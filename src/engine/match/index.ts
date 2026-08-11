@@ -12,11 +12,12 @@ export {
   toMatchSimulation,
 } from './MatchEngine'
 export { applyMatchResult, MatchResultApplicationError } from './MatchResultApplication'
-export { calculateMatchPlayerStats } from './PlayerMatchStats'
+export { calculateMatchPlayerStats, calculateTeamMatchStats } from './PlayerMatchStats'
 export { createMatchPlayerProfile } from './MatchPlayerProfile'
 export { calculateDefenseExecution, calculateEffectiveDefense, calculateShotMakeProbability, calculateShotZoneWeights, pointsForShotZone, SHOT_RESOLUTION_V1 } from './ShotResolution'
 export { chooseWeighted } from './WeightedChoice'
 export { calculateDefensiveAssignments } from './Matchups'
+export { calculateBlockCreditProbability, calculateStealCreditProbability } from './DefensiveAttribution'
 export { createDefaultTacticalPlan, validateTacticalPlan } from './tactics/MatchTacticalPlan'
 export { applyTacticalPlanChange, calculateTacticalPlanAtEvents } from './coaching/MatchCoachingState'
 export { applyManualSubstitutions } from './coaching/ManualSubstitutions'
@@ -42,7 +43,7 @@ export type {
   SubstitutePlayerOptions,
   SubstitutionSource,
 } from './MatchEngine'
-export type { PlayerMatchStats } from './PlayerMatchStats'
+export type { PlayerMatchStats, TeamMatchStats } from './PlayerMatchStats'
 export type { MatchPlayerProfile, MatchPlayerProfiles } from './MatchPlayerProfile'
 export type { PlayerMatchup } from './Matchups'
 export type { MatchTacticalPlan, TacticalLevel } from './tactics/MatchTacticalPlan'

@@ -12,6 +12,7 @@ import { chooseWeighted } from './WeightedChoice'
 import { createDefaultTacticalPlan, validateTacticalPlan, type MatchTacticalPlan } from './tactics/MatchTacticalPlan'
 import { applyPaceToPossessionDuration, applyShotProfile, calculateTacticalDefenseModifier, tacticalUsageWeight } from './tactics/TacticalEffects'
 import { clonePlan, type MatchCoachingState } from './coaching/MatchCoachingState'
+import { calculateBlockCreditProbability, calculateStealCreditProbability } from './DefensiveAttribution'
 
 export const MATCH_RULES_V2 = {
   periodCount: 4,
@@ -78,6 +79,7 @@ export type MatchEvent =
       readonly teamId: TeamId
       readonly playerId: PlayerId
       readonly defenderPlayerId: PlayerId
+      readonly blockedByPlayerId?: PlayerId
       readonly shotZone: ShotZone
       readonly homeScore: number
       readonly awayScore: number
@@ -89,6 +91,7 @@ export type MatchEvent =
       readonly type: 'turnover'
       readonly teamId: TeamId
       readonly playerId: PlayerId
+      readonly stealPlayerId?: PlayerId
       readonly homeScore: number
       readonly awayScore: number
     }
@@ -160,6 +163,7 @@ export interface MatchSimulation {
   readonly homeTeamId: TeamId
   readonly awayTeamId: TeamId
   readonly lineups: MatchLineups
+  readonly squads: MatchSquads
   readonly events: readonly MatchEvent[]
   readonly finalScore: {
     readonly home: number
@@ -346,7 +350,8 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
       newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'shotMade', teamId: attackingTeamId, playerId, defenderPlayerId: primaryDefenderId, ...(assistPlayerId === undefined ? {} : { assistPlayerId }), points, shotZone, homeScore, awayScore })
       attackingTeamId = otherTeamId(attackingTeamId, state)
     } else {
-      newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'shotMissed', teamId: attackingTeamId, playerId, defenderPlayerId: primaryDefenderId, shotZone, homeScore, awayScore })
+      const blockedByPlayerId = session.actorRandom.chance(calculateBlockCreditProbability(primaryDefender, shotZone)) ? primaryDefenderId : undefined
+      newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'shotMissed', teamId: attackingTeamId, playerId, defenderPlayerId: primaryDefenderId, ...(blockedByPlayerId === undefined ? {} : { blockedByPlayerId }), shotZone, homeScore, awayScore })
       const offensiveReboundProbability = calculateOffensiveReboundProbability({ offensiveProfiles: lineup.map((candidateId) => profileForPlayer(profiles, candidateId)), defensiveProfiles: defendingLineup.map((candidateId) => profileForPlayer(defendingProfiles, candidateId)) })
       const reboundType = session.random.chance(offensiveReboundProbability) ? 'offensive' : 'defensive'
       const reboundTeamId = reboundType === 'offensive' ? attackingTeamId : otherTeamId(attackingTeamId, state)
@@ -357,7 +362,8 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
       attackingTeamId = reboundTeamId
     }
   } else {
-    newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'turnover', teamId: attackingTeamId, playerId, homeScore, awayScore })
+    const stealPlayerId = session.actorRandom.chance(calculateStealCreditProbability(primaryDefender)) ? primaryDefenderId : undefined
+    newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'turnover', teamId: attackingTeamId, playerId, ...(stealPlayerId === undefined ? {} : { stealPlayerId }), homeScore, awayScore })
     attackingTeamId = otherTeamId(attackingTeamId, state)
   }
 
@@ -376,7 +382,7 @@ function updateSessionFatigue(session: MatchSession, state: MatchSessionState, e
 export function toMatchSimulation(session: MatchSession): MatchSimulation {
   const state = session.state
   if (!state.isComplete) throw new MatchSimulationError('Cannot convert an incomplete MatchSession to MatchSimulation')
-  return { gameId: state.gameId, homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, lineups: state.initialLineups, events: state.events, finalScore: { home: state.homeScore, away: state.awayScore } }
+  return { gameId: state.gameId, homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, lineups: state.initialLineups, squads: state.squads, events: state.events, finalScore: { home: state.homeScore, away: state.awayScore } }
 }
 
 /** Runs the single incremental MatchSession engine through completion. */

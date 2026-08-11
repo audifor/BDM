@@ -130,7 +130,15 @@ function withoutPlayerAttribution(simulation: ReturnType<typeof simulateMatchDet
         const { playerId: _playerId, assistPlayerId: _assistPlayerId, ...eventWithoutPlayer } = event
         return eventWithoutPlayer
       }
-      if (event.type === 'shotMissed' || event.type === 'turnover' || event.type === 'rebound') {
+      if (event.type === 'shotMissed') {
+        const { playerId: _playerId, blockedByPlayerId: _blockedByPlayerId, ...eventWithoutPlayer } = event
+        return eventWithoutPlayer
+      }
+      if (event.type === 'turnover') {
+        const { playerId: _playerId, stealPlayerId: _stealPlayerId, ...eventWithoutPlayer } = event
+        return eventWithoutPlayer
+      }
+      if (event.type === 'rebound') {
         const { playerId: _playerId, ...eventWithoutPlayer } = event
         return eventWithoutPlayer
       }

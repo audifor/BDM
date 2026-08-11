@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { getPlayer, type GameWorld } from '@/domain/world'
 import type { Player } from '@/domain/player'
-import { calculateMatchPlayerStats, type ManualSubstitution, type MatchEvent, type MatchSimulation, type MatchTacticalPlan, type PlayerMatchStats, type TacticalLevel } from '@/engine/match'
+import { calculateMatchPlayerStats, calculateTeamMatchStats, type ManualSubstitution, type MatchEvent, type MatchSimulation, type MatchTacticalPlan, type PlayerMatchStats, type TacticalLevel } from '@/engine/match'
 import { PLAYBACK_SPEEDS, type PlaybackSpeed } from '@/stores/matchViewerStore'
 
 import { createMatchViewerTokens, formatClock, formatMatchEvent, formatPeriod, resolveActiveMatchLineups, resolveMatchFatigue } from '../matchViewer'
@@ -54,10 +54,8 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
   const activeLineups = resolveActiveMatchLineups(props.simulation, revealedEvents)
   const fatigueByPlayerId = resolveMatchFatigue(props.world, props.simulation, revealedEvents)
   const coachingActiveLineup = props.coachingTeamId === props.simulation.homeTeamId ? activeLineups.home : activeLineups.away
-  const homePlayerIds = new Set(props.simulation.lineups.home)
-  for (const event of revealedEvents) if (event.type === 'substitution' && event.teamId === props.simulation.homeTeamId) homePlayerIds.add(event.playerInId)
-  const homeStats = playerStats.filter((stat) => homePlayerIds.has(stat.playerId))
-  const awayStats = playerStats.filter((stat) => !homePlayerIds.has(stat.playerId))
+  const homeStats = playerStats.filter((stat) => props.simulation.squads.home.includes(stat.playerId))
+  const awayStats = playerStats.filter((stat) => props.simulation.squads.away.includes(stat.playerId))
 
   useEffect(() => {
     if (!props.isPlaying || isFinished || segment !== null || requestingSegmentRef.current) return
@@ -106,8 +104,8 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
       </section>
       <MatchCourt world={props.world} homeTeamId={props.simulation.homeTeamId} awayTeamId={props.simulation.awayTeamId} lineups={segment?.startLineups ?? activeLineups} attackingTeamId={segment?.attackingTeamId ?? props.simulation.homeTeamId} period={segment?.period ?? period} events={segment?.events ?? []} progress={presentationProgress} detail={visualDetailForSpeed(props.speed)} />
       <section className="boxscore">
-        <StatsTable title="HOME" stats={homeStats} world={props.world} fatigueByPlayerId={fatigueByPlayerId} />
-        <StatsTable title="AWAY" stats={awayStats} world={props.world} fatigueByPlayerId={fatigueByPlayerId} />
+        <AdvancedStatsTable title="HOME" stats={homeStats} world={props.world} fatigueByPlayerId={fatigueByPlayerId} />
+        <AdvancedStatsTable title="AWAY" stats={awayStats} world={props.world} fatigueByPlayerId={fatigueByPlayerId} />
       </section>
       <section className="viewer-lower">
         <div className="event-feed">
@@ -146,6 +144,11 @@ function EventLine({ event, world }: { readonly event: MatchEvent; readonly worl
   return <p className={className}><time>{event.type === 'gameEnd' ? '00:00' : formatClock(event.clockSecondsRemaining)}</time> {formatMatchEvent(event, world)}</p>
 }
 
+function AdvancedStatsTable({ title, stats, world, fatigueByPlayerId }: { readonly title: string; readonly stats: readonly PlayerMatchStats[]; readonly world: GameWorld; readonly fatigueByPlayerId: Readonly<Record<string, number>> }) {
+  const totals = calculateTeamMatchStats(stats, stats.map((stat) => stat.playerId))
+  return <section className="boxscore-team table-wrap"><p className="eyebrow">{title}</p><table><thead><tr><th>PLAYER</th><th>MIN</th><th>CON</th><th>PTS</th><th>2P</th><th>3P</th><th>FT</th><th>OREB</th><th>DREB</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>TO</th><th>PF</th><th>+/-</th></tr></thead><tbody>{stats.map((stat) => <tr key={stat.playerId}><td>{getPlayer(world, stat.playerId).lastName}</td><td>{formatMinutes(stat.secondsPlayed)}</td><td>{formatCondition(fatigueByPlayerId[stat.playerId] ?? 0)}</td><td>{stat.points}</td><td>{stat.twoPointMade}/{stat.twoPointAttempted}</td><td>{stat.threePointMade}/{stat.threePointAttempted}</td><td>{stat.freeThrowsMade}/{stat.freeThrowsAttempted}</td><td>{stat.offensiveRebounds}</td><td>{stat.defensiveRebounds}</td><td>{stat.rebounds}</td><td>{stat.assists}</td><td>{stat.steals}</td><td>{stat.blocks}</td><td>{stat.turnovers}</td><td>{stat.foulsCommitted}</td><td>{formatPlusMinus(stat.plusMinus)}</td></tr>)}<tr className="totals-row"><td>TOTAL</td><td /><td /><td>{totals.points}</td><td>{totals.twoPointMade}/{totals.twoPointAttempted}</td><td>{totals.threePointMade}/{totals.threePointAttempted}</td><td>{totals.freeThrowsMade}/{totals.freeThrowsAttempted}</td><td>{totals.offensiveRebounds}</td><td>{totals.defensiveRebounds}</td><td>{totals.rebounds}</td><td>{totals.assists}</td><td>{totals.steals}</td><td>{totals.blocks}</td><td>{totals.turnovers}</td><td>{totals.foulsCommitted}</td><td /></tr></tbody></table></section>
+}
+
 function StatsTable({ title, stats, world, fatigueByPlayerId }: { readonly title: string; readonly stats: readonly PlayerMatchStats[]; readonly world: GameWorld; readonly fatigueByPlayerId: Readonly<Record<string, number>> }) {
   return <section className="boxscore-team"><p className="eyebrow">{title}</p><table><thead><tr><th>PLAYER</th><th>MIN</th><th>CON</th><th>PTS</th><th>FG</th><th>FT</th><th>REB</th><th>AST</th><th>TO</th><th>PF</th></tr></thead><tbody>{stats.map((stat) => <tr key={stat.playerId}><td>{getPlayer(world, stat.playerId).lastName}</td><td>{formatMinutes(stat.secondsPlayed)}</td><td>{formatCondition(fatigueByPlayerId[stat.playerId] ?? 0)}</td><td>{stat.points}</td><td>{stat.fieldGoalsMade}/{stat.fieldGoalsAttempted}</td><td>{stat.freeThrowsMade}/{stat.freeThrowsAttempted}</td><td>{stat.rebounds}</td><td>{stat.assists}</td><td>{stat.turnovers}</td><td>{stat.foulsCommitted}</td></tr>)}</tbody></table></section>
 }
@@ -157,3 +160,5 @@ function formatMinutes(secondsPlayed: number): string {
 function formatCondition(fatigue: number): string {
   return `${Math.round(100 - Math.min(100, Math.max(0, fatigue)))}%`
 }
+
+function formatPlusMinus(value: number): string { return value > 0 ? `+${value}` : String(value) }

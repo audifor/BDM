@@ -129,7 +129,22 @@ describe('PlayerMatchStats', () => {
     expect(stats.filter((stat) => awayIds.has(stat.playerId)).reduce((sum, stat) => sum + stat.secondsPlayed, 0)).toBe(12000)
     const firstSubstitutionIndex = simulation.events.findIndex((event) => event.type === 'substitution')
     const partial = calculateMatchPlayerStats(simulation, simulation.events.slice(0, firstSubstitutionIndex))
-    expect(partial.some((stat) => !simulation.lineups.home.includes(stat.playerId) && !simulation.lineups.away.includes(stat.playerId))).toBe(false)
+    expect(partial).toHaveLength(simulation.squads.home.length + simulation.squads.away.length)
+  })
+
+  it('keeps advanced shooting and plus-minus invariants for a complete match', () => {
+    const simulation = prepareUserMatch(createNewGame())
+    const stats = calculateMatchPlayerStats(simulation)
+    for (const stat of stats) {
+      expect(stat.fieldGoalsMade).toBe(stat.twoPointMade + stat.threePointMade)
+      expect(stat.fieldGoalsAttempted).toBe(stat.twoPointAttempted + stat.threePointAttempted)
+      expect(stat.points).toBe(stat.twoPointMade * 2 + stat.threePointMade * 3 + stat.freeThrowsMade)
+      expect(stat.rebounds).toBe(stat.offensiveRebounds + stat.defensiveRebounds)
+    }
+    const homePlusMinus = stats.filter((stat) => simulation.squads.home.includes(stat.playerId)).reduce((sum, stat) => sum + stat.plusMinus, 0)
+    const awayPlusMinus = stats.filter((stat) => simulation.squads.away.includes(stat.playerId)).reduce((sum, stat) => sum + stat.plusMinus, 0)
+    expect(homePlusMinus).toBe(5 * (simulation.finalScore.home - simulation.finalScore.away))
+    expect(awayPlusMinus).toBe(-homePlusMinus)
   })
 })
 
@@ -139,6 +154,7 @@ function createSimulation(events: readonly MatchEvent[]): MatchSimulation {
     homeTeamId: HOME_TEAM_ID,
     awayTeamId: AWAY_TEAM_ID,
     lineups: { home: HOME_PLAYERS, away: AWAY_PLAYERS },
+    squads: { home: HOME_PLAYERS, away: AWAY_PLAYERS },
     events,
     finalScore: { home: 0, away: 0 },
   }

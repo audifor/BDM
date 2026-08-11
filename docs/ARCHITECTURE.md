@@ -356,3 +356,18 @@ cannot rewrite a segment that has already been resolved.
 > MatchViewer must finish presenting the current resolved sporting segment before requesting future sporting simulation.
 
 > Presentation may interpolate abstract movement, but it must never invent a sporting event that MatchEngine did not resolve.
+
+## Derived match boxscore
+
+`PlayerMatchStats` and `TeamMatchStats` are transient projections of MatchEvents,
+MatchSquads, active lineups, and event sequence. Two- and three-point attempts are
+derived from `ShotZone`; plus/minus is assigned to the active fives for each score
+delta, including same-clock substitutions in sequence order. All MatchSquad players
+have a row, even before playing.
+
+`stealPlayerId` is optional attribution on a turnover and `blockedByPlayerId` is
+optional attribution on a missed shot. Their bootstrap Alpha probabilities use the
+existing actor RNG and MatchPlayerProfile defensive signals only; they never change
+the sporting outcome, clock, possession, fatigue, or score. Live boxscores consume
+only revealed events, never Presentation Time's already-resolved future. No stats
+are persisted or aggregated; game logs, season, and career statistics remain 027.
