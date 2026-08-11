@@ -8,6 +8,7 @@ import {
 } from '@/engine/match'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import { calculateTeamStrength } from '@/engine/team'
+import { selectStartingFive } from '@/engine/team'
 
 export class PlayUserGameError extends Error {
   public constructor(message: string) {
@@ -51,6 +52,7 @@ export function prepareMatch(world: GameWorld, game: Game): MatchSimulation {
     gameId: game.id,
     homeStrength: calculateTeamStrength(world, game.homeTeamId),
     awayStrength: calculateTeamStrength(world, game.awayTeamId),
+    lineups: { home: selectStartingFive(world, game.homeTeamId), away: selectStartingFive(world, game.awayTeamId) },
     random: createPrototypeGameRandom(game.id),
   })
 

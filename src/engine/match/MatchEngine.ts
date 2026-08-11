@@ -1,4 +1,4 @@
-import type { GameId, TeamId } from '@/domain/ids'
+import type { GameId, PlayerId, TeamId } from '@/domain/ids'
 import { getGame, type GameWorld } from '@/domain/world'
 import type { RandomSource } from '@/engine/random'
 
@@ -29,6 +29,7 @@ export interface MatchSimulationResult {
   readonly homeScore: number
   readonly awayScore: number
 }
+export interface MatchLineups { readonly home: readonly PlayerId[]; readonly away: readonly PlayerId[] }
 
 export type MatchEvent =
   | MatchPeriodEvent
@@ -73,6 +74,7 @@ export interface MatchSimulation {
   readonly gameId: GameId
   readonly homeTeamId: TeamId
   readonly awayTeamId: TeamId
+  readonly lineups: MatchLineups
   readonly events: readonly MatchEvent[]
   readonly finalScore: {
     readonly home: number
@@ -85,6 +87,7 @@ export interface SimulateMatchOptions {
   readonly gameId: GameId
   readonly homeStrength: TeamStrength
   readonly awayStrength: TeamStrength
+  readonly lineups?: MatchLineups
   readonly random: RandomSource
 }
 
@@ -165,8 +168,12 @@ export function simulateMatchDetailed(options: SimulateMatchOptions): MatchSimul
   }
 
   events.push({ sequence, period, clockSecondsRemaining: 0, type: 'gameEnd', homeScore, awayScore })
-  return { gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, events, finalScore: { home: homeScore, away: awayScore } }
+  const lineups = options.lineups ?? { home: [], away: [] }
+  validateLineup(lineups.home, 'Home'); validateLineup(lineups.away, 'Away')
+  return { gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, lineups, events, finalScore: { home: homeScore, away: awayScore } }
 }
+
+function validateLineup(lineup: readonly PlayerId[], side: string): void { if (lineup.length !== 0 && lineup.length !== 5) throw new MatchSimulationError(`${side} lineup must contain exactly 5 players`); if (new Set(lineup).size !== lineup.length) throw new MatchSimulationError(`${side} lineup cannot contain duplicate players`) }
 
 function validateOptions(options: SimulateMatchOptions) {
   const game = getGame(options.world, options.gameId)

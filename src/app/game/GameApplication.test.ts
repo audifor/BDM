@@ -62,6 +62,17 @@ describe('prototype game application', () => {
     expect(instantWorld.games[simulation.gameId]?.result).toEqual({ homeScore: simulation.finalScore.home, awayScore: simulation.finalScore.away })
   })
 
+  it('prepares transient five-player lineups from each game roster', () => {
+    const world = createNewGame()
+    const simulation = prepareUserMatch(world)
+    expect(simulation.lineups.home).toHaveLength(5)
+    expect(simulation.lineups.away).toHaveLength(5)
+    expect(new Set(simulation.lineups.home)).toHaveLength(5)
+    expect(new Set(simulation.lineups.away)).toHaveLength(5)
+    expect(simulation.lineups.home.every((id) => world.teams[simulation.homeTeamId]!.rosterPlayerIds.includes(id))).toBe(true)
+    expect(simulation.lineups.away.every((id) => world.teams[simulation.awayTeamId]!.rosterPlayerIds.includes(id))).toBe(true)
+  })
+
   it('simulates every remaining game today and is idempotent after completion', () => {
     const world = createNewGame()
     const completedWorld = simulateRemainingGamesToday(world)

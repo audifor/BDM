@@ -161,3 +161,8 @@ WorldGenerator now creates deterministic player profiles with a provisional
 Player-derived RNG stream independent of names; ratings have soft positional
 tendencies and no persisted overall. MatchEngine still uses its provisional
 TeamStrength and does not consume player ratings.
+
+Match preparation derives each Starting Five before entering MatchEngine. The
+resulting transient `MatchLineups` is stored in MatchSimulation as a snapshot;
+MatchEngine consumes but never selects it. Lineups are not persisted and events
+remain team-level until the later player-action milestone.

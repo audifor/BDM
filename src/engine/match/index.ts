@@ -10,6 +10,7 @@ export { applyMatchResult, MatchResultApplicationError } from './MatchResultAppl
 export type {
   MatchSimulationResult,
   MatchSimulation,
+  MatchLineups,
   MatchEvent,
   SimulateMatchOptions,
   TeamStrength,
