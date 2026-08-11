@@ -1,7 +1,9 @@
 import { createGame } from '@/domain/game'
 import { createGameWorld, type GameWorld } from '@/domain/world'
+import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
 
-import type { MatchSimulationResult } from './MatchEngine'
+import { calculateMatchPlayerStats } from './PlayerMatchStats'
+import type { MatchSimulation, MatchSimulationResult } from './MatchEngine'
 
 export class MatchResultApplicationError extends Error {
   public constructor(message: string) {
@@ -60,7 +62,34 @@ export function applyMatchResult(world: GameWorld, result: MatchSimulationResult
     competitions: Object.values(world.competitions),
     seasons: Object.values(world.seasons),
     games,
+    matchStatLogs: Object.values(world.matchStatLogsByGameId),
   })
+}
+
+/** Creates the immutable historical snapshot without mutating the source world. */
+export function createMatchStatLog(world: GameWorld, gameId: MatchSimulation['gameId'], simulation: MatchSimulation): MatchStatLog {
+  const game = world.games[gameId]
+  if (game === undefined) throw new MatchResultApplicationError(`Cannot create stats for missing Game ${gameId}`)
+  if (simulation.gameId !== gameId || simulation.homeTeamId !== game.homeTeamId || simulation.awayTeamId !== game.awayTeamId) throw new MatchResultApplicationError('Simulation does not match Game')
+  if (simulation.finalScore.home === simulation.finalScore.away || !simulation.events.some((event) => event.type === 'gameEnd')) throw new MatchResultApplicationError('MatchStatLog requires completed non-tied simulation')
+  const stats = calculateMatchPlayerStats(simulation)
+  const playerLines = stats.map((line) => {
+    const isHome = simulation.squads.home.includes(line.playerId)
+    const teamId = isHome ? game.homeTeamId : game.awayTeamId
+    return { playerId: line.playerId, teamId, opponentTeamId: isHome ? game.awayTeamId : game.homeTeamId, isHome, started: (isHome ? simulation.lineups.home : simulation.lineups.away).includes(line.playerId), stats: { ...line } }
+  })
+  const homePoints = playerLines.filter((line) => line.isHome).reduce((total, line) => total + line.stats.points, 0)
+  const awayPoints = playerLines.filter((line) => !line.isHome).reduce((total, line) => total + line.stats.points, 0)
+  if (homePoints !== simulation.finalScore.home || awayPoints !== simulation.finalScore.away) throw new MatchResultApplicationError('MatchStatLog player points do not match final score')
+  return { gameId, competitionId: game.competitionId, seasonId: game.seasonId, gameDate: game.date, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, finalScore: { ...simulation.finalScore }, playerLines }
+}
+
+/** Atomically completes a Game and records its canonical statistical log. */
+export function applyCompletedMatch(world: GameWorld, simulation: MatchSimulation): GameWorld {
+  if (world.matchStatLogsByGameId[simulation.gameId] !== undefined) throw new MatchResultApplicationError(`MatchStatLog already exists for Game ${simulation.gameId}`)
+  const log = createMatchStatLog(world, simulation.gameId, simulation)
+  const resultWorld = applyMatchResult(world, { gameId: simulation.gameId, homeTeamId: simulation.homeTeamId, awayTeamId: simulation.awayTeamId, homeScore: simulation.finalScore.home, awayScore: simulation.finalScore.away })
+  return createGameWorld({ currentDate: resultWorld.currentDate, userCoachId: resultWorld.userCoachId, countries: Object.values(resultWorld.countries), coaches: Object.values(resultWorld.coaches), players: Object.values(resultWorld.players), teams: Object.values(resultWorld.teams), competitions: Object.values(resultWorld.competitions), seasons: Object.values(resultWorld.seasons), games: Object.values(resultWorld.games), matchStatLogs: [...Object.values(world.matchStatLogsByGameId), log] })
 }
 
 function validateScore(value: number, side: string): void {

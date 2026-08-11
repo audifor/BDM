@@ -371,3 +371,21 @@ existing actor RNG and MatchPlayerProfile defensive signals only; they never cha
 the sporting outcome, clock, possession, fatigue, or score. Live boxscores consume
 only revealed events, never Presentation Time's already-resolved future. No stats
 are persisted or aggregated; game logs, season, and career statistics remain 027.
+
+## Historical statistics
+
+Each completed Game now owns one immutable `MatchStatLog` in the normalized
+`GameWorld.matchStatLogsByGameId` collection. Applying a completed simulation
+atomically applies its result and log. Lines preserve the player, team, opponent,
+home/away, starter, and full final stat context from that match, including DNPs.
+
+Season and career statistics are pure projections over canonical logs; they are
+never independently mutable counters. This supports future transfers and multiple
+competitions because team context remains on each historical line. Logs are
+JSON-safe in world state but 027 introduces no disk I/O, save schema, or loading;
+028 owns that boundary. Future scale may cache projections without replacing logs
+as the source of truth.
+
+> A completed game has one immutable statistical log that is the canonical source for all later season and career statistical projections.
+
+> Season and career totals must never be independently mutable counters when they can be derived from canonical game logs.

@@ -11,7 +11,7 @@ export {
   substitutePlayer,
   toMatchSimulation,
 } from './MatchEngine'
-export { applyMatchResult, MatchResultApplicationError } from './MatchResultApplication'
+export { applyMatchResult, applyCompletedMatch, createMatchStatLog, MatchResultApplicationError } from './MatchResultApplication'
 export { calculateMatchPlayerStats, calculateTeamMatchStats } from './PlayerMatchStats'
 export { createMatchPlayerProfile } from './MatchPlayerProfile'
 export { calculateDefenseExecution, calculateEffectiveDefense, calculateShotMakeProbability, calculateShotZoneWeights, pointsForShotZone, SHOT_RESOLUTION_V1 } from './ShotResolution'

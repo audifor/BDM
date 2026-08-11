@@ -15,6 +15,7 @@ import type {
 import type { Player } from '@/domain/player'
 import type { Season } from '@/domain/season'
 import type { Team } from '@/domain/team'
+import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -29,6 +30,7 @@ export interface GameWorld {
   readonly competitions: Readonly<Record<CompetitionId, Competition>>
   readonly seasons: Readonly<Record<SeasonId, Season>>
   readonly games: Readonly<Record<GameId, Game>>
+  readonly matchStatLogsByGameId: Readonly<Record<GameId, MatchStatLog>>
 }
 
 export interface CreateGameWorldInput {
@@ -41,6 +43,7 @@ export interface CreateGameWorldInput {
   competitions: readonly Competition[]
   seasons: readonly Season[]
   games: readonly Game[]
+  matchStatLogs?: readonly MatchStatLog[]
 }
 
 export class GameWorldValidationError extends Error {
@@ -62,6 +65,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     competitions: indexById(input.competitions, 'Competition'),
     seasons: indexById(input.seasons, 'Season'),
     games: indexById(input.games, 'Game'),
+    matchStatLogsByGameId: indexLogsByGameId(input.matchStatLogs ?? []),
   }
 
   validateWorld(world)
@@ -147,6 +151,25 @@ function validateWorld(world: GameWorld): void {
       throw new GameWorldValidationError(`Game ${game.id} date is outside its season range`)
     }
   }
+  for (const log of Object.values(world.matchStatLogsByGameId)) validateMatchStatLog(world, log)
+}
+
+function validateMatchStatLog(world: GameWorld, log: MatchStatLog): void {
+  const game = requireEntity(world.games, log.gameId, 'MatchStatLog game')
+  if (game.status !== 'completed' || game.result === null) throw new GameWorldValidationError(`MatchStatLog ${log.gameId} requires completed Game`)
+  if (log.homeTeamId !== game.homeTeamId || log.awayTeamId !== game.awayTeamId || log.competitionId !== game.competitionId || log.seasonId !== game.seasonId || log.gameDate !== game.date) throw new GameWorldValidationError(`MatchStatLog ${log.gameId} metadata does not match Game`)
+  if (log.finalScore.home !== game.result.homeScore || log.finalScore.away !== game.result.awayScore) throw new GameWorldValidationError(`MatchStatLog ${log.gameId} score does not match Game`)
+  const players = new Set<PlayerId>()
+  for (const line of log.playerLines) {
+    requireEntity(world.players, line.playerId, `MatchStatLog ${log.gameId} Player`)
+    if (players.has(line.playerId)) throw new GameWorldValidationError(`MatchStatLog ${log.gameId} has duplicate Player ${line.playerId}`)
+    players.add(line.playerId)
+    if (!((line.teamId === log.homeTeamId && line.opponentTeamId === log.awayTeamId && line.isHome) || (line.teamId === log.awayTeamId && line.opponentTeamId === log.homeTeamId && !line.isHome))) throw new GameWorldValidationError(`MatchStatLog ${log.gameId} has invalid Team context`)
+  }
+  const homeLines = log.playerLines.filter((line) => line.isHome)
+  const awayLines = log.playerLines.filter((line) => !line.isHome)
+  if (homeLines.reduce((sum, line) => sum + line.stats.points, 0) !== log.finalScore.home || awayLines.reduce((sum, line) => sum + line.stats.points, 0) !== log.finalScore.away) throw new GameWorldValidationError(`MatchStatLog ${log.gameId} player points do not match score`)
+  if (homeLines.filter((line) => line.started).length !== 5 || awayLines.filter((line) => line.started).length !== 5) throw new GameWorldValidationError(`MatchStatLog ${log.gameId} requires five starters per Team`)
 }
 
 function indexById<Id extends string, Entity extends { readonly id: Id }>(
@@ -162,6 +185,15 @@ function indexById<Id extends string, Entity extends { readonly id: Id }>(
     indexed[entity.id] = entity
   }
 
+  return Object.freeze(indexed)
+}
+
+function indexLogsByGameId(logs: readonly MatchStatLog[]): Readonly<Record<GameId, MatchStatLog>> {
+  const indexed = Object.create(null) as Record<GameId, MatchStatLog>
+  for (const log of logs) {
+    if (Object.hasOwn(indexed, log.gameId)) throw new GameWorldValidationError(`Duplicate MatchStatLog Game ID: ${log.gameId}`)
+    indexed[log.gameId] = log
+  }
   return Object.freeze(indexed)
 }
 

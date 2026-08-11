@@ -2,7 +2,7 @@ import type { Game } from '@/domain/game'
 import type { GameWorld } from '@/domain/world'
 import { getGamesToday, getUserTeam } from '@/engine/calendar'
 import {
-  applyMatchResult,
+  applyCompletedMatch,
   createDefaultRotationPlan,
   createMatchPlayerProfile,
   simulateMatchWithRotations,
@@ -86,13 +86,7 @@ export function prepareMatch(world: GameWorld, game: Game, tacticalPlans = { hom
 
 /** Applies a completed viewer simulation to GameWorld exactly through the result boundary. */
 export function completeMatch(world: GameWorld, simulation: MatchSimulation): GameWorld {
-  return applyMatchResult(world, {
-    gameId: simulation.gameId,
-    homeTeamId: simulation.homeTeamId,
-    awayTeamId: simulation.awayTeamId,
-    homeScore: simulation.finalScore.home,
-    awayScore: simulation.finalScore.away,
-  })
+  return applyCompletedMatch(world, simulation)
 }
 
 /** Instant Result uses the same detailed simulation as MatchViewer, then applies it immediately. */
