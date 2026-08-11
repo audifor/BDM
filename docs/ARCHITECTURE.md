@@ -74,3 +74,9 @@ seed and generator options reproduce the same world.
 returns scheduled Domain `Game` data, and never modifies `GameWorld`. The current
 schedule is a deterministic home-and-away round robin with no RNG or simulation
 logic.
+
+`MatchEngine` belongs to Engine and is separate from both state transition and
+`MatchViewer`. It receives a `RandomSource` externally and returns only a final
+`MatchSimulationResult`; it never changes `GameWorld` or `Game`. MatchEngine v0
+uses temporary `TeamStrength` inputs, which are not persisted in Team or GameWorld,
+and does not yet create possessions or events.
