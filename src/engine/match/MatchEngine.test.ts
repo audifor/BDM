@@ -125,6 +125,10 @@ function withoutPlayerAttribution(simulation: ReturnType<typeof simulateMatchDet
         const { playerId: _playerId, ...eventWithoutPlayer } = event
         return eventWithoutPlayer
       }
+      if (event.type === 'foul' || event.type === 'freeThrowMade' || event.type === 'freeThrowMissed') {
+        const { playerId: _playerId, ...eventWithoutPlayer } = event
+        return eventWithoutPlayer
+      }
       return event
     }),
   }

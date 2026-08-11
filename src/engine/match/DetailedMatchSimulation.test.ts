@@ -8,14 +8,16 @@ import { createGameWorld, type GameWorld } from '@/domain/world'
 import { MATCH_RULES_V2, simulateMatchDetailed, type MatchEvent, type MatchLineups } from './index'
 
 describe('possession-based MatchEngine v2', () => {
-  it('derives the final score exactly from shotMade events', () => {
+  it('derives the final score exactly from field goals and made free throws', () => {
     const { world, game } = createScheduledGameWorld()
     const simulation = simulate(world, game.id, 12_345)
     const madeShots = simulation.events.filter((event) => event.type === 'shotMade')
 
-    expect(madeShots.reduce((sum, event) => sum + (event.teamId === simulation.homeTeamId ? event.points : 0), 0)).toBe(simulation.finalScore.home)
-    expect(madeShots.reduce((sum, event) => sum + (event.teamId === simulation.awayTeamId ? event.points : 0), 0)).toBe(simulation.finalScore.away)
-    expect(madeShots.every((event) => [1, 2, 3].includes(event.points))).toBe(true)
+    const homeMadeFreeThrows = simulation.events.filter((event) => event.type === 'freeThrowMade' && event.teamId === simulation.homeTeamId).length
+    const awayMadeFreeThrows = simulation.events.filter((event) => event.type === 'freeThrowMade' && event.teamId === simulation.awayTeamId).length
+    expect(madeShots.reduce((sum, event) => sum + (event.teamId === simulation.homeTeamId ? event.points : 0), 0) + homeMadeFreeThrows).toBe(simulation.finalScore.home)
+    expect(madeShots.reduce((sum, event) => sum + (event.teamId === simulation.awayTeamId ? event.points : 0), 0) + awayMadeFreeThrows).toBe(simulation.finalScore.away)
+    expect(madeShots.every((event) => [2, 3].includes(event.points))).toBe(true)
     expect(simulation.events.at(-1)).toMatchObject({ type: 'gameEnd', homeScore: simulation.finalScore.home, awayScore: simulation.finalScore.away })
   })
 
@@ -111,13 +113,13 @@ describe('possession-based MatchEngine v2', () => {
       expect(lineup).toContain(event.playerId)
     }
     for (const event of simulation.events) {
-      if (event.type !== 'shotMade' || event.points === 1) continue
+      if (event.type !== 'shotMade') continue
       expect(event.assistPlayerId).toBeDefined()
       const lineup = event.teamId === simulation.homeTeamId ? simulation.lineups.home : simulation.lineups.away
       expect(lineup).toContain(event.assistPlayerId)
       expect(event.assistPlayerId).not.toBe(event.playerId)
     }
-    expect(simulation.events.every((event) => event.type !== 'shotMade' || event.points !== 1 || event.assistPlayerId === undefined)).toBe(true)
+    expect(simulation.events.every((event) => event.type !== 'shotMade' || event.points === 2 || event.points === 3)).toBe(true)
   })
 })
 
@@ -178,11 +180,11 @@ class OvertimeRandom implements RandomSource {
   private outcomes = 0
   next(): number {
     this.outcomes += 1
-    return this.outcomes <= 100 ? 0.99 : this.outcomes === 101 ? 0.2 : 0.99
+    return this.outcomes <= 100 ? 0.99 : this.outcomes === 101 ? 0.3 : 0.99
   }
   nextInt(): number { return 24 }
   nextFloat(minInclusive: number): number { return minInclusive }
-  chance(): boolean { return true }
+  chance(probability: number): boolean { return probability === 0.25 || probability === 0.5 }
   pick<Item>(items: readonly Item[]): Item { return items[0]! }
 }
 

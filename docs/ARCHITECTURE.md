@@ -151,6 +151,15 @@ is never stored in Team or GameWorld. RNG is consumed for the opening team and,
 per possession, duration then outcome; MatchViewer only replays those generated
 events and does not influence them.
 
+Shooting fouls are a separate prototype possession outcome. A provisional 10%
+sporting-RNG decision emits a `foul` attributed by actor RNG to a defender, then
+exactly two same-clock free throws by the attacking actor. Each provisional 75%
+free-throw outcome uses sporting RNG; after the second attempt possession changes
+to the defender. Free-throw misses do not yet create rebound events. This is not a
+universal FIBA/NBA/NCAA rule: bonus, foul-out, substitutions, and future variants
+are deferred to CompetitionRules. The previous abstract one-point field goal has
+been removed from productive simulation.
+
 ## Player basketball domain
 
 Player now persists a `BasketballProfile` with one primary position and seven
@@ -185,5 +194,6 @@ are a transient Engine projection: PlayerMatchStats is reconstructed from
 MatchSimulation lineups and MatchEvents and is never persisted. MatchViewer passes
 only revealed events to that projection, so its live boxscore cannot expose future
 events. This v1 contains points, field goals, turnovers, offensive and defensive
-rebounds, and assists; all remain derived and non-persistent. Other player
+rebounds, assists, free-throw makes/attempts, and fouls committed; all remain
+derived and non-persistent. Free throws are not field goals. Other player
 statistics do not yet exist.

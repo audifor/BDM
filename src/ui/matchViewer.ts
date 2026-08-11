@@ -43,6 +43,9 @@ export function formatMatchEvent(event: MatchEvent, world: GameWorld): string {
   if (event.type === 'shotMissed') return `${getPlayer(world, event.playerId).lastName} misses`
   if (event.type === 'turnover') return `${getPlayer(world, event.playerId).lastName} turnover`
   if (event.type === 'rebound') return `${getPlayer(world, event.playerId).lastName} ${event.reboundType} rebound`
+  if (event.type === 'foul') return `${getPlayer(world, event.playerId).lastName} shooting foul`
+  if (event.type === 'freeThrowMade') return `${getPlayer(world, event.playerId).lastName} makes free throw`
+  if (event.type === 'freeThrowMissed') return `${getPlayer(world, event.playerId).lastName} misses free throw`
   if (event.type === 'gameEnd') return 'FINAL'
   return event.type === 'periodStart' ? `${formatPeriod(event.period)} START` : `${formatPeriod(event.period)} END`
 }

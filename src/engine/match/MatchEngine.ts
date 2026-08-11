@@ -20,6 +20,10 @@ const MAX_OVERTIME_PERIODS = 100
 const OFFENSIVE_REBOUND_PROBABILITY = 0.25
 /** Prototype attribution value; assists never affect sporting outcomes. */
 const ASSIST_PROBABILITY = 0.6
+/** Prototype value until shooting fouls become CompetitionRules. */
+const SHOOTING_FOUL_PROBABILITY = 0.1
+/** Prototype value; free throws do not yet use player ratings. */
+const FREE_THROW_MADE_PROBABILITY = 0.75
 
 export interface TeamStrength {
   readonly teamId: TeamId
@@ -47,7 +51,7 @@ export type MatchEvent =
       readonly type: 'shotMade'
       readonly teamId: TeamId
       readonly playerId: PlayerId
-      readonly points: 1 | 2 | 3
+      readonly points: 2 | 3
       readonly assistPlayerId?: PlayerId
       readonly homeScore: number
       readonly awayScore: number
@@ -57,6 +61,27 @@ export type MatchEvent =
       readonly period: number
       readonly clockSecondsRemaining: number
       readonly type: 'shotMissed' | 'turnover'
+      readonly teamId: TeamId
+      readonly playerId: PlayerId
+      readonly homeScore: number
+      readonly awayScore: number
+    }
+  | {
+      readonly sequence: number
+      readonly period: number
+      readonly clockSecondsRemaining: number
+      readonly type: 'foul'
+      readonly teamId: TeamId
+      readonly playerId: PlayerId
+      readonly foulType: 'shooting'
+      readonly homeScore: number
+      readonly awayScore: number
+    }
+  | {
+      readonly sequence: number
+      readonly period: number
+      readonly clockSecondsRemaining: number
+      readonly type: 'freeThrowMade' | 'freeThrowMissed'
       readonly teamId: TeamId
       readonly playerId: PlayerId
       readonly homeScore: number
@@ -113,7 +138,7 @@ export interface SimulateMatchOptions {
   readonly actorRandom: RandomSource
 }
 
-type PossessionOutcome = 'made1' | 'made2' | 'made3' | 'missedShot' | 'turnover'
+type PossessionOutcome = 'shootingFoul' | 'made2' | 'made3' | 'missedShot' | 'turnover'
 
 export class MatchSimulationError extends Error {
   public constructor(message: string) {
@@ -170,9 +195,25 @@ export function simulateMatchDetailed(options: SimulateMatchOptions): MatchSimul
 
       const lineup = attackingTeamId === game.homeTeamId ? options.lineups.home : options.lineups.away
       const playerId = lineup[options.actorRandom.nextInt(0, lineup.length - 1)]!
-      if (outcome === 'made1' || outcome === 'made2' || outcome === 'made3') {
-        const points = Number(outcome.at(-1)) as 1 | 2 | 3
-        const assistPlayerId = points === 1 || !options.actorRandom.chance(ASSIST_PROBABILITY)
+      if (outcome === 'shootingFoul') {
+        const defendingTeamId = otherTeamId(attackingTeamId, game)
+        const defendingLineup = defendingTeamId === game.homeTeamId ? options.lineups.home : options.lineups.away
+        const foulingPlayerId = defendingLineup[options.actorRandom.nextInt(0, defendingLineup.length - 1)]!
+        events.push({ sequence: sequence++, period, clockSecondsRemaining: clock, type: 'foul', teamId: defendingTeamId, playerId: foulingPlayerId, foulType: 'shooting', homeScore, awayScore })
+
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+          if (options.random.chance(FREE_THROW_MADE_PROBABILITY)) {
+            if (attackingTeamId === game.homeTeamId) homeScore += 1
+            else awayScore += 1
+            events.push({ sequence: sequence++, period, clockSecondsRemaining: clock, type: 'freeThrowMade', teamId: attackingTeamId, playerId, homeScore, awayScore })
+          } else {
+            events.push({ sequence: sequence++, period, clockSecondsRemaining: clock, type: 'freeThrowMissed', teamId: attackingTeamId, playerId, homeScore, awayScore })
+          }
+        }
+        attackingTeamId = defendingTeamId
+      } else if (outcome === 'made2' || outcome === 'made3') {
+        const points = Number(outcome.at(-1)) as 2 | 3
+        const assistPlayerId = !options.actorRandom.chance(ASSIST_PROBABILITY)
           ? undefined
           : selectAssister(lineup, playerId, options.actorRandom)
         if (attackingTeamId === game.homeTeamId) homeScore += points
@@ -246,13 +287,12 @@ function choosePossessionOutcome(strength: number, isHomeTeam: boolean, random: 
   const turnover = 0.13 - adjustment * 0.25
   const made3 = 0.18 + adjustment * 0.7
   const made2 = 0.3 + adjustment
-  const made1 = 0.04
   const roll = random.next()
 
-  if (roll < turnover) return 'turnover'
-  if (roll < turnover + made3) return 'made3'
-  if (roll < turnover + made3 + made2) return 'made2'
-  if (roll < turnover + made3 + made2 + made1) return 'made1'
+  if (roll < SHOOTING_FOUL_PROBABILITY) return 'shootingFoul'
+  if (roll < SHOOTING_FOUL_PROBABILITY + turnover) return 'turnover'
+  if (roll < SHOOTING_FOUL_PROBABILITY + turnover + made3) return 'made3'
+  if (roll < SHOOTING_FOUL_PROBABILITY + turnover + made3 + made2) return 'made2'
   return 'missedShot'
 }
 

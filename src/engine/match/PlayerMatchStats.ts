@@ -12,6 +12,9 @@ export interface PlayerMatchStats {
   readonly defensiveRebounds: number
   readonly rebounds: number
   readonly assists: number
+  readonly freeThrowsMade: number
+  readonly freeThrowsAttempted: number
+  readonly foulsCommitted: number
 }
 
 /** Derives a boxscore from an explicit event subset without mutating the simulation. */
@@ -25,7 +28,7 @@ export function calculateMatchPlayerStats(
   )
 
   for (const event of events) {
-    if (event.type !== 'shotMade' && event.type !== 'shotMissed' && event.type !== 'turnover' && event.type !== 'rebound') continue
+    if (event.type !== 'shotMade' && event.type !== 'shotMissed' && event.type !== 'turnover' && event.type !== 'rebound' && event.type !== 'foul' && event.type !== 'freeThrowMade' && event.type !== 'freeThrowMissed') continue
 
     const stats = statsByPlayerId.get(event.playerId)
     if (stats === undefined) {
@@ -60,6 +63,9 @@ function emptyStats(playerId: PlayerId): PlayerMatchStats {
     defensiveRebounds: 0,
     rebounds: 0,
     assists: 0,
+    freeThrowsMade: 0,
+    freeThrowsAttempted: 0,
+    foulsCommitted: 0,
   }
 }
 
@@ -80,6 +86,15 @@ function applyEvent(stats: PlayerMatchStats, event: Extract<MatchEvent, { readon
     return event.reboundType === 'offensive'
       ? { ...stats, offensiveRebounds: stats.offensiveRebounds + 1, rebounds: stats.rebounds + 1 }
       : { ...stats, defensiveRebounds: stats.defensiveRebounds + 1, rebounds: stats.rebounds + 1 }
+  }
+  if (event.type === 'foul') {
+    return { ...stats, foulsCommitted: stats.foulsCommitted + 1 }
+  }
+  if (event.type === 'freeThrowMade') {
+    return { ...stats, points: stats.points + 1, freeThrowsMade: stats.freeThrowsMade + 1, freeThrowsAttempted: stats.freeThrowsAttempted + 1 }
+  }
+  if (event.type === 'freeThrowMissed') {
+    return { ...stats, freeThrowsAttempted: stats.freeThrowsAttempted + 1 }
   }
   return { ...stats, turnovers: stats.turnovers + 1 }
 }
