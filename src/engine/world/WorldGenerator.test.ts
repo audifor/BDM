@@ -111,4 +111,17 @@ describe('WorldGenerator', () => {
     expect(new Set(players.map((player) => JSON.stringify(player.basketball.ratings))).size).toBeGreaterThan(8)
     expect(world.teams[Object.keys(world.teams)[0] as keyof typeof world.teams]!.name).toBe('Ironhollow Vipers')
   })
+
+  it('has intrateam diversity and broad position trends', () => {
+    const world = generateWorld({ seed: 12345, gender: 'male' })
+    const firstTeam = Object.values(world.teams)[0]!
+    const roster = firstTeam.rosterPlayerIds.map((id) => world.players[id]!)
+    expect(new Set(roster.map((player) => JSON.stringify(player.basketball.ratings))).size).toBeGreaterThan(1)
+    expect(new Set(roster.filter((player) => player.basketball.primaryPosition === 'SG').map((player) => JSON.stringify(player.basketball.ratings))).size).toBeGreaterThan(1)
+    const average = (position: string, rating: keyof typeof roster[number]['basketball']['ratings']) => { const players = Object.values(world.players).filter((player) => player.basketball.primaryPosition === position); return players.reduce((sum, player) => sum + player.basketball.ratings[rating], 0) / players.length }
+    expect(average('PG', 'playmaking')).toBeGreaterThan(average('C', 'playmaking'))
+    expect(average('C', 'rebounding')).toBeGreaterThan(average('PG', 'rebounding'))
+    expect(average('SG', 'shooting')).toBeGreaterThan(average('C', 'shooting'))
+    expect(average('C', 'interiorDefense')).toBeGreaterThan(average('PG', 'interiorDefense'))
+  })
 })
