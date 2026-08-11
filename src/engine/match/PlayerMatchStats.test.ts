@@ -90,6 +90,47 @@ describe('PlayerMatchStats', () => {
     expect(afterFirst.find((stat) => stat.playerId === HOME_BENCH_PLAYER)).toMatchObject({ points: 0, fieldGoalsAttempted: 0, rebounds: 0 })
     expect(calculateMatchPlayerStats(simulation).filter((stat) => stat.playerId === HOME_PLAYERS[0]!)).toHaveLength(1)
   })
+
+  it('derives seconds from clock deltas, substitutions, same-clock events, and re-entry', () => {
+    const bench = HOME_BENCH_PLAYER
+    const simulation = createSimulation([
+      periodStart(1, 600),
+      substitutionAt(2, 300, HOME_PLAYERS[0]!, bench),
+      substitutionAt(3, 120, bench, HOME_PLAYERS[0]!),
+      foulAt(4, 120, AWAY_PLAYERS[0]!),
+      periodEnd(5, 0),
+      gameEnd(6, 0),
+    ])
+    const stats = calculateMatchPlayerStats(simulation)
+    expect(stats.find((stat) => stat.playerId === HOME_PLAYERS[0]!)?.secondsPlayed).toBe(420)
+    expect(stats.find((stat) => stat.playerId === bench)?.secondsPlayed).toBe(180)
+    expect(stats.find((stat) => stat.playerId === AWAY_PLAYERS[0]!)?.secondsPlayed).toBe(600)
+    expect(stats.reduce((sum, stat) => HOME_PLAYERS.includes(stat.playerId) || stat.playerId === bench ? sum + stat.secondsPlayed : sum, 0)).toBe(3000)
+    expect(stats.filter((stat) => stat.playerId === bench)).toHaveLength(1)
+  })
+
+  it('does not invent time between same-clock foul/free-throw events and rejects impossible timelines', () => {
+    const simulation = createSimulation([periodStart(1, 600), foul(AWAY_PLAYERS[0]!), freeThrowAt(3, 300, HOME_PLAYERS[0]!, true), freeThrowAt(4, 300, HOME_PLAYERS[0]!, false), periodEnd(5, 0)])
+    const stats = calculateMatchPlayerStats(simulation)
+    expect(stats.find((stat) => stat.playerId === HOME_PLAYERS[0]!)?.secondsPlayed).toBe(600)
+    expect(() => calculateMatchPlayerStats(createSimulation([periodStart(1, 600), turnoverAt(2, 240), turnoverAt(3, 300)]) )).toThrow('clock cannot increase')
+    expect(() => calculateMatchPlayerStats(createSimulation([periodStart(1, -1)]) )).toThrow('clock cannot be negative')
+    expect(() => calculateMatchPlayerStats(createSimulation([periodStart(1, 600), periodStartAt(2, 2, 600), turnoverAtPeriod(3, 1, 500)]) )).toThrow('period cannot move backwards')
+  })
+
+  it('keeps partial minutes anti-spoiler and gives a productive regulation match 12000 player-seconds per team', () => {
+    const simulation = prepareUserMatch(createNewGame())
+    const stats = calculateMatchPlayerStats(simulation)
+    const homeIds = new Set(simulation.lineups.home)
+    const awayIds = new Set(simulation.lineups.away)
+    for (const event of simulation.events) if (event.type === 'substitution' && event.teamId === simulation.homeTeamId) homeIds.add(event.playerInId)
+    for (const event of simulation.events) if (event.type === 'substitution' && event.teamId === simulation.awayTeamId) awayIds.add(event.playerInId)
+    expect(stats.filter((stat) => homeIds.has(stat.playerId)).reduce((sum, stat) => sum + stat.secondsPlayed, 0)).toBe(12000)
+    expect(stats.filter((stat) => awayIds.has(stat.playerId)).reduce((sum, stat) => sum + stat.secondsPlayed, 0)).toBe(12000)
+    const firstSubstitutionIndex = simulation.events.findIndex((event) => event.type === 'substitution')
+    const partial = calculateMatchPlayerStats(simulation, simulation.events.slice(0, firstSubstitutionIndex))
+    expect(partial.some((stat) => !simulation.lineups.home.includes(stat.playerId) && !simulation.lineups.away.includes(stat.playerId))).toBe(false)
+  })
 })
 
 function createSimulation(events: readonly MatchEvent[]): MatchSimulation {
@@ -130,3 +171,13 @@ function freeThrow(playerId: typeof HOME_PLAYERS[number], made: boolean): MatchE
 function substitution(playerOutId: PlayerId, playerInId: PlayerId): MatchEvent {
   return { sequence: 1, period: 1, clockSecondsRemaining: 500, type: 'substitution', teamId: HOME_TEAM_ID, playerOutId, playerInId, homeScore: 0, awayScore: 0 }
 }
+
+function periodStart(sequence: number, clockSecondsRemaining: number): MatchEvent { return { sequence, period: 1, clockSecondsRemaining, type: 'periodStart', homeScore: 0, awayScore: 0 } }
+function periodStartAt(sequence: number, period: number, clockSecondsRemaining: number): MatchEvent { return { ...periodStart(sequence, clockSecondsRemaining), period } }
+function periodEnd(sequence: number, clockSecondsRemaining: 0): MatchEvent { return { sequence, period: 1, clockSecondsRemaining, type: 'periodEnd', homeScore: 0, awayScore: 0 } }
+function gameEnd(sequence: number, clockSecondsRemaining: 0): MatchEvent { return { sequence, period: 1, clockSecondsRemaining, type: 'gameEnd', homeScore: 0, awayScore: 0 } }
+function substitutionAt(sequence: number, clockSecondsRemaining: number, playerOutId: PlayerId, playerInId: PlayerId): MatchEvent { return { sequence, period: 1, clockSecondsRemaining, type: 'substitution', teamId: HOME_TEAM_ID, playerOutId, playerInId, homeScore: 0, awayScore: 0 } }
+function turnoverAt(sequence: number, clockSecondsRemaining: number): MatchEvent { return { sequence, period: 1, clockSecondsRemaining, type: 'turnover', teamId: HOME_TEAM_ID, playerId: HOME_PLAYERS[0]!, homeScore: 0, awayScore: 0 } }
+function turnoverAtPeriod(sequence: number, period: number, clockSecondsRemaining: number): MatchEvent { return { ...turnoverAt(sequence, clockSecondsRemaining), period } }
+function freeThrowAt(sequence: number, clockSecondsRemaining: number, playerId: PlayerId, made: boolean): MatchEvent { return { sequence, period: 1, clockSecondsRemaining, type: made ? 'freeThrowMade' : 'freeThrowMissed', teamId: HOME_TEAM_ID, playerId, homeScore: made ? 1 : 0, awayScore: 0 } }
+function foulAt(sequence: number, clockSecondsRemaining: number, playerId: PlayerId): MatchEvent { return { sequence, period: 1, clockSecondsRemaining, type: 'foul', teamId: AWAY_TEAM_ID, playerId, foulType: 'shooting', homeScore: 0, awayScore: 0 } }

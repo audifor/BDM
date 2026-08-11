@@ -92,5 +92,9 @@ function EventLine({ event, world }: { readonly event: MatchEvent; readonly worl
 }
 
 function StatsTable({ title, stats, world }: { readonly title: string; readonly stats: readonly PlayerMatchStats[]; readonly world: GameWorld }) {
-  return <section className="boxscore-team"><p className="eyebrow">{title}</p><table><thead><tr><th>PLAYER</th><th>PTS</th><th>FG</th><th>FT</th><th>REB</th><th>AST</th><th>TO</th><th>PF</th></tr></thead><tbody>{stats.map((stat) => <tr key={stat.playerId}><td>{getPlayer(world, stat.playerId).lastName}</td><td>{stat.points}</td><td>{stat.fieldGoalsMade}/{stat.fieldGoalsAttempted}</td><td>{stat.freeThrowsMade}/{stat.freeThrowsAttempted}</td><td>{stat.rebounds}</td><td>{stat.assists}</td><td>{stat.turnovers}</td><td>{stat.foulsCommitted}</td></tr>)}</tbody></table></section>
+  return <section className="boxscore-team"><p className="eyebrow">{title}</p><table><thead><tr><th>PLAYER</th><th>MIN</th><th>PTS</th><th>FG</th><th>FT</th><th>REB</th><th>AST</th><th>TO</th><th>PF</th></tr></thead><tbody>{stats.map((stat) => <tr key={stat.playerId}><td>{getPlayer(world, stat.playerId).lastName}</td><td>{formatMinutes(stat.secondsPlayed)}</td><td>{stat.points}</td><td>{stat.fieldGoalsMade}/{stat.fieldGoalsAttempted}</td><td>{stat.freeThrowsMade}/{stat.freeThrowsAttempted}</td><td>{stat.rebounds}</td><td>{stat.assists}</td><td>{stat.turnovers}</td><td>{stat.foulsCommitted}</td></tr>)}</tbody></table></section>
+}
+
+function formatMinutes(secondsPlayed: number): string {
+  return `${Math.floor(secondsPlayed / 60).toString().padStart(2, '0')}:${(secondsPlayed % 60).toString().padStart(2, '0')}`
 }

@@ -4,6 +4,7 @@ import { calculateActiveLineups, type MatchEvent, type MatchLineups, type MatchS
 
 export interface PlayerMatchStats {
   readonly playerId: PlayerId
+  readonly secondsPlayed: number
   readonly points: number
   readonly fieldGoalsMade: number
   readonly fieldGoalsAttempted: number
@@ -27,8 +28,23 @@ export function calculateMatchPlayerStats(
     playerIds.map((playerId) => [playerId, emptyStats(playerId)]),
   )
   let activeLineups: MatchLineups = simulation.lineups
+  let currentPeriod: number | undefined
+  let previousClock: number | undefined
 
   for (const event of events) {
+    validateTimelineEvent(event, currentPeriod, previousClock)
+    if (event.clockSecondsRemaining < 0) throw new Error('Match event clock cannot be negative')
+    if (event.type === 'periodStart') {
+      if (currentPeriod !== undefined && event.period <= currentPeriod) throw new Error('Match event period must advance chronologically')
+      currentPeriod = event.period
+      previousClock = event.clockSecondsRemaining
+      continue
+    }
+    if (currentPeriod === undefined) currentPeriod = event.period
+    const elapsed = previousClock === undefined ? 0 : previousClock - event.clockSecondsRemaining
+    if (elapsed > 0) addSecondsPlayed(statsByPlayerId, activeLineups, elapsed)
+    previousClock = event.clockSecondsRemaining
+
     if (event.type === 'substitution') {
       activeLineups = calculateActiveLineups(activeLineups, simulation.homeTeamId, simulation.awayTeamId, [event])
       if (!statsByPlayerId.has(event.playerInId)) {
@@ -69,6 +85,7 @@ export function calculateMatchPlayerStats(
 function emptyStats(playerId: PlayerId): PlayerMatchStats {
   return {
     playerId,
+    secondsPlayed: 0,
     points: 0,
     fieldGoalsMade: 0,
     fieldGoalsAttempted: 0,
@@ -80,6 +97,22 @@ function emptyStats(playerId: PlayerId): PlayerMatchStats {
     freeThrowsMade: 0,
     freeThrowsAttempted: 0,
     foulsCommitted: 0,
+  }
+}
+
+function addSecondsPlayed(statsByPlayerId: Map<PlayerId, PlayerMatchStats>, activeLineups: MatchLineups, seconds: number): void {
+  for (const playerId of [...activeLineups.home, ...activeLineups.away]) {
+    const stats = statsByPlayerId.get(playerId)
+    if (stats === undefined) throw new Error(`Active lineup references unknown Player: ${playerId}`)
+    statsByPlayerId.set(playerId, { ...stats, secondsPlayed: stats.secondsPlayed + seconds })
+  }
+}
+
+function validateTimelineEvent(event: MatchEvent, currentPeriod: number | undefined, previousClock: number | undefined): void {
+  if (currentPeriod !== undefined && event.period < currentPeriod) throw new Error('Match event period cannot move backwards')
+  if (currentPeriod !== undefined && event.period > currentPeriod && event.type !== 'periodStart') throw new Error('Match event period must start explicitly')
+  if (event.type !== 'periodStart' && currentPeriod === event.period && previousClock !== undefined && event.clockSecondsRemaining > previousClock) {
+    throw new Error('Match event clock cannot increase within a period')
   }
 }
 

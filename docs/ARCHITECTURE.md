@@ -203,9 +203,21 @@ temporary Q1--Q4 pattern; deeper bench players may not play. Plans and their
 controller state are transient, consume no RNG or clock, and do not change score.
 The user team and AI teams both use this automatic plan temporarily. MatchViewer
 reconstructs court tokens from revealed substitution events, so playback, pause,
-and skip cannot reveal a future lineup. TeamStrength remains fixed; no minutes,
-fatigue, manual controls, or overtime-specific rotation policy exist. Future
+and skip cannot reveal a future lineup. TeamStrength remains fixed; no fatigue,
+manual controls, or overtime-specific rotation policy exist. Future
 manual substitutions will need to reconcile user choices with a pending plan.
+
+Player minutes are a separate derived projection, not live match state. The
+chronological `MatchSimulation` timeline (period starts/ends, event clocks, and
+substitutions) is the source of truth for integer `secondsPlayed` in
+`PlayerMatchStats`. Each clock delta is assigned to the five active players per
+team; same-clock events add no time, outgoing players stop accumulating, incoming
+players start at zero, and re-entry continues the same row. Partial Viewer event
+subsets cannot expose future players or future seconds. This projection is not
+persisted and does not affect results, TeamStrength, or player ratings. Future
+fatigue is intentionally different: it will be live transient MatchSession state
+because it influences what happens next, rather than a reconstruction of what
+already happened.
 
 Sporting events now carry a transient PlayerId selected uniformly from the
 attacking lineup. Actor selection uses the separate deterministic stream
