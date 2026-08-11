@@ -117,15 +117,20 @@ prototype choices.
 
 `MatchEngine` can produce either a final `MatchSimulationResult` for Instant
 Result or a transient `MatchSimulation` containing a chronological `MatchEvent`
-stream. The detailed simulation reuses the same base score calculation, so the
-same game, strengths, and seeded random source produce the same final score for
-Instant Result and MatchViewer.
+stream. Its core is a transient MatchSession: it retains immutable sporting state
+and the supplied sporting and actor RNG runtimes while advancing one logical
+possession or period transition at a time. `simulateMatchDetailed` simply steps a
+MatchSession until completion, so it remains the convenient complete-simulation
+API and no second sporting algorithm exists.
 
 Events are Engine output, not persisted in `GameWorld`. MatchViewer is a UI
 consumer of that output: it reveals events with its own pause and playback-speed
 state, but never chooses sporting outcomes. Viewer state lives in a separate
 ephemeral Zustand store and is discarded after the match. Playback speed changes
-only the visual interval between already-generated events.
+only the visual interval between already-generated events. It still consumes a
+complete MatchSimulation in this milestone; MatchSession has no timers and is the
+future seam for coaching decisions, substitutions, rotations, fatigue, and tactics,
+none of which exist yet. Mid-match sessions and RNG state are not persisted.
 
 Application prepares a user match while its Game remains scheduled. It applies
 the final score to `GameWorld` through `applyMatchResult` only when playback
