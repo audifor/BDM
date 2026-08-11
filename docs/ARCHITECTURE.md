@@ -44,3 +44,13 @@ timezone; JavaScript `Date` is not a persisted game-calendar representation.
 
 Simulation services receive `RandomSource` (or an equivalent abstraction) rather
 than sourcing randomness themselves.
+
+## Domain entities
+
+Domain entities are plain serializable data created through validating factories.
+Relationships have one canonical direction: teams hold their roster and optional
+coach reference, while players and coaches do not hold a team reference.
+
+`Competition` is the enduring institution and `Season` is one dated edition of it.
+`Game` is independent of `MatchEngine`; it records only a scheduled/completed state
+and a completed game's basic final score.
