@@ -42,6 +42,12 @@ export interface MatchLineups {
   readonly away: readonly PlayerId[]
 }
 
+/** Eligible players prepared by Application; MatchEngine never reads team rosters. */
+export interface MatchSquads {
+  readonly home: readonly PlayerId[]
+  readonly away: readonly PlayerId[]
+}
+
 export type MatchEvent =
   | MatchPeriodEvent
   | {
@@ -101,6 +107,17 @@ export type MatchEvent =
   | {
       readonly sequence: number
       readonly period: number
+      readonly clockSecondsRemaining: number
+      readonly type: 'substitution'
+      readonly teamId: TeamId
+      readonly playerOutId: PlayerId
+      readonly playerInId: PlayerId
+      readonly homeScore: number
+      readonly awayScore: number
+    }
+  | {
+      readonly sequence: number
+      readonly period: number
       readonly clockSecondsRemaining: 0
       readonly type: 'gameEnd'
       readonly homeScore: number
@@ -133,6 +150,7 @@ export interface SimulateMatchOptions {
   readonly gameId: GameId
   readonly homeStrength: TeamStrength
   readonly awayStrength: TeamStrength
+  readonly squads: MatchSquads
   readonly lineups: MatchLineups
   readonly random: RandomSource
   readonly actorRandom: RandomSource
@@ -143,7 +161,11 @@ export interface MatchSessionState {
   readonly gameId: GameId
   readonly homeTeamId: TeamId
   readonly awayTeamId: TeamId
-  readonly lineups: MatchLineups
+  /** Historical starting-five snapshot retained in the completed MatchSimulation. */
+  readonly initialLineups: MatchLineups
+  /** Current five for each team; substitutions are the only operation that changes it. */
+  readonly activeLineups: MatchLineups
+  readonly squads: MatchSquads
   readonly homeStrength: TeamStrength
   readonly awayStrength: TeamStrength
   readonly openingTeamId: TeamId
@@ -167,6 +189,12 @@ export interface MatchSession {
 export interface MatchSessionStepResult {
   readonly session: MatchSession
   readonly newEvents: readonly MatchEvent[]
+}
+
+export interface SubstitutePlayerOptions {
+  readonly teamId: TeamId
+  readonly playerOutId: PlayerId
+  readonly playerInId: PlayerId
 }
 
 type PossessionOutcome = 'shootingFoul' | 'made2' | 'made3' | 'missedShot' | 'turnover'
@@ -197,7 +225,8 @@ export function createMatchSession(options: SimulateMatchOptions): MatchSession 
   const initialEvent: MatchEvent = { sequence: 1, period: 1, clockSecondsRemaining: MATCH_RULES_V2.periodSeconds, type: 'periodStart', homeScore: 0, awayScore: 0 }
   return {
     state: {
-      gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, lineups: options.lineups,
+      gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId,
+      initialLineups: options.lineups, activeLineups: options.lineups, squads: options.squads,
       homeStrength: options.homeStrength, awayStrength: options.awayStrength, openingTeamId,
       period: 1, clockSecondsRemaining: MATCH_RULES_V2.periodSeconds, homeScore: 0, awayScore: 0,
       attackingTeamId: openingTeamId, nextSequence: 2, events: [initialEvent], isComplete: false,
@@ -205,6 +234,25 @@ export function createMatchSession(options: SimulateMatchOptions): MatchSession 
     random: options.random,
     actorRandom: options.actorRandom,
   }
+}
+
+/** Records a between-steps substitution without advancing time, score, or either RNG stream. */
+export function substitutePlayer(session: MatchSession, substitution: SubstitutePlayerOptions): MatchSession {
+  const state = session.state
+  if (state.isComplete) throw new MatchSimulationError('Cannot substitute in a completed MatchSession')
+  const activeLineups = applySubstitution(state.activeLineups, state.homeTeamId, state.awayTeamId, state.squads, substitution)
+  const event: MatchEvent = {
+    sequence: state.nextSequence,
+    period: state.period,
+    clockSecondsRemaining: state.clockSecondsRemaining,
+    type: 'substitution',
+    teamId: substitution.teamId,
+    playerOutId: substitution.playerOutId,
+    playerInId: substitution.playerInId,
+    homeScore: state.homeScore,
+    awayScore: state.awayScore,
+  }
+  return { ...session, state: { ...state, activeLineups, nextSequence: state.nextSequence + 1, events: [...state.events, event] } }
 }
 
 /** Advances one logical possession or one period transition. RNG streams mutate only inside this runtime. */
@@ -223,13 +271,13 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const clockSecondsRemaining = state.clockSecondsRemaining - possessionDuration
   const strength = state.attackingTeamId === state.homeTeamId ? state.homeStrength.value : state.awayStrength.value
   const outcome = choosePossessionOutcome(strength, state.attackingTeamId === state.homeTeamId, session.random)
-  const lineup = state.attackingTeamId === state.homeTeamId ? state.lineups.home : state.lineups.away
+  const lineup = state.attackingTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
   const playerId = lineup[session.actorRandom.nextInt(0, lineup.length - 1)]!
   let attackingTeamId = state.attackingTeamId
 
   if (outcome === 'shootingFoul') {
     const defendingTeamId = otherTeamId(attackingTeamId, state)
-    const defendingLineup = defendingTeamId === state.homeTeamId ? state.lineups.home : state.lineups.away
+    const defendingLineup = defendingTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
     const foulingPlayerId = defendingLineup[session.actorRandom.nextInt(0, defendingLineup.length - 1)]!
     newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'foul', teamId: defendingTeamId, playerId: foulingPlayerId, foulType: 'shooting', homeScore, awayScore })
     for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -254,7 +302,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     if (outcome === 'missedShot') {
       const reboundType = session.random.chance(OFFENSIVE_REBOUND_PROBABILITY) ? 'offensive' : 'defensive'
       const reboundTeamId = reboundType === 'offensive' ? attackingTeamId : otherTeamId(attackingTeamId, state)
-      const reboundLineup = reboundTeamId === state.homeTeamId ? state.lineups.home : state.lineups.away
+      const reboundLineup = reboundTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
       const reboundPlayerId = reboundLineup[session.actorRandom.nextInt(0, reboundLineup.length - 1)]!
       newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'rebound', teamId: reboundTeamId, playerId: reboundPlayerId, reboundType, homeScore, awayScore })
       attackingTeamId = reboundTeamId
@@ -273,7 +321,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
 export function toMatchSimulation(session: MatchSession): MatchSimulation {
   const state = session.state
   if (!state.isComplete) throw new MatchSimulationError('Cannot convert an incomplete MatchSession to MatchSimulation')
-  return { gameId: state.gameId, homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, lineups: state.lineups, events: state.events, finalScore: { home: state.homeScore, away: state.awayScore } }
+  return { gameId: state.gameId, homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, lineups: state.initialLineups, events: state.events, finalScore: { home: state.homeScore, away: state.awayScore } }
 }
 
 /** Runs the single incremental MatchSession engine through completion. */
@@ -323,6 +371,62 @@ function validateLineups(lineups: MatchLineups): void {
   }
 }
 
+function validateSquads(squads: MatchSquads): void {
+  validateSquad(squads.home, 'Home')
+  validateSquad(squads.away, 'Away')
+  const homePlayers = new Set(squads.home)
+  if (squads.away.some((playerId) => homePlayers.has(playerId))) throw new MatchSimulationError('Home and away squads cannot share players')
+}
+
+function validateSquad(squad: readonly PlayerId[], side: string): void {
+  if (squad.length < 5) throw new MatchSimulationError(`${side} squad must contain at least 5 players`)
+  if (new Set(squad).size !== squad.length) throw new MatchSimulationError(`${side} squad cannot contain duplicate players`)
+}
+
+function validateLineupsBelongToSquads(lineups: MatchLineups, squads: MatchSquads): void {
+  if (lineups.home.some((playerId) => !squads.home.includes(playerId))) throw new MatchSimulationError('Home lineup players must belong to the home squad')
+  if (lineups.away.some((playerId) => !squads.away.includes(playerId))) throw new MatchSimulationError('Away lineup players must belong to the away squad')
+}
+
+/** Reconstructs current five from an initial snapshot and an ordered event subset. */
+export function calculateActiveLineups(
+  initialLineups: MatchLineups,
+  homeTeamId: TeamId,
+  awayTeamId: TeamId,
+  events: readonly MatchEvent[],
+): MatchLineups {
+  validateLineups(initialLineups)
+  let activeLineups = initialLineups
+  for (const event of events) {
+    if (event.type !== 'substitution') continue
+    activeLineups = applySubstitution(activeLineups, homeTeamId, awayTeamId, undefined, event)
+  }
+  return activeLineups
+}
+
+function applySubstitution(
+  activeLineups: MatchLineups,
+  homeTeamId: TeamId,
+  awayTeamId: TeamId,
+  squads: MatchSquads | undefined,
+  substitution: SubstitutePlayerOptions,
+): MatchLineups {
+  if (substitution.teamId !== homeTeamId && substitution.teamId !== awayTeamId) throw new MatchSimulationError(`Substitution Team ${substitution.teamId} is not in this Game`)
+  if (substitution.playerOutId === substitution.playerInId) throw new MatchSimulationError('Substitution player out and player in must differ')
+  const isHome = substitution.teamId === homeTeamId
+  const lineup = isHome ? activeLineups.home : activeLineups.away
+  const opponentLineup = isHome ? activeLineups.away : activeLineups.home
+  if (!lineup.includes(substitution.playerOutId)) throw new MatchSimulationError('Substitution player out must be active for that team')
+  if (lineup.includes(substitution.playerInId)) throw new MatchSimulationError('Substitution player in is already active')
+  if (opponentLineup.includes(substitution.playerInId)) throw new MatchSimulationError('Substitution player in belongs to the opposing team')
+  const squad = isHome ? squads?.home : squads?.away
+  const opponentSquad = isHome ? squads?.away : squads?.home
+  if (opponentSquad?.includes(substitution.playerInId)) throw new MatchSimulationError('Substitution player in belongs to the opposing team')
+  if (squad !== undefined && !squad.includes(substitution.playerInId)) throw new MatchSimulationError('Substitution player in must belong to that team squad')
+  const nextLineup = lineup.map((playerId) => playerId === substitution.playerOutId ? substitution.playerInId : playerId)
+  return isHome ? { home: nextLineup, away: activeLineups.away } : { home: activeLineups.home, away: nextLineup }
+}
+
 function validateLineup(lineup: readonly PlayerId[], side: string): void {
   if (lineup.length !== 5) {
     throw new MatchSimulationError(`${side} lineup must contain exactly 5 players`)
@@ -337,7 +441,9 @@ function validateOptions(options: SimulateMatchOptions) {
   if (game.status !== 'scheduled') throw new MatchSimulationError(`Cannot simulate completed Game ${game.id}`)
   validateStrength(options.homeStrength, game.homeTeamId, 'Home')
   validateStrength(options.awayStrength, game.awayTeamId, 'Away')
+  validateSquads(options.squads)
   validateLineups(options.lineups)
+  validateLineupsBelongToSquads(options.lineups, options.squads)
   return game
 }
 

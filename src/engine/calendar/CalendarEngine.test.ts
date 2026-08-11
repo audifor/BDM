@@ -153,6 +153,7 @@ describe('CalendarEngine', () => {
       homeStrength: { teamId: userGame.homeTeamId, value: 50 },
       awayStrength: { teamId: userGame.awayTeamId, value: 50 },
       lineups: lineupsFor(world, userGame),
+      squads: { home: world.teams[userGame.homeTeamId]!.rosterPlayerIds, away: world.teams[userGame.awayTeamId]!.rosterPlayerIds },
       random: new SeededRandomSource(12345),
       actorRandom: new SeededRandomSource(67890),
     })

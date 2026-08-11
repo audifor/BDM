@@ -1,6 +1,6 @@
 import type { PlayerId } from '@/domain/ids'
 
-import type { MatchEvent, MatchSimulation } from './MatchEngine'
+import { calculateActiveLineups, type MatchEvent, type MatchLineups, type MatchSimulation } from './MatchEngine'
 
 export interface PlayerMatchStats {
   readonly playerId: PlayerId
@@ -26,9 +26,23 @@ export function calculateMatchPlayerStats(
   const statsByPlayerId = new Map<PlayerId, PlayerMatchStats>(
     playerIds.map((playerId) => [playerId, emptyStats(playerId)]),
   )
+  let activeLineups: MatchLineups = simulation.lineups
 
   for (const event of events) {
+    if (event.type === 'substitution') {
+      activeLineups = calculateActiveLineups(activeLineups, simulation.homeTeamId, simulation.awayTeamId, [event])
+      if (!statsByPlayerId.has(event.playerInId)) {
+        playerIds.push(event.playerInId)
+        statsByPlayerId.set(event.playerInId, emptyStats(event.playerInId))
+      }
+      continue
+    }
     if (event.type !== 'shotMade' && event.type !== 'shotMissed' && event.type !== 'turnover' && event.type !== 'rebound' && event.type !== 'foul' && event.type !== 'freeThrowMade' && event.type !== 'freeThrowMissed') continue
+
+    const activeLineup = event.teamId === simulation.homeTeamId ? activeLineups.home : event.teamId === simulation.awayTeamId ? activeLineups.away : undefined
+    if (activeLineup === undefined || !activeLineup.includes(event.playerId)) {
+      throw new Error(`Sporting event references Player outside active MatchSimulation lineup: ${event.playerId}`)
+    }
 
     const stats = statsByPlayerId.get(event.playerId)
     if (stats === undefined) {
@@ -39,8 +53,8 @@ export function calculateMatchPlayerStats(
 
     if (event.type === 'shotMade' && event.assistPlayerId !== undefined) {
       const assisterStats = statsByPlayerId.get(event.assistPlayerId)
-      if (assisterStats === undefined) {
-        throw new Error(`ShotMade assist references Player outside MatchSimulation lineups: ${event.assistPlayerId}`)
+      if (assisterStats === undefined || !activeLineup.includes(event.assistPlayerId)) {
+        throw new Error(`ShotMade assist references Player outside active MatchSimulation lineup: ${event.assistPlayerId}`)
       }
       if (event.assistPlayerId === event.playerId) {
         throw new Error(`ShotMade scorer cannot assist themselves: ${event.playerId}`)

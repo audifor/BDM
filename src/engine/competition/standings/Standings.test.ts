@@ -248,6 +248,7 @@ function simulateResult(world: GameWorld, game: Game, random: number | SeededRan
     homeStrength: { teamId: game.homeTeamId, value: 50 },
     awayStrength: { teamId: game.awayTeamId, value: 50 },
     lineups: lineupsFor(world, game),
+    squads: { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds },
     random: typeof random === 'number' ? new SeededRandomSource(random) : random,
     actorRandom: new SeededRandomSource(typeof random === 'number' ? random : 12345),
   })

@@ -182,6 +182,18 @@ Match preparation derives each Starting Five before entering MatchEngine. The
 resulting transient `MatchLineups` is stored in MatchSimulation as a snapshot;
 MatchEngine consumes but never selects it. Lineups are not persisted.
 
+Application also prepares `MatchSquads` from the two Team rosters. They define
+eligible players for one transient match; MatchEngine never queries GameWorld for
+roster data. `MatchSimulation.lineups` remains the historical initial-five
+snapshot. A MatchSession separately retains `initialLineups` and `activeLineups`:
+an explicit substitution event reconstructs the latter without advancing clock or
+score and without consuming either RNG stream. There are no automatic rotations,
+minutes, or fatigue yet. Actors are selected from `activeLineups`, but TeamStrength
+is deliberately fixed for the full match in this milestone, so substitutions do
+not yet alter team quality. PlayerMatchStats introduces an incoming bench player
+only once its substitution event is revealed, preserving partial-viewer
+anti-spoiler behavior.
+
 Sporting events now carry a transient PlayerId selected uniformly from the
 attacking lineup. Actor selection uses the separate deterministic stream
 `match-actors-v1:${gameId}`, so attribution does not alter the established

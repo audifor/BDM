@@ -106,6 +106,7 @@ describe('Match Result Application', () => {
       homeStrength: { teamId: game.homeTeamId, value: 60 },
       awayStrength: { teamId: game.awayTeamId, value: 40 },
       lineups: lineupsFor(world, game),
+      squads: { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds },
       random: new SeededRandomSource(12345),
       actorRandom: new SeededRandomSource(67890),
     })
@@ -185,6 +186,7 @@ function simulateResult(world: GameWorld, game: Game, seed: number): MatchSimula
     homeStrength: { teamId: game.homeTeamId, value: 55 },
     awayStrength: { teamId: game.awayTeamId, value: 45 },
     lineups: lineupsFor(world, game),
+    squads: { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds },
     random: new SeededRandomSource(seed),
     actorRandom: new SeededRandomSource(seed),
   })

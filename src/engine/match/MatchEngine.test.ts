@@ -94,6 +94,7 @@ function createOptions(world: GameWorld, gameId: GameWorld['games'][keyof GameWo
     homeStrength: { teamId: game?.homeTeamId ?? teamIdFromString('missing-team'), value: 50 },
     awayStrength: { teamId: game?.awayTeamId ?? teamIdFromString('missing-team'), value: 50 },
     lineups: game === undefined ? missingGameLineups() : lineupsFor(world, game),
+    squads: game === undefined ? missingGameLineups() : squadsFor(world, game),
     random: new SeededRandomSource(seed),
     actorRandom: new SeededRandomSource(actorSeed),
   }
@@ -104,6 +105,10 @@ function lineupsFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['
     home: world.teams[game.homeTeamId]!.rosterPlayerIds.slice(0, 5),
     away: world.teams[game.awayTeamId]!.rosterPlayerIds.slice(0, 5),
   }
+}
+
+function squadsFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['games']]) {
+  return { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds }
 }
 
 function missingGameLineups(): MatchLineups {

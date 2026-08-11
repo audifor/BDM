@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
 import { createGameWorld, type GameWorld } from '@/domain/world'
+import { playerIdFromString } from '@/domain/ids'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
-import { MATCH_RULES_V2, MatchSimulationError, createMatchSession, simulateMatchDetailed, stepMatchSession, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
+import { MATCH_RULES_V2, MatchSimulationError, calculateActiveLineups, createMatchSession, simulateMatchDetailed, stepMatchSession, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
 
 describe('MatchSession', () => {
   it('produces the same complete simulation through stepping as through the wrapper', () => {
@@ -61,6 +62,75 @@ describe('MatchSession', () => {
       expect(event.clockSecondsRemaining).toBeGreaterThanOrEqual(0)
     }
   })
+
+  it('validates squads and initial lineups against them', () => {
+    const { world, game } = createScheduledGameWorld()
+    const options = createOptions(world, game.id, 1, 2)
+
+    expect(() => createMatchSession({ ...options, squads: { ...options.squads, home: options.squads.home.slice(0, 4) } })).toThrow('Home squad must contain at least 5 players')
+    expect(() => createMatchSession({ ...options, squads: { ...options.squads, home: [...options.squads.home.slice(0, 5), options.squads.home[0]!] } })).toThrow('Home squad cannot contain duplicate players')
+    expect(() => createMatchSession({ ...options, squads: { ...options.squads, away: [...options.squads.away.slice(0, 5), options.squads.away[0]!] } })).toThrow('Away squad cannot contain duplicate players')
+    expect(() => createMatchSession({ ...options, squads: { ...options.squads, away: [...options.squads.away.slice(0, 4), options.squads.home[0]!] } })).toThrow('Home and away squads cannot share players')
+    expect(() => createMatchSession({ ...options, lineups: { ...options.lineups, home: [...options.lineups.home.slice(0, 4), options.squads.home[5]!] }, squads: { ...options.squads, home: options.squads.home.slice(0, 5) } })).toThrow('Home lineup players must belong to the home squad')
+  })
+
+  it('records valid substitutions and permits re-entry without advancing match state', () => {
+    const { world, game } = createScheduledGameWorld()
+    const session = createMatchSession(createOptions(world, game.id, 12345, 67890))
+    const playerOutId = session.state.activeLineups.home[0]!
+    const playerInId = session.state.squads.home[5]!
+    const substituted = substitutePlayer(session, { teamId: session.state.homeTeamId, playerOutId, playerInId })
+    const event = substituted.state.events.at(-1)!
+
+    expect(substituted.state.initialLineups).toEqual(session.state.activeLineups)
+    expect(substituted.state.activeLineups.home).toEqual([playerInId, ...session.state.activeLineups.home.slice(1)])
+    expect(event).toMatchObject({ type: 'substitution', teamId: session.state.homeTeamId, playerOutId, playerInId, clockSecondsRemaining: session.state.clockSecondsRemaining, homeScore: session.state.homeScore, awayScore: session.state.awayScore, sequence: session.state.nextSequence })
+    const reentered = substitutePlayer(substituted, { teamId: session.state.homeTeamId, playerOutId: playerInId, playerInId: playerOutId })
+    expect(reentered.state.activeLineups).toEqual(session.state.activeLineups)
+  })
+
+  it('rejects invalid substitutions and substitutions after completion', () => {
+    const { world, game } = createScheduledGameWorld()
+    const session = createMatchSession(createOptions(world, game.id, 12345, 67890))
+    const active = session.state.activeLineups.home[0]!
+    const bench = session.state.squads.home[5]!
+    const rival = session.state.squads.away[5]!
+    expect(() => substitutePlayer(session, { teamId: session.state.homeTeamId, playerOutId: bench, playerInId: active })).toThrow('player out must be active')
+    expect(() => substitutePlayer(session, { teamId: session.state.homeTeamId, playerOutId: active, playerInId: active })).toThrow('must differ')
+    expect(() => substitutePlayer(session, { teamId: session.state.homeTeamId, playerOutId: active, playerInId: session.state.activeLineups.home[1]! })).toThrow('already active')
+    expect(() => substitutePlayer(session, { teamId: session.state.homeTeamId, playerOutId: active, playerInId: playerIdFromString('not-in-squad') })).toThrow('must belong to that team squad')
+    expect(() => substitutePlayer(session, { teamId: session.state.homeTeamId, playerOutId: active, playerInId: rival })).toThrow('opposing team')
+    const complete = runToComplete(session)
+    expect(() => substitutePlayer(complete, { teamId: complete.state.homeTeamId, playerOutId: active, playerInId: bench })).toThrow('completed')
+  })
+
+  it('does not consume RNG and uses the active lineup for subsequent actors', () => {
+    const { world, game } = createScheduledGameWorld()
+    const baseline = createMatchSession(createOptions(world, game.id, 12345, 67890))
+    const first = stepMatchSession(baseline)
+    const outId = baseline.state.activeLineups.home[0]!
+    const inId = baseline.state.squads.home[5]!
+    const restored = substitutePlayer(substitutePlayer(createMatchSession(createOptions(world, game.id, 12345, 67890)), { teamId: baseline.state.homeTeamId, playerOutId: outId, playerInId: inId }), { teamId: baseline.state.homeTeamId, playerOutId: inId, playerInId: outId })
+    const second = stepMatchSession(restored)
+    expect(second.newEvents.map(withoutSequence)).toEqual(first.newEvents.map(withoutSequence))
+
+    const subbed = substitutePlayer(createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new FirstSportingRandom(), actorRandom: new FirstActorRandom() }), { teamId: game.homeTeamId, playerOutId: createOptions(world, game.id, 1, 1).lineups.home[0]!, playerInId: world.teams[game.homeTeamId]!.rosterPlayerIds[5]! })
+    const afterSub = stepMatchSession(subbed)
+    const sporting = afterSub.newEvents.find((event) => event.type === 'shotMade' || event.type === 'shotMissed' || event.type === 'turnover')!
+    expect(sporting).toMatchObject({ teamId: game.homeTeamId, playerId: subbed.state.activeLineups.home[0] })
+  })
+
+  it('projects active lineups from an ordered partial substitution stream', () => {
+    const { world, game } = createScheduledGameWorld()
+    const initial = lineupsFor(world, game)
+    const squad = squadsFor(world, game)
+    const first = { sequence: 1, period: 1, clockSecondsRemaining: 500, type: 'substitution' as const, teamId: game.homeTeamId, playerOutId: initial.home[0]!, playerInId: squad.home[5]!, homeScore: 0, awayScore: 0 }
+    const second = { ...first, sequence: 2, playerOutId: initial.home[1]!, playerInId: squad.home[6]! }
+    const third = { ...first, sequence: 3, playerOutId: squad.home[5]!, playerInId: initial.home[0]! }
+    expect(calculateActiveLineups(initial, game.homeTeamId, game.awayTeamId, [first])).toEqual({ home: [squad.home[5]!, ...initial.home.slice(1)], away: initial.away })
+    expect(calculateActiveLineups(initial, game.homeTeamId, game.awayTeamId, [first, second, third]).home).toEqual([initial.home[0]!, squad.home[6]!, ...initial.home.slice(2)])
+    expect(() => calculateActiveLineups(initial, game.homeTeamId, game.awayTeamId, [first, first])).toThrow('player out must be active')
+  })
 })
 
 function runToComplete(initialSession: ReturnType<typeof createMatchSession>) {
@@ -68,6 +138,8 @@ function runToComplete(initialSession: ReturnType<typeof createMatchSession>) {
   while (!session.state.isComplete) session = stepMatchSession(session).session
   return session
 }
+
+function withoutSequence(event: { readonly sequence: number }) { const { sequence: _sequence, ...rest } = event; return rest }
 
 function createScheduledGameWorld(): { world: GameWorld; game: GameWorld['games'][keyof GameWorld['games']] } {
   const generated = generateWorld({ seed: 12345, gender: 'female' })
@@ -77,8 +149,10 @@ function createScheduledGameWorld(): { world: GameWorld; game: GameWorld['games'
 
 function createOptions(world: GameWorld, gameId: GameWorld['games'][keyof GameWorld['games']]['id'], sportingSeed: number, actorSeed: number): SimulateMatchOptions {
   const game = world.games[gameId]!
-  return { world, gameId, homeStrength: { teamId: game.homeTeamId, value: 50 }, awayStrength: { teamId: game.awayTeamId, value: 50 }, lineups: lineupsFor(world, game), random: new SeededRandomSource(sportingSeed), actorRandom: new SeededRandomSource(actorSeed) }
+  return { world, gameId, homeStrength: { teamId: game.homeTeamId, value: 50 }, awayStrength: { teamId: game.awayTeamId, value: 50 }, lineups: lineupsFor(world, game), squads: squadsFor(world, game), random: new SeededRandomSource(sportingSeed), actorRandom: new SeededRandomSource(actorSeed) }
 }
+
+function squadsFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['games']]) { return { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds } }
 
 function lineupsFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['games']]): MatchLineups {
   return { home: world.teams[game.homeTeamId]!.rosterPlayerIds.slice(0, 5), away: world.teams[game.awayTeamId]!.rosterPlayerIds.slice(0, 5) }
@@ -92,3 +166,13 @@ class OvertimeRandom implements RandomSource {
   chance(probability: number): boolean { return probability === 0.25 || probability === 0.5 }
   pick<Item>(items: readonly Item[]): Item { return items[0]! }
 }
+
+class FirstSportingRandom implements RandomSource {
+  next(): number { return 0.5 }
+  nextInt(minInclusive: number): number { return minInclusive }
+  nextFloat(minInclusive: number): number { return minInclusive }
+  chance(probability: number): boolean { return probability === 0.5 }
+  pick<Item>(items: readonly Item[]): Item { return items[0]! }
+}
+
+class FirstActorRandom extends FirstSportingRandom {}

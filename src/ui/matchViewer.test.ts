@@ -35,6 +35,8 @@ describe('MatchViewer presentation helpers', () => {
     expect(formatMatchEvent({ ...madeShot, assistPlayerId: assisterId }, world)).toContain(`assist ${world.players[assisterId]!.lastName}`)
     expect(formatMatchEvent(foul, world)).toContain(`${world.players[foul.playerId]!.lastName} shooting foul`)
     expect(formatMatchEvent(freeThrow, world)).toContain(world.players[freeThrow.playerId]!.lastName)
+    const substitution = { sequence: 999, period: 1, clockSecondsRemaining: 500, type: 'substitution' as const, teamId: simulation.homeTeamId, playerOutId: simulation.lineups.home[0]!, playerInId: world.teams[simulation.homeTeamId]!.rosterPlayerIds[5]!, homeScore: 0, awayScore: 0 }
+    expect(formatMatchEvent(substitution, world)).toContain(`${world.players[substitution.playerInId]!.lastName} replaces ${world.players[substitution.playerOutId]!.lastName}`)
   })
 
   it('fails explicitly when a lineup PlayerId cannot be resolved', () => {

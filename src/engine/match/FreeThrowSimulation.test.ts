@@ -72,8 +72,10 @@ function simulateWithFoul(world: GameWorld, gameId: GameWorld['games'][keyof Gam
 
 function simulate(world: GameWorld, gameId: GameWorld['games'][keyof GameWorld['games']]['id'], random: RandomSource, actorRandom: RandomSource) {
   const game = world.games[gameId]!
-  return simulateMatchDetailed({ world, gameId, homeStrength: { teamId: game.homeTeamId, value: 50 }, awayStrength: { teamId: game.awayTeamId, value: 50 }, lineups: lineupsFor(world, game), random, actorRandom })
+  return simulateMatchDetailed({ world, gameId, homeStrength: { teamId: game.homeTeamId, value: 50 }, awayStrength: { teamId: game.awayTeamId, value: 50 }, lineups: lineupsFor(world, game), squads: squadsFor(world, game), random, actorRandom })
 }
+
+function squadsFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['games']]) { return { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds } }
 
 function lineupsFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['games']]): MatchLineups {
   return { home: world.teams[game.homeTeamId]!.rosterPlayerIds.slice(0, 5), away: world.teams[game.awayTeamId]!.rosterPlayerIds.slice(0, 5) }

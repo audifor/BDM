@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
 import { createNewGame, prepareUserMatch } from '@/app/game'
-import { gameIdFromString, playerIdFromString, teamIdFromString } from '@/domain/ids'
+import { gameIdFromString, playerIdFromString, teamIdFromString, type PlayerId } from '@/domain/ids'
 
 import { calculateMatchPlayerStats } from './PlayerMatchStats'
 import type { MatchEvent, MatchSimulation } from './MatchEngine'
 
 const HOME_PLAYERS = Array.from({ length: 5 }, (_, index) => playerIdFromString(`home-player-${index}`))
 const AWAY_PLAYERS = Array.from({ length: 5 }, (_, index) => playerIdFromString(`away-player-${index}`))
+const HOME_BENCH_PLAYER = playerIdFromString('home-bench-player')
 const HOME_TEAM_ID = teamIdFromString('home-team')
 const AWAY_TEAM_ID = teamIdFromString('away-team')
 
@@ -75,7 +76,18 @@ describe('PlayerMatchStats', () => {
   it('rejects sporting events attributed to a Player outside the lineups', () => {
     const simulation = createSimulation([madeShot(playerIdFromString('outside-lineup'), 2)])
 
-    expect(() => calculateMatchPlayerStats(simulation)).toThrow('Sporting event references Player outside MatchSimulation lineups: outside-lineup')
+    expect(() => calculateMatchPlayerStats(simulation)).toThrow('Sporting event references Player outside active MatchSimulation lineup: outside-lineup')
+  })
+
+  it('reveals an incoming bench player only at their substitution and keeps one row on re-entry', () => {
+    const firstSubstitution = substitution(HOME_PLAYERS[0]!, HOME_BENCH_PLAYER)
+    const reentry = substitution(HOME_BENCH_PLAYER, HOME_PLAYERS[0]!)
+    const simulation = createSimulation([firstSubstitution, reentry])
+
+    expect(calculateMatchPlayerStats(simulation, []).map((stat) => stat.playerId)).not.toContain(HOME_BENCH_PLAYER)
+    const afterFirst = calculateMatchPlayerStats(simulation, [firstSubstitution])
+    expect(afterFirst.find((stat) => stat.playerId === HOME_BENCH_PLAYER)).toMatchObject({ points: 0, fieldGoalsAttempted: 0, rebounds: 0 })
+    expect(calculateMatchPlayerStats(simulation).filter((stat) => stat.playerId === HOME_PLAYERS[0]!)).toHaveLength(1)
   })
 })
 
@@ -112,4 +124,8 @@ function foul(playerId: typeof HOME_PLAYERS[number]): MatchEvent {
 
 function freeThrow(playerId: typeof HOME_PLAYERS[number], made: boolean): MatchEvent {
   return { sequence: 1, period: 1, clockSecondsRemaining: 500, type: made ? 'freeThrowMade' : 'freeThrowMissed', teamId: HOME_TEAM_ID, playerId, homeScore: made ? 1 : 0, awayScore: 0 }
+}
+
+function substitution(playerOutId: PlayerId, playerInId: PlayerId): MatchEvent {
+  return { sequence: 1, period: 1, clockSecondsRemaining: 500, type: 'substitution', teamId: HOME_TEAM_ID, playerOutId, playerInId, homeScore: 0, awayScore: 0 }
 }

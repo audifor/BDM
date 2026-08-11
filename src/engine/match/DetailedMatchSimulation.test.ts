@@ -145,6 +145,7 @@ function simulateWithRandom(world: GameWorld, gameId: GameWorld['games'][keyof G
     homeStrength: { teamId: game.homeTeamId, value: homeStrength },
     awayStrength: { teamId: game.awayTeamId, value: awayStrength },
     lineups: lineupsFor(world, game),
+    squads: { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds },
     random,
     actorRandom,
   })
