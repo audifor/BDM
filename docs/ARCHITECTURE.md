@@ -148,3 +148,10 @@ adjusts possession outcome probabilities, including a small home advantage, and
 is never stored in Team or GameWorld. RNG is consumed for the opening team and,
 per possession, duration then outcome; MatchViewer only replays those generated
 events and does not influence them.
+
+## Player basketball domain
+
+Player now persists a `BasketballProfile` with one primary position and seven
+source ratings. No overall is stored. MatchEngine does not consume these ratings
+yet; WorldGenerator uses a temporary constant profile only to satisfy the new
+contract until its procedural player-profile migration in the next milestone.

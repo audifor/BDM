@@ -108,6 +108,8 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
         ...generatePersonName(random),
         gender,
         nationalityId: country.id,
+        // TODO(014B): replace this contract-compatibility profile with deterministic generation.
+        basketball: createTemporaryBasketballProfile(),
       })
       players.push(player)
       rosterPlayerIds.push(player.id)
@@ -150,6 +152,10 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     seasons: [season],
     games: [],
   })
+}
+
+function createTemporaryBasketballProfile() {
+  return { primaryPosition: 'PG' as const, ratings: { finishing: 50, shooting: 50, playmaking: 50, perimeterDefense: 50, interiorDefense: 50, rebounding: 50, athleticism: 50 } }
 }
 
 function generatePersonName(random: RandomSource): { firstName: string; lastName: string } {

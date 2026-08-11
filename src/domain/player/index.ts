@@ -1,2 +1,2 @@
 export { createPlayer } from './Player'
-export type { CreatePlayerInput, Player } from './Player'
+export type { BasketballProfile, CreatePlayerInput, Player, PlayerRatings } from './Player'
