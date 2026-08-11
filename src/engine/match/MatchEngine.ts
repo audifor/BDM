@@ -39,6 +39,7 @@ export type MatchEvent =
       readonly clockSecondsRemaining: number
       readonly type: 'shotMade'
       readonly teamId: TeamId
+      readonly playerId: PlayerId
       readonly points: 1 | 2 | 3
       readonly homeScore: number
       readonly awayScore: number
@@ -49,6 +50,7 @@ export type MatchEvent =
       readonly clockSecondsRemaining: number
       readonly type: 'shotMissed' | 'turnover'
       readonly teamId: TeamId
+      readonly playerId: PlayerId
       readonly homeScore: number
       readonly awayScore: number
     }
@@ -89,6 +91,7 @@ export interface SimulateMatchOptions {
   readonly awayStrength: TeamStrength
   readonly lineups?: MatchLineups
   readonly random: RandomSource
+  readonly actorRandom?: RandomSource
 }
 
 type PossessionOutcome = 'made1' | 'made2' | 'made3' | 'missedShot' | 'turnover'
@@ -146,13 +149,15 @@ export function simulateMatchDetailed(options: SimulateMatchOptions): MatchSimul
       const strength = attackingTeamId === game.homeTeamId ? options.homeStrength.value : options.awayStrength.value
       const outcome = choosePossessionOutcome(strength, attackingTeamId === game.homeTeamId, options.random)
 
+      const lineup = attackingTeamId === game.homeTeamId ? options.lineups?.home : options.lineups?.away
+      const playerId = lineup === undefined || lineup.length === 0 ? undefined : lineup[options.actorRandom?.nextInt(0, lineup.length - 1) ?? 0]!
       if (outcome === 'made1' || outcome === 'made2' || outcome === 'made3') {
         const points = Number(outcome.at(-1)) as 1 | 2 | 3
         if (attackingTeamId === game.homeTeamId) homeScore += points
         else awayScore += points
-        events.push({ sequence: sequence++, period, clockSecondsRemaining: clock, type: 'shotMade', teamId: attackingTeamId, points, homeScore, awayScore })
+        events.push({ sequence: sequence++, period, clockSecondsRemaining: clock, type: 'shotMade', teamId: attackingTeamId, ...(playerId === undefined ? {} : { playerId }), points, homeScore, awayScore } as MatchEvent)
       } else {
-        events.push({ sequence: sequence++, period, clockSecondsRemaining: clock, type: outcome === 'missedShot' ? 'shotMissed' : 'turnover', teamId: attackingTeamId, homeScore, awayScore })
+        events.push({ sequence: sequence++, period, clockSecondsRemaining: clock, type: outcome === 'missedShot' ? 'shotMissed' : 'turnover', teamId: attackingTeamId, ...(playerId === undefined ? {} : { playerId }), homeScore, awayScore } as MatchEvent)
       }
 
       attackingTeamId = otherTeamId(attackingTeamId, game)

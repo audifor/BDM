@@ -54,6 +54,7 @@ export function prepareMatch(world: GameWorld, game: Game): MatchSimulation {
     awayStrength: calculateTeamStrength(world, game.awayTeamId),
     lineups: { home: selectStartingFive(world, game.homeTeamId), away: selectStartingFive(world, game.awayTeamId) },
     random: createPrototypeGameRandom(game.id),
+    actorRandom: new SeededRandomSource(hashStringToSeed(`match-actors-v1:${game.id}`)),
   })
 
 }

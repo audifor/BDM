@@ -166,3 +166,9 @@ Match preparation derives each Starting Five before entering MatchEngine. The
 resulting transient `MatchLineups` is stored in MatchSimulation as a snapshot;
 MatchEngine consumes but never selects it. Lineups are not persisted and events
 remain team-level until the later player-action milestone.
+
+Sporting events now carry a transient PlayerId selected uniformly from the
+attacking lineup. Actor selection uses the separate deterministic stream
+`match-actors-v1:${gameId}`, so attribution does not alter the established
+match-outcome RNG. Player ratings do not yet affect individual possession results,
+and MatchViewer does not yet consume PlayerId.

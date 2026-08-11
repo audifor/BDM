@@ -73,6 +73,16 @@ describe('prototype game application', () => {
     expect(simulation.lineups.away.every((id) => world.teams[simulation.awayTeamId]!.rosterPlayerIds.includes(id))).toBe(true)
   })
 
+  it('attributes each sporting event to a player from the attacking lineup', () => {
+    const simulation = prepareUserMatch(createNewGame())
+    for (const event of simulation.events) {
+      if (event.type === 'shotMade' || event.type === 'shotMissed' || event.type === 'turnover') {
+        const lineup = event.teamId === simulation.homeTeamId ? simulation.lineups.home : simulation.lineups.away
+        expect(lineup).toContain(event.playerId)
+      }
+    }
+  })
+
   it('simulates every remaining game today and is idempotent after completion', () => {
     const world = createNewGame()
     const completedWorld = simulateRemainingGamesToday(world)
