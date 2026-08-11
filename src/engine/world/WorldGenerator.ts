@@ -11,11 +11,11 @@ import {
   teamIdFromString,
 } from '@/domain/ids'
 import { createPlayer } from '@/domain/player'
-import { requireGender, type Gender } from '@/domain/primitives'
+import { requireGender, type BasketballPosition, type Gender } from '@/domain/primitives'
 import { createSeason } from '@/domain/season'
 import { createTeam } from '@/domain/team'
 import { createGameWorld, type GameWorld } from '@/domain/world'
-import { SeededRandomSource, type RandomSource } from '@/engine/random'
+import { hashStringToSeed, SeededRandomSource, type RandomSource } from '@/engine/random'
 
 const TEAM_COUNT = 8
 const PLAYERS_PER_TEAM = 12
@@ -108,8 +108,7 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
         ...generatePersonName(random),
         gender,
         nationalityId: country.id,
-        // TODO(014B): replace this contract-compatibility profile with deterministic generation.
-        basketball: createTemporaryBasketballProfile(),
+        basketball: generateBasketballProfile(options.seed, `generated-player-${formatSequence(sequence)}`, playerIndex),
       })
       players.push(player)
       rosterPlayerIds.push(player.id)
@@ -154,8 +153,9 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
   })
 }
 
-function createTemporaryBasketballProfile() {
-  return { primaryPosition: 'PG' as const, ratings: { finishing: 50, shooting: 50, playmaking: 50, perimeterDefense: 50, interiorDefense: 50, rebounding: 50, athleticism: 50 } }
+const ROSTER_POSITIONS: readonly BasketballPosition[] = ['PG','PG','SG','SG','SG','SF','SF','PF','PF','PF','C','C']
+function generateBasketballProfile(seed:number, playerId:string, rosterIndex:number) {
+  const random=new SeededRandomSource(hashStringToSeed(`player-ratings-v1:${seed}:${playerId}`)); const primaryPosition=ROSTER_POSITIONS[rosterIndex]!; const bases={PG:[52,58,68,54,43,43,56],SG:[55,66,52,55,44,45,57],SF:[57,57,53,56,52,52,58],PF:[60,51,48,50,63,65,55],C:[62,48,43,46,70,70,52]} as const; const [finishing,shooting,playmaking,perimeterDefense,interiorDefense,rebounding,athleticism]=bases[primaryPosition]; const talent=random.nextInt(-8,8); const rate=(base:number)=>Math.max(0,Math.min(100,base+talent+random.nextInt(-10,10))); return {primaryPosition,ratings:{finishing:rate(finishing),shooting:rate(shooting),playmaking:rate(playmaking),perimeterDefense:rate(perimeterDefense),interiorDefense:rate(interiorDefense),rebounding:rate(rebounding),athleticism:rate(athleticism)}}
 }
 
 function generatePersonName(random: RandomSource): { firstName: string; lastName: string } {

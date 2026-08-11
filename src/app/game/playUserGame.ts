@@ -7,7 +7,7 @@ import {
   type MatchSimulation,
   type TeamStrength,
 } from '@/engine/match'
-import { SeededRandomSource } from '@/engine/random'
+import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 
 const PROTOTYPE_TEAM_STRENGTH = 50
 
@@ -28,14 +28,7 @@ export function getPrototypeTeamStrength(teamId: TeamStrength['teamId']): TeamSt
  * RNG state is persisted, but makes a game's instant result reproducible.
  */
 export function createPrototypeGameRandom(gameId: Game['id']): SeededRandomSource {
-  let hash = 0x811c_9dc5
-
-  for (let index = 0; index < gameId.length; index += 1) {
-    hash ^= gameId.charCodeAt(index)
-    hash = Math.imul(hash, 0x0100_0193) >>> 0
-  }
-
-  return new SeededRandomSource(hash)
+  return new SeededRandomSource(hashStringToSeed(gameId))
 }
 
 /** Prepares the user's current game for a viewer without changing GameWorld. */

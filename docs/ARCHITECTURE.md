@@ -155,3 +155,9 @@ Player now persists a `BasketballProfile` with one primary position and seven
 source ratings. No overall is stored. MatchEngine does not consume these ratings
 yet; WorldGenerator uses a temporary constant profile only to satisfy the new
 contract until its procedural player-profile migration in the next milestone.
+
+WorldGenerator now creates deterministic player profiles with a provisional
+2 PG / 3 SG / 2 SF / 3 PF / 2 C roster composition. Each profile uses a
+Player-derived RNG stream independent of names; ratings have soft positional
+tendencies and no persisted overall. MatchEngine still uses its provisional
+TeamStrength and does not consume player ratings.

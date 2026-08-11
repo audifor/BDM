@@ -63,6 +63,7 @@ export class SeededRandomSource implements RandomSource {
 export function createSeededRandomSource(seed: number): RandomSource {
   return new SeededRandomSource(seed)
 }
+export function hashStringToSeed(value: string): number { let hash=0x811c_9dc5; for(let index=0;index<value.length;index+=1){hash^=value.charCodeAt(index);hash=Math.imul(hash,0x0100_0193)>>>0} return hash }
 
 function validateIntegerRange(minInclusive: number, maxInclusive: number): void {
   if (!Number.isSafeInteger(minInclusive) || !Number.isSafeInteger(maxInclusive) || minInclusive > maxInclusive) {
