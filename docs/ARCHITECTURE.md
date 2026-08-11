@@ -274,6 +274,19 @@ turnovers, assists, or rebounds. Decision RNG remains limited to offensive actor
 and shot-zone selection. Steals, blocks, schemes, new attributes, traits, and
 perks do not yet exist; all current formulas are replaceable prototypes.
 
+## Pre-match tactics v1
+
+`MatchTacticalPlan` is transient match configuration, retained by MatchSession but
+not persisted in Team, Coach, GameWorld, or saves. The balanced default is neutral:
+pace changes only the existing possession-duration draw, shot profile changes only
+shot-zone decision weights, defensive emphasis changes contextual effective defense
+with explicit trade-offs, and a featured active player receives a usage-weight
+multiplier. No tactic mutates ratings or MatchPlayerProfile. Application supplies
+the user-selected pre-match plan to both Play and Instant Result; AI uses balanced.
+There are no live tactical changes or events in 023, though the session boundary is
+ready for a future between-steps update. Plays, schemes, scouting, tactical AI, and
+the final tactical model remain intentionally open for a later overhaul.
+
 MatchViewer consumes the transient lineup snapshot in MatchSimulation; it never
 selects starters. UI resolves those PlayerIds and sporting-event PlayerIds through
 GameWorld at render time, so names are not duplicated into MatchEvents. Court

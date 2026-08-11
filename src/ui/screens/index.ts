@@ -1,5 +1,6 @@
 export { HomeScreen } from './HomeScreen'
 export { MatchViewerScreen } from './MatchViewerScreen'
+export { TacticsScreen } from './TacticsScreen'
 export { ScheduleScreen } from './ScheduleScreen'
 export { SquadScreen } from './SquadScreen'
 export { StandingsScreen } from './StandingsScreen'

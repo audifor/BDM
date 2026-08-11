@@ -2,15 +2,18 @@ import { useState } from 'react'
 
 import { useGameStore } from '@/stores/gameStore'
 import { useMatchViewerStore } from '@/stores/matchViewerStore'
+import { useTacticalPlanStore } from '@/stores/tacticalPlanStore'
+import { getUserTeam } from '@/engine/calendar'
 
 import { formatPrototypeDate } from './formatters'
-import { HomeScreen, MatchViewerScreen, ScheduleScreen, SquadScreen, StandingsScreen } from './screens'
+import { HomeScreen, MatchViewerScreen, ScheduleScreen, SquadScreen, StandingsScreen, TacticsScreen } from './screens'
 import './styles.css'
 
-type Section = 'home' | 'squad' | 'schedule' | 'standings'
+type Section = 'home' | 'tactics' | 'squad' | 'schedule' | 'standings'
 
 const NAVIGATION: readonly { readonly id: Section; readonly label: string }[] = [
   { id: 'home', label: 'HOME' },
+  { id: 'tactics', label: 'TACTICS' },
   { id: 'squad', label: 'SQUAD' },
   { id: 'schedule', label: 'SCHEDULE' },
   { id: 'standings', label: 'STANDINGS' },
@@ -38,18 +41,23 @@ export function App() {
   const skipToEnd = useMatchViewerStore((state) => state.skipToEnd)
   const markResultApplied = useMatchViewerStore((state) => state.markResultApplied)
   const clearMatch = useMatchViewerStore((state) => state.clear)
+  const tacticalPlan = useTacticalPlanStore((state) => state.plan)
+  const setTacticalPlan = useTacticalPlanStore((state) => state.setPlan)
+  const resetTacticalPlan = useTacticalPlanStore((state) => state.reset)
 
   if (world === null) {
-    return <StartScreen onNewGame={() => { newGame(); setSection('home') }} />
+    return <StartScreen onNewGame={() => { newGame(); resetTacticalPlan(); setSection('home') }} />
   }
 
   if (simulation !== null) {
     return <MatchViewerScreen world={world} simulation={simulation} homeTeamName={world.teams[simulation.homeTeamId]!.name} awayTeamName={world.teams[simulation.awayTeamId]!.name} currentEventIndex={currentEventIndex} isPlaying={isPlaying} speed={speed} resultApplied={resultApplied} onPause={pause} onResume={resume} onSpeedChange={setSpeed} onRevealNext={revealNextEvent} onSkipToEnd={skipToEnd} onApplyResult={() => { if (markResultApplied()) completeMatch(simulation) }} onContinue={() => { clearMatch(); setSection('home') }} />
   }
+  const userTeam = getUserTeam(world)
 
   const startNewGame = () => {
     if (window.confirm('Start a new prototype career? The current career will be lost.')) {
       newGame()
+      resetTacticalPlan()
       setSection('home')
     }
   }
@@ -71,7 +79,8 @@ export function App() {
         </div>
       </aside>
       <div className="main-content">
-        {section === 'home' && <HomeScreen world={world} onPlayGame={() => startMatch(prepareUserMatch())} onInstantResult={instantResult} />}
+        {section === 'home' && <HomeScreen world={world} onPlayGame={() => startMatch(prepareUserMatch(tacticalPlan))} onInstantResult={() => instantResult(tacticalPlan)} />}
+        {section === 'tactics' && <TacticsScreen players={userTeam === undefined ? [] : userTeam.rosterPlayerIds.map((playerId) => world.players[playerId]!)} plan={tacticalPlan} onChange={setTacticalPlan} onReset={resetTacticalPlan} />}
         {section === 'squad' && <SquadScreen world={world} />}
         {section === 'schedule' && <ScheduleScreen world={world} />}
         {section === 'standings' && <StandingsScreen world={world} />}

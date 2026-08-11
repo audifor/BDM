@@ -6,6 +6,8 @@ import {
   createDefaultRotationPlan,
   createMatchPlayerProfile,
   simulateMatchWithRotations,
+  createDefaultTacticalPlan,
+  type MatchTacticalPlan,
   type MatchSimulation,
 } from '@/engine/match'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
@@ -29,7 +31,7 @@ export function createPrototypeGameRandom(gameId: Game['id']): SeededRandomSourc
 }
 
 /** Prepares the user's current game for a viewer without changing GameWorld. */
-export function prepareUserMatch(world: GameWorld): MatchSimulation {
+export function prepareUserMatch(world: GameWorld, userTacticalPlan: MatchTacticalPlan = createDefaultTacticalPlan()): MatchSimulation {
   const userTeam = getUserTeam(world)
   if (userTeam === undefined) {
     throw new PlayUserGameError('The user coach is not assigned to a Team')
@@ -45,10 +47,10 @@ export function prepareUserMatch(world: GameWorld): MatchSimulation {
     throw new PlayUserGameError(`The user Game ${game.id} is already completed`)
   }
 
-  return prepareMatch(world, game)
+  return prepareMatch(world, game, userTeam.id === game.homeTeamId ? { home: userTacticalPlan, away: createDefaultTacticalPlan() } : { home: createDefaultTacticalPlan(), away: userTacticalPlan })
 }
 
-export function prepareMatch(world: GameWorld, game: Game): MatchSimulation {
+export function prepareMatch(world: GameWorld, game: Game, tacticalPlans = { home: createDefaultTacticalPlan(), away: createDefaultTacticalPlan() }): MatchSimulation {
   const lineups = { home: selectStartingFive(world, game.homeTeamId), away: selectStartingFive(world, game.awayTeamId) }
   const squads = { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds }
   const playerProfiles = { home: squads.home.map((playerId) => createMatchPlayerProfile(world.players[playerId]!)), away: squads.away.map((playerId) => createMatchPlayerProfile(world.players[playerId]!)) }
@@ -65,6 +67,7 @@ export function prepareMatch(world: GameWorld, game: Game): MatchSimulation {
     random: createPrototypeGameRandom(game.id),
     decisionRandom: new SeededRandomSource(hashStringToSeed(`match-decisions-v1:${game.id}`)),
     actorRandom: new SeededRandomSource(hashStringToSeed(`match-actors-v1:${game.id}`)),
+    tacticalPlans,
   })
 
 }
@@ -81,8 +84,8 @@ export function completeMatch(world: GameWorld, simulation: MatchSimulation): Ga
 }
 
 /** Instant Result uses the same detailed simulation as MatchViewer, then applies it immediately. */
-export function instantResult(world: GameWorld): GameWorld {
-  return completeMatch(world, prepareUserMatch(world))
+export function instantResult(world: GameWorld, tacticalPlan?: MatchTacticalPlan): GameWorld {
+  return completeMatch(world, prepareUserMatch(world, tacticalPlan))
 }
 
 /** Retained application alias for existing instant-result callers. */

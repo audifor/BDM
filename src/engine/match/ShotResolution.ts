@@ -8,6 +8,7 @@ export interface ShotAttemptContext {
   readonly shooterFatigue: number
   readonly defenderProfile: MatchPlayerProfile
   readonly defenderFatigue: number
+  readonly tacticalDefenseModifier?: number
 }
 
 export const SHOT_RESOLUTION_V1 = {
@@ -35,7 +36,7 @@ export function calculateShotMakeProbability(context: ShotAttemptContext): numbe
   const execution = calculateExecution(context.shotZone, context.shooterProfile)
   const probability = SHOT_RESOLUTION_V1.baseProbability[context.shotZone]
     + (execution - 50) * SHOT_RESOLUTION_V1.skillAdjustmentPerPoint
-    - (calculateEffectiveDefense(context.shotZone, context.defenderProfile, context.defenderFatigue) - 50) * SHOT_RESOLUTION_V1.defenseAdjustmentPerPoint
+    - (clamp(calculateEffectiveDefense(context.shotZone, context.defenderProfile, context.defenderFatigue) + (context.tacticalDefenseModifier ?? 0), 0, 100) - 50) * SHOT_RESOLUTION_V1.defenseAdjustmentPerPoint
     - (clamp(context.shooterFatigue, 0, 100) / 100) * SHOT_RESOLUTION_V1.maximumFatiguePenalty
   const [minimum, maximum] = SHOT_RESOLUTION_V1.probabilityClamp[context.shotZone]
   return clamp(probability, minimum, maximum)
