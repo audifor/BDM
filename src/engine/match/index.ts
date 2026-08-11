@@ -1,4 +1,5 @@
 export {
+  MATCH_RULES_V2,
   MatchSimulationError,
   PROTOTYPE_PERIOD_COUNT,
   PROTOTYPE_PERIOD_SECONDS,

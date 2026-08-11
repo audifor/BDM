@@ -2,10 +2,20 @@ import type { GameId, TeamId } from '@/domain/ids'
 import { getGame, type GameWorld } from '@/domain/world'
 import type { RandomSource } from '@/engine/random'
 
-const BASE_SCORE = 78
-const STRENGTH_SCORE_RANGE = 24
-const HOME_ADVANTAGE = 4
-const RANDOM_VARIATION = 8
+export const MATCH_RULES_V2 = {
+  periodCount: 4,
+  periodSeconds: 600,
+  overtimeSeconds: 300,
+  possessionMinSeconds: 12,
+  possessionMaxSeconds: 24,
+} as const
+
+/** Compatibility exports for the initial prototype's normal-period rules. */
+export const PROTOTYPE_PERIOD_COUNT = MATCH_RULES_V2.periodCount
+export const PROTOTYPE_PERIOD_SECONDS = MATCH_RULES_V2.periodSeconds
+
+const HOME_ADVANTAGE_STRENGTH = 3
+const MAX_OVERTIME_PERIODS = 100
 
 export interface TeamStrength {
   readonly teamId: TeamId
@@ -20,15 +30,15 @@ export interface MatchSimulationResult {
   readonly awayScore: number
 }
 
-export const PROTOTYPE_PERIOD_COUNT = 4
-export const PROTOTYPE_PERIOD_SECONDS = 600
-
 export type MatchEvent =
+  | MatchPeriodEvent
   | {
       readonly sequence: number
       readonly period: number
       readonly clockSecondsRemaining: number
-      readonly type: 'periodStart' | 'periodEnd'
+      readonly type: 'shotMade'
+      readonly teamId: TeamId
+      readonly points: 1 | 2 | 3
       readonly homeScore: number
       readonly awayScore: number
     }
@@ -36,9 +46,8 @@ export type MatchEvent =
       readonly sequence: number
       readonly period: number
       readonly clockSecondsRemaining: number
-      readonly type: 'score'
+      readonly type: 'shotMissed' | 'turnover'
       readonly teamId: TeamId
-      readonly points: 1 | 2 | 3
       readonly homeScore: number
       readonly awayScore: number
     }
@@ -50,6 +59,15 @@ export type MatchEvent =
       readonly homeScore: number
       readonly awayScore: number
     }
+
+interface MatchPeriodEvent {
+  readonly sequence: number
+  readonly period: number
+  readonly clockSecondsRemaining: number
+  readonly type: 'periodStart' | 'periodEnd'
+  readonly homeScore: number
+  readonly awayScore: number
+}
 
 export interface MatchSimulation {
   readonly gameId: GameId
@@ -70,6 +88,8 @@ export interface SimulateMatchOptions {
   readonly random: RandomSource
 }
 
+type PossessionOutcome = 'made1' | 'made2' | 'made3' | 'missedShot' | 'turnover'
+
 export class MatchSimulationError extends Error {
   public constructor(message: string) {
     super(message)
@@ -77,164 +97,112 @@ export class MatchSimulationError extends Error {
   }
 }
 
-/**
- * Simulates a final score only. State transition is intentionally handled outside
- * MatchEngine, so this function does not change Game or GameWorld.
- */
+/** Returns the final projection of the same possession simulation used by MatchViewer. */
 export function simulateMatch(options: SimulateMatchOptions): MatchSimulationResult {
-  const game = getGame(options.world, options.gameId)
-  if (game.status !== 'scheduled') {
-    throw new MatchSimulationError(`Cannot simulate completed Game ${game.id}`)
-  }
-
-  validateStrength(options.homeStrength, game.homeTeamId, 'Home')
-  validateStrength(options.awayStrength, game.awayTeamId, 'Away')
-
-  let homeScore = calculateScore(options.homeStrength.value, HOME_ADVANTAGE, options.random)
-  let awayScore = calculateScore(options.awayStrength.value, 0, options.random)
-
-  if (homeScore === awayScore) {
-    if (options.random.chance(0.5)) {
-      homeScore += 1
-    } else {
-      awayScore += 1
-    }
-  }
-
+  const simulation = simulateMatchDetailed(options)
   return {
-    gameId: game.id,
-    homeTeamId: game.homeTeamId,
-    awayTeamId: game.awayTeamId,
-    homeScore,
-    awayScore,
+    gameId: simulation.gameId,
+    homeTeamId: simulation.homeTeamId,
+    awayTeamId: simulation.awayTeamId,
+    homeScore: simulation.finalScore.home,
+    awayScore: simulation.finalScore.away,
   }
 }
 
 /**
- * Produces the complete deterministic event stream immediately. Playback belongs
- * to MatchViewer; this engine never waits, schedules timers, or changes the world.
+ * Simulates team-level possessions immediately. RNG consumption is: opening-team
+ * choice, then for each possession duration followed by offensive outcome.
  */
 export function simulateMatchDetailed(options: SimulateMatchOptions): MatchSimulation {
-  const finalResult = simulateMatch(options)
-  const events = createMatchEvents(finalResult, options.random)
-
-  return {
-    gameId: finalResult.gameId,
-    homeTeamId: finalResult.homeTeamId,
-    awayTeamId: finalResult.awayTeamId,
-    events,
-    finalScore: {
-      home: finalResult.homeScore,
-      away: finalResult.awayScore,
-    },
-  }
-}
-
-function createMatchEvents(result: MatchSimulationResult, random: RandomSource): MatchEvent[] {
-  const actions = [
-    ...createScoreActions(result.homeTeamId, result.homeScore, random),
-    ...createScoreActions(result.awayTeamId, result.awayScore, random),
-  ].map((action) => ({ ...action, period: random.nextInt(1, PROTOTYPE_PERIOD_COUNT) }))
+  const game = validateOptions(options)
   const events: MatchEvent[] = []
   let sequence = 1
   let homeScore = 0
   let awayScore = 0
+  const openingTeamId = options.random.chance(0.5) ? game.homeTeamId : game.awayTeamId
+  let period = 1
 
-  for (let period = 1; period <= PROTOTYPE_PERIOD_COUNT; period += 1) {
-    events.push({
-      sequence: sequence++,
-      period,
-      clockSecondsRemaining: PROTOTYPE_PERIOD_SECONDS,
-      type: 'periodStart',
-      homeScore,
-      awayScore,
-    })
+  while (true) {
+    const periodSeconds = secondsForPeriod(period)
+    let clock = periodSeconds
+    let attackingTeamId = period % 2 === 1 ? openingTeamId : otherTeamId(openingTeamId, game)
 
-    const periodActions = shuffle(actions.filter((action) => action.period === period), random)
-    for (let index = 0; index < periodActions.length; index += 1) {
-      const action = periodActions[index]!
-      if (action.teamId === result.homeTeamId) {
-        homeScore += action.points
-      } else {
-        awayScore += action.points
+    events.push({ sequence: sequence++, period, clockSecondsRemaining: clock, type: 'periodStart', homeScore, awayScore })
+
+    while (clock > 0) {
+      const possessionDuration = options.random.nextInt(
+        MATCH_RULES_V2.possessionMinSeconds,
+        MATCH_RULES_V2.possessionMaxSeconds,
+      )
+      if (possessionDuration > clock) {
+        clock = 0
+        break
       }
-      events.push({
-        sequence: sequence++,
-        period,
-        clockSecondsRemaining: clockForAction(index, periodActions.length),
-        type: 'score',
-        teamId: action.teamId,
-        points: action.points,
-        homeScore,
-        awayScore,
-      })
+
+      clock -= possessionDuration
+      const strength = attackingTeamId === game.homeTeamId ? options.homeStrength.value : options.awayStrength.value
+      const outcome = choosePossessionOutcome(strength, attackingTeamId === game.homeTeamId, options.random)
+
+      if (outcome === 'made1' || outcome === 'made2' || outcome === 'made3') {
+        const points = Number(outcome.at(-1)) as 1 | 2 | 3
+        if (attackingTeamId === game.homeTeamId) homeScore += points
+        else awayScore += points
+        events.push({ sequence: sequence++, period, clockSecondsRemaining: clock, type: 'shotMade', teamId: attackingTeamId, points, homeScore, awayScore })
+      } else {
+        events.push({ sequence: sequence++, period, clockSecondsRemaining: clock, type: outcome === 'missedShot' ? 'shotMissed' : 'turnover', teamId: attackingTeamId, homeScore, awayScore })
+      }
+
+      attackingTeamId = otherTeamId(attackingTeamId, game)
     }
 
-    events.push({
-      sequence: sequence++,
-      period,
-      clockSecondsRemaining: 0,
-      type: 'periodEnd',
-      homeScore,
-      awayScore,
-    })
+    events.push({ sequence: sequence++, period, clockSecondsRemaining: 0, type: 'periodEnd', homeScore, awayScore })
+
+    if (period >= MATCH_RULES_V2.periodCount && homeScore !== awayScore) break
+    if (period >= MATCH_RULES_V2.periodCount + MAX_OVERTIME_PERIODS) {
+      throw new MatchSimulationError('Match did not resolve after the maximum overtime protection')
+    }
+    period += 1
   }
 
-  events.push({
-    sequence,
-    period: PROTOTYPE_PERIOD_COUNT,
-    clockSecondsRemaining: 0,
-    type: 'gameEnd',
-    homeScore,
-    awayScore,
-  })
-
-  if (homeScore !== result.homeScore || awayScore !== result.awayScore) {
-    throw new MatchSimulationError('Match events do not match the simulated final score')
-  }
-
-  return events
+  events.push({ sequence, period, clockSecondsRemaining: 0, type: 'gameEnd', homeScore, awayScore })
+  return { gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, events, finalScore: { home: homeScore, away: awayScore } }
 }
 
-function createScoreActions(teamId: TeamId, score: number, random: RandomSource): Array<{ teamId: TeamId; points: 1 | 2 | 3 }> {
-  const actions: Array<{ teamId: TeamId; points: 1 | 2 | 3 }> = []
-  let remaining = score
-
-  while (remaining > 0) {
-    const points = Math.min(remaining, random.nextInt(1, 3)) as 1 | 2 | 3
-    actions.push({ teamId, points })
-    remaining -= points
-  }
-
-  return actions
+function validateOptions(options: SimulateMatchOptions) {
+  const game = getGame(options.world, options.gameId)
+  if (game.status !== 'scheduled') throw new MatchSimulationError(`Cannot simulate completed Game ${game.id}`)
+  validateStrength(options.homeStrength, game.homeTeamId, 'Home')
+  validateStrength(options.awayStrength, game.awayTeamId, 'Away')
+  return game
 }
 
-function shuffle<Item>(items: readonly Item[], random: RandomSource): Item[] {
-  const shuffled = [...items]
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swapIndex = random.nextInt(0, index)
-    ;[shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex]!, shuffled[index]!]
-  }
+function choosePossessionOutcome(strength: number, isHomeTeam: boolean, random: RandomSource): PossessionOutcome {
+  const effectiveStrength = strength + (isHomeTeam ? HOME_ADVANTAGE_STRENGTH : 0)
+  const adjustment = (effectiveStrength - 50) * 0.0015
+  const turnover = 0.13 - adjustment * 0.25
+  const made3 = 0.18 + adjustment * 0.7
+  const made2 = 0.3 + adjustment
+  const made1 = 0.04
+  const roll = random.next()
 
-  return shuffled
+  if (roll < turnover) return 'turnover'
+  if (roll < turnover + made3) return 'made3'
+  if (roll < turnover + made3 + made2) return 'made2'
+  if (roll < turnover + made3 + made2 + made1) return 'made1'
+  return 'missedShot'
 }
 
-function clockForAction(index: number, count: number): number {
-  return PROTOTYPE_PERIOD_SECONDS - Math.ceil(((index + 1) * PROTOTYPE_PERIOD_SECONDS) / (count + 1))
+function secondsForPeriod(period: number): number {
+  return period <= MATCH_RULES_V2.periodCount ? MATCH_RULES_V2.periodSeconds : MATCH_RULES_V2.overtimeSeconds
 }
 
-function calculateScore(strength: number, homeAdvantage: number, random: RandomSource): number {
-  const strengthScore = ((strength - 50) / 100) * STRENGTH_SCORE_RANGE
-  const variation = random.nextInt(-RANDOM_VARIATION, RANDOM_VARIATION)
-
-  return Math.max(0, Math.round(BASE_SCORE + strengthScore + homeAdvantage + variation))
+function otherTeamId(teamId: TeamId, game: { readonly homeTeamId: TeamId; readonly awayTeamId: TeamId }): TeamId {
+  return teamId === game.homeTeamId ? game.awayTeamId : game.homeTeamId
 }
 
 function validateStrength(strength: TeamStrength, expectedTeamId: TeamId, side: string): void {
   if (strength.teamId !== expectedTeamId) {
-    throw new MatchSimulationError(
-      `${side} strength belongs to Team ${strength.teamId} but Game team is ${expectedTeamId}`,
-    )
+    throw new MatchSimulationError(`${side} strength belongs to Team ${strength.teamId} but Game team is ${expectedTeamId}`)
   }
   if (!Number.isFinite(strength.value) || strength.value < 0 || strength.value > 100) {
     throw new MatchSimulationError(`${side} strength must be a finite number from 0 to 100`)

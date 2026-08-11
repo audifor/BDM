@@ -131,3 +131,20 @@ Application prepares a user match while its Game remains scheduled. It applies
 the final score to `GameWorld` through `applyMatchResult` only when playback
 reaches `gameEnd` or the user skips to the end. This keeps the future MatchViewer
 and Instant Result paths on one deterministic simulation boundary.
+
+## Possession simulation v2
+
+MatchEngine v2 simulates team-level possessions rather than choosing a final
+score first. Each possession consumes a seeded duration, resolves to `shotMade`,
+`shotMissed`, or `turnover`, and appends an event with the accumulated score.
+`finalScore` is derived from those events. Misses provisionally end the
+possession, representing an implicit defensive rebound; no player-level action,
+rebound, or individual attribution exists yet.
+
+The current temporary rules are four ten-minute periods and five-minute overtime
+periods until a winner exists. These remain prototype rules pending future
+CompetitionRules. TeamStrength remains an external temporary abstraction: it
+adjusts possession outcome probabilities, including a small home advantage, and
+is never stored in Team or GameWorld. RNG is consumed for the opening team and,
+per possession, duration then outcome; MatchViewer only replays those generated
+events and does not influence them.

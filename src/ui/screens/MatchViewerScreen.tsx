@@ -41,10 +41,10 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
 
   return (
     <main className="match-viewer">
-      <header className="viewer-header"><span>BDM MATCH CENTRE</span><span>{isFinished ? 'FINAL' : `Q${period}`}</span></header>
+      <header className="viewer-header"><span>BDM MATCH CENTRE</span><span>{isFinished ? 'FINAL' : formatPeriod(period)}</span></header>
       <section className="scoreboard">
         <strong>{props.homeTeamName}</strong>
-        <div><b>{homeScore} – {awayScore}</b><span>{isFinished ? 'FINAL' : `Q${period} · ${formatClock(clock)}`}</span></div>
+        <div><b>{homeScore} - {awayScore}</b><span>{isFinished ? 'FINAL' : `${formatPeriod(period)} · ${formatClock(clock)}`}</span></div>
         <strong>{props.awayTeamName}</strong>
       </section>
       <Court homeLabel="HOME" awayLabel="AWAY" />
@@ -52,10 +52,10 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
         <div className="event-feed">
           <p className="eyebrow">MATCH EVENTS</p>
           {revealedEvents.slice(-10).reverse().map((event) => <EventLine event={event} key={event.sequence} />)}
-          {revealedEvents.length === 0 && <p className="empty-events">Waiting for tip-off…</p>}
+          {revealedEvents.length === 0 && <p className="empty-events">Waiting for tip-off...</p>}
         </div>
         {isFinished ? (
-          <div className="viewer-controls final-controls"><strong>FINAL · {props.simulation.finalScore.home} – {props.simulation.finalScore.away}</strong><button className="primary-button" onClick={props.onContinue} type="button">CONTINUE</button></div>
+          <div className="viewer-controls final-controls"><strong>FINAL · {props.simulation.finalScore.home} - {props.simulation.finalScore.away}</strong><button className="primary-button" onClick={props.onContinue} type="button">CONTINUE</button></div>
         ) : (
           <div className="viewer-controls">
             <button className="secondary-button" onClick={props.isPlaying ? props.onPause : props.onResume} type="button">{props.isPlaying ? 'PAUSE' : 'PLAY'}</button>
@@ -73,11 +73,18 @@ function Court({ homeLabel, awayLabel }: { readonly homeLabel: string; readonly 
 }
 
 function EventLine({ event }: { readonly event: MatchEvent }) {
-  if (event.type === 'score') return <p><time>{formatClock(event.clockSecondsRemaining)}</time> {event.teamId} +{event.points}</p>
+  if (event.type === 'shotMade') return <p className="event-made"><time>{formatClock(event.clockSecondsRemaining)}</time> {event.teamId} scores {event.points}</p>
+  if (event.type === 'shotMissed') return <p className="event-missed"><time>{formatClock(event.clockSecondsRemaining)}</time> {event.teamId} miss</p>
+  if (event.type === 'turnover') return <p className="event-turnover"><time>{formatClock(event.clockSecondsRemaining)}</time> {event.teamId} turnover</p>
   if (event.type === 'gameEnd') return <p><time>00:00</time> FINAL</p>
-  return <p><time>{formatClock(event.clockSecondsRemaining)}</time> {event.type === 'periodStart' ? `Q${event.period} START` : `Q${event.period} END`}</p>
+  return <p className="event-period"><time>{formatClock(event.clockSecondsRemaining)}</time> {event.type === 'periodStart' ? `${formatPeriod(event.period)} START` : `${formatPeriod(event.period)} END`}</p>
 }
 
 function formatClock(seconds: number): string {
   return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`
+}
+
+function formatPeriod(period: number): string {
+  if (period <= 4) return `Q${period}`
+  return period === 5 ? 'OT' : `${period - 4}OT`
 }
