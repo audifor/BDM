@@ -306,6 +306,13 @@ clock, fatigue or RNG. Automatic RotationPlan instructions remain active but are
 reconciled harmlessly when a user lineup has made an instruction incompatible;
 future rotation systems may replace this Alpha behavior.
 
+The manual-substitutions draft is ephemeral React UI state. It begins from the
+currently revealed active lineup, derives its bench from the transient MatchSquad,
+and submits only its final differences through the Application/store boundary.
+React neither owns MatchSession nor validates or mutates it directly. Applying a
+draft changes only future live steps; MatchViewer v2 remains a separate future
+milestone.
+
 > A viewed match must never precompute sporting outcomes that the user can still influence through future coaching decisions.
 
 > Coaching decisions may alter the future simulation trajectory but must never rewrite already-resolved sporting history.

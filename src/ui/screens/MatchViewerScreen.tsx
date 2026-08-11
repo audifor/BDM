@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react'
 
 import { getPlayer, type GameWorld } from '@/domain/world'
 import type { Player } from '@/domain/player'
-import { calculateMatchPlayerStats, type MatchEvent, type MatchSimulation, type MatchTacticalPlan, type PlayerMatchStats, type TacticalLevel } from '@/engine/match'
+import { calculateMatchPlayerStats, type ManualSubstitution, type MatchEvent, type MatchSimulation, type MatchTacticalPlan, type PlayerMatchStats, type TacticalLevel } from '@/engine/match'
 import { PLAYBACK_SPEEDS, type PlaybackSpeed } from '@/stores/matchViewerStore'
 
 import { createMatchViewerTokens, formatClock, formatMatchEvent, formatPeriod, resolveActiveMatchLineups, resolveMatchFatigue } from '../matchViewer'
+import { ManualSubstitutionsPanel } from './ManualSubstitutionsPanel'
 
 interface MatchViewerScreenProps {
   readonly world: GameWorld
@@ -26,10 +27,13 @@ interface MatchViewerScreenProps {
   readonly coachingPlan: MatchTacticalPlan
   readonly onApplyCoaching: (plan: MatchTacticalPlan) => void
   readonly coachingPlayers: readonly Player[]
+  readonly coachingTeamId: MatchSimulation['homeTeamId']
+  readonly onApplyManualSubstitutions: (substitutions: readonly ManualSubstitution[]) => void
 }
 
 export function MatchViewerScreen(props: MatchViewerScreenProps) {
   const [coachingOpen, setCoachingOpen] = useState(false)
+  const [substitutionsOpen, setSubstitutionsOpen] = useState(false)
   const [draft, setDraft] = useState(props.coachingPlan)
   const revealedEvents = props.simulation.events.slice(0, props.currentEventIndex)
   const lastEvent = revealedEvents.at(-1)
@@ -42,6 +46,7 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
   const playerStats = calculateMatchPlayerStats(props.simulation, revealedEvents)
   const activeLineups = resolveActiveMatchLineups(props.simulation, revealedEvents)
   const fatigueByPlayerId = resolveMatchFatigue(props.world, props.simulation, revealedEvents)
+  const coachingActiveLineup = props.coachingTeamId === props.simulation.homeTeamId ? activeLineups.home : activeLineups.away
   const homePlayerIds = new Set(props.simulation.lineups.home)
   for (const event of revealedEvents) if (event.type === 'substitution' && event.teamId === props.simulation.homeTeamId) homePlayerIds.add(event.playerInId)
   const homeStats = playerStats.filter((stat) => homePlayerIds.has(stat.playerId))
@@ -80,13 +85,15 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
           <div className="viewer-controls final-controls"><strong>FINAL · {props.simulation.finalScore.home} - {props.simulation.finalScore.away}</strong><button className="primary-button" onClick={props.onContinue} type="button">CONTINUE</button></div>
         ) : (
           <div className="viewer-controls">
-            <button className="secondary-button" onClick={props.isPlaying ? props.onPause : props.onResume} type="button">{props.isPlaying ? 'PAUSE' : 'PLAY'}</button>
-            <button className="secondary-button" onClick={() => { props.onPause(); setDraft(props.coachingPlan); setCoachingOpen(true) }} type="button">COACHING</button>
+            <button className="secondary-button" disabled={substitutionsOpen} onClick={props.isPlaying ? props.onPause : props.onResume} type="button">{props.isPlaying ? 'PAUSE' : 'PLAY'}</button>
+            <button className="secondary-button" onClick={() => { props.onPause(); setSubstitutionsOpen(false); setDraft(props.coachingPlan); setCoachingOpen(true) }} type="button">COACHING</button>
+            <button className="secondary-button" onClick={() => { props.onPause(); setCoachingOpen(false); setSubstitutionsOpen(true) }} type="button">SUBSTITUTIONS</button>
             <div className="speed-controls">{PLAYBACK_SPEEDS.map((speed) => <button className={props.speed === speed ? 'speed active' : 'speed'} key={speed} onClick={() => props.onSpeedChange(speed)} type="button">x{speed}</button>)}</div>
-            <button className="primary-button" onClick={props.onSkipToEnd} type="button">SKIP TO END</button>
+            <button className="primary-button" disabled={substitutionsOpen} onClick={props.onSkipToEnd} type="button">SKIP TO END</button>
           </div>
         )}
         {coachingOpen && <section className="content-panel"><p className="eyebrow">LIVE COACHING · CURRENT PLAN</p><label>PACE <LevelSelect value={draft.pace} onChange={(pace) => setDraft({ ...draft, pace })} /></label><label>RIM <LevelSelect value={draft.shotProfile.rim} onChange={(rim) => setDraft({ ...draft, shotProfile: { ...draft.shotProfile, rim } })} /></label><label>MID <LevelSelect value={draft.shotProfile.midRange} onChange={(midRange) => setDraft({ ...draft, shotProfile: { ...draft.shotProfile, midRange } })} /></label><label>3PT <LevelSelect value={draft.shotProfile.threePoint} onChange={(threePoint) => setDraft({ ...draft, shotProfile: { ...draft.shotProfile, threePoint } })} /></label><label>DEFENSE <select value={`${draft.defense.interior}/${draft.defense.perimeter}`} onChange={(event) => { const [interior, perimeter] = event.target.value.split('/').map(Number) as [TacticalLevel, TacticalLevel]; setDraft({ ...draft, defense: { interior, perimeter } }) }}><option value="0/0">Balanced</option><option value="2/-1">Protect Paint</option><option value="-1/2">Pressure Perimeter</option></select></label><label>FEATURED PLAYER <select value={draft.featuredPlayerId ?? ''} onChange={(event) => setDraft({ ...draft, ...(event.target.value === '' ? {} : { featuredPlayerId: event.target.value as Player['id'] }) })}><option value="">None</option>{props.coachingPlayers.map((player) => <option key={player.id} value={player.id}>{player.firstName} {player.lastName} · {player.basketball.primaryPosition}</option>)}</select></label><div className="game-actions"><button className="primary-button" onClick={() => { props.onApplyCoaching(draft); setCoachingOpen(false) }} type="button">APPLY CHANGES</button><button className="secondary-button" onClick={() => setCoachingOpen(false)} type="button">CANCEL</button></div></section>}
+        {substitutionsOpen && <ManualSubstitutionsPanel activeLineup={coachingActiveLineup} squadPlayers={props.coachingPlayers} playerStats={playerStats} fatigueByPlayerId={fatigueByPlayerId} onApply={(substitutions) => { props.onApplyManualSubstitutions(substitutions); setSubstitutionsOpen(false) }} onCancel={() => setSubstitutionsOpen(false)} />}
       </section>
     </main>
   )
