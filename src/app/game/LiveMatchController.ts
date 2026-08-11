@@ -16,10 +16,24 @@ export class LiveMatchController {
     }
     return this.snapshot()
   }
+  /** A resolved sporting boundary for the presentation layer; it does not expose MatchSession. */
+  public advanceOneStepWithSnapshots(): LiveMatchStep {
+    const before = this.snapshot()
+    const attackingTeamId = this.session.state.attackingTeamId
+    const after = this.advanceOneStep()
+    return { before, after, attackingTeamId, endAttackingTeamId: this.session.state.attackingTeamId }
+  }
   public applyTactics(teamId: MatchSession['state']['homeTeamId'], tacticalPlan: MatchTacticalPlan): MatchSimulation { this.session = applyTacticalPlanChange(this.session, { teamId, tacticalPlan }); return this.snapshot() }
   public applyManualSubstitutions(teamId: MatchSession['state']['homeTeamId'], substitutions: readonly ManualSubstitution[]): MatchSimulation { this.session = applyManualSubstitutions(this.session, { teamId, substitutions }); return this.snapshot() }
   public skipToEnd(): MatchSimulation { while (!this.session.state.isComplete) this.advanceOneStep(); return this.snapshot() }
   public snapshot(): MatchSimulation { const state = this.session.state; return state.isComplete ? toMatchSimulation(this.session) : { gameId: state.gameId, homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, lineups: state.initialLineups, events: state.events, finalScore: { home: state.homeScore, away: state.awayScore } } }
   public get isComplete(): boolean { return this.session.state.isComplete }
   public get currentPlans() { return this.session.state.coachingState }
+}
+
+export interface LiveMatchStep {
+  readonly before: MatchSimulation
+  readonly after: MatchSimulation
+  readonly attackingTeamId: MatchSession['state']['attackingTeamId']
+  readonly endAttackingTeamId: MatchSession['state']['attackingTeamId']
 }

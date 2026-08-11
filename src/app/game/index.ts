@@ -10,5 +10,5 @@ export {
   prepareMatch,
   prepareUserMatch,
 } from './playUserGame'
-export { LiveMatchController } from './LiveMatchController'
+export { LiveMatchController, type LiveMatchStep } from './LiveMatchController'
 export { getCurrentSeason } from './selectors'

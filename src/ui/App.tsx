@@ -7,6 +7,7 @@ import { getUserTeam } from '@/engine/calendar'
 
 import { formatPrototypeDate } from './formatters'
 import { HomeScreen, MatchViewerScreen, ScheduleScreen, SquadScreen, StandingsScreen, TacticsScreen } from './screens'
+import { createPresentationSegment } from './match/MatchPresentationSegment'
 import './styles.css'
 
 type Section = 'home' | 'tactics' | 'squad' | 'schedule' | 'standings'
@@ -26,6 +27,7 @@ export function App() {
   const prepareUserMatch = useGameStore((state) => state.prepareUserMatch)
   const startLiveMatch = useGameStore((state) => state.startLiveMatch)
   const advanceLiveMatch = useGameStore((state) => state.advanceLiveMatch)
+  const advanceLiveMatchPresentation = useGameStore((state) => state.advanceLiveMatchPresentation)
   const skipLiveMatch = useGameStore((state) => state.skipLiveMatch)
   const applyLiveTactics = useGameStore((state) => state.applyLiveTactics)
   const applyManualSubstitutions = useGameStore((state) => state.applyManualSubstitutions)
@@ -57,7 +59,7 @@ export function App() {
 
   if (simulation !== null) {
     const coachingTeam = getUserTeam(world)!
-    return <MatchViewerScreen world={world} simulation={simulation} homeTeamName={world.teams[simulation.homeTeamId]!.name} awayTeamName={world.teams[simulation.awayTeamId]!.name} currentEventIndex={currentEventIndex} isPlaying={isPlaying} speed={speed} resultApplied={resultApplied} onPause={pause} onResume={resume} onSpeedChange={setSpeed} onRevealNext={() => replaceSimulation(advanceLiveMatch())} onSkipToEnd={() => replaceSimulation(skipLiveMatch(), false)} onApplyResult={() => { if (markResultApplied()) completeMatch(simulation) }} onContinue={() => { clearMatch(); setSection('home') }} coachingPlan={tacticalPlan} coachingPlayers={coachingTeam.rosterPlayerIds.map((playerId) => world.players[playerId]!)} coachingTeamId={coachingTeam.id} onApplyCoaching={(plan) => { replaceSimulation(applyLiveTactics(coachingTeam.id, plan), false); setTacticalPlan(plan) }} onApplyManualSubstitutions={(substitutions) => replaceSimulation(applyManualSubstitutions(coachingTeam.id, substitutions), false)} />
+    return <MatchViewerScreen world={world} simulation={simulation} homeTeamName={world.teams[simulation.homeTeamId]!.name} awayTeamName={world.teams[simulation.awayTeamId]!.name} currentEventIndex={currentEventIndex} isPlaying={isPlaying} speed={speed} resultApplied={resultApplied} onPause={pause} onResume={resume} onSpeedChange={setSpeed} onRevealNext={() => replaceSimulation(advanceLiveMatch())} onRequestPresentationSegment={() => createPresentationSegment(advanceLiveMatchPresentation())} onCompletePresentationSegment={(nextSimulation) => replaceSimulation(nextSimulation)} onSkipToEnd={() => replaceSimulation(skipLiveMatch(), false)} onApplyResult={() => { if (markResultApplied()) completeMatch(simulation) }} onContinue={() => { clearMatch(); setSection('home') }} coachingPlan={tacticalPlan} coachingPlayers={coachingTeam.rosterPlayerIds.map((playerId) => world.players[playerId]!)} coachingTeamId={coachingTeam.id} onApplyCoaching={(plan) => { replaceSimulation(applyLiveTactics(coachingTeam.id, plan), false); setTacticalPlan(plan) }} onApplyManualSubstitutions={(substitutions) => replaceSimulation(applyManualSubstitutions(coachingTeam.id, substitutions), false)} />
   }
   const userTeam = getUserTeam(world)
 

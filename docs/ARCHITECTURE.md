@@ -334,3 +334,25 @@ events. This v1 contains points, field goals, turnovers, offensive and defensive
 rebounds, assists, free-throw makes/attempts, and fouls committed; all remain
 derived and non-persistent. Free throws are not field goals. Other player
 statistics do not yet exist.
+
+## MatchViewer presentation time
+
+Simulation Time and Presentation Time are separate. A live sporting step resolves
+at the Engine boundary, while the UI converts its before/after snapshots into one
+transient `MatchPresentationSegment`. The viewer presents every game-clock second
+of that segment before requesting the next sporting step. Playback speed changes
+only presentation duration, never sporting time, RNG, fatigue, or results.
+
+Court positions and abstract motion are deterministic presentation projections,
+not sporting state or invented basketball events. A future Engine may add timed
+microactions inside the same segment model, and future highlight modes may choose
+which segments to present. Coaching remains a sporting-boundary operation: it
+cannot rewrite a segment that has already been resolved.
+
+> Every second of game clock may be represented by MatchViewer even when MatchEngine resolves sporting outcomes at a coarser granularity.
+
+> Playback speed changes how fast simulated time is presented, never how sporting time is simulated.
+
+> MatchViewer must finish presenting the current resolved sporting segment before requesting future sporting simulation.
+
+> Presentation may interpolate abstract movement, but it must never invent a sporting event that MatchEngine did not resolve.

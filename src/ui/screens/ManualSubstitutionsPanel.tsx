@@ -8,6 +8,7 @@ export interface ManualSubstitutionsPanelProps {
   readonly squadPlayers: readonly Player[]
   readonly playerStats: readonly PlayerMatchStats[]
   readonly fatigueByPlayerId: Readonly<Record<string, number>>
+  readonly canApply?: boolean
   readonly onApply: (substitutions: readonly ManualSubstitution[]) => void
   readonly onCancel: () => void
 }
@@ -42,7 +43,7 @@ export function ManualSubstitutionsPanel(props: ManualSubstitutionsPanelProps) {
       {substitutions.length > 0 && <p className="substitutions-summary">{substitutions.map((substitution) => `${playerName(props.squadPlayers, substitution.playerOutId)} → ${playerName(props.squadPlayers, substitution.playerInId)}`).join(' · ')}</p>}
       {error !== null && <p className="substitutions-error" role="alert">{error}</p>}
       <div className="game-actions">
-        <button className="primary-button" disabled={substitutions.length === 0} onClick={apply} type="button">APPLY SUBSTITUTIONS</button>
+        <button className="primary-button" disabled={substitutions.length === 0 || props.canApply === false} onClick={apply} type="button">APPLY SUBSTITUTIONS</button>
         <button className="secondary-button" onClick={props.onCancel} type="button">CANCEL</button>
       </div>
     </section>

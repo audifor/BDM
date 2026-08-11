@@ -10,7 +10,7 @@ import {
 } from '@/app/game'
 import type { GameWorld } from '@/domain/world'
 import type { ManualSubstitution, MatchSimulation, MatchTacticalPlan } from '@/engine/match'
-import type { LiveMatchController } from '@/app/game'
+import type { LiveMatchController, LiveMatchStep } from '@/app/game'
 import { create } from 'zustand'
 
 interface GameStore {
@@ -19,6 +19,7 @@ interface GameStore {
   prepareUserMatch(tacticalPlan?: MatchTacticalPlan): MatchSimulation
   startLiveMatch(tacticalPlan?: MatchTacticalPlan): MatchSimulation
   advanceLiveMatch(): MatchSimulation
+  advanceLiveMatchPresentation(): LiveMatchStep
   skipLiveMatch(): MatchSimulation
   applyLiveTactics(teamId: MatchSimulation['homeTeamId'], tacticalPlan: MatchTacticalPlan): MatchSimulation
   applyManualSubstitutions(teamId: MatchSimulation['homeTeamId'], substitutions: readonly ManualSubstitution[]): MatchSimulation
@@ -38,6 +39,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   prepareUserMatch: (tacticalPlan) => prepareUserMatch(requireWorld(get().world), tacticalPlan),
   startLiveMatch: (tacticalPlan) => { liveController = createLiveUserMatch(requireWorld(get().world), tacticalPlan); return liveController.snapshot() },
   advanceLiveMatch: () => requireLiveController().advanceOneStep(),
+  advanceLiveMatchPresentation: () => requireLiveController().advanceOneStepWithSnapshots(),
   skipLiveMatch: () => requireLiveController().skipToEnd(),
   applyLiveTactics: (teamId, tacticalPlan) => requireLiveController().applyTactics(teamId, tacticalPlan),
   applyManualSubstitutions: (teamId, substitutions) => requireLiveController().applyManualSubstitutions(teamId, substitutions),

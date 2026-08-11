@@ -13,6 +13,15 @@ describe('LiveMatchController', () => {
     expect(controller.snapshot()).toEqual(prepareUserMatch(world))
   })
 
+  it('returns presentation snapshots around exactly one live sporting step', () => {
+    const controller = createLiveUserMatch(createNewGame())
+    const step = controller.advanceOneStepWithSnapshots()
+
+    expect(step.before.events).toHaveLength(1)
+    expect(step.after.events.length).toBeGreaterThan(step.before.events.length)
+    expect(step.after.events.at(-1)!.clockSecondsRemaining).toBeLessThan(step.before.events.at(-1)!.clockSecondsRemaining)
+  })
+
   it('records atomic tactical changes without advancing sporting state and applies no-op changes silently', () => {
     const world = createNewGame()
     const controller = createLiveUserMatch(world)
