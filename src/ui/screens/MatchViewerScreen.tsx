@@ -33,7 +33,8 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
   const [draft, setDraft] = useState(props.coachingPlan)
   const revealedEvents = props.simulation.events.slice(0, props.currentEventIndex)
   const lastEvent = revealedEvents.at(-1)
-  const isFinished = props.currentEventIndex >= props.simulation.events.length
+  /** Live snapshots may have no future events yet; only Engine's gameEnd is final. */
+  const isFinished = isMatchComplete(revealedEvents)
   const homeScore = lastEvent?.homeScore ?? 0
   const awayScore = lastEvent?.awayScore ?? 0
   const period = lastEvent?.period ?? 1
@@ -90,6 +91,8 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
     </main>
   )
 }
+
+export function isMatchComplete(events: readonly MatchEvent[]): boolean { return events.some((event) => event.type === 'gameEnd') }
 
 function LevelSelect({ value, onChange }: { readonly value: TacticalLevel; readonly onChange: (value: TacticalLevel) => void }) { return <select value={value} onChange={(event) => onChange(Number(event.target.value) as TacticalLevel)}>{[-2, -1, 0, 1, 2].map((level) => <option key={level} value={level}>{level > 0 ? `+${level}` : level}</option>)}</select> }
 

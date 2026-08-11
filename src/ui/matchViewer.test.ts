@@ -5,8 +5,13 @@ import { playerIdFromString, type PlayerId } from '@/domain/ids'
 import type { MatchEvent } from '@/engine/match'
 
 import { createMatchViewerTokens, formatMatchEvent, resolveActiveMatchLineups, resolveMatchLineup } from './matchViewer'
+import { isMatchComplete } from './screens/MatchViewerScreen'
 
 describe('MatchViewer presentation helpers', () => {
+  it('does not treat a regulation period end as final without gameEnd', () => {
+    expect(isMatchComplete([{ sequence: 1, period: 4, clockSecondsRemaining: 0, type: 'periodEnd', homeScore: 80, awayScore: 80 }])).toBe(false)
+    expect(isMatchComplete([{ sequence: 2, period: 5, clockSecondsRemaining: 0, type: 'gameEnd', homeScore: 82, awayScore: 80 }])).toBe(true)
+  })
   it('resolves the five home and away lineup PlayerIds from GameWorld', () => {
     const world = createNewGame()
     const simulation = prepareUserMatch(world)

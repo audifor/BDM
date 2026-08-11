@@ -303,6 +303,11 @@ unimplemented.
 
 > Coaching decisions may alter the future simulation trajectory but must never rewrite already-resolved sporting history.
 
+> A MatchSession is complete only after a non-tied final score exists. A tie at the
+> end of regulation or overtime creates another overtime period, never `gameEnd`.
+> Viewer and Application must rely on MatchSession's terminal `gameEnd`, not a
+> period number, clock, or currently available event count.
+
 MatchViewer consumes the transient lineup snapshot in MatchSimulation; it never
 selects starters. UI resolves those PlayerIds and sporting-event PlayerIds through
 GameWorld at render time, so names are not duplicated into MatchEvents. Court
