@@ -23,10 +23,14 @@ describe('MatchViewer presentation helpers', () => {
     const madeShot = simulation.events.find(isMadeShot)!
     const missedShot = simulation.events.find(isMissedShot)!
     const turnover = simulation.events.find(isTurnover)!
+    const rebound = simulation.events.find(isRebound)!
+    const assisterId = simulation.lineups.home.find((playerId) => playerId !== madeShot.playerId)!
 
     expect(formatMatchEvent(madeShot, world)).toContain(world.players[madeShot.playerId]!.lastName)
     expect(formatMatchEvent(missedShot, world)).toContain(world.players[missedShot.playerId]!.lastName)
     expect(formatMatchEvent(turnover, world)).toContain(world.players[turnover.playerId]!.lastName)
+    expect(formatMatchEvent(rebound, world)).toContain(`${world.players[rebound.playerId]!.lastName} ${rebound.reboundType} rebound`)
+    expect(formatMatchEvent({ ...madeShot, assistPlayerId: assisterId }, world)).toContain(`assist ${world.players[assisterId]!.lastName}`)
   })
 
   it('fails explicitly when a lineup PlayerId cannot be resolved', () => {
@@ -61,4 +65,8 @@ function isMissedShot(event: MatchEvent): event is MatchEvent & { readonly type:
 
 function isTurnover(event: MatchEvent): event is MatchEvent & { readonly type: 'turnover'; readonly playerId: PlayerId } {
   return event.type === 'turnover'
+}
+
+function isRebound(event: MatchEvent): event is MatchEvent & { readonly type: 'rebound'; readonly playerId: PlayerId; readonly reboundType: 'offensive' | 'defensive' } {
+  return event.type === 'rebound'
 }

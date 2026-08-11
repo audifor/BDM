@@ -5,7 +5,7 @@ import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 
-import { MATCH_RULES_V2, simulateMatchDetailed, type MatchLineups } from './index'
+import { MATCH_RULES_V2, simulateMatchDetailed, type MatchEvent, type MatchLineups } from './index'
 
 describe('possession-based MatchEngine v2', () => {
   it('derives the final score exactly from shotMade events', () => {
@@ -40,6 +40,16 @@ describe('possession-based MatchEngine v2', () => {
       if (event.type === 'shotMissed' || event.type === 'turnover') {
         expect(event.homeScore).toBe(simulation.events[index - 1]!.homeScore)
         expect(event.awayScore).toBe(simulation.events[index - 1]!.awayScore)
+      }
+      if (event.type === 'shotMissed') {
+        const rebound = simulation.events[index + 1]!
+        expect(rebound).toMatchObject({ type: 'rebound', homeScore: event.homeScore, awayScore: event.awayScore })
+      }
+      if (event.type === 'rebound') {
+        expect(simulation.events[index - 1]).toMatchObject({ type: 'shotMissed' })
+      }
+      if (event.type === 'shotMade' || event.type === 'turnover') {
+        expect(simulation.events[index + 1]?.type).not.toBe('rebound')
       }
     }
   })
@@ -82,6 +92,33 @@ describe('possession-based MatchEngine v2', () => {
     expect(homeWins).toBeGreaterThan(40)
     expect(homeWins).toBeLessThan(160)
   })
+
+  it('uses defensive and offensive rebounds to determine the next attacking team', () => {
+    const { world, game } = createScheduledGameWorld()
+    const defensive = simulateWithRandom(world, game.id, new FirstReboundRandom('defensive'))
+    const offensive = simulateWithRandom(world, game.id, new FirstReboundRandom('offensive'))
+
+    assertFirstRebound(defensive, 'defensive')
+    assertFirstRebound(offensive, 'offensive')
+  })
+
+  it('attributes rebounders and assists to valid non-scorer lineup players', () => {
+    const { world, game } = createScheduledGameWorld()
+    const simulation = simulateWithRandom(world, game.id, new SeededRandomSource(12345), 50, 50, new AlwaysAssistsRandom())
+
+    for (const event of simulation.events.filter((event) => event.type === 'rebound')) {
+      const lineup = event.teamId === simulation.homeTeamId ? simulation.lineups.home : simulation.lineups.away
+      expect(lineup).toContain(event.playerId)
+    }
+    for (const event of simulation.events) {
+      if (event.type !== 'shotMade' || event.points === 1) continue
+      expect(event.assistPlayerId).toBeDefined()
+      const lineup = event.teamId === simulation.homeTeamId ? simulation.lineups.home : simulation.lineups.away
+      expect(lineup).toContain(event.assistPlayerId)
+      expect(event.assistPlayerId).not.toBe(event.playerId)
+    }
+    expect(simulation.events.every((event) => event.type !== 'shotMade' || event.points !== 1 || event.assistPlayerId === undefined)).toBe(true)
+  })
 })
 
 function createScheduledGameWorld(): { world: GameWorld; game: GameWorld['games'][keyof GameWorld['games']] } {
@@ -98,7 +135,7 @@ function simulateWithStrengths(world: GameWorld, gameId: GameWorld['games'][keyo
   return simulateWithRandom(world, gameId, new SeededRandomSource(seed), homeStrength, awayStrength)
 }
 
-function simulateWithRandom(world: GameWorld, gameId: GameWorld['games'][keyof GameWorld['games']]['id'], random: RandomSource, homeStrength = 50, awayStrength = 50) {
+function simulateWithRandom(world: GameWorld, gameId: GameWorld['games'][keyof GameWorld['games']]['id'], random: RandomSource, homeStrength = 50, awayStrength = 50, actorRandom: RandomSource = new SeededRandomSource(67890)) {
   const game = world.games[gameId]!
   return simulateMatchDetailed({
     world,
@@ -107,8 +144,27 @@ function simulateWithRandom(world: GameWorld, gameId: GameWorld['games'][keyof G
     awayStrength: { teamId: game.awayTeamId, value: awayStrength },
     lineups: lineupsFor(world, game),
     random,
-    actorRandom: new SeededRandomSource(67890),
+    actorRandom,
   })
+}
+
+function assertFirstRebound(simulation: ReturnType<typeof simulateMatchDetailed>, reboundType: 'offensive' | 'defensive') {
+  const missIndex = simulation.events.findIndex((event) => event.type === 'shotMissed')
+  const missedShot = simulation.events[missIndex]!
+  const rebound = simulation.events[missIndex + 1]!
+  const nextSportingEvent = simulation.events.slice(missIndex + 2).find(isSportingEvent)!
+
+  expect(rebound).toMatchObject({ type: 'rebound', reboundType, homeScore: missedShot.homeScore, awayScore: missedShot.awayScore })
+  if (rebound.type !== 'rebound' || missedShot.type !== 'shotMissed') throw new Error('Expected miss followed by rebound')
+  const expectedTeamId = reboundType === 'offensive'
+    ? missedShot.teamId
+    : missedShot.teamId === simulation.homeTeamId ? simulation.awayTeamId : simulation.homeTeamId
+  expect(rebound.teamId).toBe(expectedTeamId)
+  expect(nextSportingEvent.teamId).toBe(expectedTeamId)
+}
+
+function isSportingEvent(event: MatchEvent): event is MatchEvent & { readonly teamId: string } {
+  return event.type === 'shotMade' || event.type === 'shotMissed' || event.type === 'turnover' || event.type === 'rebound'
 }
 
 function lineupsFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['games']]): MatchLineups {
@@ -125,6 +181,37 @@ class OvertimeRandom implements RandomSource {
     return this.outcomes <= 100 ? 0.99 : this.outcomes === 101 ? 0.2 : 0.99
   }
   nextInt(): number { return 24 }
+  nextFloat(minInclusive: number): number { return minInclusive }
+  chance(): boolean { return true }
+  pick<Item>(items: readonly Item[]): Item { return items[0]! }
+}
+
+class FirstReboundRandom implements RandomSource {
+  private readonly remainingRandom = new SeededRandomSource(12345)
+  private isFirstOutcome = true
+
+  public constructor(private readonly reboundType: 'offensive' | 'defensive') {}
+
+  next(): number {
+    if (this.isFirstOutcome) {
+      this.isFirstOutcome = false
+      return 0.99
+    }
+    return this.remainingRandom.next()
+  }
+  nextInt(minInclusive: number, maxInclusive: number): number { return this.remainingRandom.nextInt(minInclusive, maxInclusive) }
+  nextFloat(minInclusive: number, maxExclusive: number): number { return this.remainingRandom.nextFloat(minInclusive, maxExclusive) }
+  chance(probability: number): boolean {
+    if (probability === 0.5) return true
+    if (probability === 0.25) return this.reboundType === 'offensive'
+    return this.remainingRandom.chance(probability)
+  }
+  pick<Item>(items: readonly Item[]): Item { return this.remainingRandom.pick(items) }
+}
+
+class AlwaysAssistsRandom implements RandomSource {
+  next(): number { return 0 }
+  nextInt(minInclusive: number): number { return minInclusive }
   nextFloat(minInclusive: number): number { return minInclusive }
   chance(): boolean { return true }
   pick<Item>(items: readonly Item[]): Item { return items[0]! }

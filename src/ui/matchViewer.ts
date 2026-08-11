@@ -36,9 +36,13 @@ export function createMatchViewerTokens(world: GameWorld, playerIds: readonly Pl
 }
 
 export function formatMatchEvent(event: MatchEvent, world: GameWorld): string {
-  if (event.type === 'shotMade') return `${getPlayer(world, event.playerId).lastName} scores ${event.points}`
+  if (event.type === 'shotMade') {
+    const assist = event.assistPlayerId === undefined ? '' : ` (assist ${getPlayer(world, event.assistPlayerId).lastName})`
+    return `${getPlayer(world, event.playerId).lastName} scores ${event.points}${assist}`
+  }
   if (event.type === 'shotMissed') return `${getPlayer(world, event.playerId).lastName} misses`
   if (event.type === 'turnover') return `${getPlayer(world, event.playerId).lastName} turnover`
+  if (event.type === 'rebound') return `${getPlayer(world, event.playerId).lastName} ${event.reboundType} rebound`
   if (event.type === 'gameEnd') return 'FINAL'
   return event.type === 'periodStart' ? `${formatPeriod(event.period)} START` : `${formatPeriod(event.period)} END`
 }

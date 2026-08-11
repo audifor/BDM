@@ -117,7 +117,11 @@ function withoutPlayerAttribution(simulation: ReturnType<typeof simulateMatchDet
   return {
     ...simulation,
     events: simulation.events.map((event) => {
-      if (event.type === 'shotMade' || event.type === 'shotMissed' || event.type === 'turnover') {
+      if (event.type === 'shotMade') {
+        const { playerId: _playerId, assistPlayerId: _assistPlayerId, ...eventWithoutPlayer } = event
+        return eventWithoutPlayer
+      }
+      if (event.type === 'shotMissed' || event.type === 'turnover' || event.type === 'rebound') {
         const { playerId: _playerId, ...eventWithoutPlayer } = event
         return eventWithoutPlayer
       }

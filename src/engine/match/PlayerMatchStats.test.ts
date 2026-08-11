@@ -14,23 +14,25 @@ const AWAY_TEAM_ID = teamIdFromString('away-team')
 describe('PlayerMatchStats', () => {
   it('derives made 2s, made 3s, made 1s, misses, turnovers, and zero-action players', () => {
     const simulation = createSimulation([
-      madeShot(HOME_PLAYERS[0]!, 2),
+      madeShot(HOME_PLAYERS[0]!, 2, HOME_PLAYERS[1]!),
       madeShot(HOME_PLAYERS[1]!, 3),
       madeShot(HOME_PLAYERS[2]!, 1),
       missedShot(HOME_PLAYERS[3]!),
       turnover(HOME_PLAYERS[4]!),
+      rebound(HOME_PLAYERS[0]!, 'offensive'),
+      rebound(AWAY_PLAYERS[0]!, 'defensive'),
     ])
     const stats = calculateMatchPlayerStats(simulation)
 
     expect(stats).toHaveLength(10)
     expect(stats.map((stat) => stat.playerId)).toEqual([...HOME_PLAYERS, ...AWAY_PLAYERS])
     expect(new Set(stats.map((stat) => stat.playerId)).size).toBe(10)
-    expect(stats[0]).toMatchObject({ points: 2, fieldGoalsMade: 1, fieldGoalsAttempted: 1, turnovers: 0 })
-    expect(stats[1]).toMatchObject({ points: 3, fieldGoalsMade: 1, fieldGoalsAttempted: 1, turnovers: 0 })
+    expect(stats[0]).toMatchObject({ points: 2, fieldGoalsMade: 1, fieldGoalsAttempted: 1, turnovers: 0, offensiveRebounds: 1, defensiveRebounds: 0, rebounds: 1, assists: 0 })
+    expect(stats[1]).toMatchObject({ points: 3, fieldGoalsMade: 1, fieldGoalsAttempted: 1, turnovers: 0, offensiveRebounds: 0, defensiveRebounds: 0, rebounds: 0, assists: 1 })
     expect(stats[2]).toMatchObject({ points: 1, fieldGoalsMade: 0, fieldGoalsAttempted: 0, turnovers: 0 })
     expect(stats[3]).toMatchObject({ points: 0, fieldGoalsMade: 0, fieldGoalsAttempted: 1, turnovers: 0 })
     expect(stats[4]).toMatchObject({ points: 0, fieldGoalsMade: 0, fieldGoalsAttempted: 0, turnovers: 1 })
-    expect(stats[5]).toMatchObject({ points: 0, fieldGoalsMade: 0, fieldGoalsAttempted: 0, turnovers: 0 })
+    expect(stats[5]).toMatchObject({ points: 0, fieldGoalsMade: 0, fieldGoalsAttempted: 0, turnovers: 0, offensiveRebounds: 0, defensiveRebounds: 1, rebounds: 1, assists: 0 })
   })
 
   it('reconstructs a complete simulation and does not mutate it', () => {
@@ -45,15 +47,20 @@ describe('PlayerMatchStats', () => {
     expect(stats.reduce((total, stat) => total + stat.fieldGoalsMade, 0)).toBe(fieldGoals.length)
     expect(stats.reduce((total, stat) => total + stat.fieldGoalsAttempted, 0)).toBe(fieldGoals.length + simulation.events.filter((event) => event.type === 'shotMissed').length)
     expect(stats.reduce((total, stat) => total + stat.turnovers, 0)).toBe(simulation.events.filter((event) => event.type === 'turnover').length)
+    expect(stats.reduce((total, stat) => total + stat.rebounds, 0)).toBe(simulation.events.filter((event) => event.type === 'rebound').length)
+    expect(stats.reduce((total, stat) => total + stat.assists, 0)).toBe(simulation.events.filter((event) => event.type === 'shotMade' && event.assistPlayerId !== undefined).length)
+    expect(stats.every((stat) => stat.rebounds === stat.offensiveRebounds + stat.defensiveRebounds)).toBe(true)
     expect(JSON.stringify(simulation)).toBe(before)
   })
 
   it('projects only the explicit revealed event subset', () => {
-    const simulation = createSimulation([madeShot(HOME_PLAYERS[0]!, 2), madeShot(HOME_PLAYERS[1]!, 3)])
+    const simulation = createSimulation([madeShot(HOME_PLAYERS[0]!, 2), rebound(HOME_PLAYERS[1]!, 'offensive'), madeShot(HOME_PLAYERS[2]!, 3, HOME_PLAYERS[3]!)])
     const partialStats = calculateMatchPlayerStats(simulation, simulation.events.slice(0, 1))
 
     expect(partialStats[0]!.points).toBe(2)
     expect(partialStats[1]!.points).toBe(0)
+    expect(partialStats[1]!.rebounds).toBe(0)
+    expect(partialStats[3]!.assists).toBe(0)
     expect(calculateMatchPlayerStats(simulation, simulation.events)).toEqual(calculateMatchPlayerStats(simulation))
   })
 
@@ -75,8 +82,8 @@ function createSimulation(events: readonly MatchEvent[]): MatchSimulation {
   }
 }
 
-function madeShot(playerId: typeof HOME_PLAYERS[number], points: 1 | 2 | 3): MatchEvent {
-  return { sequence: 1, period: 1, clockSecondsRemaining: 500, type: 'shotMade', teamId: HOME_TEAM_ID, playerId, points, homeScore: 0, awayScore: 0 }
+function madeShot(playerId: typeof HOME_PLAYERS[number], points: 1 | 2 | 3, assistPlayerId?: typeof HOME_PLAYERS[number]): MatchEvent {
+  return { sequence: 1, period: 1, clockSecondsRemaining: 500, type: 'shotMade', teamId: HOME_TEAM_ID, playerId, ...(assistPlayerId === undefined ? {} : { assistPlayerId }), points, homeScore: 0, awayScore: 0 }
 }
 
 function missedShot(playerId: typeof HOME_PLAYERS[number]): MatchEvent {
@@ -85,4 +92,8 @@ function missedShot(playerId: typeof HOME_PLAYERS[number]): MatchEvent {
 
 function turnover(playerId: typeof HOME_PLAYERS[number]): MatchEvent {
   return { sequence: 1, period: 1, clockSecondsRemaining: 500, type: 'turnover', teamId: HOME_TEAM_ID, playerId, homeScore: 0, awayScore: 0 }
+}
+
+function rebound(playerId: typeof HOME_PLAYERS[number], reboundType: 'offensive' | 'defensive'): MatchEvent {
+  return { sequence: 1, period: 1, clockSecondsRemaining: 500, type: 'rebound', teamId: reboundType === 'offensive' ? HOME_TEAM_ID : AWAY_TEAM_ID, playerId, reboundType, homeScore: 0, awayScore: 0 }
 }

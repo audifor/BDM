@@ -137,9 +137,11 @@ and Instant Result paths on one deterministic simulation boundary.
 MatchEngine v2 simulates team-level possessions rather than choosing a final
 score first. Each possession consumes a seeded duration, resolves to `shotMade`,
 `shotMissed`, or `turnover`, and appends an event with the accumulated score.
-`finalScore` is derived from those events. Misses provisionally end the
-possession, representing an implicit defensive rebound; no player-level action,
-rebound, or individual attribution exists yet.
+`finalScore` is derived from those events. Every missed field goal is followed by
+an explicit rebound: a provisional 25% sporting-RNG offensive-rebound decision
+keeps the attacking team in possession, while a defensive rebound changes it.
+The actor RNG selects the rebounder from the winning lineup. The next action still
+consumes normal possession time.
 
 The current temporary rules are four ten-minute periods and five-minute overtime
 periods until a winner exists. These remain prototype rules pending future
@@ -169,7 +171,10 @@ MatchEngine consumes but never selects it. Lineups are not persisted.
 Sporting events now carry a transient PlayerId selected uniformly from the
 attacking lineup. Actor selection uses the separate deterministic stream
 `match-actors-v1:${gameId}`, so attribution does not alter the established
-match-outcome RNG. Player ratings do not yet affect individual possession results.
+match-outcome RNG. A provisional 60% actor-RNG attribution may add an assist to a
+made two- or three-point field goal; the assister is another player in the scoring
+lineup. Player ratings do not yet affect individual possession results, rebounds,
+or assists.
 
 MatchViewer consumes the transient lineup snapshot in MatchSimulation; it never
 selects starters. UI resolves those PlayerIds and sporting-event PlayerIds through
@@ -179,5 +184,6 @@ data on Player, Team, MatchSimulation, or GameWorld. Individual player statistic
 are a transient Engine projection: PlayerMatchStats is reconstructed from
 MatchSimulation lineups and MatchEvents and is never persisted. MatchViewer passes
 only revealed events to that projection, so its live boxscore cannot expose future
-events. This v1 contains only points, field goals, and turnovers; rebounds,
-assists, and other player statistics do not yet exist.
+events. This v1 contains points, field goals, turnovers, offensive and defensive
+rebounds, and assists; all remain derived and non-persistent. Other player
+statistics do not yet exist.

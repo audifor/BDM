@@ -8,6 +8,10 @@ export interface PlayerMatchStats {
   readonly fieldGoalsMade: number
   readonly fieldGoalsAttempted: number
   readonly turnovers: number
+  readonly offensiveRebounds: number
+  readonly defensiveRebounds: number
+  readonly rebounds: number
+  readonly assists: number
 }
 
 /** Derives a boxscore from an explicit event subset without mutating the simulation. */
@@ -21,7 +25,7 @@ export function calculateMatchPlayerStats(
   )
 
   for (const event of events) {
-    if (event.type !== 'shotMade' && event.type !== 'shotMissed' && event.type !== 'turnover') continue
+    if (event.type !== 'shotMade' && event.type !== 'shotMissed' && event.type !== 'turnover' && event.type !== 'rebound') continue
 
     const stats = statsByPlayerId.get(event.playerId)
     if (stats === undefined) {
@@ -29,13 +33,34 @@ export function calculateMatchPlayerStats(
     }
 
     statsByPlayerId.set(event.playerId, applyEvent(stats, event))
+
+    if (event.type === 'shotMade' && event.assistPlayerId !== undefined) {
+      const assisterStats = statsByPlayerId.get(event.assistPlayerId)
+      if (assisterStats === undefined) {
+        throw new Error(`ShotMade assist references Player outside MatchSimulation lineups: ${event.assistPlayerId}`)
+      }
+      if (event.assistPlayerId === event.playerId) {
+        throw new Error(`ShotMade scorer cannot assist themselves: ${event.playerId}`)
+      }
+      statsByPlayerId.set(event.assistPlayerId, { ...assisterStats, assists: assisterStats.assists + 1 })
+    }
   }
 
   return playerIds.map((playerId) => statsByPlayerId.get(playerId)!)
 }
 
 function emptyStats(playerId: PlayerId): PlayerMatchStats {
-  return { playerId, points: 0, fieldGoalsMade: 0, fieldGoalsAttempted: 0, turnovers: 0 }
+  return {
+    playerId,
+    points: 0,
+    fieldGoalsMade: 0,
+    fieldGoalsAttempted: 0,
+    turnovers: 0,
+    offensiveRebounds: 0,
+    defensiveRebounds: 0,
+    rebounds: 0,
+    assists: 0,
+  }
 }
 
 function applyEvent(stats: PlayerMatchStats, event: Extract<MatchEvent, { readonly playerId: PlayerId }>): PlayerMatchStats {
@@ -50,6 +75,11 @@ function applyEvent(stats: PlayerMatchStats, event: Extract<MatchEvent, { readon
   }
   if (event.type === 'shotMissed') {
     return { ...stats, fieldGoalsAttempted: stats.fieldGoalsAttempted + 1 }
+  }
+  if (event.type === 'rebound') {
+    return event.reboundType === 'offensive'
+      ? { ...stats, offensiveRebounds: stats.offensiveRebounds + 1, rebounds: stats.rebounds + 1 }
+      : { ...stats, defensiveRebounds: stats.defensiveRebounds + 1, rebounds: stats.rebounds + 1 }
   }
   return { ...stats, turnovers: stats.turnovers + 1 }
 }

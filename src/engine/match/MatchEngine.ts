@@ -16,6 +16,10 @@ export const PROTOTYPE_PERIOD_SECONDS = MATCH_RULES_V2.periodSeconds
 
 const HOME_ADVANTAGE_STRENGTH = 3
 const MAX_OVERTIME_PERIODS = 100
+/** Prototype value until rebounds become CompetitionRules. */
+const OFFENSIVE_REBOUND_PROBABILITY = 0.25
+/** Prototype attribution value; assists never affect sporting outcomes. */
+const ASSIST_PROBABILITY = 0.6
 
 export interface TeamStrength {
   readonly teamId: TeamId
@@ -44,6 +48,7 @@ export type MatchEvent =
       readonly teamId: TeamId
       readonly playerId: PlayerId
       readonly points: 1 | 2 | 3
+      readonly assistPlayerId?: PlayerId
       readonly homeScore: number
       readonly awayScore: number
     }
@@ -54,6 +59,17 @@ export type MatchEvent =
       readonly type: 'shotMissed' | 'turnover'
       readonly teamId: TeamId
       readonly playerId: PlayerId
+      readonly homeScore: number
+      readonly awayScore: number
+    }
+  | {
+      readonly sequence: number
+      readonly period: number
+      readonly clockSecondsRemaining: number
+      readonly type: 'rebound'
+      readonly teamId: TeamId
+      readonly playerId: PlayerId
+      readonly reboundType: 'offensive' | 'defensive'
       readonly homeScore: number
       readonly awayScore: number
     }
@@ -156,14 +172,26 @@ export function simulateMatchDetailed(options: SimulateMatchOptions): MatchSimul
       const playerId = lineup[options.actorRandom.nextInt(0, lineup.length - 1)]!
       if (outcome === 'made1' || outcome === 'made2' || outcome === 'made3') {
         const points = Number(outcome.at(-1)) as 1 | 2 | 3
+        const assistPlayerId = points === 1 || !options.actorRandom.chance(ASSIST_PROBABILITY)
+          ? undefined
+          : selectAssister(lineup, playerId, options.actorRandom)
         if (attackingTeamId === game.homeTeamId) homeScore += points
         else awayScore += points
-        events.push({ sequence: sequence++, period, clockSecondsRemaining: clock, type: 'shotMade', teamId: attackingTeamId, playerId, points, homeScore, awayScore })
+        events.push({ sequence: sequence++, period, clockSecondsRemaining: clock, type: 'shotMade', teamId: attackingTeamId, playerId, ...(assistPlayerId === undefined ? {} : { assistPlayerId }), points, homeScore, awayScore })
+        attackingTeamId = otherTeamId(attackingTeamId, game)
       } else {
         events.push({ sequence: sequence++, period, clockSecondsRemaining: clock, type: outcome === 'missedShot' ? 'shotMissed' : 'turnover', teamId: attackingTeamId, playerId, homeScore, awayScore })
+        if (outcome === 'missedShot') {
+          const reboundType = options.random.chance(OFFENSIVE_REBOUND_PROBABILITY) ? 'offensive' : 'defensive'
+          const reboundTeamId = reboundType === 'offensive' ? attackingTeamId : otherTeamId(attackingTeamId, game)
+          const reboundLineup = reboundTeamId === game.homeTeamId ? options.lineups.home : options.lineups.away
+          const reboundPlayerId = reboundLineup[options.actorRandom.nextInt(0, reboundLineup.length - 1)]!
+          events.push({ sequence: sequence++, period, clockSecondsRemaining: clock, type: 'rebound', teamId: reboundTeamId, playerId: reboundPlayerId, reboundType, homeScore, awayScore })
+          attackingTeamId = reboundTeamId
+        } else {
+          attackingTeamId = otherTeamId(attackingTeamId, game)
+        }
       }
-
-      attackingTeamId = otherTeamId(attackingTeamId, game)
     }
 
     events.push({ sequence: sequence++, period, clockSecondsRemaining: 0, type: 'periodEnd', homeScore, awayScore })
@@ -177,6 +205,11 @@ export function simulateMatchDetailed(options: SimulateMatchOptions): MatchSimul
 
   events.push({ sequence, period, clockSecondsRemaining: 0, type: 'gameEnd', homeScore, awayScore })
   return { gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, lineups: options.lineups, events, finalScore: { home: homeScore, away: awayScore } }
+}
+
+function selectAssister(lineup: readonly PlayerId[], scorerId: PlayerId, random: RandomSource): PlayerId {
+  const eligiblePlayers = lineup.filter((playerId) => playerId !== scorerId)
+  return eligiblePlayers[random.nextInt(0, eligiblePlayers.length - 1)]!
 }
 
 function validateLineups(lineups: MatchLineups): void {
