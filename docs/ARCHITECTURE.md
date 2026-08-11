@@ -80,3 +80,9 @@ logic.
 `MatchSimulationResult`; it never changes `GameWorld` or `Game`. MatchEngine v0
 uses temporary `TeamStrength` inputs, which are not persisted in Team or GameWorld,
 and does not yet create possessions or events.
+
+The match pipeline is `MatchEngine -> MatchSimulationResult -> Match Result
+Application -> GameWorld`. Simulation does not mutate state; result application
+does not simulate. `MatchSimulationResult` is transient, while `Game.result` is
+the canonical persisted final score. The current transition rebuilds GameWorld via
+the canonical validator; future optimization requires profiling evidence.
