@@ -99,7 +99,7 @@ class FirstFoulRandom implements RandomSource {
   next(): number {
     if (this.isFirstOutcome) {
       this.isFirstOutcome = false
-      return 0.05
+      return 0.15
     }
     return this.remainingRandom.next()
   }

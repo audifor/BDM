@@ -2,9 +2,12 @@ import type { GameId, PlayerId, TeamId } from '@/domain/ids'
 import { getGame, type GameWorld } from '@/domain/world'
 import type { RandomSource } from '@/engine/random'
 import { advanceFatigue, createInitialFatigue, type FatigueByPlayerId } from './Fatigue'
+import { calculateAssistProbability, selectAssister } from './AssistResolution'
 import { calculateDefensiveAssignments } from './Matchups'
 import type { MatchPlayerProfile, MatchPlayerProfiles } from './MatchPlayerProfile'
+import { calculateOffensiveReboundProbability, selectRebounder } from './ReboundResolution'
 import { calculateShotMakeProbability, calculateShotZoneWeights, pointsForShotZone, type ShotZone } from './ShotResolution'
+import { calculateTurnoverProbability } from './TurnoverResolution'
 import { chooseWeighted } from './WeightedChoice'
 
 export const MATCH_RULES_V2 = {
@@ -19,12 +22,7 @@ export const MATCH_RULES_V2 = {
 export const PROTOTYPE_PERIOD_COUNT = MATCH_RULES_V2.periodCount
 export const PROTOTYPE_PERIOD_SECONDS = MATCH_RULES_V2.periodSeconds
 
-const HOME_ADVANTAGE_STRENGTH = 3
 const MAX_OVERTIME_PERIODS = 100
-/** Prototype value until rebounds become CompetitionRules. */
-const OFFENSIVE_REBOUND_PROBABILITY = 0.25
-/** Prototype attribution value; assists never affect sporting outcomes. */
-const ASSIST_PROBABILITY = 0.6
 /** Prototype value until shooting fouls become CompetitionRules. */
 const SHOOTING_FOUL_PROBABILITY = 0.1
 /** Prototype value; free throws do not yet use player ratings. */
@@ -307,7 +305,8 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const primaryDefenderId = calculateDefensiveAssignments(lineup, defendingLineup, [...profiles, ...defendingProfiles]).find((matchup) => matchup.offensivePlayerId === playerId)?.defensivePlayerId
   if (primaryDefenderId === undefined) throw new MatchSimulationError(`Active Player ${playerId} has no primary defender`)
   const primaryDefender = profileForPlayer(defendingProfiles, primaryDefenderId)
-  const outcome = choosePossessionOutcome(state.attackingTeamId === state.homeTeamId, session.random)
+  const turnoverProbability = calculateTurnoverProbability({ ballHandlerProfile: offensiveActor, ballHandlerFatigue: state.fatigueByPlayerId[playerId] ?? 0, defenderProfile: primaryDefender, defenderFatigue: state.fatigueByPlayerId[primaryDefenderId] ?? 0 })
+  const outcome = choosePossessionOutcome(turnoverProbability, session.random)
   let attackingTeamId = state.attackingTeamId
 
   if (outcome === 'shootingFoul') {
@@ -327,17 +326,20 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     const made = session.random.chance(calculateShotMakeProbability({ shotZone, shooterProfile: offensiveActor, shooterFatigue: state.fatigueByPlayerId[playerId] ?? 0, defenderProfile: primaryDefender, defenderFatigue: state.fatigueByPlayerId[primaryDefenderId] ?? 0 }))
     const points = pointsForShotZone(shotZone)
     if (made) {
-      const assistPlayerId = !session.actorRandom.chance(ASSIST_PROBABILITY) ? undefined : selectAssister(lineup, playerId, session.actorRandom)
+      const assistCandidates = lineup.filter((candidateId) => candidateId !== playerId).map((candidateId) => profileForPlayer(profiles, candidateId))
+      const assistPlayerId = !session.actorRandom.chance(calculateAssistProbability({ shotZone, teammateProfiles: assistCandidates })) ? undefined : selectAssister(assistCandidates, session.actorRandom).playerId
       if (attackingTeamId === state.homeTeamId) homeScore += points
       else awayScore += points
       newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'shotMade', teamId: attackingTeamId, playerId, defenderPlayerId: primaryDefenderId, ...(assistPlayerId === undefined ? {} : { assistPlayerId }), points, shotZone, homeScore, awayScore })
       attackingTeamId = otherTeamId(attackingTeamId, state)
     } else {
       newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'shotMissed', teamId: attackingTeamId, playerId, defenderPlayerId: primaryDefenderId, shotZone, homeScore, awayScore })
-      const reboundType = session.random.chance(OFFENSIVE_REBOUND_PROBABILITY) ? 'offensive' : 'defensive'
+      const offensiveReboundProbability = calculateOffensiveReboundProbability({ offensiveProfiles: lineup.map((candidateId) => profileForPlayer(profiles, candidateId)), defensiveProfiles: defendingLineup.map((candidateId) => profileForPlayer(defendingProfiles, candidateId)) })
+      const reboundType = session.random.chance(offensiveReboundProbability) ? 'offensive' : 'defensive'
       const reboundTeamId = reboundType === 'offensive' ? attackingTeamId : otherTeamId(attackingTeamId, state)
       const reboundLineup = reboundTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
-      const reboundPlayerId = reboundLineup[session.actorRandom.nextInt(0, reboundLineup.length - 1)]!
+      const reboundProfiles = reboundTeamId === state.homeTeamId ? state.playerProfiles.home : state.playerProfiles.away
+      const reboundPlayerId = selectRebounder(reboundLineup.map((candidateId) => profileForPlayer(reboundProfiles, candidateId)), session.actorRandom).playerId
       newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'rebound', teamId: reboundTeamId, playerId: reboundPlayerId, reboundType, homeScore, awayScore })
       attackingTeamId = reboundTeamId
     }
@@ -369,11 +371,6 @@ export function simulateMatchDetailed(options: SimulateMatchOptions): MatchSimul
   let session = createMatchSession(options)
   while (!session.state.isComplete) session = stepMatchSession(session).session
   return toMatchSimulation(session)
-}
-
-function selectAssister(lineup: readonly PlayerId[], scorerId: PlayerId, random: RandomSource): PlayerId {
-  const eligiblePlayers = lineup.filter((playerId) => playerId !== scorerId)
-  return eligiblePlayers[random.nextInt(0, eligiblePlayers.length - 1)]!
 }
 
 function finishPeriod(session: MatchSession, state: MatchSessionState, newEvents: MatchEvent[]): MatchSessionStepResult {
@@ -508,12 +505,11 @@ function validateOptions(options: SimulateMatchOptions) {
   return game
 }
 
-function choosePossessionOutcome(isHomeTeam: boolean, random: RandomSource): PossessionOutcome {
-  const turnover = 0.13 - (isHomeTeam ? HOME_ADVANTAGE_STRENGTH : 0) * 0.0015 * 0.25
+function choosePossessionOutcome(turnoverProbability: number, random: RandomSource): PossessionOutcome {
   const roll = random.next()
 
-  if (roll < SHOOTING_FOUL_PROBABILITY) return 'shootingFoul'
-  if (roll < SHOOTING_FOUL_PROBABILITY + turnover) return 'turnover'
+  if (roll < turnoverProbability) return 'turnover'
+  if (roll < turnoverProbability + SHOOTING_FOUL_PROBABILITY) return 'shootingFoul'
   return 'fieldGoalAttempt'
 }
 

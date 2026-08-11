@@ -218,7 +218,7 @@ class FirstReboundRandom implements RandomSource {
   nextFloat(minInclusive: number, maxExclusive: number): number { return this.remainingRandom.nextFloat(minInclusive, maxExclusive) }
   chance(probability: number): boolean {
     if (probability === 0.5) return true
-    if (probability === 0.25) return this.reboundType === 'offensive'
+    if (probability >= 0.12 && probability <= 0.40) return this.reboundType === 'offensive'
     return this.remainingRandom.chance(probability)
   }
   pick<Item>(items: readonly Item[]): Item { return this.remainingRandom.pick(items) }

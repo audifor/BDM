@@ -15,7 +15,7 @@ describe('MatchSession', () => {
     const stepped = toMatchSimulation(runToComplete(createMatchSession(createOptions(world, game.id, 12345, 67890))))
 
     expect(stepped).toEqual(whole)
-    expect({ finalScore: whole.finalScore, eventCount: whole.events.length }).toEqual({ finalScore: { home: 59, away: 69 }, eventCount: 231 })
+    expect(regressionSummary(whole)).toEqual({ finalScore: { home: 70, away: 72 }, eventCount: 212, homeTurnovers: 8, awayTurnovers: 11, homeRebounds: 22, awayRebounds: 26, homeAssists: 18, awayAssists: 16 })
   })
 
   it('advances one logical unit without mutating the previous sporting state', () => {
@@ -147,6 +147,20 @@ function runToComplete(initialSession: ReturnType<typeof createMatchSession>) {
 }
 
 function withoutSequence(event: { readonly sequence: number }) { const { sequence: _sequence, ...rest } = event; return rest }
+
+function regressionSummary(simulation: ReturnType<typeof simulateMatchDetailed>) {
+  const count = (predicate: (event: (typeof simulation.events)[number]) => boolean) => simulation.events.filter(predicate).length
+  return {
+    finalScore: simulation.finalScore,
+    eventCount: simulation.events.length,
+    homeTurnovers: count((event) => event.type === 'turnover' && event.teamId === simulation.homeTeamId),
+    awayTurnovers: count((event) => event.type === 'turnover' && event.teamId === simulation.awayTeamId),
+    homeRebounds: count((event) => event.type === 'rebound' && event.teamId === simulation.homeTeamId),
+    awayRebounds: count((event) => event.type === 'rebound' && event.teamId === simulation.awayTeamId),
+    homeAssists: count((event) => event.type === 'shotMade' && event.teamId === simulation.homeTeamId && event.assistPlayerId !== undefined),
+    awayAssists: count((event) => event.type === 'shotMade' && event.teamId === simulation.awayTeamId && event.assistPlayerId !== undefined),
+  }
+}
 
 function createScheduledGameWorld(): { world: GameWorld; game: GameWorld['games'][keyof GameWorld['games']] } {
   const generated = generateWorld({ seed: 12345, gender: 'female' })

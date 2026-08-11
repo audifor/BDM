@@ -143,10 +143,10 @@ MatchEngine v2 simulates team-level possessions rather than choosing a final
 score first. Each possession consumes a seeded duration, resolves to `shotMade`,
 `shotMissed`, or `turnover`, and appends an event with the accumulated score.
 `finalScore` is derived from those events. Every missed field goal is followed by
-an explicit rebound: a provisional 25% sporting-RNG offensive-rebound decision
-keeps the attacking team in possession, while a defensive rebound changes it.
-The actor RNG selects the rebounder from the winning lineup. The next action still
-consumes normal possession time.
+an explicit rebound: sporting RNG resolves ownership from the active fives'
+rebound-impact strengths, while actor RNG chooses the winning team's rebounder.
+An offensive rebound keeps the attacking team in possession, while a defensive
+rebound changes it. The next action still consumes normal possession time.
 
 The current temporary rules are four ten-minute periods and five-minute overtime
 periods until a winner exists. These remain prototype rules pending future
@@ -157,7 +157,7 @@ per possession, duration then outcome; MatchViewer only replays those generated
 events and does not influence them.
 
 Shooting fouls are a separate prototype possession outcome. A provisional 10%
-sporting-RNG decision emits a `foul` attributed by actor RNG to a defender, then
+sporting-RNG decision emits a `foul` attributed to the primary matchup defender, then
 exactly two same-clock free throws by the attacking actor. Each provisional 75%
 free-throw outcome uses sporting RNG; after the second attempt possession changes
 to the defender. Free-throw misses do not yet create rebound events. This is not a
@@ -230,19 +230,17 @@ derived from the same revealed-event fatigue projection as `100 - fatigue`.
 
 Sporting events carry transient PlayerIds from the active lineup. Detail
 attribution uses the separate deterministic stream
-`match-actors-v1:${gameId}`, so attribution does not alter the established
-match-outcome RNG. A provisional 60% actor-RNG attribution may add an assist to a
-made two- or three-point field goal; the assister is another player in the scoring
-lineup. Player ratings do not yet affect individual possession results, rebounds,
-or assists.
+`match-actors-v1:${gameId}`, so assists and rebounder identity do not alter the
+established match-outcome RNG.
 
 The seven persisted bootstrap ratings are not BDM's final attribute model.
 Application adapts them into transient `MatchPlayerProfile` signals before a
-match, so MatchEngine consumes usage, rim attack, shooting, creation, and ball
-security rather than reaching into Player ratings. Future larger attribute sets,
-traits, perks, tendencies, and contextual modifiers can change this adapter or
-add composable shot modifiers without changing the possession loop. There is no
-persisted overall.
+match, so MatchEngine consumes usage, rim attack, shooting, creation, ball
+security, defensive signals, and rebound impact rather than reaching into Player
+ratings. Rebound impact currently derives from rebounding and athleticism. Future
+larger attribute sets, traits, perks, tendencies, and contextual modifiers can
+change this adapter or add composable modifiers without changing the possession
+loop. There is no persisted overall.
 
 Player-driven offense uses a dedicated deterministic decision RNG
 (`match-decisions-v1:${gameId}`) for weighted offensive-actor and shot-zone
@@ -262,9 +260,19 @@ uses 65% point-of-attack and 35% mobility; threes use 75% point-of-attack and 25
 mobility. Defender fatigue subtracts up to 12 signal points before the provisional
 defense adjustment. TeamStrength is no longer a field-goal defense proxy. Made and
 missed shot events preserve `defenderPlayerId`, and shooting fouls are committed by
-that primary defender. Schemes, switches, blocks, steals, turnover pressure, and
-rating-weighted rebounds or assists remain future work; all current formulas are
-replaceable prototypes.
+that primary defender.
+
+Turnovers are a sporting-RNG result of the active ball handler's ball security
+against the primary defender's point-of-attack/mobility pressure; fatigue reduces
+both effective signals. Assists remain non-sporting actor-RNG attribution: their
+zone baseline is adjusted by the other active teammates' average creation, then an
+eligible non-scorer is selected by creation weight. Rebound ownership is a
+sporting-RNG result of the active five's average rebound impact on each side; the
+capturing active player is then selected by rebound-impact weight through
+actorRandom. TeamStrength does not directly participate in shooting, defense,
+turnovers, assists, or rebounds. Decision RNG remains limited to offensive actor
+and shot-zone selection. Steals, blocks, schemes, new attributes, traits, and
+perks do not yet exist; all current formulas are replaceable prototypes.
 
 MatchViewer consumes the transient lineup snapshot in MatchSimulation; it never
 selects starters. UI resolves those PlayerIds and sporting-event PlayerIds through

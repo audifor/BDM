@@ -17,6 +17,9 @@ export interface MatchPlayerProfile {
     readonly interior: number
     readonly mobility: number
   }
+  readonly rebounding: {
+    readonly impact: number
+  }
 }
 
 export interface MatchPlayerProfiles {
@@ -41,6 +44,9 @@ export function createMatchPlayerProfile(player: Player): MatchPlayerProfile {
       pointOfAttack: clampSignal(ratings.perimeterDefense * 0.75 + ratings.athleticism * 0.25),
       interior: clampSignal(ratings.interiorDefense * 0.80 + ratings.athleticism * 0.20),
       mobility: clampSignal(ratings.perimeterDefense * 0.35 + ratings.athleticism * 0.65),
+    },
+    rebounding: {
+      impact: clampSignal(ratings.rebounding * 0.75 + ratings.athleticism * 0.25),
     },
   }
 }
