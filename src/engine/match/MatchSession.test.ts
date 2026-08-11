@@ -6,7 +6,7 @@ import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
-import { MATCH_RULES_V2, MatchSimulationError, calculateActiveLineups, createMatchSession, simulateMatchDetailed, stepMatchSession, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
+import { MATCH_RULES_V2, MatchSimulationError, calculateActiveLineups, createMatchPlayerProfile, createMatchSession, simulateMatchDetailed, stepMatchSession, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
 
 describe('MatchSession', () => {
   it('produces the same complete simulation through stepping as through the wrapper', () => {
@@ -15,7 +15,7 @@ describe('MatchSession', () => {
     const stepped = toMatchSimulation(runToComplete(createMatchSession(createOptions(world, game.id, 12345, 67890))))
 
     expect(stepped).toEqual(whole)
-    expect({ finalScore: whole.finalScore, eventCount: whole.events.length }).toEqual({ finalScore: { home: 70, away: 64 }, eventCount: 226 })
+    expect({ finalScore: whole.finalScore, eventCount: whole.events.length }).toEqual({ finalScore: { home: 66, away: 58 }, eventCount: 229 })
   })
 
   it('advances one logical unit without mutating the previous sporting state', () => {
@@ -72,6 +72,8 @@ describe('MatchSession', () => {
     expect(() => createMatchSession({ ...options, squads: { ...options.squads, away: [...options.squads.away.slice(0, 5), options.squads.away[0]!] } })).toThrow('Away squad cannot contain duplicate players')
     expect(() => createMatchSession({ ...options, squads: { ...options.squads, away: [...options.squads.away.slice(0, 4), options.squads.home[0]!] } })).toThrow('Home and away squads cannot share players')
     expect(() => createMatchSession({ ...options, lineups: { ...options.lineups, home: [...options.lineups.home.slice(0, 4), options.squads.home[5]!] }, squads: { ...options.squads, home: options.squads.home.slice(0, 5) } })).toThrow('Home lineup players must belong to the home squad')
+    expect(() => createMatchSession({ ...options, playerProfiles: { ...options.playerProfiles, home: options.playerProfiles.home.slice(1) } })).toThrow('Home player profiles must contain exactly one profile per squad player')
+    expect(() => createMatchSession({ ...options, playerProfiles: { ...options.playerProfiles, home: [...options.playerProfiles.home.slice(0, -1), options.playerProfiles.home[0]!] } })).toThrow('Home player profiles cannot contain duplicates')
   })
 
   it('records valid substitutions and permits re-entry without advancing match state', () => {
@@ -114,7 +116,7 @@ describe('MatchSession', () => {
     const second = stepMatchSession(restored)
     expect(second.newEvents.map(withoutSequence)).toEqual(first.newEvents.map(withoutSequence))
 
-    const subbed = substitutePlayer(createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new FirstSportingRandom(), actorRandom: new FirstActorRandom() }), { teamId: game.homeTeamId, playerOutId: createOptions(world, game.id, 1, 1).lineups.home[0]!, playerInId: world.teams[game.homeTeamId]!.rosterPlayerIds[5]! })
+    const subbed = substitutePlayer(createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new FirstSportingRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() }), { teamId: game.homeTeamId, playerOutId: createOptions(world, game.id, 1, 1).lineups.home[0]!, playerInId: world.teams[game.homeTeamId]!.rosterPlayerIds[5]! })
     const afterSub = stepMatchSession(subbed)
     const sporting = afterSub.newEvents.find((event) => event.type === 'shotMade' || event.type === 'shotMissed' || event.type === 'turnover')!
     expect(sporting).toMatchObject({ teamId: game.homeTeamId, playerId: subbed.state.activeLineups.home[0] })
@@ -149,8 +151,10 @@ function createScheduledGameWorld(): { world: GameWorld; game: GameWorld['games'
 
 function createOptions(world: GameWorld, gameId: GameWorld['games'][keyof GameWorld['games']]['id'], sportingSeed: number, actorSeed: number): SimulateMatchOptions {
   const game = world.games[gameId]!
-  return { world, gameId, homeStrength: { teamId: game.homeTeamId, value: 50 }, awayStrength: { teamId: game.awayTeamId, value: 50 }, lineups: lineupsFor(world, game), squads: squadsFor(world, game), random: new SeededRandomSource(sportingSeed), actorRandom: new SeededRandomSource(actorSeed) }
+  return { world, gameId, homeStrength: { teamId: game.homeTeamId, value: 50 }, awayStrength: { teamId: game.awayTeamId, value: 50 }, lineups: lineupsFor(world, game), squads: squadsFor(world, game), playerProfiles: profilesFor(world, game), random: new SeededRandomSource(sportingSeed), decisionRandom: new SeededRandomSource(sportingSeed + 1), actorRandom: new SeededRandomSource(actorSeed) }
 }
+
+function profilesFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['games']]) { return { home: world.teams[game.homeTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)), away: world.teams[game.awayTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)) } }
 
 function squadsFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['games']]) { return { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds } }
 
@@ -163,7 +167,7 @@ class OvertimeRandom implements RandomSource {
   next(): number { this.outcomes += 1; return this.outcomes <= 100 ? 0.99 : this.outcomes === 101 ? 0.3 : 0.99 }
   nextInt(): number { return 24 }
   nextFloat(minInclusive: number): number { return minInclusive }
-  chance(probability: number): boolean { return probability === 0.25 || probability === 0.5 }
+  chance(probability: number): boolean { return probability === 0.25 || probability === 0.5 || (this.outcomes === 101 && probability > 0.1 && probability < 0.9) }
   pick<Item>(items: readonly Item[]): Item { return items[0]! }
 }
 
@@ -176,3 +180,5 @@ class FirstSportingRandom implements RandomSource {
 }
 
 class FirstActorRandom extends FirstSportingRandom {}
+
+class ZeroDecisionRandom extends FirstSportingRandom { next(): number { return 0 } }

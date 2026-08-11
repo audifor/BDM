@@ -47,9 +47,9 @@ export function resolveMatchFatigue(world: GameWorld, simulation: MatchSimulatio
 export function formatMatchEvent(event: MatchEvent, world: GameWorld): string {
   if (event.type === 'shotMade') {
     const assist = event.assistPlayerId === undefined ? '' : ` (assist ${getPlayer(world, event.assistPlayerId).lastName})`
-    return `${getPlayer(world, event.playerId).lastName} scores ${event.points}${assist}`
+    return `${getPlayer(world, event.playerId).lastName} ${formatShotZoneMade(event.shotZone)}${assist}`
   }
-  if (event.type === 'shotMissed') return `${getPlayer(world, event.playerId).lastName} misses`
+  if (event.type === 'shotMissed') return `${getPlayer(world, event.playerId).lastName} misses ${formatShotZone(event.shotZone)}`
   if (event.type === 'turnover') return `${getPlayer(world, event.playerId).lastName} turnover`
   if (event.type === 'rebound') return `${getPlayer(world, event.playerId).lastName} ${event.reboundType} rebound`
   if (event.type === 'foul') return `${getPlayer(world, event.playerId).lastName} shooting foul`
@@ -58,6 +58,14 @@ export function formatMatchEvent(event: MatchEvent, world: GameWorld): string {
   if (event.type === 'substitution') return `${getPlayer(world, event.playerInId).lastName} replaces ${getPlayer(world, event.playerOutId).lastName}`
   if (event.type === 'gameEnd') return 'FINAL'
   return event.type === 'periodStart' ? `${formatPeriod(event.period)} START` : `${formatPeriod(event.period)} END`
+}
+
+function formatShotZoneMade(shotZone: 'rim' | 'midRange' | 'threePoint'): string {
+  return shotZone === 'rim' ? 'scores at the rim' : shotZone === 'midRange' ? 'hits from mid-range' : 'hits a three'
+}
+
+function formatShotZone(shotZone: 'rim' | 'midRange' | 'threePoint'): string {
+  return shotZone === 'rim' ? 'at the rim' : shotZone === 'midRange' ? 'from mid-range' : 'a three'
 }
 
 export function formatClock(seconds: number): string {

@@ -7,7 +7,7 @@ import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
-import { MatchSimulationError, simulateMatch, simulateMatchDetailed, type MatchLineups } from './index'
+import { createMatchPlayerProfile, MatchSimulationError, simulateMatch, simulateMatchDetailed, type MatchLineups } from './index'
 
 describe('MatchEngine result projection', () => {
   it('projects the final score from the same possession simulation used by MatchViewer', () => {
@@ -95,7 +95,9 @@ function createOptions(world: GameWorld, gameId: GameWorld['games'][keyof GameWo
     awayStrength: { teamId: game?.awayTeamId ?? teamIdFromString('missing-team'), value: 50 },
     lineups: game === undefined ? missingGameLineups() : lineupsFor(world, game),
     squads: game === undefined ? missingGameLineups() : squadsFor(world, game),
+    playerProfiles: game === undefined ? { home: [], away: [] } : profilesFor(world, game),
     random: new SeededRandomSource(seed),
+    decisionRandom: new SeededRandomSource(seed + 1),
     actorRandom: new SeededRandomSource(actorSeed),
   }
 }
@@ -110,6 +112,8 @@ function lineupsFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['
 function squadsFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['games']]) {
   return { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds }
 }
+
+function profilesFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['games']]) { return { home: world.teams[game.homeTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)), away: world.teams[game.awayTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)) } }
 
 function missingGameLineups(): MatchLineups {
   return {

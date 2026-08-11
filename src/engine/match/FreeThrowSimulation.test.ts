@@ -5,7 +5,7 @@ import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
-import { simulateMatchDetailed, type MatchLineups } from './index'
+import { createMatchPlayerProfile, simulateMatchDetailed, type MatchLineups } from './index'
 
 describe('shooting fouls and free throws', () => {
   it.each([
@@ -72,7 +72,7 @@ function simulateWithFoul(world: GameWorld, gameId: GameWorld['games'][keyof Gam
 
 function simulate(world: GameWorld, gameId: GameWorld['games'][keyof GameWorld['games']]['id'], random: RandomSource, actorRandom: RandomSource) {
   const game = world.games[gameId]!
-  return simulateMatchDetailed({ world, gameId, homeStrength: { teamId: game.homeTeamId, value: 50 }, awayStrength: { teamId: game.awayTeamId, value: 50 }, lineups: lineupsFor(world, game), squads: squadsFor(world, game), random, actorRandom })
+  return simulateMatchDetailed({ world, gameId, homeStrength: { teamId: game.homeTeamId, value: 50 }, awayStrength: { teamId: game.awayTeamId, value: 50 }, lineups: lineupsFor(world, game), squads: squadsFor(world, game), playerProfiles: { home: world.teams[game.homeTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)), away: world.teams[game.awayTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)) }, random, decisionRandom: new SeededRandomSource(13579), actorRandom })
 }
 
 function squadsFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['games']]) { return { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds } }

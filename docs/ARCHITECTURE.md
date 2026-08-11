@@ -228,13 +228,32 @@ recover fatigue in v1. Fatigue consumes no RNG, is not persisted, does not add
 events, and does not use stamina or athleticism. Viewer condition (`CON`) is
 derived from the same revealed-event fatigue projection as `100 - fatigue`.
 
-Sporting events now carry a transient PlayerId selected uniformly from the
-attacking lineup. Actor selection uses the separate deterministic stream
+Sporting events carry transient PlayerIds from the active lineup. Detail
+attribution uses the separate deterministic stream
 `match-actors-v1:${gameId}`, so attribution does not alter the established
 match-outcome RNG. A provisional 60% actor-RNG attribution may add an assist to a
 made two- or three-point field goal; the assister is another player in the scoring
 lineup. Player ratings do not yet affect individual possession results, rebounds,
 or assists.
+
+The seven persisted bootstrap ratings are not BDM's final attribute model.
+Application adapts them into transient `MatchPlayerProfile` signals before a
+match, so MatchEngine consumes usage, rim attack, shooting, creation, and ball
+security rather than reaching into Player ratings. Future larger attribute sets,
+traits, perks, tendencies, and contextual modifiers can change this adapter or
+add composable shot modifiers without changing the possession loop. There is no
+persisted overall.
+
+Player-driven offense uses a dedicated deterministic decision RNG
+(`match-decisions-v1:${gameId}`) for weighted offensive-actor and shot-zone
+selection. Sporting RNG resolves the contextual sporting outcome, while actor RNG
+remains detail attribution for assists, rebounders, and fouling defenders.
+Field-goal events carry `rim`, `midRange`, or `threePoint`; zone determines points.
+Make probability is a provisional pure calculation from shooter profile,
+individual fatigue, and the opponent's fatigue-adjusted TeamStrength proxy.
+Attacking TeamStrength no longer directly determines field-goal success. Individual
+defense/matchups, rating-weighted rebounds, assists, and turnovers remain future
+work.
 
 MatchViewer consumes the transient lineup snapshot in MatchSimulation; it never
 selects starters. UI resolves those PlayerIds and sporting-event PlayerIds through

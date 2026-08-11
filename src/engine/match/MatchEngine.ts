@@ -2,6 +2,9 @@ import type { GameId, PlayerId, TeamId } from '@/domain/ids'
 import { getGame, type GameWorld } from '@/domain/world'
 import type { RandomSource } from '@/engine/random'
 import { advanceFatigue, calculateFatigueAdjustedTeamStrength, createInitialFatigue, type FatigueByPlayerId } from './Fatigue'
+import type { MatchPlayerProfile, MatchPlayerProfiles } from './MatchPlayerProfile'
+import { calculateShotMakeProbability, calculateShotZoneWeights, pointsForShotZone, type ShotZone } from './ShotResolution'
+import { chooseWeighted } from './WeightedChoice'
 
 export const MATCH_RULES_V2 = {
   periodCount: 4,
@@ -59,6 +62,7 @@ export type MatchEvent =
       readonly teamId: TeamId
       readonly playerId: PlayerId
       readonly points: 2 | 3
+      readonly shotZone: ShotZone
       readonly assistPlayerId?: PlayerId
       readonly homeScore: number
       readonly awayScore: number
@@ -67,7 +71,18 @@ export type MatchEvent =
       readonly sequence: number
       readonly period: number
       readonly clockSecondsRemaining: number
-      readonly type: 'shotMissed' | 'turnover'
+      readonly type: 'shotMissed'
+      readonly teamId: TeamId
+      readonly playerId: PlayerId
+      readonly shotZone: ShotZone
+      readonly homeScore: number
+      readonly awayScore: number
+    }
+  | {
+      readonly sequence: number
+      readonly period: number
+      readonly clockSecondsRemaining: number
+      readonly type: 'turnover'
       readonly teamId: TeamId
       readonly playerId: PlayerId
       readonly homeScore: number
@@ -152,8 +167,10 @@ export interface SimulateMatchOptions {
   readonly homeStrength: TeamStrength
   readonly awayStrength: TeamStrength
   readonly squads: MatchSquads
+  readonly playerProfiles: MatchPlayerProfiles
   readonly lineups: MatchLineups
   readonly random: RandomSource
+  readonly decisionRandom: RandomSource
   readonly actorRandom: RandomSource
 }
 
@@ -168,6 +185,7 @@ export interface MatchSessionState {
   readonly activeLineups: MatchLineups
   readonly squads: MatchSquads
   readonly fatigueByPlayerId: FatigueByPlayerId
+  readonly playerProfiles: MatchPlayerProfiles
   readonly homeStrength: TeamStrength
   readonly awayStrength: TeamStrength
   readonly openingTeamId: TeamId
@@ -185,6 +203,7 @@ export interface MatchSessionState {
 export interface MatchSession {
   readonly state: MatchSessionState
   readonly random: RandomSource
+  readonly decisionRandom: RandomSource
   readonly actorRandom: RandomSource
 }
 
@@ -199,7 +218,7 @@ export interface SubstitutePlayerOptions {
   readonly playerInId: PlayerId
 }
 
-type PossessionOutcome = 'shootingFoul' | 'made2' | 'made3' | 'missedShot' | 'turnover'
+type PossessionOutcome = 'shootingFoul' | 'fieldGoalAttempt' | 'turnover'
 
 export class MatchSimulationError extends Error {
   public constructor(message: string) {
@@ -230,11 +249,13 @@ export function createMatchSession(options: SimulateMatchOptions): MatchSession 
       gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId,
       initialLineups: options.lineups, activeLineups: options.lineups, squads: options.squads,
       fatigueByPlayerId: createInitialFatigue(options.squads),
+      playerProfiles: options.playerProfiles,
       homeStrength: options.homeStrength, awayStrength: options.awayStrength, openingTeamId,
       period: 1, clockSecondsRemaining: MATCH_RULES_V2.periodSeconds, homeScore: 0, awayScore: 0,
       attackingTeamId: openingTeamId, nextSequence: 2, events: [initialEvent], isComplete: false,
     },
     random: options.random,
+    decisionRandom: options.decisionRandom,
     actorRandom: options.actorRandom,
   }
 }
@@ -274,10 +295,10 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   let sequence = state.nextSequence
   const clockSecondsRemaining = state.clockSecondsRemaining - possessionDuration
   const lineup = state.attackingTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
-  const baseStrength = state.attackingTeamId === state.homeTeamId ? state.homeStrength : state.awayStrength
-  const strength = calculateFatigueAdjustedTeamStrength(baseStrength, lineup, state.fatigueByPlayerId).value
-  const outcome = choosePossessionOutcome(strength, state.attackingTeamId === state.homeTeamId, session.random)
-  const playerId = lineup[session.actorRandom.nextInt(0, lineup.length - 1)]!
+  const profiles = state.attackingTeamId === state.homeTeamId ? state.playerProfiles.home : state.playerProfiles.away
+  const offensiveActor = chooseWeighted(lineup.map((playerId) => ({ item: profileForPlayer(profiles, playerId), weight: profileForPlayer(profiles, playerId).offense.usage })), session.decisionRandom)
+  const playerId = offensiveActor.playerId
+  const outcome = choosePossessionOutcome(state.attackingTeamId === state.homeTeamId, session.random)
   let attackingTeamId = state.attackingTeamId
 
   if (outcome === 'shootingFoul') {
@@ -295,25 +316,32 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
       }
     }
     attackingTeamId = defendingTeamId
-  } else if (outcome === 'made2' || outcome === 'made3') {
-    const points = Number(outcome.at(-1)) as 2 | 3
-    const assistPlayerId = !session.actorRandom.chance(ASSIST_PROBABILITY) ? undefined : selectAssister(lineup, playerId, session.actorRandom)
-    if (attackingTeamId === state.homeTeamId) homeScore += points
-    else awayScore += points
-    newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'shotMade', teamId: attackingTeamId, playerId, ...(assistPlayerId === undefined ? {} : { assistPlayerId }), points, homeScore, awayScore })
-    attackingTeamId = otherTeamId(attackingTeamId, state)
-  } else {
-    newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: outcome === 'missedShot' ? 'shotMissed' : 'turnover', teamId: attackingTeamId, playerId, homeScore, awayScore })
-    if (outcome === 'missedShot') {
+  } else if (outcome === 'fieldGoalAttempt') {
+    const shotZone = chooseWeighted((['rim', 'midRange', 'threePoint'] as const).map((zone) => ({ item: zone, weight: calculateShotZoneWeights(offensiveActor)[zone] })), session.decisionRandom)
+    const defendingTeamId = otherTeamId(attackingTeamId, state)
+    const defendingLineup = defendingTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
+    const defendingStrength = defendingTeamId === state.homeTeamId ? state.homeStrength : state.awayStrength
+    const opponentDefenseProxy = calculateFatigueAdjustedTeamStrength(defendingStrength, defendingLineup, state.fatigueByPlayerId).value
+    const made = session.random.chance(calculateShotMakeProbability({ shotZone, shooterProfile: offensiveActor, shooterFatigue: state.fatigueByPlayerId[playerId] ?? 0, opponentDefenseProxy }))
+    const points = pointsForShotZone(shotZone)
+    if (made) {
+      const assistPlayerId = !session.actorRandom.chance(ASSIST_PROBABILITY) ? undefined : selectAssister(lineup, playerId, session.actorRandom)
+      if (attackingTeamId === state.homeTeamId) homeScore += points
+      else awayScore += points
+      newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'shotMade', teamId: attackingTeamId, playerId, ...(assistPlayerId === undefined ? {} : { assistPlayerId }), points, shotZone, homeScore, awayScore })
+      attackingTeamId = otherTeamId(attackingTeamId, state)
+    } else {
+      newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'shotMissed', teamId: attackingTeamId, playerId, shotZone, homeScore, awayScore })
       const reboundType = session.random.chance(OFFENSIVE_REBOUND_PROBABILITY) ? 'offensive' : 'defensive'
       const reboundTeamId = reboundType === 'offensive' ? attackingTeamId : otherTeamId(attackingTeamId, state)
       const reboundLineup = reboundTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
       const reboundPlayerId = reboundLineup[session.actorRandom.nextInt(0, reboundLineup.length - 1)]!
       newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'rebound', teamId: reboundTeamId, playerId: reboundPlayerId, reboundType, homeScore, awayScore })
       attackingTeamId = reboundTeamId
-    } else {
-      attackingTeamId = otherTeamId(attackingTeamId, state)
     }
+  } else {
+    newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'turnover', teamId: attackingTeamId, playerId, homeScore, awayScore })
+    attackingTeamId = otherTeamId(attackingTeamId, state)
   }
 
   const stateAfterPossession = { ...state, clockSecondsRemaining, homeScore, awayScore, attackingTeamId, nextSequence: sequence }
@@ -398,6 +426,26 @@ function validateLineupsBelongToSquads(lineups: MatchLineups, squads: MatchSquad
   if (lineups.away.some((playerId) => !squads.away.includes(playerId))) throw new MatchSimulationError('Away lineup players must belong to the away squad')
 }
 
+function validatePlayerProfiles(playerProfiles: MatchPlayerProfiles, squads: MatchSquads): void {
+  validateProfilesForSquad(playerProfiles.home, squads.home, 'Home')
+  validateProfilesForSquad(playerProfiles.away, squads.away, 'Away')
+  const homeProfiles = new Set(playerProfiles.home.map((profile) => profile.playerId))
+  if (playerProfiles.away.some((profile) => homeProfiles.has(profile.playerId))) throw new MatchSimulationError('Home and away player profiles cannot share players')
+}
+
+function validateProfilesForSquad(profiles: readonly MatchPlayerProfile[], squad: readonly PlayerId[], side: string): void {
+  if (profiles.length !== squad.length) throw new MatchSimulationError(`${side} player profiles must contain exactly one profile per squad player`)
+  const profileIds = new Set(profiles.map((profile) => profile.playerId))
+  if (profileIds.size !== profiles.length) throw new MatchSimulationError(`${side} player profiles cannot contain duplicates`)
+  if (squad.some((playerId) => !profileIds.has(playerId)) || profiles.some((profile) => !squad.includes(profile.playerId))) throw new MatchSimulationError(`${side} player profiles must match the squad exactly`)
+}
+
+function profileForPlayer(profiles: readonly MatchPlayerProfile[], playerId: PlayerId): MatchPlayerProfile {
+  const profile = profiles.find((candidate) => candidate.playerId === playerId)
+  if (profile === undefined) throw new MatchSimulationError(`Active Player ${playerId} has no MatchPlayerProfile`)
+  return profile
+}
+
 /** Reconstructs current five from an initial snapshot and an ordered event subset. */
 export function calculateActiveLineups(
   initialLineups: MatchLineups,
@@ -454,22 +502,17 @@ function validateOptions(options: SimulateMatchOptions) {
   validateSquads(options.squads)
   validateLineups(options.lineups)
   validateLineupsBelongToSquads(options.lineups, options.squads)
+  validatePlayerProfiles(options.playerProfiles, options.squads)
   return game
 }
 
-function choosePossessionOutcome(strength: number, isHomeTeam: boolean, random: RandomSource): PossessionOutcome {
-  const effectiveStrength = strength + (isHomeTeam ? HOME_ADVANTAGE_STRENGTH : 0)
-  const adjustment = (effectiveStrength - 50) * 0.0015
-  const turnover = 0.13 - adjustment * 0.25
-  const made3 = 0.18 + adjustment * 0.7
-  const made2 = 0.3 + adjustment
+function choosePossessionOutcome(isHomeTeam: boolean, random: RandomSource): PossessionOutcome {
+  const turnover = 0.13 - (isHomeTeam ? HOME_ADVANTAGE_STRENGTH : 0) * 0.0015 * 0.25
   const roll = random.next()
 
   if (roll < SHOOTING_FOUL_PROBABILITY) return 'shootingFoul'
   if (roll < SHOOTING_FOUL_PROBABILITY + turnover) return 'turnover'
-  if (roll < SHOOTING_FOUL_PROBABILITY + turnover + made3) return 'made3'
-  if (roll < SHOOTING_FOUL_PROBABILITY + turnover + made3 + made2) return 'made2'
-  return 'missedShot'
+  return 'fieldGoalAttempt'
 }
 
 function secondsForPeriod(period: number): number {

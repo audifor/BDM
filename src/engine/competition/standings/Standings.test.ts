@@ -4,7 +4,7 @@ import { createGame, type Game } from '@/domain/game'
 import { gameIdFromString, seasonIdFromString } from '@/domain/ids'
 import { createSeason } from '@/domain/season'
 import { createGameWorld, type GameWorld } from '@/domain/world'
-import { applyMatchResult, simulateMatch, type MatchLineups } from '@/engine/match'
+import { applyMatchResult, createMatchPlayerProfile, simulateMatch, type MatchLineups } from '@/engine/match'
 import { SeededRandomSource } from '@/engine/random'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { generateWorld } from '@/engine/world'
@@ -249,7 +249,9 @@ function simulateResult(world: GameWorld, game: Game, random: number | SeededRan
     awayStrength: { teamId: game.awayTeamId, value: 50 },
     lineups: lineupsFor(world, game),
     squads: { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds },
+    playerProfiles: { home: world.teams[game.homeTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)), away: world.teams[game.awayTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)) },
     random: typeof random === 'number' ? new SeededRandomSource(random) : random,
+    decisionRandom: new SeededRandomSource(67891),
     actorRandom: new SeededRandomSource(typeof random === 'number' ? random : 12345),
   })
 }

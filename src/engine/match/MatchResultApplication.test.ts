@@ -9,6 +9,7 @@ import { generateWorld } from '@/engine/world'
 
 import {
   applyMatchResult,
+  createMatchPlayerProfile,
   MatchResultApplicationError,
   simulateMatch,
   type MatchLineups,
@@ -107,7 +108,9 @@ describe('Match Result Application', () => {
       awayStrength: { teamId: game.awayTeamId, value: 40 },
       lineups: lineupsFor(world, game),
       squads: { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds },
+      playerProfiles: { home: world.teams[game.homeTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)), away: world.teams[game.awayTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)) },
       random: new SeededRandomSource(12345),
+      decisionRandom: new SeededRandomSource(67891),
       actorRandom: new SeededRandomSource(67890),
     })
     const nextWorld = applyMatchResult(world, simulationResult)
@@ -187,7 +190,9 @@ function simulateResult(world: GameWorld, game: Game, seed: number): MatchSimula
     awayStrength: { teamId: game.awayTeamId, value: 45 },
     lineups: lineupsFor(world, game),
     squads: { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds },
+    playerProfiles: { home: world.teams[game.homeTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)), away: world.teams[game.awayTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)) },
     random: new SeededRandomSource(seed),
+    decisionRandom: new SeededRandomSource(seed + 1),
     actorRandom: new SeededRandomSource(seed),
   })
 }

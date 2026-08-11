@@ -5,7 +5,7 @@ import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 
-import { MATCH_RULES_V2, simulateMatchDetailed, type MatchEvent, type MatchLineups } from './index'
+import { MATCH_RULES_V2, createMatchPlayerProfile, simulateMatchDetailed, type MatchEvent, type MatchLineups } from './index'
 
 describe('possession-based MatchEngine v2', () => {
   it('derives the final score exactly from field goals and made free throws', () => {
@@ -147,6 +147,8 @@ function simulateWithRandom(world: GameWorld, gameId: GameWorld['games'][keyof G
     lineups: lineupsFor(world, game),
     squads: { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds },
     random,
+    playerProfiles: { home: world.teams[game.homeTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)), away: world.teams[game.awayTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)) },
+    decisionRandom: new SeededRandomSource(13579),
     actorRandom,
   })
 }
@@ -185,7 +187,7 @@ class OvertimeRandom implements RandomSource {
   }
   nextInt(): number { return 24 }
   nextFloat(minInclusive: number): number { return minInclusive }
-  chance(probability: number): boolean { return probability === 0.25 || probability === 0.5 }
+  chance(probability: number): boolean { return probability === 0.25 || probability === 0.5 || (this.outcomes === 101 && probability > 0.1 && probability < 0.9) }
   pick<Item>(items: readonly Item[]): Item { return items[0]! }
 }
 
