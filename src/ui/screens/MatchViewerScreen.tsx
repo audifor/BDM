@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 
-import type { GameWorld } from '@/domain/world'
-import type { MatchEvent, MatchSimulation } from '@/engine/match'
+import { getPlayer, type GameWorld } from '@/domain/world'
+import { calculateMatchPlayerStats, type MatchEvent, type MatchSimulation, type PlayerMatchStats } from '@/engine/match'
 import { PLAYBACK_SPEEDS, type PlaybackSpeed } from '@/stores/matchViewerStore'
 
 import { createMatchViewerTokens, formatClock, formatMatchEvent, formatPeriod } from '../matchViewer'
@@ -32,6 +32,9 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
   const awayScore = lastEvent?.awayScore ?? 0
   const period = lastEvent?.period ?? 1
   const clock = lastEvent?.clockSecondsRemaining ?? 600
+  const playerStats = calculateMatchPlayerStats(props.simulation, revealedEvents)
+  const homeStats = playerStats.slice(0, props.simulation.lineups.home.length)
+  const awayStats = playerStats.slice(props.simulation.lineups.home.length)
 
   useEffect(() => {
     if (!props.isPlaying || isFinished) return
@@ -52,6 +55,10 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
         <strong>{props.awayTeamName}</strong>
       </section>
       <Court homeLabel="HOME" awayLabel="AWAY" homePlayers={createMatchViewerTokens(props.world, props.simulation.lineups.home)} awayPlayers={createMatchViewerTokens(props.world, props.simulation.lineups.away)} />
+      <section className="boxscore">
+        <StatsTable title="HOME" stats={homeStats} world={props.world} />
+        <StatsTable title="AWAY" stats={awayStats} world={props.world} />
+      </section>
       <section className="viewer-lower">
         <div className="event-feed">
           <p className="eyebrow">MATCH EVENTS</p>
@@ -79,4 +86,8 @@ function Court({ homeLabel, awayLabel, homePlayers, awayPlayers }: { readonly ho
 function EventLine({ event, world }: { readonly event: MatchEvent; readonly world: GameWorld }) {
   const className = event.type === 'shotMade' ? 'event-made' : event.type === 'shotMissed' ? 'event-missed' : event.type === 'turnover' ? 'event-turnover' : event.type === 'gameEnd' ? undefined : 'event-period'
   return <p className={className}><time>{event.type === 'gameEnd' ? '00:00' : formatClock(event.clockSecondsRemaining)}</time> {formatMatchEvent(event, world)}</p>
+}
+
+function StatsTable({ title, stats, world }: { readonly title: string; readonly stats: readonly PlayerMatchStats[]; readonly world: GameWorld }) {
+  return <section className="boxscore-team"><p className="eyebrow">{title}</p><table><thead><tr><th>PLAYER</th><th>PTS</th><th>FG</th><th>TO</th></tr></thead><tbody>{stats.map((stat) => <tr key={stat.playerId}><td>{getPlayer(world, stat.playerId).lastName}</td><td>{stat.points}</td><td>{stat.fieldGoalsMade}/{stat.fieldGoalsAttempted}</td><td>{stat.turnovers}</td></tr>)}</tbody></table></section>
 }

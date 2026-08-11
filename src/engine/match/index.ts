@@ -7,6 +7,7 @@ export {
   simulateMatchDetailed,
 } from './MatchEngine'
 export { applyMatchResult, MatchResultApplicationError } from './MatchResultApplication'
+export { calculateMatchPlayerStats } from './PlayerMatchStats'
 export type {
   MatchSimulationResult,
   MatchSimulation,
@@ -15,3 +16,4 @@ export type {
   SimulateMatchOptions,
   TeamStrength,
 } from './MatchEngine'
+export type { PlayerMatchStats } from './PlayerMatchStats'

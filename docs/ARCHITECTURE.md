@@ -176,4 +176,8 @@ selects starters. UI resolves those PlayerIds and sporting-event PlayerIds throu
 GameWorld at render time, so names are not duplicated into MatchEvents. Court
 coordinates are presentation-only UI slots derived from primary position, never
 data on Player, Team, MatchSimulation, or GameWorld. Individual player statistics
-do not yet exist.
+are a transient Engine projection: PlayerMatchStats is reconstructed from
+MatchSimulation lineups and MatchEvents and is never persisted. MatchViewer passes
+only revealed events to that projection, so its live boxscore cannot expose future
+events. This v1 contains only points, field goals, and turnovers; rebounds,
+assists, and other player statistics do not yet exist.
