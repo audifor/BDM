@@ -98,3 +98,17 @@ GameWorld with only `currentDate` changed; simulating or applying games remains 
 separate responsibility. Date-based game queries and `CurrentDateStatus` are
 derived projections with no persisted date index. The user team is derived through
 `userCoachId -> Team.coachId`, so a user coach may validly have no team.
+
+## First playable prototype
+
+`app/game` is the application boundary for the first UI loop. It creates the
+prototype world and schedule, coordinates MatchEngine with result application,
+and resolves today's games before requesting CalendarEngine to advance the date.
+Zustand stores only the current `GameWorld` and delegates each command to that
+layer; React only renders derived information and invokes store commands.
+
+Team strength is temporarily a non-persisted value of 50 for every team. Match
+randomness is provisionally seeded from a stable explicit hash of each `GameId`;
+this makes one game's instant result reproducible without introducing persistent
+career RNG state. A future ratings and save-system design will replace both
+prototype choices.
