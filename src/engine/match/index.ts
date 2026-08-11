@@ -13,6 +13,7 @@ export {
 } from './MatchEngine'
 export { applyMatchResult, MatchResultApplicationError } from './MatchResultApplication'
 export { calculateMatchPlayerStats } from './PlayerMatchStats'
+export { advanceFatigue, calculateFatigueAdjustedTeamStrength, calculateFatigueAtEvents, clampFatigue, createInitialFatigue, FATIGUE_GAIN_PER_SECOND, FATIGUE_RECOVERY_PER_SECOND, MAX_FATIGUE, MAX_FATIGUE_STRENGTH_PENALTY } from './Fatigue'
 export { applyDueRotations, INITIAL_ROTATION_CONTROLLER_STATE } from './rotation/RotationController'
 export { simulateMatchWithRotations } from './rotation/MatchRotationRunner'
 export { createDefaultRotationPlan } from './rotation/RotationPlan'
@@ -30,6 +31,7 @@ export type {
   SubstitutePlayerOptions,
 } from './MatchEngine'
 export type { PlayerMatchStats } from './PlayerMatchStats'
+export type { FatigueByPlayerId } from './Fatigue'
 export type { ApplyDueRotationsResult, RotationControllerState } from './rotation/RotationController'
 export type { SimulateMatchWithRotationsOptions } from './rotation/MatchRotationRunner'
 export type { RotationInstruction, TeamRotationPlan } from './rotation/RotationPlan'

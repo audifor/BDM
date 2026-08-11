@@ -15,7 +15,7 @@ describe('MatchSession', () => {
     const stepped = toMatchSimulation(runToComplete(createMatchSession(createOptions(world, game.id, 12345, 67890))))
 
     expect(stepped).toEqual(whole)
-    expect({ finalScore: whole.finalScore, eventCount: whole.events.length }).toEqual({ finalScore: { home: 68, away: 77 }, eventCount: 221 })
+    expect({ finalScore: whole.finalScore, eventCount: whole.events.length }).toEqual({ finalScore: { home: 70, away: 64 }, eventCount: 226 })
   })
 
   it('advances one logical unit without mutating the previous sporting state', () => {

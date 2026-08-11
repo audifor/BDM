@@ -1,6 +1,7 @@
 import type { GameId, PlayerId, TeamId } from '@/domain/ids'
 import { getGame, type GameWorld } from '@/domain/world'
 import type { RandomSource } from '@/engine/random'
+import { advanceFatigue, calculateFatigueAdjustedTeamStrength, createInitialFatigue, type FatigueByPlayerId } from './Fatigue'
 
 export const MATCH_RULES_V2 = {
   periodCount: 4,
@@ -166,6 +167,7 @@ export interface MatchSessionState {
   /** Current five for each team; substitutions are the only operation that changes it. */
   readonly activeLineups: MatchLineups
   readonly squads: MatchSquads
+  readonly fatigueByPlayerId: FatigueByPlayerId
   readonly homeStrength: TeamStrength
   readonly awayStrength: TeamStrength
   readonly openingTeamId: TeamId
@@ -227,6 +229,7 @@ export function createMatchSession(options: SimulateMatchOptions): MatchSession 
     state: {
       gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId,
       initialLineups: options.lineups, activeLineups: options.lineups, squads: options.squads,
+      fatigueByPlayerId: createInitialFatigue(options.squads),
       homeStrength: options.homeStrength, awayStrength: options.awayStrength, openingTeamId,
       period: 1, clockSecondsRemaining: MATCH_RULES_V2.periodSeconds, homeScore: 0, awayScore: 0,
       attackingTeamId: openingTeamId, nextSequence: 2, events: [initialEvent], isComplete: false,
@@ -262,16 +265,18 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const newEvents: MatchEvent[] = []
   const possessionDuration = session.random.nextInt(MATCH_RULES_V2.possessionMinSeconds, MATCH_RULES_V2.possessionMaxSeconds)
   if (possessionDuration > state.clockSecondsRemaining) {
-    return finishPeriod(session, { ...state, clockSecondsRemaining: 0 }, newEvents)
+    const fatiguedSession = updateSessionFatigue(session, state, state.clockSecondsRemaining)
+    return finishPeriod(fatiguedSession, { ...fatiguedSession.state, clockSecondsRemaining: 0 }, newEvents)
   }
 
   let homeScore = state.homeScore
   let awayScore = state.awayScore
   let sequence = state.nextSequence
   const clockSecondsRemaining = state.clockSecondsRemaining - possessionDuration
-  const strength = state.attackingTeamId === state.homeTeamId ? state.homeStrength.value : state.awayStrength.value
-  const outcome = choosePossessionOutcome(strength, state.attackingTeamId === state.homeTeamId, session.random)
   const lineup = state.attackingTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
+  const baseStrength = state.attackingTeamId === state.homeTeamId ? state.homeStrength : state.awayStrength
+  const strength = calculateFatigueAdjustedTeamStrength(baseStrength, lineup, state.fatigueByPlayerId).value
+  const outcome = choosePossessionOutcome(strength, state.attackingTeamId === state.homeTeamId, session.random)
   const playerId = lineup[session.actorRandom.nextInt(0, lineup.length - 1)]!
   let attackingTeamId = state.attackingTeamId
 
@@ -312,9 +317,14 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   }
 
   const stateAfterPossession = { ...state, clockSecondsRemaining, homeScore, awayScore, attackingTeamId, nextSequence: sequence }
-  if (clockSecondsRemaining === 0) return finishPeriod(session, stateAfterPossession, newEvents)
-  const nextState = { ...stateAfterPossession, events: [...state.events, ...newEvents] }
-  return { session: { ...session, state: nextState }, newEvents }
+  const fatiguedSession = updateSessionFatigue(session, stateAfterPossession, possessionDuration)
+  if (clockSecondsRemaining === 0) return finishPeriod(fatiguedSession, fatiguedSession.state, newEvents)
+  const nextState = { ...fatiguedSession.state, events: [...state.events, ...newEvents] }
+  return { session: { ...fatiguedSession, state: nextState }, newEvents }
+}
+
+function updateSessionFatigue(session: MatchSession, state: MatchSessionState, elapsedSeconds: number): MatchSession {
+  return { ...session, state: { ...state, fatigueByPlayerId: advanceFatigue(state.fatigueByPlayerId, state.squads, state.activeLineups, elapsedSeconds) } }
 }
 
 /** Converts a completed transient session into the existing MatchSimulation contract. */

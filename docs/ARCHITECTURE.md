@@ -188,8 +188,8 @@ roster data. `MatchSimulation.lineups` remains the historical initial-five
 snapshot. A MatchSession separately retains `initialLineups` and `activeLineups`:
 an explicit substitution event reconstructs the latter without advancing clock or
 score and without consuming either RNG stream. Actors are selected from
-`activeLineups`, but TeamStrength is deliberately fixed for the full match, so
-substitutions do not yet alter team quality. PlayerMatchStats introduces an
+`activeLineups`. Base TeamStrength remains fixed for the full match, while live
+fatigue applies a transient effective-strength penalty. PlayerMatchStats introduces an
 incoming bench player only once its substitution event is revealed, preserving
 partial-viewer anti-spoiler behavior.
 
@@ -203,7 +203,8 @@ temporary Q1--Q4 pattern; deeper bench players may not play. Plans and their
 controller state are transient, consume no RNG or clock, and do not change score.
 The user team and AI teams both use this automatic plan temporarily. MatchViewer
 reconstructs court tokens from revealed substitution events, so playback, pause,
-and skip cannot reveal a future lineup. TeamStrength remains fixed; no fatigue,
+and skip cannot reveal a future lineup. Base TeamStrength remains fixed while
+fatigue adjusts effective strength; no fatigue-aware rotation policy,
 manual controls, or overtime-specific rotation policy exist. Future
 manual substitutions will need to reconcile user choices with a pending plan.
 
@@ -218,6 +219,14 @@ persisted and does not affect results, TeamStrength, or player ratings. Future
 fatigue is intentionally different: it will be live transient MatchSession state
 because it influences what happens next, rather than a reconstruction of what
 already happened.
+
+Live fatigue is transient `MatchSession` state on a 0--100 scale. The provisional
+gain/recovery constants are 0.04 and 0.025 per game-clock second, with a maximum
+20% penalty based on the active five's average fatigue. Active players gain and
+bench players recover only during game-clock seconds; quarter breaks do not
+recover fatigue in v1. Fatigue consumes no RNG, is not persisted, does not add
+events, and does not use stamina or athleticism. Viewer condition (`CON`) is
+derived from the same revealed-event fatigue projection as `100 - fatigue`.
 
 Sporting events now carry a transient PlayerId selected uniformly from the
 attacking lineup. Actor selection uses the separate deterministic stream
