@@ -64,3 +64,8 @@ ID. Relationships are references by ID and are validated when the world is creat
 Derived data is not persisted when it can be resolved from canonical entities.
 Future engines may define controlled world updates, but that behavior is not part
 of `GameWorld` itself.
+
+`WorldGenerator` belongs to Engine and creates a `GameWorld` through its canonical
+factory. Its procedural content uses deterministic `RandomSource`; generated IDs
+are deterministic sequence strings independent of that random stream. The same
+seed and generator options reproduce the same world.
