@@ -1,7 +1,15 @@
-export { MatchSimulationError, simulateMatch } from './MatchEngine'
+export {
+  MatchSimulationError,
+  PROTOTYPE_PERIOD_COUNT,
+  PROTOTYPE_PERIOD_SECONDS,
+  simulateMatch,
+  simulateMatchDetailed,
+} from './MatchEngine'
 export { applyMatchResult, MatchResultApplicationError } from './MatchResultApplication'
 export type {
   MatchSimulationResult,
+  MatchSimulation,
+  MatchEvent,
   SimulateMatchOptions,
   TeamStrength,
 } from './MatchEngine'

@@ -112,3 +112,22 @@ randomness is provisionally seeded from a stable explicit hash of each `GameId`;
 this makes one game's instant result reproducible without introducing persistent
 career RNG state. A future ratings and save-system design will replace both
 prototype choices.
+
+## Match simulation and viewer
+
+`MatchEngine` can produce either a final `MatchSimulationResult` for Instant
+Result or a transient `MatchSimulation` containing a chronological `MatchEvent`
+stream. The detailed simulation reuses the same base score calculation, so the
+same game, strengths, and seeded random source produce the same final score for
+Instant Result and MatchViewer.
+
+Events are Engine output, not persisted in `GameWorld`. MatchViewer is a UI
+consumer of that output: it reveals events with its own pause and playback-speed
+state, but never chooses sporting outcomes. Viewer state lives in a separate
+ephemeral Zustand store and is discarded after the match. Playback speed changes
+only the visual interval between already-generated events.
+
+Application prepares a user match while its Game remains scheduled. It applies
+the final score to `GameWorld` through `applyMatchResult` only when playback
+reaches `gameEnd` or the user skips to the end. This keeps the future MatchViewer
+and Instant Result paths on one deterministic simulation boundary.

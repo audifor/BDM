@@ -1,7 +1,12 @@
 import type { Game } from '@/domain/game'
 import type { GameWorld } from '@/domain/world'
 import { getGamesToday, getUserTeam } from '@/engine/calendar'
-import { applyMatchResult, simulateMatch, type TeamStrength } from '@/engine/match'
+import {
+  applyMatchResult,
+  simulateMatchDetailed,
+  type MatchSimulation,
+  type TeamStrength,
+} from '@/engine/match'
 import { SeededRandomSource } from '@/engine/random'
 
 const PROTOTYPE_TEAM_STRENGTH = 50
@@ -33,8 +38,8 @@ export function createPrototypeGameRandom(gameId: Game['id']): SeededRandomSourc
   return new SeededRandomSource(hash)
 }
 
-/** Simulates and applies only the user's scheduled game on the current date. */
-export function playUserGame(world: GameWorld): GameWorld {
+/** Prepares the user's current game for a viewer without changing GameWorld. */
+export function prepareUserMatch(world: GameWorld): MatchSimulation {
   const userTeam = getUserTeam(world)
   if (userTeam === undefined) {
     throw new PlayUserGameError('The user coach is not assigned to a Team')
@@ -50,11 +55,11 @@ export function playUserGame(world: GameWorld): GameWorld {
     throw new PlayUserGameError(`The user Game ${game.id} is already completed`)
   }
 
-  return simulateAndApplyGame(world, game)
+  return prepareMatch(world, game)
 }
 
-export function simulateAndApplyGame(world: GameWorld, game: Game): GameWorld {
-  const result = simulateMatch({
+export function prepareMatch(world: GameWorld, game: Game): MatchSimulation {
+  return simulateMatchDetailed({
     world,
     gameId: game.id,
     homeStrength: getPrototypeTeamStrength(game.homeTeamId),
@@ -62,5 +67,29 @@ export function simulateAndApplyGame(world: GameWorld, game: Game): GameWorld {
     random: createPrototypeGameRandom(game.id),
   })
 
-  return applyMatchResult(world, result)
+}
+
+/** Applies a completed viewer simulation to GameWorld exactly through the result boundary. */
+export function completeMatch(world: GameWorld, simulation: MatchSimulation): GameWorld {
+  return applyMatchResult(world, {
+    gameId: simulation.gameId,
+    homeTeamId: simulation.homeTeamId,
+    awayTeamId: simulation.awayTeamId,
+    homeScore: simulation.finalScore.home,
+    awayScore: simulation.finalScore.away,
+  })
+}
+
+/** Instant Result uses the same detailed simulation as MatchViewer, then applies it immediately. */
+export function instantResult(world: GameWorld): GameWorld {
+  return completeMatch(world, prepareUserMatch(world))
+}
+
+/** Retained application alias for existing instant-result callers. */
+export function playUserGame(world: GameWorld): GameWorld {
+  return instantResult(world)
+}
+
+export function simulateAndApplyGame(world: GameWorld, game: Game): GameWorld {
+  return completeMatch(world, prepareMatch(world, game))
 }

@@ -20,6 +20,48 @@ export interface MatchSimulationResult {
   readonly awayScore: number
 }
 
+export const PROTOTYPE_PERIOD_COUNT = 4
+export const PROTOTYPE_PERIOD_SECONDS = 600
+
+export type MatchEvent =
+  | {
+      readonly sequence: number
+      readonly period: number
+      readonly clockSecondsRemaining: number
+      readonly type: 'periodStart' | 'periodEnd'
+      readonly homeScore: number
+      readonly awayScore: number
+    }
+  | {
+      readonly sequence: number
+      readonly period: number
+      readonly clockSecondsRemaining: number
+      readonly type: 'score'
+      readonly teamId: TeamId
+      readonly points: 1 | 2 | 3
+      readonly homeScore: number
+      readonly awayScore: number
+    }
+  | {
+      readonly sequence: number
+      readonly period: number
+      readonly clockSecondsRemaining: 0
+      readonly type: 'gameEnd'
+      readonly homeScore: number
+      readonly awayScore: number
+    }
+
+export interface MatchSimulation {
+  readonly gameId: GameId
+  readonly homeTeamId: TeamId
+  readonly awayTeamId: TeamId
+  readonly events: readonly MatchEvent[]
+  readonly finalScore: {
+    readonly home: number
+    readonly away: number
+  }
+}
+
 export interface SimulateMatchOptions {
   readonly world: GameWorld
   readonly gameId: GameId
@@ -66,6 +108,119 @@ export function simulateMatch(options: SimulateMatchOptions): MatchSimulationRes
     homeScore,
     awayScore,
   }
+}
+
+/**
+ * Produces the complete deterministic event stream immediately. Playback belongs
+ * to MatchViewer; this engine never waits, schedules timers, or changes the world.
+ */
+export function simulateMatchDetailed(options: SimulateMatchOptions): MatchSimulation {
+  const finalResult = simulateMatch(options)
+  const events = createMatchEvents(finalResult, options.random)
+
+  return {
+    gameId: finalResult.gameId,
+    homeTeamId: finalResult.homeTeamId,
+    awayTeamId: finalResult.awayTeamId,
+    events,
+    finalScore: {
+      home: finalResult.homeScore,
+      away: finalResult.awayScore,
+    },
+  }
+}
+
+function createMatchEvents(result: MatchSimulationResult, random: RandomSource): MatchEvent[] {
+  const actions = [
+    ...createScoreActions(result.homeTeamId, result.homeScore, random),
+    ...createScoreActions(result.awayTeamId, result.awayScore, random),
+  ].map((action) => ({ ...action, period: random.nextInt(1, PROTOTYPE_PERIOD_COUNT) }))
+  const events: MatchEvent[] = []
+  let sequence = 1
+  let homeScore = 0
+  let awayScore = 0
+
+  for (let period = 1; period <= PROTOTYPE_PERIOD_COUNT; period += 1) {
+    events.push({
+      sequence: sequence++,
+      period,
+      clockSecondsRemaining: PROTOTYPE_PERIOD_SECONDS,
+      type: 'periodStart',
+      homeScore,
+      awayScore,
+    })
+
+    const periodActions = shuffle(actions.filter((action) => action.period === period), random)
+    for (let index = 0; index < periodActions.length; index += 1) {
+      const action = periodActions[index]!
+      if (action.teamId === result.homeTeamId) {
+        homeScore += action.points
+      } else {
+        awayScore += action.points
+      }
+      events.push({
+        sequence: sequence++,
+        period,
+        clockSecondsRemaining: clockForAction(index, periodActions.length),
+        type: 'score',
+        teamId: action.teamId,
+        points: action.points,
+        homeScore,
+        awayScore,
+      })
+    }
+
+    events.push({
+      sequence: sequence++,
+      period,
+      clockSecondsRemaining: 0,
+      type: 'periodEnd',
+      homeScore,
+      awayScore,
+    })
+  }
+
+  events.push({
+    sequence,
+    period: PROTOTYPE_PERIOD_COUNT,
+    clockSecondsRemaining: 0,
+    type: 'gameEnd',
+    homeScore,
+    awayScore,
+  })
+
+  if (homeScore !== result.homeScore || awayScore !== result.awayScore) {
+    throw new MatchSimulationError('Match events do not match the simulated final score')
+  }
+
+  return events
+}
+
+function createScoreActions(teamId: TeamId, score: number, random: RandomSource): Array<{ teamId: TeamId; points: 1 | 2 | 3 }> {
+  const actions: Array<{ teamId: TeamId; points: 1 | 2 | 3 }> = []
+  let remaining = score
+
+  while (remaining > 0) {
+    const points = Math.min(remaining, random.nextInt(1, 3)) as 1 | 2 | 3
+    actions.push({ teamId, points })
+    remaining -= points
+  }
+
+  return actions
+}
+
+function shuffle<Item>(items: readonly Item[], random: RandomSource): Item[] {
+  const shuffled = [...items]
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = random.nextInt(0, index)
+    ;[shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex]!, shuffled[index]!]
+  }
+
+  return shuffled
+}
+
+function clockForAction(index: number, count: number): number {
+  return PROTOTYPE_PERIOD_SECONDS - Math.ceil(((index + 1) * PROTOTYPE_PERIOD_SECONDS) / (count + 1))
 }
 
 function calculateScore(strength: number, homeAdvantage: number, random: RandomSource): number {

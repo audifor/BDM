@@ -1,10 +1,22 @@
-import { advanceGameDay, createNewGame, playUserGame, simulateRemainingGamesToday } from '@/app/game'
+import {
+  advanceGameDay,
+  completeMatch,
+  createNewGame,
+  instantResult,
+  prepareUserMatch,
+  playUserGame,
+  simulateRemainingGamesToday,
+} from '@/app/game'
 import type { GameWorld } from '@/domain/world'
+import type { MatchSimulation } from '@/engine/match'
 import { create } from 'zustand'
 
 interface GameStore {
   readonly world: GameWorld | null
   newGame(): void
+  prepareUserMatch(): MatchSimulation
+  completeMatch(simulation: MatchSimulation): void
+  instantResult(): void
   playUserGame(): void
   simulateRemainingGamesToday(): void
   advanceDay(): void
@@ -15,6 +27,15 @@ interface GameStore {
 export const useGameStore = create<GameStore>((set, get) => ({
   world: null,
   newGame: () => set({ world: createNewGame() }),
+  prepareUserMatch: () => prepareUserMatch(requireWorld(get().world)),
+  completeMatch: (simulation) => {
+    const world = requireWorld(get().world)
+    set({ world: completeMatch(world, simulation) })
+  },
+  instantResult: () => {
+    const world = requireWorld(get().world)
+    set({ world: instantResult(world) })
+  },
   playUserGame: () => {
     const world = requireWorld(get().world)
     set({ world: playUserGame(world) })

@@ -8,9 +8,10 @@ import { formatPrototypeDate } from '../formatters'
 interface HomeScreenProps {
   readonly world: Parameters<typeof getUserTeam>[0]
   readonly onPlayGame: () => void
+  readonly onInstantResult: () => void
 }
 
-export function HomeScreen({ world, onPlayGame }: HomeScreenProps) {
+export function HomeScreen({ world, onPlayGame, onInstantResult }: HomeScreenProps) {
   const userTeam = getUserTeam(world)
   const userCoach = getUserCoach(world)
   const todayGame = userTeam === undefined ? undefined : findTeamGame(getGamesToday(world), userTeam.id)
@@ -42,7 +43,10 @@ export function HomeScreen({ world, onPlayGame }: HomeScreenProps) {
           <p className="eyebrow">GAME DAY</p>
           <GameMatchup world={world} game={todayGame} />
           {todayGame.status === 'scheduled' ? (
-            <button className="primary-button" onClick={onPlayGame} type="button">PLAY GAME</button>
+            <div className="game-actions">
+              <button className="primary-button" onClick={onPlayGame} type="button">PLAY GAME</button>
+              <button className="secondary-button" onClick={onInstantResult} type="button">INSTANT RESULT</button>
+            </div>
           ) : (
             <p className="final-score">FINAL · {todayGame.result!.homeScore} – {todayGame.result!.awayScore}</p>
           )}

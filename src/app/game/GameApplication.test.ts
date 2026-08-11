@@ -7,7 +7,10 @@ import {
   advanceGameDay,
   createNewGame,
   getCurrentSeason,
+  instantResult,
   playUserGame,
+  prepareUserMatch,
+  completeMatch,
   simulateRemainingGamesToday,
 } from './index'
 
@@ -40,6 +43,23 @@ describe('prototype game application', () => {
     const gameId = getGamesToday(first).find((game) => game.status === 'completed')!.id
 
     expect(first.games[gameId]?.result).toEqual(second.games[gameId]?.result)
+  })
+
+  it('prepares a viewer session without completing the Game, then applies it once on completion', () => {
+    const world = createNewGame()
+    const simulation = prepareUserMatch(world)
+    const completedWorld = completeMatch(world, simulation)
+
+    expect(world.games[simulation.gameId]?.status).toBe('scheduled')
+    expect(completedWorld.games[simulation.gameId]).toMatchObject({ status: 'completed', result: { homeScore: simulation.finalScore.home, awayScore: simulation.finalScore.away } })
+  })
+
+  it('uses the same final score for Instant Result and MatchViewer preparation', () => {
+    const world = createNewGame()
+    const simulation = prepareUserMatch(world)
+    const instantWorld = instantResult(world)
+
+    expect(instantWorld.games[simulation.gameId]?.result).toEqual({ homeScore: simulation.finalScore.home, awayScore: simulation.finalScore.away })
   })
 
   it('simulates every remaining game today and is idempotent after completion', () => {

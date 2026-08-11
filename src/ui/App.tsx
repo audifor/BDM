@@ -1,9 +1,10 @@
 import { useState } from 'react'
 
 import { useGameStore } from '@/stores/gameStore'
+import { useMatchViewerStore } from '@/stores/matchViewerStore'
 
 import { formatPrototypeDate } from './formatters'
-import { HomeScreen, ScheduleScreen, SquadScreen, StandingsScreen } from './screens'
+import { HomeScreen, MatchViewerScreen, ScheduleScreen, SquadScreen, StandingsScreen } from './screens'
 import './styles.css'
 
 type Section = 'home' | 'squad' | 'schedule' | 'standings'
@@ -19,12 +20,31 @@ export function App() {
   const world = useGameStore((state) => state.world)
   const newGame = useGameStore((state) => state.newGame)
   const resetGame = useGameStore((state) => state.resetGame)
-  const playUserGame = useGameStore((state) => state.playUserGame)
+  const prepareUserMatch = useGameStore((state) => state.prepareUserMatch)
+  const completeMatch = useGameStore((state) => state.completeMatch)
+  const instantResult = useGameStore((state) => state.instantResult)
   const advanceDay = useGameStore((state) => state.advanceDay)
   const [section, setSection] = useState<Section>('home')
+  const simulation = useMatchViewerStore((state) => state.simulation)
+  const currentEventIndex = useMatchViewerStore((state) => state.currentEventIndex)
+  const isPlaying = useMatchViewerStore((state) => state.isPlaying)
+  const speed = useMatchViewerStore((state) => state.speed)
+  const resultApplied = useMatchViewerStore((state) => state.resultApplied)
+  const startMatch = useMatchViewerStore((state) => state.startMatch)
+  const pause = useMatchViewerStore((state) => state.pause)
+  const resume = useMatchViewerStore((state) => state.resume)
+  const setSpeed = useMatchViewerStore((state) => state.setSpeed)
+  const revealNextEvent = useMatchViewerStore((state) => state.revealNextEvent)
+  const skipToEnd = useMatchViewerStore((state) => state.skipToEnd)
+  const markResultApplied = useMatchViewerStore((state) => state.markResultApplied)
+  const clearMatch = useMatchViewerStore((state) => state.clear)
 
   if (world === null) {
     return <StartScreen onNewGame={() => { newGame(); setSection('home') }} />
+  }
+
+  if (simulation !== null) {
+    return <MatchViewerScreen simulation={simulation} homeTeamName={world.teams[simulation.homeTeamId]!.name} awayTeamName={world.teams[simulation.awayTeamId]!.name} currentEventIndex={currentEventIndex} isPlaying={isPlaying} speed={speed} resultApplied={resultApplied} onPause={pause} onResume={resume} onSpeedChange={setSpeed} onRevealNext={revealNextEvent} onSkipToEnd={skipToEnd} onApplyResult={() => { if (markResultApplied()) completeMatch(simulation) }} onContinue={() => { clearMatch(); setSection('home') }} />
   }
 
   const startNewGame = () => {
@@ -51,7 +71,7 @@ export function App() {
         </div>
       </aside>
       <div className="main-content">
-        {section === 'home' && <HomeScreen world={world} onPlayGame={playUserGame} />}
+        {section === 'home' && <HomeScreen world={world} onPlayGame={() => startMatch(prepareUserMatch())} onInstantResult={instantResult} />}
         {section === 'squad' && <SquadScreen world={world} />}
         {section === 'schedule' && <ScheduleScreen world={world} />}
         {section === 'standings' && <StandingsScreen world={world} />}
