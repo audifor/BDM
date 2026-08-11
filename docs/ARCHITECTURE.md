@@ -92,3 +92,9 @@ data for a Season. Wins, losses, and points are not persisted in Team or GameWor
 the table can be recalculated at any time. Its current neutral tie-break order is
 wins, point difference, points scored, then TeamId; future competition rules may
 replace it.
+
+`CalendarEngine` controls temporal progression. `advanceDay` creates a new
+GameWorld with only `currentDate` changed; simulating or applying games remains a
+separate responsibility. Date-based game queries and `CurrentDateStatus` are
+derived projections with no persisted date index. The user team is derived through
+`userCoachId -> Team.coachId`, so a user coach may validly have no team.
