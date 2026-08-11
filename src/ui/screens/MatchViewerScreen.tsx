@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import { getPlayer, type GameWorld } from '@/domain/world'
-import { calculateMatchPlayerStats, type MatchEvent, type MatchSimulation, type PlayerMatchStats } from '@/engine/match'
+import type { Player } from '@/domain/player'
+import { calculateMatchPlayerStats, type MatchEvent, type MatchSimulation, type MatchTacticalPlan, type PlayerMatchStats, type TacticalLevel } from '@/engine/match'
 import { PLAYBACK_SPEEDS, type PlaybackSpeed } from '@/stores/matchViewerStore'
 
 import { createMatchViewerTokens, formatClock, formatMatchEvent, formatPeriod, resolveActiveMatchLineups, resolveMatchFatigue } from '../matchViewer'
@@ -22,9 +23,14 @@ interface MatchViewerScreenProps {
   readonly onSkipToEnd: () => void
   readonly onApplyResult: () => void
   readonly onContinue: () => void
+  readonly coachingPlan: MatchTacticalPlan
+  readonly onApplyCoaching: (plan: MatchTacticalPlan) => void
+  readonly coachingPlayers: readonly Player[]
 }
 
 export function MatchViewerScreen(props: MatchViewerScreenProps) {
+  const [coachingOpen, setCoachingOpen] = useState(false)
+  const [draft, setDraft] = useState(props.coachingPlan)
   const revealedEvents = props.simulation.events.slice(0, props.currentEventIndex)
   const lastEvent = revealedEvents.at(-1)
   const isFinished = props.currentEventIndex >= props.simulation.events.length
@@ -74,14 +80,18 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
         ) : (
           <div className="viewer-controls">
             <button className="secondary-button" onClick={props.isPlaying ? props.onPause : props.onResume} type="button">{props.isPlaying ? 'PAUSE' : 'PLAY'}</button>
+            <button className="secondary-button" onClick={() => { props.onPause(); setDraft(props.coachingPlan); setCoachingOpen(true) }} type="button">COACHING</button>
             <div className="speed-controls">{PLAYBACK_SPEEDS.map((speed) => <button className={props.speed === speed ? 'speed active' : 'speed'} key={speed} onClick={() => props.onSpeedChange(speed)} type="button">x{speed}</button>)}</div>
             <button className="primary-button" onClick={props.onSkipToEnd} type="button">SKIP TO END</button>
           </div>
         )}
+        {coachingOpen && <section className="content-panel"><p className="eyebrow">LIVE COACHING · CURRENT PLAN</p><label>PACE <LevelSelect value={draft.pace} onChange={(pace) => setDraft({ ...draft, pace })} /></label><label>RIM <LevelSelect value={draft.shotProfile.rim} onChange={(rim) => setDraft({ ...draft, shotProfile: { ...draft.shotProfile, rim } })} /></label><label>MID <LevelSelect value={draft.shotProfile.midRange} onChange={(midRange) => setDraft({ ...draft, shotProfile: { ...draft.shotProfile, midRange } })} /></label><label>3PT <LevelSelect value={draft.shotProfile.threePoint} onChange={(threePoint) => setDraft({ ...draft, shotProfile: { ...draft.shotProfile, threePoint } })} /></label><label>DEFENSE <select value={`${draft.defense.interior}/${draft.defense.perimeter}`} onChange={(event) => { const [interior, perimeter] = event.target.value.split('/').map(Number) as [TacticalLevel, TacticalLevel]; setDraft({ ...draft, defense: { interior, perimeter } }) }}><option value="0/0">Balanced</option><option value="2/-1">Protect Paint</option><option value="-1/2">Pressure Perimeter</option></select></label><label>FEATURED PLAYER <select value={draft.featuredPlayerId ?? ''} onChange={(event) => setDraft({ ...draft, ...(event.target.value === '' ? {} : { featuredPlayerId: event.target.value as Player['id'] }) })}><option value="">None</option>{props.coachingPlayers.map((player) => <option key={player.id} value={player.id}>{player.firstName} {player.lastName} · {player.basketball.primaryPosition}</option>)}</select></label><div className="game-actions"><button className="primary-button" onClick={() => { props.onApplyCoaching(draft); setCoachingOpen(false) }} type="button">APPLY CHANGES</button><button className="secondary-button" onClick={() => setCoachingOpen(false)} type="button">CANCEL</button></div></section>}
       </section>
     </main>
   )
 }
+
+function LevelSelect({ value, onChange }: { readonly value: TacticalLevel; readonly onChange: (value: TacticalLevel) => void }) { return <select value={value} onChange={(event) => onChange(Number(event.target.value) as TacticalLevel)}>{[-2, -1, 0, 1, 2].map((level) => <option key={level} value={level}>{level > 0 ? `+${level}` : level}</option>)}</select> }
 
 function Court({ homeLabel, awayLabel, homePlayers, awayPlayers }: { readonly homeLabel: string; readonly awayLabel: string; readonly homePlayers: ReturnType<typeof createMatchViewerTokens>; readonly awayPlayers: ReturnType<typeof createMatchViewerTokens> }) {
   return <section className="court" aria-label="Prototype basketball court"><span className="court-label home-label">{homeLabel}</span><span className="court-label away-label">{awayLabel}</span><div className="half-court-line" />{homePlayers.map(({ player, visualSlot }) => <div className={`token home-token token-${visualSlot}`} key={player.id}><strong>{player.lastName}</strong><span>{player.basketball.primaryPosition}</span></div>)}{awayPlayers.map(({ player, visualSlot }) => <div className={`token away-token token-${visualSlot}`} key={player.id}><strong>{player.lastName}</strong><span>{player.basketball.primaryPosition}</span></div>)}</section>

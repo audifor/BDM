@@ -11,6 +11,7 @@ interface MatchViewerStore {
   readonly speed: PlaybackSpeed
   readonly resultApplied: boolean
   startMatch(simulation: MatchSimulation): void
+  replaceSimulation(simulation: MatchSimulation, isPlaying?: boolean): void
   pause(): void
   resume(): void
   setSpeed(speed: PlaybackSpeed): void
@@ -28,6 +29,7 @@ export const useMatchViewerStore = create<MatchViewerStore>((set, get) => ({
   speed: 1,
   resultApplied: false,
   startMatch: (simulation) => set({ simulation, currentEventIndex: 0, isPlaying: true, speed: 1, resultApplied: false }),
+  replaceSimulation: (simulation, isPlaying = true) => set({ simulation, currentEventIndex: simulation.events.length, isPlaying, resultApplied: false }),
   pause: () => set({ isPlaying: false }),
   resume: () => {
     const { simulation, currentEventIndex } = get()

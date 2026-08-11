@@ -13,6 +13,7 @@ import {
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import { calculateTeamStrength } from '@/engine/team'
 import { selectStartingFive } from '@/engine/team'
+import { LiveMatchController } from './LiveMatchController'
 
 export class PlayUserGameError extends Error {
   public constructor(message: string) {
@@ -48,6 +49,17 @@ export function prepareUserMatch(world: GameWorld, userTacticalPlan: MatchTactic
   }
 
   return prepareMatch(world, game, userTeam.id === game.homeTeamId ? { home: userTacticalPlan, away: createDefaultTacticalPlan() } : { home: createDefaultTacticalPlan(), away: userTacticalPlan })
+}
+
+export function createLiveUserMatch(world: GameWorld, userTacticalPlan: MatchTacticalPlan = createDefaultTacticalPlan()): LiveMatchController {
+  const userTeam = getUserTeam(world)
+  if (userTeam === undefined) throw new PlayUserGameError('The user coach is not assigned to a Team')
+  const game = getGamesToday(world).find((candidate) => candidate.homeTeamId === userTeam.id || candidate.awayTeamId === userTeam.id)
+  if (game === undefined || game.status !== 'scheduled') throw new PlayUserGameError('The user Team has no scheduled Game today')
+  const lineups = { home: selectStartingFive(world, game.homeTeamId), away: selectStartingFive(world, game.awayTeamId) }
+  const squads = { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds }
+  const tacticalPlans = userTeam.id === game.homeTeamId ? { home: userTacticalPlan, away: createDefaultTacticalPlan() } : { home: createDefaultTacticalPlan(), away: userTacticalPlan }
+  return new LiveMatchController({ world, gameId: game.id, homeStrength: calculateTeamStrength(world, game.homeTeamId), awayStrength: calculateTeamStrength(world, game.awayTeamId), lineups, squads, playerProfiles: { home: squads.home.map((id) => createMatchPlayerProfile(world.players[id]!)), away: squads.away.map((id) => createMatchPlayerProfile(world.players[id]!)) }, homeRotationPlan: createDefaultRotationPlan({ teamId: game.homeTeamId, squad: squads.home, initialLineup: lineups.home, players: world.players }), awayRotationPlan: createDefaultRotationPlan({ teamId: game.awayTeamId, squad: squads.away, initialLineup: lineups.away, players: world.players }), random: createPrototypeGameRandom(game.id), decisionRandom: new SeededRandomSource(hashStringToSeed(`match-decisions-v1:${game.id}`)), actorRandom: new SeededRandomSource(hashStringToSeed(`match-actors-v1:${game.id}`)), tacticalPlans })
 }
 
 export function prepareMatch(world: GameWorld, game: Game, tacticalPlans = { home: createDefaultTacticalPlan(), away: createDefaultTacticalPlan() }): MatchSimulation {

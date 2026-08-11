@@ -56,6 +56,7 @@ export function formatMatchEvent(event: MatchEvent, world: GameWorld): string {
   if (event.type === 'freeThrowMade') return `${getPlayer(world, event.playerId).lastName} makes free throw`
   if (event.type === 'freeThrowMissed') return `${getPlayer(world, event.playerId).lastName} misses free throw`
   if (event.type === 'substitution') return `${getPlayer(world, event.playerInId).lastName} replaces ${getPlayer(world, event.playerOutId).lastName}`
+  if (event.type === 'tacticalChange') return 'Coaching adjustment applied'
   if (event.type === 'gameEnd') return 'FINAL'
   return event.type === 'periodStart' ? `${formatPeriod(event.period)} START` : `${formatPeriod(event.period)} END`
 }

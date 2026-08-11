@@ -287,6 +287,22 @@ There are no live tactical changes or events in 023, though the session boundary
 ready for a future between-steps update. Plays, schemes, scouting, tactical AI, and
 the final tactical model remain intentionally open for a later overhaul.
 
+## Live coaching v1
+
+PLAY GAME owns a live MatchSession through an Application controller: sporting
+steps are generated only when playback requests them, never precomputed ahead of
+the viewer. Instant Result runs that same session flow to completion. MatchCoachingState
+is the live-coaching boundary and currently contains only each team's current plan.
+An atomic tactical change is validated between steps, consumes no clock, fatigue or
+RNG, and is recorded as a historical `tacticalChange` event. It can affect future
+steps but never rewrites sporting history. React and Zustand hold viewer/draft state
+only; they do not run the engine. Future shouts, timeouts and staff insights remain
+unimplemented.
+
+> A viewed match must never precompute sporting outcomes that the user can still influence through future coaching decisions.
+
+> Coaching decisions may alter the future simulation trajectory but must never rewrite already-resolved sporting history.
+
 MatchViewer consumes the transient lineup snapshot in MatchSimulation; it never
 selects starters. UI resolves those PlayerIds and sporting-event PlayerIds through
 GameWorld at render time, so names are not duplicated into MatchEvents. Court

@@ -4,17 +4,23 @@ import {
   createNewGame,
   instantResult,
   prepareUserMatch,
+  createLiveUserMatch,
   playUserGame,
   simulateRemainingGamesToday,
 } from '@/app/game'
 import type { GameWorld } from '@/domain/world'
 import type { MatchSimulation, MatchTacticalPlan } from '@/engine/match'
+import type { LiveMatchController } from '@/app/game'
 import { create } from 'zustand'
 
 interface GameStore {
   readonly world: GameWorld | null
   newGame(): void
   prepareUserMatch(tacticalPlan?: MatchTacticalPlan): MatchSimulation
+  startLiveMatch(tacticalPlan?: MatchTacticalPlan): MatchSimulation
+  advanceLiveMatch(): MatchSimulation
+  skipLiveMatch(): MatchSimulation
+  applyLiveTactics(teamId: MatchSimulation['homeTeamId'], tacticalPlan: MatchTacticalPlan): MatchSimulation
   completeMatch(simulation: MatchSimulation): void
   instantResult(tacticalPlan?: MatchTacticalPlan): void
   playUserGame(): void
@@ -24,10 +30,15 @@ interface GameStore {
 }
 
 /** UI bridge only: game operations remain in Application services. */
+let liveController: LiveMatchController | null = null
 export const useGameStore = create<GameStore>((set, get) => ({
   world: null,
   newGame: () => set({ world: createNewGame() }),
   prepareUserMatch: (tacticalPlan) => prepareUserMatch(requireWorld(get().world), tacticalPlan),
+  startLiveMatch: (tacticalPlan) => { liveController = createLiveUserMatch(requireWorld(get().world), tacticalPlan); return liveController.snapshot() },
+  advanceLiveMatch: () => requireLiveController().advanceOneStep(),
+  skipLiveMatch: () => requireLiveController().skipToEnd(),
+  applyLiveTactics: (teamId, tacticalPlan) => requireLiveController().applyTactics(teamId, tacticalPlan),
   completeMatch: (simulation) => {
     const world = requireWorld(get().world)
     set({ world: completeMatch(world, simulation) })
@@ -48,7 +59,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const world = requireWorld(get().world)
     set({ world: advanceGameDay(world) })
   },
-  resetGame: () => set({ world: null }),
+  resetGame: () => { liveController = null; set({ world: null }) },
 }))
 
 function requireWorld(world: GameWorld | null): GameWorld {
@@ -58,3 +69,4 @@ function requireWorld(world: GameWorld | null): GameWorld {
 
   return world
 }
+function requireLiveController(): LiveMatchController { if (liveController === null) throw new Error('No live match'); return liveController }

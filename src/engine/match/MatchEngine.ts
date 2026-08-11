@@ -11,6 +11,7 @@ import { calculateTurnoverProbability } from './TurnoverResolution'
 import { chooseWeighted } from './WeightedChoice'
 import { createDefaultTacticalPlan, validateTacticalPlan, type MatchTacticalPlan } from './tactics/MatchTacticalPlan'
 import { applyPaceToPossessionDuration, applyShotProfile, calculateTacticalDefenseModifier, tacticalUsageWeight } from './tactics/TacticalEffects'
+import { clonePlan, type MatchCoachingState } from './coaching/MatchCoachingState'
 
 export const MATCH_RULES_V2 = {
   periodCount: 4,
@@ -134,6 +135,7 @@ export type MatchEvent =
       readonly homeScore: number
       readonly awayScore: number
     }
+  | { readonly sequence: number; readonly period: number; readonly clockSecondsRemaining: number; readonly type: 'tacticalChange'; readonly teamId: TeamId; readonly previousPlan: MatchTacticalPlan; readonly newPlan: MatchTacticalPlan; readonly homeScore: number; readonly awayScore: number }
   | {
       readonly sequence: number
       readonly period: number
@@ -190,7 +192,7 @@ export interface MatchSessionState {
   readonly squads: MatchSquads
   readonly fatigueByPlayerId: FatigueByPlayerId
   readonly playerProfiles: MatchPlayerProfiles
-  readonly tacticalPlans: { readonly home: MatchTacticalPlan; readonly away: MatchTacticalPlan }
+  readonly coachingState: MatchCoachingState
   readonly homeStrength: TeamStrength
   readonly awayStrength: TeamStrength
   readonly openingTeamId: TeamId
@@ -254,7 +256,7 @@ export function createMatchSession(options: SimulateMatchOptions): MatchSession 
       gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId,
       initialLineups: options.lineups, activeLineups: options.lineups, squads: options.squads,
       fatigueByPlayerId: createInitialFatigue(options.squads),
-      playerProfiles: options.playerProfiles, tacticalPlans: options.tacticalPlans ?? { home: createDefaultTacticalPlan(), away: createDefaultTacticalPlan() },
+      playerProfiles: options.playerProfiles, coachingState: { home: { currentTacticalPlan: clonePlan(options.tacticalPlans?.home ?? createDefaultTacticalPlan()) }, away: { currentTacticalPlan: clonePlan(options.tacticalPlans?.away ?? createDefaultTacticalPlan()) } },
       homeStrength: options.homeStrength, awayStrength: options.awayStrength, openingTeamId,
       period: 1, clockSecondsRemaining: MATCH_RULES_V2.periodSeconds, homeScore: 0, awayScore: 0,
       attackingTeamId: openingTeamId, nextSequence: 2, events: [initialEvent], isComplete: false,
@@ -289,7 +291,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   if (session.state.isComplete) throw new MatchSimulationError('Cannot step a completed MatchSession')
   const state = session.state
   const newEvents: MatchEvent[] = []
-  const attackingPlan = state.attackingTeamId === state.homeTeamId ? state.tacticalPlans.home : state.tacticalPlans.away
+  const attackingPlan = state.attackingTeamId === state.homeTeamId ? state.coachingState.home.currentTacticalPlan : state.coachingState.away.currentTacticalPlan
   const possessionDuration = applyPaceToPossessionDuration(session.random.nextInt(MATCH_RULES_V2.possessionMinSeconds, MATCH_RULES_V2.possessionMaxSeconds), attackingPlan.pace)
   if (possessionDuration > state.clockSecondsRemaining) {
     const fatiguedSession = updateSessionFatigue(session, state, state.clockSecondsRemaining)
@@ -329,7 +331,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   } else if (outcome === 'fieldGoalAttempt') {
     const shotWeights = applyShotProfile(calculateShotZoneWeights(offensiveActor), attackingPlan)
     const shotZone = chooseWeighted((['rim', 'midRange', 'threePoint'] as const).map((zone) => ({ item: zone, weight: shotWeights[zone] })), session.decisionRandom)
-    const defendingPlan = defendingTeamId === state.homeTeamId ? state.tacticalPlans.home : state.tacticalPlans.away
+    const defendingPlan = defendingTeamId === state.homeTeamId ? state.coachingState.home.currentTacticalPlan : state.coachingState.away.currentTacticalPlan
     const made = session.random.chance(calculateShotMakeProbability({ shotZone, shooterProfile: offensiveActor, shooterFatigue: state.fatigueByPlayerId[playerId] ?? 0, defenderProfile: primaryDefender, defenderFatigue: state.fatigueByPlayerId[primaryDefenderId] ?? 0, tacticalDefenseModifier: calculateTacticalDefenseModifier(defendingPlan, shotZone) }))
     const points = pointsForShotZone(shotZone)
     if (made) {

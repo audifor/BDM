@@ -24,6 +24,10 @@ export function App() {
   const newGame = useGameStore((state) => state.newGame)
   const resetGame = useGameStore((state) => state.resetGame)
   const prepareUserMatch = useGameStore((state) => state.prepareUserMatch)
+  const startLiveMatch = useGameStore((state) => state.startLiveMatch)
+  const advanceLiveMatch = useGameStore((state) => state.advanceLiveMatch)
+  const skipLiveMatch = useGameStore((state) => state.skipLiveMatch)
+  const applyLiveTactics = useGameStore((state) => state.applyLiveTactics)
   const completeMatch = useGameStore((state) => state.completeMatch)
   const instantResult = useGameStore((state) => state.instantResult)
   const advanceDay = useGameStore((state) => state.advanceDay)
@@ -34,6 +38,7 @@ export function App() {
   const speed = useMatchViewerStore((state) => state.speed)
   const resultApplied = useMatchViewerStore((state) => state.resultApplied)
   const startMatch = useMatchViewerStore((state) => state.startMatch)
+  const replaceSimulation = useMatchViewerStore((state) => state.replaceSimulation)
   const pause = useMatchViewerStore((state) => state.pause)
   const resume = useMatchViewerStore((state) => state.resume)
   const setSpeed = useMatchViewerStore((state) => state.setSpeed)
@@ -50,7 +55,8 @@ export function App() {
   }
 
   if (simulation !== null) {
-    return <MatchViewerScreen world={world} simulation={simulation} homeTeamName={world.teams[simulation.homeTeamId]!.name} awayTeamName={world.teams[simulation.awayTeamId]!.name} currentEventIndex={currentEventIndex} isPlaying={isPlaying} speed={speed} resultApplied={resultApplied} onPause={pause} onResume={resume} onSpeedChange={setSpeed} onRevealNext={revealNextEvent} onSkipToEnd={skipToEnd} onApplyResult={() => { if (markResultApplied()) completeMatch(simulation) }} onContinue={() => { clearMatch(); setSection('home') }} />
+    const coachingTeam = getUserTeam(world)!
+    return <MatchViewerScreen world={world} simulation={simulation} homeTeamName={world.teams[simulation.homeTeamId]!.name} awayTeamName={world.teams[simulation.awayTeamId]!.name} currentEventIndex={currentEventIndex} isPlaying={isPlaying} speed={speed} resultApplied={resultApplied} onPause={pause} onResume={resume} onSpeedChange={setSpeed} onRevealNext={() => replaceSimulation(advanceLiveMatch())} onSkipToEnd={() => replaceSimulation(skipLiveMatch(), false)} onApplyResult={() => { if (markResultApplied()) completeMatch(simulation) }} onContinue={() => { clearMatch(); setSection('home') }} coachingPlan={tacticalPlan} coachingPlayers={coachingTeam.rosterPlayerIds.map((playerId) => world.players[playerId]!)} onApplyCoaching={(plan) => { replaceSimulation(applyLiveTactics(coachingTeam.id, plan), false); setTacticalPlan(plan) }} />
   }
   const userTeam = getUserTeam(world)
 
@@ -79,7 +85,7 @@ export function App() {
         </div>
       </aside>
       <div className="main-content">
-        {section === 'home' && <HomeScreen world={world} onPlayGame={() => startMatch(prepareUserMatch(tacticalPlan))} onInstantResult={() => instantResult(tacticalPlan)} />}
+        {section === 'home' && <HomeScreen world={world} onPlayGame={() => startMatch(startLiveMatch(tacticalPlan))} onInstantResult={() => instantResult(tacticalPlan)} />}
         {section === 'tactics' && <TacticsScreen players={userTeam === undefined ? [] : userTeam.rosterPlayerIds.map((playerId) => world.players[playerId]!)} plan={tacticalPlan} onChange={setTacticalPlan} onReset={resetTacticalPlan} />}
         {section === 'squad' && <SquadScreen world={world} />}
         {section === 'schedule' && <ScheduleScreen world={world} />}
