@@ -86,3 +86,9 @@ Application -> GameWorld`. Simulation does not mutate state; result application
 does not simulate. `MatchSimulationResult` is transient, while `Game.result` is
 the canonical persisted final score. The current transition rebuilds GameWorld via
 the canonical validator; future optimization requires profiling evidence.
+
+`Standings` belongs to Engine and is a derived projection of completed `Game.result`
+data for a Season. Wins, losses, and points are not persisted in Team or GameWorld;
+the table can be recalculated at any time. Its current neutral tie-break order is
+wins, point difference, points scored, then TeamId; future competition rules may
+replace it.
