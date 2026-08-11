@@ -1,9 +1,13 @@
 import { useEffect } from 'react'
 
+import type { GameWorld } from '@/domain/world'
 import type { MatchEvent, MatchSimulation } from '@/engine/match'
 import { PLAYBACK_SPEEDS, type PlaybackSpeed } from '@/stores/matchViewerStore'
 
+import { createMatchViewerTokens, formatClock, formatMatchEvent, formatPeriod } from '../matchViewer'
+
 interface MatchViewerScreenProps {
+  readonly world: GameWorld
   readonly simulation: MatchSimulation
   readonly homeTeamName: string
   readonly awayTeamName: string
@@ -47,11 +51,11 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
         <div><b>{homeScore} - {awayScore}</b><span>{isFinished ? 'FINAL' : `${formatPeriod(period)} · ${formatClock(clock)}`}</span></div>
         <strong>{props.awayTeamName}</strong>
       </section>
-      <Court homeLabel="HOME" awayLabel="AWAY" />
+      <Court homeLabel="HOME" awayLabel="AWAY" homePlayers={createMatchViewerTokens(props.world, props.simulation.lineups.home)} awayPlayers={createMatchViewerTokens(props.world, props.simulation.lineups.away)} />
       <section className="viewer-lower">
         <div className="event-feed">
           <p className="eyebrow">MATCH EVENTS</p>
-          {revealedEvents.slice(-10).reverse().map((event) => <EventLine event={event} key={event.sequence} />)}
+          {revealedEvents.slice(-10).reverse().map((event) => <EventLine event={event} key={event.sequence} world={props.world} />)}
           {revealedEvents.length === 0 && <p className="empty-events">Waiting for tip-off...</p>}
         </div>
         {isFinished ? (
@@ -68,23 +72,11 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
   )
 }
 
-function Court({ homeLabel, awayLabel }: { readonly homeLabel: string; readonly awayLabel: string }) {
-  return <section className="court" aria-label="Prototype basketball court"><span className="court-label home-label">{homeLabel}</span><span className="court-label away-label">{awayLabel}</span><div className="half-court-line" />{[0, 1, 2, 3, 4].map((position) => <i className={`token home-token token-${position}`} key={`home-${position}`} />)}{[0, 1, 2, 3, 4].map((position) => <i className={`token away-token token-${position}`} key={`away-${position}`} />)}</section>
+function Court({ homeLabel, awayLabel, homePlayers, awayPlayers }: { readonly homeLabel: string; readonly awayLabel: string; readonly homePlayers: ReturnType<typeof createMatchViewerTokens>; readonly awayPlayers: ReturnType<typeof createMatchViewerTokens> }) {
+  return <section className="court" aria-label="Prototype basketball court"><span className="court-label home-label">{homeLabel}</span><span className="court-label away-label">{awayLabel}</span><div className="half-court-line" />{homePlayers.map(({ player, visualSlot }) => <div className={`token home-token token-${visualSlot}`} key={player.id}><strong>{player.lastName}</strong><span>{player.basketball.primaryPosition}</span></div>)}{awayPlayers.map(({ player, visualSlot }) => <div className={`token away-token token-${visualSlot}`} key={player.id}><strong>{player.lastName}</strong><span>{player.basketball.primaryPosition}</span></div>)}</section>
 }
 
-function EventLine({ event }: { readonly event: MatchEvent }) {
-  if (event.type === 'shotMade') return <p className="event-made"><time>{formatClock(event.clockSecondsRemaining)}</time> {event.teamId} scores {event.points}</p>
-  if (event.type === 'shotMissed') return <p className="event-missed"><time>{formatClock(event.clockSecondsRemaining)}</time> {event.teamId} miss</p>
-  if (event.type === 'turnover') return <p className="event-turnover"><time>{formatClock(event.clockSecondsRemaining)}</time> {event.teamId} turnover</p>
-  if (event.type === 'gameEnd') return <p><time>00:00</time> FINAL</p>
-  return <p className="event-period"><time>{formatClock(event.clockSecondsRemaining)}</time> {event.type === 'periodStart' ? `${formatPeriod(event.period)} START` : `${formatPeriod(event.period)} END`}</p>
-}
-
-function formatClock(seconds: number): string {
-  return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`
-}
-
-function formatPeriod(period: number): string {
-  if (period <= 4) return `Q${period}`
-  return period === 5 ? 'OT' : `${period - 4}OT`
+function EventLine({ event, world }: { readonly event: MatchEvent; readonly world: GameWorld }) {
+  const className = event.type === 'shotMade' ? 'event-made' : event.type === 'shotMissed' ? 'event-missed' : event.type === 'turnover' ? 'event-turnover' : event.type === 'gameEnd' ? undefined : 'event-period'
+  return <p className={className}><time>{event.type === 'gameEnd' ? '00:00' : formatClock(event.clockSecondsRemaining)}</time> {formatMatchEvent(event, world)}</p>
 }

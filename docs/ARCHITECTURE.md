@@ -164,11 +164,16 @@ TeamStrength and does not consume player ratings.
 
 Match preparation derives each Starting Five before entering MatchEngine. The
 resulting transient `MatchLineups` is stored in MatchSimulation as a snapshot;
-MatchEngine consumes but never selects it. Lineups are not persisted and events
-remain team-level until the later player-action milestone.
+MatchEngine consumes but never selects it. Lineups are not persisted.
 
 Sporting events now carry a transient PlayerId selected uniformly from the
 attacking lineup. Actor selection uses the separate deterministic stream
 `match-actors-v1:${gameId}`, so attribution does not alter the established
-match-outcome RNG. Player ratings do not yet affect individual possession results,
-and MatchViewer does not yet consume PlayerId.
+match-outcome RNG. Player ratings do not yet affect individual possession results.
+
+MatchViewer consumes the transient lineup snapshot in MatchSimulation; it never
+selects starters. UI resolves those PlayerIds and sporting-event PlayerIds through
+GameWorld at render time, so names are not duplicated into MatchEvents. Court
+coordinates are presentation-only UI slots derived from primary position, never
+data on Player, Team, MatchSimulation, or GameWorld. Individual player statistics
+do not yet exist.
