@@ -3,7 +3,6 @@ export { createNewGame, PROTOTYPE_GAME_CONFIGURATION } from './createNewGame'
 export {
   createPrototypeGameRandom,
   completeMatch,
-  getPrototypeTeamStrength,
   instantResult,
   PlayUserGameError,
   playUserGame,

@@ -5,11 +5,9 @@ import {
   applyMatchResult,
   simulateMatchDetailed,
   type MatchSimulation,
-  type TeamStrength,
 } from '@/engine/match'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
-
-const PROTOTYPE_TEAM_STRENGTH = 50
+import { calculateTeamStrength } from '@/engine/team'
 
 export class PlayUserGameError extends Error {
   public constructor(message: string) {
@@ -18,10 +16,6 @@ export class PlayUserGameError extends Error {
   }
 }
 
-/** Temporary bridge until the ratings system provides actual team strengths. */
-export function getPrototypeTeamStrength(teamId: TeamStrength['teamId']): TeamStrength {
-  return { teamId, value: PROTOTYPE_TEAM_STRENGTH }
-}
 
 /**
  * Produces a stable 32-bit seed from a GameId. This is provisional until career
@@ -55,8 +49,8 @@ export function prepareMatch(world: GameWorld, game: Game): MatchSimulation {
   return simulateMatchDetailed({
     world,
     gameId: game.id,
-    homeStrength: getPrototypeTeamStrength(game.homeTeamId),
-    awayStrength: getPrototypeTeamStrength(game.awayTeamId),
+    homeStrength: calculateTeamStrength(world, game.homeTeamId),
+    awayStrength: calculateTeamStrength(world, game.awayTeamId),
     random: createPrototypeGameRandom(game.id),
   })
 
