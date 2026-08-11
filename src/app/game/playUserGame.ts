@@ -3,7 +3,8 @@ import type { GameWorld } from '@/domain/world'
 import { getGamesToday, getUserTeam } from '@/engine/calendar'
 import {
   applyMatchResult,
-  simulateMatchDetailed,
+  createDefaultRotationPlan,
+  simulateMatchWithRotations,
   type MatchSimulation,
 } from '@/engine/match'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
@@ -47,13 +48,17 @@ export function prepareUserMatch(world: GameWorld): MatchSimulation {
 }
 
 export function prepareMatch(world: GameWorld, game: Game): MatchSimulation {
-  return simulateMatchDetailed({
+  const lineups = { home: selectStartingFive(world, game.homeTeamId), away: selectStartingFive(world, game.awayTeamId) }
+  const squads = { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds }
+  return simulateMatchWithRotations({
     world,
     gameId: game.id,
     homeStrength: calculateTeamStrength(world, game.homeTeamId),
     awayStrength: calculateTeamStrength(world, game.awayTeamId),
-    lineups: { home: selectStartingFive(world, game.homeTeamId), away: selectStartingFive(world, game.awayTeamId) },
-    squads: { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds },
+    lineups,
+    squads,
+    homeRotationPlan: createDefaultRotationPlan({ teamId: game.homeTeamId, squad: squads.home, initialLineup: lineups.home, players: world.players }),
+    awayRotationPlan: createDefaultRotationPlan({ teamId: game.awayTeamId, squad: squads.away, initialLineup: lineups.away, players: world.players }),
     random: createPrototypeGameRandom(game.id),
     actorRandom: new SeededRandomSource(hashStringToSeed(`match-actors-v1:${game.id}`)),
   })

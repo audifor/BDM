@@ -44,6 +44,7 @@ describe('PlayerMatchStats', () => {
     const before = JSON.stringify(simulation)
     const stats = calculateMatchPlayerStats(simulation)
     const homePlayers = new Set(simulation.lineups.home)
+    for (const event of simulation.events) if (event.type === 'substitution' && event.teamId === simulation.homeTeamId) homePlayers.add(event.playerInId)
     const fieldGoals = simulation.events.filter((event) => event.type === 'shotMade')
 
     expect(stats.filter((stat) => homePlayers.has(stat.playerId)).reduce((total, stat) => total + stat.points, 0)).toBe(simulation.finalScore.home)

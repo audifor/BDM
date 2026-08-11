@@ -1,6 +1,6 @@
 import type { Player } from '@/domain/player'
 import { getPlayer, type GameWorld } from '@/domain/world'
-import type { MatchEvent } from '@/engine/match'
+import { calculateActiveLineups, type MatchEvent, type MatchLineups, type MatchSimulation } from '@/engine/match'
 
 export interface MatchViewerPlayerToken {
   readonly player: Player
@@ -33,6 +33,11 @@ export function createMatchViewerTokens(world: GameWorld, playerIds: readonly Pl
     occupiedSlots.add(visualSlot)
     return { player, visualSlot }
   })
+}
+
+/** Derives the currently visible court five from the event subset already revealed by playback. */
+export function resolveActiveMatchLineups(simulation: MatchSimulation, revealedEvents: readonly MatchEvent[]): MatchLineups {
+  return calculateActiveLineups(simulation.lineups, simulation.homeTeamId, simulation.awayTeamId, revealedEvents)
 }
 
 export function formatMatchEvent(event: MatchEvent, world: GameWorld): string {

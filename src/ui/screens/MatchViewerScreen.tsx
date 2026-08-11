@@ -4,7 +4,7 @@ import { getPlayer, type GameWorld } from '@/domain/world'
 import { calculateMatchPlayerStats, type MatchEvent, type MatchSimulation, type PlayerMatchStats } from '@/engine/match'
 import { PLAYBACK_SPEEDS, type PlaybackSpeed } from '@/stores/matchViewerStore'
 
-import { createMatchViewerTokens, formatClock, formatMatchEvent, formatPeriod } from '../matchViewer'
+import { createMatchViewerTokens, formatClock, formatMatchEvent, formatPeriod, resolveActiveMatchLineups } from '../matchViewer'
 
 interface MatchViewerScreenProps {
   readonly world: GameWorld
@@ -33,8 +33,11 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
   const period = lastEvent?.period ?? 1
   const clock = lastEvent?.clockSecondsRemaining ?? 600
   const playerStats = calculateMatchPlayerStats(props.simulation, revealedEvents)
-  const homeStats = playerStats.slice(0, props.simulation.lineups.home.length)
-  const awayStats = playerStats.slice(props.simulation.lineups.home.length)
+  const activeLineups = resolveActiveMatchLineups(props.simulation, revealedEvents)
+  const homePlayerIds = new Set(props.simulation.lineups.home)
+  for (const event of revealedEvents) if (event.type === 'substitution' && event.teamId === props.simulation.homeTeamId) homePlayerIds.add(event.playerInId)
+  const homeStats = playerStats.filter((stat) => homePlayerIds.has(stat.playerId))
+  const awayStats = playerStats.filter((stat) => !homePlayerIds.has(stat.playerId))
 
   useEffect(() => {
     if (!props.isPlaying || isFinished) return
@@ -54,7 +57,7 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
         <div><b>{homeScore} - {awayScore}</b><span>{isFinished ? 'FINAL' : `${formatPeriod(period)} · ${formatClock(clock)}`}</span></div>
         <strong>{props.awayTeamName}</strong>
       </section>
-      <Court homeLabel="HOME" awayLabel="AWAY" homePlayers={createMatchViewerTokens(props.world, props.simulation.lineups.home)} awayPlayers={createMatchViewerTokens(props.world, props.simulation.lineups.away)} />
+      <Court homeLabel="HOME" awayLabel="AWAY" homePlayers={createMatchViewerTokens(props.world, activeLineups.home)} awayPlayers={createMatchViewerTokens(props.world, activeLineups.away)} />
       <section className="boxscore">
         <StatsTable title="HOME" stats={homeStats} world={props.world} />
         <StatsTable title="AWAY" stats={awayStats} world={props.world} />

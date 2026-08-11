@@ -13,6 +13,9 @@ export {
 } from './MatchEngine'
 export { applyMatchResult, MatchResultApplicationError } from './MatchResultApplication'
 export { calculateMatchPlayerStats } from './PlayerMatchStats'
+export { applyDueRotations, INITIAL_ROTATION_CONTROLLER_STATE } from './rotation/RotationController'
+export { simulateMatchWithRotations } from './rotation/MatchRotationRunner'
+export { createDefaultRotationPlan } from './rotation/RotationPlan'
 export type {
   MatchSimulationResult,
   MatchSimulation,
@@ -27,3 +30,6 @@ export type {
   SubstitutePlayerOptions,
 } from './MatchEngine'
 export type { PlayerMatchStats } from './PlayerMatchStats'
+export type { ApplyDueRotationsResult, RotationControllerState } from './rotation/RotationController'
+export type { SimulateMatchWithRotationsOptions } from './rotation/MatchRotationRunner'
+export type { RotationInstruction, TeamRotationPlan } from './rotation/RotationPlan'

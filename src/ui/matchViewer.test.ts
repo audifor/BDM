@@ -4,7 +4,7 @@ import { createNewGame, prepareUserMatch } from '@/app/game'
 import { playerIdFromString, type PlayerId } from '@/domain/ids'
 import type { MatchEvent } from '@/engine/match'
 
-import { createMatchViewerTokens, formatMatchEvent, resolveMatchLineup } from './matchViewer'
+import { createMatchViewerTokens, formatMatchEvent, resolveActiveMatchLineups, resolveMatchLineup } from './matchViewer'
 
 describe('MatchViewer presentation helpers', () => {
   it('resolves the five home and away lineup PlayerIds from GameWorld', () => {
@@ -58,6 +58,22 @@ describe('MatchViewer presentation helpers', () => {
     expect(first).toEqual(second)
     expect(new Set(first.map((token) => token.visualSlot)).size).toBe(5)
     expect(first.map((token) => token.player.id)).toEqual(simulation.lineups.home)
+  })
+
+  it('projects court lineups only from substitutions revealed by playback', () => {
+    const world = createNewGame()
+    const simulation = prepareUserMatch(world)
+    const substitution = simulation.events.find((event) => event.type === 'substitution')!
+    const before = resolveActiveMatchLineups(simulation, simulation.events.slice(0, simulation.events.indexOf(substitution)))
+    const after = resolveActiveMatchLineups(simulation, simulation.events.slice(0, simulation.events.indexOf(substitution) + 1))
+    if (substitution.type !== 'substitution') throw new Error('Expected substitution event')
+
+    const beforeLineup = substitution.teamId === simulation.homeTeamId ? before.home : before.away
+    const afterLineup = substitution.teamId === simulation.homeTeamId ? after.home : after.away
+    expect(beforeLineup).toContain(substitution.playerOutId)
+    expect(beforeLineup).not.toContain(substitution.playerInId)
+    expect(afterLineup).not.toContain(substitution.playerOutId)
+    expect(afterLineup).toContain(substitution.playerInId)
   })
 })
 

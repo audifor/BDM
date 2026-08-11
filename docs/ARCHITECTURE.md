@@ -187,12 +187,25 @@ eligible players for one transient match; MatchEngine never queries GameWorld fo
 roster data. `MatchSimulation.lineups` remains the historical initial-five
 snapshot. A MatchSession separately retains `initialLineups` and `activeLineups`:
 an explicit substitution event reconstructs the latter without advancing clock or
-score and without consuming either RNG stream. There are no automatic rotations,
-minutes, or fatigue yet. Actors are selected from `activeLineups`, but TeamStrength
-is deliberately fixed for the full match in this milestone, so substitutions do
-not yet alter team quality. PlayerMatchStats introduces an incoming bench player
-only once its substitution event is revealed, preserving partial-viewer
-anti-spoiler behavior.
+score and without consuming either RNG stream. Actors are selected from
+`activeLineups`, but TeamStrength is deliberately fixed for the full match, so
+substitutions do not yet alter team quality. PlayerMatchStats introduces an
+incoming bench player only once its substitution event is revealed, preserving
+partial-viewer anti-spoiler behavior.
+
+Automatic rotations are a separate Engine orchestration layer: MatchEngine can
+execute a requested substitution but never decides when a player rests.
+Application builds deterministic per-team RotationPlans from the prepared squad,
+starters, and PlayerImpact, then the RotationController applies due instructions
+between `stepMatchSession` calls through `substitutePlayer`. Rotation v1 uses up
+to ten players (starters plus one unique primary backup per position), with a
+temporary Q1--Q4 pattern; deeper bench players may not play. Plans and their
+controller state are transient, consume no RNG or clock, and do not change score.
+The user team and AI teams both use this automatic plan temporarily. MatchViewer
+reconstructs court tokens from revealed substitution events, so playback, pause,
+and skip cannot reveal a future lineup. TeamStrength remains fixed; no minutes,
+fatigue, manual controls, or overtime-specific rotation policy exist. Future
+manual substitutions will need to reconcile user choices with a pending plan.
 
 Sporting events now carry a transient PlayerId selected uniformly from the
 attacking lineup. Actor selection uses the separate deterministic stream

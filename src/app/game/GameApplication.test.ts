@@ -1,6 +1,7 @@
 import { compareGameDates, createGameDate } from '@/domain/date'
 import { calculateStandings } from '@/engine/competition/standings'
 import { getGamesToday, getScheduledGamesToday, getUserTeam } from '@/engine/calendar'
+import { calculateActiveLineups } from '@/engine/match'
 import { describe, expect, it } from 'vitest'
 
 import {
@@ -73,11 +74,16 @@ describe('prototype game application', () => {
     expect(simulation.lineups.away.every((id) => world.teams[simulation.awayTeamId]!.rosterPlayerIds.includes(id))).toBe(true)
   })
 
-  it('attributes each sporting event to a player from the attacking lineup', () => {
+  it('attributes each sporting event to a player from the active attacking lineup', () => {
     const simulation = prepareUserMatch(createNewGame())
+    let activeLineups = simulation.lineups
     for (const event of simulation.events) {
+      if (event.type === 'substitution') {
+        activeLineups = calculateActiveLineups(activeLineups, simulation.homeTeamId, simulation.awayTeamId, [event])
+        continue
+      }
       if (event.type === 'shotMade' || event.type === 'shotMissed' || event.type === 'turnover') {
-        const lineup = event.teamId === simulation.homeTeamId ? simulation.lineups.home : simulation.lineups.away
+        const lineup = event.teamId === simulation.homeTeamId ? activeLineups.home : activeLineups.away
         expect(lineup).toContain(event.playerId)
       }
     }
