@@ -54,3 +54,13 @@ coach reference, while players and coaches do not hold a team reference.
 `Competition` is the enduring institution and `Season` is one dated edition of it.
 `Game` is independent of `MatchEngine`; it records only a scheduled/completed state
 and a completed game's basic final score.
+
+## GameWorld
+
+`GameWorld` is the canonical, serializable persistent state of one BDM game. It is
+pure TypeScript, not a Zustand store, and stores normalized entity collections by
+ID. Relationships are references by ID and are validated when the world is created.
+
+Derived data is not persisted when it can be resolved from canonical entities.
+Future engines may define controlled world updates, but that behavior is not part
+of `GameWorld` itself.
