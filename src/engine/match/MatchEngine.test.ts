@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
 import { createGame } from '@/domain/game'
-import { gameIdFromString, teamIdFromString } from '@/domain/ids'
+import { gameIdFromString, playerIdFromString, teamIdFromString } from '@/domain/ids'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
-import { MatchSimulationError, simulateMatch, simulateMatchDetailed } from './index'
+import { MatchSimulationError, simulateMatch, simulateMatchDetailed, type MatchLineups } from './index'
 
 describe('MatchEngine result projection', () => {
   it('projects the final score from the same possession simulation used by MatchViewer', () => {
@@ -43,6 +43,41 @@ describe('MatchEngine result projection', () => {
     simulateMatch(createOptions(world, game.id, 1))
     expect(JSON.stringify(world)).toBe(before)
   })
+
+  it.each([
+    ['home lineup has four players', (lineups: MatchLineups) => ({ ...lineups, home: lineups.home.slice(0, 4) })],
+    ['home lineup has six players', (lineups: MatchLineups) => ({ ...lineups, home: [...lineups.home, lineups.away[0]!] })],
+    ['away lineup has four players', (lineups: MatchLineups) => ({ ...lineups, away: lineups.away.slice(0, 4) })],
+    ['home lineup has a duplicate player', (lineups: MatchLineups) => ({ ...lineups, home: [...lineups.home.slice(0, 4), lineups.home[0]!] })],
+    ['away lineup has a duplicate player', (lineups: MatchLineups) => ({ ...lineups, away: [...lineups.away.slice(0, 4), lineups.away[0]!] })],
+    ['lineups share a player', (lineups: MatchLineups) => ({ ...lineups, away: [...lineups.away.slice(0, 4), lineups.home[0]!] })],
+  ])('rejects invalid lineups when %s', (_name, changeLineups) => {
+    const { world, game } = createScheduledGameWorld()
+    const options = createOptions(world, game.id, 1)
+
+    expect(() => simulateMatch({ ...options, lineups: changeLineups(options.lineups) })).toThrow(MatchSimulationError)
+  })
+
+  it('attributes every sporting event to a player from its attacking lineup', () => {
+    const { world, game } = createScheduledGameWorld()
+    const simulation = simulateMatchDetailed(createOptions(world, game.id, 12_345))
+
+    for (const event of simulation.events) {
+      if (event.type === 'shotMade' || event.type === 'shotMissed' || event.type === 'turnover') {
+        const lineup = event.teamId === simulation.homeTeamId ? simulation.lineups.home : simulation.lineups.away
+        expect(lineup).toContain(event.playerId)
+      }
+    }
+  })
+
+  it('keeps sporting outcomes unchanged when only the actor RNG seed changes', () => {
+    const { world, game } = createScheduledGameWorld()
+    const first = simulateMatchDetailed(createOptions(world, game.id, 12_345, 101))
+    const second = simulateMatchDetailed(createOptions(world, game.id, 12_345, 202))
+
+    expect(second.finalScore).toEqual(first.finalScore)
+    expect(withoutPlayerAttribution(second)).toEqual(withoutPlayerAttribution(first))
+  })
 })
 
 function createScheduledGameWorld(): { world: GameWorld; game: GameWorld['games'][keyof GameWorld['games']] } {
@@ -51,9 +86,44 @@ function createScheduledGameWorld(): { world: GameWorld; game: GameWorld['games'
   return { world: recreateWorld(generatedWorld, games), game: games[0]! }
 }
 
-function createOptions(world: GameWorld, gameId: GameWorld['games'][keyof GameWorld['games']]['id'], seed: number) {
+function createOptions(world: GameWorld, gameId: GameWorld['games'][keyof GameWorld['games']]['id'], seed: number, actorSeed = seed) {
   const game = world.games[gameId]
-  return { world, gameId, homeStrength: { teamId: game?.homeTeamId ?? teamIdFromString('missing-team'), value: 50 }, awayStrength: { teamId: game?.awayTeamId ?? teamIdFromString('missing-team'), value: 50 }, random: new SeededRandomSource(seed) }
+  return {
+    world,
+    gameId,
+    homeStrength: { teamId: game?.homeTeamId ?? teamIdFromString('missing-team'), value: 50 },
+    awayStrength: { teamId: game?.awayTeamId ?? teamIdFromString('missing-team'), value: 50 },
+    lineups: game === undefined ? missingGameLineups() : lineupsFor(world, game),
+    random: new SeededRandomSource(seed),
+    actorRandom: new SeededRandomSource(actorSeed),
+  }
+}
+
+function lineupsFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['games']]): MatchLineups {
+  return {
+    home: world.teams[game.homeTeamId]!.rosterPlayerIds.slice(0, 5),
+    away: world.teams[game.awayTeamId]!.rosterPlayerIds.slice(0, 5),
+  }
+}
+
+function missingGameLineups(): MatchLineups {
+  return {
+    home: Array.from({ length: 5 }, (_, index) => playerIdFromString(`missing-home-player-${index}`)),
+    away: Array.from({ length: 5 }, (_, index) => playerIdFromString(`missing-away-player-${index}`)),
+  }
+}
+
+function withoutPlayerAttribution(simulation: ReturnType<typeof simulateMatchDetailed>) {
+  return {
+    ...simulation,
+    events: simulation.events.map((event) => {
+      if (event.type === 'shotMade' || event.type === 'shotMissed' || event.type === 'turnover') {
+        const { playerId: _playerId, ...eventWithoutPlayer } = event
+        return eventWithoutPlayer
+      }
+      return event
+    }),
+  }
 }
 
 function recreateWorld(source: GameWorld, games: readonly GameWorld['games'][keyof GameWorld['games']][]): GameWorld {

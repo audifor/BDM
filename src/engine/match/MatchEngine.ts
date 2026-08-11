@@ -29,7 +29,10 @@ export interface MatchSimulationResult {
   readonly homeScore: number
   readonly awayScore: number
 }
-export interface MatchLineups { readonly home: readonly PlayerId[]; readonly away: readonly PlayerId[] }
+export interface MatchLineups {
+  readonly home: readonly PlayerId[]
+  readonly away: readonly PlayerId[]
+}
 
 export type MatchEvent =
   | MatchPeriodEvent
@@ -89,9 +92,9 @@ export interface SimulateMatchOptions {
   readonly gameId: GameId
   readonly homeStrength: TeamStrength
   readonly awayStrength: TeamStrength
-  readonly lineups?: MatchLineups
+  readonly lineups: MatchLineups
   readonly random: RandomSource
-  readonly actorRandom?: RandomSource
+  readonly actorRandom: RandomSource
 }
 
 type PossessionOutcome = 'made1' | 'made2' | 'made3' | 'missedShot' | 'turnover'
@@ -149,15 +152,15 @@ export function simulateMatchDetailed(options: SimulateMatchOptions): MatchSimul
       const strength = attackingTeamId === game.homeTeamId ? options.homeStrength.value : options.awayStrength.value
       const outcome = choosePossessionOutcome(strength, attackingTeamId === game.homeTeamId, options.random)
 
-      const lineup = attackingTeamId === game.homeTeamId ? options.lineups?.home : options.lineups?.away
-      const playerId = lineup === undefined || lineup.length === 0 ? undefined : lineup[options.actorRandom?.nextInt(0, lineup.length - 1) ?? 0]!
+      const lineup = attackingTeamId === game.homeTeamId ? options.lineups.home : options.lineups.away
+      const playerId = lineup[options.actorRandom.nextInt(0, lineup.length - 1)]!
       if (outcome === 'made1' || outcome === 'made2' || outcome === 'made3') {
         const points = Number(outcome.at(-1)) as 1 | 2 | 3
         if (attackingTeamId === game.homeTeamId) homeScore += points
         else awayScore += points
-        events.push({ sequence: sequence++, period, clockSecondsRemaining: clock, type: 'shotMade', teamId: attackingTeamId, ...(playerId === undefined ? {} : { playerId }), points, homeScore, awayScore } as MatchEvent)
+        events.push({ sequence: sequence++, period, clockSecondsRemaining: clock, type: 'shotMade', teamId: attackingTeamId, playerId, points, homeScore, awayScore })
       } else {
-        events.push({ sequence: sequence++, period, clockSecondsRemaining: clock, type: outcome === 'missedShot' ? 'shotMissed' : 'turnover', teamId: attackingTeamId, ...(playerId === undefined ? {} : { playerId }), homeScore, awayScore } as MatchEvent)
+        events.push({ sequence: sequence++, period, clockSecondsRemaining: clock, type: outcome === 'missedShot' ? 'shotMissed' : 'turnover', teamId: attackingTeamId, playerId, homeScore, awayScore })
       }
 
       attackingTeamId = otherTeamId(attackingTeamId, game)
@@ -173,18 +176,34 @@ export function simulateMatchDetailed(options: SimulateMatchOptions): MatchSimul
   }
 
   events.push({ sequence, period, clockSecondsRemaining: 0, type: 'gameEnd', homeScore, awayScore })
-  const lineups = options.lineups ?? { home: [], away: [] }
-  validateLineup(lineups.home, 'Home'); validateLineup(lineups.away, 'Away')
-  return { gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, lineups, events, finalScore: { home: homeScore, away: awayScore } }
+  return { gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, lineups: options.lineups, events, finalScore: { home: homeScore, away: awayScore } }
 }
 
-function validateLineup(lineup: readonly PlayerId[], side: string): void { if (lineup.length !== 0 && lineup.length !== 5) throw new MatchSimulationError(`${side} lineup must contain exactly 5 players`); if (new Set(lineup).size !== lineup.length) throw new MatchSimulationError(`${side} lineup cannot contain duplicate players`) }
+function validateLineups(lineups: MatchLineups): void {
+  validateLineup(lineups.home, 'Home')
+  validateLineup(lineups.away, 'Away')
+
+  const homePlayers = new Set(lineups.home)
+  if (lineups.away.some((playerId) => homePlayers.has(playerId))) {
+    throw new MatchSimulationError('Home and away lineups cannot share players')
+  }
+}
+
+function validateLineup(lineup: readonly PlayerId[], side: string): void {
+  if (lineup.length !== 5) {
+    throw new MatchSimulationError(`${side} lineup must contain exactly 5 players`)
+  }
+  if (new Set(lineup).size !== lineup.length) {
+    throw new MatchSimulationError(`${side} lineup cannot contain duplicate players`)
+  }
+}
 
 function validateOptions(options: SimulateMatchOptions) {
   const game = getGame(options.world, options.gameId)
   if (game.status !== 'scheduled') throw new MatchSimulationError(`Cannot simulate completed Game ${game.id}`)
   validateStrength(options.homeStrength, game.homeTeamId, 'Home')
   validateStrength(options.awayStrength, game.awayTeamId, 'Away')
+  validateLineups(options.lineups)
   return game
 }
 

@@ -4,7 +4,7 @@ import { createGame, type Game } from '@/domain/game'
 import { gameIdFromString, seasonIdFromString } from '@/domain/ids'
 import { createSeason } from '@/domain/season'
 import { createGameWorld, type GameWorld } from '@/domain/world'
-import { applyMatchResult, simulateMatch } from '@/engine/match'
+import { applyMatchResult, simulateMatch, type MatchLineups } from '@/engine/match'
 import { SeededRandomSource } from '@/engine/random'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { generateWorld } from '@/engine/world'
@@ -247,8 +247,17 @@ function simulateResult(world: GameWorld, game: Game, random: number | SeededRan
     gameId: game.id,
     homeStrength: { teamId: game.homeTeamId, value: 50 },
     awayStrength: { teamId: game.awayTeamId, value: 50 },
+    lineups: lineupsFor(world, game),
     random: typeof random === 'number' ? new SeededRandomSource(random) : random,
+    actorRandom: new SeededRandomSource(typeof random === 'number' ? random : 12345),
   })
+}
+
+function lineupsFor(world: GameWorld, game: Game): MatchLineups {
+  return {
+    home: world.teams[game.homeTeamId]!.rosterPlayerIds.slice(0, 5),
+    away: world.teams[game.awayTeamId]!.rosterPlayerIds.slice(0, 5),
+  }
 }
 
 function entryFor(

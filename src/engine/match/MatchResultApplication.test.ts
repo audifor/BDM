@@ -11,6 +11,7 @@ import {
   applyMatchResult,
   MatchResultApplicationError,
   simulateMatch,
+  type MatchLineups,
   type MatchSimulationResult,
 } from './index'
 
@@ -104,7 +105,9 @@ describe('Match Result Application', () => {
       gameId: game.id,
       homeStrength: { teamId: game.homeTeamId, value: 60 },
       awayStrength: { teamId: game.awayTeamId, value: 40 },
+      lineups: lineupsFor(world, game),
       random: new SeededRandomSource(12345),
+      actorRandom: new SeededRandomSource(67890),
     })
     const nextWorld = applyMatchResult(world, simulationResult)
     const completedGames = Object.values(nextWorld.games).filter((candidate) => candidate.status === 'completed')
@@ -181,8 +184,17 @@ function simulateResult(world: GameWorld, game: Game, seed: number): MatchSimula
     gameId: game.id,
     homeStrength: { teamId: game.homeTeamId, value: 55 },
     awayStrength: { teamId: game.awayTeamId, value: 45 },
+    lineups: lineupsFor(world, game),
     random: new SeededRandomSource(seed),
+    actorRandom: new SeededRandomSource(seed),
   })
+}
+
+function lineupsFor(world: GameWorld, game: Game): MatchLineups {
+  return {
+    home: world.teams[game.homeTeamId]!.rosterPlayerIds.slice(0, 5),
+    away: world.teams[game.awayTeamId]!.rosterPlayerIds.slice(0, 5),
+  }
 }
 
 function countCompletedGames(world: GameWorld): number {

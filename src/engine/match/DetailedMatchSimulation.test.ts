@@ -5,7 +5,7 @@ import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 
-import { MATCH_RULES_V2, simulateMatchDetailed } from './index'
+import { MATCH_RULES_V2, simulateMatchDetailed, type MatchLineups } from './index'
 
 describe('possession-based MatchEngine v2', () => {
   it('derives the final score exactly from shotMade events', () => {
@@ -100,7 +100,22 @@ function simulateWithStrengths(world: GameWorld, gameId: GameWorld['games'][keyo
 
 function simulateWithRandom(world: GameWorld, gameId: GameWorld['games'][keyof GameWorld['games']]['id'], random: RandomSource, homeStrength = 50, awayStrength = 50) {
   const game = world.games[gameId]!
-  return simulateMatchDetailed({ world, gameId, homeStrength: { teamId: game.homeTeamId, value: homeStrength }, awayStrength: { teamId: game.awayTeamId, value: awayStrength }, random })
+  return simulateMatchDetailed({
+    world,
+    gameId,
+    homeStrength: { teamId: game.homeTeamId, value: homeStrength },
+    awayStrength: { teamId: game.awayTeamId, value: awayStrength },
+    lineups: lineupsFor(world, game),
+    random,
+    actorRandom: new SeededRandomSource(67890),
+  })
+}
+
+function lineupsFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['games']]): MatchLineups {
+  return {
+    home: world.teams[game.homeTeamId]!.rosterPlayerIds.slice(0, 5),
+    away: world.teams[game.awayTeamId]!.rosterPlayerIds.slice(0, 5),
+  }
 }
 
 class OvertimeRandom implements RandomSource {

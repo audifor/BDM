@@ -6,7 +6,7 @@ import { createTeam } from '@/domain/team'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import { calculateStandings } from '@/engine/competition/standings'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
-import { applyMatchResult, simulateMatch } from '@/engine/match'
+import { applyMatchResult, simulateMatch, type MatchLineups } from '@/engine/match'
 import { SeededRandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
@@ -152,7 +152,9 @@ describe('CalendarEngine', () => {
       gameId: userGame.id,
       homeStrength: { teamId: userGame.homeTeamId, value: 50 },
       awayStrength: { teamId: userGame.awayTeamId, value: 50 },
+      lineups: lineupsFor(world, userGame),
       random: new SeededRandomSource(12345),
+      actorRandom: new SeededRandomSource(67890),
     })
     const completedWorld = applyMatchResult(world, simulation)
     const completedStatus = inspectCurrentDate(completedWorld)
@@ -209,4 +211,11 @@ function applyScore(world: GameWorld, game: Game, homeScore: number, awayScore: 
     homeScore,
     awayScore,
   })
+}
+
+function lineupsFor(world: GameWorld, game: Game): MatchLineups {
+  return {
+    home: world.teams[game.homeTeamId]!.rosterPlayerIds.slice(0, 5),
+    away: world.teams[game.awayTeamId]!.rosterPlayerIds.slice(0, 5),
+  }
 }
