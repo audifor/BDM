@@ -9,7 +9,7 @@ import {
   simulateRemainingGamesToday,
 } from '@/app/game'
 import type { GameWorld } from '@/domain/world'
-import type { MatchSimulation, MatchTacticalPlan } from '@/engine/match'
+import type { ManualSubstitution, MatchSimulation, MatchTacticalPlan } from '@/engine/match'
 import type { LiveMatchController } from '@/app/game'
 import { create } from 'zustand'
 
@@ -21,6 +21,7 @@ interface GameStore {
   advanceLiveMatch(): MatchSimulation
   skipLiveMatch(): MatchSimulation
   applyLiveTactics(teamId: MatchSimulation['homeTeamId'], tacticalPlan: MatchTacticalPlan): MatchSimulation
+  applyManualSubstitutions(teamId: MatchSimulation['homeTeamId'], substitutions: readonly ManualSubstitution[]): MatchSimulation
   completeMatch(simulation: MatchSimulation): void
   instantResult(tacticalPlan?: MatchTacticalPlan): void
   playUserGame(): void
@@ -39,6 +40,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   advanceLiveMatch: () => requireLiveController().advanceOneStep(),
   skipLiveMatch: () => requireLiveController().skipToEnd(),
   applyLiveTactics: (teamId, tacticalPlan) => requireLiveController().applyTactics(teamId, tacticalPlan),
+  applyManualSubstitutions: (teamId, substitutions) => requireLiveController().applyManualSubstitutions(teamId, substitutions),
   completeMatch: (simulation) => {
     const world = requireWorld(get().world)
     set({ world: completeMatch(world, simulation) })

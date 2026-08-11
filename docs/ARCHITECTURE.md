@@ -299,6 +299,13 @@ steps but never rewrites sporting history. React and Zustand hold viewer/draft s
 only; they do not run the engine. Future shouts, timeouts and staff insights remain
 unimplemented.
 
+Manual substitutions are live-coaching personnel commands, separate from tactical
+context. A validated batch is atomic, uses the same `substitutePlayer` primitive
+and emits one same-clock event per change with a `manual` source. It consumes no
+clock, fatigue or RNG. Automatic RotationPlan instructions remain active but are
+reconciled harmlessly when a user lineup has made an instruction incompatible;
+future rotation systems may replace this Alpha behavior.
+
 > A viewed match must never precompute sporting outcomes that the user can still influence through future coaching decisions.
 
 > Coaching decisions may alter the future simulation trajectory but must never rewrite already-resolved sporting history.

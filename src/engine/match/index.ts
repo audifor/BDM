@@ -19,6 +19,7 @@ export { chooseWeighted } from './WeightedChoice'
 export { calculateDefensiveAssignments } from './Matchups'
 export { createDefaultTacticalPlan, validateTacticalPlan } from './tactics/MatchTacticalPlan'
 export { applyTacticalPlanChange, calculateTacticalPlanAtEvents } from './coaching/MatchCoachingState'
+export { applyManualSubstitutions } from './coaching/ManualSubstitutions'
 export { applyPaceToPossessionDuration, applyShotProfile, calculateTacticalDefenseModifier, tacticalShotFactor, tacticalUsageWeight } from './tactics/TacticalEffects'
 export { calculateAssistProbability, selectAssister, ASSIST_RESOLUTION_V1 } from './AssistResolution'
 export { calculateOffensiveReboundProbability, selectRebounder, REBOUND_RESOLUTION_V1 } from './ReboundResolution'
@@ -39,12 +40,14 @@ export type {
   SimulateMatchOptions,
   TeamStrength,
   SubstitutePlayerOptions,
+  SubstitutionSource,
 } from './MatchEngine'
 export type { PlayerMatchStats } from './PlayerMatchStats'
 export type { MatchPlayerProfile, MatchPlayerProfiles } from './MatchPlayerProfile'
 export type { PlayerMatchup } from './Matchups'
 export type { MatchTacticalPlan, TacticalLevel } from './tactics/MatchTacticalPlan'
 export type { MatchCoachingState, TeamMatchCoachingState, TacticalPlanChange } from './coaching/MatchCoachingState'
+export type { ManualSubstitution, ManualSubstitutionBatch } from './coaching/ManualSubstitutions'
 export type { AssistContext } from './AssistResolution'
 export type { ReboundContext } from './ReboundResolution'
 export type { TurnoverContext } from './TurnoverResolution'

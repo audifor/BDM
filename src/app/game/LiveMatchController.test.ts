@@ -25,4 +25,15 @@ describe('LiveMatchController', () => {
     expect(after.events).toHaveLength(before.events.length + 1)
     expect(controller.applyTactics(userTeam.id, plan).events).toHaveLength(after.events.length)
   })
+  it('applies a manual substitution atomically without advancing the sporting clock', () => {
+    const world = createNewGame()
+    const controller = createLiveUserMatch(world)
+    const userTeam = getUserTeam(world)!
+    const before = controller.snapshot()
+    const playerOutId = before.lineups.home.includes(userTeam.rosterPlayerIds[0]!) ? userTeam.rosterPlayerIds[0]! : before.lineups.away[0]!
+    const playerInId = userTeam.rosterPlayerIds.find((playerId) => !before.lineups.home.includes(playerId) && !before.lineups.away.includes(playerId))!
+    const after = controller.applyManualSubstitutions(userTeam.id, [{ playerOutId, playerInId }])
+    expect(after.events.at(-1)).toMatchObject({ type: 'substitution', source: 'manual', playerOutId, playerInId, clockSecondsRemaining: before.events.at(-1)!.clockSecondsRemaining })
+    expect(after.events).toHaveLength(before.events.length + 1)
+  })
 })

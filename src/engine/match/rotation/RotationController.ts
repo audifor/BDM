@@ -22,7 +22,8 @@ export function applyDueRotations(session: MatchSession, plan: TeamRotationPlan,
   while (nextInstructionIndex < plan.instructions.length) {
     const instruction = plan.instructions[nextInstructionIndex]!
     if (!isDue(nextSession, instruction.period, instruction.clockThresholdSeconds)) break
-    nextSession = substitutePlayer(nextSession, { teamId: plan.teamId, playerOutId: instruction.playerOutId, playerInId: instruction.playerInId })
+    const lineup = plan.teamId === nextSession.state.homeTeamId ? nextSession.state.activeLineups.home : nextSession.state.activeLineups.away
+    if (lineup.includes(instruction.playerOutId) && !lineup.includes(instruction.playerInId)) nextSession = substitutePlayer(nextSession, { teamId: plan.teamId, playerOutId: instruction.playerOutId, playerInId: instruction.playerInId, source: 'automatic' })
     nextInstructionIndex += 1
   }
   return { session: nextSession, controllerState: { nextInstructionIndex } }

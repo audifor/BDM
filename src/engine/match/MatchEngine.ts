@@ -132,6 +132,7 @@ export type MatchEvent =
       readonly teamId: TeamId
       readonly playerOutId: PlayerId
       readonly playerInId: PlayerId
+      readonly source?: SubstitutionSource
       readonly homeScore: number
       readonly awayScore: number
     }
@@ -223,7 +224,9 @@ export interface SubstitutePlayerOptions {
   readonly teamId: TeamId
   readonly playerOutId: PlayerId
   readonly playerInId: PlayerId
+  readonly source?: SubstitutionSource
 }
+export type SubstitutionSource = 'automatic' | 'manual'
 
 type PossessionOutcome = 'shootingFoul' | 'fieldGoalAttempt' | 'turnover'
 
@@ -280,6 +283,7 @@ export function substitutePlayer(session: MatchSession, substitution: Substitute
     teamId: substitution.teamId,
     playerOutId: substitution.playerOutId,
     playerInId: substitution.playerInId,
+    source: substitution.source ?? 'manual',
     homeScore: state.homeScore,
     awayScore: state.awayScore,
   }

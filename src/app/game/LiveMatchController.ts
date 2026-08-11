@@ -1,4 +1,4 @@
-import { applyTacticalPlanChange, createMatchSession, stepMatchSession, toMatchSimulation, type MatchSimulation, type MatchTacticalPlan, type MatchSession } from '@/engine/match'
+import { applyManualSubstitutions, applyTacticalPlanChange, createMatchSession, stepMatchSession, toMatchSimulation, type ManualSubstitution, type MatchSimulation, type MatchTacticalPlan, type MatchSession } from '@/engine/match'
 import { applyDueRotations, INITIAL_ROTATION_CONTROLLER_STATE, type RotationControllerState, type SimulateMatchWithRotationsOptions } from '@/engine/match'
 
 /** Application owner for a transient live session; UI receives only snapshots. */
@@ -17,6 +17,7 @@ export class LiveMatchController {
     return this.snapshot()
   }
   public applyTactics(teamId: MatchSession['state']['homeTeamId'], tacticalPlan: MatchTacticalPlan): MatchSimulation { this.session = applyTacticalPlanChange(this.session, { teamId, tacticalPlan }); return this.snapshot() }
+  public applyManualSubstitutions(teamId: MatchSession['state']['homeTeamId'], substitutions: readonly ManualSubstitution[]): MatchSimulation { this.session = applyManualSubstitutions(this.session, { teamId, substitutions }); return this.snapshot() }
   public skipToEnd(): MatchSimulation { while (!this.session.state.isComplete) this.advanceOneStep(); return this.snapshot() }
   public snapshot(): MatchSimulation { const state = this.session.state; return state.isComplete ? toMatchSimulation(this.session) : { gameId: state.gameId, homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, lineups: state.initialLineups, events: state.events, finalScore: { home: state.homeScore, away: state.awayScore } } }
   public get isComplete(): boolean { return this.session.state.isComplete }
