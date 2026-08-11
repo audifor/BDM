@@ -6,7 +6,8 @@ export interface ShotAttemptContext {
   readonly shotZone: ShotZone
   readonly shooterProfile: MatchPlayerProfile
   readonly shooterFatigue: number
-  readonly opponentDefenseProxy: number
+  readonly defenderProfile: MatchPlayerProfile
+  readonly defenderFatigue: number
 }
 
 export const SHOT_RESOLUTION_V1 = {
@@ -18,8 +19,9 @@ export const SHOT_RESOLUTION_V1 = {
   baseProbability: { rim: 0.58, midRange: 0.40, threePoint: 0.35 },
   probabilityClamp: { rim: [0.25, 0.85], midRange: [0.15, 0.70], threePoint: [0.12, 0.65] },
   skillAdjustmentPerPoint: 0.004,
-  defenseAdjustmentPerPoint: 0.002,
+  defenseAdjustmentPerPoint: 0.003,
   maximumFatiguePenalty: 0.08,
+  defenderFatiguePenaltyAtMaximum: 12,
 } as const
 
 export function calculateShotZoneWeights(profile: MatchPlayerProfile): Readonly<Record<ShotZone, number>> {
@@ -33,10 +35,20 @@ export function calculateShotMakeProbability(context: ShotAttemptContext): numbe
   const execution = calculateExecution(context.shotZone, context.shooterProfile)
   const probability = SHOT_RESOLUTION_V1.baseProbability[context.shotZone]
     + (execution - 50) * SHOT_RESOLUTION_V1.skillAdjustmentPerPoint
-    - (context.opponentDefenseProxy - 50) * SHOT_RESOLUTION_V1.defenseAdjustmentPerPoint
+    - (calculateEffectiveDefense(context.shotZone, context.defenderProfile, context.defenderFatigue) - 50) * SHOT_RESOLUTION_V1.defenseAdjustmentPerPoint
     - (clamp(context.shooterFatigue, 0, 100) / 100) * SHOT_RESOLUTION_V1.maximumFatiguePenalty
   const [minimum, maximum] = SHOT_RESOLUTION_V1.probabilityClamp[context.shotZone]
   return clamp(probability, minimum, maximum)
+}
+
+export function calculateDefenseExecution(shotZone: ShotZone, profile: MatchPlayerProfile): number {
+  if (shotZone === 'rim') return profile.defense.interior * 0.80 + profile.defense.mobility * 0.20
+  if (shotZone === 'midRange') return profile.defense.pointOfAttack * 0.65 + profile.defense.mobility * 0.35
+  return profile.defense.pointOfAttack * 0.75 + profile.defense.mobility * 0.25
+}
+
+export function calculateEffectiveDefense(shotZone: ShotZone, profile: MatchPlayerProfile, fatigue: number): number {
+  return clamp(calculateDefenseExecution(shotZone, profile) - (clamp(fatigue, 0, 100) / 100) * SHOT_RESOLUTION_V1.defenderFatiguePenaltyAtMaximum, 0, 100)
 }
 
 export function pointsForShotZone(shotZone: ShotZone): 2 | 3 { return shotZone === 'threePoint' ? 3 : 2 }

@@ -5,7 +5,7 @@ import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 
-import { MATCH_RULES_V2, createMatchPlayerProfile, simulateMatchDetailed, type MatchEvent, type MatchLineups } from './index'
+import { MATCH_RULES_V2, calculateDefensiveAssignments, createMatchPlayerProfile, simulateMatchDetailed, type MatchEvent, type MatchLineups } from './index'
 
 describe('possession-based MatchEngine v2', () => {
   it('derives the final score exactly from field goals and made free throws', () => {
@@ -78,12 +78,22 @@ describe('possession-based MatchEngine v2', () => {
     expect(simulation.finalScore.home).not.toBe(simulation.finalScore.away)
   })
 
-  it('gives strength 80 a clear majority over strength 20 across deterministic seeds', () => {
+  it('does not use TeamStrength as a field-goal defense proxy', () => {
     const { world, game } = createScheduledGameWorld()
-    const homeWins = Array.from({ length: 200 }, (_, seed) => simulateWithStrengths(world, game.id, seed + 1, 80, 20))
-      .filter((simulation) => simulation.finalScore.home > simulation.finalScore.away).length
+    expect(simulateWithStrengths(world, game.id, 12345, 80, 20)).toEqual(simulateWithStrengths(world, game.id, 12345, 20, 80))
+  })
 
-    expect(homeWins).toBeGreaterThan(140)
+  it('records the active primary defender on every field-goal event', () => {
+    const { world, game } = createScheduledGameWorld()
+    const simulation = simulate(world, game.id, 12345)
+    const profiles = [...simulation.lineups.home, ...simulation.lineups.away].map((playerId) => createMatchPlayerProfile(world.players[playerId]!))
+    for (const event of simulation.events) {
+      if (event.type !== 'shotMade' && event.type !== 'shotMissed') continue
+      const offense = event.teamId === game.homeTeamId ? simulation.lineups.home : simulation.lineups.away
+      const defense = event.teamId === game.homeTeamId ? simulation.lineups.away : simulation.lineups.home
+      expect(defense).toContain(event.defenderPlayerId)
+      expect(event.defenderPlayerId).toBe(calculateDefensiveAssignments(offense, defense, profiles).find((assignment) => assignment.offensivePlayerId === event.playerId)?.defensivePlayerId)
+    }
   })
 
   it('keeps 50 vs 50 broadly balanced across deterministic seeds', () => {

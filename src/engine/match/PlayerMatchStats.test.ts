@@ -145,11 +145,11 @@ function createSimulation(events: readonly MatchEvent[]): MatchSimulation {
 }
 
 function madeShot(playerId: typeof HOME_PLAYERS[number], points: 2 | 3, assistPlayerId?: typeof HOME_PLAYERS[number]): MatchEvent {
-  return { sequence: 1, period: 1, clockSecondsRemaining: 500, type: 'shotMade', teamId: HOME_TEAM_ID, playerId, ...(assistPlayerId === undefined ? {} : { assistPlayerId }), points, shotZone: points === 3 ? 'threePoint' : 'rim', homeScore: 0, awayScore: 0 }
+  return { sequence: 1, period: 1, clockSecondsRemaining: 500, type: 'shotMade', teamId: HOME_TEAM_ID, playerId, defenderPlayerId: AWAY_PLAYERS[0]!, ...(assistPlayerId === undefined ? {} : { assistPlayerId }), points, shotZone: points === 3 ? 'threePoint' : 'rim', homeScore: 0, awayScore: 0 }
 }
 
 function missedShot(playerId: typeof HOME_PLAYERS[number]): MatchEvent {
-  return { sequence: 1, period: 1, clockSecondsRemaining: 500, type: 'shotMissed', teamId: HOME_TEAM_ID, playerId, shotZone: 'rim', homeScore: 0, awayScore: 0 }
+  return { sequence: 1, period: 1, clockSecondsRemaining: 500, type: 'shotMissed', teamId: HOME_TEAM_ID, playerId, defenderPlayerId: AWAY_PLAYERS[0]!, shotZone: 'rim', homeScore: 0, awayScore: 0 }
 }
 
 function turnover(playerId: typeof HOME_PLAYERS[number]): MatchEvent {

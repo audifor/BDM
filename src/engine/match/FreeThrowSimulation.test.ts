@@ -5,7 +5,7 @@ import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
-import { createMatchPlayerProfile, simulateMatchDetailed, type MatchLineups } from './index'
+import { calculateDefensiveAssignments, createMatchPlayerProfile, simulateMatchDetailed, type MatchLineups } from './index'
 
 describe('shooting fouls and free throws', () => {
   it.each([
@@ -19,6 +19,8 @@ describe('shooting fouls and free throws', () => {
     const foul = simulation.events[foulIndex]!
     const firstFreeThrow = simulation.events[foulIndex + 1]!
     const secondFreeThrow = simulation.events[foulIndex + 2]!
+
+    if (foul.type !== 'foul') throw new Error('Expected shooting foul')
 
     expect(foul).toMatchObject({ type: 'foul', teamId: game.awayTeamId, foulType: 'shooting' })
     expect([firstFreeThrow.type, secondFreeThrow.type]).toHaveLength(2)
@@ -34,11 +36,16 @@ describe('shooting fouls and free throws', () => {
     expect(firstFreeThrow.sequence).toBe(foul.sequence + 1)
     expect(secondFreeThrow.sequence).toBe(foul.sequence + 2)
     expect(simulation.lineups.home).toContain(firstFreeThrow.playerId)
-    expect(simulation.lineups.away).toContain(foul.type === 'foul' ? foul.playerId : undefined)
+    expect(simulation.lineups.away).toContain(foul.playerId)
     expect(firstFreeThrow.homeScore - foul.homeScore + (secondFreeThrow.homeScore - firstFreeThrow.homeScore)).toBe(expectedPoints)
     expect(firstFreeThrow.awayScore).toBe(foul.awayScore)
     expect(secondFreeThrow.awayScore).toBe(foul.awayScore)
     expect(simulation.events[foulIndex + 3]?.type).not.toBe('rebound')
+    const shooterProfile = world.players[firstFreeThrow.playerId]!
+    const offense = game.homeTeamId === firstFreeThrow.teamId ? simulation.lineups.home : simulation.lineups.away
+    const defense = game.homeTeamId === firstFreeThrow.teamId ? simulation.lineups.away : simulation.lineups.home
+    const profiles = [...offense, ...defense].map((playerId) => createMatchPlayerProfile(world.players[playerId]!))
+    expect(foul.playerId).toBe(calculateDefensiveAssignments(offense, defense, profiles).find((assignment) => assignment.offensivePlayerId === shooterProfile.id)?.defensivePlayerId)
   })
 
   it('keeps fouls and free throw outcomes independent from actor RNG', () => {
@@ -48,6 +55,7 @@ describe('shooting fouls and free throws', () => {
 
     expect(first.finalScore).toEqual(second.finalScore)
     expect(first.events.filter((event) => event.type === 'foul').length).toBe(second.events.filter((event) => event.type === 'foul').length)
+    expect(first.events.filter((event) => event.type === 'foul').map((event) => event.playerId)).toEqual(second.events.filter((event) => event.type === 'foul').map((event) => event.playerId))
     expect(first.events.filter((event) => event.type === 'freeThrowMade' || event.type === 'freeThrowMissed').map((event) => event.type)).toEqual(second.events.filter((event) => event.type === 'freeThrowMade' || event.type === 'freeThrowMissed').map((event) => event.type))
   })
 

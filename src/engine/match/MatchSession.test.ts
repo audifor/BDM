@@ -6,7 +6,7 @@ import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
-import { MATCH_RULES_V2, MatchSimulationError, calculateActiveLineups, createMatchPlayerProfile, createMatchSession, simulateMatchDetailed, stepMatchSession, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
+import { MATCH_RULES_V2, MatchSimulationError, calculateActiveLineups, calculateDefensiveAssignments, createMatchPlayerProfile, createMatchSession, simulateMatchDetailed, stepMatchSession, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
 
 describe('MatchSession', () => {
   it('produces the same complete simulation through stepping as through the wrapper', () => {
@@ -15,7 +15,7 @@ describe('MatchSession', () => {
     const stepped = toMatchSimulation(runToComplete(createMatchSession(createOptions(world, game.id, 12345, 67890))))
 
     expect(stepped).toEqual(whole)
-    expect({ finalScore: whole.finalScore, eventCount: whole.events.length }).toEqual({ finalScore: { home: 66, away: 58 }, eventCount: 229 })
+    expect({ finalScore: whole.finalScore, eventCount: whole.events.length }).toEqual({ finalScore: { home: 59, away: 69 }, eventCount: 231 })
   })
 
   it('advances one logical unit without mutating the previous sporting state', () => {
@@ -120,6 +120,11 @@ describe('MatchSession', () => {
     const afterSub = stepMatchSession(subbed)
     const sporting = afterSub.newEvents.find((event) => event.type === 'shotMade' || event.type === 'shotMissed' || event.type === 'turnover')!
     expect(sporting).toMatchObject({ teamId: game.homeTeamId, playerId: subbed.state.activeLineups.home[0] })
+    if (sporting.type === 'shotMade' || sporting.type === 'shotMissed') {
+      const assignments = calculateDefensiveAssignments(subbed.state.activeLineups.home, subbed.state.activeLineups.away, [...subbed.state.playerProfiles.home, ...subbed.state.playerProfiles.away])
+      expect(sporting.defenderPlayerId).toBe(assignments.find((assignment) => assignment.offensivePlayerId === sporting.playerId)?.defensivePlayerId)
+      expect(subbed.state.activeLineups.away).toContain(sporting.defenderPlayerId)
+    }
   })
 
   it('projects active lineups from an ordered partial substitution stream', () => {

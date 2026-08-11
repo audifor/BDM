@@ -12,6 +12,11 @@ export interface MatchPlayerProfile {
     readonly creation: number
     readonly ballSecurity: number
   }
+  readonly defense: {
+    readonly pointOfAttack: number
+    readonly interior: number
+    readonly mobility: number
+  }
 }
 
 export interface MatchPlayerProfiles {
@@ -31,6 +36,11 @@ export function createMatchPlayerProfile(player: Player): MatchPlayerProfile {
       shooting: clampSignal(ratings.shooting),
       creation: clampSignal(ratings.playmaking * 0.75 + ratings.athleticism * 0.25),
       ballSecurity: clampSignal(ratings.playmaking * 0.80 + ratings.athleticism * 0.20),
+    },
+    defense: {
+      pointOfAttack: clampSignal(ratings.perimeterDefense * 0.75 + ratings.athleticism * 0.25),
+      interior: clampSignal(ratings.interiorDefense * 0.80 + ratings.athleticism * 0.20),
+      mobility: clampSignal(ratings.perimeterDefense * 0.35 + ratings.athleticism * 0.65),
     },
   }
 }

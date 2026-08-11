@@ -247,13 +247,24 @@ persisted overall.
 Player-driven offense uses a dedicated deterministic decision RNG
 (`match-decisions-v1:${gameId}`) for weighted offensive-actor and shot-zone
 selection. Sporting RNG resolves the contextual sporting outcome, while actor RNG
-remains detail attribution for assists, rebounders, and fouling defenders.
+remains detail attribution for assists and rebounders.
 Field-goal events carry `rim`, `midRange`, or `threePoint`; zone determines points.
-Make probability is a provisional pure calculation from shooter profile,
-individual fatigue, and the opponent's fatigue-adjusted TeamStrength proxy.
-Attacking TeamStrength no longer directly determines field-goal success. Individual
-defense/matchups, rating-weighted rebounds, assists, and turnovers remain future
-work.
+MatchPlayerProfile also adapts the persisted bootstrap ratings into defensive
+point-of-attack, interior, and mobility signals; MatchEngine remains isolated from
+persisted ratings. For each possession, deterministic one-to-one defensive
+assignments are derived from active lineups, canonical PG-to-C positional distance,
+then mobility and PlayerId tie-breaks. They are neither persisted nor random, so a
+substitution automatically produces new assignments.
+
+ShotAttemptContext now contains the real shooter and primary defender with each
+player's individual fatigue. Rim shots use 80% interior and 20% mobility; midrange
+uses 65% point-of-attack and 35% mobility; threes use 75% point-of-attack and 25%
+mobility. Defender fatigue subtracts up to 12 signal points before the provisional
+defense adjustment. TeamStrength is no longer a field-goal defense proxy. Made and
+missed shot events preserve `defenderPlayerId`, and shooting fouls are committed by
+that primary defender. Schemes, switches, blocks, steals, turnover pressure, and
+rating-weighted rebounds or assists remain future work; all current formulas are
+replaceable prototypes.
 
 MatchViewer consumes the transient lineup snapshot in MatchSimulation; it never
 selects starters. UI resolves those PlayerIds and sporting-event PlayerIds through
