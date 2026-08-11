@@ -96,4 +96,19 @@ describe('WorldGenerator', () => {
     expect(JSON.parse(firstJson)).toMatchObject({ currentDate: '2032-10-01' })
     expect(firstJson).toBe(secondJson)
   })
+
+  it('generates valid, diverse positional profiles without changing procedural names', () => {
+    const world = generateWorld({ seed: 12345, gender: 'male', startDate: createGameDate(2032, 10, 1) })
+    const players = Object.values(world.players)
+    expect(Object.values(world.teams).every((team) => {
+      const positions = team.rosterPlayerIds.map((id) => world.players[id]!.basketball.primaryPosition)
+      return ['PG','SG','SF','PF','C'].every((position) => positions.filter((value) => value === position).length === ({ PG:2, SG:3, SF:2, PF:3, C:2 }[position] ?? 0))
+    })).toBe(true)
+    for (const player of players) {
+      expect(Object.keys(player.basketball.ratings)).toEqual(['finishing','shooting','playmaking','perimeterDefense','interiorDefense','rebounding','athleticism'])
+      expect(Object.values(player.basketball.ratings).every((rating) => Number.isInteger(rating) && rating >= 0 && rating <= 100)).toBe(true)
+    }
+    expect(new Set(players.map((player) => JSON.stringify(player.basketball.ratings))).size).toBeGreaterThan(8)
+    expect(world.teams[Object.keys(world.teams)[0] as keyof typeof world.teams]!.name).toBe('Ironhollow Vipers')
+  })
 })

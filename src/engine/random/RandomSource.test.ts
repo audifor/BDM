@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { SeededRandomSource } from './index'
+import { hashStringToSeed, SeededRandomSource } from './index'
 
 describe('SeededRandomSource', () => {
   it('reproduces the same sequence for the same seed', () => {
@@ -63,5 +63,12 @@ describe('SeededRandomSource', () => {
     expect(() => random.chance(-0.1)).toThrow(RangeError)
     expect(() => random.chance(1.1)).toThrow(RangeError)
     expect(() => random.pick([])).toThrow(RangeError)
+  })
+
+  it('hashes stable strings into valid deterministic seeds', () => {
+    expect(hashStringToSeed('schedule-generated-season-0001-game-0001')).toBe(2199234665)
+    expect(hashStringToSeed('player-ratings-v1:12345:generated-player-0001')).toBe(hashStringToSeed('player-ratings-v1:12345:generated-player-0001'))
+    expect(hashStringToSeed('one')).not.toBe(hashStringToSeed('two'))
+    expect(() => new SeededRandomSource(hashStringToSeed('game'))).not.toThrow()
   })
 })
