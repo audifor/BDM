@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useGameStore } from '@/stores/gameStore'
 import { useMatchViewerStore } from '@/stores/matchViewerStore'
 import { useTacticalPlanStore } from '@/stores/tacticalPlanStore'
+import { loadSavedGame, saveCurrentGame } from '@/app/save/GameSaveService'
+import { tauriGameSaveRepository } from '@/tauri/TauriGameSaveRepository'
 import { getUserTeam } from '@/engine/calendar'
 
 import { formatPrototypeDate } from './formatters'
@@ -24,6 +26,7 @@ export function App() {
   const world = useGameStore((state) => state.world)
   const newGame = useGameStore((state) => state.newGame)
   const resetGame = useGameStore((state) => state.resetGame)
+  const replaceWorld = useGameStore((state) => state.replaceWorld)
   const prepareUserMatch = useGameStore((state) => state.prepareUserMatch)
   const startLiveMatch = useGameStore((state) => state.startLiveMatch)
   const advanceLiveMatch = useGameStore((state) => state.advanceLiveMatch)
@@ -52,9 +55,27 @@ export function App() {
   const tacticalPlan = useTacticalPlanStore((state) => state.plan)
   const setTacticalPlan = useTacticalPlanStore((state) => state.setPlan)
   const resetTacticalPlan = useTacticalPlanStore((state) => state.reset)
+  const [hasSave, setHasSave] = useState(false)
+  const [saveMessage, setSaveMessage] = useState<string | null>(null)
+
+  const refreshSaveInfo = async () => {
+    try { setHasSave((await tauriGameSaveRepository.getInfo()) !== null) } catch { setHasSave(false) }
+  }
+  useEffect(() => { void refreshSaveInfo() }, [])
+  const loadGame = async () => {
+    try {
+      const loaded = await loadSavedGame(tauriGameSaveRepository)
+      replaceWorld(loaded); clearMatch(); resetTacticalPlan(); setSection('home'); setSaveMessage('GAME LOADED')
+    } catch (error) { setSaveMessage(error instanceof Error ? error.message : 'Unable to load saved game') }
+  }
+  const saveGame = async () => {
+    if (world === null || simulation !== null) return
+    try { await saveCurrentGame(world, tauriGameSaveRepository, new Date().toISOString()); setHasSave(true); setSaveMessage('GAME SAVED') }
+    catch (error) { setSaveMessage(error instanceof Error ? error.message : 'Unable to save game') }
+  }
 
   if (world === null) {
-    return <StartScreen onNewGame={() => { newGame(); resetTacticalPlan(); setSection('home') }} />
+    return <StartScreen onNewGame={() => { newGame(); resetTacticalPlan(); setSection('home') }} onLoad={() => void loadGame()} canLoad={hasSave} message={saveMessage} />
   }
 
   if (simulation !== null) {
@@ -83,6 +104,9 @@ export function App() {
         </nav>
         <div className="sidebar-actions">
           <button className="advance-button" onClick={advanceDay} type="button">ADVANCE DAY</button>
+          <button className="text-button" onClick={() => void saveGame()} type="button">SAVE GAME</button>
+          <button className="text-button" disabled={!hasSave} onClick={() => void loadGame()} type="button">LOAD GAME</button>
+          {saveMessage !== null && <p>{saveMessage}</p>}
           <button className="text-button" onClick={startNewGame} type="button">NEW GAME</button>
           <button className="text-button" onClick={resetGame} type="button">EXIT CAREER</button>
         </div>
@@ -98,7 +122,7 @@ export function App() {
   )
 }
 
-function StartScreen({ onNewGame }: { readonly onNewGame: () => void }) {
+function StartScreen({ onNewGame, onLoad, canLoad, message }: { readonly onNewGame: () => void; readonly onLoad: () => void; readonly canLoad: boolean; readonly message: string | null }) {
   return (
     <main className="start-screen">
       <section>
@@ -106,6 +130,8 @@ function StartScreen({ onNewGame }: { readonly onNewGame: () => void }) {
         <h1>BDM</h1>
         <p className="subtitle">Basketball Dynasty Manager</p>
         <button className="primary-button" onClick={onNewGame} type="button">NEW GAME</button>
+        <button className="text-button" disabled={!canLoad} onClick={onLoad} type="button">CONTINUE</button>
+        {message !== null && <p>{message}</p>}
       </section>
     </main>
   )

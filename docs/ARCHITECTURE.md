@@ -389,3 +389,11 @@ as the source of truth.
 > A completed game has one immutable statistical log that is the canonical source for all later season and career statistical projections.
 
 > Season and career totals must never be independently mutable counters when they can be derived from canonical game logs.
+
+## Save / Load v1
+
+`GameWorld` is the canonical persistent state. Save v1 serializes it to an explicit, JSON-only `SaveGameEnvelopeV1` (`schemaVersion: 1`, `savedAt`, and `GameWorldSaveV1` payload). Loading treats files as unknown data, validates their structure, and reconstructs the domain world through the canonical factories and semantic validation. Derived season and career statistics are rebuilt from `MatchStatLog`, never saved as counters.
+
+The Tauri Rust layer owns the single manual slot at the application-data path `saves/main.json`. It performs basic envelope validation and writes through a flushed temporary file before replacing the slot. TypeScript invokes this only through the Application save repository; React never receives filesystem paths.
+
+Live sessions, viewer presentation state, playback controls, coaching/substitution drafts, and tactical-plan UI state are transient. Save is unavailable while a live result is not applied; a successful load replaces the world and clears those transients. Future save-schema migrations belong to milestone 075.

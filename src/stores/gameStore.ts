@@ -28,6 +28,7 @@ interface GameStore {
   playUserGame(): void
   simulateRemainingGamesToday(): void
   advanceDay(): void
+  replaceWorld(world: GameWorld): void
   resetGame(): void
 }
 
@@ -46,6 +47,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   completeMatch: (simulation) => {
     const world = requireWorld(get().world)
     set({ world: completeMatch(world, simulation) })
+    liveController = null
   },
   instantResult: (tacticalPlan) => {
     const world = requireWorld(get().world)
@@ -63,6 +65,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const world = requireWorld(get().world)
     set({ world: advanceGameDay(world) })
   },
+  replaceWorld: (world) => { liveController = null; set({ world }) },
   resetGame: () => { liveController = null; set({ world: null }) },
 }))
 
