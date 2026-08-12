@@ -5,7 +5,7 @@ import { countryIdFromString, playerIdFromString } from '@/domain/ids'
 import { calculatePlayerImpact, calculateTeamStrength, selectStartingFive } from './index'
 
 describe('roster team evaluation', () => {
-  const playerWith = (ratings: Record<string, number>) => createPlayer({ id: playerIdFromString('controlled-player'), firstName: 'Test', lastName: 'Player', gender: 'male', nationalityId: countryIdFromString('country'), basketball: { primaryPosition: 'PG', ratings: { finishing: ratings.finishing ?? 50, shooting: ratings.shooting ?? 50, playmaking: ratings.playmaking ?? 50, perimeterDefense: ratings.perimeterDefense ?? 50, interiorDefense: ratings.interiorDefense ?? 50, rebounding: ratings.rebounding ?? 50, athleticism: ratings.athleticism ?? 50 } } })
+  const playerWith = (ratings: Record<string, number>) => createPlayer({ id: playerIdFromString('controlled-player'), firstName: 'Test', lastName: 'Player', gender: 'male', nationalityId: countryIdFromString('country'), basketball: { primaryPosition: 'PG', ratings: { finishing: ratings.finishing ?? 50, shooting: ratings.shooting ?? 50, playmaking: ratings.playmaking ?? 50, perimeterDefense: ratings.perimeterDefense ?? 50, interiorDefense: ratings.interiorDefense ?? 50, rebounding: ratings.rebounding ?? 50, athleticism: ratings.athleticism ?? 50 } }, bio: { dateOfBirth: '2008-06-14', heightCm: 188, weightKg: 86 } })
 
   it('returns exact endpoint and weighted impacts', () => {
     expect(calculatePlayerImpact(playerWith({ finishing:0, shooting:0, playmaking:0, perimeterDefense:0, interiorDefense:0, rebounding:0, athleticism:0 }))).toBe(0)

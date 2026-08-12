@@ -90,6 +90,7 @@ function validateWorld(world: GameWorld): void {
 
   for (const player of Object.values(world.players)) {
     requireEntity(world.countries, player.nationalityId, `Player ${player.id} nationality`)
+    if (compareGameDates(player.bio.dateOfBirth, world.currentDate) >= 0) throw new GameWorldValidationError(`Player ${player.id} date of birth must be before current date`)
   }
 
   const rosteredPlayerIds = new Set<PlayerId>()

@@ -14,7 +14,7 @@ import {
   teamIdFromString,
 } from '@/domain/ids'
 import { createPlayer } from '@/domain/player'
-import { createTestBasketballProfile } from '@/domain/player/testFixtures'
+import { createTestBasketballProfile, createTestPlayerBio } from '@/domain/player/testFixtures'
 import { createSeason } from '@/domain/season'
 import { createTeam } from '@/domain/team'
 
@@ -38,6 +38,7 @@ export function createValidGameWorldInput(): CreateGameWorldInput {
     gender: 'female',
     nationalityId: country.id,
     basketball: createTestBasketballProfile(),
+    bio: createTestPlayerBio(),
   })
   const awayPlayer = createPlayer({
     id: playerIdFromString('player-away'),
@@ -46,6 +47,7 @@ export function createValidGameWorldInput(): CreateGameWorldInput {
     gender: 'female',
     nationalityId: country.id,
     basketball: createTestBasketballProfile(),
+    bio: createTestPlayerBio(),
   })
   const homeTeam = createTeam({
     id: teamIdFromString('team-home'),

@@ -18,6 +18,7 @@ import type { MatchStatLog, PlayerGameStatsSnapshot } from '@/domain/stats/Match
 import type { SeasonHistoryRecord } from '@/domain/season'
 import { createTeam } from '@/domain/team'
 import { createGameWorld, type GameWorld } from '@/domain/world'
+import { generatePlayerBio } from '@/engine/world/PlayerBioGenerator'
 
 type JsonRecord = Readonly<Record<string, unknown>>
 
@@ -74,6 +75,8 @@ export function deserializeGameWorldV1(value: unknown): GameWorld {
   }
   requireIsoTimestamp(string(envelope.savedAt, 'Save savedAt'))
   const payload = record(envelope.payload, 'Save payload')
+  const seasons = array(payload.seasons, 'Save seasons').map(readSeason)
+  const referenceDate = seasons.reduce((earliest, season) => season.startDate < earliest ? season.startDate : earliest, seasons[0]?.startDate ?? fail('Save seasons must not be empty'))
 
   const historyWasOmitted = payload.seasonHistoryBySeasonId === undefined
   const world = createGameWorld({
@@ -82,10 +85,10 @@ export function deserializeGameWorldV1(value: unknown): GameWorld {
     userCoachId: coachIdFromString(string(payload.userCoachId, 'Save userCoachId')),
     countries: array(payload.countries, 'Save countries').map(readCountry),
     coaches: array(payload.coaches, 'Save coaches').map(readCoach),
-    players: array(payload.players, 'Save players').map(readPlayer),
+    players: array(payload.players, 'Save players').map((player) => readPlayer(player, referenceDate)),
     teams: array(payload.teams, 'Save teams').map(readTeam),
     competitions: array(payload.competitions, 'Save competitions').map(readCompetition),
-    seasons: array(payload.seasons, 'Save seasons').map(readSeason),
+    seasons,
     games: array(payload.games, 'Save games').map(readGame),
     matchStatLogs: array(payload.matchStatLogs, 'Save matchStatLogs').map(readMatchStatLog),
     seasonHistory: historyWasOmitted ? [] : array(payload.seasonHistoryBySeasonId, 'Save seasonHistoryBySeasonId').map(readSeasonHistory),
@@ -98,10 +101,12 @@ export function deserializeGameWorldV1(value: unknown): GameWorld {
 
 function readCountry(value: unknown) { const v = record(value, 'Country'); return createCountry({ id: countryIdFromString(string(v.id, 'Country id')), name: string(v.name, 'Country name'), code: string(v.code, 'Country code') }) }
 function readCoach(value: unknown) { const v = record(value, 'Coach'); return createCoach({ id: coachIdFromString(string(v.id, 'Coach id')), firstName: string(v.firstName, 'Coach firstName'), lastName: string(v.lastName, 'Coach lastName'), gender: gender(v.gender), nationalityId: countryIdFromString(string(v.nationalityId, 'Coach nationalityId')) }) }
-function readPlayer(value: unknown) {
+function readPlayer(value: unknown, referenceDate: import('@/domain/date').GameDate) {
   const v = record(value, 'Player'); const basketball = record(v.basketball, 'Player basketball'); const ratings = record(basketball.ratings, 'Player ratings')
-  return createPlayer({ id: playerIdFromString(string(v.id, 'Player id')), firstName: string(v.firstName, 'Player firstName'), lastName: string(v.lastName, 'Player lastName'), gender: gender(v.gender), nationalityId: countryIdFromString(string(v.nationalityId, 'Player nationalityId')), basketball: { primaryPosition: position(basketball.primaryPosition), ratings: { finishing: integer(ratings.finishing, 'finishing'), shooting: integer(ratings.shooting, 'shooting'), playmaking: integer(ratings.playmaking, 'playmaking'), perimeterDefense: integer(ratings.perimeterDefense, 'perimeterDefense'), interiorDefense: integer(ratings.interiorDefense, 'interiorDefense'), rebounding: integer(ratings.rebounding, 'rebounding'), athleticism: integer(ratings.athleticism, 'athleticism') } } })
+  const id = playerIdFromString(string(v.id, 'Player id')); const primaryPosition = position(basketball.primaryPosition)
+  return createPlayer({ id, firstName: string(v.firstName, 'Player firstName'), lastName: string(v.lastName, 'Player lastName'), gender: gender(v.gender), nationalityId: countryIdFromString(string(v.nationalityId, 'Player nationalityId')), basketball: { primaryPosition, ratings: { finishing: integer(ratings.finishing, 'finishing'), shooting: integer(ratings.shooting, 'shooting'), playmaking: integer(ratings.playmaking, 'playmaking'), perimeterDefense: integer(ratings.perimeterDefense, 'perimeterDefense'), interiorDefense: integer(ratings.interiorDefense, 'interiorDefense'), rebounding: integer(ratings.rebounding, 'rebounding'), athleticism: integer(ratings.athleticism, 'athleticism') } }, bio: v.bio === undefined ? generatePlayerBio(id, primaryPosition, referenceDate) : readBio(v.bio) })
 }
+function readBio(value: unknown) { const v = record(value, 'Player bio'); return { dateOfBirth: parseGameDate(string(v.dateOfBirth, 'Player bio dateOfBirth')), heightCm: integer(v.heightCm, 'Player bio heightCm'), weightKg: integer(v.weightKg, 'Player bio weightKg') } }
 function readTeam(value: unknown) { const v = record(value, 'Team'); return createTeam({ id: teamIdFromString(string(v.id, 'Team id')), name: string(v.name, 'Team name'), gender: gender(v.gender), countryId: countryIdFromString(string(v.countryId, 'Team countryId')), rosterPlayerIds: array(v.rosterPlayerIds, 'Team rosterPlayerIds').map((id) => playerIdFromString(string(id, 'Team player id'))), ...(v.coachId === undefined ? {} : { coachId: coachIdFromString(string(v.coachId, 'Team coachId')) }) }) }
 function readCompetition(value: unknown) { const v = record(value, 'Competition'); return createCompetition({ id: competitionIdFromString(string(v.id, 'Competition id')), name: string(v.name, 'Competition name'), gender: gender(v.gender), participantTeamIds: array(v.participantTeamIds, 'Competition participantTeamIds').map((id) => teamIdFromString(string(id, 'Competition team id'))) }) }
 function readSeason(value: unknown) { const v = record(value, 'Season'); return createSeason({ id: seasonIdFromString(string(v.id, 'Season id')), competitionId: competitionIdFromString(string(v.competitionId, 'Season competitionId')), label: string(v.label, 'Season label'), startDate: parseGameDate(string(v.startDate, 'Season startDate')), endDate: parseGameDate(string(v.endDate, 'Season endDate')) }) }

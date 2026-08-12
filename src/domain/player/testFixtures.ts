@@ -9,3 +9,7 @@ export function createTestBasketballProfile(): BasketballProfile {
     },
   }
 }
+
+export function createTestPlayerBio() {
+  return { dateOfBirth: '2008-06-14' as import('@/domain/date').GameDate, heightCm: 188, weightKg: 86 }
+}

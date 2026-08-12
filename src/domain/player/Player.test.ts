@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { countryIdFromString, playerIdFromString } from '@/domain/ids'
 
 import { createPlayer } from './index'
-import { createTestBasketballProfile } from './testFixtures'
+import { createTestBasketballProfile, createTestPlayerBio } from './testFixtures'
 
 describe('Player', () => {
   const input = {
@@ -13,6 +13,7 @@ describe('Player', () => {
     gender: 'male' as const,
     nationalityId: countryIdFromString('country-a'),
     basketball: createTestBasketballProfile(),
+    bio: createTestPlayerBio(),
   }
 
   it('creates a valid player', () => {
@@ -35,5 +36,10 @@ describe('Player', () => {
   it('accepts rating bounds and serializes the profile', () => {
     const player = createPlayer({ ...input, basketball: { ...input.basketball, ratings: { ...input.basketball.ratings, finishing: 0, shooting: 100 } } })
     expect(JSON.parse(JSON.stringify(player))).toEqual(player)
+  })
+
+  it('rejects invalid bio measurements', () => {
+    expect(() => createPlayer({ ...input, bio: { ...input.bio, heightCm: 119 } })).toThrow(RangeError)
+    expect(() => createPlayer({ ...input, bio: { ...input.bio, weightKg: 250.5 } })).toThrow(RangeError)
   })
 })

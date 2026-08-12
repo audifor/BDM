@@ -8,8 +8,8 @@ import { createMatchPlayerProfile } from './MatchPlayerProfile'
 import { calculateShotMakeProbability, calculateShotZoneWeights, pointsForShotZone } from './ShotResolution'
 import { chooseWeighted } from './WeightedChoice'
 
-const profile = createMatchPlayerProfile(createPlayer({ id: playerIdFromString('offense-player'), firstName: 'Test', lastName: 'Shooter', gender: 'male', nationalityId: countryIdFromString('country'), basketball: { primaryPosition: 'SG', ratings: { finishing: 80, shooting: 70, playmaking: 50, perimeterDefense: 50, interiorDefense: 50, rebounding: 50, athleticism: 40 } } }))
-const defender = createMatchPlayerProfile(createPlayer({ id: playerIdFromString('defense-player'), firstName: 'Test', lastName: 'Defender', gender: 'male', nationalityId: countryIdFromString('country'), basketball: { primaryPosition: 'SG', ratings: { finishing: 50, shooting: 50, playmaking: 50, perimeterDefense: 50, interiorDefense: 50, rebounding: 50, athleticism: 50 } } }))
+const profile = createMatchPlayerProfile(createPlayer({ id: playerIdFromString('offense-player'), firstName: 'Test', lastName: 'Shooter', gender: 'male', nationalityId: countryIdFromString('country'), basketball: { primaryPosition: 'SG', ratings: { finishing: 80, shooting: 70, playmaking: 50, perimeterDefense: 50, interiorDefense: 50, rebounding: 50, athleticism: 40 } }, bio: { dateOfBirth: '2008-06-14', heightCm: 188, weightKg: 86 } }))
+const defender = createMatchPlayerProfile(createPlayer({ id: playerIdFromString('defense-player'), firstName: 'Test', lastName: 'Defender', gender: 'male', nationalityId: countryIdFromString('country'), basketball: { primaryPosition: 'SG', ratings: { finishing: 50, shooting: 50, playmaking: 50, perimeterDefense: 50, interiorDefense: 50, rebounding: 50, athleticism: 50 } }, bio: { dateOfBirth: '2008-06-14', heightCm: 188, weightKg: 86 } }))
 
 describe('player-driven offense primitives', () => {
   it('adapts the bootstrap ratings into exact bounded match signals', () => {

@@ -413,3 +413,9 @@ The next Season starts one calendar year after the preceding Season start and ke
 > Starting a new season must create new season and game identities without mutating or replacing any canonical historical season, game, statistical log, or season history record.
 
 > The same season-finalization pipeline applies to every season; it is never specific to Season 1 or Season 2.
+
+## Player bio and age
+
+Players persist canonical `bio` metadata: `dateOfBirth` as a `GameDate`, plus integer `heightCm` and `weightKg`. Age is never stored; it is a pure calendar projection from date of birth and an arbitrary game date (or the world's current date). The Player Bio generator uses a separate deterministic stream keyed by PlayerId, so generating human metadata cannot change names, ratings, roster construction, schedules, or sporting simulation.
+
+New Alpha players receive deterministic adult bios relative to the earliest Season start. Save V1 reads legacy players without bio by enriching them from that same earliest-season reference, then writes explicit bio data on the next save. Height, weight, and age do not affect MatchEngine, MatchPlayerProfile, ratings, fatigue, or team strength in this milestone; future systems may consume them deliberately.

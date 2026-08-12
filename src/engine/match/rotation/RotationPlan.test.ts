@@ -62,7 +62,7 @@ describe('default match rotations', () => {
 })
 
 function player(id: string, position: typeof positions[number], impact: number): Player {
-  return createPlayer({ id: playerIdFromString(id), firstName: 'Test', lastName: id, gender: 'male', nationalityId: countryIdFromString('country'), basketball: { primaryPosition: position, ratings: { finishing: impact, shooting: impact, playmaking: impact, perimeterDefense: impact, interiorDefense: impact, rebounding: impact, athleticism: impact } } })
+  return createPlayer({ id: playerIdFromString(id), firstName: 'Test', lastName: id, gender: 'male', nationalityId: countryIdFromString('country'), basketball: { primaryPosition: position, ratings: { finishing: impact, shooting: impact, playmaking: impact, perimeterDefense: impact, interiorDefense: impact, rebounding: impact, athleticism: impact } }, bio: { dateOfBirth: '2008-06-14', heightCm: 188, weightKg: 86 } })
 }
 
 function playerRecord(players: readonly Player[]): Record<Player['id'], Player> { return Object.fromEntries(players.map((item) => [item.id, item])) as Record<Player['id'], Player> }

@@ -16,6 +16,7 @@ import { createSeason } from '@/domain/season'
 import { createTeam } from '@/domain/team'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import { hashStringToSeed, SeededRandomSource, type RandomSource } from '@/engine/random'
+import { generatePlayerBio } from './PlayerBioGenerator'
 
 const TEAM_COUNT = 8
 const PLAYERS_PER_TEAM = 12
@@ -109,6 +110,7 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
         gender,
         nationalityId: country.id,
         basketball: generateBasketballProfile(options.seed, `generated-player-${formatSequence(sequence)}`, playerIndex),
+        bio: generatePlayerBio(`generated-player-${formatSequence(sequence)}`, ROSTER_POSITIONS[playerIndex]!, startDate),
       })
       players.push(player)
       rosterPlayerIds.push(player.id)
