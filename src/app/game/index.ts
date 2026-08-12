@@ -9,6 +9,7 @@ export {
   playUserGame,
   prepareMatch,
   prepareUserMatch,
+  simulateAndApplyGame,
 } from './playUserGame'
 export { LiveMatchController, type LiveMatchStep } from './LiveMatchController'
 export { getCurrentSeason } from './selectors'

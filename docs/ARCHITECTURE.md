@@ -397,3 +397,9 @@ as the source of truth.
 The Tauri Rust layer owns the single manual slot at the application-data path `saves/main.json`. It performs basic envelope validation and writes through a flushed temporary file before replacing the slot. TypeScript invokes this only through the Application save repository; React never receives filesystem paths.
 
 Live sessions, viewer presentation state, playback controls, coaching/substitution drafts, and tactical-plan UI state are transient. Save is unavailable while a live result is not applied; a successful load replaces the world and clears those transients. Future save-schema migrations belong to milestone 075.
+
+## Season progression
+
+A season completes only when every one of its Games has a completed result, never from the calendar date. Applying the final result automatically creates one immutable `SeasonHistoryRecord` in the canonical `seasonHistoryBySeasonId` collection. It snapshots the deterministic final standings, champion Team ID, and latest scheduled game date; it does not duplicate player statistics.
+
+The standings projection is pure Domain logic, reused by Engine presentation and GameWorld history validation. A completed season stops calendar progression until the future offseason milestone; it does not create a following season. Save v1 persists season history while accepting pre-029 active saves that do not yet carry the optional history field.

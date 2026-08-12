@@ -2,6 +2,7 @@ import { getCurrentSeason } from '@/app/game'
 import type { Game } from '@/domain/game'
 import { getUserCoach } from '@/domain/world'
 import { getGamesToday, getNextUserGame, getUserTeam, inspectCurrentDate } from '@/engine/calendar'
+import { getSeasonHistoryRecord } from '@/engine/season'
 
 import { formatPrototypeDate } from '../formatters'
 
@@ -20,6 +21,13 @@ export function HomeScreen({ world, onPlayGame, onInstantResult }: HomeScreenPro
 
   if (userTeam === undefined) {
     return <section className="content-panel">The user coach is not assigned to a team.</section>
+  }
+
+  const seasonHistory = getSeasonHistoryRecord(world, getCurrentSeason(world).id)
+  if (seasonHistory !== undefined) {
+    const champion = world.teams[seasonHistory.championTeamId]!
+    const record = seasonHistory.finalStandings.find((line) => line.teamId === champion.id)!
+    return <section className="screen home-screen"><div className="page-heading"><div><p className="eyebrow">SEASON COMPLETE</p><h1>{champion.name} are champions</h1><p>{getCurrentSeason(world).label} · Final record {record.wins}-{record.losses}</p></div></div><article className="content-panel"><p>Offseason progression will be added in the next development milestone.</p></article></section>
   }
 
   return (

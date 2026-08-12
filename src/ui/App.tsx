@@ -6,6 +6,8 @@ import { useTacticalPlanStore } from '@/stores/tacticalPlanStore'
 import { loadSavedGame, saveCurrentGame } from '@/app/save/GameSaveService'
 import { tauriGameSaveRepository } from '@/tauri/TauriGameSaveRepository'
 import { getUserTeam } from '@/engine/calendar'
+import { getSeasonHistoryRecord } from '@/engine/season'
+import { getCurrentSeason } from '@/app/game'
 
 import { formatPrototypeDate } from './formatters'
 import { HomeScreen, MatchViewerScreen, ScheduleScreen, SquadScreen, StandingsScreen, TacticsScreen } from './screens'
@@ -83,6 +85,7 @@ export function App() {
     return <MatchViewerScreen world={world} simulation={simulation} homeTeamName={world.teams[simulation.homeTeamId]!.name} awayTeamName={world.teams[simulation.awayTeamId]!.name} currentEventIndex={currentEventIndex} isPlaying={isPlaying} speed={speed} resultApplied={resultApplied} onPause={pause} onResume={resume} onSpeedChange={setSpeed} onRevealNext={() => replaceSimulation(advanceLiveMatch())} onRequestPresentationSegment={() => createPresentationSegment(advanceLiveMatchPresentation())} onCompletePresentationSegment={(nextSimulation) => replaceSimulation(nextSimulation)} onSkipToEnd={() => replaceSimulation(skipLiveMatch(), false)} onApplyResult={() => { if (markResultApplied()) completeMatch(simulation) }} onContinue={() => { clearMatch(); setSection('home') }} coachingPlan={tacticalPlan} coachingPlayers={coachingTeam.rosterPlayerIds.map((playerId) => world.players[playerId]!)} coachingTeamId={coachingTeam.id} onApplyCoaching={(plan) => { replaceSimulation(applyLiveTactics(coachingTeam.id, plan), false); setTacticalPlan(plan) }} onApplyManualSubstitutions={(substitutions) => replaceSimulation(applyManualSubstitutions(coachingTeam.id, substitutions), false)} />
   }
   const userTeam = getUserTeam(world)
+  const seasonComplete = getSeasonHistoryRecord(world, getCurrentSeason(world).id) !== undefined
 
   const startNewGame = () => {
     if (window.confirm('Start a new prototype career? The current career will be lost.')) {
@@ -103,7 +106,7 @@ export function App() {
           {NAVIGATION.map((item) => <button className={section === item.id ? 'nav-item active' : 'nav-item'} key={item.id} onClick={() => setSection(item.id)} type="button">{item.label}</button>)}
         </nav>
         <div className="sidebar-actions">
-          <button className="advance-button" onClick={advanceDay} type="button">ADVANCE DAY</button>
+          <button className="advance-button" disabled={seasonComplete} onClick={advanceDay} type="button">ADVANCE DAY</button>
           <button className="text-button" onClick={() => void saveGame()} type="button">SAVE GAME</button>
           <button className="text-button" disabled={!hasSave} onClick={() => void loadGame()} type="button">LOAD GAME</button>
           {saveMessage !== null && <p>{saveMessage}</p>}

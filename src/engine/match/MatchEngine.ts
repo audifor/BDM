@@ -394,14 +394,13 @@ export function simulateMatchDetailed(options: SimulateMatchOptions): MatchSimul
 
 function finishPeriod(session: MatchSession, state: MatchSessionState, newEvents: MatchEvent[]): MatchSessionStepResult {
   let sequence = state.nextSequence
-  const events = [...state.events, ...newEvents]
   const periodEnd: MatchEvent = { sequence: sequence++, period: state.period, clockSecondsRemaining: 0, type: 'periodEnd', homeScore: state.homeScore, awayScore: state.awayScore }
   newEvents.push(periodEnd)
 
   if (state.period >= MATCH_RULES_V2.periodCount && state.homeScore !== state.awayScore) {
     const gameEnd: MatchEvent = { sequence, period: state.period, clockSecondsRemaining: 0, type: 'gameEnd', homeScore: state.homeScore, awayScore: state.awayScore }
     newEvents.push(gameEnd)
-    const completeState = { ...state, nextSequence: sequence + 1, events: [...events, ...newEvents], isComplete: true }
+    const completeState = { ...state, nextSequence: sequence + 1, events: [...state.events, ...newEvents], isComplete: true }
     return { session: { ...session, state: completeState }, newEvents }
   }
   if (state.period >= MATCH_RULES_V2.periodCount + MAX_OVERTIME_PERIODS) {
@@ -413,7 +412,7 @@ function finishPeriod(session: MatchSession, state: MatchSessionState, newEvents
   const attackingTeamId = period % 2 === 1 ? state.openingTeamId : otherTeamId(state.openingTeamId, state)
   const periodStart: MatchEvent = { sequence: sequence++, period, clockSecondsRemaining, type: 'periodStart', homeScore: state.homeScore, awayScore: state.awayScore }
   newEvents.push(periodStart)
-  const nextState = { ...state, period, clockSecondsRemaining, attackingTeamId, nextSequence: sequence, events: [...events, ...newEvents] }
+  const nextState = { ...state, period, clockSecondsRemaining, attackingTeamId, nextSequence: sequence, events: [...state.events, ...newEvents] }
   return { session: { ...session, state: nextState }, newEvents }
 }
 

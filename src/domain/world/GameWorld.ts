@@ -13,7 +13,7 @@ import type {
   TeamId,
 } from '@/domain/ids'
 import type { Player } from '@/domain/player'
-import type { Season } from '@/domain/season'
+import { calculateSeasonStandings, type Season, type SeasonHistoryRecord } from '@/domain/season'
 import type { Team } from '@/domain/team'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
 
@@ -31,6 +31,7 @@ export interface GameWorld {
   readonly seasons: Readonly<Record<SeasonId, Season>>
   readonly games: Readonly<Record<GameId, Game>>
   readonly matchStatLogsByGameId: Readonly<Record<GameId, MatchStatLog>>
+  readonly seasonHistoryBySeasonId: Readonly<Record<SeasonId, SeasonHistoryRecord>>
 }
 
 export interface CreateGameWorldInput {
@@ -44,6 +45,7 @@ export interface CreateGameWorldInput {
   seasons: readonly Season[]
   games: readonly Game[]
   matchStatLogs?: readonly MatchStatLog[]
+  seasonHistory?: readonly SeasonHistoryRecord[]
 }
 
 export class GameWorldValidationError extends Error {
@@ -66,6 +68,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     seasons: indexById(input.seasons, 'Season'),
     games: indexById(input.games, 'Game'),
     matchStatLogsByGameId: indexLogsByGameId(input.matchStatLogs ?? []),
+    seasonHistoryBySeasonId: indexHistoryBySeasonId(input.seasonHistory ?? []),
   }
 
   validateWorld(world)
@@ -152,6 +155,29 @@ function validateWorld(world: GameWorld): void {
     }
   }
   for (const log of Object.values(world.matchStatLogsByGameId)) validateMatchStatLog(world, log)
+  for (const history of Object.values(world.seasonHistoryBySeasonId)) validateSeasonHistory(world, history)
+}
+
+function validateSeasonHistory(world: GameWorld, history: SeasonHistoryRecord): void {
+  const season = requireEntity(world.seasons, history.seasonId, 'Season history season')
+  const competition = requireEntity(world.competitions, history.competitionId, 'Season history competition')
+  if (season.competitionId !== competition.id) throw new GameWorldValidationError(`Season history ${history.seasonId} competition does not match Season`)
+  if (!Object.values(world.games).filter((game) => game.seasonId === season.id).every((game) => game.status === 'completed')) throw new GameWorldValidationError(`Season history ${history.seasonId} requires completed Games`)
+  if (!competition.participantTeamIds.includes(history.championTeamId)) throw new GameWorldValidationError(`Season history ${history.seasonId} champion is not a participant`)
+  if (history.finalStandings.length !== competition.participantTeamIds.length) throw new GameWorldValidationError(`Season history ${history.seasonId} standings must contain every participant`)
+  const teams = new Set<TeamId>(); const positions = new Set<number>()
+  for (const line of history.finalStandings) {
+    if (!competition.participantTeamIds.includes(line.teamId) || teams.has(line.teamId)) throw new GameWorldValidationError(`Season history ${history.seasonId} has invalid standings teams`)
+    if (!Number.isInteger(line.position) || line.position < 1 || line.position > competition.participantTeamIds.length || positions.has(line.position)) throw new GameWorldValidationError(`Season history ${history.seasonId} has invalid standings positions`)
+    teams.add(line.teamId); positions.add(line.position)
+  }
+  if (history.finalStandings.find((line) => line.position === 1)?.teamId !== history.championTeamId) throw new GameWorldValidationError(`Season history ${history.seasonId} champion must be first`)
+  const expected = calculateSeasonStandings(world, history.seasonId)
+  if (history.finalStandings.length !== expected.length || history.finalStandings.some((line, index) => !sameStanding(line, expected[index]!))) throw new GameWorldValidationError(`Season history ${history.seasonId} standings do not match completed Games`)
+}
+
+function sameStanding(a: SeasonHistoryRecord['finalStandings'][number], b: SeasonHistoryRecord['finalStandings'][number]): boolean {
+  return a.position === b.position && a.teamId === b.teamId && a.played === b.played && a.wins === b.wins && a.losses === b.losses && a.pointsFor === b.pointsFor && a.pointsAgainst === b.pointsAgainst && a.pointDifference === b.pointDifference
 }
 
 function validateMatchStatLog(world: GameWorld, log: MatchStatLog): void {
@@ -193,6 +219,15 @@ function indexLogsByGameId(logs: readonly MatchStatLog[]): Readonly<Record<GameI
   for (const log of logs) {
     if (Object.hasOwn(indexed, log.gameId)) throw new GameWorldValidationError(`Duplicate MatchStatLog Game ID: ${log.gameId}`)
     indexed[log.gameId] = log
+  }
+  return Object.freeze(indexed)
+}
+
+function indexHistoryBySeasonId(history: readonly SeasonHistoryRecord[]): Readonly<Record<SeasonId, SeasonHistoryRecord>> {
+  const indexed = Object.create(null) as Record<SeasonId, SeasonHistoryRecord>
+  for (const record of history) {
+    if (Object.hasOwn(indexed, record.seasonId)) throw new GameWorldValidationError(`Duplicate Season history ID: ${record.seasonId}`)
+    indexed[record.seasonId] = record
   }
   return Object.freeze(indexed)
 }

@@ -3,6 +3,7 @@ import { createGameWorld, type GameWorld } from '@/domain/world'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
 
 import { calculateMatchPlayerStats } from './PlayerMatchStats'
+import { finalizeCompletedSeason } from '@/engine/season'
 import type { MatchSimulation, MatchSimulationResult } from './MatchEngine'
 
 export class MatchResultApplicationError extends Error {
@@ -63,6 +64,7 @@ export function applyMatchResult(world: GameWorld, result: MatchSimulationResult
     seasons: Object.values(world.seasons),
     games,
     matchStatLogs: Object.values(world.matchStatLogsByGameId),
+    seasonHistory: Object.values(world.seasonHistoryBySeasonId),
   })
 }
 
@@ -80,16 +82,19 @@ export function createMatchStatLog(world: GameWorld, gameId: MatchSimulation['ga
   })
   const homePoints = playerLines.filter((line) => line.isHome).reduce((total, line) => total + line.stats.points, 0)
   const awayPoints = playerLines.filter((line) => !line.isHome).reduce((total, line) => total + line.stats.points, 0)
-  if (homePoints !== simulation.finalScore.home || awayPoints !== simulation.finalScore.away) throw new MatchResultApplicationError('MatchStatLog player points do not match final score')
+  if (homePoints !== simulation.finalScore.home || awayPoints !== simulation.finalScore.away) throw new MatchResultApplicationError(`MatchStatLog player points do not match final score for ${gameId}: ${homePoints}-${awayPoints} vs ${simulation.finalScore.home}-${simulation.finalScore.away}`)
   return { gameId, competitionId: game.competitionId, seasonId: game.seasonId, gameDate: game.date, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, finalScore: { ...simulation.finalScore }, playerLines }
 }
 
 /** Atomically completes a Game and records its canonical statistical log. */
 export function applyCompletedMatch(world: GameWorld, simulation: MatchSimulation): GameWorld {
   if (world.matchStatLogsByGameId[simulation.gameId] !== undefined) throw new MatchResultApplicationError(`MatchStatLog already exists for Game ${simulation.gameId}`)
+  const originalGame = world.games[simulation.gameId]
+  if (originalGame === undefined) throw new MatchResultApplicationError(`Cannot apply result to missing Game ${simulation.gameId}`)
   const log = createMatchStatLog(world, simulation.gameId, simulation)
   const resultWorld = applyMatchResult(world, { gameId: simulation.gameId, homeTeamId: simulation.homeTeamId, awayTeamId: simulation.awayTeamId, homeScore: simulation.finalScore.home, awayScore: simulation.finalScore.away })
-  return createGameWorld({ currentDate: resultWorld.currentDate, userCoachId: resultWorld.userCoachId, countries: Object.values(resultWorld.countries), coaches: Object.values(resultWorld.coaches), players: Object.values(resultWorld.players), teams: Object.values(resultWorld.teams), competitions: Object.values(resultWorld.competitions), seasons: Object.values(resultWorld.seasons), games: Object.values(resultWorld.games), matchStatLogs: [...Object.values(world.matchStatLogsByGameId), log] })
+  const completedWorld = createGameWorld({ currentDate: resultWorld.currentDate, userCoachId: resultWorld.userCoachId, countries: Object.values(resultWorld.countries), coaches: Object.values(resultWorld.coaches), players: Object.values(resultWorld.players), teams: Object.values(resultWorld.teams), competitions: Object.values(resultWorld.competitions), seasons: Object.values(resultWorld.seasons), games: Object.values(resultWorld.games), matchStatLogs: [...Object.values(world.matchStatLogsByGameId), log], seasonHistory: Object.values(world.seasonHistoryBySeasonId) })
+  return finalizeCompletedSeason(completedWorld, originalGame.seasonId)
 }
 
 function validateScore(value: number, side: string): void {
