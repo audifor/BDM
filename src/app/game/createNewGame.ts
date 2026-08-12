@@ -12,7 +12,7 @@ export const PROTOTYPE_GAME_CONFIGURATION = {
 /** Creates the fixed, deterministic career used by the first playable prototype. */
 export function createNewGame(): GameWorld {
   const generatedWorld = generateWorld(PROTOTYPE_GAME_CONFIGURATION)
-  const season = Object.values(generatedWorld.seasons)[0]
+  const season = generatedWorld.seasons[generatedWorld.currentSeasonId]
 
   if (season === undefined) {
     throw new Error('Prototype world generation did not create a Season')
@@ -22,6 +22,7 @@ export function createNewGame(): GameWorld {
 
   return createGameWorld({
     currentDate: generatedWorld.currentDate,
+    currentSeasonId: generatedWorld.currentSeasonId,
     userCoachId: generatedWorld.userCoachId,
     countries: Object.values(generatedWorld.countries),
     coaches: Object.values(generatedWorld.coaches),

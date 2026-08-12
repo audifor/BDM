@@ -33,5 +33,5 @@ export function getSeasonHistory(world: GameWorld): readonly SeasonHistoryRecord
 export function getSeasonHistoryRecord(world: GameWorld, seasonId: keyof GameWorld['seasons']): SeasonHistoryRecord | undefined { return world.seasonHistoryBySeasonId[seasonId] }
 
 function rebuildWorld(world: GameWorld, seasonHistory: readonly SeasonHistoryRecord[]): GameWorld {
-  return createGameWorld({ currentDate: world.currentDate, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), seasons: Object.values(world.seasons), games: Object.values(world.games), matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory })
+  return createGameWorld({ currentDate: world.currentDate, currentSeasonId: world.currentSeasonId, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), seasons: Object.values(world.seasons), games: Object.values(world.games), matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory })
 }

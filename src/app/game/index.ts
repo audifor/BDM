@@ -13,3 +13,4 @@ export {
 } from './playUserGame'
 export { LiveMatchController, type LiveMatchStep } from './LiveMatchController'
 export { getCurrentSeason } from './selectors'
+export { startNextSeason } from './startNextSeason'

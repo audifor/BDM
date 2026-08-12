@@ -48,6 +48,13 @@ export function addDays(date: GameDate, amount: number): GameDate {
   return createGameDate(utcDate.getUTCFullYear(), utcDate.getUTCMonth() + 1, utcDate.getUTCDate())
 }
 
+/** Adds calendar years without depending on local time or timezones. */
+export function addYears(date: GameDate, amount: number): GameDate {
+  if (!Number.isSafeInteger(amount)) throw new TypeError('GameDate year offset must be a safe integer')
+  const parts = partsFromGameDate(date)
+  return createGameDate(parts.year + amount, parts.month, parts.day)
+}
+
 export function compareGameDates(a: GameDate, b: GameDate): -1 | 0 | 1 {
   if (a === b) {
     return 0

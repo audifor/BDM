@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   addDays,
+  addYears,
   compareGameDates,
   createGameDate,
   formatGameDate,
@@ -37,6 +38,10 @@ describe('GameDate', () => {
     expect(addDays(parseGameDate('2032-01-30'), 3)).toBe('2032-02-02')
     expect(addDays(parseGameDate('2032-12-31'), 1)).toBe('2033-01-01')
     expect(addDays(parseGameDate('2032-01-01'), -1)).toBe('2031-12-31')
+  })
+
+  it('adds calendar years without using local time', () => {
+    expect(addYears(parseGameDate('2032-10-01'), 1)).toBe('2033-10-01')
   })
 
   it('compares calendar dates', () => {

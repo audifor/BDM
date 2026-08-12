@@ -10,9 +10,10 @@ interface HomeScreenProps {
   readonly world: Parameters<typeof getUserTeam>[0]
   readonly onPlayGame: () => void
   readonly onInstantResult: () => void
+  readonly onStartNextSeason: () => void
 }
 
-export function HomeScreen({ world, onPlayGame, onInstantResult }: HomeScreenProps) {
+export function HomeScreen({ world, onPlayGame, onInstantResult, onStartNextSeason }: HomeScreenProps) {
   const userTeam = getUserTeam(world)
   const userCoach = getUserCoach(world)
   const todayGame = userTeam === undefined ? undefined : findTeamGame(getGamesToday(world), userTeam.id)
@@ -27,7 +28,7 @@ export function HomeScreen({ world, onPlayGame, onInstantResult }: HomeScreenPro
   if (seasonHistory !== undefined) {
     const champion = world.teams[seasonHistory.championTeamId]!
     const record = seasonHistory.finalStandings.find((line) => line.teamId === champion.id)!
-    return <section className="screen home-screen"><div className="page-heading"><div><p className="eyebrow">SEASON COMPLETE</p><h1>{champion.name} are champions</h1><p>{getCurrentSeason(world).label} · Final record {record.wins}-{record.losses}</p></div></div><article className="content-panel"><p>Offseason progression will be added in the next development milestone.</p></article></section>
+    return <section className="screen home-screen"><div className="page-heading"><div><p className="eyebrow">SEASON COMPLETE</p><h1>{champion.name} are champions</h1><p>{getCurrentSeason(world).label} · Final record {record.wins}-{record.losses}</p></div></div><article className="content-panel"><button className="primary-button" onClick={onStartNextSeason} type="button">START NEXT SEASON</button></article></section>
   }
 
   return (

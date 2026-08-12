@@ -1,5 +1,6 @@
 export {
   addDays,
+  addYears,
   compareGameDates,
   createGameDate,
   formatGameDate,

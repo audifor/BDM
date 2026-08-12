@@ -1,5 +1,6 @@
 import {
   advanceGameDay,
+  startNextSeason,
   completeMatch,
   createNewGame,
   instantResult,
@@ -28,6 +29,7 @@ interface GameStore {
   playUserGame(): void
   simulateRemainingGamesToday(): void
   advanceDay(): void
+  startNextSeason(): void
   replaceWorld(world: GameWorld): void
   resetGame(): void
 }
@@ -64,6 +66,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   advanceDay: () => {
     const world = requireWorld(get().world)
     set({ world: advanceGameDay(world) })
+  },
+  startNextSeason: () => {
+    const world = requireWorld(get().world)
+    set({ world: startNextSeason(world) })
   },
   replaceWorld: (world) => { liveController = null; set({ world }) },
   resetGame: () => { liveController = null; set({ world: null }) },

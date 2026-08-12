@@ -24,6 +24,7 @@ type JsonRecord = Readonly<Record<string, unknown>>
 /** Disk representation. It deliberately remains separate from the runtime world. */
 export interface GameWorldSaveV1 {
   readonly currentDate: string
+  readonly currentSeasonId: string
   readonly userCoachId: string
   readonly countries: readonly JsonRecord[]
   readonly coaches: readonly JsonRecord[]
@@ -49,6 +50,7 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
     savedAt,
     payload: {
       currentDate: world.currentDate,
+      currentSeasonId: world.currentSeasonId,
       userCoachId: world.userCoachId,
       countries: copyRecords(Object.values(world.countries)),
       coaches: copyRecords(Object.values(world.coaches)),
@@ -76,6 +78,7 @@ export function deserializeGameWorldV1(value: unknown): GameWorld {
   const historyWasOmitted = payload.seasonHistoryBySeasonId === undefined
   const world = createGameWorld({
     currentDate: parseGameDate(string(payload.currentDate, 'Save currentDate')),
+    ...(payload.currentSeasonId === undefined ? {} : { currentSeasonId: seasonIdFromString(string(payload.currentSeasonId, 'Save currentSeasonId')) }),
     userCoachId: coachIdFromString(string(payload.userCoachId, 'Save userCoachId')),
     countries: array(payload.countries, 'Save countries').map(readCountry),
     coaches: array(payload.coaches, 'Save coaches').map(readCoach),

@@ -22,6 +22,7 @@ export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 export interface GameWorld {
   readonly schemaVersion: typeof GAME_WORLD_SCHEMA_VERSION
   readonly currentDate: GameDate
+  readonly currentSeasonId: SeasonId
   readonly userCoachId: CoachId
   readonly countries: Readonly<Record<CountryId, Country>>
   readonly coaches: Readonly<Record<CoachId, Coach>>
@@ -36,6 +37,7 @@ export interface GameWorld {
 
 export interface CreateGameWorldInput {
   currentDate: GameDate
+  currentSeasonId?: SeasonId
   userCoachId: CoachId
   countries: readonly Country[]
   coaches: readonly Coach[]
@@ -56,16 +58,19 @@ export class GameWorldValidationError extends Error {
 }
 
 export function createGameWorld(input: CreateGameWorldInput): GameWorld {
+  const seasons = indexById(input.seasons, 'Season')
+  const currentSeasonId = input.currentSeasonId ?? selectLegacyCurrentSeasonId(seasons)
   const world: GameWorld = {
     schemaVersion: GAME_WORLD_SCHEMA_VERSION,
     currentDate: parseGameDate(input.currentDate),
+    currentSeasonId,
     userCoachId: input.userCoachId,
     countries: indexById(input.countries, 'Country'),
     coaches: indexById(input.coaches, 'Coach'),
     players: indexById(input.players, 'Player'),
     teams: indexById(input.teams, 'Team'),
     competitions: indexById(input.competitions, 'Competition'),
-    seasons: indexById(input.seasons, 'Season'),
+    seasons,
     games: indexById(input.games, 'Game'),
     matchStatLogsByGameId: indexLogsByGameId(input.matchStatLogs ?? []),
     seasonHistoryBySeasonId: indexHistoryBySeasonId(input.seasonHistory ?? []),
@@ -76,6 +81,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
 }
 
 function validateWorld(world: GameWorld): void {
+  requireEntity(world.seasons, world.currentSeasonId, 'Current season')
   requireEntity(world.coaches, world.userCoachId, 'User coach')
 
   for (const coach of Object.values(world.coaches)) {
@@ -156,6 +162,12 @@ function validateWorld(world: GameWorld): void {
   }
   for (const log of Object.values(world.matchStatLogsByGameId)) validateMatchStatLog(world, log)
   for (const history of Object.values(world.seasonHistoryBySeasonId)) validateSeasonHistory(world, history)
+}
+
+function selectLegacyCurrentSeasonId(seasons: Readonly<Record<SeasonId, Season>>): SeasonId {
+  const ids = Object.keys(seasons) as SeasonId[]
+  if (ids.length !== 1) throw new GameWorldValidationError('GameWorld requires currentSeasonId with multiple Seasons')
+  return ids[0]!
 }
 
 function validateSeasonHistory(world: GameWorld, history: SeasonHistoryRecord): void {

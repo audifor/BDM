@@ -5,6 +5,7 @@ import { createGameWorld, type GameWorld } from '@/domain/world'
 export function advanceDay(world: GameWorld): GameWorld {
   return createGameWorld({
     currentDate: addDays(world.currentDate, 1),
+    currentSeasonId: world.currentSeasonId,
     userCoachId: world.userCoachId,
     countries: Object.values(world.countries),
     coaches: Object.values(world.coaches),

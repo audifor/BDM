@@ -1,6 +1,7 @@
 import { compareGameDates } from '@/domain/date'
 import type { Game } from '@/domain/game'
 import { getUserTeam } from '@/engine/calendar'
+import { getCurrentSeason } from '@/app/game'
 
 import { formatPrototypeDate } from '../formatters'
 
@@ -12,7 +13,7 @@ export function ScheduleScreen({ world }: ScheduleScreenProps) {
   const team = getUserTeam(world)
   if (team === undefined) return null
   const games = Object.values(world.games)
-    .filter((game) => game.homeTeamId === team.id || game.awayTeamId === team.id)
+    .filter((game) => game.seasonId === getCurrentSeason(world).id && (game.homeTeamId === team.id || game.awayTeamId === team.id))
     .sort((a, b) => compareGameDates(a.date, b.date) || compareGameIds(a, b))
 
   return (

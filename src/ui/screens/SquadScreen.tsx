@@ -1,6 +1,7 @@
 import { getCountry, getTeamRoster } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { calculatePlayerStatAverages, getPlayerCareerStats, getPlayerGameLogs, getPlayerSeasonStats } from '@/engine/stats/PlayerHistory'
+import { getCurrentSeason } from '@/app/game'
 
 interface SquadScreenProps {
   readonly world: Parameters<typeof getUserTeam>[0]
@@ -14,7 +15,7 @@ export function SquadScreen({ world }: SquadScreenProps) {
     positionOrder[a.basketball.primaryPosition] - positionOrder[b.basketball.primaryPosition] ||
     compareText(a.lastName, b.lastName) || compareText(a.firstName, b.firstName) || compareText(a.id, b.id),
   )
-  const season = Object.values(world.seasons)[0]
+  const season = getCurrentSeason(world)
 
   return (
     <section className="screen">

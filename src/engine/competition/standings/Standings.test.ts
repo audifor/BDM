@@ -220,6 +220,7 @@ function recreateWorld(
 ): GameWorld {
   return createGameWorld({
     currentDate: source.currentDate,
+    currentSeasonId: source.currentSeasonId,
     userCoachId: source.userCoachId,
     countries: Object.values(source.countries),
     coaches: Object.values(source.coaches),

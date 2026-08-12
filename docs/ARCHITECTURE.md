@@ -403,3 +403,13 @@ Live sessions, viewer presentation state, playback controls, coaching/substituti
 A season completes only when every one of its Games has a completed result, never from the calendar date. Applying the final result automatically creates one immutable `SeasonHistoryRecord` in the canonical `seasonHistoryBySeasonId` collection. It snapshots the deterministic final standings, champion Team ID, and latest scheduled game date; it does not duplicate player statistics.
 
 The standings projection is pure Domain logic, reused by Engine presentation and GameWorld history validation. A completed season stops calendar progression until the future offseason milestone; it does not create a following season. Save v1 persists season history while accepting pre-029 active saves that do not yet carry the optional history field.
+
+## Offseason v1
+
+`GameWorld` retains every Season by ID and identifies its only active Season with `currentSeasonId`; historical Seasons, Games, MatchStatLogs, and SeasonHistory records are never overwritten. Starting the next season is a direct deterministic transition: it requires the current completed Season and its history, creates a new season identity and a fresh schedule through the existing round-robin generator, then moves `currentDate` to the new start date.
+
+The next Season starts one calendar year after the preceding Season start and keeps the same competition, teams, coaches, players, rosters, and ratings. It creates no players, development, aging, contracts, or offseason events. Season-specific statistics therefore reset naturally because they project over a new SeasonId; career statistics continue over all retained logs. Save V1 stores `currentSeasonId` and accepts legacy single-season saves by deriving it from their sole Season.
+
+> Starting a new season must create new season and game identities without mutating or replacing any canonical historical season, game, statistical log, or season history record.
+
+> The same season-finalization pipeline applies to every season; it is never specific to Season 1 or Season 2.
