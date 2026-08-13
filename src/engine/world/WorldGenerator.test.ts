@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { addDays, createGameDate } from '@/domain/date'
 import { playerIdFromString } from '@/domain/ids'
 import { getTeamCoach } from '@/domain/world'
+import { getPlayerPotentialBand } from '@/domain/player'
 
 import { generateWorld } from './index'
 
@@ -18,6 +19,8 @@ describe('WorldGenerator', () => {
     expect(Object.keys(world.competitions)).toHaveLength(1)
     expect(Object.keys(world.seasons)).toHaveLength(1)
     expect(Object.keys(world.games)).toHaveLength(0)
+    expect(Object.values(world.players).every((player) => Number.isInteger(player.potential.ceiling) && player.potential.ceiling >= 0 && player.potential.ceiling <= 100)).toBe(true)
+    expect(new Set(Object.values(world.players).map((player) => getPlayerPotentialBand(player.potential))).size).toBeGreaterThan(1)
   })
 
   it('assigns every player and coach to exactly one team', () => {

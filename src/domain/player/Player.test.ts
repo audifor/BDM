@@ -14,6 +14,7 @@ describe('Player', () => {
     nationalityId: countryIdFromString('country-a'),
     basketball: createTestBasketballProfile(),
     bio: createTestPlayerBio(),
+    potential: { ceiling: 70 },
   }
 
   it('creates a valid player', () => {
@@ -41,5 +42,9 @@ describe('Player', () => {
   it('rejects invalid bio measurements', () => {
     expect(() => createPlayer({ ...input, bio: { ...input.bio, heightCm: 119 } })).toThrow(RangeError)
     expect(() => createPlayer({ ...input, bio: { ...input.bio, weightKg: 250.5 } })).toThrow(RangeError)
+  })
+
+  it.each([-1, 101, 50.5, Number.NaN, Number.POSITIVE_INFINITY])('rejects invalid potential: %s', (ceiling) => {
+    expect(() => createPlayer({ ...input, potential: { ceiling } })).toThrow(RangeError)
   })
 })

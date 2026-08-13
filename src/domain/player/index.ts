@@ -1,4 +1,6 @@
 export { createPlayer } from './Player'
 export { BASKETBALL_RATING_KEYS } from './Player'
 export type { BasketballProfile, BasketballRatingKey, CreatePlayerInput, Player, PlayerBio, PlayerBioInput, PlayerRatings } from './Player'
+export { calculateBootstrapAbilityProxy, getPlayerPotentialBand } from './PlayerPotential'
+export type { PlayerPotential, PlayerPotentialBand } from './PlayerPotential'
 export { calculateAge, getPlayerAge } from './PlayerAge'

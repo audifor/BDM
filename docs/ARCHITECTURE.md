@@ -425,3 +425,13 @@ New Alpha players receive deterministic adult bios relative to the earliest Seas
 Offseason development is a pure Engine step invoked exactly once by `startNextSeason`, using each player's age at the target Season start. It changes only canonical bootstrap ratings; IDs, bio, rosters, coaches, logs, and history remain unchanged. The age curve and growth-room calculation are explicitly provisional and do not represent Potential.
 
 Each Player/rating/season transition has an independent deterministic seed. This makes development independent of Player and rating-key ordering, and ensures adding a future rating cannot perturb existing rolls. Development results are transient diagnostics; only the updated Player ratings persist in Save V1. No development happens on load, calendar advance, birthday, or season finalization.
+
+## Player Potential v1
+
+`PlayerPotential.ceiling` is canonical hidden state. It is a bootstrap aggregate development ceiling proxy, not a player overall rating and not a hard maximum for any individual basketball rating. The arithmetic bootstrap ability proxy is used only by Potential and Development; it is neither persisted nor displayed.
+
+The exact ceiling is never presented by UI. UI exposes only `PlayerPotentialBand` (`limited` through `elite`) directly during this pre-Scouting phase. Scouting can later layer knowledge, estimates, ranges, and confidence over the same canonical truth without changing it.
+
+Potential is generated deterministically from its isolated `player-potential-v1:${playerId}` stream, persists across ordinary season transitions, and legacy saves lacking it are enriched deterministically from the player’s current ratings, age at the save world date, and id. Development consumes it only for positive growth; age decline remains unaffected. MatchEngine and MatchPlayerProfile do not consume Potential directly.
+
+Future Potential models may replace this proxy with grouped or attribute-specific potential through the Development boundary. True player potential is canonical hidden information: presentation layers may expose an approximation, but must not expose the underlying exact value unless a future game system explicitly permits it.

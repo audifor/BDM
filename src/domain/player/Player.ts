@@ -7,6 +7,7 @@ import {
   type Gender,
 } from '@/domain/primitives'
 import { requireNonEmptyString } from '@/domain/validation'
+import { calculateBootstrapAbilityProxy, type PlayerPotential } from './PlayerPotential'
 
 export interface Player {
   readonly id: PlayerId
@@ -16,6 +17,7 @@ export interface Player {
   readonly nationalityId: CountryId
   readonly basketball: BasketballProfile
   readonly bio: PlayerBio
+  readonly potential: PlayerPotential
 }
 
 export interface PlayerBio {
@@ -57,12 +59,14 @@ export interface CreatePlayerInput {
   nationalityId: CountryId
   basketball: BasketballProfile
   bio: PlayerBioInput
+  potential?: PlayerPotential
 }
 
 export function createPlayer(input: CreatePlayerInput): Player {
   const ratings = input.basketball.ratings
   validateRatings(ratings)
   const bio = validateBio(input.bio)
+  const potential = validatePotential(input.potential ?? { ceiling: Math.round(calculateBootstrapAbilityProxy(ratings)) })
 
   return {
     id: requireNonEmptyString(input.id, 'Player id') as PlayerId,
@@ -75,7 +79,12 @@ export function createPlayer(input: CreatePlayerInput): Player {
       ratings,
     },
     bio,
+    potential,
   }
+}
+
+function validatePotential(potential: PlayerPotential): PlayerPotential {
+  return { ceiling: requireIntegerInRange(potential.ceiling, 'Player potential ceiling', 0, 100) }
 }
 
 function validateBio(bio: PlayerBioInput): PlayerBio {

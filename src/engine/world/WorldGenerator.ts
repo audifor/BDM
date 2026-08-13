@@ -10,13 +10,14 @@ import {
   seasonIdFromString,
   teamIdFromString,
 } from '@/domain/ids'
-import { createPlayer } from '@/domain/player'
+import { calculateAge, createPlayer } from '@/domain/player'
 import { requireGender, type BasketballPosition, type Gender } from '@/domain/primitives'
 import { createSeason } from '@/domain/season'
 import { createTeam } from '@/domain/team'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import { hashStringToSeed, SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generatePlayerBio } from './PlayerBioGenerator'
+import { generatePlayerPotential } from './PlayerPotentialGenerator'
 
 const TEAM_COUNT = 8
 const PLAYERS_PER_TEAM = 12
@@ -104,13 +105,17 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     const rosterPlayerIds = []
     for (let playerIndex = 0; playerIndex < PLAYERS_PER_TEAM; playerIndex += 1) {
       const sequence = teamIndex * PLAYERS_PER_TEAM + playerIndex + 1
+      const playerId = playerIdFromString(`generated-player-${formatSequence(sequence)}`)
+      const basketball = generateBasketballProfile(options.seed, playerId, playerIndex)
+      const bio = generatePlayerBio(playerId, ROSTER_POSITIONS[playerIndex]!, startDate)
       const player = createPlayer({
-        id: playerIdFromString(`generated-player-${formatSequence(sequence)}`),
+        id: playerId,
         ...generatePersonName(random),
         gender,
         nationalityId: country.id,
-        basketball: generateBasketballProfile(options.seed, `generated-player-${formatSequence(sequence)}`, playerIndex),
-        bio: generatePlayerBio(`generated-player-${formatSequence(sequence)}`, ROSTER_POSITIONS[playerIndex]!, startDate),
+        basketball,
+        bio,
+        potential: generatePlayerPotential(playerId, basketball.ratings, calculateAge(bio.dateOfBirth, startDate)),
       })
       players.push(player)
       rosterPlayerIds.push(player.id)
