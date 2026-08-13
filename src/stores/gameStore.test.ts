@@ -1,5 +1,6 @@
 import { createGameDate } from '@/domain/date'
 import { getGamesToday } from '@/engine/calendar'
+import { getTeamFinancialSnapshot } from '@/domain/world/finances'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { useGameStore } from './gameStore'
@@ -15,6 +16,9 @@ describe('gameStore', () => {
     useGameStore.getState().newGame()
 
     expect(useGameStore.getState().world?.currentDate).toBe(createGameDate(2032, 10, 1))
+    const world = useGameStore.getState().world!
+    const userTeam = Object.values(world.teams).find((team) => team.coachId === world.userCoachId)!
+    expect(() => getTeamFinancialSnapshot(world, userTeam.id)).not.toThrow()
   })
 
   it('delegates user game simulation and advancing the day to application services', () => {

@@ -23,6 +23,7 @@ import { createTeam } from '@/domain/team'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import { generatePlayerBio } from '@/engine/world/PlayerBioGenerator'
 import { generatePlayerPotential } from '@/engine/world/PlayerPotentialGenerator'
+import { ensureTeamFinances } from '@/engine/world/TeamFinancesEnrichment'
 
 type JsonRecord = Readonly<Record<string, unknown>>
 
@@ -92,6 +93,14 @@ export function deserializeGameWorldV1(value: unknown): GameWorld {
 
   const historyWasOmitted = payload.seasonHistoryBySeasonId === undefined
   const currentDate = parseGameDate(string(payload.currentDate, 'Save currentDate'))
+  const teams = array(payload.teams, 'Save teams').map(readTeam)
+  const contracts = payload.contracts === undefined ? [] : array(payload.contracts, 'Save contracts').map(readContract)
+  const teamFinances = ensureTeamFinances({
+    currentDate,
+    teams,
+    contracts,
+    teamFinances: payload.teamFinances === undefined ? [] : array(payload.teamFinances, 'Save teamFinances').map(readTeamFinances),
+  })
   const world = createGameWorld({
     currentDate,
     ...(payload.currentSeasonId === undefined ? {} : { currentSeasonId: seasonIdFromString(string(payload.currentSeasonId, 'Save currentSeasonId')) }),
@@ -99,16 +108,16 @@ export function deserializeGameWorldV1(value: unknown): GameWorld {
     countries: array(payload.countries, 'Save countries').map(readCountry),
     coaches: array(payload.coaches, 'Save coaches').map(readCoach),
     players: array(payload.players, 'Save players').map((player) => readPlayer(player, referenceDate, currentDate)),
-    teams: array(payload.teams, 'Save teams').map(readTeam),
+    teams,
     competitions: array(payload.competitions, 'Save competitions').map(readCompetition),
     seasons,
     games: array(payload.games, 'Save games').map(readGame),
     matchStatLogs: array(payload.matchStatLogs, 'Save matchStatLogs').map(readMatchStatLog),
     seasonHistory: historyWasOmitted ? [] : array(payload.seasonHistoryBySeasonId, 'Save seasonHistoryBySeasonId').map(readSeasonHistory),
     injuries: payload.injuries === undefined ? [] : array(payload.injuries, 'Save injuries').map(readInjury),
-    contracts: payload.contracts === undefined ? [] : array(payload.contracts, 'Save contracts').map(readContract),
+    contracts,
     playerTransactions: payload.playerTransactions === undefined ? [] : array(payload.playerTransactions, 'Save playerTransactions').map(readTransaction),
-    teamFinances: payload.teamFinances === undefined ? [] : array(payload.teamFinances, 'Save teamFinances').map(readTeamFinances),
+    teamFinances,
   })
   if (Object.values(world.seasons).some((season) => Object.values(world.games).filter((game) => game.seasonId === season.id).every((game) => game.status === 'completed') && world.seasonHistoryBySeasonId[season.id] === undefined)) {
     throw new Error('Completed season is missing season history')

@@ -43,6 +43,7 @@ describe('startNextSeason', () => {
     expect(Object.values(next.games).filter((game) => game.seasonId !== nextSeason.id)).toEqual(priorGames)
     expect(Object.values(next.matchStatLogsByGameId)).toEqual(priorLogs)
     expect(Object.values(next.seasonHistoryBySeasonId)).toEqual(priorHistory)
+    expect(next.teamFinancesByTeamId).toEqual(completed.teamFinancesByTeamId)
     const nextPlayersWithPreviousRatings = Object.values(next.players).map((player) => ({ ...player, basketball: { ...player.basketball, ratings: priorPlayers.find((prior) => prior.id === player.id)!.basketball.ratings } }))
     expect(nextPlayersWithPreviousRatings).toEqual(priorPlayers)
     expect(Object.values(next.players).map((player) => player.potential)).toEqual(priorPlayers.map((player) => player.potential))

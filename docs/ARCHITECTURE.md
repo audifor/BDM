@@ -398,6 +398,12 @@ The Tauri Rust layer owns the single manual slot at the application-data path `s
 
 Live sessions, viewer presentation state, playback controls, coaching/substitution drafts, and tactical-plan UI state are transient. Save is unavailable while a live result is not applied; a successful load replaces the world and clears those transients. Future save-schema migrations belong to milestone 075.
 
+Every runtime Team has exactly one `TeamFinances` profile. Save/load enrichment may
+deterministically create only missing profiles for legacy or partial Alpha saves,
+using active payroll at the world current date; existing persisted profiles remain
+unchanged. UI financial projections rely on this invariant and must not mask missing
+canonical finance state with fallback values.
+
 ## Season progression
 
 A season completes only when every one of its Games has a completed result, never from the calendar date. Applying the final result automatically creates one immutable `SeasonHistoryRecord` in the canonical `seasonHistoryBySeasonId` collection. It snapshots the deterministic final standings, champion Team ID, and latest scheduled game date; it does not duplicate player statistics.
