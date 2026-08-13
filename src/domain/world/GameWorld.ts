@@ -21,6 +21,8 @@ import type { InjuryId } from '@/domain/ids'
 import type { ContractId } from '@/domain/ids'
 import { createPlayerContract, type PlayerContract } from '@/domain/contract'
 import { createTeamFinances, type TeamFinances } from '@/domain/finance'
+import type { PlayerTransaction } from '@/domain/transaction'
+import type { PlayerTransactionId } from '@/domain/ids'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -41,6 +43,7 @@ export interface GameWorld {
   readonly injuriesById: Readonly<Record<InjuryId, InjuryRecord>>
   readonly contractsById: Readonly<Record<ContractId, PlayerContract>>
   readonly teamFinancesByTeamId: Readonly<Record<TeamId, TeamFinances>>
+  readonly playerTransactionsById: Readonly<Record<PlayerTransactionId, PlayerTransaction>>
 }
 
 export interface CreateGameWorldInput {
@@ -59,6 +62,7 @@ export interface CreateGameWorldInput {
   injuries?: readonly InjuryRecord[]
   contracts?: readonly PlayerContract[]
   teamFinances?: readonly TeamFinances[]
+  playerTransactions?: readonly PlayerTransaction[]
 }
 
 export class GameWorldValidationError extends Error {
@@ -88,6 +92,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     injuriesById: indexById(input.injuries ?? [], 'Injury'),
     contractsById: indexById(input.contracts ?? [], 'Contract'),
     teamFinancesByTeamId: indexTeamFinances(input.teamFinances ?? []),
+    playerTransactionsById: indexById(input.playerTransactions ?? [], 'Player transaction'),
   }
 
   validateWorld(world)
@@ -179,6 +184,7 @@ function validateWorld(world: GameWorld): void {
   for (const injury of Object.values(world.injuriesById)) validateInjury(world, injury)
   for (const contract of Object.values(world.contractsById)) { createPlayerContract(contract); requireEntity(world.players,contract.playerId,`Contract ${contract.id} Player`); requireEntity(world.teams,contract.teamId,`Contract ${contract.id} Team`) }
   for (const finances of Object.values(world.teamFinancesByTeamId)) { createTeamFinances(finances); requireEntity(world.teams,finances.teamId,`Team finances ${finances.teamId} Team`) }
+  for (const transaction of Object.values(world.playerTransactionsById)) { requireEntity(world.players,transaction.playerId,`Transaction ${transaction.id} Player`); if(transaction.fromTeamId)requireEntity(world.teams,transaction.fromTeamId,`Transaction ${transaction.id} from Team`); if(transaction.toTeamId)requireEntity(world.teams,transaction.toTeamId,`Transaction ${transaction.id} to Team`); if(transaction.contractId)requireEntity(world.contractsById,transaction.contractId,`Transaction ${transaction.id} Contract`) }
   for (const history of Object.values(world.seasonHistoryBySeasonId)) validateSeasonHistory(world, history)
 }
 

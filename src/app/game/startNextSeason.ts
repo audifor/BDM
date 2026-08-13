@@ -5,6 +5,7 @@ import { createGameWorld, type GameWorld } from '@/domain/world'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
 import { applyOffseasonDevelopment } from '@/engine/development'
+import { reconcileExpiredPlayerContracts } from '@/engine/market'
 
 import { getCurrentSeason } from './selectors'
 
@@ -24,7 +25,7 @@ export function startNextSeason(world: GameWorld): GameWorld {
   const developed = applyOffseasonDevelopment(world, { fromSeasonId: previous.id, toSeasonId: next.id, targetDate: next.startDate }).world
   const staged = rebuild(developed, [...Object.values(developed.seasons), next], developed.currentSeasonId, Object.values(developed.games))
   const schedule = generateRoundRobinSchedule({ world: staged, seasonId: next.id })
-  return rebuild(developed, [...Object.values(developed.seasons), next], next.id, [...Object.values(developed.games), ...schedule])
+  return reconcileExpiredPlayerContracts(rebuild(developed, [...Object.values(developed.seasons), next], next.id, [...Object.values(developed.games), ...schedule]), next.startDate)
 }
 
 function nextSeasonId(world: GameWorld) {
@@ -34,5 +35,5 @@ function nextSeasonId(world: GameWorld) {
 }
 
 function rebuild(world: GameWorld, seasons: readonly (typeof world.seasons)[keyof typeof world.seasons][], currentSeasonId: GameWorld['currentSeasonId'], games: readonly (typeof world.games)[keyof typeof world.games][]): GameWorld {
-  return createGameWorld({ currentDate: currentSeasonId === world.currentSeasonId ? world.currentDate : seasons.find((season) => season.id === currentSeasonId)!.startDate, currentSeasonId, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), seasons, games, matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory: Object.values(world.seasonHistoryBySeasonId), injuries: Object.values(world.injuriesById), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId) })
+  return createGameWorld({ currentDate: currentSeasonId === world.currentSeasonId ? world.currentDate : seasons.find((season) => season.id === currentSeasonId)!.startDate, currentSeasonId, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), seasons, games, matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory: Object.values(world.seasonHistoryBySeasonId), injuries: Object.values(world.injuriesById), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId), playerTransactions: Object.values(world.playerTransactionsById) })
 }

@@ -439,3 +439,7 @@ Future Potential models may replace this proxy with grouped or attribute-specifi
 ## Injuries v1
 
 `InjuryRecord` is canonical historical state in `GameWorld.injuriesById`; Player has no mutable injury flag. Availability is derived from injury dates and game date, with recovery occurring automatically on `expectedReturnDate`. Match squads filter unavailable players while Team rosters remain unchanged. New injuries are deterministic post-match records for players with minutes, using isolated injury RNG streams and a five-available-player Alpha safeguard. MatchEngine receives only available squads and has no medical knowledge. Save V1 persists injuries and legacy saves load an empty history.
+
+## Contract lifecycle and free agency core
+
+Roster membership and contractual rights are separate. Free-agent status is derived from roster membership, contract status and date; it is never a Player flag. Contract termination preserves the agreed term and records an effective early end separately. `PlayerTransaction` is canonical historical state. Expiry reconciliation removes rostered players with no active or scheduled right exactly once and records a deterministic `contractExpired` transaction. This subhito has no signing, release operation, market UI or AI market; those remain later 037 work. MatchEngine does not consume market state.

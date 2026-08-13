@@ -1,9 +1,10 @@
 import { addDays } from '@/domain/date'
 import { createGameWorld, type GameWorld } from '@/domain/world'
+import { reconcileExpiredPlayerContracts } from '@/engine/market'
 
 /** Advances only the simulation date, leaving game resolution to other services. */
 export function advanceDay(world: GameWorld): GameWorld {
-  return createGameWorld({
+  const advanced = createGameWorld({
     currentDate: addDays(world.currentDate, 1),
     currentSeasonId: world.currentSeasonId,
     userCoachId: world.userCoachId,
@@ -19,5 +20,7 @@ export function advanceDay(world: GameWorld): GameWorld {
     injuries: Object.values(world.injuriesById),
     contracts: Object.values(world.contractsById),
     teamFinances: Object.values(world.teamFinancesByTeamId),
+    playerTransactions: Object.values(world.playerTransactionsById),
   })
+  return reconcileExpiredPlayerContracts(advanced, advanced.currentDate)
 }

@@ -8,6 +8,7 @@ export { getActiveInjuryForPlayer, getAvailableRosterPlayers, getCurrentPlayerIn
 export { getActivePlayerContract, getCurrentPlayerContract, getPlayerContracts } from './contracts'
 export { calculateTeamPlayerPayroll, canTeamAffordAdditionalSalary, getTeamFinancialSnapshot } from './finances'
 export type { TeamFinancialSnapshot, TeamFinancialStatus } from './finances'
+export { getFreeAgents, getPlayerRosterTeamId, getPlayerTransactions, isPlayerFreeAgent } from './market'
 export {
   getCoach,
   getCompetition,
