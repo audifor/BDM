@@ -18,6 +18,8 @@ import type { Team } from '@/domain/team'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
 import { createInjury, isInjuryActive, type InjuryRecord } from '@/domain/injury'
 import type { InjuryId } from '@/domain/ids'
+import type { ContractId } from '@/domain/ids'
+import { createPlayerContract, type PlayerContract } from '@/domain/contract'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -36,6 +38,7 @@ export interface GameWorld {
   readonly matchStatLogsByGameId: Readonly<Record<GameId, MatchStatLog>>
   readonly seasonHistoryBySeasonId: Readonly<Record<SeasonId, SeasonHistoryRecord>>
   readonly injuriesById: Readonly<Record<InjuryId, InjuryRecord>>
+  readonly contractsById: Readonly<Record<ContractId, PlayerContract>>
 }
 
 export interface CreateGameWorldInput {
@@ -52,6 +55,7 @@ export interface CreateGameWorldInput {
   matchStatLogs?: readonly MatchStatLog[]
   seasonHistory?: readonly SeasonHistoryRecord[]
   injuries?: readonly InjuryRecord[]
+  contracts?: readonly PlayerContract[]
 }
 
 export class GameWorldValidationError extends Error {
@@ -79,6 +83,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     matchStatLogsByGameId: indexLogsByGameId(input.matchStatLogs ?? []),
     seasonHistoryBySeasonId: indexHistoryBySeasonId(input.seasonHistory ?? []),
     injuriesById: indexById(input.injuries ?? [], 'Injury'),
+    contractsById: indexById(input.contracts ?? [], 'Contract'),
   }
 
   validateWorld(world)
@@ -168,6 +173,7 @@ function validateWorld(world: GameWorld): void {
   }
   for (const log of Object.values(world.matchStatLogsByGameId)) validateMatchStatLog(world, log)
   for (const injury of Object.values(world.injuriesById)) validateInjury(world, injury)
+  for (const contract of Object.values(world.contractsById)) { createPlayerContract(contract); requireEntity(world.players,contract.playerId,`Contract ${contract.id} Player`); requireEntity(world.teams,contract.teamId,`Contract ${contract.id} Team`) }
   for (const history of Object.values(world.seasonHistoryBySeasonId)) validateSeasonHistory(world, history)
 }
 

@@ -9,6 +9,7 @@ import {
   countryIdFromString,
   gameIdFromString,
   injuryIdFromString,
+  contractIdFromString,
   playerIdFromString,
   seasonIdFromString,
   teamIdFromString,
@@ -39,6 +40,7 @@ export interface GameWorldSaveV1 {
   readonly matchStatLogs: readonly JsonRecord[]
   readonly seasonHistoryBySeasonId: readonly JsonRecord[]
   readonly injuries: readonly JsonRecord[]
+  readonly contracts: readonly JsonRecord[]
 }
 
 export interface SaveGameEnvelopeV1 {
@@ -66,6 +68,7 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
       matchStatLogs: copyRecords(Object.values(world.matchStatLogsByGameId)),
       seasonHistoryBySeasonId: copyRecords(Object.values(world.seasonHistoryBySeasonId)),
       injuries: copyRecords(Object.values(world.injuriesById)),
+      contracts: copyRecords(Object.values(world.contractsById)),
     },
   }
 }
@@ -98,6 +101,7 @@ export function deserializeGameWorldV1(value: unknown): GameWorld {
     matchStatLogs: array(payload.matchStatLogs, 'Save matchStatLogs').map(readMatchStatLog),
     seasonHistory: historyWasOmitted ? [] : array(payload.seasonHistoryBySeasonId, 'Save seasonHistoryBySeasonId').map(readSeasonHistory),
     injuries: payload.injuries === undefined ? [] : array(payload.injuries, 'Save injuries').map(readInjury),
+    contracts: payload.contracts === undefined ? [] : array(payload.contracts, 'Save contracts').map(readContract),
   })
   if (Object.values(world.seasons).some((season) => Object.values(world.games).filter((game) => game.seasonId === season.id).every((game) => game.status === 'completed') && world.seasonHistoryBySeasonId[season.id] === undefined)) {
     throw new Error('Completed season is missing season history')
@@ -127,6 +131,7 @@ function readMatchStatLog(value: unknown): MatchStatLog {
 }
 function readSeasonHistory(value: unknown): SeasonHistoryRecord { const v = record(value, 'Season history'); return { seasonId: seasonIdFromString(string(v.seasonId, 'Season history seasonId')), competitionId: competitionIdFromString(string(v.competitionId, 'Season history competitionId')), completedOn: parseGameDate(string(v.completedOn, 'Season history completedOn')), championTeamId: teamIdFromString(string(v.championTeamId, 'Season history championTeamId')), finalStandings: array(v.finalStandings, 'Season history finalStandings').map(readFinalStanding) } }
 function readInjury(value: unknown) { const v=record(value,'Injury'); const kind=string(v.kind,'Injury kind'); const severity=string(v.severity,'Injury severity'); return { id: injuryIdFromString(string(v.id,'Injury id')),playerId:playerIdFromString(string(v.playerId,'Injury playerId')),kind:kind as import('@/domain/injury').InjuryKind,severity:severity as import('@/domain/injury').InjurySeverity,injuredOn:parseGameDate(string(v.injuredOn,'Injury injuredOn')),expectedReturnDate:parseGameDate(string(v.expectedReturnDate,'Injury expectedReturnDate')),...(v.sourceGameId===undefined?{}:{sourceGameId:gameIdFromString(string(v.sourceGameId,'Injury sourceGameId'))})} }
+function readContract(value: unknown) { const v=record(value,'Contract'); const term=record(v.term,'Contract term'); const compensation=record(v.compensation,'Contract compensation'); return {id:contractIdFromString(string(v.id,'Contract id')),playerId:playerIdFromString(string(v.playerId,'Contract playerId')),teamId:teamIdFromString(string(v.teamId,'Contract teamId')),kind:string(v.kind,'Contract kind') as 'standard',term:{startsOn:parseGameDate(string(term.startsOn,'Contract startsOn')),expiresOn:parseGameDate(string(term.expiresOn,'Contract expiresOn'))},compensation:{annualSalary:integer(compensation.annualSalary,'Contract annualSalary')}} }
 function readFinalStanding(value: unknown) { const v = record(value, 'Final standing'); return { position: integer(v.position, 'Final standing position'), teamId: teamIdFromString(string(v.teamId, 'Final standing teamId')), played: integer(v.played, 'Final standing played'), wins: integer(v.wins, 'Final standing wins'), losses: integer(v.losses, 'Final standing losses'), pointsFor: integer(v.pointsFor, 'Final standing pointsFor'), pointsAgainst: integer(v.pointsAgainst, 'Final standing pointsAgainst'), pointDifference: integer(v.pointDifference, 'Final standing pointDifference') } }
 function readPlayerLine(value: unknown) { const v = record(value, 'Player stat line'); return { playerId: playerIdFromString(string(v.playerId, 'Player stat playerId')), teamId: teamIdFromString(string(v.teamId, 'Player stat teamId')), opponentTeamId: teamIdFromString(string(v.opponentTeamId, 'Player stat opponentTeamId')), isHome: boolean(v.isHome, 'Player stat isHome'), started: boolean(v.started, 'Player stat started'), stats: readStats(v.stats) } }
 function readStats(value: unknown): PlayerGameStatsSnapshot { const v = record(value, 'Player stats'); return { playerId: playerIdFromString(string(v.playerId, 'Player stats playerId')), secondsPlayed: integer(v.secondsPlayed, 'Player stats secondsPlayed'), points: integer(v.points, 'Player stats points'), fieldGoalsMade: integer(v.fieldGoalsMade, 'Player stats fieldGoalsMade'), fieldGoalsAttempted: integer(v.fieldGoalsAttempted, 'Player stats fieldGoalsAttempted'), twoPointMade: integer(v.twoPointMade, 'Player stats twoPointMade'), twoPointAttempted: integer(v.twoPointAttempted, 'Player stats twoPointAttempted'), threePointMade: integer(v.threePointMade, 'Player stats threePointMade'), threePointAttempted: integer(v.threePointAttempted, 'Player stats threePointAttempted'), freeThrowsMade: integer(v.freeThrowsMade, 'Player stats freeThrowsMade'), freeThrowsAttempted: integer(v.freeThrowsAttempted, 'Player stats freeThrowsAttempted'), offensiveRebounds: integer(v.offensiveRebounds, 'Player stats offensiveRebounds'), defensiveRebounds: integer(v.defensiveRebounds, 'Player stats defensiveRebounds'), rebounds: integer(v.rebounds, 'Player stats rebounds'), assists: integer(v.assists, 'Player stats assists'), steals: integer(v.steals, 'Player stats steals'), blocks: integer(v.blocks, 'Player stats blocks'), turnovers: integer(v.turnovers, 'Player stats turnovers'), foulsCommitted: integer(v.foulsCommitted, 'Player stats foulsCommitted'), plusMinus: integer(v.plusMinus, 'Player stats plusMinus') } }

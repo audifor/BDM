@@ -18,6 +18,7 @@ import { createGameWorld, type GameWorld } from '@/domain/world'
 import { hashStringToSeed, SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generatePlayerBio } from './PlayerBioGenerator'
 import { generatePlayerPotential } from './PlayerPotentialGenerator'
+import { generateInitialPlayerContract } from './PlayerContractGenerator'
 
 const TEAM_COUNT = 8
 const PLAYERS_PER_TEAM = 12
@@ -98,7 +99,7 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     }),
   )
   const teamNames = shuffle([...TEAM_NAMES], random).slice(0, TEAM_COUNT)
-  const players = []
+  const players: ReturnType<typeof createPlayer>[] = []
   const teams = []
 
   for (let teamIndex = 0; teamIndex < TEAM_COUNT; teamIndex += 1) {
@@ -157,6 +158,7 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     competitions: [competition],
     seasons: [season],
     games: [],
+    contracts: teams.flatMap((team) => team.rosterPlayerIds.map((playerId) => generateInitialPlayerContract(players.find((player) => player.id === playerId)!, team.id, season.startDate))),
   })
 }
 
