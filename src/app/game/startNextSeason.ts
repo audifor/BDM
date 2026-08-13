@@ -4,6 +4,7 @@ import { createSeason } from '@/domain/season'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
+import { applyOffseasonDevelopment } from '@/engine/development'
 
 import { getCurrentSeason } from './selectors'
 
@@ -20,9 +21,10 @@ export function startNextSeason(world: GameWorld): GameWorld {
     startDate: addYears(previous.startDate, 1),
     endDate: addYears(previous.endDate, 1),
   })
-  const staged = rebuild(world, [...Object.values(world.seasons), next], world.currentSeasonId, Object.values(world.games))
+  const developed = applyOffseasonDevelopment(world, { fromSeasonId: previous.id, toSeasonId: next.id, targetDate: next.startDate }).world
+  const staged = rebuild(developed, [...Object.values(developed.seasons), next], developed.currentSeasonId, Object.values(developed.games))
   const schedule = generateRoundRobinSchedule({ world: staged, seasonId: next.id })
-  return rebuild(world, [...Object.values(world.seasons), next], next.id, [...Object.values(world.games), ...schedule])
+  return rebuild(developed, [...Object.values(developed.seasons), next], next.id, [...Object.values(developed.games), ...schedule])
 }
 
 function nextSeasonId(world: GameWorld) {

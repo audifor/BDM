@@ -40,6 +40,10 @@ export interface PlayerRatings {
   readonly athleticism: number
 }
 
+/** Bootstrap rating surface only; later player taxonomies may replace it. */
+export const BASKETBALL_RATING_KEYS = ['finishing', 'shooting', 'playmaking', 'perimeterDefense', 'interiorDefense', 'rebounding', 'athleticism'] as const
+export type BasketballRatingKey = typeof BASKETBALL_RATING_KEYS[number]
+
 export interface BasketballProfile {
   readonly primaryPosition: BasketballPosition
   readonly ratings: PlayerRatings
@@ -86,11 +90,7 @@ function requireIntegerInRange(value: number, name: string, minimum: number, max
 }
 
 function validateRatings(ratings: PlayerRatings): void {
-  const ratingNames: readonly (keyof PlayerRatings)[] = [
-    'finishing', 'shooting', 'playmaking', 'perimeterDefense', 'interiorDefense', 'rebounding', 'athleticism',
-  ]
-
-  for (const name of ratingNames) {
+  for (const name of BASKETBALL_RATING_KEYS) {
     const value = ratings[name]
     if (!Number.isFinite(value) || !Number.isInteger(value) || value < 0 || value > 100) {
       throw new RangeError(`Player ${name} must be an integer from 0 to 100`)

@@ -419,3 +419,9 @@ The next Season starts one calendar year after the preceding Season start and ke
 Players persist canonical `bio` metadata: `dateOfBirth` as a `GameDate`, plus integer `heightCm` and `weightKg`. Age is never stored; it is a pure calendar projection from date of birth and an arbitrary game date (or the world's current date). The Player Bio generator uses a separate deterministic stream keyed by PlayerId, so generating human metadata cannot change names, ratings, roster construction, schedules, or sporting simulation.
 
 New Alpha players receive deterministic adult bios relative to the earliest Season start. Save V1 reads legacy players without bio by enriching them from that same earliest-season reference, then writes explicit bio data on the next save. Height, weight, and age do not affect MatchEngine, MatchPlayerProfile, ratings, fatigue, or team strength in this milestone; future systems may consume them deliberately.
+
+## Player development v1
+
+Offseason development is a pure Engine step invoked exactly once by `startNextSeason`, using each player's age at the target Season start. It changes only canonical bootstrap ratings; IDs, bio, rosters, coaches, logs, and history remain unchanged. The age curve and growth-room calculation are explicitly provisional and do not represent Potential.
+
+Each Player/rating/season transition has an independent deterministic seed. This makes development independent of Player and rating-key ordering, and ensures adding a future rating cannot perturb existing rolls. Development results are transient diagnostics; only the updated Player ratings persist in Save V1. No development happens on load, calendar advance, birthday, or season finalization.
