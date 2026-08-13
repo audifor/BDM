@@ -69,7 +69,10 @@ export function applyMatchResult(world: GameWorld, result: MatchSimulationResult
     injuries: Object.values(world.injuriesById),
     contracts: Object.values(world.contractsById),
     teamFinances: Object.values(world.teamFinancesByTeamId),
-    playerTransactions: Object.values(world.playerTransactionsById), playerKnowledge: Object.values(world.playerKnowledgeById),
+    playerTransactions: Object.values(world.playerTransactionsById),
+    playerKnowledge: Object.values(world.playerKnowledgeById),
+    staffPeople: Object.values(world.staffPeopleById),
+    teamStaffAssignments: Object.values(world.teamStaffAssignmentsById),
   })
 }
 

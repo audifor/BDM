@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createGameWorld } from '@/domain/world'
+import { calculateStaffRoleProficiency } from '@/domain/staff'
 import { calculateStandings } from '@/engine/competition/standings'
 import { getPlayerCareerStats, getPlayerSeasonStats } from '@/engine/stats/PlayerHistory'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSaveV1'
@@ -78,6 +79,40 @@ describe('startNextSeason', () => {
     expect(loaded).toEqual(next)
     expect(loaded.currentSeasonId).toBe(next.currentSeasonId)
     expect(deserializeGameWorldV1({ schemaVersion: 1, savedAt: '2032-10-01T00:00:00.000Z', payload: legacyPayload }).currentSeasonId).toBe('generated-season-0001')
+  })
+
+  it('startNextSeason preserves staff people exactly', () => {
+    const completed = completeCurrentSeason(createNewGame())
+
+    expect(startNextSeason(completed).staffPeopleById).toEqual(completed.staffPeopleById)
+  })
+
+  it('startNextSeason preserves staff assignments exactly', () => {
+    const completed = completeCurrentSeason(createNewGame())
+
+    expect(startNextSeason(completed).teamStaffAssignmentsById).toEqual(completed.teamStaffAssignmentsById)
+  })
+
+  it('multi-season save/load preserves staff people exactly', () => {
+    const next = startNextSeason(completeCurrentSeason(createNewGame()))
+    const loaded = deserializeGameWorldV1(serializeGameWorldV1(next, '2033-10-01T00:00:00.000Z'))
+
+    expect(loaded.staffPeopleById).toEqual(next.staffPeopleById)
+    for (const person of Object.values(next.staffPeopleById)) {
+      expect(loaded.staffPeopleById[person.id]!.professional.attributes).toEqual(person.professional.attributes)
+    }
+  })
+
+  it('multi-season save/load preserves staff assignments exactly', () => {
+    const next = startNextSeason(completeCurrentSeason(createNewGame()))
+    const loaded = deserializeGameWorldV1(serializeGameWorldV1(next, '2033-10-01T00:00:00.000Z'))
+
+    expect(loaded.teamStaffAssignmentsById).toEqual(next.teamStaffAssignmentsById)
+    for (const assignment of Object.values(next.teamStaffAssignmentsById)) {
+      const loadedAssignment = loaded.teamStaffAssignmentsById[assignment.id]!
+      expect(loadedAssignment.assignedOn).toBe(assignment.assignedOn)
+      expect(calculateStaffRoleProficiency(loaded.staffPeopleById[loadedAssignment.staffPersonId]!, loadedAssignment.role)).toBe(calculateStaffRoleProficiency(next.staffPeopleById[assignment.staffPersonId]!, assignment.role))
+    }
   })
 })
 

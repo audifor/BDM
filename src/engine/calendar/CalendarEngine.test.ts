@@ -33,6 +33,8 @@ describe('CalendarEngine', () => {
     expect(nextWorld.schemaVersion).toBe(world.schemaVersion)
     expect(nextWorld.userCoachId).toBe(world.userCoachId)
     expect(Object.keys(nextWorld.games)).toHaveLength(Object.keys(world.games).length)
+    expect(nextWorld.staffPeopleById).toEqual(world.staffPeopleById)
+    expect(nextWorld.teamStaffAssignmentsById).toEqual(world.teamStaffAssignmentsById)
   })
 
   it.each([

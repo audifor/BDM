@@ -15,6 +15,26 @@ describe('GameWorldSaveV1', () => {
     expect(saved.payload.players).not.toBe(Object.values(world.players))
   })
 
+  it('enriches legacy and partial Staff saves without replacing existing Staff', () => {
+    const world = createNewGame()
+    const envelope = serializeGameWorldV1(world, '2032-10-01T12:00:00.000Z')
+    const { staffPeople: _staffPeople, teamStaffAssignments: _teamStaffAssignments, ...legacyPayload } = envelope.payload
+    const removedAssignment = Object.values(world.teamStaffAssignmentsById)[0]!
+    const partialPayload = {
+      ...envelope.payload,
+      staffPeople: envelope.payload.staffPeople.filter((person) => person.id !== removedAssignment.staffPersonId),
+      teamStaffAssignments: envelope.payload.teamStaffAssignments.filter((assignment) => assignment.id !== removedAssignment.id),
+    }
+    const legacy = deserializeGameWorldV1({ ...envelope, payload: legacyPayload })
+    const partial = deserializeGameWorldV1({ ...envelope, payload: partialPayload })
+
+    expect(legacy.staffPeopleById).toEqual(world.staffPeopleById)
+    expect(legacy.teamStaffAssignmentsById).toEqual(world.teamStaffAssignmentsById)
+    expect(partial.staffPeopleById[removedAssignment.staffPersonId]).toEqual(world.staffPeopleById[removedAssignment.staffPersonId])
+    expect(partial.teamStaffAssignmentsById[removedAssignment.id]).toEqual(world.teamStaffAssignmentsById[removedAssignment.id])
+    expect(deserializeGameWorldV1(serializeGameWorldV1(partial, envelope.savedAt))).toEqual(partial)
+  })
+
   it('rejects unsupported schemas and corrupted collections', () => {
     expect(() => deserializeGameWorldV1({ schemaVersion: 2, savedAt: '2032-10-01T12:00:00.000Z', payload: {} })).toThrow('Unsupported save version')
     expect(() => deserializeGameWorldV1({ schemaVersion: 1, savedAt: '2032-10-01T12:00:00.000Z', payload: { countries: {} } })).toThrow('Save seasons')

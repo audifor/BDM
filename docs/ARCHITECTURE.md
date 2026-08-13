@@ -432,7 +432,13 @@ without conflating professional ability with future RPG skills, traits or perks.
 Staff v1 world integration stores normalized `staffPeopleById` and
 `teamStaffAssignmentsById`. The Alpha generator deterministically assigns one
 Assistant Coach, Scout and Medical person to each generated Team; this is fixture
-data, not a universal vacancy rule. No Staff effects, persistence or UI exist yet.
+data, not a universal vacancy rule. No Staff effects or UI exist yet.
+
+Every productive `GameWorld` transformation unrelated to Staff must preserve
+`staffPeopleById` and `teamStaffAssignmentsById` exactly. Season transitions do
+not currently alter Staff: identity, professional truth and assignments remain
+unchanged until an explicit Staff lifecycle system exists. Missing runtime Staff is
+corruption, not a signal to regenerate it during persistence.
 
 ## Season progression
 

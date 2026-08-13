@@ -33,6 +33,8 @@ describe('Match Result Application', () => {
     expect(nextWorld.userCoachId).toBe(world.userCoachId)
     expect(nextWorld.schemaVersion).toBe(world.schemaVersion)
     expect(Object.keys(nextWorld.games)).toHaveLength(Object.keys(world.games).length)
+    expect(nextWorld.staffPeopleById).toEqual(world.staffPeopleById)
+    expect(nextWorld.teamStaffAssignmentsById).toEqual(world.teamStaffAssignmentsById)
   })
 
   it('does not mutate the original world or its scheduled game', () => {
@@ -169,6 +171,8 @@ function recreateWorld(source: GameWorld, games: readonly Game[]): GameWorld {
     competitions: Object.values(source.competitions),
     seasons: Object.values(source.seasons),
     games,
+    staffPeople: Object.values(source.staffPeopleById),
+    teamStaffAssignments: Object.values(source.teamStaffAssignmentsById),
   })
 }
 
