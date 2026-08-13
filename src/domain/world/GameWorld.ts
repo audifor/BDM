@@ -20,6 +20,7 @@ import { createInjury, isInjuryActive, type InjuryRecord } from '@/domain/injury
 import type { InjuryId } from '@/domain/ids'
 import type { ContractId } from '@/domain/ids'
 import { createPlayerContract, type PlayerContract } from '@/domain/contract'
+import { createTeamFinances, type TeamFinances } from '@/domain/finance'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -39,6 +40,7 @@ export interface GameWorld {
   readonly seasonHistoryBySeasonId: Readonly<Record<SeasonId, SeasonHistoryRecord>>
   readonly injuriesById: Readonly<Record<InjuryId, InjuryRecord>>
   readonly contractsById: Readonly<Record<ContractId, PlayerContract>>
+  readonly teamFinancesByTeamId: Readonly<Record<TeamId, TeamFinances>>
 }
 
 export interface CreateGameWorldInput {
@@ -56,6 +58,7 @@ export interface CreateGameWorldInput {
   seasonHistory?: readonly SeasonHistoryRecord[]
   injuries?: readonly InjuryRecord[]
   contracts?: readonly PlayerContract[]
+  teamFinances?: readonly TeamFinances[]
 }
 
 export class GameWorldValidationError extends Error {
@@ -84,6 +87,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     seasonHistoryBySeasonId: indexHistoryBySeasonId(input.seasonHistory ?? []),
     injuriesById: indexById(input.injuries ?? [], 'Injury'),
     contractsById: indexById(input.contracts ?? [], 'Contract'),
+    teamFinancesByTeamId: indexTeamFinances(input.teamFinances ?? []),
   }
 
   validateWorld(world)
@@ -174,6 +178,7 @@ function validateWorld(world: GameWorld): void {
   for (const log of Object.values(world.matchStatLogsByGameId)) validateMatchStatLog(world, log)
   for (const injury of Object.values(world.injuriesById)) validateInjury(world, injury)
   for (const contract of Object.values(world.contractsById)) { createPlayerContract(contract); requireEntity(world.players,contract.playerId,`Contract ${contract.id} Player`); requireEntity(world.teams,contract.teamId,`Contract ${contract.id} Team`) }
+  for (const finances of Object.values(world.teamFinancesByTeamId)) { createTeamFinances(finances); requireEntity(world.teams,finances.teamId,`Team finances ${finances.teamId} Team`) }
   for (const history of Object.values(world.seasonHistoryBySeasonId)) validateSeasonHistory(world, history)
 }
 
@@ -263,6 +268,8 @@ function indexHistoryBySeasonId(history: readonly SeasonHistoryRecord[]): Readon
   }
   return Object.freeze(indexed)
 }
+
+function indexTeamFinances(finances: readonly TeamFinances[]): Readonly<Record<TeamId, TeamFinances>> { const indexed = Object.create(null) as Record<TeamId, TeamFinances>; for (const finance of finances) { if (Object.hasOwn(indexed, finance.teamId)) throw new GameWorldValidationError(`Duplicate Team finances ID: ${finance.teamId}`); indexed[finance.teamId] = finance } return Object.freeze(indexed) }
 
 function requireEntity<Id extends string, Entity>(
   collection: Readonly<Record<Id, Entity>>,

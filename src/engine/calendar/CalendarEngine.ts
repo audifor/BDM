@@ -18,5 +18,6 @@ export function advanceDay(world: GameWorld): GameWorld {
     seasonHistory: Object.values(world.seasonHistoryBySeasonId),
     injuries: Object.values(world.injuriesById),
     contracts: Object.values(world.contractsById),
+    teamFinances: Object.values(world.teamFinancesByTeamId),
   })
 }

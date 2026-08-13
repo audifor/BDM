@@ -19,6 +19,7 @@ import { hashStringToSeed, SeededRandomSource, type RandomSource } from '@/engin
 import { generatePlayerBio } from './PlayerBioGenerator'
 import { generatePlayerPotential } from './PlayerPotentialGenerator'
 import { generateInitialPlayerContract } from './PlayerContractGenerator'
+import { generateInitialTeamFinances } from './TeamFinancesGenerator'
 
 const TEAM_COUNT = 8
 const PLAYERS_PER_TEAM = 12
@@ -148,6 +149,7 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     endDate,
   })
 
+  const contracts = teams.flatMap((team) => team.rosterPlayerIds.map((playerId) => generateInitialPlayerContract(players.find((player) => player.id === playerId)!, team.id, season.startDate)))
   return createGameWorld({
     currentDate: startDate,
     userCoachId: coaches[0]!.id,
@@ -158,7 +160,8 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     competitions: [competition],
     seasons: [season],
     games: [],
-    contracts: teams.flatMap((team) => team.rosterPlayerIds.map((playerId) => generateInitialPlayerContract(players.find((player) => player.id === playerId)!, team.id, season.startDate))),
+    contracts,
+    teamFinances: teams.map((team) => generateInitialTeamFinances(team.id, contracts.filter((contract) => contract.teamId === team.id).reduce((sum, contract) => sum + contract.compensation.annualSalary, 0))),
   })
 }
 

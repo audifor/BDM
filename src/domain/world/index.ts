@@ -6,6 +6,8 @@ export {
 export type { CreateGameWorldInput, GameWorld } from './GameWorld'
 export { getActiveInjuryForPlayer, getAvailableRosterPlayers, getCurrentPlayerInjury, isPlayerAvailable } from './availability'
 export { getActivePlayerContract, getCurrentPlayerContract, getPlayerContracts } from './contracts'
+export { calculateTeamPlayerPayroll, canTeamAffordAdditionalSalary, getTeamFinancialSnapshot } from './finances'
+export type { TeamFinancialSnapshot, TeamFinancialStatus } from './finances'
 export {
   getCoach,
   getCompetition,
