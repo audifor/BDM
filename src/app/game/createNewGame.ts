@@ -31,5 +31,9 @@ export function createNewGame(): GameWorld {
     competitions: Object.values(generatedWorld.competitions),
     seasons: Object.values(generatedWorld.seasons),
     games,
+    injuries: Object.values(generatedWorld.injuriesById),
+    contracts: Object.values(generatedWorld.contractsById),
+    teamFinances: Object.values(generatedWorld.teamFinancesByTeamId),
+    playerTransactions: Object.values(generatedWorld.playerTransactionsById),
   })
 }
