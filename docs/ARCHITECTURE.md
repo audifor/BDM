@@ -443,3 +443,7 @@ Future Potential models may replace this proxy with grouped or attribute-specifi
 ## Contract lifecycle and free agency core
 
 Roster membership and contractual rights are separate. Free-agent status is derived from roster membership, contract status and date; it is never a Player flag. Contract termination preserves the agreed term and records an effective early end separately. `PlayerTransaction` is canonical historical state. Expiry reconciliation removes rostered players with no active or scheduled right exactly once and records a deterministic `contractExpired` transaction. This subhito has no signing, release operation, market UI or AI market; those remain later 037 work. MatchEngine does not consume market state.
+
+## Free agency operations v1
+
+Release and signing are pure Application operations. A release terminates an active contract, removes roster membership and records `released`; signing uses deterministic, non-persisted market terms, affordability and a new contract before adding roster membership and recording `signedFreeAgent`. Neither operation changes budgets, player identity, ratings, potential, injuries or historical statistics. Market UI and AI market remain outside this subhito.
