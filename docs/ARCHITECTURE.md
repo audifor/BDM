@@ -403,6 +403,8 @@ deterministically create only missing profiles for legacy or partial Alpha saves
 using active payroll at the world current date; existing persisted profiles remain
 unchanged. UI financial projections rely on this invariant and must not mask missing
 canonical finance state with fallback values.
+Squad financial presentation consumes `TeamFinancialSnapshot`; it never computes or
+persists an alternative financial state.
 
 ## Season progression
 
