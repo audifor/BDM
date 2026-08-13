@@ -4,9 +4,9 @@ import { getTeamRoster } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { calculatePlayerStatAverages, getPlayerCareerStats, getPlayerGameLogs, getPlayerSeasonStats } from '@/engine/stats/PlayerHistory'
 
-interface SquadScreenProps { readonly world: Parameters<typeof getUserTeam>[0] }
+interface SquadScreenProps { readonly world: Parameters<typeof getUserTeam>[0]; readonly onRelease?: (playerId: ReturnType<typeof getTeamRoster>[number]['id']) => void }
 
-export function SquadScreen({ world }: SquadScreenProps) {
+export function SquadScreen({ world, onRelease = () => undefined }: SquadScreenProps) {
   const team = getUserTeam(world)
   if (team === undefined) return null
   const order = { PG: 0, SG: 1, SF: 2, PF: 3, C: 4 } as const
@@ -15,7 +15,7 @@ export function SquadScreen({ world }: SquadScreenProps) {
 
   return <section className="screen">
     <div className="page-heading"><div><p className="eyebrow">SQUAD</p><h1>{team.name}</h1></div><span>{roster.length} PLAYERS</span></div>
-    <div className="content-panel table-wrap"><table><thead><tr><th>NAME</th><th>POS</th><th>AGE</th><th>POT</th><th>HT</th><th>WT</th><th>FIN</th><th>SHT</th><th>PLY</th><th>PER D</th><th>INT D</th><th>REB</th><th>ATH</th></tr></thead><tbody>{roster.map((player) => { const ratings = player.basketball.ratings; return <tr key={player.id}><td>{player.firstName} {player.lastName}</td><td>{player.basketball.primaryPosition}</td><td>{getPlayerAge(world, player.id)}</td><td>{getPlayerPotentialBand(player.potential).toUpperCase()}</td><td>{player.bio.heightCm} cm</td><td>{player.bio.weightKg} kg</td><td>{ratings.finishing}</td><td>{ratings.shooting}</td><td>{ratings.playmaking}</td><td>{ratings.perimeterDefense}</td><td>{ratings.interiorDefense}</td><td>{ratings.rebounding}</td><td>{ratings.athleticism}</td></tr> })}</tbody></table></div>
+    <div className="content-panel table-wrap"><table><thead><tr><th>NAME</th><th>POS</th><th>AGE</th><th>POT</th><th>HT</th><th>WT</th><th>FIN</th><th>SHT</th><th>PLY</th><th>PER D</th><th>INT D</th><th>REB</th><th>ATH</th><th>ACTION</th></tr></thead><tbody>{roster.map((player) => { const ratings = player.basketball.ratings; return <tr key={player.id}><td>{player.firstName} {player.lastName}</td><td>{player.basketball.primaryPosition}</td><td>{getPlayerAge(world, player.id)}</td><td>{getPlayerPotentialBand(player.potential).toUpperCase()}</td><td>{player.bio.heightCm} cm</td><td>{player.bio.weightKg} kg</td><td>{ratings.finishing}</td><td>{ratings.shooting}</td><td>{ratings.playmaking}</td><td>{ratings.perimeterDefense}</td><td>{ratings.interiorDefense}</td><td>{ratings.rebounding}</td><td>{ratings.athleticism}</td><td><button type="button" onClick={() => { if (window.confirm(`Release ${player.firstName} ${player.lastName}?`)) onRelease(player.id) }}>RELEASE</button></td></tr> })}</tbody></table></div>
     <div className="content-panel table-wrap"><p className="eyebrow">SEASON STATS</p><table><thead><tr><th>PLAYER</th><th>GP</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>TO</th><th>FG%</th><th>3P%</th><th>FT%</th></tr></thead><tbody>{roster.map((player) => { const stats = getPlayerSeasonStats(world, player.id, season.id); const averages = calculatePlayerStatAverages(stats); return <tr key={player.id}><td>{player.lastName}</td><td>{stats.gamesPlayed}</td><td>{averages.mpg.toFixed(1)}</td><td>{averages.ppg.toFixed(1)}</td><td>{averages.rpg.toFixed(1)}</td><td>{averages.apg.toFixed(1)}</td><td>{averages.spg.toFixed(1)}</td><td>{averages.bpg.toFixed(1)}</td><td>{averages.turnoversPerGame.toFixed(1)}</td><td>{averages.fieldGoalPercentage.toFixed(1)}%</td><td>{averages.threePointPercentage.toFixed(1)}%</td><td>{averages.freeThrowPercentage.toFixed(1)}%</td></tr> })}</tbody></table></div>
     <section className="content-panel"><p className="eyebrow">PLAYER HISTORY</p>{roster.map((player) => <PlayerHistory key={player.id} world={world} player={player} />)}</section>
   </section>

@@ -42,6 +42,7 @@ export function App() {
   const advanceDay = useGameStore((state) => state.advanceDay)
   const startNextSeason = useGameStore((state) => state.startNextSeason)
   const signFreeAgent = useGameStore((state) => state.signFreeAgent)
+  const releasePlayer = useGameStore((state) => state.releasePlayer)
   const [section, setSection] = useState<Section>('home')
   const simulation = useMatchViewerStore((state) => state.simulation)
   const currentEventIndex = useMatchViewerStore((state) => state.currentEventIndex)
@@ -120,7 +121,7 @@ export function App() {
       <div className="main-content">
         {section === 'home' && <HomeScreen world={world} onPlayGame={() => startMatch(startLiveMatch(tacticalPlan))} onInstantResult={() => instantResult(tacticalPlan)} onStartNextSeason={startNextSeason} />}
         {section === 'tactics' && <TacticsScreen players={userTeam === undefined ? [] : userTeam.rosterPlayerIds.map((playerId) => world.players[playerId]!)} plan={tacticalPlan} onChange={setTacticalPlan} onReset={resetTacticalPlan} />}
-        {section === 'squad' && <SquadScreen world={world} />}
+        {section === 'squad' && <SquadScreen world={world} onRelease={(playerId) => { if (userTeam !== undefined) releasePlayer(userTeam.id, playerId) }} />}
         {section === 'schedule' && <ScheduleScreen world={world} />}
         {section === 'standings' && <StandingsScreen world={world} />}
         {section === 'market' && <MarketScreen world={world} onSign={(playerId) => { if (userTeam !== undefined) signFreeAgent(userTeam.id, playerId) }} />}
