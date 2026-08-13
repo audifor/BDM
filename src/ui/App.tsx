@@ -10,16 +10,17 @@ import { getSeasonHistoryRecord } from '@/engine/season'
 import { getCurrentSeason } from '@/app/game'
 
 import { formatPrototypeDate } from './formatters'
-import { HomeScreen, MarketScreen, MatchViewerScreen, ScheduleScreen, SquadScreen, StandingsScreen, TacticsScreen } from './screens'
+import { HomeScreen, MarketScreen, MatchViewerScreen, ScheduleScreen, SquadScreen, StaffScreen, StandingsScreen, TacticsScreen } from './screens'
 import { createPresentationSegment } from './match/MatchPresentationSegment'
 import './styles.css'
 
-type Section = 'home' | 'tactics' | 'squad' | 'schedule' | 'standings' | 'market'
+type Section = 'home' | 'tactics' | 'squad' | 'staff' | 'schedule' | 'standings' | 'market'
 
-const NAVIGATION: readonly { readonly id: Section; readonly label: string }[] = [
+export const NAVIGATION: readonly { readonly id: Section; readonly label: string }[] = [
   { id: 'home', label: 'HOME' },
   { id: 'tactics', label: 'TACTICS' },
   { id: 'squad', label: 'SQUAD' },
+  { id: 'staff', label: 'STAFF' },
   { id: 'schedule', label: 'SCHEDULE' },
   { id: 'standings', label: 'STANDINGS' },
   { id: 'market', label: 'MARKET' },
@@ -122,6 +123,7 @@ export function App() {
         {section === 'home' && <HomeScreen world={world} onPlayGame={() => startMatch(startLiveMatch(tacticalPlan))} onInstantResult={() => instantResult(tacticalPlan)} onStartNextSeason={startNextSeason} />}
         {section === 'tactics' && <TacticsScreen players={userTeam === undefined ? [] : userTeam.rosterPlayerIds.map((playerId) => world.players[playerId]!)} plan={tacticalPlan} onChange={setTacticalPlan} onReset={resetTacticalPlan} />}
         {section === 'squad' && <SquadScreen world={world} onRelease={(playerId) => { if (userTeam !== undefined) releasePlayer(userTeam.id, playerId) }} />}
+        {section === 'staff' && <StaffScreen world={world} />}
         {section === 'schedule' && <ScheduleScreen world={world} />}
         {section === 'standings' && <StandingsScreen world={world} />}
         {section === 'market' && <MarketScreen world={world} onSign={(playerId) => { if (userTeam !== undefined) signFreeAgent(userTeam.id, playerId) }} />}

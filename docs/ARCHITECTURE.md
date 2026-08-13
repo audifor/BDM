@@ -425,20 +425,41 @@ attribute framework; Assistant Coach, Scout and Medical are assignment roles, no
 different attribute schemas. Role proficiency is a rounded derived weighted score,
 not stored state or Fit. Zero role weight does not imply the person lacks that
 capability. Personality, knowledge, relationships, memory and contextual Fit remain
-separate future domains. Staff is not yet integrated into `GameWorld`; 039.2 owns
-that boundary. The shared profile is intended to be adaptable to Head Coaches later,
-without conflating professional ability with future RPG skills, traits or perks.
+separate future domains. Staff is normalized in `GameWorld` through people and
+assignments rather than role-based person subtypes. The shared profile is intended
+to be adaptable to Head Coaches later, without conflating professional ability with
+future RPG skills, traits or perks.
 
 Staff v1 world integration stores normalized `staffPeopleById` and
 `teamStaffAssignmentsById`. The Alpha generator deterministically assigns one
 Assistant Coach, Scout and Medical person to each generated Team; this is fixture
-data, not a universal vacancy rule. No Staff effects or UI exist yet.
+data, not a universal vacancy rule. No Staff effects exist yet.
 
 Every productive `GameWorld` transformation unrelated to Staff must preserve
 `staffPeopleById` and `teamStaffAssignmentsById` exactly. Season transitions do
 not currently alter Staff: identity, professional truth and assignments remain
 unchanged until an explicit Staff lifecycle system exists. Missing runtime Staff is
 corruption, not a signal to regenerate it during persistence.
+
+## Staff v1 presentation
+
+`StaffScreen` presents canonical `StaffPerson` and `TeamStaffAssignment` data for
+the user Team. Every assignment uses the same professional capability framework;
+role-specific presentation never hides human capabilities. Role proficiency and
+cross-role evaluation are derived outside React, and cross-role capability is not
+contextual Fit. Staff v1 has no actions or bonuses: professional attributes are
+bootstrap truth, not Personality, and no Staff Knowledge layer exists yet.
+
+The presentation may later grow from the same `StaffPersonId` toward personality,
+traits, career, reputation, relationships, memory, history and drama without
+replacing identity. A future Staff Knowledge/Perception layer and contextual Fit
+remain distinct from Staff Truth and role proficiency.
+
+> Staff UI presents people, not role-specific stat containers. Every staff member
+> exposes the same professional capability framework.
+
+> React consumes canonical Staff queries and derived role proficiency; it must not
+> reimplement role weights or business rules.
 
 ## Season progression
 
