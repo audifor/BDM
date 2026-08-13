@@ -11,7 +11,7 @@ describe('GameWorldSaveV1', () => {
     const saved = serializeGameWorldV1(world, '2032-10-01T12:00:00.000Z')
     const loaded = deserializeGameWorldV1(JSON.parse(JSON.stringify(saved)) as unknown)
 
-    expect(loaded).toEqual({ ...world, staffPeopleById: {}, teamStaffAssignmentsById: {} })
+    expect(loaded).toEqual(world)
     expect(saved.payload.players).not.toBe(Object.values(world.players))
   })
 
@@ -27,7 +27,7 @@ describe('GameWorldSaveV1', () => {
     const loadedBeforePlay = deserializeGameWorldV1(serializeGameWorldV1(original, '2032-10-01T12:00:00.000Z'))
 
     expect(loaded.matchStatLogsByGameId).toEqual(completed.matchStatLogsByGameId)
-    expect(playUserGame(loadedBeforePlay)).toEqual({ ...playUserGame(original), staffPeopleById: {}, teamStaffAssignmentsById: {} })
+    expect(playUserGame(loadedBeforePlay)).toEqual(playUserGame(original))
   })
 
   it('enriches legacy players without bio deterministically', () => {
