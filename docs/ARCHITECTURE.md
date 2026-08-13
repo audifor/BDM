@@ -429,6 +429,11 @@ separate future domains. Staff is not yet integrated into `GameWorld`; 039.2 own
 that boundary. The shared profile is intended to be adaptable to Head Coaches later,
 without conflating professional ability with future RPG skills, traits or perks.
 
+Staff v1 world integration stores normalized `staffPeopleById` and
+`teamStaffAssignmentsById`. The Alpha generator deterministically assigns one
+Assistant Coach, Scout and Medical person to each generated Team; this is fixture
+data, not a universal vacancy rule. No Staff effects, persistence or UI exist yet.
+
 ## Season progression
 
 A season completes only when every one of its Games has a completed result, never from the calendar date. Applying the final result automatically creates one immutable `SeasonHistoryRecord` in the canonical `seasonHistoryBySeasonId` collection. It snapshots the deterministic final standings, champion Team ID, and latest scheduled game date; it does not duplicate player statistics.

@@ -25,6 +25,8 @@ import type { PlayerTransaction } from '@/domain/transaction'
 import type { PlayerTransactionId } from '@/domain/ids'
 import { createPlayerKnowledge, type PlayerKnowledgeRecord } from '@/domain/knowledge'
 import type { PlayerKnowledgeId } from '@/domain/ids'
+import { createStaffPerson, createTeamStaffAssignment, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
+import type { StaffPersonId, TeamStaffAssignmentId } from '@/domain/ids'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -47,6 +49,8 @@ export interface GameWorld {
   readonly teamFinancesByTeamId: Readonly<Record<TeamId, TeamFinances>>
   readonly playerTransactionsById: Readonly<Record<PlayerTransactionId, PlayerTransaction>>
   readonly playerKnowledgeById: Readonly<Record<PlayerKnowledgeId, PlayerKnowledgeRecord>>
+  readonly staffPeopleById: Readonly<Record<StaffPersonId, StaffPerson>>
+  readonly teamStaffAssignmentsById: Readonly<Record<TeamStaffAssignmentId, TeamStaffAssignment>>
 }
 
 export interface CreateGameWorldInput {
@@ -67,6 +71,8 @@ export interface CreateGameWorldInput {
   teamFinances?: readonly TeamFinances[]
   playerTransactions?: readonly PlayerTransaction[]
   playerKnowledge?: readonly PlayerKnowledgeRecord[]
+  staffPeople?: readonly StaffPerson[]
+  teamStaffAssignments?: readonly TeamStaffAssignment[]
 }
 
 export class GameWorldValidationError extends Error {
@@ -98,6 +104,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     teamFinancesByTeamId: indexTeamFinances(input.teamFinances ?? []),
     playerTransactionsById: indexById(input.playerTransactions ?? [], 'Player transaction'),
     playerKnowledgeById: indexById(input.playerKnowledge ?? [], 'Player knowledge'),
+    staffPeopleById: indexById(input.staffPeople ?? [], 'Staff person'),
+    teamStaffAssignmentsById: indexById(input.teamStaffAssignments ?? [], 'Staff assignment'),
   }
 
   validateWorld(world)
@@ -191,6 +199,7 @@ function validateWorld(world: GameWorld): void {
   for (const finances of Object.values(world.teamFinancesByTeamId)) { createTeamFinances(finances); requireEntity(world.teams,finances.teamId,`Team finances ${finances.teamId} Team`) }
   for (const transaction of Object.values(world.playerTransactionsById)) { requireEntity(world.players,transaction.playerId,`Transaction ${transaction.id} Player`); if(transaction.fromTeamId)requireEntity(world.teams,transaction.fromTeamId,`Transaction ${transaction.id} from Team`); if(transaction.toTeamId)requireEntity(world.teams,transaction.toTeamId,`Transaction ${transaction.id} to Team`); if(transaction.contractId)requireEntity(world.contractsById,transaction.contractId,`Transaction ${transaction.id} Contract`) }
   const pairs = new Set<string>(); for (const knowledge of Object.values(world.playerKnowledgeById)) { createPlayerKnowledge(knowledge); requireEntity(world.teams, knowledge.observerTeamId, 'Knowledge observer Team'); requireEntity(world.players, knowledge.subjectPlayerId, 'Knowledge subject Player'); const pair=`${knowledge.observerTeamId}:${knowledge.subjectPlayerId}`; if(pairs.has(pair)) throw new GameWorldValidationError('Duplicate Player knowledge observer and subject'); pairs.add(pair) }
+  const assignedStaff = new Set<StaffPersonId>(); for (const person of Object.values(world.staffPeopleById)) createStaffPerson(person); for (const assignment of Object.values(world.teamStaffAssignmentsById)) { createTeamStaffAssignment(assignment); requireEntity(world.staffPeopleById, assignment.staffPersonId, 'Staff assignment person'); requireEntity(world.teams, assignment.teamId, 'Staff assignment team'); if (assignedStaff.has(assignment.staffPersonId)) throw new GameWorldValidationError('Staff person has multiple active assignments'); assignedStaff.add(assignment.staffPersonId) }
   for (const history of Object.values(world.seasonHistoryBySeasonId)) validateSeasonHistory(world, history)
 }
 

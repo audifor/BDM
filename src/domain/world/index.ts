@@ -9,6 +9,7 @@ export { getActivePlayerContract, getCurrentPlayerContract, getPlayerContracts }
 export { calculateTeamPlayerPayroll, canTeamAffordAdditionalSalary, getTeamFinancialSnapshot } from './finances'
 export type { TeamFinancialSnapshot, TeamFinancialStatus } from './finances'
 export { getKnownBasketballRating, getPlayerBasketballKnowledgeView, getPlayerKnowledge } from './knowledge'
+export { getStaffAssignment, getStaffPerson, getStaffRoleProficiency, getTeamStaffAssignments, getTeamStaffByRole, getTeamStaffPeople } from './staff'
 export { getFreeAgents, getPlayerRosterTeamId, getPlayerTransactions, isPlayerFreeAgent } from './market'
 export {
   getCoach,
