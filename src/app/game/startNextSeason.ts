@@ -6,6 +6,7 @@ import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
 import { applyOffseasonDevelopment } from '@/engine/development'
 import { reconcileExpiredPlayerContracts } from '@/engine/market'
+import { maintainAiTeamMinimumRosters } from '@/app/market'
 
 import { getCurrentSeason } from './selectors'
 
@@ -25,7 +26,7 @@ export function startNextSeason(world: GameWorld): GameWorld {
   const developed = applyOffseasonDevelopment(world, { fromSeasonId: previous.id, toSeasonId: next.id, targetDate: next.startDate }).world
   const staged = rebuild(developed, [...Object.values(developed.seasons), next], developed.currentSeasonId, Object.values(developed.games))
   const schedule = generateRoundRobinSchedule({ world: staged, seasonId: next.id })
-  return reconcileExpiredPlayerContracts(rebuild(developed, [...Object.values(developed.seasons), next], next.id, [...Object.values(developed.games), ...schedule]), next.startDate)
+  return maintainAiTeamMinimumRosters(reconcileExpiredPlayerContracts(rebuild(developed, [...Object.values(developed.seasons), next], next.id, [...Object.values(developed.games), ...schedule]), next.startDate)).world
 }
 
 function nextSeasonId(world: GameWorld) {

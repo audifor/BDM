@@ -447,3 +447,7 @@ Roster membership and contractual rights are separate. Free-agent status is deri
 ## Free agency operations v1
 
 Release and signing are pure Application operations. A release terminates an active contract, removes roster membership and records `released`; signing uses deterministic, non-persisted market terms, affordability and a new contract before adding roster membership and recording `signedFreeAgent`. Neither operation changes budgets, player identity, ratings, potential, injuries or historical statistics. Market UI and AI market remain outside this subhito.
+
+## AI roster maintenance v1
+
+At the offseason transition, after development and contract-expiry reconciliation, Application maintains AI teams to a five-player roster minimum. AI teams are processed by TeamId and use the same `signFreeAgent` operation as the user, selecting affordable free agents by salary, then ability proxy, then PlayerId. It never changes budgets, releases players, replaces injuries, or signs for the user team. An explicit non-persisted result reports unresolved teams when no affordable free agent exists.
