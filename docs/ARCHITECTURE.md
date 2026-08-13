@@ -406,6 +406,18 @@ canonical finance state with fallback values.
 Squad financial presentation consumes `TeamFinancialSnapshot`; it never computes or
 persists an alternative financial state.
 
+## Player knowledge / scouting v1
+
+Player Truth, observer-relative Knowledge, and future Evaluation/Fit are separate
+layers. `PlayerKnowledgeRecord` is sparse Team-owned canonical knowledge: v1 creates
+records only for the user Team, with estimated basketball ratings and uncertainty.
+Ranges and confidence are derived; a missing record is `UNKNOWN`, never a fallback
+to hidden Player Truth. Knowledge is a dated observation and may be inaccurate or
+stale after development. Saves preserve it and enrich legacy/partial Alpha saves
+deterministically. Manager UI uses Knowledge, while MatchEngine and sporting logic
+continue to use Truth. Potential knowledge, Staff, reports, assignments, decay,
+Personality, Traits, Perks, Environment and Fit remain out of scope.
+
 ## Season progression
 
 A season completes only when every one of its Games has a completed result, never from the calendar date. Applying the final result automatically creates one immutable `SeasonHistoryRecord` in the canonical `seasonHistoryBySeasonId` collection. It snapshots the deterministic final standings, champion Team ID, and latest scheduled game date; it does not duplicate player statistics.

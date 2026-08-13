@@ -8,6 +8,7 @@ export { getActiveInjuryForPlayer, getAvailableRosterPlayers, getCurrentPlayerIn
 export { getActivePlayerContract, getCurrentPlayerContract, getPlayerContracts } from './contracts'
 export { calculateTeamPlayerPayroll, canTeamAffordAdditionalSalary, getTeamFinancialSnapshot } from './finances'
 export type { TeamFinancialSnapshot, TeamFinancialStatus } from './finances'
+export { getKnownBasketballRating, getPlayerBasketballKnowledgeView, getPlayerKnowledge } from './knowledge'
 export { getFreeAgents, getPlayerRosterTeamId, getPlayerTransactions, isPlayerFreeAgent } from './market'
 export {
   getCoach,

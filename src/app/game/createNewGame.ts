@@ -2,6 +2,7 @@ import { createGameDate } from '@/domain/date'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { generateWorld } from '@/engine/world'
+import { ensurePlayerKnowledge } from '@/engine/world'
 
 export const PROTOTYPE_GAME_CONFIGURATION = {
   seed: 12_345,
@@ -20,7 +21,7 @@ export function createNewGame(): GameWorld {
 
   const games = generateRoundRobinSchedule({ world: generatedWorld, seasonId: season.id })
 
-  return createGameWorld({
+  return ensurePlayerKnowledge(createGameWorld({
     currentDate: generatedWorld.currentDate,
     currentSeasonId: generatedWorld.currentSeasonId,
     userCoachId: generatedWorld.userCoachId,
@@ -35,5 +36,6 @@ export function createNewGame(): GameWorld {
     contracts: Object.values(generatedWorld.contractsById),
     teamFinances: Object.values(generatedWorld.teamFinancesByTeamId),
     playerTransactions: Object.values(generatedWorld.playerTransactionsById),
-  })
+    playerKnowledge: Object.values(generatedWorld.playerKnowledgeById),
+  }))
 }

@@ -20,7 +20,7 @@ export function advanceDay(world: GameWorld): GameWorld {
     injuries: Object.values(world.injuriesById),
     contracts: Object.values(world.contractsById),
     teamFinances: Object.values(world.teamFinancesByTeamId),
-    playerTransactions: Object.values(world.playerTransactionsById),
+    playerTransactions: Object.values(world.playerTransactionsById), playerKnowledge: Object.values(world.playerKnowledgeById),
   })
   return reconcileExpiredPlayerContracts(advanced, advanced.currentDate)
 }
