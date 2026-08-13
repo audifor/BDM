@@ -16,6 +16,8 @@ import type { Player } from '@/domain/player'
 import { calculateSeasonStandings, type Season, type SeasonHistoryRecord } from '@/domain/season'
 import type { Team } from '@/domain/team'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
+import { createInjury, isInjuryActive, type InjuryRecord } from '@/domain/injury'
+import type { InjuryId } from '@/domain/ids'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -33,6 +35,7 @@ export interface GameWorld {
   readonly games: Readonly<Record<GameId, Game>>
   readonly matchStatLogsByGameId: Readonly<Record<GameId, MatchStatLog>>
   readonly seasonHistoryBySeasonId: Readonly<Record<SeasonId, SeasonHistoryRecord>>
+  readonly injuriesById: Readonly<Record<InjuryId, InjuryRecord>>
 }
 
 export interface CreateGameWorldInput {
@@ -48,6 +51,7 @@ export interface CreateGameWorldInput {
   games: readonly Game[]
   matchStatLogs?: readonly MatchStatLog[]
   seasonHistory?: readonly SeasonHistoryRecord[]
+  injuries?: readonly InjuryRecord[]
 }
 
 export class GameWorldValidationError extends Error {
@@ -74,6 +78,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     games: indexById(input.games, 'Game'),
     matchStatLogsByGameId: indexLogsByGameId(input.matchStatLogs ?? []),
     seasonHistoryBySeasonId: indexHistoryBySeasonId(input.seasonHistory ?? []),
+    injuriesById: indexById(input.injuries ?? [], 'Injury'),
   }
 
   validateWorld(world)
@@ -162,7 +167,15 @@ function validateWorld(world: GameWorld): void {
     }
   }
   for (const log of Object.values(world.matchStatLogsByGameId)) validateMatchStatLog(world, log)
+  for (const injury of Object.values(world.injuriesById)) validateInjury(world, injury)
   for (const history of Object.values(world.seasonHistoryBySeasonId)) validateSeasonHistory(world, history)
+}
+
+function validateInjury(world: GameWorld, injury: InjuryRecord): void {
+  createInjury(injury)
+  requireEntity(world.players, injury.playerId, `Injury ${injury.id} Player`)
+  if (injury.sourceGameId !== undefined) { const game = requireEntity(world.games, injury.sourceGameId, `Injury ${injury.id} Game`); if (game.date !== injury.injuredOn) throw new GameWorldValidationError(`Injury ${injury.id} date does not match source Game`) }
+  for (const other of Object.values(world.injuriesById)) if (other.id !== injury.id && other.playerId === injury.playerId && isInjuryActive(other, injury.injuredOn)) throw new GameWorldValidationError(`Injury ${injury.playerId} overlaps another injury`)
 }
 
 function selectLegacyCurrentSeasonId(seasons: Readonly<Record<SeasonId, Season>>): SeasonId {

@@ -66,6 +66,7 @@ export function applyMatchResult(world: GameWorld, result: MatchSimulationResult
     games,
     matchStatLogs: Object.values(world.matchStatLogsByGameId),
     seasonHistory: Object.values(world.seasonHistoryBySeasonId),
+    injuries: Object.values(world.injuriesById),
   })
 }
 
@@ -94,7 +95,7 @@ export function applyCompletedMatch(world: GameWorld, simulation: MatchSimulatio
   if (originalGame === undefined) throw new MatchResultApplicationError(`Cannot apply result to missing Game ${simulation.gameId}`)
   const log = createMatchStatLog(world, simulation.gameId, simulation)
   const resultWorld = applyMatchResult(world, { gameId: simulation.gameId, homeTeamId: simulation.homeTeamId, awayTeamId: simulation.awayTeamId, homeScore: simulation.finalScore.home, awayScore: simulation.finalScore.away })
-  const completedWorld = createGameWorld({ currentDate: resultWorld.currentDate, currentSeasonId: resultWorld.currentSeasonId, userCoachId: resultWorld.userCoachId, countries: Object.values(resultWorld.countries), coaches: Object.values(resultWorld.coaches), players: Object.values(resultWorld.players), teams: Object.values(resultWorld.teams), competitions: Object.values(resultWorld.competitions), seasons: Object.values(resultWorld.seasons), games: Object.values(resultWorld.games), matchStatLogs: [...Object.values(world.matchStatLogsByGameId), log], seasonHistory: Object.values(world.seasonHistoryBySeasonId) })
+  const completedWorld = createGameWorld({ currentDate: resultWorld.currentDate, currentSeasonId: resultWorld.currentSeasonId, userCoachId: resultWorld.userCoachId, countries: Object.values(resultWorld.countries), coaches: Object.values(resultWorld.coaches), players: Object.values(resultWorld.players), teams: Object.values(resultWorld.teams), competitions: Object.values(resultWorld.competitions), seasons: Object.values(resultWorld.seasons), games: Object.values(resultWorld.games), matchStatLogs: [...Object.values(world.matchStatLogsByGameId), log], seasonHistory: Object.values(world.seasonHistoryBySeasonId), injuries: Object.values(world.injuriesById) })
   return finalizeCompletedSeason(completedWorld, originalGame.seasonId)
 }
 

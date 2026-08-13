@@ -435,3 +435,7 @@ The exact ceiling is never presented by UI. UI exposes only `PlayerPotentialBand
 Potential is generated deterministically from its isolated `player-potential-v1:${playerId}` stream, persists across ordinary season transitions, and legacy saves lacking it are enriched deterministically from the player’s current ratings, age at the save world date, and id. Development consumes it only for positive growth; age decline remains unaffected. MatchEngine and MatchPlayerProfile do not consume Potential directly.
 
 Future Potential models may replace this proxy with grouped or attribute-specific potential through the Development boundary. True player potential is canonical hidden information: presentation layers may expose an approximation, but must not expose the underlying exact value unless a future game system explicitly permits it.
+
+## Injuries v1
+
+`InjuryRecord` is canonical historical state in `GameWorld.injuriesById`; Player has no mutable injury flag. Availability is derived from injury dates and game date, with recovery occurring automatically on `expectedReturnDate`. Match squads filter unavailable players while Team rosters remain unchanged. New injuries are deterministic post-match records for players with minutes, using isolated injury RNG streams and a five-available-player Alpha safeguard. MatchEngine receives only available squads and has no medical knowledge. Save V1 persists injuries and legacy saves load an empty history.
