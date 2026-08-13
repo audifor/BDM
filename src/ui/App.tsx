@@ -10,11 +10,11 @@ import { getSeasonHistoryRecord } from '@/engine/season'
 import { getCurrentSeason } from '@/app/game'
 
 import { formatPrototypeDate } from './formatters'
-import { HomeScreen, MatchViewerScreen, ScheduleScreen, SquadScreen, StandingsScreen, TacticsScreen } from './screens'
+import { HomeScreen, MarketScreen, MatchViewerScreen, ScheduleScreen, SquadScreen, StandingsScreen, TacticsScreen } from './screens'
 import { createPresentationSegment } from './match/MatchPresentationSegment'
 import './styles.css'
 
-type Section = 'home' | 'tactics' | 'squad' | 'schedule' | 'standings'
+type Section = 'home' | 'tactics' | 'squad' | 'schedule' | 'standings' | 'market'
 
 const NAVIGATION: readonly { readonly id: Section; readonly label: string }[] = [
   { id: 'home', label: 'HOME' },
@@ -22,6 +22,7 @@ const NAVIGATION: readonly { readonly id: Section; readonly label: string }[] = 
   { id: 'squad', label: 'SQUAD' },
   { id: 'schedule', label: 'SCHEDULE' },
   { id: 'standings', label: 'STANDINGS' },
+  { id: 'market', label: 'MARKET' },
 ]
 
 export function App() {
@@ -40,6 +41,7 @@ export function App() {
   const instantResult = useGameStore((state) => state.instantResult)
   const advanceDay = useGameStore((state) => state.advanceDay)
   const startNextSeason = useGameStore((state) => state.startNextSeason)
+  const signFreeAgent = useGameStore((state) => state.signFreeAgent)
   const [section, setSection] = useState<Section>('home')
   const simulation = useMatchViewerStore((state) => state.simulation)
   const currentEventIndex = useMatchViewerStore((state) => state.currentEventIndex)
@@ -121,6 +123,7 @@ export function App() {
         {section === 'squad' && <SquadScreen world={world} />}
         {section === 'schedule' && <ScheduleScreen world={world} />}
         {section === 'standings' && <StandingsScreen world={world} />}
+        {section === 'market' && <MarketScreen world={world} onSign={(playerId) => { if (userTeam !== undefined) signFreeAgent(userTeam.id, playerId) }} />}
       </div>
     </main>
   )

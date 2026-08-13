@@ -9,6 +9,8 @@ import {
   playUserGame,
   simulateRemainingGamesToday,
 } from '@/app/game'
+import { releasePlayer, signFreeAgent } from '@/app/market'
+import type { PlayerId, TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import type { ManualSubstitution, MatchSimulation, MatchTacticalPlan } from '@/engine/match'
 import type { LiveMatchController, LiveMatchStep } from '@/app/game'
@@ -30,6 +32,8 @@ interface GameStore {
   simulateRemainingGamesToday(): void
   advanceDay(): void
   startNextSeason(): void
+  signFreeAgent(teamId: TeamId, playerId: PlayerId): void
+  releasePlayer(teamId: TeamId, playerId: PlayerId): void
   replaceWorld(world: GameWorld): void
   resetGame(): void
 }
@@ -71,6 +75,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const world = requireWorld(get().world)
     set({ world: startNextSeason(world) })
   },
+  signFreeAgent: (teamId, playerId) => set({ world: signFreeAgent(requireWorld(get().world), teamId, playerId) }),
+  releasePlayer: (teamId, playerId) => set({ world: releasePlayer(requireWorld(get().world), teamId, playerId) }),
   replaceWorld: (world) => { liveController = null; set({ world }) },
   resetGame: () => { liveController = null; set({ world: null }) },
 }))
