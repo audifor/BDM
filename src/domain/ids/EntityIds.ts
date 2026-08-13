@@ -14,6 +14,8 @@ export type InjuryId = EntityId<'InjuryId'>
 export type ContractId = EntityId<'ContractId'>
 export type PlayerTransactionId = EntityId<'PlayerTransactionId'>
 export type PlayerKnowledgeId = EntityId<'PlayerKnowledgeId'>
+export type StaffPersonId = EntityId<'StaffPersonId'>
+export type TeamStaffAssignmentId = EntityId<'TeamStaffAssignmentId'>
 export type CountryId = EntityId<'CountryId'>
 
 function idFromString<Id extends string>(value: string, name: string): Id {
@@ -43,6 +45,8 @@ export const injuryIdFromString = (value: string): InjuryId => idFromString<Inju
 export const contractIdFromString = (value: string): ContractId => idFromString<ContractId>(value, 'ContractId')
 export const playerTransactionIdFromString = (value: string): PlayerTransactionId => idFromString<PlayerTransactionId>(value, 'PlayerTransactionId')
 export const playerKnowledgeIdFromString = (value: string): PlayerKnowledgeId => idFromString<PlayerKnowledgeId>(value, 'PlayerKnowledgeId')
+export const staffPersonIdFromString = (value: string): StaffPersonId => idFromString<StaffPersonId>(value, 'StaffPersonId')
+export const teamStaffAssignmentIdFromString = (value: string): TeamStaffAssignmentId => idFromString<TeamStaffAssignmentId>(value, 'TeamStaffAssignmentId')
 export const countryIdFromString = (value: string): CountryId => idFromString<CountryId>(value, 'CountryId')
 
 export const createCoachId = (): CoachId => coachIdFromString(generateId())

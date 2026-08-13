@@ -418,6 +418,17 @@ deterministically. Manager UI uses Knowledge, while MatchEngine and sporting log
 continue to use Truth. Potential knowledge, Staff, reports, assignments, decay,
 Personality, Traits, Perks, Environment and Fit remain out of scope.
 
+## Staff person domain
+
+`StaffPerson` is a persistent human identity with one common bootstrap professional
+attribute framework; Assistant Coach, Scout and Medical are assignment roles, not
+different attribute schemas. Role proficiency is a rounded derived weighted score,
+not stored state or Fit. Zero role weight does not imply the person lacks that
+capability. Personality, knowledge, relationships, memory and contextual Fit remain
+separate future domains. Staff is not yet integrated into `GameWorld`; 039.2 owns
+that boundary. The shared profile is intended to be adaptable to Head Coaches later,
+without conflating professional ability with future RPG skills, traits or perks.
+
 ## Season progression
 
 A season completes only when every one of its Games has a completed result, never from the calendar date. Applying the final result automatically creates one immutable `SeasonHistoryRecord` in the canonical `seasonHistoryBySeasonId` collection. It snapshots the deterministic final standings, champion Team ID, and latest scheduled game date; it does not duplicate player statistics.
