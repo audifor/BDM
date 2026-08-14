@@ -1,6 +1,8 @@
 import { createGame } from '@/domain/game'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
+import { applyCoachExperienceToWorld, deriveCoachMatchExperienceGain } from '@/engine/coach'
+import { calculateTeamStrength } from '@/engine/team'
 
 import { calculateMatchPlayerStats } from './PlayerMatchStats'
 import { finalizeCompletedSeason } from '@/engine/season'
@@ -53,7 +55,7 @@ export function applyMatchResult(world: GameWorld, result: MatchSimulationResult
   })
   const games = Object.values(world.games).map((game) => (game.id === completedGame.id ? completedGame : game))
 
-  return createGameWorld({
+  const resultWorld = createGameWorld({
     currentDate: world.currentDate,
     currentSeasonId: world.currentSeasonId,
     userCoachId: world.userCoachId,
@@ -76,6 +78,7 @@ export function applyMatchResult(world: GameWorld, result: MatchSimulationResult
     coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId,
     coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId,
   })
+  return applyMatchCoachExperience(world, resultWorld, completedGame)
 }
 
 /** Creates the immutable historical snapshot without mutating the source world. */
@@ -103,7 +106,7 @@ export function applyCompletedMatch(world: GameWorld, simulation: MatchSimulatio
   if (originalGame === undefined) throw new MatchResultApplicationError(`Cannot apply result to missing Game ${simulation.gameId}`)
   const log = createMatchStatLog(world, simulation.gameId, simulation)
   const resultWorld = applyMatchResult(world, { gameId: simulation.gameId, homeTeamId: simulation.homeTeamId, awayTeamId: simulation.awayTeamId, homeScore: simulation.finalScore.home, awayScore: simulation.finalScore.away })
-  const completedWorld = createGameWorld({ currentDate: resultWorld.currentDate, currentSeasonId: resultWorld.currentSeasonId, userCoachId: resultWorld.userCoachId, countries: Object.values(resultWorld.countries), coaches: Object.values(resultWorld.coaches), players: Object.values(resultWorld.players), teams: Object.values(resultWorld.teams), competitions: Object.values(resultWorld.competitions), seasons: Object.values(resultWorld.seasons), games: Object.values(resultWorld.games), matchStatLogs: [...Object.values(world.matchStatLogsByGameId), log], seasonHistory: Object.values(world.seasonHistoryBySeasonId), injuries: Object.values(world.injuriesById), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId), playerTransactions:Object.values(world.playerTransactionsById),playerKnowledge:Object.values(world.playerKnowledgeById),staffPeople:Object.values(world.staffPeopleById),teamStaffAssignments:Object.values(world.teamStaffAssignmentsById),coachProfessionalProfilesByCoachId:world.coachProfessionalProfilesByCoachId,coachRpgProfilesByCoachId:world.coachRpgProfilesByCoachId })
+  const completedWorld = createGameWorld({ currentDate: resultWorld.currentDate, currentSeasonId: resultWorld.currentSeasonId, userCoachId: resultWorld.userCoachId, countries: Object.values(resultWorld.countries), coaches: Object.values(resultWorld.coaches), players: Object.values(resultWorld.players), teams: Object.values(resultWorld.teams), competitions: Object.values(resultWorld.competitions), seasons: Object.values(resultWorld.seasons), games: Object.values(resultWorld.games), matchStatLogs: [...Object.values(world.matchStatLogsByGameId), log], seasonHistory: Object.values(world.seasonHistoryBySeasonId), injuries: Object.values(world.injuriesById), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId), playerTransactions:Object.values(world.playerTransactionsById),playerKnowledge:Object.values(world.playerKnowledgeById),staffPeople:Object.values(world.staffPeopleById),teamStaffAssignments:Object.values(world.teamStaffAssignmentsById),coachProfessionalProfilesByCoachId:resultWorld.coachProfessionalProfilesByCoachId,coachRpgProfilesByCoachId:resultWorld.coachRpgProfilesByCoachId })
   return finalizeCompletedSeason(completedWorld, originalGame.seasonId)
 }
 
@@ -111,4 +114,23 @@ function validateScore(value: number, side: string): void {
   if (!Number.isFinite(value) || !Number.isInteger(value) || value < 0) {
     throw new MatchResultApplicationError(`${side} score must be a non-negative finite integer`)
   }
+}
+
+/** Uses pre-match strength and applies XP only after the result is canonical. */
+function applyMatchCoachExperience(worldBefore: GameWorld, resultWorld: GameWorld, completedGame: ReturnType<typeof createGame>): GameWorld {
+  const homeCoachId = worldBefore.teams[completedGame.homeTeamId]?.coachId
+  const awayCoachId = worldBefore.teams[completedGame.awayTeamId]?.coachId
+  if (homeCoachId === undefined && awayCoachId === undefined) return resultWorld
+
+  const homeStrength = calculateTeamStrength(worldBefore, completedGame.homeTeamId, completedGame.date).value
+  const awayStrength = calculateTeamStrength(worldBefore, completedGame.awayTeamId, completedGame.date).value
+  const margin = Math.abs(completedGame.result!.homeScore - completedGame.result!.awayScore)
+  let updated = resultWorld
+  if (homeCoachId !== undefined) {
+    updated = applyCoachExperienceToWorld(updated, homeCoachId, deriveCoachMatchExperienceGain({ ownStrength: homeStrength, opponentStrength: awayStrength, won: completedGame.result!.homeScore > completedGame.result!.awayScore, scoreMargin: margin }))
+  }
+  if (awayCoachId !== undefined) {
+    updated = applyCoachExperienceToWorld(updated, awayCoachId, deriveCoachMatchExperienceGain({ ownStrength: awayStrength, opponentStrength: homeStrength, won: completedGame.result!.awayScore > completedGame.result!.homeScore, scoreMargin: margin }))
+  }
+  return updated
 }

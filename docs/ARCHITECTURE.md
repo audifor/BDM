@@ -539,6 +539,30 @@ paid education will feed targeted Experience, never direct professional attribut
 > Starting presets are setup conveniences, not permanent classes or canonical
 > identity. Gameplay depends on the resulting professional profile, never preset name.
 
+## Coach experience and development
+
+`engine/coach` owns the pure Coach Experience boundary. Sources emit a small
+`CoachExperienceGain` and `applyCoachExperienceGain` updates a professional profile
+and its RPG profile without mutating either input. In this bootstrap version the
+experience ledger means available, consumable professional XP; it is deliberately
+not a lifetime event history. Values are normalized to four decimal places.
+
+Match completion is the only productive source in 040.3. The canonical result
+application derives one gain for each involved head coach from pre-match TeamStrength,
+final margin and result, after the Game is completed. The existing scheduled-to-
+completed Game guard makes that application exactly once; MatchEngine has no Coach
+RPG dependency. Loaded 040.2--040.4 saves may have no Coach profiles, in which case
+their sporting result still applies and progression is safely skipped without
+regeneration. Save persistence remains 040.5.
+
+Specific XP pays an increasing `20 + attribute² × 0.12` cost for each integer
+professional-attribute level. Remaining XP stays available, including at 100.
+Global progress creates unspent Development Points at 100 progress and carries the
+remainder. Skills, professional traits and perks are unchanged here; spending and
+unlocks belong to 040.4. Future sources may use this same gain boundary, and future
+anti-farming can consider novelty, familiarity, responsibility, relevance and stakes
+without storing micro-events.
+
 > Coach Professional Profile and Coach RPG Profile are separate canonical concepts:
 > current professional ability is not equivalent to accumulated tracked experience.
 

@@ -43,7 +43,10 @@ describe('Coach RPG world setup', () => {
     expect(advanceDay(blank).coachProfessionalProfilesByCoachId).toEqual(blank.coachProfessionalProfilesByCoachId)
     const game = Object.values(blank.games)[0]!
     const result = applyMatchResult(blank, { gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, homeScore: 80, awayScore: 70 })
-    expect(result.coachRpgProfilesByCoachId).toEqual(blank.coachRpgProfilesByCoachId)
+    const homeCoachId = blank.teams[game.homeTeamId]!.coachId!
+    const awayCoachId = blank.teams[game.awayTeamId]!.coachId!
+    expect(result.coachRpgProfilesByCoachId[homeCoachId]!.professionalExperience.byAttribute.coaching).toBeGreaterThan(0)
+    expect(result.coachRpgProfilesByCoachId[awayCoachId]!.professionalExperience.byAttribute.coaching).toBeGreaterThan(0)
     expect(getCoachProfessionalProficiency(blank, blank.userCoachId)).toBe(calculateHeadCoachProfessionalProficiency(getUserCoachProfessionalProfile(blank)!))
   })
 })
