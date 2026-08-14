@@ -34,6 +34,7 @@ import { createStaffProfessionalProfile, type StaffProfessionalProfile } from '@
 import { relationshipKey, validateRelationshipProfile, type RelationshipProfile } from '@/domain/relationships'
 import { generatePersonality, type Personality } from '@/domain/personality'
 import { createMoraleProfile, type MoraleProfile } from '@/domain/morale'
+import type { InboxItem, NewsItem } from '@/domain/inbox'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -70,6 +71,8 @@ export interface GameWorld {
   readonly relationshipsByKey: Readonly<Record<string, RelationshipProfile>>
   readonly personalitiesByPersonId: Readonly<Record<string, Personality>>
   readonly moraleByPersonId: Readonly<Record<string, MoraleProfile>>
+  readonly inboxItemsById: Readonly<Record<string, InboxItem>>
+  readonly newsItemsById: Readonly<Record<string, NewsItem>>
 }
 
 export interface CreateGameWorldInput {
@@ -104,6 +107,8 @@ export interface CreateGameWorldInput {
   relationshipsByKey?: Readonly<Record<string, RelationshipProfile>>
   personalitiesByPersonId?: Readonly<Record<string, Personality>>
   moraleByPersonId?: Readonly<Record<string, MoraleProfile>>
+  inboxItemsById?: Readonly<Record<string, InboxItem>>
+  newsItemsById?: Readonly<Record<string, NewsItem>>
 }
 
 export class GameWorldValidationError extends Error {
@@ -151,6 +156,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     relationshipsByKey: Object.freeze({ ...(input.relationshipsByKey ?? {}) }),
     personalitiesByPersonId: peopleProfiles(input.coaches, input.players, input.staffPeople ?? [], input.personalitiesByPersonId, generatePersonality),
     moraleByPersonId: peopleProfiles(input.coaches, input.players, input.staffPeople ?? [], input.moraleByPersonId, createMoraleProfile),
+    inboxItemsById: Object.freeze({ ...(input.inboxItemsById ?? {}) }), newsItemsById: Object.freeze({ ...(input.newsItemsById ?? {}) }),
   }
 
   validateWorld(world)

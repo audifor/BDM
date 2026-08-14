@@ -1,6 +1,6 @@
 import { getCurrentSeason } from '@/app/game'
 import type { Game } from '@/domain/game'
-import { getUserCoach } from '@/domain/world'
+import { getInboxItemsForCoach, getNewsFeed, getUnreadInboxCount, getUserCoach } from '@/domain/world'
 import { getGamesToday, getNextUserGame, getUserTeam, inspectCurrentDate } from '@/engine/calendar'
 import { getSeasonHistoryRecord } from '@/engine/season'
 
@@ -19,6 +19,7 @@ export function HomeScreen({ world, onPlayGame, onInstantResult, onStartNextSeas
   const todayGame = userTeam === undefined ? undefined : findTeamGame(getGamesToday(world), userTeam.id)
   const nextGame = getNextUserGame(world)
   const status = inspectCurrentDate(world)
+  const inbox=getInboxItemsForCoach(world,world.userCoachId).slice(0,3), news=getNewsFeed(world).slice(0,3), unread=getUnreadInboxCount(world,world.userCoachId)
 
   if (userTeam === undefined) {
     return <section className="content-panel">The user coach is not assigned to a team.</section>
@@ -66,6 +67,8 @@ export function HomeScreen({ world, onPlayGame, onInstantResult, onStartNextSeas
         <span>DAY STATUS</span>
         <strong>{status.scheduledGames.length === 0 ? 'All games resolved' : `${status.scheduledGames.length} game${status.scheduledGames.length === 1 ? '' : 's'} scheduled`}</strong>
       </article>
+      <article className="content-panel"><h2>INBOX</h2><p>{unread} unread</p>{inbox.length===0?<p>No inbox items.</p>:<ul>{inbox.map(item=><li key={item.id}>{item.priority.toUpperCase()} · {item.status.toUpperCase()} · {item.title}</li>)}</ul>}</article>
+      <article className="content-panel"><h2>LATEST NEWS</h2>{news.length===0?<p>No news yet.</p>:<ul>{news.map(item=><li key={item.id}>{item.gameDate} · {item.headline}</li>)}</ul>}</article>
     </section>
   )
 }

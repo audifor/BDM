@@ -13,7 +13,7 @@ import { releasePlayer, signFreeAgent } from '@/app/market'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { CoachPerkId, CoachSkillId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
-import { getRelationshipsForPerson, getUserCoachReputationProfile } from '@/domain/world'
+import { getInboxItemsForCoach, getNewsFeed, getRelationshipsForPerson, getUnreadInboxCount, getUserCoachReputationProfile } from '@/domain/world'
 import { getRecentCoachReputationEvents, type CoachReputationProfile } from '@/domain/coachReputation'
 import { purchaseCoachPerk, purchaseCoachSkillRank, type CoachRpgOperationResult } from '@/engine/coach'
 import type { ManualSubstitution, MatchSimulation, MatchTacticalPlan } from '@/engine/match'
@@ -115,3 +115,6 @@ export function selectUserCoachPendingOffers(world: GameWorld | null) { return w
 export function selectUserCoachActiveCandidacies(world: GameWorld | null) { return world === null ? [] : Object.values(world.coachJobCandidaciesById).filter((candidacy) => candidacy.coachId === world.userCoachId && ['identified', 'interviewing', 'offered'].includes(candidacy.status)) }
 /** Derived selector; relationship profiles remain exclusively in GameWorld. */
 export function selectUserCoachRelationships(world: GameWorld | null) { return world === null ? [] : getRelationshipsForPerson(world, world.userCoachId) }
+export function selectUserInbox(world:GameWorld|null){return world===null?[]:getInboxItemsForCoach(world,world.userCoachId)}
+export function selectUnreadInboxCount(world:GameWorld|null){return world===null?0:getUnreadInboxCount(world,world.userCoachId)}
+export function selectRecentNews(world:GameWorld|null,limit=5){return world===null?[]:getNewsFeed(world).slice(0,limit)}

@@ -22,6 +22,7 @@ import type { CoachCareerHistoryEntry, CoachEmployment } from '@/domain/coachCar
 import { GameWorldValidationError, type GameWorld } from './GameWorld'
 import { getRelationshipBand, relationshipKey, type RelationshipPersonId } from '@/domain/relationships'
 import { getMoraleBand, getRecentMoraleEvents } from '@/domain/morale'
+import type { InboxItem, NewsItem } from '@/domain/inbox'
 
 export function getCountry(world: GameWorld, id: CountryId): Country {
   return getEntity(world.countries, id, 'Country')
@@ -70,6 +71,9 @@ export function getPersonality(world: GameWorld, personId: string) { return worl
 export function getMorale(world: GameWorld, personId: string) { return world.moraleByPersonId[personId] }
 export function getMoraleBandForPerson(world: GameWorld, personId: string) { const morale = getMorale(world, personId); return morale === undefined ? undefined : getMoraleBand(morale.value) }
 export function getRecentMoraleEventsForPerson(world: GameWorld, personId: string, limit = 5) { const morale = getMorale(world, personId); return morale === undefined ? [] : getRecentMoraleEvents(morale, limit) }
+export function getInboxItemsForCoach(world: GameWorld, coachId: string): readonly InboxItem[] { return Object.values(world.inboxItemsById).filter((item)=>item.coachId===coachId).sort((a,b)=>b.gameDate.localeCompare(a.gameDate)||a.id.localeCompare(b.id)) }
+export function getUnreadInboxCount(world: GameWorld, coachId: string):number{return getInboxItemsForCoach(world,coachId).filter((item)=>item.status==='unread').length}
+export function getNewsFeed(world: GameWorld):readonly NewsItem[]{return Object.values(world.newsItemsById).sort((a,b)=>b.gameDate.localeCompare(a.gameDate)||a.id.localeCompare(b.id))}
 
 export function getTeamRoster(world: GameWorld, teamId: TeamId): readonly Player[] {
   return getTeam(world, teamId).rosterPlayerIds.map((playerId) => getPlayer(world, playerId))

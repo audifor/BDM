@@ -670,6 +670,21 @@ Coach and Squad presentation derive their displays from GameWorld. Memory, media
 board systems, narratives, factions, daily decay and MatchEngine morale bonuses
 remain out of scope.
 
+## Inbox and News v1
+
+Inbox is coach-directed canonical state while News is a public chronological world
+feed. `GameWorld` stores normalized inbox and news collections. Inbox has
+unread/read/archived statuses, low/normal/high priority, broad categories and
+typed action references; read/archive are immutable world operations. Queries own
+the deterministic date-descending, ID-ascending ordering and unread count.
+
+Pending user Coach job offers create high-priority actionable Inbox items. Coach
+appointments, dismissals and season champions create idempotent News from their
+canonical career/season facts. Save V1 persists these items; legacy saves start
+with empty collections and do not reconstruct history. HOME derives recent Inbox
+and News directly from GameWorld. Dynamic narratives, media, press conferences,
+desktop notifications and mail threads remain out of scope.
+
 ## Coach Career v1
 
 Coach Career is canonical world state: every Coach has Employment and append-only Career History, while Teams retain the authoritative optional `coachId`. GameWorld validates both directions and persists employment, history, job openings, candidacies, interviews and offers. Legacy saves enrich assigned coaches with an initial appointment at the saved current date and leave unassigned coaches unemployed.

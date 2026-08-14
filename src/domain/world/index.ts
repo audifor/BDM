@@ -6,6 +6,7 @@ export {
 export type { CreateGameWorldInput, GameWorld } from './GameWorld'
 export { applyRelationshipEventToWorld } from './RelationshipEvents'
 export { applyMoraleEventToWorld } from './MoraleEvents'
+export { addInboxItem, addNewsItem, archiveInboxItem, markInboxItemRead } from './InboxOperations'
 export { getActiveInjuryForPlayer, getAvailableRosterPlayers, getCurrentPlayerInjury, isPlayerAvailable } from './availability'
 export { getActivePlayerContract, getCurrentPlayerContract, getPlayerContracts } from './contracts'
 export { calculateTeamPlayerPayroll, canTeamAffordAdditionalSalary, getTeamFinancialSnapshot } from './finances'
@@ -40,4 +41,7 @@ export {
   getMorale,
   getMoraleBandForPerson,
   getRecentMoraleEventsForPerson,
+  getInboxItemsForCoach,
+  getUnreadInboxCount,
+  getNewsFeed,
 } from './queries'
