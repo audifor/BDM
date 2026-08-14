@@ -33,6 +33,7 @@ import { createCoachRpgProfile } from '@/domain/coachRpg'
 import { createStaffProfessionalProfile } from '@/domain/staff'
 import { createCoachReputationProfile, type CoachReputationSource } from '@/domain/coachReputation'
 import { coachJobCandidacyIdFromString, coachJobOfferIdFromString, coachJobOpeningIdFromString, createCoachEmployment } from '@/domain/coachCareer'
+import { type RelationshipEventSource, type RelationshipProfile } from '@/domain/relationships'
 
 type JsonRecord = Readonly<Record<string, unknown>>
 
@@ -66,6 +67,7 @@ export interface GameWorldSaveV1 {
   readonly coachJobCandidacies?: readonly JsonRecord[]
   readonly coachInterviews?: readonly JsonRecord[]
   readonly coachJobOffers?: readonly JsonRecord[]
+  readonly relationships?: readonly JsonRecord[]
 }
 
 export interface SaveGameEnvelopeV1 {
@@ -107,6 +109,7 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
       coachJobCandidacies: copyRecords(Object.values(world.coachJobCandidaciesById)),
       coachInterviews: copyRecords(Object.values(world.coachInterviewsByCandidacyId)),
       coachJobOffers: copyRecords(Object.values(world.coachJobOffersById)),
+      relationships: copyRecords(Object.values(world.relationshipsByKey)),
     },
   }
 }
@@ -165,6 +168,7 @@ export function deserializeGameWorldV1(value: unknown): GameWorld {
     ...(payload.coachJobCandidacies === undefined ? {} : { coachJobCandidaciesById: readCoachJobCandidacies(payload.coachJobCandidacies) }),
     ...(payload.coachInterviews === undefined ? {} : { coachInterviewsByCandidacyId: readCoachInterviews(payload.coachInterviews) }),
     ...(payload.coachJobOffers === undefined ? {} : { coachJobOffersById: readCoachJobOffers(payload.coachJobOffers) }),
+    ...(payload.relationships === undefined ? {} : { relationshipsByKey: readRelationships(payload.relationships) }),
   })
   if (Object.values(world.seasons).some((season) => Object.values(world.games).filter((game) => game.seasonId === season.id).every((game) => game.status === 'completed') && world.seasonHistoryBySeasonId[season.id] === undefined)) {
     throw new Error('Completed season is missing season history')
@@ -213,6 +217,9 @@ function readCoachJobOpenings(value: unknown) { return Object.fromEntries(array(
 function readCoachJobCandidacies(value: unknown) { return Object.fromEntries(array(value, 'Save coach candidacies').map((entry) => { const v = record(entry, 'Coach candidacy'); const id = coachJobCandidacyIdFromString(string(v.id, 'Coach candidacy id')); return [id, { id, jobOpeningId: coachJobOpeningIdFromString(string(v.jobOpeningId, 'Coach candidacy opening')), coachId: coachIdFromString(string(v.coachId, 'Coach candidacy coach')), status: string(v.status, 'Coach candidacy status') as never, createdOn: parseGameDate(string(v.createdOn, 'Coach candidacy createdOn')) }] })) }
 function readCoachInterviews(value: unknown) { return Object.fromEntries(array(value, 'Save coach interviews').map((entry) => { const v = record(entry, 'Coach interview'); const candidacyId = coachJobCandidacyIdFromString(string(v.candidacyId, 'Coach interview candidacy')); return [candidacyId, { candidacyId, status: string(v.status, 'Coach interview status') as never }] })) }
 function readCoachJobOffers(value: unknown) { return Object.fromEntries(array(value, 'Save coach offers').map((entry) => { const v = record(entry, 'Coach offer'); const id = coachJobOfferIdFromString(string(v.id, 'Coach offer id')); return [id, { id, jobOpeningId: coachJobOpeningIdFromString(string(v.jobOpeningId, 'Coach offer opening')), coachId: coachIdFromString(string(v.coachId, 'Coach offer coach')), teamId: teamIdFromString(string(v.teamId, 'Coach offer team')), createdOn: parseGameDate(string(v.createdOn, 'Coach offer createdOn')), status: string(v.status, 'Coach offer status') as never }] })) }
+function readRelationships(value: unknown): Readonly<Record<string, RelationshipProfile>> { return Object.fromEntries(array(value, 'Save relationships').map((entry) => { const v = record(entry, 'Relationship'); const sourceId = string(v.sourceId, 'Relationship source person'); const targetId = string(v.targetId, 'Relationship target person'); return [`${sourceId}->${targetId}`, { sourceId, targetId, value: integer(v.value, 'Relationship value'), events: array(v.events, 'Relationship events').map(readRelationshipEvent) }] })) }
+function readRelationshipEvent(value: unknown) { const v = record(value, 'Relationship event'); const source = string(v.source, 'Relationship event source'); return { id: string(v.id, 'Relationship event id'), gameDate: parseGameDate(string(v.gameDate, 'Relationship event date')), source: ['careerEvent', 'teamDecision', 'playingTime', 'developmentEvent', 'professionalInteraction'].includes(source) ? source as RelationshipEventSource : fail('Relationship event source is invalid'), delta: integer(v.delta, 'Relationship event delta'), context: readRelationshipContext(record(v.context, 'Relationship event context')) } }
+function readRelationshipContext(context: JsonRecord): Readonly<Record<string, string | number | boolean>> { const result: Record<string, string | number | boolean> = {}; for (const [key, value] of Object.entries(context)) { if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean') throw new TypeError(`Relationship event context ${key} is invalid`); if (typeof value === 'number' && !Number.isFinite(value)) throw new TypeError(`Relationship event context ${key} is invalid`); result[key] = value } return result }
 function readCoachReputationEvent(value: unknown) { const v = record(value, 'Coach reputation event'); const source = coachReputationSource(v.source); const context = record(v.context, 'Coach reputation event context'); const deltas = record(v.deltas, 'Coach reputation event deltas'); const result: Record<string, number> = {}; for (const dimension of ['competitive', 'development', 'professional', 'publicStanding']) if (deltas[dimension] !== undefined) result[dimension] = number(deltas[dimension], `Coach reputation event ${dimension}`); return { id: string(v.id, 'Coach reputation event id'), gameDate: parseGameDate(string(v.gameDate, 'Coach reputation event gameDate')), source, deltas: result, context: readCoachReputationContext(context) } }
 function readCoachReputationContext(context: JsonRecord) { const kind = coachReputationSource(context.kind); const base = { kind, key: string(context.key, 'Coach reputation event context key') }; if (kind === 'matchResult' && context.gameId !== undefined) return { ...base, gameId: string(context.gameId, 'Coach reputation match gameId'), teamId: string(context.teamId, 'Coach reputation match teamId'), opponentTeamId: string(context.opponentTeamId, 'Coach reputation match opponentTeamId'), seasonId: string(context.seasonId, 'Coach reputation match seasonId'), competitionId: string(context.competitionId, 'Coach reputation match competitionId'), result: matchResult(context.result), expectedWinProbability: number(context.expectedWinProbability, 'Coach reputation expected win probability'), teamStrength: number(context.teamStrength, 'Coach reputation team strength'), opponentTeamStrength: number(context.opponentTeamStrength, 'Coach reputation opponent team strength'), coachIsHome: boolean(context.coachIsHome, 'Coach reputation coach is home') }; if (kind === 'seasonAchievement' && context.achievement !== undefined) return { ...base, seasonId: string(context.seasonId, 'Coach reputation season id'), teamId: string(context.teamId, 'Coach reputation team id'), competitionId: string(context.competitionId, 'Coach reputation competition id'), achievement: seasonAchievement(context.achievement) }; return base }
 function matchResult(value: unknown): 'win' | 'loss' { const result = string(value, 'Coach reputation match result'); return result === 'win' || result === 'loss' ? result : fail('Coach reputation match result is invalid') }

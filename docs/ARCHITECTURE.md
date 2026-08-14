@@ -638,6 +638,21 @@ At the offseason transition, after development and contract-expiry reconciliatio
 
 ## Coach Reputation
 
+## Relationships v1
+
+Relationships are canonical sparse `GameWorld` state keyed by a directed pair of
+existing people (Coach, Player, or StaffPerson). A missing profile means Neutral
+at 0 on the -100--100 scale; profiles are only materialized after a non-zero
+Relationship Event. Events are immutable, deterministic caller-supplied records
+and idempotent per relationship by event ID. Applying an event returns a new
+world, clamps the value, and never affects MatchEngine. Save V1 persists the
+materialized profiles and reads pre-043 saves as an empty relationship collection.
+
+The current UI exposes only materialized relationships involving the user Coach.
+It derives that display from `GameWorld` through Zustand selectors; it has no
+independent relationship state. Automatic gameplay consequences are intentionally
+deferred: no present subsystem supplies a non-arbitrary interpersonal signal.
+
 ## Coach Career v1
 
 Coach Career is canonical world state: every Coach has Employment and append-only Career History, while Teams retain the authoritative optional `coachId`. GameWorld validates both directions and persists employment, history, job openings, candidacies, interviews and offers. Legacy saves enrich assigned coaches with an initial appointment at the saved current date and leave unassigned coaches unemployed.

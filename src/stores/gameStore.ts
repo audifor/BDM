@@ -13,7 +13,7 @@ import { releasePlayer, signFreeAgent } from '@/app/market'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { CoachPerkId, CoachSkillId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
-import { getUserCoachReputationProfile } from '@/domain/world'
+import { getRelationshipsForPerson, getUserCoachReputationProfile } from '@/domain/world'
 import { getRecentCoachReputationEvents, type CoachReputationProfile } from '@/domain/coachReputation'
 import { purchaseCoachPerk, purchaseCoachSkillRank, type CoachRpgOperationResult } from '@/engine/coach'
 import type { ManualSubstitution, MatchSimulation, MatchTacticalPlan } from '@/engine/match'
@@ -113,3 +113,5 @@ export function selectUserCoachRecentReputationEvents(world: GameWorld | null, l
 }
 export function selectUserCoachPendingOffers(world: GameWorld | null) { return world === null ? [] : Object.values(world.coachJobOffersById).filter((offer) => offer.coachId === world.userCoachId && offer.status === 'pending') }
 export function selectUserCoachActiveCandidacies(world: GameWorld | null) { return world === null ? [] : Object.values(world.coachJobCandidaciesById).filter((candidacy) => candidacy.coachId === world.userCoachId && ['identified', 'interviewing', 'offered'].includes(candidacy.status)) }
+/** Derived selector; relationship profiles remain exclusively in GameWorld. */
+export function selectUserCoachRelationships(world: GameWorld | null) { return world === null ? [] : getRelationshipsForPerson(world, world.userCoachId) }

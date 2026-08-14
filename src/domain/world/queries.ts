@@ -20,6 +20,7 @@ import type { CoachReputationProfile } from '@/domain/coachReputation'
 import type { CoachCareerHistoryEntry, CoachEmployment } from '@/domain/coachCareer'
 
 import { GameWorldValidationError, type GameWorld } from './GameWorld'
+import { getRelationshipBand, relationshipKey, type RelationshipPersonId } from '@/domain/relationships'
 
 export function getCountry(world: GameWorld, id: CountryId): Country {
   return getEntity(world.countries, id, 'Country')
@@ -61,6 +62,9 @@ export function getUserCoachProfessionalProfile(world: GameWorld): StaffProfessi
 export function getUserCoachRpgProfile(world: GameWorld): CoachRpgProfile | undefined { return getCoachRpgProfile(world, world.userCoachId) }
 export function getUserCoachReputationProfile(world: GameWorld): CoachReputationProfile | undefined { return getCoachReputationProfile(world, world.userCoachId) }
 export function getCoachProfessionalProficiency(world: GameWorld, coachId: CoachId): number | undefined { const profile=getCoachProfessionalProfile(world, coachId); return profile===undefined?undefined:calculateHeadCoachProfessionalProficiency(profile) }
+export function getRelationshipValue(world: GameWorld, sourceId: RelationshipPersonId, targetId: RelationshipPersonId): number { return world.relationshipsByKey[relationshipKey(sourceId, targetId)]?.value ?? 0 }
+export function getRelationshipBandForPeople(world: GameWorld, sourceId: RelationshipPersonId, targetId: RelationshipPersonId) { return getRelationshipBand(getRelationshipValue(world, sourceId, targetId)) }
+export function getRelationshipsForPerson(world: GameWorld, personId: RelationshipPersonId) { return Object.values(world.relationshipsByKey).filter((profile) => profile.sourceId === personId || profile.targetId === personId).sort((a, b) => b.value - a.value || a.sourceId.localeCompare(b.sourceId) || a.targetId.localeCompare(b.targetId)) }
 
 export function getTeamRoster(world: GameWorld, teamId: TeamId): readonly Player[] {
   return getTeam(world, teamId).rosterPlayerIds.map((playerId) => getPlayer(world, playerId))

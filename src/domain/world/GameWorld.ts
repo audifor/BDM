@@ -31,6 +31,7 @@ import { createCoachRpgProfile, type CoachRpgProfile } from '@/domain/coachRpg'
 import { createCoachReputationProfile, createDefaultCoachReputationProfile, type CoachReputationProfile } from '@/domain/coachReputation'
 import { createCoachEmployment, createCoachJobOpening, type CoachCareerHistoryEntry, type CoachEmployment, type CoachInterview, type CoachJobCandidacy, type CoachJobCandidacyId, type CoachJobOffer, type CoachJobOfferId, type CoachJobOpening, type CoachJobOpeningId } from '@/domain/coachCareer'
 import { createStaffProfessionalProfile, type StaffProfessionalProfile } from '@/domain/staff'
+import { relationshipKey, validateRelationshipProfile, type RelationshipProfile } from '@/domain/relationships'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -64,6 +65,7 @@ export interface GameWorld {
   readonly coachJobCandidaciesById: Readonly<Record<CoachJobCandidacyId, CoachJobCandidacy>>
   readonly coachInterviewsByCandidacyId: Readonly<Record<CoachJobCandidacyId, CoachInterview>>
   readonly coachJobOffersById: Readonly<Record<CoachJobOfferId, CoachJobOffer>>
+  readonly relationshipsByKey: Readonly<Record<string, RelationshipProfile>>
 }
 
 export interface CreateGameWorldInput {
@@ -95,6 +97,7 @@ export interface CreateGameWorldInput {
   coachJobCandidaciesById?: Readonly<Record<CoachJobCandidacyId, CoachJobCandidacy>>
   coachInterviewsByCandidacyId?: Readonly<Record<CoachJobCandidacyId, CoachInterview>>
   coachJobOffersById?: Readonly<Record<CoachJobOfferId, CoachJobOffer>>
+  relationshipsByKey?: Readonly<Record<string, RelationshipProfile>>
 }
 
 export class GameWorldValidationError extends Error {
@@ -139,6 +142,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     coachJobCandidaciesById: Object.freeze({ ...(input.coachJobCandidaciesById ?? {}) }),
     coachInterviewsByCandidacyId: Object.freeze({ ...(input.coachInterviewsByCandidacyId ?? {}) }),
     coachJobOffersById: Object.freeze({ ...(input.coachJobOffersById ?? {}) }),
+    relationshipsByKey: Object.freeze({ ...(input.relationshipsByKey ?? {}) }),
   }
 
   validateWorld(world)
@@ -236,6 +240,11 @@ function validateWorld(world: GameWorld): void {
   for (const [coachId, profile] of Object.entries(world.coachProfessionalProfilesByCoachId) as [CoachId, StaffProfessionalProfile][]) { requireEntity(world.coaches, coachId, 'Coach professional profile'); createStaffProfessionalProfile(profile) }
   for (const [coachId, profile] of Object.entries(world.coachRpgProfilesByCoachId) as [CoachId, CoachRpgProfile][]) { requireEntity(world.coaches, coachId, 'Coach RPG profile'); createCoachRpgProfile(profile) }
   for (const [coachId, profile] of Object.entries(world.coachReputationProfilesByCoachId) as [CoachId, CoachReputationProfile][]) { requireEntity(world.coaches, coachId, 'Coach reputation profile'); createCoachReputationProfile(profile) }
+  for (const [key, profile] of Object.entries(world.relationshipsByKey)) {
+    validateRelationshipProfile(profile)
+    if (key !== relationshipKey(profile.sourceId, profile.targetId)) throw new GameWorldValidationError(`Relationship key does not match people: ${key}`)
+    if (!hasRelationshipPerson(world, profile.sourceId) || !hasRelationshipPerson(world, profile.targetId)) throw new GameWorldValidationError(`Relationship references missing person: ${key}`)
+  }
   for (const [coachId, employment] of Object.entries(world.coachEmploymentByCoachId) as [CoachId, CoachEmployment][]) {
     requireEntity(world.coaches, coachId, 'Coach employment')
     createCoachEmployment(employment)
@@ -250,6 +259,8 @@ function validateWorld(world: GameWorld): void {
   for (const offer of Object.values(world.coachJobOffersById)) { requireEntity(world.coaches, offer.coachId, 'Coach offer Coach'); requireEntity(world.teams, offer.teamId, 'Coach offer Team'); requireEntity(world.coachJobOpeningsById, offer.jobOpeningId, 'Coach offer opening') }
   for (const history of Object.values(world.seasonHistoryBySeasonId)) validateSeasonHistory(world, history)
 }
+
+function hasRelationshipPerson(world: GameWorld, id: string): boolean { return world.coaches[id as CoachId] !== undefined || world.players[id as PlayerId] !== undefined || world.staffPeopleById[id as StaffPersonId] !== undefined }
 
 function validateInjury(world: GameWorld, injury: InjuryRecord): void {
   createInjury(injury)

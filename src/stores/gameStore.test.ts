@@ -1,10 +1,11 @@
+import { createNewGame } from '@/app/game'
 import { createGameDate } from '@/domain/date'
+import { applyRelationshipEventToWorld } from '@/domain/world'
 import { getGamesToday } from '@/engine/calendar'
 import { getTeamFinancialSnapshot } from '@/domain/world/finances'
 import { applyCoachReputationEvent } from '@/domain/coachReputation'
 import { beforeEach, describe, expect, it } from 'vitest'
-
-import { selectUserCoachRecentReputationEvents, selectUserCoachReputationProfile, useGameStore } from './gameStore'
+import { selectUserCoachRecentReputationEvents, selectUserCoachRelationships, selectUserCoachReputationProfile, useGameStore } from './gameStore'
 
 describe('gameStore', () => {
   beforeEach(() => {
@@ -61,5 +62,14 @@ describe('gameStore', () => {
     const updated = { ...world, coachReputationProfilesByCoachId: { ...world.coachReputationProfilesByCoachId, [world.userCoachId]: second.profile } }
 
     expect(selectUserCoachRecentReputationEvents(updated, 1).map((event) => event.id)).toEqual(['newer'])
+  })
+
+  it('derives user coach relationships from GameWorld without duplicated state', () => {
+    const world = createNewGame()
+    const player = Object.values(world.players)[0]!
+    const updated = applyRelationshipEventToWorld(world, world.userCoachId, player.id, { id: 'relationship:store', gameDate: world.currentDate, source: 'professionalInteraction', delta: -10, context: { kind: 'review' } })
+
+    expect(selectUserCoachRelationships(null)).toEqual([])
+    expect(selectUserCoachRelationships(updated)).toEqual([updated.relationshipsByKey[`${world.userCoachId}->${player.id}`]])
   })
 })

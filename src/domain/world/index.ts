@@ -4,6 +4,7 @@ export {
   GameWorldValidationError,
 } from './GameWorld'
 export type { CreateGameWorldInput, GameWorld } from './GameWorld'
+export { applyRelationshipEventToWorld } from './RelationshipEvents'
 export { getActiveInjuryForPlayer, getAvailableRosterPlayers, getCurrentPlayerInjury, isPlayerAvailable } from './availability'
 export { getActivePlayerContract, getCurrentPlayerContract, getPlayerContracts } from './contracts'
 export { calculateTeamPlayerPayroll, canTeamAffordAdditionalSalary, getTeamFinancialSnapshot } from './finances'
@@ -31,4 +32,7 @@ export {
   getUserCoachRpgProfile,
   getUserCoachReputationProfile,
   getCoachProfessionalProficiency,
+  getRelationshipValue,
+  getRelationshipBandForPeople,
+  getRelationshipsForPerson,
 } from './queries'

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 import { createNewGame } from '@/app/game'
 import { applyMatchResult } from '@/engine/match'
+import { applyRelationshipEventToWorld } from '@/domain/world'
 import { coachReputationBandLabel, coachReputationSourceLabel, formatCoachReputationDelta } from '@/ui/coachReputationPresentation'
 
 import { CoachScreen } from './CoachScreen'
@@ -43,5 +44,18 @@ describe('CoachScreen reputation', () => {
     expect(coachReputationSourceLabel('seasonAchievement')).toBe('Season Achievement')
     expect(formatCoachReputationDelta(8)).toBe('+8')
     expect(formatCoachReputationDelta(-6)).toBe('-6')
+  })
+
+  it('renders only materialized coach relationships with person, type, value and band', () => {
+    const world = createNewGame()
+    const player = Object.values(world.players)[0]!
+    const updated = applyRelationshipEventToWorld(world, world.userCoachId, player.id, { id: 'relationship:coach-screen', gameDate: world.currentDate, source: 'professionalInteraction', delta: 25, context: { kind: 'meeting' } })
+    const markup = renderToStaticMarkup(createElement(CoachScreen, { world: updated, onSkill: () => undefined, onPerk: () => undefined }))
+
+    expect(markup).toContain('RELATIONSHIPS')
+    expect(markup).toContain(`${player.firstName} ${player.lastName}`)
+    expect(markup).toContain('Player')
+    expect(markup).toContain('25')
+    expect(markup).toContain('positive')
   })
 })
