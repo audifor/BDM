@@ -28,6 +28,8 @@ describe('Coach reputation consequences', () => {
     expect(next.coachReputationProfilesByCoachId[homeCoachId]!.values.publicStanding).toBeGreaterThan(200)
     expect(next.coachReputationProfilesByCoachId[awayCoachId]!.values.competitive).toBeLessThan(200)
     expect(next.coachReputationProfilesByCoachId[awayCoachId]!.values.publicStanding).toBeLessThan(200)
+    expect(next.coachReputationProfilesByCoachId[homeCoachId]!.values).toMatchObject({ development: 200, professional: 200 })
+    expect(next.coachReputationProfilesByCoachId[awayCoachId]!.values).toMatchObject({ development: 200, professional: 200 })
     expect(next.games[game.id]!.result).toEqual({ homeScore: 84, awayScore: 76 })
     expect(applyMatchCoachReputationConsequences(next, next.games[game.id]!)).toEqual(next)
   })
@@ -53,6 +55,7 @@ describe('Coach reputation consequences', () => {
     const loaded = deserializeGameWorldV1(serializeGameWorldV1(finalized, '2032-12-31T00:00:00.000Z'))
 
     expect(event).toMatchObject({ id: `coach-reputation:season-champion:${seasonId}:${championCoachId}`, deltas: { competitive: 40, publicStanding: 20 }, context: { kind: 'seasonAchievement', seasonId, teamId: championTeamId, achievement: 'champion' } })
+    expect(championProfile.values).toMatchObject({ development: 200, professional: 200 })
     expect(applySeasonChampionCoachReputation(finalized, seasonId)).toEqual(finalized)
     expect(Object.entries(finalized.coachReputationProfilesByCoachId).filter(([coachId, profile]) => coachId !== championCoachId && profile.events.some((candidate) => candidate.source === 'seasonAchievement'))).toEqual([])
     expect(loaded.coachReputationProfilesByCoachId[championCoachId]!.events.find((candidate) => candidate.id === event.id)!.context).toEqual(event.context)

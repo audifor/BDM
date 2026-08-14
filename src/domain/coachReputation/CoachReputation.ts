@@ -166,7 +166,7 @@ export function getRecentCoachReputationEvents(profile: CoachReputationProfile, 
 
 export function applyCoachReputationEvent(profile: CoachReputationProfile, event: CoachReputationEvent) {
   if (!event.id.trim()) return { ok: false as const, reason: 'invalidEventId' };
-  if (event.source !== event.context.kind) return { ok: false as const, reason: 'invalidContext' };
+  if (!isCoachReputationSource(event.source) || event.source !== event.context.kind || !event.context.key.trim()) return { ok: false as const, reason: 'invalidContext' };
   if (profile.events.some((existingEvent) => existingEvent.id === event.id)) {
     return { ok: true as const, applied: false as const, reason: 'duplicateEvent', profile };
   }
@@ -176,7 +176,8 @@ export function applyCoachReputationEvent(profile: CoachReputationProfile, event
     if (!Number.isFinite(delta)) return { ok: false as const, reason: 'invalidDelta' };
     values[dimension] = clampCoachReputationValue(values[dimension] + delta);
   }
-  return { ok: true as const, applied: true as const, profile: { values, events: [...profile.events, event] } };
+  const storedEvent: CoachReputationEvent = { ...event, deltas: { ...event.deltas }, context: { ...event.context } as CoachReputationEvent['context'] };
+  return { ok: true as const, applied: true as const, profile: { values, events: [...profile.events, storedEvent] } };
 }
 
 export function getCoachReputationBand(value: number) {
@@ -186,4 +187,8 @@ export function getCoachReputationBand(value: number) {
 
 function assertFiniteNumber(value: number, name: string): void {
   if (!Number.isFinite(value)) throw new RangeError(`Invalid ${name}`);
+}
+
+function isCoachReputationSource(value: unknown): value is CoachReputationSource {
+  return value === 'matchResult' || value === 'seasonAchievement' || value === 'professionalEvent' || value === 'developmentEvent' || value === 'publicEvent';
 }

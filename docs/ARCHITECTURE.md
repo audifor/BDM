@@ -635,3 +635,37 @@ Release and signing are pure Application operations. A release terminates an act
 ## AI roster maintenance v1
 
 At the offseason transition, after development and contract-expiry reconciliation, Application maintains AI teams to a five-player roster minimum. AI teams are processed by TeamId and use the same `signFreeAgent` operation as the user, selecting affordable free agents by salary, then ability proxy, then PlayerId. It never changes budgets, releases players, replaces injuries, or signs for the user team. An explicit non-persisted result reports unresolved teams when no affordable free agent exists.
+
+## Coach Reputation
+
+Coach Reputation is a persistent, Coach-owned career perception layer. `GameWorld`
+stores one `CoachReputationProfile` per `CoachId`; it is never Team state, has no
+overall/average score, and uses four independent dimensions: Competitive,
+Development, Professional, and Public Standing. Each dimension is canonical on a
+0--1000 scale, starts at 200 for every new User and AI Coach, and exposes a derived
+band from Unknown through Legendary. Profiles persist their current values and
+immutable event history; bands, recent-event lists, opportunity eligibility, and UI
+labels are derived and are not saved. Older saves are enriched once with neutral,
+empty profiles and never receive invented historical events.
+
+Match consequences run after the canonical result application, outside
+`MatchEngine`. They reuse the real TeamStrength calculation and a deterministic
+expectation of `0.5 + (own - opponent) / 100`, adjusted by +0.05 at home or -0.05
+away and clamped to 0.15--0.85. A win/loss produces `surprise = actual -
+expectation`, then `round(surprise * 12)` Competitive and `round(surprise * 4)`
+Public Standing. The event records its contextual strength and expectation snapshot
+and has a deterministic game-and-coach ID, so User vs AI and AI vs AI outcomes are
+idempotent and use the same rules. Normal match results do not change Development
+or Professional reputation and never influence simulation RNG, score, lineups, or
+player performance.
+
+Season finalization reuses the canonical champion and awards that Team's Coach one
+deterministic `champion` event for +40 Competitive and +20 Public Standing. The
+Domain requirement evaluator is the future opportunity boundary; it reports unmet
+dimensions without creating a job market. Domain also owns recent-event ordering.
+Zustand exposes derived selectors only, while `CoachScreen` presents the four bands,
+values/progress, and up to five recent changes.
+
+Job markets, offers, interviews, firings, career transitions, relationships, media,
+board confidence/objectives, reputation decay, geographic reputation layers, new
+dimensions, and reputation-based MatchEngine bonuses remain out of scope.
