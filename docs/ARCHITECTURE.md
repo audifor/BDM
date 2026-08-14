@@ -638,6 +638,14 @@ At the offseason transition, after development and contract-expiry reconciliatio
 
 ## Coach Reputation
 
+## Coach Career v1
+
+Coach Career is canonical world state: every Coach has Employment and append-only Career History, while Teams retain the authoritative optional `coachId`. GameWorld validates both directions and persists employment, history, job openings, candidacies, interviews and offers. Legacy saves enrich assigned coaches with an initial appointment at the saved current date and leave unassigned coaches unemployed.
+
+The Application career boundary creates deterministic openings, evaluates the existing Reputation requirement, and drives candidacy, scheduled/completed interview, offers, hiring, moves and firing atomically. AI ranks eligible candidates using the temporary equal-weight mean of the four Reputation dimensions with CoachId tie-break; it is not stored as an overall reputation. AI accepts automatically, whereas User Coach offers remain pending for the UI.
+
+Coach UI presents current employment, chronological history, active processes and pending offers. Accept/decline commands delegate to Application boundaries through Zustand without duplicating career state or rules. Global job markets, contracts/salary, negotiation/agents, Board Confidence, automatic firing, media/relationships and complex interviews remain future work.
+
 Coach Reputation is a persistent, Coach-owned career perception layer. `GameWorld`
 stores one `CoachReputationProfile` per `CoachId`; it is never Team state, has no
 overall/average score, and uses four independent dimensions: Competitive,

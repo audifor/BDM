@@ -47,6 +47,8 @@ export function App() {
   const releasePlayer = useGameStore((state) => state.releasePlayer)
   const purchaseUserCoachSkill = useGameStore((state) => state.purchaseUserCoachSkill)
   const purchaseUserCoachPerk = useGameStore((state) => state.purchaseUserCoachPerk)
+  const acceptUserCoachOffer = useGameStore((state) => state.acceptUserCoachOffer)
+  const declineUserCoachOffer = useGameStore((state) => state.declineUserCoachOffer)
   const [section, setSection] = useState<Section>('home')
   const simulation = useMatchViewerStore((state) => state.simulation)
   const currentEventIndex = useMatchViewerStore((state) => state.currentEventIndex)
@@ -124,7 +126,7 @@ export function App() {
       </aside>
       <div className="main-content">
         {section === 'home' && <HomeScreen world={world} onPlayGame={() => startMatch(startLiveMatch(tacticalPlan))} onInstantResult={() => instantResult(tacticalPlan)} onStartNextSeason={startNextSeason} />}
-        {section === 'coach' && <CoachScreen world={world} onSkill={(id) => { const result=purchaseUserCoachSkill(id); if(!result.ok) setSaveMessage(result.reason) }} onPerk={(id) => { const result=purchaseUserCoachPerk(id); if(!result.ok) setSaveMessage(result.reason) }} />}
+        {section === 'coach' && <CoachScreen world={world} onSkill={(id) => { const result=purchaseUserCoachSkill(id); if(!result.ok) setSaveMessage(result.reason) }} onPerk={(id) => { const result=purchaseUserCoachPerk(id); if(!result.ok) setSaveMessage(result.reason) }} onAcceptOffer={acceptUserCoachOffer} onDeclineOffer={declineUserCoachOffer} />}
         {section === 'tactics' && <TacticsScreen players={userTeam === undefined ? [] : userTeam.rosterPlayerIds.map((playerId) => world.players[playerId]!)} plan={tacticalPlan} onChange={setTacticalPlan} onReset={resetTacticalPlan} />}
         {section === 'squad' && <SquadScreen world={world} onRelease={(playerId) => { if (userTeam !== undefined) releasePlayer(userTeam.id, playerId) }} />}
         {section === 'staff' && <StaffScreen world={world} />}

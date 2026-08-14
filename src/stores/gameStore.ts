@@ -19,6 +19,7 @@ import { purchaseCoachPerk, purchaseCoachSkillRank, type CoachRpgOperationResult
 import type { ManualSubstitution, MatchSimulation, MatchTacticalPlan } from '@/engine/match'
 import type { LiveMatchController, LiveMatchStep } from '@/app/game'
 import { create } from 'zustand'
+import { acceptCoachJobOffer, declineCoachJobOffer } from '@/app/coachCareer'
 
 interface GameStore {
   readonly world: GameWorld | null
@@ -40,6 +41,8 @@ interface GameStore {
   releasePlayer(teamId: TeamId, playerId: PlayerId): void
   purchaseUserCoachSkill(skillId: CoachSkillId): CoachRpgOperationResult
   purchaseUserCoachPerk(perkId: CoachPerkId): CoachRpgOperationResult
+  acceptUserCoachOffer(offerId: string): void
+  declineUserCoachOffer(offerId: string): void
   replaceWorld(world: GameWorld): void
   resetGame(): void
 }
@@ -85,6 +88,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   releasePlayer: (teamId, playerId) => set({ world: releasePlayer(requireWorld(get().world), teamId, playerId) }),
   purchaseUserCoachSkill: (skillId) => { const result = purchaseCoachSkillRank(requireWorld(get().world), requireWorld(get().world).userCoachId, skillId); if (result.ok) set({ world: result.world }); return result },
   purchaseUserCoachPerk: (perkId) => { const result = purchaseCoachPerk(requireWorld(get().world), requireWorld(get().world).userCoachId, perkId); if (result.ok) set({ world: result.world }); return result },
+  acceptUserCoachOffer: (offerId) => set({ world: acceptCoachJobOffer(requireWorld(get().world), offerId) }),
+  declineUserCoachOffer: (offerId) => set({ world: declineCoachJobOffer(requireWorld(get().world), offerId) }),
   replaceWorld: (world) => { liveController = null; set({ world }) },
   resetGame: () => { liveController = null; set({ world: null }) },
 }))
@@ -106,3 +111,5 @@ export function selectUserCoachRecentReputationEvents(world: GameWorld | null, l
   const profile = selectUserCoachReputationProfile(world)
   return profile === undefined ? [] : getRecentCoachReputationEvents(profile, limit)
 }
+export function selectUserCoachPendingOffers(world: GameWorld | null) { return world === null ? [] : Object.values(world.coachJobOffersById).filter((offer) => offer.coachId === world.userCoachId && offer.status === 'pending') }
+export function selectUserCoachActiveCandidacies(world: GameWorld | null) { return world === null ? [] : Object.values(world.coachJobCandidaciesById).filter((candidacy) => candidacy.coachId === world.userCoachId && ['identified', 'interviewing', 'offered'].includes(candidacy.status)) }
