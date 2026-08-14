@@ -1,0 +1,5 @@
+import { createNewGame } from '@/app/game'
+import { applyMoraleEventToWorld } from '@/domain/world'
+import { deserializeGameWorldV1, serializeGameWorldV1 } from './GameWorldSaveV1'
+import { describe, expect, it } from 'vitest'
+describe('morale persistence',()=>{it('round trips personality, morale events and deterministically enriches legacy saves',()=>{const base=createNewGame(), person=base.userCoachId;const world=applyMoraleEventToWorld(base,{id:'morale:test',personId:person,gameDate:base.currentDate,source:'professionalInteraction',delta:-7,context:{reason:'meeting',urgent:true}});const saved=serializeGameWorldV1(world,'2032-10-01T00:00:00.000Z');expect(deserializeGameWorldV1(saved).moraleByPersonId[person]).toEqual(world.moraleByPersonId[person]);const legacy={...saved.payload};delete (legacy as {personalities?:unknown}).personalities;delete (legacy as {morale?:unknown}).morale;const loaded=deserializeGameWorldV1({...saved,payload:legacy});expect(loaded.moraleByPersonId[person]).toMatchObject({value:50,events:[]});expect(deserializeGameWorldV1(serializeGameWorldV1(loaded,saved.savedAt))).toEqual(loaded)})})

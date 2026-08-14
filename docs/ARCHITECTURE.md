@@ -653,6 +653,23 @@ It derives that display from `GameWorld` through Zustand selectors; it has no
 independent relationship state. Automatic gameplay consequences are intentionally
 deferred: no present subsystem supplies a non-arbitrary interpersonal signal.
 
+## Personality and Morale v1
+
+Every Player, Coach and StaffPerson has a deterministic, persisted Personality with
+six 0--100 dimensions: ambition, professionalism, loyalty, resilience,
+temperament and teamOrientation. It is generated from stable identity for legacy
+saves, so repeated loads are identical. Morale is separate canonical person state:
+it starts at 50, has derived Very Low/Low/Stable/Good/Excellent bands, and keeps
+immutable idempotent events. Personality moderately and deterministically adjusts
+an event's morale impact without altering the event itself.
+
+Match results apply small post-result morale events to the involved players and
+coaches; MatchEngine remains unaware. Save V1 persists both profiles and event
+history; legacy saves receive deterministic Personality and empty 50 morale.
+Coach and Squad presentation derive their displays from GameWorld. Memory, media,
+board systems, narratives, factions, daily decay and MatchEngine morale bonuses
+remain out of scope.
+
 ## Coach Career v1
 
 Coach Career is canonical world state: every Coach has Employment and append-only Career History, while Teams retain the authoritative optional `coachId`. GameWorld validates both directions and persists employment, history, job openings, candidacies, interviews and offers. Legacy saves enrich assigned coaches with an initial appointment at the saved current date and leave unassigned coaches unemployed.

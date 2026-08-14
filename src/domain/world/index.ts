@@ -5,6 +5,7 @@ export {
 } from './GameWorld'
 export type { CreateGameWorldInput, GameWorld } from './GameWorld'
 export { applyRelationshipEventToWorld } from './RelationshipEvents'
+export { applyMoraleEventToWorld } from './MoraleEvents'
 export { getActiveInjuryForPlayer, getAvailableRosterPlayers, getCurrentPlayerInjury, isPlayerAvailable } from './availability'
 export { getActivePlayerContract, getCurrentPlayerContract, getPlayerContracts } from './contracts'
 export { calculateTeamPlayerPayroll, canTeamAffordAdditionalSalary, getTeamFinancialSnapshot } from './finances'
@@ -35,4 +36,8 @@ export {
   getRelationshipValue,
   getRelationshipBandForPeople,
   getRelationshipsForPerson,
+  getPersonality,
+  getMorale,
+  getMoraleBandForPerson,
+  getRecentMoraleEventsForPerson,
 } from './queries'

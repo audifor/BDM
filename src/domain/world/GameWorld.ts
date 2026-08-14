@@ -32,6 +32,8 @@ import { createCoachReputationProfile, createDefaultCoachReputationProfile, type
 import { createCoachEmployment, createCoachJobOpening, type CoachCareerHistoryEntry, type CoachEmployment, type CoachInterview, type CoachJobCandidacy, type CoachJobCandidacyId, type CoachJobOffer, type CoachJobOfferId, type CoachJobOpening, type CoachJobOpeningId } from '@/domain/coachCareer'
 import { createStaffProfessionalProfile, type StaffProfessionalProfile } from '@/domain/staff'
 import { relationshipKey, validateRelationshipProfile, type RelationshipProfile } from '@/domain/relationships'
+import { generatePersonality, type Personality } from '@/domain/personality'
+import { createMoraleProfile, type MoraleProfile } from '@/domain/morale'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -66,6 +68,8 @@ export interface GameWorld {
   readonly coachInterviewsByCandidacyId: Readonly<Record<CoachJobCandidacyId, CoachInterview>>
   readonly coachJobOffersById: Readonly<Record<CoachJobOfferId, CoachJobOffer>>
   readonly relationshipsByKey: Readonly<Record<string, RelationshipProfile>>
+  readonly personalitiesByPersonId: Readonly<Record<string, Personality>>
+  readonly moraleByPersonId: Readonly<Record<string, MoraleProfile>>
 }
 
 export interface CreateGameWorldInput {
@@ -98,6 +102,8 @@ export interface CreateGameWorldInput {
   coachInterviewsByCandidacyId?: Readonly<Record<CoachJobCandidacyId, CoachInterview>>
   coachJobOffersById?: Readonly<Record<CoachJobOfferId, CoachJobOffer>>
   relationshipsByKey?: Readonly<Record<string, RelationshipProfile>>
+  personalitiesByPersonId?: Readonly<Record<string, Personality>>
+  moraleByPersonId?: Readonly<Record<string, MoraleProfile>>
 }
 
 export class GameWorldValidationError extends Error {
@@ -143,6 +149,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     coachInterviewsByCandidacyId: Object.freeze({ ...(input.coachInterviewsByCandidacyId ?? {}) }),
     coachJobOffersById: Object.freeze({ ...(input.coachJobOffersById ?? {}) }),
     relationshipsByKey: Object.freeze({ ...(input.relationshipsByKey ?? {}) }),
+    personalitiesByPersonId: peopleProfiles(input.coaches, input.players, input.staffPeople ?? [], input.personalitiesByPersonId, generatePersonality),
+    moraleByPersonId: peopleProfiles(input.coaches, input.players, input.staffPeople ?? [], input.moraleByPersonId, createMoraleProfile),
   }
 
   validateWorld(world)
@@ -350,6 +358,8 @@ function indexHistoryBySeasonId(history: readonly SeasonHistoryRecord[]): Readon
 }
 
 function indexTeamFinances(finances: readonly TeamFinances[]): Readonly<Record<TeamId, TeamFinances>> { const indexed = Object.create(null) as Record<TeamId, TeamFinances>; for (const finance of finances) { if (Object.hasOwn(indexed, finance.teamId)) throw new GameWorldValidationError(`Duplicate Team finances ID: ${finance.teamId}`); indexed[finance.teamId] = finance } return Object.freeze(indexed) }
+
+function peopleProfiles<Value>(coaches: readonly Coach[], players: readonly Player[], staff: readonly StaffPerson[], supplied: Readonly<Record<string, Value>> | undefined, create: (id: string) => Value): Readonly<Record<string, Value>> { const result: Record<string, Value> = {}; for (const id of [...coaches, ...players, ...staff].map((person) => person.id)) result[id] = supplied?.[id] ?? create(id); return Object.freeze(result) }
 
 function coachReputationProfilesForCoaches(coaches: readonly Coach[], supplied: Readonly<Record<CoachId, CoachReputationProfile>> | undefined): Readonly<Record<CoachId, CoachReputationProfile>> {
   const profiles = Object.create(null) as Record<CoachId, CoachReputationProfile>

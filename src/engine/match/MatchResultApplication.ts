@@ -1,5 +1,5 @@
 import { createGame } from '@/domain/game'
-import { createGameWorld, type GameWorld } from '@/domain/world'
+import { applyMoraleEventToWorld, createGameWorld, type GameWorld } from '@/domain/world'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
 import { applyCoachExperienceToWorld, applyMatchCoachReputationConsequences, deriveCoachMatchExperienceGain } from '@/engine/coach'
 import { calculateTeamStrength } from '@/engine/team'
@@ -76,10 +76,12 @@ export function applyMatchResult(world: GameWorld, result: MatchSimulationResult
     staffPeople: Object.values(world.staffPeopleById),
     teamStaffAssignments: Object.values(world.teamStaffAssignmentsById),
     coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId,
-    coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: world.coachCareerHistoryByCoachId, coachJobOpeningsById: world.coachJobOpeningsById, coachJobCandidaciesById: world.coachJobCandidaciesById, coachInterviewsByCandidacyId: world.coachInterviewsByCandidacyId, coachJobOffersById: world.coachJobOffersById, relationshipsByKey: world.relationshipsByKey,
+    coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: world.coachCareerHistoryByCoachId, coachJobOpeningsById: world.coachJobOpeningsById, coachJobCandidaciesById: world.coachJobCandidaciesById, coachInterviewsByCandidacyId: world.coachInterviewsByCandidacyId, coachJobOffersById: world.coachJobOffersById, relationshipsByKey: world.relationshipsByKey, personalitiesByPersonId: world.personalitiesByPersonId, moraleByPersonId: world.moraleByPersonId,
   })
-  return applyMatchCoachExperience(world, applyMatchCoachReputationConsequences(resultWorld, completedGame), completedGame)
+  return applyMatchMorale(applyMatchCoachExperience(world, applyMatchCoachReputationConsequences(resultWorld, completedGame), completedGame), completedGame)
 }
+
+function applyMatchMorale(world: GameWorld, game: ReturnType<typeof createGame>): GameWorld { let updated = world; for (const teamId of [game.homeTeamId, game.awayTeamId]) { const won = teamId === game.homeTeamId ? game.result!.homeScore > game.result!.awayScore : game.result!.awayScore > game.result!.homeScore; const ids = [...world.teams[teamId]!.rosterPlayerIds, world.teams[teamId]!.coachId].filter((id): id is NonNullable<typeof id> => id !== undefined); for (const personId of ids) updated = applyMoraleEventToWorld(updated, { id: `morale:match:${game.id}:${personId}`, personId, gameDate: game.date, source: 'matchResult', delta: won ? 4 : -4, context: { gameId: game.id, result: won ? 'win' : 'loss' } }) } return updated }
 
 /** Creates the immutable historical snapshot without mutating the source world. */
 export function createMatchStatLog(world: GameWorld, gameId: MatchSimulation['gameId'], simulation: MatchSimulation): MatchStatLog {

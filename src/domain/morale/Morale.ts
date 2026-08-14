@@ -1,0 +1,12 @@
+import type { GameDate } from '@/domain/date'
+import type { Personality } from '@/domain/personality'
+
+export type MoraleBand = 'veryLow' | 'low' | 'stable' | 'good' | 'excellent'
+export type MoraleEventSource = 'matchResult' | 'playingTime' | 'careerEvent' | 'developmentEvent' | 'teamEvent' | 'professionalInteraction'
+export interface MoraleEvent { readonly id: string; readonly personId: string; readonly gameDate: GameDate; readonly source: MoraleEventSource; readonly delta: number; readonly context: Readonly<Record<string, string | number | boolean>> }
+export interface MoraleProfile { readonly personId: string; readonly value: number; readonly events: readonly MoraleEvent[] }
+export function createMoraleProfile(personId: string): MoraleProfile { if (!personId.trim()) throw new RangeError('Morale person is required'); return { personId, value: 50, events: [] } }
+export function getMoraleBand(value: number): MoraleBand { if (value < 20) return 'veryLow'; if (value < 40) return 'low'; if (value <= 60) return 'stable'; if (value <= 80) return 'good'; return 'excellent' }
+export function calculateMoraleEventImpact(personality: Personality, event: MoraleEvent): number { const dimension = event.source === 'matchResult' ? 'resilience' : event.source === 'professionalInteraction' ? 'temperament' : 'professionalism'; const centered = (personality.values[dimension] - 50) / 50; const resistance = event.delta < 0 ? centered : personality.values.teamOrientation > 50 ? (personality.values.teamOrientation - 50) / 100 : 0; return Math.round(event.delta * (1 - resistance * 0.35)) }
+export function applyMoraleEvent(profile: MoraleProfile, personality: Personality, event: MoraleEvent): MoraleProfile { if (!Number.isInteger(event.delta) || event.delta === 0 || !event.id.trim() || event.personId !== profile.personId || !['matchResult','playingTime','careerEvent','developmentEvent','teamEvent','professionalInteraction'].includes(event.source)) throw new RangeError('Morale event is invalid'); if (profile.events.some((item) => item.id === event.id)) return profile; const context = { ...event.context }; return { ...profile, value: Math.max(0, Math.min(100, profile.value + calculateMoraleEventImpact(personality, event))), events: [...profile.events, { ...event, context }] } }
+export function getRecentMoraleEvents(profile: MoraleProfile, limit = 5): readonly MoraleEvent[] { return [...profile.events].sort((a,b) => b.gameDate.localeCompare(a.gameDate) || b.id.localeCompare(a.id)).slice(0, limit) }

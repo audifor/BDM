@@ -21,6 +21,7 @@ import type { CoachCareerHistoryEntry, CoachEmployment } from '@/domain/coachCar
 
 import { GameWorldValidationError, type GameWorld } from './GameWorld'
 import { getRelationshipBand, relationshipKey, type RelationshipPersonId } from '@/domain/relationships'
+import { getMoraleBand, getRecentMoraleEvents } from '@/domain/morale'
 
 export function getCountry(world: GameWorld, id: CountryId): Country {
   return getEntity(world.countries, id, 'Country')
@@ -65,6 +66,10 @@ export function getCoachProfessionalProficiency(world: GameWorld, coachId: Coach
 export function getRelationshipValue(world: GameWorld, sourceId: RelationshipPersonId, targetId: RelationshipPersonId): number { return world.relationshipsByKey[relationshipKey(sourceId, targetId)]?.value ?? 0 }
 export function getRelationshipBandForPeople(world: GameWorld, sourceId: RelationshipPersonId, targetId: RelationshipPersonId) { return getRelationshipBand(getRelationshipValue(world, sourceId, targetId)) }
 export function getRelationshipsForPerson(world: GameWorld, personId: RelationshipPersonId) { return Object.values(world.relationshipsByKey).filter((profile) => profile.sourceId === personId || profile.targetId === personId).sort((a, b) => b.value - a.value || a.sourceId.localeCompare(b.sourceId) || a.targetId.localeCompare(b.targetId)) }
+export function getPersonality(world: GameWorld, personId: string) { return world.personalitiesByPersonId[personId] }
+export function getMorale(world: GameWorld, personId: string) { return world.moraleByPersonId[personId] }
+export function getMoraleBandForPerson(world: GameWorld, personId: string) { const morale = getMorale(world, personId); return morale === undefined ? undefined : getMoraleBand(morale.value) }
+export function getRecentMoraleEventsForPerson(world: GameWorld, personId: string, limit = 5) { const morale = getMorale(world, personId); return morale === undefined ? [] : getRecentMoraleEvents(morale, limit) }
 
 export function getTeamRoster(world: GameWorld, teamId: TeamId): readonly Player[] {
   return getTeam(world, teamId).rosterPlayerIds.map((playerId) => getPlayer(world, playerId))
