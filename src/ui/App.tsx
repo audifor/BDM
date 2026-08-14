@@ -10,14 +10,15 @@ import { getSeasonHistoryRecord } from '@/engine/season'
 import { getCurrentSeason } from '@/app/game'
 
 import { formatPrototypeDate } from './formatters'
-import { HomeScreen, MarketScreen, MatchViewerScreen, ScheduleScreen, SquadScreen, StaffScreen, StandingsScreen, TacticsScreen } from './screens'
+import { CoachScreen, HomeScreen, MarketScreen, MatchViewerScreen, ScheduleScreen, SquadScreen, StaffScreen, StandingsScreen, TacticsScreen } from './screens'
 import { createPresentationSegment } from './match/MatchPresentationSegment'
 import './styles.css'
 
-type Section = 'home' | 'tactics' | 'squad' | 'staff' | 'schedule' | 'standings' | 'market'
+type Section = 'home' | 'coach' | 'tactics' | 'squad' | 'staff' | 'schedule' | 'standings' | 'market'
 
 export const NAVIGATION: readonly { readonly id: Section; readonly label: string }[] = [
   { id: 'home', label: 'HOME' },
+  { id: 'coach', label: 'COACH' },
   { id: 'tactics', label: 'TACTICS' },
   { id: 'squad', label: 'SQUAD' },
   { id: 'staff', label: 'STAFF' },
@@ -44,6 +45,8 @@ export function App() {
   const startNextSeason = useGameStore((state) => state.startNextSeason)
   const signFreeAgent = useGameStore((state) => state.signFreeAgent)
   const releasePlayer = useGameStore((state) => state.releasePlayer)
+  const purchaseUserCoachSkill = useGameStore((state) => state.purchaseUserCoachSkill)
+  const purchaseUserCoachPerk = useGameStore((state) => state.purchaseUserCoachPerk)
   const [section, setSection] = useState<Section>('home')
   const simulation = useMatchViewerStore((state) => state.simulation)
   const currentEventIndex = useMatchViewerStore((state) => state.currentEventIndex)
@@ -121,6 +124,7 @@ export function App() {
       </aside>
       <div className="main-content">
         {section === 'home' && <HomeScreen world={world} onPlayGame={() => startMatch(startLiveMatch(tacticalPlan))} onInstantResult={() => instantResult(tacticalPlan)} onStartNextSeason={startNextSeason} />}
+        {section === 'coach' && <CoachScreen world={world} onSkill={(id) => { const result=purchaseUserCoachSkill(id); if(!result.ok) setSaveMessage(result.reason) }} onPerk={(id) => { const result=purchaseUserCoachPerk(id); if(!result.ok) setSaveMessage(result.reason) }} />}
         {section === 'tactics' && <TacticsScreen players={userTeam === undefined ? [] : userTeam.rosterPlayerIds.map((playerId) => world.players[playerId]!)} plan={tacticalPlan} onChange={setTacticalPlan} onReset={resetTacticalPlan} />}
         {section === 'squad' && <SquadScreen world={world} onRelease={(playerId) => { if (userTeam !== undefined) releasePlayer(userTeam.id, playerId) }} />}
         {section === 'staff' && <StaffScreen world={world} />}

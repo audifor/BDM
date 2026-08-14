@@ -76,7 +76,7 @@ describe('startNextSeason', () => {
     const loaded = deserializeGameWorldV1(envelope)
     const { currentSeasonId: _currentSeasonId, ...legacyPayload } = serializeGameWorldV1(createNewGame(), '2032-10-01T00:00:00.000Z').payload
 
-    expect(loaded).toEqual({ ...next, coachProfessionalProfilesByCoachId: {}, coachRpgProfilesByCoachId: {} })
+    expect(loaded).toEqual(next)
     expect(loaded.currentSeasonId).toBe(next.currentSeasonId)
     expect(deserializeGameWorldV1({ schemaVersion: 1, savedAt: '2032-10-01T00:00:00.000Z', payload: legacyPayload }).currentSeasonId).toBe('generated-season-0001')
   })

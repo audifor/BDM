@@ -11,7 +11,9 @@ import {
 } from '@/app/game'
 import { releasePlayer, signFreeAgent } from '@/app/market'
 import type { PlayerId, TeamId } from '@/domain/ids'
+import type { CoachPerkId, CoachSkillId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
+import { purchaseCoachPerk, purchaseCoachSkillRank, type CoachRpgOperationResult } from '@/engine/coach'
 import type { ManualSubstitution, MatchSimulation, MatchTacticalPlan } from '@/engine/match'
 import type { LiveMatchController, LiveMatchStep } from '@/app/game'
 import { create } from 'zustand'
@@ -34,6 +36,8 @@ interface GameStore {
   startNextSeason(): void
   signFreeAgent(teamId: TeamId, playerId: PlayerId): void
   releasePlayer(teamId: TeamId, playerId: PlayerId): void
+  purchaseUserCoachSkill(skillId: CoachSkillId): CoachRpgOperationResult
+  purchaseUserCoachPerk(perkId: CoachPerkId): CoachRpgOperationResult
   replaceWorld(world: GameWorld): void
   resetGame(): void
 }
@@ -77,6 +81,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   signFreeAgent: (teamId, playerId) => set({ world: signFreeAgent(requireWorld(get().world), teamId, playerId) }),
   releasePlayer: (teamId, playerId) => set({ world: releasePlayer(requireWorld(get().world), teamId, playerId) }),
+  purchaseUserCoachSkill: (skillId) => { const result = purchaseCoachSkillRank(requireWorld(get().world), requireWorld(get().world).userCoachId, skillId); if (result.ok) set({ world: result.world }); return result },
+  purchaseUserCoachPerk: (perkId) => { const result = purchaseCoachPerk(requireWorld(get().world), requireWorld(get().world).userCoachId, perkId); if (result.ok) set({ world: result.world }); return result },
   replaceWorld: (world) => { liveController = null; set({ world }) },
   resetGame: () => { liveController = null; set({ world: null }) },
 }))

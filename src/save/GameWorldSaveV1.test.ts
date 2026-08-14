@@ -11,9 +11,9 @@ describe('GameWorldSaveV1', () => {
     const saved = serializeGameWorldV1(world, '2032-10-01T12:00:00.000Z')
     const loaded = deserializeGameWorldV1(JSON.parse(JSON.stringify(saved)) as unknown)
 
-    expect(loaded).toEqual({ ...world, coachProfessionalProfilesByCoachId: {}, coachRpgProfilesByCoachId: {} })
-    expect(loaded.coachProfessionalProfilesByCoachId).toEqual({})
-    expect(loaded.coachRpgProfilesByCoachId).toEqual({})
+    expect(loaded).toEqual(world)
+    expect(loaded.coachProfessionalProfilesByCoachId).toEqual(world.coachProfessionalProfilesByCoachId)
+    expect(loaded.coachRpgProfilesByCoachId).toEqual(world.coachRpgProfilesByCoachId)
     expect(saved.payload.players).not.toBe(Object.values(world.players))
   })
 
