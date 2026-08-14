@@ -19,6 +19,9 @@ export {
   playerIdFromString,
   seasonIdFromString,
   teamIdFromString,
+  coachSkillIdFromString,
+  coachProfessionalTraitIdFromString,
+  coachPerkIdFromString,
 } from './EntityIds'
 
 export type {
@@ -35,4 +38,7 @@ export type {
   PlayerId,
   SeasonId,
   TeamId,
+  CoachSkillId,
+  CoachProfessionalTraitId,
+  CoachPerkId,
 } from './EntityIds'

@@ -461,6 +461,50 @@ remain distinct from Staff Truth and role proficiency.
 > React consumes canonical Staff queries and derived role proficiency; it must not
 > reimplement role weights or business rules.
 
+## Coach RPG domain foundation
+
+Coach RPG is a pure Domain foundation reusable by any `Coach`, never a user-only
+subsystem. Head Coaches will converge on the same common professional attribute
+framework as Staff, but 040.1 does not yet integrate a profile into `Coach`,
+`GameWorld`, generation or saves; 040.2 owns that integration.
+
+Professional attributes, accumulated experience, Skills, Professional Traits,
+Perks and Personality are separate concepts. Experience is an unbounded,
+decimal-capable aggregate ledger rather than micro-event history. Development
+Points are scarce player-directed choices for future Skills and Perks, never a
+direct currency for arbitrary professional attributes. Professional attributes will
+primarily develop through targeted experience in 040.3, with diminishing returns
+to be defined then.
+
+Professional Traits describe career-developed professional characteristics, not
+deep Personality. Perks should primarily unlock contextual capabilities,
+information, options or system interactions rather than defaulting to flat stat
+bonuses. Future paid education buys learning opportunities that enter this same
+experience architecture, never direct attributes. Losses may also teach; experience
+is not a reward for winning. Future XP allocation will consider difficulty,
+relevance, novelty, responsibility and competitive level to prevent farming.
+
+040.1 defines only types, validation, optional rookie presets and pure profile
+initialization. 040.3 will add XP/development, 040.4 catalogues and unlocks, and
+040.5 persistence/UI. Personality, relationships, memory, drama, finances and
+courses remain outside this milestone.
+
+> Coach RPG progression must be modeled for Coach entities generally, not as a
+> user-only subsystem.
+
+> Professional attributes, accumulated experience, skills, professional traits,
+> perks and personality are separate concepts and must not be flattened into one
+> progression number.
+
+> Experience may accumulate granularly and indefinitely; canonical state stores
+> aggregated experience rather than every micro-event.
+
+> Development Points represent scarce player-directed RPG choices and must not
+> become a direct currency for purchasing arbitrary professional attribute values.
+
+> Professional Traits remain distinct from deep Personality. Perks should favor
+> contextual capabilities over universal flat percentage bonuses.
+
 ## Season progression
 
 A season completes only when every one of its Games has a completed result, never from the calendar date. Applying the final result automatically creates one immutable `SeasonHistoryRecord` in the canonical `seasonHistoryBySeasonId` collection. It snapshots the deterministic final standings, champion Team ID, and latest scheduled game date; it does not duplicate player statistics.
