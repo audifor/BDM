@@ -4,6 +4,8 @@ import { createNewGame, playUserGame } from '@/app/game'
 import { calculateAge } from '@/domain/player'
 import { getTeamFinancialSnapshot } from '@/domain/world/finances'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from './GameWorldSaveV1'
+import { executeTeamTraining } from '@/engine/training'
+import { advanceDay } from '@/engine/calendar'
 
 describe('GameWorldSaveV1', () => {
   it('round-trips canonical world data independently of the runtime object', () => {
@@ -15,6 +17,17 @@ describe('GameWorldSaveV1', () => {
     expect(loaded.coachProfessionalProfilesByCoachId).toEqual(world.coachProfessionalProfilesByCoachId)
     expect(loaded.coachRpgProfilesByCoachId).toEqual(world.coachRpgProfilesByCoachId)
     expect(saved.payload.players).not.toBe(Object.values(world.players))
+  })
+
+  it('round-trips training state and supplies deterministic legacy defaults', () => {
+    const base = createNewGame(); const trained = advanceDay(base)
+    const saved = serializeGameWorldV1(trained, '2032-10-01T12:00:00.000Z')
+    expect(deserializeGameWorldV1(saved)).toEqual(trained)
+    const { trainingPlans: _plans, trainingSessions: _sessions, developmentStimulus: _stimulus, careerFatigue: _fatigue, ...legacyPayload } = saved.payload
+    const legacy = deserializeGameWorldV1({ ...saved, payload: legacyPayload })
+    expect(Object.values(legacy.trainingSessionsById)).toEqual([])
+    expect(Object.values(legacy.careerFatigueByPlayerId).every((value) => value === 0)).toBe(true)
+    expect(deserializeGameWorldV1(serializeGameWorldV1(legacy, saved.savedAt))).toEqual(legacy)
   })
 
   it('enriches legacy and partial Staff saves without replacing existing Staff', () => {

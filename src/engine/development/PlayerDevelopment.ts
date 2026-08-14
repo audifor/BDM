@@ -3,7 +3,7 @@ import type { GameDate } from '@/domain/date'
 import type { SeasonId } from '@/domain/ids'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 
-export interface PlayerDevelopmentContext { readonly fromSeasonId: SeasonId; readonly toSeasonId: SeasonId; readonly targetDate: GameDate }
+export interface PlayerDevelopmentContext { readonly fromSeasonId: SeasonId; readonly toSeasonId: SeasonId; readonly targetDate: GameDate; readonly stimulusByRating?: Readonly<Partial<Record<BasketballRatingKey, number>>> }
 export interface PlayerRatingDevelopment { readonly rating: BasketballRatingKey; readonly before: number; readonly delta: number; readonly after: number }
 export interface PlayerDevelopmentResult { readonly playerId: Player['id']; readonly age: number; readonly ratings: readonly PlayerRatingDevelopment[] }
 
@@ -30,7 +30,10 @@ export function developPlayerForSeason(player: Player, context: PlayerDevelopmen
 function developRating(player: Player, rating: BasketballRatingKey, age: number, context: PlayerDevelopmentContext): PlayerRatingDevelopment {
   const before = player.basketball.ratings[rating]
   const random = new SeededRandomSource(hashStringToSeed(`player-development-v1:${context.fromSeasonId}:${context.toSeasonId}:${player.id}:${rating}`))
-  const rawDelta = getBaseDevelopmentTrend(age) + random.nextFloat(-0.75, 0.75)
+  // Training is an input to the canonical seasonal development calculation, never
+  // a direct ratings mutation. The cap keeps a full season of work modest.
+  const stimulus = Math.min(2, (context.stimulusByRating?.[rating] ?? 0) * 0.05)
+  const rawDelta = getBaseDevelopmentTrend(age) + random.nextFloat(-0.75, 0.75) + stimulus
   const growthRoom = 0.35 + 0.65 * ((100 - before) / 100)
   const adjusted = rawDelta > 0 ? rawDelta * growthRoom * calculatePotentialGrowthFactor(player) : rawDelta
   const proposed = Math.max(-5, Math.min(4, Math.round(adjusted)))

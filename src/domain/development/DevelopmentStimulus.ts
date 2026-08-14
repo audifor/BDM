@@ -1,0 +1,4 @@
+import type { BasketballRatingKey } from '@/domain/player'
+export interface PlayerDevelopmentStimulus{readonly playerId:string;readonly byRating:Readonly<Record<BasketballRatingKey,number>>}
+export const EMPTY_DEVELOPMENT_STIMULUS:Readonly<Record<BasketballRatingKey,number>>={finishing:0,shooting:0,playmaking:0,perimeterDefense:0,interiorDefense:0,rebounding:0,athleticism:0}
+export function addDevelopmentStimulus(current:PlayerDevelopmentStimulus,addition:Readonly<Partial<Record<BasketballRatingKey,number>>>):PlayerDevelopmentStimulus{const byRating={...current.byRating};for(const key of Object.keys(byRating) as BasketballRatingKey[]){const value=addition[key]??0;if(!Number.isFinite(value)||value<0)throw new RangeError('Development stimulus must be finite and non-negative');byRating[key]+=value}return{playerId:current.playerId,byRating}}

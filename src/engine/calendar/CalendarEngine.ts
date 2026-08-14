@@ -1,6 +1,7 @@
 import { addDays } from '@/domain/date'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import { reconcileExpiredPlayerContracts } from '@/engine/market'
+import { executeEligibleTraining, recoverCareerFatigueForDay } from '@/engine/training/TrainingEngine'
 
 /** Advances only the simulation date, leaving game resolution to other services. */
 export function advanceDay(world: GameWorld): GameWorld {
@@ -25,7 +26,7 @@ export function advanceDay(world: GameWorld): GameWorld {
     staffPeople: Object.values(world.staffPeopleById),
     teamStaffAssignments: Object.values(world.teamStaffAssignmentsById),
     coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId,
-    coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: world.coachCareerHistoryByCoachId, coachJobOpeningsById: world.coachJobOpeningsById, coachJobCandidaciesById: world.coachJobCandidaciesById, coachInterviewsByCandidacyId: world.coachInterviewsByCandidacyId, coachJobOffersById: world.coachJobOffersById, relationshipsByKey: world.relationshipsByKey, personalitiesByPersonId: world.personalitiesByPersonId, moraleByPersonId: world.moraleByPersonId,
+    coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: world.coachCareerHistoryByCoachId, coachJobOpeningsById: world.coachJobOpeningsById, coachJobCandidaciesById: world.coachJobCandidaciesById, coachInterviewsByCandidacyId: world.coachInterviewsByCandidacyId, coachJobOffersById: world.coachJobOffersById, relationshipsByKey: world.relationshipsByKey, personalitiesByPersonId: world.personalitiesByPersonId, moraleByPersonId: world.moraleByPersonId, inboxItemsById: world.inboxItemsById, newsItemsById: world.newsItemsById, trainingPlansByTeamId: world.trainingPlansByTeamId, trainingSessionsById: world.trainingSessionsById, developmentStimulusByPlayerId: world.developmentStimulusByPlayerId, careerFatigueByPlayerId: world.careerFatigueByPlayerId,
   })
-  return reconcileExpiredPlayerContracts(advanced, advanced.currentDate)
+  return executeEligibleTraining(reconcileExpiredPlayerContracts(recoverCareerFatigueForDay(advanced), advanced.currentDate))
 }

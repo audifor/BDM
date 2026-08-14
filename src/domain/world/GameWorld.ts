@@ -35,6 +35,9 @@ import { relationshipKey, validateRelationshipProfile, type RelationshipProfile 
 import { generatePersonality, type Personality } from '@/domain/personality'
 import { createMoraleProfile, type MoraleProfile } from '@/domain/morale'
 import type { InboxItem, NewsItem } from '@/domain/inbox'
+import { EMPTY_DEVELOPMENT_STIMULUS, type PlayerDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
+import { clampCareerFatigue } from '@/domain/careerFatigue/CareerFatigue'
+import { createDefaultTrainingPlan, type TeamTrainingPlan, type TrainingSession } from '@/domain/training'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -73,6 +76,10 @@ export interface GameWorld {
   readonly moraleByPersonId: Readonly<Record<string, MoraleProfile>>
   readonly inboxItemsById: Readonly<Record<string, InboxItem>>
   readonly newsItemsById: Readonly<Record<string, NewsItem>>
+  readonly trainingPlansByTeamId: Readonly<Record<string, TeamTrainingPlan>>
+  readonly trainingSessionsById: Readonly<Record<string, TrainingSession>>
+  readonly developmentStimulusByPlayerId: Readonly<Record<string, PlayerDevelopmentStimulus>>
+  readonly careerFatigueByPlayerId: Readonly<Record<string, number>>
 }
 
 export interface CreateGameWorldInput {
@@ -109,6 +116,10 @@ export interface CreateGameWorldInput {
   moraleByPersonId?: Readonly<Record<string, MoraleProfile>>
   inboxItemsById?: Readonly<Record<string, InboxItem>>
   newsItemsById?: Readonly<Record<string, NewsItem>>
+  trainingPlansByTeamId?: Readonly<Record<string, TeamTrainingPlan>>
+  trainingSessionsById?: Readonly<Record<string, TrainingSession>>
+  developmentStimulusByPlayerId?: Readonly<Record<string, PlayerDevelopmentStimulus>>
+  careerFatigueByPlayerId?: Readonly<Record<string, number>>
 }
 
 export class GameWorldValidationError extends Error {
@@ -157,6 +168,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     personalitiesByPersonId: peopleProfiles(input.coaches, input.players, input.staffPeople ?? [], input.personalitiesByPersonId, generatePersonality),
     moraleByPersonId: peopleProfiles(input.coaches, input.players, input.staffPeople ?? [], input.moraleByPersonId, createMoraleProfile),
     inboxItemsById: Object.freeze({ ...(input.inboxItemsById ?? {}) }), newsItemsById: Object.freeze({ ...(input.newsItemsById ?? {}) }),
+    trainingPlansByTeamId: Object.freeze(Object.fromEntries(input.teams.map((team)=>[team.id,input.trainingPlansByTeamId?.[team.id]??createDefaultTrainingPlan(team.id)]))), trainingSessionsById:Object.freeze({...(input.trainingSessionsById??{})}),
+    developmentStimulusByPlayerId:Object.freeze(Object.fromEntries(input.players.map((player)=>[player.id,input.developmentStimulusByPlayerId?.[player.id]??{playerId:player.id,byRating:{...EMPTY_DEVELOPMENT_STIMULUS}}]))), careerFatigueByPlayerId:Object.freeze(Object.fromEntries(input.players.map((player)=>[player.id,clampCareerFatigue(input.careerFatigueByPlayerId?.[player.id]??0)]))),
   }
 
   validateWorld(world)

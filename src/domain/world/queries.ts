@@ -23,6 +23,7 @@ import { GameWorldValidationError, type GameWorld } from './GameWorld'
 import { getRelationshipBand, relationshipKey, type RelationshipPersonId } from '@/domain/relationships'
 import { getMoraleBand, getRecentMoraleEvents } from '@/domain/morale'
 import type { InboxItem, NewsItem } from '@/domain/inbox'
+import { createDefaultTrainingPlan, type TeamTrainingPlan, type TrainingSession } from '@/domain/training'
 
 export function getCountry(world: GameWorld, id: CountryId): Country {
   return getEntity(world.countries, id, 'Country')
@@ -74,6 +75,11 @@ export function getRecentMoraleEventsForPerson(world: GameWorld, personId: strin
 export function getInboxItemsForCoach(world: GameWorld, coachId: string): readonly InboxItem[] { return Object.values(world.inboxItemsById).filter((item)=>item.coachId===coachId).sort((a,b)=>b.gameDate.localeCompare(a.gameDate)||a.id.localeCompare(b.id)) }
 export function getUnreadInboxCount(world: GameWorld, coachId: string):number{return getInboxItemsForCoach(world,coachId).filter((item)=>item.status==='unread').length}
 export function getNewsFeed(world: GameWorld):readonly NewsItem[]{return Object.values(world.newsItemsById).sort((a,b)=>b.gameDate.localeCompare(a.gameDate)||a.id.localeCompare(b.id))}
+export function getTrainingPlanForTeam(world: GameWorld, teamId: TeamId): TeamTrainingPlan { return world.trainingPlansByTeamId[teamId] ?? createDefaultTrainingPlan(teamId) }
+export function getTrainingSessionsForTeam(world: GameWorld, teamId: TeamId): readonly TrainingSession[] { return Object.values(world.trainingSessionsById).filter((session) => session.teamId === teamId).sort((a, b) => b.gameDate.localeCompare(a.gameDate) || b.id.localeCompare(a.id)) }
+export function getLatestTrainingSession(world: GameWorld, teamId: TeamId): TrainingSession | undefined { return getTrainingSessionsForTeam(world, teamId)[0] }
+export function getDevelopmentStimulusForPlayer(world: GameWorld, playerId: PlayerId) { return world.developmentStimulusByPlayerId[playerId] }
+export function getCareerFatigueForPlayer(world: GameWorld, playerId: PlayerId): number { return world.careerFatigueByPlayerId[playerId] ?? 0 }
 
 export function getTeamRoster(world: GameWorld, teamId: TeamId): readonly Player[] {
   return getTeam(world, teamId).rosterPlayerIds.map((playerId) => getPlayer(world, playerId))

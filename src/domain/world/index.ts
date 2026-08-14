@@ -44,4 +44,9 @@ export {
   getInboxItemsForCoach,
   getUnreadInboxCount,
   getNewsFeed,
+  getTrainingPlanForTeam,
+  getTrainingSessionsForTeam,
+  getLatestTrainingSession,
+  getDevelopmentStimulusForPlayer,
+  getCareerFatigueForPlayer,
 } from './queries'

@@ -20,16 +20,15 @@ import {
 } from './index'
 
 describe('CalendarEngine', () => {
-  it('advances exactly one day into a new unchanged world apart from currentDate', () => {
+  it('advances one day immutably and executes eligible team training', () => {
     const { world } = createScheduledGameWorld()
     const before = JSON.parse(JSON.stringify(world)) as { currentDate: string }
     const nextWorld = advanceDay(world)
-    const expected = { ...before, currentDate: '2032-10-02' }
 
     expect(nextWorld).not.toBe(world)
     expect(nextWorld.currentDate).toBe('2032-10-02')
     expect(JSON.parse(JSON.stringify(world))).toEqual(before)
-    expect(JSON.parse(JSON.stringify(nextWorld))).toEqual(expected)
+    expect(Object.keys(nextWorld.trainingSessionsById)).toHaveLength(Object.keys(nextWorld.teams).length)
     expect(nextWorld.schemaVersion).toBe(world.schemaVersion)
     expect(nextWorld.userCoachId).toBe(world.userCoachId)
     expect(Object.keys(nextWorld.games)).toHaveLength(Object.keys(world.games).length)

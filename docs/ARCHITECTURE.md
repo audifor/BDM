@@ -65,6 +65,29 @@ Derived data is not persisted when it can be resolved from canonical entities.
 Future engines may define controlled world updates, but that behavior is not part
 of `GameWorld` itself.
 
+## Training V1
+
+Each Team has a persisted `TrainingPlan` with intensity (`light`, `normal`, or
+`high`) and a focus (balanced or one basketball rating). Calendar advancement
+recovers persistent Career Fatigue, then runs one deterministic TrainingSession
+for every team without a game that day. User and AI teams use the same plan,
+execution, fatigue and development pipeline; AI V1 keeps the default normal /
+balanced plan.
+
+Training never changes Player ratings directly. It accumulates per-player,
+per-rating Development Stimulus. The canonical offseason PlayerDevelopment
+transition consumes that stimulus as a bounded input to its existing age and
+potential logic, then resets it, so it cannot be applied twice. Plans, sessions,
+stimulus and Career Fatigue are canonical GameWorld state and save/load data;
+legacy saves default to normal/balanced plans, no sessions, neutral stimulus and
+zero fatigue.
+
+Career Fatigue is persistent 0--100 training load with daily recovery and a
+moderate training-efficiency penalty. It is intentionally separate from the
+transient MatchSession Fatigue projection: Training V1 does not affect
+MatchEngine. The UI exposes the user team's plan, latest session, fatigue summary
+and training progress without presenting stimulus as already-earned ratings.
+
 `WorldGenerator` belongs to Engine and creates a `GameWorld` through its canonical
 factory. Its procedural content uses deterministic `RandomSource`; generated IDs
 are deterministic sequence strings independent of that random stream. The same
