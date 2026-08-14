@@ -563,6 +563,22 @@ unlocks belong to 040.4. Future sources may use this same gain boundary, and fut
 anti-farming can consider novelty, familiarity, responsibility, relevance and stakes
 without storing micro-events.
 
+## Coach skills, traits and perks
+
+Coach Skills are a closed declarative catalog of deliberate ranks 0--3. They cost
+1/2/3 Development Points sequentially, require their current primary professional
+attribute only at ranks 2 (45) and 3 (60), and reduce the matching learning cost by
+2% per rank. The reusable development boundary caps all learning reductions at 15%;
+it does not create Experience, global progress or Development Points.
+
+Professional Traits are a separate permanent identity layer. Generic, non-negative
+evidence is accumulated without micro-event history and reconciliation deterministically
+adds the approved Trait only after its threshold and Skill prerequisite are met.
+Perks are one-time contextual capabilities, queried through the catalog rather than
+rechecked by consumers. Four Career Focus perks exist and a Coach may acquire at most
+two. Skills, Traits and Perks have no direct MatchEngine effect in 040.4. Missing
+runtime Coach profiles make all of these operations fail safely until 040.5 persistence.
+
 > Coach Professional Profile and Coach RPG Profile are separate canonical concepts:
 > current professional ability is not equivalent to accumulated tracked experience.
 

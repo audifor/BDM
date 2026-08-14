@@ -10,6 +10,7 @@ import {
   type StaffProfessionalProfile,
 } from '@/domain/staff'
 import { createGameWorld, type GameWorld } from '@/domain/world'
+import { calculateEffectiveCoachLearningCost } from './CoachSpecialization'
 
 /** Only match experience is productive in 040.3; more sources can join later. */
 export type CoachExperienceSourceKind = 'match'
@@ -92,8 +93,8 @@ export function applyCoachExperienceGain(
   for (const attribute of STAFF_PROFESSIONAL_ATTRIBUTE_KEYS) {
     let available = normalizeCoachExperience(experience[attribute] + (validatedGain.byAttribute[attribute] ?? 0))
     let value = attributes[attribute]
-    while (value < 100 && available >= getCoachAttributeExperienceCost(value)) {
-      available = normalizeCoachExperience(available - getCoachAttributeExperienceCost(value))
+    while (value < 100 && available >= calculateEffectiveCoachLearningCost(getCoachAttributeExperienceCost(value), rpg, attribute)) {
+      available = normalizeCoachExperience(available - calculateEffectiveCoachLearningCost(getCoachAttributeExperienceCost(value), rpg, attribute))
       value += 1
     }
     attributes[attribute] = value

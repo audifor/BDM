@@ -16,6 +16,8 @@ import { requireNonEmptyString } from '@/domain/validation'
 
 export type CoachRpgCategory = 'tactical' | 'development' | 'leadership' | 'analysis' | 'management'
 export type CoachRpgPreset = 'blank' | 'balanced' | 'tactician' | 'developer' | 'motivator' | 'analyst'
+export const PROFESSIONAL_TRAIT_EVIDENCE_IDS = ['youthDevelopment','shortRotationUsage','playerRelationshipSupport','tacticalVariation','practicePlanning','staffDevelopment'] as const
+export type ProfessionalTraitEvidenceId = typeof PROFESSIONAL_TRAIT_EVIDENCE_IDS[number]
 
 export interface CoachProfessionalExperienceLedger { readonly byAttribute: Readonly<Record<StaffProfessionalAttributeKey, number>> }
 export interface CoachDevelopmentState { readonly globalProgress: number; readonly developmentPoints: number }
@@ -24,7 +26,7 @@ export interface CoachSkillState { readonly skillId: CoachSkillId; readonly rank
 export interface CoachProfessionalTraitDefinition { readonly id: CoachProfessionalTraitId; readonly name: string; readonly description: string }
 export interface CoachPerkDefinition { readonly id: CoachPerkId; readonly name: string; readonly description: string; readonly category: CoachRpgCategory; readonly maxRank: number; readonly developmentPointCostByRank: readonly number[] }
 export interface CoachPerkState { readonly perkId: CoachPerkId; readonly rank: number }
-export interface CoachRpgProfile { readonly professionalExperience: CoachProfessionalExperienceLedger; readonly development: CoachDevelopmentState; readonly skills: Readonly<Record<CoachSkillId, CoachSkillState>>; readonly professionalTraits: readonly CoachProfessionalTraitId[]; readonly perks: Readonly<Record<CoachPerkId, CoachPerkState>> }
+export interface CoachRpgProfile { readonly professionalExperience: CoachProfessionalExperienceLedger; readonly development: CoachDevelopmentState; readonly skills: Readonly<Record<CoachSkillId, CoachSkillState>>; readonly professionalTraits: readonly CoachProfessionalTraitId[]; readonly professionalTraitEvidence: Readonly<Partial<Record<ProfessionalTraitEvidenceId, number>>>; readonly perks: Readonly<Record<CoachPerkId, CoachPerkState>> }
 export type CoachRpgRequirement =
   | { readonly kind: 'professionalAttribute'; readonly attribute: StaffProfessionalAttributeKey; readonly minimum: number }
   | { readonly kind: 'skillRank'; readonly skillId: CoachSkillId; readonly minimumRank: number }
@@ -110,11 +112,13 @@ export function createCoachRpgProfile(input: CoachRpgProfile): CoachRpgProfile {
   const perks = createPerkStateRecord(input.perks)
   const traits = input.professionalTraits.map((id) => coachProfessionalTraitIdFromString(id))
   if (new Set(traits).size !== traits.length) throw new RangeError('Duplicate Coach professional trait')
-  return { professionalExperience, development, skills, professionalTraits: traits, perks }
+  const evidence = input.professionalTraitEvidence as Record<string, number>
+  for (const [id, value] of Object.entries(evidence)) { if (!PROFESSIONAL_TRAIT_EVIDENCE_IDS.includes(id as ProfessionalTraitEvidenceId)) throw new RangeError('Invalid Coach professional trait evidence'); requireFiniteNonNegative(value, 'Coach professional trait evidence') }
+  return { professionalExperience, development, skills, professionalTraits: traits, professionalTraitEvidence: { ...input.professionalTraitEvidence }, perks }
 }
 
 export function createInitialCoachRpgProfile(): CoachRpgProfile {
-  return createCoachRpgProfile({ professionalExperience: { byAttribute: Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 0])) as Record<StaffProfessionalAttributeKey, number> }, development: { globalProgress: 0, developmentPoints: 0 }, skills: {}, professionalTraits: [], perks: {} })
+  return createCoachRpgProfile({ professionalExperience: { byAttribute: Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 0])) as Record<StaffProfessionalAttributeKey, number> }, development: { globalProgress: 0, developmentPoints: 0 }, skills: {}, professionalTraits: [], professionalTraitEvidence: {}, perks: {} })
 }
 
 /** Applies a modest starting distribution only; it never changes RPG state. */
