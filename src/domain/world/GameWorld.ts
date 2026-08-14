@@ -29,6 +29,7 @@ import { createStaffPerson, createTeamStaffAssignment, type StaffPerson, type Te
 import type { StaffPersonId, TeamStaffAssignmentId } from '@/domain/ids'
 import { createCoachRpgProfile, type CoachRpgProfile } from '@/domain/coachRpg'
 import { createCoachReputationProfile, createDefaultCoachReputationProfile, type CoachReputationProfile } from '@/domain/coachReputation'
+import { createCoachEmployment, createCoachJobOpening, type CoachCareerHistoryEntry, type CoachEmployment, type CoachInterview, type CoachJobCandidacy, type CoachJobCandidacyId, type CoachJobOffer, type CoachJobOfferId, type CoachJobOpening, type CoachJobOpeningId } from '@/domain/coachCareer'
 import { createStaffProfessionalProfile, type StaffProfessionalProfile } from '@/domain/staff'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
@@ -57,6 +58,12 @@ export interface GameWorld {
   readonly coachProfessionalProfilesByCoachId: Readonly<Record<CoachId, StaffProfessionalProfile>>
   readonly coachRpgProfilesByCoachId: Readonly<Record<CoachId, CoachRpgProfile>>
   readonly coachReputationProfilesByCoachId: Readonly<Record<CoachId, CoachReputationProfile>>
+  readonly coachEmploymentByCoachId: Readonly<Record<CoachId, CoachEmployment>>
+  readonly coachCareerHistoryByCoachId: Readonly<Record<CoachId, readonly CoachCareerHistoryEntry[]>>
+  readonly coachJobOpeningsById: Readonly<Record<CoachJobOpeningId, CoachJobOpening>>
+  readonly coachJobCandidaciesById: Readonly<Record<CoachJobCandidacyId, CoachJobCandidacy>>
+  readonly coachInterviewsByCandidacyId: Readonly<Record<CoachJobCandidacyId, CoachInterview>>
+  readonly coachJobOffersById: Readonly<Record<CoachJobOfferId, CoachJobOffer>>
 }
 
 export interface CreateGameWorldInput {
@@ -82,6 +89,12 @@ export interface CreateGameWorldInput {
   coachProfessionalProfilesByCoachId?: Readonly<Record<CoachId, StaffProfessionalProfile>>
   coachRpgProfilesByCoachId?: Readonly<Record<CoachId, CoachRpgProfile>>
   coachReputationProfilesByCoachId?: Readonly<Record<CoachId, CoachReputationProfile>>
+  coachEmploymentByCoachId?: Readonly<Record<CoachId, CoachEmployment>>
+  coachCareerHistoryByCoachId?: Readonly<Record<CoachId, readonly CoachCareerHistoryEntry[]>>
+  coachJobOpeningsById?: Readonly<Record<CoachJobOpeningId, CoachJobOpening>>
+  coachJobCandidaciesById?: Readonly<Record<CoachJobCandidacyId, CoachJobCandidacy>>
+  coachInterviewsByCandidacyId?: Readonly<Record<CoachJobCandidacyId, CoachInterview>>
+  coachJobOffersById?: Readonly<Record<CoachJobOfferId, CoachJobOffer>>
 }
 
 export class GameWorldValidationError extends Error {
@@ -94,9 +107,11 @@ export class GameWorldValidationError extends Error {
 export function createGameWorld(input: CreateGameWorldInput): GameWorld {
   const seasons = indexById(input.seasons, 'Season')
   const currentSeasonId = input.currentSeasonId ?? selectLegacyCurrentSeasonId(seasons)
+  const currentDate = parseGameDate(input.currentDate)
+  const employment = coachCareerForCoaches(input.coaches, input.teams, currentDate, input.coachEmploymentByCoachId, input.coachCareerHistoryByCoachId)
   const world: GameWorld = {
     schemaVersion: GAME_WORLD_SCHEMA_VERSION,
-    currentDate: parseGameDate(input.currentDate),
+    currentDate,
     currentSeasonId,
     userCoachId: input.userCoachId,
     countries: indexById(input.countries, 'Country'),
@@ -118,6 +133,12 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     coachProfessionalProfilesByCoachId: input.coachProfessionalProfilesByCoachId ?? {},
     coachRpgProfilesByCoachId: input.coachRpgProfilesByCoachId ?? {},
     coachReputationProfilesByCoachId: coachReputationProfilesForCoaches(input.coaches, input.coachReputationProfilesByCoachId),
+    coachEmploymentByCoachId: employment.byCoachId,
+    coachCareerHistoryByCoachId: employment.historyByCoachId,
+    coachJobOpeningsById: Object.freeze({ ...(input.coachJobOpeningsById ?? {}) }),
+    coachJobCandidaciesById: Object.freeze({ ...(input.coachJobCandidaciesById ?? {}) }),
+    coachInterviewsByCandidacyId: Object.freeze({ ...(input.coachInterviewsByCandidacyId ?? {}) }),
+    coachJobOffersById: Object.freeze({ ...(input.coachJobOffersById ?? {}) }),
   }
 
   validateWorld(world)
@@ -215,6 +236,18 @@ function validateWorld(world: GameWorld): void {
   for (const [coachId, profile] of Object.entries(world.coachProfessionalProfilesByCoachId) as [CoachId, StaffProfessionalProfile][]) { requireEntity(world.coaches, coachId, 'Coach professional profile'); createStaffProfessionalProfile(profile) }
   for (const [coachId, profile] of Object.entries(world.coachRpgProfilesByCoachId) as [CoachId, CoachRpgProfile][]) { requireEntity(world.coaches, coachId, 'Coach RPG profile'); createCoachRpgProfile(profile) }
   for (const [coachId, profile] of Object.entries(world.coachReputationProfilesByCoachId) as [CoachId, CoachReputationProfile][]) { requireEntity(world.coaches, coachId, 'Coach reputation profile'); createCoachReputationProfile(profile) }
+  for (const [coachId, employment] of Object.entries(world.coachEmploymentByCoachId) as [CoachId, CoachEmployment][]) {
+    requireEntity(world.coaches, coachId, 'Coach employment')
+    createCoachEmployment(employment)
+    const assignedTeam = Object.values(world.teams).find((team) => team.coachId === coachId)
+    if (employment.status === 'employed' && (assignedTeam === undefined || employment.teamId !== assignedTeam.id)) throw new GameWorldValidationError(`Coach ${coachId} employment does not match Team assignment`)
+    if (employment.status === 'unemployed' && assignedTeam !== undefined) throw new GameWorldValidationError(`Coach ${coachId} employment does not match Team assignment`)
+  }
+  for (const [coachId, history] of Object.entries(world.coachCareerHistoryByCoachId) as [CoachId, readonly CoachCareerHistoryEntry[]][]) for (let index = 0; index < history.length; index += 1) { const entry = history[index]!; if (entry.coachId !== coachId || (entry.kind === 'appointment' && entry.reason !== 'initialAppointment' && entry.reason !== 'hired') || (entry.kind === 'departure' && entry.reason !== 'fired' && entry.reason !== 'acceptedOtherJob')) throw new GameWorldValidationError(`Coach career history does not match Coach ${coachId}`); if (index > 0 && compareGameDates(history[index - 1]!.date, entry.date) > 0) throw new GameWorldValidationError(`Coach career history is not ordered for Coach ${coachId}`); requireEntity(world.teams, entry.teamId, 'Coach career history Team') }
+  for (const opening of Object.values(world.coachJobOpeningsById)) { createCoachJobOpening(opening); requireEntity(world.teams, opening.teamId, 'Coach job opening Team') }
+  for (const candidacy of Object.values(world.coachJobCandidaciesById)) { requireEntity(world.coaches, candidacy.coachId, 'Coach candidacy Coach'); requireEntity(world.coachJobOpeningsById, candidacy.jobOpeningId, 'Coach candidacy opening') }
+  for (const [candidacyId, interview] of Object.entries(world.coachInterviewsByCandidacyId) as [CoachJobCandidacyId, CoachInterview][]) if (interview.candidacyId !== candidacyId || world.coachJobCandidaciesById[candidacyId] === undefined) throw new GameWorldValidationError(`Coach interview references missing candidacy ${candidacyId}`)
+  for (const offer of Object.values(world.coachJobOffersById)) { requireEntity(world.coaches, offer.coachId, 'Coach offer Coach'); requireEntity(world.teams, offer.teamId, 'Coach offer Team'); requireEntity(world.coachJobOpeningsById, offer.jobOpeningId, 'Coach offer opening') }
   for (const history of Object.values(world.seasonHistoryBySeasonId)) validateSeasonHistory(world, history)
 }
 
@@ -312,6 +345,18 @@ function coachReputationProfilesForCoaches(coaches: readonly Coach[], supplied: 
   for (const coach of coaches) profiles[coach.id] = supplied?.[coach.id] === undefined ? createDefaultCoachReputationProfile() : createCoachReputationProfile(supplied[coach.id])
   if (supplied !== undefined) for (const coachId of Object.keys(supplied) as CoachId[]) if (!coaches.some((coach) => coach.id === coachId)) throw new GameWorldValidationError(`Coach reputation profile references missing ID ${coachId}`)
   return Object.freeze(profiles)
+}
+
+function coachCareerForCoaches(coaches: readonly Coach[], teams: readonly Team[], currentDate: GameDate, suppliedEmployment: Readonly<Record<CoachId, CoachEmployment>> | undefined, suppliedHistory: Readonly<Record<CoachId, readonly CoachCareerHistoryEntry[]>> | undefined): { readonly byCoachId: Readonly<Record<CoachId, CoachEmployment>>; readonly historyByCoachId: Readonly<Record<CoachId, readonly CoachCareerHistoryEntry[]>> } {
+  const byCoachId = Object.create(null) as Record<CoachId, CoachEmployment>
+  const historyByCoachId = Object.create(null) as Record<CoachId, readonly CoachCareerHistoryEntry[]>
+  for (const coach of coaches) {
+    const assignedTeam = teams.find((team) => team.coachId === coach.id)
+    byCoachId[coach.id] = suppliedEmployment?.[coach.id] === undefined ? createCoachEmployment(assignedTeam === undefined ? { status: 'unemployed' } : { status: 'employed', teamId: assignedTeam.id, startedOn: currentDate }) : createCoachEmployment(suppliedEmployment[coach.id])
+    historyByCoachId[coach.id] = Object.freeze([...(suppliedHistory?.[coach.id] ?? (assignedTeam === undefined ? [] : [{ kind: 'appointment', coachId: coach.id, teamId: assignedTeam.id, date: currentDate, reason: 'initialAppointment' }]))])
+  }
+  for (const supplied of [suppliedEmployment, suppliedHistory]) if (supplied !== undefined) for (const coachId of Object.keys(supplied) as CoachId[]) if (!coaches.some((coach) => coach.id === coachId)) throw new GameWorldValidationError(`Coach career references missing ID ${coachId}`)
+  return { byCoachId: Object.freeze(byCoachId), historyByCoachId: Object.freeze(historyByCoachId) }
 }
 
 function requireEntity<Id extends string, Entity>(

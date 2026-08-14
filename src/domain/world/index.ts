@@ -25,6 +25,8 @@ export {
   getCoachProfessionalProfile,
   getCoachRpgProfile,
   getCoachReputationProfile,
+  getCoachEmployment,
+  getCoachCareerHistory,
   getUserCoachProfessionalProfile,
   getUserCoachRpgProfile,
   getUserCoachReputationProfile,

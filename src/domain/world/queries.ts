@@ -17,6 +17,7 @@ import type { Team } from '@/domain/team'
 import { calculateHeadCoachProfessionalProficiency, type CoachRpgProfile } from '@/domain/coachRpg'
 import type { StaffProfessionalProfile } from '@/domain/staff'
 import type { CoachReputationProfile } from '@/domain/coachReputation'
+import type { CoachCareerHistoryEntry, CoachEmployment } from '@/domain/coachCareer'
 
 import { GameWorldValidationError, type GameWorld } from './GameWorld'
 
@@ -54,6 +55,8 @@ export function getUserCoach(world: GameWorld): Coach {
 export function getCoachProfessionalProfile(world: GameWorld, coachId: CoachId): StaffProfessionalProfile | undefined { return world.coachProfessionalProfilesByCoachId[coachId] }
 export function getCoachRpgProfile(world: GameWorld, coachId: CoachId): CoachRpgProfile | undefined { return world.coachRpgProfilesByCoachId[coachId] }
 export function getCoachReputationProfile(world: GameWorld, coachId: CoachId): CoachReputationProfile | undefined { return world.coachReputationProfilesByCoachId[coachId] }
+export function getCoachEmployment(world: GameWorld, coachId: CoachId): CoachEmployment | undefined { return world.coachEmploymentByCoachId[coachId] }
+export function getCoachCareerHistory(world: GameWorld, coachId: CoachId): readonly CoachCareerHistoryEntry[] | undefined { return world.coachCareerHistoryByCoachId[coachId] }
 export function getUserCoachProfessionalProfile(world: GameWorld): StaffProfessionalProfile | undefined { return getCoachProfessionalProfile(world, world.userCoachId) }
 export function getUserCoachRpgProfile(world: GameWorld): CoachRpgProfile | undefined { return getCoachRpgProfile(world, world.userCoachId) }
 export function getUserCoachReputationProfile(world: GameWorld): CoachReputationProfile | undefined { return getCoachReputationProfile(world, world.userCoachId) }
