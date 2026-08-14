@@ -40,6 +40,6 @@ export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPrese
     playerKnowledge: Object.values(generatedWorld.playerKnowledgeById),
     staffPeople: Object.values(generatedWorld.staffPeopleById), teamStaffAssignments: Object.values(generatedWorld.teamStaffAssignmentsById),
     coachProfessionalProfilesByCoachId: generatedWorld.coachProfessionalProfilesByCoachId,
-    coachRpgProfilesByCoachId: generatedWorld.coachRpgProfilesByCoachId,
+    coachRpgProfilesByCoachId: generatedWorld.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: generatedWorld.coachReputationProfilesByCoachId,
   }))
 }

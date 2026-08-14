@@ -62,6 +62,29 @@ export function createDefaultCoachReputationProfile(): CoachReputationProfile {
   return { values: { competitive: 200, development: 200, professional: 200, publicStanding: 200 }, events: [] };
 }
 
+export function createCoachReputationProfile(profile: CoachReputationProfile): CoachReputationProfile {
+  const values = {} as Record<CoachReputationDimension, number>;
+  for (const dimension of COACH_REPUTATION_DIMENSIONS) {
+    const value = profile.values[dimension];
+    if (!Number.isFinite(value) || value < COACH_REPUTATION_MIN || value > COACH_REPUTATION_MAX) {
+      throw new RangeError(`Invalid reputation value for ${dimension}`);
+    }
+    values[dimension] = value;
+  }
+  const eventIds = new Set<string>();
+  const events = profile.events.map((event) => {
+    if (!event.id.trim() || eventIds.has(event.id) || event.source !== event.context.kind || !event.context.key.trim()) {
+      throw new RangeError('Invalid reputation event');
+    }
+    eventIds.add(event.id);
+    for (const dimension of COACH_REPUTATION_DIMENSIONS) {
+      if (event.deltas[dimension] !== undefined) assertFiniteNumber(event.deltas[dimension], `reputation event delta for ${dimension}`);
+    }
+    return { ...event, deltas: { ...event.deltas }, context: { ...event.context } };
+  });
+  return { values, events };
+}
+
 export function clampCoachReputationValue(value: number): number {
   assertFiniteNumber(value, 'reputation value');
   return Math.max(COACH_REPUTATION_MIN, Math.min(COACH_REPUTATION_MAX, value));

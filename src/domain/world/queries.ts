@@ -16,6 +16,7 @@ import type { Season } from '@/domain/season'
 import type { Team } from '@/domain/team'
 import { calculateHeadCoachProfessionalProficiency, type CoachRpgProfile } from '@/domain/coachRpg'
 import type { StaffProfessionalProfile } from '@/domain/staff'
+import type { CoachReputationProfile } from '@/domain/coachReputation'
 
 import { GameWorldValidationError, type GameWorld } from './GameWorld'
 
@@ -52,8 +53,10 @@ export function getUserCoach(world: GameWorld): Coach {
 }
 export function getCoachProfessionalProfile(world: GameWorld, coachId: CoachId): StaffProfessionalProfile | undefined { return world.coachProfessionalProfilesByCoachId[coachId] }
 export function getCoachRpgProfile(world: GameWorld, coachId: CoachId): CoachRpgProfile | undefined { return world.coachRpgProfilesByCoachId[coachId] }
+export function getCoachReputationProfile(world: GameWorld, coachId: CoachId): CoachReputationProfile | undefined { return world.coachReputationProfilesByCoachId[coachId] }
 export function getUserCoachProfessionalProfile(world: GameWorld): StaffProfessionalProfile | undefined { return getCoachProfessionalProfile(world, world.userCoachId) }
 export function getUserCoachRpgProfile(world: GameWorld): CoachRpgProfile | undefined { return getCoachRpgProfile(world, world.userCoachId) }
+export function getUserCoachReputationProfile(world: GameWorld): CoachReputationProfile | undefined { return getCoachReputationProfile(world, world.userCoachId) }
 export function getCoachProfessionalProficiency(world: GameWorld, coachId: CoachId): number | undefined { const profile=getCoachProfessionalProfile(world, coachId); return profile===undefined?undefined:calculateHeadCoachProfessionalProficiency(profile) }
 
 export function getTeamRoster(world: GameWorld, teamId: TeamId): readonly Player[] {

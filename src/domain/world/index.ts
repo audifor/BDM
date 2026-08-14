@@ -24,7 +24,9 @@ export {
   getUserCoach,
   getCoachProfessionalProfile,
   getCoachRpgProfile,
+  getCoachReputationProfile,
   getUserCoachProfessionalProfile,
   getUserCoachRpgProfile,
+  getUserCoachReputationProfile,
   getCoachProfessionalProficiency,
 } from './queries'

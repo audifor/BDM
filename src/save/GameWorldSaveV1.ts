@@ -31,6 +31,7 @@ import { ensureStaffStructure } from '@/engine/world/StaffStructureEnrichment'
 import { playerKnowledgeIdFromString } from '@/domain/ids'
 import { createCoachRpgProfile } from '@/domain/coachRpg'
 import { createStaffProfessionalProfile } from '@/domain/staff'
+import { createCoachReputationProfile, type CoachReputationSource } from '@/domain/coachReputation'
 
 type JsonRecord = Readonly<Record<string, unknown>>
 
@@ -57,6 +58,7 @@ export interface GameWorldSaveV1 {
   readonly teamStaffAssignments: readonly JsonRecord[]
   readonly coachProfessionalProfilesByCoachId?: readonly JsonRecord[]
   readonly coachRpgProfilesByCoachId?: readonly JsonRecord[]
+  readonly coachReputationProfilesByCoachId?: readonly JsonRecord[]
 }
 
 export interface SaveGameEnvelopeV1 {
@@ -91,6 +93,7 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
       staffPeople: copyRecords(Object.values(world.staffPeopleById)), teamStaffAssignments: copyRecords(Object.values(world.teamStaffAssignmentsById)),
       coachProfessionalProfilesByCoachId: copyProfiles(world.coachProfessionalProfilesByCoachId),
       coachRpgProfilesByCoachId: copyProfiles(world.coachRpgProfilesByCoachId),
+      coachReputationProfilesByCoachId: copyProfiles(world.coachReputationProfilesByCoachId),
     },
   }
 }
@@ -120,6 +123,7 @@ export function deserializeGameWorldV1(value: unknown): GameWorld {
   const coaches = array(payload.coaches, 'Save coaches').map(readCoach)
   const professionalProfiles = payload.coachProfessionalProfilesByCoachId === undefined ? Object.fromEntries(coaches.map((coach) => [coach.id, createLegacyProfessionalProfile()])) : readCoachProfessionalProfiles(payload.coachProfessionalProfilesByCoachId)
   const rpgProfiles = payload.coachRpgProfilesByCoachId === undefined ? Object.fromEntries(coaches.map((coach) => [coach.id, createLegacyRpgProfile()])) : readCoachRpgProfiles(payload.coachRpgProfilesByCoachId)
+  const reputationProfiles = payload.coachReputationProfilesByCoachId === undefined ? undefined : readCoachReputationProfiles(payload.coachReputationProfilesByCoachId)
   const world = createGameWorld({
     currentDate,
     ...(payload.currentSeasonId === undefined ? {} : { currentSeasonId: seasonIdFromString(string(payload.currentSeasonId, 'Save currentSeasonId')) }),
@@ -141,6 +145,7 @@ export function deserializeGameWorldV1(value: unknown): GameWorld {
     staffPeople: payload.staffPeople === undefined ? [] : array(payload.staffPeople, 'Save staffPeople').map(readStaffPerson), teamStaffAssignments: payload.teamStaffAssignments === undefined ? [] : array(payload.teamStaffAssignments, 'Save teamStaffAssignments').map(readStaffAssignment),
     coachProfessionalProfilesByCoachId: professionalProfiles,
     coachRpgProfilesByCoachId: rpgProfiles,
+    coachReputationProfilesByCoachId: reputationProfiles,
   })
   if (Object.values(world.seasons).some((season) => Object.values(world.games).filter((game) => game.seasonId === season.id).every((game) => game.status === 'completed') && world.seasonHistoryBySeasonId[season.id] === undefined)) {
     throw new Error('Completed season is missing season history')
@@ -182,6 +187,9 @@ function createLegacyRpgProfile() { return createCoachRpgProfile({ professionalE
 function copyProfiles(values: Readonly<Record<string, object>>): readonly JsonRecord[] { return Object.entries(values).map(([coachId, profile]) => ({ coachId, profile: JSON.parse(JSON.stringify(profile)) as JsonRecord })) }
 function readCoachProfessionalProfiles(value: unknown) { return Object.fromEntries(array(value, 'Save coach professional profiles').map((entry) => { const v=record(entry,'Coach professional profile');const p=record(v.profile,'Coach professional profile value');const a=record(p.attributes,'Coach professional attributes');return [coachIdFromString(string(v.coachId,'Coach profile coachId')),createStaffProfessionalProfile({attributes:{coaching:integer(a.coaching,'coaching'),tacticalKnowledge:integer(a.tacticalKnowledge,'tacticalKnowledge'),playerDevelopment:integer(a.playerDevelopment,'playerDevelopment'),talentEvaluation:integer(a.talentEvaluation,'talentEvaluation'),potentialEvaluation:integer(a.potentialEvaluation,'potentialEvaluation'),medicalKnowledge:integer(a.medicalKnowledge,'medicalKnowledge'),rehabilitation:integer(a.rehabilitation,'rehabilitation'),analysis:integer(a.analysis,'analysis'),leadership:integer(a.leadership,'leadership'),communication:integer(a.communication,'communication'),motivation:integer(a.motivation,'motivation'),discipline:integer(a.discipline,'discipline'),adaptability:integer(a.adaptability,'adaptability')}})] })) }
 function readCoachRpgProfiles(value: unknown) { return Object.fromEntries(array(value,'Save coach RPG profiles').map((entry)=>{const v=record(entry,'Coach RPG profile');return [coachIdFromString(string(v.coachId,'Coach RPG coachId')),createCoachRpgProfile(record(v.profile,'Coach RPG profile value') as never)]})) }
+function readCoachReputationProfiles(value: unknown) { return Object.fromEntries(array(value, 'Save coach reputation profiles').map((entry) => { const v = record(entry, 'Coach reputation profile'); const profile = record(v.profile, 'Coach reputation profile value'); const values = record(profile.values, 'Coach reputation values'); return [coachIdFromString(string(v.coachId, 'Coach reputation coachId')), createCoachReputationProfile({ values: { competitive: number(values.competitive, 'Coach reputation competitive'), development: number(values.development, 'Coach reputation development'), professional: number(values.professional, 'Coach reputation professional'), publicStanding: number(values.publicStanding, 'Coach reputation publicStanding') }, events: array(profile.events, 'Coach reputation events').map(readCoachReputationEvent) })] })) }
+function readCoachReputationEvent(value: unknown) { const v = record(value, 'Coach reputation event'); const source = coachReputationSource(v.source); const context = record(v.context, 'Coach reputation event context'); const deltas = record(v.deltas, 'Coach reputation event deltas'); const result: Record<string, number> = {}; for (const dimension of ['competitive', 'development', 'professional', 'publicStanding']) if (deltas[dimension] !== undefined) result[dimension] = number(deltas[dimension], `Coach reputation event ${dimension}`); return { id: string(v.id, 'Coach reputation event id'), gameDate: parseGameDate(string(v.gameDate, 'Coach reputation event gameDate')), source, deltas: result, context: { kind: coachReputationSource(context.kind), key: string(context.key, 'Coach reputation event context key') } } }
+function coachReputationSource(value: unknown): CoachReputationSource { const source = string(value, 'Coach reputation source'); return ['matchResult', 'seasonAchievement', 'professionalEvent', 'developmentEvent', 'publicEvent'].includes(source) ? source as CoachReputationSource : fail('Coach reputation source is invalid') }
 function readFinalStanding(value: unknown) { const v = record(value, 'Final standing'); return { position: integer(v.position, 'Final standing position'), teamId: teamIdFromString(string(v.teamId, 'Final standing teamId')), played: integer(v.played, 'Final standing played'), wins: integer(v.wins, 'Final standing wins'), losses: integer(v.losses, 'Final standing losses'), pointsFor: integer(v.pointsFor, 'Final standing pointsFor'), pointsAgainst: integer(v.pointsAgainst, 'Final standing pointsAgainst'), pointDifference: integer(v.pointDifference, 'Final standing pointDifference') } }
 function readPlayerLine(value: unknown) { const v = record(value, 'Player stat line'); return { playerId: playerIdFromString(string(v.playerId, 'Player stat playerId')), teamId: teamIdFromString(string(v.teamId, 'Player stat teamId')), opponentTeamId: teamIdFromString(string(v.opponentTeamId, 'Player stat opponentTeamId')), isHome: boolean(v.isHome, 'Player stat isHome'), started: boolean(v.started, 'Player stat started'), stats: readStats(v.stats) } }
 function readStats(value: unknown): PlayerGameStatsSnapshot { const v = record(value, 'Player stats'); return { playerId: playerIdFromString(string(v.playerId, 'Player stats playerId')), secondsPlayed: integer(v.secondsPlayed, 'Player stats secondsPlayed'), points: integer(v.points, 'Player stats points'), fieldGoalsMade: integer(v.fieldGoalsMade, 'Player stats fieldGoalsMade'), fieldGoalsAttempted: integer(v.fieldGoalsAttempted, 'Player stats fieldGoalsAttempted'), twoPointMade: integer(v.twoPointMade, 'Player stats twoPointMade'), twoPointAttempted: integer(v.twoPointAttempted, 'Player stats twoPointAttempted'), threePointMade: integer(v.threePointMade, 'Player stats threePointMade'), threePointAttempted: integer(v.threePointAttempted, 'Player stats threePointAttempted'), freeThrowsMade: integer(v.freeThrowsMade, 'Player stats freeThrowsMade'), freeThrowsAttempted: integer(v.freeThrowsAttempted, 'Player stats freeThrowsAttempted'), offensiveRebounds: integer(v.offensiveRebounds, 'Player stats offensiveRebounds'), defensiveRebounds: integer(v.defensiveRebounds, 'Player stats defensiveRebounds'), rebounds: integer(v.rebounds, 'Player stats rebounds'), assists: integer(v.assists, 'Player stats assists'), steals: integer(v.steals, 'Player stats steals'), blocks: integer(v.blocks, 'Player stats blocks'), turnovers: integer(v.turnovers, 'Player stats turnovers'), foulsCommitted: integer(v.foulsCommitted, 'Player stats foulsCommitted'), plusMinus: integer(v.plusMinus, 'Player stats plusMinus') } }
@@ -190,6 +198,7 @@ function record(value: unknown, name: string): JsonRecord { if (typeof value !==
 function array(value: unknown, name: string): readonly unknown[] { if (!Array.isArray(value)) throw new TypeError(`${name} must be an array`); return value }
 function string(value: unknown, name: string): string { if (typeof value !== 'string' || value.trim().length === 0) throw new TypeError(`${name} must be a non-empty string`); return value }
 function integer(value: unknown, name: string): number { if (typeof value !== 'number' || !Number.isFinite(value) || !Number.isInteger(value)) throw new TypeError(`${name} must be an integer`); return value }
+function number(value: unknown, name: string): number { if (typeof value !== 'number' || !Number.isFinite(value)) throw new TypeError(`${name} must be finite`); return value }
 function boolean(value: unknown, name: string): boolean { if (typeof value !== 'boolean') throw new TypeError(`${name} must be a boolean`); return value }
 function gender(value: unknown): 'male' | 'female' { const result = string(value, 'Gender'); return result === 'male' || result === 'female' ? result : fail('Gender is invalid') }
 function position(value: unknown): 'PG' | 'SG' | 'SF' | 'PF' | 'C' { const result = string(value, 'Position'); return ['PG', 'SG', 'SF', 'PF', 'C'].includes(result) ? result as 'PG' | 'SG' | 'SF' | 'PF' | 'C' : fail('Position is invalid') }

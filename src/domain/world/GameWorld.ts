@@ -28,6 +28,7 @@ import type { PlayerKnowledgeId } from '@/domain/ids'
 import { createStaffPerson, createTeamStaffAssignment, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
 import type { StaffPersonId, TeamStaffAssignmentId } from '@/domain/ids'
 import { createCoachRpgProfile, type CoachRpgProfile } from '@/domain/coachRpg'
+import { createCoachReputationProfile, createDefaultCoachReputationProfile, type CoachReputationProfile } from '@/domain/coachReputation'
 import { createStaffProfessionalProfile, type StaffProfessionalProfile } from '@/domain/staff'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
@@ -55,6 +56,7 @@ export interface GameWorld {
   readonly teamStaffAssignmentsById: Readonly<Record<TeamStaffAssignmentId, TeamStaffAssignment>>
   readonly coachProfessionalProfilesByCoachId: Readonly<Record<CoachId, StaffProfessionalProfile>>
   readonly coachRpgProfilesByCoachId: Readonly<Record<CoachId, CoachRpgProfile>>
+  readonly coachReputationProfilesByCoachId: Readonly<Record<CoachId, CoachReputationProfile>>
 }
 
 export interface CreateGameWorldInput {
@@ -79,6 +81,7 @@ export interface CreateGameWorldInput {
   teamStaffAssignments?: readonly TeamStaffAssignment[]
   coachProfessionalProfilesByCoachId?: Readonly<Record<CoachId, StaffProfessionalProfile>>
   coachRpgProfilesByCoachId?: Readonly<Record<CoachId, CoachRpgProfile>>
+  coachReputationProfilesByCoachId?: Readonly<Record<CoachId, CoachReputationProfile>>
 }
 
 export class GameWorldValidationError extends Error {
@@ -114,6 +117,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     teamStaffAssignmentsById: indexById(input.teamStaffAssignments ?? [], 'Staff assignment'),
     coachProfessionalProfilesByCoachId: input.coachProfessionalProfilesByCoachId ?? {},
     coachRpgProfilesByCoachId: input.coachRpgProfilesByCoachId ?? {},
+    coachReputationProfilesByCoachId: coachReputationProfilesForCoaches(input.coaches, input.coachReputationProfilesByCoachId),
   }
 
   validateWorld(world)
@@ -210,6 +214,7 @@ function validateWorld(world: GameWorld): void {
   const assignedStaff = new Set<StaffPersonId>(); for (const person of Object.values(world.staffPeopleById)) createStaffPerson(person); for (const assignment of Object.values(world.teamStaffAssignmentsById)) { createTeamStaffAssignment(assignment); requireEntity(world.staffPeopleById, assignment.staffPersonId, 'Staff assignment person'); requireEntity(world.teams, assignment.teamId, 'Staff assignment team'); if (assignedStaff.has(assignment.staffPersonId)) throw new GameWorldValidationError('Staff person has multiple active assignments'); assignedStaff.add(assignment.staffPersonId) }
   for (const [coachId, profile] of Object.entries(world.coachProfessionalProfilesByCoachId) as [CoachId, StaffProfessionalProfile][]) { requireEntity(world.coaches, coachId, 'Coach professional profile'); createStaffProfessionalProfile(profile) }
   for (const [coachId, profile] of Object.entries(world.coachRpgProfilesByCoachId) as [CoachId, CoachRpgProfile][]) { requireEntity(world.coaches, coachId, 'Coach RPG profile'); createCoachRpgProfile(profile) }
+  for (const [coachId, profile] of Object.entries(world.coachReputationProfilesByCoachId) as [CoachId, CoachReputationProfile][]) { requireEntity(world.coaches, coachId, 'Coach reputation profile'); createCoachReputationProfile(profile) }
   for (const history of Object.values(world.seasonHistoryBySeasonId)) validateSeasonHistory(world, history)
 }
 
@@ -301,6 +306,13 @@ function indexHistoryBySeasonId(history: readonly SeasonHistoryRecord[]): Readon
 }
 
 function indexTeamFinances(finances: readonly TeamFinances[]): Readonly<Record<TeamId, TeamFinances>> { const indexed = Object.create(null) as Record<TeamId, TeamFinances>; for (const finance of finances) { if (Object.hasOwn(indexed, finance.teamId)) throw new GameWorldValidationError(`Duplicate Team finances ID: ${finance.teamId}`); indexed[finance.teamId] = finance } return Object.freeze(indexed) }
+
+function coachReputationProfilesForCoaches(coaches: readonly Coach[], supplied: Readonly<Record<CoachId, CoachReputationProfile>> | undefined): Readonly<Record<CoachId, CoachReputationProfile>> {
+  const profiles = Object.create(null) as Record<CoachId, CoachReputationProfile>
+  for (const coach of coaches) profiles[coach.id] = supplied?.[coach.id] === undefined ? createDefaultCoachReputationProfile() : createCoachReputationProfile(supplied[coach.id])
+  if (supplied !== undefined) for (const coachId of Object.keys(supplied) as CoachId[]) if (!coaches.some((coach) => coach.id === coachId)) throw new GameWorldValidationError(`Coach reputation profile references missing ID ${coachId}`)
+  return Object.freeze(profiles)
+}
 
 function requireEntity<Id extends string, Entity>(
   collection: Readonly<Record<Id, Entity>>,
