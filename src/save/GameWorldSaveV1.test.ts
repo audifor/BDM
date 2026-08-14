@@ -11,7 +11,9 @@ describe('GameWorldSaveV1', () => {
     const saved = serializeGameWorldV1(world, '2032-10-01T12:00:00.000Z')
     const loaded = deserializeGameWorldV1(JSON.parse(JSON.stringify(saved)) as unknown)
 
-    expect(loaded).toEqual(world)
+    expect(loaded).toEqual({ ...world, coachProfessionalProfilesByCoachId: {}, coachRpgProfilesByCoachId: {} })
+    expect(loaded.coachProfessionalProfilesByCoachId).toEqual({})
+    expect(loaded.coachRpgProfilesByCoachId).toEqual({})
     expect(saved.payload.players).not.toBe(Object.values(world.players))
   })
 
@@ -47,7 +49,7 @@ describe('GameWorldSaveV1', () => {
     const loadedBeforePlay = deserializeGameWorldV1(serializeGameWorldV1(original, '2032-10-01T12:00:00.000Z'))
 
     expect(loaded.matchStatLogsByGameId).toEqual(completed.matchStatLogsByGameId)
-    expect(playUserGame(loadedBeforePlay)).toEqual(playUserGame(original))
+    expect(withoutCoachRpgProfiles(playUserGame(loadedBeforePlay))).toEqual(withoutCoachRpgProfiles(playUserGame(original)))
   })
 
   it('enriches legacy players without bio deterministically', () => {
@@ -92,3 +94,8 @@ describe('GameWorldSaveV1', () => {
     expect(() => deserializeGameWorldV1({ ...envelope, payload: { ...envelope.payload, players } })).toThrow()
   })
 })
+
+function withoutCoachRpgProfiles<T extends { readonly coachProfessionalProfilesByCoachId: unknown; readonly coachRpgProfilesByCoachId: unknown }>(world: T): Omit<T, 'coachProfessionalProfilesByCoachId' | 'coachRpgProfilesByCoachId'> {
+  const { coachProfessionalProfilesByCoachId: _professional, coachRpgProfilesByCoachId: _rpg, ...remaining } = world
+  return remaining
+}

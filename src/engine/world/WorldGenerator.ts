@@ -21,6 +21,8 @@ import { generatePlayerPotential } from './PlayerPotentialGenerator'
 import { generateInitialPlayerContract } from './PlayerContractGenerator'
 import { generateInitialTeamFinances } from './TeamFinancesGenerator'
 import { generateInitialStaffStructure } from './StaffGenerator'
+import { generateCoachRpgProfiles } from './CoachProfessionalProfileGenerator'
+import type { CoachRpgPreset } from '@/domain/coachRpg'
 
 const TEAM_COUNT = 8
 const PLAYERS_PER_TEAM = 12
@@ -73,6 +75,7 @@ export interface GenerateWorldOptions {
   readonly seed: number
   readonly gender: Gender
   readonly startDate?: GameDate
+  readonly userCoachRpgPreset?: CoachRpgPreset
 }
 
 /** Generates the fixed-size starter universe used by development and tests. */
@@ -152,9 +155,11 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
 
   const contracts = teams.flatMap((team) => team.rosterPlayerIds.map((playerId) => generateInitialPlayerContract(players.find((player) => player.id === playerId)!, team.id, season.startDate)))
   const staff = generateInitialStaffStructure(teams, season.startDate)
+  const userCoachId = coaches[0]!.id
+  const coachProfiles = generateCoachRpgProfiles(coaches, userCoachId, options.userCoachRpgPreset)
   return createGameWorld({
     currentDate: startDate,
-    userCoachId: coaches[0]!.id,
+    userCoachId,
     countries: [country],
     coaches,
     players,
@@ -165,6 +170,8 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     contracts,
     teamFinances: teams.map((team) => generateInitialTeamFinances(team.id, contracts.filter((contract) => contract.teamId === team.id).reduce((sum, contract) => sum + contract.compensation.annualSalary, 0))),
     staffPeople: staff.map((item) => item.person), teamStaffAssignments: staff.map((item) => item.assignment),
+    coachProfessionalProfilesByCoachId: coachProfiles.professionalProfiles,
+    coachRpgProfilesByCoachId: coachProfiles.rpgProfiles,
   })
 }
 

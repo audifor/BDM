@@ -3,6 +3,7 @@ import { createGameWorld, type GameWorld } from '@/domain/world'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { generateWorld } from '@/engine/world'
 import { ensurePlayerKnowledge } from '@/engine/world'
+import type { CoachRpgPreset } from '@/domain/coachRpg'
 
 export const PROTOTYPE_GAME_CONFIGURATION = {
   seed: 12_345,
@@ -11,8 +12,8 @@ export const PROTOTYPE_GAME_CONFIGURATION = {
 } as const
 
 /** Creates the fixed, deterministic career used by the first playable prototype. */
-export function createNewGame(): GameWorld {
-  const generatedWorld = generateWorld(PROTOTYPE_GAME_CONFIGURATION)
+export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset } = {}): GameWorld {
+  const generatedWorld = generateWorld({ ...PROTOTYPE_GAME_CONFIGURATION, userCoachRpgPreset: options.coachRpgPreset })
   const season = generatedWorld.seasons[generatedWorld.currentSeasonId]
 
   if (season === undefined) {
@@ -38,5 +39,7 @@ export function createNewGame(): GameWorld {
     playerTransactions: Object.values(generatedWorld.playerTransactionsById),
     playerKnowledge: Object.values(generatedWorld.playerKnowledgeById),
     staffPeople: Object.values(generatedWorld.staffPeopleById), teamStaffAssignments: Object.values(generatedWorld.teamStaffAssignmentsById),
+    coachProfessionalProfilesByCoachId: generatedWorld.coachProfessionalProfilesByCoachId,
+    coachRpgProfilesByCoachId: generatedWorld.coachRpgProfilesByCoachId,
   }))
 }

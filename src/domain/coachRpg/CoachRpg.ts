@@ -31,6 +31,10 @@ export type CoachRpgRequirement =
   | { readonly kind: 'perkRank'; readonly perkId: CoachPerkId; readonly minimumRank: number }
 export interface CoachRpgPresetDefinition { readonly id: CoachRpgPreset; readonly professionalAttributeModifiers: Readonly<Partial<Record<StaffProfessionalAttributeKey, number>>> }
 
+export const HEAD_COACH_PROFESSIONAL_ATTRIBUTE_WEIGHTS: Readonly<Record<StaffProfessionalAttributeKey, number>> = {
+  coaching: .18, tacticalKnowledge: .16, playerDevelopment: .12, talentEvaluation: .02, potentialEvaluation: .02, medicalKnowledge: 0, rehabilitation: 0, analysis: .08, leadership: .12, communication: .10, motivation: .10, discipline: .04, adaptability: .06,
+}
+
 export const COACH_RPG_PRESET_DEFINITIONS: Readonly<Record<CoachRpgPreset, CoachRpgPresetDefinition>> = {
   blank: createCoachRpgPresetDefinition({ id: 'blank', professionalAttributeModifiers: {} }),
   balanced: createCoachRpgPresetDefinition({ id: 'balanced', professionalAttributeModifiers: { coaching: 2, tacticalKnowledge: 2, playerDevelopment: 2, leadership: 2, communication: 2 } }),
@@ -119,6 +123,11 @@ export function applyCoachRpgPreset(professional: StaffProfessionalProfile, pres
   const definition = COACH_RPG_PRESET_DEFINITIONS[preset]
   if (definition === undefined) throw new RangeError('Invalid Coach RPG preset')
   return createStaffProfessionalProfile({ attributes: Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, clamp(validated.attributes[key] + (definition.professionalAttributeModifiers[key] ?? 0), 0, 100)])) as Record<StaffProfessionalAttributeKey, number> })
+}
+
+export function calculateHeadCoachProfessionalProficiency(professional: StaffProfessionalProfile): number {
+  const validated = createStaffProfessionalProfile(professional)
+  return Math.round(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.reduce((sum, key) => sum + validated.attributes[key] * HEAD_COACH_PROFESSIONAL_ATTRIBUTE_WEIGHTS[key], 0))
 }
 
 function createSkillStateRecord(input: Readonly<Record<CoachSkillId, CoachSkillState>>): Readonly<Record<CoachSkillId, CoachSkillState>> { const result = Object.create(null) as Record<CoachSkillId, CoachSkillState>; for (const [id, state] of Object.entries(input) as [CoachSkillId, CoachSkillState][]) { if (id !== state.skillId) throw new RangeError('Coach skill record key does not match state'); result[id] = { skillId: coachSkillIdFromString(state.skillId), rank: nonNegativeIntegerValue(state.rank, 'Coach skill rank') } } return result }

@@ -24,6 +24,8 @@ export function advanceDay(world: GameWorld): GameWorld {
     playerKnowledge: Object.values(world.playerKnowledgeById),
     staffPeople: Object.values(world.staffPeopleById),
     teamStaffAssignments: Object.values(world.teamStaffAssignmentsById),
+    coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId,
+    coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId,
   })
   return reconcileExpiredPlayerContracts(advanced, advanced.currentDate)
 }

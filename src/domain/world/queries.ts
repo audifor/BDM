@@ -14,6 +14,8 @@ import type {
 import type { Player } from '@/domain/player'
 import type { Season } from '@/domain/season'
 import type { Team } from '@/domain/team'
+import { calculateHeadCoachProfessionalProficiency, type CoachRpgProfile } from '@/domain/coachRpg'
+import type { StaffProfessionalProfile } from '@/domain/staff'
 
 import { GameWorldValidationError, type GameWorld } from './GameWorld'
 
@@ -48,6 +50,11 @@ export function getGame(world: GameWorld, id: GameId): Game {
 export function getUserCoach(world: GameWorld): Coach {
   return getCoach(world, world.userCoachId)
 }
+export function getCoachProfessionalProfile(world: GameWorld, coachId: CoachId): StaffProfessionalProfile | undefined { return world.coachProfessionalProfilesByCoachId[coachId] }
+export function getCoachRpgProfile(world: GameWorld, coachId: CoachId): CoachRpgProfile | undefined { return world.coachRpgProfilesByCoachId[coachId] }
+export function getUserCoachProfessionalProfile(world: GameWorld): StaffProfessionalProfile | undefined { return getCoachProfessionalProfile(world, world.userCoachId) }
+export function getUserCoachRpgProfile(world: GameWorld): CoachRpgProfile | undefined { return getCoachRpgProfile(world, world.userCoachId) }
+export function getCoachProfessionalProficiency(world: GameWorld, coachId: CoachId): number | undefined { const profile=getCoachProfessionalProfile(world, coachId); return profile===undefined?undefined:calculateHeadCoachProfessionalProficiency(profile) }
 
 export function getTeamRoster(world: GameWorld, teamId: TeamId): readonly Player[] {
   return getTeam(world, teamId).rosterPlayerIds.map((playerId) => getPlayer(world, playerId))

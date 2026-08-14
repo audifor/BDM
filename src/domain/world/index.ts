@@ -22,4 +22,9 @@ export {
   getTeamCoach,
   getTeamRoster,
   getUserCoach,
+  getCoachProfessionalProfile,
+  getCoachRpgProfile,
+  getUserCoachProfessionalProfile,
+  getUserCoachRpgProfile,
+  getCoachProfessionalProficiency,
 } from './queries'

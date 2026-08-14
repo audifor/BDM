@@ -27,6 +27,8 @@ import { createPlayerKnowledge, type PlayerKnowledgeRecord } from '@/domain/know
 import type { PlayerKnowledgeId } from '@/domain/ids'
 import { createStaffPerson, createTeamStaffAssignment, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
 import type { StaffPersonId, TeamStaffAssignmentId } from '@/domain/ids'
+import { createCoachRpgProfile, type CoachRpgProfile } from '@/domain/coachRpg'
+import { createStaffProfessionalProfile, type StaffProfessionalProfile } from '@/domain/staff'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -51,6 +53,8 @@ export interface GameWorld {
   readonly playerKnowledgeById: Readonly<Record<PlayerKnowledgeId, PlayerKnowledgeRecord>>
   readonly staffPeopleById: Readonly<Record<StaffPersonId, StaffPerson>>
   readonly teamStaffAssignmentsById: Readonly<Record<TeamStaffAssignmentId, TeamStaffAssignment>>
+  readonly coachProfessionalProfilesByCoachId: Readonly<Record<CoachId, StaffProfessionalProfile>>
+  readonly coachRpgProfilesByCoachId: Readonly<Record<CoachId, CoachRpgProfile>>
 }
 
 export interface CreateGameWorldInput {
@@ -73,6 +77,8 @@ export interface CreateGameWorldInput {
   playerKnowledge?: readonly PlayerKnowledgeRecord[]
   staffPeople?: readonly StaffPerson[]
   teamStaffAssignments?: readonly TeamStaffAssignment[]
+  coachProfessionalProfilesByCoachId?: Readonly<Record<CoachId, StaffProfessionalProfile>>
+  coachRpgProfilesByCoachId?: Readonly<Record<CoachId, CoachRpgProfile>>
 }
 
 export class GameWorldValidationError extends Error {
@@ -106,6 +112,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     playerKnowledgeById: indexById(input.playerKnowledge ?? [], 'Player knowledge'),
     staffPeopleById: indexById(input.staffPeople ?? [], 'Staff person'),
     teamStaffAssignmentsById: indexById(input.teamStaffAssignments ?? [], 'Staff assignment'),
+    coachProfessionalProfilesByCoachId: input.coachProfessionalProfilesByCoachId ?? {},
+    coachRpgProfilesByCoachId: input.coachRpgProfilesByCoachId ?? {},
   }
 
   validateWorld(world)
@@ -200,6 +208,8 @@ function validateWorld(world: GameWorld): void {
   for (const transaction of Object.values(world.playerTransactionsById)) { requireEntity(world.players,transaction.playerId,`Transaction ${transaction.id} Player`); if(transaction.fromTeamId)requireEntity(world.teams,transaction.fromTeamId,`Transaction ${transaction.id} from Team`); if(transaction.toTeamId)requireEntity(world.teams,transaction.toTeamId,`Transaction ${transaction.id} to Team`); if(transaction.contractId)requireEntity(world.contractsById,transaction.contractId,`Transaction ${transaction.id} Contract`) }
   const pairs = new Set<string>(); for (const knowledge of Object.values(world.playerKnowledgeById)) { createPlayerKnowledge(knowledge); requireEntity(world.teams, knowledge.observerTeamId, 'Knowledge observer Team'); requireEntity(world.players, knowledge.subjectPlayerId, 'Knowledge subject Player'); const pair=`${knowledge.observerTeamId}:${knowledge.subjectPlayerId}`; if(pairs.has(pair)) throw new GameWorldValidationError('Duplicate Player knowledge observer and subject'); pairs.add(pair) }
   const assignedStaff = new Set<StaffPersonId>(); for (const person of Object.values(world.staffPeopleById)) createStaffPerson(person); for (const assignment of Object.values(world.teamStaffAssignmentsById)) { createTeamStaffAssignment(assignment); requireEntity(world.staffPeopleById, assignment.staffPersonId, 'Staff assignment person'); requireEntity(world.teams, assignment.teamId, 'Staff assignment team'); if (assignedStaff.has(assignment.staffPersonId)) throw new GameWorldValidationError('Staff person has multiple active assignments'); assignedStaff.add(assignment.staffPersonId) }
+  for (const [coachId, profile] of Object.entries(world.coachProfessionalProfilesByCoachId) as [CoachId, StaffProfessionalProfile][]) { requireEntity(world.coaches, coachId, 'Coach professional profile'); createStaffProfessionalProfile(profile) }
+  for (const [coachId, profile] of Object.entries(world.coachRpgProfilesByCoachId) as [CoachId, CoachRpgProfile][]) { requireEntity(world.coaches, coachId, 'Coach RPG profile'); createCoachRpgProfile(profile) }
   for (const history of Object.values(world.seasonHistoryBySeasonId)) validateSeasonHistory(world, history)
 }
 

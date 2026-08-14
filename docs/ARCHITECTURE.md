@@ -505,6 +505,43 @@ courses remain outside this milestone.
 > Professional Traits remain distinct from deep Personality. Perks should favor
 > contextual capabilities over universal flat percentage bonuses.
 
+## Coach RPG world setup
+
+`GameWorld` normalizes `coachProfessionalProfilesByCoachId` and
+`coachRpgProfilesByCoachId` separately. Any Coach may participate; the
+user-controlled Coach is not a special RPG entity. Coach identity, nationality and
+team assignment remain authoritative in the existing `Coach` and `Team` models.
+
+Head Coaches use the same thirteen professional attributes as Staff. Their
+bootstrap role weights only evaluate and generate a Head Coach professional profile;
+they are not a new capability taxonomy or contextual Fit. The user starts from a
+deterministic rookie baseline, where `blank` means no preset modifier rather than
+zero attributes. Optional presets are applied once during setup and are not stored
+as canonical identity or classes. AI profiles use CoachId/attribute-isolated
+deterministic streams.
+
+Every generated Coach starts with a zeroed RPG ledger, progress, points, Skills,
+Traits and Perks. Initial professional truth and tracked experience are deliberately
+different: a capable generated Coach still begins with an experience ledger of zero
+in this bootstrap phase. Runtime transformations unrelated to Coach RPG preserve
+both maps exactly.
+
+040.2 does not serialize or regenerate Coach profiles. Save loads therefore create
+empty runtime maps until 040.5 adds persistence and legacy handling; missing maps
+after a normal runtime transformation remain corruption, not a signal to regenerate.
+Coach and StaffPerson technical identities also remain distinct for now, while the
+shared professional profile keeps a future Staff-to-Coach career path open. Future
+paid education will feed targeted Experience, never direct professional attributes.
+
+> Every Coach may participate in the same Coach RPG architecture; the
+> user-controlled coach is not a separate RPG entity type.
+
+> Starting presets are setup conveniences, not permanent classes or canonical
+> identity. Gameplay depends on the resulting professional profile, never preset name.
+
+> Coach Professional Profile and Coach RPG Profile are separate canonical concepts:
+> current professional ability is not equivalent to accumulated tracked experience.
+
 ## Season progression
 
 A season completes only when every one of its Games has a completed result, never from the calendar date. Applying the final result automatically creates one immutable `SeasonHistoryRecord` in the canonical `seasonHistoryBySeasonId` collection. It snapshots the deterministic final standings, champion Team ID, and latest scheduled game date; it does not duplicate player statistics.
