@@ -1,7 +1,7 @@
 import { createGame } from '@/domain/game'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
-import { applyCoachExperienceToWorld, deriveCoachMatchExperienceGain } from '@/engine/coach'
+import { applyCoachExperienceToWorld, applyMatchCoachReputationConsequences, deriveCoachMatchExperienceGain } from '@/engine/coach'
 import { calculateTeamStrength } from '@/engine/team'
 
 import { calculateMatchPlayerStats } from './PlayerMatchStats'
@@ -78,7 +78,7 @@ export function applyMatchResult(world: GameWorld, result: MatchSimulationResult
     coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId,
     coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId,
   })
-  return applyMatchCoachExperience(world, resultWorld, completedGame)
+  return applyMatchCoachExperience(world, applyMatchCoachReputationConsequences(resultWorld, completedGame), completedGame)
 }
 
 /** Creates the immutable historical snapshot without mutating the source world. */

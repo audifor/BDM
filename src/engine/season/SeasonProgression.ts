@@ -2,6 +2,7 @@ import { compareGameDates } from '@/domain/date'
 import type { SeasonHistoryRecord } from '@/domain/season'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import { calculateStandings } from '@/engine/competition/standings'
+import { applySeasonChampionCoachReputation } from '@/engine/coach'
 
 export function isSeasonComplete(world: GameWorld, seasonId: keyof GameWorld['seasons']): boolean {
   const games = Object.values(world.games).filter((game) => game.seasonId === seasonId)
@@ -18,7 +19,7 @@ export function finalizeSeason(world: GameWorld, seasonId: keyof GameWorld['seas
   const games = Object.values(world.games).filter((game) => game.seasonId === seasonId)
   const completedOn = games.reduce((latest, game) => compareGameDates(game.date, latest) > 0 ? game.date : latest, games[0]!.date)
   const history: SeasonHistoryRecord = { seasonId, competitionId: season.competitionId, completedOn, championTeamId: champion.teamId, finalStandings: standings.map((line) => ({ ...line })) }
-  return rebuildWorld(world, [...Object.values(world.seasonHistoryBySeasonId), history])
+  return applySeasonChampionCoachReputation(rebuildWorld(world, [...Object.values(world.seasonHistoryBySeasonId), history]), seasonId)
 }
 
 /** Finalizes only after the result that made its season complete has been applied. */

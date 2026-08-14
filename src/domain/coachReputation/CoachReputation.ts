@@ -22,12 +22,32 @@ export type CoachReputationSource =
   | 'developmentEvent'
   | 'publicEvent';
 export type CoachReputationContext = { readonly kind: CoachReputationSource; readonly key: string };
+export interface CoachMatchReputationContext extends CoachReputationContext {
+  readonly kind: 'matchResult';
+  readonly gameId: string;
+  readonly teamId: string;
+  readonly opponentTeamId: string;
+  readonly seasonId: string;
+  readonly competitionId: string;
+  readonly result: CoachMatchResult;
+  readonly expectedWinProbability: number;
+  readonly teamStrength: number;
+  readonly opponentTeamStrength: number;
+  readonly coachIsHome: boolean;
+}
+export interface CoachSeasonAchievementReputationContext extends CoachReputationContext {
+  readonly kind: 'seasonAchievement';
+  readonly seasonId: string;
+  readonly teamId: string;
+  readonly competitionId: string;
+  readonly achievement: 'champion';
+}
 export interface CoachReputationEvent {
   readonly id: string;
   readonly gameDate: string;
   readonly source: CoachReputationSource;
   readonly deltas: Readonly<Partial<Record<CoachReputationDimension, number>>>;
-  readonly context: CoachReputationContext;
+  readonly context: CoachReputationContext | CoachMatchReputationContext | CoachSeasonAchievementReputationContext;
 }
 export interface CoachReputationProfile {
   readonly values: Readonly<Record<CoachReputationDimension, number>>;
