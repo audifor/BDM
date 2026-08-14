@@ -1,9 +1,10 @@
 import { createGameDate } from '@/domain/date'
 import { getGamesToday } from '@/engine/calendar'
 import { getTeamFinancialSnapshot } from '@/domain/world/finances'
+import { applyCoachReputationEvent } from '@/domain/coachReputation'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { useGameStore } from './gameStore'
+import { selectUserCoachRecentReputationEvents, selectUserCoachReputationProfile, useGameStore } from './gameStore'
 
 describe('gameStore', () => {
   beforeEach(() => {
@@ -38,5 +39,27 @@ describe('gameStore', () => {
     useGameStore.getState().resetGame()
 
     expect(useGameStore.getState().world).toBeNull()
+  })
+
+  it('selects canonical user coach reputation without duplicating it in the store', () => {
+    useGameStore.getState().newGame()
+    const world = useGameStore.getState().world!
+
+    expect(selectUserCoachReputationProfile(world)).toBe(world.coachReputationProfilesByCoachId[world.userCoachId])
+    expect(selectUserCoachRecentReputationEvents(world, 5)).toEqual([])
+    expect(selectUserCoachReputationProfile(null)).toBeUndefined()
+  })
+
+  it('keeps Domain recent-event ordering and limits in the selector', () => {
+    useGameStore.getState().newGame()
+    const world = useGameStore.getState().world!
+    const initial = world.coachReputationProfilesByCoachId[world.userCoachId]!
+    const first = applyCoachReputationEvent(initial, { id: 'older', gameDate: '2032-10-01', source: 'publicEvent', deltas: { publicStanding: 1 }, context: { kind: 'publicEvent', key: 'older' } })
+    if (!first.ok) throw new Error('Expected valid reputation event')
+    const second = applyCoachReputationEvent(first.profile, { id: 'newer', gameDate: '2032-10-02', source: 'publicEvent', deltas: { publicStanding: 1 }, context: { kind: 'publicEvent', key: 'newer' } })
+    if (!second.ok) throw new Error('Expected valid reputation event')
+    const updated = { ...world, coachReputationProfilesByCoachId: { ...world.coachReputationProfilesByCoachId, [world.userCoachId]: second.profile } }
+
+    expect(selectUserCoachRecentReputationEvents(updated, 1).map((event) => event.id)).toEqual(['newer'])
   })
 })

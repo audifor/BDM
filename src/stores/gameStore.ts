@@ -13,6 +13,8 @@ import { releasePlayer, signFreeAgent } from '@/app/market'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { CoachPerkId, CoachSkillId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
+import { getUserCoachReputationProfile } from '@/domain/world'
+import { getRecentCoachReputationEvents, type CoachReputationProfile } from '@/domain/coachReputation'
 import { purchaseCoachPerk, purchaseCoachSkillRank, type CoachRpgOperationResult } from '@/engine/coach'
 import type { ManualSubstitution, MatchSimulation, MatchTacticalPlan } from '@/engine/match'
 import type { LiveMatchController, LiveMatchStep } from '@/app/game'
@@ -95,3 +97,12 @@ function requireWorld(world: GameWorld | null): GameWorld {
   return world
 }
 function requireLiveController(): LiveMatchController { if (liveController === null) throw new Error('No live match'); return liveController }
+
+export function selectUserCoachReputationProfile(world: GameWorld | null): CoachReputationProfile | undefined {
+  return world === null ? undefined : getUserCoachReputationProfile(world)
+}
+
+export function selectUserCoachRecentReputationEvents(world: GameWorld | null, limit = 5) {
+  const profile = selectUserCoachReputationProfile(world)
+  return profile === undefined ? [] : getRecentCoachReputationEvents(profile, limit)
+}
