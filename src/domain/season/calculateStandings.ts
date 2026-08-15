@@ -16,6 +16,14 @@ export function calculateSeasonStandings(world: GameWorld, seasonId: keyof GameW
     if (result.homeScore > result.awayScore) { home.wins += 1; away.losses += 1 } else { away.wins += 1; home.losses += 1 }
   }
   return entries.map((entry) => ({ ...entry, position: 0, pointDifference: entry.pointsFor - entry.pointsAgainst }))
-    .sort((a, b) => b.wins - a.wins || b.pointDifference - a.pointDifference || b.pointsFor - a.pointsFor || (a.teamId < b.teamId ? -1 : a.teamId === b.teamId ? 0 : 1))
+    .sort((a, b) => compareStandingEntries(a, b, competition.rules.standings.tiebreakers))
     .map((entry, index) => ({ ...entry, position: index + 1 }))
+}
+
+function compareStandingEntries(a: { readonly teamId: TeamId; readonly wins: number; readonly pointDifference: number; readonly pointsFor: number }, b: { readonly teamId: TeamId; readonly wins: number; readonly pointDifference: number; readonly pointsFor: number }, tiebreakers: readonly import('@/domain/competition').StandingsTiebreaker[]): number {
+  for (const tiebreaker of tiebreakers) {
+    const comparison = tiebreaker === 'teamId' ? a.teamId.localeCompare(b.teamId) : b[tiebreaker] - a[tiebreaker]
+    if (comparison !== 0) return comparison
+  }
+  return 0
 }

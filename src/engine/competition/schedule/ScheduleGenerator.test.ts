@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createCompetition } from '@/domain/competition'
+import { defaultLeagueCompetitionRules } from '@/domain/competition'
 import { addDays } from '@/domain/date'
 import { type Game } from '@/domain/game'
 import { seasonIdFromString } from '@/domain/ids'
@@ -71,6 +72,20 @@ describe('ScheduleGenerator', () => {
       expect(returnLeg[index]!.homeTeamId).toBe(firstLeg[index]!.awayTeamId)
       expect(returnLeg[index]!.awayTeamId).toBe(firstLeg[index]!.homeTeamId)
     }
+  })
+
+  it('consumes a different valid meetings-per-pair rule deterministically', () => {
+    const { world, competition, season } = createGeneratedWorld()
+    const fourMeetings = createCompetition({ ...competition, rules: { ...defaultLeagueCompetitionRules, schedule: { meetingsPerPair: 4, homeAwayBalance: 'equal' } } })
+    const customWorld = recreateWorld(world, { competitions: [fourMeetings] })
+    const games = generateRoundRobinSchedule({ world: customWorld, seasonId: season.id })
+
+    expect(games).toHaveLength(112)
+    for (const teamId of fourMeetings.participantTeamIds) {
+      expect(games.filter((game) => game.homeTeamId === teamId)).toHaveLength(14)
+      expect(games.filter((game) => game.awayTeamId === teamId)).toHaveLength(14)
+    }
+    expect(games).toEqual(generateRoundRobinSchedule({ world: customWorld, seasonId: season.id }))
   })
 
   it('uses season start and four-day default round spacing', () => {

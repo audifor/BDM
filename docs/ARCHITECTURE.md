@@ -98,6 +98,19 @@ returns scheduled Domain `Game` data, and never modifies `GameWorld`. The curren
 schedule is a deterministic home-and-away round robin with no RNG or simulation
 logic.
 
+## Competition Rules
+
+`Competition.rules` is canonical, serializable configuration; fixtures, results,
+standings and season history are competition state. The current single-competition
+ruleset is a league round robin with two balanced home/away meetings per pair,
+standings ordered by wins, point difference, points scored and TeamId, completion
+only after every scheduled game is completed, and champion as the final standings
+leader. `ScheduleGenerator`, standings and season finalization consume these rules;
+no derived team count or standings is persisted. Save V1 preserves rules and enriches
+legacy competitions with this canonical ruleset deterministically. Hito 047 supports
+only the current single competition; multi-competition world coordination belongs to
+Hito 048.
+
 `MatchEngine` belongs to Engine and is separate from both state transition and
 `MatchViewer`. It receives a `RandomSource` externally and returns only a final
 `MatchSimulationResult`; it never changes `GameWorld` or `Game`. MatchEngine v0

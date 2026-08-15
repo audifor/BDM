@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createGame, type Game } from '@/domain/game'
+import { createCompetition } from '@/domain/competition'
 import { gameIdFromString, seasonIdFromString } from '@/domain/ids'
 import { createSeason } from '@/domain/season'
 import { createGameWorld, type GameWorld } from '@/domain/world'
@@ -106,6 +107,16 @@ describe('Standings', () => {
     expect(equalEntries.map((entry) => entry.teamId)).toEqual(
       [...equalEntries.map((entry) => entry.teamId)].sort(),
     )
+  })
+
+  it('consumes the competition tiebreaker order', () => {
+    const { world, seasonId, games, competition } = createScheduledGameWorld()
+    const customCompetition = createCompetition({ ...competition, rules: { ...competition.rules, standings: { tiebreakers: ['pointsFor', 'wins', 'pointDifference', 'teamId'] } } })
+    const customWorld = recreateWorld(world, { competitions: [customCompetition] })
+    const afterFirst = applyScore(customWorld, games[0]!, 90, 80)
+    const afterSecond = applyScore(afterFirst, games[1]!, 85, 70)
+
+    expect(calculateStandings(afterSecond, seasonId)[0]!.teamId).toBe(games[0]!.homeTeamId)
   })
 
   it('filters games from another season and ignores scheduled games', () => {
@@ -214,6 +225,7 @@ function createScheduledGameWorld(): {
 function recreateWorld(
   source: GameWorld,
   overrides: Partial<{
+    competitions: GameWorld['competitions'][keyof GameWorld['competitions']][]
     seasons: GameWorld['seasons'][keyof GameWorld['seasons']][]
     games: Game[]
   }>,
@@ -226,7 +238,7 @@ function recreateWorld(
     coaches: Object.values(source.coaches),
     players: Object.values(source.players),
     teams: Object.values(source.teams),
-    competitions: Object.values(source.competitions),
+    competitions: overrides.competitions ?? Object.values(source.competitions),
     seasons: overrides.seasons ?? Object.values(source.seasons),
     games: overrides.games ?? Object.values(source.games),
   })

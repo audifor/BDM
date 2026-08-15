@@ -31,7 +31,7 @@ export function generateRoundRobinSchedule(options: GenerateRoundRobinScheduleOp
   validateParticipants(teamIds)
 
   const firstLegRounds = createFirstLegRounds(teamIds)
-  const rounds = [...firstLegRounds, ...firstLegRounds.map(invertRound)]
+  const rounds = Array.from({ length: competition.rules.schedule.meetingsPerPair }, (_, legIndex) => legIndex % 2 === 0 ? firstLegRounds : firstLegRounds.map(invertRound)).flat()
   const lastRoundDate = addDays(season.startDate, (rounds.length - 1) * daysBetweenRounds)
 
   if (compareGameDates(lastRoundDate, season.endDate) > 0) {

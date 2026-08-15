@@ -6,6 +6,9 @@ import { applySeasonChampionCoachReputation } from '@/engine/coach'
 
 export function isSeasonComplete(world: GameWorld, seasonId: keyof GameWorld['seasons']): boolean {
   const games = Object.values(world.games).filter((game) => game.seasonId === seasonId)
+  const season = world.seasons[seasonId]
+  if (season === undefined) throw new Error(`Season does not exist: ${seasonId}`)
+  if (world.competitions[season.competitionId]!.rules.completion !== 'allScheduledGamesCompleted') return false
   return games.length > 0 && games.every((game) => game.status === 'completed')
 }
 
@@ -14,7 +17,7 @@ export function finalizeSeason(world: GameWorld, seasonId: keyof GameWorld['seas
   if (world.seasonHistoryBySeasonId[seasonId] !== undefined) throw new Error(`Season ${seasonId} is already finalized`)
   const season = world.seasons[seasonId]!
   const standings = calculateStandings(world, seasonId)
-  const champion = standings[0]
+  const champion = world.competitions[season.competitionId]!.rules.champion === 'standingsLeader' ? standings[0] : undefined
   if (champion === undefined) throw new Error(`Season ${seasonId} has no standings`)
   const games = Object.values(world.games).filter((game) => game.seasonId === seasonId)
   const completedOn = games.reduce((latest, game) => compareGameDates(game.date, latest) > 0 ? game.date : latest, games[0]!.date)
