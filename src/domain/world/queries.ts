@@ -44,6 +44,10 @@ export function getTeam(world: GameWorld, id: TeamId): Team {
 export function getCompetition(world: GameWorld, id: CompetitionId): Competition {
   return getEntity(world.competitions, id, 'Competition')
 }
+export function getCompetitions(world: GameWorld): readonly Competition[] { return Object.values(world.competitions).sort((a, b) => a.id.localeCompare(b.id)) }
+export function getCompetitionsForTeam(world: GameWorld, teamId: TeamId): readonly Competition[] { return getCompetitions(world).filter((competition) => competition.participantTeamIds.includes(teamId)) }
+export function getGamesForCompetition(world: GameWorld, competitionId: CompetitionId): readonly Game[] { getCompetition(world, competitionId); return Object.values(world.games).filter((game) => game.competitionId === competitionId).sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id)) }
+export function getGamesForTeam(world: GameWorld, teamId: TeamId): readonly Game[] { getTeam(world, teamId); return Object.values(world.games).filter((game) => game.homeTeamId === teamId || game.awayTeamId === teamId).sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id)) }
 
 export function getSeason(world: GameWorld, id: SeasonId): Season {
   return getEntity(world.seasons, id, 'Season')

@@ -21,9 +21,9 @@ describe('prototype game application', () => {
     const userTeam = getUserTeam(world)
 
     expect(world.currentDate).toBe(createGameDate(2032, 10, 1))
-    expect(Object.values(world.games)).toHaveLength(56)
+    expect(Object.values(world.games).filter((game) => game.competitionId === world.seasons[world.currentSeasonId]!.competitionId)).toHaveLength(56)
     expect(userTeam?.id).toBe('generated-team-0001')
-    expect(Object.values(world.seasons)).toHaveLength(1)
+    expect(Object.values(world.seasons)).toHaveLength(2)
   })
 
   it('completes only the user game without advancing or mutating the input', () => {

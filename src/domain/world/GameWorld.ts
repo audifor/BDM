@@ -257,6 +257,12 @@ function validateWorld(world: GameWorld): void {
       throw new GameWorldValidationError(`Game ${game.id} date is outside its season range`)
     }
   }
+  const teamDates = new Set<string>()
+  for (const game of Object.values(world.games)) for (const teamId of [game.homeTeamId, game.awayTeamId]) {
+    const key = `${teamId}:${game.date}`
+    if (teamDates.has(key)) throw new GameWorldValidationError(`Team ${teamId} has multiple Games on ${game.date}`)
+    teamDates.add(key)
+  }
   for (const log of Object.values(world.matchStatLogsByGameId)) validateMatchStatLog(world, log)
   for (const injury of Object.values(world.injuriesById)) validateInjury(world, injury)
   for (const contract of Object.values(world.contractsById)) { createPlayerContract(contract); requireEntity(world.players,contract.playerId,`Contract ${contract.id} Player`); requireEntity(world.teams,contract.teamId,`Contract ${contract.id} Team`) }

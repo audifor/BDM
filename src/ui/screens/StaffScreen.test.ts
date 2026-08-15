@@ -105,6 +105,5 @@ function attributeLabel(attribute: typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[numb
 }
 
 function completeCurrentSeason(world: GameWorld): GameWorld {
-  const season = getCurrentSeason(world)
-  return Object.values(world.games).filter((game) => game.seasonId === season.id && game.status === 'scheduled').reduce((current, game) => simulateAndApplyGame(current, game), world)
+  return Object.values(world.games).filter((game) => game.status === 'scheduled').reduce((current, game) => simulateAndApplyGame(current, game), world)
 }

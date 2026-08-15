@@ -33,15 +33,15 @@ describe('startNextSeason', () => {
     const nextSeason = getCurrentSeason(next)
     const newGames = Object.values(next.games).filter((game) => game.seasonId === nextSeason.id)
 
-    expect(nextSeason.id).toBe('generated-season-0002')
+    expect(nextSeason.id).toBe('generated-season-0003')
     expect(nextSeason.startDate).toBe('2033-10-01')
     expect(next.currentDate).toBe(nextSeason.startDate)
-    expect(Object.values(next.seasons)).toHaveLength(2)
-    expect(Object.values(next.games)).toHaveLength(priorGames.length + 56)
+    expect(Object.values(next.seasons)).toHaveLength(4)
+    expect(Object.values(next.games)).toHaveLength(priorGames.length + 68)
     expect(new Set(Object.keys(next.games)).size).toBe(Object.keys(next.games).length)
     expect(newGames).toHaveLength(56)
     expect(newGames.every((game) => game.status === 'scheduled' && game.result === null)).toBe(true)
-    expect(Object.values(next.games).filter((game) => game.seasonId !== nextSeason.id)).toEqual(priorGames)
+    expect(Object.values(next.games).filter((game) => ![nextSeason.id, 'generated-season-0004'].includes(game.seasonId))).toEqual(priorGames)
     expect(Object.values(next.matchStatLogsByGameId)).toEqual(priorLogs)
     expect(Object.values(next.seasonHistoryBySeasonId)).toEqual(priorHistory)
     expect(next.teamFinancesByTeamId).toEqual(completed.teamFinancesByTeamId)
@@ -65,16 +65,19 @@ describe('startNextSeason', () => {
     expect(getPlayerSeasonStats(next, playerId, seasonTwo.id).gamesPlayed).toBeLessThanOrEqual(1)
     expect(getPlayerCareerStats(next, playerId).gamesPlayed).toBeGreaterThanOrEqual(career.gamesPlayed)
     next = completeCurrentSeason(next)
-    expect(Object.values(next.seasonHistoryBySeasonId)).toHaveLength(2)
+    expect(Object.values(next.seasonHistoryBySeasonId)).toHaveLength(4)
     expect(getCurrentSeason(next).id).toBe(seasonTwo.id)
-    expect(getCurrentSeason(startNextSeason(next)).id).toBe('generated-season-0003')
+    expect(getCurrentSeason(startNextSeason(next)).id).toBe('generated-season-0005')
   })
 
   it('round-trips multiple seasons and accepts legacy single-season V1 without currentSeasonId', () => {
     const next = startNextSeason(completeCurrentSeason(createNewGame()))
     const envelope = serializeGameWorldV1(next, '2033-10-01T00:00:00.000Z')
     const loaded = deserializeGameWorldV1(envelope)
-    const { currentSeasonId: _currentSeasonId, ...legacyPayload } = serializeGameWorldV1(createNewGame(), '2032-10-01T00:00:00.000Z').payload
+    const single = serializeGameWorldV1(createNewGame(), '2032-10-01T00:00:00.000Z').payload
+    const primarySeasonId = single.currentSeasonId
+    const primaryCompetitionId = (single.seasons.find((season) => season.id === primarySeasonId) as { competitionId: string }).competitionId
+    const { currentSeasonId: _currentSeasonId, ...legacyPayload } = { ...single, competitions: single.competitions.filter((competition) => competition.id === primaryCompetitionId), seasons: single.seasons.filter((season) => season.id === primarySeasonId), games: single.games.filter((game) => game.seasonId === primarySeasonId) }
 
     expect(loaded).toEqual(next)
     expect(loaded.currentSeasonId).toBe(next.currentSeasonId)
@@ -117,6 +120,5 @@ describe('startNextSeason', () => {
 })
 
 function completeCurrentSeason(world: ReturnType<typeof createNewGame>) {
-  const season = getCurrentSeason(world)
-  return Object.values(world.games).filter((game) => game.seasonId === season.id && game.status === 'scheduled').reduce((current, game) => simulateAndApplyGame(current, game), world)
+  return Object.values(world.games).filter((game) => game.status === 'scheduled').reduce((current, game) => simulateAndApplyGame(current, game), world)
 }

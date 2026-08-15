@@ -1,1 +1,1 @@
-export { finalizeCompletedSeason, finalizeSeason, getSeasonHistory, getSeasonHistoryRecord, isSeasonComplete } from './SeasonProgression'
+export { finalizeCompletedSeason, finalizeSeason, getCompetitionChampion, getSeasonHistory, getSeasonHistoryRecord, isCompetitionComplete, isSeasonComplete } from './SeasonProgression'

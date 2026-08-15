@@ -13,6 +13,7 @@ export interface GenerateRoundRobinScheduleOptions {
   readonly world: GameWorld
   readonly seasonId: SeasonId
   readonly daysBetweenRounds?: number
+  readonly startDate?: import('@/domain/date').GameDate
 }
 
 interface Matchup {
@@ -32,7 +33,8 @@ export function generateRoundRobinSchedule(options: GenerateRoundRobinScheduleOp
 
   const firstLegRounds = createFirstLegRounds(teamIds)
   const rounds = Array.from({ length: competition.rules.schedule.meetingsPerPair }, (_, legIndex) => legIndex % 2 === 0 ? firstLegRounds : firstLegRounds.map(invertRound)).flat()
-  const lastRoundDate = addDays(season.startDate, (rounds.length - 1) * daysBetweenRounds)
+  const startDate = options.startDate ?? season.startDate
+  const lastRoundDate = addDays(startDate, (rounds.length - 1) * daysBetweenRounds)
 
   if (compareGameDates(lastRoundDate, season.endDate) > 0) {
     throw new RangeError(`Schedule for Season ${season.id} does not fit within its date range`)
@@ -40,7 +42,7 @@ export function generateRoundRobinSchedule(options: GenerateRoundRobinScheduleOp
 
   let gameSequence = 1
   return rounds.flatMap((round, roundIndex) => {
-    const date = addDays(season.startDate, roundIndex * daysBetweenRounds)
+    const date = addDays(startDate, roundIndex * daysBetweenRounds)
 
     return round.map((matchup) =>
       createGame({

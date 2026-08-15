@@ -12,7 +12,7 @@ describe('season progression', () => {
   it('does not use the calendar date as the completion criterion', () => {
     const world = createNewGame()
     const season = getCurrentSeason(world)
-    const atSeasonEnd = createGameWorld({ currentDate: season.endDate, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), seasons: Object.values(world.seasons), games: Object.values(world.games), matchStatLogs: Object.values(world.matchStatLogsByGameId) })
+    const atSeasonEnd = createGameWorld({ currentDate: season.endDate, currentSeasonId: world.currentSeasonId, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), seasons: Object.values(world.seasons), games: Object.values(world.games), matchStatLogs: Object.values(world.matchStatLogsByGameId) })
     expect(isSeasonComplete(atSeasonEnd, season.id)).toBe(false)
   })
 
@@ -20,7 +20,7 @@ describe('season progression', () => {
     let world = createNewGame()
     const season = getCurrentSeason(world)
     const games = Object.values(world.games).filter((game) => game.seasonId === season.id)
-    for (const game of games.slice(0, -1)) world = simulateAndApplyGame(world, game)
+    for (const game of Object.values(world.games).filter((game) => game.status === 'scheduled' && game.id !== games.at(-1)!.id)) world = simulateAndApplyGame(world, game)
 
     expect(isSeasonComplete(world, season.id)).toBe(false)
     expect(getSeasonHistoryRecord(world, season.id)).toBeUndefined()
@@ -32,8 +32,8 @@ describe('season progression', () => {
 
     expect(games).toHaveLength(56)
     expect(isSeasonComplete(world, season.id)).toBe(true)
-    expect(Object.values(world.seasonHistoryBySeasonId)).toHaveLength(1)
-    expect(Object.values(world.matchStatLogsByGameId)).toHaveLength(games.length)
+    expect(Object.values(world.seasonHistoryBySeasonId)).toHaveLength(2)
+    expect(Object.values(world.matchStatLogsByGameId)).toHaveLength(Object.values(world.games).length)
     expect(history.championTeamId).toBe(finalStandings[0]!.teamId)
     expect(history.finalStandings).toEqual(finalStandings)
     expect(history.completedOn).toBe(games.reduce((latest, game) => game.date > latest ? game.date : latest, games[0]!.date))
@@ -69,5 +69,5 @@ describe('season progression', () => {
 })
 
 function rebuildWithHistory(world: ReturnType<typeof createNewGame>, seasonHistory: Parameters<typeof createGameWorld>[0]['seasonHistory']) {
-  return createGameWorld({ currentDate: world.currentDate, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), seasons: Object.values(world.seasons), games: Object.values(world.games), matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory })
+  return createGameWorld({ currentDate: world.currentDate, currentSeasonId: world.currentSeasonId, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), seasons: Object.values(world.seasons), games: Object.values(world.games), matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory })
 }

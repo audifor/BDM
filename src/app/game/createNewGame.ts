@@ -1,4 +1,8 @@
 import { createGameDate } from '@/domain/date'
+import { addDays } from '@/domain/date'
+import { createCompetition, defaultLeagueCompetitionRules } from '@/domain/competition'
+import { competitionIdFromString, seasonIdFromString } from '@/domain/ids'
+import { createSeason } from '@/domain/season'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { generateWorld } from '@/engine/world'
@@ -20,7 +24,12 @@ export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPrese
     throw new Error('Prototype world generation did not create a Season')
   }
 
-  const games = generateRoundRobinSchedule({ world: generatedWorld, seasonId: season.id })
+  const secondaryCompetition = createCompetition({ id: competitionIdFromString('generated-competition-0002'), name: 'Virelia Challenger League', gender: PROTOTYPE_GAME_CONFIGURATION.gender, participantTeamIds: Object.values(generatedWorld.teams).slice(0, 4).map((team) => team.id), rules: defaultLeagueCompetitionRules })
+  const secondarySeason = createSeason({ id: seasonIdFromString('generated-season-0002'), competitionId: secondaryCompetition.id, label: season.label, startDate: season.startDate, endDate: season.endDate })
+  const competitions = [...Object.values(generatedWorld.competitions), secondaryCompetition]
+  const seasons = [...Object.values(generatedWorld.seasons), secondarySeason]
+  const staged = createGameWorld({ currentDate: generatedWorld.currentDate, currentSeasonId: generatedWorld.currentSeasonId, userCoachId: generatedWorld.userCoachId, countries: Object.values(generatedWorld.countries), coaches: Object.values(generatedWorld.coaches), players: Object.values(generatedWorld.players), teams: Object.values(generatedWorld.teams), competitions, seasons, games: [], injuries: Object.values(generatedWorld.injuriesById), contracts: Object.values(generatedWorld.contractsById), teamFinances: Object.values(generatedWorld.teamFinancesByTeamId), playerTransactions: Object.values(generatedWorld.playerTransactionsById), playerKnowledge: Object.values(generatedWorld.playerKnowledgeById), staffPeople: Object.values(generatedWorld.staffPeopleById), teamStaffAssignments: Object.values(generatedWorld.teamStaffAssignmentsById), coachProfessionalProfilesByCoachId: generatedWorld.coachProfessionalProfilesByCoachId, coachRpgProfilesByCoachId: generatedWorld.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: generatedWorld.coachReputationProfilesByCoachId, coachEmploymentByCoachId: generatedWorld.coachEmploymentByCoachId, coachCareerHistoryByCoachId: generatedWorld.coachCareerHistoryByCoachId, coachJobOpeningsById: generatedWorld.coachJobOpeningsById, coachJobCandidaciesById: generatedWorld.coachJobCandidaciesById, coachInterviewsByCandidacyId: generatedWorld.coachInterviewsByCandidacyId, coachJobOffersById: generatedWorld.coachJobOffersById, relationshipsByKey: generatedWorld.relationshipsByKey })
+  const games = Object.values(staged.seasons).flatMap((candidate) => generateRoundRobinSchedule({ world: staged, seasonId: candidate.id, ...(candidate.id === season.id ? {} : { startDate: addDays(candidate.startDate, 60) }) }))
 
   return ensurePlayerKnowledge(createGameWorld({
     currentDate: generatedWorld.currentDate,
@@ -30,8 +39,8 @@ export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPrese
     coaches: Object.values(generatedWorld.coaches),
     players: Object.values(generatedWorld.players),
     teams: Object.values(generatedWorld.teams),
-    competitions: Object.values(generatedWorld.competitions),
-    seasons: Object.values(generatedWorld.seasons),
+    competitions,
+    seasons,
     games,
     injuries: Object.values(generatedWorld.injuriesById),
     contracts: Object.values(generatedWorld.contractsById),

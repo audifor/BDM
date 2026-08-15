@@ -17,6 +17,10 @@ export { getFreeAgents, getPlayerRosterTeamId, getPlayerTransactions, isPlayerFr
 export {
   getCoach,
   getCompetition,
+  getCompetitions,
+  getCompetitionsForTeam,
+  getGamesForCompetition,
+  getGamesForTeam,
   getCountry,
   getGame,
   getPlayer,

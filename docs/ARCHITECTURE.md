@@ -109,7 +109,17 @@ leader. `ScheduleGenerator`, standings and season finalization consume these rul
 no derived team count or standings is persisted. Save V1 preserves rules and enriches
 legacy competitions with this canonical ruleset deterministically. Hito 047 supports
 only the current single competition; multi-competition world coordination belongs to
-Hito 048.
+Hito 048 supports multiple simultaneous competitions using the current league/
+round-robin rules engine. `GameWorld.competitions` is the canonical normalized
+collection; a Team may occur in multiple Competition participant lists, while every
+Game explicitly belongs to exactly one CompetitionId. Calendar and training operate
+over all world Games, and GameWorld rejects two games for one Team on one date.
+Standings, completion and champions are Competition-scoped; the world season is
+complete only when all concurrent competition seasons are complete. Save V1 already
+persists normalized competitions and games, so legacy single-competition saves load
+as the same one-entry collection. The starter career now demonstrates a primary
+eight-team league and an offset four-team secondary league with deterministic IDs.
+FIBA-like ecosystem rules belong to Hito 049.
 
 `MatchEngine` belongs to Engine and is separate from both state transition and
 `MatchViewer`. It receives a `RandomSource` externally and returns only a final

@@ -1,4 +1,4 @@
-import { addYears, formatGameDate } from '@/domain/date'
+import { addDays, addYears, formatGameDate } from '@/domain/date'
 import { seasonIdFromString } from '@/domain/ids'
 import { createSeason } from '@/domain/season'
 import { createGameWorld, type GameWorld } from '@/domain/world'
@@ -7,34 +7,22 @@ import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
 import { applyOffseasonDevelopment } from '@/engine/development'
 import { reconcileExpiredPlayerContracts } from '@/engine/market'
 import { maintainAiTeamMinimumRosters } from '@/app/market'
-
 import { getCurrentSeason } from './selectors'
 
-/** Direct deterministic offseason transition. It never changes existing entities or history. */
+/** Starts the next concurrent edition of every current competition. */
 export function startNextSeason(world: GameWorld): GameWorld {
-  const previous = getCurrentSeason(world)
-  if (!isSeasonComplete(world, previous.id)) throw new Error('Current season is not complete')
-  if (getSeasonHistoryRecord(world, previous.id) === undefined) throw new Error('Current season requires a history record')
-
-  const next = createSeason({
-    id: nextSeasonId(world),
-    competitionId: previous.competitionId,
-    label: `${formatGameDate(addYears(previous.startDate, 1))} to ${formatGameDate(addYears(previous.endDate, 1))}`,
-    startDate: addYears(previous.startDate, 1),
-    endDate: addYears(previous.endDate, 1),
-  })
-  const developed = applyOffseasonDevelopment(world, { fromSeasonId: previous.id, toSeasonId: next.id, targetDate: next.startDate }).world
-  const staged = rebuild(developed, [...Object.values(developed.seasons), next], developed.currentSeasonId, Object.values(developed.games))
-  const schedule = generateRoundRobinSchedule({ world: staged, seasonId: next.id })
-  return maintainAiTeamMinimumRosters(reconcileExpiredPlayerContracts(rebuild(developed, [...Object.values(developed.seasons), next], next.id, [...Object.values(developed.games), ...schedule]), next.startDate)).world
+  const primary = getCurrentSeason(world)
+  if (!isSeasonComplete(world, primary.id)) throw new Error('Current season is not complete')
+  const previous = Object.values(world.seasons).filter((season) => season.startDate === primary.startDate && season.endDate === primary.endDate)
+  if (previous.some((season) => getSeasonHistoryRecord(world, season.id) === undefined)) throw new Error('Current season requires a history record')
+  const ids = nextSeasonIds(world, previous.length)
+  const next = previous.sort((a, b) => a.competitionId.localeCompare(b.competitionId)).map((season, index) => createSeason({ id: ids[index]!, competitionId: season.competitionId, label: `${formatGameDate(addYears(season.startDate, 1))} to ${formatGameDate(addYears(season.endDate, 1))}`, startDate: addYears(season.startDate, 1), endDate: addYears(season.endDate, 1) }))
+  const nextPrimary = next.find((season) => season.competitionId === primary.competitionId)!
+  const developed = applyOffseasonDevelopment(world, { fromSeasonId: primary.id, toSeasonId: nextPrimary.id, targetDate: nextPrimary.startDate }).world
+  const staged = rebuild(developed, [...Object.values(developed.seasons), ...next], nextPrimary.id, Object.values(developed.games))
+  const schedule = next.flatMap((season) => generateRoundRobinSchedule({ world: staged, seasonId: season.id, ...(season.id === nextPrimary.id ? {} : { startDate: addDays(season.startDate, 60) }) }))
+  return maintainAiTeamMinimumRosters(reconcileExpiredPlayerContracts(rebuild(developed, [...Object.values(developed.seasons), ...next], nextPrimary.id, [...Object.values(developed.games), ...schedule]), nextPrimary.startDate)).world
 }
 
-function nextSeasonId(world: GameWorld) {
-  let ordinal = Object.keys(world.seasons).length + 1
-  while (world.seasons[seasonIdFromString(`generated-season-${ordinal.toString().padStart(4, '0')}`)] !== undefined) ordinal += 1
-  return seasonIdFromString(`generated-season-${ordinal.toString().padStart(4, '0')}`)
-}
-
-function rebuild(world: GameWorld, seasons: readonly (typeof world.seasons)[keyof typeof world.seasons][], currentSeasonId: GameWorld['currentSeasonId'], games: readonly (typeof world.games)[keyof typeof world.games][]): GameWorld {
-  return createGameWorld({ currentDate: currentSeasonId === world.currentSeasonId ? world.currentDate : seasons.find((season) => season.id === currentSeasonId)!.startDate, currentSeasonId, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), seasons, games, matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory: Object.values(world.seasonHistoryBySeasonId), injuries: Object.values(world.injuriesById), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId), playerTransactions: Object.values(world.playerTransactionsById), playerKnowledge: Object.values(world.playerKnowledgeById), staffPeople: Object.values(world.staffPeopleById), teamStaffAssignments: Object.values(world.teamStaffAssignmentsById), coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId, coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: world.coachCareerHistoryByCoachId, coachJobOpeningsById: world.coachJobOpeningsById, coachJobCandidaciesById: world.coachJobCandidaciesById, coachInterviewsByCandidacyId: world.coachInterviewsByCandidacyId, coachJobOffersById: world.coachJobOffersById, relationshipsByKey: world.relationshipsByKey, personalitiesByPersonId: world.personalitiesByPersonId, moraleByPersonId: world.moraleByPersonId })
-}
+function nextSeasonIds(world: GameWorld, count: number) { let ordinal = Object.keys(world.seasons).length + 1; const ids = []; while (ids.length < count) { const id = seasonIdFromString(`generated-season-${ordinal.toString().padStart(4, '0')}`); if (world.seasons[id] === undefined) ids.push(id); ordinal += 1 } return ids }
+function rebuild(world: GameWorld, seasons: readonly (typeof world.seasons)[keyof typeof world.seasons][], currentSeasonId: GameWorld['currentSeasonId'], games: readonly (typeof world.games)[keyof typeof world.games][]): GameWorld { return createGameWorld({ currentDate: currentSeasonId === world.currentSeasonId ? world.currentDate : seasons.find((season) => season.id === currentSeasonId)!.startDate, currentSeasonId, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), seasons, games, matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory: Object.values(world.seasonHistoryBySeasonId), injuries: Object.values(world.injuriesById), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId), playerTransactions: Object.values(world.playerTransactionsById), playerKnowledge: Object.values(world.playerKnowledgeById), staffPeople: Object.values(world.staffPeopleById), teamStaffAssignments: Object.values(world.teamStaffAssignmentsById), coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId, coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: world.coachCareerHistoryByCoachId, coachJobOpeningsById: world.coachJobOpeningsById, coachJobCandidaciesById: world.coachJobCandidaciesById, coachInterviewsByCandidacyId: world.coachInterviewsByCandidacyId, coachJobOffersById: world.coachJobOffersById, relationshipsByKey: world.relationshipsByKey, personalitiesByPersonId: world.personalitiesByPersonId, moraleByPersonId: world.moraleByPersonId, inboxItemsById: world.inboxItemsById, newsItemsById: world.newsItemsById, trainingPlansByTeamId: world.trainingPlansByTeamId, trainingSessionsById: world.trainingSessionsById, developmentStimulusByPlayerId: world.developmentStimulusByPlayerId, careerFatigueByPlayerId: world.careerFatigueByPlayerId }) }

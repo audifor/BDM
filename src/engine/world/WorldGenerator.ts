@@ -159,6 +159,7 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
   const coachProfiles = generateCoachRpgProfiles(coaches, userCoachId, options.userCoachRpgPreset)
   return createGameWorld({
     currentDate: startDate,
+    currentSeasonId: season.id,
     userCoachId,
     countries: [country],
     coaches,

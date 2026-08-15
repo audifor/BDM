@@ -126,6 +126,7 @@ describe('Standings', () => {
       ...games[0]!,
       id: gameIdFromString('other-season-game'),
       seasonId: otherSeason.id,
+      date: otherSeason.endDate,
       status: 'completed',
       result: { homeScore: 90, awayScore: 80 },
     })
