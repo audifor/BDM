@@ -1,10 +1,12 @@
 import type { Coach } from '@/domain/coach'
 import type { Competition } from '@/domain/competition'
+import type { SportsEcosystem } from '@/domain/ecosystem'
 import type { Country } from '@/domain/country'
 import type { Game } from '@/domain/game'
 import type {
   CoachId,
   CompetitionId,
+  EcosystemId,
   CountryId,
   GameId,
   PlayerId,
@@ -44,6 +46,12 @@ export function getTeam(world: GameWorld, id: TeamId): Team {
 export function getCompetition(world: GameWorld, id: CompetitionId): Competition {
   return getEntity(world.competitions, id, 'Competition')
 }
+export function getEcosystem(world: GameWorld, id: EcosystemId): SportsEcosystem { return getEntity(world.ecosystems, id, 'Sports ecosystem') }
+export function getEcosystems(world: GameWorld): readonly SportsEcosystem[] { return Object.values(world.ecosystems).sort((a, b) => a.id.localeCompare(b.id)) }
+export function getEcosystemForCompetition(world: GameWorld, competitionId: CompetitionId): SportsEcosystem { return getEcosystem(world, getCompetition(world, competitionId).ecosystemId) }
+export function getCompetitionsForEcosystem(world: GameWorld, ecosystemId: EcosystemId): readonly Competition[] { getEcosystem(world, ecosystemId); return getCompetitions(world).filter((competition) => competition.ecosystemId === ecosystemId) }
+export function getEcosystemForTeam(world: GameWorld, teamId: TeamId): SportsEcosystem | undefined { return getCompetitionsForTeam(world, teamId).map((competition) => getEcosystem(world, competition.ecosystemId)).sort((a, b) => a.id.localeCompare(b.id))[0] }
+export function getTeamsForEcosystem(world: GameWorld, ecosystemId: EcosystemId): readonly Team[] { return [...new Set(getCompetitionsForEcosystem(world, ecosystemId).flatMap((competition) => competition.participantTeamIds))].sort().map((teamId) => getTeam(world, teamId)) }
 export function getCompetitions(world: GameWorld): readonly Competition[] { return Object.values(world.competitions).sort((a, b) => a.id.localeCompare(b.id)) }
 export function getCompetitionsForTeam(world: GameWorld, teamId: TeamId): readonly Competition[] { return getCompetitions(world).filter((competition) => competition.participantTeamIds.includes(teamId)) }
 export function getGamesForCompetition(world: GameWorld, competitionId: CompetitionId): readonly Game[] { getCompetition(world, competitionId); return Object.values(world.games).filter((game) => game.competitionId === competitionId).sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id)) }

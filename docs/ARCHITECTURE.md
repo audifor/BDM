@@ -119,7 +119,19 @@ complete only when all concurrent competition seasons are complete. Save V1 alre
 persists normalized competitions and games, so legacy single-competition saves load
 as the same one-entry collection. The starter career now demonstrates a primary
 eight-team league and an offset four-team secondary league with deterministic IDs.
-FIBA-like ecosystem rules belong to Hito 049.
+## Sports ecosystems
+
+`SportsEcosystem` is the organizational boundary above a `Competition`. The first
+starter ecosystem is a fictitious `fibaLike` federation; its competitions retain
+their own participants, rules, Games and Season editions. A Competition explicitly
+references its ecosystem, while teams remain shared entities and their membership is
+derived from competition participants. Competition editions do not share a mandatory
+global season window: each Season supplies its own start/end window, and the global
+calendar merely advances `GameWorld.currentDate`. Standings and champions remain
+competition-scoped; a later-starting competition may complete while another remains
+active. Ecosystems and competition links persist in Save V1; legacy saves enrich to
+the deterministic default FIBA-like ecosystem. Promotion/relegation belongs to Hito
+050, and NBA-like/NCAA-like rules remain outside this milestone.
 
 `MatchEngine` belongs to Engine and is separate from both state transition and
 `MatchViewer`. It receives a `RandomSource` externally and returns only a final

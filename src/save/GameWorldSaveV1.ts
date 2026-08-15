@@ -1,11 +1,13 @@
 import { createCoach } from '@/domain/coach'
 import { createCompetition, createCompetitionRules } from '@/domain/competition'
+import { createSportsEcosystem } from '@/domain/ecosystem'
 import { createCountry } from '@/domain/country'
 import { parseGameDate } from '@/domain/date'
 import { createGame } from '@/domain/game'
 import {
   coachIdFromString,
   competitionIdFromString,
+  ecosystemIdFromString,
   countryIdFromString,
   gameIdFromString,
   injuryIdFromString,
@@ -47,6 +49,7 @@ export interface GameWorldSaveV1 {
   readonly players: readonly JsonRecord[]
   readonly teams: readonly JsonRecord[]
   readonly competitions: readonly JsonRecord[]
+  readonly ecosystems?: readonly JsonRecord[]
   readonly seasons: readonly JsonRecord[]
   readonly games: readonly JsonRecord[]
   readonly matchStatLogs: readonly JsonRecord[]
@@ -98,6 +101,7 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
       players: copyRecords(Object.values(world.players)),
       teams: copyRecords(Object.values(world.teams)),
       competitions: copyRecords(Object.values(world.competitions)),
+      ecosystems: copyRecords(Object.values(world.ecosystems)),
       seasons: copyRecords(Object.values(world.seasons)),
       games: copyRecords(Object.values(world.games)),
       matchStatLogs: copyRecords(Object.values(world.matchStatLogsByGameId)),
@@ -161,6 +165,7 @@ export function deserializeGameWorldV1(value: unknown): GameWorld {
     players: array(payload.players, 'Save players').map((player) => readPlayer(player, referenceDate, currentDate)),
     teams,
     competitions: array(payload.competitions, 'Save competitions').map(readCompetition),
+    ...(payload.ecosystems === undefined ? {} : { ecosystems: array(payload.ecosystems, 'Save ecosystems').map(readEcosystem) }),
     seasons,
     games: array(payload.games, 'Save games').map(readGame),
     matchStatLogs: array(payload.matchStatLogs, 'Save matchStatLogs').map(readMatchStatLog),
@@ -205,7 +210,8 @@ function readPlayer(value: unknown, referenceDate: import('@/domain/date').GameD
 function readPotential(value: unknown) { const v = record(value, 'Player potential'); return { ceiling: integer(v.ceiling, 'Player potential ceiling') } }
 function readBio(value: unknown) { const v = record(value, 'Player bio'); return { dateOfBirth: parseGameDate(string(v.dateOfBirth, 'Player bio dateOfBirth')), heightCm: integer(v.heightCm, 'Player bio heightCm'), weightKg: integer(v.weightKg, 'Player bio weightKg') } }
 function readTeam(value: unknown) { const v = record(value, 'Team'); return createTeam({ id: teamIdFromString(string(v.id, 'Team id')), name: string(v.name, 'Team name'), gender: gender(v.gender), countryId: countryIdFromString(string(v.countryId, 'Team countryId')), rosterPlayerIds: array(v.rosterPlayerIds, 'Team rosterPlayerIds').map((id) => playerIdFromString(string(id, 'Team player id'))), ...(v.coachId === undefined ? {} : { coachId: coachIdFromString(string(v.coachId, 'Team coachId')) }) }) }
-function readCompetition(value: unknown) { const v = record(value, 'Competition'); return createCompetition({ id: competitionIdFromString(string(v.id, 'Competition id')), name: string(v.name, 'Competition name'), gender: gender(v.gender), participantTeamIds: array(v.participantTeamIds, 'Competition participantTeamIds').map((id) => teamIdFromString(string(id, 'Competition team id'))), ...(v.rules === undefined ? {} : { rules: readCompetitionRules(v.rules) }) }) }
+function readCompetition(value: unknown) { const v = record(value, 'Competition'); return createCompetition({ id: competitionIdFromString(string(v.id, 'Competition id')), name: string(v.name, 'Competition name'), gender: gender(v.gender), participantTeamIds: array(v.participantTeamIds, 'Competition participantTeamIds').map((id) => teamIdFromString(string(id, 'Competition team id'))), ...(v.rules === undefined ? {} : { rules: readCompetitionRules(v.rules) }), ...(v.ecosystemId === undefined ? {} : { ecosystemId: ecosystemIdFromString(string(v.ecosystemId, 'Competition ecosystem id')) }) }) }
+function readEcosystem(value: unknown) { const v = record(value, 'Sports ecosystem'); return createSportsEcosystem({ id: ecosystemIdFromString(string(v.id, 'Sports ecosystem id')), name: string(v.name, 'Sports ecosystem name'), kind: string(v.kind, 'Sports ecosystem kind') as 'fibaLike' }) }
 function readCompetitionRules(value: unknown) { const v = record(value, 'Competition rules'); const schedule = record(v.schedule, 'Competition schedule rules'); const standings = record(v.standings, 'Competition standings rules'); return createCompetitionRules({ format: string(v.format, 'Competition format') as 'leagueRoundRobin', schedule: { meetingsPerPair: integer(schedule.meetingsPerPair, 'Competition meetings per pair'), homeAwayBalance: string(schedule.homeAwayBalance, 'Competition home/away balance') as 'equal' }, standings: { tiebreakers: array(standings.tiebreakers, 'Competition tiebreakers').map((item) => string(item, 'Competition tiebreaker') as import('@/domain/competition').StandingsTiebreaker) }, completion: string(v.completion, 'Competition completion rule') as 'allScheduledGamesCompleted', champion: string(v.champion, 'Competition champion rule') as 'standingsLeader' }) }
 function readSeason(value: unknown) { const v = record(value, 'Season'); return createSeason({ id: seasonIdFromString(string(v.id, 'Season id')), competitionId: competitionIdFromString(string(v.competitionId, 'Season competitionId')), label: string(v.label, 'Season label'), startDate: parseGameDate(string(v.startDate, 'Season startDate')), endDate: parseGameDate(string(v.endDate, 'Season endDate')) }) }
 function readGame(value: unknown) { const v = record(value, 'Game'); const status = string(v.status, 'Game status'); const result = v.result === null ? null : record(v.result, 'Game result'); return createGame({ id: gameIdFromString(string(v.id, 'Game id')), seasonId: seasonIdFromString(string(v.seasonId, 'Game seasonId')), competitionId: competitionIdFromString(string(v.competitionId, 'Game competitionId')), date: parseGameDate(string(v.date, 'Game date')), homeTeamId: teamIdFromString(string(v.homeTeamId, 'Game homeTeamId')), awayTeamId: teamIdFromString(string(v.awayTeamId, 'Game awayTeamId')), status: status === 'scheduled' || status === 'completed' ? status : fail('Game status is invalid'), result: result === null ? null : { homeScore: integer(result.homeScore, 'Game homeScore'), awayScore: integer(result.awayScore, 'Game awayScore') } }) }

@@ -9,19 +9,16 @@ import { reconcileExpiredPlayerContracts } from '@/engine/market'
 import { maintainAiTeamMinimumRosters } from '@/app/market'
 import { getCurrentSeason } from './selectors'
 
-/** Starts the next concurrent edition of every current competition. */
+/** Starts the next edition of the current competition without synchronizing others. */
 export function startNextSeason(world: GameWorld): GameWorld {
   const primary = getCurrentSeason(world)
   if (!isSeasonComplete(world, primary.id)) throw new Error('Current season is not complete')
-  const previous = Object.values(world.seasons).filter((season) => season.startDate === primary.startDate && season.endDate === primary.endDate)
-  if (previous.some((season) => getSeasonHistoryRecord(world, season.id) === undefined)) throw new Error('Current season requires a history record')
-  const ids = nextSeasonIds(world, previous.length)
-  const next = previous.sort((a, b) => a.competitionId.localeCompare(b.competitionId)).map((season, index) => createSeason({ id: ids[index]!, competitionId: season.competitionId, label: `${formatGameDate(addYears(season.startDate, 1))} to ${formatGameDate(addYears(season.endDate, 1))}`, startDate: addYears(season.startDate, 1), endDate: addYears(season.endDate, 1) }))
-  const nextPrimary = next.find((season) => season.competitionId === primary.competitionId)!
+  if (getSeasonHistoryRecord(world, primary.id) === undefined) throw new Error('Current season requires a history record')
+  const nextPrimary = createSeason({ id: nextSeasonIds(world, 1)[0]!, competitionId: primary.competitionId, label: `${formatGameDate(addYears(primary.startDate, 1))} to ${formatGameDate(addYears(primary.endDate, 1))}`, startDate: addYears(primary.startDate, 1), endDate: addYears(primary.endDate, 1) })
   const developed = applyOffseasonDevelopment(world, { fromSeasonId: primary.id, toSeasonId: nextPrimary.id, targetDate: nextPrimary.startDate }).world
-  const staged = rebuild(developed, [...Object.values(developed.seasons), ...next], nextPrimary.id, Object.values(developed.games))
-  const schedule = next.flatMap((season) => generateRoundRobinSchedule({ world: staged, seasonId: season.id, ...(season.id === nextPrimary.id ? {} : { startDate: addDays(season.startDate, 60) }) }))
-  return maintainAiTeamMinimumRosters(reconcileExpiredPlayerContracts(rebuild(developed, [...Object.values(developed.seasons), ...next], nextPrimary.id, [...Object.values(developed.games), ...schedule]), nextPrimary.startDate)).world
+  const staged = rebuild(developed, [...Object.values(developed.seasons), nextPrimary], nextPrimary.id, Object.values(developed.games))
+  const schedule = generateRoundRobinSchedule({ world: staged, seasonId: nextPrimary.id })
+  return maintainAiTeamMinimumRosters(reconcileExpiredPlayerContracts(rebuild(developed, [...Object.values(developed.seasons), nextPrimary], nextPrimary.id, [...Object.values(developed.games), ...schedule]), nextPrimary.startDate)).world
 }
 
 function nextSeasonIds(world: GameWorld, count: number) { let ordinal = Object.keys(world.seasons).length + 1; const ids = []; while (ids.length < count) { const id = seasonIdFromString(`generated-season-${ordinal.toString().padStart(4, '0')}`); if (world.seasons[id] === undefined) ids.push(id); ordinal += 1 } return ids }

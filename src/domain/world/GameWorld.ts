@@ -1,11 +1,13 @@
 import type { Coach } from '@/domain/coach'
 import type { Competition } from '@/domain/competition'
+import { createSportsEcosystem, DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, type SportsEcosystem } from '@/domain/ecosystem'
 import type { Country } from '@/domain/country'
 import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import type { Game } from '@/domain/game'
 import type {
   CoachId,
   CompetitionId,
+  EcosystemId,
   CountryId,
   GameId,
   PlayerId,
@@ -51,6 +53,7 @@ export interface GameWorld {
   readonly players: Readonly<Record<PlayerId, Player>>
   readonly teams: Readonly<Record<TeamId, Team>>
   readonly competitions: Readonly<Record<CompetitionId, Competition>>
+  readonly ecosystems: Readonly<Record<EcosystemId, SportsEcosystem>>
   readonly seasons: Readonly<Record<SeasonId, Season>>
   readonly games: Readonly<Record<GameId, Game>>
   readonly matchStatLogsByGameId: Readonly<Record<GameId, MatchStatLog>>
@@ -91,6 +94,7 @@ export interface CreateGameWorldInput {
   players: readonly Player[]
   teams: readonly Team[]
   competitions: readonly Competition[]
+  ecosystems?: readonly SportsEcosystem[] | Readonly<Record<EcosystemId, SportsEcosystem>>
   seasons: readonly Season[]
   games: readonly Game[]
   matchStatLogs?: readonly MatchStatLog[]
@@ -134,6 +138,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
   const currentSeasonId = input.currentSeasonId ?? selectLegacyCurrentSeasonId(seasons)
   const currentDate = parseGameDate(input.currentDate)
   const employment = coachCareerForCoaches(input.coaches, input.teams, currentDate, input.coachEmploymentByCoachId, input.coachCareerHistoryByCoachId)
+  const ecosystems = input.ecosystems === undefined ? [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike' })] : Array.isArray(input.ecosystems) ? input.ecosystems : Object.values(input.ecosystems)
   const world: GameWorld = {
     schemaVersion: GAME_WORLD_SCHEMA_VERSION,
     currentDate,
@@ -144,6 +149,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     players: indexById(input.players, 'Player'),
     teams: indexById(input.teams, 'Team'),
     competitions: indexById(input.competitions, 'Competition'),
+    ecosystems: indexById(ecosystems, 'Sports ecosystem'),
     seasons,
     games: indexById(input.games, 'Game'),
     matchStatLogsByGameId: indexLogsByGameId(input.matchStatLogs ?? []),
@@ -218,6 +224,7 @@ function validateWorld(world: GameWorld): void {
   }
 
   for (const competition of Object.values(world.competitions)) {
+    requireEntity(world.ecosystems, competition.ecosystemId, `Competition ${competition.id} ecosystem`)
     for (const teamId of competition.participantTeamIds) {
       const team = requireEntity(world.teams, teamId, `Competition ${competition.id} participant`)
       if (team.gender !== competition.gender) {

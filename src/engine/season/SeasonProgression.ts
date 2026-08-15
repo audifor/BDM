@@ -8,7 +8,7 @@ import { applySeasonChampionCoachReputation } from '@/engine/coach'
 export function isSeasonComplete(world: GameWorld, seasonId: keyof GameWorld['seasons']): boolean {
   const season = world.seasons[seasonId]
   if (season === undefined) throw new Error(`Season does not exist: ${seasonId}`)
-  return Object.values(world.seasons).filter((candidate) => candidate.startDate === season.startDate && candidate.endDate === season.endDate).every((candidate) => isCompetitionComplete(world, candidate.competitionId))
+  return isCompetitionComplete(world, season.competitionId)
 }
 
 export function isCompetitionComplete(world: GameWorld, competitionId: CompetitionId): boolean {

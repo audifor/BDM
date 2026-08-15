@@ -8,6 +8,7 @@ export type CoachId = EntityId<'CoachId'>
 export type PlayerId = EntityId<'PlayerId'>
 export type TeamId = EntityId<'TeamId'>
 export type CompetitionId = EntityId<'CompetitionId'>
+export type EcosystemId = EntityId<'EcosystemId'>
 export type SeasonId = EntityId<'SeasonId'>
 export type GameId = EntityId<'GameId'>
 export type InjuryId = EntityId<'InjuryId'>
@@ -42,6 +43,7 @@ export const playerIdFromString = (value: string): PlayerId => idFromString<Play
 export const teamIdFromString = (value: string): TeamId => idFromString<TeamId>(value, 'TeamId')
 export const competitionIdFromString = (value: string): CompetitionId =>
   idFromString<CompetitionId>(value, 'CompetitionId')
+export const ecosystemIdFromString = (value: string): EcosystemId => idFromString<EcosystemId>(value, 'EcosystemId')
 export const seasonIdFromString = (value: string): SeasonId => idFromString<SeasonId>(value, 'SeasonId')
 export const gameIdFromString = (value: string): GameId => idFromString<GameId>(value, 'GameId')
 export const injuryIdFromString = (value: string): InjuryId => idFromString<InjuryId>(value, 'InjuryId')

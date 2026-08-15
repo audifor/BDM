@@ -1,6 +1,7 @@
 export {
   coachIdFromString,
   competitionIdFromString,
+  ecosystemIdFromString,
   countryIdFromString,
   createCoachId,
   createCompetitionId,
@@ -27,6 +28,7 @@ export {
 export type {
   CoachId,
   CompetitionId,
+  EcosystemId,
   CountryId,
   GameId,
   InjuryId,

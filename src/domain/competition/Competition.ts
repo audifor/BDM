@@ -1,4 +1,5 @@
-import type { CompetitionId, TeamId } from '@/domain/ids'
+import type { CompetitionId, EcosystemId, TeamId } from '@/domain/ids'
+import { DEFAULT_FIBA_LIKE_ECOSYSTEM_ID } from '@/domain/ecosystem'
 import { requireGender, type Gender } from '@/domain/primitives'
 import { copyUniqueIds, requireNonEmptyString } from '@/domain/validation'
 import { createCompetitionRules, defaultLeagueCompetitionRules, type CompetitionRules } from './CompetitionRules'
@@ -9,6 +10,7 @@ export interface Competition {
   readonly gender: Gender
   readonly participantTeamIds: readonly TeamId[]
   readonly rules: CompetitionRules
+  readonly ecosystemId: EcosystemId
 }
 
 export interface CreateCompetitionInput {
@@ -17,6 +19,7 @@ export interface CreateCompetitionInput {
   gender: Gender
   participantTeamIds: readonly TeamId[]
   rules?: CompetitionRules
+  ecosystemId?: EcosystemId
 }
 
 export function createCompetition(input: CreateCompetitionInput): Competition {
@@ -26,5 +29,6 @@ export function createCompetition(input: CreateCompetitionInput): Competition {
     gender: requireGender(input.gender),
     participantTeamIds: copyUniqueIds(input.participantTeamIds, 'Competition participant team ids'),
     rules: createCompetitionRules(input.rules ?? defaultLeagueCompetitionRules),
+    ecosystemId: input.ecosystemId ?? DEFAULT_FIBA_LIKE_ECOSYSTEM_ID,
   }
 }
