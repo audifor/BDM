@@ -1,0 +1,34 @@
+import type { GameWorld } from '@/domain/world'
+import type { CoachPerkId, CoachSkillId, PlayerId, TeamId } from '@/domain/ids'
+import type { MatchTacticalPlan } from '@/engine/match'
+import type { TrainingFocus, TrainingIntensity } from '@/domain/training'
+import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
+import { getCareerFatigueForPlayer, getTeamRoster, isPlayerAvailable } from '@/domain/world'
+import { CoachScreen, MarketScreen, ScheduleScreen, SquadScreen, StaffScreen, StandingsScreen, TacticsScreen, TrainingScreen } from '@/ui/screens'
+import { getDesktopApp } from './DesktopAppRegistry'
+
+export function DesktopAppHost({ appId, world, actions }: { readonly appId: string; readonly world: GameWorld; readonly actions: DesktopAppActions }) {
+  const key = getDesktopApp(appId)?.renderKey
+  if (key === 'squad') return <SquadScreen world={world} />
+  if (key === 'schedule') return <ScheduleScreen onOpenMatchCenter={() => actions.openApp('match')} world={world} />
+  if (key === 'standings') return <StandingsScreen world={world} />
+  if (key === 'training') return <TrainingScreen world={world} onFocus={actions.setTrainingFocus} onIntensity={actions.setTrainingIntensity} />
+  if (key === 'staff') return <StaffScreen world={world} />
+  if (key === 'coach') return <CoachScreen world={world} onAcceptOffer={actions.acceptOffer} onDeclineOffer={actions.declineOffer} onPerk={actions.purchasePerk} onSkill={actions.purchaseSkill} />
+  if (key === 'tactics') { const team = getUserTeam(world); return <TacticsScreen onChange={actions.setTacticalPlan} onReset={actions.resetTacticalPlan} plan={actions.tacticalPlan} players={team === undefined ? [] : team.rosterPlayerIds.map((id) => world.players[id]!)} /> }
+  if (key === 'market') return <MarketScreen world={world} onSign={(playerId) => { const team = getUserTeam(world); if (team !== undefined) actions.signFreeAgent(team.id, playerId) }} />
+  if (key === 'match') return <MatchCenterApp world={world} onAdvanceDay={actions.advanceDay} onInstantResult={actions.instantResult} onOpenApp={actions.openApp} onPlayGame={actions.playGame} onSimulateRemaining={actions.simulateRemainingGamesToday} />
+  return <section className="content-panel">Esta aplicación no está disponible.</section>
+}
+export interface DesktopAppActions { readonly tacticalPlan: MatchTacticalPlan; readonly openApp: (id: string) => void; readonly playGame: () => void; readonly instantResult: () => void; readonly simulateRemainingGamesToday: () => void; readonly advanceDay: () => void; readonly startNextSeason: () => void; readonly releasePlayer: (teamId: TeamId, playerId: PlayerId) => void; readonly signFreeAgent: (teamId: TeamId, playerId: PlayerId) => void; readonly purchaseSkill: (id: CoachSkillId) => void; readonly purchasePerk: (id: CoachPerkId) => void; readonly acceptOffer: (id: string) => void; readonly declineOffer: (id: string) => void; readonly setTacticalPlan: (plan: MatchTacticalPlan) => void; readonly resetTacticalPlan: () => void; readonly setTrainingIntensity: (value: TrainingIntensity) => void; readonly setTrainingFocus: (value: TrainingFocus) => void }
+
+function MatchCenterApp({ world, onAdvanceDay, onInstantResult, onOpenApp, onPlayGame, onSimulateRemaining }: { readonly world: GameWorld; readonly onAdvanceDay: () => void; readonly onInstantResult: () => void; readonly onOpenApp: (id: string) => void; readonly onPlayGame: () => void; readonly onSimulateRemaining: () => void }) {
+  const team = getUserTeam(world); const next = getNextUserGame(world); const today = team === undefined ? undefined : getGamesToday(world).find((game) => game.homeTeamId === team.id || game.awayTeamId === team.id)
+  if (team === undefined) return <section className="content-panel">El entrenador de usuario no tiene equipo asignado.</section>
+  const game = today ?? next
+  if (game === undefined) return <section className="screen"><div className="page-heading"><div><p className="eyebrow">Centro de partido</p><h1>No hay partido programado</h1></div></div><button className="primary-button" onClick={onAdvanceDay} type="button">Avanzar día</button></section>
+  const opponent = world.teams[game.homeTeamId === team.id ? game.awayTeamId : game.homeTeamId]!
+  const isToday = game.date === world.currentDate && game.status === 'scheduled'
+  const venue = game.homeTeamId === team.id ? 'Local' : 'Visitante'
+  return <section className="match-center-app"><header className="match-center-app__hero"><p className="eyebrow">Centro de partido</p><div><strong>{team.name}</strong><span>VS</span><strong>{opponent.name}</strong></div><p>{game.date} · {venue}</p></header><article className="match-center-app__actions"><p>{isToday ? 'Día de partido. El entrenamiento no se ejecuta hoy.' : 'Tu próximo partido programado.'}</p>{isToday && <div className="game-actions"><button className="primary-button" onClick={onPlayGame} type="button">Jugar partido</button><button className="secondary-button" onClick={onInstantResult} type="button">Resultado instantáneo</button><button className="secondary-button" onClick={onSimulateRemaining} type="button">Simular otros partidos</button></div>}<button className="text-button" onClick={onAdvanceDay} type="button">Avanzar día</button></article><nav aria-label="Accesos de partido" className="match-center-app__links"><button onClick={() => onOpenApp('squad')} type="button">Abrir plantilla</button><button onClick={() => onOpenApp('training')} type="button">Abrir entrenamiento</button><button onClick={() => onOpenApp('standings')} type="button">Abrir liga</button></nav><section className="match-center-app__readiness table-wrap"><p className="eyebrow">Disponibilidad de plantilla</p><table><thead><tr><th>JUGADOR</th><th>POS</th><th>FATIGA DE CARRERA</th><th>DISPONIBLE</th></tr></thead><tbody>{getTeamRoster(world, team.id).map((player) => <tr key={player.id}><td>{player.firstName} {player.lastName}</td><td>{player.basketball.primaryPosition}</td><td>{getCareerFatigueForPlayer(world, player.id)}</td><td>{isPlayerAvailable(world, player.id) ? 'Disponible' : 'No disponible'}</td></tr>)}</tbody></table></section></section>
+}

@@ -1,31 +1,320 @@
-import { getCurrentSeason } from '@/app/game'
-import { getPlayerAge, getPlayerPotentialBand } from '@/domain/player'
-import { getPlayerBasketballKnowledgeView, getPlayerKnowledge, getTeamFinancialSnapshot, getTeamRoster } from '@/domain/world'
-import { getUserTeam } from '@/engine/calendar'
-import { calculatePlayerStatAverages, getPlayerCareerStats, getPlayerGameLogs, getPlayerSeasonStats } from '@/engine/stats/PlayerHistory'
-import { formatKnownRating, formatMoney, formatPercentage } from '@/ui/formatters'
+import { useMemo, useState } from "react";
 
-interface SquadScreenProps { readonly world: Parameters<typeof getUserTeam>[0]; readonly onRelease?: (playerId: ReturnType<typeof getTeamRoster>[number]['id']) => void }
+import {
+  BASKETBALL_RATING_KEYS,
+  getPlayerAge,
+  type BasketballRatingKey,
+  type Player,
+} from "@/domain/player";
+import {
+  getCareerFatigueForPlayer,
+  getDevelopmentStimulusForPlayer,
+  getTeamRoster,
+} from "@/domain/world";
+import { getUserTeam } from "@/engine/calendar";
+import { createEntityRef } from "@/app/entityActions/EntityRef";
+import { useEntityActions } from "@/ui/entityActions/useEntityActions";
+import { useGameStore } from "@/stores/gameStore";
+import { Progress, Tooltip } from "@/ui/components/primitives";
+import { ATTRIBUTE_LABELS } from "@/ui/attributeLabels";
 
-export function SquadScreen({ world, onRelease = () => undefined }: SquadScreenProps) {
-  const team = getUserTeam(world)
-  if (team === undefined) return null
-  const order = { PG: 0, SG: 1, SF: 2, PF: 3, C: 4 } as const
-  const roster = [...getTeamRoster(world, team.id)].sort((a, b) => order[a.basketball.primaryPosition] - order[b.basketball.primaryPosition] || a.lastName.localeCompare(b.lastName) || a.id.localeCompare(b.id))
-  const season = getCurrentSeason(world)
-  const finances = getTeamFinancialSnapshot(world, team.id)
+type PositionFilter = "ALL" | Player["basketball"]["primaryPosition"];
+type SortKey = "name" | "position" | "age" | "fatigue" | BasketballRatingKey;
+type SortDirection = "ascending" | "descending";
+const labels: Record<BasketballRatingKey, [string, string]> = {
+  finishing: ["FIN", ATTRIBUTE_LABELS.finishing],
+  shooting: ["SHO", ATTRIBUTE_LABELS.shooting],
+  playmaking: ["PLA", ATTRIBUTE_LABELS.playmaking],
+  perimeterDefense: ["PDE", ATTRIBUTE_LABELS.perimeterDefense],
+  interiorDefense: ["IDE", ATTRIBUTE_LABELS.interiorDefense],
+  rebounding: ["REB", ATTRIBUTE_LABELS.rebounding],
+  athleticism: ["ATH", ATTRIBUTE_LABELS.athleticism],
+};
 
-  return <section className="screen">
-    <p className="content-panel">MORALE: {roster.map((player) => `${player.lastName} ${world.moraleByPersonId[player.id]!.value} ${world.moraleByPersonId[player.id]!.value < 20 ? 'Very Low' : world.moraleByPersonId[player.id]!.value < 40 ? 'Low' : world.moraleByPersonId[player.id]!.value <= 60 ? 'Stable' : world.moraleByPersonId[player.id]!.value <= 80 ? 'Good' : 'Excellent'}`).join(' · ')}</p>
-    <div className="page-heading"><div><p className="eyebrow">SQUAD</p><h1>{team.name}</h1></div><span>{roster.length} PLAYERS</span></div>
-    <section className="content-panel squad-finances"><p className="eyebrow">PLAYER SALARY FINANCES</p><dl><div><dt>SALARY BUDGET</dt><dd>{formatMoney(finances.playerSalaryBudget)}</dd></div><div><dt>PAYROLL</dt><dd>{formatMoney(finances.currentPlayerPayroll)}</dd></div><div><dt>REMAINING</dt><dd>{formatMoney(finances.remainingPlayerSalaryBudget)}</dd></div><div><dt>BUDGET USED</dt><dd>{formatPercentage(finances.budgetUsageRatio)}</dd></div><div><dt>STATUS</dt><dd>{finances.status === 'overBudget' ? 'OVER BUDGET' : finances.status.toUpperCase()}</dd></div></dl></section>
-    <div className="content-panel table-wrap"><table><thead><tr><th>NAME</th><th>POS</th><th>AGE</th><th>POT</th><th>KNOWLEDGE</th><th>HT</th><th>WT</th><th>FIN</th><th>SHT</th><th>PLY</th><th>PER D</th><th>INT D</th><th>REB</th><th>ATH</th><th>ACTION</th></tr></thead><tbody>{roster.map((player) => { const ratings = getPlayerBasketballKnowledgeView(world, team.id, player.id); const knowledge=getPlayerKnowledge(world,team.id,player.id); const confidence=knowledge===undefined?'UNKNOWN':ratings.finishing.status==='estimated'?ratings.finishing.confidence.toUpperCase():'UNKNOWN'; return <tr key={player.id}><td>{player.firstName} {player.lastName}</td><td>{player.basketball.primaryPosition}</td><td>{getPlayerAge(world, player.id)}</td><td>{getPlayerPotentialBand(player.potential).toUpperCase()}</td><td>{confidence}</td><td>{player.bio.heightCm} cm</td><td>{player.bio.weightKg} kg</td><td>{formatKnownRating(ratings.finishing)}</td><td>{formatKnownRating(ratings.shooting)}</td><td>{formatKnownRating(ratings.playmaking)}</td><td>{formatKnownRating(ratings.perimeterDefense)}</td><td>{formatKnownRating(ratings.interiorDefense)}</td><td>{formatKnownRating(ratings.rebounding)}</td><td>{formatKnownRating(ratings.athleticism)}</td><td><button type="button" onClick={() => { if (window.confirm(`Release ${player.firstName} ${player.lastName}?`)) onRelease(player.id) }}>RELEASE</button></td></tr> })}</tbody></table></div>
-    <div className="content-panel table-wrap"><p className="eyebrow">SEASON STATS</p><table><thead><tr><th>PLAYER</th><th>GP</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>TO</th><th>FG%</th><th>3P%</th><th>FT%</th></tr></thead><tbody>{roster.map((player) => { const stats = getPlayerSeasonStats(world, player.id, season.id); const averages = calculatePlayerStatAverages(stats); return <tr key={player.id}><td>{player.lastName}</td><td>{stats.gamesPlayed}</td><td>{averages.mpg.toFixed(1)}</td><td>{averages.ppg.toFixed(1)}</td><td>{averages.rpg.toFixed(1)}</td><td>{averages.apg.toFixed(1)}</td><td>{averages.spg.toFixed(1)}</td><td>{averages.bpg.toFixed(1)}</td><td>{averages.turnoversPerGame.toFixed(1)}</td><td>{averages.fieldGoalPercentage.toFixed(1)}%</td><td>{averages.threePointPercentage.toFixed(1)}%</td><td>{averages.freeThrowPercentage.toFixed(1)}%</td></tr> })}</tbody></table></div>
-    <section className="content-panel"><p className="eyebrow">PLAYER HISTORY</p>{roster.map((player) => <PlayerHistory key={player.id} world={world} player={player} />)}</section>
-  </section>
+export function filterAndSortRoster(
+  world: Parameters<typeof getUserTeam>[0],
+  players: readonly Player[],
+  query: string,
+  position: PositionFilter,
+  sortKey: SortKey,
+  direction: SortDirection,
+) {
+  const search = query.trim().toLocaleLowerCase();
+  const multiplier = direction === "ascending" ? 1 : -1;
+  return players
+    .filter(
+      (player) =>
+        (position === "ALL" ||
+          player.basketball.primaryPosition === position) &&
+        `${player.firstName} ${player.lastName}`
+          .toLocaleLowerCase()
+          .includes(search),
+    )
+    .slice()
+    .sort((left, right) => {
+      const a = value(world, left, sortKey);
+      const b = value(world, right, sortKey);
+      return (
+        (typeof a === "string"
+          ? a.localeCompare(b as string)
+          : a - (b as number)) * multiplier || left.id.localeCompare(right.id)
+      );
+    });
 }
 
-function PlayerHistory({ world, player }: { readonly world: Parameters<typeof getUserTeam>[0]; readonly player: ReturnType<typeof getTeamRoster>[number] }) {
-  const stats = getPlayerCareerStats(world, player.id); const career = calculatePlayerStatAverages(stats); const logs = getPlayerGameLogs(world, player.id)
-  return <details><summary>{player.firstName} {player.lastName} · Career GP {stats.gamesPlayed} · {career.ppg.toFixed(1)} PPG</summary><p>{player.basketball.primaryPosition} · {getPlayerAge(world, player.id)} years · {player.bio.heightCm} cm · {player.bio.weightKg} kg · Born {player.bio.dateOfBirth}</p><div className="table-wrap"><table><thead><tr><th>DATE</th><th>OPP</th><th>RESULT</th><th>MIN</th><th>PTS</th><th>2P</th><th>3P</th><th>FT</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>TO</th><th>PF</th><th>+/-</th></tr></thead><tbody>{logs.map((log) => { const won = log.isHome ? log.finalScore.home > log.finalScore.away : log.finalScore.away > log.finalScore.home; const line = log.stats; return <tr key={log.gameId}><td>{log.gameDate}</td><td>{log.isHome ? 'vs ' : '@ '}{world.teams[log.opponentTeamId]!.name}</td><td>{won ? 'W' : 'L'} {log.isHome ? `${log.finalScore.home}-${log.finalScore.away}` : `${log.finalScore.away}-${log.finalScore.home}`}</td><td>{Math.floor(line.secondsPlayed / 60)}:{String(line.secondsPlayed % 60).padStart(2, '0')}</td><td>{line.points}</td><td>{line.twoPointMade}/{line.twoPointAttempted}</td><td>{line.threePointMade}/{line.threePointAttempted}</td><td>{line.freeThrowsMade}/{line.freeThrowsAttempted}</td><td>{line.rebounds}</td><td>{line.assists}</td><td>{line.steals}</td><td>{line.blocks}</td><td>{line.turnovers}</td><td>{line.foulsCommitted}</td><td>{line.plusMinus > 0 ? `+${line.plusMinus}` : line.plusMinus}</td></tr> })}</tbody></table></div></details>
+export function SquadScreen({
+  world,
+  selectedPlayerId: initialSelected,
+}: {
+  readonly world: Parameters<typeof getUserTeam>[0];
+  readonly selectedPlayerId?: Player["id"];
+}) {
+  const team = getUserTeam(world);
+  const [query, setQuery] = useState("");
+  const [position, setPosition] = useState<PositionFilter>("ALL");
+  const [sortKey, setSortKey] = useState<SortKey>("position");
+  const [direction, setDirection] = useState<SortDirection>("ascending");
+  const [selectedId, setSelectedId] = useState<Player["id"] | undefined>(
+    () =>
+      initialSelected ??
+      (team === undefined ? undefined : getTeamRoster(world, team.id)[0]?.id),
+  );
+  const roster = team === undefined ? [] : getTeamRoster(world, team.id);
+  const visible = useMemo(
+    () =>
+      filterAndSortRoster(world, roster, query, position, sortKey, direction),
+    [world, roster, query, position, sortKey, direction],
+  );
+  const selected = visible.find((player) => player.id === selectedId);
+  const sort = (key: SortKey) => {
+    if (key === sortKey)
+      setDirection((current) =>
+        current === "ascending" ? "descending" : "ascending",
+      );
+    else {
+      setSortKey(key);
+      setDirection("ascending");
+    }
+  };
+  if (team === undefined)
+    return (
+      <section className="squad-app squad-app--empty">
+        No team assigned to the user coach.
+      </section>
+    );
+  return (
+    <section className="squad-app">
+      <div className="squad-app__tools">
+        <TeamActionHeader teamId={team.id} teamName={team.name} world={world} />
+        <label>
+          Search players
+          <input
+            aria-label="Search players"
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search by name"
+            type="search"
+            value={query}
+          />
+        </label>
+        <label>
+          Position
+          <select
+            aria-label="Filter by position"
+            onChange={(event) =>
+              setPosition(event.target.value as PositionFilter)
+            }
+            value={position}
+          >
+            {(["ALL", "PG", "SG", "SF", "PF", "C"] as const).map((item) => (
+              <option key={item} value={item}>
+                {item === "ALL" ? "All positions" : item}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="squad-app__layout">
+        <div className="squad-app__table-wrap">
+          <table className="squad-app__table">
+            <thead>
+              <tr>
+                <Header
+                  active={sortKey === "position"}
+                  direction={direction}
+                  label="POS"
+                  onClick={() => sort("position")}
+                />
+                <Header
+                  active={sortKey === "name"}
+                  direction={direction}
+                  label="PLAYER"
+                  onClick={() => sort("name")}
+                />
+                <Header
+                  active={sortKey === "age"}
+                  direction={direction}
+                  label="AGE"
+                  onClick={() => sort("age")}
+                />
+                {BASKETBALL_RATING_KEYS.map((key) => (
+                  <th
+                    aria-sort={sortKey === key ? direction : "none"}
+                    key={key}
+                  >
+                    <Tooltip content={labels[key][1]}>
+                      <button
+                        aria-label={`Sort by ${labels[key][1]}`}
+                        onClick={() => sort(key)}
+                        type="button"
+                      >
+                        {labels[key][0]}
+                        {sortKey === key
+                          ? direction === "ascending"
+                            ? " ↑"
+                            : " ↓"
+                          : ""}
+                      </button>
+                    </Tooltip>
+                  </th>
+                ))}
+                <Header
+                  active={sortKey === "fatigue"}
+                  direction={direction}
+                  label="FAT"
+                  onClick={() => sort("fatigue")}
+                />
+              </tr>
+            </thead>
+            <tbody>
+              {visible.length === 0 ? (
+                <tr>
+                  <td colSpan={11}>No players match the current filters.</td>
+                </tr>
+              ) : (
+                visible.map((player) => <PlayerRow key={player.id} player={player} selected={player.id === selectedId} onSelect={() => setSelectedId(player.id)} world={world} />)
+              )}
+            </tbody>
+          </table>
+        </div>
+        <Inspector player={selected} world={world} />
+      </div>
+    </section>
+  );
+}
+
+function TeamActionHeader({ teamId, teamName, world }: { readonly teamId: string; readonly teamName: string; readonly world: Parameters<typeof getUserTeam>[0] }) {
+  const target = useEntityActions(createEntityRef('team', teamId), { world, controlledTeamId: getUserTeam(world)?.id })
+  return <div {...target}><p className="eyebrow">ROSTER</p><h1>{teamName}</h1></div>
+}
+
+function PlayerRow({ player, selected, onSelect, world }: { readonly player: Player; readonly selected: boolean; readonly onSelect: () => void; readonly world: Parameters<typeof getUserTeam>[0] }) {
+  const activeMatchSession = useGameStore((state) => state.getActiveMatchSession())
+  const target = useEntityActions(createEntityRef('player', player.id), { world, controlledTeamId: getUserTeam(world)?.id, activeMatchSession: activeMatchSession ?? undefined })
+  return <tr {...target} aria-selected={selected} className={selected ? "is-selected" : ""} onClick={onSelect} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect() } }} tabIndex={0}>
+    <td>{player.basketball.primaryPosition}</td><td><span className="squad-app__initials">{player.firstName[0]}{player.lastName[0]}</span>{player.firstName} {player.lastName}</td><td>{getPlayerAge(world, player.id)}</td>{BASKETBALL_RATING_KEYS.map((key) => <td className={ratingClass(player.basketball.ratings[key])} key={key}>{player.basketball.ratings[key]}</td>)}<td>{getCareerFatigueForPlayer(world, player.id)}</td>
+  </tr>
+}
+
+function Header({
+  active,
+  direction,
+  label,
+  onClick,
+}: {
+  readonly active: boolean;
+  readonly direction: SortDirection;
+  readonly label: string;
+  readonly onClick: () => void;
+}) {
+  return (
+    <th aria-sort={active ? direction : "none"}>
+      <button onClick={onClick} type="button">
+        {label}
+        {active ? (direction === "ascending" ? " ↑" : " ↓") : ""}
+      </button>
+    </th>
+  );
+}
+function Inspector({
+  player,
+  world,
+}: {
+  readonly player: Player | undefined;
+  readonly world: Parameters<typeof getUserTeam>[0];
+}) {
+  if (player === undefined)
+    return (
+      <aside className="squad-app__inspector">
+        <p className="eyebrow">PLAYER INSPECTOR</p>
+        <p>
+          Select a player to inspect real ratings, fatigue and development
+          stimulus.
+        </p>
+      </aside>
+    );
+  const stimulus = getDevelopmentStimulusForPlayer(world, player.id);
+  const fatigue = getCareerFatigueForPlayer(world, player.id);
+  return (
+    <aside className="squad-app__inspector">
+      <p className="eyebrow">PLAYER INSPECTOR</p>
+      <h2>
+        {player.firstName} {player.lastName}
+      </h2>
+      <p>
+        {player.basketball.primaryPosition} · Age{" "}
+        {getPlayerAge(world, player.id)}
+      </p>
+      <dl>
+        {BASKETBALL_RATING_KEYS.map((key) => (
+          <div key={key}>
+            <dt>{labels[key][0]}</dt>
+            <dd className={ratingClass(player.basketball.ratings[key])}>
+              {player.basketball.ratings[key]}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <section>
+        <h3>Career Fatigue</h3>
+        <strong>{fatigue} / 100</strong>
+        <Progress label="Career Fatigue" value={fatigue} />
+      </section>
+      <section>
+        <h3>Development stimulus</h3>
+        <p>Accumulated development stimulus, not a rating.</p>
+        {stimulus === undefined ? (
+          <p>No accumulated stimulus.</p>
+        ) : (
+          <dl>
+            {BASKETBALL_RATING_KEYS.map((key) => (
+              <div key={key}>
+                <dt>{labels[key][0]}</dt>
+                <dd>{stimulus.byRating[key].toFixed(1)}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </section>
+    </aside>
+  );
+}
+function value(
+  world: Parameters<typeof getUserTeam>[0],
+  player: Player,
+  key: SortKey,
+): string | number {
+  if (key === "name") return `${player.lastName} ${player.firstName}`;
+  if (key === "position") return player.basketball.primaryPosition;
+  if (key === "age") return getPlayerAge(world, player.id);
+  if (key === "fatigue") return getCareerFatigueForPlayer(world, player.id);
+  return player.basketball.ratings[key];
+}
+function ratingClass(rating: number) {
+  return rating >= 80
+    ? "rating rating--elite"
+    : rating >= 65
+      ? "rating rating--strong"
+      : rating < 45
+        ? "rating rating--weak"
+        : "rating";
 }

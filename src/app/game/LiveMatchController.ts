@@ -25,9 +25,18 @@ export class LiveMatchController {
   }
   public applyTactics(teamId: MatchSession['state']['homeTeamId'], tacticalPlan: MatchTacticalPlan): MatchSimulation { this.session = applyTacticalPlanChange(this.session, { teamId, tacticalPlan }); return this.snapshot() }
   public applyManualSubstitutions(teamId: MatchSession['state']['homeTeamId'], substitutions: readonly ManualSubstitution[]): MatchSimulation { this.session = applyManualSubstitutions(this.session, { teamId, substitutions }); return this.snapshot() }
+  public applySubstitution(teamId: MatchSession['state']['homeTeamId'], playerOutId: MatchSession['state']['activeLineups']['home'][number], playerInId: MatchSession['state']['activeLineups']['home'][number]): MatchSimulation { return this.applyManualSubstitutions(teamId, [{ playerOutId, playerInId }]) }
+  public replacementCandidates(teamId: MatchSession['state']['homeTeamId'], playerOutId: MatchSession['state']['activeLineups']['home'][number]): readonly MatchSession['state']['activeLineups']['home'][number][] {
+    const state = this.session.state
+    if (state.isComplete || (teamId !== state.homeTeamId && teamId !== state.awayTeamId)) return []
+    const active = teamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
+    const squad = teamId === state.homeTeamId ? state.squads.home : state.squads.away
+    return active.includes(playerOutId) ? squad.filter((playerId) => !active.includes(playerId)) : []
+  }
   public skipToEnd(): MatchSimulation { while (!this.session.state.isComplete) this.advanceOneStep(); return this.snapshot() }
   public snapshot(): MatchSimulation { const state = this.session.state; return state.isComplete ? toMatchSimulation(this.session) : { gameId: state.gameId, homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, lineups: state.initialLineups, squads: state.squads, events: state.events, finalScore: { home: state.homeScore, away: state.awayScore } } }
   public get isComplete(): boolean { return this.session.state.isComplete }
+  public get gameId() { return this.session.state.gameId }
   public get currentPlans() { return this.session.state.coachingState }
 }
 

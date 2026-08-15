@@ -24,6 +24,8 @@ import { getCareerFatigueForPlayer, getLatestTrainingSession, getTrainingPlanFor
 import type { TrainingFocus, TrainingIntensity } from '@/domain/training'
 import { setTeamTrainingPlan } from '@/engine/training'
 import { getUserTeam } from '@/engine/calendar'
+import { executeEntityActionResult, type EntityActionExecution } from '@/app/entityActions/EntityActionExecutor'
+import type { CommandResult } from '@/app/entityActions/EntityCommand'
 
 interface GameStore {
   readonly world: GameWorld | null
@@ -49,6 +51,8 @@ interface GameStore {
   declineUserCoachOffer(offerId: string): void
   setTrainingIntensity(intensity: TrainingIntensity): void
   setTrainingFocus(focus: TrainingFocus): void
+  executeEntityAction(result: CommandResult): EntityActionExecution
+  getActiveMatchSession(): LiveMatchController | null
   replaceWorld(world: GameWorld): void
   resetGame(): void
 }
@@ -98,6 +102,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   declineUserCoachOffer: (offerId) => set({ world: declineCoachJobOffer(requireWorld(get().world), offerId) }),
   setTrainingIntensity: (intensity) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: setTeamTrainingPlan(world, team.id, { intensity }) }) },
   setTrainingFocus: (focus) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: setTeamTrainingPlan(world, team.id, { focus }) }) },
+  executeEntityAction: (result) => {
+    const world = requireWorld(get().world); const outcome = executeEntityActionResult(world, result, { controlledTeamId: getUserTeam(world)?.id, activeMatchSession: liveController ?? undefined })
+    if (outcome.kind === 'executed') set({ world: outcome.world })
+    return outcome
+  },
+  getActiveMatchSession: () => liveController,
   replaceWorld: (world) => { liveController = null; set({ world }) },
   resetGame: () => { liveController = null; set({ world: null }) },
 }))

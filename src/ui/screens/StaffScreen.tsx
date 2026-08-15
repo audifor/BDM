@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { getUserTeam } from '@/engine/calendar'
 import { getStaffAssignment, getStaffPerson, type GameWorld } from '@/domain/world'
 import type { StaffPersonId } from '@/domain/ids'
+import { createEntityRef } from '@/app/entityActions/EntityRef'
+import { useEntityActions } from '@/ui/entityActions/useEntityActions'
 
 import {
   getStaffRoleEvaluations,
@@ -23,10 +25,15 @@ export function StaffScreen({ world, initialSelectedStaffId }: { readonly world:
   return <section className="screen staff-screen">
     <div className="page-heading"><div><p className="eyebrow">STAFF</p><h1>{team.name}</h1></div><span>{staff.length} STAFF</span></div>
     {staff.length === 0 ? <p className="content-panel">NO STAFF ASSIGNED</p> : <div className="staff-layout">
-      <section className="content-panel table-wrap"><table><thead><tr><th>NAME</th><th>ROLE</th><th>ROLE PROFICIENCY</th></tr></thead><tbody>{staff.map((item) => <tr key={item.staffPersonId} className={item.staffPersonId === selected?.staffPersonId ? 'staff-selected-row' : undefined}><td><button className="staff-select-button" type="button" onClick={() => setSelectedStaffId(item.staffPersonId)} aria-pressed={item.staffPersonId === selected?.staffPersonId}>{item.name}</button></td><td>{STAFF_ROLE_LABELS[item.role]}</td><td>{item.roleProficiency}</td></tr>)}</tbody></table></section>
+      <section className="content-panel table-wrap"><table><thead><tr><th>NAME</th><th>ROLE</th><th>ROLE PROFICIENCY</th></tr></thead><tbody>{staff.map((item) => <StaffRow key={item.staffPersonId} item={item} selected={item.staffPersonId === selected?.staffPersonId} onSelect={() => setSelectedStaffId(item.staffPersonId)} world={world} />)}</tbody></table></section>
       {selected !== undefined && <StaffDetail world={world} staffPersonId={selected.staffPersonId} />}
     </div>}
   </section>
+}
+
+function StaffRow({ item, selected, onSelect, world }: { readonly item: ReturnType<typeof getTeamStaffPresentation>[number]; readonly selected: boolean; readonly onSelect: () => void; readonly world: GameWorld }) {
+  const target = useEntityActions(createEntityRef('staff', item.staffPersonId), { world, controlledTeamId: getUserTeam(world)?.id })
+  return <tr {...target} className={selected ? 'staff-selected-row' : undefined}><td><button className="staff-select-button" type="button" onClick={onSelect} aria-pressed={selected}>{item.name}</button></td><td>{STAFF_ROLE_LABELS[item.role]}</td><td>{item.roleProficiency}</td></tr>
 }
 
 function StaffDetail({ world, staffPersonId }: { readonly world: GameWorld; readonly staffPersonId: StaffPersonId }) {

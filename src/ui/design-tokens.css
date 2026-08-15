@@ -1,0 +1,69 @@
+:root {
+  --color-background: #0a1017;
+  --color-desktop-background: #0d1824;
+  --color-surface-1: #111e2a;
+  --color-surface-2: #172735;
+  --color-surface-elevated: #1d3040;
+  --color-border-subtle: rgb(157 190 204 / 16%);
+  --color-border-strong: rgb(157 190 204 / 30%);
+  --color-text-primary: #f1f6f8;
+  --color-text-secondary: #b2c2cb;
+  --color-text-muted: #8196a3;
+  --color-accent-primary: #35c6d0;
+  --color-accent-secondary: #e5ad51;
+  --color-system-accent: #e5ad51;
+  --color-success: #65c794;
+  --color-warning: #e5ad51;
+  --color-danger: #df6670;
+  --color-focus: #74e4ea;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 40px;
+  --space-8: 56px;
+
+  --radius-small: 4px;
+  --radius-medium: 8px;
+  --radius-large: 14px;
+  --radius-window: 18px;
+  --radius-pill: 999px;
+
+  --shadow-surface: 0 10px 28px rgb(0 0 0 / 16%);
+  --shadow-elevated: 0 18px 46px rgb(0 0 0 / 30%);
+  --shadow-floating-window: 0 32px 92px rgb(0 0 0 / 46%);
+  --shadow-focus-glow: 0 0 0 3px rgb(116 228 234 / 38%);
+
+  --font-size-label: 0.6875rem;
+  --font-size-body: 0.875rem;
+  --font-size-heading: 1.75rem;
+  --font-size-data: 0.8125rem;
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 800;
+  --line-height-tight: 1.15;
+  --line-height-normal: 1.5;
+
+  --z-desktop: 0;
+  --z-window: 10;
+  --z-focused-window: 20;
+  --z-dock: 30;
+  --z-overlay: 40;
+  --z-launcher: 50;
+  --z-command-palette: 60;
+  --z-tooltip: 70;
+  --z-modal: 80;
+
+  --motion-fast: 120ms;
+  --motion-normal: 200ms;
+  --motion-slow: 320ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+  --dock-app-gap: 16px;
+  --dock-system-gap: 28px;
+  --dock-icon-size: 55px;
+  --dock-launcher-size: 60px;
+  --desktop-ambient-primary: rgb(101 211 218 / 64%);
+}
