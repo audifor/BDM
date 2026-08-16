@@ -1,5 +1,6 @@
 import { createCoach } from '@/domain/coach'
 import { createCompetition } from '@/domain/competition'
+import { createSportsEcosystem, DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, DEFAULT_NBA_LIKE_ECOSYSTEM_ID } from '@/domain/ecosystem'
 import { createCountry } from '@/domain/country'
 import { addDays, createGameDate, formatGameDate, type GameDate } from '@/domain/date'
 import {
@@ -24,11 +25,13 @@ import { generateInitialStaffStructure } from './StaffGenerator'
 import { generateCoachRpgProfiles } from './CoachProfessionalProfileGenerator'
 import type { CoachRpgPreset } from '@/domain/coachRpg'
 
-const TEAM_COUNT = 8
+const FIBA_TEAM_COUNT = 8
 const PLAYERS_PER_TEAM = 12
 const GENERATED_COUNTRY_ID = countryIdFromString('generated-country-0001')
 const GENERATED_COMPETITION_ID = competitionIdFromString('generated-competition-0001')
+const GENERATED_NBA_COMPETITION_ID = competitionIdFromString('generated-competition-0003')
 const GENERATED_SEASON_ID = seasonIdFromString('generated-season-0001')
+const GENERATED_NBA_SEASON_ID = seasonIdFromString('generated-season-0003')
 const DEFAULT_START_DATE = createGameDate(2032, 10, 1)
 const SEASON_LENGTH_DAYS = 272
 
@@ -69,6 +72,8 @@ const TEAM_NAMES = [
   'Highridge Lanterns',
   'Ironhollow Vipers',
   'Juniper Coast Sails',
+  'Kestrel Point Comets',
+  'Larkspur Forge',
 ] as const
 
 export interface GenerateWorldOptions {
@@ -76,6 +81,7 @@ export interface GenerateWorldOptions {
   readonly gender: Gender
   readonly startDate?: GameDate
   readonly userCoachRpgPreset?: CoachRpgPreset
+  readonly includeNbaLike?: boolean
 }
 
 /** Generates the fixed-size starter universe used by development and tests. */
@@ -95,7 +101,8 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
   })
 
   // The order of random calls is intentional: coaches, team names, then players.
-  const coaches = Array.from({ length: TEAM_COUNT }, (_, index) =>
+  const teamCount = options.includeNbaLike ? 12 : FIBA_TEAM_COUNT
+  const coaches = Array.from({ length: teamCount }, (_, index) =>
     createCoach({
       id: coachIdFromString(`generated-coach-${formatSequence(index + 1)}`),
       ...generatePersonName(random),
@@ -103,11 +110,11 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
       nationalityId: country.id,
     }),
   )
-  const teamNames = shuffle([...TEAM_NAMES], random).slice(0, TEAM_COUNT)
+  const teamNames = shuffle([...(options.includeNbaLike ? TEAM_NAMES : TEAM_NAMES.slice(0, 10))], random).slice(0, teamCount)
   const players: ReturnType<typeof createPlayer>[] = []
   const teams = []
 
-  for (let teamIndex = 0; teamIndex < TEAM_COUNT; teamIndex += 1) {
+  for (let teamIndex = 0; teamIndex < teamCount; teamIndex += 1) {
     const rosterPlayerIds = []
     for (let playerIndex = 0; playerIndex < PLAYERS_PER_TEAM; playerIndex += 1) {
       const sequence = teamIndex * PLAYERS_PER_TEAM + playerIndex + 1
@@ -143,8 +150,9 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     id: GENERATED_COMPETITION_ID,
     name: 'Virelia Horizon League',
     gender,
-    participantTeamIds: teams.map((team) => team.id),
+    participantTeamIds: teams.slice(0, FIBA_TEAM_COUNT).map((team) => team.id),
   })
+  const nbaCompetition = options.includeNbaLike ? createCompetition({ id: GENERATED_NBA_COMPETITION_ID, name: 'Orinthian Comets League', gender, participantTeamIds: teams.slice(FIBA_TEAM_COUNT).map((team) => team.id), ecosystemId: DEFAULT_NBA_LIKE_ECOSYSTEM_ID }) : undefined
   const season = createSeason({
     id: GENERATED_SEASON_ID,
     competitionId: competition.id,
@@ -152,6 +160,7 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     startDate,
     endDate,
   })
+  const nbaSeason = nbaCompetition === undefined ? undefined : createSeason({ id: GENERATED_NBA_SEASON_ID, competitionId: nbaCompetition.id, label: `${formatGameDate(addDays(startDate, 19))} to ${formatGameDate(addDays(endDate, 31))}`, startDate: addDays(startDate, 19), endDate: addDays(endDate, 31) })
 
   const contracts = teams.flatMap((team) => team.rosterPlayerIds.map((playerId) => generateInitialPlayerContract(players.find((player) => player.id === playerId)!, team.id, season.startDate)))
   const staff = generateInitialStaffStructure(teams, season.startDate)
@@ -165,8 +174,9 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     coaches,
     players,
     teams,
-    competitions: [competition],
-    seasons: [season],
+    competitions: nbaCompetition === undefined ? [competition] : [competition, nbaCompetition],
+    ecosystems: nbaCompetition === undefined ? [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike' })] : [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike' }), createSportsEcosystem({ id: DEFAULT_NBA_LIKE_ECOSYSTEM_ID, name: 'Orinthian Franchise Basketball', kind: 'nbaLike' })],
+    seasons: nbaSeason === undefined ? [season] : [season, nbaSeason],
     games: [],
     contracts,
     teamFinances: teams.map((team) => generateInitialTeamFinances(team.id, contracts.filter((contract) => contract.teamId === team.id).reduce((sum, contract) => sum + contract.compensation.annualSalary, 0))),

@@ -20,6 +20,8 @@ export {
   getCompetition,
   getEcosystem,
   getEcosystems,
+  getEcosystemsByKind,
+  isNbaLikeCompetition,
   getEcosystemForCompetition,
   getEcosystemForTeam,
   getCompetitionsForEcosystem,

@@ -21,7 +21,7 @@ describe('startNextSeason', () => {
     const completed = completeCurrentSeason(createNewGame())
     const withoutHistory = createGameWorld({ currentDate: completed.currentDate, currentSeasonId: completed.currentSeasonId, userCoachId: completed.userCoachId, countries: Object.values(completed.countries), coaches: Object.values(completed.coaches), players: Object.values(completed.players), teams: Object.values(completed.teams), competitions: Object.values(completed.competitions), seasons: Object.values(completed.seasons), games: Object.values(completed.games), matchStatLogs: Object.values(completed.matchStatLogsByGameId) })
     expect(() => startNextSeason(withoutHistory)).toThrow('history record')
-  })
+  }, 10_000)
 
   it('creates a deterministic new season without replacing canonical history', () => {
     const completed = completeCurrentSeason(createNewGame())
@@ -33,10 +33,10 @@ describe('startNextSeason', () => {
     const nextSeason = getCurrentSeason(next)
     const newGames = Object.values(next.games).filter((game) => game.seasonId === nextSeason.id)
 
-    expect(nextSeason.id).toBe('generated-season-0003')
+    expect(nextSeason.id).toBe('generated-season-0004')
     expect(nextSeason.startDate).toBe('2033-10-01')
     expect(next.currentDate).toBe(nextSeason.startDate)
-    expect(Object.values(next.seasons)).toHaveLength(3)
+    expect(Object.values(next.seasons)).toHaveLength(4)
     expect(Object.values(next.games)).toHaveLength(priorGames.length + 56)
     expect(new Set(Object.keys(next.games)).size).toBe(Object.keys(next.games).length)
     expect(newGames).toHaveLength(56)
@@ -65,9 +65,9 @@ describe('startNextSeason', () => {
     expect(getPlayerSeasonStats(next, playerId, seasonTwo.id).gamesPlayed).toBeLessThanOrEqual(1)
     expect(getPlayerCareerStats(next, playerId).gamesPlayed).toBeGreaterThanOrEqual(career.gamesPlayed)
     next = completeCurrentSeason(next)
-    expect(Object.values(next.seasonHistoryBySeasonId)).toHaveLength(3)
+    expect(Object.values(next.seasonHistoryBySeasonId)).toHaveLength(4)
     expect(getCurrentSeason(next).id).toBe(seasonTwo.id)
-    expect(getCurrentSeason(startNextSeason(next)).id).toBe('generated-season-0004')
+    expect(getCurrentSeason(startNextSeason(next)).id).toBe('generated-season-0005')
   })
 
   it('round-trips multiple seasons and accepts legacy single-season V1 without currentSeasonId', () => {

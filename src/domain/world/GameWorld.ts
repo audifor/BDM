@@ -1,6 +1,6 @@
 import type { Coach } from '@/domain/coach'
 import type { Competition, PromotionRelegationResolution } from '@/domain/competition'
-import { createSportsEcosystem, DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, type SportsEcosystem } from '@/domain/ecosystem'
+import { createSportsEcosystem, DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, DEFAULT_NBA_LIKE_ECOSYSTEM_ID, type SportsEcosystem } from '@/domain/ecosystem'
 import type { Country } from '@/domain/country'
 import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import type { Game } from '@/domain/game'
@@ -140,7 +140,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
   const currentSeasonId = input.currentSeasonId ?? selectLegacyCurrentSeasonId(seasons)
   const currentDate = parseGameDate(input.currentDate)
   const employment = coachCareerForCoaches(input.coaches, input.teams, currentDate, input.coachEmploymentByCoachId, input.coachCareerHistoryByCoachId)
-  const ecosystems = input.ecosystems === undefined ? [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike' })] : Array.isArray(input.ecosystems) ? input.ecosystems : Object.values(input.ecosystems)
+  const suppliedEcosystems = input.ecosystems === undefined ? [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike' })] : Array.isArray(input.ecosystems) ? input.ecosystems : Object.values(input.ecosystems)
+  const ecosystems = input.competitions.some((competition) => competition.ecosystemId === DEFAULT_NBA_LIKE_ECOSYSTEM_ID) && !suppliedEcosystems.some((ecosystem) => ecosystem.id === DEFAULT_NBA_LIKE_ECOSYSTEM_ID) ? [...suppliedEcosystems, createSportsEcosystem({ id: DEFAULT_NBA_LIKE_ECOSYSTEM_ID, name: 'Orinthian Franchise Basketball', kind: 'nbaLike' })] : suppliedEcosystems
   const world: GameWorld = {
     schemaVersion: GAME_WORLD_SCHEMA_VERSION,
     currentDate,

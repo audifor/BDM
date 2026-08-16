@@ -802,3 +802,13 @@ world update boundary. Save/load persists hierarchy, rules, participant snapshot
 and completed resolutions; legacy saves without them remain unconfigured and do
 not invent historical movement. NBA-like closed-league behavior and promotion
 playoffs remain outside this boundary.
+
+## NBA-like ecosystem v1
+
+`SportsEcosystem.kind` supports `nbaLike` alongside `fibaLike`. NBA-like ecosystems
+are closed franchise leagues: they own ordinary Teams and Competitions but cannot
+have domestic tiers or promotion/relegation rules. They reuse the shared schedule,
+calendar, standings, champion, roster and match systems while retaining independent
+competition windows. New games generate a deterministic, separate franchise league;
+legacy saves do not receive one implicitly. Draft, salary-cap and trade rules remain
+future ecosystem extensions.

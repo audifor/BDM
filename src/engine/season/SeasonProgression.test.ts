@@ -20,7 +20,7 @@ describe('season progression', () => {
     let world = createNewGame()
     const season = getCurrentSeason(world)
     const games = Object.values(world.games).filter((game) => game.seasonId === season.id)
-    for (const game of Object.values(world.games).filter((game) => game.status === 'scheduled' && game.id !== games.at(-1)!.id)) world = simulateAndApplyGame(world, game)
+    for (const game of games.filter((game) => game.id !== games.at(-1)!.id)) world = simulateAndApplyGame(world, game)
 
     expect(isSeasonComplete(world, season.id)).toBe(false)
     expect(getSeasonHistoryRecord(world, season.id)).toBeUndefined()
@@ -32,8 +32,8 @@ describe('season progression', () => {
 
     expect(games).toHaveLength(56)
     expect(isSeasonComplete(world, season.id)).toBe(true)
-    expect(Object.values(world.seasonHistoryBySeasonId)).toHaveLength(2)
-    expect(Object.values(world.matchStatLogsByGameId)).toHaveLength(Object.values(world.games).length)
+    expect(Object.values(world.seasonHistoryBySeasonId)).toHaveLength(1)
+    expect(Object.values(world.matchStatLogsByGameId)).toHaveLength(games.length)
     expect(history.championTeamId).toBe(finalStandings[0]!.teamId)
     expect(history.finalStandings).toEqual(finalStandings)
     expect(history.completedOn).toBe(games.reduce((latest, game) => game.date > latest ? game.date : latest, games[0]!.date))

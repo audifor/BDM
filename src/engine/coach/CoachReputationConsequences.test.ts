@@ -58,7 +58,7 @@ describe('Coach reputation consequences', () => {
     expect(event).toMatchObject({ id: `coach-reputation:season-champion:${seasonId}:${championCoachId}`, deltas: { competitive: 40, publicStanding: 20 }, context: { kind: 'seasonAchievement', seasonId, teamId: championTeamId, achievement: 'champion' } })
     expect(championProfile.values).toMatchObject({ development: 200, professional: 200 })
     expect(applySeasonChampionCoachReputation(finalized, seasonId)).toEqual(finalized)
-    expect(Object.entries(finalized.coachReputationProfilesByCoachId).filter(([coachId, profile]) => coachId !== championCoachId && profile.events.some((candidate) => candidate.source === 'seasonAchievement'))).toEqual([])
+    expect(Object.entries(finalized.coachReputationProfilesByCoachId).filter(([coachId, profile]) => coachId !== championCoachId && profile.events.some((candidate) => candidate.source === 'seasonAchievement' && (candidate.context as { readonly seasonId?: string }).seasonId === seasonId))).toEqual([])
     expect(loaded.coachReputationProfilesByCoachId[championCoachId]!.events.find((candidate) => candidate.id === event.id)!.context).toEqual(event.context)
   })
 })

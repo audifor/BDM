@@ -48,6 +48,8 @@ export function getCompetition(world: GameWorld, id: CompetitionId): Competition
 }
 export function getEcosystem(world: GameWorld, id: EcosystemId): SportsEcosystem { return getEntity(world.ecosystems, id, 'Sports ecosystem') }
 export function getEcosystems(world: GameWorld): readonly SportsEcosystem[] { return Object.values(world.ecosystems).sort((a, b) => a.id.localeCompare(b.id)) }
+export function getEcosystemsByKind(world: GameWorld, kind: SportsEcosystem['kind']): readonly SportsEcosystem[] { return getEcosystems(world).filter((ecosystem) => ecosystem.kind === kind) }
+export function isNbaLikeCompetition(world: GameWorld, competitionId: CompetitionId): boolean { return getEcosystemForCompetition(world, competitionId).kind === 'nbaLike' }
 export function getEcosystemForCompetition(world: GameWorld, competitionId: CompetitionId): SportsEcosystem { return getEcosystem(world, getCompetition(world, competitionId).ecosystemId) }
 export function getCompetitionsForEcosystem(world: GameWorld, ecosystemId: EcosystemId): readonly Competition[] { getEcosystem(world, ecosystemId); return getCompetitions(world).filter((competition) => competition.ecosystemId === ecosystemId) }
 export function getEcosystemForTeam(world: GameWorld, teamId: TeamId): SportsEcosystem | undefined { return getCompetitionsForTeam(world, teamId).map((competition) => getEcosystem(world, competition.ecosystemId)).sort((a, b) => a.id.localeCompare(b.id))[0] }
