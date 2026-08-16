@@ -1,12 +1,14 @@
 import { createCoach } from '@/domain/coach'
 import { createCompetition } from '@/domain/competition'
-import { createSportsEcosystem, DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, DEFAULT_NBA_LIKE_ECOSYSTEM_ID } from '@/domain/ecosystem'
+import { createSportsEcosystem, DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, DEFAULT_NBA_LIKE_ECOSYSTEM_ID, DEFAULT_NCAA_LIKE_ECOSYSTEM_ID } from '@/domain/ecosystem'
+import { createConference, createConferenceMembership } from '@/domain/conference'
 import { createCountry } from '@/domain/country'
 import { addDays, createGameDate, formatGameDate, type GameDate } from '@/domain/date'
 import {
   coachIdFromString,
   competitionIdFromString,
   countryIdFromString,
+  conferenceIdFromString,
   playerIdFromString,
   seasonIdFromString,
   teamIdFromString,
@@ -32,8 +34,10 @@ const PLAYERS_PER_TEAM = 12
 const GENERATED_COUNTRY_ID = countryIdFromString('generated-country-0001')
 const GENERATED_COMPETITION_ID = competitionIdFromString('generated-competition-0001')
 const GENERATED_NBA_COMPETITION_ID = competitionIdFromString('generated-competition-0003')
+const GENERATED_NCAA_COMPETITION_ID = competitionIdFromString('generated-competition-0004')
 const GENERATED_SEASON_ID = seasonIdFromString('generated-season-0001')
 const GENERATED_NBA_SEASON_ID = seasonIdFromString('generated-season-0003')
+const GENERATED_NCAA_SEASON_ID = seasonIdFromString('generated-season-0005')
 const DEFAULT_START_DATE = createGameDate(2032, 10, 1)
 const SEASON_LENGTH_DAYS = 272
 
@@ -76,6 +80,7 @@ const TEAM_NAMES = [
   'Juniper Coast Sails',
   'Kestrel Point Comets',
   'Larkspur Forge',
+  'Moonvale Pilots', 'Northgate Echoes', 'Oakridge Flares', 'Pinecrest Lynx', 'Quartz Harbor Rays', 'Ravenfall Rooks', 'Stonebridge Arcs', 'Tidewater Falcons', 'Umberfield Foxes', 'Verdant Vale Owls', 'Westmere Wolves', 'Zephyr Bay Gulls',
 ] as const
 
 export interface GenerateWorldOptions {
@@ -84,6 +89,7 @@ export interface GenerateWorldOptions {
   readonly startDate?: GameDate
   readonly userCoachRpgPreset?: CoachRpgPreset
   readonly includeNbaLike?: boolean
+  readonly includeNcaaLike?: boolean
 }
 
 /** Generates the fixed-size starter universe used by development and tests. */
@@ -103,7 +109,9 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
   })
 
   // The order of random calls is intentional: coaches, team names, then players.
-  const teamCount = options.includeNbaLike ? 12 : FIBA_TEAM_COUNT
+  const includeNcaaLike = options.includeNcaaLike ?? false
+  const teamCount = FIBA_TEAM_COUNT + (options.includeNbaLike ? 4 : 0) + (includeNcaaLike ? 12 : 0)
+  const professionalTeamCount = FIBA_TEAM_COUNT + (options.includeNbaLike ? 4 : 0)
   const coaches = Array.from({ length: teamCount }, (_, index) =>
     createCoach({
       id: coachIdFromString(`generated-coach-${formatSequence(index + 1)}`),
@@ -112,13 +120,16 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
       nationalityId: country.id,
     }),
   )
-  const teamNames = shuffle([...(options.includeNbaLike ? TEAM_NAMES : TEAM_NAMES.slice(0, 10))], random).slice(0, teamCount)
+  const baseTeamNames = shuffle([...TEAM_NAMES.slice(0, options.includeNbaLike ? 12 : 10)], random)
+  const ncaaTeamNames = includeNcaaLike ? shuffle([...TEAM_NAMES.slice(12)], new SeededRandomSource(hashStringToSeed(`ncaa-team-names-v1:${options.seed}`))) : []
+  const teamNames = [...baseTeamNames, ...ncaaTeamNames].slice(0, teamCount)
   const players: ReturnType<typeof createPlayer>[] = []
   const teams = []
 
   for (let teamIndex = 0; teamIndex < teamCount; teamIndex += 1) {
     const rosterPlayerIds = []
-    for (let playerIndex = 0; playerIndex < PLAYERS_PER_TEAM; playerIndex += 1) {
+    const playersForTeam = teamIndex < professionalTeamCount ? PLAYERS_PER_TEAM : 5
+    for (let playerIndex = 0; playerIndex < playersForTeam; playerIndex += 1) {
       const sequence = teamIndex * PLAYERS_PER_TEAM + playerIndex + 1
       const playerId = playerIdFromString(`generated-player-${formatSequence(sequence)}`)
       const basketball = generateBasketballProfile(options.seed, playerId, playerIndex)
@@ -154,7 +165,9 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     gender,
     participantTeamIds: teams.slice(0, FIBA_TEAM_COUNT).map((team) => team.id),
   })
-  const nbaCompetition = options.includeNbaLike ? createCompetition({ id: GENERATED_NBA_COMPETITION_ID, name: 'Orinthian Comets League', gender, participantTeamIds: teams.slice(FIBA_TEAM_COUNT).map((team) => team.id), ecosystemId: DEFAULT_NBA_LIKE_ECOSYSTEM_ID }) : undefined
+  const nbaCompetition = options.includeNbaLike ? createCompetition({ id: GENERATED_NBA_COMPETITION_ID, name: 'Orinthian Comets League', gender, participantTeamIds: teams.slice(FIBA_TEAM_COUNT, FIBA_TEAM_COUNT + 4).map((team) => team.id), ecosystemId: DEFAULT_NBA_LIKE_ECOSYSTEM_ID }) : undefined
+  const nbaTeamsEnd = professionalTeamCount
+  const ncaaCompetition = includeNcaaLike ? createCompetition({ id: GENERATED_NCAA_COMPETITION_ID, name: 'Asteria Collegiate Circuit', gender, participantTeamIds: teams.slice(nbaTeamsEnd).map((team) => team.id), ecosystemId: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID }) : undefined
   const season = createSeason({
     id: GENERATED_SEASON_ID,
     competitionId: competition.id,
@@ -163,9 +176,13 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     endDate,
   })
   const nbaSeason = nbaCompetition === undefined ? undefined : createSeason({ id: GENERATED_NBA_SEASON_ID, competitionId: nbaCompetition.id, label: `${formatGameDate(addDays(startDate, 19))} to ${formatGameDate(addDays(endDate, 31))}`, startDate: addDays(startDate, 19), endDate: addDays(endDate, 31) })
+  const conferences = ncaaCompetition === undefined ? [] : ['Aster', 'Boreal', 'Cinder'].map((name, index) => createConference({ id: conferenceIdFromString(`generated-conference-${formatSequence(index + 1)}`), ecosystemId: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, name: `${name} Conference` }))
+  const ncaaMemberships = ncaaCompetition === undefined ? [] : teams.slice(nbaTeamsEnd).map((team, index) => createConferenceMembership({ conferenceId: conferences[Math.floor(index / 4)]!.id, teamId: team.id, seasonId: GENERATED_NCAA_SEASON_ID }))
+  const ncaaSeason = ncaaCompetition === undefined ? undefined : createSeason({ id: GENERATED_NCAA_SEASON_ID, competitionId: ncaaCompetition.id, label: `${formatGameDate(addDays(startDate, 90))} to ${formatGameDate(addDays(startDate, 180))}`, startDate: addDays(startDate, 90), endDate: addDays(startDate, 180), conferenceMembershipSnapshot: ncaaMemberships })
 
-  const contracts = teams.flatMap((team) => team.rosterPlayerIds.map((playerId) => generateInitialPlayerContract(players.find((player) => player.id === playerId)!, team.id, season.startDate)))
-  const staff = generateInitialStaffStructure(teams, season.startDate)
+  const professionalTeams = teams.slice(0, nbaTeamsEnd)
+  const contracts = professionalTeams.flatMap((team) => team.rosterPlayerIds.map((playerId) => generateInitialPlayerContract(players.find((player) => player.id === playerId)!, team.id, season.startDate)))
+  const staff = generateInitialStaffStructure(professionalTeams, season.startDate)
   const userCoachId = coaches[0]!.id
   const coachProfiles = generateCoachRpgProfiles(coaches, userCoachId, options.userCoachRpgPreset)
   return createGameWorld({
@@ -176,9 +193,10 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     coaches,
     players,
     teams,
-    competitions: nbaCompetition === undefined ? [competition] : [competition, nbaCompetition],
-    ecosystems: nbaCompetition === undefined ? [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike' })] : [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike' }), createSportsEcosystem({ id: DEFAULT_NBA_LIKE_ECOSYSTEM_ID, name: 'Orinthian Franchise Basketball', kind: 'nbaLike' })],
-    seasons: nbaSeason === undefined ? [season] : [season, nbaSeason],
+    competitions: [competition, ...(nbaCompetition === undefined ? [] : [nbaCompetition]), ...(ncaaCompetition === undefined ? [] : [ncaaCompetition])],
+    ecosystems: [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike' }), ...(nbaCompetition === undefined ? [] : [createSportsEcosystem({ id: DEFAULT_NBA_LIKE_ECOSYSTEM_ID, name: 'Orinthian Franchise Basketball', kind: 'nbaLike' })]), ...(ncaaCompetition === undefined ? [] : [createSportsEcosystem({ id: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, name: 'Asteria Collegiate Basketball', kind: 'ncaaLike' })])],
+    conferences, conferenceMemberships: ncaaMemberships,
+    seasons: [season, ...(nbaSeason === undefined ? [] : [nbaSeason]), ...(ncaaSeason === undefined ? [] : [ncaaSeason])],
     games: [],
     contracts,
     teamFinances: teams.map((team) => generateInitialTeamFinances(team.id, contracts.filter((contract) => contract.teamId === team.id).reduce((sum, contract) => sum + contract.compensation.annualSalary, 0))),

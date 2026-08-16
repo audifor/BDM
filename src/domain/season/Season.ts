@@ -1,5 +1,6 @@
 import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import type { CompetitionId, SeasonId, TeamId } from '@/domain/ids'
+import type { ConferenceMembership } from '@/domain/conference'
 import { requireNonEmptyString } from '@/domain/validation'
 
 export interface Season {
@@ -9,6 +10,7 @@ export interface Season {
   readonly startDate: GameDate
   readonly endDate: GameDate
   readonly participantTeamIds?: readonly TeamId[]
+  readonly conferenceMembershipSnapshot?: readonly ConferenceMembership[]
 }
 
 export interface CreateSeasonInput {
@@ -18,6 +20,7 @@ export interface CreateSeasonInput {
   startDate: GameDate
   endDate: GameDate
   participantTeamIds?: readonly TeamId[]
+  conferenceMembershipSnapshot?: readonly ConferenceMembership[]
 }
 
 export function createSeason(input: CreateSeasonInput): Season {
@@ -35,5 +38,6 @@ export function createSeason(input: CreateSeasonInput): Season {
     startDate,
     endDate,
     ...(input.participantTeamIds === undefined ? {} : { participantTeamIds: Object.freeze([...new Set(input.participantTeamIds)]) }),
+    ...(input.conferenceMembershipSnapshot === undefined ? {} : { conferenceMembershipSnapshot: Object.freeze(input.conferenceMembershipSnapshot.map((membership) => ({ ...membership }))) }),
   })
 }

@@ -36,7 +36,7 @@ describe('startNextSeason', () => {
     expect(nextSeason.id).toBe('generated-season-0004')
     expect(nextSeason.startDate).toBe('2033-10-01')
     expect(next.currentDate).toBe(nextSeason.startDate)
-    expect(Object.values(next.seasons)).toHaveLength(4)
+    expect(Object.values(next.seasons)).toHaveLength(5)
     expect(Object.values(next.games)).toHaveLength(priorGames.length + 56)
     expect(new Set(Object.keys(next.games)).size).toBe(Object.keys(next.games).length)
     expect(newGames).toHaveLength(56)
@@ -65,9 +65,9 @@ describe('startNextSeason', () => {
     expect(getPlayerSeasonStats(next, playerId, seasonTwo.id).gamesPlayed).toBeLessThanOrEqual(1)
     expect(getPlayerCareerStats(next, playerId).gamesPlayed).toBeGreaterThanOrEqual(career.gamesPlayed)
     next = completeCurrentSeason(next)
-    expect(Object.values(next.seasonHistoryBySeasonId)).toHaveLength(4)
+    expect(Object.values(next.seasonHistoryBySeasonId)).toHaveLength(5)
     expect(getCurrentSeason(next).id).toBe(seasonTwo.id)
-    expect(getCurrentSeason(startNextSeason(next)).id).toBe('generated-season-0005')
+    expect(getCurrentSeason(startNextSeason(next)).id).toBe('generated-season-0006')
   })
 
   it('round-trips multiple seasons and accepts legacy single-season V1 without currentSeasonId', () => {

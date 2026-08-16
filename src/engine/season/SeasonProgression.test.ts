@@ -46,7 +46,7 @@ describe('season progression', () => {
 
   it('rejects invalid history snapshots through GameWorld validation', () => {
     let world = createNewGame()
-    for (const game of Object.values(world.games)) world = simulateAndApplyGame(world, game)
+    for (const game of Object.values(world.games).filter((candidate) => candidate.seasonId === world.currentSeasonId)) world = simulateAndApplyGame(world, game)
     const history = Object.values(world.seasonHistoryBySeasonId)[0]!
     const second = history.finalStandings[1]!
 

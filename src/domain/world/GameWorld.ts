@@ -1,7 +1,8 @@
 import type { Coach } from '@/domain/coach'
 import type { Competition, PromotionRelegationResolution } from '@/domain/competition'
+import { createConference, createConferenceMembership, type Conference, type ConferenceMembership } from '@/domain/conference'
 import type { Draft, DraftPick } from '@/domain/draft'
-import { createSportsEcosystem, DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, DEFAULT_NBA_LIKE_ECOSYSTEM_ID, type SportsEcosystem } from '@/domain/ecosystem'
+import { createSportsEcosystem, DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, DEFAULT_NBA_LIKE_ECOSYSTEM_ID, DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, type SportsEcosystem } from '@/domain/ecosystem'
 import type { Country } from '@/domain/country'
 import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import type { Game } from '@/domain/game'
@@ -9,6 +10,7 @@ import type {
   CoachId,
   CompetitionId,
   EcosystemId,
+  ConferenceId,
   CountryId,
   GameId,
   PlayerId,
@@ -58,6 +60,9 @@ export interface GameWorld {
   readonly teams: Readonly<Record<TeamId, Team>>
   readonly competitions: Readonly<Record<CompetitionId, Competition>>
   readonly ecosystems: Readonly<Record<EcosystemId, SportsEcosystem>>
+  readonly conferencesById: Readonly<Record<ConferenceId, Conference>>
+  /** Current-cycle membership. Season snapshots retain historical truth. */
+  readonly conferenceMemberships: readonly ConferenceMembership[]
   readonly seasons: Readonly<Record<SeasonId, Season>>
   readonly games: Readonly<Record<GameId, Game>>
   readonly matchStatLogsByGameId: Readonly<Record<GameId, MatchStatLog>>
@@ -111,6 +116,8 @@ export interface CreateGameWorldInput {
   teams: readonly Team[]
   competitions: readonly Competition[]
   ecosystems?: readonly SportsEcosystem[] | Readonly<Record<EcosystemId, SportsEcosystem>>
+  conferences?: readonly Conference[]
+  conferenceMemberships?: readonly ConferenceMembership[]
   seasons: readonly Season[]
   games: readonly Game[]
   matchStatLogs?: readonly MatchStatLog[]
@@ -167,7 +174,14 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
   const currentDate = parseGameDate(input.currentDate)
   const employment = coachCareerForCoaches(input.coaches, input.teams, currentDate, input.coachEmploymentByCoachId, input.coachCareerHistoryByCoachId)
   const suppliedEcosystems = input.ecosystems === undefined ? [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike' })] : Array.isArray(input.ecosystems) ? input.ecosystems : Object.values(input.ecosystems)
-  const ecosystems = input.competitions.some((competition) => competition.ecosystemId === DEFAULT_NBA_LIKE_ECOSYSTEM_ID) && !suppliedEcosystems.some((ecosystem) => ecosystem.id === DEFAULT_NBA_LIKE_ECOSYSTEM_ID) ? [...suppliedEcosystems, createSportsEcosystem({ id: DEFAULT_NBA_LIKE_ECOSYSTEM_ID, name: 'Orinthian Franchise Basketball', kind: 'nbaLike' })] : suppliedEcosystems
+  const ecosystems = [
+    ...suppliedEcosystems,
+    ...(input.competitions.some((competition) => competition.ecosystemId === DEFAULT_NBA_LIKE_ECOSYSTEM_ID) && !suppliedEcosystems.some((ecosystem) => ecosystem.id === DEFAULT_NBA_LIKE_ECOSYSTEM_ID) ? [createSportsEcosystem({ id: DEFAULT_NBA_LIKE_ECOSYSTEM_ID, name: 'Orinthian Franchise Basketball', kind: 'nbaLike' })] : []),
+    ...(input.competitions.some((competition) => competition.ecosystemId === DEFAULT_NCAA_LIKE_ECOSYSTEM_ID) && !suppliedEcosystems.some((ecosystem) => ecosystem.id === DEFAULT_NCAA_LIKE_ECOSYSTEM_ID) ? [createSportsEcosystem({ id: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, name: 'Asteria Collegiate Basketball', kind: 'ncaaLike' })] : []),
+  ]
+  const snapshotMemberships = input.seasons.flatMap((season) => season.conferenceMembershipSnapshot ?? [])
+  const memberships = input.conferenceMemberships ?? snapshotMemberships
+  const conferences = input.conferences ?? [...new Set(memberships.map((membership) => membership.conferenceId))].map((id) => createConference({ id, ecosystemId: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, name: `Conference ${id}` }))
   const world: GameWorld = {
     schemaVersion: GAME_WORLD_SCHEMA_VERSION,
     currentDate,
@@ -179,6 +193,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     teams: indexById(input.teams, 'Team'),
     competitions: indexById(input.competitions, 'Competition'),
     ecosystems: indexById(ecosystems, 'Sports ecosystem'),
+    conferencesById: indexById(conferences.map(createConference), 'Conference'),
+    conferenceMemberships: Object.freeze(memberships.map(createConferenceMembership)),
     seasons,
     games: indexById(input.games, 'Game'),
     matchStatLogsByGameId: indexLogsByGameId(input.matchStatLogs ?? []),
@@ -225,7 +241,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
 
 /** Rebuilds through the canonical validator while preserving unrelated world state. */
 export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorldInput>): GameWorld {
-  return createGameWorld({ currentDate: world.currentDate, currentSeasonId: world.currentSeasonId, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), ecosystems: Object.values(world.ecosystems), seasons: Object.values(world.seasons), games: Object.values(world.games), matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory: Object.values(world.seasonHistoryBySeasonId), injuries: Object.values(world.injuriesById), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId), playerTransactions: Object.values(world.playerTransactionsById), playerKnowledge: Object.values(world.playerKnowledgeById), staffPeople: Object.values(world.staffPeopleById), teamStaffAssignments: Object.values(world.teamStaffAssignmentsById), coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId, coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: world.coachCareerHistoryByCoachId, coachJobOpeningsById: world.coachJobOpeningsById, coachJobCandidaciesById: world.coachJobCandidaciesById, coachInterviewsByCandidacyId: world.coachInterviewsByCandidacyId, coachJobOffersById: world.coachJobOffersById, relationshipsByKey: world.relationshipsByKey, personalitiesByPersonId: world.personalitiesByPersonId, moraleByPersonId: world.moraleByPersonId, inboxItemsById: world.inboxItemsById, newsItemsById: world.newsItemsById, trainingPlansByTeamId: world.trainingPlansByTeamId, trainingSessionsById: world.trainingSessionsById, developmentStimulusByPlayerId: world.developmentStimulusByPlayerId, careerFatigueByPlayerId: world.careerFatigueByPlayerId, promotionRelegationResolutions: Object.values(world.promotionRelegationResolutionsById), drafts: Object.values(world.draftsById), draftPicks: Object.values(world.draftPicksById), salaryRulesBySeasonId: world.salaryRulesBySeasonId, salaryExceptions: Object.values(world.salaryExceptionsById), deadMoneyCharges: Object.values(world.deadMoneyChargesById), tradeRulesBySeasonId: world.tradeRulesBySeasonId, playerRights: Object.values(world.playerRightsById), futureDraftPickRights: Object.values(world.futureDraftPickRightsById), draftPickSwapRights: Object.values(world.draftPickSwapRightsById), retainedSalaryObligations: Object.values(world.retainedSalaryObligationsById), tradeHistory: Object.values(world.tradeHistoryById), ...patch })
+  return createGameWorld({ currentDate: world.currentDate, currentSeasonId: world.currentSeasonId, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), ecosystems: Object.values(world.ecosystems), conferences: Object.values(world.conferencesById), conferenceMemberships: world.conferenceMemberships, seasons: Object.values(world.seasons), games: Object.values(world.games), matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory: Object.values(world.seasonHistoryBySeasonId), injuries: Object.values(world.injuriesById), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId), playerTransactions: Object.values(world.playerTransactionsById), playerKnowledge: Object.values(world.playerKnowledgeById), staffPeople: Object.values(world.staffPeopleById), teamStaffAssignments: Object.values(world.teamStaffAssignmentsById), coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId, coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: world.coachCareerHistoryByCoachId, coachJobOpeningsById: world.coachJobOpeningsById, coachJobCandidaciesById: world.coachJobCandidaciesById, coachInterviewsByCandidacyId: world.coachInterviewsByCandidacyId, coachJobOffersById: world.coachJobOffersById, relationshipsByKey: world.relationshipsByKey, personalitiesByPersonId: world.personalitiesByPersonId, moraleByPersonId: world.moraleByPersonId, inboxItemsById: world.inboxItemsById, newsItemsById: world.newsItemsById, trainingPlansByTeamId: world.trainingPlansByTeamId, trainingSessionsById: world.trainingSessionsById, developmentStimulusByPlayerId: world.developmentStimulusByPlayerId, careerFatigueByPlayerId: world.careerFatigueByPlayerId, promotionRelegationResolutions: Object.values(world.promotionRelegationResolutionsById), drafts: Object.values(world.draftsById), draftPicks: Object.values(world.draftPicksById), salaryRulesBySeasonId: world.salaryRulesBySeasonId, salaryExceptions: Object.values(world.salaryExceptionsById), deadMoneyCharges: Object.values(world.deadMoneyChargesById), tradeRulesBySeasonId: world.tradeRulesBySeasonId, playerRights: Object.values(world.playerRightsById), futureDraftPickRights: Object.values(world.futureDraftPickRightsById), draftPickSwapRights: Object.values(world.draftPickSwapRightsById), retainedSalaryObligations: Object.values(world.retainedSalaryObligationsById), tradeHistory: Object.values(world.tradeHistoryById), ...patch })
 }
 
 function validateWorld(world: GameWorld): void {
@@ -279,6 +295,17 @@ function validateWorld(world: GameWorld): void {
         )
       }
     }
+  }
+
+  for (const conference of Object.values(world.conferencesById)) {
+    createConference(conference)
+    const ecosystem = requireEntity(world.ecosystems, conference.ecosystemId, `Conference ${conference.id} ecosystem`)
+    if (ecosystem.kind !== 'ncaaLike') throw new GameWorldValidationError(`Conference ${conference.id} must belong to an NCAA-like ecosystem`)
+  }
+  const membershipKeys = new Set<string>()
+  for (const membership of world.conferenceMemberships) {
+    createConferenceMembership(membership); const conference = requireEntity(world.conferencesById, membership.conferenceId, 'Conference membership conference'); const season = requireEntity(world.seasons, membership.seasonId, 'Conference membership season'); const competition = requireEntity(world.competitions, season.competitionId, 'Conference membership competition')
+    if (competition.ecosystemId !== conference.ecosystemId || !((season.participantTeamIds ?? competition.participantTeamIds).includes(membership.teamId)) || !membershipKeys.add(`${membership.seasonId}:${membership.teamId}`)) throw new GameWorldValidationError('Conference membership is invalid or not unique')
   }
 
   for (const ecosystem of Object.values(world.ecosystems)) {

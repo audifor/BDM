@@ -3,6 +3,7 @@ import type { CompetitionId, GameId, SeasonId, TeamId } from '@/domain/ids'
 import { requireNonEmptyString } from '@/domain/validation'
 
 export type GameStatus = 'scheduled' | 'completed'
+export type GameClassification = 'conference' | 'nonConference'
 
 export interface GameResult {
   readonly homeScore: number
@@ -16,6 +17,7 @@ interface GameBase {
   readonly date: GameDate
   readonly homeTeamId: TeamId
   readonly awayTeamId: TeamId
+  readonly classification?: GameClassification
 }
 
 export interface ScheduledGame extends GameBase {
@@ -39,6 +41,7 @@ export interface CreateGameInput {
   awayTeamId: TeamId
   status: GameStatus
   result: GameResult | null
+  classification?: GameClassification
 }
 
 export function createGame(input: CreateGameInput): Game {
@@ -56,6 +59,7 @@ export function createGame(input: CreateGameInput): Game {
     date: parseGameDate(input.date),
     homeTeamId,
     awayTeamId,
+    ...(input.classification === undefined ? {} : { classification: input.classification === 'conference' || input.classification === 'nonConference' ? input.classification : (() => { throw new TypeError('Game classification is invalid') })() }),
   }
 
   if (input.status === 'scheduled') {

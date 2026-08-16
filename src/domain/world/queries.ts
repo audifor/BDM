@@ -1,6 +1,7 @@
 import type { Coach } from '@/domain/coach'
 import type { Competition } from '@/domain/competition'
 import type { SportsEcosystem } from '@/domain/ecosystem'
+import type { Conference } from '@/domain/conference'
 import type { Country } from '@/domain/country'
 import type { Game } from '@/domain/game'
 import type {
@@ -50,6 +51,10 @@ export function getEcosystem(world: GameWorld, id: EcosystemId): SportsEcosystem
 export function getEcosystems(world: GameWorld): readonly SportsEcosystem[] { return Object.values(world.ecosystems).sort((a, b) => a.id.localeCompare(b.id)) }
 export function getEcosystemsByKind(world: GameWorld, kind: SportsEcosystem['kind']): readonly SportsEcosystem[] { return getEcosystems(world).filter((ecosystem) => ecosystem.kind === kind) }
 export function isNbaLikeCompetition(world: GameWorld, competitionId: CompetitionId): boolean { return getEcosystemForCompetition(world, competitionId).kind === 'nbaLike' }
+export function getConference(world: GameWorld, id: import('@/domain/ids').ConferenceId): Conference { return getEntity(world.conferencesById, id, 'Conference') }
+export function getConferencesForEcosystem(world: GameWorld, ecosystemId: EcosystemId): readonly Conference[] { return Object.values(world.conferencesById).filter((conference) => conference.ecosystemId === ecosystemId).sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id)) }
+export function getConferenceMembers(world: GameWorld, conferenceId: import('@/domain/ids').ConferenceId, seasonId: SeasonId): readonly Team[] { getConference(world, conferenceId); return world.conferenceMemberships.filter((membership) => membership.conferenceId === conferenceId && membership.seasonId === seasonId).map((membership) => getTeam(world, membership.teamId)).sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id)) }
+export function getTeamConferenceMembership(world: GameWorld, teamId: TeamId, seasonId: SeasonId) { return world.conferenceMemberships.find((membership) => membership.teamId === teamId && membership.seasonId === seasonId) }
 export function getEcosystemForCompetition(world: GameWorld, competitionId: CompetitionId): SportsEcosystem { return getEcosystem(world, getCompetition(world, competitionId).ecosystemId) }
 export function getCompetitionsForEcosystem(world: GameWorld, ecosystemId: EcosystemId): readonly Competition[] { getEcosystem(world, ecosystemId); return getCompetitions(world).filter((competition) => competition.ecosystemId === ecosystemId) }
 export function getEcosystemForTeam(world: GameWorld, teamId: TeamId): SportsEcosystem | undefined { return getCompetitionsForTeam(world, teamId).map((competition) => getEcosystem(world, competition.ecosystemId)).sort((a, b) => a.id.localeCompare(b.id))[0] }

@@ -813,6 +813,12 @@ competition windows. New games generate a deterministic, separate franchise leag
 legacy saves do not receive one implicitly. Draft, salary-cap and trade rules remain
 future ecosystem extensions.
 
+## NCAA-like ecosystem v1
+
+`ncaaLike` is a third independent ecosystem, not NBA-like without salaries. Programs reuse canonical `Team`, `Player`, `Coach`, Staff, Training, Development, Calendar and MatchEngine boundaries; no college-specific parallel engine exists. Conferences are structural Domain entities, not UI labels. Each NCAA-like Season stores an immutable conference-membership snapshot so future realignment cannot reinterpret historical editions.
+
+NCAA-like schedules explicitly classify games as `conference` or `nonConference`. Overall standings consume both kinds; Conference standings and the derived Conference Regular Season Champion consume only conference games. NCAA-like competitions keep their own window in the global Calendar. They do not receive NBA Salary Cap, Trade Rules or Drafts, and cannot own FIBA promotion/relegation tiers. Recruiting belongs to Hito 056; Eligibility belongs to Hito 057. Academic eligibility, NIL, collectives and boosters are intentionally not implemented; NIL is not professional team salary.
+
 ## NBA-like Draft v1
 
 Drafts are owned by an `nbaLike` `SportsEcosystem`. `DraftRules` configure the V1

@@ -10,7 +10,7 @@ export interface GameContext {
   /** Competition phases are not yet canonical Domain data, so this stays absent. */
   readonly phaseLabel?: string
   readonly ecosystemName?: string
-  readonly ecosystemKind?: 'fibaLike' | 'nbaLike'
+  readonly ecosystemKind?: 'fibaLike' | 'nbaLike' | 'ncaaLike'
   readonly currentDate: GameWorld['currentDate']
 }
 
