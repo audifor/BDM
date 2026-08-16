@@ -1,5 +1,5 @@
-export type DesktopSection = 'coach' | 'tactics' | 'training' | 'squad' | 'staff' | 'schedule' | 'standings' | 'market'
-export type DesktopIcon = 'bdm' | 'squad' | 'calendar' | 'league' | 'training' | 'staff' | 'inbox' | 'match' | 'club' | 'tactics' | 'market' | 'settings'
+export type DesktopSection = 'coach' | 'tactics' | 'training' | 'squad' | 'staff' | 'schedule' | 'standings' | 'market' | 'draft'
+export type DesktopIcon = 'bdm' | 'squad' | 'calendar' | 'league' | 'training' | 'staff' | 'inbox' | 'match' | 'club' | 'tactics' | 'market' | 'draft' | 'settings'
 
 export interface DesktopAppDefinition {
   readonly id: string
@@ -10,7 +10,7 @@ export interface DesktopAppDefinition {
   readonly availability: 'available' | 'future'
   readonly singleton?: boolean
   readonly window?: { readonly width: number; readonly height: number; readonly minWidth: number; readonly minHeight: number }
-  readonly renderKey?: 'squad' | 'schedule' | 'standings' | 'training' | 'staff' | 'coach' | 'tactics' | 'market' | 'match'
+  readonly renderKey?: 'squad' | 'schedule' | 'standings' | 'training' | 'staff' | 'coach' | 'tactics' | 'market' | 'draft' | 'match'
 }
 
 export const DESKTOP_APPS: readonly DesktopAppDefinition[] = [
@@ -23,6 +23,7 @@ export const DESKTOP_APPS: readonly DesktopAppDefinition[] = [
   { id: 'coach', label: 'Tu Club', icon: 'club', section: 'coach', defaultPinned: false, availability: 'available', singleton: true, window: { width: 920, height: 700, minWidth: 600, minHeight: 460 }, renderKey: 'coach' },
   { id: 'tactics', label: 'Tácticas', icon: 'tactics', section: 'tactics', defaultPinned: false, availability: 'available', singleton: true, window: { width: 900, height: 660, minWidth: 600, minHeight: 420 }, renderKey: 'tactics' },
   { id: 'market', label: 'Mercado', icon: 'market', section: 'market', defaultPinned: false, availability: 'available', singleton: true, window: { width: 1040, height: 700, minWidth: 680, minHeight: 460 }, renderKey: 'market' },
+  { id: 'draft', label: 'Draft', icon: 'draft', section: 'draft', defaultPinned: false, availability: 'available', singleton: true, window: { width: 1040, height: 700, minWidth: 680, minHeight: 460 }, renderKey: 'draft' },
   { id: 'inbox', label: 'Inbox', icon: 'inbox', defaultPinned: false, availability: 'future' },
   { id: 'match', label: 'Centro de Partido', icon: 'match', defaultPinned: false, availability: 'available', singleton: true, window: { width: 680, height: 520, minWidth: 480, minHeight: 360 }, renderKey: 'match' },
   { id: 'scouting', label: 'Scouting', icon: 'settings', defaultPinned: false, availability: 'future' },

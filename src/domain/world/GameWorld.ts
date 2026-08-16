@@ -1,5 +1,6 @@
 import type { Coach } from '@/domain/coach'
 import type { Competition, PromotionRelegationResolution } from '@/domain/competition'
+import type { Draft, DraftPick } from '@/domain/draft'
 import { createSportsEcosystem, DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, DEFAULT_NBA_LIKE_ECOSYSTEM_ID, type SportsEcosystem } from '@/domain/ecosystem'
 import type { Country } from '@/domain/country'
 import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
@@ -84,6 +85,8 @@ export interface GameWorld {
   readonly developmentStimulusByPlayerId: Readonly<Record<string, PlayerDevelopmentStimulus>>
   readonly careerFatigueByPlayerId: Readonly<Record<string, number>>
   readonly promotionRelegationResolutionsById: Readonly<Record<string, PromotionRelegationResolution>>
+  readonly draftsById: Readonly<Record<string, Draft>>
+  readonly draftPicksById: Readonly<Record<string, DraftPick>>
 }
 
 export interface CreateGameWorldInput {
@@ -126,6 +129,8 @@ export interface CreateGameWorldInput {
   developmentStimulusByPlayerId?: Readonly<Record<string, PlayerDevelopmentStimulus>>
   careerFatigueByPlayerId?: Readonly<Record<string, number>>
   promotionRelegationResolutions?: readonly PromotionRelegationResolution[]
+  drafts?: readonly Draft[]
+  draftPicks?: readonly DraftPick[]
 }
 
 export class GameWorldValidationError extends Error {
@@ -180,6 +185,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     trainingPlansByTeamId: Object.freeze(Object.fromEntries(input.teams.map((team)=>[team.id,input.trainingPlansByTeamId?.[team.id]??createDefaultTrainingPlan(team.id)]))), trainingSessionsById:Object.freeze({...(input.trainingSessionsById??{})}),
     developmentStimulusByPlayerId:Object.freeze(Object.fromEntries(input.players.map((player)=>[player.id,input.developmentStimulusByPlayerId?.[player.id]??{playerId:player.id,byRating:{...EMPTY_DEVELOPMENT_STIMULUS}}]))), careerFatigueByPlayerId:Object.freeze(Object.fromEntries(input.players.map((player)=>[player.id,clampCareerFatigue(input.careerFatigueByPlayerId?.[player.id]??0)]))),
     promotionRelegationResolutionsById: indexById(input.promotionRelegationResolutions ?? [], 'Promotion/relegation resolution'),
+    draftsById: indexById(input.drafts ?? [], 'Draft'),
+    draftPicksById: indexById(input.draftPicks ?? [], 'Draft pick'),
   }
 
   validateWorld(world)
@@ -188,7 +195,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
 
 /** Rebuilds through the canonical validator while preserving unrelated world state. */
 export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorldInput>): GameWorld {
-  return createGameWorld({ currentDate: world.currentDate, currentSeasonId: world.currentSeasonId, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), ecosystems: Object.values(world.ecosystems), seasons: Object.values(world.seasons), games: Object.values(world.games), matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory: Object.values(world.seasonHistoryBySeasonId), injuries: Object.values(world.injuriesById), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId), playerTransactions: Object.values(world.playerTransactionsById), playerKnowledge: Object.values(world.playerKnowledgeById), staffPeople: Object.values(world.staffPeopleById), teamStaffAssignments: Object.values(world.teamStaffAssignmentsById), coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId, coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: world.coachCareerHistoryByCoachId, coachJobOpeningsById: world.coachJobOpeningsById, coachJobCandidaciesById: world.coachJobCandidaciesById, coachInterviewsByCandidacyId: world.coachInterviewsByCandidacyId, coachJobOffersById: world.coachJobOffersById, relationshipsByKey: world.relationshipsByKey, personalitiesByPersonId: world.personalitiesByPersonId, moraleByPersonId: world.moraleByPersonId, inboxItemsById: world.inboxItemsById, newsItemsById: world.newsItemsById, trainingPlansByTeamId: world.trainingPlansByTeamId, trainingSessionsById: world.trainingSessionsById, developmentStimulusByPlayerId: world.developmentStimulusByPlayerId, careerFatigueByPlayerId: world.careerFatigueByPlayerId, promotionRelegationResolutions: Object.values(world.promotionRelegationResolutionsById), ...patch })
+  return createGameWorld({ currentDate: world.currentDate, currentSeasonId: world.currentSeasonId, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), ecosystems: Object.values(world.ecosystems), seasons: Object.values(world.seasons), games: Object.values(world.games), matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory: Object.values(world.seasonHistoryBySeasonId), injuries: Object.values(world.injuriesById), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId), playerTransactions: Object.values(world.playerTransactionsById), playerKnowledge: Object.values(world.playerKnowledgeById), staffPeople: Object.values(world.staffPeopleById), teamStaffAssignments: Object.values(world.teamStaffAssignmentsById), coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId, coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: world.coachCareerHistoryByCoachId, coachJobOpeningsById: world.coachJobOpeningsById, coachJobCandidaciesById: world.coachJobCandidaciesById, coachInterviewsByCandidacyId: world.coachInterviewsByCandidacyId, coachJobOffersById: world.coachJobOffersById, relationshipsByKey: world.relationshipsByKey, personalitiesByPersonId: world.personalitiesByPersonId, moraleByPersonId: world.moraleByPersonId, inboxItemsById: world.inboxItemsById, newsItemsById: world.newsItemsById, trainingPlansByTeamId: world.trainingPlansByTeamId, trainingSessionsById: world.trainingSessionsById, developmentStimulusByPlayerId: world.developmentStimulusByPlayerId, careerFatigueByPlayerId: world.careerFatigueByPlayerId, promotionRelegationResolutions: Object.values(world.promotionRelegationResolutionsById), drafts: Object.values(world.draftsById), draftPicks: Object.values(world.draftPicksById), ...patch })
 }
 
 function validateWorld(world: GameWorld): void {
@@ -321,6 +328,8 @@ function validateWorld(world: GameWorld): void {
   for (const offer of Object.values(world.coachJobOffersById)) { requireEntity(world.coaches, offer.coachId, 'Coach offer Coach'); requireEntity(world.teams, offer.teamId, 'Coach offer Team'); requireEntity(world.coachJobOpeningsById, offer.jobOpeningId, 'Coach offer opening') }
   for (const history of Object.values(world.seasonHistoryBySeasonId)) validateSeasonHistory(world, history)
   for (const resolution of Object.values(world.promotionRelegationResolutionsById)) validatePromotionRelegationResolution(world, resolution)
+  for (const draft of Object.values(world.draftsById)) validateDraft(world, draft)
+  for (const pick of Object.values(world.draftPicksById)) validateDraftPick(world, pick)
 }
 
 function hasRelationshipPerson(world: GameWorld, id: string): boolean { return world.coaches[id as CoachId] !== undefined || world.players[id as PlayerId] !== undefined || world.staffPeopleById[id as StaffPersonId] !== undefined }
@@ -366,6 +375,20 @@ function validatePromotionRelegationResolution(world: GameWorld, resolution: Pro
   if (rule === undefined || resolution.promotedTeamIds.length !== rule.exchangeCount || resolution.relegatedTeamIds.length !== rule.exchangeCount || new Set([...resolution.promotedTeamIds, ...resolution.relegatedTeamIds]).size !== rule.exchangeCount * 2) throw new GameWorldValidationError('Promotion/relegation resolution is invalid')
   const upperTeams = upper.participantTeamIds ?? world.competitions[upper.competitionId]!.participantTeamIds; const lowerTeams = lower.participantTeamIds ?? world.competitions[lower.competitionId]!.participantTeamIds
   if (resolution.relegatedTeamIds.some((id) => !upperTeams.includes(id)) || resolution.promotedTeamIds.some((id) => !lowerTeams.includes(id))) throw new GameWorldValidationError('Promotion/relegation resolution teams are not source participants')
+}
+
+function validateDraft(world: GameWorld, draft: Draft): void {
+  const ecosystem = requireEntity(world.ecosystems, draft.ecosystemId, 'Draft ecosystem')
+  const season = world.seasons[draft.sourceSeasonId]
+  if (ecosystem.kind !== 'nbaLike' || season === undefined || world.competitions[season.competitionId]?.ecosystemId !== ecosystem.id || (draft.status !== 'scheduled' && world.seasonHistoryBySeasonId[draft.sourceSeasonId] === undefined) || !Number.isInteger(draft.rules.rounds) || draft.rules.rounds < 1 || !Number.isInteger(draft.rules.scheduledAfterDays) || draft.rules.scheduledAfterDays < 0 || draft.rules.orderMethod !== 'reverseStandings') throw new GameWorldValidationError('Draft is invalid')
+  for (const playerId of draft.prospectPlayerIds) requireEntity(world.players, playerId, 'Draft prospect')
+  if (new Set(draft.prospectPlayerIds).size !== draft.prospectPlayerIds.length) throw new GameWorldValidationError('Draft has duplicate prospects')
+}
+function validateDraftPick(world: GameWorld, pick: DraftPick): void {
+  const draft = requireEntity(world.draftsById, pick.draftId, 'Draft pick draft')
+  requireEntity(world.teams, pick.originalTeamId, 'Draft pick original Team'); requireEntity(world.teams, pick.ownerTeamId, 'Draft pick owner Team')
+  if (!Number.isInteger(pick.round) || pick.round < 1 || pick.round > draft.rules.rounds || !Number.isInteger(pick.order) || pick.order < 1 || Object.values(world.draftPicksById).some((other) => other.id !== pick.id && other.draftId === pick.draftId && other.order === pick.order)) throw new GameWorldValidationError('Draft pick is invalid')
+  if (pick.selection !== undefined) { if (!draft.prospectPlayerIds.includes(pick.selection.playerId) || pick.selection.teamId !== pick.ownerTeamId || Object.values(world.draftPicksById).some((other) => other.id !== pick.id && other.selection?.playerId === pick.selection!.playerId)) throw new GameWorldValidationError('Draft pick selection is invalid') }
 }
 
 function sameStanding(a: SeasonHistoryRecord['finalStandings'][number], b: SeasonHistoryRecord['finalStandings'][number]): boolean {

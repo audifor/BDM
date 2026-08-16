@@ -8,11 +8,11 @@ import type { DesktopAppActions } from './DesktopAppHost'
 import { DesktopAppHost } from './DesktopAppHost'
 import { DESKTOP_APPS } from './DesktopAppRegistry'
 
-const actions: DesktopAppActions = { tacticalPlan: createDefaultTacticalPlan(), openApp: () => undefined, playGame: () => undefined, instantResult: () => undefined, simulateRemainingGamesToday: () => undefined, advanceDay: () => undefined, startNextSeason: () => undefined, releasePlayer: () => undefined, signFreeAgent: () => undefined, purchaseSkill: () => undefined, purchasePerk: () => undefined, acceptOffer: () => undefined, declineOffer: () => undefined, setTacticalPlan: () => undefined, resetTacticalPlan: () => undefined, setTrainingIntensity: () => undefined, setTrainingFocus: () => undefined }
+const actions: DesktopAppActions = { tacticalPlan: createDefaultTacticalPlan(), openApp: () => undefined, playGame: () => undefined, instantResult: () => undefined, simulateRemainingGamesToday: () => undefined, advanceDay: () => undefined, startNextSeason: () => undefined, releasePlayer: () => undefined, signFreeAgent: () => undefined, selectDraftProspect: () => undefined, purchaseSkill: () => undefined, purchasePerk: () => undefined, acceptOffer: () => undefined, declineOffer: () => undefined, setTacticalPlan: () => undefined, resetTacticalPlan: () => undefined, setTrainingIntensity: () => undefined, setTrainingFocus: () => undefined }
 
 describe('DesktopAppHost', () => {
   it('migrates every functional legacy app to a window-capable registry entry', () => {
-    for (const appId of ['squad', 'schedule', 'standings', 'training', 'staff', 'coach', 'tactics', 'market', 'match']) {
+    for (const appId of ['squad', 'schedule', 'standings', 'training', 'staff', 'coach', 'tactics', 'market', 'draft', 'match']) {
       const app = DESKTOP_APPS.find((candidate) => candidate.id === appId)
       expect(app?.window).toBeDefined()
       expect(app?.renderKey).toBeDefined()
@@ -29,7 +29,7 @@ describe('DesktopAppHost', () => {
 
   it('wraps Training, League, Staff, Coach, Tactics and Market in their existing components', () => {
     const world = createNewGame()
-    const labels = { training: 'Active plan', standings: 'STANDINGS', staff: 'STAFF', coach: 'REPUTATION', tactics: 'TACTICS', market: 'FREE AGENTS' }
+    const labels = { training: 'Active plan', standings: 'STANDINGS', staff: 'STAFF', coach: 'REPUTATION', tactics: 'TACTICS', market: 'FREE AGENTS', draft: 'No draft available' }
     for (const [appId, label] of Object.entries(labels)) {
       expect(renderToStaticMarkup(createElement(DesktopAppHost, { appId, world, actions }))).toContain(label)
     }

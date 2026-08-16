@@ -812,3 +812,27 @@ calendar, standings, champion, roster and match systems while retaining independ
 competition windows. New games generate a deterministic, separate franchise league;
 legacy saves do not receive one implicitly. Draft, salary-cap and trade rules remain
 future ecosystem extensions.
+
+## NBA-like Draft v1
+
+Drafts are owned by an `nbaLike` `SportsEcosystem`. `DraftRules` configure the V1
+reverse-standings order, scheduled offset and number of rounds; future WNBA-like
+ecosystems may reuse the infrastructure with different rules. A Draft is created
+against a completed source Competition Edition, and the global `CalendarEngine`
+opens and progresses it on its scheduled date. This lifecycle is independent from
+FIBA-like competition windows.
+
+`Draft.prospectPlayerIds` references deterministic canonical `Player` entities.
+Prospects have no roster until selected; undrafted prospects remain Players without
+a roster. `DraftPick` has a stable identity, `originalTeamId` records its origin,
+and `ownerTeamId` records the current selection rights. Draft Picks are transferable
+assets by design, and ownership changes never change Pick identity. Trades will
+modify ownership in Hito 054.
+
+V1 supports multiple rounds and deterministic AI selection through
+`chooseAiDraftProspect`; `progressDraftAi` stops for the user and resumes after
+the canonical `makeDraftSelection` assigns the Player to `ownerTeamId`. Drafts,
+Picks, prospects and selections persist mid-Draft without regeneration. The UI is
+a thin application boundary over these queries and operations; it does not own
+Draft state. Salary Cap, trades, lottery, rookie scale, Draft-specific Inbox and
+advanced scouting remain out of scope.

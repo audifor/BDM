@@ -53,6 +53,7 @@ export function App() {
   const declineUserCoachOffer = useGameStore((state) => state.declineUserCoachOffer)
   const setTrainingIntensity = useGameStore((state) => state.setTrainingIntensity)
   const setTrainingFocus = useGameStore((state) => state.setTrainingFocus)
+  const selectDraftProspect = useGameStore((state) => state.selectDraftProspect)
   const executeEntityAction = useGameStore((state) => state.executeEntityAction)
   const [launcherQuery, setLauncherQuery] = useState('')
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false)
@@ -126,7 +127,7 @@ export function App() {
   const openDesktopApp = (appId: string) => { openWindow(appId); setLauncherQuery('') }
   const unreadInboxCount = selectUnreadInboxCount(world)
   const activeAppId = desktopWindows.find((window) => window.id === focusedWindowId)?.appId ?? null
-  const desktopActions: DesktopAppActions = { tacticalPlan, openApp: openDesktopApp, playGame: () => startMatch(startLiveMatch(tacticalPlan)), instantResult: () => instantResult(tacticalPlan), simulateRemainingGamesToday, advanceDay, startNextSeason, releasePlayer, signFreeAgent, purchaseSkill: (id) => { const result = purchaseUserCoachSkill(id); if (!result.ok) setSaveMessage(result.reason) }, purchasePerk: (id) => { const result = purchaseUserCoachPerk(id); if (!result.ok) setSaveMessage(result.reason) }, acceptOffer: acceptUserCoachOffer, declineOffer: declineUserCoachOffer, setTacticalPlan, resetTacticalPlan, setTrainingIntensity, setTrainingFocus }
+  const desktopActions: DesktopAppActions = { tacticalPlan, openApp: openDesktopApp, playGame: () => startMatch(startLiveMatch(tacticalPlan)), instantResult: () => instantResult(tacticalPlan), simulateRemainingGamesToday, advanceDay, startNextSeason, releasePlayer, signFreeAgent, selectDraftProspect, purchaseSkill: (id) => { const result = purchaseUserCoachSkill(id); if (!result.ok) setSaveMessage(result.reason) }, purchasePerk: (id) => { const result = purchaseUserCoachPerk(id); if (!result.ok) setSaveMessage(result.reason) }, acceptOffer: acceptUserCoachOffer, declineOffer: declineUserCoachOffer, setTacticalPlan, resetTacticalPlan, setTrainingIntensity, setTrainingFocus }
 
   return (
     <DesktopShell

@@ -1,5 +1,5 @@
 import { createGame } from '@/domain/game'
-import { applyMoraleEventToWorld, createGameWorld, type GameWorld } from '@/domain/world'
+import { applyMoraleEventToWorld, updateGameWorld, type GameWorld } from '@/domain/world'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
 import { applyCoachExperienceToWorld, applyMatchCoachReputationConsequences, deriveCoachMatchExperienceGain } from '@/engine/coach'
 import { calculateTeamStrength } from '@/engine/team'
@@ -55,29 +55,7 @@ export function applyMatchResult(world: GameWorld, result: MatchSimulationResult
   })
   const games = Object.values(world.games).map((game) => (game.id === completedGame.id ? completedGame : game))
 
-  const resultWorld = createGameWorld({
-    currentDate: world.currentDate,
-    currentSeasonId: world.currentSeasonId,
-    userCoachId: world.userCoachId,
-    countries: Object.values(world.countries),
-    coaches: Object.values(world.coaches),
-    players: Object.values(world.players),
-    teams: Object.values(world.teams),
-    competitions: Object.values(world.competitions), ecosystems: Object.values(world.ecosystems),
-    seasons: Object.values(world.seasons),
-    games,
-    matchStatLogs: Object.values(world.matchStatLogsByGameId),
-    seasonHistory: Object.values(world.seasonHistoryBySeasonId),
-    injuries: Object.values(world.injuriesById),
-    contracts: Object.values(world.contractsById),
-    teamFinances: Object.values(world.teamFinancesByTeamId),
-    playerTransactions: Object.values(world.playerTransactionsById),
-    playerKnowledge: Object.values(world.playerKnowledgeById),
-    staffPeople: Object.values(world.staffPeopleById),
-    teamStaffAssignments: Object.values(world.teamStaffAssignmentsById),
-    promotionRelegationResolutions: Object.values(world.promotionRelegationResolutionsById), coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId,
-    coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: world.coachCareerHistoryByCoachId, coachJobOpeningsById: world.coachJobOpeningsById, coachJobCandidaciesById: world.coachJobCandidaciesById, coachInterviewsByCandidacyId: world.coachInterviewsByCandidacyId, coachJobOffersById: world.coachJobOffersById, relationshipsByKey: world.relationshipsByKey, personalitiesByPersonId: world.personalitiesByPersonId, moraleByPersonId: world.moraleByPersonId, inboxItemsById: world.inboxItemsById, newsItemsById: world.newsItemsById, trainingPlansByTeamId: world.trainingPlansByTeamId, trainingSessionsById: world.trainingSessionsById, developmentStimulusByPlayerId: world.developmentStimulusByPlayerId, careerFatigueByPlayerId: world.careerFatigueByPlayerId,
-  })
+  const resultWorld = updateGameWorld(world, { games })
   return applyMatchMorale(applyMatchCoachExperience(world, applyMatchCoachReputationConsequences(resultWorld, completedGame), completedGame), completedGame)
 }
 
@@ -108,7 +86,7 @@ export function applyCompletedMatch(world: GameWorld, simulation: MatchSimulatio
   if (originalGame === undefined) throw new MatchResultApplicationError(`Cannot apply result to missing Game ${simulation.gameId}`)
   const log = createMatchStatLog(world, simulation.gameId, simulation)
   const resultWorld = applyMatchResult(world, { gameId: simulation.gameId, homeTeamId: simulation.homeTeamId, awayTeamId: simulation.awayTeamId, homeScore: simulation.finalScore.home, awayScore: simulation.finalScore.away })
-  const completedWorld = createGameWorld({ currentDate: resultWorld.currentDate, currentSeasonId: resultWorld.currentSeasonId, userCoachId: resultWorld.userCoachId, countries: Object.values(resultWorld.countries), coaches: Object.values(resultWorld.coaches), players: Object.values(resultWorld.players), teams: Object.values(resultWorld.teams), competitions: Object.values(resultWorld.competitions), seasons: Object.values(resultWorld.seasons), games: Object.values(resultWorld.games), matchStatLogs: [...Object.values(world.matchStatLogsByGameId), log], seasonHistory: Object.values(resultWorld.seasonHistoryBySeasonId), injuries: Object.values(resultWorld.injuriesById), contracts: Object.values(resultWorld.contractsById), teamFinances: Object.values(resultWorld.teamFinancesByTeamId), playerTransactions:Object.values(resultWorld.playerTransactionsById),playerKnowledge:Object.values(resultWorld.playerKnowledgeById),staffPeople:Object.values(resultWorld.staffPeopleById),teamStaffAssignments:Object.values(resultWorld.teamStaffAssignmentsById),coachProfessionalProfilesByCoachId:resultWorld.coachProfessionalProfilesByCoachId,coachRpgProfilesByCoachId: resultWorld.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: resultWorld.coachReputationProfilesByCoachId, coachEmploymentByCoachId: resultWorld.coachEmploymentByCoachId, coachCareerHistoryByCoachId: resultWorld.coachCareerHistoryByCoachId, coachJobOpeningsById: resultWorld.coachJobOpeningsById, coachJobCandidaciesById: resultWorld.coachJobCandidaciesById, coachInterviewsByCandidacyId: resultWorld.coachInterviewsByCandidacyId, coachJobOffersById: resultWorld.coachJobOffersById, relationshipsByKey: resultWorld.relationshipsByKey, personalitiesByPersonId: resultWorld.personalitiesByPersonId, moraleByPersonId: resultWorld.moraleByPersonId, inboxItemsById: resultWorld.inboxItemsById, newsItemsById: resultWorld.newsItemsById, trainingPlansByTeamId: resultWorld.trainingPlansByTeamId, trainingSessionsById: resultWorld.trainingSessionsById, developmentStimulusByPlayerId: resultWorld.developmentStimulusByPlayerId, careerFatigueByPlayerId: resultWorld.careerFatigueByPlayerId })
+  const completedWorld = updateGameWorld(resultWorld, { matchStatLogs: [...Object.values(resultWorld.matchStatLogsByGameId), log] })
   return finalizeCompletedSeason(completedWorld, originalGame.seasonId)
 }
 

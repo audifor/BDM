@@ -26,6 +26,7 @@ import { setTeamTrainingPlan } from '@/engine/training'
 import { getUserTeam } from '@/engine/calendar'
 import { executeEntityActionResult, type EntityActionExecution } from '@/app/entityActions/EntityActionExecutor'
 import type { CommandResult } from '@/app/entityActions/EntityCommand'
+import { selectDraftProspect } from '@/app/draft'
 
 interface GameStore {
   readonly world: GameWorld | null
@@ -51,6 +52,7 @@ interface GameStore {
   declineUserCoachOffer(offerId: string): void
   setTrainingIntensity(intensity: TrainingIntensity): void
   setTrainingFocus(focus: TrainingFocus): void
+  selectDraftProspect(draftId: string, playerId: PlayerId): void
   executeEntityAction(result: CommandResult): EntityActionExecution
   getActiveMatchSession(): LiveMatchController | null
   replaceWorld(world: GameWorld): void
@@ -102,6 +104,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   declineUserCoachOffer: (offerId) => set({ world: declineCoachJobOffer(requireWorld(get().world), offerId) }),
   setTrainingIntensity: (intensity) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: setTeamTrainingPlan(world, team.id, { intensity }) }) },
   setTrainingFocus: (focus) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: setTeamTrainingPlan(world, team.id, { focus }) }) },
+  selectDraftProspect: (draftId, playerId) => set({ world: selectDraftProspect(requireWorld(get().world), draftId, playerId) }),
   executeEntityAction: (result) => {
     const world = requireWorld(get().world); const outcome = executeEntityActionResult(world, result, { controlledTeamId: getUserTeam(world)?.id, activeMatchSession: liveController ?? undefined })
     if (outcome.kind === 'executed') set({ world: outcome.world })
