@@ -9,12 +9,11 @@ import { getUserTeam } from '@/engine/calendar'
 import { getSeasonHistoryRecord } from '@/engine/season'
 import { getCurrentSeason } from '@/app/game'
 
-import { formatPrototypeDate } from './formatters'
 import { MatchViewerScreen } from './screens'
 import { createPresentationSegment } from './match/MatchPresentationSegment'
 import { DesktopShell } from './desktop/DesktopShell'
-import { DesktopAmbientLayer } from './desktop/DesktopAmbientLayer'
 import { DesktopDock, DesktopLauncher, StatusCluster } from './desktop/DesktopNavigation'
+import { GameContextBar } from './desktop/GameContextBar'
 import { DESKTOP_APPS, getDesktopApp, type DesktopSection } from './desktop/DesktopAppRegistry'
 import { DesktopWindow } from './desktop/DesktopWindow'
 import { DesktopAppHost, type DesktopAppActions } from './desktop/DesktopAppHost'
@@ -23,6 +22,7 @@ import { useDesktopWidgetStore } from '@/stores/desktopWidgetStore'
 import { DesktopWidgetLayer } from './desktop/DesktopWidgetLayer'
 import { GlobalSearchOverlay } from './desktop/GlobalSearch'
 import { EntityActionComposer } from './entityActions/EntityActionComposer'
+import { resolveGameCapabilities } from './gameContext'
 
 /** Temporary compatibility export for existing UI tests; the dock and launcher own navigation. */
 export const NAVIGATION: readonly { readonly id: DesktopSection; readonly label: string }[] = DESKTOP_APPS
@@ -44,6 +44,7 @@ export function App() {
   const instantResult = useGameStore((state) => state.instantResult)
   const simulateRemainingGamesToday = useGameStore((state) => state.simulateRemainingGamesToday)
   const advanceDay = useGameStore((state) => state.advanceDay)
+  const continueGame = useGameStore((state) => state.continueGame)
   const startNextSeason = useGameStore((state) => state.startNextSeason)
   const signFreeAgent = useGameStore((state) => state.signFreeAgent)
   const releasePlayer = useGameStore((state) => state.releasePlayer)
@@ -64,6 +65,7 @@ export function App() {
   const focusedWindowId = useDesktopStore((state) => state.focusedWindowId)
   const launcherOpen = useDesktopStore((state) => state.launcherOpen)
   const recentAppIds = useDesktopStore((state) => state.recentAppIds)
+  const launcherOrder = useDesktopStore((state) => state.launcherOrder)
   const openWindow = useDesktopStore((state) => state.openWindow)
   const closeWindow = useDesktopStore((state) => state.closeWindow)
   const focusWindow = useDesktopStore((state) => state.focusWindow)
@@ -75,6 +77,7 @@ export function App() {
   const resizeWindow = useDesktopStore((state) => state.resizeWindow)
   const toggleLauncher = useDesktopStore((state) => state.toggleLauncher)
   const closeLauncher = useDesktopStore((state) => state.closeLauncher)
+  const reorderLauncher = useDesktopStore((state) => state.reorderLauncher)
   const simulation = useMatchViewerStore((state) => state.simulation)
   const currentEventIndex = useMatchViewerStore((state) => state.currentEventIndex)
   const isPlaying = useMatchViewerStore((state) => state.isPlaying)
@@ -121,22 +124,23 @@ export function App() {
 
   if (simulation !== null) {
     const coachingTeam = getUserTeam(world)!
-    return <DesktopShell overlay={<EntityActionComposer onResult={executeComposerAction} />}><MatchViewerScreen world={world} simulation={simulation} homeTeamName={world.teams[simulation.homeTeamId]!.name} awayTeamName={world.teams[simulation.awayTeamId]!.name} currentEventIndex={currentEventIndex} isPlaying={isPlaying} speed={speed} resultApplied={resultApplied} onPause={pause} onResume={resume} onSpeedChange={setSpeed} onRevealNext={() => replaceSimulation(advanceLiveMatch())} onRequestPresentationSegment={() => createPresentationSegment(advanceLiveMatchPresentation())} onCompletePresentationSegment={(nextSimulation) => replaceSimulation(nextSimulation)} onSkipToEnd={() => replaceSimulation(skipLiveMatch(), false)} onApplyResult={() => { if (markResultApplied()) completeMatch(simulation) }} onContinue={() => { clearMatch(); openWindow('match') }} coachingPlan={tacticalPlan} coachingPlayers={coachingTeam.rosterPlayerIds.map((playerId) => world.players[playerId]!)} coachingTeamId={coachingTeam.id} onApplyCoaching={(plan) => { replaceSimulation(applyLiveTactics(coachingTeam.id, plan), false); setTacticalPlan(plan) }} onApplyManualSubstitutions={(substitutions) => replaceSimulation(applyManualSubstitutions(coachingTeam.id, substitutions), false)} /></DesktopShell>
+    return <DesktopShell context={<GameContextBar world={world} />} overlay={<EntityActionComposer onResult={executeComposerAction} />}><MatchViewerScreen world={world} simulation={simulation} homeTeamName={world.teams[simulation.homeTeamId]!.name} awayTeamName={world.teams[simulation.awayTeamId]!.name} currentEventIndex={currentEventIndex} isPlaying={isPlaying} speed={speed} resultApplied={resultApplied} onPause={pause} onResume={resume} onSpeedChange={setSpeed} onRevealNext={() => replaceSimulation(advanceLiveMatch())} onRequestPresentationSegment={() => createPresentationSegment(advanceLiveMatchPresentation())} onCompletePresentationSegment={(nextSimulation) => replaceSimulation(nextSimulation)} onSkipToEnd={() => replaceSimulation(skipLiveMatch(), false)} onApplyResult={() => { if (markResultApplied()) completeMatch(simulation) }} onContinue={() => { clearMatch(); openWindow('match') }} coachingPlan={tacticalPlan} coachingPlayers={coachingTeam.rosterPlayerIds.map((playerId) => world.players[playerId]!)} coachingTeamId={coachingTeam.id} onApplyCoaching={(plan) => { replaceSimulation(applyLiveTactics(coachingTeam.id, plan), false); setTacticalPlan(plan) }} onApplyManualSubstitutions={(substitutions) => replaceSimulation(applyManualSubstitutions(coachingTeam.id, substitutions), false)} /></DesktopShell>
   }
   const seasonComplete = getSeasonHistoryRecord(world, getCurrentSeason(world).id) !== undefined
 
   const openDesktopApp = (appId: string) => { openWindow(appId); setLauncherQuery('') }
   const unreadInboxCount = selectUnreadInboxCount(world)
+  const capabilities = resolveGameCapabilities(world)
   const activeAppId = desktopWindows.find((window) => window.id === focusedWindowId)?.appId ?? null
   const desktopActions: DesktopAppActions = { tacticalPlan, openApp: openDesktopApp, playGame: () => startMatch(startLiveMatch(tacticalPlan)), instantResult: () => instantResult(tacticalPlan), simulateRemainingGamesToday, advanceDay, startNextSeason, releasePlayer, signFreeAgent, selectDraftProspect, executeTrade, purchaseSkill: (id) => { const result = purchaseUserCoachSkill(id); if (!result.ok) setSaveMessage(result.reason) }, purchasePerk: (id) => { const result = purchaseUserCoachPerk(id); if (!result.ok) setSaveMessage(result.reason) }, acceptOffer: acceptUserCoachOffer, declineOffer: declineUserCoachOffer, setTacticalPlan, resetTacticalPlan, setTrainingIntensity, setTrainingFocus }
 
   return (
     <DesktopShell
-      ambient={<DesktopAmbientLayer world={world} />}
-      widgets={<DesktopWidgetLayer world={world} onInstantResult={() => instantResult(tacticalPlan)} onOpenApp={openDesktopApp} onPlayGame={() => startMatch(startLiveMatch(tacticalPlan))} />}
+      context={<GameContextBar world={world} />}
+      widgets={<DesktopWidgetLayer world={world} onAdvanceDay={advanceDay} onContinue={continueGame} onInstantResult={() => instantResult(tacticalPlan)} onOpenApp={openDesktopApp} onOpenPendingGame={(gameId) => { if (world.games[gameId]?.status === 'scheduled') startMatch(startLiveMatch(tacticalPlan)) }} onPlayGame={() => startMatch(startLiveMatch(tacticalPlan))} />}
       dock={<DesktopDock activeAppId={activeAppId} launcherOpen={launcherOpen} onAppOpen={openDesktopApp} onLauncherToggle={toggleLauncher} openAppIds={desktopWindows.map((window) => window.appId)} unreadCount={unreadInboxCount} />}
-      overlay={<><DesktopLauncher canAdvanceDay={!seasonComplete} canLoad={hasSave} isOpen={launcherOpen && !globalSearchOpen} onAdvanceDay={advanceDay} onAppOpen={openDesktopApp} onClose={closeLauncher} onCustomizeDesktop={enterDesktopWidgetEditMode} onLoad={() => void loadGame()} onQueryChange={setLauncherQuery} onSave={() => void saveGame()} query={launcherQuery} recentAppIds={recentAppIds} /><GlobalSearchOverlay canAdvanceDay={!seasonComplete} canLoad={hasSave} isOpen={globalSearchOpen} onAdvanceDay={advanceDay} onClose={() => setGlobalSearchOpen(false)} onCustomize={enterDesktopWidgetEditMode} onLoad={() => void loadGame()} onOpenApp={openDesktopApp} onSave={() => void saveGame()} world={world} /><EntityActionComposer onResult={executeComposerAction} /></>}
-      status={<StatusCluster date={formatPrototypeDate(world.currentDate)} saveMessage={saveMessage} />}
+      overlay={<><DesktopLauncher activeAppId={activeAppId} capabilities={capabilities} canAdvanceDay={!seasonComplete} canLoad={hasSave} isOpen={launcherOpen && !globalSearchOpen} launcherOrder={launcherOrder} onAdvanceDay={advanceDay} onAppOpen={openDesktopApp} onClose={closeLauncher} onCustomizeDesktop={enterDesktopWidgetEditMode} onLoad={() => void loadGame()} onQueryChange={setLauncherQuery} onReorder={reorderLauncher} onSave={() => void saveGame()} query={launcherQuery} recentAppIds={recentAppIds} /><GlobalSearchOverlay canAdvanceDay={!seasonComplete} canLoad={hasSave} isOpen={globalSearchOpen} onAdvanceDay={advanceDay} onClose={() => setGlobalSearchOpen(false)} onCustomize={enterDesktopWidgetEditMode} onLoad={() => void loadGame()} onOpenApp={openDesktopApp} onSave={() => void saveGame()} world={world} /><EntityActionComposer onResult={executeComposerAction} /></>}
+      status={<StatusCluster saveMessage={saveMessage} />}
     >
       <div className="app-shell">
         {desktopWindows.filter((window) => !window.minimized).map((window) => <DesktopWindow focused={window.id === focusedWindowId} key={window.id} onClose={() => closeWindow(window.id)} onFocus={() => focusWindow(window.id)} onMaximize={() => maximizeWindow(window.id)} onMinimize={() => minimizeWindow(window.id)} onMove={(position) => moveWindow(window.id, position)} onResize={(bounds) => resizeWindow(window.id, bounds)} onRestoreMaximized={() => restoreMaximizedWindow(window.id)} window={window}><DesktopAppHost actions={desktopActions} appId={window.appId} world={world} /></DesktopWindow>)}

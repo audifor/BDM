@@ -2,11 +2,12 @@ import { useEffect, type ReactNode } from 'react'
 
 export function suppressNativeContextMenu(event: Pick<MouseEvent, 'preventDefault'>): void { event.preventDefault() }
 
-export function DesktopShell({ children, ambient, dock, overlay, status, widgets }: { readonly children: ReactNode; readonly ambient?: ReactNode; readonly dock?: ReactNode; readonly overlay?: ReactNode; readonly status?: ReactNode; readonly widgets?: ReactNode }) {
+export function DesktopShell({ children, ambient, context, dock, overlay, status, widgets }: { readonly children: ReactNode; readonly ambient?: ReactNode; readonly context?: ReactNode; readonly dock?: ReactNode; readonly overlay?: ReactNode; readonly status?: ReactNode; readonly widgets?: ReactNode }) {
   useEffect(() => { const handler = (event: MouseEvent) => suppressNativeContextMenu(event); document.addEventListener('contextmenu', handler, { capture: true }); return () => document.removeEventListener('contextmenu', handler, { capture: true }) }, [])
   return (
     <main className="desktop-shell" data-testid="desktop-shell">
       <DesktopWorkspace ambient={ambient} widgets={widgets}>{children}</DesktopWorkspace>
+      {context}
       <OverlayLayer>{overlay}</OverlayLayer>
       <DesktopDockSlot>{dock}</DesktopDockSlot>
       {status}

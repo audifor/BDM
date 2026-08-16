@@ -1,6 +1,7 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
-import { getDesktopApp } from '@/ui/desktop/DesktopAppRegistry'
+import { getDesktopApp, reorderLauncherApps, resolveLauncherOrder } from '@/ui/desktop/DesktopAppRegistry'
 
 export interface DesktopBounds { readonly x: number; readonly y: number; readonly width: number; readonly height: number }
 export interface DesktopWindowState extends DesktopBounds { readonly id: string; readonly appId: string; readonly minimized: boolean; readonly maximized: boolean; readonly restoreBounds?: DesktopBounds; readonly zIndex: number }
@@ -10,6 +11,7 @@ interface DesktopStore {
   readonly focusedWindowId: string | null
   readonly launcherOpen: boolean
   readonly recentAppIds: readonly string[]
+  readonly launcherOrder: readonly string[]
   openWindow(appId: string): void
   closeWindow(windowId: string): void
   focusWindow(windowId: string): void
@@ -21,14 +23,15 @@ interface DesktopStore {
   resizeWindow(windowId: string, bounds: DesktopBounds): void
   toggleLauncher(): void
   closeLauncher(): void
+  reorderLauncher(movedId: string, targetId: string): void
 }
 
 const withZIndexes = (windows: readonly DesktopWindowState[]) => windows.map((window, index) => ({ ...window, zIndex: 10 + index }))
 const focusTopVisible = (windows: readonly DesktopWindowState[]) => [...windows].reverse().find((window) => !window.minimized)?.id ?? null
 const updateRecent = (recentAppIds: readonly string[], appId: string) => [appId, ...recentAppIds.filter((id) => id !== appId)].slice(0, 4)
 
-export const useDesktopStore = create<DesktopStore>((set) => ({
-  windows: [], focusedWindowId: null, launcherOpen: false, recentAppIds: [],
+export const useDesktopStore = create<DesktopStore>()(persist((set) => ({
+  windows: [], focusedWindowId: null, launcherOpen: false, recentAppIds: [], launcherOrder: [],
   openWindow: (appId) => set((state) => {
     const app = getDesktopApp(appId)
     if (app?.availability !== 'available' || app.window === undefined) return state
@@ -52,4 +55,5 @@ export const useDesktopStore = create<DesktopStore>((set) => ({
   resizeWindow: (windowId, bounds) => set((state) => ({ windows: state.windows.map((window) => { if (window.id !== windowId || window.maximized) return window; const constraints = getDesktopApp(window.appId)?.window; return { ...window, ...bounds, width: Math.max(constraints?.minWidth ?? 320, bounds.width), height: Math.max(constraints?.minHeight ?? 240, bounds.height) } }) })),
   toggleLauncher: () => set((state) => ({ launcherOpen: !state.launcherOpen })),
   closeLauncher: () => set({ launcherOpen: false }),
-}))
+  reorderLauncher: (movedId, targetId) => set((state) => ({ launcherOrder: reorderLauncherApps(resolveLauncherOrder(state.launcherOrder), movedId, targetId) })),
+}), { name: 'bdm.launcher-order.v1', partialize: (state) => ({ launcherOrder: state.launcherOrder }) }))

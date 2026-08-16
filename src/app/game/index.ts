@@ -1,4 +1,5 @@
 export { advanceGameDay, simulateRemainingGamesToday } from './advanceGameDay'
+export { continueGame, getContinueStopReason, getNextKnownEvent, DEFAULT_CONTINUE_DAY_LIMIT, type ContinueResult, type ContinueStopReason, type NextKnownEvent } from './ContinueFlow'
 export { createNewGame, PROTOTYPE_GAME_CONFIGURATION } from './createNewGame'
 export {
   createPrototypeGameRandom,

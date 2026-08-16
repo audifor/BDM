@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { useDesktopStore } from './desktopStore'
 
-const resetDesktop = () => useDesktopStore.setState({ windows: [], focusedWindowId: null, launcherOpen: false, recentAppIds: [] })
+const resetDesktop = () => useDesktopStore.setState({ windows: [], focusedWindowId: null, launcherOpen: false, recentAppIds: [], launcherOrder: [] })
 
 describe('desktop window manager store', () => {
   beforeEach(resetDesktop)
@@ -39,5 +39,14 @@ describe('desktop window manager store', () => {
     const world = createNewGame(); const before = JSON.stringify(world)
     useDesktopStore.getState().openWindow('schedule'); useDesktopStore.getState().maximizeWindow('schedule-window')
     expect(JSON.stringify(world)).toBe(before)
+  })
+
+  it('toggles the launcher and stores a serializable custom module order', () => {
+    const store = useDesktopStore.getState()
+    store.toggleLauncher(); expect(useDesktopStore.getState().launcherOpen).toBe(true)
+    store.toggleLauncher(); expect(useDesktopStore.getState().launcherOpen).toBe(false)
+    store.reorderLauncher('squad', 'schedule')
+    expect(useDesktopStore.getState().launcherOrder.slice(0, 2)).toEqual(['squad', 'schedule'])
+    expect(JSON.parse(JSON.stringify(useDesktopStore.getState().launcherOrder))).toEqual(useDesktopStore.getState().launcherOrder)
   })
 })

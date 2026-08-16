@@ -1,5 +1,6 @@
 import {
   advanceGameDay,
+  continueGame as runContinueGame,
   startNextSeason,
   completeMatch,
   createNewGame,
@@ -29,6 +30,7 @@ import type { CommandResult } from '@/app/entityActions/EntityCommand'
 import { selectDraftProspect } from '@/app/draft'
 import { executeTrade } from '@/engine/trade'
 import type { TradeProposal } from '@/domain/trade'
+import type { ContinueResult } from '@/app/game'
 
 interface GameStore {
   readonly world: GameWorld | null
@@ -45,6 +47,7 @@ interface GameStore {
   playUserGame(): void
   simulateRemainingGamesToday(): void
   advanceDay(): void
+  continueGame(): ContinueResult
   startNextSeason(): void
   signFreeAgent(teamId: TeamId, playerId: PlayerId): void
   releasePlayer(teamId: TeamId, playerId: PlayerId): void
@@ -94,6 +97,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   advanceDay: () => {
     const world = requireWorld(get().world)
     set({ world: advanceGameDay(world) })
+  },
+  continueGame: () => {
+    const result = runContinueGame(requireWorld(get().world))
+    set({ world: result.world })
+    return result
   },
   startNextSeason: () => {
     const world = requireWorld(get().world)

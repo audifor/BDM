@@ -35,6 +35,28 @@ describe('gameStore', () => {
     expect(useGameStore.getState().world?.currentDate).toBe(createGameDate(2032, 10, 2))
   })
 
+  it('delegates continuing time to the application flow and stores its resulting world', () => {
+    useGameStore.getState().newGame()
+
+    const result = useGameStore.getState().continueGame()
+
+    expect(result.daysAdvanced).toBe(0)
+    expect(result.stopReason.type).toBe('userGame')
+    expect(useGameStore.getState().world).toBe(result.world)
+  })
+
+  it('opens the canonical live session for the pending game without changing GameWorld', () => {
+    useGameStore.getState().newGame()
+    const world = useGameStore.getState().world!
+    const pendingGame = getGamesToday(world).find((game) => game.status === 'scheduled')!
+
+    const simulation = useGameStore.getState().startLiveMatch()
+
+    expect(simulation.gameId).toBe(pendingGame.id)
+    expect(useGameStore.getState().world).toBe(world)
+    expect(useGameStore.getState().world?.games[pendingGame.id]?.status).toBe('scheduled')
+  })
+
   it('resets the active career', () => {
     useGameStore.getState().newGame()
     useGameStore.getState().resetGame()

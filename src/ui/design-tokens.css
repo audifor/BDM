@@ -1,4 +1,26 @@
 :root {
+  /* Semantic BDM Design System tokens. Legacy --color-* aliases remain while screens migrate. */
+  --bdm-background-base: #0a1017;
+  --bdm-background-elevated: #0d1824;
+  --bdm-background-overlay: rgb(3 10 16 / 62%);
+  --bdm-surface-default: #111e2a;
+  --bdm-surface-hover: #172735;
+  --bdm-surface-active: #1d3040;
+  --bdm-surface-selected: rgb(53 198 208 / 14%);
+  --bdm-text-primary: #f1f6f8;
+  --bdm-text-secondary: #b2c2cb;
+  --bdm-text-muted: #8196a3;
+  --bdm-text-disabled: #60717c;
+  --bdm-border-subtle: rgb(157 190 204 / 16%);
+  --bdm-border-default: rgb(157 190 204 / 30%);
+  --bdm-border-strong: rgb(157 190 204 / 48%);
+  --bdm-accent-primary: #35c6d0;
+  --bdm-accent-hover: #61d5dd;
+  --bdm-accent-active: #1caab5;
+  --bdm-status-success: #65c794;
+  --bdm-status-warning: #e5ad51;
+  --bdm-status-danger: #df6670;
+  --bdm-status-info: #65b7db;
   --color-background: #0a1017;
   --color-desktop-background: #0d1824;
   --color-surface-1: #111e2a;
