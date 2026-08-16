@@ -862,3 +862,29 @@ saves load with no invented exceptions, charges, or historical rules.
 
 The Salary Engine determines salary legality and provides configured incoming-salary
 matching limits. Hito 054 executes Trades; it does not belong to this boundary.
+
+## Trade system v1
+
+The pure TradeEngine owns normalized `TradeProposal` validation and atomic execution.
+It supports N-team asset movements rather than a two-team shape. A proposal is intent;
+an immutable `TradeRecord` retains the executed date, participants, movements, and
+relevant salary consequences. Validation reports global and per-team structured
+reasons, and execution applies no partial change on failure.
+
+Trade assets include Players, materialized Draft Picks, future-pick rights,
+PlayerRights, swap rights and configurable cash consideration. Player trades move
+roster membership without recreating the Player or Contract. PlayerRights are
+separate: they may be traded across ecosystems without moving a Player's current
+roster or contract. DraftPick identity and `originalTeamId` survive ownership changes.
+
+Future pick ownership is a persistent right identified by ecosystem, cycle, round
+and original team; it is applied when that draft materializes. Protections use generic
+order ranges and may roll to a configured later cycle. Swap rights are distinct from
+pick ownership and resolve once both concrete pick orders exist, preserving pick IDs.
+
+Trade validation reuses Salary Engine matching and salary exceptions. Retained salary
+is a distinct persistent obligation, never dead money. Rules are season/ecosystem
+scoped, so NBA-like and future WNBA-like ecosystems can share infrastructure while
+using different `TradeRules`; FIBA-like competitions receive no trade rules by default.
+Save V1 persists trade state; legacy saves retain empty trade collections and invent
+no historical trades or rights.

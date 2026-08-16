@@ -25,6 +25,7 @@ import { generateInitialStaffStructure } from './StaffGenerator'
 import { generateCoachRpgProfiles } from './CoachProfessionalProfileGenerator'
 import type { CoachRpgPreset } from '@/domain/coachRpg'
 import { createNbaLikeSalaryRules } from '@/engine/salary'
+import { createNbaLikeTradeRules } from '@/engine/trade'
 
 const FIBA_TEAM_COUNT = 8
 const PLAYERS_PER_TEAM = 12
@@ -182,6 +183,7 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     contracts,
     teamFinances: teams.map((team) => generateInitialTeamFinances(team.id, contracts.filter((contract) => contract.teamId === team.id).reduce((sum, contract) => sum + contract.compensation.annualSalary, 0))),
     ...(nbaSeason === undefined ? {} : { salaryRulesBySeasonId: { [nbaSeason.id]: createNbaLikeSalaryRules(nbaSeason.id) } }),
+    ...(nbaSeason === undefined ? {} : { tradeRulesBySeasonId: { [nbaSeason.id]: createNbaLikeTradeRules(nbaSeason.id, DEFAULT_NBA_LIKE_ECOSYSTEM_ID) } }),
     staffPeople: staff.map((item) => item.person), teamStaffAssignments: staff.map((item) => item.assignment),
     coachProfessionalProfilesByCoachId: coachProfiles.professionalProfiles,
     coachRpgProfilesByCoachId: coachProfiles.rpgProfiles,

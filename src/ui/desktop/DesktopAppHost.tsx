@@ -4,7 +4,7 @@ import type { MatchTacticalPlan } from '@/engine/match'
 import type { TrainingFocus, TrainingIntensity } from '@/domain/training'
 import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
 import { getCareerFatigueForPlayer, getTeamRoster, isPlayerAvailable } from '@/domain/world'
-import { CoachScreen, DraftScreen, MarketScreen, SalaryScreen, ScheduleScreen, SquadScreen, StaffScreen, StandingsScreen, TacticsScreen, TrainingScreen } from '@/ui/screens'
+import { CoachScreen, DraftScreen, MarketScreen, SalaryScreen, ScheduleScreen, SquadScreen, StaffScreen, StandingsScreen, TacticsScreen, TradeCenterScreen, TrainingScreen } from '@/ui/screens'
 import { getDesktopApp } from './DesktopAppRegistry'
 
 export function DesktopAppHost({ appId, world, actions }: { readonly appId: string; readonly world: GameWorld; readonly actions: DesktopAppActions }) {
@@ -19,10 +19,11 @@ export function DesktopAppHost({ appId, world, actions }: { readonly appId: stri
   if (key === 'market') return <MarketScreen world={world} onSign={(playerId) => { const team = getUserTeam(world); if (team !== undefined) actions.signFreeAgent(team.id, playerId) }} />
   if (key === 'draft') return <DraftScreen world={world} onSelectProspect={actions.selectDraftProspect} />
   if (key === 'finances') return <SalaryScreen world={world} />
+  if (key === 'trades') return <TradeCenterScreen world={world} onExecute={(proposal) => actions.executeTrade?.(proposal)} />
   if (key === 'match') return <MatchCenterApp world={world} onAdvanceDay={actions.advanceDay} onInstantResult={actions.instantResult} onOpenApp={actions.openApp} onPlayGame={actions.playGame} onSimulateRemaining={actions.simulateRemainingGamesToday} />
   return <section className="content-panel">Esta aplicación no está disponible.</section>
 }
-export interface DesktopAppActions { readonly tacticalPlan: MatchTacticalPlan; readonly openApp: (id: string) => void; readonly playGame: () => void; readonly instantResult: () => void; readonly simulateRemainingGamesToday: () => void; readonly advanceDay: () => void; readonly startNextSeason: () => void; readonly releasePlayer: (teamId: TeamId, playerId: PlayerId) => void; readonly signFreeAgent: (teamId: TeamId, playerId: PlayerId) => void; readonly selectDraftProspect: (draftId: string, playerId: PlayerId) => void; readonly purchaseSkill: (id: CoachSkillId) => void; readonly purchasePerk: (id: CoachPerkId) => void; readonly acceptOffer: (id: string) => void; readonly declineOffer: (id: string) => void; readonly setTacticalPlan: (plan: MatchTacticalPlan) => void; readonly resetTacticalPlan: () => void; readonly setTrainingIntensity: (value: TrainingIntensity) => void; readonly setTrainingFocus: (value: TrainingFocus) => void }
+export interface DesktopAppActions { readonly tacticalPlan: MatchTacticalPlan; readonly openApp: (id: string) => void; readonly playGame: () => void; readonly instantResult: () => void; readonly simulateRemainingGamesToday: () => void; readonly advanceDay: () => void; readonly startNextSeason: () => void; readonly releasePlayer: (teamId: TeamId, playerId: PlayerId) => void; readonly signFreeAgent: (teamId: TeamId, playerId: PlayerId) => void; readonly selectDraftProspect: (draftId: string, playerId: PlayerId) => void; readonly executeTrade?: (proposal: import('@/domain/trade').TradeProposal) => void; readonly purchaseSkill: (id: CoachSkillId) => void; readonly purchasePerk: (id: CoachPerkId) => void; readonly acceptOffer: (id: string) => void; readonly declineOffer: (id: string) => void; readonly setTacticalPlan: (plan: MatchTacticalPlan) => void; readonly resetTacticalPlan: () => void; readonly setTrainingIntensity: (value: TrainingIntensity) => void; readonly setTrainingFocus: (value: TrainingFocus) => void }
 
 function MatchCenterApp({ world, onAdvanceDay, onInstantResult, onOpenApp, onPlayGame, onSimulateRemaining }: { readonly world: GameWorld; readonly onAdvanceDay: () => void; readonly onInstantResult: () => void; readonly onOpenApp: (id: string) => void; readonly onPlayGame: () => void; readonly onSimulateRemaining: () => void }) {
   const team = getUserTeam(world); const next = getNextUserGame(world); const today = team === undefined ? undefined : getGamesToday(world).find((game) => game.homeTeamId === team.id || game.awayTeamId === team.id)

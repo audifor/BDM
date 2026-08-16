@@ -10,6 +10,7 @@ import { addDays, addYears } from '@/domain/date'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import { calculateBootstrapAbilityProxy } from '@/domain/player'
 import { createRookieContract } from '@/engine/salary'
+import { materializeFutureDraftPickOwnership } from '@/engine/trade'
 
 export function createDraftForCompletedSeason(world: GameWorld, ecosystemId: EcosystemId, sourceSeasonId: SeasonId, rules: DraftRules, prospectPlayerIds: readonly PlayerId[]): GameWorld {
   const ecosystem = world.ecosystems[ecosystemId]; const season = world.seasons[sourceSeasonId]
@@ -18,7 +19,7 @@ export function createDraftForCompletedSeason(world: GameWorld, ecosystemId: Eco
   const order = calculateStandings(world, sourceSeasonId).slice().reverse().map((line) => line.teamId)
   const required = order.length * rules.rounds; if ((prospectPlayerIds.length !== 0 && prospectPlayerIds.length < required) || new Set(prospectPlayerIds).size !== prospectPlayerIds.length) throw new Error('Draft class has insufficient unique prospects')
   const draft: Draft = { id, ecosystemId, sourceSeasonId, rules, scheduledOn: addDays(season.endDate, rules.scheduledAfterDays), status: 'scheduled', prospectPlayerIds }
-  const picks: DraftPick[] = Array.from({ length: rules.rounds }, (_, roundIndex) => order.map((teamId, index) => ({ id: `draft-pick:${id}:round:${roundIndex + 1}:original:${teamId}`, draftId: id, round: roundIndex + 1, order: roundIndex * order.length + index + 1, originalTeamId: teamId, ownerTeamId: teamId }))).flat()
+  const picks = materializeFutureDraftPickOwnership(world, ecosystemId, Number(season.startDate.slice(0, 4)), Array.from({ length: rules.rounds }, (_, roundIndex) => order.map((teamId, index) => ({ id: `draft-pick:${id}:round:${roundIndex + 1}:original:${teamId}`, draftId: id, round: roundIndex + 1, order: roundIndex * order.length + index + 1, originalTeamId: teamId, ownerTeamId: teamId }))).flat())
   return updateGameWorld(world, { drafts: [...Object.values(world.draftsById), draft], draftPicks: [...Object.values(world.draftPicksById), ...picks] })
 }
 export function openDraft(world: GameWorld, draftId: string): GameWorld { const draft = world.draftsById[draftId]; if (!draft || draft.status !== 'scheduled' || world.currentDate < draft.scheduledOn || world.seasonHistoryBySeasonId[draft.sourceSeasonId] === undefined) return world; return updateGameWorld(world, { drafts: Object.values(world.draftsById).map((item) => item.id === draftId ? { ...item, status: 'inProgress' } : item) }) }
