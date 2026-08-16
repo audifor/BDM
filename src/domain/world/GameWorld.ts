@@ -41,6 +41,8 @@ import type { InboxItem, NewsItem } from '@/domain/inbox'
 import { EMPTY_DEVELOPMENT_STIMULUS, type PlayerDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
 import { clampCareerFatigue } from '@/domain/careerFatigue/CareerFatigue'
 import { createDefaultTrainingPlan, type TeamTrainingPlan, type TrainingSession } from '@/domain/training'
+import { createSalaryRules, type SalaryRules } from '@/domain/salary'
+import { createDeadMoneyCharge, createTeamSalaryException, type DeadMoneyCharge, type TeamSalaryException } from '@/domain/salary'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -87,6 +89,9 @@ export interface GameWorld {
   readonly promotionRelegationResolutionsById: Readonly<Record<string, PromotionRelegationResolution>>
   readonly draftsById: Readonly<Record<string, Draft>>
   readonly draftPicksById: Readonly<Record<string, DraftPick>>
+  readonly salaryRulesBySeasonId: Readonly<Record<SeasonId, SalaryRules>>
+  readonly salaryExceptionsById: Readonly<Record<string, TeamSalaryException>>
+  readonly deadMoneyChargesById: Readonly<Record<string, DeadMoneyCharge>>
 }
 
 export interface CreateGameWorldInput {
@@ -131,6 +136,9 @@ export interface CreateGameWorldInput {
   promotionRelegationResolutions?: readonly PromotionRelegationResolution[]
   drafts?: readonly Draft[]
   draftPicks?: readonly DraftPick[]
+  salaryRulesBySeasonId?: Readonly<Record<SeasonId, SalaryRules>>
+  salaryExceptions?: readonly TeamSalaryException[]
+  deadMoneyCharges?: readonly DeadMoneyCharge[]
 }
 
 export class GameWorldValidationError extends Error {
@@ -187,6 +195,9 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     promotionRelegationResolutionsById: indexById(input.promotionRelegationResolutions ?? [], 'Promotion/relegation resolution'),
     draftsById: indexById(input.drafts ?? [], 'Draft'),
     draftPicksById: indexById(input.draftPicks ?? [], 'Draft pick'),
+    salaryRulesBySeasonId: Object.freeze({ ...(input.salaryRulesBySeasonId ?? {}) }),
+    salaryExceptionsById: indexById(input.salaryExceptions ?? [], 'Salary exception'),
+    deadMoneyChargesById: indexById(input.deadMoneyCharges ?? [], 'Dead money charge'),
   }
 
   validateWorld(world)
@@ -195,7 +206,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
 
 /** Rebuilds through the canonical validator while preserving unrelated world state. */
 export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorldInput>): GameWorld {
-  return createGameWorld({ currentDate: world.currentDate, currentSeasonId: world.currentSeasonId, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), ecosystems: Object.values(world.ecosystems), seasons: Object.values(world.seasons), games: Object.values(world.games), matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory: Object.values(world.seasonHistoryBySeasonId), injuries: Object.values(world.injuriesById), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId), playerTransactions: Object.values(world.playerTransactionsById), playerKnowledge: Object.values(world.playerKnowledgeById), staffPeople: Object.values(world.staffPeopleById), teamStaffAssignments: Object.values(world.teamStaffAssignmentsById), coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId, coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: world.coachCareerHistoryByCoachId, coachJobOpeningsById: world.coachJobOpeningsById, coachJobCandidaciesById: world.coachJobCandidaciesById, coachInterviewsByCandidacyId: world.coachInterviewsByCandidacyId, coachJobOffersById: world.coachJobOffersById, relationshipsByKey: world.relationshipsByKey, personalitiesByPersonId: world.personalitiesByPersonId, moraleByPersonId: world.moraleByPersonId, inboxItemsById: world.inboxItemsById, newsItemsById: world.newsItemsById, trainingPlansByTeamId: world.trainingPlansByTeamId, trainingSessionsById: world.trainingSessionsById, developmentStimulusByPlayerId: world.developmentStimulusByPlayerId, careerFatigueByPlayerId: world.careerFatigueByPlayerId, promotionRelegationResolutions: Object.values(world.promotionRelegationResolutionsById), drafts: Object.values(world.draftsById), draftPicks: Object.values(world.draftPicksById), ...patch })
+  return createGameWorld({ currentDate: world.currentDate, currentSeasonId: world.currentSeasonId, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), ecosystems: Object.values(world.ecosystems), seasons: Object.values(world.seasons), games: Object.values(world.games), matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory: Object.values(world.seasonHistoryBySeasonId), injuries: Object.values(world.injuriesById), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId), playerTransactions: Object.values(world.playerTransactionsById), playerKnowledge: Object.values(world.playerKnowledgeById), staffPeople: Object.values(world.staffPeopleById), teamStaffAssignments: Object.values(world.teamStaffAssignmentsById), coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId, coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: world.coachCareerHistoryByCoachId, coachJobOpeningsById: world.coachJobOpeningsById, coachJobCandidaciesById: world.coachJobCandidaciesById, coachInterviewsByCandidacyId: world.coachInterviewsByCandidacyId, coachJobOffersById: world.coachJobOffersById, relationshipsByKey: world.relationshipsByKey, personalitiesByPersonId: world.personalitiesByPersonId, moraleByPersonId: world.moraleByPersonId, inboxItemsById: world.inboxItemsById, newsItemsById: world.newsItemsById, trainingPlansByTeamId: world.trainingPlansByTeamId, trainingSessionsById: world.trainingSessionsById, developmentStimulusByPlayerId: world.developmentStimulusByPlayerId, careerFatigueByPlayerId: world.careerFatigueByPlayerId, promotionRelegationResolutions: Object.values(world.promotionRelegationResolutionsById), drafts: Object.values(world.draftsById), draftPicks: Object.values(world.draftPicksById), salaryRulesBySeasonId: world.salaryRulesBySeasonId, salaryExceptions: Object.values(world.salaryExceptionsById), deadMoneyCharges: Object.values(world.deadMoneyChargesById), ...patch })
 }
 
 function validateWorld(world: GameWorld): void {
@@ -330,6 +341,9 @@ function validateWorld(world: GameWorld): void {
   for (const resolution of Object.values(world.promotionRelegationResolutionsById)) validatePromotionRelegationResolution(world, resolution)
   for (const draft of Object.values(world.draftsById)) validateDraft(world, draft)
   for (const pick of Object.values(world.draftPicksById)) validateDraftPick(world, pick)
+  for (const [seasonId, rules] of Object.entries(world.salaryRulesBySeasonId) as [SeasonId, SalaryRules][]) { requireEntity(world.seasons, seasonId, 'Salary rules season'); createSalaryRules(rules); if (rules.seasonId !== seasonId) throw new GameWorldValidationError('Salary rules season does not match key') }
+  for (const exception of Object.values(world.salaryExceptionsById)) { createTeamSalaryException(exception); requireEntity(world.teams, exception.teamId, 'Salary exception Team'); requireEntity(world.seasons, exception.seasonId, 'Salary exception season') }
+  for (const charge of Object.values(world.deadMoneyChargesById)) { createDeadMoneyCharge(charge); requireEntity(world.teams, charge.teamId, 'Dead money Team'); requireEntity(world.seasons, charge.seasonId, 'Dead money season') }
 }
 
 function hasRelationshipPerson(world: GameWorld, id: string): boolean { return world.coaches[id as CoachId] !== undefined || world.players[id as PlayerId] !== undefined || world.staffPeopleById[id as StaffPersonId] !== undefined }

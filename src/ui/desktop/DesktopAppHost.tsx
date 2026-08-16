@@ -4,7 +4,7 @@ import type { MatchTacticalPlan } from '@/engine/match'
 import type { TrainingFocus, TrainingIntensity } from '@/domain/training'
 import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
 import { getCareerFatigueForPlayer, getTeamRoster, isPlayerAvailable } from '@/domain/world'
-import { CoachScreen, DraftScreen, MarketScreen, ScheduleScreen, SquadScreen, StaffScreen, StandingsScreen, TacticsScreen, TrainingScreen } from '@/ui/screens'
+import { CoachScreen, DraftScreen, MarketScreen, SalaryScreen, ScheduleScreen, SquadScreen, StaffScreen, StandingsScreen, TacticsScreen, TrainingScreen } from '@/ui/screens'
 import { getDesktopApp } from './DesktopAppRegistry'
 
 export function DesktopAppHost({ appId, world, actions }: { readonly appId: string; readonly world: GameWorld; readonly actions: DesktopAppActions }) {
@@ -18,6 +18,7 @@ export function DesktopAppHost({ appId, world, actions }: { readonly appId: stri
   if (key === 'tactics') { const team = getUserTeam(world); return <TacticsScreen onChange={actions.setTacticalPlan} onReset={actions.resetTacticalPlan} plan={actions.tacticalPlan} players={team === undefined ? [] : team.rosterPlayerIds.map((id) => world.players[id]!)} /> }
   if (key === 'market') return <MarketScreen world={world} onSign={(playerId) => { const team = getUserTeam(world); if (team !== undefined) actions.signFreeAgent(team.id, playerId) }} />
   if (key === 'draft') return <DraftScreen world={world} onSelectProspect={actions.selectDraftProspect} />
+  if (key === 'finances') return <SalaryScreen world={world} />
   if (key === 'match') return <MatchCenterApp world={world} onAdvanceDay={actions.advanceDay} onInstantResult={actions.instantResult} onOpenApp={actions.openApp} onPlayGame={actions.playGame} onSimulateRemaining={actions.simulateRemainingGamesToday} />
   return <section className="content-panel">Esta aplicación no está disponible.</section>
 }

@@ -1,4 +1,4 @@
-export type DesktopSection = 'coach' | 'tactics' | 'training' | 'squad' | 'staff' | 'schedule' | 'standings' | 'market' | 'draft'
+export type DesktopSection = 'coach' | 'tactics' | 'training' | 'squad' | 'staff' | 'schedule' | 'standings' | 'market' | 'draft' | 'finances'
 export type DesktopIcon = 'bdm' | 'squad' | 'calendar' | 'league' | 'training' | 'staff' | 'inbox' | 'match' | 'club' | 'tactics' | 'market' | 'draft' | 'settings'
 
 export interface DesktopAppDefinition {
@@ -10,7 +10,7 @@ export interface DesktopAppDefinition {
   readonly availability: 'available' | 'future'
   readonly singleton?: boolean
   readonly window?: { readonly width: number; readonly height: number; readonly minWidth: number; readonly minHeight: number }
-  readonly renderKey?: 'squad' | 'schedule' | 'standings' | 'training' | 'staff' | 'coach' | 'tactics' | 'market' | 'draft' | 'match'
+  readonly renderKey?: 'squad' | 'schedule' | 'standings' | 'training' | 'staff' | 'coach' | 'tactics' | 'market' | 'draft' | 'finances' | 'match'
 }
 
 export const DESKTOP_APPS: readonly DesktopAppDefinition[] = [
@@ -27,7 +27,7 @@ export const DESKTOP_APPS: readonly DesktopAppDefinition[] = [
   { id: 'inbox', label: 'Inbox', icon: 'inbox', defaultPinned: false, availability: 'future' },
   { id: 'match', label: 'Centro de Partido', icon: 'match', defaultPinned: false, availability: 'available', singleton: true, window: { width: 680, height: 520, minWidth: 480, minHeight: 360 }, renderKey: 'match' },
   { id: 'scouting', label: 'Scouting', icon: 'settings', defaultPinned: false, availability: 'future' },
-  { id: 'finances', label: 'Finanzas', icon: 'settings', defaultPinned: false, availability: 'future' },
+  { id: 'finances', label: 'Finanzas', icon: 'settings', section: 'finances', defaultPinned: false, availability: 'available', singleton: true, window: { width: 900, height: 680, minWidth: 600, minHeight: 440 }, renderKey: 'finances' },
   { id: 'development', label: 'Desarrollo', icon: 'settings', defaultPinned: false, availability: 'future' },
   { id: 'settings', label: 'Ajustes', icon: 'settings', defaultPinned: false, availability: 'future' },
 ]

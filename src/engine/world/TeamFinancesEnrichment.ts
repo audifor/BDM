@@ -2,7 +2,7 @@ import type { PlayerContract } from '@/domain/contract'
 import type { GameDate } from '@/domain/date'
 import type { TeamFinances } from '@/domain/finance'
 import type { Team } from '@/domain/team'
-import { getPlayerContractStatus } from '@/domain/contract'
+import { getContractYearCompensation, getPlayerContractStatus } from '@/domain/contract'
 
 import { generateInitialTeamFinances } from './TeamFinancesGenerator'
 
@@ -26,5 +26,5 @@ export function ensureTeamFinances(input: TeamFinancesEnrichmentInput): readonly
 function activePayroll(contracts: readonly PlayerContract[], teamId: Team['id'], onDate: GameDate): number {
   return contracts
     .filter((contract) => contract.teamId === teamId && getPlayerContractStatus(contract, onDate) === 'active')
-    .reduce((total, contract) => total + contract.compensation.annualSalary, 0)
+    .reduce((total, contract) => total + getContractYearCompensation(contract, onDate).capHit, 0)
 }

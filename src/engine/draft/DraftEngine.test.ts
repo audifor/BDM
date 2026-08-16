@@ -38,6 +38,7 @@ describe('DraftEngine', () => {
 
     world = makeDraftSelection(world, initial.draftId, userTeamId, selected)
     expect(world.teams[userTeamId]!.rosterPlayerIds).toContain(selected)
+    expect(Object.values(world.contractsById).filter((contract) => contract.playerId === selected && contract.teamId === userTeamId)).toHaveLength(1)
     expect(() => makeDraftSelection(world, initial.draftId, userTeamId, selected)).toThrow('Draft selection is invalid')
     expect(getAvailableDraftProspects(world, initial.draftId)).not.toContain(selected)
 

@@ -836,3 +836,29 @@ Picks, prospects and selections persist mid-Draft without regeneration. The UI i
 a thin application boundary over these queries and operations; it does not own
 Draft state. Salary Cap, trades, lottery, rookie scale, Draft-specific Inbox and
 advanced scouting remain out of scope.
+
+## Salary Cap v1
+
+`SalaryRules` is a frozen, per-Season snapshot owned by the shared pure Salary
+Engine. An NBA-like season can define `none`, `soft`, or `hard` caps, a salary
+floor, progressive luxury-tax tiers, any number of aprons, minimum/maximum bands,
+exceptions, rookie scale, contract-length limits, and trade salary-matching rules.
+NBA-like and future WNBA-like ecosystems share the engine while supplying their
+own rules; FIBA-like competitions receive no cap rules automatically.
+
+`TeamPayroll` is a derived projection only: active current-year contract `capHit`
+plus canonical dead-money charges for the queried Team and Season. It never uses
+cash salary or sums future years. Contracts may provide yearly `cashSalary`,
+`capHit`, and `guaranteedAmount`; legacy annual contracts deterministically expose
+the same value for all three without inventing historical financial state.
+
+Salary exceptions and dead money are normalized `GameWorld` obligations. Exceptions
+retain original and remaining amounts, support partial consumption, and preserve
+consumed/expired history. Salary validation returns structured reasons for min/max,
+term, soft/hard cap, exception, and apron restrictions. Rookie contracts are
+deterministically created from the configured draft-pick scale for the Pick owner.
+Save V1 persists rules, yearly compensation, exceptions, and dead money while older
+saves load with no invented exceptions, charges, or historical rules.
+
+The Salary Engine determines salary legality and provides configured incoming-salary
+matching limits. Hito 054 executes Trades; it does not belong to this boundary.

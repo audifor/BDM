@@ -1,0 +1,15 @@
+import { getContractYearCompensation, getPlayerContractStatus } from '@/domain/contract'
+import type { GameWorld } from '@/domain/world'
+import { getUserTeam } from '@/engine/calendar'
+import { calculateTeamPayroll, calculateTeamSalaryStatus } from '@/engine/salary'
+
+export function SalaryScreen({ world }: { readonly world: GameWorld }) {
+  const team = getUserTeam(world)
+  const rules = world.salaryRulesBySeasonId[world.currentSeasonId]
+  if (team === undefined || rules === undefined) return <section className="screen"><div className="page-heading"><div><p className="eyebrow">FINANZAS</p><h1>Salary Cap</h1></div></div><p className="content-panel">No hay reglas de Salary Cap para el ciclo activo.</p></section>
+  const contracts = Object.values(world.contractsById).filter((contract) => contract.teamId === team.id && getPlayerContractStatus(contract, world.currentDate) === 'active')
+  const deadMoney = Object.values(world.deadMoneyChargesById).filter((charge) => charge.teamId === team.id && charge.seasonId === rules.seasonId).reduce((sum, charge) => sum + charge.amount, 0)
+  const status = calculateTeamSalaryStatus(rules, calculateTeamPayroll(contracts, world.currentDate, deadMoney))
+  return <section className="screen"><div className="page-heading"><div><p className="eyebrow">FINANZAS</p><h1>{team.name} · Salary Cap</h1></div></div><div className="content-panel"><p>PAYROLL {money(status.payroll.totalCapHit)} · CAP {money(status.capAmount)} · {status.capSpace >= 0 ? 'CAP SPACE' : 'OVER CAP'} {money(Math.abs(status.capSpace))}</p><p>FLOOR {status.salaryFloor === undefined ? '—' : money(status.salaryFloor)} · TAX {status.taxThreshold === undefined ? '—' : money(status.taxThreshold)} · TAX OVERAGE {money(status.taxOverage)} · ESTIMATED TAX {money(status.taxLiability)}</p><p>ACTIVE APRONS {status.activeApronIds.length === 0 ? 'NONE' : status.activeApronIds.join(', ')}</p></div><div className="content-panel table-wrap"><table><thead><tr><th>PLAYER</th><th>YEARS</th><th>CASH</th><th>CAP HIT</th><th>GUARANTEED</th></tr></thead><tbody>{contracts.map((contract) => { const player = world.players[contract.playerId]!; const compensation = getContractYearCompensation(contract, world.currentDate); return <tr key={contract.id}><td>{player.firstName} {player.lastName}</td><td>{contract.compensation.years?.length ?? 1}</td><td>{money(compensation.cashSalary)}</td><td>{money(compensation.capHit)}</td><td>{money(compensation.guaranteedAmount)}</td></tr> })}</tbody></table></div><div className="content-panel table-wrap"><table><thead><tr><th>EXCEPTION</th><th>ORIGINAL</th><th>REMAINING</th><th>EXPIRY</th><th>STATUS</th></tr></thead><tbody>{Object.values(world.salaryExceptionsById).filter((item) => item.teamId === team.id).map((item) => <tr key={item.id}><td>{item.ruleId}</td><td>{money(item.originalAmount)}</td><td>{money(item.remainingAmount)}</td><td>{item.expiresAfterSeasonId}</td><td>{item.status}</td></tr>)}</tbody></table></div></section>
+}
+function money(value: number): string { return value.toLocaleString('en-US') }

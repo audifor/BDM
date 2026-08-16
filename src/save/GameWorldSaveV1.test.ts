@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import { createNewGame, playUserGame } from '@/app/game'
 import { calculateAge } from '@/domain/player'
+import { createDeadMoneyCharge, createTeamSalaryException } from '@/domain/salary'
+import { updateGameWorld } from '@/domain/world'
 import { getTeamFinancialSnapshot } from '@/domain/world/finances'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from './GameWorldSaveV1'
 import { executeTeamTraining } from '@/engine/training'
@@ -17,6 +19,20 @@ describe('GameWorldSaveV1', () => {
     expect(loaded.coachProfessionalProfilesByCoachId).toEqual(world.coachProfessionalProfilesByCoachId)
     expect(loaded.coachRpgProfilesByCoachId).toEqual(world.coachRpgProfilesByCoachId)
     expect(saved.payload.players).not.toBe(Object.values(world.players))
+  })
+
+  it('round-trips salary rules and obligations while legacy saves keep them empty', () => {
+    const base = createNewGame()
+    const [seasonId] = Object.keys(base.salaryRulesBySeasonId) as (keyof typeof base.seasons)[]
+    const teamId = Object.values(base.teams)[0]!.id
+    const world = updateGameWorld(base, { salaryExceptions: [createTeamSalaryException({ id: 'exception:test', ruleId: 'standard', teamId, seasonId, originalAmount: 10, remainingAmount: 4, expiresAfterSeasonId: seasonId, status: 'active' })], deadMoneyCharges: [createDeadMoneyCharge({ id: 'dead:test', teamId, seasonId, amount: 7, reason: 'release' })] })
+    const saved = serializeGameWorldV1(world, '2032-10-01T12:00:00.000Z')
+    const loaded = deserializeGameWorldV1(saved)
+    expect(loaded.salaryRulesBySeasonId).toEqual(world.salaryRulesBySeasonId)
+    expect(loaded.salaryExceptionsById).toEqual(world.salaryExceptionsById)
+    expect(loaded.deadMoneyChargesById).toEqual(world.deadMoneyChargesById)
+    const { salaryRules: _rules, salaryExceptions: _exceptions, deadMoneyCharges: _charges, ...legacy } = saved.payload
+    expect(deserializeGameWorldV1({ ...saved, payload: legacy }).salaryExceptionsById).toEqual({})
   })
 
   it('round-trips training state and supplies deterministic legacy defaults', () => {

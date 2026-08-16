@@ -9,6 +9,7 @@ import { playerIdFromString } from '@/domain/ids'
 import { addDays, addYears } from '@/domain/date'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import { calculateBootstrapAbilityProxy } from '@/domain/player'
+import { createRookieContract } from '@/engine/salary'
 
 export function createDraftForCompletedSeason(world: GameWorld, ecosystemId: EcosystemId, sourceSeasonId: SeasonId, rules: DraftRules, prospectPlayerIds: readonly PlayerId[]): GameWorld {
   const ecosystem = world.ecosystems[ecosystemId]; const season = world.seasons[sourceSeasonId]
@@ -39,5 +40,7 @@ export function makeDraftSelection(world: GameWorld, draftId: string, selectingT
   const team = world.teams[selectingTeamId]!; if (team.rosterPlayerIds.includes(playerId)) throw new Error('Draft prospect is already rostered')
   const picks = Object.values(world.draftPicksById).map((item) => item.id === pick.id ? { ...item, selection: { playerId, teamId: selectingTeamId } } : item)
   const complete = picks.filter((item) => item.draftId === draftId).every((item) => item.selection !== undefined)
-  return updateGameWorld(world, { teams: Object.values(world.teams).map((item) => item.id === selectingTeamId ? { ...item, rosterPlayerIds: [...item.rosterPlayerIds, playerId] } : item), draftPicks: picks, drafts: Object.values(world.draftsById).map((item) => item.id === draftId ? { ...item, status: complete ? 'completed' : 'inProgress' } : item) })
+  const rules = world.salaryRulesBySeasonId[draft.sourceSeasonId]
+  const rookieContract = rules === undefined ? undefined : createRookieContract(rules, playerId, selectingTeamId, pick.order, world.currentDate)
+  return updateGameWorld(world, { teams: Object.values(world.teams).map((item) => item.id === selectingTeamId ? { ...item, rosterPlayerIds: [...item.rosterPlayerIds, playerId] } : item), contracts: rookieContract === undefined || world.contractsById[rookieContract.id] !== undefined ? Object.values(world.contractsById) : [...Object.values(world.contractsById), rookieContract], draftPicks: picks, drafts: Object.values(world.draftsById).map((item) => item.id === draftId ? { ...item, status: complete ? 'completed' : 'inProgress' } : item) })
 }
