@@ -7,7 +7,7 @@ export function calculateSeasonStandings(world: GameWorld, seasonId: keyof GameW
   const season = world.seasons[seasonId]
   if (season === undefined) throw new Error(`Season does not exist: ${seasonId}`)
   const competition = world.competitions[season.competitionId]!
-  const entries = competition.participantTeamIds.map((teamId) => ({ teamId, played: 0, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 }))
+  const entries = (season.participantTeamIds ?? competition.participantTeamIds).map((teamId) => ({ teamId, played: 0, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 }))
   const byTeam = Object.fromEntries(entries.map((entry) => [entry.teamId, entry])) as Record<TeamId, typeof entries[number]>
   for (const game of Object.values(world.games)) {
     if (game.seasonId !== seasonId || game.status !== 'completed') continue

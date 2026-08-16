@@ -1,32 +1,10 @@
 import { addDays } from '@/domain/date'
-import { createGameWorld, type GameWorld } from '@/domain/world'
+import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { reconcileExpiredPlayerContracts } from '@/engine/market'
 import { executeEligibleTraining, recoverCareerFatigueForDay } from '@/engine/training/TrainingEngine'
 
 /** Advances only the simulation date, leaving game resolution to other services. */
 export function advanceDay(world: GameWorld): GameWorld {
-  const advanced = createGameWorld({
-    currentDate: addDays(world.currentDate, 1),
-    currentSeasonId: world.currentSeasonId,
-    userCoachId: world.userCoachId,
-    countries: Object.values(world.countries),
-    coaches: Object.values(world.coaches),
-    players: Object.values(world.players),
-    teams: Object.values(world.teams),
-    competitions: Object.values(world.competitions),
-    seasons: Object.values(world.seasons),
-    games: Object.values(world.games),
-    matchStatLogs: Object.values(world.matchStatLogsByGameId),
-    seasonHistory: Object.values(world.seasonHistoryBySeasonId),
-    injuries: Object.values(world.injuriesById),
-    contracts: Object.values(world.contractsById),
-    teamFinances: Object.values(world.teamFinancesByTeamId),
-    playerTransactions: Object.values(world.playerTransactionsById),
-    playerKnowledge: Object.values(world.playerKnowledgeById),
-    staffPeople: Object.values(world.staffPeopleById),
-    teamStaffAssignments: Object.values(world.teamStaffAssignmentsById),
-    coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId,
-    coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: world.coachCareerHistoryByCoachId, coachJobOpeningsById: world.coachJobOpeningsById, coachJobCandidaciesById: world.coachJobCandidaciesById, coachInterviewsByCandidacyId: world.coachInterviewsByCandidacyId, coachJobOffersById: world.coachJobOffersById, relationshipsByKey: world.relationshipsByKey, personalitiesByPersonId: world.personalitiesByPersonId, moraleByPersonId: world.moraleByPersonId, inboxItemsById: world.inboxItemsById, newsItemsById: world.newsItemsById, trainingPlansByTeamId: world.trainingPlansByTeamId, trainingSessionsById: world.trainingSessionsById, developmentStimulusByPlayerId: world.developmentStimulusByPlayerId, careerFatigueByPlayerId: world.careerFatigueByPlayerId,
-  })
+  const advanced = updateGameWorld(world, { currentDate: addDays(world.currentDate, 1) })
   return executeEligibleTraining(reconcileExpiredPlayerContracts(recoverCareerFatigueForDay(advanced), advanced.currentDate))
 }

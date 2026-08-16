@@ -1,5 +1,5 @@
 import type { Coach } from '@/domain/coach'
-import type { Competition } from '@/domain/competition'
+import type { Competition, PromotionRelegationResolution } from '@/domain/competition'
 import { createSportsEcosystem, DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, type SportsEcosystem } from '@/domain/ecosystem'
 import type { Country } from '@/domain/country'
 import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
@@ -83,6 +83,7 @@ export interface GameWorld {
   readonly trainingSessionsById: Readonly<Record<string, TrainingSession>>
   readonly developmentStimulusByPlayerId: Readonly<Record<string, PlayerDevelopmentStimulus>>
   readonly careerFatigueByPlayerId: Readonly<Record<string, number>>
+  readonly promotionRelegationResolutionsById: Readonly<Record<string, PromotionRelegationResolution>>
 }
 
 export interface CreateGameWorldInput {
@@ -124,6 +125,7 @@ export interface CreateGameWorldInput {
   trainingSessionsById?: Readonly<Record<string, TrainingSession>>
   developmentStimulusByPlayerId?: Readonly<Record<string, PlayerDevelopmentStimulus>>
   careerFatigueByPlayerId?: Readonly<Record<string, number>>
+  promotionRelegationResolutions?: readonly PromotionRelegationResolution[]
 }
 
 export class GameWorldValidationError extends Error {
@@ -176,10 +178,16 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     inboxItemsById: Object.freeze({ ...(input.inboxItemsById ?? {}) }), newsItemsById: Object.freeze({ ...(input.newsItemsById ?? {}) }),
     trainingPlansByTeamId: Object.freeze(Object.fromEntries(input.teams.map((team)=>[team.id,input.trainingPlansByTeamId?.[team.id]??createDefaultTrainingPlan(team.id)]))), trainingSessionsById:Object.freeze({...(input.trainingSessionsById??{})}),
     developmentStimulusByPlayerId:Object.freeze(Object.fromEntries(input.players.map((player)=>[player.id,input.developmentStimulusByPlayerId?.[player.id]??{playerId:player.id,byRating:{...EMPTY_DEVELOPMENT_STIMULUS}}]))), careerFatigueByPlayerId:Object.freeze(Object.fromEntries(input.players.map((player)=>[player.id,clampCareerFatigue(input.careerFatigueByPlayerId?.[player.id]??0)]))),
+    promotionRelegationResolutionsById: indexById(input.promotionRelegationResolutions ?? [], 'Promotion/relegation resolution'),
   }
 
   validateWorld(world)
   return world
+}
+
+/** Rebuilds through the canonical validator while preserving unrelated world state. */
+export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorldInput>): GameWorld {
+  return createGameWorld({ currentDate: world.currentDate, currentSeasonId: world.currentSeasonId, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), ecosystems: Object.values(world.ecosystems), seasons: Object.values(world.seasons), games: Object.values(world.games), matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory: Object.values(world.seasonHistoryBySeasonId), injuries: Object.values(world.injuriesById), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId), playerTransactions: Object.values(world.playerTransactionsById), playerKnowledge: Object.values(world.playerKnowledgeById), staffPeople: Object.values(world.staffPeopleById), teamStaffAssignments: Object.values(world.teamStaffAssignmentsById), coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId, coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: world.coachCareerHistoryByCoachId, coachJobOpeningsById: world.coachJobOpeningsById, coachJobCandidaciesById: world.coachJobCandidaciesById, coachInterviewsByCandidacyId: world.coachInterviewsByCandidacyId, coachJobOffersById: world.coachJobOffersById, relationshipsByKey: world.relationshipsByKey, personalitiesByPersonId: world.personalitiesByPersonId, moraleByPersonId: world.moraleByPersonId, inboxItemsById: world.inboxItemsById, newsItemsById: world.newsItemsById, trainingPlansByTeamId: world.trainingPlansByTeamId, trainingSessionsById: world.trainingSessionsById, developmentStimulusByPlayerId: world.developmentStimulusByPlayerId, careerFatigueByPlayerId: world.careerFatigueByPlayerId, promotionRelegationResolutions: Object.values(world.promotionRelegationResolutionsById), ...patch })
 }
 
 function validateWorld(world: GameWorld): void {
@@ -235,8 +243,20 @@ function validateWorld(world: GameWorld): void {
     }
   }
 
+  for (const ecosystem of Object.values(world.ecosystems)) {
+    for (const tier of ecosystem.domesticTiers) requireEntity(world.competitions, tier.competitionId, `Domestic tier ${tier.level} competition`)
+    for (const rule of ecosystem.tierMovementRules) {
+      const upper = requireEntity(world.competitions, rule.upperCompetitionId, 'Tier movement upper competition'); const lower = requireEntity(world.competitions, rule.lowerCompetitionId, 'Tier movement lower competition')
+      const upperTier = ecosystem.domesticTiers.find((tier) => tier.competitionId === upper.id); const lowerTier = ecosystem.domesticTiers.find((tier) => tier.competitionId === lower.id)
+      if (upper.ecosystemId !== ecosystem.id || lower.ecosystemId !== ecosystem.id || upperTier === undefined || lowerTier === undefined || lowerTier.level !== upperTier.level + 1 || rule.exchangeCount > upper.participantTeamIds.length || rule.exchangeCount > lower.participantTeamIds.length) throw new GameWorldValidationError('Tier movement rule is invalid for ecosystem hierarchy')
+    }
+  }
+
   for (const season of Object.values(world.seasons)) {
     requireEntity(world.competitions, season.competitionId, `Season ${season.id} competition`)
+    const participants = season.participantTeamIds ?? world.competitions[season.competitionId]!.participantTeamIds
+    if (new Set(participants).size !== participants.length) throw new GameWorldValidationError(`Season ${season.id} has duplicate participants`)
+    for (const teamId of participants) requireEntity(world.teams, teamId, `Season ${season.id} participant`)
   }
 
   for (const game of Object.values(world.games)) {
@@ -248,10 +268,11 @@ function validateWorld(world: GameWorld): void {
     if (season.competitionId !== competition.id) {
       throw new GameWorldValidationError(`Game ${game.id} competition does not match its season`)
     }
-    if (!competition.participantTeamIds.includes(homeTeam.id)) {
+    const participants = season.participantTeamIds ?? competition.participantTeamIds
+    if (!participants.includes(homeTeam.id)) {
       throw new GameWorldValidationError(`Game ${game.id} home Team ${homeTeam.id} is not a participant`)
     }
-    if (!competition.participantTeamIds.includes(awayTeam.id)) {
+    if (!participants.includes(awayTeam.id)) {
       throw new GameWorldValidationError(`Game ${game.id} away Team ${awayTeam.id} is not a participant`)
     }
     if (homeTeam.gender !== competition.gender || awayTeam.gender !== competition.gender) {
@@ -298,6 +319,7 @@ function validateWorld(world: GameWorld): void {
   for (const [candidacyId, interview] of Object.entries(world.coachInterviewsByCandidacyId) as [CoachJobCandidacyId, CoachInterview][]) if (interview.candidacyId !== candidacyId || world.coachJobCandidaciesById[candidacyId] === undefined) throw new GameWorldValidationError(`Coach interview references missing candidacy ${candidacyId}`)
   for (const offer of Object.values(world.coachJobOffersById)) { requireEntity(world.coaches, offer.coachId, 'Coach offer Coach'); requireEntity(world.teams, offer.teamId, 'Coach offer Team'); requireEntity(world.coachJobOpeningsById, offer.jobOpeningId, 'Coach offer opening') }
   for (const history of Object.values(world.seasonHistoryBySeasonId)) validateSeasonHistory(world, history)
+  for (const resolution of Object.values(world.promotionRelegationResolutionsById)) validatePromotionRelegationResolution(world, resolution)
 }
 
 function hasRelationshipPerson(world: GameWorld, id: string): boolean { return world.coaches[id as CoachId] !== undefined || world.players[id as PlayerId] !== undefined || world.staffPeopleById[id as StaffPersonId] !== undefined }
@@ -320,17 +342,29 @@ function validateSeasonHistory(world: GameWorld, history: SeasonHistoryRecord): 
   const competition = requireEntity(world.competitions, history.competitionId, 'Season history competition')
   if (season.competitionId !== competition.id) throw new GameWorldValidationError(`Season history ${history.seasonId} competition does not match Season`)
   if (!Object.values(world.games).filter((game) => game.seasonId === season.id).every((game) => game.status === 'completed')) throw new GameWorldValidationError(`Season history ${history.seasonId} requires completed Games`)
-  if (!competition.participantTeamIds.includes(history.championTeamId)) throw new GameWorldValidationError(`Season history ${history.seasonId} champion is not a participant`)
-  if (history.finalStandings.length !== competition.participantTeamIds.length) throw new GameWorldValidationError(`Season history ${history.seasonId} standings must contain every participant`)
+  const participants = season.participantTeamIds ?? competition.participantTeamIds
+  if (!participants.includes(history.championTeamId)) throw new GameWorldValidationError(`Season history ${history.seasonId} champion is not a participant`)
+  if (history.finalStandings.length !== participants.length) throw new GameWorldValidationError(`Season history ${history.seasonId} standings must contain every participant`)
   const teams = new Set<TeamId>(); const positions = new Set<number>()
   for (const line of history.finalStandings) {
-    if (!competition.participantTeamIds.includes(line.teamId) || teams.has(line.teamId)) throw new GameWorldValidationError(`Season history ${history.seasonId} has invalid standings teams`)
-    if (!Number.isInteger(line.position) || line.position < 1 || line.position > competition.participantTeamIds.length || positions.has(line.position)) throw new GameWorldValidationError(`Season history ${history.seasonId} has invalid standings positions`)
+    if (!participants.includes(line.teamId) || teams.has(line.teamId)) throw new GameWorldValidationError(`Season history ${history.seasonId} has invalid standings teams`)
+    if (!Number.isInteger(line.position) || line.position < 1 || line.position > participants.length || positions.has(line.position)) throw new GameWorldValidationError(`Season history ${history.seasonId} has invalid standings positions`)
     teams.add(line.teamId); positions.add(line.position)
   }
   if (history.finalStandings.find((line) => line.position === 1)?.teamId !== history.championTeamId) throw new GameWorldValidationError(`Season history ${history.seasonId} champion must be first`)
   const expected = calculateSeasonStandings(world, history.seasonId)
   if (history.finalStandings.length !== expected.length || history.finalStandings.some((line, index) => !sameStanding(line, expected[index]!))) throw new GameWorldValidationError(`Season history ${history.seasonId} standings do not match completed Games`)
+}
+
+function validatePromotionRelegationResolution(world: GameWorld, resolution: PromotionRelegationResolution): void {
+  if (resolution.id !== `promotion-relegation:${resolution.upperSeasonId}:${resolution.lowerSeasonId}`) throw new GameWorldValidationError('Promotion/relegation resolution ID is invalid')
+  const upper = requireEntity(world.seasons, resolution.upperSeasonId, 'Resolution upper season'); const lower = requireEntity(world.seasons, resolution.lowerSeasonId, 'Resolution lower season')
+  if (upper.competitionId !== resolution.upperCompetitionId || lower.competitionId !== resolution.lowerCompetitionId) throw new GameWorldValidationError('Promotion/relegation resolution seasons do not match competitions')
+  const ecosystem = Object.values(world.ecosystems).find((item) => item.tierMovementRules.some((rule) => rule.upperCompetitionId === resolution.upperCompetitionId && rule.lowerCompetitionId === resolution.lowerCompetitionId))
+  const rule = ecosystem?.tierMovementRules.find((item) => item.upperCompetitionId === resolution.upperCompetitionId && item.lowerCompetitionId === resolution.lowerCompetitionId)
+  if (rule === undefined || resolution.promotedTeamIds.length !== rule.exchangeCount || resolution.relegatedTeamIds.length !== rule.exchangeCount || new Set([...resolution.promotedTeamIds, ...resolution.relegatedTeamIds]).size !== rule.exchangeCount * 2) throw new GameWorldValidationError('Promotion/relegation resolution is invalid')
+  const upperTeams = upper.participantTeamIds ?? world.competitions[upper.competitionId]!.participantTeamIds; const lowerTeams = lower.participantTeamIds ?? world.competitions[lower.competitionId]!.participantTeamIds
+  if (resolution.relegatedTeamIds.some((id) => !upperTeams.includes(id)) || resolution.promotedTeamIds.some((id) => !lowerTeams.includes(id))) throw new GameWorldValidationError('Promotion/relegation resolution teams are not source participants')
 }
 
 function sameStanding(a: SeasonHistoryRecord['finalStandings'][number], b: SeasonHistoryRecord['finalStandings'][number]): boolean {

@@ -782,3 +782,23 @@ values/progress, and up to five recent changes.
 Job markets, offers, interviews, firings, career transitions, relationships, media,
 board confidence/objectives, reputation decay, geographic reputation layers, new
 dimensions, and reputation-based MatchEngine bonuses remain out of scope.
+
+## FIBA-like promotion and relegation
+
+FIBA-like ecosystems may own an ordered domestic hierarchy through `domesticTiers`
+and adjacent `tierMovementRules`. A rule exchanges the top N teams from the lower
+tier with the bottom N teams from the upper tier, consuming the canonical final
+standings without adding a separate tiebreaker system.
+
+Completed competition editions retain their participant snapshot. A deterministic,
+persisted `PromotionRelegationResolution` records the resulting movement, and only
+the next edition consumes it when generating participants and a new schedule.
+Promotion/relegation is resolved between linked Competition Editions; it does not
+require a globally synchronized season transition or synchronized competition
+windows. Middle tiers can independently move teams in both directions.
+
+Normal `GameWorld` transitions preserve unrelated canonical state via the canonical
+world update boundary. Save/load persists hierarchy, rules, participant snapshots,
+and completed resolutions; legacy saves without them remain unconfigured and do
+not invent historical movement. NBA-like closed-league behavior and promotion
+playoffs remain outside this boundary.

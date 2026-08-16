@@ -28,7 +28,7 @@ export function generateRoundRobinSchedule(options: GenerateRoundRobinScheduleOp
 
   const season = getSeason(options.world, options.seasonId)
   const competition = getCompetition(options.world, season.competitionId)
-  const teamIds = competition.participantTeamIds
+  const teamIds = season.participantTeamIds ?? competition.participantTeamIds
   validateParticipants(teamIds)
 
   const firstLegRounds = createFirstLegRounds(teamIds)

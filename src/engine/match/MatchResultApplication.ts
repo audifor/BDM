@@ -63,7 +63,7 @@ export function applyMatchResult(world: GameWorld, result: MatchSimulationResult
     coaches: Object.values(world.coaches),
     players: Object.values(world.players),
     teams: Object.values(world.teams),
-    competitions: Object.values(world.competitions),
+    competitions: Object.values(world.competitions), ecosystems: Object.values(world.ecosystems),
     seasons: Object.values(world.seasons),
     games,
     matchStatLogs: Object.values(world.matchStatLogsByGameId),
@@ -75,7 +75,7 @@ export function applyMatchResult(world: GameWorld, result: MatchSimulationResult
     playerKnowledge: Object.values(world.playerKnowledgeById),
     staffPeople: Object.values(world.staffPeopleById),
     teamStaffAssignments: Object.values(world.teamStaffAssignmentsById),
-    coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId,
+    promotionRelegationResolutions: Object.values(world.promotionRelegationResolutionsById), coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId,
     coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: world.coachCareerHistoryByCoachId, coachJobOpeningsById: world.coachJobOpeningsById, coachJobCandidaciesById: world.coachJobCandidaciesById, coachInterviewsByCandidacyId: world.coachInterviewsByCandidacyId, coachJobOffersById: world.coachJobOffersById, relationshipsByKey: world.relationshipsByKey, personalitiesByPersonId: world.personalitiesByPersonId, moraleByPersonId: world.moraleByPersonId, inboxItemsById: world.inboxItemsById, newsItemsById: world.newsItemsById, trainingPlansByTeamId: world.trainingPlansByTeamId, trainingSessionsById: world.trainingSessionsById, developmentStimulusByPlayerId: world.developmentStimulusByPlayerId, careerFatigueByPlayerId: world.careerFatigueByPlayerId,
   })
   return applyMatchMorale(applyMatchCoachExperience(world, applyMatchCoachReputationConsequences(resultWorld, completedGame), completedGame), completedGame)

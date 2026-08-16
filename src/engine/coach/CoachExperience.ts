@@ -9,7 +9,7 @@ import {
   type StaffProfessionalAttributeKey,
   type StaffProfessionalProfile,
 } from '@/domain/staff'
-import { createGameWorld, type GameWorld } from '@/domain/world'
+import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { calculateEffectiveCoachLearningCost } from './CoachSpecialization'
 
 /** Only match experience is productive in 040.3; more sources can join later. */
@@ -163,10 +163,7 @@ function rebuildWorld(
   professionalProfiles: GameWorld['coachProfessionalProfilesByCoachId'],
   rpgProfiles: GameWorld['coachRpgProfilesByCoachId'],
 ): GameWorld {
-  return createGameWorld({
-    currentDate: world.currentDate, currentSeasonId: world.currentSeasonId, userCoachId: world.userCoachId,
-    countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), seasons: Object.values(world.seasons), games: Object.values(world.games), matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory: Object.values(world.seasonHistoryBySeasonId), injuries: Object.values(world.injuriesById), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId), playerTransactions: Object.values(world.playerTransactionsById), playerKnowledge: Object.values(world.playerKnowledgeById), staffPeople: Object.values(world.staffPeopleById), teamStaffAssignments: Object.values(world.teamStaffAssignmentsById), coachProfessionalProfilesByCoachId: professionalProfiles, coachRpgProfilesByCoachId: rpgProfiles, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: world.coachCareerHistoryByCoachId, coachJobOpeningsById: world.coachJobOpeningsById, coachJobCandidaciesById: world.coachJobCandidaciesById, coachInterviewsByCandidacyId: world.coachInterviewsByCandidacyId, coachJobOffersById: world.coachJobOffersById, relationshipsByKey: world.relationshipsByKey, personalitiesByPersonId: world.personalitiesByPersonId, moraleByPersonId: world.moraleByPersonId, inboxItemsById: world.inboxItemsById, newsItemsById: world.newsItemsById, trainingPlansByTeamId: world.trainingPlansByTeamId, trainingSessionsById: world.trainingSessionsById, developmentStimulusByPlayerId: world.developmentStimulusByPlayerId, careerFatigueByPlayerId: world.careerFatigueByPlayerId,
-  })
+  return updateGameWorld(world, { coachProfessionalProfilesByCoachId: professionalProfiles, coachRpgProfilesByCoachId: rpgProfiles })
 }
 
 function getMatchClosenessFactor(margin: number): number { if (margin <= 5) return 1.15; if (margin <= 10) return 1.08; if (margin <= 20) return 1; return 0.92 }
