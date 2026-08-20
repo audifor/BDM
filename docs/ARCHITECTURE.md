@@ -946,3 +946,13 @@ collective-backed opportunities consume their persisted resources. User and AI u
 the same NIL operations, with deterministic AI cadence. NIL can adjust recruiting
 appeal only through its configured factor; recruiting remains the sole authority for
 commitment and signing, and historical recruiting records are not modified.
+
+## Donors and Boosters v1
+
+Boosters are autonomous canonical NCAA actors, separate from Programs and
+Collectives. They have limited resources, relationships, influence and agendas;
+their only current contribution boundary funds a Collective, which remains the
+sole NIL operator. User and AI invoke the same deterministic, resource-bound API
+at monthly calendar checkpoints. Booster influence never bypasses Recruiting,
+Eligibility, Academic Eligibility, NIL ownership or Salary systems. Enforcement
+and sanctions remain the responsibility of Hito 057D.

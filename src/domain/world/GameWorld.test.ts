@@ -16,11 +16,13 @@ import {
 } from '@/domain/ids'
 import { createPlayer } from '@/domain/player'
 import { createTeam } from '@/domain/team'
+import { createNewGame } from '@/app/game/createNewGame'
 
 import {
   createGameWorld,
   GAME_WORLD_SCHEMA_VERSION,
   GameWorldValidationError,
+  updateGameWorld,
 } from './index'
 import { createValidGameWorldInput } from './testFixtures'
 
@@ -198,5 +200,21 @@ describe('GameWorld', () => {
     expect(parsed.players['player-home']).toMatchObject({ id: 'player-home' })
     expect(serialized).not.toContain('Map')
     expect(serialized).not.toContain('Set')
+  })
+
+  it('patches only the requested field and preserves the canonical world state', () => {
+    const world = createNewGame()
+    const currentDate = createGameDate(2032, 10, 2)
+
+    const updated = updateGameWorld(world, { currentDate })
+
+    expect(updated).toEqual({ ...world, currentDate })
+    expect(updated.boostersById).toBe(world.boostersById)
+    expect(updated.collectivesById).toBe(world.collectivesById)
+    expect(updated.nilDealsById).toBe(world.nilDealsById)
+    expect(updated.academicProfilesById).toBe(world.academicProfilesById)
+    expect(updated.eligibilityProfilesById).toBe(world.eligibilityProfilesById)
+    expect(updated.staffPeopleById).toBe(world.staffPeopleById)
+    expect(updated.draftsById).toBe(world.draftsById)
   })
 })

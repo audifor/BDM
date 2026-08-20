@@ -50,6 +50,7 @@ import type { RecruitingActionRecord, RecruitingBoardEntry, RecruitingCommitment
 import type { EligibilityProfile, EligibilityRestriction, EligibilityRules } from '@/domain/eligibility'
 import type { AcademicProfile, AcademicRules, AcademicSupportPlan, AcademicTermRecord } from '@/domain/academic'
 import type { Collective, NilDeal, NilOpportunity, NilProfile, NilRules } from '@/domain/nil'
+import type { Booster, BoosterContribution, BoosterRequest } from '@/domain/boosters'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -130,6 +131,9 @@ export interface GameWorld {
   readonly nilOpportunitiesById: Readonly<Record<string, NilOpportunity>>
   readonly nilDealsById: Readonly<Record<string, NilDeal>>
   readonly collectivesById: Readonly<Record<string, Collective>>
+  readonly boostersById: Readonly<Record<string, Booster>>
+  readonly boosterContributionsById: Readonly<Record<string, BoosterContribution>>
+  readonly boosterRequestsById: Readonly<Record<string, BoosterRequest>>
 }
 
 export interface CreateGameWorldInput {
@@ -207,6 +211,9 @@ export interface CreateGameWorldInput {
   nilOpportunities?: readonly NilOpportunity[]
   nilDeals?: readonly NilDeal[]
   collectives?: readonly Collective[]
+  boosters?: readonly Booster[]
+  boosterContributions?: readonly BoosterContribution[]
+  boosterRequests?: readonly BoosterRequest[]
 }
 
 export class GameWorldValidationError extends Error {
@@ -264,8 +271,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     coachInterviewsByCandidacyId: Object.freeze({ ...(input.coachInterviewsByCandidacyId ?? {}) }),
     coachJobOffersById: Object.freeze({ ...(input.coachJobOffersById ?? {}) }),
     relationshipsByKey: Object.freeze({ ...(input.relationshipsByKey ?? {}) }),
-    personalitiesByPersonId: peopleProfiles(input.coaches, input.players, input.staffPeople ?? [], input.personalitiesByPersonId, generatePersonality),
-    moraleByPersonId: peopleProfiles(input.coaches, input.players, input.staffPeople ?? [], input.moraleByPersonId, createMoraleProfile),
+    personalitiesByPersonId: peopleProfiles([...input.coaches, ...input.players, ...(input.staffPeople ?? [])], input.personalitiesByPersonId, generatePersonality),
+    moraleByPersonId: peopleProfiles([...input.coaches, ...input.players, ...(input.staffPeople ?? [])], input.moraleByPersonId, createMoraleProfile),
     inboxItemsById: Object.freeze({ ...(input.inboxItemsById ?? {}) }), newsItemsById: Object.freeze({ ...(input.newsItemsById ?? {}) }),
     trainingPlansByTeamId: Object.freeze(Object.fromEntries(input.teams.map((team)=>[team.id,input.trainingPlansByTeamId?.[team.id]??createDefaultTrainingPlan(team.id)]))), trainingSessionsById:Object.freeze({...(input.trainingSessionsById??{})}),
     developmentStimulusByPlayerId:Object.freeze(Object.fromEntries(input.players.map((player)=>[player.id,input.developmentStimulusByPlayerId?.[player.id]??{playerId:player.id,byRating:{...EMPTY_DEVELOPMENT_STIMULUS}}]))), careerFatigueByPlayerId:Object.freeze(Object.fromEntries(input.players.map((player)=>[player.id,clampCareerFatigue(input.careerFatigueByPlayerId?.[player.id]??0)]))),
@@ -296,6 +303,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     eligibilityRestrictionsById: indexById(input.eligibilityRestrictions ?? [], 'Eligibility restriction'),
     academicRulesByEcosystemId: Object.freeze({ ...(input.academicRulesByEcosystemId ?? {}) }), academicProfilesById: indexById(input.academicProfiles ?? [], 'Academic profile'), academicTermRecordsById: indexById(input.academicTermRecords ?? [], 'Academic term record'), academicSupportPlansById: indexById(input.academicSupportPlans ?? [], 'Academic support plan'),
     nilRulesByEcosystemId:Object.freeze({...(input.nilRulesByEcosystemId??{})}),nilProfilesById:indexById(input.nilProfiles??[],'NIL profile'),nilOpportunitiesById:indexById(input.nilOpportunities??[],'NIL opportunity'),nilDealsById:indexById(input.nilDeals??[],'NIL deal'),collectivesById:indexById(input.collectives??[],'Collective'),
+    boostersById:indexById(input.boosters??[],'Booster'),boosterContributionsById:indexById(input.boosterContributions??[],'Booster contribution'),boosterRequestsById:indexById(input.boosterRequests??[],'Booster request'),
   }
 
   validateWorld(world)
@@ -304,7 +312,37 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
 
 /** Rebuilds through the canonical validator while preserving unrelated world state. */
 export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorldInput>): GameWorld {
-  return createGameWorld({ currentDate: world.currentDate, currentSeasonId: world.currentSeasonId, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), ecosystems: Object.values(world.ecosystems), conferences: Object.values(world.conferencesById), conferenceMemberships: world.conferenceMemberships, seasons: Object.values(world.seasons), games: Object.values(world.games), matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory: Object.values(world.seasonHistoryBySeasonId), injuries: Object.values(world.injuriesById), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId), playerTransactions: Object.values(world.playerTransactionsById), playerKnowledge: Object.values(world.playerKnowledgeById), staffPeople: Object.values(world.staffPeopleById), teamStaffAssignments: Object.values(world.teamStaffAssignmentsById), coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId, coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: world.coachCareerHistoryByCoachId, coachJobOpeningsById: world.coachJobOpeningsById, coachJobCandidaciesById: world.coachJobCandidaciesById, coachInterviewsByCandidacyId: world.coachInterviewsByCandidacyId, coachJobOffersById: world.coachJobOffersById, relationshipsByKey: world.relationshipsByKey, personalitiesByPersonId: world.personalitiesByPersonId, moraleByPersonId: world.moraleByPersonId, inboxItemsById: world.inboxItemsById, newsItemsById: world.newsItemsById, trainingPlansByTeamId: world.trainingPlansByTeamId, trainingSessionsById: world.trainingSessionsById, developmentStimulusByPlayerId: world.developmentStimulusByPlayerId, careerFatigueByPlayerId: world.careerFatigueByPlayerId, promotionRelegationResolutions: Object.values(world.promotionRelegationResolutionsById), drafts: Object.values(world.draftsById), draftPicks: Object.values(world.draftPicksById), salaryRulesBySeasonId: world.salaryRulesBySeasonId, salaryExceptions: Object.values(world.salaryExceptionsById), deadMoneyCharges: Object.values(world.deadMoneyChargesById), tradeRulesBySeasonId: world.tradeRulesBySeasonId, playerRights: Object.values(world.playerRightsById), futureDraftPickRights: Object.values(world.futureDraftPickRightsById), draftPickSwapRights: Object.values(world.draftPickSwapRightsById), retainedSalaryObligations: Object.values(world.retainedSalaryObligationsById), tradeHistory: Object.values(world.tradeHistoryById), recruitingCycles: Object.values(world.recruitingCyclesById), recruitProfiles: Object.values(world.recruitProfilesById), recruitingInterests: world.recruitingInterests, recruitingBoards: world.recruitingBoards, recruitingCapacityByProgramId: world.recruitingCapacityByProgramId, recruitingActionHistory: Object.values(world.recruitingActionHistoryById), recruitingOffers: Object.values(world.recruitingOffersById), recruitingVisits: Object.values(world.recruitingVisitsById), recruitingCommitments: Object.values(world.recruitingCommitmentsById), recruitSignings: Object.values(world.recruitSigningsById), eligibilityRulesByEcosystemId: world.eligibilityRulesByEcosystemId, eligibilityProfiles: Object.values(world.eligibilityProfilesById), eligibilityRestrictions: Object.values(world.eligibilityRestrictionsById), academicRulesByEcosystemId: world.academicRulesByEcosystemId, academicProfiles: Object.values(world.academicProfilesById), academicTermRecords: Object.values(world.academicTermRecordsById), academicSupportPlans: Object.values(world.academicSupportPlansById), nilRulesByEcosystemId: world.nilRulesByEcosystemId, nilProfiles: Object.values(world.nilProfilesById), nilOpportunities: Object.values(world.nilOpportunitiesById), nilDeals: Object.values(world.nilDealsById), collectives: Object.values(world.collectivesById), ...patch })
+  const remainingPatch = { ...patch } as Record<string, unknown>
+  const worldPatch: Record<string, unknown> = {}
+
+  for (const [inputKey, worldKey] of Object.entries(collectionPatchTargets)) {
+    const value = remainingPatch[inputKey]
+    if (value === undefined) continue
+    delete remainingPatch[inputKey]
+    worldPatch[worldKey] = collectionPatchIndexers[inputKey]!(value)
+  }
+
+  const patched = { ...world, ...remainingPatch, ...worldPatch } as GameWorld
+  const updated = (worldPatch.coaches !== undefined || worldPatch.players !== undefined || worldPatch.staffPeopleById !== undefined)
+    ? {
+        ...patched,
+        personalitiesByPersonId: peopleProfiles([...Object.values(patched.coaches), ...Object.values(patched.players), ...Object.values(patched.staffPeopleById)], patched.personalitiesByPersonId, generatePersonality),
+        moraleByPersonId: peopleProfiles([...Object.values(patched.coaches), ...Object.values(patched.players), ...Object.values(patched.staffPeopleById)], patched.moraleByPersonId, createMoraleProfile),
+      }
+    : patched
+  validateWorld(updated)
+  return updated
+}
+
+const collectionPatchTargets: Readonly<Record<string, string>> = {
+  countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById',
+}
+
+const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unknown>> = {
+  ...Object.fromEntries(Object.keys(collectionPatchTargets).map((key) => [key, (value: unknown) => indexById(value as readonly { readonly id: string }[], key)])),
+  matchStatLogs: (value) => indexLogsByGameId(value as readonly MatchStatLog[]),
+  seasonHistory: (value) => indexHistoryBySeasonId(value as readonly SeasonHistoryRecord[]),
+  teamFinances: (value) => indexTeamFinances(value as readonly TeamFinances[]),
 }
 
 function validateWorld(world: GameWorld): void {
@@ -578,7 +616,7 @@ function indexHistoryBySeasonId(history: readonly SeasonHistoryRecord[]): Readon
 
 function indexTeamFinances(finances: readonly TeamFinances[]): Readonly<Record<TeamId, TeamFinances>> { const indexed = Object.create(null) as Record<TeamId, TeamFinances>; for (const finance of finances) { if (Object.hasOwn(indexed, finance.teamId)) throw new GameWorldValidationError(`Duplicate Team finances ID: ${finance.teamId}`); indexed[finance.teamId] = finance } return Object.freeze(indexed) }
 
-function peopleProfiles<Value>(coaches: readonly Coach[], players: readonly Player[], staff: readonly StaffPerson[], supplied: Readonly<Record<string, Value>> | undefined, create: (id: string) => Value): Readonly<Record<string, Value>> { const result: Record<string, Value> = {}; for (const id of [...coaches, ...players, ...staff].map((person) => person.id)) result[id] = supplied?.[id] ?? create(id); return Object.freeze(result) }
+function peopleProfiles<Value>(people: readonly { readonly id: string }[], supplied: Readonly<Record<string, Value>> | undefined, create: (id: string) => Value): Readonly<Record<string, Value>> { const result: Record<string, Value> = {}; for (const person of people) result[person.id] = supplied?.[person.id] ?? create(person.id); return Object.freeze(result) }
 
 function coachReputationProfilesForCoaches(coaches: readonly Coach[], supplied: Readonly<Record<CoachId, CoachReputationProfile>> | undefined): Readonly<Record<CoachId, CoachReputationProfile>> {
   const profiles = Object.create(null) as Record<CoachId, CoachReputationProfile>

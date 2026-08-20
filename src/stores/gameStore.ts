@@ -34,6 +34,7 @@ import type { ContinueResult } from '@/app/game'
 import { addRecruitingBoardEntry, makeRecruitingOffer, performRecruitingAction, removeRecruitingBoardEntry } from '@/engine/recruiting'
 import type { Priority } from '@/domain/recruiting'
 import { acceptNilOpportunity } from '@/engine/nil'
+import { requestBoosterSupport } from '@/engine/boosters'
 
 interface GameStore {
   readonly world: GameWorld | null
@@ -67,6 +68,7 @@ interface GameStore {
   performRecruitingAction(cycleId: string, recruitId: string, kind: 'contact'|'pitch'|'visit'): string | null
   makeRecruitingOffer(cycleId: string, recruitId: string): string | null
   acceptNilOpportunity(opportunityId: string): void
+  requestBoosterSupport(boosterId: string): void
   executeEntityAction(result: CommandResult): EntityActionExecution
   getActiveMatchSession(): LiveMatchController | null
   replaceWorld(world: GameWorld): void
@@ -130,6 +132,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   performRecruitingAction: (cycleId, recruitId, kind) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = performRecruitingAction(world, cycleId, recruitId, team.id, kind); if (result.ok) { set({ world: result.value }); return null } return result.reason },
   makeRecruitingOffer: (cycleId, recruitId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = makeRecruitingOffer(world, cycleId, recruitId, team.id); if (result.ok) { set({ world: result.value }); return null } return result.reason },
   acceptNilOpportunity: (opportunityId) => { const result = acceptNilOpportunity(requireWorld(get().world), opportunityId); if (result.ok) set({ world: result.value }) },
+  requestBoosterSupport: (boosterId) => { const result=requestBoosterSupport(requireWorld(get().world),boosterId);if(result.ok)set({world:result.value}) },
   executeEntityAction: (result) => {
     const world = requireWorld(get().world); const outcome = executeEntityActionResult(world, result, { controlledTeamId: getUserTeam(world)?.id, activeMatchSession: liveController ?? undefined })
     if (outcome.kind === 'executed') set({ world: outcome.world })

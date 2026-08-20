@@ -6,16 +6,18 @@ import { openDraft, progressDraftAi } from '@/engine/draft'
 import { arriveSignedRecruits, progressAiRecruiting, resolveRecruitingCommitments } from '@/engine/recruiting'
 import { progressAiAcademicSupport, resolveAcademicTerm } from '@/engine/academic'
 import { progressAiNil, progressNilLifecycle } from '@/engine/nil'
+import { progressAiBoosters } from '@/engine/boosters'
 
 /** Advances only the simulation date, leaving game resolution to other services. */
 export function advanceDay(world: GameWorld): GameWorld {
   const advanced = updateGameWorld(world, { currentDate: addDays(world.currentDate, 1) })
   const maintained = progressAcademicTerms(progressRecruiting(executeEligibleTraining(reconcileExpiredPlayerContracts(recoverCareerFatigueForDay(advanced), advanced.currentDate))))
   const withNil = maintained.currentDate.slice(-2) === '01' ? progressAiNil(progressNilLifecycle(maintained)) : progressNilLifecycle(maintained)
-  return Object.values(withNil.draftsById).reduce((current, draft) => {
+  const withBoosters = withNil.currentDate.slice(-2) === '01' ? progressAiBoosters(withNil) : withNil
+  return Object.values(withBoosters.draftsById).reduce((current, draft) => {
     const opened = openDraft(current, draft.id)
     return opened.draftsById[draft.id]?.status === 'inProgress' ? progressDraftAi(opened, draft.id) : opened
-  }, withNil)
+  }, withBoosters)
 }
 function progressAcademicTerms(world: GameWorld): GameWorld { if(world.currentDate.slice(5) !== '01-01' && world.currentDate.slice(5) !== '07-01') return world; const term=`academic:${world.currentDate.slice(0, 4)}:${world.currentDate.slice(5, 7)}`; return resolveAcademicTerm(progressAiAcademicSupport(world,term),term) }
 
