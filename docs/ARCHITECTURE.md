@@ -969,3 +969,16 @@ Hito 057 remains the authority for player competition eligibility; Recruiting,
 NIL/Collectives and Boosters remain their own authorities. Boosters may be a
 violation source but never decide enforcement. GameWorld updates preserve all
 unrelated canonical state.
+
+## Connected ecosystems
+
+Ecosystems are connected through explicit transition gateways, never shared rules.
+`PlayerId` and `CoachId` remain canonical across NCAA-like, NBA-like and FIBA-like
+career moves. Each destination ecosystem retains authority for its own Draft,
+Recruiting, contracts and eligibility: NCAA-to-NBA uses the NBA Draft gateway,
+while professional signings create a destination contract and close the departing
+professional contract. Cross-ecosystem player transitions are atomic, persistent
+historical records, so a player cannot occupy incompatible rosters at once.
+
+`GameWorld` owns global time only. Competition editions own their own windows;
+there is no global offseason and ecosystem transitions do not synchronize seasons.

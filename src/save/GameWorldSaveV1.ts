@@ -131,6 +131,7 @@ export interface GameWorldSaveV1 {
   readonly findings?: readonly JsonRecord[]
   readonly sanctions?: readonly JsonRecord[]
   readonly programCompliance?: readonly JsonRecord[]
+  readonly ecosystemTransitions?: readonly JsonRecord[]
 }
 
 export interface SaveGameEnvelopeV1 {
@@ -192,6 +193,7 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
       nilRules: copyRecords(Object.values(world.nilRulesByEcosystemId)), nilProfiles: copyRecords(Object.values(world.nilProfilesById)), nilOpportunities: copyRecords(Object.values(world.nilOpportunitiesById)), nilDeals: copyRecords(Object.values(world.nilDealsById)), collectives: copyRecords(Object.values(world.collectivesById)),
       boosters: copyRecords(Object.values(world.boostersById)), boosterContributions: copyRecords(Object.values(world.boosterContributionsById)), boosterRequests: copyRecords(Object.values(world.boosterRequestsById)),
       enforcementRules: copyRecords(Object.values(world.enforcementRulesByEcosystemId)), violations: copyRecords(Object.values(world.violationsById)), investigations: copyRecords(Object.values(world.investigationsById)), findings: copyRecords(Object.values(world.findingsById)), sanctions: copyRecords(Object.values(world.sanctionsById)), programCompliance: copyRecords(Object.values(world.programComplianceByProgramId)),
+      ecosystemTransitions: copyRecords(Object.values(world.ecosystemTransitionsById)),
     },
   }
 }
@@ -276,6 +278,7 @@ export function deserializeGameWorldV1(value: unknown): GameWorld {
     ...(payload.nilProfiles === undefined ? {} : { nilRulesByEcosystemId: Object.fromEntries(array(payload.nilRules ?? [], 'Save NIL rules').map((item) => { const rule = record(item, 'NIL rules'); return [string(rule.ecosystemId, 'NIL ecosystem'), rule] })) as never, nilProfiles: array(payload.nilProfiles, 'Save NIL profiles') as never, nilOpportunities: array(payload.nilOpportunities ?? [], 'Save NIL opportunities') as never, nilDeals: array(payload.nilDeals ?? [], 'Save NIL deals') as never, collectives: array(payload.collectives ?? [], 'Save collectives') as never }),
     ...(payload.boosters === undefined ? {} : { boosters: array(payload.boosters, 'Save boosters') as never, boosterContributions: array(payload.boosterContributions ?? [], 'Save booster contributions') as never, boosterRequests: array(payload.boosterRequests ?? [], 'Save booster requests') as never }),
     ...(payload.enforcementRules === undefined ? {} : { enforcementRulesByEcosystemId: Object.fromEntries(array(payload.enforcementRules, 'Save enforcement rules').map((item) => { const rule = record(item, 'Enforcement rules'); return [string(rule.ecosystemId, 'Enforcement ecosystem'), rule] })) as never, violations: array(payload.violations ?? [], 'Save violations') as never, investigations: array(payload.investigations ?? [], 'Save investigations') as never, findings: array(payload.findings ?? [], 'Save findings') as never, sanctions: array(payload.sanctions ?? [], 'Save sanctions') as never, programComplianceByProgramId: Object.fromEntries(array(payload.programCompliance ?? [], 'Save program compliance').map((item) => { const state = record(item, 'Program compliance'); return [string(state.programTeamId, 'Program compliance program'), state] })) as never }),
+    ...(payload.ecosystemTransitions === undefined ? {} : { ecosystemTransitions: array(payload.ecosystemTransitions, 'Save ecosystem transitions') as never }),
   })
   if (Object.values(world.seasons).some((season) => Object.values(world.games).filter((game) => game.seasonId === season.id).every((game) => game.status === 'completed') && world.seasonHistoryBySeasonId[season.id] === undefined)) {
     throw new Error('Completed season is missing season history')

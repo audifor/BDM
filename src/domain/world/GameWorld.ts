@@ -52,6 +52,7 @@ import type { AcademicProfile, AcademicRules, AcademicSupportPlan, AcademicTermR
 import type { Collective, NilDeal, NilOpportunity, NilProfile, NilRules } from '@/domain/nil'
 import type { Booster, BoosterContribution, BoosterRequest } from '@/domain/boosters'
 import type { EnforcementFinding, EnforcementRules, Investigation, ProgramComplianceState, Sanction, Violation } from '@/domain/enforcement'
+import type { EcosystemTransition } from '@/domain/career'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -141,6 +142,7 @@ export interface GameWorld {
   readonly findingsById: Readonly<Record<string, EnforcementFinding>>
   readonly sanctionsById: Readonly<Record<string, Sanction>>
   readonly programComplianceByProgramId: Readonly<Record<string, ProgramComplianceState>>
+  readonly ecosystemTransitionsById: Readonly<Record<string, EcosystemTransition>>
 }
 
 export interface CreateGameWorldInput {
@@ -227,6 +229,7 @@ export interface CreateGameWorldInput {
   findings?: readonly EnforcementFinding[]
   sanctions?: readonly Sanction[]
   programComplianceByProgramId?: Readonly<Record<string, ProgramComplianceState>>
+  ecosystemTransitions?: readonly EcosystemTransition[]
 }
 
 export class GameWorldValidationError extends Error {
@@ -318,6 +321,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     nilRulesByEcosystemId:Object.freeze({...(input.nilRulesByEcosystemId??{})}),nilProfilesById:indexById(input.nilProfiles??[],'NIL profile'),nilOpportunitiesById:indexById(input.nilOpportunities??[],'NIL opportunity'),nilDealsById:indexById(input.nilDeals??[],'NIL deal'),collectivesById:indexById(input.collectives??[],'Collective'),
     boostersById:indexById(input.boosters??[],'Booster'),boosterContributionsById:indexById(input.boosterContributions??[],'Booster contribution'),boosterRequestsById:indexById(input.boosterRequests??[],'Booster request'),
     enforcementRulesByEcosystemId: Object.freeze({ ...(input.enforcementRulesByEcosystemId ?? {}) }), violationsById: indexById(input.violations ?? [], 'Violation'), investigationsById: indexById(input.investigations ?? [], 'Investigation'), findingsById: indexById(input.findings ?? [], 'Finding'), sanctionsById: indexById(input.sanctions ?? [], 'Sanction'), programComplianceByProgramId: Object.freeze({ ...(input.programComplianceByProgramId ?? {}) }),
+    ecosystemTransitionsById:indexById(input.ecosystemTransitions??[],'Ecosystem transition'),
   }
 
   validateWorld(world)
@@ -349,7 +353,7 @@ export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorld
 }
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
-  countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById',
+  countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById',
 }
 
 const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unknown>> = {
@@ -410,6 +414,15 @@ function validateWorld(world: GameWorld): void {
         )
       }
     }
+  }
+
+  for (const transition of Object.values(world.ecosystemTransitionsById)) {
+    requireEntity(world.players, transition.playerId, `Ecosystem transition ${transition.id} player`)
+    requireEntity(world.ecosystems, transition.fromEcosystemId, `Ecosystem transition ${transition.id} origin ecosystem`)
+    requireEntity(world.ecosystems, transition.toEcosystemId, `Ecosystem transition ${transition.id} destination ecosystem`)
+    if (transition.fromEcosystemId === transition.toEcosystemId) throw new GameWorldValidationError(`Ecosystem transition ${transition.id} must cross ecosystems`)
+    if (transition.fromTeamId !== undefined) requireEntity(world.teams, transition.fromTeamId, `Ecosystem transition ${transition.id} origin team`)
+    if (transition.toTeamId !== undefined) requireEntity(world.teams, transition.toTeamId, `Ecosystem transition ${transition.id} destination team`)
   }
 
   for (const conference of Object.values(world.conferencesById)) {

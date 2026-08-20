@@ -1,7 +1,7 @@
 import { appointCoachToTeam, coachJobCandidacyIdFromString, coachJobOfferIdFromString, coachJobOpeningIdFromString, createCoachJobOpening, decideCoachJobOffer, evaluateCoachJobEligibility, fireCoach, leaveForAnotherJob, transitionCoachInterview, transitionCoachJobCandidacy, type CoachJobOpening } from '@/domain/coachCareer'
 import type { CoachId, TeamId } from '@/domain/ids'
 import type { CoachReputationRequirement } from '@/domain/coachReputation'
-import { addInboxItem, addNewsItem, createGameWorld, type GameWorld } from '@/domain/world'
+import { addInboxItem, addNewsItem, updateGameWorld, type GameWorld } from '@/domain/world'
 
 export function createCoachJobOpeningForTeam(world: GameWorld, input: { readonly teamId: TeamId; readonly reputationRequirement?: CoachReputationRequirement; readonly id?: string }): { readonly world: GameWorld; readonly opening: CoachJobOpening } {
   const team = requireTeam(world, input.teamId)
@@ -85,4 +85,14 @@ function requireOpening(world: GameWorld, id: string) { const opening = world.co
 function requireCandidacy(world: GameWorld, id: string) { const candidacy = world.coachJobCandidaciesById[coachJobCandidacyIdFromString(id)]; if (candidacy === undefined) throw new Error('Coach candidacy does not exist'); return candidacy }
 function requireOffer(world: GameWorld, id: string) { const offer = world.coachJobOffersById[coachJobOfferIdFromString(id)]; if (offer === undefined) throw new Error('Coach job offer does not exist'); return offer }
 function nextId(world: GameWorld, prefix: string): string { return `${prefix}${Object.keys(world.coachJobOpeningsById).concat(Object.keys(world.coachJobCandidaciesById), Object.keys(world.coachJobOffersById)).filter((id) => id.startsWith(prefix)).length + 1}` }
-function rebuild(world: GameWorld, changes: Partial<{ teams: readonly (typeof world.teams)[keyof typeof world.teams][]; openings: typeof world.coachJobOpeningsById; candidacies: typeof world.coachJobCandidaciesById; interviews: typeof world.coachInterviewsByCandidacyId; offers: typeof world.coachJobOffersById; employment: typeof world.coachEmploymentByCoachId; history: typeof world.coachCareerHistoryByCoachId }>): GameWorld { return createGameWorld({ currentDate: world.currentDate, currentSeasonId: world.currentSeasonId, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: changes.teams ?? Object.values(world.teams), competitions: Object.values(world.competitions), seasons: Object.values(world.seasons), games: Object.values(world.games), matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory: Object.values(world.seasonHistoryBySeasonId), injuries: Object.values(world.injuriesById), contracts: Object.values(world.contractsById), teamFinances: Object.values(world.teamFinancesByTeamId), playerTransactions: Object.values(world.playerTransactionsById), playerKnowledge: Object.values(world.playerKnowledgeById), staffPeople: Object.values(world.staffPeopleById), teamStaffAssignments: Object.values(world.teamStaffAssignmentsById), coachProfessionalProfilesByCoachId: world.coachProfessionalProfilesByCoachId, coachRpgProfilesByCoachId: world.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: world.coachReputationProfilesByCoachId, coachEmploymentByCoachId: changes.employment ?? world.coachEmploymentByCoachId, coachCareerHistoryByCoachId: changes.history ?? world.coachCareerHistoryByCoachId, coachJobOpeningsById: changes.openings ?? world.coachJobOpeningsById, coachJobCandidaciesById: changes.candidacies ?? world.coachJobCandidaciesById, coachInterviewsByCandidacyId: changes.interviews ?? world.coachInterviewsByCandidacyId, coachJobOffersById: changes.offers ?? world.coachJobOffersById }) }
+function rebuild(world: GameWorld, changes: Partial<{ teams: readonly (typeof world.teams)[keyof typeof world.teams][]; openings: typeof world.coachJobOpeningsById; candidacies: typeof world.coachJobCandidaciesById; interviews: typeof world.coachInterviewsByCandidacyId; offers: typeof world.coachJobOffersById; employment: typeof world.coachEmploymentByCoachId; history: typeof world.coachCareerHistoryByCoachId }>): GameWorld {
+  return updateGameWorld(world, {
+    ...(changes.teams === undefined ? {} : { teams: changes.teams }),
+    coachJobOpeningsById: changes.openings ?? world.coachJobOpeningsById,
+    coachJobCandidaciesById: changes.candidacies ?? world.coachJobCandidaciesById,
+    coachInterviewsByCandidacyId: changes.interviews ?? world.coachInterviewsByCandidacyId,
+    coachJobOffersById: changes.offers ?? world.coachJobOffersById,
+    coachEmploymentByCoachId: changes.employment ?? world.coachEmploymentByCoachId,
+    coachCareerHistoryByCoachId: changes.history ?? world.coachCareerHistoryByCoachId,
+  } as never)
+}

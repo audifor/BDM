@@ -262,6 +262,10 @@ function Inspector({
   const profile = eligibility === undefined ? undefined : Object.values(world.eligibilityProfilesById).find((item) => item.playerId === player.id && item.programTeamId === team?.id);
   const academic = Object.values(world.academicProfilesById).find((item) => item.playerId === player.id && item.programTeamId === team?.id);
   const academicEligibility = academic === undefined ? undefined : evaluateAcademicEligibility(world, player.id);
+  const currentTeam = Object.values(world.teams).find((candidate) => candidate.rosterPlayerIds.includes(player.id));
+  const currentCompetition = currentTeam === undefined ? undefined : Object.values(world.competitions).find((candidate) => candidate.participantTeamIds.includes(currentTeam.id));
+  const currentEcosystem = currentCompetition === undefined ? undefined : world.ecosystems[currentCompetition.ecosystemId];
+  const transitions = Object.values(world.ecosystemTransitionsById).filter((transition) => transition.playerId === player.id).sort((left, right) => left.effectiveDate.localeCompare(right.effectiveDate) || left.id.localeCompare(right.id));
   return (
     <aside className="squad-app__inspector">
       <p className="eyebrow">PLAYER INSPECTOR</p>
@@ -272,6 +276,7 @@ function Inspector({
         {player.basketball.primaryPosition} · Age{" "}
         {getPlayerAge(world, player.id)}
       </p>
+      <section><h3>Cross-ecosystem career</h3><p>Current ecosystem: {currentEcosystem?.name ?? "Free agent"}</p><p>Current team: {currentTeam?.name ?? "None"}</p>{transitions.length === 0 ? <p>No cross-ecosystem moves.</p> : <ul>{transitions.map((transition) => <li key={transition.id}>{transition.effectiveDate} · {world.ecosystems[transition.fromEcosystemId]?.name} to {world.ecosystems[transition.toEcosystemId]?.name} · {transition.transitionType}</li>)}</ul>}</section>
       <dl>
         {BASKETBALL_RATING_KEYS.map((key) => (
           <div key={key}>
