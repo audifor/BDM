@@ -5,7 +5,7 @@ import type { TrainingFocus, TrainingIntensity } from '@/domain/training'
 import type { Priority } from '@/domain/recruiting'
 import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
 import { getCareerFatigueForPlayer, getTeamRoster, isPlayerAvailable } from '@/domain/world'
-import { BoostersScreen, CoachScreen, DraftScreen, MarketScreen, NilScreen, RecruitingScreen, SalaryScreen, ScheduleScreen, SquadScreen, StaffScreen, StandingsScreen, TacticsScreen, TradeCenterScreen, TrainingScreen } from '@/ui/screens'
+import { BoostersScreen, CoachScreen, DraftScreen, EnforcementScreen, MarketScreen, NilScreen, RecruitingScreen, SalaryScreen, ScheduleScreen, SquadScreen, StaffScreen, StandingsScreen, TacticsScreen, TradeCenterScreen, TrainingScreen } from '@/ui/screens'
 import { getDesktopApp } from './DesktopAppRegistry'
 
 export function DesktopAppHost({ appId, world, actions }: { readonly appId: string; readonly world: GameWorld; readonly actions: DesktopAppActions }) {
@@ -24,6 +24,7 @@ export function DesktopAppHost({ appId, world, actions }: { readonly appId: stri
   if (key === 'recruiting') return <RecruitingScreen world={world} onAddTarget={actions.addRecruitingTarget ?? (() => undefined)} onRemoveTarget={actions.removeRecruitingTarget ?? (() => undefined)} onAction={actions.performRecruitingAction ?? (() => 'NO_CONTROLLED_PROGRAM')} onOffer={actions.makeRecruitingOffer ?? (() => 'NO_CONTROLLED_PROGRAM')} />
   if (key === 'nil') return <NilScreen world={world} onAccept={actions.acceptNilOpportunity ?? (() => undefined)} />
   if (key === 'boosters') return <BoostersScreen world={world} onSupport={actions.requestBoosterSupport ?? (() => undefined)} />
+  if (key === 'enforcement') return <EnforcementScreen world={world} />
   if (key === 'match') return <MatchCenterApp world={world} onAdvanceDay={actions.advanceDay} onInstantResult={actions.instantResult} onOpenApp={actions.openApp} onPlayGame={actions.playGame} onSimulateRemaining={actions.simulateRemainingGamesToday} />
   return <section className="content-panel">Esta aplicación no está disponible.</section>
 }

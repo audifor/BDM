@@ -956,3 +956,16 @@ sole NIL operator. User and AI invoke the same deterministic, resource-bound API
 at monthly calendar checkpoints. Booster influence never bypasses Recruiting,
 Eligibility, Academic Eligibility, NIL ownership or Salary systems. Enforcement
 and sanctions remain the responsibility of Hito 057D.
+
+## Enforcement and sanctions v1
+
+Enforcement is a separate NCAA-like domain with persisted rules, violations,
+investigations, findings, sanctions and program compliance state. Violations only
+come from explicit system actions or fixtures. Deterministic investigations can
+produce temporary sanctions; those affect other systems only through their
+canonical boundaries: Enforcement creates EligibilityRestrictions, Recruiting
+consumes its capacity state, and NIL/Collectives reject future restricted activity.
+Hito 057 remains the authority for player competition eligibility; Recruiting,
+NIL/Collectives and Boosters remain their own authorities. Boosters may be a
+violation source but never decide enforcement. GameWorld updates preserve all
+unrelated canonical state.
