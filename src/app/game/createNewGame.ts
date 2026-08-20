@@ -13,6 +13,7 @@ import { ensureNcaaNil } from '@/engine/nil'
 import { ensureNcaaBoosters } from '@/engine/boosters'
 import { ensureNcaaEnforcement } from '@/engine/enforcement'
 import type { CoachRpgPreset } from '@/domain/coachRpg'
+import { createCoachJobOpeningForTeam } from '@/app/coachCareer'
 
 export const PROTOTYPE_GAME_CONFIGURATION = {
   seed: 12_345,
@@ -24,11 +25,13 @@ export const PROTOTYPE_GAME_CONFIGURATION = {
 export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset } = {}): GameWorld {
   const men = createSingleNewGame(options, 'male')
   const women = namespaceWorld(createSingleNewGame({}, 'female'), 'women-')
-  return mergeIndependentWorlds(men, women)
+  let world = mergeIndependentWorlds(men, women)
+  for (const team of Object.values(world.teams).filter((team) => team.coachId === undefined)) world = createCoachJobOpeningForTeam(world, { teamId: team.id }).world
+  return world
 }
 
 function createSingleNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset }, gender: 'male' | 'female'): GameWorld {
-  const generatedWorld = generateWorld({ ...PROTOTYPE_GAME_CONFIGURATION, gender, startDate: gender === 'male' ? PROTOTYPE_GAME_CONFIGURATION.startDate : addDays(PROTOTYPE_GAME_CONFIGURATION.startDate, 7), userCoachRpgPreset: options.coachRpgPreset, includeNbaLike: true, includeNcaaLike: true })
+  const generatedWorld = generateWorld({ ...PROTOTYPE_GAME_CONFIGURATION, gender, startDate: gender === 'male' ? PROTOTYPE_GAME_CONFIGURATION.startDate : addDays(PROTOTYPE_GAME_CONFIGURATION.startDate, 7), userCoachRpgPreset: options.coachRpgPreset, includeNbaLike: true, includeNcaaLike: true, starterVacancyTeamIndexes: [1, 9] })
   const season = generatedWorld.seasons[generatedWorld.currentSeasonId]
 
   if (season === undefined) {

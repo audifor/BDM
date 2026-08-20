@@ -1,7 +1,8 @@
 import type { CoachReputationProfile, CoachReputationRequirement, CoachReputationRequirementFailure } from '@/domain/coachReputation'
 import { evaluateCoachReputationRequirement } from '@/domain/coachReputation'
 import type { GameDate } from '@/domain/date'
-import type { CoachId, TeamId } from '@/domain/ids'
+import type { CoachId, EcosystemId, TeamId } from '@/domain/ids'
+import type { SportsCategory } from '@/domain/primitives'
 
 declare const coachCareerIdBrand: unique symbol
 type CoachCareerId<Kind extends string> = string & { readonly [coachCareerIdBrand]: Kind }
@@ -22,7 +23,8 @@ export interface CoachCareerDepartureEntry { readonly kind: 'departure'; readonl
 export type CoachCareerHistoryEntry = CoachCareerAppointmentEntry | CoachCareerDepartureEntry
 
 export type CoachJobOpeningStatus = 'open' | 'filled' | 'closed'
-export interface CoachJobOpening { readonly id: CoachJobOpeningId; readonly teamId: TeamId; readonly status: CoachJobOpeningStatus; readonly createdOn: GameDate; readonly reputationRequirement?: CoachReputationRequirement }
+export interface CoachJobFitWeights { readonly competitive: number; readonly development: number; readonly professional: number; readonly publicStanding: number }
+export interface CoachJobOpening { readonly id: CoachJobOpeningId; readonly teamId: TeamId; readonly ecosystemId?: EcosystemId; readonly sportsCategory?: SportsCategory; readonly role?: 'headCoach'; readonly status: CoachJobOpeningStatus; readonly createdOn: GameDate; readonly reputationRequirement?: CoachReputationRequirement; readonly fitWeights?: CoachJobFitWeights }
 export type CoachJobEligibilityFailureReason = 'jobNotOpen' | 'reputationRequirementNotMet'
 export interface CoachJobEligibilityFailure { readonly reason: CoachJobEligibilityFailureReason; readonly unmet?: readonly CoachReputationRequirementFailure[] }
 export interface CoachJobEligibilityResult { readonly eligible: boolean; readonly reasons: readonly CoachJobEligibilityFailure[] }
@@ -52,7 +54,9 @@ export function createCoachEmployment(employment: CoachEmployment): CoachEmploym
 }
 
 export function createCoachJobOpening(opening: CoachJobOpening): CoachJobOpening {
-  return opening.reputationRequirement === undefined ? { ...opening } : { ...opening, reputationRequirement: { minimum: { ...opening.reputationRequirement.minimum } } }
+  const fitWeights = opening.fitWeights === undefined ? undefined : { ...opening.fitWeights }
+  if (fitWeights !== undefined && Object.values(fitWeights).some((value) => !Number.isFinite(value) || value < 0)) throw new RangeError('Coach job fit weights are invalid')
+  return { ...opening, ...(opening.reputationRequirement === undefined ? {} : { reputationRequirement: { minimum: { ...opening.reputationRequirement.minimum } } }), ...(fitWeights === undefined ? {} : { fitWeights }) }
 }
 
 export function evaluateCoachJobEligibility(_employment: CoachEmployment, reputation: CoachReputationProfile, opening: CoachJobOpening): CoachJobEligibilityResult {

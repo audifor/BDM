@@ -36,7 +36,7 @@ describe('Coach reputation consequences', () => {
 
   it('updates both AI coaches for an AI versus AI game', () => {
     const world = createNewGame()
-    const game = Object.values(world.games).find((candidate) => world.teams[candidate.homeTeamId]!.coachId !== world.userCoachId && world.teams[candidate.awayTeamId]!.coachId !== world.userCoachId)!
+    const game = Object.values(world.games).find((candidate) => world.teams[candidate.homeTeamId]!.coachId !== undefined && world.teams[candidate.awayTeamId]!.coachId !== undefined && world.teams[candidate.homeTeamId]!.coachId !== world.userCoachId && world.teams[candidate.awayTeamId]!.coachId !== world.userCoachId)!
     const next = applyMatchResult(world, { gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, homeScore: 70, awayScore: 80 })
 
     expect(next.coachReputationProfilesByCoachId[world.teams[game.homeTeamId]!.coachId!]!.events).toHaveLength(1)

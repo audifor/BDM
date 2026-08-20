@@ -997,3 +997,7 @@ women's rules are independently configurable and never assumed equal to men's NB
 rules. Recruiting, eligibility, academics, NIL, boosters and enforcement remain scoped
 by ecosystem, competition and season IDs. Coaches retain one canonical identity and may
 move across men's and women's ecosystems under the existing career rules.
+
+## Global coach job market
+
+Coach Career is the single authority for global head-coach employment transitions. Vacancies carry canonical ecosystem and sports-category context; eligibility and deterministic candidate fit are distinct, and User and AI Coaches use the same candidacy, offer and employment lifecycle. CoachId, reputation, relationships and career history persist through cross-ecosystem/category moves. GameWorld owns time; there is no global offseason.

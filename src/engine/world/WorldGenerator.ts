@@ -91,6 +91,7 @@ export interface GenerateWorldOptions {
   readonly userCoachRpgPreset?: CoachRpgPreset
   readonly includeNbaLike?: boolean
   readonly includeNcaaLike?: boolean
+  readonly starterVacancyTeamIndexes?: readonly number[]
 }
 
 /** Generates the fixed-size starter universe used by development and tests. */
@@ -158,7 +159,7 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
         gender,
         countryId: country.id,
         rosterPlayerIds,
-        coachId: coaches[teamIndex]!.id,
+        ...(options.starterVacancyTeamIndexes?.includes(teamIndex) ? {} : { coachId: coaches[teamIndex]!.id }),
       }),
     )
   }

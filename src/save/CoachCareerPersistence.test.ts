@@ -18,7 +18,10 @@ describe('Coach career persistence', () => {
       expect(getCoachEmployment(world, coach.id)).toEqual(assignedTeam === undefined ? { status: 'unemployed' } : { status: 'employed', teamId: assignedTeam.id, startedOn })
       expect(getCoachCareerHistory(world, coach.id)).toEqual(assignedTeam === undefined ? [] : [{ kind: 'appointment', coachId: coach.id, teamId: assignedTeam.id, date: startedOn, reason: 'initialAppointment' }])
     }
-    expect(world.coachJobOpeningsById).toEqual({})
+    const openings = Object.values(world.coachJobOpeningsById)
+    expect(openings).toHaveLength(4)
+    expect(new Set(openings.map((opening) => opening.sportsCategory))).toEqual(new Set(['men', 'women']))
+    expect(new Set(openings.map((opening) => opening.ecosystemId)).size).toBe(4)
     expect(world.coachJobCandidaciesById).toEqual({})
     expect(world.coachInterviewsByCandidacyId).toEqual({})
     expect(world.coachJobOffersById).toEqual({})
@@ -31,10 +34,11 @@ describe('Coach career persistence', () => {
     const openingId = coachJobOpeningIdFromString('opening:1')
     const candidacyId = coachJobCandidacyIdFromString('candidacy:1')
     const offerId = coachJobOfferIdFromString('offer:1')
-    const world = { ...base, coachCareerHistoryByCoachId: { ...base.coachCareerHistoryByCoachId, [coachId]: [...base.coachCareerHistoryByCoachId[coachId]!, { kind: 'departure' as const, coachId, teamId, date: base.currentDate, reason: 'fired' as const }] }, coachJobOpeningsById: { [openingId]: { id: openingId, teamId, status: 'open' as const, createdOn: base.currentDate } }, coachJobCandidaciesById: { [candidacyId]: { id: candidacyId, jobOpeningId: openingId, coachId, status: 'identified' as const, createdOn: base.currentDate } }, coachInterviewsByCandidacyId: { [candidacyId]: { candidacyId, status: 'scheduled' as const } }, coachJobOffersById: { [offerId]: { id: offerId, jobOpeningId: openingId, coachId, teamId, createdOn: base.currentDate, status: 'pending' as const } } }
+    const world = { ...base, coachCareerHistoryByCoachId: { ...base.coachCareerHistoryByCoachId, [coachId]: [...base.coachCareerHistoryByCoachId[coachId]!, { kind: 'departure' as const, coachId, teamId, date: base.currentDate, reason: 'fired' as const }] }, coachJobOpeningsById: { [openingId]: { id: openingId, teamId, ecosystemId: Object.keys(base.ecosystems)[0] as keyof typeof base.ecosystems, sportsCategory: 'men' as const, role: 'headCoach' as const, fitWeights: { competitive: 3, development: 2, professional: 1, publicStanding: 1 }, reputationRequirement: { minimum: { competitive: 350 } }, status: 'open' as const, createdOn: base.currentDate } }, coachJobCandidaciesById: { [candidacyId]: { id: candidacyId, jobOpeningId: openingId, coachId, status: 'identified' as const, createdOn: base.currentDate } }, coachInterviewsByCandidacyId: { [candidacyId]: { candidacyId, status: 'scheduled' as const } }, coachJobOffersById: { [offerId]: { id: offerId, jobOpeningId: openingId, coachId, teamId, createdOn: base.currentDate, status: 'pending' as const } } }
     const loaded = deserializeGameWorldV1(serializeGameWorldV1(world, savedAt))
 
     expect(loaded.coachCareerHistoryByCoachId).toEqual(world.coachCareerHistoryByCoachId)
+    expect(loaded.coachJobOpeningsById).toEqual(world.coachJobOpeningsById)
     expect(loaded.coachJobOffersById).toEqual(world.coachJobOffersById)
     expect(advanceDay(loaded).coachJobCandidaciesById).toEqual(world.coachJobCandidaciesById)
   })
