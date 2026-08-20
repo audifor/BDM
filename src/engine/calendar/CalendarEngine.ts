@@ -3,13 +3,27 @@ import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { reconcileExpiredPlayerContracts } from '@/engine/market'
 import { executeEligibleTraining, recoverCareerFatigueForDay } from '@/engine/training/TrainingEngine'
 import { openDraft, progressDraftAi } from '@/engine/draft'
+import { arriveSignedRecruits, progressAiRecruiting, resolveRecruitingCommitments } from '@/engine/recruiting'
 
 /** Advances only the simulation date, leaving game resolution to other services. */
 export function advanceDay(world: GameWorld): GameWorld {
   const advanced = updateGameWorld(world, { currentDate: addDays(world.currentDate, 1) })
-  const maintained = executeEligibleTraining(reconcileExpiredPlayerContracts(recoverCareerFatigueForDay(advanced), advanced.currentDate))
+  const maintained = progressRecruiting(executeEligibleTraining(reconcileExpiredPlayerContracts(recoverCareerFatigueForDay(advanced), advanced.currentDate)))
   return Object.values(maintained.draftsById).reduce((current, draft) => {
     const opened = openDraft(current, draft.id)
     return opened.draftsById[draft.id]?.status === 'inProgress' ? progressDraftAi(opened, draft.id) : opened
   }, maintained)
+}
+
+function progressRecruiting(world: GameWorld): GameWorld {
+  let next = world
+  for (const cycle of Object.values(world.recruitingCyclesById)) {
+    const status = next.currentDate < cycle.opensOn ? 'scheduled' : next.currentDate < cycle.signingOn ? 'open' : next.currentDate <= cycle.closesOn ? 'signing' : 'completed'
+    if (cycle.status !== status) next = updateGameWorld(next, { recruitingCycles: Object.values(next.recruitingCyclesById).map((item) => item.id === cycle.id ? { ...item, status } : item) })
+    if (status === 'open' || status === 'signing') {
+      if (next.currentDate.slice(-2) === '01' || cycle.status !== status) next = progressAiRecruiting(next, cycle.id)
+      next = resolveRecruitingCommitments(next, cycle.id)
+    }
+  }
+  return arriveSignedRecruits(next)
 }

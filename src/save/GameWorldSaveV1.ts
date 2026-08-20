@@ -97,6 +97,16 @@ export interface GameWorldSaveV1 {
   readonly draftPickSwapRights?: readonly JsonRecord[]
   readonly retainedSalaryObligations?: readonly JsonRecord[]
   readonly tradeHistory?: readonly JsonRecord[]
+  readonly recruitingCycles?: readonly JsonRecord[]
+  readonly recruitProfiles?: readonly JsonRecord[]
+  readonly recruitingInterests?: readonly JsonRecord[]
+  readonly recruitingBoards?: readonly JsonRecord[]
+  readonly recruitingCapacity?: readonly JsonRecord[]
+  readonly recruitingActionHistory?: readonly JsonRecord[]
+  readonly recruitingOffers?: readonly JsonRecord[]
+  readonly recruitingVisits?: readonly JsonRecord[]
+  readonly recruitingCommitments?: readonly JsonRecord[]
+  readonly recruitSignings?: readonly JsonRecord[]
 }
 
 export interface SaveGameEnvelopeV1 {
@@ -152,6 +162,7 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
       salaryExceptions: copyRecords(Object.values(world.salaryExceptionsById)),
       deadMoneyCharges: copyRecords(Object.values(world.deadMoneyChargesById)),
       tradeRules: copyRecords(Object.values(world.tradeRulesBySeasonId)), playerRights: copyRecords(Object.values(world.playerRightsById)), futureDraftPickRights: copyRecords(Object.values(world.futureDraftPickRightsById)), draftPickSwapRights: copyRecords(Object.values(world.draftPickSwapRightsById)), retainedSalaryObligations: copyRecords(Object.values(world.retainedSalaryObligationsById)), tradeHistory: copyRecords(Object.values(world.tradeHistoryById)),
+      recruitingCycles: copyRecords(Object.values(world.recruitingCyclesById)), recruitProfiles: copyRecords(Object.values(world.recruitProfilesById)), recruitingInterests: copyRecords(world.recruitingInterests), recruitingBoards: copyRecords(world.recruitingBoards), recruitingCapacity: Object.entries(world.recruitingCapacityByProgramId).map(([programTeamId, value]) => ({ programTeamId, value })), recruitingActionHistory: copyRecords(Object.values(world.recruitingActionHistoryById)), recruitingOffers: copyRecords(Object.values(world.recruitingOffersById)), recruitingVisits: copyRecords(Object.values(world.recruitingVisitsById)), recruitingCommitments: copyRecords(Object.values(world.recruitingCommitmentsById)), recruitSignings: copyRecords(Object.values(world.recruitSigningsById)),
     },
   }
 }
@@ -230,6 +241,7 @@ export function deserializeGameWorldV1(value: unknown): GameWorld {
     ...(payload.morale === undefined ? {} : { moraleByPersonId: readMorale(payload.morale) }),
     ...(payload.inboxItems === undefined ? {} : { inboxItemsById: readInboxItems(payload.inboxItems) }), ...(payload.newsItems === undefined ? {} : { newsItemsById: readNewsItems(payload.newsItems) }),
     ...(payload.trainingPlans === undefined ? {} : { trainingPlansByTeamId: readTrainingPlans(payload.trainingPlans) }), ...(payload.trainingSessions === undefined ? {} : { trainingSessionsById: readTrainingSessions(payload.trainingSessions) }), ...(payload.developmentStimulus === undefined ? {} : { developmentStimulusByPlayerId: readDevelopmentStimulus(payload.developmentStimulus) }), ...(payload.careerFatigue === undefined ? {} : { careerFatigueByPlayerId: readCareerFatigue(payload.careerFatigue) }),
+    ...(payload.recruitingCycles === undefined ? {} : { recruitingCycles: array(payload.recruitingCycles, 'Save recruiting cycles') as never, recruitProfiles: array(payload.recruitProfiles ?? [], 'Save recruit profiles') as never, recruitingInterests: array(payload.recruitingInterests ?? [], 'Save recruiting interests') as never, recruitingBoards: array(payload.recruitingBoards ?? [], 'Save recruiting boards') as never, recruitingCapacityByProgramId: Object.fromEntries(array(payload.recruitingCapacity ?? [], 'Save recruiting capacity').map((item) => { const entry = record(item, 'Recruiting capacity'); return [string(entry.programTeamId, 'Recruiting capacity program'), number(entry.value, 'Recruiting capacity value')] })), recruitingActionHistory: array(payload.recruitingActionHistory ?? [], 'Save recruiting action history') as never, recruitingOffers: array(payload.recruitingOffers ?? [], 'Save recruiting offers') as never, recruitingVisits: array(payload.recruitingVisits ?? [], 'Save recruiting visits') as never, recruitingCommitments: array(payload.recruitingCommitments ?? [], 'Save recruiting commitments') as never, recruitSignings: array(payload.recruitSignings ?? [], 'Save recruit signings') as never }),
   })
   if (Object.values(world.seasons).some((season) => Object.values(world.games).filter((game) => game.seasonId === season.id).every((game) => game.status === 'completed') && world.seasonHistoryBySeasonId[season.id] === undefined)) {
     throw new Error('Completed season is missing season history')

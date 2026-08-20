@@ -1,7 +1,8 @@
 import { createGame } from '@/domain/game'
-import { applyMoraleEventToWorld, updateGameWorld, type GameWorld } from '@/domain/world'
+import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { applyMoraleEvent } from '@/domain/morale'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
-import { applyCoachExperienceToWorld, applyMatchCoachReputationConsequences, deriveCoachMatchExperienceGain } from '@/engine/coach'
+import { applyCoachExperienceGain, applyMatchCoachReputationConsequences, deriveCoachMatchExperienceGain } from '@/engine/coach'
 import { calculateTeamStrength } from '@/engine/team'
 
 import { calculateMatchPlayerStats } from './PlayerMatchStats'
@@ -59,7 +60,18 @@ export function applyMatchResult(world: GameWorld, result: MatchSimulationResult
   return applyMatchMorale(applyMatchCoachExperience(world, applyMatchCoachReputationConsequences(resultWorld, completedGame), completedGame), completedGame)
 }
 
-function applyMatchMorale(world: GameWorld, game: ReturnType<typeof createGame>): GameWorld { let updated = world; for (const teamId of [game.homeTeamId, game.awayTeamId]) { const won = teamId === game.homeTeamId ? game.result!.homeScore > game.result!.awayScore : game.result!.awayScore > game.result!.homeScore; const ids = [...world.teams[teamId]!.rosterPlayerIds, world.teams[teamId]!.coachId].filter((id): id is NonNullable<typeof id> => id !== undefined); for (const personId of ids) updated = applyMoraleEventToWorld(updated, { id: `morale:match:${game.id}:${personId}`, personId, gameDate: game.date, source: 'matchResult', delta: won ? 4 : -4, context: { gameId: game.id, result: won ? 'win' : 'loss' } }) } return updated }
+function applyMatchMorale(world: GameWorld, game: ReturnType<typeof createGame>): GameWorld {
+  const morale = { ...world.moraleByPersonId }
+  for (const teamId of [game.homeTeamId, game.awayTeamId]) {
+    const won = teamId === game.homeTeamId ? game.result!.homeScore > game.result!.awayScore : game.result!.awayScore > game.result!.homeScore
+    for (const personId of [...world.teams[teamId]!.rosterPlayerIds, world.teams[teamId]!.coachId].filter((id): id is NonNullable<typeof id> => id !== undefined)) {
+      const profile = morale[personId]; const personality = world.personalitiesByPersonId[personId]
+      if (profile === undefined || personality === undefined) throw new MatchResultApplicationError(`Missing morale person ${personId}`)
+      morale[personId] = applyMoraleEvent(profile, personality, { id: `morale:match:${game.id}:${personId}`, personId, gameDate: game.date, source: 'matchResult', delta: won ? 4 : -4, context: { gameId: game.id, result: won ? 'win' : 'loss' } })
+    }
+  }
+  return updateGameWorld(world, { moraleByPersonId: morale })
+}
 
 /** Creates the immutable historical snapshot without mutating the source world. */
 export function createMatchStatLog(world: GameWorld, gameId: MatchSimulation['gameId'], simulation: MatchSimulation): MatchStatLog {
@@ -105,12 +117,10 @@ function applyMatchCoachExperience(worldBefore: GameWorld, resultWorld: GameWorl
   const homeStrength = calculateTeamStrength(worldBefore, completedGame.homeTeamId, completedGame.date).value
   const awayStrength = calculateTeamStrength(worldBefore, completedGame.awayTeamId, completedGame.date).value
   const margin = Math.abs(completedGame.result!.homeScore - completedGame.result!.awayScore)
-  let updated = resultWorld
-  if (homeCoachId !== undefined) {
-    updated = applyCoachExperienceToWorld(updated, homeCoachId, deriveCoachMatchExperienceGain({ ownStrength: homeStrength, opponentStrength: awayStrength, won: completedGame.result!.homeScore > completedGame.result!.awayScore, scoreMargin: margin }))
+  const professional = { ...resultWorld.coachProfessionalProfilesByCoachId }; const rpg = { ...resultWorld.coachRpgProfilesByCoachId }
+  for (const [coachId, gain] of [[homeCoachId, deriveCoachMatchExperienceGain({ ownStrength: homeStrength, opponentStrength: awayStrength, won: completedGame.result!.homeScore > completedGame.result!.awayScore, scoreMargin: margin })], [awayCoachId, deriveCoachMatchExperienceGain({ ownStrength: awayStrength, opponentStrength: homeStrength, won: completedGame.result!.awayScore > completedGame.result!.homeScore, scoreMargin: margin })]] as const) {
+    if (coachId === undefined || professional[coachId] === undefined || rpg[coachId] === undefined) continue
+    const applied = applyCoachExperienceGain(professional[coachId], rpg[coachId], gain); professional[coachId] = applied.professionalProfile; rpg[coachId] = applied.rpgProfile
   }
-  if (awayCoachId !== undefined) {
-    updated = applyCoachExperienceToWorld(updated, awayCoachId, deriveCoachMatchExperienceGain({ ownStrength: awayStrength, opponentStrength: homeStrength, won: completedGame.result!.awayScore > completedGame.result!.homeScore, scoreMargin: margin }))
-  }
-  return updated
+  return updateGameWorld(resultWorld, { coachProfessionalProfilesByCoachId: professional, coachRpgProfilesByCoachId: rpg })
 }

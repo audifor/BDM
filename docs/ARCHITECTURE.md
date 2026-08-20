@@ -819,6 +819,12 @@ future ecosystem extensions.
 
 NCAA-like schedules explicitly classify games as `conference` or `nonConference`. Overall standings consume both kinds; Conference standings and the derived Conference Regular Season Champion consume only conference games. NCAA-like competitions keep their own window in the global Calendar. They do not receive NBA Salary Cap, Trade Rules or Drafts, and cannot own FIBA promotion/relegation tiers. Recruiting belongs to Hito 056; Eligibility belongs to Hito 057. Academic eligibility, NIL, collectives and boosters are intentionally not implemented; NIL is not professional team salary.
 
+## Recruiting v1
+
+Recruiting is canonical `GameWorld` state: cycles, recruit profiles, sparse program interest and boards, capacity, action history, offers, visits, commitments and signings are all serialized. A `RecruitProfile` only references a canonical, unrostered `Player`; it never duplicates identity, ratings or potential. Pools are generated from isolated deterministic streams, while public rank/tier is deliberately imperfect and is separate from true ratings and potential.
+
+The shared Recruiting Engine is the only action boundary for user and AI programs: contact, preference-sensitive pitch, visit and offer consume configured capacity and leave immutable history. Commitments select one offered program deterministically; commitment is not signing. A signing locks the future destination but does not add a player to a roster. Calendar progression promotes cycle phases and idempotently delivers signed recruits only when their target season arrives. Recruiting offers are not professional salary contracts. Eligibility, NIL, academic systems and transfers remain outside Hito 056.
+
 ## NBA-like Draft v1
 
 Drafts are owned by an `nbaLike` `SportsEcosystem`. `DraftRules` configure the V1
