@@ -10,6 +10,7 @@ import { maintainAiTeamMinimumRosters } from '@/app/market'
 import { getCurrentSeason } from './selectors'
 import { buildNextCompetitionParticipants } from '@/engine/competition'
 import { ensureNcaaEligibility } from '@/engine/eligibility'
+import { ensureNcaaAcademics } from '@/engine/academic'
 
 /** Starts the next edition of the current competition without synchronizing others. */
 export function startNextSeason(world: GameWorld): GameWorld {
@@ -20,7 +21,7 @@ export function startNextSeason(world: GameWorld): GameWorld {
   const developed = applyOffseasonDevelopment(world, { fromSeasonId: primary.id, toSeasonId: nextPrimary.id, targetDate: nextPrimary.startDate }).world
   const staged = rebuild(developed, [...Object.values(developed.seasons), nextPrimary], nextPrimary.id, Object.values(developed.games))
   const schedule = staged.ecosystems[staged.competitions[nextPrimary.competitionId]!.ecosystemId]!.kind === 'ncaaLike' ? generateNcaaLikeSchedule(staged, nextPrimary.id) : generateRoundRobinSchedule({ world: staged, seasonId: nextPrimary.id })
-  return ensureNcaaEligibility(maintainAiTeamMinimumRosters(reconcileExpiredPlayerContracts(rebuild(developed, [...Object.values(developed.seasons), nextPrimary], nextPrimary.id, [...Object.values(developed.games), ...schedule]), nextPrimary.startDate)).world)
+  return ensureNcaaAcademics(ensureNcaaEligibility(maintainAiTeamMinimumRosters(reconcileExpiredPlayerContracts(rebuild(developed, [...Object.values(developed.seasons), nextPrimary], nextPrimary.id, [...Object.values(developed.games), ...schedule]), nextPrimary.startDate)).world))
 }
 
 function nextSeasonIds(world: GameWorld, count: number) { let ordinal = 1; const ids = []; while (ids.length < count) { const id = seasonIdFromString(`generated-season-${ordinal.toString().padStart(4, '0')}`); if (world.seasons[id] === undefined) ids.push(id); ordinal += 1 } return ids }

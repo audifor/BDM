@@ -13,6 +13,7 @@ import {
 } from "@/domain/world";
 import { getUserTeam } from "@/engine/calendar";
 import { evaluatePlayerEligibility } from "@/engine/eligibility";
+import { evaluateAcademicEligibility } from "@/engine/academic";
 import { createEntityRef } from "@/app/entityActions/EntityRef";
 import { useEntityActions } from "@/ui/entityActions/useEntityActions";
 import { useGameStore } from "@/stores/gameStore";
@@ -259,6 +260,8 @@ function Inspector({
   const season = Object.values(world.seasons).find((candidate) => candidate.id === world.currentSeasonId);
   const eligibility = team === undefined || season === undefined ? undefined : evaluatePlayerEligibility(world, { playerId: player.id, teamId: team.id, competitionId: season.competitionId, seasonId: season.id });
   const profile = eligibility === undefined ? undefined : Object.values(world.eligibilityProfilesById).find((item) => item.playerId === player.id && item.programTeamId === team?.id);
+  const academic = Object.values(world.academicProfilesById).find((item) => item.playerId === player.id && item.programTeamId === team?.id);
+  const academicEligibility = academic === undefined ? undefined : evaluateAcademicEligibility(world, player.id);
   return (
     <aside className="squad-app__inspector">
       <p className="eyebrow">PLAYER INSPECTOR</p>
@@ -308,6 +311,7 @@ function Inspector({
           {season !== undefined && <p>Current season: {profile.seasonRecordsBySeasonId[season.id]?.gamesParticipated ?? 0} games · {profile.seasonRecordsBySeasonId[season.id]?.resolved ? "resolved" : "unresolved"}</p>}
         </section>
       )}
+      {academic !== undefined && academicEligibility !== undefined && <section><h3>Academics</h3><p>Academic Performance: {academic.performance} · Academic Progress: {academic.progress}</p><p>{academicEligibility.standing.toUpperCase()} · Risk: {academicEligibility.risk.toUpperCase()}</p><p>Academic Eligibility: {academicEligibility.academicallyEligible ? 'ELIGIBLE' : 'INELIGIBLE'}</p><p>Current Support: {Object.values(world.academicSupportPlansById).find((item) => item.playerId === player.id)?.level ?? 'None'}</p><p>Next Evaluation: January 1 or July 1</p></section>}
     </aside>
   );
 }

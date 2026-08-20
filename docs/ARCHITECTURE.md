@@ -924,3 +924,12 @@ program roster, where initialization is idempotent. Save V1 persists rules,
 profiles, restrictions and season records; pre-057 saves receive neutral NCAA
 profiles without invented history or restrictions. NCAA status is shown in the
 existing squad inspector; FIBA-like and NBA-like players receive no NCAA display.
+
+## Academic eligibility v1
+
+Academic eligibility is a separate NCAA-like domain with deterministic profiles,
+term records and limited program support. Academic failures create canonical
+EligibilityRestrictions; Hito 057 remains the sole competition-availability
+authority and MatchEngine remains unaware. Academic ineligibility affects games,
+not roster membership. Support is not NIL money; NIL/collectives, donors/boosters,
+and enforcement/sanctions remain 057B, 057C and 057D respectively.
