@@ -5,6 +5,7 @@ import { addNewsItem, updateGameWorld, type GameWorld } from '@/domain/world'
 import { calculateStandings } from '@/engine/competition/standings'
 import { applySeasonChampionCoachReputation } from '@/engine/coach'
 import { resolvePromotionRelegation } from '@/engine/competition'
+import { resolveEligibilitySeason } from '@/engine/eligibility'
 
 export function isSeasonComplete(world: GameWorld, seasonId: keyof GameWorld['seasons']): boolean {
   const season = world.seasons[seasonId]
@@ -30,7 +31,7 @@ export function finalizeSeason(world: GameWorld, seasonId: keyof GameWorld['seas
   const games = Object.values(world.games).filter((game) => game.seasonId === seasonId)
   const completedOn = games.reduce((latest, game) => compareGameDates(game.date, latest) > 0 ? game.date : latest, games[0]!.date)
   const history: SeasonHistoryRecord = { seasonId, competitionId: season.competitionId, completedOn, championTeamId: champion.teamId, finalStandings: standings.map((line) => ({ ...line })) }
-  const finalized=applySeasonChampionCoachReputation(rebuildWorld(world, [...Object.values(world.seasonHistoryBySeasonId), history]), seasonId)
+  const finalized=resolveEligibilitySeason(applySeasonChampionCoachReputation(rebuildWorld(world, [...Object.values(world.seasonHistoryBySeasonId), history]), seasonId), seasonId)
   const team=finalized.teams[champion.teamId]!, competition=finalized.competitions[season.competitionId]!
   const withNews = addNewsItem(finalized,{id:`news:champion:${seasonId}:${team.id}`,gameDate:completedOn,category:'competition',headline:`${team.name} win ${competition.name}`,body:`${team.name} are champions of ${season.label}.`,context:{seasonId,competitionId:competition.id,teamId:team.id}})
   const rule = Object.values(withNews.ecosystems).flatMap((ecosystem) => ecosystem.tierMovementRules).find((item) => item.upperCompetitionId === season.competitionId || item.lowerCompetitionId === season.competitionId)

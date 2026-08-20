@@ -25,4 +25,11 @@ describe('SquadScreen', () => {
     const world = createNewGame(); const player = getTeamRoster(world, getUserTeam(world)!.id)[0]!; const markup = renderToStaticMarkup(createElement(SquadScreen, { world, selectedPlayerId: player.id }))
     expect(markup).toContain('PLAYER INSPECTOR'); expect(markup).toContain('Career Fatigue'); expect(markup).toContain('Development stimulus'); expect(markup).toContain(`${player.basketball.ratings.finishing}`)
   })
+
+  it('shows NCAA eligibility only for a player in an NCAA program', () => {
+    const world = createNewGame(); const season = Object.values(world.seasons).find((item) => world.ecosystems[world.competitions[item.competitionId]!.ecosystemId]!.kind === 'ncaaLike')!; const team = world.teams[world.competitions[season.competitionId]!.participantTeamIds[0]!]!; const playerId = team.rosterPlayerIds[0]!; const ncaaWorld = { ...world, currentSeasonId: season.id, userCoachId: team.coachId! }
+    const markup = renderToStaticMarkup(createElement(SquadScreen, { world: ncaaWorld, selectedPlayerId: playerId }))
+    expect(markup).toContain('Eligibility'); expect(markup).toContain('ELIGIBLE'); expect(markup).toContain('remaining')
+    expect(renderToStaticMarkup(createElement(SquadScreen, { world, selectedPlayerId: getTeamRoster(world, getUserTeam(world)!.id)[0]!.id }))).not.toContain('Eligibility')
+  })
 })

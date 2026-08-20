@@ -900,3 +900,27 @@ scoped, so NBA-like and future WNBA-like ecosystems can share infrastructure whi
 using different `TradeRules`; FIBA-like competitions receive no trade rules by default.
 Save V1 persists trade state; legacy saves retain empty trade collections and invent
 no historical trades or rights.
+
+## NCAA-like eligibility v1
+
+Eligibility is normalized NCAA-like canonical state: rules are ecosystem-scoped,
+profiles belong to a Player and Program, and temporary restrictions are date-aware.
+`evaluatePlayerEligibility` is the authoritative structured query. Participation is
+derived only from completed MatchStatLog lines with `secondsPlayed > 0` and is
+idempotent by GameId. At NCAA season resolution, a season with appearances at or
+below the configured threshold is preserved; a season above it consumes one year
+exactly once. Exhaustion derives from `seasonsUsed`.
+
+Eligibility is enforced at the shared application pre-match boundary before
+MatchEngine: canonical roster, eligibility, ordinary availability, rotation and
+then MatchEngine. An insufficient eligible/available squad is a structured pre-match
+failure; eligibility is never bypassed to satisfy the five-player minimum. New NCAA
+programs use a seven-player rotation-capable roster, so ordinary injuries
+do not make a standard match impossible. User and AI match flows share this same
+availability boundary, while MatchEngine remains eligibility-agnostic.
+
+Recruiting creates no eligibility state until a signed recruit arrives on their
+program roster, where initialization is idempotent. Save V1 persists rules,
+profiles, restrictions and season records; pre-057 saves receive neutral NCAA
+profiles without invented history or restrictions. NCAA status is shown in the
+existing squad inspector; FIBA-like and NBA-like players receive no NCAA display.

@@ -12,6 +12,7 @@ import {
   getTeamRoster,
 } from "@/domain/world";
 import { getUserTeam } from "@/engine/calendar";
+import { evaluatePlayerEligibility } from "@/engine/eligibility";
 import { createEntityRef } from "@/app/entityActions/EntityRef";
 import { useEntityActions } from "@/ui/entityActions/useEntityActions";
 import { useGameStore } from "@/stores/gameStore";
@@ -254,6 +255,10 @@ function Inspector({
     );
   const stimulus = getDevelopmentStimulusForPlayer(world, player.id);
   const fatigue = getCareerFatigueForPlayer(world, player.id);
+  const team = getUserTeam(world);
+  const season = Object.values(world.seasons).find((candidate) => candidate.id === world.currentSeasonId);
+  const eligibility = team === undefined || season === undefined ? undefined : evaluatePlayerEligibility(world, { playerId: player.id, teamId: team.id, competitionId: season.competitionId, seasonId: season.id });
+  const profile = eligibility === undefined ? undefined : Object.values(world.eligibilityProfilesById).find((item) => item.playerId === player.id && item.programTeamId === team?.id);
   return (
     <aside className="squad-app__inspector">
       <p className="eyebrow">PLAYER INSPECTOR</p>
@@ -295,6 +300,14 @@ function Inspector({
           </dl>
         )}
       </section>
+      {profile !== undefined && eligibility !== undefined && (
+        <section>
+          <h3>Eligibility</h3>
+          <p>{eligibility.status.toUpperCase()} · {profile.seasonsUsed} used · {eligibility.seasonsRemaining} remaining</p>
+          {eligibility.reasons.length > 0 && <p>{eligibility.reasons.join(", ")}</p>}
+          {season !== undefined && <p>Current season: {profile.seasonRecordsBySeasonId[season.id]?.gamesParticipated ?? 0} games · {profile.seasonRecordsBySeasonId[season.id]?.resolved ? "resolved" : "unresolved"}</p>}
+        </section>
+      )}
     </aside>
   );
 }

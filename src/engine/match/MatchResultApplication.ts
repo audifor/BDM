@@ -7,6 +7,7 @@ import { calculateTeamStrength } from '@/engine/team'
 
 import { calculateMatchPlayerStats } from './PlayerMatchStats'
 import { finalizeCompletedSeason } from '@/engine/season'
+import { recordEligibilityParticipation } from '@/engine/eligibility'
 import type { MatchSimulation, MatchSimulationResult } from './MatchEngine'
 
 export class MatchResultApplicationError extends Error {
@@ -99,7 +100,7 @@ export function applyCompletedMatch(world: GameWorld, simulation: MatchSimulatio
   const log = createMatchStatLog(world, simulation.gameId, simulation)
   const resultWorld = applyMatchResult(world, { gameId: simulation.gameId, homeTeamId: simulation.homeTeamId, awayTeamId: simulation.awayTeamId, homeScore: simulation.finalScore.home, awayScore: simulation.finalScore.away })
   const completedWorld = updateGameWorld(resultWorld, { matchStatLogs: [...Object.values(resultWorld.matchStatLogsByGameId), log] })
-  return finalizeCompletedSeason(completedWorld, originalGame.seasonId)
+  return finalizeCompletedSeason(recordEligibilityParticipation(completedWorld, originalGame.id), originalGame.seasonId)
 }
 
 function validateScore(value: number, side: string): void {

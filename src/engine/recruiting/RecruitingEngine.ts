@@ -7,6 +7,7 @@ import { createTeam } from '@/domain/team'
 import { createPlayer } from '@/domain/player'
 import { addYears } from '@/domain/date'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
+import { initializeEligibility } from '@/engine/eligibility'
 export type RecruitingResult<T>={ok:true;value:T}|{ok:false;reason:'RECRUITING_NOT_OPEN'|'INVALID_RECRUIT'|'INSUFFICIENT_RECRUITING_CAPACITY'|'DUPLICATE_OFFER'|'OFFER_LIMIT_REACHED'|'RECRUIT_ALREADY_COMMITTED'}
 export function setBoard(entries:readonly RecruitingBoardEntry[],entry:RecruitingBoardEntry){return[...entries.filter(x=>x.programTeamId!==entry.programTeamId||x.recruitId!==entry.recruitId),entry]}
 export function act(cycle:RecruitingCycle,recruit:RecruitProfile|undefined,interests:readonly RecruitingInterest[],program:TeamId,kind:'contact'|'pitch'|'visit',capacity:number):RecruitingResult<{interests:readonly RecruitingInterest[];capacity:number}>{if(cycle.status!=='open')return{ok:false,reason:'RECRUITING_NOT_OPEN'};if(!recruit||recruit.cycleId!==cycle.id)return{ok:false,reason:'INVALID_RECRUIT'};const cost=cycle.rules.costs[kind];if(capacity<cost)return{ok:false,reason:'INSUFFICIENT_RECRUITING_CAPACITY'};const before=interests.find(x=>x.recruitId===recruit.id&&x.programTeamId===program)?.value??0;const gain=kind==='contact'?8:kind==='pitch'?Math.round(recruit.preferences.development/10):18;return{ok:true,value:{capacity:capacity-cost,interests:[...interests.filter(x=>x.recruitId!==recruit.id||x.programTeamId!==program),{recruitId:recruit.id,programTeamId:program,value:Math.min(100,before+gain)}]}}}
@@ -74,7 +75,14 @@ export function arriveSignedRecruits(world: GameWorld): GameWorld {
     return playerIds.length === 0 ? team : createTeam({ ...team, rosterPlayerIds: [...team.rosterPlayerIds, ...playerIds] })
   })
   const arrived = new Set(arrivals.map((item) => item.recruitId))
-  return updateGameWorld(world, { teams, recruitProfiles: Object.values(world.recruitProfilesById).map((profile) => arrived.has(profile.id) ? { ...profile, status: 'arrived' } : profile) })
+  const arrivedWorld = updateGameWorld(world, { teams, recruitProfiles: Object.values(world.recruitProfilesById).map((profile) => arrived.has(profile.id) ? { ...profile, status: 'arrived' } : profile) })
+  let current = arrivedWorld
+  for (const arrival of arrivals) {
+    const season = current.seasons[arrival.targetSeasonId]
+    const ecosystemId = season === undefined ? undefined : current.competitions[season.competitionId]?.ecosystemId
+    if (ecosystemId !== undefined) current = initializeEligibility(current, arrival.playerId, arrival.programTeamId, ecosystemId)
+  }
+  return current
 }
 
 export interface RecruitingClassSummary { readonly programTeamId: TeamId; readonly committed: readonly RecruitProfile[]; readonly signed: readonly RecruitProfile[]; readonly incoming: readonly RecruitProfile[]; readonly publicQuality: number; readonly remainingSignings: number }

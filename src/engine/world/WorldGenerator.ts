@@ -31,6 +31,7 @@ import { createNbaLikeTradeRules } from '@/engine/trade'
 
 const FIBA_TEAM_COUNT = 8
 const PLAYERS_PER_TEAM = 12
+const NCAA_PLAYERS_PER_TEAM = 7
 const GENERATED_COUNTRY_ID = countryIdFromString('generated-country-0001')
 const GENERATED_COMPETITION_ID = competitionIdFromString('generated-competition-0001')
 const GENERATED_NBA_COMPETITION_ID = competitionIdFromString('generated-competition-0003')
@@ -128,12 +129,15 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
 
   for (let teamIndex = 0; teamIndex < teamCount; teamIndex += 1) {
     const rosterPlayerIds = []
-    const playersForTeam = teamIndex < professionalTeamCount ? PLAYERS_PER_TEAM : 5
+    // Seven gives five starters plus two substitutes; five was the engine minimum, so a
+    // single normal injury made an NCAA game impossible.
+    const playersForTeam = teamIndex < professionalTeamCount ? PLAYERS_PER_TEAM : NCAA_PLAYERS_PER_TEAM
     for (let playerIndex = 0; playerIndex < playersForTeam; playerIndex += 1) {
       const sequence = teamIndex * PLAYERS_PER_TEAM + playerIndex + 1
       const playerId = playerIdFromString(`generated-player-${formatSequence(sequence)}`)
-      const basketball = generateBasketballProfile(options.seed, playerId, playerIndex)
-      const bio = generatePlayerBio(playerId, ROSTER_POSITIONS[playerIndex]!, startDate)
+      const positions = teamIndex < professionalTeamCount ? ROSTER_POSITIONS : NCAA_ROSTER_POSITIONS
+      const basketball = generateBasketballProfile(options.seed, playerId, positions[playerIndex]!)
+      const bio = generatePlayerBio(playerId, positions[playerIndex]!, startDate)
       const player = createPlayer({
         id: playerId,
         ...generatePersonName(random),
@@ -209,8 +213,9 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
 }
 
 const ROSTER_POSITIONS: readonly BasketballPosition[] = ['PG','PG','SG','SG','SG','SF','SF','PF','PF','PF','C','C']
-function generateBasketballProfile(seed:number, playerId:string, rosterIndex:number) {
-  const random=new SeededRandomSource(hashStringToSeed(`player-ratings-v1:${seed}:${playerId}`)); const primaryPosition=ROSTER_POSITIONS[rosterIndex]!; const bases={PG:[52,58,68,54,43,43,56],SG:[55,66,52,55,44,45,57],SF:[57,57,53,56,52,52,58],PF:[60,51,48,50,63,65,55],C:[62,48,43,46,70,70,52]} as const; const [finishing,shooting,playmaking,perimeterDefense,interiorDefense,rebounding,athleticism]=bases[primaryPosition]; const talent=random.nextInt(-8,8); const rate=(base:number)=>Math.max(0,Math.min(100,base+talent+random.nextInt(-10,10))); return {primaryPosition,ratings:{finishing:rate(finishing),shooting:rate(shooting),playmaking:rate(playmaking),perimeterDefense:rate(perimeterDefense),interiorDefense:rate(interiorDefense),rebounding:rate(rebounding),athleticism:rate(athleticism)}}
+const NCAA_ROSTER_POSITIONS: readonly BasketballPosition[] = ['PG','PG','SG','SF','PF','C','C']
+function generateBasketballProfile(seed:number, playerId:string, primaryPosition:BasketballPosition) {
+  const random=new SeededRandomSource(hashStringToSeed(`player-ratings-v1:${seed}:${playerId}`)); const bases={PG:[52,58,68,54,43,43,56],SG:[55,66,52,55,44,45,57],SF:[57,57,53,56,52,52,58],PF:[60,51,48,50,63,65,55],C:[62,48,43,46,70,70,52]} as const; const [finishing,shooting,playmaking,perimeterDefense,interiorDefense,rebounding,athleticism]=bases[primaryPosition]; const talent=random.nextInt(-8,8); const rate=(base:number)=>Math.max(0,Math.min(100,base+talent+random.nextInt(-10,10))); return {primaryPosition,ratings:{finishing:rate(finishing),shooting:rate(shooting),playmaking:rate(playmaking),perimeterDefense:rate(perimeterDefense),interiorDefense:rate(interiorDefense),rebounding:rate(rebounding),athleticism:rate(athleticism)}}
 }
 
 function generatePersonName(random: RandomSource): { firstName: string; lastName: string } {

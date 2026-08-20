@@ -25,6 +25,8 @@ export const MATCH_RULES_V2 = {
 /** Compatibility exports for the initial prototype's normal-period rules. */
 export const PROTOTYPE_PERIOD_COUNT = MATCH_RULES_V2.periodCount
 export const PROTOTYPE_PERIOD_SECONDS = MATCH_RULES_V2.periodSeconds
+/** The application must supply at least a legal five-player squad per team. */
+export const MINIMUM_MATCH_SQUAD_SIZE = 5
 
 const MAX_OVERTIME_PERIODS = 100
 /** Prototype value until shooting fouls become CompetitionRules. */
@@ -434,7 +436,7 @@ function validateSquads(squads: MatchSquads): void {
 }
 
 function validateSquad(squad: readonly PlayerId[], side: string): void {
-  if (squad.length < 5) throw new MatchSimulationError(`${side} squad must contain at least 5 players`)
+  if (squad.length < MINIMUM_MATCH_SQUAD_SIZE) throw new MatchSimulationError(`${side} squad must contain at least ${MINIMUM_MATCH_SQUAD_SIZE} players`)
   if (new Set(squad).size !== squad.length) throw new MatchSimulationError(`${side} squad cannot contain duplicate players`)
 }
 

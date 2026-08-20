@@ -21,6 +21,19 @@ describe('GameWorldSaveV1', () => {
     expect(saved.payload.players).not.toBe(Object.values(world.players))
   })
 
+  it('round-trips eligibility history and initializes neutral NCAA profiles for legacy saves', () => {
+    const world = createNewGame()
+    const profile = Object.values(world.eligibilityProfilesById)[0]!
+    const seasonId = Object.values(world.seasons).find((season) => world.competitions[season.competitionId]!.ecosystemId === profile.ecosystemId)!.id
+    const withHistory = updateGameWorld(world, { eligibilityProfiles: Object.values(world.eligibilityProfilesById).map((item) => item.id === profile.id ? { ...profile, seasonsUsed: 1, seasonRecordsBySeasonId: { [seasonId]: { seasonId, gamesParticipated: 2, gameIds: ['game:test'], eligibilityConsumed: true, resolved: true } } } : item), eligibilityRestrictions: [{ id: 'eligibility-restriction:save', playerId: profile.playerId, ecosystemId: profile.ecosystemId, reasonCode: 'test', startsAt: world.currentDate }] })
+    const saved = serializeGameWorldV1(withHistory, '2032-10-01T12:00:00.000Z')
+    expect(deserializeGameWorldV1(saved)).toEqual(withHistory)
+    const { eligibilityRules: _rules, eligibilityProfiles: _profiles, eligibilityRestrictions: _restrictions, ...legacy } = saved.payload
+    const loadedLegacy = deserializeGameWorldV1({ ...saved, payload: legacy })
+    expect(Object.values(loadedLegacy.eligibilityProfilesById)).not.toHaveLength(0)
+    expect(Object.values(loadedLegacy.eligibilityProfilesById).every((item) => item.seasonsUsed === 0 && Object.keys(item.seasonRecordsBySeasonId).length === 0)).toBe(true)
+  })
+
   it('round-trips salary rules and obligations while legacy saves keep them empty', () => {
     const base = createNewGame()
     const [seasonId] = Object.keys(base.salaryRulesBySeasonId) as (keyof typeof base.seasons)[]
