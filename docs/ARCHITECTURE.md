@@ -933,3 +933,16 @@ EligibilityRestrictions; Hito 057 remains the sole competition-availability
 authority and MatchEngine remains unaware. Academic ineligibility affects games,
 not roster membership. Support is not NIL money; NIL/collectives, donors/boosters,
 and enforcement/sanctions remain 057B, 057C and 057D respectively.
+
+## NIL and Collectives v1
+
+NIL is NCAA-like athlete compensation and is never a SalaryContract, salary-cap or
+payroll input. NCAA roster arrivals initialize one deterministic NIL profile exactly
+once; marketability derives from public basketball ratings and stable identity, never
+hidden potential. NIL opportunities have available/accepted/expired lifecycle state
+and accepted opportunities create explicit NIL deals. Collectives are canonical,
+resource-limited entities separate from Teams, Programs, donors and boosters;
+collective-backed opportunities consume their persisted resources. User and AI use
+the same NIL operations, with deterministic AI cadence. NIL can adjust recruiting
+appeal only through its configured factor; recruiting remains the sole authority for
+commitment and signing, and historical recruiting records are not modified.

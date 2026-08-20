@@ -42,6 +42,7 @@ import { createDeadMoneyCharge, createSalaryRules, createTeamSalaryException } f
 import { createDraftPickSwapRight, createFutureDraftPickRight, createPlayerRights, createRetainedSalaryObligation, createTradeRecord, createTradeRules } from '@/domain/trade'
 import { ensureNcaaEligibility } from '@/engine/eligibility'
 import { ensureNcaaAcademics } from '@/engine/academic'
+import { ensureNcaaNil } from '@/engine/nil'
 
 type JsonRecord = Readonly<Record<string, unknown>>
 
@@ -116,6 +117,11 @@ export interface GameWorldSaveV1 {
   readonly academicProfiles?: readonly JsonRecord[]
   readonly academicTermRecords?: readonly JsonRecord[]
   readonly academicSupportPlans?: readonly JsonRecord[]
+  readonly nilRules?: readonly JsonRecord[]
+  readonly nilProfiles?: readonly JsonRecord[]
+  readonly nilOpportunities?: readonly JsonRecord[]
+  readonly nilDeals?: readonly JsonRecord[]
+  readonly collectives?: readonly JsonRecord[]
 }
 
 export interface SaveGameEnvelopeV1 {
@@ -174,6 +180,7 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
       recruitingCycles: copyRecords(Object.values(world.recruitingCyclesById)), recruitProfiles: copyRecords(Object.values(world.recruitProfilesById)), recruitingInterests: copyRecords(world.recruitingInterests), recruitingBoards: copyRecords(world.recruitingBoards), recruitingCapacity: Object.entries(world.recruitingCapacityByProgramId).map(([programTeamId, value]) => ({ programTeamId, value })), recruitingActionHistory: copyRecords(Object.values(world.recruitingActionHistoryById)), recruitingOffers: copyRecords(Object.values(world.recruitingOffersById)), recruitingVisits: copyRecords(Object.values(world.recruitingVisitsById)), recruitingCommitments: copyRecords(Object.values(world.recruitingCommitmentsById)), recruitSignings: copyRecords(Object.values(world.recruitSigningsById)),
       eligibilityRules: copyRecords(Object.values(world.eligibilityRulesByEcosystemId)), eligibilityProfiles: copyRecords(Object.values(world.eligibilityProfilesById)), eligibilityRestrictions: copyRecords(Object.values(world.eligibilityRestrictionsById)),
       academicRules: copyRecords(Object.values(world.academicRulesByEcosystemId)), academicProfiles: copyRecords(Object.values(world.academicProfilesById)), academicTermRecords: copyRecords(Object.values(world.academicTermRecordsById)), academicSupportPlans: copyRecords(Object.values(world.academicSupportPlansById)),
+      nilRules: copyRecords(Object.values(world.nilRulesByEcosystemId)), nilProfiles: copyRecords(Object.values(world.nilProfilesById)), nilOpportunities: copyRecords(Object.values(world.nilOpportunitiesById)), nilDeals: copyRecords(Object.values(world.nilDealsById)), collectives: copyRecords(Object.values(world.collectivesById)),
     },
   }
 }
@@ -255,11 +262,13 @@ export function deserializeGameWorldV1(value: unknown): GameWorld {
     ...(payload.recruitingCycles === undefined ? {} : { recruitingCycles: array(payload.recruitingCycles, 'Save recruiting cycles') as never, recruitProfiles: array(payload.recruitProfiles ?? [], 'Save recruit profiles') as never, recruitingInterests: array(payload.recruitingInterests ?? [], 'Save recruiting interests') as never, recruitingBoards: array(payload.recruitingBoards ?? [], 'Save recruiting boards') as never, recruitingCapacityByProgramId: Object.fromEntries(array(payload.recruitingCapacity ?? [], 'Save recruiting capacity').map((item) => { const entry = record(item, 'Recruiting capacity'); return [string(entry.programTeamId, 'Recruiting capacity program'), number(entry.value, 'Recruiting capacity value')] })), recruitingActionHistory: array(payload.recruitingActionHistory ?? [], 'Save recruiting action history') as never, recruitingOffers: array(payload.recruitingOffers ?? [], 'Save recruiting offers') as never, recruitingVisits: array(payload.recruitingVisits ?? [], 'Save recruiting visits') as never, recruitingCommitments: array(payload.recruitingCommitments ?? [], 'Save recruiting commitments') as never, recruitSignings: array(payload.recruitSignings ?? [], 'Save recruit signings') as never }),
     ...(payload.eligibilityProfiles === undefined ? {} : { eligibilityRulesByEcosystemId: Object.fromEntries(array(payload.eligibilityRules ?? [], 'Save eligibility rules').map((item) => { const rule = record(item, 'Eligibility rules'); return [string(rule.ecosystemId, 'Eligibility ecosystem'), rule] })) as never, eligibilityProfiles: array(payload.eligibilityProfiles, 'Save eligibility profiles') as never, eligibilityRestrictions: array(payload.eligibilityRestrictions ?? [], 'Save eligibility restrictions') as never }),
     ...(payload.academicProfiles === undefined ? {} : { academicRulesByEcosystemId: Object.fromEntries(array(payload.academicRules ?? [], 'Save academic rules').map((item) => { const rule = record(item, 'Academic rules'); return [string(rule.ecosystemId, 'Academic ecosystem'), rule] })) as never, academicProfiles: array(payload.academicProfiles, 'Save academic profiles') as never, academicTermRecords: array(payload.academicTermRecords ?? [], 'Save academic term records') as never, academicSupportPlans: array(payload.academicSupportPlans ?? [], 'Save academic support plans') as never }),
+    ...(payload.nilProfiles === undefined ? {} : { nilRulesByEcosystemId: Object.fromEntries(array(payload.nilRules ?? [], 'Save NIL rules').map((item) => { const rule = record(item, 'NIL rules'); return [string(rule.ecosystemId, 'NIL ecosystem'), rule] })) as never, nilProfiles: array(payload.nilProfiles, 'Save NIL profiles') as never, nilOpportunities: array(payload.nilOpportunities ?? [], 'Save NIL opportunities') as never, nilDeals: array(payload.nilDeals ?? [], 'Save NIL deals') as never, collectives: array(payload.collectives ?? [], 'Save collectives') as never }),
   })
   if (Object.values(world.seasons).some((season) => Object.values(world.games).filter((game) => game.seasonId === season.id).every((game) => game.status === 'completed') && world.seasonHistoryBySeasonId[season.id] === undefined)) {
     throw new Error('Completed season is missing season history')
   }
-  return ensureNcaaAcademics(ensureNcaaEligibility(ensureStaffStructure(ensurePlayerKnowledge(world))))
+  const enriched = ensureNcaaAcademics(ensureNcaaEligibility(ensureStaffStructure(ensurePlayerKnowledge(world))))
+  return payload.nilProfiles === undefined ? ensureNcaaNil(enriched) : enriched
 }
 
 function readCountry(value: unknown) { const v = record(value, 'Country'); return createCountry({ id: countryIdFromString(string(v.id, 'Country id')), name: string(v.name, 'Country name'), code: string(v.code, 'Country code') }) }

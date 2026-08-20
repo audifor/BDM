@@ -53,6 +53,7 @@ export function App() {
   const removeRecruitingTarget = useGameStore((state) => state.removeRecruitingTarget)
   const performRecruitingAction = useGameStore((state) => state.performRecruitingAction)
   const makeRecruitingOffer = useGameStore((state) => state.makeRecruitingOffer)
+  const acceptNilOpportunity = useGameStore((state) => state.acceptNilOpportunity)
   const purchaseUserCoachSkill = useGameStore((state) => state.purchaseUserCoachSkill)
   const purchaseUserCoachPerk = useGameStore((state) => state.purchaseUserCoachPerk)
   const acceptUserCoachOffer = useGameStore((state) => state.acceptUserCoachOffer)
@@ -136,7 +137,7 @@ export function App() {
   const unreadInboxCount = selectUnreadInboxCount(world)
   const capabilities = resolveGameCapabilities(world)
   const activeAppId = desktopWindows.find((window) => window.id === focusedWindowId)?.appId ?? null
-  const desktopActions: DesktopAppActions = { tacticalPlan, openApp: openDesktopApp, playGame: () => startMatch(startLiveMatch(tacticalPlan)), instantResult: () => instantResult(tacticalPlan), simulateRemainingGamesToday, advanceDay, startNextSeason, releasePlayer, signFreeAgent, selectDraftProspect, executeTrade, addRecruitingTarget, removeRecruitingTarget, performRecruitingAction, makeRecruitingOffer, purchaseSkill: (id) => { const result = purchaseUserCoachSkill(id); if (!result.ok) setSaveMessage(result.reason) }, purchasePerk: (id) => { const result = purchaseUserCoachPerk(id); if (!result.ok) setSaveMessage(result.reason) }, acceptOffer: acceptUserCoachOffer, declineOffer: declineUserCoachOffer, setTacticalPlan, resetTacticalPlan, setTrainingIntensity, setTrainingFocus }
+  const desktopActions: DesktopAppActions = { tacticalPlan, openApp: openDesktopApp, playGame: () => startMatch(startLiveMatch(tacticalPlan)), instantResult: () => instantResult(tacticalPlan), simulateRemainingGamesToday, advanceDay, startNextSeason, releasePlayer, signFreeAgent, selectDraftProspect, executeTrade, addRecruitingTarget, removeRecruitingTarget, performRecruitingAction, makeRecruitingOffer, acceptNilOpportunity, purchaseSkill: (id) => { const result = purchaseUserCoachSkill(id); if (!result.ok) setSaveMessage(result.reason) }, purchasePerk: (id) => { const result = purchaseUserCoachPerk(id); if (!result.ok) setSaveMessage(result.reason) }, acceptOffer: acceptUserCoachOffer, declineOffer: declineUserCoachOffer, setTacticalPlan, resetTacticalPlan, setTrainingIntensity, setTrainingFocus }
 
   return (
     <DesktopShell
