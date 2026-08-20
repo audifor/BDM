@@ -25,7 +25,8 @@ export function createDraftForCompletedSeason(world: GameWorld, ecosystemId: Eco
 export function openDraft(world: GameWorld, draftId: string): GameWorld { const draft = world.draftsById[draftId]; if (!draft || draft.status !== 'scheduled' || world.currentDate < draft.scheduledOn || world.seasonHistoryBySeasonId[draft.sourceSeasonId] === undefined) return world; return updateGameWorld(world, { drafts: Object.values(world.draftsById).map((item) => item.id === draftId ? { ...item, status: 'inProgress' } : item) }) }
 export function generateDraftProspects(world: GameWorld, draftId: string, count: number): GameWorld {
   const draft = world.draftsById[draftId]; if (!draft || draft.prospectPlayerIds.length > 0 || !Number.isInteger(count) || count < 1) throw new Error('Draft prospects cannot be generated')
-  const template = Object.values(world.players)[0]; if (!template) throw new Error('Draft prospects require a player template')
+  const templateTeam = Object.values(world.teams).find((team) => Object.values(world.competitions).some((competition) => competition.ecosystemId === draft.ecosystemId && competition.participantTeamIds.includes(team.id)))
+  const template = templateTeam && world.players[templateTeam.rosterPlayerIds[0]!]; if (!template) throw new Error('Draft prospects require a player template')
   const prospects = Array.from({ length: count }, (_, index) => { const id = playerIdFromString(`draft-prospect:${draftId}:${index + 1}`); const random = new SeededRandomSource(hashStringToSeed(`draft-prospect:${draftId}:${index + 1}`)); const positions = ['PG','SG','SF','PF','C'] as const; const rating = () => random.nextInt(45, 75); const bioDate = addYears(draft.scheduledOn, -19); return createPlayer({ id, firstName: `Prospect${index + 1}`, lastName: `Class${draftId.slice(-6)}`, gender: template.gender, nationalityId: template.nationalityId, basketball: { primaryPosition: positions[index % positions.length]!, ratings: { finishing: rating(), shooting: rating(), playmaking: rating(), perimeterDefense: rating(), interiorDefense: rating(), rebounding: rating(), athleticism: rating() } }, bio: { dateOfBirth: bioDate, heightCm: random.nextInt(180, 215), weightKg: random.nextInt(75, 115) } }) })
   return updateGameWorld(world, { players: [...Object.values(world.players), ...prospects], drafts: Object.values(world.draftsById).map((item) => item.id === draftId ? { ...item, prospectPlayerIds: prospects.map((player) => player.id) } : item) })
 }
@@ -38,7 +39,7 @@ export function getAvailableDraftProspects(world: GameWorld, draftId: string): r
 export function makeDraftSelection(world: GameWorld, draftId: string, selectingTeamId: TeamId, playerId: PlayerId): GameWorld {
   const draft = world.draftsById[draftId]; if (!draft || draft.status !== 'inProgress') throw new Error('Draft is not in progress')
   const pick = getCurrentDraftPick(world, draftId); if (!pick || pick.ownerTeamId !== selectingTeamId || !getAvailableDraftProspects(world, draftId).includes(playerId)) throw new Error('Draft selection is invalid')
-  const team = world.teams[selectingTeamId]!; if (team.rosterPlayerIds.includes(playerId)) throw new Error('Draft prospect is already rostered')
+  const team = world.teams[selectingTeamId]!; if (team.rosterPlayerIds.includes(playerId) || team.gender !== world.players[playerId]?.gender) throw new Error('Draft prospect is already rostered')
   const picks = Object.values(world.draftPicksById).map((item) => item.id === pick.id ? { ...item, selection: { playerId, teamId: selectingTeamId } } : item)
   const complete = picks.filter((item) => item.draftId === draftId).every((item) => item.selection !== undefined)
   const rules = world.salaryRulesBySeasonId[draft.sourceSeasonId]

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createNewGame, simulateAndApplyGame } from '@/app/game'
-import { createGameWorld } from '@/domain/world'
+import { createGameWorld, updateGameWorld } from '@/domain/world'
 import { calculateStandings } from '@/engine/competition/standings'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSaveV1'
 import { advanceGameDay } from '@/app/game/advanceGameDay'
@@ -12,7 +12,7 @@ describe('season progression', () => {
   it('does not use the calendar date as the completion criterion', () => {
     const world = createNewGame()
     const season = getCurrentSeason(world)
-    const atSeasonEnd = createGameWorld({ currentDate: season.endDate, currentSeasonId: world.currentSeasonId, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), seasons: Object.values(world.seasons), games: Object.values(world.games), matchStatLogs: Object.values(world.matchStatLogsByGameId) })
+    const atSeasonEnd = updateGameWorld(world, { currentDate: season.endDate })
     expect(isSeasonComplete(atSeasonEnd, season.id)).toBe(false)
   })
 
@@ -69,5 +69,5 @@ describe('season progression', () => {
 })
 
 function rebuildWithHistory(world: ReturnType<typeof createNewGame>, seasonHistory: Parameters<typeof createGameWorld>[0]['seasonHistory']) {
-  return createGameWorld({ currentDate: world.currentDate, currentSeasonId: world.currentSeasonId, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), seasons: Object.values(world.seasons), games: Object.values(world.games), matchStatLogs: Object.values(world.matchStatLogsByGameId), seasonHistory })
+  return updateGameWorld(world, { seasonHistory })
 }

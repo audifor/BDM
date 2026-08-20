@@ -3,7 +3,7 @@ import { addDays } from '@/domain/date'
 import { createCompetition, defaultLeagueCompetitionRules } from '@/domain/competition'
 import { competitionIdFromString, seasonIdFromString } from '@/domain/ids'
 import { createSeason } from '@/domain/season'
-import { createGameWorld, type GameWorld } from '@/domain/world'
+import { createGameWorld, updateGameWorld, type GameWorld } from '@/domain/world'
 import { generateNcaaLikeSchedule, generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { generateWorld } from '@/engine/world'
 import { ensurePlayerKnowledge } from '@/engine/world'
@@ -22,14 +22,20 @@ export const PROTOTYPE_GAME_CONFIGURATION = {
 
 /** Creates the fixed, deterministic career used by the first playable prototype. */
 export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset } = {}): GameWorld {
-  const generatedWorld = generateWorld({ ...PROTOTYPE_GAME_CONFIGURATION, userCoachRpgPreset: options.coachRpgPreset, includeNbaLike: true, includeNcaaLike: true })
+  const men = createSingleNewGame(options, 'male')
+  const women = namespaceWorld(createSingleNewGame({}, 'female'), 'women-')
+  return mergeIndependentWorlds(men, women)
+}
+
+function createSingleNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset }, gender: 'male' | 'female'): GameWorld {
+  const generatedWorld = generateWorld({ ...PROTOTYPE_GAME_CONFIGURATION, gender, startDate: gender === 'male' ? PROTOTYPE_GAME_CONFIGURATION.startDate : addDays(PROTOTYPE_GAME_CONFIGURATION.startDate, 7), userCoachRpgPreset: options.coachRpgPreset, includeNbaLike: true, includeNcaaLike: true })
   const season = generatedWorld.seasons[generatedWorld.currentSeasonId]
 
   if (season === undefined) {
     throw new Error('Prototype world generation did not create a Season')
   }
 
-  const secondaryCompetition = createCompetition({ id: competitionIdFromString('generated-competition-0002'), name: 'Virelia Challenger League', gender: PROTOTYPE_GAME_CONFIGURATION.gender, participantTeamIds: Object.values(generatedWorld.teams).slice(0, 4).map((team) => team.id), rules: defaultLeagueCompetitionRules })
+  const secondaryCompetition = createCompetition({ id: competitionIdFromString('generated-competition-0002'), name: 'Virelia Challenger League', gender, participantTeamIds: Object.values(generatedWorld.teams).slice(0, 4).map((team) => team.id), rules: defaultLeagueCompetitionRules })
   const secondarySeason = createSeason({ id: seasonIdFromString('generated-season-0002'), competitionId: secondaryCompetition.id, label: season.label, startDate: addDays(season.startDate, 60), endDate: season.endDate })
   const competitions = [...Object.values(generatedWorld.competitions), secondaryCompetition]
   const seasons = [...Object.values(generatedWorld.seasons), secondarySeason]
@@ -56,4 +62,20 @@ export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPrese
     coachProfessionalProfilesByCoachId: generatedWorld.coachProfessionalProfilesByCoachId,
     coachRpgProfilesByCoachId: generatedWorld.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: generatedWorld.coachReputationProfilesByCoachId, coachEmploymentByCoachId: generatedWorld.coachEmploymentByCoachId, coachCareerHistoryByCoachId: generatedWorld.coachCareerHistoryByCoachId, coachJobOpeningsById: generatedWorld.coachJobOpeningsById, coachJobCandidaciesById: generatedWorld.coachJobCandidaciesById, coachInterviewsByCandidacyId: generatedWorld.coachInterviewsByCandidacyId, coachJobOffersById: generatedWorld.coachJobOffersById, relationshipsByKey: generatedWorld.relationshipsByKey, salaryRulesBySeasonId: generatedWorld.salaryRulesBySeasonId, tradeRulesBySeasonId: generatedWorld.tradeRulesBySeasonId,
   })))))))
+}
+
+function namespaceWorld(world: GameWorld, prefix: string): GameWorld {
+  const serialized = JSON.stringify(world).replaceAll('generated-staff-', '__staff__').replaceAll('generated-', prefix).replaceAll('__staff__', 'generated-staff-')
+  return JSON.parse(serialized) as GameWorld
+}
+
+function mergeIndependentWorlds(primary: GameWorld, secondary: GameWorld): GameWorld {
+  const merged: Record<string, unknown> = { ...primary }
+  for (const [key, value] of Object.entries(secondary)) {
+    if (key === 'schemaVersion' || key === 'currentDate' || key === 'currentSeasonId' || key === 'userCoachId') continue
+    const current = primary[key as keyof GameWorld]
+    if (Array.isArray(value)) merged[key] = [...(current as readonly unknown[]), ...value]
+    else if (typeof value === 'object' && value !== null) merged[key] = { ...(current as object), ...value }
+  }
+  return updateGameWorld(merged as unknown as GameWorld, {})
 }

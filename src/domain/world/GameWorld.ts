@@ -250,9 +250,19 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     ...(input.competitions.some((competition) => competition.ecosystemId === DEFAULT_NBA_LIKE_ECOSYSTEM_ID) && !suppliedEcosystems.some((ecosystem) => ecosystem.id === DEFAULT_NBA_LIKE_ECOSYSTEM_ID) ? [createSportsEcosystem({ id: DEFAULT_NBA_LIKE_ECOSYSTEM_ID, name: 'Orinthian Franchise Basketball', kind: 'nbaLike' })] : []),
     ...(input.competitions.some((competition) => competition.ecosystemId === DEFAULT_NCAA_LIKE_ECOSYSTEM_ID) && !suppliedEcosystems.some((ecosystem) => ecosystem.id === DEFAULT_NCAA_LIKE_ECOSYSTEM_ID) ? [createSportsEcosystem({ id: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, name: 'Asteria Collegiate Basketball', kind: 'ncaaLike' })] : []),
   ]
+  for (const competition of input.competitions) {
+    if (ecosystems.some((ecosystem) => ecosystem.id === competition.ecosystemId)) continue
+    const id = String(competition.ecosystemId)
+    const kind = id.endsWith('0002') ? 'nbaLike' : id.endsWith('0003') ? 'ncaaLike' : 'fibaLike'
+    ecosystems.push(createSportsEcosystem({ id: competition.ecosystemId, name: `Legacy ${competition.name} ecosystem`, kind, category: competition.gender === 'male' ? 'men' : 'women' }))
+  }
   const snapshotMemberships = input.seasons.flatMap((season) => season.conferenceMembershipSnapshot ?? [])
   const memberships = input.conferenceMemberships ?? snapshotMemberships
-  const conferences = input.conferences ?? [...new Set(memberships.map((membership) => membership.conferenceId))].map((id) => createConference({ id, ecosystemId: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, name: `Conference ${id}` }))
+  const conferences = input.conferences ?? [...new Set(memberships.map((membership) => membership.conferenceId))].map((id) => {
+    const membership = memberships.find((item) => item.conferenceId === id)!
+    const season = seasons[membership.seasonId]!
+    return createConference({ id, ecosystemId: input.competitions.find((competition) => competition.id === season.competitionId)!.ecosystemId, name: `Conference ${id}` })
+  })
   const world: GameWorld = {
     schemaVersion: GAME_WORLD_SCHEMA_VERSION,
     currentDate,

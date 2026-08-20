@@ -7,18 +7,11 @@ import { calculateConferenceStandings, calculateStandingsForCompetition, getConf
 describe('NCAA-like ecosystem', () => {
   it('creates deterministic programs, conferences and a classified conflict-free schedule alongside FIBA and NBA', () => {
     const first = createNewGame(); const second = createNewGame()
-    expect(Object.values(first.ecosystems).map((item) => item.kind).sort()).toEqual(['fibaLike', 'nbaLike', 'ncaaLike'].sort())
-    const ncaa = Object.values(first.ecosystems).find((item) => item.kind === 'ncaaLike')!
-    const season = Object.values(first.seasons).find((item) => first.competitions[item.competitionId]!.ecosystemId === ncaa.id)!
-    const conferences = Object.values(first.conferencesById).filter((item) => item.ecosystemId === ncaa.id)
-    const games = Object.values(first.games).filter((game) => game.seasonId === season.id)
-    expect(conferences).toHaveLength(3); expect(first.conferenceMemberships.filter((item) => item.seasonId === season.id)).toHaveLength(12)
-    expect(new Set(first.conferenceMemberships.filter((item) => item.seasonId === season.id).map((item) => item.teamId)).size).toBe(12)
-    expect(games.some((game) => game.classification === 'conference')).toBe(true); expect(games.some((game) => game.classification === 'nonConference')).toBe(true)
-    for (const game of games) { const home = first.conferenceMemberships.find((item) => item.seasonId === season.id && item.teamId === game.homeTeamId)!; const away = first.conferenceMemberships.find((item) => item.seasonId === season.id && item.teamId === game.awayTeamId)!; expect(home.conferenceId === away.conferenceId).toBe(game.classification === 'conference') }
-    expect(new Set(games.flatMap((game) => [`${game.homeTeamId}:${game.date}`, `${game.awayTeamId}:${game.date}`])).size).toBe(games.length * 2)
-    expect(games).toEqual(Object.values(second.games).filter((game) => game.seasonId === season.id))
-    expect(first.salaryRulesBySeasonId[season.id]).toBeUndefined(); expect(first.tradeRulesBySeasonId[season.id]).toBeUndefined(); expect(Object.values(first.draftsById).some((draft) => draft.ecosystemId === ncaa.id)).toBe(false)
+    expect(Object.values(first.ecosystems).map((item) => item.kind).sort()).toEqual(['fibaLike', 'fibaLike', 'nbaLike', 'nbaLike', 'ncaaLike', 'ncaaLike'].sort())
+    for (const ncaa of Object.values(first.ecosystems).filter((item) => item.kind === 'ncaaLike')) { const season = Object.values(first.seasons).find((item) => first.competitions[item.competitionId]!.ecosystemId === ncaa.id)!; const conferences = Object.values(first.conferencesById).filter((item) => item.ecosystemId === ncaa.id); const games = Object.values(first.games).filter((game) => game.seasonId === season.id)
+      expect(conferences).toHaveLength(3); expect(first.conferenceMemberships.filter((item) => item.seasonId === season.id)).toHaveLength(12); expect(new Set(first.conferenceMemberships.filter((item) => item.seasonId === season.id).map((item) => item.teamId)).size).toBe(12); expect(games.some((game) => game.classification === 'conference')).toBe(true); expect(games.some((game) => game.classification === 'nonConference')).toBe(true)
+      for (const game of games) { const home = first.conferenceMemberships.find((item) => item.seasonId === season.id && item.teamId === game.homeTeamId)!; const away = first.conferenceMemberships.find((item) => item.seasonId === season.id && item.teamId === game.awayTeamId)!; expect(home.conferenceId === away.conferenceId).toBe(game.classification === 'conference') }
+      expect(new Set(games.flatMap((game) => [`${game.homeTeamId}:${game.date}`, `${game.awayTeamId}:${game.date}`])).size).toBe(games.length * 2); expect(games).toEqual(Object.values(second.games).filter((game) => game.seasonId === season.id)); expect(first.salaryRulesBySeasonId[season.id]).toBeUndefined(); expect(first.tradeRulesBySeasonId[season.id]).toBeUndefined(); expect(Object.values(first.draftsById).some((draft) => draft.ecosystemId === ncaa.id)).toBe(false) }
   })
 
   it('keeps conference and overall records separate, derives champions, and round-trips snapshots', () => {

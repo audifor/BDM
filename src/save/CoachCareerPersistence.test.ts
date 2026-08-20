@@ -14,8 +14,9 @@ describe('Coach career persistence', () => {
     const world = createNewGame()
     for (const coach of Object.values(world.coaches)) {
       const assignedTeam = Object.values(world.teams).find((team) => team.coachId === coach.id)
-      expect(getCoachEmployment(world, coach.id)).toEqual(assignedTeam === undefined ? { status: 'unemployed' } : { status: 'employed', teamId: assignedTeam.id, startedOn: world.currentDate })
-      expect(getCoachCareerHistory(world, coach.id)).toEqual(assignedTeam === undefined ? [] : [{ kind: 'appointment', coachId: coach.id, teamId: assignedTeam.id, date: world.currentDate, reason: 'initialAppointment' }])
+      const startedOn = assignedTeam === undefined ? undefined : Object.values(world.seasons).filter((season) => world.competitions[season.competitionId]!.gender === assignedTeam.gender).sort((a, b) => a.startDate.localeCompare(b.startDate))[0]!.startDate
+      expect(getCoachEmployment(world, coach.id)).toEqual(assignedTeam === undefined ? { status: 'unemployed' } : { status: 'employed', teamId: assignedTeam.id, startedOn })
+      expect(getCoachCareerHistory(world, coach.id)).toEqual(assignedTeam === undefined ? [] : [{ kind: 'appointment', coachId: coach.id, teamId: assignedTeam.id, date: startedOn, reason: 'initialAppointment' }])
     }
     expect(world.coachJobOpeningsById).toEqual({})
     expect(world.coachJobCandidaciesById).toEqual({})

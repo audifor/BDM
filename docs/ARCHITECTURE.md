@@ -982,3 +982,18 @@ historical records, so a player cannot occupy incompatible rosters at once.
 
 `GameWorld` owns global time only. Competition editions own their own windows;
 there is no global offseason and ecosystem transitions do not synchronize seasons.
+
+## Simultaneous men's and women's basketball
+
+An ecosystem kind is not its identity: men's and women's instances use separate canonical ecosystem IDs and category-scoped data.
+
+Men's and women's basketball share the same Domain and Engine architecture. Sports
+category is ecosystem configuration and competition context, not a duplicated engine
+hierarchy. A new world contains independent men's and women's FIBA-like, closed-league
+and NCAA-like ecosystems; each owns its own competition and season windows.
+
+Closed-league salary, Draft and trade configurations are ecosystem/season scoped, so
+women's rules are independently configurable and never assumed equal to men's NBA-like
+rules. Recruiting, eligibility, academics, NIL, boosters and enforcement remain scoped
+by ecosystem, competition and season IDs. Coaches retain one canonical identity and may
+move across men's and women's ecosystems under the existing career rules.

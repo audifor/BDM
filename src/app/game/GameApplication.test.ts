@@ -23,7 +23,8 @@ describe('prototype game application', () => {
     expect(world.currentDate).toBe(createGameDate(2032, 10, 1))
     expect(Object.values(world.games).filter((game) => game.competitionId === world.seasons[world.currentSeasonId]!.competitionId)).toHaveLength(56)
     expect(userTeam?.id).toBe('generated-team-0001')
-    expect(Object.values(world.seasons)).toHaveLength(4)
+    expect(Object.values(world.seasons).filter((season) => world.ecosystems[world.competitions[season.competitionId]!.ecosystemId]!.category === 'men')).toHaveLength(4)
+    expect(Object.values(world.seasons).some((season) => world.ecosystems[world.competitions[season.competitionId]!.ecosystemId]!.category === 'women')).toBe(true)
   })
 
   it('completes only the user game without advancing or mutating the input', () => {
@@ -35,7 +36,7 @@ describe('prototype game application', () => {
     expect(updatedWorld.currentDate).toBe(world.currentDate)
     expect(updatedWorld.games[userGame!.id]?.status).toBe('completed')
     expect(world.games[userGame!.id]?.status).toBe('scheduled')
-    expect(getScheduledGamesToday(updatedWorld)).toHaveLength(3)
+    expect(getScheduledGamesToday(updatedWorld).filter((game) => game.competitionId === userGame!.competitionId)).toHaveLength(3)
   })
 
   it('returns the same user result for the same world and game inputs', () => {
@@ -94,7 +95,7 @@ describe('prototype game application', () => {
     const completedWorld = simulateRemainingGamesToday(world)
 
     expect(getScheduledGamesToday(completedWorld)).toHaveLength(0)
-    expect(getGamesToday(completedWorld).filter((game) => game.status === 'completed')).toHaveLength(4)
+    expect(getGamesToday(completedWorld).filter((game) => game.competitionId === world.seasons[world.currentSeasonId]!.competitionId && game.status === 'completed')).toHaveLength(4)
     expect(simulateRemainingGamesToday(completedWorld)).toBe(completedWorld)
     expect(
       Object.values(completedWorld.games).filter((game) => game.date !== completedWorld.currentDate),

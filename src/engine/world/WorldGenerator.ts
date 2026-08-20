@@ -14,7 +14,7 @@ import {
   teamIdFromString,
 } from '@/domain/ids'
 import { calculateAge, createPlayer } from '@/domain/player'
-import { requireGender, type BasketballPosition, type Gender } from '@/domain/primitives'
+import { requireGender, sportsCategoryForGender, type BasketballPosition, type Gender } from '@/domain/primitives'
 import { createSeason } from '@/domain/season'
 import { createTeam } from '@/domain/team'
 import { createGameWorld, type GameWorld } from '@/domain/world'
@@ -198,13 +198,13 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     players,
     teams,
     competitions: [competition, ...(nbaCompetition === undefined ? [] : [nbaCompetition]), ...(ncaaCompetition === undefined ? [] : [ncaaCompetition])],
-    ecosystems: [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike' }), ...(nbaCompetition === undefined ? [] : [createSportsEcosystem({ id: DEFAULT_NBA_LIKE_ECOSYSTEM_ID, name: 'Orinthian Franchise Basketball', kind: 'nbaLike' })]), ...(ncaaCompetition === undefined ? [] : [createSportsEcosystem({ id: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, name: 'Asteria Collegiate Basketball', kind: 'ncaaLike' })])],
+    ecosystems: [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike', category: sportsCategoryForGender(gender) }), ...(nbaCompetition === undefined ? [] : [createSportsEcosystem({ id: DEFAULT_NBA_LIKE_ECOSYSTEM_ID, name: 'Orinthian Franchise Basketball', kind: 'nbaLike', category: sportsCategoryForGender(gender) })]), ...(ncaaCompetition === undefined ? [] : [createSportsEcosystem({ id: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, name: 'Asteria Collegiate Basketball', kind: 'ncaaLike', category: sportsCategoryForGender(gender) })])],
     conferences, conferenceMemberships: ncaaMemberships,
     seasons: [season, ...(nbaSeason === undefined ? [] : [nbaSeason]), ...(ncaaSeason === undefined ? [] : [ncaaSeason])],
     games: [],
     contracts,
     teamFinances: teams.map((team) => generateInitialTeamFinances(team.id, contracts.filter((contract) => contract.teamId === team.id).reduce((sum, contract) => sum + contract.compensation.annualSalary, 0))),
-    ...(nbaSeason === undefined ? {} : { salaryRulesBySeasonId: { [nbaSeason.id]: createNbaLikeSalaryRules(nbaSeason.id) } }),
+    ...(nbaSeason === undefined ? {} : { salaryRulesBySeasonId: { [nbaSeason.id]: createNbaLikeSalaryRules(nbaSeason.id, gender) } }),
     ...(nbaSeason === undefined ? {} : { tradeRulesBySeasonId: { [nbaSeason.id]: createNbaLikeTradeRules(nbaSeason.id, DEFAULT_NBA_LIKE_ECOSYSTEM_ID) } }),
     staffPeople: staff.map((item) => item.person), teamStaffAssignments: staff.map((item) => item.assignment),
     coachProfessionalProfilesByCoachId: coachProfiles.professionalProfiles,
