@@ -6,8 +6,6 @@ import { useTacticalPlanStore } from '@/stores/tacticalPlanStore'
 import { loadSavedGame, saveCurrentGame } from '@/app/save/GameSaveService'
 import { tauriGameSaveRepository } from '@/tauri/TauriGameSaveRepository'
 import { getUserTeam } from '@/engine/calendar'
-import { getSeasonHistoryRecord } from '@/engine/season'
-import { getCurrentSeason } from '@/app/game'
 
 import { MatchViewerScreen } from './screens'
 import { createPresentationSegment } from './match/MatchPresentationSegment'
@@ -23,6 +21,7 @@ import { DesktopWidgetLayer } from './desktop/DesktopWidgetLayer'
 import { GlobalSearchOverlay } from './desktop/GlobalSearch'
 import { EntityActionComposer } from './entityActions/EntityActionComposer'
 import { resolveGameCapabilities } from './gameContext'
+import { type EntityDestination, useEntityNavigationStore } from './navigation/entityNavigation'
 
 /** Temporary compatibility export for existing UI tests; the dock and launcher own navigation. */
 export const NAVIGATION: readonly { readonly id: DesktopSection; readonly label: string }[] = DESKTOP_APPS
@@ -62,6 +61,7 @@ export function App() {
   const setTrainingFocus = useGameStore((state) => state.setTrainingFocus)
   const selectDraftProspect = useGameStore((state) => state.selectDraftProspect)
   const executeEntityAction = useGameStore((state) => state.executeEntityAction)
+  const navigateEntity = useEntityNavigationStore((state) => state.navigate)
   const [launcherQuery, setLauncherQuery] = useState('')
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false)
   const desktopInitialized = useRef(false)
@@ -130,15 +130,24 @@ export function App() {
 
   if (simulation !== null) {
     const coachingTeam = getUserTeam(world)!
-    return <DesktopShell context={<GameContextBar world={world} />} overlay={<EntityActionComposer onResult={executeComposerAction} />}><MatchViewerScreen world={world} simulation={simulation} homeTeamName={world.teams[simulation.homeTeamId]!.name} awayTeamName={world.teams[simulation.awayTeamId]!.name} currentEventIndex={currentEventIndex} isPlaying={isPlaying} speed={speed} resultApplied={resultApplied} onPause={pause} onResume={resume} onSpeedChange={setSpeed} onRevealNext={() => replaceSimulation(advanceLiveMatch())} onRequestPresentationSegment={() => createPresentationSegment(advanceLiveMatchPresentation())} onCompletePresentationSegment={(nextSimulation) => replaceSimulation(nextSimulation)} onSkipToEnd={() => replaceSimulation(skipLiveMatch(), false)} onApplyResult={() => { if (markResultApplied()) completeMatch(simulation) }} onContinue={() => { clearMatch(); openWindow('match') }} coachingPlan={tacticalPlan} coachingPlayers={coachingTeam.rosterPlayerIds.map((playerId) => world.players[playerId]!)} coachingTeamId={coachingTeam.id} onApplyCoaching={(plan) => { replaceSimulation(applyLiveTactics(coachingTeam.id, plan), false); setTacticalPlan(plan) }} onApplyManualSubstitutions={(substitutions) => replaceSimulation(applyManualSubstitutions(coachingTeam.id, substitutions), false)} /></DesktopShell>
+    return <DesktopShell context={<GameContextBar world={world} />} overlay={<EntityActionComposer onResult={executeComposerAction} />}><MatchViewerScreen world={world} simulation={simulation} homeTeamName={world.teams[simulation.homeTeamId]!.name} awayTeamName={world.teams[simulation.awayTeamId]!.name} currentEventIndex={currentEventIndex} isPlaying={isPlaying} speed={speed} resultApplied={resultApplied} onPause={pause} onResume={resume} onSpeedChange={setSpeed} onRevealNext={() => replaceSimulation(advanceLiveMatch())} onRequestPresentationSegment={() => createPresentationSegment(advanceLiveMatchPresentation())} onCompletePresentationSegment={(nextSimulation) => replaceSimulation(nextSimulation)} onSkipToEnd={() => replaceSimulation(skipLiveMatch(), false)} onApplyResult={() => { if (markResultApplied()) completeMatch(simulation) }} onContinue={clearMatch} coachingPlan={tacticalPlan} coachingPlayers={coachingTeam.rosterPlayerIds.map((playerId) => world.players[playerId]!)} coachingTeamId={coachingTeam.id} onApplyCoaching={(plan) => { replaceSimulation(applyLiveTactics(coachingTeam.id, plan), false); setTacticalPlan(plan) }} onApplyManualSubstitutions={(substitutions) => replaceSimulation(applyManualSubstitutions(coachingTeam.id, substitutions), false)} /></DesktopShell>
   }
-  const seasonComplete = getSeasonHistoryRecord(world, getCurrentSeason(world).id) !== undefined
+  const seasonComplete = Object.values(world.games).every((game) => game.status === 'completed')
 
-  const openDesktopApp = (appId: string) => { openWindow(appId); setLauncherQuery('') }
+  const openEntity = (destination: EntityDestination) => { navigateEntity(destination); openWindow('entity'); setLauncherQuery('') }
+  const openDesktopApp = (appId: string) => {
+    const userTeam = getUserTeam(world)
+    const currentCompetitionId = world.seasons[world.currentSeasonId]?.competitionId
+    if (appId === 'club' && userTeam !== undefined) return openEntity({ type: 'team', teamId: userTeam.id, section: 'overview' })
+    if (appId === 'squad' && userTeam !== undefined) return openEntity({ type: 'team', teamId: userTeam.id, section: 'squad' })
+    if (appId === 'staff' && userTeam !== undefined) return openEntity({ type: 'team', teamId: userTeam.id, section: 'staff' })
+    if (appId === 'standings' && currentCompetitionId !== undefined) return openEntity({ type: 'competition', competitionId: currentCompetitionId, section: 'standings' })
+    openWindow(appId); setLauncherQuery('')
+  }
   const unreadInboxCount = selectUnreadInboxCount(world)
   const capabilities = resolveGameCapabilities(world)
   const activeAppId = desktopWindows.find((window) => window.id === focusedWindowId)?.appId ?? null
-  const desktopActions: DesktopAppActions = { tacticalPlan, openApp: openDesktopApp, playGame: () => startMatch(startLiveMatch(tacticalPlan)), instantResult: () => instantResult(tacticalPlan), simulateRemainingGamesToday, advanceDay, startNextSeason, releasePlayer, signFreeAgent, selectDraftProspect, executeTrade, addRecruitingTarget, removeRecruitingTarget, performRecruitingAction, makeRecruitingOffer, acceptNilOpportunity, purchaseSkill: (id) => { const result = purchaseUserCoachSkill(id); if (!result.ok) setSaveMessage(result.reason) }, purchasePerk: (id) => { const result = purchaseUserCoachPerk(id); if (!result.ok) setSaveMessage(result.reason) }, acceptOffer: acceptUserCoachOffer, declineOffer: declineUserCoachOffer, applyForJob: applyUserCoachForJob, setTacticalPlan, resetTacticalPlan, setTrainingIntensity, setTrainingFocus }
+  const desktopActions: DesktopAppActions = { tacticalPlan, openApp: openDesktopApp, openEntity, playGame: () => startMatch(startLiveMatch(tacticalPlan)), instantResult: () => instantResult(tacticalPlan), simulateRemainingGamesToday, advanceDay, startNextSeason, releasePlayer, signFreeAgent, selectDraftProspect, executeTrade, addRecruitingTarget, removeRecruitingTarget, performRecruitingAction, makeRecruitingOffer, acceptNilOpportunity, purchaseSkill: (id) => { const result = purchaseUserCoachSkill(id); if (!result.ok) setSaveMessage(result.reason) }, purchasePerk: (id) => { const result = purchaseUserCoachPerk(id); if (!result.ok) setSaveMessage(result.reason) }, acceptOffer: acceptUserCoachOffer, declineOffer: declineUserCoachOffer, applyForJob: applyUserCoachForJob, setTacticalPlan, resetTacticalPlan, setTrainingIntensity, setTrainingFocus }
 
   return (
     <DesktopShell

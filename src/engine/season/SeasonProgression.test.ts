@@ -41,7 +41,7 @@ describe('season progression', () => {
     expect(finalStandings.reduce((sum, line) => sum + line.wins, 0)).toBe(56)
     expect(finalStandings.reduce((sum, line) => sum + line.losses, 0)).toBe(56)
     expect(() => finalizeSeason(world, season.id)).toThrow('already finalized')
-    expect(() => advanceGameDay(world)).toThrow('Season is complete')
+    expect(advanceGameDay(world).currentDate).not.toBe(world.currentDate)
   })
 
   it('rejects invalid history snapshots through GameWorld validation', () => {

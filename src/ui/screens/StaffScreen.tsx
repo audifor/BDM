@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import { getUserTeam } from '@/engine/calendar'
 import { getStaffAssignment, getStaffPerson, type GameWorld } from '@/domain/world'
-import type { StaffPersonId } from '@/domain/ids'
+import type { StaffPersonId, TeamId } from '@/domain/ids'
 import { createEntityRef } from '@/app/entityActions/EntityRef'
 import { useEntityActions } from '@/ui/entityActions/useEntityActions'
 
@@ -14,8 +14,8 @@ import {
   STAFF_ROLE_LABELS,
 } from '@/ui/staffPresentation'
 
-export function StaffScreen({ world, initialSelectedStaffId }: { readonly world: GameWorld; readonly initialSelectedStaffId?: StaffPersonId }) {
-  const team = getUserTeam(world)
+export function StaffScreen({ world, teamId, initialSelectedStaffId }: { readonly world: GameWorld; readonly teamId?: TeamId; readonly initialSelectedStaffId?: StaffPersonId }) {
+  const team = teamId === undefined ? getUserTeam(world) : world.teams[teamId]
   const staff = team === undefined ? [] : getTeamStaffPresentation(world, team.id)
   const [selectedStaffId, setSelectedStaffId] = useState<StaffPersonId | null>(null)
   const selected = staff.find((item) => item.staffPersonId === (selectedStaffId ?? initialSelectedStaffId)) ?? staff[0]

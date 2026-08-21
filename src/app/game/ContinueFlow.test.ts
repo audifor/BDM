@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
+import { addDays } from '@/domain/date'
+import { updateGameWorld } from '@/domain/world'
 import { createNewGame } from './createNewGame'
 import { advanceGameDay, simulateRemainingGamesToday } from './advanceGameDay'
 import { continueGame, getContinueStopReason, getNextKnownEvent } from './ContinueFlow'
-import { instantResult } from './playUserGame'
+import { instantResult, simulateAndApplyGame } from './playUserGame'
 
 describe('continue flow', () => {
   it('stops immediately for a scheduled user game on the current date', () => {
@@ -17,6 +19,25 @@ describe('continue flow', () => {
     const ready = advanceGameDay(simulateRemainingGamesToday(instantResult(createNewGame())))
     const next = getNextKnownEvent(ready)!; const result = continueGame(ready)
     expect(result.daysAdvanced).toBeGreaterThan(0)
+    expect(result.finalDate).toBe(next.date)
+    expect(result.stopReason).toEqual({ type: 'userGame', gameId: next.gameId })
+  })
+
+  it('keeps advancing to a future user game after the current competition has completed', () => {
+    let world = createNewGame()
+    const currentCompetitionId = world.seasons[world.currentSeasonId]!.competitionId
+    for (const game of Object.values(world.games).filter((candidate) => candidate.competitionId === currentCompetitionId)) {
+      world = simulateAndApplyGame(world, game)
+    }
+    const next = getNextKnownEvent(world)!
+    for (const game of Object.values(world.games).filter((candidate) => candidate.status === 'scheduled' && candidate.date < next.date)) {
+      world = simulateAndApplyGame(world, game)
+    }
+    const ready = updateGameWorld(world, { currentDate: addDays(next.date, -4) })
+
+    const result = continueGame(ready)
+
+    expect(result.daysAdvanced).toBe(4)
     expect(result.finalDate).toBe(next.date)
     expect(result.stopReason).toEqual({ type: 'userGame', gameId: next.gameId })
   })

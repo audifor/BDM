@@ -19,6 +19,9 @@ import { useEntityActions } from "@/ui/entityActions/useEntityActions";
 import { useGameStore } from "@/stores/gameStore";
 import { Progress, Tooltip } from "@/ui/components/primitives";
 import { ATTRIBUTE_LABELS } from "@/ui/attributeLabels";
+import type { TeamId } from "@/domain/ids";
+import { EntityLink } from "@/ui/navigation/EntityLink";
+import type { EntityDestination } from "@/ui/navigation/entityNavigation";
 
 type PositionFilter = "ALL" | Player["basketball"]["primaryPosition"];
 type SortKey = "name" | "position" | "age" | "fatigue" | BasketballRatingKey;
@@ -66,12 +69,16 @@ export function filterAndSortRoster(
 
 export function SquadScreen({
   world,
+  teamId,
+  onOpenEntity,
   selectedPlayerId: initialSelected,
 }: {
   readonly world: Parameters<typeof getUserTeam>[0];
+  readonly teamId?: TeamId;
+  readonly onOpenEntity?: (destination: EntityDestination) => void;
   readonly selectedPlayerId?: Player["id"];
 }) {
-  const team = getUserTeam(world);
+  const team = teamId === undefined ? getUserTeam(world) : world.teams[teamId];
   const [query, setQuery] = useState("");
   const [position, setPosition] = useState<PositionFilter>("ALL");
   const [sortKey, setSortKey] = useState<SortKey>("position");
@@ -193,7 +200,7 @@ export function SquadScreen({
                   <td colSpan={11}>No players match the current filters.</td>
                 </tr>
               ) : (
-                visible.map((player) => <PlayerRow key={player.id} player={player} selected={player.id === selectedId} onSelect={() => setSelectedId(player.id)} world={world} />)
+                visible.map((player) => <PlayerRow key={player.id} onOpenEntity={onOpenEntity} player={player} selected={player.id === selectedId} onSelect={() => setSelectedId(player.id)} world={world} />)
               )}
             </tbody>
           </table>
@@ -209,11 +216,11 @@ function TeamActionHeader({ teamId, teamName, world }: { readonly teamId: string
   return <div {...target}><p className="eyebrow">ROSTER</p><h1>{teamName}</h1></div>
 }
 
-function PlayerRow({ player, selected, onSelect, world }: { readonly player: Player; readonly selected: boolean; readonly onSelect: () => void; readonly world: Parameters<typeof getUserTeam>[0] }) {
+function PlayerRow({ player, selected, onSelect, onOpenEntity = () => undefined, world }: { readonly player: Player; readonly selected: boolean; readonly onSelect: () => void; readonly onOpenEntity?: (destination: EntityDestination) => void; readonly world: Parameters<typeof getUserTeam>[0] }) {
   const activeMatchSession = useGameStore((state) => state.getActiveMatchSession())
   const target = useEntityActions(createEntityRef('player', player.id), { world, controlledTeamId: getUserTeam(world)?.id, activeMatchSession: activeMatchSession ?? undefined })
   return <tr {...target} aria-selected={selected} className={selected ? "is-selected" : ""} onClick={onSelect} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect() } }} tabIndex={0}>
-    <td>{player.basketball.primaryPosition}</td><td><span className="squad-app__initials">{player.firstName[0]}{player.lastName[0]}</span>{player.firstName} {player.lastName}</td><td>{getPlayerAge(world, player.id)}</td>{BASKETBALL_RATING_KEYS.map((key) => <td className={ratingClass(player.basketball.ratings[key])} key={key}>{player.basketball.ratings[key]}</td>)}<td>{getCareerFatigueForPlayer(world, player.id)}</td>
+    <td>{player.basketball.primaryPosition}</td><td><span className="squad-app__initials">{player.firstName[0]}{player.lastName[0]}</span><EntityLink destination={{ type: 'player', playerId: player.id, section: 'overview' }} onNavigate={onOpenEntity}>{player.firstName} {player.lastName}</EntityLink></td><td>{getPlayerAge(world, player.id)}</td>{BASKETBALL_RATING_KEYS.map((key) => <td className={ratingClass(player.basketball.ratings[key])} key={key}>{player.basketball.ratings[key]}</td>)}<td>{getCareerFatigueForPlayer(world, player.id)}</td>
   </tr>
 }
 

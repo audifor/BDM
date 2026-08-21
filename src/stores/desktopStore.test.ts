@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { createNewGame } from '@/app/game'
+import { teamIdFromString } from '@/domain/ids'
+import { useEntityNavigationStore } from '@/ui/navigation/entityNavigation'
+import { useMatchViewerStore } from './matchViewerStore'
 import { useDesktopStore } from './desktopStore'
 
 const resetDesktop = () => useDesktopStore.setState({ windows: [], focusedWindowId: null, launcherOpen: false, recentAppIds: [], launcherOrder: [] })
@@ -39,6 +42,17 @@ describe('desktop window manager store', () => {
     const world = createNewGame(); const before = JSON.stringify(world)
     useDesktopStore.getState().openWindow('schedule'); useDesktopStore.getState().maximizeWindow('schedule-window')
     expect(JSON.stringify(world)).toBe(before)
+  })
+
+  it('keeps desktop and entity navigation state when the match viewer closes', () => {
+    const store = useDesktopStore.getState()
+    store.openWindow('schedule')
+    useEntityNavigationStore.getState().navigate({ type: 'team', teamId: teamIdFromString('team-viewed'), section: 'squad' })
+
+    useMatchViewerStore.getState().clear()
+
+    expect(useDesktopStore.getState().windows.map((window) => window.id)).toEqual(['schedule-window'])
+    expect(useEntityNavigationStore.getState().destination).toEqual({ type: 'team', teamId: teamIdFromString('team-viewed'), section: 'squad' })
   })
 
   it('toggles the launcher and stores a serializable custom module order', () => {
