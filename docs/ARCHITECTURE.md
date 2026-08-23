@@ -62,6 +62,12 @@ pure TypeScript, not a Zustand store, and stores normalized entity collections b
 ID. Relationships are references by ID and are validated when the world is created.
 
 Derived data is not persisted when it can be resolved from canonical entities.
+
+## Coach finances and memory
+
+Coach finance profiles are canonical world state. Their financial position is a derived domain projection (cash, net worth, monthly shortfall, runway, security and pressure) for Career and job-offer consumers; it is never duplicated into Memory. Monthly processing remains idempotent per profile/month and continues non-salary income, expenses and debt while a coach is unemployed. Coach employment currently has no compensation, guaranteed-money or bonus contract domain, so no artificial severance or bonus subsystem is modeled here.
+
+Memories are canonical, owner-perspective records. Query helpers derive recency, current relevance and repeated memories about an entity without indexes; several decades of records remain small enough for deterministic linear queries. Financial events may later be referenced by Memory through their canonical source/entity identifiers, without copying finance state into a memory.
 Future engines may define controlled world updates, but that behavior is not part
 of `GameWorld` itself.
 

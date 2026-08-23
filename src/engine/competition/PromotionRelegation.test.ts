@@ -36,5 +36,6 @@ describe('promotion and relegation', () => {
     expect(buildNextCompetitionParticipants(world, lowerSeason.id)).toEqual([...lower.participantTeamIds.slice(1), resolution.relegatedTeamIds[0]!])
     expect(world.seasons[upperSeason.id]!.participantTeamIds).toEqual(upper.participantTeamIds)
     expect(getCompetitionTier(world, lowerId)?.level).toBe(2)
+    expect(Object.values(world.memoriesById)).toEqual(expect.arrayContaining([expect.objectContaining({ tags: expect.arrayContaining(['promotion']), permanent: true }), expect.objectContaining({ tags: expect.arrayContaining(['relegation']), permanent: true })]))
   })
 })

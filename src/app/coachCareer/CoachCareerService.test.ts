@@ -19,6 +19,7 @@ describe('Coach career application flow', () => {
     expect(hired.coachEmploymentByCoachId[base.userCoachId]).toMatchObject({ status: 'employed', teamId: source.id, startedOn: base.currentDate })
     expect(hired.coachJobOpeningsById[opening.id]!.status).toBe('filled')
     expect(hired.coachJobOffersById[offer.offerId as keyof typeof hired.coachJobOffersById]!.status).toBe('accepted')
+    expect(Object.values(hired.memoriesById)).toEqual(expect.arrayContaining([expect.objectContaining({ owner: { kind: 'player', id: source.rosterPlayerIds[0] }, type: 'opportunity', entityRefs: expect.arrayContaining([expect.objectContaining({ kind: 'coach', id: base.userCoachId })]) })]))
   })
 
   it('uses deterministic AI ranking while leaving a user offer pending', () => {
