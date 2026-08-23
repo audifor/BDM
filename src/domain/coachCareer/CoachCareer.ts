@@ -34,7 +34,7 @@ export interface CoachJobCandidacy { readonly id: CoachJobCandidacyId; readonly 
 export type CoachInterviewStatus = 'scheduled' | 'completed'
 export interface CoachInterview { readonly candidacyId: CoachJobCandidacyId; readonly status: CoachInterviewStatus }
 export type CoachJobOfferStatus = 'pending' | 'accepted' | 'declined' | 'withdrawn'
-export interface CoachJobOffer { readonly id: CoachJobOfferId; readonly jobOpeningId: CoachJobOpeningId; readonly coachId: CoachId; readonly teamId: TeamId; readonly createdOn: GameDate; readonly status: CoachJobOfferStatus }
+export interface CoachJobOffer { readonly id: CoachJobOfferId; readonly jobOpeningId: CoachJobOpeningId; readonly coachId: CoachId; readonly teamId: TeamId; readonly annualSalary?: number; readonly createdOn: GameDate; readonly status: CoachJobOfferStatus }
 export type CoachFiringReason = 'performance'
 export interface CoachFiringDecision { readonly coachId: CoachId; readonly teamId: TeamId; readonly date: GameDate; readonly reason: CoachFiringReason }
 

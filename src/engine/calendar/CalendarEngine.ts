@@ -8,13 +8,14 @@ import { progressAiAcademicSupport, resolveAcademicTerm } from '@/engine/academi
 import { progressAiNil, progressNilLifecycle } from '@/engine/nil'
 import { progressAiBoosters } from '@/engine/boosters'
 import { progressEnforcement } from '@/engine/enforcement'
+import { processCoachFinancesForMonth } from '@/engine/coachFinances'
 
 /** Advances only the simulation date, leaving game resolution to other services. */
 export function advanceDay(world: GameWorld): GameWorld {
   const advanced = updateGameWorld(world, { currentDate: addDays(world.currentDate, 1) })
   const maintained = progressAcademicTerms(progressRecruiting(executeEligibleTraining(reconcileExpiredPlayerContracts(recoverCareerFatigueForDay(advanced), advanced.currentDate))))
   const withNil = maintained.currentDate.slice(-2) === '01' ? progressAiNil(progressNilLifecycle(maintained)) : progressNilLifecycle(maintained)
-  const withBoosters = withNil.currentDate.slice(-2) === '01' ? progressAiBoosters(withNil) : withNil
+  const withBoosters = withNil.currentDate.slice(-2) === '01' ? processCoachFinancesForMonth(progressAiBoosters(withNil)) : withNil
   const enforced = progressEnforcement(withBoosters)
   return Object.values(enforced.draftsById).reduce((current, draft) => {
     const opened = openDraft(current, draft.id)

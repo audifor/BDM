@@ -33,6 +33,7 @@ import type { PlayerKnowledgeId } from '@/domain/ids'
 import { createStaffPerson, createTeamStaffAssignment, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
 import type { StaffPersonId, TeamStaffAssignmentId } from '@/domain/ids'
 import { createCoachRpgProfile, type CoachRpgProfile } from '@/domain/coachRpg'
+import { createCoachFinanceProfile, type CoachFinanceProfile } from '@/domain/coachFinances'
 import { createCoachReputationProfile, createDefaultCoachReputationProfile, type CoachReputationProfile } from '@/domain/coachReputation'
 import { createCoachEmployment, createCoachJobOpening, type CoachCareerHistoryEntry, type CoachEmployment, type CoachInterview, type CoachJobCandidacy, type CoachJobCandidacyId, type CoachJobOffer, type CoachJobOfferId, type CoachJobOpening, type CoachJobOpeningId } from '@/domain/coachCareer'
 import { createStaffProfessionalProfile, type StaffProfessionalProfile } from '@/domain/staff'
@@ -83,6 +84,7 @@ export interface GameWorld {
   readonly teamStaffAssignmentsById: Readonly<Record<TeamStaffAssignmentId, TeamStaffAssignment>>
   readonly coachProfessionalProfilesByCoachId: Readonly<Record<CoachId, StaffProfessionalProfile>>
   readonly coachRpgProfilesByCoachId: Readonly<Record<CoachId, CoachRpgProfile>>
+  readonly coachFinancesByCoachId: Readonly<Record<CoachId, CoachFinanceProfile>>
   readonly coachReputationProfilesByCoachId: Readonly<Record<CoachId, CoachReputationProfile>>
   readonly coachEmploymentByCoachId: Readonly<Record<CoachId, CoachEmployment>>
   readonly coachCareerHistoryByCoachId: Readonly<Record<CoachId, readonly CoachCareerHistoryEntry[]>>
@@ -170,6 +172,7 @@ export interface CreateGameWorldInput {
   teamStaffAssignments?: readonly TeamStaffAssignment[]
   coachProfessionalProfilesByCoachId?: Readonly<Record<CoachId, StaffProfessionalProfile>>
   coachRpgProfilesByCoachId?: Readonly<Record<CoachId, CoachRpgProfile>>
+  coachFinancesByCoachId?: Readonly<Record<CoachId, CoachFinanceProfile>>
   coachReputationProfilesByCoachId?: Readonly<Record<CoachId, CoachReputationProfile>>
   coachEmploymentByCoachId?: Readonly<Record<CoachId, CoachEmployment>>
   coachCareerHistoryByCoachId?: Readonly<Record<CoachId, readonly CoachCareerHistoryEntry[]>>
@@ -289,6 +292,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     teamStaffAssignmentsById: indexById(input.teamStaffAssignments ?? [], 'Staff assignment'),
     coachProfessionalProfilesByCoachId: input.coachProfessionalProfilesByCoachId ?? {},
     coachRpgProfilesByCoachId: input.coachRpgProfilesByCoachId ?? {},
+    coachFinancesByCoachId: coachFinancesForCoaches(input.coaches, input.coachFinancesByCoachId),
     coachReputationProfilesByCoachId: coachReputationProfilesForCoaches(input.coaches, input.coachReputationProfilesByCoachId),
     coachEmploymentByCoachId: employment.byCoachId,
     coachCareerHistoryByCoachId: employment.historyByCoachId,
@@ -503,6 +507,7 @@ function validateWorld(world: GameWorld): void {
   const assignedStaff = new Set<StaffPersonId>(); for (const person of Object.values(world.staffPeopleById)) createStaffPerson(person); for (const assignment of Object.values(world.teamStaffAssignmentsById)) { createTeamStaffAssignment(assignment); requireEntity(world.staffPeopleById, assignment.staffPersonId, 'Staff assignment person'); requireEntity(world.teams, assignment.teamId, 'Staff assignment team'); if (assignedStaff.has(assignment.staffPersonId)) throw new GameWorldValidationError('Staff person has multiple active assignments'); assignedStaff.add(assignment.staffPersonId) }
   for (const [coachId, profile] of Object.entries(world.coachProfessionalProfilesByCoachId) as [CoachId, StaffProfessionalProfile][]) { requireEntity(world.coaches, coachId, 'Coach professional profile'); createStaffProfessionalProfile(profile) }
   for (const [coachId, profile] of Object.entries(world.coachRpgProfilesByCoachId) as [CoachId, CoachRpgProfile][]) { requireEntity(world.coaches, coachId, 'Coach RPG profile'); createCoachRpgProfile(profile) }
+  for (const [coachId, profile] of Object.entries(world.coachFinancesByCoachId) as [CoachId, CoachFinanceProfile][]) { requireEntity(world.coaches, coachId, 'Coach finance profile'); createCoachFinanceProfile(profile) }
   for (const [coachId, profile] of Object.entries(world.coachReputationProfilesByCoachId) as [CoachId, CoachReputationProfile][]) { requireEntity(world.coaches, coachId, 'Coach reputation profile'); createCoachReputationProfile(profile) }
   for (const [key, profile] of Object.entries(world.relationshipsByKey)) {
     validateRelationshipProfile(profile)
@@ -660,6 +665,9 @@ function coachReputationProfilesForCoaches(coaches: readonly Coach[], supplied: 
   for (const coach of coaches) profiles[coach.id] = supplied?.[coach.id] === undefined ? createDefaultCoachReputationProfile() : createCoachReputationProfile(supplied[coach.id])
   if (supplied !== undefined) for (const coachId of Object.keys(supplied) as CoachId[]) if (!coaches.some((coach) => coach.id === coachId)) throw new GameWorldValidationError(`Coach reputation profile references missing ID ${coachId}`)
   return Object.freeze(profiles)
+}
+function coachFinancesForCoaches(coaches: readonly Coach[], supplied: Readonly<Record<CoachId, CoachFinanceProfile>> | undefined): Readonly<Record<CoachId, CoachFinanceProfile>> {
+  return Object.fromEntries(coaches.map((coach) => [coach.id, createCoachFinanceProfile(supplied?.[coach.id] ?? { coachId: coach.id })])) as Readonly<Record<CoachId, CoachFinanceProfile>>
 }
 
 function coachCareerForCoaches(coaches: readonly Coach[], teams: readonly Team[], currentDate: GameDate, suppliedEmployment: Readonly<Record<CoachId, CoachEmployment>> | undefined, suppliedHistory: Readonly<Record<CoachId, readonly CoachCareerHistoryEntry[]>> | undefined): { readonly byCoachId: Readonly<Record<CoachId, CoachEmployment>>; readonly historyByCoachId: Readonly<Record<CoachId, readonly CoachCareerHistoryEntry[]>> } {

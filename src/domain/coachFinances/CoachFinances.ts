@@ -1,0 +1,32 @@
+import type { GameDate } from '@/domain/date'
+import type { CoachId } from '@/domain/ids'
+
+export type Lifestyle = 'modest' | 'comfortable' | 'premium' | 'luxury' | 'elite'
+export type CoachAssetKind = 'property' | 'business' | 'holding' | 'legacyProject'
+export type CoachExternalIncomeKind = 'sponsorship' | 'business' | 'investment' | 'other'
+export type FinanceMovementType = 'salary' | 'expense' | 'investmentReturn' | 'investmentLoss' | 'investmentPurchase' | 'investmentLiquidation' | 'debtPayment' | 'severance' | 'sponsorship' | 'businessIncome' | 'otherIncome'
+export interface CoachFinanceMovement { readonly id: string; readonly date: GameDate; readonly type: FinanceMovementType; readonly amount: number; readonly description: string; readonly relatedEntityId?: string }
+export interface CoachInvestment { readonly id: string; readonly name: string; readonly principal: number; readonly value: number; readonly monthlyReturnRate: number; readonly risk: number; readonly liquidity: 'high' | 'medium' | 'low'; readonly status: 'active' | 'liquidated' }
+export interface CoachDebt { readonly id: string; readonly name: string; readonly principalRemaining: number; readonly monthlyPayment: number; readonly interestRate: number; readonly status: 'active' | 'paid' }
+/** A light asset model for properties, businesses, holdings and legacy projects. */
+export interface CoachAsset { readonly id: string; readonly kind: CoachAssetKind; readonly name: string; readonly marketValue: number; readonly monthlyCost: number; readonly liquidity: 'high' | 'medium' | 'low'; readonly status: 'active' | 'disposed' }
+/** Generic recurring non-salary income; sponsorships and businesses remain distinct without a parallel contract system. */
+export interface CoachExternalIncome { readonly id: string; readonly kind: CoachExternalIncomeKind; readonly name: string; readonly monthlyGrossAmount: number; readonly status: 'active' | 'expired' | 'cancelled'; readonly endsOn?: GameDate; readonly relatedEntityId?: string }
+export interface CoachFinanceProfile { readonly coachId: CoachId; readonly cash: number; readonly lifestyle: Lifestyle; readonly annualSalary: number; readonly incomeTaxRate: number; readonly investments: readonly CoachInvestment[]; readonly assets: readonly CoachAsset[]; readonly externalIncomes: readonly CoachExternalIncome[]; readonly debts: readonly CoachDebt[]; readonly movements: readonly CoachFinanceMovement[]; readonly processedMonths: readonly string[] }
+
+export const LIFESTYLE_MONTHLY_COST: Readonly<Record<Lifestyle, number>> = { modest: 1200, comfortable: 2600, premium: 5000, luxury: 9000, elite: 16000 }
+export function createCoachFinanceProfile(input: Partial<CoachFinanceProfile> & Pick<CoachFinanceProfile, 'coachId'>): CoachFinanceProfile {
+  const profile: CoachFinanceProfile = { coachId: input.coachId, cash: input.cash ?? 25_000, lifestyle: input.lifestyle ?? 'comfortable', annualSalary: input.annualSalary ?? 72_000, incomeTaxRate: input.incomeTaxRate ?? .25, investments: input.investments ?? [], assets: input.assets ?? [], externalIncomes: input.externalIncomes ?? [], debts: input.debts ?? [], movements: input.movements ?? [], processedMonths: input.processedMonths ?? [] }
+  if (!Number.isFinite(profile.cash) || !Number.isFinite(profile.annualSalary) || profile.annualSalary < 0 || !Number.isFinite(profile.incomeTaxRate) || profile.incomeTaxRate < 0 || profile.incomeTaxRate >= 1 || !LIFESTYLE_MONTHLY_COST[profile.lifestyle]) throw new RangeError('Invalid coach finance profile')
+  for (const item of profile.investments) if (item.principal < 0 || item.value < 0 || item.risk < 0 || item.risk > 1 || !Number.isFinite(item.monthlyReturnRate)) throw new RangeError('Invalid coach investment')
+  for (const item of profile.debts) if (item.principalRemaining < 0 || item.monthlyPayment < 0 || item.interestRate < 0) throw new RangeError('Invalid coach debt')
+  for (const item of profile.assets) if (item.marketValue < 0 || item.monthlyCost < 0) throw new RangeError('Invalid coach asset')
+  for (const item of profile.externalIncomes) if (item.monthlyGrossAmount < 0) throw new RangeError('Invalid external coach income')
+  const ids = [...profile.investments, ...profile.assets, ...profile.externalIncomes, ...profile.debts, ...profile.movements].map((item) => item.id)
+  if (new Set(ids).size !== ids.length || new Set(profile.processedMonths).size !== profile.processedMonths.length) throw new RangeError('Coach finance IDs must be unique')
+  return { ...profile, investments: [...profile.investments], assets: [...profile.assets], externalIncomes: [...profile.externalIncomes], debts: [...profile.debts], movements: [...profile.movements], processedMonths: [...profile.processedMonths] }
+}
+export function getCoachNetWorth(profile: CoachFinanceProfile): number { return profile.cash + profile.investments.filter((item) => item.status === 'active').reduce((sum, item) => sum + item.value, 0) + profile.assets.filter((item) => item.status === 'active').reduce((sum, item) => sum + item.marketValue, 0) - profile.debts.filter((item) => item.status === 'active').reduce((sum, item) => sum + item.principalRemaining, 0) }
+export function getCoachMonthlyExpenses(profile: CoachFinanceProfile): number { return LIFESTYLE_MONTHLY_COST[profile.lifestyle] + profile.assets.filter((item) => item.status === 'active').reduce((sum, item) => sum + item.monthlyCost, 0) + profile.debts.filter((item) => item.status === 'active').reduce((sum, item) => sum + item.monthlyPayment, 0) }
+export function getCoachMonthlyExternalIncome(profile: CoachFinanceProfile): number { return profile.externalIncomes.filter((item) => item.status === 'active').reduce((sum, item) => sum + item.monthlyGrossAmount * (1 - profile.incomeTaxRate), 0) }
+export function getCoachFinancialSecurity(profile: CoachFinanceProfile): 'vulnerable' | 'stable' | 'comfortable' | 'independent' { const runway = profile.cash / Math.max(1, getCoachMonthlyExpenses(profile) - getCoachMonthlyExternalIncome(profile)); const worth = getCoachNetWorth(profile); return runway >= 36 && worth >= 1_000_000 ? 'independent' : runway >= 12 || worth >= 300_000 ? 'comfortable' : runway >= 3 ? 'stable' : 'vulnerable' }

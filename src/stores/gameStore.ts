@@ -35,6 +35,8 @@ import { addRecruitingBoardEntry, makeRecruitingOffer, performRecruitingAction, 
 import type { Priority } from '@/domain/recruiting'
 import { acceptNilOpportunity } from '@/engine/nil'
 import { requestBoosterSupport } from '@/engine/boosters'
+import { setCoachLifestyle } from '@/engine/coachFinances'
+import type { Lifestyle } from '@/domain/coachFinances'
 
 interface GameStore {
   readonly world: GameWorld | null
@@ -70,6 +72,7 @@ interface GameStore {
   makeRecruitingOffer(cycleId: string, recruitId: string): string | null
   acceptNilOpportunity(opportunityId: string): void
   requestBoosterSupport(boosterId: string): void
+  setUserCoachLifestyle(lifestyle: Lifestyle): void
   executeEntityAction(result: CommandResult): EntityActionExecution
   getActiveMatchSession(): LiveMatchController | null
   replaceWorld(world: GameWorld): void
@@ -135,6 +138,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   makeRecruitingOffer: (cycleId, recruitId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = makeRecruitingOffer(world, cycleId, recruitId, team.id); if (result.ok) { set({ world: result.value }); return null } return result.reason },
   acceptNilOpportunity: (opportunityId) => { const result = acceptNilOpportunity(requireWorld(get().world), opportunityId); if (result.ok) set({ world: result.value }) },
   requestBoosterSupport: (boosterId) => { const result=requestBoosterSupport(requireWorld(get().world),boosterId);if(result.ok)set({world:result.value}) },
+  setUserCoachLifestyle: (lifestyle) => set({ world: setCoachLifestyle(requireWorld(get().world), requireWorld(get().world).userCoachId, lifestyle) }),
   executeEntityAction: (result) => {
     const world = requireWorld(get().world); const outcome = executeEntityActionResult(world, result, { controlledTeamId: getUserTeam(world)?.id, activeMatchSession: liveController ?? undefined })
     if (outcome.kind === 'executed') set({ world: outcome.world })

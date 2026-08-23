@@ -21,6 +21,7 @@ import { calculateHeadCoachProfessionalProficiency, type CoachRpgProfile } from 
 import type { StaffProfessionalProfile } from '@/domain/staff'
 import type { CoachReputationProfile } from '@/domain/coachReputation'
 import type { CoachCareerHistoryEntry, CoachEmployment } from '@/domain/coachCareer'
+import { getCoachFinancialSecurity, getCoachNetWorth, type CoachFinanceProfile } from '@/domain/coachFinances'
 
 import { GameWorldValidationError, type GameWorld } from './GameWorld'
 import { getRelationshipBand, relationshipKey, type RelationshipPersonId } from '@/domain/relationships'
@@ -83,6 +84,9 @@ export function getCoachCareerHistory(world: GameWorld, coachId: CoachId): reado
 export function getUserCoachProfessionalProfile(world: GameWorld): StaffProfessionalProfile | undefined { return getCoachProfessionalProfile(world, world.userCoachId) }
 export function getUserCoachRpgProfile(world: GameWorld): CoachRpgProfile | undefined { return getCoachRpgProfile(world, world.userCoachId) }
 export function getUserCoachReputationProfile(world: GameWorld): CoachReputationProfile | undefined { return getCoachReputationProfile(world, world.userCoachId) }
+export function getCoachFinanceProfile(world: GameWorld, coachId: CoachId): CoachFinanceProfile | undefined { return world.coachFinancesByCoachId[coachId] }
+export function getUserCoachFinanceProfile(world: GameWorld): CoachFinanceProfile | undefined { return getCoachFinanceProfile(world, world.userCoachId) }
+export function getUserCoachFinancialSummary(world: GameWorld) { const profile = getUserCoachFinanceProfile(world); return profile === undefined ? undefined : { profile, netWorth: getCoachNetWorth(profile), security: getCoachFinancialSecurity(profile) } }
 export function getCoachProfessionalProficiency(world: GameWorld, coachId: CoachId): number | undefined { const profile=getCoachProfessionalProfile(world, coachId); return profile===undefined?undefined:calculateHeadCoachProfessionalProficiency(profile) }
 export function getRelationshipValue(world: GameWorld, sourceId: RelationshipPersonId, targetId: RelationshipPersonId): number { return world.relationshipsByKey[relationshipKey(sourceId, targetId)]?.value ?? 0 }
 export function getRelationshipBandForPeople(world: GameWorld, sourceId: RelationshipPersonId, targetId: RelationshipPersonId) { return getRelationshipBand(getRelationshipValue(world, sourceId, targetId)) }

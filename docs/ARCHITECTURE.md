@@ -1001,3 +1001,9 @@ move across men's and women's ecosystems under the existing career rules.
 ## Global coach job market
 
 Coach Career is the single authority for global head-coach employment transitions. Vacancies carry canonical ecosystem and sports-category context; eligibility and deterministic candidate fit are distinct, and User and AI Coaches use the same candidacy, offer and employment lifecycle. CoachId, reputation, relationships and career history persist through cross-ecosystem/category moves. GameWorld owns time; there is no global offseason.
+
+## Coach finances v1
+
+`GameWorld.coachFinancesByCoachId` is the canonical personal-economy state. It stores cash, lifestyle, an abstract tax rate, investments, debts, durable assets and recurring external income, plus material movements; net worth, monthly expenses, net external income and financial-security bands are derived in the Coach Finances domain. Assets support properties, businesses, holdings and future legacy projects, while recurring income distinguishes sponsorships, businesses, investments and other sources without duplicating the contract system.
+
+The Calendar Engine processes it on the first day of each month, recording net salary, net external income and aggregated costs exactly once per `YYYY-MM` checkpoint. Investment valuation uses a deterministic stream keyed by coach, investment and month; debt amortization is canonical. Finance mutations pass through the Coach Finances engine, and old saves receive deterministic neutral profiles without invented historical movements. The personal-finance desktop app is a read/query surface plus lifestyle decision boundary; it never owns financial state. Detailed property management, negotiation agents, country-specific tax codes, family events, foundations and commercial opportunity generation are future extensions of this model.
