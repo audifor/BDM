@@ -4,6 +4,7 @@ export type {
   CreateGameInput,
   Game,
   GameResult,
+  GameStakes,
   GameStatus,
   ScheduledGame,
 } from './Game'

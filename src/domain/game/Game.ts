@@ -4,6 +4,8 @@ import { requireNonEmptyString } from '@/domain/validation'
 
 export type GameStatus = 'scheduled' | 'completed'
 export type GameClassification = 'conference' | 'nonConference'
+/** Canonical competitive stakes. Schedulers default to regular until a format supplies a higher phase. */
+export type GameStakes = 'regular' | 'important' | 'elimination' | 'final'
 
 export interface GameResult {
   readonly homeScore: number
@@ -18,6 +20,7 @@ interface GameBase {
   readonly homeTeamId: TeamId
   readonly awayTeamId: TeamId
   readonly classification?: GameClassification
+  readonly stakes: GameStakes
 }
 
 export interface ScheduledGame extends GameBase {
@@ -42,6 +45,7 @@ export interface CreateGameInput {
   status: GameStatus
   result: GameResult | null
   classification?: GameClassification
+  stakes?: GameStakes
 }
 
 export function createGame(input: CreateGameInput): Game {
@@ -60,7 +64,11 @@ export function createGame(input: CreateGameInput): Game {
     homeTeamId,
     awayTeamId,
     ...(input.classification === undefined ? {} : { classification: input.classification === 'conference' || input.classification === 'nonConference' ? input.classification : (() => { throw new TypeError('Game classification is invalid') })() }),
+    stakes: input.stakes ?? 'regular',
   }
+
+  if (!['regular', 'important', 'elimination', 'final'].includes(base.stakes)) throw new TypeError('Game stakes are invalid')
+
 
   if (input.status === 'scheduled') {
     if (input.result !== null) {

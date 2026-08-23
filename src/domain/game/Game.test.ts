@@ -25,6 +25,7 @@ describe('Game', () => {
       ...input,
       status: 'scheduled',
       result: null,
+      stakes: 'regular',
     })
   })
 
@@ -40,7 +41,12 @@ describe('Game', () => {
       ...input,
       status: 'completed',
       result: { homeScore: 82, awayScore: 79 },
+      stakes: 'regular',
     })
+  })
+
+  it('preserves explicit canonical competitive stakes', () => {
+    expect(createGame({ ...input, status: 'scheduled', result: null, stakes: 'elimination' }).stakes).toBe('elimination')
   })
 
   it('rejects invalid teams and scores', () => {
