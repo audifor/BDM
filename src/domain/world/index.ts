@@ -53,6 +53,7 @@ export {
   getCoachFinanceProfile,
   getUserCoachFinanceProfile,
   getUserCoachFinancialSummary,
+  getCoachFinancialPositionForCareer,
   getCoachProfessionalProficiency,
   getRelationshipValue,
   getRelationshipBandForPeople,
@@ -72,4 +73,7 @@ export {
   getMemoriesForEntity,
   getMemoriesBetweenEntities,
   getImportantMemories,
+  getRecentMemoriesForEntity,
+  getCurrentlyRelevantMemoriesForEntity,
+  getMemoryReinforcementForEntities,
 } from './queries'

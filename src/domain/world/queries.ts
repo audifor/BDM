@@ -21,14 +21,14 @@ import { calculateHeadCoachProfessionalProficiency, type CoachRpgProfile } from 
 import type { StaffProfessionalProfile } from '@/domain/staff'
 import type { CoachReputationProfile } from '@/domain/coachReputation'
 import type { CoachCareerHistoryEntry, CoachEmployment } from '@/domain/coachCareer'
-import { getCoachFinancialSecurity, getCoachNetWorth, type CoachFinanceProfile } from '@/domain/coachFinances'
+import { getCoachFinancialPosition, type CoachFinanceProfile } from '@/domain/coachFinances'
 
 import { GameWorldValidationError, type GameWorld } from './GameWorld'
 import { getRelationshipBand, relationshipKey, type RelationshipPersonId } from '@/domain/relationships'
 import { getMoraleBand, getRecentMoraleEvents } from '@/domain/morale'
 import type { InboxItem, NewsItem } from '@/domain/inbox'
 import { createDefaultTrainingPlan, type TeamTrainingPlan, type TrainingSession } from '@/domain/training'
-import { getMemoriesBetween, queryMemories, type MemoryQuery } from '@/domain/memory'
+import { getCurrentlyRelevantMemories, getMemoriesBetween, getMemoryReinforcement, getRecentMemories, queryMemories, type MemoryQuery } from '@/domain/memory'
 
 export function getCountry(world: GameWorld, id: CountryId): Country {
   return getEntity(world.countries, id, 'Country')
@@ -87,7 +87,8 @@ export function getUserCoachRpgProfile(world: GameWorld): CoachRpgProfile | unde
 export function getUserCoachReputationProfile(world: GameWorld): CoachReputationProfile | undefined { return getCoachReputationProfile(world, world.userCoachId) }
 export function getCoachFinanceProfile(world: GameWorld, coachId: CoachId): CoachFinanceProfile | undefined { return world.coachFinancesByCoachId[coachId] }
 export function getUserCoachFinanceProfile(world: GameWorld): CoachFinanceProfile | undefined { return getCoachFinanceProfile(world, world.userCoachId) }
-export function getUserCoachFinancialSummary(world: GameWorld) { const profile = getUserCoachFinanceProfile(world); return profile === undefined ? undefined : { profile, netWorth: getCoachNetWorth(profile), security: getCoachFinancialSecurity(profile) } }
+export function getCoachFinancialPositionForCareer(world: GameWorld, coachId: CoachId) { const profile = getCoachFinanceProfile(world, coachId); return profile === undefined ? undefined : getCoachFinancialPosition(profile) }
+export function getUserCoachFinancialSummary(world: GameWorld) { const profile = getUserCoachFinanceProfile(world); return profile === undefined ? undefined : { profile, ...getCoachFinancialPosition(profile) } }
 export function getCoachProfessionalProficiency(world: GameWorld, coachId: CoachId): number | undefined { const profile=getCoachProfessionalProfile(world, coachId); return profile===undefined?undefined:calculateHeadCoachProfessionalProficiency(profile) }
 export function getRelationshipValue(world: GameWorld, sourceId: RelationshipPersonId, targetId: RelationshipPersonId): number { return world.relationshipsByKey[relationshipKey(sourceId, targetId)]?.value ?? 0 }
 export function getRelationshipBandForPeople(world: GameWorld, sourceId: RelationshipPersonId, targetId: RelationshipPersonId) { return getRelationshipBand(getRelationshipValue(world, sourceId, targetId)) }
@@ -107,6 +108,9 @@ export function getCareerFatigueForPlayer(world: GameWorld, playerId: PlayerId):
 export function getMemoriesForEntity(world: GameWorld, entityId: string, query: Omit<MemoryQuery, 'ownerId'> = {}) { return queryMemories(Object.values(world.memoriesById), { ...query, ownerId: entityId }) }
 export function getMemoriesBetweenEntities(world: GameWorld, firstId: string, secondId: string) { return getMemoriesBetween(Object.values(world.memoriesById), firstId, secondId) }
 export function getImportantMemories(world: GameWorld, query: MemoryQuery = {}) { return queryMemories(Object.values(world.memoriesById), { minimumImportance: 'important', ...query }) }
+export function getRecentMemoriesForEntity(world: GameWorld, entityId: string, limit = 10) { return getRecentMemories(getMemoriesForEntity(world, entityId), limit) }
+export function getCurrentlyRelevantMemoriesForEntity(world: GameWorld, entityId: string, limit = 10) { return getCurrentlyRelevantMemories(getMemoriesForEntity(world, entityId), world.currentDate, limit) }
+export function getMemoryReinforcementForEntities(world: GameWorld, ownerId: string, relatedEntityId: string) { return getMemoryReinforcement(Object.values(world.memoriesById), ownerId, relatedEntityId) }
 
 export function getTeamRoster(world: GameWorld, teamId: TeamId): readonly Player[] {
   return getTeam(world, teamId).rosterPlayerIds.map((playerId) => getPlayer(world, playerId))
