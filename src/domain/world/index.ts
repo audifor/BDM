@@ -69,4 +69,7 @@ export {
   getLatestTrainingSession,
   getDevelopmentStimulusForPlayer,
   getCareerFatigueForPlayer,
+  getMemoriesForEntity,
+  getMemoriesBetweenEntities,
+  getImportantMemories,
 } from './queries'

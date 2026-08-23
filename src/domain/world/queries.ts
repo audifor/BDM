@@ -28,6 +28,7 @@ import { getRelationshipBand, relationshipKey, type RelationshipPersonId } from 
 import { getMoraleBand, getRecentMoraleEvents } from '@/domain/morale'
 import type { InboxItem, NewsItem } from '@/domain/inbox'
 import { createDefaultTrainingPlan, type TeamTrainingPlan, type TrainingSession } from '@/domain/training'
+import { getMemoriesBetween, queryMemories, type MemoryQuery } from '@/domain/memory'
 
 export function getCountry(world: GameWorld, id: CountryId): Country {
   return getEntity(world.countries, id, 'Country')
@@ -103,6 +104,9 @@ export function getTrainingSessionsForTeam(world: GameWorld, teamId: TeamId): re
 export function getLatestTrainingSession(world: GameWorld, teamId: TeamId): TrainingSession | undefined { return getTrainingSessionsForTeam(world, teamId)[0] }
 export function getDevelopmentStimulusForPlayer(world: GameWorld, playerId: PlayerId) { return world.developmentStimulusByPlayerId[playerId] }
 export function getCareerFatigueForPlayer(world: GameWorld, playerId: PlayerId): number { return world.careerFatigueByPlayerId[playerId] ?? 0 }
+export function getMemoriesForEntity(world: GameWorld, entityId: string, query: Omit<MemoryQuery, 'ownerId'> = {}) { return queryMemories(Object.values(world.memoriesById), { ...query, ownerId: entityId }) }
+export function getMemoriesBetweenEntities(world: GameWorld, firstId: string, secondId: string) { return getMemoriesBetween(Object.values(world.memoriesById), firstId, secondId) }
+export function getImportantMemories(world: GameWorld, query: MemoryQuery = {}) { return queryMemories(Object.values(world.memoriesById), { minimumImportance: 'important', ...query }) }
 
 export function getTeamRoster(world: GameWorld, teamId: TeamId): readonly Player[] {
   return getTeam(world, teamId).rosterPlayerIds.map((playerId) => getPlayer(world, playerId))

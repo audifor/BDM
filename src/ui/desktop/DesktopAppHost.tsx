@@ -6,7 +6,7 @@ import type { Priority } from '@/domain/recruiting'
 import type { Lifestyle } from '@/domain/coachFinances'
 import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
 import { getCareerFatigueForPlayer, getTeamRoster, isPlayerAvailable } from '@/domain/world'
-import { BoostersScreen, CoachFinancesScreen, CoachScreen, DraftScreen, EnforcementScreen, MarketScreen, NilScreen, RecruitingScreen, SalaryScreen, ScheduleScreen, SquadScreen, StaffScreen, StandingsScreen, TacticsScreen, TradeCenterScreen, TrainingScreen } from '@/ui/screens'
+import { BoostersScreen, CoachFinancesScreen, CoachScreen, DraftScreen, EnforcementScreen, MarketScreen, MemoryScreen, NilScreen, RecruitingScreen, SalaryScreen, ScheduleScreen, SquadScreen, StaffScreen, StandingsScreen, TacticsScreen, TradeCenterScreen, TrainingScreen } from '@/ui/screens'
 import { getDesktopApp } from './DesktopAppRegistry'
 import { EntityPageApp } from '@/ui/navigation/EntityPageApp'
 import type { EntityDestination } from '@/ui/navigation/entityNavigation'
@@ -25,6 +25,7 @@ export function DesktopAppHost({ appId, world, actions }: { readonly appId: stri
   if (key === 'draft') return <DraftScreen world={world} onSelectProspect={actions.selectDraftProspect} />
   if (key === 'finances') return <SalaryScreen world={world} />
   if (key === 'coach-finances') return <CoachFinancesScreen world={world} onLifestyle={actions.setCoachLifestyle ?? (() => undefined)} />
+  if (key === 'memories') return <MemoryScreen world={world} />
   if (key === 'trades') return <TradeCenterScreen world={world} onExecute={(proposal) => actions.executeTrade?.(proposal)} />
   if (key === 'recruiting') return <RecruitingScreen world={world} onAddTarget={actions.addRecruitingTarget ?? (() => undefined)} onRemoveTarget={actions.removeRecruitingTarget ?? (() => undefined)} onAction={actions.performRecruitingAction ?? (() => 'NO_CONTROLLED_PROGRAM')} onOffer={actions.makeRecruitingOffer ?? (() => 'NO_CONTROLLED_PROGRAM')} />
   if (key === 'nil') return <NilScreen world={world} onAccept={actions.acceptNilOpportunity ?? (() => undefined)} />

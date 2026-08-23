@@ -6,6 +6,7 @@ import { calculateStandings } from '@/engine/competition/standings'
 import { applySeasonChampionCoachReputation } from '@/engine/coach'
 import { resolvePromotionRelegation } from '@/engine/competition'
 import { resolveEligibilitySeason } from '@/engine/eligibility'
+import { recordChampionMemories } from '@/engine/memory'
 
 export function isSeasonComplete(world: GameWorld, seasonId: keyof GameWorld['seasons']): boolean {
   const season = world.seasons[seasonId]
@@ -33,7 +34,8 @@ export function finalizeSeason(world: GameWorld, seasonId: keyof GameWorld['seas
   const history: SeasonHistoryRecord = { seasonId, competitionId: season.competitionId, completedOn, championTeamId: champion.teamId, finalStandings: standings.map((line) => ({ ...line })) }
   const finalized=resolveEligibilitySeason(applySeasonChampionCoachReputation(rebuildWorld(world, [...Object.values(world.seasonHistoryBySeasonId), history]), seasonId), seasonId)
   const team=finalized.teams[champion.teamId]!, competition=finalized.competitions[season.competitionId]!
-  const withNews = addNewsItem(finalized,{id:`news:champion:${seasonId}:${team.id}`,gameDate:completedOn,category:'competition',headline:`${team.name} win ${competition.name}`,body:`${team.name} are champions of ${season.label}.`,context:{seasonId,competitionId:competition.id,teamId:team.id}})
+  const remembered = recordChampionMemories(finalized, { seasonId, competitionId: competition.id, teamId: team.id, coachId: team.coachId, occurredOn: completedOn })
+  const withNews = addNewsItem(remembered,{id:`news:champion:${seasonId}:${team.id}`,gameDate:completedOn,category:'competition',headline:`${team.name} win ${competition.name}`,body:`${team.name} are champions of ${season.label}.`,context:{seasonId,competitionId:competition.id,teamId:team.id}})
   const rule = Object.values(withNews.ecosystems).flatMap((ecosystem) => ecosystem.tierMovementRules).find((item) => item.upperCompetitionId === season.competitionId || item.lowerCompetitionId === season.competitionId)
   if (rule === undefined) return withNews
   const otherCompetitionId = rule.upperCompetitionId === season.competitionId ? rule.lowerCompetitionId : rule.upperCompetitionId
