@@ -76,4 +76,8 @@ export {
   getRecentMemoriesForEntity,
   getCurrentlyRelevantMemoriesForEntity,
   getMemoryReinforcementForEntities,
+  getCoachActiveNarratives,
+  getNarrativesBetweenEntities,
+  getMatchNarrativeContext,
+  getTopNarratives,
 } from './queries'

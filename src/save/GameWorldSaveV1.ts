@@ -135,6 +135,7 @@ export interface GameWorldSaveV1 {
   readonly programCompliance?: readonly JsonRecord[]
   readonly ecosystemTransitions?: readonly JsonRecord[]
   readonly memories?: readonly JsonRecord[]
+  readonly narratives?: readonly JsonRecord[]
 }
 
 export interface SaveGameEnvelopeV1 {
@@ -199,6 +200,7 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
       enforcementRules: copyRecords(Object.values(world.enforcementRulesByEcosystemId)), violations: copyRecords(Object.values(world.violationsById)), investigations: copyRecords(Object.values(world.investigationsById)), findings: copyRecords(Object.values(world.findingsById)), sanctions: copyRecords(Object.values(world.sanctionsById)), programCompliance: copyRecords(Object.values(world.programComplianceByProgramId)),
       ecosystemTransitions: copyRecords(Object.values(world.ecosystemTransitionsById)),
       memories: copyRecords(Object.values(world.memoriesById)),
+      narratives: copyRecords(Object.values(world.narrativesById)),
     },
   }
 }
@@ -274,6 +276,7 @@ export function deserializeGameWorldV1(value: unknown): GameWorld {
     ...(payload.coachInterviews === undefined ? {} : { coachInterviewsByCandidacyId: readCoachInterviews(payload.coachInterviews) }),
     ...(payload.coachJobOffers === undefined ? {} : { coachJobOffersById: readCoachJobOffers(payload.coachJobOffers) }),
     ...(payload.memories === undefined ? {} : { memories: array(payload.memories, 'Save memories') as never }),
+    ...(payload.narratives === undefined ? {} : { narratives: array(payload.narratives, 'Save narratives') as never }),
     ...(payload.relationships === undefined ? {} : { relationshipsByKey: readRelationships(payload.relationships) }),
     ...(payload.personalities === undefined ? {} : { personalitiesByPersonId: readPersonalities(payload.personalities) }),
     ...(payload.morale === undefined ? {} : { moraleByPersonId: readMorale(payload.morale) }),

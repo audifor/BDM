@@ -29,6 +29,7 @@ import { getMoraleBand, getRecentMoraleEvents } from '@/domain/morale'
 import type { InboxItem, NewsItem } from '@/domain/inbox'
 import { createDefaultTrainingPlan, type TeamTrainingPlan, type TrainingSession } from '@/domain/training'
 import { getCurrentlyRelevantMemories, getMemoriesBetween, getMemoryReinforcement, getRecentMemories, queryMemories, type MemoryQuery } from '@/domain/memory'
+import { getNarrativeRelevance, type NarrativeThread } from '@/domain/narrative'
 
 export function getCountry(world: GameWorld, id: CountryId): Country {
   return getEntity(world.countries, id, 'Country')
@@ -111,6 +112,10 @@ export function getImportantMemories(world: GameWorld, query: MemoryQuery = {}) 
 export function getRecentMemoriesForEntity(world: GameWorld, entityId: string, limit = 10) { return getRecentMemories(getMemoriesForEntity(world, entityId), limit) }
 export function getCurrentlyRelevantMemoriesForEntity(world: GameWorld, entityId: string, limit = 10) { return getCurrentlyRelevantMemories(getMemoriesForEntity(world, entityId), world.currentDate, limit) }
 export function getMemoryReinforcementForEntities(world: GameWorld, ownerId: string, relatedEntityId: string) { return getMemoryReinforcement(Object.values(world.memoriesById), ownerId, relatedEntityId) }
+export function getCoachActiveNarratives(world: GameWorld, coachId: string): readonly NarrativeThread[] { return Object.values(world.narrativesById).filter((thread) => thread.protagonistIds.includes(coachId) && !['resolved', 'historic'].includes(thread.status)).sort((a, b) => getNarrativeRelevance(b, world.userCoachId, world.currentDate) - getNarrativeRelevance(a, world.userCoachId, world.currentDate)) }
+export function getNarrativesBetweenEntities(world: GameWorld, firstId: string, secondId: string): readonly NarrativeThread[] { return Object.values(world.narrativesById).filter((thread) => thread.protagonistIds.includes(firstId) && thread.relatedEntityIds.includes(secondId) || thread.protagonistIds.includes(secondId) && thread.relatedEntityIds.includes(firstId)) }
+export function getMatchNarrativeContext(world: GameWorld, homeTeamId: string, awayTeamId: string): readonly NarrativeThread[] { const coaches = [world.teams[homeTeamId as TeamId]?.coachId, world.teams[awayTeamId as TeamId]?.coachId].filter((id): id is CoachId => id !== undefined); return Object.values(world.narrativesById).filter((thread) => coaches.some((coachId) => thread.protagonistIds.includes(coachId)) && [homeTeamId, awayTeamId].some((teamId) => thread.relatedEntityIds.includes(teamId))).sort((a, b) => getNarrativeRelevance(b, world.userCoachId, world.currentDate) - getNarrativeRelevance(a, world.userCoachId, world.currentDate)) }
+export function getTopNarratives(world: GameWorld, limit = 10): readonly NarrativeThread[] { return Object.values(world.narrativesById).sort((a, b) => getNarrativeRelevance(b, world.userCoachId, world.currentDate) - getNarrativeRelevance(a, world.userCoachId, world.currentDate)).slice(0, limit) }
 
 export function getTeamRoster(world: GameWorld, teamId: TeamId): readonly Player[] {
   return getTeam(world, teamId).rosterPlayerIds.map((playerId) => getPlayer(world, playerId))

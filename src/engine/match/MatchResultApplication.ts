@@ -8,6 +8,7 @@ import { calculateTeamStrength } from '@/engine/team'
 import { calculateMatchPlayerStats } from './PlayerMatchStats'
 import { finalizeCompletedSeason } from '@/engine/season'
 import { recordEligibilityParticipation } from '@/engine/eligibility'
+import { processNarrativeMatch } from '@/engine/narrative'
 import type { MatchSimulation, MatchSimulationResult } from './MatchEngine'
 
 export class MatchResultApplicationError extends Error {
@@ -58,7 +59,7 @@ export function applyMatchResult(world: GameWorld, result: MatchSimulationResult
   const games = Object.values(world.games).map((game) => (game.id === completedGame.id ? completedGame : game))
 
   const resultWorld = updateGameWorld(world, { games })
-  return applyMatchMorale(applyMatchCoachExperience(world, applyMatchCoachReputationConsequences(resultWorld, completedGame), completedGame), completedGame)
+  return processNarrativeMatch(applyMatchMorale(applyMatchCoachExperience(world, applyMatchCoachReputationConsequences(resultWorld, completedGame), completedGame), completedGame), completedGame.id)
 }
 
 function applyMatchMorale(world: GameWorld, game: ReturnType<typeof createGame>): GameWorld {
