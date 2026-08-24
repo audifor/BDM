@@ -1,0 +1,7 @@
+import { getCoachMediaProfileDescriptor, getPendingMediaOpportunities, type GameWorld } from '@/domain/world'
+import type { MediaStance } from '@/domain/media'
+
+export function MediaScreen({ world, onRespond, onSkip }: { readonly world: GameWorld; readonly onRespond: (id: string, stance: MediaStance) => void; readonly onSkip: (id: string) => void }) {
+  const pending = getPendingMediaOpportunities(world, world.userCoachId); const descriptor = getCoachMediaProfileDescriptor(world, world.userCoachId)
+  return <section className="screen"><div className="page-heading"><div><p className="eyebrow">MEDIOS</p><h1>Sala de prensa</h1><p>Las preguntas nacen de los hechos y las historias de tu carrera.</p></div>{descriptor !== undefined && <span className="status-badge">Perfil: {descriptor}</span>}</div>{pending.length === 0 ? <p className="content-panel">No hay interacciones de prensa pendientes.</p> : pending.map((item) => { const question = item.questions[0]!; return <article className="content-panel" key={item.id}><p className="eyebrow">{item.type === 'preMatch' ? 'ANTES DEL PARTIDO' : 'DESPUÉS DEL PARTIDO'} · Contexto: {question.topic}</p><h2>{question.text}</h2><div className="game-actions">{item.answers.map((answer) => <button className="secondary-button" key={answer.stance} onClick={() => onRespond(item.id, answer.stance)} type="button">{answer.text}</button>)}<button className="text-button" onClick={() => onSkip(item.id)} type="button">Delegar respuesta</button></div></article> })}</section>
+}

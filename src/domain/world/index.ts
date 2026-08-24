@@ -80,4 +80,6 @@ export {
   getNarrativesBetweenEntities,
   getMatchNarrativeContext,
   getTopNarratives,
+  getPendingMediaOpportunities,
+  getCoachMediaProfileDescriptor,
 } from './queries'

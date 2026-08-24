@@ -28,6 +28,7 @@ export const NAVIGATION: readonly { readonly id: DesktopSection; readonly label:
   .filter((app): app is typeof app & { readonly section: DesktopSection } => app.section !== undefined)
   .map((app) => ({ id: app.section, label: app.label.toUpperCase() }))
 import './styles.css'
+import './desktop/desktop-art-direction.css'
 
 export function App() {
   const world = useGameStore((state) => state.world)
@@ -60,6 +61,8 @@ export function App() {
   const setTrainingIntensity = useGameStore((state) => state.setTrainingIntensity)
   const setTrainingFocus = useGameStore((state) => state.setTrainingFocus)
   const setUserCoachLifestyle = useGameStore((state) => state.setUserCoachLifestyle)
+  const respondToMedia = useGameStore((state) => state.respondToMedia)
+  const skipMedia = useGameStore((state) => state.skipMedia)
   const selectDraftProspect = useGameStore((state) => state.selectDraftProspect)
   const executeEntityAction = useGameStore((state) => state.executeEntityAction)
   const navigateEntity = useEntityNavigationStore((state) => state.navigate)
@@ -148,7 +151,7 @@ export function App() {
   const unreadInboxCount = selectUnreadInboxCount(world)
   const capabilities = resolveGameCapabilities(world)
   const activeAppId = desktopWindows.find((window) => window.id === focusedWindowId)?.appId ?? null
-  const desktopActions: DesktopAppActions = { tacticalPlan, openApp: openDesktopApp, openEntity, playGame: () => startMatch(startLiveMatch(tacticalPlan)), instantResult: () => instantResult(tacticalPlan), simulateRemainingGamesToday, advanceDay, startNextSeason, releasePlayer, signFreeAgent, selectDraftProspect, executeTrade, addRecruitingTarget, removeRecruitingTarget, performRecruitingAction, makeRecruitingOffer, acceptNilOpportunity, purchaseSkill: (id) => { const result = purchaseUserCoachSkill(id); if (!result.ok) setSaveMessage(result.reason) }, purchasePerk: (id) => { const result = purchaseUserCoachPerk(id); if (!result.ok) setSaveMessage(result.reason) }, acceptOffer: acceptUserCoachOffer, declineOffer: declineUserCoachOffer, applyForJob: applyUserCoachForJob, setTacticalPlan, resetTacticalPlan, setTrainingIntensity, setTrainingFocus, setCoachLifestyle: setUserCoachLifestyle }
+  const desktopActions: DesktopAppActions = { tacticalPlan, openApp: openDesktopApp, openEntity, playGame: () => startMatch(startLiveMatch(tacticalPlan)), instantResult: () => instantResult(tacticalPlan), simulateRemainingGamesToday, advanceDay, startNextSeason, releasePlayer, signFreeAgent, selectDraftProspect, executeTrade, addRecruitingTarget, removeRecruitingTarget, performRecruitingAction, makeRecruitingOffer, acceptNilOpportunity, purchaseSkill: (id) => { const result = purchaseUserCoachSkill(id); if (!result.ok) setSaveMessage(result.reason) }, purchasePerk: (id) => { const result = purchaseUserCoachPerk(id); if (!result.ok) setSaveMessage(result.reason) }, acceptOffer: acceptUserCoachOffer, declineOffer: declineUserCoachOffer, applyForJob: applyUserCoachForJob, setTacticalPlan, resetTacticalPlan, setTrainingIntensity, setTrainingFocus, setCoachLifestyle: setUserCoachLifestyle, respondToMedia, skipMedia }
 
   return (
     <DesktopShell

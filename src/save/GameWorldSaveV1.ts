@@ -136,6 +136,9 @@ export interface GameWorldSaveV1 {
   readonly ecosystemTransitions?: readonly JsonRecord[]
   readonly memories?: readonly JsonRecord[]
   readonly narratives?: readonly JsonRecord[]
+  readonly mediaOpportunities?: readonly JsonRecord[]
+  readonly mediaInteractions?: readonly JsonRecord[]
+  readonly mediaProfiles?: readonly JsonRecord[]
 }
 
 export interface SaveGameEnvelopeV1 {
@@ -201,6 +204,9 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
       ecosystemTransitions: copyRecords(Object.values(world.ecosystemTransitionsById)),
       memories: copyRecords(Object.values(world.memoriesById)),
       narratives: copyRecords(Object.values(world.narrativesById)),
+      mediaOpportunities: copyRecords(Object.values(world.mediaOpportunitiesById)),
+      mediaInteractions: copyRecords(Object.values(world.mediaInteractionsById)),
+      mediaProfiles: copyRecords(Object.values(world.mediaProfilesByCoachId)),
     },
   }
 }
@@ -277,6 +283,9 @@ export function deserializeGameWorldV1(value: unknown): GameWorld {
     ...(payload.coachJobOffers === undefined ? {} : { coachJobOffersById: readCoachJobOffers(payload.coachJobOffers) }),
     ...(payload.memories === undefined ? {} : { memories: array(payload.memories, 'Save memories') as never }),
     ...(payload.narratives === undefined ? {} : { narratives: array(payload.narratives, 'Save narratives') as never }),
+    ...(payload.mediaOpportunities === undefined ? {} : { mediaOpportunitiesById: indexJsonRecords(payload.mediaOpportunities, 'Save media opportunities') as never }),
+    ...(payload.mediaInteractions === undefined ? {} : { mediaInteractionsById: indexJsonRecords(payload.mediaInteractions, 'Save media interactions') as never }),
+    ...(payload.mediaProfiles === undefined ? {} : { mediaProfilesByCoachId: indexJsonRecordsByCoach(payload.mediaProfiles, 'Save media profiles') as never }),
     ...(payload.relationships === undefined ? {} : { relationshipsByKey: readRelationships(payload.relationships) }),
     ...(payload.personalities === undefined ? {} : { personalitiesByPersonId: readPersonalities(payload.personalities) }),
     ...(payload.morale === undefined ? {} : { moraleByPersonId: readMorale(payload.morale) }),
@@ -298,6 +307,8 @@ export function deserializeGameWorldV1(value: unknown): GameWorld {
 }
 
 function readCountry(value: unknown) { const v = record(value, 'Country'); return createCountry({ id: countryIdFromString(string(v.id, 'Country id')), name: string(v.name, 'Country name'), code: string(v.code, 'Country code') }) }
+function indexJsonRecords(value: unknown, name: string) { return Object.fromEntries(array(value, name).map((item) => { const entry = record(item, name); return [string(entry.id, `${name} id`), entry] })) }
+function indexJsonRecordsByCoach(value: unknown, name: string) { return Object.fromEntries(array(value, name).map((item) => { const entry = record(item, name); return [string(entry.coachId, `${name} coach`), entry] })) }
 function readCoach(value: unknown) { const v = record(value, 'Coach'); return createCoach({ id: coachIdFromString(string(v.id, 'Coach id')), firstName: string(v.firstName, 'Coach firstName'), lastName: string(v.lastName, 'Coach lastName'), gender: gender(v.gender), nationalityId: countryIdFromString(string(v.nationalityId, 'Coach nationalityId')) }) }
 function readPlayer(value: unknown, referenceDate: import('@/domain/date').GameDate, currentDate: import('@/domain/date').GameDate) {
   const v = record(value, 'Player'); const basketball = record(v.basketball, 'Player basketball'); const ratings = record(basketball.ratings, 'Player ratings')

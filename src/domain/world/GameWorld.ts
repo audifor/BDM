@@ -56,6 +56,7 @@ import type { EnforcementFinding, EnforcementRules, Investigation, ProgramCompli
 import type { EcosystemTransition } from '@/domain/career'
 import { createMemory, type MemoryRecord } from '@/domain/memory'
 import { createNarrativeThread, type NarrativeThread } from '@/domain/narrative'
+import type { MediaInteraction, MediaOpportunity, MediaProfile } from '@/domain/media'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -149,6 +150,9 @@ export interface GameWorld {
   readonly ecosystemTransitionsById: Readonly<Record<string, EcosystemTransition>>
   readonly memoriesById: Readonly<Record<string, MemoryRecord>>
   readonly narrativesById: Readonly<Record<string, NarrativeThread>>
+  readonly mediaOpportunitiesById: Readonly<Record<string, MediaOpportunity>>
+  readonly mediaInteractionsById: Readonly<Record<string, MediaInteraction>>
+  readonly mediaProfilesByCoachId: Readonly<Record<string, MediaProfile>>
 }
 
 export interface CreateGameWorldInput {
@@ -239,6 +243,9 @@ export interface CreateGameWorldInput {
   ecosystemTransitions?: readonly EcosystemTransition[]
   memories?: readonly MemoryRecord[]
   narratives?: readonly NarrativeThread[]
+  mediaOpportunitiesById?: Readonly<Record<string, MediaOpportunity>>
+  mediaInteractionsById?: Readonly<Record<string, MediaInteraction>>
+  mediaProfilesByCoachId?: Readonly<Record<string, MediaProfile>>
 }
 
 export class GameWorldValidationError extends Error {
@@ -344,6 +351,9 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     ecosystemTransitionsById:indexById(input.ecosystemTransitions??[],'Ecosystem transition'),
     memoriesById:indexById((input.memories??[]).map(createMemory),'Memory'),
     narrativesById:indexById((input.narratives??[]).map(createNarrativeThread),'Narrative'),
+    mediaOpportunitiesById: Object.freeze({ ...(input.mediaOpportunitiesById ?? {}) }),
+    mediaInteractionsById: Object.freeze({ ...(input.mediaInteractionsById ?? {}) }),
+    mediaProfilesByCoachId: Object.freeze({ ...(input.mediaProfilesByCoachId ?? {}) }),
   }
 
   validateWorld(world)

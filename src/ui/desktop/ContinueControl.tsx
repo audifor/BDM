@@ -12,9 +12,9 @@ export function ContinueControl({ world, onAdvanceDay, onContinue, onOpenPending
   const interruption = getContinueStopReason(world)
   const pendingGameId = interruption?.type === 'userGame' ? interruption.gameId : undefined
   const stoppedForGame = pendingGameId !== undefined
+  const visualState = stoppedForGame ? 'game' : interruption?.type === 'seasonComplete' ? 'complete' : 'continue'
 
-  return <section aria-label="Career time controls" className="desktop-continue-control">
-    <p className="desktop-continue-control__eyebrow">CAREER TIME</p>
+  return <section aria-label="Career time controls" className="desktop-continue-control" data-state={visualState}>
     <BdmButton className="desktop-continue-control__primary" loading={isAdvancing} onClick={() => { if (pendingGameId !== undefined) { onOpenPendingGame(pendingGameId); return }; setIsAdvancing(true); try { setLastResult(onContinue()) } finally { setIsAdvancing(false) } }} size="large" trailingIcon="▶">{isAdvancing ? `Procesando ${formatPrototypeDate(world.currentDate)}...` : stoppedForGame ? 'PARTIDO' : 'CONTINUAR'}</BdmButton>
     {stoppedForGame && <p className="desktop-continue-control__status">Partido pendiente · {formatPrototypeDate(world.currentDate)}{opponent === undefined ? '' : ` · vs ${opponent}`}</p>}
     {!stoppedForGame && next !== undefined && <p className="desktop-continue-control__next">Próximo partido · {formatPrototypeDate(next.date)}{opponent === undefined ? '' : ` · vs ${opponent}`}</p>}

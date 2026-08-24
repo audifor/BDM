@@ -24,7 +24,6 @@ import { acceptCoachJobOffer, applyUserCoachForJob, declineCoachJobOffer } from 
 import { getCareerFatigueForPlayer, getLatestTrainingSession, getTrainingPlanForTeam } from '@/domain/world'
 import type { TrainingFocus, TrainingIntensity } from '@/domain/training'
 import { setTeamTrainingPlan } from '@/engine/training'
-import { getUserTeam } from '@/engine/calendar'
 import { executeEntityActionResult, type EntityActionExecution } from '@/app/entityActions/EntityActionExecutor'
 import type { CommandResult } from '@/app/entityActions/EntityCommand'
 import { selectDraftProspect } from '@/app/draft'
@@ -37,6 +36,9 @@ import { acceptNilOpportunity } from '@/engine/nil'
 import { requestBoosterSupport } from '@/engine/boosters'
 import { setCoachLifestyle } from '@/engine/coachFinances'
 import type { Lifestyle } from '@/domain/coachFinances'
+import type { MediaStance } from '@/domain/media'
+import { createPreMatchMediaOpportunity, respondToMediaOpportunity, skipMediaOpportunity } from '@/engine/media'
+import { getGamesToday, getUserTeam } from '@/engine/calendar'
 
 interface GameStore {
   readonly world: GameWorld | null
@@ -73,6 +75,8 @@ interface GameStore {
   acceptNilOpportunity(opportunityId: string): void
   requestBoosterSupport(boosterId: string): void
   setUserCoachLifestyle(lifestyle: Lifestyle): void
+  respondToMedia(opportunityId: string, stance: MediaStance): void
+  skipMedia(opportunityId: string): void
   executeEntityAction(result: CommandResult): EntityActionExecution
   getActiveMatchSession(): LiveMatchController | null
   replaceWorld(world: GameWorld): void
@@ -85,7 +89,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   world: null,
   newGame: () => set({ world: createNewGame() }),
   prepareUserMatch: (tacticalPlan) => prepareUserMatch(requireWorld(get().world), tacticalPlan),
-  startLiveMatch: (tacticalPlan) => { liveController = createLiveUserMatch(requireWorld(get().world), tacticalPlan); return liveController.snapshot() },
+  startLiveMatch: (tacticalPlan) => { const world = addPreMatchMedia(requireWorld(get().world)); set({ world }); liveController = createLiveUserMatch(world, tacticalPlan); return liveController.snapshot() },
   advanceLiveMatch: () => requireLiveController().advanceOneStep(),
   advanceLiveMatchPresentation: () => requireLiveController().advanceOneStepWithSnapshots(),
   skipLiveMatch: () => requireLiveController().skipToEnd(),
@@ -139,6 +143,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   acceptNilOpportunity: (opportunityId) => { const result = acceptNilOpportunity(requireWorld(get().world), opportunityId); if (result.ok) set({ world: result.value }) },
   requestBoosterSupport: (boosterId) => { const result=requestBoosterSupport(requireWorld(get().world),boosterId);if(result.ok)set({world:result.value}) },
   setUserCoachLifestyle: (lifestyle) => set({ world: setCoachLifestyle(requireWorld(get().world), requireWorld(get().world).userCoachId, lifestyle) }),
+  respondToMedia: (opportunityId, stance) => set({ world: respondToMediaOpportunity(requireWorld(get().world), opportunityId, stance) }),
+  skipMedia: (opportunityId) => set({ world: skipMediaOpportunity(requireWorld(get().world), opportunityId) }),
   executeEntityAction: (result) => {
     const world = requireWorld(get().world); const outcome = executeEntityActionResult(world, result, { controlledTeamId: getUserTeam(world)?.id, activeMatchSession: liveController ?? undefined })
     if (outcome.kind === 'executed') set({ world: outcome.world })
@@ -157,6 +163,7 @@ function requireWorld(world: GameWorld | null): GameWorld {
   return world
 }
 function requireLiveController(): LiveMatchController { if (liveController === null) throw new Error('No live match'); return liveController }
+function addPreMatchMedia(world: GameWorld): GameWorld { const team = getUserTeam(world); const game = team === undefined ? undefined : getGamesToday(world).find((item) => item.status === 'scheduled' && (item.homeTeamId === team.id || item.awayTeamId === team.id)); return game === undefined ? world : createPreMatchMediaOpportunity(world, game.id) }
 
 export function selectUserCoachReputationProfile(world: GameWorld | null): CoachReputationProfile | undefined {
   return world === null ? undefined : getUserCoachReputationProfile(world)
