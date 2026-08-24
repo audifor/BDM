@@ -1,0 +1,5 @@
+import { describe, expect, it } from 'vitest'
+import { createBoardState, getJobSecurity } from './Board'
+
+const state = (confidence=60,patience=50)=>createBoardState({teamId:'team' as never,coachId:'coach' as never,startedOn:'2032-01-01' as never,profile:{ambition:60,patience,stability:60,resultsFocus:60,developmentFocus:40,prestigeFocus:60},expectation:{summary:'Top 4',baselinePosition:4,seasonId:'season' as never},objectives:[{id:'top4',kind:'reachTopPosition',label:'Top 4',priority:'high',horizon:'season',seasonId:'season' as never,targetPosition:4,outcome:'inProgress'}],confidence,reasons:[],processedEventKeys:[]})
+describe('Board domain',()=>{it('copies canonical state and keeps deterministic dedupe keys',()=>{const value=state();expect(createBoardState({...value,processedEventKeys:['a','a']}).processedEventKeys).toEqual(['a']);expect(value.expectation.baselinePosition).toBe(4)});it('derives qualitative job security from confidence and patience',()=>{expect(getJobSecurity(state(30,20))).toBe('atRisk');expect(getJobSecurity(state(70,80))).toBe('secure')})})

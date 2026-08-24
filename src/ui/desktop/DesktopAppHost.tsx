@@ -7,20 +7,22 @@ import type { Lifestyle } from '@/domain/coachFinances'
 import type { MediaStance } from '@/domain/media'
 import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
 import { getCareerFatigueForPlayer, getTeamRoster, isPlayerAvailable } from '@/domain/world'
-import { BoostersScreen, CoachFinancesScreen, CoachScreen, DraftScreen, EnforcementScreen, MarketScreen, MediaScreen, MemoryScreen, NarrativesScreen, NilScreen, RecruitingScreen, SalaryScreen, ScheduleScreen, SquadScreen, StaffScreen, StandingsScreen, TacticsScreen, TradeCenterScreen, TrainingScreen } from '@/ui/screens'
+import { BoardScreen, BoostersScreen, CoachFinancesScreen, CoachScreen, DraftScreen, EnforcementScreen, MarketScreen, MediaScreen, MemoryScreen, NarrativesScreen, NilScreen, RecruitingScreen, SalaryScreen, ScheduleScreen, SquadScreen, StaffScreen, StandingsScreen, TacticsScreen, TradeCenterScreen, TrainingScreen } from '@/ui/screens'
 import { getDesktopApp } from './DesktopAppRegistry'
 import { EntityPageApp } from '@/ui/navigation/EntityPageApp'
 import type { EntityDestination } from '@/ui/navigation/entityNavigation'
+import { LegacyScreen } from '@/ui/screens/LegacyScreen'
 
 export function DesktopAppHost({ appId, world, actions }: { readonly appId: string; readonly world: GameWorld; readonly actions: DesktopAppActions }) {
   const key = getDesktopApp(appId)?.renderKey
   if (key === 'entity') return <EntityPageApp onOpenEntity={actions.openEntity ?? (() => undefined)} world={world} />
+  if (key === 'board') return <BoardScreen world={world} />
   if (key === 'squad') return <SquadScreen world={world} />
   if (key === 'schedule') return <ScheduleScreen onOpenMatchCenter={() => actions.openApp('match')} world={world} />
   if (key === 'standings') return <StandingsScreen world={world} />
   if (key === 'training') return <TrainingScreen world={world} onFocus={actions.setTrainingFocus} onIntensity={actions.setTrainingIntensity} />
   if (key === 'staff') return <StaffScreen world={world} />
-  if (key === 'coach') return <CoachScreen world={world} onApply={actions.applyForJob} onAcceptOffer={actions.acceptOffer} onDeclineOffer={actions.declineOffer} onPerk={actions.purchasePerk} onSkill={actions.purchaseSkill} />
+  if (key === 'coach') return appId === 'legacy' ? <LegacyScreen world={world} /> : <CoachScreen world={world} onApply={actions.applyForJob} onAcceptOffer={actions.acceptOffer} onDeclineOffer={actions.declineOffer} onPerk={actions.purchasePerk} onSkill={actions.purchaseSkill} />
   if (key === 'tactics') { const team = getUserTeam(world); return <TacticsScreen onChange={actions.setTacticalPlan} onReset={actions.resetTacticalPlan} plan={actions.tacticalPlan} players={team === undefined ? [] : team.rosterPlayerIds.map((id) => world.players[id]!)} /> }
   if (key === 'market') return <MarketScreen world={world} onSign={(playerId) => { const team = getUserTeam(world); if (team !== undefined) actions.signFreeAgent(team.id, playerId) }} />
   if (key === 'draft') return <DraftScreen world={world} onSelectProspect={actions.selectDraftProspect} />

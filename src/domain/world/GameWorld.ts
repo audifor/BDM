@@ -57,6 +57,8 @@ import type { EcosystemTransition } from '@/domain/career'
 import { createMemory, type MemoryRecord } from '@/domain/memory'
 import { createNarrativeThread, type NarrativeThread } from '@/domain/narrative'
 import type { MediaInteraction, MediaOpportunity, MediaProfile } from '@/domain/media'
+import { createBoardState, type BoardState } from '@/domain/board'
+import type { CoachAchievement, CoachLegacyState, CoachTeamLegacy, CoachTenure } from '@/domain/legacy'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -153,6 +155,11 @@ export interface GameWorld {
   readonly mediaOpportunitiesById: Readonly<Record<string, MediaOpportunity>>
   readonly mediaInteractionsById: Readonly<Record<string, MediaInteraction>>
   readonly mediaProfilesByCoachId: Readonly<Record<string, MediaProfile>>
+  readonly boardStatesByTeamId: Readonly<Record<string, BoardState>>
+  readonly coachLegacyByCoachId: Readonly<Record<string, CoachLegacyState>>
+  readonly coachAchievementsById: Readonly<Record<string, CoachAchievement>>
+  readonly coachTenuresById: Readonly<Record<string, CoachTenure>>
+  readonly coachTeamLegacyByKey: Readonly<Record<string, CoachTeamLegacy>>
 }
 
 export interface CreateGameWorldInput {
@@ -246,6 +253,11 @@ export interface CreateGameWorldInput {
   mediaOpportunitiesById?: Readonly<Record<string, MediaOpportunity>>
   mediaInteractionsById?: Readonly<Record<string, MediaInteraction>>
   mediaProfilesByCoachId?: Readonly<Record<string, MediaProfile>>
+  boardStatesByTeamId?: Readonly<Record<string, BoardState>>
+  coachLegacyByCoachId?: Readonly<Record<string, CoachLegacyState>>
+  coachAchievementsById?: Readonly<Record<string, CoachAchievement>>
+  coachTenuresById?: Readonly<Record<string, CoachTenure>>
+  coachTeamLegacyByKey?: Readonly<Record<string, CoachTeamLegacy>>
 }
 
 export class GameWorldValidationError extends Error {
@@ -354,6 +366,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     mediaOpportunitiesById: Object.freeze({ ...(input.mediaOpportunitiesById ?? {}) }),
     mediaInteractionsById: Object.freeze({ ...(input.mediaInteractionsById ?? {}) }),
     mediaProfilesByCoachId: Object.freeze({ ...(input.mediaProfilesByCoachId ?? {}) }),
+    boardStatesByTeamId: Object.freeze(Object.fromEntries(Object.entries(input.boardStatesByTeamId ?? {}).map(([teamId, state]) => [teamId, createBoardState(state)]))),
+    coachLegacyByCoachId: Object.freeze({ ...(input.coachLegacyByCoachId ?? {}) }), coachAchievementsById: Object.freeze({ ...(input.coachAchievementsById ?? {}) }), coachTenuresById: Object.freeze({ ...(input.coachTenuresById ?? {}) }), coachTeamLegacyByKey: Object.freeze({ ...(input.coachTeamLegacyByKey ?? {}) }),
   }
 
   validateWorld(world)

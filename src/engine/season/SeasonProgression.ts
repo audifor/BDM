@@ -7,6 +7,8 @@ import { applySeasonChampionCoachReputation } from '@/engine/coach'
 import { resolvePromotionRelegation } from '@/engine/competition'
 import { resolveEligibilitySeason } from '@/engine/eligibility'
 import { recordChampionMemories } from '@/engine/memory'
+import { applyBoardTierMovement, evaluateBoardSeason } from '@/engine/board'
+import { processCoachSeason, recordCoachAchievement, recordTierLegacy } from '@/engine/legacy'
 
 export function isSeasonComplete(world: GameWorld, seasonId: keyof GameWorld['seasons']): boolean {
   const season = world.seasons[seasonId]
@@ -35,12 +37,24 @@ export function finalizeSeason(world: GameWorld, seasonId: keyof GameWorld['seas
   const finalized=resolveEligibilitySeason(applySeasonChampionCoachReputation(rebuildWorld(world, [...Object.values(world.seasonHistoryBySeasonId), history]), seasonId), seasonId)
   const team=finalized.teams[champion.teamId]!, competition=finalized.competitions[season.competitionId]!
   const remembered = recordChampionMemories(finalized, { seasonId, competitionId: competition.id, teamId: team.id, coachId: team.coachId, occurredOn: completedOn })
-  const withNews = addNewsItem(remembered,{id:`news:champion:${seasonId}:${team.id}`,gameDate:completedOn,category:'competition',headline:`${team.name} win ${competition.name}`,body:`${team.name} are champions of ${season.label}.`,context:{seasonId,competitionId:competition.id,teamId:team.id}})
+  let withLegacy = Object.values(remembered.teams).reduce((current, candidate) => candidate.coachId === undefined ? current : processCoachSeason(current, { coachId: candidate.coachId, teamId: candidate.id, seasonId: String(seasonId) }), remembered)
+  if (team.coachId !== undefined) withLegacy = recordCoachAchievement(withLegacy,{coachId:team.coachId,teamId:team.id,seasonId,type:'championship',sourceEventKey:`championship:${seasonId}:${team.id}`,outsider:(remembered.boardStatesByTeamId[team.id]?.expectation.baselinePosition??1)>2})
+  const withNews = Object.values(withLegacy.teams).reduce((current, candidate) => evaluateBoardSeason(current, candidate.id, seasonId), addNewsItem(withLegacy,{id:`news:champion:${seasonId}:${team.id}`,gameDate:completedOn,category:'competition',headline:`${team.name} win ${competition.name}`,body:`${team.name} are champions of ${season.label}.`,context:{seasonId,competitionId:competition.id,teamId:team.id}}))
   const rule = Object.values(withNews.ecosystems).flatMap((ecosystem) => ecosystem.tierMovementRules).find((item) => item.upperCompetitionId === season.competitionId || item.lowerCompetitionId === season.competitionId)
   if (rule === undefined) return withNews
   const otherCompetitionId = rule.upperCompetitionId === season.competitionId ? rule.lowerCompetitionId : rule.upperCompetitionId
   const other = Object.values(withNews.seasons).filter((candidate) => candidate.competitionId === otherCompetitionId && withNews.seasonHistoryBySeasonId[candidate.id] !== undefined).sort((a, b) => b.startDate.localeCompare(a.startDate) || b.id.localeCompare(a.id))[0]
-  return other === undefined ? withNews : resolvePromotionRelegation(withNews, rule.upperCompetitionId === season.competitionId ? season.id : other.id, rule.lowerCompetitionId === season.competitionId ? season.id : other.id)
+  let resolved = other === undefined ? withNews : resolvePromotionRelegation(withNews, rule.upperCompetitionId === season.competitionId ? season.id : other.id, rule.lowerCompetitionId === season.competitionId ? season.id : other.id)
+  resolved = Object.keys(resolved.boardStatesByTeamId).reduce((current, teamId) => applyBoardTierMovement(current, teamId as import('@/domain/ids').TeamId), resolved)
+  for (const movement of Object.values(resolved.promotionRelegationResolutionsById)) for (const teamId of [...movement.promotedTeamIds, ...movement.relegatedTeamIds]) {
+    const coached = resolved.teams[teamId]!
+    if (coached.coachId === undefined) continue
+    const promoted = movement.promotedTeamIds.includes(teamId)
+    const relatedSeason = promoted ? movement.lowerSeasonId : movement.upperSeasonId
+    const unexpected = (resolved.boardStatesByTeamId[teamId]?.expectation.baselinePosition ?? 1) > 2
+    resolved = recordTierLegacy(resolved, { coachId: coached.coachId, teamId, seasonId: relatedSeason, resolutionId: movement.id, movement: promoted ? 'promotion' : 'relegation', unexpected })
+  }
+  return resolved
 }
 
 /** Finalizes only after the result that made its season complete has been applied. */

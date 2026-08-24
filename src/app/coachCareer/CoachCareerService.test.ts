@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest'
 
 import { createNewGame } from '@/app/game'
 import { updateGameWorld } from '@/domain/world'
-import { acceptCoachJobOffer, completeCoachInterview, createCoachJobOffer, fireCoachFromTeam, getEligibleCoachJobs, getOpenCoachJobs, identifyCoachCandidate, rankCoachCandidates, runCoachHiringProcessForOpening, startCoachInterview } from './CoachCareerService'
+import { createBoardState } from '@/domain/board'
+import { acceptCoachJobOffer, applyBoardFiringRecommendation, completeCoachInterview, createCoachJobOffer, fireCoachFromTeam, getEligibleCoachJobs, getOpenCoachJobs, identifyCoachCandidate, rankCoachCandidates, runCoachHiringProcessForOpening, startCoachInterview } from './CoachCareerService'
 
 describe('Coach career application flow', () => {
+  it('uses the Board recommendation rather than a parallel firing transition', () => { const base=createNewGame();const team=Object.values(base.teams).find((item)=>item.coachId===base.userCoachId)!;const season=Object.values(base.seasons).find((item)=>item.competitionId&&base.competitions[item.competitionId]!.participantTeamIds.includes(team.id))!;const state=createBoardState({teamId:team.id,coachId:base.userCoachId,startedOn:base.currentDate,profile:{ambition:90,patience:0,stability:30,resultsFocus:90,developmentFocus:20,prestigeFocus:90},expectation:{summary:'Win',baselinePosition:1,seasonId:season.id},objectives:[{id:'title',kind:'winChampionship',label:'Win',priority:'critical',horizon:'season',seasonId:season.id,outcome:'severelyFailed'}],confidence:10,reasons:[],processedEventKeys:[]});const fired=applyBoardFiringRecommendation(updateGameWorld(base,{boardStatesByTeamId:{[team.id]:state}}),team.id);expect(fired.teams[team.id]!.coachId).toBeUndefined();expect(fired.coachEmploymentByCoachId[base.userCoachId]!.status).toBe('unemployed') })
   it('fires, interviews, offers and hires an unemployed coach through the canonical flow', () => {
     const base = createNewGame()
     const source = Object.values(base.teams).find((team) => team.coachId === base.userCoachId)!
