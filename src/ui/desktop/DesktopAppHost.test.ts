@@ -29,7 +29,7 @@ describe('DesktopAppHost', () => {
 
   it('opens Golden Manager sections while preserving unrelated application hosts', () => {
     const world = createNewGame()
-    const labels = { training: 'Team Training', staff: 'STAFF', coach: 'REPUTATION', tactics: 'Pizarra', market: 'Free agents', draft: 'No draft available' }
+    const labels = { training: 'Team Training', staff: 'Staff y Roles Funcionales', coach: 'REPUTATION', tactics: 'Pizarra', market: 'Free agents', draft: 'No draft available' }
     for (const [appId, label] of Object.entries(labels)) {
       expect(renderToStaticMarkup(createElement(DesktopAppHost, { appId, world, actions }))).toContain(label)
     }
@@ -47,5 +47,11 @@ describe('DesktopAppHost', () => {
     expect(DESKTOP_APPS.find((app) => app.id === 'legacy')).toBeUndefined()
     expect(DESKTOP_APPS.find((app) => app.id === 'standings')).toBeUndefined()
     expect(renderToStaticMarkup(createElement(DesktopAppHost, { appId: 'coach', world, actions }))).toContain('>Legacy<')
+  })
+
+  it('opens Staff on the Club Staff & Roles view', () => {
+    const markup = renderToStaticMarkup(createElement(DesktopAppHost, { appId: 'staff', world: createNewGame(), actions }))
+    expect(markup).toContain('Staff y Roles Funcionales')
+    expect(markup).toContain('Bonificaciones del Staff')
   })
 })

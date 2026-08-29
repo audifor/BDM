@@ -19,8 +19,8 @@ let nextHireId = 100
 const ROLE_HIRE_LABEL: Record<string, string> = { head_coach: 'Entrenador Principal', assistant_off: 'Asistente Ofensivo', assistant_def: 'Asistente Defensivo', physio: 'Fisioterapeuta', dev_coach: 'Entrenador de Desarrollo', strength: 'Preparador Físico', scout: 'Ojeador' }
 const ROLE_SKILLS: Record<string, readonly string[]> = { head_coach: ['leadership', 'tactics', 'motivation'], assistant_off: ['offensive_tactics', 'shooting', 'playmaking'], assistant_def: ['defensive_tactics', 'positioning'], physio: ['medical', 'recovery'], dev_coach: ['youth_development', 'potential'], strength: ['strength', 'conditioning'], scout: ['scouting', 'evaluation'] }
 
-export function ClubPcbPage() {
-  const [tab, setTab] = useState<ClubTab>('dashboard')
+export function ClubPcbPage({ initialTab = 'dashboard' }: { readonly initialTab?: ClubTab }) {
+  const [tab, setTab] = useState<ClubTab>(initialTab)
   const [assignments, setAssignments] = useState<Record<string, { role: string; staff_id: number }>>(clubFixtures.staffAssignments)
   const [staffMembers, setStaffMembers] = useState(clubFixtures.staff)
   const [teamPlayers, setTeamPlayers] = useState(players)

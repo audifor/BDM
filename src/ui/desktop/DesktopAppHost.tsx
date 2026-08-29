@@ -7,7 +7,7 @@ import type { Lifestyle } from '@/domain/coachFinances'
 import type { MediaStance } from '@/domain/media'
 import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
 import { getCareerFatigueForPlayer, getTeamRoster, isPlayerAvailable } from '@/domain/world'
-import { BoardScreen, BoostersScreen, CoachFinancesScreen, CoachScreen, DraftScreen, EnforcementScreen, MarketScreen, MediaScreen, MemoryScreen, NarrativesScreen, NilScreen, RecruitingScreen, SalaryScreen, ScheduleScreen, SquadScreen, StaffScreen, TacticsScreen, TradeCenterScreen, TrainingScreen } from '@/ui/screens'
+import { BoardScreen, BoostersScreen, CoachFinancesScreen, CoachScreen, DraftScreen, EnforcementScreen, MarketScreen, MediaScreen, MemoryScreen, NarrativesScreen, NilScreen, RecruitingScreen, SalaryScreen, ScheduleScreen, SquadScreen, TacticsScreen, TradeCenterScreen, TrainingScreen } from '@/ui/screens'
 import { getDesktopApp } from './DesktopAppRegistry'
 import { EntityPageApp } from '@/ui/navigation/EntityPageApp'
 import type { EntityDestination } from '@/ui/navigation/entityNavigation'
@@ -25,6 +25,7 @@ export function DesktopAppHost({ appId, entityDestination, world, actions }: { r
   if (appId === 'training') return <TrainingPcbPage />
   if (appId === 'tactics') return <TacticsPcbPage />
   if (appId === 'club') return <ClubPcbPage />
+  if (appId === 'staff') return <ClubPcbPage initialTab="staff" />
   if (appId === 'medical') return <MedicalPcbPage />
   if (appId === 'competition') return <CompetitionPcbPage />
   if (key === 'entity') return <EntityPageApp destination={entityDestination} onOpenEntity={actions.openEntity ?? (() => undefined)} world={world} />
@@ -32,7 +33,6 @@ export function DesktopAppHost({ appId, entityDestination, world, actions }: { r
   if (key === 'squad') return <SquadScreen onOpenEntity={actions.openEntity} onOpenSection={actions.openApp} world={world} />
   if (key === 'schedule') return <ScheduleScreen onOpenMatchCenter={() => actions.openApp('match')} world={world} />
   if (key === 'training') return <TrainingScreen world={world} onFocus={actions.setTrainingFocus} onIntensity={actions.setTrainingIntensity} />
-  if (key === 'staff') return <StaffScreen world={world} />
   if (key === 'coach') return <CoachScreen world={world} onApply={actions.applyForJob} onAcceptOffer={actions.acceptOffer} onDeclineOffer={actions.declineOffer} onPerk={actions.purchasePerk} onSkill={actions.purchaseSkill} />
   if (key === 'tactics') { const team = getUserTeam(world); return <TacticsScreen onChange={actions.setTacticalPlan} onReset={actions.resetTacticalPlan} plan={actions.tacticalPlan} players={team === undefined ? [] : team.rosterPlayerIds.map((id) => world.players[id]!)} /> }
   if (key === 'market') return <MarketScreen world={world} onSign={(playerId) => { const team = getUserTeam(world); if (team !== undefined) actions.signFreeAgent(team.id, playerId) }} />
