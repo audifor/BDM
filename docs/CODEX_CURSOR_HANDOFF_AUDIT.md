@@ -34,17 +34,28 @@ timeout and record the full result before any certification claim.
 
 ## High-priority product and migration work
 
-1. Finish M7R workflow evidence: compare all 31 selected PCB surfaces with donor
-   source and record Content, Visual, Functions and Workflows in
-   `docs/PCB_MIGRATION_CLOSURE.md`.
-2. Replace remaining migration no-ops with temporary UI workflows only:
-   Club staff/hiring/objective actions; Tactics Match Plan overrides/scouting;
-   Competition detail and temporary simulation actions.
-3. Complete Club fixture coverage for Staff, Board, Analytics and Facilities;
-   do not add these fixtures to GameWorld or Save.
-4. Remove or archive unreachable Golden reconstruction files only after proving
-   no remaining consumer; its runtime fallback has already been removed.
-5. Complete M7R global validation, then stop. A1 must be a separate milestone.
+Items 1-5 below were closed by the M7 closure pass on branch
+`m7-pcb-migration-closure` (2026-08-29); see `docs/PCB_MIGRATION_CLOSURE.md`
+"M7 closure record" for full evidence. Residual limitations from that pass:
+donor PCB frontend source is no longer present in this repo to diff against,
+and no interactive browser visual pass was performed.
+
+1. ~~Finish M7R workflow evidence~~ **DONE.** 31-surface evidence table added to
+   `docs/PCB_MIGRATION_CLOSURE.md` (Content/Visual/Functionality/Workflow per
+   surface).
+2. ~~Replace remaining migration no-ops~~ **DONE.** Club staff/hiring/objective
+   actions, Tactics Match Plan overrides, and Competition team/player click +
+   match simulation are now wired to real local-state workflows.
+3. ~~Complete Club fixture coverage for Staff, Board, Facilities~~ **DONE.**
+   (Analytics was already complete.) Fixtures remain UI-only under
+   `src/ui/pcb-migrated/club/fixtures`, not in GameWorld/Save.
+4. ~~Remove unreachable Golden reconstruction files~~ **DONE.**
+   `GoldenManagerWorkspace.tsx`/`.css`/`.test.tsx` deleted; confirmed no
+   remaining consumer first.
+5. ~~Complete M7R global validation~~ **DONE.** typecheck/build/cargo
+   fmt+check/boundary searches all pass; `npm test` is 672/673 (one
+   pre-existing, out-of-scope failure in Plantilla, unrelated to this branch).
+   A1 has not been started and remains a separate future milestone.
 
 ## Core-game improvement map (after M7R / under explicit future milestones)
 
@@ -79,8 +90,11 @@ timeout and record the full result before any certification claim.
 
 ## Handoff status
 
-Working tree: **dirty baseline preserved**.
+Working tree: clean on branch `m7-pcb-migration-closure` (branched from a
+clean `main`); diff is migration-only.
 
-M7R: **in progress, not certified**.
+M7 / M7R: **certified** — see `docs/PCB_MIGRATION_CLOSURE.md` M7 closure
+record for full evidence and residual limitations (no donor frontend source
+to diff against; no interactive browser pass performed).
 
 A1: **not started**.
