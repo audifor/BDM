@@ -307,6 +307,100 @@ export default function ClubStaffAssignments({
     );
   };
 
+  // Modal para gestionar jugadores asignados a un dev coach
+  const PlayerAssignmentModal = () => {
+    if (!selectedPlayer) return null;
+    const coach = staffMembers.find((s) => s.id === selectedPlayer);
+    const assignedPlayers = getPlayersForCoach(selectedPlayer);
+    const unassignedPlayers = teamPlayers.filter(
+      (p) => p.assigned_coach !== selectedPlayer
+    );
+
+    return (
+      <div className="modal-overlay" onClick={() => setSelectedPlayer(null)}>
+        <div
+          className="modal-content modal-glass-tactical"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="modal-header">
+            <h2>Jugadores de {coach?.name || "Entrenador"}</h2>
+            <button
+              className="modal-close"
+              onClick={() => setSelectedPlayer(null)}
+            >
+              ✕
+            </button>
+          </div>
+          <div className="modal-body">
+            <p className="modal-desc">
+              Asigna o retira jugadores del desarrollo de este entrenador.
+            </p>
+            <div className="staff-list">
+              <div className="assigned-players-section">
+                <h3>Asignados ({assignedPlayers.length})</h3>
+                {assignedPlayers.length === 0 ? (
+                  <div className="empty-state">
+                    <p>Sin jugadores asignados.</p>
+                  </div>
+                ) : (
+                  assignedPlayers.map((player) => (
+                    <div key={player.id} className="staff-option">
+                      <div className="staff-details">
+                        <div className="staff-name">{player.name}</div>
+                      </div>
+                      <button
+                        className="btn-remove"
+                        onClick={() =>
+                          onAssignPlayerToCoach &&
+                          onAssignPlayerToCoach(null, player.id)
+                        }
+                      >
+                        Retirar
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="unassigned-players-section">
+                <h3>Disponibles ({unassignedPlayers.length})</h3>
+                {unassignedPlayers.length === 0 ? (
+                  <div className="empty-state">
+                    <p>No hay más jugadores disponibles.</p>
+                  </div>
+                ) : (
+                  unassignedPlayers.map((player) => (
+                    <div key={player.id} className="staff-option">
+                      <div className="staff-details">
+                        <div className="staff-name">{player.name}</div>
+                      </div>
+                      <button
+                        className="btn-link"
+                        onClick={() =>
+                          onAssignPlayerToCoach &&
+                          onAssignPlayerToCoach(selectedPlayer, player.id)
+                        }
+                      >
+                        Asignar
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+            <div className="negotiation-actions">
+              <button
+                className="subnav-item secondary"
+                onClick={() => setSelectedPlayer(null)}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Panel de bonificaciones del equipo
   const TeamBonuses = () => {
     const offBonus = calculateBonus("offensive_tactics");
@@ -376,6 +470,7 @@ export default function ClubStaffAssignments({
       </div>
 
       {selectedRole && <AssignmentModal />}
+      {selectedPlayer && <PlayerAssignmentModal />}
     </section>
   );
 }
