@@ -1,81 +1,23 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 import type { GameCapabilities } from '@/ui/gameContext'
 import { DOCK_APP_ICON_REGISTRY, getDesktopApp, getLauncherApps, LAUNCHER_GROUPS, type DesktopAppDefinition, type LauncherGroup } from './DesktopAppRegistry'
 import './BdmStartMenuV2.css'
 
-export interface BdmStartMenuProps {
-  readonly activeAppId?: string | null
-  readonly capabilities?: Partial<GameCapabilities>
-  readonly isOpen: boolean
-  readonly launcherOrder?: readonly string[]
-  readonly onAppOpen: (appId: string) => void
-  readonly onClose: () => void
-  readonly onReorder?: (movedId: string, targetId: string) => void
-  readonly onAdvanceDay: () => void
-  readonly onSave: () => void
-  readonly onLoad: () => void
-  readonly onCustomizeDesktop?: () => void
-  readonly canAdvanceDay: boolean
-  readonly canLoad: boolean
-  readonly query: string
-  readonly onQueryChange: (query: string) => void
-  readonly recentAppIds: readonly string[]
-}
+export interface BdmStartMenuProps { readonly activeAppId?: string | null; readonly capabilities?: Partial<GameCapabilities>; readonly isOpen: boolean; readonly launcherOrder?: readonly string[]; readonly onAppOpen: (appId: string) => void; readonly onClose: () => void; readonly onReorder?: (movedId: string, targetId: string) => void; readonly onAdvanceDay: () => void; readonly onSave: () => void; readonly onLoad: () => void; readonly onCustomizeDesktop?: () => void; readonly canAdvanceDay: boolean; readonly canLoad: boolean; readonly query: string; readonly onQueryChange: (query: string) => void; readonly recentAppIds: readonly string[] }
 
 const pinnedIds = ['squad', 'tactics', 'schedule', 'match', 'competition', 'market', 'training', 'staff', 'medical', 'finances', 'club', 'media']
-const railIds = ['squad', 'schedule', 'training', 'staff', 'club', 'coach', 'board', 'tactics', 'competition', 'medical', 'market', 'enforcement', 'match', 'finances', 'coach-finances', 'memories', 'narratives', 'media']
-
-const descriptions: Record<LauncherGroup, string> = {
-  EQUIPO: 'Gestiona tu equipo y cuerpo tecnico',
-  'PARTIDOS Y COMPETICIÓN': 'Competiciones, calendario y partidos',
-  MERCADO: 'Fichajes, agentes libres y operaciones',
-  'GESTIÓN DEL CLUB': 'Organizacion, finanzas y cumplimiento',
-  'MI CARRERA': 'Tu entrenador, carrera y patrimonio',
-  'MUNDO Y NARRATIVA': 'Noticias, historias y recuerdos',
-  'College Performance Center': 'Recruiting, NIL y boosters',
-}
-
-function toneFor(group: LauncherGroup) {
-  return group === 'EQUIPO' ? 'cyan' : group === 'PARTIDOS Y COMPETICIÓN' ? 'green' : group === 'MERCADO' ? 'amber' : group === 'GESTIÓN DEL CLUB' ? 'violet' : group === 'MI CARRERA' ? 'blue' : group === 'MUNDO Y NARRATIVA' ? 'pink' : 'teal'
-}
-
-function AppIcon({ app }: { readonly app: DesktopAppDefinition }) {
-  const tone = app.launcherGroup === undefined ? 'slate' : toneFor(app.launcherGroup)
-  return <img alt="" className={'bdm-windows-start__icon bdm-windows-start__icon--' + tone} draggable={false} src={DOCK_APP_ICON_REGISTRY[app.icon]} />
-}
+const railIds = ['squad', 'schedule', 'match', 'market', 'finances', 'media']
+const descriptions: Record<LauncherGroup, string> = { EQUIPO: 'Gestiona tu equipo y cuerpo técnico', 'PARTIDOS Y COMPETICIÓN': 'Competiciones, calendario y partidos', MERCADO: 'Fichajes, agentes libres y operaciones', 'GESTIÓN DEL CLUB': 'Organización, finanzas y cumplimiento', 'MI CARRERA': 'Tu entrenador, carrera y patrimonio', 'MUNDO Y NARRATIVA': 'Noticias, historias y recuerdos', 'College Performance Center': 'Recruiting, NIL y boosters' }
+function toneFor(group: LauncherGroup) { return group === 'EQUIPO' ? 'cyan' : group === 'PARTIDOS Y COMPETICIÓN' ? 'green' : group === 'MERCADO' ? 'amber' : group === 'GESTIÓN DEL CLUB' ? 'violet' : group === 'MI CARRERA' ? 'blue' : group === 'MUNDO Y NARRATIVA' ? 'pink' : 'teal' }
+function AppIcon({ app }: { readonly app: DesktopAppDefinition }) { const tone = app.launcherGroup === undefined ? 'slate' : toneFor(app.launcherGroup); return <img alt="" className={'bdm-windows-start__icon bdm-windows-start__icon--' + tone} draggable={false} src={DOCK_APP_ICON_REGISTRY[app.icon]} /> }
+function displayName(app: DesktopAppDefinition) { return app.id === 'medical' ? 'Área médica' : app.id === 'media' ? 'Prensa' : app.label }
 
 export function BdmStartMenu({ activeAppId = null, capabilities = {}, isOpen, launcherOrder = [], onAppOpen, onClose, onCustomizeDesktop = () => undefined, query, onQueryChange }: BdmStartMenuProps) {
-  useEffect(() => {
-    if (!isOpen) return
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [isOpen, onClose])
-
+  const searchInput = useRef<HTMLInputElement>(null)
+  useEffect(() => { if (!isOpen) return; const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }; window.addEventListener('keydown', onKeyDown); return () => window.removeEventListener('keydown', onKeyDown) }, [isOpen, onClose])
   if (!isOpen) return null
-
-  const apps = getLauncherApps(query, capabilities, launcherOrder)
-  const appById = new Map(apps.map((app) => [app.id, app]))
-  const railApps = railIds.map((id) => appById.get(id) ?? getDesktopApp(id)).filter((app): app is DesktopAppDefinition => app !== undefined)
-  const pinned = pinnedIds.map((id) => appById.get(id)).filter((app): app is DesktopAppDefinition => app !== undefined)
-  const groups = LAUNCHER_GROUPS.map((group) => ({ group, apps: apps.filter((app) => app.launcherGroup === group) })).filter((entry) => entry.apps.length > 0)
-  const open = (app: DesktopAppDefinition) => { onAppOpen(app.id); onClose() }
-
-  return <div className="bdm-windows-start-backdrop" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
-    <section aria-label="BDM Inicio" className="bdm-windows-start" data-testid="desktop-launcher">
-      <aside className="bdm-windows-start__rail">
-        <div className="bdm-windows-start__brand"><img alt="BDM" src={DOCK_APP_ICON_REGISTRY.home} /><span><b>BDM</b><small>Basketball Dynasty Manager</small></span></div>
-        <button className="bdm-windows-start__home is-active" type="button"><AppIcon app={getDesktopApp('bdm')!} /><span>Inicio</span></button>
-        <nav aria-label="Aplicaciones BDM" className="bdm-windows-start__app-nav">{railApps.map((app) => <button aria-current={activeAppId === app.id ? 'page' : undefined} key={app.id} onClick={() => open(app)} type="button"><AppIcon app={app} /><span>{app.label}</span></button>)}</nav>
-        <footer><button onClick={onCustomizeDesktop} type="button"><AppIcon app={getDesktopApp('settings')!} /><span>Ajustes</span></button></footer>
-      </aside>
-      <main className="bdm-windows-start__main">
-        <header className="bdm-windows-start__topbar"><label><span aria-hidden="true">⌕</span><input aria-label="Buscar en BDM" onChange={(event) => onQueryChange(event.target.value)} placeholder="Buscar apps, jugadores, equipos, competiciones..." value={query} /></label><button onClick={onCustomizeDesktop} type="button">⚐&nbsp; Editar</button></header>
-        <section className="bdm-windows-start__pinned"><header><h2>Apps fijadas</h2><button type="button">Ver todas&nbsp; →</button></header><div>{pinned.map((app) => <button aria-current={activeAppId === app.id ? 'page' : undefined} key={app.id} onClick={() => open(app)} type="button"><AppIcon app={app} /><span>{app.label}</span></button>)}</div></section>
-        <section className="bdm-windows-start__categories"><h2>Todas las categorías</h2>{groups.map(({ group, apps: groupApps }) => <section className={'bdm-windows-start__category bdm-windows-start__category--' + toneFor(group)} key={group}><div className="bdm-windows-start__category-title"><span className="bdm-windows-start__group-mark">◈</span><div><h3>{group}</h3><p>{descriptions[group]}</p></div></div><div className="bdm-windows-start__category-apps">{groupApps.map((app) => <button aria-current={activeAppId === app.id ? 'page' : undefined} key={app.id} onClick={() => open(app)} type="button"><AppIcon app={app} /><span>{app.label}</span></button>)}</div><span className="bdm-windows-start__arrow">›</span></section>)}</section>
-        <footer className="bdm-windows-start__shortcut"><kbd>Ctrl</kbd><span>+</span><kbd>K</kbd><span>para abrir búsqueda rápida</span></footer>
-      </main>
-    </section>
-  </div>
+  const apps = getLauncherApps(query, capabilities, launcherOrder); const byId = new Map(apps.map((app) => [app.id, app])); const find = (id: string) => byId.get(id) ?? getDesktopApp(id)
+  const pinned = pinnedIds.map(find).filter((app): app is DesktopAppDefinition => app !== undefined); const railApps = railIds.map(find).filter((app): app is DesktopAppDefinition => app !== undefined); const groups = LAUNCHER_GROUPS.map((group) => ({ group, apps: apps.filter((app) => app.launcherGroup === group) })).filter((entry) => entry.apps.length > 0); const open = (app: DesktopAppDefinition) => { onAppOpen(app.id); onClose() }
+  return <div className="bdm-windows-start-backdrop" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose() }}><section aria-label="BDM Inicio" className="bdm-windows-start" data-testid="desktop-launcher"><aside className="bdm-windows-start__rail"><div className="bdm-windows-start__brand"><img alt="BDM" src={DOCK_APP_ICON_REGISTRY.home} /><span><b>BDM</b><small>Basketball Dynasty Manager</small></span></div><button className="bdm-windows-start__home is-active" type="button"><AppIcon app={getDesktopApp('bdm')!} /><span>Inicio</span></button><nav aria-label="Aplicaciones BDM" className="bdm-windows-start__app-nav">{railApps.map((app) => <button aria-current={activeAppId === app.id ? 'page' : undefined} key={app.id} onClick={() => open(app)} type="button"><AppIcon app={app} /><span>{app.id === 'media' ? 'Noticias' : displayName(app)}</span></button>)}<button onClick={() => searchInput.current?.focus()} type="button"><span className="bdm-windows-start__text-icon">✉</span><span>Mensajes</span></button><button onClick={() => searchInput.current?.focus()} type="button"><span className="bdm-windows-start__text-icon">⌕</span><span>Búsqueda</span></button></nav><footer><button onClick={onCustomizeDesktop} type="button"><AppIcon app={getDesktopApp('settings')!} /><span>Ajustes</span></button><div className="bdm-windows-start__profile"><span className="bdm-windows-start__avatar">JV</span><span><b>J. Villalba</b><small>Entrenador jefe</small></span></div></footer></aside><main className="bdm-windows-start__main"><header className="bdm-windows-start__topbar"><label><span aria-hidden="true">⌕</span><input aria-label="Buscar en BDM" onChange={(event) => onQueryChange(event.target.value)} placeholder="Buscar apps, jugadores, equipos, competiciones..." ref={searchInput} value={query} /></label><button onClick={onCustomizeDesktop} type="button">⚐&nbsp; Editar</button></header><section className="bdm-windows-start__pinned"><header><h2>Apps fijadas</h2><button type="button">Ver todas&nbsp; →</button></header><div>{pinned.map((app) => <button aria-current={activeAppId === app.id ? 'page' : undefined} key={app.id} onClick={() => open(app)} type="button"><AppIcon app={app} /><span>{displayName(app)}</span></button>)}</div></section><section className="bdm-windows-start__categories"><h2>Todas las categorías</h2>{groups.map(({ group, apps: groupApps }) => <section className={'bdm-windows-start__category bdm-windows-start__category--' + toneFor(group)} key={group}><div className="bdm-windows-start__category-title"><span className="bdm-windows-start__group-mark">◈</span><div><h3>{group}</h3><p>{descriptions[group]}</p></div></div><div className="bdm-windows-start__category-apps">{groupApps.map((app) => <button aria-current={activeAppId === app.id ? 'page' : undefined} key={app.id} onClick={() => open(app)} type="button"><AppIcon app={app} /><span>{displayName(app)}</span></button>)}</div><span className="bdm-windows-start__arrow">›</span></section>)}</section><footer className="bdm-windows-start__shortcut"><kbd>Ctrl</kbd><span>+</span><kbd>K</kbd><span>para abrir búsqueda rápida</span></footer></main></section></div>
 }
