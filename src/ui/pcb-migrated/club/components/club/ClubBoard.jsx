@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Target, TrendingUp, TrendingDown, AlertTriangle, CheckCircle } from "../../ClubIcons";
 
 const MIGRATION_OBJECTIVE_CATALOG = { objectives: [
-  { id: 'league', title: 'Clasificar para playoff', metric: 'league_position', threshold: 8, comparison: '<=', category: 'sporting', description: 'Finaliza entre los ocho primeros.' },
-  { id: 'wins', title: 'Alcanzar 18 victorias', metric: 'wins', threshold: 18, comparison: '>=', category: 'sporting', description: 'Mantén un rendimiento competitivo.' },
-  { id: 'balance', title: 'Proteger el presupuesto', metric: 'balance', threshold: 0, comparison: '>=', category: 'financial', description: 'Cierra la temporada con saldo positivo.' },
+  { id: 'league', name: 'Clasificar para playoff', type: 'primary', metric: 'league_position', threshold: 8, comparison: '<=', category: 'sporting', description: 'Finaliza entre los ocho primeros.', rewards: [{ threshold: 'high', confidence: 8 }, { threshold: 'medium', confidence: 4 }], penalties: [{ threshold: 'low', confidence: -10 }, { threshold: 'critical', confidence: -18, dismissal: true }] },
+  { id: 'wins', name: 'Alcanzar 18 victorias', type: 'secondary', metric: 'wins', threshold: 18, comparison: '>=', category: 'sporting', description: 'Mantén un rendimiento competitivo.', rewards: [{ threshold: 'high', confidence: 5 }], penalties: [{ threshold: 'low', confidence: -6 }] },
+  { id: 'balance', name: 'Proteger el presupuesto', type: 'financial', metric: 'balance', threshold: 0, comparison: '>=', category: 'financial', description: 'Cierra la temporada con saldo positivo.', rewards: [{ threshold: 'high', confidence: 4, budget: 50000 }], penalties: [{ threshold: 'low', confidence: -8, budget: -20000 }] },
 ] };
 
 export default function ClubBoard({
