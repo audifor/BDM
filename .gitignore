@@ -16,3 +16,14 @@ Thumbs.db
 .env.*
 !.env.example
 .codex-autopilot/
+
+# Local/generated artifacts
+**/__pycache__/
+*.pyc
+*.pyo
+PCB/backend/data/dev.sqlite
+PCB/backend/data/dev.sqlite-shm
+PCB/backend/data/dev.sqlite-wal
+vite-os3.err
+
+**/backend/data/dev.sqlite*

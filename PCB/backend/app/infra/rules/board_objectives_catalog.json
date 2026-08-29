@@ -1,0 +1,128 @@
+{
+  "objectives": [
+    {
+      "id": "league_playoffs",
+      "type": "primary",
+      "name": "Clasificar a Playoffs",
+      "category": "league",
+      "threshold": 6,
+      "metric": "league_position",
+      "description": "Terminar entre los 6 primeros de la liga regular",
+      "reward_budget": 500000,
+      "reward_confidence": 10,
+      "penalty_budget": -200000,
+      "penalty_confidence": -15
+    },
+    {
+      "id": "league_top3",
+      "type": "primary",
+      "name": "Top 3 Liga",
+      "category": "league",
+      "threshold": 3,
+      "metric": "league_position",
+      "description": "Finalizar en el podio de la liga regular",
+      "reward_budget": 800000,
+      "reward_confidence": 15,
+      "penalty_budget": -300000,
+      "penalty_confidence": -20
+    },
+    {
+      "id": "league_champion",
+      "type": "primary",
+      "name": "Campeón de Liga",
+      "category": "league",
+      "threshold": 1,
+      "metric": "league_position",
+      "description": "Ganar el campeonato de liga regular",
+      "reward_budget": 1500000,
+      "reward_confidence": 25,
+      "penalty_budget": -500000,
+      "penalty_confidence": -25
+    },
+    {
+      "id": "cup_semifinals",
+      "type": "secondary",
+      "name": "Semifinales Copa",
+      "category": "cup",
+      "threshold": 4,
+      "metric": "cup_round",
+      "description": "Alcanzar al menos las semifinales de Copa",
+      "reward_budget": 200000,
+      "reward_confidence": 5,
+      "penalty_budget": 0,
+      "penalty_confidence": -5
+    },
+    {
+      "id": "cup_final",
+      "type": "secondary",
+      "name": "Final Copa",
+      "category": "cup",
+      "threshold": 2,
+      "metric": "cup_round",
+      "description": "Llegar a la final de Copa",
+      "reward_budget": 400000,
+      "reward_confidence": 10,
+      "penalty_budget": 0,
+      "penalty_confidence": -8
+    },
+    {
+      "id": "financial_balance",
+      "type": "financial",
+      "name": "Equilibrio Financiero",
+      "category": "finances",
+      "threshold": 0,
+      "metric": "year_balance",
+      "description": "Cerrar el año con balance positivo",
+      "reward_budget": 0,
+      "reward_confidence": 5,
+      "penalty_budget": -100000,
+      "penalty_confidence": -10
+    },
+    {
+      "id": "wage_control",
+      "type": "financial",
+      "name": "Control Salarial",
+      "category": "finances",
+      "threshold": 70,
+      "metric": "payroll_percentage",
+      "description": "Mantener masa salarial bajo 70% de ingresos",
+      "reward_budget": 0,
+      "reward_confidence": 3,
+      "penalty_budget": 0,
+      "penalty_confidence": -8
+    },
+    {
+      "id": "youth_development",
+      "type": "secondary",
+      "name": "Desarrollo Cantera",
+      "category": "development",
+      "threshold": 3,
+      "metric": "youth_promoted",
+      "description": "Promover al menos 3 jugadores de cantera",
+      "reward_budget": 150000,
+      "reward_confidence": 5,
+      "penalty_budget": 0,
+      "penalty_confidence": -3
+    },
+    {
+      "id": "attendance_growth",
+      "type": "secondary",
+      "name": "Crecimiento Asistencia",
+      "category": "revenue",
+      "threshold": 85,
+      "metric": "attendance_percentage",
+      "description": "Mantener >85% capacidad promedio",
+      "reward_budget": 100000,
+      "reward_confidence": 3,
+      "penalty_budget": 0,
+      "penalty_confidence": -2
+    }
+  ],
+  "confidence_thresholds": {
+    "very_high": { "min": 85, "label": "Muy Alta", "color": "#10b981", "status": "Seguro" },
+    "high": { "min": 70, "label": "Alta", "color": "#3b82f6", "status": "Confiado" },
+    "medium": { "min": 55, "label": "Media", "color": "#f59e0b", "status": "Estable" },
+    "low": { "min": 40, "label": "Baja", "color": "#ef4444", "status": "En Riesgo" },
+    "critical": { "min": 0, "label": "Crítica", "color": "#dc2626", "status": "Despido Inminente" }
+  }
+}

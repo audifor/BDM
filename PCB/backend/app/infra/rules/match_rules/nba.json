@@ -1,0 +1,34 @@
+{
+  "id": "NBA",
+  "court": {
+    "length_m": 28.65,
+    "width_m": 15.24,
+    "rim_x_from_baseline_m": 1.575,
+    "rim_height_m": 3.05,
+    "three_arc_radius_m": 7.24,
+    "three_corner_distance_m": 6.70,
+    "free_throw_line_from_baseline_m": 5.79,
+    "restricted_radius_m": 1.22
+  },
+  "game": {
+    "period_count": 4,
+    "period_seconds": 720,
+    "shot_clock_seconds": 24,
+    "shot_clock_reset_off_reb_seconds": 14,
+    "shot_clock_reset_deadball_seconds": 14,
+    "backcourt_seconds": 8,
+    "foul_out": 6,
+    "timeouts_per_game": 7,
+    "timeouts_scheme": "game",
+    "timeouts_per_ot": 2,
+    "inbound_seconds": 5,
+    "alt_possession": false,
+    "goaltending_enabled": true,
+    "defensive_three_seconds_enabled": true
+  },
+  "bonus": {
+    "two_shots_threshold": 5,
+    "last2min_seconds": 120,
+    "last2min_two_shots_threshold": 2
+  }
+}

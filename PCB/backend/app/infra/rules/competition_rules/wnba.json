@@ -1,0 +1,55 @@
+{
+  "id": "WNBA",
+  "name": "WNBA",
+  "edition": "2025",
+  "governing_body": "wnba",
+  "team_count": 13,
+  "season": {
+    "start_month_day": "01-01",
+    "end_month_day": "12-31",
+    "definition": "Temporada WNBA 2025"
+  },
+  "season_dates_2025": {
+    "regular_season_start": "2025-05-16",
+    "regular_season_end": "2025-09-11",
+    "playoff_start": "2025-09-14",
+    "finals_end": "2025-10-17",
+    "trade_deadline": "2025-08-07",
+    "playoff_eligibility_waivers": "2025-08-29"
+  },
+  "competitions": {
+    "regular_season": {
+      "structure": {
+        "regular_season_games": 44,
+        "playoff_teams": 8
+      }
+    }
+  },
+  "market": {
+    "windows": [
+      {
+        "type": "transfer",
+        "scope": "all",
+        "start": "2025-02-01",
+        "end": "2025-08-07",
+        "note": "Firmas y traspasos hasta el trade deadline."
+      }
+    ],
+    "key_dates_2025": {
+      "negotiation_start": "2025-01-21",
+      "signing_start": "2025-02-01",
+      "draft": "2025-04-14",
+      "training_camp_start": "2025-04-27",
+      "preseason_start": "2025-05-02",
+      "final_roster_cut": "2025-05-15",
+      "regular_season_start": "2025-05-16",
+      "trade_deadline": "2025-08-07",
+      "playoff_eligibility_waivers": "2025-08-29",
+      "regular_season_end": "2025-09-11",
+      "playoff_start": "2025-09-14"
+    }
+  },
+  "sources": [
+    "https://www.wnba.com/wnba-key-dates-2025/"
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "country": "ES",
+  "name": "Espana",
+  "leagues": [
+    {
+      "id": "ACB",
+      "name": "Liga Endesa",
+      "level": 1,
+      "ruleset": "ACB",
+      "teams": [
+        { "name": "Real Madrid", "city": "Madrid", "budget": 5000000, "reputation": 850 },
+        { "name": "Barca", "city": "Barcelona", "budget": 4500000, "reputation": 830 },
+        { "name": "Valencia Basket", "city": "Valencia", "budget": 3200000, "reputation": 760 },
+        { "name": "Baskonia", "city": "Vitoria-Gasteiz", "budget": 3000000, "reputation": 740 },
+        { "name": "Unicaja Malaga", "city": "Malaga", "budget": 2800000, "reputation": 720 },
+        { "name": "Dreamland Gran Canaria", "city": "Las Palmas", "budget": 2400000, "reputation": 690 },
+        { "name": "La Laguna Tenerife", "city": "La Laguna", "budget": 2300000, "reputation": 680 },
+        { "name": "Joventut Badalona", "city": "Badalona", "budget": 2200000, "reputation": 670 },
+        { "name": "UCAM Murcia", "city": "Murcia", "budget": 2100000, "reputation": 660 },
+        { "name": "Casademont Zaragoza", "city": "Zaragoza", "budget": 2000000, "reputation": 650 },
+        { "name": "BAXI Manresa", "city": "Manresa", "budget": 1900000, "reputation": 640 },
+        { "name": "Surne Bilbao Basket", "city": "Bilbao", "budget": 1800000, "reputation": 630 },
+        { "name": "MoraBanc Andorra", "city": "Andorra la Vella", "budget": 1750000, "reputation": 620 },
+        { "name": "Recoletas Salud San Pablo Burgos", "city": "Burgos", "budget": 1500000, "reputation": 595 },
+        { "name": "Hiopos Lleida", "city": "Lleida", "budget": 1450000, "reputation": 590 },
+        { "name": "Coviran Granada", "city": "Granada", "budget": 1650000, "reputation": 610 },
+        { "name": "Rio Breogan", "city": "Lugo", "budget": 1600000, "reputation": 605 },
+        { "name": "Basquet Girona", "city": "Girona", "budget": 1550000, "reputation": 600 }
+      ]
+    },
+    {
+      "id": "FEB",
+      "name": "Primera FEB",
+      "level": 2,
+      "ruleset": "FEB",
+      "teams": [
+        { "name": "Movistar Estudiantes", "city": "Madrid", "budget": 1200000, "reputation": 560 },
+        { "name": "Monbus Obradoiro", "city": "Santiago", "budget": 1100000, "reputation": 545 },
+        { "name": "Flexicar Fuenlabrada", "city": "Fuenlabrada", "budget": 1050000, "reputation": 535 },
+        { "name": "Real Betis Baloncesto", "city": "Sevilla", "budget": 980000, "reputation": 525 },
+        { "name": "San Pablo Burgos", "city": "Burgos", "budget": 950000, "reputation": 520 },
+        { "name": "Tizona Burgos", "city": "Burgos", "budget": 900000, "reputation": 505 },
+        { "name": "Palencia Baloncesto", "city": "Palencia", "budget": 880000, "reputation": 500 },
+        { "name": "HLA Alicante", "city": "Alicante", "budget": 840000, "reputation": 490 },
+        { "name": "Basquet Coruna", "city": "A Coruna", "budget": 820000, "reputation": 485 },
+        { "name": "Gipuzkoa Basket", "city": "San Sebastian", "budget": 800000, "reputation": 480 },
+        { "name": "Oviedo Baloncesto", "city": "Oviedo", "budget": 770000, "reputation": 470 },
+        { "name": "Melilla Ciudad del Deporte", "city": "Melilla", "budget": 750000, "reputation": 465 },
+        { "name": "Alega Cantabria", "city": "Torrelavega", "budget": 720000, "reputation": 455 },
+        { "name": "Amics Castellon", "city": "Castellon", "budget": 700000, "reputation": 450 },
+        { "name": "Zamora Baloncesto", "city": "Zamora", "budget": 680000, "reputation": 445 },
+        { "name": "Ourense Baloncesto", "city": "Ourense", "budget": 660000, "reputation": 440 },
+        { "name": "Caceres Patrimonio", "city": "Caceres", "budget": 640000, "reputation": 435 },
+        { "name": "Real Valladolid Baloncesto", "city": "Valladolid", "budget": 620000, "reputation": 430 }
+      ]
+    }
+  ]
+}

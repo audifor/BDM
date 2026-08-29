@@ -1,0 +1,29 @@
+# Unity
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.csproj
+*.sln
+*.user
+*.userprefs
+*.pidb
+*.booproj
+
+# OS / misc
+.DS_Store
+Thumbs.db
+
+# Node (si usas herramientas JS)
+node_modules/
+
+# Unity Addressables / cache (si aplica)
+[Aa]ssets/[Aa]ddressableAssetsData/*/*.bin*

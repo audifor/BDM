@@ -1,0 +1,33 @@
+{
+  "id": "FIBA",
+  "court": {
+    "length_m": 28.0,
+    "width_m": 15.0,
+    "rim_x_from_baseline_m": 1.575,
+    "rim_height_m": 3.05,
+    "three_arc_radius_m": 6.75,
+    "three_corner_distance_m": 6.60,
+    "free_throw_line_from_baseline_m": 5.80,
+    "restricted_radius_m": 1.25
+  },
+  "game": {
+    "period_count": 4,
+    "period_seconds": 600,
+    "shot_clock_seconds": 24,
+    "shot_clock_reset_off_reb_seconds": 14,
+    "shot_clock_reset_deadball_seconds": 14,
+    "backcourt_seconds": 8,
+    "foul_out": 5,
+    "timeouts_per_game": 5,
+    "timeouts_scheme": "half",
+    "timeouts_per_half": [2, 3],
+    "timeouts_per_ot": 1,
+    "inbound_seconds": 5,
+    "alt_possession": true,
+    "goaltending_enabled": true,
+    "defensive_three_seconds_enabled": false
+  },
+  "bonus": {
+    "two_shots_threshold": 5
+  }
+}

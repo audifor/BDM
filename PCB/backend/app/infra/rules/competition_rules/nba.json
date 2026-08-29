@@ -1,0 +1,62 @@
+{
+  "id": "NBA",
+  "name": "NBA",
+  "edition": "2025-26",
+  "governing_body": "nba",
+  "team_count": 30,
+  "season": {
+    "start_month_day": "07-01",
+    "end_month_day": "06-30",
+    "definition": "Temporada NBA 2025-26"
+  },
+  "season_dates_2025_26": {
+    "regular_season_start": "2025-10-21",
+    "regular_season_end": "2026-04-12",
+    "trade_deadline": "2026-02-05",
+    "playoff_eligibility_waiver_deadline": "2026-03-01",
+    "play_in_start": "2026-04-14",
+    "play_in_end": "2026-04-17",
+    "playoff_start": "2026-04-18",
+    "finals_game_1": "2026-06-03",
+    "finals_end": "2026-06-19"
+  },
+  "competitions": {
+    "regular_season": {
+      "structure": {
+        "regular_season_games": 82,
+        "playoff_teams": 16
+      }
+    }
+  },
+  "market": {
+    "windows": [
+      {
+        "type": "transfer",
+        "scope": "domestic",
+        "start": "2025-07-06",
+        "end": "2026-02-05",
+        "note": "Ventana de traspasos hasta el trade deadline."
+      },
+      {
+        "type": "transfer",
+        "scope": "external",
+        "start": "2025-07-06",
+        "end": "2026-04-12",
+        "note": "Ventana de fichajes hasta el fin de temporada regular."
+      }
+    ],
+    "key_dates_2025_26": {
+      "free_agency_negotiation_start": "2025-06-30",
+      "free_agency_signing_start": "2025-07-06",
+      "trade_deadline": "2026-02-05",
+      "regular_season_end": "2026-04-12",
+      "play_in_start": "2026-04-14",
+      "playoffs_start": "2026-04-18",
+      "finals_game_1": "2026-06-03"
+    }
+  },
+  "sources": [
+    "https://www.nba.com/news/key-dates",
+    "https://www.nba.com/news/2025-26-nba-regular-season-schedule"
+  ]
+}

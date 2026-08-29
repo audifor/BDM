@@ -1,0 +1,151 @@
+{
+  "facilities": [
+    {
+      "id": "gym",
+      "name": "Gimnasio",
+      "category": "training",
+      "description": "Instalación de fuerza y acondicionamiento físico",
+      "max_level": 6,
+      "base_cost": 150000,
+      "cost_multiplier": 1.8,
+      "upgrade_days": 30,
+      "effects": {
+        "strength_dev": 0.05,
+        "stamina_dev": 0.04,
+        "vertical_dev": 0.03
+      }
+    },
+    {
+      "id": "courts_indoor",
+      "name": "Pistas Cubiertas",
+      "category": "training",
+      "description": "Pistas interiores de entrenamiento técnico",
+      "max_level": 6,
+      "base_cost": 200000,
+      "cost_multiplier": 1.9,
+      "upgrade_days": 45,
+      "effects": {
+        "shooting_dev": 0.06,
+        "handling_dev": 0.05,
+        "technique_dev": 0.04
+      }
+    },
+    {
+      "id": "medical_center",
+      "name": "Centro Médico",
+      "category": "medical",
+      "description": "Instalaciones de recuperación y tratamiento",
+      "max_level": 6,
+      "base_cost": 250000,
+      "cost_multiplier": 2.0,
+      "upgrade_days": 60,
+      "effects": {
+        "injury_recovery": -0.15,
+        "injury_prevention": 0.08,
+        "fatigue_recovery": 0.10
+      }
+    },
+    {
+      "id": "scouting_network",
+      "name": "Red de Scouting",
+      "category": "operations",
+      "description": "Infraestructura de exploración global",
+      "max_level": 5,
+      "base_cost": 100000,
+      "cost_multiplier": 1.7,
+      "upgrade_days": 20,
+      "effects": {
+        "revealed_attributes": 2,
+        "tier_access": 3,
+        "scout_slots": 3
+      }
+    },
+    {
+      "id": "analytics_lab",
+      "name": "Laboratorio Analytics",
+      "category": "operations",
+      "description": "Centro de análisis de datos avanzado",
+      "max_level": 5,
+      "base_cost": 180000,
+      "cost_multiplier": 1.8,
+      "upgrade_days": 30,
+      "effects": {
+        "simulation_accuracy": 0.10,
+        "advanced_metrics": 1,
+        "tactical_insights": 1
+      }
+    },
+    {
+      "id": "stadium",
+      "name": "Estadio / Arena",
+      "category": "revenue",
+      "description": "Capacidad y calidad del recinto",
+      "max_level": 8,
+      "base_cost": 500000,
+      "cost_multiplier": 2.5,
+      "upgrade_days": 90,
+      "effects": {
+        "capacity": 1000,
+        "ticket_income": 15000,
+        "sponsor_bonus": 0.05
+      }
+    },
+    {
+      "id": "training_tech",
+      "name": "Tecnología Entreno",
+      "category": "training",
+      "description": "Sistemas de tracking y análisis biométrico",
+      "max_level": 5,
+      "base_cost": 120000,
+      "cost_multiplier": 1.6,
+      "upgrade_days": 25,
+      "effects": {
+        "training_efficiency": 0.08,
+        "fatigue_monitoring": 1,
+        "injury_prediction": 1
+      }
+    },
+    {
+      "id": "youth_academy",
+      "name": "Academia Juvenil",
+      "category": "development",
+      "description": "Cantera y desarrollo de jóvenes talentos",
+      "max_level": 6,
+      "base_cost": 300000,
+      "cost_multiplier": 2.0,
+      "upgrade_days": 60,
+      "effects": {
+        "youth_dev_speed": 0.12,
+        "youth_quality": 0.08,
+        "academy_slots": 3
+      }
+    }
+  ],
+  "categories": {
+    "training": {
+      "label": "Entrenamiento",
+      "icon": "🏋️",
+      "color": "#3b82f6"
+    },
+    "medical": {
+      "label": "Médico",
+      "icon": "🏥",
+      "color": "#ef4444"
+    },
+    "operations": {
+      "label": "Operaciones",
+      "icon": "📊",
+      "color": "#8b5cf6"
+    },
+    "revenue": {
+      "label": "Ingresos",
+      "icon": "💰",
+      "color": "#10b981"
+    },
+    "development": {
+      "label": "Desarrollo",
+      "icon": "🌱",
+      "color": "#f59e0b"
+    }
+  }
+}

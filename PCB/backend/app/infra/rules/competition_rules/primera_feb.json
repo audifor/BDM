@@ -1,0 +1,107 @@
+{
+  "id": "FEB",
+  "name": "Primera FEB",
+  "edition": "2025-26",
+  "governing_body": "feb",
+  "team_count": 18,
+  "season": {
+    "start_month_day": "07-01",
+    "end_month_day": "06-30",
+    "definition": "Temporada deportiva FEB"
+  },
+  "competitions": {
+    "liga_regular": {
+      "structure": {
+        "regular_season_rounds": 34,
+        "double_round_robin": true,
+        "first_round_games": 17,
+        "second_round_mirrors_first": true
+      },
+      "classification": {
+        "ranking_metric": "victorias",
+        "promotion": "Ascenso directo para el campeon y plaza adicional via playoff",
+        "relegation": "Descenso a Segunda FEB para los puestos 16 y 17"
+      },
+      "round_dates": [
+        "2025-09-26",
+        "2025-10-03",
+        "2025-10-10",
+        "2025-10-17",
+        "2025-10-24",
+        "2025-10-31",
+        "2025-11-05",
+        "2025-11-08",
+        "2025-11-14",
+        "2025-11-22",
+        "2025-12-06",
+        "2025-12-12",
+        "2025-12-19",
+        "2025-12-23",
+        "2026-01-02",
+        "2026-01-09",
+        "2026-01-16",
+        "2026-01-23",
+        "2026-01-30",
+        "2026-02-05",
+        "2026-02-15",
+        "2026-02-22",
+        "2026-03-06",
+        "2026-03-13",
+        "2026-03-20",
+        "2026-03-27",
+        "2026-04-02",
+        "2026-04-11",
+        "2026-04-17",
+        "2026-04-24",
+        "2026-05-01",
+        "2026-05-08",
+        "2026-05-15",
+        "2026-05-22"
+      ],
+      "fiba_windows": [
+        {
+          "start": "2025-11-24",
+          "end": "2025-12-02"
+        },
+        {
+          "start": "2026-02-23",
+          "end": "2026-03-03"
+        }
+      ]
+    },
+    "playoff_ascenso": {
+      "teams": 8,
+      "seeds": "2-9",
+      "best_of": 5,
+      "format": "2-2-1",
+      "final_four": true,
+      "pairings": [
+        { "seed1": 2, "seed2": 9 },
+        { "seed1": 3, "seed2": 8 },
+        { "seed1": 4, "seed2": 7 },
+        { "seed1": 5, "seed2": 6 }
+      ]
+    }
+  },
+  "market": {
+    "windows": [
+      {
+        "type": "transfer",
+        "scope": "all",
+        "start": "2025-07-01",
+        "end": "2026-02-28",
+        "note": "Cierre general FEB (usuario)."
+      }
+    ],
+    "notes": [
+      "Excepciones por lesiones de larga duracion segun bases de competicion."
+    ]
+  },
+  "season_dates_2025_26": {
+    "liga_regular_start": "2025-09-26",
+    "regular_season_end": "2026-05-22",
+    "playoff_quarters_start": "2026-05-29",
+    "playoff_quarters_end": "2026-06-12",
+    "final_four": "2026-06-20/21"
+  }
+}

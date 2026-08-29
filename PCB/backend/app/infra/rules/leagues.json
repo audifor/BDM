@@ -1,0 +1,96 @@
+{
+  "defaultLeague": "ACB",
+  "leagues": [
+    {
+      "id": "ACB",
+      "name": "Liga Endesa",
+      "shortName": "ACB",
+      "ruleset": "ACB",
+      "rotationType": "ACB",
+      "level": 1,
+      "color": "#ff7b39",
+      "rulesFile": "acb.json",
+      "competitions": {
+        "league": "Liga Endesa",
+        "cup": "Copa del Rey",
+        "supercopa": "Supercopa Endesa"
+      },
+      "universe": "FIBA"
+    },
+    {
+      "id": "FEB",
+      "name": "Primera FEB",
+      "shortName": "Primera FEB",
+      "ruleset": "FEB",
+      "rotationType": "FEB",
+      "level": 2,
+      "color": "#16a34a",
+      "rulesFile": "primera_feb.json",
+      "competitions": {
+        "league": "Primera FEB",
+        "playoff": "Playoff Ascenso"
+      },
+      "universe": "FIBA"
+    },
+    {
+      "id": "NBA",
+      "name": "NBA",
+      "shortName": "NBA",
+      "ruleset": "NBA",
+      "rotationType": "NBA",
+      "level": 1,
+      "color": "#ef4444",
+      "rulesFile": "nba.json",
+      "competitions": {
+        "league": "NBA",
+        "playoff": "NBA Playoffs"
+      },
+      "universe": "NBA"
+    },
+    {
+      "id": "WNBA",
+      "name": "WNBA",
+      "shortName": "WNBA",
+      "ruleset": "WNBA",
+      "rotationType": "WNBA",
+      "level": 1,
+      "color": "#f97316",
+      "rulesFile": "wnba.json",
+      "competitions": {
+        "league": "WNBA",
+        "playoff": "WNBA Playoffs"
+      },
+      "universe": "WNBA"
+    },
+    {
+      "id": "NCAA_M",
+      "name": "NCAA Men",
+      "shortName": "NCAA Men",
+      "ruleset": "NCAA_M",
+      "rotationType": "NCAA_M",
+      "level": 1,
+      "color": "#22c55e",
+      "rulesFile": "ncaa_m.json",
+      "competitions": {
+        "league": "NCAA Men",
+        "tournament": "NCAA Tournament"
+      },
+      "universe": "NCAA"
+    },
+    {
+      "id": "NCAA_W",
+      "name": "NCAA Women",
+      "shortName": "NCAA Women",
+      "ruleset": "NCAA_W",
+      "rotationType": "NCAA_W",
+      "level": 1,
+      "color": "#14b8a6",
+      "rulesFile": "ncaa_w.json",
+      "competitions": {
+        "league": "NCAA Women",
+        "tournament": "NCAA Tournament"
+      },
+      "universe": "NCAA"
+    }
+  ]
+}

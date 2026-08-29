@@ -1,0 +1,35 @@
+{
+  "id": "NCAA_M",
+  "court": {
+    "length_m": 28.65,
+    "width_m": 15.24,
+    "rim_x_from_baseline_m": 1.575,
+    "rim_height_m": 3.05,
+    "three_arc_radius_m": 6.75,
+    "three_corner_distance_m": 6.60,
+    "free_throw_line_from_baseline_m": 5.79,
+    "restricted_radius_m": 1.22
+  },
+  "game": {
+    "period_count": 2,
+    "period_seconds": 1200,
+    "shot_clock_seconds": 30,
+    "shot_clock_reset_off_reb_seconds": 20,
+    "shot_clock_reset_deadball_seconds": 20,
+    "backcourt_seconds": 10,
+    "foul_out": 5,
+    "timeouts_per_game": 4,
+    "timeouts_scheme": "half",
+    "timeouts_per_half": [2, 2],
+    "timeouts_per_ot": 1,
+    "inbound_seconds": 5,
+    "alt_possession": true,
+    "goaltending_enabled": true,
+    "defensive_three_seconds_enabled": false
+  },
+  "bonus": {
+    "one_and_one_threshold": 7,
+    "double_bonus_threshold": 10,
+    "two_shots_threshold": 0
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "id": "NCAA_M",
+  "name": "NCAA Men",
+  "edition": "2025-26",
+  "governing_body": "ncaa",
+  "team_count": 32,
+  "season": {
+    "start_month_day": "07-01",
+    "end_month_day": "06-30",
+    "definition": "Temporada NCAA Men 2025-26"
+  },
+  "season_dates_2025_26": {
+    "regular_season_start": "2025-11-05",
+    "regular_season_end": "2026-03-15",
+    "selection_sunday": "2026-03-15",
+    "first_four_start": "2026-03-17",
+    "first_four_end": "2026-03-18",
+    "first_round_start": "2026-03-19",
+    "first_round_end": "2026-03-20",
+    "second_round_start": "2026-03-21",
+    "second_round_end": "2026-03-22",
+    "sweet_16_start": "2026-03-26",
+    "sweet_16_end": "2026-03-27",
+    "elite_8_start": "2026-03-28",
+    "elite_8_end": "2026-03-29",
+    "final_four": "2026-04-04",
+    "championship_game": "2026-04-06"
+  },
+  "competitions": {
+    "regular_season": {
+      "structure": {
+        "regular_season_games": 30,
+        "tournament_teams": 68
+      }
+    }
+  },
+  "market": {
+    "windows": [
+      {
+        "type": "transfer",
+        "scope": "all",
+        "start": "2026-04-07",
+        "end": "2026-04-21",
+        "note": "Portal de transferencias: 15 dias desde el dia despues del campeonato."
+      }
+    ],
+    "notes": [
+      "Existe una ventana adicional de 15 dias tras cambio de entrenador principal."
+    ]
+  },
+  "sources": [
+    "https://www.ncaa.org/news/2024/7/18/media-center-di-committees-propose-first-contest-dates-basketball",
+    "https://www.ncaa.com/news/basketball-men/article/2025-08-12/2026-march-madness-schedule-mens-ncaa-tournament-dates"
+  ],
+  "notes": [
+    "regular_season_end se usa como cutoff de simulacion previo a Selection Sunday."
+  ]
+}

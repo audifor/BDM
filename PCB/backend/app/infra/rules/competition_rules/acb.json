@@ -1,0 +1,264 @@
+{
+  "id": "ACB",
+  "name": "Liga Endesa (ACB)",
+  "edition": "2025-26",
+  "governing_body": "acb",
+  "team_count": 18,
+  "season": {
+    "start_month_day": "07-01",
+    "end_month_day": "06-30",
+    "definition": "Temporada deportiva acb",
+    "notes": [
+      "La temporada comienza el 1 de julio y finaliza el 30 de junio."
+    ]
+  },
+  "rules_hierarchy": {
+    "reglamento_competiciones": {
+      "title": "Reglamento de Competiciones acb",
+      "approval_date": "2025-10-07",
+      "scope": "Reglas generales de competici\u00f3n y calendario deportivo."
+    },
+    "normas_internas": {
+      "title": "Normas internas - Liga Endesa, Copa del Rey y Supercopa Endesa",
+      "season": "2025-26",
+      "publication_date": "2025-08-18"
+    },
+    "fiba_rules": {
+      "applies_suppletory": true,
+      "notes": [
+        "Cuando no exista norma espec\u00edfica, se aplican las reglas oficiales FIBA y el Reglamento General y de Competiciones FEB."
+      ]
+    }
+  },
+  "competitions": {
+    "liga_endesa": {
+      "structure": {
+        "phases": [
+          "liga_regular",
+          "playoff"
+        ],
+        "regular_season_rounds": 34,
+        "double_round_robin": true,
+        "first_round_games": 17,
+        "second_round_mirrors_first": true
+      },
+      "calendar_rules": {
+        "calendar_approved_by": "Asamblea General acb",
+        "scheduling_constraints": [
+          "El calendario puede ajustarse a los compromisos de retransmisi\u00f3n.",
+          "Debe atenderse la disponibilidad de instalaciones y respetar la normativa vigente.",
+          "Cada club debe jugar al menos 12 partidos como local en cada vuelta en su instalaci\u00f3n principal, salvo imposibilidad justificada; en ese caso, debe se\u00f1alarse instalaci\u00f3n alternativa con requisitos acb."
+        ]
+      },
+      "fiba_windows": [
+        { "start": "2025-11-24", "end": "2025-12-02" },
+        { "start": "2026-02-23", "end": "2026-03-03" }
+      ],
+      "classification": {
+        "ranking_metric": "victorias",
+        "if_unbalanced_games": "porcentaje_victorias",
+        "final_standings_rules": {
+          "champion": "Ganador del playoff",
+          "positions_2_to_8": "Orden seg\u00fan resultados en playoff",
+          "positions_9_to_16": "Por orden de clasificaci\u00f3n en liga regular",
+          "positions_17_to_18": "Descienden a Primera FEB"
+        }
+      },
+      "playoff": {
+        "teams": 8,
+        "quarterfinals": {
+          "best_of": 3,
+          "home_court": "mejor_clasificado",
+          "format": "1-1-1",
+          "pairings": [
+            {
+              "series": "A",
+              "seed1": 1,
+              "seed2": 8
+            },
+            {
+              "series": "B",
+              "seed1": 2,
+              "seed2": 7
+            },
+            {
+              "series": "C",
+              "seed1": 3,
+              "seed2": 6
+            },
+            {
+              "series": "D",
+              "seed1": 4,
+              "seed2": 5
+            }
+          ],
+          "semifinal_bracket": [
+            {
+              "series": "SF1",
+              "winners_from": [
+                "A",
+                "D"
+              ]
+            },
+            {
+              "series": "SF2",
+              "winners_from": [
+                "B",
+                "C"
+              ]
+            }
+          ]
+        },
+        "semifinals": {
+          "best_of": 5,
+          "home_court": "mejor_clasificado",
+          "format": "2-2-1"
+        },
+        "final": {
+          "best_of": 5,
+          "home_court": "mejor_clasificado",
+          "format": "2-2-1"
+        }
+      },
+      "tiebreakers": {
+        "special_cases": {
+          "penalized_team": "Si hay igualdad a victorias y un equipo fue sancionado con perdida de partidos, se clasifica en ultimo lugar entre los empatados.",
+          "fewer_games_played": "Si hay igualdad a victorias y uno o varios equipos jugaron menos partidos, esos equipos se sit\u00faan por delante de los que jugaron mas partidos."
+        },
+        "two_team_tie": [
+          "Victorias en enfrentamientos directos.",
+          "Si empatan en victorias, mejor diferencia de puntos en enfrentamientos directos.",
+          "Si persiste el empate, mejor diferencia de puntos en toda la liga regular.",
+          "Si persiste, mayor numero de puntos anotados en toda la liga regular."
+        ],
+        "multi_team_tie": [
+          "Victorias en enfrentamientos directos entre los equipos empatados.",
+          "Si empatan en victorias, mejor diferencia de puntos en enfrentamientos directos entre los equipos empatados.",
+          "Si persiste el empate, mejor diferencia de puntos en toda la liga regular.",
+          "Si persiste, mayor numero de puntos anotados en toda la liga regular."
+        ]
+      },
+      "force_majeure": {
+        "suspension": "Las situaciones de fuerza mayor pueden suspender la competici\u00f3n.",
+        "resumption": "Se reanuda desde el inicio de la jornada siguiente a la de la suspensi\u00f3n.",
+        "decision_maker": "Presidencia acb, de oficio o por solicitud de clubes, decide completar la competici\u00f3n."
+      }
+    },
+    "copa_del_rey": {
+      "qualification": {
+        "regular_season_cut": 17,
+        "teams": 8,
+        "standard": "Se clasifican los 8 primeros al finalizar la primera vuelta.",
+        "host_team": {
+          "conditional_host_inclusion": true,
+          "rule": "Si hay club acb de la ciudad o comunidad sede, el acuerdo puede reservar plaza al mejor clasificado de esa ciudad/comunidad, y el resto para los 7 mejores restantes."
+        },
+        "tiebreakers": "Se aplican los criterios de desempate de la Liga Endesa."
+      },
+      "format": {
+        "single_elimination": true,
+        "rounds": [
+          "cuartos",
+          "semifinales",
+          "final"
+        ],
+        "single_site": true,
+        "draw": "Sorteo para emparejar cuartos de final.",
+        "seeding": {
+          "top4_seeded": true,
+          "best_regular_season_placed_in_A": true
+        },
+        "bracket": {
+          "A_vs_D_semifinal": true,
+          "B_vs_C_semifinal": true
+        },
+        "home_team": {
+          "host_team_priority": true,
+          "otherwise": "El mejor clasificado en la liga regular act\u00faa como local."
+        },
+        "bench_selection": {
+          "priority": "El mejor clasificado elige banquillo; si es el equipo sede, tiene prioridad."
+        }
+      }
+    },
+    "supercopa_endesa": {
+      "qualification": {
+        "teams": 4,
+        "order_of_access": [
+          "Campeon Liga Endesa",
+          "Campeon Copa del Rey",
+          "Campeon Supercopa Endesa",
+          "Equipo sede"
+        ],
+        "vacancies": [
+          "Subcampeon Liga Endesa",
+          "Tercer clasificado Liga Endesa",
+          "Cuarto clasificado Liga Endesa",
+          "Siguiente clasificado en Liga Endesa"
+        ],
+        "special_case_outside_spain_andorra": "Si la Supercopa se celebra fuera de Espana/Andorra, la Asamblea puede establecer criterios distintos."
+      },
+      "format": {
+        "single_elimination": true,
+        "rounds": [
+          "semifinales",
+          "final"
+        ],
+        "draw": "Sorteo para emparejar semifinales.",
+        "host_team_home": true,
+        "seeding": {
+          "top_seeds": [
+            "Campeon Liga Endesa",
+            "Campeon Copa del Rey"
+          ],
+          "if_same_club": "La segunda condicion de cabeza de serie se asigna segun orden de acceso, excluyendo al equipo sede si no obtuvo merito deportivo."
+        },
+        "home_team": "Mejor clasificado por orden de acceso, salvo el equipo sede que actua como local.",
+        "bench_selection": "Se sigue el orden de acceso, con prioridad del equipo sede."
+      }
+    }
+  },
+  "market": {
+    "windows": [
+      {
+        "type": "transfer",
+        "scope": "domestic",
+        "start": "2025-07-01",
+        "end": "2026-02-28",
+        "note": "Limite entre clubes ACB (usuario)."
+      },
+      {
+        "type": "transfer",
+        "scope": "external",
+        "start": "2025-07-01",
+        "end": "2026-05-30",
+        "note": "Inscripcion hasta fin de fase regular (usuario)."
+      },
+      {
+        "type": "tanteo",
+        "scope": "domestic",
+        "start": "2025-07-08",
+        "end": "2025-07-20",
+        "note": "Periodo de tanteo acb 2025."
+      }
+    ],
+    "notes": [
+      "Las fechas de ventana ACB/FEB fueron confirmadas por el usuario; ajustar cuando tengamos base oficial."
+    ]
+  },
+  "season_dates_2025_26": {
+    "supercopa": "2025-09-27/28",
+    "liga_endesa_start": "2025-10-04/05",
+    "copa_del_rey": "2026-02-19/22",
+    "regular_season_end": "2026-05-30",
+    "playoff_start": "2026-06-02",
+    "playoff_end": "2026-06-28"
+  },
+  "sources": [
+    "https://www.acb.com/docs/transparencia/16102005194820720056.pdf",
+    "https://www.acb.com/docs/transparencia/09302039161300070061.pdf",
+    "https://www.acb.com/articulo/ver/520057",
+    "https://www.acb.com/articulo/ver/518827-jugadores-sujetos-al-derecho-de-tanteo.html",
+    "https://www.acb.com/articulo/ver/426262-portal-de-transparencia-acb.html"
+  ]
+}
