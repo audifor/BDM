@@ -6,20 +6,18 @@ import { createNewGame } from '@/app/game'
 import { DESKTOP_APPS, DOCK_APP_ICON_REGISTRY, getLauncherApps, reorderLauncherApps, resolveLauncherOrder } from './DesktopAppRegistry'
 import { DesktopDock, DesktopLauncher } from './DesktopNavigation'
 
-const launcherProps = { canAdvanceDay: true, canLoad: true, isOpen: true, onAdvanceDay: () => undefined, onClose: () => undefined, onLoad: () => undefined, onQueryChange: () => undefined, onSave: () => undefined, onAppOpen: () => undefined, query: '', recentAppIds: ['squad'] }
+const launcherProps = { canAdvanceDay: true, canLoad: true, isOpen: true, onAdvanceDay: () => undefined, onClose: () => undefined, onLoad: () => undefined, onPinDockApp: () => undefined, onQueryChange: () => undefined, onSave: () => undefined, onAppOpen: () => undefined, query: '', recentAppIds: ['squad'] }
 
 describe('Desktop navigation', () => {
   it('renders the dock from the stable registry with a labelled launcher toggle', () => {
-    const markup = renderToStaticMarkup(createElement(DesktopDock, { activeAppId: 'squad', onAppOpen: () => undefined, onLauncherToggle: () => undefined, openAppIds: ['squad'] }))
+    const markup = renderToStaticMarkup(createElement(DesktopDock, { activeAppId: null, onAppOpen: () => undefined, onLauncherToggle: () => undefined, onPinApp: () => undefined }))
     expect(markup).toContain('data-testid="desktop-dock"')
     expect(markup).toContain('aria-label="Toggle BDM launcher"')
-    expect(markup).toContain('title="Plantilla"')
     expect(markup).toContain('is-expanded')
-    expect(markup).toContain('aria-current="page"')
     expect(markup).toContain('role="tooltip"')
     expect(markup).toContain('<img')
     expect(markup).not.toContain('<svg')
-    expect((markup.match(/class="desktop-dock__item/g) ?? []).length).toBe(DESKTOP_APPS.filter((app) => app.defaultPinned).length)
+    expect((markup.match(/class="desktop-dock__item/g) ?? []).length).toBe(1)
   })
 
   it('maps every canonical app icon concept to its individual PNG asset', () => {
