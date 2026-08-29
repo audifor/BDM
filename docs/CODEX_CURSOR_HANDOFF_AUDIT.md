@@ -34,46 +34,58 @@ timeout and record the full result before any certification claim.
 
 ## High-priority product and migration work
 
-Items 1-5 below were addressed across two remediation rounds on branch
+Items 1-5 below were addressed across three remediation rounds on branch
 `m7-pcb-migration-closure` (2026-08-29); see `docs/PCB_MIGRATION_CLOSURE.md`
 for full evidence. **Round 1 was rejected by external review**: several
 "wired" workflows were UI-only appearances (state set but never rendered,
 callbacks declared in the parent but not consumed by the child component).
 Round 2 fixed those plus a further batch of inert controls found by a
-button-by-button re-audit (not just a grep for `() => undefined`). Residual
-limitations after round 2: donor PCB frontend source is no longer present in
-this repo to diff against, and **no interactive browser visual pass has been
-performed in any session** — this is the sole reason M7 is not CERTIFIED.
+button-by-button re-audit (not just a grep for `() => undefined`) — accepted
+by a second external review as functionally correct, which asked for three
+closing items: fix the one remaining red test (which round 2 could no longer
+treat as out of scope, since it directly touched `PlantillaPcbPage.tsx`),
+add interaction tests for the round-2 fixes that hadn't gotten any yet, and
+correct documentation that overstated test coverage. Round 3 did exactly
+those three things. Residual limitation after round 3: donor PCB frontend
+source is no longer present in this repo to diff against, and **no
+interactive browser visual pass has been performed in any session** — this
+is the sole reason M7 is not CERTIFIED.
 
 1. ~~Finish M7R workflow evidence~~ **DONE.** 31-surface evidence table in
    `docs/PCB_MIGRATION_CLOSURE.md` (Content/Visual/Functionality/Workflow per
-   surface), updated in round 2 with the additional fixes below.
-2. ~~Replace remaining migration no-ops~~ **DONE (round 2).** Beyond round 1's
-   Club staff/hiring/objective actions, Tactics Match Plan overrides, and
-   Competition team/player click + match simulation, round 2 fixed: Club
-   Staff "Gestionar" (was setting state nobody rendered), Tactics "Ver
-   scouting" (no onClick), Competition Calendar Anterior/Siguiente and
-   Jornada anterior/siguiente + select (no handlers, fake "Jornada 1"),
-   Competition team/player click (parent wired but child never consumed the
-   props), Plantilla Líderes/Influyentes chips (no onClick), Training
-   Responsable select + session end time (no onChange), Training Modules
-   Configurar (no onClick), Tactics board GUARDAR AJUSTES (no onClick). All
-   now covered by interaction tests (`@testing-library/react` + `jsdom`,
-   added as devDependencies) that assert observable DOM effects, not just
-   render.
+   surface), updated in rounds 2 and 3 with the additional fixes and test
+   coverage below.
+2. ~~Replace remaining migration no-ops~~ **DONE (round 2), fully test-covered
+   (round 3).** Beyond round 1's Club staff/hiring/objective actions, Tactics
+   Match Plan overrides, and Competition team/player click + match
+   simulation, round 2 fixed: Club Staff "Gestionar" (was setting state
+   nobody rendered), Tactics "Ver scouting" (no onClick), Competition
+   Calendar Anterior/Siguiente and Jornada anterior/siguiente + select (no
+   handlers, fake "Jornada 1"), Competition team/player click (parent wired
+   but child never consumed the props), Plantilla Líderes/Influyentes chips
+   (no onClick), Training Responsable select + session end time (no
+   onChange), Training Modules Configurar (no onClick), Tactics board
+   GUARDAR AJUSTES (no onClick). Round 2 added interaction tests
+   (`@testing-library/react` + `jsdom`, added as devDependencies) for most of
+   these; round 3 closed the remaining gaps — Plantilla Líderes/Influyentes,
+   Training Responsable/session end time/Configurar, and Tactics board
+   GUARDAR AJUSTES — with four small focused test files. Every fix listed
+   above now has an interaction test asserting an observable DOM effect, not
+   just render.
 3. ~~Complete Club fixture coverage for Staff, Board, Facilities~~ **DONE.**
    (Analytics was already complete.) Fixtures remain UI-only under
    `src/ui/pcb-migrated/club/fixtures`, not in GameWorld/Save.
 4. ~~Remove unreachable Golden reconstruction files~~ **DONE.**
    `GoldenManagerWorkspace.tsx`/`.css`/`.test.tsx` deleted; confirmed no
    remaining consumer first.
-5. ~~Complete M7R global validation~~ **AUTOMATED CHECKS DONE, VISUAL PASS
-   OUTSTANDING.** typecheck/build/cargo fmt+check/boundary searches/`npm ci`
-   all pass; `npm test` is 687/688 (one pre-existing, out-of-scope failure in
-   Plantilla's static-render test, unrelated to this branch — re-verified
-   against the branch's pre-round-2 tip). The interactive browser visual pass
-   required by M7's own remediation item 6 has not been run. A1 has not been
-   started and remains a separate future milestone.
+5. ~~Complete M7R global validation~~ **AUTOMATED CHECKS 100% GREEN, VISUAL
+   PASS OUTSTANDING.** typecheck/build/cargo fmt+check/boundary searches/
+   `npm ci` all pass; `npm test` is **693/693 passing, 153/153 test files —
+   100% green** as of round 3 (the one remaining failure from round 2,
+   `PlantillaPcbPage.test.ts`, was fixed by correcting its contract — see
+   `docs/PCB_MIGRATION_CLOSURE.md` "M7 remediation round 3"). The interactive
+   browser visual pass required by M7's own remediation item 6 has not been
+   run. A1 has not been started and remains a separate future milestone.
 
 ## Core-game improvement map (after M7R / under explicit future milestones)
 
@@ -113,10 +125,10 @@ clean `main`); diff is migration-only.
 
 M7 / M7R: **NOT CERTIFIED — blocked by visual certification.** All functional
 and workflow criteria are implemented and covered by automated interaction
-tests as of remediation round 2; all automated validation passes. See
-`docs/PCB_MIGRATION_CLOSURE.md` "M7 remediation round 2" for full evidence.
-The sole remaining blocker is that no interactive browser visual pass has
-been performed in any session — do not mark this CERTIFIED until that pass
-is run and its result recorded.
+tests as of remediation round 3; `npm test` is 693/693 passing, 100% green.
+See `docs/PCB_MIGRATION_CLOSURE.md` "M7 remediation round 3" for full
+evidence. The sole remaining blocker is that no interactive browser visual
+pass has been performed in any session — do not mark this CERTIFIED until
+that pass is run and its result recorded.
 
 A1: **not started**.

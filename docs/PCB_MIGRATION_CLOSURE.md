@@ -3,17 +3,24 @@
 Status: **NOT CERTIFIED / BLOCKED BY VISUAL CERTIFICATION**
 
 All functional, workflow and validation criteria below are implemented and
-verified by automated tests. The sole remaining blocker is that no
-interactive browser visual pass has been performed in any session to date —
-see "M7 remediation round 2" for the exact scope of that gap. Do not mark M7
-CERTIFIED until that pass is run and recorded with its result.
+verified by automated tests — `npm test` is **693/693 passing, 100% green**
+as of round 3. The sole remaining blocker is that no interactive browser
+visual pass has been performed in any session to date — see "M7 remediation
+round 3" for the current state and "M7 remediation round 2" for the workflow
+fixes that established it. Do not mark M7 CERTIFIED until that pass is run
+and recorded with its result.
 
 Audit date: 2026-08-29. First closure attempt: 2026-08-29 (branch
 `m7-pcb-migration-closure`, commit `a2127e3`) — **rejected by external
 review**: several "wired" workflows were found to be UI-only appearances with
 no real effect (state set but never rendered, callbacks declared but not
 consumed by the child component). Remediation round 2: 2026-08-29 (same
-branch).
+branch) — fixed those plus a full inert-control re-audit; accepted as
+functionally correct by a second external review, which asked for three
+closing items. Remediation round 3: 2026-08-29 (same branch) — fixed the one
+remaining red test (see below), added interaction tests for round 2's
+still-uncovered fixes, and corrected documentation that overstated test
+coverage.
 
 ## Blocking findings (original audit — all resolved, see M7 closure record)
 
@@ -71,15 +78,15 @@ respond. Workflow = every action handler performs a real local-state mutation
 
 | # | Milestone | Surface | Content | Visual | Functionality | Workflow |
 | --: | --- | --- | --- | --- | --- | --- |
-| 1 | M1 | Plantilla (roster grid, sort/filter/column-picker) | OK | OK | OK | **Fixed M7 round 2**: the "Personalizada" view-state pill was rendered as a `<button>` with no `onClick`, misleadingly presented as an action. Changed to a non-interactive `<span role="status">` badge so it no longer looks clickable when it isn't. |
-| 2 | M1 | Análisis + Dinámicas (depth chart, cohesion) | OK | OK | OK | **Fixed M7 round 2**: the "Líderes"/"Influyentes" player chips had no `onClick` at all — decorative labels only. Wired them to open a player psychology detail panel (15 attribute columns) sourced from the existing roster fixture. |
+| 1 | M1 | Plantilla (roster grid, sort/filter/column-picker) | OK | OK | OK | **Fixed M7 round 2**: the "Personalizada" view-state pill was rendered as a `<button>` with no `onClick`, misleadingly presented as an action. Changed to a non-interactive `<span role="status">` badge so it no longer looks clickable when it isn't. `PlantillaPcbPage.test.ts` also corrected in round 3 to assert the real section/view labels instead of `'Sección'`/`'Vista'` text the design never had. |
+| 2 | M1 | Análisis + Dinámicas (depth chart, cohesion) | OK | OK | OK | **Fixed M7 round 2**: the "Líderes"/"Influyentes" player chips had no `onClick` at all — decorative labels only. Wired them to open a player psychology detail panel (15 attribute columns) sourced from the existing roster fixture. Covered by an interaction test in round 3 (`PlantillaPcbPage.analysis.test.ts`). |
 | 3 | M1 | Mentoring (groups, create/delete) | OK | OK | OK | OK |
-| 4 | M2 | Team Training (weekly plan, session CRUD) | OK | OK | OK | **Fixed M7 round 2**: the session editor's "Responsable" `<select>` had no `onChange` (`defaultValue="alvaro"` only) and its value was never read anywhere. Made it controlled state, reflected in the hero chip row. The session modal's "Fin" time input also had no `onChange`; wired it to a real `endTime` state that now feeds the "Impacto estimado" duration calculation. |
+| 4 | M2 | Team Training (weekly plan, session CRUD) | OK | OK | OK | **Fixed M7 round 2**: the session editor's "Responsable" `<select>` had no `onChange` (`defaultValue="alvaro"` only) and its value was never read anywhere. Made it controlled state, reflected in the hero chip row. The session modal's "Fin" time input also had no `onChange`; wired it to a real `endTime` state that now feeds the "Impacto estimado" duration calculation. Both covered by interaction tests in round 3 (`TrainingPcbPage.interactions.test.ts`). |
 | 5 | M2 | Personal Training | OK | OK | OK | OK |
 | 6 | M2 | Load Management (filters, sort, columns) | OK | OK | OK | OK |
 | 7 | M2 | Staff Assignments | OK | OK | OK | OK |
-| 8 | M2 | Training Modules | OK | OK | OK | **Fixed M7 round 2**: "Configurar" per module had no `onClick`. Added a per-module settings modal (enable/disable, intensity) with local state reflected on the module card. Also removed a fully dead `LoadManagement` function (superseded by `LoadManagementInteractive`, never referenced). |
-| 9 | M3 | Pizarra (board, drag roles) | OK | OK | OK | **Fixed M7 round 2**: the "GUARDAR AJUSTES" footer button had no `onClick` at all (tactics/starters were already auto-persisted via `useEffect`/inline calls, but the explicit save button itself did nothing when clicked). Wired it to force-persist current state and show a temporary "AJUSTES GUARDADOS" confirmation. |
+| 8 | M2 | Training Modules | OK | OK | OK | **Fixed M7 round 2**: "Configurar" per module had no `onClick`. Added a per-module settings modal (enable/disable, intensity) with local state reflected on the module card. Also removed a fully dead `LoadManagement` function (superseded by `LoadManagementInteractive`, never referenced). Covered by an interaction test in round 3 (`TrainingPcbPage.interactions.test.ts`). |
+| 9 | M3 | Pizarra (board, drag roles) | OK | OK | OK | **Fixed M7 round 2**: the "GUARDAR AJUSTES" footer button had no `onClick` at all (tactics/starters were already auto-persisted via `useEffect`/inline calls, but the explicit save button itself did nothing when clicked). Wired it to force-persist current state and show a temporary "AJUSTES GUARDADOS" confirmation. Covered by an interaction test in round 3 (`PcbTacticsBoard.test.ts`). |
 | 10 | M3 | Diseñador (play designer, frames/actions) | OK | OK | OK | OK |
 | 11 | M3 | Emparejamientos (matchups, auto-assign) | OK | OK | OK | OK |
 | 12 | M3 | Rotaciones (minutes matrix) | OK | OK | OK | OK |
@@ -399,3 +406,90 @@ untouched, not overwritten.
 - **Interactive browser visual pass: still not performed.** No browser tool
   was available in this session. This remains the sole reason M7 is not
   marked CERTIFIED.
+
+Note (round 3 correction): round 2's `npm test` figure of 687/688 included one
+failure, `PlantillaPcbPage.test.ts`, that was treated as pre-existing and
+out of scope. That was **incorrect** — round 2 itself modified
+`PlantillaPcbPage.tsx` directly (the "Personalizada" badge and the
+Líderes/Influyentes chip wiring), so that failing test could no longer be
+excluded from this PR's scope. See "M7 remediation round 3" below for the
+fix and the corrected 100%-green result.
+
+## M7 remediation round 3 (2026-08-29, branch `m7-pcb-migration-closure`)
+
+Triggered by a second external review. That review agreed the core
+functional blockers from round 2 were resolved and asked for exactly three
+things: fix the one remaining red test, add small focused tests for the
+round-2 fixes that didn't get any, and correct the PR description/docs to
+stop claiming full test coverage where it didn't yet exist. No further
+expansive audit or new functionality was requested or added.
+
+### 1. Plantilla test contract
+
+`PlantillaPcbPage.test.ts` asserted the markup contains the literal words
+`'Sección'` and `'Vista'`. Investigation (grep across
+`src/ui/pcb-migrated/plantilla/**`, including CSS and non-visible attributes)
+found those two words appear **nowhere** in the component's source, present
+or in its only prior git revision (`49280d8`, the repository snapshot commit)
+— there is no earlier version of `PlantillaPcbPage.tsx` where they existed.
+The component's real contract is: three section tabs named directly
+(`Plantilla`, `Análisis + Dinámicas`, `Mentoring`) and, within the roster
+tab, three view selectors named directly (`Resumen General`, `Psico`,
+`Físico`) — never introduced by a generic "Sección"/"Vista" label. This is a
+test written against an expectation the design never had, not a regression:
+round 2's changes to `PlantillaPcbPage.tsx` (the Líderes/Influyentes wiring,
+the Personalizada badge) touched `Analysis()`/`Roster()` but did not remove
+any "Sección"/"Vista" text, because none ever existed to remove.
+
+**Fix:** the assertion was corrected to check the real section-tab and
+view-selector labels instead of text the design never rendered. Not changed
+merely to force green — the reasoning above is why the old expectation was
+wrong, not the new one.
+
+### 2. Interaction tests for round-2 fixes
+
+Round 2 fixed several inert controls but only some of them got dedicated
+interaction tests. Added four small, focused test files (not a new test
+framework or broad new coverage):
+
+- `PlantillaPcbPage.analysis.test.ts` — opens the player detail panel from a
+  Líderes chip, asserts its content (`CLUTCH` attribute column) appears,
+  closes it via "Cerrar", and asserts the content is gone.
+- `TrainingPcbPage.interactions.test.ts` — three tests:
+  - Responsable: asserts the hero chip reads "Responsable: Álvaro Quirós
+    (84)" by default, changes the select to Marta Vidal, asserts the chip
+    text changed and the old text is gone.
+  - Session end time: opens "+ Sesión", asserts the default "Impacto
+    estimado" reads "Carga 90 AU" (10:00–11:30), changes "Fin" to 12:00,
+    asserts it now reads "Carga 120 AU".
+  - Training Modules Configurar: opens the modal for the first module,
+    unchecks "Módulo activo", sets intensity to "Alta", saves, asserts the
+    module card now shows "Desactivado".
+- `PcbTacticsBoard.test.ts` — clicks "GUARDAR AJUSTES", asserts the button's
+  own label changes to "AJUSTES GUARDADOS" (the observable confirmation) and
+  the original label is gone.
+
+`TrainingPcbPage.test.ts` (the pre-existing `renderToStaticMarkup`-based
+suite covering tab rendering and the `TrainingMigrationRepository`
+create/edit/delete workflows) was initially overwritten by mistake while
+authoring the interactions tests; this was caught before committing,
+restored to its original content, and the new interaction tests were placed
+in a separate file instead — the same pattern already used for
+`TacticsPcbPage.matchPlan.test.ts` in round 2, precisely to avoid this.
+
+### Validation (round 3)
+
+- `npm test`: **693/693 passing, 153/153 test files — 100% green.** No
+  failures, no skips.
+- `npm run typecheck`: PASS.
+- `npm run build`: PASS.
+- `cargo fmt --check --manifest-path src-tauri/Cargo.toml`: PASS.
+- `cargo check --manifest-path src-tauri/Cargo.toml`: PASS.
+- `Math.random(` search in `src`: 0 matches.
+- React/Zustand/Tauri import search in `src/domain`/`src/engine`: 0 matches.
+- `renderer/src` / PCB runtime import search in `src`: 0 matches.
+- GitHub Actions on the pushed HEAD: see the PR for the observed run result
+  (this file is written before push completes, so the live status is
+  reported in the PR description/comment, not backfilled here).
+- **Interactive browser visual pass: still not performed.** This remains the
+  sole reason M7 is not CERTIFIED.
