@@ -12,6 +12,16 @@ const Standings = () => <section className="bento competition-page"><div classNa
 
 export function CompetitionPcbPage() {
   const [competitionView, setCompetitionView] = useState('calendar')
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
+  const [simulatedResults, setSimulatedResults] = useState<Record<string, string>>({})
   const cupBrackets = { copa: { current_round: 'Cuartos', matches: fixtures.slice(0, 4).map((fixture) => ({ id: fixture.id, round: 'Cuartos', date: '2026-02-19', home: fixture.homeId, away: fixture.awayId, played: false })) }, supercopa: { current_round: 'Semifinales', matches: [] }, playoff: { current_round: 'Cuartos', matches: [] } }
-  return <CompetitionPage renderStart={() => null} competitionView={competitionView} setCompetitionView={setCompetitionView} renderCalendar={() => <Calendar />} renderJornadas={() => <Results />} renderStandings={() => <Standings />} upcomingFixtures={fixtures} myTeamId="team-9" allTeams={teams} allPlayers={players} cupBrackets={cupBrackets} leagueId="ACB" onTeamClick={() => undefined} onPlayerClick={() => undefined} onSimulateMatch={() => undefined} />
+  const selectedTeam = teams.find((team) => team.id === selectedTeamId)
+  const selectedPlayer = players.find((player) => player.id === selectedPlayerId)
+  const onSimulateMatch = (fixtureId: string) => { const fixture = fixtures.find((item) => item.id === fixtureId); if (fixture === undefined) return; const homeScore = 70 + (fixture.homeId.length % 20); const awayScore = 65 + (fixture.awayId.length % 20); setSimulatedResults((value) => ({ ...value, [fixtureId]: `${homeScore}-${awayScore}` })) }
+  return <><CompetitionPage competitionView={competitionView} setCompetitionView={setCompetitionView} renderCalendar={() => <Calendar />} renderJornadas={() => <Results />} renderStandings={() => <Standings />} upcomingFixtures={fixtures} myTeamId="team-9" allTeams={teams} allPlayers={players} cupBrackets={cupBrackets} leagueId="ACB" onTeamClick={setSelectedTeamId} onPlayerClick={setSelectedPlayerId} onSimulateMatch={onSimulateMatch} />
+    {selectedTeam && <aside className="pcb-competition__detail" aria-label="Detalle de equipo"><header><h3>{selectedTeam.name}</h3><button onClick={() => setSelectedTeamId(null)} type="button">Cerrar</button></header><dl><div><dt>PPG</dt><dd>{selectedTeam.data.stats.ppg}</dd></div><div><dt>PAPG</dt><dd>{selectedTeam.data.stats.papg}</dd></div><div><dt>REB</dt><dd>{selectedTeam.data.stats.rpg}</dd></div><div><dt>AST</dt><dd>{selectedTeam.data.stats.apg}</dd></div></dl></aside>}
+    {selectedPlayer && <aside className="pcb-competition__detail" aria-label="Detalle de jugador"><header><h3>{selectedPlayer.name}</h3><button onClick={() => setSelectedPlayerId(null)} type="button">Cerrar</button></header><dl><div><dt>Posición</dt><dd>{selectedPlayer.data.position}</dd></div><div><dt>PPG</dt><dd>{selectedPlayer.data.stats.ppg}</dd></div><div><dt>APG</dt><dd>{selectedPlayer.data.stats.apg}</dd></div><div><dt>RPG</dt><dd>{selectedPlayer.data.stats.rpg}</dd></div></dl></aside>}
+    {Object.keys(simulatedResults).length > 0 && <aside className="pcb-competition__detail" aria-label="Resultados simulados"><h3>Resultados simulados</h3><ul>{Object.entries(simulatedResults).map(([fixtureId, score]) => <li key={fixtureId}>{fixtureId}: {score}</li>)}</ul></aside>}
+  </>
 }
