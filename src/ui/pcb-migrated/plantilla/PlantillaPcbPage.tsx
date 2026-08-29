@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { PLANTILLA_VISUAL_MOCK_ROWS, PSYCHOLOGY_COLUMNS } from './PlantillaVisualMock'
+import { CanonicalRoster } from './CanonicalRoster'
 import './PlantillaPcbPage.css'
 
 type Section = 'plantilla' | 'analysis' | 'mentoring'
@@ -12,7 +13,9 @@ export function PlantillaPcbPage() {
   return <section aria-label="Plantilla PCB migrada" className="pcb-plantilla"><div className="pcb-plantilla__page"><div className="pcb-plantilla__tabs"><button className={section === 'plantilla' ? 'is-active' : ''} onClick={() => setSection('plantilla')} type="button">Plantilla</button><button className={section === 'analysis' ? 'is-active' : ''} onClick={() => setSection('analysis')} type="button">Análisis + Dinámicas</button><button className={section === 'mentoring' ? 'is-active' : ''} onClick={() => setSection('mentoring')} type="button">Mentoring</button></div>{section === 'plantilla' ? <Roster /> : section === 'analysis' ? <Analysis /> : <Mentoring />}</div></section>
 }
 
-function Roster() {
+function Roster() { return <CanonicalRoster /> }
+
+function LegacyRoster() {
   const [view, setView] = useState('psico'); const [query, setQuery] = useState(''); const [columns, setColumns] = useState<readonly number[]>(views[1].columns); const [picker, setPicker] = useState(false); const [sort, setSort] = useState<{ readonly id: string; readonly asc: boolean }>({ id: 'name', asc: true }); const [dragged, setDragged] = useState<number>(); const [selected, setSelected] = useState<string>()
   const rows = useMemo(() => PLANTILLA_VISUAL_MOCK_ROWS.filter((row) => row.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())).slice().sort((a, b) => { const x = sort.id === 'name' ? a.name : a.values[Number(sort.id)]!; const y = sort.id === 'name' ? b.name : b.values[Number(sort.id)]!; return (typeof x === 'string' ? x.localeCompare(y as string) : x - (y as number)) * (sort.asc ? 1 : -1) }), [query, sort])
   const chooseView = (id: string) => { const next = views.find((item) => item.id === id); if (next !== undefined) { setView(id); setColumns(next.columns) } }
