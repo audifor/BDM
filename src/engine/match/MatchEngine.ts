@@ -4,6 +4,7 @@ import type { RandomSource } from '@/engine/random'
 import { advanceFatigue, createInitialFatigue, type FatigueByPlayerId } from './Fatigue'
 import { calculateAssistProbability, selectAssister } from './AssistResolution'
 import { calculateDefensiveAssignments } from './Matchups'
+import type { DefensiveMatchupOverride } from './Matchups'
 import type { MatchPlayerProfile, MatchPlayerProfiles } from './MatchPlayerProfile'
 import { calculateOffensiveReboundProbability, selectRebounder } from './ReboundResolution'
 import { calculateShotMakeProbability, calculateShotZoneWeights, pointsForShotZone, type ShotZone } from './ShotResolution'
@@ -185,6 +186,7 @@ export interface SimulateMatchOptions {
   readonly decisionRandom: RandomSource
   readonly actorRandom: RandomSource
   readonly tacticalPlans?: { readonly home: MatchTacticalPlan; readonly away: MatchTacticalPlan }
+  readonly defensiveMatchups?: { readonly home:readonly DefensiveMatchupOverride[]; readonly away:readonly DefensiveMatchupOverride[] }
 }
 
 /** Immutable sporting state for one transient, resumable match. */
@@ -200,6 +202,7 @@ export interface MatchSessionState {
   readonly fatigueByPlayerId: FatigueByPlayerId
   readonly playerProfiles: MatchPlayerProfiles
   readonly coachingState: MatchCoachingState
+  readonly defensiveMatchups?: { readonly home:readonly DefensiveMatchupOverride[]; readonly away:readonly DefensiveMatchupOverride[] }
   readonly homeStrength: TeamStrength
   readonly awayStrength: TeamStrength
   readonly openingTeamId: TeamId
@@ -265,7 +268,7 @@ export function createMatchSession(options: SimulateMatchOptions): MatchSession 
       gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId,
       initialLineups: options.lineups, activeLineups: options.lineups, squads: options.squads,
       fatigueByPlayerId: createInitialFatigue(options.squads),
-      playerProfiles: options.playerProfiles, coachingState: { home: { currentTacticalPlan: clonePlan(options.tacticalPlans?.home ?? createDefaultTacticalPlan()) }, away: { currentTacticalPlan: clonePlan(options.tacticalPlans?.away ?? createDefaultTacticalPlan()) } },
+      playerProfiles: options.playerProfiles, coachingState: { home: { currentTacticalPlan: clonePlan(options.tacticalPlans?.home ?? createDefaultTacticalPlan()) }, away: { currentTacticalPlan: clonePlan(options.tacticalPlans?.away ?? createDefaultTacticalPlan()) } }, defensiveMatchups:options.defensiveMatchups??{home:[],away:[]},
       homeStrength: options.homeStrength, awayStrength: options.awayStrength, openingTeamId,
       period: 1, clockSecondsRemaining: MATCH_RULES_V2.periodSeconds, homeScore: 0, awayScore: 0,
       attackingTeamId: openingTeamId, nextSequence: 2, events: [initialEvent], isComplete: false,
@@ -319,7 +322,8 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const defendingTeamId = otherTeamId(state.attackingTeamId, state)
   const defendingLineup = defendingTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
   const defendingProfiles = defendingTeamId === state.homeTeamId ? state.playerProfiles.home : state.playerProfiles.away
-  const primaryDefenderId = calculateDefensiveAssignments(lineup, defendingLineup, [...profiles, ...defendingProfiles]).find((matchup) => matchup.offensivePlayerId === playerId)?.defensivePlayerId
+  const matchupOverrides=defendingTeamId===state.homeTeamId?(state.defensiveMatchups?.home??[]):(state.defensiveMatchups?.away??[])
+  const primaryDefenderId = calculateDefensiveAssignments(lineup, defendingLineup, [...profiles, ...defendingProfiles],matchupOverrides).find((matchup) => matchup.offensivePlayerId === playerId)?.defensivePlayerId
   if (primaryDefenderId === undefined) throw new MatchSimulationError(`Active Player ${playerId} has no primary defender`)
   const primaryDefender = profileForPlayer(defendingProfiles, primaryDefenderId)
   const turnoverProbability = calculateTurnoverProbability({ ballHandlerProfile: offensiveActor, ballHandlerFatigue: state.fatigueByPlayerId[playerId] ?? 0, defenderProfile: primaryDefender, defenderFatigue: state.fatigueByPlayerId[primaryDefenderId] ?? 0 })

@@ -101,9 +101,10 @@ function createOpenDraftWorld(rounds: number): { world: GameWorld; draftId: stri
     world = applyMatchResult(world, { gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, homeScore: 100, awayScore: 90 })
   }
   world = finalizeSeason(world, season.id)
+  world = updateGameWorld(world, { drafts: [], draftPicks: [], players: Object.values(world.players).filter((player) => !player.id.startsWith('draft-prospect:')) })
   world = createDraftForCompletedSeason(world, nba.id, season.id, { rounds, orderMethod: 'reverseStandings', scheduledAfterDays: 1 }, [])
-  const draftId = Object.keys(world.draftsById)[0]!
-  world = generateDraftProspects(world, draftId, rounds * 4)
+  const draftId = Object.values(world.draftsById).find((draft) => draft.sourceSeasonId === season.id)!.id
+  if (world.draftsById[draftId]!.prospectPlayerIds.length === 0) world = generateDraftProspects(world, draftId, rounds * 4)
   const scheduledOn = world.draftsById[draftId]!.scheduledOn
   return { world: updateGameWorld(world, { currentDate: addDays(scheduledOn, -1) }), draftId, seasonId: season.id }
 }

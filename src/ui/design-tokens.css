@@ -1,4 +1,6 @@
 :root {
+  --font-ui: "Inter Tight", Inter, "Segoe UI", Arial, sans-serif;
+  --font-display: "Barlow Condensed", "Arial Narrow", "Segoe UI", sans-serif;
   /* Semantic BDM Design System tokens. Legacy --color-* aliases remain while screens migrate. */
   --bdm-background-base: #0a1017;
   --bdm-background-elevated: #0d1824;

@@ -22,6 +22,10 @@ export type CoachSkillId = EntityId<'CoachSkillId'>
 export type CoachProfessionalTraitId = EntityId<'CoachProfessionalTraitId'>
 export type CoachPerkId = EntityId<'CoachPerkId'>
 export type CountryId = EntityId<'CountryId'>
+/** Identity boundary for organization-owned knowledge. A team is its temporary resolver. */
+export type OrganizationId = EntityId<'OrganizationId'>
+export type AgentId = EntityId<'AgentId'>
+export type AgencyId = EntityId<'AgencyId'>
 
 function idFromString<Id extends string>(value: string, name: string): Id {
   if (typeof value !== 'string' || value.trim().length === 0) {
@@ -58,6 +62,11 @@ export const coachSkillIdFromString = (value: string): CoachSkillId => idFromStr
 export const coachProfessionalTraitIdFromString = (value: string): CoachProfessionalTraitId => idFromString<CoachProfessionalTraitId>(value, 'CoachProfessionalTraitId')
 export const coachPerkIdFromString = (value: string): CoachPerkId => idFromString<CoachPerkId>(value, 'CoachPerkId')
 export const countryIdFromString = (value: string): CountryId => idFromString<CountryId>(value, 'CountryId')
+export const organizationIdFromString = (value: string): OrganizationId => idFromString<OrganizationId>(value, 'OrganizationId')
+export const agentIdFromString = (value: string): AgentId => idFromString<AgentId>(value, 'AgentId')
+export const agencyIdFromString = (value: string): AgencyId => idFromString<AgencyId>(value, 'AgencyId')
+/** TEMPORARY 1:1 resolver until organizations become first-class entities. */
+export const organizationIdForTeam = (teamId: TeamId): OrganizationId => organizationIdFromString(teamId)
 
 export const createCoachId = (): CoachId => coachIdFromString(generateId())
 export const createPlayerId = (): PlayerId => playerIdFromString(generateId())

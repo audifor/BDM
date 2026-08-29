@@ -21,5 +21,7 @@ export function generatePlayerBio(playerId: string, position: BasketballPosition
   const heightRatio = (heightCm - minimumHeight) / (maximumHeight - minimumHeight)
   const centeredWeight = Math.round(minimumWeight + (maximumWeight - minimumWeight) * heightRatio)
   const weightKg = Math.max(minimumWeight, Math.min(maximumWeight, centeredWeight + random.nextInt(-4, 4)))
-  return { dateOfBirth, heightCm, weightKg }
+  const wingspanCm = heightCm + random.nextInt(-4, 9)
+  const standingReachCm = Math.round(heightCm * .91 + (position === 'C' ? 10 : position === 'PF' ? 7 : 3) + random.nextInt(-3, 5))
+  return { dateOfBirth, heightCm, weightKg, wingspanCm, standingReachCm, dominantHand: random.nextInt(0, 9) === 0 ? 'LEFT' : 'RIGHT', measurementProvenance: { wingspanCm: 'generated', standingReachCm: 'generated', dominantHand: 'generated' } }
 }

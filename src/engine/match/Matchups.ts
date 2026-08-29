@@ -7,6 +7,7 @@ export interface PlayerMatchup {
   readonly offensivePlayerId: PlayerId
   readonly defensivePlayerId: PlayerId
 }
+export interface DefensiveMatchupOverride { readonly ourPlayerId:PlayerId; readonly opponentPlayerId:PlayerId }
 
 const POSITION_INDEX: Readonly<Record<BasketballPosition, number>> = {
   PG: 0,
@@ -21,6 +22,7 @@ export function calculateDefensiveAssignments(
   offensiveLineup: readonly PlayerId[],
   defensiveLineup: readonly PlayerId[],
   profiles: readonly MatchPlayerProfile[],
+  overrides:readonly DefensiveMatchupOverride[] = [],
 ): readonly PlayerMatchup[] {
   const profileByPlayerId = new Map(profiles.map((profile) => [profile.playerId, profile]))
   const sortedOffense = [...offensiveLineup].sort((left, right) => compareOffensivePlayers(left, right, profileByPlayerId))
@@ -28,7 +30,8 @@ export function calculateDefensiveAssignments(
 
   return sortedOffense.map((offensivePlayerId) => {
     const offensiveProfile = requiredProfile(profileByPlayerId, offensivePlayerId)
-    const defensivePlayerId = [...availableDefenders].sort((left, right) => compareDefenders(left, right, offensiveProfile, profileByPlayerId))[0]
+    const override=overrides.find(item=>item.opponentPlayerId===offensivePlayerId&&availableDefenders.has(item.ourPlayerId))
+    const defensivePlayerId = override?.ourPlayerId??[...availableDefenders].sort((left, right) => compareDefenders(left, right, offensiveProfile, profileByPlayerId))[0]
     if (defensivePlayerId === undefined) throw new Error('Defensive lineup must provide one defender per offensive player')
     availableDefenders.delete(defensivePlayerId)
     return { offensivePlayerId, defensivePlayerId }

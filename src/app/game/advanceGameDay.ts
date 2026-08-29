@@ -1,6 +1,8 @@
 import { compareGameDates } from '@/domain/date'
 import type { GameWorld } from '@/domain/world'
 import { advanceDay, getScheduledGamesToday } from '@/engine/calendar'
+import { createPreMatchMediaOpportunity } from '@/engine/media'
+import { getUserTeam } from '@/engine/calendar'
 
 import { simulateAndApplyGame } from './playUserGame'
 
@@ -27,5 +29,7 @@ export function advanceGameDay(world: GameWorld): GameWorld {
     throw new Error(`Cannot advance with scheduled Game ${pastScheduledGame.id} in the past`)
   }
 
-  return advancedWorld
+  const userTeam = getUserTeam(advancedWorld)
+  const userGame = userTeam === undefined ? undefined : getScheduledGamesToday(advancedWorld).find((game) => game.homeTeamId === userTeam.id || game.awayTeamId === userTeam.id)
+  return userGame === undefined ? advancedWorld : createPreMatchMediaOpportunity(advancedWorld, userGame.id)
 }

@@ -8,9 +8,9 @@ describe('roster team evaluation', () => {
   const playerWith = (ratings: Record<string, number>) => createPlayer({ id: playerIdFromString('controlled-player'), firstName: 'Test', lastName: 'Player', gender: 'male', nationalityId: countryIdFromString('country'), basketball: { primaryPosition: 'PG', ratings: { finishing: ratings.finishing ?? 50, shooting: ratings.shooting ?? 50, playmaking: ratings.playmaking ?? 50, perimeterDefense: ratings.perimeterDefense ?? 50, interiorDefense: ratings.interiorDefense ?? 50, rebounding: ratings.rebounding ?? 50, athleticism: ratings.athleticism ?? 50 } }, bio: { dateOfBirth: '2008-06-14', heightCm: 188, weightKg: 86 } })
 
   it('returns exact endpoint and weighted impacts', () => {
-    expect(calculatePlayerImpact(playerWith({ finishing:0, shooting:0, playmaking:0, perimeterDefense:0, interiorDefense:0, rebounding:0, athleticism:0 }))).toBe(0)
-    expect(calculatePlayerImpact(playerWith({ finishing:100, shooting:100, playmaking:100, perimeterDefense:100, interiorDefense:100, rebounding:100, athleticism:100 }))).toBe(100)
-    expect(calculatePlayerImpact(playerWith({ finishing:80, shooting:70, playmaking:60, perimeterDefense:50, interiorDefense:40, rebounding:30, athleticism:20 }))).toBe(51.5)
+    expect(calculatePlayerImpact(playerWith({ finishing:0, shooting:0, playmaking:0, perimeterDefense:0, interiorDefense:0, rebounding:0, athleticism:0 }))).toBe(1.9)
+    expect(calculatePlayerImpact(playerWith({ finishing:100, shooting:100, playmaking:100, perimeterDefense:100, interiorDefense:100, rebounding:100, athleticism:100 }))).toBe(98.2)
+    expect(calculatePlayerImpact(playerWith({ finishing:80, shooting:70, playmaking:60, perimeterDefense:50, interiorDefense:40, rebounding:30, athleticism:20 }))).toBe(51.2)
   })
 
   it.each(['shooting','playmaking','perimeterDefense','rebounding','athleticism'])('increases impact when %s increases', (rating) => {

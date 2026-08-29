@@ -1,0 +1,4 @@
+.squad-app--empty { padding:16px; color:var(--text-muted,#aab2aa); }
+.squad-app__player-link { overflow:hidden; border:0; background:transparent; color:inherit; padding:0; text-align:left; text-overflow:ellipsis; white-space:nowrap; font:inherit; cursor:pointer; }
+.squad-app__player-link:hover { color:#f0c65d; text-decoration:underline; }
+.squad-app__status { display:inline-flex; align-items:center; min-height:15px; border-left:2px solid; padding-left:5px; font-size:9px; font-weight:600; letter-spacing:.02em; }.squad-app__status--ready { border-color:#5d9d84; color:#b9d4c3; }.squad-app__status--injured { border-color:#d06d5e; color:#f0b2a9; }

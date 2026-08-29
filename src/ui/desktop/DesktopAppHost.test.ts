@@ -27,9 +27,9 @@ describe('DesktopAppHost', () => {
     expect(match).not.toContain('Team Chemistry')
   })
 
-  it('wraps Training, League, Staff, Coach, Tactics and Market in their existing components', () => {
+  it('opens Golden Manager sections while preserving unrelated application hosts', () => {
     const world = createNewGame()
-    const labels = { training: 'Active plan', standings: 'STANDINGS', staff: 'STAFF', coach: 'REPUTATION', tactics: 'TACTICS', market: 'FREE AGENTS', draft: 'No draft available' }
+    const labels = { training: 'Team Training', standings: 'STANDINGS', staff: 'STAFF', coach: 'REPUTATION', tactics: 'Pizarra', market: 'Free agents', draft: 'No draft available' }
     for (const [appId, label] of Object.entries(labels)) {
       expect(renderToStaticMarkup(createElement(DesktopAppHost, { appId, world, actions }))).toContain(label)
     }

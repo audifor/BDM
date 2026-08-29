@@ -19,7 +19,14 @@ export function createCoachJobOpeningForTeam(world: GameWorld, input: { readonly
 
 export function getOpenCoachJobs(world: GameWorld): readonly CoachJobOpening[] { return Object.values(world.coachJobOpeningsById).filter((opening) => opening.status === 'open').sort((a, b) => a.createdOn.localeCompare(b.createdOn) || a.id.localeCompare(b.id)) }
 export function getEligibleCoachJobs(world: GameWorld, coachId: CoachId) { const employment = world.coachEmploymentByCoachId[coachId], reputation = world.coachReputationProfilesByCoachId[coachId]; return getOpenCoachJobs(world).map((opening) => ({ opening, eligibility: employment === undefined || reputation === undefined ? { eligible: false, reasons: [{ reason: 'reputationRequirementNotMet' as const }] } : evaluateCoachJobEligibility(employment, reputation, opening) })) }
-export function applyUserCoachForJob(world: GameWorld, openingId: string) { return identifyCoachCandidate(world, { openingId, coachId: world.userCoachId }) }
+/** A user application is resolved through the same canonical interview/offer flow as AI hiring. */
+export function applyUserCoachForJob(world: GameWorld, openingId: string) {
+  const existing = Object.values(world.coachJobOffersById).find((offer) => offer.jobOpeningId === openingId && offer.coachId === world.userCoachId && offer.status === 'pending')
+  if (existing !== undefined) return { world, candidacyId: findCandidacy(world, existing) }
+  const candidate = identifyCoachCandidate(world, { openingId, coachId: world.userCoachId })
+  const interviewed = completeCoachInterview(startCoachInterview(candidate.world, candidate.candidacyId), candidate.candidacyId)
+  return { world: createCoachJobOffer(interviewed, { candidacyId: candidate.candidacyId }).world, candidacyId: candidate.candidacyId }
+}
 export function rankCoachCandidates(world: GameWorld, openingId: string): readonly CoachId[] { const opening = requireOpening(world, openingId); return Object.values(world.coaches).filter((coach) => evaluateCoachJobEligibility(world.coachEmploymentByCoachId[coach.id]!, world.coachReputationProfilesByCoachId[coach.id]!, opening).eligible).sort((a, b) => score(world, opening, b.id) - score(world, opening, a.id) || a.id.localeCompare(b.id)).map((coach) => coach.id) }
 
 export function identifyCoachCandidate(world: GameWorld, input: { readonly openingId: string; readonly coachId: CoachId; readonly id?: string }): { readonly world: GameWorld; readonly candidacyId: string } {

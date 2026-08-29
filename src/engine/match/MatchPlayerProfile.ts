@@ -1,4 +1,4 @@
-import type { Player } from '@/domain/player'
+import { legacyRatingSignals, type Player } from '@/domain/player'
 import type { PlayerId } from '@/domain/ids'
 import type { BasketballPosition } from '@/domain/primitives'
 
@@ -29,7 +29,8 @@ export interface MatchPlayerProfiles {
 
 /** Temporary adapter between persistent player ratings and match-only action signals. */
 export function createMatchPlayerProfile(player: Player): MatchPlayerProfile {
-  const ratings = player.basketball.ratings
+  // TEMPORARY_MATCH: derived read signals, never PlayerTruth or persisted data.
+  const ratings = legacyRatingSignals(player.basketball.ratings)
   return {
     playerId: player.id,
     primaryPosition: player.basketball.primaryPosition,

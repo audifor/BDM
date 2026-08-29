@@ -1,6 +1,6 @@
 import { getUserTeam } from '@/engine/calendar'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
-import { BASKETBALL_RATING_KEYS } from '@/domain/player'
+import { BASKETBALL_RATING_KEYS, legacyRatingSignals } from '@/domain/player'
 import { playerKnowledgeIdFromString } from '@/domain/ids'
 import { getEcosystemForTeam, updateGameWorld, type GameWorld } from '@/domain/world'
 import type { PlayerKnowledgeRecord } from '@/domain/knowledge'
@@ -14,9 +14,9 @@ export function ensurePlayerKnowledge(world: GameWorld): GameWorld {
     if (known.has(player.id)) return false
     const team = Object.values(world.teams).find((candidate) => candidate.rosterPlayerIds.includes(player.id))
     return !observerCategory || !team || getEcosystemForTeam(world, team.id)?.category === observerCategory
-  }).map((player): PlayerKnowledgeRecord => {
+  }).map((player): PlayerKnowledgeRecord => { const ratings = legacyRatingSignals(player.basketball.ratings)
     const own = observer.rosterPlayerIds.includes(player.id)
-    return { id: playerKnowledgeIdFromString(`player-knowledge:${observer.id}:${player.id}`), observerTeamId: observer.id, subjectPlayerId: player.id, assessedOn: world.currentDate, basketball: { ratings: Object.fromEntries(BASKETBALL_RATING_KEYS.map((key) => { const estimate = new SeededRandomSource(hashStringToSeed(`player-knowledge-estimate-v1:${observer.id}:${player.id}:${key}`)).nextInt(own ? -1 : -6, own ? 1 : 6); const uncertainty = new SeededRandomSource(hashStringToSeed(`player-knowledge-uncertainty-v1:${observer.id}:${player.id}:${key}`)).nextInt(own ? 1 : 4, own ? 2 : 8); return [key, { estimatedValue: Math.max(0, Math.min(100, player.basketball.ratings[key] + estimate)), uncertainty }] })) as PlayerKnowledgeRecord['basketball']['ratings'] } }
+    return { id: playerKnowledgeIdFromString(`player-knowledge:${observer.id}:${player.id}`), observerTeamId: observer.id, subjectPlayerId: player.id, assessedOn: world.currentDate, basketball: { ratings: Object.fromEntries(BASKETBALL_RATING_KEYS.map((key) => { const estimate = new SeededRandomSource(hashStringToSeed(`player-knowledge-estimate-v1:${observer.id}:${player.id}:${key}`)).nextInt(own ? -1 : -6, own ? 1 : 6); const uncertainty = new SeededRandomSource(hashStringToSeed(`player-knowledge-uncertainty-v1:${observer.id}:${player.id}:${key}`)).nextInt(own ? 1 : 4, own ? 2 : 8); return [key, { estimatedValue: Math.max(0, Math.min(100, ratings[key] + estimate)), uncertainty }] })) as PlayerKnowledgeRecord['basketball']['ratings'] } }
   })
   if (!added.length) return world
   return updateGameWorld(world, { playerKnowledge: [...existing, ...added] })

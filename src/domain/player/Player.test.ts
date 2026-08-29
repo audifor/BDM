@@ -18,7 +18,10 @@ describe('Player', () => {
   }
 
   it('creates a valid player', () => {
-    expect(createPlayer(input)).toEqual(input)
+    const player = createPlayer(input)
+    expect(Object.keys(player.basketball.ratings)).toHaveLength(35)
+    expect(Object.keys(player.basketball.tendencies)).toHaveLength(21)
+    expect(player.potential).toEqual({ ceiling: 70 })
   })
 
   it('rejects empty names', () => {

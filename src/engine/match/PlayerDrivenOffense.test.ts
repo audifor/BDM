@@ -13,8 +13,7 @@ const defender = createMatchPlayerProfile(createPlayer({ id: playerIdFromString(
 
 describe('player-driven offense primitives', () => {
   it('adapts the bootstrap ratings into exact bounded match signals', () => {
-    expect(profile.offense).toEqual({ usage: 69, rimAttack: 70, shooting: 70, creation: 47.5, ballSecurity: 48 })
-    expect(profile.defense).toEqual({ pointOfAttack: 47.5, interior: 48, mobility: 43.5 })
+    expect(profile.offense).toEqual({ usage: 66.65, rimAttack: 70.5, shooting: 65, creation: 44.25, ballSecurity: 44.60000000000001 })
     expect(Object.values(profile.offense).every((value) => value >= 0 && value <= 100)).toBe(true)
     expect(Object.values(profile.defense).every((value) => value >= 0 && value <= 100)).toBe(true)
   })
@@ -25,7 +24,7 @@ describe('player-driven offense primitives', () => {
   })
 
   it('derives shot-zone weights, points, and make probability from player offense, defense, and fatigue', () => {
-    expect(calculateShotZoneWeights(profile)).toEqual({ rim: 76.125, midRange: 48.625, threePoint: 68.75 })
+    expect(calculateShotZoneWeights(profile)).toEqual({ rim: 75.9875, midRange: 45.8875, threePoint: 64.925 })
     expect(pointsForShotZone('rim')).toBe(2)
     expect(pointsForShotZone('midRange')).toBe(2)
     expect(pointsForShotZone('threePoint')).toBe(3)

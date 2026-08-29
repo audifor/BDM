@@ -18,6 +18,12 @@ describe('desktop window manager store', () => {
     expect(useDesktopStore.getState().focusedWindowId).toBe('squad-window')
   })
 
+  it('keeps separate entity instances open together', () => {
+    const store = useDesktopStore.getState()
+    store.openWindow('entity', 'player-a'); store.openWindow('entity', 'player-b')
+    expect(useDesktopStore.getState().windows.map((window) => window.id)).toEqual(['entity-player-a', 'entity-player-b'])
+  })
+
   it('focuses, closes, minimizes and restores windows without closing the app', () => {
     const store = useDesktopStore.getState(); store.openWindow('schedule'); store.openWindow('squad')
     store.focusWindow('schedule-window'); expect(useDesktopStore.getState().focusedWindowId).toBe('schedule-window')
@@ -31,6 +37,13 @@ describe('desktop window manager store', () => {
     const store = useDesktopStore.getState(); store.openWindow('schedule'); store.moveWindow('schedule-window', { x: 220, y: 140 }); store.resizeWindow('schedule-window', { x: 220, y: 140, width: 700, height: 600 })
     store.maximizeWindow('schedule-window'); expect(useDesktopStore.getState().windows[0]?.restoreBounds).toEqual({ x: 220, y: 140, width: 700, height: 600 })
     store.restoreMaximizedWindow('schedule-window'); expect(useDesktopStore.getState().windows[0]).toMatchObject({ x: 220, y: 140, width: 700, height: 600, maximized: false })
+  })
+
+  it('snaps a window to either desktop half and keeps restore bounds', () => {
+    const store = useDesktopStore.getState(); store.openWindow('schedule')
+    store.snapWindow('schedule-window', 'right', { width: 1200, height: 800 })
+    expect(useDesktopStore.getState().windows[0]).toMatchObject({ x: 600, y: 48, width: 600, height: 696 })
+    expect(useDesktopStore.getState().windows[0]?.restoreBounds).toMatchObject({ x: 96, y: 64 })
   })
 
   it('moves windows and enforces app minimum resize bounds', () => {

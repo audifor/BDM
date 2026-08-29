@@ -20,7 +20,7 @@ import { createTeam } from '@/domain/team'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import { hashStringToSeed, SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generatePlayerBio } from './PlayerBioGenerator'
-import { generatePlayerPotential } from './PlayerPotentialGenerator'
+import { generateCanonicalDevelopmentProfile, generateCanonicalRatings } from './CanonicalPlayerTruthGenerator'
 import { generateInitialPlayerContract } from './PlayerContractGenerator'
 import { generateInitialTeamFinances } from './TeamFinancesGenerator'
 import { generateInitialStaffStructure } from './StaffGenerator'
@@ -28,6 +28,7 @@ import { generateCoachRpgProfiles } from './CoachProfessionalProfileGenerator'
 import type { CoachRpgPreset } from '@/domain/coachRpg'
 import { createNbaLikeSalaryRules } from '@/engine/salary'
 import { createNbaLikeTradeRules } from '@/engine/trade'
+import { defaultRecruitingRules } from '@/domain/recruiting'
 
 const FIBA_TEAM_COUNT = 8
 const PLAYERS_PER_TEAM = 12
@@ -137,16 +138,17 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
       const sequence = teamIndex * PLAYERS_PER_TEAM + playerIndex + 1
       const playerId = playerIdFromString(`generated-player-${formatSequence(sequence)}`)
       const positions = teamIndex < professionalTeamCount ? ROSTER_POSITIONS : NCAA_ROSTER_POSITIONS
-      const basketball = generateBasketballProfile(options.seed, playerId, positions[playerIndex]!)
-      const bio = generatePlayerBio(playerId, positions[playerIndex]!, startDate)
+      const primaryPosition = positions[playerIndex]!
+      const ratings = generateCanonicalRatings(options.seed, playerId, primaryPosition)
+      const bio = generatePlayerBio(playerId, primaryPosition, startDate)
       const player = createPlayer({
         id: playerId,
         ...generatePersonName(random),
         gender,
         nationalityId: country.id,
-        basketball,
+        basketball: { primaryPosition, ratings },
         bio,
-        potential: generatePlayerPotential(playerId, basketball.ratings, calculateAge(bio.dateOfBirth, startDate)),
+        development: generateCanonicalDevelopmentProfile(options.seed, playerId, ratings, calculateAge(bio.dateOfBirth, startDate)),
       })
       players.push(player)
       rosterPlayerIds.push(player.id)
@@ -199,7 +201,7 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     players,
     teams,
     competitions: [competition, ...(nbaCompetition === undefined ? [] : [nbaCompetition]), ...(ncaaCompetition === undefined ? [] : [ncaaCompetition])],
-    ecosystems: [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike', category: sportsCategoryForGender(gender) }), ...(nbaCompetition === undefined ? [] : [createSportsEcosystem({ id: DEFAULT_NBA_LIKE_ECOSYSTEM_ID, name: 'Orinthian Franchise Basketball', kind: 'nbaLike', category: sportsCategoryForGender(gender) })]), ...(ncaaCompetition === undefined ? [] : [createSportsEcosystem({ id: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, name: 'Asteria Collegiate Basketball', kind: 'ncaaLike', category: sportsCategoryForGender(gender) })])],
+    ecosystems: [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike', category: sportsCategoryForGender(gender) }), ...(nbaCompetition === undefined ? [] : [createSportsEcosystem({ id: DEFAULT_NBA_LIKE_ECOSYSTEM_ID, name: 'Orinthian Franchise Basketball', kind: 'nbaLike', category: sportsCategoryForGender(gender), draftRules: { rounds: 2, orderMethod: 'reverseStandings', scheduledAfterDays: 7 } })]), ...(ncaaCompetition === undefined ? [] : [createSportsEcosystem({ id: DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, name: 'Asteria Collegiate Basketball', kind: 'ncaaLike', category: sportsCategoryForGender(gender), recruitingRules: defaultRecruitingRules })])],
     conferences, conferenceMemberships: ncaaMemberships,
     seasons: [season, ...(nbaSeason === undefined ? [] : [nbaSeason]), ...(ncaaSeason === undefined ? [] : [ncaaSeason])],
     games: [],
@@ -215,9 +217,6 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
 
 const ROSTER_POSITIONS: readonly BasketballPosition[] = ['PG','PG','SG','SG','SG','SF','SF','PF','PF','PF','C','C']
 const NCAA_ROSTER_POSITIONS: readonly BasketballPosition[] = ['PG','PG','SG','SF','PF','C','C']
-function generateBasketballProfile(seed:number, playerId:string, primaryPosition:BasketballPosition) {
-  const random=new SeededRandomSource(hashStringToSeed(`player-ratings-v1:${seed}:${playerId}`)); const bases={PG:[52,58,68,54,43,43,56],SG:[55,66,52,55,44,45,57],SF:[57,57,53,56,52,52,58],PF:[60,51,48,50,63,65,55],C:[62,48,43,46,70,70,52]} as const; const [finishing,shooting,playmaking,perimeterDefense,interiorDefense,rebounding,athleticism]=bases[primaryPosition]; const talent=random.nextInt(-8,8); const rate=(base:number)=>Math.max(0,Math.min(100,base+talent+random.nextInt(-10,10))); return {primaryPosition,ratings:{finishing:rate(finishing),shooting:rate(shooting),playmaking:rate(playmaking),perimeterDefense:rate(perimeterDefense),interiorDefense:rate(interiorDefense),rebounding:rate(rebounding),athleticism:rate(athleticism)}}
-}
 
 function generatePersonName(random: RandomSource): { firstName: string; lastName: string } {
   return {

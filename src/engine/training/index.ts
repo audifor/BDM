@@ -1,1 +1,1 @@
-export { canTeamTrainOnDate, executeEligibleTraining, executeTeamTraining, recoverCareerFatigueForDay, setTeamTrainingPlan } from './TrainingEngine'
+export { assignIndividualTrainingStaff, canTeamTrainOnDate, clearIndividualTrainingPlan, executeEligibleTraining, executeTeamTraining, getIndividualTrainingPlan, getTrainingLoad, recoverCareerFatigueForDay, setIndividualTrainingFocus, setIndividualTrainingIntensity, setIndividualTrainingPlan, setTeamTrainingPlan, setTrainingResponsibility } from './TrainingEngine'

@@ -1,0 +1,12 @@
+import type { ReactNode } from 'react'
+
+export type SortDirection = 'ascending' | 'descending'
+export type DataGridSort = { readonly id: string; readonly direction: SortDirection }
+export type DataGridFilter = { readonly columnId: string; readonly operator: 'contains' | 'notContains' | 'equals' | 'startsWith' | 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'between' | 'is' | 'isNot' | 'oneOf' | 'true' | 'false'; readonly value?: string | number | boolean | readonly (string | number)[]; readonly secondValue?: string | number }
+export type DataGridColumn<Row> = { readonly id: string; readonly label: string; readonly shortLabel?: string; readonly category?: string; readonly numeric?: boolean; readonly align?: 'left' | 'right' | 'center'; readonly width?: number; readonly defaultWidth?: number; readonly minWidth?: number; readonly maxWidth?: number; readonly flex?: number; readonly sortable?: boolean; readonly filterable?: boolean; readonly searchable?: boolean; readonly hideable?: boolean; readonly required?: boolean; readonly resizable?: boolean; readonly render: (row: Row) => ReactNode; readonly value?: (row: Row) => string | number | boolean | undefined; readonly sortValue?: (row: Row) => string | number | boolean | undefined; readonly filterValue?: (row: Row) => string | number | boolean | undefined; readonly exportValue?: (row: Row) => string | number | boolean | undefined }
+export type DataColumn<Row> = DataGridColumn<Row>
+export type DataGridView = { readonly id: string; readonly name: string; readonly entityType?: string; readonly contextId?: string; readonly columnIds: readonly string[]; readonly columnWidths?: Readonly<Record<string, number>>; readonly sorting?: readonly DataGridSort[]; readonly filters?: readonly DataGridFilter[]; readonly system?: boolean }
+export type DataGridSelection = { readonly selectedIds: readonly string[]; readonly anchorId?: string; readonly focusedId?: string }
+export type DataGridContextAction<Row> = { readonly id: string; readonly label: string; readonly onSelect: (rows: readonly Row[]) => void }
+export type DataGridBulkAction<Row> = DataGridContextAction<Row>
+export type DataGridPreferences = { readonly schemaVersion: 1; readonly activeViewId: string; readonly customViews: readonly DataGridView[]; readonly columnIds: readonly string[]; readonly hiddenColumnIds: readonly string[]; readonly columnWidths: Readonly<Record<string, number>>; readonly sorting: readonly DataGridSort[]; readonly filters: readonly DataGridFilter[] }

@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { getUserTeam } from '@/engine/calendar'
 import { updateGameWorld } from '@/domain/world'
+import { organizationIdForTeam } from '@/domain/ids'
+import { validateTrade } from '@/engine/trade'
 
-import { addTradeMovement, addTradeParticipant, buildTradePresentation, changeTradeCounterparty, createTradeDraft, humanizeTradeReason, removeTradeMovement } from './TradePresentation'
+import { addTradeMovement, addTradeParticipant, buildTradePresentation, changeTradeCounterparty, createTradeDraft, humanizeTradeReason, removeTradeMovement, tradePlayerValuation } from './TradePresentation'
 
 describe('TradePresentation', () => {
   const world = createNewGame()
@@ -60,5 +62,21 @@ describe('TradePresentation', () => {
     const presentation = buildTradePresentation(world, rules, draft)
     expect(presentation.allowed).toBe(false)
     expect(presentation.teams.find((team) => team.teamId === partner.id)?.validation?.reasons).toContain('SALARY_MATCHING_FAILED')
+  })
+
+  it('keeps trade talent valuation invariant to hidden player truth and organization-specific', () => {
+    const playerId = user.rosterPlayerIds[0]!, receivingOrganization = organizationIdForTeam(partner.id), sourceOrganization = organizationIdForTeam(user.id)
+    const hiddenChanged = updateGameWorld(world, { players: Object.values(world.players).map((player) => player.id !== playerId ? player : { ...player, basketball: { ...player.basketball, ratings: { ...player.basketball.ratings, threePointShooting: 100, passing: 100 } } }) })
+    expect(tradePlayerValuation(hiddenChanged, receivingOrganization, playerId)).toEqual(tradePlayerValuation(world, receivingOrganization, playerId))
+    const known = updateGameWorld(world, { organizationKnowledge: [{ organizationId: receivingOrganization, subjectPlayerId: playerId, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: world.currentDate, provenance: 'scoutReport', estimate: 95, uncertainty: 1 } } }, { organizationId: sourceOrganization, subjectPlayerId: playerId, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: world.currentDate, provenance: 'scoutReport', estimate: 20, uncertainty: 1 } } }] })
+    expect(tradePlayerValuation(known, receivingOrganization, playerId)).not.toEqual(tradePlayerValuation(known, sourceOrganization, playerId))
+    expect(tradePlayerValuation(known, receivingOrganization, playerId)).not.toEqual(tradePlayerValuation(world, receivingOrganization, playerId))
+  })
+
+  it('keeps trade legality and salary matching independent from OrganizationKnowledge', () => {
+    const draft = addTradeMovement(addTradeParticipant(createTradeDraft(world), partner.id, rules.maxTeamsPerTrade), movement)
+    const proposal = buildTradePresentation(world, rules, draft).proposal
+    const knowledgeable = updateGameWorld(world, { organizationKnowledge: [{ organizationId: organizationIdForTeam(partner.id), subjectPlayerId: user.rosterPlayerIds[0]!, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: world.currentDate, provenance: 'scoutReport', estimate: 95, uncertainty: 1 } } }] })
+    expect(validateTrade(knowledgeable, proposal)).toEqual(validateTrade(world, proposal))
   })
 })

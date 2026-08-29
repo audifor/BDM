@@ -21,8 +21,9 @@ describe('EcosystemTransitions', () => {
     world = finalizeSeason(world, nbaSeason.id)
     const ncaa = teamIn(world, 'ncaaLike'), prospects = Object.values(world.teams).filter((team) => Object.values(world.competitions).some((competition) => competition.participantTeamIds.includes(team.id) && world.ecosystems[competition.ecosystemId]!.kind === 'ncaaLike')).flatMap((team) => team.rosterPlayerIds).slice(0, 4)
     const nba = Object.values(world.ecosystems).find((ecosystem) => ecosystem.kind === 'nbaLike')!
+    world = updateGameWorld(world, { drafts: [], draftPicks: [], players: Object.values(world.players).filter((player) => !player.id.startsWith('draft-prospect:')) })
     world = createDraftForCompletedSeason(world, nba.id, nbaSeason.id, { rounds: 1, orderMethod: 'reverseStandings', scheduledAfterDays: 1 }, prospects)
-    const draftId = Object.keys(world.draftsById)[0]!, draft = world.draftsById[draftId]!
+    const draft = Object.values(world.draftsById).find((item) => item.sourceSeasonId === nbaSeason.id)!, draftId = draft.id
     world = openDraft(updateGameWorld(world, { currentDate: draft.scheduledOn }), draftId)
     const pick = getCurrentDraftPick(world, draftId)!, playerId = prospects[0]!
     const moved = transitionNcaaPlayerToNbaDraft(world, { id: 'transition:ncaa-nba', playerId, draftId, selectingTeamId: pick.ownerTeamId, toTeamId: pick.ownerTeamId })

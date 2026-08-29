@@ -1,10 +1,12 @@
 import type { GameId, TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
+import { getPendingMediaOpportunities } from '@/domain/world'
 import { advanceGameDay } from './advanceGameDay'
 
 export type ContinueStopReason =
   | { readonly type: 'userGame'; readonly gameId: GameId }
+  | { readonly type: 'mediaOpportunity'; readonly opportunityId: string }
   | { readonly type: 'seasonComplete' }
   | { readonly type: 'safetyLimit' }
 
@@ -13,6 +15,8 @@ export interface NextKnownEvent { readonly type: 'userGame'; readonly gameId: Ga
 export const DEFAULT_CONTINUE_DAY_LIMIT = 366
 
 export function getContinueStopReason(world: GameWorld): ContinueStopReason | undefined {
+  const media = getPendingMediaOpportunities(world, world.userCoachId)[0]
+  if (media !== undefined) return { type: 'mediaOpportunity', opportunityId: media.id }
   const team = getUserTeam(world)
   const userGame = team === undefined ? undefined : getGamesToday(world).find((game) => game.status === 'scheduled' && (game.homeTeamId === team.id || game.awayTeamId === team.id))
   if (userGame !== undefined) return { type: 'userGame', gameId: userGame.id }

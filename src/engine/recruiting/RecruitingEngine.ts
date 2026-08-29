@@ -1,12 +1,14 @@
 import type { RecruitingBoardEntry, RecruitingCycle, RecruitingInterest, RecruitingOffer, RecruitProfile } from '@/domain/recruiting'
 import type { GameDate } from '@/domain/date'
-import type { TeamId } from '@/domain/ids'
+import { organizationIdForTeam, type TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { updateGameWorld } from '@/domain/world'
 import { createTeam } from '@/domain/team'
 import { createPlayer } from '@/domain/player'
+import { deriveOrganizationPlayerValuation } from '@/domain/intelligence'
 import { addYears } from '@/domain/date'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
+import { generateCanonicalDevelopmentProfile, generateCanonicalRatings } from '@/engine/world/CanonicalPlayerTruthGenerator'
 import { initializeEligibility } from '@/engine/eligibility'
 import { initializeAcademicProfile } from '@/engine/academic'
 import { initializeNilProfile } from '@/engine/nil'
@@ -101,6 +103,19 @@ export function getTeamRecruitingNeeds(world: GameWorld, teamId: TeamId): Readon
   return Object.fromEntries(Object.entries(counts).map(([position, count]) => [position, Math.max(0, 2 - count)])) as Record<'PG'|'SG'|'SF'|'PF'|'C', number>
 }
 
+/** Bounded, organization-specific target ordering for recruiting decisions. */
+export function rankAiRecruitingTargets(world: GameWorld, cycleId: string, programTeamId: TeamId): readonly RecruitProfile[] {
+  const needs = getTeamRecruitingNeeds(world, programTeamId)
+  const organizationId = organizationIdForTeam(programTeamId)
+  const policy = world.organizationEvaluationPoliciesById[organizationId]
+  return Object.values(world.recruitProfilesById).filter((profile) => profile.cycleId === cycleId && profile.status === 'open').sort((a, b) => {
+    const first = world.players[a.playerId]!, second = world.players[b.playerId]!
+    const firstValue = deriveOrganizationPlayerValuation({ organizationId, playerId: first.id, knowledge: world.organizationKnowledge, currentDate: world.currentDate, context: 'RECRUITING', publicPosition: first.basketball.primaryPosition, policy })
+    const secondValue = deriveOrganizationPlayerValuation({ organizationId, playerId: second.id, knowledge: world.organizationKnowledge, currentDate: world.currentDate, context: 'RECRUITING', publicPosition: second.basketball.primaryPosition, policy })
+    return needs[b.position] - needs[a.position] || secondValue.priorityScore - firstValue.priorityScore || a.publicRank - b.publicRank || a.id.localeCompare(b.id)
+  })
+}
+
 /** Weekly deterministic AI cadence. It only invokes public canonical operations. */
 export function progressAiRecruiting(world: GameWorld, cycleId: string): GameWorld {
   const cycle = world.recruitingCyclesById[cycleId]; const ecosystem = cycle && world.ecosystems[cycle.ecosystemId]
@@ -110,7 +125,7 @@ export function progressAiRecruiting(world: GameWorld, cycleId: string): GameWor
   let next = world
   for (const programTeamId of programs) {
     const needs = getTeamRecruitingNeeds(next, programTeamId)
-    const targets = Object.values(next.recruitProfilesById).filter((profile) => profile.cycleId === cycleId && profile.status === 'open').sort((a, b) => (needs[b.position] - needs[a.position]) || a.publicRank - b.publicRank || a.id.localeCompare(b.id)).slice(0, 2)
+    const targets = rankAiRecruitingTargets(next, cycleId, programTeamId).slice(0, 2)
     for (const target of targets) {
       next = addRecruitingBoardEntry(next, { programTeamId, recruitId: target.id, priority: needs[target.position] > 0 ? 'high' : 'normal' })
       const contacted = performRecruitingAction(next, cycleId, target.id, programTeamId, 'contact'); if (contacted.ok) next = contacted.value
@@ -135,10 +150,10 @@ export function generateRecruitingPool(world: GameWorld, cycleId: string): GameW
     const id = `recruit:${cycle.id}:${index + 1}` as import('@/domain/ids').PlayerId
     const random = new SeededRandomSource(hashStringToSeed(`recruiting-pool-v1:${cycle.ecosystemId}:${cycle.id}:${index}`))
     const position = positions[index % positions.length]!
-    const rating = () => random.nextInt(42, 82)
-    const ratings = { finishing: rating(), shooting: rating(), playmaking: rating(), perimeterDefense: rating(), interiorDefense: rating(), rebounding: rating(), athleticism: rating() }
-    const player = createPlayer({ id, firstName: `Recruit${index + 1}`, lastName: `Class${cycle.targetSeasonId}`, gender: template.gender, nationalityId: template.countryId, basketball: { primaryPosition: position, ratings }, bio: { dateOfBirth: addYears(cycle.opensOn, -random.nextInt(17, 20)), heightCm: random.nextInt(178, 218), weightKg: random.nextInt(72, 125) }, potential: { ceiling: Math.min(100, Math.round((Object.values(ratings).reduce((total, value) => total + value, 0) / 7) + random.nextInt(8, 25))) } })
-    const publicScore = Math.round(Object.values(ratings).reduce((total, value) => total + value, 0) / 7 + random.nextInt(-7, 7))
+    const ratings = generateCanonicalRatings(hashStringToSeed(cycle.id), id, position, 42, 82)
+    const age = random.nextInt(17, 20)
+    const player = createPlayer({ id, firstName: `Recruit${index + 1}`, lastName: `Class${cycle.targetSeasonId}`, gender: template.gender, nationalityId: template.countryId, basketball: { primaryPosition: position, ratings }, bio: { dateOfBirth: addYears(cycle.opensOn, -age), heightCm: random.nextInt(178, 218), weightKg: random.nextInt(72, 125) }, development: generateCanonicalDevelopmentProfile(hashStringToSeed(cycle.id), id, ratings, age) })
+    const publicScore = Math.round(Object.values(ratings).reduce((total, value) => total + value, 0) / Object.values(ratings).length + random.nextInt(-7, 7))
     players.push(player); profiles.push({ id: `recruit-profile:${cycle.id}:${index + 1}`, playerId: id, cycleId, origin: (['preCollege', 'academy', 'international'] as const)[index % 3]!, position, publicRank: index + 1, positionRank: Math.floor(index / positions.length) + 1, tier: (publicScore >= 72 ? 'elite' : publicScore >= 62 ? 'strong' : publicScore >= 52 ? 'rotation' : 'developmental') as 'elite'|'strong'|'rotation'|'developmental', preferences: { opportunity: random.nextInt(1, 10), development: random.nextInt(1, 10), competing: random.nextInt(1, 10), coach: random.nextInt(1, 10) }, status: 'open' as const })
   }
   profiles.sort((a, b) => b.tier.localeCompare(a.tier) || a.id.localeCompare(b.id)).forEach((profile, index) => { (profile as { publicRank: number }).publicRank = index + 1 })

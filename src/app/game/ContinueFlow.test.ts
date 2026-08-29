@@ -15,6 +15,13 @@ describe('continue flow', () => {
     expect(result.world).toBe(world)
   })
 
+  it('activates a relevant pre-match media interaction through the canonical daily lifecycle', () => {
+    const base=createNewGame(); const userGame=Object.values(base.games).find(game=>game.status==='scheduled'&&(game.homeTeamId===Object.values(base.teams).find(team=>team.coachId===base.userCoachId)!.id||game.awayTeamId===Object.values(base.teams).find(team=>team.coachId===base.userCoachId)!.id))!
+    const scheduled=updateGameWorld(base,{games:Object.values(base.games).map(game=>game.id===userGame.id?{...game,date:addDays(base.currentDate,1),stakes:'final' as never}:game)})
+    const next=advanceGameDay(scheduled); const pending=Object.values(next.mediaOpportunitiesById)[0]!
+    expect(pending.type).toBe('preMatch'); expect(Object.keys(next.newsItemsById)).toHaveLength(1); expect(getContinueStopReason(next)).toEqual({type:'mediaOpportunity',opportunityId:pending.id})
+  })
+
   it('advances through ordinary days then stops on the next user game date', () => {
     const ready = advanceGameDay(simulateRemainingGamesToday(instantResult(createNewGame())))
     const next = getNextKnownEvent(ready)!; const result = continueGame(ready)

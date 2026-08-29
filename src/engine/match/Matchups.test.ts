@@ -36,6 +36,14 @@ describe('individual defensive matchups', () => {
     expect(calculateDefensiveAssignments(ids(attackers), ids(equalMobility), [...attackers, ...equalMobility]).find((assignment) => assignment.offensivePlayerId === attackers[1]!.playerId)).toEqual({ offensivePlayerId: attackers[1]!.playerId, defensivePlayerId: equalMobility[1]!.playerId })
   })
 
+  it('uses a legal explicit defensive assignment and falls back when it is off court', () => {
+    const overridden=calculateDefensiveAssignments(ids(offense),ids(defense),[...offense,...defense],[{ourPlayerId:defense[4]!.playerId,opponentPlayerId:offense[0]!.playerId}])
+    expect(overridden.find(item=>item.offensivePlayerId===offense[0]!.playerId)?.defensivePlayerId).toBe(defense[4]!.playerId)
+    const offCourt=playerIdFromString('off-court')
+    const fallback=calculateDefensiveAssignments(ids(offense),ids(defense),[...offense,...defense],[{ourPlayerId:offCourt,opponentPlayerId:offense[0]!.playerId}])
+    expect(fallback.find(item=>item.offensivePlayerId===offense[0]!.playerId)?.defensivePlayerId).not.toBe(offCourt)
+  })
+
   it('uses zone-specific defense, clamps fatigue effect, and reduces shot probability for better defenders', () => {
     const defender = profile('defender', 'PF', 60, 80, 40)
     expect(calculateDefenseExecution('rim', defender)).toBe(72)

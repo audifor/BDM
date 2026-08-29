@@ -5,7 +5,8 @@ import { DESKTOP_WIDGETS, clampWidgetBounds, getDesktopWidget, isWidgetPlacement
 
 interface DesktopWidgetStore { readonly editMode: boolean; readonly selectedWidgetId: DesktopWidgetId | null; readonly widgets: readonly DesktopWidgetLayout[]; enterEditMode(): void; exitEditMode(): void; selectWidget(id: DesktopWidgetId | null): void; moveWidget(id: DesktopWidgetId, x: number, y: number, bounds: DesktopWidgetBounds): void; resizeWidget(id: DesktopWidgetId, width: number, height: number, bounds: DesktopWidgetBounds): void; hideWidget(id: DesktopWidgetId): void; showWidget(id: DesktopWidgetId, bounds: DesktopWidgetBounds): void; clampToBounds(bounds: DesktopWidgetBounds): void; resetLayout(): void }
 
-/** A new desktop is intentionally empty; existing store layouts remain untouched. */
+/** A new workstation starts as a usable desktop, not an empty dashboard. */
+/** Production starts with an empty desktop; the visual showcase is opt-in. */
 export const defaultDesktopWidgetLayouts = (): readonly DesktopWidgetLayout[] => []
 export const useDesktopWidgetStore = create<DesktopWidgetStore>()(persist((set) => ({
   editMode: false, selectedWidgetId: null, widgets: defaultDesktopWidgetLayouts(),

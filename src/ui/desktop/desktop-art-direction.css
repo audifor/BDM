@@ -7,11 +7,30 @@
 
 .desktop-workspace {
   background:
-    linear-gradient(90deg, transparent calc(50% - .5px), rgb(151 211 217 / 6%) calc(50% - .5px), rgb(151 211 217 / 6%) calc(50% + .5px), transparent calc(50% + .5px)),
-    radial-gradient(ellipse at 50% 42%, rgb(47 143 157 / 13%), transparent 28%),
-    radial-gradient(ellipse at 8% 94%, rgb(229 173 81 / 6%), transparent 26%),
-    linear-gradient(135deg, #09141e, #0b1823 52%, #09131c);
+    linear-gradient(rgb(4 10 18 / 60%), rgb(4 10 18 / 70%)),
+    url('../assets/desktop-night-city.png') center / cover no-repeat;
 }
+
+.desktop-shell[data-wallpaper="office"] .desktop-workspace { background: radial-gradient(ellipse at 16% 12%, rgb(181 143 83 / 13%), transparent 30%), linear-gradient(135deg, #16140f, #20201a 52%, #111714); }
+.desktop-shell[data-wallpaper="court"] .desktop-workspace { background: repeating-linear-gradient(90deg, transparent 0 64px, rgb(202 138 69 / 5%) 65px 66px), radial-gradient(ellipse at 50% 48%, rgb(132 69 35 / 20%), transparent 45%), #10191b; }
+.desktop-shell[data-wallpaper="abstract"] .desktop-workspace { background: radial-gradient(circle at 18% 22%, rgb(53 198 208 / 18%), transparent 25%), radial-gradient(circle at 78% 66%, rgb(229 173 81 / 12%), transparent 32%), linear-gradient(145deg, #0a1018, #141d30); }
+
+.desktop-shell[data-density="comfortable"] { --desktop-density-row: 32px; --desktop-density-gap: var(--space-3); }
+.desktop-shell[data-density="standard"] { --desktop-density-row: 28px; --desktop-density-gap: var(--space-2); }
+.desktop-shell[data-density="compact"] { --desktop-density-row: 24px; --desktop-density-gap: var(--space-1); }
+.desktop-shell .squad-app { gap: var(--desktop-density-gap); }
+.desktop-shell .squad-app__table th, .desktop-shell .squad-app__table td { height: var(--desktop-density-row); padding-block: calc((var(--desktop-density-row) - 17px) / 2); }
+.desktop-shell--auto-hide-dock .desktop-dock-slot { transform: translateY(calc(100% - 10px)); transition: transform var(--motion-normal) var(--motion-ease); }
+.desktop-shell--auto-hide-dock:hover .desktop-dock-slot, .desktop-shell--auto-hide-dock:focus-within .desktop-dock-slot { transform: translateY(0); }
+
+.desktop-settings { display: grid; gap: var(--space-5); padding: var(--space-5); }
+.desktop-settings h1, .desktop-settings h2, .desktop-settings p { margin: 0; }
+.desktop-settings header > p:last-child, .desktop-settings__grid p { margin-top: var(--space-2); color: var(--bdm-text-secondary); }
+.desktop-settings__grid { display: grid; gap: var(--space-3); grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.desktop-settings__grid > section { display: grid; align-content: start; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--bdm-border-subtle); background: var(--bdm-surface-default); }
+.desktop-settings__grid h2 { font-size: var(--font-size-body); }
+.desktop-settings__widgets { display:grid; gap:var(--space-2); padding-top:var(--space-4); border-top:1px solid var(--bdm-border-subtle); }.desktop-settings__widgets > div:first-child { display:flex; align-items:end; justify-content:space-between; gap:var(--space-3); }.desktop-settings__widget { display:flex; align-items:center; justify-content:space-between; gap:var(--space-3); min-height:38px; padding:0 var(--space-3); border:1px solid var(--bdm-border-subtle); background:var(--bdm-surface-default); color:var(--bdm-text-secondary); }
+@media (max-width: 620px) { .desktop-settings__grid { grid-template-columns: 1fr; } }
 
 .desktop-workspace::after {
   background:
@@ -141,6 +160,7 @@
 
 .game-context-bar__crest { width: 21px; height: 21px; border-color: rgb(53 198 208 / 28%); background: transparent; }
 .game-context-bar__competition,.game-context-bar__ecosystem { border-left-color: rgb(157 190 204 / 12%); }
+.game-context-bar { grid-template-columns:minmax(120px,1fr) minmax(160px,1.15fr) minmax(0,.7fr) auto auto; }.game-context-bar__actions { display:flex; gap:4px; pointer-events:auto; }.game-context-bar__actions .bdm-button { min-height:25px; padding:0 6px; font-size:9px; }
 
 .desktop-dock { bottom: clamp(16px, 2.4vh, 28px); border-color: rgb(157 190 204 / 12%); background: rgb(11 23 33 / 82%); box-shadow: 0 14px 34px rgb(0 0 0 / 22%); }
 .desktop-dock__item { border-radius: 10px; }

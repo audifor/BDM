@@ -1,0 +1,4 @@
+import type { DataGridColumn } from './types'
+type PlayerIdentity = { readonly firstName: string; readonly lastName: string; readonly basketball: { readonly primaryPosition: string } }
+/** Shared identity definitions; applications supply context-dependent values such as age or scouting knowledge. */
+export function playerIdentityColumns<Row extends PlayerIdentity>(): readonly DataGridColumn<Row>[] { return [{ id: 'name', label: 'PLAYER', category: 'Identity', searchable: true, sortable: true, minWidth: 150, flex: 2, value: (player) => `${player.firstName} ${player.lastName}`, render: (player) => `${player.firstName} ${player.lastName}` }, { id: 'position', label: 'POS', category: 'Position', searchable: true, sortable: true, width: 48, value: (player) => player.basketball.primaryPosition, render: (player) => player.basketball.primaryPosition }] }

@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "tranche": "016B.1-019",
+  "starting_code_ancestor": "f676d25",
+  "checkpoint_after": "019",
+  "milestones": [
+    {
+      "id": "016B.1",
+      "title": "Enforce valid MatchEngine lineups",
+      "status": "TODO",
+      "prompt": "docs/autopilot/milestones/016B.1.md",
+      "model": "gpt-5.6-terra",
+      "reasoning": "medium",
+      "stop_after": false
+    },
+    {
+      "id": "016C",
+      "title": "Show real players in MatchViewer",
+      "status": "TODO",
+      "prompt": "docs/autopilot/milestones/016C.md",
+      "model": "gpt-5.6-terra",
+      "reasoning": "medium",
+      "stop_after": false
+    },
+    {
+      "id": "017",
+      "title": "Add derived player boxscore v1",
+      "status": "TODO",
+      "prompt": "docs/autopilot/milestones/017.md",
+      "model": "gpt-5.6-terra",
+      "reasoning": "high",
+      "stop_after": false
+    },
+    {
+      "id": "018",
+      "title": "Add rebounds and assists v1",
+      "status": "TODO",
+      "prompt": "docs/autopilot/milestones/018.md",
+      "model": "gpt-5.6-terra",
+      "reasoning": "high",
+      "stop_after": false
+    },
+    {
+      "id": "019",
+      "title": "Add fouls and free throws v1",
+      "status": "TODO",
+      "prompt": "docs/autopilot/milestones/019.md",
+      "model": "gpt-5.6-sol",
+      "reasoning": "high",
+      "stop_after": true
+    }
+  ]
+}

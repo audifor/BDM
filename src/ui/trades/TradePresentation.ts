@@ -1,11 +1,12 @@
 import type { TradeAsset, TradeAssetMovement, TradeProposal } from '@/domain/trade'
-import type { TeamId } from '@/domain/ids'
+import { organizationIdForTeam, type OrganizationId, type TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
+import { deriveOrganizationPlayerValuation, formatRatingEvaluation, getOrganizationRatingEvaluation, type OrganizationPlayerValuation } from '@/domain/intelligence'
 import { getUserTeam } from '@/engine/calendar'
 import { validateTrade, type TeamTradeValidation, type TradeValidationReason } from '@/engine/trade'
 
 export interface TradeDraft { readonly participantTeamIds: readonly TeamId[]; readonly movements: readonly TradeAssetMovement[] }
-export interface PresentedTradeAsset { readonly movement: TradeAssetMovement; readonly label: string; readonly sourceTeamName: string }
+export interface PresentedTradeAsset { readonly movement: TradeAssetMovement; readonly label: string; readonly sourceTeamName: string; readonly intelligence?:string }
 export interface PresentedTradeTeam { readonly teamId: TeamId; readonly teamName: string; readonly received: readonly PresentedTradeAsset[]; readonly validation?: TeamTradeValidation }
 export interface TradePresentation { readonly proposal: TradeProposal; readonly teams: readonly PresentedTradeTeam[]; readonly allowed: boolean; readonly globalReasons: readonly TradeValidationReason[]; readonly hasSalaryMatching: boolean }
 
@@ -40,8 +41,15 @@ export function buildTradePresentation(world: GameWorld, rules: NonNullable<Game
     allowed: validation.allowed,
     globalReasons: validation.globalReasons,
     hasSalaryMatching: world.salaryRulesBySeasonId[rules.seasonId] !== undefined,
-    teams: draft.participantTeamIds.map((teamId) => ({ teamId, teamName: world.teams[teamId]?.name ?? 'Unknown team', received: draft.movements.filter((movement) => movement.toTeamId === teamId).map((movement) => ({ movement, label: tradeAssetLabel(world, movement.asset), sourceTeamName: world.teams[movement.fromTeamId]?.name ?? 'Unknown team' })), validation: validation.teamResults.find((result) => result.teamId === teamId) })),
+    teams: draft.participantTeamIds.map((teamId) => ({ teamId, teamName: world.teams[teamId]?.name ?? 'Unknown team', received: draft.movements.filter((movement) => movement.toTeamId === teamId).map((movement) => ({ movement, label: tradeAssetLabel(world, movement.asset), sourceTeamName: world.teams[movement.fromTeamId]?.name ?? 'Unknown team', intelligence: tradeAssetIntelligence(world, organizationIdForTeam(teamId), movement.asset) })), validation: validation.teamResults.find((result) => result.teamId === teamId) })),
   }
+}
+export function tradeAssetIntelligence(world:GameWorld,organizationId:OrganizationId,asset:TradeAsset):string|undefined{if(asset.kind!=='player')return undefined;const player=world.players[asset.playerId];if(!player)return undefined;return formatRatingEvaluation(getOrganizationRatingEvaluation({organizationId,playerId:player.id,dimension:'creation',knowledge:world.organizationKnowledge,currentDate:world.currentDate,publicPosition:player.basketball.primaryPosition}))}
+/** Trade talent evaluation is observer-specific; legality remains in the trade engine. */
+export function tradePlayerValuation(world: GameWorld, organizationId: OrganizationId, playerId: import('@/domain/ids').PlayerId): OrganizationPlayerValuation | undefined {
+  const player = world.players[playerId]
+  if (!player) return undefined
+  return deriveOrganizationPlayerValuation({ organizationId, playerId, knowledge: world.organizationKnowledge, currentDate: world.currentDate, context: 'TRADE', publicPosition: player.basketball.primaryPosition, policy: world.organizationEvaluationPoliciesById[organizationId] })
 }
 
 export function tradeAssetKey(asset: TradeAsset): string {

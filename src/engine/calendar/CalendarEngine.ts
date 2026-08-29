@@ -3,13 +3,14 @@ import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { reconcileExpiredPlayerContracts } from '@/engine/market'
 import { executeEligibleTraining, recoverCareerFatigueForDay } from '@/engine/training/TrainingEngine'
 import { openDraft, progressDraftAi } from '@/engine/draft'
-import { arriveSignedRecruits, progressAiRecruiting, resolveRecruitingCommitments } from '@/engine/recruiting'
+import { arriveSignedRecruits, generateRecruitingPool, progressAiRecruiting, resolveRecruitingCommitments } from '@/engine/recruiting'
 import { progressAiAcademicSupport, resolveAcademicTerm } from '@/engine/academic'
 import { progressAiNil, progressNilLifecycle } from '@/engine/nil'
 import { progressAiBoosters } from '@/engine/boosters'
 import { progressEnforcement } from '@/engine/enforcement'
 import { processCoachFinancesForMonth } from '@/engine/coachFinances'
 import { decayMemoriesForMonth } from '@/engine/memory'
+import { progressScoutingAssignments } from '@/engine/scouting'
 
 /** Advances only the simulation date, leaving game resolution to other services. */
 export function advanceDay(world: GameWorld): GameWorld {
@@ -17,7 +18,7 @@ export function advanceDay(world: GameWorld): GameWorld {
   const maintained = progressAcademicTerms(progressRecruiting(executeEligibleTraining(reconcileExpiredPlayerContracts(recoverCareerFatigueForDay(advanced), advanced.currentDate))))
   const withNil = maintained.currentDate.slice(-2) === '01' ? progressAiNil(progressNilLifecycle(maintained)) : progressNilLifecycle(maintained)
   const withBoosters = withNil.currentDate.slice(-2) === '01' ? decayMemoriesForMonth(processCoachFinancesForMonth(progressAiBoosters(withNil))) : withNil
-  const enforced = progressEnforcement(withBoosters)
+  const enforced = progressScoutingAssignments(progressEnforcement(withBoosters))
   return Object.values(enforced.draftsById).reduce((current, draft) => {
     const opened = openDraft(current, draft.id)
     return opened.draftsById[draft.id]?.status === 'inProgress' ? progressDraftAi(opened, draft.id) : opened
@@ -31,6 +32,7 @@ function progressRecruiting(world: GameWorld): GameWorld {
     const status = next.currentDate < cycle.opensOn ? 'scheduled' : next.currentDate < cycle.signingOn ? 'open' : next.currentDate <= cycle.closesOn ? 'signing' : 'completed'
     if (cycle.status !== status) next = updateGameWorld(next, { recruitingCycles: Object.values(next.recruitingCyclesById).map((item) => item.id === cycle.id ? { ...item, status } : item) })
     if (status === 'open' || status === 'signing') {
+      next = generateRecruitingPool(next, cycle.id)
       if (next.currentDate.slice(-2) === '01' || cycle.status !== status) next = progressAiRecruiting(next, cycle.id)
       next = resolveRecruitingCommitments(next, cycle.id)
     }

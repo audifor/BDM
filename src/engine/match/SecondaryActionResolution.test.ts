@@ -13,7 +13,7 @@ import { calculateDefensivePressure, calculateTurnoverProbability, TURNOVER_RESO
 describe('player-driven secondary action resolution', () => {
   it('adapts a known rebounding vector and keeps its signal bounded', () => {
     const profile = createMatchPlayerProfile(createPlayer({ id: playerIdFromString('rebound-profile'), firstName: 'Test', lastName: 'Rebounder', gender: 'male', nationalityId: countryIdFromString('country'), basketball: { primaryPosition: 'PF', ratings: { finishing: 0, shooting: 0, playmaking: 0, perimeterDefense: 0, interiorDefense: 0, rebounding: 80, athleticism: 60 } }, bio: { dateOfBirth: '2008-06-14', heightCm: 188, weightKg: 86 } }))
-    expect(profile.rebounding.impact).toBe(75)
+    expect(profile.rebounding.impact).toBe(77.25)
     expect(profile.rebounding.impact).toBeGreaterThanOrEqual(0)
     expect(profile.rebounding.impact).toBeLessThanOrEqual(100)
   })

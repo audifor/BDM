@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import { createGame } from '@/domain/game'
 import { gameIdFromString, playerIdFromString, teamIdFromString } from '@/domain/ids'
-import { createGameWorld, type GameWorld } from '@/domain/world'
+import { createGameWorld, updateGameWorld, type GameWorld } from '@/domain/world'
+import { organizationIdForTeam } from '@/domain/ids'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
@@ -42,6 +43,12 @@ describe('MatchEngine result projection', () => {
     const before = JSON.stringify(world)
     simulateMatch(createOptions(world, game.id, 1))
     expect(JSON.stringify(world)).toBe(before)
+  })
+
+  it('keeps physical simulation independent from OrganizationKnowledge', () => {
+    const { world, game } = createScheduledGameWorld(); const playerId = world.teams[game.homeTeamId]!.rosterPlayerIds[0]!
+    const informed = updateGameWorld(world, { organizationKnowledge: [{ organizationId: organizationIdForTeam(game.homeTeamId), subjectPlayerId: playerId, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: world.currentDate, provenance: 'scoutReport', estimate: 100, uncertainty: 1 } } }] })
+    expect(simulateMatch(createOptions(informed, game.id, 12345))).toEqual(simulateMatch(createOptions(world, game.id, 12345)))
   })
 
   it.each([

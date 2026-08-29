@@ -1,108 +1,49 @@
 import type { CountryId, PlayerId } from '@/domain/ids'
 import { parseGameDate, type GameDate } from '@/domain/date'
-import {
-  requireBasketballPosition,
-  requireGender,
-  type BasketballPosition,
-  type Gender,
-} from '@/domain/primitives'
+import { requireBasketballPosition, requireGender, type BasketballPosition, type Gender } from '@/domain/primitives'
 import { requireNonEmptyString } from '@/domain/validation'
-import { calculateBootstrapAbilityProxy, type PlayerPotential } from './PlayerPotential'
+import { createDevelopmentProfile, type PlayerDevelopmentProfile } from './PlayerDevelopmentProfile'
+import { deriveLegacyPotential, type PlayerPotential } from './PlayerPotential'
 
-export interface Player {
-  readonly id: PlayerId
-  readonly firstName: string
-  readonly lastName: string
-  readonly gender: Gender
-  readonly nationalityId: CountryId
-  readonly basketball: BasketballProfile
-  readonly bio: PlayerBio
-  readonly potential: PlayerPotential
-}
-
-export interface PlayerBio {
-  readonly dateOfBirth: GameDate
-  readonly heightCm: number
-  readonly weightKg: number
-}
-
-export interface PlayerBioInput {
-  dateOfBirth: GameDate | string
-  heightCm: number
-  weightKg: number
-}
-
-export interface PlayerRatings {
-  readonly finishing: number
-  readonly shooting: number
-  readonly playmaking: number
-  readonly perimeterDefense: number
-  readonly interiorDefense: number
-  readonly rebounding: number
-  readonly athleticism: number
-}
-
-/** Bootstrap rating surface only; later player taxonomies may replace it. */
-export const BASKETBALL_RATING_KEYS = ['finishing', 'shooting', 'playmaking', 'perimeterDefense', 'interiorDefense', 'rebounding', 'athleticism'] as const
+export const CANONICAL_RATING_KEYS = ['midRangeShooting','threePointShooting','freeThrowShooting','rimFinishing','contactFinishing','dunking','floater','postScoring','ballHandling','ballSecurity','firstStep','changeOfDirection','passing','courtVision','perimeterDefense','interiorDefense','screenNavigation','defensiveAwareness','steal','rimProtection','shotContest','offensiveRebounding','defensiveRebounding','boxOut','acceleration','speed','lateralAgility','strength','vertical','stamina','decisionMaking','anticipation','composure','offBallAwareness','discipline'] as const
+export type CanonicalRatingKey = typeof CANONICAL_RATING_KEYS[number]
+export const TENDENCY_KEYS = ['drive','attackContact','dunkAttempt','floaterAttempt','postUp','midRangeAttempt','threePointAttempt','pullUpAttempt','catchAndShoot','pickAndRollBallHandler','pickAndRollRoll','isolation','creativePassing','transitionPush','cut','offBallScreenUse','crashOffensiveGlass','helpDefense','gambleForSteal','switchDefense','foulAggression'] as const
+export type TendencyKey = typeof TENDENCY_KEYS[number]
+export type PlayerTendencies = Readonly<Record<TendencyKey, number>>
+export type DominantHand = 'LEFT' | 'RIGHT'
+export type DataProvenance = 'sourced' | 'generated' | 'migrated' | 'inferred'
+/** V1 input only; never persisted as PlayerTruth. */
+export interface LegacyPlayerRatings { readonly finishing:number; readonly shooting:number; readonly playmaking:number; readonly perimeterDefense:number; readonly interiorDefense:number; readonly rebounding:number; readonly athleticism:number }
+export const LEGACY_BASKETBALL_RATING_KEYS = ['finishing','shooting','playmaking','perimeterDefense','interiorDefense','rebounding','athleticism'] as const
+/** TEMPORARY legacy read surface. It is non-enumerable and therefore never persisted. */
+export const BASKETBALL_RATING_KEYS = LEGACY_BASKETBALL_RATING_KEYS
 export type BasketballRatingKey = typeof BASKETBALL_RATING_KEYS[number]
+/**
+ * Compatibility typing for pre-Wave-2 consumers. At runtime these seven values are
+ * non-enumerable derived signals; V2 PlayerTruth contains only canonical keys.
+ */
+export type PlayerRatings = Readonly<Record<CanonicalRatingKey, number> & LegacyPlayerRatings>
 
-export interface BasketballProfile {
-  readonly primaryPosition: BasketballPosition
-  readonly ratings: PlayerRatings
-}
+export interface Player { readonly id:PlayerId; readonly firstName:string; readonly lastName:string; readonly gender:Gender; readonly nationalityId:CountryId; readonly basketball:BasketballProfile; readonly bio:PlayerBio; readonly development:PlayerDevelopmentProfile; /** TEMPORARY derived compatibility view; not serialized. */ readonly potential:PlayerPotential }
+export interface PlayerBio { readonly dateOfBirth:GameDate; readonly heightCm:number; readonly weightKg:number; readonly wingspanCm:number; readonly standingReachCm:number; readonly dominantHand:DominantHand; readonly measurementProvenance:Readonly<Record<'wingspanCm'|'standingReachCm'|'dominantHand',DataProvenance>> }
+export interface PlayerBioInput { dateOfBirth:GameDate|string; heightCm:number; weightKg:number; wingspanCm?:number; standingReachCm?:number; dominantHand?:DominantHand; measurementProvenance?:Partial<PlayerBio['measurementProvenance']> }
+export interface BasketballProfile { readonly primaryPosition:BasketballPosition; readonly secondaryPositions?:readonly BasketballPosition[]; readonly ratings:PlayerRatings; readonly tendencies:PlayerTendencies; readonly traitIds:readonly string[] }
+export interface CreatePlayerInput { id:PlayerId; firstName:string; lastName:string; gender:Gender; nationalityId:CountryId; basketball:{readonly primaryPosition:BasketballPosition;readonly secondaryPositions?:readonly BasketballPosition[];readonly ratings:PlayerRatings|LegacyPlayerRatings;readonly tendencies?:PlayerTendencies;readonly traitIds?:readonly string[]};bio:PlayerBioInput;development?:PlayerDevelopmentProfile; /** Legacy input accepted only at V1 boundaries. */ potential?:PlayerPotential }
 
-export interface CreatePlayerInput {
-  id: PlayerId
-  firstName: string
-  lastName: string
-  gender: Gender
-  nationalityId: CountryId
-  basketball: BasketballProfile
-  bio: PlayerBioInput
-  potential?: PlayerPotential
-}
-
-export function createPlayer(input: CreatePlayerInput): Player {
-  const ratings = input.basketball.ratings
-  validateRatings(ratings)
-  const bio = validateBio(input.bio)
-  const potential = validatePotential(input.potential ?? { ceiling: Math.round(calculateBootstrapAbilityProxy(ratings)) })
-
-  return {
-    id: requireNonEmptyString(input.id, 'Player id') as PlayerId,
-    firstName: requireNonEmptyString(input.firstName, 'Player first name'),
-    lastName: requireNonEmptyString(input.lastName, 'Player last name'),
-    gender: requireGender(input.gender),
-    nationalityId: requireNonEmptyString(input.nationalityId, 'Player nationality id') as CountryId,
-    basketball: {
-      primaryPosition: requireBasketballPosition(input.basketball.primaryPosition),
-      ratings,
-    },
-    bio,
-    potential,
-  }
-}
-
-function validatePotential(potential: PlayerPotential): PlayerPotential {
-  return { ceiling: requireIntegerInRange(potential.ceiling, 'Player potential ceiling', 0, 100) }
-}
-
-function validateBio(bio: PlayerBioInput): PlayerBio {
-  const heightCm = requireIntegerInRange(bio.heightCm, 'Player heightCm', 120, 250)
-  const weightKg = requireIntegerInRange(bio.weightKg, 'Player weightKg', 30, 250)
-  return { dateOfBirth: parseGameDate(bio.dateOfBirth), heightCm, weightKg }
-}
-
-function requireIntegerInRange(value: number, name: string, minimum: number, maximum: number): number {
-  if (!Number.isFinite(value) || !Number.isInteger(value) || value < minimum || value > maximum) throw new RangeError(`${name} must be an integer from ${minimum} to ${maximum}`)
-  return value
-}
-
-function validateRatings(ratings: PlayerRatings): void {
-  for (const name of BASKETBALL_RATING_KEYS) {
-    const value = ratings[name]
-    if (!Number.isFinite(value) || !Number.isInteger(value) || value < 0 || value > 100) {
-      throw new RangeError(`Player ${name} must be an integer from 0 to 100`)
-    }
-  }
-}
+export function createPlayer(input:CreatePlayerInput):Player { const inputRatings=input.basketball.ratings;const legacy=isLegacyRatings(inputRatings)?inputRatings:undefined;if(legacy!==undefined)validateLegacyRatings(legacy);if(input.potential!==undefined&&(!Number.isInteger(input.potential.ceiling)||input.potential.ceiling<0||input.potential.ceiling>100))throw new RangeError('Player potential ceiling must be an integer from 0 to 100');const ratings=legacy===undefined?attachLegacySignals(inputRatings as PlayerRatings):attachLegacySignals(canonicalizeLegacyRatings(input.id,legacy),legacy);validateRatings(ratings);const bio=validateBio(input.id,input.basketball.primaryPosition,input.bio);const tendencies=input.basketball.tendencies??generateDefaultTendencies(input.id,input.basketball.primaryPosition,ratings);validateTendencies(tendencies);const player: Omit<Player,'potential'>={id:requireNonEmptyString(input.id,'Player id')as PlayerId,firstName:requireNonEmptyString(input.firstName,'Player first name'),lastName:requireNonEmptyString(input.lastName,'Player last name'),gender:requireGender(input.gender),nationalityId:requireNonEmptyString(input.nationalityId,'Player nationality id')as CountryId,basketball:{primaryPosition:requireBasketballPosition(input.basketball.primaryPosition),...(input.basketball.secondaryPositions===undefined?{}:{secondaryPositions:[...input.basketball.secondaryPositions].map(requireBasketballPosition)}),ratings,tendencies:{...tendencies},traitIds:[...(input.basketball.traitIds??[])]},bio,development:createDevelopmentProfile(input.development??defaultDevelopmentProfile(ratings,input.potential?.ceiling))};Object.defineProperty(player,'potential',{enumerable:false,value:deriveLegacyPotential(player.development)});return player as Player }
+function validateBio(id:PlayerId,position:BasketballPosition,bio:PlayerBioInput):PlayerBio { const heightCm=requireFiniteInRange(bio.heightCm,'Player heightCm',120,250),weightKg=requireFiniteInRange(bio.weightKg,'Player weightKg',30,250),wingspanCm=bio.wingspanCm??generatedMeasurement(id,position,heightCm,'wingspanCm'),standingReachCm=bio.standingReachCm??generatedMeasurement(id,position,heightCm,'standingReachCm');if(wingspanCm<120||wingspanCm>280||standingReachCm<150||standingReachCm>310)throw new RangeError('Player measurements are outside supported bounds');const dominantHand=bio.dominantHand??(seed(id,'dominantHand')%10===0?'LEFT':'RIGHT');if(dominantHand!=='LEFT'&&dominantHand!=='RIGHT')throw new RangeError('Player dominantHand must be LEFT or RIGHT');const defaults:PlayerBio['measurementProvenance']={wingspanCm:bio.wingspanCm===undefined?'generated':'inferred',standingReachCm:bio.standingReachCm===undefined?'generated':'inferred',dominantHand:bio.dominantHand===undefined?'generated':'inferred'};return{dateOfBirth:parseGameDate(bio.dateOfBirth),heightCm,weightKg,wingspanCm,standingReachCm,dominantHand,measurementProvenance:{...defaults,...bio.measurementProvenance}} }
+function validateRatings(ratings:PlayerRatings):void {for(const key of CANONICAL_RATING_KEYS)requireFiniteInRange(ratings[key],`Player ${key}`,1,100)}
+function validateLegacyRatings(ratings:LegacyPlayerRatings):void {for(const key of LEGACY_BASKETBALL_RATING_KEYS){const value=ratings[key];if(!Number.isInteger(value)||value<0||value>100)throw new RangeError(`Legacy player ${key} must be an integer from 0 to 100`)}}
+function validateTendencies(tendencies:PlayerTendencies):void {if(Object.keys(tendencies).length!==TENDENCY_KEYS.length)throw new RangeError('Player tendencies must contain exactly every canonical key');for(const key of TENDENCY_KEYS)requireFiniteInRange(tendencies[key],`Player tendency ${key}`,1,100)}
+function requireFiniteInRange(value:number,name:string,minimum:number,maximum:number):number {if(!Number.isFinite(value)||value<minimum||value>maximum)throw new RangeError(`${name} must be finite from ${minimum} to ${maximum}`);return value}
+function isLegacyRatings(value:PlayerRatings|LegacyPlayerRatings):value is LegacyPlayerRatings{return'finishing'in value&& !('midRangeShooting'in value)}
+function seed(id:string,key:string):number{let state=2166136261;for(const part of `${id}:${key}`)state=Math.imul(state^part.charCodeAt(0),16777619);return state>>>0}
+function variation(id:string,key:string):number{return seed(id,key)%13-6}
+export function canonicalizeLegacyRatings(id:PlayerId,legacy:LegacyPlayerRatings):PlayerRatings {const base:Record<CanonicalRatingKey,number>={midRangeShooting:legacy.shooting,threePointShooting:legacy.shooting,freeThrowShooting:legacy.shooting,rimFinishing:legacy.finishing,contactFinishing:legacy.finishing,dunking:legacy.finishing,floater:legacy.finishing,postScoring:legacy.finishing,ballHandling:legacy.playmaking,ballSecurity:legacy.playmaking,firstStep:legacy.playmaking,changeOfDirection:legacy.athleticism,passing:legacy.playmaking,courtVision:legacy.playmaking,perimeterDefense:legacy.perimeterDefense,interiorDefense:legacy.interiorDefense,screenNavigation:legacy.perimeterDefense,defensiveAwareness:(legacy.perimeterDefense+legacy.interiorDefense)/2,steal:legacy.perimeterDefense,rimProtection:legacy.interiorDefense,shotContest:legacy.perimeterDefense,offensiveRebounding:legacy.rebounding,defensiveRebounding:legacy.rebounding,boxOut:legacy.rebounding,acceleration:legacy.athleticism,speed:legacy.athleticism,lateralAgility:legacy.athleticism,strength:legacy.athleticism,vertical:legacy.athleticism,stamina:legacy.athleticism,decisionMaking:legacy.playmaking,anticipation:(legacy.perimeterDefense+legacy.interiorDefense)/2,composure:(legacy.finishing+legacy.shooting)/2,offBallAwareness:legacy.playmaking,discipline:legacy.interiorDefense};return Object.fromEntries(CANONICAL_RATING_KEYS.map(key=>[key,Math.max(1,Math.min(100,base[key]+(key==='perimeterDefense'||key==='interiorDefense'?0:variation(id,key))))]))as PlayerRatings}
+/** Explicit, pure compatibility projection. It is never stored on PlayerTruth. */
+export function legacyRatingSignals(ratings:PlayerRatings):LegacyPlayerRatings{return{finishing:average(ratings.rimFinishing,ratings.contactFinishing,ratings.dunking,ratings.floater,ratings.postScoring),shooting:average(ratings.midRangeShooting,ratings.threePointShooting,ratings.freeThrowShooting),playmaking:average(ratings.ballHandling,ratings.ballSecurity,ratings.firstStep,ratings.passing,ratings.courtVision),perimeterDefense:average(ratings.perimeterDefense,ratings.screenNavigation,ratings.steal,ratings.shotContest,ratings.defensiveAwareness),interiorDefense:average(ratings.interiorDefense,ratings.rimProtection,ratings.defensiveAwareness,ratings.discipline),rebounding:average(ratings.offensiveRebounding,ratings.defensiveRebounding,ratings.boxOut),athleticism:average(ratings.acceleration,ratings.speed,ratings.lateralAgility,ratings.changeOfDirection,ratings.strength,ratings.vertical,ratings.stamina)}}
+function attachLegacySignals(ratings:PlayerRatings,_legacy?:LegacyPlayerRatings):PlayerRatings { return { ...ratings } as PlayerRatings }
+function average(...values:number[]):number{return Math.round(values.reduce((sum,value)=>sum+value,0)/values.length)}
+export function generateDefaultTendencies(id:PlayerId,position:BasketballPosition,ratings:PlayerRatings):PlayerTendencies {const big=position==='PF'||position==='C',wing=position==='SG'||position==='SF',raw=Object.fromEntries(TENDENCY_KEYS.map(key=>[key,50+variation(id,`tendency:${key}`)]))as Record<TendencyKey,number>;raw.drive+=(ratings.firstStep+ratings.rimFinishing-100)*.18;raw.threePointAttempt+=(ratings.threePointShooting-50)*.28+(wing?7:0);raw.pickAndRollBallHandler+=(ratings.passing+ratings.courtVision-100)*.2;raw.creativePassing+=(ratings.courtVision-50)*.25;raw.crashOffensiveGlass+=(ratings.offensiveRebounding-50)*.25+(big?8:0);raw.pickAndRollRoll+=big?12:-4;raw.helpDefense+=(ratings.defensiveAwareness-50)*.2;raw.gambleForSteal+=(ratings.steal-50)*.2;raw.foulAggression+=(50-ratings.discipline)*.16;return Object.fromEntries(TENDENCY_KEYS.map(key=>[key,Math.max(1,Math.min(100,raw[key]))]))as PlayerTendencies}
+function generatedMeasurement(id:PlayerId,position:BasketballPosition,height:number,key:'wingspanCm'|'standingReachCm'):number {const spread=seed(id,key)%13-4;return key==='wingspanCm'?height+spread:Math.round(height*.91+(position==='C'?10:position==='PF'?7:3)+spread)}
+function defaultDevelopmentProfile(ratings:PlayerRatings,legacyCeiling?:number):PlayerDevelopmentProfile {const avg=CANONICAL_RATING_KEYS.reduce((sum,key)=>sum+ratings[key],0)/CANONICAL_RATING_KEYS.length;const ceiling=legacyCeiling??avg;return{developmentStage:'prime',growthRate:50,declineSensitivity:50,ceilings:{shooting:ceiling,finishing:ceiling,creation:ceiling,passing:ceiling,defense:ceiling,rebounding:ceiling,physical:ceiling,mental:ceiling}}}

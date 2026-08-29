@@ -24,6 +24,10 @@ export {
   coachSkillIdFromString,
   coachProfessionalTraitIdFromString,
   coachPerkIdFromString,
+  organizationIdFromString,
+  organizationIdForTeam,
+  agentIdFromString,
+  agencyIdFromString,
 } from './EntityIds'
 
 export type {
@@ -45,4 +49,7 @@ export type {
   CoachSkillId,
   CoachProfessionalTraitId,
   CoachPerkId,
+  OrganizationId,
+  AgentId,
+  AgencyId,
 } from './EntityIds'

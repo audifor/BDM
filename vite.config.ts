@@ -7,6 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      'lucide-react': fileURLToPath(new URL('./src/ui/pcb-migrated/shared/PcbLucideIcons.jsx', import.meta.url)),
     },
   },
   clearScreen: false,

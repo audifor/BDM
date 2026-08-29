@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { addDays, createGameDate } from '@/domain/date'
 import { playerIdFromString } from '@/domain/ids'
 import { getTeamCoach } from '@/domain/world'
-import { getPlayerPotentialBand } from '@/domain/player'
+import { CANONICAL_RATING_KEYS, getPlayerPotentialBand, legacyRatingSignals } from '@/domain/player'
 
 import { generateWorld } from './index'
 
@@ -108,8 +108,8 @@ describe('WorldGenerator', () => {
       return ['PG','SG','SF','PF','C'].every((position) => positions.filter((value) => value === position).length === ({ PG:2, SG:3, SF:2, PF:3, C:2 }[position] ?? 0))
     })).toBe(true)
     for (const player of players) {
-      expect(Object.keys(player.basketball.ratings)).toEqual(['finishing','shooting','playmaking','perimeterDefense','interiorDefense','rebounding','athleticism'])
-      expect(Object.values(player.basketball.ratings).every((rating) => Number.isInteger(rating) && rating >= 0 && rating <= 100)).toBe(true)
+      expect(Object.keys(player.basketball.ratings)).toEqual(CANONICAL_RATING_KEYS)
+      expect(Object.values(player.basketball.ratings).every((rating) => Number.isFinite(rating) && rating >= 1 && rating <= 100)).toBe(true)
     }
     expect(new Set(players.map((player) => JSON.stringify(player.basketball.ratings))).size).toBeGreaterThan(8)
     expect(world.teams[Object.keys(world.teams)[0] as keyof typeof world.teams]!.name).toBe('Ironhollow Vipers')
@@ -121,7 +121,7 @@ describe('WorldGenerator', () => {
     const roster = firstTeam.rosterPlayerIds.map((id) => world.players[id]!)
     expect(new Set(roster.map((player) => JSON.stringify(player.basketball.ratings))).size).toBeGreaterThan(1)
     expect(new Set(roster.filter((player) => player.basketball.primaryPosition === 'SG').map((player) => JSON.stringify(player.basketball.ratings))).size).toBeGreaterThan(1)
-    const average = (position: string, rating: keyof typeof roster[number]['basketball']['ratings']) => { const players = Object.values(world.players).filter((player) => player.basketball.primaryPosition === position); return players.reduce((sum, player) => sum + player.basketball.ratings[rating], 0) / players.length }
+    const average = (position: string, rating: keyof ReturnType<typeof legacyRatingSignals>) => { const players = Object.values(world.players).filter((player) => player.basketball.primaryPosition === position); return players.reduce((sum, player) => sum + legacyRatingSignals(player.basketball.ratings)[rating], 0) / players.length }
     expect(average('PG', 'playmaking')).toBeGreaterThan(average('C', 'playmaking'))
     expect(average('C', 'rebounding')).toBeGreaterThan(average('PG', 'rebounding'))
     expect(average('SG', 'shooting')).toBeGreaterThan(average('C', 'shooting'))
