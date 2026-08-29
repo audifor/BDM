@@ -1,4 +1,4 @@
-import { useEffect, useRef, type DragEvent } from 'react'
+import { useEffect, useRef, useState, type DragEvent } from 'react'
 
 import type { GameCapabilities } from '@/ui/gameContext'
 import bdmLogo from '@/ui/icons/assets/bdm-logo.png'
@@ -16,7 +16,7 @@ function toneFor(group: LauncherGroup) { return group === 'EQUIPO' ? 'cyan' : gr
 function displayName(app: DesktopAppDefinition) { return app.id === 'medical' ? 'Área médica' : app.id === 'media' ? 'Prensa' : app.label }
 function AppIcon({ app, size }: { readonly app: DesktopAppDefinition; readonly size: 20 | 28 | 64 }) { const name = BDM_APP_ICON_BY_ID[app.id as keyof typeof BDM_APP_ICON_BY_ID] ?? 'home'; return <BdmIcon className="bdm-windows-start__icon" name={name} size={size} /> }
 function CategoryIcon({ group }: { readonly group: LauncherGroup }) { const name: BdmIconName = group === 'EQUIPO' ? 'team' : group === 'PARTIDOS Y COMPETICIÓN' ? 'games' : group === 'MERCADO' ? 'market' : group === 'GESTIÓN DEL CLUB' ? 'club' : group === 'MI CARRERA' ? 'profile' : group === 'MUNDO Y NARRATIVA' ? 'histories' : 'college'; return <BdmIcon className="bdm-windows-start__group-icon" name={name} size={64} /> }
-function LauncherAppButton({ active, app, onOpen, size }: { readonly active: boolean; readonly app: DesktopAppDefinition; readonly onOpen: () => void; readonly size: 20 | 64 }) { const drag = (event: DragEvent<HTMLButtonElement>) => { event.dataTransfer.effectAllowed = 'copy'; event.dataTransfer.setData('application/x-bdm-app-id', app.id) }; return <button aria-current={active ? 'page' : undefined} draggable key={app.id} onClick={onOpen} onDragEnd={() => window.dispatchEvent(new CustomEvent('bdm-pin-dock-app', { detail: app.id }))} onDragStart={drag} type="button"><AppIcon app={app} size={size} /><span>{displayName(app)}</span></button> }
+function LauncherAppButton({ active, app, onOpen, size }: { readonly active: boolean; readonly app: DesktopAppDefinition; readonly onOpen: () => void; readonly size: 20 | 64 }) { const [dragging, setDragging] = useState(false); const drag = (event: DragEvent<HTMLButtonElement>) => { setDragging(true); event.dataTransfer.effectAllowed = 'copy'; event.dataTransfer.setData('application/x-bdm-app-id', app.id) }; return <button aria-current={active ? 'page' : undefined} className={dragging ? 'is-dragging' : undefined} draggable key={app.id} onClick={onOpen} onDragEnd={() => { setDragging(false); window.dispatchEvent(new CustomEvent('bdm-pin-dock-app', { detail: app.id })) }} onDragStart={drag} type="button"><AppIcon app={app} size={size} /><span>{displayName(app)}</span></button> }
 
 export function BdmStartMenu({ activeAppId = null, capabilities = {}, isOpen, launcherOrder = [], onAppOpen, onClose, onCustomizeDesktop = () => undefined, onPinDockApp, query, onQueryChange }: BdmStartMenuProps) {
   const searchInput = useRef<HTMLInputElement>(null)
