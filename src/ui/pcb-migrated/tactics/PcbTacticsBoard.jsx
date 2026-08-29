@@ -127,6 +127,7 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
   const [activePanel, setActivePanel] = useState("ATAQUE");
   const [contextMenu, setContextMenu] = useState(null);
   const [tactics, setTactics] = useState(defaultTactics);
+  const [justSaved, setJustSaved] = useState(false);
 
   const rosterPlayers = useMemo(() => {
     if (!Array.isArray(roster)) return [];
@@ -673,7 +674,18 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
           )}
         </div>
         <div className="tactics-board-footer">
-          <button className="tactics-board-save">GUARDAR AJUSTES</button>
+          <button
+            className="tactics-board-save"
+            onClick={() => {
+              writeJSON(tacticsKey, tactics);
+              saveStarters(starters);
+              setJustSaved(true);
+              setTimeout(() => setJustSaved(false), 2000);
+            }}
+            type="button"
+          >
+            {justSaved ? "AJUSTES GUARDADOS" : "GUARDAR AJUSTES"}
+          </button>
         </div>
       </div>
 
