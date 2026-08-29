@@ -1,0 +1,62 @@
+name: BDM task
+
+description: Create an implementation task for BDM agents
+
+title: "[BDM] "
+
+labels: []
+
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What should change and why?
+      placeholder: Describe the gameplay, UI, system, bug, or migration goal.
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Explicitly state what is in scope and out of scope.
+      placeholder: |
+        IN:
+        - ...
+
+        OUT:
+        - ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Concrete conditions required for DONE.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation
+      description: Tests and checks expected before opening the PR.
+      value: |
+        - npm test
+        - npm run typecheck
+        - npm run build
+        - cargo fmt --check --manifest-path src-tauri/Cargo.toml
+        - cargo check --manifest-path src-tauri/Cargo.toml
+        - Math.random() in src/: zero
+        - No React/Zustand/Tauri imports in src/domain or src/engine
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Context and decisions
+      description: Canonical product decisions, files to inspect, constraints, or references.
