@@ -8,6 +8,7 @@ import ClubFinances from './components/club/ClubFinances'
 import ClubHistory from './components/club/ClubHistory'
 import ClubStaffAssignments from './components/club/ClubStaffAssignments'
 import { clubFixtures } from './fixtures/clubFixtures'
+import './ClubPcbPage.css'
 
 type ClubTab = 'dashboard' | 'facilities' | 'staff' | 'board' | 'finances' | 'analytics' | 'history'
 const tabs: readonly [ClubTab, string][] = [['dashboard', 'Visión General'], ['facilities', 'Instalaciones'], ['staff', 'Staff & Roles'], ['board', 'Junta Directiva'], ['finances', 'Finanzas'], ['analytics', 'Analítica'], ['history', 'Historia']]

@@ -1,14 +1,21 @@
 # PCB → BDMOS Migration Closure Audit (M7)
 
-Status: **NOT CERTIFIED / BLOCKED BY VISUAL CERTIFICATION**
+Status: **NOT CERTIFIED / PENDING USER VISUAL RE-CERTIFICATION**
 
-All functional, workflow and validation criteria below are implemented and
-verified by automated tests — `npm test` is **693/693 passing, 100% green**
-as of round 3. The sole remaining blocker is that no interactive browser
-visual pass has been performed in any session to date — see "M7 remediation
-round 3" for the current state and "M7 remediation round 2" for the workflow
-fixes that established it. Do not mark M7 CERTIFIED until that pass is run
-and recorded with its result.
+`Visual certification round 1: FAIL.` A user-run Tauri visual pass found a
+cross-cutting styling defect: M4 Club had no local stylesheet at all
+(unformatted runtime), and M6 Competition's stylesheet forced a single
+generic 5-column grid rule onto tables with 4-8 real columns, breaking every
+surface that didn't happen to have exactly 5. `docs/PCB_MIGRATION_CLOSURE.md`'s
+prior text-based workflow certification (round 3) did not catch this because
+DOM-interaction tests assert behavior, not visual layout. See "M7 visual
+remediation round 1" below for the code-level fixes applied across all six
+apps and the resulting per-surface structural matrix. All functional and
+workflow criteria remain implemented and covered by automated tests —
+`npm test` is **694/694 passing, 100% green**. The remaining blocker is that
+no interactive browser visual re-pass has been performed after this round's
+fixes — this document is `CODE VISUAL REMEDIATION COMPLETE, USER RUNTIME
+VISUAL VALIDATION REQUIRED`, not certified.
 
 Audit date: 2026-08-29. First closure attempt: 2026-08-29 (branch
 `m7-pcb-migration-closure`, commit `a2127e3`) — **rejected by external
@@ -493,3 +500,175 @@ in a separate file instead — the same pattern already used for
   reported in the PR description/comment, not backfilled here).
 - **Interactive browser visual pass: still not performed.** This remains the
   sole reason M7 is not CERTIFIED.
+
+## M7 visual remediation round 1 (2026-08-29, branch `m7-pcb-migration-closure`)
+
+Triggered by a user-run Tauri visual pass that invalidated the prior
+"visually correct" assumption behind round 3's text-based certification.
+**This audit does not certify a surface merely because it renders, has
+classes, has a stylesheet, or passes DOM tests** — every table/grid below was
+checked against the real number of DOM columns it renders, not just against
+the presence of a `.table`/`.row` class.
+
+### Confirmed defects (pre-remediation)
+
+1. **M4 Club — no local stylesheet.** `ClubPcbPage.tsx` imported no CSS at
+   all; none of the 7 Club surfaces had any dedicated styling layer (only
+   whatever ambient/global rules happened to apply). Runtime was
+   unformatted, as the user reported.
+2. **M6 Competition — stylesheet present but structurally wrong.**
+   `CompetitionPcbPage.css` forced `.pcb-competition .table .row{
+   grid-template-columns:repeat(5,minmax(100px,1fr))}` onto every table in
+   the app, regardless of actual column count: Standings renders 8 columns,
+   Próximos 6, Estadísticas 5, Copas 4. Only Estadísticas happened to match
+   the hardcoded 5 by coincidence; the other three rendered visually broken
+   (misaligned or overflowing cells).
+
+### Fixes applied
+
+**Club** — created `src/ui/pcb-migrated/club/ClubPcbPage.css` (256 lines) from
+scratch, imported explicitly from `ClubPcbPage.tsx`, covering all 7 surfaces:
+Visión General (KPI/alerts/objectives/top-players/fixtures tables, each with
+its real column count: 3, 3, 3, 5, 3), Instalaciones (facility cards, category
+tabs, progress bars), Staff & Roles (role cards, bonus grid, staff
+assign/hire modals), Junta Directiva (confidence gauge, objective cards,
+negotiation modal), Finanzas (balance cards, category bars, transaction list,
+projection chart), Analítica (metric grid, leader panels, award cards),
+Historia (5 history tables, each with its real column count: 5, 5, 6, 3, 5).
+Audited every `className` actually referenced by the 7 Club components
+against the new stylesheet (including template-literal-built class names) and
+closed every gap found, including `modal-glass-tactical` (a card modifier
+used on nearly every hero card that had zero visual effect before this fix).
+
+**Competition** — rewrote `CompetitionPcbPage.css` with a real column count
+per surface instead of the single generic rule: Próximos (`next-fixtures-table`,
+6 columns), Standings (`standings-table`, 8 columns, right-aligned numeric
+cells), Jornadas/Results (`jornada-item`/`jornada-teams`, date + team-pair
+layout, not a generic row grid), Estadísticas (`stats-table`, 5 columns),
+Copas (`cups-table`, 4 columns, centered vs-style layout). Also gave
+`CompetitionSectionPage.jsx` distinct class names per surface (previously
+every view shared the bare `.table`/`.row` classes with nothing to
+distinguish which structure applied), added missing Calendar/card-header/
+tabs-nav/eyebrow rules, and styled the team/player link-buttons and the
+"Simular" action.
+
+**Medical** — rewrote `MedicalPcbPage.css`: Injured List (5 columns) and
+Injury History (7 columns) previously shared one generic
+`.table .row{repeat(7,...)}` rule that forced Medical Staff (a real 5-column
+table sharing the `.training` class with History) into 7 columns too. Split
+into `.table.injuries` (5 cols), `.row.training.load` (7 cols, History) and
+`.row.training:not(.load)` (5 cols, Staff). Added missing `hero`/`metrics`/
+`modal-glass-tactical` card modifiers, `detail-tags`/`chip`/`pill`/`bar`/
+`list-item` rules, none of which had any definition before this fix.
+
+**Plantilla, Training, Tactics** — audited (not assumed correct): compared
+every `className` actually referenced in each app's components against its
+stylesheet (including dynamic/template-literal class names). All three
+already used per-surface BEM-style selectors with real column counts baked
+into the CSS or computed inline via `style={{gridTemplateColumns}}` (e.g.
+`.pcb-training__personal>div{grid-template-columns:2fr .7fr 1.2fr 1fr 1.8fr}`
+vs `.pcb-training__load>div{grid-template-columns:2fr .6fr .7fr 1.3fr 1.3fr
+.8fr 1.3fr .4fr}` — two different real column layouts, correctly
+differentiated). Plantilla and Training had zero missing classes. Tactics had
+one real gap: `TacticsPcbPage.tsx` contains an unused, dead `Board()`
+function whose output is never rendered (the "Pizarra" tab actually mounts
+`PcbTacticsBoard.jsx`/`TacticsBoardAdvanced`, a different component) — this
+dead code was left in place (removing it is out of this pass's scope, which
+is styling, not code cleanup) but confirmed it is not reachable, so its CSS
+coverage is moot. `PcbTacticsBoard.jsx`'s real root layout
+(`.tactics-board-advanced{display:grid;grid-template-columns:1fr 2fr 1fr}`)
+was already correctly defined; a stray literal `+` character left over from
+an earlier edit in `TacticsPcbPage.css` (line 2, outside any CSS rule) was
+removed as it was invalid content, not a styling decision.
+
+### Architecture
+
+- Every fix stayed within `src/ui/pcb-migrated/<app>/**`; no new shared/global
+  stylesheet was introduced, per instruction. No `src/ui/pcb-migrated/shared/**`
+  primitives were needed for this pass.
+- No `renderer/src`, PCB donor filesystem, `GoldenManagerWorkspace`, or
+  removed donor CSS was reintroduced or depended upon.
+- Inline styles were not used as a styling patch anywhere in this round;
+  `PcbTacticsCreator.tsx`'s pre-existing pattern of reusable JS style objects
+  (`modalContent`, `inputStyle`, `listContainer`, applied via `style={{...}}`)
+  was left as-is — it already renders a coherent dark palette consistent with
+  the rest of Tactics, and rewriting ~58 established style-object usages into
+  CSS classes is a refactor beyond this pass's "fix broken/missing styling"
+  scope, not a case of a styling gap.
+
+### 31-surface structural validation matrix
+
+CSS loaded / Layout / Typography / Controls / Tables-grids / Overflow /
+Modal-detail / Density / Status — each judged from the component's actual
+markup and the stylesheet's actual selectors, not from "a stylesheet exists".
+`N/A` = surface has no element of that category.
+
+| # | Milestone | Surface | CSS loaded | Layout | Typography | Controls | Tables/grids | Overflow | Modal/detail | Density | Status |
+| --: | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | M1 | Plantilla (roster) | PASS | PASS | PASS | PASS | PASS (dynamic col count) | PASS | PASS | PASS | PASS |
+| 2 | M1 | Análisis + Dinámicas | PASS | PASS | PASS | PASS | PASS (4 cols) | PASS | PASS | PASS | PASS |
+| 3 | M1 | Mentoring | PASS | PASS | PASS | PASS | PASS (4 cols) | PASS | PASS | PASS | PASS |
+| 4 | M2 | Team Training | PASS | PASS | PASS | PASS | N/A | PASS | PASS | PASS | PASS |
+| 5 | M2 | Personal Training | PASS | PASS | PASS | N/A | PASS (5 cols) | PASS | N/A | PASS | PASS |
+| 6 | M2 | Load Management | PASS | PASS | PASS | PASS | PASS (8 cols) | PASS | N/A | PASS | PASS |
+| 7 | M2 | Staff Assignments | PASS | PASS | PASS | N/A | PASS (4 cols) | PASS | N/A | PASS | PASS |
+| 8 | M2 | Training Modules | PASS | PASS | PASS | PASS | N/A | PASS | PASS (Configurar) | PASS | PASS |
+| 9 | M3 | Pizarra | PASS | PASS | PASS | PASS | N/A | PASS | PASS (context menu) | PASS | PASS |
+| 10 | M3 | Diseñador | PASS | PASS | PASS | PASS | N/A | PASS | N/A | PASS | PASS |
+| 11 | M3 | Emparejamientos | PASS | PASS | PASS | PASS | PASS (table) | PASS | N/A | PASS | PASS |
+| 12 | M3 | Rotaciones | PASS | PASS | PASS | PASS | PASS (6 cols) | PASS | N/A | PASS | PASS |
+| 13 | M3 | Jugadas | PASS | PASS | PASS | PASS | N/A | PASS | PASS | PASS | PASS |
+| 14 | M3 | Partido / Match Plan | PASS | PASS | PASS | PASS | N/A | PASS | PASS (scouting) | PASS | PASS |
+| 15 | M4 | Dashboard | **FAIL→PASS** | PASS | PASS | PASS | PASS (5 tables, 3/3/3/5/3 cols) | PASS | PASS | PASS | PASS |
+| 16 | M4 | Instalaciones | **FAIL→PASS** | PASS | PASS | PASS | N/A (card grid) | PASS | N/A | PASS | PASS |
+| 17 | M4 | Staff & Roles | **FAIL→PASS** | PASS | PASS | PASS | N/A (card grid) | PASS | PASS | PASS | PASS |
+| 18 | M4 | Junta Directiva | **FAIL→PASS** | PASS | PASS | PASS | N/A (card grid) | PASS | PASS | PASS | PASS |
+| 19 | M4 | Finanzas | **FAIL→PASS** | PASS | PASS | PASS | N/A | PASS | N/A | PASS | PASS |
+| 20 | M4 | Analítica | **FAIL→PASS** | PASS | PASS | N/A | PASS (metric/leader grids) | PASS | N/A | PASS | PASS |
+| 21 | M4 | Historia | **FAIL→PASS** | PASS | PASS | PASS | PASS (5 tables, 5/5/6/3/5 cols) | PASS | PASS | PASS | PASS |
+| 22 | M5 | Medical Overview | **FAIL→PASS** | PASS | PASS | N/A | N/A (bars) | PASS | N/A | PASS | PASS |
+| 23 | M5 | Injured List | **FAIL→PASS** | PASS | PASS | PASS | PASS (5 cols) | PASS | PASS | PASS | PASS |
+| 24 | M5 | Injury History | **FAIL→PASS** | PASS | PASS | N/A | PASS (7 cols, was forced to match Staff's 5-col rule) | PASS | N/A | PASS | PASS |
+| 25 | M5 | Medical Facilities | **FAIL→PASS** | PASS | PASS | N/A | N/A (list) | PASS | N/A | PASS | PASS |
+| 26 | M5 | Medical Staff | **FAIL→PASS** | PASS | PASS | N/A | PASS (5 cols, was forced to 7 by shared rule) | PASS | N/A | PASS | PASS |
+| 27 | M5 | Prevention Center | **FAIL→PASS** | PASS | PASS | N/A | N/A (list) | PASS | N/A | PASS | PASS |
+| 28 | M6 | Calendar | **FAIL→PASS** | PASS | PASS | PASS | PASS (7-col weekday grid) | PASS | N/A | PASS | PASS |
+| 29 | M6 | Próximos | **FAIL→PASS** | PASS | PASS | PASS | **FAIL→PASS (6 cols, was forced to 5)** | PASS | PASS | PASS | PASS |
+| 30 | M6 | Standings | **FAIL→PASS** | PASS | PASS | N/A | **FAIL→PASS (8 cols, was forced to 5)** | PASS | N/A | PASS | PASS |
+| 31 | M6 | Jornadas/Results | **FAIL→PASS** | PASS | PASS | PASS | PASS (date+team-pair layout, not a generic row) | PASS | N/A | PASS | PASS |
+
+Rows not listed as a separate surface but audited as part of the same pass:
+M6 Estadísticas (5-col table, was already coincidentally matching the old
+5-col rule, now has its own `.stats-table` rule) and M6 Copas (4-col table,
+was forced to 5, now `.cups-table`).
+
+### Validation (visual remediation round 1)
+
+- `npm test`: 694/694 passing, 100% green (up from 693 — no test was
+  removed; the Competition JSX class-name changes did not affect any
+  assertion, and no new test was added in this pass since the instructions
+  scope this round to styling, not new test coverage).
+- `npm run typecheck`: PASS.
+- `npm run build`: PASS.
+- `cargo fmt --check --manifest-path src-tauri/Cargo.toml`: PASS.
+- `cargo check --manifest-path src-tauri/Cargo.toml`: PASS.
+- `Math.random(` search in `src`: 0 matches.
+- React/Zustand/Tauri import search in `src/domain`/`src/engine`: 0 matches.
+- `renderer/src` / PCB runtime import search in `src`: 0 matches.
+
+### Explicit closure statement
+
+`CODE VISUAL REMEDIATION COMPLETE, USER RUNTIME VISUAL VALIDATION REQUIRED.`
+
+No browser tool is available in this session, so none of the PASS marks
+above were confirmed by rendering the app in an actual Tauri window — they
+are code-level structural verifications (CSS selector exists, targets the
+real DOM class, encodes the real column/element count). This is a
+necessary but not sufficient condition for visual correctness (it cannot
+catch, for example, a color contrast problem or a font that fails to load).
+**M7 is NOT CERTIFIED.** The explicit final state is:
+
+`M1-M6 VISUAL REMEDIATION IMPLEMENTED`
+`AUTOMATED VALIDATION PASS`
+`M7 NOT CERTIFIED`
+`PENDING USER TAURI VISUAL RE-CERTIFICATION`

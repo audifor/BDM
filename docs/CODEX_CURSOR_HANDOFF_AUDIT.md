@@ -123,12 +123,23 @@ is the sole reason M7 is not CERTIFIED.
 Working tree: clean on branch `m7-pcb-migration-closure` (branched from a
 clean `main`); diff is migration-only.
 
-M7 / M7R: **NOT CERTIFIED — blocked by visual certification.** All functional
-and workflow criteria are implemented and covered by automated interaction
-tests as of remediation round 3; `npm test` is 693/693 passing, 100% green.
-See `docs/PCB_MIGRATION_CLOSURE.md` "M7 remediation round 3" for full
-evidence. The sole remaining blocker is that no interactive browser visual
-pass has been performed in any session — do not mark this CERTIFIED until
-that pass is run and its result recorded.
+M7 / M7R: **NOT CERTIFIED — pending user Tauri visual re-certification.**
+Round 3 certified workflows via text-based DOM tests, but a user-run Tauri
+visual pass then found a cross-cutting styling defect that round 3 could not
+have caught: M4 Club had no local stylesheet at all (unformatted runtime),
+and M6 Competition's stylesheet forced one generic 5-column grid rule onto
+tables with 4-8 real columns. A visual remediation round audited every
+`className` actually referenced by every M1-M6 component against its
+stylesheet's actual selectors (not just "a stylesheet exists"), rebuilt
+Club's stylesheet from scratch, gave Competition and Medical per-surface
+column rules matching their real DOM structure, and confirmed Plantilla/
+Training/Tactics were already structurally correct. See
+`docs/PCB_MIGRATION_CLOSURE.md` "M7 visual remediation round 1" for the
+31-surface structural matrix and full evidence. `npm test` is 694/694
+passing, 100% green, and all other automated checks pass. The remaining
+blocker is that none of this was confirmed by actually rendering the app in
+Tauri — no browser/desktop tool is available in this session. State:
+`M1-M6 VISUAL REMEDIATION IMPLEMENTED`, `AUTOMATED VALIDATION PASS`, `M7 NOT
+CERTIFIED`, `PENDING USER TAURI VISUAL RE-CERTIFICATION`.
 
 A1: **not started**.

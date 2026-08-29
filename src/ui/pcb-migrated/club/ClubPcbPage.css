@@ -1,0 +1,256 @@
+/* Local styling layer for the migrated PCB Club surfaces (Dashboard, Facilities, Staff & Roles, Board, Finances, Analytics, History). Dense BDM-OS desktop canon: dark, compact, Inter, no hero headers. */
+.pcb-club{height:100%;overflow:auto;padding:14px;background:#0b1016;color:#e7eef7;font:12px/1.3 Inter,var(--font-ui,Arial,sans-serif)}
+.pcb-club .subnav.club-subnav{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.pcb-club .subnav-item{border:1px solid #263749;border-radius:999px;background:#101824;color:#9bb3cc;padding:7px 13px;font:11px/1 Inter,sans-serif;text-transform:uppercase;letter-spacing:.5px;cursor:pointer}
+.pcb-club .subnav-item.active{border-color:#e8922f;background:#332516;color:#facc8a}
+.pcb-club .bento{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pcb-club .bento>.card.hero,.pcb-club .bento>.card[style*="1 / -1"]{grid-column:1 / -1}
+.pcb-club .card{border:1px solid #263749;border-radius:8px;background:#111923;padding:12px}
+.pcb-club .card.modal-glass-tactical{background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,0) 60%),#111923}
+.pcb-club .card-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.pcb-club .card-header h2{margin:0;font-size:14px}
+.pcb-club .card-header h3{margin:0;font-size:13px}
+.pcb-club .desc{color:#9bb3cc;font-size:11.5px;line-height:1.4}
+.pcb-club .pill{display:inline-block;border:1px solid #263749;border-radius:999px;background:#1a2431;color:#9bb3cc;padding:2px 9px;font-size:10px;text-transform:uppercase;letter-spacing:.4px}
+.pcb-club .pill.danger{border-color:#7f1d1d;background:#3a1414;color:#fca5a5}
+.pcb-club .pill.success{border-color:#14532d;background:#132a1c;color:#86efac}
+.pcb-club .tag{color:#9bb3cc;font-size:10px;text-transform:uppercase;letter-spacing:.4px}
+.pcb-club .tag.muted{opacity:.7}
+.pcb-club .mono{font-variant-numeric:tabular-nums;font-family:"Courier New",monospace}
+.pcb-club .chip{display:inline-flex;align-items:center;border:1px solid #263749;border-radius:6px;background:#0f1620;color:#c7d6e6;padding:4px 8px;font-size:11px;margin-right:6px}
+
+/* Generic dense table used across dashboard/history/staff tables */
+.pcb-club .table{display:grid;font-size:11.5px}
+.pcb-club .table.scroll-x{overflow-x:auto}
+.pcb-club .row{display:grid;align-items:center;border-top:1px solid #1c2733;padding:7px 4px;gap:8px}
+.pcb-club .row.head{border-top:0;color:#9bb3cc;font-size:10px;text-transform:uppercase;letter-spacing:.4px;padding-bottom:6px}
+.pcb-club .row.empty{color:#6b8299;font-style:italic}
+.pcb-club .market-center{text-align:center}
+.pcb-club .market-num{text-align:right;font-variant-numeric:tabular-nums}
+.pcb-club .club-kpis-table .row{grid-template-columns:170px 120px 1fr}
+.pcb-club .club-alerts-table .row{grid-template-columns:56px 200px 1fr}
+.pcb-club .club-alerts-table .row.priority-high,.pcb-club .club-alerts-table .row.priority-critical{border-left:3px solid #ef4444;padding-left:6px}
+.pcb-club .club-objectives-table .row{grid-template-columns:1fr 90px 160px}
+.pcb-club .objective-progress-bar{height:7px;border-radius:99px;background:#0c141d;overflow:hidden}
+.pcb-club .objective-progress-fill{height:100%;background:#e8922f}
+.pcb-club .club-top-players-table .row{grid-template-columns:1fr 60px 60px 60px 90px}
+.pcb-club .club-fixtures-table .row{grid-template-columns:110px 1fr 90px}
+.pcb-club .shortlist-player-btn{border:0;background:none;color:#8ab8e7;padding:0;font:inherit;cursor:pointer;text-decoration:underline;text-align:left}
+.pcb-club__detail{margin:0 0 12px;padding:12px 14px;border:1px solid #263749;border-radius:8px;background:#111923;grid-column:1 / -1}
+.pcb-club__detail header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.pcb-club__detail h3{margin:0;font-size:13px}
+.pcb-club__detail dl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0;font-size:11.5px}
+.pcb-club__detail dt{color:#9bb3cc;font-size:10px;text-transform:uppercase}
+.pcb-club__detail dd{margin:2px 0 0}
+
+/* Facilities */
+.pcb-club .club-facilities{display:block}
+.pcb-club .facility-category-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pcb-club .facility-category-tabs .tab{border:1px solid #263749;border-radius:999px;background:#101824;color:#9bb3cc;padding:5px 11px;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.pcb-club .facility-category-tabs .tab.active{border-color:#e8922f;background:#332516;color:#facc8a}
+.pcb-club .facilities-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-top:12px}
+.pcb-club .facility-card{display:grid;gap:8px}
+.pcb-club .facility-header{display:flex;align-items:center;gap:9px}
+.pcb-club .facility-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:8px;color:#0b1016;font-weight:700;flex:0 0 auto}
+.pcb-club .facility-title{flex:1;min-width:0}
+.pcb-club .facility-title h3{margin:0;font-size:12.5px}
+.pcb-club .facility-category{margin:1px 0 0;color:#9bb3cc;font-size:10px}
+.pcb-club .facility-level{text-align:right;font-size:11px}
+.pcb-club .level-display{white-space:nowrap}
+.pcb-club .level-next{color:#6b8299;margin-left:4px}
+.pcb-club .level-progress{display:flex;align-items:center;gap:6px;margin-top:3px}
+.pcb-club .level-progress .track{flex:1;height:5px;border-radius:99px;background:#0c141d;overflow:hidden}
+.pcb-club .level-progress .fill{height:100%;background:#e8922f}
+.pcb-club .level-label{color:#6b8299;font-size:10px}
+.pcb-club .facility-description{color:#9bb3cc;font-size:11px}
+.pcb-club .facility-current-effects,.pcb-club .facility-next-effects{font-size:10.5px}
+.pcb-club .effects-label{color:#6b8299;text-transform:uppercase;font-size:9.5px;letter-spacing:.4px;margin-bottom:3px}
+.pcb-club .effects-list{display:grid;gap:2px}
+.pcb-club .effect-item{color:#c7d6e6;display:flex;align-items:center;gap:4px}
+.pcb-club .facility-next-effects .effect-item{color:#facc8a}
+.pcb-club .facility-action{margin-top:2px}
+.pcb-club .facility-upgrade-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid #e8922f;border-radius:6px;background:#332516;color:#facc8a;padding:7px 10px;font-size:11px;cursor:pointer}
+.pcb-club .max-level-badge{color:#86efac;font-size:11px}
+.pcb-club .upgrade-in-progress,.pcb-club .upgrade-blocked{display:flex;align-items:center;gap:5px;color:#9bb3cc;font-size:11px}
+
+/* Staff & Roles */
+.pcb-club .team-bonuses{margin-top:0}
+.pcb-club .bonus-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.pcb-club .bonus-item{border:1px solid #1c2733;border-radius:6px;padding:8px;text-align:center}
+.pcb-club .bonus-label{color:#9bb3cc;font-size:10px;text-transform:uppercase;letter-spacing:.3px}
+.pcb-club .bonus-value{font-size:14px;font-weight:700;margin-top:3px}
+.pcb-club .roles-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:12px}
+.pcb-club .role-card{display:grid;gap:8px}
+.pcb-club .role-header{display:flex;align-items:center;gap:9px}
+.pcb-club .role-icon{font-size:16px;flex:0 0 auto}
+.pcb-club .role-info{flex:1;min-width:0}
+.pcb-club .role-info h3{margin:0;font-size:12.5px}
+.pcb-club .role-desc{margin:1px 0 0;color:#9bb3cc;font-size:10.5px}
+.pcb-club .role-count{color:#9bb3cc;font-size:11px;white-space:nowrap}
+.pcb-club .assigned-staff{display:grid;gap:6px}
+.pcb-club .staff-item{display:flex;align-items:center;gap:8px;border:1px solid #1c2733;border-radius:6px;padding:6px 8px}
+.pcb-club .staff-avatar{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#1a2431;color:#c7d6e6;font-weight:700;font-size:11px;flex:0 0 auto}
+.pcb-club .staff-details{flex:1;min-width:0}
+.pcb-club .staff-name{font-size:11.5px;font-weight:600}
+.pcb-club .staff-skills{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.pcb-club .skill-badge{display:inline-flex;align-items:center;gap:3px;font-size:9.5px;color:#9bb3cc}
+.pcb-club .skill-value{color:#c7d6e6}
+.pcb-club .assigned-players{display:flex;justify-content:space-between;align-items:center;margin-top:3px;font-size:10px}
+.pcb-club .label-small{color:#6b8299}
+.pcb-club .btn-link{border:0;background:none;color:#8ab8e7;padding:0;font:inherit;cursor:pointer;text-decoration:underline}
+.pcb-club .btn-remove{border:1px solid #263749;border-radius:6px;background:#101824;color:#9bb3cc;width:24px;height:24px;flex:0 0 auto;cursor:pointer}
+.pcb-club .role-vacancies{border-top:1px dashed #1c2733;padding-top:8px}
+.pcb-club .vacancy-header{display:flex;align-items:center;gap:5px;color:#9bb3cc;font-size:10.5px;margin-bottom:6px}
+.pcb-club .staff-list{display:grid;gap:6px;max-height:340px;overflow-y:auto}
+.pcb-club .staff-option{display:flex;align-items:center;gap:8px;border:1px solid #1c2733;border-radius:6px;padding:7px 8px;cursor:pointer}
+.pcb-club .staff-option:hover{border-color:#e8922f}
+.pcb-club .staff-role-current{color:#6b8299;font-size:10px}
+.pcb-club .skill-mini{color:#9bb3cc;font-size:9.5px;margin-right:6px}
+.pcb-club .staff-wage{color:#facc8a;font-size:10.5px;white-space:nowrap}
+.pcb-club .assigned-players-section,.pcb-club .unassigned-players-section{margin-bottom:10px}
+.pcb-club .assigned-players-section h3,.pcb-club .unassigned-players-section h3{margin:0 0 6px;font-size:11px;color:#9bb3cc;text-transform:uppercase;letter-spacing:.3px}
+
+/* Board / Junta Directiva */
+.pcb-club .club-board{display:block}
+.pcb-club .negotiate-btn{margin-top:8px}
+.pcb-club .confidence-panel{margin-top:0}
+.pcb-club .confidence-gauge .gauge-track{height:8px;border-radius:99px;background:#0c141d;overflow:hidden}
+.pcb-club .confidence-gauge .gauge-fill{height:100%}
+.pcb-club .gauge-labels{display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:#6b8299}
+.pcb-club .confidence-level{margin-top:4px;font-weight:700;font-size:13px}
+.pcb-club .confidence-effects{display:grid;gap:5px;margin-top:10px;font-size:11px}
+.pcb-club .confidence-effects .effect-item{display:flex;justify-content:space-between}
+.pcb-club .effect-label{color:#9bb3cc}
+.pcb-club .effect-value{color:#c7d6e6;font-weight:600}
+.pcb-club .info-value{color:#c7d6e6;font-weight:600}
+.pcb-club .hint{color:#6b8299;font-size:10px;margin-top:4px}
+.pcb-club .confidence-warning{display:flex;align-items:center;gap:6px;margin-top:10px;padding:8px;border:1px solid #7f1d1d;border-radius:6px;background:#2b1414;color:#fca5a5;font-size:11px}
+.pcb-club .objectives-sections{display:grid;gap:12px;margin-top:4px}
+.pcb-club .group-title{margin:0;font-size:12px}
+.pcb-club .objectives-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-top:6px}
+.pcb-club .objective-card{display:grid;gap:8px}
+.pcb-club .objectives-group{display:grid;gap:6px}
+.pcb-club .objective-header{display:flex;align-items:flex-start;gap:8px}
+.pcb-club .objective-type{display:grid;place-items:center;width:26px;height:26px;border-radius:6px;flex:0 0 auto}
+.pcb-club .objective-info h3{margin:0;font-size:12px}
+.pcb-club .objective-desc{margin:2px 0 0;color:#9bb3cc;font-size:10.5px}
+.pcb-club .objective-label{color:#9bb3cc;font-size:9.5px;text-transform:uppercase}
+.pcb-club .objective-status{margin-left:auto;flex:0 0 auto}
+.pcb-club .objective-progress .progress-header{display:flex;justify-content:space-between;font-size:10.5px;color:#9bb3cc}
+.pcb-club .progress-label{color:#9bb3cc}
+.pcb-club .progress-value{color:#c7d6e6}
+.pcb-club .progress-track{height:6px;border-radius:99px;background:#0c141d;overflow:hidden;margin:3px 0}
+.pcb-club .progress-fill{height:100%}
+.pcb-club .progress-percentage{text-align:right;font-size:10px;color:#6b8299}
+.pcb-club .objective-impact{font-size:11px}
+.pcb-club .impact-label{color:#9bb3cc;font-size:9.5px;text-transform:uppercase}
+.pcb-club .impact-value{font-weight:600}
+.pcb-club .consequences-section{min-width:0}
+.pcb-club .conf-level{color:#9bb3cc;margin-right:4px}
+.pcb-club .conf-delta{font-weight:600}
+.pcb-club .budget-bonus{color:#86efac;margin-left:6px;font-size:9.5px}
+.pcb-club .budget-penalty{color:#fca5a5;margin-left:6px;font-size:9.5px}
+.pcb-club .dismissal-warning{color:#fca5a5;margin-left:6px;font-size:9.5px}
+.pcb-club .confidence-display{margin:6px 0}
+.pcb-club .objective-consequences{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:10px}
+.pcb-club .consequences-label{display:flex;align-items:center;gap:4px;color:#9bb3cc;margin-bottom:3px}
+.pcb-club .consequences-list{margin:0;padding-left:14px}
+.pcb-club .modal-overlay{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;background:rgba(0,0,0,.65)}
+.pcb-club .modal-content{width:min(420px,92vw);max-height:80vh;overflow-y:auto;border:1px solid #263749;border-radius:10px;background:#111923;padding:16px}
+.pcb-club .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.pcb-club .modal-close{border:0;background:none;color:#9bb3cc;font-size:16px;cursor:pointer}
+.pcb-club .modal-desc{color:#9bb3cc;font-size:11px;margin:0 0 10px}
+.pcb-club .negotiation-info{display:grid;gap:6px;margin:10px 0;font-size:11px}
+.pcb-club .info-item{display:flex;justify-content:space-between}
+.pcb-club .info-label{color:#9bb3cc}
+.pcb-club .negotiation-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+.pcb-club .warning-text{color:#fca5a5;font-size:10.5px;margin-top:6px}
+
+/* Finances */
+.pcb-club .finance-tabs{display:flex;gap:6px;margin-top:8px}
+.pcb-club .finance-tabs .tab{border:1px solid #263749;border-radius:999px;background:#101824;color:#9bb3cc;padding:6px 12px;font-size:11px;cursor:pointer}
+.pcb-club .finance-tabs .tab.active{border-color:#e8922f;background:#332516;color:#facc8a}
+.pcb-club .finances-overview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pcb-club .actual-card,.pcb-club .balance-card,.pcb-club .projected-card{min-width:0}
+.pcb-club .income-breakdown,.pcb-club .expenses-breakdown{grid-column:1 / -1}
+.pcb-club .balance-display{margin:6px 0}
+.pcb-club .balance-amount{font-size:22px;font-weight:700}
+.pcb-club .balance-health{font-size:11px;margin-top:2px}
+.pcb-club .balance-details{display:grid;gap:5px;margin-top:8px;font-size:11px}
+.pcb-club .detail-row{display:flex;justify-content:space-between}
+.pcb-club .detail-label{color:#9bb3cc}
+.pcb-club .detail-value{color:#c7d6e6}
+.pcb-club .balance-breakdown{display:grid;gap:8px}
+.pcb-club .breakdown-item{display:flex;justify-content:space-between;align-items:baseline}
+.pcb-club .breakdown-label{color:#9bb3cc;font-size:11px}
+.pcb-club .breakdown-amount{font-size:14px;font-weight:700}
+.pcb-club .projection-warning{display:flex;align-items:center;gap:6px;margin-top:8px;padding:7px;border:1px solid #7f1d1d;border-radius:6px;background:#2b1414;color:#fca5a5;font-size:10.5px}
+.pcb-club .category-list{display:grid;gap:8px}
+.pcb-club .category-item{display:grid;grid-template-columns:120px 1fr 70px;align-items:center;gap:8px;font-size:11px}
+.pcb-club .category-label{color:#9bb3cc;text-transform:capitalize}
+.pcb-club .category-bar{height:6px;border-radius:99px;background:#0c141d;overflow:hidden}
+.pcb-club .category-fill{height:100%}
+.pcb-club .category-amount{text-align:right;font-variant-numeric:tabular-nums}
+.pcb-club .finances-transactions{display:grid;gap:10px}
+.pcb-club .transactions-list{display:grid;gap:4px}
+.pcb-club .transaction-item{display:grid;grid-template-columns:90px 1fr 90px;align-items:center;gap:8px;border-top:1px solid #1c2733;padding:6px 0;font-size:11px}
+.pcb-club .transaction-date{color:#6b8299}
+.pcb-club .transaction-amount{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.pcb-club .finances-projections{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+.pcb-club .chart-container{overflow-x:auto}
+.pcb-club .chart-bars{display:flex;align-items:flex-end;gap:6px;min-height:140px;padding-top:8px}
+.pcb-club .chart-bar-container{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:34px}
+.pcb-club .chart-bar{width:16px;height:100px;display:flex;align-items:flex-end;background:#0c141d;border-radius:3px;overflow:hidden}
+.pcb-club .bar-fill{width:100%}
+.pcb-club .chart-label{color:#6b8299;font-size:9.5px}
+.pcb-club .chart-value{color:#9bb3cc;font-size:8.5px;white-space:nowrap}
+.pcb-club .summary-items{display:grid;gap:8px}
+.pcb-club .summary-item{display:flex;justify-content:space-between;font-size:11px}
+.pcb-club .summary-label{color:#9bb3cc}
+.pcb-club .empty-state{color:#6b8299;font-style:italic;padding:14px 0;text-align:center}
+
+/* Analytics */
+.pcb-club .analytics-metrics-card,.pcb-club .analytics-leaders-card,.pcb-club .analytics-awards-card{grid-column:1 / -1}
+.pcb-club .analytics-hero-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.pcb-club .analytics-metrics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:8px}
+.pcb-club .analytics-metric{border:1px solid #1c2733;border-radius:6px;padding:8px;text-align:center}
+.pcb-club .metric-label{color:#9bb3cc;font-size:10px;text-transform:uppercase}
+.pcb-club .metric-value{font-size:15px;font-weight:700;margin-top:3px}
+.pcb-club .metric-sub{color:#6b8299;font-size:9.5px;margin-top:2px}
+.pcb-club .analytics-leaders-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:8px}
+.pcb-club .leaders-panel{border:1px solid #1c2733;border-radius:6px;padding:8px}
+.pcb-club .leaders-title{font-size:11px;color:#9bb3cc;text-transform:uppercase;margin-bottom:6px}
+.pcb-club .leaders-list{display:grid;gap:4px}
+.pcb-club .leaders-row{display:flex;align-items:center;gap:8px;font-size:11px}
+.pcb-club .leaders-rank{color:#6b8299;width:22px}
+.pcb-club .leaders-info{flex:1;min-width:0}
+.pcb-club .leaders-name{font-weight:600}
+.pcb-club .leaders-team{color:#6b8299;font-size:10px}
+.pcb-club .leaders-value{color:#facc8a;white-space:nowrap}
+.pcb-club .awards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-top:8px}
+.pcb-club .award-card{border:1px solid #1c2733;border-radius:6px;padding:8px;text-align:center}
+.pcb-club .award-name{font-size:11px;font-weight:600}
+.pcb-club .award-winner{font-size:10.5px;margin-top:2px}
+.pcb-club .award-team{color:#6b8299;font-size:10px}
+.pcb-club .award-stat{color:#facc8a;font-size:10.5px;margin-top:2px}
+
+/* History */
+.pcb-club .history-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pcb-club .history-tabs .tab{border:1px solid #263749;border-radius:999px;background:#101824;color:#9bb3cc;padding:6px 12px;font-size:11px;cursor:pointer}
+.pcb-club .history-tabs .tab.active{border-color:#e8922f;background:#332516;color:#facc8a}
+.pcb-club .shortlist-controls-bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:10px}
+.pcb-club .filter-group{display:flex;align-items:center;gap:6px;font-size:11px;color:#9bb3cc}
+.pcb-club .filter-group select{border:1px solid #263749;border-radius:6px;background:#101824;color:#e7eef7;padding:5px 8px;font:inherit}
+.pcb-club .shortlist-summary{color:#6b8299;font-size:10.5px}
+.pcb-club .club-trophies-table .row{grid-template-columns:90px 1fr 110px 90px 1fr}
+.pcb-club .club-records-table .row{grid-template-columns:100px 1fr 90px 1fr 110px}
+.pcb-club .club-hof-table .row{grid-template-columns:1fr 60px 90px 60px 70px 70px;cursor:pointer}
+.pcb-club .club-hof-table .row.selected{background:rgba(232,146,47,.1)}
+.pcb-club .club-hof-detail-table .row{grid-template-columns:1fr}
+.pcb-club .club-milestones-table .row{grid-template-columns:100px 200px 1fr}
+.pcb-club .club-seasons-table .row{grid-template-columns:1fr 60px 90px 70px 1fr}
+
+@media(max-width:900px){
+  .pcb-club .bento{grid-template-columns:1fr}
+  .pcb-club .finances-overview,.pcb-club .finances-projections,.pcb-club .analytics-leaders-grid{grid-template-columns:1fr}
+}
