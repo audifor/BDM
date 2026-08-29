@@ -34,28 +34,46 @@ timeout and record the full result before any certification claim.
 
 ## High-priority product and migration work
 
-Items 1-5 below were closed by the M7 closure pass on branch
+Items 1-5 below were addressed across two remediation rounds on branch
 `m7-pcb-migration-closure` (2026-08-29); see `docs/PCB_MIGRATION_CLOSURE.md`
-"M7 closure record" for full evidence. Residual limitations from that pass:
-donor PCB frontend source is no longer present in this repo to diff against,
-and no interactive browser visual pass was performed.
+for full evidence. **Round 1 was rejected by external review**: several
+"wired" workflows were UI-only appearances (state set but never rendered,
+callbacks declared in the parent but not consumed by the child component).
+Round 2 fixed those plus a further batch of inert controls found by a
+button-by-button re-audit (not just a grep for `() => undefined`). Residual
+limitations after round 2: donor PCB frontend source is no longer present in
+this repo to diff against, and **no interactive browser visual pass has been
+performed in any session** — this is the sole reason M7 is not CERTIFIED.
 
-1. ~~Finish M7R workflow evidence~~ **DONE.** 31-surface evidence table added to
+1. ~~Finish M7R workflow evidence~~ **DONE.** 31-surface evidence table in
    `docs/PCB_MIGRATION_CLOSURE.md` (Content/Visual/Functionality/Workflow per
-   surface).
-2. ~~Replace remaining migration no-ops~~ **DONE.** Club staff/hiring/objective
-   actions, Tactics Match Plan overrides, and Competition team/player click +
-   match simulation are now wired to real local-state workflows.
+   surface), updated in round 2 with the additional fixes below.
+2. ~~Replace remaining migration no-ops~~ **DONE (round 2).** Beyond round 1's
+   Club staff/hiring/objective actions, Tactics Match Plan overrides, and
+   Competition team/player click + match simulation, round 2 fixed: Club
+   Staff "Gestionar" (was setting state nobody rendered), Tactics "Ver
+   scouting" (no onClick), Competition Calendar Anterior/Siguiente and
+   Jornada anterior/siguiente + select (no handlers, fake "Jornada 1"),
+   Competition team/player click (parent wired but child never consumed the
+   props), Plantilla Líderes/Influyentes chips (no onClick), Training
+   Responsable select + session end time (no onChange), Training Modules
+   Configurar (no onClick), Tactics board GUARDAR AJUSTES (no onClick). All
+   now covered by interaction tests (`@testing-library/react` + `jsdom`,
+   added as devDependencies) that assert observable DOM effects, not just
+   render.
 3. ~~Complete Club fixture coverage for Staff, Board, Facilities~~ **DONE.**
    (Analytics was already complete.) Fixtures remain UI-only under
    `src/ui/pcb-migrated/club/fixtures`, not in GameWorld/Save.
 4. ~~Remove unreachable Golden reconstruction files~~ **DONE.**
    `GoldenManagerWorkspace.tsx`/`.css`/`.test.tsx` deleted; confirmed no
    remaining consumer first.
-5. ~~Complete M7R global validation~~ **DONE.** typecheck/build/cargo
-   fmt+check/boundary searches all pass; `npm test` is 672/673 (one
-   pre-existing, out-of-scope failure in Plantilla, unrelated to this branch).
-   A1 has not been started and remains a separate future milestone.
+5. ~~Complete M7R global validation~~ **AUTOMATED CHECKS DONE, VISUAL PASS
+   OUTSTANDING.** typecheck/build/cargo fmt+check/boundary searches/`npm ci`
+   all pass; `npm test` is 687/688 (one pre-existing, out-of-scope failure in
+   Plantilla's static-render test, unrelated to this branch — re-verified
+   against the branch's pre-round-2 tip). The interactive browser visual pass
+   required by M7's own remediation item 6 has not been run. A1 has not been
+   started and remains a separate future milestone.
 
 ## Core-game improvement map (after M7R / under explicit future milestones)
 
@@ -93,8 +111,12 @@ and no interactive browser visual pass was performed.
 Working tree: clean on branch `m7-pcb-migration-closure` (branched from a
 clean `main`); diff is migration-only.
 
-M7 / M7R: **certified** — see `docs/PCB_MIGRATION_CLOSURE.md` M7 closure
-record for full evidence and residual limitations (no donor frontend source
-to diff against; no interactive browser pass performed).
+M7 / M7R: **NOT CERTIFIED — blocked by visual certification.** All functional
+and workflow criteria are implemented and covered by automated interaction
+tests as of remediation round 2; all automated validation passes. See
+`docs/PCB_MIGRATION_CLOSURE.md` "M7 remediation round 2" for full evidence.
+The sole remaining blocker is that no interactive browser visual pass has
+been performed in any session — do not mark this CERTIFIED until that pass
+is run and its result recorded.
 
 A1: **not started**.

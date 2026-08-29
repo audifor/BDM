@@ -1,8 +1,19 @@
 # PCB → BDMOS Migration Closure Audit (M7)
 
-Status: **CERTIFIED — see M7 closure record below**
+Status: **NOT CERTIFIED / BLOCKED BY VISUAL CERTIFICATION**
 
-Audit date: 2026-08-29. Closure date: 2026-08-29 (branch `m7-pcb-migration-closure`).
+All functional, workflow and validation criteria below are implemented and
+verified by automated tests. The sole remaining blocker is that no
+interactive browser visual pass has been performed in any session to date —
+see "M7 remediation round 2" for the exact scope of that gap. Do not mark M7
+CERTIFIED until that pass is run and recorded with its result.
+
+Audit date: 2026-08-29. First closure attempt: 2026-08-29 (branch
+`m7-pcb-migration-closure`, commit `a2127e3`) — **rejected by external
+review**: several "wired" workflows were found to be UI-only appearances with
+no real effect (state set but never rendered, callbacks declared but not
+consumed by the child component). Remediation round 2: 2026-08-29 (same
+branch).
 
 ## Blocking findings (original audit — all resolved, see M7 closure record)
 
@@ -60,23 +71,23 @@ respond. Workflow = every action handler performs a real local-state mutation
 
 | # | Milestone | Surface | Content | Visual | Functionality | Workflow |
 | --: | --- | --- | --- | --- | --- | --- |
-| 1 | M1 | Plantilla (roster grid, sort/filter/column-picker) | OK | OK | OK | OK |
-| 2 | M1 | Análisis + Dinámicas (depth chart, cohesion) | OK | OK | OK | OK |
+| 1 | M1 | Plantilla (roster grid, sort/filter/column-picker) | OK | OK | OK | **Fixed M7 round 2**: the "Personalizada" view-state pill was rendered as a `<button>` with no `onClick`, misleadingly presented as an action. Changed to a non-interactive `<span role="status">` badge so it no longer looks clickable when it isn't. |
+| 2 | M1 | Análisis + Dinámicas (depth chart, cohesion) | OK | OK | OK | **Fixed M7 round 2**: the "Líderes"/"Influyentes" player chips had no `onClick` at all — decorative labels only. Wired them to open a player psychology detail panel (15 attribute columns) sourced from the existing roster fixture. |
 | 3 | M1 | Mentoring (groups, create/delete) | OK | OK | OK | OK |
-| 4 | M2 | Team Training (weekly plan, session CRUD) | OK | OK | OK | OK |
+| 4 | M2 | Team Training (weekly plan, session CRUD) | OK | OK | OK | **Fixed M7 round 2**: the session editor's "Responsable" `<select>` had no `onChange` (`defaultValue="alvaro"` only) and its value was never read anywhere. Made it controlled state, reflected in the hero chip row. The session modal's "Fin" time input also had no `onChange`; wired it to a real `endTime` state that now feeds the "Impacto estimado" duration calculation. |
 | 5 | M2 | Personal Training | OK | OK | OK | OK |
 | 6 | M2 | Load Management (filters, sort, columns) | OK | OK | OK | OK |
 | 7 | M2 | Staff Assignments | OK | OK | OK | OK |
-| 8 | M2 | Training Modules | OK | OK | OK | OK |
-| 9 | M3 | Pizarra (board, drag roles) | OK | OK | OK | OK |
+| 8 | M2 | Training Modules | OK | OK | OK | **Fixed M7 round 2**: "Configurar" per module had no `onClick`. Added a per-module settings modal (enable/disable, intensity) with local state reflected on the module card. Also removed a fully dead `LoadManagement` function (superseded by `LoadManagementInteractive`, never referenced). |
+| 9 | M3 | Pizarra (board, drag roles) | OK | OK | OK | **Fixed M7 round 2**: the "GUARDAR AJUSTES" footer button had no `onClick` at all (tactics/starters were already auto-persisted via `useEffect`/inline calls, but the explicit save button itself did nothing when clicked). Wired it to force-persist current state and show a temporary "AJUSTES GUARDADOS" confirmation. |
 | 10 | M3 | Diseñador (play designer, frames/actions) | OK | OK | OK | OK |
 | 11 | M3 | Emparejamientos (matchups, auto-assign) | OK | OK | OK | OK |
 | 12 | M3 | Rotaciones (minutes matrix) | OK | OK | OK | OK |
 | 13 | M3 | Jugadas (play library CRUD) | OK | OK | OK | OK |
-| 14 | M3 | Partido / Match Plan (overrides) | OK | OK | OK | **Fixed M7**: Ritmo/Cobertura P&R/Rotación overrides were `onChange={() => undefined}` with hardcoded values; now local `overrides` state, reset on plan reset. |
+| 14 | M3 | Partido / Match Plan (overrides + scouting) | OK | OK | OK | **Fixed M7 round 1+2**: Ritmo/Cobertura P&R/Rotación overrides were `onChange={() => undefined}` with hardcoded values (round 1 fix). Round 2 addressed the "Ver scouting" button, which had no `onClick` at all (`<button type="button">Ver scouting</button>`) — added a `SCOUTING_REPORTS` fixture per opponent and a scouting modal wired to the button and to the opponent selector. |
 | 15 | M4 | Dashboard (alerts, objectives, matches) | OK | OK | OK | OK |
 | 16 | M4 | Instalaciones (facilities upgrade) | **Fixed M7**: `teamFacilities={{}}` always empty; now seeded from `clubFixtures.facilities` and updated on upgrade. | OK | OK | OK (upgrade already wired) |
-| 17 | M4 | Staff & Roles | **Fixed M7**: `staffMembers` lacked `wage`; `assignments` started empty. Now seeded from `clubFixtures.staff`/`staffAssignments`. | OK | OK | **Fixed M7**: `onAssignPlayerToCoach` and `onHireStaff` were `() => undefined`; now mutate local roster/staff state. |
+| 17 | M4 | Staff & Roles | **Fixed M7**: `staffMembers` lacked `wage`; `assignments` started empty. Now seeded from `clubFixtures.staff`/`staffAssignments`. | OK | OK | **Fixed M7 round 1+2**: `onAssignPlayerToCoach` and `onHireStaff` were `() => undefined` (round 1 fix). Round 2 found the "Gestionar" button for dev-coach player management set `selectedPlayer` state that was never rendered anywhere (`ClubStaffAssignments.jsx`) — appeared wired but had zero visible effect. Added a `PlayerAssignmentModal` that lists assigned/available players and calls `onAssignPlayerToCoach` for both assign and unassign; covered by an interaction test that asserts the DOM updates. |
 | 18 | M4 | Junta Directiva (Board) | **Fixed M7**: `currentMetrics` was missing `wins`/`balance`, and the objectives fixture used mismatched ids (`finances` vs catalog's `balance`), which also crashed `ObjectiveCard` (`def.rewards` undefined). Catalog and fixture ids aligned; `rewards`/`penalties`/`type`/`name` added to the objective catalog. | OK | OK | **Fixed M7**: `onNegotiateObjectives` was `() => undefined`; now raises board confidence when negotiation succeeds. |
 | 19 | M4 | Finanzas | OK | OK | OK | OK |
 | 20 | M4 | Analítica | OK | OK | OK | OK |
@@ -87,10 +98,10 @@ respond. Workflow = every action handler performs a real local-state mutation
 | 25 | M5 | Medical Facilities | OK | OK | OK | OK |
 | 26 | M5 | Medical Staff | OK | OK | OK | OK |
 | 27 | M5 | Prevention Center | OK | OK | OK | OK |
-| 28 | M6 | Calendar | OK | OK | OK | OK |
-| 29 | M6 | Jornadas / Results | OK | OK | OK | **Fixed M7**: `onSimulateMatch` was `() => undefined` and never wired into `CompetitionSectionPage`; now marks fixtures as simulated with a deterministic score. |
+| 28 | M6 | Calendar | OK | OK | OK | **Fixed M7 round 2**: "Anterior"/"Siguiente" month buttons had no `onClick` at all — purely decorative. Added `monthIndex` state cycling a 3-month fixture, with `disabled` at the bounds; covered by a navigation test. |
+| 29 | M6 | Jornadas / Results | OK | OK | OK | **Fixed M7 round 1+2**: `onSimulateMatch` was `() => undefined` and never wired into `CompetitionSectionPage` (round 1 fix). Round 2 fixed "Jornada anterior"/"Jornada siguiente" buttons and the jornada `<select>`, which had no `onClick`/`onChange` at all and always showed "Jornada 1" with a single hardcoded option — added a 3-jornada fixture with real navigation state; covered by a navigation test. |
 | 30 | M6 | Standings | OK | OK | OK | OK |
-| 31 | M6 | Próximos / Stats / Cups (team & player detail) | OK | OK | OK | **Fixed M7**: `onTeamClick`/`onPlayerClick` were `() => undefined` and not consumed by `CompetitionSectionPage`; component now accepts and calls them, opening a team/player detail panel in `CompetitionPcbPage`. |
+| 31 | M6 | Próximos / Stats / Cups (team & player detail) | OK | OK | OK | **Fixed M7 round 1+2**: `onTeamClick`/`onPlayerClick` were `() => undefined` in the parent and not even destructured by `CompetitionSectionPage.jsx` (round 1 fix: wired the parent state; round 2 verified the child component now actually invokes them from the "Próximos partidos" team names and the "Estadísticas" leaderboard player names, and that a detail panel with real data renders and closes). |
 
 Note: the original PCB frontend source is not present in this repository (`PCB/`
 contains only the Python backend after the donor tree was flattened in commit
@@ -118,14 +129,21 @@ confirms non-empty, non-placeholder content and fully wired interactions.
    proving no remaining route uses it. **DONE** (M7 — `GoldenManagerWorkspace.tsx`/
    `.css`/`.test.tsx` deleted after confirming zero remaining references).
 6. Re-run full validation: npm test, typecheck, build, cargo fmt/check,
-   `Math.random(` search, boundary search and a browser visual pass. **DONE**
-   (M7 — see M7 closure record below for results).
+   `Math.random(` search, boundary search and a browser visual pass.
+   **PARTIALLY DONE.** All automated validation (npm test, typecheck, build,
+   cargo fmt/check, Math.random search, boundary search, renderer/PCB runtime
+   import search) passes — see "M7 remediation round 2" below. The
+   **interactive browser visual pass has not been performed in any session**
+   and remains the sole open blocker. Do not report this item as DONE until
+   that pass actually happens.
 
 ## Codex ↔ Cursor handoff
 
-All six remediation items are resolved as of the M7 closure pass on branch
-`m7-pcb-migration-closure`. A1 has not been started and remains a separate
-future milestone.
+Items 1-5 of the original blocking findings are functionally implemented and
+covered by automated interaction tests as of remediation round 2 on branch
+`m7-pcb-migration-closure`. Item 6's automated validation is green; its
+browser visual pass sub-requirement is **not** done — M7 stays NOT CERTIFIED
+until it is. A1 has not been started and remains a separate future milestone.
 
 ## M7R remediation log
 
@@ -149,10 +167,15 @@ future milestone.
   pass after donor-removal changes. Full M7R validation and the 31-surface
   workflow matrix remain required before certification.
 
-## M7 closure record (2026-08-29, branch `m7-pcb-migration-closure`)
+## M7 remediation round 1 (2026-08-29, branch `m7-pcb-migration-closure`, commit `a2127e3`)
 
-Closes the five remaining items from "Blocking findings" (items 2-5 above;
-item 1 was already resolved by M7R).
+**Rejected by external review.** Addressed the five remaining items from
+"Blocking findings" (items 2-5; item 1 was already resolved by M7R), but
+several of the "wired" workflows below turned out to be UI-only appearances
+with no real effect — see "M7 remediation round 2" for what was actually
+wrong and how it was fixed. This section is kept for the historical record of
+what round 1 changed; treat its claims of completeness as superseded by
+round 2.
 
 **Club fixture completeness (item 2):** `src/ui/pcb-migrated/club/fixtures/clubFixtures.ts`
 gained `facilities`, `staff` (with `wage`) and `staffAssignments`. `ClubPcbPage.tsx`
@@ -211,3 +234,168 @@ code with no visible or workflow effect, not a no-op handler.
 - Browser visual pass: not performed in this session (no interactive browser
   available); typecheck/build/test coverage plus direct source inspection were
   used instead. Flagged as a residual limitation.
+
+This round incorrectly reported overall status as **CERTIFIED** despite its
+own validation section admitting the browser visual pass was not performed —
+a direct contradiction. That status claim was wrong and is corrected in round
+2 below.
+
+## M7 remediation round 2 (2026-08-29, branch `m7-pcb-migration-closure`)
+
+Triggered by external review rejecting round 1's certification. The review
+found two categories of problem:
+
+**A. Workflows that looked wired but were not.** `ClubPcbPage.tsx` passed
+`onAssignPlayerToCoach` into `ClubStaffAssignments.jsx`, but the component's
+"Gestionar" button only called `setSelectedPlayer(staff.id)` — no JSX
+anywhere read `selectedPlayer`, so the click had zero visible effect despite
+the callback existing and being connected at the top level. `TacticsPcbPage.tsx`'s
+Match Plan "Ver scouting" button had no `onClick` at all.
+
+**B. Inert controls the round 1 audit missed by only grepping for
+`() => undefined`.** A full re-audit (button-by-button, select-by-select,
+across every file in `src/ui/pcb-migrated/**`) found additional controls with
+no `onClick`/`onChange`, dead state (written but never rendered), and one
+prop (`onPlayerClick` on `ClubDashboard`) that was correctly consumed inside
+the child component but never actually passed by the parent.
+
+### Fixes applied
+
+- **Club / Staff & Roles — Gestionar workflow.** Added `PlayerAssignmentModal`
+  to `ClubStaffAssignments.jsx`: lists players currently assigned to the
+  selected development coach and players available to assign, with
+  Asignar/Retirar buttons that call `onAssignPlayerToCoach(coachId, playerId)`
+  / `onAssignPlayerToCoach(null, playerId)`, and a Cerrar button that clears
+  `selectedPlayer`. `onAssignPlayerToCoach`'s signature in `ClubPcbPage.tsx`
+  was widened to accept `coachId: number | null` for the unassign case.
+  Verified end-to-end by `ClubPcbPage.test.ts`, which renders the page,
+  clicks Gestionar, asserts the modal's assigned/available counts, clicks
+  Asignar, re-reads the DOM and asserts the counts and player location moved,
+  then does the same for Retirar and for closing the modal.
+- **Tactics / Match Plan — scouting workflow.** Added a `SCOUTING_REPORTS`
+  fixture (threat, strength, weakness, key players, recommended plan) keyed
+  by opponent name, and a scouting modal opened by "Ver scouting" showing the
+  report for the currently selected opponent; closes via its own Cerrar
+  button. Verified by `TacticsPcbPage.matchPlan.test.ts`, which opens the
+  modal, asserts its content, closes it, then changes the opponent selector
+  and re-opens the modal to assert the content changed accordingly.
+- **Club / Dashboard — player detail.** `ClubDashboard.jsx`'s top-players
+  table already called `onPlayerClick` correctly, but `ClubPcbPage.tsx` never
+  passed that prop, so clicking a player name was silently a no-op. Wired
+  `onPlayerClick={setSelectedPlayer}` and added a detail panel rendering the
+  selected player's position/age/potential/market value, with a Cerrar
+  button. Verified by `ClubPcbPage.test.ts`.
+- **Club / Board — negotiate objectives, verified.** Round 1's
+  `onNegotiateObjectives` fix (raises confidence on success) is now covered
+  by an interaction test in `ClubPcbPage.test.ts` that opens the negotiation
+  modal, clicks "Intentar Negociar", switches to the Dashboard tab, and
+  asserts the displayed confidence increased.
+- **Competition / Calendar — month navigation.** "Anterior"/"Siguiente" had
+  no `onClick` at all and the month label was a hardcoded string. Added a
+  3-month fixture and `monthIndex` state; buttons are `disabled` at the
+  bounds. Verified by `CompetitionPcbPage.test.ts`.
+- **Competition / Jornadas (Results) — round navigation.** "Jornada
+  anterior"/"Jornada siguiente" had no `onClick`, and the `<select>` had no
+  `onChange` and only ever offered one hardcoded "Jornada 1" option. Added a
+  3-jornada fixture (each with its own fixture list) and `jornadaIndex`
+  state, wired to both buttons and the select. Verified by
+  `CompetitionPcbPage.test.ts`.
+- **Competition / team & player detail — actually wired into the child.**
+  Round 1 wired `onTeamClick`/`onPlayerClick`/`onSimulateMatch` in
+  `CompetitionPcbPage.tsx`, but `CompetitionSectionPage.jsx` never
+  destructured or called any of the three — the parent's state setters were
+  connected to nothing. Updated `CompetitionSectionPage.jsx` to accept the
+  three props and call them from the "Próximos partidos" team name buttons,
+  the "Estadísticas" leaderboard player name buttons, and a new per-fixture
+  "Simular" button. Verified by `CompetitionPcbPage.test.ts` (team detail
+  panel, player detail panel, and a simulated-result assertion with a
+  deterministic score).
+- **Medical / Injured List — player detail, verified.** Round 1's `openPlayer`
+  fix is now covered by `MedicalPcbPage.test.ts`, which opens the detail for
+  one injured player, asserts its content, then opens a second player's
+  detail and asserts the panel switched (not just opened once).
+- **Plantilla / Análisis — Líderes/Influyentes chips.** Had no `onClick` at
+  all — decorative name chips. Wired them to open a player detail panel
+  showing all 15 psychology attribute columns from the existing roster
+  fixture (`PLANTILLA_VISUAL_MOCK_ROWS`), with a Cerrar button.
+- **Plantilla / roster — "Personalizada" pill.** Was a `<button>` with no
+  `onClick`, misleadingly presented as clickable. It is a pure view-state
+  indicator (shown once the user has already customized columns via other
+  controls), so it was changed to a non-interactive `<span role="status">`
+  rather than given a fake handler — per the review's instruction to
+  "document and stop presenting as an action" where a control is
+  deliberately non-interactive.
+- **Training / Team Training — Responsable select and session end time.** The
+  "Responsable" `<select>` had `defaultValue="alvaro"` and no `onChange`; its
+  value was never read anywhere. Made it controlled state, reflected in the
+  hero chip row ("Responsable: Álvaro Quirós (84)" / "Marta Vidal (79)"). The
+  session editor's "Fin" time `<input>` had no `onChange` either; wired it to
+  a real `endTime` state that now feeds the "Impacto estimado" duration
+  calculation (previously a hardcoded "Carga 42 AU").
+- **Training / Training Modules — Configurar.** Had no `onClick`. Added a
+  per-module settings modal (enable/disable toggle, intensity picker) with
+  local state reflected on the module card ("Desactivado" label when off).
+- **Training / dead code removal.** `LoadManagement` (a superseded, unused
+  function predating `LoadManagementInteractive`) was deleted; it was never
+  referenced anywhere in the file.
+- **Tactics / Pizarra — GUARDAR AJUSTES.** `PcbTacticsBoard.jsx`'s footer
+  save button had no `onClick`. Tactics/starters state was already
+  auto-persisted on every change via `useEffect`/inline `writeJSON` calls, so
+  this button had no missing persistence to add — but it visually invited a
+  click with zero result. Wired it to force a fresh write of current state
+  and show a temporary "AJUSTES GUARDADOS" confirmation label for 2 seconds.
+
+### Deliberately non-interactive elements (documented, not faked)
+
+- Plantilla's "Personalizada" badge (above) — changed from a fake button to a
+  `<span role="status">`.
+- `myTeamId`/`leagueId` props passed into `CompetitionSectionPage` remain
+  unconsumed by that component. These are context data, not callback props,
+  and no visible control invites interaction with them — left as-is rather
+  than wiring speculative behavior not requested by any control.
+
+### Test coverage added
+
+Four new test files (`ClubPcbPage.test.ts`, `TacticsPcbPage.matchPlan.test.ts`,
+`MedicalPcbPage.test.ts`, `CompetitionPcbPage.test.ts`), 16 tests total, using
+`@testing-library/react` + `jsdom` (added as devDependencies — the existing
+suite only used `renderToStaticMarkup` in a `node` environment, which cannot
+simulate clicks or assert DOM updates). Each test asserts an **observable
+effect** of an interaction — a count changing, a panel's content changing, an
+element appearing/disappearing — not just that a component renders. The
+pre-existing `TacticsPcbPage.test.ts` (`renderToStaticMarkup`-based) was left
+untouched, not overwritten.
+
+### Validation (round 2)
+
+- `npm run typecheck`: PASS.
+- `npm run build`: PASS.
+- `npm test`: 687/688 passing. The single failure remains
+  `src/ui/pcb-migrated/plantilla/PlantillaPcbPage.test.ts` (asserts text
+  `'Sección'`/`'Vista'` that the component never rendered, unrelated to this
+  branch's changes) — re-verified as pre-existing by stashing all round 1 +
+  round 2 changes and running the test against the resulting tree
+  (`a2127e3`, the branch's pre-round-2 tip), where it fails identically.
+- `cargo fmt --check --manifest-path src-tauri/Cargo.toml`: PASS.
+- `cargo check --manifest-path src-tauri/Cargo.toml`: PASS.
+- `Math.random(` search in `src`: 0 matches.
+- React/Zustand/Tauri import search in `src/domain`/`src/engine`: 0 matches
+  (only README prose mentions).
+- `renderer/src` / PCB runtime import search in `src`: 0 matches.
+- GitHub CI (`.github/workflows/ci.yml`): runs exactly the checks above
+  (`npm ci`, `npm test`, `npm run typecheck`, `npm run build`, `cargo fmt
+  --check`, `cargo check`, the two grep-based boundary checks) on
+  `ubuntu-22.04`; all pass locally with the same commands, run against a
+  Windows environment (not the CI's Linux runner, so this is not identical to
+  a real CI run, but confirms the commands and lockfile are correct). Three
+  new devDependencies (`@testing-library/react`, `@testing-library/jest-dom`,
+  `jsdom`) were added to `package.json`/`package-lock.json` for the
+  interaction tests. `npm ci` (the exact install command CI uses,
+  lockfile-strict) was run locally after removing
+  `node_modules` and completed cleanly with 0 vulnerabilities, confirming the
+  lockfile is consistent. This branch has not been pushed for an actual CI
+  run to be observed in this session — the confirmation above is a local
+  reproduction of CI's steps, not a GitHub Actions run result.
+- **Interactive browser visual pass: still not performed.** No browser tool
+  was available in this session. This remains the sole reason M7 is not
+  marked CERTIFIED.
