@@ -162,8 +162,6 @@ export function App() {
   const seasonComplete = Object.values(world.games).every((game) => game.status === 'completed')
 
   const openDesktopApp = (appId: string) => {
-    const userTeam = getUserTeam(world)
-    if (appId === 'staff' && userTeam !== undefined) return openEntity({ type: 'team', teamId: userTeam.id, section: 'staff' })
     if (appId === 'schedule' || appId === 'standings') return openWindow('competition')
     openWindow(appId); setLauncherQuery('')
   }
