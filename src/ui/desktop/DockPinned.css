@@ -1,1 +1,11 @@
-.desktop-shell .desktop-dock-slot{height:78px}.desktop-shell .desktop-dock{bottom:0;left:0;right:0;width:100%;height:78px;padding:0;border:0;border-radius:0;background:rgb(5 13 23 / 88%);box-shadow:none;transform:none}.desktop-taskbar__apps{margin:0 0 0 12px!important}.desktop-shell .desktop-dock__item{width:48px;height:66px;border-radius:8px}.desktop-shell .desktop-dock__item--system{width:72px;height:72px}.desktop-shell .bdm-dock-icon{display:block;width:28px;height:28px;object-fit:contain}.desktop-shell .desktop-dock__item--system .bdm-dock-icon{width:64px;height:64px}.bdm-windows-start button[draggable=true]{cursor:grab;transition:transform 150ms ease,filter 150ms ease}.bdm-windows-start button[draggable=true]:active{cursor:grabbing;transform:scale(.9);filter:brightness(1.24);animation:bdm-dock-drag 620ms ease-in-out infinite}.bdm-windows-start button[draggable=true].is-dragging{opacity:.48;transform:scale(.9);filter:brightness(1.24)}@keyframes bdm-dock-drag{50%{transform:translateY(-8px) scale(.95)}}
+.desktop-shell .desktop-dock-slot { height: 216px; }
+.desktop-shell .desktop-dock { bottom: 0; left: 0; right: 0; width: 100%; height: 216px; padding: 0; border: 0; border-radius: 0; background: rgb(5 13 23 / 88%); box-shadow: none; transform: none; }
+.desktop-taskbar__apps { margin: 0 !important; }
+.desktop-shell .desktop-dock__item { width: 126px; height: 180px; border-radius: 18px; }
+.desktop-shell .desktop-dock__item--system { width: 216px; height: 216px; }
+.desktop-shell .bdm-dock-icon { display: block; width: 84px; height: 84px; object-fit: contain; }
+.desktop-shell .desktop-dock__item--system .bdm-dock-icon { width: 192px; height: 192px; }
+.bdm-windows-start button[draggable=true] { cursor: grab; transition: transform 150ms ease, filter 150ms ease; }
+.bdm-windows-start button[draggable=true]:active { cursor: grabbing; transform: scale(.9); filter: brightness(1.24); animation: bdm-dock-drag 620ms ease-in-out infinite; }
+.bdm-windows-start button[draggable=true].is-dragging { opacity: .48; transform: scale(.9); filter: brightness(1.24); }
+@keyframes bdm-dock-drag { 50% { transform: translateY(-8px) scale(.95); } }
