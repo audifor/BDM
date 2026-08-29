@@ -41,6 +41,10 @@ describe('Desktop navigation', () => {
     expect(getLauncherApps('').map((app) => app.id)).not.toContain('inbox')
   })
 
+  it('groups the college modules under College Performance Center', () => {
+    for (const appId of ['recruiting', 'nil', 'boosters']) expect(DESKTOP_APPS.find((app) => app.id === appId)?.launcherGroup).toBe('College Performance Center')
+  })
+
   it('finds launcher apps regardless of accents', () => {
     expect(getLauncherApps('tacticas').map((app) => app.id)).toContain('tactics')
     expect(getLauncherApps('tácticas').map((app) => app.id)).toContain('tactics')

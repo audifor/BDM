@@ -163,9 +163,8 @@ export function App() {
 
   const openDesktopApp = (appId: string) => {
     const userTeam = getUserTeam(world)
-    const currentCompetitionId = world.seasons[world.currentSeasonId]?.competitionId
     if (appId === 'staff' && userTeam !== undefined) return openEntity({ type: 'team', teamId: userTeam.id, section: 'staff' })
-    if (appId === 'standings' && currentCompetitionId !== undefined) return openEntity({ type: 'competition', competitionId: currentCompetitionId, section: 'standings' })
+    if (appId === 'schedule' || appId === 'standings') return openWindow('competition')
     openWindow(appId); setLauncherQuery('')
   }
   const unreadInboxCount = selectUnreadInboxCount(world)

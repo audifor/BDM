@@ -8,8 +8,9 @@ import { formatPrototypeDate } from '@/ui/formatters'
 import { coachReputationEventLabel, coachReputationSourceLabel, formatCoachReputationDelta } from '@/ui/coachReputationPresentation'
 import { AppFrame, AppHeader, DataTable, DetailGroup, SplitWorkspace, type DataColumn } from '@/ui/desktop/AppFramework'
 import { BdmButton, Badge, Tabs } from '@/ui/components/designSystem'
+import { LegacyScreen } from './LegacyScreen'
 
-type CoachTab = 'overview' | 'opportunities' | 'career' | 'reputation' | 'relationships' | 'development'
+type CoachTab = 'overview' | 'opportunities' | 'career' | 'reputation' | 'relationships' | 'development' | 'legacy'
 type Employment = GameWorld['coachEmploymentByCoachId'][keyof GameWorld['coachEmploymentByCoachId']]
 type Opening = GameWorld['coachJobOpeningsById'][keyof GameWorld['coachJobOpeningsById']]
 type Offer = GameWorld['coachJobOffersById'][keyof GameWorld['coachJobOffersById']]
@@ -23,7 +24,7 @@ export function CoachScreen({ world, onSkill, onPerk, onApply = () => undefined,
   if (!coach || !reputation || !rpg || !professional) return <section className="screen"><p className="content-panel">Coach profile unavailable.</p></section>
   const employment = world.coachEmploymentByCoachId[world.userCoachId]; const history = world.coachCareerHistoryByCoachId[world.userCoachId] ?? []; const offers = Object.values(world.coachJobOffersById).filter((offer) => offer.coachId === coach.id); const openings = Object.values(world.coachJobOpeningsById).filter((opening) => opening.status === 'open'); const relationships = getRelationshipsForPerson(world, coach.id)
   const title = employment?.status === 'employed' && employment.teamId ? world.teams[employment.teamId]?.name ?? 'Employed' : 'Unemployed'
-  const tabs: readonly { id: CoachTab; label: string }[] = [{ id: 'overview', label: 'Overview' }, { id: 'opportunities', label: 'Opportunities' }, { id: 'career', label: 'Career' }, { id: 'reputation', label: 'Reputation' }, { id: 'relationships', label: 'Relationships' }, { id: 'development', label: 'Development' }]
+  const tabs: readonly { id: CoachTab; label: string }[] = [{ id: 'overview', label: 'Overview' }, { id: 'opportunities', label: 'Opportunities' }, { id: 'career', label: 'Career' }, { id: 'reputation', label: 'Reputation' }, { id: 'relationships', label: 'Relationships' }, { id: 'development', label: 'Development' }, { id: 'legacy', label: 'Legacy' }]
   return <AppFrame header={<AppHeader eyebrow="COACH CAREER" meta={title} title={<><span aria-label="Coach portrait unavailable" className="entity-profile__portrait">{coach.firstName[0]}{coach.lastName[0]}</span>{coach.firstName} {coach.lastName}</>} />} navigation={<Tabs onChange={(next) => setTab(next as CoachTab)} tabs={tabs} value={tab} />}><CoachWorkspace employment={employment} history={history} onAcceptOffer={onAcceptOffer} onApply={onApply} onDeclineOffer={onDeclineOffer} onPerk={onPerk} onSkill={onSkill} openings={openings} offers={offers} professional={professional} reputation={reputation} relationships={relationships} rpg={rpg} tab={tab} world={world} /></AppFrame>
 }
 
@@ -33,6 +34,7 @@ function CoachWorkspace({ employment, history, onAcceptOffer, onApply, onDecline
   if (tab === 'career') return <section className="coach-overview"><DetailGroup title="Career history">{history.length === 0 ? <p>No prior career history.</p> : <DataTable columns={[{ id: 'date', label: 'DATE', render: (item: typeof history[number]) => formatPrototypeDate(item.date as never) }, { id: 'team', label: 'TEAM', render: (item) => world.teams[item.teamId as keyof typeof world.teams]?.name ?? item.teamId }, { id: 'reason', label: 'EVENT', render: (item) => item.reason }]} rows={history.map((item, index) => ({ ...item, id: `${item.date}-${index}` }))} />}</DetailGroup></section>
   if (tab === 'reputation') return <section className="coach-overview"><DetailGroup title="Reputation"><dl>{COACH_REPUTATION_DIMENSIONS.map((dimension) => <div key={dimension}><dt>{label[dimension]}</dt><dd>{reputation.values[dimension]} · {getCoachReputationBand(reputation.values[dimension])}</dd></div>)}</dl></DetailGroup></section>
   if (tab === 'relationships') return <section className="coach-overview"><DetailGroup title="Relationships">{relationships.length === 0 ? <p>No materialized relationships.</p> : <DataTable columns={[{ id: 'person', label: 'PERSON', render: (item: typeof relationships[number]) => item.sourceId === world.userCoachId ? item.targetId : item.sourceId }, { id: 'value', label: 'VALUE', numeric: true, render: (item) => item.value }, { id: 'band', label: 'BAND', render: (item) => getRelationshipBandForPeople(world, item.sourceId, item.targetId) }]} rows={relationships.map((item, index) => ({ ...item, id: `${item.sourceId}-${item.targetId}-${index}` }))} />}</DetailGroup></section>
+  if (tab === 'legacy') return <LegacyScreen world={world} />
   return <section className="coach-overview"><DetailGroup title="Skills">{COACH_SKILL_CATALOG.map((skill) => { const rank = rpg.skills[skill.id]?.rank ?? 0; return <p key={skill.id}>{skill.id} · rank {rank} <BdmButton disabled={rank === 3} onClick={() => onSkill(skill.id)} size="compact" variant="ghost">Develop</BdmButton></p> })}</DetailGroup><DetailGroup title="Perks">{COACH_PERK_CATALOG.map((perk) => <p key={perk.id}>{perk.id} · {rpg.perks[perk.id] ? 'owned' : <BdmButton onClick={() => onPerk(perk.id)} size="compact" variant="ghost">Purchase</BdmButton>}</p>)}</DetailGroup></section>
 }
 

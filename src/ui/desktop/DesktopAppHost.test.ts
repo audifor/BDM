@@ -12,7 +12,7 @@ const actions: DesktopAppActions = { tacticalPlan: createDefaultTacticalPlan(), 
 
 describe('DesktopAppHost', () => {
   it('migrates every functional legacy app to a window-capable registry entry', () => {
-    for (const appId of ['squad', 'schedule', 'standings', 'training', 'staff', 'coach', 'tactics', 'market', 'draft', 'match']) {
+    for (const appId of ['squad', 'schedule', 'training', 'staff', 'coach', 'tactics', 'market', 'draft', 'match']) {
       const app = DESKTOP_APPS.find((candidate) => candidate.id === appId)
       expect(app?.window).toBeDefined()
       expect(app?.renderKey).toBeDefined()
@@ -29,9 +29,23 @@ describe('DesktopAppHost', () => {
 
   it('opens Golden Manager sections while preserving unrelated application hosts', () => {
     const world = createNewGame()
-    const labels = { training: 'Team Training', standings: 'STANDINGS', staff: 'STAFF', coach: 'REPUTATION', tactics: 'Pizarra', market: 'Free agents', draft: 'No draft available' }
+    const labels = { training: 'Team Training', staff: 'STAFF', coach: 'REPUTATION', tactics: 'Pizarra', market: 'Free agents', draft: 'No draft available' }
     for (const [appId, label] of Object.entries(labels)) {
       expect(renderToStaticMarkup(createElement(DesktopAppHost, { appId, world, actions }))).toContain(label)
     }
+  })
+
+  it('keeps the Plantilla workspace with its analysis and mentoring sections', () => {
+    const markup = renderToStaticMarkup(createElement(DesktopAppHost, { appId: 'squad', world: createNewGame(), actions }))
+    expect(markup).toContain('Análisis + Dinámicas')
+    expect(markup).toContain('Mentoring')
+    expect(markup).toContain('Buscar jugador')
+  })
+
+  it('keeps Legacy in Perfil and removes its separate launcher alongside Liga', () => {
+    const world = createNewGame()
+    expect(DESKTOP_APPS.find((app) => app.id === 'legacy')).toBeUndefined()
+    expect(DESKTOP_APPS.find((app) => app.id === 'standings')).toBeUndefined()
+    expect(renderToStaticMarkup(createElement(DesktopAppHost, { appId: 'coach', world, actions }))).toContain('>Legacy<')
   })
 })

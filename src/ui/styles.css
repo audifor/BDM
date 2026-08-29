@@ -182,3 +182,5 @@ button { font: inherit; cursor: pointer; }
 .desktop-dock__item,.desktop-dock__item--system { border-color:transparent !important; background:transparent !important; box-shadow:none !important; }.desktop-dock__item:hover,.desktop-dock__item.is-active { background:transparent !important; box-shadow:none !important; }.desktop-dock__item:hover { transform:translateY(-2px) scale(1.04); }.desktop-dock__item.is-active::after { position:absolute; bottom:2px; width:4px; height:4px; border-radius:50%; background:var(--bdm-accent-primary); box-shadow:0 0 7px var(--bdm-accent-primary); content:''; }.desktop-dock__label { display:none; }
 
 .desktop-dock__item .desktop-icon--illustrated { width:44px; height:44px; }.desktop-dock__item--system .desktop-icon--illustrated { width:48px; height:48px; }
+
+.desktop-launcher__group { margin-top: var(--space-4); }.desktop-launcher__group > p { margin: 0 0 var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-label); font-weight: var(--font-weight-bold); letter-spacing: .06em; }
