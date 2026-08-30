@@ -31,8 +31,9 @@ describe('MatchViewerScreen workspace UX', () => {
     expect(markup).toContain('id="match-court"')
     expect(markup).toContain('id="match-stats"')
     expect(markup).toContain('id="match-play-by-play"')
-    expect(markup).toContain('COURT')
-    expect(markup).toContain('PLAY-BY-PLAY')
+    expect(markup).toContain('MATCH EVENTS')
+    expect(markup).toContain('boxscore-player--active')
+    expect(markup).not.toContain('Match sections')
   })
 
   it('keeps real pause, speed and skip controls in the always available match bar', () => {

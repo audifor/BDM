@@ -22,6 +22,7 @@ describe('LiveMatchController', () => {
     expect(step.after.events.at(-1)!.clockSecondsRemaining).toBeLessThan(step.before.events.at(-1)!.clockSecondsRemaining)
   })
 
+
   it('records atomic tactical changes without advancing sporting state and applies no-op changes silently', () => {
     const world = createNewGame()
     const controller = createLiveUserMatch(world)

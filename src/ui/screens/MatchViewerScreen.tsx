@@ -67,6 +67,9 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
   const workspaceRef = useRef<HTMLElement>(null);
   const [coachingOpen, setCoachingOpen] = useState(false);
   const [substitutionsOpen, setSubstitutionsOpen] = useState(false);
+  const [playByPlayOpen, setPlayByPlayOpen] = useState(false);
+  const [pendingSubstitution, setPendingSubstitution] =
+    useState<ManualSubstitution | null>(null);
   const [draft, setDraft] = useState(props.coachingPlan);
   const [segment, setSegment] = useState<MatchPresentationSegment | null>(null);
   const [presentationProgress, setPresentationProgress] = useState(0);
@@ -160,6 +163,11 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
     if (isFinished && !props.resultApplied) props.onApplyResult();
   }, [isFinished, props.resultApplied, props.onApplyResult]);
   useEffect(() => {
+    if (pendingSubstitution === null || segment !== null) return;
+    props.onApplyManualSubstitutions([pendingSubstitution]);
+    setPendingSubstitution(null);
+  }, [pendingSubstitution, props.onApplyManualSubstitutions, segment]);
+  useEffect(() => {
     workspaceRef.current?.focus();
   }, []);
 
@@ -190,7 +198,7 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
 
   return (
     <main
-      className="match-viewer"
+      className={playByPlayOpen ? "match-viewer match-viewer--play-by-play" : "match-viewer"}
       data-testid="match-viewer-workspace"
       ref={workspaceRef}
       tabIndex={-1}
@@ -201,8 +209,11 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
           <span>{isFinished ? "FINAL" : formatPeriod(period)}</span>
         </div>
         <section className="scoreboard">
-          <strong>{props.homeTeamName}</strong>
-          <div>
+          <div className="scoreboard__team scoreboard__team--home">
+            <TeamMark name={props.homeTeamName} />
+            <strong>{props.homeTeamName}</strong>
+          </div>
+          <div className="scoreboard__score">
             <b>
               {homeScore} - {awayScore}
             </b>
@@ -212,7 +223,10 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
                 : `${formatPeriod(period)} · ${formatClock(clock)}`}
             </span>
           </div>
-          <strong>{props.awayTeamName}</strong>
+          <div className="scoreboard__team scoreboard__team--away">
+            <strong>{props.awayTeamName}</strong>
+            <TeamMark name={props.awayTeamName} />
+          </div>
         </section>
       </header>
       <div
@@ -222,6 +236,7 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
         <section className="match-viewer__section" id="match-court">
           <MatchCourt
             world={props.world}
+            gameId={props.simulation.gameId}
             homeTeamId={props.simulation.homeTeamId}
             awayTeamId={props.simulation.awayTeamId}
             lineups={segment?.startLineups ?? activeLineups}
@@ -240,12 +255,22 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
             stats={homeStats}
             world={props.world}
             fatigueByPlayerId={fatigueByPlayerId}
+            activePlayerIds={activeLineups.home}
+            canRequestSubstitution={
+              props.coachingTeamId === props.simulation.homeTeamId
+            }
+            onRequestSubstitution={setPendingSubstitution}
           />
           <AdvancedStatsTable
             title="AWAY"
             stats={awayStats}
             world={props.world}
             fatigueByPlayerId={fatigueByPlayerId}
+            activePlayerIds={activeLineups.away}
+            canRequestSubstitution={
+              props.coachingTeamId === props.simulation.awayTeamId
+            }
+            onRequestSubstitution={setPendingSubstitution}
           />
         </section>
         <section
@@ -254,19 +279,21 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
         >
           <div className="event-feed">
             <p className="eyebrow">MATCH EVENTS</p>
-            {revealedEvents
-              .slice(-10)
-              .reverse()
-              .map((event) => (
-                <EventLine
-                  event={event}
-                  key={event.sequence}
-                  world={props.world}
-                />
-              ))}
-            {revealedEvents.length === 0 && (
-              <p className="empty-events">Waiting for tip-off...</p>
-            )}
+            <div className="event-feed__scroll">
+              {revealedEvents
+                .slice(-10)
+                .reverse()
+                .map((event) => (
+                  <EventLine
+                    event={event}
+                    key={event.sequence}
+                    world={props.world}
+                  />
+                ))}
+              {revealedEvents.length === 0 && (
+                <p className="empty-events">Waiting for tip-off...</p>
+              )}
+            </div>
           </div>
         </section>
         {coachingOpen && (
@@ -299,23 +326,6 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
         )}
       </div>
       <footer className="match-control-bar" data-testid="match-control-bar">
-        <nav
-          aria-label="Match sections"
-          className="match-control-bar__navigation"
-        >
-          <button onClick={() => scrollToSection("match-court")} type="button">
-            COURT
-          </button>
-          <button onClick={() => scrollToSection("match-stats")} type="button">
-            STATS
-          </button>
-          <button
-            onClick={() => scrollToSection("match-play-by-play")}
-            type="button"
-          >
-            PLAY-BY-PLAY
-          </button>
-        </nav>
         {isFinished ? (
           <div className="viewer-controls final-controls">
             <strong>
@@ -381,6 +391,14 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
             >
               SKIP TO END
             </button>
+            <button
+              aria-pressed={playByPlayOpen}
+              className="secondary-button"
+              onClick={() => setPlayByPlayOpen((open) => !open)}
+              type="button"
+            >
+              {playByPlayOpen ? "COURT" : "PLAY-BY-PLAY"}
+            </button>
           </div>
         )}
       </footer>
@@ -390,6 +408,14 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
 
 export function isMatchComplete(events: readonly MatchEvent[]): boolean {
   return events.some((event) => event.type === "gameEnd");
+}
+
+function TeamMark({ name }: { readonly name: string }) {
+  return (
+    <span aria-hidden="true" className="team-mark">
+      {name.split(/\s+/).map((part) => part[0]).join("").slice(0, 3)}
+    </span>
+  );
 }
 
 function CoachingPanel({
@@ -563,15 +589,29 @@ function AdvancedStatsTable({
   stats,
   world,
   fatigueByPlayerId,
+  activePlayerIds,
+  canRequestSubstitution,
+  onRequestSubstitution,
 }: {
   readonly title: string;
   readonly stats: readonly PlayerMatchStats[];
   readonly world: GameWorld;
   readonly fatigueByPlayerId: Readonly<Record<string, number>>;
+  readonly activePlayerIds: readonly string[];
+  readonly canRequestSubstitution: boolean;
+  readonly onRequestSubstitution: (substitution: ManualSubstitution) => void;
 }) {
   const totals = calculateTeamMatchStats(
     stats,
     stats.map((stat) => stat.playerId),
+  );
+  const activeOrder = new Map(
+    activePlayerIds.map((playerId, index) => [playerId, index]),
+  );
+  const orderedStats = [...stats].sort(
+    (left, right) =>
+      (activeOrder.get(left.playerId) ?? Number.MAX_SAFE_INTEGER) -
+      (activeOrder.get(right.playerId) ?? Number.MAX_SAFE_INTEGER),
   );
   return (
     <section className="boxscore-team table-wrap">
@@ -598,7 +638,17 @@ function AdvancedStatsTable({
           </tr>
         </thead>
         <tbody>
-          {stats.map((stat) => <BoxScorePlayerRow fatigue={fatigueByPlayerId[stat.playerId] ?? 0} key={stat.playerId} stat={stat} world={world} />)}
+          {orderedStats.map((stat) => (
+            <BoxScorePlayerRow
+              fatigue={fatigueByPlayerId[stat.playerId] ?? 0}
+              isOnCourt={activePlayerIds.includes(stat.playerId)}
+              key={stat.playerId}
+              canRequestSubstitution={canRequestSubstitution}
+              onRequestSubstitution={onRequestSubstitution}
+              stat={stat}
+              world={world}
+            />
+          ))}
           <tr className="totals-row">
             <td>TOTAL</td>
             <td />
@@ -629,11 +679,13 @@ function AdvancedStatsTable({
   );
 }
 
-function BoxScorePlayerRow({ fatigue, stat, world }: { readonly fatigue: number; readonly stat: PlayerMatchStats; readonly world: GameWorld }) {
+function BoxScorePlayerRow({ canRequestSubstitution, fatigue, isOnCourt, onRequestSubstitution, stat, world }: { readonly canRequestSubstitution: boolean; readonly fatigue: number; readonly isOnCourt: boolean; readonly onRequestSubstitution: (substitution: ManualSubstitution) => void; readonly stat: PlayerMatchStats; readonly world: GameWorld }) {
   const player = getPlayer(world, stat.playerId)
   const activeMatchSession = useGameStore((state) => state.getActiveMatchSession())
   const target = useEntityActions(createEntityRef('player', stat.playerId), { world, controlledTeamId: getUserTeam(world)?.id, activeMatchSession: activeMatchSession ?? undefined })
-  return <tr {...target}><td>{player.lastName}</td><td>{formatMinutes(stat.secondsPlayed)}</td><td>{formatCondition(fatigue)}</td><td>{stat.points}</td><td>{stat.twoPointMade}/{stat.twoPointAttempted}</td><td>{stat.threePointMade}/{stat.threePointAttempted}</td><td>{stat.freeThrowsMade}/{stat.freeThrowsAttempted}</td><td>{stat.offensiveRebounds}</td><td>{stat.defensiveRebounds}</td><td>{stat.rebounds}</td><td>{stat.assists}</td><td>{stat.steals}</td><td>{stat.blocks}</td><td>{stat.turnovers}</td><td>{stat.foulsCommitted}</td><td>{formatPlusMinus(stat.plusMinus)}</td></tr>
+  const canDrag = canRequestSubstitution && !isOnCourt;
+  const canReceiveDrop = canRequestSubstitution && isOnCourt;
+  return <tr {...target} className={`${isOnCourt ? "boxscore-player--active" : ""}${canDrag ? " boxscore-player--draggable" : ""}${canReceiveDrop ? " boxscore-player--drop-target" : ""}`} draggable={canDrag} onDragOver={canReceiveDrop ? (event) => event.preventDefault() : undefined} onDragStart={canDrag ? (event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", stat.playerId); } : undefined} onDrop={canReceiveDrop ? (event) => { event.preventDefault(); const playerInId = event.dataTransfer.getData("text/plain"); if (playerInId !== "" && playerInId !== stat.playerId) onRequestSubstitution({ playerOutId: stat.playerId, playerInId: playerInId as Player["id"] }); } : undefined}><td>{player.lastName}</td><td>{formatMinutes(stat.secondsPlayed)}</td><td>{formatCondition(fatigue)}</td><td>{stat.points}</td><td>{stat.twoPointMade}/{stat.twoPointAttempted}</td><td>{stat.threePointMade}/{stat.threePointAttempted}</td><td>{stat.freeThrowsMade}/{stat.freeThrowsAttempted}</td><td>{stat.offensiveRebounds}</td><td>{stat.defensiveRebounds}</td><td>{stat.rebounds}</td><td>{stat.assists}</td><td>{stat.steals}</td><td>{stat.blocks}</td><td>{stat.turnovers}</td><td>{stat.foulsCommitted}</td><td>{formatPlusMinus(stat.plusMinus)}</td></tr>
 }
 function formatMinutes(secondsPlayed: number): string {
   return `${Math.floor(secondsPlayed / 60)
