@@ -6,7 +6,8 @@ import { createNewGame } from '@/app/game'
 import { DESKTOP_APPS, DOCK_APP_ICON_REGISTRY, getLauncherApps, reorderLauncherApps, resolveLauncherOrder } from './DesktopAppRegistry'
 import { DesktopDock, DesktopLauncher } from './DesktopNavigation'
 
-const launcherProps = { canAdvanceDay: true, canLoad: true, isOpen: true, onAdvanceDay: () => undefined, onClose: () => undefined, onLoad: () => undefined, onPinDockApp: () => undefined, onQueryChange: () => undefined, onSave: () => undefined, onAppOpen: () => undefined, query: '', recentAppIds: ['squad'] }
+const launcherWorld = createNewGame()
+const launcherProps = { canAdvanceDay: true, canLoad: true, isOpen: true, onAdvanceDay: () => undefined, onClose: () => undefined, onLoad: () => undefined, onPinDockApp: () => undefined, onQueryChange: () => undefined, onSave: () => undefined, onAppOpen: () => undefined, query: '', recentAppIds: ['squad'], world: launcherWorld }
 
 describe('Desktop navigation', () => {
   it('renders the dock from the stable registry with a labelled launcher toggle', () => {
@@ -65,5 +66,12 @@ describe('Desktop navigation', () => {
     const world = createNewGame(); const before = JSON.stringify(world)
     expect(renderToStaticMarkup(createElement(DesktopLauncher, { ...launcherProps, isOpen: false }))).toBe('')
     expect(JSON.stringify(world)).toBe(before)
+  })
+
+  it('reads the launcher profile from the active game world', () => {
+    const coach = launcherWorld.coaches[launcherWorld.userCoachId]!
+    const markup = renderToStaticMarkup(createElement(DesktopLauncher, launcherProps))
+    expect(markup).toContain(`${coach.firstName} ${coach.lastName}`)
+    expect(markup).toContain(`${coach.firstName[0]}${coach.lastName[0]}`.toUpperCase())
   })
 })
