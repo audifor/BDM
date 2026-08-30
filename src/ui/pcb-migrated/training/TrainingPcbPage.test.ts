@@ -44,4 +44,10 @@ describe('TrainingPcbPage', () => {
     expect(markup).toContain('Three-Point Shooting')
     expect(markup).toContain('09:00')
   })
+
+  it('does not present the fatigue-threshold metric as a fake injury/risk alert', () => {
+    const markup = render('load')
+    expect(markup).not.toContain('ALERTA LESIÓN')
+    expect(markup).toContain('ALERTA DE FATIGA')
+  })
 })

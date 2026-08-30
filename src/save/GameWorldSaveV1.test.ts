@@ -49,7 +49,7 @@ describe('GameWorldSaveV1', () => {
   })
 
   it('round-trips training state and supplies deterministic legacy defaults', () => {
-    const base = createNewGame(); const trained = advanceDay(base)
+    const base = createNewGame(); const teamId = Object.values(base.teams)[0]!.id; const trained = executeTeamTraining(advanceDay(base), teamId)
     const saved = serializeGameWorldV1(trained, '2032-10-01T12:00:00.000Z')
     expect(deserializeGameWorldV1(saved)).toEqual(trained)
     const { trainingPlans: _plans, trainingSessions: _sessions, developmentStimulus: _stimulus, careerFatigue: _fatigue, ...legacyPayload } = saved.payload

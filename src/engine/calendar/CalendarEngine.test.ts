@@ -20,7 +20,7 @@ import {
 } from './index'
 
 describe('CalendarEngine', () => {
-  it('advances one day immutably and executes eligible team training', () => {
+  it('advances one day immutably without auto-applying the legacy training plan pipeline', () => {
     const { world } = createScheduledGameWorld()
     const before = JSON.parse(JSON.stringify(world)) as { currentDate: string }
     const nextWorld = advanceDay(world)
@@ -28,7 +28,9 @@ describe('CalendarEngine', () => {
     expect(nextWorld).not.toBe(world)
     expect(nextWorld.currentDate).toBe('2032-10-02')
     expect(JSON.parse(JSON.stringify(world))).toEqual(before)
-    expect(Object.keys(nextWorld.trainingSessionsById)).toHaveLength(Object.keys(nextWorld.teams).length)
+    // The scheduled session/module system is the sole canonical automatic training authority;
+    // the legacy trainingPlansByTeamId pipeline is no longer auto-applied by advanceDay.
+    expect(Object.keys(nextWorld.trainingSessionsById)).toHaveLength(0)
     expect(nextWorld.schemaVersion).toBe(world.schemaVersion)
     expect(nextWorld.userCoachId).toBe(world.userCoachId)
     expect(Object.keys(nextWorld.games)).toHaveLength(Object.keys(world.games).length)

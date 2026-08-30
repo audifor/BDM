@@ -90,7 +90,7 @@ describe('TrainingPcbPage / interactions', () => {
     expect(scheduled.status).toBe('scheduled')
   })
 
-  it('the Modules tab lists the real built-in catalog and creating a module calls onSaveModule with real domain data', () => {
+  it('the Modules tab lists the real built-in catalog and creating a module lets the user pick base type + scope, calling onSaveModule with real domain data', () => {
     const onSaveModule = vi.fn()
     render(createElement(TrainingPcbPage, { onSaveModule }))
     fireEvent.click(screen.getByRole('button', { name: 'Módulos' }))
@@ -100,11 +100,42 @@ describe('TrainingPcbPage / interactions', () => {
 
     const modal = screen.getByRole('heading', { name: 'Crear módulo' }).closest('section') as HTMLElement
     fireEvent.change(within(modal).getByLabelText('Nombre'), { target: { value: 'Mi módulo' } })
+    fireEvent.change(within(modal).getByLabelText('Tipo base'), { target: { value: 'threePoint' } })
+    fireEvent.change(within(modal).getByLabelText('Alcance'), { target: { value: 'individual' } })
     fireEvent.click(within(modal).getByRole('button', { name: 'Alta' }))
     fireEvent.click(within(modal).getByRole('button', { name: 'Guardar' }))
 
     expect(onSaveModule).toHaveBeenCalledTimes(1)
-    expect(onSaveModule.mock.calls[0]![0]).toMatchObject({ name: 'Mi módulo', intensity: 'high', scope: 'individual' })
+    expect(onSaveModule.mock.calls[0]![0]).toMatchObject({ name: 'Mi módulo', baseDefinitionId: 'threePoint', intensity: 'high', scope: 'individual' })
+  })
+
+  it('creating a team-only base module restricts scope to team only', () => {
+    const onSaveModule = vi.fn()
+    render(createElement(TrainingPcbPage, { onSaveModule }))
+    fireEvent.click(screen.getByRole('button', { name: 'Módulos' }))
+    fireEvent.click(screen.getByRole('button', { name: '+ Crear módulo' }))
+
+    const modal = screen.getByRole('heading', { name: 'Crear módulo' }).closest('section') as HTMLElement
+    fireEvent.change(within(modal).getByLabelText('Nombre'), { target: { value: 'Cohesión custom' } })
+    fireEvent.change(within(modal).getByLabelText('Tipo base'), { target: { value: 'teamCohesion' } })
+
+    const scopeSelect = within(modal).getByLabelText('Alcance') as HTMLSelectElement
+    expect(Array.from(scopeSelect.options).map((option) => option.value)).toEqual(['team'])
+
+    fireEvent.click(within(modal).getByRole('button', { name: 'Guardar' }))
+    expect(onSaveModule.mock.calls[0]![0]).toMatchObject({ baseDefinitionId: 'teamCohesion', scope: 'team' })
+  })
+
+  it('shows the inherited real effect profile in the module creator, not an arbitrary numeric editor', () => {
+    render(createElement(TrainingPcbPage))
+    fireEvent.click(screen.getByRole('button', { name: 'Módulos' }))
+    fireEvent.click(screen.getByRole('button', { name: '+ Crear módulo' }))
+
+    const modal = screen.getByRole('heading', { name: 'Crear módulo' }).closest('section') as HTMLElement
+    expect(within(modal).getByText(/Perfil de efectos heredado/)).toBeInTheDocument()
+    expect(within(modal).getByText(/Estímulo de desarrollo/)).toBeInTheDocument()
+    expect(within(modal).getByText(/Carga\/fatiga/)).toBeInTheDocument()
+    expect(within(modal).getByText(/Riesgo de lesión \(metadato, no aplicado por el motor\)/)).toBeInTheDocument()
   })
 
   it('shows the ISO week number alongside the Mon-Sun range', () => {

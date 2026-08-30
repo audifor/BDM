@@ -4,13 +4,31 @@ import type { TrainingIntensity } from './Training'
 export type TrainingCategory = 'shooting' | 'finishing' | 'ballHandling' | 'playmaking' | 'defense' | 'rebounding' | 'physical' | 'recovery' | 'tactical'
 export type TrainingScope = 'team' | 'individual' | 'both'
 
-/** Bounded, deterministic effect profile for a training definition at normal intensity. Scaled by trainingLoad(intensity). */
+/**
+ * Bounded, deterministic effect profile for a training definition.
+ *
+ * Scaling contract (see ScheduledTrainingEngine.executeScheduledSession, the sole canonical
+ * execution path):
+ * - developmentWeight and fatigueMultiplier ARE scaled by trainingLoad(session.intensity) at
+ *   execution time — they are per-unit-of-load multipliers, not fixed per-session deltas.
+ * - moraleDelta and cohesionDelta are fixed per-completed-session deltas, intentionally NOT
+ *   scaled by intensity: they represent a bounded, flat quality-of-training-experience effect
+ *   (e.g. team cohesion work; encouraging composure work) rather than a physical load effect.
+ * - injuryRiskWeight is metadata only. No engine code currently creates injuries from training;
+ *   it is not applied, consumed, or scaled anywhere, and must not be presented to the user as an
+ *   active risk signal until a real injury-creation capability consumes it.
+ */
 export interface TrainingEffectProfile {
   readonly targetRatings: readonly CanonicalRatingKey[]
+  /** Per-unit-of-load multiplier, scaled by trainingLoad(intensity) at execution time. */
   readonly developmentWeight: number
+  /** Per-unit-of-load multiplier, scaled by trainingLoad(intensity) at execution time. */
   readonly fatigueMultiplier: number
+  /** Fixed per-completed-session delta. Not scaled by intensity. */
   readonly moraleDelta: number
+  /** Fixed per-completed-session delta. Not scaled by intensity. */
   readonly cohesionDelta: number
+  /** Metadata only; not consumed by any engine code. */
   readonly injuryRiskWeight: number
 }
 

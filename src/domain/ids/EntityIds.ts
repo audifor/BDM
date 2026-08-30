@@ -75,3 +75,5 @@ export const createCompetitionId = (): CompetitionId => competitionIdFromString(
 export const createSeasonId = (): SeasonId => seasonIdFromString(generateId())
 export const createGameId = (): GameId => gameIdFromString(generateId())
 export const createCountryId = (): CountryId => countryIdFromString(generateId())
+/** Deterministic-format (crypto.randomUUID) id generator for plain-string identifiers that are not yet branded entity types, e.g. training schedule/module ids. */
+export const createEntityId = (): string => generateId()

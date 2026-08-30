@@ -83,6 +83,23 @@ describe('ScheduledTrainingEngine', () => {
     expect(executed.moraleByPersonId[playerId]!.value).toBeGreaterThan(before)
   })
 
+  it('documented scaling contract: development/fatigue scale with intensity, morale/cohesion are fixed per-session deltas regardless of intensity', () => {
+    const worldA = createNewGame()
+    const teamAId = Object.values(worldA.teams)[0]!.id
+    const playerAId = worldA.teams[teamAId]!.rosterPlayerIds[0]!
+    const low = executeScheduledTrainingSessions(scheduleTrainingSession(worldA, createScheduledTrainingSession({ id: 's1', teamId: teamAId, date: worldA.currentDate, startTime: '09:00', durationMinutes: 60, scope: 'individual', playerId: playerAId, definitionId: 'threePoint', intensity: 'light' })))
+    const worldB = createNewGame()
+    const teamBId = Object.values(worldB.teams)[0]!.id
+    const playerBId = worldB.teams[teamBId]!.rosterPlayerIds[0]!
+    const high = executeScheduledTrainingSessions(scheduleTrainingSession(worldB, createScheduledTrainingSession({ id: 's1', teamId: teamBId, date: worldB.currentDate, startTime: '09:00', durationMinutes: 60, scope: 'individual', playerId: playerBId, definitionId: 'threePoint', intensity: 'high' })))
+    expect(high.developmentStimulusByPlayerId[playerBId]!.byRating.threePointShooting!).toBeGreaterThan(low.developmentStimulusByPlayerId[playerAId]!.byRating.threePointShooting!)
+    expect(high.careerFatigueByPlayerId[playerBId]! - worldB.careerFatigueByPlayerId[playerBId]!).toBeGreaterThan(low.careerFatigueByPlayerId[playerAId]! - worldA.careerFatigueByPlayerId[playerAId]!)
+
+    const cohesionLow = executeScheduledTrainingSessions(scheduleTrainingSession(worldA, createScheduledTrainingSession({ id: 's2', teamId: teamAId, date: worldA.currentDate, startTime: '11:00', durationMinutes: 60, scope: 'team', definitionId: 'teamCohesion', intensity: 'light' })))
+    const cohesionHigh = executeScheduledTrainingSessions(scheduleTrainingSession(worldB, createScheduledTrainingSession({ id: 's2', teamId: teamBId, date: worldB.currentDate, startTime: '11:00', durationMinutes: 60, scope: 'team', definitionId: 'teamCohesion', intensity: 'high' })))
+    expect(cohesionHigh.teamCohesionByTeamId[teamBId]!).toBe(cohesionLow.teamCohesionByTeamId[teamAId]!)
+  })
+
   it('recovery definitions reduce fatigue instead of increasing it', () => {
     const world = createNewGame()
     const teamId = Object.values(world.teams)[0]!.id
@@ -119,5 +136,29 @@ describe('ScheduledTrainingEngine', () => {
     const scheduled = scheduleTrainingSession(world, createScheduledTrainingSession({ id: 's1', teamId, date: tomorrow, startTime: '09:00', durationMinutes: 60, scope: 'individual', playerId, definitionId: 'threePoint', intensity: 'normal' }))
     const advanced = advanceDay(scheduled)
     expect(advanced.scheduledTrainingSessionsById['s1']!.status).toBe('completed')
+  })
+
+  it('one planned/scheduled training day applies exactly one canonical training workload, not a second legacy workload on top', () => {
+    const world = createNewGame()
+    const teamId = Object.values(world.teams)[0]!.id
+    const playerId = world.teams[teamId]!.rosterPlayerIds[0]!
+    const beforeFatigue = world.careerFatigueByPlayerId[playerId] ?? 0
+    const tomorrow = advanceDay(world).currentDate
+    const scheduled = scheduleTrainingSession(world, createScheduledTrainingSession({ id: 's1', teamId, date: tomorrow, startTime: '09:00', durationMinutes: 60, scope: 'individual', playerId, definitionId: 'threePoint', intensity: 'normal' }))
+
+    const advanced = advanceDay(scheduled)
+
+    // Exactly one scheduled session executed (the individual one), and the legacy
+    // trainingPlansByTeamId pipeline did not also auto-apply a second workload.
+    expect(Object.keys(advanced.trainingSessionsById)).toHaveLength(0)
+    const stimulusTotal = Object.values(advanced.developmentStimulusByPlayerId[playerId]!.byRating).reduce((sum, value) => sum + value, 0)
+    const expectedFatigueDelta = advanced.careerFatigueByPlayerId[playerId]! - beforeFatigue
+    // Re-executing the scheduled pipeline alone from the same base should reproduce the
+    // exact same fatigue/stimulus state, proving no additional (legacy) workload was applied.
+    const onlyScheduled = executeScheduledTrainingSessions(updateGameWorld(scheduled, { currentDate: tomorrow }))
+    expect(onlyScheduled.careerFatigueByPlayerId[playerId]).toBe(advanced.careerFatigueByPlayerId[playerId])
+    expect(onlyScheduled.developmentStimulusByPlayerId[playerId]).toEqual(advanced.developmentStimulusByPlayerId[playerId])
+    expect(stimulusTotal).toBeGreaterThan(0)
+    expect(expectedFatigueDelta).toBeGreaterThan(0)
   })
 })

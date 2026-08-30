@@ -1,7 +1,7 @@
 import { addDays } from '@/domain/date'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { reconcileExpiredPlayerContracts } from '@/engine/market'
-import { executeEligibleTraining, recoverCareerFatigueForDay } from '@/engine/training/TrainingEngine'
+import { recoverCareerFatigueForDay } from '@/engine/training/TrainingEngine'
 import { executeScheduledTrainingSessions } from '@/engine/training/ScheduledTrainingEngine'
 import { openDraft, progressDraftAi } from '@/engine/draft'
 import { arriveSignedRecruits, generateRecruitingPool, progressAiRecruiting, resolveRecruitingCommitments } from '@/engine/recruiting'
@@ -13,10 +13,16 @@ import { processCoachFinancesForMonth } from '@/engine/coachFinances'
 import { decayMemoriesForMonth } from '@/engine/memory'
 import { progressScoutingAssignments } from '@/engine/scouting'
 
-/** Advances only the simulation date, leaving game resolution to other services. */
+/**
+ * Advances only the simulation date, leaving game resolution to other services.
+ * `executeScheduledTrainingSessions` is the sole automatic training authority: legacy
+ * `TeamTrainingPlan`/`IndividualTrainingPlan` + `executeTeamTraining`/`executeEligibleTraining`
+ * remain for save compatibility, defaults, and selectors, but are no longer auto-applied here
+ * to avoid a team/player receiving two independent training workloads on the same day.
+ */
 export function advanceDay(world: GameWorld): GameWorld {
   const advanced = updateGameWorld(world, { currentDate: addDays(world.currentDate, 1) })
-  const maintained = progressAcademicTerms(progressRecruiting(executeScheduledTrainingSessions(executeEligibleTraining(reconcileExpiredPlayerContracts(recoverCareerFatigueForDay(advanced), advanced.currentDate)))))
+  const maintained = progressAcademicTerms(progressRecruiting(executeScheduledTrainingSessions(reconcileExpiredPlayerContracts(recoverCareerFatigueForDay(advanced), advanced.currentDate))))
   const withNil = maintained.currentDate.slice(-2) === '01' ? progressAiNil(progressNilLifecycle(maintained)) : progressNilLifecycle(maintained)
   const withBoosters = withNil.currentDate.slice(-2) === '01' ? decayMemoriesForMonth(processCoachFinancesForMonth(progressAiBoosters(withNil))) : withNil
   const enforced = progressScoutingAssignments(progressEnforcement(withBoosters))

@@ -2,9 +2,22 @@ import { addDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus
 import { clampCareerFatigue } from '@/domain/careerFatigue/CareerFatigue'
 import { clampTeamCohesion, findCollidingSession, trainingDefinitionById, trainingLoad, type ScheduledTrainingSession, type TrainingDefinition } from '@/domain/training'
 import { applyMoraleEvent, type MoraleEvent } from '@/domain/morale'
+import { addDays, type GameDate } from '@/domain/date'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import type { CanonicalRatingKey } from '@/domain/player'
 import type { PlayerId, TeamId } from '@/domain/ids'
+
+/**
+ * The earliest date a newly-scheduled session is guaranteed to actually execute.
+ *
+ * advanceDay() increments world.currentDate *before* running executeScheduledTrainingSessions,
+ * so a session scheduled for world.currentDate after the current day has already started being
+ * processed will never be picked up by a normal advanceDay() call. Scheduling for the next date
+ * guarantees the very next advanceDay() executes it exactly once.
+ */
+export function nextEligibleTrainingDate(currentDate: GameDate): GameDate {
+  return addDays(currentDate, 1)
+}
 
 /** Schedules a new session after validating it does not collide with any existing scheduled session. */
 export function scheduleTrainingSession(world: GameWorld, session: ScheduledTrainingSession): GameWorld {

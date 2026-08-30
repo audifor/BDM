@@ -7,12 +7,13 @@ import {
 import type { GameWorld } from "@/domain/world";
 import { getCareerFatigueForPlayer, getDevelopmentStimulusForPlayer, getTeamRoster } from "@/domain/world";
 import { getUserTeam } from "@/engine/calendar";
-import { dailyLoadStatusForTeam, dailyScheduledLoad } from "@/engine/training";
+import { dailyLoadStatusForTeam, dailyScheduledLoad, nextEligibleTrainingDate } from "@/engine/training";
 import { addDays, formatGameDate, isoWeekNumber, parseGameDate, type GameDate } from "@/domain/date";
 import { BASKETBALL_RATING_KEYS, type BasketballRatingKey, type Player } from "@/domain/player";
 import type { Team } from "@/domain/team";
 import type { TeamId, PlayerId } from "@/domain/ids";
-import { TRAINING_CATALOG, type DailyLoadStatus, type ScheduledTrainingSession, type TrainingFocus, type TrainingIntensity as DomainTrainingIntensity, type TrainingDefinition, type UserTrainingModule } from "@/domain/training";
+import { createEntityId } from "@/domain/ids";
+import { TRAINING_CATALOG, trainingLoad, type DailyLoadStatus, type ScheduledTrainingSession, type TrainingCategory, type TrainingFocus, type TrainingIntensity as DomainTrainingIntensity, type TrainingDefinition, type TrainingScope, type UserTrainingModule } from "@/domain/training";
 import { ATTRIBUTE_LABELS } from "@/ui/attributeLabels";
 import { selectLatestUserTrainingSession, selectUserTeamScheduledSessions, selectUserTrainingModules, selectUserTrainingPlan } from "@/stores/gameStore";
 import DraggableSubnav from "../club/components/DraggableSubnav";
@@ -194,7 +195,7 @@ export function TrainingPcbPage({
       ) : tab === "personal" ? (
         <PersonalTraining onAssignModule={onAssignModule} scheduledSessions={scheduledSessions} team={team} userModules={userModules} world={world} />
       ) : tab === "load" ? (
-        <LoadManagementInteractive scheduledSessions={scheduledSessions} team={team} world={world} />
+        <LoadManagementInteractive onScheduleSession={onScheduleSession} scheduledSessions={scheduledSessions} team={team} world={world} />
       ) : tab === "staff" ? (
         <StaffAssignments world={world} />
       ) : (
@@ -235,7 +236,7 @@ function TeamTraining({
   const weekLabel = anchor === undefined ? "Sin fecha de referencia" : `Semana ${isoWeekNumber(anchor)} · ${formatGameDate(anchor)} - ${formatGameDate(addDays(anchor, 6))}`;
   const saveSession = (input: { readonly startTime: string; readonly durationMinutes: number; readonly definitionId: string; readonly intensity: DomainTrainingIntensity }) => {
     if (editor === undefined || team === undefined) return;
-    const id = editor.session?.id ?? `session:${team.id}:${editor.date}:${input.startTime}:${Math.random().toString(36).slice(2, 8)}`;
+    const id = editor.session?.id ?? `session:${createEntityId()}`;
     onScheduleSession?.({
       id,
       teamId: team.id,
@@ -365,7 +366,7 @@ function TeamTraining({
             })}
           </div>
         </section>
-        <Calendar anchor={anchor} scheduledSessions={scheduledSessions} team={team} />
+        <Calendar anchor={anchor} team={team} world={world} />
       </div>
       {editor !== undefined && (
         <SessionModal
@@ -379,18 +380,19 @@ function TeamTraining({
 }
 function Calendar({
   anchor,
-  scheduledSessions,
+  world,
   team,
 }: {
   readonly anchor?: GameDate;
-  readonly scheduledSessions: readonly ScheduledTrainingSession[];
+  readonly world?: GameWorld;
   readonly team?: Team;
 }) {
   const monthStart = anchor === undefined ? undefined : parseGameDate(`${anchor.slice(0, 7)}-01`);
   const startWeekday = monthStart === undefined ? 1 : isoWeekday(monthStart);
   const gridStart = monthStart === undefined ? undefined : addDays(monthStart, -(startWeekday - 1));
   const cells = gridStart === undefined ? [] : Array.from({ length: 35 }, (_, index) => addDays(gridStart, index));
-  const loadStatusForDate = (date: GameDate): DailyLoadStatus | undefined => team === undefined ? undefined : dailyLoadStatusForTeamSessions(scheduledSessions, team.id, date);
+  // Consumes the canonical engine selector (dailyLoadStatusForTeam) rather than duplicating the load formula here.
+  const loadStatusForDate = (date: GameDate): DailyLoadStatus | undefined => world === undefined || team === undefined ? undefined : dailyLoadStatusForTeam(world, team.id, date);
   return (
     <aside className="pcb-training__calendar">
       <header>
@@ -402,7 +404,7 @@ function Calendar({
           <b key={x}>{x}</b>
         ))}
         {cells.map((date) => {
-          const hasSessions = team !== undefined && scheduledSessions.some((session) => session.teamId === team.id && session.date === date);
+          const hasSessions = world !== undefined && team !== undefined && Object.values(world.scheduledTrainingSessionsById).some((session) => session.teamId === team.id && session.date === date);
           const status = hasSessions ? loadStatusForDate(date) : undefined;
           return (
             <span className={hasSessions ? "is-train" : ""} key={date}>
@@ -417,22 +419,6 @@ function Calendar({
       </p>
     </aside>
   );
-}
-
-function dailyLoadStatusForTeamSessions(sessions: readonly ScheduledTrainingSession[], teamId: TeamId, date: GameDate): DailyLoadStatus {
-  const total = sessions
-    .filter((session) => session.teamId === teamId && session.date === date)
-    .reduce((sum, session) => {
-      const definition = TRAINING_CATALOG.find((entry) => entry.id === session.definitionId);
-      const load = trainingLoadFatigue(session.intensity);
-      return sum + load * (definition?.effects.fatigueMultiplier ?? 1) * (session.durationMinutes / 60);
-    }, 0);
-  if (total >= 150) return "VERY_HIGH";
-  if (total >= 90) return "HIGH";
-  return "OK";
-}
-function trainingLoadFatigue(intensity: DomainTrainingIntensity): number {
-  return intensity === "light" ? 2 : intensity === "normal" ? 5 : 9;
 }
 
 function SessionModal({
@@ -450,7 +436,7 @@ function SessionModal({
   const [intensity, setIntensity] = useState<"Baja" | "Media" | "Alta">(initial === undefined ? "Media" : INTENSITY_ES[initial.intensity]);
   const definition = TRAINING_CATALOG.find((entry) => entry.id === definitionId) ?? initialDefinition;
   const durationMinutes = definition.durationMinutes;
-  const load = trainingLoadFatigue(INTENSITY_FROM_ES[intensity]);
+  const load = trainingLoad(INTENSITY_FROM_ES[intensity]).fatigue * definition.effects.fatigueMultiplier;
   return (
     <div className="pcb-training__modal">
       <section>
@@ -604,9 +590,9 @@ function PersonalTraining({
                       onAssignModule?.({
                         playerId: player.id,
                         moduleId: selectedModuleId,
-                        date: world.currentDate,
+                        date: nextEligibleTrainingDate(world.currentDate),
                         startTime: "09:00",
-                        sessionId: `session:${team.id}:${player.id}:${world.currentDate}:${Math.random().toString(36).slice(2, 8)}`,
+                        sessionId: `session:${createEntityId()}`,
                       });
                     }}
                     type="button"
@@ -622,14 +608,18 @@ function PersonalTraining({
     </main>
   );
 }
+const RECOVERY_DEFINITION_IDS = ["rest", "activeRecovery", "mobility", "lowLoadRecovery"] as const;
+
 function LoadManagementInteractive({
   world,
   team,
   scheduledSessions,
+  onScheduleSession,
 }: {
   readonly world?: GameWorld;
   readonly team?: Team;
   readonly scheduledSessions: readonly ScheduledTrainingSession[];
+  readonly onScheduleSession?: (session: ScheduledTrainingSession) => void;
 }) {
   const [query, setQuery] = useState("");
   const [riskOnly, setRiskOnly] = useState(false);
@@ -641,6 +631,10 @@ function LoadManagementInteractive({
     "ascending" | "descending"
   >("ascending");
   const [view, setView] = useState<"Principal" | "Riesgo" | "Recuperación">("Principal");
+  const [recoveryDefinitionId, setRecoveryDefinitionId] = useState<string>(RECOVERY_DEFINITION_IDS[0]);
+  const [recoveryDate, setRecoveryDate] = useState<string>("");
+  const [recoveryTime, setRecoveryTime] = useState("09:00");
+  const [recoveryScheduled, setRecoveryScheduled] = useState(false);
   const [columns, setColumns] = useState<readonly string[]>([
     "JUGADOR",
     "POS",
@@ -702,7 +696,7 @@ function LoadManagementInteractive({
           <span>Control de cargas</span>
         </header>
         <div className="pcb-training__metrics">
-          <Metric icon="⌁" label="ALERTA LESIÓN" tone="danger" value={String(riskCount)} />
+          <Metric icon="⌁" label="ALERTA DE FATIGA" tone="danger" value={String(riskCount)} />
           <Metric icon="✓" label="CARGA ÓPTIMA" tone="good" value={String(optimalCount)} />
           <Metric icon="▰" label="FATIGA MEDIA" tone="warn" value={`${averageFatigue.toFixed(0)}%`} />
         </div>
@@ -749,9 +743,62 @@ function LoadManagementInteractive({
           </div>
         </div>
         {view === "Recuperación" && (
-          <p className="pcb-training__filters">
-            Programa sesiones de recuperación (Descanso, Recuperación activa, Movilidad) desde la pestaña Equipo o Individual para reducir la fatiga real de estos jugadores.
-          </p>
+          <div className="pcb-training__filters">
+            {selected === undefined ? (
+              <span>Selecciona un jugador en la tabla para programar su recuperación.</span>
+            ) : (
+              <>
+                <label>
+                  Tipo
+                  <select onChange={(event) => setRecoveryDefinitionId(event.target.value)} value={recoveryDefinitionId}>
+                    {RECOVERY_DEFINITION_IDS.map((id) => (
+                      <option key={id} value={id}>
+                        {TRAINING_CATALOG.find((entry) => entry.id === id)!.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Fecha
+                  <input
+                    onChange={(event) => setRecoveryDate(event.target.value)}
+                    type="date"
+                    value={recoveryDate || (world === undefined ? "" : nextEligibleTrainingDate(world.currentDate))}
+                  />
+                </label>
+                <label>
+                  Inicio
+                  <input onChange={(event) => setRecoveryTime(event.target.value)} type="time" value={recoveryTime} />
+                </label>
+                <button
+                  className="is-primary"
+                  disabled={world === undefined || team === undefined}
+                  onClick={() => {
+                    if (world === undefined || team === undefined || selected === undefined) return;
+                    const definition = TRAINING_CATALOG.find((entry) => entry.id === recoveryDefinitionId)!;
+                    const date = (recoveryDate || nextEligibleTrainingDate(world.currentDate)) as GameDate;
+                    onScheduleSession?.({
+                      id: `session:${createEntityId()}`,
+                      teamId: team.id,
+                      date,
+                      startTime: recoveryTime,
+                      durationMinutes: definition.durationMinutes,
+                      scope: "individual",
+                      playerId: selected as PlayerId,
+                      definitionId: definition.id,
+                      intensity: definition.defaultIntensity,
+                      status: "scheduled",
+                    });
+                    setRecoveryScheduled(true);
+                  }}
+                  type="button"
+                >
+                  Programar recuperación
+                </button>
+                {recoveryScheduled && <span>Recuperación programada.</span>}
+              </>
+            )}
+          </div>
         )}
         {filtersOpen && (
           <div className="pcb-training__filters">
@@ -917,6 +964,11 @@ function StaffAssignments({ world }: { readonly world?: GameWorld }) {
     </main>
   );
 }
+/** Scopes a user module may choose, constrained by the base definition's own supported scope. */
+function allowedScopesForBase(base: TrainingDefinition): readonly TrainingScope[] {
+  return base.scope === "both" ? ["team", "individual"] : [base.scope];
+}
+
 function TrainingModules({
   userModules,
   onSaveModule,
@@ -929,10 +981,14 @@ function TrainingModules({
   const [configuring, setConfiguring] = useState<TrainingDefinition | null>(null);
   const [creating, setCreating] = useState(false);
   const [draftName, setDraftName] = useState("");
+  const [draftBaseId, setDraftBaseId] = useState(TRAINING_CATALOG[0]!.id);
+  const [draftScope, setDraftScope] = useState<TrainingScope>(allowedScopesForBase(TRAINING_CATALOG[0]!)[0]!);
   const [draftIntensity, setDraftIntensity] = useState<"Baja" | "Media" | "Alta">("Media");
+  const draftBase = TRAINING_CATALOG.find((entry) => entry.id === draftBaseId) ?? TRAINING_CATALOG[0]!;
+  const draftAllowedScopes = allowedScopesForBase(draftBase);
   const allEntries = [
     ...TRAINING_CATALOG.map((entry) => ({ kind: "builtin" as const, id: entry.id, name: entry.name, category: entry.category, scope: entry.scope })),
-    ...userModules.map((module) => ({ kind: "user" as const, id: module.id, name: module.name, category: TRAINING_CATALOG.find((entry) => entry.id === module.baseDefinitionId)?.category ?? "shooting", scope: module.scope })),
+    ...userModules.map((module) => ({ kind: "user" as const, id: module.id, name: module.name, category: TRAINING_CATALOG.find((entry) => entry.id === module.baseDefinitionId)?.category ?? ("shooting" as TrainingCategory), scope: module.scope })),
   ];
   return (
     <main className="pcb-training__bento">
@@ -942,7 +998,15 @@ function TrainingModules({
           <span>{allEntries.length} módulos</span>
         </header>
         <div className="pcb-training__control-actions">
-          <button className="is-primary" onClick={() => setCreating(true)} type="button">
+          <button
+            className="is-primary"
+            onClick={() => {
+              setDraftBaseId(TRAINING_CATALOG[0]!.id);
+              setDraftScope(allowedScopesForBase(TRAINING_CATALOG[0]!)[0]!);
+              setCreating(true);
+            }}
+            type="button"
+          >
             + Crear módulo
           </button>
         </div>
@@ -959,9 +1023,14 @@ function TrainingModules({
                   Ver
                 </button>
               ) : (
-                <button onClick={() => onDeleteModule?.(entry.id)} type="button">
-                  Eliminar
-                </button>
+                <>
+                  <button onClick={() => setConfiguring(TRAINING_CATALOG.find((item) => item.id === userModules.find((module) => module.id === entry.id)!.baseDefinitionId)!)} type="button">
+                    Ver
+                  </button>
+                  <button onClick={() => onDeleteModule?.(entry.id)} type="button">
+                    Eliminar
+                  </button>
+                </>
               )}
             </article>
           ))}
@@ -977,6 +1046,7 @@ function TrainingModules({
               </header>
               <p>Categoría: {configuring.category} · Alcance: {configuring.scope}</p>
               <p>Duración por defecto: {configuring.durationMinutes} min</p>
+              <EffectProfilePreview definition={configuring} />
               <footer>
                 <button className="is-primary" onClick={() => setConfiguring(null)} type="button">
                   Cerrar
@@ -998,6 +1068,36 @@ function TrainingModules({
                 Nombre
                 <input onChange={(event) => setDraftName(event.target.value)} type="text" value={draftName} />
               </label>
+              <label>
+                Tipo base
+                <select
+                  onChange={(event) => {
+                    const base = TRAINING_CATALOG.find((entry) => entry.id === event.target.value) ?? TRAINING_CATALOG[0]!;
+                    setDraftBaseId(base.id);
+                    setDraftScope(allowedScopesForBase(base)[0]!);
+                  }}
+                  value={draftBaseId}
+                >
+                  {TRAINING_CATALOG.map((entry) => (
+                    <option key={entry.id} value={entry.id}>
+                      {entry.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Alcance
+                <select
+                  onChange={(event) => setDraftScope(event.target.value as TrainingScope)}
+                  value={draftScope}
+                >
+                  {draftAllowedScopes.map((scope) => (
+                    <option key={scope} value={scope}>
+                      {scope === "team" ? "Equipo" : "Individual"}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <div className="pcb-training__intensity">
                 {(["Baja", "Media", "Alta"] as const).map((value) => (
                   <button
@@ -1010,6 +1110,7 @@ function TrainingModules({
                   </button>
                 ))}
               </div>
+              <EffectProfilePreview definition={draftBase} />
               <footer>
                 <button onClick={() => setCreating(false)} type="button">
                   Cancelar
@@ -1019,10 +1120,10 @@ function TrainingModules({
                   disabled={draftName.trim().length === 0}
                   onClick={() => {
                     onSaveModule?.({
-                      id: `module:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`,
+                      id: `module:${createEntityId()}`,
                       name: draftName.trim(),
-                      baseDefinitionId: TRAINING_CATALOG[0]!.id,
-                      scope: "individual",
+                      baseDefinitionId: draftBase.id,
+                      scope: draftScope,
                       intensity: INTENSITY_FROM_ES[draftIntensity],
                     });
                     setDraftName("");
@@ -1038,5 +1139,23 @@ function TrainingModules({
         )}
       </section>
     </main>
+  );
+}
+
+/** Read-only preview of a definition's real, inherited, bounded effect profile — no arbitrary numeric editing. */
+function EffectProfilePreview({ definition }: { readonly definition: TrainingDefinition }) {
+  const effects = definition.effects;
+  return (
+    <div className="pcb-training__effects">
+      <strong>Perfil de efectos heredado</strong>
+      <span>
+        Atributos objetivo: {effects.targetRatings.length === 0 ? "ninguno" : effects.targetRatings.join(", ")}
+      </span>
+      <span>Estímulo de desarrollo: {effects.developmentWeight.toFixed(2)}×</span>
+      <span>Carga/fatiga: {effects.fatigueMultiplier.toFixed(2)}×</span>
+      {effects.moraleDelta !== 0 && <span>Moral: {effects.moraleDelta > 0 ? "+" : ""}{effects.moraleDelta}</span>}
+      {effects.cohesionDelta !== 0 && <span>Cohesión de equipo: {effects.cohesionDelta > 0 ? "+" : ""}{effects.cohesionDelta}</span>}
+      <span>Riesgo de lesión (metadato, no aplicado por el motor): {effects.injuryRiskWeight.toFixed(2)}×</span>
+    </div>
   );
 }
