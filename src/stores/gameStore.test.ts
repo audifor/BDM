@@ -41,7 +41,7 @@ describe('gameStore', () => {
     const world = useGameStore.getState().world!
     const teamId = Object.values(world.teams).find((team) => team.coachId === world.userCoachId)!.id
 
-    useGameStore.getState().scheduleTrainingSession({ id: 'ui-session', teamId, date: world.currentDate, startTime: '09:00', durationMinutes: 60, scope: 'team', definitionId: 'threePoint', intensity: 'normal', status: 'scheduled' })
+    useGameStore.getState().scheduleTrainingSession({ id: 'ui-session', teamId, date: nextEligibleTrainingDate(world.currentDate), startTime: '09:00', durationMinutes: 60, scope: 'team', definitionId: 'threePoint', intensity: 'normal', status: 'scheduled' })
     expect(selectUserTeamScheduledSessions(useGameStore.getState().world)).toHaveLength(1)
 
     useGameStore.getState().cancelTrainingSession('ui-session')
@@ -64,11 +64,36 @@ describe('gameStore', () => {
     const team = Object.values(world.teams).find((item) => item.coachId === world.userCoachId)!
     const playerId = team.rosterPlayerIds[0]!
 
-    useGameStore.getState().assignTrainingModuleToPlayer({ playerId, moduleId: 'threePoint', date: world.currentDate, startTime: '09:00', sessionId: 'assigned-session' })
+    useGameStore.getState().assignTrainingModuleToPlayer({ playerId, moduleId: 'threePoint', date: nextEligibleTrainingDate(world.currentDate), startTime: '09:00', sessionId: 'assigned-session' })
 
     const sessions = selectUserTeamScheduledSessions(useGameStore.getState().world)
     expect(sessions).toHaveLength(1)
     expect(sessions[0]).toMatchObject({ scope: 'individual', playerId, definitionId: 'threePoint' })
+  })
+
+  it('schedules a user-created team module through the store into the Team planner, and it executes through the canonical engine on advanceDay', () => {
+    useGameStore.getState().newGame()
+    const world = useGameStore.getState().world!
+    const teamId = Object.values(world.teams).find((team) => team.coachId === world.userCoachId)!.id
+
+    useGameStore.getState().saveUserTrainingModule({ id: 'team-user-module', name: 'Custom Cohesion', baseDefinitionId: 'teamCohesion', scope: 'team', intensity: 'high' })
+    expect(selectUserTrainingModules(useGameStore.getState().world)).toHaveLength(1)
+
+    useGameStore.getState().scheduleTeamModuleSession({ moduleId: 'team-user-module', date: nextEligibleTrainingDate(world.currentDate), startTime: '09:00', durationMinutes: 60, sessionId: 'team-user-session' })
+    const scheduled = selectUserTeamScheduledSessions(useGameStore.getState().world)
+    expect(scheduled).toHaveLength(1)
+    expect(scheduled[0]).toMatchObject({ scope: 'team', teamId, definitionId: 'teamCohesion', intensity: 'high', status: 'scheduled' })
+
+    useGameStore.getState().advanceDay()
+    expect(selectUserTeamScheduledSessions(useGameStore.getState().world)[0]!.status).toBe('completed')
+  })
+
+  it('rejects scheduling a training session dated today or in the past through the store', () => {
+    useGameStore.getState().newGame()
+    const world = useGameStore.getState().world!
+    const teamId = Object.values(world.teams).find((team) => team.coachId === world.userCoachId)!.id
+    expect(() => useGameStore.getState().scheduleTrainingSession({ id: 'dead-session', teamId, date: world.currentDate, startTime: '09:00', durationMinutes: 60, scope: 'team', definitionId: 'threePoint', intensity: 'normal', status: 'scheduled' })).toThrow(RangeError)
+    expect(selectUserTeamScheduledSessions(useGameStore.getState().world)).toHaveLength(0)
   })
 
   it('UI/store individual assignment schedules for a date advanceDay actually reaches, and normal advanceDay completes it exactly once with real effects (no direct engine invocation)', () => {

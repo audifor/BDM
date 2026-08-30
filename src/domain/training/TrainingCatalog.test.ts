@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { CANONICAL_RATING_KEYS } from '@/domain/player'
-import { TRAINING_CATALOG, trainingDefinitionById } from './TrainingCatalog'
+import { isPositionEligible, TRAINING_CATALOG, trainingDefinitionById } from './TrainingCatalog'
 
 describe('TRAINING_CATALOG', () => {
   it('is a substantial built-in catalog covering all required categories', () => {
@@ -37,5 +37,20 @@ describe('TRAINING_CATALOG', () => {
   it('looks up a known definition and throws for an unknown id', () => {
     expect(trainingDefinitionById('threePoint').category).toBe('shooting')
     expect(() => trainingDefinitionById('not-real')).toThrow(RangeError)
+  })
+
+  it('isPositionEligible enforces eligiblePositions, and allows any position when unrestricted', () => {
+    const postScoring = trainingDefinitionById('postScoring')
+    expect(isPositionEligible(postScoring, 'PF')).toBe(true)
+    expect(isPositionEligible(postScoring, 'C')).toBe(true)
+    expect(isPositionEligible(postScoring, 'PG')).toBe(false)
+    expect(isPositionEligible(postScoring, 'SG')).toBe(false)
+    expect(isPositionEligible(postScoring, 'SF')).toBe(false)
+
+    const threePoint = trainingDefinitionById('threePoint')
+    expect(threePoint.eligiblePositions).toBeUndefined()
+    for (const position of ['PG', 'SG', 'SF', 'PF', 'C'] as const) {
+      expect(isPositionEligible(threePoint, position)).toBe(true)
+    }
   })
 })

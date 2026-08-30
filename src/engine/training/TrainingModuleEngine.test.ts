@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { advanceDay } from '@/engine/calendar'
-import { assignTrainingModuleToPlayer, createOrUpdateUserTrainingModule, dailyLoadStatusForTeam, deleteUserTrainingModule, executeScheduledTrainingSessions } from '@/engine/training'
+import { assignTrainingModuleToPlayer, createOrUpdateUserTrainingModule, dailyLoadStatusForTeam, deleteUserTrainingModule, executeScheduledTrainingSessions, scheduleTeamModuleSession } from '@/engine/training'
 import { nextEligibleTrainingDate } from './ScheduledTrainingEngine'
 
 describe('TrainingModuleEngine', () => {
@@ -52,6 +52,23 @@ describe('TrainingModuleEngine', () => {
     expect(() => assignTrainingModuleToPlayer(world, { teamId, playerId, moduleId: 'teamCohesion', date: nextEligibleTrainingDate(world.currentDate), startTime: '09:00', sessionId: 's3' })).toThrow(RangeError)
   })
 
+  it('accepts assigning a position-restricted definition to an eligible player (PF/C for Post Scoring)', () => {
+    const world = createNewGame()
+    const teamId = Object.values(world.teams)[0]!.id
+    const eligiblePlayerId = world.teams[teamId]!.rosterPlayerIds.find((id) => ['PF', 'C'].includes(world.players[id]!.basketball.primaryPosition))
+    expect(eligiblePlayerId).toBeDefined()
+    const scheduled = assignTrainingModuleToPlayer(world, { teamId, playerId: eligiblePlayerId!, moduleId: 'postScoring', date: nextEligibleTrainingDate(world.currentDate), startTime: '09:00', sessionId: 's5' })
+    expect(scheduled.scheduledTrainingSessionsById['s5']).toMatchObject({ definitionId: 'postScoring', status: 'scheduled' })
+  })
+
+  it('rejects assigning a position-restricted definition to an ineligible player (PG for Post Scoring, PF/C only)', () => {
+    const world = createNewGame()
+    const teamId = Object.values(world.teams)[0]!.id
+    const ineligiblePlayerId = world.teams[teamId]!.rosterPlayerIds.find((id) => world.players[id]!.basketball.primaryPosition === 'PG')
+    expect(ineligiblePlayerId).toBeDefined()
+    expect(() => assignTrainingModuleToPlayer(world, { teamId, playerId: ineligiblePlayerId!, moduleId: 'postScoring', date: nextEligibleTrainingDate(world.currentDate), startTime: '09:00', sessionId: 's6' })).toThrow(RangeError)
+  })
+
   it('assignment through the store/UI path executes exactly once via a normal advanceDay', () => {
     const world = createNewGame()
     const teamId = Object.values(world.teams)[0]!.id
@@ -60,5 +77,26 @@ describe('TrainingModuleEngine', () => {
     const advanced = advanceDay(scheduled)
     expect(advanced.scheduledTrainingSessionsById['s4']!.status).toBe('completed')
     expect(dailyLoadStatusForTeam(advanced, teamId, advanced.currentDate)).toBe('OK')
+  })
+
+  it('a user-created team module is schedulable into the Team planner: created -> scheduled -> advanceDay -> completes once -> inherited effects applied', () => {
+    const world = createNewGame()
+    const teamId = Object.values(world.teams)[0]!.id
+    const playerId = world.teams[teamId]!.rosterPlayerIds[0]!
+    const beforeCohesion = world.teamCohesionByTeamId[teamId]!
+
+    const withModule = createOrUpdateUserTrainingModule(world, { id: 'my-cohesion', name: 'My Cohesion Drill', baseDefinitionId: 'teamCohesion', scope: 'team', intensity: 'high' })
+    const date = nextEligibleTrainingDate(withModule.currentDate)
+    const scheduled = scheduleTeamModuleSession(withModule, { teamId, moduleId: 'my-cohesion', date, startTime: '09:00', durationMinutes: 60, sessionId: 'team-user-session' })
+    expect(scheduled.scheduledTrainingSessionsById['team-user-session']).toMatchObject({ scope: 'team', definitionId: 'teamCohesion', intensity: 'high', status: 'scheduled' })
+
+    const advanced = advanceDay(scheduled)
+    expect(advanced.scheduledTrainingSessionsById['team-user-session']!.status).toBe('completed')
+    // Re-advancing must not re-execute it a second time.
+    const advancedTwice = advanceDay(advanced)
+    expect(advancedTwice.teamCohesionByTeamId[teamId]).toBe(advanced.teamCohesionByTeamId[teamId])
+    expect(advanced.teamCohesionByTeamId[teamId]!).toBeGreaterThan(beforeCohesion)
+    const stimulusTotal = Object.values(advanced.developmentStimulusByPlayerId[playerId]!.byRating).reduce((sum, value) => sum + value, 0)
+    expect(stimulusTotal).toBeGreaterThanOrEqual(0)
   })
 })

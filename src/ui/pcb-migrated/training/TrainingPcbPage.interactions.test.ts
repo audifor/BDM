@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import '@testing-library/jest-dom/vitest'
 import { createNewGame } from '@/app/game'
 import { getUserTeam } from '@/engine/calendar'
+import { nextEligibleTrainingDate } from '@/engine/training'
 import { selectUserTrainingPlan } from '@/stores/gameStore'
 import { parseGameDate } from '@/domain/date'
 import { TrainingPcbPage } from './TrainingPcbPage'
@@ -73,21 +74,81 @@ describe('TrainingPcbPage / interactions', () => {
     expect(screen.getByText('2026-08-10 - 2026-08-16')).toBeInTheDocument()
   })
 
-  it('opening the new-session modal for a real team shows a real catalog definition and calls onScheduleSession with real domain data', () => {
+  it('opening the new-session modal for a real team shows a real catalog definition and calls onScheduleTeamModule with real domain data', () => {
     const world = createNewGame()
-    const onScheduleSession = vi.fn()
-    render(createElement(TrainingPcbPage, { world, onScheduleSession }))
-    fireEvent.click(screen.getAllByRole('button', { name: '+ Sesión' })[0]!)
+    const onScheduleTeamModule = vi.fn()
+    render(createElement(TrainingPcbPage, { world, onScheduleTeamModule }))
+    // The first "+ Sesión" button belongs to the current week's Monday, which can be today/past
+    // relative to world.currentDate and is therefore disabled; use the last enabled button instead.
+    const buttons = screen.getAllByRole('button', { name: '+ Sesión' })
+    const enabled = buttons.find((button) => !(button as HTMLButtonElement).disabled)!
+    fireEvent.click(enabled)
 
     const modal = screen.getByRole('heading', { name: 'Nueva sesión' }).closest('section') as HTMLElement
     expect(within(modal).getByText(/Carga \d+ · /)).toBeInTheDocument()
 
     fireEvent.click(within(modal).getByRole('button', { name: 'Guardar sesión' }))
 
-    expect(onScheduleSession).toHaveBeenCalledTimes(1)
-    const scheduled = onScheduleSession.mock.calls[0]![0]
-    expect(scheduled.scope).toBe('team')
-    expect(scheduled.status).toBe('scheduled')
+    expect(onScheduleTeamModule).toHaveBeenCalledTimes(1)
+    const scheduled = onScheduleTeamModule.mock.calls[0]![0]
+    expect(scheduled.moduleId).toBeDefined()
+  })
+
+  it('the Team planner disables scheduling for today/past dates and truthfully labels why', () => {
+    const world = createNewGame()
+    render(createElement(TrainingPcbPage, { world }))
+    const buttons = screen.getAllByRole('button', { name: '+ Sesión' }) as HTMLButtonElement[]
+    expect(buttons.some((button) => button.disabled)).toBe(true)
+    expect(buttons.some((button) => !button.disabled)).toBe(true)
+  })
+
+  it('a user-created team module appears and is selectable in the Team planner session editor', () => {
+    const base = createNewGame()
+    const world = {
+      ...base,
+      userTrainingModulesById: {
+        ...base.userTrainingModulesById,
+        'team-user-module': { id: 'team-user-module', name: 'Mi Cohesión de Equipo', baseDefinitionId: 'teamCohesion', scope: 'team' as const, intensity: 'high' as const },
+      },
+    }
+    const onScheduleTeamModule = vi.fn()
+    render(createElement(TrainingPcbPage, { world, onScheduleTeamModule }))
+    const buttons = screen.getAllByRole('button', { name: '+ Sesión' })
+    const enabled = buttons.find((button) => !(button as HTMLButtonElement).disabled)!
+    fireEvent.click(enabled)
+
+    const modal = screen.getByRole('heading', { name: 'Nueva sesión' }).closest('section') as HTMLElement
+    const typeSelect = within(modal).getByLabelText('Tipo') as HTMLSelectElement
+    expect(within(typeSelect).getByText('Mi Cohesión de Equipo')).toBeInTheDocument()
+
+    fireEvent.change(typeSelect, { target: { value: 'team-user-module' } })
+    fireEvent.click(within(modal).getByRole('button', { name: 'Guardar sesión' }))
+
+    expect(onScheduleTeamModule).toHaveBeenCalledTimes(1)
+    expect(onScheduleTeamModule.mock.calls[0]![0]).toMatchObject({ moduleId: 'team-user-module' })
+  })
+
+  it('a scheduling collision from the store is caught and shown as inline feedback, not an uncaught error', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const date = nextEligibleTrainingDate(base.currentDate)
+    const world = {
+      ...base,
+      scheduledTrainingSessionsById: {
+        'existing-session': { id: 'existing-session', teamId: team.id, date, startTime: '10:00', durationMinutes: 90, scope: 'team' as const, definitionId: 'threePoint', intensity: 'normal' as const, status: 'scheduled' as const },
+      },
+    }
+    const onScheduleTeamModule = vi.fn(() => {
+      throw new RangeError('Session collides with existing session existing-session')
+    })
+    render(createElement(TrainingPcbPage, { world, onScheduleTeamModule }))
+    const buttons = screen.getAllByRole('button', { name: '+ Sesión' });
+    // Click the button for the day the colliding session already occupies.
+    fireEvent.click(buttons[buttons.length - 1]!);
+
+    const modal = screen.getByRole('heading', { name: 'Nueva sesión' }).closest('section') as HTMLElement
+    expect(() => fireEvent.click(within(modal).getByRole('button', { name: 'Guardar sesión' }))).not.toThrow()
+    expect(within(modal).getByText(/colides|colisiona|collides/i)).toBeInTheDocument()
   })
 
   it('the Modules tab lists the real built-in catalog and creating a module lets the user pick base type + scope, calling onSaveModule with real domain data', () => {

@@ -145,3 +145,8 @@ export function trainingDefinitionById(id: string): TrainingDefinition {
   if (!found) throw new RangeError(`Unknown training definition: ${id}`)
   return found
 }
+
+/** True if a definition has no position restriction, or the given position is one of its eligible positions. */
+export function isPositionEligible(definition: TrainingDefinition, position: import('@/domain/primitives').BasketballPosition): boolean {
+  return definition.eligiblePositions === undefined || definition.eligiblePositions.includes(position)
+}

@@ -151,6 +151,7 @@ export function TrainingPcbPage({
   onIntensity,
   onFocus,
   onScheduleSession,
+  onScheduleTeamModule,
   onCancelSession,
   onSaveModule,
   onDeleteModule,
@@ -161,6 +162,7 @@ export function TrainingPcbPage({
   readonly onIntensity?: (value: DomainTrainingIntensity) => void;
   readonly onFocus?: (value: TrainingFocus) => void;
   readonly onScheduleSession?: (session: ScheduledTrainingSession) => void;
+  readonly onScheduleTeamModule?: (input: { readonly moduleId: string; readonly date: GameDate; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string }) => void;
   readonly onCancelSession?: (sessionId: string) => void;
   readonly onSaveModule?: (module: UserTrainingModule) => void;
   readonly onDeleteModule?: (moduleId: string) => void;
@@ -187,9 +189,10 @@ export function TrainingPcbPage({
           onCancelSession={onCancelSession}
           onFocus={onFocus}
           onIntensity={onIntensity}
-          onScheduleSession={onScheduleSession}
+          onScheduleTeamModule={onScheduleTeamModule}
           scheduledSessions={scheduledSessions}
           team={team}
+          userModules={userModules}
           world={world}
         />
       ) : tab === "personal" ? (
@@ -211,7 +214,8 @@ function TeamTraining({
   onIntensity,
   onFocus,
   scheduledSessions,
-  onScheduleSession,
+  userModules,
+  onScheduleTeamModule,
   onCancelSession,
 }: {
   readonly world?: GameWorld;
@@ -219,7 +223,8 @@ function TeamTraining({
   readonly onIntensity?: (value: DomainTrainingIntensity) => void;
   readonly onFocus?: (value: TrainingFocus) => void;
   readonly scheduledSessions: readonly ScheduledTrainingSession[];
-  readonly onScheduleSession?: (session: ScheduledTrainingSession) => void;
+  readonly userModules: readonly UserTrainingModule[];
+  readonly onScheduleTeamModule?: (input: { readonly moduleId: string; readonly date: GameDate; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string }) => void;
   readonly onCancelSession?: (sessionId: string) => void;
 }) {
   const [week, setWeek] = useState(0);
@@ -227,6 +232,7 @@ function TeamTraining({
     readonly date: GameDate;
     readonly session?: ScheduledTrainingSession;
   }>();
+  const [editorError, setEditorError] = useState<string>();
   const trainingPlan = world === undefined ? undefined : selectUserTrainingPlan(world);
   const latestSession = world === undefined ? undefined : selectLatestUserTrainingSession(world);
   const impact = world !== undefined && team !== undefined ? getTrainingImpact(world, team.id) : undefined;
@@ -234,21 +240,22 @@ function TeamTraining({
   const days = anchor === undefined ? [] : DAY_NAMES.map((name, index) => ({ name, date: addDays(anchor, index) }));
   const sessionsForDate = (date: GameDate) => scheduledSessions.filter((session) => session.date === date && session.status === "scheduled").sort((a, b) => a.startTime.localeCompare(b.startTime));
   const weekLabel = anchor === undefined ? "Sin fecha de referencia" : `Semana ${isoWeekNumber(anchor)} · ${formatGameDate(anchor)} - ${formatGameDate(addDays(anchor, 6))}`;
-  const saveSession = (input: { readonly startTime: string; readonly durationMinutes: number; readonly definitionId: string; readonly intensity: DomainTrainingIntensity }) => {
+  const teamModules = userModules.filter((module) => module.scope !== "individual");
+  const saveSession = (input: { readonly startTime: string; readonly durationMinutes: number; readonly moduleId: string }) => {
     if (editor === undefined || team === undefined) return;
-    const id = editor.session?.id ?? `session:${createEntityId()}`;
-    onScheduleSession?.({
-      id,
-      teamId: team.id,
-      date: editor.date,
-      startTime: input.startTime,
-      durationMinutes: input.durationMinutes,
-      scope: "team",
-      definitionId: input.definitionId,
-      intensity: input.intensity,
-      status: "scheduled",
-    });
-    setEditor(undefined);
+    setEditorError(undefined);
+    try {
+      onScheduleTeamModule?.({
+        moduleId: input.moduleId,
+        date: editor.date,
+        startTime: input.startTime,
+        durationMinutes: input.durationMinutes,
+        sessionId: editor.session?.id ?? `session:${createEntityId()}`,
+      });
+      setEditor(undefined);
+    } catch (error) {
+      setEditorError(error instanceof Error ? error.message : "No se pudo programar la sesión.");
+    }
   };
   return (
     <main className="pcb-training__bento pcb-training__team">
@@ -321,11 +328,20 @@ function TeamTraining({
           <div className="pcb-training__days">
             {days.map(({ name, date }) => {
               const sessions = sessionsForDate(date);
+              const isPastOrToday = world !== undefined && date <= world.currentDate;
               return (
                 <article className="pcb-training__day" key={date}>
                   <header>
                     <strong>{name}</strong>
-                    <button disabled={team === undefined} onClick={() => setEditor({ date })} type="button">
+                    <button
+                      disabled={team === undefined || isPastOrToday}
+                      onClick={() => {
+                        setEditorError(undefined);
+                        setEditor({ date });
+                      }}
+                      title={isPastOrToday ? "No se pueden programar sesiones para hoy o fechas pasadas" : undefined}
+                      type="button"
+                    >
                       + Sesión
                     </button>
                   </header>
@@ -370,9 +386,14 @@ function TeamTraining({
       </div>
       {editor !== undefined && (
         <SessionModal
+          error={editorError}
           initial={editor.session}
-          onClose={() => setEditor(undefined)}
+          onClose={() => {
+            setEditorError(undefined);
+            setEditor(undefined);
+          }}
           onSave={saveSession}
+          userModules={teamModules}
         />
       )}
     </main>
@@ -423,20 +444,29 @@ function Calendar({
 
 function SessionModal({
   initial,
+  userModules,
+  error,
   onClose,
   onSave,
 }: {
   readonly initial?: ScheduledTrainingSession;
+  readonly userModules: readonly UserTrainingModule[];
+  readonly error?: string;
   readonly onClose: () => void;
-  readonly onSave: (input: { readonly startTime: string; readonly durationMinutes: number; readonly definitionId: string; readonly intensity: DomainTrainingIntensity }) => void;
+  readonly onSave: (input: { readonly startTime: string; readonly durationMinutes: number; readonly moduleId: string }) => void;
 }) {
-  const initialDefinition = initial === undefined ? TRAINING_CATALOG[0]! : TRAINING_CATALOG.find((entry) => entry.id === initial.definitionId) ?? TRAINING_CATALOG[0]!;
+  const builtinOptions = TRAINING_CATALOG.filter((entry) => entry.scope !== "individual");
+  // A user-created team module is selected by its own module id, but resolves to its base
+  // definition's real effect profile/duration; its configured intensity is locked, not free-choice.
+  const initialModuleId = initial === undefined ? builtinOptions[0]!.id : initial.definitionId;
   const [startTime, setStartTime] = useState(initial?.startTime ?? "10:00");
-  const [definitionId, setDefinitionId] = useState(initialDefinition.id);
+  const [moduleId, setModuleId] = useState(initialModuleId);
   const [intensity, setIntensity] = useState<"Baja" | "Media" | "Alta">(initial === undefined ? "Media" : INTENSITY_ES[initial.intensity]);
-  const definition = TRAINING_CATALOG.find((entry) => entry.id === definitionId) ?? initialDefinition;
+  const selectedUserModule = userModules.find((module) => module.id === moduleId);
+  const definition = TRAINING_CATALOG.find((entry) => entry.id === (selectedUserModule?.baseDefinitionId ?? moduleId)) ?? builtinOptions[0]!;
+  const effectiveIntensity: DomainTrainingIntensity = selectedUserModule?.intensity ?? INTENSITY_FROM_ES[intensity];
   const durationMinutes = definition.durationMinutes;
-  const load = trainingLoad(INTENSITY_FROM_ES[intensity]).fatigue * definition.effects.fatigueMultiplier;
+  const load = trainingLoad(effectiveIntensity).fatigue * definition.effects.fatigueMultiplier;
   return (
     <div className="pcb-training__modal">
       <section>
@@ -449,14 +479,25 @@ function SessionModal({
         <label>
           Tipo
           <select
-            onChange={(event) => setDefinitionId(event.target.value)}
-            value={definitionId}
+            onChange={(event) => setModuleId(event.target.value)}
+            value={moduleId}
           >
-            {TRAINING_CATALOG.filter((entry) => entry.scope !== "individual").map((entry) => (
-              <option key={entry.id} value={entry.id}>
-                {entry.name}
-              </option>
-            ))}
+            <optgroup label="Catálogo">
+              {builtinOptions.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.name}
+                </option>
+              ))}
+            </optgroup>
+            {userModules.length > 0 && (
+              <optgroup label="Módulos del usuario">
+                {userModules.map((module) => (
+                  <option key={module.id} value={module.id}>
+                    {module.name}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
         </label>
         <div className="pcb-training__modal-grid">
@@ -477,8 +518,10 @@ function SessionModal({
           {(["Baja", "Media", "Alta"] as const).map((value) => (
             <button
               className={value === intensity ? "is-active" : ""}
+              disabled={selectedUserModule !== undefined}
               key={value}
               onClick={() => setIntensity(value)}
+              title={selectedUserModule !== undefined ? "Este módulo de usuario tiene una intensidad configurada" : undefined}
               type="button"
             >
               {value}
@@ -491,13 +534,18 @@ function SessionModal({
             Carga {load} · {definition.name} · Categoría {definition.category}
           </span>
         </div>
+        {error !== undefined && (
+          <div className="pcb-training__filters">
+            <span>{error}</span>
+          </div>
+        )}
         <footer>
           <button onClick={onClose} type="button">
             Cancelar
           </button>
           <button
             className="is-primary"
-            onClick={() => onSave({ startTime, durationMinutes, definitionId: definition.id, intensity: INTENSITY_FROM_ES[intensity] })}
+            onClick={() => onSave({ startTime, durationMinutes, moduleId })}
             type="button"
           >
             Guardar sesión
@@ -530,6 +578,7 @@ function PersonalTraining({
     ...userModules.filter((module) => module.scope !== "team").map((module) => ({ id: module.id, name: module.name })),
   ];
   const [selection, setSelection] = useState<Record<string, string>>({});
+  const [assignError, setAssignError] = useState<{ readonly playerId: string; readonly message: string }>();
   return (
     <main className="pcb-training__bento pcb-training__personal-page">
       <header className="pcb-training__personal-toolbar">
@@ -587,18 +636,24 @@ function PersonalTraining({
                     disabled={team === undefined || world === undefined || selectedModuleId === ""}
                     onClick={() => {
                       if (team === undefined || world === undefined || selectedModuleId === "") return;
-                      onAssignModule?.({
-                        playerId: player.id,
-                        moduleId: selectedModuleId,
-                        date: nextEligibleTrainingDate(world.currentDate),
-                        startTime: "09:00",
-                        sessionId: `session:${createEntityId()}`,
-                      });
+                      setAssignError(undefined);
+                      try {
+                        onAssignModule?.({
+                          playerId: player.id,
+                          moduleId: selectedModuleId,
+                          date: nextEligibleTrainingDate(world.currentDate),
+                          startTime: "09:00",
+                          sessionId: `session:${createEntityId()}`,
+                        });
+                      } catch (error) {
+                        setAssignError({ playerId: player.id, message: error instanceof Error ? error.message : "No se pudo asignar el módulo." });
+                      }
                     }}
                     type="button"
                   >
                     Asignar
                   </button>
+                  {assignError?.playerId === player.id && <small>{assignError.message}</small>}
                 </span>
               </div>
             );
@@ -635,6 +690,7 @@ function LoadManagementInteractive({
   const [recoveryDate, setRecoveryDate] = useState<string>("");
   const [recoveryTime, setRecoveryTime] = useState("09:00");
   const [recoveryScheduled, setRecoveryScheduled] = useState(false);
+  const [recoveryError, setRecoveryError] = useState<string>();
   const [columns, setColumns] = useState<readonly string[]>([
     "JUGADOR",
     "POS",
@@ -761,6 +817,7 @@ function LoadManagementInteractive({
                 <label>
                   Fecha
                   <input
+                    min={world === undefined ? undefined : nextEligibleTrainingDate(world.currentDate)}
                     onChange={(event) => setRecoveryDate(event.target.value)}
                     type="date"
                     value={recoveryDate || (world === undefined ? "" : nextEligibleTrainingDate(world.currentDate))}
@@ -775,27 +832,34 @@ function LoadManagementInteractive({
                   disabled={world === undefined || team === undefined}
                   onClick={() => {
                     if (world === undefined || team === undefined || selected === undefined) return;
-                    const definition = TRAINING_CATALOG.find((entry) => entry.id === recoveryDefinitionId)!;
-                    const date = (recoveryDate || nextEligibleTrainingDate(world.currentDate)) as GameDate;
-                    onScheduleSession?.({
-                      id: `session:${createEntityId()}`,
-                      teamId: team.id,
-                      date,
-                      startTime: recoveryTime,
-                      durationMinutes: definition.durationMinutes,
-                      scope: "individual",
-                      playerId: selected as PlayerId,
-                      definitionId: definition.id,
-                      intensity: definition.defaultIntensity,
-                      status: "scheduled",
-                    });
-                    setRecoveryScheduled(true);
+                    setRecoveryScheduled(false);
+                    setRecoveryError(undefined);
+                    try {
+                      const definition = TRAINING_CATALOG.find((entry) => entry.id === recoveryDefinitionId)!;
+                      const date = (recoveryDate || nextEligibleTrainingDate(world.currentDate)) as GameDate;
+                      onScheduleSession?.({
+                        id: `session:${createEntityId()}`,
+                        teamId: team.id,
+                        date,
+                        startTime: recoveryTime,
+                        durationMinutes: definition.durationMinutes,
+                        scope: "individual",
+                        playerId: selected as PlayerId,
+                        definitionId: definition.id,
+                        intensity: definition.defaultIntensity,
+                        status: "scheduled",
+                      });
+                      setRecoveryScheduled(true);
+                    } catch (error) {
+                      setRecoveryError(error instanceof Error ? error.message : "No se pudo programar la recuperación.");
+                    }
                   }}
                   type="button"
                 >
                   Programar recuperación
                 </button>
                 {recoveryScheduled && <span>Recuperación programada.</span>}
+                {recoveryError !== undefined && <span>{recoveryError}</span>}
               </>
             )}
           </div>
