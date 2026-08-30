@@ -59,6 +59,7 @@ const TACTIC_OPTIONS = {
 };
 
 const SLOT_IDS = ["PG", "SG", "SF", "PF", "C"];
+const BENCH_SLOT_IDS = ["B1", "B2", "B3", "B4", "B5", "B6", "B7"];
 
 const defaultTactics = {
   pace: 2,
@@ -120,7 +121,8 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
   const tacticsKey = `${storagePrefix}.config`;
 
   const [starters, setStarters] = useState({ PG: null, SG: null, SF: null, PF: null, C: null });
-  const [bench, setBench] = useState([]);
+  const [bench, setBench] = useState({ B1: null, B2: null, B3: null, B4: null, B5: null, B6: null, B7: null });
+  const [unassigned, setUnassigned] = useState([]);
   const [draggedPlayer, setDraggedPlayer] = useState(null);
   const [dragSource, setDragSource] = useState(null);
   const [activePanel, setActivePanel] = useState("ATAQUE");
@@ -159,6 +161,7 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
     if (!rosterPlayers.length) return;
 
     const nextStarters = { PG: null, SG: null, SF: null, PF: null, C: null };
+    const nextBench = { B1: null, B2: null, B3: null, B4: null, B5: null, B6: null, B7: null };
     const assigned = new Set();
 
     SLOT_IDS.forEach((slot) => {
@@ -169,12 +172,21 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
       }
     });
 
-    const nextBench = rosterPlayers
+    BENCH_SLOT_IDS.forEach((slot) => {
+      const full = rosterPlayers.find((p) => p.lineupSlot === slot);
+      if (full) {
+        nextBench[slot] = full;
+        assigned.add(full.id);
+      }
+    });
+
+    const nextUnassigned = rosterPlayers
       .filter((p) => !assigned.has(p.id))
       .sort((a, b) => b.rating - a.rating);
 
     setStarters(nextStarters);
     setBench(nextBench);
+    setUnassigned(nextUnassigned);
   }, [rosterPlayers]);
 
   useEffect(() => {
@@ -197,6 +209,8 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
       }
     });
   };
+
+  const firstFreeBenchSlot = (benchState) => BENCH_SLOT_IDS.find((slot) => !benchState[slot]);
 
   const savePlayerRole = (playerId, role, duty, position) => {
     const roles = readJSON(rolesKey, {});
@@ -230,17 +244,16 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
       playerToDrop.selectedRole = getDefaultRoleForPosition(positionKey);
     }
 
-    const currentPlayerInSlot = starters[positionKey];
-
-    if (dragSource === "roster") {
+    if (dragSource === "roster" || dragSource === "unassigned") {
+      // Bench or unassigned player becomes a starter: the canonical engine vacates
+      // whichever slot (bench or none) they previously held as part of the assignment.
       const newStarters = { ...starters, [positionKey]: playerToDrop };
       setStarters(newStarters);
-      setBench((prev) => prev.filter((p) => p.id !== playerToDrop.id));
-      if (currentPlayerInSlot) {
-        setBench((prev) => [...prev, currentPlayerInSlot].sort((a, b) => b.rating - a.rating));
-      }
-      saveStarters(newStarters);
-    } else if (dragSource && dragSource !== "roster" && dragSource !== positionKey) {
+      if (dragSource === "roster") setBench((prev) => Object.fromEntries(Object.entries(prev).map(([slot, p]) => [slot, p?.id === playerToDrop.id ? null : p])));
+      else setUnassigned((prev) => prev.filter((p) => p.id !== playerToDrop.id));
+      if (typeof onLineupSlotChange === "function") onLineupSlotChange(positionKey, playerToDrop.id);
+    } else if (dragSource && dragSource !== positionKey && SLOT_IDS.includes(dragSource)) {
+      const currentPlayerInSlot = starters[positionKey];
       const newStarters = {
         ...starters,
         [positionKey]: playerToDrop,
@@ -256,11 +269,17 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
 
   const handleDropOnRoster = (event) => {
     event.preventDefault();
-    if (dragSource && dragSource !== "roster" && draggedPlayer) {
-      setBench((prev) => [...prev, draggedPlayer].sort((a, b) => b.rating - a.rating));
-      const newStarters = { ...starters, [dragSource]: null };
-      setStarters(newStarters);
-      saveStarters(newStarters);
+    if (dragSource && dragSource !== "roster" && dragSource !== "unassigned" && draggedPlayer) {
+      // Court starter dropped on BANQUILLO: must land on a real canonical bench slot,
+      // never a fake bench appearance. If the bench is full, leave the player where they were.
+      const slot = firstFreeBenchSlot(bench);
+      if (slot) {
+        setBench((prev) => ({ ...prev, [slot]: draggedPlayer }));
+        setStarters((prev) => ({ ...prev, [dragSource]: null }));
+        // assignLineupSlot vacates the player's prior starter slot as part of the
+        // canonical conflict resolution, so a separate clear of `dragSource` isn't needed.
+        if (typeof onLineupSlotChange === "function") onLineupSlotChange(slot, draggedPlayer.id);
+      }
     }
     setDraggedPlayer(null);
     setDragSource(null);
@@ -282,6 +301,20 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
     if (contextMenu.targetType === "roster") {
       const playerId = contextMenu.targetId;
       setBench((prev) =>
+        Object.fromEntries(
+          Object.entries(prev).map(([slot, p]) => {
+            if (p?.id === playerId) {
+              const updated = { ...p, [key]: value };
+              savePlayerRole(playerId, updated.selectedRole, updated.selectedDuty, contextPos);
+              return [slot, updated];
+            }
+            return [slot, p];
+          }),
+        ),
+      );
+    } else if (contextMenu.targetType === "unassigned") {
+      const playerId = contextMenu.targetId;
+      setUnassigned((prev) =>
         prev.map((p) => {
           if (p.id === playerId) {
             const updated = { ...p, [key]: value };
@@ -304,7 +337,8 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
 
   const getContextPlayer = () => {
     if (!contextMenu) return null;
-    if (contextMenu.targetType === "roster") return bench.find((p) => p.id === contextMenu.targetId);
+    if (contextMenu.targetType === "roster") return Object.values(bench).find((p) => p?.id === contextMenu.targetId);
+    if (contextMenu.targetType === "unassigned") return unassigned.find((p) => p.id === contextMenu.targetId);
     return starters[contextMenu.targetId];
   };
 
@@ -334,15 +368,43 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
       <div className="tactics-board-panel" onDragOver={handleDragOver} onDrop={handleDropOnRoster}>
         <div className="tactics-board-panel-header">
           <span className="tactics-board-panel-title">BANQUILLO</span>
-          <span className="tactics-board-panel-count">{bench.length} disp.</span>
+          <span className="tactics-board-panel-count">{BENCH_SLOT_IDS.filter((slot) => bench[slot]).length} disp.</span>
         </div>
         <div className="tactics-board-panel-body">
-          {bench.map((p) => (
+          {BENCH_SLOT_IDS.filter((slot) => bench[slot]).map((slot) => {
+            const p = bench[slot];
+            return (
+              <div
+                key={p.id}
+                draggable
+                onDragStart={(event) => handleDragStart(event, p, "roster")}
+                onContextMenu={(event) => handleContextMenu(event, "roster", p.id)}
+                className="tactics-board-player"
+              >
+                <div className="tactics-board-player-pos">{slot}</div>
+                <div className="tactics-board-player-info">
+                  <div className="tactics-board-player-name">{p.name}</div>
+                  <div className="tactics-board-player-meta">
+                    <span className="tactics-board-player-rating">{p.rating}</span>
+                    <span>{p.selectedRole || "Sin rol"}</span>
+                  </div>
+                </div>
+                <GripVertical size={16} color="#475569" />
+              </div>
+            );
+          })}
+        </div>
+        <div className="tactics-board-panel-header">
+          <span className="tactics-board-panel-title">SIN ASIGNAR</span>
+          <span className="tactics-board-panel-count">{unassigned.length} disp.</span>
+        </div>
+        <div className="tactics-board-panel-body">
+          {unassigned.map((p) => (
             <div
               key={p.id}
               draggable
-              onDragStart={(event) => handleDragStart(event, p, "roster")}
-              onContextMenu={(event) => handleContextMenu(event, "roster", p.id)}
+              onDragStart={(event) => handleDragStart(event, p, "unassigned")}
+              onContextMenu={(event) => handleContextMenu(event, "unassigned", p.id)}
               className="tactics-board-player"
             >
               <div className="tactics-board-player-pos">{p.position}</div>
@@ -375,10 +437,23 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
           <button
             className="tactics-board-clear"
             onClick={() => {
-              const empty = { PG: null, SG: null, SF: null, PF: null, C: null };
-              setBench((prev) => [...prev, ...Object.values(starters).filter(Boolean)].sort((a, b) => b.rating - a.rating));
-              setStarters(empty);
-              saveStarters(empty);
+              let nextBench = { ...bench };
+              const displacedToUnassigned = [];
+              SLOT_IDS.forEach((slot) => {
+                const player = starters[slot];
+                if (!player) return;
+                const freeSlot = firstFreeBenchSlot(nextBench);
+                if (freeSlot) {
+                  nextBench = { ...nextBench, [freeSlot]: player };
+                  if (typeof onLineupSlotChange === "function") onLineupSlotChange(freeSlot, player.id);
+                } else {
+                  displacedToUnassigned.push(player);
+                  if (typeof onLineupSlotClear === "function") onLineupSlotClear(slot);
+                }
+              });
+              setBench(nextBench);
+              setUnassigned((prev) => [...prev, ...displacedToUnassigned].sort((a, b) => b.rating - a.rating));
+              setStarters({ PG: null, SG: null, SF: null, PF: null, C: null });
             }}
           >
             LIMPIAR
@@ -685,7 +760,7 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
           onClick={(event) => event.stopPropagation()}
         >
           <div className="tactics-board-context-header">
-            <span>{contextMenu.targetType === "roster" ? "BANQUILLO" : "PISTA"}</span>
+            <span>{contextMenu.targetType === "roster" ? "BANQUILLO" : contextMenu.targetType === "unassigned" ? "SIN ASIGNAR" : "PISTA"}</span>
             <span>{getContextPlayer()?.name}</span>
           </div>
           <div className="tactics-board-context-section">

@@ -79,7 +79,7 @@ describe('TacticsPcbPage / canonical lineup as single source of truth', () => {
     expect(Number(benchedQ1.value)).toBe(0)
   })
 
-  it('rosters larger than 12 leave extra players unassigned without error', () => {
+  it('rosters larger than 12 leave extra players unassigned without error, and excluded from Rotaciones', () => {
     const base = withOversizedRoster(createNewGame())
     const team = getUserTeam(base)!
     const roster = getTeamRoster(base, team.id)
@@ -93,7 +93,31 @@ describe('TacticsPcbPage / canonical lineup as single source of truth', () => {
     const lineup = getTeamLineup(world, team.id)
     expect(getLineupAssignments(lineup)).toHaveLength(12)
 
-    // Rendering with a 13th+ roster player unassigned must not throw.
-    expect(() => render(createElement(TacticsPcbPage, { world }))).not.toThrow()
+    render(createElement(TacticsPcbPage, { world }))
+    fireEvent.click(screen.getByRole('button', { name: 'Rotaciones' }))
+    // The 13th+ roster players must not silently receive rotation minutes: exactly 12 rows render.
+    const rows = document.querySelectorAll('.pcb-tactics__rotation-grid > div:not(.is-head)')
+    expect(rows).toHaveLength(12)
+  })
+
+  it('Rotaciones contains exactly the canonical active 12, in PG..C, B1..B7 order', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const roster = getTeamRoster(base, team.id)
+    let world = base
+    const slots = ['PG', 'SG', 'SF', 'PF', 'C', 'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7'] as const
+    for (const [index, slot] of slots.entries()) {
+      world = setLineupSlot(world, team.id, slot, roster[index]!.id)
+    }
+
+    render(createElement(TacticsPcbPage, { world }))
+    fireEvent.click(screen.getByRole('button', { name: 'Rotaciones' }))
+
+    const rows = document.querySelectorAll('.pcb-tactics__rotation-grid > div:not(.is-head)')
+    expect(rows).toHaveLength(12)
+    slots.forEach((_, index) => {
+      const expected = roster[index]!
+      expect(rows[index]!.textContent).toContain(`${expected.firstName} ${expected.lastName}`)
+    })
   })
 })

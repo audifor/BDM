@@ -1,50 +1,79 @@
 // @vitest-environment jsdom
 import { createElement } from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import '@testing-library/jest-dom/vitest'
-import { createNewGame } from '@/app/game'
 import { getUserTeam } from '@/engine/calendar'
-import { getTeamLineup, getTeamRoster } from '@/domain/world'
-import { setLineupSlot } from '@/engine/tactics/LineupEngine'
+import { getTeamRoster } from '@/domain/world'
+import { useGameStore } from '@/stores/gameStore'
 import { PlantillaPcbPage } from './PlantillaPcbPage'
 import { TacticsPcbPage } from '../tactics/TacticsPcbPage'
 
 afterEach(cleanup)
 afterEach(() => window.localStorage.clear())
+beforeEach(() => useGameStore.getState().resetGame())
 
-describe('Canonical lineup / Plantilla <-> Tactics synchronization', () => {
-  it('assigning PG in Plantilla makes the same player PG in Tactics (Pizarra + Rotaciones)', () => {
-    const world = createNewGame()
-    const team = getUserTeam(world)!
-    const player = getTeamRoster(world, team.id)[0]!
+/**
+ * Real production wiring: both pages read `world` from the store and call the
+ * store's own `setLineupSlot`/`clearLineupSlot` actions, exactly like
+ * `DesktopAppHost`/`App.tsx` wire them. No manual engine call after a UI event -
+ * the store subscription is what drives the re-render.
+ */
+function PlantillaHost() {
+  const world = useGameStore((state) => state.world)
+  const setLineupSlot = useGameStore((state) => state.setLineupSlot)
+  const clearLineupSlot = useGameStore((state) => state.clearLineupSlot)
+  if (world === null) return null
+  return createElement(PlantillaPcbPage, { world, onLineupSlotChange: setLineupSlot, onLineupSlotClear: clearLineupSlot })
+}
+function TacticsHost() {
+  const world = useGameStore((state) => state.world)
+  const setLineupSlot = useGameStore((state) => state.setLineupSlot)
+  const clearLineupSlot = useGameStore((state) => state.clearLineupSlot)
+  if (world === null) return null
+  return createElement(TacticsPcbPage, { world, onLineupSlotChange: setLineupSlot, onLineupSlotClear: clearLineupSlot })
+}
 
-    const onLineupSlotChange = () => undefined
-    render(createElement(PlantillaPcbPage, { world, onLineupSlotChange }))
+describe('Canonical lineup / real UI -> store -> world -> UI synchronization', () => {
+  it('Plantilla selector change -> store action -> GameWorld -> Tactics reads the changed world', () => {
+    useGameStore.getState().newGame()
+    const team = getUserTeam(useGameStore.getState().world!)!
+    const player = getTeamRoster(useGameStore.getState().world!, team.id)[0]!
 
+    render(createElement(PlantillaHost))
     fireEvent.change(screen.getAllByLabelText(`Rotación ${player.firstName} ${player.lastName}`)[0]!, { target: { value: 'PG' } })
+
+    // The store itself now reflects the assignment - proving the real production
+    // callback path (store action), not a manual post-hoc engine call.
+    expect(useGameStore.getState().world!.lineupsByTeamId[team.id]!.starters.PG).toBe(player.id)
     cleanup()
 
-    // Apply the assignment through the real engine (as the store action would).
-    const nextWorld = setLineupSlot(world, team.id, 'PG', player.id)
-    expect(getTeamLineup(nextWorld, team.id).starters.PG).toBe(player.id)
-
-    render(createElement(TacticsPcbPage, { world: nextWorld }))
+    render(createElement(TacticsHost))
     expect(screen.getAllByText(`${player.firstName} ${player.lastName}`).length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole('button', { name: 'Rotaciones' }))
     expect(screen.getAllByText(`${player.firstName} ${player.lastName}`).length).toBeGreaterThan(0)
   })
 
-  it('changing a starter from Tactics immediately reflects in Plantilla when both read the same world', () => {
-    const base = createNewGame()
-    const team = getUserTeam(base)!
-    const [first, second] = getTeamRoster(base, team.id)
+  it('Tactics lineup change -> GameWorld -> Plantilla selector reflects it', () => {
+    useGameStore.getState().newGame()
+    const team = getUserTeam(useGameStore.getState().world!)!
+    const [first, second] = getTeamRoster(useGameStore.getState().world!, team.id)
 
-    // Simulate the Tactics board assigning `second` to PG (displacing `first` if present).
-    const world = setLineupSlot(base, team.id, 'PG', second!.id)
+    render(createElement(TacticsHost))
+    const dataTransfer = { setData: () => undefined, effectAllowed: '' }
+    fireEvent.dragStart(screen.getAllByText(`${second!.firstName} ${second!.lastName}`)[0]!.closest('.tactics-board-player')!, { dataTransfer })
+    fireEvent.drop(screen.getByText('PG', { selector: '.tactics-board-slot-label' }).closest('.tactics-board-slot')!, { dataTransfer })
 
-    render(createElement(PlantillaPcbPage, { world }))
-    const selects = screen.getAllByLabelText(`Rotación ${second!.firstName} ${second!.lastName}`) as HTMLSelectElement[]
-    expect(selects.some((select) => select.value === 'PG')).toBe(true)
+    expect(useGameStore.getState().world!.lineupsByTeamId[team.id]!.starters.PG).toBe(second!.id)
+    cleanup()
+
+    render(createElement(PlantillaHost))
+    const secondSelects = screen.getAllByLabelText(`Rotación ${second!.firstName} ${second!.lastName}`) as HTMLSelectElement[]
+    expect(secondSelects.some((select) => select.value === 'PG')).toBe(true)
+
+    if (first !== undefined) {
+      const firstSelects = screen.getAllByLabelText(`Rotación ${first.firstName} ${first.lastName}`) as HTMLSelectElement[]
+      expect(firstSelects.every((select) => select.value !== 'PG')).toBe(true)
+    }
   })
 })

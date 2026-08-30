@@ -334,7 +334,9 @@ export function CanonicalRoster({
     {
       id: "general",
       name: "Resumen General",
-      columnIds: columns.map((column) => column.id),
+      // Compact curated overview: core roster fields plus a small, representative
+      // summary of basketball information - not every rating/personality column.
+      columnIds: [...baseColumnIds, "height", "weight", "fatigue", "salary"],
     },
     {
       id: "offense",

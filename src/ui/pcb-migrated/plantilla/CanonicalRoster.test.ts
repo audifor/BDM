@@ -17,6 +17,7 @@ import {
 } from './CanonicalRoster'
 
 afterEach(cleanup)
+afterEach(() => window.localStorage.clear())
 
 const PRESET_NAMES = ['Resumen General', 'Ofensiva', 'Cerebro', 'Defensa', 'Físico', 'Manejo', 'Psico', 'Personalizada']
 
@@ -39,6 +40,31 @@ describe('CanonicalRoster / roster view presets', () => {
       for (const key of group) {
         expect(typeof player.basketball.ratings[key]).toBe('number')
       }
+    }
+  })
+
+  it('Resumen General is a compact curated overview, not every rating/personality column', () => {
+    const world = createNewGame()
+    render(createElement(PlantillaPcbPage, { world }))
+
+    // Default preset is Resumen General; assert core roster columns are present...
+    for (const label of ['JUGADOR', 'POS', 'ROT', 'EDAD', 'ALT', 'PESO', 'FATIGA', 'CONTRATO']) {
+      expect(screen.getByText(label)).toBeInTheDocument()
+    }
+    // ...but curated rating/personality column headers (unique to those presets) are absent.
+    for (const label of ['TIRO MEDIO', 'DECISIÓN', 'DEF. EXT.', 'ACELERACIÓN', 'BOTE', 'AMBICIÓN']) {
+      expect(screen.queryByText(label)).not.toBeInTheDocument()
+    }
+  })
+
+  it('Personalizada exposes the full configurable column set (every rating and personality column)', () => {
+    const world = createNewGame()
+    render(createElement(PlantillaPcbPage, { world }))
+
+    fireEvent.change(screen.getByLabelText('Preset de columnas'), { target: { value: 'custom' } })
+
+    for (const label of ['TIRO MEDIO', 'DECISIÓN', 'DEF. EXT.', 'ACELERACIÓN', 'BOTE', 'AMBICIÓN', 'ALT', 'PESO', 'CONTRATO']) {
+      expect(screen.getByText(label)).toBeInTheDocument()
     }
   })
 

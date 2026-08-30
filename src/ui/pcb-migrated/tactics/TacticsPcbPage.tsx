@@ -4,7 +4,7 @@ import { getTeamLineup, getTeamRoster } from '@/domain/world'
 import { getNextUserGame, getUserTeam } from '@/engine/calendar'
 import type { Player } from '@/domain/player'
 import type { PlayerId } from '@/domain/ids'
-import { getLineupSlotForPlayer, LINEUP_SLOTS, type LineupSlot, type TeamLineup } from '@/domain/tactics'
+import { getLineupAssignments, getLineupSlotForPlayer, LINEUP_SLOTS, type LineupSlot, type TeamLineup } from '@/domain/tactics'
 import type { MatchTacticalPlan, TacticalLevel } from '@/engine/match'
 import { INITIAL_FRAME, TacticsMigrationRepository, type SavedPlay } from './TacticsMigrationRepository'
 import PcbTacticsCreator from './PcbTacticsCreator'
@@ -61,14 +61,26 @@ function Matchups() {
   return <main className="pcb-tactics__table-page"><header><div><h2>Matchups Defensivos</h2><small>Sin datos de scouting del próximo rival</small></div><input aria-label="Buscar rival" onChange={(event) => setQuery(event.target.value)} placeholder="Buscar rival" value={query} /><button disabled type="button">Auto-matchup</button><button disabled type="button">Reset</button></header><table><thead><tr><th>POS</th><th>JUGADOR RIVAL</th><th>AMENAZA</th><th>ALTURA</th><th>DEFENSOR</th><th>PRESIÓN</th><th>P&R</th><th>DIRECCIÓN</th></tr></thead><tbody><tr><td colSpan={8}>No hay datos de scouting del rival disponibles todavía.</td></tr></tbody></table></main>
 }
 
-function isLineupStarter(lineup: TeamLineup | undefined, playerId: PlayerId): boolean {
-  if (lineup === undefined) return false
-  const slot = getLineupSlotForPlayer(lineup, playerId)
-  return slot !== undefined && !(LINEUP_SLOTS.indexOf(slot) >= 5)
+function isLineupStarter(slot: LineupSlot): boolean {
+  return LINEUP_SLOTS.indexOf(slot) < 5
 }
-function Rotations({ lineup, roster }: { readonly lineup?: TeamLineup; readonly roster: readonly Player[] }) { const [minutes, setMinutes] = useState<Record<string, number[]>>(() => Object.fromEntries(roster.map((player) => [player.id, isLineupStarter(lineup, player.id) ? [8, 8, 8, 8, 0] : [0, 0, 0, 0, 0]]))); const [league, setLeague] = useState('FIBA'); const [saved, setSaved] = useState(false); const update = (id: string, quarter: number, value: number) => setMinutes((current) => ({ ...current, [id]: (current[id] ?? [0, 0, 0, 0, 0]).map((minute, index) => index === quarter ? Math.max(0, Math.min(10, value)) : minute) }))
-  const preset = () => setMinutes(Object.fromEntries(roster.map((player) => [player.id, isLineupStarter(lineup, player.id) ? [8, 8, 8, 8, 0] : [2, 2, 2, 2, 0]])))
-  return <main className="pcb-tactics__rotation"><header><div><h2>Matriz de Rotación</h2><small>Configuración temporal de sesión</small></div><select onChange={(event) => setLeague(event.target.value)} value={league}><option>FIBA</option><option>NBA</option><option>NCAA</option></select><button onClick={preset} type="button">Auto-generar</button><button onClick={preset} type="button">Reset</button><button className="is-primary" onClick={() => setSaved(true)} type="button">Guardar</button>{saved && <em>Guardado</em>}</header><div className="pcb-tactics__rotation-grid"><div className="is-head"><span>Jugador</span>{['Q1', 'Q2', 'Q3', 'Q4', 'OT'].map((quarter) => <span key={quarter}>{quarter}</span>)}<span>Total</span></div>{roster.length === 0 ? <p>No hay jugadores en la plantilla del usuario.</p> : roster.map((player) => { const row = minutes[player.id] ?? [0, 0, 0, 0, 0]; return <div draggable key={player.id}><span><b>{player.basketball.primaryPosition}</b> {player.firstName} {player.lastName}</span>{row.map((value, quarter) => <span key={quarter}><input max="10" min="0" onChange={(event) => update(player.id, quarter, Number(event.target.value))} type="range" value={value} /><input max="10" min="0" onChange={(event) => update(player.id, quarter, Number(event.target.value))} type="number" value={value} /></span>)}<strong>{row.reduce((sum, value) => sum + value, 0)}</strong></div> })}</div></main> }
+/** The canonical active squad (starters + bench), in PG..C, B1..B7 order. Unassigned roster players are excluded. */
+function activeSquad(lineup: TeamLineup | undefined, roster: readonly Player[]): readonly { readonly slot: LineupSlot; readonly player: Player }[] {
+  if (lineup === undefined) return []
+  const byId = new Map(roster.map((player) => [player.id, player]))
+  return getLineupAssignments(lineup)
+    .map(({ slot, playerId }) => ({ slot, player: byId.get(playerId) }))
+    .filter((entry): entry is { readonly slot: LineupSlot; readonly player: Player } => entry.player !== undefined)
+}
+function Rotations({ lineup, roster }: { readonly lineup?: TeamLineup; readonly roster: readonly Player[] }) {
+  const squad = activeSquad(lineup, roster)
+  const [minutes, setMinutes] = useState<Record<string, number[]>>(() => Object.fromEntries(squad.map(({ slot, player }) => [player.id, isLineupStarter(slot) ? [8, 8, 8, 8, 0] : [0, 0, 0, 0, 0]])))
+  const [league, setLeague] = useState('FIBA')
+  const [saved, setSaved] = useState(false)
+  const update = (id: string, quarter: number, value: number) => setMinutes((current) => ({ ...current, [id]: (current[id] ?? [0, 0, 0, 0, 0]).map((minute, index) => index === quarter ? Math.max(0, Math.min(10, value)) : minute) }))
+  const preset = () => setMinutes(Object.fromEntries(squad.map(({ slot, player }) => [player.id, isLineupStarter(slot) ? [8, 8, 8, 8, 0] : [2, 2, 2, 2, 0]])))
+  return <main className="pcb-tactics__rotation"><header><div><h2>Matriz de Rotación</h2><small>Configuración temporal de sesión</small></div><select onChange={(event) => setLeague(event.target.value)} value={league}><option>FIBA</option><option>NBA</option><option>NCAA</option></select><button onClick={preset} type="button">Auto-generar</button><button onClick={preset} type="button">Reset</button><button className="is-primary" onClick={() => setSaved(true)} type="button">Guardar</button>{saved && <em>Guardado</em>}</header><div className="pcb-tactics__rotation-grid"><div className="is-head"><span>Jugador</span>{['Q1', 'Q2', 'Q3', 'Q4', 'OT'].map((quarter) => <span key={quarter}>{quarter}</span>)}<span>Total</span></div>{squad.length === 0 ? <p>No hay jugadores en la plantilla del usuario.</p> : squad.map(({ player }) => { const row = minutes[player.id] ?? [0, 0, 0, 0, 0]; return <div draggable key={player.id}><span><b>{player.basketball.primaryPosition}</b> {player.firstName} {player.lastName}</span>{row.map((value, quarter) => <span key={quarter}><input max="10" min="0" onChange={(event) => update(player.id, quarter, Number(event.target.value))} type="range" value={value} /><input max="10" min="0" onChange={(event) => update(player.id, quarter, Number(event.target.value))} type="number" value={value} /></span>)}<strong>{row.reduce((sum, value) => sum + value, 0)}</strong></div> })}</div></main>
+}
 
 function Plays() { const [plays, setPlays] = useState<SavedPlay[]>(repo.loadPlays()); const [name, setName] = useState(''); const [selected, setSelected] = useState<string | null>(null); const [modal, setModal] = useState(false); const create = () => { if (!name.trim()) return; const play = repo.savePlay({ id: `library-${Date.now()}`, name, frames: [INITIAL_FRAME()], createdAt: new Date().toLocaleDateString() }); setPlays(repo.loadPlays()); setSelected(play.id); setModal(false); setName('') }
   return <main className="pcb-tactics__plays"><header><div><h2>Catálogo de Jugadas</h2><small>{plays.length} jugadas</small></div><button className="is-primary" onClick={() => setModal(true)} type="button">+ Nueva jugada</button></header><div className="pcb-tactics__play-list">{plays.length === 0 && <p>Sin jugadas guardadas. Usa el Diseñador o crea una aquí.</p>}{plays.map((play) => <article className={selected === play.id ? 'is-selected' : ''} key={play.id} onClick={() => setSelected(play.id)}><div><b>{play.name}</b><small>Set · Halfcourt · {play.createdAt}</small></div><button onClick={(event) => { event.stopPropagation(); repo.deletePlay(play.id); setPlays(repo.loadPlays()); if (selected === play.id) setSelected(null) }} type="button">Eliminar</button></article>)}</div>{modal && <Modal title="Nueva jugada" onClose={() => setModal(false)}><label>Nombre<input autoFocus onChange={(event) => setName(event.target.value)} value={name} /></label><footer><button onClick={() => setModal(false)} type="button">Cancelar</button><button className="is-primary" onClick={create} type="button">Crear</button></footer></Modal>}</main> }

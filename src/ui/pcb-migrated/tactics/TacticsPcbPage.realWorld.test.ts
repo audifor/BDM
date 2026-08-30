@@ -7,6 +7,7 @@ import '@testing-library/jest-dom/vitest'
 import { createNewGame } from '@/app/game'
 import { getUserTeam } from '@/engine/calendar'
 import { getTeamRoster } from '@/domain/world'
+import { setLineupSlot } from '@/engine/tactics/LineupEngine'
 import { createDefaultTacticalPlan, validateTacticalPlan, type MatchTacticalPlan } from '@/engine/match'
 import { TacticsPcbPage } from './TacticsPcbPage'
 
@@ -26,10 +27,12 @@ describe('TacticsPcbPage / real GameWorld integration', () => {
     }
   })
 
-  it('Rotaciones tab uses the real controlled roster', () => {
-    const world = createNewGame()
-    const team = getUserTeam(world)!
-    const roster = getTeamRoster(world, team.id)
+  it('Rotaciones tab uses the real controlled roster assigned to the canonical lineup', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const roster = getTeamRoster(base, team.id)
+    const slots = ['PG', 'SG', 'SF', 'PF', 'C'] as const
+    const world = slots.reduce((next, slot, index) => setLineupSlot(next, team.id, slot, roster[index]!.id), base)
     render(createElement(TacticsPcbPage, { world }))
     fireEvent.click(screen.getByRole('button', { name: 'Rotaciones' }))
 
