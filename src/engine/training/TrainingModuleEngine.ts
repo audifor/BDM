@@ -22,11 +22,11 @@ export function deleteUserTrainingModule(world: GameWorld, moduleId: string): Ga
  * and any other module-consuming flow, so built-in and user-created modules always execute
  * through one canonical engine rather than parallel authorities.
  */
-export function resolveTrainingModule(world: GameWorld, moduleId: string): { readonly definition: TrainingDefinition; readonly intensity: TrainingIntensity } {
+export function resolveTrainingModule(world: GameWorld, moduleId: string): { readonly definition: TrainingDefinition; readonly intensity: TrainingIntensity; readonly scope: TrainingDefinition['scope'] } {
   const userModule = world.userTrainingModulesById[moduleId]
   const definitionId = userModule?.baseDefinitionId ?? moduleId
   const definition = trainingDefinitionById(definitionId)
-  return { definition, intensity: userModule?.intensity ?? definition.defaultIntensity }
+  return { definition, intensity: userModule?.intensity ?? definition.defaultIntensity, scope: userModule?.scope ?? definition.scope }
 }
 
 /**
@@ -38,8 +38,8 @@ export function assignTrainingModuleToPlayer(
   world: GameWorld,
   input: { readonly teamId: TeamId; readonly playerId: PlayerId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly sessionId: string },
 ): GameWorld {
-  const { definition, intensity } = resolveTrainingModule(world, input.moduleId)
-  if (definition.scope === 'team') throw new RangeError('Cannot assign a team-only definition to individual training')
+  const { definition, intensity, scope } = resolveTrainingModule(world, input.moduleId)
+  if (scope === 'team') throw new RangeError('Cannot assign a team-only module to individual training')
   const player = world.players[input.playerId]
   if (player !== undefined && !isPositionEligible(definition, player.basketball.primaryPosition)) {
     throw new RangeError(`Player position ${player.basketball.primaryPosition} is not eligible for ${definition.name}`)
@@ -67,8 +67,8 @@ export function scheduleTeamModuleSession(
   world: GameWorld,
   input: { readonly teamId: TeamId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string },
 ): GameWorld {
-  const { definition, intensity } = resolveTrainingModule(world, input.moduleId)
-  if (definition.scope === 'individual') throw new RangeError('Cannot schedule an individual-only definition as a team session')
+  const { definition, intensity, scope } = resolveTrainingModule(world, input.moduleId)
+  if (scope === 'individual') throw new RangeError('Cannot schedule an individual-only module as a team session')
   const session: ScheduledTrainingSession = createScheduledTrainingSession({
     id: input.sessionId,
     teamId: input.teamId,

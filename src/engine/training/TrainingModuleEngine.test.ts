@@ -31,6 +31,45 @@ describe('TrainingModuleEngine', () => {
     expect(executed.developmentStimulusByPlayerId[playerId]!.byRating.threePointShooting!).toBeGreaterThan(0)
   })
 
+  it('keeps a built-in both-scoped module available to both individual and team training', () => {
+    const world = createNewGame()
+    const teamId = Object.values(world.teams)[0]!.id
+    const playerId = world.teams[teamId]!.rosterPlayerIds[0]!
+    const date = nextEligibleTrainingDate(world.currentDate)
+
+    const individual = assignTrainingModuleToPlayer(world, { teamId, playerId, moduleId: 'threePoint', date, startTime: '09:00', sessionId: 'both-individual' })
+    const team = scheduleTeamModuleSession(world, { teamId, moduleId: 'threePoint', date, startTime: '09:00', durationMinutes: 60, sessionId: 'both-team' })
+
+    expect(individual.scheduledTrainingSessionsById['both-individual']?.scope).toBe('individual')
+    expect(team.scheduledTrainingSessionsById['both-team']?.scope).toBe('team')
+  })
+
+  it('enforces an individual scope selected for a user module based on a both-scoped definition', () => {
+    const world = createNewGame()
+    const teamId = Object.values(world.teams)[0]!.id
+    const playerId = world.teams[teamId]!.rosterPlayerIds[0]!
+    const date = nextEligibleTrainingDate(world.currentDate)
+    const withModule = createOrUpdateUserTrainingModule(world, { id: 'individual-threes', name: 'Individual Threes', baseDefinitionId: 'threePoint', scope: 'individual', intensity: 'normal' })
+
+    const assigned = assignTrainingModuleToPlayer(withModule, { teamId, playerId, moduleId: 'individual-threes', date, startTime: '09:00', sessionId: 'individual-threes-session' })
+
+    expect(assigned.scheduledTrainingSessionsById['individual-threes-session']?.scope).toBe('individual')
+    expect(() => scheduleTeamModuleSession(withModule, { teamId, moduleId: 'individual-threes', date, startTime: '09:00', durationMinutes: 60, sessionId: 'invalid-team-session' })).toThrow(RangeError)
+  })
+
+  it('enforces a team scope selected for a user module based on a both-scoped definition', () => {
+    const world = createNewGame()
+    const teamId = Object.values(world.teams)[0]!.id
+    const playerId = world.teams[teamId]!.rosterPlayerIds[0]!
+    const date = nextEligibleTrainingDate(world.currentDate)
+    const withModule = createOrUpdateUserTrainingModule(world, { id: 'team-threes', name: 'Team Threes', baseDefinitionId: 'threePoint', scope: 'team', intensity: 'normal' })
+
+    const scheduled = scheduleTeamModuleSession(withModule, { teamId, moduleId: 'team-threes', date, startTime: '09:00', durationMinutes: 60, sessionId: 'team-threes-session' })
+
+    expect(scheduled.scheduledTrainingSessionsById['team-threes-session']?.scope).toBe('team')
+    expect(() => assignTrainingModuleToPlayer(withModule, { teamId, playerId, moduleId: 'team-threes', date, startTime: '09:00', sessionId: 'invalid-individual-session' })).toThrow(RangeError)
+  })
+
   it('assigning a user-created module inherits the base definition\'s real effect profile (target ratings, intensity) rather than a separate authority', () => {
     const world = createNewGame()
     const teamId = Object.values(world.teams)[0]!.id
