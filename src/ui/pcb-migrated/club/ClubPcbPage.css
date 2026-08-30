@@ -254,3 +254,12 @@
   .pcb-club .bento{grid-template-columns:1fr}
   .pcb-club .finances-overview,.pcb-club .finances-projections,.pcb-club .analytics-leaders-grid{grid-template-columns:1fr}
 }
+
+/* Historia uses the same bare table canvas as Plantilla. */
+.pcb-club .club-history .table{overflow:auto;border:1px solid #293a4a;border-radius:7px;background:rgba(15,23,42,.7)}
+.pcb-club .club-history .row{min-height:43px;align-items:stretch;gap:0;border-color:#293a4a;background:transparent;padding:0;color:#eef5fb;font-size:11px;font-weight:600}
+.pcb-club .club-history .row>*{display:flex;align-items:center;justify-content:center;min-width:0;border-right:1px solid #293a4a;padding:0 10px;text-align:center}
+.pcb-club .club-history .row>*:last-child{border-right:0}
+.pcb-club .club-history .row.head{min-height:28px;background:#111821;color:#84bce3;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.pcb-club .club-history>.card:not(:first-child){border:0;background:transparent;padding:0}
+.pcb-club .club-history>.card:not(:first-child)>.card-header{margin:0 0 8px;border:1px solid #263645;border-radius:8px;background:#151c25;padding:12px 14px}

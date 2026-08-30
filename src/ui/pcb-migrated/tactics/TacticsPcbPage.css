@@ -467,3 +467,15 @@
   height: 100%;
   border-radius: 2px;
 }
+
+/* Emparejamientos y Rotaciones use the shared Plantilla table surface. */
+.pcb-tactics .pcb-tactics__table-page,.pcb-tactics .pcb-tactics__rotation{border:0!important;background:transparent!important;padding:0!important}
+.pcb-tactics .pcb-tactics__table-page>header,.pcb-tactics .pcb-tactics__rotation>header{margin:0 0 12px!important;border:1px solid #263645!important;border-radius:8px!important;background:#151c25!important;padding:12px 14px!important}
+.pcb-tactics .pcb-tactics__table-page table{border:1px solid #293a4a!important;border-radius:7px!important;background:rgba(15,23,42,.7)!important}
+.pcb-tactics__table-page th,.pcb-tactics__table-page td{height:43px;border-color:#293a4a;background:transparent;color:#eef5fb;padding:0 10px;text-align:center;vertical-align:middle;font-size:11px;font-weight:600}
+.pcb-tactics__table-page th{height:28px;background:#111821;color:#84bce3;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.pcb-tactics__rotation-grid{border:1px solid #293a4a;border-radius:7px;background:rgba(15,23,42,.7)}
+.pcb-tactics__rotation-grid>div{min-height:43px;align-items:stretch;border-color:#293a4a;background:transparent;padding:0}
+.pcb-tactics__rotation-grid>div>*{display:flex;align-items:center;justify-content:center;min-width:0;border-right:1px solid #293a4a;padding:0 10px;text-align:center}
+.pcb-tactics__rotation-grid>div>*:last-child{border-right:0}
+.pcb-tactics__rotation-grid .is-head{min-height:28px;background:#111821;color:#84bce3;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}

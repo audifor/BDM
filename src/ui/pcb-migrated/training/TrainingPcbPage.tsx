@@ -1,57 +1,853 @@
-import { useMemo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
-import { TRAINING_DAYS, TRAINING_MODULES, TRAINING_PLAYERS, TRAINING_STAFF } from './TrainingVisualMock'
-import { addTrainingSession, createTrainingPlan, deleteTrainingSession, generateTrainingPlan, updateTrainingSession, type TrainingDay, type TrainingIntensity, type TrainingSession } from './TrainingMigrationRepository'
-import DraggableSubnav from '../club/components/DraggableSubnav'
-import './TrainingPcbPage.css'
+import {
+  useMemo,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
+import {
+  TRAINING_DAYS,
+  TRAINING_MODULES,
+  TRAINING_PLAYERS,
+  TRAINING_STAFF,
+} from "./TrainingVisualMock";
+import {
+  addTrainingSession,
+  createTrainingPlan,
+  deleteTrainingSession,
+  generateTrainingPlan,
+  updateTrainingSession,
+  type TrainingDay,
+  type TrainingIntensity,
+  type TrainingSession,
+} from "./TrainingMigrationRepository";
+import DraggableSubnav from "../club/components/DraggableSubnav";
+import "./TrainingPcbPage.css";
 
-export type TrainingPcbTab = 'team' | 'personal' | 'load' | 'staff' | 'modules'
-const tabs: readonly [TrainingPcbTab, string][] = [['team', 'Equipo'], ['personal', 'Individual'], ['load', 'Carga'], ['staff', 'Staff'], ['modules', 'Módulos']]
+export type TrainingPcbTab = "team" | "personal" | "load" | "staff" | "modules";
+const tabs: readonly [TrainingPcbTab, string][] = [
+  ["team", "Equipo"],
+  ["personal", "Individual"],
+  ["load", "Carga"],
+  ["staff", "Staff"],
+  ["modules", "Módulos"],
+];
 
 function useResizableTrainingColumns(initialWidths: readonly number[]) {
-  const [widths, setWidths] = useState(initialWidths)
-  const startResize = (index: number) => (event: ReactPointerEvent<HTMLSpanElement>) => {
-    event.preventDefault(); event.stopPropagation()
-    const startX = event.clientX, initialWidth = widths[index] ?? 120
-    const move = (next: PointerEvent) => setWidths((current) => current.map((width, widthIndex) => widthIndex === index ? Math.max(72, initialWidth + next.clientX - startX) : width))
-    const stop = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', stop) }
-    window.addEventListener('pointermove', move); window.addEventListener('pointerup', stop)
-  }
-  return { style: { gridTemplateColumns: widths.map((width) => `${width}px`).join(' ') } as CSSProperties, startResize }
+  const [widths, setWidths] = useState(initialWidths);
+  const startResize =
+    (index: number) => (event: ReactPointerEvent<HTMLSpanElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const startX = event.clientX,
+        initialWidth = widths[index] ?? 120;
+      const move = (next: PointerEvent) =>
+        setWidths((current) =>
+          current.map((width, widthIndex) =>
+            widthIndex === index
+              ? Math.max(72, initialWidth + next.clientX - startX)
+              : width,
+          ),
+        );
+      const stop = () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", stop);
+      };
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", stop);
+    };
+  return {
+    style: {
+      gridTemplateColumns: widths.map((width) => `${width}px`).join(" "),
+    } as CSSProperties,
+    startResize,
+    widths,
+  };
 }
 
-function TrainingColumnResizeHandle({ onPointerDown }: { readonly onPointerDown: (event: ReactPointerEvent<HTMLSpanElement>) => void }) { return <span aria-label="Ajustar ancho de columna" className="pcb-training__column-resize" onPointerDown={onPointerDown} /> }
-
-export function TrainingPcbPage({ initialTab = 'team' }: { readonly initialTab?: TrainingPcbTab }) {
-  const [tab, setTab] = useState<TrainingPcbTab>(initialTab)
-  const [plan, setPlan] = useState<readonly TrainingDay[]>(createTrainingPlan)
-  return <section aria-label="Entrenamiento PCB migrado" className="pcb-training"><DraggableSubnav className="pcb-training__subnav" items={tabs.map(([id, label]) => ({ id, label, active: tab === id, onClick: () => setTab(id) }))} storageKey="pcbasket.subnav.training" />{tab === 'team' ? <TeamTraining plan={plan} setPlan={setPlan} /> : tab === 'personal' ? <PersonalTraining /> : tab === 'load' ? <LoadManagementInteractive /> : tab === 'staff' ? <StaffAssignments /> : <TrainingModules />}</section>
+function TrainingColumnResizeHandle({
+  onPointerDown,
+}: {
+  readonly onPointerDown: (event: ReactPointerEvent<HTMLSpanElement>) => void;
+}) {
+  return (
+    <span
+      aria-label="Ajustar ancho de columna"
+      className="pcb-training__column-resize"
+      onPointerDown={onPointerDown}
+    />
+  );
 }
 
-function TeamTraining({ plan, setPlan }: { readonly plan: readonly TrainingDay[]; readonly setPlan: React.Dispatch<React.SetStateAction<readonly TrainingDay[]>> }) {
-  const [automatic, setAutomatic] = useState(true); const [saved, setSaved] = useState(false); const [week, setWeek] = useState(0); const [context, setContext] = useState('Prepartido'); const [responsible, setResponsible] = useState('alvaro'); const [editor, setEditor] = useState<{ readonly dayIndex: number; readonly session?: TrainingSession }>()
-  const saveSession = (session: Omit<TrainingSession, 'id'>) => { if (editor === undefined) return; const current = editor.session; const next = { ...session, id: current?.id ?? `local-${editor.dayIndex}-${plan[editor.dayIndex]!.sessions.length}` }; setPlan((value) => current === undefined ? addTrainingSession(value, editor.dayIndex, next) : updateTrainingSession(value, editor.dayIndex, next)); setEditor(undefined) }
-  return <main className="pcb-training__bento pcb-training__team"><section className="pcb-training__card pcb-training__hero"><div className="pcb-training__hero-top"><div><h2>Team Training</h2><p>{context} · Semana {18 + week} - {24 + week} ago</p></div><div className="pcb-training__chips"><span>Equipo Casademont Zaragoza</span><span>Responsable: {responsible === 'alvaro' ? 'Álvaro Quirós (84)' : 'Marta Vidal (79)'}</span><span>Carga Óptima</span><span>Total 486 AU</span></div></div><div className="pcb-training__controls"><label>Modo<button className={automatic ? 'is-on' : ''} onClick={() => setAutomatic(!automatic)} type="button">{automatic ? 'Automático' : 'Manual'}</button></label><label>Responsable<select onChange={(event) => setResponsible(event.target.value)} value={responsible}><option value="alvaro">Álvaro Quirós (84)</option><option value="marta">Marta Vidal (79)</option></select></label><label>Contexto<select onChange={(event) => setContext(event.target.value)} value={context}><option>Prepartido</option><option>Semana normal</option><option>Recuperación</option></select></label><div className="pcb-training__control-actions">{automatic && <button onClick={() => setPlan(generateTrainingPlan(context))} type="button">Auto-Generar</button>}<button className="is-primary" onClick={() => setSaved(true)} type="button">{saved ? 'Guardado' : 'Guardar Plan'}</button></div></div></section><div className="pcb-training__layout"><section className="pcb-training__plan"><div className="pcb-training__week"><button onClick={() => setWeek((value) => value - 1)} type="button">Anterior</button><div><strong>{18 + week} ago - {24 + week} ago</strong><small>Semana de planificación</small></div><button onClick={() => setWeek((value) => value + 1)} type="button">Siguiente</button></div><div className="pcb-training__days">{plan.map((day, dayIndex) => <article className="pcb-training__day" key={day.name}><header><strong>{day.name}</strong><button onClick={() => setEditor({ dayIndex })} type="button">+ Sesión</button></header><div>{day.sessions.length === 0 ? <p>Descanso</p> : day.sessions.map((session) => <article className="pcb-training__session" key={session.id}><button onClick={() => setEditor({ dayIndex, session })} type="button"><span><b>{session.focus}</b><em>•••</em></span><small>{session.time} · {session.intensity}</small><i className={`is-${session.intensity.toLocaleLowerCase()}`}>{session.intensity}</i></button><button className="pcb-training__delete" onClick={() => setPlan((value) => deleteTrainingSession(value, dayIndex, session.id))} title="Eliminar sesión" type="button">×</button></article>)}</div></article>)}</div></section><Calendar /></div>{editor !== undefined && <SessionModal initial={editor.session} onClose={() => setEditor(undefined)} onSave={saveSession} />}</main>
+export function TrainingPcbPage({
+  initialTab = "team",
+}: {
+  readonly initialTab?: TrainingPcbTab;
+}) {
+  const [tab, setTab] = useState<TrainingPcbTab>(initialTab);
+  const [plan, setPlan] = useState<readonly TrainingDay[]>(createTrainingPlan);
+  return (
+    <section aria-label="Entrenamiento PCB migrado" className="pcb-training">
+      <DraggableSubnav
+        className="pcb-training__subnav"
+        items={tabs.map(([id, label]) => ({
+          id,
+          label,
+          active: tab === id,
+          onClick: () => setTab(id),
+        }))}
+        storageKey="pcbasket.subnav.training"
+      />
+      {tab === "team" ? (
+        <TeamTraining plan={plan} setPlan={setPlan} />
+      ) : tab === "personal" ? (
+        <PersonalTraining />
+      ) : tab === "load" ? (
+        <LoadManagementInteractive />
+      ) : tab === "staff" ? (
+        <StaffAssignments />
+      ) : (
+        <TrainingModules />
+      )}
+    </section>
+  );
 }
-function Calendar() { return <aside className="pcb-training__calendar"><header><h3>Agosto 2032</h3><span>Plan semanal</span></header><div className="pcb-training__calendar-grid">{['L','M','X','J','V','S','D'].map((x) => <b key={x}>{x}</b>)}{Array.from({ length: 35 }, (_, index) => <span className={index > 16 && index < 24 ? 'is-train' : ''} key={index}>{index > 2 && index < 34 ? index - 2 : ''}{index > 16 && index < 24 ? <i>2</i> : null}</span>)}</div><p>Sesiones programadas durante la semana seleccionada.</p></aside> }
-function SessionModal({ initial, onClose, onSave }: { readonly initial?: TrainingSession; readonly onClose: () => void; readonly onSave: (session: Omit<TrainingSession, 'id'>) => void }) { const [time, setTime] = useState(initial?.time ?? '10:00'); const [endTime, setEndTime] = useState('11:30'); const [focus, setFocus] = useState(initial?.focus ?? 'Técnica individual'); const [intensity, setIntensity] = useState<TrainingIntensity>(initial?.intensity ?? 'Media'); const durationMinutes = (() => { const [startH, startM] = time.split(':').map(Number); const [endH, endM] = endTime.split(':').map(Number); const minutes = (endH! * 60 + endM!) - (startH! * 60 + startM!); return minutes > 0 ? minutes : 0 })(); return <div className="pcb-training__modal"><section><header><h3>{initial === undefined ? 'Nueva sesión' : 'Editar sesión'}</h3><button onClick={onClose} type="button">×</button></header><label>Tipo<select value={focus} onChange={(event) => setFocus(event.target.value)}><option>Técnica individual</option><option>Fuerza y potencia</option><option>Sistemas ofensivos</option><option>Recuperación</option></select></label><div className="pcb-training__modal-grid"><label>Inicio<input onChange={(event) => setTime(event.target.value)} type="time" value={time} /></label><label>Fin<input onChange={(event) => setEndTime(event.target.value)} type="time" value={endTime} /></label></div><label>Foco<select value={focus} onChange={(event) => setFocus(event.target.value)}><option>Tiro exterior</option><option>Defensa individual</option><option>Concentración</option></select></label><div className="pcb-training__intensity">{(['Baja','Media','Alta'] as const).map((value) => <button className={value === intensity ? 'is-active' : ''} key={value} onClick={() => setIntensity(value)} type="button">{value}</button>)}</div><div className="pcb-training__effects"><strong>Impacto estimado</strong><span>Carga {durationMinutes} AU · {focus} · Concentración</span></div><footer><button onClick={onClose} type="button">Cancelar</button><button className="is-primary" onClick={() => onSave({ time, focus, intensity })} type="button">Guardar sesión</button></footer></section></div> }
+
+function TeamTraining({
+  plan,
+  setPlan,
+}: {
+  readonly plan: readonly TrainingDay[];
+  readonly setPlan: React.Dispatch<
+    React.SetStateAction<readonly TrainingDay[]>
+  >;
+}) {
+  const [automatic, setAutomatic] = useState(true);
+  const [saved, setSaved] = useState(false);
+  const [week, setWeek] = useState(0);
+  const [context, setContext] = useState("Prepartido");
+  const [responsible, setResponsible] = useState("alvaro");
+  const [editor, setEditor] = useState<{
+    readonly dayIndex: number;
+    readonly session?: TrainingSession;
+  }>();
+  const saveSession = (session: Omit<TrainingSession, "id">) => {
+    if (editor === undefined) return;
+    const current = editor.session;
+    const next = {
+      ...session,
+      id:
+        current?.id ??
+        `local-${editor.dayIndex}-${plan[editor.dayIndex]!.sessions.length}`,
+    };
+    setPlan((value) =>
+      current === undefined
+        ? addTrainingSession(value, editor.dayIndex, next)
+        : updateTrainingSession(value, editor.dayIndex, next),
+    );
+    setEditor(undefined);
+  };
+  return (
+    <main className="pcb-training__bento pcb-training__team">
+      <section className="pcb-training__card pcb-training__hero">
+        <div className="pcb-training__hero-top">
+          <div>
+            <h2>Team Training</h2>
+            <p>
+              {context} · Semana {18 + week} - {24 + week} ago
+            </p>
+          </div>
+          <div className="pcb-training__chips">
+            <span>Equipo Casademont Zaragoza</span>
+            <span>
+              Responsable:{" "}
+              {responsible === "alvaro"
+                ? "Álvaro Quirós (84)"
+                : "Marta Vidal (79)"}
+            </span>
+            <span>Carga Óptima</span>
+            <span>Total 486 AU</span>
+          </div>
+        </div>
+        <div className="pcb-training__controls">
+          <label>
+            Modo
+            <button
+              className={automatic ? "is-on" : ""}
+              onClick={() => setAutomatic(!automatic)}
+              type="button"
+            >
+              {automatic ? "Automático" : "Manual"}
+            </button>
+          </label>
+          <label>
+            Responsable
+            <select
+              onChange={(event) => setResponsible(event.target.value)}
+              value={responsible}
+            >
+              <option value="alvaro">Álvaro Quirós (84)</option>
+              <option value="marta">Marta Vidal (79)</option>
+            </select>
+          </label>
+          <label>
+            Contexto
+            <select
+              onChange={(event) => setContext(event.target.value)}
+              value={context}
+            >
+              <option>Prepartido</option>
+              <option>Semana normal</option>
+              <option>Recuperación</option>
+            </select>
+          </label>
+          <div className="pcb-training__control-actions">
+            {automatic && (
+              <button
+                onClick={() => setPlan(generateTrainingPlan(context))}
+                type="button"
+              >
+                Auto-Generar
+              </button>
+            )}
+            <button
+              className="is-primary"
+              onClick={() => setSaved(true)}
+              type="button"
+            >
+              {saved ? "Guardado" : "Guardar Plan"}
+            </button>
+          </div>
+        </div>
+      </section>
+      <div className="pcb-training__layout">
+        <section className="pcb-training__plan">
+          <div className="pcb-training__week">
+            <button onClick={() => setWeek((value) => value - 1)} type="button">
+              Anterior
+            </button>
+            <div>
+              <strong>
+                {18 + week} ago - {24 + week} ago
+              </strong>
+              <small>Semana de planificación</small>
+            </div>
+            <button onClick={() => setWeek((value) => value + 1)} type="button">
+              Siguiente
+            </button>
+          </div>
+          <div className="pcb-training__days">
+            {plan.map((day, dayIndex) => (
+              <article className="pcb-training__day" key={day.name}>
+                <header>
+                  <strong>{day.name}</strong>
+                  <button onClick={() => setEditor({ dayIndex })} type="button">
+                    + Sesión
+                  </button>
+                </header>
+                <div>
+                  {day.sessions.length === 0 ? (
+                    <p>Descanso</p>
+                  ) : (
+                    day.sessions.map((session) => (
+                      <article
+                        className="pcb-training__session"
+                        key={session.id}
+                      >
+                        <button
+                          onClick={() => setEditor({ dayIndex, session })}
+                          type="button"
+                        >
+                          <span>
+                            <b>{session.focus}</b>
+                            <em>•••</em>
+                          </span>
+                          <small>
+                            {session.time} · {session.intensity}
+                          </small>
+                          <i
+                            className={`is-${session.intensity.toLocaleLowerCase()}`}
+                          >
+                            {session.intensity}
+                          </i>
+                        </button>
+                        <button
+                          className="pcb-training__delete"
+                          onClick={() =>
+                            setPlan((value) =>
+                              deleteTrainingSession(
+                                value,
+                                dayIndex,
+                                session.id,
+                              ),
+                            )
+                          }
+                          title="Eliminar sesión"
+                          type="button"
+                        >
+                          ×
+                        </button>
+                      </article>
+                    ))
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+        <Calendar />
+      </div>
+      {editor !== undefined && (
+        <SessionModal
+          initial={editor.session}
+          onClose={() => setEditor(undefined)}
+          onSave={saveSession}
+        />
+      )}
+    </main>
+  );
+}
+function Calendar() {
+  return (
+    <aside className="pcb-training__calendar">
+      <header>
+        <h3>Agosto 2032</h3>
+        <span>Plan semanal</span>
+      </header>
+      <div className="pcb-training__calendar-grid">
+        {["L", "M", "X", "J", "V", "S", "D"].map((x) => (
+          <b key={x}>{x}</b>
+        ))}
+        {Array.from({ length: 35 }, (_, index) => (
+          <span
+            className={index > 16 && index < 24 ? "is-train" : ""}
+            key={index}
+          >
+            {index > 2 && index < 34 ? index - 2 : ""}
+            {index > 16 && index < 24 ? <i>2</i> : null}
+          </span>
+        ))}
+      </div>
+      <p>Sesiones programadas durante la semana seleccionada.</p>
+    </aside>
+  );
+}
+function SessionModal({
+  initial,
+  onClose,
+  onSave,
+}: {
+  readonly initial?: TrainingSession;
+  readonly onClose: () => void;
+  readonly onSave: (session: Omit<TrainingSession, "id">) => void;
+}) {
+  const [time, setTime] = useState(initial?.time ?? "10:00");
+  const [endTime, setEndTime] = useState("11:30");
+  const [focus, setFocus] = useState(initial?.focus ?? "Técnica individual");
+  const [intensity, setIntensity] = useState<TrainingIntensity>(
+    initial?.intensity ?? "Media",
+  );
+  const durationMinutes = (() => {
+    const [startH, startM] = time.split(":").map(Number);
+    const [endH, endM] = endTime.split(":").map(Number);
+    const minutes = endH! * 60 + endM! - (startH! * 60 + startM!);
+    return minutes > 0 ? minutes : 0;
+  })();
+  return (
+    <div className="pcb-training__modal">
+      <section>
+        <header>
+          <h3>{initial === undefined ? "Nueva sesión" : "Editar sesión"}</h3>
+          <button onClick={onClose} type="button">
+            ×
+          </button>
+        </header>
+        <label>
+          Tipo
+          <select
+            value={focus}
+            onChange={(event) => setFocus(event.target.value)}
+          >
+            <option>Técnica individual</option>
+            <option>Fuerza y potencia</option>
+            <option>Sistemas ofensivos</option>
+            <option>Recuperación</option>
+          </select>
+        </label>
+        <div className="pcb-training__modal-grid">
+          <label>
+            Inicio
+            <input
+              onChange={(event) => setTime(event.target.value)}
+              type="time"
+              value={time}
+            />
+          </label>
+          <label>
+            Fin
+            <input
+              onChange={(event) => setEndTime(event.target.value)}
+              type="time"
+              value={endTime}
+            />
+          </label>
+        </div>
+        <label>
+          Foco
+          <select
+            value={focus}
+            onChange={(event) => setFocus(event.target.value)}
+          >
+            <option>Tiro exterior</option>
+            <option>Defensa individual</option>
+            <option>Concentración</option>
+          </select>
+        </label>
+        <div className="pcb-training__intensity">
+          {(["Baja", "Media", "Alta"] as const).map((value) => (
+            <button
+              className={value === intensity ? "is-active" : ""}
+              key={value}
+              onClick={() => setIntensity(value)}
+              type="button"
+            >
+              {value}
+            </button>
+          ))}
+        </div>
+        <div className="pcb-training__effects">
+          <strong>Impacto estimado</strong>
+          <span>
+            Carga {durationMinutes} AU · {focus} · Concentración
+          </span>
+        </div>
+        <footer>
+          <button onClick={onClose} type="button">
+            Cancelar
+          </button>
+          <button
+            className="is-primary"
+            onClick={() => onSave({ time, focus, intensity })}
+            type="button"
+          >
+            Guardar sesión
+          </button>
+        </footer>
+      </section>
+    </div>
+  );
+}
 function PersonalTraining() {
-  const columns = useResizableTrainingColumns([250, 88, 180, 150, 240])
-  const labels = ['Jugador', 'Pos', 'Focus', 'Intensidad', 'Objetivo']
-  return <main className="pcb-training__bento"><section className="pcb-training__card"><header className="pcb-training__card-head"><h2>Personal Training</h2><span>5 jugadores</span></header><div className="pcb-training__table pcb-training__personal"> <div className="is-head" style={columns.style}>{labels.map((label, index) => <span key={label}>{label}<TrainingColumnResizeHandle onPointerDown={columns.startResize(index)} /></span>)}</div>{TRAINING_PLAYERS.map(([name,pos,focus,intensity,objective]) => <div key={name} style={columns.style}><b>{name}</b><span>{pos}</span><span>{focus}</span><i>{intensity}</i><span>{objective}</span></div>)}</div></section></main>
+  const columns = useResizableTrainingColumns([250, 88, 180, 150, 240]);
+  const labels = ["Jugador", "Pos", "Focus", "Intensidad", "Objetivo"];
+  return (
+    <main className="pcb-training__bento pcb-training__personal-page">
+      <header className="pcb-training__personal-toolbar">
+        <div>
+          <h2>Entrenamiento individual</h2>
+          <small>Plan de desarrollo por jugador</small>
+        </div>
+        <div className="pcb-training__personal-pills">
+          <span>5 jugadores</span>
+        </div>
+      </header>
+      <div className="pcb-training__table pcb-training__personal">
+        <div className="is-head" style={columns.style}>
+          {labels.map((label, index) => (
+            <span key={label}>
+              {label}
+              <TrainingColumnResizeHandle
+                onPointerDown={columns.startResize(index)}
+              />
+            </span>
+          ))}
+        </div>
+        {TRAINING_PLAYERS.map(([name, pos, focus, intensity, objective]) => (
+          <div key={name} style={columns.style}>
+            <b>{name}</b>
+            <span>{pos}</span>
+            <span>{focus}</span>
+            <i>{intensity}</i>
+            <span>{objective}</span>
+          </div>
+        ))}
+      </div>
+    </main>
+  );
 }
 function LoadManagementInteractive() {
-  const [query, setQuery] = useState(''); const [riskOnly, setRiskOnly] = useState(false); const [fatigueOnly, setFatigueOnly] = useState(false); const [filtersOpen, setFiltersOpen] = useState(false); const [columnsOpen, setColumnsOpen] = useState(false); const [selected, setSelected] = useState<string>(); const [sortDirection, setSortDirection] = useState<'ascending' | 'descending'>('ascending'); const [view, setView] = useState('Principal')
-  const [columns, setColumns] = useState<readonly string[]>(['JUGADOR', 'DORSAL', 'POS', 'CARGA', 'FATIGA', 'RATIO', 'ESTADO', 'TEND.'])
-  const rows = useMemo(() => TRAINING_PLAYERS.filter(([name,,,,,,,status]) => name.toLocaleLowerCase().includes(query.toLocaleLowerCase()) && (!riskOnly || status === 'risk') && (!fatigueOnly || TRAINING_PLAYERS.find((player) => player[0] === name)![6] > 70)).slice().sort((left, right) => (left[6] - right[6]) * (sortDirection === 'ascending' ? 1 : -1)), [fatigueOnly, query, riskOnly, sortDirection])
-  const columnCell = (column: string, player: typeof TRAINING_PLAYERS[number]) => { const [name, position,,,,load,fatigue,status] = player; if (column === 'JUGADOR') return <b>{name}</b>; if (column === 'DORSAL') return <span>{name.charCodeAt(0) % 33}</span>; if (column === 'POS') return <i>{position}</i>; if (column === 'CARGA') return <Bar value={load} />; if (column === 'FATIGA') return <Bar value={fatigue} />; if (column === 'RATIO') return <b className={status === 'risk' ? 'is-danger' : ''}>{(load / 55).toFixed(2)}</b>; if (column === 'ESTADO') return <em className={`pcb-training__badge is-${status}`}>{status === 'risk' ? 'ALTO RIESGO' : status === 'low' ? 'BAJA CARGA' : 'ÓPTIMO'}</em>; return <span>{status === 'risk' ? '↑' : status === 'low' ? '−' : '↓'}</span> }
-  return <main className="pcb-training__bento"><section className="pcb-training__card"><header className="pcb-training__card-head"><h2>Load Management</h2><span>Control de cargas</span></header><div className="pcb-training__metrics"><Metric label="ALERTA LESIÓN" value="2" tone="danger" icon="⌁" /><Metric label="CARGA ÓPTIMA" value="2" tone="good" icon="✓" /><Metric label="FATIGA MEDIA" value="55%" tone="warn" icon="▰" /></div><div className="pcb-training__load-toolbar"><div>{['Principal', 'Riesgo', 'Recuperación'].map((item) => <button className={item === view ? 'is-primary' : ''} key={item} onClick={() => setView(item)} type="button">{item}</button>)}</div><div><input aria-label="Buscar jugador" onChange={(event) => setQuery(event.target.value)} placeholder="Buscar jugador..." value={query}/><button className={filtersOpen ? 'is-filtering' : ''} onClick={() => setFiltersOpen((value) => !value)} type="button">⌕ Filtros</button><button aria-expanded={columnsOpen} onClick={() => setColumnsOpen((value) => !value)} title="Columnas" type="button">•••</button></div></div>{filtersOpen && <div className="pcb-training__filters"><label><input checked={riskOnly} onChange={(event) => setRiskOnly(event.target.checked)} type="checkbox" /> Solo Alto Riesgo</label><label><input checked={fatigueOnly} onChange={(event) => setFatigueOnly(event.target.checked)} type="checkbox" /> Fatiga Alta (&gt;70%)</label></div>}{columnsOpen && <div className="pcb-training__column-menu">{['JUGADOR', 'DORSAL', 'POS', 'CARGA', 'FATIGA', 'RATIO', 'ESTADO', 'TEND.'].map((column) => <label key={column}><input checked={columns.includes(column)} disabled={column === 'JUGADOR'} onChange={() => setColumns((current) => current.includes(column) ? current.filter((item) => item !== column) : [...current, column])} type="checkbox" /> {column}</label>)}</div>}<div className="pcb-training__table pcb-training__load" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(88px, 1fr))` }}><div className="is-head" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(88px, 1fr))` }}>{columns.map((column) => column === 'FATIGA' ? <button key={column} onClick={() => setSortDirection((value) => value === 'ascending' ? 'descending' : 'ascending')} type="button">{column} {sortDirection === 'ascending' ? '↑' : '↓'}</button> : <span key={column}>{column}</span>)}</div>{rows.map((player) => <div className={selected === player[0] ? 'is-selected' : ''} key={player[0]} onClick={() => setSelected(player[0])} style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(88px, 1fr))` }}>{columns.map((column) => <span key={column}>{columnCell(column, player)}</span>)}</div>)}</div></section></main>
+  const [query, setQuery] = useState("");
+  const [riskOnly, setRiskOnly] = useState(false);
+  const [fatigueOnly, setFatigueOnly] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [columnsOpen, setColumnsOpen] = useState(false);
+  const [selected, setSelected] = useState<string>();
+  const [sortDirection, setSortDirection] = useState<
+    "ascending" | "descending"
+  >("ascending");
+  const [view, setView] = useState("Principal");
+  const [columns, setColumns] = useState<readonly string[]>([
+    "JUGADOR",
+    "DORSAL",
+    "POS",
+    "CARGA",
+    "FATIGA",
+    "RATIO",
+    "ESTADO",
+    "TEND.",
+  ]);
+  const loadColumns = useResizableTrainingColumns([
+    220, 92, 88, 160, 160, 100, 160, 92,
+  ]);
+  const loadGridStyle = {
+    gridTemplateColumns: columns
+      .map((_, index) => `${loadColumns.widths[index] ?? 120}px`)
+      .join(" "),
+  } as CSSProperties;
+  const rows = useMemo(
+    () =>
+      TRAINING_PLAYERS.filter(
+        ([name, , , , , , , status]) =>
+          name.toLocaleLowerCase().includes(query.toLocaleLowerCase()) &&
+          (!riskOnly || status === "risk") &&
+          (!fatigueOnly ||
+            TRAINING_PLAYERS.find((player) => player[0] === name)![6] > 70),
+      )
+        .slice()
+        .sort(
+          (left, right) =>
+            (left[6] - right[6]) * (sortDirection === "ascending" ? 1 : -1),
+        ),
+    [fatigueOnly, query, riskOnly, sortDirection],
+  );
+  const columnCell = (
+    column: string,
+    player: (typeof TRAINING_PLAYERS)[number],
+  ) => {
+    const [name, position, , , , load, fatigue, status] = player;
+    if (column === "JUGADOR") return <b>{name}</b>;
+    if (column === "DORSAL") return <span>{name.charCodeAt(0) % 33}</span>;
+    if (column === "POS") return <i>{position}</i>;
+    if (column === "CARGA") return <Bar value={load} />;
+    if (column === "FATIGA") return <Bar value={fatigue} />;
+    if (column === "RATIO")
+      return (
+        <b className={status === "risk" ? "is-danger" : ""}>
+          {(load / 55).toFixed(2)}
+        </b>
+      );
+    if (column === "ESTADO")
+      return (
+        <em className={`pcb-training__badge is-${status}`}>
+          {status === "risk"
+            ? "ALTO RIESGO"
+            : status === "low"
+              ? "BAJA CARGA"
+              : "ÓPTIMO"}
+        </em>
+      );
+    return (
+      <span>{status === "risk" ? "↑" : status === "low" ? "−" : "↓"}</span>
+    );
+  };
+  return (
+    <main className="pcb-training__bento">
+      <section className="pcb-training__card">
+        <header className="pcb-training__card-head">
+          <h2>Load Management</h2>
+          <span>Control de cargas</span>
+        </header>
+        <div className="pcb-training__metrics">
+          <Metric label="ALERTA LESIÓN" value="2" tone="danger" icon="⌁" />
+          <Metric label="CARGA ÓPTIMA" value="2" tone="good" icon="✓" />
+          <Metric label="FATIGA MEDIA" value="55%" tone="warn" icon="▰" />
+        </div>
+        <div className="pcb-training__load-toolbar">
+          <div>
+            {["Principal", "Riesgo", "Recuperación"].map((item) => (
+              <button
+                className={item === view ? "is-primary" : ""}
+                key={item}
+                onClick={() => setView(item)}
+                type="button"
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+          <div>
+            <input
+              aria-label="Buscar jugador"
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Buscar jugador..."
+              value={query}
+            />
+            <button
+              className={filtersOpen ? "is-filtering" : ""}
+              onClick={() => setFiltersOpen((value) => !value)}
+              type="button"
+            >
+              ⌕ Filtros
+            </button>
+            <button
+              aria-expanded={columnsOpen}
+              onClick={() => setColumnsOpen((value) => !value)}
+              title="Columnas"
+              type="button"
+            >
+              •••
+            </button>
+          </div>
+        </div>
+        {filtersOpen && (
+          <div className="pcb-training__filters">
+            <label>
+              <input
+                checked={riskOnly}
+                onChange={(event) => setRiskOnly(event.target.checked)}
+                type="checkbox"
+              />{" "}
+              Solo Alto Riesgo
+            </label>
+            <label>
+              <input
+                checked={fatigueOnly}
+                onChange={(event) => setFatigueOnly(event.target.checked)}
+                type="checkbox"
+              />{" "}
+              Fatiga Alta (&gt;70%)
+            </label>
+          </div>
+        )}
+        {columnsOpen && (
+          <div className="pcb-training__column-menu">
+            {[
+              "JUGADOR",
+              "DORSAL",
+              "POS",
+              "CARGA",
+              "FATIGA",
+              "RATIO",
+              "ESTADO",
+              "TEND.",
+            ].map((column) => (
+              <label key={column}>
+                <input
+                  checked={columns.includes(column)}
+                  disabled={column === "JUGADOR"}
+                  onChange={() =>
+                    setColumns((current) =>
+                      current.includes(column)
+                        ? current.filter((item) => item !== column)
+                        : [...current, column],
+                    )
+                  }
+                  type="checkbox"
+                />{" "}
+                {column}
+              </label>
+            ))}
+          </div>
+        )}
+        <div
+          className="pcb-training__table pcb-training__load"
+          style={loadGridStyle}
+        >
+          <div
+            className="is-head"
+            style={loadGridStyle}
+          >
+            {columns.map((column, index) =>
+              column === "FATIGA" ? (
+                <button
+                  key={column}
+                  onClick={() =>
+                    setSortDirection((value) =>
+                      value === "ascending" ? "descending" : "ascending",
+                    )
+                  }
+                  type="button"
+                >
+                  {column} {sortDirection === "ascending" ? "↑" : "↓"}
+                  <TrainingColumnResizeHandle onPointerDown={loadColumns.startResize(index)} />
+                </button>
+              ) : (
+                <span key={column}>{column}<TrainingColumnResizeHandle onPointerDown={loadColumns.startResize(index)} /></span>
+              ),
+            )}
+          </div>
+          {rows.map((player) => (
+            <div
+              className={selected === player[0] ? "is-selected" : ""}
+              key={player[0]}
+              onClick={() => setSelected(player[0])}
+              style={loadGridStyle}
+            >
+              {columns.map((column) => (
+                <span key={column}>{columnCell(column, player)}</span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </section>
+    </main>
+  );
 }
-function Metric({ label, value, tone, icon }: { readonly label: string; readonly value: string; readonly tone: string; readonly icon: string }) { return <article className={`pcb-training__metric is-${tone}`}><div><small>{label}</small><strong>{value}</strong></div><b>{icon}</b></article> }
-function Bar({ value }: { readonly value: number }) { return <span className="pcb-training__bar"><i style={{ width: `${value}%` }} /><b>{value}%</b></span> }
-function StaffAssignments() { return <main className="pcb-training__bento"><section className="pcb-training__card"><header className="pcb-training__card-head"><h2>Staff Assignments</h2><span>4 miembros</span></header><div className="pcb-training__table pcb-training__staff"><div className="is-head"><span>Staff</span><span>Rol</span><span>Área</span><span>Grupo</span></div>{TRAINING_STAFF.map(([name,role,area,group]) => <div key={name}><b>{name}</b><span>{role}</span><span>{area}</span><span>{group}</span></div>)}</div></section></main> }
+function Metric({
+  label,
+  value,
+  tone,
+  icon,
+}: {
+  readonly label: string;
+  readonly value: string;
+  readonly tone: string;
+  readonly icon: string;
+}) {
+  return (
+    <article className={`pcb-training__metric is-${tone}`}>
+      <div>
+        <small>{label}</small>
+        <strong>{value}</strong>
+      </div>
+      <b>{icon}</b>
+    </article>
+  );
+}
+function Bar({ value }: { readonly value: number }) {
+  return (
+    <span className="pcb-training__bar">
+      <i style={{ width: `${value}%` }} />
+      <b>{value}%</b>
+    </span>
+  );
+}
+function StaffAssignments() {
+  const columns = useResizableTrainingColumns([260, 210, 220, 220]);
+  const labels = ["Staff", "Rol", "Área", "Grupo"];
+  return (
+    <main className="pcb-training__bento">
+      <section className="pcb-training__card">
+        <header className="pcb-training__card-head">
+          <h2>Staff Assignments</h2>
+          <span>4 miembros</span>
+        </header>
+        <div className="pcb-training__table pcb-training__staff">
+          <div className="is-head" style={columns.style}>
+            {labels.map((label, index) => (
+              <span key={label}>
+                {label}
+                <TrainingColumnResizeHandle
+                  onPointerDown={columns.startResize(index)}
+                />
+              </span>
+            ))}
+          </div>
+          {TRAINING_STAFF.map(([name, role, area, group]) => (
+            <div key={name} style={columns.style}>
+              <b>{name}</b>
+              <span>{role}</span>
+              <span>{area}</span>
+              <span>{group}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+    </main>
+  );
+}
 function TrainingModules() {
-  const [configuring, setConfiguring] = useState<string | null>(null)
-  const [settings, setSettings] = useState<Record<string, { enabled: boolean; intensity: TrainingIntensity }>>(() => Object.fromEntries(TRAINING_MODULES.map(([name]) => [name, { enabled: true, intensity: 'Media' as TrainingIntensity }])))
-  const current = configuring === null ? undefined : settings[configuring]
-  return <main className="pcb-training__bento"><section className="pcb-training__card"><header className="pcb-training__card-head"><h2>Training Modules</h2><span>4 módulos</span></header><div className="pcb-training__module-list">{TRAINING_MODULES.map(([name,description,category]) => <article key={name}><div><b>{name}</b><p>{description}</p>{!settings[name]!.enabled && <small>Desactivado</small>}</div><span>{category}</span><button onClick={() => setConfiguring(name)} type="button">Configurar</button></article>)}</div>{configuring !== null && current !== undefined && <div className="pcb-training__modal"><section><header><h3>Configurar {configuring}</h3><button onClick={() => setConfiguring(null)} type="button">×</button></header><label><input checked={current.enabled} onChange={(event) => setSettings((value) => ({ ...value, [configuring]: { ...value[configuring]!, enabled: event.target.checked } }))} type="checkbox" /> Módulo activo</label><div className="pcb-training__intensity">{(['Baja','Media','Alta'] as const).map((value) => <button className={value === current.intensity ? 'is-active' : ''} key={value} onClick={() => setSettings((prior) => ({ ...prior, [configuring]: { ...prior[configuring]!, intensity: value } }))} type="button">{value}</button>)}</div><footer><button className="is-primary" onClick={() => setConfiguring(null)} type="button">Guardar</button></footer></section></div>}</section></main>
+  const [configuring, setConfiguring] = useState<string | null>(null);
+  const [settings, setSettings] = useState<
+    Record<string, { enabled: boolean; intensity: TrainingIntensity }>
+  >(() =>
+    Object.fromEntries(
+      TRAINING_MODULES.map(([name]) => [
+        name,
+        { enabled: true, intensity: "Media" as TrainingIntensity },
+      ]),
+    ),
+  );
+  const current = configuring === null ? undefined : settings[configuring];
+  return (
+    <main className="pcb-training__bento">
+      <section className="pcb-training__card">
+        <header className="pcb-training__card-head">
+          <h2>Training Modules</h2>
+          <span>4 módulos</span>
+        </header>
+        <div className="pcb-training__module-list">
+          {TRAINING_MODULES.map(([name, description, category]) => (
+            <article key={name}>
+              <div>
+                <b>{name}</b>
+                <p>{description}</p>
+                {!settings[name]!.enabled && <small>Desactivado</small>}
+              </div>
+              <span>{category}</span>
+              <button onClick={() => setConfiguring(name)} type="button">
+                Configurar
+              </button>
+            </article>
+          ))}
+        </div>
+        {configuring !== null && current !== undefined && (
+          <div className="pcb-training__modal">
+            <section>
+              <header>
+                <h3>Configurar {configuring}</h3>
+                <button onClick={() => setConfiguring(null)} type="button">
+                  ×
+                </button>
+              </header>
+              <label>
+                <input
+                  checked={current.enabled}
+                  onChange={(event) =>
+                    setSettings((value) => ({
+                      ...value,
+                      [configuring]: {
+                        ...value[configuring]!,
+                        enabled: event.target.checked,
+                      },
+                    }))
+                  }
+                  type="checkbox"
+                />{" "}
+                Módulo activo
+              </label>
+              <div className="pcb-training__intensity">
+                {(["Baja", "Media", "Alta"] as const).map((value) => (
+                  <button
+                    className={value === current.intensity ? "is-active" : ""}
+                    key={value}
+                    onClick={() =>
+                      setSettings((prior) => ({
+                        ...prior,
+                        [configuring]: {
+                          ...prior[configuring]!,
+                          intensity: value,
+                        },
+                      }))
+                    }
+                    type="button"
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
+              <footer>
+                <button
+                  className="is-primary"
+                  onClick={() => setConfiguring(null)}
+                  type="button"
+                >
+                  Guardar
+                </button>
+              </footer>
+            </section>
+          </div>
+        )}
+      </section>
+    </main>
+  );
 }

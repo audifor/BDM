@@ -125,6 +125,20 @@
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.pcb-plantilla__analysis-table > div:first-child > *,
+.pcb-plantilla__mentor-table > div:first-child > * {
+  position: relative;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.pcb-plantilla__analysis h3,
+.pcb-plantilla__mentoring h3 {
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .pcb-plantilla__column-resize {
@@ -133,6 +147,16 @@
   margin-left: auto;
   cursor: col-resize;
   touch-action: none;
+}
+
+.pcb-plantilla__analysis-table .pcb-plantilla__column-resize,
+.pcb-plantilla__mentor-table .pcb-plantilla__column-resize {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  bottom: 0;
+  margin-left: 0;
+  width: 8px;
 }
 
 .pcb-plantilla__analysis-table > div:not(:first-child),

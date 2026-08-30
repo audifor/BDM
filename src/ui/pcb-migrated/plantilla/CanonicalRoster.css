@@ -124,6 +124,11 @@
   justify-content: flex-start;
   text-align: left;
 }
+
+.canonical-roster__grid .bdm-data-table th:nth-child(2) {
+  justify-content: center;
+  text-align: center;
+}
 .canonical-roster__status {
   display: inline-block;
   border: 1px solid #168653;

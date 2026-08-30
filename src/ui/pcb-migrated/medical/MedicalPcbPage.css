@@ -62,3 +62,13 @@
 @media(max-width:900px){
   .pcb-medical .table.training-table .row.training,.pcb-medical .row.training,.pcb-medical .table.injuries .row,.pcb-medical .row.injuries{font-size:10.5px}
 }
+
+/* Lesionados, Historial y Staff: toolbar separate from the canonical table canvas. */
+.pcb-medical .card.roster{border:0;background:transparent;padding:0}
+.pcb-medical .card.roster .card-header{margin:0 0 8px;border:1px solid #263645;border-radius:8px;background:#151c25;padding:12px 14px}
+.pcb-medical .card.roster .desc{margin:0 0 8px}
+.pcb-medical .card.roster .table{overflow:auto;border:1px solid #293a4a;border-radius:7px;background:rgba(15,23,42,.7)}
+.pcb-medical .card.roster .row{min-height:43px;align-items:stretch;gap:0;border-color:#293a4a;background:transparent;padding:0;color:#eef5fb;font-size:11px;font-weight:600}
+.pcb-medical .card.roster .row>*{display:flex;align-items:center;justify-content:center;min-width:0;border-right:1px solid #293a4a;padding:0 10px;text-align:center}
+.pcb-medical .card.roster .row>*:last-child{border-right:0}
+.pcb-medical .card.roster .row.head{min-height:28px;background:#111821;color:#84bce3;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
