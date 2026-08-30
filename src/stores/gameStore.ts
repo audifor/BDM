@@ -26,7 +26,8 @@ import type { ScheduledTrainingSession, TrainingFocus, TrainingIntensity, UserTr
 import { assignTrainingModuleToPlayer, cancelScheduledTrainingSession, createOrUpdateUserTrainingModule, deleteUserTrainingModule, scheduleTeamModuleSession, scheduleTrainingSession, setTeamTrainingPlan } from '@/engine/training'
 import { clearLineupSlot, setLineupSlot } from '@/engine/tactics/LineupEngine'
 import { getTeamLineup } from '@/domain/world'
-import type { LineupSlot } from '@/domain/tactics'
+import type { LineupSlot, TeamRotationIntent, DefensiveMatchupAssignment } from '@/domain/tactics'
+import { updateRotationPlan, updateGamePlan } from '@/app/game/TacticalPlanning'
 import { executeEntityActionResult, type EntityActionExecution } from '@/app/entityActions/EntityActionExecutor'
 import type { CommandResult } from '@/app/entityActions/EntityCommand'
 import { selectDraftProspect } from '@/app/draft'
@@ -41,7 +42,7 @@ import { setCoachLifestyle } from '@/engine/coachFinances'
 import type { Lifestyle } from '@/domain/coachFinances'
 import type { MediaStance } from '@/domain/media'
 import { createPreMatchMediaOpportunity, respondToMediaOpportunity, skipMediaOpportunity } from '@/engine/media'
-import { getGamesToday, getUserTeam } from '@/engine/calendar'
+import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
 
 interface GameStore {
   readonly world: GameWorld | null
@@ -77,6 +78,8 @@ interface GameStore {
   assignTrainingModuleToPlayer(input: { readonly playerId: PlayerId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly sessionId: string }): void
   setLineupSlot(slot: LineupSlot, playerId: PlayerId): void
   clearLineupSlot(slot: LineupSlot): void
+  updateRotationMinutes(minutesByPeriod: Readonly<Record<PlayerId, readonly number[]>>): void
+  updateGamePlanMatchups(matchups: readonly DefensiveMatchupAssignment[]): void
   selectDraftProspect(draftId: string, playerId: PlayerId): void
   executeTrade(proposal: TradeProposal): void
   addRecruitingTarget(cycleId: string, recruitId: string, priority: Priority): void
@@ -153,6 +156,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
   assignTrainingModuleToPlayer: (input) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: assignTrainingModuleToPlayer(world, { teamId: team.id, ...input }) }) },
   setLineupSlot: (slot, playerId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: setLineupSlot(world, team.id, slot, playerId) }) },
   clearLineupSlot: (slot) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: clearLineupSlot(world, team.id, slot) }) },
+  updateRotationMinutes: (minutesByPeriod) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    if (team === undefined) return
+    const existing = world.rotationPlansByTeamId[team.id]
+    const plan: TeamRotationIntent = { teamId: team.id, instructions: existing?.instructions ?? [], minutesByPeriod }
+    set({ world: updateRotationPlan(world, plan) })
+  },
+  updateGamePlanMatchups: (matchups) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    const game = getNextUserGame(world)
+    if (team === undefined || game === undefined) return
+    const existing = world.gamePlansByKey[`${game.id}:${team.id}`]
+    set({ world: updateGamePlan(world, { gameId: game.id, teamId: team.id, ...(existing?.rotationOverride === undefined ? {} : { rotationOverride: existing.rotationOverride }), ...(existing?.tacticalOverride === undefined ? {} : { tacticalOverride: existing.tacticalOverride }), matchups }) },
+    )
+  },
   selectDraftProspect: (draftId, playerId) => set({ world: selectDraftProspect(requireWorld(get().world), draftId, playerId) }),
   executeTrade: (proposal) => set({ world: executeTrade(requireWorld(get().world), proposal).world }),
   addRecruitingTarget: (cycleId, recruitId, priority) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined && world.recruitingCyclesById[cycleId] !== undefined) set({ world: addRecruitingBoardEntry(world, { programTeamId: team.id, recruitId, priority }) }) },
@@ -205,3 +225,5 @@ export function selectLatestUserTrainingSession(world: GameWorld | null) { const
 export function selectUserTeamCareerFatigueSummary(world: GameWorld | null) { const team = world === null ? undefined : getUserTeam(world); if (team === undefined || world === null || team.rosterPlayerIds.length === 0) return 0; return team.rosterPlayerIds.reduce((sum, id) => sum + getCareerFatigueForPlayer(world, id), 0) / team.rosterPlayerIds.length }
 export function selectUserTeamScheduledSessions(world: GameWorld | null) { const team = world === null ? undefined : getUserTeam(world); if (team === undefined || world === null) return []; return Object.values(world.scheduledTrainingSessionsById).filter((session) => session.teamId === team.id) }
 export function selectUserTrainingModules(world: GameWorld | null) { return world === null ? [] : Object.values(world.userTrainingModulesById) }
+export function selectUserTeamRotationIntent(world: GameWorld | null) { const team = world === null ? undefined : getUserTeam(world); return team === undefined || world === null ? undefined : world.rotationPlansByTeamId[team.id] }
+export function selectUserNextGamePlanMatchups(world: GameWorld | null): readonly DefensiveMatchupAssignment[] { const team = world === null ? undefined : getUserTeam(world); const game = world === null ? undefined : getNextUserGame(world); if (team === undefined || game === undefined || world === null) return []; return world.gamePlansByKey[`${game.id}:${team.id}`]?.matchups ?? [] }

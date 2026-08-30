@@ -12,6 +12,7 @@ export { getActiveInjuryForPlayer, getAvailableRosterPlayers, getCurrentPlayerIn
 export { getActivePlayerContract, getCurrentPlayerContract, getPlayerContracts } from './contracts'
 export { calculateTeamPlayerPayroll, canTeamAffordAdditionalSalary, getTeamFinancialSnapshot } from './finances'
 export type { TeamFinancialSnapshot, TeamFinancialStatus } from './finances'
+export type { ResolvedGameClockRules } from './queries'
 export { getKnownBasketballRating, getPlayerBasketballKnowledgeView, getPlayerKnowledge } from './knowledge'
 export { getStaffAssignment, getStaffPerson, getStaffRoleProficiency, getTeamStaffAssignments, getTeamStaffByRole, getTeamStaffPeople } from './staff'
 export { getFreeAgents, getPlayerRosterTeamId, getPlayerTransactions, isPlayerFreeAgent } from './market'
@@ -27,6 +28,8 @@ export {
   getTeamConferenceMembership,
   isNbaLikeCompetition,
   getEcosystemForCompetition,
+  resolveGameClockRules,
+  resolveGameClockRulesForGame,
   getEcosystemForTeam,
   getCompetitionsForEcosystem,
   getTeamsForEcosystem,

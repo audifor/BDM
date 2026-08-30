@@ -1,5 +1,5 @@
 import type { GameId, PlayerId, TeamId } from '@/domain/ids'
-import { getGame, type GameWorld } from '@/domain/world'
+import { getGame, resolveGameClockRulesForGame, type GameWorld, type ResolvedGameClockRules } from '@/domain/world'
 import type { RandomSource } from '@/engine/random'
 import { advanceFatigue, createInitialFatigue, type FatigueByPlayerId } from './Fatigue'
 import { calculateAssistProbability, selectAssister } from './AssistResolution'
@@ -15,6 +15,12 @@ import { applyPaceToPossessionDuration, applyShotProfile, calculateTacticalDefen
 import { clonePlan, type MatchCoachingState } from './coaching/MatchCoachingState'
 import { calculateBlockCreditProbability, calculateStealCreditProbability } from './DefensiveAttribution'
 
+/**
+ * Default game-clock rules, used only as the fallback when a game's actual competition cannot
+ * be resolved (e.g. legacy/test fixtures). Real matches resolve their period count/length and
+ * overtime length from the specific Game's own competition via resolveGameClockRulesForGame —
+ * see domain/world/queries.ts. This constant must never be treated as a universal/ecosystem rule.
+ */
 export const MATCH_RULES_V2 = {
   periodCount: 4,
   periodSeconds: 600,
@@ -205,6 +211,8 @@ export interface MatchSessionState {
   readonly defensiveMatchups?: { readonly home:readonly DefensiveMatchupOverride[]; readonly away:readonly DefensiveMatchupOverride[] }
   readonly homeStrength: TeamStrength
   readonly awayStrength: TeamStrength
+  /** Resolved from this game's actual competition; see resolveGameClockRulesForGame. Never a global/brand constant. */
+  readonly clockRules: ResolvedGameClockRules
   readonly openingTeamId: TeamId
   readonly period: number
   readonly clockSecondsRemaining: number
@@ -261,16 +269,17 @@ export function simulateMatch(options: SimulateMatchOptions): MatchSimulationRes
 /** Creates a transitory session without resolving a possession. */
 export function createMatchSession(options: SimulateMatchOptions): MatchSession {
   const game = validateOptions(options)
+  const clockRules = resolveGameClockRulesForGame(options.world, game)
   const openingTeamId = options.random.chance(0.5) ? game.homeTeamId : game.awayTeamId
-  const initialEvent: MatchEvent = { sequence: 1, period: 1, clockSecondsRemaining: MATCH_RULES_V2.periodSeconds, type: 'periodStart', homeScore: 0, awayScore: 0 }
+  const initialEvent: MatchEvent = { sequence: 1, period: 1, clockSecondsRemaining: clockRules.periodSeconds, type: 'periodStart', homeScore: 0, awayScore: 0 }
   return {
     state: {
       gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId,
       initialLineups: options.lineups, activeLineups: options.lineups, squads: options.squads,
       fatigueByPlayerId: createInitialFatigue(options.squads),
       playerProfiles: options.playerProfiles, coachingState: { home: { currentTacticalPlan: clonePlan(options.tacticalPlans?.home ?? createDefaultTacticalPlan()) }, away: { currentTacticalPlan: clonePlan(options.tacticalPlans?.away ?? createDefaultTacticalPlan()) } }, defensiveMatchups:options.defensiveMatchups??{home:[],away:[]},
-      homeStrength: options.homeStrength, awayStrength: options.awayStrength, openingTeamId,
-      period: 1, clockSecondsRemaining: MATCH_RULES_V2.periodSeconds, homeScore: 0, awayScore: 0,
+      homeStrength: options.homeStrength, awayStrength: options.awayStrength, clockRules, openingTeamId,
+      period: 1, clockSecondsRemaining: clockRules.periodSeconds, homeScore: 0, awayScore: 0,
       attackingTeamId: openingTeamId, nextSequence: 2, events: [initialEvent], isComplete: false,
     },
     random: options.random,
@@ -403,18 +412,18 @@ function finishPeriod(session: MatchSession, state: MatchSessionState, newEvents
   const periodEnd: MatchEvent = { sequence: sequence++, period: state.period, clockSecondsRemaining: 0, type: 'periodEnd', homeScore: state.homeScore, awayScore: state.awayScore }
   newEvents.push(periodEnd)
 
-  if (state.period >= MATCH_RULES_V2.periodCount && state.homeScore !== state.awayScore) {
+  if (state.period >= state.clockRules.periodCount && state.homeScore !== state.awayScore) {
     const gameEnd: MatchEvent = { sequence, period: state.period, clockSecondsRemaining: 0, type: 'gameEnd', homeScore: state.homeScore, awayScore: state.awayScore }
     newEvents.push(gameEnd)
     const completeState = { ...state, nextSequence: sequence + 1, events: [...state.events, ...newEvents], isComplete: true }
     return { session: { ...session, state: completeState }, newEvents }
   }
-  if (state.period >= MATCH_RULES_V2.periodCount + MAX_OVERTIME_PERIODS) {
+  if (state.period >= state.clockRules.periodCount + MAX_OVERTIME_PERIODS) {
     throw new MatchSimulationError('Match did not resolve after the maximum overtime protection')
   }
 
   const period = state.period + 1
-  const clockSecondsRemaining = secondsForPeriod(period)
+  const clockSecondsRemaining = secondsForPeriod(period, state.clockRules)
   const attackingTeamId = period % 2 === 1 ? state.openingTeamId : otherTeamId(state.openingTeamId, state)
   const periodStart: MatchEvent = { sequence: sequence++, period, clockSecondsRemaining, type: 'periodStart', homeScore: state.homeScore, awayScore: state.awayScore }
   newEvents.push(periodStart)
@@ -540,8 +549,8 @@ function choosePossessionOutcome(turnoverProbability: number, random: RandomSour
   return 'fieldGoalAttempt'
 }
 
-function secondsForPeriod(period: number): number {
-  return period <= MATCH_RULES_V2.periodCount ? MATCH_RULES_V2.periodSeconds : MATCH_RULES_V2.overtimeSeconds
+function secondsForPeriod(period: number, clockRules: ResolvedGameClockRules): number {
+  return period <= clockRules.periodCount ? clockRules.periodSeconds : clockRules.overtimeSeconds
 }
 
 function otherTeamId(teamId: TeamId, game: { readonly homeTeamId: TeamId; readonly awayTeamId: TeamId }): TeamId {

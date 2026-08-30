@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import type { GameWorld } from '@/domain/world'
-import { getTeamLineup, getTeamRoster } from '@/domain/world'
+import { getTeamLineup, getTeamRoster, resolveGameClockRules } from '@/domain/world'
 import { getNextUserGame, getUserTeam } from '@/engine/calendar'
 import type { Player } from '@/domain/player'
 import { legacyRatingSignals } from '@/domain/player'
 import type { PlayerId } from '@/domain/ids'
-import { getLineupAssignments, getLineupSlotForPlayer, LINEUP_SLOTS, type LineupSlot, type TeamLineup } from '@/domain/tactics'
+import { getLineupAssignments, getLineupSlotForPlayer, LINEUP_SLOTS, type DefensiveMatchupAssignment, type LineupSlot, type TeamLineup, type TeamRotationIntent } from '@/domain/tactics'
 import type { MatchTacticalPlan, TacticalLevel } from '@/engine/match'
 import { INITIAL_FRAME, TacticsMigrationRepository, type SavedPlay } from './TacticsMigrationRepository'
 import PcbTacticsCreator from './PcbTacticsCreator'
@@ -49,21 +49,105 @@ function toBoardRoster(players: readonly Player[], lineup: TeamLineup | undefine
   })
 }
 
-export function TacticsPcbPage({ world, plan, onChange, onReset, onLineupSlotChange, onLineupSlotClear }: { readonly world?: GameWorld; readonly plan?: MatchTacticalPlan; readonly onChange?: (plan: MatchTacticalPlan) => void; readonly onReset?: () => void; readonly onLineupSlotChange?: (slot: LineupSlot, playerId: PlayerId) => void; readonly onLineupSlotClear?: (slot: LineupSlot) => void }) {
+export function TacticsPcbPage({ world, plan, onChange, onReset, onLineupSlotChange, onLineupSlotClear, onUpdateRotationMinutes, onUpdateMatchups }: { readonly world?: GameWorld; readonly plan?: MatchTacticalPlan; readonly onChange?: (plan: MatchTacticalPlan) => void; readonly onReset?: () => void; readonly onLineupSlotChange?: (slot: LineupSlot, playerId: PlayerId) => void; readonly onLineupSlotClear?: (slot: LineupSlot) => void; readonly onUpdateRotationMinutes?: (minutesByPeriod: Readonly<Record<PlayerId, readonly number[]>>) => void; readonly onUpdateMatchups?: (matchups: readonly DefensiveMatchupAssignment[]) => void }) {
   const [tab, setTab] = useState<Tab>('board')
   const [tacticalRoles, setTacticalRoles] = useState<Record<string, unknown>>({})
   const team = useMemo(() => (world === undefined ? undefined : getUserTeam(world)), [world])
   const roster = useMemo(() => (world === undefined || team === undefined ? [] : getTeamRoster(world, team.id)), [world, team])
   const lineup = useMemo(() => (world === undefined || team === undefined ? undefined : getTeamLineup(world, team.id)), [world, team])
   const boardRoster = useMemo(() => toBoardRoster(roster, lineup), [roster, lineup])
-  return <section className="pcb-tactics" aria-label="Tácticas PCB migradas"><DraggableSubnav className="pcb-tactics__tabs" items={tabs.map(([id, label]) => ({ id, label, active: tab === id, onClick: () => setTab(id) }))} storageKey="pcbasket.subnav.tactics" />{tab === 'board' && <PcbTacticsBoard onLineupSlotChange={onLineupSlotChange} onLineupSlotClear={onLineupSlotClear} onRolesChange={(next: Record<string, unknown>) => { setTacticalRoles(next); window.localStorage.setItem('pcbasket.tactics.roles', JSON.stringify(next)) }} roster={boardRoster} tacticalRoles={tacticalRoles} teamId={team?.id} />}{tab === 'designer' && <PcbTacticsCreator />}{tab === 'matchups' && <Matchups />}{tab === 'rotations' && <Rotations lineup={lineup} roster={roster} />}{tab === 'plays' && <Plays />}{tab === 'match' && <MatchPlan world={world} plan={plan} onChange={onChange} onReset={onReset} />}</section>
+  const nextGame = useMemo(() => (world === undefined ? undefined : getNextUserGame(world)), [world])
+  const opponentTeam = useMemo(() => (world === undefined || nextGame === undefined || team === undefined ? undefined : world.teams[nextGame.homeTeamId === team.id ? nextGame.awayTeamId : nextGame.homeTeamId]), [world, nextGame, team])
+  const opponentRoster = useMemo(() => (world === undefined || opponentTeam === undefined ? [] : getTeamRoster(world, opponentTeam.id)), [world, opponentTeam])
+  const clockRules = useMemo(() => (world === undefined || nextGame === undefined ? undefined : resolveGameClockRules(world, nextGame.competitionId)), [world, nextGame])
+  const rotationIntent = useMemo(() => (world === undefined || team === undefined ? undefined : world.rotationPlansByTeamId[team.id]), [world, team])
+  const persistedMatchups = useMemo(() => (world === undefined || team === undefined || nextGame === undefined ? [] : world.gamePlansByKey[`${nextGame.id}:${team.id}`]?.matchups ?? []), [world, team, nextGame])
+  return <section className="pcb-tactics" aria-label="Tácticas PCB migradas"><DraggableSubnav className="pcb-tactics__tabs" items={tabs.map(([id, label]) => ({ id, label, active: tab === id, onClick: () => setTab(id) }))} storageKey="pcbasket.subnav.tactics" />{tab === 'board' && <PcbTacticsBoard onLineupSlotChange={onLineupSlotChange} onLineupSlotClear={onLineupSlotClear} onRolesChange={(next: Record<string, unknown>) => { setTacticalRoles(next); window.localStorage.setItem('pcbasket.tactics.roles', JSON.stringify(next)) }} roster={boardRoster} tacticalRoles={tacticalRoles} teamId={team?.id} />}{tab === 'designer' && <PcbTacticsCreator repo={repo} />}{tab === 'matchups' && <Matchups onUpdateMatchups={onUpdateMatchups} opponentRoster={opponentRoster} opponentTeam={opponentTeam} ourLineup={lineup} ourRoster={roster} persistedMatchups={persistedMatchups} />}{tab === 'rotations' && <Rotations clockRules={clockRules} lineup={lineup} onUpdateRotationMinutes={onUpdateRotationMinutes} rotationIntent={rotationIntent} roster={roster} />}{tab === 'plays' && <Plays />}{tab === 'match' && <MatchPlan world={world} plan={plan} onChange={onChange} onReset={onReset} />}</section>
 }
 
 function Control({ label, options, value, onChange }: { label: string; options: readonly string[]; value: string; onChange: (value: string) => void }) { return <label className="pcb-tactics__control">{label}<select onChange={(event) => onChange(event.target.value)} value={value}>{options.map((option) => <option key={option}>{option}</option>)}</select></label> }
 
-function Matchups() {
+/**
+ * Real next-opponent defensive matchup assignment (Issue #9). No fake scouting players/opponent
+ * identity: the opponent roster is the actual next scheduled opponent's real GameWorld roster,
+ * always selectable regardless of scouting - scouting (not modeled yet) would only ever gate how
+ * much *rating/threat detail* is knowable about them, never whether they can be assigned a defender.
+ */
+function Matchups({
+  ourRoster,
+  ourLineup,
+  opponentTeam,
+  opponentRoster,
+  persistedMatchups,
+  onUpdateMatchups,
+}: {
+  readonly ourRoster: readonly Player[]
+  readonly ourLineup?: TeamLineup
+  readonly opponentTeam?: { readonly id: string; readonly name: string }
+  readonly opponentRoster: readonly Player[]
+  readonly persistedMatchups: readonly DefensiveMatchupAssignment[]
+  readonly onUpdateMatchups?: (matchups: readonly DefensiveMatchupAssignment[]) => void
+}) {
   const [query, setQuery] = useState('')
-  return <main className="pcb-tactics__table-page"><header><div><h2>Matchups Defensivos</h2><small>Sin datos de scouting del próximo rival</small></div><input aria-label="Buscar rival" onChange={(event) => setQuery(event.target.value)} placeholder="Buscar rival" value={query} /><button disabled type="button">Auto-matchup</button><button disabled type="button">Reset</button></header><table><thead><tr><th>POS</th><th>JUGADOR RIVAL</th><th>AMENAZA</th><th>ALTURA</th><th>DEFENSOR</th><th>PRESIÓN</th><th>P&R</th><th>DIRECCIÓN</th></tr></thead><tbody><tr><td colSpan={8}>No hay datos de scouting del rival disponibles todavía.</td></tr></tbody></table></main>
+  const ourStarters = activeSquad(ourLineup, ourRoster).filter(({ slot }) => isLineupStarter(slot)).map(({ player }) => player)
+  const [assignments, setAssignments] = useState<Record<string, string>>(() => Object.fromEntries(persistedMatchups.map((entry) => [entry.opponentPlayerId, entry.ourPlayerId])))
+  const filteredOpponents = opponentRoster.filter((player) => `${player.firstName} ${player.lastName}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()))
+  const persist = (next: Record<string, string>) => {
+    setAssignments(next)
+    onUpdateMatchups?.(Object.entries(next).map(([opponentPlayerId, ourPlayerId]) => ({ ourPlayerId: ourPlayerId as PlayerId, opponentPlayerId: opponentPlayerId as PlayerId })))
+  }
+  const autoMatchup = () => {
+    const next: Record<string, string> = {}
+    opponentRoster.forEach((opponent, index) => {
+      const defender = ourStarters[index % Math.max(1, ourStarters.length)]
+      if (defender !== undefined) next[opponent.id] = defender.id
+    })
+    persist(next)
+  }
+  return (
+    <main className="pcb-tactics__table-page">
+      <header>
+        <div>
+          <h2>Matchups Defensivos</h2>
+          <small>{opponentTeam === undefined ? 'Sin próximo rival programado' : `Rival: ${opponentTeam.name}`}</small>
+        </div>
+        <input aria-label="Buscar rival" onChange={(event) => setQuery(event.target.value)} placeholder="Buscar rival" value={query} />
+        <button disabled={opponentRoster.length === 0 || ourStarters.length === 0} onClick={autoMatchup} type="button">Auto-matchup</button>
+        <button disabled={Object.keys(assignments).length === 0} onClick={() => persist({})} type="button">Reset</button>
+      </header>
+      <table>
+        <thead>
+          <tr><th>POS</th><th>JUGADOR RIVAL</th><th>DEFENSOR</th></tr>
+        </thead>
+        <tbody>
+          {opponentTeam === undefined ? (
+            <tr><td colSpan={3}>Sin próximo rival programado.</td></tr>
+          ) : filteredOpponents.length === 0 ? (
+            <tr><td colSpan={3}>Sin jugadores rivales disponibles.</td></tr>
+          ) : (
+            filteredOpponents.map((opponent) => (
+              <tr key={opponent.id}>
+                <td>{opponent.basketball.primaryPosition}</td>
+                <td>{opponent.firstName} {opponent.lastName}</td>
+                <td>
+                  <select
+                    aria-label={`Defensor de ${opponent.firstName} ${opponent.lastName}`}
+                    onChange={(event) => persist(event.target.value === '' ? Object.fromEntries(Object.entries(assignments).filter(([id]) => id !== opponent.id)) : { ...assignments, [opponent.id]: event.target.value })}
+                    value={assignments[opponent.id] ?? ''}
+                  >
+                    <option value="">Sin asignar</option>
+                    {ourStarters.map((defender) => (
+                      <option key={defender.id} value={defender.id}>{defender.firstName} {defender.lastName}</option>
+                    ))}
+                  </select>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </main>
+  )
 }
 
 function isLineupStarter(slot: LineupSlot): boolean {
@@ -77,14 +161,50 @@ function activeSquad(lineup: TeamLineup | undefined, roster: readonly Player[]):
     .map(({ slot, playerId }) => ({ slot, player: byId.get(playerId) }))
     .filter((entry): entry is { readonly slot: LineupSlot; readonly player: Player } => entry.player !== undefined)
 }
-function Rotations({ lineup, roster }: { readonly lineup?: TeamLineup; readonly roster: readonly Player[] }) {
+const DEFAULT_ROTATION_PERIOD_COUNT = 4
+const ROTATION_MAX_MINUTES_PER_PERIOD = 15
+
+/**
+ * Regulation-period column labels for the rotation matrix, sized to the real resolved
+ * CompetitionRules of the upcoming game (Issue #9) - never a user-controlled FIBA/NBA/NCAA
+ * selector. Falls back to a neutral 4-period grid when no game/competition can be resolved yet.
+ * An overtime column is always appended since OT is possible regardless of period count.
+ */
+function periodLabels(periodCount: number): readonly string[] {
+  return [...Array.from({ length: periodCount }, (_, index) => `P${index + 1}`), 'OT']
+}
+
+const PLAYERS_ON_COURT = 5
+
+function Rotations({
+  lineup,
+  roster,
+  clockRules,
+  rotationIntent,
+  onUpdateRotationMinutes,
+}: {
+  readonly lineup?: TeamLineup
+  readonly roster: readonly Player[]
+  readonly clockRules?: { readonly periodCount: number; readonly periodSeconds?: number }
+  readonly rotationIntent?: TeamRotationIntent
+  readonly onUpdateRotationMinutes?: (minutesByPeriod: Readonly<Record<PlayerId, readonly number[]>>) => void
+}) {
   const squad = activeSquad(lineup, roster)
-  const [minutes, setMinutes] = useState<Record<string, number[]>>(() => Object.fromEntries(squad.map(({ slot, player }) => [player.id, isLineupStarter(slot) ? [8, 8, 8, 8, 0] : [0, 0, 0, 0, 0]])))
-  const [league, setLeague] = useState('FIBA')
+  const periodCount = clockRules?.periodCount ?? DEFAULT_ROTATION_PERIOD_COUNT
+  const periodMinutes = clockRules?.periodSeconds !== undefined ? clockRules.periodSeconds / 60 : 10
+  const columns = periodLabels(periodCount)
+  // Single source of truth for column geometry: header and every row share this exact template, so
+  // a rotation grid sized to a non-5-column competition (e.g. 2 halves + OT) never desyncs (Issue #9/#8).
+  const rowGridStyle = { gridTemplateColumns: `210px repeat(${columns.length},minmax(105px,1fr)) 60px` }
+  const defaultRowFor = (slot: LineupSlot) => Array.from({ length: columns.length }, (_, index) => (isLineupStarter(slot) && index < periodCount ? 8 : 0))
+  const [minutes, setMinutes] = useState<Record<string, number[]>>(() => Object.fromEntries(squad.map(({ slot, player }) => [player.id, rotationIntent?.minutesByPeriod?.[player.id] !== undefined ? [...rotationIntent.minutesByPeriod[player.id]!] : defaultRowFor(slot)])))
   const [saved, setSaved] = useState(false)
-  const update = (id: string, quarter: number, value: number) => setMinutes((current) => ({ ...current, [id]: (current[id] ?? [0, 0, 0, 0, 0]).map((minute, index) => index === quarter ? Math.max(0, Math.min(10, value)) : minute) }))
-  const preset = () => setMinutes(Object.fromEntries(squad.map(({ slot, player }) => [player.id, isLineupStarter(slot) ? [8, 8, 8, 8, 0] : [2, 2, 2, 2, 0]])))
-  return <main className="pcb-tactics__rotation"><header><div><h2>Matriz de Rotación</h2><small>Configuración temporal de sesión</small></div><select onChange={(event) => setLeague(event.target.value)} value={league}><option>FIBA</option><option>NBA</option><option>NCAA</option></select><button onClick={preset} type="button">Auto-generar</button><button onClick={preset} type="button">Reset</button><button className="is-primary" onClick={() => setSaved(true)} type="button">Guardar</button>{saved && <em>Guardado</em>}</header><div className="pcb-tactics__rotation-grid"><div className="is-head"><span>Jugador</span>{['Q1', 'Q2', 'Q3', 'Q4', 'OT'].map((quarter) => <span key={quarter}>{quarter}</span>)}<span>Total</span></div>{squad.length === 0 ? <p>No hay jugadores en la plantilla del usuario.</p> : squad.map(({ player }) => { const row = minutes[player.id] ?? [0, 0, 0, 0, 0]; return <div draggable key={player.id}><span><b>{player.basketball.primaryPosition}</b> {player.firstName} {player.lastName}</span>{row.map((value, quarter) => <span key={quarter}><input max="10" min="0" onChange={(event) => update(player.id, quarter, Number(event.target.value))} type="range" value={value} /><input max="10" min="0" onChange={(event) => update(player.id, quarter, Number(event.target.value))} type="number" value={value} /></span>)}<strong>{row.reduce((sum, value) => sum + value, 0)}</strong></div> })}</div></main>
+  const update = (id: string, period: number, value: number) => { setSaved(false); setMinutes((current) => ({ ...current, [id]: (current[id] ?? Array.from({ length: columns.length }, () => 0)).map((minute, index) => index === period ? Math.max(0, Math.min(ROTATION_MAX_MINUTES_PER_PERIOD, value)) : minute) })) }
+  const preset = () => { setSaved(false); setMinutes(Object.fromEntries(squad.map(({ slot, player }) => [player.id, isLineupStarter(slot) ? defaultRowFor(slot) : Array.from({ length: columns.length }, (_, index) => (index < periodCount ? 2 : 0))]))) }
+  const save = () => { onUpdateRotationMinutes?.(minutes as Record<PlayerId, readonly number[]>); setSaved(true) }
+  const totalForPeriod = (period: number) => squad.reduce((sum, { player }) => sum + (minutes[player.id]?.[period] ?? 0), 0)
+  const invalidPeriods = Array.from({ length: periodCount }, (_, period) => period).filter((period) => totalForPeriod(period) !== periodMinutes * PLAYERS_ON_COURT)
+  return <main className="pcb-tactics__rotation"><header><div><h2>Matriz de Rotación</h2><small>Configuración temporal de sesión</small></div><button onClick={preset} type="button">Auto-generar</button><button onClick={preset} type="button">Reset</button><button className="is-primary" onClick={save} type="button">Guardar</button>{saved && invalidPeriods.length === 0 && <em>Guardado</em>}</header>{invalidPeriods.length > 0 && <p className="pcb-tactics__rotation-warning" role="alert">Minutos totales inválidos en {invalidPeriods.map((period) => columns[period]).join(', ')}: cada periodo debe sumar {periodMinutes * PLAYERS_ON_COURT} minutos entre los 5 jugadores en pista.</p>}<div className="pcb-tactics__rotation-grid"><div className="is-head" style={rowGridStyle}><span>Jugador</span>{columns.map((column) => <span key={column}>{column}</span>)}<span>Total</span></div>{squad.length === 0 ? <p>No hay jugadores en la plantilla del usuario.</p> : squad.map(({ slot, player }) => { const row = minutes[player.id] ?? defaultRowFor(slot); return <div draggable key={player.id} style={rowGridStyle}><span><b>{player.basketball.primaryPosition}</b> {player.firstName} {player.lastName}</span>{row.map((value, period) => <span key={period}><input max={ROTATION_MAX_MINUTES_PER_PERIOD} min="0" onChange={(event) => update(player.id, period, Number(event.target.value))} type="range" value={value} /><input max={ROTATION_MAX_MINUTES_PER_PERIOD} min="0" onChange={(event) => update(player.id, period, Number(event.target.value))} type="number" value={value} /></span>)}<strong>{row.reduce((sum, value) => sum + value, 0)}</strong></div> })}</div></main>
 }
 
 function Plays() { const [plays, setPlays] = useState<SavedPlay[]>(repo.loadPlays()); const [name, setName] = useState(''); const [selected, setSelected] = useState<string | null>(null); const [modal, setModal] = useState(false); const create = () => { if (!name.trim()) return; const play = repo.savePlay({ id: `library-${Date.now()}`, name, frames: [INITIAL_FRAME()], createdAt: new Date().toLocaleDateString() }); setPlays(repo.loadPlays()); setSelected(play.id); setModal(false); setName('') }

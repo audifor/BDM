@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import { playerIdFromString } from '@/domain/ids'
+import { NCAA_MEN_GAME_FORMAT } from '@/domain/competition'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
@@ -61,6 +62,16 @@ describe('MatchSession', () => {
       expect(event.sequence).toBe(index + 1)
       expect(event.clockSecondsRemaining).toBeGreaterThanOrEqual(0)
     }
+  })
+
+  it('resolves game-clock rules from the game\'s actual competition, not a global brand constant (Issue #9)', () => {
+    const { world, game } = createScheduledGameWorld()
+    const ncaaMenWorld = createGameWorld({ ...worldInputFor(world), competitions: Object.values(world.competitions).map((competition) => ({ ...competition, rules: { ...competition.rules, gameFormat: NCAA_MEN_GAME_FORMAT } })) })
+    const session = createMatchSession(createOptions(ncaaMenWorld, game.id, 1, 2))
+
+    expect(session.state.clockRules).toEqual({ periodCount: 2, periodSeconds: 1200, overtimeSeconds: 300 })
+    expect(session.state.clockSecondsRemaining).toBe(1200)
+    expect(session.state.events[0]).toMatchObject({ clockSecondsRemaining: 1200 })
   })
 
   it('validates squads and initial lineups against them', () => {
@@ -166,6 +177,10 @@ function createScheduledGameWorld(): { world: GameWorld; game: GameWorld['games'
   const generated = generateWorld({ seed: 12345, gender: 'female' })
   const games = generateRoundRobinSchedule({ world: generated, seasonId: Object.values(generated.seasons)[0]!.id })
   return { world: createGameWorld({ currentDate: generated.currentDate, userCoachId: generated.userCoachId, countries: Object.values(generated.countries), coaches: Object.values(generated.coaches), players: Object.values(generated.players), teams: Object.values(generated.teams), competitions: Object.values(generated.competitions), seasons: Object.values(generated.seasons), games }), game: games[0]! }
+}
+
+function worldInputFor(world: GameWorld) {
+  return { currentDate: world.currentDate, userCoachId: world.userCoachId, countries: Object.values(world.countries), coaches: Object.values(world.coaches), players: Object.values(world.players), teams: Object.values(world.teams), competitions: Object.values(world.competitions), seasons: Object.values(world.seasons), games: Object.values(world.games) }
 }
 
 function createOptions(world: GameWorld, gameId: GameWorld['games'][keyof GameWorld['games']]['id'], sportingSeed: number, actorSeed: number): SimulateMatchOptions {

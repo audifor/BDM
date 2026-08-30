@@ -1,5 +1,5 @@
 export { createCompetition } from './Competition'
 export type { Competition, CreateCompetitionInput } from './Competition'
-export { createCompetitionRules, defaultLeagueCompetitionRules } from './CompetitionRules'
-export type { CompetitionRules, StandingsTiebreaker } from './CompetitionRules'
+export { createCompetitionRules, defaultLeagueCompetitionRules, FIBA_GAME_FORMAT, NBA_GAME_FORMAT, NCAA_MEN_GAME_FORMAT, NCAA_WOMEN_GAME_FORMAT, WNBA_GAME_FORMAT } from './CompetitionRules'
+export type { CompetitionRules, GameFormatRules, StandingsTiebreaker } from './CompetitionRules'
 export type { PromotionRelegationResolution } from './PromotionRelegation'
