@@ -84,6 +84,42 @@ interface LocalPlaybook {
   playIds: string[];
 }
 
+/**
+ * Pure, deterministic computation of the NEXT frame's starting player positions/ball state from
+ * one frame's own players/ball state and its authored `paths` (Issue #9 blocker 3). This is the
+ * exact logic `addFrame()` always used to bake one frame's actions into the next frame's starting
+ * point; extracting it lets `rebuildFramesFrom` re-run it after an earlier action is deleted, so
+ * every later frame's *starting state* stays derived correctly instead of going stale.
+ */
+function advanceFrameStartingState(frame: FrameData): Pick<FrameData, 'players' | 'ballOwnerId' | 'ballPosition'> {
+  const nextPlayers: PlayerToken[] = JSON.parse(JSON.stringify(frame.players));
+  let nextBallOwner = frame.ballOwnerId;
+  let nextBallPos = { ...frame.ballPosition };
+  frame.paths.forEach(path => {
+    const endP = path.points[path.points.length - 1];
+    if (path.linkedId && ['move', 'dribble', 'screen'].includes(path.type)) { const pIndex = nextPlayers.findIndex((pl) => pl.id === path.linkedId); if (pIndex !== -1) { nextPlayers[pIndex]!.x = endP!.x; nextPlayers[pIndex]!.y = endP!.y; } }
+    if (path.type === 'pass') { nextBallOwner = null; nextBallPos = { x: endP!.x, y: endP!.y }; const receiver = nextPlayers.find((pl) => Math.hypot(pl.x - endP!.x, pl.y - endP!.y) < 30); if (receiver) nextBallOwner = receiver.id; }
+  });
+  if (nextBallOwner !== null) { const owner = nextPlayers.find((p) => p.id === nextBallOwner); if (owner) nextBallPos = { x: owner.x, y: owner.y }; }
+  return { players: nextPlayers, ballOwnerId: nextBallOwner, ballPosition: nextBallPos };
+}
+
+/**
+ * Rebuilds every frame's *starting state* (players/ball) from `changedIndex` onward, given that
+ * frame `changedIndex`'s own paths (its authored actions) may have just changed - e.g. an action
+ * was deleted (Issue #9 blocker 3). Each later frame keeps its OWN authored `paths`/`defenders`
+ * (what the designer actually drew starting from that frame) untouched; only the derived starting
+ * players/ball position is recomputed, cascading deterministically all the way to the last frame.
+ */
+function rebuildFramesFrom(frames: readonly FrameData[], changedIndex: number): FrameData[] {
+  const rebuilt = frames.map((frame) => ({ ...frame }));
+  for (let index = changedIndex + 1; index < rebuilt.length; index += 1) {
+    const advanced = advanceFrameStartingState(rebuilt[index - 1]!);
+    rebuilt[index] = { ...rebuilt[index]!, players: advanced.players, ballOwnerId: advanced.ballOwnerId, ballPosition: advanced.ballPosition };
+  }
+  return rebuilt;
+}
+
 function toLocalPlay(play: DomainSavedPlay): LocalSavedPlay {
   return { id: play.id, name: play.name, date: play.createdAt, frames: (play.frames as FrameData[] | undefined) ?? [], engineData: undefined };
 }
@@ -312,15 +348,8 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
   };
 
   const addFrame = () => {
-    const nextPlayers = JSON.parse(JSON.stringify(currentFrame.players));
-    let nextBallOwner = currentFrame.ballOwnerId; let nextBallPos = { ...currentFrame.ballPosition };
-    currentFrame.paths.forEach(path => {
-       const endP = path.points[path.points.length - 1];
-       if (path.linkedId && ['move', 'dribble', 'screen'].includes(path.type)) { const pIndex = nextPlayers.findIndex((pl: PlayerToken) => pl.id === path.linkedId); if (pIndex !== -1) { nextPlayers[pIndex].x = endP.x; nextPlayers[pIndex].y = endP.y; } }
-       if (path.type === 'pass') { nextBallOwner = null; nextBallPos = { x: endP.x, y: endP.y }; const receiver = nextPlayers.find((pl: PlayerToken) => Math.hypot(pl.x - endP.x, pl.y - endP.y) < 30); if (receiver) nextBallOwner = receiver.id; }
-    });
-    if (nextBallOwner !== null) { const owner = nextPlayers.find((p: PlayerToken) => p.id === nextBallOwner); if (owner) nextBallPos = { x: owner.x, y: owner.y }; }
-    setFrames([...frames, { players: nextPlayers, ballOwnerId: nextBallOwner, ballPosition: nextBallPos, paths: [], defenders: [...currentFrame.defenders] }]);
+    const advanced = advanceFrameStartingState(currentFrame);
+    setFrames([...frames, { ...advanced, paths: [], defenders: [...currentFrame.defenders] }]);
     setCurrentFrameIndex(frames.length);
   };
 
@@ -339,11 +368,19 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
   /**
    * Deletes one individual drawn action/step (a path in the RESUMEN list) from the current frame,
    * by stable path id — not by array index, so deleting a middle action cannot accidentally remove
-   * the wrong one after a prior deletion re-indexes the array. This only removes the path itself;
-   * it never touches other frames, since paths are baked forward into the next frame's starting
-   * positions only once, at addFrame() time, and are never referenced retroactively.
+   * the wrong one after a prior deletion re-indexes the array (Issue #9 blocker 3).
+   *
+   * Because `addFrame()` bakes a frame's paths into the NEXT frame's starting player/ball state,
+   * deleting an action here would otherwise leave every later frame's derived starting state
+   * stale/orphaned. `rebuildFramesFrom` recomputes frame N+1's starting state from the corrected
+   * frame N, then cascades that recomputation through every subsequent frame — while leaving each
+   * later frame's OWN authored paths/defenders exactly as the designer drew them.
    */
-  const deleteAction = (pathId: number) => { updateFrame({ paths: currentFrame.paths.filter((path) => path.id !== pathId) }); };
+  const deleteAction = (pathId: number) => {
+    const updatedCurrentFrame = { ...currentFrame, paths: currentFrame.paths.filter((path) => path.id !== pathId) };
+    const framesWithUpdatedCurrent = frames.map((frame, index) => (index === currentFrameIndex ? updatedCurrentFrame : frame));
+    setFrames(rebuildFramesFrom(framesWithUpdatedCurrent, currentFrameIndex));
+  };
   
   useEffect(() => { 
       let interval: any; 

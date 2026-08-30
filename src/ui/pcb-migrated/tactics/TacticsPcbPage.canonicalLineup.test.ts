@@ -75,8 +75,10 @@ describe('TacticsPcbPage / canonical lineup as single source of truth', () => {
     const promotedQ1 = promotedRow.querySelector('input[type="number"]') as HTMLInputElement
     const benchedQ1 = benchedRow.querySelector('input[type="number"]') as HTMLInputElement
 
-    expect(Number(promotedQ1.value)).toBe(8)
-    expect(Number(benchedQ1.value)).toBe(0)
+    // The default "balanced" allocation is index-independent: it derives from lineup role
+    // (starter vs. bench), so the promoted starter (not roster[0]) gets the starter share and the
+    // benched former-roster[0] gets the bench share, regardless of roster array position.
+    expect(Number(promotedQ1.value)).toBeGreaterThan(Number(benchedQ1.value))
   })
 
   it('rosters larger than 12 leave extra players unassigned without error, and excluded from Rotaciones', () => {

@@ -8,6 +8,7 @@ import { getNextUserGame, getUserTeam } from '@/engine/calendar'
 import { getTeamRoster, resolveGameClockRules } from '@/domain/world'
 import { setLineupSlot } from '@/engine/tactics/LineupEngine'
 import { saveDesignerPlay } from '@/engine/tactics/PlaybookEngine'
+import { updateRotationMinutesForTeam } from '@/engine/tactics/RotationEngine'
 import { NCAA_MEN_GAME_FORMAT } from '@/domain/competition'
 import type { DefensiveMatchupAssignment } from '@/domain/tactics'
 import { TacticsPcbPage } from './TacticsPcbPage'
@@ -97,6 +98,59 @@ describe('TacticsPcbPage / Issue #9 acceptance', () => {
     expect(startersMinutes).not.toEqual(benchMinutes)
   })
 
+  it.each<readonly ['balanced' | 'short' | 'deep' | 'starters' | 'bench']>([['balanced'], ['short'], ['deep'], ['starters'], ['bench']])(
+    'the %s preset produces an EXACT valid regulation total under FIBA 10-minute periods',
+    (presetId) => {
+      const world = withStarterLineup(createNewGame())
+      const team = getUserTeam(world)!
+      const roster = getTeamRoster(world, team.id)
+      const onUpdateRotationMinutes = vi.fn()
+      render(createElement(TacticsPcbPage, { world, onUpdateRotationMinutes }))
+      fireEvent.click(screen.getByRole('button', { name: 'Rotaciones' }))
+
+      fireEvent.change(screen.getByLabelText('Preset de rotación'), { target: { value: presetId } })
+      const saveButton = screen.getByRole('button', { name: 'Guardar' })
+      expect(saveButton).not.toBeDisabled()
+      fireEvent.click(saveButton)
+
+      expect(onUpdateRotationMinutes).toHaveBeenCalledTimes(1)
+      const minutesByPeriod = onUpdateRotationMinutes.mock.calls[0]![0] as Record<string, readonly number[]>
+      for (let period = 0; period < 4; period += 1) {
+        const total = roster.reduce((sum, player) => sum + (minutesByPeriod[player.id]?.[period] ?? 0), 0)
+        expect(total).toBe(10 * 5)
+      }
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    },
+  )
+
+  it.each<readonly ['balanced' | 'short' | 'deep' | 'starters' | 'bench']>([['balanced'], ['short'], ['deep'], ['starters'], ['bench']])(
+    'the %s preset produces an EXACT valid regulation total under NCAA-men 20-minute periods',
+    (presetId) => {
+      const base = withStarterLineup(createNewGame())
+      const team = getUserTeam(base)!
+      const roster = getTeamRoster(base, team.id)
+      const nextGame = getNextUserGame(base)!
+      const ncaaWorld = { ...base, competitions: Object.fromEntries(Object.entries(base.competitions).map(([id, competition]) => [id, id === nextGame.competitionId ? { ...competition, rules: { ...competition.rules, gameFormat: NCAA_MEN_GAME_FORMAT } } : competition])) }
+      const onUpdateRotationMinutes = vi.fn()
+      render(createElement(TacticsPcbPage, { world: ncaaWorld, onUpdateRotationMinutes }))
+      fireEvent.click(screen.getByRole('button', { name: 'Rotaciones' }))
+
+      fireEvent.change(screen.getByLabelText('Preset de rotación'), { target: { value: presetId } })
+      const saveButton = screen.getByRole('button', { name: 'Guardar' })
+      expect(saveButton).not.toBeDisabled()
+      fireEvent.click(saveButton)
+
+      expect(onUpdateRotationMinutes).toHaveBeenCalledTimes(1)
+      const minutesByPeriod = onUpdateRotationMinutes.mock.calls[0]![0] as Record<string, readonly number[]>
+      // NCAA men resolve to 2 regulation periods of 20 minutes each.
+      for (let period = 0; period < 2; period += 1) {
+        const total = roster.reduce((sum, player) => sum + (minutesByPeriod[player.id]?.[period] ?? 0), 0)
+        expect(total).toBe(20 * 5)
+      }
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    },
+  )
+
   it('per-period minute caps derive from the actual resolved competition, including a distinct OT cap', () => {
     const base = withStarterLineup(createNewGame())
     const nextGame = getNextUserGame(base)!
@@ -176,6 +230,10 @@ describe('TacticsPcbPage / Issue #9 acceptance', () => {
     const worldAfterSwap = setLineupSlot(worldWithSwap, team.id, 'PG', outsidePlayerId)
     rerender(createElement(TacticsPcbPage, { world: worldAfterSwap, onUpdateRotationMinutes }))
 
+    // Reconciliation zeroes the newly-added player's minutes, which makes the carried-over
+    // allocation invalid (the old PG's minutes are gone); apply a preset to reach a valid
+    // allocation for the new lineup before saving, so this test can observe what gets persisted.
+    fireEvent.change(screen.getByLabelText('Preset de rotación'), { target: { value: 'starters' } })
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
     const persisted = onUpdateRotationMinutes.mock.calls.at(-1)![0]
     expect(persisted[roster[0]!.id]).toBeUndefined()
@@ -309,6 +367,51 @@ describe('TacticsPcbPage / Issue #9 acceptance', () => {
     expect(screen.getByText('SCREEN')).toBeInTheDocument()
   })
 
+  it('deleting an action in frame 1 rebuilds frame 2\'s derived starting player/ball state, not just frame 1 (Issue #9 blocker 3)', () => {
+    // Frame 1: player 1 has a "move" action from (250,380) to (100,100). Frame 2 was authored
+    // starting from the OLD baked position (100,100) — its own player token is seeded there, and
+    // it has its own authored action continuing from there. If frame 2's starting state is not
+    // rebuilt after frame 1's action is deleted, player 1 would still render at/for (100,100) in
+    // frame 2; if it IS rebuilt, player 1's frame-2 starting position must revert to (250,380) -
+    // frame 1's ORIGINAL (un-moved) position, since deleting the action means player 1 never moved.
+    const frame1 = {
+      players: [{ id: 1, x: 250, y: 380, label: '1', role: 'PG' }],
+      ballOwnerId: 1,
+      ballPosition: { x: 250, y: 380 },
+      paths: [{ id: 301, type: 'move', points: [{ x: 250, y: 380 }, { x: 100, y: 100 }], linkedId: 1 }],
+      defenders: [],
+    }
+    const frame2 = {
+      // Authored starting from frame 1's baked (100,100) end position — this is frame 2's own
+      // recorded starting state before any rebuild, exactly as `addFrame()` would have produced it.
+      players: [{ id: 1, x: 100, y: 100, label: '1', role: 'PG' }],
+      ballOwnerId: 1,
+      ballPosition: { x: 100, y: 100 },
+      paths: [],
+      defenders: [],
+    }
+    const seededWorld = saveDesignerPlay(createNewGame(), { id: 'two-frame-play', name: 'Two Frame Play', createdAt: '2026-01-01', frames: [frame1, frame2] })
+    render(createElement(TacticsPcbPage, { world: seededWorld }))
+    fireEvent.click(screen.getByRole('button', { name: 'Diseñador' }))
+    fireEvent.click(screen.getByRole('button', { name: /Cargar/ }))
+    fireEvent.click(screen.getByText('Two Frame Play'))
+
+    // Confirm we're on frame 1/2 and it has the move action.
+    expect(screen.getByText('MOVE')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar acción move' }))
+
+    // Advance to frame 2 via the timeline thumbnail (index 1).
+    const frameThumbnails = document.querySelectorAll('[style*="min-width: 60px"]')
+    fireEvent.click(frameThumbnails[1]!)
+
+    // Frame 2's player token must now render at the REBUILT starting position (250,380) -
+    // frame 1's un-moved position - not the stale (100,100) it was originally authored with.
+    const playerGroup = document.querySelector('g[transform="translate(250,380)"]')
+    expect(playerGroup).not.toBeNull()
+    expect(document.querySelector('g[transform="translate(100,100)"]')).toBeNull()
+  })
+
   it('Match Plan no longer shows a fake session-only save confirmation for unrelated fields', () => {
     const world = createNewGame()
     render(createElement(TacticsPcbPage, { world }))
@@ -327,5 +430,75 @@ describe('TacticsPcbPage / Issue #9 acceptance', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Guardar plan' }))
 
     expect(onSaveGamePlanTacticalOverride).toHaveBeenCalledWith(expect.objectContaining({ pace: 1 }))
+  })
+
+  it('remounting Tactics for the same upcoming game rehydrates the persisted pace/coverage override into Partido controls', () => {
+    const world = createNewGame()
+    const team = getUserTeam(world)!
+    const nextGame = getNextUserGame(world)!
+    const persistedOverride = { pace: 1 as const, shotProfile: { rim: 0 as const, midRange: 0 as const, threePoint: 0 as const }, defense: { interior: 2 as const, perimeter: -1 as const } }
+    const worldWithOverride = { ...world, gamePlansByKey: { ...world.gamePlansByKey, [`${nextGame.id}:${team.id}`]: { gameId: nextGame.id, teamId: team.id, tacticalOverride: persistedOverride } } }
+
+    // No `plan` prop supplied at all: this simulates the real app boundary, where the session
+    // tactical-plan store is reset on save/load and the host always passes SOME plan (its own
+    // default) rather than the persisted override - the persisted override must still surface.
+    render(createElement(TacticsPcbPage, { world: worldWithOverride }))
+    fireEvent.click(screen.getByRole('button', { name: 'Partido' }))
+
+    expect((screen.getByLabelText('Ritmo') as HTMLSelectElement).value).toBe('Rápido')
+    expect((screen.getByLabelText('Cobertura P&R') as HTMLSelectElement).value).toBe('Switch')
+  })
+
+  it('an in-session edit after rehydration takes precedence over the persisted override, without a second authority conflict', () => {
+    const world = createNewGame()
+    const team = getUserTeam(world)!
+    const nextGame = getNextUserGame(world)!
+    const persistedOverride = { pace: 1 as const, shotProfile: { rim: 0 as const, midRange: 0 as const, threePoint: 0 as const }, defense: { interior: 0 as const, perimeter: 0 as const } }
+    const worldWithOverride = { ...world, gamePlansByKey: { ...world.gamePlansByKey, [`${nextGame.id}:${team.id}`]: { gameId: nextGame.id, teamId: team.id, tacticalOverride: persistedOverride } } }
+    const onChange = vi.fn()
+
+    render(createElement(TacticsPcbPage, { world: worldWithOverride, onChange }))
+    fireEvent.click(screen.getByRole('button', { name: 'Partido' }))
+    expect((screen.getByLabelText('Ritmo') as HTMLSelectElement).value).toBe('Rápido')
+
+    fireEvent.change(screen.getByLabelText('Ritmo'), { target: { value: 'Lento' } })
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ pace: -1 }))
+  })
+})
+
+describe('RotationEngine.updateRotationMinutesForTeam / write-boundary validation (Issue #9 blocker 2)', () => {
+  it('an invalid allocation throws and does NOT mutate GameWorld.rotationPlansByTeamId', () => {
+    const world = withStarterLineup(createNewGame())
+    const team = getUserTeam(world)!
+    const roster = getTeamRoster(world, team.id)
+    const invalidMinutes = Object.fromEntries(roster.map((player) => [player.id, [1, 1, 1, 1, 0]])) // 12*1=12, not 50
+
+    expect(() => updateRotationMinutesForTeam(world, team.id, invalidMinutes)).toThrow(RangeError)
+    expect(world.rotationPlansByTeamId[team.id]).toBeUndefined()
+  })
+
+  it('a valid allocation persists, and the boundary strips rows for players no longer in the active lineup', () => {
+    const world = withStarterLineup(createNewGame())
+    const team = getUserTeam(world)!
+    const roster = getTeamRoster(world, team.id)
+    const validMinutes = Object.fromEntries(roster.map((player, index) => [player.id, index < 5 ? [10, 10, 10, 10, 0] : [0, 0, 0, 0, 0]]))
+    const staleMinutes = { ...validMinutes, 'stale-player-not-in-lineup': [10, 10, 10, 10, 0] }
+
+    const updated = updateRotationMinutesForTeam(world, team.id, staleMinutes as never)
+    expect(updated.rotationPlansByTeamId[team.id]!.minutesByPeriod!['stale-player-not-in-lineup' as never]).toBeUndefined()
+    expect(updated.rotationPlansByTeamId[team.id]!.minutesByPeriod![roster[0]!.id]).toEqual([10, 10, 10, 10, 0])
+  })
+
+  it('an attempted invalid save via the Rotaciones UI never even calls onUpdateRotationMinutes, so the write boundary is a real second line of defense, not the only one', () => {
+    const world = withStarterLineup(createNewGame())
+    const onUpdateRotationMinutes = vi.fn()
+    render(createElement(TacticsPcbPage, { world, onUpdateRotationMinutes }))
+    fireEvent.click(screen.getByRole('button', { name: 'Rotaciones' }))
+
+    const numberInputs = document.querySelectorAll('.pcb-tactics__rotation-grid input[type="number"]')
+    fireEvent.change(numberInputs[0]!, { target: { value: '1' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    expect(onUpdateRotationMinutes).not.toHaveBeenCalled()
   })
 })
