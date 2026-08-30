@@ -33,41 +33,27 @@ describe('LiveMatchController', () => {
     expect(controller.isComplete).toBe(false)
   })
 
-  it('records atomic tactical changes without advancing sporting state and applies no-op changes silently', () => {
+  it('keeps live coaching disabled for now', () => {
     const world = createNewGame()
     const controller = createLiveUserMatch(world)
     const before = controller.snapshot()
     const userTeam = getUserTeam(world)!
     const plan = { ...createDefaultTacticalPlan(), pace: 2 as const }
-    const after = controller.applyTactics(userTeam.id, plan)
-    const event = after.events.at(-1)!
-    expect(event).toMatchObject({ type: 'tacticalChange', teamId: userTeam.id, period: before.events.at(-1)!.period, clockSecondsRemaining: before.events.at(-1)!.clockSecondsRemaining, homeScore: 0, awayScore: 0 })
-    expect(after.events).toHaveLength(before.events.length + 1)
-    expect(controller.applyTactics(userTeam.id, plan).events).toHaveLength(after.events.length)
-  })
-  it('applies a manual substitution atomically without advancing the sporting clock', () => {
-    const world = createNewGame()
-    const controller = createLiveUserMatch(world)
-    const userTeam = getUserTeam(world)!
-    const before = controller.snapshot()
-    const playerOutId = before.lineups.home.includes(userTeam.rosterPlayerIds[0]!) ? userTeam.rosterPlayerIds[0]! : before.lineups.away[0]!
-    const playerInId = userTeam.rosterPlayerIds.find((playerId) => !before.lineups.home.includes(playerId) && !before.lineups.away.includes(playerId))!
-    const after = controller.applyManualSubstitutions(userTeam.id, [{ playerOutId, playerInId }])
-    expect(after.events.at(-1)).toMatchObject({ type: 'substitution', source: 'manual', playerOutId, playerInId, clockSecondsRemaining: before.events.at(-1)!.clockSecondsRemaining })
-    expect(after.events).toHaveLength(before.events.length + 1)
+
+    expect(controller.applyTactics(userTeam.id, plan)).toEqual(before)
+    expect(controller.snapshot()).toEqual(before)
   })
 
-  it('ignores a stale manual substitution request after the lineup has already changed', () => {
+  it('keeps manual substitutions disabled for now', () => {
     const world = createNewGame()
     const controller = createLiveUserMatch(world)
-    const userTeam = getUserTeam(world)!
     const before = controller.snapshot()
-    const playerOutId = before.lineups.home.includes(userTeam.rosterPlayerIds[0]!) ? userTeam.rosterPlayerIds[0]! : before.lineups.away[0]!
-    const playerInId = userTeam.rosterPlayerIds.find((playerId) => !before.lineups.home.includes(playerId) && !before.lineups.away.includes(playerId))!
-    const afterValid = controller.applyManualSubstitutions(userTeam.id, [{ playerOutId, playerInId }])
-    const afterStale = controller.applyManualSubstitutions(userTeam.id, [{ playerOutId, playerInId }])
+    const userTeam = getUserTeam(world)!
+    const playerOutId = userTeam.rosterPlayerIds[0]!
+    const playerInId = userTeam.rosterPlayerIds[1]!
 
-    expect(afterStale.events).toHaveLength(afterValid.events.length)
-    expect(afterStale.events.at(-1)).toEqual(afterValid.events.at(-1))
+    expect(controller.applyManualSubstitutions(userTeam.id, [{ playerOutId, playerInId }])).toEqual(before)
+    expect(controller.replacementCandidates(userTeam.id, playerOutId)).toEqual([])
+    expect(controller.snapshot()).toEqual(before)
   })
 })
