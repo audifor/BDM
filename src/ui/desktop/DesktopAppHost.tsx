@@ -12,7 +12,7 @@ import { getDesktopApp } from './DesktopAppRegistry'
 import { EntityPageApp } from '@/ui/navigation/EntityPageApp'
 import type { EntityDestination } from '@/ui/navigation/entityNavigation'
 import { DesktopSettingsScreen } from './DesktopSettingsScreen'
-import { PlantillaPcbPage } from '@/ui/pcb-migrated/plantilla/PlantillaPcbPage'
+import { MentoringPcbPage, PlantillaPcbPage } from '@/ui/pcb-migrated/plantilla/PlantillaPcbPage'
 import { TrainingPcbPage } from '@/ui/pcb-migrated/training/TrainingPcbPage'
 import { TacticsPcbPage } from '@/ui/pcb-migrated/tactics/TacticsPcbPage'
 import { ClubPcbPage } from '@/ui/pcb-migrated/club/ClubPcbPage'
@@ -25,7 +25,7 @@ export function DesktopAppHost({ appId, entityDestination, world, actions }: { r
   if (appId === 'squad') return <PlantillaPcbPage onOpenEntity={actions.openEntity} world={world} />
   if (appId === 'analysis') return <TeamWorkspacePage appName="Análisis" sections={['Depth Chart', 'Plan de futuro', 'Informes']} />
   if (appId === 'locker-room') return <TeamWorkspacePage appName="Vestuario" sections={['Overview', 'Estructura del equipo', 'Grupos', 'Felicidad', 'Código de conducta', 'Reunión con el equipo', 'Reacción']} />
-  if (appId === 'mentoring') return <TeamWorkspacePage appName="Mentoring" sections={[]} />
+  if (appId === 'mentoring') return <MentoringPcbPage />
   if (appId === 'training') return <TrainingPcbPage />
   if (appId === 'tactics') return <TacticsPcbPage />
   if (appId === 'club') return <ClubPcbPage />

@@ -378,7 +378,7 @@ function Analysis() {
   );
 }
 
-function Mentoring() {
+export function MentoringPcbPage() {
   const [groups, setGroups] = useState<readonly Group[]>([
     {
       id: "mentoring-1",
@@ -409,6 +409,7 @@ function Mentoring() {
     setMentees([]);
   };
   return (
+    <main className="pcb-plantilla">
     <section className="pcb-plantilla__mentoring">
       <header>
         <div>
@@ -509,5 +510,6 @@ function Mentoring() {
         </div>
       )}
     </section>
+    </main>
   );
 }
