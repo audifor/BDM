@@ -137,6 +137,49 @@ function TrainingColumnResizeHandle({
   );
 }
 
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, "0"));
+const MINUTE_OPTIONS = Array.from({ length: 12 }, (_, index) => String(index * 5).padStart(2, "0"));
+
+/** Compact hour+minute dropdown pair, composed internally into a canonical "HH:MM" string. */
+function HourMinuteSelect({
+  value,
+  onChange,
+  label,
+}: {
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+  readonly label: string;
+}) {
+  const [hour, minute] = value.split(":");
+  return (
+    <div className="pcb-training__time-select" role="group" aria-label={label}>
+      <select
+        aria-label={`${label} - hora`}
+        onChange={(event) => onChange(`${event.target.value}:${minute ?? "00"}`)}
+        value={hour ?? "00"}
+      >
+        {HOUR_OPTIONS.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+      <span>:</span>
+      <select
+        aria-label={`${label} - minuto`}
+        onChange={(event) => onChange(`${hour ?? "00"}:${event.target.value}`)}
+        value={minute ?? "00"}
+      >
+        {MINUTE_OPTIONS.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export interface TrainingModuleAssignmentInput {
   readonly playerId: PlayerId;
   readonly moduleId: string;
@@ -162,7 +205,7 @@ export function TrainingPcbPage({
   readonly onIntensity?: (value: DomainTrainingIntensity) => void;
   readonly onFocus?: (value: TrainingFocus) => void;
   readonly onScheduleSession?: (session: ScheduledTrainingSession) => void;
-  readonly onScheduleTeamModule?: (input: { readonly moduleId: string; readonly date: GameDate; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string }) => void;
+  readonly onScheduleTeamModule?: (input: { readonly moduleId: string; readonly date: GameDate; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: DomainTrainingIntensity }) => void;
   readonly onCancelSession?: (sessionId: string) => void;
   readonly onSaveModule?: (module: UserTrainingModule) => void;
   readonly onDeleteModule?: (moduleId: string) => void;
@@ -224,7 +267,7 @@ function TeamTraining({
   readonly onFocus?: (value: TrainingFocus) => void;
   readonly scheduledSessions: readonly ScheduledTrainingSession[];
   readonly userModules: readonly UserTrainingModule[];
-  readonly onScheduleTeamModule?: (input: { readonly moduleId: string; readonly date: GameDate; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string }) => void;
+  readonly onScheduleTeamModule?: (input: { readonly moduleId: string; readonly date: GameDate; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: DomainTrainingIntensity }) => void;
   readonly onCancelSession?: (sessionId: string) => void;
 }) {
   const [week, setWeek] = useState(0);
@@ -241,7 +284,7 @@ function TeamTraining({
   const sessionsForDate = (date: GameDate) => scheduledSessions.filter((session) => session.date === date && session.status === "scheduled").sort((a, b) => a.startTime.localeCompare(b.startTime));
   const weekLabel = anchor === undefined ? "Sin fecha de referencia" : `Semana ${isoWeekNumber(anchor)} · ${formatGameDate(anchor)} - ${formatGameDate(addDays(anchor, 6))}`;
   const teamModules = userModules.filter((module) => module.scope !== "individual");
-  const saveSession = (input: { readonly startTime: string; readonly durationMinutes: number; readonly moduleId: string }) => {
+  const saveSession = (input: { readonly startTime: string; readonly durationMinutes: number; readonly moduleId: string; readonly intensity: DomainTrainingIntensity }) => {
     if (editor === undefined || team === undefined) return;
     setEditorError(undefined);
     try {
@@ -251,6 +294,7 @@ function TeamTraining({
         startTime: input.startTime,
         durationMinutes: input.durationMinutes,
         sessionId: editor.session?.id ?? `session:${createEntityId()}`,
+        intensity: input.intensity,
       });
       setEditor(undefined);
     } catch (error) {
@@ -453,7 +497,7 @@ function SessionModal({
   readonly userModules: readonly UserTrainingModule[];
   readonly error?: string;
   readonly onClose: () => void;
-  readonly onSave: (input: { readonly startTime: string; readonly durationMinutes: number; readonly moduleId: string }) => void;
+  readonly onSave: (input: { readonly startTime: string; readonly durationMinutes: number; readonly moduleId: string; readonly intensity: DomainTrainingIntensity }) => void;
 }) {
   const builtinOptions = TRAINING_CATALOG.filter((entry) => entry.scope !== "individual");
   // A user-created team module is selected by its own module id, but resolves to its base
@@ -503,11 +547,7 @@ function SessionModal({
         <div className="pcb-training__modal-grid">
           <label>
             Inicio
-            <input
-              onChange={(event) => setStartTime(event.target.value)}
-              type="time"
-              value={startTime}
-            />
+            <HourMinuteSelect label="Inicio" onChange={setStartTime} value={startTime} />
           </label>
           <label>
             Duración
@@ -545,7 +585,7 @@ function SessionModal({
           </button>
           <button
             className="is-primary"
-            onClick={() => onSave({ startTime, durationMinutes, moduleId })}
+            onClick={() => onSave({ startTime, durationMinutes, moduleId, intensity: effectiveIntensity })}
             type="button"
           >
             Guardar sesión
@@ -735,7 +775,13 @@ function LoadManagementInteractive({
   const riskCount = rowsData.filter((row) => row.fatigue > 70).length;
   const optimalCount = rowsData.filter((row) => row.fatigue <= 70).length;
   const columnCell = (column: string, row: { readonly player: Player; readonly fatigue: number }) => {
-    if (column === "JUGADOR") return <b>{playerName(row.player)}</b>;
+    if (column === "JUGADOR")
+      return (
+        <b>
+          <i aria-hidden="true" className={`pcb-training__load-radio${selected === row.player.id ? " is-checked" : ""}`} />
+          {playerName(row.player)}
+        </b>
+      );
     if (column === "POS") return <i>{row.player.basketball.primaryPosition}</i>;
     if (column === "FATIGA") return <Bar value={Math.round(row.fatigue)} />;
     return (
@@ -825,7 +871,7 @@ function LoadManagementInteractive({
                 </label>
                 <label>
                   Inicio
-                  <input onChange={(event) => setRecoveryTime(event.target.value)} type="time" value={recoveryTime} />
+                  <HourMinuteSelect label="Inicio de recuperación" onChange={setRecoveryTime} value={recoveryTime} />
                 </label>
                 <button
                   className="is-primary"
@@ -937,9 +983,12 @@ function LoadManagementInteractive({
           ) : (
             rows.map((row) => (
               <div
+                aria-checked={selected === row.player.id}
+                aria-label={`Seleccionar a ${playerName(row.player)}`}
                 className={selected === row.player.id ? "is-selected" : ""}
                 key={row.player.id}
                 onClick={() => setSelected(row.player.id)}
+                role="radio"
                 style={loadGridStyle}
               >
                 {columns.map((column) => (

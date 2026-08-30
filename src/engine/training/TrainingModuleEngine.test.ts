@@ -118,6 +118,42 @@ describe('TrainingModuleEngine', () => {
     expect(dailyLoadStatusForTeam(advanced, teamId, advanced.currentDate)).toBe('OK')
   })
 
+  it.each<readonly ['light' | 'normal' | 'high']>([['light'], ['normal'], ['high']])(
+    'a built-in team session persists the user-selected intensity (%s), not the definition default',
+    (selected) => {
+      const world = createNewGame()
+      const teamId = Object.values(world.teams)[0]!.id
+      const date = nextEligibleTrainingDate(world.currentDate)
+
+      const scheduled = scheduleTeamModuleSession(world, { teamId, moduleId: 'threePoint', date, startTime: '09:00', durationMinutes: 60, sessionId: `intensity-${selected}`, intensity: selected })
+
+      expect(scheduled.scheduledTrainingSessionsById[`intensity-${selected}`]!.intensity).toBe(selected)
+    },
+  )
+
+  it('a user-created module keeps its own configured intensity authoritative even if a different intensity is passed in', () => {
+    const world = createNewGame()
+    const teamId = Object.values(world.teams)[0]!.id
+    const date = nextEligibleTrainingDate(world.currentDate)
+    const withModule = createOrUpdateUserTrainingModule(world, { id: 'locked-intensity', name: 'Locked Intensity', baseDefinitionId: 'threePoint', scope: 'team', intensity: 'high' })
+
+    const scheduled = scheduleTeamModuleSession(withModule, { teamId, moduleId: 'locked-intensity', date, startTime: '09:00', durationMinutes: 60, sessionId: 'locked-session', intensity: 'light' })
+
+    expect(scheduled.scheduledTrainingSessionsById['locked-session']!.intensity).toBe('high')
+  })
+
+  it('editing/reopening a scheduled built-in session preserves its persisted intensity across a re-save', () => {
+    const world = createNewGame()
+    const teamId = Object.values(world.teams)[0]!.id
+    const date = nextEligibleTrainingDate(world.currentDate)
+
+    const scheduled = scheduleTeamModuleSession(world, { teamId, moduleId: 'threePoint', date, startTime: '09:00', durationMinutes: 60, sessionId: 'edit-session', intensity: 'high' })
+    expect(scheduled.scheduledTrainingSessionsById['edit-session']!.intensity).toBe('high')
+
+    const reSaved = scheduleTeamModuleSession(scheduled, { teamId, moduleId: 'threePoint', date, startTime: '11:00', durationMinutes: 60, sessionId: 'edit-session', intensity: 'high' })
+    expect(reSaved.scheduledTrainingSessionsById['edit-session']!.intensity).toBe('high')
+  })
+
   it('a user-created team module is schedulable into the Team planner: created -> scheduled -> advanceDay -> completes once -> inherited effects applied', () => {
     const world = createNewGame()
     const teamId = Object.values(world.teams)[0]!.id

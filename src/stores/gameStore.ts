@@ -70,7 +70,7 @@ interface GameStore {
   setTrainingIntensity(intensity: TrainingIntensity): void
   setTrainingFocus(focus: TrainingFocus): void
   scheduleTrainingSession(session: ScheduledTrainingSession): void
-  scheduleTeamModuleSession(input: { readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string }): void
+  scheduleTeamModuleSession(input: { readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: TrainingIntensity }): void
   cancelTrainingSession(sessionId: string): void
   saveUserTrainingModule(module: UserTrainingModule): void
   deleteUserTrainingModule(moduleId: string): void

@@ -94,6 +94,52 @@ describe('TrainingPcbPage / interactions', () => {
     expect(scheduled.moduleId).toBeDefined()
   })
 
+  it('selecting Alta intensity in the session modal forwards it to onScheduleTeamModule', () => {
+    const world = createNewGame()
+    const onScheduleTeamModule = vi.fn()
+    render(createElement(TrainingPcbPage, { world, onScheduleTeamModule }))
+    const buttons = screen.getAllByRole('button', { name: '+ Sesión' })
+    const enabled = buttons.find((button) => !(button as HTMLButtonElement).disabled)!
+    fireEvent.click(enabled)
+
+    const modal = screen.getByRole('heading', { name: 'Nueva sesión' }).closest('section') as HTMLElement
+    fireEvent.click(within(modal).getByRole('button', { name: 'Alta' }))
+    fireEvent.click(within(modal).getByRole('button', { name: 'Guardar sesión' }))
+
+    expect(onScheduleTeamModule).toHaveBeenCalledTimes(1)
+    expect(onScheduleTeamModule.mock.calls[0]![0]).toMatchObject({ intensity: 'high' })
+  })
+
+  it('the session modal composes hour + minute selectors into a canonical HH:MM start time', () => {
+    const world = createNewGame()
+    const onScheduleTeamModule = vi.fn()
+    render(createElement(TrainingPcbPage, { world, onScheduleTeamModule }))
+    const buttons = screen.getAllByRole('button', { name: '+ Sesión' })
+    const enabled = buttons.find((button) => !(button as HTMLButtonElement).disabled)!
+    fireEvent.click(enabled)
+
+    const modal = screen.getByRole('heading', { name: 'Nueva sesión' }).closest('section') as HTMLElement
+    fireEvent.change(within(modal).getByLabelText('Inicio - hora'), { target: { value: '09' } })
+    fireEvent.change(within(modal).getByLabelText('Inicio - minuto'), { target: { value: '30' } })
+    fireEvent.click(within(modal).getByRole('button', { name: 'Guardar sesión' }))
+
+    expect(onScheduleTeamModule.mock.calls[0]![0]).toMatchObject({ startTime: '09:30' })
+  })
+
+  it('the session modal hour + minute selectors initialize from an existing persisted session time', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const date = nextEligibleTrainingDate(base.currentDate)
+    const world = { ...base, scheduledTrainingSessionsById: { existing: { id: 'existing', teamId: team.id, date, startTime: '17:05', durationMinutes: 60, scope: 'team' as const, definitionId: 'threePoint', intensity: 'normal' as const, status: 'scheduled' as const } } }
+    render(createElement(TrainingPcbPage, { world }))
+
+    fireEvent.click(screen.getByText('Three-Point Shooting'))
+
+    const modal = screen.getByRole('heading', { name: 'Editar sesión' }).closest('section') as HTMLElement
+    expect((within(modal).getByLabelText('Inicio - hora') as HTMLSelectElement).value).toBe('17')
+    expect((within(modal).getByLabelText('Inicio - minuto') as HTMLSelectElement).value).toBe('05')
+  })
+
   it('the Team planner disables scheduling for today/past dates and truthfully labels why', () => {
     const world = createNewGame()
     render(createElement(TrainingPcbPage, { world }))
@@ -197,6 +243,37 @@ describe('TrainingPcbPage / interactions', () => {
     expect(within(modal).getByText(/Estímulo de desarrollo/)).toBeInTheDocument()
     expect(within(modal).getByText(/Carga\/fatiga/)).toBeInTheDocument()
     expect(within(modal).getByText(/Riesgo de lesión \(metadato, no aplicado por el motor\)/)).toBeInTheDocument()
+  })
+
+  it('clicking a player row in Load Management selects it with an unmistakable selected state', () => {
+    const world = createNewGame()
+    render(createElement(TrainingPcbPage, { world, initialTab: 'load' }))
+
+    const rows = screen.getAllByRole('radio')
+    fireEvent.click(rows[0]!)
+    expect(rows[0]).toHaveAttribute('aria-checked', 'true')
+    expect(rows[0]!.className).toContain('is-selected')
+
+    fireEvent.click(rows[1]!)
+    expect(rows[1]).toHaveAttribute('aria-checked', 'true')
+    expect(rows[0]).toHaveAttribute('aria-checked', 'false')
+  })
+
+  it('Recuperación uses the selected player to schedule recovery, and selection survives switching views', () => {
+    const world = createNewGame()
+    const team = getUserTeam(world)!
+    const firstPlayerId = world.teams[team.id]!.rosterPlayerIds[0]!
+    const onScheduleSession = vi.fn()
+    render(createElement(TrainingPcbPage, { world, initialTab: 'load', onScheduleSession }))
+
+    fireEvent.click(screen.getAllByRole('radio')[0]!)
+    fireEvent.click(screen.getByRole('button', { name: 'Principal' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Recuperación' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Programar recuperación' }))
+
+    expect(onScheduleSession).toHaveBeenCalledTimes(1)
+    expect(onScheduleSession.mock.calls[0]![0]).toMatchObject({ playerId: firstPlayerId, scope: 'individual' })
   })
 
   it('shows the ISO week number alongside the Mon-Sun range', () => {

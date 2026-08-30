@@ -62,13 +62,20 @@ export function assignTrainingModuleToPlayer(
  * Schedules a team training session from a training module id (built-in catalog definition id, or a
  * user-created team-scoped module id). Used by the Team planner so user-created team modules execute
  * through the exact same canonical scheduling/execution path as built-in definitions.
+ *
+ * For a built-in definition, the caller (Team planner UI) may pick the session's intensity — there is
+ * no other authority for it. For a user-created module, the module's configured intensity remains the
+ * single authoritative value and any passed-in intensity is ignored, so there is never a second
+ * intensity authority for user modules.
  */
 export function scheduleTeamModuleSession(
   world: GameWorld,
-  input: { readonly teamId: TeamId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string },
+  input: { readonly teamId: TeamId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: TrainingIntensity },
 ): GameWorld {
-  const { definition, intensity, scope } = resolveTrainingModule(world, input.moduleId)
+  const { definition, intensity: resolvedIntensity, scope } = resolveTrainingModule(world, input.moduleId)
   if (scope === 'individual') throw new RangeError('Cannot schedule an individual-only module as a team session')
+  const isUserModule = world.userTrainingModulesById[input.moduleId] !== undefined
+  const intensity = isUserModule || input.intensity === undefined ? resolvedIntensity : input.intensity
   const session: ScheduledTrainingSession = createScheduledTrainingSession({
     id: input.sessionId,
     teamId: input.teamId,

@@ -1,6 +1,6 @@
 import { addDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
 import { clampCareerFatigue } from '@/domain/careerFatigue/CareerFatigue'
-import { clampTeamCohesion, findCollidingSession, isPositionEligible, trainingDefinitionById, trainingLoad, type ScheduledTrainingSession, type TrainingDefinition } from '@/domain/training'
+import { clampTeamCohesion, dailyWorkloadScore, findCollidingSession, isPositionEligible, trainingDefinitionById, trainingLoad, type ScheduledTrainingSession, type TrainingDefinition } from '@/domain/training'
 import { applyMoraleEvent, type MoraleEvent } from '@/domain/morale'
 import { addDays, type GameDate } from '@/domain/date'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
@@ -115,12 +115,16 @@ function distributeStimulus(definition: TrainingDefinition, base: number): Parti
   return Object.fromEntries(definition.effects.targetRatings.map((key) => [key, perRating]))
 }
 
-/** Total scheduled load-minutes-equivalent for a team on a given date, used for daily load classification. */
+/**
+ * Total canonical daily workload score for a team on a given date, used for daily load
+ * classification (calendar + Load Management). This is intentionally a distinct score from
+ * persisted careerFatigue — see dailyWorkloadScore in domain/training/TrainingLoad.ts.
+ */
 export function dailyScheduledLoad(world: GameWorld, teamId: TeamId, date: GameWorld['currentDate']): number {
   return Object.values(world.scheduledTrainingSessionsById)
     .filter((session) => session.teamId === teamId && session.date === date)
     .reduce((total, session) => {
       const definition = trainingDefinitionById(session.definitionId)
-      return total + trainingLoad(session.intensity).fatigue * definition.effects.fatigueMultiplier * (session.durationMinutes / 60)
+      return total + dailyWorkloadScore(session.intensity, session.durationMinutes, definition.effects.fatigueMultiplier)
     }, 0)
 }
