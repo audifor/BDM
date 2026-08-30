@@ -1,0 +1,13 @@
+.bdm-start-card { width:min(560px,92vw) !important; }
+.bdm-start-actions { display:grid; gap:10px; }
+.bdm-quick-start { width:100%; margin-top:8px; font-size:10px; }
+.bdm-start-message { margin:16px 0 0; color:#efad42; font-size:12px; }
+.bdm-new-game-card { display:grid; gap:18px; }
+.bdm-new-game-card h1 { margin:2px 0 0; font-size:36px; letter-spacing:.05em; }
+.bdm-new-game-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
+.bdm-start-field { display:grid; gap:7px; color:#93a5b5; font-size:10px; font-weight:800; letter-spacing:.12em; }
+.bdm-start-field select { width:100%; min-height:44px; padding:0 12px; border:1px solid #425565; background:#111b24; color:#f2f5f7; font:inherit; font-size:13px; letter-spacing:0; }
+.bdm-universe-description { margin:-7px 0 0; color:#a9b7c4; font-size:12px; line-height:1.5; }
+.bdm-test-note { padding:12px 14px; border-left:3px solid #efad42; background:#efad4212; }
+.bdm-test-note strong { color:#efad42; font-size:10px; letter-spacing:.1em; }
+.bdm-test-note p { margin:6px 0 0; color:#a9b7c4; font-size:11px; line-height:1.45; }
