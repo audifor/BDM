@@ -22,6 +22,16 @@ describe('LiveMatchController', () => {
     expect(step.after.events.at(-1)!.clockSecondsRemaining).toBeLessThan(step.before.events.at(-1)!.clockSecondsRemaining)
   })
 
+  it('simulates only the remainder of the current quarter', () => {
+    const controller = createLiveUserMatch(createNewGame())
+    controller.advanceOneStep()
+    const after = controller.skipToEndOfPeriod()
+
+    expect(after.events).toContainEqual(expect.objectContaining({ type: 'periodEnd', period: 1, clockSecondsRemaining: 0 }))
+    expect(after.events.at(-1)).toMatchObject({ type: 'periodStart', period: 2, clockSecondsRemaining: 600 })
+    expect(after.events.some((event) => event.period > 2)).toBe(false)
+    expect(controller.isComplete).toBe(false)
+  })
 
   it('records atomic tactical changes without advancing sporting state and applies no-op changes silently', () => {
     const world = createNewGame()
