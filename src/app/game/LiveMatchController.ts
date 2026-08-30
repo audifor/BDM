@@ -26,6 +26,7 @@ export class LiveMatchController {
   public applyTactics(teamId: MatchSession['state']['homeTeamId'], tacticalPlan: MatchTacticalPlan): MatchSimulation { this.session = applyTacticalPlanChange(this.session, { teamId, tacticalPlan }); return this.snapshot() }
   public applyManualSubstitutions(teamId: MatchSession['state']['homeTeamId'], substitutions: readonly ManualSubstitution[]): MatchSimulation {
     const state = this.session.state
+    if (state.isComplete) return this.snapshot()
     const isHome = teamId === state.homeTeamId
     const isAway = teamId === state.awayTeamId
     if (isHome || isAway) {
