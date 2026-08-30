@@ -1,9 +1,11 @@
 param(
     [Parameter(Mandatory = $true)]
     [int]$Issue,
-    [string]$Model = "gpt-5.6-sol",
-    [ValidateSet("minimal", "low", "medium", "high", "xhigh")]
-    [string]$Reasoning = "high"
+    [ValidateSet("codex", "claude")]
+    [string]$Agent = "codex",
+    [string]$Model = "",
+    [ValidateSet("low", "medium", "high", "xhigh")]
+    [string]$Effort = "high"
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,8 +20,17 @@ function Run([string]$File, [string[]]$Arguments) {
 }
 
 if (-not (Get-Command gh -ErrorAction SilentlyContinue)) { throw "GitHub CLI (gh) not found in PATH." }
-if (-not (Get-Command codex -ErrorAction SilentlyContinue)) { throw "Codex CLI not found in PATH." }
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) { throw "git not found in PATH." }
+if ($Agent -eq "codex" -and -not (Get-Command codex -ErrorAction SilentlyContinue)) { throw "Codex CLI not found in PATH." }
+if ($Agent -eq "claude" -and -not (Get-Command claude -ErrorAction SilentlyContinue)) { throw "Claude Code CLI not found in PATH." }
+
+$selectedModel = if ($Model) {
+    $Model
+} elseif ($Agent -eq "claude") {
+    "sonnet"
+} else {
+    "gpt-5.6-sol"
+}
 
 $dirty = git status --porcelain
 if ($LASTEXITCODE -ne 0) { throw "git status failed" }
@@ -74,19 +85,38 @@ Requirements for completion:
 If the issue cannot be completed without an unapproved product decision, architecture violation, hidden regression, or materially expanded scope, stop and report BLOCKED without committing partial work.
 "@
 
-$codexArgs = @(
-    "exec",
-    "--sandbox", "workspace-write",
-    "-m", $Model,
-    "-c", "model_reasoning_effort=`"$Reasoning`"",
-    $prompt
-)
+Write-Host ""
+Write-Host "BDM issue runner" -ForegroundColor Cyan
+Write-Host "Issue:  #$($issue.number) $($issue.title)"
+Write-Host "Agent:  $Agent"
+Write-Host "Model:  $selectedModel"
+Write-Host "Effort: $Effort"
+Write-Host "Branch: $branch"
+Write-Host ""
 
-Run codex $codexArgs
+if ($Agent -eq "claude") {
+    $claudeArgs = @(
+        "-p",
+        "--permission-mode", "auto",
+        "--model", $selectedModel,
+        "--effort", $Effort,
+        $prompt
+    )
+    Run claude $claudeArgs
+} else {
+    $codexArgs = @(
+        "exec",
+        "--sandbox", "workspace-write",
+        "-m", $selectedModel,
+        "-c", "model_reasoning_effort=`"$Effort`"",
+        $prompt
+    )
+    Run codex $codexArgs
+}
 
 $dirtyAfter = git status --porcelain
-if ($LASTEXITCODE -ne 0) { throw "git status failed after Codex run" }
-if ($dirtyAfter) { throw "Codex finished with a dirty working tree. Review before pushing.`n$dirtyAfter" }
+if ($LASTEXITCODE -ne 0) { throw "git status failed after agent run" }
+if ($dirtyAfter) { throw "$Agent finished with a dirty working tree. Review before pushing.`n$dirtyAfter" }
 
 $ahead = git rev-list --count origin/main..HEAD
 if ($LASTEXITCODE -ne 0) { throw "Unable to compare branch with origin/main." }
@@ -103,7 +133,7 @@ if ($existingPr.Count -gt 0) {
 $prBody = @"
 Closes #$($issue.number)
 
-Implemented by the BDM issue runner using repository AGENTS.md and project guardrails.
+Implemented by the BDM issue runner using $Agent, repository AGENTS.md and project guardrails.
 
 CI must pass before merge.
 "@
@@ -120,5 +150,6 @@ Run gh @(
 Write-Host ""
 Write-Host "DONE" -ForegroundColor Green
 Write-Host "Issue:  #$($issue.number) $($issue.title)"
+Write-Host "Agent:  $Agent"
 Write-Host "Branch: $branch"
 Write-Host "GitHub CI will validate the pull request."
