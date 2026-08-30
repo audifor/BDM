@@ -73,32 +73,43 @@ describe('TrainingPcbPage / interactions', () => {
     expect(screen.getByText('2026-08-10 - 2026-08-16')).toBeInTheDocument()
   })
 
-  it('changing the session end time updates the estimated impact', () => {
-    render(createElement(TrainingPcbPage))
+  it('opening the new-session modal for a real team shows a real catalog definition and calls onScheduleSession with real domain data', () => {
+    const world = createNewGame()
+    const onScheduleSession = vi.fn()
+    render(createElement(TrainingPcbPage, { world, onScheduleSession }))
     fireEvent.click(screen.getAllByRole('button', { name: '+ Sesión' })[0]!)
 
     const modal = screen.getByRole('heading', { name: 'Nueva sesión' }).closest('section') as HTMLElement
-    expect(within(modal).getByText('Carga 90 AU · Técnica individual · Concentración')).toBeInTheDocument()
+    expect(within(modal).getByText(/Carga \d+ · /)).toBeInTheDocument()
 
-    fireEvent.change(within(modal).getByLabelText('Fin'), { target: { value: '12:00' } })
+    fireEvent.click(within(modal).getByRole('button', { name: 'Guardar sesión' }))
 
-    expect(within(modal).getByText('Carga 120 AU · Técnica individual · Concentración')).toBeInTheDocument()
+    expect(onScheduleSession).toHaveBeenCalledTimes(1)
+    const scheduled = onScheduleSession.mock.calls[0]![0]
+    expect(scheduled.scope).toBe('team')
+    expect(scheduled.status).toBe('scheduled')
   })
 
-  it('Configurar lets you toggle a module and change its intensity, reflected on the card', () => {
-    render(createElement(TrainingPcbPage))
+  it('the Modules tab lists the real built-in catalog and creating a module calls onSaveModule with real domain data', () => {
+    const onSaveModule = vi.fn()
+    render(createElement(TrainingPcbPage, { onSaveModule }))
     fireEvent.click(screen.getByRole('button', { name: 'Módulos' }))
 
-    const moduleCard = screen.getAllByRole('button', { name: 'Configurar' })[0]!.closest('article') as HTMLElement
-    expect(within(moduleCard).queryByText('Desactivado')).not.toBeInTheDocument()
+    expect(screen.getByText('Three-Point Shooting')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '+ Crear módulo' }))
 
-    fireEvent.click(within(moduleCard).getByRole('button', { name: 'Configurar' }))
-
-    const modal = screen.getByRole('heading', { name: /^Configurar / }).closest('section') as HTMLElement
-    fireEvent.click(within(modal).getByRole('checkbox'))
+    const modal = screen.getByRole('heading', { name: 'Crear módulo' }).closest('section') as HTMLElement
+    fireEvent.change(within(modal).getByLabelText('Nombre'), { target: { value: 'Mi módulo' } })
     fireEvent.click(within(modal).getByRole('button', { name: 'Alta' }))
     fireEvent.click(within(modal).getByRole('button', { name: 'Guardar' }))
 
-    expect(within(moduleCard).getByText('Desactivado')).toBeInTheDocument()
+    expect(onSaveModule).toHaveBeenCalledTimes(1)
+    expect(onSaveModule.mock.calls[0]![0]).toMatchObject({ name: 'Mi módulo', intensity: 'high', scope: 'individual' })
+  })
+
+  it('shows the ISO week number alongside the Mon-Sun range', () => {
+    const world = { ...createNewGame(), currentDate: parseGameDate('2026-08-19') }
+    render(createElement(TrainingPcbPage, { world }))
+    expect(screen.getByText(/Semana 34 · 2026-08-17 - 2026-08-23/)).toBeInTheDocument()
   })
 })

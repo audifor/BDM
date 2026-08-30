@@ -68,3 +68,8 @@
 .pcb-training__session > button:first-child {
   color: #f8fafc;
 }
+
+/* Minimal semantic hook (issue #8): daily load status color on the existing calendar day badge. Reuses the badge's position/shape; only recolors it per OK/HIGH/VERY_HIGH. */
+.pcb-training__load-dot.is-good { background: rgba(34, 197, 94, .85); }
+.pcb-training__load-dot.is-warn { background: rgba(234, 179, 8, .85); }
+.pcb-training__load-dot.is-danger { background: rgba(239, 68, 68, .85); }

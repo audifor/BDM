@@ -8,6 +8,7 @@ import {
   formatGameDate,
   isAfterGameDate,
   isBeforeGameDate,
+  isoWeekNumber,
   isSameGameDate,
   parseGameDate,
 } from './index'
@@ -54,5 +55,14 @@ describe('GameDate', () => {
     expect(isBeforeGameDate(earlier, later)).toBe(true)
     expect(isAfterGameDate(later, earlier)).toBe(true)
     expect(isSameGameDate(earlier, earlier)).toBe(true)
+  })
+
+  it('computes ISO-8601 week numbers, including year-boundary edge cases', () => {
+    expect(isoWeekNumber(parseGameDate('2026-08-19'))).toBe(34)
+    expect(isoWeekNumber(parseGameDate('2026-01-01'))).toBe(1)
+    // 2025-12-29 (Monday) belongs to ISO week 1 of 2026.
+    expect(isoWeekNumber(parseGameDate('2025-12-29'))).toBe(1)
+    // 2027-01-01 (Friday) still belongs to ISO week 53 of 2026.
+    expect(isoWeekNumber(parseGameDate('2027-01-01'))).toBe(53)
   })
 })

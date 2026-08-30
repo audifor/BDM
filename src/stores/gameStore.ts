@@ -22,8 +22,8 @@ import type { LiveMatchController, LiveMatchStep } from '@/app/game'
 import { create } from 'zustand'
 import { acceptCoachJobOffer, applyUserCoachForJob, declineCoachJobOffer } from '@/app/coachCareer'
 import { getCareerFatigueForPlayer, getLatestTrainingSession, getTrainingPlanForTeam } from '@/domain/world'
-import type { TrainingFocus, TrainingIntensity } from '@/domain/training'
-import { setTeamTrainingPlan } from '@/engine/training'
+import type { ScheduledTrainingSession, TrainingFocus, TrainingIntensity, UserTrainingModule } from '@/domain/training'
+import { assignTrainingModuleToPlayer, cancelScheduledTrainingSession, createOrUpdateUserTrainingModule, deleteUserTrainingModule, scheduleTrainingSession, setTeamTrainingPlan } from '@/engine/training'
 import { clearLineupSlot, setLineupSlot } from '@/engine/tactics/LineupEngine'
 import { getTeamLineup } from '@/domain/world'
 import type { LineupSlot } from '@/domain/tactics'
@@ -69,6 +69,11 @@ interface GameStore {
   applyUserCoachForJob(openingId: string): void
   setTrainingIntensity(intensity: TrainingIntensity): void
   setTrainingFocus(focus: TrainingFocus): void
+  scheduleTrainingSession(session: ScheduledTrainingSession): void
+  cancelTrainingSession(sessionId: string): void
+  saveUserTrainingModule(module: UserTrainingModule): void
+  deleteUserTrainingModule(moduleId: string): void
+  assignTrainingModuleToPlayer(input: { readonly playerId: PlayerId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly sessionId: string }): void
   setLineupSlot(slot: LineupSlot, playerId: PlayerId): void
   clearLineupSlot(slot: LineupSlot): void
   selectDraftProspect(draftId: string, playerId: PlayerId): void
@@ -139,6 +144,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   applyUserCoachForJob: (openingId) => set({ world: applyUserCoachForJob(requireWorld(get().world), openingId).world }),
   setTrainingIntensity: (intensity) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: setTeamTrainingPlan(world, team.id, { intensity }) }) },
   setTrainingFocus: (focus) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: setTeamTrainingPlan(world, team.id, { focus }) }) },
+  scheduleTrainingSession: (session) => set({ world: scheduleTrainingSession(requireWorld(get().world), session) }),
+  cancelTrainingSession: (sessionId) => set({ world: cancelScheduledTrainingSession(requireWorld(get().world), sessionId) }),
+  saveUserTrainingModule: (module) => set({ world: createOrUpdateUserTrainingModule(requireWorld(get().world), module) }),
+  deleteUserTrainingModule: (moduleId) => set({ world: deleteUserTrainingModule(requireWorld(get().world), moduleId) }),
+  assignTrainingModuleToPlayer: (input) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: assignTrainingModuleToPlayer(world, { teamId: team.id, ...input }) }) },
   setLineupSlot: (slot, playerId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: setLineupSlot(world, team.id, slot, playerId) }) },
   clearLineupSlot: (slot) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: clearLineupSlot(world, team.id, slot) }) },
   selectDraftProspect: (draftId, playerId) => set({ world: selectDraftProspect(requireWorld(get().world), draftId, playerId) }),
@@ -191,3 +201,5 @@ export function selectUserTrainingPlan(world: GameWorld | null) { const team = w
 export function selectUserTeamLineup(world: GameWorld | null) { const team = world === null ? undefined : getUserTeam(world); return team === undefined || world === null ? undefined : getTeamLineup(world, team.id) }
 export function selectLatestUserTrainingSession(world: GameWorld | null) { const team = world === null ? undefined : getUserTeam(world); return team === undefined || world === null ? undefined : getLatestTrainingSession(world, team.id) }
 export function selectUserTeamCareerFatigueSummary(world: GameWorld | null) { const team = world === null ? undefined : getUserTeam(world); if (team === undefined || world === null || team.rosterPlayerIds.length === 0) return 0; return team.rosterPlayerIds.reduce((sum, id) => sum + getCareerFatigueForPlayer(world, id), 0) / team.rosterPlayerIds.length }
+export function selectUserTeamScheduledSessions(world: GameWorld | null) { const team = world === null ? undefined : getUserTeam(world); if (team === undefined || world === null) return []; return Object.values(world.scheduledTrainingSessionsById).filter((session) => session.teamId === team.id) }
+export function selectUserTrainingModules(world: GameWorld | null) { return world === null ? [] : Object.values(world.userTrainingModulesById) }

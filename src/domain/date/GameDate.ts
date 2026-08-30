@@ -67,6 +67,16 @@ export const isBeforeGameDate = (a: GameDate, b: GameDate): boolean => compareGa
 export const isAfterGameDate = (a: GameDate, b: GameDate): boolean => compareGameDates(a, b) > 0
 export const isSameGameDate = (a: GameDate, b: GameDate): boolean => compareGameDates(a, b) === 0
 
+/** ISO-8601 week number (1-53), where week 1 contains the year's first Thursday. */
+export function isoWeekNumber(date: GameDate): number {
+  const parts = partsFromGameDate(date)
+  const utcDate = new Date(Date.UTC(parts.year, parts.month - 1, parts.day))
+  const isoWeekday = utcDate.getUTCDay() === 0 ? 7 : utcDate.getUTCDay()
+  utcDate.setUTCDate(utcDate.getUTCDate() + 4 - isoWeekday)
+  const isoYearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1))
+  return Math.ceil(((utcDate.getTime() - isoYearStart.getTime()) / 86400000 + 1) / 7)
+}
+
 function partsFromGameDate(date: GameDate): GameDateParts {
   const [year, month, day] = date.split('-').map(Number)
   return { year: year!, month: month!, day: day! }

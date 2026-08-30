@@ -5,7 +5,7 @@ import { getGamesToday } from '@/engine/calendar'
 import { getTeamFinancialSnapshot } from '@/domain/world/finances'
 import { applyCoachReputationEvent } from '@/domain/coachReputation'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { selectUserCoachRecentReputationEvents, selectUserCoachRelationships, selectUserCoachReputationProfile, useGameStore } from './gameStore'
+import { selectUserCoachRecentReputationEvents, selectUserCoachRelationships, selectUserCoachReputationProfile, selectUserTeamScheduledSessions, selectUserTrainingModules, useGameStore } from './gameStore'
 
 describe('gameStore', () => {
   beforeEach(() => {
@@ -33,6 +33,41 @@ describe('gameStore', () => {
     useGameStore.getState().advanceDay()
 
     expect(useGameStore.getState().world?.currentDate).toBe(createGameDate(2032, 10, 2))
+  })
+
+  it('schedules and cancels a training session through the engine, persisted in GameWorld', () => {
+    useGameStore.getState().newGame()
+    const world = useGameStore.getState().world!
+    const teamId = Object.values(world.teams).find((team) => team.coachId === world.userCoachId)!.id
+
+    useGameStore.getState().scheduleTrainingSession({ id: 'ui-session', teamId, date: world.currentDate, startTime: '09:00', durationMinutes: 60, scope: 'team', definitionId: 'threePoint', intensity: 'normal', status: 'scheduled' })
+    expect(selectUserTeamScheduledSessions(useGameStore.getState().world)).toHaveLength(1)
+
+    useGameStore.getState().cancelTrainingSession('ui-session')
+    expect(selectUserTeamScheduledSessions(useGameStore.getState().world)).toHaveLength(0)
+  })
+
+  it('saves a user training module and it appears in the module bank', () => {
+    useGameStore.getState().newGame()
+    useGameStore.getState().saveUserTrainingModule({ id: 'user-module', name: 'Custom Threes', baseDefinitionId: 'threePoint', scope: 'individual', intensity: 'high' })
+
+    expect(selectUserTrainingModules(useGameStore.getState().world)).toHaveLength(1)
+
+    useGameStore.getState().deleteUserTrainingModule('user-module')
+    expect(selectUserTrainingModules(useGameStore.getState().world)).toHaveLength(0)
+  })
+
+  it('assigns a training module to a player as a real scheduled individual session', () => {
+    useGameStore.getState().newGame()
+    const world = useGameStore.getState().world!
+    const team = Object.values(world.teams).find((item) => item.coachId === world.userCoachId)!
+    const playerId = team.rosterPlayerIds[0]!
+
+    useGameStore.getState().assignTrainingModuleToPlayer({ playerId, moduleId: 'threePoint', date: world.currentDate, startTime: '09:00', sessionId: 'assigned-session' })
+
+    const sessions = selectUserTeamScheduledSessions(useGameStore.getState().world)
+    expect(sessions).toHaveLength(1)
+    expect(sessions[0]).toMatchObject({ scope: 'individual', playerId, definitionId: 'threePoint' })
   })
 
   it('delegates continuing time to the application flow and stores its resulting world', () => {
