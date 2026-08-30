@@ -195,6 +195,15 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
     setSubstitutionsOpen(true);
     requestAnimationFrame(() => scrollToSection("match-substitutions"));
   };
+  const simulateQuarter = () => {
+    setSegment(null);
+    setPresentationProgress(0);
+    requestingSegmentRef.current = false;
+    const controller = useGameStore.getState().getActiveMatchSession();
+    if (controller === null) return;
+    props.onCompletePresentationSegment(controller.skipToEndOfPeriod());
+    props.onPause();
+  };
 
   return (
     <main
@@ -380,6 +389,15 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
                 </button>
               ))}
             </div>
+            <button
+              aria-label="Simulate to end of quarter"
+              className="secondary-button"
+              disabled={substitutionsOpen}
+              onClick={simulateQuarter}
+              type="button"
+            >
+              SIM QUARTER
+            </button>
             <button
               className="primary-button"
               disabled={substitutionsOpen}
