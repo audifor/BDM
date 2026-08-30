@@ -67,7 +67,7 @@ function StartScreen({
   const [setupOpen, setSetupOpen] = useState(false)
   const [universeId, setUniverseId] = useState<NewGameUniverseId>('prototype')
   const selectedUniverse = NEW_GAME_UNIVERSES.find((universe) => universe.id === universeId)!
-  const [teamKey, setTeamKey] = useState(ACB_QUICK_START_TEAM_KEY)
+  const [teamKey, setTeamKey] = useState<string>(ACB_QUICK_START_TEAM_KEY)
 
   const chooseUniverse = (nextId: NewGameUniverseId) => {
     setUniverseId(nextId)
