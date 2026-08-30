@@ -5,24 +5,40 @@ import {
   Plus, Trash2, Play, Pause, SkipBack, ListChecks, AlertTriangle,
   FolderOpen, Book, BookOpen, PlusSquare, Settings, Database, CheckCircle
 } from './PcbTacticsIcons';
-import {
-  savePlay as savePlayToDB,
-  loadPlays,
-  deletePlay as deletePlayFromDB,
-  savePlaybook as savePlaybookToDB,
-  loadPlaybooks,
-  updatePlaybook as updatePlaybookDB,
-  deletePlaybook as deletePlaybookFromDB,
-  setActivePlaybook,
-  analyzePlayFrames,
-  SavedPlay as DBSavedPlay,
-  Playbook as DBPlaybook,
-  PlayType
-} from './PcbPlaybookManager';
+import { createEntityId } from '@/domain/ids';
+import type { Playbook as DomainPlaybook, SavedPlay as DomainSavedPlay } from '@/domain/tactics';
+
+/** Deterministic, stable-ID play-frame analysis, replacing the removed PcbPlaybookManager mock DB's analyzer. */
+function analyzePlayFrames(frames: FrameData[]) {
+  const paths = frames.flatMap((frame) => frame.paths ?? []);
+  const stats = {
+    passes: paths.filter((path) => path.type === 'pass').length,
+    screens: paths.filter((path) => path.type === 'screen').length,
+    dribbles: paths.filter((path) => path.type === 'dribble').length,
+    moves: paths.filter((path) => path.type === 'move').length,
+    total_actions: paths.length,
+    total_frames: frames.length,
+  };
+  let playType = 'Set';
+  if (stats.dribbles >= 3 && stats.dribbles >= stats.passes) playType = 'Flow';
+  if (stats.passes >= 3 && stats.screens <= 1) playType = 'Quick';
+  if (stats.screens >= 2 && stats.passes >= 2) playType = 'ATO';
+  return {
+    play_type: playType,
+    focus: stats.screens >= 2 ? 'Pick & Roll' : stats.passes >= 4 ? '3PT' : stats.moves >= 3 ? 'Cut' : 'Isolation',
+    stats,
+  };
+}
 
 // --- PROPS ---
 interface TacticsCreatorProps {
-  clubId?: number | null;
+  /** Canonical GameWorld-scoped plays/playbooks (Issue #9 blocker 8) - not a global cross-career store. */
+  savedPlays: readonly DomainSavedPlay[];
+  playbooks: readonly DomainPlaybook[];
+  onSavePlay?: (play: DomainSavedPlay) => void;
+  onDeletePlay?: (playId: string) => void;
+  onSavePlaybook?: (playbook: DomainPlaybook) => void;
+  onDeletePlaybook?: (playbookId: string) => void;
   onSaveCustomPlay?: (play: any) => void;
 }
 
@@ -54,7 +70,7 @@ interface FrameData {
   defenders: Position[];
 }
 
-interface SavedPlay {
+interface LocalSavedPlay {
   id: string;
   name: string;
   date: string;
@@ -62,10 +78,54 @@ interface SavedPlay {
   engineData: any;
 }
 
-interface Playbook {
+interface LocalPlaybook {
   id: string;
   name: string;
   playIds: string[];
+}
+
+/**
+ * Pure, deterministic computation of the NEXT frame's starting player positions/ball state from
+ * one frame's own players/ball state and its authored `paths` (Issue #9 blocker 3). This is the
+ * exact logic `addFrame()` always used to bake one frame's actions into the next frame's starting
+ * point; extracting it lets `rebuildFramesFrom` re-run it after an earlier action is deleted, so
+ * every later frame's *starting state* stays derived correctly instead of going stale.
+ */
+function advanceFrameStartingState(frame: FrameData): Pick<FrameData, 'players' | 'ballOwnerId' | 'ballPosition'> {
+  const nextPlayers: PlayerToken[] = JSON.parse(JSON.stringify(frame.players));
+  let nextBallOwner = frame.ballOwnerId;
+  let nextBallPos = { ...frame.ballPosition };
+  frame.paths.forEach(path => {
+    const endP = path.points[path.points.length - 1];
+    if (path.linkedId && ['move', 'dribble', 'screen'].includes(path.type)) { const pIndex = nextPlayers.findIndex((pl) => pl.id === path.linkedId); if (pIndex !== -1) { nextPlayers[pIndex]!.x = endP!.x; nextPlayers[pIndex]!.y = endP!.y; } }
+    if (path.type === 'pass') { nextBallOwner = null; nextBallPos = { x: endP!.x, y: endP!.y }; const receiver = nextPlayers.find((pl) => Math.hypot(pl.x - endP!.x, pl.y - endP!.y) < 30); if (receiver) nextBallOwner = receiver.id; }
+  });
+  if (nextBallOwner !== null) { const owner = nextPlayers.find((p) => p.id === nextBallOwner); if (owner) nextBallPos = { x: owner.x, y: owner.y }; }
+  return { players: nextPlayers, ballOwnerId: nextBallOwner, ballPosition: nextBallPos };
+}
+
+/**
+ * Rebuilds every frame's *starting state* (players/ball) from `changedIndex` onward, given that
+ * frame `changedIndex`'s own paths (its authored actions) may have just changed - e.g. an action
+ * was deleted (Issue #9 blocker 3). Each later frame keeps its OWN authored `paths`/`defenders`
+ * (what the designer actually drew starting from that frame) untouched; only the derived starting
+ * players/ball position is recomputed, cascading deterministically all the way to the last frame.
+ */
+function rebuildFramesFrom(frames: readonly FrameData[], changedIndex: number): FrameData[] {
+  const rebuilt = frames.map((frame) => ({ ...frame }));
+  for (let index = changedIndex + 1; index < rebuilt.length; index += 1) {
+    const advanced = advanceFrameStartingState(rebuilt[index - 1]!);
+    rebuilt[index] = { ...rebuilt[index]!, players: advanced.players, ballOwnerId: advanced.ballOwnerId, ballPosition: advanced.ballPosition };
+  }
+  return rebuilt;
+}
+
+function toLocalPlay(play: DomainSavedPlay): LocalSavedPlay {
+  return { id: play.id, name: play.name, date: play.createdAt, frames: (play.frames as FrameData[] | undefined) ?? [], engineData: undefined };
+}
+
+function toLocalPlaybook(playbook: DomainPlaybook): LocalPlaybook {
+  return { id: playbook.id, name: playbook.name, playIds: [...playbook.playIds] };
 }
 
 // --- TEMA VISUAL ---
@@ -88,7 +148,7 @@ const INITIAL_PLAYERS = [
   { id: 5, label: '5', role:'C', x: 340, y: 150 },
 ];
 
-export default function TacticsCreator({ clubId, onSaveCustomPlay }: TacticsCreatorProps) {
+export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: canonicalPlaybooks, onSavePlay, onDeletePlay, onSavePlaybook, onDeletePlaybook, onSaveCustomPlay }: TacticsCreatorProps) {
   // ESTADO
   const [playName, setPlayName] = useState("Nueva Jugada");
   const [frames, setFrames] = useState<FrameData[]>([{
@@ -103,20 +163,20 @@ export default function TacticsCreator({ clubId, onSaveCustomPlay }: TacticsCrea
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTool, setActiveTool] = useState<Tool>('select');
 
-  // GESTIÃ“N ARCHIVOS
-  const [savedPlays, setSavedPlays] = useState<SavedPlay[]>([]);
-  const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
+  // GESTIÓN ARCHIVOS — derived directly from the canonical GameWorld-scoped collections passed in as
+  // props, shared with Jugadas; a save/delete calls the canonical callback, and the next render
+  // reflects it via these props (no separate local copy of the source of truth).
+  const savedPlays = canonicalPlays.map(toLocalPlay);
+  const playbooks = canonicalPlaybooks.map(toLocalPlaybook);
 
-  // ESTADO DB
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [useDatabase, setUseDatabase] = useState(!!clubId); // Si hay clubId, usar DB
 
   // MODALES
   const [modalMode, setModalMode] = useState<'none' | 'load' | 'createPB' | 'editPB'>('none');
   const [showAddToPbDropdown, setShowAddToPbDropdown] = useState(false);
   const [newPbName, setNewPbName] = useState("");
-  const [selectedPbForEdit, setSelectedPbForEdit] = useState<Playbook | null>(null);
+  const [selectedPbForEdit, setSelectedPbForEdit] = useState<LocalPlaybook | null>(null);
 
   // INTERACCIÃ“N
   const [isDrawing, setIsDrawing] = useState(false);
@@ -134,55 +194,6 @@ export default function TacticsCreator({ clubId, onSaveCustomPlay }: TacticsCrea
 
   // ProtecciÃ³n extra: Si por algÃºn motivo no hay frame, no renderizamos nada (evita crash)
   if (!currentFrame) return null;
-
-  // CARGAR DATOS
-  useEffect(() => {
-    const loadData = async () => {
-      if (clubId && useDatabase) {
-        // Cargar desde base de datos
-        try {
-          const [dbPlays, dbPlaybooks] = await Promise.all([
-            loadPlays(clubId),
-            loadPlaybooks(clubId)
-          ]);
-
-          // Convertir formato DB a formato local
-          const localPlays: SavedPlay[] = dbPlays.map(p => ({
-            id: p.id,
-            name: p.name,
-            date: new Date(p.createdAt).toLocaleDateString(),
-            frames: p.frames,
-            engineData: p.engineData
-          }));
-
-          const localPlaybooks: Playbook[] = dbPlaybooks.map(pb => ({
-            id: pb.id,
-            name: pb.name,
-            playIds: pb.playIds
-          }));
-
-          setSavedPlays(localPlays);
-          setPlaybooks(localPlaybooks);
-          console.log(`âœ… Cargadas ${localPlays.length} jugadas y ${localPlaybooks.length} playbooks desde DB`);
-        } catch (err) {
-          console.error('Error cargando desde DB:', err);
-          // Fallback a localStorage
-          const storedPlays = localStorage.getItem('my_playbook_plays');
-          if (storedPlays) setSavedPlays(JSON.parse(storedPlays));
-          const storedBooks = localStorage.getItem('my_playbooks');
-          if (storedBooks) setPlaybooks(JSON.parse(storedBooks));
-        }
-      } else {
-        // Cargar desde localStorage
-        const storedPlays = localStorage.getItem('my_playbook_plays');
-        if (storedPlays) setSavedPlays(JSON.parse(storedPlays));
-        const storedBooks = localStorage.getItem('my_playbooks');
-        if (storedBooks) setPlaybooks(JSON.parse(storedBooks));
-      }
-    };
-
-    loadData();
-  }, [clubId, useDatabase]);
 
   // --- MATEMÃTICAS ---
   const getSVGPoint = (e: React.MouseEvent | MouseEvent) => {
@@ -202,73 +213,19 @@ export default function TacticsCreator({ clubId, onSaveCustomPlay }: TacticsCrea
     return analyzePlayFrames(frames);
   };
 
-  const savePlay = async (): Promise<string> => {
+  /** Saves through the canonical GameWorld-scoped play collection, so Jugadas sees it immediately. */
+  const savePlay = (): string => {
     setIsSaving(true);
     setSaveSuccess(false);
 
     const engineData = generateEngineData();
+    const id = `library-${createEntityId()}`;
+    onSavePlay?.({ id, name: playName, createdAt: new Date().toLocaleDateString(), frames });
 
-    if (clubId && useDatabase) {
-      // Guardar en base de datos
-      try {
-        const dbPlay = await savePlayToDB({
-          clubId,
-          name: playName,
-          playType: 'custom' as PlayType,
-          description: `${engineData.play_type} - ${engineData.stats.passes} pases, ${engineData.stats.screens} bloqueos`,
-          frames,
-          engineData,
-          efficiency: 50, // Inicial
-          familiarity: 0,
-          timesUsed: 0,
-          timesSuccessful: 0
-        });
-
-        // Actualizar estado local
-        const localPlay: SavedPlay = {
-          id: dbPlay.id,
-          name: dbPlay.name,
-          date: new Date().toLocaleDateString(),
-          frames: dbPlay.frames,
-          engineData: dbPlay.engineData
-        };
-        setSavedPlays(prev => [...prev, localPlay]);
-        if (onSaveCustomPlay) {
-          onSaveCustomPlay({
-            id: localPlay.id,
-            name: localPlay.name,
-            type: engineData.play_type || 'Set',
-            focus: engineData.focus || 'Pick & Roll',
-            situation: 'Halfcourt',
-            notes: `${engineData.play_type} - ${engineData.stats.passes} pases, ${engineData.stats.screens} bloqueos`
-          });
-        }
-        setIsSaving(false);
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 2000);
-        return dbPlay.id;
-      } catch (err) {
-        console.error('Error guardando en DB:', err);
-        setIsSaving(false);
-        // Fallback a localStorage
-      }
-    }
-
-    // Guardar en localStorage (fallback o si no hay clubId)
-    const newPlay: SavedPlay = {
-      id: Date.now().toString(),
-      name: playName,
-      date: new Date().toLocaleDateString(),
-      frames,
-      engineData
-    };
-    const updatedPlays = [...savedPlays, newPlay];
-    setSavedPlays(updatedPlays);
-    localStorage.setItem('my_playbook_plays', JSON.stringify(updatedPlays));
     if (onSaveCustomPlay) {
       onSaveCustomPlay({
-        id: newPlay.id,
-        name: newPlay.name,
+        id,
+        name: playName,
         type: engineData.play_type || 'Set',
         focus: engineData.focus || 'Pick & Roll',
         situation: 'Halfcourt',
@@ -278,151 +235,44 @@ export default function TacticsCreator({ clubId, onSaveCustomPlay }: TacticsCrea
     setIsSaving(false);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2000);
-    return newPlay.id;
+    return id;
   };
 
-  const createPlaybook = async () => {
+  const createPlaybook = () => {
     if (!newPbName.trim()) return;
-
-    if (clubId && useDatabase) {
-      try {
-        const dbPlaybook = await savePlaybookToDB({
-          clubId,
-          name: newPbName,
-          playIds: [],
-          isActive: false
-        });
-
-        const localPb: Playbook = {
-          id: dbPlaybook.id,
-          name: dbPlaybook.name,
-          playIds: dbPlaybook.playIds
-        };
-        setPlaybooks(prev => [...prev, localPb]);
-      } catch (err) {
-        console.error('Error creando playbook en DB:', err);
-      }
-    } else {
-      const newPb: Playbook = { id: Date.now().toString(), name: newPbName, playIds: [] };
-      const updatedPbs = [...playbooks, newPb];
-      setPlaybooks(updatedPbs);
-      localStorage.setItem('my_playbooks', JSON.stringify(updatedPbs));
-    }
-
+    onSavePlaybook?.({ id: `playbook-${createEntityId()}`, name: newPbName, playIds: [] });
     setNewPbName("");
     setModalMode('none');
   };
 
-  const deletePlaybook = async (pbId: string) => {
-    if (!window.confirm("Â¿Seguro que quieres eliminar este Playbook?")) return;
-
-    if (clubId && useDatabase) {
-      try {
-        await deletePlaybookFromDB(pbId);
-      } catch (err) {
-        console.error('Error eliminando playbook de DB:', err);
-      }
-    }
-
-    const updated = playbooks.filter(pb => pb.id !== pbId);
-    setPlaybooks(updated);
-    localStorage.setItem('my_playbooks', JSON.stringify(updated));
+  const deletePlaybook = (pbId: string) => {
+    if (!window.confirm("¿Seguro que quieres eliminar este Playbook?")) return;
+    onDeletePlaybook?.(pbId);
     if (selectedPbForEdit && selectedPbForEdit.id === pbId) setSelectedPbForEdit(null);
   };
 
-  const addCurrentPlayToPlaybook = async (pbId: string) => {
-    const playId = await savePlay();
+  const addCurrentPlayToPlaybook = (pbId: string) => {
+    const playId = savePlay();
+    const targetPb = playbooks.find(pb => pb.id === pbId);
+    if (!targetPb || targetPb.playIds.includes(playId)) return;
+
+    onSavePlaybook?.({ id: targetPb.id, name: targetPb.name, playIds: [...targetPb.playIds, playId] });
+    setShowAddToPbDropdown(false);
+    alert(`Jugada añadida al playbook.`);
+  };
+
+  const updatePlaybookName = (pbId: string, newName: string) => {
     const targetPb = playbooks.find(pb => pb.id === pbId);
     if (!targetPb) return;
-
-    const updatedPlayIds = [...targetPb.playIds, playId];
-
-    if (clubId && useDatabase) {
-      try {
-        await updatePlaybookDB({
-          ...targetPb,
-          clubId,
-          playIds: updatedPlayIds,
-          isActive: false,
-          createdAt: new Date().toISOString()
-        });
-      } catch (err) {
-        console.error('Error actualizando playbook en DB:', err);
-      }
-    }
-
-    const updatedPbs = playbooks.map(pb => {
-      if (pb.id === pbId) {
-        if (!pb.playIds.includes(playId)) return { ...pb, playIds: updatedPlayIds };
-      }
-      return pb;
-    });
-    setPlaybooks(updatedPbs);
-    localStorage.setItem('my_playbooks', JSON.stringify(updatedPbs));
-    setShowAddToPbDropdown(false);
-    alert(`Jugada aÃ±adida al playbook.`);
-  };
-
-  const activatePlaybook = async (pbId: string) => {
-    if (clubId && useDatabase) {
-      try {
-        await setActivePlaybook(clubId, pbId);
-        alert('Playbook activado. Se usarÃ¡ en los prÃ³ximos partidos.');
-      } catch (err) {
-        console.error('Error activando playbook:', err);
-      }
-    }
-  };
-
-  const updatePlaybookName = async (pbId: string, newName: string) => {
-    const targetPb = playbooks.find(pb => pb.id === pbId);
-
-    if (clubId && useDatabase && targetPb) {
-      try {
-        await updatePlaybookDB({
-          ...targetPb,
-          clubId,
-          name: newName,
-          isActive: false,
-          createdAt: new Date().toISOString()
-        });
-      } catch (err) {
-        console.error('Error actualizando playbook en DB:', err);
-      }
-    }
-
-    const updated = playbooks.map(pb => pb.id === pbId ? {...pb, name: newName} : pb);
-    setPlaybooks(updated);
-    localStorage.setItem('my_playbooks', JSON.stringify(updated));
+    onSavePlaybook?.({ id: targetPb.id, name: newName, playIds: targetPb.playIds });
     if (selectedPbForEdit) setSelectedPbForEdit({...selectedPbForEdit, name: newName});
   };
 
-  const removePlayFromPlaybook = async (pbId: string, playIdToRemove: string) => {
+  const removePlayFromPlaybook = (pbId: string, playIdToRemove: string) => {
     const targetPb = playbooks.find(pb => pb.id === pbId);
     if (!targetPb) return;
-
     const updatedPlayIds = targetPb.playIds.filter(pid => pid !== playIdToRemove);
-
-    if (clubId && useDatabase) {
-      try {
-        await updatePlaybookDB({
-          ...targetPb,
-          clubId,
-          playIds: updatedPlayIds,
-          isActive: false,
-          createdAt: new Date().toISOString()
-        });
-      } catch (err) {
-        console.error('Error actualizando playbook en DB:', err);
-      }
-    }
-
-    const updated = playbooks.map(pb => {
-      if (pb.id === pbId) return { ...pb, playIds: updatedPlayIds };
-      return pb;
-    });
-    setPlaybooks(updated);
-    localStorage.setItem('my_playbooks', JSON.stringify(updated));
+    onSavePlaybook?.({ id: targetPb.id, name: targetPb.name, playIds: updatedPlayIds });
     if (selectedPbForEdit && selectedPbForEdit.id === pbId) {
       setSelectedPbForEdit({ ...selectedPbForEdit, playIds: updatedPlayIds });
     }
@@ -498,15 +348,8 @@ export default function TacticsCreator({ clubId, onSaveCustomPlay }: TacticsCrea
   };
 
   const addFrame = () => {
-    const nextPlayers = JSON.parse(JSON.stringify(currentFrame.players));
-    let nextBallOwner = currentFrame.ballOwnerId; let nextBallPos = { ...currentFrame.ballPosition };
-    currentFrame.paths.forEach(path => {
-       const endP = path.points[path.points.length - 1];
-       if (path.linkedId && ['move', 'dribble', 'screen'].includes(path.type)) { const pIndex = nextPlayers.findIndex((pl: PlayerToken) => pl.id === path.linkedId); if (pIndex !== -1) { nextPlayers[pIndex].x = endP.x; nextPlayers[pIndex].y = endP.y; } }
-       if (path.type === 'pass') { nextBallOwner = null; nextBallPos = { x: endP.x, y: endP.y }; const receiver = nextPlayers.find((pl: PlayerToken) => Math.hypot(pl.x - endP.x, pl.y - endP.y) < 30); if (receiver) nextBallOwner = receiver.id; }
-    });
-    if (nextBallOwner !== null) { const owner = nextPlayers.find((p: PlayerToken) => p.id === nextBallOwner); if (owner) nextBallPos = { x: owner.x, y: owner.y }; }
-    setFrames([...frames, { players: nextPlayers, ballOwnerId: nextBallOwner, ballPosition: nextBallPos, paths: [], defenders: [...currentFrame.defenders] }]);
+    const advanced = advanceFrameStartingState(currentFrame);
+    setFrames([...frames, { ...advanced, paths: [], defenders: [...currentFrame.defenders] }]);
     setCurrentFrameIndex(frames.length);
   };
 
@@ -521,6 +364,23 @@ export default function TacticsCreator({ clubId, onSaveCustomPlay }: TacticsCrea
   };
 
   const updateFrame = (newData: Partial<FrameData>) => { const newFrames = [...frames]; newFrames[currentFrameIndex] = { ...currentFrame, ...newData }; setFrames(newFrames); };
+
+  /**
+   * Deletes one individual drawn action/step (a path in the RESUMEN list) from the current frame,
+   * by stable path id — not by array index, so deleting a middle action cannot accidentally remove
+   * the wrong one after a prior deletion re-indexes the array (Issue #9 blocker 3).
+   *
+   * Because `addFrame()` bakes a frame's paths into the NEXT frame's starting player/ball state,
+   * deleting an action here would otherwise leave every later frame's derived starting state
+   * stale/orphaned. `rebuildFramesFrom` recomputes frame N+1's starting state from the corrected
+   * frame N, then cascades that recomputation through every subsequent frame — while leaving each
+   * later frame's OWN authored paths/defenders exactly as the designer drew them.
+   */
+  const deleteAction = (pathId: number) => {
+    const updatedCurrentFrame = { ...currentFrame, paths: currentFrame.paths.filter((path) => path.id !== pathId) };
+    const framesWithUpdatedCurrent = frames.map((frame, index) => (index === currentFrameIndex ? updatedCurrentFrame : frame));
+    setFrames(rebuildFramesFrom(framesWithUpdatedCurrent, currentFrameIndex));
+  };
   
   useEffect(() => { 
       let interval: any; 
@@ -694,11 +554,14 @@ export default function TacticsCreator({ clubId, onSaveCustomPlay }: TacticsCrea
               <div style={{fontSize:'0.75rem', fontWeight:'bold', color:'#94a3b8', marginBottom:15, display:'flex', alignItems:'center', gap:5, borderBottom:'1px solid #334155', paddingBottom:10}}><ListChecks size={16}/> RESUMEN</div>
               {currentFrame.paths.length === 0 && <span style={{fontSize:'0.7rem', color:'#64748b'}}>Sin acciones</span>}
               <div style={{display:'flex', flexDirection:'column', gap:8}}>
-                {currentFrame.paths.map((p,i) => {
+                {currentFrame.paths.map((p) => {
                     const pl = currentFrame.players.find(x=>x.id===p.linkedId);
-                    return (<div key={i} style={{fontSize:'0.75rem', color:'#e2e8f0', background:'rgba(255,255,255,0.03)', padding:'8px', borderRadius:6, borderLeft:`3px solid ${p.type==='pass'?THEME.passColor:(p.type==='dribble'?THEME.dribbleColor:(p.type==='screen'?THEME.screenColor:THEME.moveColor))}`}}>
-                        <div style={{fontWeight:'bold', color:'#94a3b8', fontSize:'0.65rem', marginBottom:2}}>{pl ? `JUGADOR ${pl.label}` : 'JUGADOR'}</div>
-                        <div>{p.type.toUpperCase()}</div>
+                    return (<div key={p.id} style={{display:'flex', alignItems:'center', gap:6, fontSize:'0.75rem', color:'#e2e8f0', background:'rgba(255,255,255,0.03)', padding:'8px', borderRadius:6, borderLeft:`3px solid ${p.type==='pass'?THEME.passColor:(p.type==='dribble'?THEME.dribbleColor:(p.type==='screen'?THEME.screenColor:THEME.moveColor))}`}}>
+                        <div style={{flex:1}}>
+                            <div style={{fontWeight:'bold', color:'#94a3b8', fontSize:'0.65rem', marginBottom:2}}>{pl ? `JUGADOR ${pl.label}` : 'JUGADOR'}</div>
+                            <div>{p.type.toUpperCase()}</div>
+                        </div>
+                        <button aria-label={`Eliminar acción ${p.type}`} onClick={() => deleteAction(p.id)} style={{background:'transparent', border:'none', color:'#ef4444', cursor:'pointer', padding:0, flexShrink:0}} type="button"><Trash2 size={14}/></button>
                     </div>)
                 })}
               </div>

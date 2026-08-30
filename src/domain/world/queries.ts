@@ -52,6 +52,33 @@ export function getTeam(world: GameWorld, id: TeamId): Team {
 export function getCompetition(world: GameWorld, id: CompetitionId): Competition {
   return getEntity(world.competitions, id, 'Competition')
 }
+
+/** Canonical, seconds-based game-clock rules resolved from an actual competition's CompetitionRules.gameFormat. */
+export interface ResolvedGameClockRules {
+  readonly periodCount: number
+  readonly periodSeconds: number
+  readonly overtimeSeconds: number
+}
+
+/**
+ * Resolves game-clock rules (period count/length, overtime length) from the *specific* competition's
+ * CompetitionRules.gameFormat — never from ecosystem/brand/gender labels. Two competitions inside
+ * the same ecosystem (e.g. NCAA men's vs. NCAA women's) may resolve to entirely different values
+ * here; callers must not infer format from the ecosystem or competition name/kind (see Issue #9).
+ */
+export function resolveGameClockRules(world: GameWorld, competitionId: CompetitionId): ResolvedGameClockRules {
+  const { gameFormat } = getCompetition(world, competitionId).rules
+  return {
+    periodCount: gameFormat.periodCount,
+    periodSeconds: Math.round(gameFormat.periodMinutes * 60),
+    overtimeSeconds: Math.round(gameFormat.overtimeMinutes * 60),
+  }
+}
+
+/** Convenience resolver for a specific Game, using its own competitionId. */
+export function resolveGameClockRulesForGame(world: GameWorld, game: Game): ResolvedGameClockRules {
+  return resolveGameClockRules(world, game.competitionId)
+}
 export function getEcosystem(world: GameWorld, id: EcosystemId): SportsEcosystem { return getEntity(world.ecosystems, id, 'Sports ecosystem') }
 export function getEcosystems(world: GameWorld): readonly SportsEcosystem[] { return Object.values(world.ecosystems).sort((a, b) => a.id.localeCompare(b.id)) }
 export function getEcosystemsByKind(world: GameWorld, kind: SportsEcosystem['kind']): readonly SportsEcosystem[] { return getEcosystems(world).filter((ecosystem) => ecosystem.kind === kind) }

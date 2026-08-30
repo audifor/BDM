@@ -7,6 +7,7 @@ export {
   createCoachId,
   createCompetitionId,
   createCountryId,
+  createEntityId,
   createGameId,
   createPlayerId,
   createSeasonId,

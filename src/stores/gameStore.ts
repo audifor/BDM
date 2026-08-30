@@ -22,11 +22,14 @@ import type { LiveMatchController, LiveMatchStep } from '@/app/game'
 import { create } from 'zustand'
 import { acceptCoachJobOffer, applyUserCoachForJob, declineCoachJobOffer } from '@/app/coachCareer'
 import { getCareerFatigueForPlayer, getLatestTrainingSession, getTrainingPlanForTeam } from '@/domain/world'
-import type { TrainingFocus, TrainingIntensity } from '@/domain/training'
-import { setTeamTrainingPlan } from '@/engine/training'
+import type { ScheduledTrainingSession, TrainingFocus, TrainingIntensity, UserTrainingModule } from '@/domain/training'
+import { assignTrainingModuleToPlayer, cancelScheduledTrainingSession, createOrUpdateUserTrainingModule, deleteUserTrainingModule, scheduleTeamModuleSession, scheduleTrainingSession, setTeamTrainingPlan } from '@/engine/training'
 import { clearLineupSlot, setLineupSlot } from '@/engine/tactics/LineupEngine'
 import { getTeamLineup } from '@/domain/world'
-import type { LineupSlot } from '@/domain/tactics'
+import type { LineupSlot, DefensiveMatchupAssignment, Playbook, SavedPlay } from '@/domain/tactics'
+import { updateGamePlan } from '@/app/game/TacticalPlanning'
+import { deleteDesignerPlay, deleteDesignerPlaybook, saveDesignerPlay, saveDesignerPlaybook } from '@/engine/tactics/PlaybookEngine'
+import { updateRotationMinutesForTeam } from '@/engine/tactics/RotationEngine'
 import { executeEntityActionResult, type EntityActionExecution } from '@/app/entityActions/EntityActionExecutor'
 import type { CommandResult } from '@/app/entityActions/EntityCommand'
 import { selectDraftProspect } from '@/app/draft'
@@ -41,7 +44,7 @@ import { setCoachLifestyle } from '@/engine/coachFinances'
 import type { Lifestyle } from '@/domain/coachFinances'
 import type { MediaStance } from '@/domain/media'
 import { createPreMatchMediaOpportunity, respondToMediaOpportunity, skipMediaOpportunity } from '@/engine/media'
-import { getGamesToday, getUserTeam } from '@/engine/calendar'
+import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
 
 interface GameStore {
   readonly world: GameWorld | null
@@ -69,8 +72,21 @@ interface GameStore {
   applyUserCoachForJob(openingId: string): void
   setTrainingIntensity(intensity: TrainingIntensity): void
   setTrainingFocus(focus: TrainingFocus): void
+  scheduleTrainingSession(session: ScheduledTrainingSession): void
+  scheduleTeamModuleSession(input: { readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: TrainingIntensity }): void
+  cancelTrainingSession(sessionId: string): void
+  saveUserTrainingModule(module: UserTrainingModule): void
+  deleteUserTrainingModule(moduleId: string): void
+  assignTrainingModuleToPlayer(input: { readonly playerId: PlayerId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly sessionId: string }): void
   setLineupSlot(slot: LineupSlot, playerId: PlayerId): void
   clearLineupSlot(slot: LineupSlot): void
+  updateRotationMinutes(minutesByPeriod: Readonly<Record<PlayerId, readonly number[]>>): void
+  updateGamePlanMatchups(matchups: readonly DefensiveMatchupAssignment[]): void
+  updateGamePlanTacticalOverride(tacticalOverride: MatchTacticalPlan): void
+  saveDesignerPlay(play: SavedPlay): void
+  deleteDesignerPlay(playId: string): void
+  saveDesignerPlaybook(playbook: Playbook): void
+  deleteDesignerPlaybook(playbookId: string): void
   selectDraftProspect(draftId: string, playerId: PlayerId): void
   executeTrade(proposal: TradeProposal): void
   addRecruitingTarget(cycleId: string, recruitId: string, priority: Priority): void
@@ -139,8 +155,41 @@ export const useGameStore = create<GameStore>((set, get) => ({
   applyUserCoachForJob: (openingId) => set({ world: applyUserCoachForJob(requireWorld(get().world), openingId).world }),
   setTrainingIntensity: (intensity) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: setTeamTrainingPlan(world, team.id, { intensity }) }) },
   setTrainingFocus: (focus) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: setTeamTrainingPlan(world, team.id, { focus }) }) },
+  scheduleTrainingSession: (session) => set({ world: scheduleTrainingSession(requireWorld(get().world), session) }),
+  scheduleTeamModuleSession: (input) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: scheduleTeamModuleSession(world, { teamId: team.id, ...input }) }) },
+  cancelTrainingSession: (sessionId) => set({ world: cancelScheduledTrainingSession(requireWorld(get().world), sessionId) }),
+  saveUserTrainingModule: (module) => set({ world: createOrUpdateUserTrainingModule(requireWorld(get().world), module) }),
+  deleteUserTrainingModule: (moduleId) => set({ world: deleteUserTrainingModule(requireWorld(get().world), moduleId) }),
+  assignTrainingModuleToPlayer: (input) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: assignTrainingModuleToPlayer(world, { teamId: team.id, ...input }) }) },
   setLineupSlot: (slot, playerId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: setLineupSlot(world, team.id, slot, playerId) }) },
   clearLineupSlot: (slot) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: clearLineupSlot(world, team.id, slot) }) },
+  updateRotationMinutes: (minutesByPeriod) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    if (team === undefined) return
+    set({ world: updateRotationMinutesForTeam(world, team.id, minutesByPeriod) })
+  },
+  updateGamePlanMatchups: (matchups) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    const game = getNextUserGame(world)
+    if (team === undefined || game === undefined) return
+    const existing = world.gamePlansByKey[`${game.id}:${team.id}`]
+    set({ world: updateGamePlan(world, { gameId: game.id, teamId: team.id, ...(existing?.rotationOverride === undefined ? {} : { rotationOverride: existing.rotationOverride }), ...(existing?.tacticalOverride === undefined ? {} : { tacticalOverride: existing.tacticalOverride }), matchups }) },
+    )
+  },
+  updateGamePlanTacticalOverride: (tacticalOverride) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    const game = getNextUserGame(world)
+    if (team === undefined || game === undefined) return
+    const existing = world.gamePlansByKey[`${game.id}:${team.id}`]
+    set({ world: updateGamePlan(world, { gameId: game.id, teamId: team.id, ...(existing?.rotationOverride === undefined ? {} : { rotationOverride: existing.rotationOverride }), ...(existing?.matchups === undefined ? {} : { matchups: existing.matchups }), tacticalOverride }) })
+  },
+  saveDesignerPlay: (play) => set({ world: saveDesignerPlay(requireWorld(get().world), play) }),
+  deleteDesignerPlay: (playId) => set({ world: deleteDesignerPlay(requireWorld(get().world), playId) }),
+  saveDesignerPlaybook: (playbook) => set({ world: saveDesignerPlaybook(requireWorld(get().world), playbook) }),
+  deleteDesignerPlaybook: (playbookId) => set({ world: deleteDesignerPlaybook(requireWorld(get().world), playbookId) }),
   selectDraftProspect: (draftId, playerId) => set({ world: selectDraftProspect(requireWorld(get().world), draftId, playerId) }),
   executeTrade: (proposal) => set({ world: executeTrade(requireWorld(get().world), proposal).world }),
   addRecruitingTarget: (cycleId, recruitId, priority) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined && world.recruitingCyclesById[cycleId] !== undefined) set({ world: addRecruitingBoardEntry(world, { programTeamId: team.id, recruitId, priority }) }) },
@@ -191,3 +240,10 @@ export function selectUserTrainingPlan(world: GameWorld | null) { const team = w
 export function selectUserTeamLineup(world: GameWorld | null) { const team = world === null ? undefined : getUserTeam(world); return team === undefined || world === null ? undefined : getTeamLineup(world, team.id) }
 export function selectLatestUserTrainingSession(world: GameWorld | null) { const team = world === null ? undefined : getUserTeam(world); return team === undefined || world === null ? undefined : getLatestTrainingSession(world, team.id) }
 export function selectUserTeamCareerFatigueSummary(world: GameWorld | null) { const team = world === null ? undefined : getUserTeam(world); if (team === undefined || world === null || team.rosterPlayerIds.length === 0) return 0; return team.rosterPlayerIds.reduce((sum, id) => sum + getCareerFatigueForPlayer(world, id), 0) / team.rosterPlayerIds.length }
+export function selectUserTeamScheduledSessions(world: GameWorld | null) { const team = world === null ? undefined : getUserTeam(world); if (team === undefined || world === null) return []; return Object.values(world.scheduledTrainingSessionsById).filter((session) => session.teamId === team.id) }
+export function selectUserTrainingModules(world: GameWorld | null) { return world === null ? [] : Object.values(world.userTrainingModulesById) }
+export function selectUserTeamRotationIntent(world: GameWorld | null) { const team = world === null ? undefined : getUserTeam(world); return team === undefined || world === null ? undefined : world.rotationPlansByTeamId[team.id] }
+export function selectUserNextGamePlanMatchups(world: GameWorld | null): readonly DefensiveMatchupAssignment[] { const team = world === null ? undefined : getUserTeam(world); const game = world === null ? undefined : getNextUserGame(world); if (team === undefined || game === undefined || world === null) return []; return world.gamePlansByKey[`${game.id}:${team.id}`]?.matchups ?? [] }
+export function selectUserNextGamePlanTacticalOverride(world: GameWorld | null): MatchTacticalPlan | undefined { const team = world === null ? undefined : getUserTeam(world); const game = world === null ? undefined : getNextUserGame(world); if (team === undefined || game === undefined || world === null) return undefined; return world.gamePlansByKey[`${game.id}:${team.id}`]?.tacticalOverride as MatchTacticalPlan | undefined }
+export function selectDesignerPlays(world: GameWorld | null): readonly SavedPlay[] { return world === null ? [] : Object.values(world.savedPlaysById) }
+export function selectDesignerPlaybooks(world: GameWorld | null): readonly Playbook[] { return world === null ? [] : Object.values(world.playbooksById) }

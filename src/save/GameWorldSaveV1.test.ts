@@ -49,7 +49,7 @@ describe('GameWorldSaveV1', () => {
   })
 
   it('round-trips training state and supplies deterministic legacy defaults', () => {
-    const base = createNewGame(); const trained = advanceDay(base)
+    const base = createNewGame(); const teamId = Object.values(base.teams)[0]!.id; const trained = executeTeamTraining(advanceDay(base), teamId)
     const saved = serializeGameWorldV1(trained, '2032-10-01T12:00:00.000Z')
     expect(deserializeGameWorldV1(saved)).toEqual(trained)
     const { trainingPlans: _plans, trainingSessions: _sessions, developmentStimulus: _stimulus, careerFatigue: _fatigue, ...legacyPayload } = saved.payload
@@ -57,6 +57,26 @@ describe('GameWorldSaveV1', () => {
     expect(Object.values(legacy.trainingSessionsById)).toEqual([])
     expect(Object.values(legacy.careerFatigueByPlayerId).every((value) => value === 0)).toBe(true)
     expect(deserializeGameWorldV1(serializeGameWorldV1(legacy, saved.savedAt))).toEqual(legacy)
+  })
+
+  it('round-trips scheduled training sessions and user-created modules, and legacy saves default them to empty', () => {
+    const base = createNewGame()
+    const teamId = Object.values(base.teams)[0]!.id
+    const playerId = base.teams[teamId]!.rosterPlayerIds[0]!
+    const world = updateGameWorld(base, {
+      scheduledTrainingSessionsById: {
+        'session:test': { id: 'session:test', teamId, date: base.currentDate, startTime: '09:00', durationMinutes: 60, scope: 'individual', playerId, definitionId: 'threePoint', intensity: 'normal', status: 'scheduled' },
+      },
+      userTrainingModulesById: {
+        'module:test': { id: 'module:test', name: 'Custom Threes', baseDefinitionId: 'threePoint', scope: 'individual', intensity: 'high' },
+      },
+    })
+    const saved = serializeGameWorldV1(world, '2032-10-01T12:00:00.000Z')
+    expect(deserializeGameWorldV1(saved)).toEqual(world)
+    const { scheduledTrainingSessions: _sessions, userTrainingModules: _modules, ...legacyPayload } = saved.payload
+    const legacy = deserializeGameWorldV1({ ...saved, payload: legacyPayload })
+    expect(legacy.scheduledTrainingSessionsById).toEqual({})
+    expect(legacy.userTrainingModulesById).toEqual({})
   })
 
   it('enriches legacy and partial Staff saves without replacing existing Staff', () => {

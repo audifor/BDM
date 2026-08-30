@@ -6,6 +6,7 @@ export {
   formatGameDate,
   isAfterGameDate,
   isBeforeGameDate,
+  isoWeekNumber,
   isSameGameDate,
   parseGameDate,
 } from './GameDate'

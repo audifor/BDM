@@ -8,7 +8,6 @@ import { developPlayerForSeason, getBaseDevelopmentTrend } from './PlayerDevelop
 import { applyOffseasonDevelopment } from './OffseasonDevelopment'
 import { createNewGame } from '@/app/game'
 import { executeTeamTraining } from '@/engine/training'
-import { advanceDay } from '@/engine/calendar'
 
 const context = { fromSeasonId: seasonIdFromString('season-1'), toSeasonId: seasonIdFromString('season-2'), targetDate: createGameDate(2033, 10, 1) }
 function player(birthDate: string, rating = 50) { return createPlayer({ id: playerIdFromString(`player-${birthDate}-${rating}`), firstName: 'Test', lastName: 'Player', gender: 'male', nationalityId: countryIdFromString('country'), basketball: { primaryPosition: 'PG', ratings: { finishing: rating, shooting: rating, playmaking: rating, perimeterDefense: rating, interiorDefense: rating, rebounding: rating, athleticism: rating } }, bio: { dateOfBirth: birthDate, heightCm: 188, weightKg: 86 } }) }
@@ -38,7 +37,7 @@ describe('PlayerDevelopment', () => {
 
   it('consumes training stimulus once through the canonical offseason transition', () => {
     const world = createNewGame(); const teamId = Object.values(world.teams)[0]!.id
-    const trained = advanceDay(world); const playerId = trained.teams[teamId]!.rosterPlayerIds[0]!
+    const trained = executeTeamTraining(world, teamId); const playerId = trained.teams[teamId]!.rosterPlayerIds[0]!
     const result = applyOffseasonDevelopment(trained, { fromSeasonId: trained.currentSeasonId, toSeasonId: trained.currentSeasonId, targetDate: trained.currentDate })
     expect(Object.values(result.world.developmentStimulusByPlayerId[playerId]!.byRating).every((value) => value === 0)).toBe(true)
     expect(result.world.trainingSessionsById).toEqual(trained.trainingSessionsById)

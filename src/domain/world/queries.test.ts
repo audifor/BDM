@@ -1,15 +1,19 @@
 import { describe, expect, it } from 'vitest'
 
-import { playerIdFromString, teamIdFromString } from '@/domain/ids'
+import { competitionIdFromString, gameIdFromString, playerIdFromString, teamIdFromString } from '@/domain/ids'
+import { NCAA_MEN_GAME_FORMAT } from '@/domain/competition'
 
 import {
   createGameWorld,
   GameWorldValidationError,
+  getGame,
   getPlayer,
   getTeam,
   getTeamCoach,
   getTeamRoster,
   getUserCoach,
+  resolveGameClockRules,
+  resolveGameClockRulesForGame,
 } from './index'
 import { createValidGameWorldInput } from './testFixtures'
 
@@ -32,5 +36,21 @@ describe('GameWorld queries', () => {
 
   it('fails explicitly for missing IDs', () => {
     expect(() => getPlayer(world, playerIdFromString('missing-player'))).toThrow(GameWorldValidationError)
+  })
+
+  it('resolves seconds-based game clock rules from the competition\'s own gameFormat, defaulting to FIBA-style 4x10', () => {
+    const rules = resolveGameClockRules(world, competitionIdFromString('competition-a'))
+    expect(rules).toEqual({ periodCount: 4, periodSeconds: 600, overtimeSeconds: 300 })
+
+    const game = getGame(world, gameIdFromString('game-a'))
+    expect(resolveGameClockRulesForGame(world, game)).toEqual(rules)
+  })
+
+  it('resolves a different competition\'s explicitly configured gameFormat without any ecosystem/brand branching', () => {
+    const worldWithNcaaMen = createGameWorld({
+      ...createValidGameWorldInput(),
+      competitions: [{ ...world.competitions[competitionIdFromString('competition-a')]!, rules: { ...world.competitions[competitionIdFromString('competition-a')]!.rules, gameFormat: NCAA_MEN_GAME_FORMAT } }],
+    })
+    expect(resolveGameClockRules(worldWithNcaaMen, competitionIdFromString('competition-a'))).toEqual({ periodCount: 2, periodSeconds: 1200, overtimeSeconds: 300 })
   })
 })
