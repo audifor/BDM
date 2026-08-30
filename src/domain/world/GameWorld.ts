@@ -48,7 +48,7 @@ import type { InboxItem, NewsItem } from '@/domain/inbox'
 import { EMPTY_DEVELOPMENT_STIMULUS, type PlayerDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
 import { clampCareerFatigue } from '@/domain/careerFatigue/CareerFatigue'
 import { clampTeamCohesion, createDefaultTrainingPlan, createIndividualTrainingPlan, createScheduledTrainingSession, createUserTrainingModule, findCollidingSession, type IndividualTrainingPlan, type ScheduledTrainingSession, type TeamTrainingPlan, type TrainingResponsibility, type TrainingSession, type UserTrainingModule } from '@/domain/training'
-import { createDefaultTeamLineup, createDefaultTeamTacticalPlan, validateTeamLineup, type TeamGamePlan, type TeamLineup, type TeamTacticalPlan } from '@/domain/tactics'
+import { createDefaultTeamLineup, createDefaultTeamTacticalPlan, createPlaybook, createSavedPlay, validateTeamLineup, type Playbook, type SavedPlay, type TeamGamePlan, type TeamLineup, type TeamTacticalPlan } from '@/domain/tactics'
 import { createSalaryRules, type SalaryRules } from '@/domain/salary'
 import { createDeadMoneyCharge, createTeamSalaryException, type DeadMoneyCharge, type TeamSalaryException } from '@/domain/salary'
 import { createDraftPickSwapRight, createFutureDraftPickRight, createPlayerRights, createRetainedSalaryObligation, createTradeRecord, createTradeRules, type DraftPickSwapRight, type FutureDraftPickRight, type PlayerRights, type RetainedSalaryObligation, type TradeRecord, type TradeRules } from '@/domain/trade'
@@ -129,6 +129,9 @@ export interface GameWorld {
   readonly lineupsByTeamId: Readonly<Record<TeamId, TeamLineup>>
   readonly rotationPlansByTeamId: Readonly<Record<TeamId, import('@/domain/tactics').TeamRotationIntent>>
   readonly gamePlansByKey: Readonly<Record<string, TeamGamePlan>>
+  /** Designer-authored plays and playbooks, scoped to this save/career (Issue #9: not a global cross-career store). */
+  readonly savedPlaysById: Readonly<Record<string, SavedPlay>>
+  readonly playbooksById: Readonly<Record<string, Playbook>>
   readonly trainingSessionsById: Readonly<Record<string, TrainingSession>>
   /** Persisted planner schedule: dated/timed training sessions, replacing the former UI-only planner scratchpad. */
   readonly scheduledTrainingSessionsById: Readonly<Record<string, ScheduledTrainingSession>>
@@ -252,6 +255,8 @@ export interface CreateGameWorldInput {
   lineupsByTeamId?: Readonly<Record<TeamId, TeamLineup>>
   rotationPlansByTeamId?: Readonly<Record<TeamId, import('@/domain/tactics').TeamRotationIntent>>
   gamePlansByKey?: Readonly<Record<string, TeamGamePlan>>
+  savedPlaysById?: Readonly<Record<string, SavedPlay>>
+  playbooksById?: Readonly<Record<string, Playbook>>
   trainingSessionsById?: Readonly<Record<string, TrainingSession>>
   scheduledTrainingSessionsById?: Readonly<Record<string, ScheduledTrainingSession>>
   userTrainingModulesById?: Readonly<Record<string, UserTrainingModule>>
@@ -390,7 +395,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     personalitiesByPersonId: peopleProfiles([...input.coaches, ...input.players, ...(input.staffPeople ?? [])], input.personalitiesByPersonId, generatePersonality),
     moraleByPersonId: peopleProfiles([...input.coaches, ...input.players, ...(input.staffPeople ?? [])], input.moraleByPersonId, createMoraleProfile),
     inboxItemsById: Object.freeze({ ...(input.inboxItemsById ?? {}) }), newsItemsById: Object.freeze({ ...(input.newsItemsById ?? {}) }),
-    trainingPlansByTeamId: Object.freeze(Object.fromEntries(input.teams.map((team)=>[team.id,input.trainingPlansByTeamId?.[team.id]??createDefaultTrainingPlan(team.id)]))), individualTrainingPlansByPlayerId: Object.freeze(Object.fromEntries(Object.entries(input.individualTrainingPlansByPlayerId??{}).map(([id,plan])=>[id,createIndividualTrainingPlan(plan)]))), trainingResponsibilitiesByTeamId: Object.freeze(Object.fromEntries(Object.entries(input.trainingResponsibilitiesByTeamId??{}).map(([id,responsibilities])=>[id,Object.freeze({...responsibilities})]))), tacticalPlansByTeamId:Object.freeze(Object.fromEntries(input.teams.map(team=>[team.id,input.tacticalPlansByTeamId?.[team.id]??createDefaultTeamTacticalPlan(team.id)]))),lineupsByTeamId:Object.freeze(Object.fromEntries(input.teams.map(team=>[team.id,input.lineupsByTeamId?.[team.id]??createDefaultTeamLineup(team.id)]))),rotationPlansByTeamId:Object.freeze({...input.rotationPlansByTeamId}),gamePlansByKey:Object.freeze({...input.gamePlansByKey}), trainingSessionsById:Object.freeze({...(input.trainingSessionsById??{})}),
+    trainingPlansByTeamId: Object.freeze(Object.fromEntries(input.teams.map((team)=>[team.id,input.trainingPlansByTeamId?.[team.id]??createDefaultTrainingPlan(team.id)]))), individualTrainingPlansByPlayerId: Object.freeze(Object.fromEntries(Object.entries(input.individualTrainingPlansByPlayerId??{}).map(([id,plan])=>[id,createIndividualTrainingPlan(plan)]))), trainingResponsibilitiesByTeamId: Object.freeze(Object.fromEntries(Object.entries(input.trainingResponsibilitiesByTeamId??{}).map(([id,responsibilities])=>[id,Object.freeze({...responsibilities})]))), tacticalPlansByTeamId:Object.freeze(Object.fromEntries(input.teams.map(team=>[team.id,input.tacticalPlansByTeamId?.[team.id]??createDefaultTeamTacticalPlan(team.id)]))),lineupsByTeamId:Object.freeze(Object.fromEntries(input.teams.map(team=>[team.id,input.lineupsByTeamId?.[team.id]??createDefaultTeamLineup(team.id)]))),rotationPlansByTeamId:Object.freeze({...input.rotationPlansByTeamId}),gamePlansByKey:Object.freeze({...input.gamePlansByKey}), savedPlaysById:Object.freeze(Object.fromEntries(Object.entries(input.savedPlaysById??{}).map(([id,play])=>[id,createSavedPlay(play)]))), playbooksById:Object.freeze(Object.fromEntries(Object.entries(input.playbooksById??{}).map(([id,playbook])=>[id,createPlaybook(playbook)]))), trainingSessionsById:Object.freeze({...(input.trainingSessionsById??{})}),
     scheduledTrainingSessionsById: Object.freeze(Object.fromEntries(Object.entries(input.scheduledTrainingSessionsById ?? {}).map(([id, session]) => [id, createScheduledTrainingSession(session)]))),
     userTrainingModulesById: Object.freeze(Object.fromEntries(Object.entries(input.userTrainingModulesById ?? {}).map(([id, module]) => [id, createUserTrainingModule(module)]))),
     developmentStimulusByPlayerId:Object.freeze(Object.fromEntries(input.players.map((player)=>[player.id,input.developmentStimulusByPlayerId?.[player.id]??{playerId:player.id,byRating:{...EMPTY_DEVELOPMENT_STIMULUS}}]))), careerFatigueByPlayerId:Object.freeze(Object.fromEntries(input.players.map((player)=>[player.id,clampCareerFatigue(input.careerFatigueByPlayerId?.[player.id]??0)]))),
@@ -530,6 +535,10 @@ function validateWorld(world: GameWorld): void {
     if (session.playerId !== undefined) requireEntity(world.players, session.playerId, `Scheduled training session ${session.id} player`)
     const collision = findCollidingSession(session, scheduledSessions)
     if (collision !== undefined) throw new GameWorldValidationError(`Scheduled training session ${session.id} collides with session ${collision.id}`)
+  }
+
+  for (const playbook of Object.values(world.playbooksById)) {
+    for (const playId of playbook.playIds) requireEntity(world.savedPlaysById, playId, `Playbook ${playbook.id} play`)
   }
 
   for (const competition of Object.values(world.competitions)) {

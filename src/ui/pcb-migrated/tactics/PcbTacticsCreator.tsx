@@ -6,7 +6,7 @@ import {
   FolderOpen, Book, BookOpen, PlusSquare, Settings, Database, CheckCircle
 } from './PcbTacticsIcons';
 import { createEntityId } from '@/domain/ids';
-import type { Playbook as RepoPlaybook, SavedPlay as RepoSavedPlay, TacticsMigrationRepository } from './TacticsMigrationRepository';
+import type { Playbook as DomainPlaybook, SavedPlay as DomainSavedPlay } from '@/domain/tactics';
 
 /** Deterministic, stable-ID play-frame analysis, replacing the removed PcbPlaybookManager mock DB's analyzer. */
 function analyzePlayFrames(frames: FrameData[]) {
@@ -32,7 +32,13 @@ function analyzePlayFrames(frames: FrameData[]) {
 
 // --- PROPS ---
 interface TacticsCreatorProps {
-  repo: TacticsMigrationRepository;
+  /** Canonical GameWorld-scoped plays/playbooks (Issue #9 blocker 8) - not a global cross-career store. */
+  savedPlays: readonly DomainSavedPlay[];
+  playbooks: readonly DomainPlaybook[];
+  onSavePlay?: (play: DomainSavedPlay) => void;
+  onDeletePlay?: (playId: string) => void;
+  onSavePlaybook?: (playbook: DomainPlaybook) => void;
+  onDeletePlaybook?: (playbookId: string) => void;
   onSaveCustomPlay?: (play: any) => void;
 }
 
@@ -78,12 +84,12 @@ interface LocalPlaybook {
   playIds: string[];
 }
 
-function toLocalPlay(play: RepoSavedPlay): LocalSavedPlay {
-  return { id: play.id, name: play.name, date: play.createdAt, frames: (play.designerFrames as FrameData[] | undefined) ?? [], engineData: undefined };
+function toLocalPlay(play: DomainSavedPlay): LocalSavedPlay {
+  return { id: play.id, name: play.name, date: play.createdAt, frames: (play.frames as FrameData[] | undefined) ?? [], engineData: undefined };
 }
 
-function toLocalPlaybook(playbook: RepoPlaybook): LocalPlaybook {
-  return { id: playbook.id, name: playbook.name, playIds: playbook.playIds };
+function toLocalPlaybook(playbook: DomainPlaybook): LocalPlaybook {
+  return { id: playbook.id, name: playbook.name, playIds: [...playbook.playIds] };
 }
 
 // --- TEMA VISUAL ---
@@ -106,7 +112,7 @@ const INITIAL_PLAYERS = [
   { id: 5, label: '5', role:'C', x: 340, y: 150 },
 ];
 
-export default function TacticsCreator({ repo, onSaveCustomPlay }: TacticsCreatorProps) {
+export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: canonicalPlaybooks, onSavePlay, onDeletePlay, onSavePlaybook, onDeletePlaybook, onSaveCustomPlay }: TacticsCreatorProps) {
   // ESTADO
   const [playName, setPlayName] = useState("Nueva Jugada");
   const [frames, setFrames] = useState<FrameData[]>([{
@@ -121,9 +127,11 @@ export default function TacticsCreator({ repo, onSaveCustomPlay }: TacticsCreato
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTool, setActiveTool] = useState<Tool>('select');
 
-  // GESTIÓN ARCHIVOS — read through the one canonical TacticsMigrationRepository, shared with Jugadas.
-  const [savedPlays, setSavedPlays] = useState<LocalSavedPlay[]>(() => repo.loadPlays().map(toLocalPlay));
-  const [playbooks, setPlaybooks] = useState<LocalPlaybook[]>(() => repo.loadPlaybooks().map(toLocalPlaybook));
+  // GESTIÓN ARCHIVOS — derived directly from the canonical GameWorld-scoped collections passed in as
+  // props, shared with Jugadas; a save/delete calls the canonical callback, and the next render
+  // reflects it via these props (no separate local copy of the source of truth).
+  const savedPlays = canonicalPlays.map(toLocalPlay);
+  const playbooks = canonicalPlaybooks.map(toLocalPlaybook);
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -169,19 +177,19 @@ export default function TacticsCreator({ repo, onSaveCustomPlay }: TacticsCreato
     return analyzePlayFrames(frames);
   };
 
-  /** Saves through the one canonical TacticsMigrationRepository, so Jugadas sees it immediately. */
+  /** Saves through the canonical GameWorld-scoped play collection, so Jugadas sees it immediately. */
   const savePlay = (): string => {
     setIsSaving(true);
     setSaveSuccess(false);
 
     const engineData = generateEngineData();
-    const saved = repo.savePlay({ id: `library-${createEntityId()}`, name: playName, frames: [], createdAt: new Date().toLocaleDateString(), designerFrames: frames });
-    setSavedPlays(repo.loadPlays().map(toLocalPlay));
+    const id = `library-${createEntityId()}`;
+    onSavePlay?.({ id, name: playName, createdAt: new Date().toLocaleDateString(), frames });
 
     if (onSaveCustomPlay) {
       onSaveCustomPlay({
-        id: saved.id,
-        name: saved.name,
+        id,
+        name: playName,
         type: engineData.play_type || 'Set',
         focus: engineData.focus || 'Pick & Roll',
         situation: 'Halfcourt',
@@ -191,21 +199,19 @@ export default function TacticsCreator({ repo, onSaveCustomPlay }: TacticsCreato
     setIsSaving(false);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2000);
-    return saved.id;
+    return id;
   };
 
   const createPlaybook = () => {
     if (!newPbName.trim()) return;
-    repo.savePlaybook({ id: `playbook-${createEntityId()}`, name: newPbName, playIds: [] });
-    setPlaybooks(repo.loadPlaybooks().map(toLocalPlaybook));
+    onSavePlaybook?.({ id: `playbook-${createEntityId()}`, name: newPbName, playIds: [] });
     setNewPbName("");
     setModalMode('none');
   };
 
   const deletePlaybook = (pbId: string) => {
     if (!window.confirm("¿Seguro que quieres eliminar este Playbook?")) return;
-    repo.deletePlaybook(pbId);
-    setPlaybooks(repo.loadPlaybooks().map(toLocalPlaybook));
+    onDeletePlaybook?.(pbId);
     if (selectedPbForEdit && selectedPbForEdit.id === pbId) setSelectedPbForEdit(null);
   };
 
@@ -214,8 +220,7 @@ export default function TacticsCreator({ repo, onSaveCustomPlay }: TacticsCreato
     const targetPb = playbooks.find(pb => pb.id === pbId);
     if (!targetPb || targetPb.playIds.includes(playId)) return;
 
-    repo.updatePlaybook({ id: targetPb.id, name: targetPb.name, playIds: [...targetPb.playIds, playId] });
-    setPlaybooks(repo.loadPlaybooks().map(toLocalPlaybook));
+    onSavePlaybook?.({ id: targetPb.id, name: targetPb.name, playIds: [...targetPb.playIds, playId] });
     setShowAddToPbDropdown(false);
     alert(`Jugada añadida al playbook.`);
   };
@@ -223,8 +228,7 @@ export default function TacticsCreator({ repo, onSaveCustomPlay }: TacticsCreato
   const updatePlaybookName = (pbId: string, newName: string) => {
     const targetPb = playbooks.find(pb => pb.id === pbId);
     if (!targetPb) return;
-    repo.updatePlaybook({ id: targetPb.id, name: newName, playIds: targetPb.playIds });
-    setPlaybooks(repo.loadPlaybooks().map(toLocalPlaybook));
+    onSavePlaybook?.({ id: targetPb.id, name: newName, playIds: targetPb.playIds });
     if (selectedPbForEdit) setSelectedPbForEdit({...selectedPbForEdit, name: newName});
   };
 
@@ -232,8 +236,7 @@ export default function TacticsCreator({ repo, onSaveCustomPlay }: TacticsCreato
     const targetPb = playbooks.find(pb => pb.id === pbId);
     if (!targetPb) return;
     const updatedPlayIds = targetPb.playIds.filter(pid => pid !== playIdToRemove);
-    repo.updatePlaybook({ id: targetPb.id, name: targetPb.name, playIds: updatedPlayIds });
-    setPlaybooks(repo.loadPlaybooks().map(toLocalPlaybook));
+    onSavePlaybook?.({ id: targetPb.id, name: targetPb.name, playIds: updatedPlayIds });
     if (selectedPbForEdit && selectedPbForEdit.id === pbId) {
       setSelectedPbForEdit({ ...selectedPbForEdit, playIds: updatedPlayIds });
     }
@@ -332,6 +335,15 @@ export default function TacticsCreator({ repo, onSaveCustomPlay }: TacticsCreato
   };
 
   const updateFrame = (newData: Partial<FrameData>) => { const newFrames = [...frames]; newFrames[currentFrameIndex] = { ...currentFrame, ...newData }; setFrames(newFrames); };
+
+  /**
+   * Deletes one individual drawn action/step (a path in the RESUMEN list) from the current frame,
+   * by stable path id — not by array index, so deleting a middle action cannot accidentally remove
+   * the wrong one after a prior deletion re-indexes the array. This only removes the path itself;
+   * it never touches other frames, since paths are baked forward into the next frame's starting
+   * positions only once, at addFrame() time, and are never referenced retroactively.
+   */
+  const deleteAction = (pathId: number) => { updateFrame({ paths: currentFrame.paths.filter((path) => path.id !== pathId) }); };
   
   useEffect(() => { 
       let interval: any; 
@@ -505,11 +517,14 @@ export default function TacticsCreator({ repo, onSaveCustomPlay }: TacticsCreato
               <div style={{fontSize:'0.75rem', fontWeight:'bold', color:'#94a3b8', marginBottom:15, display:'flex', alignItems:'center', gap:5, borderBottom:'1px solid #334155', paddingBottom:10}}><ListChecks size={16}/> RESUMEN</div>
               {currentFrame.paths.length === 0 && <span style={{fontSize:'0.7rem', color:'#64748b'}}>Sin acciones</span>}
               <div style={{display:'flex', flexDirection:'column', gap:8}}>
-                {currentFrame.paths.map((p,i) => {
+                {currentFrame.paths.map((p) => {
                     const pl = currentFrame.players.find(x=>x.id===p.linkedId);
-                    return (<div key={i} style={{fontSize:'0.75rem', color:'#e2e8f0', background:'rgba(255,255,255,0.03)', padding:'8px', borderRadius:6, borderLeft:`3px solid ${p.type==='pass'?THEME.passColor:(p.type==='dribble'?THEME.dribbleColor:(p.type==='screen'?THEME.screenColor:THEME.moveColor))}`}}>
-                        <div style={{fontWeight:'bold', color:'#94a3b8', fontSize:'0.65rem', marginBottom:2}}>{pl ? `JUGADOR ${pl.label}` : 'JUGADOR'}</div>
-                        <div>{p.type.toUpperCase()}</div>
+                    return (<div key={p.id} style={{display:'flex', alignItems:'center', gap:6, fontSize:'0.75rem', color:'#e2e8f0', background:'rgba(255,255,255,0.03)', padding:'8px', borderRadius:6, borderLeft:`3px solid ${p.type==='pass'?THEME.passColor:(p.type==='dribble'?THEME.dribbleColor:(p.type==='screen'?THEME.screenColor:THEME.moveColor))}`}}>
+                        <div style={{flex:1}}>
+                            <div style={{fontWeight:'bold', color:'#94a3b8', fontSize:'0.65rem', marginBottom:2}}>{pl ? `JUGADOR ${pl.label}` : 'JUGADOR'}</div>
+                            <div>{p.type.toUpperCase()}</div>
+                        </div>
+                        <button aria-label={`Eliminar acción ${p.type}`} onClick={() => deleteAction(p.id)} style={{background:'transparent', border:'none', color:'#ef4444', cursor:'pointer', padding:0, flexShrink:0}} type="button"><Trash2 size={14}/></button>
                     </div>)
                 })}
               </div>
