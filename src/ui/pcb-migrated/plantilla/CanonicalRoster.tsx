@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 
-import type { CanonicalRatingKey, Player } from "@/domain/player";
-import { getPlayerAge } from "@/domain/player";
+import type { CanonicalRatingKey, LegacyPlayerRatings, Player } from "@/domain/player";
+import { getPlayerAge, legacyRatingSignals } from "@/domain/player";
 import {
   getCareerFatigueForPlayer,
   getCurrentPlayerContract,
@@ -119,6 +119,40 @@ const PERSONALITY_COLUMN_LABELS: Readonly<Record<PersonalityDimension, string>> 
   adaptability: "ADAPTABILIDAD",
   competitiveness: "COMPETITIVIDAD",
 };
+
+/**
+ * Deterministic compact basketball summary signals (FIN/SHO/PMK/PDE/IDE/REB/ATH),
+ * derived purely from the 35 canonical Player V2 ratings via the domain's
+ * `legacyRatingSignals` projection. Display-only: never persisted back onto
+ * PlayerTruth, never read from stale/obsolete legacy rating data.
+ */
+export function getBasketballSummarySignals(player: Player): LegacyPlayerRatings {
+  return legacyRatingSignals(player.basketball.ratings);
+}
+
+const SUMMARY_SIGNAL_LABELS: Readonly<Record<keyof LegacyPlayerRatings, string>> = {
+  finishing: "FIN",
+  shooting: "SHO",
+  playmaking: "PMK",
+  perimeterDefense: "PDE",
+  interiorDefense: "IDE",
+  rebounding: "REB",
+  athleticism: "ATH",
+};
+const SUMMARY_SIGNAL_KEYS = Object.keys(SUMMARY_SIGNAL_LABELS) as readonly (keyof LegacyPlayerRatings)[];
+
+function summarySignalColumn(key: keyof LegacyPlayerRatings): DataGridColumn<Player> {
+  return {
+    id: `summary-${key}`,
+    label: SUMMARY_SIGNAL_LABELS[key],
+    defaultWidth: 68,
+    minWidth: 56,
+    numeric: true,
+    sortable: true,
+    value: (player) => getBasketballSummarySignals(player)[key],
+    render: (player) => getBasketballSummarySignals(player)[key],
+  };
+}
 
 function ratingColumn(key: CanonicalRatingKey): DataGridColumn<Player> {
   return {
@@ -303,6 +337,7 @@ export function CanonicalRoster({
             : compactMoney(contract.compensation.annualSalary);
         },
       },
+      ...SUMMARY_SIGNAL_KEYS.map(summarySignalColumn),
       ...OFFENSE_RATING_KEYS.map(ratingColumn),
       ...BRAIN_RATING_KEYS.map(ratingColumn),
       ...DEFENSE_RATING_KEYS.map(ratingColumn),
@@ -330,13 +365,15 @@ export function CanonicalRoster({
   const ballHandlingColumnIds = BALL_HANDLING_RATING_KEYS.map((key) => `rating-${key}`);
   const personalityColumnIds = PERSONALITY_DIMENSIONS.map((dimension) => `personality-${dimension}`);
   const baseColumnIds = ["status", "player", "position", "rotation", "age"];
+  const summaryColumnIds = SUMMARY_SIGNAL_KEYS.map((key) => `summary-${key}`);
   const views: readonly DataGridView[] = [
     {
       id: "general",
       name: "Resumen General",
-      // Compact curated overview: core roster fields plus a small, representative
-      // summary of basketball information - not every rating/personality column.
-      columnIds: [...baseColumnIds, "height", "weight", "fatigue", "salary"],
+      // Compact FM-like overview: core roster fields plus the established
+      // FIN/SHO/PMK/PDE/IDE/REB/ATH basketball summary signals (deterministic
+      // projections of the 35 canonical ratings) - not every rating/personality column.
+      columnIds: [...baseColumnIds, ...summaryColumnIds, "fatigue", "salary"],
     },
     {
       id: "offense",

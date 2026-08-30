@@ -19,4 +19,11 @@ describe('no leftover index-based / localStorage-authoritative lineup logic', ()
     const source = readSource('../plantilla/CanonicalRoster.tsx')
     expect(source).not.toMatch(/useState<Record<string,\s*string>>\(\{\}\)/)
   })
+
+  it('TacticsPcbPage no longer reads player.basketball.ratings.finishing/shooting/playmaking/rebounding/athleticism directly', () => {
+    const source = readSource('./TacticsPcbPage.tsx')
+    for (const legacyKey of ['ratings.finishing', 'ratings.shooting', 'ratings.playmaking', 'ratings.rebounding', 'ratings.athleticism']) {
+      expect(source).not.toContain(legacyKey)
+    }
+  })
 })

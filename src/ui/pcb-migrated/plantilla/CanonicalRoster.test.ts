@@ -7,11 +7,13 @@ import { createNewGame } from '@/app/game'
 import { getUserTeam } from '@/engine/calendar'
 import { getTeamRoster } from '@/domain/world'
 import { setLineupSlot } from '@/engine/tactics/LineupEngine'
+import { legacyRatingSignals } from '@/domain/player'
 import { PlantillaPcbPage } from './PlantillaPcbPage'
 import {
   BALL_HANDLING_RATING_KEYS,
   BRAIN_RATING_KEYS,
   DEFENSE_RATING_KEYS,
+  getBasketballSummarySignals,
   OFFENSE_RATING_KEYS,
   PHYSICAL_RATING_KEYS,
 } from './CanonicalRoster'
@@ -43,18 +45,30 @@ describe('CanonicalRoster / roster view presets', () => {
     }
   })
 
-  it('Resumen General is a compact curated overview, not every rating/personality column', () => {
+  it('Resumen General is a compact curated overview including the FIN/SHO/PMK/PDE/IDE/REB/ATH basketball summary signals', () => {
     const world = createNewGame()
     render(createElement(PlantillaPcbPage, { world }))
 
-    // Default preset is Resumen General; assert core roster columns are present...
-    for (const label of ['JUGADOR', 'POS', 'ROT', 'EDAD', 'ALT', 'PESO', 'FATIGA', 'CONTRATO']) {
+    // Default preset is Resumen General; assert core roster columns and the compact summary signals are present...
+    for (const label of ['JUGADOR', 'POS', 'ROT', 'EDAD', 'FIN', 'SHO', 'PMK', 'PDE', 'IDE', 'REB', 'ATH', 'FATIGA', 'CONTRATO']) {
       expect(screen.getByText(label)).toBeInTheDocument()
     }
-    // ...but curated rating/personality column headers (unique to those presets) are absent.
-    for (const label of ['TIRO MEDIO', 'DECISIÓN', 'DEF. EXT.', 'ACELERACIÓN', 'BOTE', 'AMBICIÓN']) {
+    // ...but detailed 35-rating/personality column headers (unique to those presets) are absent,
+    // and it does not turn into the full table (height/weight are not part of the curated overview).
+    for (const label of ['TIRO MEDIO', 'DECISIÓN', 'DEF. EXT.', 'ACELERACIÓN', 'BOTE', 'AMBICIÓN', 'ALT', 'PESO']) {
       expect(screen.queryByText(label)).not.toBeInTheDocument()
     }
+  })
+
+  it('Resumen General summary signals are the deterministic legacyRatingSignals projection of the real roster player, not fabricated values', () => {
+    const world = createNewGame()
+    const team = getUserTeam(world)!
+    const player = getTeamRoster(world, team.id)[0]!
+    render(createElement(PlantillaPcbPage, { world }))
+
+    const expected = legacyRatingSignals(player.basketball.ratings)
+    expect(getBasketballSummarySignals(player)).toEqual(expected)
+    expect(screen.getAllByText(String(expected.finishing)).length).toBeGreaterThan(0)
   })
 
   it('Personalizada exposes the full configurable column set (every rating and personality column)', () => {
@@ -63,7 +77,7 @@ describe('CanonicalRoster / roster view presets', () => {
 
     fireEvent.change(screen.getByLabelText('Preset de columnas'), { target: { value: 'custom' } })
 
-    for (const label of ['TIRO MEDIO', 'DECISIÓN', 'DEF. EXT.', 'ACELERACIÓN', 'BOTE', 'AMBICIÓN', 'ALT', 'PESO', 'CONTRATO']) {
+    for (const label of ['TIRO MEDIO', 'DECISIÓN', 'DEF. EXT.', 'ACELERACIÓN', 'BOTE', 'AMBICIÓN', 'ALT', 'PESO', 'CONTRATO', 'FIN', 'SHO']) {
       expect(screen.getByText(label)).toBeInTheDocument()
     }
   })

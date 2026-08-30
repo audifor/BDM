@@ -3,6 +3,7 @@ import type { GameWorld } from '@/domain/world'
 import { getTeamLineup, getTeamRoster } from '@/domain/world'
 import { getNextUserGame, getUserTeam } from '@/engine/calendar'
 import type { Player } from '@/domain/player'
+import { legacyRatingSignals } from '@/domain/player'
 import type { PlayerId } from '@/domain/ids'
 import { getLineupAssignments, getLineupSlotForPlayer, LINEUP_SLOTS, type LineupSlot, type TeamLineup } from '@/domain/tactics'
 import type { MatchTacticalPlan, TacticalLevel } from '@/engine/match'
@@ -24,14 +25,18 @@ function coveragePresetFor(defense: { readonly interior: TacticalLevel; readonly
   return 'Balanced'
 }
 
+/** Deterministic FIN/SHO/PMK/PDE/IDE/REB/ATH projection of the 35 canonical Player V2 ratings, for the board's compact display only - never persisted, never read from stale legacy data. */
+function boardSummarySignals(player: Player) {
+  return legacyRatingSignals(player.basketball.ratings)
+}
 function playerRating(player: Player): number {
-  const ratings = player.basketball.ratings
-  const values = [ratings.finishing, ratings.shooting, ratings.playmaking, ratings.perimeterDefense, ratings.interiorDefense, ratings.rebounding, ratings.athleticism]
+  const signals = boardSummarySignals(player)
+  const values = [signals.finishing, signals.shooting, signals.playmaking, signals.perimeterDefense, signals.interiorDefense, signals.rebounding, signals.athleticism]
   return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length)
 }
 function toBoardRoster(players: readonly Player[], lineup: TeamLineup | undefined) {
   return players.map((player) => {
-    const ratings = player.basketball.ratings
+    const signals = boardSummarySignals(player)
     const pos = player.basketball.primaryPosition
     return {
       id: player.id,
@@ -39,7 +44,7 @@ function toBoardRoster(players: readonly Player[], lineup: TeamLineup | undefine
       position: pos,
       rating: playerRating(player),
       lineupSlot: lineup === undefined ? undefined : getLineupSlotForPlayer(lineup, player.id),
-      data: { attributes: { finishing: ratings.finishing, shooting: ratings.shooting, playmaking: ratings.playmaking, perimeterDefense: ratings.perimeterDefense, interiorDefense: ratings.interiorDefense, rebounding: ratings.rebounding, athleticism: ratings.athleticism }, bio: { pos } },
+      data: { attributes: { finishing: signals.finishing, shooting: signals.shooting, playmaking: signals.playmaking, perimeterDefense: signals.perimeterDefense, interiorDefense: signals.interiorDefense, rebounding: signals.rebounding, athleticism: signals.athleticism }, bio: { pos } },
     }
   })
 }
