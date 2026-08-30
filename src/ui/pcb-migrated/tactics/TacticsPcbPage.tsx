@@ -47,7 +47,7 @@ export function TacticsPcbPage({ world, plan, onChange, onReset }: { readonly wo
   const team = useMemo(() => (world === undefined ? undefined : getUserTeam(world)), [world])
   const roster = useMemo(() => (world === undefined || team === undefined ? [] : getTeamRoster(world, team.id)), [world, team])
   const boardRoster = useMemo(() => toBoardRoster(roster), [roster])
-  return <section className="pcb-tactics" aria-label="Tácticas PCB migradas"><DraggableSubnav className="pcb-tactics__tabs" items={tabs.map(([id, label]) => ({ id, label, active: tab === id, onClick: () => setTab(id) }))} storageKey="pcbasket.subnav.tactics" />{tab === 'board' && <PcbTacticsBoard onRolesChange={(next: Record<string, unknown>) => { setTacticalRoles(next); window.localStorage.setItem('pcbasket.tactics.roles', JSON.stringify(next)) }} roster={boardRoster} tacticalRoles={tacticalRoles} teamId={team === undefined ? 0 : Number(team.id) || 1} />}{tab === 'designer' && <PcbTacticsCreator />}{tab === 'matchups' && <Matchups />}{tab === 'rotations' && <Rotations roster={roster} />}{tab === 'plays' && <Plays />}{tab === 'match' && <MatchPlan world={world} plan={plan} onChange={onChange} onReset={onReset} />}</section>
+  return <section className="pcb-tactics" aria-label="Tácticas PCB migradas"><DraggableSubnav className="pcb-tactics__tabs" items={tabs.map(([id, label]) => ({ id, label, active: tab === id, onClick: () => setTab(id) }))} storageKey="pcbasket.subnav.tactics" />{tab === 'board' && <PcbTacticsBoard onRolesChange={(next: Record<string, unknown>) => { setTacticalRoles(next); window.localStorage.setItem('pcbasket.tactics.roles', JSON.stringify(next)) }} roster={boardRoster} tacticalRoles={tacticalRoles} teamId={team?.id} />}{tab === 'designer' && <PcbTacticsCreator />}{tab === 'matchups' && <Matchups />}{tab === 'rotations' && <Rotations roster={roster} />}{tab === 'plays' && <Plays />}{tab === 'match' && <MatchPlan world={world} plan={plan} onChange={onChange} onReset={onReset} />}</section>
 }
 
 function Control({ label, options, value, onChange }: { label: string; options: readonly string[]; value: string; onChange: (value: string) => void }) { return <label className="pcb-tactics__control">{label}<select onChange={(event) => onChange(event.target.value)} value={value}>{options.map((option) => <option key={option}>{option}</option>)}</select></label> }
@@ -66,7 +66,7 @@ function Plays() { const [plays, setPlays] = useState<SavedPlay[]>(repo.loadPlay
 const DEFAULT_TACTICAL_PLAN: MatchTacticalPlan = { pace: 0, shotProfile: { rim: 0, midRange: 0, threePoint: 0 }, defense: { interior: 0, perimeter: 0 } }
 const rotationOptions = ['Estándar', 'Corta', 'Profunda']
 function MatchPlan({ world, plan, onChange, onReset }: { readonly world?: GameWorld; readonly plan?: MatchTacticalPlan; readonly onChange?: (plan: MatchTacticalPlan) => void; readonly onReset?: () => void }) {
-  const [notes, setNotes] = useState('Atacar el lado débil tras bloqueo directo.')
+  const [notes, setNotes] = useState('')
   const [saved, setSaved] = useState(false)
   const [rotation, setRotation] = useState('Estándar')
   const [scoutingOpen, setScoutingOpen] = useState(false)

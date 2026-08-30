@@ -42,6 +42,21 @@ describe('TrainingPcbPage / interactions', () => {
     expect((screen.getByLabelText('Foco') as HTMLSelectElement).value).toBe(plan.focus)
   })
 
+  it('derives the week label from world.currentDate instead of a hardcoded value', () => {
+    const world = createNewGame()
+    render(createElement(TrainingPcbPage, { world }))
+
+    expect(screen.getAllByText(new RegExp(world.currentDate)).length).toBeGreaterThan(0)
+    expect(screen.queryByText(/18 ago/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/24 ago/)).not.toBeInTheDocument()
+  })
+
+  it('shows a neutral week label when there is no world', () => {
+    render(createElement(TrainingPcbPage))
+
+    expect(screen.getAllByText('Sin fecha de referencia').length).toBeGreaterThan(0)
+  })
+
   it('changing the session end time updates the estimated impact', () => {
     render(createElement(TrainingPcbPage))
     fireEvent.click(screen.getAllByRole('button', { name: '+ Sesión' })[0]!)

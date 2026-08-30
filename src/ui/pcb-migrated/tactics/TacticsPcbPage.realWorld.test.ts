@@ -55,6 +55,25 @@ describe('TacticsPcbPage / real GameWorld integration', () => {
     expect(keys).toContain('INITIAL_FRAME')
   })
 
+  it('Match Plan notes default to empty instead of fabricated coaching content', () => {
+    const world = createNewGame()
+    render(createElement(TacticsPcbPage, { world }))
+    fireEvent.click(screen.getByRole('button', { name: 'Partido' }))
+
+    const notes = screen.getByRole('textbox') as HTMLTextAreaElement
+    expect(notes.value).toBe('')
+    expect(screen.queryByText(/Atacar el lado débil/)).not.toBeInTheDocument()
+  })
+
+  it('the Pizarra board persists state under the real team id, not a fabricated fallback', () => {
+    const world = createNewGame()
+    const team = getUserTeam(world)!
+    render(createElement(TacticsPcbPage, { world }))
+
+    expect(window.localStorage.getItem(`pcbasket.tactics.board.${team.id}.config`)).not.toBeNull()
+    expect(window.localStorage.getItem('pcbasket.tactics.board.1.config')).toBeNull()
+  })
+
   it('the pace/coverage tactical controls call onChange with a MatchTacticalPlan valid per validateTacticalPlan', () => {
     const world = createNewGame()
     const team = getUserTeam(world)!

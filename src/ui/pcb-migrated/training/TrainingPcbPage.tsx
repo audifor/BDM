@@ -7,6 +7,7 @@ import {
 import type { GameWorld } from "@/domain/world";
 import { getCareerFatigueForPlayer, getDevelopmentStimulusForPlayer, getTeamRoster } from "@/domain/world";
 import { getUserTeam } from "@/engine/calendar";
+import { addDays, formatGameDate, parseGameDate } from "@/domain/date";
 import { BASKETBALL_RATING_KEYS, type BasketballRatingKey, type Player } from "@/domain/player";
 import type { Team } from "@/domain/team";
 import type { TeamId } from "@/domain/ids";
@@ -62,6 +63,15 @@ const MODULE_NAME_LABELS: Record<string, string> = {
 
 function playerName(player: Player): string {
   return `${player.firstName} ${player.lastName}`;
+}
+
+/** Real Mon-Sun calendar week range anchored on world.currentDate, offset by `week` weeks. */
+function trainingWeekRangeLabel(world: GameWorld | undefined, week: number): string {
+  if (world === undefined) return "Sin fecha de referencia";
+  const anchor = addDays(parseGameDate(world.currentDate), week * 7);
+  const start = formatGameDate(anchor);
+  const end = formatGameDate(addDays(anchor, 6));
+  return `${start} - ${end}`;
 }
 
 /** Aggregates real roster + per-player development stimulus + fatigue, mirroring TrainingScreen's getTrainingImpact. */
@@ -224,7 +234,7 @@ function TeamTraining({
           <div>
             <h2>Team Training</h2>
             <p>
-              Semana {18 + week} - {24 + week} ago
+              Semana {trainingWeekRangeLabel(world, week)}
             </p>
           </div>
           <div className="pcb-training__chips">
@@ -286,7 +296,7 @@ function TeamTraining({
             </button>
             <div>
               <strong>
-                {18 + week} ago - {24 + week} ago
+                {trainingWeekRangeLabel(world, week)}
               </strong>
               <small>Semana de planificación</small>
             </div>
