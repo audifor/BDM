@@ -33,6 +33,12 @@ export class LiveMatchController {
     const squad = teamId === state.homeTeamId ? state.squads.home : state.squads.away
     return active.includes(playerOutId) ? squad.filter((playerId) => !active.includes(playerId)) : []
   }
+  /** Resolves the rest of the current period, including the period-end boundary and next-period start when applicable. */
+  public skipToEndOfPeriod(): MatchSimulation {
+    const startingPeriod = this.session.state.period
+    while (!this.session.state.isComplete && this.session.state.period === startingPeriod) this.advanceOneStep()
+    return this.snapshot()
+  }
   public skipToEnd(): MatchSimulation { while (!this.session.state.isComplete) this.advanceOneStep(); return this.snapshot() }
   public snapshot(): MatchSimulation { const state = this.session.state; return state.isComplete ? toMatchSimulation(this.session) : { gameId: state.gameId, homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, lineups: state.initialLineups, squads: state.squads, events: state.events, finalScore: { home: state.homeScore, away: state.awayScore } } }
   public get isComplete(): boolean { return this.session.state.isComplete }
