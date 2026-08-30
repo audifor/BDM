@@ -1,14 +1,19 @@
 import { useMemo, useRef, useState } from "react";
 
-import type { Player } from "@/domain/player";
+import type { CanonicalRatingKey, Player } from "@/domain/player";
 import { getPlayerAge } from "@/domain/player";
 import {
   getCareerFatigueForPlayer,
   getCurrentPlayerContract,
+  getPersonality,
+  getTeamLineup,
   getTeamRoster,
 } from "@/domain/world";
 import type { GameWorld } from "@/domain/world";
-import type { TeamId } from "@/domain/ids";
+import { LINEUP_SLOTS, getLineupSlotForPlayer, type LineupSlot } from "@/domain/tactics";
+import type { PersonalityDimension } from "@/domain/personality";
+import { PERSONALITY_DIMENSIONS } from "@/domain/personality";
+import type { PlayerId, TeamId } from "@/domain/ids";
 import { BDMDataGrid } from "@/ui/dataGrid/BDMDataGrid";
 import type { DataGridColumn, DataGridView } from "@/ui/dataGrid/types";
 import { BdmIcon } from "@/ui/icons/BdmIcon";
@@ -22,8 +27,116 @@ function compactMoney(value: number) {
     : `$${Math.round(value / 1_000)}K`;
 }
 
+/**
+ * Curated groupings of real Player V2 `CANONICAL_RATING_KEYS` behind each roster
+ * preset. Every key here is a genuine attribute on `player.basketball.ratings` -
+ * no aggregate is invented; each column renders one real rating value.
+ */
+export const OFFENSE_RATING_KEYS: readonly CanonicalRatingKey[] = [
+  "midRangeShooting",
+  "threePointShooting",
+  "freeThrowShooting",
+  "rimFinishing",
+  "postScoring",
+  "passing",
+];
+export const BRAIN_RATING_KEYS: readonly CanonicalRatingKey[] = [
+  "decisionMaking",
+  "anticipation",
+  "composure",
+  "offBallAwareness",
+  "discipline",
+  "courtVision",
+];
+export const DEFENSE_RATING_KEYS: readonly CanonicalRatingKey[] = [
+  "perimeterDefense",
+  "interiorDefense",
+  "defensiveAwareness",
+  "steal",
+  "rimProtection",
+  "shotContest",
+];
+export const PHYSICAL_RATING_KEYS: readonly CanonicalRatingKey[] = [
+  "acceleration",
+  "speed",
+  "strength",
+  "vertical",
+  "stamina",
+  "lateralAgility",
+];
+export const BALL_HANDLING_RATING_KEYS: readonly CanonicalRatingKey[] = [
+  "ballHandling",
+  "ballSecurity",
+  "firstStep",
+  "changeOfDirection",
+];
+
+const RATING_COLUMN_LABELS: Readonly<Record<CanonicalRatingKey, string>> = {
+  midRangeShooting: "TIRO MEDIO",
+  threePointShooting: "TRIPLE",
+  freeThrowShooting: "T. LIBRES",
+  rimFinishing: "FINAL. ARO",
+  contactFinishing: "FIN. CONTACTO",
+  dunking: "MATE",
+  floater: "FLOATER",
+  postScoring: "POSTE",
+  ballHandling: "BOTE",
+  ballSecurity: "SEGURIDAD",
+  firstStep: "1ER PASO",
+  changeOfDirection: "CAMBIO DIR.",
+  passing: "PASE",
+  courtVision: "VISIÓN",
+  perimeterDefense: "DEF. EXT.",
+  interiorDefense: "DEF. INT.",
+  screenNavigation: "NAV. BLOQUEO",
+  defensiveAwareness: "IQ DEFENSIVO",
+  steal: "ROBO",
+  rimProtection: "PROT. ARO",
+  shotContest: "CONTESTE",
+  offensiveRebounding: "REB. OFEN.",
+  defensiveRebounding: "REB. DEF.",
+  boxOut: "BOX OUT",
+  acceleration: "ACELERACIÓN",
+  speed: "VELOCIDAD",
+  lateralAgility: "AGILIDAD",
+  strength: "FUERZA",
+  vertical: "VERTICAL",
+  stamina: "RESISTENCIA",
+  decisionMaking: "DECISIÓN",
+  anticipation: "ANTICIPACIÓN",
+  composure: "SANGRE FRÍA",
+  offBallAwareness: "IQ SIN BALÓN",
+  discipline: "DISCIPLINA",
+};
+
+const PERSONALITY_COLUMN_LABELS: Readonly<Record<PersonalityDimension, string>> = {
+  ambition: "AMBICIÓN",
+  professionalism: "PROFESIONALIDAD",
+  loyalty: "LEALTAD",
+  resilience: "RESILIENCIA",
+  temperament: "TEMPERAMENTO",
+  teamOrientation: "ORIENT. EQUIPO",
+  adaptability: "ADAPTABILIDAD",
+  competitiveness: "COMPETITIVIDAD",
+};
+
+function ratingColumn(key: CanonicalRatingKey): DataGridColumn<Player> {
+  return {
+    id: `rating-${key}`,
+    label: RATING_COLUMN_LABELS[key],
+    defaultWidth: 92,
+    minWidth: 72,
+    numeric: true,
+    sortable: true,
+    value: (player) => player.basketball.ratings[key],
+    render: (player) => player.basketball.ratings[key],
+  };
+}
+
 export function CanonicalRoster({
   activeView = "general",
+  onLineupSlotChange,
+  onLineupSlotClear,
   onOpenEntity,
   onViewChange,
   rosterSection = "overview",
@@ -31,6 +144,8 @@ export function CanonicalRoster({
   world,
 }: {
   readonly activeView?: string;
+  readonly onLineupSlotChange?: (slot: LineupSlot, playerId: PlayerId) => void;
+  readonly onLineupSlotClear?: (slot: LineupSlot) => void;
   readonly onOpenEntity?: (destination: EntityDestination) => void;
   readonly onViewChange?: (view: string) => void;
   readonly rosterSection?: string;
@@ -38,8 +153,9 @@ export function CanonicalRoster({
   readonly world: GameWorld;
 }) {
   const [query, setQuery] = useState("");
-  const [rotation, setRotation] = useState<Record<string, string>>({});
   const [selectedId, setSelectedId] = useState<string>();
+  const [ratingView, setRatingView] = useState(activeView);
+  const lineup = useMemo(() => getTeamLineup(world, team.id), [world, team.id]);
   const gridRef = useRef<HTMLDivElement>(null);
   const roster = useMemo(() => getTeamRoster(world, team.id), [world, team.id]);
   const rows = useMemo(
@@ -106,37 +222,29 @@ export function CanonicalRoster({
         defaultWidth: 120,
         minWidth: 100,
         sortable: true,
-        value: (player) => rotation[player.id] ?? "B2",
-        render: (player) => (
-          <select
-            aria-label={`Rotación ${player.firstName} ${player.lastName}`}
-            className="canonical-roster__rotation"
-            onChange={(event) =>
-              setRotation((current) => ({
-                ...current,
-                [player.id]: event.target.value,
-              }))
-            }
-            value={rotation[player.id] ?? "B2"}
-          >
-            {[
-              "PG",
-              "SG",
-              "SF",
-              "PF",
-              "C",
-              "B1",
-              "B2",
-              "B3",
-              "B4",
-              "B5",
-              "B6",
-              "B7",
-            ].map((slot) => (
-              <option key={slot}>{slot}</option>
-            ))}
-          </select>
-        ),
+        value: (player) => getLineupSlotForPlayer(lineup, player.id) ?? "",
+        render: (player) => {
+          const currentSlot = getLineupSlotForPlayer(lineup, player.id);
+          return (
+            <select
+              aria-label={`Rotación ${player.firstName} ${player.lastName}`}
+              className="canonical-roster__rotation"
+              onChange={(event) => {
+                const next = event.target.value;
+                if (next === "") onLineupSlotClear?.(currentSlot ?? "B1");
+                else onLineupSlotChange?.(next as LineupSlot, player.id);
+              }}
+              value={currentSlot ?? ""}
+            >
+              <option value="">Sin rol</option>
+              {LINEUP_SLOTS.map((slot) => (
+                <option key={slot} value={slot}>
+                  {slot}
+                </option>
+              ))}
+            </select>
+          );
+        },
       },
       {
         id: "age",
@@ -195,9 +303,33 @@ export function CanonicalRoster({
             : compactMoney(contract.compensation.annualSalary);
         },
       },
+      ...OFFENSE_RATING_KEYS.map(ratingColumn),
+      ...BRAIN_RATING_KEYS.map(ratingColumn),
+      ...DEFENSE_RATING_KEYS.map(ratingColumn),
+      ...PHYSICAL_RATING_KEYS.map(ratingColumn),
+      ...BALL_HANDLING_RATING_KEYS.map(ratingColumn),
+      ...PERSONALITY_DIMENSIONS.map(
+        (dimension): DataGridColumn<Player> => ({
+          id: `personality-${dimension}`,
+          label: PERSONALITY_COLUMN_LABELS[dimension],
+          defaultWidth: 110,
+          minWidth: 84,
+          numeric: true,
+          sortable: true,
+          value: (player) => getPersonality(world, player.id)?.values[dimension] ?? 0,
+          render: (player) => getPersonality(world, player.id)?.values[dimension] ?? "—",
+        }),
+      ),
     ],
-    [rotation, world],
+    [lineup, onLineupSlotChange, onLineupSlotClear, world],
   );
+  const offenseColumnIds = OFFENSE_RATING_KEYS.map((key) => `rating-${key}`);
+  const brainColumnIds = BRAIN_RATING_KEYS.map((key) => `rating-${key}`);
+  const defenseColumnIds = DEFENSE_RATING_KEYS.map((key) => `rating-${key}`);
+  const physicalColumnIds = PHYSICAL_RATING_KEYS.map((key) => `rating-${key}`);
+  const ballHandlingColumnIds = BALL_HANDLING_RATING_KEYS.map((key) => `rating-${key}`);
+  const personalityColumnIds = PERSONALITY_DIMENSIONS.map((dimension) => `personality-${dimension}`);
+  const baseColumnIds = ["status", "player", "position", "rotation", "age"];
   const views: readonly DataGridView[] = [
     {
       id: "general",
@@ -205,26 +337,43 @@ export function CanonicalRoster({
       columnIds: columns.map((column) => column.id),
     },
     {
-      id: "psico",
-      name: "Psico",
-      columnIds: ["status", "player", "position", "rotation", "age"],
+      id: "offense",
+      name: "Ofensiva",
+      columnIds: [...baseColumnIds, ...offenseColumnIds],
+    },
+    {
+      id: "brain",
+      name: "Cerebro",
+      columnIds: [...baseColumnIds, ...brainColumnIds],
+    },
+    {
+      id: "defense",
+      name: "Defensa",
+      columnIds: [...baseColumnIds, ...defenseColumnIds],
     },
     {
       id: "physical",
       name: "Físico",
-      columnIds: [
-        "status",
-        "player",
-        "position",
-        "rotation",
-        "age",
-        "height",
-        "weight",
-      ],
+      columnIds: [...baseColumnIds, "height", "weight", ...physicalColumnIds],
+    },
+    {
+      id: "ballHandling",
+      name: "Manejo",
+      columnIds: [...baseColumnIds, ...ballHandlingColumnIds],
+    },
+    {
+      id: "psico",
+      name: "Psico",
+      columnIds: [...baseColumnIds, ...personalityColumnIds],
+    },
+    {
+      id: "custom",
+      name: "Personalizada",
+      columnIds: columns.map((column) => column.id),
     },
   ];
   const selectedView =
-    views.find((view) => view.id === activeView) ?? views[0]!;
+    views.find((view) => view.id === ratingView) ?? views[0]!;
   return (
     <section className="canonical-roster">
       <header className="canonical-roster__toolbar">
@@ -249,6 +398,20 @@ export function CanonicalRoster({
               <option value="jerseys">Dorsales</option>
               <option value="registration">Inscripción</option>
               <option value="all-players">Todos los jugadores</option>
+            </select>
+          </label>
+          <label className="canonical-roster__view-select">
+            <span>Preset</span>
+            <select
+              aria-label="Preset de columnas"
+              onChange={(event) => setRatingView(event.target.value)}
+              value={selectedView.id}
+            >
+              {views.map((view) => (
+                <option key={view.id} value={view.id}>
+                  {view.name}
+                </option>
+              ))}
             </select>
           </label>
           <input

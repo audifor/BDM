@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import type { GameWorld } from '@/domain/world'
-import { getTeamRoster } from '@/domain/world'
+import { getTeamLineup, getTeamRoster } from '@/domain/world'
 import { getNextUserGame, getUserTeam } from '@/engine/calendar'
 import type { Player } from '@/domain/player'
+import type { PlayerId } from '@/domain/ids'
+import { getLineupSlotForPlayer, LINEUP_SLOTS, type LineupSlot, type TeamLineup } from '@/domain/tactics'
 import type { MatchTacticalPlan, TacticalLevel } from '@/engine/match'
 import { INITIAL_FRAME, TacticsMigrationRepository, type SavedPlay } from './TacticsMigrationRepository'
 import PcbTacticsCreator from './PcbTacticsCreator'
@@ -27,7 +29,7 @@ function playerRating(player: Player): number {
   const values = [ratings.finishing, ratings.shooting, ratings.playmaking, ratings.perimeterDefense, ratings.interiorDefense, ratings.rebounding, ratings.athleticism]
   return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length)
 }
-function toBoardRoster(players: readonly Player[]) {
+function toBoardRoster(players: readonly Player[], lineup: TeamLineup | undefined) {
   return players.map((player) => {
     const ratings = player.basketball.ratings
     const pos = player.basketball.primaryPosition
@@ -36,18 +38,20 @@ function toBoardRoster(players: readonly Player[]) {
       name: `${player.firstName} ${player.lastName}`,
       position: pos,
       rating: playerRating(player),
+      lineupSlot: lineup === undefined ? undefined : getLineupSlotForPlayer(lineup, player.id),
       data: { attributes: { finishing: ratings.finishing, shooting: ratings.shooting, playmaking: ratings.playmaking, perimeterDefense: ratings.perimeterDefense, interiorDefense: ratings.interiorDefense, rebounding: ratings.rebounding, athleticism: ratings.athleticism }, bio: { pos } },
     }
   })
 }
 
-export function TacticsPcbPage({ world, plan, onChange, onReset }: { readonly world?: GameWorld; readonly plan?: MatchTacticalPlan; readonly onChange?: (plan: MatchTacticalPlan) => void; readonly onReset?: () => void }) {
+export function TacticsPcbPage({ world, plan, onChange, onReset, onLineupSlotChange, onLineupSlotClear }: { readonly world?: GameWorld; readonly plan?: MatchTacticalPlan; readonly onChange?: (plan: MatchTacticalPlan) => void; readonly onReset?: () => void; readonly onLineupSlotChange?: (slot: LineupSlot, playerId: PlayerId) => void; readonly onLineupSlotClear?: (slot: LineupSlot) => void }) {
   const [tab, setTab] = useState<Tab>('board')
   const [tacticalRoles, setTacticalRoles] = useState<Record<string, unknown>>({})
   const team = useMemo(() => (world === undefined ? undefined : getUserTeam(world)), [world])
   const roster = useMemo(() => (world === undefined || team === undefined ? [] : getTeamRoster(world, team.id)), [world, team])
-  const boardRoster = useMemo(() => toBoardRoster(roster), [roster])
-  return <section className="pcb-tactics" aria-label="Tácticas PCB migradas"><DraggableSubnav className="pcb-tactics__tabs" items={tabs.map(([id, label]) => ({ id, label, active: tab === id, onClick: () => setTab(id) }))} storageKey="pcbasket.subnav.tactics" />{tab === 'board' && <PcbTacticsBoard onRolesChange={(next: Record<string, unknown>) => { setTacticalRoles(next); window.localStorage.setItem('pcbasket.tactics.roles', JSON.stringify(next)) }} roster={boardRoster} tacticalRoles={tacticalRoles} teamId={team?.id} />}{tab === 'designer' && <PcbTacticsCreator />}{tab === 'matchups' && <Matchups />}{tab === 'rotations' && <Rotations roster={roster} />}{tab === 'plays' && <Plays />}{tab === 'match' && <MatchPlan world={world} plan={plan} onChange={onChange} onReset={onReset} />}</section>
+  const lineup = useMemo(() => (world === undefined || team === undefined ? undefined : getTeamLineup(world, team.id)), [world, team])
+  const boardRoster = useMemo(() => toBoardRoster(roster, lineup), [roster, lineup])
+  return <section className="pcb-tactics" aria-label="Tácticas PCB migradas"><DraggableSubnav className="pcb-tactics__tabs" items={tabs.map(([id, label]) => ({ id, label, active: tab === id, onClick: () => setTab(id) }))} storageKey="pcbasket.subnav.tactics" />{tab === 'board' && <PcbTacticsBoard onLineupSlotChange={onLineupSlotChange} onLineupSlotClear={onLineupSlotClear} onRolesChange={(next: Record<string, unknown>) => { setTacticalRoles(next); window.localStorage.setItem('pcbasket.tactics.roles', JSON.stringify(next)) }} roster={boardRoster} tacticalRoles={tacticalRoles} teamId={team?.id} />}{tab === 'designer' && <PcbTacticsCreator />}{tab === 'matchups' && <Matchups />}{tab === 'rotations' && <Rotations lineup={lineup} roster={roster} />}{tab === 'plays' && <Plays />}{tab === 'match' && <MatchPlan world={world} plan={plan} onChange={onChange} onReset={onReset} />}</section>
 }
 
 function Control({ label, options, value, onChange }: { label: string; options: readonly string[]; value: string; onChange: (value: string) => void }) { return <label className="pcb-tactics__control">{label}<select onChange={(event) => onChange(event.target.value)} value={value}>{options.map((option) => <option key={option}>{option}</option>)}</select></label> }
@@ -57,8 +61,13 @@ function Matchups() {
   return <main className="pcb-tactics__table-page"><header><div><h2>Matchups Defensivos</h2><small>Sin datos de scouting del próximo rival</small></div><input aria-label="Buscar rival" onChange={(event) => setQuery(event.target.value)} placeholder="Buscar rival" value={query} /><button disabled type="button">Auto-matchup</button><button disabled type="button">Reset</button></header><table><thead><tr><th>POS</th><th>JUGADOR RIVAL</th><th>AMENAZA</th><th>ALTURA</th><th>DEFENSOR</th><th>PRESIÓN</th><th>P&R</th><th>DIRECCIÓN</th></tr></thead><tbody><tr><td colSpan={8}>No hay datos de scouting del rival disponibles todavía.</td></tr></tbody></table></main>
 }
 
-function Rotations({ roster }: { readonly roster: readonly Player[] }) { const [minutes, setMinutes] = useState<Record<string, number[]>>(() => Object.fromEntries(roster.map((player, index) => [player.id, index < 5 ? [8, 8, 8, 8, 0] : [0, 0, 0, 0, 0]]))); const [league, setLeague] = useState('FIBA'); const [saved, setSaved] = useState(false); const update = (id: string, quarter: number, value: number) => setMinutes((current) => ({ ...current, [id]: (current[id] ?? [0, 0, 0, 0, 0]).map((minute, index) => index === quarter ? Math.max(0, Math.min(10, value)) : minute) }))
-  const preset = () => setMinutes(Object.fromEntries(roster.map((player, index) => [player.id, index < 5 ? [8, 8, 8, 8, 0] : [2, 2, 2, 2, 0]])))
+function isLineupStarter(lineup: TeamLineup | undefined, playerId: PlayerId): boolean {
+  if (lineup === undefined) return false
+  const slot = getLineupSlotForPlayer(lineup, playerId)
+  return slot !== undefined && !(LINEUP_SLOTS.indexOf(slot) >= 5)
+}
+function Rotations({ lineup, roster }: { readonly lineup?: TeamLineup; readonly roster: readonly Player[] }) { const [minutes, setMinutes] = useState<Record<string, number[]>>(() => Object.fromEntries(roster.map((player) => [player.id, isLineupStarter(lineup, player.id) ? [8, 8, 8, 8, 0] : [0, 0, 0, 0, 0]]))); const [league, setLeague] = useState('FIBA'); const [saved, setSaved] = useState(false); const update = (id: string, quarter: number, value: number) => setMinutes((current) => ({ ...current, [id]: (current[id] ?? [0, 0, 0, 0, 0]).map((minute, index) => index === quarter ? Math.max(0, Math.min(10, value)) : minute) }))
+  const preset = () => setMinutes(Object.fromEntries(roster.map((player) => [player.id, isLineupStarter(lineup, player.id) ? [8, 8, 8, 8, 0] : [2, 2, 2, 2, 0]])))
   return <main className="pcb-tactics__rotation"><header><div><h2>Matriz de Rotación</h2><small>Configuración temporal de sesión</small></div><select onChange={(event) => setLeague(event.target.value)} value={league}><option>FIBA</option><option>NBA</option><option>NCAA</option></select><button onClick={preset} type="button">Auto-generar</button><button onClick={preset} type="button">Reset</button><button className="is-primary" onClick={() => setSaved(true)} type="button">Guardar</button>{saved && <em>Guardado</em>}</header><div className="pcb-tactics__rotation-grid"><div className="is-head"><span>Jugador</span>{['Q1', 'Q2', 'Q3', 'Q4', 'OT'].map((quarter) => <span key={quarter}>{quarter}</span>)}<span>Total</span></div>{roster.length === 0 ? <p>No hay jugadores en la plantilla del usuario.</p> : roster.map((player) => { const row = minutes[player.id] ?? [0, 0, 0, 0, 0]; return <div draggable key={player.id}><span><b>{player.basketball.primaryPosition}</b> {player.firstName} {player.lastName}</span>{row.map((value, quarter) => <span key={quarter}><input max="10" min="0" onChange={(event) => update(player.id, quarter, Number(event.target.value))} type="range" value={value} /><input max="10" min="0" onChange={(event) => update(player.id, quarter, Number(event.target.value))} type="number" value={value} /></span>)}<strong>{row.reduce((sum, value) => sum + value, 0)}</strong></div> })}</div></main> }
 
 function Plays() { const [plays, setPlays] = useState<SavedPlay[]>(repo.loadPlays()); const [name, setName] = useState(''); const [selected, setSelected] = useState<string | null>(null); const [modal, setModal] = useState(false); const create = () => { if (!name.trim()) return; const play = repo.savePlay({ id: `library-${Date.now()}`, name, frames: [INITIAL_FRAME()], createdAt: new Date().toLocaleDateString() }); setPlays(repo.loadPlays()); setSelected(play.id); setModal(false); setName('') }

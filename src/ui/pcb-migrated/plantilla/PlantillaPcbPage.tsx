@@ -6,6 +6,8 @@ import {
 } from "react";
 import type { GameWorld } from "@/domain/world";
 import { getUserTeam } from "@/engine/calendar";
+import type { LineupSlot } from "@/domain/tactics";
+import type { PlayerId } from "@/domain/ids";
 import type { EntityDestination } from "@/ui/navigation/entityNavigation";
 import {
   PLANTILLA_VISUAL_MOCK_ROWS,
@@ -61,9 +63,13 @@ function ColumnResizeHandle({ onPointerDown }: { readonly onPointerDown: (event:
 }
 
 export function PlantillaPcbPage({
+  onLineupSlotChange,
+  onLineupSlotClear,
   onOpenEntity,
   world,
 }: {
+  readonly onLineupSlotChange?: (slot: LineupSlot, playerId: PlayerId) => void;
+  readonly onLineupSlotClear?: (slot: LineupSlot) => void;
   readonly onOpenEntity?: (destination: EntityDestination) => void;
   readonly world?: GameWorld;
 }) {
@@ -77,6 +83,8 @@ export function PlantillaPcbPage({
         ) : (
           <CanonicalRoster
             activeView="general"
+            onLineupSlotChange={onLineupSlotChange}
+            onLineupSlotClear={onLineupSlotClear}
             onOpenEntity={onOpenEntity}
             onViewChange={setRosterSection}
             rosterSection={rosterSection}

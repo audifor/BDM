@@ -48,7 +48,7 @@ import type { InboxItem, NewsItem } from '@/domain/inbox'
 import { EMPTY_DEVELOPMENT_STIMULUS, type PlayerDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
 import { clampCareerFatigue } from '@/domain/careerFatigue/CareerFatigue'
 import { createDefaultTrainingPlan, createIndividualTrainingPlan, type IndividualTrainingPlan, type TeamTrainingPlan, type TrainingResponsibility, type TrainingSession } from '@/domain/training'
-import { createDefaultTeamTacticalPlan, type TeamGamePlan, type TeamTacticalPlan } from '@/domain/tactics'
+import { createDefaultTeamLineup, createDefaultTeamTacticalPlan, validateTeamLineup, type TeamGamePlan, type TeamLineup, type TeamTacticalPlan } from '@/domain/tactics'
 import { createSalaryRules, type SalaryRules } from '@/domain/salary'
 import { createDeadMoneyCharge, createTeamSalaryException, type DeadMoneyCharge, type TeamSalaryException } from '@/domain/salary'
 import { createDraftPickSwapRight, createFutureDraftPickRight, createPlayerRights, createRetainedSalaryObligation, createTradeRecord, createTradeRules, type DraftPickSwapRight, type FutureDraftPickRight, type PlayerRights, type RetainedSalaryObligation, type TradeRecord, type TradeRules } from '@/domain/trade'
@@ -125,6 +125,8 @@ export interface GameWorld {
   readonly individualTrainingPlansByPlayerId: Readonly<Record<string, IndividualTrainingPlan>>
   readonly trainingResponsibilitiesByTeamId: Readonly<Record<string, Readonly<Partial<Record<TrainingResponsibility, StaffPersonId>>>>>
   readonly tacticalPlansByTeamId: Readonly<Record<TeamId, TeamTacticalPlan>>
+  /** Canonical persisted starters (PG/SG/SF/PF/C) + bench (B1-B7) match-squad, shared by Plantilla and Tactics. */
+  readonly lineupsByTeamId: Readonly<Record<TeamId, TeamLineup>>
   readonly rotationPlansByTeamId: Readonly<Record<TeamId, import('@/domain/tactics').TeamRotationIntent>>
   readonly gamePlansByKey: Readonly<Record<string, TeamGamePlan>>
   readonly trainingSessionsById: Readonly<Record<string, TrainingSession>>
@@ -242,6 +244,7 @@ export interface CreateGameWorldInput {
   individualTrainingPlansByPlayerId?: Readonly<Record<string, IndividualTrainingPlan>>
   trainingResponsibilitiesByTeamId?: Readonly<Record<string, Readonly<Partial<Record<TrainingResponsibility, StaffPersonId>>>>>
   tacticalPlansByTeamId?: Readonly<Record<TeamId, TeamTacticalPlan>>
+  lineupsByTeamId?: Readonly<Record<TeamId, TeamLineup>>
   rotationPlansByTeamId?: Readonly<Record<TeamId, import('@/domain/tactics').TeamRotationIntent>>
   gamePlansByKey?: Readonly<Record<string, TeamGamePlan>>
   trainingSessionsById?: Readonly<Record<string, TrainingSession>>
@@ -379,7 +382,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     personalitiesByPersonId: peopleProfiles([...input.coaches, ...input.players, ...(input.staffPeople ?? [])], input.personalitiesByPersonId, generatePersonality),
     moraleByPersonId: peopleProfiles([...input.coaches, ...input.players, ...(input.staffPeople ?? [])], input.moraleByPersonId, createMoraleProfile),
     inboxItemsById: Object.freeze({ ...(input.inboxItemsById ?? {}) }), newsItemsById: Object.freeze({ ...(input.newsItemsById ?? {}) }),
-    trainingPlansByTeamId: Object.freeze(Object.fromEntries(input.teams.map((team)=>[team.id,input.trainingPlansByTeamId?.[team.id]??createDefaultTrainingPlan(team.id)]))), individualTrainingPlansByPlayerId: Object.freeze(Object.fromEntries(Object.entries(input.individualTrainingPlansByPlayerId??{}).map(([id,plan])=>[id,createIndividualTrainingPlan(plan)]))), trainingResponsibilitiesByTeamId: Object.freeze(Object.fromEntries(Object.entries(input.trainingResponsibilitiesByTeamId??{}).map(([id,responsibilities])=>[id,Object.freeze({...responsibilities})]))), tacticalPlansByTeamId:Object.freeze(Object.fromEntries(input.teams.map(team=>[team.id,input.tacticalPlansByTeamId?.[team.id]??createDefaultTeamTacticalPlan(team.id)]))),rotationPlansByTeamId:Object.freeze({...input.rotationPlansByTeamId}),gamePlansByKey:Object.freeze({...input.gamePlansByKey}), trainingSessionsById:Object.freeze({...(input.trainingSessionsById??{})}),
+    trainingPlansByTeamId: Object.freeze(Object.fromEntries(input.teams.map((team)=>[team.id,input.trainingPlansByTeamId?.[team.id]??createDefaultTrainingPlan(team.id)]))), individualTrainingPlansByPlayerId: Object.freeze(Object.fromEntries(Object.entries(input.individualTrainingPlansByPlayerId??{}).map(([id,plan])=>[id,createIndividualTrainingPlan(plan)]))), trainingResponsibilitiesByTeamId: Object.freeze(Object.fromEntries(Object.entries(input.trainingResponsibilitiesByTeamId??{}).map(([id,responsibilities])=>[id,Object.freeze({...responsibilities})]))), tacticalPlansByTeamId:Object.freeze(Object.fromEntries(input.teams.map(team=>[team.id,input.tacticalPlansByTeamId?.[team.id]??createDefaultTeamTacticalPlan(team.id)]))),lineupsByTeamId:Object.freeze(Object.fromEntries(input.teams.map(team=>[team.id,input.lineupsByTeamId?.[team.id]??createDefaultTeamLineup(team.id)]))),rotationPlansByTeamId:Object.freeze({...input.rotationPlansByTeamId}),gamePlansByKey:Object.freeze({...input.gamePlansByKey}), trainingSessionsById:Object.freeze({...(input.trainingSessionsById??{})}),
     developmentStimulusByPlayerId:Object.freeze(Object.fromEntries(input.players.map((player)=>[player.id,input.developmentStimulusByPlayerId?.[player.id]??{playerId:player.id,byRating:{...EMPTY_DEVELOPMENT_STIMULUS}}]))), careerFatigueByPlayerId:Object.freeze(Object.fromEntries(input.players.map((player)=>[player.id,clampCareerFatigue(input.careerFatigueByPlayerId?.[player.id]??0)]))),
     promotionRelegationResolutionsById: indexById(input.promotionRelegationResolutions ?? [], 'Promotion/relegation resolution'),
     draftsById: indexById(input.drafts ?? [], 'Draft'),
@@ -498,6 +501,15 @@ function validateWorld(world: GameWorld): void {
         throw new GameWorldValidationError(`Coach ${team.coachId} is assigned to more than one team`)
       }
       assignedCoachIds.add(team.coachId)
+    }
+
+    const lineup = world.lineupsByTeamId[team.id]
+    if (lineup !== undefined) {
+      try {
+        validateTeamLineup(lineup, team.rosterPlayerIds)
+      } catch (error) {
+        throw new GameWorldValidationError(error instanceof Error ? error.message : `Team ${team.id} has an invalid lineup`)
+      }
     }
   }
 

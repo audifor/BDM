@@ -24,6 +24,9 @@ import { acceptCoachJobOffer, applyUserCoachForJob, declineCoachJobOffer } from 
 import { getCareerFatigueForPlayer, getLatestTrainingSession, getTrainingPlanForTeam } from '@/domain/world'
 import type { TrainingFocus, TrainingIntensity } from '@/domain/training'
 import { setTeamTrainingPlan } from '@/engine/training'
+import { clearLineupSlot, setLineupSlot } from '@/engine/tactics/LineupEngine'
+import { getTeamLineup } from '@/domain/world'
+import type { LineupSlot } from '@/domain/tactics'
 import { executeEntityActionResult, type EntityActionExecution } from '@/app/entityActions/EntityActionExecutor'
 import type { CommandResult } from '@/app/entityActions/EntityCommand'
 import { selectDraftProspect } from '@/app/draft'
@@ -66,6 +69,8 @@ interface GameStore {
   applyUserCoachForJob(openingId: string): void
   setTrainingIntensity(intensity: TrainingIntensity): void
   setTrainingFocus(focus: TrainingFocus): void
+  setLineupSlot(slot: LineupSlot, playerId: PlayerId): void
+  clearLineupSlot(slot: LineupSlot): void
   selectDraftProspect(draftId: string, playerId: PlayerId): void
   executeTrade(proposal: TradeProposal): void
   addRecruitingTarget(cycleId: string, recruitId: string, priority: Priority): void
@@ -134,6 +139,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   applyUserCoachForJob: (openingId) => set({ world: applyUserCoachForJob(requireWorld(get().world), openingId).world }),
   setTrainingIntensity: (intensity) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: setTeamTrainingPlan(world, team.id, { intensity }) }) },
   setTrainingFocus: (focus) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: setTeamTrainingPlan(world, team.id, { focus }) }) },
+  setLineupSlot: (slot, playerId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: setLineupSlot(world, team.id, slot, playerId) }) },
+  clearLineupSlot: (slot) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: clearLineupSlot(world, team.id, slot) }) },
   selectDraftProspect: (draftId, playerId) => set({ world: selectDraftProspect(requireWorld(get().world), draftId, playerId) }),
   executeTrade: (proposal) => set({ world: executeTrade(requireWorld(get().world), proposal).world }),
   addRecruitingTarget: (cycleId, recruitId, priority) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined && world.recruitingCyclesById[cycleId] !== undefined) set({ world: addRecruitingBoardEntry(world, { programTeamId: team.id, recruitId, priority }) }) },
@@ -181,5 +188,6 @@ export function selectUserInbox(world:GameWorld|null){return world===null?[]:get
 export function selectUnreadInboxCount(world:GameWorld|null){return world===null?0:getUnreadInboxCount(world,world.userCoachId)}
 export function selectRecentNews(world:GameWorld|null,limit=5){return world===null?[]:getNewsFeed(world).slice(0,limit)}
 export function selectUserTrainingPlan(world: GameWorld | null) { const team = world === null ? undefined : getUserTeam(world); return team === undefined || world === null ? undefined : getTrainingPlanForTeam(world, team.id) }
+export function selectUserTeamLineup(world: GameWorld | null) { const team = world === null ? undefined : getUserTeam(world); return team === undefined || world === null ? undefined : getTeamLineup(world, team.id) }
 export function selectLatestUserTrainingSession(world: GameWorld | null) { const team = world === null ? undefined : getUserTeam(world); return team === undefined || world === null ? undefined : getLatestTrainingSession(world, team.id) }
 export function selectUserTeamCareerFatigueSummary(world: GameWorld | null) { const team = world === null ? undefined : getUserTeam(world); if (team === undefined || world === null || team.rosterPlayerIds.length === 0) return 0; return team.rosterPlayerIds.reduce((sum, id) => sum + getCareerFatigueForPlayer(world, id), 0) / team.rosterPlayerIds.length }

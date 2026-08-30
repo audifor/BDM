@@ -113,11 +113,10 @@ const calcRating = (player) => {
   return Math.round(Number(player?.current_ability || player?.rating || 50));
 };
 
-export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, onRolesChange }) {
+export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, onRolesChange, onLineupSlotChange, onLineupSlotClear }) {
   const storagePrefix = `pcbasket.tactics.board.${teamId || "default"}`;
   const rolesKey = "pcbasket.tactics.roles";
   const legacyRolesKey = "pcbasket.tactics.board.roles";
-  const startersKey = `${storagePrefix}.starters`;
   const tacticsKey = `${storagePrefix}.config`;
 
   const [starters, setStarters] = useState({ PG: null, SG: null, SF: null, PF: null, C: null });
@@ -145,6 +144,7 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
         condition: 100,
         selectedRole: savedPos.role || saved.role || getDefaultRoleForPosition(primaryPos),
         selectedDuty: savedPos.duty || saved.duty || "Apoyo",
+        lineupSlot: p.lineupSlot ?? null,
         data: p.data,
       };
     });
@@ -158,25 +158,16 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
   useEffect(() => {
     if (!rosterPlayers.length) return;
 
-    const savedStarters = readJSON(startersKey, null);
     const nextStarters = { PG: null, SG: null, SF: null, PF: null, C: null };
     const assigned = new Set();
 
-    if (savedStarters) {
-      SLOT_IDS.forEach((slot) => {
-        const saved = savedStarters[slot];
-        if (!saved) return;
-        const full = rosterPlayers.find((p) => p.id === saved.id);
-        if (full) {
-          nextStarters[slot] = {
-            ...full,
-            selectedRole: saved.selectedRole || full.selectedRole,
-            selectedDuty: saved.selectedDuty || full.selectedDuty,
-          };
-          assigned.add(full.id);
-        }
-      });
-    }
+    SLOT_IDS.forEach((slot) => {
+      const full = rosterPlayers.find((p) => p.lineupSlot === slot);
+      if (full) {
+        nextStarters[slot] = full;
+        assigned.add(full.id);
+      }
+    });
 
     const nextBench = rosterPlayers
       .filter((p) => !assigned.has(p.id))
@@ -184,7 +175,7 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
 
     setStarters(nextStarters);
     setBench(nextBench);
-  }, [rosterPlayers, startersKey]);
+  }, [rosterPlayers]);
 
   useEffect(() => {
     if (tactics) writeJSON(tacticsKey, tactics);
@@ -197,18 +188,14 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
   }, []);
 
   const saveStarters = (nextStarters) => {
-    const payload = {};
     SLOT_IDS.forEach((slot) => {
       const player = nextStarters[slot];
-      payload[slot] = player
-        ? {
-            id: player.id,
-            selectedRole: player.selectedRole,
-            selectedDuty: player.selectedDuty,
-          }
-        : null;
+      if (player) {
+        if (typeof onLineupSlotChange === "function") onLineupSlotChange(slot, player.id);
+      } else if (typeof onLineupSlotClear === "function") {
+        onLineupSlotClear(slot);
+      }
     });
-    writeJSON(startersKey, payload);
   };
 
   const savePlayerRole = (playerId, role, duty, position) => {

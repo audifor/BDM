@@ -8,6 +8,7 @@ import { deriveOrganizationPlayerValuation } from '@/domain/intelligence'
 import { serializeGameWorldV1 } from './GameWorldSaveV1'
 import { deserializeGameWorldSave, deserializeGameWorldV2, migrateGameWorldSaveV1ToV2, parseCanonicalRatingsV2, parsePlayerTendenciesV2, serializeGameWorldV2 } from './GameWorldSaveV2'
 import { ensurePlayerKnowledge } from '@/engine/world'
+import { setLineupSlot } from '@/engine/tactics/LineupEngine'
 
 const savedAt = '2032-10-01T00:00:00.000Z'
 describe('GameWorldSaveV2', () => {
@@ -24,6 +25,17 @@ describe('GameWorldSaveV2', () => {
     const world=updateGameWorld(base,{tacticalPlansByTeamId:{...base.tacticalPlansByTeamId,[team.id]:{teamId:team.id,instructions:{pace:1,shotProfile:{rim:1,midRange:0,threePoint:-1},defense:{interior:0,perimeter:0}}}},gamePlansByKey:{[`${game.id}:${team.id}`]:{gameId:game.id,teamId:team.id,tacticalOverride:{pace:-1}}}})
     const loaded=deserializeGameWorldV2(serializeGameWorldV2(world,savedAt))
     expect(loaded.tacticalPlansByTeamId).toEqual(world.tacticalPlansByTeamId);expect(loaded.gamePlansByKey).toEqual(world.gamePlansByKey)
+  })
+  it('round-trips a canonical team lineup through save/load', () => {
+    const base = createNewGame()
+    const team = Object.values(base.teams)[0]!
+    const [first, second] = team.rosterPlayerIds
+    const world = setLineupSlot(setLineupSlot(base, team.id, 'PG', first!), team.id, 'B1', second!)
+
+    const loaded = deserializeGameWorldV2(serializeGameWorldV2(world, savedAt))
+    expect(loaded.lineupsByTeamId[team.id]).toEqual(world.lineupsByTeamId[team.id])
+    expect(loaded.lineupsByTeamId[team.id]!.starters.PG).toBe(first)
+    expect(loaded.lineupsByTeamId[team.id]!.bench.B1).toBe(second)
   })
   it('migrates a V1 envelope deterministically without mutating it', () => {
     const v1 = serializeGameWorldV1(ensurePlayerKnowledge(createNewGame()), savedAt); const snapshot = JSON.stringify(v1)

@@ -63,6 +63,8 @@ export function App() {
   const declineUserCoachOffer = useGameStore((state) => state.declineUserCoachOffer)
   const setTrainingIntensity = useGameStore((state) => state.setTrainingIntensity)
   const setTrainingFocus = useGameStore((state) => state.setTrainingFocus)
+  const setLineupSlot = useGameStore((state) => state.setLineupSlot)
+  const clearLineupSlot = useGameStore((state) => state.clearLineupSlot)
   const setUserCoachLifestyle = useGameStore((state) => state.setUserCoachLifestyle)
   const respondToMedia = useGameStore((state) => state.respondToMedia)
   const skipMedia = useGameStore((state) => state.skipMedia)
@@ -171,7 +173,7 @@ export function App() {
   const unreadInboxCount = selectUnreadInboxCount(world)
   const capabilities = resolveGameCapabilities(world)
   const activeAppId = desktopWindows.find((window) => window.id === focusedWindowId)?.appId ?? null
-  const desktopActions: DesktopAppActions = { tacticalPlan, openApp: openDesktopApp, openEntity, playGame: () => startMatch(startLiveMatch(tacticalPlan)), instantResult: () => instantResult(tacticalPlan), simulateRemainingGamesToday, advanceDay, startNextSeason, releasePlayer, signFreeAgent, selectDraftProspect, executeTrade, addRecruitingTarget, removeRecruitingTarget, performRecruitingAction, makeRecruitingOffer, acceptNilOpportunity, purchaseSkill: (id) => { const result = purchaseUserCoachSkill(id); if (!result.ok) setSaveMessage(result.reason) }, purchasePerk: (id) => { const result = purchaseUserCoachPerk(id); if (!result.ok) setSaveMessage(result.reason) }, acceptOffer: acceptUserCoachOffer, declineOffer: declineUserCoachOffer, applyForJob: applyUserCoachForJob, setTacticalPlan, resetTacticalPlan, setTrainingIntensity, setTrainingFocus, setCoachLifestyle: setUserCoachLifestyle, respondToMedia, skipMedia }
+  const desktopActions: DesktopAppActions = { tacticalPlan, openApp: openDesktopApp, openEntity, playGame: () => startMatch(startLiveMatch(tacticalPlan)), instantResult: () => instantResult(tacticalPlan), simulateRemainingGamesToday, advanceDay, startNextSeason, releasePlayer, signFreeAgent, selectDraftProspect, executeTrade, addRecruitingTarget, removeRecruitingTarget, performRecruitingAction, makeRecruitingOffer, acceptNilOpportunity, purchaseSkill: (id) => { const result = purchaseUserCoachSkill(id); if (!result.ok) setSaveMessage(result.reason) }, purchasePerk: (id) => { const result = purchaseUserCoachPerk(id); if (!result.ok) setSaveMessage(result.reason) }, acceptOffer: acceptUserCoachOffer, declineOffer: declineUserCoachOffer, applyForJob: applyUserCoachForJob, setTacticalPlan, resetTacticalPlan, setTrainingIntensity, setTrainingFocus, setLineupSlot, clearLineupSlot, setCoachLifestyle: setUserCoachLifestyle, respondToMedia, skipMedia }
 
   return (
     <DesktopShell

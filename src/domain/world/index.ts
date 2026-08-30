@@ -66,6 +66,7 @@ export {
   getUnreadInboxCount,
   getNewsFeed,
   getTrainingPlanForTeam,
+  getTeamLineup,
   getTrainingSessionsForTeam,
   getLatestTrainingSession,
   getDevelopmentStimulusForPlayer,
