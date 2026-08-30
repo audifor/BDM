@@ -26,9 +26,10 @@ import type { ScheduledTrainingSession, TrainingFocus, TrainingIntensity, UserTr
 import { assignTrainingModuleToPlayer, cancelScheduledTrainingSession, createOrUpdateUserTrainingModule, deleteUserTrainingModule, scheduleTeamModuleSession, scheduleTrainingSession, setTeamTrainingPlan } from '@/engine/training'
 import { clearLineupSlot, setLineupSlot } from '@/engine/tactics/LineupEngine'
 import { getTeamLineup } from '@/domain/world'
-import type { LineupSlot, TeamRotationIntent, DefensiveMatchupAssignment, Playbook, SavedPlay } from '@/domain/tactics'
-import { updateRotationPlan, updateGamePlan } from '@/app/game/TacticalPlanning'
+import type { LineupSlot, DefensiveMatchupAssignment, Playbook, SavedPlay } from '@/domain/tactics'
+import { updateGamePlan } from '@/app/game/TacticalPlanning'
 import { deleteDesignerPlay, deleteDesignerPlaybook, saveDesignerPlay, saveDesignerPlaybook } from '@/engine/tactics/PlaybookEngine'
+import { updateRotationMinutesForTeam } from '@/engine/tactics/RotationEngine'
 import { executeEntityActionResult, type EntityActionExecution } from '@/app/entityActions/EntityActionExecutor'
 import type { CommandResult } from '@/app/entityActions/EntityCommand'
 import { selectDraftProspect } from '@/app/draft'
@@ -166,9 +167,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const world = requireWorld(get().world)
     const team = getUserTeam(world)
     if (team === undefined) return
-    const existing = world.rotationPlansByTeamId[team.id]
-    const plan: TeamRotationIntent = { teamId: team.id, instructions: existing?.instructions ?? [], minutesByPeriod }
-    set({ world: updateRotationPlan(world, plan) })
+    set({ world: updateRotationMinutesForTeam(world, team.id, minutesByPeriod) })
   },
   updateGamePlanMatchups: (matchups) => {
     const world = requireWorld(get().world)

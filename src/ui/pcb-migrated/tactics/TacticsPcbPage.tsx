@@ -6,7 +6,7 @@ import type { Player } from '@/domain/player'
 import { legacyRatingSignals } from '@/domain/player'
 import type { PlayerId } from '@/domain/ids'
 import { createEntityId } from '@/domain/ids'
-import { getLineupAssignments, getLineupSlotForPlayer, LINEUP_SLOTS, type DefensiveMatchupAssignment, type LineupSlot, type Playbook, type SavedPlay, type TeamLineup, type TeamRotationIntent } from '@/domain/tactics'
+import { getLineupAssignments, getLineupSlotForPlayer, isValidRotationMinutes, LINEUP_SLOTS, PLAYERS_ON_COURT, type DefensiveMatchupAssignment, type LineupSlot, type Playbook, type SavedPlay, type TeamLineup, type TeamRotationIntent } from '@/domain/tactics'
 import type { MatchTacticalPlan, TacticalLevel } from '@/engine/match'
 import { INITIAL_FRAME } from './TacticsMigrationRepository'
 import PcbTacticsCreator from './PcbTacticsCreator'
@@ -216,20 +216,35 @@ function periodLabels(periodCount: number): readonly string[] {
   return [...Array.from({ length: periodCount }, (_, index) => `P${index + 1}`), 'OT']
 }
 
-const PLAYERS_ON_COURT = 5
-
 type RotationPresetId = 'balanced' | 'short' | 'deep' | 'starters' | 'bench'
 const rotationPresetLabels: Record<RotationPresetId, string> = { balanced: 'Equilibrada', short: 'Rotación corta', deep: 'Rotación profunda', starters: 'Titulares', bench: 'Banquillo' }
 
-/** Fraction of a regulation period's minutes given to each starter, per preset - the rest is split evenly across the bench. */
-const STARTER_SHARE_BY_PRESET: Record<Exclude<RotationPresetId, 'starters' | 'bench'>, number> = { balanced: 0.8, short: 0.75, deep: 0.6 }
+/** Fraction of a regulation period's total player-minutes (periodMinutes*5) given to the starter group as a whole, per preset - the rest goes to the bench group. */
+const STARTER_GROUP_SHARE_BY_PRESET: Record<Exclude<RotationPresetId, 'starters' | 'bench'>, number> = { balanced: 0.8, short: 0.9, deep: 0.6 }
 
 /**
- * Deterministic, data-driven rotation presets (Issue #9 blocker 2). Each preset is a pure
+ * Deterministic largest-remainder distribution: splits `totalMinutes` (a non-negative integer)
+ * across `recipients.length` players as evenly as possible, so the returned values sum to EXACTLY
+ * `totalMinutes` — never off by a rounding error. Each recipient first gets floor(share), then the
+ * leftover whole minutes go one-by-one, in recipient order, to whichever remaining recipients have
+ * the largest fractional remainder (ties broken by recipient order) — the standard "largest
+ * remainder method" apportionment, applied here to rotation minutes (Issue #9 blocker 1).
+ */
+function distributeMinutesExactly(totalMinutes: number, recipientCount: number): readonly number[] {
+  if (recipientCount === 0) return []
+  const share = totalMinutes / recipientCount
+  const base = Math.floor(share)
+  const remainder = totalMinutes - base * recipientCount
+  return Array.from({ length: recipientCount }, (_, index) => base + (index < remainder ? 1 : 0))
+}
+
+/**
+ * Deterministic, data-driven rotation presets (Issue #9 blocker 1). Each preset is a pure
  * function of the actual active-12 squad and the real resolved period length/count - never a
- * fixed 8/8/8/8 constant divorced from competition rules. Whenever there is at least one starter
- * and one bench player, every regulation period sums to exactly periodMinutes*5; OT always starts
- * unallocated (0) since it is conditional on the game actually reaching overtime.
+ * fixed 8/8/8/8 constant divorced from competition rules. Every preset's regulation-period columns
+ * sum to EXACTLY periodMinutes*5 among the active squad (via distributeMinutesExactly), whenever
+ * there is at least one active player; OT always starts unallocated (0) since it is conditional on
+ * the game actually reaching overtime.
  */
 function buildRotationPreset(
   presetId: RotationPresetId,
@@ -239,23 +254,25 @@ function buildRotationPreset(
 ): Record<string, number[]> {
   const starters = squad.filter(({ slot }) => isLineupStarter(slot)).map(({ player }) => player)
   const bench = squad.filter(({ slot }) => !isLineupStarter(slot)).map(({ player }) => player)
+  const totalPlayerMinutes = periodMinutes * PLAYERS_ON_COURT
   const rowFor = (minutesPerPeriod: number) => [...Array.from({ length: periodCount }, () => minutesPerPeriod), 0]
+  const assign = (group: readonly Player[], minutesPerPlayer: readonly number[]): Record<string, number[]> => Object.fromEntries(group.map((player, index) => [player.id, rowFor(minutesPerPlayer[index] ?? 0)]))
 
   if (presetId === 'starters') {
-    // Starters play the full period, bench rests - an honest "starters play the whole game" preset.
-    return Object.fromEntries(squad.map(({ slot, player }) => [player.id, rowFor(isLineupStarter(slot) ? periodMinutes : 0)]))
+    // All available player-minutes go to the (up to 5) starters, evenly; bench rests.
+    const active = starters.slice(0, PLAYERS_ON_COURT)
+    return { ...assign(bench, bench.map(() => 0)), ...assign(active, distributeMinutesExactly(totalPlayerMinutes, active.length)) }
   }
   if (presetId === 'bench') {
-    // Inverts starters: up to 5 bench players play full minutes, starters rest.
-    const activeBenchIds = new Set(bench.slice(0, PLAYERS_ON_COURT).map((player) => player.id))
-    return Object.fromEntries(squad.map(({ player }) => [player.id, rowFor(activeBenchIds.has(player.id) ? periodMinutes : 0)]))
+    // Inverts starters: all player-minutes go to (up to 5) bench players, evenly; starters rest.
+    const active = bench.slice(0, PLAYERS_ON_COURT)
+    return { ...assign(starters, starters.map(() => 0)), ...assign(active, distributeMinutesExactly(totalPlayerMinutes, active.length)) }
   }
-  // balanced/short/deep: starters get a preset-specific majority share, bench splits the rest evenly.
-  const starterShare = STARTER_SHARE_BY_PRESET[presetId]
-  const starterMinutes = Math.round(periodMinutes * starterShare)
-  const totalBenchMinutes = Math.max(0, periodMinutes * PLAYERS_ON_COURT - starterMinutes * starters.length)
-  const benchMinutes = bench.length === 0 ? 0 : Math.round(totalBenchMinutes / bench.length)
-  return Object.fromEntries(squad.map(({ slot, player }) => [player.id, rowFor(isLineupStarter(slot) ? starterMinutes : benchMinutes)]))
+  // balanced/short/deep: the starter group gets a preset-specific exact share of total player-minutes, bench gets the exact remainder.
+  const starterGroupShare = STARTER_GROUP_SHARE_BY_PRESET[presetId]
+  const starterGroupMinutes = starters.length === 0 ? 0 : Math.round(totalPlayerMinutes * starterGroupShare)
+  const benchGroupMinutes = totalPlayerMinutes - starterGroupMinutes
+  return { ...assign(starters, distributeMinutesExactly(starterGroupMinutes, starters.length)), ...assign(bench, distributeMinutesExactly(benchGroupMinutes, bench.length)) }
 }
 
 /** Stable identity of the active-12 squad, for reconciling local editing state when the canonical lineup changes. */
@@ -308,13 +325,20 @@ function Rotations({
   const update = (id: string, period: number, value: number) => { setSaved(false); setMinutes((current) => ({ ...current, [id]: (current[id] ?? Array.from({ length: columns.length }, () => 0)).map((minute, index) => index === period ? Math.max(0, Math.min(maxForColumn(index), value)) : minute) })) }
   const applyPreset = (presetId: RotationPresetId) => { setSaved(false); setMinutes(buildRotationPreset(presetId, squad, periodCount, periodMinutes)) }
   const resetMinutes = () => { setSaved(false); setMinutes(Object.fromEntries(squad.map(({ player }) => [player.id, Array.from({ length: columns.length }, () => 0)]))) }
-  const save = () => { onUpdateRotationMinutes?.(minutes as Record<PlayerId, readonly number[]>); setSaved(true) }
+  const periodMinutesByColumn = [...Array.from({ length: periodCount }, () => periodMinutes), overtimeMinutes]
+  const activePlayerIds = squad.map(({ player }) => player.id)
+  const isValid = isValidRotationMinutes(minutes as Record<PlayerId, readonly number[]>, activePlayerIds, periodMinutesByColumn)
+  // Canonical validation (Issue #9 blocker 2): the exact same isValidRotationMinutes rule governs
+  // both this UI warning AND the write boundary (RotationEngine.updateRotationMinutesForTeam) -
+  // an invalid allocation is refused here before ever reaching onUpdateRotationMinutes, and would
+  // be rejected again at the store/domain boundary even if this guard were bypassed.
+  const save = () => { if (!isValid) return; onUpdateRotationMinutes?.(minutes as Record<PlayerId, readonly number[]>); setSaved(true) }
   const totalForPeriod = (period: number) => squad.reduce((sum, { player }) => sum + (minutes[player.id]?.[period] ?? 0), 0)
   const invalidPeriods = Array.from({ length: periodCount }, (_, period) => period).filter((period) => totalForPeriod(period) !== periodMinutes * PLAYERS_ON_COURT)
   return <main className="pcb-tactics__rotation"><header><div><h2>Matriz de Rotación</h2><small>Configuración temporal de sesión</small></div><label className="pcb-tactics__control">Preset<select aria-label="Preset de rotación" onChange={(event) => applyPreset(event.target.value as RotationPresetId)} value="">
     <option disabled value="">Elegir preset...</option>
     {(Object.keys(rotationPresetLabels) as RotationPresetId[]).map((id) => <option key={id} value={id}>{rotationPresetLabels[id]}</option>)}
-  </select></label><button onClick={resetMinutes} type="button">Reset</button><button className="is-primary" onClick={save} type="button">Guardar</button>{saved && invalidPeriods.length === 0 && <em>Guardado</em>}</header>{invalidPeriods.length > 0 && <p className="pcb-tactics__rotation-warning" role="alert">Minutos totales inválidos en {invalidPeriods.map((period) => columns[period]).join(', ')}: cada periodo debe sumar {periodMinutes * PLAYERS_ON_COURT} minutos entre los 5 jugadores en pista.</p>}<div className="pcb-tactics__rotation-grid"><div className="is-head" style={rowGridStyle}><span>Jugador</span>{columns.map((column) => <span key={column}>{column}</span>)}<span>Total</span></div>{squad.length === 0 ? <p>No hay jugadores en la plantilla del usuario.</p> : squad.map(({ player }) => { const row = minutes[player.id] ?? Array.from({ length: columns.length }, () => 0); return <div key={player.id} style={rowGridStyle}><span><b>{player.basketball.primaryPosition}</b> {player.firstName} {player.lastName}</span>{row.map((value, period) => <span key={period}><input max={maxForColumn(period)} min="0" onChange={(event) => update(player.id, period, Number(event.target.value))} type="range" value={value} /><input max={maxForColumn(period)} min="0" onChange={(event) => update(player.id, period, Number(event.target.value))} type="number" value={value} /></span>)}<strong>{row.reduce((sum, value) => sum + value, 0)}</strong></div> })}</div></main>
+  </select></label><button onClick={resetMinutes} type="button">Reset</button><button className="is-primary" disabled={!isValid} onClick={save} type="button">Guardar</button>{saved && isValid && <em>Guardado</em>}</header>{invalidPeriods.length > 0 && <p className="pcb-tactics__rotation-warning" role="alert">Minutos totales inválidos en {invalidPeriods.map((period) => columns[period]).join(', ')}: cada periodo debe sumar {periodMinutes * PLAYERS_ON_COURT} minutos entre los 5 jugadores en pista.</p>}<div className="pcb-tactics__rotation-grid"><div className="is-head" style={rowGridStyle}><span>Jugador</span>{columns.map((column) => <span key={column}>{column}</span>)}<span>Total</span></div>{squad.length === 0 ? <p>No hay jugadores en la plantilla del usuario.</p> : squad.map(({ player }) => { const row = minutes[player.id] ?? Array.from({ length: columns.length }, () => 0); return <div key={player.id} style={rowGridStyle}><span><b>{player.basketball.primaryPosition}</b> {player.firstName} {player.lastName}</span>{row.map((value, period) => <span key={period}><input max={maxForColumn(period)} min="0" onChange={(event) => update(player.id, period, Number(event.target.value))} type="range" value={value} /><input max={maxForColumn(period)} min="0" onChange={(event) => update(player.id, period, Number(event.target.value))} type="number" value={value} /></span>)}<strong>{row.reduce((sum, value) => sum + value, 0)}</strong></div> })}</div></main>
 }
 
 /**
@@ -375,7 +399,18 @@ function MatchPlan({
   const [rotation, setRotation] = useState('Estándar')
   const [scoutingOpen, setScoutingOpen] = useState(false)
   const [savedKey, setSavedKey] = useState<string | undefined>(undefined)
-  const activePlan = plan ?? DEFAULT_TACTICAL_PLAN
+  // Precedence (Issue #9 blocker 4): current unsaved editing state (`plan`, once the user has
+  // touched a control this mount) → persisted game-specific TeamGamePlan.tacticalOverride →
+  // team/base/default plan. `rehydratedKey` tracks which game's persisted override has already
+  // been applied as the starting point, so re-rendering with the same game never clobbers a
+  // subsequent in-session edit, but reopening Tactics for a game (or switching to a different
+  // upcoming game) does rehydrate from what was actually saved.
+  const [rehydratedKey, setRehydratedKey] = useState<string | undefined>(undefined)
+  if (gameKey !== rehydratedKey) {
+    setRehydratedKey(gameKey)
+    if (persistedTacticalOverride !== undefined) onChange?.(persistedTacticalOverride)
+  }
+  const activePlan = plan ?? persistedTacticalOverride ?? DEFAULT_TACTICAL_PLAN
   const nextGame = world === undefined ? undefined : getNextUserGame(world)
   const userTeam = world === undefined ? undefined : getUserTeam(world)
   const opponentTeam = world === undefined || nextGame === undefined || userTeam === undefined
