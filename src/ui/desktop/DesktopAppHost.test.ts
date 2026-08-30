@@ -35,11 +35,15 @@ describe('DesktopAppHost', () => {
     }
   })
 
-  it('keeps the Plantilla workspace with its analysis and mentoring sections', () => {
-    const markup = renderToStaticMarkup(createElement(DesktopAppHost, { appId: 'squad', world: createNewGame(), actions }))
-    expect(markup).toContain('Análisis + Dinámicas')
-    expect(markup).toContain('Mentoring')
-    expect(markup).toContain('Buscar jugador')
+  it('keeps Plantilla focused on the roster while analysis and mentoring remain separate apps', () => {
+    const world = createNewGame()
+    const roster = renderToStaticMarkup(createElement(DesktopAppHost, { appId: 'squad', world, actions }))
+    const analysis = renderToStaticMarkup(createElement(DesktopAppHost, { appId: 'analysis', world, actions }))
+    const mentoring = renderToStaticMarkup(createElement(DesktopAppHost, { appId: 'mentoring', world, actions }))
+    expect(roster).toContain('Buscar jugador')
+    expect(roster).not.toContain('Análisis + Dinámicas')
+    expect(analysis).toContain('Depth Chart')
+    expect(mentoring).toContain('Mentoring')
   })
 
   it('keeps Legacy in Perfil and removes its separate launcher alongside Liga', () => {
