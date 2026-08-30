@@ -12,6 +12,7 @@ import { INITIAL_FRAME } from './TacticsMigrationRepository'
 import PcbTacticsCreator from './PcbTacticsCreator'
 import PcbTacticsBoard from './PcbTacticsBoard'
 import DraggableSubnav from '../club/components/DraggableSubnav'
+import { useEntityContextMenu } from '@/ui/entityContextMenu/EntityContextMenuProvider'
 import './TacticsPcbPage.css'
 
 type Tab = 'board' | 'designer' | 'matchups' | 'rotations' | 'plays' | 'match'
@@ -122,6 +123,7 @@ function Matchups({
   readonly gameKey?: string
   readonly onUpdateMatchups?: (matchups: readonly DefensiveMatchupAssignment[]) => void
 }) {
+  const playerMenu = useEntityContextMenu()
   const [query, setQuery] = useState('')
   const ourStarters = activeSquad(ourLineup, ourRoster).filter(({ slot }) => isLineupStarter(slot)).map(({ player }) => player)
   const [assignments, setAssignments] = useState<Record<string, string>>(() => Object.fromEntries(persistedMatchups.map((entry) => [entry.opponentPlayerId, entry.ourPlayerId])))
@@ -167,7 +169,7 @@ function Matchups({
             <tr><td colSpan={3}>Sin jugadores rivales disponibles.</td></tr>
           ) : (
             filteredOpponents.map((opponent) => (
-              <tr key={opponent.id}>
+              <tr key={opponent.id} onContextMenu={(event) => playerMenu.open({ type: 'player', id: opponent.id }, event, { surface: 'matchups' })}>
                 <td>{opponent.basketball.primaryPosition}</td>
                 <td>{opponent.firstName} {opponent.lastName}</td>
                 <td>

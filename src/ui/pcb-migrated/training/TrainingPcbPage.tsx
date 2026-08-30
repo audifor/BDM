@@ -13,6 +13,7 @@ import { BASKETBALL_RATING_KEYS, type BasketballRatingKey, type Player } from "@
 import type { Team } from "@/domain/team";
 import type { TeamId, PlayerId } from "@/domain/ids";
 import { createEntityId } from "@/domain/ids";
+import { useEntityContextMenu } from "@/ui/entityContextMenu/EntityContextMenuProvider";
 import { TRAINING_CATALOG, trainingLoad, type DailyLoadStatus, type ScheduledTrainingSession, type TrainingCategory, type TrainingFocus, type TrainingIntensity as DomainTrainingIntensity, type TrainingDefinition, type TrainingScope, type UserTrainingModule } from "@/domain/training";
 import { ATTRIBUTE_LABELS } from "@/ui/attributeLabels";
 import { selectLatestUserTrainingSession, selectUserTeamScheduledSessions, selectUserTrainingModules, selectUserTrainingPlan } from "@/stores/gameStore";
@@ -608,6 +609,7 @@ function PersonalTraining({
   readonly userModules: readonly UserTrainingModule[];
   readonly onAssignModule?: (input: TrainingModuleAssignmentInput) => void;
 }) {
+  const playerMenu = useEntityContextMenu();
   const columns = useResizableTrainingColumns([220, 88, 180, 150, 180, 160]);
   const labels = ["Jugador", "Pos", "Plan actual", "Módulo asignado", "Objetivo", "Asignar módulo"];
   const players = world !== undefined && team !== undefined ? getTeamRoster(world, team.id) : [];
@@ -655,7 +657,7 @@ function PersonalTraining({
             const assignedDefinition = assignedSession === undefined ? undefined : TRAINING_CATALOG.find((entry) => entry.id === assignedSession.definitionId);
             const selectedModuleId = selection[player.id] ?? assignableModules[0]?.id ?? "";
             return (
-              <div key={player.id} style={columns.style}>
+              <div key={player.id} onContextMenu={(event) => playerMenu.open({ type: "player", id: player.id }, event, { surface: "training" })} style={columns.style}>
                 <b>{playerName(player)}</b>
                 <span>{player.basketball.primaryPosition}</span>
                 <span>{plan === undefined ? "—" : FOCUS_LABELS[plan.focus]}</span>
