@@ -56,4 +56,18 @@ describe('LiveMatchController', () => {
     expect(after.events.at(-1)).toMatchObject({ type: 'substitution', source: 'manual', playerOutId, playerInId, clockSecondsRemaining: before.events.at(-1)!.clockSecondsRemaining })
     expect(after.events).toHaveLength(before.events.length + 1)
   })
+
+  it('ignores a stale manual substitution request after the lineup has already changed', () => {
+    const world = createNewGame()
+    const controller = createLiveUserMatch(world)
+    const userTeam = getUserTeam(world)!
+    const before = controller.snapshot()
+    const playerOutId = before.lineups.home.includes(userTeam.rosterPlayerIds[0]!) ? userTeam.rosterPlayerIds[0]! : before.lineups.away[0]!
+    const playerInId = userTeam.rosterPlayerIds.find((playerId) => !before.lineups.home.includes(playerId) && !before.lineups.away.includes(playerId))!
+    const afterValid = controller.applyManualSubstitutions(userTeam.id, [{ playerOutId, playerInId }])
+    const afterStale = controller.applyManualSubstitutions(userTeam.id, [{ playerOutId, playerInId }])
+
+    expect(afterStale.events).toHaveLength(afterValid.events.length)
+    expect(afterStale.events.at(-1)).toEqual(afterValid.events.at(-1))
+  })
 })
