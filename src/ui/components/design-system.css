@@ -8,6 +8,79 @@
 .bdm-dialog-backdrop { position:fixed; z-index:var(--z-modal); inset:0; display:grid; place-items:center; padding:24px; background:var(--bdm-background-overlay); }.bdm-dialog { width:min(620px,100%); max-height:calc(100vh - 48px); overflow:auto; border:1px solid var(--bdm-border-default); border-radius:var(--radius-medium); background:var(--bdm-surface-default); box-shadow:var(--shadow-floating-window); padding:var(--space-5); }.bdm-dialog header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:var(--space-4); }.bdm-dialog h2 { margin:0; }.bdm-empty-state { display:grid; justify-items:center; gap:8px; padding:var(--space-6); color:var(--bdm-text-secondary); text-align:center; }.bdm-empty-state h2,.bdm-empty-state p { margin:0; }.bdm-feedback { border-left:3px solid var(--bdm-status-info); background:rgb(101 183 219 / 10%); color:var(--bdm-text-secondary); padding:10px 12px; }.bdm-feedback--success { border-color:var(--bdm-status-success); }.bdm-feedback--warning { border-color:var(--bdm-status-warning); }.bdm-feedback--danger { border-color:var(--bdm-status-danger); }
 :where(.bdm-button,.bdm-icon-action,.bdm-input,.bdm-select,.bdm-select__option,.bdm-chip,.bdm-tabs__tab):focus-visible { outline:2px solid var(--color-focus); outline-offset:2px; } @media (prefers-reduced-motion: reduce) { .bdm-button,.bdm-icon-action,.bdm-select,.bdm-select__option,.bdm-chip,.bdm-tooltip__content { transition:none; } }
 
+/* Canonical BDM OS section navigation, including Perfil. */
+.bdm-app-frame__navigation .bdm-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid #263645;
+  border-radius: 8px;
+  background: #151c25;
+}
+
+.bdm-app-frame__navigation .bdm-tabs__tab {
+  min-height: 0;
+  border: 1px solid #2a3b4d;
+  border-radius: 6px;
+  background: #101822;
+  color: #9ab3c9;
+  padding: 6px 12px;
+  font: 700 12px/1 Inter, var(--font-ui, Arial, sans-serif);
+  letter-spacing: 0;
+}
+
+.bdm-app-frame__navigation .bdm-tabs__tab:hover,
+.bdm-app-frame__navigation .bdm-tabs__tab[aria-selected="true"] {
+  border-color: #ff7b39;
+  background: #2a1b17;
+  color: #ff9b69;
+}
+
+.bdm-tabs--canonical {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border: 1px solid #263645;
+  border-radius: 8px;
+  background: #151c25;
+}
+
+.bdm-tabs--canonical .bdm-tabs__tab {
+  min-height: 0;
+  border: 1px solid #2a3b4d;
+  border-radius: 6px;
+  background: #101822;
+  color: #9ab3c9;
+  padding: 6px 12px;
+  font: 700 12px/1 Inter, var(--font-ui, Arial, sans-serif);
+  letter-spacing: 0;
+}
+
+.bdm-tabs--canonical .bdm-tabs__tab:hover,
+.bdm-tabs--canonical .bdm-tabs__tab[aria-selected="true"] {
+  border-color: #ff7b39;
+  background: #2a1b17;
+  color: #ff9b69;
+}
+
+/* Canonical table surface: matched to Entrenamiento > Individual. */
+.bdm-data-table,
+.table-wrap,
+.pcb-club .table,
+.pcb-medical .table,
+.pcb-competition .table,
+.pcb-training__table,
+.pcb-tactics__table-page,
+.pcb-tactics__rotation-grid {
+  background: rgba(15, 23, 42, 0.7) !important;
+}
+
 /* OS 3.0 application grammar: fixed chrome, localized workspaces, dense tables. */
 .bdm-app-frame { display:grid; height:100%; min-height:0; grid-template-rows:auto auto auto minmax(0,1fr); gap:var(--space-3); }
 .bdm-app-frame__header { padding-bottom:var(--space-2); border-bottom:1px solid var(--bdm-border-subtle); }.bdm-app-header { display:flex; align-items:end; justify-content:space-between; gap:var(--space-4); }.bdm-app-header h1,.bdm-app-header p { margin:0; }.bdm-app-header h1 { font-size:1.5rem; font-weight:var(--font-weight-semibold); letter-spacing:-.03em; }.bdm-app-header__meta { color:var(--bdm-text-secondary); font-size:var(--font-size-data); text-align:right; }

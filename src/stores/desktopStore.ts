@@ -30,6 +30,7 @@ interface DesktopStore {
   closeLauncher(): void
   reorderLauncher(movedId: string, targetId: string): void
   pinDockApp(appId: string): void
+  unpinDockApp(appId: string): void
 }
 
 const withZIndexes = (windows: readonly DesktopWindowState[]) => windows.map((window, index) => ({ ...window, zIndex: 10 + index }))
@@ -68,4 +69,5 @@ export const useDesktopStore = create<DesktopStore>()(persist((set) => ({
   closeLauncher: () => set({ launcherOpen: false }),
   reorderLauncher: (movedId, targetId) => set((state) => ({ launcherOrder: reorderLauncherApps(resolveLauncherOrder(state.launcherOrder), movedId, targetId) })),
   pinDockApp: (appId) => set((state) => { const app = getDesktopApp(appId); if (app === undefined || app.id === 'bdm' || app.availability !== 'available' || state.dockPinnedAppIds.includes(appId)) return state; return { dockPinnedAppIds: [...state.dockPinnedAppIds, appId] } }),
+  unpinDockApp: (appId) => set((state) => ({ dockPinnedAppIds: state.dockPinnedAppIds.filter((id) => id !== appId) })),
 }), { name: 'bdm.launcher-order.v1', partialize: (state) => ({ launcherOrder: state.launcherOrder, dockPinnedAppIds: state.dockPinnedAppIds }) }))

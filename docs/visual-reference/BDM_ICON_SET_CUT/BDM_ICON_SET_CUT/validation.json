@@ -1,0 +1,2776 @@
+{
+  "source": "sprite_de_iconos_deportivos_neón.png",
+  "icons": [
+    {
+      "id": 1,
+      "name": "01_home",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            4,
+            16,
+            15
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            5,
+            24,
+            21
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            8,
+            32,
+            31
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            12,
+            51,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 2,
+      "name": "02_team",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            5,
+            15,
+            14
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            7,
+            22,
+            20
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            10,
+            32,
+            29
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            10,
+            15,
+            50,
+            46
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 3,
+      "name": "03_calendar",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            3,
+            15,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            5,
+            21,
+            24
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            8,
+            7,
+            31,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            11,
+            51,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 4,
+      "name": "04_court",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            4,
+            16,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            5,
+            24,
+            24
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            8,
+            32,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            12,
+            51,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 5,
+      "name": "05_basketball",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            4,
+            17,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            5,
+            22,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            8,
+            31,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            10,
+            11,
+            51,
+            52
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 6,
+      "name": "06_news",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            4,
+            15,
+            15
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            6,
+            21,
+            21
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            8,
+            31,
+            31
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            13,
+            50,
+            49
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 7,
+      "name": "07_messages",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            5,
+            16,
+            14
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            7,
+            24,
+            20
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            8,
+            11,
+            32,
+            29
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            17,
+            52,
+            46
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 8,
+      "name": "08_search",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            3,
+            16,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            5,
+            22,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            7,
+            32,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            11,
+            50,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 9,
+      "name": "09_settings",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            3,
+            16,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            5,
+            24,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            7,
+            32,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            10,
+            51,
+            52
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 10,
+      "name": "10_security_shield",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            3,
+            15,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            6,
+            5,
+            21,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            9,
+            7,
+            30,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            13,
+            11,
+            49,
+            50
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 11,
+      "name": "11_coach",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            3,
+            15,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            6,
+            3,
+            21,
+            24
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            9,
+            7,
+            30,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            15,
+            10,
+            47,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 12,
+      "name": "12_staff",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            5,
+            16,
+            14
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            7,
+            22,
+            20
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            10,
+            32,
+            29
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            16,
+            50,
+            46
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 13,
+      "name": "13_tactics",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            3,
+            15,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            6,
+            5,
+            20,
+            24
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            9,
+            7,
+            29,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            15,
+            12,
+            47,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 14,
+      "name": "14_medical",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            4,
+            16,
+            15
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            5,
+            22,
+            21
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            8,
+            32,
+            31
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            10,
+            12,
+            51,
+            49
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 15,
+      "name": "15_competition_trophy",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            4,
+            16,
+            15
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            6,
+            22,
+            21
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            8,
+            32,
+            31
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            10,
+            11,
+            52,
+            49
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 16,
+      "name": "16_jersey_star",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            3,
+            15,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            5,
+            21,
+            24
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            9,
+            7,
+            30,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            13,
+            11,
+            48,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 17,
+      "name": "17_team_strategy",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            4,
+            16,
+            15
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            6,
+            22,
+            21
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            8,
+            32,
+            31
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            13,
+            51,
+            49
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 18,
+      "name": "18_compliance_shield",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            3,
+            15,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            6,
+            5,
+            21,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            9,
+            7,
+            30,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            14,
+            11,
+            48,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 19,
+      "name": "19_id_card",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            4,
+            16,
+            14
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            7,
+            24,
+            20
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            10,
+            32,
+            29
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            15,
+            51,
+            46
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 20,
+      "name": "20_finance_institution",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            3,
+            16,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            5,
+            22,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            7,
+            32,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            11,
+            51,
+            50
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 21,
+      "name": "21_market_target",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            3,
+            15,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            5,
+            22,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            7,
+            31,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            12,
+            11,
+            52,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 22,
+      "name": "22_marketplace",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            4,
+            16,
+            15
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            6,
+            22,
+            21
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            8,
+            32,
+            31
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            13,
+            51,
+            49
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 23,
+      "name": "23_handshake",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            5,
+            16,
+            14
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            7,
+            22,
+            20
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            11,
+            32,
+            28
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            17,
+            51,
+            45
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 24,
+      "name": "24_contract",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            3,
+            15,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            3,
+            22,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            8,
+            7,
+            31,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            11,
+            50,
+            52
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 25,
+      "name": "25_money_coin",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            3,
+            17,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            3,
+            22,
+            24
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            7,
+            32,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            10,
+            11,
+            52,
+            52
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 26,
+      "name": "26_growth_chart",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            3,
+            15,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            3,
+            22,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            8,
+            7,
+            31,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            12,
+            11,
+            51,
+            52
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 27,
+      "name": "27_pie_chart",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            3,
+            17,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            5,
+            22,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            7,
+            31,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            10,
+            10,
+            51,
+            52
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 28,
+      "name": "28_wallet",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            3,
+            16,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            5,
+            22,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            7,
+            32,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            12,
+            51,
+            50
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 29,
+      "name": "29_money_bag",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            3,
+            14,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            5,
+            20,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            10,
+            7,
+            29,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            16,
+            11,
+            46,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 30,
+      "name": "30_piggy_bank",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            3,
+            16,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            3,
+            22,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            7,
+            31,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            12,
+            11,
+            50,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 31,
+      "name": "31_club_shield",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            3,
+            15,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            5,
+            21,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            9,
+            7,
+            30,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            13,
+            12,
+            48,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 32,
+      "name": "32_workflow",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            2,
+            3,
+            16,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            6,
+            5,
+            24,
+            24
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            8,
+            7,
+            32,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            13,
+            11,
+            51,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 33,
+      "name": "33_podium",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            4,
+            15,
+            17
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            6,
+            22,
+            21
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            8,
+            31,
+            31
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            13,
+            51,
+            48
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 34,
+      "name": "34_medal",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            3,
+            14,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            5,
+            19,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            10,
+            7,
+            28,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            16,
+            10,
+            45,
+            52
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 35,
+      "name": "35_rankings",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            4,
+            15,
+            15
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            6,
+            5,
+            21,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            7,
+            31,
+            31
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            12,
+            12,
+            50,
+            50
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 36,
+      "name": "36_world_basketball",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            4,
+            15,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            5,
+            21,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            8,
+            7,
+            31,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            12,
+            12,
+            49,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 37,
+      "name": "37_scouting_binoculars",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            4,
+            15,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            6,
+            5,
+            21,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            9,
+            8,
+            30,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            13,
+            12,
+            49,
+            52
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 38,
+      "name": "38_report",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            4,
+            15,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            5,
+            21,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            10,
+            8,
+            30,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            14,
+            11,
+            47,
+            50
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 39,
+      "name": "39_flag",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            3,
+            15,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            6,
+            5,
+            21,
+            24
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            8,
+            7,
+            30,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            13,
+            12,
+            48,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 40,
+      "name": "40_crown",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            4,
+            16,
+            15
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            6,
+            24,
+            21
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            9,
+            32,
+            30
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            14,
+            51,
+            48
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 41,
+      "name": "41_profile_badge",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            3,
+            14,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            8,
+            5,
+            19,
+            24
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            7,
+            28,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            17,
+            11,
+            44,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 42,
+      "name": "42_college",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            5,
+            16,
+            14
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            7,
+            22,
+            20
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            10,
+            32,
+            29
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            16,
+            51,
+            46
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 43,
+      "name": "43_recruiting_handshake",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            5,
+            16,
+            14
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            7,
+            22,
+            20
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            11,
+            32,
+            28
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            17,
+            51,
+            45
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 44,
+      "name": "44_college_program",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            4,
+            15,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            6,
+            5,
+            22,
+            24
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            8,
+            8,
+            33,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            11,
+            50,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 45,
+      "name": "45_recruit_add",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            4,
+            16,
+            14
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            7,
+            22,
+            20
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            10,
+            32,
+            29
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            12,
+            15,
+            50,
+            46
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 46,
+      "name": "46_trade",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            4,
+            16,
+            15
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            6,
+            22,
+            21
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            8,
+            32,
+            31
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            12,
+            51,
+            49
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 47,
+      "name": "47_eligibility_document",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            3,
+            15,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            3,
+            22,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            8,
+            7,
+            31,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            12,
+            11,
+            50,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 48,
+      "name": "48_scout",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            5,
+            16,
+            15
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            7,
+            24,
+            21
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            10,
+            32,
+            30
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            15,
+            51,
+            48
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 49,
+      "name": "49_nil",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            3,
+            15,
+            17
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            5,
+            22,
+            21
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            8,
+            7,
+            31,
+            31
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            12,
+            11,
+            50,
+            49
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 50,
+      "name": "50_media",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            4,
+            16,
+            15
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            5,
+            24,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            8,
+            32,
+            31
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            12,
+            51,
+            50
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 51,
+      "name": "51_training",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            6,
+            16,
+            13
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            9,
+            22,
+            18
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            13,
+            32,
+            26
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            20,
+            50,
+            42
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 52,
+      "name": "52_development",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            4,
+            16,
+            15
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            6,
+            24,
+            21
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            8,
+            32,
+            30
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            13,
+            52,
+            48
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 53,
+      "name": "53_arena",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            5,
+            16,
+            14
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            7,
+            22,
+            20
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            10,
+            32,
+            29
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            14,
+            52,
+            47
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 54,
+      "name": "54_team_shield",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            3,
+            17,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            6,
+            5,
+            21,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            9,
+            7,
+            31,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            13,
+            12,
+            50,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 55,
+      "name": "55_boosters",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            4,
+            16,
+            15
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            6,
+            22,
+            21
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            9,
+            32,
+            30
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            10,
+            14,
+            52,
+            48
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 56,
+      "name": "56_ticket",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            4,
+            16,
+            15
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            6,
+            22,
+            21
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            9,
+            32,
+            30
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            14,
+            51,
+            48
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 57,
+      "name": "57_partnership",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            3,
+            16,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            5,
+            22,
+            24
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            7,
+            32,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            11,
+            11,
+            50,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 58,
+      "name": "58_analytics",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            3,
+            3,
+            16,
+            17
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            5,
+            5,
+            24,
+            21
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            7,
+            32,
+            31
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            10,
+            10,
+            52,
+            49
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 59,
+      "name": "59_star_report",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            4,
+            14,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            7,
+            5,
+            20,
+            24
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            10,
+            8,
+            29,
+            32
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            15,
+            12,
+            48,
+            51
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    },
+    {
+      "id": 60,
+      "name": "60_database_upload",
+      "sizes": {
+        "20": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            4,
+            3,
+            16,
+            16
+          ],
+          "passes_no_clipping": true
+        },
+        "28": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            6,
+            5,
+            22,
+            22
+          ],
+          "passes_no_clipping": true
+        },
+        "40": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            8,
+            7,
+            32,
+            31
+          ],
+          "passes_no_clipping": true
+        },
+        "64": {
+          "edge_alpha_max": 0,
+          "bbox": [
+            12,
+            10,
+            51,
+            52
+          ],
+          "passes_no_clipping": true
+        }
+      }
+    }
+  ],
+  "summary": {
+    "icon_count": 60,
+    "production_sizes": [
+      20,
+      28,
+      40,
+      64
+    ],
+    "master_size": 256,
+    "all_sizes_no_clipping": true
+  }
+}

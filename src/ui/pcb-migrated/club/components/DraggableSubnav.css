@@ -1,0 +1,40 @@
+/* Canonical BDM OS section navigation shared by every migrated app. */
+.bdm-section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border: 1px solid #263645;
+  border-radius: 8px;
+  background: #151c25;
+}
+
+.bdm-section-nav button.bdm-section-nav__item {
+  border: 1px solid #2a3b4d;
+  border-radius: 6px;
+  background: #101822;
+  color: #9ab3c9;
+  cursor: pointer;
+  font: 700 12px/1 Inter, var(--font-ui, Arial, sans-serif);
+  letter-spacing: 0;
+  padding: 6px 12px;
+  text-transform: none;
+}
+
+.bdm-section-nav button.bdm-section-nav__item:hover {
+  border-color: #4a6c88;
+  color: #f3f7fb;
+}
+
+.bdm-section-nav button.bdm-section-nav__item.active,
+.bdm-section-nav button.bdm-section-nav__item.is-active {
+  border-color: #ff7b39;
+  background: #2a1b17;
+  color: #ff9b69;
+}
+
+.bdm-section-nav button.bdm-section-nav__item.dragging {
+  opacity: 0.6;
+}

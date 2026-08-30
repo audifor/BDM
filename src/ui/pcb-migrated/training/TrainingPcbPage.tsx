@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { TRAINING_DAYS, TRAINING_MODULES, TRAINING_PLAYERS, TRAINING_STAFF } from './TrainingVisualMock'
 import { addTrainingSession, createTrainingPlan, deleteTrainingSession, generateTrainingPlan, updateTrainingSession, type TrainingDay, type TrainingIntensity, type TrainingSession } from './TrainingMigrationRepository'
 import DraggableSubnav from '../club/components/DraggableSubnav'
@@ -6,6 +6,20 @@ import './TrainingPcbPage.css'
 
 export type TrainingPcbTab = 'team' | 'personal' | 'load' | 'staff' | 'modules'
 const tabs: readonly [TrainingPcbTab, string][] = [['team', 'Equipo'], ['personal', 'Individual'], ['load', 'Carga'], ['staff', 'Staff'], ['modules', 'Módulos']]
+
+function useResizableTrainingColumns(initialWidths: readonly number[]) {
+  const [widths, setWidths] = useState(initialWidths)
+  const startResize = (index: number) => (event: ReactPointerEvent<HTMLSpanElement>) => {
+    event.preventDefault(); event.stopPropagation()
+    const startX = event.clientX, initialWidth = widths[index] ?? 120
+    const move = (next: PointerEvent) => setWidths((current) => current.map((width, widthIndex) => widthIndex === index ? Math.max(72, initialWidth + next.clientX - startX) : width))
+    const stop = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', stop) }
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', stop)
+  }
+  return { style: { gridTemplateColumns: widths.map((width) => `${width}px`).join(' ') } as CSSProperties, startResize }
+}
+
+function TrainingColumnResizeHandle({ onPointerDown }: { readonly onPointerDown: (event: ReactPointerEvent<HTMLSpanElement>) => void }) { return <span aria-label="Ajustar ancho de columna" className="pcb-training__column-resize" onPointerDown={onPointerDown} /> }
 
 export function TrainingPcbPage({ initialTab = 'team' }: { readonly initialTab?: TrainingPcbTab }) {
   const [tab, setTab] = useState<TrainingPcbTab>(initialTab)
@@ -20,7 +34,11 @@ function TeamTraining({ plan, setPlan }: { readonly plan: readonly TrainingDay[]
 }
 function Calendar() { return <aside className="pcb-training__calendar"><header><h3>Agosto 2032</h3><span>Plan semanal</span></header><div className="pcb-training__calendar-grid">{['L','M','X','J','V','S','D'].map((x) => <b key={x}>{x}</b>)}{Array.from({ length: 35 }, (_, index) => <span className={index > 16 && index < 24 ? 'is-train' : ''} key={index}>{index > 2 && index < 34 ? index - 2 : ''}{index > 16 && index < 24 ? <i>2</i> : null}</span>)}</div><p>Sesiones programadas durante la semana seleccionada.</p></aside> }
 function SessionModal({ initial, onClose, onSave }: { readonly initial?: TrainingSession; readonly onClose: () => void; readonly onSave: (session: Omit<TrainingSession, 'id'>) => void }) { const [time, setTime] = useState(initial?.time ?? '10:00'); const [endTime, setEndTime] = useState('11:30'); const [focus, setFocus] = useState(initial?.focus ?? 'Técnica individual'); const [intensity, setIntensity] = useState<TrainingIntensity>(initial?.intensity ?? 'Media'); const durationMinutes = (() => { const [startH, startM] = time.split(':').map(Number); const [endH, endM] = endTime.split(':').map(Number); const minutes = (endH! * 60 + endM!) - (startH! * 60 + startM!); return minutes > 0 ? minutes : 0 })(); return <div className="pcb-training__modal"><section><header><h3>{initial === undefined ? 'Nueva sesión' : 'Editar sesión'}</h3><button onClick={onClose} type="button">×</button></header><label>Tipo<select value={focus} onChange={(event) => setFocus(event.target.value)}><option>Técnica individual</option><option>Fuerza y potencia</option><option>Sistemas ofensivos</option><option>Recuperación</option></select></label><div className="pcb-training__modal-grid"><label>Inicio<input onChange={(event) => setTime(event.target.value)} type="time" value={time} /></label><label>Fin<input onChange={(event) => setEndTime(event.target.value)} type="time" value={endTime} /></label></div><label>Foco<select value={focus} onChange={(event) => setFocus(event.target.value)}><option>Tiro exterior</option><option>Defensa individual</option><option>Concentración</option></select></label><div className="pcb-training__intensity">{(['Baja','Media','Alta'] as const).map((value) => <button className={value === intensity ? 'is-active' : ''} key={value} onClick={() => setIntensity(value)} type="button">{value}</button>)}</div><div className="pcb-training__effects"><strong>Impacto estimado</strong><span>Carga {durationMinutes} AU · {focus} · Concentración</span></div><footer><button onClick={onClose} type="button">Cancelar</button><button className="is-primary" onClick={() => onSave({ time, focus, intensity })} type="button">Guardar sesión</button></footer></section></div> }
-function PersonalTraining() { return <main className="pcb-training__bento"><section className="pcb-training__card"><header className="pcb-training__card-head"><h2>Personal Training</h2><span>5 jugadores</span></header><div className="pcb-training__table pcb-training__personal"><div className="is-head"><span>Jugador</span><span>Pos</span><span>Focus</span><span>Intensidad</span><span>Objetivo</span></div>{TRAINING_PLAYERS.map(([name,pos,focus,intensity,objective]) => <div key={name}><b>{name}</b><span>{pos}</span><span>{focus}</span><i>{intensity}</i><span>{objective}</span></div>)}</div></section></main> }
+function PersonalTraining() {
+  const columns = useResizableTrainingColumns([250, 88, 180, 150, 240])
+  const labels = ['Jugador', 'Pos', 'Focus', 'Intensidad', 'Objetivo']
+  return <main className="pcb-training__bento"><section className="pcb-training__card"><header className="pcb-training__card-head"><h2>Personal Training</h2><span>5 jugadores</span></header><div className="pcb-training__table pcb-training__personal"> <div className="is-head" style={columns.style}>{labels.map((label, index) => <span key={label}>{label}<TrainingColumnResizeHandle onPointerDown={columns.startResize(index)} /></span>)}</div>{TRAINING_PLAYERS.map(([name,pos,focus,intensity,objective]) => <div key={name} style={columns.style}><b>{name}</b><span>{pos}</span><span>{focus}</span><i>{intensity}</i><span>{objective}</span></div>)}</div></section></main>
+}
 function LoadManagementInteractive() {
   const [query, setQuery] = useState(''); const [riskOnly, setRiskOnly] = useState(false); const [fatigueOnly, setFatigueOnly] = useState(false); const [filtersOpen, setFiltersOpen] = useState(false); const [columnsOpen, setColumnsOpen] = useState(false); const [selected, setSelected] = useState<string>(); const [sortDirection, setSortDirection] = useState<'ascending' | 'descending'>('ascending'); const [view, setView] = useState('Principal')
   const [columns, setColumns] = useState<readonly string[]>(['JUGADOR', 'DORSAL', 'POS', 'CARGA', 'FATIGA', 'RATIO', 'ESTADO', 'TEND.'])

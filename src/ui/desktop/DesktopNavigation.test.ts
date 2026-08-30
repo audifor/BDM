@@ -10,7 +10,7 @@ const launcherProps = { canAdvanceDay: true, canLoad: true, isOpen: true, onAdva
 
 describe('Desktop navigation', () => {
   it('renders the dock from the stable registry with a labelled launcher toggle', () => {
-    const markup = renderToStaticMarkup(createElement(DesktopDock, { activeAppId: null, onAppOpen: () => undefined, onLauncherToggle: () => undefined, onPinApp: () => undefined }))
+    const markup = renderToStaticMarkup(createElement(DesktopDock, { activeAppId: null, onAppOpen: () => undefined, onLauncherToggle: () => undefined, onPinApp: () => undefined, onUnpinApp: () => undefined }))
     expect(markup).toContain('data-testid="desktop-dock"')
     expect(markup).toContain('aria-label="Toggle BDM launcher"')
     expect(markup).toContain('is-expanded')

@@ -1,0 +1,504 @@
+{
+  "assets": {
+    "apps_large__calendar": {
+      "group": "apps_large",
+      "svg": "svg/apps_large/apps_large__calendar.svg",
+      "png20": "png/20/apps_large__calendar.png",
+      "png28": "png/28/apps_large__calendar.png",
+      "png48": "png/48/apps_large__calendar.png",
+      "png64": "png/64/apps_large__calendar.png"
+    },
+    "apps_large__club": {
+      "group": "apps_large",
+      "svg": "svg/apps_large/apps_large__club.svg",
+      "png20": "png/20/apps_large__club.png",
+      "png28": "png/28/apps_large__club.png",
+      "png48": "png/48/apps_large__club.png",
+      "png64": "png/64/apps_large__club.png"
+    },
+    "apps_large__competition": {
+      "group": "apps_large",
+      "svg": "svg/apps_large/apps_large__competition.svg",
+      "png20": "png/20/apps_large__competition.png",
+      "png28": "png/28/apps_large__competition.png",
+      "png48": "png/48/apps_large__competition.png",
+      "png64": "png/64/apps_large__competition.png"
+    },
+    "apps_large__finances": {
+      "group": "apps_large",
+      "svg": "svg/apps_large/apps_large__finances.svg",
+      "png20": "png/20/apps_large__finances.png",
+      "png28": "png/28/apps_large__finances.png",
+      "png48": "png/48/apps_large__finances.png",
+      "png64": "png/64/apps_large__finances.png"
+    },
+    "apps_large__market": {
+      "group": "apps_large",
+      "svg": "svg/apps_large/apps_large__market.svg",
+      "png20": "png/20/apps_large__market.png",
+      "png28": "png/28/apps_large__market.png",
+      "png48": "png/48/apps_large__market.png",
+      "png64": "png/64/apps_large__market.png"
+    },
+    "apps_large__match_center": {
+      "group": "apps_large",
+      "svg": "svg/apps_large/apps_large__match_center.svg",
+      "png20": "png/20/apps_large__match_center.png",
+      "png28": "png/28/apps_large__match_center.png",
+      "png48": "png/48/apps_large__match_center.png",
+      "png64": "png/64/apps_large__match_center.png"
+    },
+    "apps_large__medical": {
+      "group": "apps_large",
+      "svg": "svg/apps_large/apps_large__medical.svg",
+      "png20": "png/20/apps_large__medical.png",
+      "png28": "png/28/apps_large__medical.png",
+      "png48": "png/48/apps_large__medical.png",
+      "png64": "png/64/apps_large__medical.png"
+    },
+    "apps_large__press": {
+      "group": "apps_large",
+      "svg": "svg/apps_large/apps_large__press.svg",
+      "png20": "png/20/apps_large__press.png",
+      "png28": "png/28/apps_large__press.png",
+      "png48": "png/48/apps_large__press.png",
+      "png64": "png/64/apps_large__press.png"
+    },
+    "apps_large__roster": {
+      "group": "apps_large",
+      "svg": "svg/apps_large/apps_large__roster.svg",
+      "png20": "png/20/apps_large__roster.png",
+      "png28": "png/28/apps_large__roster.png",
+      "png48": "png/48/apps_large__roster.png",
+      "png64": "png/64/apps_large__roster.png"
+    },
+    "apps_large__staff": {
+      "group": "apps_large",
+      "svg": "svg/apps_large/apps_large__staff.svg",
+      "png20": "png/20/apps_large__staff.png",
+      "png28": "png/28/apps_large__staff.png",
+      "png48": "png/48/apps_large__staff.png",
+      "png64": "png/64/apps_large__staff.png"
+    },
+    "apps_large__tactics": {
+      "group": "apps_large",
+      "svg": "svg/apps_large/apps_large__tactics.svg",
+      "png20": "png/20/apps_large__tactics.png",
+      "png28": "png/28/apps_large__tactics.png",
+      "png48": "png/48/apps_large__tactics.png",
+      "png64": "png/64/apps_large__tactics.png"
+    },
+    "apps_large__training": {
+      "group": "apps_large",
+      "svg": "svg/apps_large/apps_large__training.svg",
+      "png20": "png/20/apps_large__training.png",
+      "png28": "png/28/apps_large__training.png",
+      "png48": "png/48/apps_large__training.png",
+      "png64": "png/64/apps_large__training.png"
+    },
+    "apps_small__board": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__board.svg",
+      "png20": "png/20/apps_small__board.png",
+      "png28": "png/28/apps_small__board.png",
+      "png48": "png/48/apps_small__board.png",
+      "png64": "png/64/apps_small__board.png"
+    },
+    "apps_small__boosters": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__boosters.svg",
+      "png20": "png/20/apps_small__boosters.png",
+      "png28": "png/28/apps_small__boosters.png",
+      "png48": "png/48/apps_small__boosters.png",
+      "png64": "png/64/apps_small__boosters.png"
+    },
+    "apps_small__calendar": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__calendar.svg",
+      "png20": "png/20/apps_small__calendar.png",
+      "png28": "png/28/apps_small__calendar.png",
+      "png48": "png/48/apps_small__calendar.png",
+      "png64": "png/64/apps_small__calendar.png"
+    },
+    "apps_small__club": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__club.svg",
+      "png20": "png/20/apps_small__club.png",
+      "png28": "png/28/apps_small__club.png",
+      "png48": "png/48/apps_small__club.png",
+      "png64": "png/64/apps_small__club.png"
+    },
+    "apps_small__competition": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__competition.svg",
+      "png20": "png/20/apps_small__competition.png",
+      "png28": "png/28/apps_small__competition.png",
+      "png48": "png/48/apps_small__competition.png",
+      "png64": "png/64/apps_small__competition.png"
+    },
+    "apps_small__compliance": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__compliance.svg",
+      "png20": "png/20/apps_small__compliance.png",
+      "png28": "png/28/apps_small__compliance.png",
+      "png48": "png/48/apps_small__compliance.png",
+      "png64": "png/64/apps_small__compliance.png"
+    },
+    "apps_small__finances": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__finances.svg",
+      "png20": "png/20/apps_small__finances.png",
+      "png28": "png/28/apps_small__finances.png",
+      "png48": "png/48/apps_small__finances.png",
+      "png64": "png/64/apps_small__finances.png"
+    },
+    "apps_small__market": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__market.svg",
+      "png20": "png/20/apps_small__market.png",
+      "png28": "png/28/apps_small__market.png",
+      "png48": "png/48/apps_small__market.png",
+      "png64": "png/64/apps_small__market.png"
+    },
+    "apps_small__match_center": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__match_center.svg",
+      "png20": "png/20/apps_small__match_center.png",
+      "png28": "png/28/apps_small__match_center.png",
+      "png48": "png/48/apps_small__match_center.png",
+      "png64": "png/64/apps_small__match_center.png"
+    },
+    "apps_small__medical": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__medical.svg",
+      "png20": "png/20/apps_small__medical.png",
+      "png28": "png/28/apps_small__medical.png",
+      "png48": "png/48/apps_small__medical.png",
+      "png64": "png/64/apps_small__medical.png"
+    },
+    "apps_small__memories": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__memories.svg",
+      "png20": "png/20/apps_small__memories.png",
+      "png28": "png/28/apps_small__memories.png",
+      "png48": "png/48/apps_small__memories.png",
+      "png64": "png/64/apps_small__memories.png"
+    },
+    "apps_small__nil": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__nil.svg",
+      "png20": "png/20/apps_small__nil.png",
+      "png28": "png/28/apps_small__nil.png",
+      "png48": "png/48/apps_small__nil.png",
+      "png64": "png/64/apps_small__nil.png"
+    },
+    "apps_small__press": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__press.svg",
+      "png20": "png/20/apps_small__press.png",
+      "png28": "png/28/apps_small__press.png",
+      "png48": "png/48/apps_small__press.png",
+      "png64": "png/64/apps_small__press.png"
+    },
+    "apps_small__profile": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__profile.svg",
+      "png20": "png/20/apps_small__profile.png",
+      "png28": "png/28/apps_small__profile.png",
+      "png48": "png/48/apps_small__profile.png",
+      "png64": "png/64/apps_small__profile.png"
+    },
+    "apps_small__recruiting": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__recruiting.svg",
+      "png20": "png/20/apps_small__recruiting.png",
+      "png28": "png/28/apps_small__recruiting.png",
+      "png48": "png/48/apps_small__recruiting.png",
+      "png64": "png/64/apps_small__recruiting.png"
+    },
+    "apps_small__roster": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__roster.svg",
+      "png20": "png/20/apps_small__roster.png",
+      "png28": "png/28/apps_small__roster.png",
+      "png48": "png/48/apps_small__roster.png",
+      "png64": "png/64/apps_small__roster.png"
+    },
+    "apps_small__staff": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__staff.svg",
+      "png20": "png/20/apps_small__staff.png",
+      "png28": "png/28/apps_small__staff.png",
+      "png48": "png/48/apps_small__staff.png",
+      "png64": "png/64/apps_small__staff.png"
+    },
+    "apps_small__stories": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__stories.svg",
+      "png20": "png/20/apps_small__stories.png",
+      "png28": "png/28/apps_small__stories.png",
+      "png48": "png/48/apps_small__stories.png",
+      "png64": "png/64/apps_small__stories.png"
+    },
+    "apps_small__tactics": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__tactics.svg",
+      "png20": "png/20/apps_small__tactics.png",
+      "png28": "png/28/apps_small__tactics.png",
+      "png48": "png/48/apps_small__tactics.png",
+      "png64": "png/64/apps_small__tactics.png"
+    },
+    "apps_small__training": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__training.svg",
+      "png20": "png/20/apps_small__training.png",
+      "png28": "png/28/apps_small__training.png",
+      "png48": "png/48/apps_small__training.png",
+      "png64": "png/64/apps_small__training.png"
+    },
+    "apps_small__wealth": {
+      "group": "apps_small",
+      "svg": "svg/apps_small/apps_small__wealth.svg",
+      "png20": "png/20/apps_small__wealth.png",
+      "png28": "png/28/apps_small__wealth.png",
+      "png48": "png/48/apps_small__wealth.png",
+      "png64": "png/64/apps_small__wealth.png"
+    },
+    "brand__basketball_mark": {
+      "group": "brand",
+      "svg": "svg/brand/brand__basketball_mark.svg",
+      "png20": "png/20/brand__basketball_mark.png",
+      "png28": "png/28/brand__basketball_mark.png",
+      "png48": "png/48/brand__basketball_mark.png",
+      "png64": "png/64/brand__basketball_mark.png"
+    },
+    "categories__career": {
+      "group": "categories",
+      "svg": "svg/categories/categories__career.svg",
+      "png20": "png/20/categories__career.png",
+      "png28": "png/28/categories__career.png",
+      "png48": "png/48/categories__career.png",
+      "png64": "png/64/categories__career.png"
+    },
+    "categories__club": {
+      "group": "categories",
+      "svg": "svg/categories/categories__club.svg",
+      "png20": "png/20/categories__club.png",
+      "png28": "png/28/categories__club.png",
+      "png48": "png/48/categories__club.png",
+      "png64": "png/64/categories__club.png"
+    },
+    "categories__college": {
+      "group": "categories",
+      "svg": "svg/categories/categories__college.svg",
+      "png20": "png/20/categories__college.png",
+      "png28": "png/28/categories__college.png",
+      "png48": "png/48/categories__college.png",
+      "png64": "png/64/categories__college.png"
+    },
+    "categories__competition": {
+      "group": "categories",
+      "svg": "svg/categories/categories__competition.svg",
+      "png20": "png/20/categories__competition.png",
+      "png28": "png/28/categories__competition.png",
+      "png48": "png/48/categories__competition.png",
+      "png64": "png/64/categories__competition.png"
+    },
+    "categories__market": {
+      "group": "categories",
+      "svg": "svg/categories/categories__market.svg",
+      "png20": "png/20/categories__market.png",
+      "png28": "png/28/categories__market.png",
+      "png48": "png/48/categories__market.png",
+      "png64": "png/64/categories__market.png"
+    },
+    "categories__narrative": {
+      "group": "categories",
+      "svg": "svg/categories/categories__narrative.svg",
+      "png20": "png/20/categories__narrative.png",
+      "png28": "png/28/categories__narrative.png",
+      "png48": "png/48/categories__narrative.png",
+      "png64": "png/64/categories__narrative.png"
+    },
+    "categories__team": {
+      "group": "categories",
+      "svg": "svg/categories/categories__team.svg",
+      "png20": "png/20/categories__team.png",
+      "png28": "png/28/categories__team.png",
+      "png48": "png/48/categories__team.png",
+      "png64": "png/64/categories__team.png"
+    },
+    "sidebar__calendar": {
+      "group": "sidebar",
+      "svg": "svg/sidebar/sidebar__calendar.svg",
+      "png20": "png/20/sidebar__calendar.png",
+      "png28": "png/28/sidebar__calendar.png",
+      "png48": "png/48/sidebar__calendar.png",
+      "png64": "png/64/sidebar__calendar.png"
+    },
+    "sidebar__finances": {
+      "group": "sidebar",
+      "svg": "svg/sidebar/sidebar__finances.svg",
+      "png20": "png/20/sidebar__finances.png",
+      "png28": "png/28/sidebar__finances.png",
+      "png48": "png/48/sidebar__finances.png",
+      "png64": "png/64/sidebar__finances.png"
+    },
+    "sidebar__home": {
+      "group": "sidebar",
+      "svg": "svg/sidebar/sidebar__home.svg",
+      "png20": "png/20/sidebar__home.png",
+      "png28": "png/28/sidebar__home.png",
+      "png48": "png/48/sidebar__home.png",
+      "png64": "png/64/sidebar__home.png"
+    },
+    "sidebar__market": {
+      "group": "sidebar",
+      "svg": "svg/sidebar/sidebar__market.svg",
+      "png20": "png/20/sidebar__market.png",
+      "png28": "png/28/sidebar__market.png",
+      "png48": "png/48/sidebar__market.png",
+      "png64": "png/64/sidebar__market.png"
+    },
+    "sidebar__match_center": {
+      "group": "sidebar",
+      "svg": "svg/sidebar/sidebar__match_center.svg",
+      "png20": "png/20/sidebar__match_center.png",
+      "png28": "png/28/sidebar__match_center.png",
+      "png48": "png/48/sidebar__match_center.png",
+      "png64": "png/64/sidebar__match_center.png"
+    },
+    "sidebar__messages": {
+      "group": "sidebar",
+      "svg": "svg/sidebar/sidebar__messages.svg",
+      "png20": "png/20/sidebar__messages.png",
+      "png28": "png/28/sidebar__messages.png",
+      "png48": "png/48/sidebar__messages.png",
+      "png64": "png/64/sidebar__messages.png"
+    },
+    "sidebar__news": {
+      "group": "sidebar",
+      "svg": "svg/sidebar/sidebar__news.svg",
+      "png20": "png/20/sidebar__news.png",
+      "png28": "png/28/sidebar__news.png",
+      "png48": "png/48/sidebar__news.png",
+      "png64": "png/64/sidebar__news.png"
+    },
+    "sidebar__roster": {
+      "group": "sidebar",
+      "svg": "svg/sidebar/sidebar__roster.svg",
+      "png20": "png/20/sidebar__roster.png",
+      "png28": "png/28/sidebar__roster.png",
+      "png48": "png/48/sidebar__roster.png",
+      "png64": "png/64/sidebar__roster.png"
+    },
+    "sidebar__search": {
+      "group": "sidebar",
+      "svg": "svg/sidebar/sidebar__search.svg",
+      "png20": "png/20/sidebar__search.png",
+      "png28": "png/28/sidebar__search.png",
+      "png48": "png/48/sidebar__search.png",
+      "png64": "png/64/sidebar__search.png"
+    },
+    "sidebar__settings": {
+      "group": "sidebar",
+      "svg": "svg/sidebar/sidebar__settings.svg",
+      "png20": "png/20/sidebar__settings.png",
+      "png28": "png/28/sidebar__settings.png",
+      "png48": "png/48/sidebar__settings.png",
+      "png64": "png/64/sidebar__settings.png"
+    },
+    "states__home_active": {
+      "group": "states",
+      "svg": "svg/states/states__home_active.svg",
+      "png20": "png/20/states__home_active.png",
+      "png28": "png/28/states__home_active.png",
+      "png48": "png/48/states__home_active.png",
+      "png64": "png/64/states__home_active.png"
+    },
+    "states__home_disabled": {
+      "group": "states",
+      "svg": "svg/states/states__home_disabled.svg",
+      "png20": "png/20/states__home_disabled.png",
+      "png28": "png/28/states__home_disabled.png",
+      "png48": "png/48/states__home_disabled.png",
+      "png64": "png/64/states__home_disabled.png"
+    },
+    "states__home_hover": {
+      "group": "states",
+      "svg": "svg/states/states__home_hover.svg",
+      "png20": "png/20/states__home_hover.png",
+      "png28": "png/28/states__home_hover.png",
+      "png48": "png/48/states__home_hover.png",
+      "png64": "png/64/states__home_hover.png"
+    },
+    "states__home_normal": {
+      "group": "states",
+      "svg": "svg/states/states__home_normal.svg",
+      "png20": "png/20/states__home_normal.png",
+      "png28": "png/28/states__home_normal.png",
+      "png48": "png/48/states__home_normal.png",
+      "png64": "png/64/states__home_normal.png"
+    },
+    "user__avatar": {
+      "group": "user",
+      "svg": "svg/user/user__avatar.svg",
+      "png20": "png/20/user__avatar.png",
+      "png28": "png/28/user__avatar.png",
+      "png48": "png/48/user__avatar.png",
+      "png64": "png/64/user__avatar.png"
+    },
+    "brand__logo_bdm": {
+      "group": "brand",
+      "svg": "svg/brand/brand__logo_bdm.svg",
+      "png64": "png/64/brand__logo_bdm.png"
+    }
+  },
+  "aliases": {
+    "inicio": "sidebar__home",
+    "plantilla_sidebar": "sidebar__roster",
+    "calendario_sidebar": "sidebar__calendar",
+    "centro_de_partido_sidebar": "sidebar__match_center",
+    "mercado_sidebar": "sidebar__market",
+    "finanzas_sidebar": "sidebar__finances",
+    "noticias": "sidebar__news",
+    "mensajes": "sidebar__messages",
+    "busqueda": "sidebar__search",
+    "ajustes": "sidebar__settings",
+    "plantilla": "apps_large__roster",
+    "tacticas": "apps_large__tactics",
+    "calendario": "apps_large__calendar",
+    "centro_de_partido": "apps_large__match_center",
+    "competicion": "apps_large__competition",
+    "mercado": "apps_large__market",
+    "entrenamiento": "apps_large__training",
+    "staff": "apps_large__staff",
+    "area_medica": "apps_large__medical",
+    "finanzas": "apps_large__finances",
+    "club": "apps_large__club",
+    "prensa": "apps_large__press",
+    "directiva": "apps_small__board",
+    "compliance": "apps_small__compliance",
+    "mi_perfil": "apps_small__profile",
+    "tu_patrimonio": "apps_small__wealth",
+    "historias": "apps_small__stories",
+    "recuerdos": "apps_small__memories",
+    "recruiting": "apps_small__recruiting",
+    "nil": "apps_small__nil",
+    "boosters": "apps_small__boosters",
+    "categoria_equipo": "categories__team",
+    "categoria_partidos_competicion": "categories__competition",
+    "categoria_mercado": "categories__market",
+    "categoria_gestion_club": "categories__club",
+    "categoria_mi_carrera": "categories__career",
+    "categoria_mundo_narrativa": "categories__narrative",
+    "categoria_college": "categories__college",
+    "home_normal": "states__home_normal",
+    "home_activo": "states__home_active",
+    "home_hover": "states__home_hover",
+    "home_deshabilitado": "states__home_disabled",
+    "avatar_usuario": "user__avatar",
+    "logo_bdm": "brand__logo_bdm",
+    "balon_bdm": "brand__basketball_mark"
+  }
+}

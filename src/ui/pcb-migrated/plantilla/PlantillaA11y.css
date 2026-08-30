@@ -1,0 +1,28 @@
+.pcb-plantilla__a11y-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pcb-plantilla__a11y-actions button {
+  border: 1px solid #2a3b4d;
+  border-radius: 6px;
+  background: #101822;
+  color: #9ab3c9;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+}
+
+.pcb-plantilla__a11y-actions button:hover {
+  border-color: #4a6c88;
+  color: #f3f7fb;
+}
+
+.pcb-plantilla__a11y-actions button.is-active {
+  border-color: #ff7b39;
+  background: #2a1b17;
+  color: #ff9b69;
+}

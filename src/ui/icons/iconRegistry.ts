@@ -1,5 +1,6 @@
 import boostersSmall from './assets/small-boosters.png'
 import boardSmall from './assets/small-board.png'
+import careerLarge from './assets/large-career.png'
 import clubLarge from './assets/large-club.png'
 import clubSmall from './assets/small-club.png'
 import collegeLarge from './assets/large-college.png'
@@ -24,6 +25,7 @@ import mediaLarge from './assets/large-media.png'
 import mediaSmall from './assets/small-media.png'
 import memoriesSmall from './assets/small-memories.png'
 import messagesMedium from './assets/medium-messages.png'
+import narrativeLarge from './assets/large-narrative.png'
 import newsMedium from './assets/medium-news.png'
 import nilSmall from './assets/small-nil.png'
 import patrimonySmall from './assets/small-patrimony.png'
@@ -51,7 +53,7 @@ export const BDM_ICON_REGISTRY = {
   roster: { large: rosterLarge, medium: rosterMedium, small: rosterSmall }, tactics: { large: tacticsLarge, small: tacticsSmall }, training: { large: trainingLarge, small: trainingSmall }, staff: { large: staffLarge, small: staffSmall }, medical: { large: medicalLarge, small: medicalSmall },
   schedule: { large: scheduleLarge, medium: scheduleMedium, small: scheduleSmall }, match: { large: matchLarge, medium: matchMedium, small: matchSmall }, competition: { large: competitionLarge, small: competitionSmall }, market: { large: marketLarge, medium: marketMedium, small: marketSmall },
   club: { large: clubLarge, small: clubSmall }, board: { small: boardSmall }, finances: { large: financesLarge, medium: financesMedium, small: financesSmall }, compliance: { small: complianceSmall }, profile: { small: profileSmall }, patrimony: { small: patrimonySmall }, media: { large: mediaLarge, small: mediaSmall }, histories: { small: historiesSmall }, memories: { small: memoriesSmall }, recruiting: { small: recruitingSmall }, nil: { small: nilSmall }, boosters: { small: boostersSmall },
-  team: { large: teamLarge }, games: { large: gamesLarge }, college: { large: collegeLarge },
+  team: { large: teamLarge }, games: { large: gamesLarge }, college: { large: collegeLarge }, career: { large: careerLarge }, narrative: { large: narrativeLarge },
 } as const satisfies Record<string, IconSources>
 
 export type BdmIconName = keyof typeof BDM_ICON_REGISTRY

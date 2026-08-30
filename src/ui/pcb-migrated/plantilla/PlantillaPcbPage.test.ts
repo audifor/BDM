@@ -1,12 +1,16 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
+import { createNewGame } from '@/app/game'
+import { getUserTeam } from '@/engine/calendar'
 import { PlantillaPcbPage } from './PlantillaPcbPage'
 
 describe('PlantillaPcbPage', () => {
-  it('renders the canonical roster controls while keeping the PCB sections', () => {
-    const markup = renderToStaticMarkup(createElement(PlantillaPcbPage))
-    for (const label of ['Plantilla', 'Análisis + Dinámicas', 'Mentoring', 'Overview', 'Ratings', 'Physical', 'Contracts', 'ALL', 'PG', 'Buscar jugador', 'Filtros', 'Plantilla (12)', 'Casademont Zaragoza', 'SALARY', 'EXPIRES', 'OK']) expect(markup).toContain(label)
+  it('renders the canonical roster controls with real roster data while keeping the PCB sections', () => {
+    const world = createNewGame()
+    const team = getUserTeam(world)!
+    const markup = renderToStaticMarkup(createElement(PlantillaPcbPage, { world }))
+    for (const label of ['Plantilla', 'Análisis + Dinámicas', 'Mentoring', `Plantilla (${team.rosterPlayerIds.length})`, team.name, 'JUGADOR', 'POS', 'CONTRATO', 'FATIGA', 'OK']) expect(markup).toContain(label)
     for (const shellLabel of ['Hub', 'Scouting', 'Mercado']) expect(markup).not.toContain(shellLabel)
   })
 })

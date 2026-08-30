@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import "./DraggableSubnav.css";
 
 const loadOrder = (storageKey, fallback) => {
   if (!storageKey) return fallback;
@@ -85,7 +86,7 @@ export default function DraggableSubnav({
   };
 
   return (
-    <div className={className}>
+    <div className={`bdm-section-nav ${className}`.trim()}>
       {order.map((id) => {
         const item = itemMap.get(id);
         if (!item) return null;
@@ -94,7 +95,7 @@ export default function DraggableSubnav({
         return (
           <button
             key={id}
-            className={`${itemClassName} draggable ${active} ${dragging}`.trim()}
+            className={`bdm-section-nav__item ${itemClassName} draggable ${active} ${dragging}`.trim()}
             onClick={item.onClick}
             draggable
             onDragStart={handleDragStart(id)}
@@ -111,5 +112,4 @@ export default function DraggableSubnav({
     </div>
   );
 }
-
 

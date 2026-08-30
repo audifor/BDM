@@ -398,6 +398,7 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
           </button>
         </div>
 
+        <div className="tactics-board-court-frame">
         <div className="tactics-board-court-surface">
           <div className="tactics-board-court-lines" />
           <svg className="tactics-board-court-svg" viewBox="0 0 500 470" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
@@ -468,6 +469,7 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
               </div>
             );
           })}
+        </div>
         </div>
       </div>
 

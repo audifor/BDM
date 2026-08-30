@@ -20,7 +20,7 @@ describe('game context', () => {
 
   it('uses configured world records, rather than ecosystem-name branching, for capabilities', () => {
     const world = createNewGame()
-    expect(resolveGameCapabilities(world)).toEqual({ hasDraft: false, hasTrades: false, hasSalaryCap: false })
+    expect(resolveGameCapabilities(world)).toEqual({ hasDraft: false, hasTrades: false, hasSalaryCap: false, isNcaa: false })
   })
 
   it('can derive a screen-specific competition context without changing GameWorld state', () => {

@@ -21,7 +21,7 @@ import { CompetitionPcbPage } from '@/ui/pcb-migrated/competition/CompetitionPcb
 
 export function DesktopAppHost({ appId, entityDestination, world, actions }: { readonly appId: string; readonly entityDestination?: EntityDestination; readonly world: GameWorld; readonly actions: DesktopAppActions }) {
   const key = getDesktopApp(appId)?.renderKey
-  if (appId === 'squad') return <PlantillaPcbPage />
+  if (appId === 'squad') return <PlantillaPcbPage onOpenEntity={actions.openEntity} world={world} />
   if (appId === 'training') return <TrainingPcbPage />
   if (appId === 'tactics') return <TacticsPcbPage />
   if (appId === 'club') return <ClubPcbPage />

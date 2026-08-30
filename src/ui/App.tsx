@@ -96,6 +96,7 @@ export function App() {
   const closeLauncher = useDesktopStore((state) => state.closeLauncher)
   const reorderLauncher = useDesktopStore((state) => state.reorderLauncher)
   const pinDockApp = useDesktopStore((state) => state.pinDockApp)
+  const unpinDockApp = useDesktopStore((state) => state.unpinDockApp)
   const wallpaper = useDesktopPreferencesStore((state) => state.wallpaper)
   const density = useDesktopPreferencesStore((state) => state.density)
   const dockAutoHide = useDesktopPreferencesStore((state) => state.dockAutoHide)
@@ -178,7 +179,7 @@ export function App() {
       density={density}
       dockAutoHide={dockAutoHide}
       widgets={<><DesktopWidgetLayer world={world} onAdvanceDay={advanceDay} onContinue={continueGame} onInstantResult={() => instantResult(tacticalPlan)} onOpenApp={openDesktopApp} onOpenPendingGame={(gameId) => { if (world.games[gameId]?.status === 'scheduled') startMatch(startLiveMatch(tacticalPlan)) }} onPlayGame={() => startMatch(startLiveMatch(tacticalPlan))} /><DesktopCanonicalSurfaceLayer visible={visualQaFixture} world={world} /></>}
-      dock={<DesktopDock activeAppId={activeAppId} dockPinnedAppIds={dockPinnedAppIds} launcherOpen={launcherOpen} onAppOpen={openDesktopApp} onLauncherToggle={toggleLauncher} onPinApp={pinDockApp} unreadCount={unreadInboxCount} />}
+      dock={<DesktopDock activeAppId={activeAppId} dockPinnedAppIds={dockPinnedAppIds} launcherOpen={launcherOpen} onAppOpen={openDesktopApp} onLauncherToggle={toggleLauncher} onPinApp={pinDockApp} onUnpinApp={unpinDockApp} unreadCount={unreadInboxCount} />}
       overlay={<><DesktopLauncher activeAppId={activeAppId} capabilities={capabilities} canAdvanceDay={!seasonComplete} canLoad={hasSave} isOpen={launcherOpen && !globalSearchOpen} launcherOrder={launcherOrder} onAdvanceDay={advanceDay} onAppOpen={openDesktopApp} onClose={closeLauncher} onCustomizeDesktop={enterDesktopWidgetEditMode} onLoad={() => void loadGame()} onPinDockApp={pinDockApp} onQueryChange={setLauncherQuery} onReorder={reorderLauncher} onSave={() => void saveGame()} query={launcherQuery} recentAppIds={recentAppIds} /><GlobalSearchOverlay canAdvanceDay={!seasonComplete} canLoad={hasSave} isOpen={globalSearchOpen} onAdvanceDay={advanceDay} onClose={() => setGlobalSearchOpen(false)} onCustomize={enterDesktopWidgetEditMode} onLoad={() => void loadGame()} onOpenApp={openDesktopApp} onSave={() => void saveGame()} world={world} /><EntityActionComposer onResult={executeComposerAction} /></>}
       status={<StatusCluster saveMessage={saveMessage} />}
       wallpaper={wallpaper}

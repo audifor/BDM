@@ -1,1 +1,179 @@
-.canonical-roster{display:grid;gap:16px}.canonical-roster__toolbar{position:relative;border:1px solid rgba(255,255,255,.2);border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.03));padding:16px}.canonical-roster__identity,.canonical-roster__controls,.canonical-roster__views{display:flex;align-items:center;gap:10px}.canonical-roster__identity{float:left}.canonical-roster__identity>span{display:grid;width:40px;height:40px;place-items:center;border-radius:11px;background:#101827;color:#ff7b39}.canonical-roster__identity strong,.canonical-roster__identity small{display:block}.canonical-roster__identity small,.canonical-roster__toolbar label{color:#94a3b8;font-size:10px}.canonical-roster__controls{justify-content:flex-end}.canonical-roster__controls label{display:grid;gap:3px;text-transform:uppercase;font-weight:700}.canonical-roster select,.canonical-roster input,.canonical-roster button{border:1px solid rgba(255,255,255,.14);border-radius:9px;background:#101827;color:#e2e8f0;padding:8px 10px;font:inherit}.canonical-roster input{width:190px}.canonical-roster__views{clear:both;padding-top:16px}.canonical-roster__views>button,.canonical-roster__views span button{border-radius:999px;padding:6px 11px;color:#94a3b8;font-size:10px;text-transform:uppercase}.canonical-roster__views .is-active{border-color:#ff7b39;background:rgba(255,123,57,.15);color:#ff7b39}.canonical-roster__views span{display:flex;gap:6px}.canonical-roster__views small{margin-left:auto;color:#94a3b8}.canonical-roster__filters{display:flex;gap:12px;align-items:center;margin-top:12px;color:#cbd5e1;font-size:11px}.canonical-roster__filters input{width:auto}.canonical-roster__table-wrap{overflow:auto;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:#101827}.canonical-roster table{width:100%;border-collapse:collapse;min-width:640px}.canonical-roster th,.canonical-roster td{padding:11px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left}.canonical-roster th{color:#94a3b8;font-size:10px}.canonical-roster__status{border-left:2px solid #55c49c;padding-left:7px;color:#d9f6eb;font-size:11px}@media(max-width:760px){.canonical-roster__identity{float:none}.canonical-roster__controls{justify-content:flex-start;flex-wrap:wrap;margin-top:12px}.canonical-roster input{width:160px}.canonical-roster__views{flex-wrap:wrap}}
+.canonical-roster {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 10px;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+}
+.canonical-roster__toolbar {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #263645;
+  border-radius: 8px;
+  background: #151c25;
+  padding: 25px 28px;
+}
+.canonical-roster__identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+.canonical-roster__icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #304254;
+  border-radius: 12px;
+  background: #101822;
+}
+.canonical-roster__identity strong,
+.canonical-roster__identity small {
+  display: block;
+}
+.canonical-roster__identity strong {
+  color: #f8fafc;
+  font-size: 16px;
+}
+.canonical-roster__identity small {
+  margin-top: 3px;
+  color: #9ab3c9;
+  font-size: 12px;
+}
+.canonical-roster__actions {
+  display: flex;
+  gap: 10px;
+}
+.canonical-roster__actions input {
+  width: 200px;
+  height: 32px;
+  border: 1px solid #2b3b4b;
+  border-radius: 6px;
+  background: #111820;
+  color: #e7edf3;
+}
+.canonical-roster__actions button {
+  width: 42px;
+  border: 1px solid #2b3b4b;
+  border-radius: 6px;
+  background: #111820;
+  color: #f28b2f;
+  cursor: pointer;
+}
+.canonical-roster__grid {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  --desktop-density-row: 43px;
+}
+.canonical-roster__grid .bdm-data-grid__tools {
+  display: none;
+}
+.canonical-roster__grid .bdm-data-table {
+  height: 100%;
+  overflow: auto;
+  border: 1px solid #293a4a;
+  border-radius: 7px;
+  background: rgba(15, 23, 42, 0.7);
+}
+.canonical-roster__grid .bdm-data-grid__column-manager {
+  right: 4px;
+  left: auto;
+  width: min(310px, calc(100% - 8px));
+  color: #edf0e9;
+}
+.canonical-roster__grid .bdm-data-table table {
+  min-width: 1390px;
+}
+.canonical-roster__grid .bdm-data-table th {
+  height: 28px;
+  border-color: #293a4a;
+  background: #111821;
+  color: #84bce3;
+  font-size: 9px;
+}
+.canonical-roster__grid .bdm-data-table td {
+  height: 43px;
+  border-bottom: 1px solid #293a4a;
+  border-color: #293a4a;
+  color: #eef5fb;
+  font-size: 11px;
+}
+.canonical-roster__grid .bdm-data-table tbody tr:last-child td {
+  border-bottom: 1px solid #293a4a;
+}
+.canonical-roster__grid .bdm-data-table th,
+.canonical-roster__grid .bdm-data-table td {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid #293a4a;
+  text-align: center;
+}
+.canonical-roster__grid .bdm-data-table td.is-numeric {
+  text-align: center;
+}
+.canonical-roster__grid .bdm-data-table th:nth-child(2),
+.canonical-roster__grid .bdm-data-table td:nth-child(2) {
+  justify-content: flex-start;
+  text-align: left;
+}
+.canonical-roster__status {
+  display: inline-block;
+  border: 1px solid #168653;
+  border-radius: 999px;
+  background: #0d422d;
+  color: #8af1bb;
+  padding: 3px 7px;
+  font-size: 10px;
+}
+.canonical-roster__position {
+  display: inline-block;
+  min-width: 38px;
+  border: 1px solid #237da9;
+  border-radius: 6px;
+  background: #0b2c40;
+  color: #38bdf8;
+  padding: 3px 6px;
+  font-weight: 700;
+}
+.canonical-roster__player {
+  color: #f8fafc;
+}
+.canonical-roster__player-link {
+  border: 0;
+  background: transparent;
+  color: #f8fafc;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.canonical-roster__player-link:hover {
+  color: #38bdf8;
+  text-decoration: underline;
+}
+.canonical-roster__rotation {
+  width: 96px;
+  border: 1px solid #304254;
+  border-radius: 6px;
+  background: #121b25;
+  color: #f1f5f9;
+  padding: 5px 8px;
+}
+@media (max-width: 760px) {
+  .canonical-roster__toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .canonical-roster__grid {
+    height: calc(100dvh - 250px);
+    min-height: 300px;
+  }
+}

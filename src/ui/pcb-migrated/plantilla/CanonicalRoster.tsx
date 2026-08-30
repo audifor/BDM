@@ -1,31 +1,277 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from "react";
 
-import { PLANTILLA_VISUAL_MOCK_ROWS } from './PlantillaVisualMock'
-import './CanonicalRoster.css'
+import type { Player } from "@/domain/player";
+import { getPlayerAge } from "@/domain/player";
+import {
+  getCareerFatigueForPlayer,
+  getCurrentPlayerContract,
+  getTeamRoster,
+} from "@/domain/world";
+import type { GameWorld } from "@/domain/world";
+import type { TeamId } from "@/domain/ids";
+import { BDMDataGrid } from "@/ui/dataGrid/BDMDataGrid";
+import type { DataGridColumn, DataGridView } from "@/ui/dataGrid/types";
+import { BdmIcon } from "@/ui/icons/BdmIcon";
+import type { EntityDestination } from "@/ui/navigation/entityNavigation";
 
-const views = ['overview', 'ratings', 'physical', 'contracts'] as const
-const labels = { overview: 'Overview', ratings: 'Ratings', physical: 'Physical', contracts: 'Contracts' } as const
-const positions = ['ALL', 'PG', 'SG', 'SF', 'PF', 'C'] as const
-const positionsByRow = ['PG', 'PG', 'SG', 'SG', 'SG', 'SF', 'SF', 'PF', 'PF', 'PF', 'C', 'C'] as const
+import "./CanonicalRoster.css";
 
-export function CanonicalRoster() {
-  const [view, setView] = useState<(typeof views)[number]>('contracts')
-  const [position, setPosition] = useState<(typeof positions)[number]>('ALL')
-  const [query, setQuery] = useState('')
-  const [filtersOpen, setFiltersOpen] = useState(false)
-  const [onlyAvailable, setOnlyAvailable] = useState(false)
-  const rows = useMemo(() => PLANTILLA_VISUAL_MOCK_ROWS.filter((row, index) => (position === 'ALL' || positionsByRow[index] === position) && row.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())), [position, query])
-
-  return <section className="canonical-roster">
-    <header className="canonical-roster__toolbar">
-      <div className="canonical-roster__identity"><span aria-hidden="true">▦</span><div><strong>Plantilla ({PLANTILLA_VISUAL_MOCK_ROWS.length})</strong><small>Casademont Zaragoza</small></div></div>
-      <div className="canonical-roster__controls"><label>Vista<select aria-label="Vista" onChange={(event) => setView(event.target.value as typeof view)} value={view}>{views.map((item) => <option key={item} value={item}>{labels[item]}</option>)}</select></label><input aria-label="Buscar jugador" onChange={(event) => setQuery(event.target.value)} placeholder="Buscar jugador..." value={query} /><button aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)} type="button">Filtros</button><button aria-label="Más acciones" onClick={() => { setQuery(''); setPosition('ALL'); setOnlyAvailable(false) }} type="button">•••</button></div>
-      <div className="canonical-roster__views">{views.map((item) => <button className={view === item ? 'is-active' : ''} key={item} onClick={() => setView(item)} type="button">{labels[item]}</button>)}<span>{positions.map((item) => <button className={position === item ? 'is-active' : ''} key={item} onClick={() => setPosition(item)} type="button">{item}</button>)}</span><small>{rows.length} / {PLANTILLA_VISUAL_MOCK_ROWS.length}</small></div>
-      {filtersOpen && <div className="canonical-roster__filters"><label><input checked={onlyAvailable} onChange={(event) => setOnlyAvailable(event.target.checked)} type="checkbox" /> Solo disponibles</label><button onClick={() => { setPosition('ALL'); setOnlyAvailable(false) }} type="button">Limpiar filtros</button></div>}
-    </header>
-    <div className="canonical-roster__table-wrap"><table><thead><tr>{headersFor(view).map((header) => <th key={header}>{header}</th>)}</tr></thead><tbody>{rows.map((row) => { const index = PLANTILLA_VISUAL_MOCK_ROWS.indexOf(row); return <tr key={row.id}><td>{row.name}</td><td>{positionsByRow[index]}</td><td>{19 + (index % 12)}</td><td><span className="canonical-roster__status">{onlyAvailable ? 'Ready' : row.status}</span></td>{cellsFor(row.values, index, view).map((value, cellIndex) => <td key={cellIndex}>{value}</td>)}</tr> })}</tbody></table></div>
-  </section>
+function compactMoney(value: number) {
+  return value >= 1_000_000
+    ? `$${Math.round(value / 1_000_000)}M`
+    : `$${Math.round(value / 1_000)}K`;
 }
 
-function headersFor(view: (typeof views)[number]) { return view === 'contracts' ? ['PLAYER', 'POS', 'AGE', 'STATUS', 'SALARY', 'EXPIRES'] : view === 'physical' ? ['PLAYER', 'POS', 'AGE', 'STATUS', 'ATHLETICISM', 'STRENGTH'] : view === 'ratings' ? ['PLAYER', 'POS', 'AGE', 'STATUS', 'FIN', 'SHO', 'PMK'] : ['PLAYER', 'POS', 'AGE', 'STATUS', 'FIN', 'SHO'] }
-function cellsFor(values: readonly number[], index: number, view: (typeof views)[number]) { if (view === 'contracts') return [`$${90 + index * 40}K`, `${2034 + (index % 4)}-10-01`]; if (view === 'physical') return [values[7]!, values[8]!]; return view === 'ratings' ? [values[0]!, values[1]!, values[2]!] : [values[0]!, values[1]!] }
+export function CanonicalRoster({
+  activeView = "general",
+  onOpenEntity,
+  onViewChange,
+  team,
+  world,
+}: {
+  readonly activeView?: string;
+  readonly onOpenEntity?: (destination: EntityDestination) => void;
+  readonly onViewChange?: (view: string) => void;
+  readonly team: { readonly id: TeamId; readonly name: string };
+  readonly world: GameWorld;
+}) {
+  const [query, setQuery] = useState("");
+  const [rotation, setRotation] = useState<Record<string, string>>({});
+  const [selectedId, setSelectedId] = useState<string>();
+  const gridRef = useRef<HTMLDivElement>(null);
+  const roster = useMemo(() => getTeamRoster(world, team.id), [world, team.id]);
+  const rows = useMemo(
+    () =>
+      roster.filter((player) =>
+        `${player.firstName} ${player.lastName}`
+          .toLocaleLowerCase()
+          .includes(query.trim().toLocaleLowerCase()),
+      ),
+    [roster, query],
+  );
+  const openPlayer = (player: Player) =>
+    onOpenEntity?.({
+      type: "player",
+      playerId: player.id,
+      section: "overview",
+    });
+  const columns = useMemo<readonly DataGridColumn<Player>[]>(
+    () => [
+      {
+        id: "status",
+        label: "EST",
+        defaultWidth: 62,
+        minWidth: 54,
+        sortable: true,
+        value: () => "OK",
+        render: () => <span className="canonical-roster__status">OK</span>,
+      },
+      {
+        id: "player",
+        label: "JUGADOR",
+        defaultWidth: 270,
+        minWidth: 180,
+        required: true,
+        searchable: true,
+        sortable: true,
+        value: (player) => `${player.lastName} ${player.firstName}`,
+        render: (player) => (
+          <button
+            className="canonical-roster__player-link"
+            onClick={() => openPlayer(player)}
+            type="button"
+          >
+            {player.firstName} {player.lastName}
+          </button>
+        ),
+      },
+      {
+        id: "position",
+        label: "POS",
+        defaultWidth: 78,
+        minWidth: 64,
+        sortable: true,
+        value: (player) => player.basketball.primaryPosition,
+        render: (player) => (
+          <span className="canonical-roster__position">
+            {player.basketball.primaryPosition}
+          </span>
+        ),
+      },
+      {
+        id: "rotation",
+        label: "ROT",
+        defaultWidth: 120,
+        minWidth: 100,
+        sortable: true,
+        value: (player) => rotation[player.id] ?? "B2",
+        render: (player) => (
+          <select
+            aria-label={`Rotación ${player.firstName} ${player.lastName}`}
+            className="canonical-roster__rotation"
+            onChange={(event) =>
+              setRotation((current) => ({
+                ...current,
+                [player.id]: event.target.value,
+              }))
+            }
+            value={rotation[player.id] ?? "B2"}
+          >
+            {[
+              "PG",
+              "SG",
+              "SF",
+              "PF",
+              "C",
+              "B1",
+              "B2",
+              "B3",
+              "B4",
+              "B5",
+              "B6",
+              "B7",
+            ].map((slot) => (
+              <option key={slot}>{slot}</option>
+            ))}
+          </select>
+        ),
+      },
+      {
+        id: "age",
+        label: "EDAD",
+        defaultWidth: 72,
+        minWidth: 58,
+        numeric: true,
+        sortable: true,
+        value: (player) => getPlayerAge(world, player.id),
+        render: (player) => getPlayerAge(world, player.id),
+      },
+      {
+        id: "height",
+        label: "ALT",
+        defaultWidth: 100,
+        minWidth: 76,
+        numeric: true,
+        sortable: true,
+        value: (player) => player.bio.heightCm,
+        render: (player) => `${player.bio.heightCm} cm`,
+      },
+      {
+        id: "weight",
+        label: "PESO",
+        defaultWidth: 100,
+        minWidth: 76,
+        numeric: true,
+        sortable: true,
+        value: (player) => player.bio.weightKg,
+        render: (player) => `${player.bio.weightKg} kg`,
+      },
+      {
+        id: "fatigue",
+        label: "FATIGA",
+        defaultWidth: 100,
+        minWidth: 76,
+        numeric: true,
+        sortable: true,
+        value: (player) => getCareerFatigueForPlayer(world, player.id),
+        render: (player) => getCareerFatigueForPlayer(world, player.id),
+      },
+      {
+        id: "salary",
+        label: "CONTRATO",
+        defaultWidth: 138,
+        minWidth: 100,
+        numeric: true,
+        sortable: true,
+        value: (player) =>
+          getCurrentPlayerContract(world, player.id)?.compensation
+            .annualSalary ?? 0,
+        render: (player) => {
+          const contract = getCurrentPlayerContract(world, player.id);
+          return contract === undefined
+            ? "Beca"
+            : compactMoney(contract.compensation.annualSalary);
+        },
+      },
+    ],
+    [rotation, world],
+  );
+  const views: readonly DataGridView[] = [
+    {
+      id: "general",
+      name: "Resumen General",
+      columnIds: columns.map((column) => column.id),
+    },
+    {
+      id: "psico",
+      name: "Psico",
+      columnIds: ["status", "player", "position", "rotation", "age"],
+    },
+    {
+      id: "physical",
+      name: "Físico",
+      columnIds: [
+        "status",
+        "player",
+        "position",
+        "rotation",
+        "age",
+        "height",
+        "weight",
+      ],
+    },
+  ];
+  const selectedView =
+    views.find((view) => view.id === activeView) ?? views[0]!;
+  return (
+    <section className="canonical-roster">
+      <header className="canonical-roster__toolbar">
+        <div className="canonical-roster__identity">
+          <span className="canonical-roster__icon">
+            <BdmIcon name="roster" size={28} />
+          </span>
+          <div>
+            <strong>Plantilla ({roster.length})</strong>
+            <small>{team.name}</small>
+          </div>
+        </div>
+        <div className="canonical-roster__actions">
+          <input
+            aria-label="Buscar jugador"
+            onChange={(event) => setQuery(event.target.value)}
+            value={query}
+          />
+          <button
+            aria-label="Configurar columnas"
+            onClick={() =>
+              gridRef.current
+                ?.querySelector<HTMLButtonElement>(
+                  '[aria-label="Customise columns"]',
+                )
+                ?.click()
+            }
+            type="button"
+          >
+            ⚙
+          </button>
+        </div>
+      </header>
+      <div className="canonical-roster__grid" ref={gridRef}>
+        <BDMDataGrid
+          columns={columns}
+          gridId={`plantilla-pcb-${selectedView.id}`}
+          key={selectedView.id}
+          onRowClick={(player) => {
+            setSelectedId(player.id);
+            openPlayer(player);
+          }}
+          onSelectionChange={(ids) => setSelectedId(ids[0])}
+          presentation="fm"
+          rows={rows}
+          selectedId={selectedId}
+          views={[selectedView]}
+        />
+      </div>
+    </section>
+  );
+}
