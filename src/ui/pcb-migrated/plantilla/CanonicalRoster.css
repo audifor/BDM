@@ -48,7 +48,28 @@
 }
 .canonical-roster__actions {
   display: flex;
+  align-items: center;
   gap: 10px;
+}
+.canonical-roster__view-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  border: 1px solid #2b3b4b;
+  border-radius: 6px;
+  background: #111820;
+  color: #84bce3;
+  padding: 0 8px;
+  font-size: 11px;
+}
+.canonical-roster__view-select select {
+  min-width: 130px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #f3f7fb;
+  font: 700 11px Inter, var(--font-ui, Arial, sans-serif);
 }
 .canonical-roster__actions input {
   width: 200px;

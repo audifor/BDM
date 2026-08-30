@@ -40,7 +40,7 @@ describe('Desktop navigation', () => {
   })
 
   it('groups applications by their functional area', () => {
-    for (const appId of ['squad', 'tactics', 'training', 'medical', 'staff']) expect(DESKTOP_APPS.find((app) => app.id === appId)?.launcherGroup).toBe('EQUIPO')
+    for (const appId of ['squad', 'analysis', 'locker-room', 'mentoring', 'tactics', 'training', 'medical', 'staff']) expect(DESKTOP_APPS.find((app) => app.id === appId)?.launcherGroup).toBe('EQUIPO')
     for (const appId of ['schedule', 'match', 'competition']) expect(DESKTOP_APPS.find((app) => app.id === appId)?.launcherGroup).toBe('PARTIDOS Y COMPETICIÓN')
     for (const appId of ['club', 'board', 'finances', 'enforcement']) expect(DESKTOP_APPS.find((app) => app.id === appId)?.launcherGroup).toBe('GESTIÓN DEL CLUB')
     for (const appId of ['coach', 'coach-finances']) expect(DESKTOP_APPS.find((app) => app.id === appId)?.launcherGroup).toBe('MI CARRERA')

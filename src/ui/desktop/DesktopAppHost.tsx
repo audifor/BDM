@@ -18,10 +18,14 @@ import { TacticsPcbPage } from '@/ui/pcb-migrated/tactics/TacticsPcbPage'
 import { ClubPcbPage } from '@/ui/pcb-migrated/club/ClubPcbPage'
 import { MedicalPcbPage } from '@/ui/pcb-migrated/medical/MedicalPcbPage'
 import { CompetitionPcbPage } from '@/ui/pcb-migrated/competition/CompetitionPcbPage'
+import { TeamWorkspacePage } from '@/ui/pcb-migrated/team/TeamWorkspacePage'
 
 export function DesktopAppHost({ appId, entityDestination, world, actions }: { readonly appId: string; readonly entityDestination?: EntityDestination; readonly world: GameWorld; readonly actions: DesktopAppActions }) {
   const key = getDesktopApp(appId)?.renderKey
   if (appId === 'squad') return <PlantillaPcbPage onOpenEntity={actions.openEntity} world={world} />
+  if (appId === 'analysis') return <TeamWorkspacePage appName="Análisis" sections={['Depth Chart', 'Plan de futuro', 'Informes']} />
+  if (appId === 'locker-room') return <TeamWorkspacePage appName="Vestuario" sections={['Overview', 'Estructura del equipo', 'Grupos', 'Felicidad', 'Código de conducta', 'Reunión con el equipo', 'Reacción']} />
+  if (appId === 'mentoring') return <TeamWorkspacePage appName="Mentoring" sections={[]} />
   if (appId === 'training') return <TrainingPcbPage />
   if (appId === 'tactics') return <TacticsPcbPage />
   if (appId === 'club') return <ClubPcbPage />

@@ -26,12 +26,14 @@ export function CanonicalRoster({
   activeView = "general",
   onOpenEntity,
   onViewChange,
+  rosterSection = "overview",
   team,
   world,
 }: {
   readonly activeView?: string;
   readonly onOpenEntity?: (destination: EntityDestination) => void;
   readonly onViewChange?: (view: string) => void;
+  readonly rosterSection?: string;
   readonly team: { readonly id: TeamId; readonly name: string };
   readonly world: GameWorld;
 }) {
@@ -236,6 +238,19 @@ export function CanonicalRoster({
           </div>
         </div>
         <div className="canonical-roster__actions">
+          <label className="canonical-roster__view-select">
+            <span>Vista</span>
+            <select
+              aria-label="Vista"
+              onChange={(event) => onViewChange?.(event.target.value)}
+              value={rosterSection}
+            >
+              <option value="overview">Vista general</option>
+              <option value="jerseys">Dorsales</option>
+              <option value="registration">Inscripción</option>
+              <option value="all-players">Todos los jugadores</option>
+            </select>
+          </label>
           <input
             aria-label="Buscar jugador"
             onChange={(event) => setQuery(event.target.value)}

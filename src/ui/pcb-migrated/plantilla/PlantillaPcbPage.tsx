@@ -16,7 +16,6 @@ import "./PlantillaPcbPage.css";
 import "./PlantillaRenderer.css";
 import "./PlantillaA11y.css";
 
-type Section = "plantilla" | "analysis" | "mentoring";
 type Group = {
   readonly id: string;
   readonly mentor: string;
@@ -68,64 +67,22 @@ export function PlantillaPcbPage({
   readonly onOpenEntity?: (destination: EntityDestination) => void;
   readonly world?: GameWorld;
 }) {
-  const [section, setSection] = useState<Section>("plantilla");
-  const [rosterView, setRosterView] = useState("general");
+  const [rosterSection, setRosterSection] = useState("overview");
   const team = useMemo(() => (world === undefined ? undefined : getUserTeam(world)), [world]);
   return (
     <section aria-label="Plantilla PCB migrada" className="pcb-plantilla">
       <div className="pcb-plantilla__page">
-        <div className="pcb-plantilla__subnav">
-          <label>
-            Sección
-            <select
-              aria-label="Sección"
-              onChange={(event) => setSection(event.target.value as Section)}
-              value={section}
-            >
-              <option value="plantilla">Plantilla</option>
-              <option value="analysis">Análisis + Dinámicas</option>
-              <option value="mentoring">Mentoring</option>
-            </select>
-          </label>
-          {section === "plantilla" && (
-            <label>
-              Vista
-              <select
-                aria-label="Vista"
-                onChange={(event) => setRosterView(event.target.value)}
-                value={rosterView}
-              >
-                <option value="general">Resumen General</option>
-                <option value="psico">Psico</option>
-                <option value="physical">Físico</option>
-              </select>
-            </label>
-          )}
-          <div className="pcb-plantilla__a11y-actions">
-            <button aria-current={section === "plantilla" ? "page" : undefined} className={section === "plantilla" ? "is-active" : undefined} onClick={() => setSection("plantilla")} type="button">Plantilla</button>
-            <button aria-current={section === "analysis" ? "page" : undefined} className={section === "analysis" ? "is-active" : undefined} onClick={() => setSection("analysis")} type="button">
-              Análisis + Dinámicas
-            </button>
-            <button aria-current={section === "mentoring" ? "page" : undefined} className={section === "mentoring" ? "is-active" : undefined} onClick={() => setSection("mentoring")} type="button">
-              Mentoring
-            </button>
-          </div>
-        </div>
-        {section === "plantilla" ? (
-          team === undefined || world === undefined ? (
-            <p className="content-panel">No team assigned to the user coach.</p>
-          ) : (
-            <CanonicalRoster
-              activeView={rosterView}
-              onOpenEntity={onOpenEntity}
-              team={team}
-              world={world}
-            />
-          )
-        ) : section === "analysis" ? (
-          <Analysis />
+        {team === undefined || world === undefined ? (
+          <p className="content-panel">No team assigned to the user coach.</p>
         ) : (
-          <Mentoring />
+          <CanonicalRoster
+            activeView="general"
+            onOpenEntity={onOpenEntity}
+            onViewChange={setRosterSection}
+            rosterSection={rosterSection}
+            team={team}
+            world={world}
+          />
         )}
       </div>
     </section>
