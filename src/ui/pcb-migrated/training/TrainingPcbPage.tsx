@@ -4,17 +4,20 @@ import {
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import {
-  TRAINING_DAYS,
-  TRAINING_MODULES,
-  TRAINING_PLAYERS,
-  TRAINING_STAFF,
-} from "./TrainingVisualMock";
+import type { GameWorld } from "@/domain/world";
+import { getCareerFatigueForPlayer, getDevelopmentStimulusForPlayer, getTeamRoster } from "@/domain/world";
+import { getUserTeam } from "@/engine/calendar";
+import { BASKETBALL_RATING_KEYS, type BasketballRatingKey, type Player } from "@/domain/player";
+import type { Team } from "@/domain/team";
+import type { TeamId } from "@/domain/ids";
+import { TRAINING_MODULES as DOMAIN_TRAINING_MODULES } from "@/domain/training";
+import type { TrainingFocus, TrainingIntensity as DomainTrainingIntensity } from "@/domain/training";
+import { ATTRIBUTE_LABELS } from "@/ui/attributeLabels";
+import { selectLatestUserTrainingSession, selectUserTrainingPlan } from "@/stores/gameStore";
 import {
   addTrainingSession,
   createTrainingPlan,
   deleteTrainingSession,
-  generateTrainingPlan,
   updateTrainingSession,
   type TrainingDay,
   type TrainingIntensity,
@@ -31,6 +34,52 @@ const tabs: readonly [TrainingPcbTab, string][] = [
   ["staff", "Staff"],
   ["modules", "Módulos"],
 ];
+
+const FOCUS_LABELS: Record<TrainingFocus, string> = {
+  balanced: "Equilibrado",
+  finishing: "Finalización",
+  shooting: "Tiro",
+  playmaking: "Creación",
+  perimeterDefense: "Defensa exterior",
+  interiorDefense: "Defensa interior",
+  rebounding: "Rebote",
+  athleticism: "Atletismo",
+};
+const INTENSITY_LABELS: Record<DomainTrainingIntensity, string> = {
+  light: "Baja",
+  normal: "Media",
+  high: "Alta",
+};
+const MODULE_NAME_LABELS: Record<string, string> = {
+  balanced: "Equilibrado",
+  shooting: "Tiro exterior",
+  finishing: "Finalización",
+  creation: "Creación",
+  defense: "Defensa",
+  rebounding: "Rebote",
+  physical: "Físico",
+};
+
+function playerName(player: Player): string {
+  return `${player.firstName} ${player.lastName}`;
+}
+
+/** Aggregates real roster + per-player development stimulus + fatigue, mirroring TrainingScreen's getTrainingImpact. */
+function getTrainingImpact(world: GameWorld, teamId: TeamId) {
+  const players = getTeamRoster(world, teamId);
+  const totals = Object.fromEntries(
+    BASKETBALL_RATING_KEYS.map((key) => [
+      key,
+      players.reduce((sum, player) => sum + (getDevelopmentStimulusForPlayer(world, player.id)?.byRating[key] ?? 0), 0),
+    ]),
+  ) as Record<BasketballRatingKey, number>;
+  const fatigue = players.map((player) => getCareerFatigueForPlayer(world, player.id));
+  return {
+    players,
+    totals,
+    averageFatigue: fatigue.length === 0 ? 0 : fatigue.reduce((sum, value) => sum + value, 0) / fatigue.length,
+  };
+}
 
 function useResizableTrainingColumns(initialWidths: readonly number[]) {
   const [widths, setWidths] = useState(initialWidths);
@@ -80,11 +129,18 @@ function TrainingColumnResizeHandle({
 
 export function TrainingPcbPage({
   initialTab = "team",
+  world,
+  onIntensity,
+  onFocus,
 }: {
   readonly initialTab?: TrainingPcbTab;
+  readonly world?: GameWorld;
+  readonly onIntensity?: (value: DomainTrainingIntensity) => void;
+  readonly onFocus?: (value: TrainingFocus) => void;
 }) {
   const [tab, setTab] = useState<TrainingPcbTab>(initialTab);
   const [plan, setPlan] = useState<readonly TrainingDay[]>(createTrainingPlan);
+  const team = useMemo(() => (world === undefined ? undefined : getUserTeam(world)), [world]);
   return (
     <section aria-label="Entrenamiento PCB migrado" className="pcb-training">
       <DraggableSubnav
@@ -98,11 +154,18 @@ export function TrainingPcbPage({
         storageKey="pcbasket.subnav.training"
       />
       {tab === "team" ? (
-        <TeamTraining plan={plan} setPlan={setPlan} />
+        <TeamTraining
+          plan={plan}
+          setPlan={setPlan}
+          world={world}
+          team={team}
+          onIntensity={onIntensity}
+          onFocus={onFocus}
+        />
       ) : tab === "personal" ? (
-        <PersonalTraining />
+        <PersonalTraining world={world} team={team} />
       ) : tab === "load" ? (
-        <LoadManagementInteractive />
+        <LoadManagementInteractive world={world} team={team} />
       ) : tab === "staff" ? (
         <StaffAssignments />
       ) : (
@@ -115,21 +178,29 @@ export function TrainingPcbPage({
 function TeamTraining({
   plan,
   setPlan,
+  world,
+  team,
+  onIntensity,
+  onFocus,
 }: {
   readonly plan: readonly TrainingDay[];
   readonly setPlan: React.Dispatch<
     React.SetStateAction<readonly TrainingDay[]>
   >;
+  readonly world?: GameWorld;
+  readonly team?: Team;
+  readonly onIntensity?: (value: DomainTrainingIntensity) => void;
+  readonly onFocus?: (value: TrainingFocus) => void;
 }) {
-  const [automatic, setAutomatic] = useState(true);
   const [saved, setSaved] = useState(false);
   const [week, setWeek] = useState(0);
-  const [context, setContext] = useState("Prepartido");
-  const [responsible, setResponsible] = useState("alvaro");
   const [editor, setEditor] = useState<{
     readonly dayIndex: number;
     readonly session?: TrainingSession;
   }>();
+  const trainingPlan = world === undefined ? undefined : selectUserTrainingPlan(world);
+  const latestSession = world === undefined ? undefined : selectLatestUserTrainingSession(world);
+  const impact = world !== undefined && team !== undefined ? getTrainingImpact(world, team.id) : undefined;
   const saveSession = (session: Omit<TrainingSession, "id">) => {
     if (editor === undefined) return;
     const current = editor.session;
@@ -153,62 +224,50 @@ function TeamTraining({
           <div>
             <h2>Team Training</h2>
             <p>
-              {context} · Semana {18 + week} - {24 + week} ago
+              Semana {18 + week} - {24 + week} ago
             </p>
           </div>
           <div className="pcb-training__chips">
-            <span>Equipo Casademont Zaragoza</span>
-            <span>
-              Responsable:{" "}
-              {responsible === "alvaro"
-                ? "Álvaro Quirós (84)"
-                : "Marta Vidal (79)"}
-            </span>
-            <span>Carga Óptima</span>
-            <span>Total 486 AU</span>
+            <span>{team === undefined ? "Sin equipo asignado" : team.name}</span>
+            {trainingPlan !== undefined && (
+              <span>
+                Última sesión:{" "}
+                {latestSession === undefined
+                  ? "Sin sesiones registradas"
+                  : `${latestSession.gameDate} · ${INTENSITY_LABELS[latestSession.intensity]}`}
+              </span>
+            )}
+            {impact !== undefined && (
+              <span>Fatiga media {impact.averageFatigue.toFixed(1)}</span>
+            )}
           </div>
         </div>
         <div className="pcb-training__controls">
           <label>
-            Modo
-            <button
-              className={automatic ? "is-on" : ""}
-              onClick={() => setAutomatic(!automatic)}
-              type="button"
-            >
-              {automatic ? "Automático" : "Manual"}
-            </button>
-          </label>
-          <label>
-            Responsable
+            Intensidad
             <select
-              onChange={(event) => setResponsible(event.target.value)}
-              value={responsible}
+              onChange={(event) => onIntensity?.(event.target.value as DomainTrainingIntensity)}
+              value={trainingPlan?.intensity ?? "normal"}
             >
-              <option value="alvaro">Álvaro Quirós (84)</option>
-              <option value="marta">Marta Vidal (79)</option>
+              <option value="light">Baja</option>
+              <option value="normal">Media</option>
+              <option value="high">Alta</option>
             </select>
           </label>
           <label>
-            Contexto
+            Foco
             <select
-              onChange={(event) => setContext(event.target.value)}
-              value={context}
+              onChange={(event) => onFocus?.(event.target.value as TrainingFocus)}
+              value={trainingPlan?.focus ?? "balanced"}
             >
-              <option>Prepartido</option>
-              <option>Semana normal</option>
-              <option>Recuperación</option>
+              {(Object.keys(FOCUS_LABELS) as TrainingFocus[]).map((value) => (
+                <option key={value} value={value}>
+                  {FOCUS_LABELS[value]}
+                </option>
+              ))}
             </select>
           </label>
           <div className="pcb-training__control-actions">
-            {automatic && (
-              <button
-                onClick={() => setPlan(generateTrainingPlan(context))}
-                type="button"
-              >
-                Auto-Generar
-              </button>
-            )}
             <button
               className="is-primary"
               onClick={() => setSaved(true)}
@@ -310,24 +369,21 @@ function Calendar() {
   return (
     <aside className="pcb-training__calendar">
       <header>
-        <h3>Agosto 2032</h3>
-        <span>Plan semanal</span>
+        <h3>Planificación</h3>
+        <span>Bloc de notas semanal</span>
       </header>
       <div className="pcb-training__calendar-grid">
         {["L", "M", "X", "J", "V", "S", "D"].map((x) => (
           <b key={x}>{x}</b>
         ))}
         {Array.from({ length: 35 }, (_, index) => (
-          <span
-            className={index > 16 && index < 24 ? "is-train" : ""}
-            key={index}
-          >
-            {index > 2 && index < 34 ? index - 2 : ""}
-            {index > 16 && index < 24 ? <i>2</i> : null}
-          </span>
+          <span key={index} />
         ))}
       </div>
-      <p>Sesiones programadas durante la semana seleccionada.</p>
+      <p>
+        Espacio de planificación libre: usa el planificador de la izquierda
+        para anotar sesiones de esta sesión de trabajo.
+      </p>
     </aside>
   );
 }
@@ -436,9 +492,17 @@ function SessionModal({
     </div>
   );
 }
-function PersonalTraining() {
+function PersonalTraining({
+  world,
+  team,
+}: {
+  readonly world?: GameWorld;
+  readonly team?: Team;
+}) {
   const columns = useResizableTrainingColumns([250, 88, 180, 150, 240]);
   const labels = ["Jugador", "Pos", "Focus", "Intensidad", "Objetivo"];
+  const players = world !== undefined && team !== undefined ? getTeamRoster(world, team.id) : [];
+  const plan = world === undefined ? undefined : selectUserTrainingPlan(world);
   return (
     <main className="pcb-training__bento pcb-training__personal-page">
       <header className="pcb-training__personal-toolbar">
@@ -447,7 +511,7 @@ function PersonalTraining() {
           <small>Plan de desarrollo por jugador</small>
         </div>
         <div className="pcb-training__personal-pills">
-          <span>5 jugadores</span>
+          <span>{players.length} jugadores</span>
         </div>
       </header>
       <div className="pcb-training__table pcb-training__personal">
@@ -461,20 +525,36 @@ function PersonalTraining() {
             </span>
           ))}
         </div>
-        {TRAINING_PLAYERS.map(([name, pos, focus, intensity, objective]) => (
-          <div key={name} style={columns.style}>
-            <b>{name}</b>
-            <span>{pos}</span>
-            <span>{focus}</span>
-            <i>{intensity}</i>
-            <span>{objective}</span>
-          </div>
-        ))}
+        {players.length === 0 ? (
+          <p>No hay jugadores en la plantilla del usuario.</p>
+        ) : (
+          players.map((player) => {
+            const stimulus = world === undefined ? undefined : getDevelopmentStimulusForPlayer(world, player.id);
+            const topRating = stimulus === undefined
+              ? undefined
+              : BASKETBALL_RATING_KEYS.slice().sort((a, b) => (stimulus.byRating[b] ?? 0) - (stimulus.byRating[a] ?? 0))[0];
+            return (
+              <div key={player.id} style={columns.style}>
+                <b>{playerName(player)}</b>
+                <span>{player.basketball.primaryPosition}</span>
+                <span>{plan === undefined ? "—" : FOCUS_LABELS[plan.focus]}</span>
+                <i>{plan === undefined ? "—" : INTENSITY_LABELS[plan.intensity]}</i>
+                <span>{topRating === undefined ? "Sin estímulo registrado" : ATTRIBUTE_LABELS[topRating]}</span>
+              </div>
+            );
+          })
+        )}
       </div>
     </main>
   );
 }
-function LoadManagementInteractive() {
+function LoadManagementInteractive({
+  world,
+  team,
+}: {
+  readonly world?: GameWorld;
+  readonly team?: Team;
+}) {
   const [query, setQuery] = useState("");
   const [riskOnly, setRiskOnly] = useState(false);
   const [fatigueOnly, setFatigueOnly] = useState(false);
@@ -487,66 +567,52 @@ function LoadManagementInteractive() {
   const [view, setView] = useState("Principal");
   const [columns, setColumns] = useState<readonly string[]>([
     "JUGADOR",
-    "DORSAL",
     "POS",
-    "CARGA",
     "FATIGA",
-    "RATIO",
     "ESTADO",
-    "TEND.",
   ]);
-  const loadColumns = useResizableTrainingColumns([
-    220, 92, 88, 160, 160, 100, 160, 92,
-  ]);
+  const loadColumns = useResizableTrainingColumns([220, 88, 160, 160]);
   const loadGridStyle = {
     gridTemplateColumns: columns
       .map((_, index) => `${loadColumns.widths[index] ?? 120}px`)
       .join(" "),
   } as CSSProperties;
+  const players = world !== undefined && team !== undefined ? getTeamRoster(world, team.id) : [];
+  const rowsData = useMemo(
+    () =>
+      players.map((player) => ({
+        player,
+        fatigue: world === undefined ? 0 : getCareerFatigueForPlayer(world, player.id),
+      })),
+    [players, world],
+  );
   const rows = useMemo(
     () =>
-      TRAINING_PLAYERS.filter(
-        ([name, , , , , , , status]) =>
-          name.toLocaleLowerCase().includes(query.toLocaleLowerCase()) &&
-          (!riskOnly || status === "risk") &&
-          (!fatigueOnly ||
-            TRAINING_PLAYERS.find((player) => player[0] === name)![6] > 70),
-      )
+      rowsData
+        .filter(
+          ({ player, fatigue }) =>
+            playerName(player).toLocaleLowerCase().includes(query.toLocaleLowerCase()) &&
+            (!riskOnly || fatigue > 70) &&
+            (!fatigueOnly || fatigue > 70),
+        )
         .slice()
         .sort(
           (left, right) =>
-            (left[6] - right[6]) * (sortDirection === "ascending" ? 1 : -1),
+            (left.fatigue - right.fatigue) * (sortDirection === "ascending" ? 1 : -1),
         ),
-    [fatigueOnly, query, riskOnly, sortDirection],
+    [rowsData, fatigueOnly, query, riskOnly, sortDirection],
   );
-  const columnCell = (
-    column: string,
-    player: (typeof TRAINING_PLAYERS)[number],
-  ) => {
-    const [name, position, , , , load, fatigue, status] = player;
-    if (column === "JUGADOR") return <b>{name}</b>;
-    if (column === "DORSAL") return <span>{name.charCodeAt(0) % 33}</span>;
-    if (column === "POS") return <i>{position}</i>;
-    if (column === "CARGA") return <Bar value={load} />;
-    if (column === "FATIGA") return <Bar value={fatigue} />;
-    if (column === "RATIO")
-      return (
-        <b className={status === "risk" ? "is-danger" : ""}>
-          {(load / 55).toFixed(2)}
-        </b>
-      );
-    if (column === "ESTADO")
-      return (
-        <em className={`pcb-training__badge is-${status}`}>
-          {status === "risk"
-            ? "ALTO RIESGO"
-            : status === "low"
-              ? "BAJA CARGA"
-              : "ÓPTIMO"}
-        </em>
-      );
+  const averageFatigue = rowsData.length === 0 ? 0 : rowsData.reduce((sum, row) => sum + row.fatigue, 0) / rowsData.length;
+  const riskCount = rowsData.filter((row) => row.fatigue > 70).length;
+  const optimalCount = rowsData.filter((row) => row.fatigue <= 70).length;
+  const columnCell = (column: string, row: { readonly player: Player; readonly fatigue: number }) => {
+    if (column === "JUGADOR") return <b>{playerName(row.player)}</b>;
+    if (column === "POS") return <i>{row.player.basketball.primaryPosition}</i>;
+    if (column === "FATIGA") return <Bar value={Math.round(row.fatigue)} />;
     return (
-      <span>{status === "risk" ? "↑" : status === "low" ? "−" : "↓"}</span>
+      <em className={`pcb-training__badge is-${row.fatigue > 70 ? "risk" : "optimal"}`}>
+        {row.fatigue > 70 ? "ALTO RIESGO" : "ÓPTIMO"}
+      </em>
     );
   };
   return (
@@ -557,9 +623,9 @@ function LoadManagementInteractive() {
           <span>Control de cargas</span>
         </header>
         <div className="pcb-training__metrics">
-          <Metric label="ALERTA LESIÓN" value="2" tone="danger" icon="⌁" />
-          <Metric label="CARGA ÓPTIMA" value="2" tone="good" icon="✓" />
-          <Metric label="FATIGA MEDIA" value="55%" tone="warn" icon="▰" />
+          <Metric label="ALERTA LESIÓN" value={String(riskCount)} tone="danger" icon="⌁" />
+          <Metric label="CARGA ÓPTIMA" value={String(optimalCount)} tone="good" icon="✓" />
+          <Metric label="FATIGA MEDIA" value={`${averageFatigue.toFixed(0)}%`} tone="warn" icon="▰" />
         </div>
         <div className="pcb-training__load-toolbar">
           <div>
@@ -620,16 +686,7 @@ function LoadManagementInteractive() {
         )}
         {columnsOpen && (
           <div className="pcb-training__column-menu">
-            {[
-              "JUGADOR",
-              "DORSAL",
-              "POS",
-              "CARGA",
-              "FATIGA",
-              "RATIO",
-              "ESTADO",
-              "TEND.",
-            ].map((column) => (
+            {["JUGADOR", "POS", "FATIGA", "ESTADO"].map((column) => (
               <label key={column}>
                 <input
                   checked={columns.includes(column)}
@@ -675,18 +732,22 @@ function LoadManagementInteractive() {
               ),
             )}
           </div>
-          {rows.map((player) => (
-            <div
-              className={selected === player[0] ? "is-selected" : ""}
-              key={player[0]}
-              onClick={() => setSelected(player[0])}
-              style={loadGridStyle}
-            >
-              {columns.map((column) => (
-                <span key={column}>{columnCell(column, player)}</span>
-              ))}
-            </div>
-          ))}
+          {rows.length === 0 ? (
+            <p>No hay jugadores disponibles.</p>
+          ) : (
+            rows.map((row) => (
+              <div
+                className={selected === row.player.id ? "is-selected" : ""}
+                key={row.player.id}
+                onClick={() => setSelected(row.player.id)}
+                style={loadGridStyle}
+              >
+                {columns.map((column) => (
+                  <span key={column}>{columnCell(column, row)}</span>
+                ))}
+              </div>
+            ))
+          )}
         </div>
       </section>
     </main>
@@ -729,7 +790,7 @@ function StaffAssignments() {
       <section className="pcb-training__card">
         <header className="pcb-training__card-head">
           <h2>Staff Assignments</h2>
-          <span>4 miembros</span>
+          <span>Sin datos de plantilla técnica</span>
         </header>
         <div className="pcb-training__table pcb-training__staff">
           <div className="is-head" style={columns.style}>
@@ -742,14 +803,7 @@ function StaffAssignments() {
               </span>
             ))}
           </div>
-          {TRAINING_STAFF.map(([name, role, area, group]) => (
-            <div key={name} style={columns.style}>
-              <b>{name}</b>
-              <span>{role}</span>
-              <span>{area}</span>
-              <span>{group}</span>
-            </div>
-          ))}
+          <p>No hay asignaciones de staff disponibles todavía.</p>
         </div>
       </section>
     </main>
@@ -761,8 +815,8 @@ function TrainingModules() {
     Record<string, { enabled: boolean; intensity: TrainingIntensity }>
   >(() =>
     Object.fromEntries(
-      TRAINING_MODULES.map(([name]) => [
-        name,
+      DOMAIN_TRAINING_MODULES.map((module) => [
+        module.id,
         { enabled: true, intensity: "Media" as TrainingIntensity },
       ]),
     ),
@@ -773,18 +827,18 @@ function TrainingModules() {
       <section className="pcb-training__card">
         <header className="pcb-training__card-head">
           <h2>Training Modules</h2>
-          <span>4 módulos</span>
+          <span>{DOMAIN_TRAINING_MODULES.length} módulos</span>
         </header>
         <div className="pcb-training__module-list">
-          {TRAINING_MODULES.map(([name, description, category]) => (
-            <article key={name}>
+          {DOMAIN_TRAINING_MODULES.map((module) => (
+            <article key={module.id}>
               <div>
-                <b>{name}</b>
-                <p>{description}</p>
-                {!settings[name]!.enabled && <small>Desactivado</small>}
+                <b>{MODULE_NAME_LABELS[module.id] ?? module.id}</b>
+                <p>Categoría: {FOCUS_LABELS[module.category]}</p>
+                {!settings[module.id]!.enabled && <small>Desactivado</small>}
               </div>
-              <span>{category}</span>
-              <button onClick={() => setConfiguring(name)} type="button">
+              <span>{module.scope}</span>
+              <button onClick={() => setConfiguring(module.id)} type="button">
                 Configurar
               </button>
             </article>
@@ -794,7 +848,7 @@ function TrainingModules() {
           <div className="pcb-training__modal">
             <section>
               <header>
-                <h3>Configurar {configuring}</h3>
+                <h3>Configurar {MODULE_NAME_LABELS[configuring] ?? configuring}</h3>
                 <button onClick={() => setConfiguring(null)} type="button">
                   ×
                 </button>

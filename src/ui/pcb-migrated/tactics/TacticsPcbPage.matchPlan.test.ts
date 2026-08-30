@@ -1,63 +1,74 @@
 // @vitest-environment jsdom
 import { createElement } from 'react'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import '@testing-library/jest-dom/vitest'
+import type { MatchTacticalPlan } from '@/engine/match'
 import { TacticsPcbPage } from './TacticsPcbPage'
 
 afterEach(cleanup)
 
+const defaultPlan: MatchTacticalPlan = { pace: 0, shotProfile: { rim: 0, midRange: 0, threePoint: 0 }, defense: { interior: 0, perimeter: 0 } }
+
 describe('TacticsPcbPage / Match Plan', () => {
-  it('updates the Ritmo, Cobertura P&R and Rotación overrides and resets them', () => {
-    render(createElement(TacticsPcbPage))
+  it('changing Ritmo calls onChange with the mapped TacticalLevel', () => {
+    const onChange = vi.fn()
+    render(createElement(TacticsPcbPage, { plan: defaultPlan, onChange }))
     fireEvent.click(screen.getByRole('button', { name: 'Partido' }))
 
     const paceSelect = screen.getByLabelText('Ritmo') as HTMLSelectElement
-    const coverageSelect = screen.getByLabelText('Cobertura P&R') as HTMLSelectElement
-    const rotationSelect = screen.getByLabelText('Rotación') as HTMLSelectElement
-
     expect(paceSelect.value).toBe('Equilibrado')
-    expect(coverageSelect.value).toBe('Drop')
-    expect(rotationSelect.value).toBe('Estándar')
 
     fireEvent.change(paceSelect, { target: { value: 'Rápido' } })
-    fireEvent.change(coverageSelect, { target: { value: 'Switch' } })
-    fireEvent.change(rotationSelect, { target: { value: 'Corta' } })
 
-    expect(paceSelect.value).toBe('Rápido')
-    expect(coverageSelect.value).toBe('Switch')
-    expect(rotationSelect.value).toBe('Corta')
+    expect(onChange).toHaveBeenCalledWith({ ...defaultPlan, pace: 1 })
+  })
+
+  it('changing Cobertura P&R calls onChange with a valid defense preset', () => {
+    const onChange = vi.fn()
+    render(createElement(TacticsPcbPage, { plan: defaultPlan, onChange }))
+    fireEvent.click(screen.getByRole('button', { name: 'Partido' }))
+
+    const coverageSelect = screen.getByLabelText('Cobertura P&R') as HTMLSelectElement
+    expect(coverageSelect.value).toBe('Drop')
+
+    fireEvent.change(coverageSelect, { target: { value: 'Switch' } })
+    expect(onChange).toHaveBeenCalledWith({ ...defaultPlan, defense: { interior: 2, perimeter: -1 } })
+
+    fireEvent.change(coverageSelect, { target: { value: 'Blitz' } })
+    expect(onChange).toHaveBeenCalledWith({ ...defaultPlan, defense: { interior: -1, perimeter: 2 } })
+  })
+
+  it('Reset calls onReset', () => {
+    const onReset = vi.fn()
+    render(createElement(TacticsPcbPage, { plan: defaultPlan, onReset }))
+    fireEvent.click(screen.getByRole('button', { name: 'Partido' }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
 
-    expect((screen.getByLabelText('Ritmo') as HTMLSelectElement).value).toBe('Equilibrado')
-    expect((screen.getByLabelText('Cobertura P&R') as HTMLSelectElement).value).toBe('Drop')
-    expect((screen.getByLabelText('Rotación') as HTMLSelectElement).value).toBe('Estándar')
+    expect(onReset).toHaveBeenCalled()
   })
 
-  it('opens the scouting report for the selected opponent and closes it', () => {
-    render(createElement(TacticsPcbPage))
+  it('Rotación stays local UI state with no real domain equivalent', () => {
+    render(createElement(TacticsPcbPage, { plan: defaultPlan }))
+    fireEvent.click(screen.getByRole('button', { name: 'Partido' }))
+
+    const rotationSelect = screen.getByLabelText('Rotación') as HTMLSelectElement
+    expect(rotationSelect.value).toBe('Estándar')
+    fireEvent.change(rotationSelect, { target: { value: 'Corta' } })
+    expect(rotationSelect.value).toBe('Corta')
+  })
+
+  it('opens and closes the scouting modal with a neutral no-data state when there is no world', () => {
+    render(createElement(TacticsPcbPage, { plan: defaultPlan }))
     fireEvent.click(screen.getByRole('button', { name: 'Partido' }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Ver scouting' }))
 
-    const modal = screen.getByRole('heading', { name: 'Scouting · Lions BC' }).closest('section')!
-    expect(within(modal).getByText('T. Walker · P&R 86')).toBeInTheDocument()
-    expect(within(modal).getByText('T. Walker')).toBeInTheDocument()
+    const modal = screen.getByRole('heading', { name: /^Scouting ·/ }).closest('section')!
+    expect(modal.textContent).toContain('No hay informe de scouting disponible todavía.')
 
-    fireEvent.click(within(modal).getByRole('button', { name: 'Cerrar' }))
-    expect(screen.queryByRole('heading', { name: 'Scouting · Lions BC' })).not.toBeInTheDocument()
-  })
-
-  it('shows a different scouting report when the opponent changes', () => {
-    render(createElement(TacticsPcbPage))
-    fireEvent.click(screen.getByRole('button', { name: 'Partido' }))
-
-    const opponentSelect = screen.getAllByRole('combobox').find((el) => (el as HTMLSelectElement).value === 'Lions BC') as HTMLSelectElement
-    fireEvent.change(opponentSelect, { target: { value: 'Falcons BC' } })
-
-    fireEvent.click(screen.getByRole('button', { name: 'Ver scouting' }))
-    const modal = screen.getByRole('heading', { name: 'Scouting · Falcons BC' }).closest('section')!
-    expect(within(modal).getByText('D. Okoye · Poste bajo 84')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }))
+    expect(screen.queryByRole('heading', { name: /^Scouting ·/ })).not.toBeInTheDocument()
   })
 })

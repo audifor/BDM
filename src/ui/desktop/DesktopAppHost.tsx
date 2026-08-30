@@ -26,8 +26,8 @@ export function DesktopAppHost({ appId, entityDestination, world, actions }: { r
   if (appId === 'analysis') return <TeamWorkspacePage appName="Análisis" sections={['Depth Chart', 'Plan de futuro', 'Informes']} />
   if (appId === 'locker-room') return <TeamWorkspacePage appName="Vestuario" sections={['Overview', 'Estructura del equipo', 'Grupos', 'Felicidad', 'Código de conducta', 'Reunión con el equipo', 'Reacción']} />
   if (appId === 'mentoring') return <MentoringPcbPage />
-  if (appId === 'training') return <TrainingPcbPage />
-  if (appId === 'tactics') return <TacticsPcbPage />
+  if (appId === 'training') return <TrainingPcbPage world={world} onIntensity={actions.setTrainingIntensity} onFocus={actions.setTrainingFocus} />
+  if (appId === 'tactics') return <TacticsPcbPage world={world} plan={actions.tacticalPlan} onChange={actions.setTacticalPlan} onReset={actions.resetTacticalPlan} />
   if (appId === 'club') return <ClubPcbPage />
   if (appId === 'staff') return <ClubPcbPage initialTab="staff" />
   if (appId === 'medical') return <MedicalPcbPage />

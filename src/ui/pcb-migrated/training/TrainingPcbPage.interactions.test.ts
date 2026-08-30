@@ -1,22 +1,45 @@
 // @vitest-environment jsdom
 import { createElement } from 'react'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import '@testing-library/jest-dom/vitest'
+import { createNewGame } from '@/app/game'
+import { getUserTeam } from '@/engine/calendar'
+import { selectUserTrainingPlan } from '@/stores/gameStore'
 import { TrainingPcbPage } from './TrainingPcbPage'
 
 afterEach(cleanup)
 
 describe('TrainingPcbPage / interactions', () => {
-  it('changing Responsable updates the hero chip', () => {
-    render(createElement(TrainingPcbPage))
+  it('changing Intensidad calls onIntensity with the selected value', () => {
+    const world = createNewGame()
+    const onIntensity = vi.fn()
+    render(createElement(TrainingPcbPage, { world, onIntensity }))
 
-    expect(screen.getByText('Responsable: Álvaro Quirós (84)')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Intensidad'), { target: { value: 'high' } })
 
-    fireEvent.change(screen.getByLabelText('Responsable'), { target: { value: 'marta' } })
+    expect(onIntensity).toHaveBeenCalledWith('high')
+  })
 
-    expect(screen.getByText('Responsable: Marta Vidal (79)')).toBeInTheDocument()
-    expect(screen.queryByText('Responsable: Álvaro Quirós (84)')).not.toBeInTheDocument()
+  it('changing Foco calls onFocus with the selected value', () => {
+    const world = createNewGame()
+    const onFocus = vi.fn()
+    render(createElement(TrainingPcbPage, { world, onFocus }))
+
+    fireEvent.change(screen.getByLabelText('Foco'), { target: { value: 'shooting' } })
+
+    expect(onFocus).toHaveBeenCalledWith('shooting')
+  })
+
+  it('reflects the real training plan intensity and focus in the controls', () => {
+    const world = createNewGame()
+    const team = getUserTeam(world)!
+    const plan = selectUserTrainingPlan(world)!
+    render(createElement(TrainingPcbPage, { world }))
+
+    expect(screen.getByText(team.name)).toBeInTheDocument()
+    expect((screen.getByLabelText('Intensidad') as HTMLSelectElement).value).toBe(plan.intensity)
+    expect((screen.getByLabelText('Foco') as HTMLSelectElement).value).toBe(plan.focus)
   })
 
   it('changing the session end time updates the estimated impact', () => {
