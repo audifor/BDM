@@ -6,6 +6,7 @@ import '@testing-library/jest-dom/vitest'
 import { createNewGame } from '@/app/game'
 import { getUserTeam } from '@/engine/calendar'
 import { selectUserTrainingPlan } from '@/stores/gameStore'
+import { parseGameDate } from '@/domain/date'
 import { TrainingPcbPage } from './TrainingPcbPage'
 
 afterEach(cleanup)
@@ -46,7 +47,7 @@ describe('TrainingPcbPage / interactions', () => {
     const world = createNewGame()
     render(createElement(TrainingPcbPage, { world }))
 
-    expect(screen.getAllByText(new RegExp(world.currentDate)).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/^\d{4}-\d{2}-\d{2} - \d{4}-\d{2}-\d{2}$/).length).toBeGreaterThan(0)
     expect(screen.queryByText(/18 ago/)).not.toBeInTheDocument()
     expect(screen.queryByText(/24 ago/)).not.toBeInTheDocument()
   })
@@ -55,6 +56,21 @@ describe('TrainingPcbPage / interactions', () => {
     render(createElement(TrainingPcbPage))
 
     expect(screen.getAllByText('Sin fecha de referencia').length).toBeGreaterThan(0)
+  })
+
+  it('anchors the week label on Monday-Sunday even when currentDate is not a Monday, and keeps that alignment across navigation', () => {
+    // 2026-08-19 is a Wednesday; its calendar week runs Monday 2026-08-17 to Sunday 2026-08-23.
+    const world = { ...createNewGame(), currentDate: parseGameDate('2026-08-19') }
+    render(createElement(TrainingPcbPage, { world }))
+
+    expect(screen.getAllByText('2026-08-17 - 2026-08-23').length).toBeGreaterThan(0)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }))
+    expect(screen.getByText('2026-08-24 - 2026-08-30')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Anterior' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Anterior' }))
+    expect(screen.getByText('2026-08-10 - 2026-08-16')).toBeInTheDocument()
   })
 
   it('changing the session end time updates the estimated impact', () => {

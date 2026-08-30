@@ -65,10 +65,19 @@ function playerName(player: Player): string {
   return `${player.firstName} ${player.lastName}`;
 }
 
-/** Real Mon-Sun calendar week range anchored on world.currentDate, offset by `week` weeks. */
+/** ISO weekday (1 = Monday .. 7 = Sunday) for a GameDate, using the same proleptic UTC calendar as GameDate arithmetic. */
+function isoWeekday(date: ReturnType<typeof parseGameDate>): number {
+  const [year, month, day] = date.split("-").map(Number) as [number, number, number];
+  const jsDay = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+  return jsDay === 0 ? 7 : jsDay;
+}
+
+/** Real Mon-Sun calendar week range anchored on the Monday of world.currentDate's week, offset by `week` weeks. */
 function trainingWeekRangeLabel(world: GameWorld | undefined, week: number): string {
   if (world === undefined) return "Sin fecha de referencia";
-  const anchor = addDays(parseGameDate(world.currentDate), week * 7);
+  const today = parseGameDate(world.currentDate);
+  const monday = addDays(today, -(isoWeekday(today) - 1));
+  const anchor = addDays(monday, week * 7);
   const start = formatGameDate(anchor);
   const end = formatGameDate(addDays(anchor, 6));
   return `${start} - ${end}`;
