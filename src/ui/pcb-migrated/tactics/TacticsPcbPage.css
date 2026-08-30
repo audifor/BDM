@@ -1,5 +1,5 @@
-.pcb-tactics{height:100%;overflow:auto;background:#090d13;color:#e2e8f0;padding:12px;font:12px/1.25 Inter,Arial,sans-serif}.pcb-tactics button,.pcb-tactics input,.pcb-tactics select,.pcb-tactics textarea{font:inherit}.pcb-tactics button{cursor:pointer;border:1px solid #475569;border-radius:6px;background:#1e293b;color:#e2e8f0;padding:7px 10px}.pcb-tactics button.is-active,.pcb-tactics button.is-primary{border-color:#38bdf8;background:rgba(56,189,248,.16);color:#7dd3fc}.pcb-tactics__tabs{display:flex;gap:7px;flex-wrap:wrap;padding-bottom:12px}.pcb-tactics__tabs button{border-radius:999px;text-transform:uppercase;font-size:11px;letter-spacing:.6px}.pcb-tactics__board{display:grid;grid-template-columns:220px minmax(440px,1fr) 230px;gap:12px;min-width:920px;height:calc(100% - 52px)}.pcb-tactics__panel,.pcb-tactics__court,.pcb-tactics__designer,.pcb-tactics__table-page,.pcb-tactics__rotation,.pcb-tactics__plays,.pcb-tactics__match{border:1px solid #334155;border-radius:10px;background:#111827;padding:12px}.pcb-tactics__panel header,.pcb-tactics__court>header,.pcb-tactics__table-page>header,.pcb-tactics__rotation>header,.pcb-tactics__plays>header,.pcb-tactics__match>header,.pcb-tactics__designer>header{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #334155;padding-bottom:10px;margin-bottom:10px}.pcb-tactics__panel header{font-weight:700}.pcb-tactics small{display:block;color:#94a3b8;font-size:10px}.pcb-tactics__player{display:flex;align-items:center;gap:8px;border:1px solid #334155;border-radius:7px;background:#0f172a;margin:6px 0;padding:7px;cursor:grab}.pcb-tactics__player i{background:#0ea5e9;border-radius:4px;color:#082f49;font-style:normal;font-weight:800;padding:4px}.pcb-tactics__player span{flex:1}.pcb-tactics__player strong{color:#facc15}.pcb-tactics__player em{color:#64748b;font-style:normal}.pcb-tactics__court-surface{position:relative;min-height:500px;background:#172235;overflow:hidden}.pcb-tactics__court-surface>svg,.pcb-tactics__designer-canvas svg{width:100%;height:100%;position:absolute;inset:0}.court-lines{stroke:#64748b;stroke-width:2;fill:none}.pcb-tactics__slot{position:absolute;transform:translate(-50%,-50%);min-width:68px;min-height:44px;display:grid;place-items:center;border:1px dashed #475569;border-radius:50%;z-index:2}.pcb-tactics__slot .pcb-tactics__player{width:144px}.pcb-tactics__controls nav{display:flex;margin:-12px -12px 12px}.pcb-tactics__controls nav button{flex:1;border-radius:0}.pcb-tactics__control{display:grid;gap:5px;color:#94a3b8;margin:13px 0;text-transform:uppercase;font-size:10px;letter-spacing:.5px}.pcb-tactics select,.pcb-tactics input,.pcb-tactics textarea{border:1px solid #475569;border-radius:5px;background:#0f172a;color:#e2e8f0;padding:7px}.pcb-tactics__control span{display:flex;align-items:center;gap:8px}.pcb-tactics__control input[type=range]{padding:0;flex:1}.pcb-tactics__designer{height:calc(100% - 52px);min-height:620px}.pcb-tactics__designer>header input{border:0;border-bottom:1px solid #64748b;border-radius:0;font-size:16px;font-weight:bold}.pcb-tactics__notice{background:rgba(34,197,94,.15);border:1px solid #22c55e;border-radius:6px;color:#86efac;padding:8px}.pcb-tactics__designer-main{display:grid;grid-template-columns:86px minmax(420px,1fr) 170px;gap:10px;height:calc(100% - 125px)}.pcb-tactics__designer-main>aside{display:flex;flex-direction:column;gap:6px}.pcb-tactics__designer-canvas{position:relative;min-height:430px;background:#0f172a}.pcb-tactics__designer-canvas svg{position:relative;cursor:crosshair}.designer-player circle{fill:#1e293b;stroke:#e2e8f0;stroke-width:2}.designer-player text{fill:#fff;text-anchor:middle;font-weight:800}.designer-defender{fill:#ef4444;font-size:25px;font-weight:800;text-anchor:middle}.action-move{stroke:#fff;stroke-width:3}.action-pass{stroke:#fbbf24;stroke-width:3;stroke-dasharray:8}.action-dribble{stroke:#38bdf8;stroke-width:3}.action-screen{stroke:#ef4444;stroke-width:4}.action-move,.action-pass,.action-dribble,.action-screen{fill:none}.pcb-tactics__summary{border-left:1px solid #334155;padding-left:9px}.pcb-tactics__summary span{display:flex;justify-content:space-between;border-left:3px solid #38bdf8;background:#0f172a;margin-top:7px;padding:6px}.pcb-tactics__designer footer{display:flex;gap:6px;align-items:center;margin-top:10px}.pcb-tactics__table-page table{width:100%;border-collapse:collapse;min-width:900px}.pcb-tactics__table-page{overflow:auto}.pcb-tactics th,.pcb-tactics td{border-bottom:1px solid #334155;padding:9px;text-align:left}.pcb-tactics th{color:#94a3b8;font-size:10px}.pcb-tactics__rotation-grid{overflow:auto}.pcb-tactics__rotation-grid>div{display:grid;grid-template-columns:210px repeat(5,minmax(105px,1fr)) 60px;align-items:center;min-width:780px;border-bottom:1px solid #334155;padding:7px}.pcb-tactics__rotation-grid .is-head{color:#94a3b8;font-weight:bold}.pcb-tactics__rotation-grid span{display:flex;gap:5px;align-items:center}.pcb-tactics__rotation-grid input[type=range]{width:55px;padding:0}.pcb-tactics__rotation-grid input[type=number]{width:33px;padding:3px}.pcb-tactics__rotation em{color:#86efac}.pcb-tactics__play-list{display:grid;gap:8px}.pcb-tactics__play-list article{display:flex;justify-content:space-between;align-items:center;border:1px solid #334155;border-radius:8px;padding:10px;cursor:pointer}.pcb-tactics__play-list article.is-selected{border-color:#38bdf8;background:rgba(56,189,248,.1)}.pcb-tactics__match-grid{display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:12px}.pcb-tactics__match-grid section{border:1px solid #334155;border-radius:8px;background:#0f172a;padding:12px}.pcb-tactics h2,.pcb-tactics h3{margin:0}.pcb-tactics dl{display:grid;gap:9px}.pcb-tactics dt{color:#94a3b8}.pcb-tactics dd{margin:2px 0}.pcb-tactics textarea{box-sizing:border-box;width:100%;min-height:135px;margin:8px 0;resize:vertical}.pcb-tactics__modal{position:fixed;z-index:1200;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.7)}.pcb-tactics__modal section{display:grid;gap:14px;width:min(390px,92vw);border:1px solid #475569;border-radius:10px;background:#1e293b;padding:16px}.pcb-tactics__modal header,.pcb-tactics__modal footer{display:flex;justify-content:space-between;gap:8px}.pcb-tactics__modal label{display:grid;gap:5px;color:#94a3b8}@media(max-width:900px){.pcb-tactics__board{grid-template-columns:190px 620px 210px}.pcb-tactics__match-grid{grid-template-columns:1fr}.pcb-tactics__designer-main{grid-template-columns:75px 520px 150px}}
-+
+.pcb-tactics{height:100%;overflow:auto;background:#090d13;color:#e2e8f0;padding:12px;font:12px/1.25 Inter,Arial,sans-serif}.pcb-tactics button,.pcb-tactics input,.pcb-tactics select,.pcb-tactics textarea{font:inherit}.pcb-tactics button{cursor:pointer;border:1px solid #475569;border-radius:6px;background:#1e293b;color:#e2e8f0;padding:7px 10px}.pcb-tactics button.is-active,.pcb-tactics button.is-primary{border-color:#38bdf8;background:rgba(56,189,248,.16);color:#7dd3fc}.pcb-tactics__tabs{display:flex;gap:7px;flex-wrap:wrap;padding-bottom:12px}.pcb-tactics__tabs button{border-radius:999px;text-transform:uppercase;font-size:11px;letter-spacing:.6px}.pcb-tactics__board{display:grid;grid-template-columns:220px minmax(440px,1fr) 230px;gap:12px;min-width:920px;height:calc(100% - 52px)}.pcb-tactics__panel,.pcb-tactics__court,.pcb-tactics__designer,.pcb-tactics__table-page,.pcb-tactics__rotation,.pcb-tactics__plays,.pcb-tactics__match{border:1px solid #334155;border-radius:10px;background:#111827;padding:12px}.pcb-tactics__panel header,.pcb-tactics__court>header,.pcb-tactics__table-page>header,.pcb-tactics__rotation>header,.pcb-tactics__plays>header,.pcb-tactics__match>header,.pcb-tactics__designer>header{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #334155;padding-bottom:10px;margin-bottom:10px}.pcb-tactics__panel header{font-weight:700}.pcb-tactics small{display:block;color:#94a3b8;font-size:10px}.pcb-tactics__player{display:flex;align-items:center;gap:8px;border:1px solid #334155;border-radius:7px;background:#0f172a;margin:6px 0;padding:7px;cursor:grab}.pcb-tactics__player i{background:#0ea5e9;border-radius:4px;color:#082f49;font-style:normal;font-weight:800;padding:4px}.pcb-tactics__player span{flex:1}.pcb-tactics__player strong{color:#facc15}.pcb-tactics__player em{color:#64748b;font-style:normal}.pcb-tactics__court-surface{position:relative;min-height:500px;background:#172235;overflow:hidden}.pcb-tactics__court-surface>svg,.pcb-tactics__designer-canvas svg{width:100%;height:100%;position:absolute;inset:0}.court-lines{stroke:#64748b;stroke-width:2;fill:none}.pcb-tactics__slot{position:absolute;transform:translate(-50%,-50%);min-width:68px;min-height:44px;display:grid;place-items:center;border:1px dashed #475569;border-radius:50%;z-index:2}.pcb-tactics__slot .pcb-tactics__player{width:144px}.pcb-tactics__controls nav{display:flex;margin:-12px -12px 12px}.pcb-tactics__controls nav button{flex:1;border-radius:0}.pcb-tactics__control{display:grid;gap:5px;color:#94a3b8;margin:13px 0;text-transform:uppercase;font-size:10px;letter-spacing:.5px}.pcb-tactics select,.pcb-tactics input,.pcb-tactics textarea{border:1px solid #475569;border-radius:5px;background:#0f172a;color:#e2e8f0;padding:7px}.pcb-tactics__control span{display:flex;align-items:center;gap:8px}.pcb-tactics__control input[type=range]{padding:0;flex:1}.pcb-tactics__designer{height:calc(100% - 52px);min-height:620px}.pcb-tactics__designer>header input{border:0;border-bottom:1px solid #64748b;border-radius:0;font-size:16px;font-weight:bold}.pcb-tactics__notice{background:rgba(34,197,94,.15);border:1px solid #22c55e;border-radius:6px;color:#86efac;padding:8px}.pcb-tactics__designer-main{display:grid;grid-template-columns:86px minmax(420px,1fr) 170px;gap:10px;height:calc(100% - 125px)}.pcb-tactics__designer-main>aside{display:flex;flex-direction:column;gap:6px}.pcb-tactics__designer-canvas{position:relative;min-height:430px;background:#0f172a}.pcb-tactics__designer-canvas svg{position:relative;cursor:crosshair}.designer-player circle{fill:#1e293b;stroke:#e2e8f0;stroke-width:2}.designer-player text{fill:#fff;text-anchor:middle;font-weight:800}.designer-defender{fill:#ef4444;font-size:25px;font-weight:800;text-anchor:middle}.action-move{stroke:#fff;stroke-width:3}.action-pass{stroke:#fbbf24;stroke-width:3;stroke-dasharray:8}.action-dribble{stroke:#38bdf8;stroke-width:3}.action-screen{stroke:#ef4444;stroke-width:4}.action-move,.action-pass,.action-dribble,.action-screen{fill:none}.pcb-tactics__summary{border-left:1px solid #334155;padding-left:9px}.pcb-tactics__summary span{display:flex;justify-content:space-between;border-left:3px solid #38bdf8;background:#0f172a;margin-top:7px;padding:6px}.pcb-tactics__designer footer{display:flex;gap:6px;align-items:center;margin-top:10px}.pcb-tactics__table-page table{width:100%;border-collapse:collapse;min-width:900px}.pcb-tactics__table-page{overflow:auto}.pcb-tactics th,.pcb-tactics td{border-bottom:1px solid #334155;padding:9px;text-align:left}.pcb-tactics th{color:#94a3b8;font-size:10px}.pcb-tactics__rotation-grid{overflow:auto}.pcb-tactics__rotation-grid>div{display:grid;grid-template-columns:210px repeat(5,minmax(105px,1fr)) 60px;align-items:center;min-width:780px;border-bottom:1px solid #334155;padding:7px}.pcb-tactics__rotation-grid .is-head{color:#94a3b8;font-weight:bold}.pcb-tactics__rotation-grid span{display:flex;gap:5px;align-items:center}.pcb-tactics__rotation-grid input[type=range]{width:55px;padding:0}.pcb-tactics__rotation-grid input[type=number]{width:33px;padding:3px}.pcb-tactics__rotation em{color:#86efac}.pcb-tactics__play-list{display:grid;gap:8px}.pcb-tactics__play-list article{display:flex;justify-content:space-between;align-items:center;border:1px solid #334155;border-radius:8px;padding:10px;cursor:pointer}.pcb-tactics__play-list article.is-selected{border-color:#38bdf8;background:rgba(56,189,248,.1)}.pcb-tactics__match-grid{display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:12px}.pcb-tactics__match-grid section{border:1px solid #334155;border-radius:8px;background:#0f172a;padding:12px}.pcb-tactics h2,.pcb-tactics h3{margin:0}.pcb-tactics dl{display:grid;gap:9px}.pcb-tactics dt{color:#94a3b8}.pcb-tactics dd{margin:2px 0}.pcb-tactics textarea{box-sizing:border-box;width:100%;min-height:135px;margin:8px 0;resize:vertical}.pcb-tactics__modal{position:fixed;z-index:1200;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.7)}.pcb-tactics__modal section{display:grid;gap:14px;width:min(390px,92vw);border:1px solid #475569;border-radius:10px;background:#1e293b;padding:16px}.pcb-tactics__modal header,.pcb-tactics__modal footer{display:flex;justify-content:space-between;gap:8px}.pcb-tactics__modal label{display:grid;gap:5px;color:#94a3b8}.pcb-tactics__scouting-players{display:grid;gap:8px;margin:0;padding:0;list-style:none}.pcb-tactics__scouting-players li{display:grid;gap:2px;border-left:3px solid #38bdf8;background:#0f172a;padding:7px 10px}.pcb-tactics__scouting-players span{color:#94a3b8;font-size:11px}@media(max-width:900px){.pcb-tactics__board{grid-template-columns:190px 620px 210px}.pcb-tactics__match-grid{grid-template-columns:1fr}.pcb-tactics__designer-main{grid-template-columns:75px 520px 150px}}
+
 .tactics-creator-grid {
   grid-template-columns: minmax(560px, 1.4fr) minmax(320px, 0.6fr);
   align-items: start;
@@ -107,6 +107,7 @@
 
 .tactics-board-court {
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -145,14 +146,27 @@
   cursor: pointer;
 }
 
-.tactics-board-court-surface {
+.tactics-board-court-frame {
+  display: flex;
   flex: 1;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.tactics-board-court-surface {
+  container-type: size;
+  container-name: tactics-court;
   position: relative;
-  background: #1f242d;
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 500 / 470;
+  background: #1e293b;
   border-radius: 12px;
   border: 2px solid #334155;
   overflow: hidden;
-  min-height: 420px;
   box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.65);
 }
 
@@ -199,18 +213,18 @@
 .tactics-board-slot {
   position: absolute;
   transform: translate(-50%, -50%);
-  width: 140px;
-  height: 180px;
+  width: clamp(90px, 28cqw, 140px);
+  height: clamp(115px, 36cqw, 180px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: clamp(3px, 1.2cqw, 6px);
 }
 
 .tactics-board-slot-ring {
-  width: 82px;
-  height: 82px;
+  width: clamp(52px, 16.4cqw, 82px);
+  height: clamp(52px, 16.4cqw, 82px);
   border-radius: 50%;
   border: 3px solid #475569;
   background: rgba(0, 0, 0, 0.35);
@@ -228,6 +242,11 @@
   display: grid;
   place-items: center;
   cursor: grab;
+}
+
+.tactics-board-slot-player svg {
+  width: clamp(22px, 7cqw, 38px);
+  height: clamp(22px, 7cqw, 38px);
 }
 
 .tactics-board-slot-label {
@@ -448,3 +467,15 @@
   height: 100%;
   border-radius: 2px;
 }
+
+/* Emparejamientos y Rotaciones use the shared Plantilla table surface. */
+.pcb-tactics .pcb-tactics__table-page,.pcb-tactics .pcb-tactics__rotation{border:0!important;background:transparent!important;padding:0!important}
+.pcb-tactics .pcb-tactics__table-page>header,.pcb-tactics .pcb-tactics__rotation>header{margin:0 0 12px!important;border:1px solid #263645!important;border-radius:8px!important;background:#151c25!important;padding:12px 14px!important}
+.pcb-tactics .pcb-tactics__table-page table{border:1px solid #293a4a!important;border-radius:7px!important;background:rgba(15,23,42,.7)!important}
+.pcb-tactics__table-page th,.pcb-tactics__table-page td{height:43px;border-color:#293a4a;background:transparent;color:#eef5fb;padding:0 10px;text-align:center;vertical-align:middle;font-size:11px;font-weight:600}
+.pcb-tactics__table-page th{height:28px;background:#111821;color:#84bce3;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.pcb-tactics__rotation-grid{border:1px solid #293a4a;border-radius:7px;background:rgba(15,23,42,.7)}
+.pcb-tactics__rotation-grid>div{min-height:43px;align-items:stretch;border-color:#293a4a;background:transparent;padding:0}
+.pcb-tactics__rotation-grid>div>*{display:flex;align-items:center;justify-content:center;min-width:0;border-right:1px solid #293a4a;padding:0 10px;text-align:center}
+.pcb-tactics__rotation-grid>div>*:last-child{border-right:0}
+.pcb-tactics__rotation-grid .is-head{min-height:28px;background:#111821;color:#84bce3;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}

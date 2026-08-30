@@ -1,4 +1,4 @@
-import { applyManualSubstitutions, applyTacticalPlanChange, createMatchSession, stepMatchSession, toMatchSimulation, type ManualSubstitution, type MatchSimulation, type MatchTacticalPlan, type MatchSession } from '@/engine/match'
+import { createMatchSession, stepMatchSession, toMatchSimulation, type ManualSubstitution, type MatchSimulation, type MatchTacticalPlan, type MatchSession } from '@/engine/match'
 import { applyDueRotations, INITIAL_ROTATION_CONTROLLER_STATE, type RotationControllerState, type SimulateMatchWithRotationsOptions } from '@/engine/match'
 
 /** Application owner for a transient live session; UI receives only snapshots. */
@@ -23,15 +23,17 @@ export class LiveMatchController {
     const after = this.advanceOneStep()
     return { before, after, attackingTeamId, endAttackingTeamId: this.session.state.attackingTeamId }
   }
-  public applyTactics(teamId: MatchSession['state']['homeTeamId'], tacticalPlan: MatchTacticalPlan): MatchSimulation { this.session = applyTacticalPlanChange(this.session, { teamId, tacticalPlan }); return this.snapshot() }
-  public applyManualSubstitutions(teamId: MatchSession['state']['homeTeamId'], substitutions: readonly ManualSubstitution[]): MatchSimulation { this.session = applyManualSubstitutions(this.session, { teamId, substitutions }); return this.snapshot() }
+  /** Live coaching is intentionally disabled until the interaction model is reintroduced safely. */
+  public applyTactics(_teamId: MatchSession['state']['homeTeamId'], _tacticalPlan: MatchTacticalPlan): MatchSimulation { return this.snapshot() }
+  /** Manual substitutions are intentionally disabled until the interaction model is reintroduced safely. */
+  public applyManualSubstitutions(_teamId: MatchSession['state']['homeTeamId'], _substitutions: readonly ManualSubstitution[]): MatchSimulation { return this.snapshot() }
   public applySubstitution(teamId: MatchSession['state']['homeTeamId'], playerOutId: MatchSession['state']['activeLineups']['home'][number], playerInId: MatchSession['state']['activeLineups']['home'][number]): MatchSimulation { return this.applyManualSubstitutions(teamId, [{ playerOutId, playerInId }]) }
-  public replacementCandidates(teamId: MatchSession['state']['homeTeamId'], playerOutId: MatchSession['state']['activeLineups']['home'][number]): readonly MatchSession['state']['activeLineups']['home'][number][] {
-    const state = this.session.state
-    if (state.isComplete || (teamId !== state.homeTeamId && teamId !== state.awayTeamId)) return []
-    const active = teamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
-    const squad = teamId === state.homeTeamId ? state.squads.home : state.squads.away
-    return active.includes(playerOutId) ? squad.filter((playerId) => !active.includes(playerId)) : []
+  public replacementCandidates(_teamId: MatchSession['state']['homeTeamId'], _playerOutId: MatchSession['state']['activeLineups']['home'][number]): readonly MatchSession['state']['activeLineups']['home'][number][] { return [] }
+  /** Resolves the rest of the current period, including the period-end boundary and next-period start when applicable. */
+  public skipToEndOfPeriod(): MatchSimulation {
+    const startingPeriod = this.session.state.period
+    while (!this.session.state.isComplete && this.session.state.period === startingPeriod) this.advanceOneStep()
+    return this.snapshot()
   }
   public skipToEnd(): MatchSimulation { while (!this.session.state.isComplete) this.advanceOneStep(); return this.snapshot() }
   public snapshot(): MatchSimulation { const state = this.session.state; return state.isComplete ? toMatchSimulation(this.session) : { gameId: state.gameId, homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, lineups: state.initialLineups, squads: state.squads, events: state.events, finalScore: { home: state.homeScore, away: state.awayScore } } }

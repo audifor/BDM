@@ -18,6 +18,7 @@ export interface GameCapabilities {
   readonly hasDraft: boolean
   readonly hasTrades: boolean
   readonly hasSalaryCap: boolean
+  readonly isNcaa: boolean
 }
 
 /** Derives display context from the canonical world without creating UI-owned game state. */
@@ -52,5 +53,6 @@ export function resolveGameCapabilities(world: GameWorld, competitionId?: Compet
     hasDraft: ecosystemId !== undefined && Object.values(world.draftsById).some((draft) => draft.ecosystemId === ecosystemId),
     hasTrades: seasonId !== undefined && world.tradeRulesBySeasonId[seasonId] !== undefined,
     hasSalaryCap: seasonId !== undefined && world.salaryRulesBySeasonId[seasonId] !== undefined,
+    isNcaa: ecosystemId !== undefined && world.ecosystems[ecosystemId]?.kind === 'ncaaLike',
   }
 }

@@ -2,8 +2,9 @@ import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 
 import type { DesktopSnap, DesktopWindowState } from '@/stores/desktopStore'
+import { BdmIcon } from '@/ui/icons/BdmIcon'
+import { BDM_APP_ICON_BY_ID } from '@/ui/icons/iconRegistry'
 import { getDesktopApp } from './DesktopAppRegistry'
-import { DesktopIcon } from './DesktopNavigation'
 
 type ResizeEdge = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
 
@@ -39,7 +40,7 @@ export function DesktopWindow({ children, focused, title, window, onClose, onFoc
     const stop = () => { globalThis.window.removeEventListener('pointermove', move); globalThis.window.removeEventListener('pointerup', stop) }
     globalThis.window.addEventListener('pointermove', move); globalThis.window.addEventListener('pointerup', stop)
   }
-  return <section aria-label={title ?? app.label} className={`app-surface desktop-window${focused ? ' is-focused' : ''}${window.maximized ? ' is-maximized' : ''}`} onPointerDown={onFocus} ref={windowRef} role="region" style={style} tabIndex={-1}><header className="desktop-window__titlebar" onDoubleClick={() => window.maximized ? onRestoreMaximized() : onMaximize()} onPointerDown={drag}><div className="desktop-window__title"><DesktopIcon icon={app.icon} /><span>{title ?? app.label}</span></div><div className="desktop-window__controls"><WindowControl label="Minimizar" onClick={onMinimize} shape="minimize" /><WindowControl label={window.maximized ? 'Restaurar ventana' : 'Maximizar'} onClick={window.maximized ? onRestoreMaximized : onMaximize} shape={window.maximized ? 'restore' : 'maximize'} /><WindowControl label="Cerrar" onClick={onClose} shape="close" /></div></header><div className="desktop-window__content">{children}</div>{!window.maximized && (['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as const).map((edge) => <div aria-hidden="true" className={`desktop-window__resize desktop-window__resize--${edge}`} key={edge} onPointerDown={(event) => resize(edge, event)} />)}</section>
+  return <section aria-label={title ?? app.label} className={`app-surface desktop-window${focused ? ' is-focused' : ''}${window.maximized ? ' is-maximized' : ''}`} onPointerDown={onFocus} ref={windowRef} role="region" style={style} tabIndex={-1}><header className="desktop-window__titlebar" onDoubleClick={() => window.maximized ? onRestoreMaximized() : onMaximize()} onPointerDown={drag}><div className="desktop-window__title"><BdmIcon className="desktop-window__title-icon" name={BDM_APP_ICON_BY_ID[app.id as keyof typeof BDM_APP_ICON_BY_ID] ?? 'home'} size={20} /><span>{title ?? app.label}</span></div><div className="desktop-window__controls"><WindowControl label="Minimizar" onClick={onMinimize} shape="minimize" /><WindowControl label={window.maximized ? 'Restaurar ventana' : 'Maximizar'} onClick={window.maximized ? onRestoreMaximized : onMaximize} shape={window.maximized ? 'restore' : 'maximize'} /><WindowControl label="Cerrar" onClick={onClose} shape="close" /></div></header><div className="desktop-window__content">{children}</div>{!window.maximized && (['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as const).map((edge) => <div aria-hidden="true" className={`desktop-window__resize desktop-window__resize--${edge}`} key={edge} onPointerDown={(event) => resize(edge, event)} />)}</section>
 }
 
 function WindowControl({ label, onClick, shape }: { readonly label: string; readonly onClick: () => void; readonly shape: 'minimize' | 'maximize' | 'restore' | 'close' }) {

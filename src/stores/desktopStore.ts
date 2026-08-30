@@ -15,6 +15,7 @@ interface DesktopStore {
   readonly launcherOpen: boolean
   readonly recentAppIds: readonly string[]
   readonly launcherOrder: readonly string[]
+  readonly dockPinnedAppIds: readonly string[]
   openWindow(appId: string, instanceId?: string, initialBounds?: Partial<DesktopBounds>): void
   closeWindow(windowId: string): void
   focusWindow(windowId: string): void
@@ -28,6 +29,8 @@ interface DesktopStore {
   toggleLauncher(): void
   closeLauncher(): void
   reorderLauncher(movedId: string, targetId: string): void
+  pinDockApp(appId: string): void
+  unpinDockApp(appId: string): void
 }
 
 const withZIndexes = (windows: readonly DesktopWindowState[]) => windows.map((window, index) => ({ ...window, zIndex: 10 + index }))
@@ -37,14 +40,15 @@ const viewport = () => ({ width: globalThis.innerWidth || 1920, height: globalTh
 export function clampDesktopBounds(bounds: DesktopBounds, viewportBounds = viewport()): DesktopBounds { const width = Math.min(bounds.width, viewportBounds.width); const height = Math.min(bounds.height, Math.max(1, viewportBounds.height - DESKTOP_TOP_BAR_HEIGHT - DESKTOP_BOTTOM_BAR_HEIGHT)); return { x: Math.max(0, Math.min(bounds.x, viewportBounds.width - width)), y: Math.max(DESKTOP_TOP_BAR_HEIGHT, Math.min(bounds.y, viewportBounds.height - DESKTOP_BOTTOM_BAR_HEIGHT - height)), width, height } }
 
 export const useDesktopStore = create<DesktopStore>()(persist((set) => ({
-  windows: [], focusedWindowId: null, launcherOpen: false, recentAppIds: [], launcherOrder: [],
+  windows: [], focusedWindowId: null, launcherOpen: false, recentAppIds: [], launcherOrder: [], dockPinnedAppIds: [],
   openWindow: (appId, instanceId, initialBounds) => set((state) => {
     const app = getDesktopApp(appId)
     if (app?.availability !== 'available' || app.window === undefined) return state
-    const existing = app.singleton ? state.windows.find((window) => window.appId === appId) : state.windows.find((window) => window.appId === appId && window.instanceId === instanceId)
+    const sameApp = (window: DesktopWindowState) => window.appId === appId && (appId !== 'entity' || window.instanceId === instanceId)
+    const existing = state.windows.filter(sameApp).at(-1)
     if (existing !== undefined) {
       const restored = existing.minimized ? { ...existing, minimized: false } : existing
-      const windows = [...state.windows.filter((window) => window.id !== existing.id), restored]
+      const windows = [...state.windows.filter((window) => !sameApp(window)), restored]
       return { windows: withZIndexes(windows), focusedWindowId: existing.id, recentAppIds: updateRecent(state.recentAppIds, appId), launcherOpen: false }
     }
     const cascade = state.windows.length * 28
@@ -64,4 +68,6 @@ export const useDesktopStore = create<DesktopStore>()(persist((set) => ({
   toggleLauncher: () => set((state) => ({ launcherOpen: !state.launcherOpen })),
   closeLauncher: () => set({ launcherOpen: false }),
   reorderLauncher: (movedId, targetId) => set((state) => ({ launcherOrder: reorderLauncherApps(resolveLauncherOrder(state.launcherOrder), movedId, targetId) })),
-}), { name: 'bdm.launcher-order.v1', partialize: (state) => ({ launcherOrder: state.launcherOrder }) }))
+  pinDockApp: (appId) => set((state) => { const app = getDesktopApp(appId); if (app === undefined || app.id === 'bdm' || app.availability !== 'available' || state.dockPinnedAppIds.includes(appId)) return state; return { dockPinnedAppIds: [...state.dockPinnedAppIds, appId] } }),
+  unpinDockApp: (appId) => set((state) => ({ dockPinnedAppIds: state.dockPinnedAppIds.filter((id) => id !== appId) })),
+}), { name: 'bdm.launcher-order.v1', partialize: (state) => ({ launcherOrder: state.launcherOrder, dockPinnedAppIds: state.dockPinnedAppIds }) }))

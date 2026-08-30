@@ -31,14 +31,17 @@ describe('MatchViewerScreen workspace UX', () => {
     expect(markup).toContain('id="match-court"')
     expect(markup).toContain('id="match-stats"')
     expect(markup).toContain('id="match-play-by-play"')
-    expect(markup).toContain('COURT')
-    expect(markup).toContain('PLAY-BY-PLAY')
+    expect(markup).toContain('MATCH EVENTS')
+    expect(markup).toContain('boxscore-player--active')
+    expect(markup).not.toContain('Match sections')
   })
 
-  it('keeps real pause, speed and skip controls in the always available match bar', () => {
+  it('keeps real pause, speed, quarter simulation and skip controls in the always available match bar', () => {
     const markup = renderViewer()
     expect(markup).toContain('aria-label="Pause match"')
     expect(markup).toContain('x1')
+    expect(markup).toContain('SIM QUARTER')
+    expect(markup).toContain('aria-label="Simulate to end of quarter"')
     expect(markup).toContain('SKIP TO END')
     expect(markup).not.toContain('ADVANCE DAY')
     expect(markup).not.toContain('Minimize')
@@ -47,6 +50,7 @@ describe('MatchViewerScreen workspace UX', () => {
   it('replaces live controls with Continue once the supplied event stream is final', () => {
     const markup = renderViewer(Number.MAX_SAFE_INTEGER, false)
     expect(markup).toContain('CONTINUE')
+    expect(markup).not.toContain('SIM QUARTER')
     expect(markup).not.toContain('SKIP TO END')
   })
 })

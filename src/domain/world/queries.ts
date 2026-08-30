@@ -28,6 +28,7 @@ import { getRelationshipBand, relationshipKey, type RelationshipPersonId } from 
 import { getMoraleBand, getRecentMoraleEvents } from '@/domain/morale'
 import type { InboxItem, NewsItem } from '@/domain/inbox'
 import { createDefaultTrainingPlan, type TeamTrainingPlan, type TrainingSession } from '@/domain/training'
+import { createDefaultTeamLineup, type TeamLineup } from '@/domain/tactics'
 import { getCurrentlyRelevantMemories, getMemoriesBetween, getMemoryReinforcement, getRecentMemories, queryMemories, type MemoryQuery } from '@/domain/memory'
 import { getNarrativeRelevance, type NarrativeThread } from '@/domain/narrative'
 import { getMediaProfileDescriptor, type MediaOpportunity } from '@/domain/media'
@@ -103,6 +104,7 @@ export function getInboxItemsForCoach(world: GameWorld, coachId: string): readon
 export function getUnreadInboxCount(world: GameWorld, coachId: string):number{return getInboxItemsForCoach(world,coachId).filter((item)=>item.status==='unread').length}
 export function getNewsFeed(world: GameWorld):readonly NewsItem[]{return Object.values(world.newsItemsById).sort((a,b)=>b.gameDate.localeCompare(a.gameDate)||a.id.localeCompare(b.id))}
 export function getTrainingPlanForTeam(world: GameWorld, teamId: TeamId): TeamTrainingPlan { return world.trainingPlansByTeamId[teamId] ?? createDefaultTrainingPlan(teamId) }
+export function getTeamLineup(world: GameWorld, teamId: TeamId): TeamLineup { return world.lineupsByTeamId[teamId] ?? createDefaultTeamLineup(teamId) }
 export function getTrainingSessionsForTeam(world: GameWorld, teamId: TeamId): readonly TrainingSession[] { return Object.values(world.trainingSessionsById).filter((session) => session.teamId === teamId).sort((a, b) => b.gameDate.localeCompare(a.gameDate) || b.id.localeCompare(a.id)) }
 export function getLatestTrainingSession(world: GameWorld, teamId: TeamId): TrainingSession | undefined { return getTrainingSessionsForTeam(world, teamId)[0] }
 export function getDevelopmentStimulusForPlayer(world: GameWorld, playerId: PlayerId) { return world.developmentStimulusByPlayerId[playerId] }

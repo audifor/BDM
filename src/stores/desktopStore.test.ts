@@ -18,6 +18,18 @@ describe('desktop window manager store', () => {
     expect(useDesktopStore.getState().focusedWindowId).toBe('squad-window')
   })
 
+  it('consolidates duplicate app windows left by an older session', () => {
+    useDesktopStore.setState({ windows: [
+      { id: 'squad-window-old', appId: 'squad', x: 96, y: 64, width: 980, height: 700, minimized: false, maximized: false, zIndex: 10 },
+      { id: 'squad-window', appId: 'squad', x: 124, y: 92, width: 980, height: 700, minimized: true, maximized: false, zIndex: 11 },
+    ] })
+
+    useDesktopStore.getState().openWindow('squad')
+
+    expect(useDesktopStore.getState().windows).toHaveLength(1)
+    expect(useDesktopStore.getState().windows[0]).toMatchObject({ id: 'squad-window', minimized: false })
+  })
+
   it('keeps separate entity instances open together', () => {
     const store = useDesktopStore.getState()
     store.openWindow('entity', 'player-a'); store.openWindow('entity', 'player-b')
@@ -72,8 +84,8 @@ describe('desktop window manager store', () => {
     const store = useDesktopStore.getState()
     store.toggleLauncher(); expect(useDesktopStore.getState().launcherOpen).toBe(true)
     store.toggleLauncher(); expect(useDesktopStore.getState().launcherOpen).toBe(false)
-    store.reorderLauncher('squad', 'schedule')
-    expect(useDesktopStore.getState().launcherOrder.slice(0, 2)).toEqual(['squad', 'schedule'])
+    store.reorderLauncher('schedule', 'squad')
+    expect(useDesktopStore.getState().launcherOrder.slice(0, 2)).toEqual(['schedule', 'squad'])
     expect(JSON.parse(JSON.stringify(useDesktopStore.getState().launcherOrder))).toEqual(useDesktopStore.getState().launcherOrder)
   })
 })

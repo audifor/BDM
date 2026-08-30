@@ -8,6 +8,138 @@
 .bdm-dialog-backdrop { position:fixed; z-index:var(--z-modal); inset:0; display:grid; place-items:center; padding:24px; background:var(--bdm-background-overlay); }.bdm-dialog { width:min(620px,100%); max-height:calc(100vh - 48px); overflow:auto; border:1px solid var(--bdm-border-default); border-radius:var(--radius-medium); background:var(--bdm-surface-default); box-shadow:var(--shadow-floating-window); padding:var(--space-5); }.bdm-dialog header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:var(--space-4); }.bdm-dialog h2 { margin:0; }.bdm-empty-state { display:grid; justify-items:center; gap:8px; padding:var(--space-6); color:var(--bdm-text-secondary); text-align:center; }.bdm-empty-state h2,.bdm-empty-state p { margin:0; }.bdm-feedback { border-left:3px solid var(--bdm-status-info); background:rgb(101 183 219 / 10%); color:var(--bdm-text-secondary); padding:10px 12px; }.bdm-feedback--success { border-color:var(--bdm-status-success); }.bdm-feedback--warning { border-color:var(--bdm-status-warning); }.bdm-feedback--danger { border-color:var(--bdm-status-danger); }
 :where(.bdm-button,.bdm-icon-action,.bdm-input,.bdm-select,.bdm-select__option,.bdm-chip,.bdm-tabs__tab):focus-visible { outline:2px solid var(--color-focus); outline-offset:2px; } @media (prefers-reduced-motion: reduce) { .bdm-button,.bdm-icon-action,.bdm-select,.bdm-select__option,.bdm-chip,.bdm-tooltip__content { transition:none; } }
 
+/* Canonical BDM OS section navigation, including Perfil. */
+.bdm-app-frame__navigation .bdm-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid #263645;
+  border-radius: 8px;
+  background: #151c25;
+}
+
+.bdm-app-frame__navigation .bdm-tabs__tab {
+  min-height: 0;
+  border: 1px solid #2a3b4d;
+  border-radius: 6px;
+  background: #101822;
+  color: #9ab3c9;
+  padding: 6px 12px;
+  font: 700 12px/1 Inter, var(--font-ui, Arial, sans-serif);
+  letter-spacing: 0;
+}
+
+.bdm-app-frame__navigation .bdm-tabs__tab:hover,
+.bdm-app-frame__navigation .bdm-tabs__tab[aria-selected="true"] {
+  border-color: #ff7b39;
+  background: #2a1b17;
+  color: #ff9b69;
+}
+
+.bdm-tabs--canonical {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border: 1px solid #263645;
+  border-radius: 8px;
+  background: #151c25;
+}
+
+.bdm-tabs--canonical .bdm-tabs__tab {
+  min-height: 0;
+  border: 1px solid #2a3b4d;
+  border-radius: 6px;
+  background: #101822;
+  color: #9ab3c9;
+  padding: 6px 12px;
+  font: 700 12px/1 Inter, var(--font-ui, Arial, sans-serif);
+  letter-spacing: 0;
+}
+
+.bdm-tabs--canonical .bdm-tabs__tab:hover,
+.bdm-tabs--canonical .bdm-tabs__tab[aria-selected="true"] {
+  border-color: #ff7b39;
+  background: #2a1b17;
+  color: #ff9b69;
+}
+
+/* Canonical table headers: uppercase and centered on both axes. */
+.bdm-data-table th,
+.table-wrap th {
+  text-align: center;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.bdm-data-table th button {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.pcb-club .table .row.head > *,
+.pcb-medical .table .row.head > *,
+.pcb-competition .table .row.head > *,
+.pcb-tactics__rotation-grid .is-head > * {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.pcb-tactics th {
+  vertical-align: middle;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.pcb-club .table .row.head > *,
+.pcb-medical .table .row.head > *,
+.pcb-competition .table .row.head > *,
+.pcb-tactics th,
+.pcb-tactics__rotation-grid .is-head > * {
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+/* The resizing grab sits on the actual grid separator, rather than inside a header cell. */
+.bdm-data-table th {
+  overflow: visible;
+}
+
+.bdm-data-grid__resize {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  right: -4px;
+  bottom: 0;
+  float: none;
+  width: 8px;
+  height: auto;
+}
+
+/* Canonical table surface: matched to Entrenamiento > Individual. */
+.bdm-data-table,
+.table-wrap,
+.pcb-club .table,
+.pcb-medical .table,
+.pcb-competition .table,
+.pcb-training__table,
+.pcb-tactics__table-page,
+.pcb-tactics__rotation-grid {
+  background: rgba(15, 23, 42, 0.7) !important;
+}
+
 /* OS 3.0 application grammar: fixed chrome, localized workspaces, dense tables. */
 .bdm-app-frame { display:grid; height:100%; min-height:0; grid-template-rows:auto auto auto minmax(0,1fr); gap:var(--space-3); }
 .bdm-app-frame__header { padding-bottom:var(--space-2); border-bottom:1px solid var(--bdm-border-subtle); }.bdm-app-header { display:flex; align-items:end; justify-content:space-between; gap:var(--space-4); }.bdm-app-header h1,.bdm-app-header p { margin:0; }.bdm-app-header h1 { font-size:1.5rem; font-weight:var(--font-weight-semibold); letter-spacing:-.03em; }.bdm-app-header__meta { color:var(--bdm-text-secondary); font-size:var(--font-size-data); text-align:right; }
@@ -42,3 +174,119 @@
 .bdm-data-table[aria-label="roster"] { border:0; border-radius:0; background:rgb(20 24 25); box-shadow:none; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools { min-height:25px; gap:4px; padding:1px 4px; border-top:1px solid rgb(210 183 100 / 20%); border-bottom:1px solid rgb(255 255 255 / 9%); background:linear-gradient(180deg,rgb(38 40 40),rgb(27 29 29)); }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools::before { color:rgb(225 183 77); content:'PLAYERS'; font-family:var(--font-display); font-size:10px; font-weight:600; letter-spacing:.065em; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools input { order:4; width:116px; min-height:19px; border:1px solid rgb(255 255 255 / 13%); border-radius:2px; background:rgb(13 15 16); color:rgb(225 230 226 / 88%); padding:0 5px; font-size:9px; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools button { min-height:19px; border:1px solid rgb(255 255 255 / 11%); border-radius:2px; background:rgb(55 57 57); color:rgb(214 219 214 / 86%); padding:0 6px; font-size:9px; letter-spacing:.02em; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools button:hover { border-color:rgb(223 182 76 / 65%); background:rgb(74 74 70); color:#fff; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools button:nth-of-type(2),.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools button:nth-of-type(3) { display:none; }.bdm-data-table[aria-label="roster"] table { min-width:760px; background:rgb(27 29 29); font-family:var(--font-body); font-size:10px; line-height:1; }.bdm-data-table[aria-label="roster"] th { height:21px; border-bottom:1px solid rgb(222 226 220 / 18%); background:linear-gradient(180deg,rgb(54 56 56),rgb(39 41 41)); color:rgb(196 203 198 / 76%); font-size:8px; font-weight:600; letter-spacing:.035em; }.bdm-data-table[aria-label="roster"] th button { max-width:calc(100% - 4px); font-size:8px; }.bdm-data-table[aria-label="roster"] td { height:21px; border-bottom:1px solid rgb(255 255 255 / 4%); color:rgb(224 228 224 / 90%); font-size:10px; }.bdm-data-table[aria-label="roster"] th,.bdm-data-table[aria-label="roster"] td { padding:0 4px; }.bdm-data-table[aria-label="roster"] tbody tr:nth-child(even) { background:rgb(255 255 255 / 2.2%); }.bdm-data-table[aria-label="roster"] tbody tr:hover,.bdm-data-table[aria-label="roster"] tbody tr:focus-visible { background:rgb(243 215 136 / 9%); }.bdm-data-table[aria-label="roster"] tbody tr.is-selected { box-shadow:inset 2px 0 #d9ae43; background:rgb(195 154 52 / 18%); color:#fff; }.bdm-data-table[aria-label="roster"] .rating { font-size:10px; }.bdm-data-table[aria-label="roster"] .rating--elite { background:transparent; color:#f0c44d; }.bdm-data-table[aria-label="roster"] .rating--weak { color:rgb(171 176 170 / 62%); text-decoration:none; }.squad-app__availability { display:inline-block; width:7px; height:7px; margin-right:5px; border:1px solid rgb(120 237 157 / 82%); border-radius:50%; background:rgb(62 201 107 / 92%); box-shadow:0 0 5px rgb(62 201 107 / 35%); vertical-align:1px; }.squad-app__availability.is-unavailable { border-color:rgb(244 119 104 / 85%); background:rgb(200 77 68 / 94%); box-shadow:none; }
 .bdm-data-grid--fm { --bdm-grid-row-height:21px; --bdm-grid-header-height:21px; --bdm-grid-font-size:10px; --bdm-grid-header-font-size:9px; --bdm-grid-cell-padding-x:4px; --bdm-grid-control-height:22px; display:flex; flex-direction:column; height:100%; min-height:0; overflow:hidden; }.bdm-data-grid--fm .bdm-data-grid__tools { flex:0 0 var(--bdm-grid-control-height); min-height:var(--bdm-grid-control-height); }.bdm-data-grid--fm table { flex:0 0 auto; min-width:max-content; }.bdm-data-grid--fm tbody { min-height:calc(100% - var(--bdm-grid-header-height)); }.bdm-data-grid--fm .bdm-data-grid__title { display:none; }.bdm-data-grid--fm .bdm-data-grid__view { display:flex; height:20px; align-items:center; gap:4px; color:rgb(211 179 89); font-family:var(--font-display); font-size:9px; letter-spacing:.06em; }.bdm-data-grid--fm .bdm-data-grid__view select { height:20px; min-width:98px; border:1px solid rgb(225 203 133 / 25%); border-radius:2px; background:rgb(61 61 57); color:#eff2eb; font:inherit; letter-spacing:0; padding:0 4px; }.bdm-data-grid--fm .bdm-data-grid__tools-spacer { flex:1; }.bdm-data-grid--fm .bdm-data-grid__header-menu { position:absolute; z-index:9; top:46px; left:120px; display:grid; min-width:160px; border:1px solid rgb(201 177 102 / 42%); background:rgb(39 41 40 / 99%); box-shadow:0 12px 30px rgb(0 0 0 / 45%); padding:3px; }.bdm-data-grid--fm .bdm-data-grid__header-menu button { min-height:21px; border:0; background:transparent; color:#eef0e9; padding:2px 8px; text-align:left; font:inherit; font-size:10px; }.bdm-data-grid--fm .bdm-data-grid__header-menu button:hover { background:rgb(191 151 47 / 34%); }.bdm-data-grid--fm .bdm-data-grid__header-menu hr { width:100%; height:1px; border:0; background:rgb(255 255 255 / 12%); margin:3px 0; }
 .bdm-app-frame:has([aria-label="roster"]) .bdm-app-frame__toolbar { position:relative; z-index:2; height:0; min-height:0; margin:0; overflow:visible; }.squad-app__strip { position:absolute; top:2px; left:132px; display:flex; height:20px; align-items:center; gap:9px; }.squad-app__strip small { color:rgb(176 186 177 / 72%); font-size:9px; white-space:nowrap; }.squad-app__strip .bdm-tabs { min-height:20px; gap:1px; }.squad-app__strip .bdm-tabs__tab { min-width:25px; min-height:20px; padding:0 5px; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools { padding-left:6px; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools::before { content:none; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools input { width:92px; border-radius:1px; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools input::placeholder { color:transparent; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools input:focus::placeholder { color:rgb(184 194 184 / 60%); }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools input:not(:placeholder-shown) { color:#edf0e9; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools input::before { content:'Search'; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools button { min-width:20px; padding-inline:4px; }.bdm-data-table[aria-label="roster"] tbody tr.is-selected { box-shadow:inset 2px 0 #d9ae43; background:rgb(195 154 52 / 10%); }.bdm-data-table[aria-label="roster"] td:nth-child(1),.bdm-data-table[aria-label="roster"] th:nth-child(1),.bdm-data-table[aria-label="roster"] td:nth-child(3),.bdm-data-table[aria-label="roster"] th:nth-child(3) { text-align:center; }.squad-app__player-link { border:0; background:transparent; color:inherit; padding:0; font:inherit; text-align:left; }.squad-app__player-link:hover { color:#f0c44d; text-decoration:none; }.squad-app__info-flag { display:inline-block; width:8px; height:8px; border:1px solid rgb(242 107 94 / 95%); border-radius:1px; background:linear-gradient(135deg,transparent 42%,rgb(242 107 94) 43% 57%,transparent 58%); vertical-align:middle; }
+
+/* Final table contract: every app uses the exact Plantilla cell grammar. */
+:where(.bdm-data-table, .table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-training__table, .pcb-plantilla__analysis-table, .pcb-plantilla__mentor-table, .pcb-tactics__table-page table, .pcb-tactics__rotation-grid, .pcb-medical .table, .pcb-competition .table, .pcb-club .table) {
+  border: 1px solid #293a4a !important;
+  border-radius: 7px !important;
+  background: rgba(15, 23, 42, .7) !important;
+}
+
+:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) table,
+:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) tbody tr {
+  background: transparent !important;
+}
+
+:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) th,
+:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) td {
+  height: 43px !important;
+  border-color: #293a4a !important;
+  background: transparent !important;
+  color: #eef5fb !important;
+  padding: 0 6px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  font-family: Inter, var(--font-ui, Arial, sans-serif) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+}
+
+:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) th {
+  height: 28px !important;
+  background: #111821 !important;
+  color: #84bce3 !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: .5px !important;
+  text-transform: uppercase !important;
+}
+
+:is(.pcb-training__table, .pcb-plantilla__analysis-table, .pcb-plantilla__mentor-table, .pcb-tactics__rotation-grid, .pcb-medical .table, .pcb-competition .table, .pcb-club .table) > :not(.pcb-plantilla__column-resize) {
+  min-height: 43px !important;
+  height: 43px !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  border-color: #293a4a !important;
+  background: transparent !important;
+  color: #eef5fb !important;
+  font-family: Inter, var(--font-ui, Arial, sans-serif) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 0 !important;
+}
+
+:is(.pcb-training__table, .pcb-plantilla__analysis-table, .pcb-plantilla__mentor-table, .pcb-tactics__rotation-grid, .pcb-medical .table, .pcb-competition .table, .pcb-club .table) > :not(.pcb-plantilla__column-resize) > * {
+  display: flex !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-right: 1px solid #293a4a !important;
+  padding: 0 6px !important;
+  text-align: center !important;
+}
+
+:is(.pcb-training__table, .pcb-plantilla__analysis-table, .pcb-plantilla__mentor-table, .pcb-tactics__rotation-grid, .pcb-medical .table, .pcb-competition .table, .pcb-club .table) > :not(.pcb-plantilla__column-resize) > *:last-child {
+  border-right: 0 !important;
+}
+
+:is(.pcb-training__table > .is-head, .pcb-plantilla__analysis-table > div:first-child, .pcb-plantilla__mentor-table > div:first-child, .pcb-tactics__rotation-grid > .is-head, .pcb-medical .table > .row.head, .pcb-competition .table > .row.head, .pcb-club .table > .row.head) {
+  min-height: 28px !important;
+  height: 28px !important;
+  background: #111821 !important;
+  color: #84bce3 !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: .5px !important;
+  text-transform: uppercase !important;
+}
+
+/* One table palette across every application: the Plantilla / Individual baseline. */
+:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page, .pcb-tactics__rotation-grid, .pcb-club .table, .pcb-medical .table, .pcb-competition .table) {
+  border-color: #293a4a !important;
+  background: rgba(15, 23, 42, 0.7) !important;
+}
+
+:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) table,
+:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) tbody tr,
+.pcb-tactics__rotation-grid > div:not(.is-head),
+.pcb-club .table .row:not(.head),
+.pcb-medical .table .row:not(.head),
+.pcb-competition .table .row:not(.head) {
+  background: transparent !important;
+}
+
+:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) th,
+.pcb-tactics__rotation-grid .is-head,
+.pcb-club .table .row.head,
+.pcb-medical .table .row.head,
+.pcb-competition .table .row.head {
+  min-height: 28px;
+  border-color: #293a4a !important;
+  background: #111821 !important;
+  color: #84bce3 !important;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) td,
+.pcb-tactics__rotation-grid > div:not(.is-head),
+.pcb-club .table .row:not(.head),
+.pcb-medical .table .row:not(.head),
+.pcb-competition .table .row:not(.head) {
+  min-height: 43px;
+  border-color: #293a4a !important;
+  color: #eef5fb;
+  font-size: 11px;
+  font-weight: 600;
+}

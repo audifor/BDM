@@ -6,20 +6,19 @@ import { createNewGame } from '@/app/game'
 import { DESKTOP_APPS, DOCK_APP_ICON_REGISTRY, getLauncherApps, reorderLauncherApps, resolveLauncherOrder } from './DesktopAppRegistry'
 import { DesktopDock, DesktopLauncher } from './DesktopNavigation'
 
-const launcherProps = { canAdvanceDay: true, canLoad: true, isOpen: true, onAdvanceDay: () => undefined, onClose: () => undefined, onLoad: () => undefined, onQueryChange: () => undefined, onSave: () => undefined, onAppOpen: () => undefined, query: '', recentAppIds: ['squad'] }
+const launcherWorld = createNewGame()
+const launcherProps = { canAdvanceDay: true, canLoad: true, isOpen: true, onAdvanceDay: () => undefined, onClose: () => undefined, onLoad: () => undefined, onPinDockApp: () => undefined, onQueryChange: () => undefined, onSave: () => undefined, onAppOpen: () => undefined, query: '', recentAppIds: ['squad'], world: launcherWorld }
 
 describe('Desktop navigation', () => {
   it('renders the dock from the stable registry with a labelled launcher toggle', () => {
-    const markup = renderToStaticMarkup(createElement(DesktopDock, { activeAppId: 'squad', onAppOpen: () => undefined, onLauncherToggle: () => undefined, openAppIds: ['squad'] }))
+    const markup = renderToStaticMarkup(createElement(DesktopDock, { activeAppId: null, onAppOpen: () => undefined, onLauncherToggle: () => undefined, onPinApp: () => undefined, onUnpinApp: () => undefined }))
     expect(markup).toContain('data-testid="desktop-dock"')
     expect(markup).toContain('aria-label="Toggle BDM launcher"')
-    expect(markup).toContain('title="Plantilla"')
     expect(markup).toContain('is-expanded')
-    expect(markup).toContain('aria-current="page"')
     expect(markup).toContain('role="tooltip"')
     expect(markup).toContain('<img')
     expect(markup).not.toContain('<svg')
-    expect((markup.match(/class="desktop-dock__item/g) ?? []).length).toBe(DESKTOP_APPS.filter((app) => app.defaultPinned).length)
+    expect((markup.match(/class="desktop-dock__item/g) ?? []).length).toBe(1)
   })
 
   it('maps every canonical app icon concept to its individual PNG asset', () => {
@@ -41,6 +40,14 @@ describe('Desktop navigation', () => {
     expect(getLauncherApps('').map((app) => app.id)).not.toContain('inbox')
   })
 
+  it('groups applications by their functional area', () => {
+    for (const appId of ['squad', 'analysis', 'locker-room', 'mentoring', 'tactics', 'training', 'medical', 'staff']) expect(DESKTOP_APPS.find((app) => app.id === appId)?.launcherGroup).toBe('EQUIPO')
+    for (const appId of ['schedule', 'match', 'competition']) expect(DESKTOP_APPS.find((app) => app.id === appId)?.launcherGroup).toBe('PARTIDOS Y COMPETICIÓN')
+    for (const appId of ['club', 'board', 'finances', 'enforcement']) expect(DESKTOP_APPS.find((app) => app.id === appId)?.launcherGroup).toBe('GESTIÓN DEL CLUB')
+    for (const appId of ['coach', 'coach-finances']) expect(DESKTOP_APPS.find((app) => app.id === appId)?.launcherGroup).toBe('MI CARRERA')
+    for (const appId of ['recruiting', 'nil', 'boosters']) expect(DESKTOP_APPS.find((app) => app.id === appId)?.launcherGroup).toBe('College Performance Center')
+  })
+
   it('finds launcher apps regardless of accents', () => {
     expect(getLauncherApps('tacticas').map((app) => app.id)).toContain('tactics')
     expect(getLauncherApps('tácticas').map((app) => app.id)).toContain('tactics')
@@ -59,5 +66,12 @@ describe('Desktop navigation', () => {
     const world = createNewGame(); const before = JSON.stringify(world)
     expect(renderToStaticMarkup(createElement(DesktopLauncher, { ...launcherProps, isOpen: false }))).toBe('')
     expect(JSON.stringify(world)).toBe(before)
+  })
+
+  it('reads the launcher profile from the active game world', () => {
+    const coach = launcherWorld.coaches[launcherWorld.userCoachId]!
+    const markup = renderToStaticMarkup(createElement(DesktopLauncher, launcherProps))
+    expect(markup).toContain(`${coach.firstName} ${coach.lastName}`)
+    expect(markup).toContain(`${coach.firstName[0]}${coach.lastName[0]}`.toUpperCase())
   })
 })

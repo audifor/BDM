@@ -1,0 +1,12 @@
+.pcb-team-workspace {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  background: #090d13;
+  color: #e2e8f0;
+  padding: 12px;
+}
+
+.pcb-team-workspace__canvas {
+  min-height: calc(100% - 44px);
+}

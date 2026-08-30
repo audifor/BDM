@@ -63,6 +63,8 @@ export function App() {
   const declineUserCoachOffer = useGameStore((state) => state.declineUserCoachOffer)
   const setTrainingIntensity = useGameStore((state) => state.setTrainingIntensity)
   const setTrainingFocus = useGameStore((state) => state.setTrainingFocus)
+  const setLineupSlot = useGameStore((state) => state.setLineupSlot)
+  const clearLineupSlot = useGameStore((state) => state.clearLineupSlot)
   const setUserCoachLifestyle = useGameStore((state) => state.setUserCoachLifestyle)
   const respondToMedia = useGameStore((state) => state.respondToMedia)
   const skipMedia = useGameStore((state) => state.skipMedia)
@@ -81,6 +83,7 @@ export function App() {
   const launcherOpen = useDesktopStore((state) => state.launcherOpen)
   const recentAppIds = useDesktopStore((state) => state.recentAppIds)
   const launcherOrder = useDesktopStore((state) => state.launcherOrder)
+  const dockPinnedAppIds = useDesktopStore((state) => state.dockPinnedAppIds)
   const openWindow = useDesktopStore((state) => state.openWindow)
   const closeWindow = useDesktopStore((state) => state.closeWindow)
   const focusWindow = useDesktopStore((state) => state.focusWindow)
@@ -94,6 +97,8 @@ export function App() {
   const toggleLauncher = useDesktopStore((state) => state.toggleLauncher)
   const closeLauncher = useDesktopStore((state) => state.closeLauncher)
   const reorderLauncher = useDesktopStore((state) => state.reorderLauncher)
+  const pinDockApp = useDesktopStore((state) => state.pinDockApp)
+  const unpinDockApp = useDesktopStore((state) => state.unpinDockApp)
   const wallpaper = useDesktopPreferencesStore((state) => state.wallpaper)
   const density = useDesktopPreferencesStore((state) => state.density)
   const dockAutoHide = useDesktopPreferencesStore((state) => state.dockAutoHide)
@@ -162,16 +167,13 @@ export function App() {
   const seasonComplete = Object.values(world.games).every((game) => game.status === 'completed')
 
   const openDesktopApp = (appId: string) => {
-    const userTeam = getUserTeam(world)
-    const currentCompetitionId = world.seasons[world.currentSeasonId]?.competitionId
-    if (appId === 'staff' && userTeam !== undefined) return openEntity({ type: 'team', teamId: userTeam.id, section: 'staff' })
-    if (appId === 'standings' && currentCompetitionId !== undefined) return openEntity({ type: 'competition', competitionId: currentCompetitionId, section: 'standings' })
+    if (appId === 'schedule' || appId === 'standings') return openWindow('competition')
     openWindow(appId); setLauncherQuery('')
   }
   const unreadInboxCount = selectUnreadInboxCount(world)
   const capabilities = resolveGameCapabilities(world)
   const activeAppId = desktopWindows.find((window) => window.id === focusedWindowId)?.appId ?? null
-  const desktopActions: DesktopAppActions = { tacticalPlan, openApp: openDesktopApp, openEntity, playGame: () => startMatch(startLiveMatch(tacticalPlan)), instantResult: () => instantResult(tacticalPlan), simulateRemainingGamesToday, advanceDay, startNextSeason, releasePlayer, signFreeAgent, selectDraftProspect, executeTrade, addRecruitingTarget, removeRecruitingTarget, performRecruitingAction, makeRecruitingOffer, acceptNilOpportunity, purchaseSkill: (id) => { const result = purchaseUserCoachSkill(id); if (!result.ok) setSaveMessage(result.reason) }, purchasePerk: (id) => { const result = purchaseUserCoachPerk(id); if (!result.ok) setSaveMessage(result.reason) }, acceptOffer: acceptUserCoachOffer, declineOffer: declineUserCoachOffer, applyForJob: applyUserCoachForJob, setTacticalPlan, resetTacticalPlan, setTrainingIntensity, setTrainingFocus, setCoachLifestyle: setUserCoachLifestyle, respondToMedia, skipMedia }
+  const desktopActions: DesktopAppActions = { tacticalPlan, openApp: openDesktopApp, openEntity, playGame: () => startMatch(startLiveMatch(tacticalPlan)), instantResult: () => instantResult(tacticalPlan), simulateRemainingGamesToday, advanceDay, startNextSeason, releasePlayer, signFreeAgent, selectDraftProspect, executeTrade, addRecruitingTarget, removeRecruitingTarget, performRecruitingAction, makeRecruitingOffer, acceptNilOpportunity, purchaseSkill: (id) => { const result = purchaseUserCoachSkill(id); if (!result.ok) setSaveMessage(result.reason) }, purchasePerk: (id) => { const result = purchaseUserCoachPerk(id); if (!result.ok) setSaveMessage(result.reason) }, acceptOffer: acceptUserCoachOffer, declineOffer: declineUserCoachOffer, applyForJob: applyUserCoachForJob, setTacticalPlan, resetTacticalPlan, setTrainingIntensity, setTrainingFocus, setLineupSlot, clearLineupSlot, setCoachLifestyle: setUserCoachLifestyle, respondToMedia, skipMedia }
 
   return (
     <DesktopShell
@@ -179,8 +181,8 @@ export function App() {
       density={density}
       dockAutoHide={dockAutoHide}
       widgets={<><DesktopWidgetLayer world={world} onAdvanceDay={advanceDay} onContinue={continueGame} onInstantResult={() => instantResult(tacticalPlan)} onOpenApp={openDesktopApp} onOpenPendingGame={(gameId) => { if (world.games[gameId]?.status === 'scheduled') startMatch(startLiveMatch(tacticalPlan)) }} onPlayGame={() => startMatch(startLiveMatch(tacticalPlan))} /><DesktopCanonicalSurfaceLayer visible={visualQaFixture} world={world} /></>}
-      dock={<DesktopDock activeAppId={activeAppId} launcherOpen={launcherOpen} onAppOpen={openDesktopApp} onLauncherToggle={toggleLauncher} openAppIds={desktopWindows.map((window) => window.appId)} unreadCount={unreadInboxCount} />}
-      overlay={<><DesktopLauncher activeAppId={activeAppId} capabilities={capabilities} canAdvanceDay={!seasonComplete} canLoad={hasSave} isOpen={launcherOpen && !globalSearchOpen} launcherOrder={launcherOrder} onAdvanceDay={advanceDay} onAppOpen={openDesktopApp} onClose={closeLauncher} onCustomizeDesktop={enterDesktopWidgetEditMode} onLoad={() => void loadGame()} onQueryChange={setLauncherQuery} onReorder={reorderLauncher} onSave={() => void saveGame()} query={launcherQuery} recentAppIds={recentAppIds} /><GlobalSearchOverlay canAdvanceDay={!seasonComplete} canLoad={hasSave} isOpen={globalSearchOpen} onAdvanceDay={advanceDay} onClose={() => setGlobalSearchOpen(false)} onCustomize={enterDesktopWidgetEditMode} onLoad={() => void loadGame()} onOpenApp={openDesktopApp} onSave={() => void saveGame()} world={world} /><EntityActionComposer onResult={executeComposerAction} /></>}
+      dock={<DesktopDock activeAppId={activeAppId} dockPinnedAppIds={dockPinnedAppIds} launcherOpen={launcherOpen} onAppOpen={openDesktopApp} onLauncherToggle={toggleLauncher} onPinApp={pinDockApp} onUnpinApp={unpinDockApp} unreadCount={unreadInboxCount} />}
+      overlay={<><DesktopLauncher activeAppId={activeAppId} capabilities={capabilities} canAdvanceDay={!seasonComplete} canLoad={hasSave} isOpen={launcherOpen && !globalSearchOpen} launcherOrder={launcherOrder} onAdvanceDay={advanceDay} onAppOpen={openDesktopApp} onClose={closeLauncher} onCustomizeDesktop={enterDesktopWidgetEditMode} onLoad={() => void loadGame()} onPinDockApp={pinDockApp} onQueryChange={setLauncherQuery} onReorder={reorderLauncher} onSave={() => void saveGame()} query={launcherQuery} recentAppIds={recentAppIds} world={world} /><GlobalSearchOverlay canAdvanceDay={!seasonComplete} canLoad={hasSave} isOpen={globalSearchOpen} onAdvanceDay={advanceDay} onClose={() => setGlobalSearchOpen(false)} onCustomize={enterDesktopWidgetEditMode} onLoad={() => void loadGame()} onOpenApp={openDesktopApp} onSave={() => void saveGame()} world={world} /><EntityActionComposer onResult={executeComposerAction} /></>}
       status={<StatusCluster saveMessage={saveMessage} />}
       wallpaper={wallpaper}
     >

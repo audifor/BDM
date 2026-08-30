@@ -1,0 +1,181 @@
+.pcb-plantilla__subnav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  border: 1px solid #263645;
+  border-radius: 8px;
+  background: #151c25;
+  padding: 8px 12px;
+}
+.pcb-plantilla__subnav > label:first-child {
+  display: none;
+}
+.pcb-plantilla__subnav label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #2a3b4d;
+  border-radius: 6px;
+  background: #101822;
+  padding: 4px 6px;
+  color: #84bce3;
+  font-size: 11px;
+}
+.pcb-plantilla__subnav select {
+  min-width: 132px;
+  border: 0;
+  background: #101822;
+  color: #f3f7fb;
+  font: inherit;
+  font-weight: 700;
+  padding: 4px;
+}
+.pcb-plantilla__page {
+  position: relative;
+}
+.pcb-plantilla__subnav label:nth-child(2) {
+  position: absolute;
+  z-index: 4;
+  top: 93px;
+  right: 292px;
+  white-space: nowrap;
+}
+@media (max-width: 900px) {
+  .pcb-plantilla__subnav label:nth-child(2) {
+    position: static;
+  }
+}
+@media (max-width: 760px) {
+  .pcb-plantilla__subnav {
+    gap: 6px;
+  }
+  .pcb-plantilla__a11y-actions {
+    flex-wrap: wrap;
+  }
+  .pcb-plantilla__subnav label {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Analysis and mentoring share the canonical Plantilla palette. */
+.pcb-plantilla__analysis > section,
+.pcb-plantilla__mentoring {
+  border-color: #263645;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.7);
+  box-shadow: none;
+  font-family: Inter, var(--font-ui, Arial, sans-serif);
+}
+
+.pcb-plantilla__analysis h2,
+.pcb-plantilla__mentoring h2 {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.pcb-plantilla__analysis header span,
+.pcb-plantilla__mentoring small {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.pcb-plantilla__analysis-table,
+.pcb-plantilla__mentor-table {
+  border-color: #293a4a;
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.pcb-plantilla__analysis-table > div,
+.pcb-plantilla__mentor-table > div {
+  height: 43px;
+  min-height: 0;
+  align-items: stretch;
+  border-color: #293a4a;
+  background: #101822;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.pcb-plantilla__analysis-table > div > *,
+.pcb-plantilla__mentor-table > div > * {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border-right: 1px solid #293a4a;
+}
+
+.pcb-plantilla__analysis-table > div > *:last-child,
+.pcb-plantilla__mentor-table > div > *:last-child {
+  border-right: 0;
+}
+
+.pcb-plantilla__analysis-table > div:first-child,
+.pcb-plantilla__mentor-table > div:first-child {
+  height: 28px;
+  min-height: 0;
+  background: #111821;
+  color: #84bce3;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.pcb-plantilla__analysis-table > div:first-child > *,
+.pcb-plantilla__mentor-table > div:first-child > * {
+  position: relative;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.pcb-plantilla__analysis h3,
+.pcb-plantilla__mentoring h3 {
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.pcb-plantilla__column-resize {
+  width: 6px;
+  min-width: 6px;
+  margin-left: auto;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.pcb-plantilla__analysis-table .pcb-plantilla__column-resize,
+.pcb-plantilla__mentor-table .pcb-plantilla__column-resize {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  bottom: 0;
+  margin-left: 0;
+  width: 8px;
+}
+
+.pcb-plantilla__analysis-table > div:not(:first-child),
+.pcb-plantilla__mentor-table > div:not(:first-child) {
+  background: transparent;
+}
+
+.pcb-plantilla__player-detail,
+.pcb-plantilla__mentor-create {
+  border-color: #293a4a;
+  background: #101822;
+}
+
+.pcb-plantilla__chips button,
+.pcb-plantilla__mentoring input,
+.pcb-plantilla__mentoring select,
+.pcb-plantilla__mentoring button {
+  border-color: #2b3b4b;
+  border-radius: 6px;
+  background: #101822;
+  color: #e7edf3;
+}
