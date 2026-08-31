@@ -33,6 +33,7 @@ import { generatePlayerPotential } from '@/engine/world/PlayerPotentialGenerator
 import { ensureTeamFinances } from '@/engine/world/TeamFinancesEnrichment'
 import { ensurePlayerKnowledge } from '@/engine/world/PlayerKnowledgeEnrichment'
 import { ensureStaffStructure } from '@/engine/world/StaffStructureEnrichment'
+import { ensureStaffContractStructure, ensureStaffEmploymentStructure, ensureStaffReputationStructure } from '@/engine/world/StaffCareerEnrichment'
 import { ensureResponsibilityStructure } from '@/engine/world/ResponsibilityEnrichment'
 import { migrateTrainingResponsibilities } from '@/domain/world/migrateTrainingResponsibilities'
 import { delegationOutcomeIdFromString, responsibilityIdFromString } from '@/domain/responsibility'
@@ -196,7 +197,11 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
       injuries: copyRecords(Object.values(world.injuriesById)),
       contracts: copyRecords(Object.values(world.contractsById)),
       playerTransactions: copyRecords(Object.values(world.playerTransactionsById)),
-      teamFinances: copyRecords(Object.values(world.teamFinancesByTeamId)),
+      // V1/V2 are legacy layers that never owned `staffSalaryBudget` (Wave 4A review Blocker 1) —
+      // serialize only the legacy two-field shape explicitly, never a raw clone of the runtime
+      // `TeamFinances` object, which now carries `staffSalaryBudget` too. V3 is the sole canonical
+      // writer/validator of that field (see `GameWorldSaveV3.ts`'s `parseTeamFinancesV3`).
+      teamFinances: Object.values(world.teamFinancesByTeamId).map((finances) => ({ teamId: finances.teamId, playerSalaryBudget: finances.playerSalaryBudget })),
       playerKnowledge: copyRecords(Object.values(world.playerKnowledgeById)),
       organizationEvaluationPolicies: Object.entries(world.organizationEvaluationPoliciesById).map(([organizationId, policy]) => ({ organizationId, ...policy })),
       staffPeople: copyRecords(Object.values(world.staffPeopleById)), teamStaffAssignments: copyRecords(Object.values(world.teamStaffAssignmentsById)),
@@ -267,6 +272,7 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
   const professionalProfiles = payload.coachProfessionalProfilesByCoachId === undefined ? Object.fromEntries(coaches.map((coach) => [coach.id, createLegacyProfessionalProfile()])) : readCoachProfessionalProfiles(payload.coachProfessionalProfilesByCoachId)
   const rpgProfiles = payload.coachRpgProfilesByCoachId === undefined ? Object.fromEntries(coaches.map((coach) => [coach.id, createLegacyRpgProfile()])) : readCoachRpgProfiles(payload.coachRpgProfilesByCoachId)
   const reputationProfiles = payload.coachReputationProfilesByCoachId === undefined ? undefined : readCoachReputationProfiles(payload.coachReputationProfilesByCoachId)
+  const staffPeople = payload.staffPeople === undefined ? [] : array(payload.staffPeople, 'Save staffPeople').map(readStaffPerson)
   const world = createGameWorld({
     currentDate,
     ...(payload.currentSeasonId === undefined ? {} : { currentSeasonId: seasonIdFromString(string(payload.currentSeasonId, 'Save currentSeasonId')) }),
@@ -300,7 +306,7 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
     teamFinances,
     playerKnowledge: payload.playerKnowledge === undefined ? [] : array(payload.playerKnowledge, 'Save playerKnowledge').map(readPlayerKnowledge),
     ...(payload.organizationEvaluationPolicies === undefined ? {} : { organizationEvaluationPoliciesById: readOrganizationEvaluationPolicies(payload.organizationEvaluationPolicies) }),
-    staffPeople: payload.staffPeople === undefined ? [] : array(payload.staffPeople, 'Save staffPeople').map(readStaffPerson), teamStaffAssignments: payload.teamStaffAssignments === undefined ? [] : array(payload.teamStaffAssignments, 'Save teamStaffAssignments').map(readStaffAssignment),
+    staffPeople, teamStaffAssignments: payload.teamStaffAssignments === undefined ? [] : array(payload.teamStaffAssignments, 'Save teamStaffAssignments').map(readStaffAssignment),
     ...(payload.responsibilities === undefined ? {} : { responsibilities: array(payload.responsibilities, 'Save responsibilities').map(readResponsibility) }),
     ...(payload.delegationOutcomes === undefined ? {} : { delegationOutcomes: array(payload.delegationOutcomes, 'Save delegationOutcomes').map(readDelegationOutcome) }),
     ...(payload.oppositionScoutingReports === undefined ? {} : { oppositionScoutingReports: array(payload.oppositionScoutingReports, 'Save oppositionScoutingReports').map(readOppositionScoutingReport) }),
@@ -342,7 +348,8 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
   }
   const withLegacyKnowledge = options.enrichLegacy === false || payload.playerKnowledge !== undefined ? world : ensurePlayerKnowledge(world)
   const withResponsibilities = options.enrichLegacy === false ? withLegacyKnowledge : migrateTrainingResponsibilities(ensureResponsibilityStructure(ensureStaffStructure(withLegacyKnowledge)))
-  const enriched = ensureNcaaAcademics(ensureNcaaEligibility(withResponsibilities))
+  const withStaffCareer = options.enrichLegacy === false ? withResponsibilities : ensureStaffReputationStructure(ensureStaffContractStructure(ensureStaffEmploymentStructure(withResponsibilities)))
+  const enriched = ensureNcaaAcademics(ensureNcaaEligibility(withStaffCareer))
   return payload.nilProfiles === undefined ? ensureNcaaNil(enriched) : enriched
 }
 
@@ -401,7 +408,9 @@ function readTradeMovement(value: unknown) { const v=record(value,'Trade movemen
 function readTradeAsset(value: unknown) { const v=record(value,'Trade asset'); const kind=string(v.kind,'Trade asset kind'); if(kind==='player')return{kind,playerId:playerIdFromString(string(v.playerId,'Trade player'))} as const;if(kind==='draftPick')return{kind,draftPickId:string(v.draftPickId,'Trade draft pick')} as const;if(kind==='futureDraftPick')return{kind,futureDraftPickRightId:string(v.futureDraftPickRightId,'Trade future pick')} as const;if(kind==='playerRights')return{kind,playerRightsId:string(v.playerRightsId,'Trade player rights')} as const;if(kind==='draftPickSwapRight')return{kind,draftPickSwapRightId:string(v.draftPickSwapRightId,'Trade swap right')} as const;if(kind==='cash')return{kind,amount:integer(v.amount,'Trade cash')} as const;return fail('Trade asset kind is invalid') }
 function readTermination(value:unknown){const v=record(value,'Contract termination');return{terminatedOn:parseGameDate(string(v.terminatedOn,'Contract terminatedOn')),reason:string(v.reason,'Contract termination reason') as 'released'}}
 function readTransaction(value:unknown){const v=record(value,'Player transaction');return{id:playerTransactionIdFromString(string(v.id,'Player transaction id')),playerId:playerIdFromString(string(v.playerId,'Player transaction playerId')),kind:string(v.kind,'Player transaction kind') as import('@/domain/transaction').PlayerTransactionKind,occurredOn:parseGameDate(string(v.occurredOn,'Player transaction occurredOn')),...(v.fromTeamId===undefined?{}:{fromTeamId:teamIdFromString(string(v.fromTeamId,'Player transaction fromTeamId'))}),...(v.toTeamId===undefined?{}:{toTeamId:teamIdFromString(string(v.toTeamId,'Player transaction toTeamId'))}),...(v.contractId===undefined?{}:{contractId:contractIdFromString(string(v.contractId,'Player transaction contractId'))})}}
-function readTeamFinances(value:unknown){const v=record(value,'Team finances');return{teamId:teamIdFromString(string(v.teamId,'Team finances teamId')),playerSalaryBudget:integer(v.playerSalaryBudget,'Team finances playerSalaryBudget')}}
+/** `staffSalaryBudget` (Wave 4A) is additive to the pre-existing V1 shape: a legacy save without it deterministically backfills from `playerSalaryBudget` (same policy as `TeamFinancesGenerator`'s initial-generation ratio), so old saves keep loading without a schema bump at this layer. */
+function readTeamFinances(value:unknown){const v=record(value,'Team finances');const playerSalaryBudget=integer(v.playerSalaryBudget,'Team finances playerSalaryBudget');return{teamId:teamIdFromString(string(v.teamId,'Team finances teamId')),playerSalaryBudget,staffSalaryBudget:v.staffSalaryBudget===undefined?backfillStaffSalaryBudget(playerSalaryBudget):integer(v.staffSalaryBudget,'Team finances staffSalaryBudget')}}
+function backfillStaffSalaryBudget(playerSalaryBudget:number):number{return Math.max(100_000,Math.ceil(playerSalaryBudget*0.12/50_000)*50_000)}
 function readPlayerKnowledge(value:unknown){const v=record(value,'Player knowledge');const basketball=record(v.basketball,'Player knowledge basketball');const ratings=record(basketball.ratings,'Player knowledge ratings');const read=(key:string)=>{const rating=record(ratings[key],`Player knowledge ${key}`);return{estimatedValue:integer(rating.estimatedValue,`Player knowledge ${key} estimate`),uncertainty:integer(rating.uncertainty,`Player knowledge ${key} uncertainty`)}};return{id:playerKnowledgeIdFromString(string(v.id,'Player knowledge id')),observerTeamId:teamIdFromString(string(v.observerTeamId,'Player knowledge observerTeamId')),subjectPlayerId:playerIdFromString(string(v.subjectPlayerId,'Player knowledge subjectPlayerId')),assessedOn:parseGameDate(string(v.assessedOn,'Player knowledge assessedOn')),basketball:{ratings:{finishing:read('finishing'),shooting:read('shooting'),playmaking:read('playmaking'),perimeterDefense:read('perimeterDefense'),interiorDefense:read('interiorDefense'),rebounding:read('rebounding'),athleticism:read('athleticism')}}}}
 function readStaffPerson(value:unknown){const v=record(value,'Staff person');const identity=record(v.identity,'Staff identity');const profile=record(v.professional,'Staff professional');const a=record(profile.attributes,'Staff attributes');const read=(key:string)=>integer(a[key],`Staff ${key}`);return{id:staffPersonIdFromString(string(v.id,'Staff id')),identity:{firstName:string(identity.firstName,'Staff firstName'),lastName:string(identity.lastName,'Staff lastName'),...(identity.dateOfBirth===undefined?{}:{dateOfBirth:parseGameDate(string(identity.dateOfBirth,'Staff dateOfBirth'))}),...(identity.nationality===undefined?{}:{nationality:string(identity.nationality,'Staff nationality')})},professional:{attributes:{coaching:read('coaching'),tacticalKnowledge:read('tacticalKnowledge'),playerDevelopment:read('playerDevelopment'),talentEvaluation:read('talentEvaluation'),potentialEvaluation:read('potentialEvaluation'),medicalKnowledge:read('medicalKnowledge'),rehabilitation:read('rehabilitation'),analysis:read('analysis'),leadership:read('leadership'),communication:read('communication'),motivation:read('motivation'),discipline:read('discipline'),adaptability:read('adaptability')}}}}
 function readOrganizationEvaluationPolicies(value:unknown){return Object.fromEntries(array(value,'Save organization evaluation policies').map((entry)=>{const v=record(entry,'Organization evaluation policy'),read=(key:string)=>integer(v[key],`Organization policy ${key}`);return[organizationIdFromString(string(v.organizationId,'Organization policy organizationId')),{riskTolerance:read('riskTolerance'),certaintyPreference:read('certaintyPreference'),upsidePreference:read('upsidePreference'),currentAbilityPreference:read('currentAbilityPreference'),scoutingReliance:read('scoutingReliance')}] }))}

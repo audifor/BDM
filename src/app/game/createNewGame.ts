@@ -12,6 +12,7 @@ import { ensureNcaaNil } from '@/engine/nil'
 import { ensureNcaaBoosters } from '@/engine/boosters'
 import { ensureNcaaEnforcement } from '@/engine/enforcement'
 import { ensureResponsibilityStructure } from '@/engine/world/ResponsibilityEnrichment'
+import { ensureStaffContractStructure, ensureStaffEmploymentStructure, ensureStaffReputationStructure } from '@/engine/world/StaffCareerEnrichment'
 import type { CoachRpgPreset } from '@/domain/coachRpg'
 import { createCoachJobOpeningForTeam } from '@/app/coachCareer'
 import { initializeBoardState } from '@/engine/board'
@@ -50,7 +51,7 @@ function createSingleNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset
   const staged = createGameWorld({ currentDate: generatedWorld.currentDate, currentSeasonId: generatedWorld.currentSeasonId, userCoachId: generatedWorld.userCoachId, countries: Object.values(generatedWorld.countries), coaches: Object.values(generatedWorld.coaches), players: Object.values(generatedWorld.players), teams: Object.values(generatedWorld.teams), competitions, ecosystems: Object.values(generatedWorld.ecosystems), conferences: Object.values(generatedWorld.conferencesById), conferenceMemberships: generatedWorld.conferenceMemberships, seasons, games: [], injuries: Object.values(generatedWorld.injuriesById), contracts: Object.values(generatedWorld.contractsById), teamFinances: Object.values(generatedWorld.teamFinancesByTeamId), playerTransactions: Object.values(generatedWorld.playerTransactionsById), playerKnowledge: Object.values(generatedWorld.playerKnowledgeById), staffPeople: Object.values(generatedWorld.staffPeopleById), teamStaffAssignments: Object.values(generatedWorld.teamStaffAssignmentsById), coachProfessionalProfilesByCoachId: generatedWorld.coachProfessionalProfilesByCoachId, coachRpgProfilesByCoachId: generatedWorld.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: generatedWorld.coachReputationProfilesByCoachId, coachEmploymentByCoachId: generatedWorld.coachEmploymentByCoachId, coachCareerHistoryByCoachId: generatedWorld.coachCareerHistoryByCoachId, coachJobOpeningsById: generatedWorld.coachJobOpeningsById, coachJobCandidaciesById: generatedWorld.coachJobCandidaciesById, coachInterviewsByCandidacyId: generatedWorld.coachInterviewsByCandidacyId, coachJobOffersById: generatedWorld.coachJobOffersById, relationshipsByKey: generatedWorld.relationshipsByKey, salaryRulesBySeasonId: generatedWorld.salaryRulesBySeasonId, tradeRulesBySeasonId: generatedWorld.tradeRulesBySeasonId })
   const games = Object.values(staged.seasons).flatMap((candidate) => staged.ecosystems[staged.competitions[candidate.competitionId]!.ecosystemId]!.kind === 'ncaaLike' ? generateNcaaLikeSchedule(staged, candidate.id) : generateRoundRobinSchedule({ world: staged, seasonId: candidate.id }))
 
-  return migrateTrainingResponsibilities(ensureResponsibilityStructure(ensureNcaaEnforcement(ensureNcaaBoosters(ensureNcaaNil(ensureNcaaAcademics(ensureNcaaEligibility(createGameWorld({
+  return ensureStaffReputationStructure(ensureStaffContractStructure(ensureStaffEmploymentStructure(migrateTrainingResponsibilities(ensureResponsibilityStructure(ensureNcaaEnforcement(ensureNcaaBoosters(ensureNcaaNil(ensureNcaaAcademics(ensureNcaaEligibility(createGameWorld({
     currentDate: generatedWorld.currentDate,
     currentSeasonId: generatedWorld.currentSeasonId,
     userCoachId: generatedWorld.userCoachId,
@@ -69,7 +70,7 @@ function createSingleNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset
     staffPeople: Object.values(generatedWorld.staffPeopleById), teamStaffAssignments: Object.values(generatedWorld.teamStaffAssignmentsById),
     coachProfessionalProfilesByCoachId: generatedWorld.coachProfessionalProfilesByCoachId,
     coachRpgProfilesByCoachId: generatedWorld.coachRpgProfilesByCoachId, coachReputationProfilesByCoachId: generatedWorld.coachReputationProfilesByCoachId, coachEmploymentByCoachId: generatedWorld.coachEmploymentByCoachId, coachCareerHistoryByCoachId: generatedWorld.coachCareerHistoryByCoachId, coachJobOpeningsById: generatedWorld.coachJobOpeningsById, coachJobCandidaciesById: generatedWorld.coachJobCandidaciesById, coachInterviewsByCandidacyId: generatedWorld.coachInterviewsByCandidacyId, coachJobOffersById: generatedWorld.coachJobOffersById, relationshipsByKey: generatedWorld.relationshipsByKey, salaryRulesBySeasonId: generatedWorld.salaryRulesBySeasonId, tradeRulesBySeasonId: generatedWorld.tradeRulesBySeasonId,
-  }))))))))
+  })))))))))))
 }
 
 function namespaceWorld(world: GameWorld, prefix: string): GameWorld {
