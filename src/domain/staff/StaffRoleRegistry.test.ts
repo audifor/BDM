@@ -30,10 +30,59 @@ describe('STAFF_ROLE_REGISTRY', () => {
     }
   })
 
-  it('gates recruiting roles to ncaaLike ecosystems only', () => {
-    expect(isStaffRoleApplicableToEcosystem('recruitingCoordinator', 'ncaaLike')).toBe(true)
-    expect(isStaffRoleApplicableToEcosystem('recruitingCoordinator', 'nbaLike')).toBe(false)
-    expect(isStaffRoleApplicableToEcosystem('assistantCoach', 'nbaLike')).toBe(true)
+  // §6.5 of docs/STAFF_SYSTEM_V2.md: for Wave 1, only the Recruiting department is hard-gated to
+  // ncaaLike. No other department may introduce ecosystem restrictions the spec does not require —
+  // in particular General Manager, Assistant General Manager, and Cap/Contracts Specialist must
+  // remain universal in this wave (they are "most meaningful" under nbaLike per the spec's prose,
+  // but that is not the same as being hard-gated away from other ecosystems).
+  describe('ecosystem gating (§6.5: Recruiting is the only hard-gated department in Wave 1)', () => {
+    it('recruitingCoordinator is applicable in ncaaLike', () => {
+      expect(isStaffRoleApplicableToEcosystem('recruitingCoordinator', 'ncaaLike')).toBe(true)
+    })
+    it('recruitingCoordinator is NOT applicable in nbaLike', () => {
+      expect(isStaffRoleApplicableToEcosystem('recruitingCoordinator', 'nbaLike')).toBe(false)
+    })
+    it('recruitingCoordinator is NOT applicable in fibaLike', () => {
+      expect(isStaffRoleApplicableToEcosystem('recruitingCoordinator', 'fibaLike')).toBe(false)
+    })
+    it('positionalRecruiter follows the same ncaaLike-only rule as recruitingCoordinator', () => {
+      expect(isStaffRoleApplicableToEcosystem('positionalRecruiter', 'ncaaLike')).toBe(true)
+      expect(isStaffRoleApplicableToEcosystem('positionalRecruiter', 'nbaLike')).toBe(false)
+      expect(isStaffRoleApplicableToEcosystem('positionalRecruiter', 'fibaLike')).toBe(false)
+    })
+    it('generalManager is valid in ncaaLike, nbaLike and fibaLike — not artificially restricted', () => {
+      expect(isStaffRoleApplicableToEcosystem('generalManager', 'ncaaLike')).toBe(true)
+      expect(isStaffRoleApplicableToEcosystem('generalManager', 'nbaLike')).toBe(true)
+      expect(isStaffRoleApplicableToEcosystem('generalManager', 'fibaLike')).toBe(true)
+    })
+    it('assistantGeneralManager is valid in ncaaLike, nbaLike and fibaLike', () => {
+      expect(isStaffRoleApplicableToEcosystem('assistantGeneralManager', 'ncaaLike')).toBe(true)
+      expect(isStaffRoleApplicableToEcosystem('assistantGeneralManager', 'nbaLike')).toBe(true)
+      expect(isStaffRoleApplicableToEcosystem('assistantGeneralManager', 'fibaLike')).toBe(true)
+    })
+    it('capContractsSpecialist is valid in ncaaLike, nbaLike and fibaLike — not hard-gated to nbaLike in this wave', () => {
+      expect(isStaffRoleApplicableToEcosystem('capContractsSpecialist', 'ncaaLike')).toBe(true)
+      expect(isStaffRoleApplicableToEcosystem('capContractsSpecialist', 'nbaLike')).toBe(true)
+      expect(isStaffRoleApplicableToEcosystem('capContractsSpecialist', 'fibaLike')).toBe(true)
+    })
+    it('a universal role like assistantCoach is valid in all three ecosystem kinds', () => {
+      expect(isStaffRoleApplicableToEcosystem('assistantCoach', 'ncaaLike')).toBe(true)
+      expect(isStaffRoleApplicableToEcosystem('assistantCoach', 'nbaLike')).toBe(true)
+      expect(isStaffRoleApplicableToEcosystem('assistantCoach', 'fibaLike')).toBe(true)
+    })
+    it('non-Recruiting scouts (collegeScout, proScout, internationalScout, regionalScout, headScout, advanceScout) carry no artificial ecosystem restriction', () => {
+      for (const scoutRole of ['collegeScout', 'proScout', 'internationalScout', 'regionalScout', 'headScout', 'advanceScout'] as const) {
+        expect(isStaffRoleApplicableToEcosystem(scoutRole, 'ncaaLike')).toBe(true)
+        expect(isStaffRoleApplicableToEcosystem(scoutRole, 'nbaLike')).toBe(true)
+        expect(isStaffRoleApplicableToEcosystem(scoutRole, 'fibaLike')).toBe(true)
+      }
+    })
+    it('only the Recruiting department declares applicableEcosystemKinds in Wave 1 — no other department introduces hard gating', () => {
+      for (const definition of Object.values(STAFF_ROLE_REGISTRY)) {
+        if (definition.department === 'recruiting') expect(definition.applicableEcosystemKinds).toEqual(['ncaaLike'])
+        else expect(definition.applicableEcosystemKinds).toBeUndefined()
+      }
+    })
   })
 
   it('groups role ids by department', () => {

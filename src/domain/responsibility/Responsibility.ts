@@ -197,7 +197,7 @@ export interface DecisionQualityContext {
   readonly workload: StaffWorkloadSnapshot
 }
 
-/** One `DecisionQualityFn` per `ResponsibilityDomain`, never a monolithic switch. Must be pure/deterministic — no direct RNG access outside an injected seeded stream, no `Math.random()`. */
+/** One `DecisionQualityFn` per `ResponsibilityDomain`, never a monolithic switch. Must be pure/deterministic — no direct RNG access outside an injected seeded stream, no unseeded randomness. */
 export type DecisionQualityFn = (context: DecisionQualityContext, seed: string) => number
 
 function brandedId<Kind extends string>(value: string, name: string): ResponsibilityBrandedId<Kind> {
