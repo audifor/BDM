@@ -15,11 +15,16 @@ const LEGACY_TRAINING_RESPONSIBILITY_TO_KIND: Readonly<Record<TrainingResponsibi
  * One-time, idempotent migration of `trainingResponsibilitiesByTeamId` (the pre-existing,
  * training-only precursor of the canonical Responsibility model) onto `responsibilitiesById`.
  *
- * The legacy map was never validated against role eligibility or team membership — the old
- * `setTrainingResponsibility` accepted any existing `StaffPersonId` unconditionally. The
- * canonical model validates both strictly (`validateResponsibilityAssignment`,
- * `validateWorld`'s holder-team check). Legacy holders are therefore treated as **untrusted**
- * data with respect to current canonical rules, never migrated blindly:
+ * The legacy map was never validated against role eligibility or team membership — the now-
+ * removed `setTrainingResponsibility` runtime setter used to accept any existing `StaffPersonId`
+ * unconditionally, so it could produce entries the canonical model would reject. The canonical
+ * model validates both strictly (`validateResponsibilityAssignment`, `validateWorld`'s
+ * holder-team check). Legacy holders read from an old save are therefore treated as
+ * **untrusted** data with respect to current canonical rules, never migrated blindly:
+ *
+ * `trainingResponsibilitiesByTeamId` itself is now read-only, save-compatibility-only state: no
+ * production API can write to it anymore. It can only ever be populated by loading an old save
+ * file through `GameWorldSaveV1`'s deserializer, never at runtime.
  *
  * For every legacy `(teamId, TrainingResponsibility, StaffPersonId)` entry:
  * - resolve the canonical Responsibility row for `(teamId, mapped kind)` via the existing stable

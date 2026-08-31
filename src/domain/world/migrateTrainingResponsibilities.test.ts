@@ -1,13 +1,26 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
-import { setTrainingResponsibility } from '@/engine/training'
 import { responsibilityIdForTeam } from '@/domain/responsibility'
-import { staffPersonIdFromString, teamStaffAssignmentIdFromString, type TeamId } from '@/domain/ids'
+import { staffPersonIdFromString, teamStaffAssignmentIdFromString, type StaffPersonId, type TeamId } from '@/domain/ids'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
+import type { TrainingResponsibility } from '@/domain/training'
 import { migrateTrainingResponsibilities } from './migrateTrainingResponsibilities'
 import { getResponsibility, updateGameWorld, type GameWorld } from './index'
 
 const flatAttributes = Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 50])) as Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number>
+
+/**
+ * Simulates historical, pre-Wave-2 save data: a legacy `trainingResponsibilitiesByTeamId` holder,
+ * built directly via `updateGameWorld` against the legacy map exactly as `GameWorldSaveV1`'s
+ * reader would reconstruct it from an old save file. Not a runtime write path — the production
+ * setter this used to go through (`setTrainingResponsibility`) has been removed entirely; nothing
+ * in the current codebase can write to this map at runtime anymore.
+ */
+function withLegacySaveHolder(world: GameWorld, teamId: TeamId, responsibility: TrainingResponsibility, staffId: StaffPersonId): GameWorld {
+  return updateGameWorld(world, {
+    trainingResponsibilitiesByTeamId: { ...world.trainingResponsibilitiesByTeamId, [teamId]: { ...world.trainingResponsibilitiesByTeamId[teamId], [responsibility]: staffId } },
+  })
+}
 
 /** The default-generated `assistantCoach` is eligible for teamTraining/individualDevelopment but not physicalLoad (determineIntensity requires strengthConditioningCoach/performanceCoach/loadManagementSpecialist), so tests exercising physicalLoad need a role-eligible staff member. */
 function withPerformanceCoach(world: GameWorld, teamId: TeamId) {
@@ -29,7 +42,7 @@ describe('migrateTrainingResponsibilities', () => {
   it('maps teamTraining -> createTeamTrainingPlan', () => {
     const world = createNewGame()
     const { teamId, staffId } = teamAndStaff(world)
-    const migrated = migrateTrainingResponsibilities(setTrainingResponsibility(world, teamId, 'teamTraining', staffId))
+    const migrated = migrateTrainingResponsibilities(withLegacySaveHolder(world, teamId, 'teamTraining', staffId))
     const responsibility = getResponsibility(migrated, teamId, 'createTeamTrainingPlan')
     expect(responsibility?.mode).toBe('delegated')
     expect(responsibility?.holderStaffId).toBe(staffId)
@@ -38,7 +51,7 @@ describe('migrateTrainingResponsibilities', () => {
   it('maps individualDevelopment -> assignIndividualDevelopment', () => {
     const world = createNewGame()
     const { teamId, staffId } = teamAndStaff(world)
-    const migrated = migrateTrainingResponsibilities(setTrainingResponsibility(world, teamId, 'individualDevelopment', staffId))
+    const migrated = migrateTrainingResponsibilities(withLegacySaveHolder(world, teamId, 'individualDevelopment', staffId))
     const responsibility = getResponsibility(migrated, teamId, 'assignIndividualDevelopment')
     expect(responsibility?.mode).toBe('delegated')
     expect(responsibility?.holderStaffId).toBe(staffId)
@@ -48,7 +61,7 @@ describe('migrateTrainingResponsibilities', () => {
     const base = createNewGame()
     const { teamId } = teamAndStaff(base)
     const { world, staffId } = withPerformanceCoach(base, teamId)
-    const migrated = migrateTrainingResponsibilities(setTrainingResponsibility(world, teamId, 'physicalLoad', staffId))
+    const migrated = migrateTrainingResponsibilities(withLegacySaveHolder(world, teamId, 'physicalLoad', staffId))
     const responsibility = getResponsibility(migrated, teamId, 'determineIntensity')
     expect(responsibility?.mode).toBe('delegated')
     expect(responsibility?.holderStaffId).toBe(staffId)
@@ -58,7 +71,7 @@ describe('migrateTrainingResponsibilities', () => {
     const world = createNewGame()
     const { teamId, staffId } = teamAndStaff(world)
     const beforeCount = Object.keys(world.responsibilitiesById).length
-    const migrated = migrateTrainingResponsibilities(setTrainingResponsibility(world, teamId, 'teamTraining', staffId))
+    const migrated = migrateTrainingResponsibilities(withLegacySaveHolder(world, teamId, 'teamTraining', staffId))
     expect(Object.keys(migrated.responsibilitiesById)).toHaveLength(beforeCount)
     expect(migrated.responsibilitiesById[responsibilityIdForTeam(teamId, 'createTeamTrainingPlan')]).toBeDefined()
   })
@@ -75,7 +88,7 @@ describe('migrateTrainingResponsibilities', () => {
     const explicitlyDelegatedToSecond = updateGameWorld(withSecondStaff, {
       responsibilities: [...Object.values(withSecondStaff.responsibilitiesById).filter((responsibility) => responsibility.id !== createTeamTrainingPlanId), { id: createTeamTrainingPlanId, teamId, kind: 'createTeamTrainingPlan', mode: 'delegated', holderStaffId: secondStaffId }],
     })
-    const withStaleLegacyHolder = setTrainingResponsibility(explicitlyDelegatedToSecond, teamId, 'teamTraining', staffId)
+    const withStaleLegacyHolder = withLegacySaveHolder(explicitlyDelegatedToSecond, teamId, 'teamTraining', staffId)
     const migrated = migrateTrainingResponsibilities(withStaleLegacyHolder)
     // Canonical state (secondStaffId) wins over the stale legacy map entry (staffId).
     expect(getResponsibility(migrated, teamId, 'createTeamTrainingPlan')?.holderStaffId).toBe(secondStaffId)
@@ -84,14 +97,14 @@ describe('migrateTrainingResponsibilities', () => {
   it('retires the legacy map after migration: trainingResponsibilitiesByTeamId is empty', () => {
     const world = createNewGame()
     const { teamId, staffId } = teamAndStaff(world)
-    const migrated = migrateTrainingResponsibilities(setTrainingResponsibility(world, teamId, 'teamTraining', staffId))
+    const migrated = migrateTrainingResponsibilities(withLegacySaveHolder(world, teamId, 'teamTraining', staffId))
     expect(Object.values(migrated.trainingResponsibilitiesByTeamId).every((entry) => Object.keys(entry).length === 0)).toBe(true)
   })
 
   it('is idempotent: migrating twice produces the same canonical state', () => {
     const world = createNewGame()
     const { teamId, staffId } = teamAndStaff(world)
-    const withLegacyHolder = setTrainingResponsibility(world, teamId, 'teamTraining', staffId)
+    const withLegacyHolder = withLegacySaveHolder(world, teamId, 'teamTraining', staffId)
     const once = migrateTrainingResponsibilities(withLegacyHolder)
     const twice = migrateTrainingResponsibilities(once)
     expect(twice.responsibilitiesById).toEqual(once.responsibilitiesById)
@@ -107,7 +120,7 @@ describe('migrateTrainingResponsibilities', () => {
     const { serializeGameWorldV1, deserializeGameWorldV1 } = await import('@/save/GameWorldSaveV1')
     const world = createNewGame()
     const { teamId, staffId } = teamAndStaff(world)
-    const withLegacyHolder = setTrainingResponsibility(world, teamId, 'teamTraining', staffId)
+    const withLegacyHolder = withLegacySaveHolder(world, teamId, 'teamTraining', staffId)
     const saved = serializeGameWorldV1(withLegacyHolder, '2032-10-01T00:00:00.000Z')
     const loaded = deserializeGameWorldV1(JSON.parse(JSON.stringify(saved)) as unknown)
     expect(getResponsibility(loaded, teamId, 'createTeamTrainingPlan')?.holderStaffId).toBe(staffId)
@@ -118,23 +131,24 @@ describe('migrateTrainingResponsibilities', () => {
     const { serializeGameWorldV1, deserializeGameWorldV1 } = await import('@/save/GameWorldSaveV1')
     const world = createNewGame()
     const { teamId, staffId } = teamAndStaff(world)
-    const migrated = migrateTrainingResponsibilities(setTrainingResponsibility(world, teamId, 'teamTraining', staffId))
+    const migrated = migrateTrainingResponsibilities(withLegacySaveHolder(world, teamId, 'teamTraining', staffId))
     const saved = serializeGameWorldV1(migrated, '2032-10-01T00:00:00.000Z')
     const loaded = deserializeGameWorldV1(JSON.parse(JSON.stringify(saved)) as unknown)
     expect(Object.values(loaded.trainingResponsibilitiesByTeamId).every((entry) => Object.keys(entry).length === 0)).toBe(true)
     expect(getResponsibility(loaded, teamId, 'createTeamTrainingPlan')?.holderStaffId).toBe(staffId)
   })
 
-  // --- Legacy save compatibility (Blocker 1): the old setTrainingResponsibility accepted any
-  // existing StaffPersonId with no role/team validation. Migration must treat every legacy holder
-  // as untrusted with respect to the strict canonical rules, degrading incompatible ones to a
-  // safe userControlled/vacant default instead of ever throwing or corrupting the load.
+  // --- Legacy save compatibility (Blocker 1): the removed setTrainingResponsibility runtime
+  // setter used to accept any existing StaffPersonId with no role/team validation, so old save
+  // files can legitimately contain a holder that is incompatible with today's strict canonical
+  // rules. Migration must treat every legacy holder as untrusted, degrading incompatible ones to
+  // a safe userControlled/vacant default instead of ever throwing or corrupting the load.
 
   it('legacy physicalLoad assigned to the system-generated assistantCoach (ineligible for determineIntensity): the save loads without error and determineIntensity stays userControlled/vacant', () => {
     const world = createNewGame()
     const { teamId, staffId } = teamAndStaff(world) // staffId is the generated assistantCoach — not eligible for determineIntensity
-    expect(() => migrateTrainingResponsibilities(setTrainingResponsibility(world, teamId, 'physicalLoad', staffId))).not.toThrow()
-    const migrated = migrateTrainingResponsibilities(setTrainingResponsibility(world, teamId, 'physicalLoad', staffId))
+    expect(() => migrateTrainingResponsibilities(withLegacySaveHolder(world, teamId, 'physicalLoad', staffId))).not.toThrow()
+    const migrated = migrateTrainingResponsibilities(withLegacySaveHolder(world, teamId, 'physicalLoad', staffId))
     const responsibility = getResponsibility(migrated, teamId, 'determineIntensity')
     expect(responsibility?.mode).toBe('userControlled')
     expect(responsibility?.holderStaffId).toBeUndefined()
@@ -144,7 +158,7 @@ describe('migrateTrainingResponsibilities', () => {
     const world = createNewGame()
     const teamId = Object.keys(world.teams)[0]! as TeamId
     const scoutAssignment = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.teamId === teamId && assignment.role === 'regionalScout')!
-    const migrated = migrateTrainingResponsibilities(setTrainingResponsibility(world, teamId, 'physicalLoad', scoutAssignment.staffPersonId))
+    const migrated = migrateTrainingResponsibilities(withLegacySaveHolder(world, teamId, 'physicalLoad', scoutAssignment.staffPersonId))
     const responsibility = getResponsibility(migrated, teamId, 'determineIntensity')
     expect(responsibility?.mode).toBe('userControlled')
     expect(responsibility?.holderStaffId).toBeUndefined()
@@ -154,7 +168,7 @@ describe('migrateTrainingResponsibilities', () => {
     const world = createNewGame()
     const teamId = Object.keys(world.teams)[0]! as TeamId
     const medicalAssignment = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.teamId === teamId && assignment.role === 'physiotherapist')!
-    const migrated = migrateTrainingResponsibilities(setTrainingResponsibility(world, teamId, 'physicalLoad', medicalAssignment.staffPersonId))
+    const migrated = migrateTrainingResponsibilities(withLegacySaveHolder(world, teamId, 'physicalLoad', medicalAssignment.staffPersonId))
     const responsibility = getResponsibility(migrated, teamId, 'determineIntensity')
     expect(responsibility?.mode).toBe('userControlled')
     expect(responsibility?.holderStaffId).toBeUndefined()
@@ -166,15 +180,15 @@ describe('migrateTrainingResponsibilities', () => {
     const teamId = teamIds[0]!
     const otherTeamId = teamIds.find((id) => id !== teamId)!
     const otherTeamAssistant = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.teamId === otherTeamId && assignment.role === 'assistantCoach')!
-    const migrated = migrateTrainingResponsibilities(setTrainingResponsibility(world, teamId, 'teamTraining', otherTeamAssistant.staffPersonId))
+    const migrated = migrateTrainingResponsibilities(withLegacySaveHolder(world, teamId, 'teamTraining', otherTeamAssistant.staffPersonId))
     const responsibility = getResponsibility(migrated, teamId, 'createTeamTrainingPlan')
     expect(responsibility?.mode).toBe('userControlled')
     expect(responsibility?.holderStaffId).toBeUndefined()
   })
 
   it('legacy holder that does not exist as a StaffPerson: degrades safely, no throw', async () => {
-    // setTrainingResponsibility itself validates existence, so build the legacy map directly to
-    // simulate an orphaned reference (e.g. the staff person was removed by an older code path).
+    // Simulates an orphaned reference (e.g. the staff person was removed by an older code path)
+    // by writing the legacy map directly, bypassing any existence check.
     const world = createNewGame()
     const teamId = Object.keys(world.teams)[0]! as TeamId
     const worldWithOrphan = updateGameWorld(world, { trainingResponsibilitiesByTeamId: { ...world.trainingResponsibilitiesByTeamId, [teamId]: { teamTraining: staffPersonIdFromString('nonexistent-staff-person') } } })
@@ -189,7 +203,7 @@ describe('migrateTrainingResponsibilities', () => {
     const { serializeGameWorldV1, deserializeGameWorldV1 } = await import('@/save/GameWorldSaveV1')
     const world = createNewGame()
     const { teamId, staffId } = teamAndStaff(world) // assistantCoach — ineligible for physicalLoad/determineIntensity
-    const withIncompatibleLegacyHolder = setTrainingResponsibility(world, teamId, 'physicalLoad', staffId)
+    const withIncompatibleLegacyHolder = withLegacySaveHolder(world, teamId, 'physicalLoad', staffId)
     const saved = serializeGameWorldV1(withIncompatibleLegacyHolder, '2032-10-01T00:00:00.000Z')
     expect(() => deserializeGameWorldV1(JSON.parse(JSON.stringify(saved)) as unknown)).not.toThrow()
     const loaded = deserializeGameWorldV1(JSON.parse(JSON.stringify(saved)) as unknown)
