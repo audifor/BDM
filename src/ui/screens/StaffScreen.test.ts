@@ -36,7 +36,7 @@ describe('StaffScreen', () => {
 
   it('shows every common attribute and cross-role evaluation for Medical Staff', () => {
     const world = createNewGame()
-    const medical = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.teamId === getUserTeam(world)!.id && assignment.role === 'medical')!
+    const medical = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.teamId === getUserTeam(world)!.id && assignment.role === 'physiotherapist')!
     const markup = renderToStaticMarkup(createElement(StaffScreen, { world, initialSelectedStaffId: medical.staffPersonId }))
 
     expect(markup).toContain('Coaching')
@@ -51,7 +51,7 @@ describe('StaffScreen', () => {
   it('shows every common attribute for Scout and Assistant Staff', () => {
     const world = createNewGame()
     const userTeam = getUserTeam(world)!
-    const scout = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.teamId === userTeam.id && assignment.role === 'scout')!
+    const scout = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.teamId === userTeam.id && assignment.role === 'regionalScout')!
     const assistant = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.teamId === userTeam.id && assignment.role === 'assistantCoach')!
 
     const scoutMarkup = renderToStaticMarkup(createElement(StaffScreen, { world, initialSelectedStaffId: scout.staffPersonId }))

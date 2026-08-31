@@ -7,7 +7,7 @@ import { deserializeGameWorldV2, serializeGameWorldV2 } from '@/save/GameWorldSa
 import { deriveScoutingNeeds, durationDays, evaluatorProfile, getPlayerKnowledgeSummary, progressScoutingAssignments, recordEvidence, requestScouting } from './ScoutingEngine'
 import { EVIDENCE_SOURCES, SCOUTING_MISSIONS } from '@/domain/scouting'
 
-function context() { const world=createNewGame(), team=Object.values(world.teams).find((item)=>item.coachId===world.userCoachId)!, player=Object.values(world.players).find((item)=>!team.rosterPlayerIds.includes(item.id))!, scout=Object.values(world.teamStaffAssignmentsById).find((item)=>item.teamId===team.id&&item.role==='scout')!; return {world,team,player,scout,organizationId:organizationIdForTeam(team.id)} }
+function context() { const world=createNewGame(), team=Object.values(world.teams).find((item)=>item.coachId===world.userCoachId)!, player=Object.values(world.players).find((item)=>!team.rosterPlayerIds.includes(item.id))!, scout=Object.values(world.teamStaffAssignmentsById).find((item)=>item.teamId===team.id&&item.role==='regionalScout')!; return {world,team,player,scout,organizationId:organizationIdForTeam(team.id)} }
 function complete(world:ReturnType<typeof createNewGame>){ let current=progressScoutingAssignments(world);for(let day=0;day<8;day++)current=progressScoutingAssignments(updateGameWorld(current,{currentDate:addDays(current.currentDate,1)}));return current }
 
 describe('ScoutingEngine',()=>{
