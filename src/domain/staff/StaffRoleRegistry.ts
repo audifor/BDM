@@ -1,35 +1,19 @@
 import type { SportsEcosystemKind } from '@/domain/ecosystem'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS, type StaffPerson, type StaffProfessionalAttributeKey } from './StaffPerson'
+import { STAFF_ROLE_IDS, type StaffRoleId } from './StaffRoleId'
+
+export { STAFF_ROLE_IDS, ASSIGNABLE_STAFF_ROLE_IDS, type StaffRoleId } from './StaffRoleId'
 
 /** Stable organizational grouping used for UI sectioning and workload aggregation. Does not vary by ecosystem. */
 export const STAFF_DEPARTMENTS = ['coaching', 'performance', 'medical', 'scouting', 'basketballOperations', 'recruiting'] as const
 export type StaffDepartment = typeof STAFF_DEPARTMENTS[number]
 
 /**
- * Canonical, data-driven, extensible role catalogue. Adding a role means adding one registry
- * entry (id/department/seniority/weights/capacityCost/optional ecosystem gating) — never a new
- * switch/if-chain in UI or engine code. `headCoach` is included only so shared code can reason
- * about "who coaches this team" uniformly; it is not a `StaffPerson` role — Head Coach remains
- * the existing `Coach` entity, and Responsibility eligibility for it routes through
- * `eligibleParticipant: 'coach'` (see `@/domain/responsibility`), never through a
- * `TeamStaffAssignment`.
+ * Canonical, data-driven, extensible role catalogue (`StaffRoleId` definitions live in
+ * `StaffRoleId.ts`). Adding a role means adding one registry entry
+ * (id/department/seniority/weights/capacityCost/optional ecosystem gating) — never a new
+ * switch/if-chain in UI or engine code.
  */
-export const STAFF_ROLE_IDS = [
-  // coaching
-  'headCoach', 'associateCoach', 'assistantCoach', 'offensiveSpecialist', 'defensiveSpecialist',
-  'playerDevelopmentCoach', 'shootingCoach', 'skillsCoach', 'bigManCoach',
-  // performance
-  'strengthConditioningCoach', 'performanceCoach', 'loadManagementSpecialist', 'developmentSpecialist',
-  // medical
-  'teamDoctor', 'physiotherapist', 'rehabilitationSpecialist', 'sportsScientist',
-  // scouting
-  'headScout', 'regionalScout', 'advanceScout', 'collegeScout', 'internationalScout', 'proScout',
-  // basketball operations
-  'generalManager', 'assistantGeneralManager', 'directorOfBasketballOperations', 'sportingDirector', 'analyticsStaff', 'capContractsSpecialist',
-  // recruiting (ncaaLike only)
-  'recruitingCoordinator', 'positionalRecruiter',
-] as const
-export type StaffRoleId = typeof STAFF_ROLE_IDS[number]
 
 export type StaffRoleSeniority = 'junior' | 'standard' | 'senior' | 'director'
 

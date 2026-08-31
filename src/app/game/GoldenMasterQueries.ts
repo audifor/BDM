@@ -8,7 +8,7 @@ export function getClubFacilities(world:GameWorld,teamId:TeamId):readonly Facili
   if(!world.teams[teamId])throw new Error(`Unknown team: ${teamId}`)
   const facilities:FacilityProjection[]=[]
   if(world.trainingPlansByTeamId[teamId])facilities.push({id:`training:${teamId}`,type:'TRAINING',capability:'scheduledTraining',source:'trainingPlan'})
-  if(getTeamStaffAssignments(world,teamId).some(assignment=>assignment.role==='medical'))facilities.push({id:`medical:${teamId}`,type:'MEDICAL',capability:'medicalStaff',source:'staffAssignment'})
+  if(getTeamStaffAssignments(world,teamId).some(assignment=>assignment.role==='physiotherapist'))facilities.push({id:`medical:${teamId}`,type:'MEDICAL',capability:'medicalStaff',source:'staffAssignment'})
   return facilities
 }
 export function getMedicalFacilities(world:GameWorld,teamId:TeamId):readonly FacilityProjection[]{return getClubFacilities(world,teamId).filter(item=>item.type==='MEDICAL')}

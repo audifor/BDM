@@ -34,7 +34,7 @@ import { deriveOrganizationEvaluationPolicy, type OrganizationEvaluationPolicy }
 import type { Agency, Agent, ContractNegotiation, MarketKnowledge, MarketReality, MarketSignal, PlayerRepresentation, RolePromise } from '@/domain/market'
 import { organizationIdForTeam, type OrganizationId } from '@/domain/ids'
 import type { PlayerKnowledgeId } from '@/domain/ids'
-import { createStaffPerson, createTeamStaffAssignment, LEGACY_STAFF_ROLE_TO_ROLE_ID, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
+import { createStaffPerson, createTeamStaffAssignment, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
 import type { StaffPersonId, TeamStaffAssignmentId } from '@/domain/ids'
 import { createDelegationOutcome, createResponsibility, validateResponsibilityAssignment, type DelegationOutcome, type DelegationOutcomeId, type Responsibility, type ResponsibilityId } from '@/domain/responsibility'
 import { createCoachRpgProfile, type CoachRpgProfile } from '@/domain/coachRpg'
@@ -652,8 +652,7 @@ function validateWorld(world: GameWorld): void {
       const holder = requireEntity(world.staffPeopleById, responsibility.holderStaffId, `Responsibility ${responsibility.id} holder`)
       const holderAssignment = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.staffPersonId === responsibility.holderStaffId)
       if (holderAssignment === undefined || holderAssignment.teamId !== responsibility.teamId) throw new GameWorldValidationError(`Responsibility ${responsibility.id} holder is not on Team ${responsibility.teamId}`)
-      const roleId = LEGACY_STAFF_ROLE_TO_ROLE_ID[holderAssignment.role]
-      const result = validateResponsibilityAssignment(responsibility.kind, responsibility.mode, roleId, holder)
+      const result = validateResponsibilityAssignment(responsibility.kind, responsibility.mode, holderAssignment.role, holder)
       if (!result.ok) throw new GameWorldValidationError(`Responsibility ${responsibility.id} holder is ineligible: ${result.reason}`)
     } else {
       const result = validateResponsibilityAssignment(responsibility.kind, responsibility.mode, undefined, undefined)

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createGameWorld, updateGameWorld } from '@/domain/world'
-import { calculateStaffRoleProficiency } from '@/domain/staff'
+import { calculateStaffRoleProficiencyByRoleId } from '@/domain/staff'
 import { calculateStandings } from '@/engine/competition/standings'
 import { getPlayerCareerStats, getPlayerSeasonStats } from '@/engine/stats/PlayerHistory'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSaveV1'
@@ -118,7 +118,7 @@ describe('startNextSeason', () => {
     for (const assignment of Object.values(next.teamStaffAssignmentsById)) {
       const loadedAssignment = loaded.teamStaffAssignmentsById[assignment.id]!
       expect(loadedAssignment.assignedOn).toBe(assignment.assignedOn)
-      expect(calculateStaffRoleProficiency(loaded.staffPeopleById[loadedAssignment.staffPersonId]!, loadedAssignment.role)).toBe(calculateStaffRoleProficiency(next.staffPeopleById[assignment.staffPersonId]!, assignment.role))
+      expect(calculateStaffRoleProficiencyByRoleId(loaded.staffPeopleById[loadedAssignment.staffPersonId]!, loadedAssignment.role)).toBe(calculateStaffRoleProficiencyByRoleId(next.staffPeopleById[assignment.staffPersonId]!, assignment.role))
     }
   })
 })
