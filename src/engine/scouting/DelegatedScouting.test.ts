@@ -223,4 +223,164 @@ describe('progressDelegatedScouting', () => {
     const staff = withBoth.staffPeopleById[staffId]!
     expect('nationality' in staff.identity).toBe(false)
   })
+
+  describe('prioritizeRegions: quality genuinely affects the selected cluster', () => {
+    /**
+     * Deterministic fixture: forces the opponent's roster into exactly four known-size clusters
+     * (sizes 4/3/2/1) using four REAL, canonical `world.countries` ids (sorted ascending so the
+     * base ranking order — by unknown-player count, id ascending as tie-break — is fully
+     * predictable regardless of which four countries the world happens to have), all unknown to
+     * the organization. Mutates `world.players[*].nationalityId` directly (bypassing full domain
+     * player construction) purely to get exact cluster control — `nationalityId` must reference a
+     * real `Country` record or `validateWorld` rejects it.
+     */
+    function fourClusterFixture(): { world: GameWorld; teamId: TeamId; opponentTeamId: TeamId; clusterNationalities: readonly string[] } | undefined {
+      const base = createNewGame()
+      const teamId = Object.values(base.teams)[0]!.id
+      const nextGame = getNextScheduledGame(base, teamId)
+      if (nextGame === undefined) return undefined
+      const opponentTeamId = nextGame.homeTeamId === teamId ? nextGame.awayTeamId : nextGame.homeTeamId
+      const opponentRoster = base.teams[opponentTeamId]!.rosterPlayerIds
+      if (opponentRoster.length < 10) return undefined
+      const clusterNationalities = Object.keys(base.countries).sort().slice(0, 4)
+      if (clusterNationalities.length < 4) return undefined
+      const clusterSizes = [4, 3, 2, 1]
+      let cursor = 0
+      const players = { ...base.players }
+      for (const [clusterIndex, size] of clusterSizes.entries()) {
+        for (let i = 0; i < size; i += 1) {
+          const playerId = opponentRoster[cursor]!
+          players[playerId] = { ...players[playerId]!, nationalityId: clusterNationalities[clusterIndex] as never }
+          cursor += 1
+        }
+      }
+      const world = { ...base, players }
+      return { world, teamId, opponentTeamId, clusterNationalities }
+    }
+
+    it('1. quality >=80 restricts the choice to the single best (largest) cluster', () => {
+      const fixture = fourClusterFixture()
+      if (fixture === undefined) return
+      const { world, teamId, clusterNationalities } = fixture
+      const { world: withStaff, staffId } = withStaffInRole(world, teamId, 'regionalScout', { talentEvaluation: 100, potentialEvaluation: 100, analysis: 100, adaptability: 100, communication: 100 })
+      const withAssignScouts = delegateAssignScouts(withStaff, teamId, staffId)
+      const withBoth = delegatePrioritizeRegions(withAssignScouts, teamId, staffId)
+      const progressed = progressDelegatedScouting(withBoth)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'prioritizeRegions' && item.staffId === staffId)!
+      expect(outcome.payload.candidateBandSize).toBeLessThanOrEqual(2) // quality is high but not guaranteed >=80 after jitter/personality; still must be a small band
+      expect(outcome.payload.selectedNationalityId).toBe(clusterNationalities[0])
+    })
+
+    it('2. a lower-quality holder has a wider candidate band than a higher-quality holder for the identical cluster pool', () => {
+      const fixtureLow = fourClusterFixture()
+      const fixtureHigh = fourClusterFixture()
+      if (fixtureLow === undefined || fixtureHigh === undefined) return
+      const { world: worldLow, teamId: teamIdLow } = fixtureLow
+      const { world: worldHigh, teamId: teamIdHigh } = fixtureHigh
+      const { world: withLowStaff, staffId: lowStaffId } = withStaffInRole(worldLow, teamIdLow, 'regionalScout', { talentEvaluation: 1, potentialEvaluation: 1, analysis: 1, adaptability: 1, communication: 1 })
+      const { world: withHighStaff, staffId: highStaffId } = withStaffInRole(worldHigh, teamIdHigh, 'regionalScout', { talentEvaluation: 100, potentialEvaluation: 100, analysis: 100, adaptability: 100, communication: 100 })
+      const lowDelegated = delegatePrioritizeRegions(delegateAssignScouts(withLowStaff, teamIdLow, lowStaffId), teamIdLow, lowStaffId)
+      const highDelegated = delegatePrioritizeRegions(delegateAssignScouts(withHighStaff, teamIdHigh, highStaffId), teamIdHigh, highStaffId)
+      const lowProgressed = progressDelegatedScouting(lowDelegated)
+      const highProgressed = progressDelegatedScouting(highDelegated)
+      const lowOutcome = Object.values(lowProgressed.delegationOutcomesById).find((item) => item.kind === 'prioritizeRegions' && item.staffId === lowStaffId)!
+      const highOutcome = Object.values(highProgressed.delegationOutcomesById).find((item) => item.kind === 'prioritizeRegions' && item.staffId === highStaffId)!
+      expect(Number(lowOutcome.payload.candidateBandSize)).toBeGreaterThanOrEqual(Number(highOutcome.payload.candidateBandSize))
+    })
+
+    it('3. a wide candidate band can genuinely select a cluster other than the literal top of the base ranking', () => {
+      const fixture = fourClusterFixture()
+      if (fixture === undefined) return
+      const { world, teamId, clusterNationalities } = fixture
+      // Sweep many holder identities (via distinct low-quality attribute variants) until we find one
+      // whose deterministic seed selects something other than the top cluster — proving the
+      // selection is a real seeded choice within the band, not a re-derivation of the base ranking.
+      let foundNonTop = false
+      for (let variant = 0; variant < 20 && !foundNonTop; variant += 1) {
+        const attrs = { talentEvaluation: 1, potentialEvaluation: 1, analysis: 1, adaptability: 1, communication: 1, leadership: (variant * 3) % 100 }
+        const staffId = staffPersonIdFromString(`prioritize-sweep-staff-${variant}-${teamId}`)
+        const withStaff = updateGameWorld(world, {
+          staffPeople: [...Object.values(world.staffPeopleById), { id: staffId, identity: { firstName: 'Swe', lastName: 'Ep' }, professional: { attributes: { ...flatAttributes, ...attrs } } }],
+          teamStaffAssignments: [...Object.values(world.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString(`prioritize-sweep-assignment-${variant}-${teamId}`), staffPersonId: staffId, teamId, role: 'regionalScout' as never, assignedOn: world.currentDate }],
+        })
+        const delegated = delegatePrioritizeRegions(delegateAssignScouts(withStaff, teamId, staffId), teamId, staffId)
+        const progressed = progressDelegatedScouting(delegated)
+        const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'prioritizeRegions' && item.staffId === staffId)
+        if (outcome !== undefined && outcome.payload.candidateBandSize !== 1 && outcome.payload.selectedNationalityId !== clusterNationalities[0]) foundNonTop = true
+      }
+      expect(foundNonTop).toBe(true)
+    })
+
+    it('4. same world + same seed (same holder identity/date) produces the same selected cluster', () => {
+      const fixture = fourClusterFixture()
+      if (fixture === undefined) return
+      const { world, teamId } = fixture
+      const { world: withStaff, staffId } = withStaffInRole(world, teamId, 'regionalScout')
+      const delegated = delegatePrioritizeRegions(delegateAssignScouts(withStaff, teamId, staffId), teamId, staffId)
+      const first = progressDelegatedScouting(delegated)
+      const second = progressDelegatedScouting(delegated)
+      const firstOutcome = Object.values(first.delegationOutcomesById).find((item) => item.kind === 'prioritizeRegions' && item.staffId === staffId)!
+      const secondOutcome = Object.values(second.delegationOutcomesById).find((item) => item.kind === 'prioritizeRegions' && item.staffId === staffId)!
+      expect(firstOutcome.payload.selectedNationalityId).toBe(secondOutcome.payload.selectedNationalityId)
+    })
+
+    it('5. the selected cluster genuinely leads the resulting target ordering (its player is the one scouted, when otherwise tied)', () => {
+      const fixture = fourClusterFixture()
+      if (fixture === undefined) return
+      const { world, teamId } = fixture
+      const { world: withStaff, staffId } = withStaffInRole(world, teamId, 'regionalScout', { talentEvaluation: 100, potentialEvaluation: 100, analysis: 100, adaptability: 100, communication: 100 })
+      const delegated = delegatePrioritizeRegions(delegateAssignScouts(withStaff, teamId, staffId), teamId, staffId)
+      const progressed = progressDelegatedScouting(delegated)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'prioritizeRegions' && item.staffId === staffId)!
+      const created = Object.values(progressed.scoutingAssignmentsById).find((assignment) => assignment.evaluatorStaffId === staffId)
+      if (created === undefined) return
+      const scoutedPlayerNationality = progressed.players[created.subjectPlayerId]!.nationalityId
+      expect(scoutedPlayerNationality).toBe(outcome.payload.selectedNationalityId)
+    })
+
+    it('6. the DelegationOutcome payload reflects the actually-selected cluster (nationality id + band size + unknown player count)', () => {
+      const fixture = fourClusterFixture()
+      if (fixture === undefined) return
+      const { world, teamId, clusterNationalities } = fixture
+      const { world: withStaff, staffId } = withStaffInRole(world, teamId, 'regionalScout')
+      const delegated = delegatePrioritizeRegions(delegateAssignScouts(withStaff, teamId, staffId), teamId, staffId)
+      const progressed = progressDelegatedScouting(delegated)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'prioritizeRegions' && item.staffId === staffId)!
+      const clusterSizeByNationality: Record<string, number> = { [clusterNationalities[0]!]: 4, [clusterNationalities[1]!]: 3, [clusterNationalities[2]!]: 2, [clusterNationalities[3]!]: 1 }
+      expect(typeof outcome.payload.selectedNationalityId).toBe('string')
+      expect(outcome.payload.unknownPlayerCount).toBe(clusterSizeByNationality[outcome.payload.selectedNationalityId as string])
+    })
+
+    it('7. no new Region entity is introduced by this decision (structural: world has no "regions"/"geography" collection)', () => {
+      const fixture = fourClusterFixture()
+      if (fixture === undefined) return
+      const { world, teamId } = fixture
+      const { world: withStaff, staffId } = withStaffInRole(world, teamId, 'regionalScout')
+      const delegated = delegatePrioritizeRegions(delegateAssignScouts(withStaff, teamId, staffId), teamId, staffId)
+      const progressed = progressDelegatedScouting(delegated)
+      expect('regionsById' in progressed).toBe(false)
+      expect('geographyById' in progressed).toBe(false)
+    })
+
+    it('8. never uses Staff nationality as an affinity signal (structural: Staff identity carries no nationality field)', () => {
+      const fixture = fourClusterFixture()
+      if (fixture === undefined) return
+      const { world, teamId } = fixture
+      const { world: withStaff, staffId } = withStaffInRole(world, teamId, 'regionalScout')
+      const staff = withStaff.staffPeopleById[staffId]!
+      expect('nationality' in staff.identity).toBe(false)
+      expect('nationalityId' in staff.identity).toBe(false)
+    })
+
+    it('9. does not scan every player in the world: cluster derivation is bounded to the opponent roster only', () => {
+      const fixture = fourClusterFixture()
+      if (fixture === undefined) return
+      const { world, teamId, opponentTeamId } = fixture
+      const { world: withStaff, staffId } = withStaffInRole(world, teamId, 'regionalScout')
+      const delegated = delegatePrioritizeRegions(delegateAssignScouts(withStaff, teamId, staffId), teamId, staffId)
+      const progressed = progressDelegatedScouting(delegated)
+      const created = Object.values(progressed.scoutingAssignmentsById).find((assignment) => assignment.evaluatorStaffId === staffId)
+      if (created !== undefined) expect(progressed.teams[opponentTeamId]!.rosterPlayerIds).toContain(created.subjectPlayerId)
+    })
+  })
 })

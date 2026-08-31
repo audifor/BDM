@@ -44,7 +44,7 @@ function progressTeamDelegatedScouting(world: GameWorld, teamId: TeamId): GameWo
   const seed = `staff-decision-quality-v1:${resolution.responsibilityId}:${world.currentDate}`
   const qualityScore = scoutingQuality(resolution.context, seed)
 
-  const withPrioritization = applyPrioritizeRegions(world, teamId, seed, qualityScore)
+  const withPrioritization = applyPrioritizeRegions(world, teamId)
   const targets = selectBoundedScoutingTargets(withPrioritization.world, teamId, withPrioritization.nationalityOrder)
   if (targets.length === 0) return withPrioritization.world
 
@@ -162,16 +162,25 @@ function pickFromTopN<Item>(ranked: readonly Item[], qualityScore: number, seed:
  * alphabetical sort. It resolves its own canonical holder/context (independent of `assignScouts`'s
  * holder — they may or may not be the same Staff), computes its own `scoutingQuality`, and derives
  * a nationality-cluster priority from EXISTING bounded metadata only: the next opponent's roster,
- * grouped by `Player.nationalityId`, ranked by how many roster players of that nationality the
- * organization has no knowledge of yet (larger unknown clusters prioritized — never comparing
- * Staff nationality to Player nationality, since no such affinity is modeled). Quality narrows how
- * many of the largest clusters are actually surfaced ahead of the rest (top-N banding, same
- * discipline as target/evaluator selection) via `SeededRandomSource`, never `Math.random`. Still
- * never creates a new Region entity — it only ever reorders the existing bounded target pool.
- * Records its own `DelegationOutcome` exactly once per (responsibility, day) when it genuinely
- * produces a non-trivial ordering (more than one nationality cluster to prioritize among).
+ * grouped by `Player.nationalityId`, base-ranked by how many roster players of that nationality the
+ * organization has no knowledge of yet (larger unknown clusters ranked first, id ascending as a
+ * stable tie-break — never comparing Staff nationality to Player nationality, since no such
+ * affinity is modeled).
+ *
+ * Quality genuinely decides which cluster leads: `topNForQuality(prioritizeQuality)` bounds a
+ * candidate band drawn from the front of the base ranking, and the Staff's actual SELECTION within
+ * that band is made via `SeededRandomSource` keyed off a `:region-priority`-suffixed seed — so a
+ * lower-quality holder can (and, over repeated seeds, will) genuinely promote a cluster other than
+ * the literal top of the base ranking ahead of it, while a high-quality holder is bounded to the
+ * single best cluster. The selected cluster is moved to the front; every other cluster keeps its
+ * original relative (stable, deterministic) order behind it. Still never creates a new Region
+ * entity — it only ever reorders the existing bounded target pool.
+ *
+ * Records its own `DelegationOutcome` exactly once per (responsibility, day) when it genuinely has
+ * more than one candidate cluster to choose among, with a payload reflecting the ACTUAL decision
+ * (`selectedNationalityId`, `candidateBandSize`, `unknownPlayerCount` of the selected cluster).
  */
-function applyPrioritizeRegions(world: GameWorld, teamId: TeamId, assignScoutsSeed: string, assignScoutsQuality: number): { readonly world: GameWorld; readonly nationalityOrder: readonly string[] | undefined } {
+function applyPrioritizeRegions(world: GameWorld, teamId: TeamId): { readonly world: GameWorld; readonly nationalityOrder: readonly string[] | undefined } {
   const resolution = resolveDelegatedResponsibility(world, teamId, 'prioritizeRegions')
   if (resolution === undefined) return { world, nationalityOrder: undefined }
 
@@ -191,12 +200,13 @@ function applyPrioritizeRegions(world: GameWorld, teamId: TeamId, assignScoutsSe
   const clusters = [...unknownByNationality.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
   if (clusters.length <= 1) return { world, nationalityOrder: clusters.map(([nationalityId]) => nationalityId) }
 
-  const prioritizeSeed = `staff-decision-quality-v1:${resolution.responsibilityId}:${world.currentDate}`
+  const prioritizeSeed = `staff-decision-quality-v1:${resolution.responsibilityId}:${world.currentDate}:region-priority`
   const prioritizeQuality = scoutingQuality(resolution.context, prioritizeSeed)
   const bandSize = Math.min(clusters.length, topNForQuality(prioritizeQuality))
-  const prioritized = clusters.slice(0, bandSize).map(([nationalityId]) => nationalityId)
-  const rest = clusters.slice(bandSize).map(([nationalityId]) => nationalityId)
-  const nationalityOrder = [...prioritized, ...rest]
+  const candidateBand = clusters.slice(0, bandSize)
+  const selectedIndex = bandSize === 1 ? 0 : new SeededRandomSource(hashStringToSeed(prioritizeSeed)).nextInt(0, bandSize - 1)
+  const [selectedNationalityId, selectedUnknownPlayerCount] = candidateBand[selectedIndex]!
+  const nationalityOrder = [selectedNationalityId, ...clusters.filter(([nationalityId]) => nationalityId !== selectedNationalityId).map(([nationalityId]) => nationalityId)]
 
   const outcomeId = delegationOutcomeIdFromString(`delegation-outcome:${resolution.responsibilityId}:${nextGame.id}:${world.currentDate}`)
   if (world.delegationOutcomesById[outcomeId] !== undefined) return { world, nationalityOrder }
@@ -208,7 +218,7 @@ function applyPrioritizeRegions(world: GameWorld, teamId: TeamId, assignScoutsSe
     kind: 'prioritizeRegions',
     applied: true,
     qualityScore: prioritizeQuality,
-    payload: { opponentTeamId, prioritizedNationalityCount: prioritized.length },
+    payload: { opponentTeamId, selectedNationalityId, candidateBandSize: bandSize, unknownPlayerCount: selectedUnknownPlayerCount },
   })
   return { world: { ...world, delegationOutcomesById: { ...world.delegationOutcomesById, [outcomeId]: outcome } }, nationalityOrder }
 }

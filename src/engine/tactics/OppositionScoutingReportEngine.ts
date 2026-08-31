@@ -90,7 +90,7 @@ const INTERIOR_THREAT_DIMENSIONS = ['finishing', 'rebounding'] as const
 const PACE_SIGNAL_DIMENSION = 'physical'
 
 const MIN_TEAM_KNOWLEDGE_WEIGHT = 0.6
-const EMPHASIS_MARGIN_RATIO = 0.15
+const BASE_REQUIRED_RELATIVE_MARGIN = 0.15
 const PACE_SIGNAL_ESTIMATE_MIDPOINT = 50
 const PACE_SIGNAL_SCALE = 25
 
@@ -101,7 +101,8 @@ const PACE_SIGNAL_SCALE = 25
  * pace is driven only by the `physical` dimension (an actual tempo-relevant signal already in the
  * domain vocabulary), never by confidence alone. Insufficient/too-close knowledge yields
  * `undefined`/an empty flagged list rather than a guess. `qualityScore` only widens/narrows the
- * margin required to commit to a concrete recommendation — it never grants additional information.
+ * RELATIVE margin required to commit to a concrete recommendation — it never grants additional
+ * information.
  */
 function deriveRecommendations(world: GameWorld, teamId: TeamId, opponentTeamId: TeamId, qualityScore: number): Recommendations {
   const opponent = getTeam(world, opponentTeamId)
@@ -111,14 +112,22 @@ function deriveRecommendations(world: GameWorld, teamId: TeamId, opponentTeamId:
   const perimeterThreat = aggregateThreat(roster, PERIMETER_THREAT_DIMENSIONS)
   const interiorThreat = aggregateThreat(roster, INTERIOR_THREAT_DIMENSIONS)
   const totalWeight = perimeterThreat.totalWeight + interiorThreat.totalWeight
+  // Normalize each side to its own weighted-average estimate (0..100 scale) before comparing —
+  // raw weighted SUMS are not comparable to each other when the two sides have different total
+  // weight, and comparing sums against a small relative-margin threshold made almost any nonzero
+  // gap "significant". Means are directly comparable magnitudes.
+  const perimeterMean = perimeterThreat.totalWeight === 0 ? 0 : perimeterThreat.weightedScore / perimeterThreat.totalWeight
+  const interiorMean = interiorThreat.totalWeight === 0 ? 0 : interiorThreat.weightedScore / interiorThreat.totalWeight
 
-  // Quality narrows/widens the margin required to commit — higher quality commits on a smaller
-  // observed gap, lower quality requires a clearer gap before recommending anything.
-  const requiredMargin = EMPHASIS_MARGIN_RATIO * (1 + (50 - qualityScore) / 100)
-  const emphasisGap = totalWeight === 0 ? 0 : Math.abs(perimeterThreat.weightedScore - interiorThreat.weightedScore) / totalWeight
-  const defensiveEmphasis: DefensiveEmphasis | undefined = totalWeight < MIN_TEAM_KNOWLEDGE_WEIGHT || emphasisGap < requiredMargin
+  // Quality narrows/widens the RELATIVE margin required to commit — higher quality commits on a
+  // smaller observed relative gap, lower quality requires a clearer gap before recommending
+  // anything. Bounded to a sane band regardless of quality (never lets quality 100 turn pure noise
+  // into a recommendation, never lets quality 0 refuse an overwhelming gap).
+  const requiredMargin = BASE_REQUIRED_RELATIVE_MARGIN * (1 + (50 - qualityScore) / 100)
+  const relativeGap = Math.abs(perimeterMean - interiorMean) / Math.max(perimeterMean, interiorMean, 1)
+  const defensiveEmphasis: DefensiveEmphasis | undefined = totalWeight < MIN_TEAM_KNOWLEDGE_WEIGHT || relativeGap < requiredMargin
     ? undefined
-    : perimeterThreat.weightedScore > interiorThreat.weightedScore ? 'perimeter' : 'interior'
+    : perimeterMean > interiorMean ? 'perimeter' : 'interior'
 
   const paceSignal = aggregatePaceSignal(roster)
   const recommendedPaceAdjustment: PaceAdjustment | undefined = paceSignal === undefined ? undefined : clampPace(Math.round((paceSignal - PACE_SIGNAL_ESTIMATE_MIDPOINT) / PACE_SIGNAL_SCALE))
@@ -126,7 +135,7 @@ function deriveRecommendations(world: GameWorld, teamId: TeamId, opponentTeamId:
   const flaggedPlayerIds = roster
     .map((entry) => ({ playerId: entry.playerId, threat: knownThreatScore(entry.knowledge) }))
     .filter((entry) => entry.threat !== undefined && entry.threat.weight >= MIN_COVERAGE_FOR_FLAG)
-    .sort((a, b) => b.threat!.score - a.threat!.score || a.playerId.localeCompare(b.playerId))
+    .sort((a, b) => b.threat!.effectiveScore - a.threat!.effectiveScore || a.playerId.localeCompare(b.playerId))
     .slice(0, MAX_FLAGGED_PLAYERS)
     .map((entry) => entry.playerId)
 
@@ -162,15 +171,22 @@ function aggregatePaceSignal(roster: readonly { readonly knowledge: Organization
   return totalWeight < MIN_TEAM_KNOWLEDGE_WEIGHT ? undefined : weightedScore / totalWeight
 }
 
-/** Best (highest weighted) offensive-threat estimate for one player, from legitimate offense dimensions only — used purely to rank/flag, never to leak Player truth. */
-function knownThreatScore(knowledge: OrganizationKnowledge | undefined): { readonly score: number; readonly weight: number } | undefined {
+/**
+ * Best offensive-threat estimate for one player, from legitimate offense dimensions only — used
+ * purely to rank/flag, never to leak Player truth. `effectiveScore = estimate × coverage ×
+ * confidence` is the value actually used for ranking (not raw `estimate`), so a player known with
+ * high confidence/coverage at a moderate estimate correctly outranks a player barely glimpsed at a
+ * high estimate.
+ */
+function knownThreatScore(knowledge: OrganizationKnowledge | undefined): { readonly effectiveScore: number; readonly weight: number } | undefined {
   if (knowledge === undefined) return undefined
-  let best: { readonly score: number; readonly weight: number } | undefined
+  let best: { readonly effectiveScore: number; readonly weight: number } | undefined
   for (const key of [...PERIMETER_THREAT_DIMENSIONS, ...INTERIOR_THREAT_DIMENSIONS]) {
     const finding = knowledge.dimensions[key]
     if (finding?.estimate === undefined) continue
     const weight = finding.coverage * finding.confidence
-    if (best === undefined || finding.estimate * weight > best.score * best.weight) best = { score: finding.estimate, weight }
+    const effectiveScore = finding.estimate * weight
+    if (best === undefined || effectiveScore > best.effectiveScore) best = { effectiveScore, weight }
   }
   return best
 }

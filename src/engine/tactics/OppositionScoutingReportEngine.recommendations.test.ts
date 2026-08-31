@@ -28,14 +28,20 @@ function delegateOppositionScouting(world: GameWorld, teamId: TeamId, staffId: S
 }
 
 function baseFixture(): { world: GameWorld; teamId: TeamId; opponentTeamId: TeamId; staffId: StaffPersonId } {
+  const { world, teamId, opponentTeamId } = baseFixtureNoStaff()
+  const { world: withStaff, staffId } = withStaffInRole(world, teamId, 'advanceScout')
+  const delegated = delegateOppositionScouting(withStaff, teamId, staffId)
+  return { world: delegated, teamId, opponentTeamId, staffId }
+}
+
+/** Like `baseFixture`, but without adding the default `advanceScout` holder — for scenarios that need to control the holder's quality-driving attributes themselves via `withStaffQuality`. */
+function baseFixtureNoStaff(): { world: GameWorld; teamId: TeamId; opponentTeamId: TeamId } {
   const base = createNewGame()
   const teamId = Object.values(base.teams).map((team) => team.id).find((id) => getNextScheduledGame(base, id) !== undefined)
   if (teamId === undefined) throw new Error('fixture requires a team with a scheduled game')
   const nextGame = getNextScheduledGame(base, teamId)!
   const opponentTeamId = nextGame.homeTeamId === teamId ? nextGame.awayTeamId : nextGame.homeTeamId
-  const { world, staffId } = withStaffInRole(base, teamId, 'advanceScout')
-  const delegated = delegateOppositionScouting(world, teamId, staffId)
-  return { world: delegated, teamId, opponentTeamId, staffId }
+  return { world: base, teamId, opponentTeamId }
 }
 
 /** Injects strong, high-confidence OrganizationKnowledge for the entire opponent roster in exactly one legitimate offense dimension, MERGING onto any dimensions already set by a prior call so multiple dimensions can be combined for one fixture. */
@@ -189,5 +195,141 @@ describe('OppositionScoutingReport: recommendations derived from OrganizationKno
     const progressed = progressOppositionScoutingReports(fast)
     const report = Object.values(progressed.oppositionScoutingReportsById)[0]!
     expect(report.recommendedPaceAdjustment).toBeGreaterThan(0)
+  })
+})
+
+/** `tacticsQuality`'s base term is role proficiency from `professional.attributes` (see StaffRoleRegistry weights for `advanceScout`: tacticalKnowledge/analysis/talentEvaluation/communication/adaptability); driving those to the extremes reliably pushes quality high or low regardless of the auto-generated Personality jitter term. */
+function withStaffQuality(world: GameWorld, teamId: TeamId, quality: 'high' | 'low'): { world: GameWorld; staffId: StaffPersonId } {
+  return withStaffInRole(world, teamId, 'advanceScout', quality === 'high'
+    ? { tacticalKnowledge: 100, analysis: 100, talentEvaluation: 100, communication: 100, adaptability: 100 }
+    : { tacticalKnowledge: 1, analysis: 1, talentEvaluation: 1, communication: 1, adaptability: 1 })
+}
+
+/** Sets exact `coverage`/`confidence`/`estimate` for a SINGLE opponent roster player in one dimension, without touching any other player or dimension — needed for the precise per-player threat-scoring fixtures below (`withUniformKnowledge` sets the whole roster uniformly, which is too coarse here). */
+function withPlayerKnowledge(world: GameWorld, teamId: TeamId, playerId: string, dimension: string, estimate: number, coverage: number, confidence: number): GameWorld {
+  const organizationId = organizationIdForTeam(teamId)
+  const existing = world.organizationKnowledge.find((item) => item.organizationId === organizationId && item.subjectPlayerId === (playerId as never))
+  const finding = { coverage, confidence, assessedAt: world.currentDate, provenance: 'scoutReport' as const, estimate, uncertainty: 4 }
+  const untouched = world.organizationKnowledge.filter((item) => !(item.organizationId === organizationId && item.subjectPlayerId === (playerId as never)))
+  const entry: OrganizationKnowledge = { organizationId, subjectPlayerId: playerId as never, dimensions: { ...existing?.dimensions, [dimension]: finding } }
+  return updateGameWorld(world, { organizationKnowledge: [...untouched, entry] })
+}
+
+describe('OppositionScoutingReport: flaggedPlayerIds ranks by effective (weighted) threat, not raw estimate', () => {
+  it('a well-known moderate-estimate player (70/.9/.9, effective=56.7) outranks a barely-known high-estimate player (95/.55/.55, effective≈28.7) — fails under raw-estimate ranking, passes under effective-threat ranking', () => {
+    const { world, teamId, opponentTeamId } = baseFixture()
+    const roster = world.teams[opponentTeamId]!.rosterPlayerIds
+    if (roster.length < 2) return
+    const [playerA, playerB] = roster
+    // Player A: high estimate, low-but-flag-eligible coverage/confidence -> weight=.3025 (clears
+    // MIN_COVERAGE_FOR_FLAG=0.3), effective = 95*.3025 ≈ 28.74
+    const withA = withPlayerKnowledge(world, teamId, playerA!, 'shooting', 95, 0.55, 0.55)
+    // Player B: moderate estimate, high coverage/confidence -> weight=.81, effective = 70*.81 = 56.7
+    const withBoth = withPlayerKnowledge(withA, teamId, playerB!, 'shooting', 70, 0.9, 0.9)
+    const progressed = progressOppositionScoutingReports(withBoth)
+    const report = Object.values(progressed.oppositionScoutingReportsById)[0]!
+    const indexA = report.flaggedPlayerIds.indexOf(playerA! as never)
+    const indexB = report.flaggedPlayerIds.indexOf(playerB! as never)
+    expect(indexB).toBeGreaterThanOrEqual(0)
+    expect(indexA).toBeGreaterThanOrEqual(0)
+    expect(indexB).toBeLessThan(indexA)
+  })
+})
+
+describe('OppositionScoutingReport: defensive emphasis compares normalized (relative) magnitudes, not raw weighted sums', () => {
+  it('perimeterMean clearly greater than interiorMean -> perimeter', () => {
+    const { world, teamId, opponentTeamId } = baseFixtureNoStaff()
+    const withPerimeter = withUniformKnowledge(withUniformKnowledge(world, teamId, opponentTeamId, 'shooting', 85), teamId, opponentTeamId, 'finishing', 55)
+    const { world: delegated, staffId } = withStaffQuality(withPerimeter, teamId, 'high')
+    const finalWorld = delegateOppositionScouting(delegated, teamId, staffId)
+    const progressed = progressOppositionScoutingReports(finalWorld)
+    const report = Object.values(progressed.oppositionScoutingReportsById)[0]!
+    expect(report.recommendedDefensiveEmphasis).toBe('perimeter')
+  })
+
+  it('interiorMean clearly greater than perimeterMean -> interior', () => {
+    const { world, teamId, opponentTeamId } = baseFixtureNoStaff()
+    const withInterior = withUniformKnowledge(withUniformKnowledge(world, teamId, opponentTeamId, 'finishing', 85), teamId, opponentTeamId, 'shooting', 55)
+    const { world: delegated, staffId } = withStaffQuality(withInterior, teamId, 'high')
+    const finalWorld = delegateOppositionScouting(delegated, teamId, staffId)
+    const progressed = progressOppositionScoutingReports(finalWorld)
+    const report = Object.values(progressed.oppositionScoutingReportsById)[0]!
+    expect(report.recommendedDefensiveEmphasis).toBe('interior')
+  })
+
+  it('80 vs 79 (relative gap ~1.25%) with a LOW-quality holder yields undefined — noise is not a recommendation', () => {
+    const { world, teamId, opponentTeamId } = baseFixtureNoStaff()
+    const withClose = withUniformKnowledge(withUniformKnowledge(world, teamId, opponentTeamId, 'shooting', 80), teamId, opponentTeamId, 'finishing', 79)
+    const { world: delegated, staffId } = withStaffQuality(withClose, teamId, 'low')
+    const finalWorld = delegateOppositionScouting(delegated, teamId, staffId)
+    const progressed = progressOppositionScoutingReports(finalWorld)
+    const report = Object.values(progressed.oppositionScoutingReportsById)[0]!
+    expect(report.recommendedDefensiveEmphasis).toBeUndefined()
+  })
+
+  it('near-equal threats never produce an automatic recommendation regardless of quality', () => {
+    const { world, teamId, opponentTeamId } = baseFixtureNoStaff()
+    const withEqual = withUniformKnowledge(withUniformKnowledge(world, teamId, opponentTeamId, 'shooting', 70), teamId, opponentTeamId, 'finishing', 70)
+    const { world: delegated, staffId } = withStaffQuality(withEqual, teamId, 'high')
+    const finalWorld = delegateOppositionScouting(delegated, teamId, staffId)
+    const progressed = progressOppositionScoutingReports(finalWorld)
+    const report = Object.values(progressed.oppositionScoutingReportsById)[0]!
+    expect(report.recommendedDefensiveEmphasis).toBeUndefined()
+  })
+
+  it('a moderate gap: a high-quality holder commits where a low-quality holder (same gap) stays undefined', () => {
+    const gapWorldHigh = (() => { const { world, teamId, opponentTeamId } = baseFixtureNoStaff(); return { world: withUniformKnowledge(withUniformKnowledge(world, teamId, opponentTeamId, 'shooting', 70), teamId, opponentTeamId, 'finishing', 62), teamId } })()
+    const gapWorldLow = (() => { const { world, teamId, opponentTeamId } = baseFixtureNoStaff(); return { world: withUniformKnowledge(withUniformKnowledge(world, teamId, opponentTeamId, 'shooting', 70), teamId, opponentTeamId, 'finishing', 62), teamId } })()
+    const { world: highDelegated, staffId: highStaffId } = withStaffQuality(gapWorldHigh.world, gapWorldHigh.teamId, 'high')
+    const { world: lowDelegated, staffId: lowStaffId } = withStaffQuality(gapWorldLow.world, gapWorldLow.teamId, 'low')
+    const highFinal = delegateOppositionScouting(highDelegated, gapWorldHigh.teamId, highStaffId)
+    const lowFinal = delegateOppositionScouting(lowDelegated, gapWorldLow.teamId, lowStaffId)
+    const highReport = Object.values(progressOppositionScoutingReports(highFinal).oppositionScoutingReportsById)[0]!
+    const lowReport = Object.values(progressOppositionScoutingReports(lowFinal).oppositionScoutingReportsById)[0]!
+    // Same ~11.4% relative gap for both — only the required margin (driven by quality) differs.
+    expect(highReport.recommendedDefensiveEmphasis).toBe('perimeter')
+    expect(lowReport.recommendedDefensiveEmphasis).toBeUndefined()
+  })
+
+  it('insufficient total knowledge weight still yields undefined regardless of the (irrelevant) gap', () => {
+    const { world, teamId, opponentTeamId } = baseFixture()
+    const organizationId = organizationIdForTeam(teamId)
+    const roster = world.teams[opponentTeamId]!.rosterPlayerIds
+    if (roster.length === 0) return
+    const sparse = updateGameWorld(world, {
+      organizationKnowledge: [{ organizationId, subjectPlayerId: roster[0]!, dimensions: { shooting: { coverage: 0.2, confidence: 0.2, assessedAt: world.currentDate, provenance: 'scoutReport', estimate: 95, uncertainty: 4 } } }],
+    })
+    const progressed = progressOppositionScoutingReports(sparse)
+    const report = Object.values(progressed.oppositionScoutingReportsById)[0]!
+    expect(report.recommendedDefensiveEmphasis).toBeUndefined()
+  })
+
+  it('empty knowledge + quality 100 still yields undefined (quality never manufactures a recommendation)', () => {
+    const { world, teamId } = baseFixtureNoStaff()
+    const { world: delegated, staffId } = withStaffQuality(world, teamId, 'high')
+    const finalWorld = delegateOppositionScouting(delegated, teamId, staffId)
+    const progressed = progressOppositionScoutingReports(finalWorld)
+    const report = Object.values(progressed.oppositionScoutingReportsById)[0]!
+    expect(report.recommendedDefensiveEmphasis).toBeUndefined()
+  })
+
+  it('same knowledge -> same result on repeat generation', () => {
+    const { world, teamId, opponentTeamId } = baseFixture()
+    const withPerimeter = withUniformKnowledge(withUniformKnowledge(world, teamId, opponentTeamId, 'shooting', 85), teamId, opponentTeamId, 'finishing', 55)
+    const first = progressOppositionScoutingReports(withPerimeter)
+    const reprocessed = { ...withPerimeter, oppositionScoutingReportsById: {} }
+    const second = progressOppositionScoutingReports(reprocessed)
+    expect(Object.values(first.oppositionScoutingReportsById)[0]!.recommendedDefensiveEmphasis).toBe(Object.values(second.oppositionScoutingReportsById)[0]!.recommendedDefensiveEmphasis)
+  })
+
+  it('modifying Player ratings/potential while holding OrganizationKnowledge fixed produces an identical result', () => {
+    const { world, teamId, opponentTeamId } = baseFixture()
+    const withPerimeter = withUniformKnowledge(withUniformKnowledge(world, teamId, opponentTeamId, 'shooting', 85), teamId, opponentTeamId, 'finishing', 55)
+    const reportA = progressOppositionScoutingReports(withPerimeter)
+    const opponentPlayerId = withPerimeter.teams[opponentTeamId]!.rosterPlayerIds[0]!
+    const mutatedPlayer = { ...withPerimeter.players[opponentPlayerId]!, basketball: { ...withPerimeter.players[opponentPlayerId]!.basketball, ratings: { ...withPerimeter.players[opponentPlayerId]!.basketball.ratings, threePointShooting: 1, rimFinishing: 100 } }, development: { ...withPerimeter.players[opponentPlayerId]!.development, ceilings: { ...withPerimeter.players[opponentPlayerId]!.development.ceilings, shooting: 1 } } }
+    const withMutatedTruth = { ...withPerimeter, players: { ...withPerimeter.players, [opponentPlayerId]: mutatedPlayer } }
+    const reportB = progressOppositionScoutingReports(withMutatedTruth)
+    expect(Object.values(reportA.oppositionScoutingReportsById)[0]!.recommendedDefensiveEmphasis).toBe(Object.values(reportB.oppositionScoutingReportsById)[0]!.recommendedDefensiveEmphasis)
   })
 })
