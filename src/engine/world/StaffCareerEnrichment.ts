@@ -1,8 +1,8 @@
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { createDefaultStaffReputationProfile } from '@/domain/staffReputation'
-import { createStaffContract, staffContractIdFromString } from '@/domain/staffContract'
+import { createStaffContract, isStaffContractActiveOn, staffContractIdFromString } from '@/domain/staffContract'
 import { staffRoleDefinition } from '@/domain/staff'
-import { parseGameDate, type GameDate } from '@/domain/date'
+import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 
 /**
  * Backfills canonical `StaffEmployment`/`StaffCareerHistoryEntry` state for every `StaffPerson`
@@ -41,23 +41,40 @@ const SALARY_BY_SENIORITY: Readonly<Record<string, number>> = { junior: 45_000, 
 
 /**
  * Backfills one deterministic default `StaffContract` for every currently-employed Staff person
- * missing an active one (Issue #19 §9). Stable id keyed off `(staffId, teamId, roleId)` — never
- * `Math.random`. Salary derives from the assigned role's `seniority` band (the only per-role
- * proxy that exists; see `STAFF_ROLE_REGISTRY`), term is a flat `DEFAULT_CONTRACT_TERM_YEARS` from
- * the employment's `startedOn` (or the current date if absent). Idempotent: skips any Staff who
- * already has an active contract.
+ * with no non-terminated contract COVERING OR STARTING ON/AFTER `world.currentDate` (Issue #19 §9,
+ * review Blocker 5) — using the single canonical `isStaffContractActiveOn` semantics as the
+ * "already covered" test, not a `termination === undefined` proxy. This covers a Staff person with
+ * no contract at all AND one whose only contract has lapsed (`expiresOn` in the past); it correctly
+ * leaves alone a Staff person whose contract has not YET started (e.g. `startsOn` a few days ahead
+ * of `world.currentDate`, as legitimately happens for a Staff person on a team whose own
+ * generation/current-date offset differs from the merged world clock) — that contract is not a
+ * gap, it will become active on its own. Stable, deterministic id keyed off `(staffId, currentDate)`
+ * — never `Math.random` — so re-running on the same world is idempotent, while a genuinely NEW gap
+ * (e.g. the prior backfilled contract later expires) gets a new id rather than colliding with the
+ * old one. Salary derives from the assigned role's `seniority` band (the only per-role proxy that
+ * exists; see `STAFF_ROLE_REGISTRY`), term is a flat `DEFAULT_CONTRACT_TERM_YEARS` from the
+ * employment's `startedOn` (or the current date if absent).
  */
 export function ensureStaffContractStructure(world: GameWorld): GameWorld {
   const additions = Object.entries(world.staffEmploymentByStaffId)
     .filter(([, employment]) => (employment as { readonly status: string }).status === 'employed')
-    .filter(([staffId]) => !Object.values(world.staffContractsById).some((contract) => contract.staffId === staffId && contract.termination === undefined))
+    .filter(([staffId]) => !Object.values(world.staffContractsById).some((contract) => contract.staffId === staffId && (isStaffContractActiveOn(contract, world.currentDate) || (contract.termination === undefined && compareGameDates(contract.term.startsOn, world.currentDate) > 0))))
     .map(([staffId, employmentValue]) => {
       const employment = employmentValue as { readonly teamId: string; readonly roleId: string; readonly startedOn?: GameDate }
-      const startsOn = employment.startedOn ?? world.currentDate
+      // Prefer the real employment start date, but never backdate the new term far enough that it
+      // would ALSO already be expired on `world.currentDate` — this is the reconciliation case
+      // (the Staff's prior contract lapsed), so the fresh replacement must actually be active now.
+      const candidateStartsOn = employment.startedOn ?? world.currentDate
+      const wouldAlreadyBeExpired = compareGameDates(world.currentDate, addYears(candidateStartsOn, DEFAULT_CONTRACT_TERM_YEARS)) >= 0
+      const startsOn = wouldAlreadyBeExpired ? world.currentDate : candidateStartsOn
       const seniority = staffRoleDefinition(employment.roleId as never).seniority
       const annualSalary = SALARY_BY_SENIORITY[seniority]!
+      // The id is keyed off the computed `startsOn` (stable, derived from `employment.startedOn`),
+      // never off `world.currentDate` — the latter would make the id depend on WHEN this enrichment
+      // happens to run (e.g. once per gendered sub-world before merging, vs. once again on the
+      // fully-merged world during a later reload), breaking true idempotency/determinism.
       return createStaffContract({
-        id: staffContractIdFromString(`staff-contract-backfill-v1:${staffId}`),
+        id: staffContractIdFromString(`staff-contract-backfill-v1:${staffId}:${startsOn}`),
         staffId: staffId as never,
         teamId: employment.teamId as never,
         kind: 'standard' as const,

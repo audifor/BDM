@@ -79,11 +79,18 @@ export function appointStaffToTeam(input: { readonly employment: StaffEmployment
   return { ok: true, employment: createStaffEmployment({ status: 'employed', teamId: input.teamId, roleId: input.roleId, startedOn: input.date }), history: [...input.history, { kind: 'appointment', staffId: input.staffId, teamId: input.teamId, roleId: input.roleId, date: input.date, reason }] }
 }
 
-/** Same-team role change only — `appointStaffToTeam` remains the sole cross-team appointment path. */
+/**
+ * Same-team role change only — `appointStaffToTeam` remains the sole cross-team appointment path.
+ * `employment.startedOn` (the original hire/appointment date with THIS team) is deliberately
+ * preserved unchanged — a promotion/reassignment is a role change within an ongoing employment
+ * relationship, not a new one, so it must never reset "how long has this Staff person been with
+ * the team." The role change itself is still recorded, both on `StaffEmployment.roleId` and as a
+ * new `CareerHistory` appointment entry dated `input.date` with the appropriate reason.
+ */
 export function promoteOrReassignStaff(input: { readonly employment: StaffEmployment; readonly history: readonly StaffCareerHistoryEntry[]; readonly staffId: StaffPersonId; readonly roleId: StaffRoleId; readonly date: GameDate; readonly reason: 'promoted' | 'reassigned' }): StaffCareerTransitionResult {
   if (input.employment.status !== 'employed' || input.employment.teamId === undefined) return { ok: false, reason: 'invalidEmploymentState' }
   const teamId = input.employment.teamId
-  return { ok: true, employment: createStaffEmployment({ status: 'employed', teamId, roleId: input.roleId, startedOn: input.date }), history: [...input.history, { kind: 'appointment', staffId: input.staffId, teamId, roleId: input.roleId, date: input.date, reason: input.reason }] }
+  return { ok: true, employment: createStaffEmployment({ status: 'employed', teamId, roleId: input.roleId, ...(input.employment.startedOn === undefined ? {} : { startedOn: input.employment.startedOn }) }), history: [...input.history, { kind: 'appointment', staffId: input.staffId, teamId, roleId: input.roleId, date: input.date, reason: input.reason }] }
 }
 
 export function fireStaff(input: { readonly employment: StaffEmployment; readonly history: readonly StaffCareerHistoryEntry[]; readonly decision: StaffFiringDecision }): StaffCareerTransitionResult {

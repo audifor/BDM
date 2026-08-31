@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { staffPersonIdFromString, teamStaffAssignmentIdFromString, type TeamId } from '@/domain/ids'
 import { staffContractIdFromString } from '@/domain/staffContract'
+import { staffJobCandidacyIdFromString, staffJobOfferIdFromString, staffJobOpeningIdFromString } from '@/domain/staffCareer'
+import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
+import { createDefaultStaffReputationProfile } from '@/domain/staffReputation'
+import { createStaffJobOpeningForTeam, identifyStaffCandidate } from '@/app/staffCareer'
 import { updateGameWorld, GameWorldValidationError } from './index'
 
 describe('Staff employment <-> TeamStaffAssignment invariant', () => {
@@ -66,5 +70,59 @@ describe('Staff employment <-> TeamStaffAssignment invariant', () => {
     for (const [id, contract] of Object.entries(withoutOwnContract)) if (contract.staffId === staffId && contract.termination === undefined) delete withoutOwnContract[id as never]
     const mismatched = { id: staffContractIdFromString('mismatched-team-contract'), staffId, teamId: otherTeamId, kind: 'standard' as const, term: { startsOn: world.currentDate, expiresOn: '2099-10-01' as never }, compensation: { annualSalary: 50_000 } }
     expect(() => updateGameWorld(world, { staffContracts: [...Object.values(withoutOwnContract), mismatched] })).toThrow(GameWorldValidationError)
+  })
+})
+
+type StaffAttributes = Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number>
+const flatAttributes: StaffAttributes = Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 60])) as StaffAttributes
+
+describe('StaffJobOffer semantic validation (Issue #19 review Blocker 6)', () => {
+  /** A world with a real, valid opening/candidacy/offer triple to tamper with. */
+  function offerFixture() {
+    const base = createNewGame()
+    const [teamA, teamB] = Object.values(base.teams)
+    const staffId = staffPersonIdFromString('offer-validation-staff')
+    const withStaff = updateGameWorld(base, { staffPeople: [...Object.values(base.staffPeopleById), { id: staffId, identity: { firstName: 'Off', lastName: 'Er' }, professional: { attributes: flatAttributes } }] })
+    const withReputation = updateGameWorld(withStaff, { staffReputationProfilesByStaffId: { ...withStaff.staffReputationProfilesByStaffId, [staffId]: createDefaultStaffReputationProfile() } })
+    const { world: withOpening, opening } = createStaffJobOpeningForTeam(withReputation, { teamId: teamA!.id, roleId: 'advanceScout' })
+    const candidate = identifyStaffCandidate(withOpening, { openingId: opening.id, staffId })
+    const offerId = staffJobOfferIdFromString('offer-validation-offer')
+    const withOffer = updateGameWorld(candidate.world, {
+      staffJobOffers: [...Object.values(candidate.world.staffJobOffersById), { id: offerId, jobOpeningId: opening.id, staffId, teamId: teamA!.id, annualSalary: 65_000, createdOn: candidate.world.currentDate, status: 'pending' }],
+    })
+    return { world: withOffer, teamA: teamA!.id, teamB: teamB!.id, staffId, opening, offerId, candidacyId: candidate.candidacyId }
+  }
+
+  it('rejects an offer whose Team does not match its opening\'s Team (offer from Team B pointing at an opening for Team A)', () => {
+    const fixture = offerFixture()
+    const tampered = { ...fixture.world.staffJobOffersById[fixture.offerId]!, teamId: fixture.teamB }
+    expect(() => updateGameWorld(fixture.world, { staffJobOffers: [...Object.values(fixture.world.staffJobOffersById).filter((o) => o.id !== fixture.offerId), tampered] })).toThrow(GameWorldValidationError)
+  })
+
+  it('rejects an offer for one Staff person whose candidacy belongs to a different Staff person', () => {
+    const fixture = offerFixture()
+    const otherStaffId = staffPersonIdFromString('offer-validation-other-staff')
+    const withOtherStaff = updateGameWorld(fixture.world, { staffPeople: [...Object.values(fixture.world.staffPeopleById), { id: otherStaffId, identity: { firstName: 'Oth', lastName: 'Er' }, professional: { attributes: flatAttributes } }] })
+    // Remove the real candidacy for `staffId` so the ONLY candidacy for this opening belongs to `otherStaffId`.
+    const withoutRealCandidacy = Object.fromEntries(Object.entries(withOtherStaff.staffJobCandidaciesById).filter(([id]) => id !== fixture.candidacyId))
+    const swappedCandidacy = { id: staffJobCandidacyIdFromString('offer-validation-swapped-candidacy'), jobOpeningId: fixture.opening.id, staffId: otherStaffId, status: 'identified' as const, createdOn: withOtherStaff.currentDate }
+    expect(() => updateGameWorld(withOtherStaff, { staffJobCandidacies: [...Object.values(withoutRealCandidacy), swappedCandidacy] })).toThrow(GameWorldValidationError)
+  })
+
+  it('rejects an offer pointing at an opening with no matching candidacy at all', () => {
+    const fixture = offerFixture()
+    const withoutCandidacy = Object.fromEntries(Object.entries(fixture.world.staffJobCandidaciesById).filter(([id]) => id !== fixture.candidacyId))
+    expect(() => updateGameWorld(fixture.world, { staffJobCandidacies: Object.values(withoutCandidacy) })).toThrow(GameWorldValidationError)
+  })
+
+  it('accepts a well-formed offer with a genuinely matching opening and candidacy', () => {
+    const fixture = offerFixture()
+    expect(() => updateGameWorld(fixture.world, {})).not.toThrow()
+  })
+
+  it('rejects an offer whose jobOpeningId does not exist at all', () => {
+    const fixture = offerFixture()
+    const tampered = { ...fixture.world.staffJobOffersById[fixture.offerId]!, jobOpeningId: staffJobOpeningIdFromString('nonexistent-opening') }
+    expect(() => updateGameWorld(fixture.world, { staffJobOffers: [...Object.values(fixture.world.staffJobOffersById).filter((o) => o.id !== fixture.offerId), tampered] })).toThrow(GameWorldValidationError)
   })
 })

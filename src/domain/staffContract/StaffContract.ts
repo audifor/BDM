@@ -39,10 +39,25 @@ export function createStaffContract(input: StaffContract): StaffContract {
   }
 }
 
-/** A contract is active on `date` when it has no termination and `date` falls within its term (inclusive of `startsOn`, exclusive of `expiresOn`). A terminated contract is never active, regardless of date. */
+/**
+ * THE single canonical semantics of "is this Staff contract active on `date`" (Issue #19 review
+ * Blocker 5) — every consumer (payroll derivation, enrichment, `validateWorld`, `StaffCareerService`)
+ * must call this rather than re-deriving its own proxy (e.g. `termination === undefined`, which
+ * silently ignores both a lapsed `expiresOn` and a not-yet-effective future termination).
+ *
+ * A contract is active on `date` when:
+ * - `date` falls within its term (`startsOn <= date < expiresOn`), AND
+ * - it has no termination yet in effect: either no `termination` at all, or a `termination` whose
+ *   `effectiveOn` is still in the future relative to `date` (a scheduled-but-not-yet-effective
+ *   termination keeps the contract active right up to, but not including, `effectiveOn`).
+ *
+ * From `termination.effectiveOn` onward (inclusive), the contract is never active again, even if
+ * `date` is still within `[startsOn, expiresOn)`.
+ */
 export function isStaffContractActiveOn(contract: StaffContract, date: GameDate): boolean {
-  if (contract.termination !== undefined) return false
-  return compareGameDates(date, contract.term.startsOn) >= 0 && compareGameDates(date, contract.term.expiresOn) < 0
+  if (compareGameDates(date, contract.term.startsOn) < 0 || compareGameDates(date, contract.term.expiresOn) >= 0) return false
+  if (contract.termination !== undefined && compareGameDates(date, contract.termination.effectiveOn) >= 0) return false
+  return true
 }
 
 export function terminateStaffContract(contract: StaffContract, effectiveOn: GameDate, reason: StaffFiringReason | 'resigned'): StaffContract {

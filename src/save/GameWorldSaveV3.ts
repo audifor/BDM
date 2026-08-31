@@ -4,6 +4,7 @@ import { staffPersonIdFromString, teamIdFromString } from '@/domain/ids'
 import { createStaffEmployment, createStaffJobOpening, staffJobCandidacyIdFromString, staffJobOfferIdFromString, staffJobOpeningIdFromString, type StaffCareerHistoryEntry, type StaffEmployment, type StaffInterview, type StaffJobCandidacy, type StaffJobOffer, type StaffJobOpening } from '@/domain/staffCareer'
 import { createStaffContract, staffContractIdFromString, type StaffContract } from '@/domain/staffContract'
 import { createStaffReputationProfile, STAFF_REPUTATION_DIMENSIONS, type StaffReputationProfile } from '@/domain/staffReputation'
+import { ensureStaffContractStructure, ensureStaffEmploymentStructure, ensureStaffReputationStructure } from '@/engine/world/StaffCareerEnrichment'
 import { parseGameDate } from '@/domain/date'
 import { deserializeGameWorldV2, migrateGameWorldSaveV1ToV2, serializeGameWorldV2, assertExactKeys, type GameWorldSaveV2, type SaveGameEnvelopeV2 } from './GameWorldSaveV2'
 import type { SaveGameEnvelopeV1 } from './GameWorldSaveV1'
@@ -22,8 +23,17 @@ export function migrateGameWorldSaveV1ToV3(value: SaveGameEnvelopeV1): SaveGameE
   return migrateGameWorldSaveV2ToV3(migrateGameWorldSaveV1ToV2(value))
 }
 
+/**
+ * `deserializeGameWorldV2` never runs Staff Career enrichment (it always loads with
+ * `enrichLegacy: false`, since V2 itself is a legacy layer that owns no Staff Career state) — so a
+ * genuinely pre-Wave-4A V2 save arrives here with EMPTY Staff Career collections. This migration is
+ * the one place responsible for deterministically backfilling `StaffEmployment`/`CareerHistory`/
+ * `StaffContract`/`StaffReputation` before handing the world to V3's serializer, exactly once, pure
+ * and idempotent (re-running this migration on an already-enriched world is a no-op per-enrichment
+ * function).
+ */
 export function migrateGameWorldSaveV2ToV3(value: SaveGameEnvelopeV2): SaveGameEnvelopeV3 {
-  const world = deserializeGameWorldV2(value)
+  const world = ensureStaffReputationStructure(ensureStaffContractStructure(ensureStaffEmploymentStructure(deserializeGameWorldV2(value))))
   return { schemaVersion: 3, savedAt: value.savedAt, payload: v3Payload(value.payload, world) }
 }
 

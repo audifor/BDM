@@ -233,4 +233,21 @@ describe('promoteOrReassignStaff: promote/reassign lifecycle and history reasons
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.reason).toBe('invalidEmploymentState')
   })
+
+  it('preserves the original employment.startedOn (hire date) across a later promotion/reassignment on a distinct date (Issue #19 review "startedOn" fix)', () => {
+    const hireDate = '2032-10-01' as never
+    const promotionDate = '2033-06-15' as never
+    const hired = { status: 'employed' as const, teamId, roleId: 'advanceScout' as never, startedOn: hireDate }
+    const promoted = promoteOrReassignStaff({ employment: hired, history: [], staffId, roleId: 'headScout' as never, date: promotionDate, reason: 'promoted' })
+    expect(promoted.ok).toBe(true)
+    if (promoted.ok) {
+      // startedOn is unchanged — still the original hire date, not the promotion date.
+      expect(promoted.employment.startedOn).toBe(hireDate)
+      expect(promoted.employment.roleId).toBe('headScout')
+      // The CareerHistory entry records the role change dated at the promotion date.
+      const entry = promoted.history.at(-1) as StaffCareerHistoryEntry
+      expect(entry.date).toBe(promotionDate)
+      expect((entry as { readonly reason: string }).reason).toBe('promoted')
+    }
+  })
 })

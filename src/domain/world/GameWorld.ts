@@ -37,7 +37,7 @@ import type { PlayerKnowledgeId } from '@/domain/ids'
 import { createStaffPerson, createTeamStaffAssignment, staffRoleDefinition, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
 import type { StaffPersonId, TeamStaffAssignmentId } from '@/domain/ids'
 import { createStaffEmployment, createStaffJobOpening, type StaffCareerHistoryEntry, type StaffEmployment, type StaffInterview, type StaffJobCandidacy, type StaffJobCandidacyId, type StaffJobOffer, type StaffJobOfferId, type StaffJobOpening, type StaffJobOpeningId } from '@/domain/staffCareer'
-import { createStaffContract, type StaffContract, type StaffContractId } from '@/domain/staffContract'
+import { createStaffContract, isStaffContractActiveOn, type StaffContract, type StaffContractId } from '@/domain/staffContract'
 import { createStaffReputationProfile, type StaffReputationProfile } from '@/domain/staffReputation'
 import { createDelegationOutcome, createResponsibility, validateResponsibilityAssignment, type DelegationOutcome, type DelegationOutcomeId, type Responsibility, type ResponsibilityId } from '@/domain/responsibility'
 import { createCoachRpgProfile, type CoachRpgProfile } from '@/domain/coachRpg'
@@ -761,7 +761,17 @@ function validateWorld(world: GameWorld): void {
   }
   for (const candidacy of Object.values(world.staffJobCandidaciesById)) { requireEntity(world.staffPeopleById, candidacy.staffId, `Staff candidacy ${candidacy.id} Staff`); requireEntity(world.staffJobOpeningsById, candidacy.jobOpeningId, `Staff candidacy ${candidacy.id} opening`) }
   for (const [candidacyId, interview] of Object.entries(world.staffInterviewsByCandidacyId) as [StaffJobCandidacyId, StaffInterview][]) if (interview.candidacyId !== candidacyId || world.staffJobCandidaciesById[candidacyId] === undefined) throw new GameWorldValidationError(`Staff interview references missing candidacy ${candidacyId}`)
-  for (const offer of Object.values(world.staffJobOffersById)) { requireEntity(world.staffPeopleById, offer.staffId, `Staff offer ${offer.id} Staff`); requireEntity(world.teams, offer.teamId, `Staff offer ${offer.id} Team`); requireEntity(world.staffJobOpeningsById, offer.jobOpeningId, `Staff offer ${offer.id} opening`) }
+  for (const offer of Object.values(world.staffJobOffersById)) {
+    requireEntity(world.staffPeopleById, offer.staffId, `Staff offer ${offer.id} Staff`)
+    requireEntity(world.teams, offer.teamId, `Staff offer ${offer.id} Team`)
+    const opening = requireEntity(world.staffJobOpeningsById, offer.jobOpeningId, `Staff offer ${offer.id} opening`)
+    // Full semantic consistency (Issue #19 review Blocker 6): an offer must genuinely belong to the
+    // opening it references (same Team) and to a real candidacy for the same (opening, Staff) pair
+    // — never a combination the state machine could not have legitimately produced.
+    if (opening.teamId !== offer.teamId) throw new GameWorldValidationError(`Staff offer ${offer.id} Team does not match its opening's Team`)
+    const candidacy = Object.values(world.staffJobCandidaciesById).find((item) => item.jobOpeningId === offer.jobOpeningId && item.staffId === offer.staffId)
+    if (candidacy === undefined) throw new GameWorldValidationError(`Staff offer ${offer.id} has no matching Staff candidacy for the same opening and Staff`)
+  }
   const staffPendingOfferKeys = new Set<StaffPersonId>()
   for (const offer of Object.values(world.staffJobOffersById)) {
     if (offer.status !== 'pending') continue
@@ -773,7 +783,10 @@ function validateWorld(world: GameWorld): void {
     createStaffContract(contract)
     requireEntity(world.staffPeopleById, contract.staffId, `Staff contract ${contract.id} Staff`)
     requireEntity(world.teams, contract.teamId, `Staff contract ${contract.id} Team`)
-    if (contract.termination === undefined) {
+    // Active-on-the-CURRENT-date, via the single canonical `isStaffContractActiveOn` semantics —
+    // never `termination === undefined` alone, which would wrongly treat a lapsed (past-expiresOn)
+    // contract as active and a scheduled-but-not-yet-effective termination as inactive.
+    if (isStaffContractActiveOn(contract, world.currentDate)) {
       if (staffActiveContractKeys.has(contract.staffId)) throw new GameWorldValidationError(`Staff ${contract.staffId} has more than one active Staff contract`)
       staffActiveContractKeys.add(contract.staffId)
       const employment = world.staffEmploymentByStaffId[contract.staffId]

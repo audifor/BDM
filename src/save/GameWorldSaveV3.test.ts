@@ -152,6 +152,56 @@ describe('GameWorldSaveV3', () => {
     expect(deserializeGameWorldSave(v3).teamFinancesByTeamId).toEqual(world.teamFinancesByTeamId)
   })
 
+  it('V1/V2 never carry Staff Career state: serializeGameWorldV2 omits all 8 Staff Career collection keys', () => {
+    const world = createNewGame()
+    const v2 = serializeGameWorldV2(world, savedAt)
+    const staffCareerKeys = ['staffEmploymentByStaffId', 'staffCareerHistoryByStaffId', 'staffJobOpenings', 'staffJobCandidacies', 'staffInterviews', 'staffJobOffers', 'staffContracts', 'staffReputationProfilesByStaffId']
+    for (const key of staffCareerKeys) expect(key in v2.payload).toBe(false)
+  })
+
+  it('a genuinely pre-Wave-4A V2 save (no Staff Career fields at all, teamFinances without staffSalaryBudget) migrates V2 -> V3 producing valid, deterministic, idempotent Staff Career structure', () => {
+    const world = createNewGame()
+    const v2 = serializeGameWorldV2(world, savedAt)
+    // Build an AUTHENTIC legacy V2 payload: strip every Staff Career key entirely (not merely
+    // empty-array them) and strip staffSalaryBudget off every teamFinances row, matching exactly
+    // what a real save written before Wave 4A would contain.
+    const { organizationKnowledge, scoutingRuntime, marketRuntime, ...v1Shape } = v2.payload as unknown as Record<string, unknown>
+    const staffCareerKeys = ['staffEmploymentByStaffId', 'staffCareerHistoryByStaffId', 'staffJobOpenings', 'staffJobCandidacies', 'staffInterviews', 'staffJobOffers', 'staffContracts', 'staffReputationProfilesByStaffId']
+    const legacyV1Shape = Object.fromEntries(Object.entries(v1Shape).filter(([key]) => !staffCareerKeys.includes(key)))
+    const legacyTeamFinances = (v2.payload.teamFinances as Record<string, unknown>[]).map((entry) => { const { staffSalaryBudget: _s, ...rest } = entry; return rest })
+    const authenticLegacyV2 = { schemaVersion: 2 as const, savedAt, payload: { ...legacyV1Shape, teamFinances: legacyTeamFinances, organizationKnowledge, scoutingRuntime, marketRuntime } as never }
+
+    for (const key of staffCareerKeys) expect(key in authenticLegacyV2.payload).toBe(false)
+
+    const migrated = migrateGameWorldSaveV2ToV3(authenticLegacyV2)
+    const loaded = deserializeGameWorldV3(migrated)
+
+    // Deterministic backfill: every real Staff person now has canonical employment state.
+    for (const staffId of Object.keys(loaded.staffPeopleById)) expect(loaded.staffEmploymentByStaffId[staffId as never]).toBeDefined()
+    // Every employed Staff person has exactly one active contract.
+    for (const [staffId, employment] of Object.entries(loaded.staffEmploymentByStaffId)) {
+      if (employment.status !== 'employed') continue
+      const activeContracts = Object.values(loaded.staffContractsById).filter((contract) => contract.staffId === staffId && contract.termination === undefined)
+      expect(activeContracts).toHaveLength(1)
+    }
+    // Every real Staff person has a reputation profile.
+    for (const staffId of Object.keys(loaded.staffPeopleById)) expect(loaded.staffReputationProfilesByStaffId[staffId as never]).toBeDefined()
+    // staffSalaryBudget was backfilled deterministically for every team.
+    for (const finance of Object.values(loaded.teamFinancesByTeamId)) expect(finance.staffSalaryBudget).toBeGreaterThan(0)
+
+    // Deterministic: migrating the same authentic legacy V2 payload again produces the identical V3 payload.
+    const migratedAgain = migrateGameWorldSaveV2ToV3(authenticLegacyV2)
+    expect(migratedAgain).toEqual(migrated)
+
+    // Idempotent: re-serializing the loaded (now-enriched) world and migrating it again does not change Staff Career state.
+    const reserializedV2 = serializeGameWorldV2(loaded, savedAt)
+    const remigrated = migrateGameWorldSaveV2ToV3(reserializedV2)
+    const reloaded = deserializeGameWorldV3(remigrated)
+    expect(reloaded.staffEmploymentByStaffId).toEqual(loaded.staffEmploymentByStaffId)
+    expect(reloaded.staffContractsById).toEqual(loaded.staffContractsById)
+    expect(reloaded.staffReputationProfilesByStaffId).toEqual(loaded.staffReputationProfilesByStaffId)
+  })
+
   it('repeated enrichment via the V1 legacy path is idempotent for Staff Career state', () => {
     const world = createNewGame()
     const v1 = serializeGameWorldV1(world, savedAt)

@@ -46,9 +46,16 @@ describe('isStaffContractActiveOn / active contract lookup', () => {
     expect(isStaffContractActiveOn(contract, '2032-09-30' as never)).toBe(false)
   })
 
-  it('a terminated contract is never active, regardless of date', () => {
+  it('a contract with a termination already in effect (effectiveOn <= date) is never active', () => {
     const terminated = terminateStaffContract(baseContract(), '2033-01-01' as never, 'performance')
-    expect(isStaffContractActiveOn(terminated, '2032-11-01' as never)).toBe(false)
+    expect(isStaffContractActiveOn(terminated, '2033-01-01' as never)).toBe(false)
+    expect(isStaffContractActiveOn(terminated, '2033-06-01' as never)).toBe(false)
+  })
+
+  it('a termination scheduled for a future effectiveOn keeps the contract active right up until effectiveOn', () => {
+    const terminated = terminateStaffContract(baseContract(), '2033-01-01' as never, 'performance')
+    expect(isStaffContractActiveOn(terminated, '2032-11-01' as never)).toBe(true)
+    expect(isStaffContractActiveOn(terminated, '2032-12-31' as never)).toBe(true)
   })
 
   it('findActiveStaffContract locates the one active contract for a Staff person on a date', () => {

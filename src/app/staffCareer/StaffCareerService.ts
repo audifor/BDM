@@ -27,8 +27,17 @@ import { staffReputationScore } from '@/domain/staffReputation'
 import { addInboxItem, addNewsItem, canTeamAffordAdditionalStaffSalary, getTeamStaffPayroll, updateGameWorld, type GameWorld } from '@/domain/world'
 import { getResponsibilitiesHeldByStaff } from '@/domain/world'
 
+/**
+ * Ecosystem role eligibility (Issue #19 review Blocker 3) is enforced HERE, at opening creation —
+ * the earliest canonical application boundary — rather than only inside `rankStaffCandidates`'s
+ * ranking filter. No opening ever exists for a `roleId` that `isStaffRoleApplicableToEcosystem`
+ * rejects for the team's own ecosystem, which transitively makes it impossible to identify a
+ * candidacy, interview, offer, or hire for that (team, role) pair — closing the manual-API bypass
+ * where a caller could skip `rankStaffCandidates` entirely.
+ */
 export function createStaffJobOpeningForTeam(world: GameWorld, input: { readonly teamId: TeamId; readonly roleId: StaffRoleId; readonly id?: string }): { readonly world: GameWorld; readonly opening: StaffJobOpening } {
   const team = requireTeam(world, input.teamId)
+  if (!isStaffRoleApplicableToEcosystem(input.roleId, teamEcosystemKind(world, team.id))) throw new Error('Staff role is not applicable to this Team\'s ecosystem')
   const existing = Object.values(world.staffJobOpeningsById).find((opening) => opening.teamId === team.id && opening.roleId === input.roleId && opening.status === 'open')
   if (existing !== undefined) return { world, opening: existing }
   const id = staffJobOpeningIdFromString(input.id ?? nextId(world, `staff-job:${team.id}:${input.roleId}:${world.currentDate}:`))
@@ -62,6 +71,10 @@ export function identifyStaffCandidate(world: GameWorld, input: { readonly openi
   const opening = requireOpening(world, input.openingId)
   if (!evaluateStaffJobEligibility(opening).eligible) throw new Error('Staff job opening is not open')
   if (world.staffPeopleById[input.staffId] === undefined || world.staffReputationProfilesByStaffId[input.staffId] === undefined) throw new Error('Staff is not eligible for this job opening')
+  // Defense-in-depth (Issue #19 review Blocker 3): `createStaffJobOpeningForTeam` is the primary
+  // gate, but this re-check ensures no ecosystem-ineligible opening (however it came to exist) can
+  // ever produce a candidacy.
+  if (!isStaffRoleApplicableToEcosystem(opening.roleId, teamEcosystemKind(world, opening.teamId))) throw new Error('Staff role is not applicable to this Team\'s ecosystem')
   const existing = Object.values(world.staffJobCandidaciesById).find((candidacy) => candidacy.jobOpeningId === opening.id && candidacy.staffId === input.staffId && ['identified', 'interviewing', 'offered'].includes(candidacy.status))
   if (existing !== undefined) return { world, candidacyId: existing.id }
   const id = staffJobCandidacyIdFromString(input.id ?? nextId(world, `staff-candidacy:${opening.id}:${input.staffId}:`))
@@ -91,7 +104,7 @@ export function createStaffJobOffer(world: GameWorld, input: { readonly candidac
   if (candidacy.status !== 'interviewing' || interview?.status !== 'completed' || !evaluateStaffJobEligibility(opening).eligible) throw new Error('Staff job offer preconditions are not met')
   const existing = Object.values(world.staffJobOffersById).find((offer) => offer.jobOpeningId === opening.id && offer.staffId === candidacy.staffId && offer.status === 'pending')
   if (existing !== undefined) return { world, offerId: existing.id }
-  const annualSalary = offerSalary(world, opening)
+  const annualSalary = calculateStaffOfferSalary(world, opening, candidacy.staffId)
   if (!canTeamAffordAdditionalStaffSalary(world, opening.teamId, annualSalary)) throw new Error('Team cannot afford this Staff job offer under its Staff salary budget')
   const transitioned = transitionStaffJobCandidacy(candidacy, 'offered')
   if (!transitioned.ok) throw new Error('Staff candidacy cannot receive an offer')
@@ -117,6 +130,13 @@ export function acceptStaffJobOffer(world: GameWorld, offerId: string): GameWorl
   if (offer.status !== 'pending' || opening.status !== 'open') throw new Error('Staff job offer cannot be accepted')
   const currentAssignment = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.staffPersonId === offer.staffId)
   if (currentAssignment !== undefined && currentAssignment.teamId === opening.teamId) throw new Error('Staff job offer cannot be accepted')
+  // Re-check the Staff budget against the CURRENT world immediately before committing (Issue #19
+  // review Blocker 2): the offer's salary was only valid against the budget at CREATE time — one or
+  // more sibling offers created against the same remaining budget may have since been accepted, so
+  // the same canonical check createStaffJobOffer used must run again here, or two individually-valid
+  // offers could both be accepted and jointly exceed the team's Staff budget.
+  const annualSalary = offer.annualSalary ?? calculateStaffOfferSalary(world, opening, offer.staffId)
+  if (!canTeamAffordAdditionalStaffSalary(world, opening.teamId, annualSalary)) throw new Error('Team cannot afford this Staff job offer under its current Staff salary budget')
 
   const accepted = decideStaffJobOffer(offer, 'accepted')
   const hired = transitionStaffJobCandidacy(candidacy, 'hired')
@@ -148,7 +168,7 @@ export function acceptStaffJobOffer(world: GameWorld, offerId: string): GameWorl
   const newAssignmentId = `staff-assignment:${offer.staffId}:${opening.teamId}:${opening.roleId}:${world.currentDate}`
   assignments = [...assignments, { id: newAssignmentId as never, staffPersonId: offer.staffId, teamId: opening.teamId, role: opening.roleId, assignedOn: world.currentDate }]
   const newContractId = staffContractIdFromString(`staff-contract:${offer.staffId}:${opening.teamId}:${world.currentDate}`)
-  contracts[newContractId] = createStaffContract({ id: newContractId, staffId: offer.staffId, teamId: opening.teamId, kind: 'standard', term: { startsOn: world.currentDate, expiresOn: addYears(world.currentDate, 2) }, compensation: { annualSalary: offer.annualSalary ?? offerSalary(world, opening) } })
+  contracts[newContractId] = createStaffContract({ id: newContractId, staffId: offer.staffId, teamId: opening.teamId, kind: 'standard', term: { startsOn: world.currentDate, expiresOn: addYears(world.currentDate, 2) }, compensation: { annualSalary } })
 
   openings[opening.id] = { ...opening, status: 'filled' }
   const candidacies: Record<string, unknown> = { ...world.staffJobCandidaciesById, [candidacy.id]: hired.candidacy }
@@ -193,6 +213,7 @@ export function promoteStaffWithinTeam(world: GameWorld, input: { readonly staff
   const employment = world.staffEmploymentByStaffId[input.staffId]
   if (employment === undefined || employment.status !== 'employed' || employment.teamId === undefined) throw new Error('Staff is not employed')
   const teamId = employment.teamId
+  if (!isStaffRoleApplicableToEcosystem(input.newRoleId, teamEcosystemKind(world, teamId))) throw new Error('Staff role is not applicable to this Team\'s ecosystem')
   const history = world.staffCareerHistoryByStaffId[input.staffId] ?? []
   const transition = promoteOrReassignStaff({ employment, history, staffId: input.staffId, roleId: input.newRoleId, date: world.currentDate, reason: input.reason })
   if (!transition.ok) throw new Error('Staff cannot be promoted or reassigned')
@@ -270,12 +291,43 @@ function candidateScore(world: GameWorld, opening: StaffJobOpening, staffId: Sta
 }
 
 const SALARY_BY_SENIORITY: Readonly<Record<string, number>> = { junior: 45_000, standard: 65_000, senior: 90_000, director: 130_000 }
-/** Prototype salary policy (Issue #19 §5): centralized, provisional constants. Salary derives from the role's seniority band (there is no per-role salary weight in `STAFF_ROLE_REGISTRY`, matching Coach Career's precedent of deriving offer salary from an existing budget/role signal rather than an arbitrary per-call magic number), never `Math.random`. */
-function offerSalary(world: GameWorld, opening: StaffJobOpening): number {
+const MIN_STAFF_OFFER_SALARY = 30_000
+/** Bounded multiplier range applied on top of the seniority base from proficiency/reputation (Issue #19 §5) — a maxed-out candidate earns at most 30% above base, a minimum-quality one at most 20% below, never unbounded. */
+const PROFICIENCY_REPUTATION_SWING_UP = 0.3
+const PROFICIENCY_REPUTATION_SWING_DOWN = 0.2
+
+/**
+ * Centralized, deterministic Staff offer-salary policy (Issue #19 §5, review Blocker 4).
+ * Provisional/prototype constants, but every input is explicit and bounded — never `Math.random`,
+ * never a magic number scattered elsewhere in the service:
+ *
+ *   base        = SALARY_BY_SENIORITY[role.seniority] — the only per-role salary proxy that exists
+ *                 (STAFF_ROLE_REGISTRY carries no salary weight of its own)
+ *   quality     = 0.7 * calculateStaffRoleProficiencyByRoleId(staff, roleId) / 100
+ *               + 0.3 * staffReputationScore(reputation) / 1000
+ *               (the SAME 70/30 blend `candidateScore` uses for ranking — one canonical notion of
+ *               "how good is this Staff person for this role", not two divergent formulas)
+ *   multiplier  = 1 + (quality - 0.5) * 2 * SWING   (SWING = up-swing above 0.5 quality, down-swing below)
+ *   salary      = round(base * multiplier / 1000) * 1000, clamped to
+ *                 [MIN_STAFF_OFFER_SALARY, min(base * (1+swingUp), remaining Staff budget)]
+ *
+ * Same `world` + `opening` + `staffId` always yields the same salary. A higher-proficiency/
+ * higher-reputation candidate for the identical opening never earns LESS than a lower one; the
+ * offer never exceeds the team's currently remaining Staff budget, and is always positive.
+ */
+function calculateStaffOfferSalary(world: GameWorld, opening: StaffJobOpening, staffId: StaffPersonId): number {
+  const staff = world.staffPeopleById[staffId]
+  const reputation = world.staffReputationProfilesByStaffId[staffId]
   const base = SALARY_BY_SENIORITY[staffRoleDefinition(opening.roleId).seniority]!
+  const quality = staff === undefined || reputation === undefined
+    ? 0.5
+    : 0.7 * (calculateStaffRoleProficiencyByRoleId(staff, opening.roleId) / 100) + 0.3 * (staffReputationScore(reputation) / 1000)
+  const swing = quality >= 0.5 ? PROFICIENCY_REPUTATION_SWING_UP : PROFICIENCY_REPUTATION_SWING_DOWN
+  const multiplier = 1 + (quality - 0.5) * 2 * swing
+  const desired = Math.round((base * multiplier) / 1_000) * 1_000
   const payroll = getTeamStaffPayroll(world, opening.teamId)
   const affordable = Math.max(0, payroll.remainingBudget)
-  return Math.max(30_000, Math.min(base, Math.round(Math.min(base, affordable) / 1_000) * 1_000))
+  return Math.max(MIN_STAFF_OFFER_SALARY, Math.min(desired, affordable))
 }
 
 /**
