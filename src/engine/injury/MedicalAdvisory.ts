@@ -117,7 +117,8 @@ function recordMedicalRecommendation(world: GameWorld, teamId: TeamId, injuryId:
  *
  * Same `(temperament, qualityScore, outcomeId)` always yields the same result — the jitter stream
  * is seeded off `outcomeId`, which is itself derived deterministically from
- * `(responsibilityId, injuryId, kind)`. Never `Math.random()`.
+ * `(responsibilityId, injuryId, kind)`. Only ever draws from the canonical seeded RandomSource,
+ * never unseeded/non-deterministic randomness.
  */
 const MAX_UNCERTAINTY_AMPLITUDE = 3
 

@@ -35,9 +35,9 @@ function progressTeamRecruitingAdvisories(world: GameWorld, teamId: TeamId, cycl
  * Bounded candidate band, actually consumed (Wave 4B review Blocker 3A): `recruitingQuality`
  * determines how wide a slice of the top of the existing, knowledge-only `rankAiRecruitingTargets`
  * ranking the holder draws from — quality >= 70 is a band of 1 (always the top target), quality
- * >= 40 a band of 2, otherwise a band of 3. Selection WITHIN that band is deterministic/seeded
- * (never `Math.random()`), keyed off the canonical decision seed plus a `prospect-band` namespace
- * so it never collides with the quality/jitter seed streams. The ranking itself is untouched — no
+ * >= 40 a band of 2, otherwise a band of 3. Selection WITHIN that band is deterministic, drawn
+ * only from the canonical seeded RandomSource, keyed off the canonical decision seed plus a
+ * `prospect-band` namespace so it never collides with the quality/jitter seed streams. The ranking itself is untouched — no
  * new ranking is built, and no hidden Player truth is ever read (the ranking already only reads
  * `OrganizationKnowledge`/valuation).
  */
