@@ -1,10 +1,10 @@
 import type { GameWorld } from '@/domain/world'
-import { deserializeGameWorldSave, deserializeGameWorldV2, serializeGameWorldV2 } from '@/save/GameWorldSaveV2'
+import { deserializeGameWorldSave, deserializeGameWorldV3, serializeGameWorldV3 } from '@/save/GameWorldSaveV3'
 import type { GameSaveRepository } from './GameSaveRepository'
 
 export async function saveCurrentGame(world: GameWorld, repository: GameSaveRepository, savedAt: string): Promise<void> {
-  const envelope = serializeGameWorldV2(world, savedAt)
-  deserializeGameWorldV2(envelope)
+  const envelope = serializeGameWorldV3(world, savedAt)
+  deserializeGameWorldV3(envelope)
   await repository.save(JSON.stringify(envelope))
 }
 

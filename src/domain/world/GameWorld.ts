@@ -34,8 +34,11 @@ import { deriveOrganizationEvaluationPolicy, type OrganizationEvaluationPolicy }
 import type { Agency, Agent, ContractNegotiation, MarketKnowledge, MarketReality, MarketSignal, PlayerRepresentation, RolePromise } from '@/domain/market'
 import { organizationIdForTeam, type OrganizationId } from '@/domain/ids'
 import type { PlayerKnowledgeId } from '@/domain/ids'
-import { createStaffPerson, createTeamStaffAssignment, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
+import { createStaffPerson, createTeamStaffAssignment, staffRoleDefinition, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
 import type { StaffPersonId, TeamStaffAssignmentId } from '@/domain/ids'
+import { createStaffEmployment, createStaffJobOpening, type StaffCareerHistoryEntry, type StaffEmployment, type StaffInterview, type StaffJobCandidacy, type StaffJobCandidacyId, type StaffJobOffer, type StaffJobOfferId, type StaffJobOpening, type StaffJobOpeningId } from '@/domain/staffCareer'
+import { createStaffContract, type StaffContract, type StaffContractId } from '@/domain/staffContract'
+import { createStaffReputationProfile, type StaffReputationProfile } from '@/domain/staffReputation'
 import { createDelegationOutcome, createResponsibility, validateResponsibilityAssignment, type DelegationOutcome, type DelegationOutcomeId, type Responsibility, type ResponsibilityId } from '@/domain/responsibility'
 import { createCoachRpgProfile, type CoachRpgProfile } from '@/domain/coachRpg'
 import { createCoachFinanceProfile, type CoachFinanceProfile } from '@/domain/coachFinances'
@@ -120,6 +123,14 @@ export interface GameWorld {
   readonly coachJobCandidaciesById: Readonly<Record<CoachJobCandidacyId, CoachJobCandidacy>>
   readonly coachInterviewsByCandidacyId: Readonly<Record<CoachJobCandidacyId, CoachInterview>>
   readonly coachJobOffersById: Readonly<Record<CoachJobOfferId, CoachJobOffer>>
+  readonly staffEmploymentByStaffId: Readonly<Record<StaffPersonId, StaffEmployment>>
+  readonly staffCareerHistoryByStaffId: Readonly<Record<StaffPersonId, readonly StaffCareerHistoryEntry[]>>
+  readonly staffJobOpeningsById: Readonly<Record<StaffJobOpeningId, StaffJobOpening>>
+  readonly staffJobCandidaciesById: Readonly<Record<StaffJobCandidacyId, StaffJobCandidacy>>
+  readonly staffInterviewsByCandidacyId: Readonly<Record<StaffJobCandidacyId, StaffInterview>>
+  readonly staffJobOffersById: Readonly<Record<StaffJobOfferId, StaffJobOffer>>
+  readonly staffContractsById: Readonly<Record<StaffContractId, StaffContract>>
+  readonly staffReputationProfilesByStaffId: Readonly<Record<StaffPersonId, StaffReputationProfile>>
   readonly relationshipsByKey: Readonly<Record<string, RelationshipProfile>>
   readonly personalitiesByPersonId: Readonly<Record<string, Personality>>
   readonly moraleByPersonId: Readonly<Record<string, MoraleProfile>>
@@ -250,6 +261,14 @@ export interface CreateGameWorldInput {
   coachJobCandidaciesById?: Readonly<Record<CoachJobCandidacyId, CoachJobCandidacy>>
   coachInterviewsByCandidacyId?: Readonly<Record<CoachJobCandidacyId, CoachInterview>>
   coachJobOffersById?: Readonly<Record<CoachJobOfferId, CoachJobOffer>>
+  staffEmploymentByStaffId?: Readonly<Record<StaffPersonId, StaffEmployment>>
+  staffCareerHistoryByStaffId?: Readonly<Record<StaffPersonId, readonly StaffCareerHistoryEntry[]>>
+  staffJobOpenings?: readonly StaffJobOpening[]
+  staffJobCandidacies?: readonly StaffJobCandidacy[]
+  staffInterviewsByCandidacyId?: Readonly<Record<StaffJobCandidacyId, StaffInterview>>
+  staffJobOffers?: readonly StaffJobOffer[]
+  staffContracts?: readonly StaffContract[]
+  staffReputationProfilesByStaffId?: Readonly<Record<StaffPersonId, StaffReputationProfile>>
   relationshipsByKey?: Readonly<Record<string, RelationshipProfile>>
   personalitiesByPersonId?: Readonly<Record<string, Personality>>
   moraleByPersonId?: Readonly<Record<string, MoraleProfile>>
@@ -401,6 +420,14 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     coachJobCandidaciesById: Object.freeze({ ...(input.coachJobCandidaciesById ?? {}) }),
     coachInterviewsByCandidacyId: Object.freeze({ ...(input.coachInterviewsByCandidacyId ?? {}) }),
     coachJobOffersById: Object.freeze({ ...(input.coachJobOffersById ?? {}) }),
+    staffEmploymentByStaffId: Object.freeze({ ...(input.staffEmploymentByStaffId ?? {}) }),
+    staffCareerHistoryByStaffId: Object.freeze({ ...(input.staffCareerHistoryByStaffId ?? {}) }),
+    staffJobOpeningsById: indexById(input.staffJobOpenings ?? [], 'Staff job opening'),
+    staffJobCandidaciesById: indexById(input.staffJobCandidacies ?? [], 'Staff job candidacy'),
+    staffInterviewsByCandidacyId: Object.freeze({ ...(input.staffInterviewsByCandidacyId ?? {}) }),
+    staffJobOffersById: indexById(input.staffJobOffers ?? [], 'Staff job offer'),
+    staffContractsById: indexById(input.staffContracts ?? [], 'Staff contract'),
+    staffReputationProfilesByStaffId: Object.freeze({ ...(input.staffReputationProfilesByStaffId ?? {}) }),
     relationshipsByKey: Object.freeze({ ...(input.relationshipsByKey ?? {}) }),
     personalitiesByPersonId: peopleProfiles([...input.coaches, ...input.players, ...(input.staffPeople ?? [])], input.personalitiesByPersonId, generatePersonality),
     moraleByPersonId: peopleProfiles([...input.coaches, ...input.players, ...(input.staffPeople ?? [])], input.moraleByPersonId, createMoraleProfile),
@@ -478,7 +505,7 @@ export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorld
 }
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
-  countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
+  countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
 }
 
 const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unknown>> = {
@@ -707,6 +734,53 @@ function validateWorld(world: GameWorld): void {
   for (const candidacy of Object.values(world.coachJobCandidaciesById)) { requireEntity(world.coaches, candidacy.coachId, 'Coach candidacy Coach'); requireEntity(world.coachJobOpeningsById, candidacy.jobOpeningId, 'Coach candidacy opening') }
   for (const [candidacyId, interview] of Object.entries(world.coachInterviewsByCandidacyId) as [CoachJobCandidacyId, CoachInterview][]) if (interview.candidacyId !== candidacyId || world.coachJobCandidaciesById[candidacyId] === undefined) throw new GameWorldValidationError(`Coach interview references missing candidacy ${candidacyId}`)
   for (const offer of Object.values(world.coachJobOffersById)) { requireEntity(world.coaches, offer.coachId, 'Coach offer Coach'); requireEntity(world.teams, offer.teamId, 'Coach offer Team'); requireEntity(world.coachJobOpeningsById, offer.jobOpeningId, 'Coach offer opening') }
+  for (const [staffId, employment] of Object.entries(world.staffEmploymentByStaffId) as [StaffPersonId, StaffEmployment][]) {
+    requireEntity(world.staffPeopleById, staffId, 'Staff employment')
+    createStaffEmployment(employment)
+    const assignment = Object.values(world.teamStaffAssignmentsById).find((item) => item.staffPersonId === staffId)
+    if (employment.status === 'employed') {
+      if (assignment === undefined || assignment.teamId !== employment.teamId || assignment.role !== employment.roleId) throw new GameWorldValidationError(`Staff ${staffId} employment does not match Team assignment`)
+    } else if (assignment !== undefined) throw new GameWorldValidationError(`Staff ${staffId} employment does not match Team assignment`)
+  }
+  for (const [staffId, history] of Object.entries(world.staffCareerHistoryByStaffId) as [StaffPersonId, readonly StaffCareerHistoryEntry[]][]) for (let index = 0; index < history.length; index += 1) {
+    const entry = history[index]!
+    if (entry.staffId !== staffId) throw new GameWorldValidationError(`Staff career history does not match Staff ${staffId}`)
+    if (entry.kind === 'appointment' && !(['initialAppointment', 'hired', 'promoted', 'reassigned'] as const).includes(entry.reason)) throw new GameWorldValidationError(`Staff career history has an invalid appointment reason for Staff ${staffId}`)
+    if (entry.kind === 'departure' && !(['fired', 'resigned', 'acceptedOtherJob', 'retired'] as const).includes(entry.reason)) throw new GameWorldValidationError(`Staff career history has an invalid departure reason for Staff ${staffId}`)
+    if (index > 0 && compareGameDates(history[index - 1]!.date, entry.date) > 0) throw new GameWorldValidationError(`Staff career history is not ordered for Staff ${staffId}`)
+    requireEntity(world.teams, entry.teamId, 'Staff career history Team')
+    if (entry.kind === 'appointment') staffRoleDefinition(entry.roleId) // throws RangeError if unknown
+  }
+  for (const opening of Object.values(world.staffJobOpeningsById)) { createStaffJobOpening(opening); requireEntity(world.teams, opening.teamId, `Staff job opening ${opening.id} Team`); staffRoleDefinition(opening.roleId) }
+  const staffJobOpeningOpenKeys = new Set<string>()
+  for (const opening of Object.values(world.staffJobOpeningsById)) {
+    if (opening.status !== 'open') continue
+    const key = `${opening.teamId}:${opening.roleId}`
+    if (staffJobOpeningOpenKeys.has(key)) throw new GameWorldValidationError(`Team ${opening.teamId} has more than one open Staff job opening for role ${opening.roleId}`)
+    staffJobOpeningOpenKeys.add(key)
+  }
+  for (const candidacy of Object.values(world.staffJobCandidaciesById)) { requireEntity(world.staffPeopleById, candidacy.staffId, `Staff candidacy ${candidacy.id} Staff`); requireEntity(world.staffJobOpeningsById, candidacy.jobOpeningId, `Staff candidacy ${candidacy.id} opening`) }
+  for (const [candidacyId, interview] of Object.entries(world.staffInterviewsByCandidacyId) as [StaffJobCandidacyId, StaffInterview][]) if (interview.candidacyId !== candidacyId || world.staffJobCandidaciesById[candidacyId] === undefined) throw new GameWorldValidationError(`Staff interview references missing candidacy ${candidacyId}`)
+  for (const offer of Object.values(world.staffJobOffersById)) { requireEntity(world.staffPeopleById, offer.staffId, `Staff offer ${offer.id} Staff`); requireEntity(world.teams, offer.teamId, `Staff offer ${offer.id} Team`); requireEntity(world.staffJobOpeningsById, offer.jobOpeningId, `Staff offer ${offer.id} opening`) }
+  const staffPendingOfferKeys = new Set<StaffPersonId>()
+  for (const offer of Object.values(world.staffJobOffersById)) {
+    if (offer.status !== 'pending') continue
+    if (staffPendingOfferKeys.has(offer.staffId)) throw new GameWorldValidationError(`Staff ${offer.staffId} has more than one pending Staff job offer`)
+    staffPendingOfferKeys.add(offer.staffId)
+  }
+  const staffActiveContractKeys = new Set<StaffPersonId>()
+  for (const contract of Object.values(world.staffContractsById)) {
+    createStaffContract(contract)
+    requireEntity(world.staffPeopleById, contract.staffId, `Staff contract ${contract.id} Staff`)
+    requireEntity(world.teams, contract.teamId, `Staff contract ${contract.id} Team`)
+    if (contract.termination === undefined) {
+      if (staffActiveContractKeys.has(contract.staffId)) throw new GameWorldValidationError(`Staff ${contract.staffId} has more than one active Staff contract`)
+      staffActiveContractKeys.add(contract.staffId)
+      const employment = world.staffEmploymentByStaffId[contract.staffId]
+      if (employment?.status !== 'employed' || employment.teamId !== contract.teamId) throw new GameWorldValidationError(`Staff contract ${contract.id} does not match Staff ${contract.staffId} employment`)
+    }
+  }
+  for (const [staffId, profile] of Object.entries(world.staffReputationProfilesByStaffId) as [StaffPersonId, StaffReputationProfile][]) { requireEntity(world.staffPeopleById, staffId, 'Staff reputation profile'); createStaffReputationProfile(profile) }
   for (const history of Object.values(world.seasonHistoryBySeasonId)) validateSeasonHistory(world, history)
   for (const resolution of Object.values(world.promotionRelegationResolutionsById)) validatePromotionRelegationResolution(world, resolution)
   for (const draft of Object.values(world.draftsById)) validateDraft(world, draft)
