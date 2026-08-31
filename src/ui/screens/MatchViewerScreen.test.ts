@@ -7,13 +7,13 @@ import { createDefaultTacticalPlan } from '@/engine/match'
 
 import { MatchViewerScreen } from './MatchViewerScreen'
 
-function renderViewer(currentEventIndex = 0, isPlaying = true): string {
+function renderViewer(currentEventIndex = 0, isPlaying = true, resultApplied = false): string {
   const world = createNewGame()
   const simulation = prepareUserMatch(world)
   const homeTeam = world.teams[simulation.homeTeamId]!
   return renderToStaticMarkup(createElement(MatchViewerScreen, {
     world, simulation, homeTeamName: homeTeam.name, awayTeamName: world.teams[simulation.awayTeamId]!.name,
-    currentEventIndex, isPlaying, speed: 1, resultApplied: false,
+    currentEventIndex, isPlaying, speed: 1, resultApplied,
     onPause: () => undefined, onResume: () => undefined, onSpeedChange: () => undefined, onRevealNext: () => undefined,
     onRequestPresentationSegment: () => { throw new Error('Presentation is not requested during static rendering') },
     onCompletePresentationSegment: () => undefined, onSkipToEnd: () => undefined, onApplyResult: () => undefined, onContinue: () => undefined,
@@ -52,5 +52,10 @@ describe('MatchViewerScreen workspace UX', () => {
     expect(markup).toContain('CONTINUE')
     expect(markup).not.toContain('SIM QUARTER')
     expect(markup).not.toContain('SKIP TO END')
+  })
+
+  it('does not allow Continue to clear the viewer before the canonical result is applied', () => {
+    expect(renderViewer(Number.MAX_SAFE_INTEGER, false)).toContain('disabled=""')
+    expect(renderViewer(Number.MAX_SAFE_INTEGER, false, true)).not.toContain('disabled=""')
   })
 })

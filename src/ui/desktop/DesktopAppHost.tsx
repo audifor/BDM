@@ -31,7 +31,7 @@ export function DesktopAppHost({ appId, entityDestination, world, actions }: { r
   if (appId === 'club') return <ClubPcbPage />
   if (appId === 'staff') return <ClubPcbPage initialTab="staff" />
   if (appId === 'medical') return <MedicalPcbPage />
-  if (appId === 'competition') return <CompetitionPcbPage />
+  if (appId === 'competition') return <CompetitionPcbPage onOpenEntity={actions.openEntity} world={world} />
   if (key === 'entity') return <EntityPageApp destination={entityDestination} onOpenEntity={actions.openEntity ?? (() => undefined)} world={world} />
   if (key === 'board') return <BoardScreen world={world} />
   if (key === 'squad') return <SquadScreen onOpenEntity={actions.openEntity} onOpenSection={actions.openApp} world={world} />

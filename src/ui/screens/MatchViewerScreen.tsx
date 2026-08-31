@@ -343,6 +343,7 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
             </strong>
             <button
               className="primary-button"
+              disabled={!props.resultApplied}
               onClick={props.onContinue}
               type="button"
             >
