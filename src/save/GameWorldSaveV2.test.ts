@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
-import { updateGameWorld } from '@/domain/world'
+import { getNextScheduledGame, updateGameWorld, type GameWorld } from '@/domain/world'
 import { CANONICAL_RATING_KEYS, TENDENCY_KEYS, canonicalizeLegacyRatings } from '@/domain/player'
 import { playerIdFromString } from '@/domain/ids'
-import { organizationIdForTeam } from '@/domain/ids'
+import { organizationIdForTeam, staffPersonIdFromString, teamStaffAssignmentIdFromString, type TeamId } from '@/domain/ids'
+import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { deriveOrganizationPlayerValuation } from '@/domain/intelligence'
+import { requestScouting } from '@/engine/scouting'
+import { progressOppositionScoutingReports } from '@/engine/tactics/OppositionScoutingReportEngine'
 import { serializeGameWorldV1 } from './GameWorldSaveV1'
 import { deserializeGameWorldSave, deserializeGameWorldV2, migrateGameWorldSaveV1ToV2, parseCanonicalRatingsV2, parsePlayerTendenciesV2, serializeGameWorldV2 } from './GameWorldSaveV2'
 import { ensurePlayerKnowledge } from '@/engine/world'
@@ -101,6 +104,81 @@ describe('GameWorldSaveV2', () => {
     expect(JSON.stringify(saved)).not.toMatch(/derivedPlayerValue|organizationPlayerValue|draftTalentScore|recruitingTalentScore|freeAgentTalentScore|tradeTalentScore/)
     const old = structuredClone(saved); delete (old.payload.scoutingRuntime as Record<string, unknown>).organizationPolicies
     expect(deserializeGameWorldV2(old).organizationEvaluationPoliciesById).toEqual(world.organizationEvaluationPoliciesById)
+  })
+
+  it('V2 round-trip preserves OrganizationKnowledge.provenance === "staffFamiliarity"', () => {
+    const base = createNewGame(); const team = Object.values(base.teams)[0]!, player = Object.values(base.players)[0]!, organizationId = organizationIdForTeam(team.id)
+    const world = updateGameWorld(base, { organizationKnowledge: [{ organizationId, subjectPlayerId: player.id, dimensions: { shooting: { coverage: .5, confidence: .5, assessedAt: base.currentDate, provenance: 'staffFamiliarity', estimate: 60, uncertainty: 6 } } }] })
+    const loaded = deserializeGameWorldV2(serializeGameWorldV2(world, savedAt))
+    expect(loaded.organizationKnowledge).toEqual(world.organizationKnowledge)
+    expect(loaded.organizationKnowledge[0]!.dimensions.shooting!.provenance).toBe('staffFamiliarity')
+  })
+
+  it('V2 round-trip preserves ScoutingAssignment.staffQualityScore', () => {
+    const base = createNewGame(); const team = Object.values(base.teams)[0]!, player = Object.values(base.players).find((candidate) => !team.rosterPlayerIds.includes(candidate.id))!
+    const scout = Object.values(base.teamStaffAssignmentsById).find((item) => item.teamId === team.id && item.role === 'regionalScout')!
+    const world = requestScouting(base, { organizationId: organizationIdForTeam(team.id), playerId: player.id, missionType: 'QUICK_LOOK', evaluatorStaffId: scout.staffPersonId, requestedBy: 'SCOUTING_DEPARTMENT', staffQualityScore: 73 })
+    const assignment = Object.values(world.scoutingAssignmentsById)[0]!
+    expect(assignment.staffQualityScore).toBe(73)
+    const loaded = deserializeGameWorldV2(serializeGameWorldV2(world, savedAt))
+    expect(Object.values(loaded.scoutingAssignmentsById)[0]!.staffQualityScore).toBe(73)
+  })
+
+  it('HEAD_COACH assignment without staffQualityScore round-trips identically (still undefined)', () => {
+    const base = createNewGame(); const team = Object.values(base.teams)[0]!, player = Object.values(base.players).find((candidate) => !team.rosterPlayerIds.includes(candidate.id))!
+    const scout = Object.values(base.teamStaffAssignmentsById).find((item) => item.teamId === team.id && item.role === 'regionalScout')!
+    const world = requestScouting(base, { organizationId: organizationIdForTeam(team.id), playerId: player.id, missionType: 'QUICK_LOOK', evaluatorStaffId: scout.staffPersonId, requestedBy: 'HEAD_COACH' })
+    const assignment = Object.values(world.scoutingAssignmentsById)[0]!
+    expect(assignment.staffQualityScore).toBeUndefined()
+    const loaded = deserializeGameWorldV2(serializeGameWorldV2(world, savedAt))
+    expect(Object.values(loaded.scoutingAssignmentsById)[0]!.staffQualityScore).toBeUndefined()
+    expect(Object.values(loaded.scoutingAssignmentsById)[0]!).toEqual(assignment)
+  })
+
+  it('rejects a saved ScoutingAssignment.staffQualityScore below 0', () => {
+    const base = createNewGame(); const team = Object.values(base.teams)[0]!, player = Object.values(base.players).find((candidate) => !team.rosterPlayerIds.includes(candidate.id))!
+    const scout = Object.values(base.teamStaffAssignmentsById).find((item) => item.teamId === team.id && item.role === 'regionalScout')!
+    const world = requestScouting(base, { organizationId: organizationIdForTeam(team.id), playerId: player.id, missionType: 'QUICK_LOOK', evaluatorStaffId: scout.staffPersonId, requestedBy: 'SCOUTING_DEPARTMENT', staffQualityScore: 50 })
+    const saved = serializeGameWorldV2(world, savedAt)
+    const tampered = structuredClone(saved); (tampered.payload.scoutingRuntime as { assignments: Record<string, unknown>[] }).assignments[0]!.staffQualityScore = -1
+    expect(() => deserializeGameWorldV2(tampered)).toThrow()
+  })
+
+  it('rejects a saved ScoutingAssignment.staffQualityScore above 100', () => {
+    const base = createNewGame(); const team = Object.values(base.teams)[0]!, player = Object.values(base.players).find((candidate) => !team.rosterPlayerIds.includes(candidate.id))!
+    const scout = Object.values(base.teamStaffAssignmentsById).find((item) => item.teamId === team.id && item.role === 'regionalScout')!
+    const world = requestScouting(base, { organizationId: organizationIdForTeam(team.id), playerId: player.id, missionType: 'QUICK_LOOK', evaluatorStaffId: scout.staffPersonId, requestedBy: 'SCOUTING_DEPARTMENT', staffQualityScore: 50 })
+    const saved = serializeGameWorldV2(world, savedAt)
+    const tampered = structuredClone(saved); (tampered.payload.scoutingRuntime as { assignments: Record<string, unknown>[] }).assignments[0]!.staffQualityScore = 101
+    expect(() => deserializeGameWorldV2(tampered)).toThrow()
+  })
+
+  it('V2 round-trip preserves OppositionScoutingReport through the canonical runtime flow', () => {
+    const base = createNewGame()
+    const teamId = Object.values(base.teams).map((team) => team.id).find((id) => getNextScheduledGame(base, id) !== undefined) as TeamId | undefined
+    if (teamId === undefined) return
+    const staffId = staffPersonIdFromString(`v2-opp-report-staff-${teamId}`)
+    const flatAttributes = Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 50])) as Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number>
+    const withStaff = updateGameWorld(base, {
+      staffPeople: [...Object.values(base.staffPeopleById), { id: staffId, identity: { firstName: 'V2', lastName: 'Report' }, professional: { attributes: flatAttributes } }],
+      teamStaffAssignments: [...Object.values(base.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString(`v2-opp-report-assignment-${teamId}`), staffPersonId: staffId, teamId, role: 'advanceScout', assignedOn: base.currentDate }],
+    })
+    const delegated = updateGameWorld(withStaff, {
+      responsibilities: [...Object.values(withStaff.responsibilitiesById).filter((r) => r.id !== (`responsibility:${teamId}:oppositionScouting` as never)), { id: `responsibility:${teamId}:oppositionScouting` as never, teamId, kind: 'oppositionScouting', mode: 'advisory', holderStaffId: staffId }],
+    })
+    const progressed = progressOppositionScoutingReports(delegated)
+    expect(Object.keys(progressed.oppositionScoutingReportsById)).toHaveLength(1)
+    const loaded = deserializeGameWorldV2(serializeGameWorldV2(progressed, savedAt))
+    expect(loaded.oppositionScoutingReportsById).toEqual(progressed.oppositionScoutingReportsById)
+  })
+
+  it('a V2 save predating oppositionScoutingReports/staffQualityScore (additive fields absent) still loads correctly', () => {
+    const base = createNewGame(); const saved = serializeGameWorldV2(base, savedAt)
+    const legacyPayload = structuredClone(saved)
+    delete (legacyPayload.payload as unknown as Record<string, unknown>).oppositionScoutingReports
+    const loaded = deserializeGameWorldV2(legacyPayload)
+    expect(loaded.oppositionScoutingReportsById).toEqual({})
+    expect(loaded.scoutingAssignmentsById).toEqual({})
   })
 
   it('migrates identical legacy inputs deterministically while identity diversifies canonical detail', () => {

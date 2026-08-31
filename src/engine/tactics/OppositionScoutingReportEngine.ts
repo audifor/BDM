@@ -3,8 +3,7 @@ import { createDelegationOutcome, delegationOutcomeIdFromString } from '@/domain
 import { createOppositionScoutingReport, oppositionScoutingReportId, MAX_FLAGGED_PLAYERS, type DefensiveEmphasis, type OppositionScoutingReport, type PaceAdjustment } from '@/domain/tactics'
 import { attributeKnowledgeDimension, getNextScheduledGame, getTeam, type GameWorld } from '@/domain/world'
 import { resolveAdvisoryResponsibility, tacticsQuality } from '@/engine/staff'
-import { getPlayerKnowledgeSummary } from '@/engine/scouting'
-import type { OrganizationKnowledgeDimension } from '@/domain/knowledge'
+import type { OrganizationKnowledge, OrganizationKnowledgeDimension } from '@/domain/knowledge'
 
 /**
  * Generates the Wave 3 pre-match `OppositionScoutingReport` (docs/STAFF_SYSTEM_V2.md §15.1/§8)
@@ -35,7 +34,7 @@ function progressTeamOppositionReport(world: GameWorld, teamId: TeamId): GameWor
 
   const seed = `staff-decision-quality-v1:${resolution.responsibilityId}:${world.currentDate}`
   const qualityScore = tacticsQuality(resolution.context, seed)
-  const recommendations = deriveRecommendations(world, teamId, opponentTeamId, qualityScore, seed)
+  const recommendations = deriveRecommendations(world, teamId, opponentTeamId, qualityScore)
 
   const report = createOppositionScoutingReport({
     id: reportId,
@@ -71,7 +70,7 @@ function progressTeamOppositionReport(world: GameWorld, teamId: TeamId): GameWor
     ...world,
     oppositionScoutingReportsById: { ...world.oppositionScoutingReportsById, [reportId]: report },
     delegationOutcomesById: { ...world.delegationOutcomesById, [outcomeId]: outcome },
-    organizationKnowledge: applyStaffFamiliarity(world, teamId, opponentTeamId, world.currentDate),
+    organizationKnowledge: applyStaffFamiliarity(world, teamId, opponentTeamId, resolution.staffId),
   }
 }
 
@@ -81,95 +80,155 @@ interface Recommendations {
   readonly flaggedPlayerIds: readonly PlayerId[]
 }
 
-const MIN_COVERAGE_FOR_RECOMMENDATION = 0.35
 const MIN_COVERAGE_FOR_FLAG = 0.3
 
+/** Offensive dimensions legitimately readable off `OrganizationKnowledge` that indicate a PERIMETER threat (shot creation/shooting off the dribble or catch). */
+const PERIMETER_THREAT_DIMENSIONS = ['shooting', 'creation'] as const
+/** Offensive dimensions that indicate an INTERIOR threat (finishing at the rim, offensive rebounding/putbacks). */
+const INTERIOR_THREAT_DIMENSIONS = ['finishing', 'rebounding'] as const
+/** `physical` (speed/quickness/conditioning) is the only existing dimension that legitimately bears on tempo — never confidence-derived causality. */
+const PACE_SIGNAL_DIMENSION = 'physical'
+
+const MIN_TEAM_KNOWLEDGE_WEIGHT = 0.6
+const EMPHASIS_MARGIN_RATIO = 0.15
+const PACE_SIGNAL_ESTIMATE_MIDPOINT = 50
+const PACE_SIGNAL_SCALE = 25
+
 /**
- * Every value here comes from `getPlayerKnowledgeSummary` (itself sourced only from
- * `OrganizationKnowledge`) — never from `Player.basketball`. Insufficient aggregate knowledge
- * (`overallCoverage` below the bounded threshold) yields neutral/undefined output rather than a
- * guess; quality only bounds the pace adjustment's magnitude/selection stability, never grants
- * additional information access.
+ * Every value here comes directly from `OrganizationKnowledge` (via the world's roster + existing
+ * dimension records) — never from `Player.basketball`. §4: emphasis and flagged players are driven
+ * by weighted-estimate threat scores per legitimate offensive dimension, not a seeded coin flip;
+ * pace is driven only by the `physical` dimension (an actual tempo-relevant signal already in the
+ * domain vocabulary), never by confidence alone. Insufficient/too-close knowledge yields
+ * `undefined`/an empty flagged list rather than a guess. `qualityScore` only widens/narrows the
+ * margin required to commit to a concrete recommendation — it never grants additional information.
  */
-function deriveRecommendations(world: GameWorld, teamId: TeamId, opponentTeamId: TeamId, qualityScore: number, seed: string): Recommendations {
+function deriveRecommendations(world: GameWorld, teamId: TeamId, opponentTeamId: TeamId, qualityScore: number): Recommendations {
   const opponent = getTeam(world, opponentTeamId)
   const organizationId = organizationIdForTeam(teamId)
-  const summaries = opponent.rosterPlayerIds.map((playerId) => ({ playerId, summary: getPlayerKnowledgeSummary(world, organizationId, playerId) }))
-  const known = summaries.filter((entry) => entry.summary.overallCoverage >= MIN_COVERAGE_FOR_RECOMMENDATION)
+  const roster = opponent.rosterPlayerIds.map((playerId) => ({ playerId, knowledge: findKnowledge(world.organizationKnowledge, organizationId, playerId) }))
 
-  if (known.length === 0) {
-    return { flaggedPlayerIds: [] }
-  }
+  const perimeterThreat = aggregateThreat(roster, PERIMETER_THREAT_DIMENSIONS)
+  const interiorThreat = aggregateThreat(roster, INTERIOR_THREAT_DIMENSIONS)
+  const totalWeight = perimeterThreat.totalWeight + interiorThreat.totalWeight
 
-  const averageConfidence = known.reduce((sum, entry) => sum + entry.summary.overallConfidence, 0) / known.length
-  // Bounded, deterministic: higher aggregate knowledge confidence and higher Staff quality both
-  // narrow toward committing to a concrete recommendation; low confidence stays neutral/undefined
-  // rather than fabricating a guess from thin information.
-  const commitThreshold = 0.4
-  const paceAdjustment: PaceAdjustment | undefined = averageConfidence >= commitThreshold
-    ? clampPace(Math.round((averageConfidence - 0.5) * 4 + (qualityScore - 50) / 50))
-    : undefined
-  const defensiveEmphasis: DefensiveEmphasis | undefined = averageConfidence >= commitThreshold
-    ? (hashToUnit(`${seed}:emphasis`) >= 0.5 ? 'interior' : 'perimeter')
-    : undefined
+  // Quality narrows/widens the margin required to commit — higher quality commits on a smaller
+  // observed gap, lower quality requires a clearer gap before recommending anything.
+  const requiredMargin = EMPHASIS_MARGIN_RATIO * (1 + (50 - qualityScore) / 100)
+  const emphasisGap = totalWeight === 0 ? 0 : Math.abs(perimeterThreat.weightedScore - interiorThreat.weightedScore) / totalWeight
+  const defensiveEmphasis: DefensiveEmphasis | undefined = totalWeight < MIN_TEAM_KNOWLEDGE_WEIGHT || emphasisGap < requiredMargin
+    ? undefined
+    : perimeterThreat.weightedScore > interiorThreat.weightedScore ? 'perimeter' : 'interior'
 
-  const flaggedPlayerIds = known
-    .filter((entry) => entry.summary.overallCoverage >= MIN_COVERAGE_FOR_FLAG)
-    .sort((a, b) => (b.summary.overallCoverage * b.summary.overallConfidence) - (a.summary.overallCoverage * a.summary.overallConfidence) || a.playerId.localeCompare(b.playerId))
+  const paceSignal = aggregatePaceSignal(roster)
+  const recommendedPaceAdjustment: PaceAdjustment | undefined = paceSignal === undefined ? undefined : clampPace(Math.round((paceSignal - PACE_SIGNAL_ESTIMATE_MIDPOINT) / PACE_SIGNAL_SCALE))
+
+  const flaggedPlayerIds = roster
+    .map((entry) => ({ playerId: entry.playerId, threat: knownThreatScore(entry.knowledge) }))
+    .filter((entry) => entry.threat !== undefined && entry.threat.weight >= MIN_COVERAGE_FOR_FLAG)
+    .sort((a, b) => b.threat!.score - a.threat!.score || a.playerId.localeCompare(b.playerId))
     .slice(0, MAX_FLAGGED_PLAYERS)
     .map((entry) => entry.playerId)
 
   return {
-    ...(paceAdjustment === undefined ? {} : { recommendedPaceAdjustment: paceAdjustment }),
+    ...(recommendedPaceAdjustment === undefined ? {} : { recommendedPaceAdjustment }),
     ...(defensiveEmphasis === undefined ? {} : { recommendedDefensiveEmphasis: defensiveEmphasis }),
     flaggedPlayerIds,
   }
+}
+
+function findKnowledge(knowledge: readonly OrganizationKnowledge[], organizationId: ReturnType<typeof organizationIdForTeam>, playerId: PlayerId): OrganizationKnowledge | undefined {
+  return knowledge.find((item) => item.organizationId === organizationId && item.subjectPlayerId === playerId)
+}
+
+/** weight = coverage × confidence per contributing dimension finding; score = weight-weighted estimate sum. Bounded: a dimension with no `estimate` contributes zero score but its weight is excluded entirely (never treated as a zero-rated threat). */
+function aggregateThreat(roster: readonly { readonly knowledge: OrganizationKnowledge | undefined }[], dimensionKeys: readonly string[]): { readonly weightedScore: number; readonly totalWeight: number } {
+  let weightedScore = 0
+  let totalWeight = 0
+  for (const entry of roster) {
+    for (const key of dimensionKeys) {
+      const finding = entry.knowledge?.dimensions[key]
+      if (finding?.estimate === undefined) continue
+      const weight = finding.coverage * finding.confidence
+      weightedScore += finding.estimate * weight
+      totalWeight += weight
+    }
+  }
+  return { weightedScore, totalWeight }
+}
+
+function aggregatePaceSignal(roster: readonly { readonly knowledge: OrganizationKnowledge | undefined }[]): number | undefined {
+  const { weightedScore, totalWeight } = aggregateThreat(roster, [PACE_SIGNAL_DIMENSION])
+  return totalWeight < MIN_TEAM_KNOWLEDGE_WEIGHT ? undefined : weightedScore / totalWeight
+}
+
+/** Best (highest weighted) offensive-threat estimate for one player, from legitimate offense dimensions only — used purely to rank/flag, never to leak Player truth. */
+function knownThreatScore(knowledge: OrganizationKnowledge | undefined): { readonly score: number; readonly weight: number } | undefined {
+  if (knowledge === undefined) return undefined
+  let best: { readonly score: number; readonly weight: number } | undefined
+  for (const key of [...PERIMETER_THREAT_DIMENSIONS, ...INTERIOR_THREAT_DIMENSIONS]) {
+    const finding = knowledge.dimensions[key]
+    if (finding?.estimate === undefined) continue
+    const weight = finding.coverage * finding.confidence
+    if (best === undefined || finding.estimate * weight > best.score * best.weight) best = { score: finding.estimate, weight }
+  }
+  return best
 }
 
 function clampPace(value: number): PaceAdjustment {
   return Math.max(-2, Math.min(2, value)) as PaceAdjustment
 }
 
-function hashToUnit(key: string): number {
-  let hash = 2166136261
-  for (const char of key) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619)
-  return (hash >>> 0) / 0xffffffff
-}
-
 const FAMILIARITY_COVERAGE_BOOST = 0.05
 const FAMILIARITY_CONFIDENCE_BOOST = 0.05
 const FAMILIARITY_UNCERTAINTY_REDUCTION = 1
 
+/** Synthetic, non-report marker recorded in `evidenceIds` once a given Staff's familiarity boost has been applied to a dimension — never resolves to a real `Evidence` record, purely an idempotency tag. */
+function familiarityMarker(staffId: import('@/domain/ids').StaffPersonId): string {
+  return `staff-familiarity:${staffId}`
+}
+
 /**
- * §12: prior relevant Staff scouting history (existing `EvaluatorReport`s attributed via
- * `attributeKnowledgeDimension`) against `opponentTeamId`'s roster may provide a small, bounded
- * familiarity benefit — never created from hidden truth, only from the fact that the
- * organization has previously produced real reports about these players. Dimensions touched
- * carry provenance `'staffFamiliarity'`. Idempotent per generated report: this function is only
- * ever invoked once, from the exactly-once report-generation gate above, so the same game/report
- * cannot repeatedly compound familiarity across calendar ticks.
+ * §12/§3: prior relevant Staff scouting history may provide a small, bounded familiarity benefit —
+ * never created from hidden truth, only from the fact that the CURRENT `oppositionScouting` holder
+ * personally authored real reports about these players before. Three invariants enforced here that
+ * were previously violated:
+ *
+ * - HOLDER-SPECIFIC (§3.1): only reports attributed to `resolution.staffId` (the Staff who
+ *   currently holds the responsibility) count — a report authored by a different Staff member, or
+ *   familiarity accrued under a since-replaced holder, grants nothing.
+ * - PER-DIMENSION (§3.2): each dimension is evaluated independently via its OWN `reportIds` — a
+ *   report covering `shooting` never boosts unrelated dimensions like `physical` or `potential:*`.
+ * - NO ARTIFICIAL REFRESH (§3.3): `assessedAt` is left untouched; familiarity is not a new
+ *   observation.
+ * - NO COMPOUNDING (§3.4): applying the SAME holder's familiarity to a dimension that already
+ *   carries their `familiarityMarker` in `evidenceIds` is a no-op — repeated matchups against the
+ *   same opponent without new evidence never grow coverage/confidence past one bounded application
+ *   per holder per dimension.
  */
-function applyStaffFamiliarity(world: GameWorld, teamId: TeamId, opponentTeamId: TeamId, now: import('@/domain/date').GameDate): readonly import('@/domain/knowledge').OrganizationKnowledge[] {
+function applyStaffFamiliarity(world: GameWorld, teamId: TeamId, opponentTeamId: TeamId, holderStaffId: import('@/domain/ids').StaffPersonId): readonly import('@/domain/knowledge').OrganizationKnowledge[] {
   const organizationId = organizationIdForTeam(teamId)
   const opponent = getTeam(world, opponentTeamId)
   return world.organizationKnowledge.map((entry) => {
     if (entry.organizationId !== organizationId || !opponent.rosterPlayerIds.includes(entry.subjectPlayerId)) return entry
-    const hasPriorStaffReports = Object.values(entry.dimensions).some((dimension) => attributeKnowledgeDimension(world, dimension).length > 0)
-    if (!hasPriorStaffReports) return entry
     return {
       ...entry,
-      dimensions: Object.fromEntries(Object.entries(entry.dimensions).map(([key, dimension]) => [key, boostWithFamiliarity(dimension, now)])),
+      dimensions: Object.fromEntries(Object.entries(entry.dimensions).map(([key, dimension]) => [key, maybeBoostWithFamiliarity(world, dimension, holderStaffId)])),
     }
   })
 }
 
-function boostWithFamiliarity(dimension: OrganizationKnowledgeDimension, now: import('@/domain/date').GameDate): OrganizationKnowledgeDimension {
+function maybeBoostWithFamiliarity(world: GameWorld, dimension: OrganizationKnowledgeDimension, holderStaffId: import('@/domain/ids').StaffPersonId): OrganizationKnowledgeDimension {
+  const marker = familiarityMarker(holderStaffId)
+  if (dimension.evidenceIds?.includes(marker) === true) return dimension // already applied for this holder — no compounding
+  const authoredByHolder = attributeKnowledgeDimension(world, dimension).some((record) => record.staffId === holderStaffId)
+  if (!authoredByHolder) return dimension
   return {
     ...dimension,
     coverage: Math.min(1, dimension.coverage + FAMILIARITY_COVERAGE_BOOST),
     confidence: Math.min(1, dimension.confidence + FAMILIARITY_CONFIDENCE_BOOST),
     ...(dimension.uncertainty === undefined ? {} : { uncertainty: Math.max(1, dimension.uncertainty - FAMILIARITY_UNCERTAINTY_REDUCTION) }),
-    assessedAt: now,
     provenance: 'staffFamiliarity',
+    evidenceIds: [...new Set([...(dimension.evidenceIds ?? []), marker])],
   }
 }
