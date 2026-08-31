@@ -10,4 +10,11 @@ describe('StaffPerson',()=>{
   it('rejects missing and invalid professional attributes',()=>{const {coaching:_missing,...missing}=attributes;expect(()=>createStaffPerson({...medical,professional:{attributes:missing as typeof attributes}})).toThrow();expect(()=>createStaffPerson({...medical,professional:{attributes:{...attributes,coaching:101}}})).toThrow();expect(()=>createStaffPerson({...medical,professional:{attributes:{...attributes,coaching:1.5}}})).toThrow()})
   it('derives role proficiency for every role from centralized weights',()=>{for(const weights of Object.values(STAFF_ROLE_ATTRIBUTE_WEIGHTS))expect(Object.values(weights).reduce((sum,value)=>sum+value,0)).toBeCloseTo(1);expect(calculateStaffRoleProficiency(medical,'medical')).toBeGreaterThan(calculateStaffRoleProficiency(medical,'assistantCoach'));expect(()=>calculateStaffRoleProficiency(medical,'scout')).not.toThrow()})
   it('validates role assignment structure without making role part of the person',()=>expect(createTeamStaffAssignment({id:teamStaffAssignmentIdFromString('assignment'),staffPersonId:medical.id,teamId:teamIdFromString('team'),role:'medical',assignedOn:createGameDate(2032,10,1)}).role).toBe('medical'))
+  it('accepts optional dateOfBirth and nationality identity fields, additive and backward-compatible',()=>{
+    const withIdentity=createStaffPerson({...medical,id:staffPersonIdFromString('staff-with-identity'),identity:{firstName:'Mira',lastName:'Vale',dateOfBirth:createGameDate(1990,3,15),nationality:'Arcadia'}})
+    expect(withIdentity.identity.dateOfBirth).toBe(createGameDate(1990,3,15))
+    expect(withIdentity.identity.nationality).toBe('Arcadia')
+    expect(medical.identity.dateOfBirth).toBeUndefined()
+    expect(medical.identity.nationality).toBeUndefined()
+  })
 })

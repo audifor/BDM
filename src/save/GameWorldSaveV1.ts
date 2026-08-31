@@ -33,6 +33,8 @@ import { generatePlayerPotential } from '@/engine/world/PlayerPotentialGenerator
 import { ensureTeamFinances } from '@/engine/world/TeamFinancesEnrichment'
 import { ensurePlayerKnowledge } from '@/engine/world/PlayerKnowledgeEnrichment'
 import { ensureStaffStructure } from '@/engine/world/StaffStructureEnrichment'
+import { ensureResponsibilityStructure } from '@/engine/world/ResponsibilityEnrichment'
+import { delegationOutcomeIdFromString, responsibilityIdFromString } from '@/domain/responsibility'
 import { playerKnowledgeIdFromString } from '@/domain/ids'
 import { createCoachRpgProfile } from '@/domain/coachRpg'
 import { createCoachFinanceProfile } from '@/domain/coachFinances'
@@ -74,6 +76,8 @@ export interface GameWorldSaveV1 {
   readonly organizationEvaluationPolicies?: readonly JsonRecord[]
   readonly staffPeople: readonly JsonRecord[]
   readonly teamStaffAssignments: readonly JsonRecord[]
+  readonly responsibilities?: readonly JsonRecord[]
+  readonly delegationOutcomes?: readonly JsonRecord[]
   readonly coachProfessionalProfilesByCoachId?: readonly JsonRecord[]
   readonly coachRpgProfilesByCoachId?: readonly JsonRecord[]
   readonly coachFinancesByCoachId?: readonly JsonRecord[]
@@ -194,6 +198,7 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
       playerKnowledge: copyRecords(Object.values(world.playerKnowledgeById)),
       organizationEvaluationPolicies: Object.entries(world.organizationEvaluationPoliciesById).map(([organizationId, policy]) => ({ organizationId, ...policy })),
       staffPeople: copyRecords(Object.values(world.staffPeopleById)), teamStaffAssignments: copyRecords(Object.values(world.teamStaffAssignmentsById)),
+      responsibilities: copyRecords(Object.values(world.responsibilitiesById)), delegationOutcomes: copyRecords(Object.values(world.delegationOutcomesById)),
       coachProfessionalProfilesByCoachId: copyProfiles(world.coachProfessionalProfilesByCoachId),
       coachRpgProfilesByCoachId: copyProfiles(world.coachRpgProfilesByCoachId),
       coachFinancesByCoachId: copyProfiles(world.coachFinancesByCoachId),
@@ -294,6 +299,8 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
     playerKnowledge: payload.playerKnowledge === undefined ? [] : array(payload.playerKnowledge, 'Save playerKnowledge').map(readPlayerKnowledge),
     ...(payload.organizationEvaluationPolicies === undefined ? {} : { organizationEvaluationPoliciesById: readOrganizationEvaluationPolicies(payload.organizationEvaluationPolicies) }),
     staffPeople: payload.staffPeople === undefined ? [] : array(payload.staffPeople, 'Save staffPeople').map(readStaffPerson), teamStaffAssignments: payload.teamStaffAssignments === undefined ? [] : array(payload.teamStaffAssignments, 'Save teamStaffAssignments').map(readStaffAssignment),
+    ...(payload.responsibilities === undefined ? {} : { responsibilities: array(payload.responsibilities, 'Save responsibilities').map(readResponsibility) }),
+    ...(payload.delegationOutcomes === undefined ? {} : { delegationOutcomes: array(payload.delegationOutcomes, 'Save delegationOutcomes').map(readDelegationOutcome) }),
     coachProfessionalProfilesByCoachId: professionalProfiles,
     coachRpgProfilesByCoachId: rpgProfiles,
     ...(payload.coachFinancesByCoachId === undefined ? {} : { coachFinancesByCoachId: readCoachFinanceProfiles(payload.coachFinancesByCoachId) }),
@@ -331,7 +338,8 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
     throw new Error('Completed season is missing season history')
   }
   const withLegacyKnowledge = options.enrichLegacy === false || payload.playerKnowledge !== undefined ? world : ensurePlayerKnowledge(world)
-  const enriched = ensureNcaaAcademics(ensureNcaaEligibility(ensureStaffStructure(withLegacyKnowledge)))
+  const withResponsibilities = options.enrichLegacy === false ? withLegacyKnowledge : ensureResponsibilityStructure(ensureStaffStructure(withLegacyKnowledge))
+  const enriched = ensureNcaaAcademics(ensureNcaaEligibility(withResponsibilities))
   return payload.nilProfiles === undefined ? ensureNcaaNil(enriched) : enriched
 }
 
@@ -395,6 +403,8 @@ function readPlayerKnowledge(value:unknown){const v=record(value,'Player knowled
 function readStaffPerson(value:unknown){const v=record(value,'Staff person');const identity=record(v.identity,'Staff identity');const profile=record(v.professional,'Staff professional');const a=record(profile.attributes,'Staff attributes');const read=(key:string)=>integer(a[key],`Staff ${key}`);return{id:staffPersonIdFromString(string(v.id,'Staff id')),identity:{firstName:string(identity.firstName,'Staff firstName'),lastName:string(identity.lastName,'Staff lastName')},professional:{attributes:{coaching:read('coaching'),tacticalKnowledge:read('tacticalKnowledge'),playerDevelopment:read('playerDevelopment'),talentEvaluation:read('talentEvaluation'),potentialEvaluation:read('potentialEvaluation'),medicalKnowledge:read('medicalKnowledge'),rehabilitation:read('rehabilitation'),analysis:read('analysis'),leadership:read('leadership'),communication:read('communication'),motivation:read('motivation'),discipline:read('discipline'),adaptability:read('adaptability')}}}}
 function readOrganizationEvaluationPolicies(value:unknown){return Object.fromEntries(array(value,'Save organization evaluation policies').map((entry)=>{const v=record(entry,'Organization evaluation policy'),read=(key:string)=>integer(v[key],`Organization policy ${key}`);return[organizationIdFromString(string(v.organizationId,'Organization policy organizationId')),{riskTolerance:read('riskTolerance'),certaintyPreference:read('certaintyPreference'),upsidePreference:read('upsidePreference'),currentAbilityPreference:read('currentAbilityPreference'),scoutingReliance:read('scoutingReliance')}] }))}
 function readStaffAssignment(value:unknown){const v=record(value,'Staff assignment');const role=string(v.role,'Staff role');return{id:teamStaffAssignmentIdFromString(string(v.id,'Staff assignment id')),staffPersonId:staffPersonIdFromString(string(v.staffPersonId,'Staff assignment person')),teamId:teamIdFromString(string(v.teamId,'Staff assignment team')),role:role as import('@/domain/staff').StaffRole,assignedOn:parseGameDate(string(v.assignedOn,'Staff assignedOn'))}}
+function readResponsibility(value: unknown) { const v = record(value, 'Responsibility'); const holderStaffId = v.holderStaffId === undefined ? undefined : staffPersonIdFromString(string(v.holderStaffId, 'Responsibility holder')); return { id: responsibilityIdFromString(string(v.id, 'Responsibility id')), teamId: teamIdFromString(string(v.teamId, 'Responsibility team')), kind: string(v.kind, 'Responsibility kind') as import('@/domain/responsibility').ResponsibilityKind, mode: string(v.mode, 'Responsibility mode') as import('@/domain/responsibility').ResponsibilityMode, ...(holderStaffId === undefined ? {} : { holderStaffId }), ...(v.assignedOn === undefined ? {} : { assignedOn: parseGameDate(string(v.assignedOn, 'Responsibility assignedOn')) }) } }
+function readDelegationOutcome(value: unknown) { const v = record(value, 'Delegation outcome'); const payload = record(v.payload ?? {}, 'Delegation outcome payload') as Record<string, string | number | boolean>; return { id: delegationOutcomeIdFromString(string(v.id, 'Delegation outcome id')), responsibilityId: responsibilityIdFromString(string(v.responsibilityId, 'Delegation outcome responsibility')), staffId: staffPersonIdFromString(string(v.staffId, 'Delegation outcome staff')), decidedOn: parseGameDate(string(v.decidedOn, 'Delegation outcome decidedOn')), kind: string(v.kind, 'Delegation outcome kind') as import('@/domain/responsibility').ResponsibilityKind, applied: Boolean(v.applied), qualityScore: number(v.qualityScore, 'Delegation outcome qualityScore'), payload, ...(v.rationale === undefined ? {} : { rationale: string(v.rationale, 'Delegation outcome rationale') }) } }
 function createLegacyProfessionalProfile() { return createStaffProfessionalProfile({ attributes: { coaching: 0, tacticalKnowledge: 0, playerDevelopment: 0, talentEvaluation: 0, potentialEvaluation: 0, medicalKnowledge: 0, rehabilitation: 0, analysis: 0, leadership: 0, communication: 0, motivation: 0, discipline: 0, adaptability: 0 } }) }
 function createLegacyRpgProfile() { return createCoachRpgProfile({ professionalExperience: { byAttribute: { coaching: 0, tacticalKnowledge: 0, playerDevelopment: 0, talentEvaluation: 0, potentialEvaluation: 0, medicalKnowledge: 0, rehabilitation: 0, analysis: 0, leadership: 0, communication: 0, motivation: 0, discipline: 0, adaptability: 0 } }, development: { globalProgress: 0, developmentPoints: 0 }, skills: {}, professionalTraits: [], professionalTraitEvidence: {}, perks: {} }) }
 function copyProfiles(values: Readonly<Record<string, object>>): readonly JsonRecord[] { return Object.entries(values).map(([coachId, profile]) => ({ coachId, profile: JSON.parse(JSON.stringify(profile)) as JsonRecord })) }

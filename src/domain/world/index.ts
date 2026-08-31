@@ -15,6 +15,8 @@ export type { TeamFinancialSnapshot, TeamFinancialStatus } from './finances'
 export type { ResolvedGameClockRules } from './queries'
 export { getKnownBasketballRating, getPlayerBasketballKnowledgeView, getPlayerKnowledge } from './knowledge'
 export { getStaffAssignment, getStaffPerson, getStaffRoleProficiency, getTeamStaffAssignments, getTeamStaffByRole, getTeamStaffPeople } from './staff'
+export { calculateStaffWorkload, getResponsibilitiesHeldByStaff, getResponsibility, getTeamResponsibilities } from './responsibility'
+export { projectLegacyTrainingResponsibility } from './trainingResponsibilityAdapter'
 export { getFreeAgents, getPlayerRosterTeamId, getPlayerTransactions, isPlayerFreeAgent } from './market'
 export {
   getCoach,
