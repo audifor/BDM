@@ -11,7 +11,8 @@ import { progressAiBoosters } from '@/engine/boosters'
 import { progressEnforcement } from '@/engine/enforcement'
 import { processCoachFinancesForMonth } from '@/engine/coachFinances'
 import { decayMemoriesForMonth } from '@/engine/memory'
-import { progressScoutingAssignments } from '@/engine/scouting'
+import { progressAdvisoryScoutingReports, progressDelegatedScouting, progressScoutingAssignments } from '@/engine/scouting'
+import { progressOppositionScoutingReports } from '@/engine/tactics/OppositionScoutingReportEngine'
 
 /**
  * Advances only the simulation date, leaving game resolution to other services.
@@ -19,13 +20,21 @@ import { progressScoutingAssignments } from '@/engine/scouting'
  * `TeamTrainingPlan`/`IndividualTrainingPlan` + `executeTeamTraining`/`executeEligibleTraining`
  * remain for save compatibility, defaults, and selectors, but are no longer auto-applied here
  * to avoid a team/player receiving two independent training workloads on the same day.
+ *
+ * Wave 3 (docs/STAFF_SYSTEM_V2.md §13): bounded delegated/advisory Scouting requests and
+ * pre-match opposition-prep artifacts are created BEFORE `progressScoutingAssignments()` runs,
+ * so any request they create can be picked up by the same checkpoint's assignment progression —
+ * `progressScoutingAssignments()`/`requestScouting()` remain the sole Scouting execution
+ * authority; `progressDelegatedScouting`/`progressAdvisoryScoutingReports`/
+ * `progressOppositionScoutingReports` only ever decide WHICH bounded requests to create.
  */
 export function advanceDay(world: GameWorld): GameWorld {
   const advanced = updateGameWorld(world, { currentDate: addDays(world.currentDate, 1) })
   const maintained = progressAcademicTerms(progressRecruiting(executeScheduledTrainingSessions(reconcileExpiredPlayerContracts(recoverCareerFatigueForDay(advanced), advanced.currentDate))))
   const withNil = maintained.currentDate.slice(-2) === '01' ? progressAiNil(progressNilLifecycle(maintained)) : progressNilLifecycle(maintained)
   const withBoosters = withNil.currentDate.slice(-2) === '01' ? decayMemoriesForMonth(processCoachFinancesForMonth(progressAiBoosters(withNil))) : withNil
-  const enforced = progressScoutingAssignments(progressEnforcement(withBoosters))
+  const staffScoutingRequests = progressOppositionScoutingReports(progressAdvisoryScoutingReports(progressDelegatedScouting(progressEnforcement(withBoosters))))
+  const enforced = progressScoutingAssignments(staffScoutingRequests)
   return Object.values(enforced.draftsById).reduce((current, draft) => {
     const opened = openDraft(current, draft.id)
     return opened.draftsById[draft.id]?.status === 'inProgress' ? progressDraftAi(opened, draft.id) : opened

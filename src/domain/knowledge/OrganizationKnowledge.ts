@@ -2,7 +2,7 @@ import type { GameDate } from '@/domain/date'
 import { organizationIdForTeam, type OrganizationId, type PlayerId } from '@/domain/ids'
 import type { PlayerKnowledgeRecord } from './PlayerKnowledge'
 export type { OrganizationId } from '@/domain/ids'
-export type KnowledgeProvenance = 'legacyBaseline' | 'public' | 'ownObservation' | 'scoutReport' | 'inferred'
+export type KnowledgeProvenance = 'legacyBaseline' | 'public' | 'ownObservation' | 'scoutReport' | 'inferred' | 'staffFamiliarity'
 export interface OrganizationKnowledgeDimension { readonly coverage:number; readonly confidence:number; readonly assessedAt:GameDate; readonly provenance:KnowledgeProvenance; readonly estimate?:number; readonly uncertainty?:number; readonly evidenceIds?:readonly string[]; readonly reportIds?:readonly string[] }
 /** Sparse V2 contract only. Reports and assignments arrive in Wave 2. */
 export interface OrganizationKnowledge { readonly organizationId:OrganizationId; readonly subjectPlayerId:PlayerId; readonly dimensions:Readonly<Record<string,OrganizationKnowledgeDimension>> }

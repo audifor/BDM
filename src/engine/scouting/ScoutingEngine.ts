@@ -17,12 +17,12 @@ export function evaluatorProfile(world: GameWorld, staffId: StaffPersonId): Eval
   return createEvaluatorProfile({ staffPersonId: staffId, experience: Math.round((ability + staff.professional.attributes.analysis) / 3), perks: ability >= 80 ? ['EYE_FOR_SHOOTERS'] : [], biases: ability < 45 ? ['PRODUCTION_BIAS'] : [] })
 }
 
-export function requestScouting(world: GameWorld, input: { organizationId: OrganizationId; playerId: PlayerId; missionType: ScoutingMission; priority?: ScoutingPriority; evaluatorStaffId?: StaffPersonId; targetDimension?: string; teamContextId?: TeamId; gameId?: string; requestedBy?: 'HEAD_COACH' | 'SCOUTING_DEPARTMENT' }): GameWorld {
+export function requestScouting(world: GameWorld, input: { organizationId: OrganizationId; playerId: PlayerId; missionType: ScoutingMission; priority?: ScoutingPriority; evaluatorStaffId?: StaffPersonId; targetDimension?: string; teamContextId?: TeamId; gameId?: string; requestedBy?: 'HEAD_COACH' | 'SCOUTING_DEPARTMENT'; staffQualityScore?: number }): GameWorld {
   const evaluatorStaffId = input.evaluatorStaffId ?? chooseEvaluator(world, input.organizationId, input.missionType)
   if (!world.players[input.playerId] || !world.staffPeopleById[evaluatorStaffId]) throw new Error('Scouting request references missing entity')
   if (Object.values(world.scoutingAssignmentsById).some((item) => item.organizationId === input.organizationId && item.subjectPlayerId === input.playerId && item.evaluatorStaffId === evaluatorStaffId && item.missionType === input.missionType && item.status !== 'COMPLETED' && item.status !== 'CANCELLED')) return world
   const id = `scouting:${input.organizationId}:${input.playerId}:${evaluatorStaffId}:${input.missionType}:${world.currentDate}`
-  const assignment: ScoutingAssignment = { id, organizationId: input.organizationId, subjectPlayerId: input.playerId, evaluatorStaffId, missionType: input.missionType, requestedBy: input.requestedBy ?? 'HEAD_COACH', priority: input.priority ?? 'NORMAL', createdAt: world.currentDate, status: 'QUEUED', ...(input.targetDimension === undefined ? {} : { targetDimension: input.targetDimension }), ...(input.teamContextId === undefined ? {} : { teamContextId: input.teamContextId }), ...(input.gameId === undefined ? {} : { gameId: input.gameId }) }
+  const assignment: ScoutingAssignment = { id, organizationId: input.organizationId, subjectPlayerId: input.playerId, evaluatorStaffId, missionType: input.missionType, requestedBy: input.requestedBy ?? 'HEAD_COACH', priority: input.priority ?? 'NORMAL', createdAt: world.currentDate, status: 'QUEUED', ...(input.targetDimension === undefined ? {} : { targetDimension: input.targetDimension }), ...(input.teamContextId === undefined ? {} : { teamContextId: input.teamContextId }), ...(input.gameId === undefined ? {} : { gameId: input.gameId }), ...(input.staffQualityScore === undefined ? {} : { staffQualityScore: input.staffQualityScore }) }
   return updateGameWorld(world, { evaluatorProfilesByStaffId: { ...world.evaluatorProfilesByStaffId, [evaluatorStaffId]: evaluatorProfile(world, evaluatorStaffId) }, scoutingAssignments: [...Object.values(world.scoutingAssignmentsById), assignment] })
 }
 
@@ -72,10 +72,27 @@ function completeAssignment(world: GameWorld, assignmentId: string): GameWorld {
   return updateGameWorld(world, { evidence: [...Object.values(world.evidenceById), evidence], evaluatorReports: [...Object.values(world.evaluatorReportsById), report], organizationKnowledge: knowledge, scoutingAssignments: Object.values(world.scoutingAssignmentsById).map((item) => item.id === assignmentId ? { ...item, status: 'COMPLETED', completedAt: world.currentDate } : item) })
 }
 function createEvidence(world: GameWorld, assignment: ScoutingAssignment): Evidence { const source = assignment.missionType === 'LIVE_GAME' ? 'OPPONENT_GAME' : assignment.missionType === 'TACTICAL_FIT' ? 'VIDEO_SCOUTING' : 'LIVE_SCOUTING'; return { id: `evidence:${assignment.id}`, organizationId: assignment.organizationId, subjectPlayerId: assignment.subjectPlayerId, source, observedAt: world.currentDate, quality: missionUnits[assignment.missionType] / 4, dimensions: dimensionsFor(assignment), context: assignment.missionType, ...(assignment.gameId === undefined ? {} : { gameId: assignment.gameId }) } }
+/**
+ * Wave 3 quality-based uncertainty adjustment (§7): a Staff-driven assignment
+ * (`assignment.staffQualityScore` set only by delegated/advisory Staff creation paths, never by
+ * manual HEAD_COACH requests) nudges uncertainty by a small BOUNDED delta centered on quality 50
+ * — higher quality never widens expected uncertainty relative to lower quality under otherwise
+ * equivalent inputs. Applied additively alongside the existing ability/experience/perk/evidence
+ * terms, never replacing them; the existing `Math.max(3, ...)` floor and report/domain bounds
+ * still apply afterward.
+ */
+const QUALITY_UNCERTAINTY_SWING = 4
+
+function qualityUncertaintyAdjustment(staffQualityScore: number | undefined): number {
+  if (staffQualityScore === undefined) return 0
+  return Math.round(((50 - staffQualityScore) / 50) * QUALITY_UNCERTAINTY_SWING)
+}
+
 export function generateEvaluatorReport(world: GameWorld, assignment: ScoutingAssignment, evidence: Evidence): EvaluatorReport {
   const player = world.players[assignment.subjectPlayerId]!, staff = world.staffPeopleById[assignment.evaluatorStaffId]!, profile = evaluatorProfile(world, assignment.evaluatorStaffId)
   const ability = assignment.missionType === 'POTENTIAL_EVALUATION' ? staff.professional.attributes.potentialEvaluation : assignment.missionType === 'TACTICAL_FIT' ? Math.round((staff.professional.attributes.tacticalKnowledge + staff.professional.attributes.analysis) / 2) : staff.professional.attributes.talentEvaluation
-  const findings = dimensionsFor(assignment).map((dimension) => { const truth = truthForDimension(player, dimension, assignment.missionType); const error = deterministicError(`${assignment.id}:${dimension}`, ability, profile, dimension, evidence.source); const perkReduction = profile.perks.includes('EYE_FOR_SHOOTERS') && dimension === 'shooting' || profile.perks.includes('PROJECTION_EXPERT') && dimension.startsWith('potential:') ? 2 : profile.perks.includes('TAPE_GRINDER') && evidence.source === 'VIDEO_SCOUTING' ? 1 : profile.perks.includes('LIVE_SCOUT') && evidence.source !== 'VIDEO_SCOUTING' ? 1 : 0; const uncertainty = Math.max(3, Math.round(17 - ability / 9 - profile.experience / 18 - perkReduction + (1 - evidence.quality) * 5)); return { dimension, estimate: clamp(Math.round(truth + error), 1, 100), uncertainty, confidence: clamp(Math.round(100 - uncertainty * 4 + evidence.quality * 12), 1, 95), coverageContribution: Math.round(evidence.quality * 100) / 100 } })
+  const qualityAdjustment = qualityUncertaintyAdjustment(assignment.staffQualityScore)
+  const findings = dimensionsFor(assignment).map((dimension) => { const truth = truthForDimension(player, dimension, assignment.missionType); const error = deterministicError(`${assignment.id}:${dimension}`, ability, profile, dimension, evidence.source); const perkReduction = profile.perks.includes('EYE_FOR_SHOOTERS') && dimension === 'shooting' || profile.perks.includes('PROJECTION_EXPERT') && dimension.startsWith('potential:') ? 2 : profile.perks.includes('TAPE_GRINDER') && evidence.source === 'VIDEO_SCOUTING' ? 1 : profile.perks.includes('LIVE_SCOUT') && evidence.source !== 'VIDEO_SCOUTING' ? 1 : 0; const uncertainty = Math.max(3, Math.round(17 - ability / 9 - profile.experience / 18 - perkReduction + (1 - evidence.quality) * 5 + qualityAdjustment)); return { dimension, estimate: clamp(Math.round(truth + error), 1, 100), uncertainty, confidence: clamp(Math.round(100 - uncertainty * 4 + evidence.quality * 12), 1, 95), coverageContribution: Math.round(evidence.quality * 100) / 100 } })
   return { id: `report:${assignment.id}`, organizationId: assignment.organizationId, subjectPlayerId: assignment.subjectPlayerId, evaluatorStaffId: assignment.evaluatorStaffId, assignmentId: assignment.id, missionType: assignment.missionType, createdAt: world.currentDate, evidenceIds: [evidence.id], findings, ...(assignment.missionType === 'TACTICAL_FIT' ? { tacticalFit: clamp(Math.round((staff.professional.attributes.tacticalKnowledge + staff.professional.attributes.analysis) / 2 + deterministicError(`${assignment.id}:${assignment.teamContextId ?? ''}`, ability, profile, 'fit', evidence.source)), 1, 100) } : {}) }
 }
 export function consolidateOrganizationKnowledge(existing: readonly OrganizationKnowledge[], report: EvaluatorReport, evidence: Evidence, profile: EvaluatorProfile, now: GameDate): readonly OrganizationKnowledge[] {
