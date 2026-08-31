@@ -1,6 +1,8 @@
 import type { TeamId } from '@/domain/ids'
+import type { RecruitProfile } from '@/domain/recruiting'
 import { createDelegationOutcome, delegationOutcomeIdFromString, type DelegationOutcome, type DelegationOutcomeId, type ResponsibilityKind } from '@/domain/responsibility'
 import { resolveAdvisoryResponsibility, recruitingQuality } from '@/engine/staff'
+import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import type { GameWorld } from '@/domain/world'
 import { getTeamRecruitingNeeds, rankAiRecruitingTargets, performRecruitingAction, makeRecruitingOffer, addRecruitingBoardEntry } from './RecruitingEngine'
 
@@ -29,17 +31,28 @@ function progressTeamRecruitingAdvisories(world: GameWorld, teamId: TeamId, cycl
   return recordRecruitingPriorities(withEvaluation, teamId, cycleId)
 }
 
-/** Bounded candidate band: top-3 ranked targets not yet on the team's board. Quality bounds band size/stability, never reveals hidden truth (ranking already comes from the existing, knowledge-only `rankAiRecruitingTargets`). */
+/**
+ * Bounded candidate band, actually consumed (Wave 4B review Blocker 3A): `recruitingQuality`
+ * determines how wide a slice of the top of the existing, knowledge-only `rankAiRecruitingTargets`
+ * ranking the holder draws from — quality >= 70 is a band of 1 (always the top target), quality
+ * >= 40 a band of 2, otherwise a band of 3. Selection WITHIN that band is deterministic/seeded
+ * (never `Math.random()`), keyed off the canonical decision seed plus a `prospect-band` namespace
+ * so it never collides with the quality/jitter seed streams. The ranking itself is untouched — no
+ * new ranking is built, and no hidden Player truth is ever read (the ranking already only reads
+ * `OrganizationKnowledge`/valuation).
+ */
 function recordProspectIdentification(world: GameWorld, teamId: TeamId, cycleId: string): GameWorld {
   const resolution = resolveAdvisoryResponsibility(world, teamId, 'prospectIdentification')
   if (resolution === undefined) return world
   const seed = `staff-decision-quality-v1:${resolution.responsibilityId}:${world.currentDate}`
   const quality = recruitingQuality(resolution.context, seed)
-  const bandSize = quality >= 70 ? 3 : quality >= 40 ? 2 : 1
+  const bandSize = quality >= 70 ? 1 : quality >= 40 ? 2 : 3
 
   const boarded = new Set(world.recruitingBoards.filter((entry) => entry.programTeamId === teamId).map((entry) => entry.recruitId))
-  const target = rankAiRecruitingTargets(world, cycleId, teamId).find((profile) => !boarded.has(profile.id))
-  if (target === undefined) return world
+  const band = rankAiRecruitingTargets(world, cycleId, teamId).filter((profile) => !boarded.has(profile.id)).slice(0, bandSize)
+  if (band.length === 0) return world
+  const random = new SeededRandomSource(hashStringToSeed(`${seed}:prospect-band`))
+  const target = band[random.nextInt(0, band.length - 1)]!
 
   return recordOutcome(world, teamId, resolution, 'prospectIdentification', { cycleId, recruitId: target.id, bandSize })
 }
@@ -62,23 +75,55 @@ function recordRecruitEvaluation(world: GameWorld, teamId: TeamId, cycleId: stri
   return recordOutcome(world, teamId, resolution, 'recruitEvaluation', { cycleId, recruitId: entry.recruitId, recommendedAction: nextAction })
 }
 
-/** Recommends a priority (high/normal/low) for the team's existing board entries, using positional needs + valuation. */
+/**
+ * Recommends a priority (high/normal/low) for one existing board entry (Wave 4B review Blocker
+ * 3B). Reuses the existing canonical `rankAiRecruitingTargets` ranking — which already folds in
+ * positional needs, `OrganizationKnowledge`/`deriveOrganizationPlayerValuation(context:
+ * 'RECRUITING')`, public rank and a deterministic tie-break — rather than building a second
+ * ranking or reading `Player.basketball.ratings`/potential directly. A board entry's RELATIVE
+ * standing within that ranking, combined with positional need, decides the recommendation:
+ *
+ *   strong need + within the quality-adjusted top band  => high
+ *   within the wider quality-adjusted band, or no strong need but reasonably ranked => normal
+ *   clearly outside the quality-adjusted preferred band and no strong need         => low
+ *
+ * `recruitingQuality` widens/narrows the "preferred band" threshold itself: a high-quality holder
+ * draws a tight preferred band (only genuinely top-ranked recruits read as `high`/`normal`,
+ * everything else reads `low`), a low-quality holder draws a wide, less discriminating band. This
+ * makes quality materially change the recommendation, not just its metadata.
+ */
 function recordRecruitingPriorities(world: GameWorld, teamId: TeamId, cycleId: string): GameWorld {
   const resolution = resolveAdvisoryResponsibility(world, teamId, 'recruitingPriorities')
   if (resolution === undefined) return world
+  const seed = `staff-decision-quality-v1:${resolution.responsibilityId}:${world.currentDate}`
+  const quality = recruitingQuality(resolution.context, seed)
   const needs = getTeamRecruitingNeeds(world, teamId)
+  const ranked = rankAiRecruitingTargets(world, cycleId, teamId)
+  const rankIndexByRecruitId = new Map(ranked.map((profile, index) => [profile.id, index]))
+  const preferredBand = quality >= 70 ? Math.max(1, Math.ceil(ranked.length * 0.15)) : quality >= 40 ? Math.max(1, Math.ceil(ranked.length * 0.35)) : Math.max(1, Math.ceil(ranked.length * 0.6))
+
   const boardEntries = world.recruitingBoards.filter((entry) => entry.programTeamId === teamId && world.recruitProfilesById[entry.recruitId]?.cycleId === cycleId)
   const target = [...boardEntries].sort((a, b) => a.recruitId.localeCompare(b.recruitId)).find((entry) => {
     const profile = world.recruitProfilesById[entry.recruitId]
     if (profile === undefined) return false
-    const recommended = needs[profile.position] > 0 ? 'high' : 'normal'
+    const recommended = recommendedPriorityFor(profile, needs, rankIndexByRecruitId, preferredBand)
     return entry.priority !== recommended
   })
   if (target === undefined) return world
   const profile = world.recruitProfilesById[target.recruitId]!
-  const recommendedPriority = needs[profile.position] > 0 ? 'high' : 'normal'
+  const recommendedPriority = recommendedPriorityFor(profile, needs, rankIndexByRecruitId, preferredBand)
 
   return recordOutcome(world, teamId, resolution, 'recruitingPriorities', { cycleId, recruitId: target.recruitId, recommendedPriority })
+}
+
+function recommendedPriorityFor(profile: RecruitProfile, needs: Readonly<Record<'PG' | 'SG' | 'SF' | 'PF' | 'C', number>>, rankIndexByRecruitId: ReadonlyMap<string, number>, preferredBand: number): 'high' | 'normal' | 'low' {
+  const rankIndex = rankIndexByRecruitId.get(profile.id)
+  const strongNeed = needs[profile.position] > 0
+  if (rankIndex === undefined) return strongNeed ? 'normal' : 'low'
+  const withinPreferredBand = rankIndex < preferredBand
+  if (strongNeed && withinPreferredBand) return 'high'
+  if (withinPreferredBand || strongNeed) return 'normal'
+  return 'low'
 }
 
 function recordOutcome(world: GameWorld, teamId: TeamId, resolution: NonNullable<ReturnType<typeof resolveAdvisoryResponsibility>>, kind: ResponsibilityKind, payload: Readonly<Record<string, string | number | boolean>>): GameWorld {

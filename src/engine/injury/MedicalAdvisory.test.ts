@@ -132,6 +132,101 @@ describe('progressMedicalAdvisories', () => {
     const aggressiveAverage = averageExtraDaysFor(90)
     expect(conservativeAverage).toBeGreaterThan(aggressiveAverage)
   })
+
+  /**
+   * Wave 4B review Blocker 2: `medicalQuality` must materially affect `recommendedExtraDays`, not
+   * just sit unused in `qualityScore`. Holds `temperament` fixed (neutral, 50 — no directional
+   * bias either way) and drives `qualityScore` apart purely via role-attribute strength (weak
+   * `medicalKnowledge`/`rehabilitation` attributes for low quality, maxed for high quality — the
+   * same technique `medicalQuality.test.ts` itself uses to separate quality). Samples a
+   * deterministic series of distinct injury ids (never a probabilistic assertion) and compares
+   * dispersion: a low-quality holder's recommendations must vary MORE across that series (larger
+   * spread from the direction-only target of 0, since neutral temperament's `direction` term is
+   * 0) than a high-quality holder's, which must stay tightly clustered near 0.
+   */
+  it('medicalQuality materially affects the downstream recommendation: high quality clusters tightly, low quality disperses, with neutral temperament', () => {
+    const base = createNewGame()
+    const teamId = Object.values(base.teams)[0]!.id
+
+    function samplesFor(attributeStrength: number): readonly number[] {
+      return Array.from({ length: 12 }, (_, index) => index).map((index) => {
+        const staffId = staffPersonIdFromString(`medical-quality-downstream-staff-${attributeStrength}`)
+        const injury = createInjury({ id: injuryIdFromString(`medical-quality-downstream-injury-${attributeStrength}-${index}`), playerId: base.teams[teamId]!.rosterPlayerIds[0]!, kind: 'ankleSprain', severity: 'moderate', injuredOn: base.currentDate, expectedReturnDate: '2099-01-01' as never })
+        const withInjury = updateGameWorld(base, { injuries: [...Object.values(base.injuriesById), injury] })
+        const withStaff = updateGameWorld(withInjury, {
+          staffPeople: [...Object.values(withInjury.staffPeopleById), { id: staffId, identity: { firstName: 'Med', lastName: 'Ic' }, professional: { attributes: { ...flatAttributes, medicalKnowledge: attributeStrength, rehabilitation: attributeStrength, analysis: attributeStrength } } }],
+          teamStaffAssignments: [...Object.values(withInjury.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString(`medical-quality-downstream-assignment-${attributeStrength}-${index}`), staffPersonId: staffId, teamId, role: 'teamDoctor', assignedOn: withInjury.currentDate }],
+        })
+        const personalityWorld = setPersonality(withStaff, staffId, { temperament: 50 })
+        const delegated = delegateAdvisory(personalityWorld, teamId, 'returnToPlayRecommendation', 'advisory', staffId)
+        const progressed = progressMedicalAdvisories(delegated)
+        const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.staffId === staffId)
+        expect(outcome).toBeDefined()
+        if (outcome === undefined) throw new Error('unreachable')
+        return outcome.payload.recommendedExtraDays as number
+      })
+    }
+
+    const lowQualitySamples = samplesFor(5)
+    const highQualitySamples = samplesFor(100)
+    const lowDispersion = lowQualitySamples.reduce((sum, value) => sum + Math.abs(value), 0)
+    const highDispersion = highQualitySamples.reduce((sum, value) => sum + Math.abs(value), 0)
+    expect(lowDispersion).toBeGreaterThan(highDispersion)
+  })
+
+  it('overload degradation of medicalQuality reaches the downstream recommendation: an overloaded holder disperses more than a non-overloaded one with identical attributes/temperament', () => {
+    const base = createNewGame()
+    const teamId = Object.values(base.teams)[0]!.id
+
+    function samplesWithOverload(overloaded: boolean): readonly number[] {
+      return Array.from({ length: 12 }, (_, index) => index).map((index) => {
+        const staffId = staffPersonIdFromString(`medical-overload-downstream-staff-${overloaded}`)
+        const injury = createInjury({ id: injuryIdFromString(`medical-overload-downstream-injury-${overloaded}-${index}`), playerId: base.teams[teamId]!.rosterPlayerIds[0]!, kind: 'ankleSprain', severity: 'moderate', injuredOn: base.currentDate, expectedReturnDate: '2099-01-01' as never })
+        const withInjury = updateGameWorld(base, { injuries: [...Object.values(base.injuriesById), injury] })
+        const withStaff = updateGameWorld(withInjury, {
+          staffPeople: [...Object.values(withInjury.staffPeopleById), { id: staffId, identity: { firstName: 'Med', lastName: 'Ic' }, professional: { attributes: { ...flatAttributes, medicalKnowledge: 100, rehabilitation: 100, analysis: 100 } } }],
+          teamStaffAssignments: [...Object.values(withInjury.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString(`medical-overload-downstream-assignment-${overloaded}-${index}`), staffPersonId: staffId, teamId, role: 'teamDoctor', assignedOn: withInjury.currentDate }],
+        })
+        const personalityWorld = setPersonality(withStaff, staffId, { temperament: 50 })
+        const delegated = delegateAdvisory(personalityWorld, teamId, 'returnToPlayRecommendation', 'advisory', staffId)
+        const withExtraResponsibilities = overloaded
+          ? updateGameWorld(delegated, {
+              responsibilities: [
+                ...Object.values(delegated.responsibilitiesById).filter((item) => item.id !== `responsibility:${teamId}:treatmentRecommendation` && item.id !== `responsibility:${teamId}:riskAssessment`),
+                { id: `responsibility:${teamId}:treatmentRecommendation` as never, teamId, kind: 'treatmentRecommendation', mode: 'advisory', holderStaffId: staffId },
+                { id: `responsibility:${teamId}:riskAssessment` as never, teamId, kind: 'riskAssessment', mode: 'advisory', holderStaffId: staffId },
+              ],
+            })
+          : delegated
+        const progressed = progressMedicalAdvisories(withExtraResponsibilities)
+        const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.staffId === staffId && item.kind === 'returnToPlayRecommendation')
+        expect(outcome).toBeDefined()
+        if (outcome === undefined) throw new Error('unreachable')
+        return outcome.payload.recommendedExtraDays as number
+      })
+    }
+
+    const nonOverloadedSamples = samplesWithOverload(false)
+    const overloadedSamples = samplesWithOverload(true)
+    const nonOverloadedDispersion = nonOverloadedSamples.reduce((sum, value) => sum + Math.abs(value), 0)
+    const overloadedDispersion = overloadedSamples.reduce((sum, value) => sum + Math.abs(value), 0)
+    expect(overloadedDispersion).toBeGreaterThanOrEqual(nonOverloadedDispersion)
+  })
+
+  it('recommendedExtraDays remains deterministic: same world produces the same result across repeated progression', () => {
+    const base = createNewGame()
+    const teamId = Object.values(base.teams)[0]!.id
+    const { world: withInjury } = withActiveInjury(base, teamId)
+    const { world: withStaff, staffId } = withStaffInRole(withInjury, teamId, 'teamDoctor')
+    const delegated = delegateAdvisory(withStaff, teamId, 'returnToPlayRecommendation', 'advisory', staffId)
+    const first = progressMedicalAdvisories(delegated)
+    const second = progressMedicalAdvisories(delegated)
+    const firstOutcome = Object.values(first.delegationOutcomesById).find((item) => item.staffId === staffId)
+    const secondOutcome = Object.values(second.delegationOutcomesById).find((item) => item.staffId === staffId)
+    expect(firstOutcome).toBeDefined()
+    expect(secondOutcome).toBeDefined()
+    expect(firstOutcome?.payload.recommendedExtraDays).toBe(secondOutcome?.payload.recommendedExtraDays)
+  })
 })
 
 describe('acceptMedicalRecommendation', () => {
@@ -159,24 +254,110 @@ describe('acceptMedicalRecommendation', () => {
     expect(updatedInjury.expectedReturnDate).toBe(expectedDate.toISOString().slice(0, 10))
   })
 
-  it('computes the new date from baseExpectedReturnDate, not a compounded current date: accepting both recommendations for the same injury does not stack', () => {
-    const { world, outcome: firstOutcome } = delegatedWorldWithOutcome('returnToPlayRecommendation')
-    const secondFixture = delegatedWorldWithOutcome('treatmentRecommendation')
-    void secondFixture
-    const afterFirst = acceptMedicalRecommendation(world, firstOutcome.id)
-    expect(afterFirst.ok).toBe(true)
-    if (!afterFirst.ok) return
+  /**
+   * Non-vacuous no-compounding protocol (Wave 4B review Blocker 1). Exercises the exact broken
+   * sequence the review called out: generate ONLY `returnToPlayRecommendation` first, accept it
+   * (moving `Injury.expectedReturnDate` away from D0), THEN enable `treatmentRecommendation` and
+   * generate it. The late `treatmentRecommendation` must still freeze its baseline at the
+   * ORIGINAL D0 (via `resolveMedicalBaseExpectedReturnDate` finding the first outcome's already
+   * frozen baseline), never at the already-adjusted date — proven by asserting the final date
+   * equals `originalBase + treatment.recommendedExtraDays`, not `adjustedDate + treatment.recommendedExtraDays`.
+   * No `if (x === undefined) return` early-outs are used anywhere in this test — every step
+   * asserts existence explicitly before narrowing, so the test cannot silently pass without
+   * exercising the second acceptance.
+   */
+  it('a late second medical recommendation freezes the ORIGINAL baseline, not the already-adjusted date: no compounding', () => {
+    const base = createNewGame()
+    const teamId = Object.values(base.teams)[0]!.id
+    const { world: withInjury, injury } = withActiveInjury(base, teamId)
+    const originalBase = injury.expectedReturnDate
 
-    const treatmentOutcome = Object.values(afterFirst.world.delegationOutcomesById).find((item) => item.kind === 'treatmentRecommendation' && item.staffId === firstOutcome.staffId)
-    if (treatmentOutcome === undefined) return
-    const afterSecond = acceptMedicalRecommendation(afterFirst.world, treatmentOutcome.id)
-    expect(afterSecond.ok).toBe(true)
-    if (!afterSecond.ok) return
+    // Step 1-2: only returnToPlayRecommendation is advisory at first.
+    const { world: withStaff, staffId } = withStaffInRole(withInjury, teamId, 'teamDoctor')
+    const withReturnToPlay = delegateAdvisory(withStaff, teamId, 'returnToPlayRecommendation', 'advisory', staffId)
 
-    const finalInjury = afterSecond.world.injuriesById[(firstOutcome.payload.injuryId as string) as never]!
-    const expectedBase = new Date(`${treatmentOutcome.payload.baseExpectedReturnDate as string}T00:00:00.000Z`)
-    expectedBase.setUTCDate(expectedBase.getUTCDate() + (treatmentOutcome.payload.recommendedExtraDays as number))
-    expect(finalInjury.expectedReturnDate).toBe(expectedBase.toISOString().slice(0, 10))
+    // Step 3-4: progress and assert the outcome genuinely exists.
+    const progressedFirst = progressMedicalAdvisories(withReturnToPlay)
+    const returnToPlayOutcome = Object.values(progressedFirst.delegationOutcomesById).find((item) => item.staffId === staffId && item.kind === 'returnToPlayRecommendation')
+    expect(returnToPlayOutcome).toBeDefined()
+    if (returnToPlayOutcome === undefined) throw new Error('unreachable')
+
+    // Step 5: capture the frozen baseline from the outcome itself.
+    expect(returnToPlayOutcome.payload.baseExpectedReturnDate).toBe(originalBase)
+
+    // Step 6: accept it.
+    const afterAccept = acceptMedicalRecommendation(progressedFirst, returnToPlayOutcome.id)
+    expect(afterAccept.ok).toBe(true)
+    if (!afterAccept.ok) throw new Error('unreachable')
+
+    // Step 7: the injury's expectedReturnDate genuinely moved away from D0 (fixture guarantees a
+    // non-zero adjustment: teamDoctor with flat 60 attributes and neutral personality yields a
+    // deterministic non-zero recommendedExtraDays for this seed — asserted directly rather than assumed).
+    const adjustedDays = returnToPlayOutcome.payload.recommendedExtraDays as number
+    expect(adjustedDays).not.toBe(0)
+    const adjustedInjury = afterAccept.world.injuriesById[injury.id]!
+    expect(adjustedInjury.expectedReturnDate).not.toBe(originalBase)
+
+    // Step 8: NOW enable treatmentRecommendation (simulating it becoming advisory later).
+    const withTreatment = delegateAdvisory(afterAccept.world, teamId, 'treatmentRecommendation', 'advisory', staffId)
+
+    // Step 9-10: progress again; assert the treatment outcome genuinely exists.
+    const progressedSecond = progressMedicalAdvisories(withTreatment)
+    const treatmentOutcome = Object.values(progressedSecond.delegationOutcomesById).find((item) => item.staffId === staffId && item.kind === 'treatmentRecommendation')
+    expect(treatmentOutcome).toBeDefined()
+    if (treatmentOutcome === undefined) throw new Error('unreachable')
+
+    // Step 11: THE CRITICAL ASSERTION — the late outcome's baseline is the ORIGINAL D0, not the
+    // already-adjusted date the injury currently holds.
+    expect(treatmentOutcome.payload.baseExpectedReturnDate).toBe(originalBase)
+    expect(treatmentOutcome.payload.baseExpectedReturnDate).not.toBe(adjustedInjury.expectedReturnDate)
+
+    // Step 12-13: accept the treatment recommendation and assert the final date is
+    // originalBase + treatment.recommendedExtraDays.
+    const afterSecondAccept = acceptMedicalRecommendation(progressedSecond, treatmentOutcome.id)
+    expect(afterSecondAccept.ok).toBe(true)
+    if (!afterSecondAccept.ok) throw new Error('unreachable')
+    const finalInjury = afterSecondAccept.world.injuriesById[injury.id]!
+    const expectedFinal = new Date(`${originalBase}T00:00:00.000Z`)
+    expectedFinal.setUTCDate(expectedFinal.getUTCDate() + (treatmentOutcome.payload.recommendedExtraDays as number))
+    expect(finalInjury.expectedReturnDate).toBe(expectedFinal.toISOString().slice(0, 10))
+
+    // Step 14: explicitly prove the final date was NOT computed from the returnToPlay-adjusted date.
+    const wronglyCompoundedFinal = new Date(`${adjustedInjury.expectedReturnDate}T00:00:00.000Z`)
+    wronglyCompoundedFinal.setUTCDate(wronglyCompoundedFinal.getUTCDate() + (treatmentOutcome.payload.recommendedExtraDays as number))
+    if (adjustedDays !== 0) expect(finalInjury.expectedReturnDate).not.toBe(wronglyCompoundedFinal.toISOString().slice(0, 10))
+  })
+
+  it('baseline resolution is deterministic when prior outcomes already exist for the injury, regardless of outcome iteration order', () => {
+    const base = createNewGame()
+    const teamId = Object.values(base.teams)[0]!.id
+    const { world: withInjury, injury } = withActiveInjury(base, teamId)
+    const { world: withStaff, staffId } = withStaffInRole(withInjury, teamId, 'teamDoctor')
+    const delegated = delegateAdvisory(delegateAdvisory(withStaff, teamId, 'returnToPlayRecommendation', 'advisory', staffId), teamId, 'treatmentRecommendation', 'advisory', staffId)
+    const first = progressMedicalAdvisories(delegated)
+    const second = progressMedicalAdvisories(delegated)
+    const firstOutcomes = Object.values(first.delegationOutcomesById).filter((item) => item.payload.injuryId === injury.id)
+    const secondOutcomes = Object.values(second.delegationOutcomesById).filter((item) => item.payload.injuryId === injury.id)
+    expect(firstOutcomes.map((item) => item.payload.baseExpectedReturnDate).sort()).toEqual(secondOutcomes.map((item) => item.payload.baseExpectedReturnDate).sort())
+    for (const outcome of firstOutcomes) expect(outcome.payload.baseExpectedReturnDate).toBe(injury.expectedReturnDate)
+  })
+
+  it('exactly-once holds across repeated progression even after a baseline has been frozen by acceptance', () => {
+    const base = createNewGame()
+    const teamId = Object.values(base.teams)[0]!.id
+    const { world: withInjury } = withActiveInjury(base, teamId)
+    const { world: withStaff, staffId } = withStaffInRole(withInjury, teamId, 'teamDoctor')
+    const delegated = delegateAdvisory(withStaff, teamId, 'returnToPlayRecommendation', 'advisory', staffId)
+    const progressed = progressMedicalAdvisories(delegated)
+    const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.staffId === staffId)
+    expect(outcome).toBeDefined()
+    if (outcome === undefined) throw new Error('unreachable')
+    const accepted = acceptMedicalRecommendation(progressed, outcome.id)
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) throw new Error('unreachable')
+    const reprocessed = progressMedicalAdvisories(accepted.world)
+    const outcomesForKind = Object.values(reprocessed.delegationOutcomesById).filter((item) => item.staffId === staffId && item.kind === 'returnToPlayRecommendation')
+    expect(outcomesForKind).toHaveLength(1)
   })
 
   it('never produces a return date <= injuredOn', () => {

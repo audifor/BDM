@@ -43,6 +43,30 @@ function progressTeamMedicalAdvisories(world: GameWorld, teamId: TeamId): GameWo
   return next
 }
 
+/**
+ * Resolves the canonical, frozen baseline return date for `injury` — the value every medical
+ * `DelegationOutcome` for this injury must anchor its `recommendedExtraDays` to, so a later
+ * recommendation (e.g. `treatmentRecommendation` generated after `returnToPlayRecommendation` was
+ * already accepted) never compounds on top of an already-adjusted `injury.expectedReturnDate`.
+ *
+ * Looks for existing medical outcomes (`returnToPlayRecommendation`/`treatmentRecommendation`)
+ * whose `payload.injuryId === injury.id` and whose `payload.baseExpectedReturnDate` is a
+ * well-formed date string — i.e. a baseline some earlier recommendation already froze. When
+ * several exist (both kinds may coexist for one injury), picks deterministically: `decidedOn`
+ * ascending, then `id` as a stable tie-break, so the same world always resolves the same baseline
+ * regardless of `Object.values` iteration order. When none exist yet, the injury's OWN current
+ * `expectedReturnDate` is the baseline — this is only ever true for the very first medical
+ * recommendation on that injury, before any acceptance could have moved it.
+ */
+function resolveMedicalBaseExpectedReturnDate(world: GameWorld, injury: { readonly id: InjuryId; readonly expectedReturnDate: GameDate }): GameDate {
+  const priorBaselines = Object.values(world.delegationOutcomesById)
+    .filter((outcome): outcome is DelegationOutcome & { readonly kind: MedicalRecommendationKind } => MEDICAL_RECOMMENDATION_KINDS.includes(outcome.kind as MedicalRecommendationKind) && outcome.payload.injuryId === injury.id && typeof outcome.payload.baseExpectedReturnDate === 'string')
+    .sort((a, b) => compareGameDates(a.decidedOn, b.decidedOn) || a.id.localeCompare(b.id))
+  const frozen = priorBaselines[0]?.payload.baseExpectedReturnDate as string | undefined
+  if (frozen === undefined) return injury.expectedReturnDate
+  try { return parseGameDate(frozen) } catch { return injury.expectedReturnDate }
+}
+
 function recordMedicalRecommendation(world: GameWorld, teamId: TeamId, injuryId: InjuryId, playerId: PlayerId, kind: MedicalRecommendationKind): GameWorld {
   const resolution = resolveAdvisoryResponsibility(world, teamId, kind)
   if (resolution === undefined) return world
@@ -54,7 +78,8 @@ function recordMedicalRecommendation(world: GameWorld, teamId: TeamId, injuryId:
 
   const seed = `staff-decision-quality-v1:${resolution.responsibilityId}:${world.currentDate}`
   const qualityScore = medicalQuality(resolution.context, seed)
-  const recommendedExtraDays = recommendMedicalAdjustmentDays(resolution.context.personality.values.temperament, outcomeId)
+  const baseExpectedReturnDate = resolveMedicalBaseExpectedReturnDate(world, injury)
+  const recommendedExtraDays = recommendMedicalAdjustmentDays(resolution.context.personality.values.temperament, qualityScore, outcomeId)
 
   const outcome = createDelegationOutcome({
     id: outcomeId,
@@ -67,7 +92,7 @@ function recordMedicalRecommendation(world: GameWorld, teamId: TeamId, injuryId:
     payload: {
       injuryId,
       playerId,
-      baseExpectedReturnDate: injury.expectedReturnDate,
+      baseExpectedReturnDate,
       recommendedExtraDays,
     },
   })
@@ -75,18 +100,34 @@ function recordMedicalRecommendation(world: GameWorld, teamId: TeamId, injuryId:
 }
 
 /**
- * Deterministic, bounded, personality-influenced direction: a low-`temperament` (calm,
- * even-keeled) medical professional recommends more caution/margin (higher extra days); a
- * high-`temperament` one recommends less (docs §10.3's "conservative vs aggressive" hook, mapped
- * onto the existing `temperament` dimension since the spec does not add a new one). The seeded
- * jitter term keeps the exact day count reproducible per outcome id without ever exceeding the
- * frozen `[MIN_MEDICAL_ADJUSTMENT_DAYS, MAX_MEDICAL_ADJUSTMENT_DAYS]` band.
+ * Deterministic, bounded recommendation combining `temperament` (direction: conservative staff
+ * recommend more margin, aggressive staff recommend less) with `qualityScore` (confidence: a
+ * high-quality holder's recommendation sticks close to their directional target with low
+ * dispersion; a low-quality holder's recommendation is materially noisier/less decisive around
+ * that same target) and a seeded jitter term whose AMPLITUDE itself shrinks as quality rises —
+ * this is what makes `qualityScore` materially affect the output rather than being inert metadata
+ * (Wave 4B review Blocker 2): two holders with identical `temperament` but very different quality
+ * produce, deterministically, different `recommendedExtraDays` distributions.
+ *
+ *   direction   = ((50 - temperament) / 50) * MAX_MEDICAL_ADJUSTMENT_DAYS  — conservative bias
+ *   confidence  = qualityScore / 100                                       — 0..1
+ *   uncertainty = MAX_UNCERTAINTY_AMPLITUDE * (1 - confidence)             — shrinks as quality rises
+ *   raw         = direction * confidence + seededJitter(-1, 1) * uncertainty
+ *   recommended = clamp(round(raw), MIN_MEDICAL_ADJUSTMENT_DAYS, MAX_MEDICAL_ADJUSTMENT_DAYS)
+ *
+ * Same `(temperament, qualityScore, outcomeId)` always yields the same result — the jitter stream
+ * is seeded off `outcomeId`, which is itself derived deterministically from
+ * `(responsibilityId, injuryId, kind)`. Never `Math.random()`.
  */
-function recommendMedicalAdjustmentDays(temperament: number, outcomeId: DelegationOutcomeId): number {
-  const conservativeBias = ((50 - temperament) / 50) * MAX_MEDICAL_ADJUSTMENT_DAYS
+const MAX_UNCERTAINTY_AMPLITUDE = 3
+
+function recommendMedicalAdjustmentDays(temperament: number, qualityScore: number, outcomeId: DelegationOutcomeId): number {
+  const direction = ((50 - temperament) / 50) * MAX_MEDICAL_ADJUSTMENT_DAYS
+  const confidence = qualityScore / 100
+  const uncertaintyAmplitude = MAX_UNCERTAINTY_AMPLITUDE * (1 - confidence)
   const random = new SeededRandomSource(hashStringToSeed(`medical-adjustment-v1:${outcomeId}`))
   const jitter = random.nextFloat(-1, 1)
-  const raw = conservativeBias + jitter
+  const raw = direction * confidence + jitter * uncertaintyAmplitude
   return Math.max(MIN_MEDICAL_ADJUSTMENT_DAYS, Math.min(MAX_MEDICAL_ADJUSTMENT_DAYS, Math.round(raw)))
 }
 
