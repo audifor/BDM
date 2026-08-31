@@ -17,6 +17,8 @@ export { getKnownBasketballRating, getPlayerBasketballKnowledgeView, getPlayerKn
 export { getStaffAssignment, getStaffPerson, getStaffRoleProficiency, getTeamStaffAssignments, getTeamStaffByRole, getTeamStaffPeople } from './staff'
 export { calculateStaffWorkload, getResponsibilitiesHeldByStaff, getResponsibility, getTeamResponsibilities } from './responsibility'
 export { migrateTrainingResponsibilities } from './migrateTrainingResponsibilities'
+export { attributeKnowledgeDimension, attributingStaffIds } from './staffKnowledgeAttribution'
+export type { KnowledgeAttributionRecord } from './staffKnowledgeAttribution'
 export { getFreeAgents, getPlayerRosterTeamId, getPlayerTransactions, isPlayerFreeAgent } from './market'
 export {
   getCoach,
@@ -39,6 +41,7 @@ export {
   getCompetitionsForTeam,
   getGamesForCompetition,
   getGamesForTeam,
+  getNextScheduledGame,
   getCountry,
   getGame,
   getPlayer,

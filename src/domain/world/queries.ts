@@ -96,6 +96,11 @@ export function getCompetitionsForTeam(world: GameWorld, teamId: TeamId): readon
 export function getGamesForCompetition(world: GameWorld, competitionId: CompetitionId): readonly Game[] { getCompetition(world, competitionId); return Object.values(world.games).filter((game) => game.competitionId === competitionId).sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id)) }
 export function getGamesForTeam(world: GameWorld, teamId: TeamId): readonly Game[] { getTeam(world, teamId); return Object.values(world.games).filter((game) => game.homeTeamId === teamId || game.awayTeamId === teamId).sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id)) }
 
+/** The team's next `status: 'scheduled'` game on or after `world.currentDate`, deterministically ordered (date, then stable game id) — never dependent on object/map iteration order. `undefined` when no scheduled game remains. */
+export function getNextScheduledGame(world: GameWorld, teamId: TeamId): Game | undefined {
+  return getGamesForTeam(world, teamId).find((game) => game.status === 'scheduled' && game.date >= world.currentDate)
+}
+
 export function getSeason(world: GameWorld, id: SeasonId): Season {
   return getEntity(world.seasons, id, 'Season')
 }

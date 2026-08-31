@@ -4,37 +4,34 @@ import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import { calculateOverloadPenalty } from '../overloadPenalty'
 
 /**
- * Training-domain `DecisionQualityFn` (see `@/domain/responsibility`). Pure, deterministic:
+ * Tactics-domain `DecisionQualityFn` (see `@/domain/responsibility`). Pure, deterministic:
  * same context + same seed always produces the same 0-100 integer. Never mutates `world`, never
- * uses unseeded randomness.
+ * uses unseeded randomness, never reads hidden opponent truth (it only ever receives the
+ * canonical `DecisionQualityContext` — Staff/personality/workload — no Player data at all).
  *
  * `seed` is expected to already be the canonical decision-quality seed
- * (`staff-decision-quality-v1:${responsibilityId}:${gameDate}`, built by the execution caller —
- * see `ScheduledTrainingEngine.ts`); this module does not add its own prefix.
+ * (`staff-decision-quality-v1:${responsibilityId}:${gameDate}`), built by the caller.
  *
- * Formula (bounded, centralized, prototype tuning constants — same discipline as MatchEngine's
- * documented "prototype" formulas):
+ * Formula (bounded, centralized, prototype tuning constants — same discipline as `trainingQuality`):
  *
  *   base        = canonical role proficiency for the holder's actual assigned role
  *                 (reuses `calculateStaffRoleProficiencyByRoleId` — no duplicate weight table)
- *   personality = bounded ±PERSONALITY_SWING adjustment from `professionalism` (executes the
- *                 job as trained) and `adaptability` (handles context well), both centered on
- *                 50 so an average personality contributes zero
- *   jitter      = bounded ±JITTER_SWING seeded noise, keyed off `seed` — models day-to-day
- *                 variance in execution without being unbounded or unseeded
+ *   personality = bounded ±PERSONALITY_SWING adjustment from `professionalism` and `adaptability`
+ *                 (reading and adjusting to an upcoming opponent), both centered on 50
+ *   jitter      = bounded ±JITTER_SWING seeded noise, keyed off `seed`
+ *   overload    = shared Wave 3 workload-overload penalty (`calculateOverloadPenalty`) —
+ *                 `utilization <= 1` always yields `0`
  *
- *   quality = clamp(round(base + personality + jitter), 0, 100)
+ *   quality = clamp(round(base + personality + jitter - overload), 0, 100)
  *
- * Wave 3 (docs/STAFF_SYSTEM_V2.md §11.2) activates the shared workload overload penalty
- * (`calculateOverloadPenalty`, `@/engine/staff/overloadPenalty`): `utilization <= 1` always
- * yields penalty `0`, so this formula stays byte-for-byte identical to the merged Wave 2
- * version for every non-overloaded holder — that is a frozen regression invariant, not just an
- * implementation detail.
+ * This score bounds the stability/selection of `OppositionScoutingReport` recommendations — it
+ * never grants access to opponent private truth; recommendations are always derived separately
+ * from `OrganizationKnowledge`/public evidence.
  */
 const PERSONALITY_SWING = 6
 const JITTER_SWING = 5
 
-export const trainingQuality: DecisionQualityFn = (context: DecisionQualityContext, seed: string): number => {
+export const tacticsQuality: DecisionQualityFn = (context: DecisionQualityContext, seed: string): number => {
   const base = calculateStaffRoleProficiencyByRoleId(context.staff, context.roleId)
   const personality = personalityAdjustment(context)
   const jitter = seededJitter(seed)
