@@ -56,6 +56,22 @@ describe('prototype game application', () => {
     expect(completedWorld.games[simulation.gameId]).toMatchObject({ status: 'completed', result: { homeScore: simulation.finalScore.home, awayScore: simulation.finalScore.away } })
   })
 
+  it('keeps the completed user result and standings scoped to its canonical competition', () => {
+    const world = createNewGame()
+    const simulation = prepareUserMatch(world)
+    const game = world.games[simulation.gameId]!
+    const unrelatedSeason = Object.values(world.seasons).find((season) => season.competitionId !== game.competitionId)!
+    const unrelatedBefore = calculateStandings(world, unrelatedSeason.id)
+    const completed = completeMatch(world, simulation)
+    const home = calculateStandings(completed, game.seasonId).find((entry) => entry.teamId === game.homeTeamId)!
+    const away = calculateStandings(completed, game.seasonId).find((entry) => entry.teamId === game.awayTeamId)!
+
+    expect(completed.games[game.id]).toMatchObject({ status: 'completed', result: { homeScore: simulation.finalScore.home, awayScore: simulation.finalScore.away } })
+    expect(home).toMatchObject({ played: 1, pointsFor: simulation.finalScore.home, pointsAgainst: simulation.finalScore.away, wins: simulation.finalScore.home > simulation.finalScore.away ? 1 : 0, losses: simulation.finalScore.home > simulation.finalScore.away ? 0 : 1 })
+    expect(away).toMatchObject({ played: 1, pointsFor: simulation.finalScore.away, pointsAgainst: simulation.finalScore.home, wins: simulation.finalScore.away > simulation.finalScore.home ? 1 : 0, losses: simulation.finalScore.away > simulation.finalScore.home ? 0 : 1 })
+    expect(calculateStandings(completed, unrelatedSeason.id)).toEqual(unrelatedBefore)
+  })
+
   it('uses the same final score for Instant Result and MatchViewer preparation', () => {
     const world = createNewGame()
     const simulation = prepareUserMatch(world)

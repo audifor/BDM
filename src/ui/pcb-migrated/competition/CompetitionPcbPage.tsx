@@ -1,29 +1,53 @@
-import { useState } from 'react'
-import CompetitionPage from './CompetitionSectionPage'
+import { useMemo, useState } from 'react'
+import type { Game } from '@/domain/game'
+import type { CompetitionId, SeasonId, TeamId } from '@/domain/ids'
+import type { GameWorld } from '@/domain/world'
+import { getUserTeam } from '@/engine/calendar'
+import { calculateStandings } from '@/engine/competition/standings'
+import type { EntityDestination } from '@/ui/navigation/entityNavigation'
 import './CompetitionPcbPage.css'
 
-const names = ['Real Madrid','Barca','Valencia Basket','Baskonia','Unicaja Malaga','Dreamland Gran Canaria','La Laguna Tenerife','Joventut Badalona','UCAM Murcia','Casademont Zaragoza','BAXI Manresa','Surne Bilbao Basket','MoraBanc Andorra','Recoletas Salud San Pablo Burgos','Hiopos Lleida','Basquet Girona','Rio Breogan','Coviran Granada']
-const teams = names.map((name, index) => ({ id: `team-${index}`, name, data: { league_id: 'ACB', recent_results: [{ result: 'W' }, { result: index % 2 ? 'L' : 'W' }, { result: 'W' }], stats: { ppg: 87 - index, papg: 78 + index / 2, rpg: 35, apg: 19, fg_pct: 47, three_pct: 36 } } }))
-const players = names.slice(0, 12).map((name, index) => ({ id: `player-${index}`, name: ['Sergio Llull','Kevin Punter','Jean Montero','Markus Howard','Kendrick Perry','Nico Brussino','Marcelinho Huertas','Ante Tomic','Dylan Ennis','Trae Bell-Haynes','Dani Perez','Melwin Pantzar'][index], data: { team_id: `team-${index}`, position: ['PG','SG','SF','PF','C'][index % 5], stats: { ppg: 21 - index / 2, apg: 7 - index / 5, rpg: 8 - index / 4, games_played: 18 } } }))
-const fixtures = names.slice(0, 14).map((_, index) => ({ id: `acb-${index}`, date: '2025-10-04', homeId: `team-${index}`, awayId: `team-${(index + 15) % names.length}`, competition: 'liga' }))
-const CALENDAR_MONTHS = ['Septiembre de 2025', 'Octubre de 2025', 'Noviembre de 2025']
-const JORNADAS = [1, 2, 3].map((jornada) => ({ jornada, fixtures: fixtures.map((fixture, index) => ({ ...fixture, id: `${fixture.id}-j${jornada}`, homeId: `team-${(index + jornada - 1) % names.length}`, awayId: `team-${(index + jornada + 14) % names.length}` })) }))
-const Calendar = () => { const [monthIndex, setMonthIndex] = useState(0); return <section className="bento competition-page"><div className="card competition-calendar"><div className="calendar-header"><div><div className="eyebrow">Liga Endesa</div><h2>Calendario</h2></div><div className="calendar-nav"><button className="subnav-item" disabled={monthIndex === 0} onClick={() => setMonthIndex((value) => Math.max(0, value - 1))} type="button">Anterior</button><div className="calendar-month">{CALENDAR_MONTHS[monthIndex]}</div><button className="subnav-item" disabled={monthIndex === CALENDAR_MONTHS.length - 1} onClick={() => setMonthIndex((value) => Math.min(CALENDAR_MONTHS.length - 1, value + 1))} type="button">Siguiente</button></div></div><div className="calendar-grid">{['Lun','Mar','Mie','Jue','Vie','Sab','Dom'].map((day) => <div className="calendar-weekday" key={day}>{day}</div>)}{Array.from({ length: 42 }, (_, index) => <div className="calendar-day" key={index}><div className="calendar-day-number">{index + 1}</div>{index === 32 && fixtures.slice(0, 3).map((fixture) => <div className="calendar-event simple" key={fixture.id}>{teams.find((team) => team.id === fixture.homeId)?.name} — {teams.find((team) => team.id === fixture.awayId)?.name}</div>)}</div>)}</div></div></section> }
-const Results = () => { const [jornadaIndex, setJornadaIndex] = useState(0); const current = JORNADAS[jornadaIndex]!; return <section className="bento competition-page"><div className="card competition-jornadas"><div className="calendar-header"><div><div className="eyebrow">Liga Endesa</div><h2>Jornada {current.jornada}</h2></div></div><div className="jornada-controls"><button className="subnav-item" disabled={jornadaIndex === 0} onClick={() => setJornadaIndex((value) => Math.max(0, value - 1))} type="button">Jornada anterior</button><select onChange={(event) => setJornadaIndex(Number(event.target.value))} value={jornadaIndex}>{JORNADAS.map((item, index) => <option key={item.jornada} value={index}>Jornada {item.jornada}</option>)}</select><button className="subnav-item" disabled={jornadaIndex === JORNADAS.length - 1} onClick={() => setJornadaIndex((value) => Math.min(JORNADAS.length - 1, value + 1))} type="button">Jornada siguiente</button></div><div className="jornada-list">{current.fixtures.map((fixture) => <div className="jornada-item" key={fixture.id}><div className="jornada-date">{fixture.date}</div><div className="jornada-teams">{teams.find((team) => team.id === fixture.homeId)?.name}<span className="jornada-score">Pendiente</span>{teams.find((team) => team.id === fixture.awayId)?.name}</div></div>)}</div></div></section> }
-const Standings = () => <section className="bento competition-page"><div className="card competition-standings"><div className="card-header"><h2>Clasificación ACB</h2><span className="tag muted">Liga Regular</span></div><div className="table standings-table"><div className="row head standings"><div>#</div><div>Equipo</div><div>W</div><div>L</div><div>PF</div><div>PA</div><div>Diff</div><div>Pct</div></div>{teams.map((team, index) => <div className="row standings" key={team.id}><div>{index + 1}</div><div>{team.name}</div><div>{14 - index * 2}</div><div>{4 + index * 2}</div><div>1498</div><div>1420</div><div>+78</div><div>.778</div></div>)}</div></div></section>
+export interface CompetitionContext { readonly competitionId: CompetitionId; readonly seasonId: SeasonId }
 
-export function CompetitionPcbPage() {
-  const [competitionView, setCompetitionView] = useState('calendar')
-  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
-  const [simulatedResults, setSimulatedResults] = useState<Record<string, string>>({})
-  const cupBrackets = { copa: { current_round: 'Cuartos', matches: fixtures.slice(0, 4).map((fixture) => ({ id: fixture.id, round: 'Cuartos', date: '2026-02-19', home: fixture.homeId, away: fixture.awayId, played: false })) }, supercopa: { current_round: 'Semifinales', matches: [] }, playoff: { current_round: 'Cuartos', matches: [] } }
-  const selectedTeam = teams.find((team) => team.id === selectedTeamId)
-  const selectedPlayer = players.find((player) => player.id === selectedPlayerId)
-  const onSimulateMatch = (fixtureId: string) => { const fixture = fixtures.find((item) => item.id === fixtureId); if (fixture === undefined) return; const homeScore = 70 + (fixture.homeId.length % 20); const awayScore = 65 + (fixture.awayId.length % 20); setSimulatedResults((value) => ({ ...value, [fixtureId]: `${homeScore}-${awayScore}` })) }
-  return <><CompetitionPage competitionView={competitionView} setCompetitionView={setCompetitionView} renderCalendar={() => <Calendar />} renderJornadas={() => <Results />} renderStandings={() => <Standings />} upcomingFixtures={fixtures} myTeamId="team-9" allTeams={teams} allPlayers={players} cupBrackets={cupBrackets} leagueId="ACB" onTeamClick={setSelectedTeamId} onPlayerClick={setSelectedPlayerId} onSimulateMatch={onSimulateMatch} />
-    {selectedTeam && <aside className="pcb-competition__detail" aria-label="Detalle de equipo"><header><h3>{selectedTeam.name}</h3><button onClick={() => setSelectedTeamId(null)} type="button">Cerrar</button></header><dl><div><dt>PPG</dt><dd>{selectedTeam.data.stats.ppg}</dd></div><div><dt>PAPG</dt><dd>{selectedTeam.data.stats.papg}</dd></div><div><dt>REB</dt><dd>{selectedTeam.data.stats.rpg}</dd></div><div><dt>AST</dt><dd>{selectedTeam.data.stats.apg}</dd></div></dl></aside>}
-    {selectedPlayer && <aside className="pcb-competition__detail" aria-label="Detalle de jugador"><header><h3>{selectedPlayer.name}</h3><button onClick={() => setSelectedPlayerId(null)} type="button">Cerrar</button></header><dl><div><dt>Posición</dt><dd>{selectedPlayer.data.position}</dd></div><div><dt>PPG</dt><dd>{selectedPlayer.data.stats.ppg}</dd></div><div><dt>APG</dt><dd>{selectedPlayer.data.stats.apg}</dd></div><div><dt>RPG</dt><dd>{selectedPlayer.data.stats.rpg}</dd></div></dl></aside>}
-    {Object.keys(simulatedResults).length > 0 && <aside className="pcb-competition__detail" aria-label="Resultados simulados"><h3>Resultados simulados</h3><ul>{Object.entries(simulatedResults).map(([fixtureId, score]) => <li key={fixtureId}>{fixtureId}: {score}</li>)}</ul></aside>}
-  </>
+/** A stable UI selection over canonical competition editions; it owns no competition state. */
+export function selectCompetitionContext(world: GameWorld, preferredCompetitionId?: CompetitionId): CompetitionContext | undefined {
+  const seasonsByCompetition = new Map<CompetitionId, SeasonId[]>()
+  for (const season of Object.values(world.seasons)) seasonsByCompetition.set(season.competitionId, [...(seasonsByCompetition.get(season.competitionId) ?? []), season.id])
+  const competitionIds = [...seasonsByCompetition.keys()].sort()
+  const userTeamId = getUserTeam(world)?.id
+  const currentCompetitionId = world.seasons[world.currentSeasonId]?.competitionId
+  const competitionId = preferredCompetitionId !== undefined && seasonsByCompetition.has(preferredCompetitionId) ? preferredCompetitionId : competitionIds.find((id) => id === currentCompetitionId && userTeamId !== undefined && world.competitions[id]!.participantTeamIds.includes(userTeamId)) ?? competitionIds.find((id) => userTeamId !== undefined && world.competitions[id]!.participantTeamIds.includes(userTeamId)) ?? competitionIds[0]
+  if (competitionId === undefined) return undefined
+  const seasonId = seasonsByCompetition.get(competitionId)!.sort((left, right) => left === world.currentSeasonId ? -1 : right === world.currentSeasonId ? 1 : world.seasons[right]!.startDate.localeCompare(world.seasons[left]!.startDate) || left.localeCompare(right))[0]
+  return seasonId === undefined ? undefined : { competitionId, seasonId }
 }
+
+export function CompetitionPcbPage({ world, onOpenEntity }: { readonly world: GameWorld; readonly onOpenEntity?: (destination: EntityDestination) => void }) {
+  const [view, setView] = useState<'calendar' | 'results' | 'standings'>('calendar')
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState<CompetitionId | undefined>()
+  const context = selectCompetitionContext(world, selectedCompetitionId)
+  const projection = useMemo(() => context === undefined ? undefined : buildCompetitionProjection(world, context), [world, context?.competitionId, context?.seasonId])
+  if (projection === undefined) return <section className="pcb-competition"><div className="card">No hay competiciones con una temporada canónica.</div></section>
+  const openTeam = (teamId: TeamId) => onOpenEntity?.({ type: 'team', teamId, section: 'overview' })
+  return <section className="pcb-competition">
+    <header className="competition-context"><div><p className="eyebrow">COMPETICIÓN</p><h2>{projection.competitionName}</h2><span className="tag muted">{projection.seasonLabel}</span></div><label>Competición<select aria-label="Competición" value={projection.competitionId} onChange={(event) => setSelectedCompetitionId(event.target.value as CompetitionId)}>{projection.competitions.map((competition) => <option key={competition.id} value={competition.id}>{competition.name}</option>)}</select></label></header>
+    <nav className="subnav" aria-label="Secciones de competición">{([['calendar', 'Calendario'], ['results', 'Resultados'], ['standings', 'Clasificación']] as const).map(([id, label]) => <button className={`subnav-item${view === id ? ' active' : ''}`} key={id} onClick={() => setView(id)} type="button">{label}</button>)}</nav>
+    {view === 'calendar' && <section className="bento competition-page"><div className="card competition-calendar"><div className="card-header"><h2>Calendario</h2><span className="tag muted">{projection.games.length} partidos</span></div><GameList games={projection.games} teams={world.teams} onOpenTeam={openTeam} /></div></section>}
+    {view === 'results' && <section className="bento competition-page"><div className="card competition-jornadas"><div className="card-header"><h2>Resultados</h2><span className="tag muted">Agrupados por fecha</span></div>{projection.dateGroups.map((group, index) => <section className="competition-date-group" key={group.date}><h3>Jornada {index + 1} · {group.date}</h3><GameList games={group.games} teams={world.teams} onOpenTeam={openTeam} /></section>)}</div></section>}
+    {view === 'standings' && <section className="bento competition-page"><div className="card competition-standings"><div className="card-header"><h2>Clasificación</h2><span className="tag muted">{projection.seasonLabel}</span></div><div className="table standings-table"><div className="row head standings"><div>#</div><div>Equipo</div><div>W</div><div>L</div><div>PF</div><div>PA</div><div>Diff</div><div>Pct</div></div>{projection.standings.map((entry) => <div className="row standings" key={entry.teamId}><div>{entry.position}</div><div><button className="link-button" onClick={() => openTeam(entry.teamId)} type="button">{world.teams[entry.teamId]!.name}</button></div><div>{entry.wins}</div><div>{entry.losses}</div><div>{entry.pointsFor}</div><div>{entry.pointsAgainst}</div><div>{formatDifference(entry.pointDifference)}</div><div>{entry.played === 0 ? '.000' : (entry.wins / entry.played).toFixed(3).replace('0.', '.')}</div></div>)}</div></div></section>}
+  </section>
+}
+
+function buildCompetitionProjection(world: GameWorld, context: CompetitionContext) {
+  const games = Object.values(world.games).filter((game) => game.competitionId === context.competitionId && game.seasonId === context.seasonId).sort((left, right) => left.date.localeCompare(right.date) || left.id.localeCompare(right.id))
+  const groupedGames = new Map<string, Game[]>()
+  for (const game of games) groupedGames.set(game.date, [...(groupedGames.get(game.date) ?? []), game])
+  return { competitionId: context.competitionId, competitionName: world.competitions[context.competitionId]!.name, seasonLabel: world.seasons[context.seasonId]!.label, games, dateGroups: [...groupedGames].map(([date, grouped]) => ({ date, games: grouped })), standings: calculateStandings(world, context.seasonId), competitions: Object.values(world.competitions).filter((competition) => Object.values(world.seasons).some((season) => season.competitionId === competition.id)).sort((left, right) => left.id.localeCompare(right.id)) }
+}
+
+function GameList({ games, teams, onOpenTeam }: { readonly games: readonly Game[]; readonly teams: GameWorld['teams']; readonly onOpenTeam: (teamId: TeamId) => void }) {
+  if (games.length === 0) return <p className="tag muted">No hay partidos programados para esta temporada.</p>
+  return <div className="competition-game-list">{games.map((game) => <div className="jornada-item" key={game.id}><div className="jornada-date">{game.date}</div><div className="jornada-teams"><button className="link-button" onClick={() => onOpenTeam(game.homeTeamId)} type="button">{teams[game.homeTeamId]!.name}</button><span className="jornada-score">{game.status === 'completed' ? `${game.result.homeScore} - ${game.result.awayScore}` : 'Pendiente'}</span><button className="link-button" onClick={() => onOpenTeam(game.awayTeamId)} type="button">{teams[game.awayTeamId]!.name}</button></div></div>)}</div>
+}
+
+function formatDifference(value: number): string { return value > 0 ? `+${value}` : String(value) }

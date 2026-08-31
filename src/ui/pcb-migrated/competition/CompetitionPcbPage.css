@@ -1,6 +1,12 @@
 /* Local styling layer for the migrated PCB Competition surfaces (Calendar, Próximos, Standings, Jornadas/Results, Estadísticas, Copas). Dense BDM-OS desktop canon: dark, compact, Inter. */
 .pcb-competition{height:100%;overflow:auto;padding:14px;background:#0b1016;color:#e7eef7;font:12px/1.3 Inter,var(--font-ui,Arial,sans-serif)}
 .pcb-competition .subnav{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.pcb-competition .competition-context{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:12px}
+.pcb-competition .competition-context h2{margin:2px 0}
+.pcb-competition .competition-context label{display:grid;gap:4px;color:#9bb3cc;font-size:10px;text-transform:uppercase;letter-spacing:.4px}
+.pcb-competition .competition-context select{border:1px solid #263749;border-radius:6px;background:#101824;color:#e7eef7;padding:6px 8px;font:inherit;text-transform:none}
+.pcb-competition .competition-date-group+.competition-date-group{margin-top:14px}
+.pcb-competition .competition-game-list{display:grid}
 .pcb-competition .subnav-item{border:1px solid #263749;border-radius:999px;background:#101824;color:#9bb3cc;padding:7px 13px;font:11px/1 Inter,sans-serif;text-transform:uppercase;letter-spacing:.5px;cursor:pointer}
 .pcb-competition .subnav-item.active{border-color:#e8922f;background:#332516;color:#facc8a}
 .pcb-competition .bento{display:grid;gap:12px}
