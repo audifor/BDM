@@ -8,7 +8,7 @@ import { updateGameWorld, type GameWorld } from '@/domain/world'
 import type { CanonicalRatingKey } from '@/domain/player'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import { resolveDelegatedResponsibility, trainingQuality } from '@/engine/staff'
-import { effectiveIndividualDefinition, effectiveIntensity, effectiveTeamDefinition } from './DelegatedTraining'
+import { delegatedStimulusMultiplier, effectiveIndividualDefinition, effectiveIntensity, effectiveTeamDefinition } from './DelegatedTraining'
 
 /**
  * The earliest date a newly-scheduled session is guaranteed to actually execute.
@@ -66,7 +66,13 @@ export function executeScheduledTrainingSessions(world: GameWorld): GameWorld {
  * sessions) and/or `determineIntensity` are `mode: 'delegated'` with a valid holder, the
  * *effective* definition/intensity used for this execution are chosen deterministically from the
  * holder's canonical attributes (see `DelegatedTraining.ts`) instead of the session's own
- * `definitionId`/`intensity`. The persisted `ScheduledTrainingSession` itself — and therefore the
+ * `definitionId`/`intensity`. When the PLAN responsibility specifically is delegated, each
+ * eligible player's development stimulus is additionally scaled by a bounded, deterministic
+ * `delegatedStimulusMultiplier` — quality narrows the multiplier band toward 1.0, never widens it
+ * beyond [0.85, 1.15]. This multiplier is scoped strictly to the plan holder's own decision: it
+ * never applies when only `determineIntensity` is delegated (that would misattribute a quality
+ * effect to a different responsibility/holder), and it never touches fatigue, morale, cohesion, or
+ * `injuryRiskWeight`. The persisted `ScheduledTrainingSession` itself — and therefore the
  * calendar/scheduling authority — is never rewritten; only `status` changes. When neither
  * responsibility is delegated, execution is byte-for-byte identical to pre-Wave-2 behavior.
  */
@@ -89,7 +95,8 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
     const eligible = rosterPlayer === undefined || isPositionEligible(definition, rosterPlayer.basketball.primaryPosition)
     if (eligible) {
       const efficiency = Math.max(0.4, 1 - (fatigue[playerId] ?? 0) / 150)
-      const developmentDelta = distributeStimulus(definition, load.stimulus * efficiency)
+      const stimulusMultiplier = planDelegation === undefined ? 1 : delegatedStimulusMultiplier(planDelegation.qualityScore, stimulusVarianceSeed(planDelegation.responsibilityId, session.id, playerId, world.currentDate))
+      const developmentDelta = distributeStimulus(definition, load.stimulus * efficiency * stimulusMultiplier)
       if (Object.keys(developmentDelta).length > 0) stimulus[playerId] = addDevelopmentStimulus(stimulus[playerId]!, developmentDelta)
     }
     const fatigueDelta = load.fatigue * definition.effects.fatigueMultiplier
@@ -121,7 +128,12 @@ function decisionQualitySeed(responsibilityId: string, gameDate: GameDate): stri
   return `staff-decision-quality-v1:${responsibilityId}:${gameDate}`
 }
 
-interface PlanDelegation { readonly definition: TrainingDefinition; readonly outcome: DelegationOutcome }
+/** Stimulus-variance seed (docs/STAFF_SYSTEM_V2.md §14.2): includes playerId so different players in the same team session do not all receive the exact same fluctuation. Stable IDs/dates only — never map/object iteration order. */
+function stimulusVarianceSeed(responsibilityId: string, sessionId: string, playerId: PlayerId, gameDate: GameDate): string {
+  return `staff-training-stimulus-v1:${responsibilityId}:${sessionId}:${playerId}:${gameDate}`
+}
+
+interface PlanDelegation { readonly definition: TrainingDefinition; readonly responsibilityId: string; readonly qualityScore: number; readonly outcome: DelegationOutcome }
 interface IntensityDelegation { readonly intensity: TrainingIntensity; readonly outcome: DelegationOutcome }
 
 /**
@@ -150,7 +162,7 @@ function resolvePlanDelegation(world: GameWorld, session: ScheduledTrainingSessi
     qualityScore,
     payload: { sessionId: session.id, definitionId: definition.id, category: definition.category, scope: session.scope },
   })
-  return { definition, outcome }
+  return { definition, responsibilityId: resolution.responsibilityId, qualityScore, outcome }
 }
 
 function resolveIntensityDelegation(world: GameWorld, session: ScheduledTrainingSession): IntensityDelegation | undefined {
