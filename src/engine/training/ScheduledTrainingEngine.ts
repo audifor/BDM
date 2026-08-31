@@ -1,11 +1,14 @@
 import { addDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
 import { clampCareerFatigue } from '@/domain/careerFatigue/CareerFatigue'
-import { clampTeamCohesion, dailyWorkloadScore, findCollidingSession, isPositionEligible, trainingDefinitionById, trainingLoad, type ScheduledTrainingSession, type TrainingDefinition } from '@/domain/training'
+import { clampTeamCohesion, dailyWorkloadScore, findCollidingSession, isPositionEligible, trainingDefinitionById, trainingLoad, type ScheduledTrainingSession, type TrainingDefinition, type TrainingIntensity } from '@/domain/training'
 import { applyMoraleEvent, type MoraleEvent } from '@/domain/morale'
+import { createDelegationOutcome, delegationOutcomeIdFromString, type DelegationOutcome } from '@/domain/responsibility'
 import { addDays, type GameDate } from '@/domain/date'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import type { CanonicalRatingKey } from '@/domain/player'
 import type { PlayerId, TeamId } from '@/domain/ids'
+import { resolveDelegatedResponsibility, trainingQuality } from '@/engine/staff'
+import { effectiveIndividualDefinition, effectiveIntensity, effectiveTeamDefinition } from './DelegatedTraining'
 
 /**
  * The earliest date a newly-scheduled session is guaranteed to actually execute.
@@ -57,19 +60,33 @@ export function executeScheduledTrainingSessions(world: GameWorld): GameWorld {
  * positions receive its targeted development stimulus. This models a coach running a
  * position-specific drill within a team session: everyone trains, only the relevant
  * specialists actually improve the targeted skill.
+ *
+ * Delegation (Wave 2, docs/STAFF_SYSTEM_V2.md §14.2): if the relevant plan responsibility
+ * (`createTeamTrainingPlan` for team sessions, `assignIndividualDevelopment` for individual
+ * sessions) and/or `determineIntensity` are `mode: 'delegated'` with a valid holder, the
+ * *effective* definition/intensity used for this execution are chosen deterministically from the
+ * holder's canonical attributes (see `DelegatedTraining.ts`) instead of the session's own
+ * `definitionId`/`intensity`. The persisted `ScheduledTrainingSession` itself — and therefore the
+ * calendar/scheduling authority — is never rewritten; only `status` changes. When neither
+ * responsibility is delegated, execution is byte-for-byte identical to pre-Wave-2 behavior.
  */
 function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSession): GameWorld {
-  const definition = trainingDefinitionById(session.definitionId)
+  const planDelegation = resolvePlanDelegation(world, session)
+  const intensityDelegation = resolveIntensityDelegation(world, session)
+
+  const definition = planDelegation === undefined ? trainingDefinitionById(session.definitionId) : planDelegation.definition
+  const intensity = intensityDelegation === undefined ? session.intensity : intensityDelegation.intensity
+
   const playerIds = session.scope === 'individual' ? [session.playerId!] : world.teams[session.teamId]!.rosterPlayerIds
-  const load = trainingLoad(session.intensity)
+  const load = trainingLoad(intensity)
 
   let stimulus = { ...world.developmentStimulusByPlayerId }
   let fatigue = { ...world.careerFatigueByPlayerId }
   let moraleByPersonId = world.moraleByPersonId
 
   for (const playerId of playerIds) {
-    const player = world.players[playerId]
-    const eligible = player === undefined || isPositionEligible(definition, player.basketball.primaryPosition)
+    const rosterPlayer = world.players[playerId]
+    const eligible = rosterPlayer === undefined || isPositionEligible(definition, rosterPlayer.basketball.primaryPosition)
     if (eligible) {
       const efficiency = Math.max(0.4, 1 - (fatigue[playerId] ?? 0) / 150)
       const developmentDelta = distributeStimulus(definition, load.stimulus * efficiency)
@@ -84,13 +101,75 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
     ? world.teamCohesionByTeamId
     : { ...world.teamCohesionByTeamId, [session.teamId]: clampTeamCohesion((world.teamCohesionByTeamId[session.teamId] ?? 50) + definition.effects.cohesionDelta) }
 
+  const delegationOutcomes = [
+    ...(planDelegation === undefined ? [] : [planDelegation.outcome]),
+    ...(intensityDelegation === undefined ? [] : [intensityDelegation.outcome]),
+  ]
+
   return updateGameWorld(world, {
     developmentStimulusByPlayerId: stimulus,
     careerFatigueByPlayerId: fatigue,
     moraleByPersonId,
     teamCohesionByTeamId,
     scheduledTrainingSessionsById: { ...world.scheduledTrainingSessionsById, [session.id]: { ...session, status: 'completed' } },
+    ...(delegationOutcomes.length === 0 ? {} : { delegationOutcomes: [...Object.values(world.delegationOutcomesById), ...delegationOutcomes] }),
   })
+}
+
+/** Canonical decision-quality seed family (docs/STAFF_SYSTEM_V2.md §10.2): `staff-decision-quality-v1:${responsibilityId}:${gameDate}`. Stable IDs/dates only — never map/object iteration order — so results are order-independent across teams. */
+function decisionQualitySeed(responsibilityId: string, gameDate: GameDate): string {
+  return `staff-decision-quality-v1:${responsibilityId}:${gameDate}`
+}
+
+interface PlanDelegation { readonly definition: TrainingDefinition; readonly outcome: DelegationOutcome }
+interface IntensityDelegation { readonly intensity: TrainingIntensity; readonly outcome: DelegationOutcome }
+
+/**
+ * Resolves the effective definition AND the exactly-once `DelegationOutcome` for the plan
+ * responsibility relevant to this session's scope, in a single pass — computing `trainingQuality`
+ * exactly once per delegated decision (same seed => same score, so recomputing would be harmless
+ * but wasteful and easy to accidentally desync).
+ */
+function resolvePlanDelegation(world: GameWorld, session: ScheduledTrainingSession): PlanDelegation | undefined {
+  const kind = session.scope === 'individual' ? 'assignIndividualDevelopment' : 'createTeamTrainingPlan'
+  const resolution = resolveDelegatedResponsibility(world, session.teamId, kind)
+  if (resolution === undefined) return undefined
+  const seed = decisionQualitySeed(resolution.responsibilityId, world.currentDate)
+  const qualityScore = trainingQuality(resolution.context, seed)
+  const player = session.scope === 'individual' ? world.players[session.playerId!] : undefined
+  const definition = session.scope === 'individual' && player !== undefined
+    ? effectiveIndividualDefinition(player, qualityScore, seed)
+    : effectiveTeamDefinition(resolution.context.staff, qualityScore, seed)
+  const outcome = createDelegationOutcome({
+    id: delegationOutcomeIdFromString(`delegation-outcome:${resolution.responsibilityId}:${session.id}`),
+    responsibilityId: resolution.responsibilityId,
+    staffId: resolution.staffId,
+    decidedOn: world.currentDate,
+    kind,
+    applied: true,
+    qualityScore,
+    payload: { sessionId: session.id, definitionId: definition.id, category: definition.category, scope: session.scope },
+  })
+  return { definition, outcome }
+}
+
+function resolveIntensityDelegation(world: GameWorld, session: ScheduledTrainingSession): IntensityDelegation | undefined {
+  const resolution = resolveDelegatedResponsibility(world, session.teamId, 'determineIntensity')
+  if (resolution === undefined) return undefined
+  const seed = decisionQualitySeed(resolution.responsibilityId, world.currentDate)
+  const qualityScore = trainingQuality(resolution.context, seed)
+  const intensity = effectiveIntensity(qualityScore, seed)
+  const outcome = createDelegationOutcome({
+    id: delegationOutcomeIdFromString(`delegation-outcome:${resolution.responsibilityId}:${session.id}`),
+    responsibilityId: resolution.responsibilityId,
+    staffId: resolution.staffId,
+    decidedOn: world.currentDate,
+    kind: 'determineIntensity',
+    applied: true,
+    qualityScore,
+    payload: { sessionId: session.id, intensity, scope: session.scope },
+  })
+  return { intensity, outcome }
 }
 
 function applyMoraleForPlayer(moraleByPersonId: GameWorld['moraleByPersonId'], world: GameWorld, playerId: PlayerId, definition: TrainingDefinition, session: ScheduledTrainingSession): GameWorld['moraleByPersonId'] {

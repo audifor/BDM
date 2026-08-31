@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { setTrainingResponsibility } from '@/engine/training'
-import { projectLegacyTrainingResponsibility } from './trainingResponsibilityAdapter'
+import { migrateTrainingResponsibilities } from './migrateTrainingResponsibilities'
+import { getResponsibility } from './responsibility'
 
-describe('Training responsibility compatibility (Wave 1 adapter — not a permanent parallel authority)', () => {
-  it('does not create a second permanent Responsibility source of truth: responsibilitiesById is unaffected by the legacy setter', () => {
+describe('Training responsibility compatibility (Wave 2: migrateTrainingResponsibilities retires the legacy map as a runtime authority)', () => {
+  it('the legacy setter alone does not create a second permanent Responsibility source of truth: responsibilitiesById is unaffected until migration runs', () => {
     const world = createNewGame()
     const teamId = Object.keys(world.teams)[0]! as never
     const staffId = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.teamId === teamId)!.staffPersonId
@@ -13,25 +14,17 @@ describe('Training responsibility compatibility (Wave 1 adapter — not a perman
     expect(updated.responsibilitiesById).toBe(before)
   })
 
-  it('projects the legacy trainingResponsibilitiesByTeamId holder onto the general model shape for read views, without persisting it', () => {
+  it('migration converts a legacy holder into the canonical delegated Responsibility and empties the legacy map', () => {
     const world = createNewGame()
     const teamId = Object.keys(world.teams)[0]! as never
     const staffId = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.teamId === teamId)!.staffPersonId
-    const updated = setTrainingResponsibility(world, teamId, 'teamTraining', staffId)
-    const projected = projectLegacyTrainingResponsibility(updated, teamId, 'createTeamTrainingPlan')
-    expect(projected?.holderStaffId).toBe(staffId)
-    expect(projected?.mode).toBe('delegated')
-  })
+    const withLegacyHolder = setTrainingResponsibility(world, teamId, 'teamTraining', staffId)
+    const migrated = migrateTrainingResponsibilities(withLegacyHolder)
 
-  it('returns undefined when the legacy map has no holder for that team/kind', () => {
-    const world = createNewGame()
-    const teamId = Object.keys(world.teams)[0]! as never
-    expect(projectLegacyTrainingResponsibility(world, teamId, 'createTeamTrainingPlan')).toBeUndefined()
-  })
-
-  it('returns undefined for a ResponsibilityKind with no legacy TrainingResponsibility counterpart', () => {
-    const world = createNewGame()
-    const teamId = Object.keys(world.teams)[0]! as never
-    expect(projectLegacyTrainingResponsibility(world, teamId, 'oppositionScouting')).toBeUndefined()
+    const responsibility = getResponsibility(migrated, teamId, 'createTeamTrainingPlan')
+    expect(responsibility?.mode).toBe('delegated')
+    expect(responsibility?.holderStaffId).toBe(staffId)
+    expect(migrated.trainingResponsibilitiesByTeamId[teamId]).toBeUndefined()
+    expect(Object.values(migrated.trainingResponsibilitiesByTeamId).every((entry) => Object.keys(entry).length === 0)).toBe(true)
   })
 })

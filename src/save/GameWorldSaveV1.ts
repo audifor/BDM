@@ -34,6 +34,7 @@ import { ensureTeamFinances } from '@/engine/world/TeamFinancesEnrichment'
 import { ensurePlayerKnowledge } from '@/engine/world/PlayerKnowledgeEnrichment'
 import { ensureStaffStructure } from '@/engine/world/StaffStructureEnrichment'
 import { ensureResponsibilityStructure } from '@/engine/world/ResponsibilityEnrichment'
+import { migrateTrainingResponsibilities } from '@/domain/world/migrateTrainingResponsibilities'
 import { delegationOutcomeIdFromString, responsibilityIdFromString } from '@/domain/responsibility'
 import { playerKnowledgeIdFromString } from '@/domain/ids'
 import { createCoachRpgProfile } from '@/domain/coachRpg'
@@ -338,7 +339,7 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
     throw new Error('Completed season is missing season history')
   }
   const withLegacyKnowledge = options.enrichLegacy === false || payload.playerKnowledge !== undefined ? world : ensurePlayerKnowledge(world)
-  const withResponsibilities = options.enrichLegacy === false ? withLegacyKnowledge : ensureResponsibilityStructure(ensureStaffStructure(withLegacyKnowledge))
+  const withResponsibilities = options.enrichLegacy === false ? withLegacyKnowledge : migrateTrainingResponsibilities(ensureResponsibilityStructure(ensureStaffStructure(withLegacyKnowledge)))
   const enriched = ensureNcaaAcademics(ensureNcaaEligibility(withResponsibilities))
   return payload.nilProfiles === undefined ? ensureNcaaNil(enriched) : enriched
 }
