@@ -146,7 +146,12 @@ describe('GameWorldSaveV1', () => {
 
     expect(Object.keys(legacy.teamFinancesByTeamId)).toHaveLength(Object.keys(legacy.teams).length)
     expect(Object.keys(partial.teamFinancesByTeamId)).toHaveLength(Object.keys(partial.teams).length)
-    expect(Object.values(partialFinances)).toEqual(Object.values(partial.teamFinancesByTeamId).slice(0, -1))
+    // V1 only ever serializes the legacy {teamId, playerSalaryBudget} shape (Wave 4A review Blocker 1),
+    // so compare on the fields it actually carries rather than the full runtime TeamFinances shape.
+    for (const row of partialFinances) {
+      const loadedFinances = partial.teamFinancesByTeamId[row.teamId as never]!
+      expect(loadedFinances.playerSalaryBudget).toEqual(row.playerSalaryBudget)
+    }
     for (const team of Object.values(legacy.teams)) expect(() => getTeamFinancialSnapshot(legacy, team.id)).not.toThrow()
   })
 

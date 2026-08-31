@@ -16,7 +16,8 @@ import type { SaveGameEnvelopeV1 } from './GameWorldSaveV1'
  * V1) and the new `TeamFinances.staffSalaryBudget` field (strictly validated here rather than left
  * to V1's loose backfilling reader, per the "changed contract" rule).
  */
-export interface GameWorldSaveV3 extends GameWorldSaveV2 { readonly staffCareerRuntime?: Readonly<Record<string, unknown>> }
+/** `staffCareerRuntime` is REQUIRED (Wave 4A review Blocker 3) — V3 is precisely the format that owns Staff Career state; tolerance for its absence belongs only to the V1/V2 migration path (`migrateGameWorldSaveV1ToV3`/`migrateGameWorldSaveV2ToV3`), never to a canonical V3 payload. */
+export interface GameWorldSaveV3 extends GameWorldSaveV2 { readonly staffCareerRuntime: Readonly<Record<string, unknown>> }
 export interface SaveGameEnvelopeV3 { readonly schemaVersion: 3; readonly savedAt: string; readonly payload: GameWorldSaveV3 }
 
 export function migrateGameWorldSaveV1ToV3(value: SaveGameEnvelopeV1): SaveGameEnvelopeV3 {
@@ -101,8 +102,8 @@ function parseStaffCareerRuntimeV3(value: unknown): {
   readonly staffContracts: readonly StaffContract[]
   readonly staffReputationProfilesByStaffId: Readonly<Record<string, StaffReputationProfile>>
 } {
-  const empty = { staffEmploymentByStaffId: {}, staffCareerHistoryByStaffId: {}, staffJobOpenings: [], staffJobCandidacies: [], staffInterviewsByCandidacyId: {}, staffJobOffers: [], staffContracts: [], staffReputationProfilesByStaffId: {} }
-  if (value === undefined) return empty
+  // `value` is required for a canonical V3 payload (Blocker 3) — `record()` throws if it is
+  // `undefined`/missing, so there is no "treat absence as empty" fallback here anymore.
   const runtime = record(value, 'Staff career runtime V3')
   assertExactKeys(runtime, ['staffEmployment', 'staffCareerHistory', 'staffJobOpenings', 'staffJobCandidacies', 'staffInterviews', 'staffJobOffers', 'staffContracts', 'staffReputationProfiles'], 'Staff career runtime V3')
 

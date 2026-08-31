@@ -37,6 +37,28 @@ export interface StaffJobOffer { readonly id: StaffJobOfferId; readonly jobOpeni
 export type StaffFiringReason = 'performance' | 'budgetCuts' | 'roleEliminated'
 export interface StaffFiringDecision { readonly staffId: StaffPersonId; readonly teamId: TeamId; readonly date: GameDate; readonly reason: StaffFiringReason }
 
+/**
+ * Canonical, centralized matrix of which `StaffJobCandidacy` statuses are consistent with a given
+ * `StaffJobOffer` status (Issue #19 review Blocker 2) — used by `GameWorld.validateWorld` to reject
+ * otherwise-referentially-valid but state-machine-impossible worlds (e.g. a `pending` offer backed
+ * by an `identified` candidacy, which the state machine could never actually produce).
+ *
+ * `withdrawn` offers accept BOTH `withdrawn` and `rejected` candidacies: when a winning candidate's
+ * offer is accepted, every competing offer for the same opening is withdrawn while its candidacy is
+ * independently transitioned to `rejected` (see `StaffCareerService.acceptStaffJobOffer`) — a
+ * legitimate, frequently-occurring combination, not an error.
+ */
+const OFFER_CANDIDACY_CONSISTENCY: Readonly<Record<StaffJobOfferStatus, readonly StaffJobCandidacyStatus[]>> = {
+  pending: ['offered'],
+  accepted: ['hired'],
+  declined: ['rejected'],
+  withdrawn: ['withdrawn', 'rejected'],
+}
+
+export function isStaffOfferCandidacyStateConsistent(offerStatus: StaffJobOfferStatus, candidacyStatus: StaffJobCandidacyStatus): boolean {
+  return OFFER_CANDIDACY_CONSISTENCY[offerStatus].includes(candidacyStatus)
+}
+
 export type StaffCareerFailureReason = 'invalidEmploymentState' | 'alreadyEmployedByTeam' | 'invalidCandidacyTransition' | 'invalidInterviewTransition' | 'invalidOfferTransition'
 export type StaffCareerTransitionResult = { readonly ok: true; readonly employment: StaffEmployment; readonly history: readonly StaffCareerHistoryEntry[] } | { readonly ok: false; readonly reason: StaffCareerFailureReason }
 export type StaffCandidacyTransitionResult = { readonly ok: true; readonly candidacy: StaffJobCandidacy } | { readonly ok: false; readonly reason: 'invalidCandidacyTransition' }

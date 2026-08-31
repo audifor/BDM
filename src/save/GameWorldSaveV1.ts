@@ -197,7 +197,11 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
       injuries: copyRecords(Object.values(world.injuriesById)),
       contracts: copyRecords(Object.values(world.contractsById)),
       playerTransactions: copyRecords(Object.values(world.playerTransactionsById)),
-      teamFinances: copyRecords(Object.values(world.teamFinancesByTeamId)),
+      // V1/V2 are legacy layers that never owned `staffSalaryBudget` (Wave 4A review Blocker 1) —
+      // serialize only the legacy two-field shape explicitly, never a raw clone of the runtime
+      // `TeamFinances` object, which now carries `staffSalaryBudget` too. V3 is the sole canonical
+      // writer/validator of that field (see `GameWorldSaveV3.ts`'s `parseTeamFinancesV3`).
+      teamFinances: Object.values(world.teamFinancesByTeamId).map((finances) => ({ teamId: finances.teamId, playerSalaryBudget: finances.playerSalaryBudget })),
       playerKnowledge: copyRecords(Object.values(world.playerKnowledgeById)),
       organizationEvaluationPolicies: Object.entries(world.organizationEvaluationPoliciesById).map(([organizationId, policy]) => ({ organizationId, ...policy })),
       staffPeople: copyRecords(Object.values(world.staffPeopleById)), teamStaffAssignments: copyRecords(Object.values(world.teamStaffAssignmentsById)),

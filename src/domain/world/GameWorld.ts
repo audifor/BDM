@@ -36,7 +36,7 @@ import { organizationIdForTeam, type OrganizationId } from '@/domain/ids'
 import type { PlayerKnowledgeId } from '@/domain/ids'
 import { createStaffPerson, createTeamStaffAssignment, staffRoleDefinition, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
 import type { StaffPersonId, TeamStaffAssignmentId } from '@/domain/ids'
-import { createStaffEmployment, createStaffJobOpening, type StaffCareerHistoryEntry, type StaffEmployment, type StaffInterview, type StaffJobCandidacy, type StaffJobCandidacyId, type StaffJobOffer, type StaffJobOfferId, type StaffJobOpening, type StaffJobOpeningId } from '@/domain/staffCareer'
+import { createStaffEmployment, createStaffJobOpening, isStaffOfferCandidacyStateConsistent, type StaffCareerHistoryEntry, type StaffEmployment, type StaffInterview, type StaffJobCandidacy, type StaffJobCandidacyId, type StaffJobOffer, type StaffJobOfferId, type StaffJobOpening, type StaffJobOpeningId } from '@/domain/staffCareer'
 import { createStaffContract, isStaffContractActiveOn, type StaffContract, type StaffContractId } from '@/domain/staffContract'
 import { createStaffReputationProfile, type StaffReputationProfile } from '@/domain/staffReputation'
 import { createDelegationOutcome, createResponsibility, validateResponsibilityAssignment, type DelegationOutcome, type DelegationOutcomeId, type Responsibility, type ResponsibilityId } from '@/domain/responsibility'
@@ -771,6 +771,10 @@ function validateWorld(world: GameWorld): void {
     if (opening.teamId !== offer.teamId) throw new GameWorldValidationError(`Staff offer ${offer.id} Team does not match its opening's Team`)
     const candidacy = Object.values(world.staffJobCandidaciesById).find((item) => item.jobOpeningId === offer.jobOpeningId && item.staffId === offer.staffId)
     if (candidacy === undefined) throw new GameWorldValidationError(`Staff offer ${offer.id} has no matching Staff candidacy for the same opening and Staff`)
+    // Issue #19 review Blocker 2: the offer's status must be one the state machine could actually
+    // have produced together with its candidacy's current status — see the centralized
+    // `isStaffOfferCandidacyStateConsistent` matrix.
+    if (!isStaffOfferCandidacyStateConsistent(offer.status, candidacy.status)) throw new GameWorldValidationError(`Staff offer ${offer.id} status ${offer.status} is inconsistent with its Staff candidacy ${candidacy.id} status ${candidacy.status}`)
   }
   const staffPendingOfferKeys = new Set<StaffPersonId>()
   for (const offer of Object.values(world.staffJobOffersById)) {

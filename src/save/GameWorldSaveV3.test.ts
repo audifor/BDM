@@ -213,4 +213,74 @@ describe('GameWorldSaveV3', () => {
     expect(loadedTwice.staffContractsById).toEqual(loadedOnce.staffContractsById)
     expect(loadedTwice.staffReputationProfilesByStaffId).toEqual(loadedOnce.staffReputationProfilesByStaffId)
   })
+
+  // --- Wave 4A review Blocker 1: V1/V2 must never carry staffSalaryBudget ---
+
+  it('V1 teamFinances rows never carry staffSalaryBudget', () => {
+    const world = createNewGame()
+    const v1 = serializeGameWorldV1(world, savedAt)
+    for (const row of v1.payload.teamFinances as Record<string, unknown>[]) {
+      expect('staffSalaryBudget' in row).toBe(false)
+      expect(Object.keys(row).sort()).toEqual(['playerSalaryBudget', 'teamId'])
+    }
+  })
+
+  it('V2 teamFinances rows never carry staffSalaryBudget (inherits V1 serialization)', () => {
+    const world = createNewGame()
+    const v2 = serializeGameWorldV2(world, savedAt)
+    for (const row of v2.payload.teamFinances as Record<string, unknown>[]) {
+      expect('staffSalaryBudget' in row).toBe(false)
+    }
+  })
+
+  it('V3 teamFinances rows carry a valid staffSalaryBudget, and V3 round-trip preserves it exactly', () => {
+    const world = createNewGame()
+    const v3 = serializeGameWorldV3(world, savedAt)
+    for (const row of v3.payload.teamFinances as Record<string, unknown>[]) {
+      expect(typeof row.staffSalaryBudget).toBe('number')
+      expect(row.staffSalaryBudget as number).toBeGreaterThan(0)
+    }
+    const loaded = deserializeGameWorldV3(v3)
+    expect(loaded.teamFinancesByTeamId).toEqual(world.teamFinancesByTeamId)
+  })
+
+  // --- Wave 4A review Blocker 3: staffCareerRuntime is mandatory in V3 ---
+
+  it('a valid V3 payload with staffCareerRuntime present deserializes successfully', () => {
+    const { world } = worldWithHiredStaff()
+    const saved = serializeGameWorldV3(world, savedAt)
+    expect(saved.payload.staffCareerRuntime).toBeDefined()
+    expect(() => deserializeGameWorldV3(saved)).not.toThrow()
+  })
+
+  it('a V3 payload missing staffCareerRuntime entirely is rejected', () => {
+    const world = createNewGame()
+    const saved = structuredClone(serializeGameWorldV3(world, savedAt))
+    delete (saved.payload as unknown as Record<string, unknown>).staffCareerRuntime
+    expect(() => deserializeGameWorldV3(saved)).toThrow()
+  })
+
+  it('a V3 payload with staffCareerRuntime = {} is rejected by the closed schema', () => {
+    const world = createNewGame()
+    const saved = structuredClone(serializeGameWorldV3(world, savedAt))
+    ;(saved.payload as unknown as Record<string, unknown>).staffCareerRuntime = {}
+    expect(() => deserializeGameWorldV3(saved)).toThrow()
+  })
+
+  it('a V3 payload with staffCareerRuntime missing a required sub-collection is rejected', () => {
+    const { world } = worldWithHiredStaff()
+    const saved = structuredClone(serializeGameWorldV3(world, savedAt))
+    const runtime = (saved.payload as unknown as Record<string, unknown>).staffCareerRuntime as Record<string, unknown>
+    delete runtime.staffContracts
+    expect(() => deserializeGameWorldV3(saved)).toThrow()
+  })
+
+  it('V1/V2 without Staff Career still migrate to a V3 whose staffCareerRuntime is complete', () => {
+    const world = createNewGame()
+    const v1 = serializeGameWorldV1(world, savedAt)
+    const migrated = migrateGameWorldSaveV1ToV3(v1)
+    expect(migrated.payload.staffCareerRuntime).toBeDefined()
+    const loaded = deserializeGameWorldV3(migrated)
+    for (const staffId of Object.keys(loaded.staffPeopleById)) expect(loaded.staffEmploymentByStaffId[staffId as never]).toBeDefined()
+  })
 })
