@@ -18,6 +18,7 @@ import { BDMDataGrid } from "@/ui/dataGrid/BDMDataGrid";
 import type { DataGridColumn, DataGridView } from "@/ui/dataGrid/types";
 import { BdmIcon } from "@/ui/icons/BdmIcon";
 import type { EntityDestination } from "@/ui/navigation/entityNavigation";
+import { useEntityContextMenu } from "@/ui/entityContextMenu/EntityContextMenuProvider";
 
 import "./CanonicalRoster.css";
 
@@ -187,6 +188,7 @@ export function CanonicalRoster({
   readonly world: GameWorld;
 }) {
   const [query, setQuery] = useState("");
+  const playerMenu = useEntityContextMenu();
   const [selectedId, setSelectedId] = useState<string>();
   const [ratingView, setRatingView] = useState(activeView);
   const lineup = useMemo(() => getTeamLineup(world, team.id), [world, team.id]);
@@ -231,6 +233,7 @@ export function CanonicalRoster({
           <button
             className="canonical-roster__player-link"
             onClick={() => openPlayer(player)}
+            onContextMenu={(event) => playerMenu.open({ type: "player", id: player.id }, event, { surface: "roster" })}
             type="button"
           >
             {player.firstName} {player.lastName}
@@ -484,6 +487,9 @@ export function CanonicalRoster({
           }}
           onSelectionChange={(ids) => setSelectedId(ids[0])}
           presentation="fm"
+          entityForRow={(player) => ({ type: "player", id: player.id })}
+          entitySurface="roster"
+          multiSelect
           rows={rows}
           selectedId={selectedId}
           views={[selectedView]}

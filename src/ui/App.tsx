@@ -25,6 +25,7 @@ import { GlobalSearchOverlay } from './desktop/GlobalSearch'
 import { EntityActionComposer } from './entityActions/EntityActionComposer'
 import { resolveGameCapabilities } from './gameContext'
 import { type EntityDestination, useEntityNavigationStore } from './navigation/entityNavigation'
+import { EntityContextMenuProvider } from './entityContextMenu/EntityContextMenuProvider'
 
 /** Temporary compatibility export for existing UI tests; the dock and launcher own navigation. */
 export const NAVIGATION: readonly { readonly id: DesktopSection; readonly label: string }[] = DESKTOP_APPS
@@ -175,7 +176,7 @@ export function App() {
 
   if (simulation !== null) {
     const coachingTeam = getUserTeam(world)!
-    return <DesktopShell context={<GameContextBar onOpenSettings={() => openWindow('settings')} onSearch={() => setGlobalSearchOpen(true)} world={world} />} density={density} dockAutoHide={dockAutoHide} overlay={<EntityActionComposer onResult={executeComposerAction} />} wallpaper={wallpaper}><MatchViewerScreen world={world} simulation={simulation} homeTeamName={world.teams[simulation.homeTeamId]!.name} awayTeamName={world.teams[simulation.awayTeamId]!.name} currentEventIndex={currentEventIndex} isPlaying={isPlaying} speed={speed} resultApplied={resultApplied} onPause={pause} onResume={resume} onSpeedChange={setSpeed} onRevealNext={() => replaceSimulation(advanceLiveMatch())} onRequestPresentationSegment={() => createPresentationSegment(advanceLiveMatchPresentation())} onCompletePresentationSegment={(nextSimulation) => replaceSimulation(nextSimulation)} onSkipToEnd={() => replaceSimulation(skipLiveMatch(), false)} onApplyResult={() => { if (markResultApplied()) completeMatch(simulation) }} onContinue={clearMatch} coachingPlan={tacticalPlan} coachingPlayers={coachingTeam.rosterPlayerIds.map((playerId) => world.players[playerId]!)} coachingTeamId={coachingTeam.id} onApplyCoaching={(plan) => { replaceSimulation(applyLiveTactics(coachingTeam.id, plan), false); setTacticalPlan(plan) }} onApplyManualSubstitutions={(substitutions) => replaceSimulation(applyManualSubstitutions(coachingTeam.id, substitutions), false)} /></DesktopShell>
+    return <EntityContextMenuProvider onOpenEntity={openEntity} world={world}><DesktopShell context={<GameContextBar onOpenSettings={() => openWindow('settings')} onSearch={() => setGlobalSearchOpen(true)} world={world} />} density={density} dockAutoHide={dockAutoHide} overlay={<EntityActionComposer onResult={executeComposerAction} />} wallpaper={wallpaper}><MatchViewerScreen world={world} simulation={simulation} homeTeamName={world.teams[simulation.homeTeamId]!.name} awayTeamName={world.teams[simulation.awayTeamId]!.name} currentEventIndex={currentEventIndex} isPlaying={isPlaying} speed={speed} resultApplied={resultApplied} onPause={pause} onResume={resume} onSpeedChange={setSpeed} onRevealNext={() => replaceSimulation(advanceLiveMatch())} onRequestPresentationSegment={() => createPresentationSegment(advanceLiveMatchPresentation())} onCompletePresentationSegment={(nextSimulation) => replaceSimulation(nextSimulation)} onSkipToEnd={() => replaceSimulation(skipLiveMatch(), false)} onApplyResult={() => { if (markResultApplied()) completeMatch(simulation) }} onContinue={clearMatch} coachingPlan={tacticalPlan} coachingPlayers={coachingTeam.rosterPlayerIds.map((playerId) => world.players[playerId]!)} coachingTeamId={coachingTeam.id} onApplyCoaching={(plan) => { replaceSimulation(applyLiveTactics(coachingTeam.id, plan), false); setTacticalPlan(plan) }} onApplyManualSubstitutions={(substitutions) => replaceSimulation(applyManualSubstitutions(coachingTeam.id, substitutions), false)} /></DesktopShell></EntityContextMenuProvider>
   }
   const seasonComplete = Object.values(world.games).every((game) => game.status === 'completed')
 
@@ -189,7 +190,7 @@ export function App() {
   const desktopActions: DesktopAppActions = { tacticalPlan, openApp: openDesktopApp, openEntity, playGame: () => startMatch(startLiveMatch(tacticalPlan)), instantResult: () => instantResult(tacticalPlan), simulateRemainingGamesToday, advanceDay, startNextSeason, releasePlayer, signFreeAgent, selectDraftProspect, executeTrade, addRecruitingTarget, removeRecruitingTarget, performRecruitingAction, makeRecruitingOffer, acceptNilOpportunity, purchaseSkill: (id) => { const result = purchaseUserCoachSkill(id); if (!result.ok) setSaveMessage(result.reason) }, purchasePerk: (id) => { const result = purchaseUserCoachPerk(id); if (!result.ok) setSaveMessage(result.reason) }, acceptOffer: acceptUserCoachOffer, declineOffer: declineUserCoachOffer, applyForJob: applyUserCoachForJob, setTacticalPlan, resetTacticalPlan, setTrainingIntensity, setTrainingFocus, scheduleTrainingSession, scheduleTeamModuleSession, cancelTrainingSession, saveUserTrainingModule, deleteUserTrainingModule, assignTrainingModuleToPlayer, setLineupSlot, clearLineupSlot, updateRotationMinutes, updateGamePlanMatchups, updateGamePlanTacticalOverride, saveDesignerPlay, deleteDesignerPlay, saveDesignerPlaybook, deleteDesignerPlaybook, setCoachLifestyle: setUserCoachLifestyle, respondToMedia, skipMedia }
 
   return (
-    <DesktopShell
+    <EntityContextMenuProvider onOpenEntity={openEntity} world={world}><DesktopShell
       context={<GameContextBar onOpenSettings={() => openDesktopApp('settings')} onSearch={() => setGlobalSearchOpen(true)} world={world} />}
       density={density}
       dockAutoHide={dockAutoHide}
@@ -202,7 +203,7 @@ export function App() {
       <div className="app-shell">
         {desktopWindows.filter((window) => !window.minimized).map((window) => <DesktopWindow focused={window.id === focusedWindowId} key={window.id} onClose={() => closeWindow(window.id)} onFocus={() => focusWindow(window.id)} onMaximize={() => maximizeWindow(window.id)} onMinimize={() => minimizeWindow(window.id)} onMove={(position) => moveWindow(window.id, position)} onResize={(bounds) => resizeWindow(window.id, bounds)} onRestoreMaximized={() => restoreMaximizedWindow(window.id)} onSnap={(snap) => snapWindow(window.id, snap, { width: globalThis.innerWidth, height: globalThis.innerHeight })} title={desktopWindowTitle(window.appId, window.instanceId === undefined ? undefined : entityDestinations[window.instanceId], world)} window={window}><DesktopAppHost actions={desktopActions} appId={window.appId} entityDestination={window.instanceId === undefined ? undefined : entityDestinations[window.instanceId]} world={world} /></DesktopWindow>)}
       </div>
-    </DesktopShell>
+    </DesktopShell></EntityContextMenuProvider>
   )
 }
 

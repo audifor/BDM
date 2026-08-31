@@ -1,0 +1,32 @@
+import type { EntityRef } from '@/app/entityActions/EntityRef'
+import type { CompetitionId, PlayerId, TeamId } from '@/domain/ids'
+import { getTeamRoster } from '@/domain/world'
+import { getNextUserGame, getUserTeam } from '@/engine/calendar'
+import { isPositionEligible, TRAINING_CATALOG, trainingDefinitionById } from '@/domain/training'
+import { getLineupAssignments, LINEUP_SLOTS, type LineupSlot } from '@/domain/tactics'
+import type { GameWorld } from '@/domain/world'
+import type { EntityDestination } from '@/ui/navigation/entityNavigation'
+export type EntityActionCommand = { readonly type: 'navigate'; readonly destination: EntityDestination } | { readonly type: 'lineup'; readonly playerId: PlayerId; readonly slot: LineupSlot } | { readonly type: 'clearLineup'; readonly slot: LineupSlot } | { readonly type: 'training'; readonly playerIds: readonly PlayerId[]; readonly moduleId: string } | { readonly type: 'matchup'; readonly opponentPlayerId: PlayerId; readonly defenderId: PlayerId }
+export type EntityContextAction = { readonly kind: 'action'; readonly id: string; readonly label: string; readonly command: EntityActionCommand; readonly destination?: EntityDestination; readonly disabled?: boolean; readonly reason?: string }
+export type EntityContextEntry = EntityContextAction | { readonly kind: 'submenu'; readonly id: string; readonly label: string; readonly children: readonly EntityContextEntry[] } | { readonly kind: 'separator'; readonly id: string }
+export interface EntityActionContext { readonly surface?: 'roster' | 'training' | 'tactics' | 'matchups'; readonly selection?: readonly EntityRef[] }
+const nav = (id: string, label: string, destination: EntityDestination): EntityContextAction => ({ kind: 'action', id, label, destination, command: { type: 'navigate', destination } })
+const sep = (id: string): EntityContextEntry => ({ kind: 'separator', id })
+/** Capability resolver: every mutation maps to an existing canonical store command. */
+export function resolveEntityContextActions(world: GameWorld, entity: EntityRef, context: EntityActionContext = {}): readonly EntityContextEntry[] {
+  if (entity.type === 'team') { const teamId = entity.id as TeamId; return world.teams[teamId] === undefined ? [] : [nav('open-team', 'Open team', { type: 'team', teamId, section: 'overview' }), nav('open-roster', 'Open roster', { type: 'team', teamId, section: 'squad' })] }
+  if (entity.type === 'competition') { const competitionId = entity.id as CompetitionId; return world.competitions[competitionId] === undefined ? [] : [nav('open-competition', 'Open competition', { type: 'competition', competitionId, section: 'overview' }), nav('open-standings', 'Open standings', { type: 'competition', competitionId, section: 'standings' }), nav('open-schedule', 'Open schedule', { type: 'competition', competitionId, section: 'schedule' })] }
+  if (entity.type !== 'player') return []
+  const playerId = entity.id as PlayerId; const team = getUserTeam(world); const own = team?.rosterPlayerIds.includes(playerId) === true
+  if (world.players[playerId] === undefined) return []
+  const entries: EntityContextEntry[] = [nav('open-profile', 'Open profile', { type: 'player', playerId, section: 'overview' })]
+  if (!own) { const game = team === undefined ? undefined : getNextUserGame(world); const opponent = game === undefined || team === undefined ? undefined : game.homeTeamId === team.id ? game.awayTeamId : game.homeTeamId; const lineup = team === undefined ? undefined : world.lineupsByTeamId[team.id]; const starterIds = new Set(lineup === undefined ? [] : getLineupAssignments(lineup).filter(({ slot }) => LINEUP_SLOTS.indexOf(slot) < 5).map(({ playerId: starterId }) => starterId)); const defenders = team === undefined ? [] : getTeamRoster(world, team.id).filter((p) => starterIds.has(p.id)); if (opponent !== undefined && world.teams[opponent]?.rosterPlayerIds.includes(playerId) && defenders.length > 0) entries.push(sep('matchup'), { kind: 'submenu', id: 'assign-defender', label: 'Assign defender', children: defenders.map((p) => ({ kind: 'action', id: `defender-${p.id}`, label: `${p.firstName} ${p.lastName}`, command: { type: 'matchup', opponentPlayerId: playerId, defenderId: p.id } })) }); return entries }
+  const selection = (context.selection ?? [entity]).filter((ref): ref is EntityRef<'player', PlayerId> => ref.type === 'player' && team!.rosterPlayerIds.includes(ref.id as PlayerId)); const playerIds = selection.length > 0 ? selection.map((ref) => ref.id) : [playerId]
+  const lineup = world.lineupsByTeamId[team!.id]; const assigned = lineup === undefined ? undefined : LINEUP_SLOTS.find((slot) => (slot in lineup.starters ? lineup.starters[slot as keyof typeof lineup.starters] : lineup.bench[slot as keyof typeof lineup.bench]) === playerId)
+  const lineupActions: EntityContextEntry[] = [{ kind: 'submenu', id: 'starters', label: 'Starting five', children: LINEUP_SLOTS.slice(0, 5).map((slot) => ({ kind: 'action', id: `lineup-${slot}`, label: slot, command: { type: 'lineup', playerId, slot } })) }, { kind: 'submenu', id: 'bench', label: 'Bench', children: LINEUP_SLOTS.slice(5).map((slot) => ({ kind: 'action', id: `lineup-${slot}`, label: slot, command: { type: 'lineup', playerId, slot } })) }]
+  if (assigned !== undefined) lineupActions.push(sep('remove'), { kind: 'action', id: 'remove-active', label: 'Remove from active 12', command: { type: 'clearLineup', slot: assigned } })
+  const trainingModules = [...TRAINING_CATALOG.map((definition) => ({ id: definition.id, name: definition.name, definition, scope: definition.scope })), ...Object.values(world.userTrainingModulesById).map((module) => { const definition = trainingDefinitionById(module.baseDefinitionId); return { id: module.id, name: module.name, definition, scope: module.scope } })]
+  const eligibleTraining = trainingModules.filter((module) => module.scope !== 'team' && playerIds.every((id) => isPositionEligible(module.definition, world.players[id]!.basketball.primaryPosition)))
+  entries.push(sep('own'), { kind: 'submenu', id: 'lineup', label: 'Squad / lineup', children: lineupActions }, { kind: 'submenu', id: 'training', label: playerIds.length > 1 ? `Training (${playerIds.length})` : 'Training', children: eligibleTraining.map((module) => ({ kind: 'action', id: `training-${module.id}`, label: module.name, command: { type: 'training', playerIds, moduleId: module.id } })) })
+  return entries
+}
