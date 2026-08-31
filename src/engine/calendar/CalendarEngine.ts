@@ -3,8 +3,8 @@ import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { reconcileExpiredPlayerContracts } from '@/engine/market'
 import { recoverCareerFatigueForDay } from '@/engine/training/TrainingEngine'
 import { executeScheduledTrainingSessions } from '@/engine/training/ScheduledTrainingEngine'
-import { openDraft, progressDraftAi } from '@/engine/draft'
-import { arriveSignedRecruits, generateRecruitingPool, progressAiRecruiting, resolveRecruitingCommitments } from '@/engine/recruiting'
+import { openDraft, progressDraftAi, progressDraftProspectAdvisories } from '@/engine/draft'
+import { arriveSignedRecruits, generateRecruitingPool, progressAiRecruiting, progressRecruitingAdvisories, resolveRecruitingCommitments } from '@/engine/recruiting'
 import { progressAiAcademicSupport, resolveAcademicTerm } from '@/engine/academic'
 import { progressAiNil, progressNilLifecycle } from '@/engine/nil'
 import { progressAiBoosters } from '@/engine/boosters'
@@ -13,6 +13,7 @@ import { processCoachFinancesForMonth } from '@/engine/coachFinances'
 import { decayMemoriesForMonth } from '@/engine/memory'
 import { progressAdvisoryScoutingReports, progressDelegatedScouting, progressScoutingAssignments } from '@/engine/scouting'
 import { progressOppositionScoutingReports } from '@/engine/tactics/OppositionScoutingReportEngine'
+import { progressMedicalAdvisories } from '@/engine/injury'
 
 /**
  * Advances only the simulation date, leaving game resolution to other services.
@@ -34,10 +35,12 @@ export function advanceDay(world: GameWorld): GameWorld {
   const withNil = maintained.currentDate.slice(-2) === '01' ? progressAiNil(progressNilLifecycle(maintained)) : progressNilLifecycle(maintained)
   const withBoosters = withNil.currentDate.slice(-2) === '01' ? decayMemoriesForMonth(processCoachFinancesForMonth(progressAiBoosters(withNil))) : withNil
   const staffScoutingRequests = progressOppositionScoutingReports(progressAdvisoryScoutingReports(progressDelegatedScouting(progressEnforcement(withBoosters))))
-  const enforced = progressScoutingAssignments(staffScoutingRequests)
+  const withMedicalAdvisories = progressMedicalAdvisories(staffScoutingRequests)
+  const enforced = progressScoutingAssignments(withMedicalAdvisories)
   return Object.values(enforced.draftsById).reduce((current, draft) => {
     const opened = openDraft(current, draft.id)
-    return opened.draftsById[draft.id]?.status === 'inProgress' ? progressDraftAi(opened, draft.id) : opened
+    if (opened.draftsById[draft.id]?.status !== 'inProgress') return opened
+    return progressDraftAi(progressDraftProspectAdvisories(opened, draft.id), draft.id)
   }, enforced)
 }
 function progressAcademicTerms(world: GameWorld): GameWorld { if(world.currentDate.slice(5) !== '01-01' && world.currentDate.slice(5) !== '07-01') return world; const term=`academic:${world.currentDate.slice(0, 4)}:${world.currentDate.slice(5, 7)}`; return resolveAcademicTerm(progressAiAcademicSupport(world,term),term) }
@@ -50,6 +53,7 @@ function progressRecruiting(world: GameWorld): GameWorld {
     if (status === 'open' || status === 'signing') {
       next = generateRecruitingPool(next, cycle.id)
       if (next.currentDate.slice(-2) === '01' || cycle.status !== status) next = progressAiRecruiting(next, cycle.id)
+      next = progressRecruitingAdvisories(next, cycle.id)
       next = resolveRecruitingCommitments(next, cycle.id)
     }
   }
