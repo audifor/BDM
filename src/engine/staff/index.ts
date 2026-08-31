@@ -1,4 +1,4 @@
 export { resolveDelegatedResponsibility, resolveAdvisoryResponsibility } from './resolveDelegatedResponsibility'
 export type { DelegatedResponsibilityResolution, AdvisoryResponsibilityResolution } from './resolveDelegatedResponsibility'
-export { trainingQuality, scoutingQuality, tacticsQuality } from './quality'
+export { trainingQuality, scoutingQuality, tacticsQuality, medicalQuality, recruitingQuality } from './quality'
 export { calculateOverloadPenalty } from './overloadPenalty'

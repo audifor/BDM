@@ -1,3 +1,5 @@
 export { trainingQuality } from './trainingQuality'
 export { scoutingQuality } from './scoutingQuality'
 export { tacticsQuality } from './tacticsQuality'
+export { medicalQuality } from './medicalQuality'
+export { recruitingQuality } from './recruitingQuality'
