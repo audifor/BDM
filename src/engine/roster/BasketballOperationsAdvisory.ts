@@ -1,5 +1,6 @@
 import { deriveOrganizationPlayerValuation } from '@/domain/intelligence'
 import { getMarketKnowledge } from '@/domain/market'
+import { compareGameDates } from '@/domain/date'
 import { organizationIdForTeam, type EcosystemId, type OrganizationId, type PlayerId, type SeasonId, type TeamId } from '@/domain/ids'
 import { createDelegationOutcome, delegationOutcomeIdFromString, type DelegationOutcome, type DelegationOutcomeId, type ResponsibilityKind } from '@/domain/responsibility'
 import { getActivePlayerContract, getEcosystemForTeam, getTeamFinancialSnapshot, isPlayerFreeAgent, type GameWorld } from '@/domain/world'
@@ -124,10 +125,19 @@ function contractRecommendation(world: GameWorld, teamId: TeamId, organizationId
 /**
  * Incoming target uses valuation + roster needs (unchanged). Outgoing asset selection (Blocker 2)
  * prefers the most expendable own rostered contracted player (surplus position, lowest valuation)
- * FIRST, and only falls back to the next-preferred outgoing candidate when `validateTrade`
- * rejects it — `validateTrade` stays the legality boundary only, never the desirability ranker.
- * Eligibility-first (Blocker 5): the incoming side is filtered to a legally-tradeable, known,
- * non-NOT_FOR_SALE universe before any candidate is drawn from the ranked/RNG window.
+ * FIRST. Eligibility-first (Blocker 5): the incoming side is filtered to a legally-tradeable,
+ * known, non-NOT_FOR_SALE universe before any candidate is drawn from the ranked/RNG window.
+ *
+ * Legality-fallback (Blocker B): the ranked+bounded eligible window is walked IN ORDER — for each
+ * incoming candidate, every outgoing candidate is tried (in unchanged expendable-first preference
+ * order) against the canonical `validateTrade`. The first incoming candidate that has ANY legal
+ * outgoing pairing does not immediately win — every legal pairing found while walking the whole
+ * window is collected into a legal-pair set, preserving (incoming-rank, outgoing-preference) order.
+ * A single deterministic seeded pick then selects among that legal-pair set (or trivially returns
+ * the sole entry when only one exists), rather than blindly RNG-picking a candidate before its
+ * legality is even known. `validateTrade` remains strictly the legality boundary; it is never used
+ * to judge desirability — desirability/ranking is entirely decided before this loop runs. Only once
+ * the entire bounded window is exhausted with zero legal pairings does this return `undefined`.
  */
 function tradeRecommendation(world: GameWorld, teamId: TeamId, organizationId: OrganizationId, qualityScore: number, rngSeed: string): Record<string, string | number | boolean> | undefined {
   const ecosystem = getEcosystemForTeam(world, teamId)
@@ -145,27 +155,31 @@ function tradeRecommendation(world: GameWorld, teamId: TeamId, organizationId: O
 
   const bounded = Math.min(eligibleIncoming.length, candidateWindow(qualityScore))
   const window = eligibleIncoming.slice(0, bounded)
-  const pickedIncoming = pickWithinEligibleWindow(window, qualityScore, `staff-basketball-ops:tradeRecommendation:${rngSeed}`)
-  if (pickedIncoming === undefined) return undefined
-  const counterpart = Object.values(world.teams).find((team) => team.rosterPlayerIds.includes(pickedIncoming))
-  if (counterpart === undefined) return undefined
 
-  for (const outgoing of outgoingCandidates) {
-    const proposal: TradeProposal = {
-      id: `staff-advisory:${teamId}:${outgoing}:${pickedIncoming}:${world.currentDate}`,
-      ecosystemId: ecosystem.id,
-      seasonId,
-      participantTeamIds: [teamId, counterpart.id],
-      movements: [
-        { asset: { kind: 'player' as const, playerId: outgoing }, fromTeamId: teamId, toTeamId: counterpart.id },
-        { asset: { kind: 'player' as const, playerId: pickedIncoming }, fromTeamId: counterpart.id, toTeamId: teamId },
-      ],
-    }
-    if (validateTrade(world, proposal).allowed) {
-      return { teamId, incomingPlayerId: pickedIncoming, outgoingPlayerId: outgoing, counterpartTeamId: counterpart.id, proposalId: proposal.id, ecosystemId: ecosystem.id, seasonId, rank: 1, candidateCount: bounded, confidence: certainty(world, organizationId, pickedIncoming, 'TRADE') }
+  type LegalPair = { readonly incoming: PlayerId; readonly outgoing: PlayerId; readonly counterpartTeamId: TeamId; readonly proposal: TradeProposal }
+  const legalPairs: LegalPair[] = []
+  for (const incoming of window) {
+    const counterpart = Object.values(world.teams).find((team) => team.rosterPlayerIds.includes(incoming))
+    if (counterpart === undefined) continue
+    for (const outgoing of outgoingCandidates) {
+      const proposal: TradeProposal = {
+        id: `staff-advisory:${teamId}:${outgoing}:${incoming}:${world.currentDate}`,
+        ecosystemId: ecosystem.id,
+        seasonId,
+        participantTeamIds: [teamId, counterpart.id],
+        movements: [
+          { asset: { kind: 'player' as const, playerId: outgoing }, fromTeamId: teamId, toTeamId: counterpart.id },
+          { asset: { kind: 'player' as const, playerId: incoming }, fromTeamId: counterpart.id, toTeamId: teamId },
+        ],
+      }
+      if (validateTrade(world, proposal).allowed) legalPairs.push({ incoming, outgoing, counterpartTeamId: counterpart.id, proposal })
     }
   }
-  return undefined
+  if (legalPairs.length === 0) return undefined
+
+  const pickIndex = legalPairs.length === 1 ? 0 : new SeededRandomSource(hashStringToSeed(`staff-basketball-ops:tradeRecommendation:${rngSeed}`)).nextInt(0, legalPairs.length - 1)
+  const picked = legalPairs[pickIndex]!
+  return { teamId, incomingPlayerId: picked.incoming, outgoingPlayerId: picked.outgoing, counterpartTeamId: picked.counterpartTeamId, proposalId: picked.proposal.id, ecosystemId: ecosystem.id, seasonId, rank: 1, candidateCount: bounded, confidence: certainty(world, organizationId, picked.incoming, 'TRADE') }
 }
 
 function evaluation(world: GameWorld, organizationId: ReturnType<typeof organizationIdForTeam>, playerId: PlayerId, context: 'FREE_AGENCY' | 'TRADE') { return deriveOrganizationPlayerValuation({ organizationId, playerId, knowledge: world.organizationKnowledge, currentDate: world.currentDate, context, publicPosition: world.players[playerId]!.basketball.primaryPosition, policy: world.organizationEvaluationPoliciesById[organizationId] }) }
@@ -175,23 +189,38 @@ function certainty(world: GameWorld, organizationId: ReturnType<typeof organizat
 function need(world: GameWorld, teamId: TeamId, position: string): number { return Math.max(0, 2 - world.teams[teamId]!.rosterPlayerIds.filter((id) => world.players[id]!.basketball.primaryPosition === position).length) }
 
 /**
- * Canonical, non-insertion-order team→season resolution for trade context (Blocker 3). BDM is
- * multi-competition: a team may participate in more than one Season's competition simultaneously
- * (`docs/ARCHITECTURE.md` — "a Team may occur in multiple Competition participant lists"), so
- * `Object.values(world.seasons).find(...)` picking the first season by insertion order is
- * ambiguous and fragile. Trades are only meaningful where `TradeRules` are actually configured
- * (FIBA-like ecosystems intentionally have none, per ARCHITECTURE.md's Trade system v1 section),
- * so the deterministic selection requires all three: the team participates in the season's
- * competition, that competition's ecosystem matches the team's canonical `getEcosystemForTeam`
- * resolution (itself already ecosystem-id-sorted, not insertion-order), and the season has a
- * `tradeRulesBySeasonId` entry. Ties (more than one season still qualifying) break on SeasonId
- * string ordering — stable regardless of `world.seasons` key insertion/iteration order.
+ * Canonical, non-insertion-order, date-aware team→season resolution for trade context (Blocker A).
+ * BDM is multi-competition: a team may participate in more than one Season's competition
+ * simultaneously (`docs/ARCHITECTURE.md` — "a Team may occur in multiple Competition participant
+ * lists"), so `Object.values(world.seasons).find(...)` picking the first season by insertion order
+ * is ambiguous and fragile, and picking the lexicographically-first SeasonId is equally wrong once
+ * two TradeRules-backed seasons for the same team/ecosystem coexist (e.g. an old and a current
+ * season). Resolution order:
+ *   1. Team-specific membership: prefer the season's own `participantTeamIds` snapshot when present
+ *      (a Competition may currently list the team even though a specific season never did); only
+ *      fall back to `Competition.participantTeamIds` when the season has no snapshot.
+ *   2. Ecosystem match: the season's competition's `ecosystemId` equals the team's canonical
+ *      `getEcosystemForTeam` resolution.
+ *   3. TradeRules configured for that season (FIBA-like ecosystems intentionally have none).
+ *   4. Lifecycle: `world.currentDate` falls within `[season.startDate, season.endDate]` — this is
+ *      what actually disambiguates two TradeRules-backed seasons (e.g. 2032 vs 2033) for the same
+ *      team/ecosystem, not lexicographic SeasonId order.
+ *   5. Deterministic tie-break (SeasonId string order) only if more than one season still qualifies
+ *      after all of the above — stable regardless of `world.seasons` key insertion/iteration order.
+ * Never depends on `world.currentSeasonId`.
  */
 function seasonForTeam(world: GameWorld, teamId: TeamId): SeasonId | undefined {
   const ecosystem = getEcosystemForTeam(world, teamId)
   if (ecosystem === undefined) return undefined
   return Object.values(world.seasons)
-    .filter((season) => world.competitions[season.competitionId]?.participantTeamIds.includes(teamId) && world.competitions[season.competitionId]?.ecosystemId === ecosystem.id && world.tradeRulesBySeasonId[season.id] !== undefined)
+    .filter((season) => {
+      const competition = world.competitions[season.competitionId]
+      if (competition === undefined || competition.ecosystemId !== ecosystem.id) return false
+      const membership = season.participantTeamIds ?? competition.participantTeamIds
+      if (!membership.includes(teamId)) return false
+      if (world.tradeRulesBySeasonId[season.id] === undefined) return false
+      return compareGameDates(world.currentDate, season.startDate) >= 0 && compareGameDates(world.currentDate, season.endDate) <= 0
+    })
     .sort((a, b) => a.id.localeCompare(b.id))[0]?.id
 }
 

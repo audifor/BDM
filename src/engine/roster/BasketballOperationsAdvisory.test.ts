@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game/createNewGame'
+import { addYears } from '@/domain/date'
 import { organizationIdForTeam, staffPersonIdFromString, teamStaffAssignmentIdFromString, type PlayerId, type TeamId } from '@/domain/ids'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { getActivePlayerContract, updateGameWorld, type GameWorld } from '@/domain/world'
@@ -903,6 +904,282 @@ describe('BasketballOperationsAdvisory', () => {
       // Must resolve to the real, TradeRules-backed, ecosystem-consistent season — never the bogus one.
       expect(outcome.payload.seasonId).toBe(season.id)
       expect(outcome.payload.ecosystemId).toBe(seasoned.competitions[season.competitionId]!.ecosystemId)
+    })
+
+    /**
+     * Blocker A: two TradeRules-backed seasons for the SAME team/ecosystem — an older season whose
+     * SeasonId sorts lexicographically SMALLER, and a current season whose SeasonId sorts
+     * lexicographically LARGER. `world.currentDate` falls only within the current (larger-id)
+     * season's range. Under the old pure-lexicographic-sort behavior, the OLDER season would
+     * incorrectly win (smaller id sorts first); date-range containment must instead select the
+     * season whose `[startDate, endDate]` actually contains `currentDate`. Also asserted
+     * order-independent: the older season is inserted first in one build and last in another.
+     */
+    function buildTwoSeasonFixture(olderFirst: boolean) {
+      const base = createNewGame()
+      const season = Object.values(base.seasons).find((item) => base.tradeRulesBySeasonId[item.id] !== undefined)!
+      const seasonTeams = Object.values(base.teams).filter((item) => base.competitions[season.competitionId]!.participantTeamIds.includes(item.id))
+      const team = seasonTeams[0]!
+      const source = seasonTeams.find((item) => item.id !== team.id && item.rosterPlayerIds.length > 0)!
+      const playerId = source.rosterPlayerIds[0]!
+      const org = organizationIdForTeam(team.id)
+      const staffId = staffPersonIdFromString('ops:two-season')
+
+      // Older season: id sorts lexicographically SMALLER than the current one, dated in the past.
+      const olderSeason = { ...season, id: 'season:aaa-older' as never, startDate: addYears(season.startDate, -2), endDate: addYears(season.endDate, -2) }
+      // Current season: id sorts lexicographically LARGER (would lose under pure string-sort), dated to contain currentDate.
+      const currentSeason = { ...season, id: 'season:zzz-current' as never }
+      const tradeRules = base.tradeRulesBySeasonId[season.id]!
+
+      const newSeasonsInOrder = olderFirst
+        ? { [olderSeason.id]: olderSeason, [currentSeason.id]: currentSeason }
+        : { [currentSeason.id]: currentSeason, [olderSeason.id]: olderSeason }
+
+      // Preserve every other pre-existing season (conference memberships / games reference them by
+      // id) and just add the two new trade-context seasons in the desired insertion order. Strip
+      // TradeRules from the ORIGINAL season (its id/dates are otherwise still a qualifying
+      // duplicate of `currentSeason`) so only the two synthetic seasons under test can win.
+      const { [season.id]: _removedTradeRules, ...tradeRulesWithoutOriginal } = base.tradeRulesBySeasonId
+      const withSeasons = {
+        ...base,
+        seasons: { ...newSeasonsInOrder, ...base.seasons },
+        tradeRulesBySeasonId: { ...tradeRulesWithoutOriginal, [olderSeason.id]: { ...tradeRules, seasonId: olderSeason.id }, [currentSeason.id]: { ...tradeRules, seasonId: currentSeason.id } },
+        currentSeasonId: currentSeason.id,
+        currentDate: currentSeason.startDate,
+      }
+      const withStaff = updateGameWorld(withSeasons, {
+        staffPeople: [...Object.values(withSeasons.staffPeopleById), { id: staffId, identity: { firstName: 'Two', lastName: 'Season' }, professional: { attributes: highAttributes } }],
+        teamStaffAssignments: [...Object.values(withSeasons.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('assignment:two-season'), staffPersonId: staffId, teamId: team.id, role: 'generalManager' as never, assignedOn: withSeasons.currentDate }],
+        responsibilities: [...Object.values(withSeasons.responsibilitiesById).filter((item) => item.id !== `responsibility:${team.id}:tradeRecommendation`), { id: `responsibility:${team.id}:tradeRecommendation` as never, teamId: team.id, kind: 'tradeRecommendation', mode: 'advisory', holderStaffId: staffId }],
+        organizationKnowledge: [{ organizationId: org, subjectPlayerId: playerId, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: withSeasons.currentDate, provenance: 'scoutReport', estimate: 90, uncertainty: 2 } } }],
+        marketKnowledge: [{ organizationId: org, playerId, availability: 'OPEN', expectedSalary: 1, expectedYears: 1, confidence: 90, assessedAt: withSeasons.currentDate, source: 'AGENT' }],
+      })
+      return { world: withStaff, currentSeasonId: currentSeason.id, olderSeasonId: olderSeason.id }
+    }
+
+    it('resolves to the season whose date range actually contains currentDate, not the lexicographically-first SeasonId, with older season inserted FIRST', () => {
+      const { world, currentSeasonId, olderSeasonId } = buildTwoSeasonFixture(true)
+      expect(Object.keys(world.seasons)[0]).toBe(olderSeasonId) // sanity: older/lexicographically-smaller id really is first
+      const progressed = progressBasketballOperationsAdvisories(world)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'tradeRecommendation')
+      expect(outcome).toBeDefined()
+      if (outcome === undefined) return
+      expect(outcome.payload.seasonId).toBe(currentSeasonId)
+      expect(outcome.payload.seasonId).not.toBe(olderSeasonId)
+    })
+
+    it('resolves to the season whose date range actually contains currentDate, not the lexicographically-first SeasonId, with older season inserted LAST (order-independence)', () => {
+      const { world, currentSeasonId, olderSeasonId } = buildTwoSeasonFixture(false)
+      expect(Object.keys(world.seasons)[0]).toBe(currentSeasonId) // sanity: current season is first by insertion order this time
+      const progressed = progressBasketballOperationsAdvisories(world)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'tradeRecommendation')
+      expect(outcome).toBeDefined()
+      if (outcome === undefined) return
+      expect(outcome.payload.seasonId).toBe(currentSeasonId)
+      expect(outcome.payload.seasonId).not.toBe(olderSeasonId)
+    })
+
+    /**
+     * Blocker A, `Season.participantTeamIds` snapshot case: the Competition currently lists the
+     * team, but the specific season's own `participantTeamIds` snapshot omits it. That season must
+     * be skipped even though the Competition-level membership would otherwise include the team.
+     */
+    it('skips a season whose own participantTeamIds snapshot omits the team, even though the Competition currently lists it', () => {
+      const base = createNewGame()
+      const season = Object.values(base.seasons).find((item) => base.tradeRulesBySeasonId[item.id] !== undefined)!
+      const seasonTeams = Object.values(base.teams).filter((item) => base.competitions[season.competitionId]!.participantTeamIds.includes(item.id))
+      const team = seasonTeams[0]!
+      const source = seasonTeams.find((item) => item.id !== team.id && item.rosterPlayerIds.length > 0)!
+      const playerId = source.rosterPlayerIds[0]!
+      const org = organizationIdForTeam(team.id)
+      const staffId = staffPersonIdFromString('ops:season-snapshot-omit')
+
+      // Build a synthetic second season on the SAME (real, ecosystem-consistent) competition — no
+      // games or conference memberships reference this synthetic season id, so it can carry a
+      // participantTeamIds snapshot that omits `team` without tripping game-participant validation.
+      // It is TradeRules-backed and date-current, so if the snapshot were ignored it WOULD win.
+      const omittingSeason = { ...season, id: 'season:snapshot-omit' as never, participantTeamIds: base.competitions[season.competitionId]!.participantTeamIds.filter((id) => id !== team.id) }
+      const tradeRules = base.tradeRulesBySeasonId[season.id]!
+      // Strip TradeRules from the ORIGINAL season too — its id/dates otherwise still qualify
+      // (unaffected by the synthetic season's snapshot), which would mask the assertion.
+      const { [season.id]: _removedTradeRules, ...tradeRulesWithoutOriginal } = base.tradeRulesBySeasonId
+      const seasoned = {
+        ...base,
+        seasons: { [omittingSeason.id]: omittingSeason, ...base.seasons },
+        tradeRulesBySeasonId: { ...tradeRulesWithoutOriginal, [omittingSeason.id]: { ...tradeRules, seasonId: omittingSeason.id } },
+        currentSeasonId: omittingSeason.id,
+        currentDate: omittingSeason.startDate,
+      }
+      const withStaff = updateGameWorld(seasoned, {
+        staffPeople: [...Object.values(seasoned.staffPeopleById), { id: staffId, identity: { firstName: 'Snapshot', lastName: 'Omit' }, professional: { attributes: highAttributes } }],
+        teamStaffAssignments: [...Object.values(seasoned.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('assignment:season-snapshot-omit'), staffPersonId: staffId, teamId: team.id, role: 'generalManager' as never, assignedOn: seasoned.currentDate }],
+        responsibilities: [...Object.values(seasoned.responsibilitiesById).filter((item) => item.id !== `responsibility:${team.id}:tradeRecommendation`), { id: `responsibility:${team.id}:tradeRecommendation` as never, teamId: team.id, kind: 'tradeRecommendation', mode: 'advisory', holderStaffId: staffId }],
+        organizationKnowledge: [{ organizationId: org, subjectPlayerId: playerId, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: seasoned.currentDate, provenance: 'scoutReport', estimate: 90, uncertainty: 2 } } }],
+        marketKnowledge: [{ organizationId: org, playerId, availability: 'OPEN', expectedSalary: 1, expectedYears: 1, confidence: 90, assessedAt: seasoned.currentDate, source: 'AGENT' }],
+      })
+      const progressed = progressBasketballOperationsAdvisories(withStaff)
+      // Neither the real season (currentDate no longer falls in its range once currentDate moved to
+      // the synthetic season's range) nor the synthetic one (snapshot omits `team`) qualifies, so no
+      // recommendation can be produced.
+      expect(Object.values(progressed.delegationOutcomesById).some((item) => item.kind === 'tradeRecommendation')).toBe(false)
+    })
+
+    it('a season whose participantTeamIds snapshot DOES include the team is still selected normally (snapshot present and satisfied)', () => {
+      const base = createNewGame()
+      const season = Object.values(base.seasons).find((item) => base.tradeRulesBySeasonId[item.id] !== undefined)!
+      const seasonTeams = Object.values(base.teams).filter((item) => base.competitions[season.competitionId]!.participantTeamIds.includes(item.id))
+      const team = seasonTeams[0]!
+      const source = seasonTeams.find((item) => item.id !== team.id && item.rosterPlayerIds.length > 0)!
+      const playerId = source.rosterPlayerIds[0]!
+      const org = organizationIdForTeam(team.id)
+      const staffId = staffPersonIdFromString('ops:season-snapshot-include')
+
+      // Season snapshot explicitly includes `team` (identical membership to the Competition level).
+      const snapshotSeason = { ...season, participantTeamIds: base.competitions[season.competitionId]!.participantTeamIds }
+      const seasoned = { ...base, seasons: { ...base.seasons, [season.id]: snapshotSeason }, currentSeasonId: season.id, currentDate: season.startDate }
+      const withStaff = updateGameWorld(seasoned, {
+        staffPeople: [...Object.values(seasoned.staffPeopleById), { id: staffId, identity: { firstName: 'Snapshot', lastName: 'Include' }, professional: { attributes: highAttributes } }],
+        teamStaffAssignments: [...Object.values(seasoned.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('assignment:season-snapshot-include'), staffPersonId: staffId, teamId: team.id, role: 'generalManager' as never, assignedOn: seasoned.currentDate }],
+        responsibilities: [...Object.values(seasoned.responsibilitiesById).filter((item) => item.id !== `responsibility:${team.id}:tradeRecommendation`), { id: `responsibility:${team.id}:tradeRecommendation` as never, teamId: team.id, kind: 'tradeRecommendation', mode: 'advisory', holderStaffId: staffId }],
+        organizationKnowledge: [{ organizationId: org, subjectPlayerId: playerId, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: seasoned.currentDate, provenance: 'scoutReport', estimate: 90, uncertainty: 2 } } }],
+        marketKnowledge: [{ organizationId: org, playerId, availability: 'OPEN', expectedSalary: 1, expectedYears: 1, confidence: 90, assessedAt: seasoned.currentDate, source: 'AGENT' }],
+      })
+      const progressed = progressBasketballOperationsAdvisories(withStaff)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'tradeRecommendation')
+      expect(outcome).toBeDefined()
+      if (outcome === undefined) return
+      expect(outcome.payload.seasonId).toBe(season.id)
+    })
+  })
+
+  // Blocker B: the trade incoming candidate must be tried against real legal pairings, walking the
+  // ranked+bounded eligible window in order, before final selection — never "rank, pick one, then
+  // discover it has no legal pairing and give up".
+  describe('trade legality fallback (tradeRecommendation)', () => {
+    /**
+     * Candidate A ranks first (highest valuation) but its contract's `annualSalary` is set so high
+     * that incoming salary exceeds the team's incoming-salary limit for EVERY possible outgoing
+     * player, so `validateTrade` rejects every A×outgoing pairing with `SALARY_MATCHING_FAILED`.
+     * Candidate B ranks second (lower valuation) but has an ordinary low salary that matches
+     * cleanly. The staff advisory must not give up after A fails — it must fall through to B.
+     */
+    function buildLegalityFallbackFixture() {
+      const base = createNewGame()
+      const season = Object.values(base.seasons).find((item) => base.tradeRulesBySeasonId[item.id] !== undefined)!
+      const seasonTeams = Object.values(base.teams).filter((item) => base.competitions[season.competitionId]!.participantTeamIds.includes(item.id))
+      const team = seasonTeams[0]!
+      const donors = seasonTeams.filter((item) => item.id !== team.id && item.rosterPlayerIds.length > 0).slice(0, 2)
+      if (donors.length < 2) return undefined
+      const candidateA = donors[0]!.rosterPlayerIds[0]!
+      const candidateB = donors[1]!.rosterPlayerIds[0]!
+      if (candidateA === candidateB) return undefined
+      const outgoingContracted = team.rosterPlayerIds.filter((playerId) => getActivePlayerContract(base, playerId) !== undefined)
+      if (outgoingContracted.length < 1) return undefined
+
+      const org = organizationIdForTeam(team.id)
+      const staffId = staffPersonIdFromString('ops:trade-legality-incoming')
+      const seasoned = updateGameWorld(base, { currentSeasonId: season.id, currentDate: season.startDate })
+
+      // Make candidateA's contract salary enormous so it fails validateTrade against every outgoing player.
+      const contractA = getActivePlayerContract(seasoned, candidateA)
+      if (contractA === undefined) return undefined
+      const inflated = updateGameWorld(seasoned, {
+        contracts: Object.values(seasoned.contractsById).map((item) => item.id === contractA.id ? { ...item, compensation: { annualSalary: 100_000_000 } } : item),
+      })
+
+      const withStaff = updateGameWorld(inflated, {
+        staffPeople: [...Object.values(inflated.staffPeopleById), { id: staffId, identity: { firstName: 'Legality', lastName: 'Fallback' }, professional: { attributes: highAttributes } }],
+        teamStaffAssignments: [...Object.values(inflated.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('assignment:trade-legality-incoming'), staffPersonId: staffId, teamId: team.id, role: 'generalManager' as never, assignedOn: inflated.currentDate }],
+        responsibilities: [...Object.values(inflated.responsibilitiesById).filter((item) => item.id !== `responsibility:${team.id}:tradeRecommendation`), { id: `responsibility:${team.id}:tradeRecommendation` as never, teamId: team.id, kind: 'tradeRecommendation', mode: 'advisory', holderStaffId: staffId }],
+        organizationKnowledge: [
+          // candidateA ranks first (higher valuation/estimate) despite being trade-illegal against everything.
+          { organizationId: org, subjectPlayerId: candidateA, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: inflated.currentDate, provenance: 'scoutReport', estimate: 99, uncertainty: 1 } } },
+          { organizationId: org, subjectPlayerId: candidateB, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: inflated.currentDate, provenance: 'scoutReport', estimate: 60, uncertainty: 1 } } },
+        ],
+        marketKnowledge: [
+          { organizationId: org, playerId: candidateA, availability: 'OPEN', expectedSalary: 1, expectedYears: 1, confidence: 90, assessedAt: inflated.currentDate, source: 'AGENT' },
+          { organizationId: org, playerId: candidateB, availability: 'OPEN', expectedSalary: 1, expectedYears: 1, confidence: 90, assessedAt: inflated.currentDate, source: 'AGENT' },
+        ],
+      })
+      return { world: withStaff, team, candidateA, candidateB, outgoingContracted }
+    }
+
+    it('advances to the next-ranked incoming candidate when the top-ranked one has zero legal pairings, instead of returning undefined', () => {
+      const built = buildLegalityFallbackFixture()
+      if (built === undefined) return
+      const { world, candidateA, candidateB } = built
+      const progressed = progressBasketballOperationsAdvisories(world)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'tradeRecommendation')
+      expect(outcome).toBeDefined()
+      if (outcome === undefined) return
+      expect(outcome.payload.incomingPlayerId).toBe(candidateB)
+      expect(outcome.payload.incomingPlayerId).not.toBe(candidateA)
+    })
+
+    it('composes both fallback axes: incoming A fails with every outgoing candidate, incoming B fails with the first (most expendable) outgoing but succeeds with the second — the outcome uses B plus the outgoing that actually clears validateTrade', () => {
+      const base = createNewGame()
+      const season = Object.values(base.seasons).find((item) => base.tradeRulesBySeasonId[item.id] !== undefined)!
+      const seasonTeams = Object.values(base.teams).filter((item) => base.competitions[season.competitionId]!.participantTeamIds.includes(item.id))
+      const team = seasonTeams[0]!
+      const donors = seasonTeams.filter((item) => item.id !== team.id && item.rosterPlayerIds.length > 0).slice(0, 2)
+      if (donors.length < 2) return
+      const candidateA = donors[0]!.rosterPlayerIds[0]!
+      const candidateB = donors[1]!.rosterPlayerIds[0]!
+      if (candidateA === candidateB) return
+      const seasoned = updateGameWorld(base, { currentSeasonId: season.id, currentDate: season.startDate })
+      const outgoingContracted = team.rosterPlayerIds.filter((playerId) => getActivePlayerContract(seasoned, playerId) !== undefined)
+      if (outgoingContracted.length < 2) return
+
+      const org = organizationIdForTeam(team.id)
+      const staffId = staffPersonIdFromString('ops:trade-legality-compound')
+
+      // candidateA: inflate its contract salary so it fails validateTrade against every outgoing player.
+      const contractA = getActivePlayerContract(seasoned, candidateA)
+      if (contractA === undefined) return
+      const inflatedA = updateGameWorld(seasoned, {
+        contracts: Object.values(seasoned.contractsById).map((item) => item.id === contractA.id ? { ...item, compensation: { annualSalary: 100_000_000 } } : item),
+      })
+
+      // Make the single MOST-preferred outgoing candidate (by the same need/value/id ordering the
+      // implementation uses) untradeable for EVERY incoming candidate by removing it from the roster
+      // (validateTrade reads live roster state, so this fails as PLAYER_NOT_ON_TEAM for any proposal
+      // that offers it) — this forces the implementation's outgoing-preference loop to fall through
+      // to the next-preferred outgoing candidate for whichever incoming candidate is actually usable
+      // (candidateB), composing with the incoming-side fallback (candidateA is unusable for ANY
+      // outgoing due to its inflated salary) in the same recommendation.
+      const contractedRoster = outgoingContracted.slice()
+      const outgoing1 = contractedRoster[0]!
+      const remainingContracted = contractedRoster.filter((id) => id !== outgoing1)
+      if (remainingContracted.length === 0) return
+      const withoutOutgoing1 = updateGameWorld(inflatedA, {
+        teams: Object.values(inflatedA.teams).map((item) => item.id === team.id ? { ...item, rosterPlayerIds: item.rosterPlayerIds.filter((id) => id !== outgoing1) } : item),
+      })
+
+      const withStaff = updateGameWorld(withoutOutgoing1, {
+        staffPeople: [...Object.values(withoutOutgoing1.staffPeopleById), { id: staffId, identity: { firstName: 'Legality', lastName: 'Compound' }, professional: { attributes: highAttributes } }],
+        teamStaffAssignments: [...Object.values(withoutOutgoing1.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('assignment:trade-legality-compound'), staffPersonId: staffId, teamId: team.id, role: 'generalManager' as never, assignedOn: withoutOutgoing1.currentDate }],
+        responsibilities: [...Object.values(withoutOutgoing1.responsibilitiesById).filter((item) => item.id !== `responsibility:${team.id}:tradeRecommendation`), { id: `responsibility:${team.id}:tradeRecommendation` as never, teamId: team.id, kind: 'tradeRecommendation', mode: 'advisory', holderStaffId: staffId }],
+        organizationKnowledge: [
+          { organizationId: org, subjectPlayerId: candidateA, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: withoutOutgoing1.currentDate, provenance: 'scoutReport', estimate: 99, uncertainty: 1 } } },
+          { organizationId: org, subjectPlayerId: candidateB, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: withoutOutgoing1.currentDate, provenance: 'scoutReport', estimate: 60, uncertainty: 1 } } },
+        ],
+        marketKnowledge: [
+          { organizationId: org, playerId: candidateA, availability: 'OPEN', expectedSalary: 1, expectedYears: 1, confidence: 90, assessedAt: withoutOutgoing1.currentDate, source: 'AGENT' },
+          { organizationId: org, playerId: candidateB, availability: 'OPEN', expectedSalary: 1, expectedYears: 1, confidence: 90, assessedAt: withoutOutgoing1.currentDate, source: 'AGENT' },
+        ],
+      })
+
+      const progressed = progressBasketballOperationsAdvisories(withStaff)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'tradeRecommendation')
+      expect(outcome).toBeDefined()
+      if (outcome === undefined) return
+      // A is unusable (astronomical salary fails against every outgoing); B is the only viable incoming
+      // candidate, and outgoing1 is no longer a roster member, so the outcome must have fallen through
+      // to some OTHER contracted roster player as the outgoing asset.
+      expect(outcome.payload.incomingPlayerId).toBe(candidateB)
+      expect(outcome.payload.incomingPlayerId).not.toBe(candidateA)
+      expect(outcome.payload.outgoingPlayerId).not.toBe(outgoing1)
+      expect(remainingContracted).toContain(outcome.payload.outgoingPlayerId)
     })
   })
 })
