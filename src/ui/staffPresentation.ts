@@ -2,6 +2,7 @@ import { calculateAge } from '@/domain/player/PlayerAge'
 import {
   calculateStaffRoleProficiencyByRoleId,
   staffRoleDefinition,
+  staffRoleIdsInDepartment,
   STAFF_DEPARTMENTS,
   STAFF_ROLE_IDS,
   type StaffDepartment,
@@ -12,7 +13,7 @@ import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { isStaffContractActiveOn, type StaffContract } from '@/domain/staffContract'
 import type { StaffAppointmentReason, StaffCareerHistoryEntry, StaffDepartureReason, StaffEmployment } from '@/domain/staffCareer'
 import { staffReputationScore, type StaffReputationProfile } from '@/domain/staffReputation'
-import { calculateStaffWorkload, getStaffPerson, getTeamStaffAssignments, type GameWorld } from '@/domain/world'
+import { calculateStaffWorkload, getStaffAssignment, getStaffPerson, getTeamStaffAssignments, type GameWorld } from '@/domain/world'
 import type { StaffPersonId, TeamId } from '@/domain/ids'
 
 /**
@@ -60,11 +61,17 @@ export const STAFF_PROFESSIONAL_ATTRIBUTE_LABELS: Readonly<Record<StaffProfessio
   adaptability: 'Adaptability',
 }
 
-/** Wave 1 reachable-role display order (unchanged from pre-Wave-1: assistant coach, scout, medical); any other canonical role sorts after, by registry declaration order. */
-const REACHABLE_ROLE_ORDER: readonly StaffRoleId[] = ['assistantCoach', 'regionalScout', 'physiotherapist']
+/**
+ * Grid row display order for the three original Wave-1 roles (assistant coach, scout, medical)
+ * stays first for continuity with the pre-Wave-1 layout; any other canonical role sorts after, by
+ * registry declaration order. This ordering is for the STAFF GRID's ROLE column/sort only — it is
+ * NOT the role-evaluation candidate authority (see `getStaffRoleEvaluations`, which is
+ * canonical-registry-driven and independent of this list).
+ */
+const GRID_ROLE_DISPLAY_ORDER: readonly StaffRoleId[] = ['assistantCoach', 'regionalScout', 'physiotherapist']
 function roleOrder(role: StaffRoleId): number {
-  const reachableIndex = REACHABLE_ROLE_ORDER.indexOf(role)
-  return reachableIndex === -1 ? REACHABLE_ROLE_ORDER.length + STAFF_ROLE_IDS.indexOf(role) : reachableIndex
+  const reachableIndex = GRID_ROLE_DISPLAY_ORDER.indexOf(role)
+  return reachableIndex === -1 ? GRID_ROLE_DISPLAY_ORDER.length + STAFF_ROLE_IDS.indexOf(role) : reachableIndex
 }
 
 export type StaffEmploymentStatusLabel = 'EMPLOYED' | 'UNEMPLOYED' | 'UNKNOWN'
@@ -83,6 +90,7 @@ export interface StaffPresentationItem {
   readonly activeContract: StaffContract | undefined
   readonly annualSalary: number | undefined
   readonly contractExpiresOn: string | undefined
+  readonly contractStatus: StaffContractStatus
 }
 
 /** Presentation projection only; professional truth and role/workload/contract calculations remain canonical. */
@@ -108,6 +116,7 @@ export function getTeamStaffPresentation(world: GameWorld, teamId: TeamId): read
         activeContract,
         annualSalary: activeContract?.compensation.annualSalary,
         contractExpiresOn: activeContract?.term.expiresOn,
+        contractStatus: getStaffContractStatus(world, person.id),
       }
     })
     .sort((left, right) =>
@@ -118,11 +127,56 @@ export function getTeamStaffPresentation(world: GameWorld, teamId: TeamId): read
     )
 }
 
-/** Evaluates the person against the three Wave-1-reachable roles, unchanged from pre-Wave-1 behavior (no UI redesign). */
+/** Compact ROLE EVALUATION list target size — see `getStaffRoleEvaluations` doc comment. */
+const ROLE_EVALUATION_TARGET_COUNT = 6
+
+/**
+ * Canonical-registry-driven ROLE EVALUATION candidate set for the Staff Detail panel (Issue #27
+ * Wave 4C1 Fix 1). Replaces the old hardcoded 3-legacy-role (`assistantCoach`/`regionalScout`/
+ * `physiotherapist`) list, which violated Staff V2's canonical `STAFF_ROLE_REGISTRY` by silently
+ * capping every staff member's evaluation to those three roles regardless of their actual
+ * assignment or department.
+ *
+ * Selection rule (deterministic, data-driven — no per-role switch/if-chain):
+ * 1. The staff person's current assigned role always appears, first.
+ * 2. Remaining candidates are drawn from `staffRoleIdsInDepartment(currentDepartment)` (their own
+ *    department/family — the natural "could this person do a closely related role" comparison).
+ * 3. If the department alone does not fill `ROLE_EVALUATION_TARGET_COUNT` entries (a small
+ *    department, e.g. `recruiting`), the list is padded with additional roles from the full
+ *    `STAFF_ROLE_IDS` registry declaration order (skipping roles already included) so the panel
+ *    still reads as a useful compact comparison rather than a near-empty list.
+ * 4. The list never exceeds `ROLE_EVALUATION_TARGET_COUNT` entries — this stays a compact
+ *    "alternatives" panel, never the full ~28-role catalogue.
+ * 5. Alternatives (everything after the current role) are ordered by proficiency descending, then
+ *    role id ascending — deterministic and stable across repeated calls for the same world/staff.
+ *
+ * Proficiency is always computed via the canonical `calculateStaffRoleProficiencyByRoleId` —
+ * never reimplemented here.
+ */
 export function getStaffRoleEvaluations(world: GameWorld, staffPersonId: StaffPersonId): readonly { readonly role: StaffRoleId; readonly proficiency: number }[] {
   const person = getStaffPerson(world, staffPersonId)
   if (person === undefined) throw new Error(`Staff person does not exist: ${staffPersonId}`)
-  return REACHABLE_ROLE_ORDER.map((role) => ({ role, proficiency: calculateStaffRoleProficiencyByRoleId(person, role) }))
+  const currentRole = getStaffAssignment(world, staffPersonId)?.role
+
+  const candidateRoles = new Set<StaffRoleId>()
+  if (currentRole !== undefined) candidateRoles.add(currentRole)
+  const department = currentRole === undefined ? undefined : staffRoleDefinition(currentRole).department
+  if (department !== undefined) for (const roleId of staffRoleIdsInDepartment(department)) candidateRoles.add(roleId)
+  if (candidateRoles.size < ROLE_EVALUATION_TARGET_COUNT) {
+    for (const roleId of STAFF_ROLE_IDS) {
+      if (candidateRoles.size >= ROLE_EVALUATION_TARGET_COUNT) break
+      candidateRoles.add(roleId)
+    }
+  }
+
+  const evaluations = [...candidateRoles].map((role) => ({ role, proficiency: calculateStaffRoleProficiencyByRoleId(person, role) }))
+  const alternatives = evaluations
+    .filter((entry) => entry.role !== currentRole)
+    .sort((left, right) => right.proficiency - left.proficiency || left.role.localeCompare(right.role))
+    .slice(0, Math.max(0, ROLE_EVALUATION_TARGET_COUNT - (currentRole === undefined ? 0 : 1)))
+
+  const current = currentRole === undefined ? [] : evaluations.filter((entry) => entry.role === currentRole)
+  return [...current, ...alternatives]
 }
 
 /**
@@ -150,6 +204,48 @@ export const WORKLOAD_STATE_LABELS: Readonly<Record<StaffWorkloadState, string>>
 /** THE single canonical "active contract for this staff person on the world's current date" lookup — never re-derived ad hoc. */
 export function findActiveStaffContractForStaff(world: GameWorld, staffId: StaffPersonId, onDate = world.currentDate): StaffContract | undefined {
   return Object.values(world.staffContractsById).find((contract) => contract.staffId === staffId && isStaffContractActiveOn(contract, onDate))
+}
+
+/**
+ * Contract Status (Issue #27 Wave 4C1 Fix 2) — an explicit, pure presentation projection over
+ * `StaffContract`, deliberately separate from Employment Status (`getStaffEmploymentStatusLabel`,
+ * sourced from `staffEmploymentByStaffId`). Employment answers "does this team currently employ
+ * this person"; Contract Status answers "what is the state of their contractual paperwork" — the
+ * two can and do diverge (e.g. a legacy/partial world could carry an active employment record
+ * with no matching contract, or vice versa), so this function never reads or derives from
+ * employment state, only from `StaffContract` records.
+ *
+ * States, derived exclusively from `StaffContract`/`isStaffContractActiveOn` semantics
+ * (see `StaffContract.ts` for the canonical activeness rule):
+ * - `ACTIVE` — an active contract exists per `isStaffContractActiveOn`.
+ * - `TERMINATED` — a contract exists whose `termination.effectiveOn` has already taken effect
+ *   on/before `onDate` (an explicit early end, distinguishable from a natural expiry because
+ *   `termination` is only ever set by `terminateStaffContract`).
+ * - `EXPIRED` — a contract exists whose `term.expiresOn` has passed relative to `onDate` with no
+ *   termination record at all (the term simply ran out; the model can reliably tell this apart
+ *   from `TERMINATED` because `termination` is a distinct optional field, never inferred).
+ * - `NO_CONTRACT` — no `StaffContract` record referencing this staff person exists at all.
+ *
+ * When multiple non-active contracts exist for the same staff person (e.g. career history with
+ * several past contracts), the most recently expired/terminated one (latest `term.expiresOn`) is
+ * reported, for a deterministic single-value status.
+ */
+export type StaffContractStatus = 'ACTIVE' | 'TERMINATED' | 'EXPIRED' | 'NO_CONTRACT'
+
+export function getStaffContractStatus(world: GameWorld, staffId: StaffPersonId, onDate = world.currentDate): StaffContractStatus {
+  const contracts = Object.values(world.staffContractsById).filter((contract) => contract.staffId === staffId)
+  if (contracts.length === 0) return 'NO_CONTRACT'
+  if (contracts.some((contract) => isStaffContractActiveOn(contract, onDate))) return 'ACTIVE'
+
+  const mostRecent = [...contracts].sort((left, right) => right.term.expiresOn.localeCompare(left.term.expiresOn))[0]!
+  return mostRecent.termination !== undefined && mostRecent.termination.effectiveOn <= onDate ? 'TERMINATED' : 'EXPIRED'
+}
+
+export const STAFF_CONTRACT_STATUS_LABELS: Readonly<Record<StaffContractStatus, string>> = {
+  ACTIVE: 'ACTIVE',
+  TERMINATED: 'TERMINATED',
+  EXPIRED: 'EXPIRED',
+  NO_CONTRACT: 'NO CONTRACT',
 }
 
 export function getStaffEmployment(world: GameWorld, staffId: StaffPersonId): StaffEmployment | undefined {
@@ -199,8 +295,18 @@ export function getStaffAge(world: GameWorld, staffId: StaffPersonId): number | 
   return calculateAge(person.identity.dateOfBirth, world.currentDate)
 }
 
+/**
+ * Compact salary formatting (Issue #27 Wave 4C1 Fix 3). Rounding to the nearest whole M/K lost
+ * meaningful precision (e.g. `$1,500,000` rendered as `$2M`). Both scales now round to at most 2
+ * decimal places and trim trailing zeros/decimal point, so exact-scale values still render clean
+ * (`$1M`, `$65K`) while fractional values keep their precision (`$1.5M`, `$2.25M`).
+ */
 export function compactStaffSalary(value: number): string {
-  return value >= 1_000_000 ? `$${Math.round(value / 1_000_000)}M` : `$${Math.round(value / 1_000)}K`
+  return value >= 1_000_000 ? `$${trimTrailingZeros(value / 1_000_000)}M` : `$${trimTrailingZeros(value / 1_000)}K`
+}
+
+function trimTrailingZeros(value: number): string {
+  return value.toFixed(2).replace(/\.?0+$/, '')
 }
 
 export { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS }

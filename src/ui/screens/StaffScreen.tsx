@@ -21,6 +21,7 @@ import {
   getStaffRoleEvaluations,
   getTeamStaffPresentation,
   formatStaffCareerEntry,
+  STAFF_CONTRACT_STATUS_LABELS,
   STAFF_DEPARTMENT_LABELS,
   STAFF_PROFESSIONAL_ATTRIBUTE_KEYS,
   STAFF_PROFESSIONAL_ATTRIBUTE_LABELS,
@@ -49,6 +50,7 @@ export function StaffScreen({ world, teamId, initialSelectedStaffId }: { readonl
     { id: 'reputation', label: 'REPUTATION', category: 'Evaluation', numeric: true, sortable: true, width: 92, render: (item) => item.reputationScore ?? '—', value: (item) => item.reputationScore ?? -1 },
     { id: 'workload', label: 'WORKLOAD', category: 'Capacity', sortable: true, width: 100, render: (item) => <WorkloadBadge state={item.workloadState} utilization={item.utilization} />, value: (item) => item.utilization === Number.POSITIVE_INFINITY ? Number.MAX_SAFE_INTEGER : item.utilization },
     { id: 'employment', label: 'EMPLOYMENT', category: 'Contract', sortable: true, width: 96, render: (item) => item.employmentStatus, value: (item) => item.employmentStatus },
+    { id: 'contractStatus', label: 'CONTRACT STATUS', category: 'Contract', sortable: true, width: 108, render: (item) => STAFF_CONTRACT_STATUS_LABELS[item.contractStatus], value: (item) => STAFF_CONTRACT_STATUS_LABELS[item.contractStatus] },
     { id: 'salary', label: 'SALARY', category: 'Contract', numeric: true, sortable: true, width: 84, render: (item) => item.annualSalary === undefined ? '—' : compactStaffSalary(item.annualSalary), value: (item) => item.annualSalary ?? -1 },
     { id: 'expiry', label: 'CONTRACT EXPIRES', category: 'Contract', sortable: true, width: 96, render: (item) => item.contractExpiresOn ?? '—', value: (item) => item.contractExpiresOn ?? '' },
   ]

@@ -6,6 +6,9 @@ import { calculateStaffWorkload, getStaffPerson, getTeamStaffAssignments, update
 import { staffRoleDefinition } from '@/domain/staff'
 import type { StaffPersonId, TeamId } from '@/domain/ids'
 
+import { STAFF_ROLE_IDS } from '@/domain/staff'
+import { createStaffContract, staffContractIdFromString, terminateStaffContract } from '@/domain/staffContract'
+
 import {
   classifyWorkloadState,
   compactStaffSalary,
@@ -14,6 +17,7 @@ import {
   getRecentStaffCareerHistory,
   getStaffAge,
   getStaffCareerHistory,
+  getStaffContractStatus,
   getStaffEmployment,
   getStaffEmploymentStatusLabel,
   getStaffReputationProfile,
@@ -224,8 +228,135 @@ describe('getStaffAge', () => {
 })
 
 describe('compactStaffSalary', () => {
-  it('formats millions and thousands compactly', () => {
-    expect(compactStaffSalary(1_500_000)).toBe('$2M')
+  it('keeps whole-scale values clean, with no trailing .0', () => {
+    expect(compactStaffSalary(1_000_000)).toBe('$1M')
     expect(compactStaffSalary(65_000)).toBe('$65K')
   })
+
+  it('preserves fractional precision instead of rounding to the nearest whole M/K', () => {
+    expect(compactStaffSalary(1_500_000)).toBe('$1.5M')
+    expect(compactStaffSalary(2_250_000)).toBe('$2.25M')
+  })
+
+  it('preserves fractional precision on the K scale too', () => {
+    expect(compactStaffSalary(65_500)).toBe('$65.5K')
+  })
 })
+
+describe('getStaffRoleEvaluations', () => {
+  function firstStaffId(w: GameWorld): StaffPersonId {
+    const teamId = userTeamId(w)
+    return getTeamStaffAssignments(w, teamId)[0]!.staffPersonId
+  }
+
+  it('always includes the staff member\'s current assigned role', () => {
+    const w = world()
+    const staffId = firstStaffId(w)
+    const currentRole = getTeamStaffAssignments(w, userTeamId(w)).find((a) => a.staffPersonId === staffId)!.role
+    const evaluations = getStaffRoleEvaluations(w, staffId)
+    expect(evaluations.some((entry) => entry.role === currentRole)).toBe(true)
+    expect(evaluations[0]!.role).toBe(currentRole)
+  })
+
+  it('produces a valid non-empty evaluation list, including the actual role, for a staff member whose role is not one of the 3 legacy roles', () => {
+    const w = world()
+    const teamId = userTeamId(w)
+    const assignment = getTeamStaffAssignments(w, teamId)[0]!
+    const person = getStaffPerson(w, assignment.staffPersonId)!
+    const existingEmployment = w.staffEmploymentByStaffId[person.id]!
+    const retargeted = updateGameWorld(w, {
+      teamStaffAssignments: Object.values(w.teamStaffAssignmentsById).map((a) => (a.id === assignment.id ? { ...a, role: 'headScout' } : a)),
+      staffEmploymentByStaffId: { ...w.staffEmploymentByStaffId, [person.id]: { ...existingEmployment, roleId: 'headScout' } } as never,
+    })
+    const evaluations = getStaffRoleEvaluations(retargeted, person.id)
+    expect(evaluations.length).toBeGreaterThan(0)
+    expect(evaluations[0]!.role).toBe('headScout')
+  })
+
+  it('draws alternatives from the canonical registry (same department as the current role), never a hardcoded value', () => {
+    const w = world()
+    const staffId = firstStaffId(w)
+    const currentRole = getTeamStaffAssignments(w, userTeamId(w))[0]!.role
+    const department = staffRoleDefinition(currentRole).department
+    const evaluations = getStaffRoleEvaluations(w, staffId)
+    const alternatives = evaluations.filter((entry) => entry.role !== currentRole)
+    expect(alternatives.length).toBeGreaterThan(0)
+    expect(alternatives.some((entry) => STAFF_ROLE_IDS.includes(entry.role) && staffRoleDefinition(entry.role).department === department)).toBe(true)
+  })
+
+  it('is deterministic: repeated calls for the same world/staff produce the same list and order', () => {
+    const w = world()
+    const staffId = firstStaffId(w)
+    const first = getStaffRoleEvaluations(w, staffId)
+    const second = getStaffRoleEvaluations(w, staffId)
+    expect(second).toEqual(first)
+  })
+
+  it('never indiscriminately returns the full role catalogue — the list stays compact', () => {
+    const w = world()
+    const staffId = firstStaffId(w)
+    const evaluations = getStaffRoleEvaluations(w, staffId)
+    expect(evaluations.length).toBeLessThan(STAFF_ROLE_IDS.length)
+    expect(evaluations.length).toBeLessThanOrEqual(6)
+  })
+})
+
+describe('getStaffContractStatus', () => {
+  it('reports ACTIVE when an active contract exists', () => {
+    const w = world()
+    const staffId = firstAssignedStaffId(w)
+    expect(getStaffContractStatus(w, staffId)).toBe('ACTIVE')
+  })
+
+  it('reports NO_CONTRACT when the staff person has no contract record at all', () => {
+    const w = world()
+    const staffId = firstAssignedStaffId(w)
+    const remaining = Object.values(w.staffContractsById).filter((contract) => contract.staffId !== staffId)
+    const stripped = updateGameWorld(w, { staffContracts: remaining })
+    expect(getStaffContractStatus(stripped, staffId)).toBe('NO_CONTRACT')
+  })
+
+  it('reports TERMINATED for a contract with an already-effective termination', () => {
+    const w = world()
+    const teamId = userTeamId(w)
+    const staffId = firstAssignedStaffId(w)
+    const active = Object.values(w.staffContractsById).find((contract) => contract.staffId === staffId)!
+    const terminated = terminateStaffContract(active, w.currentDate, 'performance')
+    const remaining = Object.values(w.staffContractsById).filter((contract) => contract.staffId !== staffId)
+    // Employment/assignment consistency is a canonical world invariant (GameWorld.validateWorld):
+    // dropping this contract's coverage also means dropping the now-inconsistent assignment/employment.
+    const remainingAssignments = Object.values(w.teamStaffAssignmentsById).filter((a) => a.staffPersonId !== staffId)
+    const { [staffId]: _removedEmployment, ...restEmployment } = w.staffEmploymentByStaffId
+    const stripped = updateGameWorld(w, { staffContracts: [...remaining, terminated], teamStaffAssignments: remainingAssignments, staffEmploymentByStaffId: restEmployment as never })
+    expect(getStaffContractStatus(stripped, staffId, w.currentDate)).toBe('TERMINATED')
+    void teamId
+  })
+
+  it('reports EXPIRED for a contract whose term has passed with no termination record', () => {
+    const w = world()
+    const teamId = userTeamId(w)
+    const staffId = firstAssignedStaffId(w)
+    const remaining = Object.values(w.staffContractsById).filter((contract) => contract.staffId !== staffId)
+    const expired = createStaffContract({ id: staffContractIdFromString('expired-fixture-contract'), staffId, teamId, kind: 'standard', term: { startsOn: '2020-01-01' as never, expiresOn: '2021-01-01' as never }, compensation: { annualSalary: 50_000 } })
+    const remainingAssignments = Object.values(w.teamStaffAssignmentsById).filter((a) => a.staffPersonId !== staffId)
+    const { [staffId]: _removedEmployment, ...restEmployment } = w.staffEmploymentByStaffId
+    const stripped = updateGameWorld(w, { staffContracts: [...remaining, expired], teamStaffAssignments: remainingAssignments, staffEmploymentByStaffId: restEmployment as never })
+    expect(getStaffContractStatus(stripped, staffId, w.currentDate)).toBe('EXPIRED')
+  })
+
+  it('is computed independently from Employment Status — the two remain conceptually separate', () => {
+    const w = world()
+    const staffId = firstAssignedStaffId(w)
+    // Employment says EMPLOYED while contract records are removed entirely: contract status must
+    // not be derived from (or forced to agree with) employment status.
+    const remaining = Object.values(w.staffContractsById).filter((contract) => contract.staffId !== staffId)
+    const stillEmployed = updateGameWorld(w, { staffContracts: remaining })
+    expect(getStaffEmploymentStatusLabel(stillEmployed, staffId)).toBe('EMPLOYED')
+    expect(getStaffContractStatus(stillEmployed, staffId)).toBe('NO_CONTRACT')
+  })
+})
+
+function firstAssignedStaffId(w: GameWorld): StaffPersonId {
+  const teamId = userTeamId(w)
+  return getTeamStaffAssignments(w, teamId)[0]!.staffPersonId
+}
