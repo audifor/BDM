@@ -4,6 +4,7 @@ import { getUserTeam } from '@/engine/calendar'
 import { ASSIGNABLE_STAFF_ROLE_IDS, isStaffRoleApplicableToEcosystem } from '@/domain/staff'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSaveV1'
 import { acceptStaffJobOffer, completeStaffInterview, createStaffJobOffer, createStaffJobOpeningForTeam, fireStaffFromTeam, identifyStaffCandidate, listFreeAgentStaff, startStaffInterview } from '@/app/staffCareer'
+import { acceptCoachJobOffer, completeCoachInterview, createCoachJobOffer, fireCoachFromTeam, identifyCoachCandidate, startCoachInterview } from '@/app/coachCareer'
 import { createNewGame } from './createNewGame'
 import { createAcbTestGame } from './createAcbTestGame'
 
@@ -74,6 +75,28 @@ describe('createAcbTestGame', () => {
     expect(loaded.staffEmploymentByStaffId[candidate]).toEqual(fired.staffEmploymentByStaffId[candidate])
     expect(loaded.teamStaffAssignmentsById).toEqual(fired.teamStaffAssignmentsById)
     expect(listFreeAgentStaff(loaded, 'assistantCoach')).toContain(candidate)
+  })
+
+  it('uses the canonical head-coach career flow for an ACB free-agent coach', () => {
+    const world = createAcbTestGame({ userTeamKey: 'caz' })
+    const team = getUserTeam(world)!
+    const coachId = Object.values(world.coaches).find((coach) => String(coach.id) === 'acb-free-agent-head-coach-1')!.id
+    expect(world.coachEmploymentByCoachId[coachId]!.status).toBe('unemployed')
+
+    const fired = fireCoachFromTeam(world, team.id)
+    const opening = Object.values(fired.coachJobOpeningsById).find((item) => item.teamId === team.id && item.status === 'open')!
+    const candidacy = identifyCoachCandidate(fired, { openingId: opening.id, coachId })
+    const interviewed = completeCoachInterview(startCoachInterview(candidacy.world, candidacy.candidacyId), candidacy.candidacyId)
+    const offer = createCoachJobOffer(interviewed, { candidacyId: candidacy.candidacyId })
+    const hired = acceptCoachJobOffer(offer.world, offer.offerId)
+
+    expect(hired.teams[team.id]!.coachId).toBe(coachId)
+    expect(hired.coachEmploymentByCoachId[coachId]).toMatchObject({ status: 'employed', teamId: team.id })
+    expect(Object.values(hired.teams).filter((item) => item.coachId === coachId)).toHaveLength(1)
+    expect(Object.values(hired.teamStaffAssignmentsById).some((assignment) => assignment.role === 'headCoach')).toBe(false)
+    const loaded = deserializeGameWorldV1(serializeGameWorldV1(hired, '2026-09-19T00:00:00.000Z'))
+    expect(loaded.teams[team.id]!.coachId).toBe(coachId)
+    expect(loaded.coachEmploymentByCoachId[coachId]).toEqual(hired.coachEmploymentByCoachId[coachId])
   })
 
   it('leaves the prototype staff fixture unchanged', () => {

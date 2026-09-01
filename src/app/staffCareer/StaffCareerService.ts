@@ -55,9 +55,10 @@ export function listFreeAgentStaff(world: GameWorld, roleId?: StaffRoleId): read
 }
 
 /**
- * Ranks eligible candidates (real Staff, not already assigned to `opening.teamId`, whose role
- * matches `opening.roleId` and whose ecosystem applicability allows the opening's team ecosystem)
- * by a linear blend of canonical role proficiency and Staff reputation, tie-broken by id for full
+ * Ranks eligible candidates (real Staff not already assigned to `opening.teamId`, with an
+ * ecosystem-valid opening) by their proficiency for `opening.roleId`. `marketRole` is a market
+ * presentation speciality only; it deliberately does not restrict a later canonical assignment.
+ * Ranking uses a linear blend of canonical role proficiency and Staff reputation, tie-broken by id for full
  * determinism. Neither purely reputation-driven nor a duplicate of `STAFF_ROLE_REGISTRY` weights —
  * proficiency is read directly from `calculateStaffRoleProficiencyByRoleId`.
  */

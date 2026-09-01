@@ -52,6 +52,8 @@ export function App() {
   const startNextSeason = useGameStore((state) => state.startNextSeason)
   const signFreeAgent = useGameStore((state) => state.signFreeAgent)
   const releasePlayer = useGameStore((state) => state.releasePlayer)
+  const negotiateStaffHire = useGameStore((state) => state.negotiateStaffHire)
+  const fireStaff = useGameStore((state) => state.fireStaff)
   const executeTrade = useGameStore((state) => state.executeTrade)
   const addRecruitingTarget = useGameStore((state) => state.addRecruitingTarget)
   const removeRecruitingTarget = useGameStore((state) => state.removeRecruitingTarget)
@@ -187,7 +189,7 @@ export function App() {
   const unreadInboxCount = selectUnreadInboxCount(world)
   const capabilities = resolveGameCapabilities(world)
   const activeAppId = desktopWindows.find((window) => window.id === focusedWindowId)?.appId ?? null
-  const desktopActions: DesktopAppActions = { tacticalPlan, openApp: openDesktopApp, openEntity, playGame: () => startMatch(startLiveMatch(tacticalPlan)), instantResult: () => instantResult(tacticalPlan), simulateRemainingGamesToday, advanceDay, startNextSeason, releasePlayer, signFreeAgent, selectDraftProspect, executeTrade, addRecruitingTarget, removeRecruitingTarget, performRecruitingAction, makeRecruitingOffer, acceptNilOpportunity, purchaseSkill: (id) => { const result = purchaseUserCoachSkill(id); if (!result.ok) setSaveMessage(result.reason) }, purchasePerk: (id) => { const result = purchaseUserCoachPerk(id); if (!result.ok) setSaveMessage(result.reason) }, acceptOffer: acceptUserCoachOffer, declineOffer: declineUserCoachOffer, applyForJob: applyUserCoachForJob, setTacticalPlan, resetTacticalPlan, setTrainingIntensity, setTrainingFocus, scheduleTrainingSession, scheduleTeamModuleSession, cancelTrainingSession, saveUserTrainingModule, deleteUserTrainingModule, assignTrainingModuleToPlayer, setLineupSlot, clearLineupSlot, updateRotationMinutes, updateGamePlanMatchups, updateGamePlanTacticalOverride, saveDesignerPlay, deleteDesignerPlay, saveDesignerPlaybook, deleteDesignerPlaybook, setCoachLifestyle: setUserCoachLifestyle, respondToMedia, skipMedia }
+  const desktopActions: DesktopAppActions = { tacticalPlan, openApp: openDesktopApp, openEntity, playGame: () => startMatch(startLiveMatch(tacticalPlan)), instantResult: () => instantResult(tacticalPlan), simulateRemainingGamesToday, advanceDay, startNextSeason, releasePlayer, signFreeAgent, negotiateStaffHire, fireStaff, selectDraftProspect, executeTrade, addRecruitingTarget, removeRecruitingTarget, performRecruitingAction, makeRecruitingOffer, acceptNilOpportunity, purchaseSkill: (id) => { const result = purchaseUserCoachSkill(id); if (!result.ok) setSaveMessage(result.reason) }, purchasePerk: (id) => { const result = purchaseUserCoachPerk(id); if (!result.ok) setSaveMessage(result.reason) }, acceptOffer: acceptUserCoachOffer, declineOffer: declineUserCoachOffer, applyForJob: applyUserCoachForJob, setTacticalPlan, resetTacticalPlan, setTrainingIntensity, setTrainingFocus, scheduleTrainingSession, scheduleTeamModuleSession, cancelTrainingSession, saveUserTrainingModule, deleteUserTrainingModule, assignTrainingModuleToPlayer, setLineupSlot, clearLineupSlot, updateRotationMinutes, updateGamePlanMatchups, updateGamePlanTacticalOverride, saveDesignerPlay, deleteDesignerPlay, saveDesignerPlaybook, deleteDesignerPlaybook, setCoachLifestyle: setUserCoachLifestyle, respondToMedia, skipMedia }
 
   return (
     <EntityContextMenuProvider onOpenEntity={openEntity} world={world}><DesktopShell

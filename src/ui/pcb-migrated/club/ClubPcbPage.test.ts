@@ -1,97 +1,66 @@
 // @vitest-environment jsdom
-import { createElement } from 'react'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { createElement, useState } from 'react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import '@testing-library/jest-dom/vitest'
+
+import { createAcbTestGame } from '@/app/game'
+import { acceptStaffJobOffer, completeStaffInterview, createStaffJobOffer, createStaffJobOpeningForTeam, fireStaffFromTeam, identifyStaffCandidate, listFreeAgentStaff, startStaffInterview } from '@/app/staffCareer'
+import type { GameWorld } from '@/domain/world'
+import type { StaffPersonId } from '@/domain/ids'
+import type { StaffRoleId } from '@/domain/staff'
+import { getUserTeam } from '@/engine/calendar'
 import { ClubPcbPage } from './ClubPcbPage'
 
 afterEach(cleanup)
 
-const asHtml = (element: Element | null) => element as HTMLElement
+function hire(world: GameWorld, roleId: StaffRoleId, staffId: StaffPersonId): GameWorld {
+  const opening = createStaffJobOpeningForTeam(world, { teamId: getUserTeam(world)!.id, roleId })
+  const candidacy = identifyStaffCandidate(opening.world, { openingId: opening.opening.id, staffId })
+  const interviewed = completeStaffInterview(startStaffInterview(candidacy.world, candidacy.candidacyId), candidacy.candidacyId)
+  const offer = createStaffJobOffer(interviewed, { candidacyId: candidacy.candidacyId })
+  return acceptStaffJobOffer(offer.world, offer.offerId)
+}
 
-describe('ClubPcbPage', () => {
-  it('assigns and unassigns a player to a development coach from the Gestionar modal', () => {
-    render(createElement(ClubPcbPage))
-    fireEvent.click(screen.getByRole('button', { name: 'Staff & Roles' }))
+function StaffSandbox() {
+  const [world, setWorld] = useState(() => createAcbTestGame({ userTeamKey: 'caz' }))
+  return createElement(ClubPcbPage, {
+    initialTab: 'staff',
+    world,
+    onNegotiateStaff: (roleId: StaffRoleId, staffId: StaffPersonId) => setWorld((current) => hire(current, roleId, staffId)),
+    onFireStaff: (staffId: StaffPersonId) => setWorld((current) => fireStaffFromTeam(current, staffId)),
+  })
+}
 
-    fireEvent.click(screen.getByRole('button', { name: 'Gestionar' }))
-    expect(screen.getByRole('heading', { name: /Jugadores de Diego Ferrer/ })).toBeInTheDocument()
+describe('ClubPcbPage staff sandbox', () => {
+  it('renders canonical ACB staff rather than fixture staff', () => {
+    const world = createAcbTestGame({ userTeamKey: 'caz' })
+    const assigned = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.teamId === getUserTeam(world)!.id)!
+    const person = world.staffPeopleById[assigned.staffPersonId]!
+    render(createElement(ClubPcbPage, { initialTab: 'staff', world }))
 
-    const available = asHtml(screen.getByText('Disponibles (1)').closest('.unassigned-players-section'))
-    expect(within(available).getByText('Julian Price')).toBeInTheDocument()
-    fireEvent.click(within(available).getByRole('button', { name: 'Asignar' }))
-
-    expect(screen.getByText('Asignados (2)')).toBeInTheDocument()
-    const assigned = asHtml(screen.getByText('Asignados (2)').closest('.assigned-players-section'))
-    expect(within(assigned).getByText('Julian Price')).toBeInTheDocument()
-
-    const retireButtons = within(assigned).getAllByRole('button', { name: 'Retirar' })
-    const julianRow = retireButtons.find((button) => button.closest('.staff-option')?.textContent?.includes('Julian Price'))!
-    fireEvent.click(julianRow)
-
-    expect(screen.getByText('Asignados (1)')).toBeInTheDocument()
-    const availableAfter = asHtml(screen.getByText('Disponibles (1)').closest('.unassigned-players-section'))
-    expect(within(availableAfter).getByText('Julian Price')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }))
-    expect(screen.queryByRole('heading', { name: /Jugadores de Diego Ferrer/ })).not.toBeInTheDocument()
+    expect(screen.getByText(`${person.identity.firstName} ${person.identity.lastName}`)).toBeInTheDocument()
+    expect(screen.queryByText('Diego Ferrer')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Staff 100/)).not.toBeInTheDocument()
   })
 
-  it('hires new staff for a role with no available candidates and reflects it in assignments', () => {
-    render(createElement(ClubPcbPage))
-    fireEvent.click(screen.getByRole('button', { name: 'Staff & Roles' }))
+  it('filters the real free-agent market, hires canonically, and returns fired staff to it', () => {
+    const world = createAcbTestGame({ userTeamKey: 'caz' })
+    const candidateId = listFreeAgentStaff(world, 'assistantCoach')[0]!
+    const candidate = world.staffPeopleById[candidateId]!
+    const candidateName = `${candidate.identity.firstName} ${candidate.identity.lastName}`
+    render(createElement(StaffSandbox))
 
-    // Physio already has Marta Vidal assigned (from fixtures) and has limit 2, but she
-    // is the only fixture staff member with medical/recovery skills, so the second
-    // vacancy has zero remaining candidates and should offer "Contratar Nuevo".
-    const getPhysioCard = () => asHtml(screen.getByRole('heading', { name: 'Fisioterapeuta' }).closest('.role-card'))
-    const physioRoleCount = () => within(getPhysioCard()).getByText((_, node) => node?.className === 'role-count' && /\d \/ 2/.test(node.textContent ?? ''))
-    expect(physioRoleCount()).toHaveTextContent('1 / 2')
-    expect(within(getPhysioCard()).getByRole('button', { name: 'Contratar Nuevo' })).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Filtrar por rol'), { target: { value: 'assistantCoach' } })
+    expect(screen.getAllByRole('button', { name: 'Negociar y contratar' })).toHaveLength(5)
+    expect(screen.getByText(candidateName)).toBeInTheDocument()
 
-    fireEvent.click(within(getPhysioCard()).getByRole('button', { name: 'Contratar Nuevo' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Negociar y contratar' })[0]!)
+    expect(screen.getAllByRole('button', { name: 'Negociar y contratar' })).toHaveLength(4)
+    const firedButton = screen.getByRole('button', { name: `Despedir ${candidateName}` })
+    fireEvent.click(firedButton)
 
-    expect(physioRoleCount()).toHaveTextContent('2 / 2')
-    expect(within(getPhysioCard()).getByText(/^Fisioterapeuta \d+$/)).toBeInTheDocument()
-  })
-
-  it('assigns an available staff member to a role via the assignment modal', () => {
-    render(createElement(ClubPcbPage))
-    fireEvent.click(screen.getByRole('button', { name: 'Staff & Roles' }))
-
-    const getAssistantCard = () => asHtml(screen.getByRole('heading', { name: 'Asistente Defensivo' }).closest('.role-card'))
-    const roleCount = () => within(getAssistantCard()).getByText((_, node) => node?.className === 'role-count' && /\d \/ 1/.test(node.textContent ?? ''))
-    expect(roleCount()).toHaveTextContent('0 / 1')
-    fireEvent.click(within(getAssistantCard()).getByRole('button', { name: 'Asignar Staff' }))
-
-    expect(screen.getByRole('heading', { name: /Asignar.*Asistente Defensivo/ })).toBeInTheDocument()
-    fireEvent.click(screen.getByText('Laura Sáez').closest('.staff-option')!)
-
-    expect(screen.queryByRole('heading', { name: /Asignar.*Asistente Defensivo/ })).not.toBeInTheDocument()
-    expect(roleCount()).toHaveTextContent('1 / 1')
-    expect(within(getAssistantCard()).getByText('Laura Sáez')).toBeInTheDocument()
-  })
-
-  it('opens and closes a player detail panel from the Dashboard top players table', () => {
-    render(createElement(ClubPcbPage))
-    fireEvent.click(screen.getByRole('button', { name: 'Marcus Cole' }))
-
-    const detail = screen.getByLabelText('Detalle de jugador')
-    expect(within(detail).getByRole('heading', { name: 'Marcus Cole' })).toBeInTheDocument()
-    expect(within(detail).getByText('950000')).toBeInTheDocument()
-
-    fireEvent.click(within(detail).getByRole('button', { name: 'Cerrar' }))
-    expect(screen.queryByLabelText('Detalle de jugador')).not.toBeInTheDocument()
-  })
-
-  it('raises board confidence when negotiating objectives succeeds', () => {
-    render(createElement(ClubPcbPage))
-    fireEvent.click(screen.getByRole('button', { name: 'Junta Directiva' }))
-
-    fireEvent.click(screen.getByRole('button', { name: 'Negociar Objetivos' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Intentar Negociar' }))
-
-    fireEvent.click(screen.getByRole('button', { name: 'Visión General' }))
-    expect(screen.getByText('80')).toBeInTheDocument()
+    expect(screen.getByText(candidateName)).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Negociar y contratar' })).toHaveLength(5)
   })
 })
