@@ -14,6 +14,7 @@ import { decayMemoriesForMonth } from '@/engine/memory'
 import { progressAdvisoryScoutingReports, progressDelegatedScouting, progressScoutingAssignments } from '@/engine/scouting'
 import { progressOppositionScoutingReports } from '@/engine/tactics/OppositionScoutingReportEngine'
 import { progressMedicalAdvisories } from '@/engine/injury'
+import { progressBasketballOperationsAdvisories } from '@/engine/roster'
 
 /**
  * Advances only the simulation date, leaving game resolution to other services.
@@ -35,7 +36,7 @@ export function advanceDay(world: GameWorld): GameWorld {
   const withNil = maintained.currentDate.slice(-2) === '01' ? progressAiNil(progressNilLifecycle(maintained)) : progressNilLifecycle(maintained)
   const withBoosters = withNil.currentDate.slice(-2) === '01' ? decayMemoriesForMonth(processCoachFinancesForMonth(progressAiBoosters(withNil))) : withNil
   const staffScoutingRequests = progressOppositionScoutingReports(progressAdvisoryScoutingReports(progressDelegatedScouting(progressEnforcement(withBoosters))))
-  const withMedicalAdvisories = progressMedicalAdvisories(staffScoutingRequests)
+  const withMedicalAdvisories = progressBasketballOperationsAdvisories(progressMedicalAdvisories(staffScoutingRequests))
   const enforced = progressScoutingAssignments(withMedicalAdvisories)
   return Object.values(enforced.draftsById).reduce((current, draft) => {
     const opened = openDraft(current, draft.id)
