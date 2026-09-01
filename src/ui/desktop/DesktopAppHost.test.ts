@@ -2,7 +2,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 
-import { createAcbTestGame, createNewGame } from '@/app/game'
+import { createNewGame } from '@/app/game'
 import { createDefaultTacticalPlan } from '@/engine/match'
 import { getUserTeam } from '@/engine/calendar'
 import { getTeamStaffPresentation } from '@/ui/staffPresentation'
@@ -73,13 +73,11 @@ describe('DesktopAppHost', () => {
   })
 
   it('leaves the Club app itself rendering ClubPcbPage unaffected by the Staff routing fix', () => {
-    const world = createAcbTestGame({ userTeamKey: 'caz' })
-    const staffId = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.teamId === Object.values(world.teams).find((team) => team.coachId === world.userCoachId)!.id)!.staffPersonId
-    const staff = world.staffPeopleById[staffId]!
-    const markup = renderToStaticMarkup(createElement(DesktopAppHost, { appId: 'club', world, actions }))
-    expect(markup).toContain('Staff y Roles Funcionales')
-    expect(markup).toContain('Bonificaciones del Staff')
-    expect(markup).toContain(`${staff.identity.firstName} ${staff.identity.lastName}`)
-    expect(markup).not.toContain('Diego Ferrer')
+    // ClubPcbPage's own "Staff & Roles" tab (reached via initialTab: 'staff', which DesktopAppHost
+    // no longer passes for appId 'club' after the Staff routing fix) is covered directly by
+    // ClubPcbPage.test.ts. This only needs to confirm 'club' still opens ClubPcbPage's default view.
+    const markup = renderToStaticMarkup(createElement(DesktopAppHost, { appId: 'club', world: createNewGame(), actions }))
+    expect(markup).toContain('pcb-club')
+    expect(markup).toContain('club-dashboard')
   })
 })
