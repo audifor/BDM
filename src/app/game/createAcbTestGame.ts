@@ -1,11 +1,12 @@
 import { initializeBoardState } from '@/engine/board'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
-import { ensurePlayerKnowledge, generateCoachRpgProfiles, generateInitialStaffStructure } from '@/engine/world'
+import { ensurePlayerKnowledge, generateCoachRpgProfiles, generateStaffSandbox } from '@/engine/world'
 import { generateCanonicalDevelopmentProfile, generateCanonicalRatings } from '@/engine/world/CanonicalPlayerTruthGenerator'
 import { generatePlayerBio } from '@/engine/world/PlayerBioGenerator'
 import { generateInitialPlayerContract } from '@/engine/world/PlayerContractGenerator'
 import { generateInitialTeamFinances } from '@/engine/world/TeamFinancesGenerator'
 import { createCoach } from '@/domain/coach'
+import { createDefaultStaffReputationProfile } from '@/domain/staffReputation'
 import { createCompetition, defaultLeagueCompetitionRules } from '@/domain/competition'
 import { createCountry } from '@/domain/country'
 import { createGameDate } from '@/domain/date'
@@ -43,7 +44,7 @@ export interface CreateAcbTestGameOptions {
 
 /**
  * Creates a development-only ACB universe using the generic BDM FIBA-like engine.
- * Sourced truth is deliberately limited to club/player/position/head-coach names.
+ * Recognizable club/player/head-coach names sit beside a deliberately broad synthetic Staff sandbox.
  */
 export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameWorld {
   const userTeamKey = options.userTeamKey ?? ACB_QUICK_START_TEAM_KEY
@@ -67,8 +68,6 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
         nationalityId: UNKNOWN_COUNTRY_ID,
       })
     })
-  const coaches = [userCoach, ...aiCoaches]
-
   const players = ACB_2026_27_TEAMS.flatMap((team) =>
     team.players.map(([name, position], playerIndex) => {
       const id = playerIdFromString(`acb-player-${team.key}-${String(playerIndex + 1).padStart(2, '0')}`)
@@ -117,7 +116,19 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
       contracts.filter((contract) => contract.teamId === team.id).reduce((sum, contract) => sum + contract.compensation.annualSalary, 0),
     ),
   )
-  const staff = generateInitialStaffStructure(teams, SEASON_START)
+  const freeAgentCoaches = Array.from({ length: 5 }, (_, index) => createCoach({ id: coachIdFromString(`acb-free-agent-head-coach-${index + 1}`), firstName: 'Free', lastName: `Coach ${index + 1}`, gender: 'male', nationalityId: SPAIN_ID }))
+  const coaches = [userCoach, ...aiCoaches, ...freeAgentCoaches]
+  const staffSandbox = generateStaffSandbox({ teams, assignedOn: SEASON_START, idPrefix: 'acb-staff-sandbox-v1' })
+  const assignmentsByStaffId = new Map(staffSandbox.assignments.map((assignment) => [assignment.staffPersonId, assignment]))
+  const staffEmploymentByStaffId = Object.fromEntries(staffSandbox.people.map((person) => {
+    const assignment = assignmentsByStaffId.get(person.id)
+    return [person.id, assignment === undefined ? { status: 'unemployed' as const } : { status: 'employed' as const, teamId: assignment.teamId, roleId: assignment.role, startedOn: assignment.assignedOn }]
+  }))
+  const staffCareerHistoryByStaffId = Object.fromEntries(staffSandbox.people.map((person) => {
+    const assignment = assignmentsByStaffId.get(person.id)
+    return [person.id, assignment === undefined ? [] : [{ kind: 'appointment' as const, staffId: person.id, teamId: assignment.teamId, roleId: assignment.role, date: assignment.assignedOn, reason: 'initialAppointment' as const }]]
+  }))
+  const staffReputationProfilesByStaffId = Object.fromEntries(staffSandbox.people.map((person) => [person.id, createDefaultStaffReputationProfile()]))
   const coachProfiles = generateCoachRpgProfiles(coaches, USER_COACH_ID, options.coachRpgPreset)
   const userTeam = teams.find((team) => team.coachId === USER_COACH_ID)!
 
@@ -136,8 +147,11 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
       games,
       contracts,
       teamFinances,
-      staffPeople: staff.map((entry) => entry.person),
-      teamStaffAssignments: staff.map((entry) => entry.assignment),
+      staffPeople: staffSandbox.people,
+      teamStaffAssignments: staffSandbox.assignments,
+      staffEmploymentByStaffId,
+      staffCareerHistoryByStaffId,
+      staffReputationProfilesByStaffId,
       coachProfessionalProfilesByCoachId: coachProfiles.professionalProfiles,
       coachRpgProfilesByCoachId: coachProfiles.rpgProfiles,
     })

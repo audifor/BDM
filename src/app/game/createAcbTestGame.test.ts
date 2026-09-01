@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import { getUserTeam } from '@/engine/calendar'
+import { ASSIGNABLE_STAFF_ROLE_IDS, isStaffRoleApplicableToEcosystem } from '@/domain/staff'
+import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSaveV1'
+import { acceptStaffJobOffer, completeStaffInterview, createStaffJobOffer, createStaffJobOpeningForTeam, fireStaffFromTeam, identifyStaffCandidate, listFreeAgentStaff, startStaffInterview } from '@/app/staffCareer'
+import { createNewGame } from './createNewGame'
 import { createAcbTestGame } from './createAcbTestGame'
 
 describe('createAcbTestGame', () => {
@@ -29,5 +33,52 @@ describe('createAcbTestGame', () => {
 
   it('rejects unknown ACB team keys', () => {
     expect(() => createAcbTestGame({ userTeamKey: 'not-a-team' })).toThrow('Unknown ACB test team')
+  })
+
+  it('creates deterministic broad staffs and five free agents for every FIBA-applicable role', () => {
+    const world = createAcbTestGame({ userTeamKey: 'caz' })
+    const sameWorld = createAcbTestGame({ userTeamKey: 'caz' })
+    const roles = ASSIGNABLE_STAFF_ROLE_IDS.filter((role) => isStaffRoleApplicableToEcosystem(role, 'fibaLike'))
+    expect(roles).toHaveLength(28)
+    for (const team of Object.values(world.teams)) {
+      const assignments = Object.values(world.teamStaffAssignmentsById).filter((assignment) => assignment.teamId === team.id)
+      expect(assignments).toHaveLength(roles.length + 3)
+      expect(assignments.every((assignment) => isStaffRoleApplicableToEcosystem(assignment.role, 'fibaLike'))).toBe(true)
+      expect(assignments.filter((assignment) => assignment.role === 'assistantCoach')).toHaveLength(2)
+      expect(assignments.filter((assignment) => assignment.role === 'physiotherapist')).toHaveLength(2)
+      expect(assignments.filter((assignment) => assignment.role === 'regionalScout')).toHaveLength(2)
+    }
+    for (const role of roles) expect(listFreeAgentStaff(world, role)).toHaveLength(5)
+    expect(listFreeAgentStaff(world)).toHaveLength(roles.length * 5)
+    const freeCoachIds = Object.values(world.coaches).filter((coach) => String(coach.id).startsWith('acb-free-agent-head-coach-')).map((coach) => coach.id)
+    expect(freeCoachIds).toHaveLength(5)
+    expect(freeCoachIds.every((coachId) => world.coachEmploymentByCoachId[coachId]!.status === 'unemployed')).toBe(true)
+    expect(listFreeAgentStaff(world).every((staffId) => world.staffEmploymentByStaffId[staffId]!.status === 'unemployed')).toBe(true)
+    expect(Object.values(world.staffPeopleById)).toEqual(Object.values(sameWorld.staffPeopleById))
+  })
+
+  it('uses canonical hiring, firing and save/load for an ACB free agent', () => {
+    const world = createAcbTestGame({ userTeamKey: 'caz' })
+    const candidate = listFreeAgentStaff(world, 'assistantCoach')[0]!
+    const opening = createStaffJobOpeningForTeam(world, { teamId: getUserTeam(world)!.id, roleId: 'assistantCoach' })
+    const candidacy = identifyStaffCandidate(opening.world, { openingId: opening.opening.id, staffId: candidate })
+    const interviewed = completeStaffInterview(startStaffInterview(candidacy.world, candidacy.candidacyId), candidacy.candidacyId)
+    const offer = createStaffJobOffer(interviewed, { candidacyId: candidacy.candidacyId })
+    const hired = acceptStaffJobOffer(offer.world, offer.offerId)
+    expect(hired.staffEmploymentByStaffId[candidate]!.status).toBe('employed')
+    const fired = fireStaffFromTeam(hired, candidate)
+    expect(fired.staffEmploymentByStaffId[candidate]!.status).toBe('unemployed')
+    expect(listFreeAgentStaff(fired, 'assistantCoach')).toContain(candidate)
+    const loaded = deserializeGameWorldV1(serializeGameWorldV1(fired, '2026-09-19T00:00:00.000Z'))
+    expect(loaded.staffPeopleById[candidate]).toEqual(fired.staffPeopleById[candidate])
+    expect(loaded.staffEmploymentByStaffId[candidate]).toEqual(fired.staffEmploymentByStaffId[candidate])
+    expect(loaded.teamStaffAssignmentsById).toEqual(fired.teamStaffAssignmentsById)
+    expect(listFreeAgentStaff(loaded, 'assistantCoach')).toContain(candidate)
+  })
+
+  it('leaves the prototype staff fixture unchanged', () => {
+    const prototype = createNewGame()
+    expect(Object.values(prototype.teamStaffAssignmentsById).every((assignment) => ['assistantCoach', 'regionalScout', 'physiotherapist'].includes(assignment.role))).toBe(true)
+    expect(Object.values(prototype.teamStaffAssignmentsById)).toHaveLength(Object.keys(prototype.staffPeopleById).length)
   })
 })

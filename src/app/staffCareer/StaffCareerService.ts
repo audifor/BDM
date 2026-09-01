@@ -49,6 +49,11 @@ export function getOpenStaffJobs(world: GameWorld): readonly StaffJobOpening[] {
   return Object.values(world.staffJobOpeningsById).filter((opening) => opening.status === 'open').sort((a, b) => a.createdOn.localeCompare(b.createdOn) || a.id.localeCompare(b.id))
 }
 
+/** Lists canonically unemployed Staff and optionally filters by their primary market speciality. */
+export function listFreeAgentStaff(world: GameWorld, roleId?: StaffRoleId): readonly StaffPersonId[] {
+  return Object.values(world.staffPeopleById).filter((staff) => world.staffEmploymentByStaffId[staff.id]?.status === 'unemployed' && (roleId === undefined || staff.marketRole === roleId)).sort((a, b) => a.id.localeCompare(b.id)).map((staff) => staff.id)
+}
+
 /**
  * Ranks eligible candidates (real Staff, not already assigned to `opening.teamId`, whose role
  * matches `opening.roleId` and whose ecosystem applicability allows the opening's team ecosystem)
