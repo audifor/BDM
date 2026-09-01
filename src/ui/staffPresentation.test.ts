@@ -299,6 +299,27 @@ describe('getStaffRoleEvaluations', () => {
     expect(evaluations.length).toBeLessThan(STAFF_ROLE_IDS.length)
     expect(evaluations.length).toBeLessThanOrEqual(6)
   })
+
+  it('never includes headCoach as an alternative for a coaching-department staff member (Issue #27 Wave 4C1 Fix 1)', () => {
+    // assistantCoach shares department: 'coaching' with headCoach in STAFF_ROLE_REGISTRY, so
+    // headCoach would previously have been eligible department-mate padding — this is the exact
+    // scenario that would have caught the bug (a generic non-coaching staff member would not).
+    const w = world()
+    const teamId = userTeamId(w)
+    const assignment = getTeamStaffAssignments(w, teamId).find((a) => staffRoleDefinition(a.role).department === 'coaching')!
+    expect(assignment).toBeDefined()
+    const evaluations = getStaffRoleEvaluations(w, assignment.staffPersonId)
+    expect(evaluations.some((entry) => entry.role === 'headCoach')).toBe(false)
+  })
+
+  it('never includes headCoach for any staff member in the fixture world', () => {
+    const w = world()
+    const teamId = userTeamId(w)
+    for (const assignment of getTeamStaffAssignments(w, teamId)) {
+      const evaluations = getStaffRoleEvaluations(w, assignment.staffPersonId)
+      expect(evaluations.some((entry) => entry.role === 'headCoach')).toBe(false)
+    }
+  })
 })
 
 describe('getStaffContractStatus', () => {
@@ -353,6 +374,112 @@ describe('getStaffContractStatus', () => {
     const stillEmployed = updateGameWorld(w, { staffContracts: remaining })
     expect(getStaffEmploymentStatusLabel(stillEmployed, staffId)).toBe('EMPLOYED')
     expect(getStaffContractStatus(stillEmployed, staffId)).toBe('NO_CONTRACT')
+  })
+
+  it('reports UPCOMING for a contract that has not started yet (Issue #27 Wave 4C1 Fix 2)', () => {
+    const w = world()
+    const teamId = userTeamId(w)
+    const staffId = firstAssignedStaffId(w)
+    // Replace this staff person's only contract with one whose startsOn is strictly after the
+    // world's current date, so there is no ACTIVE contract to fall back on.
+    const remaining = Object.values(w.staffContractsById).filter((contract) => contract.staffId !== staffId)
+    const upcoming = createStaffContract({
+      id: staffContractIdFromString('upcoming-fixture-contract'),
+      staffId,
+      teamId,
+      kind: 'standard',
+      term: { startsOn: '2099-01-01' as never, expiresOn: '2099-06-01' as never },
+      compensation: { annualSalary: 50_000 },
+    })
+    const remainingAssignments = Object.values(w.teamStaffAssignmentsById).filter((a) => a.staffPersonId !== staffId)
+    const { [staffId]: _removedEmployment, ...restEmployment } = w.staffEmploymentByStaffId
+    const stripped = updateGameWorld(w, { staffContracts: [...remaining, upcoming], teamStaffAssignments: remainingAssignments, staffEmploymentByStaffId: restEmployment as never })
+    expect(getStaffContractStatus(stripped, staffId, w.currentDate)).toBe('UPCOMING')
+  })
+
+  it('never misreports a not-yet-started contract as EXPIRED — the actual regression being fixed', () => {
+    // This is the exact "date < startsOn" scenario that the old code (which only distinguished
+    // ACTIVE from "everything else via mostRecent.termination") silently fell through to EXPIRED
+    // for, since isStaffContractActiveOn(contract, date) === false both before startsOn and
+    // after expiresOn, and the old code never checked which side of the term the date was on.
+    const w = world()
+    const teamId = userTeamId(w)
+    const staffId = firstAssignedStaffId(w)
+    const remaining = Object.values(w.staffContractsById).filter((contract) => contract.staffId !== staffId)
+    const upcoming = createStaffContract({
+      id: staffContractIdFromString('future-fixture-contract'),
+      staffId,
+      teamId,
+      kind: 'standard',
+      term: { startsOn: '2099-03-01' as never, expiresOn: '2099-09-01' as never },
+      compensation: { annualSalary: 75_000 },
+    })
+    const remainingAssignments = Object.values(w.teamStaffAssignmentsById).filter((a) => a.staffPersonId !== staffId)
+    const { [staffId]: _removedEmployment, ...restEmployment } = w.staffEmploymentByStaffId
+    const stripped = updateGameWorld(w, { staffContracts: [...remaining, upcoming], teamStaffAssignments: remainingAssignments, staffEmploymentByStaffId: restEmployment as never })
+    const status = getStaffContractStatus(stripped, staffId, w.currentDate)
+    expect(status).not.toBe('EXPIRED')
+    expect(status).toBe('UPCOMING')
+  })
+
+  it('is deterministic regardless of staffContractsById key insertion order (no Object.values order dependency)', () => {
+    const w = world()
+    const teamId = userTeamId(w)
+    const staffId = firstAssignedStaffId(w)
+    const remaining = Object.values(w.staffContractsById).filter((contract) => contract.staffId !== staffId)
+    // Two upcoming contracts with different startsOn dates, plus two past contracts with a tied
+    // expiresOn, so neither date alone disambiguates the past pair — the id tie-break must.
+    const upcomingA = createStaffContract({ id: staffContractIdFromString('upcoming-a'), staffId, teamId, kind: 'standard', term: { startsOn: '2099-06-01' as never, expiresOn: '2099-12-01' as never }, compensation: { annualSalary: 40_000 } })
+    const upcomingB = createStaffContract({ id: staffContractIdFromString('upcoming-b'), staffId, teamId, kind: 'standard', term: { startsOn: '2099-02-01' as never, expiresOn: '2099-08-01' as never }, compensation: { annualSalary: 45_000 } })
+    const remainingAssignments = Object.values(w.teamStaffAssignmentsById).filter((a) => a.staffPersonId !== staffId)
+    const { [staffId]: _removedEmployment, ...restEmployment } = w.staffEmploymentByStaffId
+
+    const forward = updateGameWorld(w, {
+      staffContracts: [...remaining, upcomingA, upcomingB],
+      teamStaffAssignments: remainingAssignments,
+      staffEmploymentByStaffId: restEmployment as never,
+    })
+    const reversed = updateGameWorld(w, {
+      staffContracts: [...remaining, upcomingB, upcomingA],
+      teamStaffAssignments: remainingAssignments,
+      staffEmploymentByStaffId: restEmployment as never,
+    })
+
+    const forwardStatus = getStaffContractStatus(forward, staffId, w.currentDate)
+    const reversedStatus = getStaffContractStatus(reversed, staffId, w.currentDate)
+    expect(forwardStatus).toBe('UPCOMING')
+    expect(forwardStatus).toBe(reversedStatus)
+    // Repeated calls on the same world must also agree.
+    expect(getStaffContractStatus(forward, staffId, w.currentDate)).toBe(getStaffContractStatus(forward, staffId, w.currentDate))
+  })
+
+  it('is deterministic for tied past (EXPIRED) candidates regardless of insertion order, tie-broken by id', () => {
+    const w = world()
+    const teamId = userTeamId(w)
+    const staffId = firstAssignedStaffId(w)
+    const remaining = Object.values(w.staffContractsById).filter((contract) => contract.staffId !== staffId)
+    // Two expired contracts with the exact same expiresOn — id ascending tie-break must produce
+    // the same EXPIRED result regardless of array order.
+    const expiredA = createStaffContract({ id: staffContractIdFromString('expired-a'), staffId, teamId, kind: 'standard', term: { startsOn: '2018-01-01' as never, expiresOn: '2020-01-01' as never }, compensation: { annualSalary: 30_000 } })
+    const expiredB = createStaffContract({ id: staffContractIdFromString('expired-b'), staffId, teamId, kind: 'standard', term: { startsOn: '2017-01-01' as never, expiresOn: '2020-01-01' as never }, compensation: { annualSalary: 35_000 } })
+    const remainingAssignments = Object.values(w.teamStaffAssignmentsById).filter((a) => a.staffPersonId !== staffId)
+    const { [staffId]: _removedEmployment, ...restEmployment } = w.staffEmploymentByStaffId
+
+    const forward = updateGameWorld(w, {
+      staffContracts: [...remaining, expiredA, expiredB],
+      teamStaffAssignments: remainingAssignments,
+      staffEmploymentByStaffId: restEmployment as never,
+    })
+    const reversed = updateGameWorld(w, {
+      staffContracts: [...remaining, expiredB, expiredA],
+      teamStaffAssignments: remainingAssignments,
+      staffEmploymentByStaffId: restEmployment as never,
+    })
+
+    const forwardStatus = getStaffContractStatus(forward, staffId, w.currentDate)
+    const reversedStatus = getStaffContractStatus(reversed, staffId, w.currentDate)
+    expect(forwardStatus).toBe('EXPIRED')
+    expect(forwardStatus).toBe(reversedStatus)
   })
 })
 

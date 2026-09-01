@@ -1,8 +1,10 @@
 import { calculateAge } from '@/domain/player/PlayerAge'
+import { compareGameDates } from '@/domain/date'
 import {
   calculateStaffRoleProficiencyByRoleId,
   staffRoleDefinition,
   staffRoleIdsInDepartment,
+  ASSIGNABLE_STAFF_ROLE_IDS,
   STAFF_DEPARTMENTS,
   STAFF_ROLE_IDS,
   type StaffDepartment,
@@ -149,10 +151,19 @@ const ROLE_EVALUATION_TARGET_COUNT = 6
  *    "alternatives" panel, never the full ~28-role catalogue.
  * 5. Alternatives (everything after the current role) are ordered by proficiency descending, then
  *    role id ascending — deterministic and stable across repeated calls for the same world/staff.
+ * 6. `headCoach` never appears as an alternative: every department/padding candidate source is
+ *    filtered through the canonical `ASSIGNABLE_STAFF_ROLE_IDS` (Issue #27 Wave 4C1 Fix 1) — the
+ *    single authority for "roles a `StaffPerson`/`TeamStaffAssignment` can actually hold". `headCoach`
+ *    exists in the shared role catalogue (it shares `department: 'coaching'` with `assistantCoach`
+ *    and friends) purely so other shared code can reason about "who coaches this team" uniformly; it
+ *    is never a real `StaffPerson` role and must never be suggested as one, even as department-mate
+ *    padding for a coaching-department staff member.
  *
  * Proficiency is always computed via the canonical `calculateStaffRoleProficiencyByRoleId` —
  * never reimplemented here.
  */
+const ASSIGNABLE_STAFF_ROLE_ID_SET: ReadonlySet<StaffRoleId> = new Set(ASSIGNABLE_STAFF_ROLE_IDS)
+
 export function getStaffRoleEvaluations(world: GameWorld, staffPersonId: StaffPersonId): readonly { readonly role: StaffRoleId; readonly proficiency: number }[] {
   const person = getStaffPerson(world, staffPersonId)
   if (person === undefined) throw new Error(`Staff person does not exist: ${staffPersonId}`)
@@ -161,11 +172,13 @@ export function getStaffRoleEvaluations(world: GameWorld, staffPersonId: StaffPe
   const candidateRoles = new Set<StaffRoleId>()
   if (currentRole !== undefined) candidateRoles.add(currentRole)
   const department = currentRole === undefined ? undefined : staffRoleDefinition(currentRole).department
-  if (department !== undefined) for (const roleId of staffRoleIdsInDepartment(department)) candidateRoles.add(roleId)
+  if (department !== undefined) {
+    for (const roleId of staffRoleIdsInDepartment(department)) if (ASSIGNABLE_STAFF_ROLE_ID_SET.has(roleId)) candidateRoles.add(roleId)
+  }
   if (candidateRoles.size < ROLE_EVALUATION_TARGET_COUNT) {
     for (const roleId of STAFF_ROLE_IDS) {
       if (candidateRoles.size >= ROLE_EVALUATION_TARGET_COUNT) break
-      candidateRoles.add(roleId)
+      if (ASSIGNABLE_STAFF_ROLE_ID_SET.has(roleId)) candidateRoles.add(roleId)
     }
   }
 
@@ -218,31 +231,47 @@ export function findActiveStaffContractForStaff(world: GameWorld, staffId: Staff
  * States, derived exclusively from `StaffContract`/`isStaffContractActiveOn` semantics
  * (see `StaffContract.ts` for the canonical activeness rule):
  * - `ACTIVE` — an active contract exists per `isStaffContractActiveOn`.
- * - `TERMINATED` — a contract exists whose `termination.effectiveOn` has already taken effect
- *   on/before `onDate` (an explicit early end, distinguishable from a natural expiry because
- *   `termination` is only ever set by `terminateStaffContract`).
- * - `EXPIRED` — a contract exists whose `term.expiresOn` has passed relative to `onDate` with no
- *   termination record at all (the term simply ran out; the model can reliably tell this apart
- *   from `TERMINATED` because `termination` is a distinct optional field, never inferred).
+ * - `UPCOMING` — no active contract, but at least one contract exists that has not started yet
+ *   (`term.startsOn > onDate`, via `compareGameDates`). `isStaffContractActiveOn` alone cannot
+ *   distinguish "not yet started" from "already ended" (both simply return `false`), so this status
+ *   must be derived explicitly here rather than falling through to `EXPIRED` (Issue #27 Wave 4C1
+ *   Fix 2 — a future contract was previously misreported as `EXPIRED`).
+ * - `TERMINATED` — no active or upcoming contract; the most relevant past contract's
+ *   `termination.effectiveOn` has already taken effect on/before `onDate` (an explicit early end,
+ *   distinguishable from a natural expiry because `termination` is only ever set by
+ *   `terminateStaffContract`).
+ * - `EXPIRED` — no active or upcoming contract; the most relevant past contract's `term.expiresOn`
+ *   has passed relative to `onDate` with no termination record at all (the term simply ran out; the
+ *   model can reliably tell this apart from `TERMINATED` because `termination` is a distinct
+ *   optional field, never inferred).
  * - `NO_CONTRACT` — no `StaffContract` record referencing this staff person exists at all.
  *
- * When multiple non-active contracts exist for the same staff person (e.g. career history with
- * several past contracts), the most recently expired/terminated one (latest `term.expiresOn`) is
- * reported, for a deterministic single-value status.
+ * Selection is fully deterministic and never depends on `Object.values` iteration order:
+ * - Priority is ACTIVE, then UPCOMING, then past (TERMINATED/EXPIRED).
+ * - Among multiple UPCOMING candidates, the soonest-to-start wins (`term.startsOn` ascending via
+ *   `compareGameDates`), tie-broken by `id` ascending.
+ * - Among multiple past candidates, the most recently expired one wins (`term.expiresOn`
+ *   descending via `compareGameDates`), tie-broken by `id` ascending.
  */
-export type StaffContractStatus = 'ACTIVE' | 'TERMINATED' | 'EXPIRED' | 'NO_CONTRACT'
+export type StaffContractStatus = 'ACTIVE' | 'UPCOMING' | 'TERMINATED' | 'EXPIRED' | 'NO_CONTRACT'
 
 export function getStaffContractStatus(world: GameWorld, staffId: StaffPersonId, onDate = world.currentDate): StaffContractStatus {
   const contracts = Object.values(world.staffContractsById).filter((contract) => contract.staffId === staffId)
   if (contracts.length === 0) return 'NO_CONTRACT'
   if (contracts.some((contract) => isStaffContractActiveOn(contract, onDate))) return 'ACTIVE'
 
-  const mostRecent = [...contracts].sort((left, right) => right.term.expiresOn.localeCompare(left.term.expiresOn))[0]!
-  return mostRecent.termination !== undefined && mostRecent.termination.effectiveOn <= onDate ? 'TERMINATED' : 'EXPIRED'
+  const upcoming = contracts.filter((contract) => compareGameDates(contract.term.startsOn, onDate) > 0)
+  if (upcoming.length > 0) return 'UPCOMING'
+
+  const [mostRecent] = [...contracts].sort(
+    (left, right) => compareGameDates(right.term.expiresOn, left.term.expiresOn) || left.id.localeCompare(right.id),
+  )
+  return mostRecent!.termination !== undefined && compareGameDates(mostRecent!.termination.effectiveOn, onDate) <= 0 ? 'TERMINATED' : 'EXPIRED'
 }
 
 export const STAFF_CONTRACT_STATUS_LABELS: Readonly<Record<StaffContractStatus, string>> = {
   ACTIVE: 'ACTIVE',
+  UPCOMING: 'UPCOMING',
   TERMINATED: 'TERMINATED',
   EXPIRED: 'EXPIRED',
   NO_CONTRACT: 'NO CONTRACT',
