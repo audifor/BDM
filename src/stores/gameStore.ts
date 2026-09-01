@@ -46,7 +46,7 @@ import type { MediaStance } from '@/domain/media'
 import { createPreMatchMediaOpportunity, respondToMediaOpportunity, skipMediaOpportunity } from '@/engine/media'
 import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
 import type { StaffRoleId } from '@/domain/staff'
-import { acceptStaffJobOffer, completeStaffInterview, createStaffJobOffer, createStaffJobOpeningForTeam, fireStaffFromTeam, identifyStaffCandidate, startStaffInterview } from '@/app/staffCareer'
+import { acceptStaffJobOffer, completeStaffInterview, createStaffJobOffer, createStaffJobOpeningForTeam, declineStaffJobOffer, fireStaffFromTeam, identifyStaffCandidate, startStaffInterview } from '@/app/staffCareer'
 
 interface GameStore {
   readonly world: GameWorld | null
@@ -67,7 +67,12 @@ interface GameStore {
   startNextSeason(): void
   signFreeAgent(teamId: TeamId, playerId: PlayerId): void
   releasePlayer(teamId: TeamId, playerId: PlayerId): void
-  negotiateStaffHire(teamId: TeamId, roleId: StaffRoleId, staffId: StaffPersonId): void
+  startStaffCandidacy(teamId: TeamId, roleId: StaffRoleId, staffId: StaffPersonId): void
+  startStaffInterview(candidacyId: string): void
+  completeStaffInterview(candidacyId: string): void
+  createStaffOffer(candidacyId: string): void
+  acceptStaffOffer(offerId: string): void
+  declineStaffOffer(offerId: string): void
   fireStaff(staffId: StaffPersonId): void
   purchaseUserCoachSkill(skillId: CoachSkillId): CoachRpgOperationResult
   purchaseUserCoachPerk(perkId: CoachPerkId): CoachRpgOperationResult
@@ -152,13 +157,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   signFreeAgent: (teamId, playerId) => set({ world: signFreeAgent(requireWorld(get().world), teamId, playerId) }),
   releasePlayer: (teamId, playerId) => set({ world: releasePlayer(requireWorld(get().world), teamId, playerId) }),
-  negotiateStaffHire: (teamId, roleId, staffId) => {
+  startStaffCandidacy: (teamId, roleId, staffId) => {
     const opening = createStaffJobOpeningForTeam(requireWorld(get().world), { teamId, roleId })
     const candidacy = identifyStaffCandidate(opening.world, { openingId: opening.opening.id, staffId })
-    const interviewed = completeStaffInterview(startStaffInterview(candidacy.world, candidacy.candidacyId), candidacy.candidacyId)
-    const offer = createStaffJobOffer(interviewed, { candidacyId: candidacy.candidacyId })
-    set({ world: acceptStaffJobOffer(offer.world, offer.offerId) })
+    set({ world: candidacy.world })
   },
+  startStaffInterview: (candidacyId) => set({ world: startStaffInterview(requireWorld(get().world), candidacyId) }),
+  completeStaffInterview: (candidacyId) => set({ world: completeStaffInterview(requireWorld(get().world), candidacyId) }),
+  createStaffOffer: (candidacyId) => { const offer = createStaffJobOffer(requireWorld(get().world), { candidacyId }); set({ world: offer.world }) },
+  acceptStaffOffer: (offerId) => set({ world: acceptStaffJobOffer(requireWorld(get().world), offerId) }),
+  declineStaffOffer: (offerId) => set({ world: declineStaffJobOffer(requireWorld(get().world), offerId) }),
   fireStaff: (staffId) => set({ world: fireStaffFromTeam(requireWorld(get().world), staffId) }),
   purchaseUserCoachSkill: (skillId) => { const result = purchaseCoachSkillRank(requireWorld(get().world), requireWorld(get().world).userCoachId, skillId); if (result.ok) set({ world: result.world }); return result },
   purchaseUserCoachPerk: (perkId) => { const result = purchaseCoachPerk(requireWorld(get().world), requireWorld(get().world).userCoachId, perkId); if (result.ok) set({ world: result.world }); return result },

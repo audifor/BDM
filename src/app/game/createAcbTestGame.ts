@@ -7,6 +7,8 @@ import { generateInitialPlayerContract } from '@/engine/world/PlayerContractGene
 import { generateInitialTeamFinances } from '@/engine/world/TeamFinancesGenerator'
 import { createCoach } from '@/domain/coach'
 import { createDefaultStaffReputationProfile } from '@/domain/staffReputation'
+import { createStaffContract, staffContractIdFromString } from '@/domain/staffContract'
+import { calculateStaffRoleProficiencyByRoleId, staffRoleDefinition, type StaffPerson, type StaffRoleId } from '@/domain/staff'
 import { createCompetition, defaultLeagueCompetitionRules } from '@/domain/competition'
 import { createCountry } from '@/domain/country'
 import { createGameDate } from '@/domain/date'
@@ -129,6 +131,14 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
     return [person.id, assignment === undefined ? [] : [{ kind: 'appointment' as const, staffId: person.id, teamId: assignment.teamId, roleId: assignment.role, date: assignment.assignedOn, reason: 'initialAppointment' as const }]]
   }))
   const staffReputationProfilesByStaffId = Object.fromEntries(staffSandbox.people.map((person) => [person.id, createDefaultStaffReputationProfile()]))
+  const staffContracts = staffSandbox.assignments.map((assignment) => {
+    const staff = staffSandbox.people.find((person) => person.id === assignment.staffPersonId)!
+    return createStaffContract({ id: staffContractIdFromString(`acb-staff-contract:${staff.id}:${assignment.teamId}`), staffId: staff.id, teamId: assignment.teamId, kind: 'standard', term: { startsOn: CURRENT_DATE, expiresOn: createGameDate(2028, 6, 30) }, compensation: { annualSalary: initialStaffSalary(staff, assignment.role) } })
+  })
+  const financedTeams = teamFinances.map((finance) => {
+    const staffPayroll = staffContracts.filter((contract) => contract.teamId === finance.teamId).reduce((sum, contract) => sum + contract.compensation.annualSalary, 0)
+    return { ...finance, staffSalaryBudget: Math.max(finance.staffSalaryBudget, staffPayroll + 250_000) }
+  })
   const coachProfiles = generateCoachRpgProfiles(coaches, USER_COACH_ID, options.coachRpgPreset)
   const userTeam = teams.find((team) => team.coachId === USER_COACH_ID)!
 
@@ -146,12 +156,13 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
       seasons: [season],
       games,
       contracts,
-      teamFinances,
+      teamFinances: financedTeams,
       staffPeople: staffSandbox.people,
       teamStaffAssignments: staffSandbox.assignments,
       staffEmploymentByStaffId,
       staffCareerHistoryByStaffId,
       staffReputationProfilesByStaffId,
+      staffContracts,
       coachProfessionalProfilesByCoachId: coachProfiles.professionalProfiles,
       coachRpgProfilesByCoachId: coachProfiles.rpgProfiles,
     })
@@ -160,6 +171,13 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
   world = buildWorld(generateRoundRobinSchedule({ world, seasonId: season.id, daysBetweenRounds: 7 }))
   world = ensurePlayerKnowledge(world)
   return initializeBoardState(world, userTeam.id)
+}
+
+function initialStaffSalary(staff: StaffPerson, roleId: StaffRoleId): number {
+  const baseBySeniority = { junior: 45_000, standard: 65_000, senior: 90_000, director: 130_000 } as const
+  const base = baseBySeniority[staffRoleDefinition(roleId).seniority]
+  const proficiency = calculateStaffRoleProficiencyByRoleId(staff, roleId)
+  return Math.round((base * (0.8 + proficiency / 250)) / 1_000) * 1_000
 }
 
 function splitPersonName(value: string): { readonly firstName: string; readonly lastName: string } {

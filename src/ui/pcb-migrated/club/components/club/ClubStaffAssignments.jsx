@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Award, AlertCircle, Plus, Users } from "../../ClubIcons";
 
-export default function ClubStaffAssignments({ staffMembers = [], marketCandidates = [], roles = [], onFireStaff, onNegotiateStaff }) {
+export default function ClubStaffAssignments({ staffMembers = [], marketCandidates = [], roles = [], onAcceptStaffOffer, onCompleteStaffInterview, onCreateStaffOffer, onDeclineStaffOffer, onFireStaff, onStartStaffCandidacy, onStartStaffInterview }) {
   const [selectedRole, setSelectedRole] = useState(roles[0]?.id ?? "");
   const selectedCandidates = marketCandidates.filter((staff) => selectedRole === "" || staff.marketRole === selectedRole);
   const roleById = Object.fromEntries(roles.map((role) => [role.id, role]));
@@ -24,7 +24,7 @@ export default function ClubStaffAssignments({ staffMembers = [], marketCandidat
         <div className="card-header"><h3>Mercado de staff</h3><Users size={20} /></div>
         <label className="modal-desc" htmlFor="staff-market-role">Filtrar por rol</label>
         <select id="staff-market-role" onChange={(event) => setSelectedRole(event.target.value)} value={selectedRole}>{roles.map((role) => <option key={role.id} value={role.id}>{role.label}</option>)}</select>
-        <div className="staff-list">{selectedCandidates.map((staff) => <div className="staff-option" key={staff.id}><div className="staff-avatar">{staff.name.charAt(0)}</div><div className="staff-details"><div className="staff-name">{staff.name}</div><div className="staff-role-current">{roleById[staff.marketRole]?.label ?? staff.marketRole}</div><div className="staff-skills">Calidad: {staff.proficiency}</div></div><button className="subnav-item primary" onClick={() => onNegotiateStaff?.(selectedRole, staff.id)} type="button"><Plus size={16} /><span>Negociar y contratar</span></button></div>)}</div>
+        <div className="staff-list">{selectedCandidates.map((staff) => <div className="staff-option" key={staff.id}><div className="staff-avatar">{staff.name.charAt(0)}</div><div className="staff-details"><div className="staff-name">{staff.name}</div><div className="staff-role-current">{roleById[staff.marketRole]?.label ?? staff.marketRole}</div><div className="staff-skills">Calidad: {staff.proficiency}</div>{staff.offerId ? <div className="staff-skills">Oferta: ${(staff.annualSalary ?? 0).toLocaleString()}/aÃ±o</div> : null}</div><NegotiationActions staff={staff} roleId={selectedRole} onAcceptStaffOffer={onAcceptStaffOffer} onCompleteStaffInterview={onCompleteStaffInterview} onCreateStaffOffer={onCreateStaffOffer} onDeclineStaffOffer={onDeclineStaffOffer} onStartStaffCandidacy={onStartStaffCandidacy} onStartStaffInterview={onStartStaffInterview} /></div>)}</div>
       </div>
 
       <div className="roles-grid">{roles.map((role) => {
@@ -36,4 +36,12 @@ export default function ClubStaffAssignments({ staffMembers = [], marketCandidat
       })}</div>
     </section>
   );
+}
+
+function NegotiationActions({ staff, roleId, onAcceptStaffOffer, onCompleteStaffInterview, onCreateStaffOffer, onDeclineStaffOffer, onStartStaffCandidacy, onStartStaffInterview }) {
+  if (!staff.candidacyId) return <button className="subnav-item primary" onClick={() => onStartStaffCandidacy?.(roleId, staff.id)} type="button"><Plus size={16} /><span>Iniciar candidatura</span></button>
+  if (staff.offerId) return <div className="negotiation-actions"><button className="subnav-item primary" onClick={() => onAcceptStaffOffer?.(staff.offerId)} type="button">Aceptar oferta</button><button className="subnav-item secondary" onClick={() => onDeclineStaffOffer?.(staff.offerId)} type="button">Rechazar oferta</button></div>
+  if (staff.candidacyStatus === 'identified') return <button className="subnav-item primary" onClick={() => onStartStaffInterview?.(staff.candidacyId)} type="button">Iniciar entrevista</button>
+  if (staff.interviewStatus === 'scheduled') return <button className="subnav-item primary" onClick={() => onCompleteStaffInterview?.(staff.candidacyId)} type="button">Completar entrevista</button>
+  return <button className="subnav-item primary" onClick={() => onCreateStaffOffer?.(staff.candidacyId)} type="button">Generar oferta</button>
 }

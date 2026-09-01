@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import { getUserTeam } from '@/engine/calendar'
+import { getTeamStaffPayroll } from '@/domain/world'
+import { isStaffContractActiveOn } from '@/domain/staffContract'
 import { ASSIGNABLE_STAFF_ROLE_IDS, isStaffRoleApplicableToEcosystem } from '@/domain/staff'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSaveV1'
+import { deserializeGameWorldV3, serializeGameWorldV3 } from '@/save/GameWorldSaveV3'
 import { acceptStaffJobOffer, completeStaffInterview, createStaffJobOffer, createStaffJobOpeningForTeam, fireStaffFromTeam, identifyStaffCandidate, listFreeAgentStaff, startStaffInterview } from '@/app/staffCareer'
 import { acceptCoachJobOffer, completeCoachInterview, createCoachJobOffer, fireCoachFromTeam, identifyCoachCandidate, startCoachInterview } from '@/app/coachCareer'
 import { createNewGame } from './createNewGame'
@@ -75,6 +78,25 @@ describe('createAcbTestGame', () => {
     expect(loaded.staffEmploymentByStaffId[candidate]).toEqual(fired.staffEmploymentByStaffId[candidate])
     expect(loaded.teamStaffAssignmentsById).toEqual(fired.teamStaffAssignmentsById)
     expect(listFreeAgentStaff(loaded, 'assistantCoach')).toContain(candidate)
+  })
+
+  it('starts every employed ACB staff member on one active deterministic contract that counts toward payroll', () => {
+    const world = createAcbTestGame({ userTeamKey: 'caz' })
+    const sameWorld = createAcbTestGame({ userTeamKey: 'caz' })
+    for (const team of Object.values(world.teams)) {
+      const employed = Object.entries(world.staffEmploymentByStaffId).filter(([, employment]) => employment.status === 'employed' && employment.teamId === team.id).map(([staffId]) => staffId)
+      const activeContracts = Object.values(world.staffContractsById).filter((contract) => contract.teamId === team.id && isStaffContractActiveOn(contract, world.currentDate))
+      expect(employed).toHaveLength(31)
+      expect(activeContracts).toHaveLength(31)
+      expect(activeContracts.every((contract) => contract.compensation.annualSalary > 0)).toBe(true)
+      const payroll = getTeamStaffPayroll(world, team.id)
+      expect(payroll.activeAnnualSalary).toBe(activeContracts.reduce((sum, contract) => sum + contract.compensation.annualSalary, 0))
+      expect(payroll.activeAnnualSalary).toBeGreaterThan(0)
+      expect(payroll.remainingBudget).toBeGreaterThan(0)
+    }
+    expect(world.staffContractsById).toEqual(sameWorld.staffContractsById)
+    const loaded = deserializeGameWorldV3(serializeGameWorldV3(world, '2026-09-19T00:00:00.000Z'))
+    expect(loaded.staffContractsById).toEqual(world.staffContractsById)
   })
 
   it('uses the canonical head-coach career flow for an ACB free-agent coach', () => {

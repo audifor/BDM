@@ -49,9 +49,16 @@ export function getOpenStaffJobs(world: GameWorld): readonly StaffJobOpening[] {
   return Object.values(world.staffJobOpeningsById).filter((opening) => opening.status === 'open').sort((a, b) => a.createdOn.localeCompare(b.createdOn) || a.id.localeCompare(b.id))
 }
 
-/** Lists canonically unemployed Staff and optionally filters by their primary market speciality. */
+/** Resolves a market speciality without changing the canonical assignment flexibility of Staff. */
+export function getStaffMarketRole(world: GameWorld, staffId: StaffPersonId): StaffRoleId | undefined {
+  const staff = world.staffPeopleById[staffId]
+  if (staff?.marketRole !== undefined) return staff.marketRole
+  return [...(world.staffCareerHistoryByStaffId[staffId] ?? [])].reverse().find((entry): entry is Extract<typeof entry, { readonly kind: 'appointment' }> => entry.kind === 'appointment')?.roleId
+}
+
+/** Lists canonically unemployed Staff and optionally filters by their primary or derived market speciality. */
 export function listFreeAgentStaff(world: GameWorld, roleId?: StaffRoleId): readonly StaffPersonId[] {
-  return Object.values(world.staffPeopleById).filter((staff) => world.staffEmploymentByStaffId[staff.id]?.status === 'unemployed' && (roleId === undefined || staff.marketRole === roleId)).sort((a, b) => a.id.localeCompare(b.id)).map((staff) => staff.id)
+  return Object.values(world.staffPeopleById).filter((staff) => world.staffEmploymentByStaffId[staff.id]?.status === 'unemployed' && (roleId === undefined || getStaffMarketRole(world, staff.id) === roleId)).sort((a, b) => a.id.localeCompare(b.id)).map((staff) => staff.id)
 }
 
 /**
