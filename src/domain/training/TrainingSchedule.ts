@@ -16,7 +16,11 @@ export interface ScheduledTrainingSession {
   readonly definitionId: string
   readonly intensity: TrainingIntensity
   readonly status: ScheduledTrainingSessionStatus
-  /** Staff who execute this concrete session. This is deliberately separate from plan responsibility. */
+  /**
+   * Staff assigned to execute this pending concrete session. This is deliberately separate from
+   * plan/intensity Responsibilities. The active assignment is consumed when the session completes;
+   * it is not an employment-history record.
+   */
   readonly assignedStaffPersonIds?: readonly StaffPersonId[]
 }
 

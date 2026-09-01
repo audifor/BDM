@@ -1,14 +1,13 @@
 import { addDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
 import { clampCareerFatigue } from '@/domain/careerFatigue/CareerFatigue'
-import { clampTeamCohesion, dailyWorkloadScore, findCollidingSession, isPositionEligible, trainingDefinitionById, trainingLoad, type ScheduledTrainingSession, type TrainingDefinition, type TrainingIntensity } from '@/domain/training'
-import { calculateStaffRoleProficiencyByRoleId } from '@/domain/staff'
+import { clampTeamCohesion, dailyWorkloadScore, findCollidingSession, isPositionEligible, timeToMinutes, trainingDefinitionById, trainingLoad, type ScheduledTrainingSession, type TrainingDefinition, type TrainingIntensity } from '@/domain/training'
+import { calculateStaffRoleProficiencyByRoleId, type StaffRoleId } from '@/domain/staff'
 import { applyMoraleEvent, type MoraleEvent } from '@/domain/morale'
 import { createDelegationOutcome, delegationOutcomeIdFromString, type DelegationOutcome } from '@/domain/responsibility'
 import { addDays, type GameDate } from '@/domain/date'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import type { CanonicalRatingKey } from '@/domain/player'
-import type { PlayerId, TeamId } from '@/domain/ids'
-import type { StaffPersonId } from '@/domain/ids'
+import type { PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
 import { resolveDelegatedResponsibility, trainingQuality } from '@/engine/staff'
 import { delegatedStimulusMultiplier, effectiveIndividualDefinition, effectiveIntensity, effectiveTeamDefinition } from './DelegatedTraining'
 
@@ -51,14 +50,14 @@ export function assignStaffToScheduledTrainingSession(world: GameWorld, input: {
   return scheduleTrainingSession(world, { ...session, assignedStaffPersonIds: input.assignedStaffPersonIds })
 }
 
-/** Called by canonical StaffCareer firing: future work is detached, never left assigned to an unemployed person. */
+/** Called by canonical StaffCareer firing: pending work is detached, never left assigned to an unemployed person. */
 export function detachStaffFromFutureTrainingSessions(world: GameWorld, staffId: StaffPersonId): GameWorld {
   let changed = false
   const sessions = Object.fromEntries(Object.entries(world.scheduledTrainingSessionsById).map(([id, session]) => {
-    if (session.date < world.currentDate || !session.assignedStaffPersonIds?.includes(staffId)) return [id, session]
+    if (session.status !== 'scheduled' || session.date < world.currentDate || !session.assignedStaffPersonIds?.includes(staffId)) return [id, session]
     changed = true
     const assignedStaffPersonIds = session.assignedStaffPersonIds.filter((id) => id !== staffId)
-    return [id, { ...session, ...(assignedStaffPersonIds.length === 0 ? { assignedStaffPersonIds: undefined } : { assignedStaffPersonIds }) }]
+    return [id, { ...session, assignedStaffPersonIds: assignedStaffPersonIds.length === 0 ? undefined : assignedStaffPersonIds }]
   })) as GameWorld['scheduledTrainingSessionsById']
   return changed ? updateGameWorld(world, { scheduledTrainingSessionsById: sessions }) : world
 }
@@ -83,20 +82,20 @@ export function executeScheduledTrainingSessions(world: GameWorld): GameWorld {
  * position-specific drill within a team session: everyone trains, only the relevant
  * specialists actually improve the targeted skill.
  *
- * Delegation (Wave 2, docs/STAFF_SYSTEM_V2.md §14.2): if the relevant plan responsibility
- * (`createTeamTrainingPlan` for team sessions, `assignIndividualDevelopment` for individual
- * sessions) and/or `determineIntensity` are `mode: 'delegated'` with a valid holder, the
- * *effective* definition/intensity used for this execution are chosen deterministically from the
- * holder's canonical attributes (see `DelegatedTraining.ts`) instead of the session's own
- * `definitionId`/`intensity`. When the PLAN responsibility specifically is delegated, each
- * eligible player's development stimulus is additionally scaled by a bounded, deterministic
- * `delegatedStimulusMultiplier` — quality narrows the multiplier band toward 1.0, never widens it
- * beyond [0.85, 1.15]. This multiplier is scoped strictly to the plan holder's own decision: it
- * never applies when only `determineIntensity` is delegated (that would misattribute a quality
- * effect to a different responsibility/holder), and it never touches fatigue, morale, cohesion, or
- * `injuryRiskWeight`. The persisted `ScheduledTrainingSession` itself — and therefore the
- * calendar/scheduling authority — is never rewritten; only `status` changes. When neither
- * responsibility is delegated, execution is byte-for-byte identical to pre-Wave-2 behavior.
+ * Delegation (Wave 2, docs/STAFF_SYSTEM_V2.md §14.2) remains the decision layer: if the relevant
+ * plan responsibility and/or determineIntensity are delegated, the holder determines the
+ * effective definition/intensity and may contribute its bounded planning-quality multiplier.
+ * assignedStaffPersonIds is a separate execution layer: those people run the concrete session
+ * and contribute a bounded execution-quality multiplier based on role fit + canonical Staff
+ * proficiency. A person may legitimately plan and execute the same session; those are distinct
+ * responsibilities and remain independently bounded.
+ *
+ * No executing staff preserves the exact legacy execution multiplier of 1.0. Executing staff can
+ * affect development stimulus, recovery magnitude for recovery modules, and cohesion for tactical
+ * modules. It never changes ordinary positive fatigue, morale, or metadata-only injuryRiskWeight.
+ * The scheduled definition/intensity remain immutable during execution. The active execution
+ * assignment is consumed when the session completes so later dismissal does not rewrite history
+ * or leave completed work coupled to current employment validation.
  */
 function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSession): GameWorld {
   const planDelegation = resolvePlanDelegation(world, session)
@@ -122,59 +121,87 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
       const developmentDelta = distributeStimulus(definition, load.stimulus * efficiency * stimulusMultiplier * executionMultiplier)
       if (Object.keys(developmentDelta).length > 0) stimulus[playerId] = addDevelopmentStimulus(stimulus[playerId]!, developmentDelta)
     }
-    const fatigueDelta = load.fatigue * definition.effects.fatigueMultiplier * recoveryExecutionMultiplier(definition, executionMultiplier)
+    const fatigueExecutionMultiplier = definition.category === 'recovery' ? executionMultiplier : 1
+    const fatigueDelta = load.fatigue * definition.effects.fatigueMultiplier * fatigueExecutionMultiplier
     fatigue[playerId] = clampCareerFatigue((fatigue[playerId] ?? 0) + fatigueDelta)
     if (eligible && definition.effects.moraleDelta !== 0) moraleByPersonId = applyMoraleForPlayer(moraleByPersonId, world, playerId, definition, session)
   }
 
+  const cohesionExecutionMultiplier = definition.category === 'tactical' ? executionMultiplier : 1
   const teamCohesionByTeamId = definition.effects.cohesionDelta === 0
     ? world.teamCohesionByTeamId
-    : { ...world.teamCohesionByTeamId, [session.teamId]: clampTeamCohesion((world.teamCohesionByTeamId[session.teamId] ?? 50) + definition.effects.cohesionDelta) }
+    : { ...world.teamCohesionByTeamId, [session.teamId]: clampTeamCohesion((world.teamCohesionByTeamId[session.teamId] ?? 50) + definition.effects.cohesionDelta * cohesionExecutionMultiplier) }
 
   const delegationOutcomes = [
     ...(planDelegation === undefined ? [] : [planDelegation.outcome]),
     ...(intensityDelegation === undefined ? [] : [intensityDelegation.outcome]),
   ]
 
+  const completedSession: ScheduledTrainingSession = session.assignedStaffPersonIds === undefined
+    ? { ...session, status: 'completed' }
+    : { ...session, assignedStaffPersonIds: undefined, status: 'completed' }
+
   return updateGameWorld(world, {
     developmentStimulusByPlayerId: stimulus,
     careerFatigueByPlayerId: fatigue,
     moraleByPersonId,
     teamCohesionByTeamId,
-    scheduledTrainingSessionsById: { ...world.scheduledTrainingSessionsById, [session.id]: { ...session, status: 'completed' } },
+    scheduledTrainingSessionsById: { ...world.scheduledTrainingSessionsById, [session.id]: completedSession },
     ...(delegationOutcomes.length === 0 ? {} : { delegationOutcomes: [...Object.values(world.delegationOutcomesById), ...delegationOutcomes] }),
   })
 }
 
-const ROLE_FIT: Readonly<Record<TrainingDefinition['category'], Readonly<Partial<Record<import('@/domain/staff').StaffRoleId, number>>>>> = {
-  shooting: { shootingCoach: 1, skillsCoach: .9, playerDevelopmentCoach: .8 },
-  finishing: { skillsCoach: 1, playerDevelopmentCoach: .85, bigManCoach: .7 },
-  ballHandling: { skillsCoach: 1, playerDevelopmentCoach: .85 },
-  playmaking: { assistantCoach: .9, associateCoach: 1, offensiveSpecialist: 1, playerDevelopmentCoach: .75 },
-  defense: { defensiveSpecialist: 1, assistantCoach: .8, associateCoach: .85 },
-  rebounding: { bigManCoach: 1, defensiveSpecialist: .8, assistantCoach: .7 },
-  physical: { strengthConditioningCoach: 1, performanceCoach: .85, developmentSpecialist: .8 },
-  recovery: { performanceCoach: 1, loadManagementSpecialist: .95, sportsScientist: .9, physiotherapist: .8, rehabilitationSpecialist: .75 },
-  tactical: { associateCoach: .85, assistantCoach: .8, offensiveSpecialist: 1, defensiveSpecialist: 1 },
+const CATEGORY_ROLE_FIT: Readonly<Record<TrainingDefinition['category'], Readonly<Partial<Record<StaffRoleId, number>>>>> = {
+  shooting: { shootingCoach: 1, skillsCoach: .92, playerDevelopmentCoach: .85, associateCoach: .65, assistantCoach: .6 },
+  finishing: { skillsCoach: 1, playerDevelopmentCoach: .9, bigManCoach: .85, shootingCoach: .55, assistantCoach: .5 },
+  ballHandling: { skillsCoach: 1, playerDevelopmentCoach: .9, assistantCoach: .6, associateCoach: .55 },
+  playmaking: { offensiveSpecialist: 1, associateCoach: .95, assistantCoach: .85, playerDevelopmentCoach: .7, skillsCoach: .65, analyticsStaff: .55 },
+  defense: { defensiveSpecialist: 1, associateCoach: .9, assistantCoach: .85, analyticsStaff: .55 },
+  rebounding: { bigManCoach: 1, defensiveSpecialist: .85, assistantCoach: .7, associateCoach: .7 },
+  physical: { strengthConditioningCoach: 1, performanceCoach: .95, loadManagementSpecialist: .8, developmentSpecialist: .7, sportsScientist: .7 },
+  recovery: { physiotherapist: 1, rehabilitationSpecialist: 1, loadManagementSpecialist: .95, sportsScientist: .9, performanceCoach: .85, teamDoctor: .75, strengthConditioningCoach: .65 },
+  tactical: { associateCoach: .95, assistantCoach: .85, offensiveSpecialist: .8, defensiveSpecialist: .8, analyticsStaff: .65, playerDevelopmentCoach: .5 },
 }
 
-/** Deterministic, bounded execution quality. No assignment remains exactly legacy behaviour. */
+const TACTICAL_DEFINITION_ROLE_FIT: Readonly<Record<string, Readonly<Partial<Record<StaffRoleId, number>>>>> = {
+  offensiveSystem: { offensiveSpecialist: 1, associateCoach: .92, assistantCoach: .85, analyticsStaff: .6, playerDevelopmentCoach: .5, defensiveSpecialist: .15 },
+  spacing: { offensiveSpecialist: 1, associateCoach: .9, assistantCoach: .82, analyticsStaff: .65, skillsCoach: .5, defensiveSpecialist: .15 },
+  pickAndRollOffense: { offensiveSpecialist: 1, associateCoach: .92, assistantCoach: .85, analyticsStaff: .65, defensiveSpecialist: .15 },
+  defensiveSystem: { defensiveSpecialist: 1, associateCoach: .92, assistantCoach: .85, analyticsStaff: .6, offensiveSpecialist: .15 },
+  pickAndRollDefense: { defensiveSpecialist: 1, associateCoach: .92, assistantCoach: .85, analyticsStaff: .65, offensiveSpecialist: .15 },
+  transition: { offensiveSpecialist: .9, associateCoach: .88, assistantCoach: .82, performanceCoach: .75, strengthConditioningCoach: .65, defensiveSpecialist: .55 },
+  teamCohesion: { associateCoach: .95, assistantCoach: .9, playerDevelopmentCoach: .85, performanceCoach: .65, skillsCoach: .55 },
+}
+
+function roleFitForDefinition(definition: TrainingDefinition, roleId: StaffRoleId): number {
+  const definitionFit = definition.category === 'tactical' ? TACTICAL_DEFINITION_ROLE_FIT[definition.id] : undefined
+  return definitionFit?.[roleId] ?? CATEGORY_ROLE_FIT[definition.category][roleId] ?? .1
+}
+
+/** 0..100 execution suitability for one StaffPerson on this concrete session/definition. */
+export function trainingStaffSuitabilityScore(world: GameWorld, session: ScheduledTrainingSession, staffId: StaffPersonId, definition = trainingDefinitionById(session.definitionId)): number {
+  const person = world.staffPeopleById[staffId]
+  if (person === undefined) return 0
+  const assignments = Object.values(world.teamStaffAssignmentsById).filter((item) => item.staffPersonId === staffId && item.teamId === session.teamId)
+  if (assignments.length === 0) return 0
+  const best = Math.max(...assignments.map((assignment) => roleFitForDefinition(definition, assignment.role) * calculateStaffRoleProficiencyByRoleId(person, assignment.role)))
+  return Math.round(Math.max(0, Math.min(100, best)))
+}
+
+/**
+ * Deterministic, bounded execution quality. No executing staff is exactly legacy behaviour.
+ * Contributions are sorted best-first and decay geometrically (1, .55, .3025, ...), so extra
+ * helpers can improve a session but can never stack linearly. Final multiplier is clamped to
+ * [0.90, 1.18]. No assignment returns exactly 1.0.
+ */
 export function trainingStaffExecutionMultiplier(world: GameWorld, session: ScheduledTrainingSession, definition = trainingDefinitionById(session.definitionId)): number {
   const assigned = session.assignedStaffPersonIds
   if (assigned === undefined || assigned.length === 0) return 1
-  const fit = ROLE_FIT[definition.category]
-  const suitability = assigned.map((staffId) => {
-    const assignment = Object.values(world.teamStaffAssignmentsById).find((item) => item.staffPersonId === staffId && item.teamId === session.teamId)
-    const person = world.staffPeopleById[staffId]
-    if (assignment === undefined || person === undefined) return 0
-    return (fit[assignment.role] ?? .15) * calculateStaffRoleProficiencyByRoleId(person, assignment.role) / 100
-  }).sort((a, b) => b - a)
+  const suitability = assigned
+    .map((staffId) => trainingStaffSuitabilityScore(world, session, staffId, definition) / 100)
+    .sort((a, b) => b - a)
   const combined = suitability.reduce((total, value, index) => total + value * Math.pow(.55, index), 0)
   return Math.max(.9, Math.min(1.18, 1 + (combined - .5) * .2))
-}
-
-function recoveryExecutionMultiplier(definition: TrainingDefinition, executionMultiplier: number): number {
-  return definition.category === 'recovery' ? Math.max(.8, 2 - executionMultiplier) : 1
 }
 
 function validateAssignedStaff(world: GameWorld, session: ScheduledTrainingSession, existing: readonly ScheduledTrainingSession[]): void {
@@ -186,14 +213,14 @@ function validateAssignedStaff(world: GameWorld, session: ScheduledTrainingSessi
     const employment = world.staffEmploymentByStaffId[staffId]
     const activeAssignment = Object.values(world.teamStaffAssignmentsById).some((assignment) => assignment.staffPersonId === staffId && assignment.teamId === session.teamId)
     if (employment?.status !== 'employed' || employment.teamId !== session.teamId || !activeAssignment) throw new RangeError(`Scheduled session staff ${staffId} is not actively employed by this team`)
-    const conflict = existing.find((other) => other.id !== session.id && other.assignedStaffPersonIds?.includes(staffId) && other.date === session.date && timeRangesOverlap(session, other))
+    const conflict = existing.find((other) => other.status === 'scheduled' && other.id !== session.id && other.assignedStaffPersonIds?.includes(staffId) && other.date === session.date && timeRangesOverlap(session, other))
     if (conflict !== undefined) throw new RangeError(`Staff ${staffId} is already assigned to overlapping session ${conflict.id}`)
   }
 }
 
 function timeRangesOverlap(a: ScheduledTrainingSession, b: ScheduledTrainingSession): boolean {
-  const minutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3))
-  return minutes(a.startTime) < minutes(b.startTime) + b.durationMinutes && minutes(b.startTime) < minutes(a.startTime) + a.durationMinutes
+  return timeToMinutes(a.startTime) < timeToMinutes(b.startTime) + b.durationMinutes
+    && timeToMinutes(b.startTime) < timeToMinutes(a.startTime) + a.durationMinutes
 }
 
 /** Canonical decision-quality seed family (docs/STAFF_SYSTEM_V2.md §10.2): `staff-decision-quality-v1:${responsibilityId}:${gameDate}`. Stable IDs/dates only — never map/object iteration order — so results are order-independent across teams. */
