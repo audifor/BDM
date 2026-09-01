@@ -572,6 +572,16 @@ function validateWorld(world: GameWorld): void {
     if (session.playerId !== undefined) requireEntity(world.players, session.playerId, `Scheduled training session ${session.id} player`)
     const collision = findCollidingSession(session, scheduledSessions)
     if (collision !== undefined) throw new GameWorldValidationError(`Scheduled training session ${session.id} collides with session ${collision.id}`)
+    const assigned = session.assignedStaffPersonIds
+    if (assigned !== undefined) {
+      if (new Set(assigned).size !== assigned.length) throw new GameWorldValidationError(`Scheduled training session ${session.id} has duplicate staff assignments`)
+      for (const staffId of assigned) {
+        requireEntity(world.staffPeopleById, staffId, `Scheduled training session ${session.id} staff`)
+        const employment = world.staffEmploymentByStaffId[staffId]
+        const assignment = Object.values(world.teamStaffAssignmentsById).some((item) => item.staffPersonId === staffId && item.teamId === session.teamId)
+        if (employment?.status !== 'employed' || employment.teamId !== session.teamId || !assignment) throw new GameWorldValidationError(`Scheduled training session ${session.id} staff ${staffId} is not actively assigned to its team`)
+      }
+    }
   }
 
   for (const playbook of Object.values(world.playbooksById)) {

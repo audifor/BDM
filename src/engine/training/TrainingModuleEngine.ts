@@ -36,7 +36,7 @@ export function resolveTrainingModule(world: GameWorld, moduleId: string): { rea
  */
 export function assignTrainingModuleToPlayer(
   world: GameWorld,
-  input: { readonly teamId: TeamId; readonly playerId: PlayerId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly sessionId: string },
+  input: { readonly teamId: TeamId; readonly playerId: PlayerId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly sessionId: string; readonly assignedStaffPersonIds?: readonly import('@/domain/ids').StaffPersonId[] },
 ): GameWorld {
   const { definition, intensity, scope } = resolveTrainingModule(world, input.moduleId)
   if (scope === 'team') throw new RangeError('Cannot assign a team-only module to individual training')
@@ -54,6 +54,7 @@ export function assignTrainingModuleToPlayer(
     playerId: input.playerId,
     definitionId: definition.id,
     intensity,
+    assignedStaffPersonIds: input.assignedStaffPersonIds,
   })
   return scheduleTrainingSession(world, session)
 }
@@ -70,7 +71,7 @@ export function assignTrainingModuleToPlayer(
  */
 export function scheduleTeamModuleSession(
   world: GameWorld,
-  input: { readonly teamId: TeamId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: TrainingIntensity },
+  input: { readonly teamId: TeamId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: TrainingIntensity; readonly assignedStaffPersonIds?: readonly import('@/domain/ids').StaffPersonId[] },
 ): GameWorld {
   const { definition, intensity: resolvedIntensity, scope } = resolveTrainingModule(world, input.moduleId)
   if (scope === 'individual') throw new RangeError('Cannot schedule an individual-only module as a team session')
@@ -85,6 +86,7 @@ export function scheduleTeamModuleSession(
     scope: 'team',
     definitionId: definition.id,
     intensity,
+    assignedStaffPersonIds: input.assignedStaffPersonIds,
   })
   return scheduleTrainingSession(world, session)
 }
