@@ -7,7 +7,7 @@ import type { Lifestyle } from '@/domain/coachFinances'
 import type { MediaStance } from '@/domain/media'
 import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
 import { getCareerFatigueForPlayer, getTeamRoster, isPlayerAvailable } from '@/domain/world'
-import { BoardScreen, BoostersScreen, CoachFinancesScreen, CoachScreen, DraftScreen, EnforcementScreen, MarketScreen, MediaScreen, MemoryScreen, NarrativesScreen, NilScreen, RecruitingScreen, SalaryScreen, ScheduleScreen, SquadScreen, TacticsScreen, TradeCenterScreen, TrainingScreen } from '@/ui/screens'
+import { BoardScreen, BoostersScreen, CoachFinancesScreen, CoachScreen, DraftScreen, EnforcementScreen, MarketScreen, MediaScreen, MemoryScreen, NarrativesScreen, NilScreen, RecruitingScreen, SalaryScreen, ScheduleScreen, SquadScreen, StaffScreen, TacticsScreen, TradeCenterScreen, TrainingScreen } from '@/ui/screens'
 import { getDesktopApp } from './DesktopAppRegistry'
 import { EntityPageApp } from '@/ui/navigation/EntityPageApp'
 import type { EntityDestination } from '@/ui/navigation/entityNavigation'
@@ -29,7 +29,7 @@ export function DesktopAppHost({ appId, entityDestination, world, actions }: { r
   if (appId === 'training') return <TrainingPcbPage world={world} onIntensity={actions.setTrainingIntensity} onFocus={actions.setTrainingFocus} onScheduleSession={actions.scheduleTrainingSession} onScheduleTeamModule={actions.scheduleTeamModuleSession} onCancelSession={actions.cancelTrainingSession} onSaveModule={actions.saveUserTrainingModule} onDeleteModule={actions.deleteUserTrainingModule} onAssignModule={actions.assignTrainingModuleToPlayer} />
   if (appId === 'tactics') return <TacticsPcbPage onLineupSlotChange={actions.setLineupSlot} onLineupSlotClear={actions.clearLineupSlot} onChange={actions.setTacticalPlan} onReset={actions.resetTacticalPlan} onUpdateRotationMinutes={actions.updateRotationMinutes} onUpdateMatchups={actions.updateGamePlanMatchups} onSaveGamePlanTacticalOverride={actions.updateGamePlanTacticalOverride} onSaveDesignerPlay={actions.saveDesignerPlay} onDeleteDesignerPlay={actions.deleteDesignerPlay} onSaveDesignerPlaybook={actions.saveDesignerPlaybook} onDeleteDesignerPlaybook={actions.deleteDesignerPlaybook} plan={actions.tacticalPlan} world={world} />
   if (appId === 'club') return <ClubPcbPage />
-  if (appId === 'staff') return <ClubPcbPage initialTab="staff" />
+  if (appId === 'staff') return <StaffScreen world={world} />
   if (appId === 'medical') return <MedicalPcbPage />
   if (appId === 'competition') return <CompetitionPcbPage onOpenEntity={actions.openEntity} world={world} />
   if (key === 'entity') return <EntityPageApp destination={entityDestination} onOpenEntity={actions.openEntity ?? (() => undefined)} world={world} />
