@@ -1,12 +1,14 @@
 import { addDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
 import { clampCareerFatigue } from '@/domain/careerFatigue/CareerFatigue'
 import { clampTeamCohesion, dailyWorkloadScore, findCollidingSession, isPositionEligible, trainingDefinitionById, trainingLoad, type ScheduledTrainingSession, type TrainingDefinition, type TrainingIntensity } from '@/domain/training'
+import { calculateStaffRoleProficiencyByRoleId } from '@/domain/staff'
 import { applyMoraleEvent, type MoraleEvent } from '@/domain/morale'
 import { createDelegationOutcome, delegationOutcomeIdFromString, type DelegationOutcome } from '@/domain/responsibility'
 import { addDays, type GameDate } from '@/domain/date'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import type { CanonicalRatingKey } from '@/domain/player'
 import type { PlayerId, TeamId } from '@/domain/ids'
+import type { StaffPersonId } from '@/domain/ids'
 import { resolveDelegatedResponsibility, trainingQuality } from '@/engine/staff'
 import { delegatedStimulusMultiplier, effectiveIndividualDefinition, effectiveIntensity, effectiveTeamDefinition } from './DelegatedTraining'
 
@@ -38,7 +40,27 @@ export function scheduleTrainingSession(world: GameWorld, session: ScheduledTrai
   const existing = Object.values(world.scheduledTrainingSessionsById)
   const collision = findCollidingSession(session, existing)
   if (collision !== undefined) throw new RangeError(`Session collides with existing session ${collision.id}`)
+  validateAssignedStaff(world, session, existing)
   return updateGameWorld(world, { scheduledTrainingSessionsById: { ...world.scheduledTrainingSessionsById, [session.id]: session } })
+}
+
+/** Replaces the executing staff on an existing future session through the same canonical validation boundary. */
+export function assignStaffToScheduledTrainingSession(world: GameWorld, input: { readonly sessionId: string; readonly assignedStaffPersonIds: readonly StaffPersonId[] }): GameWorld {
+  const session = world.scheduledTrainingSessionsById[input.sessionId]
+  if (session === undefined) throw new RangeError(`Unknown scheduled training session ${input.sessionId}`)
+  return scheduleTrainingSession(world, { ...session, assignedStaffPersonIds: input.assignedStaffPersonIds })
+}
+
+/** Called by canonical StaffCareer firing: future work is detached, never left assigned to an unemployed person. */
+export function detachStaffFromFutureTrainingSessions(world: GameWorld, staffId: StaffPersonId): GameWorld {
+  let changed = false
+  const sessions = Object.fromEntries(Object.entries(world.scheduledTrainingSessionsById).map(([id, session]) => {
+    if (session.date < world.currentDate || !session.assignedStaffPersonIds?.includes(staffId)) return [id, session]
+    changed = true
+    const assignedStaffPersonIds = session.assignedStaffPersonIds.filter((id) => id !== staffId)
+    return [id, { ...session, ...(assignedStaffPersonIds.length === 0 ? { assignedStaffPersonIds: undefined } : { assignedStaffPersonIds }) }]
+  })) as GameWorld['scheduledTrainingSessionsById']
+  return changed ? updateGameWorld(world, { scheduledTrainingSessionsById: sessions }) : world
 }
 
 export function cancelScheduledTrainingSession(world: GameWorld, sessionId: string): GameWorld {
@@ -85,6 +107,7 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
 
   const playerIds = session.scope === 'individual' ? [session.playerId!] : world.teams[session.teamId]!.rosterPlayerIds
   const load = trainingLoad(intensity)
+  const executionMultiplier = trainingStaffExecutionMultiplier(world, session, definition)
 
   let stimulus = { ...world.developmentStimulusByPlayerId }
   let fatigue = { ...world.careerFatigueByPlayerId }
@@ -96,10 +119,10 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
     if (eligible) {
       const efficiency = Math.max(0.4, 1 - (fatigue[playerId] ?? 0) / 150)
       const stimulusMultiplier = planDelegation === undefined ? 1 : delegatedStimulusMultiplier(planDelegation.qualityScore, stimulusVarianceSeed(planDelegation.responsibilityId, session.id, playerId, world.currentDate))
-      const developmentDelta = distributeStimulus(definition, load.stimulus * efficiency * stimulusMultiplier)
+      const developmentDelta = distributeStimulus(definition, load.stimulus * efficiency * stimulusMultiplier * executionMultiplier)
       if (Object.keys(developmentDelta).length > 0) stimulus[playerId] = addDevelopmentStimulus(stimulus[playerId]!, developmentDelta)
     }
-    const fatigueDelta = load.fatigue * definition.effects.fatigueMultiplier
+    const fatigueDelta = load.fatigue * definition.effects.fatigueMultiplier * recoveryExecutionMultiplier(definition, executionMultiplier)
     fatigue[playerId] = clampCareerFatigue((fatigue[playerId] ?? 0) + fatigueDelta)
     if (eligible && definition.effects.moraleDelta !== 0) moraleByPersonId = applyMoraleForPlayer(moraleByPersonId, world, playerId, definition, session)
   }
@@ -121,6 +144,56 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
     scheduledTrainingSessionsById: { ...world.scheduledTrainingSessionsById, [session.id]: { ...session, status: 'completed' } },
     ...(delegationOutcomes.length === 0 ? {} : { delegationOutcomes: [...Object.values(world.delegationOutcomesById), ...delegationOutcomes] }),
   })
+}
+
+const ROLE_FIT: Readonly<Record<TrainingDefinition['category'], Readonly<Partial<Record<import('@/domain/staff').StaffRoleId, number>>>>> = {
+  shooting: { shootingCoach: 1, skillsCoach: .9, playerDevelopmentCoach: .8 },
+  finishing: { skillsCoach: 1, playerDevelopmentCoach: .85, bigManCoach: .7 },
+  ballHandling: { skillsCoach: 1, playerDevelopmentCoach: .85 },
+  playmaking: { assistantCoach: .9, associateCoach: 1, offensiveSpecialist: 1, playerDevelopmentCoach: .75 },
+  defense: { defensiveSpecialist: 1, assistantCoach: .8, associateCoach: .85 },
+  rebounding: { bigManCoach: 1, defensiveSpecialist: .8, assistantCoach: .7 },
+  physical: { strengthConditioningCoach: 1, performanceCoach: .85, developmentSpecialist: .8 },
+  recovery: { performanceCoach: 1, loadManagementSpecialist: .95, sportsScientist: .9, physiotherapist: .8, rehabilitationSpecialist: .75 },
+  tactical: { associateCoach: .85, assistantCoach: .8, offensiveSpecialist: 1, defensiveSpecialist: 1 },
+}
+
+/** Deterministic, bounded execution quality. No assignment remains exactly legacy behaviour. */
+export function trainingStaffExecutionMultiplier(world: GameWorld, session: ScheduledTrainingSession, definition = trainingDefinitionById(session.definitionId)): number {
+  const assigned = session.assignedStaffPersonIds
+  if (assigned === undefined || assigned.length === 0) return 1
+  const fit = ROLE_FIT[definition.category]
+  const suitability = assigned.map((staffId) => {
+    const assignment = Object.values(world.teamStaffAssignmentsById).find((item) => item.staffPersonId === staffId && item.teamId === session.teamId)
+    const person = world.staffPeopleById[staffId]
+    if (assignment === undefined || person === undefined) return 0
+    return (fit[assignment.role] ?? .15) * calculateStaffRoleProficiencyByRoleId(person, assignment.role) / 100
+  }).sort((a, b) => b - a)
+  const combined = suitability.reduce((total, value, index) => total + value * Math.pow(.55, index), 0)
+  return Math.max(.9, Math.min(1.18, 1 + (combined - .5) * .2))
+}
+
+function recoveryExecutionMultiplier(definition: TrainingDefinition, executionMultiplier: number): number {
+  return definition.category === 'recovery' ? Math.max(.8, 2 - executionMultiplier) : 1
+}
+
+function validateAssignedStaff(world: GameWorld, session: ScheduledTrainingSession, existing: readonly ScheduledTrainingSession[]): void {
+  const assigned = session.assignedStaffPersonIds
+  if (assigned === undefined) return
+  if (new Set(assigned).size !== assigned.length) throw new RangeError('Scheduled session staff assignments must not contain duplicates')
+  for (const staffId of assigned) {
+    if (world.staffPeopleById[staffId] === undefined) throw new RangeError(`Unknown scheduled session staff ${staffId}`)
+    const employment = world.staffEmploymentByStaffId[staffId]
+    const activeAssignment = Object.values(world.teamStaffAssignmentsById).some((assignment) => assignment.staffPersonId === staffId && assignment.teamId === session.teamId)
+    if (employment?.status !== 'employed' || employment.teamId !== session.teamId || !activeAssignment) throw new RangeError(`Scheduled session staff ${staffId} is not actively employed by this team`)
+    const conflict = existing.find((other) => other.id !== session.id && other.assignedStaffPersonIds?.includes(staffId) && other.date === session.date && timeRangesOverlap(session, other))
+    if (conflict !== undefined) throw new RangeError(`Staff ${staffId} is already assigned to overlapping session ${conflict.id}`)
+  }
+}
+
+function timeRangesOverlap(a: ScheduledTrainingSession, b: ScheduledTrainingSession): boolean {
+  const minutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3))
+  return minutes(a.startTime) < minutes(b.startTime) + b.durationMinutes && minutes(b.startTime) < minutes(a.startTime) + a.durationMinutes
 }
 
 /** Canonical decision-quality seed family (docs/STAFF_SYSTEM_V2.md §10.2): `staff-decision-quality-v1:${responsibilityId}:${gameDate}`. Stable IDs/dates only — never map/object iteration order — so results are order-independent across teams. */

@@ -26,6 +26,7 @@ import { RESPONSIBILITY_REGISTRY } from '@/domain/responsibility'
 import { staffReputationScore } from '@/domain/staffReputation'
 import { addInboxItem, addNewsItem, canTeamAffordAdditionalStaffSalary, getTeamStaffPayroll, updateGameWorld, type GameWorld } from '@/domain/world'
 import { getResponsibilitiesHeldByStaff } from '@/domain/world'
+import { detachStaffFromFutureTrainingSessions } from '@/engine/training'
 
 /**
  * Ecosystem role eligibility (Issue #19 review Blocker 3) is enforced HERE, at opening creation —
@@ -262,12 +263,16 @@ export function fireStaffFromTeam(world: GameWorld, staffId: StaffPersonId): Gam
   const result = fireStaff({ employment, history, decision: { staffId, teamId, date: world.currentDate, reason: 'performance' } })
   if (!result.ok) throw new Error('Staff cannot be fired')
 
-  const assignments = Object.values(world.teamStaffAssignmentsById).filter((assignment) => assignment.staffPersonId !== staffId)
-  const activeContract = Object.values(world.staffContractsById).find((contract) => contract.staffId === staffId && isStaffContractActiveOn(contract, world.currentDate))
-  const contracts = activeContract === undefined ? world.staffContractsById : { ...world.staffContractsById, [activeContract.id]: terminateStaffContract(activeContract, world.currentDate, 'performance') }
-  const responsibilities = vacateResponsibilitiesHeldByStaffOnTeam(Object.values(world.responsibilitiesById), staffId, teamId)
+  // Reconcile while the person is still validly employed; GameWorld validation then never observes
+  // a future session pointing at a fired employee.
+  const withDetachedTraining = detachStaffFromFutureTrainingSessions(world, staffId)
 
-  const vacant = rebuild(world, { assignments, employment: { ...world.staffEmploymentByStaffId, [staffId]: result.employment }, history: { ...world.staffCareerHistoryByStaffId, [staffId]: result.history }, contracts, responsibilities })
+  const assignments = Object.values(withDetachedTraining.teamStaffAssignmentsById).filter((assignment) => assignment.staffPersonId !== staffId)
+  const activeContract = Object.values(withDetachedTraining.staffContractsById).find((contract) => contract.staffId === staffId && isStaffContractActiveOn(contract, world.currentDate))
+  const contracts = activeContract === undefined ? withDetachedTraining.staffContractsById : { ...withDetachedTraining.staffContractsById, [activeContract.id]: terminateStaffContract(activeContract, world.currentDate, 'performance') }
+  const responsibilities = vacateResponsibilitiesHeldByStaffOnTeam(Object.values(withDetachedTraining.responsibilitiesById), staffId, teamId)
+
+  const vacant = rebuild(withDetachedTraining, { assignments, employment: { ...withDetachedTraining.staffEmploymentByStaffId, [staffId]: result.employment }, history: { ...withDetachedTraining.staffCareerHistoryByStaffId, [staffId]: result.history }, contracts, responsibilities })
   const opened = createStaffJobOpeningForTeam(vacant, { teamId, roleId }).world
   const staff = world.staffPeopleById[staffId]!
   const team = world.teams[teamId]!

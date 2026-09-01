@@ -1,5 +1,5 @@
 import type { GameDate } from '@/domain/date'
-import type { PlayerId, TeamId } from '@/domain/ids'
+import type { PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
 import { trainingDefinitionById } from './TrainingCatalog'
 import type { TrainingIntensity } from './Training'
 
@@ -16,6 +16,8 @@ export interface ScheduledTrainingSession {
   readonly definitionId: string
   readonly intensity: TrainingIntensity
   readonly status: ScheduledTrainingSessionStatus
+  /** Staff who execute this concrete session. This is deliberately separate from plan responsibility. */
+  readonly assignedStaffPersonIds?: readonly StaffPersonId[]
 }
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/
@@ -37,7 +39,9 @@ export function createScheduledTrainingSession(input: Omit<ScheduledTrainingSess
   if (input.scope === 'team' && input.playerId !== undefined) throw new RangeError('Team sessions must not specify a playerId')
   trainingDefinitionById(input.definitionId)
   if (!['light', 'normal', 'high'].includes(input.intensity)) throw new RangeError('Invalid session intensity')
-  return { ...input, status: input.status ?? 'scheduled' }
+  const assigned = input.assignedStaffPersonIds
+  if (assigned !== undefined && new Set(assigned).size !== assigned.length) throw new RangeError('Scheduled session staff assignments must not contain duplicates')
+  return { ...input, ...(assigned === undefined ? {} : { assignedStaffPersonIds: Object.freeze([...assigned]) }), status: input.status ?? 'scheduled' }
 }
 
 /** True if two sessions occupy overlapping time ranges on the same date. */

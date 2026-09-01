@@ -82,11 +82,11 @@ interface GameStore {
   setTrainingIntensity(intensity: TrainingIntensity): void
   setTrainingFocus(focus: TrainingFocus): void
   scheduleTrainingSession(session: ScheduledTrainingSession): void
-  scheduleTeamModuleSession(input: { readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: TrainingIntensity }): void
+  scheduleTeamModuleSession(input: { readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: TrainingIntensity; readonly assignedStaffPersonIds?: readonly StaffPersonId[] }): void
   cancelTrainingSession(sessionId: string): void
   saveUserTrainingModule(module: UserTrainingModule): void
   deleteUserTrainingModule(moduleId: string): void
-  assignTrainingModuleToPlayer(input: { readonly playerId: PlayerId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly sessionId: string }): void
+  assignTrainingModuleToPlayer(input: { readonly playerId: PlayerId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly sessionId: string; readonly assignedStaffPersonIds?: readonly StaffPersonId[] }): void
   setLineupSlot(slot: LineupSlot, playerId: PlayerId): void
   clearLineupSlot(slot: LineupSlot): void
   updateRotationMinutes(minutesByPeriod: Readonly<Record<PlayerId, readonly number[]>>): void
