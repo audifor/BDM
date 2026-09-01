@@ -11,7 +11,7 @@ import {
   simulateRemainingGamesToday,
 } from '@/app/game'
 import { releasePlayer, signFreeAgent } from '@/app/market'
-import type { PlayerId, TeamId } from '@/domain/ids'
+import type { PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
 import type { CoachPerkId, CoachSkillId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { getInboxItemsForCoach, getNewsFeed, getRelationshipsForPerson, getUnreadInboxCount, getUserCoachReputationProfile } from '@/domain/world'
@@ -45,6 +45,8 @@ import type { Lifestyle } from '@/domain/coachFinances'
 import type { MediaStance } from '@/domain/media'
 import { createPreMatchMediaOpportunity, respondToMediaOpportunity, skipMediaOpportunity } from '@/engine/media'
 import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
+import type { StaffRoleId } from '@/domain/staff'
+import { acceptStaffJobOffer, completeStaffInterview, createStaffJobOffer, createStaffJobOpeningForTeam, declineStaffJobOffer, fireStaffFromTeam, identifyStaffCandidate, startStaffInterview } from '@/app/staffCareer'
 
 interface GameStore {
   readonly world: GameWorld | null
@@ -65,6 +67,13 @@ interface GameStore {
   startNextSeason(): void
   signFreeAgent(teamId: TeamId, playerId: PlayerId): void
   releasePlayer(teamId: TeamId, playerId: PlayerId): void
+  startStaffCandidacy(teamId: TeamId, roleId: StaffRoleId, staffId: StaffPersonId): void
+  startStaffInterview(candidacyId: string): void
+  completeStaffInterview(candidacyId: string): void
+  createStaffOffer(candidacyId: string): void
+  acceptStaffOffer(offerId: string): void
+  declineStaffOffer(offerId: string): void
+  fireStaff(staffId: StaffPersonId): void
   purchaseUserCoachSkill(skillId: CoachSkillId): CoachRpgOperationResult
   purchaseUserCoachPerk(perkId: CoachPerkId): CoachRpgOperationResult
   acceptUserCoachOffer(offerId: string): void
@@ -73,11 +82,11 @@ interface GameStore {
   setTrainingIntensity(intensity: TrainingIntensity): void
   setTrainingFocus(focus: TrainingFocus): void
   scheduleTrainingSession(session: ScheduledTrainingSession): void
-  scheduleTeamModuleSession(input: { readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: TrainingIntensity }): void
+  scheduleTeamModuleSession(input: { readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: TrainingIntensity; readonly assignedStaffPersonIds?: readonly StaffPersonId[] }): void
   cancelTrainingSession(sessionId: string): void
   saveUserTrainingModule(module: UserTrainingModule): void
   deleteUserTrainingModule(moduleId: string): void
-  assignTrainingModuleToPlayer(input: { readonly playerId: PlayerId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly sessionId: string }): void
+  assignTrainingModuleToPlayer(input: { readonly playerId: PlayerId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly sessionId: string; readonly assignedStaffPersonIds?: readonly StaffPersonId[] }): void
   setLineupSlot(slot: LineupSlot, playerId: PlayerId): void
   clearLineupSlot(slot: LineupSlot): void
   updateRotationMinutes(minutesByPeriod: Readonly<Record<PlayerId, readonly number[]>>): void
@@ -148,6 +157,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   signFreeAgent: (teamId, playerId) => set({ world: signFreeAgent(requireWorld(get().world), teamId, playerId) }),
   releasePlayer: (teamId, playerId) => set({ world: releasePlayer(requireWorld(get().world), teamId, playerId) }),
+  startStaffCandidacy: (teamId, roleId, staffId) => {
+    const opening = createStaffJobOpeningForTeam(requireWorld(get().world), { teamId, roleId })
+    const candidacy = identifyStaffCandidate(opening.world, { openingId: opening.opening.id, staffId })
+    set({ world: candidacy.world })
+  },
+  startStaffInterview: (candidacyId) => set({ world: startStaffInterview(requireWorld(get().world), candidacyId) }),
+  completeStaffInterview: (candidacyId) => set({ world: completeStaffInterview(requireWorld(get().world), candidacyId) }),
+  createStaffOffer: (candidacyId) => { const offer = createStaffJobOffer(requireWorld(get().world), { candidacyId }); set({ world: offer.world }) },
+  acceptStaffOffer: (offerId) => set({ world: acceptStaffJobOffer(requireWorld(get().world), offerId) }),
+  declineStaffOffer: (offerId) => set({ world: declineStaffJobOffer(requireWorld(get().world), offerId) }),
+  fireStaff: (staffId) => set({ world: fireStaffFromTeam(requireWorld(get().world), staffId) }),
   purchaseUserCoachSkill: (skillId) => { const result = purchaseCoachSkillRank(requireWorld(get().world), requireWorld(get().world).userCoachId, skillId); if (result.ok) set({ world: result.world }); return result },
   purchaseUserCoachPerk: (perkId) => { const result = purchaseCoachPerk(requireWorld(get().world), requireWorld(get().world).userCoachId, perkId); if (result.ok) set({ world: result.world }); return result },
   acceptUserCoachOffer: (offerId) => set({ world: acceptCoachJobOffer(requireWorld(get().world), offerId) }),

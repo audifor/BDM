@@ -1,11 +1,35 @@
 import { describe, expect, it } from 'vitest'
-import { createNewGame } from '@/app/game'
+import { createAcbTestGame, createNewGame } from '@/app/game'
 import { advanceDay } from '@/engine/calendar'
-import { cancelScheduledTrainingSession, dailyLoadStatusForTeam, dailyScheduledLoad, executeScheduledTrainingSessions, nextEligibleTrainingDate, scheduleTrainingSession } from '@/engine/training'
+import { cancelScheduledTrainingSession, dailyLoadStatusForTeam, dailyScheduledLoad, executeScheduledTrainingSessions, nextEligibleTrainingDate, scheduleTrainingSession, trainingStaffExecutionMultiplier } from '@/engine/training'
 import { updateGameWorld } from '@/domain/world'
 import { createScheduledTrainingSession } from '@/domain/training'
 
 describe('ScheduledTrainingEngine', () => {
+  it('persists eligible executing staff, rejects invalid/overlapping use, and applies bounded deterministic quality', () => {
+    const world = createAcbTestGame()
+    const teamId = Object.values(world.teams)[0]!.id
+    const staff = Object.values(world.teamStaffAssignmentsById).filter((item) => item.teamId === teamId)
+    const shooter = staff.find((item) => item.role === 'shootingCoach')!.staffPersonId
+    const scout = staff.find((item) => item.role === 'regionalScout')!.staffPersonId
+    const date = nextEligibleTrainingDate(world.currentDate)
+    const base = { teamId, date, startTime: '09:00', durationMinutes: 60, scope: 'team' as const, definitionId: 'threePoint', intensity: 'normal' as const }
+    const scheduled = scheduleTrainingSession(world, createScheduledTrainingSession({ id: 'staff-session', ...base, assignedStaffPersonIds: [shooter] }))
+    expect(scheduled.scheduledTrainingSessionsById['staff-session']!.assignedStaffPersonIds).toEqual([shooter])
+    expect(trainingStaffExecutionMultiplier(scheduled, scheduled.scheduledTrainingSessionsById['staff-session']!)).toBeGreaterThan(trainingStaffExecutionMultiplier(scheduled, { ...scheduled.scheduledTrainingSessionsById['staff-session']!, assignedStaffPersonIds: [scout] }))
+    expect(trainingStaffExecutionMultiplier(scheduled, { ...scheduled.scheduledTrainingSessionsById['staff-session']!, assignedStaffPersonIds: [shooter, scout] })).toBeLessThanOrEqual(1.18)
+    expect(() => scheduleTrainingSession(scheduled, createScheduledTrainingSession({ id: 'overlap', ...base, startTime: '09:30', assignedStaffPersonIds: [shooter] }))).toThrow(RangeError)
+    const freeAgent = Object.keys(world.staffEmploymentByStaffId).find((id) => world.staffEmploymentByStaffId[id as never]?.status === 'unemployed')!
+    expect(() => scheduleTrainingSession(world, createScheduledTrainingSession({ id: 'free', ...base, assignedStaffPersonIds: [freeAgent as never] }))).toThrow(RangeError)
+  })
+
+  it('keeps no-staff scheduled sessions exactly on the legacy execution path', () => {
+    const world = createNewGame()
+    const teamId = Object.values(world.teams)[0]!.id
+    const playerId = world.teams[teamId]!.rosterPlayerIds[0]!
+    const session = createScheduledTrainingSession({ id: 'legacy', teamId, date: nextEligibleTrainingDate(world.currentDate), startTime: '09:00', durationMinutes: 60, scope: 'individual', playerId, definitionId: 'threePoint', intensity: 'normal' })
+    expect(trainingStaffExecutionMultiplier(world, session)).toBe(1)
+  })
   it('schedules a session and rejects a colliding one', () => {
     const world = createNewGame()
     const teamId = Object.values(world.teams)[0]!.id

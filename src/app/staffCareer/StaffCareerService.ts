@@ -26,6 +26,7 @@ import { RESPONSIBILITY_REGISTRY } from '@/domain/responsibility'
 import { staffReputationScore } from '@/domain/staffReputation'
 import { addInboxItem, addNewsItem, canTeamAffordAdditionalStaffSalary, getTeamStaffPayroll, updateGameWorld, type GameWorld } from '@/domain/world'
 import { getResponsibilitiesHeldByStaff } from '@/domain/world'
+import { detachStaffFromFutureTrainingSessions } from '@/engine/training'
 
 /**
  * Ecosystem role eligibility (Issue #19 review Blocker 3) is enforced HERE, at opening creation —
@@ -49,10 +50,23 @@ export function getOpenStaffJobs(world: GameWorld): readonly StaffJobOpening[] {
   return Object.values(world.staffJobOpeningsById).filter((opening) => opening.status === 'open').sort((a, b) => a.createdOn.localeCompare(b.createdOn) || a.id.localeCompare(b.id))
 }
 
+/** Resolves a market speciality without changing the canonical assignment flexibility of Staff. */
+export function getStaffMarketRole(world: GameWorld, staffId: StaffPersonId): StaffRoleId | undefined {
+  const staff = world.staffPeopleById[staffId]
+  if (staff?.marketRole !== undefined) return staff.marketRole
+  return [...(world.staffCareerHistoryByStaffId[staffId] ?? [])].reverse().find((entry): entry is Extract<typeof entry, { readonly kind: 'appointment' }> => entry.kind === 'appointment')?.roleId
+}
+
+/** Lists canonically unemployed Staff and optionally filters by their primary or derived market speciality. */
+export function listFreeAgentStaff(world: GameWorld, roleId?: StaffRoleId): readonly StaffPersonId[] {
+  return Object.values(world.staffPeopleById).filter((staff) => world.staffEmploymentByStaffId[staff.id]?.status === 'unemployed' && (roleId === undefined || getStaffMarketRole(world, staff.id) === roleId)).sort((a, b) => a.id.localeCompare(b.id)).map((staff) => staff.id)
+}
+
 /**
- * Ranks eligible candidates (real Staff, not already assigned to `opening.teamId`, whose role
- * matches `opening.roleId` and whose ecosystem applicability allows the opening's team ecosystem)
- * by a linear blend of canonical role proficiency and Staff reputation, tie-broken by id for full
+ * Ranks eligible candidates (real Staff not already assigned to `opening.teamId`, with an
+ * ecosystem-valid opening) by their proficiency for `opening.roleId`. `marketRole` is a market
+ * presentation speciality only; it deliberately does not restrict a later canonical assignment.
+ * Ranking uses a linear blend of canonical role proficiency and Staff reputation, tie-broken by id for full
  * determinism. Neither purely reputation-driven nor a duplicate of `STAFF_ROLE_REGISTRY` weights —
  * proficiency is read directly from `calculateStaffRoleProficiencyByRoleId`.
  */
@@ -249,12 +263,16 @@ export function fireStaffFromTeam(world: GameWorld, staffId: StaffPersonId): Gam
   const result = fireStaff({ employment, history, decision: { staffId, teamId, date: world.currentDate, reason: 'performance' } })
   if (!result.ok) throw new Error('Staff cannot be fired')
 
-  const assignments = Object.values(world.teamStaffAssignmentsById).filter((assignment) => assignment.staffPersonId !== staffId)
-  const activeContract = Object.values(world.staffContractsById).find((contract) => contract.staffId === staffId && isStaffContractActiveOn(contract, world.currentDate))
-  const contracts = activeContract === undefined ? world.staffContractsById : { ...world.staffContractsById, [activeContract.id]: terminateStaffContract(activeContract, world.currentDate, 'performance') }
-  const responsibilities = vacateResponsibilitiesHeldByStaffOnTeam(Object.values(world.responsibilitiesById), staffId, teamId)
+  // Reconcile while the person is still validly employed; GameWorld validation then never observes
+  // a future session pointing at a fired employee.
+  const withDetachedTraining = detachStaffFromFutureTrainingSessions(world, staffId)
 
-  const vacant = rebuild(world, { assignments, employment: { ...world.staffEmploymentByStaffId, [staffId]: result.employment }, history: { ...world.staffCareerHistoryByStaffId, [staffId]: result.history }, contracts, responsibilities })
+  const assignments = Object.values(withDetachedTraining.teamStaffAssignmentsById).filter((assignment) => assignment.staffPersonId !== staffId)
+  const activeContract = Object.values(withDetachedTraining.staffContractsById).find((contract) => contract.staffId === staffId && isStaffContractActiveOn(contract, world.currentDate))
+  const contracts = activeContract === undefined ? withDetachedTraining.staffContractsById : { ...withDetachedTraining.staffContractsById, [activeContract.id]: terminateStaffContract(activeContract, world.currentDate, 'performance') }
+  const responsibilities = vacateResponsibilitiesHeldByStaffOnTeam(Object.values(withDetachedTraining.responsibilitiesById), staffId, teamId)
+
+  const vacant = rebuild(withDetachedTraining, { assignments, employment: { ...withDetachedTraining.staffEmploymentByStaffId, [staffId]: result.employment }, history: { ...withDetachedTraining.staffCareerHistoryByStaffId, [staffId]: result.history }, contracts, responsibilities })
   const opened = createStaffJobOpeningForTeam(vacant, { teamId, roleId }).world
   const staff = world.staffPeopleById[staffId]!
   const team = world.teams[teamId]!

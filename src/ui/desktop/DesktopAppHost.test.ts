@@ -2,13 +2,13 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 
-import { createNewGame } from '@/app/game'
+import { createAcbTestGame, createNewGame } from '@/app/game'
 import { createDefaultTacticalPlan } from '@/engine/match'
 import type { DesktopAppActions } from './DesktopAppHost'
 import { DesktopAppHost } from './DesktopAppHost'
 import { DESKTOP_APPS } from './DesktopAppRegistry'
 
-const actions: DesktopAppActions = { tacticalPlan: createDefaultTacticalPlan(), openApp: () => undefined, playGame: () => undefined, instantResult: () => undefined, simulateRemainingGamesToday: () => undefined, advanceDay: () => undefined, startNextSeason: () => undefined, releasePlayer: () => undefined, signFreeAgent: () => undefined, selectDraftProspect: () => undefined, purchaseSkill: () => undefined, purchasePerk: () => undefined, acceptOffer: () => undefined, declineOffer: () => undefined, applyForJob: () => undefined, setTacticalPlan: () => undefined, resetTacticalPlan: () => undefined, setTrainingIntensity: () => undefined, setTrainingFocus: () => undefined, scheduleTrainingSession: () => undefined, scheduleTeamModuleSession: () => undefined, cancelTrainingSession: () => undefined, saveUserTrainingModule: () => undefined, deleteUserTrainingModule: () => undefined, assignTrainingModuleToPlayer: () => undefined, setLineupSlot: () => undefined, clearLineupSlot: () => undefined, updateRotationMinutes: () => undefined, updateGamePlanMatchups: () => undefined, updateGamePlanTacticalOverride: () => undefined, saveDesignerPlay: () => undefined, deleteDesignerPlay: () => undefined, saveDesignerPlaybook: () => undefined, deleteDesignerPlaybook: () => undefined }
+const actions: DesktopAppActions = { tacticalPlan: createDefaultTacticalPlan(), openApp: () => undefined, playGame: () => undefined, instantResult: () => undefined, simulateRemainingGamesToday: () => undefined, advanceDay: () => undefined, startNextSeason: () => undefined, releasePlayer: () => undefined, signFreeAgent: () => undefined, startStaffCandidacy: () => undefined, startStaffInterview: () => undefined, completeStaffInterview: () => undefined, createStaffOffer: () => undefined, acceptStaffOffer: () => undefined, declineStaffOffer: () => undefined, fireStaff: () => undefined, selectDraftProspect: () => undefined, purchaseSkill: () => undefined, purchasePerk: () => undefined, acceptOffer: () => undefined, declineOffer: () => undefined, applyForJob: () => undefined, setTacticalPlan: () => undefined, resetTacticalPlan: () => undefined, setTrainingIntensity: () => undefined, setTrainingFocus: () => undefined, scheduleTrainingSession: () => undefined, scheduleTeamModuleSession: () => undefined, cancelTrainingSession: () => undefined, saveUserTrainingModule: () => undefined, deleteUserTrainingModule: () => undefined, assignTrainingModuleToPlayer: () => undefined, setLineupSlot: () => undefined, clearLineupSlot: () => undefined, updateRotationMinutes: () => undefined, updateGamePlanMatchups: () => undefined, updateGamePlanTacticalOverride: () => undefined, saveDesignerPlay: () => undefined, deleteDesignerPlay: () => undefined, saveDesignerPlaybook: () => undefined, deleteDesignerPlaybook: () => undefined }
 
 describe('DesktopAppHost', () => {
   it('migrates every functional legacy app to a window-capable registry entry', () => {
@@ -54,8 +54,13 @@ describe('DesktopAppHost', () => {
   })
 
   it('opens Staff on the Club Staff & Roles view', () => {
-    const markup = renderToStaticMarkup(createElement(DesktopAppHost, { appId: 'staff', world: createNewGame(), actions }))
+    const world = createAcbTestGame({ userTeamKey: 'caz' })
+    const staffId = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.teamId === Object.values(world.teams).find((team) => team.coachId === world.userCoachId)!.id)!.staffPersonId
+    const staff = world.staffPeopleById[staffId]!
+    const markup = renderToStaticMarkup(createElement(DesktopAppHost, { appId: 'staff', world, actions }))
     expect(markup).toContain('Staff y Roles Funcionales')
     expect(markup).toContain('Bonificaciones del Staff')
+    expect(markup).toContain(`${staff.identity.firstName} ${staff.identity.lastName}`)
+    expect(markup).not.toContain('Diego Ferrer')
   })
 })

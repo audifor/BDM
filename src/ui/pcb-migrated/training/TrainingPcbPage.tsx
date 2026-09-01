@@ -11,7 +11,7 @@ import { dailyLoadStatusForTeam, dailyScheduledLoad, nextEligibleTrainingDate } 
 import { addDays, formatGameDate, isoWeekNumber, parseGameDate, type GameDate } from "@/domain/date";
 import { BASKETBALL_RATING_KEYS, type BasketballRatingKey, type Player } from "@/domain/player";
 import type { Team } from "@/domain/team";
-import type { TeamId, PlayerId } from "@/domain/ids";
+import type { TeamId, PlayerId, StaffPersonId } from "@/domain/ids";
 import { createEntityId } from "@/domain/ids";
 import { useEntityContextMenu } from "@/ui/entityContextMenu/EntityContextMenuProvider";
 import { TRAINING_CATALOG, trainingLoad, type DailyLoadStatus, type ScheduledTrainingSession, type TrainingCategory, type TrainingFocus, type TrainingIntensity as DomainTrainingIntensity, type TrainingDefinition, type TrainingScope, type UserTrainingModule } from "@/domain/training";
@@ -187,6 +187,14 @@ export interface TrainingModuleAssignmentInput {
   readonly date: GameDate;
   readonly startTime: string;
   readonly sessionId: string;
+  readonly assignedStaffPersonIds?: readonly StaffPersonId[];
+}
+
+function eligibleTrainingStaff(world: GameWorld | undefined, team: Team | undefined) {
+  if (world === undefined || team === undefined) return [];
+  return Object.values(world.teamStaffAssignmentsById)
+    .filter((assignment) => assignment.teamId === team.id && world.staffEmploymentByStaffId[assignment.staffPersonId]?.status === "employed")
+    .map((assignment) => ({ id: assignment.staffPersonId, role: assignment.role, name: `${world.staffPeopleById[assignment.staffPersonId]!.identity.firstName} ${world.staffPeopleById[assignment.staffPersonId]!.identity.lastName}` }));
 }
 
 export function TrainingPcbPage({
@@ -206,7 +214,7 @@ export function TrainingPcbPage({
   readonly onIntensity?: (value: DomainTrainingIntensity) => void;
   readonly onFocus?: (value: TrainingFocus) => void;
   readonly onScheduleSession?: (session: ScheduledTrainingSession) => void;
-  readonly onScheduleTeamModule?: (input: { readonly moduleId: string; readonly date: GameDate; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: DomainTrainingIntensity }) => void;
+  readonly onScheduleTeamModule?: (input: { readonly moduleId: string; readonly date: GameDate; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: DomainTrainingIntensity; readonly assignedStaffPersonIds?: readonly StaffPersonId[] }) => void;
   readonly onCancelSession?: (sessionId: string) => void;
   readonly onSaveModule?: (module: UserTrainingModule) => void;
   readonly onDeleteModule?: (moduleId: string) => void;
@@ -235,12 +243,13 @@ export function TrainingPcbPage({
           onIntensity={onIntensity}
           onScheduleTeamModule={onScheduleTeamModule}
           scheduledSessions={scheduledSessions}
+          eligibleStaff={eligibleTrainingStaff(world, team)}
           team={team}
           userModules={userModules}
           world={world}
         />
       ) : tab === "personal" ? (
-        <PersonalTraining onAssignModule={onAssignModule} scheduledSessions={scheduledSessions} team={team} userModules={userModules} world={world} />
+        <PersonalTraining eligibleStaff={eligibleTrainingStaff(world, team)} onAssignModule={onAssignModule} scheduledSessions={scheduledSessions} team={team} userModules={userModules} world={world} />
       ) : tab === "load" ? (
         <LoadManagementInteractive onScheduleSession={onScheduleSession} scheduledSessions={scheduledSessions} team={team} world={world} />
       ) : tab === "staff" ? (
@@ -261,6 +270,7 @@ function TeamTraining({
   userModules,
   onScheduleTeamModule,
   onCancelSession,
+  eligibleStaff,
 }: {
   readonly world?: GameWorld;
   readonly team?: Team;
@@ -268,8 +278,9 @@ function TeamTraining({
   readonly onFocus?: (value: TrainingFocus) => void;
   readonly scheduledSessions: readonly ScheduledTrainingSession[];
   readonly userModules: readonly UserTrainingModule[];
-  readonly onScheduleTeamModule?: (input: { readonly moduleId: string; readonly date: GameDate; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: DomainTrainingIntensity }) => void;
+  readonly onScheduleTeamModule?: (input: { readonly moduleId: string; readonly date: GameDate; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: DomainTrainingIntensity; readonly assignedStaffPersonIds?: readonly StaffPersonId[] }) => void;
   readonly onCancelSession?: (sessionId: string) => void;
+  readonly eligibleStaff: readonly { readonly id: StaffPersonId; readonly role: string; readonly name: string }[];
 }) {
   const [week, setWeek] = useState(0);
   const [editor, setEditor] = useState<{
@@ -285,7 +296,7 @@ function TeamTraining({
   const sessionsForDate = (date: GameDate) => scheduledSessions.filter((session) => session.date === date && session.status === "scheduled").sort((a, b) => a.startTime.localeCompare(b.startTime));
   const weekLabel = anchor === undefined ? "Sin fecha de referencia" : `Semana ${isoWeekNumber(anchor)} · ${formatGameDate(anchor)} - ${formatGameDate(addDays(anchor, 6))}`;
   const teamModules = userModules.filter((module) => module.scope !== "individual");
-  const saveSession = (input: { readonly startTime: string; readonly durationMinutes: number; readonly moduleId: string; readonly intensity: DomainTrainingIntensity }) => {
+  const saveSession = (input: { readonly startTime: string; readonly durationMinutes: number; readonly moduleId: string; readonly intensity: DomainTrainingIntensity; readonly assignedStaffPersonIds: readonly StaffPersonId[] }) => {
     if (editor === undefined || team === undefined) return;
     setEditorError(undefined);
     try {
@@ -296,6 +307,7 @@ function TeamTraining({
         durationMinutes: input.durationMinutes,
         sessionId: editor.session?.id ?? `session:${createEntityId()}`,
         intensity: input.intensity,
+        assignedStaffPersonIds: input.assignedStaffPersonIds,
       });
       setEditor(undefined);
     } catch (error) {
@@ -438,6 +450,7 @@ function TeamTraining({
             setEditor(undefined);
           }}
           onSave={saveSession}
+          eligibleStaff={eligibleStaff}
           userModules={teamModules}
         />
       )}
@@ -493,12 +506,14 @@ function SessionModal({
   error,
   onClose,
   onSave,
+  eligibleStaff,
 }: {
   readonly initial?: ScheduledTrainingSession;
   readonly userModules: readonly UserTrainingModule[];
   readonly error?: string;
   readonly onClose: () => void;
-  readonly onSave: (input: { readonly startTime: string; readonly durationMinutes: number; readonly moduleId: string; readonly intensity: DomainTrainingIntensity }) => void;
+  readonly onSave: (input: { readonly startTime: string; readonly durationMinutes: number; readonly moduleId: string; readonly intensity: DomainTrainingIntensity; readonly assignedStaffPersonIds: readonly StaffPersonId[] }) => void;
+  readonly eligibleStaff: readonly { readonly id: StaffPersonId; readonly role: string; readonly name: string }[];
 }) {
   const builtinOptions = TRAINING_CATALOG.filter((entry) => entry.scope !== "individual");
   // A user-created team module is selected by its own module id, but resolves to its base
@@ -507,6 +522,7 @@ function SessionModal({
   const [startTime, setStartTime] = useState(initial?.startTime ?? "10:00");
   const [moduleId, setModuleId] = useState(initialModuleId);
   const [intensity, setIntensity] = useState<"Baja" | "Media" | "Alta">(initial === undefined ? "Media" : INTENSITY_ES[initial.intensity]);
+  const [staffIds, setStaffIds] = useState<readonly StaffPersonId[]>(initial?.assignedStaffPersonIds ?? []);
   const selectedUserModule = userModules.find((module) => module.id === moduleId);
   const definition = TRAINING_CATALOG.find((entry) => entry.id === (selectedUserModule?.baseDefinitionId ?? moduleId)) ?? builtinOptions[0]!;
   const effectiveIntensity: DomainTrainingIntensity = selectedUserModule?.intensity ?? INTENSITY_FROM_ES[intensity];
@@ -575,6 +591,12 @@ function SessionModal({
             Carga {load} · {definition.name} · Categoría {definition.category}
           </span>
         </div>
+        <label>
+          Staff ejecutor
+          <select aria-label="Staff ejecutor" multiple onChange={(event) => setStaffIds(Array.from(event.currentTarget.selectedOptions, (option) => option.value as StaffPersonId))} value={staffIds}>
+            {eligibleStaff.map((staff) => <option key={staff.id} value={staff.id}>{staff.name} · {staff.role}</option>)}
+          </select>
+        </label>
         {error !== undefined && (
           <div className="pcb-training__filters">
             <span>{error}</span>
@@ -586,7 +608,7 @@ function SessionModal({
           </button>
           <button
             className="is-primary"
-            onClick={() => onSave({ startTime, durationMinutes, moduleId, intensity: effectiveIntensity })}
+            onClick={() => onSave({ startTime, durationMinutes, moduleId, intensity: effectiveIntensity, assignedStaffPersonIds: staffIds })}
             type="button"
           >
             Guardar sesión
@@ -602,12 +624,14 @@ function PersonalTraining({
   scheduledSessions,
   userModules,
   onAssignModule,
+  eligibleStaff,
 }: {
   readonly world?: GameWorld;
   readonly team?: Team;
   readonly scheduledSessions: readonly ScheduledTrainingSession[];
   readonly userModules: readonly UserTrainingModule[];
   readonly onAssignModule?: (input: TrainingModuleAssignmentInput) => void;
+  readonly eligibleStaff: readonly { readonly id: StaffPersonId; readonly role: string; readonly name: string }[];
 }) {
   const playerMenu = useEntityContextMenu();
   const columns = useResizableTrainingColumns([220, 88, 180, 150, 180, 160]);
@@ -620,6 +644,7 @@ function PersonalTraining({
     ...userModules.filter((module) => module.scope !== "team").map((module) => ({ id: module.id, name: module.name })),
   ];
   const [selection, setSelection] = useState<Record<string, string>>({});
+  const [staffSelection, setStaffSelection] = useState<Record<string, readonly StaffPersonId[]>>({});
   const [assignError, setAssignError] = useState<{ readonly playerId: string; readonly message: string }>();
   return (
     <main className="pcb-training__bento pcb-training__personal-page">
@@ -686,6 +711,7 @@ function PersonalTraining({
                           date: nextEligibleTrainingDate(world.currentDate),
                           startTime: "09:00",
                           sessionId: `session:${createEntityId()}`,
+                          assignedStaffPersonIds: staffSelection[player.id] ?? [],
                         });
                       } catch (error) {
                         setAssignError({ playerId: player.id, message: error instanceof Error ? error.message : "No se pudo asignar el módulo." });
@@ -696,6 +722,9 @@ function PersonalTraining({
                     Asignar
                   </button>
                   {assignError?.playerId === player.id && <small>{assignError.message}</small>}
+                  <select aria-label={`Staff ejecutor para ${playerName(player)}`} multiple onChange={(event) => setStaffSelection((current) => ({ ...current, [player.id]: Array.from(event.currentTarget.selectedOptions, (option) => option.value as StaffPersonId) }))} value={staffSelection[player.id] ?? []}>
+                    {eligibleStaff.map((staff) => <option key={staff.id} value={staff.id}>{staff.name} · {staff.role}</option>)}
+                  </select>
                 </span>
               </div>
             );
