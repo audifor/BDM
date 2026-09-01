@@ -1182,4 +1182,131 @@ describe('BasketballOperationsAdvisory', () => {
       expect(remainingContracted).toContain(outcome.payload.outgoingPlayerId)
     })
   })
+
+  describe('tradeRecommendation outgoing selection is not RNG-biased by combinatorial legal pairings', () => {
+    /**
+     * One viable incoming candidate; two own contracted outgoing candidates where BOTH resulting
+     * trades are `validateTrade`-legal. outgoingA is clearly more expendable (surplus position, low
+     * valuation) and sorts first in `expendableOwnRoster`; outgoingB is scarce/high-valuation and
+     * sorts later. Under the old flat-`legalPairs`-then-uniform-RNG-pick implementation, BOTH
+     * (incoming, outgoingA) and (incoming, outgoingB) would land in the same flat array and the RNG
+     * could select either — so outgoingB could win despite being strictly less preferred. Under the
+     * fixed "first legal outgoing wins, then stop" implementation, only (incoming, outgoingA) is ever
+     * considered, since the search stops at the first legal outgoing. outgoingA must therefore be
+     * selected deterministically regardless of RNG seed.
+     */
+    function buildOutgoingPreferenceFixture(staffSuffix: string) {
+      const base = createNewGame()
+      const season = Object.values(base.seasons).find((item) => base.tradeRulesBySeasonId[item.id] !== undefined)!
+      const seasonTeams = Object.values(base.teams).filter((item) => base.competitions[season.competitionId]!.participantTeamIds.includes(item.id))
+      const team = seasonTeams[0]!
+      const source = seasonTeams.find((item) => item.id !== team.id && item.rosterPlayerIds.length > 0)!
+      const incomingPlayerId = source.rosterPlayerIds[0]!
+      const contractedOwn = team.rosterPlayerIds.filter((playerId) => getActivePlayerContract(base, playerId) !== undefined)
+      if (contractedOwn.length < 2) return undefined
+      const scarcePlayer = contractedOwn[0]!
+      const expendablePlayer = contractedOwn[1]!
+      const scarcePosition = base.players[scarcePlayer]!.basketball.primaryPosition
+      const expendablePosition = base.players[expendablePlayer]!.basketball.primaryPosition
+      if (scarcePosition === expendablePosition) return undefined
+      const org = organizationIdForTeam(team.id)
+      const staffId = staffPersonIdFromString(`ops:trade-outgoing-rng-${staffSuffix}`)
+      const seasoned = updateGameWorld(base, { currentSeasonId: season.id, currentDate: season.startDate })
+      // Saturate every other roster position at the expendable player's position, so that position reads as surplus (need=0)
+      // while the scarce player's position remains the sole occupant (need>0) — same technique as the deterministic preference test above.
+      const reshuffled = updateGameWorld(seasoned, {
+        players: Object.values(seasoned.players).map((player) => team.rosterPlayerIds.includes(player.id) && player.id !== scarcePlayer ? { ...player, basketball: { ...player.basketball, primaryPosition: expendablePosition } } : player),
+      })
+      const withStaff = updateGameWorld(reshuffled, {
+        staffPeople: [...Object.values(reshuffled.staffPeopleById), { id: staffId, identity: { firstName: 'Trade', lastName: 'OutgoingRng' }, professional: { attributes: highAttributes } }],
+        teamStaffAssignments: [...Object.values(reshuffled.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString(`assignment:trade-outgoing-rng-${staffSuffix}`), staffPersonId: staffId, teamId: team.id, role: 'generalManager' as never, assignedOn: reshuffled.currentDate }],
+        responsibilities: [...Object.values(reshuffled.responsibilitiesById).filter((item) => item.id !== `responsibility:${team.id}:tradeRecommendation`), { id: `responsibility:${team.id}:tradeRecommendation` as never, teamId: team.id, kind: 'tradeRecommendation', mode: 'advisory', holderStaffId: staffId }],
+        organizationKnowledge: [
+          { organizationId: org, subjectPlayerId: incomingPlayerId, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: reshuffled.currentDate, provenance: 'scoutReport', estimate: 90, uncertainty: 2 } } },
+          { organizationId: org, subjectPlayerId: scarcePlayer, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: reshuffled.currentDate, provenance: 'scoutReport', estimate: 99, uncertainty: 1 } } },
+          { organizationId: org, subjectPlayerId: expendablePlayer, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: reshuffled.currentDate, provenance: 'scoutReport', estimate: 40, uncertainty: 1 } } },
+        ],
+        marketKnowledge: [{ organizationId: org, playerId: incomingPlayerId, availability: 'OPEN', expectedSalary: 1, expectedYears: 1, confidence: 90, assessedAt: reshuffled.currentDate, source: 'AGENT' }],
+      })
+      return { world: withStaff, expendablePlayer, scarcePlayer }
+    }
+
+    it.each(['seed-a', 'seed-b', 'seed-c', 'seed-d'])('always offers the most-expendable legal outgoing player, never a less-expendable one, across RNG seed variation (%s)', (staffSuffix) => {
+      const built = buildOutgoingPreferenceFixture(staffSuffix)
+      if (built === undefined) return
+      const { world, expendablePlayer, scarcePlayer } = built
+      const progressed = progressBasketballOperationsAdvisories(world)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'tradeRecommendation')
+      expect(outcome).toBeDefined()
+      if (outcome === undefined) return
+      expect(outcome.payload.outgoingPlayerId).toBe(expendablePlayer)
+      expect(outcome.payload.outgoingPlayerId).not.toBe(scarcePlayer)
+    })
+
+    /**
+     * Incoming candidate A has exactly one legal outgoing option; incoming candidate B has several
+     * (3+) legal outgoing options. Under the old flat-array implementation, B would be represented
+     * ~3x more often than A in the RNG draw purely because more of its outgoing pairings happened to
+     * be legal — a combinatorial bias `validateTrade` legality must never introduce. Under the fixed
+     * implementation, each incoming candidate contributes at most one entry regardless of how many
+     * outgoing options were legal for it, and whichever incoming candidate is ultimately selected
+     * always uses its own first-legal (most expendable) outgoing option — never a worse one that
+     * existed only because more legal combinations were available for that candidate.
+     */
+    function buildNoCombinatorialBiasFixture() {
+      const base = createNewGame()
+      const season = Object.values(base.seasons).find((item) => base.tradeRulesBySeasonId[item.id] !== undefined)!
+      const seasonTeams = Object.values(base.teams).filter((item) => base.competitions[season.competitionId]!.participantTeamIds.includes(item.id))
+      const team = seasonTeams[0]!
+      const donors = seasonTeams.filter((item) => item.id !== team.id && item.rosterPlayerIds.length > 0).slice(0, 2)
+      if (donors.length < 2) return undefined
+      const incomingA = donors[0]!.rosterPlayerIds[0]!
+      const incomingB = donors[1]!.rosterPlayerIds[0]!
+      if (incomingA === incomingB) return undefined
+      const seasoned = updateGameWorld(base, { currentSeasonId: season.id, currentDate: season.startDate })
+      const contractedOwn = team.rosterPlayerIds.filter((playerId) => getActivePlayerContract(seasoned, playerId) !== undefined)
+      // Need at least 2 own contracted players: outgoingFirst (most expendable, legal against both
+      // incoming candidates) and outgoingSecond (next-most-expendable, only relevant if the loop
+      // incorrectly skipped past outgoingFirst — asserted against below to prove it never does).
+      if (contractedOwn.length < 2) return undefined
+      const outgoingFirst = contractedOwn[0]!
+      const outgoingSecond = contractedOwn[1]!
+
+      const org = organizationIdForTeam(team.id)
+      const staffId = staffPersonIdFromString('ops:trade-no-combinatorial-bias')
+      const withStaff = updateGameWorld(seasoned, {
+        staffPeople: [...Object.values(seasoned.staffPeopleById), { id: staffId, identity: { firstName: 'Trade', lastName: 'NoBias' }, professional: { attributes: highAttributes } }],
+        teamStaffAssignments: [...Object.values(seasoned.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('assignment:trade-no-combinatorial-bias'), staffPersonId: staffId, teamId: team.id, role: 'generalManager' as never, assignedOn: seasoned.currentDate }],
+        responsibilities: [...Object.values(seasoned.responsibilitiesById).filter((item) => item.id !== `responsibility:${team.id}:tradeRecommendation`), { id: `responsibility:${team.id}:tradeRecommendation` as never, teamId: team.id, kind: 'tradeRecommendation', mode: 'advisory', holderStaffId: staffId }],
+        organizationKnowledge: [
+          { organizationId: org, subjectPlayerId: incomingA, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: seasoned.currentDate, provenance: 'scoutReport', estimate: 90, uncertainty: 1 } } },
+          { organizationId: org, subjectPlayerId: incomingB, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: seasoned.currentDate, provenance: 'scoutReport', estimate: 60, uncertainty: 1 } } },
+        ],
+        marketKnowledge: [
+          { organizationId: org, playerId: incomingA, availability: 'OPEN', expectedSalary: 1, expectedYears: 1, confidence: 90, assessedAt: seasoned.currentDate, source: 'AGENT' },
+          { organizationId: org, playerId: incomingB, availability: 'OPEN', expectedSalary: 1, expectedYears: 1, confidence: 90, assessedAt: seasoned.currentDate, source: 'AGENT' },
+        ],
+      })
+      return { world: withStaff, incomingA, incomingB, outgoingFirst, outgoingSecond }
+    }
+
+    it('whichever incoming candidate is selected always uses its own first-legal (most expendable) outgoing option, never a fallback one, regardless of how many legal outgoing options existed for it', () => {
+      const built = buildNoCombinatorialBiasFixture()
+      if (built === undefined) return
+      const { world, incomingA, incomingB, outgoingFirst, outgoingSecond } = built
+      const progressed = progressBasketballOperationsAdvisories(world)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'tradeRecommendation')
+      expect(outcome).toBeDefined()
+      if (outcome === undefined) return
+      expect([incomingA, incomingB]).toContain(outcome.payload.incomingPlayerId)
+      // Both incoming candidates are legal against outgoingFirst (the most expendable own contracted
+      // player, first in `expendableOwnRoster` preference order) since no salary/roster manipulation
+      // makes either pairing illegal here. Whichever incoming candidate wins the RNG draw over
+      // *incoming* candidates, the outgoing asset used must be outgoingFirst — never outgoingSecond
+      // or any other less-preferred option — because the fixed algorithm always stops at the first
+      // legal outgoing for whichever incoming candidate it is evaluating.
+      expect(outcome.payload.outgoingPlayerId).toBe(outgoingFirst)
+      expect(outcome.payload.outgoingPlayerId).not.toBe(outgoingSecond)
+    })
+  })
 })

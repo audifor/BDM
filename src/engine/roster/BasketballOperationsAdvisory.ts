@@ -129,15 +129,17 @@ function contractRecommendation(world: GameWorld, teamId: TeamId, organizationId
  * known, non-NOT_FOR_SALE universe before any candidate is drawn from the ranked/RNG window.
  *
  * Legality-fallback (Blocker B): the ranked+bounded eligible window is walked IN ORDER — for each
- * incoming candidate, every outgoing candidate is tried (in unchanged expendable-first preference
- * order) against the canonical `validateTrade`. The first incoming candidate that has ANY legal
- * outgoing pairing does not immediately win — every legal pairing found while walking the whole
- * window is collected into a legal-pair set, preserving (incoming-rank, outgoing-preference) order.
- * A single deterministic seeded pick then selects among that legal-pair set (or trivially returns
- * the sole entry when only one exists), rather than blindly RNG-picking a candidate before its
- * legality is even known. `validateTrade` remains strictly the legality boundary; it is never used
- * to judge desirability — desirability/ranking is entirely decided before this loop runs. Only once
- * the entire bounded window is exhausted with zero legal pairings does this return `undefined`.
+ * incoming candidate, `outgoingCandidates` is walked in its unchanged expendable-first preference
+ * order and the search STOPS at the FIRST outgoing candidate whose pairing `validateTrade` allows.
+ * This produces at most one viable pair per incoming candidate, so outgoing desirability is never
+ * overridden by a later RNG draw, and an incoming candidate with many legal outgoing options is
+ * never over-represented relative to one with only a single legal option. A single deterministic
+ * seeded pick then selects among the resulting per-incoming-candidate viable pairs (or trivially
+ * returns the sole entry when only one exists) — uniform over viable INCOMING candidates, never
+ * biased by how many outgoing options happened to be legal for any of them. `validateTrade` remains
+ * strictly the legality boundary; it is never used to judge desirability — desirability/ranking is
+ * entirely decided before this loop runs. Only once the entire bounded window is exhausted with zero
+ * viable pairs does this return `undefined`.
  */
 function tradeRecommendation(world: GameWorld, teamId: TeamId, organizationId: OrganizationId, qualityScore: number, rngSeed: string): Record<string, string | number | boolean> | undefined {
   const ecosystem = getEcosystemForTeam(world, teamId)
@@ -156,8 +158,8 @@ function tradeRecommendation(world: GameWorld, teamId: TeamId, organizationId: O
   const bounded = Math.min(eligibleIncoming.length, candidateWindow(qualityScore))
   const window = eligibleIncoming.slice(0, bounded)
 
-  type LegalPair = { readonly incoming: PlayerId; readonly outgoing: PlayerId; readonly counterpartTeamId: TeamId; readonly proposal: TradeProposal }
-  const legalPairs: LegalPair[] = []
+  type ViablePair = { readonly incoming: PlayerId; readonly outgoing: PlayerId; readonly counterpartTeamId: TeamId; readonly proposal: TradeProposal }
+  const viablePairs: ViablePair[] = []
   for (const incoming of window) {
     const counterpart = Object.values(world.teams).find((team) => team.rosterPlayerIds.includes(incoming))
     if (counterpart === undefined) continue
@@ -172,13 +174,15 @@ function tradeRecommendation(world: GameWorld, teamId: TeamId, organizationId: O
           { asset: { kind: 'player' as const, playerId: incoming }, fromTeamId: counterpart.id, toTeamId: teamId },
         ],
       }
-      if (validateTrade(world, proposal).allowed) legalPairs.push({ incoming, outgoing, counterpartTeamId: counterpart.id, proposal })
+      if (validateTrade(world, proposal).allowed) {
+        viablePairs.push({ incoming, outgoing, counterpartTeamId: counterpart.id, proposal })
+        break // stop at the FIRST (most expendable) legal outgoing for this incoming candidate
+      }
     }
   }
-  if (legalPairs.length === 0) return undefined
+  if (viablePairs.length === 0) return undefined
 
-  const pickIndex = legalPairs.length === 1 ? 0 : new SeededRandomSource(hashStringToSeed(`staff-basketball-ops:tradeRecommendation:${rngSeed}`)).nextInt(0, legalPairs.length - 1)
-  const picked = legalPairs[pickIndex]!
+  const picked = viablePairs.length === 1 ? viablePairs[0]! : viablePairs[new SeededRandomSource(hashStringToSeed(`staff-basketball-ops:tradeRecommendation:${rngSeed}`)).nextInt(0, viablePairs.length - 1)]!
   return { teamId, incomingPlayerId: picked.incoming, outgoingPlayerId: picked.outgoing, counterpartTeamId: picked.counterpartTeamId, proposalId: picked.proposal.id, ecosystemId: ecosystem.id, seasonId, rank: 1, candidateCount: bounded, confidence: certainty(world, organizationId, picked.incoming, 'TRADE') }
 }
 
