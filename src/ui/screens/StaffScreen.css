@@ -38,3 +38,31 @@
 .staff-workload-state--overloaded { color: #f0b2a9; border: 1px solid #d06d5e; }
 .staff-workload-badge--unassigned,
 .staff-workload-state--unassigned { color: #9aa39a; border: 1px solid #4b524b; }
+
+.staff-screen-tabs { display: flex; gap: 4px; }
+.staff-screen-tabs button { font-size: 11px; font-weight: 600; letter-spacing: 0.03em; padding: 3px 10px; border-radius: 3px; border: 1px solid var(--bdm-border, #3a423a); background: transparent; color: var(--bdm-text-secondary, #9aa39a); cursor: pointer; }
+.staff-screen-tabs button.is-active { color: #f0c65d; border-color: #f0c65d; }
+
+.staff-responsibilities-held { display: flex; flex-direction: column; gap: 2px; margin: 0; }
+.staff-responsibilities-held div { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 18px; font-size: 11px; }
+.staff-responsibilities-held dt { color: var(--bdm-text-secondary, #9aa39a); font-weight: 500; }
+.staff-responsibilities-held dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+.staff-responsibility-inspector { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; padding-right: 2px; }
+.staff-responsibility-inspector h2 { margin: 2px 0 6px; font-size: 1.05rem; letter-spacing: -0.02em; }
+.staff-responsibility-summary,
+.staff-candidate-summary { display: flex; flex-direction: column; gap: 2px; margin: 0; }
+.staff-responsibility-summary div,
+.staff-candidate-summary div { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 18px; font-size: 11px; }
+.staff-responsibility-summary dt,
+.staff-candidate-summary dt { color: var(--bdm-text-secondary, #9aa39a); font-weight: 500; letter-spacing: 0.02em; }
+.staff-responsibility-summary dd,
+.staff-candidate-summary dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+.staff-mode-group { display: flex; flex-wrap: wrap; gap: 4px; }
+.staff-mode-group button { font-size: 10px; font-weight: 600; letter-spacing: 0.02em; padding: 2px 8px; border-radius: 3px; border: 1px solid var(--bdm-border, #3a423a); background: transparent; color: var(--bdm-text-secondary, #9aa39a); cursor: pointer; }
+.staff-mode-group button.is-active { color: #f0c65d; border-color: #f0c65d; }
+.staff-mode-group button:disabled { opacity: 0.5; cursor: default; }
+
+.staff-responsibility-inspector select { font-size: 11px; padding: 2px 4px; width: 100%; }
+.staff-responsibility-apply { margin-top: 6px; align-self: flex-start; }

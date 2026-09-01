@@ -15,7 +15,17 @@ import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { isStaffContractActiveOn, type StaffContract } from '@/domain/staffContract'
 import type { StaffAppointmentReason, StaffCareerHistoryEntry, StaffDepartureReason, StaffEmployment } from '@/domain/staffCareer'
 import { staffReputationScore, type StaffReputationProfile } from '@/domain/staffReputation'
-import { calculateStaffWorkload, getStaffAssignment, getStaffPerson, getTeamStaffAssignments, type GameWorld } from '@/domain/world'
+import { calculateStaffWorkload, getStaffAssignment, getStaffPerson, getTeamStaffAssignments, getTeamResponsibilities, getResponsibilitiesHeldByStaff, type GameWorld } from '@/domain/world'
+import {
+  RESPONSIBILITY_DOMAINS,
+  RESPONSIBILITY_KINDS,
+  responsibilityDefinition,
+  validateResponsibilityAssignment,
+  type Responsibility,
+  type ResponsibilityDomain,
+  type ResponsibilityKind,
+  type ResponsibilityMode,
+} from '@/domain/responsibility'
 import type { StaffPersonId, TeamId } from '@/domain/ids'
 
 /**
@@ -339,3 +349,180 @@ function trimTrailingZeros(value: number): string {
 }
 
 export { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS }
+
+// ---------------------------------------------------------------------------
+// Wave 4C2 — Responsibilities & Delegation UI presentation
+// ---------------------------------------------------------------------------
+
+/** camelCase -> "Camel Case" — the sole label helper for Responsibility kinds. No second registry. */
+export function formatCamelCaseLabel(value: string): string {
+  const spaced = value.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+  return spaced.replace(/^./, (letter) => letter.toUpperCase())
+}
+
+export const RESPONSIBILITY_DOMAIN_LABELS: Readonly<Record<ResponsibilityDomain, string>> = Object.fromEntries(
+  RESPONSIBILITY_DOMAINS.map((domain) => [domain, domain.toUpperCase()]),
+) as Readonly<Record<ResponsibilityDomain, string>>
+
+export const RESPONSIBILITY_KIND_LABELS: Readonly<Record<ResponsibilityKind, string>> = Object.fromEntries(
+  RESPONSIBILITY_KINDS.map((kind) => [kind, formatCamelCaseLabel(kind)]),
+) as Readonly<Record<ResponsibilityKind, string>>
+
+export const RESPONSIBILITY_MODE_LABELS: Readonly<Record<ResponsibilityMode, string>> = {
+  userControlled: 'USER CONTROLLED',
+  delegated: 'DELEGATED',
+  advisory: 'ADVISORY',
+  organizational: 'ORGANIZATIONAL',
+}
+
+/** Deterministic canonical ordering: RESPONSIBILITY_DOMAINS order, then RESPONSIBILITY_KINDS order. Never Object.values()/insertion order. */
+function responsibilityDomainOrder(domain: ResponsibilityDomain): number {
+  return RESPONSIBILITY_DOMAINS.indexOf(domain)
+}
+function responsibilityKindOrder(kind: ResponsibilityKind): number {
+  return RESPONSIBILITY_KINDS.indexOf(kind)
+}
+
+export type StaffResponsibilityHolderLabel = 'YOU' | 'ORGANIZATION' | 'HEAD COACH' | string
+
+export interface StaffResponsibilityPresentationItem {
+  readonly id: string
+  readonly kind: ResponsibilityKind
+  readonly domain: ResponsibilityDomain
+  readonly mode: ResponsibilityMode
+  readonly capacityCost: number
+  readonly eligibleParticipant: 'staff' | 'coach'
+  readonly supportedModes: readonly ResponsibilityMode[]
+  readonly holderStaffId: StaffPersonId | undefined
+  readonly holderName: string | undefined
+  readonly holderRole: StaffRoleId | undefined
+  readonly holderProficiency: number | undefined
+  readonly holderUtilization: number | undefined
+  readonly holderWorkloadState: StaffWorkloadState | undefined
+  readonly holderLabel: StaffResponsibilityHolderLabel
+}
+
+/**
+ * Every canonical `RESPONSIBILITY_KIND` row for `teamId`, deterministically ordered by
+ * `RESPONSIBILITY_DOMAINS` then `RESPONSIBILITY_KINDS` declaration order. Rows for kinds with no
+ * persisted `Responsibility` yet (a legacy/never-enriched world) are still produced at the
+ * registry's `defaultMode`, so the grid is never gated on `responsibilitiesById` completeness —
+ * only `RESPONSIBILITY_REGISTRY` is the source of the row set.
+ */
+export function getTeamResponsibilityPresentation(world: GameWorld, teamId: TeamId): readonly StaffResponsibilityPresentationItem[] {
+  const existingByKind = new Map<ResponsibilityKind, Responsibility>(getTeamResponsibilities(world, teamId).map((item) => [item.kind, item]))
+
+  return [...RESPONSIBILITY_KINDS]
+    .sort((left, right) => {
+      const definitionLeft = responsibilityDefinition(left)
+      const definitionRight = responsibilityDefinition(right)
+      return responsibilityDomainOrder(definitionLeft.domain) - responsibilityDomainOrder(definitionRight.domain)
+        || responsibilityKindOrder(left) - responsibilityKindOrder(right)
+    })
+    .map((kind) => {
+      const definition = responsibilityDefinition(kind)
+      const existing = existingByKind.get(kind)
+      const mode = existing?.mode ?? definition.defaultMode
+      const holderStaffId = existing?.holderStaffId
+      const holderPerson = holderStaffId === undefined ? undefined : getStaffPerson(world, holderStaffId)
+      const holderAssignment = holderStaffId === undefined ? undefined : getStaffAssignment(world, holderStaffId)
+      const holderWorkload = holderStaffId === undefined ? undefined : calculateStaffWorkload(world, holderStaffId)
+
+      return {
+        id: existing?.id ?? `responsibility:${teamId}:${kind}`,
+        kind,
+        domain: definition.domain,
+        mode,
+        capacityCost: definition.capacityCost,
+        eligibleParticipant: definition.eligibleParticipant,
+        supportedModes: definition.supportedModes,
+        holderStaffId,
+        holderName: holderPerson === undefined ? undefined : `${holderPerson.identity.firstName} ${holderPerson.identity.lastName}`,
+        holderRole: holderAssignment?.role,
+        holderProficiency: holderPerson === undefined || holderAssignment === undefined ? undefined : calculateStaffRoleProficiencyByRoleId(holderPerson, holderAssignment.role),
+        holderUtilization: holderWorkload?.utilization,
+        holderWorkloadState: holderWorkload === undefined ? undefined : classifyWorkloadState(holderWorkload),
+        holderLabel: responsibilityHolderLabel(definition.eligibleParticipant, mode, holderPerson === undefined ? undefined : `${holderPerson.identity.firstName} ${holderPerson.identity.lastName}`),
+      }
+    })
+}
+
+function responsibilityHolderLabel(eligibleParticipant: 'staff' | 'coach', mode: ResponsibilityMode, holderName: string | undefined): StaffResponsibilityHolderLabel {
+  if (eligibleParticipant === 'coach') return 'HEAD COACH'
+  if (mode === 'userControlled') return 'YOU'
+  if (mode === 'organizational') return 'ORGANIZATION'
+  return holderName ?? 'VACANT'
+}
+
+export interface StaffResponsibilityCandidate {
+  readonly staffPersonId: StaffPersonId
+  readonly name: string
+  readonly role: StaffRoleId
+  readonly proficiency: number
+  readonly currentUtilization: number
+  readonly projectedUtilization: number
+  readonly projectedWorkloadState: StaffWorkloadState
+}
+
+/**
+ * Eligible `delegated`/`advisory` candidates for `kind` on `teamId`: only Staff from this Team,
+ * currently employed, with a real `TeamStaffAssignment`, whose role is eligible per
+ * `validateResponsibilityAssignment` — never `marketRole`, free agents, another Team's Staff, or
+ * `headCoach`. Ordered by current-role proficiency descending, then StaffPersonId ascending.
+ */
+export function getEligibleResponsibilityCandidates(world: GameWorld, teamId: TeamId, kind: ResponsibilityKind): readonly StaffResponsibilityCandidate[] {
+  const definition = responsibilityDefinition(kind)
+  if (definition.eligibleParticipant !== 'staff') return []
+
+  return getTeamStaffAssignments(world, teamId)
+    .filter((assignment) => world.staffEmploymentByStaffId[assignment.staffPersonId]?.status === 'employed')
+    .map((assignment) => {
+      const person = getStaffPerson(world, assignment.staffPersonId)
+      if (person === undefined) return undefined
+      const validation = validateResponsibilityAssignment(kind, 'delegated', assignment.role, person)
+      if (!validation.ok) return undefined
+      const currentWorkload = calculateStaffWorkload(world, person.id)
+      const projectedWorkload = projectStaffWorkloadForResponsibility(world, teamId, kind, person.id)
+      return {
+        staffPersonId: person.id,
+        name: `${person.identity.firstName} ${person.identity.lastName}`,
+        role: assignment.role,
+        proficiency: calculateStaffRoleProficiencyByRoleId(person, assignment.role),
+        currentUtilization: currentWorkload.utilization,
+        projectedUtilization: projectedWorkload.utilization,
+        projectedWorkloadState: classifyWorkloadState(projectedWorkload),
+      }
+    })
+    .filter((candidate): candidate is StaffResponsibilityCandidate => candidate !== undefined)
+    .sort((left, right) => right.proficiency - left.proficiency || left.staffPersonId.localeCompare(right.staffPersonId))
+}
+
+/**
+ * Projected workload for `staffId` if `kind` were (re)assigned to them on `teamId`, computed by
+ * building a transient, non-persisted `Responsibility` collection and calling the canonical
+ * `calculateStaffWorkload` again — never a second workload formula. Correctly handles: the Staff
+ * member already holding the Responsibility (no double count), moving it from another holder, and
+ * simply changing mode while keeping the same holder.
+ */
+export function projectStaffWorkloadForResponsibility(world: GameWorld, teamId: TeamId, kind: ResponsibilityKind, staffId: StaffPersonId): ReturnType<typeof calculateStaffWorkload> {
+  const existing = getTeamResponsibilities(world, teamId).find((item) => item.kind === kind)
+  const projectedResponsibilitiesById = { ...world.responsibilitiesById }
+  const id = existing?.id ?? `responsibility:${teamId}:${kind}`
+  projectedResponsibilitiesById[id as keyof typeof projectedResponsibilitiesById] = {
+    ...(existing ?? { id, teamId, kind }),
+    mode: 'delegated',
+    holderStaffId: staffId,
+  } as never
+  const projectedWorld: GameWorld = { ...world, responsibilitiesById: projectedResponsibilitiesById }
+  return calculateStaffWorkload(projectedWorld, staffId)
+}
+
+/** Responsibilities currently held by `staffId`, for the compact "RESPONSIBILITIES HELD" Staff detail section. Deterministic domain/kind order. */
+export function getResponsibilitiesHeldPresentation(world: GameWorld, staffId: StaffPersonId): readonly { readonly id: string; readonly kind: ResponsibilityKind; readonly domain: ResponsibilityDomain; readonly mode: ResponsibilityMode; readonly capacityCost: number }[] {
+  return getResponsibilitiesHeldByStaff(world, staffId)
+    .map((responsibility) => {
+      const definition = responsibilityDefinition(responsibility.kind)
+      return { id: responsibility.id, kind: responsibility.kind, domain: definition.domain, mode: responsibility.mode, capacityCost: definition.capacityCost }
+    })
+    .sort((left, right) => responsibilityDomainOrder(left.domain) - responsibilityDomainOrder(right.domain) || responsibilityKindOrder(left.kind) - responsibilityKindOrder(right.kind))
+}

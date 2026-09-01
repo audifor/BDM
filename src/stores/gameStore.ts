@@ -47,6 +47,7 @@ import { createPreMatchMediaOpportunity, respondToMediaOpportunity, skipMediaOpp
 import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
 import type { StaffRoleId } from '@/domain/staff'
 import { acceptStaffJobOffer, completeStaffInterview, createStaffJobOffer, createStaffJobOpeningForTeam, declineStaffJobOffer, fireStaffFromTeam, identifyStaffCandidate, startStaffInterview } from '@/app/staffCareer'
+import { setTeamResponsibility, type SetTeamResponsibilityInput } from '@/app/staffResponsibilities'
 
 interface GameStore {
   readonly world: GameWorld | null
@@ -74,6 +75,7 @@ interface GameStore {
   acceptStaffOffer(offerId: string): void
   declineStaffOffer(offerId: string): void
   fireStaff(staffId: StaffPersonId): void
+  setStaffResponsibility(input: SetTeamResponsibilityInput): void
   purchaseUserCoachSkill(skillId: CoachSkillId): CoachRpgOperationResult
   purchaseUserCoachPerk(perkId: CoachPerkId): CoachRpgOperationResult
   acceptUserCoachOffer(offerId: string): void
@@ -168,6 +170,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   acceptStaffOffer: (offerId) => set({ world: acceptStaffJobOffer(requireWorld(get().world), offerId) }),
   declineStaffOffer: (offerId) => set({ world: declineStaffJobOffer(requireWorld(get().world), offerId) }),
   fireStaff: (staffId) => set({ world: fireStaffFromTeam(requireWorld(get().world), staffId) }),
+  setStaffResponsibility: (input) => set({ world: setTeamResponsibility(requireWorld(get().world), input) }),
   purchaseUserCoachSkill: (skillId) => { const result = purchaseCoachSkillRank(requireWorld(get().world), requireWorld(get().world).userCoachId, skillId); if (result.ok) set({ world: result.world }); return result },
   purchaseUserCoachPerk: (perkId) => { const result = purchaseCoachPerk(requireWorld(get().world), requireWorld(get().world).userCoachId, perkId); if (result.ok) set({ world: result.world }); return result },
   acceptUserCoachOffer: (offerId) => set({ world: acceptCoachJobOffer(requireWorld(get().world), offerId) }),
