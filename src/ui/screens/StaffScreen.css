@@ -1,0 +1,40 @@
+.staff-detail { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; padding-right: 2px; }
+.staff-detail__identity h2 { margin: 2px 0 6px; font-size: 1.05rem; letter-spacing: -0.02em; }
+.staff-detail__summary,
+.staff-evaluations,
+.staff-workload,
+.staff-contract,
+.staff-reputation,
+.staff-attributes { display: flex; flex-direction: column; gap: 2px; margin: 0; }
+.staff-detail__summary div,
+.staff-evaluations div,
+.staff-workload div,
+.staff-contract div,
+.staff-reputation div,
+.staff-attributes div { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 18px; font-size: 11px; }
+.staff-detail__summary dt,
+.staff-evaluations dt,
+.staff-workload dt,
+.staff-contract dt,
+.staff-reputation dt,
+.staff-attributes dt { color: var(--bdm-text-secondary, #9aa39a); font-weight: 500; letter-spacing: 0.02em; }
+.staff-detail__summary dd,
+.staff-evaluations dd,
+.staff-workload dd,
+.staff-contract dd,
+.staff-reputation dd,
+.staff-attributes dd { margin: 0; font-variant-numeric: tabular-nums; }
+.staff-evaluations div.current-role dt,
+.staff-evaluations div.current-role dd { font-weight: 700; color: #f0c65d; }
+.staff-explanation { margin: 2px 0 4px; font-size: 11px; color: var(--bdm-text-secondary, #9aa39a); }
+.staff-career-history { margin: 0; padding-left: 14px; font-size: 11px; display: flex; flex-direction: column; gap: 2px; }
+
+.staff-workload-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.02em; padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
+.staff-workload-badge--normal,
+.staff-workload-state--normal { color: #b9d4c3; border: 1px solid #5d9d84; }
+.staff-workload-badge--pressured,
+.staff-workload-state--pressured { color: #f0d99b; border: 1px solid #d0a94e; }
+.staff-workload-badge--overloaded,
+.staff-workload-state--overloaded { color: #f0b2a9; border: 1px solid #d06d5e; }
+.staff-workload-badge--unassigned,
+.staff-workload-state--unassigned { color: #9aa39a; border: 1px solid #4b524b; }

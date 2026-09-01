@@ -2,8 +2,10 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 
-import { createAcbTestGame, createNewGame } from '@/app/game'
+import { createNewGame } from '@/app/game'
 import { createDefaultTacticalPlan } from '@/engine/match'
+import { getUserTeam } from '@/engine/calendar'
+import { getTeamStaffPresentation } from '@/ui/staffPresentation'
 import type { DesktopAppActions } from './DesktopAppHost'
 import { DesktopAppHost } from './DesktopAppHost'
 import { DESKTOP_APPS } from './DesktopAppRegistry'
@@ -29,7 +31,7 @@ describe('DesktopAppHost', () => {
 
   it('opens Golden Manager sections while preserving unrelated application hosts', () => {
     const world = createNewGame()
-    const labels = { training: 'Team Training', staff: 'Staff y Roles Funcionales', coach: 'REPUTATION', tactics: 'Pizarra', market: 'Free agents', draft: 'No draft available' }
+    const labels = { training: 'Team Training', coach: 'REPUTATION', tactics: 'Pizarra', market: 'Free agents', draft: 'No draft available' }
     for (const [appId, label] of Object.entries(labels)) {
       expect(renderToStaticMarkup(createElement(DesktopAppHost, { appId, world, actions }))).toContain(label)
     }
@@ -53,14 +55,29 @@ describe('DesktopAppHost', () => {
     expect(renderToStaticMarkup(createElement(DesktopAppHost, { appId: 'coach', world, actions }))).toContain('>Legacy<')
   })
 
-  it('opens Staff on the Club Staff & Roles view', () => {
-    const world = createAcbTestGame({ userTeamKey: 'caz' })
-    const staffId = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.teamId === Object.values(world.teams).find((team) => team.coachId === world.userCoachId)!.id)!.staffPersonId
-    const staff = world.staffPeopleById[staffId]!
+  it('opens Staff on the Wave 4C1 Staff Core UI, not the legacy Club Staff & Roles view', () => {
+    const world = createNewGame()
     const markup = renderToStaticMarkup(createElement(DesktopAppHost, { appId: 'staff', world, actions }))
-    expect(markup).toContain('Staff y Roles Funcionales')
-    expect(markup).toContain('Bonificaciones del Staff')
-    expect(markup).toContain(`${staff.identity.firstName} ${staff.identity.lastName}`)
-    expect(markup).not.toContain('Diego Ferrer')
+    // Wave 4C1 Staff Core UI signal: the staff-core BDMDataGrid and its CONTRACT STATUS column.
+    expect(markup).toContain('staff-core')
+    expect(markup).toContain('CONTRACT STATUS')
+    // The current GameWorld's staff data is what renders (world-derived, not fabricated).
+    const team = getUserTeam(world)
+    expect(team).toBeDefined()
+    const staff = getTeamStaffPresentation(world, team!.id)
+    expect(staff.length).toBeGreaterThan(0)
+    expect(markup).toContain(staff[0]!.name)
+    // Legacy Club "Staff & Roles" tab content must NOT appear.
+    expect(markup).not.toContain('Staff y Roles Funcionales')
+    expect(markup).not.toContain('Bonificaciones del Staff')
+  })
+
+  it('leaves the Club app itself rendering ClubPcbPage unaffected by the Staff routing fix', () => {
+    // ClubPcbPage's own "Staff & Roles" tab (reached via initialTab: 'staff', which DesktopAppHost
+    // no longer passes for appId 'club' after the Staff routing fix) is covered directly by
+    // ClubPcbPage.test.ts. This only needs to confirm 'club' still opens ClubPcbPage's default view.
+    const markup = renderToStaticMarkup(createElement(DesktopAppHost, { appId: 'club', world: createNewGame(), actions }))
+    expect(markup).toContain('pcb-club')
+    expect(markup).toContain('club-dashboard')
   })
 })

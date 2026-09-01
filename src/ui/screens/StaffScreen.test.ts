@@ -27,8 +27,7 @@ describe('StaffScreen', () => {
     expect(markup).toContain('ASSISTANT COACH')
     expect(markup).toContain('SCOUT')
     expect(markup).toContain('MEDICAL')
-    expect(markup).toContain('CURRENT ROLE')
-    expect(markup).toContain('ROLE PROFICIENCY')
+    expect(markup).toContain('STAFF PERSON')
     expect(markup).toContain('ROLE EVALUATION')
     for (const attribute of STAFF_PROFESSIONAL_ATTRIBUTE_KEYS) expect(markup).toContain(attributeLabel(attribute))
     expect(markup).toContain(world.staffPeopleById[Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.teamId === team.id)!.staffPersonId]!.identity.firstName)
@@ -80,7 +79,7 @@ describe('StaffScreen', () => {
     const retainedPeople = retainedAssignments.map((assignment) => world.staffPeopleById[assignment.staffPersonId]!)
     const markup = renderToStaticMarkup(createElement(StaffScreen, { world: rebuildWorld(world, retainedPeople, retainedAssignments) }))
 
-    expect(markup).toContain('NO STAFF ASSIGNED')
+    expect(markup).toContain('No staff')
   })
 
   it('renders the same Staff after save/load and a season transition', () => {
