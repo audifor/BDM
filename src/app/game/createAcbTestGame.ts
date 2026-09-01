@@ -120,7 +120,7 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
   )
   const freeAgentCoaches = Array.from({ length: 5 }, (_, index) => createCoach({ id: coachIdFromString(`acb-free-agent-head-coach-${index + 1}`), firstName: 'Free', lastName: `Coach ${index + 1}`, gender: 'male', nationalityId: SPAIN_ID }))
   const coaches = [userCoach, ...aiCoaches, ...freeAgentCoaches]
-  const staffSandbox = generateStaffSandbox({ teams, assignedOn: SEASON_START, idPrefix: 'acb-staff-sandbox-v1' })
+  const staffSandbox = generateStaffSandbox({ teams, assignedOn: CURRENT_DATE, idPrefix: 'acb-staff-sandbox-v1' })
   const assignmentsByStaffId = new Map(staffSandbox.assignments.map((assignment) => [assignment.staffPersonId, assignment]))
   const staffEmploymentByStaffId = Object.fromEntries(staffSandbox.people.map((person) => {
     const assignment = assignmentsByStaffId.get(person.id)

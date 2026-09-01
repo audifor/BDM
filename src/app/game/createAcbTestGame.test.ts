@@ -99,6 +99,22 @@ describe('createAcbTestGame', () => {
     expect(loaded.staffContractsById).toEqual(world.staffContractsById)
   })
 
+  it('keeps initial ACB staff chronology at or before the current game date', () => {
+    const world = createAcbTestGame({ userTeamKey: 'caz' })
+    for (const assignment of Object.values(world.teamStaffAssignmentsById)) {
+      expect(assignment.assignedOn <= world.currentDate).toBe(true)
+      const employment = world.staffEmploymentByStaffId[assignment.staffPersonId]!
+      expect(employment.startedOn! <= world.currentDate).toBe(true)
+      const appointment = world.staffCareerHistoryByStaffId[assignment.staffPersonId]!.find((entry) => entry.kind === 'appointment')!
+      expect(appointment.date <= world.currentDate).toBe(true)
+    }
+    const staffId = Object.values(world.teamStaffAssignmentsById)[0]!.staffPersonId
+    const appointment = world.staffCareerHistoryByStaffId[staffId]!.find((entry) => entry.kind === 'appointment')!
+    const fired = fireStaffFromTeam(world, staffId)
+    const departure = fired.staffCareerHistoryByStaffId[staffId]!.find((entry) => entry.kind === 'departure')!
+    expect(departure.date >= appointment.date).toBe(true)
+  })
+
   it('uses the canonical head-coach career flow for an ACB free-agent coach', () => {
     const world = createAcbTestGame({ userTeamKey: 'caz' })
     const team = getUserTeam(world)!
