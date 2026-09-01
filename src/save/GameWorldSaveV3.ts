@@ -1,6 +1,6 @@
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { createTeamFinances, type TeamFinances } from '@/domain/finance'
-import { staffPersonIdFromString, teamIdFromString } from '@/domain/ids'
+import { staffPersonIdFromString, teamIdFromString, type StaffPersonId } from '@/domain/ids'
 import { createStaffEmployment, createStaffJobOpening, staffJobCandidacyIdFromString, staffJobOfferIdFromString, staffJobOpeningIdFromString, type StaffCareerHistoryEntry, type StaffEmployment, type StaffInterview, type StaffJobCandidacy, type StaffJobOffer, type StaffJobOpening } from '@/domain/staffCareer'
 import { createStaffContract, staffContractIdFromString, type StaffContract } from '@/domain/staffContract'
 import { createStaffReputationProfile, STAFF_REPUTATION_DIMENSIONS, type StaffReputationProfile } from '@/domain/staffReputation'
@@ -34,7 +34,12 @@ export function migrateGameWorldSaveV1ToV3(value: SaveGameEnvelopeV1): SaveGameE
  * function).
  */
 export function migrateGameWorldSaveV2ToV3(value: SaveGameEnvelopeV2): SaveGameEnvelopeV3 {
-  const world = ensureStaffReputationStructure(ensureStaffContractStructure(ensureStaffEmploymentStructure(deserializeGameWorldV2(value))))
+  const payload = record(value.payload, 'Save V2 payload')
+  const trainingStaffAssignments = parseScheduledTrainingStaffAssignments(payload.scheduledTrainingSessions)
+  const compatibilityPayload = stripScheduledTrainingStaffAssignments(payload)
+  const baseWorld = deserializeGameWorldV2({ ...value, payload: compatibilityPayload })
+  const enriched = ensureStaffReputationStructure(ensureStaffContractStructure(ensureStaffEmploymentStructure(baseWorld)))
+  const world = restoreScheduledTrainingStaffAssignments(enriched, trainingStaffAssignments)
   return { schemaVersion: 3, savedAt: value.savedAt, payload: v3Payload(value.payload, world) }
 }
 
@@ -51,12 +56,14 @@ export function deserializeGameWorldV3(value: unknown): GameWorld {
   const payload = record(envelope.payload, 'Save V3 payload')
   const teamFinances = array(payload.teamFinances, 'Save V3 teamFinances').map(parseTeamFinancesV3)
   const runtime = parseStaffCareerRuntimeV3(payload.staffCareerRuntime)
-  // V2's own reader is looser (it only strictly validates player/organization-knowledge/scouting/
-  // market contracts) — it still needs a syntactically valid `teamFinances` array to construct a
-  // world at all, so we pass the payload through unchanged and then OVERWRITE with the strictly
-  // re-parsed `teamFinances` above, which is the actual V3-owned source of truth for this field.
-  const world = deserializeGameWorldV2({ ...envelope, schemaVersion: 2, payload })
-  return updateGameWorld(world, {
+  const trainingStaffAssignments = parseScheduledTrainingStaffAssignments(payload.scheduledTrainingSessions)
+  // V2/V1 are legacy layers and do not own Staff Career. A current V3 session may carry concrete
+  // execution-staff IDs, but validating those IDs requires V3 employment to exist. Strip only that
+  // new field while constructing the compatibility world, restore V3 Staff Career, then restore the
+  // assignments through updateGameWorld so the full canonical validator runs with employment live.
+  const compatibilityPayload = stripScheduledTrainingStaffAssignments(payload)
+  const world = deserializeGameWorldV2({ ...envelope, schemaVersion: 2, payload: compatibilityPayload })
+  const withStaffCareer = updateGameWorld(world, {
     teamFinances,
     staffEmploymentByStaffId: runtime.staffEmploymentByStaffId,
     staffCareerHistoryByStaffId: runtime.staffCareerHistoryByStaffId,
@@ -67,6 +74,7 @@ export function deserializeGameWorldV3(value: unknown): GameWorld {
     staffContracts: runtime.staffContracts,
     staffReputationProfilesByStaffId: runtime.staffReputationProfilesByStaffId,
   })
+  return restoreScheduledTrainingStaffAssignments(withStaffCareer, trainingStaffAssignments)
 }
 
 function v3Payload(payload: GameWorldSaveV2, world: GameWorld): GameWorldSaveV3 {
@@ -195,6 +203,41 @@ function parseStaffReputationProfileV3(value: unknown): StaffReputationProfile {
   const values = record(v.values, 'Staff reputation values V3')
   assertExactKeys(values, [...STAFF_REPUTATION_DIMENSIONS], 'Staff reputation values V3')
   return createStaffReputationProfile({ values: Object.fromEntries(STAFF_REPUTATION_DIMENSIONS.map((dimension) => [dimension, finite(values[dimension], `Staff reputation ${dimension}`)])) as never })
+}
+
+function parseScheduledTrainingStaffAssignments(value: unknown): Readonly<Record<string, readonly StaffPersonId[]>> {
+  if (value === undefined) return Object.freeze({})
+  const result: Record<string, readonly StaffPersonId[]> = {}
+  for (const entry of array(value, 'Save scheduled training sessions')) {
+    const session = record(entry, 'Save scheduled training session')
+    if (session.assignedStaffPersonIds === undefined) continue
+    const sessionId = text(session.id, 'Scheduled training session id')
+    const staffIds = array(session.assignedStaffPersonIds, `Scheduled training session ${sessionId} assigned staff`).map((staffId) => staffPersonIdFromString(text(staffId, `Scheduled training session ${sessionId} assigned staff id`)))
+    if (new Set(staffIds).size !== staffIds.length) throw new TypeError(`Scheduled training session ${sessionId} assigned staff must be unique`)
+    result[sessionId] = Object.freeze(staffIds)
+  }
+  return Object.freeze(result)
+}
+
+function stripScheduledTrainingStaffAssignments(payload: Record<string, unknown>): Record<string, unknown> {
+  if (payload.scheduledTrainingSessions === undefined) return payload
+  const scheduledTrainingSessions = array(payload.scheduledTrainingSessions, 'Save scheduled training sessions').map((entry) => {
+    const session = { ...record(entry, 'Save scheduled training session') }
+    delete session.assignedStaffPersonIds
+    return session
+  })
+  return { ...payload, scheduledTrainingSessions }
+}
+
+function restoreScheduledTrainingStaffAssignments(world: GameWorld, assignments: Readonly<Record<string, readonly StaffPersonId[]>>): GameWorld {
+  if (Object.keys(assignments).length === 0) return world
+  const scheduledTrainingSessionsById = { ...world.scheduledTrainingSessionsById }
+  for (const [sessionId, staffIds] of Object.entries(assignments)) {
+    const session = scheduledTrainingSessionsById[sessionId]
+    if (session === undefined) throw new TypeError(`Scheduled training staff assignment references missing session ${sessionId}`)
+    scheduledTrainingSessionsById[sessionId] = { ...session, assignedStaffPersonIds: staffIds }
+  }
+  return updateGameWorld(world, { scheduledTrainingSessionsById })
 }
 
 /** Canonical read dispatcher (Issue #19 §10): V1/V2 are migrated purely up to V3; runtime serialization writes V3 only. Supersedes `GameWorldSaveV2.deserializeGameWorldSave`, which remains for its own layer's direct V1/V2 tests. */

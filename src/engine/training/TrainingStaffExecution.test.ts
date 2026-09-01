@@ -4,7 +4,7 @@ import { fireStaffFromTeam } from '@/app/staffCareer/StaffCareerService'
 import { createScheduledTrainingSession } from '@/domain/training'
 import type { PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
-import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSaveV1'
+import { deserializeGameWorldSave, serializeGameWorldV3 } from '@/save/GameWorldSaveV3'
 import {
   executeScheduledTrainingSessions,
   nextEligibleTrainingDate,
@@ -186,7 +186,7 @@ describe('Training Staff V2 execution assignments', () => {
     expect(() => fireStaffFromTeam(executed, shooter2)).not.toThrow()
   })
 
-  it('round-trips pending execution assignments through the existing V1 save compatibility path', () => {
+  it('round-trips pending execution assignments through the canonical V3 save path', () => {
     const world = createAcbTestGame()
     const team = firstTeam(world)
     const playerId = team.rosterPlayerIds[0]!
@@ -196,7 +196,8 @@ describe('Training Staff V2 execution assignments', () => {
       id: 'save-staff-session', teamId: team.id, date, startTime: '09:00', durationMinutes: 60,
       scope: 'individual', playerId, definitionId: 'threePoint', intensity: 'normal', assignedStaffPersonIds: [shooter],
     }))
-    const loaded = deserializeGameWorldV1(serializeGameWorldV1(scheduled, '2026-09-01T12:00:00.000Z'))
+    const loaded = deserializeGameWorldSave(serializeGameWorldV3(scheduled, '2026-09-01T12:00:00.000Z'))
     expect(loaded.scheduledTrainingSessionsById['save-staff-session']!.assignedStaffPersonIds).toEqual([shooter])
+    expect(loaded.staffEmploymentByStaffId[shooter]).toEqual(scheduled.staffEmploymentByStaffId[shooter])
   })
 })
