@@ -428,5 +428,67 @@ describe('BasketballOperationsAdvisory', () => {
       if (second.ok) return
       expect(second.reason).toBe('alreadyApplied')
     })
+
+    it('the payload freezes the seasonId and ecosystemId the proposal was validated against', () => {
+      const { world } = tradeFixture()
+      const progressed = progressBasketballOperationsAdvisories(world)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'tradeRecommendation')
+      if (outcome === undefined) return
+      expect(outcome.payload.seasonId).toBe(world.currentSeasonId)
+      expect(typeof outcome.payload.ecosystemId).toBe('string')
+    })
+
+    it('BDM is multi-competition: acceptance reconstructs the proposal from the frozen payload seasonId, not world.currentSeasonId, even after currentSeasonId advances to a different valid season', () => {
+      const { world } = tradeFixture()
+      const progressed = progressBasketballOperationsAdvisories(world)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'tradeRecommendation')
+      if (outcome === undefined) return
+      const seasonA = outcome.payload.seasonId as string
+      const seasonB = Object.values(progressed.seasons).find((item) => progressed.tradeRulesBySeasonId[item.id] !== undefined && item.id !== seasonA)
+      if (seasonB === undefined) return
+      // Advance currentSeasonId to a different season with its own trade rules — acceptance must
+      // still validate/execute against the frozen season A, never reinterpret against season B.
+      const advanced = updateGameWorld(progressed, { currentSeasonId: seasonB.id })
+      const result = acceptTradeRecommendation(advanced, outcome.id)
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      const executedTrade = Object.values(result.world.tradeHistoryById).find((item) => item.proposalId === outcome.payload.proposalId)
+      expect(executedTrade?.seasonId).toBe(seasonA)
+    })
+
+    it('a recommendation whose frozen season/ecosystem pairing is no longer valid is stale and fails atomically with no partial mutation', () => {
+      const { world } = tradeFixture()
+      const progressed = progressBasketballOperationsAdvisories(world)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'tradeRecommendation')
+      if (outcome === undefined) return
+      const seasonId = outcome.payload.seasonId as string
+      const season = progressed.seasons[seasonId as keyof typeof progressed.seasons]!
+      // Reassign the frozen season's competition to point at a different ecosystem than the one
+      // frozen in the payload — the season/ecosystem pairing the recommendation was built against no
+      // longer holds, so acceptance must treat it as stale rather than silently reinterpreting it
+      // against whatever ecosystem the competition now belongs to.
+      const otherEcosystem = Object.values(progressed.ecosystems).find((item) => item.id !== progressed.competitions[season.competitionId]!.ecosystemId)
+      if (otherEcosystem === undefined) return
+      const staled = updateGameWorld(progressed, {
+        competitions: Object.values(progressed.competitions).map((item) => item.id === season.competitionId ? { ...item, ecosystemId: otherEcosystem.id } : item),
+      })
+      const before = JSON.stringify(staled)
+      const result = acceptTradeRecommendation(staled, outcome.id)
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+      expect(result.reason).toBe('staleRecommendation')
+      expect(JSON.stringify(staled)).toBe(before)
+    })
+
+    it('determinism and idempotency are unaffected by freezing seasonId/ecosystemId: repeated progression from the same world produces the same single outcome', () => {
+      const { world } = tradeFixture()
+      const first = progressBasketballOperationsAdvisories(world)
+      const second = progressBasketballOperationsAdvisories(first)
+      const firstOutcome = Object.values(first.delegationOutcomesById).find((item) => item.kind === 'tradeRecommendation')
+      const secondOutcome = Object.values(second.delegationOutcomesById).find((item) => item.kind === 'tradeRecommendation')
+      expect(firstOutcome).toBeDefined()
+      expect(secondOutcome).toEqual(firstOutcome)
+      expect(Object.values(second.delegationOutcomesById).filter((item) => item.kind === 'tradeRecommendation')).toHaveLength(1)
+    })
   })
 })

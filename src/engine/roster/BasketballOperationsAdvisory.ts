@@ -1,6 +1,6 @@
 import { deriveOrganizationPlayerValuation } from '@/domain/intelligence'
 import { getMarketKnowledge } from '@/domain/market'
-import { organizationIdForTeam, type PlayerId, type TeamId } from '@/domain/ids'
+import { organizationIdForTeam, type EcosystemId, type PlayerId, type SeasonId, type TeamId } from '@/domain/ids'
 import { createDelegationOutcome, delegationOutcomeIdFromString, type DelegationOutcome, type DelegationOutcomeId, type ResponsibilityKind } from '@/domain/responsibility'
 import { getActivePlayerContract, getEcosystemForTeam, getTeamFinancialSnapshot, isPlayerFreeAgent, type GameWorld } from '@/domain/world'
 import { basketballOperationsQuality, resolveAdvisoryResponsibility } from '@/engine/staff'
@@ -39,9 +39,10 @@ function record(world: GameWorld, teamId: TeamId, kind: typeof KINDS[number]): G
     const counterpart = Object.values(world.teams).find((team) => team.rosterPlayerIds.includes(candidate))
     const outgoing = world.teams[teamId]!.rosterPlayerIds.slice().sort().find((player) => getActivePlayerContract(world, player) !== undefined)
     const ecosystem = getEcosystemForTeam(world, teamId)
-    if (counterpart !== undefined && outgoing !== undefined && ecosystem !== undefined && getMarketKnowledge(world.marketKnowledge, organizationId, candidate)?.availability !== 'NOT_FOR_SALE') {
-      const proposal = { id: `staff-advisory:${teamId}:${outgoing}:${candidate}:${world.currentDate}`, ecosystemId: ecosystem.id, seasonId: world.currentSeasonId, participantTeamIds: [teamId, counterpart.id], movements: [{ asset: { kind: 'player' as const, playerId: outgoing }, fromTeamId: teamId, toTeamId: counterpart.id }, { asset: { kind: 'player' as const, playerId: candidate }, fromTeamId: counterpart.id, toTeamId: teamId }] }
-      if (validateTrade(world, proposal).allowed) payload = { teamId, incomingPlayerId: candidate, outgoingPlayerId: outgoing, counterpartTeamId: counterpart.id, proposalId: proposal.id, rank: 1, candidateCount: bounded, confidence: certainty(world, organizationId, candidate, 'TRADE') }
+    const seasonId = seasonForTeam(world, teamId)
+    if (counterpart !== undefined && outgoing !== undefined && ecosystem !== undefined && seasonId !== undefined && getMarketKnowledge(world.marketKnowledge, organizationId, candidate)?.availability !== 'NOT_FOR_SALE') {
+      const proposal = { id: `staff-advisory:${teamId}:${outgoing}:${candidate}:${world.currentDate}`, ecosystemId: ecosystem.id, seasonId, participantTeamIds: [teamId, counterpart.id], movements: [{ asset: { kind: 'player' as const, playerId: outgoing }, fromTeamId: teamId, toTeamId: counterpart.id }, { asset: { kind: 'player' as const, playerId: candidate }, fromTeamId: counterpart.id, toTeamId: teamId }] }
+      if (validateTrade(world, proposal).allowed) payload = { teamId, incomingPlayerId: candidate, outgoingPlayerId: outgoing, counterpartTeamId: counterpart.id, proposalId: proposal.id, ecosystemId: ecosystem.id, seasonId, rank: 1, candidateCount: bounded, confidence: certainty(world, organizationId, candidate, 'TRADE') }
     }
   }
   if (payload === undefined) return world
@@ -52,6 +53,8 @@ function evaluation(world: GameWorld, organizationId: ReturnType<typeof organiza
 function value(world: GameWorld, organizationId: ReturnType<typeof organizationIdForTeam>, playerId: PlayerId, context: 'FREE_AGENCY' | 'TRADE') { return evaluation(world, organizationId, playerId, context).priorityScore }
 function certainty(world: GameWorld, organizationId: ReturnType<typeof organizationIdForTeam>, playerId: PlayerId, context: 'FREE_AGENCY' | 'TRADE') { return evaluation(world, organizationId, playerId, context).certainty }
 function need(world: GameWorld, teamId: TeamId, position: string): number { return Math.max(0, 2 - world.teams[teamId]!.rosterPlayerIds.filter((id) => world.players[id]!.basketball.primaryPosition === position).length) }
+/** Canonical team→season resolution (mirrors `initializeBoardState`): the season whose competition the team currently participates in, not `world.currentSeasonId`, which may not apply to every team/ecosystem. */
+function seasonForTeam(world: GameWorld, teamId: TeamId): SeasonId | undefined { return Object.values(world.seasons).find((season) => world.competitions[season.competitionId]?.participantTeamIds.includes(teamId))?.id }
 
 export type AcceptTradeRecommendationFailureReason = 'notFound' | 'invalidKind' | 'alreadyApplied' | 'malformedPayload' | 'staleRecommendation' | 'tradeEngineRejected'
 export type AcceptTradeRecommendationResult = { readonly ok: true; readonly world: GameWorld } | { readonly ok: false; readonly reason: AcceptTradeRecommendationFailureReason }
@@ -72,15 +75,21 @@ export function acceptTradeRecommendation(world: GameWorld, outcomeId: Delegatio
   if (outcome.kind !== 'tradeRecommendation') return { ok: false, reason: 'invalidKind' }
   if (outcome.applied) return { ok: false, reason: 'alreadyApplied' }
 
-  const { teamId, incomingPlayerId, outgoingPlayerId, counterpartTeamId, proposalId } = outcome.payload
-  if (typeof teamId !== 'string' || typeof incomingPlayerId !== 'string' || typeof outgoingPlayerId !== 'string' || typeof counterpartTeamId !== 'string' || typeof proposalId !== 'string') return { ok: false, reason: 'malformedPayload' }
+  const { teamId, incomingPlayerId, outgoingPlayerId, counterpartTeamId, proposalId, ecosystemId, seasonId } = outcome.payload
+  if (typeof teamId !== 'string' || typeof incomingPlayerId !== 'string' || typeof outgoingPlayerId !== 'string' || typeof counterpartTeamId !== 'string' || typeof proposalId !== 'string' || typeof ecosystemId !== 'string' || typeof seasonId !== 'string') return { ok: false, reason: 'malformedPayload' }
 
-  const ecosystem = getEcosystemForTeam(world, teamId as TeamId)
-  if (ecosystem === undefined) return { ok: false, reason: 'staleRecommendation' }
+  // Reconstruct the exact proposal frozen at recommendation time — never reinterpret it against
+  // `world.currentSeasonId`, which may have advanced (or never applied to this team/ecosystem) since
+  // creation. If the frozen season/ecosystem no longer exist or no longer relate to each other, the
+  // recommendation is stale and must fail safely with no mutation.
+  const season = world.seasons[seasonId as SeasonId]
+  if (season === undefined) return { ok: false, reason: 'staleRecommendation' }
+  const competition = world.competitions[season.competitionId]
+  if (competition === undefined || competition.ecosystemId !== ecosystemId) return { ok: false, reason: 'staleRecommendation' }
   const proposal = {
     id: proposalId,
-    ecosystemId: ecosystem.id,
-    seasonId: world.currentSeasonId,
+    ecosystemId: ecosystemId as EcosystemId,
+    seasonId: seasonId as SeasonId,
     participantTeamIds: [teamId as TeamId, counterpartTeamId as TeamId],
     movements: [
       { asset: { kind: 'player' as const, playerId: outgoingPlayerId as PlayerId }, fromTeamId: teamId as TeamId, toTeamId: counterpartTeamId as TeamId },
