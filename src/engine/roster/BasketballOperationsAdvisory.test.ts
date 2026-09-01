@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game/createNewGame'
 import { organizationIdForTeam, staffPersonIdFromString, teamStaffAssignmentIdFromString, type PlayerId, type TeamId } from '@/domain/ids'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
-import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { getActivePlayerContract, updateGameWorld, type GameWorld } from '@/domain/world'
 import { acceptTradeRecommendation, progressBasketballOperationsAdvisories } from './BasketballOperationsAdvisory'
 
 type Kind = 'recommendSignings' | 'shortlistPlayers' | 'contractRecommendation' | 'tradeRecommendation'
@@ -109,13 +109,26 @@ describe('BasketballOperationsAdvisory', () => {
     expect(Object.values(a.delegationOutcomesById).find((x) => x.kind === 'shortlistPlayers')?.payload).toEqual(Object.values(b.delegationOutcomesById).find((x) => x.kind === 'shortlistPlayers')?.payload)
   })
 
-  it.each(['recommendSignings', 'shortlistPlayers', 'tradeRecommendation'] as const)('%s only ever selects a candidate present in OrganizationKnowledge', (kind) => {
+  it.each(['recommendSignings', 'tradeRecommendation'] as const)('%s only ever selects a candidate present in OrganizationKnowledge', (kind) => {
     const { world, playerId } = worldFor(kind)
     const progressed = progressBasketballOperationsAdvisories(world)
     const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === kind)
     if (outcome === undefined) return
     const candidateId = (outcome.payload.playerId ?? outcome.payload.incomingPlayerId) as string
     expect(candidateId).toBe(playerId)
+  })
+
+  // shortlistPlayers now returns a bounded, indexed candidate list (Blocker 4: DelegationOutcome.payload
+  // only allows flat string|number|boolean scalars, so the shortlist is represented as
+  // candidate1PlayerId..candidateNPlayerId rather than a single `playerId`).
+  it('shortlistPlayers only ever selects candidates present in OrganizationKnowledge', () => {
+    const { world, playerId } = worldFor('shortlistPlayers')
+    const progressed = progressBasketballOperationsAdvisories(world)
+    const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'shortlistPlayers')
+    if (outcome === undefined) return
+    const count = outcome.payload.candidateCount as number
+    const ids = Array.from({ length: count }, (_, index) => outcome.payload[`candidate${index + 1}PlayerId`])
+    expect(ids).toContain(playerId)
   })
 
   it('vacant/userControlled/organizational responsibilities never produce a Staff-authored outcome', () => {
@@ -150,6 +163,43 @@ describe('BasketballOperationsAdvisory', () => {
       const unaffordable = updateGameWorld(world, { marketKnowledge: [{ organizationId: org, playerId, availability: 'OPEN', expectedSalary: 10_000_000_000, expectedYears: 1, confidence: 90, assessedAt: world.currentDate, source: 'AGENT' }] })
       const progressed = progressBasketballOperationsAdvisories(unaffordable)
       expect(Object.values(progressed.delegationOutcomesById).some((item) => item.kind === 'recommendSignings')).toBe(false)
+    })
+
+    // Blocker 5: eligibility must be filtered BEFORE the ranked/RNG candidate pick, not after — the
+    // globally top-ranked candidate here is NOT_FOR_SALE (ineligible), but a second, fully-valid
+    // candidate exists lower in the need/value ranking, and must still be found and recommended.
+    it('finds and uses a valid lower-ranked candidate when the top-ranked candidate is ineligible (NOT_FOR_SALE)', () => {
+      const base = createNewGame()
+      const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
+      const donors = Object.values(base.teams).filter((item) => item.id !== team.id && item.rosterPlayerIds.length > 5).slice(0, 2)
+      if (donors.length < 2) return
+      const topRanked = donors[0]!.rosterPlayerIds[0]!
+      const fallback = donors[1]!.rosterPlayerIds[0]!
+      const org = organizationIdForTeam(team.id)
+      const staffId = staffPersonIdFromString('ops:eligibility-fallback')
+      const market = updateGameWorld(base, {
+        teams: Object.values(base.teams).map((item) => donors.some((donor) => donor.id === item.id) ? { ...item, rosterPlayerIds: item.rosterPlayerIds.filter((id) => id !== topRanked && id !== fallback) } : item),
+        contracts: Object.values(base.contractsById).filter((item) => item.playerId !== topRanked && item.playerId !== fallback),
+      })
+      const withStaff = updateGameWorld(market, {
+        staffPeople: [...Object.values(market.staffPeopleById), { id: staffId, identity: { firstName: 'Eligibility', lastName: 'Fallback' }, professional: { attributes: highAttributes } }],
+        teamStaffAssignments: [...Object.values(market.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('assignment:eligibility-fallback'), staffPersonId: staffId, teamId: team.id, role: 'generalManager' as never, assignedOn: market.currentDate }],
+        responsibilities: [...Object.values(market.responsibilitiesById).filter((item) => item.id !== `responsibility:${team.id}:recommendSignings`), { id: `responsibility:${team.id}:recommendSignings` as never, teamId: team.id, kind: 'recommendSignings', mode: 'advisory', holderStaffId: staffId }],
+        // topRanked has strictly higher valuation (ranks first) but is NOT_FOR_SALE; fallback is fully eligible.
+        organizationKnowledge: [
+          { organizationId: org, subjectPlayerId: topRanked, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: market.currentDate, provenance: 'scoutReport', estimate: 99, uncertainty: 1 } } },
+          { organizationId: org, subjectPlayerId: fallback, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: market.currentDate, provenance: 'scoutReport', estimate: 60, uncertainty: 1 } } },
+        ],
+        marketKnowledge: [
+          { organizationId: org, playerId: topRanked, availability: 'NOT_FOR_SALE', expectedSalary: 1, expectedYears: 1, confidence: 90, assessedAt: market.currentDate, source: 'AGENT' },
+          { organizationId: org, playerId: fallback, availability: 'OPEN', expectedSalary: 1, expectedYears: 1, confidence: 90, assessedAt: market.currentDate, source: 'AGENT' },
+        ],
+      })
+      const progressed = progressBasketballOperationsAdvisories(withStaff)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'recommendSignings')
+      expect(outcome).toBeDefined()
+      if (outcome === undefined) return
+      expect(outcome.payload.playerId).toBe(fallback)
     })
 
     it('never mutates roster, contracts, or finances', () => {
@@ -260,6 +310,114 @@ describe('BasketballOperationsAdvisory', () => {
       expect(progressed.players).toEqual(world.players)
       expect(progressed.contractsById).toEqual(world.contractsById)
     })
+
+    // Blocker 4: shortlist must be a bounded SHORTLIST, not one playerId.
+    it('includes more than one candidate when enough valid candidates exist', () => {
+      const base = createNewGame()
+      const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
+      const donors = Object.values(base.teams).filter((item) => item.id !== team.id && item.rosterPlayerIds.length > 3).slice(0, 5)
+      const candidates = donors.map((donor) => donor.rosterPlayerIds[0]!)
+      const org = organizationIdForTeam(team.id)
+      const staffId = staffPersonIdFromString('ops:shortlist-many')
+      const market = updateGameWorld(base, {
+        teams: Object.values(base.teams).map((item) => donors.some((donor) => donor.id === item.id) ? { ...item, rosterPlayerIds: item.rosterPlayerIds.filter((id) => !candidates.includes(id)) } : item),
+        contracts: Object.values(base.contractsById).filter((item) => !candidates.includes(item.playerId)),
+      })
+      const withStaff = updateGameWorld(market, {
+        staffPeople: [...Object.values(market.staffPeopleById), { id: staffId, identity: { firstName: 'Shortlist', lastName: 'Many' }, professional: { attributes: highAttributes } }],
+        teamStaffAssignments: [...Object.values(market.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('assignment:shortlist-many'), staffPersonId: staffId, teamId: team.id, role: 'analyticsStaff' as never, assignedOn: market.currentDate }],
+        responsibilities: [...Object.values(market.responsibilitiesById).filter((item) => item.id !== `responsibility:${team.id}:shortlistPlayers`), { id: `responsibility:${team.id}:shortlistPlayers` as never, teamId: team.id, kind: 'shortlistPlayers', mode: 'advisory', holderStaffId: staffId }],
+        organizationKnowledge: candidates.map((playerId) => ({ organizationId: org, subjectPlayerId: playerId, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: market.currentDate, provenance: 'scoutReport' as const, estimate: 80, uncertainty: 2 } } })),
+      })
+      const progressed = progressBasketballOperationsAdvisories(withStaff)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'shortlistPlayers')
+      expect(outcome).toBeDefined()
+      if (outcome === undefined) return
+      expect(outcome.payload.candidateCount as number).toBeGreaterThan(1)
+    })
+
+    it('never exceeds the bounded maximum shortlist depth', () => {
+      const base = createNewGame()
+      const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
+      const donors = Object.values(base.teams).filter((item) => item.id !== team.id)
+      const candidates = donors.flatMap((donor) => donor.rosterPlayerIds).slice(0, 20)
+      const org = organizationIdForTeam(team.id)
+      const staffId = staffPersonIdFromString('ops:shortlist-max')
+      const market = updateGameWorld(base, {
+        teams: Object.values(base.teams).map((item) => donors.some((donor) => donor.id === item.id) ? { ...item, rosterPlayerIds: item.rosterPlayerIds.filter((id) => !candidates.includes(id)) } : item),
+        contracts: Object.values(base.contractsById).filter((item) => !candidates.includes(item.playerId)),
+      })
+      const withStaff = updateGameWorld(market, {
+        staffPeople: [...Object.values(market.staffPeopleById), { id: staffId, identity: { firstName: 'Shortlist', lastName: 'Max' }, professional: { attributes: lowAttributes } }],
+        teamStaffAssignments: [...Object.values(market.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('assignment:shortlist-max'), staffPersonId: staffId, teamId: team.id, role: 'analyticsStaff' as never, assignedOn: market.currentDate }],
+        responsibilities: [...Object.values(market.responsibilitiesById).filter((item) => item.id !== `responsibility:${team.id}:shortlistPlayers`), { id: `responsibility:${team.id}:shortlistPlayers` as never, teamId: team.id, kind: 'shortlistPlayers', mode: 'advisory', holderStaffId: staffId }],
+        organizationKnowledge: candidates.map((playerId) => ({ organizationId: org, subjectPlayerId: playerId, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: market.currentDate, provenance: 'scoutReport' as const, estimate: 80, uncertainty: 2 } } })),
+      })
+      const progressed = progressBasketballOperationsAdvisories(withStaff)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'shortlistPlayers')
+      expect(outcome).toBeDefined()
+      if (outcome === undefined) return
+      expect(outcome.payload.candidateCount as number).toBeLessThanOrEqual(8)
+    })
+
+    it('deterministic order across repeated runs', () => {
+      const { world } = fixture('shortlistPlayers')
+      const a = progressBasketballOperationsAdvisories(world)
+      const b = progressBasketballOperationsAdvisories(world)
+      const outcomeA = Object.values(a.delegationOutcomesById).find((item) => item.kind === 'shortlistPlayers')
+      const outcomeB = Object.values(b.delegationOutcomesById).find((item) => item.kind === 'shortlistPlayers')
+      expect(outcomeA?.payload).toEqual(outcomeB?.payload)
+    })
+
+    it('roster need changes shortlist ranking (mirrors recommendSignings need test)', () => {
+      const base = createNewGame()
+      const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
+      const donors = Object.values(base.teams).filter((item) => item.id !== team.id && item.rosterPlayerIds.length > 5).slice(0, 2)
+      if (donors.length < 2) return
+      const candidateA = donors[0]!.rosterPlayerIds[0]!
+      const candidateB = donors[1]!.rosterPlayerIds[0]!
+      const positionA = base.players[candidateA]!.basketball.primaryPosition
+      const positionB = base.players[candidateB]!.basketball.primaryPosition
+      if (positionA === positionB) return
+      const market = updateGameWorld(base, {
+        teams: Object.values(base.teams).map((item) => donors.some((donor) => donor.id === item.id) ? { ...item, rosterPlayerIds: item.rosterPlayerIds.filter((id) => id !== candidateA && id !== candidateB) } : item),
+        contracts: Object.values(base.contractsById).filter((item) => item.playerId !== candidateA && item.playerId !== candidateB),
+      })
+      const org = organizationIdForTeam(team.id)
+      const staffId = staffPersonIdFromString('ops:shortlist-need-test')
+      const saturated = updateGameWorld(market, {
+        players: Object.values(market.players).map((player) => market.teams[team.id]!.rosterPlayerIds.includes(player.id) ? { ...player, basketball: { ...player.basketball, primaryPosition: positionA } } : player),
+      })
+      const withStaff = updateGameWorld(saturated, {
+        staffPeople: [...Object.values(saturated.staffPeopleById), { id: staffId, identity: { firstName: 'Shortlist', lastName: 'Need' }, professional: { attributes: { ...highAttributes, talentEvaluation: 30, analysis: 30 } } }],
+        teamStaffAssignments: [...Object.values(saturated.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('assignment:shortlist-need-test'), staffPersonId: staffId, teamId: team.id, role: 'analyticsStaff' as never, assignedOn: saturated.currentDate }],
+        responsibilities: [...Object.values(saturated.responsibilitiesById).filter((item) => item.id !== `responsibility:${team.id}:shortlistPlayers`), { id: `responsibility:${team.id}:shortlistPlayers` as never, teamId: team.id, kind: 'shortlistPlayers', mode: 'advisory', holderStaffId: staffId }],
+        organizationKnowledge: [
+          { organizationId: org, subjectPlayerId: candidateA, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: saturated.currentDate, provenance: 'scoutReport', estimate: 99, uncertainty: 1 } } },
+          { organizationId: org, subjectPlayerId: candidateB, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: saturated.currentDate, provenance: 'scoutReport', estimate: 60, uncertainty: 1 } } },
+        ],
+      })
+      const progressed = progressBasketballOperationsAdvisories(withStaff)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'shortlistPlayers')
+      if (outcome === undefined) return
+      expect(outcome.payload.candidate1PlayerId).toBe(candidateB)
+    })
+
+    it('quality/workload materially affect shortlist depth', () => {
+      const highQuality = fixture('shortlistPlayers', highAttributes, 'shortlist-quality-high')
+      const lowQuality = fixture('shortlistPlayers', lowAttributes, 'shortlist-quality-low')
+      const highOutcome = Object.values(progressBasketballOperationsAdvisories(highQuality.world).delegationOutcomesById).find((item) => item.kind === 'shortlistPlayers')
+      const lowOutcome = Object.values(progressBasketballOperationsAdvisories(lowQuality.world).delegationOutcomesById).find((item) => item.kind === 'shortlistPlayers')
+      if (highOutcome === undefined || lowOutcome === undefined) return
+      expect(highOutcome.payload.candidateCount as number).toBeLessThanOrEqual(lowOutcome.payload.candidateCount as number)
+    })
+
+    it('repeated progression does not duplicate the outcome', () => {
+      const { world } = fixture('shortlistPlayers')
+      const first = progressBasketballOperationsAdvisories(world)
+      const second = progressBasketballOperationsAdvisories(first)
+      expect(Object.values(second.delegationOutcomesById).filter((item) => item.kind === 'shortlistPlayers')).toHaveLength(1)
+    })
   })
 
   describe('contractRecommendation', () => {
@@ -308,6 +466,95 @@ describe('BasketballOperationsAdvisory', () => {
       if (highOutcome === undefined || lowOutcome === undefined) return
       expect(highOutcome.qualityScore).toBeGreaterThan(lowOutcome.qualityScore)
     })
+
+    // Blocker 1: contractRecommendation must be materially determined by Basketball Operations
+    // context (valuation, roster need, quality, workload), not "first roster player sorted by id".
+    it('roster need/valuation changes which contract is prioritized', () => {
+      const base = createNewGame()
+      const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
+      const contracted = team.rosterPlayerIds.filter((playerId) => getActivePlayerContract(base, playerId) !== undefined)
+      if (contracted.length < 2) return
+      const playerA = contracted[0]!
+      const playerB = contracted[1]!
+      const positionA = base.players[playerA]!.basketball.primaryPosition
+      const positionB = base.players[playerB]!.basketball.primaryPosition
+      if (positionA === positionB) return
+      const org = organizationIdForTeam(team.id)
+      const staffId = staffPersonIdFromString('ops:contract-priority')
+      // Saturate every OTHER roster position at playerA's position so playerB's position reads scarce (higher need).
+      const reshuffled = updateGameWorld(base, {
+        players: Object.values(base.players).map((player) => team.rosterPlayerIds.includes(player.id) && player.id !== playerB ? { ...player, basketball: { ...player.basketball, primaryPosition: positionA } } : player),
+      })
+      const withStaff = updateGameWorld(reshuffled, {
+        staffPeople: [...Object.values(reshuffled.staffPeopleById), { id: staffId, identity: { firstName: 'Contract', lastName: 'Priority' }, professional: { attributes: highAttributes } }],
+        teamStaffAssignments: [...Object.values(reshuffled.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('assignment:contract-priority'), staffPersonId: staffId, teamId: team.id, role: 'capContractsSpecialist' as never, assignedOn: reshuffled.currentDate }],
+        responsibilities: [...Object.values(reshuffled.responsibilitiesById).filter((item) => item.id !== `responsibility:${team.id}:contractRecommendation`), { id: `responsibility:${team.id}:contractRecommendation` as never, teamId: team.id, kind: 'contractRecommendation', mode: 'advisory', holderStaffId: staffId }],
+      })
+      const progressed = progressBasketballOperationsAdvisories(withStaff)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'contractRecommendation')
+      expect(outcome).toBeDefined()
+      if (outcome === undefined) return
+      // playerB now occupies the only scarce position on the roster — the recommendation must prioritize them, not the lexicographically-first contracted player.
+      expect(outcome.payload.playerId).toBe(playerB)
+    })
+
+    it('high vs low quality materially changes confidence/recommended terms, not just qualityScore', () => {
+      const highQuality = fixture('contractRecommendation', highAttributes, 'contract-terms-high')
+      const lowQuality = fixture('contractRecommendation', lowAttributes, 'contract-terms-low')
+      const highOutcome = Object.values(progressBasketballOperationsAdvisories(highQuality.world).delegationOutcomesById).find((item) => item.kind === 'contractRecommendation')
+      const lowOutcome = Object.values(progressBasketballOperationsAdvisories(lowQuality.world).delegationOutcomesById).find((item) => item.kind === 'contractRecommendation')
+      if (highOutcome === undefined || lowOutcome === undefined) return
+      expect(highOutcome.qualityScore).toBeGreaterThan(lowOutcome.qualityScore)
+      // Observable functional difference beyond qualityScore: confidence and/or recommended terms move too.
+      const differs = highOutcome.payload.confidence !== lowOutcome.payload.confidence || highOutcome.payload.recommendedAnnualSalary !== lowOutcome.payload.recommendedAnnualSalary || highOutcome.payload.recommendation !== lowOutcome.payload.recommendation
+      expect(differs).toBe(true)
+    })
+
+    it('overload materially degrades the outcome (recommendation and/or confidence), not only qualityScore', () => {
+      // A `capContractsSpecialist` (the role the shared `fixture()` assigns for this kind) is only
+      // eligible for `contractRecommendation` itself, and a Responsibility's holder must be assigned
+      // to that exact Team, so overload here is built via a broadly-eligible `generalManager` holder
+      // instead, mirroring the existing recommendSignings overload test's approach.
+      const { world } = fixture('contractRecommendation', highAttributes, 'contract-overload')
+      const team = Object.values(world.teams).find((item) => item.coachId === world.userCoachId)!
+      const staffId = staffPersonIdFromString('ops:contract-overload')
+      const roleFixed = updateGameWorld(world, {
+        teamStaffAssignments: Object.values(world.teamStaffAssignmentsById).map((item) => item.staffPersonId === staffId ? { ...item, role: 'generalManager' as never } : item),
+      })
+      const responsibilityId = `responsibility:${team.id}:contractRecommendation`
+      const extraIds = new Set([responsibilityId, `responsibility:${team.id}:shortlistPlayers`, `responsibility:${team.id}:recommendSignings`, `responsibility:${team.id}:tradeRecommendation`])
+      const overloaded = updateGameWorld(roleFixed, {
+        responsibilities: [
+          ...Object.values(roleFixed.responsibilitiesById).filter((item) => !extraIds.has(item.id)),
+          { id: responsibilityId as never, teamId: team.id, kind: 'contractRecommendation', mode: 'advisory', holderStaffId: staffId },
+          { id: `responsibility:${team.id}:shortlistPlayers` as never, teamId: team.id, kind: 'shortlistPlayers', mode: 'advisory', holderStaffId: staffId },
+          { id: `responsibility:${team.id}:recommendSignings` as never, teamId: team.id, kind: 'recommendSignings', mode: 'advisory', holderStaffId: staffId },
+          { id: `responsibility:${team.id}:tradeRecommendation` as never, teamId: team.id, kind: 'tradeRecommendation', mode: 'advisory', holderStaffId: staffId },
+        ],
+      })
+      const baseline = progressBasketballOperationsAdvisories(roleFixed)
+      const overloadedProgressed = progressBasketballOperationsAdvisories(overloaded)
+      const baselineOutcome = Object.values(baseline.delegationOutcomesById).find((item) => item.kind === 'contractRecommendation')
+      const overloadedOutcome = Object.values(overloadedProgressed.delegationOutcomesById).find((item) => item.kind === 'contractRecommendation')
+      if (baselineOutcome === undefined || overloadedOutcome === undefined) return
+      expect(overloadedOutcome.qualityScore).toBeLessThanOrEqual(baselineOutcome.qualityScore)
+      expect(overloadedOutcome.payload.confidence as number).toBeLessThanOrEqual(baselineOutcome.payload.confidence as number)
+    })
+
+    it('generation does not mutate contracts/finances (overload variant)', () => {
+      const { world } = fixture('contractRecommendation')
+      const progressed = progressBasketballOperationsAdvisories(world)
+      expect(progressed.contractsById).toEqual(world.contractsById)
+      expect(progressed.teamFinancesByTeamId).toEqual(world.teamFinancesByTeamId)
+      expect(progressed.teams).toEqual(world.teams)
+    })
+
+    it('determinism/exactly-once hold', () => {
+      const { world } = fixture('contractRecommendation')
+      const first = progressBasketballOperationsAdvisories(world)
+      const second = progressBasketballOperationsAdvisories(first)
+      expect(Object.values(second.delegationOutcomesById).filter((item) => item.kind === 'contractRecommendation')).toHaveLength(1)
+    })
   })
 
   describe('tradeRecommendation', () => {
@@ -337,6 +584,91 @@ describe('BasketballOperationsAdvisory', () => {
       if (outcome === undefined) return
       // The recommendation always includes valuation-derived confidence — never a bare legality flag.
       expect(typeof outcome.payload.confidence).toBe('number')
+    })
+
+    // Blocker 2: outgoing asset selection must prefer the lowest-value/highest-surplus own rostered
+    // contracted player, not "first by PlayerId" — `validateTrade` stays the legality boundary only.
+    it('offers the expendable (surplus-position, low-valuation) own player instead of the scarce/high-value one', () => {
+      const base = createNewGame()
+      const season = Object.values(base.seasons).find((item) => base.tradeRulesBySeasonId[item.id] !== undefined)!
+      const seasonTeams = Object.values(base.teams).filter((item) => base.competitions[season.competitionId]!.participantTeamIds.includes(item.id))
+      const team = seasonTeams[0]!
+      const source = seasonTeams.find((item) => item.id !== team.id && item.rosterPlayerIds.length > 0)!
+      const incomingPlayerId = source.rosterPlayerIds[0]!
+      const contractedOwn = team.rosterPlayerIds.filter((playerId) => getActivePlayerContract(base, playerId) !== undefined)
+      if (contractedOwn.length < 2) return
+      const scarcePlayer = contractedOwn[0]!
+      const expendablePlayer = contractedOwn[1]!
+      const scarcePosition = base.players[scarcePlayer]!.basketball.primaryPosition
+      const expendablePosition = base.players[expendablePlayer]!.basketball.primaryPosition
+      if (scarcePosition === expendablePosition) return
+      const org = organizationIdForTeam(team.id)
+      const staffId = staffPersonIdFromString('ops:trade-outgoing-preference')
+      const seasoned = updateGameWorld(base, { currentSeasonId: season.id, currentDate: season.startDate })
+      // Saturate every other roster position at the expendable player's position, so that position reads as surplus (need=0)
+      // while the scarce player's position remains the sole occupant (need>0).
+      const reshuffled = updateGameWorld(seasoned, {
+        players: Object.values(seasoned.players).map((player) => team.rosterPlayerIds.includes(player.id) && player.id !== scarcePlayer ? { ...player, basketball: { ...player.basketball, primaryPosition: expendablePosition } } : player),
+      })
+      const withStaff = updateGameWorld(reshuffled, {
+        staffPeople: [...Object.values(reshuffled.staffPeopleById), { id: staffId, identity: { firstName: 'Trade', lastName: 'Outgoing' }, professional: { attributes: highAttributes } }],
+        teamStaffAssignments: [...Object.values(reshuffled.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('assignment:trade-outgoing-preference'), staffPersonId: staffId, teamId: team.id, role: 'generalManager' as never, assignedOn: reshuffled.currentDate }],
+        responsibilities: [...Object.values(reshuffled.responsibilitiesById).filter((item) => item.id !== `responsibility:${team.id}:tradeRecommendation`), { id: `responsibility:${team.id}:tradeRecommendation` as never, teamId: team.id, kind: 'tradeRecommendation', mode: 'advisory', holderStaffId: staffId }],
+        organizationKnowledge: [
+          { organizationId: org, subjectPlayerId: incomingPlayerId, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: reshuffled.currentDate, provenance: 'scoutReport', estimate: 90, uncertainty: 2 } } },
+          // High valuation for the scarce/needed player, low valuation for the expendable/surplus one — the expendable one must still be offered.
+          { organizationId: org, subjectPlayerId: scarcePlayer, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: reshuffled.currentDate, provenance: 'scoutReport', estimate: 99, uncertainty: 1 } } },
+          { organizationId: org, subjectPlayerId: expendablePlayer, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: reshuffled.currentDate, provenance: 'scoutReport', estimate: 40, uncertainty: 1 } } },
+        ],
+        marketKnowledge: [{ organizationId: org, playerId: incomingPlayerId, availability: 'OPEN', expectedSalary: 1, expectedYears: 1, confidence: 90, assessedAt: reshuffled.currentDate, source: 'AGENT' }],
+      })
+      const progressed = progressBasketballOperationsAdvisories(withStaff)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'tradeRecommendation')
+      expect(outcome).toBeDefined()
+      if (outcome === undefined) return
+      expect(outcome.payload.outgoingPlayerId).toBe(expendablePlayer)
+      expect(outcome.payload.outgoingPlayerId).not.toBe(scarcePlayer)
+    })
+
+    // Blocker 5: the incoming candidate ranked first (by need+value) is NOT_FOR_SALE; a fully
+    // eligible, lower-ranked candidate must still be found and used instead of returning nothing.
+    // (A legality-fallback-specific test for the outgoing side is not separately constructed: cheaply
+    // forcing `validateTrade` to reject the single most-expendable own player while accepting the
+    // second-most-expendable one would require fabricating salary-matching/apron edge cases that
+    // duplicate TradeEngine's own coverage; the preference-ordering test above is the mandatory one,
+    // and the `for (const outgoing of outgoingCandidates)` loop in the implementation already tries
+    // candidates in preference order against the same canonical `validateTrade` TradeEngine tests use.)
+    it('finds and uses a valid lower-ranked incoming candidate when the top-ranked one is ineligible (NOT_FOR_SALE)', () => {
+      const base = createNewGame()
+      const season = Object.values(base.seasons).find((item) => base.tradeRulesBySeasonId[item.id] !== undefined)!
+      const seasonTeams = Object.values(base.teams).filter((item) => base.competitions[season.competitionId]!.participantTeamIds.includes(item.id))
+      const team = seasonTeams[0]!
+      const donors = seasonTeams.filter((item) => item.id !== team.id && item.rosterPlayerIds.length > 0).slice(0, 2)
+      if (donors.length < 2) return
+      const topRanked = donors[0]!.rosterPlayerIds[0]!
+      const fallback = donors[1]!.rosterPlayerIds[0]!
+      if (topRanked === fallback) return
+      const org = organizationIdForTeam(team.id)
+      const staffId = staffPersonIdFromString('ops:trade-eligibility-fallback')
+      const seasoned = updateGameWorld(base, { currentSeasonId: season.id, currentDate: season.startDate })
+      const withStaff = updateGameWorld(seasoned, {
+        staffPeople: [...Object.values(seasoned.staffPeopleById), { id: staffId, identity: { firstName: 'Trade', lastName: 'Fallback' }, professional: { attributes: highAttributes } }],
+        teamStaffAssignments: [...Object.values(seasoned.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('assignment:trade-eligibility-fallback'), staffPersonId: staffId, teamId: team.id, role: 'generalManager' as never, assignedOn: seasoned.currentDate }],
+        responsibilities: [...Object.values(seasoned.responsibilitiesById).filter((item) => item.id !== `responsibility:${team.id}:tradeRecommendation`), { id: `responsibility:${team.id}:tradeRecommendation` as never, teamId: team.id, kind: 'tradeRecommendation', mode: 'advisory', holderStaffId: staffId }],
+        organizationKnowledge: [
+          { organizationId: org, subjectPlayerId: topRanked, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: seasoned.currentDate, provenance: 'scoutReport', estimate: 99, uncertainty: 1 } } },
+          { organizationId: org, subjectPlayerId: fallback, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: seasoned.currentDate, provenance: 'scoutReport', estimate: 60, uncertainty: 1 } } },
+        ],
+        marketKnowledge: [
+          { organizationId: org, playerId: topRanked, availability: 'NOT_FOR_SALE', expectedSalary: 1, expectedYears: 1, confidence: 90, assessedAt: seasoned.currentDate, source: 'AGENT' },
+          { organizationId: org, playerId: fallback, availability: 'OPEN', expectedSalary: 1, expectedYears: 1, confidence: 90, assessedAt: seasoned.currentDate, source: 'AGENT' },
+        ],
+      })
+      const progressed = progressBasketballOperationsAdvisories(withStaff)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'tradeRecommendation')
+      expect(outcome).toBeDefined()
+      if (outcome === undefined) return
+      expect(outcome.payload.incomingPlayerId).toBe(fallback)
     })
 
     it('generating the advisory does not execute a trade: rosters, contracts, ownership, and finances are unchanged', () => {
@@ -489,6 +821,88 @@ describe('BasketballOperationsAdvisory', () => {
       expect(firstOutcome).toBeDefined()
       expect(secondOutcome).toEqual(firstOutcome)
       expect(Object.values(second.delegationOutcomesById).filter((item) => item.kind === 'tradeRecommendation')).toHaveLength(1)
+    })
+  })
+
+  // Blocker 3: seasonForTeam must not resolve by "first season in insertion order whose competition
+  // contains this team" — BDM is multi-competition, so the same team can belong to two seasons/
+  // competitions simultaneously. Resolution must be ecosystem-consistent and TradeRules-backed, with
+  // a stable (non-insertion-order) tie-break.
+  describe('trade-context season resolution (seasonForTeam)', () => {
+    it('reordering world.seasons key insertion order does not change the chosen trade context/season', () => {
+      const base = createNewGame()
+      const season = Object.values(base.seasons).find((item) => base.tradeRulesBySeasonId[item.id] !== undefined)!
+      const seasonTeams = Object.values(base.teams).filter((item) => base.competitions[season.competitionId]!.participantTeamIds.includes(item.id))
+      const team = seasonTeams[0]!
+      const source = seasonTeams.find((item) => item.id !== team.id && item.rosterPlayerIds.length > 0)!
+      const playerId = source.rosterPlayerIds[0]!
+      const org = organizationIdForTeam(team.id)
+      const staffId = staffPersonIdFromString('ops:season-order')
+      const seasoned = updateGameWorld(base, { currentSeasonId: season.id, currentDate: season.startDate })
+      const withStaff = updateGameWorld(seasoned, {
+        staffPeople: [...Object.values(seasoned.staffPeopleById), { id: staffId, identity: { firstName: 'Season', lastName: 'Order' }, professional: { attributes: highAttributes } }],
+        teamStaffAssignments: [...Object.values(seasoned.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('assignment:season-order'), staffPersonId: staffId, teamId: team.id, role: 'generalManager' as never, assignedOn: seasoned.currentDate }],
+        responsibilities: [...Object.values(seasoned.responsibilitiesById).filter((item) => item.id !== `responsibility:${team.id}:tradeRecommendation`), { id: `responsibility:${team.id}:tradeRecommendation` as never, teamId: team.id, kind: 'tradeRecommendation', mode: 'advisory', holderStaffId: staffId }],
+        organizationKnowledge: [{ organizationId: org, subjectPlayerId: playerId, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: seasoned.currentDate, provenance: 'scoutReport', estimate: 90, uncertainty: 2 } } }],
+        marketKnowledge: [{ organizationId: org, playerId, availability: 'OPEN', expectedSalary: 1, expectedYears: 1, confidence: 90, assessedAt: seasoned.currentDate, source: 'AGENT' }],
+      })
+      // Rebuild the world with `seasons`' key order reversed — the chosen trade context/season must be identical.
+      const reversedSeasons = Object.fromEntries(Object.entries(withStaff.seasons).reverse())
+      const reversed = { ...withStaff, seasons: reversedSeasons }
+      const progressedOriginal = progressBasketballOperationsAdvisories(withStaff)
+      const progressedReversed = progressBasketballOperationsAdvisories(reversed)
+      const outcomeOriginal = Object.values(progressedOriginal.delegationOutcomesById).find((item) => item.kind === 'tradeRecommendation')
+      const outcomeReversed = Object.values(progressedReversed.delegationOutcomesById).find((item) => item.kind === 'tradeRecommendation')
+      expect(outcomeOriginal).toBeDefined()
+      expect(outcomeReversed).toBeDefined()
+      if (outcomeOriginal === undefined || outcomeReversed === undefined) return
+      expect(outcomeReversed.payload.seasonId).toBe(outcomeOriginal.payload.seasonId)
+      expect(outcomeReversed.payload.ecosystemId).toBe(outcomeOriginal.payload.ecosystemId)
+    })
+
+    it('a team participating in two seasons/competitions simultaneously resolves to the ecosystem-consistent, TradeRules-backed one, not the first by insertion order', () => {
+      const base = createNewGame()
+      const season = Object.values(base.seasons).find((item) => base.tradeRulesBySeasonId[item.id] !== undefined)!
+      const seasonTeams = Object.values(base.teams).filter((item) => base.competitions[season.competitionId]!.participantTeamIds.includes(item.id))
+      const team = seasonTeams[0]!
+      const source = seasonTeams.find((item) => item.id !== team.id && item.rosterPlayerIds.length > 0)!
+      const playerId = source.rosterPlayerIds[0]!
+      const org = organizationIdForTeam(team.id)
+      const staffId = staffPersonIdFromString('ops:multi-season')
+      const seasoned = updateGameWorld(base, { currentSeasonId: season.id, currentDate: season.startDate })
+      const realEcosystemId = seasoned.competitions[season.competitionId]!.ecosystemId
+      // Pick an ecosystem that sorts AFTER the real one, so `getEcosystemForTeam` (lowest-ecosystem-id
+      // tie-break) still resolves to the real ecosystem even once `team` also participates in the
+      // bogus competition below — this isolates the assertion to seasonForTeam's TradeRules/insertion
+      // order behavior rather than accidentally also perturbing getEcosystemForTeam's own result.
+      const otherEcosystem = Object.values(seasoned.ecosystems).filter((item) => item.id !== realEcosystemId).sort((a, b) => a.id.localeCompare(b.id)).find((item) => item.id.localeCompare(realEcosystemId) > 0)!
+      // Hand-build a second competition/season (no TradeRules configured, and belonging to a
+      // DIFFERENT real ecosystem than the team's canonical `getEcosystemForTeam` resolution) that
+      // ALSO includes `team` as a participant, inserted BEFORE the real trade-rules-backed season in
+      // `world.seasons`, so an insertion-order-first resolution would incorrectly pick this bogus
+      // season instead.
+      const bogusCompetition = { ...seasoned.competitions[season.competitionId]!, id: 'competition:bogus-secondary' as never, ecosystemId: otherEcosystem.id }
+      const bogusSeason = { ...season, id: 'season:bogus-secondary' as never, competitionId: bogusCompetition.id }
+      const withBogus = {
+        ...seasoned,
+        competitions: { [bogusCompetition.id]: bogusCompetition, ...seasoned.competitions },
+        seasons: { [bogusSeason.id]: bogusSeason, ...seasoned.seasons },
+      }
+      const withStaff = updateGameWorld(withBogus, {
+        staffPeople: [...Object.values(withBogus.staffPeopleById), { id: staffId, identity: { firstName: 'Multi', lastName: 'Season' }, professional: { attributes: highAttributes } }],
+        teamStaffAssignments: [...Object.values(withBogus.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('assignment:multi-season'), staffPersonId: staffId, teamId: team.id, role: 'generalManager' as never, assignedOn: withBogus.currentDate }],
+        responsibilities: [...Object.values(withBogus.responsibilitiesById).filter((item) => item.id !== `responsibility:${team.id}:tradeRecommendation`), { id: `responsibility:${team.id}:tradeRecommendation` as never, teamId: team.id, kind: 'tradeRecommendation', mode: 'advisory', holderStaffId: staffId }],
+        organizationKnowledge: [{ organizationId: org, subjectPlayerId: playerId, dimensions: { shooting: { coverage: 1, confidence: 1, assessedAt: withBogus.currentDate, provenance: 'scoutReport', estimate: 90, uncertainty: 2 } } }],
+        marketKnowledge: [{ organizationId: org, playerId, availability: 'OPEN', expectedSalary: 1, expectedYears: 1, confidence: 90, assessedAt: withBogus.currentDate, source: 'AGENT' }],
+      })
+      expect(Object.keys(withStaff.seasons)[0]).toBe(bogusSeason.id) // sanity: bogus season really is first by insertion order
+      const progressed = progressBasketballOperationsAdvisories(withStaff)
+      const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.kind === 'tradeRecommendation')
+      expect(outcome).toBeDefined()
+      if (outcome === undefined) return
+      // Must resolve to the real, TradeRules-backed, ecosystem-consistent season — never the bogus one.
+      expect(outcome.payload.seasonId).toBe(season.id)
+      expect(outcome.payload.ecosystemId).toBe(seasoned.competitions[season.competitionId]!.ecosystemId)
     })
   })
 })
