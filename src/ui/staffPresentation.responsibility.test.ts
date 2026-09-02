@@ -79,7 +79,7 @@ describe('getEligibleResponsibilityCandidates', () => {
   it('only returns Staff from the given Team', () => {
     const w = world()
     const teamId = userTeamId(w)
-    const candidates = getEligibleResponsibilityCandidates(w, teamId, 'createTeamTrainingPlan')
+    const candidates = getEligibleResponsibilityCandidates(w, teamId, 'createTeamTrainingPlan', 'delegated')
     const teamStaffIds = new Set(getTeamStaffAssignments(w, teamId).map((item) => item.staffPersonId))
     for (const candidate of candidates) expect(teamStaffIds.has(candidate.staffPersonId)).toBe(true)
   })
@@ -87,14 +87,14 @@ describe('getEligibleResponsibilityCandidates', () => {
   it('only returns Staff whose role is eligible for the responsibility', () => {
     const w = world()
     const teamId = userTeamId(w)
-    const candidates = getEligibleResponsibilityCandidates(w, teamId, 'treatmentRecommendation')
+    const candidates = getEligibleResponsibilityCandidates(w, teamId, 'treatmentRecommendation', 'advisory')
     for (const candidate of candidates) expect(['teamDoctor', 'physiotherapist', 'rehabilitationSpecialist']).toContain(candidate.role)
   })
 
   it('sorts by current-role proficiency descending, then StaffPersonId ascending', () => {
     const w = world()
     const teamId = userTeamId(w)
-    const candidates = getEligibleResponsibilityCandidates(w, teamId, 'createTeamTrainingPlan')
+    const candidates = getEligibleResponsibilityCandidates(w, teamId, 'createTeamTrainingPlan', 'delegated')
     for (let i = 1; i < candidates.length; i += 1) {
       const prev = candidates[i - 1]!
       const cur = candidates[i]!
@@ -105,13 +105,13 @@ describe('getEligibleResponsibilityCandidates', () => {
   it('returns no candidates for coach-only responsibilities', () => {
     const w = world()
     const teamId = userTeamId(w)
-    expect(getEligibleResponsibilityCandidates(w, teamId, 'rotationPlanning')).toEqual([])
+    expect(getEligibleResponsibilityCandidates(w, teamId, 'rotationPlanning', 'advisory')).toEqual([])
   })
 
   it('projected workload uses the canonical calculateStaffWorkload result and reflects capacity added', () => {
     const w = world()
     const teamId = userTeamId(w)
-    const candidates = getEligibleResponsibilityCandidates(w, teamId, 'createTeamTrainingPlan')
+    const candidates = getEligibleResponsibilityCandidates(w, teamId, 'createTeamTrainingPlan', 'delegated')
     for (const candidate of candidates) expect(candidate.projectedUtilization).toBeGreaterThanOrEqual(candidate.currentUtilization)
   })
 
@@ -124,9 +124,37 @@ describe('getEligibleResponsibilityCandidates', () => {
     for (const kind of ['createTeamTrainingPlan', 'assignIndividualDevelopment'] as const) {
       current = setTeamResponsibility(current, { teamId, kind, mode: 'delegated', holderStaffId: assistantId })
     }
-    const candidates = getEligibleResponsibilityCandidates(current, teamId, 'oppositionReport')
-    // Still eligible/listed even if overloaded elsewhere — never excluded by workload.
+    // oppositionScouting's eligibleRoleIds include 'assistantCoach' and supports 'advisory' (not 'delegated').
+    const candidates = getEligibleResponsibilityCandidates(current, teamId, 'oppositionScouting', 'advisory')
     const assistant = candidates.find((candidate) => candidate.staffPersonId === assistantId)
-    if (assistant !== undefined) expect(['normal', 'pressured', 'overloaded', 'unassigned']).toContain(assistant.projectedWorkloadState)
+    expect(assistant).toBeDefined()
+    // Still eligible/listed even though overloaded elsewhere — never excluded by workload.
+    expect(['normal', 'pressured', 'overloaded', 'unassigned']).toContain(assistant!.projectedWorkloadState)
+  })
+
+  it('treatmentRecommendation + advisory returns eligible physiotherapist candidates even though delegated is unsupported', () => {
+    const w = world()
+    const teamId = userTeamId(w)
+    const physioId = staffWithRole(w, teamId, 'physiotherapist')
+    const candidates = getEligibleResponsibilityCandidates(w, teamId, 'treatmentRecommendation', 'advisory')
+    expect(candidates.length).toBeGreaterThan(0)
+    expect(candidates.some((candidate) => candidate.staffPersonId === physioId)).toBe(true)
+  })
+
+  it('oppositionScouting + advisory returns eligible Staff without requiring delegated support', () => {
+    const w = world()
+    const teamId = userTeamId(w)
+    const assistantId = staffWithRole(w, teamId, 'assistantCoach')
+    const candidates = getEligibleResponsibilityCandidates(w, teamId, 'oppositionScouting', 'advisory')
+    expect(candidates.length).toBeGreaterThan(0)
+    expect(candidates.some((candidate) => candidate.staffPersonId === assistantId)).toBe(true)
+  })
+
+  it('projected workload for an advisory-only responsibility is computed via calculateStaffWorkload without requiring delegated mode', () => {
+    const w = world()
+    const teamId = userTeamId(w)
+    const candidates = getEligibleResponsibilityCandidates(w, teamId, 'treatmentRecommendation', 'advisory')
+    expect(candidates.length).toBeGreaterThan(0)
+    for (const candidate of candidates) expect(candidate.projectedUtilization).toBeGreaterThanOrEqual(candidate.currentUtilization)
   })
 })

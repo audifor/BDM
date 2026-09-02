@@ -229,11 +229,11 @@ function ResponsibilityInspector({ world, teamId, responsibility, onApply }: { r
 
   const readOnly = onApply === undefined || responsibility.eligibleParticipant === 'coach'
   const needsHolder = draftMode === 'delegated' || draftMode === 'advisory'
-  const candidates = needsHolder ? getEligibleResponsibilityCandidates(world, teamId, responsibility.kind) : []
+  const candidates = needsHolder ? getEligibleResponsibilityCandidates(world, teamId, responsibility.kind, draftMode) : []
   const selectedCandidate = candidates.find((candidate) => candidate.staffPersonId === draftHolderId)
 
   const hasChange = draftMode !== responsibility.mode || (needsHolder ? draftHolderId !== responsibility.holderStaffId : false)
-  const canApply = !readOnly && hasChange && (!needsHolder || draftHolderId !== undefined)
+  const canApply = !readOnly && hasChange && (!needsHolder || selectedCandidate !== undefined)
 
   const apply = () => {
     if (!canApply || onApply === undefined) return

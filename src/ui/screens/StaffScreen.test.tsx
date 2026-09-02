@@ -218,4 +218,58 @@ describe('StaffScreen', () => {
     fireEvent.doubleClick(screen.getAllByText(RESPONSIBILITY_KIND_LABELS.createTeamTrainingPlan)[0]!)
     expect(screen.queryByRole('button', { name: 'APPLY' })).toBeNull()
   })
+
+  it('treatmentRecommendation never offers DELEGATED as a control mode', () => {
+    const w = world()
+    const teamId = userTeamId(w)
+    render(<StaffScreen teamId={teamId} world={w} />)
+    fireEvent.click(screen.getByRole('button', { name: 'RESPONSIBILITIES' }))
+    fireEvent.doubleClick(screen.getAllByText(RESPONSIBILITY_KIND_LABELS.treatmentRecommendation)[0]!)
+    const modeGroup = document.querySelector('.staff-mode-group')!
+    const labels = [...modeGroup.querySelectorAll('button')].map((button) => button.textContent)
+    expect(labels).not.toContain('DELEGATED')
+    expect(labels).toEqual(['USER CONTROLLED', 'ADVISORY', 'ORGANIZATIONAL'])
+  })
+
+  it('treatmentRecommendation + ADVISORY shows an eligible physiotherapist; selecting them and Apply calls the callback with mode advisory', () => {
+    const w = world()
+    const teamId = userTeamId(w)
+    const onSetResponsibility = vi.fn()
+    render(<StaffScreen onSetResponsibility={onSetResponsibility} teamId={teamId} world={w} />)
+    fireEvent.click(screen.getByRole('button', { name: 'RESPONSIBILITIES' }))
+    fireEvent.doubleClick(screen.getAllByText(RESPONSIBILITY_KIND_LABELS.treatmentRecommendation)[0]!)
+    fireEvent.click(screen.getByRole('button', { name: 'ADVISORY' }))
+    const select = screen.getByRole('combobox') as HTMLSelectElement
+    const physiotherapistId = staffWithRole(w, teamId, 'physiotherapist')
+    expect(select.querySelector(`option[value="${physiotherapistId}"]`)).toBeTruthy()
+    fireEvent.change(select, { target: { value: physiotherapistId } })
+    fireEvent.click(screen.getByRole('button', { name: 'APPLY' }))
+    expect(onSetResponsibility).toHaveBeenCalledWith({ teamId, kind: 'treatmentRecommendation', mode: 'advisory', holderStaffId: physiotherapistId })
+  })
+
+  it('a stale/invalid draft holder (no longer a candidate) keeps APPLY disabled', () => {
+    const w = world()
+    const teamId = userTeamId(w)
+    const physiotherapistId = staffWithRole(w, teamId, 'physiotherapist')
+    // Reassign the physiotherapist to a role ineligible for treatmentRecommendation (still employed,
+    // still on the Team) so the persisted holder becomes stale/invalid without violating world validation.
+    const reassignedAssignments = Object.values(w.teamStaffAssignmentsById).map((assignment) =>
+      assignment.staffPersonId === physiotherapistId ? { ...assignment, role: 'assistantCoach' } : assignment,
+    )
+    const staleWorld = updateGameWorld(w, {
+      teamStaffAssignments: reassignedAssignments,
+      staffEmploymentByStaffId: {
+        ...w.staffEmploymentByStaffId,
+        [physiotherapistId]: { ...w.staffEmploymentByStaffId[physiotherapistId], roleId: 'assistantCoach' },
+      } as never,
+    })
+    const onSetResponsibility = vi.fn()
+    render(<StaffScreen onSetResponsibility={onSetResponsibility} teamId={teamId} world={staleWorld} />)
+    fireEvent.click(screen.getByRole('button', { name: 'RESPONSIBILITIES' }))
+    fireEvent.doubleClick(screen.getAllByText(RESPONSIBILITY_KIND_LABELS.treatmentRecommendation)[0]!)
+    fireEvent.click(screen.getByRole('button', { name: 'ADVISORY' }))
+    // The reassigned physiotherapist no longer qualifies for treatmentRecommendation under any role, so no combobox renders.
+    expect(screen.getByText('NO ELIGIBLE STAFF')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'APPLY' }).hasAttribute('disabled')).toBe(true)
+  })
 })

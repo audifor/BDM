@@ -465,12 +465,14 @@ export interface StaffResponsibilityCandidate {
 }
 
 /**
- * Eligible `delegated`/`advisory` candidates for `kind` on `teamId`: only Staff from this Team,
- * currently employed, with a real `TeamStaffAssignment`, whose role is eligible per
- * `validateResponsibilityAssignment` — never `marketRole`, free agents, another Team's Staff, or
- * `headCoach`. Ordered by current-role proficiency descending, then StaffPersonId ascending.
+ * Eligible `delegated`/`advisory` candidates for `kind` on `teamId`, evaluated against the given
+ * target `mode` (never hardcoded/inferred — many kinds support `advisory` but not `delegated`):
+ * only Staff from this Team, currently employed, with a real `TeamStaffAssignment`, whose role is
+ * eligible per `validateResponsibilityAssignment` for `mode` — never `marketRole`, free agents,
+ * another Team's Staff, or `headCoach`. Ordered by current-role proficiency descending, then
+ * StaffPersonId ascending.
  */
-export function getEligibleResponsibilityCandidates(world: GameWorld, teamId: TeamId, kind: ResponsibilityKind): readonly StaffResponsibilityCandidate[] {
+export function getEligibleResponsibilityCandidates(world: GameWorld, teamId: TeamId, kind: ResponsibilityKind, mode: 'delegated' | 'advisory'): readonly StaffResponsibilityCandidate[] {
   const definition = responsibilityDefinition(kind)
   if (definition.eligibleParticipant !== 'staff') return []
 
@@ -479,10 +481,10 @@ export function getEligibleResponsibilityCandidates(world: GameWorld, teamId: Te
     .map((assignment) => {
       const person = getStaffPerson(world, assignment.staffPersonId)
       if (person === undefined) return undefined
-      const validation = validateResponsibilityAssignment(kind, 'delegated', assignment.role, person)
+      const validation = validateResponsibilityAssignment(kind, mode, assignment.role, person)
       if (!validation.ok) return undefined
       const currentWorkload = calculateStaffWorkload(world, person.id)
-      const projectedWorkload = projectStaffWorkloadForResponsibility(world, teamId, kind, person.id)
+      const projectedWorkload = projectStaffWorkloadForResponsibility(world, teamId, kind, person.id, mode)
       return {
         staffPersonId: person.id,
         name: `${person.identity.firstName} ${person.identity.lastName}`,
@@ -498,19 +500,21 @@ export function getEligibleResponsibilityCandidates(world: GameWorld, teamId: Te
 }
 
 /**
- * Projected workload for `staffId` if `kind` were (re)assigned to them on `teamId`, computed by
- * building a transient, non-persisted `Responsibility` collection and calling the canonical
- * `calculateStaffWorkload` again — never a second workload formula. Correctly handles: the Staff
- * member already holding the Responsibility (no double count), moving it from another holder, and
- * simply changing mode while keeping the same holder.
+ * Projected workload for `staffId` if `kind` were (re)assigned to them on `teamId` in `mode`,
+ * computed by building a transient, non-persisted `Responsibility` collection and calling the
+ * canonical `calculateStaffWorkload` again — never a second workload formula. `mode` is passed
+ * through explicitly (never hardcoded to `delegated`) so an advisory-only `kind` is projected
+ * with a valid `advisory` Responsibility rather than fabricating an invalid `delegated` one.
+ * Correctly handles: the Staff member already holding the Responsibility (no double count),
+ * moving it from another holder, and simply changing mode while keeping the same holder.
  */
-export function projectStaffWorkloadForResponsibility(world: GameWorld, teamId: TeamId, kind: ResponsibilityKind, staffId: StaffPersonId): ReturnType<typeof calculateStaffWorkload> {
+export function projectStaffWorkloadForResponsibility(world: GameWorld, teamId: TeamId, kind: ResponsibilityKind, staffId: StaffPersonId, mode: 'delegated' | 'advisory'): ReturnType<typeof calculateStaffWorkload> {
   const existing = getTeamResponsibilities(world, teamId).find((item) => item.kind === kind)
   const projectedResponsibilitiesById = { ...world.responsibilitiesById }
   const id = existing?.id ?? `responsibility:${teamId}:${kind}`
   projectedResponsibilitiesById[id as keyof typeof projectedResponsibilitiesById] = {
     ...(existing ?? { id, teamId, kind }),
-    mode: 'delegated',
+    mode,
     holderStaffId: staffId,
   } as never
   const projectedWorld: GameWorld = { ...world, responsibilitiesById: projectedResponsibilitiesById }

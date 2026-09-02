@@ -55,8 +55,15 @@ export function setTeamResponsibility(world: GameWorld, input: SetTeamResponsibi
     if (staffAssignment === undefined || staffAssignment.teamId !== input.teamId) {
       throw new RangeError(`Staff person ${holderStaffId} is not assigned to Team ${input.teamId}`)
     }
-    if (world.staffEmploymentByStaffId[holderStaffId]?.status !== 'employed') {
+    const employment = world.staffEmploymentByStaffId[holderStaffId]
+    if (employment?.status !== 'employed') {
       throw new RangeError(`Staff person ${holderStaffId} is not currently employed`)
+    }
+    if (employment.teamId !== undefined && employment.teamId !== input.teamId) {
+      throw new RangeError(`Staff person ${holderStaffId} employment record does not match Team ${input.teamId}`)
+    }
+    if (employment.roleId !== undefined && employment.roleId !== staffAssignment.role) {
+      throw new RangeError(`Staff person ${holderStaffId} employment role does not match current assignment`)
     }
   }
 
