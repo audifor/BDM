@@ -15,6 +15,7 @@ import { progressAdvisoryScoutingReports, progressDelegatedScouting, progressSco
 import { progressOppositionScoutingReports } from '@/engine/tactics/OppositionScoutingReportEngine'
 import { progressMedicalAdvisories } from '@/engine/injury'
 import { progressBasketballOperationsAdvisories } from '@/engine/roster'
+import { progressStaffHumanState } from '@/engine/staff/StaffHumanStatePipeline'
 
 /**
  * Advances only the simulation date, leaving game resolution to other services.
@@ -38,11 +39,12 @@ export function advanceDay(world: GameWorld): GameWorld {
   const staffScoutingRequests = progressOppositionScoutingReports(progressAdvisoryScoutingReports(progressDelegatedScouting(progressEnforcement(withBoosters))))
   const withMedicalAdvisories = progressBasketballOperationsAdvisories(progressMedicalAdvisories(staffScoutingRequests))
   const enforced = progressScoutingAssignments(withMedicalAdvisories)
-  return Object.values(enforced.draftsById).reduce((current, draft) => {
+  const withDrafts = Object.values(enforced.draftsById).reduce((current, draft) => {
     const opened = openDraft(current, draft.id)
     if (opened.draftsById[draft.id]?.status !== 'inProgress') return opened
     return progressDraftAi(progressDraftProspectAdvisories(opened, draft.id), draft.id)
   }, enforced)
+  return progressStaffHumanState(withDrafts)
 }
 function progressAcademicTerms(world: GameWorld): GameWorld { if(world.currentDate.slice(5) !== '01-01' && world.currentDate.slice(5) !== '07-01') return world; const term=`academic:${world.currentDate.slice(0, 4)}:${world.currentDate.slice(5, 7)}`; return resolveAcademicTerm(progressAiAcademicSupport(world,term),term) }
 
