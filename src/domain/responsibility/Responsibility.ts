@@ -180,7 +180,10 @@ export interface DelegationOutcome {
 
 export function createDelegationOutcome(input: DelegationOutcome): DelegationOutcome {
   if (!Number.isInteger(input.qualityScore) || input.qualityScore < 0 || input.qualityScore > 100) throw new RangeError('Delegation outcome quality score must be an integer from 0 to 100')
+  // Bidirectional: userDisposition and userDecidedOn must be set together, or both absent (legacy/unresolved) — never just one.
   if (input.userDisposition !== undefined && input.userDecidedOn === undefined) throw new RangeError('Delegation outcome userDisposition requires userDecidedOn')
+  if (input.userDisposition === undefined && input.userDecidedOn !== undefined) throw new RangeError('Delegation outcome userDecidedOn requires userDisposition')
+  if (input.userDisposition !== undefined && input.userDisposition !== 'accepted' && input.userDisposition !== 'dismissed') throw new RangeError(`Delegation outcome userDisposition must be 'accepted' or 'dismissed', got: ${String(input.userDisposition)}`)
   if (input.userDisposition === 'accepted' && !input.applied) throw new RangeError('Delegation outcome accepted by the user must be applied')
   if (input.userDisposition === 'dismissed' && input.applied) throw new RangeError('Delegation outcome dismissed by the user must not be applied')
   return {

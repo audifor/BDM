@@ -160,6 +160,36 @@ describe('GameWorldSaveV3', () => {
     expect(serializeGameWorldV3(world, savedAt).schemaVersion).toBe(3)
   })
 
+  it('Wave 4C3: malformed save — userDecidedOn present without userDisposition is rejected atomically on load', () => {
+    const base = createNewGame()
+    const teamId = Object.values(base.teams)[0]!.id
+    const responsibilityId = Object.keys(base.responsibilitiesById).find((id) => base.responsibilitiesById[id as never]!.teamId === teamId) as never
+    const staffId = Object.values(base.teamStaffAssignmentsById).find((assignment) => assignment.teamId === teamId)!.staffPersonId
+    const dismissed = { id: 'outcome:v3-malformed-decidedon-only' as never, responsibilityId, staffId, decidedOn: base.currentDate, kind: 'createTeamTrainingPlan' as const, applied: false, qualityScore: 40, payload: {}, userDisposition: 'dismissed' as const, userDecidedOn: base.currentDate }
+    const world = updateGameWorld(base, { delegationOutcomes: [...Object.values(base.delegationOutcomesById), dismissed] })
+
+    const saved = serializeGameWorldV3(world, savedAt)
+    const malformedOutcomes = saved.payload.delegationOutcomes!.map((entry) => entry.id === 'outcome:v3-malformed-decidedon-only' ? { ...entry, userDisposition: undefined } : entry)
+    const tampered = { ...saved, payload: { ...saved.payload, delegationOutcomes: malformedOutcomes } }
+
+    expect(() => deserializeGameWorldV3(tampered)).toThrow()
+  })
+
+  it('Wave 4C3: malformed save — an unrecognized userDisposition value is rejected atomically on load', () => {
+    const base = createNewGame()
+    const teamId = Object.values(base.teams)[0]!.id
+    const responsibilityId = Object.keys(base.responsibilitiesById).find((id) => base.responsibilitiesById[id as never]!.teamId === teamId) as never
+    const staffId = Object.values(base.teamStaffAssignmentsById).find((assignment) => assignment.teamId === teamId)!.staffPersonId
+    const dismissed = { id: 'outcome:v3-malformed-bad-enum' as never, responsibilityId, staffId, decidedOn: base.currentDate, kind: 'createTeamTrainingPlan' as const, applied: false, qualityScore: 40, payload: {}, userDisposition: 'dismissed' as const, userDecidedOn: base.currentDate }
+    const world = updateGameWorld(base, { delegationOutcomes: [...Object.values(base.delegationOutcomesById), dismissed] })
+
+    const saved = serializeGameWorldV3(world, savedAt)
+    const malformedOutcomes = saved.payload.delegationOutcomes!.map((entry) => entry.id === 'outcome:v3-malformed-bad-enum' ? { ...entry, userDisposition: 'invalid-value' } : entry)
+    const tampered = { ...saved, payload: { ...saved.payload, delegationOutcomes: malformedOutcomes } }
+
+    expect(() => deserializeGameWorldV3(tampered)).toThrow()
+  })
+
   it('dispatch accepts V1/V2/V3 and the current serializer emits V3', () => {
     const world = createNewGame()
     const v1 = serializeGameWorldV1(world, savedAt)

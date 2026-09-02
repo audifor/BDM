@@ -171,6 +171,31 @@ describe('DelegationOutcome foundation', () => {
     expect(() => createDelegationOutcome({ ...base, applied: true, userDisposition: 'dismissed', userDecidedOn: createGameDate(2032, 10, 2) })).toThrow()
   })
 
+  it('rejects userDecidedOn without userDisposition (bidirectional invariant)', () => {
+    const base = { id: delegationOutcomeIdFromString('outcome-decidedon-only'), responsibilityId: responsibilityIdFromString(responsibilityIdForTeam(teamId, 'assignScouts')), staffId: scout.id, decidedOn: createGameDate(2032, 10, 1), kind: 'assignScouts' as const, applied: false, qualityScore: 50, payload: {} }
+    expect(() => createDelegationOutcome({ ...base, userDecidedOn: createGameDate(2032, 10, 2) })).toThrow(RangeError)
+  })
+
+  it('rejects a runtime-invalid userDisposition value that is not accepted/dismissed', () => {
+    const base = { id: delegationOutcomeIdFromString('outcome-bad-disposition'), responsibilityId: responsibilityIdFromString(responsibilityIdForTeam(teamId, 'assignScouts')), staffId: scout.id, decidedOn: createGameDate(2032, 10, 1), kind: 'assignScouts' as const, applied: false, qualityScore: 50, payload: {} }
+    expect(() => createDelegationOutcome({ ...base, userDisposition: 'whatever' as never, userDecidedOn: createGameDate(2032, 10, 2) })).toThrow(RangeError)
+  })
+
+  it('legacy outcome with neither field remains valid', () => {
+    const outcome = createDelegationOutcome({
+      id: delegationOutcomeIdFromString('outcome-legacy-neither'),
+      responsibilityId: responsibilityIdFromString(responsibilityIdForTeam(teamId, 'assignScouts')),
+      staffId: scout.id,
+      decidedOn: createGameDate(2032, 10, 1),
+      kind: 'assignScouts',
+      applied: false,
+      qualityScore: 50,
+      payload: {},
+    })
+    expect(outcome.userDisposition).toBeUndefined()
+    expect(outcome.userDecidedOn).toBeUndefined()
+  })
+
   it('parses userDecidedOn as a GameDate', () => {
     const outcome = createDelegationOutcome({
       id: delegationOutcomeIdFromString('outcome-date'),
