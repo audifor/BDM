@@ -4,7 +4,9 @@ import { getUserTeam } from '@/engine/calendar'
 import { getStaffAssignment, getStaffPerson, type GameWorld } from '@/domain/world'
 import { staffRoleDefinition } from '@/domain/staff'
 import type { ResponsibilityKind, ResponsibilityMode } from '@/domain/responsibility'
+import type { DelegationOutcomeId } from '@/domain/responsibility'
 import type { SetTeamResponsibilityInput } from '@/app/staffResponsibilities'
+import type { StaffRecommendationCommandResult } from '@/app/staffRecommendations'
 import type { StaffPersonId, TeamId } from '@/domain/ids'
 import { createEntityRef } from '@/app/entityActions/EntityRef'
 import { useEntityActions } from '@/ui/entityActions/useEntityActions'
@@ -38,14 +40,15 @@ import {
   type StaffPresentationItem,
   type StaffResponsibilityPresentationItem,
 } from '@/ui/staffPresentation'
+import { getStaffRecommendationsForTeam, type StaffRecommendationPresentationItem } from '@/ui/staffRecommendationPresentation'
 import { calculateStaffWorkload } from '@/domain/world'
 import { STAFF_REPUTATION_DIMENSIONS } from '@/domain/staffReputation'
 
 import './StaffScreen.css'
 
-type StaffScreenTab = 'staff' | 'responsibilities'
+type StaffScreenTab = 'staff' | 'responsibilities' | 'advisory'
 
-export function StaffScreen({ world, teamId, initialSelectedStaffId, onSetResponsibility }: { readonly world: GameWorld; readonly teamId?: TeamId; readonly initialSelectedStaffId?: StaffPersonId; readonly onSetResponsibility?: (input: SetTeamResponsibilityInput) => void }) {
+export function StaffScreen({ world, teamId, initialSelectedStaffId, onSetResponsibility, onAcceptRecommendation, onDismissRecommendation }: { readonly world: GameWorld; readonly teamId?: TeamId; readonly initialSelectedStaffId?: StaffPersonId; readonly onSetResponsibility?: (input: SetTeamResponsibilityInput) => void; readonly onAcceptRecommendation?: (outcomeId: DelegationOutcomeId) => StaffRecommendationCommandResult; readonly onDismissRecommendation?: (outcomeId: DelegationOutcomeId) => StaffRecommendationCommandResult }) {
   const team = teamId === undefined ? getUserTeam(world) : world.teams[teamId]
   const staff = team === undefined ? [] : getTeamStaffPresentation(world, team.id)
   const [tab, setTab] = useState<StaffScreenTab>('staff')
@@ -68,29 +71,33 @@ export function StaffScreen({ world, teamId, initialSelectedStaffId, onSetRespon
   ]
 
   const rows = staff.map((item) => ({ ...item, id: item.staffPersonId }))
+  const openAdvisoryCount = getStaffRecommendationsForTeam(world, team.id).filter((item) => item.status === 'PENDING' || item.status === 'INFORMATIONAL').length
 
   const toolbar = <div className="staff-screen-tabs">
     <button aria-pressed={tab === 'staff'} className={tab === 'staff' ? 'is-active' : undefined} onClick={() => setTab('staff')} type="button">STAFF</button>
     <button aria-pressed={tab === 'responsibilities'} className={tab === 'responsibilities' ? 'is-active' : undefined} onClick={() => setTab('responsibilities')} type="button">RESPONSIBILITIES</button>
+    <button aria-pressed={tab === 'advisory'} className={tab === 'advisory' ? 'is-active' : undefined} onClick={() => setTab('advisory')} type="button">ADVISORY{openAdvisoryCount > 0 ? ` · ${openAdvisoryCount}` : ''}</button>
   </div>
 
   return <AppFrame header={<AppHeader eyebrow="STAFF" meta={<span>{staff.length} STAFF</span>} title={team.name} />} toolbar={toolbar}>
     {tab === 'responsibilities'
       ? <ResponsibilitiesTab onSetResponsibility={onSetResponsibility} teamId={team.id} world={world} />
-      : staff.length === 0
-        ? <EmptyState description="No staff assigned to this team." title="No staff" />
-        : <SplitWorkspace inspector={selected !== undefined && <StaffDetail staffPersonId={selected.staffPersonId} world={world} />}>
-          <BDMDataGrid
-            columns={columns}
-            emptyDescription="Change the current filters to see more staff."
-            emptyTitle="No staff"
-            entityForRow={(row) => createEntityRef('staff', row.staffPersonId)}
-            gridId="staff-core"
-            onRowClick={(row) => setSelectedStaffId(row.staffPersonId)}
-            rows={rows}
-            selectedId={selected?.staffPersonId}
-          />
-        </SplitWorkspace>}
+      : tab === 'advisory'
+        ? <AdvisoryTab onAcceptRecommendation={onAcceptRecommendation} onDismissRecommendation={onDismissRecommendation} teamId={team.id} world={world} />
+        : staff.length === 0
+          ? <EmptyState description="No staff assigned to this team." title="No staff" />
+          : <SplitWorkspace inspector={selected !== undefined && <StaffDetail staffPersonId={selected.staffPersonId} world={world} />}>
+            <BDMDataGrid
+              columns={columns}
+              emptyDescription="Change the current filters to see more staff."
+              emptyTitle="No staff"
+              entityForRow={(row) => createEntityRef('staff', row.staffPersonId)}
+              gridId="staff-core"
+              onRowClick={(row) => setSelectedStaffId(row.staffPersonId)}
+              rows={rows}
+              selectedId={selected?.staffPersonId}
+            />
+          </SplitWorkspace>}
   </AppFrame>
 }
 
@@ -291,4 +298,102 @@ function ResponsibilityInspector({ world, teamId, responsibility, onApply }: { r
 
 function formatPercent(value: number): string {
   return Number.isFinite(value) ? `${Math.round(value * 100)}%` : '∞'
+}
+
+type AdvisoryFilter = 'open' | 'history'
+
+/** Failure reasons from `StaffRecommendationCommandResult` mapped to compact, non-technical inspector copy (Wave 4C3 §34). */
+const RECOMMENDATION_FAILURE_MESSAGES: Readonly<Record<string, string>> = {
+  notFound: 'Recommendation no longer exists.',
+  alreadyResolved: 'Recommendation already resolved.',
+  notAcceptable: 'This recommendation is informational only.',
+  underlyingRejected: 'Recommendation is no longer valid.',
+}
+
+function AdvisoryTab({ world, teamId, onAcceptRecommendation, onDismissRecommendation }: { readonly world: GameWorld; readonly teamId: TeamId; readonly onAcceptRecommendation?: (outcomeId: DelegationOutcomeId) => StaffRecommendationCommandResult; readonly onDismissRecommendation?: (outcomeId: DelegationOutcomeId) => StaffRecommendationCommandResult }) {
+  const items = getStaffRecommendationsForTeam(world, teamId)
+  const [filter, setFilter] = useState<AdvisoryFilter>('open')
+  const [selectedId, setSelectedId] = useState<string | undefined>(undefined)
+  const [failureMessage, setFailureMessage] = useState<string | undefined>(undefined)
+
+  const filtered = items.filter((item) => filter === 'open' ? item.status === 'PENDING' || item.status === 'INFORMATIONAL' : item.status === 'ACCEPTED' || item.status === 'DISMISSED')
+  const selected = filtered.find((item) => item.id === selectedId) ?? filtered[0]
+
+  const columns: readonly DataGridColumn<StaffRecommendationPresentationItem & { readonly id: string }>[] = [
+    { id: 'date', label: 'DATE', category: 'Identity', sortable: true, width: 92, render: (item) => item.decidedOn, value: (item) => item.decidedOn },
+    { id: 'domain', label: 'DOMAIN', category: 'Identity', sortable: true, searchable: true, width: 100, render: (item) => RESPONSIBILITY_DOMAIN_LABELS[item.domain], value: (item) => RESPONSIBILITY_DOMAIN_LABELS[item.domain] },
+    { id: 'recommendation', label: 'RECOMMENDATION', category: 'Identity', sortable: true, searchable: true, minWidth: 200, flex: 2, render: (item) => item.summary, value: (item) => item.summary },
+    { id: 'from', label: 'FROM', category: 'Identity', sortable: true, searchable: true, width: 130, render: (item) => item.staffName, value: (item) => item.staffName },
+    { id: 'quality', label: 'QUALITY', category: 'Evaluation', numeric: true, sortable: true, width: 80, render: (item) => item.qualityScore, value: (item) => item.qualityScore },
+    { id: 'status', label: 'STATUS', category: 'Status', sortable: true, width: 100, render: (item) => item.status, value: (item) => item.status },
+  ]
+
+  const gridRows = filtered.map((item) => ({ ...item, id: item.id }))
+
+  return <SplitWorkspace inspector={selected !== undefined && <AdvisoryInspector item={selected} key={selected.id} onAccept={onAcceptRecommendation} onDismiss={onDismissRecommendation} onFailure={setFailureMessage} />}>
+    <div className="staff-advisory-toolbar">
+      <div className="staff-mode-group" role="group">
+        <button aria-pressed={filter === 'open'} className={filter === 'open' ? 'is-active' : undefined} onClick={() => { setFilter('open'); setFailureMessage(undefined) }} type="button">OPEN</button>
+        <button aria-pressed={filter === 'history'} className={filter === 'history' ? 'is-active' : undefined} onClick={() => { setFilter('history'); setFailureMessage(undefined) }} type="button">HISTORY</button>
+      </div>
+    </div>
+    <BDMDataGrid
+      columns={columns}
+      emptyDescription={filter === 'open' ? 'No open recommendations.' : 'No resolved recommendations yet.'}
+      emptyTitle="No recommendations"
+      gridId="staff-advisory"
+      onRowClick={(row) => { setSelectedId(row.id); setFailureMessage(undefined) }}
+      rows={gridRows}
+      selectedId={selected?.id}
+    />
+  </SplitWorkspace>
+}
+
+function AdvisoryInspector({ item, onAccept, onDismiss, onFailure }: { readonly item: StaffRecommendationPresentationItem; readonly onAccept?: (outcomeId: DelegationOutcomeId) => StaffRecommendationCommandResult; readonly onDismiss?: (outcomeId: DelegationOutcomeId) => StaffRecommendationCommandResult; readonly onFailure: (message: string | undefined) => void }) {
+  const [localFailure, setLocalFailure] = useState<string | undefined>(undefined)
+  const readOnly = onAccept === undefined && onDismiss === undefined
+
+  const runCommand = (command: ((outcomeId: DelegationOutcomeId) => StaffRecommendationCommandResult) | undefined) => {
+    if (command === undefined) return
+    const result = command(item.outcomeId)
+    if (!result.ok) {
+      const message = RECOMMENDATION_FAILURE_MESSAGES[result.reason] ?? 'Recommendation is no longer valid.'
+      setLocalFailure(message)
+      onFailure(message)
+    } else {
+      setLocalFailure(undefined)
+      onFailure(undefined)
+    }
+  }
+
+  return <section className="staff-recommendation-inspector">
+    <p className="eyebrow">RECOMMENDATION</p>
+    <h2>{item.title}</h2>
+    <dl className="staff-recommendation-summary">
+      <div><dt>DOMAIN</dt><dd>{RESPONSIBILITY_DOMAIN_LABELS[item.domain]}</dd></div>
+      <div><dt>STATUS</dt><dd>{item.status}</dd></div>
+      <div><dt>DATE</dt><dd>{item.decidedOn}</dd></div>
+      <div><dt>FROM</dt><dd>{item.staffName}</dd></div>
+      {item.staffRole !== undefined && <div><dt>ROLE</dt><dd>{STAFF_ROLE_LABELS[item.staffRole]}</dd></div>}
+      <div><dt>QUALITY</dt><dd>{item.qualityScore}</dd></div>
+    </dl>
+
+    <DetailGroup title="DETAILS">
+      <p className="staff-explanation">{item.summary}</p>
+      <dl className="staff-recommendation-detail">
+        {item.detailRows.map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}
+      </dl>
+    </DetailGroup>
+
+    {!readOnly && localFailure !== undefined && <p className="staff-recommendation-failure">{localFailure}</p>}
+
+    {!readOnly && item.status === 'PENDING' && item.actionability === 'ACCEPTABLE' && <div className="staff-recommendation-actions">
+      <button className="primary-button" onClick={() => runCommand(onAccept)} type="button">ACCEPT</button>
+      <button onClick={() => runCommand(onDismiss)} type="button">DISMISS</button>
+    </div>}
+
+    {!readOnly && item.status === 'INFORMATIONAL' && <div className="staff-recommendation-actions">
+      <button onClick={() => runCommand(onDismiss)} type="button">DISMISS</button>
+    </div>}
+  </section>
 }
