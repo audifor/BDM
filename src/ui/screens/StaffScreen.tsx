@@ -48,6 +48,14 @@ import {
   INTENSITY_BAND_LABELS,
   type StaffDynamicsPresentationItem,
 } from '@/ui/staffHumanStatePresentation'
+import { explainStaffCultureFit } from '@/ui/staffCulturePresentation'
+import {
+  explainStaffUnitCohesion,
+  getStaffUnitsForTeam,
+  STAFF_UNIT_COHESION_BAND_LABELS,
+  type StaffUnitPresentationItem,
+} from '@/ui/staffUnitCohesionPresentation'
+import { STAFF_UNIT_COHESION_DIMENSIONS } from '@/domain/staffUnitCohesion'
 import { STAFF_HUMAN_STATE_DIMENSIONS } from '@/domain/staffHumanState'
 import { calculateStaffWorkload } from '@/domain/world'
 import { STAFF_REPUTATION_DIMENSIONS } from '@/domain/staffReputation'
@@ -479,7 +487,26 @@ function bandLabel(value: string): string {
   return (SATISFACTION_BAND_LABELS as Record<string, string>)[value] ?? (INTENSITY_BAND_LABELS as Record<string, string>)[value] ?? value
 }
 
+type DynamicsSubview = 'PEOPLE' | 'UNITS'
+
+/** Wave 5C — the DYNAMICS tab hosts two subviews. PEOPLE (per-Staff Human State) stays the default. */
 function DynamicsTab({ world, teamId }: { readonly world: GameWorld; readonly teamId: TeamId }) {
+  const [subview, setSubview] = useState<DynamicsSubview>('PEOPLE')
+
+  const toggle = <div className="staff-dynamics-subview">
+    <div className="staff-mode-group" role="group">
+      <button aria-pressed={subview === 'PEOPLE'} className={subview === 'PEOPLE' ? 'is-active' : undefined} onClick={() => setSubview('PEOPLE')} type="button">PEOPLE</button>
+      <button aria-pressed={subview === 'UNITS'} className={subview === 'UNITS' ? 'is-active' : undefined} onClick={() => setSubview('UNITS')} type="button">UNITS</button>
+    </div>
+  </div>
+
+  return <>
+    {toggle}
+    {subview === 'UNITS' ? <UnitsSubview teamId={teamId} world={world} /> : <PeopleSubview teamId={teamId} world={world} />}
+  </>
+}
+
+function PeopleSubview({ world, teamId }: { readonly world: GameWorld; readonly teamId: TeamId }) {
   const items = getStaffDynamicsForTeam(world, teamId)
   const [filter, setFilter] = useState<DynamicsFilter>('ALL')
   const [selectedId, setSelectedId] = useState<StaffPersonId | undefined>(undefined)
@@ -569,6 +596,8 @@ function DynamicsInspector({ world, staffId }: { readonly world: GameWorld; read
       <ul className="staff-career-history">{explanation.memories.map((memory) => <li key={memory.id}>{memory.summary} ({memory.occurredOn})</li>)}</ul>
     </DetailGroup>}
 
+    <CultureFitGroup staffId={staffId} world={world} />
+
     {explanation.relationships.length > 0 && <DetailGroup title="WORKING RELATIONSHIPS">
       <ul className="staff-working-relationships">
         {explanation.relationships.map((relationship) => <li key={relationship.personId}>
@@ -581,5 +610,92 @@ function DynamicsInspector({ world, staffId }: { readonly world: GameWorld; read
 
     {explanation.positives.length === 0 && explanation.concerns.length === 0 && explanation.expectationGaps.length === 0 && explanation.recentDevelopments.length === 0
       && <p className="staff-explanation">Nothing notable to report — a settled, unremarkable professional state.</p>}
+  </section>
+}
+
+// ---------------------------------------------------------------------------
+// Wave 5C — Culture Fit + UNITS subview (qualitative bands only, never raw values)
+// ---------------------------------------------------------------------------
+
+function CultureFitGroup({ world, staffId }: { readonly world: GameWorld; readonly staffId: StaffPersonId }) {
+  const fit = explainStaffCultureFit(world, staffId)
+  return <DetailGroup title="CULTURE FIT">
+    <dl className="staff-recommendation-summary">
+      <div><dt>FIT</dt><dd>{fit.label}</dd></div>
+    </dl>
+    {!fit.established && <p className="staff-explanation">Organizational culture has not settled yet.</p>}
+    {fit.frictionWith.length > 0 && <p className="staff-explanation">Friction with: {fit.frictionWith.join(', ')}.</p>}
+    {fit.frictionWith.length === 0 && fit.alignedWith.length > 0 && <p className="staff-explanation">Aligned on: {fit.alignedWith.slice(0, 4).join(', ')}.</p>}
+  </DetailGroup>
+}
+
+/** Compact per-dimension column abbreviations for the UNITS grid, in canonical order. */
+const UNIT_COHESION_COLUMN_LABEL: Readonly<Record<typeof STAFF_UNIT_COHESION_DIMENSIONS[number], string>> = {
+  cohesionTrust: 'TRUST',
+  communicationFlow: 'COMMS',
+  coordinationQuality: 'COORD',
+  sharedPurpose: 'PURPOSE',
+  conflictTolerance: 'CONFLICT',
+  mutualSupport: 'SUPPORT',
+  moraleAlignment: 'MORALE',
+  leadershipCohesion: 'LEAD COHESION',
+}
+
+function UnitsSubview({ world, teamId }: { readonly world: GameWorld; readonly teamId: TeamId }) {
+  const units = getStaffUnitsForTeam(world, teamId)
+  const [selectedKey, setSelectedKey] = useState<string | undefined>(undefined)
+  const selected = units.find((unit) => unit.unitKey === selectedKey) ?? units[0]
+
+  const columns: readonly DataGridColumn<StaffUnitPresentationItem & { readonly id: string }>[] = [
+    { id: 'unit', label: 'UNIT', category: 'Identity', sortable: true, searchable: true, minWidth: 140, flex: 2, render: (item) => item.departmentLabel, value: (item) => item.departmentLabel },
+    { id: 'members', label: 'MEMBERS', category: 'Identity', numeric: true, sortable: true, width: 84, render: (item) => item.memberCount, value: (item) => item.memberCount },
+    { id: 'lead', label: 'LEAD', category: 'Identity', sortable: true, searchable: true, width: 150, render: (item) => item.leaderLabel, value: (item) => item.leaderLabel },
+    ...STAFF_UNIT_COHESION_DIMENSIONS.map((dimension): DataGridColumn<StaffUnitPresentationItem & { readonly id: string }> => ({
+      id: dimension, label: UNIT_COHESION_COLUMN_LABEL[dimension], category: 'Cohesion', sortable: true, width: 96,
+      render: (item) => STAFF_UNIT_COHESION_BAND_LABELS[item.bands[dimension]],
+      value: (item) => STAFF_UNIT_COHESION_BAND_LABELS[item.bands[dimension]],
+    })),
+  ]
+
+  const gridRows = units.map((unit) => ({ ...unit, id: unit.unitKey }))
+
+  return <SplitWorkspace inspector={selected !== undefined && <UnitInspector unit={selected} world={world} />}>
+    <BDMDataGrid
+      columns={columns}
+      emptyDescription="No Staff units resolved for this team."
+      emptyTitle="No units"
+      gridId="staff-units"
+      onRowClick={(row) => setSelectedKey(row.unitKey)}
+      rows={gridRows}
+      selectedId={selected?.unitKey}
+    />
+  </SplitWorkspace>
+}
+
+function UnitInspector({ world, unit }: { readonly world: GameWorld; readonly unit: StaffUnitPresentationItem }) {
+  const explanation = explainStaffUnitCohesion(world, unit.unitKey)
+
+  return <section className="staff-unit-inspector">
+    <p className="eyebrow">STAFF UNIT</p>
+    <h2>{unit.departmentLabel}</h2>
+    <dl className="staff-recommendation-summary">
+      <div><dt>LEAD</dt><dd>{unit.leaderLabel}</dd></div>
+    </dl>
+
+    {!explanation.established
+      ? <p className="staff-explanation">Unit cohesion has not been established yet.</p>
+      : <DetailGroup title="COHESION">
+        <dl className="staff-recommendation-detail">
+          {explanation.dimensions.map((item) => <div key={item.key}><dt>{item.label}</dt><dd>{STAFF_UNIT_COHESION_BAND_LABELS[item.band]}</dd></div>)}
+        </dl>
+      </DetailGroup>}
+
+    {explanation.strengths.length > 0 && <DetailGroup title="UNIT STRENGTHS">
+      <ul className="staff-career-history">{explanation.strengths.map((line, index) => <li key={index}>{line}</li>)}</ul>
+    </DetailGroup>}
+
+    {explanation.concerns.length > 0 && <DetailGroup title="UNIT CONCERNS">
+      <ul className="staff-career-history">{explanation.concerns.map((line, index) => <li key={index}>{line}</li>)}</ul>
+    </DetailGroup>}
   </section>
 }

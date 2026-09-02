@@ -16,6 +16,8 @@ import { advanceGameDay } from '@/app/game/advanceGameDay'
 
 import { StaffScreen } from './StaffScreen'
 import { getTeamStaffPresentation, RESPONSIBILITY_KIND_LABELS, STAFF_ROLE_LABELS } from '@/ui/staffPresentation'
+import { getStaffUnitsForTeam, STAFF_UNIT_COHESION_DIMENSION_LABELS } from '@/ui/staffUnitCohesionPresentation'
+import { STAFF_UNIT_COHESION_DIMENSIONS } from '@/domain/staffUnitCohesion'
 
 function world(): GameWorld {
   return createNewGame()
@@ -570,5 +572,86 @@ describe('StaffScreen Dynamics tab', () => {
     // Never raw -100..100 numbers in the relationship row.
     const section = screen.getByText('WORKING RELATIONSHIPS').closest('section')!
     expect(section.textContent).not.toMatch(/-?\d{2,3}(?!\d)/)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// DYNAMICS tab — PEOPLE | UNITS subviews (Wave 5C)
+// ---------------------------------------------------------------------------
+
+function subviewGroup(): HTMLElement {
+  return document.querySelector<HTMLElement>('.staff-dynamics-subview .staff-mode-group')!
+}
+
+describe('StaffScreen Dynamics UNITS subview', () => {
+  afterEach(cleanup)
+
+  it('DYNAMICS defaults to the PEOPLE subview, rendering the existing staff-dynamics grid', () => {
+    const w = advanceGameDay(createNewGame())
+    render(<StaffScreen teamId={userTeamId(w)} world={w} />)
+    fireEvent.click(screen.getByRole('button', { name: /^DYNAMICS/ }))
+    expect(within(subviewGroup()).getByRole('button', { name: 'PEOPLE' }).getAttribute('aria-pressed')).toBe('true')
+    expect(within(subviewGroup()).getByRole('button', { name: 'UNITS' }).getAttribute('aria-pressed')).toBe('false')
+    expect(screen.getByRole('region', { name: 'staff-dynamics' })).toBeTruthy()
+    expect(screen.queryByRole('region', { name: 'staff-units' })).toBeNull()
+  })
+
+  it('switching to UNITS renders the staff-units grid with one row per resolved unit', () => {
+    const w = advanceGameDay(createNewGame())
+    const teamId = userTeamId(w)
+    render(<StaffScreen teamId={teamId} world={w} />)
+    fireEvent.click(screen.getByRole('button', { name: /^DYNAMICS/ }))
+    fireEvent.click(within(subviewGroup()).getByRole('button', { name: 'UNITS' }))
+    expect(screen.getByRole('region', { name: 'staff-units' })).toBeTruthy()
+    expect(screen.queryByRole('region', { name: 'staff-dynamics' })).toBeNull()
+
+    const units = getStaffUnitsForTeam(w, teamId)
+    expect(units.length).toBeGreaterThan(0)
+    for (const unit of units) expect(screen.getAllByText(unit.departmentLabel).length).toBeGreaterThan(0)
+  })
+
+  it('double-clicking a unit row opens its inspector with qualitative bands only — no raw cohesion numbers', () => {
+    const w = advanceGameDay(createNewGame())
+    const teamId = userTeamId(w)
+    render(<StaffScreen teamId={teamId} world={w} />)
+    fireEvent.click(screen.getByRole('button', { name: /^DYNAMICS/ }))
+    fireEvent.click(within(subviewGroup()).getByRole('button', { name: 'UNITS' }))
+
+    const units = getStaffUnitsForTeam(w, teamId)
+    const target = units[units.length - 1]!
+    // BDMDataGrid fires onRowClick on double-click, not click.
+    fireEvent.doubleClick(screen.getAllByText(target.departmentLabel)[0]!.closest('tr')!)
+
+    const inspector = screen.getByText('STAFF UNIT').closest('section')!
+    expect(inspector.textContent).toContain(target.departmentLabel)
+    for (const dimension of STAFF_UNIT_COHESION_DIMENSIONS) {
+      expect(inspector.textContent).toContain(STAFF_UNIT_COHESION_DIMENSION_LABELS[dimension])
+    }
+    // Scoped to the inspector: no bare 2-3 digit 0-100 cohesion value may be rendered.
+    expect(inspector.textContent).not.toMatch(/\b\d{2,3}\b/)
+  })
+
+  it('a unit with no cohesion state yet degrades gracefully rather than crashing', () => {
+    // A brand-new world has not run the periodic pipeline, so no unit state exists.
+    const w = createNewGame()
+    render(<StaffScreen teamId={userTeamId(w)} world={w} />)
+    fireEvent.click(screen.getByRole('button', { name: /^DYNAMICS/ }))
+    fireEvent.click(within(subviewGroup()).getByRole('button', { name: 'UNITS' }))
+    expect(screen.getByRole('region', { name: 'staff-units' })).toBeTruthy()
+    expect(screen.getByText('Unit cohesion has not been established yet.')).toBeTruthy()
+  })
+
+  it('the PEOPLE inspector shows a qualitative Culture Fit band, never a raw fit score', () => {
+    const w = advanceGameDay(createNewGame())
+    const teamId = userTeamId(w)
+    render(<StaffScreen teamId={teamId} world={w} />)
+    fireEvent.click(screen.getByRole('button', { name: /^DYNAMICS/ }))
+    expect(screen.getByText('CULTURE FIT')).toBeTruthy()
+
+    const group = screen.getByText('CULTURE FIT').closest('section, div')!
+    const bands = ['STRONG FIT', 'GOOD FIT', 'MIXED FIT', 'MISMATCH', 'SEVERE MISMATCH', 'NOT YET ESTABLISHED']
+    expect(bands.some((band) => group.textContent?.includes(band))).toBe(true)
+    // A raw 0-100 fit score must never be rendered next to the band.
+    expect(group.querySelector('dd')?.textContent).not.toMatch(/\d/)
   })
 })

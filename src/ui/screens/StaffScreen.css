@@ -68,6 +68,7 @@
 .staff-responsibility-apply { margin-top: 6px; align-self: flex-start; }
 
 .staff-advisory-toolbar { display: flex; margin-bottom: 4px; }
+.staff-dynamics-subview { display: flex; margin-bottom: 4px; }
 
 .staff-recommendation-inspector { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; padding-right: 2px; }
 .staff-recommendation-inspector h2 { margin: 2px 0 6px; font-size: 1.05rem; letter-spacing: -0.02em; }

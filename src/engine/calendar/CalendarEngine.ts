@@ -16,6 +16,7 @@ import { progressOppositionScoutingReports } from '@/engine/tactics/OppositionSc
 import { progressMedicalAdvisories } from '@/engine/injury'
 import { progressBasketballOperationsAdvisories } from '@/engine/roster'
 import { progressStaffHumanState } from '@/engine/staff/StaffHumanStatePipeline'
+import { progressStaffCultureAndCohesion } from '@/engine/staff/StaffCultureCohesionPipeline'
 
 /**
  * Advances only the simulation date, leaving game resolution to other services.
@@ -44,7 +45,7 @@ export function advanceDay(world: GameWorld): GameWorld {
     if (opened.draftsById[draft.id]?.status !== 'inProgress') return opened
     return progressDraftAi(progressDraftProspectAdvisories(opened, draft.id), draft.id)
   }, enforced)
-  return progressStaffHumanState(withDrafts)
+  return progressStaffCultureAndCohesion(progressStaffHumanState(withDrafts))
 }
 function progressAcademicTerms(world: GameWorld): GameWorld { if(world.currentDate.slice(5) !== '01-01' && world.currentDate.slice(5) !== '07-01') return world; const term=`academic:${world.currentDate.slice(0, 4)}:${world.currentDate.slice(5, 7)}`; return resolveAcademicTerm(progressAiAcademicSupport(world,term),term) }
 
