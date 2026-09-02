@@ -1,15 +1,20 @@
 import { describe, expect, it } from 'vitest'
 
 import { getUserTeam } from '@/engine/calendar'
-import { getTeamStaffPayroll } from '@/domain/world'
+import { getTeamStaffAssignments, getTeamStaffPayroll } from '@/domain/world'
 import { isStaffContractActiveOn } from '@/domain/staffContract'
 import { ASSIGNABLE_STAFF_ROLE_IDS, isStaffRoleApplicableToEcosystem } from '@/domain/staff'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSaveV1'
 import { deserializeGameWorldV3, serializeGameWorldV3 } from '@/save/GameWorldSaveV3'
 import { acceptStaffJobOffer, completeStaffInterview, createStaffJobOffer, createStaffJobOpeningForTeam, fireStaffFromTeam, identifyStaffCandidate, listFreeAgentStaff, startStaffInterview } from '@/app/staffCareer'
 import { acceptCoachJobOffer, completeCoachInterview, createCoachJobOffer, fireCoachFromTeam, identifyCoachCandidate, startCoachInterview } from '@/app/coachCareer'
+import { setTeamResponsibility } from '@/app/staffResponsibilities'
+import { getEligibleResponsibilityCandidates } from '@/ui/staffPresentation'
+import { getStaffRecommendationsForTeam } from '@/ui/staffRecommendationPresentation'
 import { createNewGame } from './createNewGame'
 import { createAcbTestGame } from './createAcbTestGame'
+import { advanceGameDay } from './advanceGameDay'
+import { continueGame } from './ContinueFlow'
 
 describe('createAcbTestGame', () => {
   it('creates the complete ACB 2026/27 regular-season test universe', () => {
@@ -135,6 +140,69 @@ describe('createAcbTestGame', () => {
     const loaded = deserializeGameWorldV1(serializeGameWorldV1(hired, '2026-09-19T00:00:00.000Z'))
     expect(loaded.teams[team.id]!.coachId).toBe(coachId)
     expect(loaded.coachEmploymentByCoachId[coachId]).toEqual(hired.coachEmploymentByCoachId[coachId])
+  })
+
+  it('reproduces the manual QA flow: set oppositionScouting advisory, advance a day, Advisory OPEN must show the recommendation', () => {
+    let world = createAcbTestGame({ userTeamKey: 'caz' })
+    const team = getUserTeam(world)!
+    expect(team.name).toBe('Casademont Zaragoza')
+
+    const candidates = getEligibleResponsibilityCandidates(world, team.id, 'oppositionScouting', 'advisory')
+    expect(candidates.length).toBeGreaterThan(0)
+    const holder = candidates[0]!
+    world = setTeamResponsibility(world, { teamId: team.id, kind: 'oppositionScouting', mode: 'advisory', holderStaffId: holder.staffPersonId })
+
+    for (let day = 0; day < 10; day += 1) {
+      world = advanceGameDay(world)
+      const items = getStaffRecommendationsForTeam(world, team.id)
+      if (items.some((item) => item.kind === 'oppositionScouting')) break
+    }
+
+    const items = getStaffRecommendationsForTeam(world, team.id)
+    const oppositionScoutingItems = items.filter((item) => item.kind === 'oppositionScouting')
+    expect(oppositionScoutingItems.length).toBeGreaterThan(0)
+    expect(oppositionScoutingItems.some((item) => item.status === 'PENDING' || item.status === 'INFORMATIONAL')).toBe(true)
+  })
+
+  it('reproduces the manual QA flow via continueGame (the actual "avanzar/continuar días" action)', () => {
+    let world = createAcbTestGame({ userTeamKey: 'caz' })
+    const team = getUserTeam(world)!
+
+    const candidates = getEligibleResponsibilityCandidates(world, team.id, 'oppositionScouting', 'advisory')
+    const holder = candidates[0]!
+    world = setTeamResponsibility(world, { teamId: team.id, kind: 'oppositionScouting', mode: 'advisory', holderStaffId: holder.staffPersonId })
+
+    const result = continueGame(world, 30)
+    world = result.world
+    expect(result.daysAdvanced).toBeGreaterThan(0)
+
+    const items = getStaffRecommendationsForTeam(world, team.id)
+    expect(items.some((item) => item.kind === 'oppositionScouting')).toBe(true)
+  })
+
+  it('reproduces the manual QA flow exactly: several single-day advances, THEN continueGame, checking Advisory after every step', () => {
+    let world = createAcbTestGame({ userTeamKey: 'caz' })
+    const team = getUserTeam(world)!
+
+    const candidates = getEligibleResponsibilityCandidates(world, team.id, 'oppositionScouting', 'advisory')
+    const holder = candidates[0]!
+    world = setTeamResponsibility(world, { teamId: team.id, kind: 'oppositionScouting', mode: 'advisory', holderStaffId: holder.staffPersonId })
+
+    // "avancé día varias veces": repeated single-day advances first.
+    for (let day = 0; day < 3; day += 1) {
+      world = advanceGameDay(world)
+    }
+    const afterSingleDays = getStaffRecommendationsForTeam(world, team.id).filter((item) => item.kind === 'oppositionScouting')
+    expect(afterSingleDays.length).toBeGreaterThan(0)
+
+    // "y probé continuar": then continueGame on top of that same world.
+    const result = continueGame(world, 30)
+    world = result.world
+    const afterContinue = getStaffRecommendationsForTeam(world, team.id).filter((item) => item.kind === 'oppositionScouting')
+    expect(afterContinue.length).toBeGreaterThan(0)
+
+    // The pre-existing outcome from the single-day advances must still be present (never silently dropped/overwritten).
+    for (const item of afterSingleDays) expect(afterContinue.some((later) => later.outcomeId === item.outcomeId)).toBe(true)
   })
 
   it('leaves the prototype staff fixture unchanged', () => {
