@@ -5,6 +5,9 @@ import { createGameDate } from '@/domain/date'
 import { staffHumanContextIdFor, createStaffHumanContext, createStaffHumanState, createStaffHumanEvent, type StaffHumanEvent } from '@/domain/staffHumanState'
 import { applyStaffHumanEvent } from './StaffHumanReactionEngine'
 import type { TeamId, StaffPersonId } from '@/domain/ids'
+import { setTeamResponsibility } from '@/app/staffResponsibilities'
+import { dismissStaffRecommendation } from '@/app/staffRecommendations'
+import { RELATIONSHIP_DIMENSION_KEYS } from '@/domain/relationships'
 
 function baseWorld() {
   return createNewGame()
@@ -256,9 +259,7 @@ describe('Wave 5B — Working Relationships', () => {
     expect(dims.communicationQuality).toBeLessThan(0)
   })
 
-  it('G. INFORMATIONAL DISMISS pattern: no new RelationshipEvent, no facet change (via ROUTINE importance / no facetBase)', () => {
-    // Informational dismiss never reaches this bridge with an acceptance-family kind; simulate the
-    // actual guarantee at this layer: an event kind with no relationship mapping produces no event.
+  it('G (bridge-level sanity, NOT the real informational-dismiss guarantee — see the seam-level test below): an event kind with no relationship facet mapping never creates a relationship', () => {
     const base = baseWorld()
     const teamId = Object.values(base.teams)[0]!.id
     const staffId = pickStaff(base, teamId, 'assistantCoach')
@@ -267,6 +268,48 @@ describe('Wave 5B — Working Relationships', () => {
     const event = makeEvent({ staffId, contextId, kind: 'sustainedHealthyWorkload', importance: 'ROUTINE', attribution: { actorKind: 'USER_COACH', actorId: coachId } })
     const result = applyStaffHumanEvent(world, world.staffHumanContextsById[contextId]!, event)
     expect(Object.keys(result.world.relationshipsByKey)).toHaveLength(0)
+  })
+
+  it('G (REAL seam): dismissing a genuinely INFORMATIONAL DelegationOutcome through dismissStaffRecommendation produces zero rejection event, zero new RelationshipEvent, an unchanged value, all 8 dimensions unchanged, and no negative Memory', () => {
+    const base = baseWorld()
+    const teamId = Object.values(base.teams)[0]!.id
+    const staffId = pickStaff(base, teamId, 'assistantCoach')
+    const coachId = Object.values(base.coaches)[0]!.id
+    const { world: seededWorld, contextId } = seedContext(base, staffId, teamId)
+
+    // oppositionScouting has no canonical acceptance seam (Wave 4C3) — genuinely INFORMATIONAL.
+    const advisory = setTeamResponsibility(seededWorld, { teamId, kind: 'oppositionScouting', mode: 'advisory', holderStaffId: staffId })
+
+    // A preexisting Staff->Coach relationship snapshot, so the assertion is meaningful (not just "0 === 0").
+    const preexistingProfile = { sourceId: staffId, targetId: coachId, value: 12, dimensions: { trust: 10, professionalRespect: 8, communicationQuality: 5, collaboration: 3, personalCloseness: 0, perceivedSupport: 6, reliability: 4, professionalAlignment: 2 }, events: [] }
+    const withProfile = updateGameWorld(advisory, { relationshipsByKey: { ...advisory.relationshipsByKey, [`${staffId}->${coachId}`]: preexistingProfile } })
+
+    const outcomeId = 'delegation-outcome:informational-real-seam' as never
+    const withOutcome = updateGameWorld(withProfile, {
+      delegationOutcomes: [...Object.values(withProfile.delegationOutcomesById), { id: outcomeId, responsibilityId: `responsibility:${teamId}:oppositionScouting` as never, staffId, decidedOn: withProfile.currentDate, kind: 'oppositionScouting', applied: false, qualityScore: 60, payload: {} }],
+    })
+
+    const beforeState = withOutcome.staffHumanStatesByContextId[contextId]!
+    const beforeReactionCount = Object.keys(withOutcome.staffReactionRecordsById).length
+    const beforeRelationship = withOutcome.relationshipsByKey[`${staffId}->${coachId}`]!
+    const beforeMemoryCount = Object.keys(withOutcome.memoriesById).length
+
+    const result = dismissStaffRecommendation(withOutcome, outcomeId)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    // No StaffHumanEvent of rejection ever fired.
+    expect(Object.keys(result.world.staffReactionRecordsById)).toHaveLength(beforeReactionCount)
+    expect(result.world.staffHumanStatesByContextId[contextId]).toEqual(beforeState)
+
+    // No new RelationshipEvent — the events array is byte-identical, value unchanged, all 8 dimensions unchanged.
+    const afterRelationship = result.world.relationshipsByKey[`${staffId}->${coachId}`]!
+    expect(afterRelationship.events).toEqual(beforeRelationship.events)
+    expect(afterRelationship.value).toBe(beforeRelationship.value)
+    for (const key of RELATIONSHIP_DIMENSION_KEYS) expect(afterRelationship.dimensions![key]).toBe(beforeRelationship.dimensions![key])
+
+    // No negative Memory derived from a rejection that never happened.
+    expect(Object.keys(result.world.memoriesById)).toHaveLength(beforeMemoryCount)
   })
 
   it('H. SYSTEMIC / NO ACTOR: no personal relationship effect', () => {
@@ -338,5 +381,34 @@ describe('Wave 5B — Working Relationships', () => {
     const result = applyStaffHumanEvent(withLegacy, withLegacy.staffHumanContextsById[contextId]!, event)
     expect(result.reaction).toBeDefined()
     expect(Number.isFinite(result.reaction!.stateDelta.influenceSatisfaction)).toBe(true)
+  })
+
+  it('HARD DIRECTIONALITY: an extreme actor->staff profile with no staff->actor profile never modulates the reaction — the reverse direction is never consulted', () => {
+    const base = baseWorld()
+    const teamId = Object.values(base.teams)[0]!.id
+    const staffId = pickStaff(base, teamId, 'assistantCoach')
+    const coachId = Object.values(base.coaches)[0]!.id
+    const { world, contextId } = seedContext(base, staffId, teamId)
+
+    // Only actor->staff exists (the coach's perception of the Staff), and it is extreme in BOTH
+    // directions across two otherwise-identical worlds — if the reverse direction were ever
+    // consulted, these two extreme-but-opposite profiles would produce different reaction
+    // magnitudes. They must not: staff->actor is absent in both, so the modifier must be neutral (1x).
+    const extremePositiveReverse = { sourceId: coachId, targetId: staffId, value: 100, dimensions: { trust: 100, professionalRespect: 100, communicationQuality: 100, collaboration: 0, personalCloseness: 0, perceivedSupport: 0, reliability: 0, professionalAlignment: 0 }, events: [] }
+    const extremeNegativeReverse = { sourceId: coachId, targetId: staffId, value: -100, dimensions: { trust: -100, professionalRespect: -100, communicationQuality: -100, collaboration: 0, personalCloseness: 0, perceivedSupport: 0, reliability: 0, professionalAlignment: 0 }, events: [] }
+    const worldPositiveReverse = updateGameWorld(world, { relationshipsByKey: { ...world.relationshipsByKey, [`${coachId}->${staffId}`]: extremePositiveReverse } })
+    const worldNegativeReverse = updateGameWorld(world, { relationshipsByKey: { ...world.relationshipsByKey, [`${coachId}->${staffId}`]: extremeNegativeReverse } })
+
+    expect(worldPositiveReverse.relationshipsByKey[`${staffId}->${coachId}`]).toBeUndefined()
+    expect(worldNegativeReverse.relationshipsByKey[`${staffId}->${coachId}`]).toBeUndefined()
+
+    const event = makeEvent({ staffId, contextId, kind: 'importantRecommendationRejected', importance: 'IMPORTANT', attribution: { actorKind: 'USER_COACH', actorId: coachId } })
+    const resultNoReverse = applyStaffHumanEvent(world, world.staffHumanContextsById[contextId]!, { ...event, id: 'event:no-reverse', sourceEventId: 'no-reverse' })
+    const resultPositiveReverse = applyStaffHumanEvent(worldPositiveReverse, worldPositiveReverse.staffHumanContextsById[contextId]!, { ...event, id: 'event:positive-reverse', sourceEventId: 'positive-reverse' })
+    const resultNegativeReverse = applyStaffHumanEvent(worldNegativeReverse, worldNegativeReverse.staffHumanContextsById[contextId]!, { ...event, id: 'event:negative-reverse', sourceEventId: 'negative-reverse' })
+
+    // All three must be identical: the extreme actor->staff profile is never read, regardless of its sign.
+    expect(resultPositiveReverse.reaction!.stateDelta).toEqual(resultNoReverse.reaction!.stateDelta)
+    expect(resultNegativeReverse.reaction!.stateDelta).toEqual(resultNoReverse.reaction!.stateDelta)
   })
 })

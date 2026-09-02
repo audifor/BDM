@@ -185,8 +185,11 @@ function resolvePersonalityModifier(personality: Personality | undefined, dimens
 /** §14/Wave 5B §16 — a good relationship with the attributed actor amortizes a negative event; a bad one amplifies it, always within bounds. Prefers the DIRECTIONAL staff→actor profile (facets are directional per Wave 5B §9); falls back to the reverse-direction profile, then to neutral. When facets exist (trust/professionalRespect/communicationQuality), they drive the modulation as the richer signal; a legacy profile with no facets falls back to `value` exactly as before — never a behavior change for pre-5B saves/fixtures. Bounded 0.8x-1.2x, same envelope as before, to avoid runaway feedback loops. */
 function resolveRelationshipModifier(world: GameWorld, event: StaffHumanEvent, attributable: boolean): number {
   if (!attributable || event.attribution.actorId === undefined) return 1
-  const forward = world.relationshipsByKey[`${event.staffId}->${event.attribution.actorId}`]
-  const relationship = forward ?? world.relationshipsByKey[`${event.attribution.actorId}->${event.staffId}`]
+  // Directional per Relationship canon: only the Staff person's OWN perception of the actor
+  // (staff->actor) can modulate how the Staff interprets this event — the actor's perception of
+  // the Staff (actor->staff) is a completely different, independent profile and must never be
+  // consulted here, even as a fallback.
+  const relationship = world.relationshipsByKey[`${event.staffId}->${event.attribution.actorId}`]
   if (relationship === undefined) return 1
 
   if (relationship.dimensions !== undefined) {
