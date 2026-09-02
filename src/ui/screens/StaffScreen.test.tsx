@@ -1,13 +1,17 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { createNewGame } from '@/app/game/createNewGame'
 import { getUserTeam } from '@/engine/calendar'
 import { getTeamStaffAssignments, updateGameWorld, type GameWorld } from '@/domain/world'
-import type { StaffPersonId, TeamId } from '@/domain/ids'
+import { createInjury } from '@/domain/injury'
+import { injuryIdFromString, staffPersonIdFromString, teamStaffAssignmentIdFromString, type StaffPersonId, type TeamId } from '@/domain/ids'
 import type { StaffRoleId } from '@/domain/staff'
+import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { setTeamResponsibility } from '@/app/staffResponsibilities'
+import { acceptStaffRecommendation, dismissStaffRecommendation } from '@/app/staffRecommendations'
+import { progressMedicalAdvisories } from '@/engine/injury/MedicalAdvisory'
 
 import { StaffScreen } from './StaffScreen'
 import { getTeamStaffPresentation, RESPONSIBILITY_KIND_LABELS, STAFF_ROLE_LABELS } from '@/ui/staffPresentation'
@@ -238,7 +242,7 @@ describe('StaffScreen', () => {
     render(<StaffScreen onSetResponsibility={onSetResponsibility} teamId={teamId} world={w} />)
     fireEvent.click(screen.getByRole('button', { name: 'RESPONSIBILITIES' }))
     fireEvent.doubleClick(screen.getAllByText(RESPONSIBILITY_KIND_LABELS.treatmentRecommendation)[0]!)
-    fireEvent.click(screen.getByRole('button', { name: 'ADVISORY' }))
+    fireEvent.click(within(document.querySelector('.staff-mode-group')!).getByRole('button', { name: 'ADVISORY' }))
     const select = screen.getByRole('combobox') as HTMLSelectElement
     const physiotherapistId = staffWithRole(w, teamId, 'physiotherapist')
     expect(select.querySelector(`option[value="${physiotherapistId}"]`)).toBeTruthy()
@@ -267,9 +271,189 @@ describe('StaffScreen', () => {
     render(<StaffScreen onSetResponsibility={onSetResponsibility} teamId={teamId} world={staleWorld} />)
     fireEvent.click(screen.getByRole('button', { name: 'RESPONSIBILITIES' }))
     fireEvent.doubleClick(screen.getAllByText(RESPONSIBILITY_KIND_LABELS.treatmentRecommendation)[0]!)
-    fireEvent.click(screen.getByRole('button', { name: 'ADVISORY' }))
+    fireEvent.click(within(document.querySelector('.staff-mode-group')!).getByRole('button', { name: 'ADVISORY' }))
     // The reassigned physiotherapist no longer qualifies for treatmentRecommendation under any role, so no combobox renders.
     expect(screen.getByText('NO ELIGIBLE STAFF')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'APPLY' }).hasAttribute('disabled')).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Advisory tab (Wave 4C3)
+// ---------------------------------------------------------------------------
+
+type AdvisoryStaffAttributes = Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number>
+const advisoryFlatAttributes: AdvisoryStaffAttributes = Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 60])) as AdvisoryStaffAttributes
+
+function withAdvisoryStaffInRole(world: GameWorld, teamId: TeamId, role: string, kind: 'treatmentRecommendation' | 'contractRecommendation') {
+  const staffId = staffPersonIdFromString(`advisory-ui-staff-${role}-${kind}-${teamId}`)
+  const withStaff = updateGameWorld(world, {
+    staffPeople: [...Object.values(world.staffPeopleById), { id: staffId, identity: { firstName: 'Med', lastName: 'Ic' }, professional: { attributes: advisoryFlatAttributes } }],
+    teamStaffAssignments: [...Object.values(world.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString(`advisory-ui-assignment-${role}-${kind}-${teamId}`), staffPersonId: staffId, teamId, role: role as never, assignedOn: world.currentDate }],
+  })
+  const id = `responsibility:${teamId}:${kind}` as never
+  const delegated = updateGameWorld(withStaff, {
+    responsibilities: [...Object.values(withStaff.responsibilitiesById).filter((responsibility) => responsibility.id !== id), { id, teamId, kind, mode: 'advisory', holderStaffId: staffId }],
+  })
+  return { world: delegated, staffId }
+}
+
+function withAdvisoryActiveInjury(world: GameWorld, teamId: TeamId) {
+  const playerId = world.teams[teamId]!.rosterPlayerIds[0]!
+  const injury = createInjury({ id: injuryIdFromString(`advisory-ui-injury-${teamId}`), playerId, kind: 'ankleSprain', severity: 'moderate', injuredOn: world.currentDate, expectedReturnDate: '2099-01-01' as never })
+  return { world: updateGameWorld(world, { injuries: [...Object.values(world.injuriesById), injury] }), injury }
+}
+
+function medicalPendingWorld() {
+  const base = createNewGame()
+  const teamId = userTeamId(base)
+  const { world: withInjury } = withAdvisoryActiveInjury(base, teamId)
+  const { world: withStaff, staffId } = withAdvisoryStaffInRole(withInjury, teamId, 'teamDoctor', 'treatmentRecommendation')
+  const progressed = progressMedicalAdvisories(withStaff)
+  const outcome = Object.values(progressed.delegationOutcomesById).find((item) => item.staffId === staffId && item.kind === 'treatmentRecommendation')!
+  return { world: progressed, outcome, teamId }
+}
+
+function contractInformationalWorld() {
+  const base = createNewGame()
+  const teamId = userTeamId(base)
+  const { world: withStaff, staffId } = withAdvisoryStaffInRole(base, teamId, 'capContractsSpecialist', 'contractRecommendation')
+  const playerId = withStaff.teams[teamId]!.rosterPlayerIds[0]
+  const outcomeId = 'delegation-outcome:advisory-ui-contract' as never
+  const withOutcome = updateGameWorld(withStaff, {
+    delegationOutcomes: [...Object.values(withStaff.delegationOutcomesById), { id: outcomeId, responsibilityId: `responsibility:${teamId}:contractRecommendation` as never, staffId, decidedOn: withStaff.currentDate, kind: 'contractRecommendation', applied: false, qualityScore: 60, payload: { playerId: playerId ?? '', recommendation: 'renew', annualSalary: 1000000, recommendedAnnualSalary: 1000000, budgetStatus: 'healthy', confidence: 70 } }],
+  })
+  return { world: withOutcome, outcomeId, teamId }
+}
+
+describe('StaffScreen Advisory tab', () => {
+  afterEach(cleanup)
+
+  it('STAFF remains the default tab', () => {
+    const w = createNewGame()
+    render(<StaffScreen teamId={userTeamId(w)} world={w} />)
+    const tabs = document.querySelector('.staff-screen-tabs')!
+    expect(tabs.querySelector('button.is-active')?.textContent).toBe('STAFF')
+    expect(screen.getByRole('region', { name: 'staff-core' })).toBeTruthy()
+  })
+
+  it('RESPONSIBILITIES tab still works', () => {
+    const w = createNewGame()
+    render(<StaffScreen teamId={userTeamId(w)} world={w} />)
+    fireEvent.click(screen.getByRole('button', { name: 'RESPONSIBILITIES' }))
+    expect(screen.getByRole('region', { name: 'staff-responsibilities' })).toBeTruthy()
+  })
+
+  it('ADVISORY tab exists and renders the staff-advisory grid, defaulting to OPEN', () => {
+    const { world, teamId } = medicalPendingWorld()
+    render(<StaffScreen teamId={teamId} world={world} />)
+    fireEvent.click(screen.getByRole('button', { name: /^ADVISORY/ }))
+    expect(screen.getByRole('region', { name: 'staff-advisory' })).toBeTruthy()
+    const filterGroup = document.querySelector<HTMLElement>('.staff-advisory-toolbar .staff-mode-group')!
+    expect(within(filterGroup).getByRole('button', { name: 'OPEN' }).getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('HISTORY filter shows accepted/dismissed and hides open recommendations', () => {
+    const { world, outcome, teamId } = medicalPendingWorld()
+    const accepted = updateGameWorld(world, { delegationOutcomes: [...Object.values(world.delegationOutcomesById).filter((item) => item.id !== outcome.id), { ...outcome, applied: true, userDisposition: 'accepted', userDecidedOn: world.currentDate }] })
+    render(<StaffScreen teamId={teamId} world={accepted} />)
+    fireEvent.click(screen.getByRole('button', { name: /^ADVISORY/ }))
+    const filterGroup = document.querySelector<HTMLElement>('.staff-advisory-toolbar .staff-mode-group')!
+    fireEvent.click(within(filterGroup).getByRole('button', { name: 'HISTORY' }))
+    expect(screen.getByRole('region', { name: 'staff-advisory' }).textContent).toContain('ACCEPTED')
+  })
+
+  it('ACCEPT appears for a Medical pending recommendation', () => {
+    const { world, teamId } = medicalPendingWorld()
+    const onAcceptRecommendation = vi.fn()
+    render(<StaffScreen onAcceptRecommendation={onAcceptRecommendation} teamId={teamId} world={world} />)
+    fireEvent.click(screen.getByRole('button', { name: /^ADVISORY/ }))
+    expect(screen.getByRole('button', { name: 'ACCEPT' })).toBeTruthy()
+  })
+
+  it('ACCEPT does not appear for contractRecommendation (no canonical acceptance seam)', () => {
+    const { world, teamId } = contractInformationalWorld()
+    const onAcceptRecommendation = vi.fn()
+    render(<StaffScreen onAcceptRecommendation={onAcceptRecommendation} teamId={teamId} world={world} />)
+    fireEvent.click(screen.getByRole('button', { name: /^ADVISORY/ }))
+    expect(screen.queryByRole('button', { name: 'ACCEPT' })).toBeNull()
+  })
+
+  it('DISMISS appears for an informational recommendation', () => {
+    const { world, teamId } = contractInformationalWorld()
+    const onDismissRecommendation = vi.fn()
+    render(<StaffScreen onDismissRecommendation={onDismissRecommendation} teamId={teamId} world={world} />)
+    fireEvent.click(screen.getByRole('button', { name: /^ADVISORY/ }))
+    expect(screen.getByRole('button', { name: 'DISMISS' })).toBeTruthy()
+  })
+
+  it('ACCEPT calls the callback with the correct outcomeId', () => {
+    const { world, outcome, teamId } = medicalPendingWorld()
+    const onAcceptRecommendation = vi.fn().mockReturnValue({ ok: true, world })
+    render(<StaffScreen onAcceptRecommendation={onAcceptRecommendation} teamId={teamId} world={world} />)
+    fireEvent.click(screen.getByRole('button', { name: /^ADVISORY/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'ACCEPT' }))
+    expect(onAcceptRecommendation).toHaveBeenCalledWith(outcome.id)
+  })
+
+  it('DISMISS calls the callback with the correct outcomeId', () => {
+    const { world, outcomeId, teamId } = contractInformationalWorld()
+    const onDismissRecommendation = vi.fn().mockReturnValue({ ok: true, world })
+    render(<StaffScreen onDismissRecommendation={onDismissRecommendation} teamId={teamId} world={world} />)
+    fireEvent.click(screen.getByRole('button', { name: /^ADVISORY/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'DISMISS' }))
+    expect(onDismissRecommendation).toHaveBeenCalledWith(outcomeId)
+  })
+
+  it('accepted moves out of OPEN and into HISTORY when the world updates (real facade, real rerender)', () => {
+    const { world, outcome, teamId } = medicalPendingWorld()
+    const result = acceptStaffRecommendation(world, outcome.id)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    const { rerender } = render(<StaffScreen teamId={teamId} world={world} />)
+    fireEvent.click(screen.getByRole('button', { name: /^ADVISORY/ }))
+    expect(screen.getByRole('region', { name: 'staff-advisory' }).textContent).not.toContain('ACCEPTED')
+    rerender(<StaffScreen teamId={teamId} world={result.world} />)
+    const filterGroup = document.querySelector<HTMLElement>('.staff-advisory-toolbar .staff-mode-group')!
+    fireEvent.click(within(filterGroup).getByRole('button', { name: 'HISTORY' }))
+    expect(screen.getByRole('region', { name: 'staff-advisory' }).textContent).toContain('ACCEPTED')
+  })
+
+  it('dismissed moves out of OPEN and into HISTORY when the world updates', () => {
+    const { world, outcome, teamId } = medicalPendingWorld()
+    const result = dismissStaffRecommendation(world, outcome.id)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    render(<StaffScreen teamId={teamId} world={result.world} />)
+    fireEvent.click(screen.getByRole('button', { name: /^ADVISORY/ }))
+    const filterGroup = document.querySelector<HTMLElement>('.staff-advisory-toolbar .staff-mode-group')!
+    fireEvent.click(within(filterGroup).getByRole('button', { name: 'HISTORY' }))
+    expect(screen.getByRole('region', { name: 'staff-advisory' }).textContent).toContain('DISMISSED')
+  })
+
+  it('read-only (no callbacks) does not show ACCEPT/DISMISS mutating buttons', () => {
+    const { world, teamId } = medicalPendingWorld()
+    render(<StaffScreen teamId={teamId} world={world} />)
+    fireEvent.click(screen.getByRole('button', { name: /^ADVISORY/ }))
+    expect(screen.queryByRole('button', { name: 'ACCEPT' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'DISMISS' })).toBeNull()
+  })
+
+  it('a Team with no Staff does not break Advisory (still renders the tab/grid)', () => {
+    const w = createNewGame()
+    const teamId = userTeamId(w)
+    const assignments = Object.values(w.teamStaffAssignmentsById).filter((assignment) => assignment.teamId === teamId)
+    const remainingAssignments = Object.values(w.teamStaffAssignmentsById).filter((assignment) => !assignments.some((removed) => removed.id === assignment.id))
+    const removedStaffIds = new Set(assignments.map((assignment) => assignment.staffPersonId))
+    const employmentUpdates = Object.fromEntries([...removedStaffIds].map((id) => [id, { status: 'unemployed' }]))
+    const remainingContracts = Object.values(w.staffContractsById).filter((contract) => !removedStaffIds.has(contract.staffId))
+    const stripped = updateGameWorld(w, {
+      teamStaffAssignments: remainingAssignments,
+      staffEmploymentByStaffId: { ...w.staffEmploymentByStaffId, ...employmentUpdates } as never,
+      staffContracts: remainingContracts,
+    })
+    render(<StaffScreen teamId={teamId} world={stripped} />)
+    fireEvent.click(screen.getByRole('button', { name: /^ADVISORY/ }))
+    expect(screen.getByRole('region', { name: 'staff-advisory' })).toBeTruthy()
   })
 })

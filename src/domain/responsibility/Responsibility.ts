@@ -148,6 +148,15 @@ export function validateResponsibilityAssignment(kind: ResponsibilityKind, mode:
 // Delegation foundation
 // ---------------------------------------------------------------------------
 
+/**
+ * Explicit user decision on an `advisory` `DelegationOutcome` (Wave 4C3 — Advisory Center).
+ * Deliberately just two states: `undefined` (no user decision yet) covers everything else,
+ * including historical/automatic/delegated outcomes that were never surfaced for a user decision
+ * at all — `applied: true` must never be read as "user accepted" on its own (see
+ * `userDecidedOn`/`userDisposition` invariants below).
+ */
+export type DelegationOutcomeUserDisposition = 'accepted' | 'dismissed'
+
 export interface DelegationOutcome {
   readonly id: DelegationOutcomeId
   readonly responsibilityId: ResponsibilityId
@@ -160,10 +169,20 @@ export interface DelegationOutcome {
   readonly qualityScore: number
   readonly payload: Readonly<Record<string, string | number | boolean>>
   readonly rationale?: string
+  /**
+   * Set only by the Wave 4C3 Advisory Center application façade, never by an engine's own
+   * automatic/delegated outcome recording. Optional and additive — a `DelegationOutcome` with
+   * neither field is exactly as valid as one that predates Wave 4C3 (Save backward compatibility).
+   */
+  readonly userDisposition?: DelegationOutcomeUserDisposition
+  readonly userDecidedOn?: GameDate
 }
 
 export function createDelegationOutcome(input: DelegationOutcome): DelegationOutcome {
   if (!Number.isInteger(input.qualityScore) || input.qualityScore < 0 || input.qualityScore > 100) throw new RangeError('Delegation outcome quality score must be an integer from 0 to 100')
+  if (input.userDisposition !== undefined && input.userDecidedOn === undefined) throw new RangeError('Delegation outcome userDisposition requires userDecidedOn')
+  if (input.userDisposition === 'accepted' && !input.applied) throw new RangeError('Delegation outcome accepted by the user must be applied')
+  if (input.userDisposition === 'dismissed' && input.applied) throw new RangeError('Delegation outcome dismissed by the user must not be applied')
   return {
     id: delegationOutcomeIdFromString(input.id),
     responsibilityId: responsibilityIdFromString(input.responsibilityId),
@@ -174,6 +193,8 @@ export function createDelegationOutcome(input: DelegationOutcome): DelegationOut
     qualityScore: input.qualityScore,
     payload: { ...input.payload },
     ...(input.rationale === undefined ? {} : { rationale: input.rationale }),
+    ...(input.userDisposition === undefined ? {} : { userDisposition: input.userDisposition }),
+    ...(input.userDecidedOn === undefined ? {} : { userDecidedOn: parseGameDate(input.userDecidedOn) }),
   }
 }
 

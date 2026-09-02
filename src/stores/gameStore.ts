@@ -48,6 +48,8 @@ import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
 import type { StaffRoleId } from '@/domain/staff'
 import { acceptStaffJobOffer, completeStaffInterview, createStaffJobOffer, createStaffJobOpeningForTeam, declineStaffJobOffer, fireStaffFromTeam, identifyStaffCandidate, startStaffInterview } from '@/app/staffCareer'
 import { setTeamResponsibility, type SetTeamResponsibilityInput } from '@/app/staffResponsibilities'
+import { acceptStaffRecommendation as acceptStaffRecommendationCommand, dismissStaffRecommendation as dismissStaffRecommendationCommand, type StaffRecommendationCommandResult } from '@/app/staffRecommendations'
+import type { DelegationOutcomeId } from '@/domain/responsibility'
 
 interface GameStore {
   readonly world: GameWorld | null
@@ -76,6 +78,8 @@ interface GameStore {
   declineStaffOffer(offerId: string): void
   fireStaff(staffId: StaffPersonId): void
   setStaffResponsibility(input: SetTeamResponsibilityInput): void
+  acceptStaffRecommendation(outcomeId: DelegationOutcomeId): StaffRecommendationCommandResult
+  dismissStaffRecommendation(outcomeId: DelegationOutcomeId): StaffRecommendationCommandResult
   purchaseUserCoachSkill(skillId: CoachSkillId): CoachRpgOperationResult
   purchaseUserCoachPerk(perkId: CoachPerkId): CoachRpgOperationResult
   acceptUserCoachOffer(offerId: string): void
@@ -171,6 +175,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
   declineStaffOffer: (offerId) => set({ world: declineStaffJobOffer(requireWorld(get().world), offerId) }),
   fireStaff: (staffId) => set({ world: fireStaffFromTeam(requireWorld(get().world), staffId) }),
   setStaffResponsibility: (input) => set({ world: setTeamResponsibility(requireWorld(get().world), input) }),
+  acceptStaffRecommendation: (outcomeId) => {
+    const result = acceptStaffRecommendationCommand(requireWorld(get().world), outcomeId)
+    if (result.ok) set({ world: result.world })
+    return result
+  },
+  dismissStaffRecommendation: (outcomeId) => {
+    const result = dismissStaffRecommendationCommand(requireWorld(get().world), outcomeId)
+    if (result.ok) set({ world: result.world })
+    return result
+  },
   purchaseUserCoachSkill: (skillId) => { const result = purchaseCoachSkillRank(requireWorld(get().world), requireWorld(get().world).userCoachId, skillId); if (result.ok) set({ world: result.world }); return result },
   purchaseUserCoachPerk: (perkId) => { const result = purchaseCoachPerk(requireWorld(get().world), requireWorld(get().world).userCoachId, perkId); if (result.ok) set({ world: result.world }); return result },
   acceptUserCoachOffer: (offerId) => set({ world: acceptCoachJobOffer(requireWorld(get().world), offerId) }),

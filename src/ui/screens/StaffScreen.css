@@ -66,3 +66,18 @@
 
 .staff-responsibility-inspector select { font-size: 11px; padding: 2px 4px; width: 100%; }
 .staff-responsibility-apply { margin-top: 6px; align-self: flex-start; }
+
+.staff-advisory-toolbar { display: flex; margin-bottom: 4px; }
+
+.staff-recommendation-inspector { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; padding-right: 2px; }
+.staff-recommendation-inspector h2 { margin: 2px 0 6px; font-size: 1.05rem; letter-spacing: -0.02em; }
+.staff-recommendation-summary,
+.staff-recommendation-detail { display: flex; flex-direction: column; gap: 2px; margin: 0; }
+.staff-recommendation-summary div,
+.staff-recommendation-detail div { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 18px; font-size: 11px; }
+.staff-recommendation-summary dt,
+.staff-recommendation-detail dt { color: var(--bdm-text-secondary, #9aa39a); font-weight: 500; letter-spacing: 0.02em; }
+.staff-recommendation-summary dd,
+.staff-recommendation-detail dd { margin: 0; font-variant-numeric: tabular-nums; text-align: right; }
+.staff-recommendation-failure { margin: 2px 0; font-size: 11px; color: #f0b2a9; }
+.staff-recommendation-actions { display: flex; gap: 6px; margin-top: 6px; }

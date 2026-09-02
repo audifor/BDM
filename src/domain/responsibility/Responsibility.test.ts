@@ -113,4 +113,77 @@ describe('DelegationOutcome foundation', () => {
     expect(() => createDelegationOutcome({ ...base, qualityScore: -1 })).toThrow()
     expect(() => createDelegationOutcome({ ...base, qualityScore: 1.5 })).toThrow()
   })
+
+  it('a legacy outcome with no userDisposition/userDecidedOn remains valid (Wave 4C3 additive backward compatibility)', () => {
+    const outcome = createDelegationOutcome({
+      id: delegationOutcomeIdFromString('outcome-legacy'),
+      responsibilityId: responsibilityIdFromString(responsibilityIdForTeam(teamId, 'assignScouts')),
+      staffId: scout.id,
+      decidedOn: createGameDate(2032, 10, 1),
+      kind: 'assignScouts',
+      applied: true,
+      qualityScore: 55,
+      payload: {},
+    })
+    expect(outcome.userDisposition).toBeUndefined()
+    expect(outcome.userDecidedOn).toBeUndefined()
+  })
+
+  it('accepts a coherent accepted disposition (applied true, userDecidedOn set)', () => {
+    const outcome = createDelegationOutcome({
+      id: delegationOutcomeIdFromString('outcome-accepted'),
+      responsibilityId: responsibilityIdFromString(responsibilityIdForTeam(teamId, 'treatmentRecommendation')),
+      staffId: scout.id,
+      decidedOn: createGameDate(2032, 10, 1),
+      kind: 'treatmentRecommendation',
+      applied: true,
+      qualityScore: 55,
+      payload: {},
+      userDisposition: 'accepted',
+      userDecidedOn: createGameDate(2032, 10, 2),
+    })
+    expect(outcome.userDisposition).toBe('accepted')
+    expect(outcome.userDecidedOn).toBe(createGameDate(2032, 10, 2))
+    expect(outcome.applied).toBe(true)
+  })
+
+  it('accepts a coherent dismissed disposition (applied false, userDecidedOn set)', () => {
+    const outcome = createDelegationOutcome({
+      id: delegationOutcomeIdFromString('outcome-dismissed'),
+      responsibilityId: responsibilityIdFromString(responsibilityIdForTeam(teamId, 'oppositionScouting')),
+      staffId: scout.id,
+      decidedOn: createGameDate(2032, 10, 1),
+      kind: 'oppositionScouting',
+      applied: false,
+      qualityScore: 55,
+      payload: {},
+      userDisposition: 'dismissed',
+      userDecidedOn: createGameDate(2032, 10, 2),
+    })
+    expect(outcome.userDisposition).toBe('dismissed')
+    expect(outcome.applied).toBe(false)
+  })
+
+  it('rejects userDisposition without userDecidedOn, and incoherent applied/disposition combinations', () => {
+    const base = { id: delegationOutcomeIdFromString('outcome-invalid'), responsibilityId: responsibilityIdFromString(responsibilityIdForTeam(teamId, 'assignScouts')), staffId: scout.id, decidedOn: createGameDate(2032, 10, 1), kind: 'assignScouts' as const, qualityScore: 50, payload: {} }
+    expect(() => createDelegationOutcome({ ...base, applied: true, userDisposition: 'accepted' })).toThrow()
+    expect(() => createDelegationOutcome({ ...base, applied: false, userDisposition: 'accepted', userDecidedOn: createGameDate(2032, 10, 2) })).toThrow()
+    expect(() => createDelegationOutcome({ ...base, applied: true, userDisposition: 'dismissed', userDecidedOn: createGameDate(2032, 10, 2) })).toThrow()
+  })
+
+  it('parses userDecidedOn as a GameDate', () => {
+    const outcome = createDelegationOutcome({
+      id: delegationOutcomeIdFromString('outcome-date'),
+      responsibilityId: responsibilityIdFromString(responsibilityIdForTeam(teamId, 'assignScouts')),
+      staffId: scout.id,
+      decidedOn: createGameDate(2032, 10, 1),
+      kind: 'assignScouts',
+      applied: false,
+      qualityScore: 50,
+      payload: {},
+      userDisposition: 'dismissed',
+      userDecidedOn: '2032-10-03' as never,
+    })
+    expect(outcome.userDecidedOn).toBe(createGameDate(2032, 10, 3))
+  })
 })
