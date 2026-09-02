@@ -84,3 +84,9 @@
 
 .staff-dynamics-summary { display: flex; gap: 12px; margin-bottom: 4px; font-size: 11px; color: var(--bdm-text-secondary, #9aa39a); flex-wrap: wrap; }
 .staff-dynamics-summary span { white-space: nowrap; }
+
+.staff-working-relationships { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.staff-working-relationships li { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 18px; font-size: 11px; }
+.staff-working-relationship__person { color: var(--bdm-text-secondary, #9aa39a); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.staff-working-relationship__state { font-weight: 600; }
+.staff-working-relationship__trend { width: 14px; text-align: right; }

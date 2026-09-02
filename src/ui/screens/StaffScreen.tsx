@@ -455,6 +455,10 @@ const DYNAMICS_STATE_LABELS: Readonly<Record<StaffDynamicsPresentationItem['inte
 const DYNAMICS_TREND_LABELS: Readonly<Record<StaffDynamicsPresentationItem['trend'], string>> = {
   IMPROVING: '↑ IMPROVING', STABLE: '→ STABLE', WORSENING: '↓ WORSENING',
 }
+const WORKING_RELATIONSHIP_STATE_LABELS: Readonly<Record<string, string>> = {
+  EXCELLENT: 'EXCELLENT', STRONG: 'STRONG', GOOD: 'GOOD', PROFESSIONAL: 'PROFESSIONAL', MIXED: 'MIXED', STRAINED: 'STRAINED', POOR: 'POOR',
+}
+const TREND_ARROW: Readonly<Record<'IMPROVING' | 'STABLE' | 'WORSENING', string>> = { IMPROVING: '↑', STABLE: '→', WORSENING: '↓' }
 
 /** Compact per-dimension column abbreviations, in canonical `STAFF_HUMAN_STATE_DIMENSIONS` order. */
 const DIMENSION_COLUMN_LABEL: Readonly<Record<typeof STAFF_HUMAN_STATE_DIMENSIONS[number], string>> = {
@@ -565,8 +569,14 @@ function DynamicsInspector({ world, staffId }: { readonly world: GameWorld; read
       <ul className="staff-career-history">{explanation.memories.map((memory) => <li key={memory.id}>{memory.summary} ({memory.occurredOn})</li>)}</ul>
     </DetailGroup>}
 
-    {explanation.relationships.length > 0 && <DetailGroup title="KEY WORKING RELATIONSHIPS">
-      <dl className="staff-recommendation-detail">{explanation.relationships.map((relationship) => <div key={relationship.personId}><dt>{relationship.personLabel}</dt><dd>{relationship.band}</dd></div>)}</dl>
+    {explanation.relationships.length > 0 && <DetailGroup title="WORKING RELATIONSHIPS">
+      <ul className="staff-working-relationships">
+        {explanation.relationships.map((relationship) => <li key={relationship.personId}>
+          <span className="staff-working-relationship__person">{relationship.personLabel}{relationship.personRole !== undefined ? ` · ${relationship.personRole}` : ''}</span>
+          <span className="staff-working-relationship__state">{WORKING_RELATIONSHIP_STATE_LABELS[relationship.state] ?? relationship.state}</span>
+          <span className="staff-working-relationship__trend">{TREND_ARROW[relationship.trend]}</span>
+        </li>)}
+      </ul>
     </DetailGroup>}
 
     {explanation.positives.length === 0 && explanation.concerns.length === 0 && explanation.expectationGaps.length === 0 && explanation.recentDevelopments.length === 0

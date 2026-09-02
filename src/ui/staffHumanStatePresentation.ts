@@ -14,6 +14,7 @@ import {
 import { deriveStaffReality, deriveOverallSatisfaction, getStaffConsequenceSignals } from '@/engine/staff/StaffHumanAppraisalEngine'
 import { calculateStaffWorkload } from '@/domain/world'
 import { STAFF_ROLE_LABELS } from './staffPresentation'
+import { deriveWorkingRelationshipState, deriveWorkingRelationshipTrend, type WorkingRelationshipState, type WorkingRelationshipTrend } from './staffWorkingRelationshipPresentation'
 
 /**
  * Wave 5A §38-44 — pure, read-only Staff Dynamics presentation. NEVER computes psychological
@@ -163,7 +164,10 @@ export interface StaffDynamicsMemoryDisplay {
 export interface StaffDynamicsRelationshipDisplay {
   readonly personId: string
   readonly personLabel: string
+  readonly personRole: string | undefined
   readonly band: string
+  readonly state: WorkingRelationshipState
+  readonly trend: WorkingRelationshipTrend
 }
 
 export interface StaffDynamicsExplanation {
@@ -248,11 +252,18 @@ export function explainStaffHumanState(world: GameWorld, staffId: StaffPersonId)
   }))
 
   const relationships = getRelationshipsForPerson(world, staffId)
-    .filter((profile) => profile.sourceId === staffId || profile.targetId === staffId)
+    .filter((profile) => profile.sourceId === staffId) // §9 directional — only relationships THIS Staff person holds toward someone else, never the reverse direction mixed in.
     .slice(0, 5)
     .map((profile) => {
-      const otherId = profile.sourceId === staffId ? profile.targetId : profile.sourceId
-      return { personId: otherId, personLabel: personLabel(world, otherId), band: getRelationshipBand(profile.value).toUpperCase() }
+      const otherId = profile.targetId
+      return {
+        personId: otherId,
+        personLabel: personLabel(world, otherId),
+        personRole: getStaffAssignment(world, otherId as never) !== undefined ? STAFF_ROLE_LABELS[getStaffAssignment(world, otherId as never)!.role] : world.coaches[otherId as never] !== undefined ? 'HEAD COACH' : undefined,
+        band: getRelationshipBand(profile.value).toUpperCase(),
+        state: deriveWorkingRelationshipState(profile),
+        trend: deriveWorkingRelationshipTrend(profile),
+      }
     })
 
   return {

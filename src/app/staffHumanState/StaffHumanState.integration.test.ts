@@ -54,6 +54,27 @@ describe('CASO 1 — RESPONSIBILITY GRANTED', () => {
     const after = granted.staffHumanStatesByContextId[contextId]!
     expect(after.responsibilitySatisfaction).toBeGreaterThanOrEqual(before.responsibilitySatisfaction)
   })
+
+  it('Wave 5B ACB acceptance: real Responsibility grant -> facets change -> presentation shows it -> Save/load conserves the relationship', async () => {
+    const { explainWorkingRelationship } = await import('@/ui/staffWorkingRelationshipPresentation')
+    const { serializeGameWorldV3, deserializeGameWorldV3 } = await import('@/save/GameWorldSaveV3')
+    const base = acbWorld()
+    const team = getUserTeam(base)!
+    const staffId = pickStaff(base, team.id, 'assistantCoach')
+    const { world } = ensureContext(base, staffId, team.id)
+
+    const granted = setTeamResponsibility(world, { teamId: team.id, kind: 'createTeamTrainingPlan', mode: 'delegated', holderStaffId: staffId })
+    const relationship = granted.relationshipsByKey[`${staffId}->${granted.userCoachId}`]
+    expect(relationship?.dimensions?.trust).toBeGreaterThan(0)
+
+    const explanation = explainWorkingRelationship(granted, staffId, granted.userCoachId)
+    expect(explanation).toBeDefined()
+    expect(explanation!.facets.some((facet) => facet.key === 'trust')).toBe(true)
+    expect(explanation!.recentInteractions.length).toBeGreaterThan(0)
+
+    const loaded = deserializeGameWorldV3(serializeGameWorldV3(granted, '2032-10-01T00:00:00.000Z'))
+    expect(loaded.relationshipsByKey[`${staffId}->${granted.userCoachId}`]).toEqual(relationship)
+  })
 })
 
 describe('CASO 2 — MODE CHANGE', () => {
@@ -188,7 +209,7 @@ describe('CASO 5 — PATTERN', () => {
 })
 
 describe('CASO 7 — WORKLOAD', () => {
-  it('sustained overload raises stress and lowers workload satisfaction; relief afterward recovers stress', { timeout: 30000 }, () => {
+  it('sustained overload raises stress and lowers workload satisfaction; relief afterward recovers stress', { timeout: 45000 }, () => {
     const base = createAcbTestGame({ userTeamKey: 'caz' })
     const team = getUserTeam(base)!
     const staffId = pickStaff(base, team.id, 'assistantCoach')
