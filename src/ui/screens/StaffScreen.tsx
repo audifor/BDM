@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { getUserTeam } from '@/engine/calendar'
 import { getStaffAssignment, getStaffPerson, type GameWorld } from '@/domain/world'
 import { staffRoleDefinition } from '@/domain/staff'
+import type { ResponsibilityKind, ResponsibilityMode } from '@/domain/responsibility'
+import type { SetTeamResponsibilityInput } from '@/app/staffResponsibilities'
 import type { StaffPersonId, TeamId } from '@/domain/ids'
 import { createEntityRef } from '@/app/entityActions/EntityRef'
 import { useEntityActions } from '@/ui/entityActions/useEntityActions'
@@ -15,12 +17,18 @@ import {
   classifyWorkloadState,
   compactStaffSalary,
   findActiveStaffContractForStaff,
+  getEligibleResponsibilityCandidates,
   getRecentStaffCareerHistory,
+  getResponsibilitiesHeldPresentation,
   getStaffAge,
   getStaffReputationProfile,
   getStaffRoleEvaluations,
+  getTeamResponsibilityPresentation,
   getTeamStaffPresentation,
   formatStaffCareerEntry,
+  RESPONSIBILITY_DOMAIN_LABELS,
+  RESPONSIBILITY_KIND_LABELS,
+  RESPONSIBILITY_MODE_LABELS,
   STAFF_CONTRACT_STATUS_LABELS,
   STAFF_DEPARTMENT_LABELS,
   STAFF_PROFESSIONAL_ATTRIBUTE_KEYS,
@@ -28,15 +36,19 @@ import {
   STAFF_ROLE_LABELS,
   WORKLOAD_STATE_LABELS,
   type StaffPresentationItem,
+  type StaffResponsibilityPresentationItem,
 } from '@/ui/staffPresentation'
 import { calculateStaffWorkload } from '@/domain/world'
 import { STAFF_REPUTATION_DIMENSIONS } from '@/domain/staffReputation'
 
 import './StaffScreen.css'
 
-export function StaffScreen({ world, teamId, initialSelectedStaffId }: { readonly world: GameWorld; readonly teamId?: TeamId; readonly initialSelectedStaffId?: StaffPersonId }) {
+type StaffScreenTab = 'staff' | 'responsibilities'
+
+export function StaffScreen({ world, teamId, initialSelectedStaffId, onSetResponsibility }: { readonly world: GameWorld; readonly teamId?: TeamId; readonly initialSelectedStaffId?: StaffPersonId; readonly onSetResponsibility?: (input: SetTeamResponsibilityInput) => void }) {
   const team = teamId === undefined ? getUserTeam(world) : world.teams[teamId]
   const staff = team === undefined ? [] : getTeamStaffPresentation(world, team.id)
+  const [tab, setTab] = useState<StaffScreenTab>('staff')
   const [selectedStaffId, setSelectedStaffId] = useState<StaffPersonId | undefined>(undefined)
   const selected = staff.find((item) => item.staffPersonId === (selectedStaffId ?? initialSelectedStaffId)) ?? staff[0]
 
@@ -57,21 +69,28 @@ export function StaffScreen({ world, teamId, initialSelectedStaffId }: { readonl
 
   const rows = staff.map((item) => ({ ...item, id: item.staffPersonId }))
 
-  return <AppFrame header={<AppHeader eyebrow="STAFF" meta={<span>{staff.length} STAFF</span>} title={team.name} />}>
-    {staff.length === 0
-      ? <EmptyState description="No staff assigned to this team." title="No staff" />
-      : <SplitWorkspace inspector={selected !== undefined && <StaffDetail staffPersonId={selected.staffPersonId} world={world} />}>
-        <BDMDataGrid
-          columns={columns}
-          emptyDescription="Change the current filters to see more staff."
-          emptyTitle="No staff"
-          entityForRow={(row) => createEntityRef('staff', row.staffPersonId)}
-          gridId="staff-core"
-          onRowClick={(row) => setSelectedStaffId(row.staffPersonId)}
-          rows={rows}
-          selectedId={selected?.staffPersonId}
-        />
-      </SplitWorkspace>}
+  const toolbar = <div className="staff-screen-tabs">
+    <button aria-pressed={tab === 'staff'} className={tab === 'staff' ? 'is-active' : undefined} onClick={() => setTab('staff')} type="button">STAFF</button>
+    <button aria-pressed={tab === 'responsibilities'} className={tab === 'responsibilities' ? 'is-active' : undefined} onClick={() => setTab('responsibilities')} type="button">RESPONSIBILITIES</button>
+  </div>
+
+  return <AppFrame header={<AppHeader eyebrow="STAFF" meta={<span>{staff.length} STAFF</span>} title={team.name} />} toolbar={toolbar}>
+    {tab === 'responsibilities'
+      ? <ResponsibilitiesTab onSetResponsibility={onSetResponsibility} teamId={team.id} world={world} />
+      : staff.length === 0
+        ? <EmptyState description="No staff assigned to this team." title="No staff" />
+        : <SplitWorkspace inspector={selected !== undefined && <StaffDetail staffPersonId={selected.staffPersonId} world={world} />}>
+          <BDMDataGrid
+            columns={columns}
+            emptyDescription="Change the current filters to see more staff."
+            emptyTitle="No staff"
+            entityForRow={(row) => createEntityRef('staff', row.staffPersonId)}
+            gridId="staff-core"
+            onRowClick={(row) => setSelectedStaffId(row.staffPersonId)}
+            rows={rows}
+            selectedId={selected?.staffPersonId}
+          />
+        </SplitWorkspace>}
   </AppFrame>
 }
 
@@ -145,8 +164,131 @@ function StaffDetail({ world, staffPersonId }: { readonly world: GameWorld; read
         : <ul className="staff-career-history">{careerHistory.map((entry, index) => <li key={`${entry.date}-${entry.kind}-${index}`}>{formatStaffCareerEntry(entry)}</li>)}</ul>}
     </DetailGroup>
 
+    <DetailGroup title="RESPONSIBILITIES HELD">
+      <ResponsibilitiesHeld staffPersonId={staffPersonId} world={world} />
+    </DetailGroup>
+
     <DetailGroup title="PROFESSIONAL ATTRIBUTES">
       <dl className="staff-attributes">{STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => <div key={key}><dt>{STAFF_PROFESSIONAL_ATTRIBUTE_LABELS[key]}</dt><dd>{person.professional.attributes[key]}</dd></div>)}</dl>
     </DetailGroup>
   </section>
+}
+
+/** Compact, read-only: rows where `responsibility.holderStaffId === staffPersonId`. Editing happens only in the RESPONSIBILITIES tab. */
+function ResponsibilitiesHeld({ world, staffPersonId }: { readonly world: GameWorld; readonly staffPersonId: StaffPersonId }) {
+  const held = getResponsibilitiesHeldPresentation(world, staffPersonId)
+  if (held.length === 0) return <p className="staff-explanation">No responsibilities assigned.</p>
+  return <dl className="staff-responsibilities-held">
+    {held.map((item) => <div key={item.id}>
+      <dt>{RESPONSIBILITY_KIND_LABELS[item.kind]}</dt>
+      <dd>{RESPONSIBILITY_MODE_LABELS[item.mode]} · {item.capacityCost}</dd>
+    </div>)}
+  </dl>
+}
+
+function ResponsibilitiesTab({ world, teamId, onSetResponsibility }: { readonly world: GameWorld; readonly teamId: TeamId; readonly onSetResponsibility?: (input: SetTeamResponsibilityInput) => void }) {
+  const rows = getTeamResponsibilityPresentation(world, teamId)
+  const [selectedId, setSelectedId] = useState<string | undefined>(undefined)
+  const selected = rows.find((row) => row.id === selectedId) ?? rows[0]
+
+  const columns: readonly DataGridColumn<StaffResponsibilityPresentationItem & { readonly id: string }>[] = [
+    { id: 'responsibility', label: 'RESPONSIBILITY', category: 'Identity', sortable: true, searchable: true, minWidth: 170, flex: 2, render: (item) => RESPONSIBILITY_KIND_LABELS[item.kind], value: (item) => RESPONSIBILITY_KIND_LABELS[item.kind] },
+    { id: 'domain', label: 'DOMAIN', category: 'Identity', sortable: true, searchable: true, width: 100, render: (item) => RESPONSIBILITY_DOMAIN_LABELS[item.domain], value: (item) => RESPONSIBILITY_DOMAIN_LABELS[item.domain] },
+    { id: 'control', label: 'CONTROL', category: 'Delegation', sortable: true, width: 120, render: (item) => RESPONSIBILITY_MODE_LABELS[item.mode], value: (item) => RESPONSIBILITY_MODE_LABELS[item.mode] },
+    { id: 'holder', label: 'HOLDER', category: 'Delegation', sortable: true, searchable: true, width: 140, render: (item) => item.holderLabel, value: (item) => item.holderLabel },
+    { id: 'role', label: 'ROLE', category: 'Delegation', sortable: true, width: 130, render: (item) => item.holderRole === undefined ? '—' : STAFF_ROLE_LABELS[item.holderRole], value: (item) => item.holderRole === undefined ? '' : STAFF_ROLE_LABELS[item.holderRole] },
+    { id: 'load', label: 'LOAD', category: 'Capacity', numeric: true, sortable: true, width: 72, render: (item) => item.capacityCost, value: (item) => item.capacityCost },
+    { id: 'utilization', label: 'UTILIZATION', category: 'Capacity', sortable: true, width: 110, render: (item) => item.holderUtilization === undefined ? '—' : <WorkloadBadge state={item.holderWorkloadState ?? 'unassigned'} utilization={item.holderUtilization} />, value: (item) => item.holderUtilization ?? -1 },
+  ]
+
+  const gridRows = rows.map((item) => ({ ...item, id: item.id }))
+
+  return <SplitWorkspace inspector={selected !== undefined && <ResponsibilityInspector onApply={onSetResponsibility} responsibility={selected} teamId={teamId} world={world} />}>
+    <BDMDataGrid
+      columns={columns}
+      emptyDescription="No responsibilities configured."
+      emptyTitle="No responsibilities"
+      gridId="staff-responsibilities"
+      onRowClick={(row) => setSelectedId(row.id)}
+      rows={gridRows}
+      selectedId={selected?.id}
+    />
+  </SplitWorkspace>
+}
+
+function ResponsibilityInspector({ world, teamId, responsibility, onApply }: { readonly world: GameWorld; readonly teamId: TeamId; readonly responsibility: StaffResponsibilityPresentationItem; readonly onApply?: (input: SetTeamResponsibilityInput) => void }) {
+  const [draftMode, setDraftMode] = useState<ResponsibilityMode>(responsibility.mode)
+  const [draftHolderId, setDraftHolderId] = useState<StaffPersonId | undefined>(responsibility.holderStaffId)
+
+  // Reset the draft whenever the selected Responsibility or its canonical world state changes, so a
+  // stale draft can never be applied onto a different Responsibility.
+  useEffect(() => {
+    setDraftMode(responsibility.mode)
+    setDraftHolderId(responsibility.holderStaffId)
+  }, [responsibility.id, responsibility.mode, responsibility.holderStaffId])
+
+  const readOnly = onApply === undefined || responsibility.eligibleParticipant === 'coach'
+  const needsHolder = draftMode === 'delegated' || draftMode === 'advisory'
+  const candidates = needsHolder ? getEligibleResponsibilityCandidates(world, teamId, responsibility.kind, draftMode) : []
+  const selectedCandidate = candidates.find((candidate) => candidate.staffPersonId === draftHolderId)
+
+  const hasChange = draftMode !== responsibility.mode || (needsHolder ? draftHolderId !== responsibility.holderStaffId : false)
+  const canApply = !readOnly && hasChange && (!needsHolder || selectedCandidate !== undefined)
+
+  const apply = () => {
+    if (!canApply || onApply === undefined) return
+    onApply({ teamId, kind: responsibility.kind, mode: draftMode, ...(needsHolder && draftHolderId !== undefined ? { holderStaffId: draftHolderId } : {}) })
+  }
+
+  return <section className="staff-responsibility-inspector">
+    <p className="eyebrow">RESPONSIBILITY</p>
+    <h2>{RESPONSIBILITY_KIND_LABELS[responsibility.kind]}</h2>
+    <dl className="staff-responsibility-summary">
+      <div><dt>DOMAIN</dt><dd>{RESPONSIBILITY_DOMAIN_LABELS[responsibility.domain]}</dd></div>
+      <div><dt>CAPACITY COST</dt><dd>{responsibility.capacityCost}</dd></div>
+      <div><dt>CURRENT CONTROL</dt><dd>{RESPONSIBILITY_MODE_LABELS[responsibility.mode]}</dd></div>
+      <div><dt>CURRENT HOLDER</dt><dd>{responsibility.holderLabel}</dd></div>
+    </dl>
+
+    <DetailGroup title="CONTROL MODE">
+      {responsibility.eligibleParticipant === 'coach'
+        ? <p className="staff-explanation">Head Coach-only. Only {RESPONSIBILITY_MODE_LABELS[responsibility.mode]} is available for this responsibility.</p>
+        : <div className="staff-mode-group" role="group">
+          {responsibility.supportedModes.map((mode) => <button
+            aria-pressed={draftMode === mode}
+            className={draftMode === mode ? 'is-active' : undefined}
+            disabled={readOnly}
+            key={mode}
+            onClick={() => setDraftMode(mode)}
+            type="button"
+          >{RESPONSIBILITY_MODE_LABELS[mode]}</button>)}
+        </div>}
+    </DetailGroup>
+
+    {needsHolder && <DetailGroup title="STAFF SELECTOR">
+      {candidates.length === 0
+        ? <p className="staff-explanation">NO ELIGIBLE STAFF</p>
+        : <>
+          <select disabled={readOnly} onChange={(event) => setDraftHolderId((event.target.value || undefined) as StaffPersonId | undefined)} value={draftHolderId ?? ''}>
+            <option value="">Select staff…</option>
+            {candidates.map((candidate) => <option key={candidate.staffPersonId} value={candidate.staffPersonId}>
+              {candidate.name} · {STAFF_ROLE_LABELS[candidate.role]} · PROF {candidate.proficiency} · {formatPercent(candidate.currentUtilization)} → {formatPercent(candidate.projectedUtilization)}
+            </option>)}
+          </select>
+          {selectedCandidate !== undefined && <dl className="staff-candidate-summary">
+            <div><dt>ROLE</dt><dd>{STAFF_ROLE_LABELS[selectedCandidate.role]}</dd></div>
+            <div><dt>PROFICIENCY</dt><dd>{selectedCandidate.proficiency}</dd></div>
+            <div><dt>CURRENT WORKLOAD</dt><dd>{formatPercent(selectedCandidate.currentUtilization)}</dd></div>
+            <div><dt>PROJECTED WORKLOAD</dt><dd>{formatPercent(selectedCandidate.projectedUtilization)}</dd></div>
+            <div><dt>PROJECTED STATE</dt><dd className={`staff-workload-state staff-workload-state--${selectedCandidate.projectedWorkloadState}`}>{WORKLOAD_STATE_LABELS[selectedCandidate.projectedWorkloadState]}</dd></div>
+          </dl>}
+        </>}
+    </DetailGroup>}
+
+    {!readOnly && <button className="primary-button staff-responsibility-apply" disabled={!canApply} onClick={apply} type="button">APPLY</button>}
+  </section>
+}
+
+function formatPercent(value: number): string {
+  return Number.isFinite(value) ? `${Math.round(value * 100)}%` : '∞'
 }
