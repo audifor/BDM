@@ -71,15 +71,17 @@ export function progressStaffCultureAndCohesion(world: GameWorld): GameWorld {
       }
     }
 
-    // Culture Fit pressure into the two existing canonical Human State dimensions. Matches
-    // `runWeeklyAppraisal`'s live-context filter, so an ended employment stage is never re-pressured.
+    // Culture Fit pressure into the canonical Human State dimensions the PER-DIMENSION mismatch
+    // legitimately speaks to (see `applyCultureFitPressure`). Matches `runWeeklyAppraisal`'s
+    // live-context filter, so an ended employment stage is never re-pressured.
     for (const context of Object.values(world.staffHumanContextsById)) {
       if (context.endedOn !== undefined) continue
       const state = world.staffHumanStatesByContextId[context.id]
       if (state === undefined) continue
       const cultureState = cultureByScope.get(context.teamId as string)
       if (cultureState === undefined) continue
-      const pressured = applyCultureFitPressure(state, calculateStaffCultureFit(world, context.staffId, cultureState).fitScore)
+      const fit = calculateStaffCultureFit(world, context.staffId, cultureState)
+      const pressured = applyCultureFitPressure(state, fit)
       if (pressured !== state) {
         humanStates.push(pressured)
         changed = true

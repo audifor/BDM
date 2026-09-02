@@ -30,35 +30,35 @@ export const STAFF_UNIT_COHESION_BAND_LABELS: Readonly<Record<StaffUnitCohesionB
 }
 
 export const STAFF_UNIT_COHESION_DIMENSION_LABELS: Readonly<Record<StaffUnitCohesionDimension, string>> = {
-  cohesionTrust: 'Trust',
-  communicationFlow: 'Communication flow',
-  coordinationQuality: 'Coordination',
-  sharedPurpose: 'Shared purpose',
-  conflictTolerance: 'Conflict tolerance',
-  mutualSupport: 'Mutual support',
-  moraleAlignment: 'Morale alignment',
-  leadershipCohesion: 'Leadership cohesion',
+  communication: 'Communication',
+  coordination: 'Coordination',
+  roleClarity: 'Role clarity',
+  mutualSupport: 'Support',
+  sharedPurpose: 'Purpose',
+  trustClimate: 'Trust',
+  leadershipAlignment: 'Leadership alignment',
+  stability: 'Stability',
 }
 
 const STRENGTH_PHRASES: Readonly<Record<StaffUnitCohesionDimension, string>> = {
-  cohesionTrust: 'The unit trusts each other.',
-  communicationFlow: 'Information moves freely inside the unit.',
-  coordinationQuality: 'The unit coordinates its work well.',
-  sharedPurpose: 'Strong shared purpose.',
-  conflictTolerance: 'Disagreement is handled without damage.',
+  communication: 'Information moves freely inside the unit.',
+  coordination: 'The unit coordinates its work well.',
+  roleClarity: "Everyone's responsibilities are clear.",
   mutualSupport: 'People look out for each other here.',
-  moraleAlignment: 'Morale is aligned across the unit.',
-  leadershipCohesion: 'The unit is behind its lead.',
+  sharedPurpose: 'Strong shared purpose.',
+  trustClimate: 'The unit trusts each other.',
+  leadershipAlignment: 'The unit is behind its lead.',
+  stability: 'This unit has real continuity.',
 }
 const CONCERN_PHRASES: Readonly<Record<StaffUnitCohesionDimension, string>> = {
-  cohesionTrust: 'Trust inside the unit is thin.',
-  communicationFlow: 'Communication does not flow well.',
-  coordinationQuality: 'Coordination is poor.',
-  sharedPurpose: 'The unit is not pulling in one direction.',
-  conflictTolerance: 'Weak conflict tolerance.',
+  communication: 'Communication does not flow well.',
+  coordination: 'Coordination is poor.',
+  roleClarity: 'Responsibilities are unclear or uncovered.',
   mutualSupport: 'Little mutual support.',
-  moraleAlignment: 'Morale is uneven across the unit.',
-  leadershipCohesion: 'The unit is not aligned behind its lead.',
+  sharedPurpose: 'The unit is not pulling in one direction.',
+  trustClimate: 'Trust inside the unit is thin.',
+  leadershipAlignment: 'The unit is not aligned behind its lead.',
+  stability: 'This unit has little continuity yet.',
 }
 
 const STRENGTH_THRESHOLD = 68

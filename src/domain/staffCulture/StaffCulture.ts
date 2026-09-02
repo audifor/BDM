@@ -14,28 +14,32 @@ import { requireNonEmptyString } from '@/domain/validation'
  * resolution at a real Organization id without touching the Culture progression pipeline.
  *
  * Culture is NOT a second Personality block and NOT a second Human State block. The 14 dimensions
- * below are ORGANIZATION-level norms ("how this organization works"), deliberately distinct from
- * the 8 PERSON-level `PERSONALITY_DIMENSIONS` ("who this person is"), the 11 PERSON-in-a-job
+ * below are ORGANIZATION-level norms ("how this organization works"), a different semantic layer
+ * from the 8 PERSON-level `PERSONALITY_DIMENSIONS` ("who this person is"), the 11 PERSON-in-a-job
  * `STAFF_HUMAN_STATE_DIMENSIONS` ("how this person is doing"), and the 8 dyadic
- * `RELATIONSHIP_DIMENSION_KEYS` ("how these two people work together").
+ * `RELATIONSHIP_DIMENSION_KEYS` ("how these two people work together"). Some dimension NAMES are
+ * intentionally shared with those other vocabularies (e.g. `adaptability`/`competitiveness` also
+ * name Personality traits, `collaboration` also names a Relationship facet) because the plain
+ * English word is the correct one at both layers — vocabulary uniqueness was never the goal; the
+ * canonical 14-name catalog is.
  */
 
 /** 14 canonical Organizational Culture dimensions. Integer 0-100, 50 = neutral/unformed. */
 export const STAFF_CULTURE_DIMENSIONS = [
-  'innovationOrientation',
-  'disciplineOrientation',
-  'collaborationOrientation',
-  'hierarchyOrientation',
-  'riskTolerance',
+  'autonomy',
+  'hierarchy',
+  'collaboration',
+  'accountability',
   'communicationOpenness',
-  'accountabilityStandard',
-  'developmentFocus',
-  'stabilityOrientation',
-  'competitiveIntensity',
-  'professionalismStandard',
-  'inclusivity',
-  'transparencyStandard',
-  'resultsOrientation',
+  'innovation',
+  'adaptability',
+  'developmentOrientation',
+  'analyticsOrientation',
+  'performanceIntensity',
+  'stability',
+  'longTermOrientation',
+  'discipline',
+  'competitiveness',
 ] as const
 export type StaffCultureDimension = typeof STAFF_CULTURE_DIMENSIONS[number]
 

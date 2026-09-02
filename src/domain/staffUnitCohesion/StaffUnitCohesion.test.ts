@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest'
 
-import { RELATIONSHIP_DIMENSION_KEYS } from '@/domain/relationships'
-import { STAFF_CULTURE_DIMENSIONS } from '@/domain/staffCulture'
-import { STAFF_HUMAN_STATE_DIMENSIONS } from '@/domain/staffHumanState'
-
 import {
   clampUnitCohesionValue,
   createStaffUnitCohesionState,
@@ -12,18 +8,27 @@ import {
   STAFF_UNIT_COHESION_DIMENSIONS,
 } from './StaffUnitCohesion'
 
+/** The one approved catalog. Vocabulary uniqueness across layers is NOT the goal — the exact set below is. */
+const CANONICAL_STAFF_UNIT_COHESION_DIMENSIONS = [
+  'communication',
+  'coordination',
+  'roleClarity',
+  'mutualSupport',
+  'sharedPurpose',
+  'trustClimate',
+  'leadershipAlignment',
+  'stability',
+] as const
+
 describe('StaffUnitCohesion domain', () => {
-  it('defines exactly 8 unique cohesion dimensions', () => {
-    expect(STAFF_UNIT_COHESION_DIMENSIONS).toHaveLength(8)
+  it('defines EXACTLY the canonical 8 cohesion dimensions, in order', () => {
+    expect(STAFF_UNIT_COHESION_DIMENSIONS).toEqual(CANONICAL_STAFF_UNIT_COHESION_DIMENSIONS)
     expect(new Set(STAFF_UNIT_COHESION_DIMENSIONS).size).toBe(8)
   })
 
-  it('is a distinct vocabulary from Culture, Human State and dyadic Relationship facets', () => {
-    for (const dimension of STAFF_UNIT_COHESION_DIMENSIONS) {
-      expect(STAFF_CULTURE_DIMENSIONS as readonly string[]).not.toContain(dimension)
-      expect(STAFF_HUMAN_STATE_DIMENSIONS as readonly string[]).not.toContain(dimension)
-      expect(RELATIONSHIP_DIMENSION_KEYS as readonly string[]).not.toContain(dimension)
-    }
+  it('never re-introduces the retired vocabulary from the pre-correction implementation', () => {
+    const retired = ['cohesionTrust', 'communicationFlow', 'coordinationQuality', 'conflictTolerance', 'moraleAlignment', 'leadershipCohesion']
+    for (const name of retired) expect(STAFF_UNIT_COHESION_DIMENSIONS as readonly string[]).not.toContain(name)
   })
 
   it('clamps to integer 0-100 and defaults non-finite input to neutral 50', () => {

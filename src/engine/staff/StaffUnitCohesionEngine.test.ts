@@ -107,23 +107,42 @@ describe('buildStaffUnitRuntimeViews', () => {
     }
   })
 
-  it('handles a single-member unit', () => {
+  it('handles a single-member unit: valid, non-extreme, and never a crash', () => {
     const base = createNewGame()
     const teamId = userTeamId(base)
     const { world } = withStaffInRole(base, teamId, 'recruitingCoordinator', 'solo')
     const recruiting = viewFor(world, teamId, 'recruiting')
     expect(recruiting.memberStaffIds).toHaveLength(1)
     expect(recruiting.leaderStaffId).toBe(recruiting.memberStaffIds[0])
-    // No pairs are possible, so cohesion is exactly neutral.
-    expect(deriveStaffUnitCohesionTarget(world, recruiting)).toEqual(neutralUnitCohesionValues())
+    // No pairs are possible, so the dyadic dimensions are exactly neutral, but roleClarity/stability
+    // are structural (non-relationship) signals and may legitimately differ from 50.
+    const target = deriveStaffUnitCohesionTarget(world, recruiting)
+    for (const dimension of STAFF_UNIT_COHESION_DIMENSIONS) {
+      expect(Number.isFinite(target[dimension])).toBe(true)
+      expect(target[dimension]).toBeGreaterThanOrEqual(0)
+      expect(target[dimension]).toBeLessThanOrEqual(100)
+    }
+    expect(target.communication).toBe(50)
+    expect(target.trustClimate).toBe(50)
+    expect(target.mutualSupport).toBe(50)
+    expect(target.sharedPurpose).toBe(50)
+    expect(target.leadershipAlignment).toBe(50)
   })
 })
 
 describe('deriveStaffUnitCohesionTarget', () => {
-  it('with zero relationship data reads exactly neutral 50 across all 8 dimensions', () => {
+  it('with zero relationship data, the dyadic dimensions read exactly neutral 50 — REGRESSION J', () => {
     const world = createNewGame()
     const view = buildStaffUnitRuntimeViews(world, userTeamId(world))[0]!
-    expect(deriveStaffUnitCohesionTarget(world, view)).toEqual(neutralUnitCohesionValues())
+    const target = deriveStaffUnitCohesionTarget(world, view)
+    expect(target.communication).toBe(50)
+    expect(target.trustClimate).toBe(50)
+    expect(target.mutualSupport).toBe(50)
+    expect(target.sharedPurpose).toBe(50)
+    expect(target.leadershipAlignment).toBe(50)
+    // roleClarity/stability are structural signals and can still carry real evidence.
+    expect(Number.isFinite(target.roleClarity)).toBe(true)
+    expect(Number.isFinite(target.stability)).toBe(true)
   })
 
   it('sparse data in a larger unit produces a real but coverage-dampened result, never a crash', () => {
@@ -136,9 +155,9 @@ describe('deriveStaffUnitCohesionTarget', () => {
     const world = withRelationship(base, view.memberStaffIds[0]!, view.memberStaffIds[1]!, 100)
     const target = deriveStaffUnitCohesionTarget(world, viewFor(world, teamId, view.department))
     // Real movement above neutral...
-    expect(target.cohesionTrust).toBeGreaterThan(50)
+    expect(target.trustClimate).toBeGreaterThan(50)
     // ...but nowhere near the extreme, because coverage is tiny.
-    expect(target.cohesionTrust).toBeLessThan(70)
+    expect(target.trustClimate).toBeLessThan(70)
   })
 
   it('one extreme outlier pair in a 4+ member unit does not drag the aggregate to the extreme', () => {
@@ -157,12 +176,12 @@ describe('deriveStaffUnitCohesionTarget', () => {
     const withOutlier = deriveStaffUnitCohesionTarget(world, viewFor(world, teamId, view.department))
 
     // The outlier is trimmed away, so it must not halve the reading the way an unweighted mean would.
-    const unweightedDrop = (withoutOutlier.cohesionTrust - 50) / 2
-    expect(withOutlier.cohesionTrust).toBeGreaterThan(50)
-    expect(withOutlier.cohesionTrust - 50).toBeGreaterThan(unweightedDrop)
+    const unweightedDrop = (withoutOutlier.trustClimate - 50) / 2
+    expect(withOutlier.trustClimate).toBeGreaterThan(50)
+    expect(withOutlier.trustClimate - 50).toBeGreaterThan(unweightedDrop)
   })
 
-  it('leadershipCohesion degrades to the unit-wide reading when the leader has no relationship data', () => {
+  it('leadershipAlignment degrades to the unit-wide reading when the leader has no relationship data', () => {
     const base = createNewGame()
     const teamId = userTeamId(base)
     const view = buildStaffUnitRuntimeViews(base, teamId).find((item) => item.memberStaffIds.length >= 3 && item.leaderStaffId !== undefined)
@@ -176,6 +195,97 @@ describe('deriveStaffUnitCohesionTarget', () => {
       expect(target[dimension]).toBeLessThanOrEqual(100)
     }
   })
+
+  // -------------------------------------------------------------------------
+  // Wave 5C correction spec — mandatory structural regression cases E, F, G, H, I
+  // -------------------------------------------------------------------------
+
+  it('REGRESSION E: clear responsibility ownership across the unit reads roleClarity healthy', () => {
+    const base = createNewGame()
+    const teamId = userTeamId(base)
+    let world = withStaffInRole(base, teamId, 'loadManagementSpecialist', 'clarity-a').world
+    world = withStaffInRole(world, teamId, 'strengthConditioningCoach', 'clarity-b').world
+    const performance = viewFor(world, teamId, 'performance')
+
+    const kinds = ['determineIntensity', 'recommendWorkloadChange'] as const
+    world = updateGameWorld(world, {
+      responsibilities: performance.memberStaffIds.map((staffId, index) => ({
+        id: `role-clarity-e-${index}` as never,
+        teamId,
+        kind: kinds[index % kinds.length] as never,
+        mode: kinds[index % kinds.length] === 'recommendWorkloadChange' ? 'advisory' as never : 'delegated' as never,
+        holderStaffId: staffId,
+        assignedOn: world.currentDate,
+      })),
+    })
+    const target = deriveStaffUnitCohesionTarget(world, viewFor(world, teamId, 'performance'))
+    expect(target.roleClarity).toBeGreaterThan(70)
+  })
+
+  it('REGRESSION F: no responsibility coverage at all for the unit reads roleClarity as a mild neutral, never inflated to a false high', () => {
+    const base = createNewGame()
+    const teamId = userTeamId(base)
+    let world = withStaffInRole(base, teamId, 'loadManagementSpecialist', 'clarity-c').world
+    world = withStaffInRole(world, teamId, 'strengthConditioningCoach', 'clarity-d').world
+    const performance = viewFor(world, teamId, 'performance')
+    const target = deriveStaffUnitCohesionTarget(world, performance)
+    expect(target.roleClarity).toBeLessThan(70)
+    expect(target.roleClarity).toBeGreaterThanOrEqual(50)
+  })
+
+  /** Merges into the EXISTING employment map (never replaces it wholesale) so unrelated Staff Contract cross-checks for other Staff stay intact. Only `startedOn` changes for the unit's own members. */
+  function withBackdatedTenure(world: GameWorld, memberStaffIds: readonly StaffPersonId[], startedOn: string): GameWorld {
+    const updated = { ...world.staffEmploymentByStaffId }
+    for (const staffId of memberStaffIds) {
+      const current = updated[staffId]
+      if (current?.status === 'employed') updated[staffId] = { ...current, startedOn: startedOn as never }
+    }
+    return updateGameWorld(world, { staffEmploymentByStaffId: updated })
+  }
+
+  it('REGRESSION G: a stable, long-tenured unit reads stability healthy', () => {
+    const base = createNewGame()
+    const teamId = userTeamId(base)
+    const view = buildStaffUnitRuntimeViews(base, teamId)[0]!
+    const world = withBackdatedTenure(base, view.memberStaffIds, '2020-01-01')
+    const target = deriveStaffUnitCohesionTarget(world, viewFor(world, teamId, view.department))
+    expect(target.stability).toBeGreaterThan(70)
+  })
+
+  it('REGRESSION H: a very recently formed unit reads lower stability than a long-tenured one, where evidence exists', () => {
+    const base = createNewGame()
+    const teamId = userTeamId(base)
+    const view = buildStaffUnitRuntimeViews(base, teamId)[0]!
+    const longTenured = withBackdatedTenure(base, view.memberStaffIds, '2018-01-01')
+    const recent = withBackdatedTenure(base, view.memberStaffIds, base.currentDate)
+    const longTarget = deriveStaffUnitCohesionTarget(longTenured, viewFor(longTenured, teamId, view.department))
+    const recentTarget = deriveStaffUnitCohesionTarget(recent, viewFor(recent, teamId, view.department))
+    expect(recentTarget.stability).toBeLessThan(longTarget.stability)
+    // A legitimately brand-new unit is never punished into an extreme low — neutral, not negative.
+    expect(recentTarget.stability).toBeGreaterThanOrEqual(50)
+  })
+
+  it('REGRESSION I: a heavily imbalanced workload across the unit reads lower coordination than a balanced one', () => {
+    const base = createNewGame()
+    const teamId = userTeamId(base)
+    let world = withStaffInRole(base, teamId, 'strengthConditioningCoach', 'coord-a').world
+    const { world: withSecond, staffId: second } = withStaffInRole(world, teamId, 'performanceCoach', 'coord-b')
+    world = withSecond
+    const performance = viewFor(world, teamId, 'performance')
+    const [first] = performance.memberStaffIds.filter((staffId) => staffId !== second)
+
+    const balancedTarget = deriveStaffUnitCohesionTarget(world, performance)
+
+    // Pile every held responsibility onto ONE member of the unit — a real workload imbalance signal.
+    const imbalanced = updateGameWorld(world, {
+      responsibilities: [
+        { id: 'coord-i-1' as never, teamId, kind: 'determineIntensity' as never, mode: 'delegated' as never, holderStaffId: first, assignedOn: world.currentDate },
+        { id: 'coord-i-2' as never, teamId, kind: 'recommendWorkloadChange' as never, mode: 'advisory' as never, holderStaffId: first, assignedOn: world.currentDate },
+      ],
+    })
+    const imbalancedTarget = deriveStaffUnitCohesionTarget(imbalanced, viewFor(imbalanced, teamId, 'performance'))
+    expect(imbalancedTarget.coordination).toBeLessThanOrEqual(balancedTarget.coordination)
+  })
 })
 
 describe('progressStaffUnitCohesionState', () => {
@@ -186,8 +296,8 @@ describe('progressStaffUnitCohesionState', () => {
     let state = createStaffUnitCohesionState({ unitKey: 'team:coaching', target: high, current: low, lastEvaluatedOn: world.currentDate })
 
     state = progressStaffUnitCohesionState(state, high, world.currentDate)
-    expect(state.current.cohesionTrust).toBeGreaterThan(15)
-    expect(state.current.cohesionTrust).toBeLessThan(30)
+    expect(state.current.trustClimate).toBeGreaterThan(15)
+    expect(state.current.trustClimate).toBeLessThan(30)
 
     for (let index = 0; index < 60; index += 1) state = progressStaffUnitCohesionState(state, high, world.currentDate)
     for (const dimension of STAFF_UNIT_COHESION_DIMENSIONS) expect(state.current[dimension]).toBeLessThanOrEqual(90)

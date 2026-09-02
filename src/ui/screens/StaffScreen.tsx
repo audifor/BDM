@@ -624,21 +624,22 @@ function CultureFitGroup({ world, staffId }: { readonly world: GameWorld; readon
       <div><dt>FIT</dt><dd>{fit.label}</dd></div>
     </dl>
     {!fit.established && <p className="staff-explanation">Organizational culture has not settled yet.</p>}
-    {fit.frictionWith.length > 0 && <p className="staff-explanation">Friction with: {fit.frictionWith.join(', ')}.</p>}
-    {fit.frictionWith.length === 0 && fit.alignedWith.length > 0 && <p className="staff-explanation">Aligned on: {fit.alignedWith.slice(0, 4).join(', ')}.</p>}
+    {fit.causes.length > 0 && <ul className="staff-career-history">{fit.causes.map((cause, index) => <li key={index}>{cause}</li>)}</ul>}
+    {fit.established && fit.causes.length === 0 && fit.frictionWith.length === 0 && fit.alignedWith.length > 0
+      && <p className="staff-explanation">Aligned on: {fit.alignedWith.slice(0, 4).join(', ')}.</p>}
   </DetailGroup>
 }
 
 /** Compact per-dimension column abbreviations for the UNITS grid, in canonical order. */
 const UNIT_COHESION_COLUMN_LABEL: Readonly<Record<typeof STAFF_UNIT_COHESION_DIMENSIONS[number], string>> = {
-  cohesionTrust: 'TRUST',
-  communicationFlow: 'COMMS',
-  coordinationQuality: 'COORD',
-  sharedPurpose: 'PURPOSE',
-  conflictTolerance: 'CONFLICT',
+  communication: 'COMMS',
+  coordination: 'COORD',
+  roleClarity: 'ROLE CLARITY',
   mutualSupport: 'SUPPORT',
-  moraleAlignment: 'MORALE',
-  leadershipCohesion: 'LEAD COHESION',
+  sharedPurpose: 'PURPOSE',
+  trustClimate: 'TRUST',
+  leadershipAlignment: 'LEAD ALIGNMENT',
+  stability: 'STABILITY',
 }
 
 function UnitsSubview({ world, teamId }: { readonly world: GameWorld; readonly teamId: TeamId }) {

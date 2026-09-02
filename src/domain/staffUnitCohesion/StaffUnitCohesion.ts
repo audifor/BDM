@@ -15,22 +15,25 @@ import { requireNonEmptyString } from '@/domain/validation'
  * is the ONLY place that resolution happens, so a future canonical `organizationId`/`staffUnitId`
  * only requires changing how `unitKey`/`memberStaffIds` are resolved there.
  *
- * These 8 dimensions are GROUP-level ("how well does this unit work as a unit"). They are
- * deliberately distinct from the 8 dyadic `RELATIONSHIP_DIMENSION_KEYS` (PERSON↔PERSON,
+ * These 8 dimensions are GROUP-level ("how well does this unit work as a unit"). They are a
+ * different semantic layer from the 8 dyadic `RELATIONSHIP_DIMENSION_KEYS` (PERSON↔PERSON,
  * -100..100) which are their INPUT, not their duplicate, and from the 14 organization-level
- * `STAFF_CULTURE_DIMENSIONS` (norms, not working quality).
+ * `STAFF_CULTURE_DIMENSIONS` (norms, not working quality). `stability` intentionally names both a
+ * Culture dimension and a Cohesion dimension — organizational continuity-as-a-norm and this unit's
+ * lived continuity-of-membership are different questions that happen to share the correct English
+ * word; vocabulary uniqueness was never the goal.
  */
 
 /** 8 canonical Staff Unit Cohesion dimensions. Integer 0-100, 50 = neutral/no-signal. */
 export const STAFF_UNIT_COHESION_DIMENSIONS = [
-  'cohesionTrust',
-  'communicationFlow',
-  'coordinationQuality',
-  'sharedPurpose',
-  'conflictTolerance',
+  'communication',
+  'coordination',
+  'roleClarity',
   'mutualSupport',
-  'moraleAlignment',
-  'leadershipCohesion',
+  'sharedPurpose',
+  'trustClimate',
+  'leadershipAlignment',
+  'stability',
 ] as const
 export type StaffUnitCohesionDimension = typeof STAFF_UNIT_COHESION_DIMENSIONS[number]
 

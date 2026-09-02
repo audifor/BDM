@@ -81,8 +81,8 @@ describe('deriveStaffCultureTarget', () => {
     const withLoudDirector = deriveStaffCultureTarget(withPersonality(asDirector.world, asDirector.staffId, loud), teamId as string)
     const withLoudJunior = deriveStaffCultureTarget(withPersonality(asJunior.world, asJunior.staffId, loud), teamId as string)
 
-    const directorShift = Math.abs(withLoudDirector.resultsOrientation - directorBaseline.resultsOrientation)
-    const juniorShift = Math.abs(withLoudJunior.resultsOrientation - juniorBaseline.resultsOrientation)
+    const directorShift = Math.abs(withLoudDirector.competitiveness - directorBaseline.competitiveness)
+    const juniorShift = Math.abs(withLoudJunior.competitiveness - juniorBaseline.competitiveness)
     expect(directorShift).toBeGreaterThan(juniorShift)
   })
 })
@@ -96,8 +96,8 @@ describe('progressStaffCultureState', () => {
     let state = createStaffCultureState({ scopeKey, target: high, current: low, lastEvaluatedOn: world.currentDate })
 
     const first = progressStaffCultureState(state, high, world.currentDate)
-    expect(first.current.riskTolerance).toBeGreaterThan(10)
-    expect(first.current.riskTolerance).toBeLessThan(30)
+    expect(first.current.innovation).toBeGreaterThan(10)
+    expect(first.current.innovation).toBeLessThan(30)
     expect(first.target).toEqual(high)
 
     state = first
@@ -109,8 +109,8 @@ describe('progressStaffCultureState', () => {
     const world = createNewGame()
     const values = neutralCultureValues()
     const state = createStaffCultureState({ scopeKey: 'scope', target: values, current: values, lastEvaluatedOn: world.currentDate })
-    const next = progressStaffCultureState(state, { ...values, innovationOrientation: 90 }, '2031-05-05' as never)
-    expect(next.target.innovationOrientation).toBe(90)
+    const next = progressStaffCultureState(state, { ...values, innovation: 90 }, '2031-05-05' as never)
+    expect(next.target.innovation).toBe(90)
     expect(next.lastEvaluatedOn).toBe('2031-05-05')
   })
 })
@@ -174,17 +174,45 @@ describe('initializeStaffCultureState', () => {
 })
 
 describe('applyCultureFitPressure', () => {
-  it('never moves a single call by more than the secondary clamp', () => {
-    const state = {
+  function neutralState() {
+    return {
       contextId: 'ctx' as never, staffId: 'staff' as never,
       roleSatisfaction: 50, responsibilitySatisfaction: 50, autonomySatisfaction: 50, influenceSatisfaction: 50,
       contractSatisfaction: 50, workloadSatisfaction: 50, professionalFulfillment: 50, recognitionSatisfaction: 50,
       frustration: 50, stress: 50, organizationalCommitment: 50, lastEvaluatedOn: '2030-01-07' as never,
     }
-    for (const fitScore of [0, 25, 50, 75, 100]) {
-      const next = applyCultureFitPressure(state, fitScore)
-      expect(Math.abs(next.organizationalCommitment - state.organizationalCommitment)).toBeLessThanOrEqual(CULTURE_FIT_PRESSURE_CLAMP)
-      expect(Math.abs(next.professionalFulfillment - state.professionalFulfillment)).toBeLessThanOrEqual(CULTURE_FIT_PRESSURE_CLAMP)
+  }
+
+  /** A fit reading where every dimension has the given preference and the given signed gap (lived minus preference). */
+  function uniformFit(preference: number, signedGap: number): ReturnType<typeof calculateStaffCultureFit> {
+    const preferences = Object.fromEntries(STAFF_CULTURE_DIMENSIONS.map((dimension) => [dimension, preference])) as never
+    const signedGapValues = Object.fromEntries(STAFF_CULTURE_DIMENSIONS.map((dimension) => [dimension, signedGap])) as never
+    const perDimension = Object.fromEntries(STAFF_CULTURE_DIMENSIONS.map((dimension) => [dimension, Math.abs(signedGap)])) as never
+    return { fitScore: 100 - Math.abs(signedGap), preferences, signedGap: signedGapValues, perDimension }
+  }
+
+  it('never moves any single Human State dimension by more than the per-dimension clamp in one call', () => {
+    const state = neutralState()
+    for (const gap of [-40, -10, 0, 10, 40]) {
+      const next = applyCultureFitPressure(state, uniformFit(90, gap))
+      for (const key of Object.keys(state) as (keyof typeof state)[]) {
+        if (typeof state[key] !== 'number') continue
+        expect(Math.abs((next[key] as number) - (state[key] as number))).toBeLessThanOrEqual(CULTURE_FIT_PRESSURE_CLAMP)
+      }
     }
+  })
+
+  it('a perfect match (zero signed gap everywhere) never produces negative pressure', () => {
+    const state = neutralState()
+    const pressured = applyCultureFitPressure(state, uniformFit(80, 0))
+    for (const key of Object.keys(state) as (keyof typeof state)[]) {
+      if (typeof state[key] !== 'number') continue
+      expect(pressured[key] as number).toBeGreaterThanOrEqual(state[key] as number)
+    }
+  })
+
+  it('a person indifferent to every dimension (preference exactly 50) is never pressured', () => {
+    const state = neutralState()
+    expect(applyCultureFitPressure(state, uniformFit(50, 40))).toBe(state)
   })
 })

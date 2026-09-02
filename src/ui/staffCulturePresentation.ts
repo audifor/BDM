@@ -26,20 +26,20 @@ export const STAFF_CULTURE_BAND_LABELS: Readonly<Record<StaffCultureBand, string
 }
 
 export const STAFF_CULTURE_DIMENSION_LABELS: Readonly<Record<StaffCultureDimension, string>> = {
-  innovationOrientation: 'Innovation',
-  disciplineOrientation: 'Discipline',
-  collaborationOrientation: 'Collaboration',
-  hierarchyOrientation: 'Hierarchy',
-  riskTolerance: 'Risk tolerance',
+  autonomy: 'Autonomy',
+  hierarchy: 'Hierarchy',
+  collaboration: 'Collaboration',
+  accountability: 'Accountability',
   communicationOpenness: 'Communication openness',
-  accountabilityStandard: 'Accountability',
-  developmentFocus: 'Development focus',
-  stabilityOrientation: 'Stability',
-  competitiveIntensity: 'Competitive intensity',
-  professionalismStandard: 'Professionalism',
-  inclusivity: 'Inclusivity',
-  transparencyStandard: 'Transparency',
-  resultsOrientation: 'Results focus',
+  innovation: 'Innovation',
+  adaptability: 'Adaptability',
+  developmentOrientation: 'Development orientation',
+  analyticsOrientation: 'Analytics orientation',
+  performanceIntensity: 'Performance intensity',
+  stability: 'Stability',
+  longTermOrientation: 'Long-term orientation',
+  discipline: 'Discipline',
+  competitiveness: 'Competitiveness',
 }
 
 export interface StaffCultureDimensionDisplay {
@@ -94,10 +94,35 @@ export interface StaffCultureFitExplanation {
   readonly label: string
   readonly alignedWith: readonly string[]
   readonly frictionWith: readonly string[]
+  /** Human-readable CAUSES, not just dimension names — e.g. "Prefers more professional autonomy than the current environment provides." */
+  readonly causes: readonly string[]
 }
 
 const ALIGNED_GAP = 12
 const FRICTION_GAP = 30
+
+/** One-line cause phrase per dimension, direction-aware (positive signedGap = lived culture reads HIGHER than this person prefers). */
+const FRICTION_CAUSE_PHRASES: Readonly<Record<StaffCultureDimension, { readonly tooHigh: string; readonly tooLow: string }>> = {
+  autonomy: { tooLow: 'Prefers more professional autonomy than the current environment provides.', tooHigh: 'Has more decision authority than they are comfortable with.' },
+  hierarchy: { tooHigh: 'Finds the organization more centralized/top-down than preferred.', tooLow: 'Would prefer clearer lines of authority than the current flat structure.' },
+  collaboration: { tooLow: 'Wants more cross-team collaboration than the organization currently practices.', tooHigh: 'Prefers more independent working than the current collaborative culture.' },
+  accountability: { tooLow: 'Expects a higher standard of ownership over decisions and outcomes.', tooHigh: 'Finds accountability standards more demanding than preferred.' },
+  communicationOpenness: { tooLow: 'Wants more open feedback and professional disagreement than the culture currently allows.', tooHigh: 'Finds the current level of open debate more than they are comfortable with.' },
+  innovation: { tooLow: 'Prefers more openness to new methods than the organization currently shows.', tooHigh: 'Finds the pace of new methods faster than preferred.' },
+  adaptability: { tooLow: 'Wants a more adaptable working environment than currently exists.', tooHigh: 'Finds the organization changes approach more often than preferred.' },
+  developmentOrientation: { tooLow: "Strong fit with the organization's development orientation is missing here.", tooHigh: 'Finds the development focus heavier than their own priorities.' },
+  analyticsOrientation: { tooLow: 'Would prefer a stronger analytical/data-driven approach than currently practiced.', tooHigh: 'Finds the analytical emphasis heavier than preferred.' },
+  performanceIntensity: { tooHigh: 'Current performance intensity is above preferred level.', tooLow: 'Wants a higher-intensity, more immediate-results environment than currently exists.' },
+  stability: { tooLow: 'Prefers more organizational continuity than currently exists.', tooHigh: 'Finds the organization more change-resistant than preferred.' },
+  longTermOrientation: { tooLow: 'Wants a stronger focus on the long-term project than the organization currently shows.', tooHigh: 'Prefers more focus on immediate results than the current long-term orientation.' },
+  discipline: { tooLow: 'Expects more rigor/structure in how work is done than currently practiced.', tooHigh: 'Finds the current standards more rigid than preferred.' },
+  competitiveness: { tooLow: 'Wants a more competitive environment than currently exists.', tooHigh: 'Finds the competitive intensity higher than preferred.' },
+}
+
+/** One-line phrase for a dimension that is a genuine, meaningful ALIGNMENT — not just "close enough". */
+function alignedCausePhrase(key: StaffCultureDimension): string {
+  return `Strong fit with the organization's ${STAFF_CULTURE_DIMENSION_LABELS[key].toLowerCase()}.`
+}
 
 /** Pure. Resolves the Staff person's employing Team's Culture; no state, no persistence, no numbers surfaced. */
 export function explainStaffCultureFit(world: GameWorld, staffId: StaffPersonId): StaffCultureFitExplanation {
@@ -105,13 +130,23 @@ export function explainStaffCultureFit(world: GameWorld, staffId: StaffPersonId)
   const scopeKey = employment?.status === 'employed' ? employment.teamId as string | undefined : undefined
   const state = scopeKey === undefined ? undefined : world.staffCultureStatesByScopeKey[scopeKey]
   if (state === undefined) {
-    return { staffId, established: false, band: 'MIXED_FIT', label: 'NOT YET ESTABLISHED', alignedWith: [], frictionWith: [] }
+    return { staffId, established: false, band: 'MIXED_FIT', label: 'NOT YET ESTABLISHED', alignedWith: [], frictionWith: [], causes: [] }
   }
 
   const fit = calculateStaffCultureFit(world, staffId, state)
   const band = getStaffCultureFitBand(fit.fitScore)
   const alignedWith = STAFF_CULTURE_DIMENSIONS.filter((key) => fit.perDimension[key] <= ALIGNED_GAP).map((key) => STAFF_CULTURE_DIMENSION_LABELS[key])
-  const frictionWith = STAFF_CULTURE_DIMENSIONS.filter((key) => fit.perDimension[key] >= FRICTION_GAP).map((key) => STAFF_CULTURE_DIMENSION_LABELS[key])
+  const frictionKeys = STAFF_CULTURE_DIMENSIONS.filter((key) => fit.perDimension[key] >= FRICTION_GAP)
+  const frictionWith = frictionKeys.map((key) => STAFF_CULTURE_DIMENSION_LABELS[key])
 
-  return { staffId, established: true, band, label: STAFF_CULTURE_FIT_LABELS[band], alignedWith, frictionWith }
+  const frictionCauses = frictionKeys.map((key) => {
+    const phrases = FRICTION_CAUSE_PHRASES[key]
+    return fit.signedGap[key] > 0 ? phrases.tooHigh : phrases.tooLow
+  })
+  const alignedCauses = frictionKeys.length === 0
+    ? STAFF_CULTURE_DIMENSIONS.filter((key) => fit.perDimension[key] <= ALIGNED_GAP).slice(0, 2).map(alignedCausePhrase)
+    : []
+  const causes = [...frictionCauses, ...alignedCauses]
+
+  return { staffId, established: true, band, label: STAFF_CULTURE_FIT_LABELS[band], alignedWith, frictionWith, causes }
 }

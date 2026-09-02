@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import { PERSONALITY_DIMENSIONS } from '@/domain/personality'
+import { STAFF_HUMAN_STATE_DIMENSIONS, STAFF_EXPECTATION_DIMENSIONS, STAFF_HUMAN_EVENT_KINDS } from '@/domain/staffHumanState'
+import { STAFF_CONSEQUENCE_SIGNAL_KINDS } from '@/domain/staffHumanState/StaffConsequenceSignals'
 import { RELATIONSHIP_DIMENSION_KEYS } from '@/domain/relationships'
-import { STAFF_HUMAN_STATE_DIMENSIONS } from '@/domain/staffHumanState'
 
 import {
   clampCultureValue,
@@ -11,18 +11,45 @@ import {
   STAFF_CULTURE_DIMENSIONS,
 } from './StaffCulture'
 
+/** The one approved catalog. Vocabulary uniqueness across layers is NOT the goal — the exact set below is. */
+const CANONICAL_STAFF_CULTURE_DIMENSIONS = [
+  'autonomy',
+  'hierarchy',
+  'collaboration',
+  'accountability',
+  'communicationOpenness',
+  'innovation',
+  'adaptability',
+  'developmentOrientation',
+  'analyticsOrientation',
+  'performanceIntensity',
+  'stability',
+  'longTermOrientation',
+  'discipline',
+  'competitiveness',
+] as const
+
 describe('StaffCulture domain', () => {
-  it('defines exactly 14 unique culture dimensions', () => {
-    expect(STAFF_CULTURE_DIMENSIONS).toHaveLength(14)
+  it('defines EXACTLY the canonical 14 culture dimensions, in order', () => {
+    expect(STAFF_CULTURE_DIMENSIONS).toEqual(CANONICAL_STAFF_CULTURE_DIMENSIONS)
     expect(new Set(STAFF_CULTURE_DIMENSIONS).size).toBe(14)
   })
 
-  it('is a distinct vocabulary from Personality, Human State and Relationship facets', () => {
-    for (const dimension of STAFF_CULTURE_DIMENSIONS) {
-      expect(PERSONALITY_DIMENSIONS as readonly string[]).not.toContain(dimension)
-      expect(STAFF_HUMAN_STATE_DIMENSIONS as readonly string[]).not.toContain(dimension)
-      expect(RELATIONSHIP_DIMENSION_KEYS as readonly string[]).not.toContain(dimension)
-    }
+  it('never re-introduces the retired vocabulary from the pre-correction implementation', () => {
+    const retired = [
+      'innovationOrientation', 'disciplineOrientation', 'collaborationOrientation', 'hierarchyOrientation',
+      'riskTolerance', 'accountabilityStandard', 'developmentFocus', 'stabilityOrientation',
+      'competitiveIntensity', 'professionalismStandard', 'inclusivity', 'transparencyStandard', 'resultsOrientation',
+    ]
+    for (const name of retired) expect(STAFF_CULTURE_DIMENSIONS as readonly string[]).not.toContain(name)
+  })
+
+  it('canonical counts across the wider Staff vocabulary remain unchanged', () => {
+    expect(STAFF_HUMAN_STATE_DIMENSIONS).toHaveLength(11)
+    expect(STAFF_EXPECTATION_DIMENSIONS).toHaveLength(15)
+    expect(STAFF_HUMAN_EVENT_KINDS).toHaveLength(30)
+    expect(STAFF_CONSEQUENCE_SIGNAL_KINDS).toHaveLength(40)
+    expect(RELATIONSHIP_DIMENSION_KEYS).toHaveLength(8)
   })
 
   it('clamps to integer 0-100 and defaults non-finite input to neutral 50', () => {
