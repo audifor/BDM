@@ -1,8 +1,9 @@
 import type { Personality } from '@/domain/personality'
 import { createMemory, type MemoryImportance, type MemoryRecord, type MemoryType } from '@/domain/memory'
 import { recordMemory } from '@/engine/memory'
-import { applyRelationshipEvent, createRelationshipProfile, relationshipKey, type RelationshipEvent, type RelationshipProfile } from '@/domain/relationships'
+import { applyRelationshipEvent, createRelationshipProfile, getRelationshipDimensions, relationshipKey, type RelationshipEvent, type RelationshipProfile } from '@/domain/relationships'
 import { applyRelationshipEventToWorld, getStaffAssignment, getStaffPerson, updateGameWorld, type GameWorld } from '@/domain/world'
+import { relationshipFacetDeltasFor } from './StaffProfessionalRelationshipDefinitions'
 import {
   clampHumanStateValue,
   createStaffHumanState,
@@ -181,13 +182,20 @@ function resolvePersonalityModifier(personality: Personality | undefined, dimens
   return Math.max(0.6, Math.min(1.5, raw))
 }
 
-/** §14 — a good relationship with the attributed actor amortizes a negative event; a bad one amplifies it, always within bounds. No relationship, or a systemic/non-attributable event, is neutral. */
+/** §14/Wave 5B §16 — a good relationship with the attributed actor amortizes a negative event; a bad one amplifies it, always within bounds. Prefers the DIRECTIONAL staff→actor profile (facets are directional per Wave 5B §9); falls back to the reverse-direction profile, then to neutral. When facets exist (trust/professionalRespect/communicationQuality), they drive the modulation as the richer signal; a legacy profile with no facets falls back to `value` exactly as before — never a behavior change for pre-5B saves/fixtures. Bounded 0.8x-1.2x, same envelope as before, to avoid runaway feedback loops. */
 function resolveRelationshipModifier(world: GameWorld, event: StaffHumanEvent, attributable: boolean): number {
   if (!attributable || event.attribution.actorId === undefined) return 1
-  const relationship = world.relationshipsByKey[`${event.staffId}->${event.attribution.actorId}`] ?? world.relationshipsByKey[`${event.attribution.actorId}->${event.staffId}`]
+  const forward = world.relationshipsByKey[`${event.staffId}->${event.attribution.actorId}`]
+  const relationship = forward ?? world.relationshipsByKey[`${event.attribution.actorId}->${event.staffId}`]
   if (relationship === undefined) return 1
-  // value is -100..100; map to an approximately 0.8x (hostile) .. 1.15x (strong) band for negative events,
-  // and a mirrored, gentler band for positive events (a good relationship modestly amplifies good news too).
+
+  if (relationship.dimensions !== undefined) {
+    const dimensions = getRelationshipDimensions(relationship)
+    const signal = (dimensions.trust + dimensions.professionalRespect + dimensions.communicationQuality) / 3
+    const normalized = signal / 100
+    return Math.max(0.8, Math.min(1.2, 1 - normalized * 0.2))
+  }
+  // Legacy fallback: identical to pre-5B behavior.
   const normalized = relationship.value / 100
   return Math.max(0.8, Math.min(1.2, 1 - normalized * 0.2))
 }
@@ -250,23 +258,32 @@ function hasPersonalRelevance(reaction: StaffReactionRecord): boolean {
   return Object.values(reaction.stateDelta).some((value) => Math.abs(value ?? 0) >= 4)
 }
 
-/** §31 — Relationship bridge: only ever modifies a relationship when a real PERSON is attributable, and only through the canonical `applyRelationshipEventToWorld` boundary. Systemic/non-attributable events never touch personal relationships. */
-/** Only the professional-standing dimensions (never internal frustration/stress) decide the SIGN/magnitude of a relationship effect — an actor is judged on what they granted/denied professionally, not on how the recipient happens to feel. */
-const RELATIONSHIP_RELEVANT_DIMENSIONS = ['roleSatisfaction', 'responsibilitySatisfaction', 'autonomySatisfaction', 'influenceSatisfaction', 'recognitionSatisfaction', 'professionalFulfillment', 'contractSatisfaction'] as const
-
+/** §31/Wave 5B §10-11 — Relationship bridge: only ever modifies a relationship when a real PERSON is attributable, and only through the canonical `applyRelationshipEventToWorld` boundary. Systemic/non-attributable events never touch personal relationships. Facet deltas come from the single `StaffProfessionalRelationshipDefinitions` mapping authority; `delta` (the legacy scalar) is derived from the SAME facet vector so `value` stays coherent with the facets it summarizes, never a second independent computation. */
 function computeRelationshipEvent(world: GameWorld, event: StaffHumanEvent, attributable: boolean): { readonly actorId: string; readonly event: RelationshipEvent } | undefined {
   if (!attributable || event.attribution.actorId === undefined) return undefined
   if (event.importance === 'ROUTINE') return undefined
-  const definition = reactionDefinitionFor(event.kind)
-  const relevantSum = RELATIONSHIP_RELEVANT_DIMENSIONS.reduce((sum, dimension) => sum + (definition.baseDelta[dimension] ?? 0), 0)
-  if (relevantSum === 0) return undefined
+  const facetBase = relationshipFacetDeltasFor(event.kind)
+  if (facetBase === undefined) return undefined
   const actorId = event.attribution.actorId
   if (getStaffPerson(world, actorId as never) === undefined && world.coaches[actorId as never] === undefined) return undefined
 
   const scale = IMPORTANCE_SCALING[event.importance]
-  const magnitude = Math.max(1, Math.round(Math.min(8, Math.abs(relevantSum)) * scale * 0.4))
-  const delta = Math.sign(relevantSum) * Math.max(-8, Math.min(8, magnitude))
+  const dimensionDeltas: Record<string, number> = {}
+  let facetSum = 0
+  for (const [key, base] of Object.entries(facetBase)) {
+    if (base === undefined || base === 0) continue
+    const scaled = Math.sign(base) * Math.max(1, Math.round(Math.abs(base) * scale))
+    dimensionDeltas[key] = scaled
+    facetSum += scaled
+  }
+  if (Object.keys(dimensionDeltas).length === 0) return undefined
+
+  // Legacy scalar `value` summary: average of the facet deltas, bounded the same way the old
+  // dimension-summed heuristic was — never a second independent computation of "how positive/negative".
+  const averageMagnitude = Math.round(facetSum / Object.keys(dimensionDeltas).length)
+  const delta = Math.max(-8, Math.min(8, averageMagnitude === 0 ? Math.sign(facetSum) : averageMagnitude))
   if (delta === 0) return undefined
+
   return {
     actorId,
     event: {
@@ -275,6 +292,7 @@ function computeRelationshipEvent(world: GameWorld, event: StaffHumanEvent, attr
       source: 'professionalInteraction',
       delta,
       context: { eventKind: event.kind, contextId: event.contextId },
+      dimensionDeltas,
     },
   }
 }

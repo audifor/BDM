@@ -555,4 +555,20 @@ describe('StaffScreen Dynamics tab', () => {
     fireEvent.click(screen.getByRole('button', { name: /^DYNAMICS/ }))
     expect(JSON.stringify(w.staffHumanStatesByContextId)).toBe(before)
   })
+
+  it('Wave 5B: Working Relationships appears in the inspector after a real Responsibility grant produces an attributed relationship', () => {
+    let w = advanceGameDay(createNewGame())
+    const teamId = userTeamId(w)
+    const staffId = staffWithRole(w, teamId, 'assistantCoach')
+    w = setTeamResponsibility(w, { teamId, kind: 'createTeamTrainingPlan', mode: 'delegated', holderStaffId: staffId })
+    render(<StaffScreen teamId={teamId} world={w} />)
+    fireEvent.click(screen.getByRole('button', { name: /^DYNAMICS/ }))
+    const fullName = `${w.staffPeopleById[staffId]!.identity.firstName} ${w.staffPeopleById[staffId]!.identity.lastName}`
+    const nameCell = screen.getByText(fullName)
+    fireEvent.doubleClick(nameCell.closest('tr')!)
+    expect(screen.getByText('WORKING RELATIONSHIPS')).toBeTruthy()
+    // Never raw -100..100 numbers in the relationship row.
+    const section = screen.getByText('WORKING RELATIONSHIPS').closest('section')!
+    expect(section.textContent).not.toMatch(/-?\d{2,3}(?!\d)/)
+  })
 })

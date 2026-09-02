@@ -169,3 +169,174 @@ describe('applyStaffHumanEvent', () => {
     expect(Object.keys(result.world.relationshipsByKey)).toHaveLength(0)
   })
 })
+
+describe('Wave 5B — Working Relationships', () => {
+  it('A. RESPONSIBILITY GRANT: Staff -> attributable Head Coach relationship gains trust/respect/support', () => {
+    const base = baseWorld()
+    const teamId = Object.values(base.teams)[0]!.id
+    const staffId = pickStaff(base, teamId, 'assistantCoach')
+    const coachId = Object.values(base.coaches)[0]!.id
+    const { world, contextId } = seedContext(base, staffId, teamId)
+    const event = makeEvent({ staffId, contextId, kind: 'responsibilityGranted', attribution: { actorKind: 'USER_COACH', actorId: coachId } })
+    const result = applyStaffHumanEvent(world, world.staffHumanContextsById[contextId]!, event)
+    const relationship = result.world.relationshipsByKey[`${staffId}->${coachId}`]!
+    expect(relationship.dimensions?.trust).toBeGreaterThan(0)
+    expect(relationship.dimensions?.professionalRespect).toBeGreaterThan(0)
+    expect(relationship.dimensions?.perceivedSupport).toBeGreaterThan(0)
+  })
+
+  it('B. MODE INCREASE (advisory -> delegated): positive professional relationship effect', () => {
+    const base = baseWorld()
+    const teamId = Object.values(base.teams)[0]!.id
+    const staffId = pickStaff(base, teamId, 'assistantCoach')
+    const coachId = Object.values(base.coaches)[0]!.id
+    const { world, contextId } = seedContext(base, staffId, teamId)
+    const event = makeEvent({ staffId, contextId, kind: 'responsibilityModeIncreased', attribution: { actorKind: 'USER_COACH', actorId: coachId } })
+    const result = applyStaffHumanEvent(world, world.staffHumanContextsById[contextId]!, event)
+    const relationship = result.world.relationshipsByKey[`${staffId}->${coachId}`]!
+    expect(relationship.dimensions?.trust).toBeGreaterThan(0)
+    expect(relationship.dimensions?.professionalRespect).toBeGreaterThan(0)
+  })
+
+  it('C. ACTIONABLE REJECTION isolated: small professional effect, no large trust change, no personalCloseness', () => {
+    const base = baseWorld()
+    const teamId = Object.values(base.teams)[0]!.id
+    const staffId = pickStaff(base, teamId, 'assistantCoach')
+    const coachId = Object.values(base.coaches)[0]!.id
+    const { world, contextId } = seedContext(base, staffId, teamId)
+    const event = makeEvent({ staffId, contextId, kind: 'actionableRecommendationRejected', attribution: { actorKind: 'USER_COACH', actorId: coachId } })
+    const result = applyStaffHumanEvent(world, world.staffHumanContextsById[contextId]!, event)
+    const relationship = result.world.relationshipsByKey[`${staffId}->${coachId}`]!
+    expect(Math.abs(relationship.dimensions?.trust ?? 0)).toBeLessThanOrEqual(2)
+    expect(relationship.dimensions?.personalCloseness ?? 0).toBe(0)
+  })
+
+  it('D. IMPORTANT REJECTION: larger effect than an isolated/routine rejection', () => {
+    const base = baseWorld()
+    const teamId = Object.values(base.teams)[0]!.id
+    const staffId = pickStaff(base, teamId, 'assistantCoach')
+    const coachId = Object.values(base.coaches)[0]!.id
+    const { world: isolatedWorld, contextId: isolatedContextId } = seedContext(base, staffId, teamId)
+    const isolatedResult = applyStaffHumanEvent(isolatedWorld, isolatedWorld.staffHumanContextsById[isolatedContextId]!, makeEvent({ staffId, contextId: isolatedContextId, kind: 'actionableRecommendationRejected', attribution: { actorKind: 'USER_COACH', actorId: coachId }, sourceEventId: 'isolated' }))
+    const isolatedRespect = isolatedResult.world.relationshipsByKey[`${staffId}->${coachId}`]?.dimensions?.professionalRespect ?? 0
+
+    const { world: importantWorld, contextId: importantContextId } = seedContext(base, staffId, teamId)
+    const importantResult = applyStaffHumanEvent(importantWorld, importantWorld.staffHumanContextsById[importantContextId]!, makeEvent({ staffId, contextId: importantContextId, kind: 'importantRecommendationRejected', importance: 'IMPORTANT', attribution: { actorKind: 'USER_COACH', actorId: coachId }, sourceEventId: 'important' }))
+    const importantRespect = importantResult.world.relationshipsByKey[`${staffId}->${coachId}`]?.dimensions?.professionalRespect ?? 0
+
+    expect(Math.abs(importantRespect)).toBeGreaterThan(Math.abs(isolatedRespect))
+  })
+
+  it('E. POSITIVE PATTERN: trust/respect/communication/collaboration all improve', () => {
+    const base = baseWorld()
+    const teamId = Object.values(base.teams)[0]!.id
+    const staffId = pickStaff(base, teamId, 'assistantCoach')
+    const coachId = Object.values(base.coaches)[0]!.id
+    const { world, contextId } = seedContext(base, staffId, teamId)
+    const event = makeEvent({ staffId, contextId, kind: 'recommendationPatternPositive', importance: 'IMPORTANT', attribution: { actorKind: 'USER_COACH', actorId: coachId } })
+    const result = applyStaffHumanEvent(world, world.staffHumanContextsById[contextId]!, event)
+    const dims = result.world.relationshipsByKey[`${staffId}->${coachId}`]!.dimensions!
+    expect(dims.trust).toBeGreaterThan(0)
+    expect(dims.professionalRespect).toBeGreaterThan(0)
+    expect(dims.communicationQuality).toBeGreaterThan(0)
+    expect(dims.collaboration).toBeGreaterThan(0)
+  })
+
+  it('F. NEGATIVE PATTERN: larger, coherent deterioration', () => {
+    const base = baseWorld()
+    const teamId = Object.values(base.teams)[0]!.id
+    const staffId = pickStaff(base, teamId, 'assistantCoach')
+    const coachId = Object.values(base.coaches)[0]!.id
+    const { world, contextId } = seedContext(base, staffId, teamId)
+    const event = makeEvent({ staffId, contextId, kind: 'recommendationPatternNegative', importance: 'IMPORTANT', attribution: { actorKind: 'USER_COACH', actorId: coachId } })
+    const result = applyStaffHumanEvent(world, world.staffHumanContextsById[contextId]!, event)
+    const dims = result.world.relationshipsByKey[`${staffId}->${coachId}`]!.dimensions!
+    expect(dims.trust).toBeLessThan(0)
+    expect(dims.professionalRespect).toBeLessThan(0)
+    expect(dims.communicationQuality).toBeLessThan(0)
+  })
+
+  it('G. INFORMATIONAL DISMISS pattern: no new RelationshipEvent, no facet change (via ROUTINE importance / no facetBase)', () => {
+    // Informational dismiss never reaches this bridge with an acceptance-family kind; simulate the
+    // actual guarantee at this layer: an event kind with no relationship mapping produces no event.
+    const base = baseWorld()
+    const teamId = Object.values(base.teams)[0]!.id
+    const staffId = pickStaff(base, teamId, 'assistantCoach')
+    const coachId = Object.values(base.coaches)[0]!.id
+    const { world, contextId } = seedContext(base, staffId, teamId)
+    const event = makeEvent({ staffId, contextId, kind: 'sustainedHealthyWorkload', importance: 'ROUTINE', attribution: { actorKind: 'USER_COACH', actorId: coachId } })
+    const result = applyStaffHumanEvent(world, world.staffHumanContextsById[contextId]!, event)
+    expect(Object.keys(result.world.relationshipsByKey)).toHaveLength(0)
+  })
+
+  it('H. SYSTEMIC / NO ACTOR: no personal relationship effect', () => {
+    const base = baseWorld()
+    const teamId = Object.values(base.teams)[0]!.id
+    const staffId = pickStaff(base, teamId, 'assistantCoach')
+    const { world, contextId } = seedContext(base, staffId, teamId)
+    const event = makeEvent({ staffId, contextId, kind: 'responsibilityGranted', attribution: { actorKind: 'SYSTEMIC_CONTEXT' } })
+    const result = applyStaffHumanEvent(world, world.staffHumanContextsById[contextId]!, event)
+    expect(Object.keys(result.world.relationshipsByKey)).toHaveLength(0)
+  })
+
+  it('I. CORRECT ACTOR: explicit Staff/Coach actor gets the relationship, no userCoach fallback', () => {
+    const base = baseWorld()
+    const teamId = Object.values(base.teams)[0]!.id
+    const staffId = pickStaff(base, teamId, 'assistantCoach')
+    const otherStaffId = pickStaff(base, teamId, 'regionalScout')
+    const { world, contextId } = seedContext(base, staffId, teamId)
+    const event = makeEvent({ staffId, contextId, kind: 'responsibilityGranted', attribution: { actorKind: 'OTHER_STAFF', actorId: otherStaffId } })
+    const result = applyStaffHumanEvent(world, world.staffHumanContextsById[contextId]!, event)
+    expect(result.world.relationshipsByKey[`${staffId}->${otherStaffId}`]).toBeDefined()
+    expect(result.world.relationshipsByKey[`${staffId}->${world.userCoachId}`]).toBeUndefined()
+  })
+
+  it('J. BENEFICIARY: a Staff person reassigned a Responsibility (gain event) receives no automatic hostility', () => {
+    const base = baseWorld()
+    const teamId = Object.values(base.teams)[0]!.id
+    const staffId = pickStaff(base, teamId, 'assistantCoach')
+    const otherStaffId = pickStaff(base, teamId, 'regionalScout')
+    const { world, contextId } = seedContext(base, staffId, teamId)
+    const event = makeEvent({ staffId, contextId, kind: 'responsibilityReassignedToStaff', attribution: { actorKind: 'OTHER_STAFF', actorId: otherStaffId } })
+    const result = applyStaffHumanEvent(world, world.staffHumanContextsById[contextId]!, event)
+    const relationship = result.world.relationshipsByKey[`${staffId}->${otherStaffId}`]
+    if (relationship !== undefined) expect(relationship.dimensions?.perceivedSupport ?? 0).toBeGreaterThanOrEqual(0)
+  })
+
+  it('Human State feedback: same negative reaction is dampened by a strong relationship vs. amplified by a poor one, bounded', () => {
+    const base = baseWorld()
+    const teamId = Object.values(base.teams)[0]!.id
+    const staffId = pickStaff(base, teamId, 'assistantCoach')
+    const coachId = Object.values(base.coaches)[0]!.id
+
+    const strongProfile = { sourceId: staffId, targetId: coachId, value: 80, dimensions: { trust: 80, professionalRespect: 80, communicationQuality: 80, collaboration: 0, personalCloseness: 0, perceivedSupport: 0, reliability: 0, professionalAlignment: 0 }, events: [] }
+    const poorProfile = { sourceId: staffId, targetId: coachId, value: -80, dimensions: { trust: -80, professionalRespect: -80, communicationQuality: -80, collaboration: 0, personalCloseness: 0, perceivedSupport: 0, reliability: 0, professionalAlignment: 0 }, events: [] }
+
+    const { world: baseWorldWithContext, contextId } = seedContext(base, staffId, teamId)
+    const strongWorld = updateGameWorld(baseWorldWithContext, { relationshipsByKey: { ...baseWorldWithContext.relationshipsByKey, [`${staffId}->${coachId}`]: strongProfile } })
+    const poorWorld = updateGameWorld(baseWorldWithContext, { relationshipsByKey: { ...baseWorldWithContext.relationshipsByKey, [`${staffId}->${coachId}`]: poorProfile } })
+
+    const negativeEvent = makeEvent({ staffId, contextId, kind: 'importantRecommendationRejected', importance: 'IMPORTANT', attribution: { actorKind: 'USER_COACH', actorId: coachId } })
+    const strongResult = applyStaffHumanEvent(strongWorld, strongWorld.staffHumanContextsById[contextId]!, negativeEvent)
+    const poorResult = applyStaffHumanEvent(poorWorld, poorWorld.staffHumanContextsById[contextId]!, negativeEvent)
+
+    const strongMagnitude = Math.abs(strongResult.reaction!.stateDelta.influenceSatisfaction ?? 0)
+    const poorMagnitude = Math.abs(poorResult.reaction!.stateDelta.influenceSatisfaction ?? 0)
+    expect(strongMagnitude).toBeLessThan(poorMagnitude)
+    expect(poorMagnitude / Math.max(1, strongMagnitude)).toBeLessThan(3) // bounded, no runaway amplification
+  })
+
+  it('legacy profile (no facets) still modulates Human State reactions via `value`, unchanged from pre-5B behavior', () => {
+    const base = baseWorld()
+    const teamId = Object.values(base.teams)[0]!.id
+    const staffId = pickStaff(base, teamId, 'assistantCoach')
+    const coachId = Object.values(base.coaches)[0]!.id
+    const { world, contextId } = seedContext(base, staffId, teamId)
+    const legacyProfile = { sourceId: staffId, targetId: coachId, value: 70, events: [] }
+    const withLegacy = updateGameWorld(world, { relationshipsByKey: { ...world.relationshipsByKey, [`${staffId}->${coachId}`]: legacyProfile } })
+    const event = makeEvent({ staffId, contextId, kind: 'importantRecommendationRejected', importance: 'IMPORTANT', attribution: { actorKind: 'USER_COACH', actorId: coachId } })
+    const result = applyStaffHumanEvent(withLegacy, withLegacy.staffHumanContextsById[contextId]!, event)
+    expect(result.reaction).toBeDefined()
+    expect(Number.isFinite(result.reaction!.stateDelta.influenceSatisfaction)).toBe(true)
+  })
+})
