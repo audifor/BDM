@@ -17,8 +17,8 @@ import { applyStaffHumanEventsBatch } from '@/engine/staff/StaffHumanReactionEng
  * sustained-ness from the weekly cadence itself: it only runs on the same weekly checkpoint as
  * `runWeeklyAppraisal` and looks at whether the PREVIOUS reaction record for this Staff/context
  * already reported the same band via its own event payload — i.e. two consecutive weekly
- * checkpoints in the same band is what "sustained" means here. Never Math.random(), never a
- * hidden counter field.
+ * checkpoints in the same band is what "sustained" means here. Deterministic — no randomness,
+ * never a hidden counter field.
  *
  * §36 performance: builds every checkpoint's `StaffHumanEvent` first, then commits the whole
  * week's worth in ONE `applyStaffHumanEventsBatch` call — never one `updateGameWorld`-validating
