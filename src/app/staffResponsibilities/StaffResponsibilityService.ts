@@ -4,10 +4,12 @@ import {
   responsibilityDefinition,
   responsibilityIdForTeam,
   validateResponsibilityAssignment,
+  type Responsibility,
   type ResponsibilityKind,
   type ResponsibilityMode,
 } from '@/domain/responsibility'
 import { getStaffAssignment, getStaffPerson, updateGameWorld, type GameWorld } from '@/domain/world'
+import { emitResponsibilityTransitionEvents, emitReassignmentGainEvent } from '@/app/staffHumanState/StaffHumanResponsibilityEvents'
 
 export interface SetTeamResponsibilityInput {
   readonly teamId: TeamId
@@ -38,6 +40,7 @@ export interface SetTeamResponsibilityInput {
 export function setTeamResponsibility(world: GameWorld, input: SetTeamResponsibilityInput): GameWorld {
   const team = world.teams[input.teamId]
   if (team === undefined) throw new RangeError(`Unknown Team: ${input.teamId}`)
+  const before: Responsibility | undefined = world.responsibilitiesById[responsibilityIdForTeam(input.teamId, input.kind)]
 
   const definition = responsibilityDefinition(input.kind)
   if (!definition.supportedModes.includes(input.mode)) {
@@ -80,5 +83,6 @@ export function setTeamResponsibility(world: GameWorld, input: SetTeamResponsibi
     ...(holderStaffId === undefined ? {} : { assignedOn: world.currentDate }),
   })
 
-  return updateGameWorld(world, { responsibilities: [...Object.values(world.responsibilitiesById).filter((existing) => existing.id !== id), responsibility] })
+  const updated = updateGameWorld(world, { responsibilities: [...Object.values(world.responsibilitiesById).filter((existing) => existing.id !== id), responsibility] })
+  return emitReassignmentGainEvent(emitResponsibilityTransitionEvents(updated, before, responsibility), before, responsibility)
 }

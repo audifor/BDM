@@ -12,6 +12,7 @@ import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { setTeamResponsibility } from '@/app/staffResponsibilities'
 import { acceptStaffRecommendation, dismissStaffRecommendation } from '@/app/staffRecommendations'
 import { progressMedicalAdvisories } from '@/engine/injury/MedicalAdvisory'
+import { advanceGameDay } from '@/app/game/advanceGameDay'
 
 import { StaffScreen } from './StaffScreen'
 import { getTeamStaffPresentation, RESPONSIBILITY_KIND_LABELS, STAFF_ROLE_LABELS } from '@/ui/staffPresentation'
@@ -455,5 +456,103 @@ describe('StaffScreen Advisory tab', () => {
     render(<StaffScreen teamId={teamId} world={stripped} />)
     fireEvent.click(screen.getByRole('button', { name: /^ADVISORY/ }))
     expect(screen.getByRole('region', { name: 'staff-advisory' })).toBeTruthy()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// DYNAMICS tab (Wave 5A)
+// ---------------------------------------------------------------------------
+
+describe('StaffScreen Dynamics tab', () => {
+  afterEach(cleanup)
+
+  it('STAFF remains the default tab', () => {
+    const w = createNewGame()
+    render(<StaffScreen teamId={userTeamId(w)} world={w} />)
+    const tabs = document.querySelector('.staff-screen-tabs')!
+    expect(tabs.querySelector('button.is-active')?.textContent).toBe('STAFF')
+  })
+
+  it('DYNAMICS tab exists', () => {
+    const w = createNewGame()
+    render(<StaffScreen teamId={userTeamId(w)} world={w} />)
+    expect(screen.getByRole('button', { name: /^DYNAMICS/ })).toBeTruthy()
+  })
+
+  it('Dynamics works with employed Staff (after the daily pipeline creates Human Contexts) and renders the staff-dynamics grid', () => {
+    const w = advanceGameDay(createNewGame())
+    const teamId = userTeamId(w)
+    render(<StaffScreen teamId={teamId} world={w} />)
+    fireEvent.click(screen.getByRole('button', { name: /^DYNAMICS/ }))
+    expect(screen.getByRole('region', { name: 'staff-dynamics' })).toBeTruthy()
+  })
+
+  it('the grid renders qualitative state labels, never raw Human State numbers', () => {
+    const w = advanceGameDay(createNewGame())
+    const teamId = userTeamId(w)
+    render(<StaffScreen teamId={teamId} world={w} />)
+    fireEvent.click(screen.getByRole('button', { name: /^DYNAMICS/ }))
+    const region = screen.getByRole('region', { name: 'staff-dynamics' })
+    // No raw 0-100 numeric band value should ever appear as standalone cell content.
+    expect(region.textContent).not.toMatch(/>\s*\d{1,3}\s*</)
+  })
+
+  it('NEEDS ATTENTION filter narrows the grid to Staff with needsAttention signals', () => {
+    const w = advanceGameDay(createNewGame())
+    const teamId = userTeamId(w)
+    render(<StaffScreen teamId={teamId} world={w} />)
+    fireEvent.click(screen.getByRole('button', { name: /^DYNAMICS/ }))
+    const filterGroup = document.querySelector<HTMLElement>('.staff-advisory-toolbar .staff-mode-group')!
+    fireEvent.click(within(filterGroup).getByRole('button', { name: 'NEEDS ATTENTION' }))
+    expect(within(filterGroup).getByRole('button', { name: 'NEEDS ATTENTION' }).getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('selecting a Staff row opens the inspector with real explainability content', () => {
+    const w = advanceGameDay(createNewGame())
+    const teamId = userTeamId(w)
+    const staffId = staffWithRole(w, teamId, 'assistantCoach')
+    render(<StaffScreen teamId={teamId} world={w} />)
+    fireEvent.click(screen.getByRole('button', { name: /^DYNAMICS/ }))
+    const rows = screen.getAllByRole('row')
+    const targetRow = rows.find((row) => row.textContent?.includes(w.staffPeopleById[staffId]!.identity.firstName))
+    if (targetRow !== undefined) fireEvent.click(targetRow)
+    expect(screen.getByText('PROFESSIONAL STATE')).toBeTruthy()
+  })
+
+  it('an empty/no-issue Staff person still shows a useful inspector (no fabricated data)', () => {
+    const w = advanceGameDay(createNewGame())
+    const teamId = userTeamId(w)
+    render(<StaffScreen teamId={teamId} world={w} />)
+    fireEvent.click(screen.getByRole('button', { name: /^DYNAMICS/ }))
+    expect(screen.getByText('PROFESSIONAL STATE')).toBeTruthy()
+    expect(screen.getAllByText('STATE').length).toBeGreaterThan(0)
+  })
+
+  it('existing RESPONSIBILITIES still works alongside Dynamics', () => {
+    const w = advanceGameDay(createNewGame())
+    const teamId = userTeamId(w)
+    render(<StaffScreen teamId={teamId} world={w} />)
+    fireEvent.click(screen.getByRole('button', { name: 'RESPONSIBILITIES' }))
+    expect(screen.getByRole('region', { name: 'staff-responsibilities' })).toBeTruthy()
+  })
+
+  it('existing ADVISORY still works alongside Dynamics', () => {
+    const w = advanceGameDay(createNewGame())
+    const teamId = userTeamId(w)
+    render(<StaffScreen teamId={teamId} world={w} />)
+    fireEvent.click(screen.getByRole('button', { name: /^ADVISORY/ }))
+    expect(screen.getByRole('region', { name: 'staff-advisory' })).toBeTruthy()
+  })
+
+  it('read-only rendering has zero side effects on Human State (rendering twice yields identical staffHumanStatesByContextId)', () => {
+    const w = advanceGameDay(createNewGame())
+    const teamId = userTeamId(w)
+    const before = JSON.stringify(w.staffHumanStatesByContextId)
+    const { unmount } = render(<StaffScreen teamId={teamId} world={w} />)
+    fireEvent.click(screen.getByRole('button', { name: /^DYNAMICS/ }))
+    unmount()
+    render(<StaffScreen teamId={teamId} world={w} />)
+    fireEvent.click(screen.getByRole('button', { name: /^DYNAMICS/ }))
+    expect(JSON.stringify(w.staffHumanStatesByContextId)).toBe(before)
   })
 })

@@ -1,8 +1,9 @@
-import type { DelegationOutcome, DelegationOutcomeId, ResponsibilityKind } from '@/domain/responsibility'
+import { responsibilityDefinition, type DelegationOutcome, type DelegationOutcomeId, type ResponsibilityKind } from '@/domain/responsibility'
 import type { GameWorld } from '@/domain/world'
 import { acceptMedicalRecommendation } from '@/engine/injury/MedicalAdvisory'
 import { acceptRecruitingRecommendation } from '@/engine/recruiting/RecruitingAdvisory'
 import { acceptTradeRecommendation } from '@/engine/roster/BasketballOperationsAdvisory'
+import { emitAdvisoryAcceptedEvent, emitAdvisoryRejectedEvent } from '@/app/staffHumanState/StaffHumanAdvisoryEvents'
 
 /**
  * `ResponsibilityKind`s that have a canonical, existing acceptance seam an advisory
@@ -43,19 +44,28 @@ export function acceptStaffRecommendation(world: GameWorld, outcomeId: Delegatio
   if (MEDICAL_ACCEPTANCE_KINDS.includes(outcome.kind as typeof MEDICAL_ACCEPTANCE_KINDS[number])) {
     const result = acceptMedicalRecommendation(world, outcomeId)
     if (!result.ok) return { ok: false, reason: 'underlyingRejected' }
-    return { ok: true, world: markAccepted(result.world, outcomeId) }
+    return { ok: true, world: emitAccepted(markAccepted(result.world, outcomeId), outcome) }
   }
   if (RECRUITING_ACCEPTANCE_KINDS.includes(outcome.kind as typeof RECRUITING_ACCEPTANCE_KINDS[number])) {
     const result = acceptRecruitingRecommendation(world, outcomeId)
     if (!result.ok) return { ok: false, reason: 'underlyingRejected' }
-    return { ok: true, world: markAccepted(result.world, outcomeId) }
+    return { ok: true, world: emitAccepted(markAccepted(result.world, outcomeId), outcome) }
   }
   if (TRADE_ACCEPTANCE_KINDS.includes(outcome.kind as typeof TRADE_ACCEPTANCE_KINDS[number])) {
     const result = acceptTradeRecommendation(world, outcomeId)
     if (!result.ok) return { ok: false, reason: 'underlyingRejected' }
-    return { ok: true, world: markAccepted(result.world, outcomeId) }
+    return { ok: true, world: emitAccepted(markAccepted(result.world, outcomeId), outcome) }
   }
   return { ok: false, reason: 'notAcceptable' }
+}
+
+/** Wave 5A §16 — a Responsibility with `capacityCost >= 2` is the existing canonical "this matters more" signal (already used to size workload) and is reused here as the IMPORTANT/MEANINGFUL threshold, rather than inventing a second importance scale. */
+function isImportantResponsibility(kind: ResponsibilityKind): boolean {
+  return responsibilityDefinition(kind).capacityCost >= 2
+}
+
+function emitAccepted(world: GameWorld, outcome: DelegationOutcome): GameWorld {
+  return emitAdvisoryAcceptedEvent(world, outcome, isImportantResponsibility(outcome.kind))
 }
 
 /**
@@ -72,7 +82,9 @@ export function dismissStaffRecommendation(world: GameWorld, outcomeId: Delegati
   if (outcome.applied) return { ok: false, reason: 'alreadyResolved' }
 
   const updated: DelegationOutcome = { ...outcome, applied: false, userDisposition: 'dismissed', userDecidedOn: world.currentDate }
-  return { ok: true, world: { ...world, delegationOutcomesById: { ...world.delegationOutcomesById, [outcomeId]: updated } } }
+  const dismissedWorld: GameWorld = { ...world, delegationOutcomesById: { ...world.delegationOutcomesById, [outcomeId]: updated } }
+  const reacted = emitAdvisoryRejectedEvent(dismissedWorld, outcome, hasCanonicalAcceptanceSeam, isImportantResponsibility(outcome.kind))
+  return { ok: true, world: reacted }
 }
 
 function markAccepted(world: GameWorld, outcomeId: DelegationOutcomeId): GameWorld {

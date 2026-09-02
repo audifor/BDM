@@ -7,6 +7,8 @@ import { createDefaultStaffReputationProfile } from '@/domain/staffReputation'
 import { createStaffJobOpeningForTeam, identifyStaffCandidate, completeStaffInterview, startStaffInterview, createStaffJobOffer, acceptStaffJobOffer } from '@/app/staffCareer'
 import { requestScouting } from '@/engine/scouting'
 import { progressOppositionScoutingReports } from '@/engine/tactics/OppositionScoutingReportEngine'
+import { advanceGameDay } from '@/app/game/advanceGameDay'
+import { setTeamResponsibility } from '@/app/staffResponsibilities'
 import { serializeGameWorldV1 } from './GameWorldSaveV1'
 import { serializeGameWorldV2 } from './GameWorldSaveV2'
 import { serializeGameWorldV3, deserializeGameWorldV3, deserializeGameWorldSave, migrateGameWorldSaveV1ToV3, migrateGameWorldSaveV2ToV3 } from './GameWorldSaveV3'
@@ -331,5 +333,69 @@ describe('GameWorldSaveV3', () => {
     expect(migrated.payload.staffCareerRuntime).toBeDefined()
     const loaded = deserializeGameWorldV3(migrated)
     for (const staffId of Object.keys(loaded.staffPeopleById)) expect(loaded.staffEmploymentByStaffId[staffId as never]).toBeDefined()
+  })
+})
+
+describe('Wave 5A — Staff Human State V3 save round-trip', () => {
+  it('creates a human context/expectations/human state/event/reaction, saves, and reloads with exact relevant state preserved', () => {
+    const base = createNewGame()
+    const teamId = Object.values(base.teams)[0]!.id
+    const staffId = staffPersonIdFromString(Object.values(base.teamStaffAssignmentsById).find((assignment) => assignment.teamId === teamId)!.staffPersonId)
+    const advanced = advanceGameDay(base)
+    expect(Object.keys(advanced.staffHumanContextsById).length).toBeGreaterThan(0)
+    const granted = setTeamResponsibility(advanced, { teamId, kind: 'createTeamTrainingPlan', mode: 'delegated', holderStaffId: staffId })
+
+    const saved = serializeGameWorldV3(granted, savedAt)
+    const loaded = deserializeGameWorldV3(saved)
+    expect(loaded.staffHumanContextsById).toEqual(granted.staffHumanContextsById)
+    expect(loaded.staffHumanStatesByContextId).toEqual(granted.staffHumanStatesByContextId)
+    expect(loaded.staffExpectationProfilesByContextId).toEqual(granted.staffExpectationProfilesByContextId)
+    expect(loaded.staffReactionRecordsById).toEqual(granted.staffReactionRecordsById)
+  })
+
+  it('a legacy V3 save missing Human State fields loads validly with deterministic empty collections, no crash', () => {
+    const world = createNewGame()
+    const saved = serializeGameWorldV3(world, savedAt)
+    const legacyPayload = { ...saved.payload } as Record<string, unknown>
+    delete legacyPayload.staffHumanContexts
+    delete legacyPayload.staffHumanStates
+    delete legacyPayload.staffExpectationProfiles
+    delete legacyPayload.staffReactionRecords
+    const legacySave = { ...saved, payload: legacyPayload } as unknown as typeof saved
+    const loaded = deserializeGameWorldV3(legacySave)
+    expect(Object.keys(loaded.staffHumanContextsById)).toHaveLength(0)
+    expect(Object.keys(loaded.staffHumanStatesByContextId)).toHaveLength(0)
+    expect(Object.keys(loaded.staffExpectationProfilesByContextId)).toHaveLength(0)
+    expect(Object.keys(loaded.staffReactionRecordsById)).toHaveLength(0)
+    expect(saved.schemaVersion).toBe(3)
+  })
+
+  it('save/load/reprocess the same source event produces no duplicate ReactionRecord and no second state delta', () => {
+    const base = createNewGame()
+    const teamId = Object.values(base.teams)[0]!.id
+    const staffId = staffPersonIdFromString(Object.values(base.teamStaffAssignmentsById).find((assignment) => assignment.teamId === teamId)!.staffPersonId)
+    const advanced = advanceGameDay(base)
+    const granted = setTeamResponsibility(advanced, { teamId, kind: 'createTeamTrainingPlan', mode: 'delegated', holderStaffId: staffId })
+    const reactionCountBefore = Object.keys(granted.staffReactionRecordsById).length
+
+    const loaded = deserializeGameWorldV3(serializeGameWorldV3(granted, savedAt))
+    // Reprocessing the exact same (teamId, kind, mode, holder) transition again must be idempotent —
+    // it is the same before/after Responsibility pair, so no new Human Event/reaction is emitted.
+    const reprocessed = setTeamResponsibility(loaded, { teamId, kind: 'createTeamTrainingPlan', mode: 'delegated', holderStaffId: staffId })
+    expect(Object.keys(reprocessed.staffReactionRecordsById)).toHaveLength(reactionCountBefore)
+    expect(reprocessed.staffHumanStatesByContextId).toEqual(loaded.staffHumanStatesByContextId)
+  })
+
+  it('the expectation profile initial snapshot persists independently from current after adaptation', () => {
+    const base = createNewGame()
+    const advanced = advanceGameDay(base)
+    const contextId = Object.keys(advanced.staffHumanContextsById)[0] as never
+    const profile = advanced.staffExpectationProfilesByContextId[contextId]!
+    const adapted = { ...profile, current: { ...profile.current, autonomy: Math.min(100, profile.current.autonomy + 5) } }
+    const withAdapted = updateGameWorld(advanced, { staffExpectationProfiles: [...Object.values(advanced.staffExpectationProfilesByContextId).filter((item) => item.contextId !== contextId), adapted] })
+    const loaded = deserializeGameWorldV3(serializeGameWorldV3(withAdapted, savedAt))
+    expect(loaded.staffExpectationProfilesByContextId[contextId]!.initial).toEqual(profile.initial)
+    expect(loaded.staffExpectationProfilesByContextId[contextId]!.current.autonomy).toBe(adapted.current.autonomy)
+    expect(loaded.staffExpectationProfilesByContextId[contextId]!.initial).not.toEqual(loaded.staffExpectationProfilesByContextId[contextId]!.current)
   })
 })
