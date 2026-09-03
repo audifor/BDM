@@ -39,6 +39,21 @@ export const RESPONSIBILITY_KINDS = [
 ] as const
 export type ResponsibilityKind = typeof RESPONSIBILITY_KINDS[number]
 
+/**
+ * Advisory outcomes with an existing canonical acceptance seam. This is shared
+ * domain authority: a dismissal is a professional rejection only for these
+ * actionable kinds; all other advisory outcomes are informational/view-only.
+ */
+export const ACCEPTABLE_RESPONSIBILITY_KINDS: ReadonlySet<ResponsibilityKind> = new Set([
+  'returnToPlayRecommendation', 'treatmentRecommendation',
+  'prospectIdentification', 'recruitEvaluation', 'recruitingPriorities',
+  'tradeRecommendation',
+])
+
+export function hasCanonicalAcceptanceSeam(kind: ResponsibilityKind): boolean {
+  return ACCEPTABLE_RESPONSIBILITY_KINDS.has(kind)
+}
+
 export const RESPONSIBILITY_MODES = ['userControlled', 'delegated', 'advisory', 'organizational'] as const
 export type ResponsibilityMode = typeof RESPONSIBILITY_MODES[number]
 
