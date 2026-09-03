@@ -43,6 +43,16 @@ function findOffer(world: GameWorld, offerId: string) {
 }
 
 describe('Hiring transaction: opening -> candidacy -> interview -> offer -> accept -> employed', () => {
+  it('employer autopilot progresses the canonically selected staffApplied candidacy rather than orphaning it', () => {
+    const base = createNewGame()
+    const teamId = Object.values(base.teams)[0]!.id
+    const { world, staffId } = withFreeAgentStaff(base, 'staff-applied', { talentEvaluation: 100, potentialEvaluation: 100, tacticalKnowledge: 100, analysis: 100, communication: 100 })
+    const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId, roleId: 'advanceScout' })
+    const applied = identifyStaffCandidate(withOpening, { openingId: opening.id, staffId, origin: 'staffApplied' })
+    const hired = runStaffHiringProcessForOpening(applied.world, opening.id)
+    expect(hired.staffJobCandidaciesById[applied.candidacyId as never]).toMatchObject({ origin: 'staffApplied', status: 'hired' })
+    expect(hired.staffEmploymentByStaffId[staffId]).toMatchObject({ status: 'employed', teamId })
+  })
   it('runs the full lifecycle producing employment, assignment, and one active contract', () => {
     const base = createNewGame()
     const teamId = Object.values(base.teams)[0]!.id
