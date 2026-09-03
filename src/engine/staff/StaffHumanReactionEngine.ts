@@ -4,6 +4,8 @@ import { recordMemory } from '@/engine/memory'
 import { applyRelationshipEvent, createRelationshipProfile, getRelationshipDimensions, relationshipKey, type RelationshipEvent, type RelationshipProfile } from '@/domain/relationships'
 import { applyRelationshipEventToWorld, getStaffAssignment, getStaffPerson, updateGameWorld, type GameWorld } from '@/domain/world'
 import { relationshipFacetDeltasFor } from './StaffProfessionalRelationshipDefinitions'
+import { applyStaffConflictTrigger } from './StaffConflictEngine'
+import { staffConflictTriggerFromHumanEvent } from './StaffConflictTriggerRegistry'
 import {
   clampHumanStateValue,
   createStaffHumanState,
@@ -52,7 +54,9 @@ export function applyStaffHumanEvent(world: GameWorld, context: StaffHumanContex
   }
   if (computed.memory !== undefined) next = recordMemory(next, computed.memory)
   if (computed.relationshipEvent !== undefined) next = applyRelationshipEventToWorld(next, event.staffId, computed.relationshipEvent.actorId, computed.relationshipEvent.event)
-  return { world: next, reaction: computed.reaction }
+  const candidate = staffConflictTriggerFromHumanEvent(event, context.teamId)
+  const trigger = candidate !== undefined && (world.staffPeopleById[candidate.counterpartActorId as never] !== undefined || world.coaches[candidate.counterpartActorId as never] !== undefined) ? candidate : undefined
+  return { world: trigger === undefined ? next : applyStaffConflictTrigger(next, trigger), reaction: computed.reaction }
 }
 
 interface ComputedReaction {
@@ -140,12 +144,18 @@ export function applyStaffHumanEventsBatch(world: GameWorld, events: readonly St
 
   const deduplicatedMemories = dedupeMemories(world, memories)
 
-  return updateGameWorld(world, {
+  const next = updateGameWorld(world, {
     staffHumanStates: Object.values(states),
     staffReactionRecords: Object.values(reactions),
     ...(deduplicatedMemories.length === 0 ? {} : { memories: [...Object.values(world.memoriesById), ...deduplicatedMemories] }),
     ...(relationshipUpdates.size === 0 ? {} : { relationshipsByKey: { ...world.relationshipsByKey, ...Object.fromEntries(relationshipUpdates) } }),
   })
+  return events.reduce((current, event) => {
+    const context = current.staffHumanContextsById[event.contextId]
+    const candidate = context === undefined ? undefined : staffConflictTriggerFromHumanEvent(event, context.teamId)
+    const trigger = candidate !== undefined && (current.staffPeopleById[candidate.counterpartActorId as never] !== undefined || current.coaches[candidate.counterpartActorId as never] !== undefined) ? candidate : undefined
+    return trigger === undefined ? current : applyStaffConflictTrigger(current, trigger)
+  }, next)
 }
 
 /** Mirrors `recordMemory`'s own dedupe rule (by id, and by owner+semanticKey) since the batch path bypasses `recordMemory` itself for performance. */
