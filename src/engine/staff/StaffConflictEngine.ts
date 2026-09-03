@@ -3,8 +3,12 @@ import { getRelationshipDimensions, applyRelationshipEvent, createRelationshipPr
 import { clampHumanStateValue, createStaffHumanState, type StaffHumanState } from '@/domain/staffHumanState'
 import { createStaffConflict, createStaffConflictParticipantState, createStaffConflictTrigger, staffConflictGroupingKey, staffConflictIdFor, type StaffConflict, type StaffConflictParticipant, type StaffConflictTrigger } from '@/domain/staffConflict'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { calculateStaffCultureFit } from './StaffCultureEngine'
+import { buildStaffUnitRuntimeViews } from './StaffUnitCohesionEngine'
 
 const CREATION_THRESHOLD = 62
+export const STAFF_CONFLICT_COOLDOWN_DAYS = 30
+export const STAFF_CONFLICT_COOLDOWN_BYPASS_PRESSURE = 86
 
 export function calculateStaffConflictPressure(world: GameWorld, trigger: StaffConflictTrigger, existing?: StaffConflict): number {
   const subjectState = humanStateFor(world, trigger.subjectActorId)
@@ -22,11 +26,15 @@ export function applyStaffConflictTrigger(world: GameWorld, input: StaffConflict
   const active = Object.values(world.staffConflictsById).find((conflict) => conflict.status === 'ACTIVE' && staffConflictGroupingKey(conflict) === staffConflictGroupingKey({ scopeKey: trigger.scopeKey, type: trigger.type, participants: [{ actorId: trigger.subjectActorId, role: 'PRIMARY', state: neutralParticipantState(), joinedOn: trigger.occurredOn }, { actorId: trigger.counterpartActorId, role: 'SECONDARY', state: neutralParticipantState(), joinedOn: trigger.occurredOn }] }))
   if (active?.sourceTriggerIds.includes(trigger.id)) return world
   const pressure = calculateStaffConflictPressure(world, trigger, active)
-  if (active === undefined && pressure < CREATION_THRESHOLD) return world
+  if (active === undefined) {
+    if (pressure < CREATION_THRESHOLD) return world
+    const resolved = Object.values(world.staffConflictsById).find((conflict) => conflict.status === 'RESOLVED' && staffConflictGroupingKey(conflict) === triggerGroupingKey(trigger))
+    if (resolved !== undefined && daysBetween(resolved.resolvedOn!, trigger.occurredOn) <= STAFF_CONFLICT_COOLDOWN_DAYS && pressure < STAFF_CONFLICT_COOLDOWN_BYPASS_PRESSURE) return world
+  }
   const conflict = active === undefined ? createConflict(trigger, pressure) : applyTrigger(active, trigger, pressure)
   let next = updateGameWorld(world, { staffConflicts: [...Object.values(world.staffConflictsById).filter((item) => item.id !== conflict.id), conflict] })
-  next = applyConflictRelationshipMilestone(next, conflict, active === undefined ? 'started' : 'escalated')
-  return recordConflictMemories(next, conflict, active === undefined ? 'started' : 'escalated')
+  const milestone = active === undefined ? 'started' : escalationMilestone(active, conflict)
+  return milestone === undefined ? next : recordConflictMemories(applyConflictRelationshipMilestone(next, conflict, milestone), conflict, milestone)
 }
 
 export function progressStaffConflicts(world: GameWorld): GameWorld {
@@ -55,13 +63,30 @@ function applyTrigger(conflict: StaffConflict, trigger: StaffConflictTrigger, pr
   return createStaffConflict({ ...conflict, primaryCause: trigger.cause, participants, sourceTriggerIds: [...conflict.sourceTriggerIds, trigger.id], stage: magnitude >= 82 ? 'ESCALATING' : conflict.stage === 'LATENT' ? 'EMERGING' : conflict.stage, severity: severityFor(magnitude), lastEvaluatedOn: trigger.occurredOn })
 }
 function progressConflict(world: GameWorld, conflict: StaffConflict): StaffConflict {
-  const magnitude = conflictMagnitude(conflict)
+  const magnitude = conflictMagnitude(conflict); const environment = calculateActiveConflictEnvironment(world, conflict)
   const compromise = conflict.participants.reduce((sum, item) => sum + item.state.willingnessToCompromise + item.state.perceivedFairness, 0) / (conflict.participants.length * 2)
-  const nextParticipants = conflict.participants.map((item) => ({ ...item, state: createStaffConflictParticipantState({ ...item.state, grievance: item.state.grievance - (compromise >= 60 ? 9 : 2), emotionalInvestment: item.state.emotionalInvestment - (compromise >= 60 ? 5 : 1), perceivedFairness: item.state.perceivedFairness + (compromise >= 60 ? 5 : 1) }) }))
+  const recovery = environment <= -18 && compromise >= 58 ? 7 : environment <= -6 && compromise >= 52 ? 3 : 0
+  const deterioration = environment >= 25 ? 5 : environment >= 12 ? 2 : 0
+  const nextParticipants = conflict.participants.map((item) => ({ ...item, state: createStaffConflictParticipantState({ ...item.state, grievance: item.state.grievance - recovery + deterioration, emotionalInvestment: item.state.emotionalInvestment - Math.round(recovery / 2) + Math.round(deterioration / 2), perceivedFairness: item.state.perceivedFairness + recovery - Math.round(deterioration / 2) }) }))
   const nextMagnitude = conflictMagnitude({ ...conflict, participants: nextParticipants })
   if (nextMagnitude <= 22 && compromise >= 60) return createStaffConflict({ ...conflict, participants: nextParticipants, status: 'RESOLVED', stage: 'RESOLVED', severity: 'MINOR', resolvedOn: world.currentDate, resolution: { type: 'FADED', resolvedOn: world.currentDate }, lastEvaluatedOn: world.currentDate })
-  const stage = nextMagnitude >= 82 ? 'ESCALATING' : nextMagnitude <= 36 ? 'RESOLVING' : nextMagnitude < magnitude ? 'COOLING' : conflict.stage === 'EMERGING' ? 'ACTIVE' : conflict.stage
+  const stage = nextMagnitude >= 82 || environment >= 32 ? 'ESCALATING' : recovery > 0 && nextMagnitude <= 36 ? 'RESOLVING' : recovery > 0 && nextMagnitude < magnitude ? 'COOLING' : conflict.stage === 'EMERGING' ? 'ACTIVE' : conflict.stage
   return createStaffConflict({ ...conflict, participants: nextParticipants, stage, severity: severityFor(nextMagnitude), lastEvaluatedOn: world.currentDate })
+}
+/** Bounded active-episode context; only the episode's own participants are inspected. */
+export function calculateActiveConflictEnvironment(world: GameWorld, conflict: StaffConflict): number {
+  const [primary, secondary] = conflict.participants.filter((item) => item.role === 'PRIMARY' || item.role === 'SECONDARY')
+  if (primary === undefined || secondary === undefined) return 0
+  const human = [primary.actorId, secondary.actorId].map((id) => humanStateFor(world, id)).filter((state): state is StaffHumanState => state !== undefined)
+  const humanPressure = human.length === 0 ? 0 : human.reduce((sum, state) => sum + state.frustration + state.stress + (100 - state.professionalFulfillment) + (100 - state.organizationalCommitment) + (100 - state.autonomySatisfaction) + (100 - state.influenceSatisfaction) - 300, 0) / (human.length * 6)
+  const forward = getRelationshipDimensions(world.relationshipsByKey[relationshipKey(primary.actorId, secondary.actorId)])
+  const reverse = getRelationshipDimensions(world.relationshipsByKey[relationshipKey(secondary.actorId, primary.actorId)])
+  const relation = ([forward, reverse].reduce((sum, value) => sum + value.trust + value.professionalRespect + value.communicationQuality + value.perceivedSupport + value.professionalAlignment + value.collaboration, 0) / 12)
+  const culture = [primary.actorId, secondary.actorId].map((id) => world.staffPeopleById[id as never] === undefined ? undefined : world.staffCultureStatesByScopeKey[conflict.scopeKey] === undefined ? undefined : calculateStaffCultureFit(world, id as never, world.staffCultureStatesByScopeKey[conflict.scopeKey]!).fitScore - 50).filter((value): value is number => value !== undefined)
+  const cultureSignal = culture.length === 0 ? 0 : -culture.reduce((sum, value) => sum + value, 0) / culture.length
+  const unit = buildStaffUnitRuntimeViews(world, conflict.teamId as never ?? conflict.scopeKey as never).find((view) => view.memberStaffIds.includes(primary.actorId as never) && view.memberStaffIds.includes(secondary.actorId as never))
+  const cohesion = unit === undefined ? 0 : ((world.staffUnitCohesionStatesByUnitKey[unit.unitKey]?.current.communication ?? 50) + (world.staffUnitCohesionStatesByUnitKey[unit.unitKey]?.current.coordination ?? 50) - 100) / 2
+  return Math.round(Math.max(-40, Math.min(40, humanPressure - relation * 0.45 + cultureSignal * 0.18 - cohesion * 0.18)))
 }
 function applyConflictHumanStatePressure(world: GameWorld, conflicts: readonly StaffConflict[]): readonly StaffHumanState[] {
   const activeByActor = new Map<string, StaffConflict[]>()
@@ -93,4 +118,7 @@ function neutralParticipantState() { return { grievance: 50, willingnessToCompro
 function conflictMagnitude(conflict: Pick<StaffConflict, 'participants' | 'sourceTriggerIds'>): number { const states = conflict.participants.map((item) => item.state); return Math.max(0, Math.min(100, Math.round(states.reduce((sum, item) => sum + item.grievance * 0.6 + item.emotionalInvestment * 0.25 + (100 - item.perceivedFairness) * 0.15, 0) / Math.max(1, states.length) + Math.min(12, conflict.sourceTriggerIds.length * 3)))) }
 function severityFor(magnitude: number): StaffConflict['severity'] { return magnitude >= 88 ? 'CRITICAL' : magnitude >= 74 ? 'SEVERE' : magnitude >= 58 ? 'SERIOUS' : magnitude >= 42 ? 'MODERATE' : 'MINOR' }
 function humanStateFor(world: GameWorld, actorId: string) { return Object.values(world.staffHumanStatesByContextId).find((item) => item.staffId === actorId) }
+function triggerGroupingKey(trigger: StaffConflictTrigger): string { return staffConflictGroupingKey({ scopeKey: trigger.scopeKey, type: trigger.type, participants: [{ actorId: trigger.subjectActorId, role: 'PRIMARY', state: neutralParticipantState(), joinedOn: trigger.occurredOn }, { actorId: trigger.counterpartActorId, role: 'SECONDARY', state: neutralParticipantState(), joinedOn: trigger.occurredOn }] }) }
+function escalationMilestone(before: StaffConflict, after: StaffConflict): 'escalated' | undefined { return before.stage !== 'ESCALATING' && after.stage === 'ESCALATING' ? 'escalated' : undefined }
+function daysBetween(from: string, to: string): number { return Math.floor((Date.UTC(...to.split('-').map((value, index) => Number(value) - (index === 1 ? 1 : 0)) as [number, number, number]) - Date.UTC(...from.split('-').map((value, index) => Number(value) - (index === 1 ? 1 : 0)) as [number, number, number])) / 86400000) }
 function isoWeekday(date: string): number { const [year, month, day] = date.split('-').map(Number); const weekday = new Date(Date.UTC(year!, month! - 1, day!)).getUTCDay(); return weekday === 0 ? 7 : weekday }
