@@ -4,6 +4,7 @@ import type { StaffCareerAutonomyState, StaffCareerIntent, StaffCareerOutlook } 
 import type { StaffJobOffer, StaffJobOpening } from '@/domain/staffCareer'
 import { calculateStaffRoleProficiencyByRoleId, staffRoleDefinition } from '@/domain/staff'
 import type { StaffPersonId } from '@/domain/ids'
+import { getRelationshipDimensions } from '@/domain/relationships'
 
 export const STAFF_CAREER_AUTONOMY_TUNING = {
   adaptation: 0.28,
@@ -53,7 +54,10 @@ export function appraiseStaffCareer(world: GameWorld, context: StaffHumanContext
   const contract = low(state.contractSatisfaction)
   const workload = clamp(low(state.workloadSatisfaction) + state.stress * 0.35)
   const culture = world.staffCultureStatesByScopeKey[context.teamId]
-  const relationshipPressure = clamp(Object.values(world.relationshipsByKey).filter((relationship) => relationship.sourceId === context.staffId).reduce((sum, relationship) => sum + Math.max(0, -relationship.value), 0))
+  const leadershipId = world.teams[context.teamId]?.coachId
+  const leadershipRelationship = leadershipId === undefined ? undefined : world.relationshipsByKey[`${context.staffId}->${leadershipId}`]
+  const dimensions = getRelationshipDimensions(leadershipRelationship)
+  const relationshipPressure = clamp((Math.max(0, -dimensions.trust) + Math.max(0, -dimensions.professionalRespect) + Math.max(0, -dimensions.communicationQuality) + Math.max(0, -dimensions.collaboration) + Math.max(0, -dimensions.perceivedSupport) + Math.max(0, -dimensions.reliability) + Math.max(0, -dimensions.professionalAlignment)) / 3)
   const cohesionPressure = clamp(Object.values(world.staffUnitCohesionStatesByUnitKey).filter((unit) => unit.scopeKey === context.teamId).reduce((sum, unit) => sum + low(unit.current.mutualSupport) * 0.08 + low(unit.current.trustClimate) * 0.08, 0))
   const belonging = clamp(low(state.organizationalCommitment) * 0.65 + relationshipPressure * 0.12 + cohesionPressure * 0.08 + (culture === undefined ? 0 : low(culture.current.collaboration) * 0.075 + low(culture.current.communicationOpenness) * 0.075))
   const conflict = clamp(Object.values(world.staffConflictsById)

@@ -321,9 +321,13 @@ export function closeStaffJobOpening(world: GameWorld, openingId: string): GameW
  * deterministic — see `rankStaffCandidates`).
  */
 export function runStaffHiringProcessForOpening(world: GameWorld, openingId: string): GameWorld {
+  const opening = requireOpening(world, openingId)
   const staffId = rankStaffCandidates(world, openingId)[0]
   if (staffId === undefined) return world
-  const candidate = identifyStaffCandidate(world, { openingId, staffId })
+  // A self-initiated application is employer input, never an employer decision. Select it only
+  // when the canonical ranking independently selects that Staff member.
+  const existing = Object.values(world.staffJobCandidaciesById).find((item) => item.jobOpeningId === opening.id && item.staffId === staffId && item.status === 'identified')
+  const candidate = existing === undefined ? identifyStaffCandidate(world, { openingId, staffId }) : { world, candidacyId: existing.id }
   const interviewed = completeStaffInterview(startStaffInterview(candidate.world, candidate.candidacyId), candidate.candidacyId)
   const offered = createStaffJobOffer(interviewed, { candidacyId: candidate.candidacyId })
   return acceptStaffJobOffer(offered.world, offered.offerId)
