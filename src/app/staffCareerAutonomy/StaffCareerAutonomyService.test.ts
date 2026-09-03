@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { createAcbTestGame } from '@/app/game/createAcbTestGame'
 import { createStaffJobOpeningForTeam } from '@/app/staffCareer'
 import { updateGameWorld } from '@/domain/world'
+import { getRelationshipDimensions } from '@/domain/relationships'
 import { progressStaffHumanState } from '@/engine/staff/StaffHumanStatePipeline'
-import { progressStaffAutonomousResignations, progressStaffCareerMarketAgency } from './StaffCareerAutonomyService'
+import { declineStaffCareerRequest, progressStaffAutonomousResignations, progressStaffCareerMarketAgency } from './StaffCareerAutonomyService'
 
 describe('Staff career market agency', () => {
   it('creates one provenance-marked candidacy for the best real external opening', () => {
@@ -37,5 +38,19 @@ describe('Staff career market agency', () => {
     })
     expect(progressStaffAutonomousResignations(primed).staffEmploymentByStaffId[staffId as never]).toMatchObject({ status: 'unemployed' })
     expect(employment.teamId).toBe(context.teamId)
+  })
+
+  it('applies professional decline facets once without changing personal closeness', () => {
+    const base = progressStaffHumanState(createAcbTestGame())
+    const context = Object.values(base.staffHumanContextsById)[0]!
+    const requestId = 'meaningful-decline'
+    const withRequest = updateGameWorld(base, { staffCareerRequests: [{ id: requestId, contextId: context.id, staffId: context.staffId, teamId: context.teamId, kind: 'RELEASE', createdOn: base.currentDate, status: 'OPEN' }] })
+    const declined = declineStaffCareerRequest(withRequest, requestId)
+    const relationship = declined.relationshipsByKey[`${context.staffId}->${base.userCoachId}`]!
+    const dimensions = getRelationshipDimensions(relationship)
+    expect(dimensions).toMatchObject({ trust: -4, professionalRespect: -4, perceivedSupport: -6, personalCloseness: 0 })
+    expect(() => declineStaffCareerRequest(declined, requestId)).toThrow()
+    expect(relationship.events).toHaveLength(1)
+    expect(Object.values(declined.memoriesById).filter((memory) => memory.sourceId === requestId)).toHaveLength(1)
   })
 })
