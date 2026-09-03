@@ -67,11 +67,11 @@ describe('StaffCulture domain', () => {
 
   it('createStaffCultureState clamps both target and current and validates the scope key', () => {
     const raw = Object.fromEntries(STAFF_CULTURE_DIMENSIONS.map((dimension) => [dimension, 400])) as never
-    const state = createStaffCultureState({ scopeKey: 'team-1', target: raw, current: raw, lastEvaluatedOn: '2030-01-07' as never })
+    const state = createStaffCultureState({ scopeKey: 'team-1', target: raw, current: raw, establishedOn: '2030-01-07' as never, lastEvaluatedOn: '2030-01-07' as never })
     for (const dimension of STAFF_CULTURE_DIMENSIONS) {
       expect(state.target[dimension]).toBe(100)
       expect(state.current[dimension]).toBe(100)
     }
-    expect(() => createStaffCultureState({ scopeKey: '  ', target: raw, current: raw, lastEvaluatedOn: '2030-01-07' as never })).toThrow()
+    expect(() => createStaffCultureState({ scopeKey: '  ', target: raw, current: raw, establishedOn: '2030-01-07' as never, lastEvaluatedOn: '2030-01-07' as never })).toThrow()
   })
 })

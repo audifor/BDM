@@ -48,17 +48,17 @@ describe('Staff Culture / Unit Cohesion save persistence', () => {
 
     // Culture Fit, unit membership, leader derivation, overall classifications, trends and UI labels
     // are all derived-on-demand and must NEVER be persisted.
-    for (const forbidden of ['cultureFit', 'fitScore', 'fitBand', 'leaderStaffId', 'memberStaffIds', 'department', 'trend', 'band', 'label', 'strengths', 'concerns', 'established', 'preferences']) {
+    for (const forbidden of ['cultureFit', 'fitScore', 'fitBand', 'leaderStaffId', 'memberStaffIds', 'trend', 'band', 'label', 'strengths', 'concerns', 'preferences']) {
       expect(cultureJson).not.toContain(forbidden)
       expect(cohesionJson).not.toContain(forbidden)
     }
 
     // What IS persisted is exactly the declared shape and nothing else.
     for (const record of saved.payload.staffCultureStates ?? []) {
-      expect(Object.keys(record).sort()).toEqual(['current', 'lastEvaluatedOn', 'scopeKey', 'target'])
+      expect(Object.keys(record).sort()).toEqual(['current', 'establishedOn', 'lastEvaluatedOn', 'scopeKey', 'target'])
     }
     for (const record of saved.payload.staffUnitCohesionStates ?? []) {
-      expect(Object.keys(record).sort()).toEqual(['current', 'lastEvaluatedOn', 'target', 'unitKey'])
+      expect(Object.keys(record).sort()).toEqual(['current', 'departmentProxy', 'establishedOn', 'lastEvaluatedOn', 'scopeKey', 'target', 'unitKey'])
     }
   })
 

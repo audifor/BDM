@@ -42,9 +42,12 @@ describe('progressStaffCultureAndCohesion', () => {
     }
   })
 
-  it('initializes a culture state per team and a cohesion state per resolved unit', () => {
+  it('initializes culture and cohesion only for teams with current Staff', () => {
     const world = progressStaffCultureAndCohesion(createNewGame())
-    expect(Object.keys(world.staffCultureStatesByScopeKey).length).toBe(Object.keys(world.teams).length)
+    const relevantTeamIds = Object.values(world.teams).filter((team) =>
+      Object.values(world.teamStaffAssignmentsById).some((assignment) => assignment.teamId === team.id && world.staffPeopleById[assignment.staffPersonId] !== undefined && (world.staffEmploymentByStaffId[assignment.staffPersonId] === undefined || world.staffEmploymentByStaffId[assignment.staffPersonId]!.status === 'employed')),
+    ).map((team) => team.id as string)
+    expect(Object.keys(world.staffCultureStatesByScopeKey).sort()).toEqual(relevantTeamIds.sort())
     expect(Object.keys(world.staffUnitCohesionStatesByUnitKey).length).toBeGreaterThan(0)
     for (const state of Object.values(world.staffCultureStatesByScopeKey)) {
       for (const dimension of STAFF_CULTURE_DIMENSIONS) expect(Number.isInteger(state.current[dimension])).toBe(true)
@@ -52,6 +55,15 @@ describe('progressStaffCultureAndCohesion', () => {
     for (const state of Object.values(world.staffUnitCohesionStatesByUnitKey)) {
       for (const dimension of STAFF_UNIT_COHESION_DIMENSIONS) expect(Number.isInteger(state.current[dimension])).toBe(true)
     }
+  })
+
+  it('does not create a culture state for a team without current Staff', () => {
+    const base = createNewGame()
+    const emptyTeam = Object.values(base.teams).find((team) => !Object.values(base.teamStaffAssignmentsById).some((assignment) => assignment.teamId === team.id))
+    expect(emptyTeam).toBeDefined()
+    if (emptyTeam === undefined) return
+    const progressed = progressStaffCultureAndCohesion(base)
+    expect(progressed.staffCultureStatesByScopeKey[emptyTeam.id]).toBeUndefined()
   })
 
   it('is idempotent on a non-weekly tick once states exist (returns the same world unchanged)', () => {

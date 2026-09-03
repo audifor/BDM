@@ -23,8 +23,8 @@ import {
  *  1. Ensure a `StaffCultureState` exists per organization scope and a `StaffUnitCohesionState`
  *     exists per resolved runtime unit (both idempotent — keys are deterministic).
  *  2. On the weekly cadence only, recompute every target and move `current` toward it.
- *  3. On the same weekly tick, apply the bounded Culture-Fit pressure into the two existing Human
- *     State dimensions it speaks to.
+ *  3. On the same weekly tick, apply bounded per-dimension Culture-Fit pressure into the existing
+ *     canonical Human State dimensions it legitimately speaks to.
  *
  * It NEVER touches `world.teamCohesionByTeamId` — that is the separate tactical/training cohesion
  * scalar and is entirely out of this system's scope.
@@ -39,13 +39,18 @@ export function progressStaffCultureAndCohesion(world: GameWorld): GameWorld {
   const cohesionByUnit = new Map<string, StaffUnitCohesionState>(Object.entries(world.staffUnitCohesionStatesByUnitKey))
   let changed = false
 
-  for (const team of Object.values(world.teams)) {
-    const scopeKey = team.id as string
+  const relevantTeamIds = Object.values(world.teams)
+    .filter((team) => getRelevantTeamStaffIds(world, team.id).length > 0)
+    .map((team) => team.id)
+  const unitViewsByTeamId = new Map(relevantTeamIds.map((teamId) => [teamId, buildStaffUnitRuntimeViews(world, teamId)]))
+
+  for (const teamId of relevantTeamIds) {
+    const scopeKey = teamId as string
     if (!cultureByScope.has(scopeKey)) {
       cultureByScope.set(scopeKey, initializeStaffCultureState(world, scopeKey))
       changed = true
     }
-    for (const unitView of buildStaffUnitRuntimeViews(world, team.id)) {
+    for (const unitView of unitViewsByTeamId.get(teamId) ?? []) {
       if (!cohesionByUnit.has(unitView.unitKey)) {
         cohesionByUnit.set(unitView.unitKey, initializeStaffUnitCohesionState(world, unitView))
         changed = true
@@ -56,14 +61,16 @@ export function progressStaffCultureAndCohesion(world: GameWorld): GameWorld {
   const humanStates: StaffHumanState[] = []
 
   if (weekly) {
-    for (const [scopeKey, state] of cultureByScope) {
+    for (const teamId of relevantTeamIds) {
+      const scopeKey = teamId as string
+      const state = cultureByScope.get(scopeKey)
+      if (state === undefined) continue
       cultureByScope.set(scopeKey, progressStaffCultureState(state, deriveStaffCultureTarget(world, scopeKey), world.currentDate))
       changed = true
     }
 
-    // Cohesion targets need the unit membership, so re-resolve the views once per team and match by key.
-    for (const team of Object.values(world.teams)) {
-      for (const unitView of buildStaffUnitRuntimeViews(world, team.id)) {
+    for (const teamId of relevantTeamIds) {
+      for (const unitView of unitViewsByTeamId.get(teamId) ?? []) {
         const state = cohesionByUnit.get(unitView.unitKey)
         if (state === undefined) continue
         cohesionByUnit.set(unitView.unitKey, progressStaffUnitCohesionState(state, deriveStaffUnitCohesionTarget(world, unitView), world.currentDate))
@@ -99,6 +106,14 @@ export function progressStaffCultureAndCohesion(world: GameWorld): GameWorld {
       staffHumanStates: Object.values(world.staffHumanStatesByContextId).map((state) => pressuredByContextId.get(state.contextId) ?? state),
     }),
   })
+}
+
+function getRelevantTeamStaffIds(world: GameWorld, teamId: import('@/domain/ids').TeamId): readonly string[] {
+  return Object.values(world.teamStaffAssignmentsById)
+    .filter((assignment) => assignment.teamId === teamId)
+    .map((assignment) => assignment.staffPersonId)
+    .filter((staffId) => world.staffPeopleById[staffId] !== undefined)
+    .filter((staffId) => world.staffEmploymentByStaffId[staffId] === undefined || world.staffEmploymentByStaffId[staffId]!.status === 'employed')
 }
 
 /** Weekly cadence: the ISO weekday of `currentDate` is Monday (1). Matches the Wave 5A pipeline's convention. */

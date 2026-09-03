@@ -18,6 +18,7 @@ import {
   getTeamStaffAssignments,
   type GameWorld,
 } from '@/domain/world'
+import { hasCanonicalAcceptanceSeam } from '@/domain/responsibility'
 
 /**
  * Wave 5C — Organizational Culture derivation.
@@ -73,6 +74,7 @@ function collectContributors(world: GameWorld, teamId: TeamId): readonly Culture
   for (const assignment of getTeamStaffAssignments(world, teamId)) {
     const person = world.staffPeopleById[assignment.staffPersonId]
     if (person === undefined) continue
+    if (world.staffEmploymentByStaffId[assignment.staffPersonId] !== undefined && world.staffEmploymentByStaffId[assignment.staffPersonId]!.status !== 'employed') continue
     const definition = staffRoleDefinition(assignment.role)
     const employment = world.staffEmploymentByStaffId[assignment.staffPersonId]
     const startedOn = employment?.status === 'employed' ? employment.startedOn : undefined
@@ -126,33 +128,37 @@ function relationshipFacetAverage(world: GameWorld, staffIds: readonly StaffPers
   return count === 0 ? 50 : total / count
 }
 
-/** Share of DelegationOutcomes produced by this unit's Staff that were actually applied — a real "does the organization act on its people's professional voice" signal. */
+/** Explicit user dispositions are the sole professional-voice signal; automatic or unresolved outcomes are neutral. */
 function delegationAcceptanceRate(world: GameWorld, staffIds: readonly StaffPersonId[]): { readonly rate: number; readonly hasData: boolean } {
   const members = new Set<string>(staffIds)
-  let applied = 0
+  let accepted = 0
   let total = 0
   for (const outcome of Object.values(world.delegationOutcomesById)) {
     if (!members.has(outcome.staffId)) continue
-    total += 1
-    if (outcome.applied) applied += 1
+    if (outcome.userDisposition === 'accepted') {
+      total += 1
+      accepted += 1
+    } else if (outcome.userDisposition === 'dismissed' && hasCanonicalAcceptanceSeam(outcome.kind)) {
+      total += 1
+    }
   }
-  return total === 0 ? { rate: 0.5, hasData: false } : { rate: applied / total, hasData: true }
+  return total === 0 ? { rate: 0.5, hasData: false } : { rate: accepted / total, hasData: true }
 }
 
 interface ResponsibilityDistribution {
   readonly delegatedShare: number
-  readonly userControlledOrAdvisoryShare: number
+  readonly advisoryShare: number
+  readonly userControlledShare: number
+  readonly organizationalShare: number
   readonly hasData: boolean
 }
 
 /** How this Team's held Responsibilities are actually distributed across the 4 canonical modes — the real "distribution of authority" signal. */
 function responsibilityDistribution(world: GameWorld, teamId: TeamId): ResponsibilityDistribution {
   const responsibilities = getTeamResponsibilities(world, teamId)
-  const held = responsibilities.filter((item) => item.holderStaffId !== undefined)
-  if (held.length === 0) return { delegatedShare: 0.5, userControlledOrAdvisoryShare: 0.5, hasData: false }
-  const delegatedShare = held.filter((item) => item.mode === 'delegated').length / held.length
-  const userControlledOrAdvisoryShare = held.filter((item) => item.mode === 'userControlled' || item.mode === 'advisory').length / held.length
-  return { delegatedShare, userControlledOrAdvisoryShare, hasData: true }
+  if (responsibilities.length === 0) return { delegatedShare: 0.5, advisoryShare: 0.5, userControlledShare: 0.5, organizationalShare: 0.5, hasData: false }
+  const share = (mode: 'delegated' | 'advisory' | 'userControlled' | 'organizational') => responsibilities.filter((item) => item.mode === mode).length / responsibilities.length
+  return { delegatedShare: share('delegated'), advisoryShare: share('advisory'), userControlledShare: share('userControlled'), organizationalShare: share('organizational'), hasData: true }
 }
 
 /**
@@ -184,14 +190,14 @@ export function deriveStaffCultureTarget(world: GameWorld, scopeKey: string): St
     // AUTONOMY: real distribution of professional decision authority — delegated share plus how
     // often the organization actually acts on the advisory/professional voice it receives.
     autonomy: blend(
-      responsibilities.hasData ? 25 + responsibilities.delegatedShare * 60 : 50,
+      responsibilities.hasData ? 22 + responsibilities.delegatedShare * 65 + responsibilities.advisoryShare * 35 + responsibilities.organizationalShare * 28 - responsibilities.userControlledShare * 12 : 50,
       acceptance.hasData ? 30 + acceptance.rate * 55 : 50,
     ),
-    // HIERARCHY: centralization of authority — a director-heavy staff and a staff whose held
-    // responsibilities stay user-controlled/advisory (never delegated) both read as top-down.
+    // HIERARCHY: centralization of authority — director-heavy and user-controlled responsibility
+    // mixes read as top-down, while delegated authority counterbalances them.
     hierarchy: blend(
       30 + seniorityShare * 50,
-      responsibilities.hasData ? 30 + responsibilities.userControlledOrAdvisoryShare * 55 : 50,
+      responsibilities.hasData ? 38 + responsibilities.userControlledShare * 50 + responsibilities.advisoryShare * 22 + responsibilities.organizationalShare * 25 - responsibilities.delegatedShare * 18 : 50,
     ),
     // COLLABORATION: cooperative disposition, the lived Relationship collaboration facet, and
     // professional alignment (people who see eye-to-eye on the work collaborate more readily).
@@ -258,7 +264,7 @@ export function deriveStaffCultureTarget(world: GameWorld, scopeKey: string): St
 
 export function initializeStaffCultureState(world: GameWorld, scopeKey: string): StaffCultureState {
   const target = deriveStaffCultureTarget(world, scopeKey)
-  return createStaffCultureState({ scopeKey, target, current: target, lastEvaluatedOn: world.currentDate })
+  return createStaffCultureState({ scopeKey, target, current: target, establishedOn: world.currentDate, lastEvaluatedOn: world.currentDate })
 }
 
 /** Culture has real inertia: it moves 4% of the remaining distance toward its target per weekly tick. */
@@ -270,7 +276,7 @@ export function progressStaffCultureState(current: StaffCultureState, target: St
     const from = current.current[dimension]
     next[dimension] = clampCultureValue(from + (target[dimension] - from) * STAFF_CULTURE_INERTIA_RATE)
   }
-  return createStaffCultureState({ scopeKey: current.scopeKey, target, current: next, lastEvaluatedOn: evaluatedOn })
+  return createStaffCultureState({ scopeKey: current.scopeKey, target, current: next, establishedOn: current.establishedOn, lastEvaluatedOn: evaluatedOn })
 }
 
 // ---------------------------------------------------------------------------

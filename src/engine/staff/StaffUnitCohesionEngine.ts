@@ -44,6 +44,7 @@ export function buildStaffUnitRuntimeViews(world: GameWorld, teamId: TeamId): re
   const byDepartment = new Map<StaffDepartment, StaffPersonId[]>()
   for (const assignment of getTeamStaffAssignments(world, teamId)) {
     if (world.staffPeopleById[assignment.staffPersonId] === undefined) continue
+    if (world.staffEmploymentByStaffId[assignment.staffPersonId] !== undefined && world.staffEmploymentByStaffId[assignment.staffPersonId]!.status !== 'employed') continue
     const department = staffRoleDefinition(assignment.role).department
     const members = byDepartment.get(department)
     if (members === undefined) byDepartment.set(department, [assignment.staffPersonId])
@@ -254,7 +255,7 @@ export function deriveStaffUnitCohesionTarget(world: GameWorld, unitView: StaffU
 
 export function initializeStaffUnitCohesionState(world: GameWorld, unitView: StaffUnitRuntimeView): StaffUnitCohesionState {
   const target = deriveStaffUnitCohesionTarget(world, unitView)
-  return createStaffUnitCohesionState({ unitKey: unitView.unitKey, target, current: target, lastEvaluatedOn: world.currentDate })
+  return createStaffUnitCohesionState({ unitKey: unitView.unitKey, scopeKey: unitView.teamId, departmentProxy: unitView.department, target, current: target, establishedOn: world.currentDate, lastEvaluatedOn: world.currentDate })
 }
 
 /** Cohesion moves faster than Culture — how a unit works together shifts sooner than what an organization believes. */
@@ -266,5 +267,5 @@ export function progressStaffUnitCohesionState(current: StaffUnitCohesionState, 
     const from = current.current[dimension]
     next[dimension] = clampUnitCohesionValue(from + (target[dimension] - from) * STAFF_UNIT_COHESION_INERTIA_RATE)
   }
-  return createStaffUnitCohesionState({ unitKey: current.unitKey, target, current: next, lastEvaluatedOn: evaluatedOn })
+  return createStaffUnitCohesionState({ unitKey: current.unitKey, scopeKey: current.scopeKey, departmentProxy: current.departmentProxy, target, current: next, establishedOn: current.establishedOn, lastEvaluatedOn: evaluatedOn })
 }

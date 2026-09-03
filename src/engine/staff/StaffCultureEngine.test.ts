@@ -5,6 +5,7 @@ import { getUserTeam } from '@/engine/calendar'
 import { getTeamStaffAssignments, updateGameWorld, type GameWorld } from '@/domain/world'
 import { staffRoleDefinition, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { staffPersonIdFromString, teamStaffAssignmentIdFromString, type StaffPersonId, type TeamId } from '@/domain/ids'
+import { createResponsibility, responsibilityIdForTeam, type ResponsibilityKind } from '@/domain/responsibility'
 import { STAFF_CULTURE_DIMENSIONS, createStaffCultureState, neutralCultureValues } from '@/domain/staffCulture'
 
 import {
@@ -40,6 +41,13 @@ function withStaffInRole(world: GameWorld, teamId: TeamId, role: string, suffix:
     teamStaffAssignments: [...Object.values(world.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString(`culture-test-assignment-${suffix}`), staffPersonId: staffId, teamId, role: role as never, assignedOn: world.currentDate }],
   })
   return { world: next, staffId }
+}
+
+function withAdvisoryResponsibility(world: GameWorld, kind: ResponsibilityKind, role: string, suffix: string) {
+  const teamId = userTeamId(world)
+  const { world: withStaff, staffId } = withStaffInRole(world, teamId, role, suffix)
+  const responsibility = createResponsibility({ id: responsibilityIdForTeam(teamId, kind), teamId, kind, mode: 'advisory', holderStaffId: staffId, assignedOn: world.currentDate })
+  return { world: updateGameWorld(withStaff, { responsibilities: [...Object.values(withStaff.responsibilitiesById).filter((item) => item.id !== responsibility.id), responsibility] }), staffId, responsibility }
 }
 
 describe('deriveStaffCultureTarget', () => {
@@ -85,6 +93,38 @@ describe('deriveStaffCultureTarget', () => {
     const juniorShift = Math.abs(withLoudJunior.competitiveness - juniorBaseline.competitiveness)
     expect(directorShift).toBeGreaterThan(juniorShift)
   })
+
+  it('counts only explicit actionable user dispositions as professional-voice evidence', () => {
+    const fixture = withAdvisoryResponsibility(createNewGame(), 'treatmentRecommendation', 'teamDoctor', 'advisory')
+    const scopeKey = userTeamId(fixture.world) as string
+    const baseline = deriveStaffCultureTarget(fixture.world, scopeKey)
+    const outcome = { id: 'delegation-outcome:culture-advisory' as never, responsibilityId: fixture.responsibility.id, staffId: fixture.staffId, decidedOn: fixture.world.currentDate, kind: 'treatmentRecommendation' as const, applied: true, qualityScore: 50, payload: {} }
+    const legacyApplied = updateGameWorld(fixture.world, { delegationOutcomes: [outcome] })
+    expect(deriveStaffCultureTarget(legacyApplied, scopeKey)).toEqual(baseline)
+
+    const accepted = updateGameWorld(fixture.world, { delegationOutcomes: [{ ...outcome, userDisposition: 'accepted' as const, userDecidedOn: fixture.world.currentDate }] })
+    expect(deriveStaffCultureTarget(accepted, scopeKey).communicationOpenness).toBeGreaterThan(baseline.communicationOpenness)
+
+    const dismissed = updateGameWorld(fixture.world, { delegationOutcomes: [{ ...outcome, applied: false, userDisposition: 'dismissed' as const, userDecidedOn: fixture.world.currentDate }] })
+    expect(deriveStaffCultureTarget(dismissed, scopeKey).communicationOpenness).toBeLessThan(baseline.communicationOpenness)
+  })
+
+  it('treats informational dismissal as neutral and includes holder-less responsibility modes', () => {
+    const informational = withAdvisoryResponsibility(createNewGame(), 'oppositionScouting', 'advanceScout', 'informational')
+    const informationalScope = userTeamId(informational.world) as string
+    const informationalBaseline = deriveStaffCultureTarget(informational.world, informationalScope)
+    const dismissedInformational = updateGameWorld(informational.world, { delegationOutcomes: [{ id: 'delegation-outcome:culture-informational' as never, responsibilityId: informational.responsibility.id, staffId: informational.staffId, decidedOn: informational.world.currentDate, kind: 'oppositionScouting', applied: false, qualityScore: 50, payload: {}, userDisposition: 'dismissed', userDecidedOn: informational.world.currentDate }] })
+    expect(deriveStaffCultureTarget(dismissedInformational, informationalScope)).toEqual(informationalBaseline)
+
+    const teamId = userTeamId(createNewGame())
+    const { world: withGeneralManager, staffId } = withStaffInRole(createNewGame(), teamId, 'defensiveSpecialist', 'modes')
+    const delegated = updateGameWorld(withGeneralManager, { responsibilities: [createResponsibility({ id: responsibilityIdForTeam(teamId, 'defensiveGamePlan'), teamId, kind: 'defensiveGamePlan', mode: 'delegated', holderStaffId: staffId, assignedOn: withGeneralManager.currentDate })] })
+    const userControlled = updateGameWorld(withGeneralManager, { responsibilities: [createResponsibility({ id: responsibilityIdForTeam(teamId, 'defensiveGamePlan'), teamId, kind: 'defensiveGamePlan', mode: 'userControlled', assignedOn: withGeneralManager.currentDate })] })
+    const delegatedTarget = deriveStaffCultureTarget(delegated, teamId as string)
+    const userControlledTarget = deriveStaffCultureTarget(userControlled, teamId as string)
+    expect(delegatedTarget.autonomy).toBeGreaterThan(userControlledTarget.autonomy)
+    expect(userControlledTarget.hierarchy).toBeGreaterThan(delegatedTarget.hierarchy)
+  })
 })
 
 describe('progressStaffCultureState', () => {
@@ -93,7 +133,7 @@ describe('progressStaffCultureState', () => {
     const scopeKey = userTeamId(world) as string
     const low = Object.fromEntries(STAFF_CULTURE_DIMENSIONS.map((dimension) => [dimension, 10])) as never
     const high = Object.fromEntries(STAFF_CULTURE_DIMENSIONS.map((dimension) => [dimension, 90])) as never
-    let state = createStaffCultureState({ scopeKey, target: high, current: low, lastEvaluatedOn: world.currentDate })
+    let state = createStaffCultureState({ scopeKey, target: high, current: low, establishedOn: world.currentDate, lastEvaluatedOn: world.currentDate })
 
     const first = progressStaffCultureState(state, high, world.currentDate)
     expect(first.current.innovation).toBeGreaterThan(10)
@@ -108,10 +148,11 @@ describe('progressStaffCultureState', () => {
   it('replaces target with the freshly-passed target and bumps lastEvaluatedOn', () => {
     const world = createNewGame()
     const values = neutralCultureValues()
-    const state = createStaffCultureState({ scopeKey: 'scope', target: values, current: values, lastEvaluatedOn: world.currentDate })
+    const state = createStaffCultureState({ scopeKey: 'scope', target: values, current: values, establishedOn: world.currentDate, lastEvaluatedOn: world.currentDate })
     const next = progressStaffCultureState(state, { ...values, innovation: 90 }, '2031-05-05' as never)
     expect(next.target.innovation).toBe(90)
     expect(next.lastEvaluatedOn).toBe('2031-05-05')
+    expect(next.establishedOn).toBe(world.currentDate)
   })
 })
 
@@ -131,7 +172,7 @@ describe('deriveStaffCulturePreferences / calculateStaffCultureFit', () => {
     const world = createNewGame()
     const staffId = getTeamStaffAssignments(world, userTeamId(world))[0]!.staffPersonId
     const preferences = deriveStaffCulturePreferences(world, staffId)
-    const matched = createStaffCultureState({ scopeKey: 'scope', target: preferences, current: preferences, lastEvaluatedOn: world.currentDate })
+    const matched = createStaffCultureState({ scopeKey: 'scope', target: preferences, current: preferences, establishedOn: world.currentDate, lastEvaluatedOn: world.currentDate })
     expect(calculateStaffCultureFit(world, staffId, matched).fitScore).toBe(100)
   })
 
@@ -142,9 +183,9 @@ describe('deriveStaffCulturePreferences / calculateStaffCultureFit', () => {
     const opinionated = withPersonality(world, staffId, { competitiveness: 95, ambition: 95, teamOrientation: 95, professionalism: 95, adaptability: 95, loyalty: 5 })
     const preferences = deriveStaffCulturePreferences(opinionated, staffId)
     const inverted = Object.fromEntries(STAFF_CULTURE_DIMENSIONS.map((dimension) => [dimension, 100 - preferences[dimension]])) as never
-    const mismatch = createStaffCultureState({ scopeKey: 'scope', target: inverted, current: inverted, lastEvaluatedOn: world.currentDate })
+    const mismatch = createStaffCultureState({ scopeKey: 'scope', target: inverted, current: inverted, establishedOn: world.currentDate, lastEvaluatedOn: world.currentDate })
 
-    const matched = createStaffCultureState({ scopeKey: 'scope', target: preferences, current: preferences, lastEvaluatedOn: world.currentDate })
+    const matched = createStaffCultureState({ scopeKey: 'scope', target: preferences, current: preferences, establishedOn: world.currentDate, lastEvaluatedOn: world.currentDate })
     expect(calculateStaffCultureFit(opinionated, staffId, mismatch).fitScore)
       .toBeLessThan(calculateStaffCultureFit(opinionated, staffId, matched).fitScore)
     expect(calculateStaffCultureFit(opinionated, staffId, mismatch).fitScore).toBeLessThan(60)
@@ -158,7 +199,7 @@ describe('deriveStaffCulturePreferences / calculateStaffCultureFit', () => {
     const neutralDimension = STAFF_CULTURE_DIMENSIONS.find((dimension) => Math.abs(preferences[dimension] - 50) <= 3)
     if (neutralDimension === undefined) return
     const culture = { ...preferences, [neutralDimension]: 100 } as never
-    const state = createStaffCultureState({ scopeKey: 'scope', target: culture, current: culture, lastEvaluatedOn: world.currentDate })
+    const state = createStaffCultureState({ scopeKey: 'scope', target: culture, current: culture, establishedOn: world.currentDate, lastEvaluatedOn: world.currentDate })
     // A flat unweighted average over 14 dimensions would lose ~3.5 points here; extremity-weighting loses far less.
     expect(calculateStaffCultureFit(world, staffId, state).fitScore).toBeGreaterThanOrEqual(98)
   })

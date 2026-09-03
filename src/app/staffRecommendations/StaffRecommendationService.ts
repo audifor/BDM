@@ -1,4 +1,4 @@
-import { responsibilityDefinition, type DelegationOutcome, type DelegationOutcomeId, type ResponsibilityKind } from '@/domain/responsibility'
+import { hasCanonicalAcceptanceSeam, responsibilityDefinition, type DelegationOutcome, type DelegationOutcomeId, type ResponsibilityKind } from '@/domain/responsibility'
 import type { GameWorld } from '@/domain/world'
 import { acceptMedicalRecommendation } from '@/engine/injury/MedicalAdvisory'
 import { acceptRecruitingRecommendation } from '@/engine/recruiting/RecruitingAdvisory'
@@ -15,15 +15,7 @@ const MEDICAL_ACCEPTANCE_KINDS = ['returnToPlayRecommendation', 'treatmentRecomm
 const RECRUITING_ACCEPTANCE_KINDS = ['prospectIdentification', 'recruitEvaluation', 'recruitingPriorities'] as const
 const TRADE_ACCEPTANCE_KINDS = ['tradeRecommendation'] as const
 
-export const ACCEPTABLE_RESPONSIBILITY_KINDS: ReadonlySet<ResponsibilityKind> = new Set([
-  ...MEDICAL_ACCEPTANCE_KINDS,
-  ...RECRUITING_ACCEPTANCE_KINDS,
-  ...TRADE_ACCEPTANCE_KINDS,
-])
-
-export function hasCanonicalAcceptanceSeam(kind: ResponsibilityKind): boolean {
-  return ACCEPTABLE_RESPONSIBILITY_KINDS.has(kind)
-}
+export { hasCanonicalAcceptanceSeam }
 
 export type StaffRecommendationCommandFailureReason = 'notFound' | 'alreadyResolved' | 'notAcceptable' | 'underlyingRejected'
 export type StaffRecommendationCommandResult = { readonly ok: true; readonly world: GameWorld } | { readonly ok: false; readonly reason: StaffRecommendationCommandFailureReason }

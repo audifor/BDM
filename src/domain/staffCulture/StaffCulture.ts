@@ -52,6 +52,7 @@ export interface StaffCultureState {
   readonly target: StaffCultureValues
   /** Where the lived culture actually is — moves toward `target` slowly (culture has inertia). */
   readonly current: StaffCultureValues
+  readonly establishedOn: GameDate
   readonly lastEvaluatedOn: GameDate
 }
 
@@ -79,6 +80,7 @@ export function createStaffCultureState(input: StaffCultureState): StaffCultureS
     scopeKey: requireNonEmptyString(input.scopeKey, 'Staff culture scope key'),
     target: clampCultureValues(input.target),
     current: clampCultureValues(input.current),
+    establishedOn: parseGameDate(input.establishedOn),
     lastEvaluatedOn: parseGameDate(input.lastEvaluatedOn),
   }
 }

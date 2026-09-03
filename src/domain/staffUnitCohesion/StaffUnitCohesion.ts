@@ -59,10 +59,15 @@ export function staffUnitKeyFor(teamId: TeamId, department: StaffDepartment): st
 
 export interface StaffUnitCohesionState {
   readonly unitKey: string
+  /** Current Team/organization proxy scope. */
+  readonly scopeKey: string
+  /** Current StaffDepartment runtime adapter, never a canonical STAFF_UNIT identity. */
+  readonly departmentProxy: StaffDepartment
   /** Where the unit's real relationship signals currently point — recomputed each weekly tick. */
   readonly target: StaffUnitCohesionValues
   /** Where the lived cohesion actually is — moves toward `target` faster than Culture, slower than a single event. */
   readonly current: StaffUnitCohesionValues
+  readonly establishedOn: GameDate
   readonly lastEvaluatedOn: GameDate
 }
 
@@ -88,8 +93,11 @@ export function neutralUnitCohesionValues(): StaffUnitCohesionValues {
 export function createStaffUnitCohesionState(input: StaffUnitCohesionState): StaffUnitCohesionState {
   return {
     unitKey: requireNonEmptyString(input.unitKey, 'Staff unit cohesion unit key'),
+    scopeKey: requireNonEmptyString(input.scopeKey, 'Staff unit cohesion scope key'),
+    departmentProxy: input.departmentProxy,
     target: clampUnitCohesionValues(input.target),
     current: clampUnitCohesionValues(input.current),
+    establishedOn: parseGameDate(input.establishedOn),
     lastEvaluatedOn: parseGameDate(input.lastEvaluatedOn),
   }
 }

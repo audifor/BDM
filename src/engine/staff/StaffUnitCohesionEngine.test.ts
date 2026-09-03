@@ -293,7 +293,7 @@ describe('progressStaffUnitCohesionState', () => {
     const world = createNewGame()
     const low = Object.fromEntries(STAFF_UNIT_COHESION_DIMENSIONS.map((dimension) => [dimension, 10])) as never
     const high = Object.fromEntries(STAFF_UNIT_COHESION_DIMENSIONS.map((dimension) => [dimension, 90])) as never
-    let state = createStaffUnitCohesionState({ unitKey: 'team:coaching', target: high, current: low, lastEvaluatedOn: world.currentDate })
+    let state = createStaffUnitCohesionState({ unitKey: 'team:coaching', scopeKey: 'team', departmentProxy: 'coaching', target: high, current: low, establishedOn: world.currentDate, lastEvaluatedOn: world.currentDate })
 
     state = progressStaffUnitCohesionState(state, high, world.currentDate)
     expect(state.current.trustClimate).toBeGreaterThan(15)

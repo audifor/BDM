@@ -49,8 +49,8 @@ describe('StaffUnitCohesion domain', () => {
 
   it('createStaffUnitCohesionState clamps both value maps and validates the unit key', () => {
     const raw = Object.fromEntries(STAFF_UNIT_COHESION_DIMENSIONS.map((dimension) => [dimension, -30])) as never
-    const state = createStaffUnitCohesionState({ unitKey: 'team-1:medical', target: raw, current: raw, lastEvaluatedOn: '2030-01-07' as never })
+    const state = createStaffUnitCohesionState({ unitKey: 'team-1:medical', scopeKey: 'team-1', departmentProxy: 'medical', target: raw, current: raw, establishedOn: '2030-01-07' as never, lastEvaluatedOn: '2030-01-07' as never })
     for (const dimension of STAFF_UNIT_COHESION_DIMENSIONS) expect(state.current[dimension]).toBe(0)
-    expect(() => createStaffUnitCohesionState({ unitKey: '', target: raw, current: raw, lastEvaluatedOn: '2030-01-07' as never })).toThrow()
+    expect(() => createStaffUnitCohesionState({ unitKey: '', scopeKey: 'team-1', departmentProxy: 'medical', target: raw, current: raw, establishedOn: '2030-01-07' as never, lastEvaluatedOn: '2030-01-07' as never })).toThrow()
   })
 })
