@@ -57,6 +57,7 @@ import {
 } from '@/ui/staffUnitCohesionPresentation'
 import { STAFF_UNIT_COHESION_DIMENSIONS } from '@/domain/staffUnitCohesion'
 import { STAFF_HUMAN_STATE_DIMENSIONS } from '@/domain/staffHumanState'
+import { getStaffConflictsForTeam, type StaffConflictPresentationItem } from '@/ui/staffConflictPresentation'
 import { calculateStaffWorkload } from '@/domain/world'
 import { STAFF_REPUTATION_DIMENSIONS } from '@/domain/staffReputation'
 
@@ -487,7 +488,7 @@ function bandLabel(value: string): string {
   return (SATISFACTION_BAND_LABELS as Record<string, string>)[value] ?? (INTENSITY_BAND_LABELS as Record<string, string>)[value] ?? value
 }
 
-type DynamicsSubview = 'PEOPLE' | 'UNITS'
+type DynamicsSubview = 'PEOPLE' | 'UNITS' | 'CONFLICTS'
 
 /** Wave 5C — the DYNAMICS tab hosts two subviews. PEOPLE (per-Staff Human State) stays the default. */
 function DynamicsTab({ world, teamId }: { readonly world: GameWorld; readonly teamId: TeamId }) {
@@ -497,13 +498,32 @@ function DynamicsTab({ world, teamId }: { readonly world: GameWorld; readonly te
     <div className="staff-mode-group" role="group">
       <button aria-pressed={subview === 'PEOPLE'} className={subview === 'PEOPLE' ? 'is-active' : undefined} onClick={() => setSubview('PEOPLE')} type="button">PEOPLE</button>
       <button aria-pressed={subview === 'UNITS'} className={subview === 'UNITS' ? 'is-active' : undefined} onClick={() => setSubview('UNITS')} type="button">UNITS</button>
+      <button aria-pressed={subview === 'CONFLICTS'} className={subview === 'CONFLICTS' ? 'is-active' : undefined} onClick={() => setSubview('CONFLICTS')} type="button">CONFLICTS</button>
     </div>
   </div>
 
   return <>
     {toggle}
-    {subview === 'UNITS' ? <UnitsSubview teamId={teamId} world={world} /> : <PeopleSubview teamId={teamId} world={world} />}
+    {subview === 'UNITS' ? <UnitsSubview teamId={teamId} world={world} /> : subview === 'CONFLICTS' ? <ConflictsSubview teamId={teamId} world={world} /> : <PeopleSubview teamId={teamId} world={world} />}
   </>
+}
+
+function ConflictsSubview({ world, teamId }: { readonly world: GameWorld; readonly teamId: TeamId }) {
+  const [history, setHistory] = useState(false)
+  const items = getStaffConflictsForTeam(world, teamId).filter((item) => history ? item.status === 'RESOLVED' : item.status === 'ACTIVE')
+  const [selectedId, setSelectedId] = useState<string | undefined>(undefined)
+  const selected = items.find((item) => item.id === selectedId) ?? items[0]
+  const columns: readonly DataGridColumn<StaffConflictPresentationItem>[] = [
+    { id: 'parties', label: 'PARTIES', category: 'Conflict', sortable: true, searchable: true, minWidth: 180, flex: 2, render: (item) => item.parties, value: (item) => item.parties },
+    { id: 'type', label: 'TYPE', category: 'Conflict', sortable: true, width: 140, render: (item) => item.type, value: (item) => item.type },
+    { id: 'stage', label: 'STAGE', category: 'State', sortable: true, width: 110, render: (item) => item.stage, value: (item) => item.stage },
+    { id: 'severity', label: 'SEVERITY', category: 'State', sortable: true, width: 100, render: (item) => item.severity, value: (item) => item.severity },
+    { id: 'trend', label: 'TREND', category: 'State', sortable: true, width: 105, render: (item) => item.trend, value: (item) => item.trend },
+  ]
+  return <SplitWorkspace inspector={selected !== undefined && <section className="staff-recommendation-inspector"><p className="eyebrow">CONFLICT</p><h2>{selected.parties}</h2><dl className="staff-recommendation-summary"><div><dt>PRIMARY CAUSE</dt><dd>{selected.primaryCause}</dd></div><div><dt>STATE</dt><dd>{selected.severity} · {selected.stage}</dd></div></dl><DetailGroup title="DRIVERS">{selected.drivers.map((driver) => <p key={driver} className="staff-explanation">{driver}</p>)}</DetailGroup></section>}>
+    <div className="staff-advisory-toolbar"><div className="staff-mode-group" role="group"><button aria-pressed={!history} className={!history ? 'is-active' : undefined} onClick={() => setHistory(false)} type="button">OPEN</button><button aria-pressed={history} className={history ? 'is-active' : undefined} onClick={() => setHistory(true)} type="button">HISTORY</button></div></div>
+    <BDMDataGrid columns={columns} emptyDescription="No staff conflicts in this scope." emptyTitle="No conflicts" onRowClick={(item) => setSelectedId(item.id)} rows={items} selectedId={selected?.id} />
+  </SplitWorkspace>
 }
 
 function PeopleSubview({ world, teamId }: { readonly world: GameWorld; readonly teamId: TeamId }) {

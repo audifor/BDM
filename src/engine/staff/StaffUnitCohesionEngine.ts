@@ -214,13 +214,17 @@ export function deriveStaffUnitCohesionTarget(world: GameWorld, unitView: StaffU
   // Structural dimensions carry real signal even with zero relationship data or a single-member unit.
   const roleClarity = deriveRoleClarity(world, unitView)
   const structuralStability = deriveStructuralStability(world, unitView)
+  const activeConflictPenalty = Object.values(world.staffConflictsById)
+    .filter((conflict) => conflict.status === 'ACTIVE' && conflict.participants.filter((participant) => unitView.memberStaffIds.includes(participant.actorId as StaffPersonId)).length >= 2)
+    .reduce((sum, conflict) => sum + (conflict.severity === 'CRITICAL' ? 12 : conflict.severity === 'SEVERE' ? 9 : conflict.severity === 'SERIOUS' ? 6 : 3), 0)
 
   if (readings.length === 0) {
-    return {
+    const neutral = {
       ...neutralUnitCohesionValues(),
       roleClarity,
       stability: structuralStability,
     }
+    return activeConflictPenalty === 0 ? neutral : { ...neutral, communication: clampUnitCohesionValue(neutral.communication - activeConflictPenalty), coordination: clampUnitCohesionValue(neutral.coordination - activeConflictPenalty), mutualSupport: clampUnitCohesionValue(neutral.mutualSupport - activeConflictPenalty), trustClimate: clampUnitCohesionValue(neutral.trustClimate - activeConflictPenalty), leadershipAlignment: clampUnitCohesionValue(neutral.leadershipAlignment - activeConflictPenalty) }
   }
 
   const facet = (read: (dimensions: Readonly<Record<RelationshipDimensionKey, number>>) => number): number => aggregateFacet(readings, memberCount, read)
@@ -248,6 +252,14 @@ export function deriveStaffUnitCohesionTarget(world: GameWorld, unitView: StaffU
     stability: structuralStability,
   }
 
+  if (activeConflictPenalty > 0) {
+    values.communication -= activeConflictPenalty
+    values.coordination -= activeConflictPenalty
+    values.mutualSupport -= activeConflictPenalty
+    values.trustClimate -= activeConflictPenalty
+    values.leadershipAlignment -= activeConflictPenalty
+    if (Object.values(world.staffConflictsById).some((conflict) => conflict.status === 'ACTIVE' && ['RESPONSIBILITY', 'ROLE', 'AUTHORITY'].includes(conflict.type) && conflict.participants.filter((participant) => unitView.memberStaffIds.includes(participant.actorId as StaffPersonId)).length >= 2)) values.roleClarity -= Math.min(8, activeConflictPenalty)
+  }
   const clamped: Record<StaffUnitCohesionDimension, number> = {} as never
   for (const dimension of STAFF_UNIT_COHESION_DIMENSIONS) clamped[dimension] = clampUnitCohesionValue(values[dimension])
   return clamped
