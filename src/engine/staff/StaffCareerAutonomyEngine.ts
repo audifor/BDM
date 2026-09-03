@@ -2,7 +2,7 @@ import type { GameWorld } from '@/domain/world'
 import type { StaffHumanContext, StaffHumanState } from '@/domain/staffHumanState'
 import type { StaffCareerAutonomyState, StaffCareerIntent, StaffCareerOutlook } from '@/domain/staffCareerAutonomy'
 import type { StaffJobOffer, StaffJobOpening } from '@/domain/staffCareer'
-import { staffRoleDefinition } from '@/domain/staff'
+import { calculateStaffRoleProficiencyByRoleId, staffRoleDefinition } from '@/domain/staff'
 import type { StaffPersonId } from '@/domain/ids'
 
 export const STAFF_CAREER_AUTONOMY_TUNING = {
@@ -65,10 +65,10 @@ export function appraiseStaffCareer(world: GameWorld, context: StaffHumanContext
   let intent: StaffCareerIntent = 'NONE'
   if (exitBase >= 78) intent = 'EXIT_NOW'
   else if (exitBase >= 60) intent = 'EXPLORE_MARKET'
-  else if (progression >= 55) intent = 'PROMOTION'
+  else if (progression + opportunity * 0.15 >= 55) intent = 'PROMOTION'
   else if (responsibility >= 48) intent = 'MORE_RESPONSIBILITY'
   else if (contract >= 55) intent = 'CONTRACT_IMPROVEMENT'
-  const target = intent === 'PROMOTION' ? progression : intent === 'MORE_RESPONSIBILITY' ? responsibility : intent === 'CONTRACT_IMPROVEMENT' ? contract : intent === 'EXPLORE_MARKET' || intent === 'EXIT_NOW' ? exitBase : Math.max(0, 35 - exitBase)
+  const target = intent === 'PROMOTION' ? clamp(progression + opportunity * 0.15) : intent === 'MORE_RESPONSIBILITY' ? responsibility : intent === 'CONTRACT_IMPROVEMENT' ? contract : intent === 'EXPLORE_MARKET' || intent === 'EXIT_NOW' ? clamp(exitBase + opportunity * 0.1) : Math.max(0, 35 - exitBase)
   const outlook: StaffCareerOutlook = exitBase >= 75 ? 'EXIT_MINDED' : exitBase >= 48 ? 'RESTLESS' : target >= 35 ? 'OPEN' : state.organizationalCommitment >= 70 ? 'COMMITTED' : 'STABLE'
   const reasons: string[] = []
   if (progression >= 45) reasons.push('Feels capable of greater professional progression')
@@ -96,7 +96,7 @@ export function assessStaffCareerOpportunity(world: GameWorld, staffId: StaffPer
   const openingSeniority = staffRoleDefinition(opening.roleId).seniority
   const rank = (value: typeof currentSeniority) => ['junior', 'standard', 'senior', 'director'].indexOf(value)
   const promotion = (rank(openingSeniority) - rank(currentSeniority)) * 24
-  const roleFit = Math.max(0, Math.min(100, (staff.professional.attributes.leadership + staff.professional.attributes.tacticalKnowledge + staff.professional.attributes.communication) / 3)) * 0.12
+  const roleFit = calculateStaffRoleProficiencyByRoleId(staff, opening.roleId) * 0.12
   const lateralTolerance = state.outlook === 'EXIT_MINDED' ? 20 : 0
   const score = clamp(promotion + roleFit + state.intensity * 0.38 + (personality?.ambition ?? 50) * 0.16 - (personality?.loyalty ?? 50) * 0.1 + lateralTolerance)
   return { eligible: score >= 50, score }

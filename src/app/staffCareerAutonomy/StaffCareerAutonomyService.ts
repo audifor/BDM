@@ -67,7 +67,8 @@ export function progressStaffAutonomousResignations(world: GameWorld): GameWorld
   let next = world
   for (const state of Object.values(world.staffCareerAutonomyByContextId).sort((a, b) => a.contextId.localeCompare(b.contextId))) {
     if (state.primaryIntent !== 'EXIT_NOW' || state.intensity < STAFF_CAREER_AUTONOMY_TUNING.resignationIntensity || daysSince(state.intentSince, world.currentDate) < STAFF_CAREER_AUTONOMY_TUNING.minimumIntentAgeDays) continue
-    const hasProcess = Object.values(next.staffCareerRequestsById).some((item) => item.contextId === state.contextId && item.status === 'OPEN') || Object.values(next.staffJobCandidaciesById).some((item) => item.staffId === state.staffId && ['identified', 'interviewing', 'offered'].includes(item.status)) || Object.values(next.staffJobOffersById).some((item) => item.staffId === state.staffId && item.status === 'pending')
+    const hasReleaseGrace = Object.values(next.staffCareerRequestsById).some((item) => item.contextId === state.contextId && item.kind === 'RELEASE' && item.status === 'OPEN' && daysSince(item.createdOn, world.currentDate) < 14)
+    const hasProcess = hasReleaseGrace || Object.values(next.staffCareerRequestsById).some((item) => item.contextId === state.contextId && item.status === 'OPEN' && item.kind !== 'RELEASE') || Object.values(next.staffJobCandidaciesById).some((item) => item.staffId === state.staffId && ['identified', 'interviewing', 'offered'].includes(item.status)) || Object.values(next.staffJobOffersById).some((item) => item.staffId === state.staffId && item.status === 'pending')
     if (!hasProcess) next = resignStaffFromTeam(next, state.staffId)
   }
   return next

@@ -15,7 +15,7 @@ import { progressAdvisoryScoutingReports, progressDelegatedScouting, progressSco
 import { progressOppositionScoutingReports } from '@/engine/tactics/OppositionScoutingReportEngine'
 import { progressMedicalAdvisories } from '@/engine/injury'
 import { progressBasketballOperationsAdvisories } from '@/engine/roster'
-import { progressStaffHumanState } from '@/engine/staff/StaffHumanStatePipeline'
+import { progressStaffCareerAutonomyAppraisal, progressStaffHumanState } from '@/engine/staff/StaffHumanStatePipeline'
 import { progressStaffCultureAndCohesion } from '@/engine/staff/StaffCultureCohesionPipeline'
 import { progressStaffConflicts } from '@/engine/staff/StaffConflictEngine'
 import { progressStaffAutonomousOfferDecisions, progressStaffAutonomousResignations, progressStaffCareerMarketAgency } from '@/app/staffCareerAutonomy'
@@ -49,7 +49,11 @@ export function advanceDay(world: GameWorld): GameWorld {
   }, enforced)
   // Human State refreshes first; Career Autonomy then consumes the current weekly appraisal while
   // the application boundary alone performs canonical market transitions.
-  return progressStaffAutonomousResignations(progressStaffAutonomousOfferDecisions(progressStaffCareerMarketAgency(progressStaffCultureAndCohesion(progressStaffConflicts(progressStaffHumanState(withDrafts))))))
+  const withHumanState = progressStaffHumanState(withDrafts)
+  const withConflicts = progressStaffConflicts(withHumanState)
+  const withCulture = progressStaffCultureAndCohesion(withConflicts)
+  const withCareerAutonomy = progressStaffCareerAutonomyAppraisal(withCulture)
+  return progressStaffAutonomousResignations(progressStaffAutonomousOfferDecisions(progressStaffCareerMarketAgency(withCareerAutonomy)))
 }
 function progressAcademicTerms(world: GameWorld): GameWorld { if(world.currentDate.slice(5) !== '01-01' && world.currentDate.slice(5) !== '07-01') return world; const term=`academic:${world.currentDate.slice(0, 4)}:${world.currentDate.slice(5, 7)}`; return resolveAcademicTerm(progressAiAcademicSupport(world,term),term) }
 

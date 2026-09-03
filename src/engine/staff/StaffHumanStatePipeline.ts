@@ -18,7 +18,7 @@ import { emitWorkloadTransitionEvents } from './StaffHumanWorkloadTracking'
 import { appraiseStaffCareer, progressStaffCareerAutonomy as evolveStaffCareerAutonomy, STAFF_CAREER_AUTONOMY_TUNING } from './StaffCareerAutonomyEngine'
 import { staffCareerRequestIdFor, type StaffCareerRequest, type StaffCareerRequestKind } from '@/domain/staffCareerAutonomy'
 import { RESPONSIBILITY_REGISTRY } from '@/domain/responsibility'
-import { STAFF_ROLE_REGISTRY } from '@/domain/staff'
+import { calculateStaffRoleProficiencyByRoleId, isStaffRoleApplicableToEcosystem, STAFF_ROLE_REGISTRY } from '@/domain/staff'
 
 /**
  * Wave 5A §21/§37 — the single canonical daily/periodic authority for Staff Human State.
@@ -38,8 +38,13 @@ export function progressStaffHumanState(world: GameWorld): GameWorld {
   let next = ensureStaffHumanContexts(world)
   next = applyDailyRecovery(next)
   next = emitWorkloadTransitionEvents(next)
-  if (shouldRunWeeklyAppraisal(next)) next = progressWeeklyStaffCareerAutonomy(runWeeklyAppraisal(next))
+  if (shouldRunWeeklyAppraisal(next)) next = runWeeklyAppraisal(next)
   return next
+}
+
+/** Runs after conflict and culture progression so career appraisal reads their current canonical state. */
+export function progressStaffCareerAutonomyAppraisal(world: GameWorld): GameWorld {
+  return shouldRunWeeklyAppraisal(world) ? progressWeeklyStaffCareerAutonomy(world) : world
 }
 
 /** Wave 5E weekly continuation of the canonical Human-State cadence. It is intentionally state-only: request execution remains an application concern. */
@@ -57,7 +62,7 @@ function progressWeeklyStaffCareerAutonomy(world: GameWorld): GameWorld {
     if (index < 0) states.push(next); else states[index] = next
     changed ||= prior === undefined || prior.intensity !== next.intensity || prior.primaryIntent !== next.primaryIntent || prior.outlook !== next.outlook
     const request = requestFor(world, context, next.primaryIntent)
-    if (request !== undefined && next.intensity >= STAFF_CAREER_AUTONOMY_TUNING.requestIntensity && !requests.some((item) => item.id === request.id)) { requests.push(request); changed = true }
+    if (request !== undefined && next.intensity >= STAFF_CAREER_AUTONOMY_TUNING.requestIntensity && canCreateRequest(requests, request, world.currentDate)) { requests.push(request); changed = true }
   }
   return changed ? updateGameWorld(world, { staffCareerAutonomyStates: states, staffCareerRequests: requests }) : world
 }
@@ -70,7 +75,13 @@ function requestFor(world: GameWorld, context: StaffHumanContext, intent: import
   let targetResponsibilityKind: StaffCareerRequest['targetResponsibilityKind']
   if (intent === 'PROMOTION' || intent === 'ROLE_CHANGE') {
     const current = STAFF_ROLE_REGISTRY[employment.roleId!]
-    const higher = Object.values(STAFF_ROLE_REGISTRY).filter((role) => role.department === current.department && ['junior', 'standard', 'senior', 'director'].indexOf(role.seniority) > ['junior', 'standard', 'senior', 'director'].indexOf(current.seniority)).sort((a, b) => a.id.localeCompare(b.id))[0]
+    const ecosystem = Object.values(world.competitions).find((competition) => competition.participantTeamIds.includes(context.teamId))
+    if (ecosystem === undefined) return undefined
+    const ecosystemKind = world.ecosystems[ecosystem.ecosystemId]!.kind
+    const levels = ['junior', 'standard', 'senior', 'director']
+    const currentRank = levels.indexOf(current.seniority)
+    const nextRank = levels.findIndex((_, index) => index > currentRank && Object.values(STAFF_ROLE_REGISTRY).some((role) => role.department === current.department && levels.indexOf(role.seniority) === index && isStaffRoleApplicableToEcosystem(role.id, ecosystemKind)))
+    const higher = nextRank < 0 ? undefined : Object.values(STAFF_ROLE_REGISTRY).filter((role) => role.department === current.department && levels.indexOf(role.seniority) === nextRank && isStaffRoleApplicableToEcosystem(role.id, ecosystemKind)).sort((a, b) => calculateStaffRoleProficiencyByRoleId(world.staffPeopleById[context.staffId]!, b.id) - calculateStaffRoleProficiencyByRoleId(world.staffPeopleById[context.staffId]!, a.id) || a.id.localeCompare(b.id))[0]
     if (higher === undefined) return undefined
     kind = intent === 'PROMOTION' ? 'PROMOTION' : 'ROLE_CHANGE'; targetRoleId = higher.id
   } else if (intent === 'MORE_RESPONSIBILITY') {
@@ -80,9 +91,18 @@ function requestFor(world: GameWorld, context: StaffHumanContext, intent: import
   } else if (intent === 'CONTRACT_IMPROVEMENT') kind = 'CONTRACT_DISCUSSION'
   else if (intent === 'EXIT_NOW') kind = 'RELEASE'
   if (kind === undefined) return undefined
-  const id = staffCareerRequestIdFor(context.id, kind, targetRoleId ?? targetResponsibilityKind)
+  const id = staffCareerRequestIdFor(context.id, kind, targetRoleId ?? targetResponsibilityKind, world.currentDate)
   return { id, contextId: context.id, staffId: context.staffId, teamId: context.teamId, kind, createdOn: world.currentDate, status: 'OPEN', ...(targetRoleId === undefined ? {} : { targetRoleId }), ...(targetResponsibilityKind === undefined ? {} : { targetResponsibilityKind }) }
 }
+
+function canCreateRequest(requests: readonly StaffCareerRequest[], request: StaffCareerRequest, date: string): boolean {
+  const equivalent = requests.filter((item) => item.contextId === request.contextId && item.kind === request.kind && item.targetRoleId === request.targetRoleId && item.targetResponsibilityKind === request.targetResponsibilityKind)
+  if (equivalent.some((item) => item.status === 'OPEN')) return false
+  const latest = equivalent.sort((a, b) => (b.resolvedOn ?? b.createdOn).localeCompare(a.resolvedOn ?? a.createdOn))[0]
+  return latest === undefined || daysBetween(latest.resolvedOn ?? latest.createdOn, date) >= 28
+}
+
+function daysBetween(from: string, to: string): number { return Math.max(0, Math.floor((Date.parse(to) - Date.parse(from)) / 86_400_000)) }
 
 /** Weekly cadence: the ISO weekday of `currentDate` is Monday (1). Matches the existing repo convention of deriving cadence from `currentDate` rather than a persisted counter. */
 function shouldRunWeeklyAppraisal(world: GameWorld): boolean {

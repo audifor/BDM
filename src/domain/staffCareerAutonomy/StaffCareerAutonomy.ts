@@ -53,6 +53,6 @@ export function createStaffCareerRequest(value: StaffCareerRequest): StaffCareer
   return { ...value, createdOn: parseGameDate(value.createdOn), ...(value.resolvedOn === undefined ? {} : { resolvedOn: parseGameDate(value.resolvedOn) }) }
 }
 
-export function staffCareerRequestIdFor(contextId: StaffHumanContextId, kind: StaffCareerRequestKind, target?: string): string {
-  return `staff-career-request:${contextId}:${kind}:${target ?? 'none'}`
+export function staffCareerRequestIdFor(contextId: StaffHumanContextId, kind: StaffCareerRequestKind, target?: string, createdOn?: GameDate): string {
+  return `staff-career-request:${contextId}:${kind}:${target ?? 'none'}:${createdOn ?? 'initial'}`
 }
