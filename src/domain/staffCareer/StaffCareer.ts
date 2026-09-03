@@ -26,7 +26,8 @@ export type StaffJobOpeningStatus = 'open' | 'filled' | 'closed'
 export interface StaffJobOpening { readonly id: StaffJobOpeningId; readonly teamId: TeamId; readonly roleId: StaffRoleId; readonly status: StaffJobOpeningStatus; readonly createdOn: GameDate }
 
 export type StaffJobCandidacyStatus = 'identified' | 'interviewing' | 'rejected' | 'offered' | 'withdrawn' | 'hired'
-export interface StaffJobCandidacy { readonly id: StaffJobCandidacyId; readonly jobOpeningId: StaffJobOpeningId; readonly staffId: StaffPersonId; readonly status: StaffJobCandidacyStatus; readonly createdOn: GameDate }
+export type StaffJobCandidacyOrigin = 'teamIdentified' | 'staffApplied'
+export interface StaffJobCandidacy { readonly id: StaffJobCandidacyId; readonly jobOpeningId: StaffJobOpeningId; readonly staffId: StaffPersonId; readonly status: StaffJobCandidacyStatus; readonly createdOn: GameDate; readonly origin?: StaffJobCandidacyOrigin }
 
 export type StaffInterviewStatus = 'scheduled' | 'completed'
 export interface StaffInterview { readonly candidacyId: StaffJobCandidacyId; readonly status: StaffInterviewStatus }
@@ -123,6 +124,12 @@ export function fireStaff(input: { readonly employment: StaffEmployment; readonl
 export function staffLeaveForAnotherJob(input: { readonly employment: StaffEmployment; readonly history: readonly StaffCareerHistoryEntry[]; readonly staffId: StaffPersonId; readonly date: GameDate }): StaffCareerTransitionResult {
   if (input.employment.status !== 'employed' || input.employment.teamId === undefined) return { ok: false, reason: 'invalidEmploymentState' }
   return { ok: true, employment: createStaffEmployment({ status: 'unemployed' }), history: [...input.history, { kind: 'departure', staffId: input.staffId, teamId: input.employment.teamId, date: input.date, reason: 'acceptedOtherJob' }] }
+}
+
+/** Canonical voluntary departure. Unlike firing, the career history retains the Staff person's agency. */
+export function staffResign(input: { readonly employment: StaffEmployment; readonly history: readonly StaffCareerHistoryEntry[]; readonly staffId: StaffPersonId; readonly date: GameDate }): StaffCareerTransitionResult {
+  if (input.employment.status !== 'employed' || input.employment.teamId === undefined) return { ok: false, reason: 'invalidEmploymentState' }
+  return { ok: true, employment: createStaffEmployment({ status: 'unemployed' }), history: [...input.history, { kind: 'departure', staffId: input.staffId, teamId: input.employment.teamId, date: input.date, reason: 'resigned' }] }
 }
 
 function careerId<Kind extends string>(value: string, name: string): StaffCareerId<Kind> { if (!value.trim()) throw new RangeError(`${name} must be non-empty`); return value as StaffCareerId<Kind> }

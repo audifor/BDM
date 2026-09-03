@@ -25,8 +25,10 @@ import {
   getStaffAge,
   getStaffReputationProfile,
   getStaffRoleEvaluations,
+  getOpenStaffCareerRequestsPresentation,
   getTeamResponsibilityPresentation,
   getTeamStaffPresentation,
+  presentStaffCareerOutlook,
   formatStaffCareerEntry,
   RESPONSIBILITY_DOMAIN_LABELS,
   RESPONSIBILITY_KIND_LABELS,
@@ -65,7 +67,7 @@ import './StaffScreen.css'
 
 type StaffScreenTab = 'staff' | 'responsibilities' | 'advisory' | 'dynamics'
 
-export function StaffScreen({ world, teamId, initialSelectedStaffId, onSetResponsibility, onAcceptRecommendation, onDismissRecommendation }: { readonly world: GameWorld; readonly teamId?: TeamId; readonly initialSelectedStaffId?: StaffPersonId; readonly onSetResponsibility?: (input: SetTeamResponsibilityInput) => void; readonly onAcceptRecommendation?: (outcomeId: DelegationOutcomeId) => StaffRecommendationCommandResult; readonly onDismissRecommendation?: (outcomeId: DelegationOutcomeId) => StaffRecommendationCommandResult }) {
+export function StaffScreen({ world, teamId, initialSelectedStaffId, onSetResponsibility, onAcceptRecommendation, onDismissRecommendation, onGrantCareerRequest, onDeclineCareerRequest }: { readonly world: GameWorld; readonly teamId?: TeamId; readonly initialSelectedStaffId?: StaffPersonId; readonly onSetResponsibility?: (input: SetTeamResponsibilityInput) => void; readonly onAcceptRecommendation?: (outcomeId: DelegationOutcomeId) => StaffRecommendationCommandResult; readonly onDismissRecommendation?: (outcomeId: DelegationOutcomeId) => StaffRecommendationCommandResult; readonly onGrantCareerRequest?: (requestId: string) => void; readonly onDeclineCareerRequest?: (requestId: string) => void }) {
   const team = teamId === undefined ? getUserTeam(world) : world.teams[teamId]
   const staff = team === undefined ? [] : getTeamStaffPresentation(world, team.id)
   const [tab, setTab] = useState<StaffScreenTab>('staff')
@@ -104,7 +106,7 @@ export function StaffScreen({ world, teamId, initialSelectedStaffId, onSetRespon
       : tab === 'advisory'
         ? <AdvisoryTab onAcceptRecommendation={onAcceptRecommendation} onDismissRecommendation={onDismissRecommendation} teamId={team.id} world={world} />
         : tab === 'dynamics'
-          ? <DynamicsTab teamId={team.id} world={world} />
+        ? <DynamicsTab onDeclineCareerRequest={onDeclineCareerRequest} onGrantCareerRequest={onGrantCareerRequest} teamId={team.id} world={world} />
           : staff.length === 0
             ? <EmptyState description="No staff assigned to this team." title="No staff" />
             : <SplitWorkspace inspector={selected !== undefined && <StaffDetail staffPersonId={selected.staffPersonId} world={world} />}>
@@ -488,10 +490,10 @@ function bandLabel(value: string): string {
   return (SATISFACTION_BAND_LABELS as Record<string, string>)[value] ?? (INTENSITY_BAND_LABELS as Record<string, string>)[value] ?? value
 }
 
-type DynamicsSubview = 'PEOPLE' | 'UNITS' | 'CONFLICTS'
+type DynamicsSubview = 'PEOPLE' | 'UNITS' | 'CONFLICTS' | 'CAREER'
 
 /** Wave 5C — the DYNAMICS tab hosts two subviews. PEOPLE (per-Staff Human State) stays the default. */
-function DynamicsTab({ world, teamId }: { readonly world: GameWorld; readonly teamId: TeamId }) {
+function DynamicsTab({ world, teamId, onGrantCareerRequest, onDeclineCareerRequest }: { readonly world: GameWorld; readonly teamId: TeamId; readonly onGrantCareerRequest?: (requestId: string) => void; readonly onDeclineCareerRequest?: (requestId: string) => void }) {
   const [subview, setSubview] = useState<DynamicsSubview>('PEOPLE')
 
   const toggle = <div className="staff-dynamics-subview">
@@ -499,13 +501,19 @@ function DynamicsTab({ world, teamId }: { readonly world: GameWorld; readonly te
       <button aria-pressed={subview === 'PEOPLE'} className={subview === 'PEOPLE' ? 'is-active' : undefined} onClick={() => setSubview('PEOPLE')} type="button">PEOPLE</button>
       <button aria-pressed={subview === 'UNITS'} className={subview === 'UNITS' ? 'is-active' : undefined} onClick={() => setSubview('UNITS')} type="button">UNITS</button>
       <button aria-pressed={subview === 'CONFLICTS'} className={subview === 'CONFLICTS' ? 'is-active' : undefined} onClick={() => setSubview('CONFLICTS')} type="button">CONFLICTS</button>
+      <button aria-pressed={subview === 'CAREER'} className={subview === 'CAREER' ? 'is-active' : undefined} onClick={() => setSubview('CAREER')} type="button">CAREER</button>
     </div>
   </div>
 
   return <>
     {toggle}
-    {subview === 'UNITS' ? <UnitsSubview teamId={teamId} world={world} /> : subview === 'CONFLICTS' ? <ConflictsSubview teamId={teamId} world={world} /> : <PeopleSubview teamId={teamId} world={world} />}
+    {subview === 'UNITS' ? <UnitsSubview teamId={teamId} world={world} /> : subview === 'CONFLICTS' ? <ConflictsSubview teamId={teamId} world={world} /> : subview === 'CAREER' ? <CareerRequestsSubview onDecline={onDeclineCareerRequest} onGrant={onGrantCareerRequest} teamId={teamId} world={world} /> : <PeopleSubview teamId={teamId} world={world} />}
   </>
+}
+
+function CareerRequestsSubview({ world, teamId, onGrant, onDecline }: { readonly world: GameWorld; readonly teamId: TeamId; readonly onGrant?: (requestId: string) => void; readonly onDecline?: (requestId: string) => void }) {
+  const requests = getOpenStaffCareerRequestsPresentation(world, teamId)
+  return <section className="staff-recommendation-inspector"><p className="eyebrow">CAREER REQUESTS</p><h2>Pending requests</h2>{requests.length === 0 ? <p className="staff-explanation">No staff career requests require a decision.</p> : requests.map((request) => <section className="staff-recommendation-card" key={request.id}><h3>{request.staffName}</h3><p className="staff-explanation">{request.role} · {request.request}</p><p className="staff-explanation">{request.detail}</p><div className="staff-recommendation-actions">{onGrant !== undefined && <button className="primary-button" onClick={() => onGrant(request.id)} type="button">GRANT</button>}{onDecline !== undefined && <button onClick={() => onDecline(request.id)} type="button">DECLINE</button>}</div></section>)}</section>
 }
 
 function ConflictsSubview({ world, teamId }: { readonly world: GameWorld; readonly teamId: TeamId }) {
@@ -586,6 +594,7 @@ function PeopleSubview({ world, teamId }: { readonly world: GameWorld; readonly 
 function DynamicsInspector({ world, staffId }: { readonly world: GameWorld; readonly staffId: StaffPersonId }) {
   const explanation = explainStaffHumanState(world, staffId)
   const person = getStaffPerson(world, staffId)
+  const career = presentStaffCareerOutlook(world, staffId)
   if (explanation === undefined || person === undefined) return <section className="staff-recommendation-inspector"><p className="staff-explanation">No Dynamics data yet.</p></section>
 
   return <section className="staff-recommendation-inspector">
@@ -595,6 +604,11 @@ function DynamicsInspector({ world, staffId }: { readonly world: GameWorld; read
       <div><dt>STATE</dt><dd>{DYNAMICS_STATE_LABELS[explanation.currentState]}</dd></div>
       <div><dt>TREND</dt><dd>{DYNAMICS_TREND_LABELS[explanation.trend]}</dd></div>
     </dl>
+
+    {career !== undefined && <DetailGroup title="CAREER OUTLOOK">
+      <dl className="staff-recommendation-detail"><div><dt>OUTLOOK</dt><dd>{career.outlook}</dd></div><div><dt>CURRENT FOCUS</dt><dd>{career.intent}</dd></div></dl>
+      <ul className="staff-career-history">{career.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
+    </DetailGroup>}
 
     {explanation.positives.length > 0 && <DetailGroup title="KEY POSITIVES">
       <ul className="staff-career-history">{explanation.positives.map((line, index) => <li key={index}>{line}</li>)}</ul>

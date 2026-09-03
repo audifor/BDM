@@ -15,6 +15,10 @@ import {
 } from '@/engine/staff/StaffHumanAppraisalEngine'
 import { calculateStaffWorkload, getStaffAssignment } from '@/domain/world'
 import { emitWorkloadTransitionEvents } from './StaffHumanWorkloadTracking'
+import { appraiseStaffCareer, progressStaffCareerAutonomy as evolveStaffCareerAutonomy, STAFF_CAREER_AUTONOMY_TUNING } from './StaffCareerAutonomyEngine'
+import { staffCareerRequestIdFor, type StaffCareerRequest, type StaffCareerRequestKind } from '@/domain/staffCareerAutonomy'
+import { RESPONSIBILITY_REGISTRY } from '@/domain/responsibility'
+import { STAFF_ROLE_REGISTRY } from '@/domain/staff'
 
 /**
  * Wave 5A §21/§37 — the single canonical daily/periodic authority for Staff Human State.
@@ -34,8 +38,50 @@ export function progressStaffHumanState(world: GameWorld): GameWorld {
   let next = ensureStaffHumanContexts(world)
   next = applyDailyRecovery(next)
   next = emitWorkloadTransitionEvents(next)
-  if (shouldRunWeeklyAppraisal(next)) next = runWeeklyAppraisal(next)
+  if (shouldRunWeeklyAppraisal(next)) next = progressWeeklyStaffCareerAutonomy(runWeeklyAppraisal(next))
   return next
+}
+
+/** Wave 5E weekly continuation of the canonical Human-State cadence. It is intentionally state-only: request execution remains an application concern. */
+function progressWeeklyStaffCareerAutonomy(world: GameWorld): GameWorld {
+  const states = Object.values(world.staffCareerAutonomyByContextId)
+  const requests = Object.values(world.staffCareerRequestsById) as StaffCareerRequest[]
+  let changed = false
+  for (const context of Object.values(world.staffHumanContextsById)) {
+    if (context.endedOn !== undefined) continue
+    const human = world.staffHumanStatesByContextId[context.id]
+    if (human === undefined) continue
+    const prior = world.staffCareerAutonomyByContextId[context.id]
+    const next = evolveStaffCareerAutonomy(prior, appraiseStaffCareer(world, context, human), context, world.currentDate)
+    const index = states.findIndex((item) => item.contextId === context.id)
+    if (index < 0) states.push(next); else states[index] = next
+    changed ||= prior === undefined || prior.intensity !== next.intensity || prior.primaryIntent !== next.primaryIntent || prior.outlook !== next.outlook
+    const request = requestFor(world, context, next.primaryIntent)
+    if (request !== undefined && next.intensity >= STAFF_CAREER_AUTONOMY_TUNING.requestIntensity && !requests.some((item) => item.id === request.id)) { requests.push(request); changed = true }
+  }
+  return changed ? updateGameWorld(world, { staffCareerAutonomyStates: states, staffCareerRequests: requests }) : world
+}
+
+function requestFor(world: GameWorld, context: StaffHumanContext, intent: import('@/domain/staffCareerAutonomy').StaffCareerIntent): StaffCareerRequest | undefined {
+  const employment = world.staffEmploymentByStaffId[context.staffId]
+  if (employment?.status !== 'employed') return undefined
+  let kind: StaffCareerRequestKind | undefined
+  let targetRoleId: StaffCareerRequest['targetRoleId']
+  let targetResponsibilityKind: StaffCareerRequest['targetResponsibilityKind']
+  if (intent === 'PROMOTION' || intent === 'ROLE_CHANGE') {
+    const current = STAFF_ROLE_REGISTRY[employment.roleId!]
+    const higher = Object.values(STAFF_ROLE_REGISTRY).filter((role) => role.department === current.department && ['junior', 'standard', 'senior', 'director'].indexOf(role.seniority) > ['junior', 'standard', 'senior', 'director'].indexOf(current.seniority)).sort((a, b) => a.id.localeCompare(b.id))[0]
+    if (higher === undefined) return undefined
+    kind = intent === 'PROMOTION' ? 'PROMOTION' : 'ROLE_CHANGE'; targetRoleId = higher.id
+  } else if (intent === 'MORE_RESPONSIBILITY') {
+    const eligible = Object.values(RESPONSIBILITY_REGISTRY).filter((definition) => definition.eligibleRoleIds.includes(employment.roleId!) && !Object.values(world.responsibilitiesById).some((item) => item.teamId === context.teamId && item.kind === definition.kind && item.holderStaffId !== undefined)).sort((a, b) => a.kind.localeCompare(b.kind))[0]
+    if (eligible === undefined) return undefined
+    kind = 'MORE_RESPONSIBILITY'; targetResponsibilityKind = eligible.kind
+  } else if (intent === 'CONTRACT_IMPROVEMENT') kind = 'CONTRACT_DISCUSSION'
+  else if (intent === 'EXIT_NOW') kind = 'RELEASE'
+  if (kind === undefined) return undefined
+  const id = staffCareerRequestIdFor(context.id, kind, targetRoleId ?? targetResponsibilityKind)
+  return { id, contextId: context.id, staffId: context.staffId, teamId: context.teamId, kind, createdOn: world.currentDate, status: 'OPEN', ...(targetRoleId === undefined ? {} : { targetRoleId }), ...(targetResponsibilityKind === undefined ? {} : { targetResponsibilityKind }) }
 }
 
 /** Weekly cadence: the ISO weekday of `currentDate` is Monday (1). Matches the existing repo convention of deriving cadence from `currentDate` rather than a persisted counter. */

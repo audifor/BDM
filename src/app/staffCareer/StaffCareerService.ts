@@ -15,6 +15,7 @@ import {
   staffJobOfferIdFromString,
   staffJobOpeningIdFromString,
   staffLeaveForAnotherJob,
+  staffResign,
   transitionStaffInterview,
   transitionStaffJobCandidacy,
   type StaffCareerHistoryEntry,
@@ -81,7 +82,7 @@ export function rankStaffCandidates(world: GameWorld, openingId: string): readon
     .map((staff) => staff.id)
 }
 
-export function identifyStaffCandidate(world: GameWorld, input: { readonly openingId: string; readonly staffId: StaffPersonId; readonly id?: string }): { readonly world: GameWorld; readonly candidacyId: string } {
+export function identifyStaffCandidate(world: GameWorld, input: { readonly openingId: string; readonly staffId: StaffPersonId; readonly id?: string; readonly origin?: 'teamIdentified' | 'staffApplied' }): { readonly world: GameWorld; readonly candidacyId: string } {
   const opening = requireOpening(world, input.openingId)
   if (!evaluateStaffJobEligibility(opening).eligible) throw new Error('Staff job opening is not open')
   if (world.staffPeopleById[input.staffId] === undefined || world.staffReputationProfilesByStaffId[input.staffId] === undefined) throw new Error('Staff is not eligible for this job opening')
@@ -92,7 +93,7 @@ export function identifyStaffCandidate(world: GameWorld, input: { readonly openi
   const existing = Object.values(world.staffJobCandidaciesById).find((candidacy) => candidacy.jobOpeningId === opening.id && candidacy.staffId === input.staffId && ['identified', 'interviewing', 'offered'].includes(candidacy.status))
   if (existing !== undefined) return { world, candidacyId: existing.id }
   const id = staffJobCandidacyIdFromString(input.id ?? nextId(world, `staff-candidacy:${opening.id}:${input.staffId}:`))
-  return { world: rebuild(world, { candidacies: { ...world.staffJobCandidaciesById, [id]: { id, jobOpeningId: opening.id, staffId: input.staffId, status: 'identified', createdOn: world.currentDate } } }), candidacyId: id }
+  return { world: rebuild(world, { candidacies: { ...world.staffJobCandidaciesById, [id]: { id, jobOpeningId: opening.id, staffId: input.staffId, status: 'identified', createdOn: world.currentDate, ...(input.origin === undefined ? {} : { origin: input.origin }) } } }), candidacyId: id }
 }
 
 export function startStaffInterview(world: GameWorld, candidacyId: string): GameWorld {
@@ -162,9 +163,11 @@ export function acceptStaffJobOffer(world: GameWorld, offerId: string): GameWorl
   let openings = { ...world.staffJobOpeningsById }
   let contracts = { ...world.staffContractsById }
   let responsibilities: readonly Responsibility[] = Object.values(world.responsibilitiesById)
+  let departedTeamId: TeamId | undefined
 
   if (employment.status === 'employed') {
     const oldTeamId = employment.teamId!
+    departedTeamId = oldTeamId
     const leaving = staffLeaveForAnotherJob({ employment, history, staffId: offer.staffId, date: world.currentDate })
     if (!leaving.ok) throw new Error('Staff cannot leave current Team')
     employment = leaving.employment
@@ -195,7 +198,8 @@ export function acceptStaffJobOffer(world: GameWorld, offerId: string): GameWorl
   const staff = world.staffPeopleById[offer.staffId]!
   const team = world.teams[opening.teamId]!
   const withNews = addNewsItem(next, { id: `news:staff-hired:${offer.id}`, gameDate: world.currentDate, category: 'career', headline: `${staff.identity.firstName} ${staff.identity.lastName} joins ${team.name}`, body: `${staff.identity.firstName} ${staff.identity.lastName} has been appointed ${staffRoleDefinition(opening.roleId).id} at ${team.name}.`, context: { staffId: offer.staffId, teamId: team.id, offerId: offer.id } })
-  return addInboxItem(withNews, { id: `inbox:staff-hired:${offer.id}:${world.userCoachId}`, coachId: world.userCoachId, gameDate: world.currentDate, category: 'career', priority: team.id === teamOfUserCoach(world) ? 'high' : 'low', title: `${staff.identity.firstName} ${staff.identity.lastName} joins ${team.name}`, body: `${staff.identity.firstName} ${staff.identity.lastName} has been hired as ${staffRoleDefinition(opening.roleId).id} for $${(offer.annualSalary ?? 0).toLocaleString()} per year.`, status: 'unread', context: { staffId: offer.staffId, teamId: team.id, offerId: offer.id } })
+  const notified = addInboxItem(withNews, { id: `inbox:staff-hired:${offer.id}:${world.userCoachId}`, coachId: world.userCoachId, gameDate: world.currentDate, category: 'career', priority: team.id === teamOfUserCoach(world) ? 'high' : 'low', title: `${staff.identity.firstName} ${staff.identity.lastName} joins ${team.name}`, body: `${staff.identity.firstName} ${staff.identity.lastName} has been hired as ${staffRoleDefinition(opening.roleId).id} for $${(offer.annualSalary ?? 0).toLocaleString()} per year.`, status: 'unread', context: { staffId: offer.staffId, teamId: team.id, offerId: offer.id } })
+  return departedTeamId === undefined ? notified : closeEmploymentCareerContext(notified, offer.staffId, departedTeamId)
 }
 
 export function declineStaffJobOffer(world: GameWorld, offerId: string): GameWorld {
@@ -276,7 +280,31 @@ export function fireStaffFromTeam(world: GameWorld, staffId: StaffPersonId): Gam
   const opened = createStaffJobOpeningForTeam(vacant, { teamId, roleId }).world
   const staff = world.staffPeopleById[staffId]!
   const team = world.teams[teamId]!
-  return addNewsItem(opened, { id: `news:staff-fired:${staffId}:${teamId}:${world.currentDate}`, gameDate: world.currentDate, category: 'career', headline: `${staff.identity.firstName} ${staff.identity.lastName} dismissed by ${team.name}`, body: `${staff.identity.firstName} ${staff.identity.lastName} is no longer ${staffRoleDefinition(roleId).id} at ${team.name}.`, context: { staffId, teamId } })
+  return closeEmploymentCareerContext(addNewsItem(opened, { id: `news:staff-fired:${staffId}:${teamId}:${world.currentDate}`, gameDate: world.currentDate, category: 'career', headline: `${staff.identity.firstName} ${staff.identity.lastName} dismissed by ${team.name}`, body: `${staff.identity.firstName} ${staff.identity.lastName} is no longer ${staffRoleDefinition(roleId).id} at ${team.name}.`, context: { staffId, teamId } }), staffId, teamId)
+}
+
+/** Voluntary counterpart to firing, sharing the same cleanup transaction while preserving resignation semantics. */
+export function resignStaffFromTeam(world: GameWorld, staffId: StaffPersonId): GameWorld {
+  const employment = world.staffEmploymentByStaffId[staffId]
+  if (employment === undefined || employment.status !== 'employed' || employment.teamId === undefined) throw new Error('Staff is not employed')
+  const teamId = employment.teamId
+  const roleId = employment.roleId!
+  const result = staffResign({ employment, history: world.staffCareerHistoryByStaffId[staffId] ?? [], staffId, date: world.currentDate })
+  if (!result.ok) throw new Error('Staff cannot resign')
+  const detached = detachStaffFromFutureTrainingSessions(world, staffId)
+  const assignments = Object.values(detached.teamStaffAssignmentsById).filter((assignment) => assignment.staffPersonId !== staffId)
+  const activeContract = Object.values(detached.staffContractsById).find((contract) => contract.staffId === staffId && isStaffContractActiveOn(contract, detached.currentDate))
+  const contracts = activeContract === undefined ? detached.staffContractsById : { ...detached.staffContractsById, [activeContract.id]: terminateStaffContract(activeContract, detached.currentDate, 'resigned') }
+  const responsibilities = vacateResponsibilitiesHeldByStaffOnTeam(Object.values(detached.responsibilitiesById), staffId, teamId)
+  const vacant = rebuild(detached, { assignments, employment: { ...detached.staffEmploymentByStaffId, [staffId]: result.employment }, history: { ...detached.staffCareerHistoryByStaffId, [staffId]: result.history }, contracts, responsibilities })
+  return closeEmploymentCareerContext(createStaffJobOpeningForTeam(vacant, { teamId, roleId }).world, staffId, teamId)
+}
+
+function closeEmploymentCareerContext(world: GameWorld, staffId: StaffPersonId, teamId: TeamId): GameWorld {
+  const contexts = Object.values(world.staffHumanContextsById).map((context) => context.staffId === staffId && context.teamId === teamId && context.endedOn === undefined ? { ...context, endedOn: world.currentDate } : context)
+  const endedIds = new Set(contexts.filter((context) => context.staffId === staffId && context.teamId === teamId && context.endedOn === world.currentDate).map((context) => context.id))
+  const requests = Object.values(world.staffCareerRequestsById).map((request) => request.status === 'OPEN' && endedIds.has(request.contextId) ? { ...request, status: 'WITHDRAWN' as const, resolvedOn: world.currentDate } : request)
+  return updateGameWorld(world, { staffHumanContexts: contexts, staffCareerRequests: requests })
 }
 
 export function closeStaffJobOpening(world: GameWorld, openingId: string): GameWorld {

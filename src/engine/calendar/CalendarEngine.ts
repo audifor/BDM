@@ -18,6 +18,7 @@ import { progressBasketballOperationsAdvisories } from '@/engine/roster'
 import { progressStaffHumanState } from '@/engine/staff/StaffHumanStatePipeline'
 import { progressStaffCultureAndCohesion } from '@/engine/staff/StaffCultureCohesionPipeline'
 import { progressStaffConflicts } from '@/engine/staff/StaffConflictEngine'
+import { progressStaffAutonomousOfferDecisions, progressStaffAutonomousResignations, progressStaffCareerMarketAgency } from '@/app/staffCareerAutonomy'
 
 /**
  * Advances only the simulation date, leaving game resolution to other services.
@@ -46,7 +47,9 @@ export function advanceDay(world: GameWorld): GameWorld {
     if (opened.draftsById[draft.id]?.status !== 'inProgress') return opened
     return progressDraftAi(progressDraftProspectAdvisories(opened, draft.id), draft.id)
   }, enforced)
-  return progressStaffCultureAndCohesion(progressStaffConflicts(progressStaffHumanState(withDrafts)))
+  // Human State refreshes first; Career Autonomy then consumes the current weekly appraisal while
+  // the application boundary alone performs canonical market transitions.
+  return progressStaffAutonomousResignations(progressStaffAutonomousOfferDecisions(progressStaffCareerMarketAgency(progressStaffCultureAndCohesion(progressStaffConflicts(progressStaffHumanState(withDrafts))))))
 }
 function progressAcademicTerms(world: GameWorld): GameWorld { if(world.currentDate.slice(5) !== '01-01' && world.currentDate.slice(5) !== '07-01') return world; const term=`academic:${world.currentDate.slice(0, 4)}:${world.currentDate.slice(5, 7)}`; return resolveAcademicTerm(progressAiAcademicSupport(world,term),term) }
 

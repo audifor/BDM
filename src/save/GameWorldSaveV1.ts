@@ -38,6 +38,7 @@ import { ensureResponsibilityStructure } from '@/engine/world/ResponsibilityEnri
 import { migrateTrainingResponsibilities } from '@/domain/world/migrateTrainingResponsibilities'
 import { delegationOutcomeIdFromString, responsibilityIdFromString } from '@/domain/responsibility'
 import { staffHumanContextIdFromString, staffReactionRecordIdFromString } from '@/domain/staffHumanState'
+import { createStaffCareerAutonomyState, createStaffCareerRequest } from '@/domain/staffCareerAutonomy'
 import { playerKnowledgeIdFromString } from '@/domain/ids'
 import { createCoachRpgProfile } from '@/domain/coachRpg'
 import { createCoachFinanceProfile } from '@/domain/coachFinances'
@@ -89,6 +90,8 @@ export interface GameWorldSaveV1 {
   readonly staffCultureStates?: readonly JsonRecord[]
   readonly staffUnitCohesionStates?: readonly JsonRecord[]
   readonly staffConflicts?: readonly JsonRecord[]
+  readonly staffCareerAutonomyStates?: readonly JsonRecord[]
+  readonly staffCareerRequests?: readonly JsonRecord[]
   readonly coachProfessionalProfilesByCoachId?: readonly JsonRecord[]
   readonly coachRpgProfilesByCoachId?: readonly JsonRecord[]
   readonly coachFinancesByCoachId?: readonly JsonRecord[]
@@ -218,6 +221,8 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
       staffCultureStates: copyRecords(Object.values(world.staffCultureStatesByScopeKey)),
       staffUnitCohesionStates: copyRecords(Object.values(world.staffUnitCohesionStatesByUnitKey)),
       staffConflicts: copyRecords(Object.values(world.staffConflictsById)),
+      staffCareerAutonomyStates: copyRecords(Object.values(world.staffCareerAutonomyByContextId)),
+      staffCareerRequests: copyRecords(Object.values(world.staffCareerRequestsById)),
       coachProfessionalProfilesByCoachId: copyProfiles(world.coachProfessionalProfilesByCoachId),
       coachRpgProfilesByCoachId: copyProfiles(world.coachRpgProfilesByCoachId),
       coachFinancesByCoachId: copyProfiles(world.coachFinancesByCoachId),
@@ -328,6 +333,8 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
     ...(payload.staffCultureStates === undefined ? {} : { staffCultureStates: array(payload.staffCultureStates, 'Save staffCultureStates').map(readStaffCultureState) }),
     ...(payload.staffUnitCohesionStates === undefined ? {} : { staffUnitCohesionStates: array(payload.staffUnitCohesionStates, 'Save staffUnitCohesionStates').map(readStaffUnitCohesionState) }),
     ...(payload.staffConflicts === undefined ? {} : { staffConflicts: array(payload.staffConflicts, 'Save staff conflicts').map(readStaffConflict) }),
+    ...(payload.staffCareerAutonomyStates === undefined ? {} : { staffCareerAutonomyStates: array(payload.staffCareerAutonomyStates, 'Save staff career autonomy states').map(readStaffCareerAutonomyState) }),
+    ...(payload.staffCareerRequests === undefined ? {} : { staffCareerRequests: array(payload.staffCareerRequests, 'Save staff career requests').map(readStaffCareerRequest) }),
     ...(payload.oppositionScoutingReports === undefined ? {} : { oppositionScoutingReports: array(payload.oppositionScoutingReports, 'Save oppositionScoutingReports').map(readOppositionScoutingReport) }),
     coachProfessionalProfilesByCoachId: professionalProfiles,
     coachRpgProfilesByCoachId: rpgProfiles,
@@ -455,6 +462,8 @@ function readStaffReactionRecord(value: unknown) { const v = record(value, 'Staf
 const STAFF_CULTURE_DIMENSION_LIST = ['autonomy', 'hierarchy', 'collaboration', 'accountability', 'communicationOpenness', 'innovation', 'adaptability', 'developmentOrientation', 'analyticsOrientation', 'performanceIntensity', 'stability', 'longTermOrientation', 'discipline', 'competitiveness'] as const
 const STAFF_UNIT_COHESION_DIMENSION_LIST = ['communication', 'coordination', 'roleClarity', 'mutualSupport', 'sharedPurpose', 'trustClimate', 'leadershipAlignment', 'stability'] as const
 function readCultureValues(value: unknown, name: string): import('@/domain/staffCulture').StaffCultureValues { const v = record(value, name); const result: Record<string, number> = {}; for (const key of STAFF_CULTURE_DIMENSION_LIST) result[key] = number(v[key], `${name} ${key}`); return result as import('@/domain/staffCulture').StaffCultureValues }
+function readStaffCareerAutonomyState(value: unknown) { const v = record(value, 'Staff career autonomy state'); return createStaffCareerAutonomyState({ contextId: staffHumanContextIdFromString(string(v.contextId, 'Staff career autonomy context')), staffId: staffPersonIdFromString(string(v.staffId, 'Staff career autonomy staff')), teamId: teamIdFromString(string(v.teamId, 'Staff career autonomy team')), outlook: string(v.outlook, 'Staff career outlook') as import('@/domain/staffCareerAutonomy').StaffCareerOutlook, primaryIntent: string(v.primaryIntent, 'Staff career intent') as import('@/domain/staffCareerAutonomy').StaffCareerIntent, intensity: number(v.intensity, 'Staff career intensity'), intentSince: parseGameDate(string(v.intentSince, 'Staff career intent since')), lastEvaluatedOn: parseGameDate(string(v.lastEvaluatedOn, 'Staff career last evaluated')), ...(v.lastActionOn === undefined ? {} : { lastActionOn: parseGameDate(string(v.lastActionOn, 'Staff career last action')) }) }) }
+function readStaffCareerRequest(value: unknown) { const v = record(value, 'Staff career request'); return createStaffCareerRequest({ id: string(v.id, 'Staff career request id'), contextId: staffHumanContextIdFromString(string(v.contextId, 'Staff career request context')), staffId: staffPersonIdFromString(string(v.staffId, 'Staff career request staff')), teamId: teamIdFromString(string(v.teamId, 'Staff career request team')), kind: string(v.kind, 'Staff career request kind') as import('@/domain/staffCareerAutonomy').StaffCareerRequestKind, createdOn: parseGameDate(string(v.createdOn, 'Staff career request created')), status: string(v.status, 'Staff career request status') as import('@/domain/staffCareerAutonomy').StaffCareerRequestStatus, ...(v.resolvedOn === undefined ? {} : { resolvedOn: parseGameDate(string(v.resolvedOn, 'Staff career request resolved')) }), ...(v.targetRoleId === undefined ? {} : { targetRoleId: string(v.targetRoleId, 'Staff career request role') as import('@/domain/staff').StaffRoleId }), ...(v.targetResponsibilityKind === undefined ? {} : { targetResponsibilityKind: string(v.targetResponsibilityKind, 'Staff career request responsibility') as import('@/domain/responsibility').ResponsibilityKind }) }) }
 function readStaffCultureState(value: unknown): import('@/domain/staffCulture').StaffCultureState { const v = record(value, 'Staff culture state'); return { scopeKey: string(v.scopeKey, 'Staff culture state scopeKey'), target: readCultureValues(v.target, 'Staff culture state target'), current: readCultureValues(v.current, 'Staff culture state current'), establishedOn: parseGameDate(string(v.establishedOn, 'Staff culture state establishedOn')), lastEvaluatedOn: parseGameDate(string(v.lastEvaluatedOn, 'Staff culture state lastEvaluatedOn')) } }
 function readUnitCohesionValues(value: unknown, name: string): import('@/domain/staffUnitCohesion').StaffUnitCohesionValues { const v = record(value, name); const result: Record<string, number> = {}; for (const key of STAFF_UNIT_COHESION_DIMENSION_LIST) result[key] = number(v[key], `${name} ${key}`); return result as import('@/domain/staffUnitCohesion').StaffUnitCohesionValues }
 function readStaffUnitCohesionState(value: unknown): import('@/domain/staffUnitCohesion').StaffUnitCohesionState { const v = record(value, 'Staff unit cohesion state'); return { unitKey: string(v.unitKey, 'Staff unit cohesion state unitKey'), scopeKey: string(v.scopeKey, 'Staff unit cohesion state scopeKey'), departmentProxy: string(v.departmentProxy, 'Staff unit cohesion state departmentProxy') as import('@/domain/staff').StaffDepartment, target: readUnitCohesionValues(v.target, 'Staff unit cohesion state target'), current: readUnitCohesionValues(v.current, 'Staff unit cohesion state current'), establishedOn: parseGameDate(string(v.establishedOn, 'Staff unit cohesion state establishedOn')), lastEvaluatedOn: parseGameDate(string(v.lastEvaluatedOn, 'Staff unit cohesion state lastEvaluatedOn')) } }
