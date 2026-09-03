@@ -168,8 +168,8 @@ function parseStaffJobOpeningV3(value: unknown): StaffJobOpening {
 
 function parseStaffJobCandidacyV3(value: unknown): StaffJobCandidacy {
   const v = record(value, 'Staff job candidacy V3')
-  assertExactKeys(v, ['id', 'jobOpeningId', 'staffId', 'status', 'createdOn'], 'Staff job candidacy V3')
-  return { id: staffJobCandidacyIdFromString(text(v.id, 'Staff job candidacy id')), jobOpeningId: staffJobOpeningIdFromString(text(v.jobOpeningId, 'Staff job candidacy opening')), staffId: staffPersonIdFromString(text(v.staffId, 'Staff job candidacy staffId')), status: enumValue(v.status, ['identified', 'interviewing', 'rejected', 'offered', 'withdrawn', 'hired'], 'Staff job candidacy status') as never, createdOn: parseGameDate(text(v.createdOn, 'Staff job candidacy createdOn')) }
+  assertExactKeys(v, ['id', 'jobOpeningId', 'staffId', 'status', 'createdOn', ...(v.origin === undefined ? [] : ['origin'])], 'Staff job candidacy V3')
+  return { id: staffJobCandidacyIdFromString(text(v.id, 'Staff job candidacy id')), jobOpeningId: staffJobOpeningIdFromString(text(v.jobOpeningId, 'Staff job candidacy opening')), staffId: staffPersonIdFromString(text(v.staffId, 'Staff job candidacy staffId')), status: enumValue(v.status, ['identified', 'interviewing', 'rejected', 'offered', 'withdrawn', 'hired'], 'Staff job candidacy status') as never, createdOn: parseGameDate(text(v.createdOn, 'Staff job candidacy createdOn')), ...(v.origin === undefined ? {} : { origin: enumValue(v.origin, ['teamIdentified', 'staffApplied'], 'Staff job candidacy origin') as import('@/domain/staffCareer').StaffJobCandidacyOrigin }) }
 }
 
 function parseStaffJobOfferV3(value: unknown): StaffJobOffer {

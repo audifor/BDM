@@ -24,6 +24,11 @@ import { MedicalPcbPage } from '@/ui/pcb-migrated/medical/MedicalPcbPage'
 import { CompetitionPcbPage } from '@/ui/pcb-migrated/competition/CompetitionPcbPage'
 import { TeamWorkspacePage } from '@/ui/pcb-migrated/team/TeamWorkspacePage'
 
+export interface DesktopAppActions {
+  readonly grantStaffCareerRequest?: (requestId: string) => void
+  readonly declineStaffCareerRequest?: (requestId: string) => void
+}
+
 export function DesktopAppHost({ appId, entityDestination, world, actions }: { readonly appId: string; readonly entityDestination?: EntityDestination; readonly world: GameWorld; readonly actions: DesktopAppActions }) {
   const key = getDesktopApp(appId)?.renderKey
   if (appId === 'analysis') return <TeamWorkspacePage appName="Análisis" sections={['Depth Chart', 'Plan de futuro', 'Informes']} />
@@ -33,7 +38,7 @@ export function DesktopAppHost({ appId, entityDestination, world, actions }: { r
   if (appId === 'training') return <TrainingPcbPage world={world} onIntensity={actions.setTrainingIntensity} onFocus={actions.setTrainingFocus} onScheduleSession={actions.scheduleTrainingSession} onScheduleTeamModule={actions.scheduleTeamModuleSession} onCancelSession={actions.cancelTrainingSession} onSaveModule={actions.saveUserTrainingModule} onDeleteModule={actions.deleteUserTrainingModule} onAssignModule={actions.assignTrainingModuleToPlayer} />
   if (appId === 'tactics') return <TacticsPcbPage onLineupSlotChange={actions.setLineupSlot} onLineupSlotClear={actions.clearLineupSlot} onChange={actions.setTacticalPlan} onReset={actions.resetTacticalPlan} onUpdateRotationMinutes={actions.updateRotationMinutes} onUpdateMatchups={actions.updateGamePlanMatchups} onSaveGamePlanTacticalOverride={actions.updateGamePlanTacticalOverride} onSaveDesignerPlay={actions.saveDesignerPlay} onDeleteDesignerPlay={actions.deleteDesignerPlay} onSaveDesignerPlaybook={actions.saveDesignerPlaybook} onDeleteDesignerPlaybook={actions.deleteDesignerPlaybook} plan={actions.tacticalPlan} world={world} />
   if (appId === 'club') return <ClubPcbPage onAcceptStaffOffer={actions.acceptStaffOffer} onCompleteStaffInterview={actions.completeStaffInterview} onCreateStaffOffer={actions.createStaffOffer} onDeclineStaffOffer={actions.declineStaffOffer} onFireStaff={actions.fireStaff} onStartStaffCandidacy={(roleId, staffId) => { const team = getUserTeam(world); if (team !== undefined) actions.startStaffCandidacy(team.id, roleId, staffId) }} onStartStaffInterview={actions.startStaffInterview} world={world} />
-  if (appId === 'staff') return <StaffScreen onAcceptRecommendation={actions.acceptStaffRecommendation} onDismissRecommendation={actions.dismissStaffRecommendation} onSetResponsibility={actions.setStaffResponsibility} world={world} />
+  if (appId === 'staff') return <StaffScreen onAcceptRecommendation={actions.acceptStaffRecommendation} onDeclineCareerRequest={actions.declineStaffCareerRequest} onDismissRecommendation={actions.dismissStaffRecommendation} onGrantCareerRequest={actions.grantStaffCareerRequest} onSetResponsibility={actions.setStaffResponsibility} world={world} />
   if (appId === 'medical') return <MedicalPcbPage />
   if (appId === 'competition') return <CompetitionPcbPage onOpenEntity={actions.openEntity} world={world} />
   if (key === 'entity') return <EntityPageApp destination={entityDestination} onOpenEntity={actions.openEntity ?? (() => undefined)} world={world} />

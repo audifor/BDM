@@ -44,6 +44,7 @@ import { createStaffHumanContext, createStaffHumanState, createStaffExpectationP
 import { createStaffCultureState, type StaffCultureState } from '@/domain/staffCulture'
 import { createStaffUnitCohesionState, type StaffUnitCohesionState } from '@/domain/staffUnitCohesion'
 import { createStaffConflict, type StaffConflict } from '@/domain/staffConflict'
+import { createStaffCareerAutonomyState, createStaffCareerRequest, type StaffCareerAutonomyState, type StaffCareerRequest } from '@/domain/staffCareerAutonomy'
 import { createCoachRpgProfile, type CoachRpgProfile } from '@/domain/coachRpg'
 import { createCoachFinanceProfile, type CoachFinanceProfile } from '@/domain/coachFinances'
 import { createCoachReputationProfile, createDefaultCoachReputationProfile, type CoachReputationProfile } from '@/domain/coachReputation'
@@ -144,6 +145,8 @@ export interface GameWorld {
   /** Wave 5C — Staff Unit Cohesion, keyed by `${teamId}:${department}`. Never the tactical/training `teamCohesionByTeamId`. */
   readonly staffUnitCohesionStatesByUnitKey: Readonly<Record<string, StaffUnitCohesionState>>
   readonly staffConflictsById: Readonly<Record<string, StaffConflict>>
+  readonly staffCareerAutonomyByContextId: Readonly<Record<StaffHumanContextId, StaffCareerAutonomyState>>
+  readonly staffCareerRequestsById: Readonly<Record<string, StaffCareerRequest>>
   readonly relationshipsByKey: Readonly<Record<string, RelationshipProfile>>
   readonly personalitiesByPersonId: Readonly<Record<string, Personality>>
   readonly moraleByPersonId: Readonly<Record<string, MoraleProfile>>
@@ -270,6 +273,8 @@ export interface CreateGameWorldInput {
   staffCultureStates?: readonly StaffCultureState[]
   staffUnitCohesionStates?: readonly StaffUnitCohesionState[]
   staffConflicts?: readonly StaffConflict[]
+  staffCareerAutonomyStates?: readonly StaffCareerAutonomyState[]
+  staffCareerRequests?: readonly StaffCareerRequest[]
   oppositionScoutingReports?: readonly OppositionScoutingReport[]
   coachProfessionalProfilesByCoachId?: Readonly<Record<CoachId, StaffProfessionalProfile>>
   coachRpgProfilesByCoachId?: Readonly<Record<CoachId, CoachRpgProfile>>
@@ -455,6 +460,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     staffCultureStatesByScopeKey: indexCultureStatesByScopeKey(input.staffCultureStates ?? []),
     staffUnitCohesionStatesByUnitKey: indexUnitCohesionStatesByUnitKey(input.staffUnitCohesionStates ?? []),
     staffConflictsById: indexById(input.staffConflicts ?? [], 'Staff conflict'),
+    staffCareerAutonomyByContextId: indexCareerAutonomyByContextId((input.staffCareerAutonomyStates ?? []).map(createStaffCareerAutonomyState)),
+    staffCareerRequestsById: indexById((input.staffCareerRequests ?? []).map(createStaffCareerRequest), 'Staff career request'),
     relationshipsByKey: Object.freeze({ ...(input.relationshipsByKey ?? {}) }),
     personalitiesByPersonId: peopleProfiles([...input.coaches, ...input.players, ...(input.staffPeople ?? [])], input.personalitiesByPersonId, generatePersonality),
     moraleByPersonId: peopleProfiles([...input.coaches, ...input.players, ...(input.staffPeople ?? [])], input.moraleByPersonId, createMoraleProfile),
@@ -532,7 +539,7 @@ export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorld
 }
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
-  countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
+  countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
 }
 
 const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unknown>> = {
@@ -545,6 +552,7 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   staffExpectationProfiles: (value) => indexExpectationProfilesByContextId(value as readonly StaffExpectationProfile[]),
   staffCultureStates: (value) => indexCultureStatesByScopeKey(value as readonly StaffCultureState[]),
   staffUnitCohesionStates: (value) => indexUnitCohesionStatesByUnitKey(value as readonly StaffUnitCohesionState[]),
+  staffCareerAutonomyStates: (value) => indexCareerAutonomyByContextId(value as readonly StaffCareerAutonomyState[]),
   staffConflicts: (value) => indexById(value as readonly StaffConflict[], 'Staff conflict'),
 }
 
@@ -741,6 +749,23 @@ function validateWorld(world: GameWorld): void {
     requireEntity(world.staffPeopleById, context.staffId, `Staff human context ${context.id} Staff`)
     requireEntity(world.teams, context.teamId, `Staff human context ${context.id} Team`)
   }
+  for (const state of Object.values(world.staffCareerAutonomyByContextId)) {
+    createStaffCareerAutonomyState(state)
+    const context = requireEntity(world.staffHumanContextsById, state.contextId, `Staff career autonomy ${state.contextId} context`)
+    if (context.staffId !== state.staffId || context.teamId !== state.teamId) throw new GameWorldValidationError(`Staff career autonomy ${state.contextId} does not match its employment context`)
+  }
+  for (const request of Object.values(world.staffCareerRequestsById)) {
+    createStaffCareerRequest(request)
+    const context = requireEntity(world.staffHumanContextsById, request.contextId, `Staff career request ${request.id} context`)
+    if (context.staffId !== request.staffId || context.teamId !== request.teamId) throw new GameWorldValidationError(`Staff career request ${request.id} does not match its context`)
+    if (request.status === 'OPEN' && context.endedOn !== undefined) throw new GameWorldValidationError(`Open Staff career request ${request.id} has ended context`)
+  }
+  const openCareerRequests = new Set<string>()
+  for (const request of Object.values(world.staffCareerRequestsById)) if (request.status === 'OPEN') {
+    const key = `${request.contextId}:${request.kind}:${request.targetRoleId ?? request.targetResponsibilityKind ?? ''}`
+    if (openCareerRequests.has(key)) throw new GameWorldValidationError(`Duplicate open Staff career request ${key}`)
+    openCareerRequests.add(key)
+  }
   for (const state of Object.values(world.staffHumanStatesByContextId)) {
     createStaffHumanState(state)
     requireEntity(world.staffHumanContextsById, state.contextId, `Staff human state context`)
@@ -827,7 +852,7 @@ function validateWorld(world: GameWorld): void {
     if (staffJobOpeningOpenKeys.has(key)) throw new GameWorldValidationError(`Team ${opening.teamId} has more than one open Staff job opening for role ${opening.roleId}`)
     staffJobOpeningOpenKeys.add(key)
   }
-  for (const candidacy of Object.values(world.staffJobCandidaciesById)) { requireEntity(world.staffPeopleById, candidacy.staffId, `Staff candidacy ${candidacy.id} Staff`); requireEntity(world.staffJobOpeningsById, candidacy.jobOpeningId, `Staff candidacy ${candidacy.id} opening`) }
+  for (const candidacy of Object.values(world.staffJobCandidaciesById)) { requireEntity(world.staffPeopleById, candidacy.staffId, `Staff candidacy ${candidacy.id} Staff`); requireEntity(world.staffJobOpeningsById, candidacy.jobOpeningId, `Staff candidacy ${candidacy.id} opening`); if (candidacy.origin !== undefined && candidacy.origin !== 'teamIdentified' && candidacy.origin !== 'staffApplied') throw new GameWorldValidationError(`Staff candidacy ${candidacy.id} has invalid origin`) }
   for (const [candidacyId, interview] of Object.entries(world.staffInterviewsByCandidacyId) as [StaffJobCandidacyId, StaffInterview][]) if (interview.candidacyId !== candidacyId || world.staffJobCandidaciesById[candidacyId] === undefined) throw new GameWorldValidationError(`Staff interview references missing candidacy ${candidacyId}`)
   for (const offer of Object.values(world.staffJobOffersById)) {
     requireEntity(world.staffPeopleById, offer.staffId, `Staff offer ${offer.id} Staff`)
@@ -1010,6 +1035,15 @@ function indexExpectationProfilesByContextId(profiles: readonly StaffExpectation
   for (const profile of profiles) {
     if (Object.hasOwn(indexed, profile.contextId)) throw new GameWorldValidationError(`Duplicate Staff expectation profile for context ${profile.contextId}`)
     indexed[profile.contextId] = profile
+  }
+  return Object.freeze(indexed)
+}
+
+function indexCareerAutonomyByContextId(states: readonly StaffCareerAutonomyState[]): Readonly<Record<StaffHumanContextId, StaffCareerAutonomyState>> {
+  const indexed = Object.create(null) as Record<StaffHumanContextId, StaffCareerAutonomyState>
+  for (const state of states) {
+    if (Object.hasOwn(indexed, state.contextId)) throw new GameWorldValidationError(`Duplicate Staff career autonomy state for context ${state.contextId}`)
+    indexed[state.contextId] = state
   }
   return Object.freeze(indexed)
 }

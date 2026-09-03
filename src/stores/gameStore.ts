@@ -50,6 +50,7 @@ import { acceptStaffJobOffer, completeStaffInterview, createStaffJobOffer, creat
 import { setTeamResponsibility, type SetTeamResponsibilityInput } from '@/app/staffResponsibilities'
 import { acceptStaffRecommendation as acceptStaffRecommendationCommand, dismissStaffRecommendation as dismissStaffRecommendationCommand, type StaffRecommendationCommandResult } from '@/app/staffRecommendations'
 import type { DelegationOutcomeId } from '@/domain/responsibility'
+import { declineStaffCareerRequest, grantStaffCareerRequest } from '@/app/staffCareerAutonomy'
 
 interface GameStore {
   readonly world: GameWorld | null
@@ -80,6 +81,8 @@ interface GameStore {
   setStaffResponsibility(input: SetTeamResponsibilityInput): void
   acceptStaffRecommendation(outcomeId: DelegationOutcomeId): StaffRecommendationCommandResult
   dismissStaffRecommendation(outcomeId: DelegationOutcomeId): StaffRecommendationCommandResult
+  grantStaffCareerRequest(requestId: string): void
+  declineStaffCareerRequest(requestId: string): void
   purchaseUserCoachSkill(skillId: CoachSkillId): CoachRpgOperationResult
   purchaseUserCoachPerk(perkId: CoachPerkId): CoachRpgOperationResult
   acceptUserCoachOffer(offerId: string): void
@@ -185,6 +188,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (result.ok) set({ world: result.world })
     return result
   },
+  grantStaffCareerRequest: (requestId) => set({ world: grantStaffCareerRequest(requireWorld(get().world), requestId) }),
+  declineStaffCareerRequest: (requestId) => set({ world: declineStaffCareerRequest(requireWorld(get().world), requestId) }),
   purchaseUserCoachSkill: (skillId) => { const result = purchaseCoachSkillRank(requireWorld(get().world), requireWorld(get().world).userCoachId, skillId); if (result.ok) set({ world: result.world }); return result },
   purchaseUserCoachPerk: (perkId) => { const result = purchaseCoachPerk(requireWorld(get().world), requireWorld(get().world).userCoachId, perkId); if (result.ok) set({ world: result.world }); return result },
   acceptUserCoachOffer: (offerId) => set({ world: acceptCoachJobOffer(requireWorld(get().world), offerId) }),

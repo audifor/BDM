@@ -43,6 +43,30 @@ function findOffer(world: GameWorld, offerId: string) {
 }
 
 describe('Hiring transaction: opening -> candidacy -> interview -> offer -> accept -> employed', () => {
+  it('employer autopilot progresses the canonically selected staffApplied candidacy rather than orphaning it', () => {
+    const base = createNewGame()
+    const teamId = Object.values(base.teams)[0]!.id
+    const { world, staffId } = withFreeAgentStaff(base, 'staff-applied', { talentEvaluation: 100, potentialEvaluation: 100, tacticalKnowledge: 100, analysis: 100, communication: 100 })
+    const { world: withOpening, opening } = createStaffJobOpeningForTeam(world, { teamId, roleId: 'advanceScout' })
+    const applied = identifyStaffCandidate(withOpening, { openingId: opening.id, staffId, origin: 'staffApplied' })
+    const hired = runStaffHiringProcessForOpening(applied.world, opening.id)
+    expect(hired.staffJobCandidaciesById[applied.candidacyId as never]).toMatchObject({ origin: 'staffApplied', status: 'hired' })
+    expect(hired.staffEmploymentByStaffId[staffId]).toMatchObject({ status: 'employed', teamId })
+  })
+
+  it('rejects a weak staffApplied candidacy when a stronger canonical candidate fills the opening', () => {
+    const base = createNewGame()
+    const teamId = Object.values(base.teams)[0]!.id
+    const { world: weakWorld, staffId: weakId } = withFreeAgentStaff(base, 'weak-applied', { talentEvaluation: 1, potentialEvaluation: 1, tacticalKnowledge: 1, analysis: 1, communication: 1 })
+    const { world: strongWorld, staffId: strongId } = withFreeAgentStaff(weakWorld, 'strong-ranked', { talentEvaluation: 100, potentialEvaluation: 100, tacticalKnowledge: 100, analysis: 100, communication: 100 })
+    const { world: opened, opening } = createStaffJobOpeningForTeam(strongWorld, { teamId, roleId: 'advanceScout' })
+    const applied = identifyStaffCandidate(opened, { openingId: opening.id, staffId: weakId, origin: 'staffApplied' })
+    const hired = runStaffHiringProcessForOpening(applied.world, opening.id)
+    expect(hired.staffEmploymentByStaffId[strongId]).toMatchObject({ status: 'employed', teamId })
+    expect(hired.staffEmploymentByStaffId[weakId]).toBeUndefined()
+    expect(hired.staffJobCandidaciesById[applied.candidacyId as never]).toMatchObject({ status: 'rejected', origin: 'staffApplied' })
+    expect(Object.values(hired.staffJobCandidaciesById).some((item) => item.jobOpeningId === opening.id && ['identified', 'interviewing', 'offered'].includes(item.status))).toBe(false)
+  })
   it('runs the full lifecycle producing employment, assignment, and one active contract', () => {
     const base = createNewGame()
     const teamId = Object.values(base.teams)[0]!.id

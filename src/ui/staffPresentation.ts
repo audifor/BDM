@@ -27,6 +27,45 @@ import {
   type ResponsibilityMode,
 } from '@/domain/responsibility'
 import type { StaffPersonId, TeamId } from '@/domain/ids'
+import type { StaffCareerOutlook } from '@/domain/staffCareerAutonomy'
+
+export interface StaffCareerOutlookPresentation {
+  readonly outlook: string
+  readonly intent: string
+  readonly reasons: readonly string[]
+}
+
+/** UI receives only qualitative, already-derived career state; never pressure or intensity numbers. */
+export function presentStaffCareerOutlook(world: GameWorld, staffId: StaffPersonId): StaffCareerOutlookPresentation | undefined {
+  const context = Object.values(world.staffHumanContextsById).find((item) => item.staffId === staffId && item.endedOn === undefined)
+  if (context === undefined) return undefined
+  const state = world.staffCareerAutonomyByContextId[context.id]
+  if (state === undefined) return undefined
+  return { outlook: careerOutlookLabel(state.outlook), intent: state.primaryIntent === 'NONE' ? 'No immediate career concerns' : state.primaryIntent.replace(/_/g, ' '), reasons: state.outlook === 'COMMITTED' ? ['Strongly attached to the organization'] : state.outlook === 'STABLE' ? ['Current professional situation is broadly settled'] : ['Career expectations are not fully being met'] }
+}
+
+function careerOutlookLabel(outlook: StaffCareerOutlook): string { return outlook.replace(/_/g, ' ') }
+
+export interface StaffCareerRequestPresentationItem {
+  readonly id: string
+  readonly staffName: string
+  readonly role: string
+  readonly request: string
+  readonly detail: string
+  readonly createdOn: string
+}
+
+export function getOpenStaffCareerRequestsPresentation(world: GameWorld, teamId: TeamId): readonly StaffCareerRequestPresentationItem[] {
+  return Object.values(world.staffCareerRequestsById)
+    .filter((request) => request.teamId === teamId && request.status === 'OPEN')
+    .sort((a, b) => a.createdOn.localeCompare(b.createdOn) || a.id.localeCompare(b.id))
+    .map((request) => {
+      const person = world.staffPeopleById[request.staffId]!
+      const role = world.staffEmploymentByStaffId[request.staffId]?.roleId
+      const target = request.targetRoleId === undefined ? request.targetResponsibilityKind === undefined ? '' : RESPONSIBILITY_KIND_LABELS[request.targetResponsibilityKind] : STAFF_ROLE_LABELS[request.targetRoleId]
+      return { id: request.id, staffName: `${person.identity.firstName} ${person.identity.lastName}`, role: role === undefined ? '—' : STAFF_ROLE_LABELS[role], request: request.kind.replace(/_/g, ' '), detail: target === '' ? 'Professional expectations remain unmet.' : `Requested: ${target}`, createdOn: request.createdOn }
+    })
+}
 
 /**
  * Presentation labels for every canonical `StaffRoleId`. Only `assistantCoach`/`regionalScout`/
