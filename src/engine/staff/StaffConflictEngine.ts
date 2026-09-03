@@ -9,6 +9,7 @@ import { buildStaffUnitRuntimeViews } from './StaffUnitCohesionEngine'
 const CREATION_THRESHOLD = 62
 export const STAFF_CONFLICT_COOLDOWN_DAYS = 30
 export const STAFF_CONFLICT_COOLDOWN_BYPASS_PRESSURE = 86
+export function resolveStaffConflictActorKind(world: GameWorld, actorId: string): 'staff' | 'coach' | undefined { return world.staffPeopleById[actorId as never] !== undefined ? 'staff' : world.coaches[actorId as never] !== undefined ? 'coach' : undefined }
 
 export function calculateStaffConflictPressure(world: GameWorld, trigger: StaffConflictTrigger, existing?: StaffConflict): number {
   const subjectState = humanStateFor(world, trigger.subjectActorId)
@@ -23,12 +24,13 @@ export function calculateStaffConflictPressure(world: GameWorld, trigger: StaffC
 /** Trigger-only conflict creation: no relationship, culture, or Human State value can create an episode without this concrete seam. */
 export function applyStaffConflictTrigger(world: GameWorld, input: StaffConflictTrigger): GameWorld {
   const trigger = createStaffConflictTrigger(input)
+  if (resolveStaffConflictActorKind(world, trigger.subjectActorId) === undefined || resolveStaffConflictActorKind(world, trigger.counterpartActorId) === undefined) return world
   const active = Object.values(world.staffConflictsById).find((conflict) => conflict.status === 'ACTIVE' && staffConflictGroupingKey(conflict) === staffConflictGroupingKey({ scopeKey: trigger.scopeKey, type: trigger.type, participants: [{ actorId: trigger.subjectActorId, role: 'PRIMARY', state: neutralParticipantState(), joinedOn: trigger.occurredOn }, { actorId: trigger.counterpartActorId, role: 'SECONDARY', state: neutralParticipantState(), joinedOn: trigger.occurredOn }] }))
   if (active?.sourceTriggerIds.includes(trigger.id)) return world
   const pressure = calculateStaffConflictPressure(world, trigger, active)
   if (active === undefined) {
     if (pressure < CREATION_THRESHOLD) return world
-    const resolved = Object.values(world.staffConflictsById).find((conflict) => conflict.status === 'RESOLVED' && staffConflictGroupingKey(conflict) === triggerGroupingKey(trigger))
+    const resolved = Object.values(world.staffConflictsById).filter((conflict) => conflict.status === 'RESOLVED' && staffConflictGroupingKey(conflict) === triggerGroupingKey(trigger)).sort((left, right) => right.resolvedOn!.localeCompare(left.resolvedOn!))[0]
     if (resolved !== undefined && daysBetween(resolved.resolvedOn!, trigger.occurredOn) <= STAFF_CONFLICT_COOLDOWN_DAYS && pressure < STAFF_CONFLICT_COOLDOWN_BYPASS_PRESSURE) return world
   }
   const conflict = active === undefined ? createConflict(trigger, pressure) : applyTrigger(active, trigger, pressure)
@@ -109,7 +111,7 @@ function applyConflictRelationshipMilestone(world: GameWorld, conflict: StaffCon
   return updateGameWorld(world, { relationshipsByKey: relationships })
 }
 function recordConflictMemories(world: GameWorld, conflict: StaffConflict, milestone: 'started' | 'escalated' | 'resolved'): GameWorld {
-  const memories = conflict.participants.slice(0, 2).map((participant) => createMemory({ id: `memory:staff-conflict:${conflict.id}:${milestone}:${participant.actorId}`, owner: { kind: world.staffPeopleById[participant.actorId as never] === undefined ? 'coach' : 'staff', id: participant.actorId }, type: 'conflict', occurredOn: conflict.lastEvaluatedOn, entityRefs: conflict.participants.filter((item) => item.actorId !== participant.actorId).map((item) => ({ kind: world.staffPeopleById[item.actorId as never] === undefined ? 'coach' as const : 'staff' as const, id: item.actorId })), sourceId: conflict.id, semanticKey: `staff-conflict:${conflict.id}:${milestone}`, importance: milestone === 'escalated' ? 'important' : 'notable', valence: milestone === 'resolved' ? 15 : -45, intensity: milestone === 'escalated' ? 70 : 45, decayPerMonth: 3, permanent: false, tags: ['staff', 'conflict', milestone], context: { conflictId: conflict.id, milestone } }))
+  const memories = conflict.participants.slice(0, 2).flatMap((participant) => { const ownerKind = resolveStaffConflictActorKind(world, participant.actorId); if (ownerKind === undefined) return []; const refs = conflict.participants.filter((item) => item.actorId !== participant.actorId).flatMap((item) => { const kind = resolveStaffConflictActorKind(world, item.actorId); return kind === undefined ? [] : [{ kind, id: item.actorId }] }); return [createMemory({ id: `memory:staff-conflict:${conflict.id}:${milestone}:${participant.actorId}`, owner: { kind: ownerKind, id: participant.actorId }, type: 'conflict', occurredOn: conflict.lastEvaluatedOn, entityRefs: refs, sourceId: conflict.id, semanticKey: `staff-conflict:${conflict.id}:${milestone}`, importance: milestone === 'escalated' ? 'important' : 'notable', valence: milestone === 'resolved' ? 15 : -45, intensity: milestone === 'escalated' ? 70 : 45, decayPerMonth: 3, permanent: false, tags: ['staff', 'conflict', milestone], context: { conflictId: conflict.id, milestone } })] })
   const fresh = memories.filter((memory) => world.memoriesById[memory.id] === undefined && !Object.values(world.memoriesById).some((item) => item.owner.id === memory.owner.id && item.semanticKey === memory.semanticKey))
   return fresh.length === 0 ? world : updateGameWorld(world, { memories: [...Object.values(world.memoriesById), ...fresh] })
 }
