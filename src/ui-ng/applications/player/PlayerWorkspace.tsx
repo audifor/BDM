@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react'
 import './player-overview.css'
 import './player-attributes.css'
 import './player-performance.css'
+import './player-contract.css'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -30,6 +31,10 @@ import {
   PerformanceGameInspectorContent,
   PlayerPerformanceView,
 } from '@/ui-ng/applications/player/views/PlayerPerformanceView'
+import {
+  ContractInspectorContent,
+  PlayerContractView,
+} from '@/ui-ng/applications/player/views/PlayerContractView'
 import { PlayerPlaceholderView } from '@/ui-ng/applications/player/views/PlayerPlaceholderView'
 import { ApplicationWorkspace } from '@/ui-ng/workspace/ApplicationWorkspace'
 import { InspectorPane } from '@/ui-ng/workspace/InspectorPane'
@@ -58,6 +63,7 @@ function PlayerWorkspaceShell({ data }: { readonly data: PlayerWorkspaceState })
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false)
   const [selectedGameId, setSelectedGameId] = useState<GameId | null>(null)
   const [competitionFilter, setCompetitionFilter] = useState<PerformanceCompetitionFilter>('all')
+  const [selectedContractItemId, setSelectedContractItemId] = useState<string | null>(null)
 
   const setActiveView = useCallback((view: PlayerWorkspaceViewId) => {
     setActiveViewState(view)
@@ -95,10 +101,12 @@ function PlayerWorkspaceShell({ data }: { readonly data: PlayerWorkspaceState })
     if (model === null) {
       setSelectedGameId(null)
       setCompetitionFilter('all')
+      setSelectedContractItemId(null)
       return
     }
     setSelectedGameId(null)
     setCompetitionFilter('all')
+    setSelectedContractItemId(model.contract.defaultSelectedItemId)
   }, [model?.identity.playerId])
 
   const session = useMemo<PlayerWorkspaceSession>(
@@ -119,6 +127,10 @@ function PlayerWorkspaceShell({ data }: { readonly data: PlayerWorkspaceState })
         competitionFilter,
         setCompetitionFilter,
       },
+      contract: {
+        selectedItemId: selectedContractItemId,
+        setSelectedItemId: setSelectedContractItemId,
+      },
     }),
     [
       activeView,
@@ -126,6 +138,7 @@ function PlayerWorkspaceShell({ data }: { readonly data: PlayerWorkspaceState })
       competitionFilter,
       inspectorCollapsed,
       selectedCategory,
+      selectedContractItemId,
       selectedGameId,
       selectedRatingId,
       setActiveView,
@@ -200,7 +213,15 @@ function PlayerWorkspaceLayout({
       >
         <WorkspaceBody
           inspector={
-            activeView === 'performance' ? (
+            activeView === 'contract' ? (
+              <InspectorPane
+                collapsed={inspectorCollapsed}
+                onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
+                title="Contract Detail"
+              >
+                <ContractInspectorContent />
+              </InspectorPane>
+            ) : activeView === 'performance' ? (
               <InspectorPane
                 collapsed={inspectorCollapsed}
                 onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
@@ -223,8 +244,8 @@ function PlayerWorkspaceLayout({
               {activeView === 'overview' && <PlayerOverviewView />}
               {activeView === 'attributes' && <PlayerAttributesView />}
               {activeView === 'performance' && <PlayerPerformanceView />}
+              {activeView === 'contract' && <PlayerContractView />}
               {(activeView === 'development' ||
-                activeView === 'contract' ||
                 activeView === 'medical' ||
                 activeView === 'history') && <PlayerPlaceholderView viewId={activeView} />}
             </div>

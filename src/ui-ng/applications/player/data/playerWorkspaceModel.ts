@@ -2,6 +2,7 @@ import type { PlayerId } from '@/domain/ids'
 import type { CanonicalRatingKey } from '@/domain/player'
 
 import type { PlayerPerformanceModel } from './buildPlayerPerformanceModel'
+import type { PlayerContractModel } from './buildPlayerContractModel'
 import type { RatingCategory } from './ratingCatalog'
 
 export type PresentationAvailability = 'available' | 'unavailable'
@@ -120,6 +121,7 @@ export interface PlayerWorkspaceModel {
   readonly ratings: readonly PlayerRatingRow[]
   readonly attributes: PlayerAttributesModel
   readonly performance: PlayerPerformanceModel
+  readonly contract: PlayerContractModel
   readonly strengths: readonly EvaluationItem[]
   readonly limitations: readonly EvaluationItem[]
   readonly radarAxes: readonly RadarAxisModel[]

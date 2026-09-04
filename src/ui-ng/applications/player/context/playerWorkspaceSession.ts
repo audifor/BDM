@@ -2,6 +2,7 @@ import type { CanonicalRatingKey } from '@/domain/player'
 
 import type { RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
 import type { PerformanceSession } from '@/ui-ng/applications/player/context/performanceSession'
+import type { ContractSession } from '@/ui-ng/applications/player/context/contractSession'
 import type { PlayerWorkspaceViewId } from '@/ui-ng/applications/player/playerStructuralData'
 
 export interface PlayerWorkspaceSession {
@@ -16,4 +17,5 @@ export interface PlayerWorkspaceSession {
   readonly inspectorCollapsed: boolean
   readonly setInspectorCollapsed: (collapsed: boolean) => void
   readonly performance: PerformanceSession
+  readonly contract: ContractSession
 }

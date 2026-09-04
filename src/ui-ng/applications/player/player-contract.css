@@ -1,0 +1,488 @@
+/* Player Contract workspace — STEP 007 */
+
+.pc-root {
+  display: grid;
+  grid-template-rows: minmax(0, auto) minmax(0, 1fr) auto;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--ng-bg-workspace);
+}
+
+.pc-root__upper {
+  display: grid;
+  gap: 0;
+  border-bottom: 1px solid var(--ng-border-strong);
+}
+
+.pc-root__main {
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Shared stat hierarchy */
+.pc-stat-label {
+  font-size: var(--ng-font-size-meta);
+  font-weight: var(--ng-font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pc-stat-label--primary {
+  color: var(--ng-text-muted);
+}
+
+.pc-stat-label--secondary,
+.pc-stat-label--tertiary {
+  color: var(--ng-text-disabled);
+  font-weight: var(--ng-font-weight-medium);
+}
+
+.pc-stat-value {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.pc-stat-value--primary {
+  font-size: 20px;
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-primary);
+}
+
+.pc-stat-value--secondary {
+  font-size: var(--ng-font-size-data);
+  font-weight: var(--ng-font-weight-medium);
+  color: var(--ng-text-secondary);
+}
+
+.pc-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ng-spacing-8);
+  min-height: 28px;
+  padding: var(--ng-spacing-4) var(--ng-spacing-12);
+  border-bottom: 1px solid var(--ng-border-subtle);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.pc-panel-head__title {
+  font-size: var(--ng-font-size-secondary);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-primary);
+}
+
+.pc-panel-head__meta {
+  font-size: var(--ng-font-size-meta);
+  color: var(--ng-text-muted);
+}
+
+.pc-panel-empty {
+  margin: 0;
+  padding: var(--ng-spacing-12);
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-muted);
+}
+
+/* Status band */
+.pc-status {
+  padding: var(--ng-spacing-8) var(--ng-spacing-12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 24%),
+    var(--ng-bg-panel-primary);
+}
+
+.pc-status__primary {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--ng-spacing-16);
+}
+
+.pc-status__context {
+  display: flex;
+  align-items: center;
+  gap: var(--ng-spacing-8);
+}
+
+.pc-status__team {
+  font-size: var(--ng-font-size-md);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-primary);
+}
+
+.pc-status__pill {
+  font-size: 11px;
+  font-weight: var(--ng-font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--ng-border-standard);
+}
+
+.pc-status__pill--active {
+  color: var(--ng-positive);
+  border-color: rgba(95, 168, 106, 0.35);
+  background: var(--ng-positive-muted);
+}
+
+.pc-status__pill--expiring {
+  color: var(--ng-warning);
+  border-color: rgba(196, 154, 69, 0.35);
+  background: var(--ng-warning-muted);
+}
+
+.pc-status__pill--scheduled,
+.pc-status__pill--none {
+  color: var(--ng-text-secondary);
+}
+
+.pc-status__pill--terminated,
+.pc-status__pill--expired {
+  color: var(--ng-text-muted);
+}
+
+.pc-status__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ng-spacing-16);
+}
+
+.pc-status__fact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 72px;
+}
+
+.pc-status__meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ng-spacing-16);
+  margin-top: var(--ng-spacing-4);
+  font-size: var(--ng-font-size-meta);
+  color: var(--ng-text-muted);
+}
+
+.pc-status--empty .pc-status__empty-message {
+  margin: var(--ng-spacing-4) 0 0;
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-secondary);
+}
+
+/* Agreement summary */
+.pc-agreement {
+  border-top: 1px solid var(--ng-border-subtle);
+  background: var(--ng-bg-panel-secondary);
+}
+
+.pc-agreement__grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--ng-spacing-8) var(--ng-spacing-12);
+  margin: 0;
+  padding: var(--ng-spacing-8) var(--ng-spacing-12);
+}
+
+.pc-agreement__grid dt {
+  font-size: var(--ng-font-size-meta);
+  color: var(--ng-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pc-agreement__grid dd {
+  margin: 2px 0 0;
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-primary);
+}
+
+/* Rights */
+.pc-rights {
+  border-top: 1px solid var(--ng-border-subtle);
+}
+
+.pc-rights__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ng-spacing-8) var(--ng-spacing-12);
+  margin: 0;
+  padding: var(--ng-spacing-8) var(--ng-spacing-12);
+}
+
+.pc-rights__grid dt {
+  font-size: var(--ng-font-size-meta);
+  color: var(--ng-text-muted);
+}
+
+.pc-rights__grid dd {
+  margin: 2px 0 0;
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-secondary);
+}
+
+/* Timeline */
+.pc-timeline {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--ng-border-subtle);
+  background: var(--ng-bg-panel-secondary);
+}
+
+.pc-timeline__track {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: var(--ng-spacing-4);
+  align-items: start;
+  padding: var(--ng-spacing-12);
+  min-height: 132px;
+}
+
+.pc-timeline-node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: var(--ng-spacing-4);
+  border: 1px solid transparent;
+  border-radius: var(--ng-radius-sm);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.pc-timeline-node:hover {
+  background: var(--ng-bg-hover);
+}
+
+.pc-timeline-node.is-selected {
+  border-color: var(--ng-border-selected);
+  background: var(--ng-selection);
+}
+
+.pc-timeline-node__marker {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ng-accent-secondary);
+}
+
+.pc-timeline-node--current .pc-timeline-node__marker {
+  background: var(--ng-accent-primary);
+  box-shadow: 0 0 0 3px var(--ng-accent-primary-muted);
+}
+
+.pc-timeline-node--signed .pc-timeline-node__marker {
+  background: var(--ng-brand-mark);
+}
+
+.pc-timeline-node--expires .pc-timeline-node__marker,
+.pc-timeline-node__marker-label {
+  color: var(--ng-warning);
+}
+
+.pc-timeline-node__connector {
+  position: absolute;
+  top: 14px;
+  left: calc(50% + 8px);
+  width: calc(100% - 8px);
+  height: 1px;
+  background: var(--ng-border-standard);
+  pointer-events: none;
+}
+
+.pc-timeline-node__season {
+  font-size: var(--ng-font-size-meta);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-primary);
+}
+
+.pc-timeline-node__marker-label,
+.pc-timeline-node__guarantee {
+  font-size: 11px;
+  color: var(--ng-text-muted);
+  text-align: center;
+}
+
+/* Financial schedule */
+.pc-schedule {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pc-schedule__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.pc-schedule__table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: var(--ng-font-size-meta);
+}
+
+.pc-schedule__table col.pc-schedule__col--season {
+  width: 16%;
+}
+
+.pc-schedule__table col.pc-schedule__col--num {
+  width: 17%;
+}
+
+.pc-schedule__table col.pc-schedule__col--status {
+  width: 18%;
+}
+
+.pc-schedule__table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: var(--ng-grid-row-sm);
+  padding: 0 var(--ng-spacing-8);
+  border-bottom: 1px solid var(--ng-border-standard);
+  background: var(--ng-bg-panel-primary);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-muted);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.pc-schedule__table tbody tr {
+  height: var(--ng-grid-row-md);
+  cursor: pointer;
+}
+
+.pc-schedule__table tbody tr:hover {
+  background: var(--ng-bg-hover);
+}
+
+.pc-schedule__table tbody tr.is-current td:first-child {
+  box-shadow: inset 2px 0 0 var(--ng-accent-primary);
+}
+
+.pc-schedule__table tbody tr.is-selected {
+  background: var(--ng-bg-selected);
+  box-shadow: var(--ng-shadow-selected-glow);
+}
+
+.pc-schedule__table td {
+  padding: 0 var(--ng-spacing-8);
+  border-bottom: 1px solid var(--ng-border-subtle);
+  color: var(--ng-text-secondary);
+  white-space: nowrap;
+  text-align: center;
+}
+
+.pc-schedule__num,
+.pc-schedule__col--season,
+.pc-schedule__col--status {
+  text-align: center;
+}
+
+/* History */
+.pc-history {
+  border-top: 1px solid var(--ng-border-subtle);
+  background: var(--ng-bg-panel-primary);
+}
+
+.pc-history__list {
+  list-style: none;
+  margin: 0;
+  padding: var(--ng-spacing-4) var(--ng-spacing-12) var(--ng-spacing-8);
+}
+
+.pc-history__item {
+  display: grid;
+  grid-template-columns: 1.2fr 1.4fr auto;
+  gap: var(--ng-spacing-12);
+  min-height: var(--ng-grid-row-sm);
+  align-items: center;
+  font-size: var(--ng-font-size-meta);
+  color: var(--ng-text-secondary);
+}
+
+.pc-history__team {
+  color: var(--ng-text-primary);
+  font-weight: var(--ng-font-weight-medium);
+}
+
+.pc-history__status {
+  color: var(--ng-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Inspector */
+.pc-inspector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ng-spacing-12);
+}
+
+.pc-inspector--empty .pc-inspector__hint {
+  margin: 0;
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-muted);
+}
+
+.pc-inspector__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pc-inspector__season {
+  font-size: var(--ng-font-size-md);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-primary);
+}
+
+.pc-inspector__meta {
+  font-size: var(--ng-font-size-meta);
+  color: var(--ng-text-muted);
+}
+
+.pc-inspector__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ng-spacing-8);
+}
+
+.pc-inspector__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pc-inspector__footer {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ng-spacing-8);
+  padding-top: var(--ng-spacing-4);
+  border-top: 1px solid var(--ng-border-subtle);
+}
+
+@media (min-width: 2400px) {
+  .pc-root__main {
+    grid-template-columns: 1fr 1.15fr;
+  }
+
+  .pc-agreement__grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .pc-schedule__table {
+    font-size: var(--ng-font-size-secondary);
+  }
+
+  .pc-inspector__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

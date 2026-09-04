@@ -30,6 +30,9 @@ import {
   buildPlayerPerformanceModel,
 } from './buildPlayerPerformanceModel'
 import {
+  buildPlayerContractModel,
+} from './buildPlayerContractModel'
+import {
   availableField,
   deriveTeamColors,
   findTeamForPlayer,
@@ -253,6 +256,7 @@ export function buildPlayerWorkspaceModel(
     ratings,
     attributes: buildAttributes(player.basketball.ratings),
     performance: buildPlayerPerformanceModel(world, player.id),
+    contract: buildPlayerContractModel(world, player.id),
     strengths: buildEvaluations(ratings, 'strength'),
     limitations: buildEvaluations(ratings, 'limitation'),
     radarAxes: RADAR_CATEGORY_ORDER.map((category) => ({
