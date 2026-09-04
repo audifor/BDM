@@ -2,11 +2,12 @@ import { applyRelationshipEvent, createRelationshipProfile, relationshipKey, typ
 
 import { updateGameWorld, type GameWorld } from './GameWorld'
 
-/** Applies a deterministic event to one directed relationship without mutating the world. */
-export function applyRelationshipEventToWorld(world: GameWorld, sourceId: RelationshipPersonId, targetId: RelationshipPersonId, event: RelationshipEvent): GameWorld {
-  const key = relationshipKey(sourceId, targetId)
-  const profile = world.relationshipsByKey[key] ?? createRelationshipProfile(sourceId, targetId)
-  const updated = applyRelationshipEvent(profile, event)
-  if (updated === profile) return world
-  return updateGameWorld(world, { relationshipsByKey: { ...world.relationshipsByKey, [key]: updated } })
+export interface DirectedRelationshipEvent { readonly sourceId: RelationshipPersonId; readonly targetId: RelationshipPersonId; readonly event: RelationshipEvent }
+export function applyRelationshipEventsToWorld(world: GameWorld, events: readonly DirectedRelationshipEvent[]): GameWorld {
+  const relationships = { ...world.relationshipsByKey }; let changed = false
+  for (const item of [...events].sort((a, b) => a.sourceId.localeCompare(b.sourceId) || a.targetId.localeCompare(b.targetId) || a.event.id.localeCompare(b.event.id))) { const key = relationshipKey(item.sourceId, item.targetId); const profile = relationships[key] ?? createRelationshipProfile(item.sourceId, item.targetId); const updated = applyRelationshipEvent(profile, item.event); if (updated !== profile) { relationships[key] = updated; changed = true } }
+  return changed ? updateGameWorld(world, { relationshipsByKey: relationships }) : world
 }
+
+/** Applies a deterministic event to one directed relationship without mutating the world. */
+export function applyRelationshipEventToWorld(world: GameWorld, sourceId: RelationshipPersonId, targetId: RelationshipPersonId, event: RelationshipEvent): GameWorld { return applyRelationshipEventsToWorld(world, [{ sourceId, targetId, event }]) }

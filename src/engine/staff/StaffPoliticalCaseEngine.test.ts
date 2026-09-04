@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { advanceDay } from '@/engine/calendar'
 import { addDays, type GameDate } from '@/domain/date'
-import { staffPersonIdFromString } from '@/domain/ids'
-import { createStaffPerson, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
+import { staffPersonIdFromString, teamStaffAssignmentIdFromString } from '@/domain/ids'
+import { createStaffPerson, createTeamStaffAssignment, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { staffHumanContextIdFor } from '@/domain/staffHumanState'
 import { updateGameWorld } from '@/domain/world'
+import { createStaffPoliticalAction, staffPoliticalActionIdFor, staffPoliticalCaseIdFor } from '@/domain/staffPolitics'
 import { progressStaffPoliticalCases } from './StaffPoliticalCaseEngine'
 import { isStaffWeeklyCheckpoint } from './StaffWeeklyCadence'
 
@@ -23,6 +24,15 @@ function worldWithRequest(kind: import('@/domain/staffCareerAutonomy').StaffCare
   const context = { id: staffHumanContextIdFor(staffId, teamId, base.currentDate), staffId, teamId, startedOn: base.currentDate }
   const request = { id: `request-${kind}`, contextId: context.id, staffId: context.staffId, teamId: context.teamId, kind, createdOn: base.currentDate, status, ...(status === 'OPEN' ? {} : { resolvedOn: base.currentDate }), ...((kind === 'PROMOTION' || kind === 'ROLE_CHANGE') ? { targetRoleId: 'assistantCoach' as never } : {}), ...(kind === 'MORE_RESPONSIBILITY' ? { targetResponsibilityKind: 'SCOUTING' as never } : {}) }
   return updateGameWorld(base, { staffPeople: [...Object.values(base.staffPeopleById), staff], staffHumanContexts: [context], staffCareerRequests: [request] })
+}
+
+function worldReadyForSupportLobby(currentDate?: GameDate) {
+  const base = updateGameWorld(createNewGame(), { currentDate: currentDate ?? nextWeeklyCheckpoint(createNewGame().currentDate) }); const date = base.currentDate; const teamId = Object.values(base.teams)[0]!.id; const coachId = base.teams[teamId]!.coachId!
+  const subjectId = staffPersonIdFromString('pipeline-subject'); const actorId = staffPersonIdFromString('pipeline-actor'); const attributes = Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((attribute) => [attribute, 90])) as Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number>
+  const people = [subjectId, actorId].map((id) => createStaffPerson({ id, identity: { firstName: id, lastName: 'Staff' }, professional: { attributes } })); const contexts = [subjectId, actorId].map((staffId) => ({ id: staffHumanContextIdFor(staffId, teamId, date), staffId, teamId, startedOn: date })); const assignments = [subjectId, actorId].map((staffPersonId, index) => createTeamStaffAssignment({ id: teamStaffAssignmentIdFromString(`pipeline-assignment-${index}`), staffPersonId, teamId, role: (index === 0 ? 'assistantCoach' : 'generalManager') as never, assignedOn: date }))
+  const request = { id: 'pipeline-request', contextId: contexts[0]!.id, staffId: subjectId, teamId, kind: 'RELEASE' as const, createdOn: date, status: 'OPEN' as const }; const politicalCase = { id: staffPoliticalCaseIdFor(teamId, 'CAREER_REQUEST', request.id), scopeKey: teamId, teamId, sourceKind: 'CAREER_REQUEST' as const, sourceId: request.id, agenda: 'CAREER' as const, subjectStaffId: subjectId, openedOn: date, lastEvaluatedOn: date, status: 'OPEN' as const, positions: [{ actorId, stance: 'SUPPORT' as const, since: date, lastEvaluatedOn: date }] }; const neutral = { trust: 100, professionalRespect: 100, communicationQuality: 100, collaboration: 0, personalCloseness: 0, perceivedSupport: 100, reliability: 0, professionalAlignment: 100 }
+  const world = updateGameWorld(base, { staffPeople: [...Object.values(base.staffPeopleById), ...people], teamStaffAssignments: [...Object.values(base.teamStaffAssignmentsById), ...assignments], staffEmploymentByStaffId: { ...base.staffEmploymentByStaffId, [subjectId]: { status: 'employed' as const, teamId, roleId: 'assistantCoach' as never, startedOn: date }, [actorId]: { status: 'employed' as const, teamId, roleId: 'generalManager' as never, startedOn: date } }, staffHumanContexts: contexts, staffCareerRequests: [request], staffPoliticalCases: [politicalCase], relationshipsByKey: { [`${actorId}->${coachId}`]: { sourceId: actorId, targetId: coachId, value: 0, dimensions: neutral, events: [] } } })
+  return { world, date, teamId, coachId, subjectId, actorId, request: world.staffCareerRequestsById[request.id]!, politicalCase: world.staffPoliticalCasesById[politicalCase.id]! }
 }
 
 describe('progressStaffPoliticalCases', () => {
@@ -109,5 +119,20 @@ describe('progressStaffPoliticalCases', () => {
     const sunday = addDays(nextWeeklyCheckpoint(initial.currentDate), -1)
     const world = worldWithRequest('RELEASE', 'OPEN', sunday)
     expect(Object.keys(advanceDay(world).staffPoliticalCasesById)).toHaveLength(1)
+  })
+
+  it('applies a newly created action consequence in the same weekly checkpoint', () => {
+    const value = worldReadyForSupportLobby(); const progressed = progressStaffPoliticalCases(value.world); const politicalAction = Object.values(progressed.staffPoliticalActionsById)[0]!
+    expect(politicalAction).toMatchObject({ kind: 'LOBBY', stance: 'SUPPORT', actorIds: [value.actorId], performedOn: value.date }); const relationship = progressed.relationshipsByKey[`${value.subjectId}->${value.actorId}`]!; expect(relationship).toMatchObject({ value: 5, dimensions: expect.objectContaining({ perceivedSupport: 9, trust: 4, professionalRespect: 3, professionalAlignment: 2 }) }); expect(relationship.events).toHaveLength(1); expect(Object.values(progressed.memoriesById)).toHaveLength(1)
+  })
+
+  it('does not backfill consequences for an action persisted before this checkpoint', () => {
+    const initial = worldReadyForSupportLobby(); const nextDate = nextWeeklyCheckpoint(addDays(initial.date, 1)); const action = createStaffPoliticalAction({ id: staffPoliticalActionIdFor(initial.politicalCase.id, 'LOBBY', 'SUPPORT', [initial.actorId], { kind: 'COACH', id: initial.coachId }), caseId: initial.politicalCase.id, teamId: initial.teamId, kind: 'LOBBY', stance: 'SUPPORT', actorIds: [initial.actorId], target: { kind: 'COACH', id: initial.coachId }, performedOn: initial.date }); const historical = updateGameWorld(initial.world, { currentDate: nextDate, staffPoliticalActions: [action] }); const progressed = progressStaffPoliticalCases(historical)
+    expect(progressed.staffPoliticalActionsById).toEqual(historical.staffPoliticalActionsById); expect(progressed.relationshipsByKey).toEqual(historical.relationshipsByKey); expect(progressed.memoriesById).toEqual(historical.memoriesById)
+  })
+
+  it('resolves the Career Request before actions or consequences can be created', () => {
+    const value = worldReadyForSupportLobby(); const resolved = updateGameWorld(value.world, { staffCareerRequests: [{ ...value.request, status: 'DECLINED', resolvedOn: value.date }] }); const progressed = progressStaffPoliticalCases(resolved)
+    expect(progressed.staffPoliticalCasesById[value.politicalCase.id]).toMatchObject({ status: 'RESOLVED', resolution: { kind: 'REJECTED', resolvedOn: value.date } }); expect(progressed.staffPoliticalActionsById).toEqual({}); expect(progressed.relationshipsByKey).toEqual(resolved.relationshipsByKey); expect(progressed.memoriesById).toEqual(resolved.memoriesById)
   })
 })
