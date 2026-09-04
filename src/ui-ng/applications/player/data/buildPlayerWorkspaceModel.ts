@@ -27,6 +27,9 @@ import {
   splitPrimarySecondaryRatings,
 } from './ratingCatalog'
 import {
+  buildPlayerPerformanceModel,
+} from './buildPlayerPerformanceModel'
+import {
   availableField,
   deriveTeamColors,
   findTeamForPlayer,
@@ -249,6 +252,7 @@ export function buildPlayerWorkspaceModel(
     },
     ratings,
     attributes: buildAttributes(player.basketball.ratings),
+    performance: buildPlayerPerformanceModel(world, player.id),
     strengths: buildEvaluations(ratings, 'strength'),
     limitations: buildEvaluations(ratings, 'limitation'),
     radarAxes: RADAR_CATEGORY_ORDER.map((category) => ({

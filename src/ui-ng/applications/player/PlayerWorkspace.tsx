@@ -2,13 +2,16 @@ import type { CSSProperties } from 'react'
 
 import './player-overview.css'
 import './player-attributes.css'
+import './player-performance.css'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import type { GameId } from '@/domain/ids'
+
 import { PlayerWorkspaceHeader } from '@/ui-ng/applications/player/components/PlayerWorkspaceHeader'
 import { RatingInspectorDetail } from '@/ui-ng/applications/player/components/RatingInspectorDetail'
-import type { RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
-import { RADAR_CATEGORY_ORDER } from '@/ui-ng/applications/player/data/ratingCatalog'
+import type { PerformanceCompetitionFilter } from '@/ui-ng/applications/player/data/buildPlayerPerformanceModel'
+import { RADAR_CATEGORY_ORDER, type RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
 import {
   usePlayerWorkspaceModel,
   type PlayerWorkspaceState,
@@ -23,6 +26,10 @@ import {
 } from '@/ui-ng/applications/player/playerStructuralData'
 import { PlayerAttributesView } from '@/ui-ng/applications/player/views/PlayerAttributesView'
 import { PlayerOverviewView } from '@/ui-ng/applications/player/views/PlayerOverviewView'
+import {
+  PerformanceGameInspectorContent,
+  PlayerPerformanceView,
+} from '@/ui-ng/applications/player/views/PlayerPerformanceView'
 import { PlayerPlaceholderView } from '@/ui-ng/applications/player/views/PlayerPlaceholderView'
 import { ApplicationWorkspace } from '@/ui-ng/workspace/ApplicationWorkspace'
 import { InspectorPane } from '@/ui-ng/workspace/InspectorPane'
@@ -49,6 +56,8 @@ function PlayerWorkspaceShell({ data }: { readonly data: PlayerWorkspaceState })
   const [selectedCategory, setSelectedCategory] = useState<RatingCategory | null>(null)
   const [attributesCategory, setAttributesCategory] = useState<RatingCategory>(RADAR_CATEGORY_ORDER[0]!)
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false)
+  const [selectedGameId, setSelectedGameId] = useState<GameId | null>(null)
+  const [competitionFilter, setCompetitionFilter] = useState<PerformanceCompetitionFilter>('all')
 
   const setActiveView = useCallback((view: PlayerWorkspaceViewId) => {
     setActiveViewState(view)
@@ -82,6 +91,16 @@ function PlayerWorkspaceShell({ data }: { readonly data: PlayerWorkspaceState })
     }
   }, [activeView, attributesCategory, model, selectedRatingId])
 
+  useEffect(() => {
+    if (model === null) {
+      setSelectedGameId(null)
+      setCompetitionFilter('all')
+      return
+    }
+    setSelectedGameId(null)
+    setCompetitionFilter('all')
+  }, [model?.identity.playerId])
+
   const session = useMemo<PlayerWorkspaceSession>(
     () => ({
       activeView,
@@ -94,8 +113,23 @@ function PlayerWorkspaceShell({ data }: { readonly data: PlayerWorkspaceState })
       setAttributesCategory,
       inspectorCollapsed,
       setInspectorCollapsed,
+      performance: {
+        selectedGameId,
+        setSelectedGameId,
+        competitionFilter,
+        setCompetitionFilter,
+      },
     }),
-    [activeView, attributesCategory, inspectorCollapsed, selectedCategory, selectedRatingId, setActiveView],
+    [
+      activeView,
+      attributesCategory,
+      competitionFilter,
+      inspectorCollapsed,
+      selectedCategory,
+      selectedGameId,
+      selectedRatingId,
+      setActiveView,
+    ],
   )
 
   const contextValue = useMemo(() => ({ ...data, session }), [data, session])
@@ -166,7 +200,15 @@ function PlayerWorkspaceLayout({
       >
         <WorkspaceBody
           inspector={
-            (activeView === 'overview' || activeView === 'attributes') && inspectorRatingId !== null ? (
+            activeView === 'performance' ? (
+              <InspectorPane
+                collapsed={inspectorCollapsed}
+                onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
+                title="Game Detail"
+              >
+                <PerformanceGameInspectorContent />
+              </InspectorPane>
+            ) : (activeView === 'overview' || activeView === 'attributes') && inspectorRatingId !== null ? (
               <InspectorPane
                 collapsed={inspectorCollapsed}
                 onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
@@ -180,8 +222,8 @@ function PlayerWorkspaceLayout({
             <div className="po-workspace-content" data-ng-region="player-workspace-content">
               {activeView === 'overview' && <PlayerOverviewView />}
               {activeView === 'attributes' && <PlayerAttributesView />}
-              {(activeView === 'performance' ||
-                activeView === 'development' ||
+              {activeView === 'performance' && <PlayerPerformanceView />}
+              {(activeView === 'development' ||
                 activeView === 'contract' ||
                 activeView === 'medical' ||
                 activeView === 'history') && <PlayerPlaceholderView viewId={activeView} />}

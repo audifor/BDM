@@ -1,0 +1,508 @@
+/* Player Performance workspace — STEP 006 */
+
+.pp-root {
+  display: grid;
+  grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--ng-bg-workspace);
+}
+
+.pp-root__upper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  border-bottom: 1px solid var(--ng-border-strong);
+}
+
+.pp-root__lanes {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr 1fr;
+  min-height: 0;
+  border-top: 1px solid var(--ng-border-subtle);
+  background: var(--ng-bg-panel-secondary);
+}
+
+.pp-root__lower {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Season summary ── */
+.pp-season {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 24%),
+    var(--ng-bg-panel-primary);
+}
+
+.pp-season__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--ng-spacing-16);
+  padding: var(--ng-spacing-8) var(--ng-spacing-12) var(--ng-spacing-4);
+}
+
+.pp-season__context {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pp-season__season {
+  font-size: var(--ng-font-size-secondary);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-primary);
+}
+
+.pp-season__meta {
+  font-size: var(--ng-font-size-meta);
+  color: var(--ng-text-muted);
+}
+
+.pp-season__playing-time {
+  display: flex;
+  gap: var(--ng-spacing-16);
+}
+
+.pp-season__time-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.pp-season__production {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ng-spacing-16) var(--ng-spacing-24);
+  padding: var(--ng-spacing-4) var(--ng-spacing-12) var(--ng-spacing-8);
+  border-top: 1px solid var(--ng-border-subtle);
+}
+
+.pp-season__prod-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 44px;
+}
+
+.pp-season__prod-cell--secondary {
+  opacity: 0.82;
+}
+
+.pp-season--empty .pp-season__empty-message {
+  margin: 0;
+  padding: var(--ng-spacing-8) var(--ng-spacing-12) var(--ng-spacing-12);
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-secondary);
+}
+
+/* ── Stat hierarchy ── */
+.pp-stat-label {
+  font-size: var(--ng-font-size-meta);
+  font-weight: var(--ng-font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pp-stat-label--primary {
+  color: var(--ng-text-muted);
+}
+
+.pp-stat-label--secondary {
+  color: var(--ng-text-disabled);
+}
+
+.pp-stat-label--tertiary {
+  color: var(--ng-text-disabled);
+  font-weight: var(--ng-font-weight-medium);
+}
+
+.pp-stat-value {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.pp-stat-value--primary {
+  font-size: 22px;
+  font-weight: var(--ng-font-weight-semibold);
+  line-height: 1.1;
+  color: var(--ng-text-primary);
+}
+
+.pp-stat-value--secondary {
+  font-size: var(--ng-font-size-data);
+  font-weight: var(--ng-font-weight-medium);
+  color: var(--ng-text-secondary);
+}
+
+.pp-stat-value--tertiary {
+  font-size: var(--ng-font-size-secondary);
+  font-weight: var(--ng-font-weight-medium);
+  color: var(--ng-text-secondary);
+}
+
+/* ── Panel chrome ── */
+.pp-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ng-spacing-8);
+  min-height: 28px;
+  padding: var(--ng-spacing-4) var(--ng-spacing-12);
+  border-bottom: 1px solid var(--ng-border-subtle);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.pp-panel-head__title {
+  font-size: var(--ng-font-size-secondary);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-primary);
+}
+
+.pp-panel-head__meta {
+  font-size: var(--ng-font-size-meta);
+  color: var(--ng-text-muted);
+}
+
+.pp-panel-empty {
+  margin: 0;
+  padding: var(--ng-spacing-12);
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-muted);
+}
+
+/* ── Production lane ── */
+.pp-production-lane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--ng-border-subtle);
+}
+
+.pp-production-lane__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ng-spacing-8) var(--ng-spacing-12);
+  padding: var(--ng-spacing-8) var(--ng-spacing-12);
+}
+
+.pp-production-lane__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ── Shooting ── */
+.pp-shooting {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--ng-border-subtle);
+}
+
+.pp-shooting__lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ng-spacing-8);
+  padding: var(--ng-spacing-8) var(--ng-spacing-12);
+}
+
+.pp-shooting__line {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  align-items: baseline;
+  gap: var(--ng-spacing-8);
+}
+
+.pp-shooting__label {
+  font-size: var(--ng-font-size-meta);
+  font-weight: var(--ng-font-weight-semibold);
+  letter-spacing: 0.04em;
+  color: var(--ng-text-muted);
+}
+
+.pp-shooting__attempts {
+  font-size: var(--ng-font-size-data);
+  color: var(--ng-text-primary);
+}
+
+.pp-shooting__pct {
+  font-size: var(--ng-font-size-secondary);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-brand-mark);
+}
+
+/* ── Recent form ── */
+.pp-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pp-form__track {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: var(--ng-spacing-4);
+  align-items: end;
+  min-height: 112px;
+  padding: var(--ng-spacing-8) var(--ng-spacing-12);
+}
+
+.pp-form-game {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: var(--ng-spacing-4) 2px;
+  border: 1px solid transparent;
+  border-radius: var(--ng-radius-sm);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.pp-form-game:hover {
+  background: var(--ng-bg-hover);
+}
+
+.pp-form-game[aria-pressed='true'] {
+  border-color: var(--ng-border-selected);
+  background: var(--ng-selection);
+}
+
+.pp-form-game__bar-wrap {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  height: 56px;
+}
+
+.pp-form-game__bar {
+  display: block;
+  width: 70%;
+  min-height: 4px;
+  border-radius: 1px 1px 0 0;
+  background: var(--ng-accent-secondary);
+}
+
+.pp-form-game.is-above-avg .pp-form-game__bar {
+  background: var(--ng-positive);
+}
+
+.pp-form-game.is-below-avg .pp-form-game__bar {
+  background: rgba(138, 132, 120, 0.55);
+}
+
+.pp-form-game.is-best .pp-form-game__bar {
+  background: var(--ng-rating-elite);
+}
+
+.pp-form-game.is-worst .pp-form-game__bar {
+  background: var(--ng-negative);
+}
+
+.pp-form-game__pts {
+  font-size: var(--ng-font-size-meta);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-primary);
+}
+
+.pp-form-game__opp {
+  font-size: 11px;
+  color: var(--ng-text-muted);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Game log ── */
+.pp-log {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.pp-log__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.pp-log__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ng-font-size-meta);
+}
+
+.pp-log__table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: var(--ng-grid-row-sm);
+  padding: 0 var(--ng-spacing-8);
+  border-bottom: 1px solid var(--ng-border-standard);
+  background: var(--ng-bg-panel-primary);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-muted);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.pp-log__table tbody tr {
+  height: var(--ng-grid-row-md);
+  cursor: pointer;
+}
+
+.pp-log__table tbody tr:hover {
+  background: var(--ng-bg-hover);
+}
+
+.pp-log__table tbody tr.is-selected {
+  background: var(--ng-bg-selected);
+  box-shadow: var(--ng-shadow-selected-glow);
+}
+
+.pp-log__table td {
+  padding: 0 var(--ng-spacing-8);
+  border-bottom: 1px solid var(--ng-border-subtle);
+  color: var(--ng-text-secondary);
+  white-space: nowrap;
+}
+
+.pp-log__col--num,
+.pp-log__col--shoot {
+  text-align: right;
+}
+
+.pp-log__col--result {
+  font-weight: var(--ng-font-weight-medium);
+  color: var(--ng-text-primary);
+}
+
+/* ── Competition filter ── */
+.pp-competition-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--ng-spacing-8);
+  padding: 0 var(--ng-spacing-12) var(--ng-spacing-8);
+}
+
+.pp-competition-filter__label {
+  font-size: var(--ng-font-size-meta);
+  color: var(--ng-text-muted);
+}
+
+.pp-competition-filter__select {
+  min-width: 180px;
+  height: var(--ng-control-height-sm);
+  padding: 0 var(--ng-spacing-8);
+  border: 1px solid var(--ng-border-standard);
+  border-radius: var(--ng-radius-sm);
+  background: var(--ng-bg-inset);
+  color: var(--ng-text-primary);
+}
+
+/* ── Inspector ── */
+.pp-inspector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ng-spacing-12);
+}
+
+.pp-inspector--empty .pp-inspector__hint {
+  margin: 0;
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-muted);
+}
+
+.pp-inspector__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pp-inspector__opponent {
+  font-size: var(--ng-font-size-md);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-primary);
+}
+
+.pp-inspector__meta {
+  font-size: var(--ng-font-size-meta);
+  color: var(--ng-text-muted);
+}
+
+.pp-inspector__line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ng-spacing-8);
+}
+
+.pp-inspector__started {
+  margin-left: auto;
+  font-size: var(--ng-font-size-meta);
+  color: var(--ng-text-muted);
+}
+
+.pp-inspector__production {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ng-spacing-8);
+}
+
+.pp-inspector__prod-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pp-inspector__shooting {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ng-spacing-8);
+  padding-top: var(--ng-spacing-4);
+  border-top: 1px solid var(--ng-border-subtle);
+}
+
+.pp-inspector__shoot-line {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: var(--ng-spacing-8);
+}
+
+.pp-inspector__footer {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ng-spacing-8);
+  padding-top: var(--ng-spacing-4);
+  border-top: 1px solid var(--ng-border-subtle);
+}
+
+/* ── 2560 × 1440 — use space, do not scale chrome ── */
+@media (min-width: 2400px) {
+  .pp-root__lanes {
+    grid-template-columns: 1.1fr 1fr 1.05fr;
+  }
+
+  .pp-form__track {
+    min-height: 128px;
+  }
+
+  .pp-form-game__bar-wrap {
+    height: 68px;
+  }
+
+  .pp-log__table {
+    font-size: var(--ng-font-size-secondary);
+  }
+
+  .pp-inspector__production {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
