@@ -93,6 +93,17 @@ describe('StaffPoliticalInfluenceEngine', () => {
     expect(Object.keys(world.relationshipsByKey)).toHaveLength(relationshipCount)
   })
 
+  it('indexes only active same-team assignments for constant-time influence derivation', () => {
+    const world = baseWorld(); const teamId = Object.values(world.teams)[0]!.id; const staffId = staffFor(world, teamId, 'assistantCoach')
+    const assignment = getTeamStaffAssignments(world, teamId).find((item) => item.staffPersonId === staffId)!
+    const inactive = { ...world, staffEmploymentByStaffId: { ...world.staffEmploymentByStaffId, [staffId]: { status: 'unemployed' as const } } } as GameWorld
+    const index = buildStaffPoliticalInfluenceIndex(world)
+    expect(index.activeAssignmentByStaffId[staffId]).toEqual(assignment)
+    expect(index.assignmentRowsScanned).toBe(Object.keys(world.teamStaffAssignmentsById).length)
+    expect(buildStaffPoliticalInfluenceIndex(inactive).activeAssignmentByStaffId[staffId]).toBeUndefined()
+    expect(deriveStaffPoliticalInfluence(world, contextFor(world, staffId, teamId), index)).toEqual(deriveStaffPoliticalInfluence(world, contextFor(world, staffId, teamId)))
+  })
+
   it('is deterministic, bounded, and presents a qualitative band only', () => {
     const world = baseWorld(); const teamId = Object.values(world.teams)[0]!.id; const staffId = staffFor(world, teamId, 'assistantCoach'); const context = contextFor(world, staffId, teamId)
     const first = deriveStaffPoliticalInfluence(world, context); const second = deriveStaffPoliticalInfluence(world, context)

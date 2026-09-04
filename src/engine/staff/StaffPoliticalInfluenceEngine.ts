@@ -1,8 +1,8 @@
 import { getRelationshipDimensions, relationshipKey } from '@/domain/relationships'
 import { responsibilityDefinition } from '@/domain/responsibility'
-import { calculateStaffRoleProficiencyByRoleId, staffRoleDefinition } from '@/domain/staff'
+import { calculateStaffRoleProficiencyByRoleId, staffRoleDefinition, type TeamStaffAssignment } from '@/domain/staff'
 import { staffReputationScore } from '@/domain/staffReputation'
-import { getStaffAssignment, type GameWorld } from '@/domain/world'
+import type { GameWorld } from '@/domain/world'
 import type { StaffHumanContext } from '@/domain/staffHumanState'
 
 export interface StaffPoliticalInfluence {
@@ -30,12 +30,14 @@ export type StaffPoliticalInfluenceBand = typeof STAFF_POLITICAL_INFLUENCE_BANDS
  * it is deliberately not GameWorld state and has no save representation.
  */
 export interface StaffPoliticalInfluenceIndex {
+  readonly activeAssignmentByStaffId: Readonly<Record<string, TeamStaffAssignment>>
   readonly responsibilityAuthorityByStaffId: Readonly<Record<string, number>>
   readonly leadershipAccessByStaffId: Readonly<Record<string, number>>
   readonly leadershipActorByStaffId: Readonly<Record<string, string>>
   readonly leadershipRelationshipByStaffId: Readonly<Record<string, true>>
   readonly networkBackingByStaffId: Readonly<Record<string, number>>
   readonly relationshipRowsScanned: number
+  readonly assignmentRowsScanned: number
 }
 
 export function classifyStaffPoliticalInfluenceBand(overall: number): StaffPoliticalInfluenceBand {
@@ -49,12 +51,14 @@ export function classifyStaffPoliticalInfluenceBand(overall: number): StaffPolit
 /** Pure political-structure projection. It deliberately never reads Human State or Career Autonomy. */
 export function buildStaffPoliticalInfluenceIndex(world: GameWorld): StaffPoliticalInfluenceIndex {
   const staffTeamById: Record<string, string> = {}
+  const activeAssignmentByStaffId: Record<string, TeamStaffAssignment> = {}
   const leadershipActorByStaffId: Record<string, string> = {}
   const leadershipRelationshipByStaffId: Record<string, true> = {}
   for (const assignment of Object.values(world.teamStaffAssignmentsById)) {
     const employment = world.staffEmploymentByStaffId[assignment.staffPersonId]
     if (employment?.status !== 'employed' || employment.teamId !== assignment.teamId) continue
     staffTeamById[assignment.staffPersonId] = assignment.teamId
+    activeAssignmentByStaffId[assignment.staffPersonId] = assignment
     const leaderId = world.teams[assignment.teamId]?.coachId
     if (leaderId !== undefined) {
       leadershipActorByStaffId[assignment.staffPersonId] = leaderId
@@ -88,12 +92,12 @@ export function buildStaffPoliticalInfluenceIndex(world: GameWorld): StaffPoliti
     accumulator.total += score; accumulator.count += 1
   }
   const networkBackingByStaffId = Object.fromEntries(Object.entries(networkTotals).map(([staffId, value]) => [staffId, clamp(value.total / value.count)]))
-  return { responsibilityAuthorityByStaffId, leadershipAccessByStaffId, leadershipActorByStaffId, leadershipRelationshipByStaffId, networkBackingByStaffId, relationshipRowsScanned: relationships.length }
+  return { activeAssignmentByStaffId, responsibilityAuthorityByStaffId, leadershipAccessByStaffId, leadershipActorByStaffId, leadershipRelationshipByStaffId, networkBackingByStaffId, relationshipRowsScanned: relationships.length, assignmentRowsScanned: Object.keys(world.teamStaffAssignmentsById).length }
 }
 
 /** Pure political-structure projection. It deliberately never reads Human State or Career Autonomy. */
 export function deriveStaffPoliticalInfluence(world: GameWorld, context: StaffHumanContext, index = buildStaffPoliticalInfluenceIndex(world)): StaffPoliticalInfluence {
-  const assignment = getStaffAssignment(world, context.staffId)
+  const assignment = index.activeAssignmentByStaffId[context.staffId]
   const activeAssignment = assignment?.teamId === context.teamId ? assignment : undefined
   const role = activeAssignment === undefined ? undefined : staffRoleDefinition(activeAssignment.role)
   const formalAuthority = role === undefined ? 0 : seniorityAuthority(role.seniority)
