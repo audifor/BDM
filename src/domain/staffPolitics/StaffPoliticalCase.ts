@@ -1,6 +1,6 @@
 import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import { teamIdFromString, type StaffPersonId, type TeamId } from '@/domain/ids'
-import { POLITICAL_AGENDAS, POLITICAL_CASE_SOURCE_KINDS, type PoliticalAgenda, type PoliticalCaseSourceKind } from './StaffPolitics'
+import { POLITICAL_AGENDAS, POLITICAL_CASE_SOURCE_KINDS, POLITICAL_STANCES, type PoliticalAgenda, type PoliticalCaseSourceKind, type PoliticalStance } from './StaffPolitics'
 
 export const STAFF_POLITICAL_CASE_STATUSES = ['OPEN', 'RESOLVED', 'EXPIRED'] as const
 export type StaffPoliticalCaseStatus = typeof STAFF_POLITICAL_CASE_STATUSES[number]
@@ -8,8 +8,9 @@ export const STAFF_POLITICAL_CASE_RESOLUTION_KINDS = ['APPROVED', 'REJECTED', 'W
 export type StaffPoliticalCaseResolutionKind = typeof STAFF_POLITICAL_CASE_RESOLUTION_KINDS[number]
 
 export interface StaffPoliticalCaseResolution { readonly kind: StaffPoliticalCaseResolutionKind; readonly resolvedOn: GameDate }
+export interface StaffPoliticalPosition { readonly actorId: StaffPersonId; readonly stance: PoliticalStance; readonly since: GameDate; readonly lastEvaluatedOn: GameDate }
 export interface StaffPoliticalCase {
-  readonly id: string; readonly scopeKey: string; readonly teamId: TeamId; readonly sourceKind: PoliticalCaseSourceKind; readonly sourceId: string; readonly agenda: PoliticalAgenda; readonly subjectStaffId?: StaffPersonId; readonly openedOn: GameDate; readonly lastEvaluatedOn: GameDate; readonly status: StaffPoliticalCaseStatus; readonly resolution?: StaffPoliticalCaseResolution
+  readonly id: string; readonly scopeKey: string; readonly teamId: TeamId; readonly sourceKind: PoliticalCaseSourceKind; readonly sourceId: string; readonly agenda: PoliticalAgenda; readonly subjectStaffId?: StaffPersonId; readonly openedOn: GameDate; readonly lastEvaluatedOn: GameDate; readonly status: StaffPoliticalCaseStatus; readonly resolution?: StaffPoliticalCaseResolution; readonly positions?: readonly StaffPoliticalPosition[]
 }
 
 export function createStaffPoliticalCase(value: StaffPoliticalCase): StaffPoliticalCase {
@@ -25,7 +26,11 @@ export function createStaffPoliticalCase(value: StaffPoliticalCase): StaffPoliti
   if (value.status === 'OPEN' && resolution !== undefined) throw new RangeError('Open Staff political case cannot have a resolution')
   if (value.status === 'RESOLVED' && (resolution === undefined || resolution.kind === 'EXPIRED')) throw new RangeError('Resolved Staff political case requires a non-expired resolution')
   if (value.status === 'EXPIRED' && (resolution === undefined || resolution.kind !== 'EXPIRED')) throw new RangeError('Expired Staff political case requires an expired resolution')
-  return { ...value, teamId, openedOn, lastEvaluatedOn, ...(resolution === undefined ? {} : { resolution }) }
+  const positions = (value.positions ?? []).map((position) => ({ actorId: position.actorId, stance: position.stance, since: parseGameDate(position.since), lastEvaluatedOn: parseGameDate(position.lastEvaluatedOn) }))
+  if (positions.some((position) => !position.actorId.trim() || !POLITICAL_STANCES.includes(position.stance) || compareGameDates(position.since, openedOn) < 0 || compareGameDates(position.lastEvaluatedOn, position.since) < 0 || compareGameDates(position.lastEvaluatedOn, openedOn) < 0)) throw new RangeError('Invalid Staff political position')
+  if (new Set(positions.map((position) => position.actorId)).size !== positions.length) throw new RangeError('Staff political case positions must have unique actors')
+  if (value.subjectStaffId !== undefined && positions.some((position) => position.actorId === value.subjectStaffId)) throw new RangeError('Staff political case subject cannot take a position')
+  return { ...value, teamId, openedOn, lastEvaluatedOn, positions, ...(resolution === undefined ? {} : { resolution }) }
 }
 
 export function staffPoliticalCaseIdFor(teamId: TeamId, sourceKind: PoliticalCaseSourceKind, sourceId: string): string {

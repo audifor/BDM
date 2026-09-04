@@ -57,8 +57,9 @@ describe('GameWorldSaveV3', () => {
 
   it('round-trips open and resolved Staff Political Cases, while legacy V3 defaults them to empty', () => {
     const { world, teamId, staffId } = worldWithHiredStaff()
-    const openCase = { id: `staff-political-case:${teamId}:CAREER_REQUEST:request-open`, scopeKey: teamId, teamId, sourceKind: 'CAREER_REQUEST' as const, sourceId: 'request-open', agenda: 'CAREER' as const, subjectStaffId: staffId, openedOn: world.currentDate, lastEvaluatedOn: world.currentDate, status: 'OPEN' as const }
-    const resolvedCase = { id: `staff-political-case:${teamId}:CAREER_REQUEST:request-resolved`, scopeKey: teamId, teamId, sourceKind: 'CAREER_REQUEST' as const, sourceId: 'request-resolved', agenda: 'CAREER' as const, subjectStaffId: staffId, openedOn: world.currentDate, lastEvaluatedOn: world.currentDate, status: 'RESOLVED' as const, resolution: { kind: 'APPROVED' as const, resolvedOn: world.currentDate } }
+    const [supporter, opponent, mediator] = Object.keys(world.staffPeopleById).filter((id) => id !== staffId).slice(0, 3) as [string, string, string]
+    const openCase = { id: `staff-political-case:${teamId}:CAREER_REQUEST:request-open`, scopeKey: teamId, teamId, sourceKind: 'CAREER_REQUEST' as const, sourceId: 'request-open', agenda: 'CAREER' as const, subjectStaffId: staffId, openedOn: world.currentDate, lastEvaluatedOn: world.currentDate, status: 'OPEN' as const, positions: [{ actorId: supporter as never, stance: 'SUPPORT' as const, since: world.currentDate, lastEvaluatedOn: world.currentDate }, { actorId: opponent as never, stance: 'OPPOSE' as const, since: world.currentDate, lastEvaluatedOn: world.currentDate }, { actorId: mediator as never, stance: 'MEDIATE' as const, since: world.currentDate, lastEvaluatedOn: world.currentDate }] }
+    const resolvedCase = { id: `staff-political-case:${teamId}:CAREER_REQUEST:request-resolved`, scopeKey: teamId, teamId, sourceKind: 'CAREER_REQUEST' as const, sourceId: 'request-resolved', agenda: 'CAREER' as const, subjectStaffId: staffId, openedOn: world.currentDate, lastEvaluatedOn: world.currentDate, status: 'RESOLVED' as const, resolution: { kind: 'APPROVED' as const, resolvedOn: world.currentDate }, positions: [] }
     const withCases = updateGameWorld(world, { staffPoliticalCases: [openCase, resolvedCase] })
     const saved = serializeGameWorldV3(withCases, savedAt)
     expect(deserializeGameWorldV3(saved).staffPoliticalCasesById).toEqual(withCases.staffPoliticalCasesById)
@@ -74,6 +75,13 @@ describe('GameWorldSaveV3', () => {
     const tampered = structuredClone(saved)
     ;(tampered.payload.staffCareerRuntime as Record<string, unknown>).staffPoliticalCases = [{ id: 'alternate-case-id', scopeKey: teamId, teamId, sourceKind: 'CAREER_REQUEST', sourceId: 'request', agenda: 'CAREER', openedOn: world.currentDate, lastEvaluatedOn: world.currentDate, status: 'OPEN' }]
     expect(() => deserializeGameWorldV3(tampered)).toThrow()
+  })
+
+  it('rejects malformed persisted Staff Political Position rows', () => {
+    const { world, teamId, staffId } = worldWithHiredStaff(); const actor = Object.keys(world.staffPeopleById).find((id) => id !== staffId)!
+    const politicalCase = { id: `staff-political-case:${teamId}:CAREER_REQUEST:position-malformed`, scopeKey: teamId, teamId, sourceKind: 'CAREER_REQUEST' as const, sourceId: 'position-malformed', agenda: 'CAREER' as const, subjectStaffId: staffId, openedOn: world.currentDate, lastEvaluatedOn: world.currentDate, status: 'OPEN' as const, positions: [{ actorId: actor as never, stance: 'SUPPORT' as const, since: world.currentDate, lastEvaluatedOn: world.currentDate }] }
+    const saved = serializeGameWorldV3(updateGameWorld(world, { staffPoliticalCases: [politicalCase] }), savedAt)
+    for (const mutate of [(positions: Record<string, unknown>[]) => positions.push({ ...positions[0] }), (positions: Record<string, unknown>[]) => { positions[0]!.stance = 'NEUTRAL' }, (positions: Record<string, unknown>[]) => { positions[0]!.since = '1900-01-01' }]) { const tampered = structuredClone(saved); const positions = ((tampered.payload.staffCareerRuntime as Record<string, unknown>).staffPoliticalCases as { positions: Record<string, unknown>[] }[])[0]!.positions; mutate(positions); expect(() => deserializeGameWorldV3(tampered)).toThrow() }
   })
 
   it('V2 -> V3 migration is deterministic', () => {

@@ -4,3 +4,4 @@ export { trainingQuality, scoutingQuality, tacticsQuality, medicalQuality, recru
 export { calculateOverloadPenalty } from './overloadPenalty'
 export { progressStaffPoliticalCases } from './StaffPoliticalCaseEngine'
 export { isStaffWeeklyCheckpoint } from './StaffWeeklyCadence'
+export { appraiseStaffPoliticalPosition, buildStaffPoliticalRelevanceIndex, discoverRelevantPoliticalActors, pressureForStance, MAX_POLITICAL_ACTORS_PER_CASE } from './StaffPoliticalPositionEngine'
