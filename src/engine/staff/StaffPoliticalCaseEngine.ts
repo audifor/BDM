@@ -4,7 +4,8 @@ import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { isStaffWeeklyCheckpoint } from './StaffWeeklyCadence'
 import { progressStaffPoliticalPositions } from './StaffPoliticalPositionEngine'
 import { buildStaffPoliticalRelevanceIndex } from './StaffPoliticalPositionEngine'
-import { progressStaffPoliticalActions } from './StaffPoliticalActionEngine'
+import { progressStaffPoliticalActionsDetailed } from './StaffPoliticalActionEngine'
+import { applyStaffPoliticalActionConsequences } from './StaffPoliticalActionConsequenceEngine'
 
 const agendaForCareerRequest = (kind: import('@/domain/staffCareerAutonomy').StaffCareerRequestKind): import('@/domain/staffPolitics').PoliticalAgenda => kind === 'MORE_RESPONSIBILITY' ? 'RESPONSIBILITY' : 'CAREER'
 
@@ -52,5 +53,6 @@ export function progressStaffPoliticalCases(world: GameWorld): GameWorld {
   }
   const reconciled = changed ? updateGameWorld(world, { staffPoliticalCases: Object.values(casesById) }) : world
   const index = buildStaffPoliticalRelevanceIndex(reconciled)
-  return progressStaffPoliticalActions(progressStaffPoliticalPositions(reconciled, index), index)
+  const result = progressStaffPoliticalActionsDetailed(progressStaffPoliticalPositions(reconciled, index), index)
+  return applyStaffPoliticalActionConsequences(result.world, result.createdActions)
 }

@@ -7,8 +7,10 @@ export const MAX_NEW_POLITICAL_ACTIONS_PER_CASE_PER_CHECKPOINT = 4
 export const STAFF_POLITICAL_ACTION_TUNING = { endorseMinInfluence: 45, lobbyMinInfluence: 55, lobbyMinLeadershipAccess: 55, coordinateMinActorInfluence: 35, coordinateMinCombinedInfluence: 100, mediateMinInfluence: 45, maxNewActionsPerCasePerCheckpoint: MAX_NEW_POLITICAL_ACTIONS_PER_CASE_PER_CHECKPOINT } as const
 
 interface Candidate { readonly priority: number; readonly action: StaffPoliticalAction }
+export interface StaffPoliticalActionProgressResult { readonly world: GameWorld; readonly createdActions: readonly StaffPoliticalAction[] }
 
-export function progressStaffPoliticalActions(world: GameWorld, index: StaffPoliticalRelevanceIndex): GameWorld {
+export function progressStaffPoliticalActions(world: GameWorld, index: StaffPoliticalRelevanceIndex): GameWorld { return progressStaffPoliticalActionsDetailed(world, index).world }
+export function progressStaffPoliticalActionsDetailed(world: GameWorld, index: StaffPoliticalRelevanceIndex): StaffPoliticalActionProgressResult {
   const existing = new Set(Object.keys(world.staffPoliticalActionsById))
   const actionsCreatedThisCheckpointByCaseId: Record<string, number> = {}
   for (const action of Object.values(world.staffPoliticalActionsById)) if (action.performedOn === world.currentDate) actionsCreatedThisCheckpointByCaseId[action.caseId] = (actionsCreatedThisCheckpointByCaseId[action.caseId] ?? 0) + 1
@@ -21,7 +23,7 @@ export function progressStaffPoliticalActions(world: GameWorld, index: StaffPoli
       if (!existing.has(candidate.action.id)) { existing.add(candidate.action.id); additions.push(candidate.action) }
     }
   }
-  return additions.length === 0 ? world : updateGameWorld(world, { staffPoliticalActions: [...Object.values(world.staffPoliticalActionsById), ...additions] })
+  return additions.length === 0 ? { world, createdActions: [] } : { world: updateGameWorld(world, { staffPoliticalActions: [...Object.values(world.staffPoliticalActionsById), ...additions] }), createdActions: additions }
 }
 
 function candidatesForCase(world: GameWorld, politicalCase: StaffPoliticalCase, index: StaffPoliticalRelevanceIndex, existing: ReadonlySet<string>): Candidate[] {

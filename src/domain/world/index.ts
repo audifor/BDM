@@ -5,7 +5,8 @@ export {
   GameWorldValidationError,
 } from './GameWorld'
 export type { CreateGameWorldInput, GameWorld } from './GameWorld'
-export { applyRelationshipEventToWorld } from './RelationshipEvents'
+export { addMemoriesToGameWorld } from './GameWorld'
+export { applyRelationshipEventToWorld, applyRelationshipEventsToWorld } from './RelationshipEvents'
 export { applyMoraleEventToWorld } from './MoraleEvents'
 export { addInboxItem, addNewsItem, archiveInboxItem, markInboxItemRead } from './InboxOperations'
 export { getActiveInjuryForPlayer, getAvailableRosterPlayers, getCurrentPlayerInjury, isPlayerAvailable } from './availability'
