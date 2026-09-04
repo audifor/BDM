@@ -1,0 +1,42 @@
+@import '../tokens/ng-tokens.css';
+
+#root {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.bdm-os-ng {
+  height: 100vh;
+  width: 100vw;
+  display: grid;
+  grid-template-rows:
+    var(--ng-system-bar-height)
+    minmax(0, 1fr)
+    var(--ng-taskbar-height);
+  overflow: hidden;
+  background: var(--ng-bg-system);
+  color: var(--ng-text-primary);
+  font-family: var(--ng-font-ui);
+  font-size: var(--ng-font-size-body);
+  line-height: 1.4;
+}
+
+.bdm-os-ng__workspace-region {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.bdm-os-ng__scaffold-label {
+  font-size: var(--ng-font-size-meta);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.bdm-os-ng__scaffold-outline {
+  outline: 1px dashed var(--ng-border-subtle);
+  outline-offset: -1px;
+}

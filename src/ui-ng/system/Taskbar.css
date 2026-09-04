@@ -1,0 +1,41 @@
+.ng-taskbar {
+  display: flex;
+  align-items: center;
+  height: var(--ng-taskbar-height);
+  min-height: var(--ng-taskbar-height);
+  padding: 0 var(--ng-spacing-12);
+  border-top: 1px solid var(--ng-border-subtle);
+  background: var(--ng-bg-system);
+  overflow: hidden;
+}
+
+.ng-taskbar__apps {
+  display: flex;
+  align-items: center;
+  gap: var(--ng-spacing-8);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ng-taskbar__app {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--ng-control-height-md);
+  padding: 0 var(--ng-spacing-12);
+  border: 1px solid var(--ng-border-standard);
+  border-radius: 4px;
+  background: var(--ng-bg-elevated);
+  color: var(--ng-text-secondary);
+  font-size: var(--ng-font-size-secondary);
+}
+
+.ng-taskbar__app:hover {
+  border-color: var(--ng-border-strong);
+  color: var(--ng-text-primary);
+}
+
+.ng-taskbar__app:focus-visible {
+  outline: 2px solid var(--ng-accent-primary);
+  outline-offset: 1px;
+}

@@ -1,0 +1,68 @@
+:root {
+  /* Backgrounds */
+  --ng-bg-system: #0f1114;
+  --ng-bg-workspace: #14171c;
+  --ng-bg-elevated: #1a1f26;
+  --ng-bg-subtle: #101318;
+
+  /* Borders */
+  --ng-border-subtle: #252a33;
+  --ng-border-standard: #323844;
+  --ng-border-strong: #454d5c;
+
+  /* Text */
+  --ng-text-primary: #e8eaed;
+  --ng-text-secondary: #b4bac4;
+  --ng-text-muted: #7a8290;
+
+  /* Accents & semantic */
+  --ng-accent-primary: #4a8fd4;
+  --ng-accent-secondary: #6b7fd7;
+  --ng-positive: #3d9a6e;
+  --ng-warning: #c49a3a;
+  --ng-negative: #c45c5c;
+  --ng-information: #4a8fd4;
+
+  /* Spacing */
+  --ng-spacing-4: 4px;
+  --ng-spacing-8: 8px;
+  --ng-spacing-12: 12px;
+  --ng-spacing-16: 16px;
+  --ng-spacing-24: 24px;
+  --ng-spacing-32: 32px;
+
+  /* Shell geometry */
+  --ng-system-bar-height: 48px;
+  --ng-taskbar-height: 56px;
+  --ng-workspace-header-height: 56px;
+  --ng-workspace-tabs-height: 36px;
+  --ng-workspace-toolbar-height: 36px;
+
+  /* Inspector geometry */
+  --ng-inspector-width: 336px;
+  --ng-inspector-min-width: 300px;
+  --ng-inspector-max-width: 420px;
+
+  /* Typography */
+  --ng-font-ui: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --ng-font-data: 'Consolas', 'Cascadia Mono', 'Segoe UI Mono', monospace;
+
+  --ng-font-size-meta: 11px;
+  --ng-font-size-secondary: 12px;
+  --ng-font-size-data: 13px;
+  --ng-font-size-body: 14px;
+  --ng-font-size-md: 16px;
+  --ng-font-size-lg: 18px;
+  --ng-font-size-xl: 22px;
+  --ng-font-size-display: 26px;
+
+  /* Control heights */
+  --ng-control-height-sm: 28px;
+  --ng-control-height-md: 32px;
+  --ng-control-height-lg: 34px;
+
+  /* Grid row heights */
+  --ng-grid-row-sm: 28px;
+  --ng-grid-row-md: 30px;
+  --ng-grid-row-lg: 34px;
+}

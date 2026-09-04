@@ -1,0 +1,33 @@
+.ng-system-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--ng-spacing-16);
+  height: var(--ng-system-bar-height);
+  min-height: var(--ng-system-bar-height);
+  padding: 0 var(--ng-spacing-16);
+  border-bottom: 1px solid var(--ng-border-subtle);
+  background: var(--ng-bg-system);
+  overflow: hidden;
+}
+
+.ng-system-bar__brand {
+  font-size: var(--ng-font-size-md);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ng-text-primary);
+}
+
+.ng-system-bar__items {
+  display: flex;
+  align-items: center;
+  gap: var(--ng-spacing-12);
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.ng-system-bar__item {
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-secondary);
+  white-space: nowrap;
+}
