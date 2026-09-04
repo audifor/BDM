@@ -20,6 +20,7 @@ import { staffCareerRequestIdFor, type StaffCareerRequest, type StaffCareerReque
 import { RESPONSIBILITY_REGISTRY } from '@/domain/responsibility'
 import { calculateStaffRoleProficiencyByRoleId, isStaffRoleApplicableToEcosystem, STAFF_ROLE_REGISTRY } from '@/domain/staff'
 import { buildStaffPoliticalInfluenceIndex } from './StaffPoliticalInfluenceEngine'
+import { isStaffWeeklyCheckpoint } from './StaffWeeklyCadence'
 
 /**
  * Wave 5A §21/§37 — the single canonical daily/periodic authority for Staff Human State.
@@ -39,13 +40,13 @@ export function progressStaffHumanState(world: GameWorld): GameWorld {
   let next = ensureStaffHumanContexts(world)
   next = applyDailyRecovery(next)
   next = emitWorkloadTransitionEvents(next)
-  if (shouldRunWeeklyAppraisal(next)) next = runWeeklyAppraisal(next)
+  if (isStaffWeeklyCheckpoint(next.currentDate)) next = runWeeklyAppraisal(next)
   return next
 }
 
 /** Runs after conflict and culture progression so career appraisal reads their current canonical state. */
 export function progressStaffCareerAutonomyAppraisal(world: GameWorld): GameWorld {
-  return shouldRunWeeklyAppraisal(world) ? progressWeeklyStaffCareerAutonomy(world) : world
+  return isStaffWeeklyCheckpoint(world.currentDate) ? progressWeeklyStaffCareerAutonomy(world) : world
 }
 
 /** Wave 5E weekly continuation of the canonical Human-State cadence. It is intentionally state-only: request execution remains an application concern. */
@@ -104,17 +105,6 @@ function canCreateRequest(requests: readonly StaffCareerRequest[], request: Staf
 }
 
 function daysBetween(from: string, to: string): number { return Math.max(0, Math.floor((Date.parse(to) - Date.parse(from)) / 86_400_000)) }
-
-/** Weekly cadence: the ISO weekday of `currentDate` is Monday (1). Matches the existing repo convention of deriving cadence from `currentDate` rather than a persisted counter. */
-function shouldRunWeeklyAppraisal(world: GameWorld): boolean {
-  return isoWeekday(world.currentDate) === 1
-}
-
-function isoWeekday(date: string): number {
-  const [year, month, day] = date.split('-').map(Number)
-  const weekday = new Date(Date.UTC(year!, month! - 1, day!)).getUTCDay()
-  return weekday === 0 ? 7 : weekday
-}
 
 function ensureStaffHumanContexts(world: GameWorld): GameWorld {
   const newContexts: StaffHumanContext[] = []

@@ -48,6 +48,16 @@ describe('GameWorld', () => {
     expect(() => createGameWorld(duplicatePlayerInput)).toThrow(GameWorldValidationError)
   })
 
+  it('stores Political Cases and validates their team and optional subject Staff references', () => {
+    const input = createValidGameWorldInput()
+    const politicalCase = { id: `staff-political-case:${input.teams[0]!.id}:CAREER_REQUEST:career-request`, scopeKey: input.teams[0]!.id, teamId: input.teams[0]!.id, sourceKind: 'CAREER_REQUEST' as const, sourceId: 'career-request', agenda: 'CAREER' as const, openedOn: input.currentDate, lastEvaluatedOn: input.currentDate, status: 'RESOLVED' as const, resolution: { kind: 'APPROVED' as const, resolvedOn: input.currentDate } }
+    expect(createGameWorld({ ...input, staffPoliticalCases: [politicalCase] }).staffPoliticalCasesById[politicalCase.id]).toEqual(politicalCase)
+    expect(() => createGameWorld({ ...input, staffPoliticalCases: [{ ...politicalCase, id: 'staff-political-case:missing-team:CAREER_REQUEST:career-request', teamId: teamIdFromString('missing-team') }] })).toThrow(GameWorldValidationError)
+    expect(() => createGameWorld({ ...input, staffPoliticalCases: [{ ...politicalCase, subjectStaffId: 'missing-staff' as never }] })).toThrow(GameWorldValidationError)
+    expect(() => createGameWorld({ ...input, staffPoliticalCases: [politicalCase, politicalCase] })).toThrow(GameWorldValidationError)
+    expect(() => createGameWorld({ ...input, staffPoliticalCases: [politicalCase, { ...politicalCase, id: 'alternate-source-id' }] })).toThrow(RangeError)
+  })
+
   it('rejects players assigned to multiple rosters', () => {
     const input = createValidGameWorldInput()
     const homePlayer = input.players[0]!

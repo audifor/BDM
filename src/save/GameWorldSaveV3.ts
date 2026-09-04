@@ -4,6 +4,7 @@ import { staffPersonIdFromString, teamIdFromString, type StaffPersonId } from '@
 import { createStaffEmployment, createStaffJobOpening, staffJobCandidacyIdFromString, staffJobOfferIdFromString, staffJobOpeningIdFromString, type StaffCareerHistoryEntry, type StaffEmployment, type StaffInterview, type StaffJobCandidacy, type StaffJobOffer, type StaffJobOpening } from '@/domain/staffCareer'
 import { createStaffContract, staffContractIdFromString, type StaffContract } from '@/domain/staffContract'
 import { createStaffReputationProfile, STAFF_REPUTATION_DIMENSIONS, type StaffReputationProfile } from '@/domain/staffReputation'
+import { createStaffPoliticalCase, POLITICAL_AGENDAS, POLITICAL_CASE_SOURCE_KINDS, STAFF_POLITICAL_CASE_RESOLUTION_KINDS, STAFF_POLITICAL_CASE_STATUSES, type StaffPoliticalCase, type StaffPoliticalCaseResolutionKind } from '@/domain/staffPolitics'
 import { ensureStaffContractStructure, ensureStaffEmploymentStructure, ensureStaffReputationStructure } from '@/engine/world/StaffCareerEnrichment'
 import { parseGameDate } from '@/domain/date'
 import { deserializeGameWorldV2, migrateGameWorldSaveV1ToV2, serializeGameWorldV2, assertExactKeys, type GameWorldSaveV2, type SaveGameEnvelopeV2 } from './GameWorldSaveV2'
@@ -73,6 +74,7 @@ export function deserializeGameWorldV3(value: unknown): GameWorld {
     staffJobOffers: runtime.staffJobOffers,
     staffContracts: runtime.staffContracts,
     staffReputationProfilesByStaffId: runtime.staffReputationProfilesByStaffId,
+    staffPoliticalCases: runtime.staffPoliticalCases,
   })
   return restoreScheduledTrainingStaffAssignments(withStaffCareer, trainingStaffAssignments)
 }
@@ -90,6 +92,7 @@ function v3Payload(payload: GameWorldSaveV2, world: GameWorld): GameWorldSaveV3 
       staffJobOffers: Object.values(world.staffJobOffersById),
       staffContracts: Object.values(world.staffContractsById),
       staffReputationProfiles: Object.entries(world.staffReputationProfilesByStaffId).map(([staffId, profile]) => ({ staffId, profile })),
+      staffPoliticalCases: Object.values(world.staffPoliticalCasesById),
     },
   }
 }
@@ -109,11 +112,12 @@ function parseStaffCareerRuntimeV3(value: unknown): {
   readonly staffJobOffers: readonly StaffJobOffer[]
   readonly staffContracts: readonly StaffContract[]
   readonly staffReputationProfilesByStaffId: Readonly<Record<string, StaffReputationProfile>>
+  readonly staffPoliticalCases: readonly StaffPoliticalCase[]
 } {
   // `value` is required for a canonical V3 payload (Blocker 3) — `record()` throws if it is
   // `undefined`/missing, so there is no "treat absence as empty" fallback here anymore.
   const runtime = record(value, 'Staff career runtime V3')
-  assertExactKeys(runtime, ['staffEmployment', 'staffCareerHistory', 'staffJobOpenings', 'staffJobCandidacies', 'staffInterviews', 'staffJobOffers', 'staffContracts', 'staffReputationProfiles'], 'Staff career runtime V3')
+  assertExactKeys(runtime, ['staffEmployment', 'staffCareerHistory', 'staffJobOpenings', 'staffJobCandidacies', 'staffInterviews', 'staffJobOffers', 'staffContracts', 'staffReputationProfiles', ...(runtime.staffPoliticalCases === undefined ? [] : ['staffPoliticalCases'])], 'Staff career runtime V3')
 
   const staffEmploymentByStaffId = Object.fromEntries(array(runtime.staffEmployment, 'Staff career runtime staffEmployment').map((entry) => {
     const e = record(entry, 'Staff employment V3'); assertExactKeys(e, ['staffId', 'employment'], 'Staff employment V3')
@@ -136,8 +140,20 @@ function parseStaffCareerRuntimeV3(value: unknown): {
     const e = record(entry, 'Staff reputation profile V3'); assertExactKeys(e, ['staffId', 'profile'], 'Staff reputation profile V3')
     return [staffPersonIdFromString(text(e.staffId, 'Staff reputation staffId')), parseStaffReputationProfileV3(e.profile)]
   }))
+  const staffPoliticalCases = runtime.staffPoliticalCases === undefined ? [] : array(runtime.staffPoliticalCases, 'Staff career runtime staffPoliticalCases').map(parseStaffPoliticalCaseV3)
 
-  return { staffEmploymentByStaffId, staffCareerHistoryByStaffId, staffJobOpenings, staffJobCandidacies, staffInterviewsByCandidacyId, staffJobOffers, staffContracts, staffReputationProfilesByStaffId }
+  return { staffEmploymentByStaffId, staffCareerHistoryByStaffId, staffJobOpenings, staffJobCandidacies, staffInterviewsByCandidacyId, staffJobOffers, staffContracts, staffReputationProfilesByStaffId, staffPoliticalCases }
+}
+
+function parseStaffPoliticalCaseV3(value: unknown): StaffPoliticalCase {
+  const item = record(value, 'Staff political case V3')
+  assertExactKeys(item, ['id', 'scopeKey', 'teamId', 'sourceKind', 'sourceId', 'agenda', 'openedOn', 'lastEvaluatedOn', 'status', ...(item.subjectStaffId === undefined ? [] : ['subjectStaffId']), ...(item.resolution === undefined ? [] : ['resolution'])], 'Staff political case V3')
+  const resolution = item.resolution === undefined ? undefined : (() => {
+    const raw = record(item.resolution, 'Staff political case resolution V3')
+    assertExactKeys(raw, ['kind', 'resolvedOn'], 'Staff political case resolution V3')
+    return { kind: enumValue(raw.kind, STAFF_POLITICAL_CASE_RESOLUTION_KINDS, 'Staff political case resolution kind') as StaffPoliticalCaseResolutionKind, resolvedOn: parseGameDate(text(raw.resolvedOn, 'Staff political case resolution date')) }
+  })()
+  return createStaffPoliticalCase({ id: text(item.id, 'Staff political case id'), scopeKey: text(item.scopeKey, 'Staff political case scope key'), teamId: teamIdFromString(text(item.teamId, 'Staff political case team ID')), sourceKind: enumValue(item.sourceKind, POLITICAL_CASE_SOURCE_KINDS, 'Staff political case source kind') as StaffPoliticalCase['sourceKind'], sourceId: text(item.sourceId, 'Staff political case source ID'), agenda: enumValue(item.agenda, POLITICAL_AGENDAS, 'Staff political case agenda') as StaffPoliticalCase['agenda'], ...(item.subjectStaffId === undefined ? {} : { subjectStaffId: staffPersonIdFromString(text(item.subjectStaffId, 'Staff political case subject staff ID')) }), openedOn: parseGameDate(text(item.openedOn, 'Staff political case openedOn')), lastEvaluatedOn: parseGameDate(text(item.lastEvaluatedOn, 'Staff political case lastEvaluatedOn')), status: enumValue(item.status, STAFF_POLITICAL_CASE_STATUSES, 'Staff political case status') as StaffPoliticalCase['status'], ...(resolution === undefined ? {} : { resolution }) })
 }
 
 function parseStaffEmploymentV3(value: unknown): StaffEmployment {

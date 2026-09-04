@@ -55,6 +55,27 @@ describe('GameWorldSaveV3', () => {
     expect(loaded.staffReputationProfilesByStaffId).toEqual(world.staffReputationProfilesByStaffId)
   })
 
+  it('round-trips open and resolved Staff Political Cases, while legacy V3 defaults them to empty', () => {
+    const { world, teamId, staffId } = worldWithHiredStaff()
+    const openCase = { id: `staff-political-case:${teamId}:CAREER_REQUEST:request-open`, scopeKey: teamId, teamId, sourceKind: 'CAREER_REQUEST' as const, sourceId: 'request-open', agenda: 'CAREER' as const, subjectStaffId: staffId, openedOn: world.currentDate, lastEvaluatedOn: world.currentDate, status: 'OPEN' as const }
+    const resolvedCase = { id: `staff-political-case:${teamId}:CAREER_REQUEST:request-resolved`, scopeKey: teamId, teamId, sourceKind: 'CAREER_REQUEST' as const, sourceId: 'request-resolved', agenda: 'CAREER' as const, subjectStaffId: staffId, openedOn: world.currentDate, lastEvaluatedOn: world.currentDate, status: 'RESOLVED' as const, resolution: { kind: 'APPROVED' as const, resolvedOn: world.currentDate } }
+    const withCases = updateGameWorld(world, { staffPoliticalCases: [openCase, resolvedCase] })
+    const saved = serializeGameWorldV3(withCases, savedAt)
+    expect(deserializeGameWorldV3(saved).staffPoliticalCasesById).toEqual(withCases.staffPoliticalCasesById)
+    const legacy = structuredClone(saved)
+    delete (legacy.payload.staffCareerRuntime as Record<string, unknown>).staffPoliticalCases
+    expect(deserializeGameWorldV3(legacy).staffPoliticalCasesById).toEqual({})
+  })
+
+  it('rejects malformed Staff Political Cases on load', () => {
+    const world = createNewGame()
+    const teamId = Object.values(world.teams)[0]!.id
+    const saved = serializeGameWorldV3(world, savedAt)
+    const tampered = structuredClone(saved)
+    ;(tampered.payload.staffCareerRuntime as Record<string, unknown>).staffPoliticalCases = [{ id: 'alternate-case-id', scopeKey: teamId, teamId, sourceKind: 'CAREER_REQUEST', sourceId: 'request', agenda: 'CAREER', openedOn: world.currentDate, lastEvaluatedOn: world.currentDate, status: 'OPEN' }]
+    expect(() => deserializeGameWorldV3(tampered)).toThrow()
+  })
+
   it('V2 -> V3 migration is deterministic', () => {
     const world = createNewGame()
     const v2 = serializeGameWorldV2(world, savedAt)
