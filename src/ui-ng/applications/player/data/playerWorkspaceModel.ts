@@ -5,6 +5,7 @@ import type { PlayerPerformanceModel } from './buildPlayerPerformanceModel'
 import type { PlayerContractModel } from './buildPlayerContractModel'
 import type { PlayerMedicalModel, MedicalRiskOverviewTone } from './buildPlayerMedicalModel'
 import type { PlayerDevelopmentModel } from './buildPlayerDevelopmentModel'
+import type { PlayerHistoryModel } from './buildPlayerHistoryModel'
 import type { RatingCategory } from './ratingCatalog'
 
 export type PresentationAvailability = 'available' | 'unavailable'
@@ -127,6 +128,7 @@ export interface PlayerWorkspaceModel {
   readonly contract: PlayerContractModel
   readonly medical: PlayerMedicalModel
   readonly development: PlayerDevelopmentModel
+  readonly history: PlayerHistoryModel
   readonly strengths: readonly EvaluationItem[]
   readonly limitations: readonly EvaluationItem[]
   readonly radarAxes: readonly RadarAxisModel[]

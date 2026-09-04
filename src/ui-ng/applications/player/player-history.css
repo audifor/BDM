@@ -1,0 +1,288 @@
+/* Player History workspace — STEP 010 */
+
+.ph-root {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--ng-bg-workspace);
+}
+
+.ph-stat-label {
+  font-size: var(--ng-font-size-meta);
+  font-weight: var(--ng-font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.ph-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ng-spacing-8);
+  min-height: 28px;
+  padding: var(--ng-spacing-4) var(--ng-spacing-12);
+  border-bottom: 1px solid var(--ng-border-subtle);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.ph-panel-head__title {
+  font-size: var(--ng-font-size-secondary);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-primary);
+}
+
+.ph-panel-head__meta {
+  font-size: var(--ng-font-size-meta);
+  color: var(--ng-text-muted);
+}
+
+.ph-panel-empty {
+  margin: 0;
+  padding: var(--ng-spacing-12);
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-muted);
+}
+
+.ph-scope {
+  padding: var(--ng-spacing-8) var(--ng-spacing-12);
+  border-bottom: 1px solid var(--ng-border-strong);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 24%),
+    var(--ng-bg-panel-primary);
+}
+
+.ph-scope__primary {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--ng-spacing-16);
+}
+
+.ph-scope__title {
+  font-size: var(--ng-font-size-data);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-primary);
+}
+
+.ph-scope__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ng-spacing-8);
+}
+
+.ph-scope__count {
+  font-size: 11px;
+  font-weight: var(--ng-font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ng-text-secondary);
+  padding: 2px 8px;
+  border: 1px solid var(--ng-border-subtle);
+  border-radius: 999px;
+}
+
+.ph-scope__note,
+.ph-scope__gaps {
+  margin: var(--ng-spacing-4) 0 0;
+  font-size: var(--ng-font-size-meta);
+  line-height: 1.35;
+  color: var(--ng-text-disabled);
+}
+
+.ph-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ng-spacing-4);
+  padding: var(--ng-spacing-6) var(--ng-spacing-12);
+  border-bottom: 1px solid var(--ng-border-strong);
+  background: var(--ng-bg-panel-secondary);
+}
+
+.ph-filters button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ng-spacing-4);
+  min-height: 28px;
+  padding: 0 var(--ng-spacing-8);
+  border: 1px solid var(--ng-border-subtle);
+  border-radius: var(--ng-radius-sm);
+  background: rgba(0, 0, 0, 0.12);
+  color: var(--ng-text-secondary);
+  font-size: var(--ng-font-size-meta);
+  font-weight: var(--ng-font-weight-medium);
+  cursor: pointer;
+}
+
+.ph-filters button.is-active {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ng-text-primary);
+}
+
+.ph-filters__count {
+  font-variant-numeric: tabular-nums lining-nums;
+  color: var(--ng-text-disabled);
+}
+
+.ph-timeline {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ph-timeline__scroll {
+  min-height: 0;
+  overflow: auto;
+  flex: 1;
+}
+
+.ph-timeline__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ng-font-size-secondary);
+}
+
+.ph-timeline__col--date {
+  width: 16%;
+}
+
+.ph-timeline__col--event {
+  width: 34%;
+}
+
+.ph-timeline__col--context {
+  width: 50%;
+}
+
+.ph-timeline__table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--ng-spacing-4) var(--ng-spacing-8);
+  text-align: left;
+  font-size: var(--ng-font-size-meta);
+  font-weight: var(--ng-font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ng-text-disabled);
+  background: var(--ng-bg-workspace);
+  border-bottom: 1px solid var(--ng-border-subtle);
+}
+
+.ph-timeline__table td {
+  padding: var(--ng-spacing-6) var(--ng-spacing-8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: top;
+}
+
+.ph-timeline__table tr[role='button'] {
+  cursor: pointer;
+}
+
+.ph-timeline__table tr.is-selected {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ph-timeline__date {
+  color: var(--ng-text-secondary);
+  white-space: nowrap;
+}
+
+.ph-timeline__precision {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ng-text-disabled);
+}
+
+.ph-timeline__title {
+  display: block;
+  color: var(--ng-text-primary);
+  font-weight: var(--ng-font-weight-medium);
+}
+
+.ph-timeline__detail {
+  display: block;
+  margin-top: 2px;
+  color: var(--ng-text-secondary);
+}
+
+.ph-timeline__context {
+  color: var(--ng-text-muted);
+}
+
+.ph-inspector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ng-spacing-10);
+  padding: var(--ng-spacing-12);
+  height: 100%;
+}
+
+.ph-inspector--empty {
+  justify-content: center;
+}
+
+.ph-inspector__hint {
+  margin: 0;
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-muted);
+  text-align: center;
+}
+
+.ph-inspector__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ng-spacing-2);
+}
+
+.ph-inspector__title {
+  font-size: var(--ng-font-size-data);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-primary);
+}
+
+.ph-inspector__meta {
+  font-size: var(--ng-font-size-meta);
+  color: var(--ng-text-muted);
+}
+
+.ph-inspector__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ng-spacing-8);
+  margin: 0;
+}
+
+.ph-inspector__list dt {
+  font-size: var(--ng-font-size-meta);
+  font-weight: var(--ng-font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ng-text-disabled);
+}
+
+.ph-inspector__list dd {
+  margin: var(--ng-spacing-2) 0 0;
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-primary);
+}
+
+.ph-inspector__note {
+  margin: 0;
+  font-size: var(--ng-font-size-meta);
+  line-height: 1.4;
+  color: var(--ng-text-disabled);
+}
+
+@media (min-width: 2200px) {
+  .ph-timeline__col--date {
+    width: 14%;
+  }
+}

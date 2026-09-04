@@ -40,6 +40,9 @@ import {
   buildPlayerDevelopmentModel,
 } from './buildPlayerDevelopmentModel'
 import {
+  buildPlayerHistoryModel,
+} from './buildPlayerHistoryModel'
+import {
   availableField,
   deriveTeamColors,
   findTeamForPlayer,
@@ -222,6 +225,8 @@ export function buildPlayerWorkspaceModel(
   const riskPresentation = resolvePlayerMedicalRiskPresentation(world, player.id)
   const development = buildPlayerDevelopmentModel(world, player.id)
   if (development === undefined) return undefined
+  const history = buildPlayerHistoryModel(world, player.id)
+  if (history === undefined) return undefined
 
   return {
     identity: {
@@ -273,6 +278,7 @@ export function buildPlayerWorkspaceModel(
     contract: buildPlayerContractModel(world, player.id),
     medical: buildPlayerMedicalModel(world, player.id),
     development,
+    history,
     strengths: buildEvaluations(ratings, 'strength'),
     limitations: buildEvaluations(ratings, 'limitation'),
     radarAxes: RADAR_CATEGORY_ORDER.map((category) => ({

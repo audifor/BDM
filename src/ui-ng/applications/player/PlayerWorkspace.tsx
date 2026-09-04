@@ -6,6 +6,7 @@ import './player-performance.css'
 import './player-contract.css'
 import './player-medical.css'
 import './player-development.css'
+import './player-history.css'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -13,6 +14,7 @@ import type { GameId, InjuryId } from '@/domain/ids'
 
 import { PlayerWorkspaceHeader } from '@/ui-ng/applications/player/components/PlayerWorkspaceHeader'
 import { RatingInspectorDetail } from '@/ui-ng/applications/player/components/RatingInspectorDetail'
+import type { HistoryFilterId } from '@/ui-ng/applications/player/data/buildPlayerHistoryModel'
 import type { PerformanceCompetitionFilter } from '@/ui-ng/applications/player/data/buildPlayerPerformanceModel'
 import { RADAR_CATEGORY_ORDER, type RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
 import {
@@ -45,7 +47,10 @@ import {
   DevelopmentInspectorContent,
   PlayerDevelopmentView,
 } from '@/ui-ng/applications/player/views/PlayerDevelopmentView'
-import { PlayerPlaceholderView } from '@/ui-ng/applications/player/views/PlayerPlaceholderView'
+import {
+  HistoryInspectorContent,
+  PlayerHistoryView,
+} from '@/ui-ng/applications/player/views/PlayerHistoryView'
 import { ApplicationWorkspace } from '@/ui-ng/workspace/ApplicationWorkspace'
 import { InspectorPane } from '@/ui-ng/workspace/InspectorPane'
 import { WorkspaceBody } from '@/ui-ng/workspace/WorkspaceBody'
@@ -76,6 +81,8 @@ function PlayerWorkspaceShell({ data }: { readonly data: PlayerWorkspaceState })
   const [selectedContractItemId, setSelectedContractItemId] = useState<string | null>(null)
   const [selectedMedicalEventId, setSelectedMedicalEventId] = useState<InjuryId | null>(null)
   const [selectedDevelopmentItemId, setSelectedDevelopmentItemId] = useState<string | null>(null)
+  const [selectedHistoryItemId, setSelectedHistoryItemId] = useState<string | null>(null)
+  const [activeHistoryFilter, setActiveHistoryFilter] = useState<HistoryFilterId>('all')
 
   const setActiveView = useCallback((view: PlayerWorkspaceViewId) => {
     setActiveViewState(view)
@@ -116,6 +123,8 @@ function PlayerWorkspaceShell({ data }: { readonly data: PlayerWorkspaceState })
       setSelectedContractItemId(null)
       setSelectedMedicalEventId(null)
       setSelectedDevelopmentItemId(null)
+      setSelectedHistoryItemId(null)
+      setActiveHistoryFilter('all')
       return
     }
     setSelectedGameId(null)
@@ -123,6 +132,8 @@ function PlayerWorkspaceShell({ data }: { readonly data: PlayerWorkspaceState })
     setSelectedContractItemId(model.contract.defaultSelectedItemId)
     setSelectedMedicalEventId(model.medical.defaultSelectedEventId)
     setSelectedDevelopmentItemId(model.development.defaultSelectedItemId)
+    setSelectedHistoryItemId(model.history.defaultSelectedItemId)
+    setActiveHistoryFilter('all')
   }, [model?.identity.playerId])
 
   const session = useMemo<PlayerWorkspaceSession>(
@@ -155,8 +166,15 @@ function PlayerWorkspaceShell({ data }: { readonly data: PlayerWorkspaceState })
         selectedItemId: selectedDevelopmentItemId,
         setSelectedItemId: setSelectedDevelopmentItemId,
       },
+      history: {
+        selectedItemId: selectedHistoryItemId,
+        setSelectedItemId: setSelectedHistoryItemId,
+        activeFilter: activeHistoryFilter,
+        setActiveFilter: setActiveHistoryFilter,
+      },
     }),
     [
+      activeHistoryFilter,
       activeView,
       attributesCategory,
       competitionFilter,
@@ -165,6 +183,7 @@ function PlayerWorkspaceShell({ data }: { readonly data: PlayerWorkspaceState })
       selectedContractItemId,
       selectedDevelopmentItemId,
       selectedGameId,
+      selectedHistoryItemId,
       selectedMedicalEventId,
       selectedRatingId,
       setActiveView,
@@ -263,6 +282,14 @@ function PlayerWorkspaceLayout({
               >
                 <DevelopmentInspectorContent />
               </InspectorPane>
+            ) : activeView === 'history' ? (
+              <InspectorPane
+                collapsed={inspectorCollapsed}
+                onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
+                title="History Detail"
+              >
+                <HistoryInspectorContent />
+              </InspectorPane>
             ) : activeView === 'performance' ? (
               <InspectorPane
                 collapsed={inspectorCollapsed}
@@ -289,7 +316,7 @@ function PlayerWorkspaceLayout({
               {activeView === 'contract' && <PlayerContractView />}
               {activeView === 'medical' && <PlayerMedicalView />}
               {activeView === 'development' && <PlayerDevelopmentView />}
-              {activeView === 'history' && <PlayerPlaceholderView viewId={activeView} />}
+              {activeView === 'history' && <PlayerHistoryView />}
             </div>
           }
         />

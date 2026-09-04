@@ -34,6 +34,7 @@ describe('buildPlayerWorkspaceModel', () => {
     expect(model!.attributes.allRatings.length).toBe(CANONICAL_RATING_KEYS.length)
     expect(model!.attributes.categories.length).toBe(8)
     expect(model!.development.longitudinal.message).toContain('not currently tracked')
+    expect(model!.history.scope.scopeNote).toContain('persisted in this save')
   })
 
   it('aggregates radar categories as the mean of canonical ratings in each family', () => {

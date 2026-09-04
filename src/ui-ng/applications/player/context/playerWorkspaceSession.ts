@@ -5,6 +5,7 @@ import type { PerformanceSession } from '@/ui-ng/applications/player/context/per
 import type { ContractSession } from '@/ui-ng/applications/player/context/contractSession'
 import type { MedicalSession } from '@/ui-ng/applications/player/context/medicalSession'
 import type { DevelopmentSession } from '@/ui-ng/applications/player/context/developmentSession'
+import type { HistorySession } from '@/ui-ng/applications/player/context/historySession'
 import type { PlayerWorkspaceViewId } from '@/ui-ng/applications/player/playerStructuralData'
 
 export interface PlayerWorkspaceSession {
@@ -22,4 +23,5 @@ export interface PlayerWorkspaceSession {
   readonly contract: ContractSession
   readonly medical: MedicalSession
   readonly development: DevelopmentSession
+  readonly history: HistorySession
 }
