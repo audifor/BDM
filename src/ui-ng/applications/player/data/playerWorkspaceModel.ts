@@ -99,10 +99,25 @@ export interface RoleProfileModel {
   readonly isDerived: true
 }
 
+export interface AttributeCategoryModel {
+  readonly category: RatingCategory
+  readonly label: string
+  readonly profileValue: number
+  readonly primary: readonly PlayerRatingRow[]
+  readonly secondary: readonly PlayerRatingRow[]
+  readonly all: readonly PlayerRatingRow[]
+}
+
+export interface PlayerAttributesModel {
+  readonly categories: readonly AttributeCategoryModel[]
+  readonly allRatings: readonly PlayerRatingRow[]
+}
+
 export interface PlayerWorkspaceModel {
   readonly identity: PlayerIdentityModel
   readonly status: PlayerStatusModel
   readonly ratings: readonly PlayerRatingRow[]
+  readonly attributes: PlayerAttributesModel
   readonly strengths: readonly EvaluationItem[]
   readonly limitations: readonly EvaluationItem[]
   readonly radarAxes: readonly RadarAxisModel[]

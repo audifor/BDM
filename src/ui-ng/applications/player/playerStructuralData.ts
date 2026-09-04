@@ -1,14 +1,34 @@
 /** Structural UI constants for NG player workspace — not game data. */
 
-export const WORKSPACE_TABS = [
-  { id: 'overview', label: 'Overview', active: true },
-  { id: 'attributes', label: 'Attributes' },
-  { id: 'performance', label: 'Performance' },
-  { id: 'development', label: 'Development' },
-  { id: 'contract', label: 'Contract' },
-  { id: 'medical', label: 'Medical' },
-  { id: 'history', label: 'History' },
+export const PLAYER_WORKSPACE_VIEWS = [
+  'overview',
+  'attributes',
+  'performance',
+  'development',
+  'contract',
+  'medical',
+  'history',
 ] as const
+
+export type PlayerWorkspaceViewId = (typeof PLAYER_WORKSPACE_VIEWS)[number]
+
+export const PLAYER_VIEW_LABELS: Record<PlayerWorkspaceViewId, string> = {
+  overview: 'Overview',
+  attributes: 'Attributes',
+  performance: 'Performance',
+  development: 'Development',
+  contract: 'Contract',
+  medical: 'Medical',
+  history: 'History',
+}
+
+export const PLAYER_VIEW_PLACEHOLDERS: Partial<Record<PlayerWorkspaceViewId, string>> = {
+  performance: 'Performance workspace not implemented in NG yet.',
+  development: 'Development workspace not implemented in NG yet.',
+  contract: 'Contract workspace not implemented in NG yet.',
+  medical: 'Medical workspace not implemented in NG yet.',
+  history: 'History workspace not implemented in NG yet.',
+}
 
 export const TASKBAR_APPS = [
   { id: 'home', label: 'Home' },
@@ -20,3 +40,10 @@ export const TASKBAR_APPS = [
 ] as const
 
 export const UNAVAILABLE_LABEL = 'Not available'
+
+export function parsePlayerWorkspaceView(value: string | null): PlayerWorkspaceViewId {
+  if (value !== null && PLAYER_WORKSPACE_VIEWS.includes(value as PlayerWorkspaceViewId)) {
+    return value as PlayerWorkspaceViewId
+  }
+  return 'overview'
+}

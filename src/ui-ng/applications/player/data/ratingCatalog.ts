@@ -170,12 +170,59 @@ export function aggregateCategoryValue(
   return Math.round(total / keys.length)
 }
 
-export function ratingsInCategory(
-  category: RatingCategory,
+export function buildFullRatingRows(
   playerRatings: Readonly<Record<CanonicalRatingKey, number>>,
-): readonly { readonly key: CanonicalRatingKey; readonly value: number }[] {
-  return CANONICAL_RATING_KEYS
-    .filter((key) => CANONICAL_RATING_CATEGORY[key] === category)
-    .map((key) => ({ key, value: playerRatings[key] }))
-    .sort((left, right) => right.value - left.value || left.key.localeCompare(right.key))
+): readonly { readonly id: CanonicalRatingKey; readonly label: string; readonly category: RatingCategory; readonly value: number }[] {
+  return CANONICAL_RATING_KEYS.map((key) => ({
+    id: key,
+    label: ratingLabel(key),
+    category: ratingCategory(key),
+    value: playerRatings[key],
+  }))
+}
+
+export function ratingsForCategory(
+  category: RatingCategory,
+  allRatings: readonly { readonly id: CanonicalRatingKey; readonly label: string; readonly category: RatingCategory; readonly value: number }[],
+): readonly { readonly id: CanonicalRatingKey; readonly label: string; readonly category: RatingCategory; readonly value: number }[] {
+  return allRatings
+    .filter((rating) => rating.category === category)
+    .slice()
+    .sort((left, right) => right.value - left.value || left.label.localeCompare(right.label))
+}
+
+const PRIMARY_MAX = 4
+const PRIMARY_MIN = 3
+
+export function splitPrimarySecondaryRatings<T extends { readonly value: number }>(
+  ratings: readonly T[],
+): { readonly primary: readonly T[]; readonly secondary: readonly T[] } {
+  if (ratings.length <= PRIMARY_MAX) {
+    return { primary: ratings, secondary: [] }
+  }
+  const primaryCount = Math.min(PRIMARY_MAX, Math.max(PRIMARY_MIN, Math.ceil(ratings.length * 0.4)))
+  return {
+    primary: ratings.slice(0, primaryCount),
+    secondary: ratings.slice(primaryCount),
+  }
+}
+
+export function rankInCategory(
+  ratingId: CanonicalRatingKey,
+  categoryRatings: readonly { readonly id: CanonicalRatingKey; readonly value: number }[],
+): number {
+  const sorted = [...categoryRatings].sort((left, right) => right.value - left.value || left.id.localeCompare(right.id))
+  return sorted.findIndex((rating) => rating.id === ratingId) + 1
+}
+
+export function relatedRatingsInCategory(
+  ratingId: CanonicalRatingKey,
+  categoryRatings: readonly { readonly id: CanonicalRatingKey; readonly label: string; readonly value: number }[],
+  limit = 3,
+): readonly { readonly id: CanonicalRatingKey; readonly label: string; readonly value: number }[] {
+  return categoryRatings
+    .filter((rating) => rating.id !== ratingId)
+    .slice()
+    .sort((left, right) => right.value - left.value || left.label.localeCompare(right.label))
+    .slice(0, limit)
 }

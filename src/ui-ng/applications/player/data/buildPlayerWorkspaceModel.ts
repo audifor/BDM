@@ -17,10 +17,14 @@ import { getUserTeam } from '@/engine/calendar'
 
 import {
   aggregateCategoryValue,
+  buildFullRatingRows,
   buildOverviewRatingKeys,
+  CATEGORY_LABELS,
   ratingCategory,
   ratingLabel,
   RADAR_CATEGORY_ORDER,
+  ratingsForCategory,
+  splitPrimarySecondaryRatings,
 } from './ratingCatalog'
 import {
   availableField,
@@ -32,6 +36,7 @@ import {
 } from './presentationHelpers'
 import type {
   EvaluationItem,
+  PlayerAttributesModel,
   PlayerWorkspaceModel,
   PlayerRatingRow,
   RecentFormGameModel,
@@ -54,6 +59,24 @@ function buildRatings(playerRatings: PlayerRatings): PlayerRatingRow[] {
     category: ratingCategory(key),
     value: playerRatings[key],
   }))
+}
+
+function buildAttributes(playerRatings: PlayerRatings): PlayerAttributesModel {
+  const allRatings = buildFullRatingRows(playerRatings)
+  const categories = RADAR_CATEGORY_ORDER.map((category) => {
+    const categoryRatings = ratingsForCategory(category, allRatings)
+    const split = splitPrimarySecondaryRatings(categoryRatings)
+    return {
+      category,
+      label: CATEGORY_LABELS[category],
+      profileValue: aggregateCategoryValue(category, playerRatings),
+      primary: split.primary,
+      secondary: split.secondary,
+      all: categoryRatings,
+    }
+  }).filter((entry) => entry.all.length > 0)
+
+  return { categories, allRatings }
 }
 
 function buildEvaluations(
@@ -225,6 +248,7 @@ export function buildPlayerWorkspaceModel(
       risk: unavailableField('Not tracked'),
     },
     ratings,
+    attributes: buildAttributes(player.basketball.ratings),
     strengths: buildEvaluations(ratings, 'strength'),
     limitations: buildEvaluations(ratings, 'limitation'),
     radarAxes: RADAR_CATEGORY_ORDER.map((category) => ({

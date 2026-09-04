@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { CANONICAL_RATING_KEYS } from '@/domain/player'
 import { createConfiguredGame, createNewGame } from '@/app/game'
 import { ACB_QUICK_START_TEAM_KEY, ACB_TEST_UNIVERSE_ID } from '@/data/acb2026'
 import type { PlayerId } from '@/domain/ids'
@@ -30,6 +31,8 @@ describe('buildPlayerWorkspaceModel', () => {
     expect(model!.shotProfile.status).toBe('unavailable')
     expect(model!.roleProfile.isDerived).toBe(true)
     expect(model!.identity.jerseyNumber.status).toBe('unavailable')
+    expect(model!.attributes.allRatings.length).toBe(CANONICAL_RATING_KEYS.length)
+    expect(model!.attributes.categories.length).toBe(8)
   })
 
   it('aggregates radar categories as the mean of canonical ratings in each family', () => {
