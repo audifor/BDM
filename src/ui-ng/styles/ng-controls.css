@@ -1,0 +1,149 @@
+/* Shared NG control primitives */
+
+.ng-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ng-spacing-8);
+  height: var(--ng-control-height-sm);
+  padding: 0 var(--ng-spacing-12);
+  border: 1px solid var(--ng-border-standard);
+  border-radius: var(--ng-radius-sm);
+  background: var(--ng-bg-elevated);
+  box-shadow: var(--ng-shadow-inset-highlight);
+  color: var(--ng-text-secondary);
+  font-family: var(--ng-font-ui);
+  font-size: var(--ng-font-size-secondary);
+  font-weight: var(--ng-font-weight-medium);
+  white-space: nowrap;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.ng-btn:hover:not(:disabled) {
+  border-color: var(--ng-border-strong);
+  background: var(--ng-bg-hover);
+  color: var(--ng-text-primary);
+}
+
+.ng-btn:focus-visible {
+  outline: 2px solid var(--ng-focus-ring);
+  outline-offset: 1px;
+}
+
+.ng-btn:active:not(:disabled) {
+  background: var(--ng-bg-selected);
+}
+
+.ng-btn:disabled {
+  border-color: var(--ng-border-subtle);
+  background: var(--ng-bg-disabled);
+  color: var(--ng-text-disabled);
+  cursor: not-allowed;
+}
+
+.ng-btn--primary {
+  border-color: rgba(72, 149, 212, 0.45);
+  background: var(--ng-accent-primary-muted);
+  color: var(--ng-accent-primary);
+}
+
+.ng-btn--primary:hover:not(:disabled) {
+  border-color: var(--ng-accent-primary);
+  background: rgba(72, 149, 212, 0.22);
+  color: #6db3e8;
+}
+
+.ng-btn--toggle.is-active {
+  border-color: rgba(72, 149, 212, 0.5);
+  background: var(--ng-accent-primary-muted);
+  color: var(--ng-text-primary);
+}
+
+.ng-btn--ghost {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ng-btn--ghost:hover:not(:disabled) {
+  border-color: var(--ng-border-subtle);
+  background: var(--ng-bg-hover);
+}
+
+.ng-btn--icon {
+  width: var(--ng-control-height-sm);
+  padding: 0;
+}
+
+.ng-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 var(--ng-spacing-8);
+  border-radius: var(--ng-radius-sm);
+  font-size: var(--ng-font-size-meta);
+  font-weight: var(--ng-font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ng-badge--positive {
+  border: 1px solid var(--ng-border-positive);
+  background: var(--ng-positive-muted);
+  color: var(--ng-positive);
+}
+
+.ng-badge--warning {
+  border: 1px solid var(--ng-border-warning);
+  background: var(--ng-warning-muted);
+  color: var(--ng-warning);
+}
+
+.ng-badge--negative {
+  border: 1px solid var(--ng-border-negative);
+  background: var(--ng-negative-muted);
+  color: var(--ng-negative);
+}
+
+.ng-badge--neutral {
+  border: 1px solid var(--ng-border-standard);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ng-text-secondary);
+}
+
+.ng-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ng-status-dot--positive { background: var(--ng-positive); }
+.ng-status-dot--warning { background: var(--ng-warning); }
+.ng-status-dot--negative { background: var(--ng-negative); }
+.ng-status-dot--neutral { background: var(--ng-text-muted); }
+
+.ng-input {
+  height: var(--ng-control-height-sm);
+  padding: 0 var(--ng-spacing-12);
+  border: 1px solid var(--ng-border-standard);
+  border-radius: var(--ng-radius-sm);
+  background: var(--ng-bg-inset);
+  box-shadow: var(--ng-shadow-inset-panel);
+  color: var(--ng-text-primary);
+  font-family: var(--ng-font-ui);
+  font-size: var(--ng-font-size-secondary);
+}
+
+.ng-input::placeholder {
+  color: var(--ng-text-muted);
+}
+
+.ng-input:focus {
+  outline: none;
+  border-color: var(--ng-border-focus);
+  box-shadow: 0 0 0 1px var(--ng-focus-ring);
+}

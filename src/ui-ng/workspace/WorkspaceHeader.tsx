@@ -10,7 +10,9 @@ export interface WorkspaceHeaderProps {
 export function WorkspaceHeader({ title, meta }: WorkspaceHeaderProps) {
   return (
     <header className="ng-workspace-header" data-ng-region="workspace-header">
-      <div className="ng-workspace-header__title">{title}</div>
+      <div className="ng-workspace-header__main">
+        <div className="ng-workspace-header__title">{title}</div>
+      </div>
       {meta !== undefined && <div className="ng-workspace-header__meta">{meta}</div>}
     </header>
   )

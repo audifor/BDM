@@ -24,7 +24,7 @@ export function ApplicationWorkspace({
 
   return (
     <section
-      className="ng-application-workspace bdm-os-ng__scaffold-outline"
+      className="ng-application-workspace"
       data-ng-region="application-workspace"
       style={{ gridTemplateRows }}
     >

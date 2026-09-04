@@ -4,6 +4,7 @@ export type WorkspaceApplicationId =
   | 'roster'
   | 'scouting'
   | 'tactics'
+  | 'player'
   | 'placeholder'
 
 export interface WorkspaceSession {

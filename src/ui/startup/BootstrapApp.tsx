@@ -7,11 +7,12 @@ import { useGameStore } from '@/stores/gameStore'
 import { useMatchViewerStore } from '@/stores/matchViewerStore'
 import { useTacticalPlanStore } from '@/stores/tacticalPlanStore'
 import { tauriGameSaveRepository } from '@/tauri/TauriGameSaveRepository'
+import { BdmOsNg } from '@/ui-ng/BdmOsNg'
 import { App } from '@/ui/App'
 
 import './BootstrapApp.css'
 
-export function BootstrapApp() {
+export function BootstrapApp({ uiMode = 'legacy' }: { readonly uiMode?: 'legacy' | 'ng' }) {
   const world = useGameStore((state) => state.world)
   const replaceWorld = useGameStore((state) => state.replaceWorld)
   const resetTacticalPlan = useTacticalPlanStore((state) => state.reset)
@@ -27,7 +28,7 @@ export function BootstrapApp() {
     return () => { active = false }
   }, [])
 
-  if (world !== null) return <App />
+  if (world !== null) return uiMode === 'ng' ? <BdmOsNg /> : <App />
 
   const startGame = (configuration: NewGameConfiguration) => {
     try {

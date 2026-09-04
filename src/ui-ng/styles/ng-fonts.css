@@ -1,0 +1,57 @@
+@font-face {
+  font-family: 'Inter Tight';
+  src: url('../../ui/assets/fonts/inter-tight-400.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Inter Tight';
+  src: url('../../ui/assets/fonts/inter-tight-500.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 500;
+}
+
+@font-face {
+  font-family: 'Inter Tight';
+  src: url('../../ui/assets/fonts/inter-tight-600.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 600;
+}
+
+@font-face {
+  font-family: 'Inter Tight';
+  src: url('../../ui/assets/fonts/inter-tight-700.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: 'Barlow Condensed';
+  src: url('../../ui/assets/fonts/barlow-condensed-600.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 600;
+}
+
+@font-face {
+  font-family: 'Barlow Condensed';
+  src: url('../../ui/assets/fonts/barlow-condensed-700.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 700;
+}
+
+/* Player Overview typography — Roboto Flex */
+@font-face {
+  font-family: 'Roboto Flex';
+  src: url('../assets/fonts/roboto-flex-latin-wght-normal.woff2') format('woff2');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 100 1000;
+  font-stretch: 75% 100%;
+}

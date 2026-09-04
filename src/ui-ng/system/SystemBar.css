@@ -1,33 +1,66 @@
 .ng-system-bar {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: var(--ng-spacing-16);
   height: var(--ng-system-bar-height);
-  min-height: var(--ng-system-bar-height);
-  padding: 0 var(--ng-spacing-16);
+  padding: 0 var(--ng-spacing-12);
   border-bottom: 1px solid var(--ng-border-subtle);
   background: var(--ng-bg-system);
-  overflow: hidden;
 }
 
-.ng-system-bar__brand {
-  font-size: var(--ng-font-size-md);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--ng-text-primary);
-}
-
-.ng-system-bar__items {
+.ng-system-bar__left,
+.ng-system-bar__center,
+.ng-system-bar__right {
   display: flex;
   align-items: center;
   gap: var(--ng-spacing-12);
-  min-width: 0;
-  flex: 1;
-  overflow: hidden;
 }
 
-.ng-system-bar__item {
+.ng-system-bar__center {
+  justify-content: center;
+}
+
+.ng-system-bar__right {
+  justify-content: flex-end;
+}
+
+.ng-system-bar__mark {
+  font-family: var(--ng-font-display);
+  font-size: 15px;
+  font-weight: var(--ng-font-weight-bold);
+  letter-spacing: 0.12em;
+  color: var(--ng-brand-mark);
+}
+
+.ng-system-bar__club {
   font-size: var(--ng-font-size-secondary);
-  color: var(--ng-text-secondary);
-  white-space: nowrap;
+  font-weight: var(--ng-font-weight-medium);
+  color: var(--ng-text-primary);
+}
+
+.ng-system-bar__chip,
+.ng-system-bar__date {
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-muted);
+}
+
+.ng-system-bar__search {
+  width: 160px;
+  height: var(--ng-control-height-sm);
+  padding: 0 var(--ng-spacing-8);
+  border: 1px solid var(--ng-border-standard);
+  border-radius: var(--ng-radius-sm);
+  background: var(--ng-bg-inset);
+  color: var(--ng-text-primary);
+  font-size: var(--ng-font-size-secondary);
+}
+
+.ng-system-bar__search::placeholder {
+  color: var(--ng-text-muted);
+}
+
+.ng-system-bar__search:focus {
+  outline: none;
+  border-color: var(--ng-border-focus);
 }

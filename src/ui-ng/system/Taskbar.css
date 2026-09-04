@@ -1,41 +1,45 @@
 .ng-taskbar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   height: var(--ng-taskbar-height);
-  min-height: var(--ng-taskbar-height);
   padding: 0 var(--ng-spacing-12);
   border-top: 1px solid var(--ng-border-subtle);
   background: var(--ng-bg-system);
-  overflow: hidden;
 }
 
 .ng-taskbar__apps {
   display: flex;
   align-items: center;
-  gap: var(--ng-spacing-8);
-  min-width: 0;
-  overflow: hidden;
+  gap: var(--ng-spacing-4);
 }
 
 .ng-taskbar__app {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: var(--ng-control-height-md);
+  height: 32px;
   padding: 0 var(--ng-spacing-12);
-  border: 1px solid var(--ng-border-standard);
-  border-radius: 4px;
-  background: var(--ng-bg-elevated);
-  color: var(--ng-text-secondary);
+  border: 1px solid transparent;
+  border-radius: var(--ng-radius-sm);
+  background: transparent;
+  color: var(--ng-text-muted);
   font-size: var(--ng-font-size-secondary);
+  font-weight: var(--ng-font-weight-medium);
 }
 
 .ng-taskbar__app:hover {
-  border-color: var(--ng-border-strong);
+  color: var(--ng-text-secondary);
+  background: var(--ng-bg-hover);
+}
+
+.ng-taskbar__app.is-active {
+  border-color: var(--ng-border-selected);
+  background: var(--ng-accent-primary-muted);
+  box-shadow: var(--ng-shadow-selected-glow);
   color: var(--ng-text-primary);
 }
 
-.ng-taskbar__app:focus-visible {
-  outline: 2px solid var(--ng-accent-primary);
-  outline-offset: 1px;
+.ng-taskbar__status {
+  font-size: var(--ng-font-size-meta);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
 }
