@@ -1,6 +1,7 @@
 import { calculateAge } from '@/domain/player'
 import { isStaffContractActiveOn } from '@/domain/staffContract'
 import { staffReputationScore } from '@/domain/staffReputation'
+import { relationshipKey } from '@/domain/relationships'
 import { staffRoleDefinition } from '@/domain/staff'
 import {
   calculateStaffWorkload,
@@ -31,24 +32,33 @@ import {
   type StaffRealityReading,
 } from '@/domain/staffHumanState'
 import { STAFF_CONSEQUENCE_SIGNAL_KINDS, type StaffConsequenceSignal, type StaffConsequenceSignalKind } from '@/domain/staffHumanState/StaffConsequenceSignals'
+import { deriveStaffPoliticalInfluence, type StaffPoliticalInfluenceIndex } from './StaffPoliticalInfluenceEngine'
 
 // ---------------------------------------------------------------------------
 // §6/§19 — Reality Engine: one known/unknown reading per Expectation dimension,
 // derived exclusively from existing canonical GameWorld authorities. Never fabricated.
 // ---------------------------------------------------------------------------
 
-export function deriveStaffReality(world: GameWorld, context: StaffHumanContext): StaffRealityProfile {
+export function deriveStaffReality(world: GameWorld, context: StaffHumanContext, politicalInfluenceIndex?: StaffPoliticalInfluenceIndex): StaffRealityProfile {
   const assignment = getStaffAssignment(world, context.staffId)
-  const roleDefinition = assignment === undefined ? undefined : staffRoleDefinition(assignment.role)
-  const held = getResponsibilitiesHeldByStaff(world, context.staffId)
+  const roleDefinition = assignment?.teamId === context.teamId ? staffRoleDefinition(assignment.role) : undefined
+  const held = getResponsibilitiesHeldByStaff(world, context.staffId).filter((item) => item.teamId === context.teamId)
   const teamResponsibilities = getTeamResponsibilities(world, context.teamId)
   const workload = calculateStaffWorkload(world, context.staffId)
   const contract = Object.values(world.staffContractsById).find((item) => item.staffId === context.staffId && item.teamId === context.teamId && isStaffContractActiveOn(item, world.currentDate))
   const reputation = world.staffReputationProfilesByStaffId[context.staffId]
+  const politicalInfluence = deriveStaffPoliticalInfluence(world, context, politicalInfluenceIndex)
 
   const delegatedOrAdvisoryHeld = held.filter((item) => item.mode === 'delegated' || item.mode === 'advisory')
-  const decisionAccessCount = held.length
-  const influenceReality = held.length === 0 ? UNKNOWN_REALITY : knownReality(30 + Math.min(60, held.reduce((sum, item) => sum + (item.mode === 'delegated' ? 18 : 12), 0)))
+  const activeEmployment = world.staffEmploymentByStaffId[context.staffId]
+  const hasActiveContext = activeEmployment?.status === 'employed' && activeEmployment.teamId === context.teamId
+  const hasFormalDecisionAuthority = roleDefinition?.seniority === 'senior' || roleDefinition?.seniority === 'director'
+  const hasHeldDecisionResponsibility = delegatedOrAdvisoryHeld.length > 0
+  const leaderId = world.teams[context.teamId]?.coachId
+  const hasLeadershipAccessRelationship = politicalInfluenceIndex?.leadershipRelationshipByStaffId[context.staffId] !== undefined
+    || (politicalInfluenceIndex === undefined && leaderId !== undefined && world.relationshipsByKey[relationshipKey(context.staffId, leaderId)] !== undefined)
+  const hasInformationSignal = held.length > 0 || hasLeadershipAccessRelationship
+  const influenceReality = hasActiveContext ? knownReality(politicalInfluence.overall) : UNKNOWN_REALITY
   const autonomyReality = held.length === 0 ? UNKNOWN_REALITY : knownReality(20 + Math.min(70, delegatedOrAdvisoryHeld.reduce((sum, item) => sum + (item.mode === 'delegated' ? 20 : 8), 0)))
 
   const reality: Record<StaffExpectationDimension, StaffRealityReading> = {
@@ -64,8 +74,8 @@ export function deriveStaffReality(world: GameWorld, context: StaffHumanContext)
     professionalChallenge: assignment === undefined ? UNKNOWN_REALITY : knownReality(professionalChallengeScore(workload.utilization)),
     development: UNKNOWN_REALITY, // no canonical Staff development-track authority yet
     resourceSupport: UNKNOWN_REALITY, // no canonical Organization resource authority yet — Team !== Organization
-    informationAccess: decisionAccessCount === 0 ? UNKNOWN_REALITY : knownReality(40 + Math.min(50, decisionAccessCount * 10)),
-    decisionAccess: decisionAccessCount === 0 ? UNKNOWN_REALITY : knownReality(30 + Math.min(60, delegatedOrAdvisoryHeld.length * 15)),
+    informationAccess: !hasInformationSignal ? UNKNOWN_REALITY : knownReality(Math.round(politicalInfluence.leadershipAccess * 0.55 + politicalInfluence.responsibilityAuthority * 0.45)),
+    decisionAccess: !(hasFormalDecisionAuthority || hasHeldDecisionResponsibility) ? UNKNOWN_REALITY : knownReality(Math.round(politicalInfluence.formalAuthority * 0.55 + politicalInfluence.responsibilityAuthority * 0.45)),
     organizationalAmbition: UNKNOWN_REALITY, // no canonical organizational-ambition/project authority yet
   }
   return reality
@@ -229,8 +239,8 @@ export interface AppraisalResult {
 }
 
 /** §21 — the periodic Appraisal pass. Never persisted gaps: derived fresh from current expectations vs current reality on every call. */
-export function appraiseStaffHumanState(world: GameWorld, context: StaffHumanContext, currentState: StaffHumanState, expectations: StaffExpectationProfile, monthsSinceEstablished: number): AppraisalResult {
-  const reality = deriveStaffReality(world, context)
+export function appraiseStaffHumanState(world: GameWorld, context: StaffHumanContext, currentState: StaffHumanState, expectations: StaffExpectationProfile, monthsSinceEstablished: number, politicalInfluenceIndex?: StaffPoliticalInfluenceIndex): AppraisalResult {
+  const reality = deriveStaffReality(world, context, politicalInfluenceIndex)
   const duration = classifyGapDuration(monthsSinceEstablished)
   const durationScale = DURATION_PRESSURE_SCALE[duration]
 

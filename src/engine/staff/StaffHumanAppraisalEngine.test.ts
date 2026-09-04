@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game/createNewGame'
 import { getTeamStaffAssignments, updateGameWorld, type GameWorld } from '@/domain/world'
 import { setTeamResponsibility } from '@/app/staffResponsibilities'
+import { relationshipKey } from '@/domain/relationships'
 import {
   STAFF_EXPECTATION_DIMENSIONS,
   STAFF_HUMAN_STATE_DIMENSIONS,
@@ -23,6 +24,7 @@ import {
   classifyGapDuration,
 } from './StaffHumanAppraisalEngine'
 import type { StaffPersonId, TeamId } from '@/domain/ids'
+import { deriveStaffPoliticalInfluence } from './StaffPoliticalInfluenceEngine'
 
 function baseWorld(): GameWorld { return createNewGame() }
 function pickStaff(world: GameWorld, teamId: TeamId, role: string): StaffPersonId {
@@ -30,6 +32,30 @@ function pickStaff(world: GameWorld, teamId: TeamId, role: string): StaffPersonI
 }
 
 describe('deriveStaffReality', () => {
+  it('uses derived political influence as its canonical influence reading without fabricating decision access', () => {
+    const world = baseWorld()
+    const teamId = Object.values(world.teams)[0]!.id
+    const staffId = pickStaff(world, teamId, 'assistantCoach')
+    const context = createStaffHumanContext({ id: staffHumanContextIdFor(staffId, teamId, world.currentDate), staffId, teamId, startedOn: world.currentDate })
+    const reality = deriveStaffReality(world, context)
+    expect(reality.influence).toEqual(knownReality(deriveStaffPoliticalInfluence(world, context).overall))
+    expect(world.staffHumanStatesByContextId).toEqual({})
+    expect(reality.decisionAccess).toEqual(UNKNOWN_REALITY)
+  })
+  it('keeps decision and information UNKNOWN without access signals, then recognizes real leadership and delegation signals', () => {
+    const world = baseWorld(); const teamId = Object.values(world.teams)[0]!.id; const staffId = pickStaff(world, teamId, 'assistantCoach')
+    const context = createStaffHumanContext({ id: staffHumanContextIdFor(staffId, teamId, world.currentDate), staffId, teamId, startedOn: world.currentDate })
+    const absent = deriveStaffReality(world, context)
+    expect(absent.influence.known).toBe(true)
+    expect(absent.decisionAccess).toEqual(UNKNOWN_REALITY)
+    expect(absent.informationAccess).toEqual(UNKNOWN_REALITY)
+    const leadership = updateGameWorld(world, { relationshipsByKey: { [relationshipKey(staffId, world.teams[teamId]!.coachId!)]: { sourceId: staffId, targetId: world.teams[teamId]!.coachId!, value: 0, events: [], dimensions: { trust: 50, professionalRespect: 50, communicationQuality: 50, collaboration: 0, personalCloseness: 0, perceivedSupport: 50, reliability: 0, professionalAlignment: 50 } } } })
+    expect(deriveStaffReality(leadership, context).informationAccess.known).toBe(true)
+    const delegated = setTeamResponsibility(world, { teamId, kind: 'createTeamTrainingPlan', mode: 'delegated', holderStaffId: staffId })
+    const known = deriveStaffReality(delegated, context)
+    expect(known.decisionAccess.known).toBe(true)
+    expect(known.informationAccess.known).toBe(true)
+  })
   it('unavailable dimensions (no canonical authority yet) are UNKNOWN, never fabricated zeros', () => {
     const world = baseWorld()
     const teamId = Object.values(world.teams)[0]!.id

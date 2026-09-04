@@ -19,6 +19,7 @@ import { appraiseStaffCareer, progressStaffCareerAutonomy as evolveStaffCareerAu
 import { staffCareerRequestIdFor, type StaffCareerRequest, type StaffCareerRequestKind } from '@/domain/staffCareerAutonomy'
 import { RESPONSIBILITY_REGISTRY } from '@/domain/responsibility'
 import { calculateStaffRoleProficiencyByRoleId, isStaffRoleApplicableToEcosystem, STAFF_ROLE_REGISTRY } from '@/domain/staff'
+import { buildStaffPoliticalInfluenceIndex } from './StaffPoliticalInfluenceEngine'
 
 /**
  * Wave 5A §21/§37 — the single canonical daily/periodic authority for Staff Human State.
@@ -154,6 +155,7 @@ function applyDailyRecovery(world: GameWorld): GameWorld {
 function runWeeklyAppraisal(world: GameWorld): GameWorld {
   const contexts = Object.values(world.staffHumanContextsById).filter((context) => context.endedOn === undefined)
   if (contexts.length === 0) return world
+  const politicalInfluenceIndex = buildStaffPoliticalInfluenceIndex(world)
 
   const updatedStates: Record<StaffHumanContextId, ReturnType<typeof appraiseStaffHumanState>['state']> = {} as never
   const updatedExpectations: Record<StaffHumanContextId, ReturnType<typeof appraiseStaffHumanState>['expectations']> = {} as never
@@ -163,7 +165,7 @@ function runWeeklyAppraisal(world: GameWorld): GameWorld {
     const expectations = world.staffExpectationProfilesByContextId[context.id]
     if (state === undefined || expectations === undefined) continue
     const monthsSinceEstablished = monthsBetween(expectations.establishedOn, world.currentDate)
-    const result = appraiseStaffHumanState(world, context, state, expectations, monthsSinceEstablished)
+    const result = appraiseStaffHumanState(world, context, state, expectations, monthsSinceEstablished, politicalInfluenceIndex)
     updatedStates[context.id] = result.state
     updatedExpectations[context.id] = result.expectations
   }
