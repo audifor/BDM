@@ -33,6 +33,10 @@ import {
   buildPlayerContractModel,
 } from './buildPlayerContractModel'
 import {
+  buildPlayerMedicalModel,
+  resolvePlayerMedicalRiskPresentation,
+} from './buildPlayerMedicalModel'
+import {
   availableField,
   deriveTeamColors,
   findTeamForPlayer,
@@ -212,6 +216,7 @@ export function buildPlayerWorkspaceModel(
   const seasonAverages =
     seasonStats.gamesPlayed === 0 ? undefined : calculatePlayerStatAverages(seasonStats).ppg
   const teamColors = team === undefined ? deriveTeamColors('free-agent') : deriveTeamColors(team.id)
+  const riskPresentation = resolvePlayerMedicalRiskPresentation(world, player.id)
 
   return {
     identity: {
@@ -251,12 +256,17 @@ export function buildPlayerWorkspaceModel(
           ? unavailableField('Not available')
           : availableField(MORALE_BAND_LABELS[moraleBand]),
       sharpness: unavailableField('Not tracked'),
-      risk: unavailableField('Not tracked'),
+      risk:
+        riskPresentation.status === 'available'
+          ? availableField(riskPresentation.displayLabel!)
+          : unavailableField(riskPresentation.unavailableLabel ?? 'Not tracked'),
+      riskTone: riskPresentation.status === 'available' ? riskPresentation.overviewTone ?? null : null,
     },
     ratings,
     attributes: buildAttributes(player.basketball.ratings),
     performance: buildPlayerPerformanceModel(world, player.id),
     contract: buildPlayerContractModel(world, player.id),
+    medical: buildPlayerMedicalModel(world, player.id),
     strengths: buildEvaluations(ratings, 'strength'),
     limitations: buildEvaluations(ratings, 'limitation'),
     radarAxes: RADAR_CATEGORY_ORDER.map((category) => ({

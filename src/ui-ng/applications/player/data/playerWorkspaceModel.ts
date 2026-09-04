@@ -3,6 +3,7 @@ import type { CanonicalRatingKey } from '@/domain/player'
 
 import type { PlayerPerformanceModel } from './buildPlayerPerformanceModel'
 import type { PlayerContractModel } from './buildPlayerContractModel'
+import type { PlayerMedicalModel, MedicalRiskOverviewTone } from './buildPlayerMedicalModel'
 import type { RatingCategory } from './ratingCatalog'
 
 export type PresentationAvailability = 'available' | 'unavailable'
@@ -45,6 +46,7 @@ export interface PlayerStatusModel {
   readonly morale: PresentationField<string>
   readonly sharpness: PresentationField<number>
   readonly risk: PresentationField<string>
+  readonly riskTone: MedicalRiskOverviewTone | null
 }
 
 export interface PlayerRatingRow {
@@ -122,6 +124,7 @@ export interface PlayerWorkspaceModel {
   readonly attributes: PlayerAttributesModel
   readonly performance: PlayerPerformanceModel
   readonly contract: PlayerContractModel
+  readonly medical: PlayerMedicalModel
   readonly strengths: readonly EvaluationItem[]
   readonly limitations: readonly EvaluationItem[]
   readonly radarAxes: readonly RadarAxisModel[]

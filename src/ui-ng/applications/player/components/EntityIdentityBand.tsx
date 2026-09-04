@@ -186,6 +186,20 @@ export function EntityIdentityBand() {
 
         )}
 
+        {status.risk.status === 'available' && (
+
+          <StatusInstrument
+
+            label="Risk"
+
+            tone={status.riskTone ?? 'neutral'}
+
+            value={presentationValue(status.risk)}
+
+          />
+
+        )}
+
         {status.sharpness.status === 'unavailable' && (
 
           <StatusInstrument label="Sharpness" tone="neutral" value={status.sharpness.label ?? UNAVAILABLE_LABEL} />
