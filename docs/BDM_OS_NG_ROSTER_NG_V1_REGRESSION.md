@@ -2,7 +2,7 @@
 
 **Checkpoint base:** NG-012 Roster migration preservation audit (`8ca1cb2`)  
 **Implementation:** STEP 013 Roster NG visual migration  
-**Verification:** STEP 013A preserve-first · STEP 013B stable mount · STEP 013C product pivot · STEP 013D workspace navigation + session restore · **STEP 013E real-browser certification**  
+**Verification:** STEP 013A preserve-first · STEP 013B stable mount · STEP 013C product pivot · STEP 013D workspace navigation + session restore · **STEP 013E real-browser certification** · **STEP 014 scout-aware rating presentation (data honesty gate)**  
 **Functional source:** `PlantillaPcbPage` → `CanonicalRoster` (`variant="ng"`) → `BDMDataGrid` (`visualMode="ng"`) **plus** ported capabilities from `SquadScreen` → `RosterSquadTable`
 
 ---
@@ -36,7 +36,22 @@ BdmOsNg
 
 **Production baseline (unchanged):** `DesktopAppHost` → `PlantillaPcbPage` → `CanonicalRoster` (`variant="legacy"`) → legacy entity window / `PlayerProfileApp`.
 
-**Union target:** CanonicalRoster grid power **+** SquadScreen position filter **+** contract expiry (EXP). Scout-aware rating columns: **REQUIRED BEFORE CUTOVER** (see below).
+**Union target:** CanonicalRoster grid power **+** SquadScreen position filter **+** contract expiry (EXP). Scout-aware rating columns: **RESOLVED in STEP 014** (NG `variant="ng"` only).
+
+---
+
+## STEP 014 — Scout-aware ratings (RESOLVED)
+
+| Item | Classification | Detail |
+|------|----------------|--------|
+| Scout-aware rating presentation | **RESOLVED (NG-only)** | `variant="ng"` uses `getOrganizationRatingEvaluation` + `formatRatingEvaluation` via `rosterRatingPresentation.ts` / `rosterScoutAwareColumns.tsx`. Legacy `variant="legacy"` unchanged (still shows raw canonical ratings). |
+| Summary signals FIN/SHO/PMK/… | **RESOLVED (NG-only)** | Mapped to organization dimensions (`finishing`, `shooting`, `creation`, etc.) — no longer derived from hidden `legacyRatingSignals`. |
+| Sort / CSV / custom columns | **RESOLVED (NG-only)** | `sortValue` = `intelligenceSortValue ?? 101`; `exportValue` = formatted evaluation; no raw `value` on rating columns. |
+| Player Workspace Attributes / Overview | **BLOCKER BEFORE NG PLAYER/ROSTER CUTOVER** | `buildPlayerWorkspaceModel` still reads exact `player.basketball.ratings`. Roster NG may hide a rating, but opening PlayerWorkspace reveals underlying truth. Does **not** block NG-014 commit; **does** block final NG cutover. |
+
+Browser: `scripts/verify-step-014-roster-scout-ratings.mjs` → `docs/verify-step-014-report.json` (**PASS**, 40-row fixture).
+
+**Cutover gate (Roster NG scout-aware):** resolved in STEP 014. **Remaining cutover blocker:** PlayerWorkspace NG must apply the same organization knowledge boundary before final NG player/roster cutover.
 
 ---
 
@@ -99,7 +114,7 @@ Historical 013A/013B findings **retained above** for audit trail.
 
 | Item | Classification | Affected columns / presets |
 |------|----------------|----------------------------|
-| Scout-aware rating presentation | **REQUIRED BEFORE CUTOVER** | All `rating-*` columns (35 canonical keys) across offense/brain/defense/physical/ballHandling presets; summary signals (`summary-*`) show exact derived values today — must audit against `getOrganizationRatingEvaluation` / SquadScreen rules before legacy cutover |
+| ~~Scout-aware rating presentation~~ | **RESOLVED (STEP 014)** | NG `rating-*` (35 keys) + `summary-*` (7 signals) — see STEP 014 section above |
 
 Jerseys / registration selectors: **FUTURE DOMAIN** — omitted in NG (not ported broken legacy sub-views).
 

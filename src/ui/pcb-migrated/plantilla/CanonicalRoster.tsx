@@ -25,6 +25,11 @@ import {
   filterRosterByPosition,
   ROSTER_POSITION_FILTERS,
 } from "@/ui-ng/applications/roster/rosterPositionFilter";
+import { buildRosterRatingEvaluationLookup } from "@/ui-ng/applications/roster/rosterRatingPresentation";
+import {
+  scoutAwareRatingColumn,
+  scoutAwareSummaryColumn,
+} from "@/ui-ng/applications/roster/rosterScoutAwareColumns";
 import type { RosterNgSessionBridge } from "@/ui-ng/applications/roster/rosterWorkspaceSession";
 
 import "./CanonicalRoster.css";
@@ -232,8 +237,34 @@ export function CanonicalRoster({
       playerId: player.id,
       section: "overview",
     });
+  const ratingEvaluationLookup = useMemo(
+    () => (isNg ? buildRosterRatingEvaluationLookup(world, team.id) : undefined),
+    [isNg, world, team.id],
+  );
   const columns = useMemo<readonly DataGridColumn<Player>[]>(
-    () => [
+    () => {
+      const summaryColumns =
+        isNg && ratingEvaluationLookup !== undefined
+          ? SUMMARY_SIGNAL_KEYS.map((key) =>
+              scoutAwareSummaryColumn(
+                ratingEvaluationLookup,
+                key,
+                SUMMARY_SIGNAL_LABELS[key],
+              ),
+            )
+          : SUMMARY_SIGNAL_KEYS.map(summarySignalColumn);
+      const ratingColumns = (keys: readonly CanonicalRatingKey[]) =>
+        isNg && ratingEvaluationLookup !== undefined
+          ? keys.map((key) =>
+              scoutAwareRatingColumn(
+                ratingEvaluationLookup,
+                key,
+                RATING_COLUMN_LABELS[key],
+              ),
+            )
+          : keys.map(ratingColumn);
+
+      return [
       {
         id: "status",
         label: "EST",
@@ -390,12 +421,12 @@ export function CanonicalRoster({
         render: (player) =>
           getCurrentPlayerContract(world, player.id)?.term.expiresOn ?? "—",
       },
-      ...SUMMARY_SIGNAL_KEYS.map(summarySignalColumn),
-      ...OFFENSE_RATING_KEYS.map(ratingColumn),
-      ...BRAIN_RATING_KEYS.map(ratingColumn),
-      ...DEFENSE_RATING_KEYS.map(ratingColumn),
-      ...PHYSICAL_RATING_KEYS.map(ratingColumn),
-      ...BALL_HANDLING_RATING_KEYS.map(ratingColumn),
+      ...summaryColumns,
+      ...ratingColumns(OFFENSE_RATING_KEYS),
+      ...ratingColumns(BRAIN_RATING_KEYS),
+      ...ratingColumns(DEFENSE_RATING_KEYS),
+      ...ratingColumns(PHYSICAL_RATING_KEYS),
+      ...ratingColumns(BALL_HANDLING_RATING_KEYS),
       ...PERSONALITY_DIMENSIONS.map(
         (dimension): DataGridColumn<Player> => ({
           id: `personality-${dimension}`,
@@ -408,8 +439,17 @@ export function CanonicalRoster({
           render: (player) => getPersonality(world, player.id)?.values[dimension] ?? "—",
         }),
       ),
+    ];
+    },
+    [
+      isNg,
+      lineup,
+      onLineupSlotChange,
+      onLineupSlotClear,
+      playerMenu,
+      ratingEvaluationLookup,
+      world,
     ],
-    [lineup, onLineupSlotChange, onLineupSlotClear, world],
   );
   const offenseColumnIds = OFFENSE_RATING_KEYS.map((key) => `rating-${key}`);
   const brainColumnIds = BRAIN_RATING_KEYS.map((key) => `rating-${key}`);
