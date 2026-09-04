@@ -37,6 +37,9 @@ import {
   resolvePlayerMedicalRiskPresentation,
 } from './buildPlayerMedicalModel'
 import {
+  buildPlayerDevelopmentModel,
+} from './buildPlayerDevelopmentModel'
+import {
   availableField,
   deriveTeamColors,
   findTeamForPlayer,
@@ -217,6 +220,8 @@ export function buildPlayerWorkspaceModel(
     seasonStats.gamesPlayed === 0 ? undefined : calculatePlayerStatAverages(seasonStats).ppg
   const teamColors = team === undefined ? deriveTeamColors('free-agent') : deriveTeamColors(team.id)
   const riskPresentation = resolvePlayerMedicalRiskPresentation(world, player.id)
+  const development = buildPlayerDevelopmentModel(world, player.id)
+  if (development === undefined) return undefined
 
   return {
     identity: {
@@ -267,6 +272,7 @@ export function buildPlayerWorkspaceModel(
     performance: buildPlayerPerformanceModel(world, player.id),
     contract: buildPlayerContractModel(world, player.id),
     medical: buildPlayerMedicalModel(world, player.id),
+    development,
     strengths: buildEvaluations(ratings, 'strength'),
     limitations: buildEvaluations(ratings, 'limitation'),
     radarAxes: RADAR_CATEGORY_ORDER.map((category) => ({

@@ -4,6 +4,7 @@ import type { RatingCategory } from '@/ui-ng/applications/player/data/ratingCata
 import type { PerformanceSession } from '@/ui-ng/applications/player/context/performanceSession'
 import type { ContractSession } from '@/ui-ng/applications/player/context/contractSession'
 import type { MedicalSession } from '@/ui-ng/applications/player/context/medicalSession'
+import type { DevelopmentSession } from '@/ui-ng/applications/player/context/developmentSession'
 import type { PlayerWorkspaceViewId } from '@/ui-ng/applications/player/playerStructuralData'
 
 export interface PlayerWorkspaceSession {
@@ -20,4 +21,5 @@ export interface PlayerWorkspaceSession {
   readonly performance: PerformanceSession
   readonly contract: ContractSession
   readonly medical: MedicalSession
+  readonly development: DevelopmentSession
 }

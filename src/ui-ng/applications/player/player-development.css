@@ -1,0 +1,355 @@
+/* Player Development workspace — STEP 009 */
+
+.pd-root {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--ng-bg-workspace);
+}
+
+.pd-root__upper {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  min-height: 0;
+  border-bottom: 1px solid var(--ng-border-strong);
+}
+
+.pd-root__main {
+  display: grid;
+  grid-template-columns: 0.88fr 1.12fr;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pd-stat-label {
+  font-size: var(--ng-font-size-meta);
+  font-weight: var(--ng-font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pd-stat-label--primary {
+  color: var(--ng-text-muted);
+}
+
+.pd-stat-label--secondary {
+  color: var(--ng-text-disabled);
+  font-weight: var(--ng-font-weight-medium);
+}
+
+.pd-stat-value {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.pd-stat-value--primary {
+  font-size: 20px;
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-primary);
+}
+
+.pd-stat-value--secondary {
+  font-size: var(--ng-font-size-data);
+  font-weight: var(--ng-font-weight-medium);
+  color: var(--ng-text-secondary);
+}
+
+.pd-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ng-spacing-8);
+  min-height: 28px;
+  padding: var(--ng-spacing-4) var(--ng-spacing-12);
+  border-bottom: 1px solid var(--ng-border-subtle);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.pd-panel-head__title {
+  font-size: var(--ng-font-size-secondary);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-primary);
+}
+
+.pd-panel-head__meta {
+  font-size: var(--ng-font-size-meta);
+  color: var(--ng-text-muted);
+}
+
+.pd-panel-note {
+  margin: 0;
+  padding: var(--ng-spacing-6) var(--ng-spacing-12);
+  font-size: var(--ng-font-size-meta);
+  line-height: 1.35;
+  color: var(--ng-text-disabled);
+  border-bottom: 1px solid var(--ng-border-subtle);
+}
+
+.pd-panel-empty {
+  margin: 0;
+  padding: var(--ng-spacing-12);
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-muted);
+}
+
+.pd-status {
+  padding: var(--ng-spacing-8) var(--ng-spacing-12);
+  border-bottom: 1px solid var(--ng-border-strong);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 24%),
+    var(--ng-bg-panel-primary);
+}
+
+.pd-status__primary {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--ng-spacing-16);
+}
+
+.pd-status__context {
+  display: flex;
+  align-items: center;
+  gap: var(--ng-spacing-8);
+  min-width: 0;
+}
+
+.pd-status__pill {
+  font-size: 11px;
+  font-weight: var(--ng-font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ng-text-secondary);
+  padding: 2px 8px;
+  border: 1px solid var(--ng-border-subtle);
+  border-radius: 999px;
+}
+
+.pd-status__label {
+  font-size: var(--ng-font-size-data);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-primary);
+}
+
+.pd-status__season {
+  font-size: var(--ng-font-size-meta);
+  color: var(--ng-text-muted);
+}
+
+.pd-status__trend {
+  font-size: var(--ng-font-size-data);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-secondary);
+}
+
+.pd-status__meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ng-spacing-8) var(--ng-spacing-16);
+  margin-top: var(--ng-spacing-4);
+  font-size: var(--ng-font-size-meta);
+  color: var(--ng-text-disabled);
+}
+
+.pd-stimulus,
+.pd-training,
+.pd-potential,
+.pd-longitudinal {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--ng-border-strong);
+  background: var(--ng-bg-panel-secondary);
+}
+
+.pd-longitudinal {
+  border-right: none;
+}
+
+.pd-stimulus__body {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
+  flex: 1;
+}
+
+.pd-stimulus__section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--ng-spacing-6) var(--ng-spacing-8) var(--ng-spacing-8);
+}
+
+.pd-stimulus__section + .pd-stimulus__section {
+  border-top: 1px solid var(--ng-border-subtle);
+}
+
+.pd-stimulus__scroll {
+  min-height: 0;
+  overflow: auto;
+  margin-top: var(--ng-spacing-4);
+}
+
+.pd-stimulus__scroll--compact {
+  max-height: 180px;
+}
+
+.pd-stimulus__table,
+.pd-potential__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ng-font-size-secondary);
+}
+
+.pd-stimulus__table th,
+.pd-potential__table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--ng-spacing-4) var(--ng-spacing-8);
+  text-align: left;
+  font-size: var(--ng-font-size-meta);
+  font-weight: var(--ng-font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ng-text-disabled);
+  background: var(--ng-bg-panel-secondary);
+  border-bottom: 1px solid var(--ng-border-subtle);
+}
+
+.pd-stimulus__table td,
+.pd-potential__table td {
+  padding: var(--ng-spacing-4) var(--ng-spacing-8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--ng-text-secondary);
+}
+
+.pd-stimulus__table tr[role='button'],
+.pd-potential__table tr[role='button'] {
+  cursor: pointer;
+}
+
+.pd-stimulus__table tr.is-selected,
+.pd-potential__table tr.is-selected {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.pd-stimulus__num,
+.pd-potential__num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.pd-stimulus__rating {
+  display: block;
+  color: var(--ng-text-primary);
+}
+
+.pd-stimulus__category {
+  display: block;
+  font-size: var(--ng-font-size-meta);
+  color: var(--ng-text-disabled);
+}
+
+.pd-training__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ng-spacing-8);
+  margin: 0;
+  padding: var(--ng-spacing-10) var(--ng-spacing-12);
+}
+
+.pd-training__grid dt {
+  font-size: var(--ng-font-size-meta);
+  font-weight: var(--ng-font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ng-text-disabled);
+}
+
+.pd-training__grid dd {
+  margin: var(--ng-spacing-2) 0 0;
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-primary);
+}
+
+.pd-potential__scroll {
+  min-height: 0;
+  overflow: auto;
+  flex: 1;
+}
+
+.pd-longitudinal__message {
+  margin: 0;
+  padding: var(--ng-spacing-12);
+  font-size: var(--ng-font-size-data);
+  font-weight: var(--ng-font-weight-medium);
+  color: var(--ng-text-primary);
+}
+
+.pd-inspector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ng-spacing-10);
+  padding: var(--ng-spacing-12);
+  height: 100%;
+}
+
+.pd-inspector--empty {
+  justify-content: center;
+}
+
+.pd-inspector__hint {
+  margin: 0;
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-muted);
+  text-align: center;
+}
+
+.pd-inspector__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ng-spacing-2);
+}
+
+.pd-inspector__title {
+  font-size: var(--ng-font-size-data);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-primary);
+}
+
+.pd-inspector__meta {
+  font-size: var(--ng-font-size-meta);
+  color: var(--ng-text-muted);
+}
+
+.pd-inspector__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ng-spacing-8);
+}
+
+.pd-inspector__cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ng-spacing-2);
+  padding: var(--ng-spacing-8);
+  border: 1px solid var(--ng-border-subtle);
+  border-radius: var(--ng-radius-sm);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.pd-inspector__note {
+  margin: 0;
+  font-size: var(--ng-font-size-meta);
+  line-height: 1.4;
+  color: var(--ng-text-disabled);
+}
+
+@media (min-width: 2200px) {
+  .pd-stat-value--primary {
+    font-size: 20px;
+  }
+}

@@ -5,6 +5,7 @@ import './player-attributes.css'
 import './player-performance.css'
 import './player-contract.css'
 import './player-medical.css'
+import './player-development.css'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -40,6 +41,10 @@ import {
   MedicalInspectorContent,
   PlayerMedicalView,
 } from '@/ui-ng/applications/player/views/PlayerMedicalView'
+import {
+  DevelopmentInspectorContent,
+  PlayerDevelopmentView,
+} from '@/ui-ng/applications/player/views/PlayerDevelopmentView'
 import { PlayerPlaceholderView } from '@/ui-ng/applications/player/views/PlayerPlaceholderView'
 import { ApplicationWorkspace } from '@/ui-ng/workspace/ApplicationWorkspace'
 import { InspectorPane } from '@/ui-ng/workspace/InspectorPane'
@@ -70,6 +75,7 @@ function PlayerWorkspaceShell({ data }: { readonly data: PlayerWorkspaceState })
   const [competitionFilter, setCompetitionFilter] = useState<PerformanceCompetitionFilter>('all')
   const [selectedContractItemId, setSelectedContractItemId] = useState<string | null>(null)
   const [selectedMedicalEventId, setSelectedMedicalEventId] = useState<InjuryId | null>(null)
+  const [selectedDevelopmentItemId, setSelectedDevelopmentItemId] = useState<string | null>(null)
 
   const setActiveView = useCallback((view: PlayerWorkspaceViewId) => {
     setActiveViewState(view)
@@ -109,12 +115,14 @@ function PlayerWorkspaceShell({ data }: { readonly data: PlayerWorkspaceState })
       setCompetitionFilter('all')
       setSelectedContractItemId(null)
       setSelectedMedicalEventId(null)
+      setSelectedDevelopmentItemId(null)
       return
     }
     setSelectedGameId(null)
     setCompetitionFilter('all')
     setSelectedContractItemId(model.contract.defaultSelectedItemId)
     setSelectedMedicalEventId(model.medical.defaultSelectedEventId)
+    setSelectedDevelopmentItemId(model.development.defaultSelectedItemId)
   }, [model?.identity.playerId])
 
   const session = useMemo<PlayerWorkspaceSession>(
@@ -143,6 +151,10 @@ function PlayerWorkspaceShell({ data }: { readonly data: PlayerWorkspaceState })
         selectedEventId: selectedMedicalEventId,
         setSelectedEventId: setSelectedMedicalEventId,
       },
+      development: {
+        selectedItemId: selectedDevelopmentItemId,
+        setSelectedItemId: setSelectedDevelopmentItemId,
+      },
     }),
     [
       activeView,
@@ -151,6 +163,7 @@ function PlayerWorkspaceShell({ data }: { readonly data: PlayerWorkspaceState })
       inspectorCollapsed,
       selectedCategory,
       selectedContractItemId,
+      selectedDevelopmentItemId,
       selectedGameId,
       selectedMedicalEventId,
       selectedRatingId,
@@ -242,6 +255,14 @@ function PlayerWorkspaceLayout({
               >
                 <MedicalInspectorContent />
               </InspectorPane>
+            ) : activeView === 'development' ? (
+              <InspectorPane
+                collapsed={inspectorCollapsed}
+                onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
+                title="Development Detail"
+              >
+                <DevelopmentInspectorContent />
+              </InspectorPane>
             ) : activeView === 'performance' ? (
               <InspectorPane
                 collapsed={inspectorCollapsed}
@@ -267,8 +288,8 @@ function PlayerWorkspaceLayout({
               {activeView === 'performance' && <PlayerPerformanceView />}
               {activeView === 'contract' && <PlayerContractView />}
               {activeView === 'medical' && <PlayerMedicalView />}
-              {(activeView === 'development' ||
-                activeView === 'history') && <PlayerPlaceholderView viewId={activeView} />}
+              {activeView === 'development' && <PlayerDevelopmentView />}
+              {activeView === 'history' && <PlayerPlaceholderView viewId={activeView} />}
             </div>
           }
         />
