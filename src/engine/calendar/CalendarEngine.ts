@@ -18,6 +18,7 @@ import { progressBasketballOperationsAdvisories } from '@/engine/roster'
 import { progressStaffCareerAutonomyAppraisal, progressStaffHumanState } from '@/engine/staff/StaffHumanStatePipeline'
 import { progressStaffCultureAndCohesion } from '@/engine/staff/StaffCultureCohesionPipeline'
 import { progressStaffConflicts } from '@/engine/staff/StaffConflictEngine'
+import { progressStaffPoliticalCases } from '@/engine/staff/StaffPoliticalCaseEngine'
 import { progressStaffAutonomousOfferDecisions, progressStaffAutonomousResignations, progressStaffCareerMarketAgency } from '@/app/staffCareerAutonomy'
 
 /**
@@ -52,7 +53,8 @@ export function advanceDay(world: GameWorld): GameWorld {
   const withHumanState = progressStaffHumanState(withDrafts)
   const withConflicts = progressStaffConflicts(withHumanState)
   const withCulture = progressStaffCultureAndCohesion(withConflicts)
-  const withCareerAutonomy = progressStaffCareerAutonomyAppraisal(withCulture)
+  const withPoliticalCases = progressStaffPoliticalCases(withCulture)
+  const withCareerAutonomy = progressStaffCareerAutonomyAppraisal(withPoliticalCases)
   return progressStaffAutonomousResignations(progressStaffAutonomousOfferDecisions(progressStaffCareerMarketAgency(withCareerAutonomy)))
 }
 function progressAcademicTerms(world: GameWorld): GameWorld { if(world.currentDate.slice(5) !== '01-01' && world.currentDate.slice(5) !== '07-01') return world; const term=`academic:${world.currentDate.slice(0, 4)}:${world.currentDate.slice(5, 7)}`; return resolveAcademicTerm(progressAiAcademicSupport(world,term),term) }

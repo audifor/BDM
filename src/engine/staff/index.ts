@@ -2,3 +2,5 @@ export { resolveDelegatedResponsibility, resolveAdvisoryResponsibility } from '.
 export type { DelegatedResponsibilityResolution, AdvisoryResponsibilityResolution } from './resolveDelegatedResponsibility'
 export { trainingQuality, scoutingQuality, tacticsQuality, medicalQuality, recruitingQuality, basketballOperationsQuality } from './quality'
 export { calculateOverloadPenalty } from './overloadPenalty'
+export { progressStaffPoliticalCases } from './StaffPoliticalCaseEngine'
+export { isStaffWeeklyCheckpoint } from './StaffWeeklyCadence'
