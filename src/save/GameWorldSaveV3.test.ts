@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { staffPersonIdFromString, type TeamId } from '@/domain/ids'
+import { staffPoliticalActionIdFor } from '@/domain/staffPolitics'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { updateGameWorld, getNextScheduledGame } from '@/domain/world'
 import { createDefaultStaffReputationProfile } from '@/domain/staffReputation'
@@ -82,6 +83,20 @@ describe('GameWorldSaveV3', () => {
     const politicalCase = { id: `staff-political-case:${teamId}:CAREER_REQUEST:position-malformed`, scopeKey: teamId, teamId, sourceKind: 'CAREER_REQUEST' as const, sourceId: 'position-malformed', agenda: 'CAREER' as const, subjectStaffId: staffId, openedOn: world.currentDate, lastEvaluatedOn: world.currentDate, status: 'OPEN' as const, positions: [{ actorId: actor as never, stance: 'SUPPORT' as const, since: world.currentDate, lastEvaluatedOn: world.currentDate }] }
     const saved = serializeGameWorldV3(updateGameWorld(world, { staffPoliticalCases: [politicalCase] }), savedAt)
     for (const mutate of [(positions: Record<string, unknown>[]) => positions.push({ ...positions[0] }), (positions: Record<string, unknown>[]) => { positions[0]!.stance = 'NEUTRAL' }, (positions: Record<string, unknown>[]) => { positions[0]!.since = '1900-01-01' }]) { const tampered = structuredClone(saved); const positions = ((tampered.payload.staffCareerRuntime as Record<string, unknown>).staffPoliticalCases as { positions: Record<string, unknown>[] }[])[0]!.positions; mutate(positions); expect(() => deserializeGameWorldV3(tampered)).toThrow() }
+  })
+
+  it('round-trips Political Actions and defaults legacy V3 actions to empty', () => {
+    const { world, teamId, staffId } = worldWithHiredStaff(); const [supporter, opponent, mediator] = Object.keys(world.staffPeopleById).filter((id) => id !== staffId).slice(0, 3) as [string, string, string]
+    const politicalCase = { id: `staff-political-case:${teamId}:CAREER_REQUEST:actions`, scopeKey: teamId, teamId, sourceKind: 'CAREER_REQUEST' as const, sourceId: 'actions', agenda: 'CAREER' as const, subjectStaffId: staffId, openedOn: world.currentDate, lastEvaluatedOn: world.currentDate, status: 'OPEN' as const, positions: [] }
+    const action = (kind: 'ENDORSE' | 'LOBBY' | 'COORDINATE' | 'MEDIATE', stance: 'SUPPORT' | 'OPPOSE' | 'MEDIATE', actors: string[], target?: { kind: 'COACH'; id: string }) => ({ id: staffPoliticalActionIdFor(politicalCase.id, kind, stance, actors as never, target), caseId: politicalCase.id, teamId, kind, stance, actorIds: actors as never, ...(target === undefined ? {} : { target }), performedOn: world.currentDate })
+    const actions = [action('ENDORSE', 'SUPPORT', [supporter]), action('LOBBY', 'SUPPORT', [supporter], { kind: 'COACH', id: world.teams[teamId]!.coachId! }), action('LOBBY', 'OPPOSE', [opponent], { kind: 'COACH', id: world.teams[teamId]!.coachId! }), action('COORDINATE', 'SUPPORT', [supporter, opponent].sort()), action('MEDIATE', 'MEDIATE', [mediator])]
+    const saved = serializeGameWorldV3(updateGameWorld(world, { staffPoliticalCases: [politicalCase], staffPoliticalActions: actions }), savedAt)
+    expect(deserializeGameWorldV3(saved).staffPoliticalActionsById).toEqual(Object.fromEntries(actions.map((item) => [item.id, item])))
+    const legacy = structuredClone(saved); delete (legacy.payload.staffCareerRuntime as Record<string, unknown>).staffPoliticalActions
+    expect(deserializeGameWorldV3(legacy).staffPoliticalActionsById).toEqual({})
+    const malformed = (saved.payload.staffCareerRuntime as Record<string, unknown>).staffPoliticalActions as Record<string, unknown>[]
+    malformed[1]!.target = { kind: 'BOARD', id: 'board' }
+    expect(() => deserializeGameWorldV3(saved)).toThrow()
   })
 
   it('V2 -> V3 migration is deterministic', () => {
