@@ -1,0 +1,460 @@
+{
+  "step": "013E",
+  "verdict": "READY TO COMMIT NG-013",
+  "failures": [],
+  "warnings": [],
+  "environment": {
+    "baseUrl": "http://127.0.0.1:5173",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "fixture": {
+    "rosterCount": 40,
+    "scrollHeight": 1214,
+    "clientHeight": 920,
+    "requiresVerticalScroll": true
+  },
+  "initialAssertions": {
+    "systemBar": true,
+    "taskbar": true,
+    "rosterWorkspace": true,
+    "ngGrid": true,
+    "positionFilter": true,
+    "rowHeight": 28,
+    "documentScrollable": false,
+    "embeddedPanel": false,
+    "playerProfileApp": false,
+    "rosterPlayer": null,
+    "activeTaskbar": "Roster"
+  },
+  "stateBeforePlayer": {
+    "preset": "psico",
+    "positionFilter": "ALL",
+    "searchQuery": "a",
+    "sorting": [
+      {
+        "id": "status",
+        "direction": "ascending"
+      },
+      {
+        "id": "player",
+        "direction": "ascending"
+      }
+    ],
+    "columnIds": [
+      "status",
+      "player",
+      "position",
+      "rotation",
+      "age",
+      "personality-ambition",
+      "personality-professionalism",
+      "personality-loyalty",
+      "personality-resilience",
+      "personality-temperament",
+      "personality-teamOrientation",
+      "personality-adaptability",
+      "personality-competitiveness"
+    ],
+    "hiddenColumnIds": [
+      "height",
+      "weight",
+      "fatigue",
+      "salary",
+      "expiry",
+      "summary-finishing",
+      "summary-shooting",
+      "summary-playmaking",
+      "summary-perimeterDefense",
+      "summary-interiorDefense",
+      "summary-rebounding",
+      "summary-athleticism",
+      "rating-midRangeShooting",
+      "rating-threePointShooting",
+      "rating-freeThrowShooting",
+      "rating-rimFinishing",
+      "rating-postScoring",
+      "rating-passing",
+      "rating-decisionMaking",
+      "rating-anticipation",
+      "rating-composure",
+      "rating-offBallAwareness",
+      "rating-discipline",
+      "rating-courtVision",
+      "rating-perimeterDefense",
+      "rating-interiorDefense",
+      "rating-defensiveAwareness",
+      "rating-steal",
+      "rating-rimProtection",
+      "rating-shotContest",
+      "rating-acceleration",
+      "rating-speed",
+      "rating-strength",
+      "rating-vertical",
+      "rating-stamina",
+      "rating-lateralAgility",
+      "rating-ballHandling",
+      "rating-ballSecurity",
+      "rating-firstStep",
+      "rating-changeOfDirection",
+      "position"
+    ],
+    "columnWidths": {},
+    "sortIndicators": [
+      "EST ↑",
+      "JUGADOR ↑2"
+    ],
+    "selectedRows": [
+      "Galen Bexley",
+      "Bren Farrow"
+    ],
+    "selectedCount": 2,
+    "scrollTop": 230,
+    "sessionScrollTop": 230,
+    "scrollLeft": 0,
+    "scrollHeight": 1158,
+    "clientHeight": 920,
+    "totalRows": 38,
+    "firstRowHeight": 28,
+    "columnHeaders": [
+      {
+        "label": "EST",
+        "width": 62
+      },
+      {
+        "label": "JUGADOR",
+        "width": 270
+      },
+      {
+        "label": "ROT",
+        "width": 120
+      },
+      {
+        "label": "EDAD",
+        "width": 72
+      },
+      {
+        "label": "AMBICIÓN",
+        "width": 110
+      },
+      {
+        "label": "PROFESIONALIDAD",
+        "width": 110
+      },
+      {
+        "label": "LEALTAD",
+        "width": 110
+      },
+      {
+        "label": "RESILIENCIA",
+        "width": 110
+      },
+      {
+        "label": "TEMPERAMENTO",
+        "width": 110
+      },
+      {
+        "label": "ORIENT. EQUIPO",
+        "width": 110
+      },
+      {
+        "label": "ADAPTABILIDAD",
+        "width": 110
+      },
+      {
+        "label": "COMPETITIVIDAD",
+        "width": 110
+      }
+    ],
+    "rotValue": "",
+    "url": "http://127.0.0.1:5173/?ui=ng&app=roster",
+    "app": "roster",
+    "rosterPlayer": null,
+    "playerId": null,
+    "hasPlayerProfileApp": false,
+    "hasEmbeddedPanel": false,
+    "hasPlayerWorkspace": false,
+    "activeTaskbar": "Roster",
+    "documentScrollable": false
+  },
+  "stateAfterBack": {
+    "preset": "psico",
+    "positionFilter": "ALL",
+    "searchQuery": "a",
+    "sorting": [
+      {
+        "id": "status",
+        "direction": "ascending"
+      },
+      {
+        "id": "player",
+        "direction": "ascending"
+      }
+    ],
+    "columnIds": [
+      "status",
+      "player",
+      "position",
+      "rotation",
+      "age",
+      "personality-ambition",
+      "personality-professionalism",
+      "personality-loyalty",
+      "personality-resilience",
+      "personality-temperament",
+      "personality-teamOrientation",
+      "personality-adaptability",
+      "personality-competitiveness"
+    ],
+    "hiddenColumnIds": [
+      "height",
+      "weight",
+      "fatigue",
+      "salary",
+      "expiry",
+      "summary-finishing",
+      "summary-shooting",
+      "summary-playmaking",
+      "summary-perimeterDefense",
+      "summary-interiorDefense",
+      "summary-rebounding",
+      "summary-athleticism",
+      "rating-midRangeShooting",
+      "rating-threePointShooting",
+      "rating-freeThrowShooting",
+      "rating-rimFinishing",
+      "rating-postScoring",
+      "rating-passing",
+      "rating-decisionMaking",
+      "rating-anticipation",
+      "rating-composure",
+      "rating-offBallAwareness",
+      "rating-discipline",
+      "rating-courtVision",
+      "rating-perimeterDefense",
+      "rating-interiorDefense",
+      "rating-defensiveAwareness",
+      "rating-steal",
+      "rating-rimProtection",
+      "rating-shotContest",
+      "rating-acceleration",
+      "rating-speed",
+      "rating-strength",
+      "rating-vertical",
+      "rating-stamina",
+      "rating-lateralAgility",
+      "rating-ballHandling",
+      "rating-ballSecurity",
+      "rating-firstStep",
+      "rating-changeOfDirection",
+      "position"
+    ],
+    "columnWidths": {},
+    "sortIndicators": [
+      "EST ↑",
+      "JUGADOR ↑2"
+    ],
+    "selectedRows": [
+      "Galen Bexley",
+      "Bren Farrow"
+    ],
+    "selectedCount": 2,
+    "scrollTop": 230,
+    "sessionScrollTop": 230,
+    "scrollLeft": 0,
+    "scrollHeight": 1158,
+    "clientHeight": 920,
+    "totalRows": 38,
+    "firstRowHeight": 28,
+    "columnHeaders": [
+      {
+        "label": "EST",
+        "width": 62
+      },
+      {
+        "label": "JUGADOR",
+        "width": 270
+      },
+      {
+        "label": "ROT",
+        "width": 120
+      },
+      {
+        "label": "EDAD",
+        "width": 72
+      },
+      {
+        "label": "AMBICIÓN",
+        "width": 110
+      },
+      {
+        "label": "PROFESIONALIDAD",
+        "width": 110
+      },
+      {
+        "label": "LEALTAD",
+        "width": 110
+      },
+      {
+        "label": "RESILIENCIA",
+        "width": 110
+      },
+      {
+        "label": "TEMPERAMENTO",
+        "width": 110
+      },
+      {
+        "label": "ORIENT. EQUIPO",
+        "width": 110
+      },
+      {
+        "label": "ADAPTABILIDAD",
+        "width": 110
+      },
+      {
+        "label": "COMPETITIVIDAD",
+        "width": 110
+      }
+    ],
+    "rotValue": "",
+    "url": "http://127.0.0.1:5173/?ui=ng&app=roster",
+    "app": "roster",
+    "rosterPlayer": null,
+    "playerId": null,
+    "hasPlayerProfileApp": false,
+    "hasEmbeddedPanel": false,
+    "hasPlayerWorkspace": false,
+    "activeTaskbar": "Roster",
+    "documentScrollable": false
+  },
+  "scrollRestoration": {
+    "before": 230,
+    "after": 230,
+    "delta": 0,
+    "tolerance": 48,
+    "result": "PASS"
+  },
+  "secondarySort": {
+    "before": [
+      "EST ↑",
+      "JUGADOR ↑2"
+    ],
+    "after": [
+      "EST ↑",
+      "JUGADOR ↑2"
+    ],
+    "sortingBefore": [
+      {
+        "id": "status",
+        "direction": "ascending"
+      },
+      {
+        "id": "player",
+        "direction": "ascending"
+      }
+    ],
+    "sortingAfter": [
+      {
+        "id": "status",
+        "direction": "ascending"
+      },
+      {
+        "id": "player",
+        "direction": "ascending"
+      }
+    ],
+    "result": "PASS"
+  },
+  "openPaths": {
+    "enter": {
+      "url": "http://127.0.0.1:5173/?ui=ng&app=player&playerId=generated-player-0049",
+      "pass": true,
+      "restored": true
+    },
+    "doubleClick": {
+      "url": "http://127.0.0.1:5173/?ui=ng&app=player&playerId=generated-player-0001",
+      "pass": true
+    },
+    "contextMenu": {
+      "url": "http://127.0.0.1:5173/?ui=ng&app=player&playerId=generated-player-0001",
+      "pass": true
+    },
+    "nameClick": {
+      "pass": true
+    }
+  },
+  "playerChain": {
+    "playerAToBViaPush": "UNSUPPORTED",
+    "note": "PlayerWorkspace header select updates store without pushState history chain; certified Roster→Player→Back only."
+  },
+  "taskbar": {
+    "presetPreserved": true,
+    "searchPreserved": true,
+    "positionFilterPreserved": true
+  },
+  "positionFilter": {
+    "ALL": 38,
+    "PG": 10,
+    "SG": 15,
+    "SF": 8,
+    "PF": 3,
+    "C": 2
+  },
+  "contractExpiry": {
+    "expHeaderVisible": true,
+    "hasDashOrDate": true,
+    "sampleValues": [
+      "OK",
+      "Arel Bexley",
+      "PG"
+    ]
+  },
+  "rot": {
+    "expected": "PG",
+    "actual": "PG",
+    "pass": true
+  },
+  "multiSelectBulk": {
+    "trainingMenuVisible": 1,
+    "lineupMenuVisible": 1
+  },
+  "density1920": {
+    "totalRows": 38,
+    "visibleRowsApprox": 30,
+    "rowHeight": 28,
+    "headerHeight": 24,
+    "toolbarHeight": 36,
+    "visibleColumns": 12,
+    "documentScrollable": false,
+    "gridScrollable": true
+  },
+  "density2560": {
+    "totalRows": 38,
+    "rowHeight": 28,
+    "visibleColumns": 12
+  },
+  "legacyIsolation": {
+    "rosterPlayer": null,
+    "playerProfileApp": false
+  },
+  "scoutAwareRatings": "REQUIRED BEFORE ROSTER CUTOVER",
+  "screenshots": [
+    "docs/screenshots/step-013/07-roster-to-player-ng-1920x1080.png",
+    "docs/screenshots/step-013/01-roster-ng-populated-1920x1080.png",
+    "docs/screenshots/step-013/08-roster-ng-final-2560x1440.png"
+  ],
+  "stateRestoration": {
+    "preset": "PASS",
+    "positionFilter": "PASS",
+    "searchQuery": "PASS",
+    "primarySort": "PASS",
+    "secondarySort": "PASS",
+    "selectedCount": "PASS",
+    "hiddenColumns": "PASS",
+    "columnOrder": "PASS",
+    "columnWidths": "PASS",
+    "verticalScroll": "PASS"
+  }
+}

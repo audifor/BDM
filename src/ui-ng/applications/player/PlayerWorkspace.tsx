@@ -56,21 +56,17 @@ import { InspectorPane } from '@/ui-ng/workspace/InspectorPane'
 import { WorkspaceBody } from '@/ui-ng/workspace/WorkspaceBody'
 import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
 
-function syncPlayerViewQuery(view: PlayerWorkspaceViewId) {
-  const url = new URL(window.location.href)
-  if (view === 'overview') {
-    url.searchParams.delete('playerView')
-  } else {
-    url.searchParams.set('playerView', view)
-  }
-  window.history.replaceState(window.history.state, '', url)
-}
+import { syncPlayerViewQueryFromApps } from '@/ui-ng/workspace/workspaceApps'
 
-function PlayerWorkspaceShell({ data }: { readonly data: PlayerWorkspaceState }) {
+function PlayerWorkspaceShell({
+  data,
+  urlPlayerView,
+}: {
+  readonly data: PlayerWorkspaceState
+  readonly urlPlayerView: PlayerWorkspaceViewId
+}) {
   const { model, emptyState } = data
-  const [activeView, setActiveViewState] = useState<PlayerWorkspaceViewId>(() =>
-    parsePlayerWorkspaceView(new URLSearchParams(window.location.search).get('playerView')),
-  )
+  const [activeView, setActiveViewState] = useState<PlayerWorkspaceViewId>(urlPlayerView)
   const [selectedRatingId, setSelectedRatingId] =
     useState<PlayerWorkspaceSession['selectedRatingId']>(null)
   const [selectedCategory, setSelectedCategory] = useState<RatingCategory | null>(null)
@@ -86,8 +82,12 @@ function PlayerWorkspaceShell({ data }: { readonly data: PlayerWorkspaceState })
 
   const setActiveView = useCallback((view: PlayerWorkspaceViewId) => {
     setActiveViewState(view)
-    syncPlayerViewQuery(view)
+    syncPlayerViewQueryFromApps(view)
   }, [])
+
+  useEffect(() => {
+    setActiveViewState(urlPlayerView)
+  }, [urlPlayerView])
 
   useEffect(() => {
     if (model === null) {
@@ -326,8 +326,33 @@ function PlayerWorkspaceLayout({
 }
 
 export function PlayerWorkspace() {
-  const data = usePlayerWorkspaceModel(new URLSearchParams(window.location.search).get('playerId'))
-  return <PlayerWorkspaceShell data={data} />
+  const urlState = useNgPlayerUrlState()
+  const data = usePlayerWorkspaceModel(urlState.playerId)
+  return <PlayerWorkspaceShell data={data} urlPlayerView={urlState.playerView} />
+}
+
+function useNgPlayerUrlState() {
+  const read = () => {
+    const params = new URLSearchParams(window.location.search)
+    return {
+      playerId: params.get('playerId'),
+      playerView: parsePlayerWorkspaceView(params.get('playerView')),
+    }
+  }
+
+  const [urlState, setUrlState] = useState(read)
+
+  useEffect(() => {
+    const sync = () => setUrlState(read())
+    window.addEventListener('bdm-ng-nav', sync)
+    window.addEventListener('popstate', sync)
+    return () => {
+      window.removeEventListener('bdm-ng-nav', sync)
+      window.removeEventListener('popstate', sync)
+    }
+  }, [])
+
+  return urlState
 }
 
 /** @deprecated Use PlayerWorkspace. Kept for transitional imports. */

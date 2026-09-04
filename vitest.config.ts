@@ -9,6 +9,12 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts', 'src/ui/entityContextMenu/**/*.test.tsx', 'src/ui/navigation/EntityLink.test.tsx', 'src/ui/screens/StaffScreen.test.tsx'],
+    include: [
+      'src/**/*.test.ts',
+      'src/ui/entityContextMenu/**/*.test.tsx',
+      'src/ui/navigation/EntityLink.test.tsx',
+      'src/ui/screens/StaffScreen.test.tsx',
+      'src/ui-ng/applications/roster/**/*.test.tsx',
+    ],
   },
 })

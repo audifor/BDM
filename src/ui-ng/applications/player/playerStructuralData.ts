@@ -33,7 +33,7 @@ export const PLAYER_VIEW_PLACEHOLDERS: Partial<Record<PlayerWorkspaceViewId, str
 export const TASKBAR_APPS = [
   { id: 'home', label: 'Home' },
   { id: 'roster', label: 'Roster' },
-  { id: 'player', label: 'Player', active: true },
+  { id: 'player', label: 'Player' },
   { id: 'scouting', label: 'Scouting' },
   { id: 'tactics', label: 'Tactics' },
   { id: 'medical', label: 'Medical' },

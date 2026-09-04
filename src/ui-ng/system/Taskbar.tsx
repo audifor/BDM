@@ -1,19 +1,34 @@
 import './Taskbar.css'
 
-import { TASKBAR_APPS } from '@/ui-ng/applications/player/playerStructuralData'
+import { WORKSPACE_TASKBAR_APPS } from '@/ui-ng/workspace/workspaceApps'
+import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 
 export function Taskbar() {
+  const { app, setActiveApp } = useNgWorkspaceNavigation()
+  const activeApp = app === 'player' ? 'player' : app
+
   return (
     <footer className="ng-taskbar" data-ng-region="taskbar">
       <div className="ng-taskbar__apps" role="toolbar">
-        {TASKBAR_APPS.map((app) => (
+        {WORKSPACE_TASKBAR_APPS.map((entry) => (
           <button
-            aria-current={'active' in app && app.active ? 'page' : undefined}
-            className={`ng-taskbar__app${'active' in app && app.active ? ' is-active' : ''}`}
-            key={app.id}
+            aria-current={entry.id === activeApp ? 'page' : undefined}
+            className={`ng-taskbar__app${entry.id === activeApp ? ' is-active' : ''}`}
+            key={entry.id}
+            onClick={() => {
+              if (entry.id === 'home' || entry.id === 'scouting' || entry.id === 'tactics' || entry.id === 'medical') {
+                setActiveApp(entry.id)
+                return
+              }
+              if (entry.id === 'player') {
+                setActiveApp('player')
+                return
+              }
+              setActiveApp(entry.id)
+            }}
             type="button"
           >
-            {app.label}
+            {entry.label}
           </button>
         ))}
       </div>

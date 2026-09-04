@@ -160,6 +160,20 @@
   overflow: hidden;
 }
 
+.ng-workspace-placeholder {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  min-height: 0;
+  padding: var(--ng-spacing-24);
+}
+
+.ng-workspace-placeholder__label {
+  margin: 0;
+  color: var(--ng-text-muted);
+  font-size: var(--ng-font-size-secondary);
+}
+
 .ng-inspector-pane {
   display: flex;
   flex-direction: column;

@@ -159,6 +159,11 @@
   padding: 3px 7px;
   font-size: 10px;
 }
+.canonical-roster__status--injured {
+  border-color: #9b4545;
+  background: #3a1515;
+  color: #f0a0a0;
+}
 .canonical-roster__position {
   display: inline-block;
   min-width: 38px;

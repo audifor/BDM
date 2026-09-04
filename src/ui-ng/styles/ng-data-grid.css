@@ -1,0 +1,95 @@
+/* Scoped NG visual mode for BDMDataGrid — only active under .bdm-os-ng */
+
+.bdm-os-ng .bdm-data-grid--ng.bdm-data-grid--fm {
+  --bdm-grid-row-height: 28px;
+  --bdm-grid-header-height: 24px;
+  --bdm-grid-font-size: var(--ng-font-size-secondary, 13px);
+  --bdm-grid-header-font-size: var(--ng-font-size-meta, 11px);
+  --bdm-grid-cell-padding-x: 6px;
+  --bdm-grid-control-height: 24px;
+}
+
+.bdm-os-ng .bdm-data-grid--ng .bdm-data-grid__tools {
+  gap: var(--ng-spacing-8);
+  border-bottom: 1px solid var(--ng-border-subtle);
+  background: var(--ng-bg-panel-secondary);
+}
+
+.bdm-os-ng .bdm-data-grid--ng .bdm-data-grid__tools input {
+  width: 140px;
+  min-height: 22px;
+  padding: 0 var(--ng-spacing-8);
+  border: 1px solid var(--ng-border-standard);
+  border-radius: var(--ng-radius-sm);
+  background: var(--ng-bg-elevated);
+  color: var(--ng-text-primary);
+  font-family: var(--ng-font-ui);
+  font-size: var(--ng-font-size-meta);
+}
+
+.bdm-os-ng .bdm-data-grid--ng .bdm-data-grid__tools button,
+.bdm-os-ng .bdm-data-grid--ng .bdm-data-grid__tools select {
+  min-height: 22px;
+  padding: 0 var(--ng-spacing-8);
+  border: 1px solid var(--ng-border-standard);
+  border-radius: var(--ng-radius-sm);
+  background: var(--ng-bg-elevated);
+  color: var(--ng-text-secondary);
+  font-family: var(--ng-font-ui);
+  font-size: var(--ng-font-size-meta);
+}
+
+.bdm-os-ng .bdm-data-grid--ng .bdm-data-grid__tools button:hover {
+  background: var(--ng-bg-hover);
+  color: var(--ng-text-primary);
+}
+
+.bdm-os-ng .bdm-data-grid--ng .bdm-data-grid__column-manager {
+  border: 1px solid var(--ng-border-standard);
+  border-radius: var(--ng-radius-sm);
+  background: var(--ng-bg-panel-primary);
+  color: var(--ng-text-primary);
+  box-shadow: var(--ng-shadow-elevated);
+}
+
+.bdm-os-ng .bdm-data-grid--ng .bdm-data-grid__header-menu {
+  border: 1px solid var(--ng-border-standard);
+  border-radius: var(--ng-radius-sm);
+  background: var(--ng-bg-panel-primary);
+  box-shadow: var(--ng-shadow-elevated);
+}
+
+.bdm-os-ng .bdm-data-grid--ng .bdm-data-grid__header-menu button {
+  color: var(--ng-text-secondary);
+  font-family: var(--ng-font-ui);
+  font-size: var(--ng-font-size-meta);
+}
+
+.bdm-os-ng .bdm-data-grid--ng .bdm-data-grid__header-menu button:hover {
+  background: var(--ng-bg-hover);
+  color: var(--ng-text-primary);
+}
+
+.bdm-os-ng .bdm-data-grid--ng .bdm-data-table td.is-numeric,
+.bdm-os-ng .bdm-data-grid--ng .bdm-data-table th.is-numeric {
+  font-family: var(--ng-font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.bdm-os-ng .entity-context-menu {
+  border: 1px solid var(--ng-border-standard);
+  border-radius: var(--ng-radius-sm);
+  background: var(--ng-bg-panel-primary);
+  box-shadow: var(--ng-shadow-elevated);
+}
+
+.bdm-os-ng .entity-context-menu button {
+  color: var(--ng-text-secondary);
+  font-family: var(--ng-font-ui);
+  font-size: var(--ng-font-size-secondary);
+}
+
+.bdm-os-ng .entity-context-menu button:hover {
+  background: var(--ng-bg-hover);
+  color: var(--ng-text-primary);
+}

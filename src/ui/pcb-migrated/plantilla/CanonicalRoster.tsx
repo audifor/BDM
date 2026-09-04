@@ -2,9 +2,11 @@ import { useMemo, useRef, useState } from "react";
 
 import type { CanonicalRatingKey, LegacyPlayerRatings, Player } from "@/domain/player";
 import { getPlayerAge, legacyRatingSignals } from "@/domain/player";
+import { formatInjuryKind } from "@/domain/injury";
 import {
   getCareerFatigueForPlayer,
   getCurrentPlayerContract,
+  getCurrentPlayerInjury,
   getPersonality,
   getTeamLineup,
   getTeamRoster,
@@ -19,6 +21,11 @@ import type { DataGridColumn, DataGridView } from "@/ui/dataGrid/types";
 import { BdmIcon } from "@/ui/icons/BdmIcon";
 import type { EntityDestination } from "@/ui/navigation/entityNavigation";
 import { useEntityContextMenu } from "@/ui/entityContextMenu/EntityContextMenuProvider";
+import {
+  filterRosterByPosition,
+  ROSTER_POSITION_FILTERS,
+} from "@/ui-ng/applications/roster/rosterPositionFilter";
+import type { RosterNgSessionBridge } from "@/ui-ng/applications/roster/rosterWorkspaceSession";
 
 import "./CanonicalRoster.css";
 
@@ -168,6 +175,8 @@ function ratingColumn(key: CanonicalRatingKey): DataGridColumn<Player> {
   };
 }
 
+export type CanonicalRosterVariant = "legacy" | "ng";
+
 export function CanonicalRoster({
   activeView = "general",
   onLineupSlotChange,
@@ -175,7 +184,9 @@ export function CanonicalRoster({
   onOpenEntity,
   onViewChange,
   rosterSection = "overview",
+  sessionBridge,
   team,
+  variant = "legacy",
   world,
 }: {
   readonly activeView?: string;
@@ -184,25 +195,37 @@ export function CanonicalRoster({
   readonly onOpenEntity?: (destination: EntityDestination) => void;
   readonly onViewChange?: (view: string) => void;
   readonly rosterSection?: string;
+  readonly sessionBridge?: RosterNgSessionBridge;
   readonly team: { readonly id: TeamId; readonly name: string };
+  readonly variant?: CanonicalRosterVariant;
   readonly world: GameWorld;
 }) {
+  const isNg = variant === "ng";
   const [query, setQuery] = useState("");
   const playerMenu = useEntityContextMenu();
   const [selectedId, setSelectedId] = useState<string>();
-  const [ratingView, setRatingView] = useState(activeView);
+  const [internalRatingView, setInternalRatingView] = useState(activeView);
+  const ratingView = sessionBridge?.activePreset ?? internalRatingView;
+  const setRatingView = sessionBridge?.onActivePresetChange ?? setInternalRatingView;
+  const positionFilter = sessionBridge?.positionFilter ?? "ALL";
+  const gridSearchQuery = sessionBridge?.searchQuery;
+  const gridSelectedIds = sessionBridge?.selectedRowIds;
   const lineup = useMemo(() => getTeamLineup(world, team.id), [world, team.id]);
   const gridRef = useRef<HTMLDivElement>(null);
   const roster = useMemo(() => getTeamRoster(world, team.id), [world, team.id]);
-  const rows = useMemo(
-    () =>
-      roster.filter((player) =>
-        `${player.firstName} ${player.lastName}`
-          .toLocaleLowerCase()
-          .includes(query.trim().toLocaleLowerCase()),
-      ),
-    [roster, query],
-  );
+  const rows = useMemo(() => {
+    const filteredBySection = isNg
+      ? roster
+      : roster.filter((player) =>
+          `${player.firstName} ${player.lastName}`
+            .toLocaleLowerCase()
+            .includes(query.trim().toLocaleLowerCase()),
+        );
+    if (isNg && sessionBridge !== undefined) {
+      return filterRosterByPosition(filteredBySection, positionFilter);
+    }
+    return filteredBySection;
+  }, [isNg, positionFilter, query, roster, sessionBridge]);
   const openPlayer = (player: Player) =>
     onOpenEntity?.({
       type: "player",
@@ -217,8 +240,21 @@ export function CanonicalRoster({
         defaultWidth: 62,
         minWidth: 54,
         sortable: true,
-        value: () => "OK",
-        render: () => <span className="canonical-roster__status">OK</span>,
+        value: (player) => getCurrentPlayerInjury(world, player.id)?.kind ?? "ready",
+        render: (player) => {
+          const injury = getCurrentPlayerInjury(world, player.id);
+          if (injury === undefined) {
+            return <span className="canonical-roster__status">OK</span>;
+          }
+          return (
+            <span
+              className="canonical-roster__status canonical-roster__status--injured"
+              title={`${formatInjuryKind(injury.kind)} · return ${injury.expectedReturnDate}`}
+            >
+              Out
+            </span>
+          );
+        },
       },
       {
         id: "player",
@@ -232,7 +268,10 @@ export function CanonicalRoster({
         render: (player) => (
           <button
             className="canonical-roster__player-link"
-            onClick={() => openPlayer(player)}
+            onClick={(event) => {
+              event.stopPropagation();
+              openPlayer(player);
+            }}
             onContextMenu={(event) => playerMenu.open({ type: "player", id: player.id }, event, { surface: "roster" })}
             type="button"
           >
@@ -340,6 +379,17 @@ export function CanonicalRoster({
             : compactMoney(contract.compensation.annualSalary);
         },
       },
+      {
+        id: "expiry",
+        label: "EXP",
+        defaultWidth: 96,
+        minWidth: 76,
+        sortable: true,
+        value: (player) =>
+          getCurrentPlayerContract(world, player.id)?.term.expiresOn ?? "",
+        render: (player) =>
+          getCurrentPlayerContract(world, player.id)?.term.expiresOn ?? "—",
+      },
       ...SUMMARY_SIGNAL_KEYS.map(summarySignalColumn),
       ...OFFENSE_RATING_KEYS.map(ratingColumn),
       ...BRAIN_RATING_KEYS.map(ratingColumn),
@@ -376,7 +426,7 @@ export function CanonicalRoster({
       // Compact FM-like overview: core roster fields plus the established
       // FIN/SHO/PMK/PDE/IDE/REB/ATH basketball summary signals (deterministic
       // projections of the 35 canonical ratings) - not every rating/personality column.
-      columnIds: [...baseColumnIds, ...summaryColumnIds, "fatigue", "salary"],
+      columnIds: [...baseColumnIds, ...summaryColumnIds, "fatigue", "salary", "expiry"],
     },
     {
       id: "offense",
@@ -416,32 +466,41 @@ export function CanonicalRoster({
   ];
   const selectedView =
     views.find((view) => view.id === ratingView) ?? views[0]!;
+  const handleSelectionChange = (ids: readonly string[]) => {
+    setSelectedId(ids[0]);
+    sessionBridge?.onSelectedRowIdsChange(ids);
+  };
+
   return (
-    <section className="canonical-roster">
+    <section className={`canonical-roster${isNg ? " canonical-roster--ng" : ""}`}>
       <header className="canonical-roster__toolbar">
         <div className="canonical-roster__identity">
-          <span className="canonical-roster__icon">
-            <BdmIcon name="roster" size={28} />
-          </span>
+          {!isNg && (
+            <span className="canonical-roster__icon">
+              <BdmIcon name="roster" size={28} />
+            </span>
+          )}
           <div>
             <strong>Plantilla ({roster.length})</strong>
-            <small>{team.name}</small>
+            {!isNg && <small>{team.name}</small>}
           </div>
         </div>
         <div className="canonical-roster__actions">
-          <label className="canonical-roster__view-select">
-            <span>Vista</span>
-            <select
-              aria-label="Vista"
-              onChange={(event) => onViewChange?.(event.target.value)}
-              value={rosterSection}
-            >
-              <option value="overview">Vista general</option>
-              <option value="jerseys">Dorsales</option>
-              <option value="registration">Inscripción</option>
-              <option value="all-players">Todos los jugadores</option>
-            </select>
-          </label>
+          {!isNg && (
+            <label className="canonical-roster__view-select">
+              <span>Vista</span>
+              <select
+                aria-label="Vista"
+                onChange={(event) => onViewChange?.(event.target.value)}
+                value={rosterSection}
+              >
+                <option value="overview">Vista general</option>
+                <option value="jerseys">Dorsales</option>
+                <option value="registration">Inscripción</option>
+                <option value="all-players">Todos los jugadores</option>
+              </select>
+            </label>
+          )}
           <label className="canonical-roster__view-select">
             <span>Preset</span>
             <select
@@ -456,11 +515,33 @@ export function CanonicalRoster({
               ))}
             </select>
           </label>
-          <input
-            aria-label="Buscar jugador"
-            onChange={(event) => setQuery(event.target.value)}
-            value={query}
-          />
+          {isNg && sessionBridge !== undefined && (
+            <label className="canonical-roster__view-select">
+              <span>Pos</span>
+              <select
+                aria-label="Filtro de posición"
+                onChange={(event) =>
+                  sessionBridge.onPositionFilterChange(
+                    event.target.value as typeof positionFilter,
+                  )
+                }
+                value={positionFilter}
+              >
+                {ROSTER_POSITION_FILTERS.map((filter) => (
+                  <option key={filter} value={filter}>
+                    {filter}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {!isNg && (
+            <input
+              aria-label="Buscar jugador"
+              onChange={(event) => setQuery(event.target.value)}
+              value={query}
+            />
+          )}
           <button
             aria-label="Configurar columnas"
             onClick={() =>
@@ -485,14 +566,18 @@ export function CanonicalRoster({
             setSelectedId(player.id);
             openPlayer(player);
           }}
-          onSelectionChange={(ids) => setSelectedId(ids[0])}
+          onSearchQueryChange={sessionBridge?.onSearchQueryChange}
+          onSelectionChange={handleSelectionChange}
           presentation="fm"
           entityForRow={(player) => ({ type: "player", id: player.id })}
           entitySurface="roster"
           multiSelect
           rows={rows}
-          selectedId={selectedId}
+          searchQuery={gridSearchQuery}
+          selectedId={gridSelectedIds === undefined ? selectedId : undefined}
+          selectedIds={gridSelectedIds}
           views={[selectedView]}
+          visualMode={isNg ? "ng" : "legacy"}
         />
       </div>
     </section>
