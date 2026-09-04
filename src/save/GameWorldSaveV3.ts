@@ -4,7 +4,7 @@ import { staffPersonIdFromString, teamIdFromString, type StaffPersonId } from '@
 import { createStaffEmployment, createStaffJobOpening, staffJobCandidacyIdFromString, staffJobOfferIdFromString, staffJobOpeningIdFromString, type StaffCareerHistoryEntry, type StaffEmployment, type StaffInterview, type StaffJobCandidacy, type StaffJobOffer, type StaffJobOpening } from '@/domain/staffCareer'
 import { createStaffContract, staffContractIdFromString, type StaffContract } from '@/domain/staffContract'
 import { createStaffReputationProfile, STAFF_REPUTATION_DIMENSIONS, type StaffReputationProfile } from '@/domain/staffReputation'
-import { createStaffPoliticalAction, createStaffPoliticalCase, POLITICAL_ACTION_KINDS, POLITICAL_AGENDAS, POLITICAL_CASE_SOURCE_KINDS, POLITICAL_STANCES, STAFF_POLITICAL_CASE_RESOLUTION_KINDS, STAFF_POLITICAL_CASE_STATUSES, type StaffPoliticalAction, type StaffPoliticalCase, type StaffPoliticalCaseResolutionKind } from '@/domain/staffPolitics'
+import { createStaffPoliticalAction, createStaffPoliticalAlliance, createStaffPoliticalCase, createStaffPoliticalFaction, POLITICAL_ACTION_KINDS, POLITICAL_AGENDAS, POLITICAL_CASE_SOURCE_KINDS, POLITICAL_STANCES, STAFF_POLITICAL_CASE_RESOLUTION_KINDS, STAFF_POLITICAL_CASE_STATUSES, type StaffPoliticalAction, type StaffPoliticalAlliance, type StaffPoliticalCase, type StaffPoliticalCaseResolutionKind, type StaffPoliticalFaction } from '@/domain/staffPolitics'
 import { ensureStaffContractStructure, ensureStaffEmploymentStructure, ensureStaffReputationStructure } from '@/engine/world/StaffCareerEnrichment'
 import { parseGameDate } from '@/domain/date'
 import { deserializeGameWorldV2, migrateGameWorldSaveV1ToV2, serializeGameWorldV2, assertExactKeys, type GameWorldSaveV2, type SaveGameEnvelopeV2 } from './GameWorldSaveV2'
@@ -76,6 +76,8 @@ export function deserializeGameWorldV3(value: unknown): GameWorld {
     staffReputationProfilesByStaffId: runtime.staffReputationProfilesByStaffId,
     staffPoliticalCases: runtime.staffPoliticalCases,
     staffPoliticalActions: runtime.staffPoliticalActions,
+    staffPoliticalAlliances: runtime.staffPoliticalAlliances,
+    staffPoliticalFactions: runtime.staffPoliticalFactions,
   })
   return restoreScheduledTrainingStaffAssignments(withStaffCareer, trainingStaffAssignments)
 }
@@ -95,6 +97,8 @@ function v3Payload(payload: GameWorldSaveV2, world: GameWorld): GameWorldSaveV3 
       staffReputationProfiles: Object.entries(world.staffReputationProfilesByStaffId).map(([staffId, profile]) => ({ staffId, profile })),
       staffPoliticalCases: Object.values(world.staffPoliticalCasesById),
       staffPoliticalActions: Object.values(world.staffPoliticalActionsById),
+      staffPoliticalAlliances: Object.values(world.staffPoliticalAlliancesById),
+      staffPoliticalFactions: Object.values(world.staffPoliticalFactionsById),
     },
   }
 }
@@ -116,11 +120,13 @@ function parseStaffCareerRuntimeV3(value: unknown): {
   readonly staffReputationProfilesByStaffId: Readonly<Record<string, StaffReputationProfile>>
   readonly staffPoliticalCases: readonly StaffPoliticalCase[]
   readonly staffPoliticalActions: readonly StaffPoliticalAction[]
+  readonly staffPoliticalAlliances: readonly StaffPoliticalAlliance[]
+  readonly staffPoliticalFactions: readonly StaffPoliticalFaction[]
 } {
   // `value` is required for a canonical V3 payload (Blocker 3) — `record()` throws if it is
   // `undefined`/missing, so there is no "treat absence as empty" fallback here anymore.
   const runtime = record(value, 'Staff career runtime V3')
-  assertExactKeys(runtime, ['staffEmployment', 'staffCareerHistory', 'staffJobOpenings', 'staffJobCandidacies', 'staffInterviews', 'staffJobOffers', 'staffContracts', 'staffReputationProfiles', ...(runtime.staffPoliticalCases === undefined ? [] : ['staffPoliticalCases']), ...(runtime.staffPoliticalActions === undefined ? [] : ['staffPoliticalActions'])], 'Staff career runtime V3')
+  assertExactKeys(runtime, ['staffEmployment', 'staffCareerHistory', 'staffJobOpenings', 'staffJobCandidacies', 'staffInterviews', 'staffJobOffers', 'staffContracts', 'staffReputationProfiles', ...(runtime.staffPoliticalCases === undefined ? [] : ['staffPoliticalCases']), ...(runtime.staffPoliticalActions === undefined ? [] : ['staffPoliticalActions']), ...(runtime.staffPoliticalAlliances === undefined ? [] : ['staffPoliticalAlliances']), ...(runtime.staffPoliticalFactions === undefined ? [] : ['staffPoliticalFactions'])], 'Staff career runtime V3')
 
   const staffEmploymentByStaffId = Object.fromEntries(array(runtime.staffEmployment, 'Staff career runtime staffEmployment').map((entry) => {
     const e = record(entry, 'Staff employment V3'); assertExactKeys(e, ['staffId', 'employment'], 'Staff employment V3')
@@ -145,9 +151,14 @@ function parseStaffCareerRuntimeV3(value: unknown): {
   }))
   const staffPoliticalCases = runtime.staffPoliticalCases === undefined ? [] : array(runtime.staffPoliticalCases, 'Staff career runtime staffPoliticalCases').map(parseStaffPoliticalCaseV3)
   const staffPoliticalActions = runtime.staffPoliticalActions === undefined ? [] : array(runtime.staffPoliticalActions, 'Staff career runtime staffPoliticalActions').map(parseStaffPoliticalActionV3)
+  const staffPoliticalAlliances = runtime.staffPoliticalAlliances === undefined ? [] : array(runtime.staffPoliticalAlliances, 'Staff career runtime staffPoliticalAlliances').map(parseStaffPoliticalAllianceV3)
+  const staffPoliticalFactions = runtime.staffPoliticalFactions === undefined ? [] : array(runtime.staffPoliticalFactions, 'Staff career runtime staffPoliticalFactions').map(parseStaffPoliticalFactionV3)
 
-  return { staffEmploymentByStaffId, staffCareerHistoryByStaffId, staffJobOpenings, staffJobCandidacies, staffInterviewsByCandidacyId, staffJobOffers, staffContracts, staffReputationProfilesByStaffId, staffPoliticalCases, staffPoliticalActions }
+  return { staffEmploymentByStaffId, staffCareerHistoryByStaffId, staffJobOpenings, staffJobCandidacies, staffInterviewsByCandidacyId, staffJobOffers, staffContracts, staffReputationProfilesByStaffId, staffPoliticalCases, staffPoliticalActions, staffPoliticalAlliances, staffPoliticalFactions }
 }
+
+function parseStaffPoliticalAllianceV3(value: unknown): StaffPoliticalAlliance { const item = record(value, 'Staff political alliance V3'); assertExactKeys(item, ['id', 'teamId', 'memberIds', 'formedOn', 'lastReinforcedOn', 'status', 'sharedAgendaWeights', 'coordinationScore', 'cohesionScore'], 'Staff political alliance V3'); return createStaffPoliticalAlliance({ id: text(item.id, 'Staff political alliance ID'), teamId: teamIdFromString(text(item.teamId, 'Staff political alliance Team')), memberIds: array(item.memberIds, 'Staff political alliance members').map((id) => staffPersonIdFromString(text(id, 'Staff political alliance member'))), formedOn: parseGameDate(text(item.formedOn, 'Staff political alliance formedOn')), lastReinforcedOn: parseGameDate(text(item.lastReinforcedOn, 'Staff political alliance lastReinforcedOn')), status: enumValue(item.status, ['ACTIVE', 'DORMANT', 'DISSOLVED'], 'Staff political alliance status') as never, sharedAgendaWeights: record(item.sharedAgendaWeights, 'Staff political alliance agendas') as never, coordinationScore: integer(item.coordinationScore, 'Staff political alliance score'), cohesionScore: integer(item.cohesionScore, 'Staff political alliance cohesion') }) }
+function parseStaffPoliticalFactionV3(value: unknown): StaffPoliticalFaction { const item = record(value, 'Staff political faction V3'); assertExactKeys(item, ['id', 'teamId', 'memberIds', 'leaderId', 'formedOn', 'lastReinforcedOn', 'status', 'dominantAgendas', 'cohesionScore', 'influenceScore'], 'Staff political faction V3'); return createStaffPoliticalFaction({ id: text(item.id, 'Staff political faction ID'), teamId: teamIdFromString(text(item.teamId, 'Staff political faction Team')), memberIds: array(item.memberIds, 'Staff political faction members').map((id) => staffPersonIdFromString(text(id, 'Staff political faction member'))), leaderId: staffPersonIdFromString(text(item.leaderId, 'Staff political faction leader')), formedOn: parseGameDate(text(item.formedOn, 'Staff political faction formedOn')), lastReinforcedOn: parseGameDate(text(item.lastReinforcedOn, 'Staff political faction lastReinforcedOn')), status: enumValue(item.status, ['ACTIVE', 'DORMANT', 'DISSOLVED'], 'Staff political faction status') as never, dominantAgendas: array(item.dominantAgendas, 'Staff political faction agendas').map((agenda) => enumValue(agenda, POLITICAL_AGENDAS, 'Staff political faction agenda') as never), cohesionScore: integer(item.cohesionScore, 'Staff political faction cohesion'), influenceScore: integer(item.influenceScore, 'Staff political faction influence') }) }
 
 function parseStaffPoliticalActionV3(value: unknown): StaffPoliticalAction {
   const item = record(value, 'Staff political action V3')

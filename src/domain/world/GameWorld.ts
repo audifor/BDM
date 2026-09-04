@@ -45,7 +45,7 @@ import { createStaffCultureState, type StaffCultureState } from '@/domain/staffC
 import { createStaffUnitCohesionState, type StaffUnitCohesionState } from '@/domain/staffUnitCohesion'
 import { createStaffConflict, type StaffConflict } from '@/domain/staffConflict'
 import { createStaffCareerAutonomyState, createStaffCareerRequest, type StaffCareerAutonomyState, type StaffCareerRequest } from '@/domain/staffCareerAutonomy'
-import { createStaffPoliticalAction, createStaffPoliticalCase, type StaffPoliticalAction, type StaffPoliticalCase } from '@/domain/staffPolitics'
+import { createStaffPoliticalAction, createStaffPoliticalAlliance, createStaffPoliticalCase, createStaffPoliticalFaction, type StaffPoliticalAction, type StaffPoliticalAlliance, type StaffPoliticalCase, type StaffPoliticalFaction } from '@/domain/staffPolitics'
 import { createCoachRpgProfile, type CoachRpgProfile } from '@/domain/coachRpg'
 import { createCoachFinanceProfile, type CoachFinanceProfile } from '@/domain/coachFinances'
 import { createCoachReputationProfile, createDefaultCoachReputationProfile, type CoachReputationProfile } from '@/domain/coachReputation'
@@ -150,6 +150,8 @@ export interface GameWorld {
   readonly staffCareerRequestsById: Readonly<Record<string, StaffCareerRequest>>
   readonly staffPoliticalCasesById: Readonly<Record<string, StaffPoliticalCase>>
   readonly staffPoliticalActionsById: Readonly<Record<string, StaffPoliticalAction>>
+  readonly staffPoliticalAlliancesById: Readonly<Record<string, StaffPoliticalAlliance>>
+  readonly staffPoliticalFactionsById: Readonly<Record<string, StaffPoliticalFaction>>
   readonly relationshipsByKey: Readonly<Record<string, RelationshipProfile>>
   readonly personalitiesByPersonId: Readonly<Record<string, Personality>>
   readonly moraleByPersonId: Readonly<Record<string, MoraleProfile>>
@@ -280,6 +282,8 @@ export interface CreateGameWorldInput {
   staffCareerRequests?: readonly StaffCareerRequest[]
   staffPoliticalCases?: readonly StaffPoliticalCase[]
   staffPoliticalActions?: readonly StaffPoliticalAction[]
+  staffPoliticalAlliances?: readonly StaffPoliticalAlliance[]
+  staffPoliticalFactions?: readonly StaffPoliticalFaction[]
   oppositionScoutingReports?: readonly OppositionScoutingReport[]
   coachProfessionalProfilesByCoachId?: Readonly<Record<CoachId, StaffProfessionalProfile>>
   coachRpgProfilesByCoachId?: Readonly<Record<CoachId, CoachRpgProfile>>
@@ -469,6 +473,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     staffCareerRequestsById: indexById((input.staffCareerRequests ?? []).map(createStaffCareerRequest), 'Staff career request'),
     staffPoliticalCasesById: indexById((input.staffPoliticalCases ?? []).map(createStaffPoliticalCase), 'Staff political case'),
     staffPoliticalActionsById: indexById((input.staffPoliticalActions ?? []).map(createStaffPoliticalAction), 'Staff political action'),
+    staffPoliticalAlliancesById: indexById((input.staffPoliticalAlliances ?? []).map(createStaffPoliticalAlliance), 'Staff political alliance'),
+    staffPoliticalFactionsById: indexById((input.staffPoliticalFactions ?? []).map(createStaffPoliticalFaction), 'Staff political faction'),
     relationshipsByKey: Object.freeze({ ...(input.relationshipsByKey ?? {}) }),
     personalitiesByPersonId: peopleProfiles([...input.coaches, ...input.players, ...(input.staffPeople ?? [])], input.personalitiesByPersonId, generatePersonality),
     moraleByPersonId: peopleProfiles([...input.coaches, ...input.players, ...(input.staffPeople ?? [])], input.moraleByPersonId, createMoraleProfile),
@@ -562,7 +568,7 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
 }
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
-  countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
+  countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
 }
 
 const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unknown>> = {
@@ -798,6 +804,16 @@ function validateWorld(world: GameWorld): void {
     for (const actorId of action.actorIds) requireEntity(world.staffPeopleById, actorId, `Staff political action ${action.id} actor`)
     if (action.target?.kind === 'COACH') requireEntity(world.coaches, action.target.id as never, `Staff political action ${action.id} coach target`)
     if (action.target?.kind === 'STAFF') requireEntity(world.staffPeopleById, action.target.id, `Staff political action ${action.id} staff target`)
+  }
+  for (const alliance of Object.values(world.staffPoliticalAlliancesById)) {
+    createStaffPoliticalAlliance(alliance)
+    requireEntity(world.teams, alliance.teamId, `Staff political alliance ${alliance.id} Team`)
+    for (const memberId of alliance.memberIds) requireEntity(world.staffPeopleById, memberId, `Staff political alliance ${alliance.id} member`)
+  }
+  for (const faction of Object.values(world.staffPoliticalFactionsById)) {
+    createStaffPoliticalFaction(faction)
+    requireEntity(world.teams, faction.teamId, `Staff political faction ${faction.id} Team`)
+    for (const memberId of faction.memberIds) requireEntity(world.staffPeopleById, memberId, `Staff political faction ${faction.id} member`)
   }
   const openCareerRequests = new Set<string>()
   for (const request of Object.values(world.staffCareerRequestsById)) if (request.status === 'OPEN') {

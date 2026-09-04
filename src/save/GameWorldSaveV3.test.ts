@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { staffPersonIdFromString, type TeamId } from '@/domain/ids'
-import { staffPoliticalActionIdFor } from '@/domain/staffPolitics'
+import { createStaffPoliticalAlliance, createStaffPoliticalFaction, staffPoliticalActionIdFor, staffPoliticalAllianceIdFor, staffPoliticalFactionIdFor } from '@/domain/staffPolitics'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { updateGameWorld, getNextScheduledGame } from '@/domain/world'
 import { createDefaultStaffReputationProfile } from '@/domain/staffReputation'
@@ -377,6 +377,20 @@ describe('GameWorldSaveV3', () => {
     expect(migrated.payload.staffCareerRuntime).toBeDefined()
     const loaded = deserializeGameWorldV3(migrated)
     for (const staffId of Object.keys(loaded.staffPeopleById)) expect(loaded.staffEmploymentByStaffId[staffId as never]).toBeDefined()
+  })
+})
+
+describe('Wave 5F3 Staff political groups V3 save round-trip', () => {
+  it('preserves deterministic alliance and faction state', () => {
+    const base = createNewGame(); const teamId = Object.values(base.teams)[0]!.id
+    const members = Object.values(base.teamStaffAssignmentsById).filter((assignment) => assignment.teamId === teamId).map((assignment) => assignment.staffPersonId).sort().slice(0, 3)
+    const allianceMembers = members.slice(0, 2) as [typeof members[number], typeof members[number]]
+    const alliance = createStaffPoliticalAlliance({ id: staffPoliticalAllianceIdFor(teamId, allianceMembers), teamId, memberIds: allianceMembers, formedOn: base.currentDate, lastReinforcedOn: base.currentDate, status: 'ACTIVE', sharedAgendaWeights: { CAREER: 2 }, coordinationScore: 40, cohesionScore: 40 })
+    const faction = createStaffPoliticalFaction({ id: staffPoliticalFactionIdFor(teamId, members), teamId, memberIds: members, leaderId: members[0]!, formedOn: base.currentDate, lastReinforcedOn: base.currentDate, status: 'ACTIVE', dominantAgendas: ['CAREER'], cohesionScore: 40, influenceScore: 50 })
+    const world = updateGameWorld(base, { staffPoliticalAlliances: [alliance], staffPoliticalFactions: [faction] })
+    const loaded = deserializeGameWorldV3(serializeGameWorldV3(world, savedAt))
+    expect(loaded.staffPoliticalAlliancesById).toEqual(world.staffPoliticalAlliancesById)
+    expect(loaded.staffPoliticalFactionsById).toEqual(world.staffPoliticalFactionsById)
   })
 })
 
