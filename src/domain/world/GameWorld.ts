@@ -768,6 +768,7 @@ function validateWorld(world: GameWorld): void {
     createStaffPoliticalCase(politicalCase)
     requireEntity(world.teams, politicalCase.teamId, `Staff political case ${politicalCase.id} Team`)
     if (politicalCase.subjectStaffId !== undefined) requireEntity(world.staffPeopleById, politicalCase.subjectStaffId, `Staff political case ${politicalCase.id} Staff`)
+    for (const position of politicalCase.positions ?? []) requireEntity(world.staffPeopleById, position.actorId, `Staff political case ${politicalCase.id} position actor`)
   }
   const openCareerRequests = new Set<string>()
   for (const request of Object.values(world.staffCareerRequestsById)) if (request.status === 'OPEN') {

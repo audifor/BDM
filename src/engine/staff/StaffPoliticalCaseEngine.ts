@@ -2,6 +2,7 @@ import { compareGameDates } from '@/domain/date'
 import { createStaffPoliticalCase, staffPoliticalCaseIdFor, type StaffPoliticalCase, type StaffPoliticalCaseResolutionKind } from '@/domain/staffPolitics'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { isStaffWeeklyCheckpoint } from './StaffWeeklyCadence'
+import { progressStaffPoliticalPositions } from './StaffPoliticalPositionEngine'
 
 const agendaForCareerRequest = (kind: import('@/domain/staffCareerAutonomy').StaffCareerRequestKind): import('@/domain/staffPolitics').PoliticalAgenda => kind === 'MORE_RESPONSIBILITY' ? 'RESPONSIBILITY' : 'CAREER'
 
@@ -47,5 +48,5 @@ export function progressStaffPoliticalCases(world: GameWorld): GameWorld {
     casesById[politicalCase.id] = createStaffPoliticalCase({ ...politicalCase, lastEvaluatedOn: request.resolvedOn, status: 'RESOLVED', resolution: { kind: resolutionKind, resolvedOn: request.resolvedOn } })
     changed = true
   }
-  return changed ? updateGameWorld(world, { staffPoliticalCases: Object.values(casesById) }) : world
+  return progressStaffPoliticalPositions(changed ? updateGameWorld(world, { staffPoliticalCases: Object.values(casesById) }) : world)
 }
