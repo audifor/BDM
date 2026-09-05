@@ -76,6 +76,38 @@ function governanceFixture(universe: Universe) {
 }
 
 describe("Governance world integration", () => {
+  it("rejects invalid BG3 period, evaluation, source, and transition references", () => {
+    const world = governanceFixture("PROFESSIONAL_CLUB"), institution = Object.values(world.governanceInstitutionsById)[0]!, body = world.governanceBodiesById["body:board"]!, managerId = world.userCoachId
+    const period = { id: "bg3-period", institutionId: institution.id, universe: institution.universe, manager: { kind: "COACH" as const, id: managerId }, startedOn: world.currentDate, endedOn: "2033-01-01" as never }
+    expect(() => updateGameWorld(world, { governanceManagerEvaluationPeriods: [{ ...period, manager: { kind: "COACH", id: "missing" } }] })).toThrow()
+    expect(() => updateGameWorld(world, { governanceManagerEvaluationPeriods: [{ ...period, institutionId: "missing" }] })).toThrow()
+    expect(() => updateGameWorld(world, { governanceManagerEvaluationPeriods: [{ ...period, startedOn: "2034-01-01" as never }] })).toThrow()
+    expect(() => updateGameWorld(world, { governanceManagerEvaluationPeriods: [period, period] })).toThrow()
+    const withPeriod = updateGameWorld(world, { governanceManagerEvaluationPeriods: [period] })
+    const evaluation = { id: "bg3-evaluation", evaluationPeriodId: period.id, evaluatorBodyId: body.id, evaluatedOn: world.currentDate, objectiveEvaluations: [], factors: [{ id: "factor", kind: "INSTITUTIONAL_PATIENCE" as const, status: "PRESENT" as const, weight: 1, direction: "POSITIVE" as const, normalizedValue: .8, source: { kind: "GOVERNANCE_BODY" as const, bodyId: body.id } }] }
+    expect(() => updateGameWorld(withPeriod, { governanceManagerEvaluations: [{ ...evaluation, evaluationPeriodId: "missing" }] })).toThrow()
+    expect(() => updateGameWorld(withPeriod, { governanceManagerEvaluations: [{ ...evaluation, evaluatorBodyId: "missing" }] })).toThrow()
+    expect(() => updateGameWorld(withPeriod, { governanceManagerEvaluations: [{ ...evaluation, evaluatedOn: "2031-01-01" as never }] })).toThrow()
+    expect(() => updateGameWorld(withPeriod, { governanceManagerEvaluations: [{ ...evaluation, evaluatedOn: "2034-01-02" as never }] })).toThrow()
+    expect(() => updateGameWorld(withPeriod, { governanceManagerEvaluations: [{ ...evaluation, factors: [...evaluation.factors, { ...evaluation.factors[0] }] }] })).toThrow()
+    expect(() => updateGameWorld(withPeriod, { governanceManagerEvaluations: [{ ...evaluation, factors: [{ ...evaluation.factors[0], source: { kind: "GOVERNANCE_BODY", bodyId: "missing" } }] }] })).toThrow()
+    const withEvaluation = updateGameWorld(withPeriod, { governanceManagerEvaluations: [evaluation] })
+    const transition = { id: "bg3-transition", managerId, institutionId: institution.id, bodyId: body.id, evaluationId: evaluation.id, nextState: "STABLE" as const, effectiveOn: world.currentDate, triggerKinds: ["INSTITUTIONAL_PATIENCE" as const], sourceFactorIds: ["factor"] }
+    expect(updateGameWorld(withEvaluation, { governanceJobSecurityTransitions: [transition] }).governanceJobSecurityTransitionsById[transition.id]).toBeDefined()
+    expect(() => updateGameWorld(withEvaluation, { governanceJobSecurityTransitions: [{ ...transition, managerId: "missing" }] })).toThrow()
+    expect(() => updateGameWorld(withEvaluation, { governanceJobSecurityTransitions: [{ ...transition, evaluationId: "missing" }] })).toThrow()
+    expect(() => updateGameWorld(withEvaluation, { governanceJobSecurityTransitions: [{ ...transition, institutionId: "missing" }] })).toThrow()
+    expect(() => updateGameWorld(withEvaluation, { governanceJobSecurityTransitions: [{ ...transition, bodyId: "missing" }] })).toThrow()
+    expect(() => updateGameWorld(withEvaluation, { governanceJobSecurityTransitions: [{ ...transition, effectiveOn: "2031-01-01" as never }] })).toThrow()
+    expect(() => updateGameWorld(withEvaluation, { governanceJobSecurityTransitions: [{ ...transition, sourceFactorIds: ["missing"] }] })).toThrow()
+    expect(() => updateGameWorld(withEvaluation, { governanceJobSecurityTransitions: [transition, transition] })).toThrow()
+  })
+  it("permits overlapping BG3 periods as additive historical body-specific records", () => {
+    const world = governanceFixture("PROFESSIONAL_CLUB"), institution = Object.values(world.governanceInstitutionsById)[0]!, manager = world.userCoachId
+    const first = { id: "period:one", institutionId: institution.id, universe: institution.universe, manager: { kind: "COACH" as const, id: manager }, startedOn: world.currentDate }
+    const second = { ...first, id: "period:two" }
+    expect(Object.keys(updateGameWorld(world, { governanceManagerEvaluationPeriods: [first, second] }).governanceManagerEvaluationPeriodsById)).toEqual([first.id, second.id])
+  })
   it.each([["PROFESSIONAL_CLUB", 3], ["NBA_WNBA", 3], ["NCAA", 4], ["FEDERATION", 2]] as const)("models %s as its own governance structure", (universe, bodyCount) => {
     const world = governanceFixture(universe);
     expect(Object.values(world.governanceInstitutionsById)[0]!.universe).toBe(universe);
