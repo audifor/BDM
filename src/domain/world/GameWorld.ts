@@ -73,7 +73,7 @@ import { createMemory, type MemoryRecord } from '@/domain/memory'
 import { createNarrativeThread, type NarrativeThread } from '@/domain/narrative'
 import type { MediaInteraction, MediaOpportunity, MediaProfile } from '@/domain/media'
 import { createBoardState, type BoardState } from '@/domain/board'
-import { createGovernanceAppointment, createGovernanceAuthorityGrant, createGovernanceBody, createGovernanceExternalRelationship, createGovernanceInstitution, isGovernanceAuthorityActive, type GovernanceAppointment, type GovernanceAuthorityGrant, type GovernanceBody, type GovernanceExternalRelationship, type GovernanceInstitution } from '@/domain/governance'
+import { createGovernanceAppointment, createGovernanceAuthorityGrant, createGovernanceBody, createGovernanceExpectationPeriod, createGovernanceExternalRelationship, createGovernanceInstitution, createGovernanceObjective, isGovernanceAuthorityActive, type GovernanceAppointment, type GovernanceAuthorityGrant, type GovernanceBody, type GovernanceExpectationPeriod, type GovernanceExternalRelationship, type GovernanceInstitution, type GovernanceObjective } from '@/domain/governance'
 import type { CoachAchievement, CoachLegacyState, CoachTeamLegacy, CoachTenure } from '@/domain/legacy'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
@@ -232,6 +232,8 @@ export interface GameWorld {
   readonly governanceAppointmentsById: Readonly<Record<string, GovernanceAppointment>>
   readonly governanceAuthorityGrantsById: Readonly<Record<string, GovernanceAuthorityGrant>>
   readonly governanceExternalRelationshipsById: Readonly<Record<string, GovernanceExternalRelationship>>
+  readonly governanceExpectationPeriodsById: Readonly<Record<string, GovernanceExpectationPeriod>>
+  readonly governanceObjectivesById: Readonly<Record<string, GovernanceObjective>>
   readonly coachLegacyByCoachId: Readonly<Record<string, CoachLegacyState>>
   readonly coachAchievementsById: Readonly<Record<string, CoachAchievement>>
   readonly coachTenuresById: Readonly<Record<string, CoachTenure>>
@@ -384,6 +386,8 @@ export interface CreateGameWorldInput {
   governanceAppointments?: readonly GovernanceAppointment[]
   governanceAuthorityGrants?: readonly GovernanceAuthorityGrant[]
   governanceExternalRelationships?: readonly GovernanceExternalRelationship[]
+  governanceExpectationPeriods?: readonly GovernanceExpectationPeriod[]
+  governanceObjectives?: readonly GovernanceObjective[]
   coachLegacyByCoachId?: Readonly<Record<string, CoachLegacyState>>
   coachAchievementsById?: Readonly<Record<string, CoachAchievement>>
   coachTenuresById?: Readonly<Record<string, CoachTenure>>
@@ -536,6 +540,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     governanceAppointmentsById: indexById((input.governanceAppointments ?? []).map(createGovernanceAppointment), 'Governance appointment'),
     governanceAuthorityGrantsById: indexById((input.governanceAuthorityGrants ?? []).map(createGovernanceAuthorityGrant), 'Governance authority grant'),
     governanceExternalRelationshipsById: indexById((input.governanceExternalRelationships ?? []).map(createGovernanceExternalRelationship), 'Governance external relationship'),
+    governanceExpectationPeriodsById: indexById((input.governanceExpectationPeriods ?? []).map(createGovernanceExpectationPeriod), 'Governance expectation period'),
+    governanceObjectivesById: indexById((input.governanceObjectives ?? []).map(createGovernanceObjective), 'Governance objective'),
     coachLegacyByCoachId: Object.freeze({ ...(input.coachLegacyByCoachId ?? {}) }), coachAchievementsById: Object.freeze({ ...(input.coachAchievementsById ?? {}) }), coachTenuresById: Object.freeze({ ...(input.coachTenuresById ?? {}) }), coachTeamLegacyByKey: Object.freeze({ ...(input.coachTeamLegacyByKey ?? {}) }),
   }
 
@@ -584,7 +590,7 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
 }
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
-  governanceInstitutions: 'governanceInstitutionsById', governanceBodies: 'governanceBodiesById', governanceAppointments: 'governanceAppointmentsById', governanceAuthorityGrants: 'governanceAuthorityGrantsById', governanceExternalRelationships: 'governanceExternalRelationshipsById',
+  governanceInstitutions: 'governanceInstitutionsById', governanceBodies: 'governanceBodiesById', governanceAppointments: 'governanceAppointmentsById', governanceAuthorityGrants: 'governanceAuthorityGrantsById', governanceExternalRelationships: 'governanceExternalRelationshipsById', governanceExpectationPeriods: 'governanceExpectationPeriodsById', governanceObjectives: 'governanceObjectivesById',
   countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
 }
 
@@ -595,6 +601,8 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   governanceAppointments: (value) => indexById((value as readonly GovernanceAppointment[]).map(createGovernanceAppointment), 'Governance appointment'),
   governanceAuthorityGrants: (value) => indexById((value as readonly GovernanceAuthorityGrant[]).map(createGovernanceAuthorityGrant), 'Governance authority grant'),
   governanceExternalRelationships: (value) => indexById((value as readonly GovernanceExternalRelationship[]).map(createGovernanceExternalRelationship), 'Governance external relationship'),
+  governanceExpectationPeriods: (value) => indexById((value as readonly GovernanceExpectationPeriod[]).map(createGovernanceExpectationPeriod), 'Governance expectation period'),
+  governanceObjectives: (value) => indexById((value as readonly GovernanceObjective[]).map(createGovernanceObjective), 'Governance objective'),
   matchStatLogs: (value) => indexLogsByGameId(value as readonly MatchStatLog[]),
   seasonHistory: (value) => indexHistoryBySeasonId(value as readonly SeasonHistoryRecord[]),
   teamFinances: (value) => indexTeamFinances(value as readonly TeamFinances[]),
@@ -1009,6 +1017,18 @@ function validateGovernance(world: GameWorld): void {
       if (relationship.institutionId !== undefined && body.institutionId !== relationship.institutionId) throw new GameWorldValidationError(`Governance external relationship ${relationship.id} body belongs to another institution`)
     }
     if (relationship.externalRef.kind === 'CONFERENCE') requireEntity(world.conferencesById, relationship.externalRef.id, `Governance external relationship ${relationship.id} conference`)
+  }
+  for (const period of Object.values(world.governanceExpectationPeriodsById)) { const institution = requireEntity(institutions, period.institutionId, `Governance expectation period ${period.id} institution`); if (period.universe !== institution.universe) throw new GameWorldValidationError(`Governance expectation period ${period.id} universe differs from its institution`) }
+  for (const objective of Object.values(world.governanceObjectivesById)) {
+    const period = requireEntity(world.governanceExpectationPeriodsById, objective.expectationPeriodId, `Governance objective ${objective.id} period`)
+    if (objective.ownerInstitutionId !== undefined) requireEntity(institutions, objective.ownerInstitutionId, `Governance objective ${objective.id} institution`)
+    if (objective.ownerBodyId !== undefined) {
+      const body = requireEntity(world.governanceBodiesById, objective.ownerBodyId, `Governance objective ${objective.id} body`)
+      if (objective.ownerInstitutionId !== undefined && body.institutionId !== objective.ownerInstitutionId) throw new GameWorldValidationError(`Governance objective ${objective.id} owner body belongs to another institution`)
+      if (body.institutionId !== period.institutionId) throw new GameWorldValidationError(`Governance objective ${objective.id} owner body differs from its period`)
+    }
+    if (objective.ownerInstitutionId !== undefined && objective.ownerInstitutionId !== period.institutionId) throw new GameWorldValidationError(`Governance objective ${objective.id} owner institution differs from its period`)
+    if (objective.evaluationStartsOn < period.startedOn || (period.endedOn !== undefined && objective.evaluationEndsOn > period.endedOn)) throw new GameWorldValidationError(`Governance objective ${objective.id} evaluation window must be within its period`)
   }
   for (const decision of new Set(grants.map((grant) => grant.decision))) {
     const edges = grants.filter((grant) => grant.decision === decision && isGovernanceAuthorityActive(grant, world.currentDate))

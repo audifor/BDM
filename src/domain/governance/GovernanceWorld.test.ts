@@ -127,6 +127,59 @@ describe("Governance world integration", () => {
     expect(() => updateGameWorld(world, { governanceInstitutions: [{ ...parentCycle, parentInstitutionId: "institution:missing" }] })).toThrow();
   });
 
+  it("enforces BG2 period and objective references, ownership, and historical windows", () => {
+    const world = governanceFixture("PROFESSIONAL_CLUB");
+    const period = expectationPeriod();
+    const validInstitutionObjective = expectationObjective({ id: "objective:institution", ownerInstitutionId: "institution:PROFESSIONAL_CLUB" });
+    const validBodyObjective = expectationObjective({ id: "objective:body", ownerBodyId: "body:board" });
+    const validExecutiveObjective = expectationObjective({ id: "objective:executive", ownerBodyId: "body:executive", metric: "PLAYER_DEVELOPMENT_SCORE", family: "PLAYER_DEVELOPMENT" });
+    const valid = updateGameWorld(world, { governanceExpectationPeriods: [period, expectationPeriod({ id: "period:open", startedOn: "2034-01-01" as never, endedOn: undefined })], governanceObjectives: [validInstitutionObjective, validBodyObjective, validExecutiveObjective] });
+    expect(Object.keys(valid.governanceExpectationPeriodsById)).toEqual(["period:history", "period:open"]);
+    expect(valid.governanceExpectationPeriodsById["period:open"]!.endedOn).toBeUndefined();
+    expect(valid.governanceObjectivesById["objective:institution"]!.expectationPeriodId).toBe("period:history");
+    expect(valid.governanceObjectivesById["objective:body"]!.ownerBodyId).toBe("body:board");
+    expect(valid.governanceObjectivesById["objective:executive"]!.ownerBodyId).toBe("body:executive");
+
+    expect(() => updateGameWorld(world, { governanceExpectationPeriods: [expectationPeriod({ institutionId: "institution:missing" })] })).toThrow();
+    expect(() => updateGameWorld(world, { governanceExpectationPeriods: [expectationPeriod({ universe: "NCAA" })] })).toThrow();
+    expect(() => updateGameWorld(world, { governanceExpectationPeriods: [expectationPeriod({ startedOn: "2033-01-01" as never, endedOn: "2032-01-01" as never })] })).toThrow();
+    expect(() => updateGameWorld(world, { governanceObjectives: [expectationObjective({ expectationPeriodId: "period:missing" })] })).toThrow();
+    const withPeriod = updateGameWorld(world, { governanceExpectationPeriods: [period] });
+    expect(() => updateGameWorld(withPeriod, { governanceObjectives: [expectationObjective({ ownerInstitutionId: "institution:missing" })] })).toThrow();
+    expect(() => updateGameWorld(withPeriod, { governanceObjectives: [expectationObjective({ ownerInstitutionId: "institution:other" })], governanceInstitutions: [...Object.values(world.governanceInstitutionsById), { id: "institution:other", universe: "PROFESSIONAL_CLUB", name: "Other", teamIds: [] }] })).toThrow();
+    expect(() => updateGameWorld(withPeriod, { governanceObjectives: [expectationObjective({ ownerBodyId: "body:missing" })] })).toThrow();
+    expect(() => updateGameWorld(withPeriod, { governanceObjectives: [expectationObjective({ ownerInstitutionId: undefined, ownerBodyId: "body:other" })], governanceInstitutions: [...Object.values(world.governanceInstitutionsById), { id: "institution:other", universe: "PROFESSIONAL_CLUB", name: "Other", teamIds: [] }], governanceBodies: [...Object.values(world.governanceBodiesById), { id: "body:other", institutionId: "institution:other", kind: "BOARD", name: "Other board" }] })).toThrow();
+    expect(() => updateGameWorld(withPeriod, { governanceObjectives: [expectationObjective({ evaluationStartsOn: "2031-12-31" as never })] })).toThrow();
+    expect(() => updateGameWorld(withPeriod, { governanceObjectives: [expectationObjective({ evaluationEndsOn: "2033-01-01" as never })] })).toThrow();
+    expect(() => updateGameWorld(withPeriod, { governanceObjectives: [expectationObjective({ evaluationStartsOn: "2032-12-31" as never, evaluationEndsOn: "2032-01-01" as never })] })).toThrow();
+  });
+
+  it("round-trips every BG2 target shape, historical field, and missing-BG2 legacy save", () => {
+    const base = governanceFixture("NCAA");
+    const period = { id: "period:bg2", institutionId: "institution:NCAA", universe: "NCAA" as const, startedOn: "2032-01-01" as never, endedOn: "2032-12-31" as never };
+    const objectives = [
+      { id: "objective:numeric", expectationPeriodId: period.id, ownerInstitutionId: period.institutionId, family: "PLAYER_DEVELOPMENT" as const, horizon: "SHORT" as const, metric: "PLAYER_DEVELOPMENT_SCORE" as const, comparison: "AT_LEAST" as const, target: { kind: "NUMERIC" as const, value: 60 }, tolerance: 2, partialTolerance: 5, importance: 70, evaluationStartsOn: "2032-02-01" as never, evaluationEndsOn: "2032-10-01" as never },
+      { id: "objective:boolean", expectationPeriodId: period.id, ownerBodyId: "body:athletics", family: "SPORTING_RESULTS" as const, horizon: "MEDIUM" as const, metric: "PLAYOFF_QUALIFICATION" as const, comparison: "BOOLEAN_SUCCESS" as const, target: { kind: "BOOLEAN" as const, value: true }, tolerance: 0, importance: 80, evaluationStartsOn: "2032-03-01" as never, evaluationEndsOn: "2032-11-01" as never },
+      { id: "objective:range", expectationPeriodId: period.id, ownerBodyId: "body:athletics", family: "ROSTER_CONSTRUCTION" as const, horizon: "LONG" as const, metric: "ROSTER_AGE_PROFILE" as const, comparison: "BETWEEN" as const, target: { kind: "RANGE" as const, minimum: 23, maximum: 27 }, tolerance: 0, importance: 50, evaluationStartsOn: "2032-04-01" as never, evaluationEndsOn: "2032-12-01" as never },
+    ];
+    const world = updateGameWorld(base, { governanceExpectationPeriods: [period], governanceObjectives: objectives });
+    const saved = serializeGameWorldV3(world, "2032-01-02T00:00:00.000Z");
+    const loaded = deserializeGameWorldV3(saved);
+    expect(loaded.governanceExpectationPeriodsById).toEqual(world.governanceExpectationPeriodsById);
+    expect(loaded.governanceObjectivesById).toEqual(world.governanceObjectivesById);
+    expect(loaded.governanceObjectivesById["objective:numeric"]!.target).toEqual({ kind: "NUMERIC", value: 60 });
+    expect(loaded.governanceObjectivesById["objective:boolean"]!.target).toEqual({ kind: "BOOLEAN", value: true });
+    expect(loaded.governanceObjectivesById["objective:range"]!.target).toEqual({ kind: "RANGE", minimum: 23, maximum: 27 });
+    expect(loaded.governanceObjectivesById["objective:numeric"]!.partialTolerance).toBe(5);
+    expect(loaded.governanceObjectivesById["objective:boolean"]!.partialTolerance).toBeUndefined();
+    expect(governanceRuntime(serializeGameWorldV3(loaded, "2032-01-02T00:00:00.000Z"))).toEqual(governanceRuntime(saved));
+    const legacy = structuredClone(saved); const runtime = legacy.payload.staffCareerRuntime as Record<string, unknown>;
+    delete runtime.governanceExpectationPeriods; delete runtime.governanceObjectives;
+    const oldLoaded = deserializeGameWorldV3(legacy);
+    expect(oldLoaded.governanceExpectationPeriodsById).toEqual({});
+    expect(oldLoaded.governanceObjectivesById).toEqual({});
+  });
+
   it("provides a typed staff-political actor bridge without changing staff politics", () => {
     const staffId = "staff:political-actor" as never;
     expect(governanceActorForStaff(staffId)).toEqual({ kind: "STAFF", id: staffId });
@@ -150,5 +203,10 @@ function governanceRuntime(save: ReturnType<typeof serializeGameWorldV3>): Recor
     governanceAppointments: runtime.governanceAppointments,
     governanceAuthorityGrants: runtime.governanceAuthorityGrants,
     governanceExternalRelationships: runtime.governanceExternalRelationships,
+    governanceExpectationPeriods: runtime.governanceExpectationPeriods,
+    governanceObjectives: runtime.governanceObjectives,
   };
 }
+
+function expectationPeriod(overrides: Record<string, unknown> = {}) { return { id: "period:history", institutionId: "institution:PROFESSIONAL_CLUB", universe: "PROFESSIONAL_CLUB" as const, startedOn: "2032-01-01" as never, endedOn: "2032-12-31" as never, ...overrides }; }
+function expectationObjective(overrides: Record<string, unknown> = {}) { return { id: "objective:base", expectationPeriodId: "period:history", ownerInstitutionId: "institution:PROFESSIONAL_CLUB", family: "PLAYER_DEVELOPMENT" as const, horizon: "SHORT" as const, metric: "PLAYER_DEVELOPMENT_SCORE" as const, comparison: "AT_LEAST" as const, target: { kind: "NUMERIC" as const, value: 50 }, tolerance: 5, importance: 80, evaluationStartsOn: "2032-01-01" as never, evaluationEndsOn: "2032-12-31" as never, ...overrides }; }
