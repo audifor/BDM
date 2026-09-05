@@ -3,10 +3,10 @@ import { createRoot } from 'react-dom/client'
 
 import { BootstrapApp } from '@/ui/startup/BootstrapApp'
 
-const isNgUi = new URLSearchParams(window.location.search).get('ui') === 'ng'
+const isLegacyUi = new URLSearchParams(window.location.search).get('ui') === 'legacy'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BootstrapApp uiMode={isNgUi ? 'ng' : 'legacy'} />
+    <BootstrapApp uiMode={isLegacyUi ? 'legacy' : 'ng'} />
   </StrictMode>,
 )
