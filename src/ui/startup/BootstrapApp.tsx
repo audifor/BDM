@@ -12,7 +12,7 @@ import { App } from '@/ui/App'
 
 import './BootstrapApp.css'
 
-export function BootstrapApp({ uiMode = 'legacy' }: { readonly uiMode?: 'legacy' | 'ng' }) {
+export function BootstrapApp({ uiMode = 'ng' }: { readonly uiMode?: 'legacy' | 'ng' }) {
   const world = useGameStore((state) => state.world)
   const replaceWorld = useGameStore((state) => state.replaceWorld)
   const resetTacticalPlan = useTacticalPlanStore((state) => state.reset)
