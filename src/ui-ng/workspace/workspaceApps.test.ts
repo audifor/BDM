@@ -22,7 +22,8 @@ describe('workspaceApps navigation', () => {
     expect(parseWorkspaceApp('medical')).toBe('medical')
     expect(parseWorkspaceApp('recruiting')).toBe('recruiting')
     expect(parseWorkspaceApp('schedule')).toBe('schedule')
-    expect(parseWorkspaceApp('invalid')).toBe('player')
+    expect(parseWorkspaceApp('invalid')).toBe('home')
+    expect(parseWorkspaceApp(null)).toBe('home')
     expect(parseWorkspacePlayerId('player-1')).toBe('player-1')
     expect(parseWorkspacePlayerId(null)).toBeNull()
     expect(parseWorkspaceStaffId('staff-1')).toBe('staff-1')
@@ -59,7 +60,7 @@ describe('workspaceApps navigation', () => {
     expect(url.searchParams.get('playerView')).toBeNull()
   })
 
-  it('navigateToPlayer clears app param and pushes player id', () => {
+  it('navigateToPlayer explicitly opens the player app and pushes player id', () => {
     window.history.replaceState({}, '', '/?ui=ng&app=roster')
     const pushState = vi.spyOn(window.history, 'pushState')
     const playerId = 'player:xyz' as PlayerId
@@ -68,7 +69,7 @@ describe('workspaceApps navigation', () => {
 
     expect(pushState).toHaveBeenCalled()
     const url = new URL(window.location.href)
-    expect(url.searchParams.get('app')).toBeNull()
+    expect(url.searchParams.get('app')).toBe('player')
     expect(url.searchParams.get('playerId')).toBe(playerId)
   })
 
@@ -81,7 +82,7 @@ describe('workspaceApps navigation', () => {
 
     expect(pushState).toHaveBeenCalled()
     const url = new URL(window.location.href)
-    expect(url.searchParams.get('app')).toBeNull()
+    expect(url.searchParams.get('app')).toBe('player')
     expect(url.searchParams.get('playerId')).toBe(playerId)
     expect(url.searchParams.get('playerView')).toBe('medical')
   })
