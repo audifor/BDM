@@ -1,4 +1,52 @@
 @font-face {
+  font-family: 'Geist Sans';
+  src: url('../assets/fonts/geist-sans-400.woff2') format('woff2');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Geist Sans';
+  src: url('../assets/fonts/geist-sans-500.woff2') format('woff2');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 500;
+}
+
+@font-face {
+  font-family: 'Geist Sans';
+  src: url('../assets/fonts/geist-sans-600.woff2') format('woff2');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 600;
+}
+
+@font-face {
+  font-family: 'Geist Sans';
+  src: url('../assets/fonts/geist-sans-700.woff2') format('woff2');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  src: url('../assets/fonts/barlow-semi-condensed-600.woff2') format('woff2');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 600;
+}
+
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  src: url('../assets/fonts/barlow-semi-condensed-700.woff2') format('woff2');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 700;
+}
+
+@font-face {
   font-family: 'Inter Tight';
   src: url('../../ui/assets/fonts/inter-tight-400.ttf') format('truetype');
   font-display: swap;
@@ -46,7 +94,39 @@
   font-weight: 700;
 }
 
-/* Player Overview typography — Roboto Flex */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('../assets/fonts/ibm-plex-sans-400.woff2') format('woff2');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('../assets/fonts/ibm-plex-sans-500.woff2') format('woff2');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 500;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('../assets/fonts/ibm-plex-sans-600.woff2') format('woff2');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 600;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('../assets/fonts/ibm-plex-sans-700.woff2') format('woff2');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 700;
+}
+
+/* Variable fallback — kept for any remaining Roboto Flex consumers */
 @font-face {
   font-family: 'Roboto Flex';
   src: url('../assets/fonts/roboto-flex-latin-wght-normal.woff2') format('woff2');

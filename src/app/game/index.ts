@@ -1,5 +1,14 @@
 export { advanceGameDay, simulateRemainingGamesToday } from './advanceGameDay'
 export { continueGame, getContinueStopReason, getNextKnownEvent, DEFAULT_CONTINUE_DAY_LIMIT, type ContinueResult, type ContinueStopReason, type NextKnownEvent } from './ContinueFlow'
+export {
+  simulateUntilDate,
+  tickSimulateUntilDate,
+  type SimulateUntilEvent,
+  type SimulateUntilResult,
+  type SimulateUntilStopReason,
+  type SimulateUntilTick,
+  type UserMatchSummary,
+} from './simulateUntilDate'
 export { createNewGame, PROTOTYPE_GAME_CONFIGURATION } from './createNewGame'
 export { createAcbTestGame, type CreateAcbTestGameOptions } from './createAcbTestGame'
 export { createConfiguredGame } from './createConfiguredGame'

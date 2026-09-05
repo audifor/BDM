@@ -1,3 +1,4 @@
+import type { TeamId } from '@/domain/ids'
 import { getUserTeam } from '@/engine/calendar'
 import type { GameWorld } from '@/domain/world'
 
@@ -12,8 +13,11 @@ export interface RosterWorkspaceContextModel {
   readonly seasonLabel: string | null
 }
 
-export function buildRosterWorkspaceContext(world: GameWorld): RosterWorkspaceContextModel | null {
-  const team = getUserTeam(world)
+export function buildRosterWorkspaceContext(
+  world: GameWorld,
+  teamId?: TeamId | null,
+): RosterWorkspaceContextModel | null {
+  const team = rosterTeamForWorld(world, teamId)
   if (team === undefined) return null
 
   const season = world.seasons[world.currentSeasonId]
@@ -29,8 +33,11 @@ export function buildRosterWorkspaceContext(world: GameWorld): RosterWorkspaceCo
   }
 }
 
-/** Resolve team for roster when user team exists. */
-export function rosterTeamForWorld(world: GameWorld) {
+/** Resolve the requested team, falling back to the user club. */
+export function rosterTeamForWorld(world: GameWorld, teamId?: TeamId | null) {
+  if (teamId !== undefined && teamId !== null && world.teams[teamId] !== undefined) {
+    return world.teams[teamId]
+  }
   return getUserTeam(world)
 }
 

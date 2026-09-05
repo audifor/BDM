@@ -1,0 +1,386 @@
+.ng-canon:has(.ng-match) .ng-canon__scroll {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--ng-spacing-12);
+  overflow: hidden;
+}
+
+.ng-match {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  gap: var(--ng-spacing-10);
+  min-height: 0;
+  height: 100%;
+}
+
+.ng-match__scoreboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--ng-spacing-16);
+  padding: 10px 16px;
+}
+
+.ng-match__team {
+  display: flex;
+  align-items: center;
+  gap: var(--ng-spacing-10);
+  min-width: 0;
+}
+
+.ng-match__team.is-away {
+  justify-content: flex-end;
+}
+
+.ng-match__team strong {
+  overflow: hidden;
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-font-size-lg);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ng-match__mark {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, var(--ng-match-home-accent, var(--ng-cyan)) 55%, transparent);
+  background: color-mix(in srgb, var(--ng-match-home, var(--ng-cyan)) 28%, #0a1016);
+  color: var(--ng-text-primary);
+  font-family: var(--ng-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.ng-match__mark.is-away {
+  border-color: color-mix(in srgb, var(--ng-match-away-accent, var(--ng-amber)) 55%, transparent);
+  background: color-mix(in srgb, var(--ng-match-away, var(--ng-amber)) 28%, #0a1016);
+}
+
+.ng-match__score {
+  text-align: center;
+}
+
+.ng-match__score b {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  color: var(--ng-text-primary);
+  font-family: var(--ng-font-display);
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.ng-match__score b span {
+  color: var(--ng-text-muted);
+  font-size: 22px;
+}
+
+.ng-match__score em {
+  display: block;
+  color: var(--ng-amber);
+  font-family: var(--ng-font-display);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ng-match__stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  gap: var(--ng-spacing-10);
+  min-height: 0;
+}
+
+.ng-match__court-wrap {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  padding: 12px;
+}
+
+.ng-match .match-court {
+  position: relative;
+  width: min(100%, 920px);
+  aspect-ratio: 28 / 15;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ng-cyan) 32%, var(--ng-border-subtle));
+  background:
+    radial-gradient(circle at 50% 50%, rgba(22, 217, 243, 0.05), transparent 58%),
+    linear-gradient(90deg, #0a1015 0 49.8%, #0d141a 50%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.ng-match .court-markings {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: color-mix(in srgb, var(--ng-cyan) 52%, #8ea6b4);
+  pointer-events: none;
+}
+
+.ng-match .court-markings__lines {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 10;
+  vector-effect: non-scaling-stroke;
+}
+
+.ng-match .court-markings__perimeter {
+  stroke-width: 14;
+}
+
+.ng-match .court-markings__free-throw {
+  stroke-dasharray: 16 12;
+}
+
+.ng-match .court-markings__hoops {
+  fill: var(--ng-amber);
+  stroke: #ffd46b;
+  stroke-width: 8;
+  vector-effect: non-scaling-stroke;
+}
+
+.ng-match .token {
+  position: absolute;
+  display: grid;
+  width: 58px;
+  min-height: 36px;
+  padding: 4px 6px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 2px;
+  color: #fff;
+  line-height: 1.15;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  transition: left 120ms linear, top 120ms linear;
+}
+
+.ng-match .token strong {
+  max-width: 52px;
+  overflow: hidden;
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ng-match .token span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.ng-match .home-token {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ng-match-home-accent, var(--ng-cyan)) 55%, #102028),
+    color-mix(in srgb, var(--ng-match-home, #153f86) 80%, #081018)
+  );
+}
+
+.ng-match .away-token {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ng-match-away-accent, var(--ng-amber)) 55%, #2a1c10),
+    color-mix(in srgb, var(--ng-match-away, #8a3a20) 80%, #120c08)
+  );
+}
+
+.ng-match .focused-token {
+  border-color: var(--ng-amber);
+  box-shadow: var(--ng-glow-amber-low);
+}
+
+.ng-match .ball-indicator {
+  position: absolute;
+  z-index: 3;
+  color: var(--ng-amber);
+  font-size: 18px;
+  text-shadow: 0 0 10px rgba(230, 183, 77, 0.7);
+  transform: translate(-35%, -65%);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ng-match .token {
+    transition: none;
+  }
+}
+
+.ng-match__rail,
+.ng-match__feed,
+.ng-match__drawer {
+  min-height: 0;
+}
+
+.ng-match__rail {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: var(--ng-spacing-10);
+}
+
+.ng-match__feed {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 10px 12px;
+}
+
+.ng-match__feed-scroll {
+  min-height: 0;
+  overflow: auto;
+}
+
+.ng-match__event {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 8px;
+  margin: 0;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--ng-border-subtle);
+  color: var(--ng-text-secondary);
+  font-size: 11px;
+}
+
+.ng-match__event time {
+  color: var(--ng-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ng-match__event.is-made {
+  color: var(--ng-positive);
+}
+
+.ng-match__event.is-missed {
+  color: var(--ng-text-muted);
+}
+
+.ng-match__event.is-turnover,
+.ng-match__event.is-foul {
+  color: var(--ng-negative);
+}
+
+.ng-match__event.is-rebound {
+  color: var(--ng-cyan);
+}
+
+.ng-match__drawer {
+  padding: 10px 12px;
+}
+
+.ng-match__drawer label {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  color: var(--ng-text-muted);
+  font-size: 11px;
+}
+
+.ng-match__box {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ng-spacing-16);
+  min-height: 0;
+  max-height: 180px;
+  padding: 10px 12px;
+  overflow: auto;
+}
+
+.ng-match__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ng-spacing-8);
+  padding: 8px 12px;
+}
+
+.ng-match__speeds {
+  display: flex;
+  gap: 4px;
+}
+
+.ng-match__speed {
+  min-width: 36px;
+  height: 28px;
+  border: 1px solid var(--ng-border-subtle);
+  background: transparent;
+  color: var(--ng-text-muted);
+  font-family: var(--ng-font-display);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ng-match__speed.is-active {
+  border-color: color-mix(in srgb, var(--ng-amber) 55%, transparent);
+  background: color-mix(in srgb, var(--ng-amber) 12%, transparent);
+  color: var(--ng-amber);
+}
+
+.ng-match .substitutions-panel,
+.ng-match .content-panel {
+  display: grid;
+  gap: 8px;
+}
+
+.ng-match .substitutions-panel h2,
+.ng-match .content-panel .eyebrow {
+  margin: 0;
+  color: var(--ng-text-muted);
+  font-family: var(--ng-font-display);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ng-match .substitution-player-list {
+  display: grid;
+  gap: 4px;
+}
+
+.ng-match .substitution-player {
+  display: grid;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--ng-border-subtle);
+  background: transparent;
+  color: var(--ng-text-primary);
+  text-align: left;
+}
+
+.ng-match .substitution-player.selected-out,
+.ng-match .substitution-player[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--ng-amber) 50%, transparent);
+  background: color-mix(in srgb, var(--ng-amber) 10%, transparent);
+}
+
+.ng-match .game-actions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 1100px) {
+  .ng-match__stage,
+  .ng-match__box {
+    grid-template-columns: 1fr;
+  }
+}

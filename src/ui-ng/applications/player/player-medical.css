@@ -2,23 +2,59 @@
 
 .pm-root {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 7fr) minmax(0, 3fr);
+  gap: var(--ng-panel-gap);
   height: 100%;
   min-height: 0;
+  padding: var(--ng-workspace-padding);
   overflow: hidden;
-  background: var(--ng-bg-workspace);
 }
 
 .pm-root__upper {
   display: grid;
   grid-template-columns: 0.95fr 1.05fr;
+  gap: var(--ng-panel-gap);
   min-height: 0;
-  border-bottom: 1px solid var(--ng-border-strong);
+}
+
+.pm-root__upper-spacer {
+  min-height: 0;
+}
+
+.pm-root__injury-slot {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pm-root__injury-slot .pm-injury {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.pm-root__injury-slot .pm-injury--clear .pm-injury__clear-body {
+  flex: 1;
+  align-items: center;
+  justify-content: flex-start;
+  padding: var(--ng-spacing-12);
+}
+
+.pm-root__injury-slot .pm-injury--clear .pm-injury__holo-body {
+  width: 240px;
+  height: 336px;
+  margin-left: auto;
+}
+
+.pm-root__injury-slot .pm-injury__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
 .pm-root__main {
   display: grid;
   grid-template-columns: 0.82fr 1.18fr;
+  gap: var(--ng-panel-gap);
   min-height: 0;
   overflow: hidden;
 }
@@ -29,9 +65,10 @@
 
 /* Shared stat hierarchy */
 .pm-stat-label {
+  font-family: var(--ng-font-display);
   font-size: var(--ng-font-size-meta);
   font-weight: var(--ng-font-weight-semibold);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -93,10 +130,6 @@
 /* Availability band */
 .pm-status {
   padding: var(--ng-spacing-8) var(--ng-spacing-12);
-  border-bottom: 1px solid var(--ng-border-strong);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 24%),
-    var(--ng-bg-panel-primary);
 }
 
 .pm-status__primary {
@@ -157,7 +190,8 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  border-right: 1px solid var(--ng-border-subtle);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .pm-fatigue__body {
@@ -241,6 +275,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
 }
 
 .pm-injury__body {
@@ -283,8 +318,24 @@
   color: var(--ng-text-muted);
 }
 
+.pm-injury__clear-body {
+  display: flex;
+  align-items: center;
+  gap: var(--ng-spacing-12);
+  padding: var(--ng-spacing-4) var(--ng-spacing-12) var(--ng-spacing-8);
+  min-height: 0;
+}
+
+.pm-injury__holo-body {
+  flex: none;
+  width: 52px;
+  height: 72px;
+  color: var(--ng-cyan);
+}
+
 .pm-injury--clear .pm-injury__empty {
-  padding: var(--ng-spacing-10) var(--ng-spacing-12) var(--ng-spacing-12);
+  margin: 0;
+  padding: 0;
 }
 
 /* Recovery timeline */
@@ -292,7 +343,8 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  border-right: 1px solid var(--ng-border-subtle);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .pm-recovery__track {
@@ -354,6 +406,8 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .pm-history__scroll {
@@ -366,7 +420,6 @@
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
-  font-size: var(--ng-font-size-meta);
 }
 
 .pm-history__table col.pm-history__col--date { width: 22%; }
@@ -378,40 +431,13 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  height: var(--ng-grid-row-sm);
-  padding: 0 var(--ng-spacing-8);
-  border-bottom: 1px solid var(--ng-border-standard);
-  background: var(--ng-bg-panel-primary);
-  font-weight: var(--ng-font-weight-semibold);
-  color: var(--ng-text-muted);
-  text-align: center;
-  white-space: nowrap;
 }
 
 .pm-history__table tbody tr {
-  height: var(--ng-grid-row-md);
   cursor: pointer;
 }
 
-.pm-history__table tbody tr:hover {
-  background: var(--ng-bg-hover);
-}
-
-.pm-history__table tbody tr.is-active td:first-child {
-  box-shadow: inset 2px 0 0 var(--ng-warning);
-}
-
-.pm-history__table tbody tr.is-selected {
-  background: var(--ng-bg-selected);
-  box-shadow: var(--ng-shadow-selected-glow);
-}
-
 .pm-history__table td {
-  padding: 0 var(--ng-spacing-8);
-  border-bottom: 1px solid var(--ng-border-subtle);
-  color: var(--ng-text-secondary);
-  white-space: nowrap;
-  text-align: center;
   vertical-align: middle;
 }
 

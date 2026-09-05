@@ -1,14 +1,12 @@
-import {
-  useMemo,
-  useState,
-  type CSSProperties,
-  type PointerEvent as ReactPointerEvent,
-} from "react";
-import type { GameWorld } from "@/domain/world";
+import { Fragment, useMemo, useState, type ReactNode } from "react";
+import { getTeamRoster, type GameWorld } from "@/domain/world";
 import { getUserTeam } from "@/engine/calendar";
 import type { LineupSlot } from "@/domain/tactics";
 import type { PlayerId } from "@/domain/ids";
 import type { EntityDestination } from "@/ui/navigation/entityNavigation";
+import { PlayerNameLink } from "@/ui/navigation/PlayerNameLink";
+import { PrecisionDivHead } from "@/ui-ng/components/PrecisionDivHead";
+import { usePrecisionDivGrid, type PrecisionDivColumn } from "@/ui-ng/components/usePrecisionDivGrid";
 import {
   PLANTILLA_VISUAL_MOCK_ROWS,
   PSYCHOLOGY_COLUMNS,
@@ -35,32 +33,18 @@ const views = [
 ] as const;
 const playerNames = PLANTILLA_VISUAL_MOCK_ROWS.map((row) => row.name);
 
-function useResizableGridColumns(initialWidths: readonly number[]) {
-  const [widths, setWidths] = useState(initialWidths);
-  const startResize = (index: number) => (event: ReactPointerEvent<HTMLSpanElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const startX = event.clientX;
-    const initialWidth = widths[index] ?? 160;
-    const move = (next: PointerEvent) => {
-      setWidths((current) => current.map((width, widthIndex) => widthIndex === index ? Math.max(72, initialWidth + next.clientX - startX) : width));
-    };
-    const stop = () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", stop);
-    };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", stop);
-  };
-  return {
-    style: { gridTemplateColumns: widths.map((width) => `${width}px`).join(" ") } as CSSProperties,
-    startResize,
-  };
-}
-
-function ColumnResizeHandle({ onPointerDown }: { readonly onPointerDown: (event: ReactPointerEvent<HTMLSpanElement>) => void }) {
-  return <span aria-label="Ajustar ancho de columna" className="pcb-plantilla__column-resize" onPointerDown={onPointerDown} />;
-}
+const ANALYSIS_COLUMNS: readonly PrecisionDivColumn[] = [
+  { id: "pos", label: "Pos", width: 66 },
+  { id: "starter", label: "Titular", width: 318 },
+  { id: "rotation", label: "Rotación", width: 318 },
+  { id: "bench", label: "Reservas", width: 318 },
+];
+const MENTOR_COLUMNS: readonly PrecisionDivColumn[] = [
+  { id: "focus", label: "Enfoque", width: 190 },
+  { id: "mentor", label: "Mentor", width: 230 },
+  { id: "mentees", label: "Aprendices", width: 360 },
+  { id: "action", label: "Acción", width: 130 },
+];
 
 export function PlantillaPcbPage({
   onLineupSlotChange,
@@ -233,7 +217,7 @@ function LegacyRoster() {
       </div>
       <div className="pcb-plantilla__table-wrap">
         <div
-          className="pcb-plantilla__table"
+          className="pcb-plantilla__table ng-precision-grid"
           style={{
             gridTemplateColumns: `52px 190px repeat(${columns.length},92px)`,
           }}
@@ -295,7 +279,7 @@ function LegacyRoster() {
 function Analysis() {
   const positions = ["PG", "SG", "SF", "PF", "C"];
   const [selected, setSelected] = useState<string | null>(null);
-  const analysisColumns = useResizableGridColumns([66, 318, 318, 318]);
+  const analysisGrid = usePrecisionDivGrid("ng-plantilla-analysis", ANALYSIS_COLUMNS);
   const selectedRow = PLANTILLA_VISUAL_MOCK_ROWS.find(
     (row) => row.name === selected,
   );
@@ -306,21 +290,33 @@ function Analysis() {
           <h2>Análisis de Plantilla</h2>
           <span>Depth Chart</span>
         </header>
-        <div className="pcb-plantilla__analysis-table">
-          <div style={analysisColumns.style}>
-            <b>Pos<ColumnResizeHandle onPointerDown={analysisColumns.startResize(0)} /></b>
-            <b>Titular<ColumnResizeHandle onPointerDown={analysisColumns.startResize(1)} /></b>
-            <b>Rotación<ColumnResizeHandle onPointerDown={analysisColumns.startResize(2)} /></b>
-            <b>Reservas<ColumnResizeHandle onPointerDown={analysisColumns.startResize(3)} /></b>
+        <div className="pcb-plantilla__analysis-table ng-precision-grid">
+          <div style={analysisGrid.style}>
+            {analysisGrid.ordered.map((column) => (
+              <PrecisionDivHead
+                key={column.id}
+                headerProps={analysisGrid.headerProps(column.id)}
+                label={column.label}
+                onResize={analysisGrid.startResize(column.id)}
+                resizeClassName="pcb-plantilla__column-resize"
+              />
+            ))}
           </div>
-          {positions.map((position, index) => (
-            <div key={position} style={analysisColumns.style}>
-              <b>{position}</b>
-              <span>{playerNames[index]}</span>
-              <span>{playerNames[(index + 5) % playerNames.length]}</span>
-              <span>{playerNames[(index + 8) % playerNames.length]}</span>
-            </div>
-          ))}
+          {positions.map((position, index) => {
+            const cells: Record<string, ReactNode> = {
+              pos: <b>{position}</b>,
+              starter: <span>{playerNames[index]}</span>,
+              rotation: <span>{playerNames[(index + 5) % playerNames.length]}</span>,
+              bench: <span>{playerNames[(index + 8) % playerNames.length]}</span>,
+            };
+            return (
+              <div key={position} style={analysisGrid.style}>
+                {analysisGrid.ordered.map((column) => (
+                  <Fragment key={column.id}>{cells[column.id]}</Fragment>
+                ))}
+              </div>
+            );
+          })}
         </div>
       </section>
       <section>
@@ -386,23 +382,46 @@ function Analysis() {
   );
 }
 
-export function MentoringPcbPage() {
-  const [groups, setGroups] = useState<readonly Group[]>([
-    {
-      id: "mentoring-1",
-      mentor: playerNames[3]!,
-      mentees: [playerNames[0]!, playerNames[1]!],
-      focus: "Ética de trabajo",
-    },
-  ]);
+export function MentoringPcbPage({
+  world,
+  variant = "legacy",
+  onOpenPlayer,
+}: {
+  readonly world?: GameWorld;
+  readonly variant?: "legacy" | "ng";
+  readonly onOpenPlayer?: (playerId: PlayerId) => void;
+} = {}) {
+  const rosterChoices = useMemo(() => {
+    if (world === undefined) return playerNames.map((name, index) => ({ id: `mock-${index}`, name }));
+    const team = getUserTeam(world);
+    if (team === undefined) return playerNames.map((name, index) => ({ id: `mock-${index}`, name }));
+    return getTeamRoster(world, team.id).map((player) => ({
+      id: player.id,
+      name: `${player.firstName} ${player.lastName}`,
+    }));
+  }, [world]);
+  const nameById = useMemo(() => new Map(rosterChoices.map((choice) => [choice.id, choice.name])), [rosterChoices]);
+  const labelFor = (id: string) => nameById.get(id) ?? id;
+  const [groups, setGroups] = useState<readonly Group[]>(() =>
+    world === undefined
+      ? [
+          {
+            id: "mentoring-1",
+            mentor: playerNames[3]!,
+            mentees: [playerNames[0]!, playerNames[1]!],
+            focus: "Ética de trabajo",
+          },
+        ]
+      : [],
+  );
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
   const [mentor, setMentor] = useState("");
   const [focus, setFocus] = useState("Clutch");
   const [mentees, setMentees] = useState<readonly string[]>([]);
-  const mentorColumns = useResizableGridColumns([190, 230, 360, 130]);
+  const mentorGrid = usePrecisionDivGrid("ng-mentoring-groups", MENTOR_COLUMNS);
   const filtered = groups.filter((group) =>
-    `${group.mentor} ${group.focus} ${group.mentees.join(" ")}`
+    `${labelFor(group.mentor)} ${group.focus} ${group.mentees.map(labelFor).join(" ")}`
       .toLocaleLowerCase()
       .includes(query.toLocaleLowerCase()),
   );
@@ -417,8 +436,8 @@ export function MentoringPcbPage() {
     setMentees([]);
   };
   return (
-    <main className="pcb-plantilla">
-    <section className="pcb-plantilla__mentoring">
+    <main className={`pcb-plantilla${variant === "ng" ? " pcb-plantilla--ng" : ""}`}>
+    <section aria-label="Mentoring PCB migrado" className="pcb-plantilla__mentoring">
       <header>
         <div>
           <b>M</b>
@@ -438,30 +457,61 @@ export function MentoringPcbPage() {
           </button>
         </span>
       </header>
-      <div className="pcb-plantilla__mentor-table">
-        <div style={mentorColumns.style}>
-          <b>Enfoque<ColumnResizeHandle onPointerDown={mentorColumns.startResize(0)} /></b>
-          <b>Mentor<ColumnResizeHandle onPointerDown={mentorColumns.startResize(1)} /></b>
-          <b>Aprendices<ColumnResizeHandle onPointerDown={mentorColumns.startResize(2)} /></b>
-          <b>Acción<ColumnResizeHandle onPointerDown={mentorColumns.startResize(3)} /></b>
+      <div className="pcb-plantilla__mentor-table ng-precision-grid">
+        <div style={mentorGrid.style}>
+          {mentorGrid.ordered.map((column) => (
+            <PrecisionDivHead
+              key={column.id}
+              headerProps={mentorGrid.headerProps(column.id)}
+              label={column.label}
+              onResize={mentorGrid.startResize(column.id)}
+              resizeClassName="pcb-plantilla__column-resize"
+            />
+          ))}
         </div>
-        {filtered.map((group) => (
-          <div key={group.id} style={mentorColumns.style}>
-            <span>{group.focus}</span>
-            <span>{group.mentor}</span>
-            <span>{group.mentees.join(" · ")}</span>
-            <button
-              onClick={() =>
-                setGroups((current) =>
-                  current.filter((item) => item.id !== group.id),
-                )
-              }
-              type="button"
-            >
-              Eliminar
-            </button>
-          </div>
-        ))}
+        {filtered.map((group) => {
+          const cells: Record<string, ReactNode> = {
+            focus: <span>{group.focus}</span>,
+            mentor: (
+              <span>
+                <PlayerNameLink onOpenPlayer={onOpenPlayer} playerId={group.mentor as PlayerId}>
+                  {labelFor(group.mentor)}
+                </PlayerNameLink>
+              </span>
+            ),
+            mentees: (
+              <span>
+                {group.mentees.map((menteeId, index) => (
+                  <span key={menteeId}>
+                    {index > 0 ? " · " : null}
+                    <PlayerNameLink onOpenPlayer={onOpenPlayer} playerId={menteeId as PlayerId}>
+                      {labelFor(menteeId)}
+                    </PlayerNameLink>
+                  </span>
+                ))}
+              </span>
+            ),
+            action: (
+              <button
+                onClick={() =>
+                  setGroups((current) =>
+                    current.filter((item) => item.id !== group.id),
+                  )
+                }
+                type="button"
+              >
+                Eliminar
+              </button>
+            ),
+          };
+          return (
+            <div key={group.id} style={mentorGrid.style}>
+              {mentorGrid.ordered.map((column) => (
+                <Fragment key={column.id}>{cells[column.id]}</Fragment>
+              ))}
+            </div>
+          );
+        })}
       </div>
       {creating && (
         <div className="pcb-plantilla__mentor-create">
@@ -473,8 +523,8 @@ export function MentoringPcbPage() {
               value={mentor}
             >
               <option value="">Seleccionar mentor</option>
-              {playerNames.slice(3).map((name) => (
-                <option key={name}>{name}</option>
+              {rosterChoices.map((choice) => (
+                <option key={choice.id} value={choice.id}>{choice.name}</option>
               ))}
             </select>
           </label>
@@ -491,20 +541,20 @@ export function MentoringPcbPage() {
           </label>
           <h3>Aprendices</h3>
           <div className="pcb-plantilla__chips">
-            {playerNames.slice(0, 7).map((name) => (
+            {rosterChoices.map((choice) => (
               <button
-                className={mentees.includes(name) ? "is-active" : ""}
-                key={name}
+                className={mentees.includes(choice.id) ? "is-active" : ""}
+                key={choice.id}
                 onClick={() =>
                   setMentees((current) =>
-                    current.includes(name)
-                      ? current.filter((item) => item !== name)
-                      : [...current, name],
+                    current.includes(choice.id)
+                      ? current.filter((item) => item !== choice.id)
+                      : [...current, choice.id],
                   )
                 }
                 type="button"
               >
-                {name}
+                {choice.name}
               </button>
             ))}
           </div>

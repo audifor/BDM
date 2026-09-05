@@ -1,4 +1,5 @@
 import type { PlayerHistoryItemModel } from '@/ui-ng/applications/player/data/buildPlayerHistoryModel'
+import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 
 export function HistoryTimelineList({
   items,
@@ -21,59 +22,43 @@ export function HistoryTimelineList({
         <p className="ph-panel-empty">{emptyMessage ?? 'No history available.'}</p>
       ) : (
         <div className="ph-timeline__scroll">
-          <table className="ph-timeline__table">
-            <colgroup>
-              <col className="ph-timeline__col--date" />
-              <col className="ph-timeline__col--event" />
-              <col className="ph-timeline__col--context" />
-            </colgroup>
-            <thead>
-              <tr>
-                <th className="ph-timeline__col--date" scope="col">
-                  Date / Season
-                </th>
-                <th className="ph-timeline__col--event" scope="col">
-                  Event
-                </th>
-                <th className="ph-timeline__col--context" scope="col">
-                  Context
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => {
-                const selected = selectedItemId === item.id
-                return (
-                  <tr
-                    aria-selected={selected}
-                    className={selected ? 'is-selected' : undefined}
-                    key={item.id}
-                    onClick={() => onSelectItem(item.id)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault()
-                        onSelectItem(item.id)
-                      }
-                    }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <td className="ph-timeline__date">
-                      <span>{item.dateLabel}</span>
-                      {item.datePrecision === 'season' && (
-                        <span className="ph-timeline__precision">Season</span>
-                      )}
-                    </td>
-                    <td className="ph-timeline__event">
-                      <span className="ph-timeline__title">{item.title}</span>
-                      <span className="ph-timeline__detail">{item.detail}</span>
-                    </td>
-                    <td className="ph-timeline__context">{item.contextLabel ?? '—'}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+          <NgPrecisionTable
+            className="ph-timeline__table"
+            columns={[
+              ngCol<PlayerHistoryItemModel>(
+                'date',
+                'Date / Season',
+                (item) => (
+                  <span className="ph-timeline__date">
+                    <span>{item.dateLabel}</span>
+                    {item.datePrecision === 'season' && <span className="ph-timeline__precision">Season</span>}
+                  </span>
+                ),
+                { value: (item) => item.sortDate },
+              ),
+              ngCol<PlayerHistoryItemModel>(
+                'event',
+                'Event',
+                (item) => (
+                  <span className="ph-timeline__event">
+                    <span className="ph-timeline__title">{item.title}</span>
+                    <span className="ph-timeline__detail">{item.detail}</span>
+                  </span>
+                ),
+                { value: (item) => item.title },
+              ),
+              ngCol<PlayerHistoryItemModel>('context', 'Context', (item) => item.contextLabel ?? '—', {
+                value: (item) => item.contextLabel ?? '—',
+              }),
+            ]}
+            gridId="ng-player-history-timeline"
+            onRowClick={(item) => onSelectItem(item.id)}
+            onSelectionChange={(ids) => {
+              if (ids[0]) onSelectItem(ids[0])
+            }}
+            rows={items}
+            selectedId={selectedItemId ?? undefined}
+          />
         </div>
       )}
     </section>

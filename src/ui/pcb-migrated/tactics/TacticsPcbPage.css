@@ -480,3 +480,8 @@
 .pcb-tactics__rotation-grid>div>*:last-child{border-right:0}
 .pcb-tactics__rotation-grid .is-head{min-height:28px;background:#111821;color:#84bce3;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
 .pcb-tactics__rotation-warning{margin:0 0 10px;border:1px solid rgba(239,68,68,.4);border-radius:6px;background:rgba(239,68,68,.12);color:#fca5a5;padding:8px 10px;font-size:11px}
+.pcb-tactics__matchups-table{min-width:1100px}
+.pcb-tactics__matchups-table th button{background:transparent;border:0;color:inherit;padding:0;font:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer}
+.pcb-tactics__player-link{background:transparent;border:0;color:inherit;padding:0;font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.pcb-tactics__mismatch{display:block;margin-top:2px;color:#fca5a5;font-size:9px}
+.pcb-tactics select.is-mismatch{border-color:#ef4444;color:#fecaca}

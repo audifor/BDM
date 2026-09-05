@@ -5,14 +5,16 @@ import {
   getCareerFatigueForPlayer,
   getCurrentPlayerInjury,
   getMoraleBandForPerson,
+  getPlayerRosterTeamId,
   isPlayerAvailable,
+  type GameWorld,
 } from '@/domain/world'
-import type { GameWorld } from '@/domain/world'
 import {
   calculatePlayerStatAverages,
   getPlayerGameLogs,
   getPlayerSeasonStats,
 } from '@/engine/stats/PlayerHistory'
+import { boxScoreValuation } from '@/engine/stats/boxScoreValuation'
 import { getUserTeam } from '@/engine/calendar'
 
 import {
@@ -46,6 +48,7 @@ import {
   availableField,
   deriveTeamColors,
   findTeamForPlayer,
+  formatGameDateLabel,
   opponentShortCode,
   teamShortCode,
   unavailableField,
@@ -122,6 +125,7 @@ function buildSeasonPerformance(world: GameWorld, playerId: PlayerId): PlayerWor
   if (stats.gamesPlayed === 0) {
     return {
       status: 'unavailable',
+      valuation: null,
       primary: [],
       secondary: [],
       metaLabel: competition === undefined || season === undefined
@@ -134,8 +138,10 @@ function buildSeasonPerformance(world: GameWorld, playerId: PlayerId): PlayerWor
     stats.fieldGoalsAttempted + 0.44 * stats.freeThrowsAttempted === 0
       ? undefined
       : stats.points / (2 * (stats.fieldGoalsAttempted + 0.44 * stats.freeThrowsAttempted))
+  const valuation = (boxScoreValuation(stats) / stats.gamesPlayed).toFixed(1)
 
   const primary = [
+    { label: 'VAL', value: valuation },
     { label: 'PTS', value: averages.ppg.toFixed(1) },
     { label: 'AST', value: averages.apg.toFixed(1) },
     { label: 'REB', value: averages.rpg.toFixed(1) },
@@ -156,6 +162,7 @@ function buildSeasonPerformance(world: GameWorld, playerId: PlayerId): PlayerWor
 
   return {
     status: 'available',
+    valuation,
     metaLabel:
       competition === undefined || season === undefined
         ? undefined
@@ -210,6 +217,7 @@ export function buildPlayerWorkspaceModel(
   const player = world.players[playerId]
   if (player === undefined) return undefined
 
+  const rosterTeamId = getPlayerRosterTeamId(world, player.id)
   const team = findTeamForPlayer(world, player.id) ?? getUserTeam(world)
   const season = world.seasons[world.currentSeasonId]
   const competition = season === undefined ? undefined : world.competitions[season.competitionId]
@@ -236,6 +244,8 @@ export function buildPlayerWorkspaceModel(
       initials: `${player.firstName[0] ?? ''}${player.lastName[0] ?? ''}`,
       jerseyNumber: unavailableField('Not tracked'),
       teamName: team === undefined ? unavailableField('Free agent') : availableField(team.name),
+      teamId:
+        rosterTeamId === undefined ? unavailableField('—') : availableField(rosterTeamId),
       teamShort: team === undefined ? unavailableField('—') : availableField(teamShortCode(team.name)),
       competitionLabel:
         competition === undefined ? unavailableField('Not available') : availableField(competition.name),
@@ -243,10 +253,14 @@ export function buildPlayerWorkspaceModel(
       primaryPosition: player.basketball.primaryPosition,
       secondaryPositions: player.basketball.secondaryPositions ?? [],
       age: availableField(getPlayerAge(world, player.id)),
+      dateOfBirth: availableField(formatGameDateLabel(player.bio.dateOfBirth)),
       nationality:
         country === undefined ? unavailableField('Unknown') : availableField(country.name),
+      nationalityCode:
+        country === undefined ? unavailableField('—') : availableField(country.code),
       height: availableField(`${player.bio.heightCm} cm`),
       weight: availableField(`${player.bio.weightKg} kg`),
+      wingspan: availableField(`${player.bio.wingspanCm} cm`),
       portrait: availableField('initials'),
       teamCrest: availableField('initials'),
       teamColors,

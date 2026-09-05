@@ -1,4 +1,4 @@
-import type { PlayerId } from '@/domain/ids'
+import type { PlayerId, TeamId } from '@/domain/ids'
 import type { CanonicalRatingKey } from '@/domain/player'
 
 import type { PlayerPerformanceModel } from './buildPlayerPerformanceModel'
@@ -23,6 +23,7 @@ export interface PlayerIdentityModel {
   readonly initials: string
   readonly jerseyNumber: PresentationField<number>
   readonly teamName: PresentationField<string>
+  readonly teamId: PresentationField<TeamId>
   readonly teamShort: PresentationField<string>
   readonly competitionLabel: PresentationField<string>
   readonly seasonLabel: PresentationField<string>
@@ -30,8 +31,11 @@ export interface PlayerIdentityModel {
   readonly secondaryPositions: readonly string[]
   readonly age: PresentationField<number>
   readonly nationality: PresentationField<string>
+  readonly nationalityCode: PresentationField<string>
+  readonly dateOfBirth: PresentationField<string>
   readonly height: PresentationField<string>
   readonly weight: PresentationField<string>
+  readonly wingspan: PresentationField<string>
   readonly portrait: PresentationField<'initials'>
   readonly teamCrest: PresentationField<'initials'>
   readonly teamColors: {
@@ -74,6 +78,7 @@ export interface RadarAxisModel {
 export interface SeasonPerformanceModel {
   readonly status: PresentationAvailability
   readonly metaLabel?: string
+  readonly valuation: string | null
   readonly primary: readonly { readonly label: string; readonly value: string }[]
   readonly secondary: readonly { readonly label: string; readonly value: string }[]
 }

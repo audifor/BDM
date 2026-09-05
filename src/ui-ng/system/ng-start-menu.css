@@ -1,0 +1,138 @@
+.ng-start-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(4, 8, 12, 0.42);
+}
+
+.ng-start-menu {
+  position: absolute;
+  left: var(--ng-spacing-16);
+  bottom: calc(var(--ng-taskbar-height) + 8px);
+  display: flex;
+  width: min(880px, calc(100vw - 32px));
+  height: auto;
+  max-height: min(780px, calc(100vh - var(--ng-taskbar-height) - 24px));
+  overflow: hidden;
+  border: 1px solid var(--bdm-border-default);
+  border-radius: var(--ng-radius-panel);
+  background-color: color-mix(in srgb, var(--bdm-surface-1) 86%, transparent);
+  background-image: var(--bdm-holo-ticks);
+  background-repeat: no-repeat;
+  background-size: var(--bdm-holo-tick-size);
+  background-position: var(--bdm-holo-tick-pos);
+  box-shadow: var(--bdm-panel-shadow-premium);
+}
+
+.ng-start-menu__category-apps button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: var(--ng-radius-sm);
+  background: transparent;
+  color: var(--ng-text-secondary);
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+}
+
+.ng-start-menu__category-apps button:hover {
+  border-color: var(--ng-border-standard);
+  background: var(--ng-bg-hover);
+  color: var(--ng-text-primary);
+}
+
+.ng-start-menu__category-apps button[aria-current='page'] {
+  border-color: rgba(22, 217, 243, 0.45);
+  background: rgba(22, 217, 243, 0.08);
+  box-shadow: inset 2px 0 0 var(--ng-cyan);
+  color: var(--ng-cyan-bright);
+}
+
+.ng-start-menu__main {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 40%),
+    rgba(8, 13, 18, 0.55);
+}
+
+.ng-start-menu__search label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--ng-border-standard);
+  border-radius: var(--ng-radius-sm);
+  background: rgba(8, 13, 18, 0.72);
+  color: var(--ng-text-muted);
+}
+
+.ng-start-menu__search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ng-text-primary);
+  font-family: var(--ng-font-ui);
+  font-size: 13px;
+}
+
+.ng-start-menu__categories {
+  display: grid;
+  align-content: start;
+  gap: 0;
+  min-height: 0;
+  flex: 0 1 auto;
+  margin-top: 12px;
+  overflow: auto;
+}
+
+.ng-start-menu__categories > h2,
+.ng-start-menu__category h3 {
+  margin: 0;
+  font-family: var(--ng-font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.ng-start-menu__category {
+  display: grid;
+  grid-template-columns: minmax(168px, 220px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-height: 52px;
+  padding: 6px 4px;
+  border-top: 1px solid var(--ng-border-subtle);
+}
+
+.ng-start-menu__category-title p {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--ng-text-muted);
+}
+
+.ng-start-menu__category h3 {
+  color: var(--ng-text-secondary);
+}
+
+.ng-start-menu__category-apps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}

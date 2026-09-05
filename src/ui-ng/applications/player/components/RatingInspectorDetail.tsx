@@ -6,6 +6,7 @@ import {
   relatedRatingsInCategory,
   ratingsForCategory,
 } from '@/ui-ng/applications/player/data/ratingCatalog'
+import { HoloTechnicalField } from '@/ui-ng/applications/player/components/visual/HoloTechnicalField'
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import type { PlayerWorkspaceViewId } from '@/ui-ng/applications/player/playerStructuralData'
 
@@ -44,6 +45,7 @@ export function RatingInspectorDetail({
 
   return (
     <div className="po-inspector-detail">
+      <HoloTechnicalField variant="inspector" />
       <span className="po-inspector-detail__category">{CATEGORY_LABELS[rating.category]}</span>
       <h3 className="po-inspector-detail__title">{rating.label}</h3>
 

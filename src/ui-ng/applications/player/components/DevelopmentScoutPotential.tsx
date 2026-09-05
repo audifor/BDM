@@ -1,4 +1,8 @@
-import type { DevelopmentScoutPotentialModel } from '@/ui-ng/applications/player/data/buildPlayerDevelopmentModel'
+import type {
+  DevelopmentScoutPotentialModel,
+  DevelopmentScoutPotentialRowModel,
+} from '@/ui-ng/applications/player/data/buildPlayerDevelopmentModel'
+import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 
 export function DevelopmentScoutPotential({
   model,
@@ -19,40 +23,25 @@ export function DevelopmentScoutPotential({
         <p className="pd-panel-empty">{model.unavailableLabel ?? 'Potential evaluations unavailable.'}</p>
       ) : (
         <div className="pd-potential__scroll">
-          <table className="pd-potential__table">
-            <thead>
-              <tr>
-                <th scope="col">Domain</th>
-                <th className="pd-potential__num" scope="col">
-                  Evaluation
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {model.rows.map((row) => {
-                const selected = selectedItemId === row.id
-                return (
-                  <tr
-                    aria-selected={selected}
-                    className={selected ? 'is-selected' : undefined}
-                    key={row.id}
-                    onClick={() => onSelectItem(row.id)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault()
-                        onSelectItem(row.id)
-                      }
-                    }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <td>{row.domainLabel}</td>
-                    <td className="pd-potential__num">{row.evaluationLabel}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+          <NgPrecisionTable
+            className="pd-potential__table"
+            columns={[
+              ngCol<DevelopmentScoutPotentialRowModel>('domain', 'Domain', (row) => row.domainLabel, {
+                value: (row) => row.domainLabel,
+              }),
+              ngCol<DevelopmentScoutPotentialRowModel>('evaluation', 'Evaluation', (row) => row.evaluationLabel, {
+                numeric: true,
+                value: (row) => row.evaluationLabel,
+              }),
+            ]}
+            gridId="ng-player-dev-scout-potential"
+            onRowClick={(row) => onSelectItem(row.id)}
+            onSelectionChange={(ids) => {
+              if (ids[0]) onSelectItem(ids[0])
+            }}
+            rows={model.rows}
+            selectedId={selectedItemId ?? undefined}
+          />
         </div>
       )}
     </section>

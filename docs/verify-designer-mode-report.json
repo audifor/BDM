@@ -1,0 +1,259 @@
+{
+  "step": "DESIGNER-MODE-CERT",
+  "verdict": "READY",
+  "failures": [],
+  "developmentGuard": {
+    "usesImportMetaDev": true,
+    "note": "isDesignerMode gates on import.meta.env.DEV; production build must tree-shake DesignerViewport path"
+  },
+  "canonicalStage": {
+    "1496x900": {
+      "windowInnerWidth": 1496,
+      "windowInnerHeight": 900,
+      "designerScale": "0.7792",
+      "stageWidth": 1496,
+      "stageHeight": 842,
+      "stageLayoutWidth": "1920px",
+      "stageLayoutHeight": "1080px",
+      "shellLayoutWidth": "1920px",
+      "shellLayoutHeight": "1080px",
+      "hasDesignerViewport": true,
+      "documentScrollHeight": 900,
+      "documentClientHeight": 900,
+      "bodyOverflow": "hidden"
+    },
+    "1920x1080": {
+      "windowInnerWidth": 1920,
+      "windowInnerHeight": 1080,
+      "designerScale": "1.0000",
+      "stageWidth": 1920,
+      "stageHeight": 1080,
+      "stageLayoutWidth": "1920px",
+      "stageLayoutHeight": "1080px",
+      "shellLayoutWidth": "1920px",
+      "shellLayoutHeight": "1080px",
+      "hasDesignerViewport": true,
+      "documentScrollHeight": 1080,
+      "documentClientHeight": 1080,
+      "bodyOverflow": "hidden"
+    },
+    "2560x1440": {
+      "windowInnerWidth": 2560,
+      "windowInnerHeight": 1440,
+      "designerScale": "1.3333",
+      "stageWidth": 2560,
+      "stageHeight": 1440,
+      "stageLayoutWidth": "1920px",
+      "stageLayoutHeight": "1080px",
+      "shellLayoutWidth": "1920px",
+      "shellLayoutHeight": "1080px",
+      "hasDesignerViewport": true,
+      "documentScrollHeight": 1440,
+      "documentClientHeight": 1440,
+      "bodyOverflow": "hidden"
+    }
+  },
+  "scalePolicy": "FIT TO VIEW: min(availableW/1920, availableH/1080) without cap",
+  "cursorDesignerSelection": {
+    "topLeft": {
+      "pass": true,
+      "selector": ".po-workspace-header__app",
+      "centerX": 31.50755023956299,
+      "centerY": 88.07707977294922,
+      "hitTag": "SPAN",
+      "hitClass": "po-workspace-header__app"
+    },
+    "topCenter": {
+      "pass": true,
+      "selector": ".po-workspace-header__player-select select",
+      "centerX": 420.3603973388672,
+      "centerY": 88.07707977294922,
+      "hitTag": "SELECT",
+      "hitClass": ""
+    },
+    "topRight": {
+      "pass": true,
+      "selector": ".po-workspace-header__actions button",
+      "centerX": 1296.746337890625,
+      "centerY": 88.07707977294922,
+      "hitTag": "BUTTON",
+      "hitClass": "ng-btn ng-btn--ghost"
+    },
+    "center": {
+      "pass": true,
+      "selector": "[data-ng-region=\"player-overview\"] .po-overview, [data-ng-region=\"player-overview\"]",
+      "centerX": 617.0999755859375,
+      "centerY": 482.72499084472656,
+      "hitTag": "DIV",
+      "hitClass": "po-ratings__matrix"
+    },
+    "bottomLeft": {
+      "pass": true,
+      "selector": ".po-overview__core, [data-ng-region=\"player-overview\"] .po-identity-band",
+      "centerX": 617.0999755859375,
+      "centerY": 449.22080993652344,
+      "hitTag": "DIV",
+      "hitClass": "po-ratings__matrix"
+    },
+    "bottomCenter": {
+      "pass": true,
+      "selector": "[data-ng-region=\"performance-deck\"], .po-performance-deck",
+      "centerX": 617.0999755859375,
+      "centerY": 765.5624694824219,
+      "hitTag": "SECTION",
+      "hitClass": "po-form po-form--empty"
+    },
+    "bottomRight": {
+      "pass": true,
+      "selector": ".ng-taskbar__apps .ng-taskbar__app:last-child, .ng-taskbar__clock",
+      "centerX": 295.23719787597656,
+      "centerY": 849.3228759765625,
+      "hitTag": "BUTTON",
+      "hitClass": "ng-taskbar__app"
+    }
+  },
+  "pointerAlignment": {
+    "50,50": {
+      "pass": true,
+      "clientX": 38.96,
+      "clientY": 68.21000000000001,
+      "clickedTag": "HEADER",
+      "clickedClass": "po-workspace-header",
+      "clickedText": "PlayerDunmere OrbitsVirelia Horizon Leag"
+    },
+    "960,540": {
+      "pass": true,
+      "clientX": 748.032,
+      "clientY": 450.01800000000003,
+      "clickedTag": "DIV",
+      "clickedClass": "po-ratings__matrix",
+      "clickedText": "All SkillsRatingLevelThree-Point Shootin"
+    },
+    "1850,1030": {
+      "pass": true,
+      "clientX": 1441.52,
+      "clientY": 831.826,
+      "clickedTag": "FOOTER",
+      "clickedClass": "ng-taskbar",
+      "clickedText": "HomeRosterPlayerScoutingTacticsMedicalSi"
+    }
+  },
+  "portals": {
+    "entityContextMenu": {
+      "tested": true,
+      "pass": true,
+      "menuBox": {
+        "x": 80.98463439941406,
+        "y": 192.98455810546875,
+        "width": 152.71665954589844,
+        "height": 103.62918090820312
+      },
+      "linkBox": {
+        "x": 53.76249694824219,
+        "y": 186.1790313720703,
+        "width": 54.71210479736328,
+        "height": 14.171096801757812
+      }
+    },
+    "gridHeaderMenu": {
+      "tested": true,
+      "pass": true
+    },
+    "nativeSelect": {
+      "tested": true,
+      "pass": "LIMITATION",
+      "note": "Native OS select popovers are not scaled by CSS transform; expected limitation"
+    },
+    "dialogPortal": {
+      "tested": true,
+      "pass": "N/A",
+      "note": "Dialog createPortal to body not used in NG Player/Roster paths tested"
+    }
+  },
+  "player": {
+    "tabs": {
+      "overview": {
+        "shellLayoutWidth": "1920px",
+        "shellLayoutHeight": "1080px",
+        "pass": true
+      },
+      "attributes": {
+        "shellLayoutWidth": "1920px",
+        "shellLayoutHeight": "1080px",
+        "pass": true
+      },
+      "performance": {
+        "shellLayoutWidth": "1920px",
+        "shellLayoutHeight": "1080px",
+        "pass": true
+      },
+      "development": {
+        "shellLayoutWidth": "1920px",
+        "shellLayoutHeight": "1080px",
+        "pass": true
+      },
+      "contract": {
+        "shellLayoutWidth": "1920px",
+        "shellLayoutHeight": "1080px",
+        "pass": true
+      },
+      "medical": {
+        "shellLayoutWidth": "1920px",
+        "shellLayoutHeight": "1080px",
+        "pass": true
+      },
+      "history": {
+        "shellLayoutWidth": "1920px",
+        "shellLayoutHeight": "1080px",
+        "pass": true
+      }
+    }
+  },
+  "roster": {
+    "systemBar": true,
+    "taskbar": true,
+    "grid": true,
+    "scrollRegion": {
+      "scrollHeight": 1214,
+      "clientHeight": 920,
+      "scrollTop": 0
+    },
+    "scrollWorks": true
+  },
+  "productionIsolation": {
+    "player": {
+      "hasDesignerViewport": false,
+      "hasDesignerStage": false,
+      "shellWidth": "1496px",
+      "htmlDesignerClass": false
+    },
+    "roster": {
+      "hasDesignerViewport": false,
+      "htmlDesignerClass": false
+    }
+  },
+  "startScreen": "NOT SUPPORTED — DesignerViewport wraps BdmOsNg only after GameWorld exists; pre-game StartScreen is outside scope",
+  "fitControls": "DEFER — Cursor Designer works without FIT/100% controls for now",
+  "gitScope": {
+    "step014": "committed at 6bf4b54",
+    "designerMode": [
+      "src/ui-ng/BdmOsNg.tsx",
+      "src/ui-ng/designer/",
+      "src/vite-env.d.ts",
+      "src/ui/entityContextMenu/EntityContextMenu.tsx",
+      "src/ui/entityContextMenu/EntityContextMenuProvider.tsx"
+    ]
+  },
+  "fullCanvasVisibility": {
+    "pass": true,
+    "viewportRect": {
+      "width": 1496,
+      "height": 900
+    },
+    "stageRect": {
+      "width": 1496,
+      "height": 841.5
+    },
+    "documentScrollable": false
+  }
+}

@@ -259,6 +259,41 @@ describe('TacticsPcbPage / Issue #9 acceptance', () => {
     expect(onUpdateMatchups).toHaveBeenCalledTimes(1)
     const matchups = onUpdateMatchups.mock.calls[0]![0] as readonly DefensiveMatchupAssignment[]
     expect(matchups).toEqual([{ ourPlayerId: ourRoster[0]!.id, opponentPlayerId: opponentRoster[0]!.id }])
+    expect(screen.getByRole('columnheader', { name: /AMENAZA/ })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /ALTURA/ })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /PRESIÓN/ })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /P&R/ })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /DIRECCIÓN/ })).toBeInTheDocument()
+    expect(screen.getAllByText(`${opponentRoster[0]!.bio.heightCm} cm`).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('?').length).toBeGreaterThan(0)
+    fireEvent.change(screen.getByLabelText(`Presión sobre ${opponentRoster[0]!.firstName} ${opponentRoster[0]!.lastName}`), { target: { value: 'Negar' } })
+    expect(onUpdateMatchups).toHaveBeenCalledTimes(1)
+  })
+
+  it('Matchups amenaza stays unknown when hidden ratings change', () => {
+    const world = withStarterLineup(createNewGame())
+    const team = getUserTeam(world)!
+    const nextGame = getNextUserGame(world)!
+    const opponentTeamId = nextGame.homeTeamId === team.id ? nextGame.awayTeamId : nextGame.homeTeamId
+    const opponent = getTeamRoster(world, opponentTeamId)[0]!
+    const { rerender } = render(createElement(TacticsPcbPage, { world }))
+    fireEvent.click(screen.getByRole('button', { name: 'Emparejamientos' }))
+    const before = screen.getAllByRole('row')[1]?.textContent
+    const altered = {
+      ...world,
+      players: {
+        ...world.players,
+        [opponent.id]: {
+          ...opponent,
+          basketball: {
+            ...opponent.basketball,
+            ratings: { ...opponent.basketball.ratings, threePointShooting: 100, finishing: 100 },
+          },
+        },
+      },
+    }
+    rerender(createElement(TacticsPcbPage, { world: altered }))
+    expect(screen.getAllByRole('row')[1]?.textContent).toBe(before)
   })
 
   it('changing the upcoming game/opponent does not leak the previous game\'s matchup assignments into the new game', () => {

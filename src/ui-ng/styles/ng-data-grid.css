@@ -1,95 +1,645 @@
-/* Scoped NG visual mode for BDMDataGrid — only active under .bdm-os-ng */
+/* BDM Precision Grid — default NG data-table system.
+   Future tables: add class `ng-precision-grid` (or keep the `__table` suffix). */
 
+.bdm-os-ng {
+  --grid-bg-frame: #091117;
+  --grid-bg-header: #081016;
+  --grid-bg-toolbar: #081016;
+  --grid-row-bg: #091117;
+  --grid-row-hover: rgba(52, 88, 104, 0.1);
+  --grid-border: rgba(92, 155, 178, 0.36);
+  --grid-border-subtle: rgba(115, 145, 160, 0.1);
+  --grid-border-cell: rgba(115, 145, 160, 0.055);
+  --grid-text-strong: #e7eef2;
+  --grid-text: #c9d5db;
+  --grid-text-header: #9fb0ba;
+  --grid-text-muted: #71838d;
+  --grid-cyan: #18d7f0;
+  --grid-cyan-bright: #40e8fc;
+  --grid-amber: #e6b74d;
+  --grid-green: #29cf85;
+  --grid-green-bright: #4ae49b;
+  --grid-red: #e85d67;
+  --grid-header-h: var(--ng-precision-header-h, 26px);
+  --grid-row-h: var(--ng-precision-row-h, 28px);
+  --grid-toolbar-h: var(--ng-precision-toolbar-h, 40px);
+  --grid-footer-h: var(--ng-precision-footer-h, 28px);
+  --grid-radius: 3px;
+}
+
+.bdm-os-ng .bdm-data-grid,
+.bdm-os-ng .bdm-data-grid--fm,
 .bdm-os-ng .bdm-data-grid--ng.bdm-data-grid--fm {
-  --bdm-grid-row-height: 28px;
-  --bdm-grid-header-height: 24px;
-  --bdm-grid-font-size: var(--ng-font-size-secondary, 13px);
-  --bdm-grid-header-font-size: var(--ng-font-size-meta, 11px);
-  --bdm-grid-cell-padding-x: 6px;
-  --bdm-grid-control-height: 24px;
+  --bdm-grid-row-height: var(--grid-row-h);
+  --bdm-grid-header-height: var(--grid-header-h);
+  --bdm-grid-font-size: 12px;
+  --bdm-grid-header-font-size: 11px;
+  --bdm-grid-cell-padding-x: 8px;
+  --bdm-grid-control-height: 22px;
 }
 
-.bdm-os-ng .bdm-data-grid--ng .bdm-data-grid__tools {
-  gap: var(--ng-spacing-8);
-  border-bottom: 1px solid var(--ng-border-subtle);
-  background: var(--ng-bg-panel-secondary);
+.bdm-os-ng .bdm-data-table.bdm-data-grid {
+  height: auto;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--grid-row-bg) !important;
+  box-shadow: none !important;
 }
 
-.bdm-os-ng .bdm-data-grid--ng .bdm-data-grid__tools input {
-  width: 140px;
-  min-height: 22px;
-  padding: 0 var(--ng-spacing-8);
-  border: 1px solid var(--ng-border-standard);
-  border-radius: var(--ng-radius-sm);
-  background: var(--ng-bg-elevated);
-  color: var(--ng-text-primary);
-  font-family: var(--ng-font-ui);
-  font-size: var(--ng-font-size-meta);
+.bdm-os-ng .bdm-data-grid--ng > .bdm-data-grid__tools {
+  display: none;
 }
 
-.bdm-os-ng .bdm-data-grid--ng .bdm-data-grid__tools button,
-.bdm-os-ng .bdm-data-grid--ng .bdm-data-grid__tools select {
-  min-height: 22px;
-  padding: 0 var(--ng-spacing-8);
-  border: 1px solid var(--ng-border-standard);
-  border-radius: var(--ng-radius-sm);
-  background: var(--ng-bg-elevated);
-  color: var(--ng-text-secondary);
-  font-family: var(--ng-font-ui);
-  font-size: var(--ng-font-size-meta);
+.bdm-os-ng .bdm-data-grid__resize,
+.bdm-os-ng .ng-precision-grid__resize {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  right: -4px;
+  bottom: 0;
+  width: 8px;
+  min-width: 8px;
+  cursor: col-resize;
+  touch-action: none;
 }
 
-.bdm-os-ng .bdm-data-grid--ng .bdm-data-grid__tools button:hover {
-  background: var(--ng-bg-hover);
-  color: var(--ng-text-primary);
+.bdm-os-ng .bdm-data-grid__resize:hover,
+.bdm-os-ng .ng-precision-grid__resize:hover {
+  background: rgba(24, 215, 240, 0.35);
 }
 
-.bdm-os-ng .bdm-data-grid--ng .bdm-data-grid__column-manager {
-  border: 1px solid var(--ng-border-standard);
-  border-radius: var(--ng-radius-sm);
-  background: var(--ng-bg-panel-primary);
-  color: var(--ng-text-primary);
-  box-shadow: var(--ng-shadow-elevated);
+.bdm-os-ng .bdm-data-table table {
+  border-color: transparent !important;
+  background: transparent !important;
 }
 
-.bdm-os-ng .bdm-data-grid--ng .bdm-data-grid__header-menu {
-  border: 1px solid var(--ng-border-standard);
-  border-radius: var(--ng-radius-sm);
-  background: var(--ng-bg-panel-primary);
-  box-shadow: var(--ng-shadow-elevated);
+.bdm-os-ng .bdm-data-grid__tools {
+  min-height: var(--grid-toolbar-h);
+  gap: 8px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--grid-border-subtle);
+  background: var(--grid-bg-toolbar);
 }
 
-.bdm-os-ng .bdm-data-grid--ng .bdm-data-grid__header-menu button {
-  color: var(--ng-text-secondary);
-  font-family: var(--ng-font-ui);
-  font-size: var(--ng-font-size-meta);
+.bdm-os-ng .bdm-data-grid__tools input,
+.bdm-os-ng .bdm-data-grid__tools button,
+.bdm-os-ng .bdm-data-grid__tools select {
+  min-height: 30px;
+  border: 1px solid rgba(100, 155, 180, 0.24);
+  border-radius: 3px;
+  background: #091219;
+  color: var(--grid-text);
+  font-family: var(--ng-font-grid);
+  font-size: 12px;
 }
 
-.bdm-os-ng .bdm-data-grid--ng .bdm-data-grid__header-menu button:hover {
-  background: var(--ng-bg-hover);
-  color: var(--ng-text-primary);
+.bdm-os-ng .bdm-data-grid__tools input {
+  width: 260px;
+  padding: 0 10px;
+  color: var(--grid-text-strong);
 }
 
-.bdm-os-ng .bdm-data-grid--ng .bdm-data-table td.is-numeric,
-.bdm-os-ng .bdm-data-grid--ng .bdm-data-table th.is-numeric {
-  font-family: var(--ng-font-data);
+.bdm-os-ng .bdm-data-grid__tools input:focus {
+  border-color: rgba(22, 217, 243, 0.7);
+  outline: 0;
+}
+
+.bdm-os-ng .bdm-data-grid__tools button:hover,
+.bdm-os-ng .bdm-data-grid__tools select:hover {
+  border-color: rgba(22, 217, 243, 0.55);
+  color: var(--grid-cyan-bright);
+}
+
+.bdm-os-ng .bdm-data-grid__view {
+  color: rgba(230, 183, 77, 0.72);
+  font-family: var(--ng-font-grid);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.bdm-os-ng .bdm-data-grid__column-manager,
+.bdm-os-ng .bdm-data-grid__header-menu {
+  color: var(--grid-text-strong);
+}
+
+.bdm-os-ng .bdm-data-grid__header-menu button {
+  color: var(--grid-text);
+  font-family: var(--ng-font-grid);
+  font-size: 11px;
+}
+
+.bdm-os-ng .bdm-data-grid__header-menu button:hover {
+  background: var(--grid-row-hover);
+  color: var(--grid-text-strong);
+}
+
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--ng-font-grid);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.bdm-os-ng :is(.ng-precision-grid, .bdm-data-table) table,
+.bdm-os-ng table[class*='__table'],
+.bdm-os-ng .pcb-tactics__table-page table {
+  display: table !important;
+  width: 100%;
+  table-layout: auto;
+}
+
+.bdm-os-ng :is(.ng-precision-grid, .bdm-data-table) thead,
+.bdm-os-ng table[class*='__table'] thead,
+.bdm-os-ng .pcb-tactics__table-page table thead {
+  display: table-header-group !important;
+}
+
+.bdm-os-ng :is(.ng-precision-grid, .bdm-data-table) tbody,
+.bdm-os-ng table[class*='__table'] tbody,
+.bdm-os-ng .pcb-tactics__table-page table tbody {
+  display: table-row-group !important;
+}
+
+.bdm-os-ng :is(.ng-precision-grid, .bdm-data-table) tfoot,
+.bdm-os-ng table[class*='__table'] tfoot,
+.bdm-os-ng .pcb-tactics__table-page table tfoot {
+  display: table-footer-group !important;
+}
+
+.bdm-os-ng :is(.ng-precision-grid, .bdm-data-table) tr,
+.bdm-os-ng table[class*='__table'] tr,
+.bdm-os-ng .pcb-tactics__table-page table tr {
+  display: table-row !important;
+}
+
+.bdm-os-ng .ng-precision-grid:not(.bdm-data-grid) {
+  border: 1px solid var(--grid-border) !important;
+  border-radius: var(--grid-radius) !important;
+  background: var(--grid-row-bg) !important;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.015);
+}
+
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) :is(th, td, button, select, input) {
+  font-family: inherit;
   font-variant-numeric: tabular-nums;
 }
 
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) th {
+  height: var(--grid-header-h) !important;
+  padding: 0 8px !important;
+  border-block-end: 1px solid rgba(112, 158, 178, 0.2) !important;
+  border-inline-end: 1px solid var(--grid-border-cell) !important;
+  background: var(--grid-bg-header) !important;
+  color: var(--grid-text-header) !important;
+  font-family: var(--ng-font-grid) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.025em;
+  display: table-cell !important;
+  min-width: max-content !important;
+  overflow: visible !important;
+  line-height: 16px;
+  text-align: left !important;
+  text-transform: none !important;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) th button {
+  display: flex !important;
+  width: auto;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+  overflow: visible !important;
+  text-align: left;
+  text-overflow: unset;
+  white-space: nowrap;
+}
+
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) th[aria-sort] button {
+  color: var(--grid-cyan-bright) !important;
+}
+
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) td {
+  height: var(--grid-row-h) !important;
+  padding: 0 8px !important;
+  border-block-end: 1px solid var(--grid-border-subtle) !important;
+  border-inline-end: 1px solid var(--grid-border-cell) !important;
+  background: transparent !important;
+  color: var(--grid-text) !important;
+  font-size: 12px !important;
+  display: table-cell !important;
+  font-weight: 500 !important;
+  line-height: 16px;
+  overflow: hidden;
+  text-align: left !important;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) :is(select, input:not([type='checkbox'])) {
+  height: 22px !important;
+  min-height: 22px !important;
+  padding: 0 6px !important;
+  border: 1px solid rgba(100, 150, 170, 0.22) !important;
+  border-radius: 3px !important;
+  background: #091219 !important;
+  color: var(--grid-text) !important;
+  font-family: var(--ng-font-grid) !important;
+  font-size: 12px !important;
+}
+
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) tbody tr:hover,
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) tbody tr:focus-visible {
+  background: transparent !important;
+}
+
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) tbody tr:hover td {
+  background: var(--grid-row-hover) !important;
+}
+
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) tbody tr:is(.is-selected, .is-current, .is-active) {
+  background: linear-gradient(90deg, rgba(230, 183, 77, 0.05), rgba(230, 183, 77, 0.015) 35%, transparent 80%);
+  box-shadow: inset 2px 0 0 var(--grid-amber);
+}
+
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) tbody tr:is(.is-selected, .is-current, .is-active) td {
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--grid-text) !important;
+}
+
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) tbody tr.is-focused {
+  box-shadow: inset 0 0 0 1px rgba(22, 217, 243, 0.45);
+}
+
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) tbody tr:is(.is-selected, .is-current, .is-active).is-focused {
+  box-shadow:
+    inset 2px 0 0 var(--grid-amber),
+    inset 0 0 0 1px rgba(22, 217, 243, 0.45);
+}
+
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) :is(td, th).is-numeric,
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) :is(td, th)[class*='--num'],
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) :is(td, th)[class*='--shoot'] {
+  font-variant-numeric: tabular-nums;
+  text-align: right !important;
+}
+
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) :is(td, th).is-center {
+  text-align: center !important;
+}
+
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) th.is-numeric button {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  table[class*='__table'],
+  .pcb-tactics__table-page table
+) th.is-center button {
+  justify-content: center;
+  text-align: center;
+}
+
+/* Parent holo cards become the same graphite frame as Roster. */
+.bdm-os-ng :is(
+  .ng-holo-panel,
+  .ng-canon__panel,
+  .staff-workspace__panel,
+  .medical-workspace__panel,
+  .medical-workspace__card,
+  .scouting-workspace__panel,
+  .pp-log,
+  .pc-schedule,
+  .pm-history,
+  .pd-stimulus,
+  .pd-potential,
+  .ph-timeline
+):has(.ng-precision-grid):not(.canonical-roster--ng) {
+  padding: 0 !important;
+  border: 1px solid var(--grid-border) !important;
+  border-radius: var(--grid-radius) !important;
+  background-color: var(--grid-bg-frame) !important;
+  background-image: none !important;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.015) !important;
+}
+
+.bdm-os-ng :is(
+  .ng-holo-panel,
+  .ng-canon__panel,
+  .staff-workspace__panel,
+  .medical-workspace__panel,
+  .scouting-workspace__panel
+):has(> .ng-precision-grid) > :is(p, h2, h3, header) {
+  display: flex;
+  align-items: center;
+  min-height: var(--grid-toolbar-h);
+  margin: 0;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--grid-border-subtle);
+  background: var(--grid-bg-toolbar);
+}
+
+.bdm-os-ng :is(
+  .ng-holo-panel,
+  .ng-canon__panel,
+  .staff-workspace__panel,
+  .medical-workspace__panel,
+  .scouting-workspace__panel
+):has(> .ng-precision-grid) > .ng-precision-grid {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none;
+}
+
 .bdm-os-ng .entity-context-menu {
-  border: 1px solid var(--ng-border-standard);
-  border-radius: var(--ng-radius-sm);
-  background: var(--ng-bg-panel-primary);
-  box-shadow: var(--ng-shadow-elevated);
+  color: var(--grid-text-strong);
 }
 
 .bdm-os-ng .entity-context-menu button {
-  color: var(--ng-text-secondary);
-  font-family: var(--ng-font-ui);
-  font-size: var(--ng-font-size-secondary);
+  color: var(--grid-text);
+  font-family: var(--ng-font-grid);
+  font-size: 12px;
 }
 
 .bdm-os-ng .entity-context-menu button:hover {
-  background: var(--ng-bg-hover);
-  color: var(--ng-text-primary);
+  background: var(--grid-row-hover);
+  color: var(--grid-text-strong);
+}
+
+/* Div-based PCB grids. Outranks design-system 43px Plantilla grammar inside NG. */
+.bdm-os-ng :is(
+  .pcb-training__table,
+  .pcb-plantilla__mentor-table,
+  .pcb-plantilla__analysis-table,
+  .pcb-plantilla__table,
+  .pcb-tactics__rotation-grid,
+  .pcb-medical .table,
+  .pcb-competition .table,
+  .pcb-club .table
+) {
+  border: 1px solid var(--grid-border-subtle) !important;
+  border-radius: 0 !important;
+  background: var(--grid-row-bg) !important;
+  color: var(--grid-text) !important;
+  font-family: var(--ng-font-grid) !important;
+}
+
+.bdm-os-ng :is(
+  .pcb-training__table,
+  .pcb-plantilla__mentor-table,
+  .pcb-plantilla__analysis-table,
+  .pcb-tactics__rotation-grid,
+  .pcb-medical .table,
+  .pcb-competition .table,
+  .pcb-club .table
+) > :not(.pcb-plantilla__column-resize) {
+  min-height: var(--grid-row-h) !important;
+  height: var(--grid-row-h) !important;
+  border-color: var(--grid-border-subtle) !important;
+  background: transparent !important;
+  color: var(--grid-text) !important;
+  font-family: var(--ng-font-grid) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.bdm-os-ng :is(
+  .pcb-training__table,
+  .pcb-plantilla__mentor-table,
+  .pcb-plantilla__analysis-table,
+  .pcb-tactics__rotation-grid,
+  .pcb-medical .table,
+  .pcb-competition .table,
+  .pcb-club .table
+) > :not(.pcb-plantilla__column-resize) > * {
+  border-right: 1px solid var(--grid-border-cell) !important;
+  justify-content: flex-start !important;
+  padding: 0 8px !important;
+  text-align: left !important;
+}
+
+.bdm-os-ng :is(
+  .pcb-training__table > .is-head,
+  .pcb-training__table > div.is-head,
+  .pcb-plantilla__mentor-table > div:first-child,
+  .pcb-plantilla__mentor-table > div:first-child > *,
+  .pcb-plantilla__analysis-table > div:first-child,
+  .pcb-tactics__rotation-grid > .is-head,
+  .pcb-tactics__rotation-grid .is-head,
+  .pcb-medical .table > .row.head,
+  .pcb-competition .table > .row.head,
+  .pcb-club .table > .row.head
+) {
+  min-height: var(--grid-header-h) !important;
+  height: var(--grid-header-h) !important;
+  background: var(--grid-bg-header) !important;
+  color: var(--grid-text-header) !important;
+  font-family: var(--ng-font-grid) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.025em !important;
+  text-transform: none !important;
+}
+
+.bdm-os-ng .pcb-training__table > .is-head button {
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  font: inherit !important;
+  letter-spacing: inherit !important;
+  text-transform: none !important;
+}
+
+.bdm-os-ng :is(
+  .pcb-training__table,
+  .pcb-plantilla__mentor-table,
+  .pcb-tactics__rotation-grid
+) :is(select, input:not([type='checkbox'])) {
+  height: 22px !important;
+  min-height: 22px !important;
+  padding: 0 6px !important;
+  border: 1px solid rgba(100, 150, 170, 0.22) !important;
+  border-radius: 3px !important;
+  background: #091219 !important;
+  color: var(--grid-text) !important;
+  font-family: var(--ng-font-grid) !important;
+  font-size: 12px !important;
+}
+
+/* Leftover PCB Plantilla grammar (43px / centered / Inter). Canonical wins. */
+.bdm-os-ng .pcb-training .pcb-training__table,
+.bdm-os-ng .pcb-plantilla .pcb-plantilla__mentor-table,
+.bdm-os-ng .pcb-plantilla .pcb-plantilla__analysis-table,
+.bdm-os-ng .pcb-plantilla .pcb-plantilla__table,
+.bdm-os-ng .pcb-tactics .pcb-tactics__rotation-grid {
+  border: 1px solid var(--grid-border) !important;
+  border-radius: var(--grid-radius) !important;
+  background: var(--grid-row-bg) !important;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.015);
+}
+
+.bdm-os-ng .pcb-training .pcb-training__table > div,
+.bdm-os-ng .pcb-plantilla .pcb-plantilla__mentor-table > div,
+.bdm-os-ng .pcb-plantilla .pcb-plantilla__analysis-table > div,
+.bdm-os-ng .pcb-tactics .pcb-tactics__rotation-grid > div {
+  min-height: var(--grid-row-h) !important;
+  height: var(--grid-row-h) !important;
+  background: transparent !important;
+  color: var(--grid-text) !important;
+  font-family: var(--ng-font-grid) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.bdm-os-ng .pcb-training .pcb-training__table > div > *,
+.bdm-os-ng .pcb-plantilla .pcb-plantilla__mentor-table > div > *,
+.bdm-os-ng .pcb-plantilla .pcb-plantilla__analysis-table > div > *,
+.bdm-os-ng .pcb-tactics .pcb-tactics__rotation-grid > div > * {
+  justify-content: flex-start !important;
+  padding: 0 8px !important;
+  border-right-color: var(--grid-border-cell) !important;
+  text-align: left !important;
+}
+
+.bdm-os-ng .pcb-training .pcb-training__table > div.is-head,
+.bdm-os-ng .pcb-plantilla .pcb-plantilla__mentor-table > div:first-child,
+.bdm-os-ng .pcb-plantilla .pcb-plantilla__analysis-table > div:first-child,
+.bdm-os-ng .pcb-tactics .pcb-tactics__rotation-grid > div.is-head {
+  min-height: var(--grid-header-h) !important;
+  height: var(--grid-header-h) !important;
+  background: var(--grid-bg-header) !important;
+  color: var(--grid-text-header) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.025em !important;
+  text-transform: none !important;
+}
+
+.bdm-os-ng .pcb-training .pcb-training__table > div.is-head > *,
+.bdm-os-ng .pcb-plantilla .pcb-plantilla__mentor-table > div:first-child > *,
+.bdm-os-ng .pcb-plantilla .pcb-plantilla__analysis-table > div:first-child > *,
+.bdm-os-ng .pcb-tactics .pcb-tactics__rotation-grid > div.is-head > * {
+  justify-content: flex-start !important;
+  text-align: left !important;
+  text-transform: none !important;
 }

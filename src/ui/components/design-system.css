@@ -175,20 +175,21 @@
 .bdm-data-grid--fm { --bdm-grid-row-height:21px; --bdm-grid-header-height:21px; --bdm-grid-font-size:10px; --bdm-grid-header-font-size:9px; --bdm-grid-cell-padding-x:4px; --bdm-grid-control-height:22px; display:flex; flex-direction:column; height:100%; min-height:0; overflow:hidden; }.bdm-data-grid--fm .bdm-data-grid__tools { flex:0 0 var(--bdm-grid-control-height); min-height:var(--bdm-grid-control-height); }.bdm-data-grid--fm table { flex:0 0 auto; min-width:max-content; }.bdm-data-grid--fm tbody { min-height:calc(100% - var(--bdm-grid-header-height)); }.bdm-data-grid--fm .bdm-data-grid__title { display:none; }.bdm-data-grid--fm .bdm-data-grid__view { display:flex; height:20px; align-items:center; gap:4px; color:rgb(211 179 89); font-family:var(--font-display); font-size:9px; letter-spacing:.06em; }.bdm-data-grid--fm .bdm-data-grid__view select { height:20px; min-width:98px; border:1px solid rgb(225 203 133 / 25%); border-radius:2px; background:rgb(61 61 57); color:#eff2eb; font:inherit; letter-spacing:0; padding:0 4px; }.bdm-data-grid--fm .bdm-data-grid__tools-spacer { flex:1; }.bdm-data-grid--fm .bdm-data-grid__header-menu { position:absolute; z-index:9; top:46px; left:120px; display:grid; min-width:160px; border:1px solid rgb(201 177 102 / 42%); background:rgb(39 41 40 / 99%); box-shadow:0 12px 30px rgb(0 0 0 / 45%); padding:3px; }.bdm-data-grid--fm .bdm-data-grid__header-menu button { min-height:21px; border:0; background:transparent; color:#eef0e9; padding:2px 8px; text-align:left; font:inherit; font-size:10px; }.bdm-data-grid--fm .bdm-data-grid__header-menu button:hover { background:rgb(191 151 47 / 34%); }.bdm-data-grid--fm .bdm-data-grid__header-menu hr { width:100%; height:1px; border:0; background:rgb(255 255 255 / 12%); margin:3px 0; }
 .bdm-app-frame:has([aria-label="roster"]) .bdm-app-frame__toolbar { position:relative; z-index:2; height:0; min-height:0; margin:0; overflow:visible; }.squad-app__strip { position:absolute; top:2px; left:132px; display:flex; height:20px; align-items:center; gap:9px; }.squad-app__strip small { color:rgb(176 186 177 / 72%); font-size:9px; white-space:nowrap; }.squad-app__strip .bdm-tabs { min-height:20px; gap:1px; }.squad-app__strip .bdm-tabs__tab { min-width:25px; min-height:20px; padding:0 5px; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools { padding-left:6px; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools::before { content:none; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools input { width:92px; border-radius:1px; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools input::placeholder { color:transparent; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools input:focus::placeholder { color:rgb(184 194 184 / 60%); }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools input:not(:placeholder-shown) { color:#edf0e9; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools input::before { content:'Search'; }.bdm-data-table[aria-label="roster"] .bdm-data-grid__tools button { min-width:20px; padding-inline:4px; }.bdm-data-table[aria-label="roster"] tbody tr.is-selected { box-shadow:inset 2px 0 #d9ae43; background:rgb(195 154 52 / 10%); }.bdm-data-table[aria-label="roster"] td:nth-child(1),.bdm-data-table[aria-label="roster"] th:nth-child(1),.bdm-data-table[aria-label="roster"] td:nth-child(3),.bdm-data-table[aria-label="roster"] th:nth-child(3) { text-align:center; }.squad-app__player-link { border:0; background:transparent; color:inherit; padding:0; font:inherit; text-align:left; }.squad-app__player-link:hover { color:#f0c44d; text-decoration:none; }.squad-app__info-flag { display:inline-block; width:8px; height:8px; border:1px solid rgb(242 107 94 / 95%); border-radius:1px; background:linear-gradient(135deg,transparent 42%,rgb(242 107 94) 43% 57%,transparent 58%); vertical-align:middle; }
 
-/* Final table contract: every app uses the exact Plantilla cell grammar. */
-:where(.bdm-data-table, .table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-training__table, .pcb-plantilla__analysis-table, .pcb-plantilla__mentor-table, .pcb-tactics__table-page table, .pcb-tactics__rotation-grid, .pcb-medical .table, .pcb-competition .table, .pcb-club .table) {
+/* Final table contract: every app uses the exact Plantilla cell grammar.
+   Disabled inside BDM OS NG — Precision Grid is the canonical table system. */
+html:not(:has(.bdm-os-ng)) :where(.bdm-data-table, .table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-training__table, .pcb-plantilla__analysis-table, .pcb-plantilla__mentor-table, .pcb-tactics__table-page table, .pcb-tactics__rotation-grid, .pcb-medical .table, .pcb-competition .table, .pcb-club .table) {
   border: 1px solid #293a4a !important;
   border-radius: 7px !important;
   background: rgba(15, 23, 42, .7) !important;
 }
 
-:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) table,
-:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) tbody tr {
+html:not(:has(.bdm-os-ng)) :where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) table,
+html:not(:has(.bdm-os-ng)) :where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) tbody tr {
   background: transparent !important;
 }
 
-:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) th,
-:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) td {
+html:not(:has(.bdm-os-ng)) :where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) th,
+html:not(:has(.bdm-os-ng)) :where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) td {
   height: 43px !important;
   border-color: #293a4a !important;
   background: transparent !important;
@@ -201,7 +202,7 @@
   font-weight: 600 !important;
 }
 
-:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) th {
+html:not(:has(.bdm-os-ng)) :where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) th {
   height: 28px !important;
   background: #111821 !important;
   color: #84bce3 !important;
@@ -211,7 +212,7 @@
   text-transform: uppercase !important;
 }
 
-:is(.pcb-training__table, .pcb-plantilla__analysis-table, .pcb-plantilla__mentor-table, .pcb-tactics__rotation-grid, .pcb-medical .table, .pcb-competition .table, .pcb-club .table) > :not(.pcb-plantilla__column-resize) {
+html:not(:has(.bdm-os-ng)) :is(.pcb-training__table, .pcb-plantilla__analysis-table, .pcb-plantilla__mentor-table, .pcb-tactics__rotation-grid, .pcb-medical .table, .pcb-competition .table, .pcb-club .table) > :not(.pcb-plantilla__column-resize) {
   min-height: 43px !important;
   height: 43px !important;
   align-items: stretch !important;
@@ -225,7 +226,7 @@
   padding: 0 !important;
 }
 
-:is(.pcb-training__table, .pcb-plantilla__analysis-table, .pcb-plantilla__mentor-table, .pcb-tactics__rotation-grid, .pcb-medical .table, .pcb-competition .table, .pcb-club .table) > :not(.pcb-plantilla__column-resize) > * {
+html:not(:has(.bdm-os-ng)) :is(.pcb-training__table, .pcb-plantilla__analysis-table, .pcb-plantilla__mentor-table, .pcb-tactics__rotation-grid, .pcb-medical .table, .pcb-competition .table, .pcb-club .table) > :not(.pcb-plantilla__column-resize) > * {
   display: flex !important;
   height: 100% !important;
   min-width: 0 !important;
@@ -236,11 +237,11 @@
   text-align: center !important;
 }
 
-:is(.pcb-training__table, .pcb-plantilla__analysis-table, .pcb-plantilla__mentor-table, .pcb-tactics__rotation-grid, .pcb-medical .table, .pcb-competition .table, .pcb-club .table) > :not(.pcb-plantilla__column-resize) > *:last-child {
+html:not(:has(.bdm-os-ng)) :is(.pcb-training__table, .pcb-plantilla__analysis-table, .pcb-plantilla__mentor-table, .pcb-tactics__rotation-grid, .pcb-medical .table, .pcb-competition .table, .pcb-club .table) > :not(.pcb-plantilla__column-resize) > *:last-child {
   border-right: 0 !important;
 }
 
-:is(.pcb-training__table > .is-head, .pcb-plantilla__analysis-table > div:first-child, .pcb-plantilla__mentor-table > div:first-child, .pcb-tactics__rotation-grid > .is-head, .pcb-medical .table > .row.head, .pcb-competition .table > .row.head, .pcb-club .table > .row.head) {
+html:not(:has(.bdm-os-ng)) :is(.pcb-training__table > .is-head, .pcb-plantilla__analysis-table > div:first-child, .pcb-plantilla__mentor-table > div:first-child, .pcb-tactics__rotation-grid > .is-head, .pcb-medical .table > .row.head, .pcb-competition .table > .row.head, .pcb-club .table > .row.head) {
   min-height: 28px !important;
   height: 28px !important;
   background: #111821 !important;
@@ -252,25 +253,25 @@
 }
 
 /* One table palette across every application: the Plantilla / Individual baseline. */
-:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page, .pcb-tactics__rotation-grid, .pcb-club .table, .pcb-medical .table, .pcb-competition .table) {
+html:not(:has(.bdm-os-ng)) :where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page, .pcb-tactics__rotation-grid, .pcb-club .table, .pcb-medical .table, .pcb-competition .table) {
   border-color: #293a4a !important;
   background: rgba(15, 23, 42, 0.7) !important;
 }
 
-:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) table,
-:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) tbody tr,
-.pcb-tactics__rotation-grid > div:not(.is-head),
-.pcb-club .table .row:not(.head),
-.pcb-medical .table .row:not(.head),
-.pcb-competition .table .row:not(.head) {
+html:not(:has(.bdm-os-ng)) :where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) table,
+html:not(:has(.bdm-os-ng)) :where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) tbody tr,
+html:not(:has(.bdm-os-ng)) .pcb-tactics__rotation-grid > div:not(.is-head),
+html:not(:has(.bdm-os-ng)) .pcb-club .table .row:not(.head),
+html:not(:has(.bdm-os-ng)) .pcb-medical .table .row:not(.head),
+html:not(:has(.bdm-os-ng)) .pcb-competition .table .row:not(.head) {
   background: transparent !important;
 }
 
-:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) th,
-.pcb-tactics__rotation-grid .is-head,
-.pcb-club .table .row.head,
-.pcb-medical .table .row.head,
-.pcb-competition .table .row.head {
+html:not(:has(.bdm-os-ng)) :where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) th,
+html:not(:has(.bdm-os-ng)) .pcb-tactics__rotation-grid .is-head,
+html:not(:has(.bdm-os-ng)) .pcb-club .table .row.head,
+html:not(:has(.bdm-os-ng)) .pcb-medical .table .row.head,
+html:not(:has(.bdm-os-ng)) .pcb-competition .table .row.head {
   min-height: 28px;
   border-color: #293a4a !important;
   background: #111821 !important;
@@ -279,11 +280,11 @@
   font-weight: 700;
 }
 
-:where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) td,
-.pcb-tactics__rotation-grid > div:not(.is-head),
-.pcb-club .table .row:not(.head),
-.pcb-medical .table .row:not(.head),
-.pcb-competition .table .row:not(.head) {
+html:not(:has(.bdm-os-ng)) :where(.table-wrap, .squad-app__table-wrap, .training-app__table-wrap, .pcb-tactics__table-page) td,
+html:not(:has(.bdm-os-ng)) .pcb-tactics__rotation-grid > div:not(.is-head),
+html:not(:has(.bdm-os-ng)) .pcb-club .table .row:not(.head),
+html:not(:has(.bdm-os-ng)) .pcb-medical .table .row:not(.head),
+html:not(:has(.bdm-os-ng)) .pcb-competition .table .row:not(.head) {
   min-height: 43px;
   border-color: #293a4a !important;
   color: #eef5fb;

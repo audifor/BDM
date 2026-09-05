@@ -1,62 +1,136 @@
 :root {
-  /* Surfaces — warm charcoal workstation */
-  --ng-bg-system: #0e0d0c;
-  --ng-bg-workspace: #121110;
-  --ng-bg-panel-primary: #161514;
-  --ng-bg-panel-secondary: #1a1917;
-  --ng-bg-elevated: #1f1e1b;
-  --ng-bg-subtle: #100f0e;
-  --ng-bg-hover: #22201d;
-  --ng-bg-selected: #25221e;
-  --ng-bg-disabled: #141312;
-  --ng-bg-inset: #0c0b0a;
+  /*
+   * BDM OS NG · Graphite Holo Luxe
+   * Canonical visual direction — graphite workstation + cyan structure + amber quant
+   */
 
-  /* Text */
-  --ng-text-primary: #ece8e1;
-  --ng-text-secondary: #b8b2a8;
-  --ng-text-muted: #857f76;
-  --ng-text-disabled: #5c5750;
-  --ng-text-inverse: #0e0d0c;
+  /* ── Graphite surfaces ── */
+  --bdm-bg-void: #05080b;
+  --bdm-bg-shell: #080d12;
+  --bdm-bg-workspace: #0a1016;
 
-  /* Borders */
-  --ng-border-subtle: rgba(255, 255, 255, 0.05);
-  --ng-border-standard: rgba(255, 255, 255, 0.09);
-  --ng-border-strong: rgba(255, 255, 255, 0.14);
-  --ng-border-focus: #c9a227;
-  --ng-border-selected: rgba(201, 162, 39, 0.55);
+  --bdm-surface-1: #0c141a;
+  --bdm-surface-2: #0f1820;
+  --bdm-surface-3: #121e27;
 
-  /* BDM brand */
-  --ng-brand-mark: #d9c089;
-  --ng-accent-primary: #c9a227;
-  --ng-accent-primary-muted: rgba(201, 162, 39, 0.12);
-  --ng-accent-secondary: #8a8478;
-  --ng-focus-ring: rgba(201, 162, 39, 0.35);
-  --ng-selection: rgba(201, 162, 39, 0.14);
-  --ng-shadow-selected-glow: inset 3px 0 0 var(--ng-accent-primary);
+  --bdm-surface-hover: #16232d;
+  --bdm-surface-selected: #182026;
+  --bdm-row-base: #0d151b;
 
-  /* Semantic */
-  --ng-positive: #5fa86a;
-  --ng-positive-muted: rgba(95, 168, 106, 0.12);
-  --ng-warning: #c49a45;
-  --ng-warning-muted: rgba(196, 154, 69, 0.12);
-  --ng-negative: #c45f5f;
-  --ng-negative-muted: rgba(196, 95, 95, 0.12);
-  --ng-information: #9a9080;
+  /* NG aliases (warm charcoal → graphite holo) */
+  --ng-bg-system: var(--bdm-bg-shell);
+  --ng-bg-workspace: var(--bdm-bg-workspace);
+  --ng-bg-panel-primary: var(--bdm-surface-1);
+  --ng-bg-panel-secondary: var(--bdm-surface-2);
+  --ng-bg-elevated: var(--bdm-surface-3);
+  --ng-bg-subtle: #080d12;
+  --ng-bg-hover: var(--bdm-surface-hover);
+  --ng-bg-selected: var(--bdm-surface-selected);
+  --ng-bg-disabled: #0a1016;
+  --ng-bg-inset: #080d12;
 
-  /* Rating scale tones */
-  --ng-rating-poor: #6a5e5e;
-  --ng-rating-below: #7a7268;
-  --ng-rating-average: #8a8578;
-  --ng-rating-good: #a6966e;
-  --ng-rating-very-good: #c4ad72;
-  --ng-rating-elite: #ddc988;
+  /* ── Text ── */
+  --bdm-text-primary: #eef4f7;
+  --bdm-text-secondary: #b7c2ca;
+  --bdm-text-muted: #76858e;
+  --bdm-text-faint: #53616a;
+  --bdm-text-disabled: #4d5961;
 
-  /* Depth */
+  --ng-text-primary: var(--bdm-text-primary);
+  --ng-text-secondary: var(--bdm-text-secondary);
+  --ng-text-muted: var(--bdm-text-muted);
+  --ng-text-faint: var(--bdm-text-faint);
+  --ng-text-disabled: var(--bdm-text-disabled);
+  --ng-text-inverse: var(--bdm-bg-void);
+
+  /* ── Borders (3 tiers) ── */
+  --bdm-border-subtle: rgba(116, 150, 168, 0.16);
+  --bdm-border-default: rgba(116, 150, 168, 0.30);
+  --bdm-border-strong: rgba(135, 175, 194, 0.44);
+
+  --ng-border-subtle: var(--bdm-border-subtle);
+  --ng-border-standard: var(--bdm-border-default);
+  --ng-border-strong: var(--bdm-border-strong);
+  --ng-border-focus: #16d9f3;
+  --ng-border-selected: rgba(230, 183, 77, 0.60);
+
+  --ng-border-positive: rgba(72, 217, 138, 0.45);
+  --ng-border-warning: rgba(230, 183, 77, 0.45);
+  --ng-border-negative: rgba(232, 93, 103, 0.45);
+
+  /* ── Cyan · structural / navigation ── */
+  --bdm-cyan: #16d9f3;
+  --bdm-cyan-bright: #40eaff;
+  --bdm-cyan-muted: rgba(22, 217, 243, 0.22);
+
+  --ng-cyan: var(--bdm-cyan);
+  --ng-cyan-bright: var(--bdm-cyan-bright);
+  --ng-cyan-muted: var(--bdm-cyan-muted);
+  --ng-accent-secondary: var(--bdm-cyan);
+
+  /* ── Amber · quantitative / CTA / selection ── */
+  --bdm-amber: #e6b74d;
+  --bdm-amber-bright: #ffd46b;
+  --bdm-amber-muted: rgba(230, 183, 77, 0.20);
+
+  --ng-amber: var(--bdm-amber);
+  --ng-amber-bright: var(--bdm-amber-bright);
+  --ng-amber-muted: var(--bdm-amber-muted);
+  --ng-brand-mark: var(--bdm-amber-bright);
+  --ng-accent-primary: var(--bdm-amber);
+  --ng-accent-primary-muted: rgba(230, 183, 77, 0.12);
+
+  --ng-focus-ring: rgba(22, 217, 243, 0.35);
+  --ng-selection: rgba(230, 183, 77, 0.10);
+  --ng-shadow-selected-glow:
+    inset 2px 0 0 var(--bdm-amber),
+    inset 6px 0 10px rgba(230, 183, 77, 0.035);
+
+  /* ── Semantic ── */
+  --ng-positive: #48d98b;
+  --ng-positive-muted: rgba(72, 217, 138, 0.12);
+  --ng-warning: var(--bdm-amber);
+  --ng-warning-muted: var(--bdm-amber-muted);
+  --ng-negative: #e85d67;
+  --ng-negative-muted: rgba(232, 93, 103, 0.12);
+  --ng-information: #4da7d9;
+  --ng-magenta: #dc4fc4;
+
+  /* ── Rating scale · warm amber instrumentation ── */
+  --ng-rating-poor: #6a5e50;
+  --ng-rating-below: #8c6722;
+  --ng-rating-average: #a6842e;
+  --ng-rating-good: #c99034;
+  --ng-rating-very-good: #e6b74d;
+  --ng-rating-elite: #ffd46b;
+
+  --ng-rating-bar-track: #1a2730;
+  --ng-rating-bar-fill: linear-gradient(90deg, #c78f31 0%, #e5b34a 55%, #ffd268 100%);
+
+  /* ── Glow ── */
+  --ng-glow-cyan-low: 0 0 6px rgba(22, 217, 243, 0.10);
+  --ng-glow-cyan-medium: 0 0 10px rgba(22, 217, 243, 0.16), 0 0 20px rgba(22, 217, 243, 0.05);
+  --ng-glow-amber-low: 0 0 8px rgba(230, 183, 77, 0.28), 0 0 18px rgba(230, 183, 77, 0.10);
+  --ng-glow-amber-bar: 0 0 5px rgba(230, 183, 77, 0.12);
+
+  /* ── Depth ── */
   --ng-shadow-inset-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   --ng-shadow-inset-panel: inset 0 1px 0 rgba(255, 255, 255, 0.025);
-  --ng-shadow-elevated: 0 6px 20px rgba(0, 0, 0, 0.4);
+  --ng-shadow-elevated: 0 2px 10px rgba(0, 0, 0, 0.30);
+  --ng-shadow-inspector: 0 4px 18px rgba(0, 0, 0, 0.35);
+  --bdm-panel-fill: linear-gradient(180deg, rgba(15, 24, 32, 0.72) 0%, rgba(10, 17, 23, 0.82) 100%);
+  --bdm-panel-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    inset 0 0 20px rgba(20, 120, 160, 0.012),
+    0 2px 10px rgba(0, 0, 0, 0.20);
+  --bdm-panel-shadow-premium:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    inset 0 0 24px rgba(20, 120, 160, 0.016),
+    0 4px 16px rgba(0, 0, 0, 0.28);
+  --bdm-edge-cyan: 0 0 6px rgba(22, 217, 243, 0.14);
+  --bdm-edge-amber: 0 0 6px rgba(230, 183, 77, 0.16);
 
-  /* Spacing */
+  /* ── Spacing ── */
   --ng-spacing-4: 4px;
   --ng-spacing-8: 8px;
   --ng-spacing-12: 12px;
@@ -64,22 +138,32 @@
   --ng-spacing-24: 24px;
   --ng-spacing-32: 32px;
 
-  /* Shell geometry */
+  --bdm-panel-gap: 10px;
+  --bdm-workspace-padding: 12px;
+  --ng-panel-gap: var(--bdm-panel-gap);
+  --ng-workspace-padding: var(--bdm-workspace-padding);
+
+  /* ── Shell geometry ── */
+  --ng-ui-zoom: 0.8;
   --ng-system-bar-height: 48px;
   --ng-taskbar-height: 56px;
   --ng-workspace-header-height: 56px;
-  --ng-workspace-tabs-height: 36px;
+  --ng-workspace-tabs-height: 44px;
   --ng-workspace-toolbar-height: 36px;
 
-  /* Inspector */
-  --ng-inspector-width: 336px;
-  --ng-inspector-min-width: 300px;
+  /* ── Inspector ── */
+  --ng-inspector-width: 360px;
+  --ng-inspector-min-width: 320px;
   --ng-inspector-max-width: 420px;
 
-  /* Typography */
-  --ng-font-ui: 'Inter Tight', 'Segoe UI', system-ui, sans-serif;
-  --ng-font-display: 'Barlow Condensed', 'Inter Tight', sans-serif;
-  --ng-font-data: 'Inter Tight', 'Segoe UI', system-ui, sans-serif;
+  /* ── Typography ── */
+  --ng-font-plex: 'IBM Plex Sans', 'Geist Sans', 'Segoe UI', system-ui, sans-serif;
+  --ng-font-condensed: 'Barlow Semi Condensed', 'Barlow Condensed', 'IBM Plex Sans', sans-serif;
+  --ng-font-ui: var(--ng-font-plex);
+  --ng-font-display: var(--ng-font-plex);
+  --ng-font-data: var(--ng-font-plex);
+  --ng-font-player: var(--ng-font-plex);
+  --ng-font-grid: var(--ng-font-plex);
 
   --ng-font-size-meta: 11px;
   --ng-font-size-secondary: 12px;
@@ -89,11 +173,23 @@
   --ng-font-size-lg: 18px;
   --ng-font-size-xl: 22px;
   --ng-font-size-display: 24px;
+  --ng-font-size-entity: 32px;
+  --ng-font-size-hero-number: 56px;
 
   --ng-font-weight-regular: 400;
   --ng-font-weight-medium: 500;
   --ng-font-weight-semibold: 600;
   --ng-font-weight-bold: 700;
+
+  --ng-track-meta: 0.12em;
+  --ng-track-chrome: 0.08em;
+  --ng-track-display: 0.04em;
+  --ng-glow-entity:
+    0 0 10px rgba(64, 234, 255, 0.5),
+    0 0 28px rgba(22, 217, 243, 0.34);
+  --ng-glow-hero:
+    0 0 8px rgba(230, 183, 77, 0.38),
+    0 0 28px rgba(230, 183, 77, 0.22);
 
   --ng-control-height-sm: 28px;
   --ng-control-height-md: 32px;
@@ -103,12 +199,20 @@
   --ng-grid-row-md: 30px;
   --ng-grid-row-lg: 34px;
 
-  --ng-radius-sm: 2px;
+  /* BDM Precision Grid — default NG data-table contract */
+  --ng-precision-header-h: 26px;
+  --ng-precision-row-h: 28px;
+  --ng-precision-toolbar-h: 40px;
+  --ng-precision-footer-h: 28px;
+
+  --ng-radius-sm: 3px;
   --ng-radius-md: 3px;
   --ng-radius-lg: 4px;
+  --ng-radius-panel: 3px;
 
-  /* Player prototype */
-  --po-court-fill: #14120f;
-  --po-identity-height: 72px;
-  --po-lanes-height: 158px;
+  /* ── Player workspace ── */
+  --po-court-fill: var(--bdm-surface-2);
+  --po-identity-height: 180px;
+  --po-lanes-height: 140px;
+  --po-profile-width: 358px;
 }

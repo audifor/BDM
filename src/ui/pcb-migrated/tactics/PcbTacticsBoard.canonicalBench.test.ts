@@ -91,6 +91,24 @@ describe('PcbTacticsBoard / canonical bench semantics', () => {
     expect(getTeamLineup(nextWorld, team.id).bench.B1).toBeUndefined()
   })
 
+  it('unassigned -> bench drag assigns the first free canonical B slot', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const roster = getTeamRoster(base, team.id)
+    const world = setLineupSlot(base, team.id, 'B1', roster[1]!.id)
+    const calls: [string, string][] = []
+
+    render(createElement(TacticsPcbPage, { world, onLineupSlotChange: (slot, playerId) => calls.push([slot, playerId]) }))
+    const dt = dataTransfer()
+    const unassignedPlayer = document.querySelector('.tactics-board-panel-body--unassigned .tactics-board-player')!
+    const playerName = unassignedPlayer.querySelector('.tactics-board-player-name')!.textContent!
+    const player = roster.find((entry) => `${entry.firstName} ${entry.lastName}` === playerName)!
+    fireEvent.dragStart(unassignedPlayer, { dataTransfer: dt })
+    fireEvent.drop(screen.getByText('BANQUILLO').closest('.tactics-board-panel-header')!, { dataTransfer: dt })
+
+    expect(calls).toEqual([['B2', player.id]])
+  })
+
   it('when the bench is full, a court -> bench drop does not fabricate bench membership', () => {
     const base = withFullTwelve(createNewGame())
     const team = getUserTeam(base)!

@@ -1,4 +1,3 @@
-import { EntityIdentityBand } from '@/ui-ng/applications/player/components/EntityIdentityBand'
 import { PerformanceStrip, FormTimeline } from '@/ui-ng/applications/player/components/PerformanceLanes'
 import { RatingMatrix } from '@/ui-ng/applications/player/components/RatingMatrix'
 import { AttributeProfilePanel, ShotProfileCourt } from '@/ui-ng/applications/player/components/ShotProfileCourt'
@@ -52,7 +51,6 @@ export function PlayerOverviewView() {
 
   return (
     <div className="po-overview" data-ng-region="player-overview">
-      <EntityIdentityBand />
       <div className="po-overview__core">
         <AttributeProfilePanel
           onCategorySelect={handleCategorySelect}

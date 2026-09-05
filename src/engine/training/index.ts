@@ -1,3 +1,4 @@
 export { assignIndividualTrainingStaff, canTeamTrainOnDate, clearIndividualTrainingPlan, executeEligibleTraining, executeTeamTraining, getIndividualTrainingPlan, getTrainingLoad, recoverCareerFatigueForDay, setIndividualTrainingFocus, setIndividualTrainingIntensity, setIndividualTrainingPlan, setTeamTrainingPlan } from './TrainingEngine'
 export { assignStaffToScheduledTrainingSession, cancelScheduledTrainingSession, dailyScheduledLoad, detachStaffFromFutureTrainingSessions, executeScheduledTrainingSessions, nextEligibleTrainingDate, scheduleTrainingSession, trainingStaffExecutionMultiplier } from './ScheduledTrainingEngine'
 export { assignTrainingModuleToPlayer, createOrUpdateUserTrainingModule, dailyLoadStatusForTeam, deleteUserTrainingModule, resolveTrainingModule, scheduleTeamModuleSession } from './TrainingModuleEngine'
+export { automaticTeamTrainingDefinitionId, scheduleAutomaticTeamTrainingWeek } from './AutomaticTeamTraining'

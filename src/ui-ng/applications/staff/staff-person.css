@@ -1,0 +1,207 @@
+.staff-person {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+.staff-person.po-root::before,
+.staff-person--empty::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--bdm-holo-wallpaper);
+}
+
+.staff-person > * {
+  position: relative;
+  z-index: 1;
+}
+
+.staff-person--empty {
+  display: grid;
+  place-items: center;
+}
+
+.staff-person__empty-state {
+  padding: var(--ng-spacing-24);
+}
+
+.staff-person__empty-title {
+  margin: 0 0 var(--ng-spacing-8);
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-font-size-xl);
+  font-weight: 700;
+  letter-spacing: var(--ng-track-display);
+  text-transform: uppercase;
+  color: var(--ng-text-primary);
+}
+
+.staff-person__empty-message,
+.staff-person__empty-copy,
+.staff-person__note {
+  margin: 0;
+  color: var(--ng-text-muted);
+  font-size: var(--ng-font-size-secondary);
+}
+
+.staff-person__empty-copy {
+  padding: var(--ng-spacing-16);
+}
+
+.staff-person__scroll {
+  height: 100%;
+  min-height: 0;
+  padding: var(--ng-workspace-padding);
+  overflow: auto;
+}
+
+.staff-person__overview {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) var(--po-lanes-height);
+  height: 100%;
+  min-height: 0;
+  gap: var(--ng-panel-gap);
+}
+
+.staff-person__core {
+  display: grid;
+  grid-template-columns: var(--po-profile-width) minmax(0, 1fr);
+  gap: var(--ng-panel-gap);
+  min-height: 0;
+}
+
+.staff-person__deck,
+.staff-person__stack {
+  display: grid;
+  gap: var(--ng-panel-gap);
+  min-height: 0;
+}
+
+.staff-person__deck {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.staff-person__panel {
+  min-height: 0;
+  padding: var(--ng-spacing-12);
+  overflow: auto;
+}
+
+.staff-person__panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ng-spacing-12);
+  margin-bottom: var(--ng-spacing-8);
+}
+
+.staff-person__panel-head h2 {
+  margin: 0;
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-font-size-meta);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.staff-person__panel-head span {
+  color: var(--ng-text-muted);
+  font-size: var(--ng-font-size-meta);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.staff-person__eval-list,
+.staff-person__bullets,
+.staff-person__history,
+.staff-person__relationships {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.staff-person__eval-list li,
+.staff-person__metric,
+.staff-person__relationships li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.staff-person__eval-list li {
+  grid-template-columns: minmax(0, 1fr) 36px minmax(64px, 88px);
+}
+
+.staff-person__eval-list li.is-current {
+  color: var(--ng-amber-bright);
+  font-weight: 700;
+}
+
+.staff-person__meter {
+  display: block;
+  height: 3px;
+  background: var(--ng-rating-bar-track);
+}
+
+.staff-person__meter span {
+  display: block;
+  height: 100%;
+  background: var(--ng-rating-bar-fill);
+}
+
+.staff-person__metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+}
+
+.staff-person__metric dt {
+  color: var(--ng-text-muted);
+  font-size: var(--ng-font-size-secondary);
+}
+
+.staff-person__metric dd {
+  margin: 0;
+  color: var(--ng-text-primary);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.staff-person__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.staff-person__bullets,
+.staff-person__history {
+  padding-left: 16px;
+  list-style: disc;
+  color: var(--ng-text-secondary);
+}
+
+.staff-person__relationships li {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+@media (max-width: 1100px) {
+  .staff-person__core,
+  .staff-person__deck {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-person__overview {
+    grid-template-rows: auto auto;
+    height: auto;
+  }
+}

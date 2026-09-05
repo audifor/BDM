@@ -1,0 +1,290 @@
+.ng-canon {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: transparent;
+  color: var(--ng-text-primary);
+  font-family: var(--ng-font-ui);
+}
+
+.ng-canon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--bdm-holo-wallpaper);
+}
+
+.ng-canon > * {
+  position: relative;
+  z-index: 1;
+}
+
+.ng-canon .ng-application-workspace,
+.ng-canon .ng-application-workspace__header-slot,
+.ng-canon .ng-application-workspace__body-slot,
+.ng-canon .ng-scroll-region {
+  background: transparent;
+}
+
+.ng-canon--empty {
+  display: grid;
+  place-items: center;
+}
+
+.ng-canon__empty-state {
+  padding: var(--ng-spacing-24);
+}
+
+.ng-canon__empty-title {
+  margin: 0 0 var(--ng-spacing-8);
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-font-size-xl);
+  font-weight: 700;
+  letter-spacing: var(--ng-track-display);
+  text-transform: uppercase;
+  color: var(--ng-text-primary);
+}
+
+.ng-canon__empty-message,
+.ng-canon__empty,
+.ng-canon__note {
+  margin: 0;
+  color: var(--ng-text-muted);
+  font-size: var(--ng-font-size-secondary);
+}
+
+.ng-canon__empty,
+.ng-canon__note {
+  padding: var(--ng-spacing-16);
+}
+
+.ng-canon__scroll {
+  height: 100%;
+  min-height: 0;
+  padding: var(--ng-workspace-padding);
+  overflow: auto;
+  background: transparent;
+}
+
+.ng-canon-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ng-spacing-12);
+  height: var(--ng-workspace-header-height);
+  min-height: var(--ng-workspace-header-height);
+  padding: 0 var(--ng-spacing-16);
+  border-bottom: 1px solid var(--ng-border-subtle);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%),
+    color-mix(in srgb, var(--bdm-surface-1) 78%, transparent);
+  box-shadow: var(--ng-shadow-inset-highlight);
+}
+
+.ng-canon-header__main {
+  display: flex;
+  align-items: center;
+  gap: var(--ng-spacing-12);
+  min-width: 0;
+}
+
+.ng-canon-header__app {
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: var(--ng-track-meta);
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.ng-canon-header__sep {
+  width: 1px;
+  height: 16px;
+  background: var(--ng-border-standard);
+}
+
+.ng-canon-header__team {
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-font-size-lg);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--ng-text-primary);
+}
+
+.ng-canon-header__meta {
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: var(--ng-track-chrome);
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ng-canon__overview,
+.ng-canon__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--ng-spacing-12);
+}
+
+.ng-canon__split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: var(--ng-spacing-12);
+  min-height: 0;
+  align-items: start;
+}
+
+.ng-canon__panel,
+.ng-canon__inspector,
+.ng-canon__card {
+  padding: var(--ng-spacing-12);
+  overflow: auto;
+}
+
+.ng-canon__inspector,
+.ng-canon__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ng-spacing-8);
+}
+
+.ng-canon__eyebrow {
+  margin: 0;
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-font-size-meta);
+  font-weight: 700;
+  letter-spacing: var(--ng-track-meta);
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.ng-canon__title {
+  margin: 0;
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-font-size-lg);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ng-text-primary);
+}
+
+.ng-canon__metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+}
+
+.ng-canon__metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--ng-spacing-8);
+  min-height: 20px;
+}
+
+.ng-canon__metric dt {
+  color: var(--ng-text-muted);
+  font-size: var(--ng-font-size-secondary);
+}
+
+.ng-canon__metric dd {
+  margin: 0;
+  color: var(--ng-text-primary);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.ng-canon__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ng-canon__link,
+.ng-canon__action {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ng-text-primary);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ng-canon__link:hover,
+.ng-canon__action:hover {
+  color: var(--ng-cyan);
+}
+
+.ng-canon__action {
+  padding: 4px 8px;
+  border: 1px solid var(--ng-border-subtle);
+  border-radius: var(--ng-radius-sm);
+  font-family: var(--ng-font-display);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ng-canon__action:disabled {
+  cursor: default;
+  color: var(--ng-text-muted);
+}
+
+.ng-canon__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ng-spacing-8);
+}
+
+.ng-canon__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border: 1px solid var(--ng-border-subtle);
+  border-radius: var(--ng-radius-sm);
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ng-canon__list {
+  display: grid;
+  gap: var(--ng-spacing-12);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ng-canon__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ng-spacing-8);
+  margin-bottom: var(--ng-spacing-12);
+}
+
+.ng-canon__toolbar input,
+.ng-canon__toolbar select {
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--ng-border-subtle);
+  border-radius: var(--ng-radius-sm);
+  background: color-mix(in srgb, var(--bdm-surface-1) 70%, transparent);
+  color: var(--ng-text-primary);
+  font: inherit;
+}
+
+@media (max-width: 1100px) {
+  .ng-canon__split {
+    grid-template-columns: 1fr;
+  }
+}

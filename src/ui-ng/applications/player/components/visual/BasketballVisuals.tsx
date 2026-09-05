@@ -1,9 +1,11 @@
 import type { RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
 
 const SIZE = 120
+const VIEW_PAD = 28
+const VIEW_SIZE = SIZE + VIEW_PAD * 2
 const CENTER = SIZE / 2
 const MAX_RADIUS = 46
-const LABEL_RADIUS = MAX_RADIUS + 14
+const LABEL_RADIUS = MAX_RADIUS + 20
 
 function polarPoint(index: number, total: number, radius: number): [number, number] {
   const angle = (Math.PI * 2 * index) / total - Math.PI / 2
@@ -35,7 +37,7 @@ export function AttributeRadar({
   axes,
   selectedCategory = null,
   onCategorySelect,
-  accent = 'var(--po-team-primary)',
+  accent = 'var(--ng-cyan)',
 }: AttributeRadarProps) {
   const total = axes.length
   const gridLevels = [0.25, 0.5, 0.75, 1]
@@ -49,7 +51,20 @@ export function AttributeRadar({
     .join(' ')
 
   return (
-    <svg aria-label="Attribute profile radar" className="po-radar" viewBox={`0 0 ${SIZE} ${SIZE}`}>
+    <svg aria-label="Attribute profile radar" className="po-radar" viewBox={`${-VIEW_PAD} ${-VIEW_PAD} ${VIEW_SIZE} ${VIEW_SIZE}`}>
+      <circle cx={CENTER} cy={CENTER} fill="rgba(22, 217, 243, 0.03)" r={MAX_RADIUS} />
+      {[0.4, 0.7, 1].map((level) => (
+        <circle
+          key={`scope-${level}`}
+          cx={CENTER}
+          cy={CENTER}
+          fill="none"
+          r={MAX_RADIUS * level}
+          stroke="rgba(116, 150, 168, 0.16)"
+          strokeWidth="0.6"
+        />
+      ))}
+
       {gridLevels.map((level) => (
         <polygon
           key={level}
@@ -58,7 +73,7 @@ export function AttributeRadar({
             const [x, y] = polarPoint(index, total, MAX_RADIUS * level)
             return `${x},${y}`
           }).join(' ')}
-          stroke="rgba(255,255,255,0.08)"
+          stroke="rgba(116, 150, 168, 0.38)"
           strokeWidth="1"
         />
       ))}
@@ -69,7 +84,7 @@ export function AttributeRadar({
         return (
           <line
             key={`spoke-${axis.key}`}
-            stroke={isActive ? 'var(--po-team-secondary)' : 'rgba(255,255,255,0.06)'}
+            stroke={isActive ? 'var(--ng-cyan-bright)' : 'rgba(116, 150, 168, 0.32)'}
             strokeWidth={isActive ? 1.5 : 1}
             x1={CENTER}
             x2={x}
@@ -81,7 +96,7 @@ export function AttributeRadar({
 
       <polygon
         fill={accent}
-        fillOpacity="0.18"
+        fillOpacity="0.24"
         points={polygonPoints}
         stroke={accent}
         strokeWidth="1.5"
@@ -96,8 +111,8 @@ export function AttributeRadar({
             key={`${axis.key}-dot`}
             cx={x}
             cy={y}
-            fill={isActive ? 'var(--po-team-secondary)' : accent}
-            r={isActive ? 3.5 : 2.5}
+            fill={isActive ? 'var(--ng-amber-bright)' : 'var(--ng-cyan)'}
+            r={isActive ? 3.5 : 3}
           />
         )
       })}
@@ -157,8 +172,8 @@ const HOOP_R = 2.25
 const BACKBOARD_Y = BASELINE - 12
 const BACKBOARD_HALF = 9
 
-const COURT_LINE = 'rgba(255, 255, 255, 0.55)'
-const COURT_LINE_SOFT = 'rgba(255, 255, 255, 0.3)'
+const COURT_LINE = 'rgba(135, 175, 194, 0.38)'
+const COURT_LINE_SOFT = 'rgba(135, 175, 194, 0.22)'
 const LINE = 0.35
 
 function HalfCourtLines() {

@@ -50,7 +50,7 @@ describe('CanonicalRoster / roster view presets', () => {
     render(createElement(PlantillaPcbPage, { world }))
 
     // Default preset is Resumen General; assert core roster columns and the compact summary signals are present...
-    for (const label of ['JUGADOR', 'POS', 'ROT', 'EDAD', 'FIN', 'SHO', 'PMK', 'PDE', 'IDE', 'REB', 'ATH', 'FATIGA', 'CONTRATO']) {
+    for (const label of ['JUGADOR', 'POS', 'ROL', 'EDAD', 'FIN', 'SHO', 'PMK', 'PDE', 'IDE', 'REB', 'ATH', 'FATIGA', 'CONTRATO']) {
       expect(screen.getByText(label)).toBeInTheDocument()
     }
     // ...but detailed 35-rating/personality column headers (unique to those presets) are absent,

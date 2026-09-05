@@ -1,4 +1,5 @@
 import type { ContractFinancialRowModel } from '@/ui-ng/applications/player/data/buildPlayerContractModel'
+import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 
 export function ContractFinancialSchedule({
   rows,
@@ -27,59 +28,36 @@ export function ContractFinancialSchedule({
         <span className="pc-panel-head__meta">{rows.length} seasons</span>
       </header>
       <div className="pc-schedule__scroll">
-        <table className="pc-schedule__table">
-          <colgroup>
-            <col className="pc-schedule__col--season" />
-            <col className="pc-schedule__col--num" span={3} />
-            <col className="pc-schedule__col--status" />
-          </colgroup>
-          <thead>
-            <tr>
-              <th className="pc-schedule__col--season" scope="col">
-                Season
-              </th>
-              <th className="pc-schedule__num" scope="col">
-                Base
-              </th>
-              <th className="pc-schedule__num" scope="col">
-                Guaranteed
-              </th>
-              <th className="pc-schedule__num" scope="col">
-                Cap hit
-              </th>
-              <th className="pc-schedule__col--status" scope="col">
-                Status
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => {
-              const selected = selectedItemId === row.id
-              return (
-                <tr
-                  aria-selected={selected}
-                  className={`${row.isCurrent ? 'is-current' : ''}${selected ? ' is-selected' : ''}`.trim()}
-                  key={row.id}
-                  onClick={() => onSelectRow(row.id)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      onSelectRow(row.id)
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <td className="pc-schedule__col--season">{row.seasonLabel}</td>
-                  <td className="pc-schedule__num ng-type-numeric">{row.baseSalary.formatted}</td>
-                  <td className="pc-schedule__num ng-type-numeric">{row.guaranteed.formatted}</td>
-                  <td className="pc-schedule__num ng-type-numeric">{row.capHit.formatted}</td>
-                  <td className="pc-schedule__col--status">{row.guaranteeState}</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+        <NgPrecisionTable
+          className="pc-schedule__table"
+          columns={[
+            ngCol<ContractFinancialRowModel>('season', 'Season', (row) => row.seasonLabel, {
+              value: (row) => row.seasonLabel,
+            }),
+            ngCol<ContractFinancialRowModel>('base', 'Base', (row) => row.baseSalary.formatted, {
+              numeric: true,
+              value: (row) => row.baseSalary.amount,
+            }),
+            ngCol<ContractFinancialRowModel>('guaranteed', 'Guaranteed', (row) => row.guaranteed.formatted, {
+              numeric: true,
+              value: (row) => row.guaranteed.amount,
+            }),
+            ngCol<ContractFinancialRowModel>('capHit', 'Cap hit', (row) => row.capHit.formatted, {
+              numeric: true,
+              value: (row) => row.capHit.amount,
+            }),
+            ngCol<ContractFinancialRowModel>('status', 'Status', (row) => row.guaranteeState, {
+              value: (row) => row.guaranteeState,
+            }),
+          ]}
+          gridId="ng-player-contract-schedule"
+          onRowClick={(row) => onSelectRow(row.id)}
+          onSelectionChange={(ids) => {
+            if (ids[0]) onSelectRow(ids[0])
+          }}
+          rows={rows}
+          selectedId={selectedItemId ?? undefined}
+        />
       </div>
     </section>
   )

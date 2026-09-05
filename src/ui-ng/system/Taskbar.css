@@ -1,11 +1,35 @@
 .ng-taskbar {
+  position: relative;
+  z-index: 4;
+  overflow: visible;
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: var(--ng-taskbar-height);
-  padding: 0 var(--ng-spacing-12);
-  border-top: 1px solid var(--ng-border-subtle);
-  background: var(--ng-bg-system);
+  padding: 0 var(--ng-spacing-16);
+  border-top: 1px solid rgba(22, 217, 243, 0.16);
+  background:
+    linear-gradient(180deg, rgba(22, 217, 243, 0.015) 0%, transparent 70%),
+    #060a0e;
+}
+
+.ng-taskbar::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 160px;
+  pointer-events: none;
+  opacity: 0.045;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 6px,
+    rgba(22, 217, 243, 0.65) 6px,
+    rgba(22, 217, 243, 0.65) 7px
+  );
+  mask-image: linear-gradient(90deg, transparent, black);
 }
 
 .ng-taskbar__apps {
@@ -14,15 +38,49 @@
   gap: var(--ng-spacing-4);
 }
 
+.ng-taskbar__app-slot {
+  position: relative;
+}
+
 .ng-taskbar__app {
-  height: 32px;
-  padding: 0 var(--ng-spacing-12);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  min-width: 88px;
+  padding: 0 10px;
   border: 1px solid transparent;
-  border-radius: var(--ng-radius-sm);
+  border-radius: 4px;
   background: transparent;
-  color: var(--ng-text-muted);
-  font-size: var(--ng-font-size-secondary);
-  font-weight: var(--ng-font-weight-medium);
+  color: #70818b;
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.ng-taskbar__start {
+  position: relative;
+  z-index: 32;
+  min-width: 72px;
+  margin-right: 4px;
+  border-color: rgba(22, 217, 243, 0.28);
+  background: rgba(22, 217, 243, 0.06);
+  color: var(--ng-cyan-bright);
+}
+
+.ng-taskbar__start:hover,
+.ng-taskbar__start.is-open {
+  border-color: rgba(22, 217, 243, 0.55);
+  background: rgba(22, 217, 243, 0.12);
+  box-shadow: inset 0 -2px 0 rgba(22, 217, 243, 0.55);
+  color: var(--ng-cyan-bright);
 }
 
 .ng-taskbar__app:hover {
@@ -31,15 +89,75 @@
 }
 
 .ng-taskbar__app.is-active {
-  border-color: var(--ng-border-selected);
-  background: var(--ng-accent-primary-muted);
-  box-shadow: var(--ng-shadow-selected-glow);
-  color: var(--ng-text-primary);
+  border-color: rgba(230, 183, 77, 0.68);
+  background:
+    linear-gradient(180deg, rgba(230, 183, 77, 0.10) 0%, rgba(26, 36, 43, 0.92) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 -2px 0 rgba(230, 183, 77, 0.55),
+    0 0 8px rgba(230, 183, 77, 0.14);
+  color: #f3e6c0;
 }
 
 .ng-taskbar__status {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ng-spacing-8);
+  font-family: var(--ng-font-display);
   font-size: var(--ng-font-size-meta);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ng-text-muted);
+}
+
+.ng-taskbar__status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ng-amber);
+  box-shadow: 0 0 6px rgba(230, 183, 77, 0.4);
+}
+
+.ng-taskbar__menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.ng-taskbar__menu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 6px);
+  z-index: 41;
+  min-width: 100%;
+  padding: 4px;
+  border: 1px solid rgba(22, 217, 243, 0.28);
+  border-radius: 4px;
+  background: #0a1014;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.ng-taskbar__menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ng-text-primary);
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.ng-taskbar__menu button:hover,
+.ng-taskbar__menu button:focus-visible {
+  background: rgba(22, 217, 243, 0.12);
+  color: var(--ng-cyan-bright);
 }

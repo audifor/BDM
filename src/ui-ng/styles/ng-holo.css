@@ -1,0 +1,119 @@
+/* Graphite Holo Luxe — reusable surface + edge language. Scoped to NG. */
+
+.bdm-os-ng {
+  --bdm-holo-ticks:
+    linear-gradient(var(--ng-cyan), var(--ng-cyan)),
+    linear-gradient(var(--ng-cyan), var(--ng-cyan)),
+    linear-gradient(var(--ng-amber), var(--ng-amber)),
+    linear-gradient(var(--ng-amber), var(--ng-amber)),
+    var(--bdm-panel-fill);
+  --bdm-holo-tick-size: 12px 1px, 1px 12px, 12px 1px, 1px 12px, auto;
+  --bdm-holo-tick-pos: 8px 0, 0 8px, calc(100% - 8px) 100%, 100% calc(100% - 8px), 0 0;
+  --bdm-holo-stage:
+    radial-gradient(circle at 82% 16%, rgba(22, 217, 243, 0.04), transparent 32%),
+    radial-gradient(circle at 18% 92%, rgba(230, 183, 77, 0.028), transparent 30%),
+    radial-gradient(circle, rgba(116, 150, 168, 0.08) 0.6px, transparent 0.7px);
+  --bdm-holo-wallpaper:
+    linear-gradient(90deg, var(--po-team-muted, rgba(22, 217, 243, 0.1)) 0%, transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 72%);
+}
+
+.po-root,
+.roster-workspace,
+.scouting-workspace,
+.tactics-workspace,
+.training-workspace,
+.mentoring-workspace,
+.staff-workspace,
+.staff-person,
+.medical-workspace,
+.match-workspace,
+.ng-canon,
+.ng-workspace-placeholder {
+  --bdm-holo-wallpaper:
+    linear-gradient(90deg, var(--po-team-muted, rgba(22, 217, 243, 0.1)) 0%, transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 72%);
+}
+
+.bdm-os-ng .ng-module,
+.bdm-os-ng .ng-holo-panel,
+.bdm-os-ng .ng-workspace-placeholder__card,
+.bdm-os-ng .roster-workspace__empty-state,
+.bdm-os-ng .scouting-workspace__empty-state,
+.bdm-os-ng .training-workspace__empty-state,
+.bdm-os-ng .mentoring-workspace__empty-state,
+.bdm-os-ng .staff-workspace__empty-state,
+.bdm-os-ng .staff-person__empty-state,
+.bdm-os-ng .medical-workspace__empty-state,
+.bdm-os-ng .staff-person__panel,
+.bdm-os-ng .staff-workspace__panel,
+.bdm-os-ng .staff-workspace__inspector,
+.bdm-os-ng .medical-workspace__panel,
+.bdm-os-ng .medical-workspace__inspector,
+.bdm-os-ng .medical-workspace__card,
+.bdm-os-ng .ng-canon__panel,
+.bdm-os-ng .ng-canon__inspector,
+.bdm-os-ng .ng-canon__card,
+.bdm-os-ng .ng-canon__empty-state,
+.bdm-os-ng .scouting-workspace__panel,
+.bdm-os-ng .roster-workspace .canonical-roster__toolbar,
+.bdm-os-ng .roster-workspace .canonical-roster--ng,
+.bdm-os-ng .roster-depth-chart,
+.bdm-os-ng .po-root .po-profile-panel,
+.bdm-os-ng .po-root .po-ratings,
+.bdm-os-ng .po-root .po-perf-strip,
+.bdm-os-ng .po-root .po-form,
+.bdm-os-ng .po-root .po-shot-profile,
+.bdm-os-ng .po-root .po-attributes__rail,
+.bdm-os-ng .po-root .po-attributes__detail,
+.bdm-os-ng .po-root .pp-season,
+.bdm-os-ng .po-root .pp-production-lane,
+.bdm-os-ng .po-root .pp-shooting,
+.bdm-os-ng .po-root .pp-form,
+.bdm-os-ng .po-root .pp-log,
+.bdm-os-ng .po-root .pc-status,
+.bdm-os-ng .po-root .pc-agreement,
+.bdm-os-ng .po-root .pc-rights,
+.bdm-os-ng .po-root .pc-timeline,
+.bdm-os-ng .po-root .pc-schedule,
+.bdm-os-ng .po-root .pc-history,
+.bdm-os-ng .po-root .pm-status,
+.bdm-os-ng .po-root .pm-fatigue,
+.bdm-os-ng .po-root .pm-injury,
+.bdm-os-ng .po-root .pm-recovery,
+.bdm-os-ng .po-root .pm-history,
+.bdm-os-ng .po-root .pd-status,
+.bdm-os-ng .po-root .pd-stimulus,
+.bdm-os-ng .po-root .pd-training,
+.bdm-os-ng .po-root .pd-potential,
+.bdm-os-ng .po-root .pd-longitudinal,
+.bdm-os-ng .po-root .ph-scope,
+.bdm-os-ng .po-root .ph-filters,
+.bdm-os-ng .po-root .ph-timeline {
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--bdm-border-default);
+  border-radius: var(--ng-radius-panel);
+  background-color: color-mix(in srgb, var(--bdm-surface-1) 72%, transparent);
+  background-image: var(--bdm-holo-ticks);
+  background-repeat: no-repeat;
+  background-size: var(--bdm-holo-tick-size);
+  background-position: var(--bdm-holo-tick-pos);
+  box-shadow: var(--bdm-panel-shadow);
+}
+
+.bdm-os-ng .ng-holo-float,
+.bdm-os-ng .bdm-data-grid__column-manager,
+.bdm-os-ng .bdm-data-grid__header-menu,
+.bdm-os-ng .entity-context-menu {
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--bdm-border-default);
+  border-radius: var(--ng-radius-panel);
+  background-color: color-mix(in srgb, var(--bdm-surface-1) 86%, transparent);
+  background-image: var(--bdm-holo-ticks);
+  background-repeat: no-repeat;
+  background-size: 10px 1px, 1px 10px, 10px 1px, 1px 10px, auto;
+  background-position: 6px 0, 0 6px, calc(100% - 6px) 100%, 100% calc(100% - 6px), 0 0;
+  box-shadow: var(--bdm-panel-shadow-premium);
+}

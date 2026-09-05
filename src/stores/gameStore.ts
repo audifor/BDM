@@ -1,6 +1,7 @@
 import {
   advanceGameDay,
   continueGame as runContinueGame,
+  simulateUntilDate as runSimulateUntilDate,
   startNextSeason,
   completeMatch,
   createNewGame,
@@ -11,7 +12,7 @@ import {
   simulateRemainingGamesToday,
 } from '@/app/game'
 import { releasePlayer, signFreeAgent } from '@/app/market'
-import type { PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
+import { organizationIdForTeam, type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
 import type { CoachPerkId, CoachSkillId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { getInboxItemsForCoach, getNewsFeed, getRelationshipsForPerson, getUnreadInboxCount, getUserCoachReputationProfile } from '@/domain/world'
@@ -23,7 +24,7 @@ import { create } from 'zustand'
 import { acceptCoachJobOffer, applyUserCoachForJob, declineCoachJobOffer } from '@/app/coachCareer'
 import { getCareerFatigueForPlayer, getLatestTrainingSession, getTrainingPlanForTeam } from '@/domain/world'
 import type { ScheduledTrainingSession, TrainingFocus, TrainingIntensity, UserTrainingModule } from '@/domain/training'
-import { assignTrainingModuleToPlayer, cancelScheduledTrainingSession, createOrUpdateUserTrainingModule, deleteUserTrainingModule, scheduleTeamModuleSession, scheduleTrainingSession, setTeamTrainingPlan } from '@/engine/training'
+import { assignTrainingModuleToPlayer, cancelScheduledTrainingSession, createOrUpdateUserTrainingModule, deleteUserTrainingModule, scheduleAutomaticTeamTrainingWeek, scheduleTeamModuleSession, scheduleTrainingSession, setTeamTrainingPlan } from '@/engine/training'
 import { clearLineupSlot, setLineupSlot } from '@/engine/tactics/LineupEngine'
 import { getTeamLineup } from '@/domain/world'
 import type { LineupSlot, DefensiveMatchupAssignment, Playbook, SavedPlay } from '@/domain/tactics'
@@ -35,7 +36,7 @@ import type { CommandResult } from '@/app/entityActions/EntityCommand'
 import { selectDraftProspect } from '@/app/draft'
 import { executeTrade } from '@/engine/trade'
 import type { TradeProposal } from '@/domain/trade'
-import type { ContinueResult } from '@/app/game'
+import type { ContinueResult, SimulateUntilResult } from '@/app/game'
 import { addRecruitingBoardEntry, makeRecruitingOffer, performRecruitingAction, removeRecruitingBoardEntry } from '@/engine/recruiting'
 import type { Priority } from '@/domain/recruiting'
 import { acceptNilOpportunity } from '@/engine/nil'
@@ -45,6 +46,7 @@ import type { Lifestyle } from '@/domain/coachFinances'
 import type { MediaStance } from '@/domain/media'
 import { createPreMatchMediaOpportunity, respondToMediaOpportunity, skipMediaOpportunity } from '@/engine/media'
 import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
+import { requestScouting } from '@/engine/scouting'
 import type { StaffRoleId } from '@/domain/staff'
 import { acceptStaffJobOffer, completeStaffInterview, createStaffJobOffer, createStaffJobOpeningForTeam, declineStaffJobOffer, fireStaffFromTeam, identifyStaffCandidate, startStaffInterview } from '@/app/staffCareer'
 import { setTeamResponsibility, type SetTeamResponsibilityInput } from '@/app/staffResponsibilities'
@@ -68,6 +70,7 @@ interface GameStore {
   simulateRemainingGamesToday(): void
   advanceDay(): void
   continueGame(): ContinueResult
+  simulateUntilDate(date: GameWorld['currentDate']): SimulateUntilResult
   startNextSeason(): void
   signFreeAgent(teamId: TeamId, playerId: PlayerId): void
   releasePlayer(teamId: TeamId, playerId: PlayerId): void
@@ -92,11 +95,13 @@ interface GameStore {
   setTrainingFocus(focus: TrainingFocus): void
   scheduleTrainingSession(session: ScheduledTrainingSession): void
   scheduleTeamModuleSession(input: { readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: TrainingIntensity; readonly assignedStaffPersonIds?: readonly StaffPersonId[] }): void
+  scheduleAutomaticTeamTrainingWeek(weekStart: GameWorld['currentDate']): void
   cancelTrainingSession(sessionId: string): void
   saveUserTrainingModule(module: UserTrainingModule): void
   deleteUserTrainingModule(moduleId: string): void
   assignTrainingModuleToPlayer(input: { readonly playerId: PlayerId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly sessionId: string; readonly assignedStaffPersonIds?: readonly StaffPersonId[] }): void
   setLineupSlot(slot: LineupSlot, playerId: PlayerId): void
+  requestScoutingAssignment(playerId: PlayerId): void
   clearLineupSlot(slot: LineupSlot): void
   updateRotationMinutes(minutesByPeriod: Readonly<Record<PlayerId, readonly number[]>>): void
   updateGamePlanMatchups(matchups: readonly DefensiveMatchupAssignment[]): void
@@ -160,6 +165,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ world: result.world })
     return result
   },
+  simulateUntilDate: (date) => {
+    const result = runSimulateUntilDate(requireWorld(get().world), date)
+    set({ world: result.world })
+    return result
+  },
   startNextSeason: () => {
     const world = requireWorld(get().world)
     set({ world: startNextSeason(world) })
@@ -199,11 +209,30 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setTrainingFocus: (focus) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: setTeamTrainingPlan(world, team.id, { focus }) }) },
   scheduleTrainingSession: (session) => set({ world: scheduleTrainingSession(requireWorld(get().world), session) }),
   scheduleTeamModuleSession: (input) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: scheduleTeamModuleSession(world, { teamId: team.id, ...input }) }) },
+  scheduleAutomaticTeamTrainingWeek: (weekStart) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: scheduleAutomaticTeamTrainingWeek(world, { teamId: team.id, weekStart }) }) },
   cancelTrainingSession: (sessionId) => set({ world: cancelScheduledTrainingSession(requireWorld(get().world), sessionId) }),
   saveUserTrainingModule: (module) => set({ world: createOrUpdateUserTrainingModule(requireWorld(get().world), module) }),
   deleteUserTrainingModule: (moduleId) => set({ world: deleteUserTrainingModule(requireWorld(get().world), moduleId) }),
   assignTrainingModuleToPlayer: (input) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: assignTrainingModuleToPlayer(world, { teamId: team.id, ...input }) }) },
   setLineupSlot: (slot, playerId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: setLineupSlot(world, team.id, slot, playerId) }) },
+  requestScoutingAssignment: (playerId) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    if (team === undefined) return
+    const scout = Object.values(world.teamStaffAssignmentsById).find(
+      (assignment) => assignment.teamId === team.id && assignment.role === 'regionalScout',
+    )
+    if (scout === undefined) return
+    set({
+      world: requestScouting(world, {
+        organizationId: organizationIdForTeam(team.id),
+        playerId,
+        missionType: 'QUICK_LOOK',
+        requestedBy: 'HEAD_COACH',
+        evaluatorStaffId: scout.staffPersonId,
+      }),
+    })
+  },
   clearLineupSlot: (slot) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: clearLineupSlot(world, team.id, slot) }) },
   updateRotationMinutes: (minutesByPeriod) => {
     const world = requireWorld(get().world)

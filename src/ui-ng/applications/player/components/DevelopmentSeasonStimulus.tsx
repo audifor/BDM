@@ -3,6 +3,7 @@ import type {
   DevelopmentStimulusCategoryRowModel,
   DevelopmentStimulusRatingRowModel,
 } from '@/ui-ng/applications/player/data/buildPlayerDevelopmentModel'
+import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 
 export function DevelopmentSeasonStimulus({
   model,
@@ -24,117 +25,64 @@ export function DevelopmentSeasonStimulus({
         <div className="pd-stimulus__section">
           <span className="pd-stat-label pd-stat-label--secondary">By category</span>
           <div className="pd-stimulus__scroll">
-            <table className="pd-stimulus__table">
-              <thead>
-                <tr>
-                  <th scope="col">Category</th>
-                  <th className="pd-stimulus__num" scope="col">
-                    Stimulus
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {model.categories.map((row) => (
-                  <StimulusCategoryRow
-                    key={row.id}
-                    onSelect={onSelectItem}
-                    row={row}
-                    selected={selectedItemId === row.id}
-                  />
-                ))}
-              </tbody>
-            </table>
+            <NgPrecisionTable
+              className="pd-stimulus__table"
+              columns={[
+                ngCol<DevelopmentStimulusCategoryRowModel>('category', 'Category', (row) => row.categoryLabel, {
+                  value: (row) => row.categoryLabel,
+                }),
+                ngCol<DevelopmentStimulusCategoryRowModel>(
+                  'stimulus',
+                  'Stimulus',
+                  (row) => row.stimulusTotal.toFixed(1),
+                  { numeric: true, value: (row) => row.stimulusTotal },
+                ),
+              ]}
+              gridId="ng-player-dev-stimulus-category"
+              onRowClick={(row) => onSelectItem(row.id)}
+              onSelectionChange={(ids) => {
+                if (ids[0]) onSelectItem(ids[0])
+              }}
+              rows={model.categories}
+              selectedId={selectedItemId ?? undefined}
+            />
           </div>
         </div>
         {model.topRatings.length > 0 && (
           <div className="pd-stimulus__section">
             <span className="pd-stat-label pd-stat-label--secondary">Top rating focus</span>
             <div className="pd-stimulus__scroll pd-stimulus__scroll--compact">
-              <table className="pd-stimulus__table">
-                <thead>
-                  <tr>
-                    <th scope="col">Rating</th>
-                    <th className="pd-stimulus__num" scope="col">
-                      Stimulus
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {model.topRatings.map((row) => (
-                    <StimulusRatingRow
-                      key={row.id}
-                      onSelect={onSelectItem}
-                      row={row}
-                      selected={selectedItemId === row.id}
-                    />
-                  ))}
-                </tbody>
-              </table>
+              <NgPrecisionTable
+                className="pd-stimulus__table"
+                columns={[
+                  ngCol<DevelopmentStimulusRatingRowModel>(
+                    'rating',
+                    'Rating',
+                    (row) => (
+                      <>
+                        <span className="pd-stimulus__rating">{row.ratingLabel}</span>
+                        <span className="pd-stimulus__category">{row.categoryLabel}</span>
+                      </>
+                    ),
+                    { value: (row) => row.ratingLabel },
+                  ),
+                  ngCol<DevelopmentStimulusRatingRowModel>('stimulus', 'Stimulus', (row) => row.stimulus.toFixed(1), {
+                    numeric: true,
+                    value: (row) => row.stimulus,
+                  }),
+                ]}
+                gridId="ng-player-dev-stimulus-ratings"
+                onRowClick={(row) => onSelectItem(row.id)}
+                onSelectionChange={(ids) => {
+                  if (ids[0]) onSelectItem(ids[0])
+                }}
+                rows={model.topRatings}
+                selectedId={selectedItemId ?? undefined}
+              />
             </div>
           </div>
         )}
       </div>
     </section>
-  )
-}
-
-function StimulusCategoryRow({
-  row,
-  selected,
-  onSelect,
-}: {
-  readonly row: DevelopmentStimulusCategoryRowModel
-  readonly selected: boolean
-  readonly onSelect: (itemId: string) => void
-}) {
-  return (
-    <tr
-      aria-selected={selected}
-      className={selected ? 'is-selected' : undefined}
-      onClick={() => onSelect(row.id)}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          onSelect(row.id)
-        }
-      }}
-      role="button"
-      tabIndex={0}
-    >
-      <td>{row.categoryLabel}</td>
-      <td className="pd-stimulus__num ng-type-numeric">{row.stimulusTotal.toFixed(1)}</td>
-    </tr>
-  )
-}
-
-function StimulusRatingRow({
-  row,
-  selected,
-  onSelect,
-}: {
-  readonly row: DevelopmentStimulusRatingRowModel
-  readonly selected: boolean
-  readonly onSelect: (itemId: string) => void
-}) {
-  return (
-    <tr
-      aria-selected={selected}
-      className={selected ? 'is-selected' : undefined}
-      onClick={() => onSelect(row.id)}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          onSelect(row.id)
-        }
-      }}
-      role="button"
-      tabIndex={0}
-    >
-      <td>
-        <span className="pd-stimulus__rating">{row.ratingLabel}</span>
-        <span className="pd-stimulus__category">{row.categoryLabel}</span>
-      </td>
-      <td className="pd-stimulus__num ng-type-numeric">{row.stimulus.toFixed(1)}</td>
-    </tr>
   )
 }

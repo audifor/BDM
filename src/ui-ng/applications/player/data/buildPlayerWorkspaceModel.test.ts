@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
 import { CANONICAL_RATING_KEYS } from '@/domain/player'
-import { createConfiguredGame, createNewGame } from '@/app/game'
+import { completeMatch, createConfiguredGame, createNewGame, prepareUserMatch } from '@/app/game'
+import { boxScoreValuation } from '@/engine/stats/boxScoreValuation'
+import { getPlayerSeasonStats } from '@/engine/stats/PlayerHistory'
 import { ACB_QUICK_START_TEAM_KEY, ACB_TEST_UNIVERSE_ID } from '@/data/acb2026'
 import type { PlayerId } from '@/domain/ids'
 
@@ -31,6 +33,9 @@ describe('buildPlayerWorkspaceModel', () => {
     expect(model!.shotProfile.status).toBe('unavailable')
     expect(model!.roleProfile.isDerived).toBe(true)
     expect(model!.identity.jerseyNumber.status).toBe('unavailable')
+    expect(model!.identity.teamId.status).toBe('available')
+    expect(model!.identity.dateOfBirth.status).toBe('available')
+    expect(model!.identity.wingspan.status).toBe('available')
     expect(model!.attributes.allRatings.length).toBe(CANONICAL_RATING_KEYS.length)
     expect(model!.attributes.categories.length).toBe(8)
     expect(model!.development.longitudinal.message).toContain('not currently tracked')
@@ -67,5 +72,19 @@ describe('buildPlayerWorkspaceModel', () => {
 
     expect(guardModel!.identity.firstName).not.toEqual(bigModel!.identity.firstName)
     expect(guardModel!.ratings.some((rating) => rating.label.length > 0)).toBe(true)
+  })
+
+  it('adds FIBA valuation to season performance after a completed match', () => {
+    const world = createNewGame()
+    const simulation = prepareUserMatch(world)
+    const updated = completeMatch(world, simulation)
+    const playerId = simulation.squads.home[0]!
+    const stats = getPlayerSeasonStats(updated, playerId, updated.currentSeasonId)
+    const expected = (boxScoreValuation(stats) / stats.gamesPlayed).toFixed(1)
+    const model = buildPlayerWorkspaceModel(updated, playerId)
+
+    expect(model!.seasonPerformance.status).toBe('available')
+    expect(model!.seasonPerformance.valuation).toBe(expected)
+    expect(model!.seasonPerformance.primary[0]).toEqual({ label: 'VAL', value: expected })
   })
 })

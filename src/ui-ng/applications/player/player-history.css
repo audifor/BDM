@@ -3,10 +3,11 @@
 .ph-root {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
+  gap: var(--ng-panel-gap);
   height: 100%;
   min-height: 0;
+  padding: var(--ng-workspace-padding);
   overflow: hidden;
-  background: var(--ng-bg-workspace);
 }
 
 .ph-stat-label {
@@ -48,10 +49,6 @@
 
 .ph-scope {
   padding: var(--ng-spacing-8) var(--ng-spacing-12);
-  border-bottom: 1px solid var(--ng-border-strong);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 24%),
-    var(--ng-bg-panel-primary);
 }
 
 .ph-scope__primary {
@@ -62,8 +59,11 @@
 }
 
 .ph-scope__title {
-  font-size: var(--ng-font-size-data);
-  font-weight: var(--ng-font-weight-semibold);
+  font-family: var(--ng-font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--ng-text-primary);
 }
 
@@ -74,9 +74,10 @@
 }
 
 .ph-scope__count {
+  font-family: var(--ng-font-display);
   font-size: 11px;
   font-weight: var(--ng-font-weight-semibold);
-  letter-spacing: 0.04em;
+  letter-spacing: var(--ng-track-meta);
   text-transform: uppercase;
   color: var(--ng-text-secondary);
   padding: 2px 8px;
@@ -97,8 +98,6 @@
   flex-wrap: wrap;
   gap: var(--ng-spacing-4);
   padding: var(--ng-spacing-6) var(--ng-spacing-12);
-  border-bottom: 1px solid var(--ng-border-strong);
-  background: var(--ng-bg-panel-secondary);
 }
 
 .ph-filters button {
@@ -143,7 +142,6 @@
 .ph-timeline__table {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--ng-font-size-secondary);
 }
 
 .ph-timeline__col--date {
@@ -162,29 +160,14 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  padding: var(--ng-spacing-4) var(--ng-spacing-8);
-  text-align: left;
-  font-size: var(--ng-font-size-meta);
-  font-weight: var(--ng-font-weight-semibold);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ng-text-disabled);
-  background: var(--ng-bg-workspace);
-  border-bottom: 1px solid var(--ng-border-subtle);
 }
 
 .ph-timeline__table td {
-  padding: var(--ng-spacing-6) var(--ng-spacing-8);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 .ph-timeline__table tr[role='button'] {
   cursor: pointer;
-}
-
-.ph-timeline__table tr.is-selected {
-  background: rgba(255, 255, 255, 0.06);
 }
 
 .ph-timeline__date {

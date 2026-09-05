@@ -4,19 +4,25 @@ import { getTeamLineup, getTeamRoster, resolveGameClockRules } from '@/domain/wo
 import { getNextUserGame, getUserTeam } from '@/engine/calendar'
 import type { Player } from '@/domain/player'
 import { legacyRatingSignals } from '@/domain/player'
-import type { PlayerId } from '@/domain/ids'
-import { createEntityId } from '@/domain/ids'
+import type { PlayerId, TeamId } from '@/domain/ids'
+import { createEntityId, organizationIdForTeam } from '@/domain/ids'
+import { formatRatingEvaluation, getOrganizationRatingEvaluation, intelligenceSortValue } from '@/domain/intelligence/OrganizationPlayerEvaluation'
 import { getLineupAssignments, getLineupSlotForPlayer, isValidRotationMinutes, LINEUP_SLOTS, PLAYERS_ON_COURT, type DefensiveMatchupAssignment, type LineupSlot, type Playbook, type SavedPlay, type TeamLineup, type TeamRotationIntent } from '@/domain/tactics'
 import type { MatchTacticalPlan, TacticalLevel } from '@/engine/match'
 import { INITIAL_FRAME } from './TacticsMigrationRepository'
 import PcbTacticsCreator from './PcbTacticsCreator'
 import PcbTacticsBoard from './PcbTacticsBoard'
 import DraggableSubnav from '../club/components/DraggableSubnav'
-import { useEntityContextMenu } from '@/ui/entityContextMenu/EntityContextMenuProvider'
+import { PlayerNameLink } from '@/ui/navigation/PlayerNameLink'
+import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { PrecisionDivHead } from '@/ui-ng/components/PrecisionDivHead'
+import { usePrecisionDivGrid, type PrecisionDivColumn } from '@/ui-ng/components/usePrecisionDivGrid'
 import './TacticsPcbPage.css'
 
-type Tab = 'board' | 'designer' | 'matchups' | 'rotations' | 'plays' | 'match'
-const tabs: readonly [Tab, string][] = [['board', 'Pizarra'], ['designer', 'Diseñador'], ['matchups', 'Emparejamientos'], ['rotations', 'Rotaciones'], ['plays', 'Jugadas'], ['match', 'Partido']]
+export type TacticsPcbTab = 'board' | 'designer' | 'matchups' | 'rotations' | 'plays' | 'match'
+export const TACTICS_PCB_TABS: readonly [TacticsPcbTab, string][] = [['board', 'Pizarra'], ['designer', 'Diseñador'], ['matchups', 'Emparejamientos'], ['rotations', 'Rotaciones'], ['plays', 'Jugadas'], ['match', 'Partido']]
+type Tab = TacticsPcbTab
+const tabs = TACTICS_PCB_TABS
 const paceOptions: readonly { readonly label: string; readonly value: TacticalLevel }[] = [{ label: 'Equilibrado', value: 0 }, { label: 'Rápido', value: 1 }, { label: 'Lento', value: -1 }]
 const coverageOptions: readonly { readonly label: string; readonly value: 'Balanced' | 'Protect paint' | 'Pressure perimeter' }[] = [{ label: 'Drop', value: 'Balanced' }, { label: 'Switch', value: 'Protect paint' }, { label: 'Blitz', value: 'Pressure perimeter' }]
 const defensePresets: Record<'Balanced' | 'Protect paint' | 'Pressure perimeter', { readonly interior: TacticalLevel; readonly perimeter: TacticalLevel }> = { Balanced: { interior: 0, perimeter: 0 }, 'Protect paint': { interior: 2, perimeter: -1 }, 'Pressure perimeter': { interior: -1, perimeter: 2 } }
@@ -64,6 +70,10 @@ export function TacticsPcbPage({
   onDeleteDesignerPlay,
   onSaveDesignerPlaybook,
   onDeleteDesignerPlaybook,
+  variant = 'legacy',
+  activeTab,
+  onTabChange,
+  onOpenPlayer,
 }: {
   readonly world?: GameWorld
   readonly plan?: MatchTacticalPlan
@@ -78,8 +88,17 @@ export function TacticsPcbPage({
   readonly onDeleteDesignerPlay?: (playId: string) => void
   readonly onSaveDesignerPlaybook?: (playbook: Playbook) => void
   readonly onDeleteDesignerPlaybook?: (playbookId: string) => void
+  readonly variant?: 'legacy' | 'ng'
+  readonly activeTab?: Tab
+  readonly onTabChange?: (tab: Tab) => void
+  readonly onOpenPlayer?: (playerId: PlayerId) => void
 }) {
-  const [tab, setTab] = useState<Tab>('board')
+  const [internalTab, setInternalTab] = useState<Tab>('board')
+  const tab = activeTab ?? internalTab
+  const setTab = (next: Tab) => {
+    onTabChange?.(next)
+    if (activeTab === undefined) setInternalTab(next)
+  }
   const [tacticalRoles, setTacticalRoles] = useState<Record<string, unknown>>({})
   const team = useMemo(() => (world === undefined ? undefined : getUserTeam(world)), [world])
   const roster = useMemo(() => (world === undefined || team === undefined ? [] : getTeamRoster(world, team.id)), [world, team])
@@ -95,7 +114,7 @@ export function TacticsPcbPage({
   const persistedTacticalOverride = useMemo(() => (world === undefined || gamePlanKey === undefined ? undefined : world.gamePlansByKey[gamePlanKey]?.tacticalOverride as MatchTacticalPlan | undefined), [world, gamePlanKey])
   const savedPlays = useMemo(() => (world === undefined ? [] : Object.values(world.savedPlaysById)), [world])
   const playbooks = useMemo(() => (world === undefined ? [] : Object.values(world.playbooksById)), [world])
-  return <section className="pcb-tactics" aria-label="Tácticas PCB migradas"><DraggableSubnav className="pcb-tactics__tabs" items={tabs.map(([id, label]) => ({ id, label, active: tab === id, onClick: () => setTab(id) }))} storageKey="pcbasket.subnav.tactics" />{tab === 'board' && <PcbTacticsBoard onLineupSlotChange={onLineupSlotChange} onLineupSlotClear={onLineupSlotClear} onRolesChange={(next: Record<string, unknown>) => { setTacticalRoles(next); window.localStorage.setItem('pcbasket.tactics.roles', JSON.stringify(next)) }} roster={boardRoster} tacticalRoles={tacticalRoles} teamId={team?.id} />}{tab === 'designer' && <PcbTacticsCreator onDeletePlay={onDeleteDesignerPlay} onDeletePlaybook={onDeleteDesignerPlaybook} onSavePlay={onSaveDesignerPlay} onSavePlaybook={onSaveDesignerPlaybook} playbooks={playbooks} savedPlays={savedPlays} />}{tab === 'matchups' && <Matchups gameKey={gamePlanKey} onUpdateMatchups={onUpdateMatchups} opponentRoster={opponentRoster} opponentTeam={opponentTeam} ourLineup={lineup} ourRoster={roster} persistedMatchups={persistedMatchups} />}{tab === 'rotations' && <Rotations clockRules={clockRules} lineup={lineup} onUpdateRotationMinutes={onUpdateRotationMinutes} rotationIntent={rotationIntent} roster={roster} />}{tab === 'plays' && <Plays onDeletePlay={onDeleteDesignerPlay} onSavePlay={onSaveDesignerPlay} savedPlays={savedPlays} />}{tab === 'match' && <MatchPlan gameKey={gamePlanKey} onChange={onChange} onReset={onReset} onSaveTacticalOverride={onSaveGamePlanTacticalOverride} persistedTacticalOverride={persistedTacticalOverride} plan={plan} world={world} />}</section>
+  return <section className={`pcb-tactics${variant === 'ng' ? ' pcb-tactics--ng' : ''}`} aria-label="Tácticas PCB migradas">{variant === 'legacy' ? <DraggableSubnav className="pcb-tactics__tabs" items={tabs.map(([id, label]) => ({ id, label, active: tab === id, onClick: () => setTab(id) }))} storageKey="pcbasket.subnav.tactics" /> : null}{tab === 'board' && <PcbTacticsBoard onLineupSlotChange={onLineupSlotChange} onLineupSlotClear={onLineupSlotClear} onOpenPlayer={onOpenPlayer} onRolesChange={(next: Record<string, unknown>) => { setTacticalRoles(next); window.localStorage.setItem('pcbasket.tactics.roles', JSON.stringify(next)) }} roster={boardRoster} tacticalRoles={tacticalRoles} teamId={team?.id} />}{tab === 'designer' && <PcbTacticsCreator onDeletePlay={onDeleteDesignerPlay} onDeletePlaybook={onDeleteDesignerPlaybook} onSavePlay={onSaveDesignerPlay} onSavePlaybook={onSaveDesignerPlaybook} playbooks={playbooks} savedPlays={savedPlays} />}{tab === 'matchups' && <Matchups gameKey={gamePlanKey} onOpenPlayer={onOpenPlayer} onUpdateMatchups={onUpdateMatchups} opponentRoster={opponentRoster} opponentTeam={opponentTeam} ourLineup={lineup} ourRoster={roster} persistedMatchups={persistedMatchups} teamId={team?.id} world={world} />}{tab === 'rotations' && <Rotations clockRules={clockRules} lineup={lineup} onOpenPlayer={onOpenPlayer} onUpdateRotationMinutes={onUpdateRotationMinutes} rotationIntent={rotationIntent} roster={roster} />}{tab === 'plays' && <Plays onDeletePlay={onDeleteDesignerPlay} onSavePlay={onSaveDesignerPlay} savedPlays={savedPlays} />}{tab === 'match' && <MatchPlan gameKey={gamePlanKey} onChange={onChange} onReset={onReset} onSaveTacticalOverride={onSaveGamePlanTacticalOverride} persistedTacticalOverride={persistedTacticalOverride} plan={plan} world={world} />}</section>
 }
 
 function Control({ label, options, value, onChange }: { label: string; options: readonly string[]; value: string; onChange: (value: string) => void }) { return <label className="pcb-tactics__control">{label}<select onChange={(event) => onChange(event.target.value)} value={value}>{options.map((option) => <option key={option}>{option}</option>)}</select></label> }
@@ -106,6 +125,52 @@ function Control({ label, options, value, onChange }: { label: string; options: 
  * always selectable regardless of scouting - scouting (not modeled yet) would only ever gate how
  * much *rating/threat detail* is knowable about them, never whether they can be assigned a defender.
  */
+const MATCHUP_PRESSURE = ['Gap', 'Normal', 'Intensa', 'Negar'] as const
+const MATCHUP_PNR = ['Drop', 'Over', 'Under', 'Switch', 'Blitz'] as const
+const MATCHUP_FORCE = ['Centro', 'Fondo', 'Débil', 'No'] as const
+const MATCHUP_INSTRUCTION_DEFAULT = { pressure: 'Normal', pnr: 'Drop', force: 'Centro' } as const
+const MATCHUP_HEIGHT_MISMATCH_CM = 12
+const POSITION_ORDER: Readonly<Record<string, number>> = { PG: 0, SG: 1, SF: 2, PF: 3, C: 4 }
+
+type MatchupInstruction = { readonly pressure: string; readonly pnr: string; readonly force: string }
+
+function positionRank(position: string): number {
+  return POSITION_ORDER[position] ?? 99
+}
+
+function playerFullName(player: Player): string {
+  return `${player.firstName} ${player.lastName}`
+}
+
+/** Position-first unique pairing. Never reads hidden ratings. */
+export function autoAssignDefensiveMatchups(
+  opponents: readonly Player[],
+  defenders: readonly Player[],
+  starterIds: ReadonlySet<string>,
+): Record<string, string> {
+  const unused = [...defenders].sort((left, right) => {
+    const byStarter = Number(starterIds.has(right.id)) - Number(starterIds.has(left.id))
+    if (byStarter !== 0) return byStarter
+    const byPosition = positionRank(left.basketball.primaryPosition) - positionRank(right.basketball.primaryPosition)
+    return byPosition !== 0 ? byPosition : left.id.localeCompare(right.id)
+  })
+  const sortedOpponents = [...opponents].sort((left, right) => {
+    const byPosition = positionRank(left.basketball.primaryPosition) - positionRank(right.basketball.primaryPosition)
+    return byPosition !== 0 ? byPosition : left.id.localeCompare(right.id)
+  })
+  const next: Record<string, string> = {}
+  for (const opponent of sortedOpponents) {
+    const samePositionStarter = unused.findIndex((defender) => defender.basketball.primaryPosition === opponent.basketball.primaryPosition && starterIds.has(defender.id))
+    const samePosition = unused.findIndex((defender) => defender.basketball.primaryPosition === opponent.basketball.primaryPosition)
+    const anyStarter = unused.findIndex((defender) => starterIds.has(defender.id))
+    const pick = samePositionStarter >= 0 ? samePositionStarter : samePosition >= 0 ? samePosition : anyStarter >= 0 ? anyStarter : unused.length === 0 ? -1 : 0
+    if (pick < 0) continue
+    const [defender] = unused.splice(pick, 1)
+    if (defender !== undefined) next[opponent.id] = defender.id
+  }
+  return next
+}
+
 function Matchups({
   ourRoster,
   ourLineup,
@@ -113,7 +178,10 @@ function Matchups({
   opponentRoster,
   persistedMatchups,
   gameKey,
+  world,
+  teamId,
   onUpdateMatchups,
+  onOpenPlayer,
 }: {
   readonly ourRoster: readonly Player[]
   readonly ourLineup?: TeamLineup
@@ -121,11 +189,15 @@ function Matchups({
   readonly opponentRoster: readonly Player[]
   readonly persistedMatchups: readonly DefensiveMatchupAssignment[]
   readonly gameKey?: string
+  readonly world?: GameWorld
+  readonly teamId?: TeamId
   readonly onUpdateMatchups?: (matchups: readonly DefensiveMatchupAssignment[]) => void
+  readonly onOpenPlayer?: (playerId: PlayerId) => void
 }) {
-  const playerMenu = useEntityContextMenu()
   const [query, setQuery] = useState('')
+  const [instructions, setInstructions] = useState<Record<string, MatchupInstruction>>({})
   const ourStarters = activeSquad(ourLineup, ourRoster).filter(({ slot }) => isLineupStarter(slot)).map(({ player }) => player)
+  const starterIds = new Set(ourStarters.map((player) => player.id))
   const [assignments, setAssignments] = useState<Record<string, string>>(() => Object.fromEntries(persistedMatchups.map((entry) => [entry.opponentPlayerId, entry.ourPlayerId])))
   const [reconciledKey, setReconciledKey] = useState(gameKey)
   // Reconcile local assignments whenever the upcoming game/opponent identity changes, so a
@@ -133,19 +205,50 @@ function Matchups({
   if (gameKey !== reconciledKey) {
     setReconciledKey(gameKey)
     setAssignments(Object.fromEntries(persistedMatchups.map((entry) => [entry.opponentPlayerId, entry.ourPlayerId])))
+    setInstructions({})
   }
-  const filteredOpponents = opponentRoster.filter((player) => `${player.firstName} ${player.lastName}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()))
+  const flaggedIds = useMemo(() => {
+    if (world === undefined || teamId === undefined) return new Set<string>()
+    return new Set(
+      Object.values(world.oppositionScoutingReportsById)
+        .filter((report) => report.teamId === teamId && (opponentTeam === undefined || report.opponentTeamId === opponentTeam.id))
+        .flatMap((report) => report.flaggedPlayerIds),
+    )
+  }, [opponentTeam, teamId, world])
+  const threatByOpponent = useMemo(() => {
+    if (world === undefined || teamId === undefined) return new Map<string, { readonly label: string; readonly sort: number | undefined }>()
+    const organizationId = organizationIdForTeam(teamId)
+    return new Map(opponentRoster.map((player) => {
+      const evaluation = getOrganizationRatingEvaluation({
+        organizationId,
+        playerId: player.id,
+        dimension: 'shooting',
+        knowledge: world.organizationKnowledge,
+        currentDate: world.currentDate,
+        publicPosition: player.basketball.primaryPosition,
+      })
+      const known = formatRatingEvaluation(evaluation)
+      const flagged = flaggedIds.has(player.id)
+      return [player.id, {
+        label: flagged ? (known === '?' ? 'Alta' : `Alta · ${known}`) : known,
+        sort: flagged ? 101 : intelligenceSortValue(evaluation),
+      }] as const
+    }))
+  }, [flaggedIds, opponentRoster, teamId, world])
+  const filteredOpponents = [...opponentRoster.filter((player) => playerFullName(player).toLocaleLowerCase().includes(query.toLocaleLowerCase()))].sort((left, right) => {
+    const compare = positionRank(left.basketball.primaryPosition) - positionRank(right.basketball.primaryPosition)
+    return compare !== 0 ? compare : left.id.localeCompare(right.id)
+  })
   const persist = (next: Record<string, string>) => {
     setAssignments(next)
     onUpdateMatchups?.(Object.entries(next).map(([opponentPlayerId, ourPlayerId]) => ({ ourPlayerId: ourPlayerId as PlayerId, opponentPlayerId: opponentPlayerId as PlayerId })))
   }
-  const autoMatchup = () => {
-    const next: Record<string, string> = {}
-    opponentRoster.forEach((opponent, index) => {
-      const defender = ourStarters[index % Math.max(1, ourStarters.length)]
-      if (defender !== undefined) next[opponent.id] = defender.id
-    })
-    persist(next)
+  const updateInstruction = (opponentId: string, field: keyof MatchupInstruction, value: string) => {
+    setInstructions((current) => ({ ...current, [opponentId]: { ...(current[opponentId] ?? MATCHUP_INSTRUCTION_DEFAULT), [field]: value } }))
+  }
+  const resetAll = () => {
+    persist({})
+    setInstructions({})
   }
   return (
     <main className="pcb-tactics__table-page">
@@ -155,40 +258,118 @@ function Matchups({
           <small>{opponentTeam === undefined ? 'Sin próximo rival programado' : `Rival: ${opponentTeam.name}`}</small>
         </div>
         <input aria-label="Buscar rival" onChange={(event) => setQuery(event.target.value)} placeholder="Buscar rival" value={query} />
-        <button disabled={opponentRoster.length === 0 || ourStarters.length === 0} onClick={autoMatchup} type="button">Auto-matchup</button>
-        <button disabled={Object.keys(assignments).length === 0} onClick={() => persist({})} type="button">Reset</button>
+        <button disabled={opponentRoster.length === 0 || ourRoster.length === 0} onClick={() => persist(autoAssignDefensiveMatchups(opponentRoster, ourRoster, starterIds))} type="button">Auto-matchup</button>
+        <button disabled={Object.keys(assignments).length === 0} onClick={resetAll} type="button">Reset</button>
       </header>
-      <table>
-        <thead>
-          <tr><th>POS</th><th>JUGADOR RIVAL</th><th>DEFENSOR</th></tr>
-        </thead>
-        <tbody>
-          {opponentTeam === undefined ? (
-            <tr><td colSpan={3}>Sin próximo rival programado.</td></tr>
-          ) : filteredOpponents.length === 0 ? (
-            <tr><td colSpan={3}>Sin jugadores rivales disponibles.</td></tr>
-          ) : (
-            filteredOpponents.map((opponent) => (
-              <tr key={opponent.id} onContextMenu={(event) => playerMenu.open({ type: 'player', id: opponent.id }, event, { surface: 'matchups' })}>
-                <td>{opponent.basketball.primaryPosition}</td>
-                <td>{opponent.firstName} {opponent.lastName}</td>
-                <td>
+      <NgPrecisionTable
+        className="pcb-tactics__matchups-table"
+        columns={[
+          ngCol<Player>(
+            'pos',
+            'POS',
+            (opponent) => <span className="pcb-tactics__position ng-play-position">{opponent.basketball.primaryPosition}</span>,
+            { value: (opponent) => positionRank(opponent.basketball.primaryPosition) },
+          ),
+          ngCol<Player>(
+            'name',
+            'JUGADOR RIVAL',
+            (opponent) => {
+              const name = playerFullName(opponent)
+              return onOpenPlayer === undefined ? name : (
+                <button className="pcb-tactics__player-link" onClick={() => onOpenPlayer(opponent.id)} type="button">{name}</button>
+              )
+            },
+            { value: (opponent) => playerFullName(opponent) },
+          ),
+          ngCol<Player>(
+            'threat',
+            'AMENAZA',
+            (opponent) => threatByOpponent.get(opponent.id)?.label ?? '?',
+            { value: (opponent) => threatByOpponent.get(opponent.id)?.sort ?? -1 },
+          ),
+          ngCol<Player>(
+            'height',
+            'ALTURA',
+            (opponent) => `${opponent.bio.heightCm} cm`,
+            { numeric: true, value: (opponent) => opponent.bio.heightCm },
+          ),
+          ngCol<Player>(
+            'defender',
+            'DEFENSOR',
+            (opponent) => {
+              const defender = ourRoster.find((player) => player.id === assignments[opponent.id])
+              const heightDiff = defender === undefined ? 0 : defender.bio.heightCm - opponent.bio.heightCm
+              const mismatch = defender !== undefined && Math.abs(heightDiff) > MATCHUP_HEIGHT_MISMATCH_CM
+              const name = playerFullName(opponent)
+              return (
+                <>
                   <select
-                    aria-label={`Defensor de ${opponent.firstName} ${opponent.lastName}`}
+                    aria-label={`Defensor de ${name}`}
+                    className={mismatch ? 'is-mismatch' : undefined}
                     onChange={(event) => persist(event.target.value === '' ? Object.fromEntries(Object.entries(assignments).filter(([id]) => id !== opponent.id)) : { ...assignments, [opponent.id]: event.target.value })}
                     value={assignments[opponent.id] ?? ''}
                   >
                     <option value="">Sin asignar</option>
-                    {ourStarters.map((defender) => (
-                      <option key={defender.id} value={defender.id}>{defender.firstName} {defender.lastName}</option>
+                    {ourRoster.map((candidate) => (
+                      <option key={candidate.id} value={candidate.id}>{candidate.basketball.primaryPosition} · {playerFullName(candidate)}</option>
                     ))}
                   </select>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+                  {mismatch ? <small className="pcb-tactics__mismatch">Altura {heightDiff > 0 ? '+' : ''}{heightDiff} cm</small> : null}
+                </>
+              )
+            },
+            { value: (opponent) => assignments[opponent.id] ?? '' },
+          ),
+          ngCol<Player>(
+            'pressure',
+            'PRESIÓN',
+            (opponent) => {
+              const name = playerFullName(opponent)
+              const instruction = instructions[opponent.id] ?? MATCHUP_INSTRUCTION_DEFAULT
+              return (
+                <select aria-label={`Presión sobre ${name}`} onChange={(event) => updateInstruction(opponent.id, 'pressure', event.target.value)} value={instruction.pressure}>
+                  {MATCHUP_PRESSURE.map((option) => <option key={option}>{option}</option>)}
+                </select>
+              )
+            },
+            { value: (opponent) => (instructions[opponent.id] ?? MATCHUP_INSTRUCTION_DEFAULT).pressure },
+          ),
+          ngCol<Player>(
+            'pnr',
+            'P&R',
+            (opponent) => {
+              const name = playerFullName(opponent)
+              const instruction = instructions[opponent.id] ?? MATCHUP_INSTRUCTION_DEFAULT
+              return (
+                <select aria-label={`P&R sobre ${name}`} onChange={(event) => updateInstruction(opponent.id, 'pnr', event.target.value)} value={instruction.pnr}>
+                  {MATCHUP_PNR.map((option) => <option key={option}>{option}</option>)}
+                </select>
+              )
+            },
+            { value: (opponent) => (instructions[opponent.id] ?? MATCHUP_INSTRUCTION_DEFAULT).pnr },
+          ),
+          ngCol<Player>(
+            'force',
+            'DIRECCIÓN',
+            (opponent) => {
+              const name = playerFullName(opponent)
+              const instruction = instructions[opponent.id] ?? MATCHUP_INSTRUCTION_DEFAULT
+              return (
+                <select aria-label={`Dirección sobre ${name}`} onChange={(event) => updateInstruction(opponent.id, 'force', event.target.value)} value={instruction.force}>
+                  {MATCHUP_FORCE.map((option) => <option key={option}>{option}</option>)}
+                </select>
+              )
+            },
+            { value: (opponent) => (instructions[opponent.id] ?? MATCHUP_INSTRUCTION_DEFAULT).force },
+          ),
+        ]}
+        emptyDescription={opponentTeam === undefined ? 'Sin próximo rival programado.' : 'Sin jugadores rivales disponibles.'}
+        emptyTitle={opponentTeam === undefined ? 'Sin próximo rival programado.' : 'Sin jugadores rivales disponibles.'}
+        entityForRow={(opponent) => ({ type: 'player', id: opponent.id })}
+        entitySurface="matchups"
+        gridId="pcb-tactics-matchups"
+        rows={filteredOpponents}
+      />
     </main>
   )
 }
@@ -287,12 +468,14 @@ function Rotations({
   clockRules,
   rotationIntent,
   onUpdateRotationMinutes,
+  onOpenPlayer,
 }: {
   readonly lineup?: TeamLineup
   readonly roster: readonly Player[]
   readonly clockRules?: { readonly periodCount: number; readonly periodSeconds?: number; readonly overtimeSeconds?: number }
   readonly rotationIntent?: TeamRotationIntent
   readonly onUpdateRotationMinutes?: (minutesByPeriod: Readonly<Record<PlayerId, readonly number[]>>) => void
+  readonly onOpenPlayer?: (playerId: PlayerId) => void
 }) {
   const squad = activeSquad(lineup, roster)
   const periodCount = clockRules?.periodCount ?? DEFAULT_ROTATION_PERIOD_COUNT
@@ -303,9 +486,12 @@ function Rotations({
   // periodMinutes, the OT column caps at overtimeMinutes (Issue #9 blocker 3) - never a flat
   // constant that's wrong for NCAA men's 20-minute halves or NBA/FIBA/WNBA period lengths.
   const maxForColumn = (columnIndex: number) => (columnIndex < periodCount ? periodMinutes : overtimeMinutes)
-  // Single source of truth for column geometry: header and every row share this exact template, so
-  // a rotation grid sized to a non-5-column competition (e.g. 2 halves + OT) never desyncs (Issue #9/#8).
-  const rowGridStyle = { gridTemplateColumns: `210px repeat(${columns.length},minmax(105px,1fr)) 60px` }
+  const rotationColumnDefs = useMemo<readonly PrecisionDivColumn[]>(() => [
+    { id: 'player', label: 'Jugador', width: 210, locked: true },
+    ...periodLabels(periodCount).map((label) => ({ id: label, label, width: 105, flex: 1, minWidth: 105 })),
+    { id: 'total', label: 'Total', width: 60, locked: true },
+  ], [periodCount])
+  const grid = usePrecisionDivGrid('ng-tactics-rotation', rotationColumnDefs)
   const identity = squadIdentity(squad)
   // Initial per-player default before any explicit preset/edit: the "balanced" preset's exact
   // distribution (Issue #9 blocker 1/2) - this is a rendering starting point that must ALSO be a
@@ -342,7 +528,24 @@ function Rotations({
   return <main className="pcb-tactics__rotation"><header><div><h2>Matriz de Rotación</h2><small>Configuración temporal de sesión</small></div><label className="pcb-tactics__control">Preset<select aria-label="Preset de rotación" onChange={(event) => applyPreset(event.target.value as RotationPresetId)} value="">
     <option disabled value="">Elegir preset...</option>
     {(Object.keys(rotationPresetLabels) as RotationPresetId[]).map((id) => <option key={id} value={id}>{rotationPresetLabels[id]}</option>)}
-  </select></label><button onClick={resetMinutes} type="button">Reset</button><button className="is-primary" disabled={!isValid} onClick={save} type="button">Guardar</button>{saved && isValid && <em>Guardado</em>}</header>{invalidPeriods.length > 0 && <p className="pcb-tactics__rotation-warning" role="alert">Minutos totales inválidos en {invalidPeriods.map((period) => columns[period]).join(', ')}: cada periodo debe sumar {periodMinutes * PLAYERS_ON_COURT} minutos entre los 5 jugadores en pista.</p>}<div className="pcb-tactics__rotation-grid"><div className="is-head" style={rowGridStyle}><span>Jugador</span>{columns.map((column) => <span key={column}>{column}</span>)}<span>Total</span></div>{squad.length === 0 ? <p>No hay jugadores en la plantilla del usuario.</p> : squad.map(({ player }) => { const row = minutes[player.id] ?? Array.from({ length: columns.length }, () => 0); return <div key={player.id} style={rowGridStyle}><span><b>{player.basketball.primaryPosition}</b> {player.firstName} {player.lastName}</span>{row.map((value, period) => <span key={period}><input max={maxForColumn(period)} min="0" onChange={(event) => update(player.id, period, Number(event.target.value))} type="range" value={value} /><input max={maxForColumn(period)} min="0" onChange={(event) => update(player.id, period, Number(event.target.value))} type="number" value={value} /></span>)}<strong>{row.reduce((sum, value) => sum + value, 0)}</strong></div> })}</div></main>
+  </select></label><button onClick={resetMinutes} type="button">Reset</button><button className="is-primary" disabled={!isValid} onClick={save} type="button">Guardar</button>{saved && isValid && <em>Guardado</em>}</header>{invalidPeriods.length > 0 && <p className="pcb-tactics__rotation-warning" role="alert">Minutos totales inválidos en {invalidPeriods.map((period) => columns[period]).join(', ')}: cada periodo debe sumar {periodMinutes * PLAYERS_ON_COURT} minutos entre los 5 jugadores en pista.</p>}<div className="pcb-tactics__rotation-grid ng-precision-grid"><div className="is-head" style={grid.style}>{grid.ordered.map((column) => (
+    <PrecisionDivHead
+      key={column.id}
+      headerProps={grid.headerProps(column.id)}
+      label={column.label}
+      onResize={grid.startResize(column.id)}
+    />
+  ))}</div>{squad.length === 0 ? <p>No hay jugadores en la plantilla del usuario.</p> : squad.map(({ player }) => { const row = minutes[player.id] ?? Array.from({ length: columns.length }, () => 0); return <div key={player.id} style={grid.style}>{grid.ordered.map((column) => {
+    if (column.id === 'player') {
+      return <span key={column.id}><span className="ng-play-position">{player.basketball.primaryPosition}</span> <PlayerNameLink onOpenPlayer={onOpenPlayer} playerId={player.id}>{player.firstName} {player.lastName}</PlayerNameLink></span>
+    }
+    if (column.id === 'total') {
+      return <strong key={column.id}>{row.reduce((sum, value) => sum + value, 0)}</strong>
+    }
+    const period = columns.indexOf(column.id)
+    const value = row[period] ?? 0
+    return <span key={column.id}><input max={maxForColumn(period)} min="0" onChange={(event) => update(player.id, period, Number(event.target.value))} type="range" value={value} /><input max={maxForColumn(period)} min="0" onChange={(event) => update(player.id, period, Number(event.target.value))} type="number" value={value} /></span>
+  })}</div> })}</div></main>
 }
 
 /**

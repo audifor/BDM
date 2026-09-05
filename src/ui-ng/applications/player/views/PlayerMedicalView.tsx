@@ -34,6 +34,10 @@ export function PlayerMedicalView() {
           risk={medical.risk}
           riskUnavailableLabel={medical.riskUnavailableLabel}
         />
+        <div aria-hidden className="pm-root__upper-spacer" />
+      </div>
+
+      <div className="pm-root__injury-slot">
         {injured && medical.activeInjury !== null ? (
           <MedicalActiveInjuryDossier injury={medical.activeInjury} />
         ) : (

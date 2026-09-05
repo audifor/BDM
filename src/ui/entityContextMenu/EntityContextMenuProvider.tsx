@@ -34,7 +34,7 @@ export function EntityContextMenuProvider({ children, onOpenEntity, world }: { r
 
 export function useEntityContextMenu(entity?: EntityRef, context: EntityActionContext = {}) {
   const api = useContext(EntityContextMenuContext)
-  const open = (target: EntityRef, event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>, nextContext = context) => { if (api !== null) { event.preventDefault(); const bounds = event.currentTarget.getBoundingClientRect(); api.open(target, 'clientX' in event && event.clientX !== 0 ? { x: event.clientX, y: event.clientY } : { x: bounds.left, y: bounds.bottom }, event.currentTarget, nextContext) } }
+  const open = (target: EntityRef, event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>, nextContext = context) => { if (api !== null) { event.preventDefault(); const bounds = event.currentTarget.getBoundingClientRect(); const fallback = window.__bdmDesignerViewportBridge?.toStageAnchor(bounds.left, bounds.bottom) ?? { x: bounds.left, y: bounds.bottom }; const anchor = 'clientX' in event && event.clientX !== 0 ? window.__bdmDesignerViewportBridge?.toStageAnchor(event.clientX, event.clientY) ?? { x: event.clientX, y: event.clientY } : fallback; api.open(target, anchor, event.currentTarget, nextContext) } }
   const onContextMenu = (event: MouseEvent<HTMLElement>) => { if (entity !== undefined) open(entity, event) }
   const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (entity === undefined || (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10'))) return

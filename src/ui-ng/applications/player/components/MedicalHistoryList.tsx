@@ -1,6 +1,7 @@
 import type { InjuryId } from '@/domain/ids'
 
 import type { MedicalHistoryRowModel } from '@/ui-ng/applications/player/data/buildPlayerMedicalModel'
+import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 
 export function MedicalHistoryList({
   rows,
@@ -23,63 +24,44 @@ export function MedicalHistoryList({
         <p className="pm-panel-empty">{emptyMessage ?? 'No medical history available.'}</p>
       ) : (
         <div className="pm-history__scroll">
-          <table className="pm-history__table">
-            <colgroup>
-              <col className="pm-history__col--date" />
-              <col className="pm-history__col--event" />
-              <col className="pm-history__col--status" />
-              <col className="pm-history__col--duration" />
-            </colgroup>
-            <thead>
-              <tr>
-                <th className="pm-history__col--date" scope="col">
-                  Date
-                </th>
-                <th className="pm-history__col--event" scope="col">
-                  Event
-                </th>
-                <th className="pm-history__col--status" scope="col">
-                  Status
-                </th>
-                <th className="pm-history__col--duration" scope="col">
-                  Duration
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => {
-                const selected = selectedEventId === row.id
-                return (
-                  <tr
-                    aria-selected={selected}
-                    className={`${row.statusTone === 'active' ? 'is-active' : ''}${selected ? ' is-selected' : ''}`.trim()}
-                    key={row.id}
-                    onClick={() => onSelectRow(row.id)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault()
-                        onSelectRow(row.id)
-                      }
-                    }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <td>{row.injuredOnLabel}</td>
-                    <td>
-                      <span className="pm-history__event">{row.injuryLabel}</span>
-                      <span className="pm-history__severity">{row.severityLabel}</span>
-                    </td>
-                    <td>
-                      <span className={`pm-history__status pm-history__status--${row.statusTone}`}>
-                        {row.statusLabel}
-                      </span>
-                    </td>
-                    <td className="ng-type-numeric">{row.durationLabel}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+          <NgPrecisionTable
+            className="pm-history__table"
+            columns={[
+              ngCol<MedicalHistoryRowModel>('date', 'Date', (row) => row.injuredOnLabel, {
+                value: (row) => row.injuredOnLabel,
+              }),
+              ngCol<MedicalHistoryRowModel>(
+                'event',
+                'Event',
+                (row) => (
+                  <>
+                    <span className="pm-history__event">{row.injuryLabel}</span>
+                    <span className="pm-history__severity">{row.severityLabel}</span>
+                  </>
+                ),
+                { value: (row) => `${row.injuryLabel} ${row.severityLabel}` },
+              ),
+              ngCol<MedicalHistoryRowModel>(
+                'status',
+                'Status',
+                (row) => (
+                  <span className={`pm-history__status pm-history__status--${row.statusTone}`}>{row.statusLabel}</span>
+                ),
+                { value: (row) => row.statusLabel },
+              ),
+              ngCol<MedicalHistoryRowModel>('duration', 'Duration', (row) => row.durationLabel, {
+                numeric: true,
+                value: (row) => row.durationLabel,
+              }),
+            ]}
+            gridId="ng-player-medical-history"
+            onRowClick={(row) => onSelectRow(row.id)}
+            onSelectionChange={(ids) => {
+              if (ids[0]) onSelectRow(ids[0] as InjuryId)
+            }}
+            rows={rows}
+            selectedId={selectedEventId ?? undefined}
+          />
         </div>
       )}
     </section>

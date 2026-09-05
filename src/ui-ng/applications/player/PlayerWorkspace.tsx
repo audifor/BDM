@@ -12,8 +12,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { GameId, InjuryId } from '@/domain/ids'
 
-import { PlayerWorkspaceHeader } from '@/ui-ng/applications/player/components/PlayerWorkspaceHeader'
-import { RatingInspectorDetail } from '@/ui-ng/applications/player/components/RatingInspectorDetail'
+import { PlayerWorkspaceTabActions } from '@/ui-ng/applications/player/components/PlayerWorkspaceHeader'
+import { EntityIdentityBand } from '@/ui-ng/applications/player/components/EntityIdentityBand'
 import type { HistoryFilterId } from '@/ui-ng/applications/player/data/buildPlayerHistoryModel'
 import type { PerformanceCompetitionFilter } from '@/ui-ng/applications/player/data/buildPlayerPerformanceModel'
 import { RADAR_CATEGORY_ORDER, type RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
@@ -218,7 +218,7 @@ function PlayerWorkspaceLayout({
   readonly setActiveView: (view: PlayerWorkspaceViewId) => void
 }) {
   const { model, session } = usePlayerWorkspace()
-  const { selectedRatingId, inspectorCollapsed, setInspectorCollapsed } = session
+  const { inspectorCollapsed, setInspectorCollapsed } = session
 
   const teamStyle = useMemo(() => {
     if (model === null) return undefined
@@ -239,18 +239,15 @@ function PlayerWorkspaceLayout({
     [activeView],
   )
 
-  const inspectorRatingId =
-    activeView === 'attributes'
-      ? selectedRatingId
-      : selectedRatingId ?? model?.ratings[0]?.id ?? null
-
   return (
     <div className="po-root" style={teamStyle}>
       <ApplicationWorkspace
-        header={<PlayerWorkspaceHeader />}
+        identityBand={<EntityIdentityBand />}
         tabs={
           <WorkspaceTabs
             activeTabId={activeView}
+            insertAfterTabId="medical"
+            insertedContent={<PlayerWorkspaceTabActions />}
             onTabSelect={(tabId) => setActiveView(tabId as PlayerWorkspaceViewId)}
             tabs={tabs}
           />
@@ -297,14 +294,6 @@ function PlayerWorkspaceLayout({
                 title="Game Detail"
               >
                 <PerformanceGameInspectorContent />
-              </InspectorPane>
-            ) : (activeView === 'overview' || activeView === 'attributes') && inspectorRatingId !== null ? (
-              <InspectorPane
-                collapsed={inspectorCollapsed}
-                onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
-                title="Rating Detail"
-              >
-                <RatingInspectorDetail ratingId={inspectorRatingId} viewId={activeView} />
               </InspectorPane>
             ) : undefined
           }

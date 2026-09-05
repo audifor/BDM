@@ -1,5 +1,6 @@
 import type { MedicalActiveInjuryModel } from '@/ui-ng/applications/player/data/buildPlayerMedicalModel'
 import { formatDurationLabel } from '@/ui-ng/applications/player/data/buildPlayerMedicalModel'
+import { MedicalHoloBody } from '@/ui-ng/applications/player/components/MedicalHoloBody'
 
 export function MedicalActiveInjuryDossier({
   injury,
@@ -46,7 +47,10 @@ export function MedicalNoInjuryNotice() {
       <header className="pm-panel-head">
         <span className="pm-panel-head__title">Active injury</span>
       </header>
-      <p className="pm-injury__empty">No active injury</p>
+      <div className="pm-injury__clear-body">
+        <p className="pm-injury__empty">No active injury</p>
+        <MedicalHoloBody className="pm-injury__holo-body" />
+      </div>
     </section>
   )
 }

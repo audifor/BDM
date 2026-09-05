@@ -114,7 +114,7 @@ const calcRating = (player) => {
   return Math.round(Number(player?.current_ability || player?.rating || 50));
 };
 
-export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, onRolesChange, onLineupSlotChange, onLineupSlotClear }) {
+export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, onRolesChange, onLineupSlotChange, onLineupSlotClear, onOpenPlayer }) {
   const storagePrefix = `pcbasket.tactics.board.${teamId || "default"}`;
   const rolesKey = "pcbasket.tactics.roles";
   const legacyRolesKey = "pcbasket.tactics.board.roles";
@@ -269,17 +269,27 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
 
   const handleDropOnRoster = (event) => {
     event.preventDefault();
-    if (dragSource && dragSource !== "roster" && dragSource !== "unassigned" && draggedPlayer) {
-      // Court starter dropped on BANQUILLO: must land on a real canonical bench slot,
-      // never a fake bench appearance. If the bench is full, leave the player where they were.
-      const slot = firstFreeBenchSlot(bench);
-      if (slot) {
-        setBench((prev) => ({ ...prev, [slot]: draggedPlayer }));
+    const droppedOnUnassigned = Boolean(
+      event.target instanceof Element &&
+        (event.target.closest(".tactics-board-panel-body--unassigned") ||
+          event.target.closest(".tactics-board-panel-header")?.textContent?.includes("SIN ASIGNAR")),
+    );
+    if (droppedOnUnassigned || !draggedPlayer || dragSource === "roster") {
+      setDraggedPlayer(null);
+      setDragSource(null);
+      return;
+    }
+    // Court starter or unassigned player dropped on BANQUILLO: must land on a real
+    // canonical bench slot. If the bench is full, leave the player where they were.
+    const slot = firstFreeBenchSlot(bench);
+    if (slot) {
+      setBench((prev) => ({ ...prev, [slot]: draggedPlayer }));
+      if (dragSource === "unassigned") {
+        setUnassigned((prev) => prev.filter((player) => player.id !== draggedPlayer.id));
+      } else if (SLOT_IDS.includes(dragSource)) {
         setStarters((prev) => ({ ...prev, [dragSource]: null }));
-        // assignLineupSlot vacates the player's prior starter slot as part of the
-        // canonical conflict resolution, so a separate clear of `dragSource` isn't needed.
-        if (typeof onLineupSlotChange === "function") onLineupSlotChange(slot, draggedPlayer.id);
       }
+      if (typeof onLineupSlotChange === "function") onLineupSlotChange(slot, draggedPlayer.id);
     }
     setDraggedPlayer(null);
     setDragSource(null);
@@ -381,9 +391,22 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
                 onContextMenu={(event) => handleContextMenu(event, "roster", p.id)}
                 className="tactics-board-player"
               >
-                <div className="tactics-board-player-pos">{slot}</div>
+                <div className="tactics-board-player-pos ng-play-position">{slot}</div>
                 <div className="tactics-board-player-info">
-                  <div className="tactics-board-player-name">{p.name}</div>
+                  {onOpenPlayer ? (
+                    <button
+                      className="tactics-board-player-name pcb-player-link"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onOpenPlayer(p.id);
+                      }}
+                      type="button"
+                    >
+                      {p.name}
+                    </button>
+                  ) : (
+                    <div className="tactics-board-player-name">{p.name}</div>
+                  )}
                   <div className="tactics-board-player-meta">
                     <span className="tactics-board-player-rating">{p.rating}</span>
                     <span>{p.selectedRole || "Sin rol"}</span>
@@ -398,7 +421,7 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
           <span className="tactics-board-panel-title">SIN ASIGNAR</span>
           <span className="tactics-board-panel-count">{unassigned.length} disp.</span>
         </div>
-        <div className="tactics-board-panel-body">
+        <div className="tactics-board-panel-body tactics-board-panel-body--unassigned">
           {unassigned.map((p) => (
             <div
               key={p.id}
@@ -407,9 +430,22 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
               onContextMenu={(event) => handleContextMenu(event, "unassigned", p.id)}
               className="tactics-board-player"
             >
-              <div className="tactics-board-player-pos">{p.position}</div>
+              <div className="tactics-board-player-pos ng-play-position">{p.position}</div>
               <div className="tactics-board-player-info">
-                <div className="tactics-board-player-name">{p.name}</div>
+                {onOpenPlayer ? (
+                  <button
+                    className="tactics-board-player-name pcb-player-link"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onOpenPlayer(p.id);
+                    }}
+                    type="button"
+                  >
+                    {p.name}
+                  </button>
+                ) : (
+                  <div className="tactics-board-player-name">{p.name}</div>
+                )}
                 <div className="tactics-board-player-meta">
                   <span className="tactics-board-player-rating">{p.rating}</span>
                   <span>{p.selectedRole || "Sin rol"}</span>
@@ -519,7 +555,20 @@ export default function TacticsBoardAdvanced({ teamId, roster, tacticalRoles, on
                 </div>
                 {player && (
                   <div className="tactics-board-slot-info" style={{ borderColor: suitabilityColor }}>
-                    <div className="tactics-board-slot-name">{player.name}</div>
+                    {onOpenPlayer ? (
+                      <button
+                        className="tactics-board-slot-name pcb-player-link"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onOpenPlayer(player.id);
+                        }}
+                        type="button"
+                      >
+                        {player.name}
+                      </button>
+                    ) : (
+                      <div className="tactics-board-slot-name">{player.name}</div>
+                    )}
                     <div className="tactics-board-slot-duty">
                       <span>{player.selectedRole}</span>
                       {player.selectedDuty === "Ataque" && <ArrowUpCircle size={10} color={dutyColor} />}

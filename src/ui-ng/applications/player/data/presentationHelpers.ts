@@ -48,6 +48,22 @@ export function deriveTeamColors(teamId: string): {
   }
 }
 
+/** Deterministic country palette for NG flag chips when no flag asset exists. */
+export function deriveCountryFlagColors(countryCode: string): {
+  readonly primary: string
+  readonly secondary: string
+} {
+  let hash = 2166136261
+  for (const char of countryCode) {
+    hash = Math.imul(hash ^ char.charCodeAt(0), 16777619)
+  }
+  const hue = hash % 360
+  return {
+    primary: `hsl(${hue} 58% 42%)`,
+    secondary: `hsl(${(hue + 28) % 360} 72% 58%)`,
+  }
+}
+
 export function formatGameDateLabel(date: string): string {
   const parsed = new Date(`${date}T12:00:00`)
   if (Number.isNaN(parsed.getTime())) return date

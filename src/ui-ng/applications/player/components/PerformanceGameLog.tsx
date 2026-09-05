@@ -1,34 +1,9 @@
 import type { GameId } from '@/domain/ids'
 
 import type { PlayerGameLogRow } from '@/ui-ng/applications/player/data/buildPlayerPerformanceModel'
+import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 
-const COLUMNS: readonly { readonly key: keyof PlayerGameLogRow | 'started'; readonly label: string; readonly className?: string }[] = [
-  { key: 'date', label: 'Date', className: 'pp-log__col--date' },
-  { key: 'opponent', label: 'Opp', className: 'pp-log__col--opp' },
-  { key: 'competition', label: 'Comp', className: 'pp-log__col--comp' },
-  { key: 'homeAway', label: 'H/A', className: 'pp-log__col--ha' },
-  { key: 'result', label: 'Result', className: 'pp-log__col--result' },
-  { key: 'minutes', label: 'MIN', className: 'pp-log__col--num' },
-  { key: 'points', label: 'PTS', className: 'pp-log__col--num' },
-  { key: 'rebounds', label: 'REB', className: 'pp-log__col--num' },
-  { key: 'assists', label: 'AST', className: 'pp-log__col--num' },
-  { key: 'steals', label: 'STL', className: 'pp-log__col--num' },
-  { key: 'blocks', label: 'BLK', className: 'pp-log__col--num' },
-  { key: 'turnovers', label: 'TOV', className: 'pp-log__col--num' },
-  { key: 'fg', label: 'FG', className: 'pp-log__col--shoot' },
-  { key: 'threePt', label: '3PT', className: 'pp-log__col--shoot' },
-  { key: 'ft', label: 'FT', className: 'pp-log__col--shoot' },
-]
-
-function cellValue(row: PlayerGameLogRow, key: keyof PlayerGameLogRow | 'started'): string {
-  if (key === 'started') return row.started ? 'S' : '—'
-  const value = row[key]
-  return typeof value === 'number' ? String(value) : value
-}
-
-function isNumericColumn(className: string | undefined): boolean {
-  return className === 'pp-log__col--num' || className === 'pp-log__col--shoot'
-}
+type GameLogTableRow = PlayerGameLogRow & { readonly id: string }
 
 export function PerformanceGameLog({
   rows,
@@ -52,6 +27,8 @@ export function PerformanceGameLog({
     )
   }
 
+  const tableRows: readonly GameLogTableRow[] = rows.map((row) => ({ ...row, id: row.gameId }))
+
   return (
     <section className="pp-log" data-ng-region="performance-game-log">
       <header className="pp-panel-head">
@@ -59,47 +36,33 @@ export function PerformanceGameLog({
         <span className="pp-panel-head__meta">{rows.length} games</span>
       </header>
       <div className="pp-log__scroll">
-        <table className="pp-log__table">
-          <thead>
-            <tr>
-              {COLUMNS.map((column) => (
-                <th className={column.className} key={column.key} scope="col">
-                  {column.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => {
-              const selected = selectedGameId === row.gameId
-              return (
-                <tr
-                  aria-selected={selected}
-                  className={selected ? 'is-selected' : undefined}
-                  key={row.gameId}
-                  onClick={() => onSelectGame(row.gameId)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      onSelectGame(row.gameId)
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                >
-                  {COLUMNS.map((column) => (
-                    <td
-                      className={`${column.className ?? ''}${isNumericColumn(column.className) ? ' ng-type-numeric' : ''}`.trim()}
-                      key={column.key}
-                    >
-                      {cellValue(row, column.key)}
-                    </td>
-                  ))}
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+        <NgPrecisionTable
+          className="pp-log__table"
+          columns={[
+            ngCol<GameLogTableRow>('date', 'Date', (row) => row.date, { value: (row) => row.date }),
+            ngCol<GameLogTableRow>('opponent', 'Opp', (row) => row.opponent, { value: (row) => row.opponent }),
+            ngCol<GameLogTableRow>('competition', 'Comp', (row) => row.competition, { value: (row) => row.competition }),
+            ngCol<GameLogTableRow>('homeAway', 'H/A', (row) => row.homeAway, { value: (row) => row.homeAway }),
+            ngCol<GameLogTableRow>('result', 'Result', (row) => row.result, { value: (row) => row.result }),
+            ngCol<GameLogTableRow>('minutes', 'MIN', (row) => row.minutes, { defaultWidth: 52, numeric: true, value: (row) => row.minutes }),
+            ngCol<GameLogTableRow>('points', 'PTS', (row) => row.points, { defaultWidth: 48, numeric: true, value: (row) => row.points }),
+            ngCol<GameLogTableRow>('rebounds', 'REB', (row) => row.rebounds, { defaultWidth: 48, numeric: true, value: (row) => row.rebounds }),
+            ngCol<GameLogTableRow>('assists', 'AST', (row) => row.assists, { defaultWidth: 48, numeric: true, value: (row) => row.assists }),
+            ngCol<GameLogTableRow>('steals', 'STL', (row) => row.steals, { defaultWidth: 48, numeric: true, value: (row) => row.steals }),
+            ngCol<GameLogTableRow>('blocks', 'BLK', (row) => row.blocks, { defaultWidth: 48, numeric: true, value: (row) => row.blocks }),
+            ngCol<GameLogTableRow>('turnovers', 'TOV', (row) => row.turnovers, { defaultWidth: 48, numeric: true, value: (row) => row.turnovers }),
+            ngCol<GameLogTableRow>('fg', 'FG', (row) => row.fg, { defaultWidth: 56, numeric: true, value: (row) => row.fg }),
+            ngCol<GameLogTableRow>('threePt', '3PT', (row) => row.threePt, { defaultWidth: 56, numeric: true, value: (row) => row.threePt }),
+            ngCol<GameLogTableRow>('ft', 'FT', (row) => row.ft, { defaultWidth: 56, numeric: true, value: (row) => row.ft }),
+          ]}
+          gridId="ng-player-game-log"
+          onRowClick={(row) => onSelectGame(row.gameId)}
+          onSelectionChange={(ids) => {
+            if (ids[0]) onSelectGame(ids[0] as GameId)
+          }}
+          rows={tableRows}
+          selectedId={selectedGameId ?? undefined}
+        />
       </div>
     </section>
   )

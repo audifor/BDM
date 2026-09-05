@@ -1,0 +1,17 @@
+.staff-tone-dot {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--staff-tone);
+  box-shadow: 0 0 7px color-mix(in srgb, var(--staff-tone) 68%, transparent);
+  vertical-align: middle;
+}
+
+.staff-tone-dot-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}

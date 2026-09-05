@@ -1,5 +1,5 @@
 import { createNewGame } from '@/app/game'
-import { createGameDate } from '@/domain/date'
+import { addDays, createGameDate } from '@/domain/date'
 import { applyRelationshipEventToWorld } from '@/domain/world'
 import { getGamesToday } from '@/engine/calendar'
 import { getTeamFinancialSnapshot } from '@/domain/world/finances'
@@ -164,6 +164,18 @@ describe('gameStore', () => {
     expect(result.daysAdvanced).toBe(0)
     expect(result.stopReason.type).toBe('userGame')
     expect(useGameStore.getState().world).toBe(result.world)
+  })
+
+  it('delegates simulate-until-date to the application flow and stores its resulting world', () => {
+    useGameStore.getState().newGame()
+    const world = useGameStore.getState().world!
+    const target = addDays(world.currentDate, 1)
+
+    const result = useGameStore.getState().simulateUntilDate(target)
+
+    expect(result.finalDate).toBe(target)
+    expect(useGameStore.getState().world).toBe(result.world)
+    expect(useGameStore.getState().world?.currentDate).toBe(target)
   })
 
   it('opens the canonical live session for the pending game without changing GameWorld', () => {

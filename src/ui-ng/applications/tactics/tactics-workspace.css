@@ -1,0 +1,554 @@
+.tactics-workspace {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: transparent;
+  --ng-font-display: var(--ng-font-condensed);
+  font-family: var(--ng-font-ui);
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+}
+
+.tactics-workspace::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--bdm-holo-wallpaper);
+}
+
+.tactics-workspace > * {
+  position: relative;
+  z-index: 1;
+}
+
+.tactics-workspace .ng-application-workspace,
+.tactics-workspace .ng-application-workspace__header-slot,
+.tactics-workspace .ng-application-workspace__tabs-slot,
+.tactics-workspace .ng-application-workspace__body-slot,
+.tactics-workspace .ng-workspace-tabs,
+.tactics-workspace .ng-scroll-region {
+  background: transparent;
+}
+
+.tactics-workspace .ng-application-workspace__tabs-slot {
+  padding-left: var(--ng-workspace-padding);
+  padding-right: var(--ng-workspace-padding);
+}
+
+.tactics-workspace .ng-workspace-tabs {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.tactics-workspace--empty {
+  display: grid;
+  place-items: center;
+}
+
+.tactics-workspace__empty-state {
+  padding: var(--ng-spacing-24);
+  background: transparent;
+}
+
+.tactics-workspace__empty-title {
+  margin: 0 0 var(--ng-spacing-8);
+  font-family: var(--ng-font-condensed);
+  font-size: var(--ng-font-size-xl);
+  font-weight: 700;
+  letter-spacing: var(--ng-track-display);
+  text-transform: uppercase;
+  color: var(--ng-text-primary);
+}
+
+.tactics-workspace__empty-message {
+  margin: 0;
+  color: var(--ng-text-muted);
+  font-family: var(--ng-font-ui);
+  font-size: var(--ng-font-size-secondary);
+}
+
+.tactics-workspace__scroll {
+  height: 100%;
+  min-height: 0;
+  padding: var(--ng-workspace-padding);
+  overflow: auto;
+  background: transparent;
+}
+
+.tactics-workspace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ng-spacing-12);
+  height: var(--ng-workspace-header-height);
+  min-height: var(--ng-workspace-header-height);
+  padding: 0 var(--ng-spacing-16);
+  border-bottom: 1px solid var(--ng-border-subtle);
+  background: transparent;
+  box-shadow: none;
+}
+
+.tactics-workspace-header__main {
+  display: flex;
+  align-items: center;
+  gap: var(--ng-spacing-12);
+  min-width: 0;
+}
+
+.tactics-workspace-header__app {
+  font-family: var(--ng-font-condensed);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: var(--ng-track-meta);
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.tactics-workspace-header__sep {
+  width: 1px;
+  height: 16px;
+  background: var(--ng-border-standard);
+}
+
+.tactics-workspace-header__team {
+  font-family: var(--ng-font-ui);
+  font-size: var(--ng-font-size-lg);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ng-text-primary);
+}
+
+.tactics-workspace-header__meta {
+  font-family: var(--ng-font-condensed);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: var(--ng-track-chrome);
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tactics-workspace .pcb-tactics--ng {
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+  color: var(--ng-text-primary);
+  font: var(--ng-font-weight-regular) var(--ng-font-size-secondary) / 1.35 var(--ng-font-ui);
+}
+
+.tactics-workspace .pcb-tactics--ng button,
+.tactics-workspace .pcb-tactics--ng input,
+.tactics-workspace .pcb-tactics--ng select,
+.tactics-workspace .pcb-tactics--ng textarea {
+  font-family: inherit;
+  color: var(--ng-text-primary);
+  border-color: var(--ng-border-standard);
+  background: transparent;
+}
+
+.tactics-workspace .pcb-tactics--ng button {
+  height: var(--ng-control-height-sm);
+  padding: 0 var(--ng-spacing-12);
+  border-radius: var(--ng-radius-sm);
+  font-family: var(--ng-font-condensed);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ng-text-secondary);
+  box-shadow: none;
+}
+
+.tactics-workspace .pcb-tactics--ng button.pcb-player-link,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__player-link {
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: inherit;
+  font-family: var(--ng-font-ui);
+  font-size: inherit;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.tactics-workspace .pcb-tactics--ng button.is-primary,
+.tactics-workspace .pcb-tactics--ng button.is-active,
+.tactics-workspace .pcb-tactics--ng .tactics-board-btn-group button.active {
+  border-color: rgba(230, 183, 77, 0.55);
+  background: transparent;
+  color: var(--ng-amber-bright);
+}
+
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__panel,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__court,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__designer,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__rotation,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__plays,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__match,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__match-grid section,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__play-list article,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__modal section,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__player,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__court-surface,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__designer-canvas,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__summary span,
+.tactics-workspace .pcb-tactics--ng .card,
+.tactics-workspace .pcb-tactics--ng .tactics-board-advanced,
+.tactics-workspace .pcb-tactics--ng .tactics-board-panel,
+.tactics-workspace .pcb-tactics--ng .tactics-board-panel-header,
+.tactics-workspace .pcb-tactics--ng .tactics-board-panel-body,
+.tactics-workspace .pcb-tactics--ng .tactics-board-player,
+.tactics-workspace .pcb-tactics--ng .tactics-board-chip,
+.tactics-workspace .pcb-tactics--ng .tactics-board-court,
+.tactics-workspace .pcb-tactics--ng .tactics-board-court-header,
+.tactics-workspace .pcb-tactics--ng .tactics-board-court-frame,
+.tactics-workspace .pcb-tactics--ng .tactics-board-court-surface,
+.tactics-workspace .pcb-tactics--ng .tactics-board-tabs,
+.tactics-workspace .pcb-tactics--ng .tactics-board-control,
+.tactics-workspace .pcb-tactics--ng .tactics-board-footer,
+.tactics-workspace .pcb-tactics--ng .tactics-board-slot-player,
+.tactics-workspace .pcb-tactics--ng .tactics-board-slot-info,
+.tactics-workspace .pcb-tactics--ng .tactics-board-slot-duty,
+.tactics-workspace .pcb-tactics--ng .tactics-board-context,
+.tactics-workspace .pcb-tactics--ng .tactics-board-context-header {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__panel,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__court,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__designer,
+.tactics-workspace .pcb-tactics--ng .tactics-board-panel,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__match-grid section,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__play-list article,
+.tactics-workspace .pcb-tactics--ng .tactics-board-player,
+.tactics-workspace .pcb-tactics--ng .tactics-board-chip,
+.tactics-workspace .pcb-tactics--ng .tactics-board-control,
+.tactics-workspace .pcb-tactics--ng .tactics-board-court-surface,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__modal section {
+  border-color: var(--ng-border-subtle);
+  border-radius: var(--ng-radius-panel);
+}
+
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__panel header,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__court > header,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__table-page > header,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__rotation > header,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__plays > header,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__match > header,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__designer > header,
+.tactics-workspace .pcb-tactics--ng .tactics-board-panel-header,
+.tactics-workspace .pcb-tactics--ng .tactics-board-tabs,
+.tactics-workspace .pcb-tactics--ng .tactics-board-footer {
+  border-bottom-color: var(--ng-border-subtle);
+  border-top-color: var(--ng-border-subtle);
+}
+
+.tactics-workspace .pcb-tactics--ng h2,
+.tactics-workspace .pcb-tactics--ng h3,
+.tactics-workspace .pcb-tactics--ng .tactics-board-panel-title,
+.tactics-workspace .pcb-tactics--ng .tactics-board-control-title,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__control,
+.tactics-workspace .pcb-tactics--ng .tactics-board-clear {
+  font-family: var(--ng-font-condensed);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.tactics-workspace .pcb-tactics--ng h2,
+.tactics-workspace .pcb-tactics--ng h3,
+.tactics-workspace .pcb-tactics--ng .tactics-board-panel-title {
+  color: var(--ng-text-primary);
+}
+
+.tactics-workspace .pcb-tactics--ng .tactics-board-player-name,
+.tactics-workspace .pcb-tactics--ng .tactics-board-slot-name,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__player span {
+  font-family: var(--ng-font-ui);
+  font-weight: 500;
+  color: var(--ng-text-primary);
+}
+
+.tactics-workspace .pcb-tactics--ng small,
+.tactics-workspace .pcb-tactics--ng dt,
+.tactics-workspace .pcb-tactics--ng .tactics-board-panel-count,
+.tactics-workspace .pcb-tactics--ng .tactics-board-player-meta,
+.tactics-workspace .pcb-tactics--ng .tactics-board-slot-label {
+  font-family: var(--ng-font-condensed);
+  color: var(--ng-text-muted);
+}
+
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__player strong,
+.tactics-workspace .pcb-tactics--ng .tactics-board-player-rating,
+.tactics-workspace .pcb-tactics--ng .tactics-board-chip b,
+.tactics-workspace .pcb-tactics--ng .tactics-board-control-value,
+.tactics-workspace .pcb-tactics--ng .ng-type-numeric {
+  font-family: var(--ng-font-data);
+  font-variant-numeric: tabular-nums lining-nums;
+  color: var(--ng-amber-bright);
+}
+
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__player i {
+  background: transparent;
+  color: var(--ng-cyan-bright);
+  font-family: var(--ng-font-condensed);
+  font-weight: 700;
+}
+
+.tactics-workspace .pcb-tactics--ng .tactics-board-slot-ring {
+  background: transparent;
+}
+
+.tactics-workspace .pcb-tactics--ng .tactics-board-court-surface {
+  width: 70%;
+  max-width: 70%;
+}
+
+.tactics-workspace .pcb-tactics--ng .court-lines,
+.tactics-workspace .pcb-tactics--ng .tactics-board-court-svg .court-lines {
+  stroke: color-mix(in srgb, var(--ng-cyan) 42%, var(--ng-border-standard));
+}
+
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__notice {
+  border-color: color-mix(in srgb, var(--ng-positive) 45%, transparent);
+  background: transparent;
+  color: var(--ng-positive);
+}
+
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__play-list article.is-selected {
+  border-color: rgba(22, 217, 243, 0.45);
+  background: transparent;
+}
+
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__modal {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__board,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__designer {
+  height: auto;
+  min-height: 620px;
+}
+
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__designer > div,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__designer > div > div {
+  background: transparent !important;
+}
+
+.tactics-workspace .pcb-tactics--ng .pcb-tactics-creator__header,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics-creator__tools,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics-creator__canvas,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics-creator__summary,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics-creator__timeline,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics-creator__court,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics-creator__frame,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics-creator__header button,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics-creator__timeline > div:first-child button:first-child {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.tactics-workspace .pcb-tactics--ng .pcb-tactics-creator__header button {
+  color: var(--ng-text-primary) !important;
+}
+
+.tactics-workspace .pcb-tactics--ng .pcb-tactics-creator__court {
+  border-color: var(--ng-border-subtle);
+}
+
+.tactics-workspace .pcb-tactics--ng .pcb-tactics-creator__add-frame {
+  min-width: 76px;
+  color: var(--ng-text-primary);
+}
+
+.tactics-workspace .pcb-tactics--ng .pcb-tactics-creator__add-frame > span:last-child {
+  font-family: var(--ng-font-condensed);
+  font-size: 11px !important;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  color: var(--ng-text-primary);
+}
+
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__matchups-table th button,
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__player-link {
+  font-family: var(--ng-font-condensed);
+  color: var(--ng-text-primary);
+}
+
+.tactics-workspace .pcb-tactics--ng .pcb-tactics__matchups-table select {
+  min-width: 118px;
+}
+
+.tactics-workspace .pcb-tactics--ng .tactics-board-advanced {
+  min-height: 746px;
+}
+
+.tactics-workspace .pcb-tactics--ng .tactics-board-panel > .tactics-board-panel-body:first-of-type {
+  flex: 1 1 286px;
+  min-height: 286px;
+}
+
+.tactics-workspace .pcb-tactics--ng .tactics-board-panel-body--unassigned {
+  flex: 0 0 344px;
+  min-height: 344px;
+}
+
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng :is(.pcb-tactics__table-page, .pcb-tactics__rotation) {
+  overflow: hidden;
+  border: 1px solid var(--grid-border, rgba(92, 155, 178, 0.36)) !important;
+  border-radius: 3px !important;
+  background: var(--grid-bg-frame, #091117) !important;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.015);
+}
+
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng :is(.pcb-tactics__table-page, .pcb-tactics__rotation) > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: var(--grid-toolbar-h, 40px);
+  margin: 0 !important;
+  padding: 0 16px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--grid-border-subtle, rgba(115, 145, 160, 0.1)) !important;
+  border-radius: 0 !important;
+  background: var(--grid-bg-toolbar, #081016) !important;
+}
+
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng :is(.pcb-tactics__table-page, .pcb-tactics__rotation) > header h2 {
+  margin: 0;
+  font-family: var(--ng-font-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 24px;
+  text-transform: none;
+  color: #edf3f6;
+}
+
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng :is(.pcb-tactics__table-page, .pcb-tactics__rotation) > header small {
+  color: #7f929c;
+  font-family: var(--ng-font-grid);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng :is(.pcb-tactics__table-page, .pcb-tactics__rotation) > header input,
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng :is(.pcb-tactics__table-page, .pcb-tactics__rotation) > header button,
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng :is(.pcb-tactics__table-page, .pcb-tactics__rotation) > header select {
+  height: 30px;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(100, 155, 180, 0.24);
+  border-radius: 3px;
+  background: #091219;
+  color: var(--grid-text-strong, #e7eef2);
+  font-family: var(--ng-font-grid);
+  font-size: 12px;
+}
+
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng .pcb-tactics__table-page > header input {
+  width: 220px;
+}
+
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng .pcb-tactics__table-page > header input:focus {
+  border-color: rgba(22, 217, 243, 0.7);
+  outline: 0;
+}
+
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng .pcb-tactics__table-page > header button:hover {
+  border-color: rgba(22, 217, 243, 0.55);
+  color: var(--grid-cyan-bright, #40e8fc);
+}
+
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng .pcb-tactics__table-page table {
+  width: 100%;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--grid-row-bg, #091117) !important;
+}
+
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng .pcb-tactics__table-page th,
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng .pcb-tactics__table-page td {
+  height: var(--grid-row-h, 28px) !important;
+  padding: 0 8px !important;
+  border-block-end: 1px solid var(--grid-border-subtle, rgba(115, 145, 160, 0.1)) !important;
+  border-inline-end: 1px solid var(--grid-border-cell, rgba(115, 145, 160, 0.055)) !important;
+  background: transparent !important;
+  color: var(--grid-text, #c9d5db) !important;
+  font-family: var(--ng-font-grid) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  text-align: left !important;
+  text-transform: none !important;
+  vertical-align: middle;
+}
+
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng .pcb-tactics__table-page th {
+  height: var(--grid-header-h, 26px) !important;
+  background: var(--grid-bg-header, #081016) !important;
+  color: var(--grid-text-header, #9fb0ba) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.025em !important;
+}
+
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng .pcb-tactics__table-page th button {
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit !important;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng .pcb-tactics__table-page tbody tr:hover td {
+  background: var(--grid-row-hover, rgba(52, 88, 104, 0.1)) !important;
+}
+
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng .pcb-tactics__table-page select {
+  width: 100%;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid rgba(100, 150, 170, 0.22);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--grid-text, #c9d5db);
+  font-family: var(--ng-font-grid);
+  font-size: 12px;
+}
+
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng .pcb-tactics__table-page select:focus {
+  border-color: rgba(22, 217, 243, 0.8);
+  outline: 0;
+}
+
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng .pcb-tactics__player-link {
+  color: var(--grid-text-strong, #e7eef2);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.bdm-os-ng .tactics-workspace .pcb-tactics--ng .pcb-tactics__player-link:hover {
+  color: var(--grid-cyan-bright, #40e8fc);
+}

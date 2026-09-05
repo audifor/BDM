@@ -3,30 +3,32 @@
 .pc-root {
   display: grid;
   grid-template-rows: minmax(0, auto) minmax(0, 1fr) auto;
+  gap: var(--ng-panel-gap);
   height: 100%;
   min-height: 0;
+  padding: var(--ng-workspace-padding);
   overflow: hidden;
-  background: var(--ng-bg-workspace);
 }
 
 .pc-root__upper {
   display: grid;
-  gap: 0;
-  border-bottom: 1px solid var(--ng-border-strong);
+  gap: var(--ng-panel-gap);
 }
 
 .pc-root__main {
   display: grid;
   grid-template-columns: 0.95fr 1.05fr;
+  gap: var(--ng-panel-gap);
   min-height: 0;
   overflow: hidden;
 }
 
 /* Shared stat hierarchy */
 .pc-stat-label {
+  font-family: var(--ng-font-display);
   font-size: var(--ng-font-size-meta);
   font-weight: var(--ng-font-weight-semibold);
-  letter-spacing: 0.04em;
+  letter-spacing: var(--ng-track-meta);
   text-transform: uppercase;
 }
 
@@ -45,8 +47,10 @@
 }
 
 .pc-stat-value--primary {
-  font-size: 20px;
-  font-weight: var(--ng-font-weight-semibold);
+  font-family: var(--ng-font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   color: var(--ng-text-primary);
 }
 
@@ -68,8 +72,11 @@
 }
 
 .pc-panel-head__title {
-  font-size: var(--ng-font-size-secondary);
-  font-weight: var(--ng-font-weight-semibold);
+  font-family: var(--ng-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--ng-text-primary);
 }
 
@@ -88,9 +95,6 @@
 /* Status band */
 .pc-status {
   padding: var(--ng-spacing-8) var(--ng-spacing-12);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 24%),
-    var(--ng-bg-panel-primary);
 }
 
 .pc-status__primary {
@@ -174,8 +178,8 @@
 
 /* Agreement summary */
 .pc-agreement {
-  border-top: 1px solid var(--ng-border-subtle);
-  background: var(--ng-bg-panel-secondary);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .pc-agreement__grid {
@@ -201,7 +205,8 @@
 
 /* Rights */
 .pc-rights {
-  border-top: 1px solid var(--ng-border-subtle);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .pc-rights__grid {
@@ -228,8 +233,8 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  border-right: 1px solid var(--ng-border-subtle);
-  background: var(--ng-bg-panel-secondary);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .pc-timeline__track {
@@ -313,6 +318,8 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .pc-schedule__scroll {
@@ -344,52 +351,20 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  height: var(--ng-grid-row-sm);
-  padding: 0 var(--ng-spacing-8);
-  border-bottom: 1px solid var(--ng-border-standard);
-  background: var(--ng-bg-panel-primary);
-  font-weight: var(--ng-font-weight-semibold);
-  color: var(--ng-text-muted);
-  text-align: center;
-  white-space: nowrap;
 }
 
 .pc-schedule__table tbody tr {
-  height: var(--ng-grid-row-md);
   cursor: pointer;
 }
 
-.pc-schedule__table tbody tr:hover {
-  background: var(--ng-bg-hover);
-}
-
-.pc-schedule__table tbody tr.is-current td:first-child {
-  box-shadow: inset 2px 0 0 var(--ng-accent-primary);
-}
-
-.pc-schedule__table tbody tr.is-selected {
-  background: var(--ng-bg-selected);
-  box-shadow: var(--ng-shadow-selected-glow);
-}
-
-.pc-schedule__table td {
-  padding: 0 var(--ng-spacing-8);
-  border-bottom: 1px solid var(--ng-border-subtle);
-  color: var(--ng-text-secondary);
-  white-space: nowrap;
-  text-align: center;
-}
-
-.pc-schedule__num,
-.pc-schedule__col--season,
-.pc-schedule__col--status {
-  text-align: center;
+.pc-schedule__num {
+  text-align: right;
 }
 
 /* History */
 .pc-history {
-  border-top: 1px solid var(--ng-border-subtle);
-  background: var(--ng-bg-panel-primary);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .pc-history__list {

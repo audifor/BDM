@@ -1,0 +1,217 @@
+.mentoring-workspace {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: transparent;
+  color: var(--ng-text-primary);
+  font-family: var(--ng-font-ui);
+}
+
+.mentoring-workspace::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--bdm-holo-wallpaper);
+}
+
+.mentoring-workspace > * {
+  position: relative;
+  z-index: 1;
+}
+
+.mentoring-workspace .ng-application-workspace,
+.mentoring-workspace .ng-application-workspace__header-slot,
+.mentoring-workspace .ng-application-workspace__body-slot,
+.mentoring-workspace .ng-scroll-region {
+  background: transparent;
+}
+
+.mentoring-workspace--empty {
+  display: grid;
+  place-items: center;
+}
+
+.mentoring-workspace__empty-state {
+  padding: var(--ng-spacing-24);
+  background: transparent;
+}
+
+.mentoring-workspace__empty-title {
+  margin: 0 0 var(--ng-spacing-8);
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-font-size-xl);
+  font-weight: 700;
+  letter-spacing: var(--ng-track-display);
+  text-transform: uppercase;
+  color: var(--ng-text-primary);
+}
+
+.mentoring-workspace__empty-message {
+  margin: 0;
+  color: var(--ng-text-muted);
+  font-family: var(--ng-font-ui);
+  font-size: var(--ng-font-size-secondary);
+}
+
+.mentoring-workspace__scroll {
+  height: 100%;
+  min-height: 0;
+  padding: var(--ng-workspace-padding);
+  overflow: auto;
+  background: transparent;
+}
+
+.mentoring-workspace-header {
+  display: flex;
+  align-items: center;
+  height: var(--ng-workspace-header-height);
+  min-height: var(--ng-workspace-header-height);
+  padding: 0 var(--ng-spacing-16);
+  border-bottom: 1px solid var(--ng-border-subtle);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%),
+    color-mix(in srgb, var(--bdm-surface-1) 78%, transparent);
+  box-shadow: var(--ng-shadow-inset-highlight);
+}
+
+.mentoring-workspace-header__main {
+  display: flex;
+  align-items: center;
+  gap: var(--ng-spacing-12);
+  min-width: 0;
+}
+
+.mentoring-workspace-header__app {
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: var(--ng-track-meta);
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.mentoring-workspace-header__sep {
+  width: 1px;
+  height: 16px;
+  background: var(--ng-border-standard);
+}
+
+.mentoring-workspace-header__team {
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-font-size-lg);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--ng-text-primary);
+}
+
+.mentoring-workspace-header__meta {
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: var(--ng-track-chrome);
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.mentoring-workspace .pcb-plantilla--ng {
+  background: transparent;
+  color: var(--ng-text-primary);
+  font: var(--ng-font-weight-regular) var(--ng-font-size-secondary) / 1.35 var(--ng-font-ui);
+}
+
+.mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentoring,
+.mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentor-create {
+  border-color: var(--ng-border-standard);
+  border-radius: var(--ng-radius-panel);
+  background-color: color-mix(in srgb, var(--bdm-surface-1) 72%, transparent);
+  background-image: none;
+  box-shadow: var(--bdm-panel-shadow);
+  color: var(--ng-text-primary);
+  font-family: var(--ng-font-ui);
+}
+
+.mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentoring strong,
+.mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentoring h2,
+.mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentoring h3 {
+  font-family: var(--ng-font-display);
+  font-weight: 700;
+  letter-spacing: var(--ng-track-display);
+  text-transform: uppercase;
+  color: var(--ng-text-primary);
+}
+
+.mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentoring small {
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: var(--ng-track-chrome);
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentoring header b {
+  font-family: var(--ng-font-condensed);
+  color: var(--ng-cyan-bright);
+}
+
+.mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentoring button,
+.mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentoring input,
+.mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentoring select {
+  border-color: var(--ng-border-standard);
+  border-radius: var(--ng-radius-sm);
+  background: var(--ng-bg-elevated);
+  box-shadow: var(--ng-shadow-inset-highlight);
+  color: var(--ng-text-primary);
+  font-family: var(--ng-font-ui);
+}
+
+.mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentoring button {
+  height: var(--ng-control-height-sm);
+  padding: 0 var(--ng-spacing-12);
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ng-text-secondary);
+}
+
+.mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentoring button.pcb-player-link {
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: inherit;
+  font-family: var(--ng-font-ui);
+  font-size: inherit;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__chips button.is-active {
+  border-color: rgba(230, 183, 77, 0.55);
+  background: var(--ng-accent-primary-muted);
+  color: var(--ng-amber-bright);
+}
+
+.bdm-os-ng .mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentor-table {
+  border-radius: var(--grid-radius, 3px) !important;
+}
+
+.mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentor-create label {
+  font-family: var(--ng-font-condensed);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentor-create button:last-of-type:not(:disabled) {
+  border-color: rgba(230, 183, 77, 0.55);
+  background: var(--ng-accent-primary-muted);
+  color: var(--ng-amber-bright);
+}

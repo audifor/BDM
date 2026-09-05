@@ -44,10 +44,11 @@
 .po-attributes {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
+  gap: var(--ng-panel-gap);
   height: 100%;
   min-height: 0;
+  padding: var(--ng-workspace-padding);
   overflow: hidden;
-  background: var(--ng-bg-workspace);
 }
 
 .po-attributes__rail {
@@ -57,16 +58,14 @@
   min-height: 0;
   padding: var(--ng-spacing-8);
   overflow: auto;
-  border-right: 1px solid var(--ng-border-subtle);
-  background: rgba(0, 0, 0, 0.14);
 }
 
 .po-attributes__rail-title {
   padding: 0 var(--ng-spacing-4) var(--ng-spacing-4);
-  font-family: var(--po-font);
+  font-family: var(--ng-font-display);
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ng-text-muted);
 }
@@ -101,18 +100,20 @@
 
 .po-attributes__category-label {
   grid-column: 1;
-  font-family: var(--po-font);
-  font-size: 12px;
+  font-family: var(--ng-font-display);
+  font-size: 13px;
   font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
 .po-attributes__category-value {
   grid-column: 2;
   grid-row: 1 / span 2;
   align-self: center;
-  font-family: var(--po-font);
-  font-size: 18px;
-  font-weight: 650;
+  font-family: var(--ng-font-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   color: var(--ng-text-primary);
 }
 

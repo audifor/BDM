@@ -1,0 +1,555 @@
+.training-workspace {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: transparent;
+  color: var(--ng-text-primary);
+  font-family: var(--ng-font-ui);
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+}
+
+.training-workspace::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--bdm-holo-wallpaper);
+}
+
+.training-workspace > * {
+  position: relative;
+  z-index: 1;
+}
+
+.training-workspace .ng-application-workspace,
+.training-workspace .ng-application-workspace__header-slot,
+.training-workspace .ng-application-workspace__tabs-slot,
+.training-workspace .ng-application-workspace__body-slot,
+.training-workspace .ng-workspace-tabs,
+.training-workspace .ng-scroll-region {
+  background: transparent;
+}
+
+.training-workspace .ng-application-workspace__tabs-slot {
+  padding-left: var(--ng-workspace-padding);
+  padding-right: var(--ng-workspace-padding);
+}
+
+.training-workspace .ng-workspace-tabs {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.training-workspace--empty {
+  display: grid;
+  place-items: center;
+}
+
+.training-workspace__empty-state {
+  padding: var(--ng-spacing-24);
+  background: transparent;
+}
+
+.training-workspace__empty-title {
+  margin: 0 0 var(--ng-spacing-8);
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-font-size-xl);
+  font-weight: 700;
+  letter-spacing: var(--ng-track-display);
+  text-transform: uppercase;
+  color: var(--ng-text-primary);
+}
+
+.training-workspace__empty-message {
+  margin: 0;
+  color: var(--ng-text-muted);
+  font-family: var(--ng-font-ui);
+  font-size: var(--ng-font-size-secondary);
+}
+
+.training-workspace__scroll {
+  height: 100%;
+  min-height: 0;
+  padding: var(--ng-workspace-padding);
+  overflow: auto;
+  background: transparent;
+}
+
+.training-workspace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ng-spacing-12);
+  height: var(--ng-workspace-header-height);
+  min-height: var(--ng-workspace-header-height);
+  padding: 0 var(--ng-spacing-16);
+  border-bottom: 1px solid var(--ng-border-subtle);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%),
+    color-mix(in srgb, var(--bdm-surface-1) 78%, transparent);
+  box-shadow: var(--ng-shadow-inset-highlight);
+}
+
+.training-workspace-header__main {
+  display: flex;
+  align-items: center;
+  gap: var(--ng-spacing-12);
+  min-width: 0;
+}
+
+.training-workspace-header__app {
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: var(--ng-track-meta);
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.training-workspace-header__sep {
+  width: 1px;
+  height: 16px;
+  background: var(--ng-border-standard);
+}
+
+.training-workspace-header__team {
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-font-size-lg);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--ng-text-primary);
+}
+
+.training-workspace-header__meta {
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: var(--ng-track-chrome);
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.training-workspace .pcb-training--ng {
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+  color: var(--ng-text-primary);
+  font: var(--ng-font-weight-regular) var(--ng-font-size-secondary) / 1.35 var(--ng-font-ui);
+}
+
+.training-workspace .pcb-training--ng button,
+.training-workspace .pcb-training--ng input,
+.training-workspace .pcb-training--ng select,
+.training-workspace .pcb-training--ng textarea,
+.training-workspace .pcb-training--ng label {
+  font-family: var(--ng-font-ui);
+  color: var(--ng-text-primary);
+}
+
+.training-workspace .pcb-training--ng button,
+.training-workspace .pcb-training--ng input,
+.training-workspace .pcb-training--ng select,
+.training-workspace .pcb-training--ng textarea {
+  border-color: var(--ng-border-standard);
+  border-radius: var(--ng-radius-sm);
+  background: var(--ng-bg-elevated);
+  box-shadow: var(--ng-shadow-inset-highlight);
+}
+
+.training-workspace .pcb-training--ng button {
+  height: var(--ng-control-height-sm);
+  padding: 0 var(--ng-spacing-12);
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ng-text-secondary);
+}
+
+.training-workspace .pcb-training--ng button.pcb-player-link {
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: inherit;
+  font-family: var(--ng-font-ui);
+  font-size: inherit;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.training-workspace .pcb-training--ng button.is-active,
+.training-workspace .pcb-training--ng button.is-primary,
+.training-workspace .pcb-training--ng .pcb-training__intensity .is-active,
+.training-workspace .pcb-training--ng .pcb-training__load-toolbar .is-filtering {
+  border-color: rgba(230, 183, 77, 0.55);
+  background: var(--ng-accent-primary-muted);
+  color: var(--ng-amber-bright);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__controls .is-on {
+  border-color: color-mix(in srgb, var(--ng-positive) 45%, transparent);
+  background: var(--ng-positive-muted);
+  color: var(--ng-positive);
+}
+
+.training-workspace .pcb-training--ng h2,
+.training-workspace .pcb-training--ng h3 {
+  font-family: var(--ng-font-display);
+  font-weight: 700;
+  letter-spacing: var(--ng-track-display);
+  color: var(--ng-text-primary);
+}
+
+.training-workspace .pcb-training--ng small,
+.training-workspace .pcb-training--ng p,
+.training-workspace .pcb-training--ng em,
+.training-workspace .pcb-training--ng .pcb-training__hero-top p,
+.training-workspace .pcb-training--ng .pcb-training__time-select span {
+  color: var(--ng-text-muted);
+  font-family: var(--ng-font-ui);
+  font-style: normal;
+}
+
+.training-workspace .pcb-training--ng .pcb-training__controls label,
+.training-workspace .pcb-training--ng .pcb-training__modal label,
+.training-workspace .pcb-training--ng .pcb-training__chips span,
+.training-workspace .pcb-training--ng .pcb-training__card-head span,
+.training-workspace .pcb-training--ng .pcb-training__personal-pills span,
+.training-workspace .pcb-training--ng .pcb-training__module-list span,
+.training-workspace .pcb-training--ng .pcb-training__calendar-grid > b {
+  font-family: var(--ng-font-condensed);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__card,
+.training-workspace .pcb-training--ng .pcb-training__calendar,
+.training-workspace .pcb-training--ng .pcb-training__day,
+.training-workspace .pcb-training--ng .pcb-training__week,
+.training-workspace .pcb-training--ng .pcb-training__session,
+.training-workspace .pcb-training--ng .pcb-training__personal-toolbar,
+.training-workspace .pcb-training--ng .pcb-training__column-menu,
+.training-workspace .pcb-training--ng .pcb-training__metric,
+.training-workspace .pcb-training--ng .pcb-training__module-list article,
+.training-workspace .pcb-training--ng .pcb-training__filters,
+.training-workspace .pcb-training--ng .pcb-training__effects,
+.training-workspace .pcb-training--ng .pcb-training__modal > section {
+  border-color: var(--ng-border-standard);
+  border-radius: var(--ng-radius-panel);
+  background-color: color-mix(in srgb, var(--bdm-surface-1) 72%, transparent);
+  background-image: none;
+  box-shadow: var(--bdm-panel-shadow);
+  color: var(--ng-text-primary);
+}
+
+.bdm-os-ng .training-workspace .pcb-training--ng .pcb-training__table {
+  border-radius: var(--grid-radius, 3px) !important;
+}
+
+.training-workspace .pcb-training--ng .pcb-training__chips span,
+.training-workspace .pcb-training--ng .pcb-training__card-head span,
+.training-workspace .pcb-training--ng .pcb-training__personal-pills span,
+.training-workspace .pcb-training--ng .pcb-training__module-list span {
+  border-color: var(--ng-border-subtle);
+  border-radius: var(--ng-radius-sm);
+  background: var(--ng-bg-inset);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__session > button:first-child,
+.training-workspace .pcb-training--ng .pcb-training__delete {
+  background: transparent;
+  box-shadow: none;
+  color: var(--ng-text-primary);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__delete:hover {
+  background: var(--ng-negative-muted);
+  color: var(--ng-negative);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__session .is-alta {
+  color: var(--ng-negative);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__session .is-media {
+  color: var(--ng-warning);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__session .is-baja {
+  color: var(--ng-cyan);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__metric strong,
+.training-workspace .pcb-training--ng .pcb-training__metric > b,
+.training-workspace .pcb-training--ng .pcb-training__week strong {
+  font-family: var(--ng-font-data);
+  font-variant-numeric: tabular-nums lining-nums;
+  color: var(--ng-amber-bright);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__metric {
+  border-left-color: var(--ng-amber);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__metric.is-danger {
+  border-left-color: var(--ng-negative);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__metric.is-good {
+  border-left-color: var(--ng-positive);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__filters {
+  border-color: var(--ng-border-warning);
+  background: var(--ng-warning-muted);
+  color: var(--ng-amber-bright);
+  font-family: var(--ng-font-display);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__bar > i {
+  background: var(--ng-rating-bar-fill);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__bar > b {
+  color: var(--ng-text-secondary);
+  font-family: var(--ng-font-data);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__load .ng-play-position {
+  border-color: color-mix(in srgb, var(--ng-cyan) 40%, transparent);
+  background: var(--ng-cyan-muted);
+  color: var(--ng-cyan-bright);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__module-pill dd:has(.ng-play-position) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.training-workspace .pcb-training--ng .pcb-training__load > div.is-selected {
+  background: var(--ng-selection);
+  outline-color: var(--ng-cyan);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__load-radio {
+  border-color: var(--ng-border-standard);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__load-radio.is-checked {
+  border-color: var(--ng-cyan);
+  background: radial-gradient(circle, var(--ng-cyan) 0 5px, transparent 6px);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__badge {
+  border-color: var(--ng-border-positive);
+  background: var(--ng-positive-muted);
+  color: var(--ng-positive);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__badge.is-risk {
+  border-color: var(--ng-border-negative);
+  background: var(--ng-negative-muted);
+  color: var(--ng-negative);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__badge.is-low {
+  border-color: var(--ng-border-warning);
+  background: var(--ng-warning-muted);
+  color: var(--ng-warning);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__load-dot.is-good {
+  background: var(--ng-positive);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__load-dot.is-warn {
+  background: var(--ng-warning);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__load-dot.is-danger {
+  background: var(--ng-negative);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__calendar-grid > span {
+  border-color: var(--ng-border-subtle);
+  background: var(--ng-bg-inset);
+  color: var(--ng-text-muted);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__week-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.training-workspace .pcb-training--ng .pcb-training__calendar-grid > span.is-train {
+  border-color: color-mix(in srgb, var(--ng-cyan) 40%, transparent);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__calendar-grid > span.is-match,
+.training-workspace .pcb-training--ng .pcb-training__day.is-match {
+  border-color: color-mix(in srgb, var(--ng-amber) 55%, transparent);
+  background: var(--ng-amber-muted);
+  color: var(--ng-amber-bright);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__day.is-match header {
+  background: color-mix(in srgb, var(--ng-amber) 16%, var(--bdm-surface-2));
+  color: var(--ng-amber-bright);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__day.is-match > div > p {
+  color: var(--ng-amber-bright);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__personal {
+  width: 100%;
+}
+
+.training-workspace .pcb-training--ng .pcb-training__personal > div {
+  width: 100%;
+}
+
+.training-workspace .pcb-training--ng .pcb-training__assign {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.training-workspace .pcb-training--ng .pcb-training__assign select {
+  flex: 1 1 0;
+  max-width: 148px;
+  min-width: 0;
+}
+
+.training-workspace .pcb-training--ng .pcb-training__assign button {
+  height: 22px;
+  min-height: 22px;
+  padding: 0 8px;
+  border: 1px solid rgba(100, 155, 180, 0.24);
+  border-radius: 3px;
+  background: #091219;
+  color: var(--grid-text, #c9d5db);
+  font-family: var(--ng-font-grid);
+  font-size: 11px;
+}
+
+.training-workspace .pcb-training--ng .pcb-training__calendar-grid i {
+  background: var(--ng-cyan);
+  color: var(--ng-text-inverse);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__day header {
+  background: color-mix(in srgb, var(--bdm-surface-2) 80%, transparent);
+  border-bottom: 1px solid var(--ng-border-subtle);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__modal {
+  background: rgba(5, 8, 11, 0.72);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__modal > section {
+  background-color: color-mix(in srgb, var(--bdm-surface-1) 92%, transparent);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__modules {
+  border-color: var(--grid-border, rgba(92, 155, 178, 0.36));
+  border-radius: var(--grid-radius, 3px);
+  background: var(--grid-bg-frame, #091117);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.015);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__module-toolbar {
+  padding-bottom: 2px;
+}
+
+.training-workspace .pcb-training--ng .pcb-training__module-scopes,
+.training-workspace .pcb-training--ng .pcb-training__module-cats {
+  gap: 6px;
+}
+
+.training-workspace .pcb-training--ng .pcb-training__module-scopes button,
+.training-workspace .pcb-training--ng .pcb-training__module-cats button {
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(100, 155, 180, 0.24);
+  border-radius: 999px;
+  background: #091219;
+  color: var(--grid-text, #c9d5db);
+  font-family: var(--ng-font-grid);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  text-transform: none;
+}
+
+.training-workspace .pcb-training--ng .pcb-training__module-scopes button.is-active,
+.training-workspace .pcb-training--ng .pcb-training__module-cats button.is-active {
+  border-color: rgba(22, 217, 243, 0.55);
+  background: rgba(22, 217, 243, 0.08);
+  color: var(--grid-cyan-bright, #40e8fc);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__module-pills {
+  grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+}
+
+.training-workspace .pcb-training--ng .pcb-training__module-pill {
+  border-color: var(--grid-border-subtle, rgba(115, 145, 160, 0.1));
+  border-radius: var(--grid-radius, 3px);
+  background: #0b1218;
+  box-shadow: inset 2px 0 0 var(--module-cat, var(--grid-cyan, #18d7f0));
+}
+
+.training-workspace .pcb-training--ng .pcb-training__module-pill header b {
+  color: var(--grid-text-strong, #e7eef2);
+  font-family: var(--ng-font-grid);
+  font-weight: 600;
+}
+
+.training-workspace .pcb-training--ng .pcb-training__module-pill-cat,
+.training-workspace .pcb-training--ng .pcb-training__module-pill-origin {
+  border-color: color-mix(in srgb, var(--module-cat, var(--grid-cyan)) 40%, transparent);
+  background: color-mix(in srgb, var(--module-cat, var(--grid-cyan)) 12%, transparent);
+  color: var(--grid-text, #c9d5db);
+  font-family: var(--ng-font-grid);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__module-pill dt {
+  color: var(--grid-text-muted, #71838d);
+  font-family: var(--ng-font-grid);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__module-pill dd {
+  color: var(--grid-text, #c9d5db);
+  font-family: var(--ng-font-grid);
+}
+
+.training-workspace .pcb-training--ng .pcb-training__module-pill button {
+  height: 22px;
+  min-height: 22px;
+  padding: 0 8px;
+  border: 1px solid rgba(100, 155, 180, 0.24);
+  border-radius: 3px;
+  background: #091219;
+  color: var(--grid-text, #c9d5db);
+  font-family: var(--ng-font-grid);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}

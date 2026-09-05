@@ -1,0 +1,233 @@
+.ng-system-bar__until-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 36;
+  display: grid;
+  gap: var(--ng-spacing-12);
+  width: 292px;
+  padding: 12px;
+  border: 1px solid rgba(230, 183, 77, 0.35);
+  border-radius: var(--ng-radius-sm);
+  background: #080d12;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45), 0 0 12px rgba(230, 183, 77, 0.12);
+}
+
+.ng-sim-cal__head {
+  display: grid;
+  grid-template-columns: 28px 1fr 28px;
+  align-items: center;
+  gap: 8px;
+}
+
+.ng-sim-cal__month {
+  text-align: center;
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ng-text-primary);
+}
+
+.ng-sim-cal__nav {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #22343f;
+  border-radius: var(--ng-radius-sm);
+  background: #060a0e;
+  color: var(--ng-text-muted);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.ng-sim-cal__nav:hover:not(:disabled) {
+  border-color: var(--ng-amber);
+  color: var(--ng-amber-bright);
+}
+
+.ng-sim-cal__nav:disabled {
+  opacity: 0.35;
+}
+
+.ng-sim-cal__weekdays,
+.ng-sim-cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.ng-sim-cal__weekday {
+  height: 20px;
+  display: grid;
+  place-items: center;
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.ng-sim-cal__day {
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ng-text-primary);
+  font-family: var(--ng-font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.ng-sim-cal__day.is-outside {
+  color: #4d5b64;
+}
+
+.ng-sim-cal__day:hover:not(:disabled) {
+  border-color: rgba(230, 183, 77, 0.35);
+  background: rgba(230, 183, 77, 0.08);
+}
+
+.ng-sim-cal__day.is-selected {
+  border-color: rgba(230, 183, 77, 0.7);
+  background: rgba(230, 183, 77, 0.16);
+  color: #fff4dc;
+}
+
+.ng-sim-cal__day:disabled {
+  color: #3a464d;
+  cursor: default;
+}
+
+.ng-sim-cal__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ng-sim-cal__actions .ng-btn--primary {
+  min-width: 92px;
+}
+
+.ng-sim-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(3, 6, 9, 0.78);
+}
+
+.bdm-os-ng > .ng-sim-overlay {
+  position: absolute;
+}
+
+.ng-sim-modal {
+  width: min(520px, 100%);
+  max-height: min(72vh, 640px);
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 20px 22px 16px;
+  border: 1px solid rgba(230, 183, 77, 0.38);
+  border-radius: var(--ng-radius-sm);
+  background: #080d12;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.55), 0 0 18px rgba(230, 183, 77, 0.12);
+}
+
+.ng-sim-modal__eyebrow {
+  font-family: var(--ng-font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ng-amber-bright);
+}
+
+.ng-sim-modal__date {
+  margin: 0;
+  font-family: var(--ng-font-display);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ng-text-primary);
+}
+
+.ng-sim-modal__results {
+  min-height: 44px;
+  overflow: auto;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+
+.ng-sim-modal__empty {
+  font-size: 12px;
+  color: var(--ng-text-muted);
+}
+
+.ng-sim-modal__match {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #22343f;
+  border-radius: 3px;
+  background: #060a0e;
+}
+
+.ng-sim-modal__match-date {
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.ng-sim-modal__match-line {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ng-text-primary);
+}
+
+.ng-sim-modal__match-score {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #fff4dc;
+}
+
+.ng-sim-modal__match-outcome {
+  font-family: var(--ng-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.ng-sim-modal__match-outcome.is-win {
+  color: #7dcea0;
+}
+
+.ng-sim-modal__match-outcome.is-loss {
+  color: #e07a6a;
+}
+
+.ng-sim-modal__match-outcome.is-draw {
+  color: var(--ng-amber-bright);
+}
+
+.ng-sim-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ng-sim-modal__footer .ng-btn--primary {
+  min-width: 92px;
+}

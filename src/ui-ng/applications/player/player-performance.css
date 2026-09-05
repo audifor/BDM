@@ -3,26 +3,25 @@
 .pp-root {
   display: grid;
   grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+  gap: var(--ng-panel-gap);
   height: 100%;
   min-height: 0;
+  padding: var(--ng-workspace-padding);
   overflow: hidden;
-  background: var(--ng-bg-workspace);
 }
 
 .pp-root__upper {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: var(--ng-panel-gap);
   min-height: 0;
-  border-bottom: 1px solid var(--ng-border-strong);
 }
 
 .pp-root__lanes {
   display: grid;
   grid-template-columns: 1.05fr 0.95fr 1fr;
+  gap: var(--ng-panel-gap);
   min-height: 0;
-  border-top: 1px solid var(--ng-border-subtle);
-  background: var(--ng-bg-panel-secondary);
 }
 
 .pp-root__lower {
@@ -32,9 +31,7 @@
 
 /* ── Season summary ── */
 .pp-season {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 24%),
-    var(--ng-bg-panel-primary);
+  min-width: 0;
 }
 
 .pp-season__head {
@@ -102,9 +99,10 @@
 
 /* ── Stat hierarchy ── */
 .pp-stat-label {
+  font-family: var(--ng-font-display);
   font-size: var(--ng-font-size-meta);
   font-weight: var(--ng-font-weight-semibold);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -126,8 +124,10 @@
 }
 
 .pp-stat-value--primary {
-  font-size: 22px;
-  font-weight: var(--ng-font-weight-semibold);
+  font-family: var(--ng-font-display);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   line-height: 1.1;
   color: var(--ng-text-primary);
 }
@@ -157,8 +157,11 @@
 }
 
 .pp-panel-head__title {
-  font-size: var(--ng-font-size-secondary);
-  font-weight: var(--ng-font-weight-semibold);
+  font-family: var(--ng-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--ng-text-primary);
 }
 
@@ -179,7 +182,8 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  border-right: 1px solid var(--ng-border-subtle);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .pp-production-lane__grid {
@@ -200,7 +204,8 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  border-right: 1px solid var(--ng-border-subtle);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .pp-shooting__lines {
@@ -240,6 +245,8 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .pp-form__track {
@@ -326,6 +333,7 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  overflow: hidden;
 }
 
 .pp-log__scroll {
@@ -337,42 +345,16 @@
 .pp-log__table {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--ng-font-size-meta);
 }
 
 .pp-log__table thead th {
   position: sticky;
   top: 0;
   z-index: 1;
-  height: var(--ng-grid-row-sm);
-  padding: 0 var(--ng-spacing-8);
-  border-bottom: 1px solid var(--ng-border-standard);
-  background: var(--ng-bg-panel-primary);
-  font-weight: var(--ng-font-weight-semibold);
-  color: var(--ng-text-muted);
-  text-align: left;
-  white-space: nowrap;
 }
 
 .pp-log__table tbody tr {
-  height: var(--ng-grid-row-md);
   cursor: pointer;
-}
-
-.pp-log__table tbody tr:hover {
-  background: var(--ng-bg-hover);
-}
-
-.pp-log__table tbody tr.is-selected {
-  background: var(--ng-bg-selected);
-  box-shadow: var(--ng-shadow-selected-glow);
-}
-
-.pp-log__table td {
-  padding: 0 var(--ng-spacing-8);
-  border-bottom: 1px solid var(--ng-border-subtle);
-  color: var(--ng-text-secondary);
-  white-space: nowrap;
 }
 
 .pp-log__col--num,

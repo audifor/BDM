@@ -35,7 +35,8 @@ describe('CanonicalRoster NG scout-aware ratings', () => {
 
     fireEvent.change(screen.getByLabelText('Preset de columnas'), { target: { value: 'offense' } })
 
-    expect(screen.getAllByText('?').length).toBeGreaterThan(0)
+    expect(document.querySelectorAll('.canonical-roster__rating--unknown').length).toBeGreaterThan(0)
+    expect(screen.queryByText('?')).not.toBeInTheDocument()
     expect(screen.queryByText(raw)).not.toBeInTheDocument()
   })
 

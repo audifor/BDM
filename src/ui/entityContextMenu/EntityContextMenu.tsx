@@ -36,4 +36,10 @@ function ContextSubmenu({ entries, path, openPath, onInvoke, onOpen, onClose, on
   return <ContextMenuSurface anchor={anchor} entries={entries} onClose={onClose} onCloseSubmenu={onCloseSubmenu} onInvoke={onInvoke} onOpen={onOpen} openPath={openPath} path={path} />
 }
 
-function viewport(): Viewport { return { width: globalThis.innerWidth, height: globalThis.innerHeight } }
+function viewport(): Viewport {
+  const designer = window.__bdmDesignerViewportBridge?.stageViewport()
+  if (designer !== undefined) {
+    return designer
+  }
+  return { width: globalThis.innerWidth, height: globalThis.innerHeight }
+}

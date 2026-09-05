@@ -396,7 +396,7 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
   }, [isPlaying, frames.length]);
 
   return (
-    <div style={{display:'flex', flexDirection:'column', height:'100%', width:'100%', gap:10, fontFamily:'sans-serif', overflow:'hidden', position:'relative'}}>
+    <div className="pcb-tactics-creator" style={{display:'flex', flexDirection:'column', height:'100%', width:'100%', gap:10, fontFamily:'sans-serif', overflow:'hidden', position:'relative'}}>
       
       {/* MODALES */}
       {modalMode === 'load' && (
@@ -452,7 +452,7 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
                               <input type="text" value={selectedPbForEdit.name} onChange={e=>updatePlaybookName(selectedPbForEdit.id, e.target.value)} style={{...inputStyle, flex:1}} />
                           </div>
                           <div style={{...listContainer, maxHeight:250}}>
-                              {selectedPbForEdit.playIds.length === 0 ? <p style={{color:'#94a3b8'}}>VacÃ­o.</p> : selectedPbForEdit.playIds.map(pid => {
+                              {selectedPbForEdit.playIds.length === 0 ? <p style={{color:'#94a3b8'}}>Vacío.</p> : selectedPbForEdit.playIds.map(pid => {
                                     const play = savedPlays.find(p => p.id === pid);
                                     if(!play) return null;
                                     return (
@@ -471,7 +471,7 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
       )}
 
       {/* HEADER */}
-      <div style={{flexShrink:0, padding:'8px 15px', background: THEME.bg, borderRadius:8, border:'1px solid #334155', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+      <div className="pcb-tactics-creator__header" style={{flexShrink:0, padding:'8px 15px', background: THEME.bg, borderRadius:8, border:'1px solid #334155', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
         <div style={{display:'flex', alignItems:'center', gap:15}}>
              <input type="text" value={playName} onChange={(e) => setPlayName(e.target.value)} style={{background:'transparent', border:'none', color:'white', fontSize:'1.1rem', fontWeight:'bold', borderBottom:'1px solid #475569', paddingBottom:2, outline:'none', width:200}}/>
              <span style={{color:'#94a3b8', fontSize:'0.75rem'}}>Frame <b style={{color: THEME.passColor}}>{displayIndex + 1}/{frames.length}</b></span>
@@ -480,7 +480,7 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
              <button onClick={()=>setModalMode('createPB')} style={textBtn}><PlusSquare size={16}/> Crear PB</button>
              <button onClick={()=>setModalMode('editPB')} style={textBtn}><BookOpen size={16}/> Editar PB</button>
              <div style={{position:'relative'}}>
-                 <button onClick={()=>setShowAddToPbDropdown(!showAddToPbDropdown)} style={{...textBtn, padding:'5px 10px'}}><Book size={16}/> AÃ±adir a...</button>
+                 <button onClick={()=>setShowAddToPbDropdown(!showAddToPbDropdown)} style={{...textBtn, padding:'5px 10px'}}><Book size={16}/> Añadir a...</button>
                  {showAddToPbDropdown && (
                      <div style={{position:'absolute', top:'100%', right:0, marginTop:5, background:'#1e293b', border:'1px solid #334155', borderRadius:6, width:200, zIndex:100, boxShadow:'0 4px 10px rgba(0,0,0,0.5)'}}>
                          {playbooks.length === 0 ? <div style={{padding:10, color:'#94a3b8', fontSize:'0.8rem'}}>No hay playbooks</div> : playbooks.map(pb => (
@@ -497,7 +497,7 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
 
       <div style={{flex:1, display:'flex', gap:10, minHeight:0, overflow:'hidden'}}>
           {/* TOOLBAR */}
-          <div style={{width: 70, background: THEME.bg, borderRadius:8, border:'1px solid #334155', display:'flex', flexDirection:'column', alignItems:'center', padding:'15px 0', gap: 8, overflowY:'auto'}}>
+          <div className="pcb-tactics-creator__tools" style={{width: 70, background: THEME.bg, borderRadius:8, border:'1px solid #334155', display:'flex', flexDirection:'column', alignItems:'center', padding:'15px 0', gap: 8, overflowY:'auto'}}>
              <ToolBtn icon={<MousePointer2 size={20}/>} label="Select" active={activeTool==='select'} onClick={()=>setActiveTool('select')} />
              <div style={{width:'60%', height:1, background:'#334155', margin:'5px 0'}}></div>
              <ToolBtn icon={<Circle size={20}/>} label="Corte" active={activeTool==='move'} onClick={()=>setActiveTool('move')} color={THEME.moveColor}/>
@@ -510,10 +510,10 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
           </div>
 
           {/* CANVAS */}
-          <div style={{flex:1, background:'#0f172a', borderRadius:8, border:'1px solid #334155', display:'flex', alignItems: 'center', justifyContent: 'center', overflow:'hidden', position:'relative'}}>
+          <div className="pcb-tactics-creator__canvas" style={{flex:1, background:'#0f172a', borderRadius:8, border:'1px solid #334155', display:'flex', alignItems: 'center', justifyContent: 'center', overflow:'hidden', position:'relative'}}>
              {warning && <div style={{position:'absolute', top:20, background:'#ef4444', color:'white', padding:'5px 10px', borderRadius:4, zIndex:10, display:'flex', gap:5, alignItems:'center'}}><AlertTriangle size={16}/> {warning}</div>}
              <svg 
-                ref={svgRef} viewBox="0 0 500 470" preserveAspectRatio="xMidYMid meet"
+                ref={svgRef} viewBox="0 0 500 470" preserveAspectRatio="xMidYMid meet" className="pcb-tactics-creator__court"
                 style={{maxHeight:'95%', maxWidth:'95%', aspectRatio:'50/47', background: THEME.bg, border:'2px solid #334155', cursor: activeTool==='select'?(dragging?'grabbing':'default'):'crosshair', boxShadow:'0 0 40px rgba(0,0,0,0.5)', touchAction:'none'}}
                 onMouseDown={handleMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onDoubleClick={(e)=>{const p=getSVGPoint(e); const pl=currentFrame.players.find(x=>Math.hypot(x.x-p.x,x.y-p.y)<35); if(pl&&activeTool==='select') updateFrame({ballOwnerId:pl.id})}}
              >
@@ -550,7 +550,7 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
           </div>
 
           {/* RESUMEN LATERAL */}
-          <div style={{width: 180, background:'#1e293b', borderLeft:'1px solid #334155', padding:15, overflowY:'auto'}}>
+          <div className="pcb-tactics-creator__summary" style={{width: 180, background:'#1e293b', borderLeft:'1px solid #334155', padding:15, overflowY:'auto'}}>
               <div style={{fontSize:'0.75rem', fontWeight:'bold', color:'#94a3b8', marginBottom:15, display:'flex', alignItems:'center', gap:5, borderBottom:'1px solid #334155', paddingBottom:10}}><ListChecks size={16}/> RESUMEN</div>
               {currentFrame.paths.length === 0 && <span style={{fontSize:'0.7rem', color:'#64748b'}}>Sin acciones</span>}
               <div style={{display:'flex', flexDirection:'column', gap:8}}>
@@ -569,7 +569,7 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
       </div>
 
       {/* TIMELINE */}
-      <div style={{flexShrink: 0, height: 80, background: THEME.bg, borderRadius:8, border:'1px solid #334155', display:'flex', alignItems:'center', padding:'0 20px', gap:20}}>
+      <div className="pcb-tactics-creator__timeline" style={{flexShrink: 0, height: 80, background: THEME.bg, borderRadius:8, border:'1px solid #334155', display:'flex', alignItems:'center', padding:'0 20px', gap:20}}>
           <div style={{display:'flex', gap:10, alignItems:'center'}}>
              <button onClick={() => setCurrentFrameIndex(0)} style={timelineControlBtn} title="Inicio"><SkipBack size={18}/></button>
              <button onClick={() => setIsPlaying(!isPlaying)} style={{...timelineControlBtn, background: isPlaying ? '#ef4444':'#22c55e', border:'none', color:'black', width:45, height:45}}>{isPlaying ? <Pause size={20}/> : <Play size={20}/>}</button>
@@ -577,12 +577,12 @@ export default function TacticsCreator({ savedPlays: canonicalPlays, playbooks: 
           <div style={{width:1, height:'50%', background:'#334155'}}></div>
           <div style={{flex:1, display:'flex', gap:10, overflowX:'auto', paddingBottom:5, alignItems:'center'}}>
              {frames.map((_, index) => (
-                <div key={index} onClick={() => { setIsPlaying(false); setCurrentFrameIndex(index); }} style={{minWidth: 60, height: 60, borderRadius: 8, border: displayIndex === index ? `2px solid ${THEME.dribbleColor}` : '1px solid #475569', background: displayIndex === index ? 'rgba(56, 189, 248, 0.1)' : '#0f172a', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', cursor:'pointer', position:'relative'}}>
+                <div key={index} className="pcb-tactics-creator__frame" onClick={() => { setIsPlaying(false); setCurrentFrameIndex(index); }} style={{minWidth: 60, height: 60, borderRadius: 8, border: displayIndex === index ? `2px solid ${THEME.dribbleColor}` : '1px solid #475569', background: displayIndex === index ? 'rgba(56, 189, 248, 0.1)' : '#0f172a', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', cursor:'pointer', position:'relative'}}>
                    <span style={{fontSize:'1rem', fontWeight:'bold', color: displayIndex === index ? THEME.dribbleColor : '#64748b'}}>{index + 1}</span>
                    {frames.length > 1 && <button onClick={(e) => { e.stopPropagation(); deleteFrame(index); }} style={{position:'absolute', top:-5, right:-5, background:'#ef4444', border:'none', color:'white', width:18, height:18, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', padding:0}}><Trash2 size={10}/></button>}
                 </div>
              ))}
-             <button onClick={addFrame} style={{minWidth: 60, height: 60, borderRadius: 8, border:'1px dashed #64748b', background:'transparent', color:'#94a3b8', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:5}}><Plus size={20}/><span style={{fontSize:'0.6rem'}}>AÃ‘ADIR</span></button>
+             <button className="pcb-tactics-creator__add-frame" onClick={addFrame} style={{minWidth: 60, height: 60, borderRadius: 8, border:'1px dashed #64748b', background:'transparent', color:'#94a3b8', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:5}}><Plus size={20}/><span style={{fontSize:'0.6rem'}}>AÑADIR</span></button>
           </div>
       </div>
     </div>

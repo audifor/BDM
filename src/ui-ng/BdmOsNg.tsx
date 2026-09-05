@@ -1,10 +1,14 @@
 import '@/ui-ng/styles/reset.css'
 import '@/ui-ng/styles/ng-global.css'
 
+import { useEffect, useState } from 'react'
+
 import { useGameStore } from '@/stores/gameStore'
 import { EntityContextMenuProvider } from '@/ui/entityContextMenu/EntityContextMenuProvider'
 import { SystemBar } from '@/ui-ng/system/SystemBar'
 import { Taskbar } from '@/ui-ng/system/Taskbar'
+import { DesignerViewport } from '@/ui-ng/designer/DesignerViewport'
+import { isDesignerMode } from '@/ui-ng/designer/designerMode'
 import { NgWorkspaceNavigationProvider, useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 import { WorkspaceHost } from '@/ui-ng/workspace/WorkspaceHost'
 
@@ -34,9 +38,27 @@ function BdmOsNgShell() {
 }
 
 export function BdmOsNg() {
-  return (
+  const [designer, setDesigner] = useState(isDesignerMode)
+
+  useEffect(() => {
+    const syncDesignerMode = () => setDesigner(isDesignerMode())
+    window.addEventListener('popstate', syncDesignerMode)
+    window.addEventListener('bdm-ng-nav', syncDesignerMode)
+    return () => {
+      window.removeEventListener('popstate', syncDesignerMode)
+      window.removeEventListener('bdm-ng-nav', syncDesignerMode)
+    }
+  }, [])
+
+  const shell = (
     <NgWorkspaceNavigationProvider>
       <BdmOsNgShell />
     </NgWorkspaceNavigationProvider>
   )
+
+  if (designer) {
+    return <DesignerViewport>{shell}</DesignerViewport>
+  }
+
+  return shell
 }

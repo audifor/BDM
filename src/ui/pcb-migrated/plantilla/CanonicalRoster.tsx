@@ -31,6 +31,9 @@ import {
   scoutAwareSummaryColumn,
 } from "@/ui-ng/applications/roster/rosterScoutAwareColumns";
 import type { RosterNgSessionBridge } from "@/ui-ng/applications/roster/rosterWorkspaceSession";
+import { buildRosterStaffComments } from "@/ui-ng/applications/roster/buildRosterStaffComments";
+import { RosterRowInspector } from "@/ui-ng/applications/roster/components/RosterRowInspector";
+import { RosterStaffComments } from "@/ui-ng/applications/roster/components/RosterStaffComments";
 
 import "./CanonicalRoster.css";
 
@@ -158,7 +161,7 @@ function summarySignalColumn(key: keyof LegacyPlayerRatings): DataGridColumn<Pla
   return {
     id: `summary-${key}`,
     label: SUMMARY_SIGNAL_LABELS[key],
-    defaultWidth: 68,
+    defaultWidth: 74,
     minWidth: 56,
     numeric: true,
     sortable: true,
@@ -184,6 +187,7 @@ export type CanonicalRosterVariant = "legacy" | "ng";
 
 export function CanonicalRoster({
   activeView = "general",
+  embedInspector = true,
   onLineupSlotChange,
   onLineupSlotClear,
   onOpenEntity,
@@ -195,6 +199,7 @@ export function CanonicalRoster({
   world,
 }: {
   readonly activeView?: string;
+  readonly embedInspector?: boolean;
   readonly onLineupSlotChange?: (slot: LineupSlot, playerId: PlayerId) => void;
   readonly onLineupSlotClear?: (slot: LineupSlot) => void;
   readonly onOpenEntity?: (destination: EntityDestination) => void;
@@ -268,21 +273,21 @@ export function CanonicalRoster({
       {
         id: "status",
         label: "EST",
-        defaultWidth: 62,
+        defaultWidth: 58,
         minWidth: 54,
         sortable: true,
         value: (player) => getCurrentPlayerInjury(world, player.id)?.kind ?? "ready",
         render: (player) => {
           const injury = getCurrentPlayerInjury(world, player.id);
           if (injury === undefined) {
-            return <span className="canonical-roster__status">OK</span>;
+            return <span className="canonical-roster__status canonical-roster__status--ok">OK</span>;
           }
           return (
             <span
-              className="canonical-roster__status canonical-roster__status--injured"
+              className="canonical-roster__status canonical-roster__status--out"
               title={`${formatInjuryKind(injury.kind)} · return ${injury.expectedReturnDate}`}
             >
-              Out
+              OUT
             </span>
           );
         },
@@ -290,7 +295,7 @@ export function CanonicalRoster({
       {
         id: "player",
         label: "JUGADOR",
-        defaultWidth: 270,
+        defaultWidth: 235,
         minWidth: 180,
         required: true,
         searchable: true,
@@ -313,21 +318,21 @@ export function CanonicalRoster({
       {
         id: "position",
         label: "POS",
-        defaultWidth: 78,
-        minWidth: 64,
+        defaultWidth: 64,
+        minWidth: 56,
         sortable: true,
         value: (player) => player.basketball.primaryPosition,
         render: (player) => (
-          <span className="canonical-roster__position">
+          <span className="canonical-roster__position ng-play-position">
             {player.basketball.primaryPosition}
           </span>
         ),
       },
       {
         id: "rotation",
-        label: "ROT",
-        defaultWidth: 120,
-        minWidth: 100,
+        label: "ROL",
+        defaultWidth: 88,
+        minWidth: 72,
         sortable: true,
         value: (player) => getLineupSlotForPlayer(lineup, player.id) ?? "",
         render: (player) => {
@@ -356,8 +361,8 @@ export function CanonicalRoster({
       {
         id: "age",
         label: "EDAD",
-        defaultWidth: 72,
-        minWidth: 58,
+        defaultWidth: 64,
+        minWidth: 52,
         numeric: true,
         sortable: true,
         value: (player) => getPlayerAge(world, player.id),
@@ -386,8 +391,8 @@ export function CanonicalRoster({
       {
         id: "fatigue",
         label: "FATIGA",
-        defaultWidth: 100,
-        minWidth: 76,
+        defaultWidth: 90,
+        minWidth: 72,
         numeric: true,
         sortable: true,
         value: (player) => getCareerFatigueForPlayer(world, player.id),
@@ -396,7 +401,7 @@ export function CanonicalRoster({
       {
         id: "salary",
         label: "CONTRATO",
-        defaultWidth: 138,
+        defaultWidth: 150,
         minWidth: 100,
         numeric: true,
         sortable: true,
@@ -413,8 +418,8 @@ export function CanonicalRoster({
       {
         id: "expiry",
         label: "EXP",
-        defaultWidth: 96,
-        minWidth: 76,
+        defaultWidth: 150,
+        minWidth: 96,
         sortable: true,
         value: (player) =>
           getCurrentPlayerContract(world, player.id)?.term.expiresOn ?? "",
@@ -506,13 +511,28 @@ export function CanonicalRoster({
   ];
   const selectedView =
     views.find((view) => view.id === ratingView) ?? views[0]!;
+  const currentSelection = gridSelectedIds ?? (selectedId === undefined ? [] : [selectedId]);
+  const inspectedId = currentSelection.at(-1);
   const handleSelectionChange = (ids: readonly string[]) => {
-    setSelectedId(ids[0]);
+    const nextId = ids.at(-1);
+    if (
+      isNg &&
+      ids.length === 1 &&
+      currentSelection.length === 1 &&
+      nextId !== undefined &&
+      nextId === inspectedId
+    ) {
+      setSelectedId(undefined);
+      sessionBridge?.onSelectedRowIdsChange([]);
+      return;
+    }
+    setSelectedId(nextId);
     sessionBridge?.onSelectedRowIdsChange(ids);
   };
+  const inspectedPlayer = inspectedId === undefined ? undefined : rows.find((player) => player.id === inspectedId);
 
   return (
-    <section className={`canonical-roster${isNg ? " canonical-roster--ng" : ""}`}>
+    <section className={`canonical-roster${isNg ? " canonical-roster--ng ng-holo-panel" : ""}`}>
       <header className="canonical-roster__toolbar">
         <div className="canonical-roster__identity">
           {!isNg && (
@@ -521,8 +541,14 @@ export function CanonicalRoster({
             </span>
           )}
           <div>
-            <strong>Plantilla ({roster.length})</strong>
-            {!isNg && <small>{team.name}</small>}
+            <strong>{isNg ? 'Plantilla' : `Plantilla (${roster.length})`}</strong>
+            {isNg ? (
+              <small>
+                <span className="ng-type-numeric">{roster.length}</span> jugadores
+              </small>
+            ) : (
+              <small>{team.name}</small>
+            )}
           </div>
         </div>
         <div className="canonical-roster__actions">
@@ -542,7 +568,7 @@ export function CanonicalRoster({
             </label>
           )}
           <label className="canonical-roster__view-select">
-            <span>Preset</span>
+            <span>VISTA</span>
             <select
               aria-label="Preset de columnas"
               onChange={(event) => setRatingView(event.target.value)}
@@ -556,26 +582,33 @@ export function CanonicalRoster({
             </select>
           </label>
           {isNg && sessionBridge !== undefined && (
-            <label className="canonical-roster__view-select">
-              <span>Pos</span>
-              <select
-                aria-label="Filtro de posición"
-                onChange={(event) =>
-                  sessionBridge.onPositionFilterChange(
-                    event.target.value as typeof positionFilter,
-                  )
-                }
-                value={positionFilter}
-              >
-                {ROSTER_POSITION_FILTERS.map((filter) => (
-                  <option key={filter} value={filter}>
-                    {filter}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div aria-label="Filtro de posición" className="canonical-roster__pos-filter" role="group">
+              <span className="canonical-roster__pos-filter-label">POS</span>
+              {ROSTER_POSITION_FILTERS.map((filter) => (
+                <button
+                  aria-pressed={positionFilter === filter}
+                  key={filter}
+                  onClick={() => sessionBridge.onPositionFilterChange(filter)}
+                  type="button"
+                >
+                  {filter === 'ALL' ? 'TODOS' : filter}
+                </button>
+              ))}
+            </div>
           )}
-          {!isNg && (
+          {isNg ? (
+            <input
+              aria-label="Search grid"
+              onChange={(event) =>
+                sessionBridge === undefined
+                  ? setQuery(event.target.value)
+                  : sessionBridge.onSearchQueryChange(event.target.value)
+              }
+              placeholder="Buscar jugador..."
+              type="search"
+              value={gridSearchQuery ?? query}
+            />
+          ) : (
             <input
               aria-label="Buscar jugador"
               onChange={(event) => setQuery(event.target.value)}
@@ -606,20 +639,33 @@ export function CanonicalRoster({
             setSelectedId(player.id);
             openPlayer(player);
           }}
-          onSearchQueryChange={sessionBridge?.onSearchQueryChange}
+          onSearchQueryChange={sessionBridge?.onSearchQueryChange ?? (isNg ? setQuery : undefined)}
           onSelectionChange={handleSelectionChange}
           presentation="fm"
           entityForRow={(player) => ({ type: "player", id: player.id })}
           entitySurface="roster"
           multiSelect
           rows={rows}
-          searchQuery={gridSearchQuery}
+          searchQuery={isNg ? (gridSearchQuery ?? query) : undefined}
           selectedId={gridSelectedIds === undefined ? selectedId : undefined}
           selectedIds={gridSelectedIds}
           views={[selectedView]}
           visualMode={isNg ? "ng" : "legacy"}
+          emptyTitle="No hay jugadores que coincidan con los filtros actuales."
+          emptyDescription="Limpiar filtros"
         />
       </div>
+      {isNg && embedInspector && inspectedPlayer !== undefined ? (
+        <div className="canonical-roster__leftover">
+          <RosterRowInspector
+            onOpenPlayer={openPlayer}
+            player={inspectedPlayer}
+            team={team}
+            world={world}
+          />
+          <RosterStaffComments model={buildRosterStaffComments(world, team.id, inspectedPlayer.id)} />
+        </div>
+      ) : null}
     </section>
   );
 }

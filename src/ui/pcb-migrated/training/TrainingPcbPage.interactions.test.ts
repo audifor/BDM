@@ -7,7 +7,8 @@ import { createNewGame } from '@/app/game'
 import { getUserTeam } from '@/engine/calendar'
 import { nextEligibleTrainingDate } from '@/engine/training'
 import { selectUserTrainingPlan } from '@/stores/gameStore'
-import { parseGameDate } from '@/domain/date'
+import { addDays, parseGameDate } from '@/domain/date'
+import { getGamesForTeam } from '@/domain/world'
 import { TrainingPcbPage } from './TrainingPcbPage'
 
 afterEach(cleanup)
@@ -280,5 +281,25 @@ describe('TrainingPcbPage / interactions', () => {
     const world = { ...createNewGame(), currentDate: parseGameDate('2026-08-19') }
     render(createElement(TrainingPcbPage, { world }))
     expect(screen.getByText(/Semana 34 · 2026-08-17 - 2026-08-23/)).toBeInTheDocument()
+  })
+
+  it('marks match days in the planner and calendar and offers automatic week fill', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const match = getGamesForTeam(base, team.id).find((game) => game.date > base.currentDate)
+    expect(match).toBeDefined()
+    const [year, month, day] = match!.date.split('-').map(Number) as [number, number, number]
+    const jsDay = new Date(Date.UTC(year, month - 1, day)).getUTCDay()
+    const weekStart = addDays(match!.date, -((jsDay === 0 ? 7 : jsDay) - 1))
+    const world = { ...base, currentDate: weekStart }
+    const onScheduleAutomaticWeek = vi.fn()
+    render(createElement(TrainingPcbPage, { world, onScheduleAutomaticWeek }))
+
+    expect(document.querySelector('.pcb-training__day.is-match')).not.toBeNull()
+    expect(document.querySelector('.pcb-training__calendar-grid > span.is-match')).not.toBeNull()
+    expect(screen.getAllByText(/Partido/).length).toBeGreaterThan(0)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Entrenamientos automáticos' }))
+    expect(onScheduleAutomaticWeek).toHaveBeenCalledWith(weekStart)
   })
 })

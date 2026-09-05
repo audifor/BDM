@@ -12,9 +12,11 @@
   background: var(--ng-bg-elevated);
   box-shadow: var(--ng-shadow-inset-highlight);
   color: var(--ng-text-secondary);
-  font-family: var(--ng-font-ui);
-  font-size: var(--ng-font-size-secondary);
-  font-weight: var(--ng-font-weight-medium);
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   white-space: nowrap;
   transition:
     background 120ms ease,
@@ -45,20 +47,20 @@
 }
 
 .ng-btn--primary {
-  border-color: rgba(72, 149, 212, 0.45);
+  border-color: rgba(230, 183, 77, 0.55);
   background: var(--ng-accent-primary-muted);
-  color: var(--ng-accent-primary);
+  color: var(--ng-amber-bright);
 }
 
 .ng-btn--primary:hover:not(:disabled) {
-  border-color: var(--ng-accent-primary);
-  background: rgba(72, 149, 212, 0.22);
-  color: #6db3e8;
+  border-color: var(--ng-amber);
+  background: rgba(230, 183, 77, 0.18);
+  color: #fff4dc;
 }
 
 .ng-btn--toggle.is-active {
-  border-color: rgba(72, 149, 212, 0.5);
-  background: var(--ng-accent-primary-muted);
+  border-color: rgba(22, 217, 243, 0.45);
+  background: var(--ng-cyan-muted);
   color: var(--ng-text-primary);
 }
 
@@ -84,9 +86,10 @@
   height: 18px;
   padding: 0 var(--ng-spacing-8);
   border-radius: var(--ng-radius-sm);
+  font-family: var(--ng-font-display);
   font-size: var(--ng-font-size-meta);
-  font-weight: var(--ng-font-weight-semibold);
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: var(--ng-track-meta);
   text-transform: uppercase;
 }
 
@@ -144,6 +147,6 @@
 
 .ng-input:focus {
   outline: none;
-  border-color: var(--ng-border-focus);
-  box-shadow: 0 0 0 1px var(--ng-focus-ring);
+  border-color: var(--ng-cyan);
+  box-shadow: var(--ng-glow-cyan-low);
 }

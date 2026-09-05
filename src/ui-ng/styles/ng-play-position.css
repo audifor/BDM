@@ -1,0 +1,26 @@
+/* Canonical play-position chip — Carga / Load Management is the source format. */
+.bdm-os-ng :is(
+  .ng-play-position,
+  .canonical-roster__position,
+  .pcb-tactics__position,
+  .tactics-board-player-pos,
+  .roster-depth-chart__pos
+) {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid color-mix(in srgb, var(--ng-cyan) 40%, transparent);
+  border-radius: 4px;
+  background: var(--ng-cyan-muted);
+  color: var(--ng-cyan-bright);
+  font-family: var(--ng-font-grid);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-transform: none;
+  white-space: nowrap;
+}

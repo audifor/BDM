@@ -1,33 +1,34 @@
-import {
-  useMemo,
-  useState,
-  type CSSProperties,
-  type PointerEvent as ReactPointerEvent,
-} from "react";
+import { Fragment, useMemo, useState, type ReactNode } from "react";
 import type { GameWorld } from "@/domain/world";
-import { getCareerFatigueForPlayer, getDevelopmentStimulusForPlayer, getTeamRoster } from "@/domain/world";
+import { getCareerFatigueForPlayer, getDevelopmentStimulusForPlayer, getGamesForTeam, getTeamRoster } from "@/domain/world";
 import { getUserTeam } from "@/engine/calendar";
-import { dailyLoadStatusForTeam, dailyScheduledLoad, nextEligibleTrainingDate } from "@/engine/training";
+import { canTeamTrainOnDate, dailyLoadStatusForTeam, dailyScheduledLoad, nextEligibleTrainingDate } from "@/engine/training";
 import { addDays, formatGameDate, isoWeekNumber, parseGameDate, type GameDate } from "@/domain/date";
 import { BASKETBALL_RATING_KEYS, type BasketballRatingKey, type Player } from "@/domain/player";
 import type { Team } from "@/domain/team";
 import type { TeamId, PlayerId, StaffPersonId } from "@/domain/ids";
 import { createEntityId } from "@/domain/ids";
+import { STAFF_ROLE_REGISTRY, type StaffRoleId } from "@/domain/staff";
+import { STAFF_ROLE_LABELS } from "@/ui/staffPresentation";
 import { useEntityContextMenu } from "@/ui/entityContextMenu/EntityContextMenuProvider";
+import { PlayerNameLink } from "@/ui/navigation/PlayerNameLink";
 import { TRAINING_CATALOG, trainingLoad, type DailyLoadStatus, type ScheduledTrainingSession, type TrainingCategory, type TrainingFocus, type TrainingIntensity as DomainTrainingIntensity, type TrainingDefinition, type TrainingScope, type UserTrainingModule } from "@/domain/training";
 import { ATTRIBUTE_LABELS } from "@/ui/attributeLabels";
 import { selectLatestUserTrainingSession, selectUserTeamScheduledSessions, selectUserTrainingModules, selectUserTrainingPlan } from "@/stores/gameStore";
+import { PrecisionDivHead } from "@/ui-ng/components/PrecisionDivHead";
+import { usePrecisionDivGrid, type PrecisionDivColumn } from "@/ui-ng/components/usePrecisionDivGrid";
 import DraggableSubnav from "../club/components/DraggableSubnav";
 import "./TrainingPcbPage.css";
 
 export type TrainingPcbTab = "team" | "personal" | "load" | "staff" | "modules";
-const tabs: readonly [TrainingPcbTab, string][] = [
+export const TRAINING_PCB_TABS: readonly [TrainingPcbTab, string][] = [
   ["team", "Equipo"],
   ["personal", "Individual"],
   ["load", "Carga"],
   ["staff", "Staff"],
   ["modules", "Módulos"],
 ];
+const tabs = TRAINING_PCB_TABS;
 
 const FOCUS_LABELS: Record<TrainingFocus, string> = {
   balanced: "Equilibrado",
@@ -69,6 +70,15 @@ function weekAnchor(world: GameWorld | undefined, week: number): GameDate | unde
   return addDays(monday, week * 7);
 }
 
+function teamGameOnDate(world: GameWorld | undefined, team: Team | undefined, date: GameDate) {
+  if (world === undefined || team === undefined) return undefined;
+  return getGamesForTeam(world, team.id).find((game) => game.date === date);
+}
+
+function isMatchDay(world: GameWorld | undefined, team: Team | undefined, date: GameDate): boolean {
+  return world !== undefined && team !== undefined && !canTeamTrainOnDate(world, team.id, date);
+}
+
 function trainingWeekRangeLabel(world: GameWorld | undefined, week: number): string {
   const anchor = weekAnchor(world, week);
   if (anchor === undefined) return "Sin fecha de referencia";
@@ -92,51 +102,26 @@ function getTrainingImpact(world: GameWorld, teamId: TeamId) {
   };
 }
 
-function useResizableTrainingColumns(initialWidths: readonly number[]) {
-  const [widths, setWidths] = useState(initialWidths);
-  const startResize =
-    (index: number) => (event: ReactPointerEvent<HTMLSpanElement>) => {
-      event.preventDefault();
-      event.stopPropagation();
-      const startX = event.clientX,
-        initialWidth = widths[index] ?? 120;
-      const move = (next: PointerEvent) =>
-        setWidths((current) =>
-          current.map((width, widthIndex) =>
-            widthIndex === index
-              ? Math.max(72, initialWidth + next.clientX - startX)
-              : width,
-          ),
-        );
-      const stop = () => {
-        window.removeEventListener("pointermove", move);
-        window.removeEventListener("pointerup", stop);
-      };
-      window.addEventListener("pointermove", move);
-      window.addEventListener("pointerup", stop);
-    };
-  return {
-    style: {
-      gridTemplateColumns: widths.map((width) => `${width}px`).join(" "),
-    } as CSSProperties,
-    startResize,
-    widths,
-  };
-}
-
-function TrainingColumnResizeHandle({
-  onPointerDown,
-}: {
-  readonly onPointerDown: (event: ReactPointerEvent<HTMLSpanElement>) => void;
-}) {
-  return (
-    <span
-      aria-label="Ajustar ancho de columna"
-      className="pcb-training__column-resize"
-      onPointerDown={onPointerDown}
-    />
-  );
-}
+const PERSONAL_TRAINING_COLUMNS: readonly PrecisionDivColumn[] = [
+  { id: "player", label: "Jugador", width: 220, flex: 0.9, minWidth: 160 },
+  { id: "pos", label: "POS", width: 56, minWidth: 44 },
+  { id: "plan", label: "Plan actual", width: 130 },
+  { id: "module", label: "Módulo asignado", width: 180, flex: 1.4 },
+  { id: "objective", label: "Objetivo", width: 150, flex: 1 },
+  { id: "assign", label: "Asignar", width: 340, minWidth: 280 },
+];
+const LOAD_TRAINING_COLUMNS: readonly PrecisionDivColumn[] = [
+  { id: "JUGADOR", label: "JUGADOR", width: 220 },
+  { id: "POS", label: "POS", width: 88 },
+  { id: "FATIGA", label: "FATIGA", width: 160 },
+  { id: "ESTADO", label: "ESTADO", width: 160 },
+];
+const STAFF_TRAINING_COLUMNS: readonly PrecisionDivColumn[] = [
+  { id: "staff", label: "Staff", width: 260 },
+  { id: "role", label: "Rol", width: 210 },
+  { id: "area", label: "Área", width: 220 },
+  { id: "group", label: "Grupo", width: 220 },
+];
 
 const HOUR_OPTIONS = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, "0"));
 const MINUTE_OPTIONS = Array.from({ length: 12 }, (_, index) => String(index * 5).padStart(2, "0"));
@@ -204,10 +189,15 @@ export function TrainingPcbPage({
   onFocus,
   onScheduleSession,
   onScheduleTeamModule,
+  onScheduleAutomaticWeek,
   onCancelSession,
   onSaveModule,
   onDeleteModule,
   onAssignModule,
+  variant = "legacy",
+  activeTab,
+  onTabChange,
+  onOpenPlayer,
 }: {
   readonly initialTab?: TrainingPcbTab;
   readonly world?: GameWorld;
@@ -215,17 +205,28 @@ export function TrainingPcbPage({
   readonly onFocus?: (value: TrainingFocus) => void;
   readonly onScheduleSession?: (session: ScheduledTrainingSession) => void;
   readonly onScheduleTeamModule?: (input: { readonly moduleId: string; readonly date: GameDate; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: DomainTrainingIntensity; readonly assignedStaffPersonIds?: readonly StaffPersonId[] }) => void;
+  readonly onScheduleAutomaticWeek?: (weekStart: GameDate) => void;
   readonly onCancelSession?: (sessionId: string) => void;
   readonly onSaveModule?: (module: UserTrainingModule) => void;
   readonly onDeleteModule?: (moduleId: string) => void;
   readonly onAssignModule?: (input: TrainingModuleAssignmentInput) => void;
+  readonly variant?: "legacy" | "ng";
+  readonly activeTab?: TrainingPcbTab;
+  readonly onTabChange?: (tab: TrainingPcbTab) => void;
+  readonly onOpenPlayer?: (playerId: PlayerId) => void;
 }) {
-  const [tab, setTab] = useState<TrainingPcbTab>(initialTab);
+  const [internalTab, setInternalTab] = useState<TrainingPcbTab>(initialTab);
+  const tab = activeTab ?? internalTab;
+  const setTab = (next: TrainingPcbTab) => {
+    onTabChange?.(next);
+    if (activeTab === undefined) setInternalTab(next);
+  };
   const team = useMemo(() => (world === undefined ? undefined : getUserTeam(world)), [world]);
   const scheduledSessions = world === undefined ? [] : selectUserTeamScheduledSessions(world);
   const userModules = world === undefined ? [] : selectUserTrainingModules(world);
   return (
-    <section aria-label="Entrenamiento PCB migrado" className="pcb-training">
+    <section aria-label="Entrenamiento PCB migrado" className={`pcb-training${variant === "ng" ? " pcb-training--ng" : ""}`}>
+      {variant === "legacy" ? (
       <DraggableSubnav
         className="pcb-training__subnav"
         items={tabs.map(([id, label]) => ({
@@ -236,11 +237,13 @@ export function TrainingPcbPage({
         }))}
         storageKey="pcbasket.subnav.training"
       />
+      ) : null}
       {tab === "team" ? (
         <TeamTraining
           onCancelSession={onCancelSession}
           onFocus={onFocus}
           onIntensity={onIntensity}
+          onScheduleAutomaticWeek={onScheduleAutomaticWeek}
           onScheduleTeamModule={onScheduleTeamModule}
           scheduledSessions={scheduledSessions}
           eligibleStaff={eligibleTrainingStaff(world, team)}
@@ -249,9 +252,9 @@ export function TrainingPcbPage({
           world={world}
         />
       ) : tab === "personal" ? (
-        <PersonalTraining eligibleStaff={eligibleTrainingStaff(world, team)} onAssignModule={onAssignModule} scheduledSessions={scheduledSessions} team={team} userModules={userModules} world={world} />
+        <PersonalTraining eligibleStaff={eligibleTrainingStaff(world, team)} onAssignModule={onAssignModule} onOpenPlayer={onOpenPlayer} scheduledSessions={scheduledSessions} team={team} userModules={userModules} world={world} />
       ) : tab === "load" ? (
-        <LoadManagementInteractive onScheduleSession={onScheduleSession} scheduledSessions={scheduledSessions} team={team} world={world} />
+        <LoadManagementInteractive onOpenPlayer={onOpenPlayer} onScheduleSession={onScheduleSession} scheduledSessions={scheduledSessions} team={team} world={world} />
       ) : tab === "staff" ? (
         <StaffAssignments world={world} />
       ) : (
@@ -269,6 +272,7 @@ function TeamTraining({
   scheduledSessions,
   userModules,
   onScheduleTeamModule,
+  onScheduleAutomaticWeek,
   onCancelSession,
   eligibleStaff,
 }: {
@@ -279,6 +283,7 @@ function TeamTraining({
   readonly scheduledSessions: readonly ScheduledTrainingSession[];
   readonly userModules: readonly UserTrainingModule[];
   readonly onScheduleTeamModule?: (input: { readonly moduleId: string; readonly date: GameDate; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: DomainTrainingIntensity; readonly assignedStaffPersonIds?: readonly StaffPersonId[] }) => void;
+  readonly onScheduleAutomaticWeek?: (weekStart: GameDate) => void;
   readonly onCancelSession?: (sessionId: string) => void;
   readonly eligibleStaff: readonly { readonly id: StaffPersonId; readonly role: string; readonly name: string }[];
 }) {
@@ -294,6 +299,11 @@ function TeamTraining({
   const anchor = weekAnchor(world, week);
   const days = anchor === undefined ? [] : DAY_NAMES.map((name, index) => ({ name, date: addDays(anchor, index) }));
   const sessionsForDate = (date: GameDate) => scheduledSessions.filter((session) => session.date === date && session.status === "scheduled").sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const hasAutomaticDays = days.some(({ date }) => {
+    if (world === undefined || team === undefined || date <= world.currentDate) return false;
+    if (isMatchDay(world, team, date)) return false;
+    return sessionsForDate(date).every((session) => session.scope !== "team");
+  });
   const weekLabel = anchor === undefined ? "Sin fecha de referencia" : `Semana ${isoWeekNumber(anchor)} · ${formatGameDate(anchor)} - ${formatGameDate(addDays(anchor, 6))}`;
   const teamModules = userModules.filter((module) => module.scope !== "individual");
   const saveSession = (input: { readonly startTime: string; readonly durationMinutes: number; readonly moduleId: string; readonly intensity: DomainTrainingIntensity; readonly assignedStaffPersonIds: readonly StaffPersonId[] }) => {
@@ -378,32 +388,57 @@ function TeamTraining({
               </strong>
               <small>Semana {anchor === undefined ? "—" : isoWeekNumber(anchor)} de planificación</small>
             </div>
-            <button onClick={() => setWeek((value) => value + 1)} type="button">
-              Siguiente
-            </button>
+            <div className="pcb-training__week-actions">
+              <button
+                className="is-primary"
+                disabled={team === undefined || anchor === undefined || !hasAutomaticDays || onScheduleAutomaticWeek === undefined}
+                onClick={() => {
+                  if (anchor !== undefined) onScheduleAutomaticWeek?.(anchor);
+                }}
+                title="Rellena los días futuros sin partido con el foco e intensidad actuales"
+                type="button"
+              >
+                Entrenamientos automáticos
+              </button>
+              <button onClick={() => setWeek((value) => value + 1)} type="button">
+                Siguiente
+              </button>
+            </div>
           </div>
           <div className="pcb-training__days">
             {days.map(({ name, date }) => {
               const sessions = sessionsForDate(date);
               const isPastOrToday = world !== undefined && date <= world.currentDate;
+              const match = teamGameOnDate(world, team, date);
+              const matchDay = match !== undefined;
+              const opponent = match === undefined || world === undefined || team === undefined
+                ? undefined
+                : world.teams[match.homeTeamId === team.id ? match.awayTeamId : match.homeTeamId];
               return (
-                <article className="pcb-training__day" key={date}>
+                <article className={`pcb-training__day${matchDay ? " is-match" : ""}`} key={date}>
                   <header>
                     <strong>{name}</strong>
                     <button
-                      disabled={team === undefined || isPastOrToday}
+                      disabled={team === undefined || isPastOrToday || matchDay}
                       onClick={() => {
                         setEditorError(undefined);
                         setEditor({ date });
                       }}
-                      title={isPastOrToday ? "No se pueden programar sesiones para hoy o fechas pasadas" : undefined}
+                      title={
+                        matchDay
+                          ? "Día de partido: no se programa entrenamiento"
+                          : isPastOrToday
+                            ? "No se pueden programar sesiones para hoy o fechas pasadas"
+                            : undefined
+                      }
                       type="button"
                     >
                       + Sesión
                     </button>
                   </header>
                   <div>
-                    {sessions.length === 0 ? (
+                    {matchDay ? <p>Partido{opponent === undefined ? "" : ` · ${opponent.name}`}</p> : null}
+                    {!matchDay && sessions.length === 0 ? (
                       <p>Descanso</p>
                     ) : (
                       sessions.map((session) => {
@@ -484,9 +519,10 @@ function Calendar({
         ))}
         {cells.map((date) => {
           const hasSessions = world !== undefined && team !== undefined && Object.values(world.scheduledTrainingSessionsById).some((session) => session.teamId === team.id && session.date === date);
+          const matchDay = isMatchDay(world, team, date);
           const status = hasSessions ? loadStatusForDate(date) : undefined;
           return (
-            <span className={hasSessions ? "is-train" : ""} key={date}>
+            <span className={[hasSessions ? "is-train" : "", matchDay ? "is-match" : ""].filter(Boolean).join(" ")} key={date}>
               {Number(date.slice(-2))}
               {status !== undefined && <i className={`pcb-training__load-dot is-${LOAD_STATUS_TONE[status]}`}>{LOAD_STATUS_LABELS[status]}</i>}
             </span>
@@ -494,7 +530,7 @@ function Calendar({
         })}
       </div>
       <p>
-        Los días marcados muestran sesiones reales programadas y su nivel de carga.
+        Los días marcados muestran sesiones reales programadas y su nivel de carga. El ámbar señala un día de partido.
       </p>
     </aside>
   );
@@ -624,6 +660,7 @@ function PersonalTraining({
   scheduledSessions,
   userModules,
   onAssignModule,
+  onOpenPlayer,
   eligibleStaff,
 }: {
   readonly world?: GameWorld;
@@ -631,11 +668,12 @@ function PersonalTraining({
   readonly scheduledSessions: readonly ScheduledTrainingSession[];
   readonly userModules: readonly UserTrainingModule[];
   readonly onAssignModule?: (input: TrainingModuleAssignmentInput) => void;
+  readonly onOpenPlayer?: (playerId: PlayerId) => void;
   readonly eligibleStaff: readonly { readonly id: StaffPersonId; readonly role: string; readonly name: string }[];
 }) {
   const playerMenu = useEntityContextMenu();
-  const columns = useResizableTrainingColumns([220, 88, 180, 150, 180, 160]);
-  const labels = ["Jugador", "Pos", "Plan actual", "Módulo asignado", "Objetivo", "Asignar módulo"];
+  const grid = usePrecisionDivGrid("ng-training-personal", PERSONAL_TRAINING_COLUMNS);
+  const rowStyle = { ...grid.style, width: "100%" };
   const players = world !== undefined && team !== undefined ? getTeamRoster(world, team.id) : [];
   const plan = world === undefined ? undefined : selectUserTrainingPlan(world);
   const individualDefinitions = TRAINING_CATALOG.filter((entry) => entry.scope !== "team");
@@ -643,8 +681,12 @@ function PersonalTraining({
     ...individualDefinitions.map((entry) => ({ id: entry.id, name: entry.name })),
     ...userModules.filter((module) => module.scope !== "team").map((module) => ({ id: module.id, name: module.name })),
   ];
+  const assignStaff = eligibleStaff.filter((staff) => {
+    const department = STAFF_ROLE_REGISTRY[staff.role as StaffRoleId]?.department;
+    return department === "coaching" || department === "performance";
+  });
   const [selection, setSelection] = useState<Record<string, string>>({});
-  const [staffSelection, setStaffSelection] = useState<Record<string, readonly StaffPersonId[]>>({});
+  const [staffSelection, setStaffSelection] = useState<Record<string, StaffPersonId | "">>({});
   const [assignError, setAssignError] = useState<{ readonly playerId: string; readonly message: string }>();
   return (
     <main className="pcb-training__bento pcb-training__personal-page">
@@ -657,15 +699,16 @@ function PersonalTraining({
           <span>{players.length} jugadores</span>
         </div>
       </header>
-      <div className="pcb-training__table pcb-training__personal">
-        <div className="is-head" style={columns.style}>
-          {labels.map((label, index) => (
-            <span key={label}>
-              {label}
-              <TrainingColumnResizeHandle
-                onPointerDown={columns.startResize(index)}
-              />
-            </span>
+      <div className="pcb-training__table pcb-training__personal ng-precision-grid">
+        <div className="is-head" style={rowStyle}>
+          {grid.ordered.map((column) => (
+            <PrecisionDivHead
+              key={column.id}
+              headerProps={grid.headerProps(column.id)}
+              label={column.label}
+              onResize={grid.startResize(column.id)}
+              resizeClassName="pcb-training__column-resize"
+            />
           ))}
         </div>
         {players.length === 0 ? (
@@ -681,15 +724,26 @@ function PersonalTraining({
               .sort((a, b) => (a.date === b.date ? a.startTime.localeCompare(b.startTime) : a.date.localeCompare(b.date)))[0];
             const assignedDefinition = assignedSession === undefined ? undefined : TRAINING_CATALOG.find((entry) => entry.id === assignedSession.definitionId);
             const selectedModuleId = selection[player.id] ?? assignableModules[0]?.id ?? "";
-            return (
-              <div key={player.id} onContextMenu={(event) => playerMenu.open({ type: "player", id: player.id }, event, { surface: "training" })} style={columns.style}>
-                <b>{playerName(player)}</b>
-                <span>{player.basketball.primaryPosition}</span>
-                <span>{plan === undefined ? "—" : FOCUS_LABELS[plan.focus]}</span>
-                <span>{assignedDefinition === undefined ? "Sin módulo asignado" : assignedDefinition.name}</span>
-                <span>{topRating === undefined ? "Sin estímulo registrado" : ATTRIBUTE_LABELS[topRating]}</span>
+            const cells: Record<string, ReactNode> = {
+              player: (
+                <b>
+                  <PlayerNameLink onOpenPlayer={onOpenPlayer} playerId={player.id}>
+                    {playerName(player)}
+                  </PlayerNameLink>
+                </b>
+              ),
+              pos: (
                 <span>
+                  <span className="ng-play-position">{player.basketball.primaryPosition}</span>
+                </span>
+              ),
+              plan: <span>{plan === undefined ? "—" : FOCUS_LABELS[plan.focus]}</span>,
+              module: <span>{assignedDefinition === undefined ? "Sin módulo asignado" : assignedDefinition.name}</span>,
+              objective: <span>{topRating === undefined ? "Sin estímulo registrado" : ATTRIBUTE_LABELS[topRating]}</span>,
+              assign: (
+                <span className="pcb-training__assign">
                   <select
+                    aria-label={`Módulo para ${playerName(player)}`}
                     onChange={(event) => setSelection((current) => ({ ...current, [player.id]: event.target.value }))}
                     value={selectedModuleId}
                   >
@@ -699,19 +753,32 @@ function PersonalTraining({
                       </option>
                     ))}
                   </select>
+                  <select
+                    aria-label={`Staff ejecutor para ${playerName(player)}`}
+                    onChange={(event) => setStaffSelection((current) => ({ ...current, [player.id]: event.target.value as StaffPersonId | "" }))}
+                    value={staffSelection[player.id] ?? ""}
+                  >
+                    <option value="">Sin staff</option>
+                    {assignStaff.map((staff) => (
+                      <option key={staff.id} value={staff.id}>
+                        {staff.name} · {STAFF_ROLE_LABELS[staff.role as StaffRoleId] ?? staff.role}
+                      </option>
+                    ))}
+                  </select>
                   <button
                     disabled={team === undefined || world === undefined || selectedModuleId === ""}
                     onClick={() => {
                       if (team === undefined || world === undefined || selectedModuleId === "") return;
                       setAssignError(undefined);
                       try {
+                        const staffId = staffSelection[player.id];
                         onAssignModule?.({
                           playerId: player.id,
                           moduleId: selectedModuleId,
                           date: nextEligibleTrainingDate(world.currentDate),
                           startTime: "09:00",
                           sessionId: `session:${createEntityId()}`,
-                          assignedStaffPersonIds: staffSelection[player.id] ?? [],
+                          assignedStaffPersonIds: staffId ? [staffId] : undefined,
                         });
                       } catch (error) {
                         setAssignError({ playerId: player.id, message: error instanceof Error ? error.message : "No se pudo asignar el módulo." });
@@ -722,10 +789,14 @@ function PersonalTraining({
                     Asignar
                   </button>
                   {assignError?.playerId === player.id && <small>{assignError.message}</small>}
-                  <select aria-label={`Staff ejecutor para ${playerName(player)}`} multiple onChange={(event) => setStaffSelection((current) => ({ ...current, [player.id]: Array.from(event.currentTarget.selectedOptions, (option) => option.value as StaffPersonId) }))} value={staffSelection[player.id] ?? []}>
-                    {eligibleStaff.map((staff) => <option key={staff.id} value={staff.id}>{staff.name} · {staff.role}</option>)}
-                  </select>
                 </span>
+              ),
+            };
+            return (
+              <div key={player.id} onContextMenu={(event) => playerMenu.open({ type: "player", id: player.id }, event, { surface: "training" })} style={rowStyle}>
+                {grid.ordered.map((column) => (
+                  <Fragment key={column.id}>{cells[column.id]}</Fragment>
+                ))}
               </div>
             );
           })
@@ -741,11 +812,13 @@ function LoadManagementInteractive({
   team,
   scheduledSessions,
   onScheduleSession,
+  onOpenPlayer,
 }: {
   readonly world?: GameWorld;
   readonly team?: Team;
   readonly scheduledSessions: readonly ScheduledTrainingSession[];
   readonly onScheduleSession?: (session: ScheduledTrainingSession) => void;
+  readonly onOpenPlayer?: (playerId: PlayerId) => void;
 }) {
   const [query, setQuery] = useState("");
   const [riskOnly, setRiskOnly] = useState(false);
@@ -768,12 +841,11 @@ function LoadManagementInteractive({
     "FATIGA",
     "ESTADO",
   ]);
-  const loadColumns = useResizableTrainingColumns([220, 88, 160, 160]);
-  const loadGridStyle = {
-    gridTemplateColumns: columns
-      .map((_, index) => `${loadColumns.widths[index] ?? 120}px`)
-      .join(" "),
-  } as CSSProperties;
+  const loadColumnDefs = useMemo(
+    () => LOAD_TRAINING_COLUMNS.filter((column) => columns.includes(column.id)),
+    [columns],
+  );
+  const loadGrid = usePrecisionDivGrid("ng-training-load", loadColumnDefs);
   const players = world !== undefined && team !== undefined ? getTeamRoster(world, team.id) : [];
   const todayLoadStatus = world !== undefined && team !== undefined ? dailyLoadStatusForTeam(world, team.id, world.currentDate) : undefined;
   const todayLoad = world !== undefined && team !== undefined ? dailyScheduledLoad(world, team.id, world.currentDate) : 0;
@@ -810,10 +882,12 @@ function LoadManagementInteractive({
       return (
         <b>
           <i aria-hidden="true" className={`pcb-training__load-radio${selected === row.player.id ? " is-checked" : ""}`} />
-          {playerName(row.player)}
+          <PlayerNameLink onOpenPlayer={onOpenPlayer} playerId={row.player.id}>
+            {playerName(row.player)}
+          </PlayerNameLink>
         </b>
       );
-    if (column === "POS") return <i>{row.player.basketball.primaryPosition}</i>;
+    if (column === "POS") return <span className="ng-play-position">{row.player.basketball.primaryPosition}</span>;
     if (column === "FATIGA") return <Bar value={Math.round(row.fatigue)} />;
     return (
       <em className={`pcb-training__badge is-${row.fatigue > 70 ? "risk" : "optimal"}`}>
@@ -983,31 +1057,35 @@ function LoadManagementInteractive({
           </div>
         )}
         <div
-          className="pcb-training__table pcb-training__load"
-          style={loadGridStyle}
+          className="pcb-training__table pcb-training__load ng-precision-grid"
+          style={loadGrid.style}
         >
           <div
             className="is-head"
-            style={loadGridStyle}
+            style={loadGrid.style}
           >
-            {columns.map((column, index) =>
-              column === "FATIGA" ? (
-                <button
-                  key={column}
-                  onClick={() =>
-                    setSortDirection((value) =>
-                      value === "ascending" ? "descending" : "ascending",
-                    )
-                  }
-                  type="button"
-                >
-                  {column} {sortDirection === "ascending" ? "↑" : "↓"}
-                  <TrainingColumnResizeHandle onPointerDown={loadColumns.startResize(index)} />
-                </button>
-              ) : (
-                <span key={column}>{column}<TrainingColumnResizeHandle onPointerDown={loadColumns.startResize(index)} /></span>
-              ),
-            )}
+            {loadGrid.ordered.map((column) => (
+              <PrecisionDivHead
+                key={column.id}
+                headerProps={loadGrid.headerProps(column.id)}
+                label={column.label}
+                onResize={loadGrid.startResize(column.id)}
+                resizeClassName="pcb-training__column-resize"
+              >
+                {column.id === "FATIGA" ? (
+                  <button
+                    onClick={() =>
+                      setSortDirection((value) =>
+                        value === "ascending" ? "descending" : "ascending",
+                      )
+                    }
+                    type="button"
+                  >
+                    {column.label} {sortDirection === "ascending" ? "↑" : "↓"}
+                  </button>
+                ) : undefined}
+              </PrecisionDivHead>
+            ))}
           </div>
           {rows.length === 0 ? (
             <p>No hay jugadores disponibles.</p>
@@ -1020,10 +1098,10 @@ function LoadManagementInteractive({
                 key={row.player.id}
                 onClick={() => setSelected(row.player.id)}
                 role="radio"
-                style={loadGridStyle}
+                style={loadGrid.style}
               >
-                {columns.map((column) => (
-                  <span key={column}>{columnCell(column, row)}</span>
+                {loadGrid.ordered.map((column) => (
+                  <span key={column.id}>{columnCell(column.id, row)}</span>
                 ))}
               </div>
             ))
@@ -1063,8 +1141,7 @@ function Bar({ value }: { readonly value: number }) {
   );
 }
 function StaffAssignments({ world }: { readonly world?: GameWorld }) {
-  const columns = useResizableTrainingColumns([260, 210, 220, 220]);
-  const labels = ["Staff", "Rol", "Área", "Grupo"];
+  const grid = usePrecisionDivGrid("ng-training-staff", STAFF_TRAINING_COLUMNS);
   const team = world === undefined ? undefined : getUserTeam(world);
   const responsibilities = world !== undefined && team !== undefined ? world.trainingResponsibilitiesByTeamId[team.id] : undefined;
   const rows = responsibilities === undefined
@@ -1080,28 +1157,36 @@ function StaffAssignments({ world }: { readonly world?: GameWorld }) {
           <h2>Staff Assignments</h2>
           <span>{rows.length === 0 ? "Sin datos de plantilla técnica" : `${rows.length} asignaciones`}</span>
         </header>
-        <div className="pcb-training__table pcb-training__staff">
-          <div className="is-head" style={columns.style}>
-            {labels.map((label, index) => (
-              <span key={label}>
-                {label}
-                <TrainingColumnResizeHandle
-                  onPointerDown={columns.startResize(index)}
-                />
-              </span>
+        <div className="pcb-training__table pcb-training__staff ng-precision-grid">
+          <div className="is-head" style={grid.style}>
+            {grid.ordered.map((column) => (
+              <PrecisionDivHead
+                key={column.id}
+                headerProps={grid.headerProps(column.id)}
+                label={column.label}
+                onResize={grid.startResize(column.id)}
+                resizeClassName="pcb-training__column-resize"
+              />
             ))}
           </div>
           {rows.length === 0 ? (
             <p>No hay asignaciones de staff disponibles todavía.</p>
           ) : (
-            rows.map(({ role, staff }) => (
-              <div key={role} style={columns.style}>
-                <b>{staff.identity.firstName} {staff.identity.lastName}</b>
-                <span>{role}</span>
-                <span>Entrenamiento</span>
-                <span>{team?.name ?? "—"}</span>
-              </div>
-            ))
+            rows.map(({ role, staff }) => {
+              const cells: Record<string, ReactNode> = {
+                staff: <b>{staff.identity.firstName} {staff.identity.lastName}</b>,
+                role: <span>{role}</span>,
+                area: <span>Entrenamiento</span>,
+                group: <span>{team?.name ?? "—"}</span>,
+              };
+              return (
+                <div key={role} style={grid.style}>
+                  {grid.ordered.map((column) => (
+                    <Fragment key={column.id}>{cells[column.id]}</Fragment>
+                  ))}
+                </div>
+              );
+            })
           )}
         </div>
       </section>
@@ -1111,6 +1196,45 @@ function StaffAssignments({ world }: { readonly world?: GameWorld }) {
 /** Scopes a user module may choose, constrained by the base definition's own supported scope. */
 function allowedScopesForBase(base: TrainingDefinition): readonly TrainingScope[] {
   return base.scope === "both" ? ["team", "individual"] : [base.scope];
+}
+
+const TRAINING_CATEGORIES: readonly TrainingCategory[] = [
+  "shooting",
+  "finishing",
+  "ballHandling",
+  "playmaking",
+  "defense",
+  "rebounding",
+  "physical",
+  "recovery",
+  "tactical",
+];
+
+const TRAINING_CATEGORY_LABELS: Record<TrainingCategory, string> = {
+  shooting: "Tiro",
+  finishing: "Finalización",
+  ballHandling: "Manejo",
+  playmaking: "Creación",
+  defense: "Defensa",
+  rebounding: "Rebote",
+  physical: "Físico",
+  recovery: "Recuperación",
+  tactical: "Táctica",
+};
+
+const TRAINING_SCOPE_FILTERS = [
+  ["individual", "Individual"],
+  ["team", "Equipo"],
+  ["both", "Ambos"],
+] as const;
+
+function ratingKeyLabel(key: string): string {
+  return key.replace(/([A-Z])/g, " $1").replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function moduleMatchesScope(scope: TrainingScope, filter: TrainingScope): boolean {
+  if (filter === "both") return true;
+  return scope === filter || scope === "both";
 }
 
 function TrainingModules({
@@ -1128,20 +1252,48 @@ function TrainingModules({
   const [draftBaseId, setDraftBaseId] = useState(TRAINING_CATALOG[0]!.id);
   const [draftScope, setDraftScope] = useState<TrainingScope>(allowedScopesForBase(TRAINING_CATALOG[0]!)[0]!);
   const [draftIntensity, setDraftIntensity] = useState<"Baja" | "Media" | "Alta">("Media");
+  const [categoryFilter, setCategoryFilter] = useState<TrainingCategory | "all">("all");
+  const [scopeFilter, setScopeFilter] = useState<TrainingScope>("both");
   const draftBase = TRAINING_CATALOG.find((entry) => entry.id === draftBaseId) ?? TRAINING_CATALOG[0]!;
   const draftAllowedScopes = allowedScopesForBase(draftBase);
   const allEntries = [
-    ...TRAINING_CATALOG.map((entry) => ({ kind: "builtin" as const, id: entry.id, name: entry.name, category: entry.category, scope: entry.scope })),
-    ...userModules.map((module) => ({ kind: "user" as const, id: module.id, name: module.name, category: TRAINING_CATALOG.find((entry) => entry.id === module.baseDefinitionId)?.category ?? ("shooting" as TrainingCategory), scope: module.scope })),
+    ...TRAINING_CATALOG.map((entry) => ({
+      kind: "builtin" as const,
+      id: entry.id,
+      name: entry.name,
+      category: entry.category,
+      scope: entry.scope,
+      definition: entry,
+      intensity: entry.defaultIntensity,
+    })),
+    ...userModules.map((module) => {
+      const definition = TRAINING_CATALOG.find((entry) => entry.id === module.baseDefinitionId) ?? TRAINING_CATALOG[0]!;
+      return {
+        kind: "user" as const,
+        id: module.id,
+        name: module.name,
+        category: definition.category,
+        scope: module.scope,
+        definition,
+        intensity: module.intensity,
+      };
+    }),
   ];
+  const visibleEntries = allEntries.filter(
+    (entry) =>
+      (categoryFilter === "all" || entry.category === categoryFilter) &&
+      moduleMatchesScope(entry.scope, scopeFilter),
+  );
   return (
-    <main className="pcb-training__bento">
-      <section className="pcb-training__card">
+    <main className="pcb-training__bento pcb-training__modules-page">
+      <section className="pcb-training__card pcb-training__modules">
         <header className="pcb-training__card-head">
-          <h2>Training Modules</h2>
-          <span>{allEntries.length} módulos</span>
-        </header>
-        <div className="pcb-training__control-actions">
+          <div>
+            <h2>Training Modules</h2>
+            <small>
+              {visibleEntries.length} de {allEntries.length} módulos
+            </small>
+          </div>
           <button
             className="is-primary"
             onClick={() => {
@@ -1153,31 +1305,145 @@ function TrainingModules({
           >
             + Crear módulo
           </button>
+        </header>
+        <div className="pcb-training__module-toolbar">
+          <div className="pcb-training__module-scopes" role="group" aria-label="Alcance">
+            {TRAINING_SCOPE_FILTERS.map(([id, label]) => (
+              <button
+                aria-label={`Alcance ${label}`}
+                aria-pressed={scopeFilter === id}
+                className={scopeFilter === id ? "is-active" : undefined}
+                key={id}
+                onClick={() => setScopeFilter(id)}
+                type="button"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="pcb-training__module-cats" role="group" aria-label="Categoría">
+            <button
+              aria-pressed={categoryFilter === "all"}
+              className={categoryFilter === "all" ? "is-active" : undefined}
+              onClick={() => setCategoryFilter("all")}
+              type="button"
+            >
+              Todas
+            </button>
+            {TRAINING_CATEGORIES.map((category) => (
+              <button
+                aria-pressed={categoryFilter === category}
+                className={categoryFilter === category ? "is-active" : undefined}
+                data-category={category}
+                key={category}
+                onClick={() => setCategoryFilter(category)}
+                type="button"
+              >
+                {TRAINING_CATEGORY_LABELS[category]}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="pcb-training__module-list">
-          {allEntries.map((entry) => (
-            <article key={`${entry.kind}-${entry.id}`}>
-              <div>
-                <b>{entry.name}</b>
-                <p>Categoría: {entry.category}</p>
-              </div>
-              <span>{entry.scope}</span>
-              {entry.kind === "builtin" ? (
-                <button onClick={() => setConfiguring(TRAINING_CATALOG.find((item) => item.id === entry.id)!)} type="button">
-                  Ver
-                </button>
-              ) : (
-                <>
-                  <button onClick={() => setConfiguring(TRAINING_CATALOG.find((item) => item.id === userModules.find((module) => module.id === entry.id)!.baseDefinitionId)!)} type="button">
+        <div className="pcb-training__module-pills">
+          {visibleEntries.length === 0 ? (
+            <p className="pcb-training__module-empty">Ningún módulo coincide con los filtros.</p>
+          ) : null}
+          {visibleEntries.map((entry) => {
+            const effects = entry.definition.effects;
+            return (
+              <article
+                className="pcb-training__module-pill"
+                data-category={entry.category}
+                data-scope={entry.scope}
+                key={`${entry.kind}-${entry.id}`}
+              >
+                <header>
+                  <b>{entry.name}</b>
+                  <span className="pcb-training__module-pill-cat">{TRAINING_CATEGORY_LABELS[entry.category]}</span>
+                </header>
+                <dl>
+                  <div>
+                    <dt>Alcance</dt>
+                    <dd>{entry.scope === "team" ? "Equipo" : entry.scope === "individual" ? "Individual" : "Ambos"}</dd>
+                  </div>
+                  <div>
+                    <dt>Duración</dt>
+                    <dd>{entry.definition.durationMinutes} min</dd>
+                  </div>
+                  <div>
+                    <dt>Intensidad</dt>
+                    <dd>{INTENSITY_LABELS[entry.intensity]}</dd>
+                  </div>
+                  <div>
+                    <dt>Objetivo</dt>
+                    <dd>
+                      {effects.targetRatings.length === 0
+                        ? "—"
+                        : effects.targetRatings.map(ratingKeyLabel).join(" · ")}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Estímulo</dt>
+                    <dd>{effects.developmentWeight.toFixed(2)}×</dd>
+                  </div>
+                  <div>
+                    <dt>Carga</dt>
+                    <dd>{effects.fatigueMultiplier.toFixed(2)}×</dd>
+                  </div>
+                  {effects.moraleDelta !== 0 ? (
+                    <div>
+                      <dt>Moral</dt>
+                      <dd>
+                        {effects.moraleDelta > 0 ? "+" : ""}
+                        {effects.moraleDelta}
+                      </dd>
+                    </div>
+                  ) : null}
+                  {effects.cohesionDelta !== 0 ? (
+                    <div>
+                      <dt>Cohesión</dt>
+                      <dd>
+                        {effects.cohesionDelta > 0 ? "+" : ""}
+                        {effects.cohesionDelta}
+                      </dd>
+                    </div>
+                  ) : null}
+                  {entry.definition.eligiblePositions !== undefined ? (
+                    <div>
+                      <dt>Posiciones</dt>
+                      <dd>
+                        {entry.definition.eligiblePositions.map((position) => (
+                          <span className="ng-play-position" key={position}>
+                            {position}
+                          </span>
+                        ))}
+                      </dd>
+                    </div>
+                  ) : null}
+                </dl>
+                <footer>
+                  {entry.kind === "user" ? <span className="pcb-training__module-pill-origin">Usuario</span> : <span className="pcb-training__module-pill-origin">Catálogo</span>}
+                  <button
+                    onClick={() =>
+                      setConfiguring(
+                        entry.kind === "builtin"
+                          ? entry.definition
+                          : TRAINING_CATALOG.find((item) => item.id === userModules.find((module) => module.id === entry.id)!.baseDefinitionId) ?? entry.definition,
+                      )
+                    }
+                    type="button"
+                  >
                     Ver
                   </button>
-                  <button onClick={() => onDeleteModule?.(entry.id)} type="button">
-                    Eliminar
-                  </button>
-                </>
-              )}
-            </article>
-          ))}
+                  {entry.kind === "user" ? (
+                    <button onClick={() => onDeleteModule?.(entry.id)} type="button">
+                      Eliminar
+                    </button>
+                  ) : null}
+                </footer>
+              </article>
+            );
+          })}
         </div>
         {configuring !== null && (
           <div className="pcb-training__modal">

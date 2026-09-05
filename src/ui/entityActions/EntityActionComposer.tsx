@@ -119,7 +119,7 @@ export function EntityActionComposer({
             <p className="eyebrow">{state.entity.type.toUpperCase()} ACTIONS</p>
             <h2>{title}</h2>
             {player !== undefined && (
-              <p>{player.basketball.primaryPosition} · PLAYER</p>
+              <p><span className="ng-play-position">{player.basketball.primaryPosition}</span> · PLAYER</p>
             )}
           </div>
           <button
