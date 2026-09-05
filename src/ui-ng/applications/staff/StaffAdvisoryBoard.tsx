@@ -12,7 +12,7 @@ import {
 
 import { FilterGroup, InspectorSection, MetricRow } from '@/ui-ng/applications/staff/StaffChrome'
 import { RECOMMENDATION_FAILURE_MESSAGES } from '@/ui-ng/applications/staff/staffWorkspaceModel'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 
 type AdvisoryFilter = 'open' | 'history'
 
@@ -72,7 +72,7 @@ export function StaffAdvisoryBoard({
           <div className="staff-workspace__panel ng-holo-panel">
             <NgPrecisionTable
               className="staff-workspace__table"
-              columns={[
+              columns={ngTableColumns(filtered, [
                 ngCol('date', 'Date', (row) => row.decidedOn, { value: (row) => row.decidedOn }),
                 ngCol('domain', 'Domain', (row) => RESPONSIBILITY_DOMAIN_LABELS[row.domain], {
                   value: (row) => RESPONSIBILITY_DOMAIN_LABELS[row.domain],
@@ -84,7 +84,7 @@ export function StaffAdvisoryBoard({
                   value: (row) => row.qualityScore,
                 }),
                 ngCol('status', 'Status', (row) => row.status, { value: (row) => row.status }),
-              ]}
+              ])}
               gridId="ng-staff-advisory"
               onSelectionChange={(ids) => {
                 if (ids[0]) {

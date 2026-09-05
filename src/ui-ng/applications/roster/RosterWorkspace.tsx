@@ -1,6 +1,7 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, type CSSProperties } from 'react'
 
 import type { LineupSlot } from '@/domain/tactics'
+import type { PlayerId } from '@/domain/ids'
 
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
@@ -116,7 +117,7 @@ export function RosterWorkspace() {
   const inspectedPlayer = useMemo(() => {
     if (world === null) return undefined
     const inspectedId = selectedRowIds.at(-1)
-    return inspectedId === undefined ? undefined : world.players[inspectedId]
+    return inspectedId === undefined ? undefined : world.players[inspectedId as PlayerId]
   }, [selectedRowIds, world])
 
   const sessionBridge = useMemo<RosterNgSessionBridge>(

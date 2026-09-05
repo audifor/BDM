@@ -6,7 +6,7 @@ import { useGameStore } from '@/stores/gameStore'
 import { UNAVAILABLE_SECTION_MESSAGE } from '@/ui-ng/system/startMenuCatalog'
 import { navigateToPlayer } from '@/ui-ng/workspace/workspaceApps'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
 
 const REASON_TEXT: Readonly<Record<string, string>> = {
@@ -76,7 +76,37 @@ export function RecruitingWorkspace() {
         <div className="ng-canon__panel ng-holo-panel">
           <NgPrecisionTable
             className="ng-canon__table"
-            columns={[
+            columns={ngTableColumns(profiles.map((profile) => {
+              const player = world.players[profile.playerId]
+              const interest =
+                team === undefined
+                  ? undefined
+                  : world.recruitingInterests.find((item) => item.recruitId === profile.id && item.programTeamId === team.id)?.value
+              return {
+                id: profile.id,
+                playerId: profile.playerId,
+                player,
+                publicRank: profile.publicRank,
+                position: profile.position,
+                tier: profile.tier,
+                status: profile.status,
+                interest,
+                interestLabel:
+                  interest === undefined
+                    ? 'Cold'
+                    : interest >= 75
+                      ? 'Leader'
+                      : interest >= 55
+                        ? 'Strong'
+                        : interest >= 30
+                          ? 'Warm'
+                          : 'Interested',
+                board:
+                  team === undefined
+                    ? undefined
+                    : world.recruitingBoards.find((entry) => entry.recruitId === profile.id && entry.programTeamId === team.id),
+              }
+            }), [
               ngCol('rank', 'Rank', (row) => row.publicRank, { numeric: true, value: (row) => row.publicRank }),
               ngCol('player', 'Player', (row) =>
                 row.player === undefined ? (
@@ -117,7 +147,7 @@ export function RecruitingWorkspace() {
                   </div>
                 ) : null,
               ),
-            ]}
+            ])}
             gridId="ng-recruiting"
             rows={profiles.map((profile) => {
               const player = world.players[profile.playerId]

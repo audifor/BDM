@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 
 import type { Player } from '@/domain/player'
+import type { PlayerId } from '@/domain/ids'
 import { getPlayer } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import {
@@ -26,7 +27,7 @@ import { formatClock, formatMatchEvent, formatPeriod, resolveActiveMatchLineups,
 import { ManualSubstitutionsPanel } from '@/ui/screens/ManualSubstitutionsPanel'
 import { isMatchComplete } from '@/ui/screens/MatchViewerScreen'
 import { deriveTeamColors, teamShortCode } from '@/ui-ng/applications/player/data/presentationHelpers'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { navigateToPlayer } from '@/ui-ng/workspace/workspaceApps'
 
 type ViewerPanel = 'none' | 'coaching' | 'substitutions'
@@ -466,7 +467,7 @@ function BoxScore({
       <p className="ng-canon__eyebrow">{title}</p>
       <NgPrecisionTable
         className="ng-canon__table"
-        columns={[
+        columns={ngTableColumns(rows, [
           ngCol<(typeof rows)[number]>(
             'player',
             'Jugador',
@@ -474,7 +475,7 @@ function BoxScore({
               row.isTotal ? (
                 row.lastName
               ) : (
-                <button className="ng-canon__link" onClick={() => navigateToPlayer(row.id)} type="button">
+                <button className="ng-canon__link" onClick={() => navigateToPlayer(row.id as PlayerId)} type="button">
                   {row.lastName}
                 </button>
               ),
@@ -504,7 +505,7 @@ function BoxScore({
             numeric: true,
             value: (row) => row.plusMinus,
           }),
-        ]}
+        ])}
         gridId="ng-match-box-score"
         rows={rows}
         selectedIds={activePlayerIds}

@@ -22,7 +22,7 @@ export type NgPrecisionTableProps<Row extends { readonly id: string }> = {
   readonly entitySurface?: 'roster' | 'training' | 'tactics' | 'matchups'
 }
 
-export function ngCol<Row>(
+export function ngCol<Row extends { readonly id: string }>(
   id: string,
   label: string,
   render: (row: Row) => ReactNode,
@@ -37,6 +37,14 @@ export function ngCol<Row>(
     label,
     render,
   }
+}
+
+/** Bind column Row inference to the same rows expression passed to NgPrecisionTable. */
+export function ngTableColumns<Row extends { readonly id: string }>(
+  _rows: readonly Row[],
+  columns: readonly DataGridColumn<NoInfer<Row>>[],
+): readonly DataGridColumn<Row>[] {
+  return columns
 }
 
 export function NgPrecisionTable<Row extends { readonly id: string }>({

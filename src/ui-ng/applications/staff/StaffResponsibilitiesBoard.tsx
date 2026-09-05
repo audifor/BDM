@@ -17,7 +17,7 @@ import {
 
 import { FilterGroup, InspectorSection, MetricRow, WorkloadBadge } from '@/ui-ng/applications/staff/StaffChrome'
 import { formatStaffPercent } from '@/ui-ng/applications/staff/staffWorkspaceModel'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 
 export function StaffResponsibilitiesBoard({
   world,
@@ -41,7 +41,7 @@ export function StaffResponsibilitiesBoard({
       <div className="staff-workspace__panel ng-holo-panel">
         <NgPrecisionTable
           className="staff-workspace__table"
-          columns={[
+          columns={ngTableColumns(rows, [
             ngCol('kind', 'Responsibility', (row) => RESPONSIBILITY_KIND_LABELS[row.kind], {
               value: (row) => RESPONSIBILITY_KIND_LABELS[row.kind],
             }),
@@ -67,7 +67,7 @@ export function StaffResponsibilitiesBoard({
                 ),
               { value: (row) => row.holderUtilization },
             ),
-          ]}
+          ])}
           gridId="ng-staff-responsibilities"
           onSelectionChange={(ids) => {
             if (ids[0]) setSelectedId(ids[0])

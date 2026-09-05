@@ -51,6 +51,10 @@ describe('buildDepthChartLaneItems', () => {
       '3 Depth One',
       '4 Open One',
     ])
-    expect(items.some((item) => item.kind === 'group' && item.label === 'FREE')).toBe(false)
+    expect(
+      items
+        .filter((item): item is Extract<(typeof items)[number], { kind: 'group' }> => item.kind === 'group')
+        .map((item) => item.label),
+    ).toEqual(['STARTER', 'ROTATION', 'DEPTH'])
   })
 })

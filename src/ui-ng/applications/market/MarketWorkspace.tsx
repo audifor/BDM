@@ -10,7 +10,7 @@ import { useGameStore } from '@/stores/gameStore'
 import { formatMoney } from '@/ui/formatters'
 import { navigateToPlayer } from '@/ui-ng/workspace/workspaceApps'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 
 type PositionFilter = 'ALL' | Player['basketball']['primaryPosition']
@@ -75,7 +75,7 @@ export function MarketWorkspace() {
           ) : (
             <NgPrecisionTable
               className="ng-canon__table"
-              columns={[
+              columns={ngTableColumns(agents, [
                 ngCol('player', 'Player', (player) => (
                   <button
                     className="ng-canon__link"
@@ -99,7 +99,7 @@ export function MarketWorkspace() {
                   numeric: true,
                   value: (player) => getFreeAgentMarketTerms(world, player.id).annualSalary,
                 }),
-              ]}
+              ])}
               gridId="ng-market-free-agents"
               onSelectionChange={(ids) => setSelectedId(ids[0] as PlayerId | undefined)}
               rows={agents}

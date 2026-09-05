@@ -3,7 +3,7 @@ import { resolveGameCapabilities } from '@/ui/gameContext'
 import { useGameStore } from '@/stores/gameStore'
 import { UNAVAILABLE_SECTION_MESSAGE } from '@/ui-ng/system/startMenuCatalog'
 import { navigateToPlayer } from '@/ui-ng/workspace/workspaceApps'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 
 export function NilWorkspace() {
@@ -55,7 +55,16 @@ export function NilWorkspace() {
         ) : (
           <NgPrecisionTable
             className="ng-canon__table"
-            columns={[
+            columns={ngTableColumns(profiles.map((profile) => ({
+              id: profile.id,
+              playerId: profile.playerId,
+              player: world.players[profile.playerId],
+              marketability: profile.marketability,
+              opportunities: Object.values(world.nilOpportunitiesById).filter(
+                (item) => item.playerId === profile.playerId && item.status === 'available',
+              ),
+              deals: Object.values(world.nilDealsById).filter((item) => item.playerId === profile.playerId && item.status === 'active').length,
+            })), [
               ngCol('player', 'Player', (row) =>
                 row.player === undefined ? (
                   row.playerId
@@ -74,7 +83,7 @@ export function NilWorkspace() {
                       </button>
                     )), { value: (row) => row.opportunities.length }),
               ngCol('deals', 'Deals', (row) => row.deals, { numeric: true, value: (row) => row.deals }),
-            ]}
+            ])}
             gridId="ng-nil-profiles"
             rows={profiles.map((profile) => ({
               id: profile.id,

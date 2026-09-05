@@ -15,7 +15,7 @@ import {
   type MedicalWorkspaceModel,
   type MedicalWorkspaceTabId,
 } from '@/ui-ng/applications/medical/medicalWorkspaceModel'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
 import { deriveTeamColors } from '@/ui-ng/applications/player/data/presentationHelpers'
 import { ApplicationWorkspace } from '@/ui-ng/workspace/ApplicationWorkspace'
@@ -105,7 +105,7 @@ function OverviewBoard({
           <p className="medical-workspace__eyebrow">Active injuries</p>
           <NgPrecisionTable
             className="medical-workspace__table"
-            columns={[
+            columns={ngTableColumns(model.injured.map((row) => ({ ...row, id: row.injuryId })), [
               ngCol('name', 'Player', (row) => (
                 <button className="medical-workspace__link" onClick={() => onOpenPlayer(row.playerId)} type="button">
                   {row.playerName}
@@ -118,7 +118,7 @@ function OverviewBoard({
                 </span>
               ), { value: (row) => row.severityLabel }),
               ngCol('return', 'Return', (row) => row.expectedReturnLabel, { value: (row) => row.expectedReturnLabel }),
-            ]}
+            ])}
             gridId="ng-medical-overview"
             rows={model.injured.map((row) => ({ ...row, id: row.injuryId }))}
           />
@@ -150,7 +150,7 @@ function InjuredBoard({
       <div className="medical-workspace__panel ng-holo-panel">
         <NgPrecisionTable
           className="medical-workspace__table"
-          columns={[
+          columns={ngTableColumns(rows.map((row) => ({ ...row, id: row.injuryId })), [
             ngCol('name', 'Player', (row) => (
               <button
                 className="medical-workspace__link"
@@ -173,7 +173,7 @@ function InjuredBoard({
             ngCol('injured', 'Injured', (row) => row.injuredOnLabel, { value: (row) => row.injuredOnLabel }),
             ngCol('return', 'Return', (row) => row.expectedReturnLabel, { value: (row) => row.expectedReturnLabel }),
             ngCol('remaining', 'Remaining', (row) => row.daysRemaining, { numeric: true, value: (row) => row.daysRemaining }),
-          ]}
+          ])}
           gridId="ng-medical-injured"
           onSelectionChange={(ids) => {
             const next = ids[0]
@@ -218,7 +218,7 @@ function HistoryBoard({
     <div className="medical-workspace__panel ng-holo-panel">
       <NgPrecisionTable
         className="medical-workspace__table"
-        columns={[
+        columns={ngTableColumns(rows.map((row) => ({ ...row, id: row.injuryId })), [
           ngCol('name', 'Player', (row) => (
             <button className="medical-workspace__link" onClick={() => onOpenPlayer(row.playerId)} type="button">
               {row.playerName}
@@ -235,7 +235,7 @@ function HistoryBoard({
           ngCol('return', 'Return', (row) => row.expectedReturnLabel, { value: (row) => row.expectedReturnLabel }),
           ngCol('duration', 'Duration', (row) => row.durationLabel, { value: (row) => row.durationLabel }),
           ngCol('source', 'Source', (row) => row.sourceLabel, { value: (row) => row.sourceLabel }),
-        ]}
+        ])}
         gridId="ng-medical-history"
         rows={rows.map((row) => ({ ...row, id: row.injuryId }))}
       />
@@ -265,7 +265,7 @@ function RiskBoard({
       <div className="medical-workspace__panel ng-holo-panel">
         <NgPrecisionTable
           className="medical-workspace__table"
-          columns={[
+          columns={ngTableColumns(rows.map((row) => ({ ...row, id: row.playerId })), [
             ngCol('name', 'Player', (row) => (
               <button
                 className="medical-workspace__link"
@@ -290,7 +290,7 @@ function RiskBoard({
               </span>
             ), { value: (row) => row.riskBandLabel }),
             ngCol('score', 'Score', (row) => row.riskScore, { numeric: true, value: (row) => row.riskScore }),
-          ]}
+          ])}
           gridId="ng-medical-load"
           onSelectionChange={(ids) => {
             const next = ids[0]
@@ -342,7 +342,7 @@ function StaffBoard({
     <div className="medical-workspace__panel ng-holo-panel">
       <NgPrecisionTable
         className="medical-workspace__table"
-        columns={[
+        columns={ngTableColumns(rows.map((row) => ({ ...row, id: row.staffPersonId })), [
           ngCol('name', 'Staff', (row) => (
             <button className="medical-workspace__link" onClick={() => onOpenStaff(row.staffPersonId)} type="button">
               {row.name}
@@ -352,7 +352,7 @@ function StaffBoard({
           ngCol('proficiency', 'Proficiency', (row) => row.proficiency, { numeric: true, value: (row) => row.proficiency }),
           ngCol('workload', 'Workload', (row) => row.workloadLabel, { value: (row) => row.workloadLabel }),
           ngCol('utilization', 'Utilization', (row) => row.utilizationLabel, { value: (row) => row.utilizationLabel }),
-        ]}
+        ])}
         gridId="ng-medical-staff"
         rows={rows.map((row) => ({ ...row, id: row.staffPersonId }))}
       />

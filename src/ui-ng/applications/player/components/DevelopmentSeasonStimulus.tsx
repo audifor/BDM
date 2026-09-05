@@ -3,7 +3,7 @@ import type {
   DevelopmentStimulusCategoryRowModel,
   DevelopmentStimulusRatingRowModel,
 } from '@/ui-ng/applications/player/data/buildPlayerDevelopmentModel'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 
 export function DevelopmentSeasonStimulus({
   model,
@@ -27,7 +27,7 @@ export function DevelopmentSeasonStimulus({
           <div className="pd-stimulus__scroll">
             <NgPrecisionTable
               className="pd-stimulus__table"
-              columns={[
+              columns={ngTableColumns(model.categories, [
                 ngCol<DevelopmentStimulusCategoryRowModel>('category', 'Category', (row) => row.categoryLabel, {
                   value: (row) => row.categoryLabel,
                 }),
@@ -37,7 +37,7 @@ export function DevelopmentSeasonStimulus({
                   (row) => row.stimulusTotal.toFixed(1),
                   { numeric: true, value: (row) => row.stimulusTotal },
                 ),
-              ]}
+              ])}
               gridId="ng-player-dev-stimulus-category"
               onRowClick={(row) => onSelectItem(row.id)}
               onSelectionChange={(ids) => {
@@ -54,7 +54,7 @@ export function DevelopmentSeasonStimulus({
             <div className="pd-stimulus__scroll pd-stimulus__scroll--compact">
               <NgPrecisionTable
                 className="pd-stimulus__table"
-                columns={[
+                columns={ngTableColumns(model.topRatings, [
                   ngCol<DevelopmentStimulusRatingRowModel>(
                     'rating',
                     'Rating',
@@ -70,7 +70,7 @@ export function DevelopmentSeasonStimulus({
                     numeric: true,
                     value: (row) => row.stimulus,
                   }),
-                ]}
+                ])}
                 gridId="ng-player-dev-stimulus-ratings"
                 onRowClick={(row) => onSelectItem(row.id)}
                 onSelectionChange={(ids) => {

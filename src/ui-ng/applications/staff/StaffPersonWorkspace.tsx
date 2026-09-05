@@ -15,7 +15,7 @@ import {
   type StaffPersonViewId,
   type StaffPersonWorkspaceModel,
 } from '@/ui-ng/applications/staff/staffPersonWorkspaceModel'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { ApplicationWorkspace } from '@/ui-ng/workspace/ApplicationWorkspace'
 import { ScrollRegion } from '@/ui-ng/workspace/ScrollRegion'
 import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
@@ -288,12 +288,12 @@ function ResponsibilitiesView({ model }: { readonly model: StaffPersonWorkspaceM
     <div className="staff-person__panel ng-holo-panel">
       <NgPrecisionTable
         className="staff-person__table"
-        columns={[
+        columns={ngTableColumns(model.responsibilities, [
           ngCol('kind', 'Responsibility', (row) => row.kindLabel, { value: (row) => row.kindLabel }),
           ngCol('domain', 'Domain', (row) => row.domainLabel, { value: (row) => row.domainLabel }),
           ngCol('control', 'Control', (row) => row.modeLabel, { value: (row) => row.modeLabel }),
           ngCol('load', 'Load', (row) => row.capacityCost, { numeric: true, value: (row) => row.capacityCost }),
-        ]}
+        ])}
         gridId="ng-staff-person"
         rows={model.responsibilities}
       />

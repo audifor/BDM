@@ -5,7 +5,7 @@ import type { Game } from '@/domain/game'
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
 import { formatGameDateLabel } from '@/ui-ng/applications/player/data/presentationHelpers'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
 import { syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
 
@@ -58,7 +58,21 @@ export function ScheduleWorkspace() {
         <div className="ng-canon__panel ng-holo-panel">
           <NgPrecisionTable
             className="ng-canon__table"
-            columns={[
+            columns={ngTableColumns(rows.map((game) => {
+              const home = world.teams[game.homeTeamId]!
+              const away = world.teams[game.awayTeamId]!
+              return {
+                id: game.id,
+                date: game.date,
+                competitionName: world.competitions[game.competitionId]?.name ?? game.competitionId,
+                matchup:
+                  game.status === 'completed' && game.result !== undefined
+                    ? `${home.name} ${game.result.homeScore} – ${game.result.awayScore} ${away.name}`
+                    : `${home.name} vs ${away.name}`,
+                venue: game.homeTeamId === team.id ? 'Home' : 'Away',
+                status: game.status,
+              }
+            }), [
               ngCol('date', 'Date', (row) => formatGameDateLabel(row.date), { value: (row) => row.date }),
               ngCol('competition', 'Competition', (row) => row.competitionName, { value: (row) => row.competitionName }),
               ngCol('matchup', 'Matchup', (row) => row.matchup, { value: (row) => row.matchup }),
@@ -74,7 +88,7 @@ export function ScheduleWorkspace() {
                   ) : null}
                 </>
               ), { value: (row) => row.status }),
-            ]}
+            ])}
             gridId="ng-schedule"
             rows={rows.map((game) => {
               const home = world.teams[game.homeTeamId]!

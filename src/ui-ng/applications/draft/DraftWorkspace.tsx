@@ -8,7 +8,7 @@ import { resolveGameCapabilities } from '@/ui/gameContext'
 import { UNAVAILABLE_SECTION_MESSAGE } from '@/ui-ng/system/startMenuCatalog'
 import { navigateToPlayer } from '@/ui-ng/workspace/workspaceApps'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
 
 export function DraftWorkspace() {
@@ -54,7 +54,23 @@ export function DraftWorkspace() {
             {draft.status === 'inProgress' && userOnClock ? (
               <NgPrecisionTable
                 className="ng-canon__table"
-                columns={[
+                columns={ngTableColumns(available.map((playerId) => {
+                  const player = world.players[playerId]!
+                  return {
+                    id: player.id,
+                    player,
+                    evaluation: formatRatingEvaluation(
+                      getOrganizationRatingEvaluation({
+                        organizationId: organizationIdForTeam(team!.id),
+                        playerId: player.id,
+                        dimension: 'shooting',
+                        knowledge: world.organizationKnowledge,
+                        currentDate: world.currentDate,
+                        publicPosition: player.basketball.primaryPosition,
+                      }),
+                    ),
+                  }
+                }), [
                   ngCol('prospect', 'Prospect', (row) => (
                     <>
                       <button className="ng-canon__link" onClick={() => navigateToPlayer(row.player.id)} type="button">
@@ -75,7 +91,7 @@ export function DraftWorkspace() {
                       Select
                     </button>
                   )),
-                ]}
+                ])}
                 gridId={`ng-draft-available-${draft.id}`}
                 rows={available.map((playerId) => {
                   const player = world.players[playerId]!
@@ -100,7 +116,7 @@ export function DraftWorkspace() {
             ) : null}
             <NgPrecisionTable
               className="ng-canon__table"
-              columns={[
+              columns={ngTableColumns(picks, [
                 ngCol('round', 'Round', (pick) => pick.round, { numeric: true, value: (pick) => pick.round }),
                 ngCol('order', 'Pick', (pick) => `#${pick.order}`, { numeric: true, value: (pick) => pick.order }),
                 ngCol('owner', 'Owner', (pick) => world.teams[pick.ownerTeamId]?.name, { value: (pick) => world.teams[pick.ownerTeamId]?.name ?? pick.ownerTeamId }),
@@ -108,7 +124,7 @@ export function DraftWorkspace() {
                   const selected = pick.selection === undefined ? undefined : world.players[pick.selection.playerId]
                   return selected === undefined ? 'Pending' : `${selected.firstName} ${selected.lastName}`
                 }, { value: (pick) => pick.selection?.playerId ?? '' }),
-              ]}
+              ])}
               gridId={`ng-draft-picks-${draft.id}`}
               rows={picks}
             />

@@ -7,7 +7,7 @@ import { COACH_PERK_CATALOG, COACH_SKILL_CATALOG } from '@/engine/coach'
 import { useGameStore } from '@/stores/gameStore'
 import { coachReputationEventLabel, coachReputationSourceLabel, formatCoachReputationDelta } from '@/ui/coachReputationPresentation'
 import { formatPrototypeDate } from '@/ui/formatters'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 
 const TABS = [
@@ -125,7 +125,30 @@ export function CoachWorkspace() {
           ) : (
             <NgPrecisionTable
               className="ng-canon__table"
-              columns={[
+              columns={ngTableColumns([
+                ...offers.map((offer) => ({
+                  id: offer.id,
+                  kind: 'Offer' as const,
+                  teamName: world.teams[offer.teamId]?.name ?? offer.teamId,
+                  status: offer.status,
+                  offerPending: offer.status === 'pending',
+                  openingEligible: false,
+                })),
+                ...openings.map((opening) => {
+                  const eligibility =
+                    employment === undefined
+                      ? { eligible: false, reasons: [] }
+                      : evaluateCoachJobEligibility(employment, reputation, opening)
+                  return {
+                    id: opening.id,
+                    kind: 'Opening' as const,
+                    teamName: world.teams[opening.teamId]?.name ?? opening.teamId,
+                    status: opening.status,
+                    offerPending: false,
+                    openingEligible: eligibility.eligible,
+                  }
+                }),
+              ], [
                 ngCol('type', 'Type', (row) => row.kind, { value: (row) => row.kind }),
                 ngCol('team', 'Team', (row) => row.teamName, { value: (row) => row.teamName }),
                 ngCol('status', 'Status', (row) => row.status, { value: (row) => row.status }),
@@ -153,7 +176,7 @@ export function CoachWorkspace() {
                     </button>
                   )
                 }, { sortable: false }),
-              ]}
+              ])}
               gridId="ng-coach-opportunities"
               rows={[
                 ...offers.map((offer) => ({
@@ -190,11 +213,16 @@ export function CoachWorkspace() {
           ) : (
             <NgPrecisionTable
               className="ng-canon__table"
-              columns={[
+              columns={ngTableColumns(history.map((item, index) => ({
+                id: `${item.date}-${index}`,
+                dateLabel: formatPrototypeDate(item.date as never),
+                teamName: world.teams[item.teamId as never]?.name ?? item.teamId,
+                reason: item.reason,
+              })), [
                 ngCol('date', 'Date', (row) => row.dateLabel, { value: (row) => row.dateLabel }),
                 ngCol('team', 'Team', (row) => row.teamName, { value: (row) => row.teamName }),
                 ngCol('event', 'Event', (row) => row.reason, { value: (row) => row.reason }),
-              ]}
+              ])}
               gridId="ng-coach-career"
               rows={history.map((item, index) => ({
                 id: `${item.date}-${index}`,
@@ -222,11 +250,19 @@ export function CoachWorkspace() {
           ) : (
             <NgPrecisionTable
               className="ng-canon__table"
-              columns={[
+              columns={ngTableColumns(relationships.map((item) => {
+                const otherId = item.sourceId === world.userCoachId ? item.targetId : item.sourceId
+                return {
+                  id: `${item.sourceId}-${item.targetId}`,
+                  name: personName(otherId),
+                  value: item.value,
+                  band: getRelationshipBandForPeople(world, item.sourceId, item.targetId),
+                }
+              }), [
                 ngCol('person', 'Person', (row) => row.name, { value: (row) => row.name }),
                 ngCol('value', 'Value', (row) => row.value, { numeric: true, value: (row) => row.value }),
                 ngCol('band', 'Band', (row) => row.band, { value: (row) => row.band }),
-              ]}
+              ])}
               gridId="ng-coach-relationships"
               rows={relationships.map((item) => {
                 const otherId = item.sourceId === world.userCoachId ? item.targetId : item.sourceId

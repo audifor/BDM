@@ -1,5 +1,5 @@
 import type { ContractFinancialRowModel } from '@/ui-ng/applications/player/data/buildPlayerContractModel'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 
 export function ContractFinancialSchedule({
   rows,
@@ -30,7 +30,7 @@ export function ContractFinancialSchedule({
       <div className="pc-schedule__scroll">
         <NgPrecisionTable
           className="pc-schedule__table"
-          columns={[
+          columns={ngTableColumns(rows, [
             ngCol<ContractFinancialRowModel>('season', 'Season', (row) => row.seasonLabel, {
               value: (row) => row.seasonLabel,
             }),
@@ -49,7 +49,7 @@ export function ContractFinancialSchedule({
             ngCol<ContractFinancialRowModel>('status', 'Status', (row) => row.guaranteeState, {
               value: (row) => row.guaranteeState,
             }),
-          ]}
+          ])}
           gridId="ng-player-contract-schedule"
           onRowClick={(row) => onSelectRow(row.id)}
           onSelectionChange={(ids) => {

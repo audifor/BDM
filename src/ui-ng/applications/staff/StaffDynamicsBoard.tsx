@@ -48,7 +48,7 @@ import {
   type DynamicsFilter,
   type DynamicsSubviewId,
 } from '@/ui-ng/applications/staff/staffWorkspaceModel'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 
 function matchesDynamicsFilter(item: StaffDynamicsPresentationItem, filter: DynamicsFilter): boolean {
   switch (filter) {
@@ -200,7 +200,7 @@ function ConflictsSubview({ world, teamId }: { readonly world: GameWorld; readon
           <div className="staff-workspace__panel ng-holo-panel">
             <NgPrecisionTable
               className="staff-workspace__table"
-              columns={[
+              columns={ngTableColumns(items, [
                 ngCol('parties', 'Parties', (row) => row.parties, { value: (row) => row.parties }),
                 ngCol('type', 'Type', (row) => row.type, { value: (row) => row.type }),
                 ngCol('stage', 'Stage', (row) => row.stage, { value: (row) => row.stage }),
@@ -224,7 +224,7 @@ function ConflictsSubview({ world, teamId }: { readonly world: GameWorld; readon
                   ),
                   { value: (row) => row.trend },
                 ),
-              ]}
+              ])}
               gridId="ng-staff-dynamics-conflicts"
               onSelectionChange={(ids) => {
                 if (ids[0]) setSelectedId(ids[0])
@@ -318,7 +318,7 @@ function PeopleSubview({
           <div className="staff-workspace__panel ng-holo-panel">
             <NgPrecisionTable
               className="staff-workspace__table"
-              columns={[
+              columns={ngTableColumns(rows, [
                 ngCol(
                   'name',
                   'Staff',
@@ -355,7 +355,7 @@ function PeopleSubview({
                   { value: (row) => DYNAMICS_STATE_LABELS[row.interpretedState] },
                 ),
                 ...STAFF_HUMAN_STATE_DIMENSIONS.map((dimension) =>
-                  ngCol(
+                  ngCol<(typeof rows)[number]>(
                     dimension,
                     HUMAN_STATE_COLUMN_LABEL[dimension],
                     (row) => (
@@ -373,10 +373,10 @@ function PeopleSubview({
                   numeric: true,
                   value: (row) => row.signalKinds.length,
                 }),
-              ]}
+              ])}
               gridId="ng-staff-dynamics-people"
               onSelectionChange={(ids) => {
-                if (ids[0]) setSelectedId(ids[0])
+                if (ids[0]) setSelectedId(ids[0] as StaffPersonId)
               }}
               rows={rows}
               selectedId={selected?.staffId}
@@ -573,12 +573,12 @@ function UnitsSubview({ world, teamId }: { readonly world: GameWorld; readonly t
       <div className="staff-workspace__panel ng-holo-panel">
         <NgPrecisionTable
           className="staff-workspace__table"
-          columns={[
+          columns={ngTableColumns(rows, [
             ngCol('unit', 'Unit', (row) => row.departmentLabel, { value: (row) => row.departmentLabel }),
             ngCol('members', 'Members', (row) => row.memberCount, { numeric: true, value: (row) => row.memberCount }),
             ngCol('lead', 'Lead', (row) => row.leaderLabel, { value: (row) => row.leaderLabel }),
             ...STAFF_UNIT_COHESION_DIMENSIONS.map((dimension) =>
-              ngCol(
+              ngCol<(typeof rows)[number]>(
                 dimension,
                 UNIT_COHESION_COLUMN_LABEL[dimension],
                 (row) => (
@@ -592,7 +592,7 @@ function UnitsSubview({ world, teamId }: { readonly world: GameWorld; readonly t
                 { value: (row) => STAFF_UNIT_COHESION_BAND_LABELS[row.bands[dimension]] },
               ),
             ),
-          ]}
+          ])}
           gridId="ng-staff-dynamics-units"
           onSelectionChange={(ids) => {
             if (ids[0]) setSelectedKey(ids[0])

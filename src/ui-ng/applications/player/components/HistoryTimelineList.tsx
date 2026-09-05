@@ -1,5 +1,5 @@
 import type { PlayerHistoryItemModel } from '@/ui-ng/applications/player/data/buildPlayerHistoryModel'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 
 export function HistoryTimelineList({
   items,
@@ -24,7 +24,7 @@ export function HistoryTimelineList({
         <div className="ph-timeline__scroll">
           <NgPrecisionTable
             className="ph-timeline__table"
-            columns={[
+            columns={ngTableColumns(items, [
               ngCol<PlayerHistoryItemModel>(
                 'date',
                 'Date / Season',
@@ -50,7 +50,7 @@ export function HistoryTimelineList({
               ngCol<PlayerHistoryItemModel>('context', 'Context', (item) => item.contextLabel ?? '—', {
                 value: (item) => item.contextLabel ?? '—',
               }),
-            ]}
+            ])}
             gridId="ng-player-history-timeline"
             onRowClick={(item) => onSelectItem(item.id)}
             onSelectionChange={(ids) => {

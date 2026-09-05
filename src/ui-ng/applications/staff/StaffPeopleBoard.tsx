@@ -25,7 +25,7 @@ import {
 
 import { InspectorSection, MetricRow, WorkloadBadge } from '@/ui-ng/applications/staff/StaffChrome'
 import { formatStaffPercent } from '@/ui-ng/applications/staff/staffWorkspaceModel'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 
 export function StaffPeopleBoard({
   world,
@@ -52,7 +52,7 @@ export function StaffPeopleBoard({
       <div className="staff-workspace__panel ng-holo-panel">
         <NgPrecisionTable
           className="staff-workspace__table"
-          columns={[
+          columns={ngTableColumns(rows, [
             ngCol(
               'name',
               'Staff',
@@ -99,10 +99,10 @@ export function StaffPeopleBoard({
               { numeric: true, value: (row) => row.annualSalary },
             ),
             ngCol('expires', 'Expires', (row) => row.contractExpiresOn ?? '—', { value: (row) => row.contractExpiresOn }),
-          ]}
+          ])}
           gridId="ng-staff-people"
           onSelectionChange={(ids) => {
-            if (ids[0]) onSelectStaff(ids[0])
+            if (ids[0]) onSelectStaff(ids[0] as StaffPersonId)
           }}
           rows={rows}
           selectedId={selected?.staffPersonId}

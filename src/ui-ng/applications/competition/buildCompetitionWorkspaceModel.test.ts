@@ -143,7 +143,8 @@ describe('buildCompetitionWorkspaceModel', () => {
 
     const model = buildCompetitionWorkspaceModel(staged, base.competitionId, team.id)!
     const starts = model.calendarEvents.filter((event) => event.kind === 'milestone' && event.id.startsWith('season-start:'))
-    expect(new Set(starts.map((event) => event.label)).size).toBeGreaterThan(1)
+    expect(starts.every((event) => event.kind === 'milestone')).toBe(true)
+    expect(new Set(starts.map((event) => (event.kind === 'milestone' ? event.label : ''))).size).toBeGreaterThan(1)
     expect(model.calendarEvents.some((event) => event.kind === 'training' && event.id === 'calendar-training')).toBe(true)
     expect(model.calendarEvents.some((event) => event.kind === 'game' && event.involvesUserTeam)).toBe(true)
 

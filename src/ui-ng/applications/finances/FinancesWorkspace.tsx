@@ -4,7 +4,7 @@ import { calculateTeamPayroll, calculateTeamSalaryStatus } from '@/engine/salary
 import { useGameStore } from '@/stores/gameStore'
 import { formatMoney } from '@/ui/formatters'
 import { navigateToPlayer } from '@/ui-ng/workspace/workspaceApps'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 
 export function FinancesWorkspace() {
@@ -64,7 +64,19 @@ export function FinancesWorkspace() {
         <p className="ng-canon__eyebrow">Contracts</p>
         <NgPrecisionTable
           className="ng-canon__table"
-          columns={[
+          columns={ngTableColumns(contracts.map((contract) => {
+            const player = world.players[contract.playerId]
+            const compensation = getContractYearCompensation(contract, world.currentDate)
+            return {
+              id: contract.id,
+              playerId: contract.playerId,
+              player,
+              years: contract.compensation.years?.length ?? 1,
+              cashSalary: compensation.cashSalary,
+              capHit: compensation.capHit,
+              guaranteedAmount: compensation.guaranteedAmount,
+            }
+          }), [
             ngCol('player', 'Player', (row) =>
               row.player === undefined ? (
                 row.playerId
@@ -77,7 +89,7 @@ export function FinancesWorkspace() {
             ngCol('cash', 'Cash', (row) => formatMoney(row.cashSalary), { numeric: true, value: (row) => row.cashSalary }),
             ngCol('cap', 'Cap hit', (row) => formatMoney(row.capHit), { numeric: true, value: (row) => row.capHit }),
             ngCol('guaranteed', 'Guaranteed', (row) => formatMoney(row.guaranteedAmount), { numeric: true, value: (row) => row.guaranteedAmount }),
-          ]}
+          ])}
           gridId="ng-finances-contracts"
           rows={contracts.map((contract) => {
             const player = world.players[contract.playerId]
@@ -101,13 +113,13 @@ export function FinancesWorkspace() {
         ) : (
           <NgPrecisionTable
             className="ng-canon__table"
-            columns={[
+            columns={ngTableColumns(exceptions, [
               ngCol('rule', 'Exception', (item) => item.ruleId, { value: (item) => item.ruleId }),
               ngCol('original', 'Original', (item) => formatMoney(item.originalAmount), { numeric: true, value: (item) => item.originalAmount }),
               ngCol('remaining', 'Remaining', (item) => formatMoney(item.remainingAmount), { numeric: true, value: (item) => item.remainingAmount }),
               ngCol('expiry', 'Expiry', (item) => item.expiresAfterSeasonId, { value: (item) => item.expiresAfterSeasonId }),
               ngCol('status', 'Status', (item) => item.status, { value: (item) => item.status }),
-            ]}
+            ])}
             gridId="ng-finances-exceptions"
             rows={exceptions}
           />

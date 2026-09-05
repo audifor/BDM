@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 
 import type { TeamId } from '@/domain/ids'
-import type { TradeAsset, TradeAssetKind } from '@/domain/trade'
+import type { TradeAsset, TradeAssetKind, TradeRules } from '@/domain/trade'
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
 import {
@@ -61,7 +61,7 @@ function TradesBoard({
 }: {
   readonly world: NonNullable<ReturnType<typeof useGameStore.getState>['world']>
   readonly teamId: TeamId
-  readonly rules: NonNullable<NonNullable<ReturnType<typeof useGameStore.getState>['world']>['tradeRulesBySeasonId'][string]>
+  readonly rules: TradeRules
 }) {
   const executeTrade = useGameStore((state) => state.executeTrade)
   const [draft, setDraft] = useState(() => createTradeDraft(world))

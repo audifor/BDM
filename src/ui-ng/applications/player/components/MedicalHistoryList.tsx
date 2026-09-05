@@ -1,7 +1,7 @@
 import type { InjuryId } from '@/domain/ids'
 
 import type { MedicalHistoryRowModel } from '@/ui-ng/applications/player/data/buildPlayerMedicalModel'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 
 export function MedicalHistoryList({
   rows,
@@ -26,7 +26,7 @@ export function MedicalHistoryList({
         <div className="pm-history__scroll">
           <NgPrecisionTable
             className="pm-history__table"
-            columns={[
+            columns={ngTableColumns(rows, [
               ngCol<MedicalHistoryRowModel>('date', 'Date', (row) => row.injuredOnLabel, {
                 value: (row) => row.injuredOnLabel,
               }),
@@ -53,7 +53,7 @@ export function MedicalHistoryList({
                 numeric: true,
                 value: (row) => row.durationLabel,
               }),
-            ]}
+            ])}
             gridId="ng-player-medical-history"
             onRowClick={(row) => onSelectRow(row.id)}
             onSelectionChange={(ids) => {

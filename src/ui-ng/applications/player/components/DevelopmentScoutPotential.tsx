@@ -2,7 +2,7 @@ import type {
   DevelopmentScoutPotentialModel,
   DevelopmentScoutPotentialRowModel,
 } from '@/ui-ng/applications/player/data/buildPlayerDevelopmentModel'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 
 export function DevelopmentScoutPotential({
   model,
@@ -25,7 +25,7 @@ export function DevelopmentScoutPotential({
         <div className="pd-potential__scroll">
           <NgPrecisionTable
             className="pd-potential__table"
-            columns={[
+            columns={ngTableColumns(model.rows, [
               ngCol<DevelopmentScoutPotentialRowModel>('domain', 'Domain', (row) => row.domainLabel, {
                 value: (row) => row.domainLabel,
               }),
@@ -33,7 +33,7 @@ export function DevelopmentScoutPotential({
                 numeric: true,
                 value: (row) => row.evaluationLabel,
               }),
-            ]}
+            ])}
             gridId="ng-player-dev-scout-potential"
             onRowClick={(row) => onSelectItem(row.id)}
             onSelectionChange={(ids) => {

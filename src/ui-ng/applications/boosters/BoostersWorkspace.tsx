@@ -2,7 +2,7 @@ import { getUserTeam } from '@/engine/calendar'
 import { resolveGameCapabilities } from '@/ui/gameContext'
 import { useGameStore } from '@/stores/gameStore'
 import { UNAVAILABLE_SECTION_MESSAGE } from '@/ui-ng/system/startMenuCatalog'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
 
 export function BoostersWorkspace() {
@@ -37,7 +37,7 @@ export function BoostersWorkspace() {
         <div className="ng-canon__panel ng-holo-panel">
           <NgPrecisionTable
             className="ng-canon__table"
-            columns={[
+            columns={ngTableColumns(boosters, [
               ngCol('name', 'Booster', (booster) => booster.name, { value: (booster) => booster.name }),
               ngCol('influence', 'Influence', (booster) => booster.influence, { value: (booster) => booster.influence }),
               ngCol('relationship', 'Relationship', (booster) => booster.relationship, { value: (booster) => booster.relationship }),
@@ -56,7 +56,7 @@ export function BoostersWorkspace() {
                   </button>
                 </>
               )),
-            ]}
+            ])}
             gridId="ng-boosters"
             rows={boosters}
           />

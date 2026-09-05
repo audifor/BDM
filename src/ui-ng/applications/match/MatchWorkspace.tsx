@@ -5,7 +5,7 @@ import { useMatchViewerStore } from '@/stores/matchViewerStore'
 import { useTacticalPlanStore } from '@/stores/tacticalPlanStore'
 import { formatGameDateLabel } from '@/ui-ng/applications/player/data/presentationHelpers'
 import { NgMatchViewer } from '@/ui-ng/applications/match/NgMatchViewer'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 import { navigateToPlayer, syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
@@ -112,7 +112,7 @@ export function MatchWorkspace() {
         <p className="ng-canon__eyebrow">Readiness</p>
         <NgPrecisionTable
           className="ng-canon__table"
-          columns={[
+          columns={ngTableColumns(roster, [
             ngCol(
               'player',
               'Player',
@@ -136,7 +136,7 @@ export function MatchWorkspace() {
               (player) => (isPlayerAvailable(world, player.id) ? 'Available' : 'Unavailable'),
               { value: (player) => (isPlayerAvailable(world, player.id) ? 'Available' : 'Unavailable') },
             ),
-          ]}
+          ])}
           gridId="ng-match-readiness"
           rows={roster}
         />

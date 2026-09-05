@@ -1,7 +1,7 @@
 import { getUserTeam } from '@/engine/calendar'
 import { evaluateRenewalRecommendation, getBoardSummary } from '@/engine/board'
 import { useGameStore } from '@/stores/gameStore'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 
 function profileLabel(value: number): string {
@@ -68,12 +68,12 @@ export function BoardWorkspace() {
           ) : (
             <NgPrecisionTable
               className="ng-canon__table"
-              columns={[
+              columns={ngTableColumns(summary.state.objectives, [
                 ngCol('label', 'Objective', (item) => item.label, { value: (item) => item.label }),
                 ngCol('priority', 'Priority', (item) => item.priority, { value: (item) => item.priority }),
                 ngCol('horizon', 'Horizon', (item) => item.horizon, { value: (item) => item.horizon }),
                 ngCol('outcome', 'Outcome', (item) => item.outcome, { value: (item) => item.outcome }),
-              ]}
+              ])}
               gridId="ng-board-objectives"
               rows={summary.state.objectives}
             />

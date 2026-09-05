@@ -1,7 +1,7 @@
 import type { GameId } from '@/domain/ids'
 
 import type { PlayerGameLogRow } from '@/ui-ng/applications/player/data/buildPlayerPerformanceModel'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 
 type GameLogTableRow = PlayerGameLogRow & { readonly id: string }
 
@@ -38,7 +38,7 @@ export function PerformanceGameLog({
       <div className="pp-log__scroll">
         <NgPrecisionTable
           className="pp-log__table"
-          columns={[
+          columns={ngTableColumns(tableRows, [
             ngCol<GameLogTableRow>('date', 'Date', (row) => row.date, { value: (row) => row.date }),
             ngCol<GameLogTableRow>('opponent', 'Opp', (row) => row.opponent, { value: (row) => row.opponent }),
             ngCol<GameLogTableRow>('competition', 'Comp', (row) => row.competition, { value: (row) => row.competition }),
@@ -54,7 +54,7 @@ export function PerformanceGameLog({
             ngCol<GameLogTableRow>('fg', 'FG', (row) => row.fg, { defaultWidth: 56, numeric: true, value: (row) => row.fg }),
             ngCol<GameLogTableRow>('threePt', '3PT', (row) => row.threePt, { defaultWidth: 56, numeric: true, value: (row) => row.threePt }),
             ngCol<GameLogTableRow>('ft', 'FT', (row) => row.ft, { defaultWidth: 56, numeric: true, value: (row) => row.ft }),
-          ]}
+          ])}
           gridId="ng-player-game-log"
           onRowClick={(row) => onSelectGame(row.gameId)}
           onSelectionChange={(ids) => {

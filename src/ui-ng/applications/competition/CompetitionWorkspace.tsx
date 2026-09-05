@@ -20,7 +20,7 @@ import {
   type CompetitionGameRow,
   type CompetitionTabId,
 } from '@/ui-ng/applications/competition/buildCompetitionWorkspaceModel'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 import { navigateToPlayer, syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
@@ -61,7 +61,7 @@ function CompetitionGamesTable({
   return (
     <NgPrecisionTable
       className="ng-canon__table"
-      columns={[
+      columns={ngTableColumns(games, [
         ngCol('date', 'Fecha', (row) => row.date, { defaultWidth: 108, value: (row) => row.date }),
         ngCol('home', 'Local', (row) => <TeamLink name={row.homeName} teamId={row.homeTeamId} />, {
           value: (row) => row.homeName,
@@ -76,7 +76,7 @@ function CompetitionGamesTable({
         }),
         ...(showAction
           ? [
-              ngCol(
+              ngCol<CompetitionGameRow>(
                 'action',
                 '',
                 (row) =>
@@ -89,7 +89,7 @@ function CompetitionGamesTable({
               ),
             ]
           : []),
-      ]}
+      ])}
       gridId={gridId}
       rows={games}
     />
@@ -288,7 +288,11 @@ export function CompetitionWorkspace() {
         <div className="ng-canon__panel ng-holo-panel">
           <NgPrecisionTable
             className="ng-canon__table"
-            columns={[
+            columns={ngTableColumns(model.standings.map((row) => ({
+              ...row,
+              id: row.teamId,
+              teamName: world.teams[row.teamId]?.name ?? row.teamId,
+            })), [
               ngCol('position', '#', (row) => row.position, { defaultWidth: 44, numeric: true, value: (row) => row.position }),
               ngCol('team', 'Equipo', (row) => <TeamLink name={row.teamName} teamId={row.teamId} />, {
                 value: (row) => row.teamName,
@@ -309,7 +313,7 @@ export function CompetitionWorkspace() {
                 sortValue: (row) => (row.played === 0 ? 0 : row.wins / row.played),
                 value: (row) => standingsPct(row),
               }),
-            ]}
+            ])}
             gridId="ng-competition-standings"
             rows={model.standings.map((row) => ({
               ...row,
@@ -354,7 +358,7 @@ export function CompetitionWorkspace() {
               <div className="ng-canon__panel ng-holo-panel">
                 <NgPrecisionTable
                   className="ng-canon__table"
-                  columns={[
+                  columns={ngTableColumns(model.leaders.slice(0, 30).map((row, index) => ({ ...row, id: row.playerId, rank: index + 1 })), [
                     ngCol('rank', '#', (row) => row.rank, { numeric: true, value: (row) => row.rank }),
                     ngCol('player', 'Jugador', (row) => (
                       <button className="ng-canon__link" onClick={() => navigateToPlayer(row.playerId)} type="button">
@@ -366,7 +370,7 @@ export function CompetitionWorkspace() {
                     ngCol('ppg', 'PPG', (row) => row.ppg.toFixed(1), { numeric: true, value: (row) => row.ppg }),
                     ngCol('rpg', 'RPG', (row) => row.rpg.toFixed(1), { numeric: true, value: (row) => row.rpg }),
                     ngCol('apg', 'APG', (row) => row.apg.toFixed(1), { numeric: true, value: (row) => row.apg }),
-                  ]}
+                  ])}
                   gridId="ng-competition-leaders"
                   rows={model.leaders.slice(0, 30).map((row, index) => ({ ...row, id: row.playerId, rank: index + 1 }))}
                 />

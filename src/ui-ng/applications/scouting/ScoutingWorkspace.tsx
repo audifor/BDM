@@ -14,7 +14,7 @@ import {
   type ScoutingWorkspaceModel,
   type ScoutingWorkspaceTabId,
 } from '@/ui-ng/applications/scouting/scoutingWorkspaceModel'
-import { ngCol, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
 import { ApplicationWorkspace } from '@/ui-ng/workspace/ApplicationWorkspace'
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
@@ -79,7 +79,7 @@ function KnowledgeBoard({
     <div className="scouting-workspace__panel ng-holo-panel">
       <NgPrecisionTable
         className="scouting-workspace__table"
-        columns={[
+        columns={ngTableColumns(rows, [
           ngCol('name', 'Player', (row) => (
             <>
               <button className="scouting-workspace__link" onClick={() => onOpenPlayer(row.playerId)} type="button">
@@ -119,7 +119,7 @@ function KnowledgeBoard({
               {row.hasOpenQuickLook ? 'Queued' : 'Quick look'}
             </button>
           ), { sortable: false, value: (row) => (row.hasOpenQuickLook ? 'Queued' : 'Quick look') }),
-        ]}
+        ])}
         gridId="ng-scouting-knowledge"
         rows={rows}
       />
@@ -145,7 +145,7 @@ function AssignmentBoard({
     <div className="scouting-workspace__panel ng-holo-panel">
       <NgPrecisionTable
         className="scouting-workspace__table"
-        columns={[
+        columns={ngTableColumns(rows, [
           ngCol('name', 'Player', (row) => (
             <button className="scouting-workspace__link" onClick={() => onOpenPlayer(row.playerId)} type="button">
               {row.playerName}
@@ -157,7 +157,7 @@ function AssignmentBoard({
           ngCol('evaluator', 'Evaluator', (row) => row.evaluatorName, { value: (row) => row.evaluatorName }),
           ngCol('created', 'Created', (row) => row.createdLabel, { value: (row) => row.createdLabel }),
           ngCol('expected', 'Expected', (row) => row.expectedLabel ?? '—', { value: (row) => row.expectedLabel ?? '' }),
-        ]}
+        ])}
         gridId="ng-scouting-assignments"
         rows={rows}
       />
