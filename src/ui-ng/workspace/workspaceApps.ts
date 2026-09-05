@@ -76,7 +76,7 @@ export function parseWorkspaceApp(value: string | null): WorkspaceAppId {
   if (value !== null && WORKSPACE_APP_IDS.includes(value as WorkspaceAppId)) {
     return value as WorkspaceAppId
   }
-  return 'player'
+  return 'home'
 }
 
 export function parseWorkspacePlayerId(value: string | null): PlayerId | null {
@@ -125,7 +125,7 @@ function clearEntityQuery(url: URL) {
 
 export function syncWorkspaceAppQuery(app: WorkspaceAppId, method: 'push' | 'replace' = 'replace') {
   const url = new URL(window.location.href)
-  if (app === 'player') {
+  if (app === 'home') {
     url.searchParams.delete('app')
   } else {
     url.searchParams.set('app', app)
@@ -172,7 +172,7 @@ export function navigateToPlayerFromRoster(playerId: PlayerId) {
 export function navigateToPlayer(playerId: PlayerId) {
   const url = new URL(window.location.href)
   clearEntityQuery(url)
-  url.searchParams.delete('app')
+  url.searchParams.set('app', 'player')
   url.searchParams.set('playerId', playerId)
   applyHistory(url, 'push')
   notifyNgNavigation()
@@ -181,7 +181,7 @@ export function navigateToPlayer(playerId: PlayerId) {
 export function navigateToPlayerMedical(playerId: PlayerId) {
   const url = new URL(window.location.href)
   clearEntityQuery(url)
-  url.searchParams.delete('app')
+  url.searchParams.set('app', 'player')
   url.searchParams.set('playerId', playerId)
   url.searchParams.set('playerView', 'medical')
   applyHistory(url, 'push')
