@@ -13,6 +13,7 @@ import { setTeamResponsibility } from '@/app/staffResponsibilities'
 import { serializeGameWorldV1 } from './GameWorldSaveV1'
 import { serializeGameWorldV2 } from './GameWorldSaveV2'
 import { serializeGameWorldV3, deserializeGameWorldV3, deserializeGameWorldSave, migrateGameWorldSaveV1ToV3, migrateGameWorldSaveV2ToV3 } from './GameWorldSaveV3'
+import { createGovernanceBody, createGovernanceInstitution } from '@/domain/governance'
 
 const savedAt = '2032-10-01T00:00:00.000Z'
 
@@ -34,6 +35,20 @@ function worldWithHiredStaff() {
 }
 
 describe('GameWorldSaveV3', () => {
+  it('round-trips canonical BG3 history and defaults a legacy V3 payload to empty BG3 collections', () => {
+    const base = createNewGame(), teamId = Object.values(base.teams)[0]!.id, managerId = base.userCoachId
+    const institution = createGovernanceInstitution({ id: 'bg3-institution', universe: 'PROFESSIONAL_CLUB', name: 'BG3 Club', teamIds: [teamId] })
+    const body = createGovernanceBody({ id: 'bg3-board', institutionId: institution.id, kind: 'BOARD', name: 'Board' })
+    const period = { id: 'bg3-period', institutionId: institution.id, universe: institution.universe, manager: { kind: 'COACH' as const, id: managerId }, startedOn: base.currentDate }
+    const managerEvaluation = { id: 'bg3-evaluation', evaluationPeriodId: period.id, evaluatorBodyId: body.id, evaluatedOn: base.currentDate, objectiveEvaluations: [], factors: [{ id: 'bg3-factor', kind: 'INSTITUTIONAL_PATIENCE' as const, status: 'PRESENT' as const, weight: 1, direction: 'POSITIVE' as const, normalizedValue: .8, source: { kind: 'GOVERNANCE_BODY' as const, bodyId: body.id } }] }
+    const transition = { id: 'bg3-transition', managerId, institutionId: institution.id, bodyId: body.id, evaluationId: managerEvaluation.id, nextState: 'STABLE' as const, effectiveOn: base.currentDate, triggerKinds: ['INSTITUTIONAL_PATIENCE' as const], sourceFactorIds: ['bg3-factor'] }
+    const world = updateGameWorld(base, { governanceInstitutions: [institution], governanceBodies: [body], governanceManagerEvaluationPeriods: [period], governanceManagerEvaluations: [managerEvaluation], governanceJobSecurityTransitions: [transition] })
+    const saved = serializeGameWorldV3(world, savedAt), loaded = deserializeGameWorldV3(JSON.parse(JSON.stringify(saved)))
+    expect(loaded.governanceManagerEvaluationsById).toEqual(world.governanceManagerEvaluationsById)
+    expect(serializeGameWorldV3(deserializeGameWorldV3(serializeGameWorldV3(loaded, savedAt)), savedAt)).toEqual(serializeGameWorldV3(loaded, savedAt))
+    const legacy = structuredClone(saved); const runtime = legacy.payload.staffCareerRuntime as Record<string, unknown>; delete runtime.governanceManagerEvaluationPeriods; delete runtime.governanceManagerEvaluations; delete runtime.governanceJobSecurityTransitions
+    expect(deserializeGameWorldV3(legacy).governanceManagerEvaluationsById).toEqual({})
+  })
   it('round-trips a fresh world through V3', () => {
     const world = createNewGame()
     const saved = serializeGameWorldV3(world, savedAt)
