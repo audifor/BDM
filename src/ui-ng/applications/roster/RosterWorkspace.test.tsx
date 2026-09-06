@@ -210,7 +210,8 @@ describe('RosterWorkspace session restoration', () => {
   it('preserves preset, search, selection, and position filter across unmount', () => {
     const { unmount } = mountRosterWorkspace()
 
-    fireEvent.change(screen.getByLabelText('Preset de columnas'), { target: { value: 'psico' } })
+    fireEvent.click(screen.getByLabelText('Preset de columnas'))
+    fireEvent.click(screen.getByRole('option', { name: 'PSICO' }))
 
     const rows = document.querySelectorAll('.bdm-data-table tbody tr')
     expect(rows.length).toBeGreaterThanOrEqual(2)
@@ -229,7 +230,7 @@ describe('RosterWorkspace session restoration', () => {
 
     mountRosterWorkspace()
 
-    expect((screen.getByLabelText('Preset de columnas') as HTMLSelectElement).value).toBe('psico')
+    expect(screen.getByLabelText('Preset de columnas')).toHaveAttribute('data-preset', 'psico')
     expect(screen.getByRole('button', { name: 'SG' })).toHaveAttribute('aria-pressed', 'true')
     expect((screen.getByPlaceholderText('Buscar jugador...') as HTMLInputElement).value).toBe('mart')
     expect(useRosterWorkspaceSession.getState().selectedRowIds.length).toBe(2)

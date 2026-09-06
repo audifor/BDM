@@ -34,6 +34,8 @@ describe('CompetitionWorkspace', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Clasificación' }))
     expect(screen.getByRole('columnheader', { name: /Pct/ })).toBeInTheDocument()
+    expect(document.querySelector('.is-zone-playoff')).not.toBeNull()
+    expect(document.querySelector('.competition-standings__legend')).not.toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: 'Próximos' }))
     expect(screen.queryByText('No hay partidos pendientes.')).not.toBeInTheDocument()

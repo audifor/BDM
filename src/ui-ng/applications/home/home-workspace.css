@@ -1,0 +1,635 @@
+/* Home dashboard · Graphite Holo Luxe (layout only; chrome from ng-holo). */
+
+[data-ng-region='home-workspace'] .ng-application-workspace__body-slot,
+[data-ng-region='home-workspace'] .ng-canon__scroll {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+[data-ng-region='home-workspace'] .ng-canon__scroll {
+  overflow: hidden;
+}
+
+[data-ng-region='home-workspace'] .home-dashboard {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--ng-spacing-12);
+  min-height: 0;
+  height: 100%;
+}
+
+[data-ng-region='home-workspace'] .home-dashboard__top {
+  display: grid;
+  flex: none;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--ng-spacing-12);
+  align-items: stretch;
+}
+
+[data-ng-region='home-workspace'] .home-dashboard__modules {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--ng-spacing-12);
+  align-items: stretch;
+  min-height: 0;
+}
+
+[data-ng-region='home-workspace'] .home-dashboard__fixture {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: var(--ng-spacing-12);
+  align-items: center;
+  min-height: 147px;
+  height: 100%;
+  padding: var(--ng-spacing-16);
+}
+
+[data-ng-region='home-workspace'] .home-dashboard__fixture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--po-team-muted, var(--ng-cyan-muted)) 80%, transparent), transparent 58%);
+}
+
+[data-ng-region='home-workspace'] .home-dashboard__fixture > * {
+  position: relative;
+  z-index: 1;
+}
+
+[data-ng-region='home-workspace'] .home-dashboard__fixture-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  text-align: center;
+}
+
+[data-ng-region='home-workspace'] .home-dashboard__fixture-side--away {
+  order: 3;
+}
+
+[data-ng-region='home-workspace'] .home-dashboard__crest {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--ng-cyan) 35%, var(--ng-border-subtle));
+  background: var(--crest-primary, var(--bdm-surface-3));
+  color: var(--ng-text-primary);
+  font-family: var(--ng-font-display);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--crest-secondary, var(--ng-amber)) 45%, transparent),
+    var(--ng-glow-cyan-low);
+}
+
+[data-ng-region='home-workspace'] .home-dashboard__fixture-name {
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ng-text-primary);
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-ng-region='home-workspace'] .home-dashboard__fixture-center {
+  order: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  text-align: center;
+}
+
+[data-ng-region='home-workspace'] .home-dashboard__fixture-center .ng-canon__eyebrow {
+  margin-bottom: 2px;
+}
+
+[data-ng-region='home-workspace'] .home-dashboard__fixture-vs {
+  margin: 0;
+  color: var(--ng-amber-bright);
+  font-family: var(--ng-font-display);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-shadow: var(--ng-glow-amber-low);
+}
+
+[data-ng-region='home-workspace'] .home-dashboard__fixture-meta {
+  margin: 0;
+  color: var(--ng-text-muted);
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-font-size-secondary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+[data-ng-region='home-workspace'] .home-dashboard__fixture-facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  margin: 4px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+[data-ng-region='home-workspace'] .home-dashboard__fixture-facts .ng-canon__metric {
+  display: inline-flex;
+  gap: 6px;
+  min-height: 0;
+}
+
+[data-ng-region='home-workspace'] .home-dashboard__fixture-actions {
+  margin-top: 4px;
+  justify-content: center;
+}
+
+[data-ng-region='home-workspace'] .home-dashboard__module {
+  min-width: 0;
+  min-height: 147px;
+  height: 100%;
+  padding: var(--ng-spacing-12);
+  overflow: auto;
+}
+
+[data-ng-region='home-workspace'] .home-dashboard__module > .ng-canon__eyebrow {
+  margin-bottom: var(--ng-spacing-8);
+}
+
+[data-ng-region='home-workspace'] .home-dynamics {
+  display: grid;
+  gap: 4px;
+}
+
+[data-ng-region='home-workspace'] .home-dynamics__head {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 4px;
+  color: var(--ng-text-faint);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+[data-ng-region='home-workspace'] .home-dynamics__head span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-ng-region='home-workspace'] .home-dynamics__head span:last-child {
+  text-align: right;
+}
+
+[data-ng-region='home-workspace'] .home-dynamics__row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 6px;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--ng-border-subtle);
+}
+
+[data-ng-region='home-workspace'] .home-dynamics__label {
+  color: var(--ng-text-faint);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+[data-ng-region='home-workspace'] .home-dynamics__value {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-ng-region='home-workspace'] .home-dynamics__value.is-home {
+  color: var(--ng-cyan-bright);
+}
+
+[data-ng-region='home-workspace'] .home-dynamics__value.is-away {
+  color: var(--ng-amber-bright);
+  text-align: right;
+}
+
+[data-ng-region='home-workspace'] .home-upcoming {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-ng-region='home-workspace'] .home-upcoming li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--ng-border-subtle);
+}
+
+[data-ng-region='home-workspace'] .home-upcoming__main {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+}
+
+[data-ng-region='home-workspace'] .home-upcoming__main strong,
+[data-ng-region='home-workspace'] .home-upcoming__main .home-entity-link,
+[data-ng-region='home-workspace'] .home-upcoming__main .ng-canon__link {
+  overflow: hidden;
+  color: var(--ng-text-primary);
+  font-size: 12px;
+  font-weight: var(--ng-font-weight-regular);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-ng-region='home-workspace'] .home-upcoming__main span {
+  flex: none;
+  color: var(--ng-cyan);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+[data-ng-region='home-workspace'] .home-upcoming__meta {
+  margin-top: 2px;
+  color: var(--ng-text-muted);
+  font-size: 11px;
+}
+
+/* Modular slots · FM-like picker */
+[data-ng-region='home-workspace'] .home-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: visible;
+}
+
+[data-ng-region='home-workspace'] .home-slot__header {
+  position: relative;
+  z-index: 5;
+  flex: none;
+  padding: var(--ng-spacing-8) var(--ng-spacing-12) 0;
+}
+
+[data-ng-region='home-workspace'] .home-slot__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ng-amber-bright);
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-font-size-meta);
+  font-weight: 700;
+  letter-spacing: var(--ng-track-meta);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+[data-ng-region='home-workspace'] .home-slot__trigger:hover,
+[data-ng-region='home-workspace'] .home-slot__trigger[aria-expanded='true'] {
+  color: var(--ng-cyan-bright);
+}
+
+[data-ng-region='home-workspace'] .home-slot__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-ng-region='home-workspace'] .home-slot__chevron {
+  flex: none;
+  font-size: 11px;
+  line-height: 1;
+}
+
+[data-ng-region='home-workspace'] .home-slot__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: var(--ng-spacing-12);
+  z-index: 40;
+  display: grid;
+  gap: 1px;
+  min-width: 220px;
+  max-width: min(280px, 70vw);
+  max-height: min(320px, 50vh);
+  margin: 0;
+  padding: 4px;
+  overflow: auto;
+  list-style: none;
+}
+
+[data-ng-region='home-workspace'] .home-slot__menu button {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: var(--ng-radius-sm);
+  background: transparent;
+  color: var(--ng-text-secondary);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+[data-ng-region='home-workspace'] .home-slot__menu button:hover {
+  background: color-mix(in srgb, var(--ng-cyan) 10%, transparent);
+  color: var(--ng-text-primary);
+}
+
+[data-ng-region='home-workspace'] .home-slot__menu button.is-active {
+  background: color-mix(in srgb, var(--ng-amber) 16%, transparent);
+  color: var(--ng-amber-bright);
+}
+
+[data-ng-region='home-workspace'] .home-slot__check {
+  color: var(--ng-positive);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+[data-ng-region='home-workspace'] .home-slot__body {
+  flex: 1;
+  min-height: 0;
+  padding: var(--ng-spacing-8) var(--ng-spacing-12) var(--ng-spacing-12);
+  overflow: auto;
+}
+
+[data-ng-region='home-workspace'] .home-slot__body .ng-canon__empty,
+[data-ng-region='home-workspace'] .home-slot__body .ng-canon__note {
+  padding: 0;
+}
+
+[data-ng-region='home-workspace'] .home-standings {
+  display: grid;
+  gap: var(--ng-spacing-8);
+  align-content: start;
+  min-height: 100%;
+}
+
+[data-ng-region='home-workspace'] .home-slot-table__head,
+[data-ng-region='home-workspace'] .home-slot-table li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) 22px 20px 20px 32px 24px;
+  gap: 4px;
+  align-items: center;
+}
+
+[data-ng-region='home-workspace'] .home-slot-table__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 2px 4px 6px;
+  border-bottom: 1px solid var(--ng-border-subtle);
+  background: color-mix(in srgb, var(--bdm-surface-1) 88%, transparent);
+  color: var(--ng-text-faint);
+  font-family: var(--ng-font-ui);
+  font-size: var(--ng-font-size-meta);
+  font-weight: var(--ng-font-weight-bold);
+  letter-spacing: var(--ng-track-meta);
+  text-transform: uppercase;
+}
+
+[data-ng-region='home-workspace'] .home-slot-table {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-ng-region='home-workspace'] .home-slot-table li {
+  min-height: 24px;
+  padding: 3px 4px;
+  color: var(--ng-text-secondary);
+  font-size: var(--ng-font-size-data);
+  font-weight: var(--ng-font-weight-regular);
+}
+
+[data-ng-region='home-workspace'] .home-slot-table .is-team {
+  overflow: hidden;
+  color: var(--ng-text-primary);
+  font-weight: var(--ng-font-weight-regular);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-ng-region='home-workspace'] .home-entity-link {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  font-weight: var(--ng-font-weight-regular);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-ng-region='home-workspace'] .home-slot-table .home-entity-link.is-team {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+
+[data-ng-region='home-workspace'] .home-slot-table li.is-zone-playoff {
+  background: color-mix(in srgb, var(--ng-positive, #29cf85) 10%, transparent);
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--ng-positive, #29cf85) 75%, transparent);
+}
+
+[data-ng-region='home-workspace'] .home-slot-table li.is-zone-promotion {
+  background: color-mix(in srgb, var(--ng-cyan, #18d7f0) 10%, transparent);
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--ng-cyan, #18d7f0) 75%, transparent);
+}
+
+[data-ng-region='home-workspace'] .home-slot-table li.is-zone-relegation {
+  background: color-mix(in srgb, var(--ng-negative, #e85d67) 10%, transparent);
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--ng-negative, #e85d67) 75%, transparent);
+}
+
+[data-ng-region='home-workspace'] .home-slot-table li.is-user {
+  color: var(--ng-text-primary);
+}
+
+[data-ng-region='home-workspace'] .home-slot-table li.is-user:not(.is-zone-playoff):not(.is-zone-promotion):not(.is-zone-relegation) {
+  background: color-mix(in srgb, var(--ng-cyan) 10%, transparent);
+  box-shadow: inset 2px 0 0 var(--ng-cyan);
+}
+
+[data-ng-region='home-workspace'] .home-slot-table li.is-user.is-zone-playoff,
+[data-ng-region='home-workspace'] .home-slot-table li.is-user.is-zone-promotion,
+[data-ng-region='home-workspace'] .home-slot-table li.is-user.is-zone-relegation {
+  background: color-mix(in srgb, var(--ng-cyan) 8%, transparent);
+}
+
+[data-ng-region='home-workspace'] .home-slot-table .is-pos,
+[data-ng-region='home-workspace'] .home-slot-table .is-num {
+  font-variant-numeric: tabular-nums;
+}
+
+[data-ng-region='home-workspace'] .home-slot-table .is-num {
+  text-align: right;
+}
+
+[data-ng-region='home-workspace'] .home-slot-table .is-pts {
+  color: var(--ng-text-primary);
+  font-weight: var(--ng-font-weight-bold);
+}
+
+[data-ng-region='home-workspace'] .home-standings .competition-standings__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ng-spacing-12);
+  margin: 2px 0 0;
+  color: var(--ng-text-muted);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+[data-ng-region='home-workspace'] .home-standings .competition-standings__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+[data-ng-region='home-workspace'] .home-standings .competition-standings__legend span::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+}
+
+[data-ng-region='home-workspace'] .home-standings .competition-standings__legend .is-zone-playoff::before {
+  background: var(--ng-positive, #29cf85);
+}
+
+[data-ng-region='home-workspace'] .home-standings .competition-standings__legend .is-zone-promotion::before {
+  background: var(--ng-cyan, #18d7f0);
+}
+
+[data-ng-region='home-workspace'] .home-standings .competition-standings__legend .is-zone-relegation::before {
+  background: var(--ng-negative, #e85d67);
+}
+
+[data-ng-region='home-workspace'] .home-slot-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-ng-region='home-workspace'] .home-slot-list li {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--ng-border-subtle);
+}
+
+[data-ng-region='home-workspace'] .home-slot-list__badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 1px solid color-mix(in srgb, var(--ng-cyan) 40%, transparent);
+  border-radius: 50%;
+  color: var(--ng-cyan-bright);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+[data-ng-region='home-workspace'] .home-slot-list strong {
+  color: var(--ng-text-primary);
+  font-size: 12px;
+}
+
+[data-ng-region='home-workspace'] .home-slot-list__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+[data-ng-region='home-workspace'] .home-slot-list__row span {
+  color: var(--ng-amber-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-ng-region='home-workspace'] .home-finances .ng-canon__metrics {
+  margin-bottom: var(--ng-spacing-8);
+}
+
+@media (max-width: 1100px) {
+  [data-ng-region='home-workspace'] .home-dashboard__top {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  [data-ng-region='home-workspace'] .home-dashboard__fixture {
+    grid-column: 1 / -1;
+  }
+
+  [data-ng-region='home-workspace'] .home-dashboard__modules {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-height: 240px;
+  }
+}
+
+@media (max-width: 760px) {
+  [data-ng-region='home-workspace'] .ng-canon__scroll {
+    overflow: auto;
+  }
+
+  [data-ng-region='home-workspace'] .home-dashboard__top,
+  [data-ng-region='home-workspace'] .home-dashboard__modules {
+    grid-template-columns: 1fr;
+  }
+
+  [data-ng-region='home-workspace'] .home-dashboard__modules {
+    flex: none;
+  }
+
+  [data-ng-region='home-workspace'] .home-slot {
+    min-height: 240px;
+    height: auto;
+  }
+
+  [data-ng-region='home-workspace'] .home-dashboard__fixture {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  [data-ng-region='home-workspace'] .home-dashboard__fixture-side--away {
+    order: 3;
+  }
+}

@@ -5,10 +5,9 @@
     linear-gradient(var(--ng-cyan), var(--ng-cyan)),
     linear-gradient(var(--ng-cyan), var(--ng-cyan)),
     linear-gradient(var(--ng-amber), var(--ng-amber)),
-    linear-gradient(var(--ng-amber), var(--ng-amber)),
-    var(--bdm-panel-fill);
-  --bdm-holo-tick-size: 12px 1px, 1px 12px, 12px 1px, 1px 12px, auto;
-  --bdm-holo-tick-pos: 8px 0, 0 8px, calc(100% - 8px) 100%, 100% calc(100% - 8px), 0 0;
+    linear-gradient(var(--ng-amber), var(--ng-amber));
+  --bdm-holo-tick-size: 12px 1px, 1px 12px, 12px 1px, 1px 12px;
+  --bdm-holo-tick-pos: 8px 0, 0 8px, calc(100% - 8px) 100%, 100% calc(100% - 8px);
   --bdm-holo-stage:
     radial-gradient(circle at 82% 16%, rgba(22, 217, 243, 0.04), transparent 32%),
     radial-gradient(circle at 18% 92%, rgba(230, 183, 77, 0.028), transparent 30%),
@@ -94,26 +93,60 @@
   z-index: 1;
   border: 1px solid var(--bdm-border-default);
   border-radius: var(--ng-radius-panel);
-  background-color: color-mix(in srgb, var(--bdm-surface-1) 72%, transparent);
-  background-image: var(--bdm-holo-ticks);
-  background-repeat: no-repeat;
-  background-size: var(--bdm-holo-tick-size);
-  background-position: var(--bdm-holo-tick-pos);
-  box-shadow: var(--bdm-panel-shadow);
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: var(--bdm-holo-ticks) !important;
+  background-repeat: no-repeat !important;
+  background-size: var(--bdm-holo-tick-size) !important;
+  background-position: var(--bdm-holo-tick-pos) !important;
+  box-shadow: none !important;
 }
 
-.bdm-os-ng .ng-holo-float,
-.bdm-os-ng .bdm-data-grid__column-manager,
-.bdm-os-ng .bdm-data-grid__header-menu,
-.bdm-os-ng .entity-context-menu {
+.bdm-os-ng .ng-holo-float {
   position: relative;
   z-index: 1;
   border: 1px solid var(--bdm-border-default);
   border-radius: var(--ng-radius-panel);
-  background-color: color-mix(in srgb, var(--bdm-surface-1) 86%, transparent);
-  background-image: var(--bdm-holo-ticks);
+  background-color: color-mix(in srgb, var(--bdm-surface-1) 92%, transparent);
+  background-image:
+    linear-gradient(var(--ng-cyan), var(--ng-cyan)),
+    linear-gradient(var(--ng-cyan), var(--ng-cyan)),
+    linear-gradient(var(--ng-amber), var(--ng-amber)),
+    linear-gradient(var(--ng-amber), var(--ng-amber));
   background-repeat: no-repeat;
-  background-size: 10px 1px, 1px 10px, 10px 1px, 1px 10px, auto;
-  background-position: 6px 0, 0 6px, calc(100% - 6px) 100%, 100% calc(100% - 6px), 0 0;
+  background-size: 10px 1px, 1px 10px, 10px 1px, 1px 10px;
+  background-position: 6px 0, 0 6px, calc(100% - 6px) 100%, 100% calc(100% - 6px);
   box-shadow: var(--bdm-panel-shadow-premium);
+}
+
+/* Overlays must float above content — never re-enter document flow. */
+.bdm-os-ng .bdm-data-grid__column-manager,
+.bdm-os-ng .bdm-data-grid__header-menu,
+.bdm-os-ng .entity-context-menu {
+  z-index: 40;
+  border: 1px solid var(--bdm-border-default);
+  border-radius: var(--ng-radius-panel);
+  background-color: color-mix(in srgb, var(--bdm-surface-1) 92%, transparent);
+  background-image:
+    linear-gradient(var(--ng-cyan), var(--ng-cyan)),
+    linear-gradient(var(--ng-cyan), var(--ng-cyan)),
+    linear-gradient(var(--ng-amber), var(--ng-amber)),
+    linear-gradient(var(--ng-amber), var(--ng-amber));
+  background-repeat: no-repeat;
+  background-size: 10px 1px, 1px 10px, 10px 1px, 1px 10px;
+  background-position: 6px 0, 0 6px, calc(100% - 6px) 100%, 100% calc(100% - 6px);
+  box-shadow: var(--bdm-panel-shadow-premium);
+}
+
+.bdm-os-ng .bdm-data-grid__column-manager,
+.bdm-os-ng .bdm-data-grid__header-menu {
+  position: absolute;
+}
+
+.bdm-os-ng .bdm-data-grid__column-manager {
+  top: 0;
+  right: 4px;
+  left: auto;
+  width: min(280px, calc(100% - 8px));
+  max-height: min(320px, 70%);
 }

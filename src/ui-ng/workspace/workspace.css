@@ -20,7 +20,7 @@
   margin: 0;
   font-family: var(--ng-font-display);
   font-size: var(--ng-font-size-xl);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: var(--ng-track-display);
   color: var(--ng-text-secondary);
 }
@@ -84,10 +84,8 @@
   min-height: var(--ng-workspace-header-height);
   padding: 0 var(--ng-spacing-16);
   border-bottom: 1px solid var(--ng-border-subtle);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%),
-    var(--ng-bg-panel-primary);
-  box-shadow: var(--ng-shadow-inset-highlight);
+  background: transparent;
+  box-shadow: none;
 }
 
 .ng-workspace-header__main {
@@ -114,7 +112,7 @@
   font-size: var(--ng-font-size-secondary);
   letter-spacing: var(--ng-track-chrome);
   text-transform: uppercase;
-  color: var(--ng-text-muted);
+  color: var(--ng-cyan);
 }
 
 .ng-workspace-tabs {
@@ -126,9 +124,7 @@
   min-height: var(--ng-workspace-tabs-height);
   padding: 0 var(--ng-spacing-12) 0 0;
   border-bottom: 1px solid rgba(22, 217, 243, 0.14);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.015) 0%, transparent 100%),
-    var(--ng-bg-subtle);
+  background: transparent !important;
 }
 
 .ng-workspace-tabs__list {
@@ -138,9 +134,8 @@
   min-width: 0;
   flex: 1;
   overflow-x: auto;
-  --ng-font-display: var(--ng-font-condensed);
-  --po-font-display: var(--ng-font-condensed);
-  font-family: var(--ng-font-condensed);
+  font-family: var(--ng-font-ui);
+  background: transparent !important;
 }
 
 .ng-workspace-tabs__item {
@@ -174,10 +169,10 @@
   border-bottom: 2px solid transparent;
   background: transparent;
   color: var(--ng-text-muted);
-  font-family: var(--ng-font-display);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-family: var(--ng-font-ui);
+  font-size: var(--ng-font-size-data);
+  font-weight: var(--ng-font-weight-regular);
+  letter-spacing: var(--ng-track-chrome);
   text-transform: uppercase;
   transition:
     color 120ms ease,
@@ -188,14 +183,15 @@
 
 .ng-workspace-tabs__tab:hover {
   color: var(--ng-text-secondary);
-  background: rgba(255, 255, 255, 0.02);
+  background: transparent;
 }
 
 .ng-workspace-tabs__tab.is-active {
   border-bottom-color: var(--ng-cyan);
-  background: rgba(22, 217, 243, 0.06);
-  box-shadow: 0 1px 0 rgba(22, 217, 243, 0.18);
+  background: transparent;
+  box-shadow: none;
   color: var(--ng-text-primary);
+  font-weight: var(--ng-font-weight-bold);
 }
 
 .ng-workspace-toolbar {
@@ -306,7 +302,7 @@
   margin: 0;
   font-family: var(--ng-font-display);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: var(--ng-track-meta);
   text-transform: uppercase;
   color: var(--ng-text-muted);

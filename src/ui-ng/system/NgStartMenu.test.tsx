@@ -52,11 +52,14 @@ describe('NG start menu', () => {
     expect(screen.getByRole('button', { name: 'Roster' })).toBeInTheDocument()
   })
 
-  it('keeps only BDM and Home on the taskbar until a section is opened', () => {
+  it('keeps only BDM start and Home on the taskbar until a section is opened', () => {
     mountTaskbar()
     const toolbar = screen.getByRole('toolbar')
-    const labels = [...toolbar.querySelectorAll('button')].map((button) => button.textContent)
-    expect(labels).toEqual(['BDM', 'Home'])
+    const buttons = [...toolbar.querySelectorAll('button')]
+    expect(buttons).toHaveLength(2)
+    expect(buttons[0]).toHaveAccessibleName('Abrir menú de inicio BDM')
+    expect(buttons[0]).not.toHaveTextContent('BDM')
+    expect(buttons[1]).toHaveTextContent('Home')
     expect(screen.queryByRole('button', { name: 'Roster' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Training' })).not.toBeInTheDocument()
   })
@@ -72,6 +75,24 @@ describe('NG start menu', () => {
     expect(screen.queryByRole('button', { name: 'Roster' })).not.toBeInTheDocument()
     expect(new URL(window.location.href).searchParams.get('app')).toBeNull()
     expect(screen.getByRole('button', { name: 'Home' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('closes an opened section with middle click and ignores Home', () => {
+    mountTaskbar()
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir menú de inicio BDM' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Roster' }))
+    fireEvent(
+      screen.getByRole('button', { name: 'Roster' }),
+      new MouseEvent('auxclick', { bubbles: true, button: 1 }),
+    )
+    expect(screen.queryByRole('button', { name: 'Roster' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Home' })).toHaveAttribute('aria-current', 'page')
+
+    fireEvent(
+      screen.getByRole('button', { name: 'Home' }),
+      new MouseEvent('auxclick', { bubbles: true, button: 1 }),
+    )
+    expect(screen.getByRole('button', { name: 'Home' })).toBeInTheDocument()
   })
 
   it('does not offer a close menu on Home', () => {
@@ -102,8 +123,9 @@ describe('NG start menu', () => {
     window.history.replaceState({}, '', '/?ui=ng&app=training')
     mountTaskbar()
     const toolbar = screen.getByRole('toolbar')
-    const labels = [...toolbar.querySelectorAll('button')].map((button) => button.textContent)
-    expect(labels).toEqual(['BDM', 'Home', 'Training'])
+    const buttons = [...toolbar.querySelectorAll('button')]
+    expect(buttons[0]).toHaveAccessibleName('Abrir menú de inicio BDM')
+    expect(buttons.map((button) => button.textContent)).toEqual(['', 'Home', 'Training'])
     expect(screen.queryByRole('button', { name: 'Roster' })).not.toBeInTheDocument()
   })
 })

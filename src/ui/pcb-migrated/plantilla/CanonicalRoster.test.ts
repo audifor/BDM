@@ -21,7 +21,16 @@ import {
 afterEach(cleanup)
 afterEach(() => window.localStorage.clear())
 
-const PRESET_NAMES = ['Resumen General', 'Ofensiva', 'Cerebro', 'Defensa', 'Físico', 'Manejo', 'Psico', 'Personalizada']
+const PRESET_NAMES = [
+  'RESUMEN GENERAL',
+  'OFENSIVA',
+  'CEREBRO',
+  'DEFENSA',
+  'FÍSICO',
+  'MANEJO',
+  'PSICO',
+  'PERSONALIZADA',
+]
 
 describe('CanonicalRoster / roster view presets', () => {
   it('exposes exactly the 8 canonical presets in the preset selector', () => {

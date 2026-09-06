@@ -188,7 +188,7 @@
   color: var(--ng-text-muted);
   font-family: var(--ng-font-display);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -262,6 +262,68 @@
   font-size: 16px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+.competition-standings {
+  display: grid;
+  gap: var(--ng-spacing-8);
+}
+
+.bdm-os-ng .competition-standings .ng-canon__table tbody tr.is-zone-playoff td {
+  background: color-mix(in srgb, var(--ng-positive, #29cf85) 10%, transparent) !important;
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--ng-positive, #29cf85) 75%, transparent);
+}
+
+.bdm-os-ng .competition-standings .ng-canon__table tbody tr.is-zone-promotion td {
+  background: color-mix(in srgb, var(--ng-cyan, #18d7f0) 10%, transparent) !important;
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--ng-cyan, #18d7f0) 75%, transparent);
+}
+
+.bdm-os-ng .competition-standings .ng-canon__table tbody tr.is-zone-relegation td {
+  background: color-mix(in srgb, var(--ng-negative, #e85d67) 10%, transparent) !important;
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--ng-negative, #e85d67) 75%, transparent);
+}
+
+.bdm-os-ng .competition-standings .ng-canon__table tbody tr.is-zone-playoff.is-selected td,
+.bdm-os-ng .competition-standings .ng-canon__table tbody tr.is-zone-promotion.is-selected td,
+.bdm-os-ng .competition-standings .ng-canon__table tbody tr.is-zone-relegation.is-selected td {
+  background: color-mix(in srgb, var(--grid-cyan, #18d7f0) 8%, transparent) !important;
+}
+
+.competition-standings__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ng-spacing-12);
+  margin: 0;
+  color: var(--ng-text-muted);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.competition-standings__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.competition-standings__legend span::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+}
+
+.competition-standings__legend .is-zone-playoff::before {
+  background: var(--ng-positive, #29cf85);
+}
+
+.competition-standings__legend .is-zone-promotion::before {
+  background: var(--ng-cyan, #18d7f0);
+}
+
+.competition-standings__legend .is-zone-relegation::before {
+  background: var(--ng-negative, #e85d67);
 }
 
 @media (max-width: 1100px) {
