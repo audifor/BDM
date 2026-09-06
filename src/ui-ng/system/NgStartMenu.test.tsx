@@ -70,7 +70,7 @@ describe('NG start menu', () => {
     expect(slot?.querySelector('[role="menu"]')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('menuitem', { name: 'Cerrar' }))
     expect(screen.queryByRole('button', { name: 'Roster' })).not.toBeInTheDocument()
-    expect(new URL(window.location.href).searchParams.get('app')).toBe('home')
+    expect(new URL(window.location.href).searchParams.get('app')).toBeNull()
     expect(screen.getByRole('button', { name: 'Home' })).toHaveAttribute('aria-current', 'page')
   })
 
