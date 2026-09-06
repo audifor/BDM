@@ -1,21 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 
-import type { Player } from '@/domain/player'
-import type { PlayerId } from '@/domain/ids'
-import { getPlayer } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import {
   calculateMatchPlayerStats,
-  calculateTeamMatchStats,
-  type MatchEvent,
   type MatchTacticalPlan,
-  type PlayerMatchStats,
-  type TacticalLevel,
 } from '@/engine/match'
 import { useGameStore } from '@/stores/gameStore'
 import { PLAYBACK_SPEEDS, useMatchViewerStore } from '@/stores/matchViewerStore'
 import { useTacticalPlanStore } from '@/stores/tacticalPlanStore'
-import { MatchCourt } from '@/ui/match/MatchCourt'
 import {
   createPresentationSegment,
   displayClockAtProgress,
@@ -23,14 +15,33 @@ import {
   visualDetailForSpeed,
   type MatchPresentationSegment,
 } from '@/ui/match/MatchPresentationSegment'
-import { formatClock, formatMatchEvent, formatPeriod, resolveActiveMatchLineups, resolveMatchFatigue } from '@/ui/matchViewer'
-import { ManualSubstitutionsPanel } from '@/ui/screens/ManualSubstitutionsPanel'
+import { formatClock, formatPeriod, resolveActiveMatchLineups, resolveMatchFatigue } from '@/ui/matchViewer'
 import { isMatchComplete } from '@/ui/screens/MatchViewerScreen'
-import { deriveTeamColors, teamShortCode } from '@/ui-ng/applications/player/data/presentationHelpers'
-import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
-import { navigateToPlayer } from '@/ui-ng/workspace/workspaceApps'
+import { deriveTeamColors } from '@/ui-ng/applications/player/data/presentationHelpers'
+import { LiveCourtStage } from '@/ui-ng/applications/match/engine/LiveCourtStage'
+import {
+  GameClock,
+  MatchQuickControls,
+  MatchScoreboard,
+  TeamScoreSummary,
+} from '@/ui-ng/applications/match/engine/MatchScoreboard'
+import {
+  energyFromFatigue,
+  matchdayLabel,
+  seasonLabel,
+  teamFoulsTotal,
+  teamMark,
+  teamRecordLabel,
+  venueLabel,
+  chromeSafeClubAccent,
+  type LiveStageMode,
+  type TacticalPanelTab,
+} from '@/ui-ng/applications/match/engine/matchPresentation'
+import { TacticalPanel } from '@/ui-ng/applications/match/engine/TacticalPanel'
+import { TeamBoxScore } from '@/ui-ng/applications/match/engine/TeamBoxScore'
+import { navigateToPlayer, navigateToTeamInNg } from '@/ui-ng/workspace/workspaceApps'
 
-type ViewerPanel = 'none' | 'coaching' | 'substitutions'
+import './engine/match-engine.css'
 
 export function NgMatchViewer() {
   const world = useGameStore((state) => state.world)
@@ -52,7 +63,9 @@ export function NgMatchViewer() {
   const coachingPlan = useTacticalPlanStore((state) => state.plan)
   const setCoachingPlan = useTacticalPlanStore((state) => state.setPlan)
 
-  const [panel, setPanel] = useState<ViewerPanel>('none')
+  const [stageMode, setStageMode] = useState<LiveStageMode>('tracking')
+  const [tacticalTab, setTacticalTab] = useState<TacticalPanelTab>('general')
+  const [boxScoresCollapsed, setBoxScoresCollapsed] = useState(false)
   const [draft, setDraft] = useState(coachingPlan)
   const [segment, setSegment] = useState<MatchPresentationSegment | null>(null)
   const [presentationProgress, setPresentationProgress] = useState(0)
@@ -101,6 +114,12 @@ export function NgMatchViewer() {
 
   const homeColors = deriveTeamColors(simulation?.homeTeamId ?? 'home')
   const awayColors = deriveTeamColors(simulation?.awayTeamId ?? 'away')
+  const userTeamId =
+    world === null
+      ? (simulation?.homeTeamId ?? 'home')
+      : (getUserTeam(world)?.id ?? simulation?.homeTeamId ?? 'home')
+  const rawClub = deriveTeamColors(String(userTeamId))
+  const clubColors = chromeSafeClubAccent(rawClub.primary, rawClub.secondary)
   const courtStyle = useMemo(
     () =>
       ({
@@ -108,8 +127,19 @@ export function NgMatchViewer() {
         '--ng-match-home-accent': homeColors.secondary,
         '--ng-match-away': awayColors.primary,
         '--ng-match-away-accent': awayColors.secondary,
+        '--me-club': clubColors.primary,
+        '--me-club-hi': clubColors.secondary,
+        '--me-club-ink': clubColors.ink,
       }) as CSSProperties,
-    [awayColors.primary, awayColors.secondary, homeColors.primary, homeColors.secondary],
+    [
+      awayColors.primary,
+      awayColors.secondary,
+      clubColors.primary,
+      clubColors.secondary,
+      clubColors.ink,
+      homeColors.primary,
+      homeColors.secondary,
+    ],
   )
 
   if (world === null || simulation === null) return null
@@ -131,14 +161,50 @@ export function NgMatchViewer() {
   const awayStats = playerStats.filter((stat) => simulation.squads.away.includes(stat.playerId))
   const homeName = world.teams[simulation.homeTeamId]!.name
   const awayName = world.teams[simulation.awayTeamId]!.name
+  const game = world.games[simulation.gameId]
+  const venue = venueLabel(world, simulation.homeTeamId)
+  const onCourtStats = (coachingTeamId === simulation.homeTeamId ? homeStats : awayStats).filter((stat) =>
+    coachingActiveLineup.includes(stat.playerId),
+  )
+  const benchStats = (coachingTeamId === simulation.homeTeamId ? homeStats : awayStats).filter(
+    (stat) => !coachingActiveLineup.includes(stat.playerId),
+  )
+  const energyPercent = Math.round(
+    coachingActiveLineup.reduce((sum, playerId) => sum + energyFromFatigue(fatigueByPlayerId[playerId]), 0) /
+      Math.max(1, coachingActiveLineup.length),
+  )
+  const liveEventCount = revealedEvents.filter((event) => event.type === 'shotMade' || event.type === 'foul').length
 
-  const openPanel = (next: ViewerPanel) => {
+  const openSubs = () => {
     pause()
-    setDraft(coachingPlan)
-    setPanel(next)
+    setTacticalTab('jugadores')
   }
 
-  const simulateQuarter = () => {
+  const openTactics = () => {
+    pause()
+    setDraft(coachingPlan)
+    setTacticalTab('ataque')
+  }
+
+  const nextPossession = () => {
+    if (finished || segment !== null) return
+    pause()
+    requestingSegmentRef.current = false
+    setSegment(null)
+    setPresentationProgress(0)
+    const step = createPresentationSegment(advanceLiveMatchPresentation())
+    replaceSimulation(step.endSimulation, false)
+  }
+
+  const skipToEnd = () => {
+    setSegment(null)
+    setPresentationProgress(0)
+    requestingSegmentRef.current = false
+    replaceSimulation(skipLiveMatch(), false)
+  }
+
+  const skipToEndOfPeriod = () => {
+    if (finished) return
     setSegment(null)
     setPresentationProgress(0)
     requestingSegmentRef.current = false
@@ -149,385 +215,166 @@ export function NgMatchViewer() {
   }
 
   return (
-    <section className="ng-match" data-ng-region="match-live" style={courtStyle}>
-      <header className="ng-match__scoreboard ng-holo-panel">
-        <div className="ng-match__team is-home">
-          <span className="ng-match__mark">{teamShortCode(homeName)}</span>
-          <strong>{homeName}</strong>
-        </div>
-        <div className="ng-match__score">
-          <b>
-            {homeScore}
-            <span>–</span>
-            {awayScore}
-          </b>
-          <em>{finished ? 'FINAL' : `${formatPeriod(period)} · ${formatClock(clock)}`}</em>
-        </div>
-        <div className="ng-match__team is-away">
-          <strong>{awayName}</strong>
-          <span className="ng-match__mark is-away">{teamShortCode(awayName)}</span>
-        </div>
-      </header>
-
-      <div className="ng-match__stage">
-        <div className="ng-match__court-wrap ng-holo-panel">
-          <MatchCourt
-            attackingTeamId={segment?.attackingTeamId ?? simulation.homeTeamId}
-            awayTeamId={simulation.awayTeamId}
-            detail={visualDetailForSpeed(speed)}
-            events={segment?.events ?? []}
-            gameId={simulation.gameId}
-            homeTeamId={simulation.homeTeamId}
-            lineups={segment?.startLineups ?? activeLineups}
-            period={segment?.period ?? period}
-            progress={presentationProgress}
-            world={world}
+    <section className="me" data-ng-region="match-live" style={courtStyle}>
+      <MatchScoreboard
+        home={
+          <TeamScoreSummary
+            fouls={teamFoulsTotal(homeStats)}
+            mark={teamMark(homeName)}
+            name={homeName}
+            onOpen={() => navigateToTeamInNg({ type: 'team', teamId: simulation.homeTeamId, section: 'overview' })}
+            record={teamRecordLabel(world, simulation.homeTeamId)}
+            side="home"
+            timeouts={null}
           />
-        </div>
-        <aside className="ng-match__rail">
-          <section className="ng-match__feed ng-holo-panel">
-            <p className="ng-canon__eyebrow">Play-by-play</p>
-            <div className="ng-match__feed-scroll">
-              {revealedEvents.length === 0 ? (
-                <p className="ng-canon__empty">Esperando el salto inicial…</p>
-              ) : (
-                [...revealedEvents]
-                  .slice(-12)
-                  .reverse()
-                  .map((event) => (
-                    <p className={`ng-match__event is-${eventTone(event)}`} key={event.sequence}>
-                      <time>{event.type === 'gameEnd' ? '00:00' : formatClock(event.clockSecondsRemaining)}</time>
-                      <span>{formatMatchEvent(event, world)}</span>
-                    </p>
-                  ))
-              )}
+        }
+        score={
+          <GameClock
+            arena={venue.arena}
+            attendance={null}
+            awayScore={awayScore}
+            clockLabel={formatClock(clock)}
+            finished={finished}
+            homeScore={homeScore}
+            location={venue.location}
+            periodLabel={formatPeriod(period)}
+            shotClock={null}
+          />
+        }
+        away={
+          <TeamScoreSummary
+            fouls={teamFoulsTotal(awayStats)}
+            mark={teamMark(awayName)}
+            name={awayName}
+            onOpen={() => navigateToTeamInNg({ type: 'team', teamId: simulation.awayTeamId, section: 'overview' })}
+            record={teamRecordLabel(world, simulation.awayTeamId)}
+            side="away"
+            timeouts={null}
+          />
+        }
+        controls={
+          <MatchQuickControls
+            canContinue={resultApplied}
+            finished={finished}
+            isPlaying={isPlaying}
+            onContinue={clearMatch}
+            onNextPossession={nextPossession}
+            onSetSpeed={(value) => setSpeed(value as (typeof PLAYBACK_SPEEDS)[number])}
+            onSubs={openSubs}
+            onSkipEnd={skipToEnd}
+            onSkipPeriod={skipToEndOfPeriod}
+            onTimeout={() => {
+              pause()
+            }}
+            onTogglePlay={isPlaying ? pause : resume}
+            speed={speed}
+            speeds={[1, 2, 4]}
+          />
+        }
+        meta={
+          <div className="me-meta">
+            <div className="me-meta__season">
+              <strong>{seasonLabel(world)}</strong>
+              <em>{game === undefined ? 'Jornada' : matchdayLabel(world, game.competitionId)}</em>
+              <span>{String(world.currentDate)}</span>
             </div>
-          </section>
-          {panel === 'coaching' ? (
-            <CoachingDrawer
-              draft={draft}
-              onApply={(plan) => {
-                replaceSimulation(applyLiveTactics(coachingTeamId, plan), false)
-                setCoachingPlan(plan)
-                setPanel('none')
-              }}
-              onCancel={() => setPanel('none')}
-              onChange={setDraft}
-              players={coachingPlayers}
-            />
-          ) : null}
-          {panel === 'substitutions' ? (
-            <div className="ng-match__drawer ng-holo-panel">
-              <ManualSubstitutionsPanel
-                activeLineup={coachingActiveLineup}
-                canApply={segment === null}
-                fatigueByPlayerId={fatigueByPlayerId}
-                onApply={(substitutions) => {
-                  replaceSimulation(applyManualSubstitutions(coachingTeamId, substitutions), false)
-                  setPanel('none')
-                }}
-                onCancel={() => setPanel('none')}
-                playerStats={[...homeStats, ...awayStats]}
-                squadPlayers={coachingPlayers}
-              />
+            <div className="me-meta__live">
+              <em>Eventos en vivo</em>
+              <strong>{liveEventCount} nuevos</strong>
+              <span className="me-meta__dots" aria-hidden>
+                <i />
+                <i />
+              </span>
             </div>
-          ) : null}
-        </aside>
-      </div>
-
-      <div className="ng-match__box ng-holo-panel">
-        <BoxScore
-          activePlayerIds={activeLineups.home}
-          fatigueByPlayerId={fatigueByPlayerId}
-          stats={homeStats}
-          title={homeName}
-          world={world}
-        />
-        <BoxScore
-          activePlayerIds={activeLineups.away}
-          fatigueByPlayerId={fatigueByPlayerId}
-          stats={awayStats}
-          title={awayName}
-          world={world}
-        />
-      </div>
-
-      <footer className="ng-match__controls ng-holo-panel">
-        {finished ? (
-          <>
-            <strong>
-              FINAL · {simulation.finalScore.home} – {simulation.finalScore.away}
-            </strong>
-            <button className="ng-btn ng-btn--primary" disabled={!resultApplied} onClick={clearMatch} type="button">
-              Continuar
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              aria-label={isPlaying ? 'Pausar partido' : 'Reanudar partido'}
-              className="ng-btn ng-btn--ghost"
-              disabled={panel !== 'none'}
-              onClick={isPlaying ? pause : resume}
-              type="button"
-            >
-              {isPlaying ? 'Pausa' : 'Reanudar'}
-            </button>
-            <button className="ng-btn ng-btn--ghost" disabled={segment !== null} onClick={() => openPanel('coaching')} type="button">
-              Coaching
-            </button>
-            <button className="ng-btn ng-btn--ghost" disabled={segment !== null} onClick={() => openPanel('substitutions')} type="button">
-              Cambios
-            </button>
-            <div className="ng-match__speeds">
-              {PLAYBACK_SPEEDS.map((value) => (
-                <button
-                  aria-pressed={speed === value}
-                  className={`ng-match__speed${speed === value ? ' is-active' : ''}`}
-                  key={value}
-                  onClick={() => setSpeed(value)}
-                  type="button"
-                >
-                  x{value}
-                </button>
-              ))}
-            </div>
-            <button className="ng-btn ng-btn--ghost" disabled={panel !== 'none'} onClick={simulateQuarter} type="button">
-              Saltar cuarto
-            </button>
-            <button
-              className="ng-btn ng-btn--primary"
-              disabled={panel !== 'none'}
-              onClick={() => {
-                setSegment(null)
-                replaceSimulation(skipLiveMatch(), false)
-              }}
-              type="button"
-            >
-              Saltar al final
-            </button>
-          </>
-        )}
-      </footer>
-    </section>
-  )
-}
-
-function CoachingDrawer({
-  draft,
-  onApply,
-  onCancel,
-  onChange,
-  players,
-}: {
-  readonly draft: MatchTacticalPlan
-  readonly onApply: (plan: MatchTacticalPlan) => void
-  readonly onCancel: () => void
-  readonly onChange: (plan: MatchTacticalPlan) => void
-  readonly players: readonly Player[]
-}) {
-  return (
-    <section className="ng-match__drawer ng-holo-panel">
-      <p className="ng-canon__eyebrow">Coaching en vivo</p>
-      <label>
-        Ritmo
-        <LevelSelect onChange={(pace) => onChange({ ...draft, pace })} value={draft.pace} />
-      </label>
-      <label>
-        Aro
-        <LevelSelect
-          onChange={(rim) => onChange({ ...draft, shotProfile: { ...draft.shotProfile, rim } })}
-          value={draft.shotProfile.rim}
-        />
-      </label>
-      <label>
-        Media
-        <LevelSelect
-          onChange={(midRange) => onChange({ ...draft, shotProfile: { ...draft.shotProfile, midRange } })}
-          value={draft.shotProfile.midRange}
-        />
-      </label>
-      <label>
-        Triple
-        <LevelSelect
-          onChange={(threePoint) => onChange({ ...draft, shotProfile: { ...draft.shotProfile, threePoint } })}
-          value={draft.shotProfile.threePoint}
-        />
-      </label>
-      <label>
-        Defensa
-        <select
-          onChange={(event) => {
-            const [interior, perimeter] = event.target.value.split('/').map(Number) as [TacticalLevel, TacticalLevel]
-            onChange({ ...draft, defense: { interior, perimeter } })
-          }}
-          value={`${draft.defense.interior}/${draft.defense.perimeter}`}
-        >
-          <option value="0/0">Equilibrada</option>
-          <option value="2/-1">Proteger pintura</option>
-          <option value="-1/2">Presión perimetral</option>
-        </select>
-      </label>
-      <label>
-        Jugador destacado
-        <select
-          onChange={(event) =>
-            onChange({
-              ...draft,
-              ...(event.target.value === '' ? {} : { featuredPlayerId: event.target.value as Player['id'] }),
-            })
-          }
-          value={draft.featuredPlayerId ?? ''}
-        >
-          <option value="">Ninguno</option>
-          {players.map((player) => (
-            <option key={player.id} value={player.id}>
-              {player.firstName} {player.lastName} · {player.basketball.primaryPosition}
-            </option>
-          ))}
-        </select>
-      </label>
-      <div className="ng-canon__actions">
-        <button className="ng-btn ng-btn--primary" onClick={() => onApply(draft)} type="button">
-          Aplicar
-        </button>
-        <button className="ng-btn ng-btn--ghost" onClick={onCancel} type="button">
-          Cancelar
-        </button>
-      </div>
-    </section>
-  )
-}
-
-function LevelSelect({ value, onChange }: { readonly value: TacticalLevel; readonly onChange: (value: TacticalLevel) => void }) {
-  return (
-    <select onChange={(event) => onChange(Number(event.target.value) as TacticalLevel)} value={value}>
-      {[-2, -1, 0, 1, 2].map((level) => (
-        <option key={level} value={level}>
-          {level > 0 ? `+${level}` : level}
-        </option>
-      ))}
-    </select>
-  )
-}
-
-function BoxScore({
-  title,
-  stats,
-  world,
-  fatigueByPlayerId,
-  activePlayerIds,
-}: {
-  readonly title: string
-  readonly stats: readonly PlayerMatchStats[]
-  readonly world: import('@/domain/world').GameWorld
-  readonly fatigueByPlayerId: Readonly<Record<string, number>>
-  readonly activePlayerIds: readonly string[]
-}) {
-  const totals = calculateTeamMatchStats(
-    stats,
-    stats.map((stat) => stat.playerId),
-  )
-  const ordered = [...stats].sort((left, right) => rankOnCourt(activePlayerIds, left.playerId) - rankOnCourt(activePlayerIds, right.playerId))
-  const rows = [
-    ...ordered.map((stat) => {
-      const condition = Math.round(100 - Math.min(100, Math.max(0, fatigueByPlayerId[stat.playerId] ?? 0)))
-      return {
-        id: stat.playerId,
-        isTotal: false,
-        lastName: getPlayer(world, stat.playerId).lastName,
-        minutes: formatMinutes(stat.secondsPlayed),
-        secondsPlayed: stat.secondsPlayed,
-        conditionLabel: `${condition}%`,
-        condition,
-        points: stat.points,
-        rebounds: stat.rebounds,
-        assists: stat.assists,
-        plusMinus: stat.plusMinus,
-        plusMinusLabel: stat.plusMinus > 0 ? `+${stat.plusMinus}` : String(stat.plusMinus),
-      }
-    }),
-    {
-      id: '__total__',
-      isTotal: true,
-      lastName: 'TOTAL',
-      minutes: '',
-      secondsPlayed: -1,
-      conditionLabel: '',
-      condition: -1,
-      points: totals.points,
-      rebounds: totals.rebounds,
-      assists: totals.assists,
-      plusMinus: Number.NEGATIVE_INFINITY,
-      plusMinusLabel: '',
-    },
-  ]
-  return (
-    <section>
-      <p className="ng-canon__eyebrow">{title}</p>
-      <NgPrecisionTable
-        className="ng-canon__table"
-        columns={ngTableColumns(rows, [
-          ngCol<(typeof rows)[number]>(
-            'player',
-            'Jugador',
-            (row) =>
-              row.isTotal ? (
-                row.lastName
-              ) : (
-                <button className="ng-canon__link" onClick={() => navigateToPlayer(row.id as PlayerId)} type="button">
-                  {row.lastName}
-                </button>
-              ),
-            { value: (row) => row.lastName },
-          ),
-          ngCol<(typeof rows)[number]>('minutes', 'MIN', (row) => row.minutes, {
-            numeric: true,
-            value: (row) => row.secondsPlayed,
-          }),
-          ngCol<(typeof rows)[number]>('condition', 'CON', (row) => row.conditionLabel, {
-            numeric: true,
-            value: (row) => row.condition,
-          }),
-          ngCol<(typeof rows)[number]>('points', 'PTS', (row) => row.points, {
-            numeric: true,
-            value: (row) => row.points,
-          }),
-          ngCol<(typeof rows)[number]>('rebounds', 'REB', (row) => row.rebounds, {
-            numeric: true,
-            value: (row) => row.rebounds,
-          }),
-          ngCol<(typeof rows)[number]>('assists', 'AST', (row) => row.assists, {
-            numeric: true,
-            value: (row) => row.assists,
-          }),
-          ngCol<(typeof rows)[number]>('plusMinus', '+/-', (row) => row.plusMinusLabel, {
-            numeric: true,
-            value: (row) => row.plusMinus,
-          }),
-        ])}
-        gridId="ng-match-box-score"
-        rows={rows}
-        selectedIds={activePlayerIds}
+          </div>
+        }
       />
+
+      <div className="me-main">
+        <div className="me-left">
+          <div className="me-live-view">
+            <LiveCourtStage
+              attackingTeamId={segment?.attackingTeamId ?? simulation.homeTeamId}
+              awayName={awayName}
+              awayTeamId={simulation.awayTeamId}
+              courtStyle={courtStyle}
+              detail={visualDetailForSpeed(speed)}
+              events={segment?.events ?? []}
+              gameId={simulation.gameId}
+              homeName={homeName}
+              homeTeamId={simulation.homeTeamId}
+              isPlaying={isPlaying}
+              lineups={segment?.startLineups ?? activeLineups}
+              onPlayerSelect={navigateToPlayer}
+              period={segment?.period ?? period}
+              playbackSpeed={speed}
+              progress={presentationProgress}
+              world={world}
+            />
+          </div>
+
+          <div className="me-boxscores">
+            <TeamBoxScore
+              activePlayerIds={activeLineups.home}
+              collapsed={boxScoresCollapsed}
+              onToggleCollapsed={() => setBoxScoresCollapsed((value) => !value)}
+              onOpenTeam={() => navigateToTeamInNg({ type: 'team', teamId: simulation.homeTeamId, section: 'overview' })}
+              score={homeScore}
+              side="local"
+              stats={homeStats}
+              title={homeName}
+              world={world}
+            />
+            <TeamBoxScore
+              activePlayerIds={activeLineups.away}
+              collapsed={boxScoresCollapsed}
+              onToggleCollapsed={() => setBoxScoresCollapsed((value) => !value)}
+              onOpenTeam={() => navigateToTeamInNg({ type: 'team', teamId: simulation.awayTeamId, section: 'overview' })}
+              score={awayScore}
+              side="visitante"
+              stats={awayStats}
+              title={awayName}
+              world={world}
+            />
+          </div>
+        </div>
+
+        <TacticalPanel
+          activeLineup={coachingActiveLineup}
+          allStats={[...homeStats, ...awayStats]}
+          bench={benchStats}
+          canApplySubs={segment === null}
+          draft={draft}
+          energyPercent={energyPercent}
+          fatigueByPlayerId={fatigueByPlayerId}
+          onApplySubs={(substitutions) => {
+            replaceSimulation(applyManualSubstitutions(coachingTeamId, substitutions), false)
+            setTacticalTab('general')
+          }}
+          onApplyTactics={(plan: MatchTacticalPlan) => {
+            replaceSimulation(applyLiveTactics(coachingTeamId, plan), false)
+            setCoachingPlan(plan)
+            setTacticalTab('general')
+          }}
+          onDraftChange={setDraft}
+          onStageModeChange={setStageMode}
+          onTabChange={(tab) => {
+            setStageMode('tracking')
+            if (tab === 'jugadores' || tab === 'ataque' || tab === 'defensa') {
+              pause()
+              setDraft(coachingPlan)
+            }
+            setTacticalTab(tab)
+          }}
+          onCourt={onCourtStats}
+          players={coachingPlayers}
+          stageMode={stageMode}
+          tab={tacticalTab}
+          teamName={(team ?? world.teams[coachingTeamId]!).name}
+          events={revealedEvents}
+          world={world}
+        />
+      </div>
     </section>
   )
-}
-
-function rankOnCourt(activePlayerIds: readonly string[], playerId: string): number {
-  const index = activePlayerIds.indexOf(playerId)
-  return index === -1 ? 99 : index
-}
-
-function formatMinutes(secondsPlayed: number): string {
-  return `${Math.floor(secondsPlayed / 60).toString().padStart(2, '0')}:${(secondsPlayed % 60).toString().padStart(2, '0')}`
-}
-
-function eventTone(event: MatchEvent): string {
-  if (event.type === 'shotMade' || event.type === 'freeThrowMade') return 'made'
-  if (event.type === 'shotMissed' || event.type === 'freeThrowMissed') return 'missed'
-  if (event.type === 'turnover') return 'turnover'
-  if (event.type === 'rebound') return 'rebound'
-  if (event.type === 'foul') return 'foul'
-  return 'period'
 }

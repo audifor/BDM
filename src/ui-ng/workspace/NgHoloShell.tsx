@@ -27,9 +27,11 @@ export function NgHoloShell({
   empty = false,
   emptyTitle,
   emptyMessage,
+  hideHeader = false,
   tabs,
   activeTabId,
   onTabSelect,
+  className,
   children,
 }: {
   readonly region: string
@@ -40,9 +42,11 @@ export function NgHoloShell({
   readonly empty?: boolean
   readonly emptyTitle?: string
   readonly emptyMessage?: string
+  readonly hideHeader?: boolean
   readonly tabs?: readonly { readonly id: string; readonly label: string }[]
   readonly activeTabId?: string
   readonly onTabSelect?: (id: string) => void
+  readonly className?: string
   readonly children?: ReactNode
 }) {
   const teamStyle = useMemo(() => {
@@ -55,9 +59,11 @@ export function NgHoloShell({
     } as CSSProperties
   }, [teamId])
 
+  const shellClassName = ['ng-canon', className, empty ? 'ng-canon--empty' : undefined].filter(Boolean).join(' ')
+
   if (empty) {
     return (
-      <div className="ng-canon ng-canon--empty" data-ng-region={region} style={teamStyle}>
+      <div className={shellClassName} data-ng-region={region} style={teamStyle}>
         <section className="ng-canon__empty-state">
           <h1 className="ng-canon__empty-title">{emptyTitle ?? appLabel}</h1>
           <p className="ng-canon__empty-message">{emptyMessage ?? 'No team assigned to the user coach.'}</p>
@@ -77,21 +83,23 @@ export function NgHoloShell({
         }))
 
   return (
-    <div className="ng-canon" data-ng-region={region} style={teamStyle}>
+    <div className={shellClassName} data-ng-region={region} style={teamStyle}>
       <ApplicationWorkspace
         header={
-          <header className="ng-canon-header">
-            <div className="ng-canon-header__main">
-              <span className="ng-canon-header__app">{appLabel}</span>
-              {title === undefined ? null : (
-                <>
-                  <span className="ng-canon-header__sep" aria-hidden />
-                  <span className="ng-canon-header__team">{title}</span>
-                </>
-              )}
-              {meta === undefined ? null : <span className="ng-canon-header__meta">{meta}</span>}
-            </div>
-          </header>
+          hideHeader ? undefined : (
+            <header className="ng-canon-header">
+              <div className="ng-canon-header__main">
+                <span className="ng-canon-header__app">{appLabel}</span>
+                {title === undefined ? null : (
+                  <>
+                    <span className="ng-canon-header__sep" aria-hidden />
+                    <span className="ng-canon-header__team">{title}</span>
+                  </>
+                )}
+                {meta === undefined ? null : <span className="ng-canon-header__meta">{meta}</span>}
+              </div>
+            </header>
+          )
         }
         tabs={
           mappedTabs === undefined || onTabSelect === undefined ? undefined : (
