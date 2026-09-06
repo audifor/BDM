@@ -7,7 +7,7 @@ export type GovernanceRequestCategory = typeof GOVERNANCE_REQUEST_CATEGORIES[num
 export type GovernanceRequestEventKind = typeof GOVERNANCE_REQUEST_EVENT_KINDS[number]
 export type GovernanceRequestOrigin = { readonly kind: 'MEETING'; readonly meetingId: string; readonly agendaItemId?: string } | { readonly kind: 'STANDALONE' }
 export type GovernanceRequest = { readonly id: string; readonly institutionId: string; readonly issuer: GovernanceInteractionParty; readonly recipient: GovernanceInteractionParty; readonly category: GovernanceRequestCategory; readonly summary: string; readonly dueOn?: GameDate; readonly origin: GovernanceRequestOrigin }
-export type GovernanceRequestFulfillmentEvidence = { readonly kind: 'GOVERNANCE_DECISION'; readonly decisionId: string }
+export type GovernanceRequestFulfillmentEvidence = { readonly kind: 'GOVERNANCE_DECISION'; readonly decisionId: string } | { readonly kind: 'GOVERNANCE_COMMITMENT'; readonly commitmentId: string }
 export type GovernanceRequestEvent = { readonly id: string; readonly requestId: string; readonly kind: Exclude<GovernanceRequestEventKind, 'FULFILLED'>; readonly effectiveOn: GameDate; readonly actor: GovernanceInteractionParty } | { readonly id: string; readonly requestId: string; readonly kind: 'FULFILLED'; readonly effectiveOn: GameDate; readonly actor: GovernanceInteractionParty; readonly evidence?: GovernanceRequestFulfillmentEvidence }
 
 const nonempty = (value: string) => value.trim() !== ''
@@ -19,7 +19,7 @@ export function createGovernanceRequest(value: GovernanceRequest): GovernanceReq
   return { ...value, ...(value.dueOn === undefined ? {} : { dueOn: parseGameDate(value.dueOn) }) }
 }
 export function createGovernanceRequestEvent(value: GovernanceRequestEvent): GovernanceRequestEvent {
-  if (!nonempty(value.id) || !nonempty(value.requestId) || !GOVERNANCE_REQUEST_EVENT_KINDS.includes(value.kind) || !validParty(value.actor) || (value.kind === 'FULFILLED' && value.evidence !== undefined && (value.evidence.kind !== 'GOVERNANCE_DECISION' || !nonempty(value.evidence.decisionId)))) throw new RangeError('Invalid governance request event')
+  if (!nonempty(value.id) || !nonempty(value.requestId) || !GOVERNANCE_REQUEST_EVENT_KINDS.includes(value.kind) || !validParty(value.actor) || (value.kind === 'FULFILLED' && value.evidence !== undefined && (value.evidence.kind === 'GOVERNANCE_DECISION' ? !nonempty(value.evidence.decisionId) : value.evidence.kind !== 'GOVERNANCE_COMMITMENT' || !nonempty(value.evidence.commitmentId)))) throw new RangeError('Invalid governance request event')
   return { ...value, effectiveOn: parseGameDate(value.effectiveOn) }
 }
 export const sortGovernanceRequestEvents = (events: readonly GovernanceRequestEvent[]) => [...events].sort((a, b) => a.effectiveOn.localeCompare(b.effectiveOn) || a.id.localeCompare(b.id))
