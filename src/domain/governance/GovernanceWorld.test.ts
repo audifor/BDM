@@ -281,6 +281,25 @@ describe("Governance world integration", () => {
   });
 });
 
+describe('BG5C commitment world validation', () => {
+  const setup = () => {
+    const base = createNewGame(), team = Object.values(base.teams)[0]!, institution = { id: 'bg5c-world-institution', universe: 'PROFESSIONAL_CLUB' as const, name: 'BG5C', teamIds: [team.id] }, body = { id: 'bg5c-world-body', institutionId: institution.id, kind: 'BOARD' as const, name: 'Board' }, commitment = { id: 'bg5c-world-commitment', institutionId: institution.id, promisor: { kind: 'BODY' as const, bodyId: body.id }, beneficiary: { kind: 'ACTOR' as const, actor: { kind: 'COACH' as const, id: base.userCoachId } }, summary: 'Plan', dueOn: '2032-01-10' as never, provenance: { kind: 'STANDALONE' as const } }
+    return { base, institution, body, commitment }
+  }
+  it('indexes valid commitments and rejects party, deadline, and actor violations', () => {
+    const { base, institution, body, commitment } = setup(), made = { id: '01', commitmentId: commitment.id, kind: 'MADE' as const, effectiveOn: '2032-01-01' as never, actor: commitment.promisor }
+    expect(updateGameWorld(base, { governanceInstitutions: [institution], governanceBodies: [body], governanceCommitments: [commitment], governanceCommitmentEvents: [made] }).governanceCommitmentsById[commitment.id]).toBeDefined()
+    expect(() => updateGameWorld(base, { governanceInstitutions: [institution], governanceBodies: [body], governanceCommitments: [{ ...commitment, promisor: { kind: 'BODY', bodyId: 'missing' } }], governanceCommitmentEvents: [made] })).toThrow()
+    expect(() => updateGameWorld(base, { governanceInstitutions: [institution], governanceBodies: [body], governanceCommitments: [{ ...commitment, dueOn: '2031-12-31' as never }], governanceCommitmentEvents: [made] })).toThrow()
+    expect(() => updateGameWorld(base, { governanceInstitutions: [institution], governanceBodies: [body], governanceCommitments: [commitment], governanceCommitmentEvents: [{ ...made, actor: commitment.beneficiary }] })).toThrow()
+  })
+  it('enforces breach and supersession references including cycles', () => {
+    const { base, institution, body, commitment } = setup(), successor = { ...commitment, id: 'bg5c-world-successor', summary: 'Next' }, made = (id: string) => ({ id: `made:${id}`, commitmentId: id, kind: 'MADE' as const, effectiveOn: '2032-01-01' as never, actor: commitment.promisor })
+    expect(() => updateGameWorld(base, { governanceInstitutions: [institution], governanceBodies: [body], governanceCommitments: [commitment], governanceCommitmentEvents: [made(commitment.id), { id: 'breach', commitmentId: commitment.id, kind: 'BREACHED' as const, effectiveOn: '2032-01-10' as never }] })).toThrow()
+    expect(() => updateGameWorld(base, { governanceInstitutions: [institution], governanceBodies: [body], governanceCommitments: [commitment, successor], governanceCommitmentEvents: [made(commitment.id), made(successor.id), { id: 'a-b', commitmentId: commitment.id, kind: 'SUPERSEDED' as const, effectiveOn: '2032-01-02' as never, successorCommitmentId: successor.id }, { id: 'b-a', commitmentId: successor.id, kind: 'SUPERSEDED' as const, effectiveOn: '2032-01-03' as never, successorCommitmentId: commitment.id }] })).toThrow()
+  })
+})
+
 function governanceRuntime(save: ReturnType<typeof serializeGameWorldV3>): Record<string, unknown> {
   const runtime = save.payload.staffCareerRuntime as Record<string, unknown>;
   return {

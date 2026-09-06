@@ -27,4 +27,10 @@ describe('Governance requests', () => {
     expect(isGovernanceRequestOverdue(request, issued, '2032-01-06' as never)).toBe(true)
     for (const kind of ['DECLINED', 'WITHDRAWN', 'FULFILLED'] as const) expect(isGovernanceRequestOverdue(request, [event('ISSUED', '01'), event(kind, '02')], '2032-01-06' as never)).toBe(false)
   })
+  it('accepts decision or commitment fulfillment evidence and rejects malformed commitment evidence', () => {
+    expect((createGovernanceRequestEvent({ id: 'decision', requestId: request.id, kind: 'FULFILLED', effectiveOn: '2032-01-02' as never, actor: recipient, evidence: { kind: 'GOVERNANCE_DECISION', decisionId: 'decision' } }) as Extract<import('./GovernanceRequest').GovernanceRequestEvent, { kind: 'FULFILLED' }>).evidence).toEqual({ kind: 'GOVERNANCE_DECISION', decisionId: 'decision' })
+    expect((createGovernanceRequestEvent({ id: 'commitment', requestId: request.id, kind: 'FULFILLED', effectiveOn: '2032-01-02' as never, actor: recipient, evidence: { kind: 'GOVERNANCE_COMMITMENT', commitmentId: 'commitment' } }) as Extract<import('./GovernanceRequest').GovernanceRequestEvent, { kind: 'FULFILLED' }>).evidence).toEqual({ kind: 'GOVERNANCE_COMMITMENT', commitmentId: 'commitment' })
+    expect(() => createGovernanceRequestEvent({ id: 'bad', requestId: request.id, kind: 'FULFILLED', effectiveOn: '2032-01-02' as never, actor: recipient, evidence: { kind: 'GOVERNANCE_COMMITMENT', commitmentId: ' ' } })).toThrow()
+    expect(() => createGovernanceRequestEvent({ id: 'unknown', requestId: request.id, kind: 'FULFILLED', effectiveOn: '2032-01-02' as never, actor: recipient, evidence: { kind: 'UNKNOWN', commitmentId: 'x' } } as never)).toThrow()
+  })
 })
