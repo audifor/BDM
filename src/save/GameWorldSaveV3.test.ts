@@ -35,6 +35,28 @@ function worldWithHiredStaff() {
 }
 
 describe('GameWorldSaveV3', () => {
+  it('round-trips BG5A meetings, defaults legacy V3 fields, and rejects malformed present data', () => {
+    const base = createNewGame(), teamId = Object.values(base.teams)[0]!.id
+    const institution = createGovernanceInstitution({ id: 'bg5-institution', universe: 'PROFESSIONAL_CLUB', name: 'BG5 Club', teamIds: [teamId] })
+    const body = createGovernanceBody({ id: 'bg5-board', institutionId: institution.id, kind: 'BOARD', name: 'Board' })
+    const meeting = { id: 'bg5-meeting', institutionId: institution.id, conveningBodyId: body.id, category: 'ORDINARY' as const, title: 'Review', createdOn: '2032-01-01' as never }
+    const world = updateGameWorld(base, { governanceInstitutions: [institution], governanceBodies: [body], governanceMeetings: [meeting], governanceMeetingParticipants: [{ id: 'bg5-participant', meetingId: meeting.id, party: { kind: 'BODY' as const, bodyId: body.id }, role: 'CHAIR' as const, attendance: 'PRESENT' as const }], governanceMeetingAgendaItems: [{ id: 'bg5-agenda', meetingId: meeting.id, sequence: 1, subject: { kind: 'INSTITUTIONAL_TOPIC' as const, topic: 'Budget' } }], governanceMeetingEvents: [{ id: 'bg5-scheduled', meetingId: meeting.id, kind: 'SCHEDULED' as const, effectiveOn: '2032-01-01' as never, scheduledFor: '2032-01-01' as never }, { id: 'bg5-held', meetingId: meeting.id, kind: 'HELD' as const, effectiveOn: '2032-01-02' as never }] })
+    const saved = serializeGameWorldV3(world, savedAt), loaded = deserializeGameWorldV3(saved)
+    expect(loaded.governanceMeetingsById).toEqual(world.governanceMeetingsById); expect(loaded.governanceMeetingParticipantsById).toEqual(world.governanceMeetingParticipantsById); expect(loaded.governanceMeetingAgendaItemsById).toEqual(world.governanceMeetingAgendaItemsById); expect(loaded.governanceMeetingEventsById).toEqual(world.governanceMeetingEventsById)
+    const legacy = structuredClone(saved), runtime = legacy.payload.staffCareerRuntime as Record<string, unknown>
+    delete runtime.governanceMeetings; delete runtime.governanceMeetingParticipants; delete runtime.governanceMeetingAgendaItems; delete runtime.governanceMeetingEvents
+    const legacyLoaded = deserializeGameWorldV3(legacy)
+    expect(legacyLoaded.governanceMeetingsById).toEqual({}); expect(legacyLoaded.governanceMeetingParticipantsById).toEqual({}); expect(legacyLoaded.governanceMeetingAgendaItemsById).toEqual({}); expect(legacyLoaded.governanceMeetingEventsById).toEqual({})
+    const malformed = structuredClone(saved), malformedRuntime = malformed.payload.staffCareerRuntime as Record<string, unknown>
+    malformedRuntime.governanceMeetings = [{ ...meeting, unknown: true }]
+    expect(() => deserializeGameWorldV3(malformed)).toThrow()
+    const malformedParty = structuredClone(saved), partyRuntime = malformedParty.payload.staffCareerRuntime as Record<string, unknown>
+    partyRuntime.governanceMeetingParticipants = [{ id: 'bad', meetingId: meeting.id, party: { kind: 'ACTOR', actor: { kind: 'EXTERNAL', id: 'external' } }, role: 'ATTENDEE', attendance: 'PRESENT' }]
+    expect(() => deserializeGameWorldV3(malformedParty)).toThrow()
+    const malformedEvent = structuredClone(saved), eventRuntime = malformedEvent.payload.staffCareerRuntime as Record<string, unknown>
+    eventRuntime.governanceMeetingEvents = [{ id: 'bad', meetingId: meeting.id, kind: 'HELD', effectiveOn: base.currentDate, scheduledFor: base.currentDate }]
+    expect(() => deserializeGameWorldV3(malformedEvent)).toThrow()
+  })
   it('round-trips generic BG4 decision evidence and loads a V3 payload without BG4 fields', () => {
     const base = createNewGame(), teamId = Object.values(base.teams)[0]!.id, institution = createGovernanceInstitution({ id: 'bg4-institution', universe: 'PROFESSIONAL_CLUB', name: 'BG4 Club', teamIds: [teamId] }), owner = createGovernanceBody({ id: 'bg4-owner', institutionId: institution.id, kind: 'OWNERSHIP', name: 'Owner' }), board = createGovernanceBody({ id: 'bg4-board', institutionId: institution.id, kind: 'BOARD', name: 'Board' })
     const period = { id: 'bg4-period', institutionId: institution.id, universe: institution.universe, manager: { kind: 'COACH' as const, id: base.userCoachId }, startedOn: base.currentDate }, evaluation = { id: 'bg4-evaluation', evaluationPeriodId: period.id, evaluatorBodyId: board.id, evaluatedOn: base.currentDate, objectiveEvaluations: [], factors: [{ id: 'bg4-factor', kind: 'INSTITUTIONAL_PATIENCE' as const, status: 'PRESENT' as const, weight: 1, direction: 'POSITIVE' as const, normalizedValue: .8, source: { kind: 'GOVERNANCE_BODY' as const, bodyId: board.id } }] }, grant = { id: 'bg4-grant', fromBodyId: owner.id, toBodyId: board.id, decision: 'COACH_FIRING' as const, grantedOn: base.currentDate }, decision = { id: 'bg4-decision', institutionId: institution.id, decisionType: 'COACH_FIRING' as const, proposedByBodyId: board.id, proposedOn: base.currentDate, subject: { kind: 'COACH' as const, coachId: base.userCoachId }, source: { kind: 'MANAGER_EVALUATION' as const, evaluationId: evaluation.id } }, participation = { id: 'bg4-propose', authorityGrantId: grant.id, bodyId: board.id, edgeParticipant: 'DELEGATE' as const, right: 'PROPOSE' as const }, event = { id: 'bg4-proposed', decisionId: decision.id, kind: 'PROPOSED' as const, bodyId: board.id, effectiveOn: base.currentDate, authorityGrantIds: [grant.id] }
