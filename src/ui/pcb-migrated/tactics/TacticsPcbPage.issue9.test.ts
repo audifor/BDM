@@ -334,7 +334,7 @@ describe('TacticsPcbPage / Issue #9 acceptance', () => {
     expect(resolveGameClockRules(world, nextGame.competitionId).periodCount).toBe(4)
   })
 
-  it('save a Designer play persists it into GameWorld.savedPlaysById and it is immediately present in Jugadas', () => {
+  it('save a Designer play persists it into GameWorld.savedPlaysById and is immediately present in Designer', () => {
     const world = createNewGame()
     const onSaveDesignerPlay = vi.fn((play) => { savedWorld = saveDesignerPlay(savedWorld, play) })
     let savedWorld = world
@@ -345,7 +345,8 @@ describe('TacticsPcbPage / Issue #9 acceptance', () => {
     expect(onSaveDesignerPlay).toHaveBeenCalledTimes(1)
 
     rerender(createElement(TacticsPcbPage, { world: savedWorld, onSaveDesignerPlay }))
-    fireEvent.click(screen.getByRole('button', { name: 'Jugadas' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Diseñador' }))
+    fireEvent.click(screen.getByRole('button', { name: /Cargar/ }))
     expect(screen.getByText('Nueva Jugada')).toBeInTheDocument()
     expect(Object.keys(savedWorld.savedPlaysById)).toHaveLength(1)
   })
