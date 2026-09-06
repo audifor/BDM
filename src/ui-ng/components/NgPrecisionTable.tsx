@@ -20,6 +20,7 @@ export type NgPrecisionTableProps<Row extends { readonly id: string }> = {
   readonly onSelectionChange?: (ids: readonly string[]) => void
   readonly entityForRow?: (row: Row) => EntityRef
   readonly entitySurface?: 'roster' | 'training' | 'tactics' | 'matchups'
+  readonly rowClassName?: (row: Row) => string | undefined
 }
 
 export function ngCol<Row extends { readonly id: string }>(
@@ -63,6 +64,7 @@ export function NgPrecisionTable<Row extends { readonly id: string }>({
   onSelectionChange,
   entityForRow,
   entitySurface,
+  rowClassName,
 }: NgPrecisionTableProps<Row>) {
   return (
     <BDMDataGrid
@@ -78,6 +80,7 @@ export function NgPrecisionTable<Row extends { readonly id: string }>({
       onSearchQueryChange={onSearchQueryChange}
       onSelectionChange={onSelectionChange}
       presentation="default"
+      rowClassName={rowClassName}
       rows={rows}
       searchQuery={searchQuery}
       selectedId={selectedId}

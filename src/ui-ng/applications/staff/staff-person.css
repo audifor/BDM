@@ -112,7 +112,7 @@
 .staff-person__panel-head span {
   color: var(--ng-text-muted);
   font-size: var(--ng-font-size-meta);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }

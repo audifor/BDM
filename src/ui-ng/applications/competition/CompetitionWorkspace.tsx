@@ -20,6 +20,8 @@ import {
   type CompetitionGameRow,
   type CompetitionTabId,
 } from '@/ui-ng/applications/competition/buildCompetitionWorkspaceModel'
+import { standingsZoneClassName, standingsZoneForPosition } from '@/ui-ng/applications/competition/standingsZones'
+import { StandingsZoneLegend } from '@/ui-ng/applications/competition/StandingsZoneLegend'
 import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
@@ -285,43 +287,49 @@ export function CompetitionWorkspace() {
       ) : null}
 
       {tab === 'standings' ? (
-        <div className="ng-canon__panel ng-holo-panel">
-          <NgPrecisionTable
-            className="ng-canon__table"
-            columns={ngTableColumns(model.standings.map((row) => ({
-              ...row,
-              id: row.teamId,
-              teamName: world.teams[row.teamId]?.name ?? row.teamId,
-            })), [
-              ngCol('position', '#', (row) => row.position, { defaultWidth: 44, numeric: true, value: (row) => row.position }),
-              ngCol('team', 'Equipo', (row) => <TeamLink name={row.teamName} teamId={row.teamId} />, {
-                value: (row) => row.teamName,
-              }),
-              ngCol('played', 'PJ', (row) => row.played, { defaultWidth: 52, numeric: true, value: (row) => row.played }),
-              ngCol('wins', 'W', (row) => row.wins, { defaultWidth: 48, numeric: true, value: (row) => row.wins }),
-              ngCol('losses', 'L', (row) => row.losses, { defaultWidth: 48, numeric: true, value: (row) => row.losses }),
-              ngCol('pointsFor', 'PF', (row) => row.pointsFor, { defaultWidth: 56, numeric: true, value: (row) => row.pointsFor }),
-              ngCol('pointsAgainst', 'PA', (row) => row.pointsAgainst, { defaultWidth: 56, numeric: true, value: (row) => row.pointsAgainst }),
-              ngCol('diff', 'Diff', (row) => (row.pointDifference > 0 ? `+${row.pointDifference}` : row.pointDifference), {
-                defaultWidth: 56,
-                numeric: true,
-                value: (row) => row.pointDifference,
-              }),
-              ngCol('pct', 'Pct', (row) => standingsPct(row), {
-                defaultWidth: 56,
-                numeric: true,
-                sortValue: (row) => (row.played === 0 ? 0 : row.wins / row.played),
-                value: (row) => standingsPct(row),
-              }),
-            ])}
-            gridId="ng-competition-standings"
-            rows={model.standings.map((row) => ({
-              ...row,
-              id: row.teamId,
-              teamName: world.teams[row.teamId]?.name ?? row.teamId,
-            }))}
-            selectedId={team?.id}
-          />
+        <div className="competition-standings">
+          <div className="ng-canon__panel ng-holo-panel">
+            <NgPrecisionTable
+              className="ng-canon__table"
+              columns={ngTableColumns(model.standings.map((row) => ({
+                ...row,
+                id: row.teamId,
+                teamName: world.teams[row.teamId]?.name ?? row.teamId,
+              })), [
+                ngCol('position', '#', (row) => row.position, { defaultWidth: 44, numeric: true, value: (row) => row.position }),
+                ngCol('team', 'Equipo', (row) => <TeamLink name={row.teamName} teamId={row.teamId} />, {
+                  value: (row) => row.teamName,
+                }),
+                ngCol('played', 'PJ', (row) => row.played, { defaultWidth: 52, numeric: true, value: (row) => row.played }),
+                ngCol('wins', 'W', (row) => row.wins, { defaultWidth: 48, numeric: true, value: (row) => row.wins }),
+                ngCol('losses', 'L', (row) => row.losses, { defaultWidth: 48, numeric: true, value: (row) => row.losses }),
+                ngCol('pointsFor', 'PF', (row) => row.pointsFor, { defaultWidth: 56, numeric: true, value: (row) => row.pointsFor }),
+                ngCol('pointsAgainst', 'PA', (row) => row.pointsAgainst, { defaultWidth: 56, numeric: true, value: (row) => row.pointsAgainst }),
+                ngCol('diff', 'Diff', (row) => (row.pointDifference > 0 ? `+${row.pointDifference}` : row.pointDifference), {
+                  defaultWidth: 56,
+                  numeric: true,
+                  value: (row) => row.pointDifference,
+                }),
+                ngCol('pct', 'Pct', (row) => standingsPct(row), {
+                  defaultWidth: 56,
+                  numeric: true,
+                  sortValue: (row) => (row.played === 0 ? 0 : row.wins / row.played),
+                  value: (row) => standingsPct(row),
+                }),
+              ])}
+              gridId="ng-competition-standings"
+              rowClassName={(row) =>
+                standingsZoneClassName(standingsZoneForPosition(row.position, model.standingsZoneBands))
+              }
+              rows={model.standings.map((row) => ({
+                ...row,
+                id: row.teamId,
+                teamName: world.teams[row.teamId]?.name ?? row.teamId,
+              }))}
+              selectedId={team?.id}
+            />
+          </div>
+          <StandingsZoneLegend bands={model.standingsZoneBands} />
         </div>
       ) : null}
 

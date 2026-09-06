@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CT-ARENA · Court & Arena</title>
+    <style>
+      html,
+      body,
+      #root {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #03060c;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      const params = new URLSearchParams(location.search)
+      const capture = params.get('capture')
+      const showCourt = params.get('perimeter') !== '1' && params.get('showCourt') !== '0'
+      if (capture) {
+        const { mountCourtCanonCapture } = await import('/src/ui/match/court/dev/courtVisualPreview.ts')
+        mountCourtCanonCapture(document.getElementById('root'), capture, { showCourt })
+      } else {
+        const { mountCourtVisualPreview } = await import('/src/ui/match/court/dev/courtVisualPreview.ts')
+        mountCourtVisualPreview(document.getElementById('root'))
+      }
+    </script>
+  </body>
+</html>

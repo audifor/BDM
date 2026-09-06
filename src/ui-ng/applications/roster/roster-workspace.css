@@ -1,17 +1,14 @@
 .roster-workspace {
-  --roster-holo-surface: #0a141b;
+  --roster-holo-surface: transparent;
   --roster-holo-border: color-mix(in srgb, var(--ng-cyan) 22%, var(--bdm-border-default));
   --roster-holo-fill:
     linear-gradient(var(--ng-cyan), var(--ng-cyan)),
     linear-gradient(var(--ng-cyan), var(--ng-cyan)),
     linear-gradient(var(--ng-amber), var(--ng-amber)),
-    linear-gradient(var(--ng-amber), var(--ng-amber)),
-    linear-gradient(180deg, rgba(12, 20, 26, 0.92) 0%, rgba(8, 12, 16, 0.96) 100%);
-  --roster-holo-size: 14px 1px, 1px 14px, 14px 1px, 1px 14px, auto;
-  --roster-holo-pos: 8px 0, 0 8px, calc(100% - 8px) 100%, 100% calc(100% - 8px), 0 0;
-  --roster-holo-glow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 10px 28px rgba(0, 0, 0, 0.32);
+    linear-gradient(var(--ng-amber), var(--ng-amber));
+  --roster-holo-size: 14px 1px, 1px 14px, 14px 1px, 1px 14px;
+  --roster-holo-pos: 8px 0, 0 8px, calc(100% - 8px) 100%, 100% calc(100% - 8px);
+  --roster-holo-glow: none;
   position: relative;
   height: 100%;
   min-height: 0;
@@ -84,6 +81,10 @@
   background: transparent;
 }
 
+.roster-workspace .ng-application-workspace__header-slot {
+  padding-inline: var(--ng-workspace-padding);
+}
+
 .roster-workspace-header {
   display: flex;
   align-items: center;
@@ -91,12 +92,10 @@
   gap: var(--ng-spacing-12);
   height: var(--ng-workspace-header-height);
   min-height: var(--ng-workspace-header-height);
-  padding: 0 var(--ng-spacing-16);
+  padding: 0 var(--ng-workspace-padding);
   border-bottom: 1px solid var(--ng-border-subtle);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%),
-    color-mix(in srgb, var(--bdm-surface-1) 78%, transparent);
-  box-shadow: var(--ng-shadow-inset-highlight);
+  background: transparent;
+  box-shadow: none;
 }
 
 .roster-workspace-header__main {
@@ -108,8 +107,8 @@
 
 .roster-workspace-header__app {
   font-family: var(--ng-font-display);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 15.6px;
+  font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ng-text-muted);
@@ -132,10 +131,10 @@
 .roster-workspace-header__meta {
   font-family: var(--ng-font-display);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: var(--ng-track-chrome);
   text-transform: uppercase;
-  color: var(--ng-text-muted);
+  color: var(--ng-cyan);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -152,37 +151,33 @@
   overflow: hidden;
   border: 1px solid var(--grid-border, rgba(92, 155, 178, 0.36));
   border-radius: var(--grid-radius, 3px);
-  background: var(--grid-bg-frame, #091117);
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.015);
+  background: transparent;
+  box-shadow: none;
 }
 
 .bdm-os-ng .roster-workspace .ng-holo-panel,
 .bdm-os-ng .roster-workspace .canonical-roster--ng.ng-holo-panel,
 .bdm-os-ng .roster-workspace .canonical-roster--ng {
   border-color: var(--roster-holo-border);
-  background-color: var(--roster-holo-surface);
-  background-image: var(--roster-holo-fill);
-  background-repeat: no-repeat;
-  background-size: var(--roster-holo-size);
-  background-position: var(--roster-holo-pos);
-  box-shadow: var(--roster-holo-glow);
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: var(--roster-holo-fill) !important;
+  background-repeat: no-repeat !important;
+  background-size: var(--roster-holo-size) !important;
+  background-position: var(--roster-holo-pos) !important;
+  box-shadow: none !important;
 }
 
 .bdm-os-ng .roster-workspace .canonical-roster__toolbar,
 .bdm-os-ng .roster-workspace .canonical-roster__grid {
-  background-color: var(--roster-holo-surface);
+  background-color: transparent;
   background-image: none;
 }
 
 .bdm-os-ng .roster-workspace .canonical-roster__grid .bdm-data-table.bdm-data-grid,
 .bdm-os-ng .roster-workspace .canonical-roster__grid .ng-precision-grid {
-  background-color: var(--roster-holo-surface) !important;
-  background-image: var(--roster-holo-fill) !important;
-  background-repeat: no-repeat !important;
-  background-size: var(--roster-holo-size) !important;
-  background-position: var(--roster-holo-pos) !important;
+  background-color: transparent !important;
+  background-image: none !important;
   box-shadow: none !important;
 }
 
@@ -192,7 +187,7 @@
 
 .bdm-os-ng .roster-workspace .canonical-roster__grid th {
   min-width: unset !important;
-  background: color-mix(in srgb, var(--roster-holo-surface) 82%, rgba(22, 217, 243, 0.08)) !important;
+  background: transparent !important;
 }
 
 .roster-workspace .canonical-roster--ng::before,
@@ -260,57 +255,218 @@
   color: #7f929c;
   font-family: var(--ng-font-grid);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .roster-workspace .canonical-roster__pos-filter-label {
   color: rgba(230, 183, 77, 0.72);
   font-family: var(--ng-font-grid);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.05em;
+  line-height: 1;
 }
 
 .roster-workspace .canonical-roster__actions {
+  display: flex;
   flex: 1;
+  align-items: center;
   justify-content: flex-end;
   gap: 8px;
   min-width: 0;
 }
 
 .roster-workspace .canonical-roster__view-select {
+  position: relative;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   height: 30px;
-  padding: 0 8px;
+  min-height: 30px;
+  padding: 0 8px 0 10px;
   border: 1px solid rgba(100, 155, 180, 0.28);
   border-radius: 3px;
   background: #091219;
   color: rgba(230, 183, 77, 0.72);
   font-family: var(--ng-font-grid);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+  box-sizing: border-box;
 }
 
-.roster-workspace .canonical-roster__view-select select {
+.roster-workspace .canonical-roster__view-select:focus-within,
+.roster-workspace .canonical-roster__view-select:has(.canonical-roster__view-trigger[aria-expanded='true']) {
+  border-color: rgba(22, 217, 243, 0.7);
+  box-shadow: 0 0 8px rgba(22, 217, 243, 0.12);
+}
+
+.roster-workspace .canonical-roster__view-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   min-width: 148px;
+  max-width: 220px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--grid-text-strong, #e7eef2);
   font-family: var(--ng-font-grid);
   font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.roster-workspace .canonical-roster__view-trigger:hover,
+.roster-workspace .canonical-roster__view-trigger[aria-expanded='true'] {
+  color: var(--grid-cyan-bright, #40e8fc);
+}
+
+.roster-workspace .canonical-roster__view-trigger-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.roster-workspace .canonical-roster__view-trigger-chevron {
+  flex: none;
+  color: inherit;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.roster-workspace .canonical-roster__view-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
+  display: grid;
+  gap: 1px;
+  min-width: 100%;
+  width: max-content;
+  max-width: min(280px, 70vw);
+  max-height: min(320px, 50vh);
+  margin: 0;
+  padding: 4px;
+  overflow: auto;
+  list-style: none;
+  border: 1px solid rgba(100, 155, 180, 0.36);
+  border-radius: 3px;
+  background-color: color-mix(in srgb, #0b141c 94%, transparent);
+  background-image:
+    linear-gradient(var(--ng-cyan), var(--ng-cyan)),
+    linear-gradient(var(--ng-cyan), var(--ng-cyan)),
+    linear-gradient(var(--ng-amber), var(--ng-amber)),
+    linear-gradient(var(--ng-amber), var(--ng-amber));
+  background-repeat: no-repeat;
+  background-size: 10px 1px, 1px 10px, 10px 1px, 1px 10px;
+  background-position: 6px 0, 0 6px, calc(100% - 6px) 100%, 100% calc(100% - 6px);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+}
+
+.roster-workspace .canonical-roster__view-menu button {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ng-text-secondary, #c9d5db);
+  font-family: var(--ng-font-grid);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-align: left;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.roster-workspace .canonical-roster__view-menu button:hover {
+  background: color-mix(in srgb, var(--ng-cyan) 12%, transparent);
+  color: var(--ng-text-primary, #e7eef2);
+}
+
+.roster-workspace .canonical-roster__view-menu button.is-active {
+  background: color-mix(in srgb, var(--ng-cyan) 16%, transparent);
+  color: var(--grid-cyan-bright, #40e8fc);
+}
+
+.roster-workspace .canonical-roster__view-check {
+  color: var(--ng-positive, #29cf85);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.bdm-os-ng .roster-workspace .canonical-roster__view-select select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  display: block;
+  min-width: 148px;
+  width: auto;
+  height: 28px;
+  margin: 0;
+  padding: 0 22px 0 0;
+  border: 0;
+  outline: 0;
+  border-radius: 0;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%2371838d' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 2px center;
+  background-size: 10px 6px;
+  color: var(--grid-text-strong, #e7eef2);
+  font-family: var(--ng-font-grid);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 28px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.bdm-os-ng .roster-workspace .canonical-roster__view-select select:hover,
+.bdm-os-ng .roster-workspace .canonical-roster__view-select select:focus {
+  color: var(--grid-cyan-bright, #40e8fc);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%2340e8fc' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+}
+
+.bdm-os-ng .roster-workspace .canonical-roster__view-select select option {
+  background: #0b141c;
+  color: var(--grid-text-strong, #e7eef2);
 }
 
 .roster-workspace .canonical-roster__pos-filter {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
+  height: 30px;
+  min-height: 30px;
 }
 
-.roster-workspace .canonical-roster__pos-filter button {
-  min-width: 50px;
+.bdm-os-ng .roster-workspace .canonical-roster__actions .canonical-roster__pos-filter button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 40px;
   height: 30px;
+  min-height: 30px;
+  margin: 0;
   padding: 0 8px;
   border: 1px solid rgba(100, 155, 180, 0.24);
   border-radius: 3px;
@@ -318,15 +474,18 @@
   color: var(--grid-text-muted, #71838d);
   font-family: var(--ng-font-grid);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.04em;
+  line-height: 1;
+  box-sizing: border-box;
+  vertical-align: middle;
 }
 
-.roster-workspace .canonical-roster__pos-filter button:first-child {
-  min-width: 78px;
+.bdm-os-ng .roster-workspace .canonical-roster__actions .canonical-roster__pos-filter button:first-of-type {
+  min-width: 64px;
 }
 
-.roster-workspace .canonical-roster__pos-filter button[aria-pressed='true'] {
+.bdm-os-ng .roster-workspace .canonical-roster__actions .canonical-roster__pos-filter button[aria-pressed='true'] {
   border-color: rgba(22, 217, 243, 0.8);
   background: rgba(22, 217, 243, 0.07);
   box-shadow: 0 0 8px rgba(22, 217, 243, 0.1);
@@ -453,9 +612,10 @@
   background: none;
   color: var(--grid-text-strong, #e7eef2);
   font-family: var(--ng-font-grid);
-  font-size: 12.5px;
-  font-weight: 600;
-  line-height: 16px;
+  font-size: var(--ng-font-size-data);
+  font-weight: var(--ng-font-weight-regular);
+  letter-spacing: 0;
+  line-height: var(--ng-line-dense);
 }
 
 .roster-workspace .canonical-roster__player-link:hover {
@@ -493,7 +653,7 @@
   padding: 0 6px;
   border-radius: 3px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .roster-workspace .canonical-roster__status--ok {
@@ -544,10 +704,12 @@
   padding: 10px 12px;
   border: 1px solid color-mix(in srgb, var(--ng-cyan) 16%, var(--bdm-border-default));
   border-radius: var(--grid-radius, 3px);
-  background: color-mix(in srgb, var(--roster-holo-surface) 88%, #05080b);
+  background: transparent;
+  box-shadow: none;
 }
 
 .roster-workspace .canonical-roster__inspector {
+  position: relative;
   flex: 1 1 36%;
   width: auto;
   min-width: 240px;
@@ -567,7 +729,6 @@
 }
 
 .roster-workspace .canonical-roster__inspector-head {
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -576,13 +737,13 @@
 
 .roster-workspace .canonical-roster__inspector-portrait {
   position: absolute;
-  top: calc(50% + 42px);
+  top: 50%;
   left: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: clamp(100px, 28%, 150px);
-  height: 116px;
+  width: clamp(120px, 30%, 180px);
+  height: 139px;
   overflow: visible;
   transform: translateY(-50%);
   pointer-events: none;
@@ -590,7 +751,7 @@
 
 .roster-workspace .canonical-roster__inspector-portrait img {
   display: block;
-  width: 82px;
+  width: 98px;
   height: 100%;
   object-fit: cover;
   object-position: 50% 12%;
@@ -616,9 +777,10 @@
 
 .roster-inspector-dossier {
   flex: 1 1 auto;
+  align-self: stretch;
   min-width: 0;
   display: flex;
-  align-items: stretch;
+  align-items: flex-start;
   gap: 16px;
   padding: 2px 0 0 12px;
   overflow: hidden;
@@ -634,36 +796,64 @@
 
 .roster-inspector-dossier__zone {
   flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
   min-height: 0;
   overflow: auto;
+  text-align: center;
 }
 
 .roster-inspector-dossier__title {
-  margin: 0 0 8px;
+  margin: 0;
+  flex: 0 0 auto;
+  width: 100%;
   color: var(--grid-text-muted, #71838d);
   font-family: var(--ng-font-grid);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
+  line-height: 1.1;
+  text-align: center;
   text-transform: uppercase;
 }
 
 .roster-inspector-dossier__measures {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
+  width: 100%;
 }
 
 .roster-inspector-dossier__zone .canonical-roster__inspector-measure {
-  align-items: flex-start;
+  width: 100%;
+  align-items: center;
+}
+
+.roster-inspector-dossier__zone .canonical-roster__inspector-measure-reading {
+  justify-content: center;
+  width: 100%;
 }
 
 .roster-inspector-dossier__zone .canonical-roster__inspector-measure-value {
+  display: block;
+  width: 100%;
   font-size: 16px;
-  text-align: left;
+  line-height: 1.1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roster-inspector-dossier__zone .canonical-roster__inspector-measure-label {
+  width: 100%;
+  text-align: center;
 }
 
 .roster-briefing {
@@ -735,7 +925,7 @@
   gap: 8px;
   color: var(--ng-text-muted);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -773,7 +963,7 @@
 .roster-briefing__facts dt {
   color: var(--ng-text-muted);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -805,7 +995,7 @@
   color: var(--grid-text-muted, #71838d);
   font-family: var(--ng-font-grid);
   font-size: 9px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -878,15 +1068,15 @@
 
 .roster-workspace .canonical-roster__staff-comments-title-line {
   color: var(--grid-text-strong, #e7eef2);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .roster-workspace .canonical-roster__inspector-who .canonical-roster__player-link {
   color: var(--ng-text-primary, #e7eef2);
   font-family: var(--ng-font-display, var(--ng-font-grid));
-  font-size: 40px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: var(--ng-text-display);
+  font-weight: var(--ng-font-weight-black);
+  letter-spacing: 0;
   line-height: 1;
 }
 
@@ -950,7 +1140,7 @@
   color: var(--ng-text-muted);
   font-family: var(--ng-font-display, var(--ng-font-grid));
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.04em;
 }
 
@@ -972,7 +1162,8 @@
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--ng-cyan) 16%, var(--bdm-border-default));
   border-radius: var(--grid-radius, 3px);
-  background: color-mix(in srgb, var(--roster-holo-surface) 88%, #05080b);
+  background: transparent;
+  box-shadow: none;
 }
 
 .roster-depth-chart__head {
@@ -990,7 +1181,7 @@
   margin: 0;
   font-family: var(--ng-font-display);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ng-text-muted);
@@ -998,7 +1189,7 @@
 
 .roster-depth-chart__meta {
   font-size: var(--ng-font-size-meta);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ng-text-muted);
@@ -1145,7 +1336,7 @@
   color: var(--ng-text-muted);
   font-family: var(--ng-font-data);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums lining-nums;
 }
 
@@ -1164,9 +1355,8 @@
 
 .roster-depth-chart__row.is-selected .roster-depth-chart__player {
   color: var(--grid-text-strong, #e7eef2);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  font-weight: var(--ng-font-weight-bold);
+  letter-spacing: 0;
 }
 
 .roster-depth-chart__stars {
@@ -1193,10 +1383,10 @@
   box-shadow: none;
   color: var(--grid-text-strong, #e7eef2);
   font-family: var(--ng-font-grid);
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: var(--ng-font-size-data);
+  font-weight: var(--ng-font-weight-regular);
   letter-spacing: 0;
-  line-height: 16px;
+  line-height: var(--ng-line-dense);
   text-align: left;
   text-decoration: none;
   text-transform: none;

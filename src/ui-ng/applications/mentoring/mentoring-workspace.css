@@ -71,10 +71,8 @@
   min-height: var(--ng-workspace-header-height);
   padding: 0 var(--ng-spacing-16);
   border-bottom: 1px solid var(--ng-border-subtle);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%),
-    color-mix(in srgb, var(--bdm-surface-1) 78%, transparent);
-  box-shadow: var(--ng-shadow-inset-highlight);
+  background: transparent;
+  box-shadow: none;
 }
 
 .mentoring-workspace-header__main {
@@ -86,7 +84,7 @@
 
 .mentoring-workspace-header__app {
   font-family: var(--ng-font-display);
-  font-size: 12px;
+  font-size: 15.6px;
   font-weight: 700;
   letter-spacing: var(--ng-track-meta);
   text-transform: uppercase;
@@ -110,10 +108,10 @@
 .mentoring-workspace-header__meta {
   font-family: var(--ng-font-display);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: var(--ng-track-chrome);
   text-transform: uppercase;
-  color: var(--ng-text-muted);
+  color: var(--ng-cyan);
 }
 
 .mentoring-workspace .pcb-plantilla--ng {
@@ -126,9 +124,10 @@
 .mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentor-create {
   border-color: var(--ng-border-standard);
   border-radius: var(--ng-radius-panel);
-  background-color: color-mix(in srgb, var(--bdm-surface-1) 72%, transparent);
-  background-image: none;
-  box-shadow: var(--bdm-panel-shadow);
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
   color: var(--ng-text-primary);
   font-family: var(--ng-font-ui);
 }
@@ -146,14 +145,14 @@
 .mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentoring small {
   font-family: var(--ng-font-display);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: var(--ng-track-chrome);
   text-transform: uppercase;
   color: var(--ng-text-muted);
 }
 
 .mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentoring header b {
-  font-family: var(--ng-font-condensed);
+  font-family: var(--ng-font-display);
   color: var(--ng-cyan-bright);
 }
 
@@ -173,7 +172,7 @@
   padding: 0 var(--ng-spacing-12);
   font-family: var(--ng-font-display);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ng-text-secondary);
@@ -188,7 +187,7 @@
   color: inherit;
   font-family: var(--ng-font-ui);
   font-size: inherit;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0;
   text-transform: none;
 }
@@ -201,10 +200,14 @@
 
 .bdm-os-ng .mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentor-table {
   border-radius: var(--grid-radius, 3px) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
 }
 
 .mentoring-workspace .pcb-plantilla--ng .pcb-plantilla__mentor-create label {
-  font-family: var(--ng-font-condensed);
+  font-family: var(--ng-font-display);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ng-text-muted);

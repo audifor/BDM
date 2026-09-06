@@ -7,6 +7,10 @@ import { calculateStandings, type StandingsEntry } from '@/engine/competition/st
 import { boxScoreValuation } from '@/engine/stats/boxScoreValuation'
 import { selectCompetitionContext } from '@/ui/pcb-migrated/competition/CompetitionPcbPage'
 import { findTeamForPlayer } from '@/ui-ng/applications/player/data/presentationHelpers'
+import {
+  resolveStandingsZoneBands,
+  type StandingsZoneBands,
+} from '@/ui-ng/applications/competition/standingsZones'
 
 export const COMPETITION_TABS = ['calendar', 'upcoming', 'results', 'standings', 'stats'] as const
 export type CompetitionTabId = (typeof COMPETITION_TABS)[number]
@@ -151,6 +155,7 @@ export interface CompetitionWorkspaceModel {
   readonly upcoming: readonly CompetitionGameRow[]
   readonly dateGroups: readonly CompetitionDateGroup[]
   readonly standings: readonly StandingsEntry[]
+  readonly standingsZoneBands: StandingsZoneBands
   readonly leaders: readonly CompetitionLeaderRow[]
   readonly statPodiums: readonly CompetitionStatPodium[]
   readonly calendarEvents: readonly CalendarEvent[]
@@ -349,6 +354,11 @@ export function standingsPct(entry: StandingsEntry): string {
   return formatPct(entry.wins, entry.played)
 }
 
+/** FIBA-like league table points: 2 for a win, 1 for a loss (presentation only). */
+export function standingsClassificationPoints(entry: Pick<StandingsEntry, 'wins' | 'losses'>): number {
+  return entry.wins * 2 + entry.losses
+}
+
 export function buildCompetitionWorkspaceModel(
   world: GameWorld,
   preferredCompetitionId: CompetitionId | undefined,
@@ -419,6 +429,7 @@ export function buildCompetitionWorkspaceModel(
         games: groupedGames.filter((game) => game.status === 'completed'),
       })),
     standings: calculateStandings(world, context.seasonId),
+    standingsZoneBands: resolveStandingsZoneBands(world, context.competitionId),
     leaders,
     statPodiums: buildStatPodiums(leaders),
     calendarEvents: sortCalendarEvents(buildCalendarEvents(world, context, userTeamId)),

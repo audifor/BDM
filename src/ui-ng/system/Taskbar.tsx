@@ -45,7 +45,6 @@ export function Taskbar() {
           type="button"
         >
           <StartMenuMark />
-          <span>BDM</span>
         </button>
         {openApps.map((id) => {
           const label = taskbarAppLabel(id)
@@ -58,6 +57,13 @@ export function Taskbar() {
                 aria-expanded={closable ? menuOpen : undefined}
                 aria-haspopup={closable ? 'menu' : undefined}
                 className={`ng-taskbar__app${id === activeApp ? ' is-active' : ''}`}
+                onAuxClick={(event) => {
+                  if (event.button !== 1 || !closable) return
+                  event.preventDefault()
+                  setStartOpen(false)
+                  setMenu(null)
+                  closeApp(id)
+                }}
                 onClick={() => {
                   setStartOpen(false)
                   setMenu(null)
@@ -67,6 +73,9 @@ export function Taskbar() {
                   event.preventDefault()
                   setStartOpen(false)
                   setMenu(closable ? id : null)
+                }}
+                onMouseDown={(event) => {
+                  if (event.button === 1 && closable) event.preventDefault()
                 }}
                 type="button"
               >

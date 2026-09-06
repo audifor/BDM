@@ -12,10 +12,10 @@
   background: var(--ng-bg-elevated);
   box-shadow: var(--ng-shadow-inset-highlight);
   color: var(--ng-text-secondary);
-  font-family: var(--ng-font-display);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-family: var(--ng-font-ui);
+  font-size: var(--ng-font-size-secondary);
+  font-weight: var(--ng-font-weight-regular);
+  letter-spacing: var(--ng-track-chrome);
   text-transform: uppercase;
   white-space: nowrap;
   transition:
@@ -50,6 +50,7 @@
   border-color: rgba(230, 183, 77, 0.55);
   background: var(--ng-accent-primary-muted);
   color: var(--ng-amber-bright);
+  font-weight: var(--ng-font-weight-bold);
 }
 
 .ng-btn--primary:hover:not(:disabled) {
@@ -86,9 +87,9 @@
   height: 18px;
   padding: 0 var(--ng-spacing-8);
   border-radius: var(--ng-radius-sm);
-  font-family: var(--ng-font-display);
+  font-family: var(--ng-font-ui);
   font-size: var(--ng-font-size-meta);
-  font-weight: 700;
+  font-weight: var(--ng-font-weight-bold);
   letter-spacing: var(--ng-track-meta);
   text-transform: uppercase;
 }
@@ -137,8 +138,8 @@
   background: var(--ng-bg-inset);
   box-shadow: var(--ng-shadow-inset-panel);
   color: var(--ng-text-primary);
-  font-family: var(--ng-font-ui);
-  font-size: var(--ng-font-size-secondary);
+  font: inherit;
+  font-size: var(--ng-font-size-data);
 }
 
 .ng-input::placeholder {

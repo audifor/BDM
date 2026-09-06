@@ -24,6 +24,7 @@
 
 .ng-canon .ng-application-workspace,
 .ng-canon .ng-application-workspace__header-slot,
+.ng-canon .ng-application-workspace__tabs-slot,
 .ng-canon .ng-application-workspace__body-slot,
 .ng-canon .ng-scroll-region {
   background: transparent;
@@ -78,10 +79,8 @@
   min-height: var(--ng-workspace-header-height);
   padding: 0 var(--ng-spacing-16);
   border-bottom: 1px solid var(--ng-border-subtle);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%),
-    color-mix(in srgb, var(--bdm-surface-1) 78%, transparent);
-  box-shadow: var(--ng-shadow-inset-highlight);
+  background: transparent;
+  box-shadow: none;
 }
 
 .ng-canon-header__main {
@@ -93,7 +92,7 @@
 
 .ng-canon-header__app {
   font-family: var(--ng-font-display);
-  font-size: 12px;
+  font-size: 15.6px;
   font-weight: 700;
   letter-spacing: var(--ng-track-meta);
   text-transform: uppercase;
@@ -116,11 +115,11 @@
 
 .ng-canon-header__meta {
   font-family: var(--ng-font-display);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--ng-font-size-secondary);
+  font-weight: 700;
   letter-spacing: var(--ng-track-chrome);
   text-transform: uppercase;
-  color: var(--ng-text-muted);
+  color: var(--ng-cyan);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -139,144 +138,6 @@
   gap: var(--ng-spacing-12);
   min-height: 0;
   align-items: start;
-}
-
-.home-dashboard {
-  display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(260px, 0.9fr);
-  grid-auto-rows: max-content;
-  gap: var(--ng-spacing-12);
-  min-height: 0;
-  align-items: start;
-}
-
-.home-dashboard__fixture {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(220px, 0.7fr);
-  gap: var(--ng-spacing-24);
-  align-items: center;
-  min-height: 150px;
-  padding: var(--ng-spacing-20);
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--ng-team-primary) 18%, transparent), transparent 65%),
-    var(--bdm-surface-1);
-}
-
-.home-dashboard__fixture-title {
-  margin: 6px 0;
-  font-family: var(--ng-font-display);
-  font-size: clamp(22px, 2.2vw, 34px);
-  line-height: 1.05;
-  color: var(--ng-text-primary);
-}
-
-.home-dashboard__fixture-title span {
-  color: var(--ng-amber-bright);
-  font-size: 0.6em;
-  text-transform: uppercase;
-}
-
-.home-dashboard__fixture-meta {
-  margin: 0 0 var(--ng-spacing-12);
-  color: var(--ng-text-muted);
-  font-family: var(--ng-font-display);
-  font-size: var(--ng-font-size-secondary);
-  text-transform: uppercase;
-}
-
-.home-dashboard__fixture-facts {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding-left: var(--ng-spacing-20);
-  border-left: 1px solid var(--ng-border-subtle);
-}
-
-.home-dashboard__news,
-.home-dashboard__panel {
-  min-width: 0;
-  align-self: start;
-  padding: var(--ng-spacing-12);
-  overflow: hidden;
-}
-
-.home-dashboard__panel > .ng-canon__eyebrow,
-.home-dashboard__news > .ng-canon__eyebrow {
-  margin-bottom: var(--ng-spacing-12);
-}
-
-.home-dashboard__table-head,
-.home-dashboard__standings li {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 38px 48px;
-  gap: 8px;
-  align-items: center;
-}
-
-.home-dashboard__table-head {
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--ng-border-subtle);
-  color: var(--ng-text-muted);
-  font-family: var(--ng-font-display);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.home-dashboard__standings,
-.home-dashboard__leaders {
-  display: grid;
-  gap: 2px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.home-dashboard__standings li,
-.home-dashboard__leaders li {
-  min-height: 27px;
-  padding: 4px 6px;
-  color: var(--ng-text-secondary);
-  font-size: var(--ng-font-size-secondary);
-}
-
-.home-dashboard__standings li.is-user {
-  border-left: 2px solid var(--ng-cyan);
-  background: color-mix(in srgb, var(--ng-cyan) 8%, transparent);
-  color: var(--ng-text-primary);
-}
-
-.home-dashboard__standings li strong,
-.home-dashboard__leaders li strong {
-  color: var(--ng-text-primary);
-}
-
-.home-dashboard__leaders li {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  border-bottom: 1px solid var(--ng-border-subtle);
-}
-
-.home-dashboard__leaders li span {
-  color: var(--ng-text-muted);
-  font-size: 11px;
-}
-
-.home-dashboard__calendar {
-  min-height: 340px;
-}
-
-.home-dashboard__calendar .home-competition-calendar {
-  width: 100%;
-  max-width: none;
-  height: 100%;
-  max-height: none;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
 }
 
 .home-competition-calendar {
@@ -331,21 +192,6 @@
 }
 
 @media (max-width: 900px) {
-  .home-dashboard {
-    grid-template-columns: 1fr;
-  }
-
-  .home-dashboard__fixture {
-    grid-template-columns: 1fr;
-  }
-
-  .home-dashboard__fixture-facts {
-    padding-top: var(--ng-spacing-12);
-    padding-left: 0;
-    border-top: 1px solid var(--ng-border-subtle);
-    border-left: 0;
-  }
-
   .home-competition-calendar {
     width: 100%;
     max-width: 100%;
@@ -426,14 +272,17 @@
   background: none;
   color: var(--ng-text-primary);
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
 }
 
 .ng-canon__link:hover,
+.ng-canon__link:focus-visible,
 .ng-canon__action:hover {
   color: var(--ng-cyan);
+  text-decoration: none;
 }
 
 .ng-canon__action {

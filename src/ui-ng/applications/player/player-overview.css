@@ -60,7 +60,7 @@
 .po-root .ng-workspace-tabs__tab {
   font-family: var(--po-font-display);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -80,7 +80,7 @@
 .po-root .ng-btn {
   font-family: var(--po-font-display);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -166,7 +166,7 @@
   color: var(--ng-cyan-bright);
   font-family: var(--po-font);
   font-size: 15px;
-  font-weight: 650;
+  font-weight: 700;
   letter-spacing: 0;
   text-transform: none;
 }
@@ -194,7 +194,7 @@
   height: var(--ng-workspace-header-height);
   padding: 0 var(--ng-spacing-16);
   border-bottom: 1px solid var(--ng-border-subtle);
-  background: var(--ng-bg-panel-primary);
+  background: transparent;
 }
 
 .po-workspace-header__context {
@@ -207,7 +207,7 @@
 .po-workspace-header__app {
   font-family: var(--po-font);
   font-size: 17px;
-  font-weight: 650;
+  font-weight: 700;
   letter-spacing: 0;
   color: var(--ng-text-primary);
 }
@@ -221,7 +221,7 @@
 .po-workspace-header__team {
   font-family: var(--po-font);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--po-team-secondary);
 }
 
@@ -231,15 +231,15 @@
   background: transparent;
   font-family: var(--po-font);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--po-team-secondary);
   cursor: pointer;
 }
 
 .po-workspace-header__team-link.entity-link:hover,
 .po-workspace-header__team-link.entity-link:focus-visible {
-  text-decoration: underline;
-  color: var(--po-team-secondary);
+  text-decoration: none;
+  color: var(--ng-cyan-bright);
 }
 
 .po-workspace-header__comp {
@@ -296,10 +296,10 @@
 .po-identity__person,
 .po-identity__positions,
 .po-identity__measures {
-  --ng-font-display: var(--ng-font-condensed);
-  --po-font: var(--ng-font-condensed);
-  --po-font-display: var(--ng-font-condensed);
-  font-family: var(--ng-font-condensed);
+  --ng-font-display: var(--ng-font-ui);
+  --po-font: var(--ng-font-player);
+  --po-font-display: var(--ng-font-display);
+  font-family: var(--ng-font-ui);
 }
 
 .po-identity__positions,
@@ -312,7 +312,7 @@
 .po-identity__section-label {
   font-family: var(--po-font-display);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ng-text-muted);
@@ -397,7 +397,7 @@
 
 .po-identity__firstname {
   font-size: 0.78em;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--ng-text-primary);
 }
@@ -424,7 +424,7 @@
   background: transparent;
   font-family: var(--po-font-display);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--ng-text-primary);
   cursor: pointer;
@@ -433,7 +433,7 @@
 .po-identity__meta-team-link.entity-link:hover,
 .po-identity__meta-team-link.entity-link:focus-visible {
   color: var(--ng-cyan-bright);
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .po-identity__meta-detail {
@@ -499,7 +499,7 @@
 .po-status__label {
   font-family: var(--po-font-display);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ng-text-muted);
@@ -586,7 +586,7 @@
 .po-identity__measure-unit {
   font-family: var(--po-font-display);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: lowercase;
   color: var(--ng-text-muted);
@@ -896,7 +896,7 @@
 .po-role__label {
   font-family: var(--po-font-display);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ng-text-muted);
@@ -907,7 +907,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .po-role__secondary {
@@ -1049,13 +1049,13 @@
   font-family: var(--ng-font-ui);
   font-variation-settings: normal;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.02em;
   color: var(--ng-text-secondary);
 }
 
 .po-rating-row.is-selected .po-rating-row__label {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--ng-text-primary);
 }
 
@@ -1147,7 +1147,7 @@
 .po-eval__label {
   font-family: var(--po-font);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--ng-text-secondary);
 }
 
@@ -1260,7 +1260,7 @@
 .po-perf-primary__label {
   font-family: var(--po-font);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--ng-text-muted);
 }
@@ -1274,7 +1274,7 @@
 .po-perf-primary__value {
   font-family: var(--po-font);
   font-size: 19px;
-  font-weight: 650;
+  font-weight: 700;
   font-variant-numeric: tabular-nums lining-nums;
   line-height: 1;
   color: var(--ng-text-primary);
@@ -1283,7 +1283,7 @@
 .po-perf-primary__delta {
   font-family: var(--po-font);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums lining-nums;
 }
 
@@ -1305,7 +1305,7 @@
 .po-perf-secondary__label {
   font-family: var(--po-font);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.02em;
   color: var(--ng-text-muted);
 }
@@ -1313,7 +1313,7 @@
 .po-perf-secondary__value {
   font-family: var(--po-font);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums lining-nums;
   color: var(--ng-text-secondary);
 }
@@ -1373,7 +1373,7 @@
 .po-form-game__opp {
   font-family: var(--po-font);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--ng-text-secondary);
 }
@@ -1383,7 +1383,7 @@
   margin-top: var(--ng-spacing-4);
   font-family: var(--po-font);
   font-size: 19px;
-  font-weight: 650;
+  font-weight: 700;
   font-variant-numeric: tabular-nums lining-nums;
   line-height: 1;
   color: var(--ng-text-primary);
@@ -1402,7 +1402,7 @@
   margin-top: 2px;
   font-family: var(--po-font);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums lining-nums;
 }
 
@@ -1528,7 +1528,7 @@
   grid-column: 1 / -1;
   font-family: var(--po-font);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.03em;
   color: var(--ng-text-secondary);
 }
@@ -1536,7 +1536,7 @@
 .po-shot-profile__zone-freq {
   font-family: var(--po-font);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums lining-nums;
   color: var(--ng-text-primary);
 }
@@ -1656,7 +1656,7 @@
 .po-inspector-detail__stats dt {
   font-family: var(--po-font);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--ng-text-muted);
 }
 
@@ -1664,7 +1664,7 @@
   margin: 0;
   font-family: var(--po-font);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums lining-nums;
   color: var(--ng-text-primary);
 }
@@ -1693,7 +1693,7 @@
   gap: var(--ng-spacing-8);
   font-family: var(--po-font);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--ng-text-secondary);
 }
 
@@ -1722,7 +1722,7 @@
   margin: 0 0 var(--ng-spacing-8);
   font-family: var(--po-font);
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .po-empty-state__message {

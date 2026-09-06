@@ -36,7 +36,7 @@
   color: var(--ng-text-secondary);
   font-family: var(--ng-font-display);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   text-align: left;
@@ -105,7 +105,7 @@
   margin: 0;
   font-family: var(--ng-font-display);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ng-text-muted);
