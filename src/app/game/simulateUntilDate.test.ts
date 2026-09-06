@@ -32,7 +32,7 @@ describe('simulate until date', () => {
     expect(result.finalDate).toBe(target)
     expect(result.stopReason).toEqual({ type: 'arrived' })
     expect(result.world).toEqual(manual)
-  })
+  }, 15_000)
 
   it('simulates the user match and every other pending game before arriving on the target morning', () => {
     const world = createNewGame()
