@@ -28,12 +28,20 @@
     linear-gradient(180deg, #070b0f 0%, var(--ng-bg-system) 100%);
   color: var(--ng-text-primary);
   font-family: var(--ng-font-ui);
-  font-size: var(--ng-font-size-body);
+  font-size: var(--ng-font-size-data);
   font-weight: var(--ng-font-weight-regular);
-  line-height: 1.35;
+  line-height: var(--ng-line-ui);
+  font-synthesis: none;
   -webkit-font-smoothing: antialiased;
   user-select: none;
   -webkit-user-select: none;
+}
+
+.bdm-os-ng button,
+.bdm-os-ng input,
+.bdm-os-ng textarea,
+.bdm-os-ng select {
+  font: inherit;
 }
 
 .bdm-os-ng input,
@@ -53,11 +61,13 @@
   background-size: auto, auto, 10px 10px, auto;
 }
 
-/* Typography standard — display = HUD chrome, ui/data = dense body */
+/* Typography standard — dense FM-like roles over GT America */
 .bdm-os-ng h1,
 .bdm-os-ng h2,
 .bdm-os-ng h3 {
   font-family: var(--ng-font-display);
+  font-weight: var(--ng-font-weight-bold);
+  letter-spacing: 0;
 }
 
 .ng-type-display {
@@ -71,16 +81,16 @@
 
 .ng-type-section {
   font-family: var(--ng-font-display);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: var(--ng-text-base);
+  font-weight: var(--ng-font-weight-bold);
+  letter-spacing: var(--ng-track-chrome);
   text-transform: uppercase;
 }
 
 .ng-type-meta {
   font-family: var(--ng-font-display);
   font-size: var(--ng-font-size-meta);
-  font-weight: 600;
+  font-weight: var(--ng-font-weight-bold);
   letter-spacing: var(--ng-track-meta);
   text-transform: uppercase;
   color: var(--ng-text-muted);
@@ -88,8 +98,8 @@
 
 .ng-type-chrome {
   font-family: var(--ng-font-display);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--ng-text-sm);
+  font-weight: var(--ng-font-weight-bold);
   letter-spacing: var(--ng-track-chrome);
   text-transform: uppercase;
 }
@@ -97,22 +107,22 @@
 .ng-type-entity {
   font-family: var(--ng-font-display);
   font-size: var(--ng-font-size-entity);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  line-height: 0.92;
+  font-weight: var(--ng-font-weight-bold);
+  letter-spacing: 0;
+  line-height: 0.95;
 }
 
 .ng-type-entity__given {
   font-size: 0.78em;
-  font-weight: 600;
-  letter-spacing: var(--ng-track-chrome);
+  font-weight: var(--ng-font-weight-regular);
+  letter-spacing: 0;
   color: var(--ng-text-secondary);
 }
 
 .ng-type-entity__family {
   font-size: 1.14em;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-weight: var(--ng-font-weight-bold);
+  letter-spacing: 0;
   color: var(--ng-cyan-bright);
   text-shadow: var(--ng-glow-entity);
 }
@@ -120,9 +130,9 @@
 .ng-type-hero {
   font-family: var(--ng-font-display);
   font-size: var(--ng-font-size-hero-number);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 0.9;
+  font-weight: var(--ng-font-weight-black);
+  letter-spacing: 0;
+  line-height: 0.95;
   font-variant-numeric: tabular-nums lining-nums;
   color: var(--ng-amber-bright);
   text-shadow: var(--ng-glow-hero);
@@ -131,7 +141,34 @@
 .ng-type-data {
   font-family: var(--ng-font-data);
   font-size: var(--ng-font-size-data);
+  font-weight: var(--ng-font-weight-regular);
+  letter-spacing: 0;
+  line-height: var(--ng-line-dense);
   font-variant-numeric: tabular-nums lining-nums;
+}
+
+.ng-type-label {
+  font-family: var(--ng-font-ui);
+  font-size: var(--ng-font-size-meta);
+  font-weight: var(--ng-font-weight-bold);
+  letter-spacing: var(--ng-track-meta);
+  text-transform: uppercase;
+}
+
+.ng-type-panel-title {
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-text-base);
+  font-weight: var(--ng-font-weight-bold);
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.ng-type-screen-title {
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-text-xl);
+  font-weight: var(--ng-font-weight-bold);
+  letter-spacing: 0;
+  line-height: 1.15;
 }
 
 .ng-type-numeric {
@@ -171,9 +208,9 @@
 
 .ng-module__title {
   font-family: var(--ng-font-display);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-size: var(--ng-font-size-data);
+  font-weight: var(--ng-font-weight-bold);
+  letter-spacing: var(--ng-track-meta);
   text-transform: uppercase;
   color: var(--ng-text-secondary);
 }
@@ -206,7 +243,7 @@
   box-shadow: none;
   color: inherit;
   font: inherit;
-  font-weight: 600;
+  font-weight: var(--ng-font-weight-regular);
   letter-spacing: 0;
   text-transform: none;
   text-align: inherit;
@@ -218,5 +255,44 @@
 .bdm-os-ng .tactics-board-player-name.pcb-player-link:hover,
 .bdm-os-ng .tactics-board-slot-name.pcb-player-link:hover {
   color: var(--ng-cyan-bright);
-  text-decoration: underline;
+  text-decoration: none;
+}
+
+/* Entity names: clickable via color/cursor only — never underline. */
+.bdm-os-ng .entity-link,
+.bdm-os-ng .entity-link:hover,
+.bdm-os-ng .entity-link:focus-visible,
+.bdm-os-ng .ng-canon__link,
+.bdm-os-ng .ng-canon__link:hover,
+.bdm-os-ng .ng-canon__link:focus-visible {
+  text-decoration: none;
+}
+
+/* Workspace tabs chrome is always transparent (holo wallpaper shows through). */
+.bdm-os-ng .ng-application-workspace__tabs-slot,
+.bdm-os-ng .ng-workspace-tabs,
+.bdm-os-ng .ng-workspace-tabs__list {
+  background: transparent !important;
+}
+
+/* Workspace title bars are always transparent across apps. */
+.bdm-os-ng .ng-workspace-header,
+.bdm-os-ng .ng-canon-header,
+.bdm-os-ng .po-workspace-header,
+.bdm-os-ng [class$='-workspace-header'] {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Workspace header meta line (league · season · counts) is cyan everywhere. */
+.bdm-os-ng .ng-workspace-header__meta,
+.bdm-os-ng .ng-canon-header__meta,
+.bdm-os-ng [class$='-workspace-header__meta'] {
+  color: var(--ng-cyan) !important;
+}
+
+/* Workspace header app label (SCHEDULE / ROSTER / …) +30% everywhere. */
+.bdm-os-ng .ng-canon-header__app,
+.bdm-os-ng [class$='-workspace-header__app']:not(.po-workspace-header__app) {
+  font-size: 15.6px !important;
 }

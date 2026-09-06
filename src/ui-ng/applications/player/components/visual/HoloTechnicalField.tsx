@@ -25,7 +25,7 @@ export function HoloTechnicalField({
         {variant === 'inspector' && (
           <text
             fill="rgba(135, 175, 194, 0.38)"
-            fontFamily="IBM Plex Sans, sans-serif"
+            fontFamily='"GT America Standard", "Noto Sans", "IBM Plex Sans", system-ui, sans-serif'
             fontSize="9"
             letterSpacing="2.4"
             x="28"

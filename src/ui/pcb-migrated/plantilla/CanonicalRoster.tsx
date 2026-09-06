@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import type { CanonicalRatingKey, LegacyPlayerRatings, Player } from "@/domain/player";
 import { getPlayerAge, legacyRatingSignals } from "@/domain/player";
@@ -222,6 +222,9 @@ export function CanonicalRoster({
   const gridSelectedIds = sessionBridge?.selectedRowIds;
   const lineup = useMemo(() => getTeamLineup(world, team.id), [world, team.id]);
   const gridRef = useRef<HTMLDivElement>(null);
+  const viewMenuRef = useRef<HTMLDivElement>(null);
+  const viewMenuId = useId();
+  const [viewMenuOpen, setViewMenuOpen] = useState(false);
   const roster = useMemo(() => getTeamRoster(world, team.id), [world, team.id]);
   const rows = useMemo(() => {
     const filteredBySection = isNg
@@ -467,7 +470,7 @@ export function CanonicalRoster({
   const views: readonly DataGridView[] = [
     {
       id: "general",
-      name: "Resumen General",
+      name: "RESUMEN GENERAL",
       // Compact FM-like overview: core roster fields plus the established
       // FIN/SHO/PMK/PDE/IDE/REB/ATH basketball summary signals (deterministic
       // projections of the 35 canonical ratings) - not every rating/personality column.
@@ -475,42 +478,61 @@ export function CanonicalRoster({
     },
     {
       id: "offense",
-      name: "Ofensiva",
+      name: "OFENSIVA",
       columnIds: [...baseColumnIds, ...offenseColumnIds],
     },
     {
       id: "brain",
-      name: "Cerebro",
+      name: "CEREBRO",
       columnIds: [...baseColumnIds, ...brainColumnIds],
     },
     {
       id: "defense",
-      name: "Defensa",
+      name: "DEFENSA",
       columnIds: [...baseColumnIds, ...defenseColumnIds],
     },
     {
       id: "physical",
-      name: "Físico",
+      name: "FÍSICO",
       columnIds: [...baseColumnIds, "height", "weight", ...physicalColumnIds],
     },
     {
       id: "ballHandling",
-      name: "Manejo",
+      name: "MANEJO",
       columnIds: [...baseColumnIds, ...ballHandlingColumnIds],
     },
     {
       id: "psico",
-      name: "Psico",
+      name: "PSICO",
       columnIds: [...baseColumnIds, ...personalityColumnIds],
     },
     {
       id: "custom",
-      name: "Personalizada",
+      name: "PERSONALIZADA",
       columnIds: columns.map((column) => column.id),
     },
   ];
   const selectedView =
     views.find((view) => view.id === ratingView) ?? views[0]!;
+
+  useEffect(() => {
+    if (!viewMenuOpen) return
+    const onPointerDown = (event: PointerEvent) => {
+      if (viewMenuRef.current !== null && !viewMenuRef.current.contains(event.target as Node)) {
+        setViewMenuOpen(false)
+      }
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setViewMenuOpen(false)
+    }
+    window.addEventListener('pointerdown', onPointerDown)
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('pointerdown', onPointerDown)
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [viewMenuOpen])
+
   const currentSelection = gridSelectedIds ?? (selectedId === undefined ? [] : [selectedId]);
   const inspectedId = currentSelection.at(-1);
   const handleSelectionChange = (ids: readonly string[]) => {
@@ -567,20 +589,68 @@ export function CanonicalRoster({
               </select>
             </label>
           )}
-          <label className="canonical-roster__view-select">
-            <span>VISTA</span>
-            <select
-              aria-label="Preset de columnas"
-              onChange={(event) => setRatingView(event.target.value)}
-              value={selectedView.id}
-            >
-              {views.map((view) => (
-                <option key={view.id} value={view.id}>
-                  {view.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          {isNg ? (
+            <div className="canonical-roster__view-select" ref={viewMenuRef}>
+              <span>VISTA</span>
+              <button
+                aria-controls={viewMenuId}
+                aria-expanded={viewMenuOpen}
+                aria-haspopup="listbox"
+                aria-label="Preset de columnas"
+                className="canonical-roster__view-trigger"
+                data-preset={selectedView.id}
+                onClick={() => setViewMenuOpen((open) => !open)}
+                type="button"
+              >
+                <span className="canonical-roster__view-trigger-label">{selectedView.name}</span>
+                <span aria-hidden className="canonical-roster__view-trigger-chevron">
+                  ▾
+                </span>
+              </button>
+              {viewMenuOpen ? (
+                <ul
+                  className="canonical-roster__view-menu"
+                  id={viewMenuId}
+                  role="listbox"
+                >
+                  {views.map((view) => (
+                    <li key={view.id} role="none">
+                      <button
+                        aria-selected={view.id === selectedView.id}
+                        className={view.id === selectedView.id ? 'is-active' : undefined}
+                        onClick={() => {
+                          setRatingView(view.id)
+                          setViewMenuOpen(false)
+                        }}
+                        role="option"
+                        type="button"
+                      >
+                        <span aria-hidden className="canonical-roster__view-check">
+                          {view.id === selectedView.id ? '✓' : ''}
+                        </span>
+                        {view.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          ) : (
+            <label className="canonical-roster__view-select">
+              <span>VISTA</span>
+              <select
+                aria-label="Preset de columnas"
+                onChange={(event) => setRatingView(event.target.value)}
+                value={selectedView.id}
+              >
+                {views.map((view) => (
+                  <option key={view.id} value={view.id}>
+                    {view.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           {isNg && sessionBridge !== undefined && (
             <div aria-label="Filtro de posición" className="canonical-roster__pos-filter" role="group">
               <span className="canonical-roster__pos-filter-label">POS</span>

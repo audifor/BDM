@@ -24,6 +24,7 @@
 
 .staff-workspace .ng-application-workspace,
 .staff-workspace .ng-application-workspace__header-slot,
+.staff-workspace .ng-application-workspace__tabs-slot,
 .staff-workspace .ng-application-workspace__body-slot,
 .staff-workspace .ng-scroll-region {
   background: transparent;
@@ -83,10 +84,8 @@
   min-height: var(--ng-workspace-header-height);
   padding: 0 var(--ng-spacing-16);
   border-bottom: 1px solid var(--ng-border-subtle);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%),
-    color-mix(in srgb, var(--bdm-surface-1) 78%, transparent);
-  box-shadow: var(--ng-shadow-inset-highlight);
+  background: transparent;
+  box-shadow: none;
 }
 
 .staff-workspace-header__main {
@@ -98,7 +97,7 @@
 
 .staff-workspace-header__app {
   font-family: var(--ng-font-display);
-  font-size: 12px;
+  font-size: 15.6px;
   font-weight: 700;
   letter-spacing: var(--ng-track-meta);
   text-transform: uppercase;
@@ -122,10 +121,10 @@
 .staff-workspace-header__meta {
   font-family: var(--ng-font-display);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: var(--ng-track-chrome);
   text-transform: uppercase;
-  color: var(--ng-text-muted);
+  color: var(--ng-cyan);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -245,7 +244,7 @@
   background: none;
   color: var(--ng-text-primary);
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   text-align: left;
   cursor: pointer;
 }
@@ -304,7 +303,7 @@
   color: var(--ng-text-muted);
   font-family: var(--ng-font-display);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: var(--ng-track-chrome);
   text-transform: uppercase;
 }
@@ -315,44 +314,69 @@
   box-sizing: border-box;
 }
 
+.staff-responsibilities__table {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+}
+
 .staff-responsibilities__table table {
   table-layout: fixed !important;
-  min-width: 960px;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.staff-responsibilities__table th,
+.staff-responsibilities__table td {
+  min-width: 0 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.staff-responsibilities__table th button {
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis;
 }
 
 .staff-responsibilities__table th:nth-child(1),
 .staff-responsibilities__table td:nth-child(1) {
-  width: 190px;
+  width: 22%;
 }
 
 .staff-responsibilities__table th:nth-child(2),
 .staff-responsibilities__table td:nth-child(2) {
-  width: 90px;
+  width: 10%;
 }
 
 .staff-responsibilities__table th:nth-child(3),
 .staff-responsibilities__table td:nth-child(3) {
-  width: 150px;
+  width: 16%;
 }
 
 .staff-responsibilities__table th:nth-child(4),
 .staff-responsibilities__table td:nth-child(4) {
-  width: 270px;
+  width: 20%;
 }
 
 .staff-responsibilities__table th:nth-child(5),
 .staff-responsibilities__table td:nth-child(5) {
-  width: 150px;
+  width: 12%;
 }
 
 .staff-responsibilities__table th:nth-child(6),
 .staff-responsibilities__table td:nth-child(6) {
-  width: 70px;
+  width: 8%;
 }
 
 .staff-responsibilities__table th:nth-child(7),
 .staff-responsibilities__table td:nth-child(7) {
-  width: 130px;
+  width: 12%;
+}
+
+.staff-responsibilities__table .staff-workspace__select {
+  max-width: 100%;
 }
 
 .staff-workspace__list {
@@ -633,7 +657,7 @@
   cursor: pointer;
   font-family: var(--ng-font-display);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: var(--ng-track-meta);
   text-transform: uppercase;
   color: var(--ng-text-secondary);

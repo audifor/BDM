@@ -24,7 +24,7 @@
   text-align: center;
   font-family: var(--ng-font-display);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ng-text-primary);
@@ -64,7 +64,7 @@
   place-items: center;
   font-family: var(--ng-font-display);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ng-text-muted);
@@ -79,7 +79,7 @@
   color: var(--ng-text-primary);
   font-family: var(--ng-font-ui);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
 }
 
@@ -142,7 +142,7 @@
 .ng-sim-modal__eyebrow {
   font-family: var(--ng-font-display);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ng-amber-bright);
@@ -185,7 +185,7 @@
 .ng-sim-modal__match-date {
   font-family: var(--ng-font-display);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ng-text-muted);
@@ -194,13 +194,13 @@
 .ng-sim-modal__match-line {
   min-width: 0;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--ng-text-primary);
 }
 
 .ng-sim-modal__match-score {
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
+  font-weight: 700;
   color: #fff4dc;
 }
 

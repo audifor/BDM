@@ -29,7 +29,7 @@ export function TeamCrest({ code, size = 28 }: { readonly code: string; readonly
     <svg aria-hidden className="po-crest" height={size} viewBox="0 0 32 36" width={size * 0.89}>
       <path d="M16 1 L30 8 V22 C30 29 24 34 16 35 C8 34 2 29 2 22 V8 Z" fill="var(--po-team-primary)" />
       <path d="M16 5 L26 10 V21 C26 26 22 29 16 30 C10 29 6 26 6 21 V10 Z" fill="var(--po-team-secondary)" fillOpacity="0.85" />
-      <text fill="#fff" fontFamily="IBM Plex Sans" fontSize="11" fontWeight="700" textAnchor="middle" x="16" y="22">
+      <text fill="#fff" fontFamily='"GT America Standard", "Noto Sans", "IBM Plex Sans", system-ui, sans-serif' fontSize="11" fontWeight="700" textAnchor="middle" x="16" y="22">
         {code.slice(0, 3)}
       </text>
     </svg>

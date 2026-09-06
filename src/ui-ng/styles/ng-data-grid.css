@@ -2,11 +2,11 @@
    Future tables: add class `ng-precision-grid` (or keep the `__table` suffix). */
 
 .bdm-os-ng {
-  --grid-bg-frame: #091117;
-  --grid-bg-header: #081016;
-  --grid-bg-toolbar: #081016;
-  --grid-row-bg: #091117;
-  --grid-row-hover: rgba(52, 88, 104, 0.1);
+  --grid-bg-frame: transparent;
+  --grid-bg-header: transparent;
+  --grid-bg-toolbar: transparent;
+  --grid-row-bg: transparent;
+  --grid-row-hover: rgba(52, 88, 104, 0.12);
   --grid-border: rgba(92, 155, 178, 0.36);
   --grid-border-subtle: rgba(115, 145, 160, 0.1);
   --grid-border-cell: rgba(115, 145, 160, 0.055);
@@ -32,8 +32,8 @@
 .bdm-os-ng .bdm-data-grid--ng.bdm-data-grid--fm {
   --bdm-grid-row-height: var(--grid-row-h);
   --bdm-grid-header-height: var(--grid-header-h);
-  --bdm-grid-font-size: 12px;
-  --bdm-grid-header-font-size: 11px;
+  --bdm-grid-font-size: var(--ng-font-size-data);
+  --bdm-grid-header-font-size: var(--ng-font-size-meta);
   --bdm-grid-cell-padding-x: 8px;
   --bdm-grid-control-height: 22px;
 }
@@ -42,7 +42,8 @@
   height: auto;
   border: 0 !important;
   border-radius: 0 !important;
-  background: var(--grid-row-bg) !important;
+  background: transparent !important;
+  background-color: transparent !important;
   box-shadow: none !important;
 }
 
@@ -78,7 +79,7 @@
   gap: 8px;
   padding: 0 16px;
   border-bottom: 1px solid var(--grid-border-subtle);
-  background: var(--grid-bg-toolbar);
+  background: transparent;
 }
 
 .bdm-os-ng .bdm-data-grid__tools input,
@@ -90,7 +91,7 @@
   background: #091219;
   color: var(--grid-text);
   font-family: var(--ng-font-grid);
-  font-size: 12px;
+  font-size: var(--ng-font-size-data);
 }
 
 .bdm-os-ng .bdm-data-grid__tools input {
@@ -114,7 +115,7 @@
   color: rgba(230, 183, 77, 0.72);
   font-family: var(--ng-font-grid);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: var(--ng-font-weight-bold);
   letter-spacing: 0.05em;
 }
 
@@ -126,7 +127,7 @@
 .bdm-os-ng .bdm-data-grid__header-menu button {
   color: var(--grid-text);
   font-family: var(--ng-font-grid);
-  font-size: 11px;
+  font-size: var(--ng-font-size-meta);
 }
 
 .bdm-os-ng .bdm-data-grid__header-menu button:hover {
@@ -182,10 +183,9 @@
 .bdm-os-ng .ng-precision-grid:not(.bdm-data-grid) {
   border: 1px solid var(--grid-border) !important;
   border-radius: var(--grid-radius) !important;
-  background: var(--grid-row-bg) !important;
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.015);
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
 }
 
 .bdm-os-ng :is(
@@ -211,13 +211,13 @@
   background: var(--grid-bg-header) !important;
   color: var(--grid-text-header) !important;
   font-family: var(--ng-font-grid) !important;
-  font-size: 11px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.025em;
+  font-size: var(--ng-font-size-meta) !important;
+  font-weight: var(--ng-font-weight-bold) !important;
+  letter-spacing: 0;
   display: table-cell !important;
   min-width: max-content !important;
   overflow: visible !important;
-  line-height: 16px;
+  line-height: var(--ng-line-dense);
   text-align: left !important;
   text-transform: none !important;
   vertical-align: middle;
@@ -268,10 +268,12 @@
   border-inline-end: 1px solid var(--grid-border-cell) !important;
   background: transparent !important;
   color: var(--grid-text) !important;
-  font-size: 12px !important;
+  font-family: var(--ng-font-grid) !important;
+  font-size: var(--ng-font-size-data) !important;
   display: table-cell !important;
-  font-weight: 500 !important;
-  line-height: 16px;
+  font-weight: var(--ng-font-weight-regular) !important;
+  letter-spacing: 0;
+  line-height: var(--ng-line-dense);
   overflow: hidden;
   text-align: left !important;
   text-overflow: ellipsis;
@@ -293,7 +295,7 @@
   background: #091219 !important;
   color: var(--grid-text) !important;
   font-family: var(--ng-font-grid) !important;
-  font-size: 12px !important;
+  font-size: var(--ng-font-size-data) !important;
 }
 
 .bdm-os-ng :is(
@@ -380,7 +382,7 @@
   .pcb-tactics__table-page table
 ) :is(td, th)[class*='--shoot'] {
   font-variant-numeric: tabular-nums;
-  text-align: right !important;
+  text-align: center !important;
 }
 
 .bdm-os-ng :is(
@@ -397,22 +399,19 @@
   .bdm-data-table,
   table[class*='__table'],
   .pcb-tactics__table-page table
-) th.is-numeric button {
-  justify-content: flex-end;
-  text-align: right;
-}
-
+) th.is-numeric button,
 .bdm-os-ng :is(
   .ng-precision-grid,
   .bdm-data-table,
   table[class*='__table'],
   .pcb-tactics__table-page table
 ) th.is-center button {
+  width: 100%;
   justify-content: center;
   text-align: center;
 }
 
-/* Parent holo cards become the same graphite frame as Roster. */
+/* Parent panels hosting precision grids stay transparent like Match Plan. */
 .bdm-os-ng :is(
   .ng-holo-panel,
   .ng-canon__panel,
@@ -426,15 +425,29 @@
   .pd-stimulus,
   .pd-potential,
   .ph-timeline
-):has(.ng-precision-grid):not(.canonical-roster--ng) {
+):has(
+  .ng-precision-grid,
+  .bdm-data-table,
+  .staff-workspace__table,
+  .medical-workspace__table,
+  .scouting-workspace__table,
+  .pp-log__table,
+  .pc-schedule__table,
+  .pm-history__table,
+  .pd-stimulus__table,
+  .pd-potential__table,
+  .ph-timeline__table,
+  .pcb-training__table,
+  .pcb-tactics__rotation-grid,
+  table[class*='__table']
+):not(.canonical-roster--ng) {
   padding: 0 !important;
   border: 1px solid var(--grid-border) !important;
   border-radius: var(--grid-radius) !important;
-  background-color: var(--grid-bg-frame) !important;
+  background: transparent !important;
+  background-color: transparent !important;
   background-image: none !important;
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.015) !important;
+  box-shadow: none !important;
 }
 
 .bdm-os-ng :is(
@@ -450,7 +463,7 @@
   margin: 0;
   padding: 0 16px;
   border-bottom: 1px solid var(--grid-border-subtle);
-  background: var(--grid-bg-toolbar);
+  background: transparent;
 }
 
 .bdm-os-ng :is(
@@ -472,7 +485,7 @@
 .bdm-os-ng .entity-context-menu button {
   color: var(--grid-text);
   font-family: var(--ng-font-grid);
-  font-size: 12px;
+  font-size: var(--ng-font-size-data);
 }
 
 .bdm-os-ng .entity-context-menu button:hover {
@@ -513,8 +526,8 @@
   background: transparent !important;
   color: var(--grid-text) !important;
   font-family: var(--ng-font-grid) !important;
-  font-size: 12px !important;
-  font-weight: 500 !important;
+  font-size: var(--ng-font-size-data) !important;
+  font-weight: var(--ng-font-weight-regular) !important;
 }
 
 .bdm-os-ng :is(
@@ -549,8 +562,8 @@
   background: var(--grid-bg-header) !important;
   color: var(--grid-text-header) !important;
   font-family: var(--ng-font-grid) !important;
-  font-size: 11px !important;
-  font-weight: 600 !important;
+  font-size: var(--ng-font-size-meta) !important;
+  font-weight: var(--ng-font-weight-bold) !important;
   letter-spacing: 0.025em !important;
   text-transform: none !important;
 }
@@ -581,10 +594,10 @@
   background: #091219 !important;
   color: var(--grid-text) !important;
   font-family: var(--ng-font-grid) !important;
-  font-size: 12px !important;
+  font-size: var(--ng-font-size-data) !important;
 }
 
-/* Leftover PCB Plantilla grammar (43px / centered / Inter). Canonical wins. */
+/* Leftover PCB Plantilla grammar (43px / centered). Canonical precision grid wins. */
 .bdm-os-ng .pcb-training .pcb-training__table,
 .bdm-os-ng .pcb-plantilla .pcb-plantilla__mentor-table,
 .bdm-os-ng .pcb-plantilla .pcb-plantilla__analysis-table,
@@ -592,10 +605,9 @@
 .bdm-os-ng .pcb-tactics .pcb-tactics__rotation-grid {
   border: 1px solid var(--grid-border) !important;
   border-radius: var(--grid-radius) !important;
-  background: var(--grid-row-bg) !important;
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.015);
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
 }
 
 .bdm-os-ng .pcb-training .pcb-training__table > div,
@@ -607,8 +619,8 @@
   background: transparent !important;
   color: var(--grid-text) !important;
   font-family: var(--ng-font-grid) !important;
-  font-size: 12px !important;
-  font-weight: 500 !important;
+  font-size: var(--ng-font-size-data) !important;
+  font-weight: var(--ng-font-weight-regular) !important;
 }
 
 .bdm-os-ng .pcb-training .pcb-training__table > div > *,
@@ -629,8 +641,8 @@
   height: var(--grid-header-h) !important;
   background: var(--grid-bg-header) !important;
   color: var(--grid-text-header) !important;
-  font-size: 11px !important;
-  font-weight: 600 !important;
+  font-size: var(--ng-font-size-meta) !important;
+  font-weight: var(--ng-font-weight-bold) !important;
   letter-spacing: 0.025em !important;
   text-transform: none !important;
 }
@@ -642,4 +654,121 @@
   justify-content: flex-start !important;
   text-align: left !important;
   text-transform: none !important;
+}
+
+/* All NG sections: table chrome stays transparent (Match Plan language). */
+.bdm-os-ng :is(
+  .bdm-data-table,
+  .bdm-data-grid,
+  .ng-precision-grid,
+  .staff-workspace__table,
+  .staff-responsibilities__table,
+  .staff-person__table,
+  .medical-workspace__table,
+  .scouting-workspace__table,
+  .pp-log__table,
+  .pc-schedule__table,
+  .pm-history__table,
+  .pd-stimulus__table,
+  .pd-potential__table,
+  .ph-timeline__table,
+  .home-slot-table,
+  .competition-jornada .bdm-data-table,
+  .pcb-training__table,
+  .pcb-plantilla__mentor-table,
+  .pcb-plantilla__analysis-table,
+  .pcb-plantilla__table,
+  .pcb-tactics__rotation-grid,
+  .pcb-tactics__table-page,
+  .pcb-tactics__table-page table,
+  .pcb-tactics__matchups-table,
+  .pcb-medical .table,
+  .pcb-competition .table,
+  .pcb-club .table,
+  .canonical-roster__grid,
+  .canonical-roster__grid .bdm-data-table,
+  .canonical-roster__grid .ng-precision-grid,
+  table[class*='__table']
+) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.bdm-os-ng :is(
+  .bdm-data-table,
+  .bdm-data-grid,
+  .ng-precision-grid,
+  .staff-workspace__table,
+  .staff-responsibilities__table,
+  .staff-person__table,
+  .medical-workspace__table,
+  .scouting-workspace__table,
+  .pp-log__table,
+  .pc-schedule__table,
+  .pm-history__table,
+  .pd-stimulus__table,
+  .pd-potential__table,
+  .ph-timeline__table,
+  .pcb-tactics__table-page,
+  .pcb-tactics__matchups-table,
+  .canonical-roster__grid .bdm-data-table,
+  .canonical-roster__grid .ng-precision-grid,
+  table[class*='__table']
+) :is(table, thead, tbody, tfoot, tr, th, td) {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.bdm-os-ng :is(
+  .pcb-training__table,
+  .pcb-plantilla__mentor-table,
+  .pcb-plantilla__analysis-table,
+  .pcb-plantilla__table,
+  .pcb-tactics__rotation-grid,
+  .pcb-medical .table,
+  .pcb-competition .table,
+  .pcb-club .table
+) > * {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  .staff-workspace__table,
+  .medical-workspace__table,
+  .scouting-workspace__table,
+  .pp-log__table,
+  .pc-schedule__table,
+  .pm-history__table,
+  .pd-stimulus__table,
+  .pd-potential__table,
+  .ph-timeline__table,
+  .pcb-tactics__table-page,
+  .canonical-roster__grid,
+  table[class*='__table']
+) tbody tr:hover td {
+  background: var(--grid-row-hover) !important;
+}
+
+.bdm-os-ng :is(
+  .ng-precision-grid,
+  .bdm-data-table,
+  .staff-workspace__table,
+  .medical-workspace__table,
+  .scouting-workspace__table,
+  .pp-log__table,
+  .pc-schedule__table,
+  .pm-history__table,
+  .pd-stimulus__table,
+  .pd-potential__table,
+  .ph-timeline__table,
+  .pcb-tactics__table-page,
+  .canonical-roster__grid,
+  table[class*='__table']
+) tbody tr:is(.is-selected, .is-current, .is-active, .is-focused) td {
+  background: color-mix(in srgb, var(--grid-cyan) 6%, transparent) !important;
 }

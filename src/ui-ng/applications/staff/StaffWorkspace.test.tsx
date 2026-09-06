@@ -60,7 +60,9 @@ describe('StaffWorkspace', () => {
     mountStaffWorkspace()
     fireEvent.click(screen.getByRole('button', { name: 'Responsibilities' }))
     expect(screen.getAllByText('Responsibility').length).toBeGreaterThan(0)
-    expect(screen.getByText('Control mode')).toBeInTheDocument()
+    expect(screen.getByText('Control')).toBeInTheDocument()
+    expect(screen.getByText('Utilization')).toBeInTheDocument()
+    expect(screen.queryByText('Control mode')).not.toBeInTheDocument()
   })
 
   it('opens dynamics people from the canonical workspace tabs', () => {

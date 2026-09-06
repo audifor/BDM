@@ -33,7 +33,8 @@ describe('CanonicalRoster NG scout-aware ratings', () => {
       }),
     )
 
-    fireEvent.change(screen.getByLabelText('Preset de columnas'), { target: { value: 'offense' } })
+    fireEvent.click(screen.getByLabelText('Preset de columnas'))
+    fireEvent.click(screen.getByRole('option', { name: 'OFENSIVA' }))
 
     expect(document.querySelectorAll('.canonical-roster__rating--unknown').length).toBeGreaterThan(0)
     expect(screen.queryByText('?')).not.toBeInTheDocument()
@@ -54,7 +55,8 @@ describe('CanonicalRoster NG scout-aware ratings', () => {
       }),
     )
 
-    fireEvent.change(screen.getByLabelText('Preset de columnas'), { target: { value: 'offense' } })
+    fireEvent.click(screen.getByLabelText('Preset de columnas'))
+    fireEvent.click(screen.getByRole('option', { name: 'OFENSIVA' }))
 
     expect(container.innerHTML).not.toContain(`title="${raw}"`)
     expect(container.innerHTML).not.toContain(`aria-label="${raw}"`)
@@ -92,7 +94,8 @@ describe('CanonicalRoster NG scout-aware ratings', () => {
       }),
     )
 
-    fireEvent.change(screen.getByLabelText('Preset de columnas'), { target: { value: 'offense' } })
+    fireEvent.click(screen.getByLabelText('Preset de columnas'))
+    fireEvent.click(screen.getByRole('option', { name: 'OFENSIVA' }))
 
     expect(screen.getAllByText('88').length).toBeGreaterThan(0)
   })

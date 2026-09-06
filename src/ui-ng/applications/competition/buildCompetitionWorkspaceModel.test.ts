@@ -17,6 +17,7 @@ import {
   monthStart,
   monthTitle,
   shiftMonth,
+  standingsClassificationPoints,
 } from '@/ui-ng/applications/competition/buildCompetitionWorkspaceModel'
 
 function firstOpenDate(world: GameWorld, teamIds: readonly string[], start: GameDate, end: GameDate): GameDate {
@@ -201,5 +202,13 @@ describe('buildCompetitionWorkspaceModel', () => {
       expect(podium.entries.length).toBeLessThanOrEqual(3)
     }
     expect(model.statPodiums[0]?.entries[0]?.playerId).toBe(model.leaders[0]?.playerId)
+  })
+})
+
+describe('standingsClassificationPoints', () => {
+  it('awards 2 points per win and 1 per loss', () => {
+    expect(standingsClassificationPoints({ wins: 10, losses: 1 })).toBe(21)
+    expect(standingsClassificationPoints({ wins: 0, losses: 0 })).toBe(0)
+    expect(standingsClassificationPoints({ wins: 2, losses: 9 })).toBe(13)
   })
 })

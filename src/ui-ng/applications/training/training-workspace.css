@@ -86,10 +86,8 @@
   min-height: var(--ng-workspace-header-height);
   padding: 0 var(--ng-spacing-16);
   border-bottom: 1px solid var(--ng-border-subtle);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%),
-    color-mix(in srgb, var(--bdm-surface-1) 78%, transparent);
-  box-shadow: var(--ng-shadow-inset-highlight);
+  background: transparent;
+  box-shadow: none;
 }
 
 .training-workspace-header__main {
@@ -101,7 +99,7 @@
 
 .training-workspace-header__app {
   font-family: var(--ng-font-display);
-  font-size: 12px;
+  font-size: 15.6px;
   font-weight: 700;
   letter-spacing: var(--ng-track-meta);
   text-transform: uppercase;
@@ -125,10 +123,10 @@
 .training-workspace-header__meta {
   font-family: var(--ng-font-display);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: var(--ng-track-chrome);
   text-transform: uppercase;
-  color: var(--ng-text-muted);
+  color: var(--ng-cyan);
 }
 
 .training-workspace .pcb-training--ng {
@@ -165,7 +163,7 @@
   padding: 0 var(--ng-spacing-12);
   font-family: var(--ng-font-display);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ng-text-secondary);
@@ -180,7 +178,7 @@
   color: inherit;
   font-family: var(--ng-font-ui);
   font-size: inherit;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0;
   text-transform: none;
 }
@@ -225,8 +223,9 @@
 .training-workspace .pcb-training--ng .pcb-training__personal-pills span,
 .training-workspace .pcb-training--ng .pcb-training__module-list span,
 .training-workspace .pcb-training--ng .pcb-training__calendar-grid > b {
-  font-family: var(--ng-font-condensed);
-  letter-spacing: 0.08em;
+  font-family: var(--ng-font-ui);
+  font-weight: var(--ng-font-weight-bold);
+  letter-spacing: var(--ng-track-meta);
   text-transform: uppercase;
   color: var(--ng-text-muted);
 }
@@ -245,14 +244,19 @@
 .training-workspace .pcb-training--ng .pcb-training__modal > section {
   border-color: var(--ng-border-standard);
   border-radius: var(--ng-radius-panel);
-  background-color: color-mix(in srgb, var(--bdm-surface-1) 72%, transparent);
-  background-image: none;
-  box-shadow: var(--bdm-panel-shadow);
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
   color: var(--ng-text-primary);
 }
 
 .bdm-os-ng .training-workspace .pcb-training--ng .pcb-training__table {
   border-radius: var(--grid-radius, 3px) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
 }
 
 .training-workspace .pcb-training--ng .pcb-training__chips span,
@@ -469,10 +473,8 @@
 .training-workspace .pcb-training--ng .pcb-training__modules {
   border-color: var(--grid-border, rgba(92, 155, 178, 0.36));
   border-radius: var(--grid-radius, 3px);
-  background: var(--grid-bg-frame, #091117);
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.015);
+  background: transparent;
+  box-shadow: none;
 }
 
 .training-workspace .pcb-training--ng .pcb-training__module-toolbar {
@@ -512,15 +514,16 @@
 
 .training-workspace .pcb-training--ng .pcb-training__module-pill {
   border-color: var(--grid-border-subtle, rgba(115, 145, 160, 0.1));
-  border-radius: var(--grid-radius, 3px);
+  border-radius: 8px;
   background: #0b1218;
   box-shadow: inset 2px 0 0 var(--module-cat, var(--grid-cyan, #18d7f0));
+  overflow: hidden;
 }
 
 .training-workspace .pcb-training--ng .pcb-training__module-pill header b {
   color: var(--grid-text-strong, #e7eef2);
   font-family: var(--ng-font-grid);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .training-workspace .pcb-training--ng .pcb-training__module-pill-cat,

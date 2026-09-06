@@ -21,7 +21,12 @@
 }
 
 .scouting-workspace .ng-application-workspace,
-.scouting-workspace .ng-application-workspace__body-slot {
+.scouting-workspace .ng-application-workspace__header-slot,
+.scouting-workspace .ng-application-workspace__tabs-slot,
+.scouting-workspace .ng-application-workspace__body-slot,
+.scouting-workspace .ng-workspace-tabs,
+.scouting-workspace .ng-workspace-tabs__list,
+.scouting-workspace .ng-scroll-region {
   background: transparent;
 }
 
@@ -74,10 +79,8 @@
   min-height: var(--ng-workspace-header-height);
   padding: 0 var(--ng-spacing-16);
   border-bottom: 1px solid var(--ng-border-subtle);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%),
-    color-mix(in srgb, var(--bdm-surface-1) 78%, transparent);
-  box-shadow: var(--ng-shadow-inset-highlight);
+  background: transparent;
+  box-shadow: none;
 }
 
 .scouting-workspace-header__main {
@@ -89,7 +92,7 @@
 
 .scouting-workspace-header__app {
   font-family: var(--ng-font-display);
-  font-size: 12px;
+  font-size: 15.6px;
   font-weight: 700;
   letter-spacing: var(--ng-track-meta);
   text-transform: uppercase;
@@ -113,10 +116,10 @@
 .scouting-workspace-header__meta {
   font-family: var(--ng-font-display);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: var(--ng-track-chrome);
   text-transform: uppercase;
-  color: var(--ng-text-muted);
+  color: var(--ng-cyan);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -147,7 +150,7 @@
   background: none;
   color: var(--ng-text-primary);
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   text-align: left;
   cursor: pointer;
 }

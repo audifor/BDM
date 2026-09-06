@@ -55,7 +55,7 @@
   color: #70818b;
   font-family: var(--ng-font-display);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   transition:
@@ -68,7 +68,10 @@
 .ng-taskbar__start {
   position: relative;
   z-index: 32;
-  min-width: 72px;
+  justify-content: center;
+  width: 36px;
+  min-width: 36px;
+  padding: 0;
   margin-right: 4px;
   border-color: rgba(22, 217, 243, 0.28);
   background: rgba(22, 217, 243, 0.06);
@@ -150,7 +153,7 @@
   color: var(--ng-text-primary);
   font-family: var(--ng-font-display);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-align: left;
   text-transform: uppercase;
