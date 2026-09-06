@@ -217,6 +217,33 @@ describe("Governance world integration", () => {
     expect(governanceActorForStaff(staffId)).toEqual({ kind: "STAFF", id: staffId });
   });
 
+  it("validates BG4 grant-evidenced decision history without executing coach employment", () => {
+    const world = governanceFixture("PROFESSIONAL_CLUB");
+    const grants = [
+      ...Object.values(world.governanceAuthorityGrantsById),
+      { id: "grant:bg4:owner-board", fromBodyId: "body:ownership", toBodyId: "body:board", decision: "COACH_FIRING" as const, grantedOn: world.currentDate },
+      { id: "grant:bg4:board-executive", fromBodyId: "body:board", toBodyId: "body:executive", decision: "COACH_FIRING" as const, grantedOn: world.currentDate },
+    ];
+    const rights = [
+      { id: "right:bg4:propose", authorityGrantId: "grant:bg4:board-executive", bodyId: "body:executive", edgeParticipant: "DELEGATE" as const, right: "PROPOSE" as const },
+      { id: "right:bg4:review", authorityGrantId: "grant:bg4:owner-board", bodyId: "body:board", edgeParticipant: "DELEGATE" as const, right: "REVIEW" as const },
+      { id: "right:bg4:approve", authorityGrantId: "grant:bg4:owner-board", bodyId: "body:board", edgeParticipant: "DELEGATE" as const, right: "APPROVE" as const, approvalRequirement: "ALL_OF" as const },
+      { id: "right:bg4:execute", authorityGrantId: "grant:bg4:board-executive", bodyId: "body:executive", edgeParticipant: "DELEGATE" as const, right: "EXECUTE" as const },
+    ];
+    const decision = { id: "decision:bg4", institutionId: "institution:PROFESSIONAL_CLUB", decisionType: "COACH_FIRING" as const, proposedByBodyId: "body:executive", proposedOn: world.currentDate, subject: { kind: "COACH" as const, coachId: world.userCoachId } };
+    const events = [
+      { id: "01", decisionId: decision.id, kind: "PROPOSED" as const, bodyId: "body:executive", effectiveOn: world.currentDate, authorityGrantIds: ["grant:bg4:board-executive"] },
+      { id: "02", decisionId: decision.id, kind: "REVIEW_STARTED" as const, bodyId: "body:board", effectiveOn: world.currentDate, authorityGrantIds: ["grant:bg4:owner-board"] },
+      { id: "03", decisionId: decision.id, kind: "APPROVED" as const, bodyId: "body:board", effectiveOn: world.currentDate, authorityGrantIds: ["grant:bg4:owner-board"] },
+    ];
+    const updated = updateGameWorld(world, { governanceAuthorityGrants: grants, governanceDecisionParticipationGrants: rights, governanceDecisions: [decision], governanceDecisionEvents: events });
+    expect(updated.governanceDecisionEventsById["03"]).toBeDefined();
+    expect(Object.values(updated.teams)[0]!.coachId).toBe(Object.values(world.teams)[0]!.coachId);
+    const reloaded = deserializeGameWorldV3(serializeGameWorldV3(updated, "2032-01-02T00:00:00.000Z"));
+    expect(reloaded.governanceDecisionsById[decision.id]!.subject).toEqual(decision.subject);
+    expect(reloaded.governanceDecisionEventsById["03"]!.authorityGrantIds).toEqual(["grant:bg4:owner-board"]);
+  });
+
   it("keeps external attachments outside formal authority and authority-cycle resolution", () => {
     const world = governanceFixture("NCAA");
     const externalIds = Object.keys(world.governanceExternalRelationshipsById);
@@ -224,6 +251,33 @@ describe("Governance world integration", () => {
     for (const externalId of ["external:nil", "external:donors", "external:boosters", "external:conference"]) {
       expect(() => updateGameWorld(world, { governanceAuthorityGrants: [...Object.values(world.governanceAuthorityGrantsById), { id: `grant:${externalId}`, fromBodyId: "body:athletics", toBodyId: externalId, decision: "NIL_POLICY", grantedOn: "2032-01-01" as never }] })).toThrow();
     }
+  });
+
+  it("permits a formal-only strategic decision to execute but blocks unsupported effect-required decisions", () => {
+    const base = governanceFixture("PROFESSIONAL_CLUB"), institution = Object.values(base.governanceInstitutionsById)[0]!, date = base.currentDate
+    const make = (decisionType: "STRATEGIC_PLAN" | "COACH_HIRING" | "EXECUTIVE_HIRING" | "EXECUTIVE_FIRING") => {
+      const grant = { id: `grant:${decisionType}`, fromBodyId: "body:ownership", toBodyId: "body:board", decision: decisionType, grantedOn: date }
+      const subject = decisionType === "STRATEGIC_PLAN" ? { kind: "GENERIC" as const, referenceId: "plan" } : decisionType === "COACH_HIRING" ? { kind: "COACH" as const, coachId: base.userCoachId } : { kind: "EXECUTIVE" as const, staffId: Object.values(base.staffPeopleById)[0]!.id }
+      const decision = { id: `decision:${decisionType}`, institutionId: institution.id, decisionType, proposedByBodyId: "body:board", proposedOn: date, subject }
+      const rights = [{ id: `propose:${decisionType}`, authorityGrantId: grant.id, bodyId: "body:board", edgeParticipant: "DELEGATE" as const, right: "PROPOSE" as const }, { id: `approve:${decisionType}`, authorityGrantId: grant.id, bodyId: "body:ownership", edgeParticipant: "DELEGATOR" as const, right: "APPROVE" as const }, { id: `execute:${decisionType}`, authorityGrantId: grant.id, bodyId: "body:board", edgeParticipant: "DELEGATE" as const, right: "EXECUTE" as const }]
+      const events = [{ id: `01:${decisionType}`, decisionId: decision.id, kind: "PROPOSED" as const, bodyId: "body:board", effectiveOn: date, authorityGrantIds: [grant.id] }, { id: `02:${decisionType}`, decisionId: decision.id, kind: "APPROVED" as const, bodyId: "body:ownership", effectiveOn: date, authorityGrantIds: [grant.id] }, { id: `03:${decisionType}`, decisionId: decision.id, kind: "EXECUTED" as const, bodyId: "body:board", effectiveOn: date, authorityGrantIds: [grant.id] }]
+      return { governanceAuthorityGrants: [...Object.values(base.governanceAuthorityGrantsById), grant], governanceDecisionParticipationGrants: rights, governanceDecisions: [decision], governanceDecisionEvents: events }
+    }
+    expect(updateGameWorld(base, make("STRATEGIC_PLAN")).governanceDecisionEventsById["03:STRATEGIC_PLAN"]).toBeDefined()
+    for (const type of ["COACH_HIRING", "EXECUTIVE_HIRING", "EXECUTIVE_FIRING"] as const) expect(() => updateGameWorld(base, make(type))).toThrow("unimplemented execution effect")
+  });
+
+  it("requires a manager-evaluation source to match the decision institution and coach, while remaining optional", () => {
+    const base = governanceFixture("PROFESSIONAL_CLUB"), institution = Object.values(base.governanceInstitutionsById)[0]!, coachB = Object.values(base.coaches).find((coach) => coach.id !== base.userCoachId)!, date = base.currentDate
+    const grant = { id: "grant:source", fromBodyId: "body:ownership", toBodyId: "body:board", decision: "COACH_FIRING" as const, grantedOn: date }, rights = [{ id: "source-propose", authorityGrantId: grant.id, bodyId: "body:board", edgeParticipant: "DELEGATE" as const, right: "PROPOSE" as const }], decision = { id: "source-decision", institutionId: institution.id, decisionType: "COACH_FIRING" as const, proposedByBodyId: "body:board", proposedOn: date, subject: { kind: "COACH" as const, coachId: base.userCoachId } }, events = [{ id: "source-proposed", decisionId: decision.id, kind: "PROPOSED" as const, bodyId: "body:board", effectiveOn: date, authorityGrantIds: [grant.id] }]
+    const common = { governanceAuthorityGrants: [...Object.values(base.governanceAuthorityGrantsById), grant], governanceDecisionParticipationGrants: rights, governanceDecisions: [decision], governanceDecisionEvents: events }
+    expect(updateGameWorld(base, common).governanceDecisionsById[decision.id]!.source).toBeUndefined()
+    expect(() => updateGameWorld(base, { ...common, governanceDecisions: [{ ...decision, source: { kind: "MANAGER_EVALUATION", evaluationId: "missing" } }] })).toThrow()
+    const period = { id: "source-period", institutionId: institution.id, universe: institution.universe, manager: { kind: "COACH" as const, id: base.userCoachId }, startedOn: date }, evaluation = { id: "source-evaluation", evaluationPeriodId: period.id, evaluatorBodyId: "body:board", evaluatedOn: date, objectiveEvaluations: [], factors: [{ id: "source-factor", kind: "INSTITUTIONAL_PATIENCE" as const, status: "PRESENT" as const, weight: 1, direction: "POSITIVE" as const, normalizedValue: .8, source: { kind: "GOVERNANCE_BODY" as const, bodyId: "body:board" } }] }
+    expect(updateGameWorld(base, { ...common, governanceManagerEvaluationPeriods: [period], governanceManagerEvaluations: [evaluation], governanceDecisions: [{ ...decision, source: { kind: "MANAGER_EVALUATION", evaluationId: evaluation.id } }] }).governanceDecisionsById[decision.id]!.source).toEqual({ kind: "MANAGER_EVALUATION", evaluationId: evaluation.id })
+    expect(() => updateGameWorld(base, { ...common, governanceManagerEvaluationPeriods: [{ ...period, manager: { kind: "COACH", id: coachB.id } }], governanceManagerEvaluations: [evaluation], governanceDecisions: [{ ...decision, source: { kind: "MANAGER_EVALUATION", evaluationId: evaluation.id } }] })).toThrow("does not match its institution or coach")
+    const otherInstitution = { id: "institution:other", universe: "PROFESSIONAL_CLUB" as const, name: "Other", teamIds: [] }, otherBody = { id: "body:other", institutionId: otherInstitution.id, kind: "BOARD" as const, name: "Other board" }, otherPeriod = { ...period, institutionId: otherInstitution.id, universe: otherInstitution.universe }, otherEvaluation = { ...evaluation, evaluationPeriodId: otherPeriod.id, evaluatorBodyId: otherBody.id, factors: [{ ...evaluation.factors[0]!, source: { kind: "GOVERNANCE_BODY" as const, bodyId: otherBody.id } }] }
+    expect(() => updateGameWorld(base, { ...common, governanceInstitutions: [...Object.values(base.governanceInstitutionsById), otherInstitution], governanceBodies: [...Object.values(base.governanceBodiesById), otherBody], governanceManagerEvaluationPeriods: [otherPeriod], governanceManagerEvaluations: [otherEvaluation], governanceDecisions: [{ ...decision, source: { kind: "MANAGER_EVALUATION", evaluationId: otherEvaluation.id } }] })).toThrow("does not match its institution or coach")
   });
 });
 
