@@ -144,7 +144,7 @@
   --ng-workspace-padding: var(--bdm-workspace-padding);
 
   /* ── Shell geometry ── */
-  --ng-ui-zoom: 1.0;
+  --ng-ui-zoom: 1.25;
   --ng-system-bar-height: 48px;
   --ng-taskbar-height: 56px;
   --ng-workspace-header-height: 56px;
