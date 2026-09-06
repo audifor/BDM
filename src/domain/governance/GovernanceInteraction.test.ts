@@ -14,7 +14,7 @@ describe('Governance interaction projections', () => {
     const active = { ...request, id: 'active', dueOn: date('2032-01-10') }, withdrawn = { ...request, id: 'withdrawn' }, fulfilled = { ...request, id: 'fulfilled' }
     const signals = deriveGovernanceInteractionSignals({ institutionId: 'institution', asOfDate: date('2032-01-12'), requests: [request, active, withdrawn, fulfilled], commitments: [], commitmentEvents: [], requestEvents: [{ id: 'declined', requestId: request.id, kind: 'DECLINED' as const, effectiveOn: date('2032-01-11'), actor: coach }, { id: 'withdrawn', requestId: withdrawn.id, kind: 'WITHDRAWN' as const, effectiveOn: date('2032-01-11'), actor: board }, { id: 'fulfilled', requestId: fulfilled.id, kind: 'FULFILLED' as const, effectiveOn: date('2032-01-11'), actor: coach, evidence: { kind: 'GOVERNANCE_DECISION' as const, decisionId: 'decision' } }] })
     expect(signals.map((signal) => signal.kind)).toEqual(['REQUEST_OVERDUE', 'REQUEST_DECLINED', 'REQUEST_FULFILLED', 'REQUEST_WITHDRAWN'])
-    expect(signals.find((signal) => signal.kind === 'REQUEST_FULFILLED')).toMatchObject({ evidence: { kind: 'GOVERNANCE_DECISION', decisionId: 'decision' } })
+    expect(signals.find((signal) => signal.kind === 'REQUEST_FULFILLED')).toMatchObject({ sourceEventId: 'fulfilled', effectiveOn: '2032-01-11', evidence: { kind: 'GOVERNANCE_DECISION', decisionId: 'decision' } })
   })
 
   it('derives every commitment lifecycle signal and overdue status', () => {
