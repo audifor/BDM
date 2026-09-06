@@ -35,6 +35,18 @@ function worldWithHiredStaff() {
 }
 
 describe('GameWorldSaveV3', () => {
+  it('round-trips BG5B requests and rejects malformed present request data', () => {
+    const base = createNewGame(), teamId = Object.values(base.teams)[0]!.id
+    const institution = createGovernanceInstitution({ id: 'bg5b-institution', universe: 'PROFESSIONAL_CLUB', name: 'BG5B Club', teamIds: [teamId] }), issuer = createGovernanceBody({ id: 'bg5b-issuer', institutionId: institution.id, kind: 'BOARD', name: 'Board' })
+    const request = { id: 'bg5b-request', institutionId: institution.id, issuer: { kind: 'BODY' as const, bodyId: issuer.id }, recipient: { kind: 'ACTOR' as const, actor: { kind: 'COACH' as const, id: base.userCoachId } }, category: 'PERFORMANCE' as const, summary: 'Improve results', origin: { kind: 'STANDALONE' as const } }
+    const world = updateGameWorld(base, { governanceInstitutions: [institution], governanceBodies: [issuer], governanceRequests: [request], governanceRequestEvents: [{ id: 'bg5b-01-issued', requestId: request.id, kind: 'ISSUED' as const, effectiveOn: base.currentDate, actor: request.issuer }, { id: 'bg5b-02-accepted', requestId: request.id, kind: 'ACCEPTED' as const, effectiveOn: base.currentDate, actor: request.recipient }] })
+    const saved = serializeGameWorldV3(world, savedAt), loaded = deserializeGameWorldV3(saved)
+    expect(loaded.governanceRequestsById).toEqual(world.governanceRequestsById); expect(loaded.governanceRequestEventsById).toEqual(world.governanceRequestEventsById)
+    const legacy = structuredClone(saved), runtime = legacy.payload.staffCareerRuntime as Record<string, unknown>; delete runtime.governanceRequests; delete runtime.governanceRequestEvents
+    expect(deserializeGameWorldV3(legacy).governanceRequestsById).toEqual({})
+    const malformed = structuredClone(saved), malformedRuntime = malformed.payload.staffCareerRuntime as Record<string, unknown>; malformedRuntime.governanceRequests = [{ ...request, category: 'NOPE' }]
+    expect(() => deserializeGameWorldV3(malformed)).toThrow()
+  })
   it('round-trips BG5A meetings, defaults legacy V3 fields, and rejects malformed present data', () => {
     const base = createNewGame(), teamId = Object.values(base.teams)[0]!.id
     const institution = createGovernanceInstitution({ id: 'bg5-institution', universe: 'PROFESSIONAL_CLUB', name: 'BG5 Club', teamIds: [teamId] })
