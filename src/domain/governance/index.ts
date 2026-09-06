@@ -5,3 +5,4 @@ export * from "./GovernanceDecision";
 export * from "./GovernanceMeeting";
 export * from "./GovernanceRequest";
 export * from "./GovernanceCommitment";
+export * from "./GovernanceInteraction";
