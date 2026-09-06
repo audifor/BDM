@@ -35,9 +35,9 @@ export function MatchWorkspace() {
     return (
       <NgHoloShell
         appLabel="Match"
+        hideHeader
         region="match-workspace"
         teamId={team.id}
-        title={`${world.teams[simulation.homeTeamId]?.name ?? 'Home'} vs ${world.teams[simulation.awayTeamId]?.name ?? 'Away'}`}
       >
         <NgMatchViewer />
       </NgHoloShell>
