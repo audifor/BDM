@@ -1,5 +1,13 @@
 import type { StaffPersonId, TeamId } from '@/domain/ids'
+import { STAFF_DEPARTMENTS, type StaffDepartment } from '@/domain/staff'
 import type { StaffPresentationItem } from '@/ui/staffPresentation'
+
+export function parseStaffDepartment(value: string | null): StaffDepartment | null {
+  if (value !== null && (STAFF_DEPARTMENTS as readonly string[]).includes(value)) {
+    return value as StaffDepartment
+  }
+  return null
+}
 
 export const STAFF_WORKSPACE_TABS = ['staff', 'responsibilities', 'advisory', 'dynamics'] as const
 export type StaffWorkspaceTabId = (typeof STAFF_WORKSPACE_TABS)[number]

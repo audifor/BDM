@@ -540,6 +540,7 @@
 }
 
 .roster-workspace__deck {
+  align-items: center;
   padding: 10px 12px;
   border: 1px solid color-mix(in srgb, var(--ng-cyan) 16%, var(--bdm-border-default));
   border-radius: var(--grid-radius, 3px);
@@ -566,11 +567,42 @@
 }
 
 .roster-workspace .canonical-roster__inspector-head {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
   width: 100%;
+}
+
+.roster-workspace .canonical-roster__inspector-portrait {
+  position: absolute;
+  top: calc(50% + 42px);
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(100px, 28%, 150px);
+  height: 116px;
+  overflow: visible;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.roster-workspace .canonical-roster__inspector-portrait img {
+  display: block;
+  width: 82px;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 12%;
+  filter: drop-shadow(0 10px 18px rgba(5, 8, 11, 0.55));
+  -webkit-mask-image:
+    linear-gradient(180deg, #000 0%, #000 58%, transparent 100%),
+    linear-gradient(90deg, transparent 0%, #000 14%, #000 86%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(180deg, #000 0%, #000 58%, transparent 100%),
+    linear-gradient(90deg, transparent 0%, #000 14%, #000 86%, transparent 100%);
+  mask-composite: intersect;
 }
 
 .roster-workspace .canonical-roster__inspector-who {

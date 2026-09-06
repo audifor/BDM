@@ -40,12 +40,13 @@ describe('TacticsWorkspace', () => {
     expect(screen.getByText('No team assigned to the user coach.')).toBeInTheDocument()
   })
 
-  it('clones the six canonical tactics surfaces under NG chrome', () => {
+  it('clones the five canonical tactics surfaces under NG chrome', () => {
     const { team } = mountTacticsWorkspace()
     expect(screen.getByText(team.name, { selector: '.tactics-workspace-header__team' })).toBeInTheDocument()
-    for (const label of ['Pizarra', 'Diseñador', 'Emparejamientos', 'Rotaciones', 'Jugadas', 'Partido']) {
+    for (const label of ['Pizarra', 'Diseñador', 'Emparejamientos', 'Rotaciones', 'Partido']) {
       expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
     }
+    expect(screen.queryByRole('button', { name: 'Jugadas' })).not.toBeInTheDocument()
     expect(screen.getByLabelText('Tácticas PCB migradas')).toHaveClass('pcb-tactics--ng')
     expect(document.querySelector('.pcb-tactics__tabs')).toBeNull()
   })

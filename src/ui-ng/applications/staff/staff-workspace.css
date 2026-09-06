@@ -311,6 +311,48 @@
 
 .staff-workspace__select {
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.staff-responsibilities__table table {
+  table-layout: fixed !important;
+  min-width: 960px;
+}
+
+.staff-responsibilities__table th:nth-child(1),
+.staff-responsibilities__table td:nth-child(1) {
+  width: 190px;
+}
+
+.staff-responsibilities__table th:nth-child(2),
+.staff-responsibilities__table td:nth-child(2) {
+  width: 90px;
+}
+
+.staff-responsibilities__table th:nth-child(3),
+.staff-responsibilities__table td:nth-child(3) {
+  width: 150px;
+}
+
+.staff-responsibilities__table th:nth-child(4),
+.staff-responsibilities__table td:nth-child(4) {
+  width: 270px;
+}
+
+.staff-responsibilities__table th:nth-child(5),
+.staff-responsibilities__table td:nth-child(5) {
+  width: 150px;
+}
+
+.staff-responsibilities__table th:nth-child(6),
+.staff-responsibilities__table td:nth-child(6) {
+  width: 70px;
+}
+
+.staff-responsibilities__table th:nth-child(7),
+.staff-responsibilities__table td:nth-child(7) {
+  width: 130px;
 }
 
 .staff-workspace__list {
@@ -361,8 +403,324 @@
   border-radius: var(--ng-radius-sm);
 }
 
+.staff-workspace__clear-filter {
+  align-self: flex-start;
+  font-size: var(--ng-font-size-secondary);
+  text-transform: uppercase;
+  letter-spacing: var(--ng-track-meta);
+}
+
 @media (max-width: 1100px) {
   .staff-workspace__split {
     grid-template-columns: 1fr;
   }
+}
+
+.staff-department-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: auto auto 1fr;
+  gap: var(--ng-spacing-12);
+}
+
+@media (max-width: 1400px) {
+  .staff-department-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .staff-department-board {
+    grid-template-columns: 1fr;
+  }
+}
+
+.staff-department-card {
+  display: grid;
+  grid-row: span 3;
+  grid-template-rows: subgrid;
+  gap: var(--ng-spacing-12);
+  padding: var(--ng-spacing-12);
+}
+
+.staff-department-card__header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.staff-department-card__roles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ng-spacing-8);
+  align-self: start;
+}
+
+.staff-department-card__title-link {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-font-size-meta);
+  font-weight: 700;
+  letter-spacing: var(--ng-track-meta);
+  text-transform: uppercase;
+  color: var(--ng-amber-bright);
+}
+
+.staff-department-card__title-link:hover {
+  color: var(--ng-cyan);
+}
+
+.staff-department-card__subtitle {
+  margin: 0;
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-muted);
+}
+
+.staff-department-card__dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.staff-department-card__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--ng-border-standard);
+  background: transparent;
+}
+
+.staff-department-card__dot.is-filled {
+  border-color: var(--dot-color, var(--ng-cyan));
+  background: var(--dot-color, var(--ng-cyan));
+}
+
+.staff-department-card__role-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.staff-department-card__role-list li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ng-spacing-8);
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-secondary);
+}
+
+.staff-department-card__role-list li.is-understaffed .staff-department-card__role-ratio {
+  color: var(--ng-warning);
+}
+
+.staff-department-card__role-ratio {
+  min-width: 32px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--ng-text-primary);
+}
+
+.staff-department-card__role-name {
+  color: var(--ng-text-muted);
+}
+
+.staff-department-chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ng-spacing-8);
+  padding-top: var(--ng-spacing-8);
+  border-top: 1px solid var(--ng-border-subtle);
+}
+
+.staff-department-chart__caption {
+  margin: 0;
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: var(--ng-track-meta);
+  text-transform: uppercase;
+  color: var(--ng-amber-bright);
+  text-align: center;
+}
+
+.staff-department-chart__caption--low {
+  color: var(--ng-text-muted);
+}
+
+.staff-department-chart__grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 6px;
+  height: 120px;
+}
+
+.staff-department-chart__column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.staff-department-chart__track {
+  position: relative;
+  width: 100%;
+  max-width: 22px;
+  flex: 1;
+  border: 1px solid var(--ng-border-subtle);
+  border-radius: var(--ng-radius-sm);
+  background: color-mix(in srgb, var(--bdm-surface-1) 60%, transparent);
+}
+
+.staff-department-chart__range {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: var(--ng-radius-sm);
+  background: linear-gradient(180deg, var(--ng-amber-bright) 0%, color-mix(in srgb, var(--ng-amber-bright) 40%, transparent) 100%);
+}
+
+.staff-department-chart__marker {
+  position: absolute;
+  left: -3px;
+  right: -3px;
+  height: 2px;
+  background: var(--ng-cyan);
+  box-shadow: 0 0 4px var(--ng-cyan);
+}
+
+.staff-department-chart__label {
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+  text-align: center;
+  writing-mode: horizontal-tb;
+  transform: none;
+  white-space: nowrap;
+}
+
+.staff-workspace-header__menu-list {
+  position: fixed;
+  z-index: 200;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  border: 1px solid var(--ng-border-standard);
+  border-radius: var(--ng-radius-sm);
+  background: var(--bdm-surface-1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.staff-workspace-header__menu-list button {
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--ng-radius-sm);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--ng-font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: var(--ng-track-meta);
+  text-transform: uppercase;
+  color: var(--ng-text-secondary);
+}
+
+.staff-workspace-header__menu-list button:hover {
+  background: color-mix(in srgb, var(--ng-cyan) 12%, transparent);
+  color: var(--ng-text-primary);
+}
+
+.staff-workspace-header__menu-list button.is-active {
+  color: var(--ng-amber-bright);
+}
+
+.staff-department-detail__grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--ng-spacing-12);
+  align-items: start;
+}
+
+@media (max-width: 1300px) {
+  .staff-department-detail__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.staff-department-detail__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ng-spacing-8);
+  padding: var(--ng-spacing-12);
+}
+
+.staff-department-detail__legend {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  font-size: var(--ng-font-size-secondary);
+  color: var(--ng-text-secondary);
+}
+
+.staff-department-detail__legend li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.staff-department-detail__legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.staff-department-detail__stack-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(28px, 1fr);
+  gap: 6px;
+  height: 220px;
+}
+
+.staff-department-detail__stack-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.staff-department-detail__stack-track {
+  position: relative;
+  width: 28px;
+  min-width: 28px;
+  flex: 1;
+  display: flex;
+  flex-direction: column-reverse;
+  overflow: hidden;
+  border: 1px solid var(--ng-border-subtle);
+  border-radius: var(--ng-radius-sm);
+  background: color-mix(in srgb, var(--bdm-surface-1) 60%, transparent);
+}
+
+.staff-department-detail__stack-segment {
+  width: 100%;
 }

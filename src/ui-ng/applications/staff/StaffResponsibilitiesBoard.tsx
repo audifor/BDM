@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import type { SetTeamResponsibilityInput } from '@/app/staffResponsibilities'
-import type { ResponsibilityMode } from '@/domain/responsibility'
+import { RESPONSIBILITY_MODES, type ResponsibilityMode } from '@/domain/responsibility'
 import type { StaffPersonId, TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import {
@@ -40,7 +40,7 @@ export function StaffResponsibilitiesBoard({
     <div className="staff-workspace__split">
       <div className="staff-workspace__panel ng-holo-panel">
         <NgPrecisionTable
-          className="staff-workspace__table"
+          className="staff-workspace__table staff-responsibilities__table"
           columns={ngTableColumns(rows, [
             ngCol('kind', 'Responsibility', (row) => RESPONSIBILITY_KIND_LABELS[row.kind], {
               value: (row) => RESPONSIBILITY_KIND_LABELS[row.kind],
@@ -48,10 +48,38 @@ export function StaffResponsibilitiesBoard({
             ngCol('domain', 'Domain', (row) => RESPONSIBILITY_DOMAIN_LABELS[row.domain], {
               value: (row) => RESPONSIBILITY_DOMAIN_LABELS[row.domain],
             }),
-            ngCol('control', 'Control', (row) => RESPONSIBILITY_MODE_LABELS[row.mode], {
+            ngCol('control', 'Control', (row) => (
+              <ResponsibilityModeSelect
+                onChange={(mode) => {
+                  if (onSetResponsibility === undefined) return
+                  const candidates = mode === 'delegated' || mode === 'advisory'
+                    ? getEligibleResponsibilityCandidates(world, teamId, row.kind, mode)
+                    : []
+                  onSetResponsibility({
+                    teamId,
+                    kind: row.kind,
+                    mode,
+                    ...(candidates[0] === undefined ? {} : { holderStaffId: candidates[0].staffPersonId }),
+                  })
+                }}
+                responsibility={row}
+                disabled={onSetResponsibility === undefined}
+              />
+            ), {
               value: (row) => RESPONSIBILITY_MODE_LABELS[row.mode],
             }),
-            ngCol('holder', 'Holder', (row) => row.holderLabel, { value: (row) => row.holderLabel }),
+            ngCol('holder', 'Holder', (row) => (
+              <ResponsibilityHolderSelect
+                onChange={(holderStaffId) => {
+                  if (onSetResponsibility === undefined) return
+                  onSetResponsibility({ teamId, kind: row.kind, mode: row.mode, holderStaffId })
+                }}
+                responsibility={row}
+                disabled={onSetResponsibility === undefined}
+                world={world}
+                teamId={teamId}
+              />
+            ), { value: (row) => row.holderLabel }),
             ngCol('role', 'Role', (row) => (row.holderRole === undefined ? '—' : STAFF_ROLE_LABELS[row.holderRole]), {
               value: (row) => (row.holderRole === undefined ? '—' : STAFF_ROLE_LABELS[row.holderRole]),
             }),
@@ -80,6 +108,71 @@ export function StaffResponsibilitiesBoard({
         <ResponsibilityInspector onApply={onSetResponsibility} responsibility={selected} teamId={teamId} world={world} />
       ) : null}
     </div>
+  )
+}
+
+function ResponsibilityModeSelect({
+  responsibility,
+  onChange,
+  disabled,
+}: {
+  readonly responsibility: StaffResponsibilityPresentationItem
+  readonly onChange: (mode: ResponsibilityMode) => void
+  readonly disabled: boolean
+}) {
+  return (
+    <select
+      aria-label={`Control for ${RESPONSIBILITY_KIND_LABELS[responsibility.kind]}`}
+      className="ng-input staff-workspace__select"
+      disabled={disabled}
+      onChange={(event) => onChange(event.target.value as ResponsibilityMode)}
+      onClick={(event) => event.stopPropagation()}
+      value={responsibility.mode}
+    >
+      {RESPONSIBILITY_MODES.map((mode) => (
+        <option disabled={!responsibility.supportedModes.includes(mode)} key={mode} value={mode}>
+          {RESPONSIBILITY_MODE_LABELS[mode]}
+        </option>
+      ))}
+    </select>
+  )
+}
+
+function ResponsibilityHolderSelect({
+  responsibility,
+  onChange,
+  disabled,
+  world,
+  teamId,
+}: {
+  readonly responsibility: StaffResponsibilityPresentationItem
+  readonly onChange: (holderStaffId: StaffPersonId) => void
+  readonly disabled: boolean
+  readonly world: GameWorld
+  readonly teamId: TeamId
+}) {
+  const requiresStaff = responsibility.mode === 'delegated' || responsibility.mode === 'advisory'
+  if (!requiresStaff || responsibility.eligibleParticipant === 'coach') {
+    return <span>{responsibility.holderLabel}</span>
+  }
+
+  const candidates = getEligibleResponsibilityCandidates(world, teamId, responsibility.kind, responsibility.mode)
+  return (
+    <select
+      aria-label={`Holder for ${RESPONSIBILITY_KIND_LABELS[responsibility.kind]}`}
+      className="ng-input staff-workspace__select"
+      disabled={disabled || candidates.length === 0}
+      onChange={(event) => onChange(event.target.value as StaffPersonId)}
+      onClick={(event) => event.stopPropagation()}
+      value={responsibility.holderStaffId ?? ''}
+    >
+      {candidates.length === 0 ? <option value="">No eligible staff</option> : null}
+      {candidates.map((candidate) => (
+        <option key={candidate.staffPersonId} value={candidate.staffPersonId}>
+          {candidate.name}
+        </option>
+      ))}
+    </select>
   )
 }
 

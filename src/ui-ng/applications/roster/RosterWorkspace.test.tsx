@@ -152,6 +152,10 @@ describe('CanonicalRoster NG variant', () => {
 
     const inspector = screen.getByRole('complementary', { name: 'Inspector del jugador' })
     expect(inspector).toHaveClass('canonical-roster__inspector')
+    expect(inspector.querySelector('.canonical-roster__inspector-portrait img')).toHaveAttribute(
+      'src',
+      expect.stringContaining('player-portrait-placeholder'),
+    )
     expect(inspector.textContent).toContain(player.firstName)
     expect(inspector.textContent).toContain(player.lastName)
     expect(inspector.textContent).toContain(String(player.bio.heightCm))

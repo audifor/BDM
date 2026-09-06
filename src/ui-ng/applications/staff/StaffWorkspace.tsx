@@ -1,17 +1,21 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 
 import type { StaffPersonId } from '@/domain/ids'
+import type { StaffDepartment } from '@/domain/staff'
 
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
 import { deriveTeamColors } from '@/ui-ng/applications/player/data/presentationHelpers'
 import { StaffAdvisoryBoard } from '@/ui-ng/applications/staff/StaffAdvisoryBoard'
+import { useStaffDepartmentTabHover } from '@/ui-ng/applications/staff/StaffChrome'
+import { StaffDepartmentWorkspace } from '@/ui-ng/applications/staff/StaffDepartmentWorkspace'
 import { StaffDynamicsBoard } from '@/ui-ng/applications/staff/StaffDynamicsBoard'
 import { StaffPeopleBoard } from '@/ui-ng/applications/staff/StaffPeopleBoard'
 import { StaffPersonWorkspace } from '@/ui-ng/applications/staff/StaffPersonWorkspace'
 import { StaffResponsibilitiesBoard } from '@/ui-ng/applications/staff/StaffResponsibilitiesBoard'
 import { buildStaffWorkspaceModel } from '@/ui-ng/applications/staff/buildStaffWorkspaceModel'
 import {
+  parseStaffDepartment,
   STAFF_WORKSPACE_TABS,
   staffTabLabel,
   type StaffWorkspaceModel,
@@ -58,10 +62,32 @@ function useStaffIdFromUrl(): StaffPersonId | null {
   return staffId
 }
 
+function useStaffDepartmentFromUrl(): StaffDepartment | null {
+  const read = () => parseStaffDepartment(new URLSearchParams(window.location.search).get('staffDept'))
+  const [department, setDepartment] = useState(read)
+  useEffect(() => {
+    const sync = () => setDepartment(read())
+    window.addEventListener('bdm-ng-nav', sync)
+    window.addEventListener('popstate', sync)
+    return () => {
+      window.removeEventListener('bdm-ng-nav', sync)
+      window.removeEventListener('popstate', sync)
+    }
+  }, [])
+  return department
+}
+
 export function StaffWorkspace() {
   const staffId = useStaffIdFromUrl()
+  const department = useStaffDepartmentFromUrl()
+  const world = useGameStore((state) => state.world)
+  const team = useMemo(() => (world === null ? undefined : getUserTeam(world)), [world])
+
   if (staffId !== null) {
     return <StaffPersonWorkspace staffId={staffId} />
+  }
+  if (department !== null && world !== null && team !== undefined) {
+    return <StaffDepartmentWorkspace department={department} teamId={team.id} world={world} />
   }
   return <StaffBoardWorkspace />
 }
@@ -74,7 +100,7 @@ function StaffBoardWorkspace() {
   const grantStaffCareerRequest = useGameStore((state) => state.grantStaffCareerRequest)
   const declineStaffCareerRequest = useGameStore((state) => state.declineStaffCareerRequest)
   const [activeTab, setActiveTab] = useState<StaffWorkspaceTabId>('staff')
-  const [selectedStaffId, setSelectedStaffId] = useState<StaffPersonId | undefined>(undefined)
+  const departmentHover = useStaffDepartmentTabHover(null)
 
   const model = useMemo(() => (world === null ? null : buildStaffWorkspaceModel(world)), [world])
   const team = useMemo(() => (world === null ? undefined : getUserTeam(world)), [world])
@@ -116,20 +142,29 @@ function StaffBoardWorkspace() {
       <ApplicationWorkspace
         header={<StaffWorkspaceHeader model={model} />}
         tabs={
-          <WorkspaceTabs
-            activeTabId={activeTab}
-            onTabSelect={(tabId) => setActiveTab(tabId as StaffWorkspaceTabId)}
-            tabs={tabs}
-          />
+          <>
+            <WorkspaceTabs
+              activeTabId={activeTab}
+              onTabMouseEnter={(tabId) => {
+                if (tabId === 'staff') departmentHover.onTabMouseEnter()
+              }}
+              onTabMouseLeave={(tabId) => {
+                if (tabId === 'staff') departmentHover.onTabMouseLeave()
+              }}
+              onTabSelect={(tabId) => setActiveTab(tabId as StaffWorkspaceTabId)}
+              tabRef={departmentHover.tabButtonRef}
+              tabRefId="staff"
+              tabs={tabs}
+            />
+            {departmentHover.menu}
+          </>
         }
       >
         <ScrollRegion className="staff-workspace__scroll">
           {activeTab === 'staff' ? (
             <StaffPeopleBoard
-              onOpenStaff={navigateToStaff}
-              onSelectStaff={setSelectedStaffId}
-              selectedStaffId={selectedStaffId}
               staff={model.staff}
+              teamId={model.teamId}
               world={world}
             />
           ) : null}

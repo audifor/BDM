@@ -6,6 +6,7 @@ import type { TeamId } from '@/domain/ids'
 import { PlayPositionMark } from '@/ui-ng/components/PlayPositionMark'
 import { CountryNationalityMark } from '@/ui-ng/applications/player/components/CountryNationalityMark'
 import { buildRosterInspectorSeasonStats } from '@/ui-ng/applications/roster/buildRosterInspectorSeasonStats'
+import playerPortraitPlaceholder from '@/ui-ng/assets/images/player-portrait-placeholder.png'
 
 function InspectorMeasure({
   value,
@@ -55,6 +56,9 @@ export function RosterRowInspector({
       data-ng-region="roster-row-inspector"
     >
       <header className="canonical-roster__inspector-head">
+        <div aria-hidden className="canonical-roster__inspector-portrait">
+          <img alt="" src={playerPortraitPlaceholder} />
+        </div>
         <div className="canonical-roster__inspector-who">
           <button
             className="canonical-roster__player-link"

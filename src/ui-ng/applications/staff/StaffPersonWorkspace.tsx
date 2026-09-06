@@ -7,6 +7,7 @@ import { ratingTone } from '@/ui-ng/applications/player/data/ratingCatalog'
 import { DynamicsToneDot, DynamicsTonePair } from '@/ui-ng/applications/staff/DynamicsToneDot'
 import { StaffPersonIdentityBand } from '@/ui-ng/applications/staff/StaffPersonIdentityBand'
 import { buildStaffPersonWorkspaceModel } from '@/ui-ng/applications/staff/buildStaffPersonWorkspaceModel'
+import { useStaffDepartmentTabHover } from '@/ui-ng/applications/staff/StaffChrome'
 import {
   STAFF_PERSON_VIEWS,
   STAFF_PERSON_VIEW_LABELS,
@@ -19,7 +20,7 @@ import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPr
 import { ApplicationWorkspace } from '@/ui-ng/workspace/ApplicationWorkspace'
 import { ScrollRegion } from '@/ui-ng/workspace/ScrollRegion'
 import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
-import { syncStaffViewQuery } from '@/ui-ng/workspace/workspaceApps'
+import { navigateToStaffDepartment, syncStaffViewQuery } from '@/ui-ng/workspace/workspaceApps'
 
 import '@/ui-ng/applications/player/player-overview.css'
 import '@/ui-ng/applications/player/player-attributes.css'
@@ -31,6 +32,7 @@ export function StaffPersonWorkspace({ staffId }: { readonly staffId: StaffPerso
   const [activeView, setActiveViewState] = useState<StaffPersonViewId>(urlView)
   const [selectedGroupId, setSelectedGroupId] = useState<StaffAttributeGroupId | null>(null)
   const [selectedAttributeId, setSelectedAttributeId] = useState<string | null>(null)
+  const departmentHover = useStaffDepartmentTabHover(null)
 
   const model = useMemo(
     () => (world === null ? null : buildStaffPersonWorkspaceModel(world, staffId)),
@@ -62,11 +64,14 @@ export function StaffPersonWorkspace({ staffId }: { readonly staffId: StaffPerso
 
   const tabs = useMemo(
     () =>
-      STAFF_PERSON_VIEWS.map((id) => ({
-        id,
-        label: STAFF_PERSON_VIEW_LABELS[id],
-        active: id === activeView,
-      })),
+      [
+        { id: 'staff', label: 'Staff' },
+        ...STAFF_PERSON_VIEWS.map((id) => ({
+          id,
+          label: STAFF_PERSON_VIEW_LABELS[id],
+          active: id === activeView,
+        })),
+      ],
     [activeView],
   )
 
@@ -86,11 +91,28 @@ export function StaffPersonWorkspace({ staffId }: { readonly staffId: StaffPerso
       <ApplicationWorkspace
         identityBand={<StaffPersonIdentityBand model={model} />}
         tabs={
-          <WorkspaceTabs
-            activeTabId={activeView}
-            onTabSelect={(tabId) => setActiveView(tabId as StaffPersonViewId)}
-            tabs={tabs}
-          />
+          <>
+            <WorkspaceTabs
+              activeTabId={activeView}
+              onTabMouseEnter={(tabId) => {
+                if (tabId === 'staff') departmentHover.onTabMouseEnter()
+              }}
+              onTabMouseLeave={(tabId) => {
+                if (tabId === 'staff') departmentHover.onTabMouseLeave()
+              }}
+              onTabSelect={(tabId) => {
+                if (tabId === 'staff') {
+                  navigateToStaffDepartment(null)
+                } else {
+                  setActiveView(tabId as StaffPersonViewId)
+                }
+              }}
+              tabRef={departmentHover.tabButtonRef}
+              tabRefId="staff"
+              tabs={tabs}
+            />
+            {departmentHover.menu}
+          </>
         }
       >
         <ScrollRegion className="staff-person__scroll">

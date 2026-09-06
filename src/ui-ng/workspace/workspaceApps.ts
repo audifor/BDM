@@ -1,4 +1,5 @@
 import type { CompetitionId, PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
+import type { StaffDepartment } from '@/domain/staff'
 
 import type { EntityDestination } from '@/ui/navigation/entityNavigation'
 
@@ -205,6 +206,20 @@ export function syncStaffViewQuery(view: StaffPersonViewId) {
     url.searchParams.set('staffView', view)
   }
   window.history.replaceState(window.history.state, '', url)
+  notifyNgNavigation()
+}
+
+export function navigateToStaffDepartment(department: StaffDepartment | null) {
+  const url = new URL(window.location.href)
+  url.searchParams.set('app', 'staff')
+  url.searchParams.delete('staffId')
+  url.searchParams.delete('staffView')
+  if (department === null) {
+    url.searchParams.delete('staffDept')
+  } else {
+    url.searchParams.set('staffDept', department)
+  }
+  applyHistory(url, 'push')
   notifyNgNavigation()
 }
 

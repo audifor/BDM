@@ -47,13 +47,12 @@ describe('StaffWorkspace', () => {
     expect(
       screen.getByText((_, element) => element?.classList.contains('staff-workspace-header__team') === true && element.textContent === team.name),
     ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: `${person.identity.firstName} ${person.identity.lastName}` })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'ng-staff-people' })).not.toBeInTheDocument()
     expect(screen.getAllByText(STAFF_ROLE_LABELS.assistantCoach).length).toBeGreaterThan(0)
     expect(screen.getAllByText(STAFF_ROLE_LABELS.regionalScout).length).toBeGreaterThan(0)
     expect(screen.getAllByText(STAFF_ROLE_LABELS.physiotherapist).length).toBeGreaterThan(0)
-    expect(screen.getByText('Role evaluation')).toBeInTheDocument()
     for (const key of STAFF_PROFESSIONAL_ATTRIBUTE_KEYS) {
-      expect(screen.getByText(STAFF_PROFESSIONAL_ATTRIBUTE_LABELS[key])).toBeInTheDocument()
+      expect(screen.getAllByText(STAFF_PROFESSIONAL_ATTRIBUTE_LABELS[key]).length).toBeGreaterThan(0)
     }
   })
 
@@ -87,11 +86,13 @@ describe('StaffWorkspace', () => {
     expect(screen.queryByText('VERY WEAK')).not.toBeInTheDocument()
   })
 
-  it('opens the individual staff dossier from a staff name', () => {
-    const { world, team } = mountStaffWorkspace()
+  it('opens the individual staff dossier from a direct staff route', () => {
+    const world = createNewGame()
+    const team = getUserTeam(world)!
     const assignment = Object.values(world.teamStaffAssignmentsById).find((item) => item.teamId === team.id)!
     const person = world.staffPeopleById[assignment.staffPersonId]!
-    fireEvent.click(screen.getByRole('button', { name: `${person.identity.firstName} ${person.identity.lastName}` }))
+    window.history.replaceState({}, '', `/?ui=ng&app=staff&staffId=${assignment.staffPersonId}`)
+    mountStaffWorkspace(world)
 
     expect(new URL(window.location.href).searchParams.get('staffId')).toBe(assignment.staffPersonId)
     expect(
@@ -102,6 +103,10 @@ describe('StaffWorkspace', () => {
     expect(screen.getByRole('button', { name: 'Contract' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'History' })).toBeInTheDocument()
     expect(screen.getByText('Role evaluation')).toBeInTheDocument()
+
+    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Staff' }))
+    expect(screen.getByRole('menuitem', { name: 'Overview' })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: 'COACHING' })).toBeInTheDocument()
   })
 })
 

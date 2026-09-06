@@ -27,7 +27,7 @@ describe('HomeWorkspace', () => {
     expect(screen.getByText('No career loaded.')).toBeInTheDocument()
   })
 
-  it('renders canonical continue and next-match facts from the live world', () => {
+  it('renders the manager dashboard from live world data', () => {
     const world = createNewGame()
     useGameStore.getState().replaceWorld(world)
     const team = getUserTeam(world)!
@@ -36,7 +36,14 @@ describe('HomeWorkspace', () => {
         <HomeWorkspace />
       </NgWorkspaceNavigationProvider>,
     )
-    expect(screen.getByText(team.name)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
+    expect(screen.getByText(team.name, { selector: '.ng-canon-header__team' })).toBeInTheDocument()
+    expect(document.querySelector('[data-ng-region="home-competition-calendar"]')).toBeInTheDocument()
+    expect(screen.getByText('Próximo partido')).toBeInTheDocument()
+    expect(screen.getByText('Clasificación')).toBeInTheDocument()
+    expect(screen.getByText('Líderes de la liga')).toBeInTheDocument()
+    expect(screen.getByText('Noticias del club')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Mes anterior' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Mes siguiente' })).toBeInTheDocument()
+    expect(screen.getByText('Inbox')).toBeInTheDocument()
   })
 })
