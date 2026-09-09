@@ -17,6 +17,7 @@ import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPr
 import { ApplicationWorkspace } from '@/ui-ng/workspace/ApplicationWorkspace'
 import { ScrollRegion } from '@/ui-ng/workspace/ScrollRegion'
 import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
+import { navigateToStaff } from '@/ui-ng/workspace/workspaceApps'
 
 const PERSON_STACK_COLORS = ['#7dd3fc', '#a78bfa', '#facc15', '#34d399', '#fb923c', '#f472b6', '#60a5fa', '#4ade80'] as const
 
@@ -146,7 +147,23 @@ function DepartmentPeopleTable({ people }: { readonly people: readonly StaffDepa
       <NgPrecisionTable
         className="staff-workspace__table"
         columns={ngTableColumns(rows, [
-          ngCol('name', 'Staff', (row) => row.name, { value: (row) => row.name }),
+          ngCol(
+            'name',
+            'Staff',
+            (row) => (
+              <button
+                className="staff-workspace__link"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  navigateToStaff(row.staffPersonId)
+                }}
+                type="button"
+              >
+                {row.name}
+              </button>
+            ),
+            { value: (row) => row.name },
+          ),
           ngCol('role', 'Role', (row) => STAFF_ROLE_LABELS[row.role], { value: (row) => STAFF_ROLE_LABELS[row.role] }),
           ngCol(
             'workload',

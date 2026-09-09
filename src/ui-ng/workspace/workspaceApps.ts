@@ -23,6 +23,7 @@ export const WORKSPACE_APP_IDS = [
   'draft',
   'trades',
   'club',
+  'team',
   'board',
   'finances',
   'enforcement',
@@ -60,6 +61,7 @@ export const WORKSPACE_TASKBAR_APPS: readonly WorkspaceTaskbarApp[] = [
   { id: 'draft', label: 'Draft' },
   { id: 'trades', label: 'Trades' },
   { id: 'club', label: 'Club' },
+  { id: 'team', label: 'Team' },
   { id: 'board', label: 'Board' },
   { id: 'finances', label: 'Finances' },
   { id: 'enforcement', label: 'Compliance' },
@@ -228,7 +230,7 @@ export function navigateToTeamInNg(
   method: 'push' | 'replace' = 'push',
 ) {
   const url = new URL(window.location.href)
-  url.searchParams.set('app', destination.section === 'overview' ? 'club' : 'roster')
+  url.searchParams.set('app', destination.section === 'squad' ? 'roster' : 'team')
   url.searchParams.set('teamId', destination.teamId)
   url.searchParams.delete('playerId')
   url.searchParams.delete('playerView')

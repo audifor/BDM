@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 
 import { parseGameDate } from '@/domain/date'
-import type { TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import {
@@ -15,7 +14,7 @@ import {
   type CalendarEvent,
   type CalendarGameEvent,
 } from '@/ui-ng/applications/competition/buildCompetitionWorkspaceModel'
-import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
+import { TeamLink } from '@/ui-ng/components/TeamLink'
 import { syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
 
 import '@/ui-ng/applications/competition/competition-workspace.css'
@@ -28,19 +27,14 @@ const STAKES_LABEL: Readonly<Record<CalendarGameEvent['stakes'], string | undefi
 }
 const WEEKDAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'] as const
 
-function TeamLink({ teamId, name }: { readonly teamId: TeamId; readonly name: string }) {
-  const { openEntity } = useNgWorkspaceNavigation()
-  return <button className="ng-canon__link" onClick={() => openEntity({ type: 'team', teamId, section: 'overview' })} type="button">{name}</button>
-}
-
 function CalendarEventCard({ event }: { readonly event: CalendarEvent }) {
   if (event.kind === 'game') {
     return (
       <div className={`competition-calendar__event is-${event.tone}`} title={event.competitionName}>
         <div className="competition-calendar__match">
-          <TeamLink name={event.homeName} teamId={event.homeTeamId} />
+          <TeamLink teamId={event.homeTeamId}>{event.homeName}</TeamLink>
           <span className="competition-calendar__score">{event.scoreLabel}</span>
-          <TeamLink name={event.awayName} teamId={event.awayTeamId} />
+          <TeamLink teamId={event.awayTeamId}>{event.awayName}</TeamLink>
         </div>
         {STAKES_LABEL[event.stakes] === undefined ? null : <span className="competition-calendar__stakes">{STAKES_LABEL[event.stakes]}</span>}
       </div>

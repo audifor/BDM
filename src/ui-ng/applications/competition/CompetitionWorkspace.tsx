@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 
 import { parseGameDate } from '@/domain/date'
-import type { CompetitionId, TeamId } from '@/domain/ids'
+import type { CompetitionId } from '@/domain/ids'
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
 import {
@@ -23,6 +23,7 @@ import {
 import { standingsZoneClassName, standingsZoneForPosition } from '@/ui-ng/applications/competition/standingsZones'
 import { StandingsZoneLegend } from '@/ui-ng/applications/competition/StandingsZoneLegend'
 import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
+import { TeamLink } from '@/ui-ng/components/TeamLink'
 import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
 import { useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 import { navigateToPlayer, syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
@@ -38,19 +39,6 @@ const STAKES_LABEL: Readonly<Record<CalendarGameEvent['stakes'], string | undefi
 
 const WEEKDAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'] as const
 
-function TeamLink({ teamId, name }: { readonly teamId: TeamId; readonly name: string }) {
-  const { openEntity } = useNgWorkspaceNavigation()
-  return (
-    <button
-      className="ng-canon__link"
-      onClick={() => openEntity({ type: 'team', teamId, section: 'overview' })}
-      type="button"
-    >
-      {name}
-    </button>
-  )
-}
-
 function CompetitionGamesTable({
   games,
   gridId,
@@ -65,7 +53,7 @@ function CompetitionGamesTable({
       className="ng-canon__table"
       columns={ngTableColumns(games, [
         ngCol('date', 'Fecha', (row) => row.date, { defaultWidth: 108, value: (row) => row.date }),
-        ngCol('home', 'Local', (row) => <TeamLink name={row.homeName} teamId={row.homeTeamId} />, {
+        ngCol('home', 'Local', (row) => <TeamLink teamId={row.homeTeamId}>{row.homeName}</TeamLink>, {
           value: (row) => row.homeName,
         }),
         ngCol('score', 'Res', (row) => row.scoreLabel, {
@@ -73,7 +61,7 @@ function CompetitionGamesTable({
           defaultWidth: 96,
           value: (row) => row.scoreLabel,
         }),
-        ngCol('away', 'Visitante', (row) => <TeamLink name={row.awayName} teamId={row.awayTeamId} />, {
+        ngCol('away', 'Visitante', (row) => <TeamLink teamId={row.awayTeamId}>{row.awayName}</TeamLink>, {
           value: (row) => row.awayName,
         }),
         ...(showAction
@@ -107,9 +95,9 @@ function CalendarEventCard({ event }: { readonly event: CalendarEvent }) {
           <span className="competition-calendar__comp">{event.competitionName}</span>
         )}
         <div className="competition-calendar__match">
-          <TeamLink name={event.homeName} teamId={event.homeTeamId} />
+          <TeamLink teamId={event.homeTeamId}>{event.homeName}</TeamLink>
           <span className="competition-calendar__score">{event.scoreLabel}</span>
-          <TeamLink name={event.awayName} teamId={event.awayTeamId} />
+          <TeamLink teamId={event.awayTeamId}>{event.awayName}</TeamLink>
         </div>
         {stakes === undefined ? null : <span className="competition-calendar__stakes">{stakes}</span>}
       </div>
@@ -297,7 +285,7 @@ export function CompetitionWorkspace() {
                 teamName: world.teams[row.teamId]?.name ?? row.teamId,
               })), [
                 ngCol('position', '#', (row) => row.position, { defaultWidth: 44, numeric: true, value: (row) => row.position }),
-                ngCol('team', 'Equipo', (row) => <TeamLink name={row.teamName} teamId={row.teamId} />, {
+                ngCol('team', 'Equipo', (row) => <TeamLink teamId={row.teamId}>{row.teamName}</TeamLink>, {
                   value: (row) => row.teamName,
                 }),
                 ngCol('played', 'PJ', (row) => row.played, { defaultWidth: 52, numeric: true, value: (row) => row.played }),

@@ -1,0 +1,536 @@
+.team-workspace {
+  --ng-workspace-header-height: 92px;
+  --team-crest-tile: color-mix(in srgb, var(--po-team-muted) 16%, transparent);
+  height: 100%;
+  min-height: 0;
+  background: var(--ng-bg-workspace);
+}
+
+.team-workspace--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.team-workspace__empty-state {
+  display: grid;
+  justify-items: center;
+  gap: var(--ng-spacing-8);
+  max-width: 460px;
+  padding: var(--ng-spacing-24);
+  text-align: center;
+}
+
+.team-workspace__empty-title {
+  margin: 0;
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-text-2xl);
+  letter-spacing: var(--ng-track-display);
+  color: var(--ng-text-primary);
+}
+
+.team-workspace__empty-message {
+  margin: 0;
+  font-size: var(--ng-text-md);
+  color: var(--ng-text-secondary);
+}
+
+/* ---------------------------------------------------------------- header */
+.team-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ng-spacing-24);
+  height: 100%;
+  width: 100%;
+  padding: 0 var(--ng-spacing-24);
+  background: linear-gradient(180deg, var(--team-crest-tile), transparent 78%);
+  border-bottom: 1px solid color-mix(in srgb, var(--po-team-secondary) 22%, var(--ng-border-subtle));
+}
+
+.team-header__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--ng-spacing-16);
+  min-width: 0;
+}
+
+.team-header__crest {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--ng-radius-panel);
+  background: color-mix(in srgb, var(--po-team-primary) 14%, var(--ng-bg-panel-primary));
+  border: 1px solid color-mix(in srgb, var(--po-team-primary) 32%, var(--ng-border-subtle));
+}
+
+.team-header__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.team-header__name {
+  margin: 0;
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-font-size-entity);
+  font-weight: var(--ng-font-weight-bold);
+  letter-spacing: var(--ng-track-display);
+  color: var(--ng-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-header__context {
+  display: flex;
+  align-items: center;
+  gap: var(--ng-spacing-8);
+  font-size: var(--ng-text-sm);
+  color: var(--ng-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-header__context-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-header__context span:last-child {
+  flex: 0 0 auto;
+}
+
+.team-header__divider {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 12px;
+  background: var(--ng-border-subtle);
+}
+
+.team-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ng-spacing-8);
+  flex: 0 0 auto;
+}
+
+/* ------------------------------------------------------------- overview */
+.team-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: var(--ng-panel-gap, var(--ng-spacing-16));
+  align-items: start;
+  padding: var(--ng-spacing-16);
+}
+
+.team-overview__main {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ng-panel-gap, var(--ng-spacing-16));
+  align-items: start;
+  min-width: 0;
+}
+
+.team-overview__main--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.team-overview__rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ng-panel-gap, var(--ng-spacing-16));
+  min-width: 0;
+}
+
+/* ----------------------------------------------------------------- panel */
+.team-workspace .team-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.team-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ng-spacing-8);
+  min-height: 30px;
+  padding: 6px var(--ng-spacing-12);
+  border-bottom: 1px solid var(--ng-border-subtle);
+  background: var(--ng-bg-panel-secondary);
+}
+
+.team-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ng-spacing-8);
+  padding: var(--ng-spacing-8) var(--ng-spacing-12) var(--ng-spacing-12);
+}
+
+.team-panel__body > *:last-child {
+  margin-bottom: 0;
+}
+
+/* ------------------------------------------------------ team facts block */
+.team-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px var(--ng-spacing-24);
+}
+
+.team-fact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--ng-spacing-8);
+  min-height: 22px;
+  padding: 3px 0;
+  border-bottom: 1px dotted var(--ng-border-subtle);
+}
+
+.team-fact:last-child,
+.team-fact:nth-last-child(2):nth-child(odd) {
+  border-bottom: 0;
+}
+
+.team-fact__label {
+  font-size: var(--ng-text-xs);
+  letter-spacing: 0.02em;
+  color: var(--ng-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-fact__value {
+  font-size: var(--ng-text-sm);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-primary);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------- people block */
+.team-people {
+  display: grid;
+  gap: 2px;
+}
+
+.team-person {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--ng-spacing-8);
+  min-height: 26px;
+  padding: 3px 0;
+  border-bottom: 1px dotted var(--ng-border-subtle);
+}
+
+.team-person:last-child {
+  border-bottom: 0;
+}
+
+.team-person__name {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+}
+
+.team-person__name.ng-canon__link {
+  font-weight: var(--ng-font-weight-bold);
+}
+
+.team-person__role {
+  font-size: var(--ng-text-xs);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------- competition block */
+.team-comps {
+  display: grid;
+  gap: 6px;
+}
+
+.team-comp {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px var(--ng-spacing-12);
+  padding: 6px 0;
+  border-bottom: 1px dotted var(--ng-border-subtle);
+}
+
+.team-comp:last-child {
+  border-bottom: 0;
+}
+
+.team-comp__link {
+  grid-column: 1 / 2;
+}
+
+.team-comp__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px var(--ng-spacing-8);
+  min-width: 0;
+}
+
+.team-comp__season {
+  font-size: var(--ng-text-xs);
+  color: var(--ng-text-secondary);
+}
+
+.team-comp__line {
+  grid-column: 2 / 3;
+  grid-row: 1 / span 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+}
+
+.team-comp__pos {
+  font-family: var(--ng-font-data);
+  font-size: var(--ng-text-lg);
+  font-weight: var(--ng-font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--ng-cyan);
+}
+
+.team-comp__record {
+  font-size: var(--ng-text-xs);
+  color: var(--ng-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------- results block */
+.team-results {
+  display: grid;
+  gap: 2px;
+}
+
+.team-result {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: var(--ng-spacing-8);
+  padding: 4px 0;
+  border-bottom: 1px dotted var(--ng-border-subtle);
+}
+
+.team-result:last-child {
+  border-bottom: 0;
+}
+
+.team-result__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: start;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--ng-radius-sm);
+  font-family: var(--ng-font-data);
+  font-size: var(--ng-text-2xs);
+  font-weight: var(--ng-font-weight-bold);
+  line-height: 1;
+}
+
+.team-result__badge.is-win {
+  color: #06140b;
+  background: var(--ng-cyan);
+}
+
+.team-result__badge.is-loss {
+  color: #1b0d0f;
+  background: var(--ng-amber);
+}
+
+.team-result__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.team-result__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ng-spacing-8);
+  min-width: 0;
+}
+
+.team-result__top .ng-canon__link {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-result__score {
+  font-family: var(--ng-font-data);
+  font-size: var(--ng-text-sm);
+  font-weight: var(--ng-font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.team-result__score.is-win {
+  color: var(--ng-cyan);
+}
+
+.team-result__score.is-loss {
+  color: var(--ng-text-secondary);
+}
+
+.team-result__sub {
+  font-size: var(--ng-text-xs);
+  color: var(--ng-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* -------------------------------------------------------------- form strip */
+.team-form {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--ng-border-subtle);
+}
+
+.team-form__label {
+  margin-right: auto;
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-text-xs);
+  letter-spacing: var(--ng-track-meta);
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.team-form__letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--ng-radius-sm);
+  font-family: var(--ng-font-data);
+  font-size: var(--ng-text-2xs);
+  font-weight: var(--ng-font-weight-bold);
+  line-height: 1;
+}
+
+.team-form__letter.is-win {
+  color: #06140b;
+  background: var(--ng-cyan);
+}
+
+.team-form__letter.is-loss {
+  color: #1b0d0f;
+  background: var(--ng-amber);
+}
+
+/* ------------------------------------------------------------ honours block */
+.team-honours {
+  display: grid;
+  gap: 2px;
+}
+
+.team-honour {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: var(--ng-spacing-8);
+  padding: 4px 0;
+  border-bottom: 1px dotted var(--ng-border-subtle);
+}
+
+.team-honour:last-child {
+  border-bottom: 0;
+}
+
+.team-honour__medal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--ng-radius-sm);
+  background: color-mix(in srgb, var(--ng-amber) 22%, transparent);
+  color: var(--ng-amber-bright);
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-text-xs);
+  font-weight: var(--ng-font-weight-black);
+}
+
+.team-honour__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.team-honour__name {
+  font-size: var(--ng-text-sm);
+  font-weight: var(--ng-font-weight-semibold);
+  color: var(--ng-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-honour__meta {
+  font-size: var(--ng-text-xs);
+  color: var(--ng-text-muted);
+}
+
+/* ------------------------------------------------------------------ chips */
+.team-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border: 1px solid var(--ng-border-subtle);
+  border-radius: var(--ng-radius-sm);
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-text-2xs);
+  font-weight: var(--ng-font-weight-semibold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ng-text-secondary);
+  white-space: nowrap;
+}
+
+.team-chip--cyan {
+  border-color: color-mix(in srgb, var(--ng-cyan) 40%, var(--ng-border-subtle));
+  color: var(--ng-cyan);
+}
+
+/* -------------------------------------------------------------- placeholder */
+.team-workspace__placeholder {
+  display: grid;
+  justify-items: center;
+  gap: var(--ng-spacing-8);
+  padding: var(--ng-spacing-32);
+  text-align: center;
+}
+
+.team-workspace__placeholder-text {
+  margin: 0;
+  font-size: var(--ng-text-md);
+  color: var(--ng-text-secondary);
+}

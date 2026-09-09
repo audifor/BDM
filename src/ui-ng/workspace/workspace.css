@@ -186,6 +186,12 @@
   background: transparent;
 }
 
+.ng-workspace-tabs__tab:disabled {
+  color: var(--ng-text-disabled);
+  cursor: default;
+  opacity: 0.55;
+}
+
 .ng-workspace-tabs__tab.is-active {
   border-bottom-color: var(--ng-cyan);
   background: transparent;

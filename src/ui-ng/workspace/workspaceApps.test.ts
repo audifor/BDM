@@ -22,6 +22,7 @@ describe('workspaceApps navigation', () => {
     expect(parseWorkspaceApp('medical')).toBe('medical')
     expect(parseWorkspaceApp('recruiting')).toBe('recruiting')
     expect(parseWorkspaceApp('schedule')).toBe('schedule')
+    expect(parseWorkspaceApp('team')).toBe('team')
     expect(parseWorkspaceApp('invalid')).toBe('home')
     expect(parseWorkspaceApp(null)).toBe('home')
     expect(parseWorkspacePlayerId('player-1')).toBe('player-1')
@@ -87,7 +88,7 @@ describe('workspaceApps navigation', () => {
     expect(url.searchParams.get('playerView')).toBe('medical')
   })
 
-  it('navigateToTeamInNg opens the profile of the clicked club', () => {
+  it('navigateToTeamInNg opens the canonical team dossier of the clicked club', () => {
     window.history.replaceState({}, '', '/?ui=ng&playerId=player-1')
     const pushState = vi.spyOn(window.history, 'pushState')
     const teamId = 'team:leyma' as TeamId
@@ -96,7 +97,7 @@ describe('workspaceApps navigation', () => {
 
     expect(pushState).toHaveBeenCalled()
     const url = new URL(window.location.href)
-    expect(url.searchParams.get('app')).toBe('club')
+    expect(url.searchParams.get('app')).toBe('team')
     expect(url.searchParams.get('teamId')).toBe(teamId)
     expect(url.searchParams.get('playerId')).toBeNull()
     expect(url.searchParams.get('playerView')).toBeNull()

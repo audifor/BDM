@@ -23,6 +23,7 @@ import { ScheduleWorkspace } from '@/ui-ng/applications/schedule/ScheduleWorkspa
 import { ScoutingWorkspace } from '@/ui-ng/applications/scouting/ScoutingWorkspace'
 import { StaffWorkspace } from '@/ui-ng/applications/staff/StaffWorkspace'
 import { TacticsWorkspace } from '@/ui-ng/applications/tactics/TacticsWorkspace'
+import { TeamWorkspace } from '@/ui-ng/applications/team/TeamWorkspace'
 import { TradesWorkspace } from '@/ui-ng/applications/trades/TradesWorkspace'
 import { TrainingWorkspace } from '@/ui-ng/applications/training/TrainingWorkspace'
 import { useGameStore } from '@/stores/gameStore'
@@ -50,6 +51,7 @@ const WORKSPACES = {
   draft: DraftWorkspace,
   trades: TradesWorkspace,
   club: ClubWorkspace,
+  team: TeamWorkspace,
   board: BoardWorkspace,
   finances: FinancesWorkspace,
   enforcement: EnforcementWorkspace,
