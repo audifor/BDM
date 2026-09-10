@@ -8,3 +8,4 @@ export * from "./GovernanceCommitment";
 export * from "./GovernanceInteraction";
 export * from './GovernanceUniverseProfile'
 export * from './GovernanceInstitutionStructure'
+export * from './GovernanceStructureInstantiation'
