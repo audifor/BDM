@@ -6,3 +6,4 @@ export * from "./GovernanceMeeting";
 export * from "./GovernanceRequest";
 export * from "./GovernanceCommitment";
 export * from "./GovernanceInteraction";
+export * from './GovernanceUniverseProfile'
