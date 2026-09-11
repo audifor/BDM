@@ -32,6 +32,7 @@ export function TacticalPanel({
   draft,
   onDraftChange,
   onApplyTactics,
+  tacticalError,
   players,
   activeLineup,
   canApplySubs,
@@ -52,6 +53,7 @@ export function TacticalPanel({
   readonly draft: MatchTacticalPlan
   readonly onDraftChange: (plan: MatchTacticalPlan) => void
   readonly onApplyTactics: (plan: MatchTacticalPlan) => void
+  readonly tacticalError?: string | null
   readonly players: readonly Player[]
   readonly activeLineup: readonly PlayerId[]
   readonly canApplySubs: boolean
@@ -124,6 +126,7 @@ export function TacticalPanel({
           {(tab === 'general' || tab === 'ataque' || tab === 'defensa') && (
             <TacticalSettings
               draft={draft}
+              error={tacticalError ?? null}
               mode={tab}
               onApply={() => onApplyTactics(draft)}
               onChange={onDraftChange}
@@ -265,11 +268,13 @@ function TacticalSettings({
   onChange,
   onApply,
   mode,
+  error,
 }: {
   readonly draft: MatchTacticalPlan
   readonly onChange: (plan: MatchTacticalPlan) => void
   readonly onApply: () => void
   readonly mode: TacticalPanelTab
+  readonly error?: string | null
 }) {
   const pace = paceToSlider(draft.pace)
   return (
@@ -340,6 +345,11 @@ function TacticalSettings({
             <option value={2}>Agresivo</option>
           </select>
         </label>
+      )}
+      {error !== null && error !== undefined && (
+        <p className="me-settings__error" role="alert">
+          {error}
+        </p>
       )}
       <button className="me-settings__apply" onClick={onApply} type="button">
         Aplicar plan

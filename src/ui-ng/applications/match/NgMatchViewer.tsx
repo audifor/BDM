@@ -50,6 +50,7 @@ export function NgMatchViewer() {
   const skipLiveMatch = useGameStore((state) => state.skipLiveMatch)
   const applyLiveTactics = useGameStore((state) => state.applyLiveTactics)
   const applyManualSubstitutions = useGameStore((state) => state.applyManualSubstitutions)
+  const currentLiveMatchSnapshot = useGameStore((state) => state.currentLiveMatchSnapshot)
   const simulation = useMatchViewerStore((state) => state.simulation)
   const isPlaying = useMatchViewerStore((state) => state.isPlaying)
   const speed = useMatchViewerStore((state) => state.speed)
@@ -67,6 +68,7 @@ export function NgMatchViewer() {
   const [tacticalTab, setTacticalTab] = useState<TacticalPanelTab>('general')
   const [boxScoresCollapsed, setBoxScoresCollapsed] = useState(false)
   const [draft, setDraft] = useState(coachingPlan)
+  const [tacticalError, setTacticalError] = useState<string | null>(null)
   const [segment, setSegment] = useState<MatchPresentationSegment | null>(null)
   const [presentationProgress, setPresentationProgress] = useState(0)
   const requestingSegmentRef = useRef(false)
@@ -348,14 +350,20 @@ export function NgMatchViewer() {
           energyPercent={energyPercent}
           fatigueByPlayerId={fatigueByPlayerId}
           onApplySubs={(substitutions) => {
-            replaceSimulation(applyManualSubstitutions(coachingTeamId, substitutions), false)
+            const result = applyManualSubstitutions(coachingTeamId, substitutions)
+            if (result.status !== 'applied') throw new Error(result.message)
+            replaceSimulation(currentLiveMatchSnapshot(), false)
             setTacticalTab('general')
           }}
           onApplyTactics={(plan: MatchTacticalPlan) => {
-            replaceSimulation(applyLiveTactics(coachingTeamId, plan), false)
+            const result = applyLiveTactics(coachingTeamId, plan)
+            if (result.status !== 'applied') { setTacticalError(result.message); return }
+            setTacticalError(null)
+            replaceSimulation(currentLiveMatchSnapshot(), false)
             setCoachingPlan(plan)
             setTacticalTab('general')
           }}
+          tacticalError={tacticalError}
           onDraftChange={setDraft}
           onStageModeChange={setStageMode}
           onTabChange={(tab) => {
@@ -363,6 +371,7 @@ export function NgMatchViewer() {
             if (tab === 'jugadores' || tab === 'ataque' || tab === 'defensa') {
               pause()
               setDraft(coachingPlan)
+              setTacticalError(null)
             }
             setTacticalTab(tab)
           }}

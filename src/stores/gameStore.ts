@@ -20,6 +20,7 @@ import { getRecentCoachReputationEvents, type CoachReputationProfile } from '@/d
 import { purchaseCoachPerk, purchaseCoachSkillRank, type CoachRpgOperationResult } from '@/engine/coach'
 import type { ManualSubstitution, MatchSimulation, MatchTacticalPlan } from '@/engine/match'
 import type { LiveMatchController, LiveMatchStep } from '@/app/game'
+import type { LiveCoachingCommandResult } from '@/app/game/LiveCoachingCommand'
 import { create } from 'zustand'
 import { acceptCoachJobOffer, applyUserCoachForJob, declineCoachJobOffer } from '@/app/coachCareer'
 import { getCareerFatigueForPlayer, getLatestTrainingSession, getTrainingPlanForTeam } from '@/domain/world'
@@ -62,8 +63,9 @@ interface GameStore {
   advanceLiveMatch(): MatchSimulation
   advanceLiveMatchPresentation(): LiveMatchStep
   skipLiveMatch(): MatchSimulation
-  applyLiveTactics(teamId: MatchSimulation['homeTeamId'], tacticalPlan: MatchTacticalPlan): MatchSimulation
-  applyManualSubstitutions(teamId: MatchSimulation['homeTeamId'], substitutions: readonly ManualSubstitution[]): MatchSimulation
+  applyLiveTactics(teamId: MatchSimulation['homeTeamId'], tacticalPlan: MatchTacticalPlan): LiveCoachingCommandResult
+  applyManualSubstitutions(teamId: MatchSimulation['homeTeamId'], substitutions: readonly ManualSubstitution[]): LiveCoachingCommandResult
+  currentLiveMatchSnapshot(): MatchSimulation
   completeMatch(simulation: MatchSimulation): void
   instantResult(tacticalPlan?: MatchTacticalPlan): void
   playUserGame(): void
@@ -139,6 +141,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   skipLiveMatch: () => requireLiveController().skipToEnd(),
   applyLiveTactics: (teamId, tacticalPlan) => requireLiveController().applyTactics(teamId, tacticalPlan),
   applyManualSubstitutions: (teamId, substitutions) => requireLiveController().applyManualSubstitutions(teamId, substitutions),
+  currentLiveMatchSnapshot: () => requireLiveController().snapshot(),
   completeMatch: (simulation) => {
     const world = requireWorld(get().world)
     set({ world: completeMatch(world, simulation) })

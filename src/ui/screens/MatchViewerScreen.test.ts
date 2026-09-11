@@ -17,8 +17,8 @@ function renderViewer(currentEventIndex = 0, isPlaying = true, resultApplied = f
     onPause: () => undefined, onResume: () => undefined, onSpeedChange: () => undefined, onRevealNext: () => undefined,
     onRequestPresentationSegment: () => { throw new Error('Presentation is not requested during static rendering') },
     onCompletePresentationSegment: () => undefined, onSkipToEnd: () => undefined, onApplyResult: () => undefined, onContinue: () => undefined,
-    coachingPlan: createDefaultTacticalPlan(), onApplyCoaching: () => undefined,
-    coachingPlayers: homeTeam.rosterPlayerIds.map((playerId) => world.players[playerId]!), coachingTeamId: homeTeam.id, onApplyManualSubstitutions: () => undefined,
+    coachingPlan: createDefaultTacticalPlan(), onApplyCoaching: () => ({ status: 'applied' as const }),
+    coachingPlayers: homeTeam.rosterPlayerIds.map((playerId) => world.players[playerId]!), coachingTeamId: homeTeam.id, onApplyManualSubstitutions: () => ({ status: 'applied' as const }),
   }))
 }
 

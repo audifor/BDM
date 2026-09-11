@@ -2,6 +2,7 @@ import { releasePlayer } from '@/app/market'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import type { MatchSimulation } from '@/engine/match'
+import type { LiveCoachingCommandResult } from '@/app/game/LiveCoachingCommand'
 
 import type { CommandResult } from './EntityCommand'
 
@@ -15,7 +16,10 @@ export type EntityActionExecution =
 /** Application boundary: only explicitly wired commands may mutate a GameWorld. */
 export interface EntityActionExecutionContext {
   readonly controlledTeamId?: TeamId
-  readonly activeMatchSession?: { applySubstitution(teamId: TeamId, playerOutId: PlayerId, playerInId: PlayerId): MatchSimulation }
+  readonly activeMatchSession?: {
+    applySubstitution(teamId: TeamId, playerOutId: PlayerId, playerInId: PlayerId): LiveCoachingCommandResult
+    snapshot(): MatchSimulation
+  }
 }
 type EntityCommandExecutor = (world: GameWorld, result: Extract<CommandResult, { readonly kind: 'command' }>, context: EntityActionExecutionContext) => EntityActionExecution
 
@@ -34,7 +38,10 @@ const substituteExecutor: EntityCommandExecutor = (_world, result, context) => {
   const payload = result.payload !== null && typeof result.payload === 'object' && !Array.isArray(result.payload) ? result.payload as Readonly<Record<string, unknown>> : undefined
   const playerInId = payload?.replacement
   if (typeof playerInId !== 'string') return { kind: 'rejected', reason: 'A replacement player is required' }
-  try { return { kind: 'sessionUpdated', simulation: context.activeMatchSession.applySubstitution(context.controlledTeamId, result.entity.id as PlayerId, playerInId as PlayerId) } } catch (error) { return { kind: 'rejected', reason: error instanceof Error ? error.message : 'Substitution was rejected' } }
+  const activeMatchSession = context.activeMatchSession
+  const outcome = activeMatchSession.applySubstitution(context.controlledTeamId, result.entity.id as PlayerId, playerInId as PlayerId)
+  if (outcome.status !== 'applied') return { kind: 'rejected', reason: outcome.message }
+  return { kind: 'sessionUpdated', simulation: activeMatchSession.snapshot() }
 }
 
 export const productionEntityActionExecutorRegistry = new EntityActionExecutorRegistry().register('player.release', releaseExecutor).register('player.substitute', substituteExecutor)
