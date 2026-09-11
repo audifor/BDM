@@ -12,6 +12,8 @@ import {
   simulateRemainingGamesToday,
 } from '@/app/game'
 import { releasePlayer, signFreeAgent } from '@/app/market'
+import { saveCurrentGame } from '@/app/save/GameSaveService'
+import type { GameSaveRepository } from '@/app/save/GameSaveRepository'
 import { organizationIdForTeam, type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
 import type { CoachPerkId, CoachSkillId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
@@ -67,6 +69,15 @@ interface GameStore {
   applyManualSubstitutions(teamId: MatchSimulation['homeTeamId'], substitutions: readonly ManualSubstitution[]): LiveCoachingCommandResult
   currentLiveMatchSnapshot(): MatchSimulation
   completeMatch(simulation: MatchSimulation): void
+  /**
+   * Persists the current world (already reflecting a match committed via
+   * completeMatch) through Save V3 (MG2D / MG1 BUG-5). Does not re-derive or
+   * re-simulate anything: it serializes whatever world is already in the store.
+   * A disk-save failure never masquerades as success — it is thrown, so the
+   * caller can distinguish "match committed to GameWorld" from "persisted to
+   * disk" and surface the failure instead of silently discarding it.
+   */
+  saveCompletedMatch(repository: GameSaveRepository, savedAt: string): Promise<void>
   instantResult(tacticalPlan?: MatchTacticalPlan): void
   playUserGame(): void
   simulateRemainingGamesToday(): void
@@ -147,6 +158,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ world: completeMatch(world, simulation) })
     liveController = null
   },
+  saveCompletedMatch: (repository, savedAt) => saveCurrentGame(requireWorld(get().world), repository, savedAt),
   instantResult: (tacticalPlan) => {
     const world = requireWorld(get().world)
     set({ world: instantResult(world, tacticalPlan) })

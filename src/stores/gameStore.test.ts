@@ -227,4 +227,41 @@ describe('gameStore', () => {
     expect(selectUserCoachRelationships(null)).toEqual([])
     expect(selectUserCoachRelationships(updated)).toEqual([updated.relationshipsByKey[`${world.userCoachId}->${player.id}`]])
   })
+
+  it('saveCompletedMatch persists the world already committed by completeMatch (MG2D / MG1 BUG-5)', async () => {
+    useGameStore.getState().newGame()
+    useGameStore.getState().startLiveMatch()
+    const finalSimulation = useGameStore.getState().skipLiveMatch()
+    useGameStore.getState().completeMatch(finalSimulation)
+    const committedWorld = useGameStore.getState().world!
+
+    let savedJson: string | null = null
+    const repository = {
+      save: async (envelopeJson: string) => { savedJson = envelopeJson },
+      load: async () => { throw new Error('unused') },
+      getInfo: async () => null,
+    }
+
+    await useGameStore.getState().saveCompletedMatch(repository, '2032-10-01T12:00:00.000Z')
+
+    expect(savedJson).not.toBeNull()
+    const envelope = JSON.parse(savedJson!)
+    expect(envelope.payload.games.find((game: { id: string }) => game.id === finalSimulation.gameId)?.status).toBe('completed')
+    expect(committedWorld.games[finalSimulation.gameId]?.status).toBe('completed')
+  })
+
+  it('saveCompletedMatch propagates a disk-save failure instead of reporting false success', async () => {
+    useGameStore.getState().newGame()
+    useGameStore.getState().startLiveMatch()
+    const finalSimulation = useGameStore.getState().skipLiveMatch()
+    useGameStore.getState().completeMatch(finalSimulation)
+
+    const failingRepository = {
+      save: async () => { throw new Error('disk is full') },
+      load: async () => { throw new Error('unused') },
+      getInfo: async () => null,
+    }
+
+    await expect(useGameStore.getState().saveCompletedMatch(failingRepository, '2032-10-01T12:00:00.000Z')).rejects.toThrow('disk is full')
+  })
 })

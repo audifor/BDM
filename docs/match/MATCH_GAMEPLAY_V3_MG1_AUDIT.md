@@ -220,6 +220,7 @@ Two parallel UI stacks exist: legacy (`src/ui/App.tsx`, reachable only via `?ui=
 **BUG-5 (P3).** No disk-persistence path exists on the default (NG) match-completion flow.
 - `saveCurrentGame`/`GameSaveService`/`TauriGameSaveRepository` are wired only into the legacy `?ui=legacy` UI's manual SAVE button. Zero references found anywhere in `src/ui-ng`.
 - A user playing exclusively through the default NG UI has no way to persist a completed match (or any world state) to disk short of falling back to legacy mode. This is likely a known gap in ongoing NG migration work rather than a match-specific defect, but it directly affects "does the match result survive," so it is recorded here.
+- **RESOLVED in MG2D** (`match-gameplay-v3-mg2d-completed-match-persistence`), specifically for the match-completion moment: `NgMatchViewer`'s completion effect now calls the existing Save V3 boundary (`saveCurrentGame`, via a new `gameStore.saveCompletedMatch` action) immediately after committing the match to `GameWorld`, so a completed NG match is written to disk without any manual action. Save failures are surfaced (not swallowed) via a new `matchSaveError` UI state. **Scope note**: this resolves the match-completion persistence gap specifically; it does not add a general NG save/load UI for other world mutations outside match completion — that remains a broader, unaddressed NG-migration gap. See `docs/match/MATCH_GAMEPLAY_V3_MG2D_REPORT.md`.
 
 ---
 
