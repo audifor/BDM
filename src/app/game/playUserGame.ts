@@ -1,7 +1,7 @@
 import type { Game } from '@/domain/game'
 import type { GameWorld } from '@/domain/world'
 import { getTeamLineup } from '@/domain/world'
-import { getLineupAssignments, PLAYERS_ON_COURT } from '@/domain/tactics'
+import { BENCH_SLOTS, getLineupAssignments, PLAYERS_ON_COURT } from '@/domain/tactics'
 import { BASKETBALL_POSITIONS } from '@/domain/primitives'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import { getGamesToday, getUserTeam } from '@/engine/calendar'
@@ -41,6 +41,21 @@ function resolveStartingFive(world: GameWorld, teamId: TeamId, onDate: Game['dat
   const availableSet = new Set(availableSquad)
   const isValidConfiguredLineup = starterIds.length === PLAYERS_ON_COURT && new Set(starterIds).size === PLAYERS_ON_COURT && starterIds.every((playerId) => availableSet.has(playerId))
   return isValidConfiguredLineup ? starterIds : selectStartingFive(world, teamId, onDate, availableSquad)
+}
+
+/**
+ * The team's configured bench priority (TeamLineup B1..B7 order), when one exists
+ * (MG2C / MG1 BUG-4): this is the only signal RotationPlan's default-rotation
+ * builder uses to break ties among an already-eligible bench pool. It never
+ * ranks player quality — an unconfigured team (including every AI team) simply
+ * has no priority list, and the rotation builder falls back to stable squad
+ * order on its own.
+ */
+function resolveBenchPriorityOrder(world: GameWorld, teamId: TeamId): readonly PlayerId[] {
+  const lineup = getTeamLineup(world, teamId)
+  return getLineupAssignments(lineup)
+    .filter((assignment) => (BENCH_SLOTS as readonly string[]).includes(assignment.slot))
+    .map((assignment) => assignment.playerId)
 }
 
 export class PlayUserGameError extends Error {
@@ -87,7 +102,7 @@ export function createLiveUserMatch(world: GameWorld, userTacticalPlan: MatchTac
   const squads = availableSquads(world, game)
   const lineups = { home: resolveStartingFive(world, game.homeTeamId, game.date, squads.home), away: resolveStartingFive(world, game.awayTeamId, game.date, squads.away) }
   const tacticalPlans = userTeam.id === game.homeTeamId ? { home: userTacticalPlan, away: createDefaultTacticalPlan() } : { home: createDefaultTacticalPlan(), away: userTacticalPlan }
-  return new LiveMatchController({ world, gameId: game.id, homeStrength: calculateTeamStrength(world, game.homeTeamId, game.date, squads.home), awayStrength: calculateTeamStrength(world, game.awayTeamId, game.date, squads.away), lineups, squads, playerProfiles: { home: squads.home.map((id) => createMatchPlayerProfile(world.players[id]!)), away: squads.away.map((id) => createMatchPlayerProfile(world.players[id]!)) }, homeRotationPlan: createDefaultRotationPlan({ teamId: game.homeTeamId, squad: squads.home, initialLineup: lineups.home, players: world.players }), awayRotationPlan: createDefaultRotationPlan({ teamId: game.awayTeamId, squad: squads.away, initialLineup: lineups.away, players: world.players }), random: createPrototypeGameRandom(game.id), decisionRandom: new SeededRandomSource(hashStringToSeed(`match-decisions-v1:${game.id}`)), actorRandom: new SeededRandomSource(hashStringToSeed(`match-actors-v1:${game.id}`)), tacticalPlans })
+  return new LiveMatchController({ world, gameId: game.id, homeStrength: calculateTeamStrength(world, game.homeTeamId, game.date, squads.home), awayStrength: calculateTeamStrength(world, game.awayTeamId, game.date, squads.away), lineups, squads, playerProfiles: { home: squads.home.map((id) => createMatchPlayerProfile(world.players[id]!)), away: squads.away.map((id) => createMatchPlayerProfile(world.players[id]!)) }, homeRotationPlan: createDefaultRotationPlan({ teamId: game.homeTeamId, squad: squads.home, initialLineup: lineups.home, players: world.players, benchPriorityOrder: resolveBenchPriorityOrder(world, game.homeTeamId) }), awayRotationPlan: createDefaultRotationPlan({ teamId: game.awayTeamId, squad: squads.away, initialLineup: lineups.away, players: world.players, benchPriorityOrder: resolveBenchPriorityOrder(world, game.awayTeamId) }), random: createPrototypeGameRandom(game.id), decisionRandom: new SeededRandomSource(hashStringToSeed(`match-decisions-v1:${game.id}`)), actorRandom: new SeededRandomSource(hashStringToSeed(`match-actors-v1:${game.id}`)), tacticalPlans })
 }
 
 export function prepareMatch(world: GameWorld, game: Game, tacticalPlans?: { home: MatchTacticalPlan; away: MatchTacticalPlan }): MatchSimulation {
@@ -104,8 +119,8 @@ export function prepareMatch(world: GameWorld, game: Game, tacticalPlans?: { hom
     lineups,
     squads,
     playerProfiles,
-    homeRotationPlan: homeGamePlan?.rotationOverride??world.rotationPlansByTeamId[game.homeTeamId]??createDefaultRotationPlan({ teamId: game.homeTeamId, squad: squads.home, initialLineup: lineups.home, players: world.players }),
-    awayRotationPlan: awayGamePlan?.rotationOverride??world.rotationPlansByTeamId[game.awayTeamId]??createDefaultRotationPlan({ teamId: game.awayTeamId, squad: squads.away, initialLineup: lineups.away, players: world.players }),
+    homeRotationPlan: homeGamePlan?.rotationOverride??world.rotationPlansByTeamId[game.homeTeamId]??createDefaultRotationPlan({ teamId: game.homeTeamId, squad: squads.home, initialLineup: lineups.home, players: world.players, benchPriorityOrder: resolveBenchPriorityOrder(world, game.homeTeamId) }),
+    awayRotationPlan: awayGamePlan?.rotationOverride??world.rotationPlansByTeamId[game.awayTeamId]??createDefaultRotationPlan({ teamId: game.awayTeamId, squad: squads.away, initialLineup: lineups.away, players: world.players, benchPriorityOrder: resolveBenchPriorityOrder(world, game.awayTeamId) }),
     random: createPrototypeGameRandom(game.id),
     decisionRandom: new SeededRandomSource(hashStringToSeed(`match-decisions-v1:${game.id}`)),
     actorRandom: new SeededRandomSource(hashStringToSeed(`match-actors-v1:${game.id}`)),
