@@ -14,7 +14,6 @@ export { createAcbTestGame, type CreateAcbTestGameOptions } from './createAcbTes
 export { createConfiguredGame } from './createConfiguredGame'
 export { NEW_GAME_UNIVERSES, type NewGameConfiguration, type NewGameTeamOption, type NewGameUniverseId, type NewGameUniverseOption } from './NewGameUniverseCatalog'
 export {
-  createPrototypeGameRandom,
   completeMatch,
   createLiveUserMatch,
   instantResult,
@@ -24,6 +23,7 @@ export {
   prepareUserMatch,
   simulateAndApplyGame,
 } from './playUserGame'
+export { createPrototypeGameRandom, resolveCanonicalMatchInput, type CanonicalMatchInput, type ResolveCanonicalMatchInputOptions } from './resolveCanonicalMatchInput'
 export { LiveMatchController, type LiveMatchStep } from './LiveMatchController'
 export { getCurrentSeason } from './selectors'
 export { startNextSeason } from './startNextSeason'

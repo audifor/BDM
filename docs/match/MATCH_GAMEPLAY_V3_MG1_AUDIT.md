@@ -286,3 +286,9 @@ Justification: the possession-resolution core (shots/rebounds/turnovers/assists/
 - Domain/Engine dependency boundary (react/zustand/@tauri-apps import in `src/domain/tactics`, `src/engine/match`): **zero matches** — clean.
 - Marker audit (`.only`, `.skip`, `debugger`, `console.log/debug`, `TODO`, `FIXME`) in match/tactics/coaching code: **zero matches** — clean.
 - No MG1-induced changes to production or test code were required — this audit produced documentation only.
+
+---
+
+## Addendum (MG3): Live vs Instant Result tactical divergence
+
+MG3's pre-match consolidation audit (`docs/match/MATCH_GAMEPLAY_V3_MG3_REPORT.md`) surfaced a latent bug this original MG1 audit did not name explicitly: `createLiveUserMatch` never called `getEffectiveTacticalPlan` and always forced a flat default tactical plan for the opponent, while `prepareMatch`/Instant Result read the persisted `TeamTacticalInstructions`/`TeamGamePlan.tacticalOverride` configuration. Live Match and Instant Result could therefore silently disagree on a user's own saved tactics. This was invisible in prior test coverage because `createNewGame()` worlds never configure non-default tactics. **RESOLVED in MG3** by consolidating both paths onto a single `resolveCanonicalMatchInput` resolver; `createLiveUserMatch` also now threads `defensiveMatchups` into live matches for the first time (previously silently dropped). A related, still-open gap — the UI's `tacticalPlanStore` draft is never seeded from persisted configuration, so the live UI still always supplies an override in practice — is documented as known debt in the MG3 report, not fixed there (it is a UI-state change, not a pre-match resolver change).
