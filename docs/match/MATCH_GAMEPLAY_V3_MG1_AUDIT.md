@@ -197,6 +197,7 @@ Two parallel UI stacks exist: legacy (`src/ui/App.tsx`, reachable only via `?ui=
 - Cascading effect: `createDefaultRotationPlan`'s `initialLineup` (`playUserGame.ts:83-84`) is seeded from this wrong lineup, so even correctly-configured substitution timing operates on the wrong starting five/bench mapping.
 - Confirmed not caught by tests: `GameApplication.test.ts:83-91` explicitly documents the current (buggy) behavior as intentional, describing the lineups as "transient" and asserting only validity/uniqueness, never equality with `world.lineupsByTeamId`.
 - Fix location for MG2: `playUserGame.ts` (`prepareMatch`/`prepareUserMatch`/`createLiveUserMatch`) should resolve lineups from `getTeamLineup(world, teamId)` first, falling back to `selectStartingFive` only when no valid user lineup exists.
+- **RESOLVED in MG2A** (`match-gameplay-v3-mg2a-lineup-authority`). See `docs/match/MATCH_GAMEPLAY_V3_MG2A_REPORT.md` for the fix, fallback policy, and regression tests (`src/app/game/LineupAuthority.test.ts`).
 
 **BUG-2 (P2 — feature partially incorrect / dead UI).** Live in-match tactical changes and manual substitutions are non-functional but the UI does not reflect this.
 - `LiveMatchController.applyTactics` / `applyManualSubstitutions` (`src/app/game/LiveMatchController.ts:27-29`) are stubs returning the unchanged snapshot, per commit `3f775c5`.

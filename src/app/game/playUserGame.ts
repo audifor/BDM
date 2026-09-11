@@ -1,5 +1,9 @@
 import type { Game } from '@/domain/game'
 import type { GameWorld } from '@/domain/world'
+import { getTeamLineup } from '@/domain/world'
+import { getLineupAssignments, PLAYERS_ON_COURT } from '@/domain/tactics'
+import { BASKETBALL_POSITIONS } from '@/domain/primitives'
+import type { PlayerId, TeamId } from '@/domain/ids'
 import { getGamesToday, getUserTeam } from '@/engine/calendar'
 import {
   applyCompletedMatch,
@@ -18,6 +22,26 @@ import { getAvailablePlayersForCompetition } from '@/engine/eligibility'
 import { MINIMUM_MATCH_SQUAD_SIZE } from '@/engine/match'
 import { LiveMatchController } from './LiveMatchController'
 import { getEffectiveTacticalPlan, getGamePlan } from './TacticalPlanning'
+
+/**
+ * Resolves the actual match-starting five for `teamId`. The team's configured
+ * canonical `TeamLineup` (domain/tactics/TeamLineup.ts) is authoritative whenever
+ * it names exactly PLAYERS_ON_COURT distinct starters who are all present in
+ * `availableSquad` (this game's eligible+available player pool). Any other case —
+ * no lineup configured, fewer/more than five starters, or a starter unavailable
+ * for this specific game (injury/suspension/ineligibility) — falls back to the
+ * existing algorithmic `selectStartingFive`, which remains the only mechanism for
+ * AI-controlled teams (they are never given a configured TeamLineup).
+ */
+function resolveStartingFive(world: GameWorld, teamId: TeamId, onDate: Game['date'], availableSquad: readonly PlayerId[]): readonly PlayerId[] {
+  const lineup = getTeamLineup(world, teamId)
+  const starterIds = getLineupAssignments(lineup)
+    .filter((assignment) => (BASKETBALL_POSITIONS as readonly string[]).includes(assignment.slot))
+    .map((assignment) => assignment.playerId)
+  const availableSet = new Set(availableSquad)
+  const isValidConfiguredLineup = starterIds.length === PLAYERS_ON_COURT && new Set(starterIds).size === PLAYERS_ON_COURT && starterIds.every((playerId) => availableSet.has(playerId))
+  return isValidConfiguredLineup ? starterIds : selectStartingFive(world, teamId, onDate, availableSquad)
+}
 
 export class PlayUserGameError extends Error {
   public constructor(message: string, public readonly code: 'INSUFFICIENT_AVAILABLE_PLAYERS' | 'INVALID_MATCH_CONTEXT' = 'INVALID_MATCH_CONTEXT') {
@@ -61,14 +85,14 @@ export function createLiveUserMatch(world: GameWorld, userTacticalPlan: MatchTac
   const game = getGamesToday(world).find((candidate) => candidate.homeTeamId === userTeam.id || candidate.awayTeamId === userTeam.id)
   if (game === undefined || game.status !== 'scheduled') throw new PlayUserGameError('The user Team has no scheduled Game today')
   const squads = availableSquads(world, game)
-  const lineups = { home: selectStartingFive(world, game.homeTeamId, game.date, squads.home), away: selectStartingFive(world, game.awayTeamId, game.date, squads.away) }
+  const lineups = { home: resolveStartingFive(world, game.homeTeamId, game.date, squads.home), away: resolveStartingFive(world, game.awayTeamId, game.date, squads.away) }
   const tacticalPlans = userTeam.id === game.homeTeamId ? { home: userTacticalPlan, away: createDefaultTacticalPlan() } : { home: createDefaultTacticalPlan(), away: userTacticalPlan }
   return new LiveMatchController({ world, gameId: game.id, homeStrength: calculateTeamStrength(world, game.homeTeamId, game.date, squads.home), awayStrength: calculateTeamStrength(world, game.awayTeamId, game.date, squads.away), lineups, squads, playerProfiles: { home: squads.home.map((id) => createMatchPlayerProfile(world.players[id]!)), away: squads.away.map((id) => createMatchPlayerProfile(world.players[id]!)) }, homeRotationPlan: createDefaultRotationPlan({ teamId: game.homeTeamId, squad: squads.home, initialLineup: lineups.home, players: world.players }), awayRotationPlan: createDefaultRotationPlan({ teamId: game.awayTeamId, squad: squads.away, initialLineup: lineups.away, players: world.players }), random: createPrototypeGameRandom(game.id), decisionRandom: new SeededRandomSource(hashStringToSeed(`match-decisions-v1:${game.id}`)), actorRandom: new SeededRandomSource(hashStringToSeed(`match-actors-v1:${game.id}`)), tacticalPlans })
 }
 
 export function prepareMatch(world: GameWorld, game: Game, tacticalPlans?: { home: MatchTacticalPlan; away: MatchTacticalPlan }): MatchSimulation {
   const squads = availableSquads(world, game)
-  const lineups = { home: selectStartingFive(world, game.homeTeamId, game.date, squads.home), away: selectStartingFive(world, game.awayTeamId, game.date, squads.away) }
+  const lineups = { home: resolveStartingFive(world, game.homeTeamId, game.date, squads.home), away: resolveStartingFive(world, game.awayTeamId, game.date, squads.away) }
   const playerProfiles = { home: squads.home.map((playerId) => createMatchPlayerProfile(world.players[playerId]!)), away: squads.away.map((playerId) => createMatchPlayerProfile(world.players[playerId]!)) }
   const resolvedTactics=tacticalPlans??{home:getEffectiveTacticalPlan(world,game.id,game.homeTeamId),away:getEffectiveTacticalPlan(world,game.id,game.awayTeamId)}
   const homeGamePlan=getGamePlan(world,game.id,game.homeTeamId);const awayGamePlan=getGamePlan(world,game.id,game.awayTeamId)
