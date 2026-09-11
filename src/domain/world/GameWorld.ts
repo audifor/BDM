@@ -67,6 +67,7 @@ import type { EligibilityProfile, EligibilityRestriction, EligibilityRules } fro
 import type { AcademicProfile, AcademicRules, AcademicSupportPlan, AcademicTermRecord } from '@/domain/academic'
 import type { Collective, NilDeal, NilOpportunity, NilProfile, NilRules } from '@/domain/nil'
 import type { Booster, BoosterContribution, BoosterRequest } from '@/domain/boosters'
+import { createCollectiveInstitutionAffiliation, createCollectiveParticipantAffiliation, createSupporterRelationship, type CollectiveInstitutionAffiliation, type CollectiveParticipantAffiliation, type SupporterRelationship } from '@/domain/supporters'
 import type { EnforcementFinding, EnforcementRules, Investigation, ProgramComplianceState, Sanction, Violation } from '@/domain/enforcement'
 import type { EcosystemTransition } from '@/domain/career'
 import { createMemory, type MemoryRecord } from '@/domain/memory'
@@ -220,6 +221,9 @@ export interface GameWorld {
   readonly boostersById: Readonly<Record<string, Booster>>
   readonly boosterContributionsById: Readonly<Record<string, BoosterContribution>>
   readonly boosterRequestsById: Readonly<Record<string, BoosterRequest>>
+  readonly supporterRelationshipsById: Readonly<Record<string, SupporterRelationship>>
+  readonly collectiveInstitutionAffiliationsById: Readonly<Record<string, CollectiveInstitutionAffiliation>>
+  readonly collectiveParticipantAffiliationsById: Readonly<Record<string, CollectiveParticipantAffiliation>>
   readonly enforcementRulesByEcosystemId: Readonly<Record<EcosystemId, EnforcementRules>>
   readonly violationsById: Readonly<Record<string, Violation>>
   readonly investigationsById: Readonly<Record<string, Investigation>>
@@ -389,6 +393,9 @@ export interface CreateGameWorldInput {
   boosters?: readonly Booster[]
   boosterContributions?: readonly BoosterContribution[]
   boosterRequests?: readonly BoosterRequest[]
+  supporterRelationships?: readonly SupporterRelationship[]
+  collectiveInstitutionAffiliations?: readonly CollectiveInstitutionAffiliation[]
+  collectiveParticipantAffiliations?: readonly CollectiveParticipantAffiliation[]
   enforcementRulesByEcosystemId?: Readonly<Record<EcosystemId, EnforcementRules>>
   violations?: readonly Violation[]
   investigations?: readonly Investigation[]
@@ -563,6 +570,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     academicRulesByEcosystemId: Object.freeze({ ...(input.academicRulesByEcosystemId ?? {}) }), academicProfilesById: indexById(input.academicProfiles ?? [], 'Academic profile'), academicTermRecordsById: indexById(input.academicTermRecords ?? [], 'Academic term record'), academicSupportPlansById: indexById(input.academicSupportPlans ?? [], 'Academic support plan'),
     nilRulesByEcosystemId:Object.freeze({...(input.nilRulesByEcosystemId??{})}),nilProfilesById:indexById(input.nilProfiles??[],'NIL profile'),nilOpportunitiesById:indexById(input.nilOpportunities??[],'NIL opportunity'),nilDealsById:indexById(input.nilDeals??[],'NIL deal'),collectivesById:indexById(input.collectives??[],'Collective'),
     boostersById:indexById(input.boosters??[],'Booster'),boosterContributionsById:indexById(input.boosterContributions??[],'Booster contribution'),boosterRequestsById:indexById(input.boosterRequests??[],'Booster request'),
+    supporterRelationshipsById:indexById((input.supporterRelationships??[]).map(createSupporterRelationship),'Supporter relationship'), collectiveInstitutionAffiliationsById:indexById((input.collectiveInstitutionAffiliations??[]).map(createCollectiveInstitutionAffiliation),'Collective institution affiliation'), collectiveParticipantAffiliationsById:indexById((input.collectiveParticipantAffiliations??[]).map(createCollectiveParticipantAffiliation),'Collective participant affiliation'),
     enforcementRulesByEcosystemId: Object.freeze({ ...(input.enforcementRulesByEcosystemId ?? {}) }), violationsById: indexById(input.violations ?? [], 'Violation'), investigationsById: indexById(input.investigations ?? [], 'Investigation'), findingsById: indexById(input.findings ?? [], 'Finding'), sanctionsById: indexById(input.sanctions ?? [], 'Sanction'), programComplianceByProgramId: Object.freeze({ ...(input.programComplianceByProgramId ?? {}) }),
     ecosystemTransitionsById:indexById(input.ecosystemTransitions??[],'Ecosystem transition'),
     memoriesById:indexById((input.memories??[]).map(createMemory),'Memory'),
@@ -637,6 +645,7 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
   governanceInstitutions: 'governanceInstitutionsById', governanceUniverseProfiles: 'governanceUniverseProfilesById', governanceBodies: 'governanceBodiesById', governanceAppointments: 'governanceAppointmentsById', governanceAuthorityGrants: 'governanceAuthorityGrantsById', governanceExternalRelationships: 'governanceExternalRelationshipsById', governanceExpectationPeriods: 'governanceExpectationPeriodsById', governanceObjectives: 'governanceObjectivesById',
+  supporterRelationships: 'supporterRelationshipsById', collectiveInstitutionAffiliations: 'collectiveInstitutionAffiliationsById', collectiveParticipantAffiliations: 'collectiveParticipantAffiliationsById',
   governanceManagerEvaluationPeriods: 'governanceManagerEvaluationPeriodsById', governanceManagerEvaluations: 'governanceManagerEvaluationsById', governanceJobSecurityTransitions: 'governanceJobSecurityTransitionsById', governanceDecisions: 'governanceDecisionsById', governanceDecisionParticipationGrants: 'governanceDecisionParticipationGrantsById', governanceDecisionEvents: 'governanceDecisionEventsById', governanceMeetings:'governanceMeetingsById', governanceMeetingParticipants:'governanceMeetingParticipantsById', governanceMeetingAgendaItems:'governanceMeetingAgendaItemsById', governanceMeetingEvents:'governanceMeetingEventsById', governanceRequests:'governanceRequestsById', governanceRequestEvents:'governanceRequestEventsById', governanceCommitments:'governanceCommitmentsById', governanceCommitmentEvents:'governanceCommitmentEventsById',
   countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
 }
@@ -660,6 +669,7 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   governanceMeetings: (value) => indexById((value as readonly GovernanceMeeting[]).map(createGovernanceMeeting), 'Governance meeting'), governanceMeetingParticipants: (value) => indexById((value as readonly GovernanceMeetingParticipant[]).map(createGovernanceMeetingParticipant), 'Governance meeting participant'), governanceMeetingAgendaItems: (value) => indexById((value as readonly GovernanceMeetingAgendaItem[]).map(createGovernanceMeetingAgendaItem), 'Governance meeting agenda item'), governanceMeetingEvents: (value) => indexById((value as readonly GovernanceMeetingEvent[]).map(createGovernanceMeetingEvent), 'Governance meeting event'),
   governanceRequests: (value) => indexById((value as readonly GovernanceRequest[]).map(createGovernanceRequest), 'Governance request'), governanceRequestEvents: (value) => indexById((value as readonly GovernanceRequestEvent[]).map(createGovernanceRequestEvent), 'Governance request event'),
   governanceCommitments: (value) => indexById((value as readonly GovernanceCommitment[]).map(createGovernanceCommitment), 'Governance commitment'), governanceCommitmentEvents: (value) => indexById((value as readonly GovernanceCommitmentEvent[]).map(createGovernanceCommitmentEvent), 'Governance commitment event'),
+  supporterRelationships: (value) => indexById((value as readonly SupporterRelationship[]).map(createSupporterRelationship), 'Supporter relationship'), collectiveInstitutionAffiliations: (value) => indexById((value as readonly CollectiveInstitutionAffiliation[]).map(createCollectiveInstitutionAffiliation), 'Collective institution affiliation'), collectiveParticipantAffiliations: (value) => indexById((value as readonly CollectiveParticipantAffiliation[]).map(createCollectiveParticipantAffiliation), 'Collective participant affiliation'),
   matchStatLogs: (value) => indexLogsByGameId(value as readonly MatchStatLog[]),
   seasonHistory: (value) => indexHistoryBySeasonId(value as readonly SeasonHistoryRecord[]),
   teamFinances: (value) => indexTeamFinances(value as readonly TeamFinances[]),
@@ -676,6 +686,7 @@ function validateWorld(world: GameWorld): void {
   requireEntity(world.seasons, world.currentSeasonId, 'Current season')
   requireEntity(world.coaches, world.userCoachId, 'User coach')
   validateGovernance(world)
+  validateInstitutionalSupport(world)
 
   for (const coach of Object.values(world.coaches)) {
     requireEntity(world.countries, coach.nationalityId, `Coach ${coach.id} nationality`)
@@ -1208,6 +1219,31 @@ function validateGovernance(world: GameWorld): void {
     const edges = grants.filter((grant) => grant.decision === decision && isGovernanceAuthorityActive(grant, world.currentDate))
     const visit = (bodyId: string, path: Set<string>): void => { if (path.has(bodyId)) throw new GameWorldValidationError(`Governance authority cycle for ${decision}`); const next = new Set(path); next.add(bodyId); for (const edge of edges.filter((item) => item.fromBodyId === bodyId)) visit(edge.toBodyId, next) }
     for (const body of Object.values(world.governanceBodiesById)) visit(body.id, new Set())
+  }
+}
+
+/** BG7A records structural supporter facts only; authority and Staff Politics remain untouched. */
+function validateInstitutionalSupport(world: GameWorld): void {
+  const institutions = world.governanceInstitutionsById
+  const validateActor = (actor: { readonly kind: string; readonly id: string }, label: string) => {
+    if (actor.kind === 'COACH') requireEntity(world.coaches, actor.id as CoachId, `${label} coach`)
+    if (actor.kind === 'STAFF') requireEntity(world.staffPeopleById, actor.id as StaffPersonId, `${label} staff`)
+  }
+  const validatePrograms = (institutionId: string, programIds: readonly TeamId[], label: string) => {
+    const institution = requireEntity(institutions, institutionId, `${label} institution`)
+    for (const teamId of programIds) {
+      requireEntity(world.teams, teamId, `${label} program`)
+      if (!institution.teamIds.includes(teamId)) throw new GameWorldValidationError(`${label} program is not linked to its institution`)
+    }
+  }
+  for (const relationship of Object.values(world.supporterRelationshipsById)) {
+    createSupporterRelationship(relationship); validateActor(relationship.actor, `Supporter relationship ${relationship.id}`); validatePrograms(relationship.institutionId, relationship.programTeamIds, `Supporter relationship ${relationship.id}`)
+  }
+  for (const affiliation of Object.values(world.collectiveInstitutionAffiliationsById)) {
+    createCollectiveInstitutionAffiliation(affiliation); requireEntity(world.collectivesById, affiliation.collectiveId, `Collective affiliation ${affiliation.id} collective`); validatePrograms(affiliation.institutionId, affiliation.programTeamIds, `Collective affiliation ${affiliation.id}`)
+  }
+  for (const affiliation of Object.values(world.collectiveParticipantAffiliationsById)) {
+    createCollectiveParticipantAffiliation(affiliation); requireEntity(world.collectivesById, affiliation.collectiveId, `Collective participant ${affiliation.id} collective`); validateActor(affiliation.actor, `Collective participant ${affiliation.id}`)
   }
 }
 
