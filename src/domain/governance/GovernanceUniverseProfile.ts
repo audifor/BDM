@@ -1,0 +1,12 @@
+import type { GovernanceBodyKind, GovernanceUniverse } from './Governance'
+
+export const GOVERNANCE_UNIVERSE_PROFILE_KINDS = ['PROFESSIONAL_CLUB', 'NBA_FRANCHISE', 'WNBA_FRANCHISE', 'NCAA_PROGRAM', 'NCAAW_PROGRAM', 'FEDERATION'] as const
+export type GovernanceUniverseProfileKind = typeof GOVERNANCE_UNIVERSE_PROFILE_KINDS[number]
+export const GOVERNANCE_OWNERSHIP_MODELS = ['PRIVATE', 'OWNERSHIP_GROUP', 'MEMBER_OWNED', 'MULTISPORT_SECTION', 'UNIVERSITY', 'FEDERATION'] as const
+export type GovernanceOwnershipModel = typeof GOVERNANCE_OWNERSHIP_MODELS[number]
+/** Structural semantics only; authority remains exclusively in GovernanceAuthorityGrant. */
+export interface GovernanceUniverseProfile { readonly id: string; readonly institutionId: string; readonly kind: GovernanceUniverseProfileKind; readonly ownershipModel: GovernanceOwnershipModel; readonly expectedBodyKinds: readonly GovernanceBodyKind[]; readonly apexAuthorityBodyId?: string; readonly executiveAuthorityBodyId?: string; readonly basketballOperationsBodyId?: string; readonly externalOversight: boolean }
+const universe: Readonly<Record<GovernanceUniverseProfileKind, GovernanceUniverse>> = { PROFESSIONAL_CLUB: 'PROFESSIONAL_CLUB', NBA_FRANCHISE: 'NBA_WNBA', WNBA_FRANCHISE: 'NBA_WNBA', NCAA_PROGRAM: 'NCAA', NCAAW_PROGRAM: 'NCAA', FEDERATION: 'FEDERATION' }
+const allowed: Readonly<Record<GovernanceUniverseProfileKind, readonly GovernanceOwnershipModel[]>> = { PROFESSIONAL_CLUB: ['PRIVATE', 'OWNERSHIP_GROUP', 'MEMBER_OWNED', 'MULTISPORT_SECTION'], NBA_FRANCHISE: ['PRIVATE', 'OWNERSHIP_GROUP'], WNBA_FRANCHISE: ['PRIVATE', 'OWNERSHIP_GROUP'], NCAA_PROGRAM: ['UNIVERSITY'], NCAAW_PROGRAM: ['UNIVERSITY'], FEDERATION: ['FEDERATION'] }
+export function createGovernanceUniverseProfile(value: GovernanceUniverseProfile): GovernanceUniverseProfile { if (!value.id.trim() || !value.institutionId.trim() || !GOVERNANCE_UNIVERSE_PROFILE_KINDS.includes(value.kind) || !allowed[value.kind].includes(value.ownershipModel) || value.expectedBodyKinds.length === 0 || new Set(value.expectedBodyKinds).size !== value.expectedBodyKinds.length || value.expectedBodyKinds.some((kind) => !['OWNERSHIP', 'BOARD', 'EXECUTIVE', 'ATHLETIC_DEPARTMENT', 'COMPLIANCE'].includes(kind))) throw new RangeError('Invalid governance universe profile'); return { ...value, expectedBodyKinds: [...value.expectedBodyKinds] } }
+export const governanceUniverseForProfile = (profile: GovernanceUniverseProfile): GovernanceUniverse => universe[profile.kind]
