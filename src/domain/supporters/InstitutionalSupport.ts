@@ -8,9 +8,9 @@ export const SUPPORTER_RELATIONSHIP_KINDS = ['DONOR', 'BOOSTER'] as const
 export type SupporterRelationshipKind = typeof SUPPORTER_RELATIONSHIP_KINDS[number]
 export const DONOR_PATTERNS = ['ONE_TIME', 'RECURRING'] as const
 export type DonorPattern = typeof DONOR_PATTERNS[number]
-export const COLLECTIVE_AFFILIATION_KINDS = ['INDEPENDENT', 'INSTITUTIONAL_AFFILIATE'] as const
+export const COLLECTIVE_AFFILIATION_KINDS = ['INDEPENDENT', 'INSTITUTIONAL_AFFILIATE', 'INSTITUTION_RECOGNIZED', 'ATHLETICS_ALIGNED', 'PROGRAM_ALIGNED', 'MULTI_PROGRAM'] as const
 export type CollectiveAffiliationKind = typeof COLLECTIVE_AFFILIATION_KINDS[number]
-export const COLLECTIVE_PARTICIPANT_KINDS = ['COLLECTIVE_MEMBER', 'COLLECTIVE_EXECUTIVE', 'BUSINESS_PARTNER', 'EXTERNAL_SUPPORTER'] as const
+export const COLLECTIVE_PARTICIPANT_KINDS = ['COLLECTIVE_MEMBER', 'COLLECTIVE_EXECUTIVE', 'DIRECTOR', 'BOARD_MEMBER', 'FUNDRAISER', 'DONOR', 'BOOSTER', 'BUSINESS_PARTNER', 'ADVISOR', 'EXTERNAL_SUPPORTER'] as const
 export type CollectiveParticipantKind = typeof COLLECTIVE_PARTICIPANT_KINDS[number]
 
 /** A structural donor/booster status; it is never money, authority, or political influence. */
@@ -46,6 +46,14 @@ export interface CollectiveParticipantAffiliation {
   readonly startedOn: GameDate
   readonly endedOn?: GameDate
 }
+export const COLLECTIVE_INSTITUTIONAL_STATUSES = ['INDEPENDENT_EXTERNAL', 'AFFILIATED_EXTERNAL', 'INSTITUTION_RECOGNIZED', 'ATHLETICS_ALIGNED', 'PROGRAM_ALIGNED', 'MULTI_PROGRAM'] as const
+export type CollectiveInstitutionalStatus = typeof COLLECTIVE_INSTITUTIONAL_STATUSES[number]
+export const COLLECTIVE_LIAISON_KINDS = ['COLLECTIVE_REPRESENTATIVE', 'ATHLETICS_LIAISON', 'COMPLIANCE_CONTACT', 'PROGRAM_CONTACT'] as const
+export type CollectiveLiaisonKind = typeof COLLECTIVE_LIAISON_KINDS[number]
+/** Additive factual status history. The three independence dimensions deliberately do not confer control or authority. */
+export interface CollectiveInstitutionalStatusEvent { readonly id: string; readonly collectiveId: string; readonly institutionId: string; readonly status: CollectiveInstitutionalStatus; readonly legalIndependent: boolean; readonly financialIndependent: boolean; readonly operationalIndependent: boolean; readonly effectiveOn: GameDate }
+/** A communication link, distinct from a GovernanceAppointment or GovernanceAuthorityGrant. */
+export interface CollectiveInstitutionalLiaison { readonly id: string; readonly collectiveId: string; readonly institutionId: string; readonly actor: GovernanceActor; readonly kind: CollectiveLiaisonKind; readonly programTeamId?: TeamId; readonly startedOn: GameDate; readonly endedOn?: GameDate }
 
 function dates(startedOn: GameDate, endedOn?: GameDate): { readonly startedOn: GameDate; readonly endedOn?: GameDate } {
   const start = parseGameDate(startedOn), end = endedOn === undefined ? undefined : parseGameDate(endedOn)
@@ -74,3 +82,9 @@ export function createCollectiveParticipantAffiliation(value: CollectiveParticip
   if (!value.id.trim() || !value.collectiveId.trim() || !COLLECTIVE_PARTICIPANT_KINDS.includes(value.kind)) throw new RangeError('Invalid collective participant affiliation')
   return { ...value, actor: actor(value.actor), ...dates(value.startedOn, value.endedOn) }
 }
+export function createCollectiveInstitutionalStatusEvent(value: CollectiveInstitutionalStatusEvent): CollectiveInstitutionalStatusEvent { if (!value.id.trim() || !value.collectiveId.trim() || !value.institutionId.trim() || !COLLECTIVE_INSTITUTIONAL_STATUSES.includes(value.status) || typeof value.legalIndependent !== 'boolean' || typeof value.financialIndependent !== 'boolean' || typeof value.operationalIndependent !== 'boolean') throw new RangeError('Invalid collective institutional status event'); return { ...value, effectiveOn: parseGameDate(value.effectiveOn) } }
+export function createCollectiveInstitutionalLiaison(value: CollectiveInstitutionalLiaison): CollectiveInstitutionalLiaison { if (!value.id.trim() || !value.collectiveId.trim() || !value.institutionId.trim() || !COLLECTIVE_LIAISON_KINDS.includes(value.kind)) throw new RangeError('Invalid collective institutional liaison'); return { ...value, actor: actor(value.actor), ...(value.programTeamId === undefined ? {} : { programTeamId: value.programTeamId }), ...dates(value.startedOn, value.endedOn) } }
+export const activeCollectiveParticipants = (items: readonly CollectiveParticipantAffiliation[], collectiveId: string, on: GameDate) => items.filter((item) => item.collectiveId === collectiveId && item.startedOn <= on && (item.endedOn === undefined || item.endedOn >= on)).sort((a, b) => a.id.localeCompare(b.id))
+export const collectiveLeadership = (items: readonly CollectiveParticipantAffiliation[], collectiveId: string, on: GameDate) => activeCollectiveParticipants(items, collectiveId, on).filter((item) => ['COLLECTIVE_EXECUTIVE', 'DIRECTOR', 'BOARD_MEMBER'].includes(item.kind))
+export const collectivesAlignedToInstitution = (items: readonly CollectiveInstitutionAffiliation[], institutionId: string) => items.filter((item) => item.institutionId === institutionId).sort((a, b) => a.id.localeCompare(b.id))
+export const collectivesAlignedToProgram = (items: readonly CollectiveInstitutionAffiliation[], teamId: TeamId) => items.filter((item) => item.programTeamIds.includes(teamId)).sort((a, b) => a.id.localeCompare(b.id))
