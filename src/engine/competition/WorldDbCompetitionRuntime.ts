@@ -22,9 +22,10 @@ export interface WorldDbCompetitionRuntimeV1 {
 export function createWorldDbCompetitionRuntimeV1(value: unknown): WorldDbCompetitionRuntimeV1 {
   assertWorldDbCompetitionBundleV1(value)
   const bundle = value
+  const structurePositions = bundle.structurePositions ?? []
   const entryById = uniqueIndex(bundle.entries, (entry) => entry.competitionSeasonEntryId, 'competition entry')
   const nodeById = uniqueIndex(bundle.structureNodes, (node) => node.competitionStructureNodeId, 'structure node')
-  const positionById = uniqueIndex(bundle.structurePositions, (position) => position.competitionStructurePositionId, 'structure position')
+  const positionById = uniqueIndex(structurePositions, (position) => position.competitionStructurePositionId, 'structure position')
   const fixtureById = uniqueIndex(bundle.fixtures, (fixture) => fixture.competitionFixtureId, 'fixture')
 
   const fixturesByNodeId = groupBy(bundle.fixtures.filter((fixture) => fixture.structureNodeId !== null), (fixture) => fixture.structureNodeId!)
@@ -32,7 +33,7 @@ export function createWorldDbCompetitionRuntimeV1(value: unknown): WorldDbCompet
   const entryIdsByNodeId = groupValues(bundle.structureEntryAssignments, (assignment) => assignment.competitionStructureNodeId, (assignment) => assignment.competitionSeasonEntryId)
   const childNodeIdsByNodeId = groupValues(bundle.structureEdges, (edge) => edge.fromNodeId, (edge) => edge.toNodeId)
 
-  for (const position of bundle.structurePositions) requireKey(nodeById, position.competitionStructureNodeId, 'Structure position node')
+  for (const position of structurePositions) requireKey(nodeById, position.competitionStructureNodeId, 'Structure position node')
   for (const assignment of bundle.structureEntryAssignments) {
     requireKey(nodeById, assignment.competitionStructureNodeId, 'Structure assignment node')
     requireKey(entryById, assignment.competitionSeasonEntryId, 'Structure assignment entry')
