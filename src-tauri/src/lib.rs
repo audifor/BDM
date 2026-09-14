@@ -1,4 +1,5 @@
 mod world_db;
+mod world_db_rules;
 
 use serde::Serialize;
 use serde_json::Value;

@@ -1,3 +1,4 @@
+use crate::world_db_rules::load_rule_payloads;
 use rusqlite::{Connection, OpenFlags};
 use serde::Serialize;
 use serde_json::{Map, Value};
@@ -198,6 +199,7 @@ pub fn load_competition_bundle_v1(
             })
         },
     )?;
+    let rule_payloads = load_rule_payloads(&connection, competition_season_id)?;
 
     Ok(WorldDbCompetitionBundleV1 {
         schema_version: 1,
@@ -216,7 +218,7 @@ pub fn load_competition_bundle_v1(
         structure_entry_assignments,
         fixtures,
         fixture_sides,
-        rule_payloads: Map::new(),
+        rule_payloads,
     })
 }
 
