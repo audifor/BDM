@@ -1,5 +1,10 @@
 import type { GameWorld } from '@/domain/world'
 
+export interface WorldDbCompetitionSeasonSourceV1 {
+  readonly databaseId: string
+  readonly competitionSeasonId: string
+}
+
 export interface WorldDbCompetitionGameFixtureBindingV1 {
   readonly gameId: string
   readonly competitionFixtureId: string
@@ -18,6 +23,7 @@ export interface WorldDbCompetitionFixtureOutcomeV1 {
 
 export interface WorldDbCompetitionRuntimeStateV1 {
   readonly schemaVersion: 1
+  readonly competitionSeasonSources: readonly WorldDbCompetitionSeasonSourceV1[]
   readonly gameFixtureBindings: readonly WorldDbCompetitionGameFixtureBindingV1[]
   readonly resolvedStructurePositions: readonly WorldDbResolvedStructurePositionV1[]
   readonly fixtureOutcomes: readonly WorldDbCompetitionFixtureOutcomeV1[]
@@ -29,6 +35,7 @@ export type GameWorldWithWorldDbCompetitionRuntime = GameWorld & {
 
 export const EMPTY_WORLD_DB_COMPETITION_RUNTIME_V1: WorldDbCompetitionRuntimeStateV1 = Object.freeze({
   schemaVersion: 1,
+  competitionSeasonSources: Object.freeze([]),
   gameFixtureBindings: Object.freeze([]),
   resolvedStructurePositions: Object.freeze([]),
   fixtureOutcomes: Object.freeze([]),
@@ -36,11 +43,21 @@ export const EMPTY_WORLD_DB_COMPETITION_RUNTIME_V1: WorldDbCompetitionRuntimeSta
 
 export function assertWorldDbCompetitionRuntimeStateV1(value: unknown): asserts value is WorldDbCompetitionRuntimeStateV1 {
   const runtime = record(value, 'World DB competition runtime')
-  exactKeys(runtime, ['schemaVersion', 'gameFixtureBindings', 'resolvedStructurePositions', 'fixtureOutcomes'], 'World DB competition runtime')
+  exactKeys(runtime, ['schemaVersion', 'competitionSeasonSources', 'gameFixtureBindings', 'resolvedStructurePositions', 'fixtureOutcomes'], 'World DB competition runtime')
   if (runtime.schemaVersion !== 1) throw new TypeError('Unsupported World DB competition runtime version')
+  const sources = array(runtime.competitionSeasonSources, 'World DB competition season sources')
   const bindings = array(runtime.gameFixtureBindings, 'World DB game fixture bindings')
   const positions = array(runtime.resolvedStructurePositions, 'World DB resolved structure positions')
   const outcomes = array(runtime.fixtureOutcomes, 'World DB fixture outcomes')
+
+  const sourceSeasonIds = new Set<string>()
+  for (const [index, raw] of sources.entries()) {
+    const row = record(raw, `World DB competition season source[${index}]`)
+    exactKeys(row, ['databaseId', 'competitionSeasonId'], `World DB competition season source[${index}]`)
+    text(row.databaseId, `World DB competition season source[${index}].databaseId`)
+    const seasonId = text(row.competitionSeasonId, `World DB competition season source[${index}].competitionSeasonId`)
+    unique(sourceSeasonIds, seasonId, `Duplicate World DB competition season source: ${seasonId}`)
+  }
 
   const bindingPairs = new Set<string>()
   for (const [index, raw] of bindings.entries()) {
@@ -76,6 +93,7 @@ export function normalizeWorldDbCompetitionRuntimeStateV1(value: unknown): World
   assertWorldDbCompetitionRuntimeStateV1(value)
   return Object.freeze({
     schemaVersion: 1,
+    competitionSeasonSources: Object.freeze(value.competitionSeasonSources.map((row) => Object.freeze({ ...row }))),
     gameFixtureBindings: Object.freeze(value.gameFixtureBindings.map((row) => Object.freeze({ ...row }))),
     resolvedStructurePositions: Object.freeze(value.resolvedStructurePositions.map((row) => Object.freeze({ ...row }))),
     fixtureOutcomes: Object.freeze(value.fixtureOutcomes.map((row) => Object.freeze({ ...row }))),
