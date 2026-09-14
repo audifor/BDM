@@ -51,7 +51,9 @@ pub fn load_match_realizations_v1(
         .execute_batch("PRAGMA query_only = ON; PRAGMA foreign_keys = ON;")
         .map_err(|error| format!("Unable to configure World DB connection: {error}"))?;
 
-    if !table_exists(&connection, "match")? || !table_exists(&connection, "game_fixture_realization")? {
+    if !table_exists(&connection, "match")?
+        || !table_exists(&connection, "game_fixture_realization")?
+    {
         return Ok(WorldDbMatchRealizationBundleV1 {
             schema_version: 1,
             competition_season_id: competition_season_id.to_owned(),
