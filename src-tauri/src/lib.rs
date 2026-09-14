@@ -1,3 +1,5 @@
+mod world_db;
+
 use serde::Serialize;
 use serde_json::Value;
 #[cfg(windows)]
@@ -49,6 +51,14 @@ fn get_save_info_v1(app: tauri::AppHandle) -> Result<Option<SaveInfoV1>, String>
         .expect("validated savedAt")
         .to_owned();
     Ok(Some(SaveInfoV1 { saved_at }))
+}
+
+#[tauri::command]
+fn load_world_db_competition_bundle_v1(
+    database_path: String,
+    competition_season_id: String,
+) -> Result<world_db::WorldDbCompetitionBundleV1, String> {
+    world_db::load_competition_bundle_v1(&database_path, &competition_season_id)
 }
 
 fn save_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
@@ -156,7 +166,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             save_game_v1,
             load_game_v1,
-            get_save_info_v1
+            get_save_info_v1,
+            load_world_db_competition_bundle_v1
         ])
         .run(tauri::generate_context!())
         .expect("error while running BDM");
