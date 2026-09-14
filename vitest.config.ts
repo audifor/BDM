@@ -21,6 +21,7 @@ export default defineConfig({
       'src/ui-ng/applications/mentoring/**/*.test.tsx',
       'src/ui-ng/applications/staff/**/*.test.tsx',
       'src/ui-ng/applications/medical/**/*.test.tsx',
+      'src/ui-ng/applications/coach/**/*.test.tsx',
       'src/ui-ng/applications/home/**/*.test.tsx',
       'src/ui-ng/applications/recruiting/**/*.test.tsx',
       'src/ui-ng/applications/competition/**/*.test.tsx',

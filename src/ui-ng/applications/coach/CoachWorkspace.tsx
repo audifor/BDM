@@ -3,10 +3,10 @@ import { useState } from 'react'
 import { COACH_REPUTATION_DIMENSIONS, getCoachReputationBand, getRecentCoachReputationEvents } from '@/domain/coachReputation'
 import { evaluateCoachJobEligibility } from '@/domain/coachCareer'
 import { getRelationshipBandForPeople, getRelationshipsForPerson } from '@/domain/world'
-import { COACH_PERK_CATALOG, COACH_SKILL_CATALOG } from '@/engine/coach'
 import { useGameStore } from '@/stores/gameStore'
 import { coachReputationEventLabel, coachReputationSourceLabel, formatCoachReputationDelta } from '@/ui/coachReputationPresentation'
 import { formatPrototypeDate } from '@/ui/formatters'
+import { CoachDevelopmentWorkspace } from '@/ui-ng/applications/coach/CoachDevelopmentWorkspace'
 import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPrecisionTable'
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 
@@ -278,38 +278,7 @@ export function CoachWorkspace() {
         </div>
       ) : null}
       {tab === 'development' ? (
-        <div className="ng-canon__split">
-          <section className="ng-canon__panel ng-holo-panel">
-            <p className="ng-canon__eyebrow">Skills</p>
-            <ul className="ng-canon__list">
-              {COACH_SKILL_CATALOG.map((skill) => {
-                const rank = rpg.skills[skill.id]?.rank ?? 0
-                return (
-                  <li key={skill.id}>
-                    {skill.id} · rank {rank}{' '}
-                    <button className="ng-canon__action" disabled={rank === 3} onClick={() => purchaseUserCoachSkill(skill.id)} type="button">
-                      Develop
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          </section>
-          <section className="ng-canon__inspector ng-holo-panel">
-            <p className="ng-canon__eyebrow">Perks</p>
-            <ul className="ng-canon__list">
-              {COACH_PERK_CATALOG.map((perk) => (
-                <li key={perk.id}>
-                  {perk.id} · {rpg.perks[perk.id] ? 'owned' : (
-                    <button className="ng-canon__action" onClick={() => purchaseUserCoachPerk(perk.id)} type="button">
-                      Purchase
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </section>
-        </div>
+        <CoachDevelopmentWorkspace onDevelopSkill={purchaseUserCoachSkill} onPurchasePerk={purchaseUserCoachPerk} rpg={rpg} />
       ) : null}
       {tab === 'legacy' ? (
         <section className="ng-canon__card ng-holo-panel">
