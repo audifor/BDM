@@ -31,11 +31,14 @@ const STAKES_PRIORITY: Readonly<Record<GameStakes, number>> = Object.freeze({
 export interface WorldDbGameMaterializationResultV1 {
   readonly world: GameWorld
   readonly plan: WorldDbPhysicalGamePlanningResultV1
+  /** Virtual SERIES/AGGREGATE fixtures that must be expanded before physical Games can exist. */
+  readonly deferredCompetitionFixtureIds: readonly string[]
 }
 
 /**
  * Materializes currently executable B04/B12 physical games into GameWorld.
  * Immutable World DB structure stays external; only runtime bindings/sources are persisted in Save V4.
+ * Virtual multi-game contests are never collapsed into one Game.
  */
 export function materializeWorldDbPhysicalGamesV1(
   world: GameWorld,
@@ -45,9 +48,18 @@ export function materializeWorldDbPhysicalGamesV1(
   const plan = planWorldDbPhysicalGamesV1(contexts, asOf)
   const gamesById = { ...world.games } as Record<string, Game>
   const materializedGameIds = new Set(Object.keys(gamesById))
+  const deferredFixtureIds = new Set<string>()
 
   for (const planned of plan.games) {
     if (planned.localDate === null) continue
+    const expansionRequired = planned.sourceMatchId === null
+      ? planned.competitionFixtureIds.filter((fixtureId) => fixtureRequiresPhysicalExpansion(contexts, fixtureId))
+      : []
+    if (expansionRequired.length > 0) {
+      for (const fixtureId of expansionRequired) deferredFixtureIds.add(fixtureId)
+      continue
+    }
+
     const id = gameIdFromString(planned.gameId)
     const seasonId = seasonIdFromString(planned.seasonId)
     const competitionId = competitionIdFromString(planned.competitionId)
@@ -103,6 +115,7 @@ export function materializeWorldDbPhysicalGamesV1(
   return Object.freeze({
     world: withWorldDbCompetitionRuntimeStateV1(updatedWorld, nextRuntime),
     plan,
+    deferredCompetitionFixtureIds: Object.freeze([...deferredFixtureIds].sort()),
   })
 }
 
@@ -141,6 +154,23 @@ export function deriveWorldDbPhysicalGameStakesV1(
   }
 
   return result
+}
+
+/** True when a virtual competition fixture represents a multi-game contest, not one physical Game. */
+export function fixtureRequiresPhysicalExpansion(
+  contexts: readonly WorldDbCompetitionPlanningContextV1[],
+  competitionFixtureId: string,
+): boolean {
+  const ref = buildFixtureIndex(contexts)[competitionFixtureId]
+  if (ref === undefined) throw new Error(`Physical expansion references unloaded competition fixture: ${competitionFixtureId}`)
+  const fixture = ref.context.bundle.fixtures.find((row) => row.competitionFixtureId === competitionFixtureId)!
+  if (fixture.structureNodeId === null) return false
+  const formats = createWorldDbCompetitionRulesV1(ref.context.bundle).contestFormats.filter(
+    (rule) => rule.scopeStructureNodeId === fixture.structureNodeId,
+  )
+  if (formats.length > 1) throw new Error(`Structure node ${fixture.structureNodeId} has multiple contest formats`)
+  const type = formats[0]?.type?.toUpperCase()
+  return type === 'SERIES' || type === 'AGGREGATE'
 }
 
 function buildFixtureIndex(
