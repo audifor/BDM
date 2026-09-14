@@ -1,6 +1,7 @@
 import { parseWorldCompetitionFormatDocument } from './WorldCompetitionFormatParser'
 import { array, enumValue, optionalText, record, requireUnique, text } from './WorldCompetitionFormatParserHelpers'
 import type { WorldCompetitionFormatDocument } from './WorldCompetitionFormatTypes'
+import { parseWorldCompetitionInitialScoreDocument, type WorldCompetitionInitialScoreDocument } from './WorldCompetitionInitialScore'
 
 export const WORLD_COMPETITION_RUNTIME_BUNDLE_SCHEMA_VERSION = 1 as const
 export const WORLD_COMPETITION_RUNTIME_BUNDLE_HASH_ALGORITHM = 'BLAKE3' as const
@@ -13,6 +14,7 @@ export interface WorldCompetitionRuntimeBundle {
   readonly worldDbSchema: string
   readonly sourceCommit?: string
   readonly competitionFormats: readonly WorldCompetitionFormatDocument[]
+  readonly initialScoreDocuments: readonly WorldCompetitionInitialScoreDocument[]
 }
 
 export function parseWorldCompetitionRuntimeBundle(value: unknown): WorldCompetitionRuntimeBundle {
@@ -27,6 +29,16 @@ export function parseWorldCompetitionRuntimeBundle(value: unknown): WorldCompeti
   if (competitionFormats.length === 0) throw new RangeError('Competition runtime bundle requires at least one competition format')
   requireUnique(competitionFormats.map((format) => format.competitionSeasonId), 'competition season id')
 
+  const initialScoreDocuments = raw.initial_score_documents === undefined
+    ? []
+    : array(raw.initial_score_documents, 'initial_score_documents').map(parseWorldCompetitionInitialScoreDocument)
+  requireUnique(initialScoreDocuments.map((document) => document.competitionSeasonId), 'initial score competition season id')
+
+  const formatSeasonIds = new Set(competitionFormats.map((format) => format.competitionSeasonId))
+  for (const document of initialScoreDocuments) {
+    if (!formatSeasonIds.has(document.competitionSeasonId)) throw new RangeError(`Initial score rules reference a competition season absent from the bundle: ${document.competitionSeasonId}`)
+  }
+
   const sourceCommit = optionalText(raw.source_commit, 'source_commit')
   return Object.freeze({
     bundleSchemaVersion: WORLD_COMPETITION_RUNTIME_BUNDLE_SCHEMA_VERSION,
@@ -36,5 +48,6 @@ export function parseWorldCompetitionRuntimeBundle(value: unknown): WorldCompeti
     worldDbSchema: text(raw.world_db_schema, 'world_db_schema'),
     ...(sourceCommit === undefined ? {} : { sourceCommit }),
     competitionFormats: Object.freeze(competitionFormats),
+    initialScoreDocuments: Object.freeze(initialScoreDocuments),
   })
 }
