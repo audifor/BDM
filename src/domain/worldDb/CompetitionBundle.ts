@@ -20,6 +20,8 @@ export interface WorldDbStructureNodeV1 {
   readonly nodeType: string
   readonly name: string | null
   readonly sequenceNo: number | null
+  /** Canonical subtype projected from the node-specific B04 table when available. */
+  readonly specializedType?: string | null
 }
 
 export interface WorldDbStructurePositionV1 {
