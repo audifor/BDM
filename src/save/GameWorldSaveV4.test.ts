@@ -12,6 +12,10 @@ const savedAt = '2032-10-01T00:00:00.000Z'
 
 const runtime: WorldDbCompetitionRuntimeStateV1 = Object.freeze({
   schemaVersion: 1,
+  competitionSeasonSources: Object.freeze([
+    Object.freeze({ databaseId: 'world.db', competitionSeasonId: 'season:regular' }),
+    Object.freeze({ databaseId: 'world.db', competitionSeasonId: 'season:cup' }),
+  ]),
   gameFixtureBindings: Object.freeze([
     Object.freeze({ gameId: 'game:shared', competitionFixtureId: 'fixture:regular' }),
     Object.freeze({ gameId: 'game:shared', competitionFixtureId: 'fixture:cup' }),
@@ -40,6 +44,7 @@ describe('GameWorldSaveV4', () => {
     const loaded = deserializeGameWorldSaveV4(legacy)
     expect(getWorldDbCompetitionRuntimeStateV1(loaded)).toEqual({
       schemaVersion: 1,
+      competitionSeasonSources: [],
       gameFixtureBindings: [],
       resolvedStructurePositions: [],
       fixtureOutcomes: [],
@@ -58,6 +63,7 @@ describe('GameWorldSaveV4', () => {
     }
     malformed.payload.worldDbCompetitionRuntime = {
       schemaVersion: 1,
+      competitionSeasonSources: [],
       gameFixtureBindings: [
         { gameId: 'game:1', competitionFixtureId: 'fixture:1' },
         { gameId: 'game:1', competitionFixtureId: 'fixture:1' },
