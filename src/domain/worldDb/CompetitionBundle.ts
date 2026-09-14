@@ -65,7 +65,8 @@ export interface WorldDbCompetitionBundleV1 {
   readonly competitionSeason: WorldDbCompetitionSeasonV1
   readonly entries: readonly WorldDbCompetitionEntryV1[]
   readonly structureNodes: readonly WorldDbStructureNodeV1[]
-  readonly structurePositions: readonly WorldDbStructurePositionV1[]
+  /** Added additively within v1 so older in-memory fixtures remain valid. */
+  readonly structurePositions?: readonly WorldDbStructurePositionV1[]
   readonly structureEdges: readonly WorldDbStructureEdgeV1[]
   readonly structureEntryAssignments: readonly WorldDbStructureEntryAssignmentV1[]
   readonly fixtures: readonly WorldDbFixtureV1[]
@@ -84,7 +85,7 @@ export function assertWorldDbCompetitionBundleV1(value: unknown): asserts value 
   requireText(value.competitionSeason.seasonId, 'World DB seasonId')
   requireArray(value.entries, 'World DB entries')
   requireArray(value.structureNodes, 'World DB structure nodes')
-  requireArray(value.structurePositions, 'World DB structure positions')
+  if (value.structurePositions !== undefined) requireArray(value.structurePositions, 'World DB structure positions')
   requireArray(value.structureEdges, 'World DB structure edges')
   requireArray(value.structureEntryAssignments, 'World DB structure entry assignments')
   requireArray(value.fixtures, 'World DB fixtures')
