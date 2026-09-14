@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { createNewGame } from '@/app/game'
+import { createNewGame } from './createNewGame'
 import type { WorldDbCompetitionBundleV1 } from '@/domain/worldDb/CompetitionBundle'
 import { getWorldDbCompetitionRuntimeStateV1 } from '@/domain/worldDb/CompetitionRuntimeState'
 import type { WorldDbCompetitionPlanningContextV1 } from '@/engine/competition/WorldDbPhysicalGamePlanner'
 import {
   deriveWorldDbPhysicalGameStakesV1,
+  fixtureRequiresPhysicalExpansion,
   materializeWorldDbPhysicalGamesV1,
 } from './WorldDbGameMaterialization'
 
@@ -103,5 +104,25 @@ describe('World DB Game materialization', () => {
     const runtime = getWorldDbCompetitionRuntimeStateV1(second.world)
     expect(runtime.competitionSeasonSources).toEqual([{ databaseId: 'world.db', competitionSeasonId: 'competition-season:materialize' }])
     expect(runtime.gameFixtureBindings.filter((binding) => binding.competitionFixtureId === fixtureId)).toHaveLength(1)
+  })
+
+  it('defers a virtual SERIES fixture instead of collapsing it into one Game', () => {
+    const { world, context, fixtureId } = executableContext()
+    const node = context.bundle.structureNodes[0]!
+    const seriesBundle: WorldDbCompetitionBundleV1 = {
+      ...context.bundle,
+      structureNodes: [{ ...node, nodeType: 'ROUND' }],
+      rulePayloads: {
+        contestFormats: [{ id: 'contest:series', scopeStructureNodeId: node.competitionStructureNodeId, type: 'SERIES' }],
+      },
+    }
+    const seriesContext = { bundle: seriesBundle }
+    expect(fixtureRequiresPhysicalExpansion([seriesContext], fixtureId)).toBe(true)
+
+    const result = materializeWorldDbPhysicalGamesV1(world, [seriesContext], `${world.currentDate}T12:00:00Z`)
+    const gameId = result.plan.games[0]!.gameId
+    expect(result.deferredCompetitionFixtureIds).toEqual([fixtureId])
+    expect(result.world.games[gameId as keyof typeof result.world.games]).toBeUndefined()
+    expect(getWorldDbCompetitionRuntimeStateV1(result.world).gameFixtureBindings.some((binding) => binding.competitionFixtureId === fixtureId)).toBe(false)
   })
 })
