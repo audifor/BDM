@@ -1,5 +1,9 @@
 import type { GameWorld } from '@/domain/world'
-import type { WorldDbGameFixtureBindingV1 } from '@/engine/competition/WorldDbGameFixtureBinding'
+
+export interface WorldDbCompetitionGameFixtureBindingV1 {
+  readonly gameId: string
+  readonly competitionFixtureId: string
+}
 
 export interface WorldDbResolvedStructurePositionV1 {
   readonly competitionStructurePositionId: string
@@ -14,7 +18,7 @@ export interface WorldDbCompetitionFixtureOutcomeV1 {
 
 export interface WorldDbCompetitionRuntimeStateV1 {
   readonly schemaVersion: 1
-  readonly gameFixtureBindings: readonly WorldDbGameFixtureBindingV1[]
+  readonly gameFixtureBindings: readonly WorldDbCompetitionGameFixtureBindingV1[]
   readonly resolvedStructurePositions: readonly WorldDbResolvedStructurePositionV1[]
   readonly fixtureOutcomes: readonly WorldDbCompetitionFixtureOutcomeV1[]
 }
@@ -32,6 +36,7 @@ export const EMPTY_WORLD_DB_COMPETITION_RUNTIME_V1: WorldDbCompetitionRuntimeSta
 
 export function assertWorldDbCompetitionRuntimeStateV1(value: unknown): asserts value is WorldDbCompetitionRuntimeStateV1 {
   const runtime = record(value, 'World DB competition runtime')
+  exactKeys(runtime, ['schemaVersion', 'gameFixtureBindings', 'resolvedStructurePositions', 'fixtureOutcomes'], 'World DB competition runtime')
   if (runtime.schemaVersion !== 1) throw new TypeError('Unsupported World DB competition runtime version')
   const bindings = array(runtime.gameFixtureBindings, 'World DB game fixture bindings')
   const positions = array(runtime.resolvedStructurePositions, 'World DB resolved structure positions')
