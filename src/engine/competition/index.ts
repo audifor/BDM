@@ -10,3 +10,5 @@ export { applyCompletedGameToWorldDbCompetitionInstancesV1 } from './WorldDbComp
 export type { WorldDbCompletedGameRealizationResultV1, WorldDbCompetitionExecutionV1 } from './WorldDbCompletedGameRealization'
 export { createWorldDbPhysicalGamePlanV1, materializeWorldDbPhysicalGameV1 } from './WorldDbPhysicalGamePlan'
 export type { MaterializedWorldDbPhysicalGameV1, MaterializeWorldDbPhysicalGameV1Input, WorldDbInstanceFixtureRefV1, WorldDbPhysicalGamePlanV1 } from './WorldDbPhysicalGamePlan'
+export { resolveWorldDbEntrySelectionV1 } from './WorldDbEntrySelection'
+export type { ResolveWorldDbEntrySelectionV1Input, WorldDbEntrySelectionRequirementV1, WorldDbEntrySelectionResultV1, WorldDbEntrySelectionStatusV1 } from './WorldDbEntrySelection'
