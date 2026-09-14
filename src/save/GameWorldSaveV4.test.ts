@@ -12,6 +12,11 @@ const savedAt = '2032-10-01T00:00:00.000Z'
 
 const runtime: WorldDbCompetitionRuntimeStateV1 = Object.freeze({
   schemaVersion: 1,
+  competitionRuntimeBundle: Object.freeze({
+    contentId: 'bdm-phase1-competition-runtime-v1',
+    contentHash: 'a'.repeat(64),
+    worldDbSchema: 'DDL-PHASE1-A',
+  }),
   competitionSeasonSources: Object.freeze([
     Object.freeze({ databaseId: 'world.db', competitionSeasonId: 'season:regular' }),
     Object.freeze({ databaseId: 'world.db', competitionSeasonId: 'season:cup' }),
@@ -44,6 +49,7 @@ describe('GameWorldSaveV4', () => {
     const loaded = deserializeGameWorldSaveV4(legacy)
     expect(getWorldDbCompetitionRuntimeStateV1(loaded)).toEqual({
       schemaVersion: 1,
+      competitionRuntimeBundle: null,
       competitionSeasonSources: [],
       gameFixtureBindings: [],
       resolvedStructurePositions: [],
@@ -63,6 +69,7 @@ describe('GameWorldSaveV4', () => {
     }
     malformed.payload.worldDbCompetitionRuntime = {
       schemaVersion: 1,
+      competitionRuntimeBundle: null,
       competitionSeasonSources: [],
       gameFixtureBindings: [
         { gameId: 'game:1', competitionFixtureId: 'fixture:1' },
@@ -72,5 +79,20 @@ describe('GameWorldSaveV4', () => {
       fixtureOutcomes: [],
     }
     expect(() => deserializeGameWorldV4(malformed)).toThrow('Duplicate World DB game fixture binding')
+  })
+
+  it('rejects malformed immutable runtime bundle pins', () => {
+    const malformed = structuredClone(serializeGameWorldV4(createNewGame(), savedAt)) as unknown as {
+      payload: Record<string, unknown>
+    }
+    malformed.payload.worldDbCompetitionRuntime = {
+      schemaVersion: 1,
+      competitionRuntimeBundle: { contentId: 'phase1', contentHash: 'not-a-digest', worldDbSchema: 'DDL-PHASE1-A' },
+      competitionSeasonSources: [],
+      gameFixtureBindings: [],
+      resolvedStructurePositions: [],
+      fixtureOutcomes: [],
+    }
+    expect(() => deserializeGameWorldV4(malformed)).toThrow('contentHash')
   })
 })
