@@ -140,11 +140,14 @@ function buildRoundRobinFixtures(
   orderedTeamIds: readonly string[],
 ): WorldDbInstanceFixtureV1[] {
   const payload = record(pairing.payload)
-  const meetings = payload?.meetings_per_pair ?? 1
-  if (!Number.isInteger(meetings) || Number(meetings) < 1) throw new RangeError(`Invalid meetings_per_pair for ${nodeId}`)
+  const rawMeetings = payload?.meetings_per_pair
+  const meetingsPerPair = rawMeetings === undefined ? 1 : rawMeetings
+  if (typeof meetingsPerPair !== 'number' || !Number.isInteger(meetingsPerPair) || meetingsPerPair < 1) {
+    throw new RangeError(`Invalid meetings_per_pair for ${nodeId}`)
+  }
 
   const fixtures: WorldDbInstanceFixtureV1[] = []
-  for (let meeting = 0; meeting < Number(meetings); meeting += 1) {
+  for (let meeting = 0; meeting < meetingsPerPair; meeting += 1) {
     for (let left = 0; left < orderedTeamIds.length - 1; left += 1) {
       for (let right = left + 1; right < orderedTeamIds.length; right += 1) {
         const first = orderedTeamIds[left]!
