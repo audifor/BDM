@@ -9,6 +9,7 @@ export type WorldCompetitionFixtureParticipantRefV1 =
   | Readonly<{ kind: 'ENTRY'; competitionSeasonEntryId: string; seed: number }>
   | Readonly<{ kind: 'WINNER_OF_FIXTURE'; fixtureId: string }>
 
+/** A virtual fixture is one competitive contest/matchup. SERIES contests may expand into several physical games later. */
 export interface WorldCompetitionVirtualFixtureV1 {
   readonly fixtureId: string
   readonly competitionSeasonId: string
