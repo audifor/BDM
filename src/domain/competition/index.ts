@@ -24,5 +24,16 @@ export type {
   WorldCompetitionSource,
   WorldCompetitionTieResolution,
 } from './WorldCompetitionFormatTypes'
-export { parseWorldCompetitionRuntimeBundle, WORLD_COMPETITION_RUNTIME_BUNDLE_SCHEMA_VERSION } from './WorldCompetitionRuntimeBundle'
+export { parseWorldCompetitionInitialScoreDocument, WORLD_COMPETITION_INITIAL_SCORE_SCHEMA_VERSION } from './WorldCompetitionInitialScore'
+export type {
+  WorldCompetitionInitialScoreCompositionMode,
+  WorldCompetitionInitialScoreDocument,
+  WorldCompetitionInitialScoreRule,
+  WorldCompetitionInitialScoreRuleType,
+} from './WorldCompetitionInitialScore'
+export {
+  parseWorldCompetitionRuntimeBundle,
+  WORLD_COMPETITION_RUNTIME_BUNDLE_HASH_ALGORITHM,
+  WORLD_COMPETITION_RUNTIME_BUNDLE_SCHEMA_VERSION,
+} from './WorldCompetitionRuntimeBundle'
 export type { WorldCompetitionRuntimeBundle } from './WorldCompetitionRuntimeBundle'
