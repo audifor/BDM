@@ -16,7 +16,8 @@ function bundle() {
   return parseWorldCompetitionRuntimeBundle({
     bundle_schema_version: 1,
     content_id: 'phase1-test',
-    content_sha256: 'b'.repeat(64),
+    content_hash_algorithm: 'BLAKE3',
+    content_hash: 'b'.repeat(64),
     world_db_schema: 'DDL-PHASE1-A',
     competition_formats: [
       format('edition:ESP:liga-endesa:2026-27', '2026-27'),
@@ -30,6 +31,7 @@ describe('WorldCompetitionCatalog', () => {
     const catalog = createWorldCompetitionCatalog(bundle())
 
     expect(catalog.bundleContentId).toBe('phase1-test')
+    expect(catalog.bundleContentHash).toBe('b'.repeat(64))
     expect(requireWorldCompetitionFormat(catalog, 'edition:ESP:liga-endesa:2025-26').seasonLabel).toBe('2025-26')
     expect(listWorldCompetitionFormats(catalog, 'competition:ESP:liga-endesa').map((format) => format.seasonLabel)).toEqual(['2025-26', '2026-27'])
   })
