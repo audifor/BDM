@@ -16,3 +16,5 @@ export { resolveWorldDbFixtureProgressionV1 } from './WorldDbProgressionResolver
 export { createWorldDbGameFixtureBindingIndexV1 } from './WorldDbGameFixtureBinding'
 export { resolveWorldDbStandingPolicyForNodeV1 } from './WorldDbStandingPolicy'
 export type { WorldDbStandingPolicyV1, WorldDbTiebreakerRulesetPolicyV1, WorldDbTiebreakerRulePolicyV1 } from './WorldDbStandingPolicy'
+export { projectWorldDbPhysicalMatchPolicyV1 } from './WorldDbPhysicalMatchPolicy'
+export type { WorldDbPhysicalMatchPolicyV1 } from './WorldDbPhysicalMatchPolicy'
