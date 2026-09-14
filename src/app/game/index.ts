@@ -14,7 +14,7 @@ export { createAcbTestGame, type CreateAcbTestGameOptions } from './createAcbTes
 export { createConfiguredGame } from './createConfiguredGame'
 export { NEW_GAME_UNIVERSES, type NewGameConfiguration, type NewGameTeamOption, type NewGameUniverseId, type NewGameUniverseOption } from './NewGameUniverseCatalog'
 export { loadWorldDbCompetitionPlanningContextsV1 } from './WorldDbCompetitionContextLoader'
-export { materializeWorldDbPhysicalGamesV1, deriveWorldDbPhysicalGameStakesV1, type WorldDbGameMaterializationResultV1 } from './WorldDbGameMaterialization'
+export { materializeWorldDbPhysicalGamesV1, deriveWorldDbPhysicalGameStakesV1, fixtureRequiresPhysicalExpansion, type WorldDbGameMaterializationResultV1 } from './WorldDbGameMaterialization'
 export {
   createPrototypeGameRandom,
   completeMatch,
