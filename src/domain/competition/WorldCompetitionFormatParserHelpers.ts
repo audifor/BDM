@@ -35,7 +35,7 @@ export function optionalPositiveInteger(value: unknown, label: string): number |
 }
 
 export function enumValue<const T extends readonly string[]>(value: unknown, allowed: T, label: string): T[number] {
-  if (typeof value !== 'string' || !allowed.includes(value)) throw new TypeError(`${label} must be one of ${allowed.join(', ')}`)
+  if (typeof value !== 'string' || !(allowed as readonly string[]).includes(value)) throw new TypeError(`${label} must be one of ${allowed.join(', ')}`)
   return value as T[number]
 }
 
