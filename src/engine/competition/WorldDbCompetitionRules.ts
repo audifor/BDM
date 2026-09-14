@@ -23,6 +23,16 @@ export interface WorldDbCompetitionRulesV1 {
   readonly singleGameFormats: readonly WorldDbRuleRecordV1[]
   readonly seriesFormats: readonly WorldDbRuleRecordV1[]
   readonly seriesHostingPatterns: readonly WorldDbRuleRecordV1[]
+  readonly standingSchemes: readonly WorldDbRuleRecordV1[]
+  readonly standingTables: readonly WorldDbRuleRecordV1[]
+  readonly standingMetricDefinitions: readonly WorldDbRuleRecordV1[]
+  readonly standingPointsRules: readonly WorldDbRuleRecordV1[]
+  readonly standingResultTreatmentRules: readonly WorldDbRuleRecordV1[]
+  readonly standingNormalizationRules: readonly WorldDbRuleRecordV1[]
+  readonly tiebreakerRulesets: readonly WorldDbRuleRecordV1[]
+  readonly tiebreakerRules: readonly WorldDbRuleRecordV1[]
+  readonly tiebreakerConditions: readonly WorldDbRuleRecordV1[]
+  readonly tiebreakerActions: readonly WorldDbRuleRecordV1[]
   readonly initialScore: readonly WorldDbRuleRecordV1[]
   readonly rulesByNodeId: Readonly<Record<string, readonly WorldDbRuleRecordV1[]>>
 }
@@ -42,6 +52,16 @@ const FAMILY_NAMES = [
   'singleGameFormats',
   'seriesFormats',
   'seriesHostingPatterns',
+  'standingSchemes',
+  'standingTables',
+  'standingMetricDefinitions',
+  'standingPointsRules',
+  'standingResultTreatmentRules',
+  'standingNormalizationRules',
+  'tiebreakerRulesets',
+  'tiebreakerRules',
+  'tiebreakerConditions',
+  'tiebreakerActions',
   'initialScore',
 ] as const
 
