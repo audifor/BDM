@@ -85,6 +85,58 @@ pub struct WorldDbFixtureSideV1 {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct WorldDbScheduleBlockV1 {
+    competition_schedule_block_id: String,
+    block_type: String,
+    name: Option<String>,
+    start_date: Option<String>,
+    end_date: Option<String>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldDbScheduleSessionV1 {
+    competition_schedule_session_id: String,
+    competition_schedule_block_id: String,
+    name: Option<String>,
+    session_order: Option<i64>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldDbScheduleSlotV1 {
+    competition_schedule_slot_id: String,
+    schedule_block_id: Option<String>,
+    schedule_session_id: Option<String>,
+    slot_order: Option<i64>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldDbScheduleSlotTimingV1 {
+    competition_schedule_slot_timing_history_id: String,
+    competition_schedule_slot_id: String,
+    timing_state: String,
+    local_date: Option<String>,
+    local_time: Option<String>,
+    time_zone: Option<String>,
+    valid_from: Option<String>,
+    valid_to: Option<String>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldDbFixtureScheduleAllocationV1 {
+    competition_fixture_schedule_allocation_id: String,
+    competition_fixture_id: String,
+    competition_schedule_slot_id: String,
+    status: String,
+    valid_from: Option<String>,
+    valid_to: Option<String>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WorldDbCompetitionBundleV1 {
     schema_version: u8,
     source: WorldDbSourceRefV1,
@@ -96,6 +148,11 @@ pub struct WorldDbCompetitionBundleV1 {
     structure_entry_assignments: Vec<WorldDbStructureEntryAssignmentV1>,
     fixtures: Vec<WorldDbFixtureV1>,
     fixture_sides: Vec<WorldDbFixtureSideV1>,
+    schedule_blocks: Vec<WorldDbScheduleBlockV1>,
+    schedule_sessions: Vec<WorldDbScheduleSessionV1>,
+    schedule_slots: Vec<WorldDbScheduleSlotV1>,
+    schedule_slot_timings: Vec<WorldDbScheduleSlotTimingV1>,
+    fixture_schedule_allocations: Vec<WorldDbFixtureScheduleAllocationV1>,
     rule_payloads: Map<String, Value>,
 }
 
@@ -210,6 +267,68 @@ pub fn load_competition_bundle_v1(
             source_structure_position_id: row.get(5)?,
         }),
     )?;
+    let schedule_blocks = query_many(
+        &connection,
+        "SELECT competition_schedule_block_id, block_type, name, start_date, end_date FROM competition_schedule_block WHERE competition_season_id = ?1 ORDER BY COALESCE(start_date, '9999-12-31'), competition_schedule_block_id",
+        competition_season_id,
+        |row| Ok(WorldDbScheduleBlockV1 {
+            competition_schedule_block_id: row.get(0)?,
+            block_type: row.get(1)?,
+            name: row.get(2)?,
+            start_date: row.get(3)?,
+            end_date: row.get(4)?,
+        }),
+    )?;
+    let schedule_sessions = query_many(
+        &connection,
+        "SELECT s.competition_schedule_session_id, s.competition_schedule_block_id, s.name, s.session_order FROM competition_schedule_session s JOIN competition_schedule_block b ON b.competition_schedule_block_id = s.competition_schedule_block_id WHERE b.competition_season_id = ?1 ORDER BY s.competition_schedule_block_id, COALESCE(s.session_order, 2147483647), s.competition_schedule_session_id",
+        competition_season_id,
+        |row| Ok(WorldDbScheduleSessionV1 {
+            competition_schedule_session_id: row.get(0)?,
+            competition_schedule_block_id: row.get(1)?,
+            name: row.get(2)?,
+            session_order: row.get(3)?,
+        }),
+    )?;
+    let schedule_slots = query_many(
+        &connection,
+        "SELECT competition_schedule_slot_id, schedule_block_id, schedule_session_id, slot_order FROM competition_schedule_slot WHERE competition_season_id = ?1 ORDER BY COALESCE(slot_order, 2147483647), competition_schedule_slot_id",
+        competition_season_id,
+        |row| Ok(WorldDbScheduleSlotV1 {
+            competition_schedule_slot_id: row.get(0)?,
+            schedule_block_id: row.get(1)?,
+            schedule_session_id: row.get(2)?,
+            slot_order: row.get(3)?,
+        }),
+    )?;
+    let schedule_slot_timings = query_many(
+        &connection,
+        "SELECT h.competition_schedule_slot_timing_history_id, h.competition_schedule_slot_id, h.timing_state, h.local_date, h.local_time, h.time_zone, h.valid_from, h.valid_to FROM competition_schedule_slot_timing_history h JOIN competition_schedule_slot s ON s.competition_schedule_slot_id = h.competition_schedule_slot_id WHERE s.competition_season_id = ?1 ORDER BY h.competition_schedule_slot_id, COALESCE(h.valid_from, ''), h.competition_schedule_slot_timing_history_id",
+        competition_season_id,
+        |row| Ok(WorldDbScheduleSlotTimingV1 {
+            competition_schedule_slot_timing_history_id: row.get(0)?,
+            competition_schedule_slot_id: row.get(1)?,
+            timing_state: row.get(2)?,
+            local_date: row.get(3)?,
+            local_time: row.get(4)?,
+            time_zone: row.get(5)?,
+            valid_from: row.get(6)?,
+            valid_to: row.get(7)?,
+        }),
+    )?;
+    let fixture_schedule_allocations = query_many(
+        &connection,
+        "SELECT a.competition_fixture_schedule_allocation_id, a.competition_fixture_id, a.competition_schedule_slot_id, a.status, a.valid_from, a.valid_to FROM competition_fixture_schedule_allocation a JOIN competition_fixture f ON f.competition_fixture_id = a.competition_fixture_id WHERE f.competition_season_id = ?1 ORDER BY a.competition_fixture_id, COALESCE(a.valid_from, ''), a.competition_fixture_schedule_allocation_id",
+        competition_season_id,
+        |row| Ok(WorldDbFixtureScheduleAllocationV1 {
+            competition_fixture_schedule_allocation_id: row.get(0)?,
+            competition_fixture_id: row.get(1)?,
+            competition_schedule_slot_id: row.get(2)?,
+            status: row.get(3)?,
+            valid_from: row.get(4)?,
+            valid_to: row.get(5)?,
+        }),
+    )?;
     let rule_payloads = load_rule_payloads(&connection, competition_season_id)?;
 
     Ok(WorldDbCompetitionBundleV1 {
@@ -230,6 +349,11 @@ pub fn load_competition_bundle_v1(
         structure_entry_assignments,
         fixtures,
         fixture_sides,
+        schedule_blocks,
+        schedule_sessions,
+        schedule_slots,
+        schedule_slot_timings,
+        fixture_schedule_allocations,
         rule_payloads,
     })
 }
