@@ -4,7 +4,10 @@ import { applyWorldDbCompetitionInstanceOutcomesV1 } from './WorldDbCompetitionI
 import type { WorldDbCompetitionInstanceV1, WorldDbInstanceFixtureV1 } from './WorldDbCompetitionInstance'
 import type { WorldDbCompetitionRuntimeV1 } from './WorldDbCompetitionRuntime'
 import type { WorldDbCompetitionRulesV1 } from './WorldDbCompetitionRules'
-import type { WorldDbGameInstanceFixtureBindingIndexV1 } from './WorldDbGameInstanceFixtureBinding'
+import type {
+  WorldDbGameInstanceFixtureBindingIndexV1,
+  WorldDbGameInstanceFixtureBindingV1,
+} from './WorldDbGameInstanceFixtureBinding'
 
 export interface WorldDbCompetitionExecutionV1 {
   readonly runtime: WorldDbCompetitionRuntimeV1
@@ -65,7 +68,7 @@ export function applyCompletedGameToWorldDbCompetitionInstancesV1(
         throw new Error(`Bound competition instance fixture not found: ${competitionSeasonId}/${binding.instanceFixtureId}`)
       }
       validateGameMatchesFixture(game, fixture)
-      const homeWon = game.result!.homeScore > game.result!.awayScore
+      const homeWon = game.result.homeScore > game.result.awayScore
       return Object.freeze({
         instanceFixtureId: fixture.instanceFixtureId,
         winnerTeamId: homeWon ? fixture.homeTeamId : fixture.awayTeamId,
@@ -103,9 +106,9 @@ function validateGameMatchesFixture(game: Game, fixture: WorldDbInstanceFixtureV
 }
 
 function groupBindingsByCompetitionSeason(
-  bindings: readonly { readonly competitionSeasonId: string; readonly instanceFixtureId: string }[],
-): Record<string, typeof bindings[number][]> {
-  const result: Record<string, typeof bindings[number][]> = {}
+  bindings: readonly WorldDbGameInstanceFixtureBindingV1[],
+): Record<string, WorldDbGameInstanceFixtureBindingV1[]> {
+  const result: Record<string, WorldDbGameInstanceFixtureBindingV1[]> = {}
   for (const binding of bindings) (result[binding.competitionSeasonId] ??= []).push(binding)
   return result
 }
