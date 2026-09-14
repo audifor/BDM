@@ -2,7 +2,7 @@ import type { WorldCompetitionFormatDocument, WorldCompetitionRuntimeBundle } fr
 
 export interface WorldCompetitionCatalog {
   readonly bundleContentId: string
-  readonly bundleContentSha256: string
+  readonly bundleContentHash: string
   readonly formatsBySeasonId: Readonly<Record<string, WorldCompetitionFormatDocument>>
   readonly seasonIdsByCompetitionId: Readonly<Record<string, readonly string[]>>
 }
@@ -21,7 +21,7 @@ export function createWorldCompetitionCatalog(bundle: WorldCompetitionRuntimeBun
 
   return Object.freeze({
     bundleContentId: bundle.contentId,
-    bundleContentSha256: bundle.contentSha256,
+    bundleContentHash: bundle.contentHash,
     formatsBySeasonId: Object.freeze({ ...formatsBySeasonId }),
     seasonIdsByCompetitionId: Object.freeze(Object.fromEntries(Object.entries(seasonIdsByCompetitionId).map(([competitionId, seasonIds]) => [competitionId, Object.freeze([...seasonIds])]))),
   })
