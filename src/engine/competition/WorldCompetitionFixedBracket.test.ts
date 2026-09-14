@@ -64,7 +64,19 @@ describe('Phase 1 fixed bracket instantiator', () => {
     ])
   })
 
-  it('fails rather than inventing a multi-fixture path', () => {
+  it('accepts the canonical dash-form matchups alias used by league playoff documents', () => {
+    const dashFormat = parseWorldCompetitionFormatDocument({
+      schema_version: '1.0', competition_id: 'competition:test', competition_season_id: 'edition:test', season_label: 'test', status: 'COMPLETE',
+      variants: [{ key: 'MAIN', nodes: [
+        { key: 'QF', node_type: 'ROUND', role: 'PLAYOFF', team_count: 8, pairing: { type: 'FIXED_BRACKET', payload: { matchups: ['1-8', '4-5', '2-7', '3-6'] } } },
+      ], edges: [] }],
+      sources: [{ url: 'https://example.com', type: 'OFFICIAL' }],
+    })
+    const plan = instantiateWorldCompetitionFixedBracketV1(dashFormat, 'MAIN', seededEntries)
+    expect(plan.fixtureIdsByNodeKey.QF).toHaveLength(4)
+  })
+
+  it('fails rather than inventing a multi-fixture winner path', () => {
     const ambiguous = parseWorldCompetitionFormatDocument({
       schema_version: '1.0', competition_id: 'competition:test', competition_season_id: 'edition:test', season_label: 'test', status: 'COMPLETE',
       variants: [{ key: 'MAIN', nodes: [
@@ -73,7 +85,7 @@ describe('Phase 1 fixed bracket instantiator', () => {
       ], edges: [{ from: 'R1', to: 'R2', selector: 'WINNER' }] }],
       sources: [{ url: 'https://example.com', type: 'OFFICIAL' }],
     })
-    expect(() => instantiateWorldCompetitionFixedBracketV1(ambiguous, 'MAIN', seededEntries)).toThrow('lacks explicit pairings or paths')
+    expect(() => instantiateWorldCompetitionFixedBracketV1(ambiguous, 'MAIN', seededEntries)).toThrow('incoming WINNER progression')
   })
 
   it('rejects missing or duplicate seeds', () => {
