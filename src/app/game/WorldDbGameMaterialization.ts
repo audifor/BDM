@@ -102,6 +102,7 @@ export function materializeWorldDbPhysicalGamesV1(
   const runtime = getWorldDbCompetitionRuntimeStateV1(world)
   const nextRuntime: WorldDbCompetitionRuntimeStateV1 = Object.freeze({
     schemaVersion: 1,
+    competitionRuntimeBundle: runtime.competitionRuntimeBundle,
     competitionSeasonSources: mergeCompetitionSeasonSources(runtime.competitionSeasonSources, contexts),
     gameFixtureBindings: mergeGameFixtureBindings(
       runtime.gameFixtureBindings,
