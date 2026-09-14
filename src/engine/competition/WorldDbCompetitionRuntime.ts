@@ -5,45 +5,34 @@ import {
   type WorldDbFixtureSideV1,
   type WorldDbFixtureV1,
   type WorldDbStructureNodeV1,
+  type WorldDbStructurePositionV1,
 } from '@/domain/worldDb/CompetitionBundle'
 
 export interface WorldDbCompetitionRuntimeV1 {
   readonly bundle: WorldDbCompetitionBundleV1
   readonly entryById: Readonly<Record<string, WorldDbCompetitionEntryV1>>
   readonly nodeById: Readonly<Record<string, WorldDbStructureNodeV1>>
+  readonly positionById: Readonly<Record<string, WorldDbStructurePositionV1>>
   readonly fixturesByNodeId: Readonly<Record<string, readonly WorldDbFixtureV1[]>>
   readonly fixtureSidesByFixtureId: Readonly<Record<string, readonly WorldDbFixtureSideV1[]>>
   readonly entryIdsByNodeId: Readonly<Record<string, readonly string[]>>
   readonly childNodeIdsByNodeId: Readonly<Record<string, readonly string[]>>
 }
 
-/**
- * Builds the immutable in-memory view used by competition engines.
- *
- * The adapter validates B04 referential integrity at the game boundary. A corrupted or partially
- * materialized World DB therefore fails during new-game bootstrap rather than half way through a
- * season simulation.
- */
 export function createWorldDbCompetitionRuntimeV1(value: unknown): WorldDbCompetitionRuntimeV1 {
   assertWorldDbCompetitionBundleV1(value)
   const bundle = value
   const entryById = uniqueIndex(bundle.entries, (entry) => entry.competitionSeasonEntryId, 'competition entry')
   const nodeById = uniqueIndex(bundle.structureNodes, (node) => node.competitionStructureNodeId, 'structure node')
+  const positionById = uniqueIndex(bundle.structurePositions, (position) => position.competitionStructurePositionId, 'structure position')
   const fixtureById = uniqueIndex(bundle.fixtures, (fixture) => fixture.competitionFixtureId, 'fixture')
 
   const fixturesByNodeId = groupBy(bundle.fixtures.filter((fixture) => fixture.structureNodeId !== null), (fixture) => fixture.structureNodeId!)
   const fixtureSidesByFixtureId = groupBy(bundle.fixtureSides, (side) => side.competitionFixtureId)
-  const entryIdsByNodeId = groupValues(
-    bundle.structureEntryAssignments,
-    (assignment) => assignment.competitionStructureNodeId,
-    (assignment) => assignment.competitionSeasonEntryId,
-  )
-  const childNodeIdsByNodeId = groupValues(
-    bundle.structureEdges,
-    (edge) => edge.fromNodeId,
-    (edge) => edge.toNodeId,
-  )
+  const entryIdsByNodeId = groupValues(bundle.structureEntryAssignments, (assignment) => assignment.competitionStructureNodeId, (assignment) => assignment.competitionSeasonEntryId)
+  const childNodeIdsByNodeId = groupValues(bundle.structureEdges, (edge) => edge.fromNodeId, (edge) => edge.toNodeId)
 
+  for (const position of bundle.structurePositions) requireKey(nodeById, position.competitionStructureNodeId, 'Structure position node')
   for (const assignment of bundle.structureEntryAssignments) {
     requireKey(nodeById, assignment.competitionStructureNodeId, 'Structure assignment node')
     requireKey(entryById, assignment.competitionSeasonEntryId, 'Structure assignment entry')
@@ -58,12 +47,14 @@ export function createWorldDbCompetitionRuntimeV1(value: unknown): WorldDbCompet
   for (const side of bundle.fixtureSides) {
     requireKey(fixtureById, side.competitionFixtureId, 'Fixture side fixture')
     if (side.competitionSeasonEntryId !== null) requireKey(entryById, side.competitionSeasonEntryId, 'Fixture side entry')
+    if (side.sourceStructurePositionId !== null) requireKey(positionById, side.sourceStructurePositionId, 'Fixture side source position')
   }
 
   return Object.freeze({
     bundle,
     entryById: Object.freeze(entryById),
     nodeById: Object.freeze(nodeById),
+    positionById: Object.freeze(positionById),
     fixturesByNodeId: freezeGrouped(fixturesByNodeId),
     fixtureSidesByFixtureId: freezeGrouped(fixtureSidesByFixtureId),
     entryIdsByNodeId: freezeGrouped(entryIdsByNodeId),
