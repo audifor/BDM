@@ -5,11 +5,13 @@ import type { WorldDbFixtureOutcomeV1 } from './WorldDbProgressionResolver'
 import type { WorldDbGameFixtureBindingIndexV1 } from './WorldDbGameFixtureBinding'
 
 /**
- * Converts completed physical Games into competition-fixture outcomes.
+ * Converts completed physical Games into competition-fixture outcomes for one loaded competition
+ * season.
  *
- * The adapter is intentionally N:M: one physical Game may realize several competition fixtures.
- * Multiple completed Games realizing the same fixture are rejected here until realization
- * authority/status is carried into the runtime projection.
+ * The adapter is intentionally N:M: one physical Game may realize several competition fixtures,
+ * including fixtures from other competition-season runtimes. Foreign fixture bindings are ignored
+ * by this runtime. Multiple completed Games realizing the same local fixture are rejected until
+ * realization authority/status is carried into the runtime projection.
  */
 export function adaptCompletedGamesToWorldDbFixtureOutcomesV1(
   runtime: WorldDbCompetitionRuntimeV1,
@@ -22,11 +24,14 @@ export function adaptCompletedGamesToWorldDbFixtureOutcomesV1(
     (fixture) => fixture.competitionFixtureId,
     'resolved fixture',
   )
+  const localFixtureIds = new Set(runtime.bundle.fixtures.map((fixture) => fixture.competitionFixtureId))
   const outcomeByFixtureId: Record<string, WorldDbFixtureOutcomeV1> = {}
 
   for (const game of games) {
     const fixtureIds = bindingIndex.fixtureIdsByGameId[game.id] ?? []
     for (const fixtureId of fixtureIds) {
+      if (!localFixtureIds.has(fixtureId)) continue
+
       const resolvedFixture = resolvedFixtureById[fixtureId]
       if (resolvedFixture === undefined) throw new Error(`Resolved fixture not found: ${fixtureId}`)
       if (!resolvedFixture.ready) throw new Error(`Fixture is not ready for Game outcome adaptation: ${fixtureId}`)
