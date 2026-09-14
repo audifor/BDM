@@ -22,7 +22,10 @@ export interface WorldCompetitionRankedStandingV1 extends WorldCompetitionRoundR
   readonly rank: number
 }
 
-/** Computes objective table metrics only. It deliberately does not guess competition tiebreak rules. */
+/**
+ * Computes objective table metrics only. Ranking policy must come from explicit caller/B04 rules;
+ * this layer deliberately does not guess competition tiebreak semantics.
+ */
 export function computeWorldCompetitionRoundRobinStandingsV1(
   plan: WorldCompetitionRoundRobinPlanV1,
   results: readonly WorldCompetitionRoundRobinResultV1[],
