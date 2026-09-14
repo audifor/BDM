@@ -1,5 +1,9 @@
+#[path = "world_db_standings.rs"]
+mod standings;
+
 use rusqlite::{Connection, OptionalExtension};
 use serde_json::{json, Map, Value};
+use standings::append_standing_rule_payloads;
 
 pub fn load_rule_payloads(
     connection: &Connection,
@@ -245,6 +249,8 @@ pub fn load_rule_payloads(
             },
         )?,
     );
+
+    append_standing_rule_payloads(connection, competition_season_id, &mut result)?;
 
     if table_exists(connection, "competition_contest_initial_score_rule")? {
         insert_family(
