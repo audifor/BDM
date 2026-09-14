@@ -12,6 +12,12 @@ export interface WorldDbInstanceFixtureV1 {
   readonly awayTeamId: string
 }
 
+export interface WorldDbInstanceFixtureOutcomeV1 {
+  readonly instanceFixtureId: string
+  readonly winnerTeamId: string
+  readonly loserTeamId: string
+}
+
 export interface WorldDbCompetitionInstanceRequirementV1 {
   readonly kind: 'DRAW'
   readonly structureNodeId: string
@@ -25,6 +31,7 @@ export interface WorldDbCompetitionInstanceV1 {
   readonly participantTeamIds: readonly string[]
   readonly nodeParticipantTeamIds: Readonly<Record<string, readonly string[]>>
   readonly fixtures: readonly WorldDbInstanceFixtureV1[]
+  readonly fixtureOutcomesById: Readonly<Record<string, WorldDbInstanceFixtureOutcomeV1>>
   readonly requirements: readonly WorldDbCompetitionInstanceRequirementV1[]
 }
 
@@ -59,16 +66,17 @@ export function instantiateWorldDbCompetitionV1(
   const explicitOrder = input.pairingOrderByNodeId?.[nodeId]
 
   if (pairing.type === 'DRAW_PAIRING' && explicitOrder === undefined) {
-    return Object.freeze({
+    return freezeInstance({
       schemaVersion: 1,
       competitionSeasonId: runtime.bundle.competitionSeason.competitionSeasonId,
       status: 'awaitingDraw',
       participantTeamIds,
       nodeParticipantTeamIds,
-      fixtures: Object.freeze([]),
-      requirements: Object.freeze([
-        Object.freeze({ kind: 'DRAW' as const, structureNodeId: nodeId, teamIds: participantTeamIds }),
-      ]),
+      fixtures: [],
+      fixtureOutcomesById: {},
+      requirements: [
+        { kind: 'DRAW', structureNodeId: nodeId, teamIds: participantTeamIds },
+      ],
     })
   }
 
@@ -76,15 +84,51 @@ export function instantiateWorldDbCompetitionV1(
     ? participantTeamIds
     : validatePermutation(explicitOrder, participantTeamIds, `Pairing order for ${nodeId}`)
 
-  const fixtures = buildInitialFixtures(runtime, pairing, nodeId, order)
-  return Object.freeze({
+  const fixtures = buildWorldDbInstanceFixturesForPairingV1(runtime, pairing, nodeId, order)
+  return freezeInstance({
     schemaVersion: 1,
     competitionSeasonId: runtime.bundle.competitionSeason.competitionSeasonId,
     status: 'ready',
     participantTeamIds,
     nodeParticipantTeamIds,
-    fixtures: Object.freeze(fixtures),
-    requirements: Object.freeze([]),
+    fixtures,
+    fixtureOutcomesById: {},
+    requirements: [],
+  })
+}
+
+export function buildWorldDbInstanceFixturesForPairingV1(
+  runtime: WorldDbCompetitionRuntimeV1,
+  pairing: WorldDbRuleRecordV1,
+  nodeId: string,
+  orderedTeamIds: readonly string[],
+): WorldDbInstanceFixtureV1[] {
+  switch (pairing.type) {
+    case 'ROUND_ROBIN_PAIRING':
+      return buildRoundRobinFixtures(runtime, pairing, nodeId, orderedTeamIds)
+    case 'FIXED_BRACKET_PAIRING':
+    case 'SEEDED_BRACKET_PAIRING':
+    case 'DRAW_PAIRING':
+      return buildPairFixtures(runtime, nodeId, orderedTeamIds)
+    default:
+      throw new Error(`Unsupported pairing type: ${String(pairing.type)}`)
+  }
+}
+
+export function createWorldDbInstanceFixtureV1(
+  runtime: WorldDbCompetitionRuntimeV1,
+  nodeId: string,
+  ordinal: number,
+  homeTeamId: string,
+  awayTeamId: string,
+): WorldDbInstanceFixtureV1 {
+  return Object.freeze({
+    instanceFixtureId: `instance-fixture:${runtime.bundle.competitionSeason.competitionSeasonId}:${nodeId}:${ordinal}`,
+    sourceCompetitionFixtureId: null,
+    structureNodeId: nodeId,
+    ordinal,
+    homeTeamId,
+    awayTeamId,
   })
 }
 
@@ -100,24 +144,6 @@ function findRootPairingRules(rules: WorldDbCompetitionRulesV1): readonly WorldD
   )
 }
 
-function buildInitialFixtures(
-  runtime: WorldDbCompetitionRuntimeV1,
-  pairing: WorldDbRuleRecordV1,
-  nodeId: string,
-  orderedTeamIds: readonly string[],
-): WorldDbInstanceFixtureV1[] {
-  switch (pairing.type) {
-    case 'ROUND_ROBIN_PAIRING':
-      return buildRoundRobinFixtures(runtime, pairing, nodeId, orderedTeamIds)
-    case 'FIXED_BRACKET_PAIRING':
-    case 'SEEDED_BRACKET_PAIRING':
-    case 'DRAW_PAIRING':
-      return buildPairFixtures(runtime, nodeId, orderedTeamIds)
-    default:
-      throw new Error(`Unsupported initial pairing type: ${String(pairing.type)}`)
-  }
-}
-
 function buildPairFixtures(
   runtime: WorldDbCompetitionRuntimeV1,
   nodeId: string,
@@ -128,7 +154,7 @@ function buildPairFixtures(
   }
   const fixtures: WorldDbInstanceFixtureV1[] = []
   for (let index = 0; index < orderedTeamIds.length; index += 2) {
-    fixtures.push(instanceFixture(runtime, nodeId, fixtures.length + 1, orderedTeamIds[index]!, orderedTeamIds[index + 1]!))
+    fixtures.push(createWorldDbInstanceFixtureV1(runtime, nodeId, fixtures.length + 1, orderedTeamIds[index]!, orderedTeamIds[index + 1]!))
   }
   return fixtures
 }
@@ -153,27 +179,27 @@ function buildRoundRobinFixtures(
         const first = orderedTeamIds[left]!
         const second = orderedTeamIds[right]!
         const [home, away] = meeting % 2 === 0 ? [first, second] : [second, first]
-        fixtures.push(instanceFixture(runtime, nodeId, fixtures.length + 1, home, away))
+        fixtures.push(createWorldDbInstanceFixtureV1(runtime, nodeId, fixtures.length + 1, home, away))
       }
     }
   }
   return fixtures
 }
 
-function instanceFixture(
-  runtime: WorldDbCompetitionRuntimeV1,
-  nodeId: string,
-  ordinal: number,
-  homeTeamId: string,
-  awayTeamId: string,
-): WorldDbInstanceFixtureV1 {
+function freezeInstance(instance: WorldDbCompetitionInstanceV1): WorldDbCompetitionInstanceV1 {
+  const nodeParticipantTeamIds: Record<string, readonly string[]> = {}
+  for (const [nodeId, teamIds] of Object.entries(instance.nodeParticipantTeamIds)) {
+    nodeParticipantTeamIds[nodeId] = Object.freeze([...teamIds])
+  }
+  const outcomes: Record<string, WorldDbInstanceFixtureOutcomeV1> = {}
+  for (const [fixtureId, outcome] of Object.entries(instance.fixtureOutcomesById)) outcomes[fixtureId] = Object.freeze({ ...outcome })
   return Object.freeze({
-    instanceFixtureId: `instance-fixture:${runtime.bundle.competitionSeason.competitionSeasonId}:${nodeId}:${ordinal}`,
-    sourceCompetitionFixtureId: null,
-    structureNodeId: nodeId,
-    ordinal,
-    homeTeamId,
-    awayTeamId,
+    ...instance,
+    participantTeamIds: Object.freeze([...instance.participantTeamIds]),
+    nodeParticipantTeamIds: Object.freeze(nodeParticipantTeamIds),
+    fixtures: Object.freeze([...instance.fixtures]),
+    fixtureOutcomesById: Object.freeze(outcomes),
+    requirements: Object.freeze(instance.requirements.map((requirement) => Object.freeze({ ...requirement, teamIds: Object.freeze([...requirement.teamIds]) }))),
   })
 }
 
