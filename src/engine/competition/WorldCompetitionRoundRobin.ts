@@ -9,6 +9,7 @@ export interface WorldCompetitionRoundRobinFixtureV1 {
   readonly competitionSeasonId: string
   readonly variantKey: string
   readonly nodeKey: string
+  /** Logical round in the generated pairing cycle, not a calendar date or matchday timestamp. */
   readonly roundNo: number
   readonly meetingNo: number
   readonly homeEntryId: string
@@ -73,8 +74,6 @@ export function instantiateWorldCompetitionRoundRobinV1(
       const right = current[current.length - 1 - index]!
       if (left === bye || right === bye) continue
 
-      // Alternating the anchored team's orientation avoids a permanent home bias while remaining
-      // fully deterministic. Other pair orientations flip with the round parity as well.
       const reverse = (roundIndex + index) % 2 === 1
       pairs.push(reverse ? [right, left] : [left, right])
     }
