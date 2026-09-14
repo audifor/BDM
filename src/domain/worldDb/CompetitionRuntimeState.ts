@@ -1,0 +1,127 @@
+import type { GameWorld } from '@/domain/world'
+import type { WorldDbGameFixtureBindingV1 } from '@/engine/competition/WorldDbGameFixtureBinding'
+
+export interface WorldDbResolvedStructurePositionV1 {
+  readonly competitionStructurePositionId: string
+  readonly competitionSeasonEntryId: string
+}
+
+export interface WorldDbCompetitionFixtureOutcomeV1 {
+  readonly competitionFixtureId: string
+  readonly winnerEntryId: string
+  readonly loserEntryId: string
+}
+
+export interface WorldDbCompetitionRuntimeStateV1 {
+  readonly schemaVersion: 1
+  readonly gameFixtureBindings: readonly WorldDbGameFixtureBindingV1[]
+  readonly resolvedStructurePositions: readonly WorldDbResolvedStructurePositionV1[]
+  readonly fixtureOutcomes: readonly WorldDbCompetitionFixtureOutcomeV1[]
+}
+
+export type GameWorldWithWorldDbCompetitionRuntime = GameWorld & {
+  readonly worldDbCompetitionRuntime: WorldDbCompetitionRuntimeStateV1
+}
+
+export const EMPTY_WORLD_DB_COMPETITION_RUNTIME_V1: WorldDbCompetitionRuntimeStateV1 = Object.freeze({
+  schemaVersion: 1,
+  gameFixtureBindings: Object.freeze([]),
+  resolvedStructurePositions: Object.freeze([]),
+  fixtureOutcomes: Object.freeze([]),
+})
+
+export function assertWorldDbCompetitionRuntimeStateV1(value: unknown): asserts value is WorldDbCompetitionRuntimeStateV1 {
+  const runtime = record(value, 'World DB competition runtime')
+  if (runtime.schemaVersion !== 1) throw new TypeError('Unsupported World DB competition runtime version')
+  const bindings = array(runtime.gameFixtureBindings, 'World DB game fixture bindings')
+  const positions = array(runtime.resolvedStructurePositions, 'World DB resolved structure positions')
+  const outcomes = array(runtime.fixtureOutcomes, 'World DB fixture outcomes')
+
+  const bindingPairs = new Set<string>()
+  for (const [index, raw] of bindings.entries()) {
+    const row = record(raw, `World DB game fixture binding[${index}]`)
+    exactKeys(row, ['gameId', 'competitionFixtureId'], `World DB game fixture binding[${index}]`)
+    const gameId = text(row.gameId, `World DB game fixture binding[${index}].gameId`)
+    const fixtureId = text(row.competitionFixtureId, `World DB game fixture binding[${index}].competitionFixtureId`)
+    unique(bindingPairs, `${gameId}\u0000${fixtureId}`, `Duplicate World DB game fixture binding: ${gameId} -> ${fixtureId}`)
+  }
+
+  const positionIds = new Set<string>()
+  for (const [index, raw] of positions.entries()) {
+    const row = record(raw, `World DB resolved structure position[${index}]`)
+    exactKeys(row, ['competitionStructurePositionId', 'competitionSeasonEntryId'], `World DB resolved structure position[${index}]`)
+    const positionId = text(row.competitionStructurePositionId, `World DB resolved structure position[${index}].competitionStructurePositionId`)
+    text(row.competitionSeasonEntryId, `World DB resolved structure position[${index}].competitionSeasonEntryId`)
+    unique(positionIds, positionId, `Duplicate World DB resolved structure position: ${positionId}`)
+  }
+
+  const fixtureIds = new Set<string>()
+  for (const [index, raw] of outcomes.entries()) {
+    const row = record(raw, `World DB fixture outcome[${index}]`)
+    exactKeys(row, ['competitionFixtureId', 'winnerEntryId', 'loserEntryId'], `World DB fixture outcome[${index}]`)
+    const fixtureId = text(row.competitionFixtureId, `World DB fixture outcome[${index}].competitionFixtureId`)
+    const winner = text(row.winnerEntryId, `World DB fixture outcome[${index}].winnerEntryId`)
+    const loser = text(row.loserEntryId, `World DB fixture outcome[${index}].loserEntryId`)
+    if (winner === loser) throw new Error(`World DB fixture outcome ${fixtureId} requires distinct winner and loser`)
+    unique(fixtureIds, fixtureId, `Duplicate World DB fixture outcome: ${fixtureId}`)
+  }
+}
+
+export function normalizeWorldDbCompetitionRuntimeStateV1(value: unknown): WorldDbCompetitionRuntimeStateV1 {
+  assertWorldDbCompetitionRuntimeStateV1(value)
+  return Object.freeze({
+    schemaVersion: 1,
+    gameFixtureBindings: Object.freeze(value.gameFixtureBindings.map((row) => Object.freeze({ ...row }))),
+    resolvedStructurePositions: Object.freeze(value.resolvedStructurePositions.map((row) => Object.freeze({ ...row }))),
+    fixtureOutcomes: Object.freeze(value.fixtureOutcomes.map((row) => Object.freeze({ ...row }))),
+  })
+}
+
+export function getWorldDbCompetitionRuntimeStateV1(world: GameWorld): WorldDbCompetitionRuntimeStateV1 {
+  const value = (world as GameWorld & { readonly worldDbCompetitionRuntime?: unknown }).worldDbCompetitionRuntime
+  return value === undefined ? EMPTY_WORLD_DB_COMPETITION_RUNTIME_V1 : normalizeWorldDbCompetitionRuntimeStateV1(value)
+}
+
+export function withWorldDbCompetitionRuntimeStateV1(
+  world: GameWorld,
+  value: WorldDbCompetitionRuntimeStateV1,
+): GameWorldWithWorldDbCompetitionRuntime {
+  const runtime = normalizeWorldDbCompetitionRuntimeStateV1(value)
+  return Object.freeze({ ...world, worldDbCompetitionRuntime: runtime }) as GameWorldWithWorldDbCompetitionRuntime
+}
+
+export function resolvedEntryIdByStructurePositionIdV1(
+  runtime: WorldDbCompetitionRuntimeStateV1,
+): Readonly<Record<string, string>> {
+  const result: Record<string, string> = {}
+  for (const row of runtime.resolvedStructurePositions) result[row.competitionStructurePositionId] = row.competitionSeasonEntryId
+  return Object.freeze(result)
+}
+
+function record(value: unknown, label: string): Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new TypeError(`${label} must be an object`)
+  return value as Record<string, unknown>
+}
+
+function array(value: unknown, label: string): readonly unknown[] {
+  if (!Array.isArray(value)) throw new TypeError(`${label} must be an array`)
+  return value
+}
+
+function text(value: unknown, label: string): string {
+  if (typeof value !== 'string' || value.trim().length === 0) throw new TypeError(`${label} must be a non-empty string`)
+  return value
+}
+
+function exactKeys(value: Record<string, unknown>, keys: readonly string[], label: string): void {
+  const actual = Object.keys(value).sort()
+  const expected = [...keys].sort()
+  if (actual.length !== expected.length || actual.some((key, index) => key !== expected[index])) {
+    throw new TypeError(`${label} has unexpected fields`)
+  }
+}
+
+function unique(values: Set<string>, key: string, message: string): void {
+  if (values.has(key)) throw new Error(message)
+  values.add(key)
+}
