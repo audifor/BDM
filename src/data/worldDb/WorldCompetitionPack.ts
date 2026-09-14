@@ -48,14 +48,36 @@ export interface WorldCompetitionSeasonEntryRecord {
   readonly teamId: string
 }
 
+export interface WorldCompetitionSeasonSlotRecord {
+  readonly id: string
+  readonly competitionSeasonId: string
+  readonly slotTypeId: string | null
+  readonly slotOrder: number | null
+}
+
 export interface WorldCompetitionStructureNodeRecord {
   readonly id: string
   readonly competitionSeasonId: string
-  readonly parentNodeId: string | null
   readonly nodeType: string
-  readonly role: string | null
   readonly name: string | null
+  readonly sequenceNo: number | null
+  readonly specializedType: string | null
   readonly sourceEcosystemUnitId: string | null
+}
+
+export interface WorldCompetitionStructureRelationshipRecord {
+  readonly id: string
+  readonly fromNodeId: string
+  readonly toNodeId: string
+  readonly relationshipType: string
+}
+
+export interface WorldCompetitionStructurePositionRecord {
+  readonly id: string
+  readonly structureNodeId: string
+  readonly positionType: string
+  readonly positionOrder: number | null
+  readonly label: string | null
 }
 
 export interface WorldCompetitionStructureAssignmentRecord {
@@ -75,9 +97,10 @@ export interface WorldCompetitionFixtureRecord {
 export interface WorldCompetitionFixtureSideRecord {
   readonly id: string
   readonly competitionFixtureId: string
-  readonly side: string
-  readonly teamId: string | null
-  readonly sourceStructureNodeId: string | null
+  readonly sideRole: string
+  readonly competitionSeasonEntryId: string | null
+  readonly competitionSeasonSlotId: string | null
+  readonly sourceStructurePositionId: string | null
 }
 
 export interface WorldCompetitionRuleRecord {
@@ -99,7 +122,10 @@ export interface WorldCompetitionPack {
   readonly competitionAssignments: readonly WorldCompetitionAssignmentRecord[]
   readonly competitionSeasons: readonly WorldCompetitionSeasonRecord[]
   readonly seasonEntries: readonly WorldCompetitionSeasonEntryRecord[]
+  readonly seasonSlots: readonly WorldCompetitionSeasonSlotRecord[]
   readonly structureNodes: readonly WorldCompetitionStructureNodeRecord[]
+  readonly structureRelationships: readonly WorldCompetitionStructureRelationshipRecord[]
+  readonly structurePositions: readonly WorldCompetitionStructurePositionRecord[]
   readonly structureAssignments: readonly WorldCompetitionStructureAssignmentRecord[]
   readonly fixtures: readonly WorldCompetitionFixtureRecord[]
   readonly fixtureSides: readonly WorldCompetitionFixtureSideRecord[]
@@ -107,6 +133,7 @@ export interface WorldCompetitionPack {
 }
 
 type UnknownRecord = Record<string, unknown>
+type IdRecord = { readonly id: string }
 
 export function parseWorldCompetitionPack(input: unknown): WorldCompetitionPack {
   const root = requireRecord(input, 'World competition pack')
@@ -121,25 +148,20 @@ export function parseWorldCompetitionPack(input: unknown): WorldCompetitionPack 
     ecosystems: parseArray(root.ecosystems, 'ecosystems', parseEcosystem),
     ecosystemUnits: parseArray(root.ecosystemUnits, 'ecosystemUnits', parseEcosystemUnit),
     competitions: parseArray(root.competitions, 'competitions', parseCompetition),
-    competitionAssignments: parseArray(
-      root.competitionAssignments,
-      'competitionAssignments',
-      parseCompetitionAssignment,
-    ),
+    competitionAssignments: parseArray(root.competitionAssignments, 'competitionAssignments', parseCompetitionAssignment),
     competitionSeasons: parseArray(root.competitionSeasons, 'competitionSeasons', parseCompetitionSeason),
     seasonEntries: parseArray(root.seasonEntries, 'seasonEntries', parseSeasonEntry),
+    seasonSlots: parseArray(root.seasonSlots, 'seasonSlots', parseSeasonSlot),
     structureNodes: parseArray(root.structureNodes, 'structureNodes', parseStructureNode),
-    structureAssignments: parseArray(
-      root.structureAssignments,
-      'structureAssignments',
-      parseStructureAssignment,
-    ),
+    structureRelationships: parseArray(root.structureRelationships, 'structureRelationships', parseStructureRelationship),
+    structurePositions: parseArray(root.structurePositions, 'structurePositions', parseStructurePosition),
+    structureAssignments: parseArray(root.structureAssignments, 'structureAssignments', parseStructureAssignment),
     fixtures: parseArray(root.fixtures, 'fixtures', parseFixture),
     fixtureSides: parseArray(root.fixtureSides, 'fixtureSides', parseFixtureSide),
     rules: parseArray(root.rules, 'rules', parseRule),
   }
 
-  validateWorldCompetitionPackReferences(pack)
+  validateReferences(pack)
   return pack
 }
 
@@ -206,33 +228,55 @@ function parseSeasonEntry(value: unknown, path: string): WorldCompetitionSeasonE
   }
 }
 
+function parseSeasonSlot(value: unknown, path: string): WorldCompetitionSeasonSlotRecord {
+  const row = requireRecord(value, path)
+  return {
+    id: requireString(row.id, `${path}.id`),
+    competitionSeasonId: requireString(row.competitionSeasonId, `${path}.competitionSeasonId`),
+    slotTypeId: optionalString(row.slotTypeId, `${path}.slotTypeId`),
+    slotOrder: optionalInteger(row.slotOrder, `${path}.slotOrder`),
+  }
+}
+
 function parseStructureNode(value: unknown, path: string): WorldCompetitionStructureNodeRecord {
   const row = requireRecord(value, path)
   return {
     id: requireString(row.id, `${path}.id`),
     competitionSeasonId: requireString(row.competitionSeasonId, `${path}.competitionSeasonId`),
-    parentNodeId: optionalString(row.parentNodeId, `${path}.parentNodeId`),
     nodeType: requireString(row.nodeType, `${path}.nodeType`),
-    role: optionalString(row.role, `${path}.role`),
     name: optionalString(row.name, `${path}.name`),
-    sourceEcosystemUnitId: optionalString(
-      row.sourceEcosystemUnitId,
-      `${path}.sourceEcosystemUnitId`,
-    ),
+    sequenceNo: optionalInteger(row.sequenceNo, `${path}.sequenceNo`),
+    specializedType: optionalString(row.specializedType, `${path}.specializedType`),
+    sourceEcosystemUnitId: optionalString(row.sourceEcosystemUnitId, `${path}.sourceEcosystemUnitId`),
   }
 }
 
-function parseStructureAssignment(
-  value: unknown,
-  path: string,
-): WorldCompetitionStructureAssignmentRecord {
+function parseStructureRelationship(value: unknown, path: string): WorldCompetitionStructureRelationshipRecord {
   const row = requireRecord(value, path)
   return {
     id: requireString(row.id, `${path}.id`),
-    competitionSeasonEntryId: requireString(
-      row.competitionSeasonEntryId,
-      `${path}.competitionSeasonEntryId`,
-    ),
+    fromNodeId: requireString(row.fromNodeId, `${path}.fromNodeId`),
+    toNodeId: requireString(row.toNodeId, `${path}.toNodeId`),
+    relationshipType: requireString(row.relationshipType, `${path}.relationshipType`),
+  }
+}
+
+function parseStructurePosition(value: unknown, path: string): WorldCompetitionStructurePositionRecord {
+  const row = requireRecord(value, path)
+  return {
+    id: requireString(row.id, `${path}.id`),
+    structureNodeId: requireString(row.structureNodeId, `${path}.structureNodeId`),
+    positionType: requireString(row.positionType, `${path}.positionType`),
+    positionOrder: optionalInteger(row.positionOrder, `${path}.positionOrder`),
+    label: optionalString(row.label, `${path}.label`),
+  }
+}
+
+function parseStructureAssignment(value: unknown, path: string): WorldCompetitionStructureAssignmentRecord {
+  const row = requireRecord(value, path)
+  return {
+    id: requireString(row.id, `${path}.id`),
+    competitionSeasonEntryId: requireString(row.competitionSeasonEntryId, `${path}.competitionSeasonEntryId`),
     structureNodeId: requireString(row.structureNodeId, `${path}.structureNodeId`),
   }
 }
@@ -252,16 +296,11 @@ function parseFixtureSide(value: unknown, path: string): WorldCompetitionFixture
   const row = requireRecord(value, path)
   return {
     id: requireString(row.id, `${path}.id`),
-    competitionFixtureId: requireString(
-      row.competitionFixtureId,
-      `${path}.competitionFixtureId`,
-    ),
-    side: requireString(row.side, `${path}.side`),
-    teamId: optionalString(row.teamId, `${path}.teamId`),
-    sourceStructureNodeId: optionalString(
-      row.sourceStructureNodeId,
-      `${path}.sourceStructureNodeId`,
-    ),
+    competitionFixtureId: requireString(row.competitionFixtureId, `${path}.competitionFixtureId`),
+    sideRole: requireString(row.sideRole, `${path}.sideRole`),
+    competitionSeasonEntryId: optionalString(row.competitionSeasonEntryId, `${path}.competitionSeasonEntryId`),
+    competitionSeasonSlotId: optionalString(row.competitionSeasonSlotId, `${path}.competitionSeasonSlotId`),
+    sourceStructurePositionId: optionalString(row.sourceStructurePositionId, `${path}.sourceStructurePositionId`),
   }
 }
 
@@ -270,10 +309,7 @@ function parseRule(value: unknown, path: string): WorldCompetitionRuleRecord {
   return {
     id: requireString(row.id, `${path}.id`),
     competitionSeasonId: requireString(row.competitionSeasonId, `${path}.competitionSeasonId`),
-    scopeStructureNodeId: optionalString(
-      row.scopeStructureNodeId,
-      `${path}.scopeStructureNodeId`,
-    ),
+    scopeStructureNodeId: optionalString(row.scopeStructureNodeId, `${path}.scopeStructureNodeId`),
     category: requireString(row.category, `${path}.category`),
     ruleType: requireString(row.ruleType, `${path}.ruleType`),
     priority: requireInteger(row.priority, `${path}.priority`),
@@ -281,23 +317,36 @@ function parseRule(value: unknown, path: string): WorldCompetitionRuleRecord {
   }
 }
 
-function validateWorldCompetitionPackReferences(pack: WorldCompetitionPack): void {
+function validateReferences(pack: WorldCompetitionPack): void {
   const ecosystemIds = uniqueIds(pack.ecosystems, 'ecosystems')
   const unitIds = uniqueIds(pack.ecosystemUnits, 'ecosystemUnits')
   const competitionIds = uniqueIds(pack.competitions, 'competitions')
   uniqueIds(pack.competitionAssignments, 'competitionAssignments')
   const seasonIds = uniqueIds(pack.competitionSeasons, 'competitionSeasons')
   const entryIds = uniqueIds(pack.seasonEntries, 'seasonEntries')
+  const slotIds = uniqueIds(pack.seasonSlots, 'seasonSlots')
   const nodeIds = uniqueIds(pack.structureNodes, 'structureNodes')
+  uniqueIds(pack.structureRelationships, 'structureRelationships')
+  const positionIds = uniqueIds(pack.structurePositions, 'structurePositions')
   uniqueIds(pack.structureAssignments, 'structureAssignments')
   const fixtureIds = uniqueIds(pack.fixtures, 'fixtures')
   uniqueIds(pack.fixtureSides, 'fixtureSides')
   uniqueIds(pack.rules, 'rules')
 
+  const unitsById = byId(pack.ecosystemUnits)
+  const entriesById = byId(pack.seasonEntries)
+  const slotsById = byId(pack.seasonSlots)
+  const nodesById = byId(pack.structureNodes)
+  const positionsById = byId(pack.structurePositions)
+  const fixturesById = byId(pack.fixtures)
+
   for (const unit of pack.ecosystemUnits) {
     requireReference(ecosystemIds, unit.ecosystemId, `ecosystemUnits.${unit.id}.ecosystemId`)
     if (unit.parentUnitId !== null) {
       requireReference(unitIds, unit.parentUnitId, `ecosystemUnits.${unit.id}.parentUnitId`)
+      if (unitsById.get(unit.parentUnitId)?.ecosystemId !== unit.ecosystemId) {
+        throw new RangeError(`ecosystemUnits.${unit.id}.parentUnitId crosses ecosystems`)
+      }
     }
   }
 
@@ -306,32 +355,43 @@ function validateWorldCompetitionPackReferences(pack: WorldCompetitionPack): voi
     requireReference(competitionIds, assignment.competitionId, `competitionAssignments.${assignment.id}.competitionId`)
     if (assignment.unitId !== null) {
       requireReference(unitIds, assignment.unitId, `competitionAssignments.${assignment.id}.unitId`)
+      if (unitsById.get(assignment.unitId)?.ecosystemId !== assignment.ecosystemId) {
+        throw new RangeError(`competitionAssignments.${assignment.id}.unitId crosses ecosystems`)
+      }
     }
   }
 
-  const seasonsById = new Map(pack.competitionSeasons.map((season) => [season.id, season]))
   for (const season of pack.competitionSeasons) {
     requireReference(competitionIds, season.competitionId, `competitionSeasons.${season.id}.competitionId`)
   }
 
-  const entriesById = new Map(pack.seasonEntries.map((entry) => [entry.id, entry]))
   for (const entry of pack.seasonEntries) {
     requireReference(seasonIds, entry.competitionSeasonId, `seasonEntries.${entry.id}.competitionSeasonId`)
   }
 
-  const nodesById = new Map(pack.structureNodes.map((node) => [node.id, node]))
+  for (const slot of pack.seasonSlots) {
+    requireReference(seasonIds, slot.competitionSeasonId, `seasonSlots.${slot.id}.competitionSeasonId`)
+  }
+
   for (const node of pack.structureNodes) {
     requireReference(seasonIds, node.competitionSeasonId, `structureNodes.${node.id}.competitionSeasonId`)
-    if (node.parentNodeId !== null) {
-      requireReference(nodeIds, node.parentNodeId, `structureNodes.${node.id}.parentNodeId`)
-      const parent = nodesById.get(node.parentNodeId)
-      if (parent?.competitionSeasonId !== node.competitionSeasonId) {
-        throw new RangeError(`structureNodes.${node.id}.parentNodeId crosses competition seasons`)
-      }
-    }
     if (node.sourceEcosystemUnitId !== null) {
       requireReference(unitIds, node.sourceEcosystemUnitId, `structureNodes.${node.id}.sourceEcosystemUnitId`)
     }
+  }
+
+  for (const relationship of pack.structureRelationships) {
+    requireReference(nodeIds, relationship.fromNodeId, `structureRelationships.${relationship.id}.fromNodeId`)
+    requireReference(nodeIds, relationship.toNodeId, `structureRelationships.${relationship.id}.toNodeId`)
+    const from = nodesById.get(relationship.fromNodeId)
+    const to = nodesById.get(relationship.toNodeId)
+    if (from?.competitionSeasonId !== to?.competitionSeasonId) {
+      throw new RangeError(`structureRelationships.${relationship.id} crosses competition seasons`)
+    }
+  }
+
+  for (const position of pack.structurePositions) {
+    requireReference(nodeIds, position.structureNodeId, `structurePositions.${position.id}.structureNodeId`)
   }
 
   for (const assignment of pack.structureAssignments) {
@@ -348,8 +408,7 @@ function validateWorldCompetitionPackReferences(pack: WorldCompetitionPack): voi
     requireReference(seasonIds, fixture.competitionSeasonId, `fixtures.${fixture.id}.competitionSeasonId`)
     if (fixture.structureNodeId !== null) {
       requireReference(nodeIds, fixture.structureNodeId, `fixtures.${fixture.id}.structureNodeId`)
-      const node = nodesById.get(fixture.structureNodeId)
-      if (node?.competitionSeasonId !== fixture.competitionSeasonId) {
+      if (nodesById.get(fixture.structureNodeId)?.competitionSeasonId !== fixture.competitionSeasonId) {
         throw new RangeError(`fixtures.${fixture.id}.structureNodeId crosses competition seasons`)
       }
     }
@@ -357,8 +416,25 @@ function validateWorldCompetitionPackReferences(pack: WorldCompetitionPack): voi
 
   for (const side of pack.fixtureSides) {
     requireReference(fixtureIds, side.competitionFixtureId, `fixtureSides.${side.id}.competitionFixtureId`)
-    if (side.sourceStructureNodeId !== null) {
-      requireReference(nodeIds, side.sourceStructureNodeId, `fixtureSides.${side.id}.sourceStructureNodeId`)
+    const seasonId = fixturesById.get(side.competitionFixtureId)?.competitionSeasonId
+    if (side.competitionSeasonEntryId !== null) {
+      requireReference(entryIds, side.competitionSeasonEntryId, `fixtureSides.${side.id}.competitionSeasonEntryId`)
+      if (entriesById.get(side.competitionSeasonEntryId)?.competitionSeasonId !== seasonId) {
+        throw new RangeError(`fixtureSides.${side.id}.competitionSeasonEntryId crosses competition seasons`)
+      }
+    }
+    if (side.competitionSeasonSlotId !== null) {
+      requireReference(slotIds, side.competitionSeasonSlotId, `fixtureSides.${side.id}.competitionSeasonSlotId`)
+      if (slotsById.get(side.competitionSeasonSlotId)?.competitionSeasonId !== seasonId) {
+        throw new RangeError(`fixtureSides.${side.id}.competitionSeasonSlotId crosses competition seasons`)
+      }
+    }
+    if (side.sourceStructurePositionId !== null) {
+      requireReference(positionIds, side.sourceStructurePositionId, `fixtureSides.${side.id}.sourceStructurePositionId`)
+      const position = positionsById.get(side.sourceStructurePositionId)
+      if (nodesById.get(position?.structureNodeId ?? '')?.competitionSeasonId !== seasonId) {
+        throw new RangeError(`fixtureSides.${side.id}.sourceStructurePositionId crosses competition seasons`)
+      }
     }
   }
 
@@ -366,19 +442,18 @@ function validateWorldCompetitionPackReferences(pack: WorldCompetitionPack): voi
     requireReference(seasonIds, rule.competitionSeasonId, `rules.${rule.id}.competitionSeasonId`)
     if (rule.scopeStructureNodeId !== null) {
       requireReference(nodeIds, rule.scopeStructureNodeId, `rules.${rule.id}.scopeStructureNodeId`)
-      const node = nodesById.get(rule.scopeStructureNodeId)
-      if (node?.competitionSeasonId !== rule.competitionSeasonId) {
+      if (nodesById.get(rule.scopeStructureNodeId)?.competitionSeasonId !== rule.competitionSeasonId) {
         throw new RangeError(`rules.${rule.id}.scopeStructureNodeId crosses competition seasons`)
       }
     }
   }
-
-  for (const seasonId of seasonsById.keys()) {
-    requireReference(seasonIds, seasonId, `competitionSeasons.${seasonId}.id`)
-  }
 }
 
-function uniqueIds(rows: readonly { readonly id: string }[], path: string): Set<string> {
+function byId<T extends IdRecord>(rows: readonly T[]): ReadonlyMap<string, T> {
+  return new Map(rows.map((row) => [row.id, row]))
+}
+
+function uniqueIds(rows: readonly IdRecord[], path: string): Set<string> {
   const ids = new Set<string>()
   for (const row of rows) {
     if (ids.has(row.id)) {
@@ -395,11 +470,7 @@ function requireReference(ids: ReadonlySet<string>, id: string, path: string): v
   }
 }
 
-function parseArray<T>(
-  value: unknown,
-  path: string,
-  parser: (value: unknown, path: string) => T,
-): readonly T[] {
+function parseArray<T>(value: unknown, path: string, parser: (value: unknown, path: string) => T): readonly T[] {
   if (!Array.isArray(value)) {
     throw new TypeError(`${path} must be an array`)
   }
@@ -432,6 +503,13 @@ function requireInteger(value: unknown, path: string): number {
     throw new TypeError(`${path} must be an integer`)
   }
   return value
+}
+
+function optionalInteger(value: unknown, path: string): number | null {
+  if (value === null || value === undefined) {
+    return null
+  }
+  return requireInteger(value, path)
 }
 
 function requireJsonValue(value: unknown, path: string): JsonValue {
