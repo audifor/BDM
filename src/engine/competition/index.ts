@@ -8,3 +8,5 @@ export { createWorldDbGameInstanceFixtureBindingIndexV1, worldDbInstanceFixtureR
 export type { WorldDbGameInstanceFixtureBindingIndexV1, WorldDbGameInstanceFixtureBindingV1 } from './WorldDbGameInstanceFixtureBinding'
 export { applyCompletedGameToWorldDbCompetitionInstancesV1 } from './WorldDbCompletedGameRealization'
 export type { WorldDbCompletedGameRealizationResultV1, WorldDbCompetitionExecutionV1 } from './WorldDbCompletedGameRealization'
+export { createWorldDbPhysicalGamePlanV1, materializeWorldDbPhysicalGameV1 } from './WorldDbPhysicalGamePlan'
+export type { MaterializedWorldDbPhysicalGameV1, MaterializeWorldDbPhysicalGameV1Input, WorldDbInstanceFixtureRefV1, WorldDbPhysicalGamePlanV1 } from './WorldDbPhysicalGamePlan'
