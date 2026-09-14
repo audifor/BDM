@@ -186,7 +186,7 @@ function fixtureId(seasonId: string, variantKey: string, nodeKey: string, order:
 
 function topologicalNodes(nodes: readonly WorldCompetitionFormatNode[], edges: readonly { readonly from: string; readonly to: string }[]): readonly WorldCompetitionFormatNode[] {
   const nodeByKey = new Map(nodes.map((node) => [node.key, node] as const))
-  const indegree = new Map(nodes.map((node) => [node.key, 0] as const))
+  const indegree = new Map<string, number>(nodes.map((node) => [node.key, 0]))
   const outgoing = new Map<string, string[]>()
   for (const edge of edges) {
     if (!nodeByKey.has(edge.from) || !nodeByKey.has(edge.to)) continue
