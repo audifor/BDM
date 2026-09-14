@@ -19,6 +19,8 @@ export interface WorldCompetitionSeriesPlanV1 {
   readonly nodeKey: string
   readonly bestOf: number
   readonly winsRequired: number
+  readonly firstEntryId: string
+  readonly secondEntryId: string
   readonly priorityEntryId: string
   readonly games: readonly WorldCompetitionSeriesGameV1[]
 }
@@ -80,6 +82,8 @@ export function instantiateWorldCompetitionSeriesV1(
     nodeKey,
     bestOf,
     winsRequired,
+    firstEntryId,
+    secondEntryId,
     priorityEntryId,
     games: Object.freeze(games),
   })
@@ -89,44 +93,42 @@ export function evaluateWorldCompetitionSeriesV1(
   plan: WorldCompetitionSeriesPlanV1,
   results: readonly WorldCompetitionSeriesGameResultV1[],
 ): WorldCompetitionSeriesStateV1 {
+  const gameIds = new Set(plan.games.map((game) => game.gameId))
   const resultByGameId = new Map<string, WorldCompetitionSeriesGameResultV1>()
   for (const result of results) {
+    if (!gameIds.has(result.gameId)) throw new Error(`Series result references unknown game: ${result.gameId}`)
     if (resultByGameId.has(result.gameId)) throw new Error(`Duplicate series game result: ${result.gameId}`)
     resultByGameId.set(result.gameId, result)
   }
 
   let firstEntryWins = 0
   let secondEntryWins = 0
-  const firstEntryId = plan.games[0]?.homeEntryId === plan.priorityEntryId || plan.games[0]?.awayEntryId === plan.priorityEntryId
-    ? plan.priorityEntryId
-    : null
-  if (firstEntryId === null) throw new Error('Series plan has no games')
-  const participantIds = new Set(plan.games.flatMap((game) => [game.homeEntryId, game.awayEntryId]))
-  if (participantIds.size !== 2) throw new Error('Series plan must contain exactly two participants')
-  const [participantA, participantB] = [...participantIds]
-
   let nextGame: WorldCompetitionSeriesGameV1 | null = null
+  let missingGameSeen = false
+
   for (const game of plan.games) {
     const result = resultByGameId.get(game.gameId)
     const clinched = firstEntryWins >= plan.winsRequired || secondEntryWins >= plan.winsRequired
     if (result === undefined) {
       if (!clinched && nextGame === null) nextGame = game
+      if (!clinched) missingGameSeen = true
       continue
     }
     if (clinched) throw new Error(`Series contains result after clinch: ${game.gameId}`)
+    if (missingGameSeen) throw new Error(`Series results must be contiguous from game 1: ${game.gameId}`)
     validateScore(result.homeScore, `${game.gameId} homeScore`)
     validateScore(result.awayScore, `${game.gameId} awayScore`)
     if (result.homeScore === result.awayScore) throw new Error(`Completed series game cannot be tied: ${game.gameId}`)
 
     const winnerEntryId = result.homeScore > result.awayScore ? game.homeEntryId : game.awayEntryId
-    if (winnerEntryId === participantA) firstEntryWins += 1
-    else if (winnerEntryId === participantB) secondEntryWins += 1
+    if (winnerEntryId === plan.firstEntryId) firstEntryWins += 1
+    else if (winnerEntryId === plan.secondEntryId) secondEntryWins += 1
     else throw new Error(`Series game winner is not a series participant: ${game.gameId}`)
   }
 
   const completed = firstEntryWins >= plan.winsRequired || secondEntryWins >= plan.winsRequired
-  const winnerEntryId = completed ? (firstEntryWins > secondEntryWins ? participantA : participantB) : null
-  const loserEntryId = completed ? (winnerEntryId === participantA ? participantB : participantA) : null
+  const winnerEntryId = completed ? (firstEntryWins > secondEntryWins ? plan.firstEntryId : plan.secondEntryId) : null
+  const loserEntryId = completed ? (winnerEntryId === plan.firstEntryId ? plan.secondEntryId : plan.firstEntryId) : null
   if (completed) nextGame = null
 
   return Object.freeze({ firstEntryWins, secondEntryWins, completed, winnerEntryId, loserEntryId, nextGame })
