@@ -22,3 +22,5 @@ export { projectWorldDbPhysicalMatchPolicyV1 } from './WorldDbPhysicalMatchPolic
 export type { WorldDbPhysicalMatchPolicyV1 } from './WorldDbPhysicalMatchPolicy'
 export { resolveWorldDbFixtureSchedulesAtV1, listWorldDbFixturesScheduledOnLocalDateV1 } from './WorldDbScheduleResolver'
 export type { WorldDbResolvedScheduleTimingV1, WorldDbResolvedFixtureScheduleV1 } from './WorldDbScheduleResolver'
+export { planWorldDbPhysicalGamesV1 } from './WorldDbPhysicalGamePlanner'
+export type { WorldDbCompetitionPlanningContextV1, WorldDbPlannedPhysicalGameV1, WorldDbPhysicalGamePlanningResultV1, WorldDbPhysicalGameWaitingFixtureV1, WorldDbPhysicalGameWaitingReasonV1 } from './WorldDbPhysicalGamePlanner'
