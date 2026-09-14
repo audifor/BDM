@@ -2,6 +2,8 @@ export { getCompetitionSeason, getCompetitionTemporalStatus, isCompetitionActive
 export { buildNextCompetitionParticipants, getCompetitionTier, getLowerDomesticCompetition, getPromotionRelegationResolution, getUpperDomesticCompetition, resolvePromotionRelegation } from './PromotionRelegation'
 export { createWorldCompetitionCatalog, listWorldCompetitionFormats, requireWorldCompetitionFormat } from './WorldCompetitionCatalog'
 export type { WorldCompetitionCatalog } from './WorldCompetitionCatalog'
+export { instantiateWorldCompetitionFixedBracketV1 } from './WorldCompetitionFixedBracket'
+export type { WorldCompetitionSeededEntryV1, WorldCompetitionFixtureParticipantRefV1, WorldCompetitionVirtualFixtureV1, WorldCompetitionFixedBracketPlanV1 } from './WorldCompetitionFixedBracket'
 export { instantiateWorldCompetitionRoundRobinV1 } from './WorldCompetitionRoundRobin'
 export type { WorldCompetitionRoundRobinEntryV1, WorldCompetitionRoundRobinFixtureV1, WorldCompetitionRoundRobinPlanV1 } from './WorldCompetitionRoundRobin'
 export { computeWorldCompetitionRoundRobinStandingsV1, rankWorldCompetitionRoundRobinStandingsV1, selectWorldCompetitionRankRangeV1 } from './WorldCompetitionRoundRobinStandings'
