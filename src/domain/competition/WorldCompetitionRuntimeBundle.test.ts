@@ -17,7 +17,8 @@ function bundle() {
   return {
     bundle_schema_version: 1,
     content_id: 'bdm-phase1-2026-09-14',
-    content_sha256: 'a'.repeat(64),
+    content_hash_algorithm: 'BLAKE3',
+    content_hash: 'a'.repeat(64),
     world_db_schema: 'DDL-PHASE1-A',
     source_commit: '39a8c0a57e9e87e1ba1fb649caf6317744b867b5',
     competition_formats: [format()],
@@ -29,11 +30,13 @@ describe('parseWorldCompetitionRuntimeBundle', () => {
     const parsed = parseWorldCompetitionRuntimeBundle(bundle())
     expect(parsed.bundleSchemaVersion).toBe(1)
     expect(parsed.contentId).toBe('bdm-phase1-2026-09-14')
+    expect(parsed.contentHashAlgorithm).toBe('BLAKE3')
     expect(parsed.competitionFormats[0]?.competitionSeasonId).toBe('edition:ESP:liga-endesa:2025-26')
   })
 
-  it('rejects malformed hashes and duplicate season definitions', () => {
-    expect(() => parseWorldCompetitionRuntimeBundle({ ...bundle(), content_sha256: 'bad' })).toThrow(/SHA-256/)
+  it('rejects malformed hashes, unsupported algorithms and duplicate season definitions', () => {
+    expect(() => parseWorldCompetitionRuntimeBundle({ ...bundle(), content_hash: 'bad' })).toThrow(/BLAKE3/)
+    expect(() => parseWorldCompetitionRuntimeBundle({ ...bundle(), content_hash_algorithm: 'SHA256' })).toThrow(/content_hash_algorithm/)
     expect(() => parseWorldCompetitionRuntimeBundle({ ...bundle(), competition_formats: [format(), format()] })).toThrow(/Duplicate competition season id/)
   })
 })
