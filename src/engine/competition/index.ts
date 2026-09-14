@@ -4,6 +4,8 @@ export { createWorldCompetitionCatalog, listWorldCompetitionFormats, requireWorl
 export type { WorldCompetitionCatalog } from './WorldCompetitionCatalog'
 export { instantiateWorldCompetitionFixedBracketV1 } from './WorldCompetitionFixedBracket'
 export type { WorldCompetitionSeededEntryV1, WorldCompetitionFixtureParticipantRefV1, WorldCompetitionVirtualFixtureV1, WorldCompetitionFixedBracketPlanV1 } from './WorldCompetitionFixedBracket'
+export { resolveWorldCompetitionVirtualFixturesV1, listReadyUncompletedWorldCompetitionFixturesV1 } from './WorldCompetitionVirtualFixtureResolver'
+export type { WorldCompetitionVirtualFixtureOutcomeV1, WorldCompetitionResolvedVirtualFixtureV1 } from './WorldCompetitionVirtualFixtureResolver'
 export { createWorldDbCompetitionRuntimeV1 } from './WorldDbCompetitionRuntime'
 export { createWorldDbCompetitionRulesV1 } from './WorldDbCompetitionRules'
 export { resolveWorldDbFixtureProgressionV1 } from './WorldDbProgressionResolver'
