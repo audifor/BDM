@@ -5,7 +5,7 @@ import { createWorldDbCompetitionRuntimeV1 } from './WorldDbCompetitionRuntime'
 import { createWorldDbCompetitionRulesV1 } from './WorldDbCompetitionRules'
 import { resolveWorldDbFixtureProgressionV1 } from './WorldDbProgressionResolver'
 
-function buildBundle(): WorldDbCompetitionBundleV1 {
+function buildBundle(rulePayloads?: WorldDbCompetitionBundleV1['rulePayloads']): WorldDbCompetitionBundleV1 {
   return {
     schemaVersion: 1,
     source: { databaseId: 'phase1.db', schemaId: 'DDL-PHASE1-A' },
@@ -31,7 +31,7 @@ function buildBundle(): WorldDbCompetitionBundleV1 {
       { competitionFixtureSideId: 'side:h', competitionFixtureId: 'fixture:qf1', sideRole: 'HOME', competitionSeasonEntryId: 'entry:a', competitionSeasonSlotId: null, sourceStructurePositionId: null },
       { competitionFixtureSideId: 'side:a', competitionFixtureId: 'fixture:qf1', sideRole: 'AWAY', competitionSeasonEntryId: 'entry:b', competitionSeasonSlotId: null, sourceStructurePositionId: null },
     ],
-    rulePayloads: {
+    rulePayloads: rulePayloads ?? {
       progressionRules: [
         { id: 'rule:winner', scopeStructureNodeId: 'node:qf', type: 'GAME_WINNER', payload: null },
         { id: 'rule:loser', scopeStructureNodeId: 'node:qf', type: 'GAME_LOSER', payload: null },
@@ -83,12 +83,10 @@ describe('World DB fixture progression', () => {
   })
 
   it('does not apply standings-driven rules in the fixture-result evaluator', () => {
-    const value = buildBundle()
-    value.rulePayloads = {
+    const runtime = createWorldDbCompetitionRuntimeV1(buildBundle({
       progressionRules: [{ id: 'rule:rank', scopeStructureNodeId: 'node:qf', type: 'STANDING_POSITION', payload: null }],
       progressionDestinations: [{ id: 'dest:rank', ruleId: 'rule:rank', sequenceNo: 1, type: 'STRUCTURE_NODE', payload: { competition_structure_node_id: 'node:sf' } }],
-    }
-    const runtime = createWorldDbCompetitionRuntimeV1(value)
+    }))
     const rules = createWorldDbCompetitionRulesV1(runtime.bundle)
 
     expect(resolveWorldDbFixtureProgressionV1(runtime, rules, [{
