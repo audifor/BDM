@@ -58,14 +58,19 @@ export function instantiateWorldCompetitionFixedBracketV1(
   const fixtureBySeedPair = new Map<string, WorldCompetitionVirtualFixtureV1>()
 
   for (const node of topologicalNodes(variant.nodes, variant.edges)) {
-    if (node.pairing?.type !== 'FIXED_BRACKET' && node.teamCount !== 2) continue
-
     const pairings = stringArray(node.pairing?.payload, 'pairings')
+    const matchups = stringArray(node.pairing?.payload, 'matchups')
+    if (pairings.length > 0 && matchups.length > 0) throw new Error(`Fixed bracket node ${node.key} declares both pairings and matchups`)
+    const directPairings = pairings.length > 0 ? pairings : matchups
     const paths = stringArray(node.pairing?.payload, 'paths')
+    const hasIncomingWinners = (incomingWinnerSources.get(node.key)?.length ?? 0) > 0
+    const candidate = node.pairing?.type === 'FIXED_BRACKET' || directPairings.length > 0 || paths.length > 0 || node.teamCount === 2 || hasIncomingWinners
+    if (!candidate) continue
+
     let participants: readonly (readonly [WorldCompetitionFixtureParticipantRefV1, WorldCompetitionFixtureParticipantRefV1])[]
 
-    if (pairings.length > 0) {
-      participants = pairings.map((pairing) => {
+    if (directPairings.length > 0) {
+      participants = directPairings.map((pairing) => {
         const [leftSeed, rightSeed] = parseSeedPair(pairing)
         const left = requireSeed(entryBySeed, leftSeed)
         const right = requireSeed(entryBySeed, rightSeed)
@@ -95,6 +100,8 @@ export function instantiateWorldCompetitionFixedBracketV1(
         Object.freeze({ kind: 'WINNER_OF_FIXTURE' as const, fixtureId: sourceFixtures[0]!.fixtureId }),
         Object.freeze({ kind: 'WINNER_OF_FIXTURE' as const, fixtureId: sourceFixtures[1]!.fixtureId }),
       ]) as readonly [WorldCompetitionFixtureParticipantRefV1, WorldCompetitionFixtureParticipantRefV1]]
+    } else if (hasIncomingWinners) {
+      throw new Error(`Fixed bracket node ${node.key} has incoming WINNER progression but lacks explicit paths or an unambiguous two-team destination`)
     } else {
       throw new Error(`Fixed bracket node ${node.key} lacks explicit pairings or paths`)
     }
@@ -123,6 +130,11 @@ export function instantiateWorldCompetitionFixedBracketV1(
   }
 
   if (fixtures.length === 0) throw new Error(`Competition format contains no instantiable fixed-bracket fixtures: ${format.competitionSeasonId}`)
+  for (const edge of variant.edges.filter((candidate) => candidate.selector === 'WINNER')) {
+    if ((fixturesByNodeKey[edge.from]?.length ?? 0) > 0 && (fixturesByNodeKey[edge.to]?.length ?? 0) === 0) {
+      throw new Error(`Bracket progression ${edge.from}->${edge.to} is not fully materialized`)
+    }
+  }
   return Object.freeze({
     competitionSeasonId: format.competitionSeasonId,
     variantKey,
@@ -158,7 +170,7 @@ function stringArray(payload: JsonObject | undefined, key: string): readonly str
 }
 
 function parseSeedPair(value: string): readonly [number, number] {
-  const match = /^(\d+)_VS_(\d+)$/.exec(value)
+  const match = /^(\d+)(?:_VS_|-)(\d+)$/.exec(value)
   if (match === null) throw new Error(`Unsupported fixed bracket pairing: ${value}`)
   return [Number(match[1]), Number(match[2])]
 }
