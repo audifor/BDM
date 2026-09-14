@@ -5,6 +5,12 @@ export interface WorldDbCompetitionSeasonSourceV1 {
   readonly competitionSeasonId: string
 }
 
+export interface WorldDbCompetitionRuntimeBundlePinV1 {
+  readonly contentId: string
+  readonly contentHash: string
+  readonly worldDbSchema: string
+}
+
 export interface WorldDbCompetitionGameFixtureBindingV1 {
   readonly gameId: string
   readonly competitionFixtureId: string
@@ -23,6 +29,7 @@ export interface WorldDbCompetitionFixtureOutcomeV1 {
 
 export interface WorldDbCompetitionRuntimeStateV1 {
   readonly schemaVersion: 1
+  readonly competitionRuntimeBundle: WorldDbCompetitionRuntimeBundlePinV1 | null
   readonly competitionSeasonSources: readonly WorldDbCompetitionSeasonSourceV1[]
   readonly gameFixtureBindings: readonly WorldDbCompetitionGameFixtureBindingV1[]
   readonly resolvedStructurePositions: readonly WorldDbResolvedStructurePositionV1[]
@@ -35,6 +42,7 @@ export type GameWorldWithWorldDbCompetitionRuntime = GameWorld & {
 
 export const EMPTY_WORLD_DB_COMPETITION_RUNTIME_V1: WorldDbCompetitionRuntimeStateV1 = Object.freeze({
   schemaVersion: 1,
+  competitionRuntimeBundle: null,
   competitionSeasonSources: Object.freeze([]),
   gameFixtureBindings: Object.freeze([]),
   resolvedStructurePositions: Object.freeze([]),
@@ -43,8 +51,16 @@ export const EMPTY_WORLD_DB_COMPETITION_RUNTIME_V1: WorldDbCompetitionRuntimeSta
 
 export function assertWorldDbCompetitionRuntimeStateV1(value: unknown): asserts value is WorldDbCompetitionRuntimeStateV1 {
   const runtime = record(value, 'World DB competition runtime')
-  exactKeys(runtime, ['schemaVersion', 'competitionSeasonSources', 'gameFixtureBindings', 'resolvedStructurePositions', 'fixtureOutcomes'], 'World DB competition runtime')
+  exactKeys(runtime, ['schemaVersion', 'competitionRuntimeBundle', 'competitionSeasonSources', 'gameFixtureBindings', 'resolvedStructurePositions', 'fixtureOutcomes'], 'World DB competition runtime')
   if (runtime.schemaVersion !== 1) throw new TypeError('Unsupported World DB competition runtime version')
+  if (runtime.competitionRuntimeBundle !== null) {
+    const pin = record(runtime.competitionRuntimeBundle, 'World DB competition runtime bundle pin')
+    exactKeys(pin, ['contentId', 'contentHash', 'worldDbSchema'], 'World DB competition runtime bundle pin')
+    text(pin.contentId, 'World DB competition runtime bundle contentId')
+    const hash = text(pin.contentHash, 'World DB competition runtime bundle contentHash')
+    if (!/^[a-f0-9]{64}$/.test(hash)) throw new TypeError('World DB competition runtime bundle contentHash must be a 64-character lowercase hex digest')
+    text(pin.worldDbSchema, 'World DB competition runtime bundle worldDbSchema')
+  }
   const sources = array(runtime.competitionSeasonSources, 'World DB competition season sources')
   const bindings = array(runtime.gameFixtureBindings, 'World DB game fixture bindings')
   const positions = array(runtime.resolvedStructurePositions, 'World DB resolved structure positions')
@@ -93,6 +109,7 @@ export function normalizeWorldDbCompetitionRuntimeStateV1(value: unknown): World
   assertWorldDbCompetitionRuntimeStateV1(value)
   return Object.freeze({
     schemaVersion: 1,
+    competitionRuntimeBundle: value.competitionRuntimeBundle === null ? null : Object.freeze({ ...value.competitionRuntimeBundle }),
     competitionSeasonSources: Object.freeze(value.competitionSeasonSources.map((row) => Object.freeze({ ...row }))),
     gameFixtureBindings: Object.freeze(value.gameFixtureBindings.map((row) => Object.freeze({ ...row }))),
     resolvedStructurePositions: Object.freeze(value.resolvedStructurePositions.map((row) => Object.freeze({ ...row }))),
