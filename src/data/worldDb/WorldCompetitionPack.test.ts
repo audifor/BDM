@@ -10,9 +10,7 @@ function validPack(): WorldCompetitionPack {
   return {
     schemaVersion: WORLD_COMPETITION_PACK_SCHEMA_VERSION,
     sourceRevision: 'bdm-db:phase1:0510cac',
-    ecosystems: [
-      { id: 'ecosystem:nba', code: 'NBA', name: 'NBA', gender: 'MALE' },
-    ],
+    ecosystems: [{ id: 'ecosystem:nba', code: 'NBA', name: 'NBA', gender: 'MALE' }],
     ecosystemUnits: [
       {
         id: 'unit:east',
@@ -51,15 +49,49 @@ function validPack(): WorldCompetitionPack {
         teamId: 'team:celtics',
       },
     ],
+    seasonSlots: [
+      {
+        id: 'slot:east-1',
+        competitionSeasonId: 'season:nba:2026-27',
+        slotTypeId: 'PLAYOFF_SEED',
+        slotOrder: 1,
+      },
+    ],
     structureNodes: [
       {
         id: 'node:east',
         competitionSeasonId: 'season:nba:2026-27',
-        parentNodeId: null,
         nodeType: 'GROUP',
-        role: 'CONFERENCE',
         name: 'Eastern Conference',
+        sequenceNo: 1,
+        specializedType: 'CONFERENCE',
         sourceEcosystemUnitId: 'unit:east',
+      },
+      {
+        id: 'node:playoffs',
+        competitionSeasonId: 'season:nba:2026-27',
+        nodeType: 'STAGE',
+        name: 'Playoffs',
+        sequenceNo: 2,
+        specializedType: 'PLAYOFFS',
+        sourceEcosystemUnitId: null,
+      },
+    ],
+    structureRelationships: [
+      {
+        id: 'relationship:east-playoffs',
+        fromNodeId: 'node:east',
+        toNodeId: 'node:playoffs',
+        relationshipType: 'PROGRESSION',
+      },
+    ],
+    structurePositions: [
+      {
+        id: 'position:east-1',
+        structureNodeId: 'node:east',
+        positionType: 'RANK',
+        positionOrder: 1,
+        label: '1',
       },
     ],
     structureAssignments: [
@@ -82,9 +114,10 @@ function validPack(): WorldCompetitionPack {
       {
         id: 'fixture-side:1:home',
         competitionFixtureId: 'fixture:1',
-        side: 'HOME',
-        teamId: 'team:celtics',
-        sourceStructureNodeId: null,
+        sideRole: 'HOME',
+        competitionSeasonEntryId: 'entry:celtics',
+        competitionSeasonSlotId: null,
+        sourceStructurePositionId: null,
       },
     ],
     rules: [
@@ -107,9 +140,9 @@ describe('WorldCompetitionPack', () => {
   })
 
   it('rejects unsupported schema versions before runtime adaptation', () => {
-    expect(() =>
-      parseWorldCompetitionPack({ ...validPack(), schemaVersion: '2.0' }),
-    ).toThrow('Unsupported world competition pack schema version')
+    expect(() => parseWorldCompetitionPack({ ...validPack(), schemaVersion: '2.0' })).toThrow(
+      'Unsupported world competition pack schema version',
+    )
   })
 
   it('rejects duplicate identities', () => {
@@ -122,7 +155,7 @@ describe('WorldCompetitionPack', () => {
     ).toThrow('competitions contains duplicate id')
   })
 
-  it('rejects cross-season structural references', () => {
+  it('rejects graph relationships crossing competition seasons', () => {
     const pack = validPack()
     expect(() =>
       parseWorldCompetitionPack({
@@ -140,13 +173,56 @@ describe('WorldCompetitionPack', () => {
         structureNodes: [
           ...pack.structureNodes,
           {
-            id: 'node:bad-child',
+            id: 'node:future',
             competitionSeasonId: 'season:nba:2027-28',
-            parentNodeId: 'node:east',
-            nodeType: 'ROUND',
-            role: null,
+            nodeType: 'STAGE',
             name: null,
+            sequenceNo: null,
+            specializedType: null,
             sourceEcosystemUnitId: null,
+          },
+        ],
+        structureRelationships: [
+          {
+            id: 'relationship:bad',
+            fromNodeId: 'node:east',
+            toNodeId: 'node:future',
+            relationshipType: 'PROGRESSION',
+          },
+        ],
+      }),
+    ).toThrow('crosses competition seasons')
+  })
+
+  it('rejects fixture-side references from a different competition season', () => {
+    const pack = validPack()
+    expect(() =>
+      parseWorldCompetitionPack({
+        ...pack,
+        competitionSeasons: [
+          ...pack.competitionSeasons,
+          {
+            id: 'season:nba:2027-28',
+            competitionId: 'competition:nba',
+            seasonId: 'season:2027-28',
+            startDate: null,
+            endDate: null,
+          },
+        ],
+        seasonSlots: [
+          ...pack.seasonSlots,
+          {
+            id: 'slot:future',
+            competitionSeasonId: 'season:nba:2027-28',
+            slotTypeId: null,
+            slotOrder: null,
+          },
+        ],
+        fixtureSides: [
+          {
+            ...pack.fixtureSides[0],
+            competitionSeasonEntryId: null,
+            competitionSeasonSlotId: 'slot:future',
           },
         ],
       }),
