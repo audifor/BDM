@@ -98,15 +98,15 @@ describe('World DB competition instance progression', () => {
       })),
     })
 
-    expect(final.nodeParticipantTeamIds['node:final']).toEqual(['team:2', 'team:6'])
+    expect(final.nodeParticipantTeamIds['node:final']).toEqual(['team:3', 'team:7'])
     expect(final.fixtures.filter((fixture) => fixture.structureNodeId === 'node:final')).toEqual([
       {
         instanceFixtureId: 'instance-fixture:edition:test:cup:2026-27:node:final:1',
         sourceCompetitionFixtureId: null,
         structureNodeId: 'node:final',
         ordinal: 1,
-        homeTeamId: 'team:2',
-        awayTeamId: 'team:6',
+        homeTeamId: 'team:3',
+        awayTeamId: 'team:7',
       },
     ])
   })
