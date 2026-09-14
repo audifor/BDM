@@ -53,7 +53,9 @@ describe('GameWorldSaveV4', () => {
     delete saved.payload.worldDbCompetitionRuntime
     expect(() => deserializeGameWorldV4(saved)).toThrow('requires worldDbCompetitionRuntime')
 
-    const malformed = structuredClone(serializeGameWorldV4(createNewGame(), savedAt))
+    const malformed = structuredClone(serializeGameWorldV4(createNewGame(), savedAt)) as unknown as {
+      payload: Record<string, unknown>
+    }
     malformed.payload.worldDbCompetitionRuntime = {
       schemaVersion: 1,
       gameFixtureBindings: [
