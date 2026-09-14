@@ -85,7 +85,11 @@ fn validate_envelope_json(text: &str) -> Result<Value, String> {
     let object = value
         .as_object()
         .ok_or_else(|| "Save envelope must be an object".to_owned())?;
-    if object.get("schemaVersion").and_then(Value::as_u64) != Some(1) {
+    let schema_version = object
+        .get("schemaVersion")
+        .and_then(Value::as_u64)
+        .ok_or_else(|| "Save schemaVersion must be an integer".to_owned())?;
+    if !(1..=4).contains(&schema_version) {
         return Err("Unsupported or invalid save version".to_owned());
     }
     if object
@@ -189,17 +193,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn validates_minimum_envelope() {
-        assert!(validate_envelope_json(
-            r#"{"schemaVersion":1,"savedAt":"2026-01-01T00:00:00.000Z","payload":{}}"#
-        )
-        .is_ok());
+    fn validates_supported_save_envelopes() {
+        for schema_version in 1..=4 {
+            let text = format!(
+                r#"{{"schemaVersion":{schema_version},"savedAt":"2026-01-01T00:00:00.000Z","payload":{{}}}}"#
+            );
+            assert!(validate_envelope_json(&text).is_ok());
+        }
     }
 
     #[test]
     fn rejects_invalid_envelope() {
         assert!(
-            validate_envelope_json(r#"{"schemaVersion":2,"savedAt":"","payload":null}"#).is_err()
+            validate_envelope_json(r#"{"schemaVersion":5,"savedAt":"","payload":null}"#).is_err()
         );
     }
 }
