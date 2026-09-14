@@ -22,6 +22,14 @@ export interface WorldDbStructureNodeV1 {
   readonly sequenceNo: number | null
 }
 
+export interface WorldDbStructurePositionV1 {
+  readonly competitionStructurePositionId: string
+  readonly competitionStructureNodeId: string
+  readonly positionType: string
+  readonly positionOrder: number | null
+  readonly label: string | null
+}
+
 export interface WorldDbStructureEdgeV1 {
   readonly fromNodeId: string
   readonly toNodeId: string
@@ -51,27 +59,17 @@ export interface WorldDbFixtureSideV1 {
   readonly sourceStructurePositionId: string | null
 }
 
-/**
- * Versioned read model crossing the World DB -> game boundary.
- *
- * This is intentionally not a mirror of every B04 table. The database remains the canonical
- * authoring model; the game consumes a small stable projection and may evolve it independently.
- */
 export interface WorldDbCompetitionBundleV1 {
   readonly schemaVersion: 1
   readonly source: WorldDbSourceRefV1
   readonly competitionSeason: WorldDbCompetitionSeasonV1
   readonly entries: readonly WorldDbCompetitionEntryV1[]
   readonly structureNodes: readonly WorldDbStructureNodeV1[]
+  readonly structurePositions: readonly WorldDbStructurePositionV1[]
   readonly structureEdges: readonly WorldDbStructureEdgeV1[]
   readonly structureEntryAssignments: readonly WorldDbStructureEntryAssignmentV1[]
   readonly fixtures: readonly WorldDbFixtureV1[]
   readonly fixtureSides: readonly WorldDbFixtureSideV1[]
-  /**
-   * Lossless payloads for B04 rule families not yet executed by the legacy runtime. Keeping these
-   * opaque at the transport boundary prevents React/Zustand from learning the SQL schema while the
-   * competition runtime is expanded incrementally.
-   */
   readonly rulePayloads: Readonly<Record<string, readonly Readonly<Record<string, unknown>>[]>>
 }
 
@@ -86,6 +84,7 @@ export function assertWorldDbCompetitionBundleV1(value: unknown): asserts value 
   requireText(value.competitionSeason.seasonId, 'World DB seasonId')
   requireArray(value.entries, 'World DB entries')
   requireArray(value.structureNodes, 'World DB structure nodes')
+  requireArray(value.structurePositions, 'World DB structure positions')
   requireArray(value.structureEdges, 'World DB structure edges')
   requireArray(value.structureEntryAssignments, 'World DB structure entry assignments')
   requireArray(value.fixtures, 'World DB fixtures')
