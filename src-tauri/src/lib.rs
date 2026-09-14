@@ -1,4 +1,5 @@
 mod world_db;
+mod world_db_matches;
 mod world_db_rules;
 
 use serde::Serialize;
@@ -60,6 +61,14 @@ fn load_world_db_competition_bundle_v1(
     competition_season_id: String,
 ) -> Result<world_db::WorldDbCompetitionBundleV1, String> {
     world_db::load_competition_bundle_v1(&database_path, &competition_season_id)
+}
+
+#[tauri::command]
+fn load_world_db_match_realizations_v1(
+    database_path: String,
+    competition_season_id: String,
+) -> Result<world_db_matches::WorldDbMatchRealizationBundleV1, String> {
+    world_db_matches::load_match_realizations_v1(&database_path, &competition_season_id)
 }
 
 fn save_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
@@ -168,7 +177,8 @@ pub fn run() {
             save_game_v1,
             load_game_v1,
             get_save_info_v1,
-            load_world_db_competition_bundle_v1
+            load_world_db_competition_bundle_v1,
+            load_world_db_match_realizations_v1
         ])
         .run(tauri::generate_context!())
         .expect("error while running BDM");
