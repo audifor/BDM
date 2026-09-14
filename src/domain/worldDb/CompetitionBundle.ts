@@ -59,6 +59,48 @@ export interface WorldDbFixtureSideV1 {
   readonly sourceStructurePositionId: string | null
 }
 
+export interface WorldDbScheduleBlockV1 {
+  readonly competitionScheduleBlockId: string
+  readonly blockType: string
+  readonly name: string | null
+  readonly startDate: string | null
+  readonly endDate: string | null
+}
+
+export interface WorldDbScheduleSessionV1 {
+  readonly competitionScheduleSessionId: string
+  readonly competitionScheduleBlockId: string
+  readonly name: string | null
+  readonly sessionOrder: number | null
+}
+
+export interface WorldDbScheduleSlotV1 {
+  readonly competitionScheduleSlotId: string
+  readonly scheduleBlockId: string | null
+  readonly scheduleSessionId: string | null
+  readonly slotOrder: number | null
+}
+
+export interface WorldDbScheduleSlotTimingV1 {
+  readonly competitionScheduleSlotTimingHistoryId: string
+  readonly competitionScheduleSlotId: string
+  readonly timingState: string
+  readonly localDate: string | null
+  readonly localTime: string | null
+  readonly timeZone: string | null
+  readonly validFrom: string | null
+  readonly validTo: string | null
+}
+
+export interface WorldDbFixtureScheduleAllocationV1 {
+  readonly competitionFixtureScheduleAllocationId: string
+  readonly competitionFixtureId: string
+  readonly competitionScheduleSlotId: string
+  readonly status: string
+  readonly validFrom: string | null
+  readonly validTo: string | null
+}
+
 export interface WorldDbCompetitionBundleV1 {
   readonly schemaVersion: 1
   readonly source: WorldDbSourceRefV1
@@ -71,6 +113,12 @@ export interface WorldDbCompetitionBundleV1 {
   readonly structureEntryAssignments: readonly WorldDbStructureEntryAssignmentV1[]
   readonly fixtures: readonly WorldDbFixtureV1[]
   readonly fixtureSides: readonly WorldDbFixtureSideV1[]
+  /** Canonical B04 scheduling rows. Optional so persisted/test v1 bundles remain backward compatible. */
+  readonly scheduleBlocks?: readonly WorldDbScheduleBlockV1[]
+  readonly scheduleSessions?: readonly WorldDbScheduleSessionV1[]
+  readonly scheduleSlots?: readonly WorldDbScheduleSlotV1[]
+  readonly scheduleSlotTimings?: readonly WorldDbScheduleSlotTimingV1[]
+  readonly fixtureScheduleAllocations?: readonly WorldDbFixtureScheduleAllocationV1[]
   readonly rulePayloads: Readonly<Record<string, readonly Readonly<Record<string, unknown>>[]>>
 }
 
@@ -90,6 +138,11 @@ export function assertWorldDbCompetitionBundleV1(value: unknown): asserts value 
   requireArray(value.structureEntryAssignments, 'World DB structure entry assignments')
   requireArray(value.fixtures, 'World DB fixtures')
   requireArray(value.fixtureSides, 'World DB fixture sides')
+  if (value.scheduleBlocks !== undefined) requireArray(value.scheduleBlocks, 'World DB schedule blocks')
+  if (value.scheduleSessions !== undefined) requireArray(value.scheduleSessions, 'World DB schedule sessions')
+  if (value.scheduleSlots !== undefined) requireArray(value.scheduleSlots, 'World DB schedule slots')
+  if (value.scheduleSlotTimings !== undefined) requireArray(value.scheduleSlotTimings, 'World DB schedule slot timings')
+  if (value.fixtureScheduleAllocations !== undefined) requireArray(value.fixtureScheduleAllocations, 'World DB fixture schedule allocations')
   requireRecord(value.rulePayloads, 'World DB rule payloads')
 }
 
