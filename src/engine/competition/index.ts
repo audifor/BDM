@@ -4,6 +4,8 @@ export { createWorldCompetitionCatalog, listWorldCompetitionFormats, requireWorl
 export type { WorldCompetitionCatalog } from './WorldCompetitionCatalog'
 export { instantiateWorldCompetitionRoundRobinV1 } from './WorldCompetitionRoundRobin'
 export type { WorldCompetitionRoundRobinEntryV1, WorldCompetitionRoundRobinFixtureV1, WorldCompetitionRoundRobinPlanV1 } from './WorldCompetitionRoundRobin'
+export { computeWorldCompetitionRoundRobinStandingsV1, rankWorldCompetitionRoundRobinStandingsV1, selectWorldCompetitionRankRangeV1 } from './WorldCompetitionRoundRobinStandings'
+export type { WorldCompetitionStandingsTiebreakerV1, WorldCompetitionRoundRobinResultV1, WorldCompetitionRoundRobinStandingV1, WorldCompetitionRankedStandingV1 } from './WorldCompetitionRoundRobinStandings'
 export { createWorldDbCompetitionRuntimeV1 } from './WorldDbCompetitionRuntime'
 export { createWorldDbCompetitionRulesV1 } from './WorldDbCompetitionRules'
 export { resolveWorldDbFixtureProgressionV1 } from './WorldDbProgressionResolver'
