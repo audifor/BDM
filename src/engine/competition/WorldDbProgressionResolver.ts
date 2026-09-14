@@ -12,6 +12,7 @@ export interface WorldDbProgressionAssignmentV1 {
   readonly ruleType: string
   readonly sourceNodeId: string
   readonly destinationNodeId: string
+  readonly destinationPositionId?: string
   readonly competitionSeasonEntryId: string
 }
 
@@ -20,9 +21,9 @@ const GAME_RESULT_RULES = new Set(['GAME_WINNER', 'GAME_LOSER'])
 /**
  * Resolves result-driven B04 progression without knowing which competition is being played.
  *
- * This first execution slice intentionally handles only rules whose selector is fully determined
- * by a physical fixture result. Standings, committee selection and cross-group ranking remain
- * separate evaluators and can be added without changing this contract.
+ * A progression destination may optionally name a concrete structure position through
+ * `competition_structure_position_id`. Node-only destinations remain valid, but are deliberately
+ * not converted into fixture sides by guessing position order.
  */
 export function resolveWorldDbFixtureProgressionV1(
   runtime: WorldDbCompetitionRuntimeV1,
@@ -52,11 +53,21 @@ export function resolveWorldDbFixtureProgressionV1(
 
       const entryId = rule.type === 'GAME_WINNER' ? outcome.winnerEntryId : outcome.loserEntryId
       for (const destination of destinationsByRuleId[rule.id] ?? []) {
-        const destinationNodeId = readDestinationNodeId(destination)
+        const { nodeId: destinationNodeId, positionId: destinationPositionId } = readDestination(destination)
         if (runtime.nodeById[destinationNodeId] === undefined) {
           throw new Error(`Progression destination node not found: ${destinationNodeId}`)
         }
-        const key = `${rule.id}\u0000${destinationNodeId}\u0000${entryId}`
+        if (destinationPositionId !== undefined) {
+          const position = runtime.positionById[destinationPositionId]
+          if (position === undefined) {
+            throw new Error(`Progression destination position not found: ${destinationPositionId}`)
+          }
+          if (position.competitionStructureNodeId !== destinationNodeId) {
+            throw new Error(`Progression destination position ${destinationPositionId} does not belong to node ${destinationNodeId}`)
+          }
+        }
+
+        const key = `${rule.id}\u0000${destinationNodeId}\u0000${destinationPositionId ?? ''}\u0000${entryId}`
         if (seen.has(key)) continue
         seen.add(key)
         assignments.push(Object.freeze({
@@ -64,6 +75,7 @@ export function resolveWorldDbFixtureProgressionV1(
           ruleType: rule.type,
           sourceNodeId: fixture.structureNodeId,
           destinationNodeId,
+          ...(destinationPositionId === undefined ? {} : { destinationPositionId }),
           competitionSeasonEntryId: entryId,
         }))
       }
@@ -84,7 +96,7 @@ function groupByRuleId(records: readonly WorldDbRuleRecordV1[]): Record<string, 
   return grouped
 }
 
-function readDestinationNodeId(destination: WorldDbRuleRecordV1): string {
+function readDestination(destination: WorldDbRuleRecordV1): { readonly nodeId: string; readonly positionId?: string } {
   if (!isRecord(destination.payload)) {
     throw new TypeError(`Progression destination ${destination.id} must have an object payload`)
   }
@@ -92,7 +104,11 @@ function readDestinationNodeId(destination: WorldDbRuleRecordV1): string {
   if (typeof nodeId !== 'string' || nodeId.length === 0) {
     throw new TypeError(`Progression destination ${destination.id} must name a structure node`)
   }
-  return nodeId
+  const rawPositionId = destination.payload.competition_structure_position_id
+  if (rawPositionId !== undefined && (typeof rawPositionId !== 'string' || rawPositionId.length === 0)) {
+    throw new TypeError(`Progression destination ${destination.id} has an invalid structure position`)
+  }
+  return rawPositionId === undefined ? { nodeId } : { nodeId, positionId: rawPositionId }
 }
 
 function requireEntry(runtime: WorldDbCompetitionRuntimeV1, entryId: string, label: string): void {
