@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { addDays } from '@/domain/date'
+import { gameIdFromString } from '@/domain/ids'
 import type { WorldDbCompetitionBundleV1 } from '@/domain/worldDb/CompetitionBundle'
 import type { WorldDbCompetitionPlanningContextV1 } from '@/engine/competition/WorldDbPhysicalGamePlanner'
 
@@ -124,9 +125,10 @@ describe('World DB daily advance', () => {
 
     expect(result.before.plan.games).toHaveLength(1)
     const plannedGameId = result.before.plan.games[0]!.gameId
-    expect(result.before.world.games[plannedGameId]?.status).toBe('scheduled')
-    expect(result.world.games[plannedGameId]?.status).toBe('completed')
-    expect(result.world.games[plannedGameId]?.result).not.toBeNull()
+    const plannedGameKey = gameIdFromString(plannedGameId)
+    expect(result.before.world.games[plannedGameKey]?.status).toBe('scheduled')
+    expect(result.world.games[plannedGameKey]?.status).toBe('completed')
+    expect(result.world.games[plannedGameKey]?.result).not.toBeNull()
     expect(result.after.plan.games[0]?.gameId).toBe(plannedGameId)
     expect(result.world.currentDate).toBe(nextDate)
   })
