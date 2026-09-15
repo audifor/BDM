@@ -10,6 +10,10 @@ import {
   type WorldDbPhysicalGamePlanningResultV1,
 } from './WorldDbPhysicalGamePlanner'
 import { resolveWorldDbFixtureProgressionV1 } from './WorldDbProgressionResolver'
+import {
+  projectWorldDbPlanningRealizationsV1,
+  selectWorldDbAuthoritativeOutcomeBindingsV1,
+} from './WorldDbRealizationAuthority'
 
 export interface WorldDbCompetitionProgressionReconstructionV1 {
   readonly contexts: readonly WorldDbCompetitionPlanningContextV1[]
@@ -23,6 +27,10 @@ export interface WorldDbCompetitionProgressionReconstructionV1 {
  * are deterministic projections, so reconstruction repeatedly replans physical Games, derives local
  * fixture outcomes from completed Games, applies explicit B04 progression destinations and replans
  * until no new structure position is discovered.
+ *
+ * B12 realization authority is projected before planning: SUPERSEDED/VOIDED realizations are not
+ * active physical owners, PROVISIONAL can reserve physical identity but cannot drive progression,
+ * and AUTHORITATIVE realizations are the only B12 Games allowed to produce fixture outcomes.
  */
 export function reconstructWorldDbCompetitionProgressionV1(
   contexts: readonly WorldDbCompetitionPlanningContextV1[],
@@ -34,11 +42,17 @@ export function reconstructWorldDbCompetitionProgressionV1(
 
   for (let iteration = 0; iteration < maxIterations; iteration += 1) {
     const plan = planWorldDbPhysicalGamesV1(currentContexts, asOf)
-    const bindingIndex = createWorldDbGameFixtureBindingIndexV1(plan.bindings)
     let changed = false
 
     const nextContexts = currentContexts.map((context) => {
       const runtime = createWorldDbCompetitionRuntimeV1(context.bundle)
+      const outcomeBindings = selectWorldDbAuthoritativeOutcomeBindingsV1(
+        context.bundle.source.databaseId,
+        context.bundle.fixtures.map((fixture) => fixture.competitionFixtureId),
+        context.matchRealizations,
+        plan.bindings,
+      )
+      const bindingIndex = createWorldDbGameFixtureBindingIndexV1(outcomeBindings)
       const outcomes = adaptCompletedGamesToWorldDbFixtureOutcomesV1(
         runtime,
         bindingIndex,
@@ -103,16 +117,23 @@ function mergeResolvedPositions(
 function freezeContexts(
   contexts: readonly WorldDbCompetitionPlanningContextV1[],
 ): readonly WorldDbCompetitionPlanningContextV1[] {
-  return Object.freeze(contexts.map((context) => Object.freeze({
-    ...context,
-    ...(context.resolvedEntryIdByStructurePositionId === undefined
-      ? {}
-      : {
-          resolvedEntryIdByStructurePositionId: Object.freeze({
-            ...context.resolvedEntryIdByStructurePositionId,
+  return Object.freeze(contexts.map((context) => {
+    const matchRealizations = context.matchRealizations === undefined
+      ? undefined
+      : projectWorldDbPlanningRealizationsV1(context.matchRealizations)
+
+    return Object.freeze({
+      ...context,
+      ...(matchRealizations === undefined ? {} : { matchRealizations }),
+      ...(context.resolvedEntryIdByStructurePositionId === undefined
+        ? {}
+        : {
+            resolvedEntryIdByStructurePositionId: Object.freeze({
+              ...context.resolvedEntryIdByStructurePositionId,
+            }),
           }),
-        }),
-  })))
+    })
+  }))
 }
 
 function countStructurePositions(contexts: readonly WorldDbCompetitionPlanningContextV1[]): number {
