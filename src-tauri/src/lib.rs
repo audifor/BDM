@@ -1,6 +1,7 @@
 mod world_db;
 mod world_db_matches;
 mod world_db_rules;
+mod world_db_session;
 
 use serde::Serialize;
 use serde_json::Value;
@@ -53,6 +54,13 @@ fn get_save_info_v1(app: tauri::AppHandle) -> Result<Option<SaveInfoV1>, String>
         .expect("validated savedAt")
         .to_owned();
     Ok(Some(SaveInfoV1 { saved_at }))
+}
+
+#[tauri::command]
+fn inspect_world_db_v1(
+    database_path: String,
+) -> Result<world_db_session::WorldDbDatabaseInfoV1, String> {
+    world_db_session::inspect_database_v1(&database_path)
 }
 
 #[tauri::command]
@@ -200,6 +208,7 @@ pub fn run() {
             save_game_v1,
             load_game_v1,
             get_save_info_v1,
+            inspect_world_db_v1,
             load_world_db_competition_bundle_v1,
             load_world_db_match_realizations_v1,
             load_world_db_competition_runtime_bundle_v1
