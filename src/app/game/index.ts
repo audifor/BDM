@@ -25,6 +25,11 @@ export {
   type WorldDbGameMaterializationResultV1,
 } from './WorldDbGameMaterialization'
 export {
+  advanceWorldDbGameDayV1,
+  type AdvanceWorldDbGameDayInputV1,
+  type AdvanceWorldDbGameDayResultV1,
+} from './WorldDbDailyAdvance'
+export {
   createPrototypeGameRandom,
   completeMatch,
   createLiveUserMatch,
