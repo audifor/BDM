@@ -1,6 +1,5 @@
-import type { Player } from '@/domain/player'
 import type { PlayerId, TeamId } from '@/domain/ids'
-import { calculatePlayerImpact } from '@/engine/team'
+import type { Player } from '@/domain/player'
 
 import type { MatchLineups, MatchSquads } from '../MatchEngine'
 
@@ -21,6 +20,14 @@ interface RotationPlanOptions {
   readonly squad: readonly PlayerId[]
   readonly initialLineup: readonly PlayerId[]
   readonly players: Readonly<Record<PlayerId, Player>>
+  /**
+   * The team's configured bench priority (TeamLineup B1..B7 order), when one
+   * exists. This is eligibility-neutral: it never adds or removes candidates,
+   * it only breaks ties among an already-eligible pool. When a player has no
+   * configured slot (or none is supplied), squad order is the deterministic
+   * fallback — never a computed player-quality ranking (MG2C / MG1 BUG-4).
+   */
+  readonly benchPriorityOrder?: readonly PlayerId[]
 }
 
 const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'] as const
@@ -37,7 +44,7 @@ export function createDefaultRotationPlan(options: RotationPlanOptions): TeamRot
     if (starters.get(position) === undefined) continue
     const samePosition = availableBench.filter((playerId) => !backupsHas(backups, playerId) && options.players[playerId]!.basketball.primaryPosition === position)
     const fallback = availableBench.filter((playerId) => !backupsHas(backups, playerId))
-    const selected = bestPlayer(samePosition.length > 0 ? samePosition : fallback, options.players)
+    const selected = preferredCandidate(samePosition.length > 0 ? samePosition : fallback, options.benchPriorityOrder)
     if (selected !== undefined) backups.set(position, selected)
   }
 
@@ -69,8 +76,23 @@ function substitutionsFor(
   })
 }
 
-function bestPlayer(playerIds: readonly PlayerId[], players: Readonly<Record<PlayerId, Player>>): PlayerId | undefined {
-  return [...playerIds].sort((left, right) => calculatePlayerImpact(players[right]!)-calculatePlayerImpact(players[left]!) || left.localeCompare(right))[0]
+/**
+ * Picks one candidate from an already-eligible pool without ranking player quality
+ * (MG2C / MG1 BUG-4): when the team has a configured bench priority (TeamLineup
+ * B1..B7), the pool member that appears earliest in that priority wins; any
+ * candidate outside the configured priority (or when none is supplied) falls
+ * back to the pool's own stable order, which is itself squad/roster order —
+ * never a computed impact/overall score. Ties within the fallback break on
+ * PlayerId for full determinism.
+ */
+function preferredCandidate(playerIds: readonly PlayerId[], benchPriorityOrder: readonly PlayerId[] | undefined): PlayerId | undefined {
+  if (playerIds.length === 0) return undefined
+  if (benchPriorityOrder !== undefined) {
+    for (const playerId of benchPriorityOrder) {
+      if (playerIds.includes(playerId)) return playerId
+    }
+  }
+  return [...playerIds].sort((left, right) => left.localeCompare(right))[0]
 }
 
 function backupsHas(backups: ReadonlyMap<(typeof POSITIONS)[number], PlayerId>, playerId: PlayerId): boolean {

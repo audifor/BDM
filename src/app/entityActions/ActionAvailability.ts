@@ -1,6 +1,7 @@
 import type { GameWorld } from '@/domain/world'
 import type { GameId, PlayerId, TeamId } from '@/domain/ids'
 import type { MatchSimulation } from '@/engine/match'
+import type { LiveCoachingCommandResult } from '@/app/game/LiveCoachingCommand'
 
 export type ActionAvailability =
   | { readonly kind: 'enabled' }
@@ -13,7 +14,8 @@ export interface EntityActionEnvironment {
   readonly activeMatchSession?: {
     readonly gameId: GameId
     replacementCandidates(teamId: TeamId, playerOutId: PlayerId): readonly PlayerId[]
-    applySubstitution(teamId: TeamId, playerOutId: PlayerId, playerInId: PlayerId): MatchSimulation
+    applySubstitution(teamId: TeamId, playerOutId: PlayerId, playerInId: PlayerId): LiveCoachingCommandResult
+    snapshot(): MatchSimulation
   }
   readonly permissions?: readonly string[]
 }

@@ -14,7 +14,7 @@ const starters = positions.map((position) => playerIdFromString(`starter-${posit
 const backups = positions.map((position) => playerIdFromString(`backup-${position}`))
 
 describe('default match rotations', () => {
-  it('selects the best unique positional backups deterministically and schedules Q1-Q4', () => {
+  it('selects unique positional backups deterministically by squad order (never player quality) and schedules Q1-Q4', () => {
     const players = playerRecord([
       ...positions.map((position, index) => player(`starter-${position}`, position, 90 - index)),
       ...positions.map((position, index) => player(`backup-${position}`, position, 40 + index)),
@@ -27,13 +27,24 @@ describe('default match rotations', () => {
 
     expect(first).toEqual(second)
     expect(first.instructions).toHaveLength(20)
-    expect(first.instructions.find((item) => item.period === 1 && item.clockThresholdSeconds === 120 && item.playerOutId === starters[0])).toMatchObject({ playerInId: playerIdFromString('backup-PG-alpha') })
+    // squad-order fallback: backup-PG (in `backups`, earlier in squad) is preferred over the
+    // higher-rated backup-PG-alpha/beta (later in squad) — proves no rating/impact ranking occurs.
+    expect(first.instructions.find((item) => item.period === 1 && item.clockThresholdSeconds === 120 && item.playerOutId === starters[0])).toMatchObject({ playerInId: playerIdFromString('backup-PG') })
     expect(new Set(first.instructions.filter((item) => item.period === 1).map((item) => item.playerInId)).size).toBe(5)
     expect(first.instructions.filter((item) => item.period === 1 && item.clockThresholdSeconds === 240).map((item) => item.playerOutId)).toEqual([starters[1], starters[3]])
     expect(first.instructions.filter((item) => item.period === 4 && item.clockThresholdSeconds === 360).map((item) => item.playerInId)).toEqual([starters[1], starters[3]])
   })
 
-  it('uses the highest-impact unassigned fallback and supports partial or five-player squads', () => {
+  it('MG2C Test B: a lower-rated bench player earlier in the configured bench priority is preferred over a higher-rated later one', () => {
+    const players = playerRecord([...positions.map((position) => player(`starter-${position}`, position, 90)), player('weak-pg', 'PG', 20), player('strong-pg', 'PG', 95)])
+    const squad = [...starters, playerIdFromString('weak-pg'), playerIdFromString('strong-pg')]
+    // strong-pg has clearly better ratings, but weak-pg is placed first in the configured bench priority.
+    const plan = createDefaultRotationPlan({ teamId: TEAM_ID, squad, initialLineup: starters, players, benchPriorityOrder: [playerIdFromString('weak-pg'), playerIdFromString('strong-pg')] })
+
+    expect(plan.instructions.find((item) => item.playerOutId === starters[0])).toMatchObject({ playerInId: playerIdFromString('weak-pg') })
+  })
+
+  it('uses the stable squad-order fallback (never player quality) and supports partial or five-player squads', () => {
     const players = playerRecord([...positions.map((position) => player(`starter-${position}`, position, 90)), player('bench-sf', 'SF', 50), player('bench-pg', 'PG', 70), player('bench-pf', 'PF', 60)])
     const partial = createDefaultRotationPlan({ teamId: TEAM_ID, squad: [...starters, playerIdFromString('bench-sf'), playerIdFromString('bench-pg'), playerIdFromString('bench-pf')], initialLineup: starters, players })
     const five = createDefaultRotationPlan({ teamId: TEAM_ID, squad: starters, initialLineup: starters, players })

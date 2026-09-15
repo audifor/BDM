@@ -16,6 +16,7 @@ import {
   type PlayerMatchStats,
   type TacticalLevel,
 } from "@/engine/match";
+import type { LiveCoachingCommandResult } from "@/app/game/LiveCoachingCommand";
 import { PLAYBACK_SPEEDS, type PlaybackSpeed } from "@/stores/matchViewerStore";
 import {
   formatClock,
@@ -55,12 +56,12 @@ interface MatchViewerScreenProps {
   readonly onApplyResult: () => void;
   readonly onContinue: () => void;
   readonly coachingPlan: MatchTacticalPlan;
-  readonly onApplyCoaching: (plan: MatchTacticalPlan) => void;
+  readonly onApplyCoaching: (plan: MatchTacticalPlan) => LiveCoachingCommandResult;
   readonly coachingPlayers: readonly Player[];
   readonly coachingTeamId: MatchSimulation["homeTeamId"];
   readonly onApplyManualSubstitutions: (
     substitutions: readonly ManualSubstitution[],
-  ) => void;
+  ) => LiveCoachingCommandResult;
 }
 
 export function MatchViewerScreen(props: MatchViewerScreenProps) {
@@ -70,6 +71,10 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
   const [playByPlayOpen, setPlayByPlayOpen] = useState(false);
   const [pendingSubstitution, setPendingSubstitution] =
     useState<ManualSubstitution | null>(null);
+  const [quickSubstitutionError, setQuickSubstitutionError] = useState<
+    string | null
+  >(null);
+  const [coachingError, setCoachingError] = useState<string | null>(null);
   const [draft, setDraft] = useState(props.coachingPlan);
   const [segment, setSegment] = useState<MatchPresentationSegment | null>(null);
   const [presentationProgress, setPresentationProgress] = useState(0);
@@ -164,7 +169,8 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
   }, [isFinished, props.resultApplied, props.onApplyResult]);
   useEffect(() => {
     if (pendingSubstitution === null || segment !== null) return;
-    props.onApplyManualSubstitutions([pendingSubstitution]);
+    const result = props.onApplyManualSubstitutions([pendingSubstitution]);
+    if (result.status !== "applied") setQuickSubstitutionError(result.message);
     setPendingSubstitution(null);
   }, [pendingSubstitution, props.onApplyManualSubstitutions, segment]);
   useEffect(() => {
@@ -186,11 +192,13 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
     props.onPause();
     setSubstitutionsOpen(false);
     setDraft(props.coachingPlan);
+    setCoachingError(null);
     setCoachingOpen(true);
     requestAnimationFrame(() => scrollToSection("match-coaching"));
   };
   const openSubstitutions = () => {
     props.onPause();
+    setQuickSubstitutionError(null);
     setCoachingOpen(false);
     setSubstitutionsOpen(true);
     requestAnimationFrame(() => scrollToSection("match-substitutions"));
@@ -281,6 +289,11 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
             }
             onRequestSubstitution={setPendingSubstitution}
           />
+          {quickSubstitutionError !== null && (
+            <p className="substitutions-error" role="alert">
+              {quickSubstitutionError}
+            </p>
+          )}
         </section>
         <section
           className="viewer-lower match-viewer__section"
@@ -308,8 +321,14 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
         {coachingOpen && (
           <CoachingPanel
             draft={draft}
+            error={coachingError}
             onApply={(plan) => {
-              props.onApplyCoaching(plan);
+              const result = props.onApplyCoaching(plan);
+              if (result.status !== "applied") {
+                setCoachingError(result.message);
+                return;
+              }
+              setCoachingError(null);
               setCoachingOpen(false);
             }}
             onCancel={() => setCoachingOpen(false)}
@@ -326,7 +345,8 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
               fatigueByPlayerId={fatigueByPlayerId}
               canApply={segment === null}
               onApply={(substitutions) => {
-                props.onApplyManualSubstitutions(substitutions);
+                const result = props.onApplyManualSubstitutions(substitutions);
+                if (result.status !== "applied") throw new Error(result.message);
                 setSubstitutionsOpen(false);
               }}
               onCancel={() => setSubstitutionsOpen(false)}
@@ -439,12 +459,14 @@ function TeamMark({ name }: { readonly name: string }) {
 
 function CoachingPanel({
   draft,
+  error,
   onApply,
   onCancel,
   onChange,
   players,
 }: {
   readonly draft: MatchTacticalPlan;
+  readonly error: string | null;
   readonly onApply: (plan: MatchTacticalPlan) => void;
   readonly onCancel: () => void;
   readonly onChange: (plan: MatchTacticalPlan) => void;
@@ -534,6 +556,11 @@ function CoachingPanel({
           ))}
         </select>
       </label>
+      {error !== null && (
+        <p className="substitutions-error" role="alert">
+          {error}
+        </p>
+      )}
       <div className="game-actions">
         <button
           className="primary-button"

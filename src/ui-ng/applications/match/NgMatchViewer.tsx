@@ -5,6 +5,7 @@ import {
   calculateMatchPlayerStats,
   type MatchTacticalPlan,
 } from '@/engine/match'
+import { tauriGameSaveRepository } from '@/tauri/TauriGameSaveRepository'
 import { useGameStore } from '@/stores/gameStore'
 import { PLAYBACK_SPEEDS, useMatchViewerStore } from '@/stores/matchViewerStore'
 import { useTacticalPlanStore } from '@/stores/tacticalPlanStore'
@@ -46,10 +47,12 @@ import './engine/match-engine.css'
 export function NgMatchViewer() {
   const world = useGameStore((state) => state.world)
   const completeMatch = useGameStore((state) => state.completeMatch)
+  const saveCompletedMatch = useGameStore((state) => state.saveCompletedMatch)
   const advanceLiveMatchPresentation = useGameStore((state) => state.advanceLiveMatchPresentation)
   const skipLiveMatch = useGameStore((state) => state.skipLiveMatch)
   const applyLiveTactics = useGameStore((state) => state.applyLiveTactics)
   const applyManualSubstitutions = useGameStore((state) => state.applyManualSubstitutions)
+  const currentLiveMatchSnapshot = useGameStore((state) => state.currentLiveMatchSnapshot)
   const simulation = useMatchViewerStore((state) => state.simulation)
   const isPlaying = useMatchViewerStore((state) => state.isPlaying)
   const speed = useMatchViewerStore((state) => state.speed)
@@ -67,6 +70,8 @@ export function NgMatchViewer() {
   const [tacticalTab, setTacticalTab] = useState<TacticalPanelTab>('general')
   const [boxScoresCollapsed, setBoxScoresCollapsed] = useState(false)
   const [draft, setDraft] = useState(coachingPlan)
+  const [tacticalError, setTacticalError] = useState<string | null>(null)
+  const [matchSaveError, setMatchSaveError] = useState<string | null>(null)
   const [segment, setSegment] = useState<MatchPresentationSegment | null>(null)
   const [presentationProgress, setPresentationProgress] = useState(0)
   const requestingSegmentRef = useRef(false)
@@ -109,8 +114,13 @@ export function NgMatchViewer() {
 
   useEffect(() => {
     if (simulation === null || !finished || resultApplied) return
-    if (markResultApplied()) completeMatch(simulation)
-  }, [completeMatch, finished, markResultApplied, resultApplied, simulation])
+    if (!markResultApplied()) return
+    completeMatch(simulation)
+    setMatchSaveError(null)
+    saveCompletedMatch(tauriGameSaveRepository, new Date().toISOString()).catch((error: unknown) => {
+      setMatchSaveError(error instanceof Error ? error.message : 'Unable to save the completed match')
+    })
+  }, [completeMatch, finished, markResultApplied, resultApplied, saveCompletedMatch, simulation])
 
   const homeColors = deriveTeamColors(simulation?.homeTeamId ?? 'home')
   const awayColors = deriveTeamColors(simulation?.awayTeamId ?? 'away')
@@ -278,14 +288,21 @@ export function NgMatchViewer() {
               <em>{game === undefined ? 'Jornada' : matchdayLabel(world, game.competitionId)}</em>
               <span>{String(world.currentDate)}</span>
             </div>
-            <div className="me-meta__live">
-              <em>Eventos en vivo</em>
-              <strong>{liveEventCount} nuevos</strong>
-              <span className="me-meta__dots" aria-hidden>
-                <i />
-                <i />
-              </span>
-            </div>
+            {finished && matchSaveError !== null ? (
+              <div className="me-meta__live" role="alert">
+                <em>Save failed</em>
+                <strong>{matchSaveError}</strong>
+              </div>
+            ) : (
+              <div className="me-meta__live">
+                <em>Eventos en vivo</em>
+                <strong>{liveEventCount} nuevos</strong>
+                <span className="me-meta__dots" aria-hidden>
+                  <i />
+                  <i />
+                </span>
+              </div>
+            )}
           </div>
         }
       />
@@ -348,14 +365,20 @@ export function NgMatchViewer() {
           energyPercent={energyPercent}
           fatigueByPlayerId={fatigueByPlayerId}
           onApplySubs={(substitutions) => {
-            replaceSimulation(applyManualSubstitutions(coachingTeamId, substitutions), false)
+            const result = applyManualSubstitutions(coachingTeamId, substitutions)
+            if (result.status !== 'applied') throw new Error(result.message)
+            replaceSimulation(currentLiveMatchSnapshot(), false)
             setTacticalTab('general')
           }}
           onApplyTactics={(plan: MatchTacticalPlan) => {
-            replaceSimulation(applyLiveTactics(coachingTeamId, plan), false)
+            const result = applyLiveTactics(coachingTeamId, plan)
+            if (result.status !== 'applied') { setTacticalError(result.message); return }
+            setTacticalError(null)
+            replaceSimulation(currentLiveMatchSnapshot(), false)
             setCoachingPlan(plan)
             setTacticalTab('general')
           }}
+          tacticalError={tacticalError}
           onDraftChange={setDraft}
           onStageModeChange={setStageMode}
           onTabChange={(tab) => {
@@ -363,6 +386,7 @@ export function NgMatchViewer() {
             if (tab === 'jugadores' || tab === 'ataque' || tab === 'defensa') {
               pause()
               setDraft(coachingPlan)
+              setTacticalError(null)
             }
             setTacticalTab(tab)
           }}

@@ -19,8 +19,35 @@ describe('EntityActionExecutor', () => {
     expect(executeEntityActionResult(world, createEntityCommand({ type: 'player.talk', entity: createEntityRef('player', playerId) }), { controlledTeamId: team.id })).toEqual({ kind: 'noExecutor' })
   })
 
-  it('does not expose live substitution candidates while substitutions are disabled', () => {
-    const world = createNewGame(); const team = getUserTeam(world)!; const controller = createLiveUserMatch(world); const playerOutId = [...controller.snapshot().lineups.home, ...controller.snapshot().lineups.away].find((id) => team.rosterPlayerIds.includes(id))!
-    expect(controller.replacementCandidates(team.id, playerOutId)).toEqual([])
+  it('exposes the real bench as live substitution candidates for an on-court player (MG2B)', () => {
+    const world = createNewGame(); const team = getUserTeam(world)!; const controller = createLiveUserMatch(world)
+    const snapshot = controller.snapshot(); const isHome = snapshot.homeTeamId === team.id
+    const playerOutId = isHome ? snapshot.lineups.home[0]! : snapshot.lineups.away[0]!
+    const candidates = controller.replacementCandidates(team.id, playerOutId)
+    expect(candidates.length).toBeGreaterThan(0)
+    expect(candidates).not.toContain(playerOutId)
+  })
+
+  it('applies a valid live substitution through the entity-action boundary and reports sessionUpdated', () => {
+    const world = createNewGame(); const team = getUserTeam(world)!; const controller = createLiveUserMatch(world)
+    const snapshot = controller.snapshot(); const isHome = snapshot.homeTeamId === team.id
+    const playerOutId = isHome ? snapshot.lineups.home[0]! : snapshot.lineups.away[0]!
+    const playerInId = controller.replacementCandidates(team.id, playerOutId)[0]!
+
+    const result = executeEntityActionResult(world, createEntityCommand({ type: 'player.substitute', entity: createEntityRef('player', playerOutId), payload: { replacement: playerInId } }), { controlledTeamId: team.id, activeMatchSession: controller })
+
+    expect(result.kind).toBe('sessionUpdated')
+    if (result.kind === 'sessionUpdated') expect(result.simulation.events.at(-1)).toMatchObject({ type: 'substitution', playerOutId, playerInId })
+  })
+
+  it('rejects an invalid live substitution through the entity-action boundary instead of applying it', () => {
+    const world = createNewGame(); const team = getUserTeam(world)!; const controller = createLiveUserMatch(world)
+    const snapshot = controller.snapshot(); const isHome = snapshot.homeTeamId === team.id
+    const playerOutId = isHome ? snapshot.lineups.home[0]! : snapshot.lineups.away[0]!
+    const alreadyOnCourt = isHome ? snapshot.lineups.home[1]! : snapshot.lineups.away[1]!
+
+    const result = executeEntityActionResult(world, createEntityCommand({ type: 'player.substitute', entity: createEntityRef('player', playerOutId), payload: { replacement: alreadyOnCourt } }), { controlledTeamId: team.id, activeMatchSession: controller })
+
+    expect(result.kind).toBe('rejected')
   })
 })
