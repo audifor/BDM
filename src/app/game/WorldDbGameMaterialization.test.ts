@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseGameDate } from '@/domain/date'
+import { addDays, parseGameDate, type GameDate } from '@/domain/date'
 import { createGame } from '@/domain/game'
 import {
   attachWorldDbCompetitionRuntime,
@@ -56,6 +56,7 @@ function executableContext(): {
   readonly world: ReturnType<typeof createNewGame>
   readonly context: WorldDbCompetitionPlanningContextV1
   readonly fixtureId: string
+  readonly fixtureDate: GameDate
 } {
   const world = createNewGame()
   const season = Object.values(world.seasons)[0]!
@@ -65,6 +66,12 @@ function executableContext(): {
     throw new Error('Test universe requires two teams')
   }
 
+  const fixtureDate = firstCollisionFreeDate(
+    world,
+    homeTeamId,
+    awayTeamId,
+    season.endDate,
+  )
   const fixtureId = 'fixture:materialize:1'
   const nodeId = 'node:regular'
   const slotId = 'slot:1'
@@ -115,7 +122,7 @@ function executableContext(): {
         competitionScheduleSlotTimingHistoryId: 'timing:1',
         competitionScheduleSlotId: slotId,
         timingState: 'CONFIRMED',
-        localDate: world.currentDate,
+        localDate: fixtureDate,
         localTime: null,
         timeZone: null,
         validFrom: null,
@@ -135,7 +142,30 @@ function executableContext(): {
     rulePayloads: {},
   }
 
-  return { world, context: { bundle }, fixtureId }
+  return { world, context: { bundle }, fixtureId, fixtureDate }
+}
+
+function firstCollisionFreeDate(
+  world: ReturnType<typeof createNewGame>,
+  homeTeamId: string,
+  awayTeamId: string,
+  seasonEndDate: GameDate,
+): GameDate {
+  const occupiedDates = new Set(
+    Object.values(world.games)
+      .filter((game) =>
+        game.homeTeamId === homeTeamId
+        || game.awayTeamId === homeTeamId
+        || game.homeTeamId === awayTeamId
+        || game.awayTeamId === awayTeamId,
+      )
+      .map((game) => game.date),
+  )
+
+  for (let date = world.currentDate; date <= seasonEndDate; date = addDays(date, 1)) {
+    if (!occupiedDates.has(date)) return date
+  }
+  throw new Error('Test universe has no collision-free date for selected teams')
 }
 
 describe('World DB Game materialization', () => {
@@ -198,12 +228,12 @@ describe('World DB Game materialization', () => {
   })
 
   it('materializes deterministically and registers only the active competition season', () => {
-    const { world, context } = executableContext()
+    const { world, context, fixtureDate } = executableContext()
     const seeded = attachWorldDbCompetitionRuntime(world, {
       competitionPlanIds: ['plan:preexisting'],
       competitionSeasonIds: [],
     })
-    const asOf = `${world.currentDate}T12:00:00Z`
+    const asOf = `${fixtureDate}T12:00:00Z`
 
     const first = materializeWorldDbPhysicalGamesV1(seeded, [context], asOf)
     const gameId = first.plan.games[0]!.gameId
@@ -222,8 +252,8 @@ describe('World DB Game materialization', () => {
   })
 
   it('preserves a completed result when the deterministic plan is materialized again', () => {
-    const { world, context } = executableContext()
-    const asOf = `${world.currentDate}T12:00:00Z`
+    const { world, context, fixtureDate } = executableContext()
+    const asOf = `${fixtureDate}T12:00:00Z`
     const first = materializeWorldDbPhysicalGamesV1(world, [context], asOf)
     const gameId = first.plan.games[0]!.gameId
     const scheduled = first.world.games[gameId as keyof typeof first.world.games]!
@@ -247,7 +277,7 @@ describe('World DB Game materialization', () => {
   it.each(['SERIES', 'AGGREGATE'] as const)(
     'defers a virtual %s fixture instead of collapsing it into one Game',
     (formatType) => {
-      const { world, context, fixtureId } = executableContext()
+      const { world, context, fixtureId, fixtureDate } = executableContext()
       const node = context.bundle.structureNodes[0]!
       const contestContext: WorldDbCompetitionPlanningContextV1 = {
         bundle: {
@@ -270,7 +300,7 @@ describe('World DB Game materialization', () => {
       const result = materializeWorldDbPhysicalGamesV1(
         world,
         [contestContext],
-        `${world.currentDate}T12:00:00Z`,
+        `${fixtureDate}T12:00:00Z`,
       )
       const gameId = result.plan.games[0]!.gameId
       expect(result.deferredCompetitionFixtureIds).toEqual([fixtureId])
