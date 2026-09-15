@@ -28,7 +28,7 @@ export function resolveWorldDbFixturesV1(
   runtime: WorldDbCompetitionRuntimeV1,
   assignments: readonly WorldDbProgressionAssignmentV1[],
 ): readonly WorldDbResolvedFixtureV1[] {
-  const entryByPositionId = buildPositionEntryIndex(runtime, assignments)
+  const entryByPositionId = resolveWorldDbStructurePositionEntriesV1(runtime, assignments)
   const resolved = runtime.bundle.fixtures.map((fixture) => {
     const sides = (runtime.fixtureSidesByFixtureId[fixture.competitionFixtureId] ?? []).map((side) => {
       const positionEntryId = side.sourceStructurePositionId === null
@@ -86,7 +86,8 @@ export function resolveWorldDbFixturesV1(
   return Object.freeze(resolved)
 }
 
-function buildPositionEntryIndex(
+/** Returns only explicitly targeted structure positions; node-only progression is intentionally absent. */
+export function resolveWorldDbStructurePositionEntriesV1(
   runtime: WorldDbCompetitionRuntimeV1,
   assignments: readonly WorldDbProgressionAssignmentV1[],
 ): Readonly<Record<string, string>> {
