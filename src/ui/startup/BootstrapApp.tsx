@@ -7,6 +7,7 @@ import { useGameStore } from '@/stores/gameStore'
 import { useMatchViewerStore } from '@/stores/matchViewerStore'
 import { useTacticalPlanStore } from '@/stores/tacticalPlanStore'
 import { tauriGameSaveRepository } from '@/tauri/TauriGameSaveRepository'
+import { prepareConfiguredWorldDbRuntimeV1 } from '@/tauri/TauriWorldDbDailyRuntime'
 import { BdmOsNg } from '@/ui-ng/BdmOsNg'
 import { App } from '@/ui/App'
 
@@ -43,9 +44,10 @@ export function BootstrapApp({ uiMode = 'ng' }: { readonly uiMode?: 'legacy' | '
   const loadGame = async () => {
     try {
       const loaded = await loadSavedGame(tauriGameSaveRepository)
+      const prepared = await prepareConfiguredWorldDbRuntimeV1(loaded)
       clearMatch()
       resetTacticalPlan()
-      replaceWorld(loaded)
+      replaceWorld(prepared)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to load saved game')
     }
