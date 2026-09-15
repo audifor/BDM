@@ -1,4 +1,10 @@
-import type { GameWorld } from '@/domain/world'
+import {
+  EMPTY_WORLD_DB_COMPETITION_RUNTIME,
+  attachWorldDbCompetitionRuntime,
+  createWorldDbCompetitionRuntime,
+  type GameWorld,
+  type WorldDbCompetitionRuntime,
+} from '@/domain/world'
 import {
   deserializeGameWorldSave as deserializeLegacyGameWorldSave,
   deserializeGameWorldV3,
@@ -7,11 +13,15 @@ import {
   type SaveGameEnvelopeV3,
 } from './GameWorldSaveV3'
 
-/**
- * Save V4A is deliberately structural only. It advances the envelope version while preserving the
- * canonical V3 payload unchanged. World DB competition runtime state is introduced separately.
- */
-export type GameWorldSaveV4 = GameWorldSaveV3
+export interface WorldDbCompetitionRuntimeSaveV4 {
+  readonly competitionPlanIds: readonly string[]
+  readonly competitionSeasonIds: readonly string[]
+}
+
+/** Save V4B adds only the minimal persisted World DB competition runtime projection. */
+export interface GameWorldSaveV4 extends GameWorldSaveV3 {
+  readonly worldDbCompetitionRuntime: WorldDbCompetitionRuntimeSaveV4
+}
 
 export interface SaveGameEnvelopeV4 {
   readonly schemaVersion: 4
@@ -20,16 +30,18 @@ export interface SaveGameEnvelopeV4 {
 }
 
 /**
- * V4A changes only the envelope contract. A canonical V3 payload is already valid V4A payload data,
- * so migration must not deserialize and reserialize it. Doing so runs V3 enrichment and can reorder
- * or add neutral derived entries, making an otherwise structural migration non identity-preserving.
+ * V3 owns no World DB competition runtime. Migration validates the canonical V3 payload, preserves
+ * every V3 field as-is, and adds the explicit empty V4 runtime projection exactly once.
  */
 export function migrateGameWorldSaveV3ToV4(value: SaveGameEnvelopeV3): SaveGameEnvelopeV4 {
   deserializeGameWorldV3(value)
   return Object.freeze({
     schemaVersion: 4,
     savedAt: value.savedAt,
-    payload: value.payload,
+    payload: Object.freeze({
+      ...value.payload,
+      worldDbCompetitionRuntime: serializeWorldDbCompetitionRuntimeV4(EMPTY_WORLD_DB_COMPETITION_RUNTIME),
+    }),
   })
 }
 
@@ -38,7 +50,12 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
   return Object.freeze({
     schemaVersion: 4,
     savedAt: compatibility.savedAt,
-    payload: compatibility.payload,
+    payload: Object.freeze({
+      ...compatibility.payload,
+      worldDbCompetitionRuntime: serializeWorldDbCompetitionRuntimeV4(
+        world.worldDbCompetitionRuntime ?? EMPTY_WORLD_DB_COMPETITION_RUNTIME,
+      ),
+    }),
   })
 }
 
@@ -47,14 +64,63 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   exactKeys(envelope, ['schemaVersion', 'savedAt', 'payload'], 'Save V4 envelope')
   if (envelope.schemaVersion !== 4) throw new Error('Unsupported save version')
   const savedAt = isoTimestamp(envelope.savedAt, 'Save V4 savedAt')
-  return deserializeGameWorldV3({ schemaVersion: 3, savedAt, payload: envelope.payload } as SaveGameEnvelopeV3)
+  const payload = record(envelope.payload, 'Save V4 payload')
+  const runtime = parseWorldDbCompetitionRuntimeV4(payload.worldDbCompetitionRuntime)
+  const { worldDbCompetitionRuntime: _runtime, ...compatibilityPayload } = payload
+  const world = deserializeGameWorldV3({
+    schemaVersion: 3,
+    savedAt,
+    payload: compatibilityPayload as unknown as GameWorldSaveV3,
+  })
+  return attachWorldDbCompetitionRuntime(world, runtime)
 }
 
-/** Reads V1-V4. V1-V3 keep using the existing legacy migration chain. */
+/** Reads V1-V4. Legacy saves normalize the V4-owned runtime projection to empty arrays. */
 export function deserializeGameWorldSaveV4(value: unknown): GameWorld {
   const envelope = record(value, 'Save file')
   if (envelope.schemaVersion === 4) return deserializeGameWorldV4(value)
-  return deserializeLegacyGameWorldSave(value)
+  return attachWorldDbCompetitionRuntime(
+    deserializeLegacyGameWorldSave(value),
+    EMPTY_WORLD_DB_COMPETITION_RUNTIME,
+  )
+}
+
+function serializeWorldDbCompetitionRuntimeV4(
+  value: WorldDbCompetitionRuntime,
+): WorldDbCompetitionRuntimeSaveV4 {
+  const runtime = createWorldDbCompetitionRuntime(value)
+  return Object.freeze({
+    competitionPlanIds: runtime.competitionPlanIds,
+    competitionSeasonIds: runtime.competitionSeasonIds,
+  })
+}
+
+function parseWorldDbCompetitionRuntimeV4(value: unknown): WorldDbCompetitionRuntime {
+  const runtime = record(value, 'World DB competition runtime V4')
+  exactKeys(
+    runtime,
+    ['competitionPlanIds', 'competitionSeasonIds'],
+    'World DB competition runtime V4',
+  )
+  return createWorldDbCompetitionRuntime({
+    competitionPlanIds: idArray(runtime.competitionPlanIds, 'World DB competition plan IDs V4'),
+    competitionSeasonIds: idArray(
+      runtime.competitionSeasonIds,
+      'World DB competition season IDs V4',
+    ),
+  })
+}
+
+function idArray(value: unknown, label: string): readonly string[] {
+  if (!Array.isArray(value)) throw new TypeError(`${label} must be an array`)
+  const ids = value.map((entry) => {
+    if (typeof entry !== 'string' || entry.length === 0) {
+      throw new TypeError(`${label} must contain non-empty strings`)
+    }
+    return entry
+  })
+  if (new Set(ids).size !== ids.length) throw new TypeError(`${label} must not contain duplicates`)
+  return Object.freeze(ids)
 }
 
 function record(value: unknown, label: string): Record<string, unknown> {
