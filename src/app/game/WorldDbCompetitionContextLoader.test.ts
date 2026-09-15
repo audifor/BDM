@@ -137,6 +137,16 @@ describe('WorldDbCompetitionContextLoader', () => {
     expect(repo.loadMatchRealizations).not.toHaveBeenCalled()
   })
 
+  it('rejects an empty runtime bundle path before repository access', async () => {
+    const repo = repository()
+    const world = attachWorldDbCompetitionRuntime(createNewGame(), runtime)
+
+    await expect(
+      loadWorldDbCompetitionRuntimeCatalogV1(repo, ' ', world),
+    ).rejects.toThrow('bundlePath')
+    expect(repo.loadCompetitionRuntimeBundle).not.toHaveBeenCalled()
+  })
+
   it('loads the runtime catalog and pins its logical identity', async () => {
     const world = attachWorldDbCompetitionRuntime(createNewGame(), runtime)
     const loaded = await loadWorldDbCompetitionRuntimeCatalogV1(
