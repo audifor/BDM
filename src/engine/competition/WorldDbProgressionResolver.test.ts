@@ -24,6 +24,15 @@ function buildBundle(rulePayloads?: WorldDbCompetitionBundleV1['rulePayloads']):
       { competitionStructureNodeId: 'node:sf', nodeType: 'ROUND', name: 'Semifinal', sequenceNo: 2 },
       { competitionStructureNodeId: 'node:consolation', nodeType: 'ROUND', name: 'Consolation', sequenceNo: 2 },
     ],
+    structurePositions: [
+      {
+        competitionStructurePositionId: 'position:sf:1',
+        competitionStructureNodeId: 'node:sf',
+        positionType: 'BRACKET_SLOT',
+        positionOrder: 1,
+        label: 'SF slot 1',
+      },
+    ],
     structureEdges: [],
     structureEntryAssignments: [],
     fixtures: [{ competitionFixtureId: 'fixture:qf1', structureNodeId: 'node:qf', matchdayId: null, fixtureOrder: 1 }],
@@ -69,6 +78,69 @@ describe('World DB fixture progression', () => {
         competitionSeasonEntryId: 'entry:a',
       },
     ])
+  })
+
+  it('preserves an explicit destination structure position', () => {
+    const runtime = createWorldDbCompetitionRuntimeV1(buildBundle({
+      progressionRules: [
+        { id: 'rule:winner', scopeStructureNodeId: 'node:qf', type: 'GAME_WINNER', payload: null },
+      ],
+      progressionDestinations: [
+        {
+          id: 'dest:winner',
+          ruleId: 'rule:winner',
+          sequenceNo: 1,
+          type: 'STRUCTURE_POSITION',
+          payload: {
+            competition_structure_node_id: 'node:sf',
+            competition_structure_position_id: 'position:sf:1',
+          },
+        },
+      ],
+    }))
+    const rules = createWorldDbCompetitionRulesV1(runtime.bundle)
+
+    expect(resolveWorldDbFixtureProgressionV1(runtime, rules, [{
+      competitionFixtureId: 'fixture:qf1',
+      winnerEntryId: 'entry:b',
+      loserEntryId: 'entry:a',
+    }])).toEqual([
+      {
+        ruleId: 'rule:winner',
+        ruleType: 'GAME_WINNER',
+        sourceNodeId: 'node:qf',
+        destinationNodeId: 'node:sf',
+        destinationPositionId: 'position:sf:1',
+        competitionSeasonEntryId: 'entry:b',
+      },
+    ])
+  })
+
+  it('rejects an explicit destination position outside the destination node', () => {
+    const runtime = createWorldDbCompetitionRuntimeV1(buildBundle({
+      progressionRules: [
+        { id: 'rule:winner', scopeStructureNodeId: 'node:qf', type: 'GAME_WINNER', payload: null },
+      ],
+      progressionDestinations: [
+        {
+          id: 'dest:winner',
+          ruleId: 'rule:winner',
+          sequenceNo: 1,
+          type: 'STRUCTURE_POSITION',
+          payload: {
+            competition_structure_node_id: 'node:qf',
+            competition_structure_position_id: 'position:sf:1',
+          },
+        },
+      ],
+    }))
+    const rules = createWorldDbCompetitionRulesV1(runtime.bundle)
+
+    expect(() => resolveWorldDbFixtureProgressionV1(runtime, rules, [{
+      competitionFixtureId: 'fixture:qf1',
+      winnerEntryId: 'entry:b',
+      loserEntryId: 'entry:a',
+    }])).toThrow('does not belong to node node:qf')
   })
 
   it('fails on outcomes for fixtures outside the loaded competition season', () => {
