@@ -5,6 +5,12 @@ export {
   GameWorldValidationError,
 } from './GameWorld'
 export type { CreateGameWorldInput, GameWorld } from './GameWorld'
+export {
+  EMPTY_WORLD_DB_COMPETITION_RUNTIME,
+  attachWorldDbCompetitionRuntime,
+  createWorldDbCompetitionRuntime,
+} from './WorldDbCompetitionRuntime'
+export type { WorldDbCompetitionRuntime } from './WorldDbCompetitionRuntime'
 export { addMemoriesToGameWorld } from './GameWorld'
 export { applyRelationshipEventToWorld, applyRelationshipEventsToWorld } from './RelationshipEvents'
 export { applyMoraleEventToWorld } from './MoraleEvents'
