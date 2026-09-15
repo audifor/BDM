@@ -208,8 +208,7 @@ mod tests {
         )
         .is_err());
         assert!(
-            validate_envelope_json(r#"{"schemaVersion":4,"savedAt":"","payload":null}"#)
-                .is_err()
+            validate_envelope_json(r#"{"schemaVersion":4,"savedAt":"","payload":null}"#).is_err()
         );
     }
 }
