@@ -13,19 +13,26 @@ describe('GameWorldSaveV4 competition runtime', () => {
 
     expect(v4.schemaVersion).toBe(4)
     expect(v4.payload.worldDbCompetitionRuntime).toEqual({
+      competitionRuntimeBundle: null,
       competitionPlanIds: [],
       competitionSeasonIds: [],
     })
 
     const restored = deserializeGameWorldV4(v4)
     expect(restored.worldDbCompetitionRuntime).toEqual({
+      competitionRuntimeBundle: null,
       competitionPlanIds: [],
       competitionSeasonIds: [],
     })
   })
 
-  it('round-trips populated competition plan and season identities', () => {
+  it('round-trips populated competition runtime identities and bundle pin', () => {
     const world = attachWorldDbCompetitionRuntime(createNewGame(), {
+      competitionRuntimeBundle: {
+        contentId: 'bdm-phase1-competition-runtime-v1',
+        contentHash: 'a'.repeat(64),
+        worldDbSchema: 'DDL-PHASE1-A',
+      },
       competitionPlanIds: ['plan:liga-acb:2032', 'plan:euroleague:2032'],
       competitionSeasonIds: ['competition-season:acb:2032', 'competition-season:euroleague:2032'],
     })
@@ -35,7 +42,7 @@ describe('GameWorldSaveV4 competition runtime', () => {
     expect(restored.worldDbCompetitionRuntime).toEqual(world.worldDbCompetitionRuntime)
   })
 
-  it('migrates canonical V3 by preserving V3 fields and adding empty runtime arrays', () => {
+  it('migrates canonical V3 by preserving V3 fields and adding empty runtime state', () => {
     const v3 = serializeGameWorldV3(createNewGame(), savedAt)
     const v4 = migrateGameWorldSaveV3ToV4(v3)
     const { worldDbCompetitionRuntime, ...v4CompatibilityPayload } = v4.payload
@@ -43,6 +50,7 @@ describe('GameWorldSaveV4 competition runtime', () => {
     expect(v4.schemaVersion).toBe(4)
     expect(v4CompatibilityPayload).toEqual(v3.payload)
     expect(worldDbCompetitionRuntime).toEqual({
+      competitionRuntimeBundle: null,
       competitionPlanIds: [],
       competitionSeasonIds: [],
     })
@@ -54,6 +62,7 @@ describe('GameWorldSaveV4 competition runtime', () => {
     const restored = deserializeGameWorldSaveV4(legacy)
 
     expect(restored.worldDbCompetitionRuntime).toEqual({
+      competitionRuntimeBundle: null,
       competitionPlanIds: [],
       competitionSeasonIds: [],
     })
@@ -73,6 +82,7 @@ describe('GameWorldSaveV4 competition runtime', () => {
       payload: {
         ...valid.payload,
         worldDbCompetitionRuntime: {
+          competitionRuntimeBundle: null,
           competitionPlanIds: ['duplicate', 'duplicate'],
           competitionSeasonIds: [],
         },
@@ -83,11 +93,27 @@ describe('GameWorldSaveV4 competition runtime', () => {
       payload: {
         ...valid.payload,
         worldDbCompetitionRuntime: {
+          competitionRuntimeBundle: null,
           competitionPlanIds: [],
           competitionSeasonIds: [42],
         },
       },
     })).toThrow(/non-empty strings/)
+    expect(() => deserializeGameWorldV4({
+      ...valid,
+      payload: {
+        ...valid.payload,
+        worldDbCompetitionRuntime: {
+          competitionRuntimeBundle: {
+            contentId: 'bdm-phase1-competition-runtime-v1',
+            contentHash: 'not-a-hash',
+            worldDbSchema: 'DDL-PHASE1-A',
+          },
+          competitionPlanIds: [],
+          competitionSeasonIds: [],
+        },
+      },
+    })).toThrow(/64-character lowercase hex digest/)
   })
 
   it('rejects malformed canonical V4 envelopes', () => {

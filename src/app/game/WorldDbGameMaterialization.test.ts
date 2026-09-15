@@ -242,6 +242,7 @@ describe('World DB Game materialization', () => {
       stakes: 'regular',
     })
     expect(first.world.worldDbCompetitionRuntime).toEqual({
+      competitionRuntimeBundle: null,
       competitionPlanIds: ['plan:preexisting'],
       competitionSeasonIds: ['competition-season:materialize'],
     })

@@ -14,11 +14,16 @@ import {
 } from './GameWorldSaveV3'
 
 export interface WorldDbCompetitionRuntimeSaveV4 {
+  readonly competitionRuntimeBundle: {
+    readonly contentId: string
+    readonly contentHash: string
+    readonly worldDbSchema: string
+  } | null
   readonly competitionPlanIds: readonly string[]
   readonly competitionSeasonIds: readonly string[]
 }
 
-/** Save V4B adds only the minimal persisted World DB competition runtime projection. */
+/** Save V4 persists the minimal World DB competition runtime projection. */
 export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly worldDbCompetitionRuntime: WorldDbCompetitionRuntimeSaveV4
 }
@@ -75,7 +80,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   return attachWorldDbCompetitionRuntime(world, runtime)
 }
 
-/** Reads V1-V4. Legacy saves normalize the V4-owned runtime projection to empty arrays. */
+/** Reads V1-V4. Legacy saves normalize the V4-owned runtime projection to empty state. */
 export function deserializeGameWorldSaveV4(value: unknown): GameWorld {
   const envelope = record(value, 'Save file')
   if (envelope.schemaVersion === 4) return deserializeGameWorldV4(value)
@@ -89,7 +94,9 @@ function serializeWorldDbCompetitionRuntimeV4(
   value: WorldDbCompetitionRuntime,
 ): WorldDbCompetitionRuntimeSaveV4 {
   const runtime = createWorldDbCompetitionRuntime(value)
+  const pin = runtime.competitionRuntimeBundle ?? null
   return Object.freeze({
+    competitionRuntimeBundle: pin === null ? null : Object.freeze({ ...pin }),
     competitionPlanIds: runtime.competitionPlanIds,
     competitionSeasonIds: runtime.competitionSeasonIds,
   })
@@ -99,16 +106,37 @@ function parseWorldDbCompetitionRuntimeV4(value: unknown): WorldDbCompetitionRun
   const runtime = record(value, 'World DB competition runtime V4')
   exactKeys(
     runtime,
-    ['competitionPlanIds', 'competitionSeasonIds'],
+    ['competitionRuntimeBundle', 'competitionPlanIds', 'competitionSeasonIds'],
     'World DB competition runtime V4',
   )
   return createWorldDbCompetitionRuntime({
+    competitionRuntimeBundle: parseRuntimeBundlePin(runtime.competitionRuntimeBundle),
     competitionPlanIds: idArray(runtime.competitionPlanIds, 'World DB competition plan IDs V4'),
     competitionSeasonIds: idArray(
       runtime.competitionSeasonIds,
       'World DB competition season IDs V4',
     ),
   })
+}
+
+function parseRuntimeBundlePin(
+  value: unknown,
+): WorldDbCompetitionRuntime['competitionRuntimeBundle'] {
+  if (value === null) return null
+  const pin = record(value, 'World DB competition runtime bundle pin V4')
+  exactKeys(
+    pin,
+    ['contentId', 'contentHash', 'worldDbSchema'],
+    'World DB competition runtime bundle pin V4',
+  )
+  return {
+    contentId: nonEmptyText(pin.contentId, 'World DB competition runtime bundle contentId V4'),
+    contentHash: nonEmptyText(pin.contentHash, 'World DB competition runtime bundle contentHash V4'),
+    worldDbSchema: nonEmptyText(
+      pin.worldDbSchema,
+      'World DB competition runtime bundle worldDbSchema V4',
+    ),
+  }
 }
 
 function idArray(value: unknown, label: string): readonly string[] {
@@ -121,6 +149,11 @@ function idArray(value: unknown, label: string): readonly string[] {
   })
   if (new Set(ids).size !== ids.length) throw new TypeError(`${label} must not contain duplicates`)
   return Object.freeze(ids)
+}
+
+function nonEmptyText(value: unknown, label: string): string {
+  if (typeof value !== 'string' || value.length === 0) throw new TypeError(`${label} must be non-empty`)
+  return value
 }
 
 function record(value: unknown, label: string): Record<string, unknown> {
