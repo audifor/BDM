@@ -30,6 +30,12 @@ export {
   type AdvanceWorldDbGameDayResultV1,
 } from './WorldDbDailyAdvance'
 export {
+  WorldDbSessionV1,
+  type PreparedWorldDbSessionV1,
+  type WorldDbSessionAccessV1,
+  type WorldDbSessionSnapshotV1,
+} from './WorldDbSession'
+export {
   createPrototypeGameRandom,
   completeMatch,
   createLiveUserMatch,

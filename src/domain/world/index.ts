@@ -10,7 +10,10 @@ export {
   attachWorldDbCompetitionRuntime,
   createWorldDbCompetitionRuntime,
 } from './WorldDbCompetitionRuntime'
-export type { WorldDbCompetitionRuntime } from './WorldDbCompetitionRuntime'
+export type {
+  WorldDbCompetitionRuntime,
+  WorldDbCompetitionRuntimeBundlePin,
+} from './WorldDbCompetitionRuntime'
 export { addMemoriesToGameWorld } from './GameWorld'
 export { applyRelationshipEventToWorld, applyRelationshipEventsToWorld } from './RelationshipEvents'
 export { applyMoraleEventToWorld } from './MoraleEvents'
