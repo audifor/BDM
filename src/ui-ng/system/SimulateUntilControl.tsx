@@ -3,10 +3,11 @@ import './simulate-until.css'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
-import { getNextKnownEvent, tickSimulateUntilDate, type UserMatchSummary } from '@/app/game'
+import { getNextKnownEvent, hasActiveWorldDbCompetitionRuntimeV1, tickSimulateUntilDate, type UserMatchSummary } from '@/app/game'
 import { addDays, compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import type { GameWorld } from '@/domain/world'
 import { useGameStore } from '@/stores/gameStore'
+import { tickConfiguredWorldDbSimulateUntilDateV1 } from '@/tauri/TauriWorldDbDailyRuntime'
 import { formatGameDateLabel } from '@/ui-ng/applications/player/data/presentationHelpers'
 import { holidayResultStillVisible } from '@/ui-ng/system/holidayMatchSpotlight'
 
@@ -33,6 +34,7 @@ export function SimulateUntilControl({ blocked, world }: { readonly blocked: boo
   const [draft, setDraft] = useState(defaultTargetDate(world, tomorrow, maxDate))
   const [monthCursor, setMonthCursor] = useState(() => monthStart(draft))
   const [running, setRunning] = useState(false)
+  const [runtimeError, setRuntimeError] = useState<string | null>(null)
   const [liveDate, setLiveDate] = useState(world.currentDate)
   const [matches, setMatches] = useState<UserMatchSummary[]>([])
   const rootRef = useRef<HTMLDivElement>(null)
@@ -77,12 +79,13 @@ export function SimulateUntilControl({ blocked, world }: { readonly blocked: boo
     cancelRef.current = false
     setOpen(false)
     setRunning(true)
+    setRuntimeError(null)
     setMatches([])
     setLiveDate(world.currentDate)
 
     let iterations = 0
     let spotlight: UserMatchSummary | undefined
-    const step = () => {
+    const step = async () => {
       if (cancelRef.current) return
       const current = useGameStore.getState().world
       if (current === null) {
@@ -91,27 +94,36 @@ export function SimulateUntilControl({ blocked, world }: { readonly blocked: boo
         return
       }
 
-      const tick = tickSimulateUntilDate(current, target)
-      iterations += 1
-      useGameStore.getState().replaceWorld(tick.world)
-      const live = tick.event.type === 'userMatch' ? tick.event.match.date : tick.world.currentDate
-      if (tick.event.type === 'userMatch') {
-        spotlight = tick.event.match
-      } else if (spotlight !== undefined && !holidayResultStillVisible(spotlight.date, live)) {
-        spotlight = undefined
-      }
-      setLiveDate(live)
-      setMatches(spotlight === undefined ? [] : [spotlight])
-      const arrived = compareGameDates(tick.world.currentDate, target) >= 0
-      if (tick.event.type === 'finished' || arrived || iterations > 4000) {
+      try {
+        const tick = hasActiveWorldDbCompetitionRuntimeV1(current)
+          ? await tickConfiguredWorldDbSimulateUntilDateV1(current, target)
+          : tickSimulateUntilDate(current, target)
+        iterations += 1
+        useGameStore.getState().replaceWorld(tick.world)
+        const live = tick.event.type === 'userMatch' ? tick.event.match.date : tick.world.currentDate
+        if (tick.event.type === 'userMatch') {
+          spotlight = tick.event.match
+        } else if (spotlight !== undefined && !holidayResultStillVisible(spotlight.date, live)) {
+          spotlight = undefined
+        }
+        setLiveDate(live)
+        setMatches(spotlight === undefined ? [] : [spotlight])
+        const arrived = compareGameDates(tick.world.currentDate, target) >= 0
+        if (tick.event.type === 'finished' || arrived || iterations > 4000) {
+          setRunning(false)
+          setMatches([])
+          return
+        }
+        window.setTimeout(() => void step(), spotlight === undefined ? 90 : 500)
+      } catch (error) {
+        setRuntimeError(error instanceof Error ? error.message : 'World DB runtime failed')
         setRunning(false)
         setMatches([])
-        return
+        setOpen(true)
       }
-      window.setTimeout(step, spotlight === undefined ? 90 : 500)
     }
 
-    window.setTimeout(step, 0)
+    window.setTimeout(() => void step(), 0)
   }
 
   return (
@@ -180,6 +192,7 @@ export function SimulateUntilControl({ blocked, world }: { readonly blocked: boo
               )
             })}
           </div>
+          {runtimeError !== null ? <p className="ng-sim-cal__error" role="alert">{runtimeError}</p> : null}
           <div className="ng-sim-cal__actions">
             <button className="ng-btn ng-btn--primary" disabled={!canConfirm} onClick={startHoliday} type="button">
               Simulate

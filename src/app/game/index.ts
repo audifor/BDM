@@ -25,6 +25,11 @@ export {
   type WorldDbGameMaterializationResultV1,
 } from './WorldDbGameMaterialization'
 export {
+  hasActiveWorldDbCompetitionRuntimeV1,
+  WorldDbDailyRuntimeSessionV1,
+  type WorldDbDailyRuntimeAccessV1,
+} from './WorldDbDailyRuntime'
+export {
   createPrototypeGameRandom,
   completeMatch,
   createLiveUserMatch,

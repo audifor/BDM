@@ -137,6 +137,18 @@
   padding: 0;
 }
 
+.ng-system-bar__runtime-error {
+  max-width: 92px;
+  overflow: hidden;
+  color: #ff8f8f;
+  font-family: var(--ng-font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .ng-system-bar__until {
   position: relative;
 }
