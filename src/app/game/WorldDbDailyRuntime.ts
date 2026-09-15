@@ -1,9 +1,10 @@
-import type { GameDate } from '@/domain/date'
+import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import type { GameWorld, WorldDbCompetitionRuntime } from '@/domain/world'
+import { getScheduledGamesToday } from '@/engine/calendar'
 import type { WorldDbCompetitionPlanningContextV1 } from '@/engine/competition/WorldDbPhysicalGamePlanner'
 import type { WorldDatabaseRepository } from '@/tauri/TauriWorldDatabaseRepository'
 
-import { advanceGameDay } from './advanceGameDay'
+import { advanceGameDay, simulateRemainingGamesToday } from './advanceGameDay'
 import {
   DEFAULT_CONTINUE_DAY_LIMIT,
   getContinueStopReason,
@@ -75,18 +76,13 @@ export class WorldDbDailyRuntimeSessionV1 {
       this.cachedContextKey = contextKey
     }
 
-    return materializeWorldDbPhysicalGamesV1(
-      loadedCatalog.world,
-      this.cachedContexts,
-      loadedCatalog.world.currentDate,
-    ).world
+    return this.materializeCached(loadedCatalog.world)
   }
 
-  /** Canonical one-day boundary: materialize before today's simulation and again after results. */
+  /** Canonical one-day boundary with same-date result/progression stabilization. */
   async advanceDay(world: GameWorld): Promise<GameWorld> {
-    const prepared = await this.prepare(world)
-    const advanced = advanceGameDay(prepared)
-    return this.prepare(advanced)
+    if (!hasActiveWorldDbCompetitionRuntimeV1(world)) return advanceGameDay(world)
+    return this.advancePreparedDay(await this.prepare(world))
   }
 
   /** World DB-aware Continue loop; preparation occurs before every stop check. */
@@ -112,7 +108,9 @@ export class WorldDbDailyRuntimeSessionV1 {
         }
       }
 
-      current = await this.prepare(advanceGameDay(current))
+      current = hasActiveWorldDbCompetitionRuntimeV1(current)
+        ? await this.advancePreparedDay(current)
+        : advanceGameDay(current)
       daysAdvanced += 1
     }
 
@@ -124,15 +122,61 @@ export class WorldDbDailyRuntimeSessionV1 {
     }
   }
 
-  /** One holiday/simulate-until tick using the same pre/post World DB materialization boundary. */
+  /** One holiday/simulate-until tick using the same World DB-aware daily boundary. */
   async tickSimulateUntilDate(world: GameWorld, targetDate: GameDate): Promise<SimulateUntilTick> {
     const prepared = await this.prepare(world)
-    const tick = tickSimulateUntilDate(prepared, targetDate)
+    const target = parseGameDate(targetDate)
+    if (compareGameDates(prepared.currentDate, target) >= 0) {
+      return tickSimulateUntilDate(prepared, target)
+    }
+
+    const interruption = getContinueStopReason(prepared)
+    if (interruption === undefined && hasActiveWorldDbCompetitionRuntimeV1(prepared)) {
+      return {
+        world: await this.advancePreparedDay(prepared),
+        event: { type: 'dayAdvanced' },
+      }
+    }
+
+    const tick = tickSimulateUntilDate(prepared, target)
     if (tick.event.type === 'finished') return tick
     return {
       world: await this.prepare(tick.world),
       event: tick.event,
     }
+  }
+
+  private materializeCached(world: GameWorld): GameWorld {
+    return materializeWorldDbPhysicalGamesV1(
+      world,
+      this.cachedContexts,
+      world.currentDate,
+    ).world
+  }
+
+  private async advancePreparedDay(prepared: GameWorld): Promise<GameWorld> {
+    let current = prepared
+    const fixtureCount = this.cachedContexts.reduce(
+      (total, context) => total + context.bundle.fixtures.length,
+      0,
+    )
+    const maxPasses = Math.max(1, fixtureCount + 1)
+
+    for (let pass = 0; pass < maxPasses; pass += 1) {
+      if (getScheduledGamesToday(current).length === 0) {
+        const advanced = advanceGameDay(current)
+        return this.prepare(advanced)
+      }
+
+      current = this.materializeCached(simulateRemainingGamesToday(current))
+    }
+
+    if (getScheduledGamesToday(current).length > 0) {
+      throw new Error('World DB same-day competition progression did not converge')
+    }
+
+    const advanced = advanceGameDay(current)
+    return this.prepare(advanced)
   }
 }
 
