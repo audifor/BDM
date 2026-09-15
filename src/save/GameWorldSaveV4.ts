@@ -104,13 +104,21 @@ function serializeWorldDbCompetitionRuntimeV4(
 
 function parseWorldDbCompetitionRuntimeV4(value: unknown): WorldDbCompetitionRuntime {
   const runtime = record(value, 'World DB competition runtime V4')
+  const hasRuntimeBundlePin = Object.prototype.hasOwnProperty.call(
+    runtime,
+    'competitionRuntimeBundle',
+  )
   exactKeys(
     runtime,
-    ['competitionRuntimeBundle', 'competitionPlanIds', 'competitionSeasonIds'],
+    hasRuntimeBundlePin
+      ? ['competitionRuntimeBundle', 'competitionPlanIds', 'competitionSeasonIds']
+      : ['competitionPlanIds', 'competitionSeasonIds'],
     'World DB competition runtime V4',
   )
   return createWorldDbCompetitionRuntime({
-    competitionRuntimeBundle: parseRuntimeBundlePin(runtime.competitionRuntimeBundle),
+    competitionRuntimeBundle: hasRuntimeBundlePin
+      ? parseRuntimeBundlePin(runtime.competitionRuntimeBundle)
+      : null,
     competitionPlanIds: idArray(runtime.competitionPlanIds, 'World DB competition plan IDs V4'),
     competitionSeasonIds: idArray(
       runtime.competitionSeasonIds,
