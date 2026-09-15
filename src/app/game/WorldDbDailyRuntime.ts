@@ -112,7 +112,7 @@ export class WorldDbDailyRuntimeSessionV1 {
         }
       }
 
-      current = await this.advanceDay(current)
+      current = await this.prepare(advanceGameDay(current))
       daysAdvanced += 1
     }
 
