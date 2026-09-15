@@ -71,6 +71,26 @@ fn load_world_db_match_realizations_v1(
     world_db_matches::load_match_realizations_v1(&database_path, &competition_season_id)
 }
 
+#[tauri::command]
+fn load_world_db_competition_runtime_bundle_v1(bundle_path: String) -> Result<Value, String> {
+    let path = Path::new(&bundle_path);
+    if !path.is_file() {
+        return Err(format!(
+            "World DB competition runtime bundle does not exist: {}",
+            path.display()
+        ));
+    }
+    let text = fs::read_to_string(path)
+        .map_err(|error| format!("Unable to read World DB competition runtime bundle: {error}"))?;
+    let value: Value = serde_json::from_str(&text).map_err(|error| {
+        format!("World DB competition runtime bundle contains invalid JSON: {error}")
+    })?;
+    if !value.is_object() {
+        return Err("World DB competition runtime bundle must be a JSON object".to_owned());
+    }
+    Ok(value)
+}
+
 fn save_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     let app_data = app
         .path()
@@ -181,7 +201,8 @@ pub fn run() {
             load_game_v1,
             get_save_info_v1,
             load_world_db_competition_bundle_v1,
-            load_world_db_match_realizations_v1
+            load_world_db_match_realizations_v1,
+            load_world_db_competition_runtime_bundle_v1
         ])
         .run(tauri::generate_context!())
         .expect("error while running BDM");
@@ -210,5 +231,13 @@ mod tests {
         assert!(
             validate_envelope_json(r#"{"schemaVersion":4,"savedAt":"","payload":null}"#).is_err()
         );
+    }
+
+    #[test]
+    fn rejects_missing_runtime_bundle_file() {
+        assert!(load_world_db_competition_runtime_bundle_v1(
+            "__bdm_missing_runtime_bundle__.json".to_owned()
+        )
+        .is_err());
     }
 }
