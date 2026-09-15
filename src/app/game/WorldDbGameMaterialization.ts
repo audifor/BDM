@@ -1,5 +1,5 @@
 import { parseGameDate } from '@/domain/date'
-import { createGame, type Game, type GameStakes } from '@/domain/game'
+import { createGame, type CompletedGame, type Game, type GameStakes } from '@/domain/game'
 import {
   competitionIdFromString,
   gameIdFromString,
@@ -14,10 +14,10 @@ import {
   type WorldDbCompetitionRuntime,
 } from '@/domain/world'
 import { createWorldDbCompetitionRulesV1 } from '@/engine/competition/WorldDbCompetitionRules'
-import {
-  planWorldDbPhysicalGamesV1,
-  type WorldDbCompetitionPlanningContextV1,
-  type WorldDbPhysicalGamePlanningResultV1,
+import { reconstructWorldDbCompetitionProgressionV1 } from '@/engine/competition/WorldDbCompetitionProgressionReconstructor'
+import type {
+  WorldDbCompetitionPlanningContextV1,
+  WorldDbPhysicalGamePlanningResultV1,
 } from '@/engine/competition/WorldDbPhysicalGamePlanner'
 
 const STAKES_PRIORITY: Readonly<Record<GameStakes, number>> = Object.freeze({
@@ -37,17 +37,28 @@ export interface WorldDbGameMaterializationResultV1 {
 /**
  * Materializes executable B04/B12 physical games into GameWorld.
  *
+ * Before the final plan is materialized, result-driven B04 structure positions are reconstructed
+ * from completed Games already present in the save. The reconstruction is deterministic and does
+ * not persist derived Game↔Fixture bindings or bracket positions in Save V4.
+ *
  * The physical planner remains the source of deterministic Game identity and in-memory N:M
- * Game↔Fixture bindings. Save V4 stores only the minimal active competition-season identities here;
- * it does not duplicate those derivable bindings. Virtual SERIES/AGGREGATE fixtures are deferred
- * until an expansion layer creates their physical games.
+ * Game↔Fixture bindings. Virtual SERIES/AGGREGATE fixtures are deferred until an expansion layer
+ * creates their physical games.
  */
 export function materializeWorldDbPhysicalGamesV1(
   world: GameWorld,
   contexts: readonly WorldDbCompetitionPlanningContextV1[],
   asOf: string,
 ): WorldDbGameMaterializationResultV1 {
-  const plan = planWorldDbPhysicalGamesV1(contexts, asOf)
+  const completedGames = Object.values(world.games)
+    .filter((game): game is CompletedGame => game.status === 'completed')
+  const reconstruction = reconstructWorldDbCompetitionProgressionV1(
+    contexts,
+    completedGames,
+    asOf,
+  )
+  const resolvedContexts = reconstruction.contexts
+  const plan = reconstruction.plan
   const gamesById = { ...world.games } as Record<string, Game>
   const deferredFixtureIds = new Set<string>()
 
@@ -58,7 +69,7 @@ export function materializeWorldDbPhysicalGamesV1(
     // for newly planned virtual fixtures that still represent a multi-game contest.
     const expansionRequired = planned.sourceMatchId === null
       ? planned.competitionFixtureIds.filter((fixtureId) =>
-          fixtureRequiresPhysicalExpansion(contexts, fixtureId),
+          fixtureRequiresPhysicalExpansion(resolvedContexts, fixtureId),
         )
       : []
 
@@ -73,7 +84,7 @@ export function materializeWorldDbPhysicalGamesV1(
     const date = parseGameDate(planned.localDate)
     const homeTeamId = teamIdFromString(planned.homeTeamId)
     const awayTeamId = teamIdFromString(planned.awayTeamId)
-    const stakes = deriveWorldDbPhysicalGameStakesV1(contexts, planned.competitionFixtureIds)
+    const stakes = deriveWorldDbPhysicalGameStakesV1(resolvedContexts, planned.competitionFixtureIds)
     const existing = world.games[id]
 
     if (existing !== undefined) {
@@ -108,9 +119,9 @@ export function materializeWorldDbPhysicalGamesV1(
   const updatedWorld = updateGameWorld(world, { games: Object.values(gamesById) })
   const runtime = world.worldDbCompetitionRuntime ?? EMPTY_WORLD_DB_COMPETITION_RUNTIME
   const nextRuntime: WorldDbCompetitionRuntime = Object.freeze({
-    // #90A does not invent plan identity. Catalog/identity semantics remain a later concern.
+    competitionRuntimeBundle: runtime.competitionRuntimeBundle,
     competitionPlanIds: runtime.competitionPlanIds,
-    competitionSeasonIds: mergeCompetitionSeasonIds(runtime.competitionSeasonIds, contexts),
+    competitionSeasonIds: mergeCompetitionSeasonIds(runtime.competitionSeasonIds, resolvedContexts),
   })
 
   return Object.freeze({
