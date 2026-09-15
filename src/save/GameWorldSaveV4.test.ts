@@ -26,6 +26,24 @@ describe('GameWorldSaveV4 competition runtime', () => {
     })
   })
 
+  it('continues to read pre-91 V4 runtime payloads without a bundle pin', () => {
+    const current = serializeGameWorldV4(createNewGame(), savedAt)
+    const { competitionRuntimeBundle: _pin, ...pre91Runtime } = current.payload.worldDbCompetitionRuntime
+    const restored = deserializeGameWorldV4({
+      ...current,
+      payload: {
+        ...current.payload,
+        worldDbCompetitionRuntime: pre91Runtime,
+      },
+    })
+
+    expect(restored.worldDbCompetitionRuntime).toEqual({
+      competitionRuntimeBundle: null,
+      competitionPlanIds: [],
+      competitionSeasonIds: [],
+    })
+  })
+
   it('round-trips populated competition runtime identities and bundle pin', () => {
     const world = attachWorldDbCompetitionRuntime(createNewGame(), {
       competitionRuntimeBundle: {
