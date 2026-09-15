@@ -19,9 +19,18 @@ export interface SaveGameEnvelopeV4 {
   readonly payload: GameWorldSaveV4
 }
 
+/**
+ * V4A changes only the envelope contract. A canonical V3 payload is already valid V4A payload data,
+ * so migration must not deserialize and reserialize it. Doing so runs V3 enrichment and can reorder
+ * or add neutral derived entries, making an otherwise structural migration non identity-preserving.
+ */
 export function migrateGameWorldSaveV3ToV4(value: SaveGameEnvelopeV3): SaveGameEnvelopeV4 {
-  const world = deserializeGameWorldV3(value)
-  return serializeGameWorldV4(world, value.savedAt)
+  deserializeGameWorldV3(value)
+  return Object.freeze({
+    schemaVersion: 4,
+    savedAt: value.savedAt,
+    payload: value.payload,
+  })
 }
 
 export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGameEnvelopeV4 {
