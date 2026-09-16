@@ -1,0 +1,1770 @@
+/*
+ * Coach · Overview — the character landing screen.
+ *
+ * Cyan is system / information / progression; gold is spend / unlock / milestone. Every panel shares
+ * one grammar: no fill of its own, a 1px cyan edge, a cyan bracket top-left and a gold bracket
+ * bottom-right — the same absence of background as the HOME boards. Density is intentional: this is a
+ * workstation, not a marketing page.
+ */
+
+/* ── Local semantic layer ──
+   Maps the screen palette onto the NG tokens so Overview stays inside the BDM language while
+   keeping a single place to retune it. */
+
+.co-overview {
+  --co-cyan: var(--ng-cyan);
+  --co-gold: var(--ng-amber);
+  --co-gold-bright: var(--ng-amber-bright);
+  --co-green: var(--ng-positive);
+  --co-amber: var(--ng-warning);
+  --co-red: var(--ng-negative);
+  --co-purple: #9b5de5;
+
+  --co-panel-edge: rgba(46, 193, 220, 0.34);
+  --co-panel-edge-hover: rgba(46, 193, 220, 0.62);
+  --co-divider: rgba(100, 165, 190, 0.16);
+  --co-label: #7fa7bf;
+  --co-value: #f2f7fa;
+  --co-heading: #eaf7ff;
+  --co-tick-cyan: rgba(22, 217, 243, 0.40);
+  --co-tick-gold: rgba(230, 183, 77, 0.36);
+  /* Ambient halo kept deliberately faint: it frames the panels, it must not compete with the
+     values inside them, and every panel bleeds it into the 10px channel that separates it from its
+     neighbours (two halos per seam, so the channels are where it used to read as a neon line). */
+  --co-panel-shadow: 0 0 12px rgba(0, 180, 220, 0.012);
+  /* Hover bloom: one restrained step up from the resting halo, not a neon frame. */
+  --co-panel-glow-hover: 0 0 12px rgba(22, 217, 243, 0.04);
+
+  --co-gap: 10px;
+  --co-pad: 10px;
+  --co-core-h: 340px;
+  --co-card-h: 212px;
+  --co-timeline-h: 138px;
+  /* Height of the chart band inside every summary card. Fixed, not content-driven, so the plot
+     geometry is identical in all six cards and every chart can be sized from it: the SVG plot and
+     the bars take whatever the title + caption leave, and the ring is exactly this minus the
+     band's own vertical padding. */
+  --co-chart-h: 78px;
+  --co-ring-size: calc(var(--co-chart-h) - 10px);
+  /* Sized to the attributes column's available height (~272px), not its width: aspect-ratio derives
+     the height from the width, so an oversized value here would overflow the panel. */
+  --co-radar-size: 266px;
+
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: var(--co-gap);
+  align-content: start;
+  min-height: 100%;
+
+  /* Deliberately no background of its own, exactly like HOME. Every layer between a panel and the
+     app's workspace backdrop is transparent (.ng-application-workspace + its slots, .ng-scroll-region,
+     .co-overview, .co-overview__core), so the panels composite straight onto
+     .bdm-os-ng__workspace-region plus the .ng-canon wallpaper — the same backdrop the HOME boards sit
+     on. This screen used to paint an opaque stage here to make a panel fill read as raised; the fill
+     is gone by design now (see .co-panel), and with it the reason for a local stage. */
+  background: transparent;
+}
+
+/* ── Tone utilities ── */
+
+.co-tone-text--neutral { color: var(--co-value); }
+.co-tone-text--cyan { color: var(--co-cyan); }
+.co-tone-text--positive { color: var(--co-green); }
+.co-tone-text--warning { color: var(--co-amber); }
+.co-tone-text--negative { color: var(--co-red); }
+.co-tone-text--gold { color: var(--co-gold-bright); }
+.co-tone-text--purple { color: var(--co-purple); }
+
+.co-tone-bg--neutral { background-color: #8ea6b5; }
+.co-tone-bg--cyan { background-color: var(--co-cyan); }
+.co-tone-bg--positive { background-color: var(--co-green); }
+.co-tone-bg--warning { background-color: var(--co-amber); }
+.co-tone-bg--negative { background-color: var(--co-red); }
+.co-tone-bg--gold { background-color: var(--co-gold); }
+.co-tone-bg--purple { background-color: var(--co-purple); }
+
+.co-stroke--cyan { stroke: var(--co-cyan); }
+.co-stroke--positive { stroke: var(--co-green); }
+.co-stroke--warning { stroke: var(--co-amber); }
+.co-stroke--negative { stroke: var(--co-red); }
+.co-stroke--gold { stroke: var(--co-gold); }
+.co-stroke--neutral { stroke: #5f7b8b; }
+
+.co-tone-edge--neutral { --co-edge: rgba(140, 170, 186, 0.5); }
+.co-tone-edge--cyan { --co-edge: rgba(22, 217, 243, 0.5); }
+.co-tone-edge--positive { --co-edge: rgba(72, 217, 138, 0.5); }
+.co-tone-edge--warning { --co-edge: rgba(230, 183, 77, 0.5); }
+.co-tone-edge--negative { --co-edge: rgba(232, 93, 103, 0.5); }
+.co-tone-edge--gold { --co-edge: rgba(230, 183, 77, 0.5); }
+.co-tone-edge--purple { --co-edge: rgba(155, 93, 229, 0.5); }
+
+/* ── Panel grammar ── */
+
+.co-panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  /* Edge, absence of fill and no-shadow chrome come from the shared `.ng-canon__panel` /
+     `.ng-holo-panel` classes the Overview panels carry now, exactly like Career, Reputation, Legacy
+     and the rest of the tabs. Radius is kept here so the panel keeps its 3px geometry regardless of
+     where the global token lives. */
+  border-radius: var(--ng-radius-panel);
+}
+
+/* Technical corner brackets: cyan top-left, gold bottom-right. */
+.co-panel::before,
+.co-panel::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.co-panel::before {
+  top: -1px;
+  left: -1px;
+  width: 14px;
+  height: 14px;
+  border-top: 1px solid var(--co-tick-cyan);
+  border-left: 1px solid var(--co-tick-cyan);
+}
+
+.co-panel::after {
+  right: -1px;
+  bottom: -1px;
+  width: 12px;
+  height: 12px;
+  border-right: 1px solid var(--co-tick-gold);
+  border-bottom: 1px solid var(--co-tick-gold);
+}
+
+.co-panel__head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--co-gap);
+  min-height: 30px;
+  padding: 0 var(--co-pad);
+  border-bottom: 1px solid var(--co-divider);
+}
+
+.co-panel__heading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  margin: 0;
+}
+
+.co-panel__icon {
+  flex: none;
+  color: var(--co-cyan);
+  opacity: 0.85;
+}
+
+.co-panel__title {
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--co-heading);
+  white-space: nowrap;
+}
+
+.co-panel__subtitle {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--ng-text-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-panel__hint {
+  font-family: var(--ng-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ng-text-faint);
+  white-space: nowrap;
+}
+
+.co-block__title {
+  margin: 0;
+  font-family: var(--ng-font-display);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--co-label);
+}
+
+/* ── Row 1 · layout ── */
+
+.co-overview__core {
+  display: grid;
+  grid-template-columns: minmax(0, 40fr) minmax(0, 27fr) minmax(0, 33fr);
+  gap: var(--co-gap);
+  align-items: stretch;
+}
+
+.co-overview__core > .co-panel {
+  height: var(--co-core-h);
+}
+
+/* ── Character core ── */
+
+.co-core {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 30fr) minmax(0, 42fr) minmax(0, 28fr);
+  min-height: 0;
+}
+
+.co-core__identity,
+.co-core__attributes,
+.co-core__personality {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 9px var(--co-pad);
+}
+
+.co-core__identity,
+.co-core__attributes {
+  border-right: 1px solid var(--co-divider);
+}
+
+.co-identity__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.co-identity__name {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--ng-font-display);
+  font-size: clamp(18px, 1.32vw, 26px);
+  font-weight: 700;
+  /* 1.05 clipped the descender of "Jora" inside the overflow:hidden box. */
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  color: #fff;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-identity__level {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid rgba(46, 193, 220, 0.5);
+  border-radius: 2px;
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--co-cyan);
+  font-variant-numeric: tabular-nums;
+}
+
+.co-identity__role {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 4px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--co-cyan);
+}
+
+.co-identity__role-sep {
+  width: 1px;
+  height: 10px;
+  background: var(--co-divider);
+}
+
+/* Stacked, not side-by-side: "Shadow Archetype" and its value cannot share one line inside a
+   column this narrow without both being truncated. */
+.co-identity__rows {
+  display: grid;
+  gap: 8px;
+  margin: 11px 0 0;
+}
+
+.co-identity__row {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.co-identity__row dt {
+  overflow: hidden;
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--co-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-identity__row dd {
+  overflow: hidden;
+  margin: 0;
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--co-value);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* XP and points are pinned to the bottom so the column reads as filled, not as a hole. */
+.co-identity__xp {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.co-identity__xp-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.co-identity__xp-value {
+  font-family: var(--ng-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--co-gold-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+.co-identity__xp-max {
+  font-weight: 400;
+  color: var(--ng-text-muted);
+}
+
+.co-identity__xp-track {
+  display: block;
+  height: 7px;
+  overflow: hidden;
+  border: 1px solid var(--co-divider);
+  border-radius: 2px;
+  background: #08131b;
+}
+
+.co-identity__xp-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #b98c2c 0%, var(--co-gold) 60%, var(--co-gold-bright) 100%);
+  box-shadow: 0 0 6px rgba(230, 183, 77, 0.28);
+}
+
+.co-identity__points {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px solid var(--co-divider);
+}
+
+.co-identity__points-label {
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  color: var(--co-label);
+}
+
+.co-identity__points-box {
+  display: grid;
+  min-width: 22px;
+  height: 20px;
+  place-items: center;
+  border: 1px solid rgba(230, 183, 77, 0.55);
+  border-radius: 2px;
+  background: rgba(230, 183, 77, 0.1);
+  font-family: var(--ng-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--co-gold-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Attributes ── */
+
+.co-core__attributes {
+  align-items: center;
+  gap: 6px;
+}
+
+.co-core__attributes > .co-block__title {
+  align-self: stretch;
+}
+
+.co-radar {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  width: 100%;
+}
+
+/* Must stay square: the SVG keeps its 1:1 viewBox, so a non-square box would letterbox the polygon
+   while the percentage-positioned labels kept spreading over the full box. `aspect-ratio` only
+   derives the *other* axis, so the height must never clamp — every --co-radar-size below is already
+   sized to the column's available height, and `min()` handles the case where width binds first. */
+.co-radar__plot {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  width: min(100%, var(--co-radar-size));
+}
+
+.co-radar__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.co-radar__ring {
+  fill: none;
+  stroke: rgba(100, 165, 190, 0.18);
+  stroke-width: 1;
+}
+
+.co-radar__spoke {
+  stroke: rgba(100, 165, 190, 0.13);
+  stroke-width: 1;
+}
+
+.co-radar__area {
+  fill: rgba(22, 217, 243, 0.16);
+  stroke: var(--co-cyan);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+
+.co-radar__point {
+  fill: var(--co-cyan);
+}
+
+.co-radar__label {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.co-radar__label.is-top {
+  transform: translate(-50%, calc(-100% - 3px));
+  text-align: center;
+}
+
+.co-radar__label.is-bottom {
+  transform: translate(-50%, 3px);
+  text-align: center;
+}
+
+.co-radar__label.is-right {
+  transform: translate(3px, -50%);
+  text-align: left;
+}
+
+.co-radar__label.is-left {
+  transform: translate(calc(-100% - 3px), -50%);
+  text-align: right;
+}
+
+/* Sentence case, not uppercase: "DEVELOPMENT" at this size is ~15% wider and would push the longest
+   axis label past the plot square at the 1600 breakpoint. */
+.co-radar__label-name {
+  font-size: 8.5px;
+  letter-spacing: 0.02em;
+  color: var(--co-label);
+}
+
+.co-radar__label-value {
+  font-family: var(--ng-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--co-cyan);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Personality ── */
+
+.co-core__traits {
+  display: grid;
+  flex: 1;
+  align-content: space-between;
+  gap: 9px;
+  margin-top: 8px;
+  min-height: 0;
+}
+
+/* Sits directly under the traits, which now own all the slack in the column. */
+.co-core__motto {
+  margin: 0;
+  padding-top: 10px;
+  font-size: 10.5px;
+  font-style: italic;
+  line-height: 1.35;
+  color: var(--ng-text-muted);
+}
+
+/* Placement is explicit rather than auto: with `grid-column: 1 / -1` on the track, auto-placement
+   would push the value onto a third row and roughly double every bar's height. */
+.co-valuebar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto 8px;
+  gap: 3px 8px;
+  align-items: center;
+}
+
+.co-valuebar__label {
+  grid-area: 1 / 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  color: var(--co-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-valuebar__value {
+  grid-area: 1 / 2;
+  font-family: var(--ng-font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--co-value);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.co-valuebar__track {
+  position: relative;
+  grid-area: 2 / 1 / 3 / 3;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #0a161e;
+}
+
+.co-valuebar__fill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+}
+
+/* ── Current status ── */
+
+.co-status {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-height: 0;
+}
+
+.co-status__item {
+  display: flex;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.co-status__item + .co-status__item {
+  border-top: 1px solid var(--co-divider);
+}
+
+.co-status__row {
+  display: grid;
+  flex: 1;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  padding: 4px var(--co-pad);
+  border: 0;
+  border-left: 2px solid var(--co-edge, transparent);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.co-status__row:hover {
+  background: rgba(22, 217, 243, 0.045);
+}
+
+.co-status__row:hover .co-status__chevron {
+  transform: translateX(2px);
+}
+
+.co-status__icon {
+  display: grid;
+  place-items: center;
+  opacity: 0.9;
+}
+
+.co-status__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.co-status__title {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--co-value);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-status__detail {
+  overflow: hidden;
+  font-size: 9.5px;
+  color: var(--ng-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-status__badge {
+  font-family: var(--ng-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.co-status__chevron {
+  color: var(--ng-text-faint);
+  transition: transform 120ms ease;
+}
+
+.co-status__risk {
+  flex: none;
+  padding: 7px var(--co-pad) 8px;
+  border-top: 1px solid var(--co-divider);
+}
+
+.co-status__risk-rows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 12px;
+  margin-top: 6px;
+}
+
+.co-segmented {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 6px;
+  align-items: center;
+}
+
+.co-segmented__label {
+  grid-area: 1 / 1;
+  overflow: hidden;
+  font-size: 9.5px;
+  letter-spacing: 0.03em;
+  color: var(--co-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-segmented__value {
+  grid-area: 1 / 2;
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--co-value);
+  font-variant-numeric: tabular-nums;
+}
+
+.co-segmented__value-total {
+  font-weight: 400;
+  color: var(--ng-text-faint);
+}
+
+.co-segmented__blocks {
+  display: flex;
+  grid-area: 2 / 1 / 3 / 3;
+  gap: 2px;
+}
+
+.co-segmented__block {
+  width: 13px;
+  height: 7px;
+  border: 1px solid rgba(100, 165, 190, 0.22);
+  border-radius: 1px;
+  background: #0b1720;
+}
+
+.co-segmented__block.is-on {
+  border-color: transparent;
+}
+
+/* ── Personal economy & power ── */
+
+.co-economy {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 52fr) minmax(0, 48fr);
+  min-height: 0;
+}
+
+.co-economy__resources,
+.co-economy__power {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 9px var(--co-pad);
+}
+
+.co-economy__resources {
+  border-right: 1px solid var(--co-divider);
+}
+
+/* Both lists own a share of the leftover height and spread their rows across it, so the resources
+   column is filled top to bottom instead of leaving a dead zone under the network list. */
+.co-resource-list,
+.co-network-list {
+  display: grid;
+  flex: 1;
+  align-content: space-between;
+  gap: 5px;
+  margin: 7px 0 0;
+  padding: 0;
+  list-style: none;
+  min-height: 0;
+}
+
+.co-resource {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+}
+
+.co-resource__icon {
+  display: grid;
+  place-items: center;
+  opacity: 0.85;
+}
+
+.co-resource__label {
+  overflow: hidden;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  color: var(--co-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-resource__value {
+  font-family: var(--ng-font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.co-favors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+  padding: 7px 0;
+  border-top: 1px solid var(--co-divider);
+  border-bottom: 1px solid var(--co-divider);
+}
+
+.co-favors__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.co-favors__label {
+  font-size: 9.5px;
+  letter-spacing: 0.03em;
+  color: var(--co-label);
+}
+
+.co-favors__value {
+  font-family: var(--ng-font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--co-value);
+  font-variant-numeric: tabular-nums;
+}
+
+.co-network {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.co-network__label {
+  overflow: hidden;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  color: var(--co-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-network__value {
+  font-family: var(--ng-font-display);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.co-economy__power {
+  gap: 7px;
+}
+
+.co-economy__power > .co-block__title {
+  flex: none;
+}
+
+.co-donut {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 0;
+}
+
+.co-donut__visual {
+  position: relative;
+  flex: none;
+  width: 128px;
+  height: 128px;
+}
+
+.co-donut__svg,
+.co-ring__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.co-donut__track,
+.co-ring__track {
+  fill: none;
+  stroke: rgba(100, 165, 190, 0.16);
+  stroke-width: 7;
+}
+
+.co-donut__slice,
+.co-ring__value {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: butt;
+}
+
+.co-ring__value {
+  stroke: var(--co-gold);
+}
+
+.co-donut__center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translate(-50%, -50%);
+}
+
+.co-donut__value {
+  font-family: var(--ng-font-display);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--co-value);
+  font-variant-numeric: tabular-nums;
+}
+
+.co-donut__caption {
+  font-family: var(--ng-font-display);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ng-text-faint);
+}
+
+.co-donut__legend {
+  display: grid;
+  flex: 1;
+  gap: 5px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.co-donut__legend-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.co-donut__swatch {
+  width: 7px;
+  height: 7px;
+  border-radius: 1px;
+}
+
+.co-donut__legend-label {
+  overflow: hidden;
+  font-size: 9.5px;
+  color: var(--co-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-donut__legend-value {
+  font-family: var(--ng-font-display);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--co-value);
+  font-variant-numeric: tabular-nums;
+}
+
+.co-power {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 7px;
+  border-top: 1px solid var(--co-divider);
+}
+
+.co-power__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.co-power__standing {
+  font-family: var(--ng-font-display);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.co-power__caption {
+  margin: 0;
+  font-size: 9.5px;
+  line-height: 1.35;
+  color: var(--ng-text-muted);
+}
+
+/* ── Row 2 · summary modules ── */
+
+/* Flex, not a fixed six-column grid: the strip is a single row of equal cards whose width is decided
+   by the strip's own width, so a card can never be pushed past the container edge and no `min-width`
+   can silently make the row wider than the panels above it. Every card shares the same height and the
+   last one lands exactly on the panels' right edge at any viewport width. */
+.co-summaries {
+  display: flex;
+  gap: var(--co-gap);
+  align-items: stretch;
+}
+
+.co-card {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  height: var(--co-card-h);
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--co-panel-edge);
+  border-radius: var(--ng-radius-panel);
+  /* Same absence of background as `.co-panel` and the HOME boards. */
+  background: transparent;
+  box-shadow: var(--co-panel-shadow), var(--ng-shadow-inset-panel);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.co-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 12px;
+  height: 12px;
+  border-top: 1px solid var(--co-tick-cyan);
+  border-left: 1px solid var(--co-tick-cyan);
+  pointer-events: none;
+}
+
+.co-card:hover {
+  border-color: var(--co-panel-edge-hover);
+  box-shadow: var(--co-panel-shadow), var(--co-panel-glow-hover), var(--ng-shadow-inset-panel);
+}
+
+.co-card:has(.co-card__hit:focus-visible) {
+  border-color: var(--co-panel-edge-hover);
+  outline: 1px solid rgba(22, 217, 243, 0.35);
+  outline-offset: -1px;
+}
+
+.co-card:hover .co-card__chevron {
+  transform: translateX(2px);
+}
+
+.co-card__hit {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.co-card__head {
+  display: grid;
+  flex: none;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+  padding: 6px var(--co-pad) 5px;
+  border-bottom: 1px solid var(--co-divider);
+}
+
+.co-card__icon {
+  display: grid;
+  place-items: center;
+  color: var(--co-cyan);
+  opacity: 0.9;
+}
+
+.co-card__titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.co-card__title {
+  overflow: hidden;
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--co-heading);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-card__subtitle {
+  overflow: hidden;
+  font-size: 9px;
+  letter-spacing: 0.03em;
+  color: var(--ng-text-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-card__chevron {
+  color: var(--ng-text-faint);
+  transition: transform 120ms ease;
+}
+
+.co-card__metrics {
+  display: grid;
+  flex: none;
+  gap: 2px;
+  margin: 0;
+  padding: 6px var(--co-pad) 0;
+  list-style: none;
+}
+
+.co-card__metric {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.co-card__metric-label {
+  overflow: hidden;
+  font-size: 9.5px;
+  letter-spacing: 0.03em;
+  color: var(--co-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-card__metric-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--ng-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--co-value);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.co-card__delta {
+  flex: none;
+}
+
+/* The chart band owns a fixed height, so the ink can never be squeezed into the metrics above or the
+   footer below: it used to be `flex: 1` on a zero basis, which grew or shrank the *box* while the
+   figure inside kept its own height and spilled over the band's padding (measured: the line charts
+   ate 3.5px above and 5.5px below the band at 1600x900, the rings overshot by 6.2/8.2px at both
+   sizes). The band still absorbs the card's leftover height, but never gives any back. */
+.co-card__chart {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  height: var(--co-chart-h);
+  min-height: var(--co-chart-h);
+  padding: 6px var(--co-pad) 4px;
+}
+
+.co-card__chart > * {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+/* Inside the strip each chart is that band with a single elastic plot, so all six cards share one
+   chart height and the ink still fits: the plot (line or bars) takes exactly what the title and the
+   caption leave, and the ring is a square derived from the same band. Scoped to `.co-card__chart` on
+   purpose — the other coach boards import these same chart components and keep their own geometry. */
+.co-card__chart .co-chart__head,
+.co-card__chart .co-chart__caption {
+  flex: none;
+}
+
+.co-card__chart .co-chart__svg {
+  flex: 1 1 0;
+  height: auto;
+  min-height: 12px;
+}
+
+.co-card__chart .co-bars {
+  flex: 1 1 0;
+  height: auto;
+  min-height: 24px;
+}
+
+.co-card__banner {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin: 0 var(--co-pad) 6px;
+  padding: 4px 6px;
+  border: 1px solid rgba(230, 183, 77, 0.4);
+  border-radius: 2px;
+  background: rgba(230, 183, 77, 0.09);
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--co-gold-bright);
+  text-align: center;
+}
+
+.co-card__banner svg {
+  flex: none;
+}
+
+.co-card__footer {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: auto;
+  padding: 4px var(--co-pad);
+  border-top: 1px solid var(--co-divider);
+}
+
+.co-card__footer-label {
+  font-family: var(--ng-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--co-cyan);
+  white-space: nowrap;
+}
+
+.co-card__footer-arrow {
+  color: var(--co-cyan);
+  font-size: 10px;
+  transition: transform 120ms ease;
+}
+
+.co-card:hover .co-card__footer-arrow {
+  transform: translateX(2px);
+}
+
+/* ── Generic chart chrome ── */
+
+.co-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 0;
+  margin: 0;
+}
+
+.co-chart__head {
+  display: flex;
+  flex: none;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.co-chart__title {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--ng-font-display);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--co-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-chart__value {
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--co-cyan);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.co-chart__svg {
+  display: block;
+  width: 100%;
+  height: 34px;
+}
+
+/* Caption row. It also carries the chart's own reading (first → last value, or the bars' axis),
+   derived by the caller; the wrapper span keeps the caption text truncatable next to it. */
+.co-chart__caption {
+  display: flex;
+  flex: none;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 0;
+  font-size: 8.5px;
+  letter-spacing: 0.02em;
+  color: var(--ng-text-faint);
+  white-space: nowrap;
+}
+
+.co-chart__caption-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.co-chart__scale {
+  flex: none;
+  /* The reading sits on the caption row's right edge even when the chart has no caption text next
+     to it (the bars card), so all six cards agree on where the numbers live. */
+  margin-left: auto;
+  font-family: var(--ng-font-display);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--co-label);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.co-line__area {
+  fill: rgba(22, 217, 243, 0.1);
+  stroke: none;
+}
+
+.co-line__stroke {
+  fill: none;
+  stroke: var(--co-cyan);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.co-line__point {
+  fill: var(--co-cyan);
+}
+
+/* Bars */
+/* Note: only the summary strip (`.co-card__chart`, below) overrides the chart internals. The other
+   coach boards import these same chart components, so their geometry is left exactly as it was. */
+
+.co-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 5px;
+  height: 42px;
+}
+
+.co-bars__column {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  height: 100%;
+}
+
+.co-bars__track {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+  border-bottom: 1px solid var(--co-divider);
+}
+
+.co-bars__fill {
+  width: 60%;
+  max-width: 16px;
+  border-radius: 1px 1px 0 0;
+  background: linear-gradient(180deg, var(--co-cyan) 0%, rgba(22, 217, 243, 0.35) 100%);
+}
+
+.co-bars__label {
+  font-family: var(--ng-font-display);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--co-label);
+}
+
+/* Track meters */
+
+.co-meters {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.co-meter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto 7px;
+  gap: 3px 6px;
+  align-items: center;
+}
+
+.co-meter__label {
+  grid-area: 1 / 1;
+  overflow: hidden;
+  font-size: 9.5px;
+  letter-spacing: 0.03em;
+  color: var(--co-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-meter__value {
+  grid-area: 1 / 2;
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--co-gold-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+.co-meter__track {
+  display: flex;
+  grid-area: 2 / 1 / 3 / 3;
+  gap: 2px;
+}
+
+.co-meter__segment {
+  flex: 1;
+  height: 7px;
+  border: 1px solid rgba(100, 165, 190, 0.22);
+  border-radius: 1px;
+  background: #0b1720;
+}
+
+.co-meter__segment.is-on {
+  border-color: transparent;
+  background: var(--co-cyan);
+}
+
+/* Ring */
+
+.co-ring {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.co-ring__visual {
+  position: relative;
+  flex: none;
+  /* Falls back to the standalone size the other boards expect; the summary strip retunes
+     `--co-ring-size` from its own chart band. */
+  width: var(--co-ring-size, 84px);
+  height: var(--co-ring-size, 84px);
+}
+
+.co-ring__label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--ng-font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--co-value);
+  font-variant-numeric: tabular-nums;
+}
+
+.co-ring__caption {
+  font-family: var(--ng-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--co-label);
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* ── Row 3 · timeline ── */
+
+.co-panel--timeline {
+  height: var(--co-timeline-h);
+}
+
+.co-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--co-cyan);
+  font-family: var(--ng-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.co-link:hover {
+  color: var(--co-cyan-bright);
+}
+
+.co-link__arrow {
+  transition: transform 120ms ease;
+}
+
+.co-link:hover .co-link__arrow {
+  transform: translateX(2px);
+}
+
+/* Flex, not a five-column grid: the entries spread themselves evenly across the band whatever their
+   number is (the grid wrapped a sixth entry into a second row, and the row was clipped by the band).
+   Every entry but the last shares the width equally, so the dots keep one constant step and fill the
+   rail end to end instead of leaving stretches of bare rail between two of them. */
+.co-timeline {
+  position: relative;
+  display: flex;
+  flex: 1;
+  gap: var(--co-gap);
+  margin: 0;
+  padding: 9px var(--co-pad) 8px;
+  list-style: none;
+  min-height: 0;
+}
+
+/* The rail the dots sit on. */
+.co-timeline::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  right: var(--co-pad);
+  left: var(--co-pad);
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--co-divider) 3%,
+    var(--co-divider) 97%,
+    transparent 100%
+  );
+}
+
+.co-timeline__event {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-top: 11px;
+}
+
+/* The newest entry takes its natural width, so its text ends on the panel's right padding edge
+   instead of being cut by the container edge. Capped so a long entry cannot push the earlier dots
+   together. */
+.co-timeline__event:last-child {
+  flex: 0 1 auto;
+  max-width: 260px;
+}
+
+.co-timeline__dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  border: 1px solid #061219;
+  border-radius: 50%;
+}
+
+.co-timeline__date {
+  font-family: var(--ng-font-display);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ng-text-faint);
+  white-space: nowrap;
+}
+
+/* Illustrative-entry chip for the timeline. Mirrors Legacy's `.ld-mock` language (gold micro-tag)
+   under a fresh `co-` class, and its `line-height: 1` keeps the date row no taller than the date
+   itself so the fixed timeline band geometry does not move. */
+.co-mock {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 3px;
+  border: 1px solid rgba(230, 183, 77, 0.5);
+  border-radius: 2px;
+  background: rgba(230, 183, 77, 0.08);
+  font-family: var(--ng-font-display);
+  font-size: 7.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--co-gold-bright);
+  vertical-align: middle;
+}
+
+.co-timeline__title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--co-value);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-timeline__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+}
+
+.co-timeline__highlight {
+  overflow: hidden;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--co-gold-bright);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-timeline__detail {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 9.5px;
+  line-height: 1.3;
+  color: var(--ng-text-muted);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* ── Responsive ──
+   1600x900 keeps the three-column core and the six-across strip; only type, gaps and chart sizes
+   come down. Nothing reflows into a column until the desktop layout genuinely cannot hold it. */
+
+@media (max-width: 1740px) {
+  .co-overview {
+    --co-core-h: 306px;
+    --co-card-h: 200px;
+    --co-timeline-h: 128px;
+    --co-radar-size: 232px;
+    /* 66 + the card's fixed rows (title 39.3 + metrics 69.2 + footer 22) = 196.5 of the card's 198
+       content box: the chart band is the only row that gives, and it never gives more than this. */
+    --co-chart-h: 66px;
+  }
+
+  .co-identity__row dd {
+    font-size: 11px;
+  }
+
+  .co-identity__row dt,
+  .co-resource__label,
+  .co-valuebar__label,
+  .co-network__label,
+  .co-card__metric-label,
+  .co-status__detail {
+    font-size: 9.5px;
+  }
+
+  .co-donut__visual {
+    width: 110px;
+    height: 110px;
+  }
+
+  .co-ring__label {
+    font-size: 14px;
+  }
+
+  .co-segmented__block {
+    width: 11px;
+  }
+}
+
+@media (max-width: 1500px) {
+  .co-overview {
+    --co-core-h: 290px;
+    --co-card-h: 196px;
+    --co-radar-size: 216px;
+    --co-chart-h: 62px;
+  }
+
+  .co-donut {
+    gap: 6px;
+  }
+
+  .co-donut__visual {
+    width: 96px;
+    height: 96px;
+  }
+
+  .co-donut__value {
+    font-size: 15px;
+  }
+}
+
+/* Below this the attributes column would be narrower than the radar plus its labels need, which is
+   the only case where the radar stops fitting inside its own column. Stack instead of deforming. */
+@media (max-width: 1400px) {
+  .co-overview__core {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .co-overview__core > .co-panel {
+    height: auto;
+  }
+
+  .co-core {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .co-core__identity,
+  .co-core__attributes {
+    border-right: 0;
+    border-bottom: 1px solid var(--co-divider);
+  }
+
+  .co-radar__plot {
+    width: min(100%, 320px);
+  }
+
+  /* Three cards per row: the strip wraps instead of shrinking to eight-card widths. */
+  .co-summaries {
+    flex-wrap: wrap;
+  }
+
+  .co-card {
+    flex: 1 1 calc((100% - 2 * var(--co-gap)) / 3);
+  }
+
+  /* Two entries per row, and no rail to spread them over. */
+  .co-timeline {
+    flex-wrap: wrap;
+  }
+
+  .co-timeline__event,
+  .co-timeline__event:last-child {
+    flex: 1 1 calc((100% - var(--co-gap)) / 2);
+    max-width: none;
+  }
+
+  .co-timeline::before {
+    display: none;
+  }
+}

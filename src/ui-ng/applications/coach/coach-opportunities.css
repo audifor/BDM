@@ -1,0 +1,1017 @@
+/*
+ * Coach · Opportunities — the coach's personal professional market.
+ *
+ * Same grammar as the reconstructed Overview: a transparent stage that lets the shared ambient shell
+ * background through, one panel language, cyan for system/information, gold for progression,
+ * green/amber/red for fit and risk, violet for perks.
+ * Density is intentional: 10-14px panel padding, 24-30px rows, 9-10px microcopy, no dead space.
+ *
+ * Height budget (1920x1080 ≈ 816px of scroll region, 1600x900 ≈ 636px):
+ *   row 1 264 / 212   row 2 340 / 304   row 3 112 / 100   gaps 10px
+ * The second row owns the most height because the Opportunity Board is the primary table and the two
+ * right-hand panels stack inside it; the third row is sized so the pipeline entries keep two text lines.
+ * Both breakpoints keep the multi-column layout: nothing stacks until 1180px.
+ */
+
+.cop-screen {
+  /* ── Local semantic layer ──
+     Mapped onto the NG tokens so this screen keeps one place to retune it. */
+  --cop-cyan: var(--ng-cyan);
+  --cop-cyan-bright: var(--ng-cyan-bright);
+  --cop-gold: var(--ng-amber);
+  --cop-gold-bright: var(--ng-amber-bright);
+  --cop-green: var(--ng-positive);
+  --cop-amber: var(--ng-warning);
+  --cop-red: var(--ng-negative);
+  --cop-purple: #9b5de5;
+
+  --cop-heading: #eaf7ff;
+  --cop-value: #f2f7fa;
+  --cop-label: #7fa7bf;
+  --cop-divider: rgba(100, 165, 190, 0.16);
+  --cop-track: #0a161e;
+
+  --cop-gap: 10px;
+  --cop-pad: 10px;
+  --cop-top-h: 264px;
+  --cop-board-h: 340px;
+  --cop-timeline-h: 112px;
+
+  /* Tokens read by the shared Overview micrographics that are imported here. Declared locally so
+     this screen never depends on the Overview palette while that one is being reworked. */
+  --co-cyan: var(--cop-cyan);
+  --co-cyan-bright: var(--cop-cyan-bright);
+  --co-gold: var(--cop-gold);
+  --co-gold-bright: var(--cop-gold-bright);
+  --co-green: var(--cop-green);
+  --co-amber: var(--cop-amber);
+  --co-red: var(--cop-red);
+  --co-purple: var(--cop-purple);
+  --co-heading: var(--cop-heading);
+  --co-value: var(--cop-value);
+  --co-label: var(--cop-label);
+  --co-divider: var(--cop-divider);
+
+  /* Denser rows than the 28px precision-grid default: the board carries eight columns.
+     `--grid-row-h` is the property the ng-data-grid contract actually reads (it is declared on
+     `.bdm-os-ng` as `var(--ng-precision-row-h)`, i.e. substituted there), so the override has to
+     target it directly — overriding `--ng-precision-row-h` this far down would do nothing. */
+  --grid-header-h: 24px;
+  --grid-row-h: 25px;
+
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: var(--cop-gap);
+  align-content: start;
+  min-height: 100%;
+
+  /* Deliberately background-free, like Overview and HOME: the `ng-holo-panel` frames supply the
+     surface chrome and the shell supplies the ambient backdrop. */
+}
+
+.cop-screen--empty {
+  grid-template-rows: auto;
+}
+
+/* ── Tone utilities ── */
+
+.cop-tone-text--neutral { color: var(--cop-value); }
+.cop-tone-text--cyan { color: var(--cop-cyan); }
+.cop-tone-text--positive { color: var(--cop-green); }
+.cop-tone-text--warning { color: var(--cop-amber); }
+.cop-tone-text--negative { color: var(--cop-red); }
+.cop-tone-text--gold { color: var(--cop-gold-bright); }
+.cop-tone-text--purple { color: var(--cop-purple); }
+
+.cop-tone-bg--neutral { background-color: #8ea6b5; }
+.cop-tone-bg--cyan { background-color: var(--cop-cyan); }
+.cop-tone-bg--positive { background-color: var(--cop-green); }
+.cop-tone-bg--warning { background-color: var(--cop-amber); }
+.cop-tone-bg--negative { background-color: var(--cop-red); }
+.cop-tone-bg--gold { background-color: var(--cop-gold); }
+.cop-tone-bg--purple { background-color: var(--cop-purple); }
+
+/* Scoped fallbacks for the imported micrographics (higher specificity than their own file, so the
+   screen keeps its colour even if the Overview palette is retuned). */
+.cop-screen .co-tone-bg--cyan { background-color: var(--cop-cyan); }
+.cop-screen .co-tone-bg--positive { background-color: var(--cop-green); }
+.cop-screen .co-tone-bg--warning { background-color: var(--cop-amber); }
+.cop-screen .co-tone-bg--negative { background-color: var(--cop-red); }
+.cop-screen .co-tone-bg--gold { background-color: var(--cop-gold); }
+.cop-screen .co-tone-bg--purple { background-color: var(--cop-purple); }
+
+/* ── Mock marking ──
+   Violet + dotted is reserved for invented data: it must never read as a real runtime value. */
+
+.cop-mock-tag {
+  padding: 1px 5px;
+  border: 1px solid rgba(155, 93, 229, 0.5);
+  border-radius: 2px;
+  background: rgba(155, 93, 229, 0.12);
+  font-family: var(--ng-font-display);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cop-purple);
+}
+
+.cop-screen
+  .cop-is-mock
+  :is(.cop-metric__value, .co-valuebar__value, .cop-signal__age, .cop-timeline__date, .cop-factor__market, .co-chart__value, .co-chart__caption) {
+  text-decoration: underline dotted rgba(155, 93, 229, 0.6);
+  text-underline-offset: 2px;
+}
+
+/* ── Panel grammar ── */
+
+.cop-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cop-panel--empty {
+  height: auto;
+  padding: 12px;
+}
+
+.cop-panel__head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cop-gap);
+  min-height: 28px;
+  padding: 0 var(--cop-pad);
+  border-bottom: 1px solid var(--cop-divider);
+}
+
+.cop-panel__heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+}
+
+.cop-panel__icon {
+  flex: none;
+  color: var(--cop-cyan);
+  opacity: 0.85;
+}
+
+.cop-panel__title {
+  font-family: var(--ng-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cop-heading);
+  white-space: nowrap;
+}
+
+.cop-panel__subtitle {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+  color: var(--ng-text-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cop-panel__aside {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cop-panel__hint {
+  font-family: var(--ng-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ng-text-faint);
+  white-space: nowrap;
+}
+
+.cop-empty {
+  margin: 0;
+  padding: 10px var(--cop-pad);
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--ng-text-muted);
+}
+
+.cop-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cop-cyan);
+  font-family: var(--ng-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cop-link:hover {
+  color: var(--cop-cyan-bright);
+}
+
+.cop-link__arrow {
+  transition: transform 120ms ease;
+}
+
+.cop-link:hover .cop-link__arrow {
+  transform: translateX(2px);
+}
+
+/* ── Rows ── */
+
+.cop-row--top {
+  display: grid;
+  grid-template-columns: minmax(0, 38fr) minmax(0, 30fr) minmax(0, 32fr);
+  gap: var(--cop-gap);
+  align-items: stretch;
+}
+
+.cop-row--top > .cop-panel {
+  height: var(--cop-top-h);
+}
+
+.cop-row--board {
+  display: grid;
+  grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);
+  gap: var(--cop-gap);
+  align-items: stretch;
+}
+
+.cop-row--board > .cop-panel {
+  height: var(--cop-board-h);
+}
+
+.cop-side {
+  display: grid;
+  grid-template-rows: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: var(--cop-gap);
+  height: var(--cop-board-h);
+}
+
+.cop-panel--timeline {
+  height: var(--cop-timeline-h);
+}
+
+/* ── Market overview ── */
+
+.cop-market {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 46fr) minmax(0, 54fr);
+  min-height: 0;
+}
+
+.cop-market__metrics {
+  display: grid;
+  align-content: space-between;
+  gap: 0;
+  margin: 0;
+  padding: 0 var(--cop-pad);
+  list-style: none;
+  border-right: 1px solid var(--cop-divider);
+}
+
+.cop-metric {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 2px 0;
+}
+
+.cop-metric + .cop-metric {
+  border-top: 1px solid var(--cop-divider);
+}
+
+.cop-metric__label {
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--cop-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cop-metric__value {
+  font-family: var(--ng-font-display);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cop-market__momentum {
+  display: grid;
+  /* The trend chart takes every pixel the stats row does not need — no dead band in the middle. */
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 8px var(--cop-pad);
+  min-width: 0;
+}
+
+.cop-momentum__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+}
+
+.cop-momentum__stat {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.cop-momentum__stat dt {
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--cop-label);
+}
+
+.cop-momentum__stat dd {
+  margin: 0;
+  font-family: var(--ng-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cop-value);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Personal fit profile ── */
+
+.cop-fit {
+  display: grid;
+  flex: 1;
+  align-content: space-between;
+  gap: 4px;
+  padding: 8px var(--cop-pad);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cop-fit__row {
+  min-width: 0;
+}
+
+.cop-fit__footer {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px var(--cop-pad) 6px;
+  border-top: 1px solid var(--cop-divider);
+  font-size: 9.5px;
+  letter-spacing: 0.03em;
+  color: var(--cop-label);
+  white-space: nowrap;
+}
+
+.cop-fit__footer b {
+  font-family: var(--ng-font-display);
+  font-weight: 700;
+}
+
+.cop-fit__overall b {
+  font-size: 13px;
+  color: var(--cop-value);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Opportunity signals ── */
+
+.cop-signals {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.cop-signal + .cop-signal {
+  border-top: 1px solid var(--cop-divider);
+}
+
+.cop-signal__hit {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  padding: 5px var(--cop-pad);
+  border: 0;
+  border-left: 2px solid transparent;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+button.cop-signal__hit {
+  cursor: pointer;
+}
+
+button.cop-signal__hit:hover {
+  border-left-color: var(--cop-cyan);
+  background: rgba(22, 217, 243, 0.045);
+}
+
+.cop-signal__icon {
+  display: grid;
+  place-items: center;
+  opacity: 0.9;
+}
+
+.cop-signal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.cop-signal__title {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--cop-value);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cop-signal__detail {
+  overflow: hidden;
+  font-size: 9.5px;
+  line-height: 1.25;
+  color: var(--ng-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cop-signal__age {
+  font-family: var(--ng-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ng-text-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── Opportunity board ── */
+
+/* The panel that hosts a precision grid is forced transparent with a grid-coloured frame by the
+   global ng-data-grid contract; the header keeps its own band above the table. */
+.cop-panel--board {
+  position: relative;
+}
+
+.cop-board {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
+
+.cop-board__grid {
+  min-width: 0;
+}
+
+.cop-board__club {
+  font-weight: 700;
+  color: var(--cop-value);
+}
+
+.cop-board__mute {
+  color: var(--ng-text-faint);
+}
+
+.cop-board__actions {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.cop-action {
+  padding: 1px 6px;
+  border: 1px solid rgba(22, 217, 243, 0.5);
+  border-radius: 2px;
+  background: rgba(22, 217, 243, 0.08);
+  color: var(--cop-cyan);
+  font-family: var(--ng-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cop-action:hover {
+  border-color: var(--cop-cyan-bright);
+  background: rgba(22, 217, 243, 0.18);
+  color: var(--cop-cyan-bright);
+}
+
+.cop-action--ghost {
+  border-color: rgba(116, 150, 168, 0.4);
+  background: transparent;
+  color: var(--ng-text-secondary);
+}
+
+.cop-action--ghost:hover {
+  border-color: var(--cop-cyan);
+  background: rgba(22, 217, 243, 0.08);
+  color: var(--cop-cyan);
+}
+
+/* Fit cell: a tone-coloured micro track plus the percentage, so the colour carries the meaning. */
+.cop-fit-cell {
+  display: inline-grid;
+  grid-template-columns: 30px auto;
+  gap: 5px;
+  align-items: center;
+  width: 100%;
+}
+
+.cop-fit-cell__track {
+  display: block;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 1px;
+  background: var(--cop-track);
+}
+
+.cop-fit-cell__fill {
+  display: block;
+  height: 100%;
+  background: currentColor;
+}
+
+.cop-fit-cell__value {
+  font-family: var(--ng-font-display);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: currentColor;
+  font-variant-numeric: tabular-nums;
+}
+
+.cop-status {
+  display: inline-block;
+  padding: 1px 5px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  font-family: var(--ng-font-display);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  opacity: 0.92;
+}
+
+/* ── Network & contacts ── */
+
+.cop-contacts {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.cop-contact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 86px 54px 44px;
+  gap: 8px;
+  align-items: center;
+  padding: 4px var(--cop-pad);
+}
+
+.cop-contact + .cop-contact {
+  border-top: 1px solid var(--cop-divider);
+}
+
+.cop-contact__name {
+  overflow: hidden;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--cop-value);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cop-contact__role {
+  overflow: hidden;
+  font-size: 9px;
+  letter-spacing: 0.03em;
+  color: var(--cop-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cop-contact__strength {
+  display: grid;
+  gap: 3px;
+  justify-items: end;
+  min-width: 0;
+}
+
+.cop-contact__track {
+  display: block;
+  width: 100%;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 1px;
+  background: var(--cop-track);
+}
+
+.cop-contact__fill {
+  display: block;
+  height: 100%;
+}
+
+.cop-contact__value {
+  font-family: var(--ng-font-display);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.cop-contact__influence {
+  font-family: var(--ng-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+/* ── Decision factors ── */
+
+.cop-factors {
+  display: grid;
+  flex: 1;
+  align-content: space-between;
+  margin: 0;
+  padding: 6px var(--cop-pad);
+  list-style: none;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.cop-factor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 56px auto;
+  gap: 8px;
+  align-items: center;
+  padding: 2px 0;
+}
+
+.cop-factor__label {
+  overflow: hidden;
+  font-size: 9.5px;
+  letter-spacing: 0.03em;
+  color: var(--cop-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cop-factor__importance {
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--cop-value);
+  font-variant-numeric: tabular-nums;
+}
+
+.cop-factor__track {
+  display: block;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 1px;
+  background: var(--cop-track);
+}
+
+.cop-factor__fill {
+  display: block;
+  height: 100%;
+}
+
+.cop-factor__market {
+  min-width: 20px;
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.cop-factors__note {
+  flex: none;
+  margin: 0;
+  padding: 5px var(--cop-pad) 6px;
+  border-top: 1px solid var(--cop-divider);
+  font-size: 9px;
+  line-height: 1.3;
+  color: var(--ng-text-faint);
+}
+
+/* ── Opportunity timeline ── */
+
+.cop-timeline {
+  position: relative;
+  display: grid;
+  flex: 1;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--cop-gap);
+  margin: 0;
+  padding: 9px var(--cop-pad) 8px;
+  list-style: none;
+  min-height: 0;
+}
+
+/* The rail the dots sit on. */
+.cop-timeline::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  right: var(--cop-pad);
+  left: var(--cop-pad);
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--cop-divider) 3%, var(--cop-divider) 97%, transparent 100%);
+}
+
+.cop-timeline__event {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-top: 11px;
+}
+
+.cop-timeline__dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  border: 1px solid #061219;
+  border-radius: 50%;
+}
+
+.cop-timeline__date {
+  font-family: var(--ng-font-display);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ng-text-faint);
+  white-space: nowrap;
+}
+
+.cop-timeline__title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--cop-value);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cop-timeline__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+}
+
+.cop-timeline__detail {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 9.5px;
+  line-height: 1.3;
+  color: var(--ng-text-muted);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* ── Scoped layout fallbacks for the imported micrographics ──
+   Only the two primitives this screen renders: the momentum line and the fit value bars. */
+
+.cop-screen .co-chart {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 3px;
+  margin: 0;
+  min-height: 0;
+}
+
+.cop-screen .co-chart__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.cop-screen .co-chart__title {
+  font-family: var(--ng-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cop-label);
+  white-space: nowrap;
+}
+
+.cop-screen .co-chart__value {
+  font-family: var(--ng-font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cop-cyan);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cop-screen .co-chart__svg {
+  display: block;
+  flex: 1;
+  width: 100%;
+  min-height: 36px;
+  height: auto;
+}
+
+.cop-screen .co-chart__caption {
+  margin: 0;
+  font-size: 8.5px;
+  letter-spacing: 0.02em;
+  color: var(--ng-text-faint);
+  white-space: nowrap;
+}
+
+.cop-screen .co-line__area {
+  fill: rgba(22, 217, 243, 0.1);
+  stroke: none;
+}
+
+.cop-screen .co-line__stroke {
+  fill: none;
+  stroke: var(--cop-cyan);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.cop-screen .co-line__point {
+  fill: var(--cop-cyan);
+}
+
+.cop-screen .co-valuebar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto 7px;
+  gap: 2px 8px;
+  align-items: center;
+}
+
+.cop-screen .co-valuebar__label {
+  grid-area: 1 / 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--cop-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cop-screen .co-valuebar__value {
+  grid-area: 1 / 2;
+  font-family: var(--ng-font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--cop-value);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.cop-screen .co-valuebar__track {
+  position: relative;
+  grid-area: 2 / 1 / 3 / 3;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--cop-track);
+}
+
+.cop-screen .co-valuebar__fill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+}
+
+/* ── Responsive ──
+   1600x900 keeps every column and the three-across top row; only the height budget, type and gaps
+   come down. Nothing stacks until the desktop layout genuinely cannot hold it. */
+
+@media (max-width: 1740px) {
+  .cop-screen {
+    --cop-top-h: 250px;
+    --cop-board-h: 328px;
+    --cop-timeline-h: 104px;
+  }
+}
+
+@media (max-height: 980px) {
+  .cop-screen {
+    --cop-top-h: 212px;
+    --cop-board-h: 304px;
+    --cop-timeline-h: 100px;
+  }
+
+  .cop-metric__value {
+    font-size: 14px;
+  }
+
+  /* Height is the scarce axis here: the pipeline keeps one detail line instead of two. */
+  .cop-timeline__detail {
+    -webkit-line-clamp: 1;
+  }
+
+  .cop-screen .co-chart__svg {
+    min-height: 32px;
+  }
+}
+
+@media (max-width: 1500px) {
+  .cop-screen {
+    --cop-pad: 9px;
+    --cop-gap: 8px;
+  }
+
+  .cop-contact {
+    grid-template-columns: minmax(0, 1fr) 62px 48px 40px;
+    gap: 6px;
+  }
+
+  .cop-factor {
+    grid-template-columns: minmax(0, 1fr) auto 44px auto;
+    gap: 6px;
+  }
+}
+
+/* Below this the board plus the two stacked side panels stop fitting side by side. */
+@media (max-width: 1180px) {
+  .cop-row--top,
+  .cop-row--board {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cop-row--top > .cop-panel,
+  .cop-row--board > .cop-panel,
+  .cop-side {
+    height: auto;
+  }
+
+  .cop-side {
+    grid-template-rows: auto;
+  }
+}
