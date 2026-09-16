@@ -79,6 +79,11 @@ function repository(bundle: WorldCompetitionRuntimeBundle = runtimeBundle): Worl
       source: { databaseId: 'world.db', schemaId: 'DDL-PHASE1-A' },
       competitionSeasonIds: ['season:regular', 'season:cup'],
     })),
+    discoverPlayableCatalog: vi.fn(async () => ({
+      schemaVersion: 1,
+      source: { databaseId: 'world.db', schemaId: 'DDL-PHASE1-A' },
+      ecosystems: [],
+    })),
     loadCompetitionSeason: vi.fn(async (_databasePath, competitionSeasonId) => competitionBundle(competitionSeasonId)),
     loadMatchRealizations: vi.fn(async (_databasePath, competitionSeasonId) => matchBundle(competitionSeasonId)),
     loadCompetitionRuntimeBundle: vi.fn(async () => bundle),
