@@ -1,0 +1,916 @@
+/*
+ * Coach · Reputation — density layer for the perception board.
+ *
+ * Same workstation grammar as the Overview: graphite surface, cyan structure, warm quant accents.
+ * The panel chrome itself is the global `.ng-canon__panel ng-holo-panel` pair; everything here is
+ * either the local tone vocabulary or the inner grid of each panel. Rows carry an explicit height so
+ * the three panels of a row always end on the same pixel, and every repeated list distributes its
+ * items with flex so a panel never clips at the small desktop breakpoint.
+ */
+
+.cr-reputation {
+  /* Local semantic layer, mapped onto the NG tokens. */
+  --cr-cyan: var(--ng-cyan);
+  --cr-gold: var(--ng-amber-bright);
+  --cr-green: var(--ng-positive);
+  --cr-amber: var(--ng-warning);
+  --cr-red: var(--ng-negative);
+  --cr-purple: #9b5de5;
+  --cr-label: #7fa7bf;
+  --cr-value: #f2f7fa;
+  --cr-heading: #eaf7ff;
+  --cr-divider: rgba(100, 165, 190, 0.16);
+  --cr-track: #0a161e;
+  --cr-gap: 10px;
+  --cr-pad: 12px;
+  --cr-row-1: 316px;
+  --cr-row-2: 250px;
+  --cr-row-3: 182px;
+
+  /* The shared micro-chart primitives read the Overview palette variables. Declaring them here keeps
+     the imported primitives correct even when this board is rendered outside the Overview tree. */
+  --co-cyan: var(--ng-cyan);
+  --co-gold: var(--ng-amber);
+  --co-gold-bright: var(--ng-amber-bright);
+  --co-green: var(--ng-positive);
+  --co-amber: var(--ng-warning);
+  --co-red: var(--ng-negative);
+  --co-purple: var(--cr-purple);
+  --co-label: var(--cr-label);
+  --co-value: var(--cr-value);
+  --co-heading: var(--cr-heading);
+  --co-divider: var(--cr-divider);
+  --co-pad: 0px;
+  --co-gap: var(--cr-gap);
+
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: var(--cr-gap);
+  align-content: start;
+  min-height: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Tone vocabulary (text, rail edges, bar fills) ── */
+
+.cr-tone--neutral { color: var(--cr-value); }
+.cr-tone--cyan { color: var(--cr-cyan); }
+.cr-tone--positive { color: var(--cr-green); }
+.cr-tone--warning { color: var(--cr-amber); }
+.cr-tone--negative { color: var(--cr-red); }
+.cr-tone--gold { color: var(--cr-gold); }
+.cr-tone--purple { color: var(--cr-purple); }
+
+.cr-edge--neutral { --cr-edge: rgba(140, 170, 186, 0.5); }
+.cr-edge--cyan { --cr-edge: rgba(22, 217, 243, 0.5); }
+.cr-edge--positive { --cr-edge: rgba(72, 217, 138, 0.5); }
+.cr-edge--warning { --cr-edge: rgba(230, 183, 77, 0.5); }
+.cr-edge--negative { --cr-edge: rgba(232, 93, 103, 0.5); }
+.cr-edge--gold { --cr-edge: rgba(230, 183, 77, 0.5); }
+.cr-edge--purple { --cr-edge: rgba(155, 93, 229, 0.5); }
+
+.cr-fill--neutral { background: #8ea6b5; }
+.cr-fill--cyan { background: var(--cr-cyan); }
+.cr-fill--positive { background: var(--cr-green); }
+.cr-fill--warning { background: var(--cr-amber); }
+.cr-fill--negative { background: var(--cr-red); }
+.cr-fill--gold { background: var(--cr-gold); }
+.cr-fill--purple { background: var(--cr-purple); }
+
+/* ── Rows ── */
+
+.cr-row {
+  display: grid;
+  gap: var(--cr-gap);
+  align-items: stretch;
+}
+
+.cr-row--1,
+.cr-row--2 {
+  grid-template-columns: minmax(0, 38fr) minmax(0, 29fr) minmax(0, 33fr);
+}
+
+.cr-row--1 { height: var(--cr-row-1); }
+.cr-row--2 { height: var(--cr-row-2); }
+
+.cr-row--3 {
+  grid-template-columns: minmax(0, 62fr) minmax(0, 38fr);
+  height: var(--cr-row-3);
+}
+
+/* ── Panel ── */
+
+.ng-canon__panel.cr-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 10px var(--cr-pad);
+  overflow: hidden;
+}
+
+.cr-panel .co-panel__head {
+  flex: none;
+  min-height: 26px;
+  padding: 0;
+  border-bottom: 1px solid var(--cr-divider);
+}
+
+.cr-panel__hint {
+  font-family: var(--ng-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ng-text-faint);
+  white-space: nowrap;
+}
+
+.cr-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cr-cyan);
+  font-family: var(--ng-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cr-link:hover:not(:disabled),
+.cr-link:focus-visible:not(:disabled) {
+  color: var(--ng-cyan-bright);
+}
+
+.cr-link:disabled {
+  color: var(--ng-text-faint);
+  cursor: default;
+}
+
+.cr-mock-tag {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 0 4px;
+  border: 1px solid rgba(140, 170, 186, 0.42);
+  border-radius: 2px;
+  color: var(--ng-text-faint);
+  font-family: var(--ng-font-display);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.cr-foot {
+  flex: none;
+  margin: 0;
+  font-size: 9px;
+  line-height: 1.3;
+  color: var(--ng-text-faint);
+}
+
+.cr-empty {
+  margin: 0;
+  padding: 6px 0;
+  color: var(--ng-text-muted);
+  font-size: var(--ng-font-size-secondary);
+}
+
+.cr-num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* ── Summary ── */
+
+.cr-summary {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) 190px;
+  gap: 12px;
+  min-height: 0;
+}
+
+.cr-dims {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-height: 0;
+}
+
+.cr-dim {
+  display: grid;
+  flex: 1 1 0;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  grid-template-rows: auto 7px;
+  grid-template-areas:
+    'label band value delta'
+    'track track track track';
+  gap: 3px 8px;
+  align-items: center;
+  min-height: 0;
+}
+
+.cr-dim__label {
+  grid-area: label;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--cr-label);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-dim__band {
+  grid-area: band;
+  color: var(--ng-text-faint);
+  font-family: var(--ng-font-display);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.cr-dim__value {
+  grid-area: value;
+  color: var(--cr-value);
+  font-family: var(--ng-font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.cr-dim__delta {
+  grid-area: delta;
+  min-width: 36px;
+  font-size: 10.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cr-dim__track,
+.cr-total__track,
+.cr-driver__track,
+.cr-territory__track,
+.cr-narrative__track {
+  position: relative;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--cr-track);
+}
+
+.cr-dim__track {
+  grid-area: track;
+  height: 7px;
+}
+
+.cr-dim__fill,
+.cr-total__fill,
+.cr-driver__fill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(22, 217, 243, 0.55) 0%, var(--cr-cyan) 100%);
+}
+
+.cr-summary__side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding-left: 12px;
+  border-left: 1px solid var(--cr-divider);
+}
+
+.cr-total {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cr-total__label,
+.cr-change__label {
+  color: var(--cr-label);
+  font-family: var(--ng-font-display);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.cr-total__value {
+  color: var(--cr-value);
+  font-family: var(--ng-font-display);
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cr-total__max {
+  margin-left: 3px;
+  color: var(--ng-text-faint);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.cr-total__band {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--cr-gold);
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.cr-total__track {
+  height: 6px;
+  margin-top: 2px;
+}
+
+.cr-total__fill {
+  background: linear-gradient(90deg, rgba(230, 183, 77, 0.5) 0%, var(--cr-gold) 100%);
+}
+
+.cr-change {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 7px;
+  border-top: 1px solid var(--cr-divider);
+}
+
+.cr-change__row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.cr-change__value {
+  font-family: var(--ng-font-display);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.cr-change__window {
+  color: var(--ng-text-faint);
+  font-size: 9px;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.cr-change__note {
+  margin: 2px 0 0;
+  color: var(--ng-text-muted);
+  font-size: 9.5px;
+  line-height: 1.35;
+}
+
+/* ── Perception ── */
+
+.cr-perception {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 0;
+}
+
+/* ── Signals ── */
+
+.cr-signals {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-height: 0;
+}
+
+.cr-signal {
+  display: grid;
+  flex: 1 1 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'label effect'
+    'chips date';
+  gap: 2px 8px;
+  align-items: center;
+  min-height: 0;
+  padding: 3px 0 3px 8px;
+  border-left: 2px solid var(--cr-edge, var(--cr-divider));
+  overflow: hidden;
+}
+
+.cr-signal__label {
+  grid-area: label;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--cr-value);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-signal__effect {
+  grid-area: effect;
+  font-family: var(--ng-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.cr-signal__chips {
+  display: flex;
+  grid-area: chips;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cr-chip {
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.cr-signal__date {
+  grid-area: date;
+  color: var(--ng-text-faint);
+  font-size: 9px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ── Drivers ── */
+
+.cr-drivers {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 0;
+}
+
+.cr-drivers__head,
+.cr-driver {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px 34px minmax(0, 1fr) 14px;
+  gap: 8px;
+  align-items: center;
+}
+
+.cr-drivers__head {
+  flex: none;
+  color: var(--cr-label);
+  font-family: var(--ng-font-display);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.cr-drivers__list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-height: 0;
+}
+
+.cr-driver {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cr-driver__label {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--cr-label);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-driver__weight,
+.cr-driver__current {
+  color: var(--cr-value);
+  font-family: var(--ng-font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.cr-driver__track {
+  height: 7px;
+}
+
+.cr-driver__trend {
+  display: grid;
+  place-items: center;
+}
+
+/* ── Geographic reach ── */
+
+.cr-territories {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-height: 0;
+}
+
+.cr-territory {
+  display: grid;
+  flex: 1 1 0;
+  grid-template-columns: minmax(0, 1fr) auto 26px;
+  grid-template-rows: auto 6px;
+  grid-template-areas:
+    'label sentiment interest'
+    'track track track';
+  gap: 3px 8px;
+  align-items: center;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cr-territory__label {
+  grid-area: label;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--cr-label);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-territory__sentiment {
+  grid-area: sentiment;
+  font-family: var(--ng-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.cr-territory__interest {
+  grid-area: interest;
+  color: var(--cr-value);
+  font-family: var(--ng-font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.cr-territory__track {
+  grid-area: track;
+  height: 6px;
+}
+
+.cr-territory__fill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  opacity: 0.85;
+}
+
+/* ── Media & narrative ── */
+
+.cr-narratives {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-height: 0;
+}
+
+.cr-narrative {
+  display: grid;
+  flex: 1 1 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'headline sentiment'
+    'track volume';
+  gap: 3px 8px;
+  align-items: center;
+  min-height: 0;
+  padding: 3px 0 3px 8px;
+  border-left: 2px solid var(--cr-edge, var(--cr-divider));
+  overflow: hidden;
+}
+
+.cr-narrative__headline {
+  grid-area: headline;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--cr-value);
+  font-size: 11px;
+  font-style: italic;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-narrative__sentiment {
+  grid-area: sentiment;
+  font-family: var(--ng-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.cr-narrative__track {
+  grid-area: track;
+  height: 5px;
+}
+
+.cr-narrative__fill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  opacity: 0.8;
+}
+
+.cr-narrative__volume {
+  grid-area: volume;
+  color: var(--ng-text-muted);
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+/* ── Timeline ── */
+
+.cr-timeline {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) 108px;
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'chart legend'
+    'axis axis';
+  gap: 5px 12px;
+  min-height: 0;
+}
+
+.cr-timeline > .co-chart {
+  grid-area: chart;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+}
+
+.cr-timeline > .co-chart .co-chart__svg {
+  height: 46px;
+}
+
+.cr-timeline__legend {
+  display: flex;
+  grid-area: legend;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+
+.cr-timeline__entry {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cr-timeline__label {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--cr-label);
+  font-size: 9.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-timeline__delta {
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cr-timeline__axis {
+  display: flex;
+  grid-area: axis;
+  justify-content: space-between;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cr-timeline__tick {
+  flex: 1;
+  overflow: hidden;
+  color: var(--ng-text-faint);
+  font-family: var(--ng-font-display);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.cr-scale {
+  display: flex;
+  gap: 2px;
+}
+
+.cr-scale__btn {
+  min-width: 26px;
+  padding: 1px 5px;
+  border: 1px solid var(--bdm-border-subtle);
+  border-radius: 2px;
+  background: none;
+  color: var(--ng-text-muted);
+  font-family: var(--ng-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+.cr-scale__btn.is-active {
+  border-color: rgba(230, 183, 77, 0.6);
+  color: var(--cr-gold);
+}
+
+/* ── Milestones ── */
+
+.cr-milestones {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-height: 0;
+}
+
+.cr-milestone {
+  display: grid;
+  flex: 1 1 0;
+  grid-template-columns: 78px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'date label effect'
+    'date detail detail';
+  gap: 1px 8px;
+  align-items: center;
+  min-height: 0;
+  padding-left: 8px;
+  border-left: 2px solid var(--cr-edge, var(--cr-divider));
+  overflow: hidden;
+}
+
+.cr-milestone__date {
+  grid-area: date;
+  color: var(--ng-text-faint);
+  font-family: var(--ng-font-display);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.cr-milestone__label {
+  grid-area: label;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--cr-value);
+  font-size: 11px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-milestone__effect {
+  grid-area: effect;
+  font-family: var(--ng-font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cr-milestone__detail {
+  grid-area: detail;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ng-text-faint);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Responsive ──
+   1600x900 keeps all three columns of both rows: only type, heights and gaps come down. */
+
+@media (max-width: 1740px) {
+  .cr-reputation {
+    --cr-row-1: 262px;
+    --cr-row-2: 222px;
+    --cr-row-3: 146px;
+  }
+
+  .cr-dim__label,
+  .cr-driver__label,
+  .cr-territory__label {
+    font-size: 10px;
+  }
+
+  .cr-summary {
+    grid-template-columns: minmax(0, 1fr) 168px;
+  }
+
+  .cr-total__value {
+    font-size: 22px;
+  }
+
+  .cr-change__value {
+    font-size: 19px;
+  }
+
+  .cr-timeline {
+    grid-template-columns: minmax(0, 1fr) 96px;
+  }
+
+  .cr-timeline > .co-chart .co-chart__svg {
+    height: 38px;
+  }
+
+  .cr-foot {
+    font-size: 8.5px;
+  }
+}
+
+@media (max-width: 1500px) {
+  .cr-reputation {
+    --cr-row-1: 250px;
+    --cr-row-2: 212px;
+    --cr-row-3: 138px;
+  }
+
+  .cr-summary {
+    grid-template-columns: minmax(0, 1fr) 154px;
+  }
+
+  .cr-drivers__head,
+  .cr-driver {
+    grid-template-columns: minmax(0, 1fr) 36px 30px minmax(0, 1fr) 12px;
+    gap: 6px;
+  }
+}
