@@ -6,6 +6,7 @@ import {
   type WorldDbCompetitionRuntimeBundlePin,
 } from '@/domain/world'
 import type { WorldDbDatabaseInfoV1 } from '@/domain/worldDb/DatabaseInfo'
+import type { WorldDbSelectionCatalogV1 } from '@/domain/worldDb/SelectionCatalog'
 import {
   createWorldCompetitionCatalog,
   type WorldCompetitionCatalog,
@@ -55,6 +56,7 @@ export class WorldDbSessionV1 {
   private databaseInfo: WorldDbDatabaseInfoV1 | null = null
   private runtimeBundle: WorldCompetitionRuntimeBundle | null = null
   private catalog: WorldCompetitionCatalog | null = null
+  private cachedSelectionCatalog: WorldDbSelectionCatalogV1 | null = null
   private cachedContextKey: string | null = null
   private cachedContexts: readonly WorldDbCompetitionPlanningContextV1[] = Object.freeze([])
 
@@ -84,6 +86,7 @@ export class WorldDbSessionV1 {
     this.databaseInfo = databaseInfo
     this.runtimeBundle = runtimeBundle
     this.catalog = createWorldCompetitionCatalog(runtimeBundle)
+    this.cachedSelectionCatalog = null
     this.cachedContextKey = null
     this.cachedContexts = Object.freeze([])
     return this.snapshot()
@@ -93,6 +96,7 @@ export class WorldDbSessionV1 {
     this.databaseInfo = null
     this.runtimeBundle = null
     this.catalog = null
+    this.cachedSelectionCatalog = null
     this.cachedContextKey = null
     this.cachedContexts = Object.freeze([])
   }
@@ -113,6 +117,16 @@ export class WorldDbSessionV1 {
       runtimeBundlePin: runtimeBundlePin(bundle),
       availableCompetitionSeasonIds: Object.freeze([...info.competitionSeasonIds]),
     })
+  }
+
+  async discoverSelectionCatalog(): Promise<WorldDbSelectionCatalogV1> {
+    this.requireOpen()
+    if (this.cachedSelectionCatalog === null) {
+      const catalog = await this.repository.loadSelectionCatalog(this.databasePath)
+      this.assertSelectionCatalogSource(catalog)
+      this.cachedSelectionCatalog = catalog
+    }
+    return this.cachedSelectionCatalog
   }
 
   selectCompetitionSeasons(competitionSeasonIds: readonly string[]): WorldDbCompetitionRuntime {
@@ -196,6 +210,20 @@ export class WorldDbSessionV1 {
       if (catalog.formatsBySeasonId[id] === undefined) {
         throw new Error(`World DB competition season has no executable runtime format: ${id}`)
       }
+    }
+  }
+
+  private assertSelectionCatalogSource(catalog: WorldDbSelectionCatalogV1): void {
+    const source = this.requireDatabaseInfo().source
+    if (catalog.source.databaseId !== source.databaseId) {
+      throw new Error(
+        `World DB selection database identity mismatch: expected ${source.databaseId}, received ${catalog.source.databaseId}`,
+      )
+    }
+    if (catalog.source.schemaId !== source.schemaId) {
+      throw new Error(
+        `World DB selection schema identity mismatch: expected ${source.schemaId}, received ${catalog.source.schemaId}`,
+      )
     }
   }
 
