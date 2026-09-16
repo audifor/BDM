@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import type { WorldCompetitionRuntimeBundle } from '@/domain/competition'
+import type { WorldDbDatabaseInfoV1 } from '@/domain/worldDb/DatabaseInfo'
 import type { WorldDatabaseRepository } from '@/tauri/TauriWorldDatabaseRepository'
 
 import { WorldDbSessionV1 } from './WorldDbSession'
@@ -39,7 +40,7 @@ const runtimeBundle: WorldCompetitionRuntimeBundle = {
 describe('WorldDbSessionV1 partial Phase 1 availability', () => {
   it('opens a schema-compatible database and validates completeness at season selection', async () => {
     const repository: WorldDatabaseRepository = {
-      inspectDatabase: vi.fn(async () => ({
+      inspectDatabase: vi.fn(async (): Promise<WorldDbDatabaseInfoV1> => ({
         schemaVersion: 1,
         source: { databaseId: 'phase1a.db', schemaId: 'DDL-PHASE1-A' },
         competitionSeasonIds: ['season:available'],
