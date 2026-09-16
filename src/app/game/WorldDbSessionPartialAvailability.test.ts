@@ -45,6 +45,11 @@ describe('WorldDbSessionV1 partial Phase 1 availability', () => {
         source: { databaseId: 'phase1a.db', schemaId: 'DDL-PHASE1-A' },
         competitionSeasonIds: ['season:available'],
       })),
+      discoverPlayableCatalog: vi.fn(async () => ({
+        schemaVersion: 1,
+        source: { databaseId: 'phase1a.db', schemaId: 'DDL-PHASE1-A' },
+        ecosystems: [],
+      })),
       loadCompetitionSeason: vi.fn(),
       loadMatchRealizations: vi.fn(),
       loadCompetitionRuntimeBundle: vi.fn(async () => runtimeBundle),

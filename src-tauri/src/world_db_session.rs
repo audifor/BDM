@@ -82,16 +82,20 @@ pub fn inspect_database_v1(database_path: &str) -> Result<WorldDbDatabaseInfoV1,
 
     Ok(WorldDbDatabaseInfoV1 {
         schema_version: 1,
-        source: WorldDbDatabaseSourceV1 {
-            database_id: path
-                .file_name()
-                .and_then(|name| name.to_str())
-                .unwrap_or("bdm-world.db")
-                .to_owned(),
-            schema_id: WORLD_DB_SCHEMA_ID.to_owned(),
-        },
+        source: source_ref_v1(path),
         competition_season_ids,
     })
+}
+
+pub(crate) fn source_ref_v1(path: &Path) -> WorldDbDatabaseSourceV1 {
+    WorldDbDatabaseSourceV1 {
+        database_id: path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("bdm-world.db")
+            .to_owned(),
+        schema_id: WORLD_DB_SCHEMA_ID.to_owned(),
+    }
 }
 
 fn table_exists(connection: &Connection, table: &str) -> Result<bool, String> {
