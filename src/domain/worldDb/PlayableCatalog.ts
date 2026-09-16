@@ -7,11 +7,14 @@ export interface WorldDbPlayableSeasonV1 {
 }
 
 export interface WorldDbPlayableCompetitionV1 {
+  readonly ecosystemCompetitionAssignmentId: string
   readonly competitionId: string
   readonly name: string
   readonly ecosystemLevelId: string | null
   readonly ecosystemUnitId: string | null
   readonly roleType: string
+  readonly validFrom: string | null
+  readonly validTo: string | null
   readonly seasons: readonly WorldDbPlayableSeasonV1[]
 }
 
@@ -33,13 +36,19 @@ export interface WorldDbPlayableUnitV1 {
 }
 
 export interface WorldDbPlayableTeamMembershipV1 {
+  readonly teamEcosystemMembershipId: string
   readonly ecosystemLevelId: string | null
   readonly membershipStatus: string
+  readonly validFrom: string | null
+  readonly validTo: string | null
 }
 
 export interface WorldDbPlayableTeamUnitMembershipV1 {
+  readonly teamEcosystemUnitMembershipId: string
   readonly ecosystemUnitId: string
   readonly membershipStatus: string
+  readonly validFrom: string | null
+  readonly validTo: string | null
 }
 
 export interface WorldDbPlayableTeamV1 {
@@ -101,11 +110,14 @@ export function assertWorldDbPlayableCatalogV1(value: unknown): asserts value is
 
     for (const competitionValue of requireArray(ecosystem.competitions, 'World DB playable ecosystem competitions')) {
       const competition = requireRecord(competitionValue, 'World DB playable competition')
+      requireText(competition.ecosystemCompetitionAssignmentId, 'World DB playable competition ecosystemCompetitionAssignmentId')
       requireText(competition.competitionId, 'World DB playable competition competitionId')
       requireText(competition.name, 'World DB playable competition name')
       requireNullableText(competition.ecosystemLevelId, 'World DB playable competition ecosystemLevelId')
       requireNullableText(competition.ecosystemUnitId, 'World DB playable competition ecosystemUnitId')
       requireText(competition.roleType, 'World DB playable competition roleType')
+      requireNullableText(competition.validFrom, 'World DB playable competition validFrom')
+      requireNullableText(competition.validTo, 'World DB playable competition validTo')
       for (const seasonValue of requireArray(competition.seasons, 'World DB playable competition seasons')) {
         const season = requireRecord(seasonValue, 'World DB playable season')
         requireText(season.competitionSeasonId, 'World DB playable season competitionSeasonId')
@@ -120,13 +132,19 @@ export function assertWorldDbPlayableCatalogV1(value: unknown): asserts value is
       requireText(team.name, 'World DB playable team name')
       for (const membershipValue of requireArray(team.memberships, 'World DB playable team memberships')) {
         const membership = requireRecord(membershipValue, 'World DB playable team membership')
+        requireText(membership.teamEcosystemMembershipId, 'World DB playable team membership teamEcosystemMembershipId')
         requireNullableText(membership.ecosystemLevelId, 'World DB playable team membership ecosystemLevelId')
         requireText(membership.membershipStatus, 'World DB playable team membership membershipStatus')
+        requireNullableText(membership.validFrom, 'World DB playable team membership validFrom')
+        requireNullableText(membership.validTo, 'World DB playable team membership validTo')
       }
       for (const membershipValue of requireArray(team.unitMemberships, 'World DB playable team unit memberships')) {
         const membership = requireRecord(membershipValue, 'World DB playable team unit membership')
+        requireText(membership.teamEcosystemUnitMembershipId, 'World DB playable team unit membership teamEcosystemUnitMembershipId')
         requireText(membership.ecosystemUnitId, 'World DB playable team unit membership ecosystemUnitId')
         requireText(membership.membershipStatus, 'World DB playable team unit membership membershipStatus')
+        requireNullableText(membership.validFrom, 'World DB playable team unit membership validFrom')
+        requireNullableText(membership.validTo, 'World DB playable team unit membership validTo')
       }
     }
   }
