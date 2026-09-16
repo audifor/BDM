@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { WorldCompetitionRuntimeBundle } from '@/domain/competition'
 import { attachWorldDbCompetitionRuntime, type WorldDbCompetitionRuntime } from '@/domain/world'
 import type { WorldDbCompetitionBundleV1 } from '@/domain/worldDb/CompetitionBundle'
+import type { WorldDbDatabaseInfoV1 } from '@/domain/worldDb/DatabaseInfo'
 import type { WorldDbMatchRealizationBundleV1 } from '@/domain/worldDb/MatchRealizationBundle'
 import type { WorldDatabaseRepository } from '@/tauri/TauriWorldDatabaseRepository'
 import { createNewGame } from './createNewGame'
@@ -73,7 +74,7 @@ function matchBundle(competitionSeasonId: string): WorldDbMatchRealizationBundle
 
 function repository(bundle: WorldCompetitionRuntimeBundle = runtimeBundle): WorldDatabaseRepository {
   return {
-    inspectDatabase: vi.fn(async () => ({
+    inspectDatabase: vi.fn(async (): Promise<WorldDbDatabaseInfoV1> => ({
       schemaVersion: 1,
       source: { databaseId: 'world.db', schemaId: 'DDL-PHASE1-A' },
       competitionSeasonIds: ['season:regular', 'season:cup'],
