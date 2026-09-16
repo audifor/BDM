@@ -105,7 +105,9 @@ pub struct WorldDbSelectionCatalogV1 {
     team_unit_memberships: Vec<WorldDbSelectionTeamUnitMembershipV1>,
 }
 
-pub fn load_selection_catalog_v1(database_path: &str) -> Result<WorldDbSelectionCatalogV1, String> {
+pub fn load_selection_catalog_v1(
+    database_path: &str,
+) -> Result<WorldDbSelectionCatalogV1, String> {
     crate::world_db_session::inspect_database_v1(database_path)?;
 
     let path = Path::new(database_path);
@@ -311,7 +313,10 @@ mod tests {
         assert_eq!(catalog.competition_seasons.len(), 1);
         assert_eq!(catalog.team_memberships.len(), 1);
         assert_eq!(catalog.team_unit_memberships.len(), 1);
-        assert_eq!(catalog.competition_assignments[0].competition_name, "Liga Endesa");
+        assert_eq!(
+            catalog.competition_assignments[0].competition_name,
+            "Liga Endesa"
+        );
         assert_eq!(catalog.team_memberships[0].team_name, "Real Madrid");
     }
 }
