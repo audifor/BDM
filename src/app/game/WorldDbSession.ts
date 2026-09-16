@@ -6,6 +6,7 @@ import {
   type WorldDbCompetitionRuntimeBundlePin,
 } from '@/domain/world'
 import type { WorldDbDatabaseInfoV1 } from '@/domain/worldDb/DatabaseInfo'
+import type { WorldDbPlayableCatalogV1 } from '@/domain/worldDb/PlayableCatalog'
 import {
   createWorldCompetitionCatalog,
   type WorldCompetitionCatalog,
@@ -55,6 +56,7 @@ export class WorldDbSessionV1 {
   private databaseInfo: WorldDbDatabaseInfoV1 | null = null
   private runtimeBundle: WorldCompetitionRuntimeBundle | null = null
   private catalog: WorldCompetitionCatalog | null = null
+  private playableCatalog: WorldDbPlayableCatalogV1 | null = null
   private cachedContextKey: string | null = null
   private cachedContexts: readonly WorldDbCompetitionPlanningContextV1[] = Object.freeze([])
 
@@ -84,6 +86,7 @@ export class WorldDbSessionV1 {
     this.databaseInfo = databaseInfo
     this.runtimeBundle = runtimeBundle
     this.catalog = createWorldCompetitionCatalog(runtimeBundle)
+    this.playableCatalog = null
     this.cachedContextKey = null
     this.cachedContexts = Object.freeze([])
     return this.snapshot()
@@ -93,6 +96,7 @@ export class WorldDbSessionV1 {
     this.databaseInfo = null
     this.runtimeBundle = null
     this.catalog = null
+    this.playableCatalog = null
     this.cachedContextKey = null
     this.cachedContexts = Object.freeze([])
   }
@@ -113,6 +117,25 @@ export class WorldDbSessionV1 {
       runtimeBundlePin: runtimeBundlePin(bundle),
       availableCompetitionSeasonIds: Object.freeze([...info.competitionSeasonIds]),
     })
+  }
+
+  async discoverPlayableCatalog(): Promise<WorldDbPlayableCatalogV1> {
+    const info = this.requireDatabaseInfo()
+    if (this.playableCatalog !== null) return this.playableCatalog
+
+    const catalog = await this.repository.discoverPlayableCatalog(this.databasePath)
+    if (catalog.source.databaseId !== info.source.databaseId) {
+      throw new Error(
+        `World DB discovery database identity mismatch: expected ${info.source.databaseId}, received ${catalog.source.databaseId}`,
+      )
+    }
+    if (catalog.source.schemaId !== info.source.schemaId) {
+      throw new Error(
+        `World DB discovery schema identity mismatch: expected ${info.source.schemaId}, received ${catalog.source.schemaId}`,
+      )
+    }
+    this.playableCatalog = catalog
+    return catalog
   }
 
   selectCompetitionSeasons(competitionSeasonIds: readonly string[]): WorldDbCompetitionRuntime {
