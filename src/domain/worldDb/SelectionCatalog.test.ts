@@ -64,9 +64,10 @@ describe('WorldDbSelectionCatalogV1', () => {
 
   it('rejects duplicate canonical IDs', () => {
     const value = catalog()
+    const season = value.competitionSeasons[0]!
     const duplicate = {
       ...value,
-      competitionSeasons: [value.competitionSeasons[0], value.competitionSeasons[0]],
+      competitionSeasons: [season, season],
     }
     expect(() => assertWorldDbSelectionCatalogV1(duplicate)).toThrow('duplicate IDs')
   })
@@ -75,7 +76,7 @@ describe('WorldDbSelectionCatalogV1', () => {
     const value = catalog()
     const invalid = {
       ...value,
-      teamMemberships: [{ ...value.teamMemberships[0], teamName: ' ' }],
+      teamMemberships: [{ ...value.teamMemberships[0]!, teamName: ' ' }],
     }
     expect(() => assertWorldDbSelectionCatalogV1(invalid)).toThrow('teamName')
   })
