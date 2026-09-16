@@ -7,9 +7,11 @@ import {
 import { assertWorldDbCompetitionBundleV1, type WorldDbCompetitionBundleV1 } from '@/domain/worldDb/CompetitionBundle'
 import { assertWorldDbDatabaseInfoV1, type WorldDbDatabaseInfoV1 } from '@/domain/worldDb/DatabaseInfo'
 import { assertWorldDbMatchRealizationBundleV1, type WorldDbMatchRealizationBundleV1 } from '@/domain/worldDb/MatchRealizationBundle'
+import { assertWorldDbSelectionCatalogV1, type WorldDbSelectionCatalogV1 } from '@/domain/worldDb/SelectionCatalog'
 
 export interface WorldDatabaseRepository {
   inspectDatabase(databasePath: string): Promise<WorldDbDatabaseInfoV1>
+  loadSelectionCatalog(databasePath: string): Promise<WorldDbSelectionCatalogV1>
   loadCompetitionSeason(databasePath: string, competitionSeasonId: string): Promise<WorldDbCompetitionBundleV1>
   loadMatchRealizations(databasePath: string, competitionSeasonId: string): Promise<WorldDbMatchRealizationBundleV1>
   loadCompetitionRuntimeBundle(bundlePath: string): Promise<WorldCompetitionRuntimeBundle>
@@ -19,6 +21,12 @@ export const tauriWorldDatabaseRepository: WorldDatabaseRepository = {
   async inspectDatabase(databasePath) {
     const value = await invoke<unknown>('inspect_world_db_v1', { databasePath })
     assertWorldDbDatabaseInfoV1(value)
+    return value
+  },
+
+  async loadSelectionCatalog(databasePath) {
+    const value = await invoke<unknown>('load_world_db_selection_catalog_v1', { databasePath })
+    assertWorldDbSelectionCatalogV1(value)
     return value
   },
 

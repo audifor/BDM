@@ -5,6 +5,7 @@ import type { GameWorld } from '@/domain/world'
 import type { WorldDbCompetitionBundleV1 } from '@/domain/worldDb/CompetitionBundle'
 import type { WorldDbDatabaseInfoV1 } from '@/domain/worldDb/DatabaseInfo'
 import type { WorldDbMatchRealizationBundleV1 } from '@/domain/worldDb/MatchRealizationBundle'
+import type { WorldDbSelectionCatalogV1 } from '@/domain/worldDb/SelectionCatalog'
 import type { WorldDatabaseRepository } from '@/tauri/TauriWorldDatabaseRepository'
 
 import { WorldDbSessionV1 } from './WorldDbSession'
@@ -73,12 +74,29 @@ function matchBundle(competitionSeasonId: string): WorldDbMatchRealizationBundle
   return { schemaVersion: 1, competitionSeasonId, matches: [], realizations: [] }
 }
 
+function selectionCatalog(databaseId = databaseInfo.source.databaseId): WorldDbSelectionCatalogV1 {
+  return {
+    schemaVersion: 1,
+    source: { databaseId, schemaId: databaseInfo.source.schemaId },
+    ecosystems: [
+      { ecosystemId: 'ecosystem:test', code: 'TEST', name: 'Test ecosystem', gender: 'M' },
+    ],
+    levels: [],
+    units: [],
+    competitionAssignments: [],
+    competitionSeasons: [],
+    teamMemberships: [],
+    teamUnitMemberships: [],
+  }
+}
+
 function repository(
   info: WorldDbDatabaseInfoV1 = databaseInfo,
   bundle: WorldCompetitionRuntimeBundle = runtimeBundle,
 ): WorldDatabaseRepository {
   return {
     inspectDatabase: vi.fn(async () => info),
+    loadSelectionCatalog: vi.fn(async () => selectionCatalog(info.source.databaseId)),
     loadCompetitionSeason: vi.fn(async (_path, id) => competitionBundle(id)),
     loadMatchRealizations: vi.fn(async (_path, id) => matchBundle(id)),
     loadCompetitionRuntimeBundle: vi.fn(async () => bundle),
@@ -135,6 +153,31 @@ describe('WorldDbSessionV1', () => {
     expect(repo.inspectDatabase).toHaveBeenCalledWith(
       'C:/BDM_DB/DDL-PHASE1-A/output/bdm_world_phase1a.db',
     )
+  })
+
+  it('discovers and caches canonical selection data inside the open session', async () => {
+    const repo = repository()
+    const runtime = session(repo)
+    await runtime.open()
+
+    const first = await runtime.discoverSelectionCatalog()
+    const second = await runtime.discoverSelectionCatalog()
+
+    expect(first).toBe(second)
+    expect(first.ecosystems[0]?.ecosystemId).toBe('ecosystem:test')
+    expect(repo.loadSelectionCatalog).toHaveBeenCalledTimes(1)
+    expect(repo.loadSelectionCatalog).toHaveBeenCalledWith(
+      'C:/BDM_DB/DDL-PHASE1-A/output/bdm_world_phase1a.db',
+    )
+  })
+
+  it('rejects selection data from a different database identity', async () => {
+    const repo = repository()
+    repo.loadSelectionCatalog = vi.fn(async () => selectionCatalog('other.db'))
+    const runtime = session(repo)
+    await runtime.open()
+
+    await expect(runtime.discoverSelectionCatalog()).rejects.toThrow('selection database identity mismatch')
   })
 
   it('rejects an incompatible database/runtime schema pair', async () => {
@@ -203,14 +246,17 @@ describe('WorldDbSessionV1', () => {
     const repo = repository()
     const runtime = session(repo)
     await runtime.open()
+    await runtime.discoverSelectionCatalog()
     runtime.close()
 
     expect(runtime.isOpen).toBe(false)
     expect(() => runtime.snapshot()).toThrow('session is closed')
 
     await runtime.reopen()
+    await runtime.discoverSelectionCatalog()
     expect(runtime.isOpen).toBe(true)
     expect(repo.inspectDatabase).toHaveBeenCalledTimes(2)
+    expect(repo.loadSelectionCatalog).toHaveBeenCalledTimes(2)
   })
 
   it('rejects empty external paths before repository access', () => {
