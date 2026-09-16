@@ -61,11 +61,7 @@ pub fn inspect_database_v1(database_path: &str) -> Result<WorldDbDatabaseInfoV1,
             ));
         }
     }
-    if !column_exists(
-        &connection,
-        "competition_group",
-        "source_ecosystem_unit_id",
-    )? {
+    if !column_exists(&connection, "competition_group", "source_ecosystem_unit_id")? {
         return Err(
             "Incompatible World DB: competition_group.source_ecosystem_unit_id is missing"
                 .to_owned(),
