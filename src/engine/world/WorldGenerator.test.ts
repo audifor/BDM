@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { addDays, createGameDate } from '@/domain/date'
 import { playerIdFromString } from '@/domain/ids'
 import { getTeamCoach } from '@/domain/world'
-import { CANONICAL_RATING_KEYS, getPlayerPotentialBand, legacyRatingSignals } from '@/domain/player'
+import { PLAYER_TRUTH_RATING_KEYS, getPlayerPotentialBand, legacyRatingSignals } from '@/domain/player'
 
 import { generateWorld } from './index'
 
@@ -108,7 +108,7 @@ describe('WorldGenerator', () => {
       return ['PG','SG','SF','PF','C'].every((position) => positions.filter((value) => value === position).length === ({ PG:2, SG:3, SF:2, PF:3, C:2 }[position] ?? 0))
     })).toBe(true)
     for (const player of players) {
-      expect(Object.keys(player.basketball.ratings)).toEqual(CANONICAL_RATING_KEYS)
+      expect(Object.keys(player.basketball.ratings)).toEqual(PLAYER_TRUTH_RATING_KEYS)
       expect(Object.values(player.basketball.ratings).every((rating) => Number.isFinite(rating) && rating >= 1 && rating <= 100)).toBe(true)
     }
     expect(new Set(players.map((player) => JSON.stringify(player.basketball.ratings))).size).toBeGreaterThan(8)

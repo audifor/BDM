@@ -1,4 +1,6 @@
 import type { Coach } from '@/domain/coach'
+import type { Person } from '@/domain/person'
+import { createPerson, personIdForProfile } from '@/domain/person'
 import type { Competition, PromotionRelegationResolution } from '@/domain/competition'
 import { createConference, createConferenceMembership, type Conference, type ConferenceMembership } from '@/domain/conference'
 import type { Draft, DraftPick } from '@/domain/draft'
@@ -89,6 +91,7 @@ export interface GameWorld {
   readonly currentDate: GameDate
   readonly currentSeasonId: SeasonId
   readonly userCoachId: CoachId
+  readonly personsById: Readonly<Record<import('@/domain/ids').PersonId, Person>>
   readonly countries: Readonly<Record<CountryId, Country>>
   readonly coaches: Readonly<Record<CoachId, Coach>>
   readonly players: Readonly<Record<PlayerId, Player>>
@@ -265,6 +268,8 @@ export interface CreateGameWorldInput {
   currentDate: GameDate
   currentSeasonId?: SeasonId
   userCoachId: CoachId
+  /** Optional in legacy callers; omitted roots are derived deterministically from profiles. */
+  persons?: readonly Person[]
   countries: readonly Country[]
   coaches: readonly Coach[]
   players: readonly Player[]
@@ -442,6 +447,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
   const currentSeasonId = input.currentSeasonId ?? selectLegacyCurrentSeasonId(seasons)
   const currentDate = parseGameDate(input.currentDate)
   const employment = coachCareerForCoaches(input.coaches, input.teams, currentDate, input.coachEmploymentByCoachId, input.coachCareerHistoryByCoachId)
+  const persons = input.persons === undefined ? derivePersons(input) : input.persons.map(createPerson)
   const suppliedEcosystems = input.ecosystems === undefined ? [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike' })] : Array.isArray(input.ecosystems) ? input.ecosystems : Object.values(input.ecosystems)
   const ecosystems = [
     ...suppliedEcosystems,
@@ -466,6 +472,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     currentDate,
     currentSeasonId,
     userCoachId: input.userCoachId,
+    personsById: indexById(persons, 'Person'),
     countries: indexById(input.countries, 'Country'),
     coaches: indexById(input.coaches, 'Coach'),
     players: indexById(input.players, 'Player'),
@@ -608,13 +615,15 @@ export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorld
   }
 
   const patched = { ...world, ...remainingPatch, ...worldPatch } as GameWorld
-  const updated = (worldPatch.coaches !== undefined || worldPatch.players !== undefined || worldPatch.staffPeopleById !== undefined)
+  const profilesChanged = worldPatch.coaches !== undefined || worldPatch.players !== undefined || worldPatch.staffPeopleById !== undefined
+  const withPersonRoots = profilesChanged && worldPatch.persons === undefined ? { ...patched, personsById: synchronizePersonRoots(patched) } : patched
+  const updated = profilesChanged
     ? {
-        ...patched,
-        personalitiesByPersonId: peopleProfiles([...Object.values(patched.coaches), ...Object.values(patched.players), ...Object.values(patched.staffPeopleById)], patched.personalitiesByPersonId, generatePersonality),
-        moraleByPersonId: peopleProfiles([...Object.values(patched.coaches), ...Object.values(patched.players), ...Object.values(patched.staffPeopleById)], patched.moraleByPersonId, createMoraleProfile),
+        ...withPersonRoots,
+        personalitiesByPersonId: peopleProfiles([...Object.values(withPersonRoots.coaches), ...Object.values(withPersonRoots.players), ...Object.values(withPersonRoots.staffPeopleById)], withPersonRoots.personalitiesByPersonId, generatePersonality),
+        moraleByPersonId: peopleProfiles([...Object.values(withPersonRoots.coaches), ...Object.values(withPersonRoots.players), ...Object.values(withPersonRoots.staffPeopleById)], withPersonRoots.moraleByPersonId, createMoraleProfile),
       }
-    : patched
+    : withPersonRoots
   validateWorld(updated)
   return updated
 }
@@ -638,7 +647,7 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
 const collectionPatchTargets: Readonly<Record<string, string>> = {
   governanceInstitutions: 'governanceInstitutionsById', governanceUniverseProfiles: 'governanceUniverseProfilesById', governanceBodies: 'governanceBodiesById', governanceAppointments: 'governanceAppointmentsById', governanceAuthorityGrants: 'governanceAuthorityGrantsById', governanceExternalRelationships: 'governanceExternalRelationshipsById', governanceExpectationPeriods: 'governanceExpectationPeriodsById', governanceObjectives: 'governanceObjectivesById',
   governanceManagerEvaluationPeriods: 'governanceManagerEvaluationPeriodsById', governanceManagerEvaluations: 'governanceManagerEvaluationsById', governanceJobSecurityTransitions: 'governanceJobSecurityTransitionsById', governanceDecisions: 'governanceDecisionsById', governanceDecisionParticipationGrants: 'governanceDecisionParticipationGrantsById', governanceDecisionEvents: 'governanceDecisionEventsById', governanceMeetings:'governanceMeetingsById', governanceMeetingParticipants:'governanceMeetingParticipantsById', governanceMeetingAgendaItems:'governanceMeetingAgendaItemsById', governanceMeetingEvents:'governanceMeetingEventsById', governanceRequests:'governanceRequestsById', governanceRequestEvents:'governanceRequestEventsById', governanceCommitments:'governanceCommitmentsById', governanceCommitmentEvents:'governanceCommitmentEventsById',
-  countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
+  persons: 'personsById', countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
 }
 
 const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unknown>> = {
@@ -675,6 +684,7 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
 function validateWorld(world: GameWorld): void {
   requireEntity(world.seasons, world.currentSeasonId, 'Current season')
   requireEntity(world.coaches, world.userCoachId, 'User coach')
+  validatePersons(world)
   validateGovernance(world)
 
   for (const coach of Object.values(world.coaches)) {
@@ -1308,6 +1318,123 @@ function indexById<Id extends string, Entity extends { readonly id: Id }>(
   }
 
   return Object.freeze(indexed)
+}
+
+function synchronizePersonRoots(world: GameWorld): Readonly<Record<import('@/domain/ids').PersonId, Person>> {
+  const derived = derivePersons({
+    ...world,
+    coaches: Object.values(world.coaches),
+    players: Object.values(world.players),
+    staffPeople: Object.values(world.staffPeopleById),
+  } as unknown as CreateGameWorldInput)
+  const previous = new Map(Object.values(world.personsById).map((person) => [person.id, person]))
+  const merged = new Map(derived.map((person) => {
+    const prior = previous.get(person.id)
+    const preservedRefs = prior?.profileRefs.filter((ref) => ref.kind === 'official' || ref.kind === 'agent' || ref.kind === 'mediaPerson') ?? []
+    return [person.id, preservedRefs.length === 0 ? person : { ...person, profileRefs: [...person.profileRefs, ...preservedRefs] }] as const
+  }))
+  return indexById([...merged.values()], 'Person')
+}
+
+function derivePersons(input: CreateGameWorldInput): readonly Person[] {
+  type PersonCandidate = {
+    readonly id: import('@/domain/ids').PersonId
+    readonly firstName: string
+    readonly lastName: string
+    readonly gender?: import('@/domain/primitives').Gender
+    readonly dateOfBirth?: GameDate
+    readonly nationalityIds?: readonly import('@/domain/ids').CountryId[]
+    readonly physical?: Person['physical']
+    readonly profile: Person['profileRefs'][number]
+  }
+  const candidates: readonly PersonCandidate[] = [
+    ...input.coaches.map((coach) => ({
+      id: coach.personId ?? personIdForProfile('coach', coach.id),
+      firstName: coach.firstName,
+      lastName: coach.lastName,
+      gender: coach.gender,
+      nationalityIds: [coach.nationalityId],
+      profile: { kind: 'coach' as const, profileId: coach.id },
+    })),
+    ...input.players.map((player) => ({
+      id: player.personId ?? personIdForProfile('player', player.id),
+      firstName: player.firstName,
+      lastName: player.lastName,
+      gender: player.gender,
+      dateOfBirth: player.bio.dateOfBirth,
+      nationalityIds: [player.nationalityId],
+      physical: {
+        heightCm: player.bio.heightCm,
+        weightKg: player.bio.weightKg,
+        wingspanCm: player.bio.wingspanCm,
+        standingReachCm: player.bio.standingReachCm,
+      },
+      profile: { kind: 'player' as const, profileId: player.id },
+    })),
+    ...(input.staffPeople ?? []).map((staff) => ({
+      id: staff.personId ?? personIdForProfile('staff', staff.id),
+      firstName: staff.identity.firstName,
+      lastName: staff.identity.lastName,
+      ...(staff.identity.dateOfBirth === undefined ? {} : { dateOfBirth: staff.identity.dateOfBirth }),
+      ...(staff.identity.nationality === undefined ? {} : { nationalityIds: [staff.identity.nationality as import('@/domain/ids').CountryId] }),
+      profile: { kind: 'staff' as const, profileId: staff.id },
+    })),
+  ]
+  const grouped = new Map<string, {
+    readonly id: import('@/domain/ids').PersonId
+    readonly firstName: string
+    readonly lastName: string
+    readonly gender?: import('@/domain/primitives').Gender
+    readonly dateOfBirth?: GameDate
+    readonly nationalityIds: readonly import('@/domain/ids').CountryId[]
+    readonly physical?: Person['physical']
+    readonly profileRefs: Person['profileRefs']
+  }>()
+  for (const candidate of candidates) {
+    const existing = grouped.get(candidate.id)
+    if (existing !== undefined) {
+      if (existing.firstName !== candidate.firstName || existing.lastName !== candidate.lastName) throw new GameWorldValidationError(`Person ${candidate.id} has conflicting identity data`)
+      if (existing.profileRefs.some((ref) => ref.kind === candidate.profile.kind && ref.profileId === candidate.profile.profileId)) continue
+      grouped.set(candidate.id, { ...existing, profileRefs: [...existing.profileRefs, candidate.profile] })
+      continue
+    }
+    grouped.set(candidate.id, {
+      id: candidate.id,
+      firstName: candidate.firstName,
+      lastName: candidate.lastName,
+      ...(candidate.gender === undefined ? {} : { gender: candidate.gender }),
+      ...(candidate.dateOfBirth === undefined ? {} : { dateOfBirth: candidate.dateOfBirth }),
+      nationalityIds: candidate.nationalityIds ?? [],
+      ...(candidate.physical === undefined ? {} : { physical: candidate.physical }),
+      profileRefs: [candidate.profile],
+    })
+  }
+  return [...grouped.values()].map(createPerson)
+}
+
+function validatePersons(world: GameWorld): void {
+  for (const person of Object.values(world.personsById)) {
+    createPerson(person)
+    for (const ref of person.profileRefs) {
+      const profile = ref.kind === 'player'
+        ? world.players[ref.profileId as PlayerId]
+        : ref.kind === 'coach'
+          ? world.coaches[ref.profileId as CoachId]
+          : ref.kind === 'staff'
+            ? world.staffPeopleById[ref.profileId as StaffPersonId]
+            : undefined
+      if (profile === undefined && (ref.kind === 'player' || ref.kind === 'coach' || ref.kind === 'staff')) throw new GameWorldValidationError(`Person ${person.id} references missing ${ref.kind} profile ${ref.profileId}`)
+      if (profile !== undefined && 'personId' in profile && profile.personId !== undefined && profile.personId !== person.id) throw new GameWorldValidationError(`Person ${person.id} does not match ${ref.kind} profile ${ref.profileId}`)
+    }
+  }
+  for (const coach of Object.values(world.coaches)) requirePersonRoot(world, coach.personId ?? personIdForProfile('coach', coach.id), 'coach', coach.id)
+  for (const player of Object.values(world.players)) requirePersonRoot(world, player.personId ?? personIdForProfile('player', player.id), 'player', player.id)
+  for (const staff of Object.values(world.staffPeopleById)) requirePersonRoot(world, staff.personId ?? personIdForProfile('staff', staff.id), 'staff', staff.id)
+}
+
+function requirePersonRoot(world: GameWorld, personId: import('@/domain/ids').PersonId, kind: import('@/domain/person').PersonProfileKind, profileId: string): void {
+  const person = world.personsById[personId]
+  if (person === undefined || !person.profileRefs.some((ref) => ref.kind === kind && ref.profileId === profileId)) throw new GameWorldValidationError(`${kind} profile ${profileId} is missing Person root ${personId}`)
 }
 
 function indexHumanStatesByContextId(states: readonly StaffHumanState[]): Readonly<Record<StaffHumanContextId, StaffHumanState>> {

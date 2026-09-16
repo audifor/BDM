@@ -5,6 +5,7 @@ type EntityId<Name extends string> = string & {
 }
 
 export type CoachId = EntityId<'CoachId'>
+export type PersonId = EntityId<'PersonId'>
 export type PlayerId = EntityId<'PlayerId'>
 export type TeamId = EntityId<'TeamId'>
 export type CompetitionId = EntityId<'CompetitionId'>
@@ -44,6 +45,7 @@ function generateId(): string {
 }
 
 export const coachIdFromString = (value: string): CoachId => idFromString<CoachId>(value, 'CoachId')
+export const personIdFromString = (value: string): PersonId => idFromString<PersonId>(value, 'PersonId')
 export const playerIdFromString = (value: string): PlayerId => idFromString<PlayerId>(value, 'PlayerId')
 export const teamIdFromString = (value: string): TeamId => idFromString<TeamId>(value, 'TeamId')
 export const competitionIdFromString = (value: string): CompetitionId =>

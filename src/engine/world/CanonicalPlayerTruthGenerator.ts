@@ -2,10 +2,12 @@ import type { PlayerId } from '@/domain/ids'
 import {
   CANONICAL_RATING_KEYS,
   createDevelopmentProfile,
+  migrateLegacyCanonicalRatingsToTruth,
   type CanonicalRatingKey,
   type PlayerDevelopmentProfile,
   type PlayerRatings,
 } from '@/domain/player'
+import { PLAYER_TRUTH_RATING_KEYS } from '@/domain/player/PlayerTruthCatalog'
 import type { BasketballPosition } from '@/domain/primitives'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 
@@ -22,12 +24,13 @@ export function generateCanonicalRatings(seed: number, playerId: PlayerId, posit
   const random = new SeededRandomSource(hashStringToSeed(`canonical-player-truth-v2:${seed}:${playerId}`))
   const center = random.nextInt(minimum, maximum)
   const bias = positionBias[position]
-  return Object.fromEntries(CANONICAL_RATING_KEYS.map((key) => [key, clamp(center + (bias[key] ?? 0) + random.nextInt(-9, 9))])) as PlayerRatings
+  const legacyRatings = Object.fromEntries(CANONICAL_RATING_KEYS.map((key) => [key, clamp(center + (bias[key] ?? 0) + random.nextInt(-9, 9))])) as Record<CanonicalRatingKey, number>
+  return migrateLegacyCanonicalRatingsToTruth(legacyRatings) as PlayerRatings
 }
 
 export function generateCanonicalDevelopmentProfile(seed: number, playerId: PlayerId, ratings: PlayerRatings, age: number): PlayerDevelopmentProfile {
   const random = new SeededRandomSource(hashStringToSeed(`canonical-development-v2:${seed}:${playerId}`))
-  const average = CANONICAL_RATING_KEYS.reduce((sum, key) => sum + ratings[key], 0) / CANONICAL_RATING_KEYS.length
+  const average = PLAYER_TRUTH_RATING_KEYS.reduce((sum, key) => sum + ratings[key], 0) / PLAYER_TRUTH_RATING_KEYS.length
   const stage = age <= 20 ? 'early' : age <= 24 ? 'developing' : age <= 30 ? 'prime' : 'declining'
   const headroom = stage === 'early' ? random.nextInt(12, 25) : stage === 'developing' ? random.nextInt(6, 18) : stage === 'prime' ? random.nextInt(1, 8) : 0
   const ceiling = clamp(average + headroom)

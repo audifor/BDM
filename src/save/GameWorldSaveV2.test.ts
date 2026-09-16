@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { getNextScheduledGame, updateGameWorld, type GameWorld } from '@/domain/world'
-import { CANONICAL_RATING_KEYS, TENDENCY_KEYS, canonicalizeLegacyRatings } from '@/domain/player'
+import { CANONICAL_RATING_KEYS, PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS, TENDENCY_KEYS, canonicalizeLegacyRatings } from '@/domain/player'
 import { playerIdFromString } from '@/domain/ids'
 import { organizationIdForTeam, staffPersonIdFromString, teamStaffAssignmentIdFromString, type TeamId } from '@/domain/ids'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
@@ -19,8 +19,8 @@ describe('GameWorldSaveV2', () => {
     const world = createNewGame(); const saved = serializeGameWorldV2(world, savedAt)
     expect(saved.schemaVersion).toBe(2)
     const player = saved.payload.players[0] as { basketball: { ratings: Record<string, number>; tendencies: Record<string, number> } }
-    expect(Object.keys(player.basketball.ratings)).toEqual(CANONICAL_RATING_KEYS)
-    expect(Object.keys(player.basketball.tendencies)).toEqual(TENDENCY_KEYS)
+    expect(Object.keys(player.basketball.ratings)).toEqual(PLAYER_TRUTH_RATING_KEYS)
+    expect(Object.keys(player.basketball.tendencies)).toEqual(PLAYER_TRUTH_TENDENCY_KEYS)
     expect(deserializeGameWorldV2(saved).players).toEqual(world.players)
   })
   it('round-trips sparse tactical and game-plan state with neutral legacy defaults', () => {
@@ -57,15 +57,15 @@ describe('GameWorldSaveV2', () => {
   it('enforces independent closed V2 player contracts', () => {
     const world = createNewGame(); const saved = serializeGameWorldV2(world, savedAt)
     const first = saved.payload.players[0] as { basketball: { ratings: Record<string, unknown>; tendencies: Record<string, unknown> }; development: { ceilings: Record<string, unknown> } }
-    expect(Object.keys(parseCanonicalRatingsV2(first.basketball.ratings))).toHaveLength(35)
+    expect(Object.keys(parseCanonicalRatingsV2(first.basketball.ratings))).toHaveLength(80)
     expect(parsePlayerTendenciesV2(first.basketball.tendencies)).toMatchObject(first.basketball.tendencies)
     for (const mutate of [
-      (copy: typeof saved) => { delete (copy.payload.players[0] as { basketball: { ratings: Record<string, unknown> } }).basketball.ratings.midRangeShooting },
+      (copy: typeof saved) => { delete (copy.payload.players[0] as { basketball: { ratings: Record<string, unknown> } }).basketball.ratings.FREE_THROW },
       (copy: typeof saved) => { (copy.payload.players[0] as { basketball: { ratings: Record<string, unknown> } }).basketball.ratings.unknown = 50 },
-      (copy: typeof saved) => { (copy.payload.players[0] as { basketball: { ratings: Record<string, unknown> } }).basketball.ratings.midRangeShooting = 0 },
-      (copy: typeof saved) => { (copy.payload.players[0] as { basketball: { ratings: Record<string, unknown> } }).basketball.ratings.midRangeShooting = 101 },
-      (copy: typeof saved) => { (copy.payload.players[0] as { basketball: { ratings: Record<string, unknown> } }).basketball.ratings.midRangeShooting = Number.NaN },
-      (copy: typeof saved) => { delete (copy.payload.players[0] as { basketball: { tendencies: Record<string, unknown> } }).basketball.tendencies.drive },
+      (copy: typeof saved) => { (copy.payload.players[0] as { basketball: { ratings: Record<string, unknown> } }).basketball.ratings.FREE_THROW = 0 },
+      (copy: typeof saved) => { (copy.payload.players[0] as { basketball: { ratings: Record<string, unknown> } }).basketball.ratings.FREE_THROW = 101 },
+      (copy: typeof saved) => { (copy.payload.players[0] as { basketball: { ratings: Record<string, unknown> } }).basketball.ratings.FREE_THROW = Number.NaN },
+      (copy: typeof saved) => { delete (copy.payload.players[0] as { basketball: { tendencies: Record<string, unknown> } }).basketball.tendencies.SHOT_FREQUENCY },
       (copy: typeof saved) => { (copy.payload.players[0] as { basketball: { tendencies: Record<string, unknown> } }).basketball.tendencies.unknown = 50 },
       (copy: typeof saved) => { delete (copy.payload.players[0] as { development: { ceilings: Record<string, unknown> } }).development.ceilings.shooting },
       (copy: typeof saved) => { (copy.payload.players[0] as { development: { ceilings: Record<string, unknown> } }).development.ceilings.unknown = 70 },

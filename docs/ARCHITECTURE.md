@@ -51,6 +51,14 @@ Domain entities are plain serializable data created through validating factories
 Relationships have one canonical direction: teams hold their roster and optional
 coach reference, while players and coaches do not hold a team reference.
 
+Human identity is rooted in the serializable `Person` collection. `Player`,
+`Coach`, and `StaffPerson` are role profiles that reference a stable `PersonId`;
+the runtime keeps existing field names as compatibility surfaces while new save
+data persists the shared person root. A person may reference player, staff,
+coach, official, agent, and media-person profiles without duplicating human
+identity. Coach RPG remains available through the explicit coaching Staff-role
+projection.
+
 `Competition` is the enduring institution and `Season` is one dated edition of it.
 `Game` is independent of `MatchEngine`; it records only a scheduled/completed state
 and a completed game's basic final score.
@@ -231,10 +239,10 @@ been removed from productive simulation.
 
 ## Player basketball domain
 
-Player now persists a `BasketballProfile` with one primary position and seven
-source ratings. No overall is stored. MatchEngine does not consume these ratings
-yet; WorldGenerator uses a temporary constant profile only to satisfy the new
-contract until its procedural player-profile migration in the next milestone.
+Player now persists a `BasketballProfile` with one primary position, the exact
+80-key World DB rating truth, and the exact 40-key tendency truth. No overall is
+stored. The former 35-key and seven-key rating surfaces, plus the former
+21-key tendency surface, are explicit non-persisted compatibility projections.
 
 WorldGenerator now creates deterministic player profiles with a provisional
 2 PG / 3 SG / 2 SF / 3 PF / 2 C roster composition. Each profile uses a
@@ -297,14 +305,13 @@ attribution uses the separate deterministic stream
 `match-actors-v1:${gameId}`, so assists and rebounder identity do not alter the
 established match-outcome RNG.
 
-The seven persisted bootstrap ratings are not BDM's final attribute model.
-Application adapts them into transient `MatchPlayerProfile` signals before a
-match, so MatchEngine consumes usage, rim attack, shooting, creation, ball
-security, defensive signals, and rebound impact rather than reaching into Player
-ratings. Rebound impact currently derives from rebounding and athleticism. Future
-larger attribute sets, traits, perks, tendencies, and contextual modifiers can
-change this adapter or add composable modifiers without changing the possession
-loop. There is no persisted overall.
+The 80 persisted ratings and 40 tendencies are BDM's current canonical Player
+Truth model. Application adapts the rating truth into transient
+`MatchPlayerProfile` signals before a match, so MatchEngine consumes usage, rim
+attack, shooting, creation, ball security, defensive signals, and rebound
+impact rather than reaching into Player ratings. Legacy consumers use explicit
+35-key or seven-key projections; they are not written back as truth. There is
+no persisted overall.
 
 Player-driven offense uses a dedicated deterministic decision RNG
 (`match-decisions-v1:${gameId}`) for weighted offensive-actor and shot-zone
@@ -670,7 +677,7 @@ New Alpha players receive deterministic adult bios relative to the earliest Seas
 
 ## Player development v1
 
-Offseason development is a pure Engine step invoked exactly once by `startNextSeason`, using each player's age at the target Season start. It changes only canonical bootstrap ratings; IDs, bio, rosters, coaches, logs, and history remain unchanged. The age curve and growth-room calculation are explicitly provisional and do not represent Potential.
+Offseason development is a pure Engine step invoked exactly once by `startNextSeason`, using each player's age at the target Season start. It changes only the canonical 80-key Player rating truth; IDs, bio, rosters, coaches, logs, tendencies, and history remain unchanged. The age curve and growth-room calculation are explicitly provisional and do not represent Potential.
 
 Each Player/rating/season transition has an independent deterministic seed. This makes development independent of Player and rating-key ordering, and ensures adding a future rating cannot perturb existing rolls. Development results are transient diagnostics; only the updated Player ratings persist in Save V1. No development happens on load, calendar advance, birthday, or season finalization.
 

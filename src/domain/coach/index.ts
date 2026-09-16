@@ -1,2 +1,2 @@
-export { createCoach } from './Coach'
-export type { Coach, CreateCoachInput } from './Coach'
+export { createCoach, projectCoachToStaffRole } from './Coach'
+export type { Coach, CoachStaffRoleProjection, CreateCoachInput } from './Coach'

@@ -1,4 +1,4 @@
-import type { CountryId, PlayerId } from '@/domain/ids'
+import type { CountryId, PersonId, PlayerId } from '@/domain/ids'
 import { parseGameDate, type GameDate } from '@/domain/date'
 import {
   requireBasketballPosition,
@@ -131,6 +131,8 @@ export type PlayerTendencies = Readonly<PlayerTruthTendencies & LegacyPlayerTend
 
 export interface Player {
   readonly id: PlayerId
+  /** Canonical human root reference; legacy callers may omit it at the input boundary. */
+  readonly personId?: PersonId
   readonly firstName: string
   readonly lastName: string
   readonly gender: Gender
@@ -174,6 +176,7 @@ export interface BasketballProfile {
 
 export interface CreatePlayerInput {
   id: PlayerId
+  readonly personId?: PersonId
   firstName: string
   lastName: string
   gender: Gender
@@ -218,6 +221,7 @@ export function createPlayer(input: CreatePlayerInput): Player {
   )
   const player: Omit<Player, 'potential'> = {
     id: requireNonEmptyString(input.id, 'Player id') as PlayerId,
+    personId: input.personId ?? (`person:player:${input.id}` as PersonId),
     firstName: requireNonEmptyString(input.firstName, 'Player first name'),
     lastName: requireNonEmptyString(input.lastName, 'Player last name'),
     gender: requireGender(input.gender),
@@ -248,17 +252,20 @@ function normalizeRatings(
   input: CreatePlayerInput['basketball']['ratings'],
 ): PlayerRatings {
   let truth: PlayerTruthRatings
+  let legacy35: LegacyCanonicalPlayerRatings | undefined
   if (isPlayerTruthRatings(input)) {
     validatePlayerTruthRatings(input)
     truth = pickPlayerTruthRatings(input)
   } else if (isLegacyCanonicalRatings(input)) {
     validateLegacyCanonicalRatings(input)
     truth = migrateLegacyCanonicalRatingsToTruth(input)
+    legacy35 = input
   } else {
     validateLegacyRatings(input)
-    truth = migrateLegacyCanonicalRatingsToTruth(canonicalizeLegacyRatings35(id, input))
+    legacy35 = canonicalizeLegacyRatings35(id, input)
+    truth = migrateLegacyCanonicalRatingsToTruth(legacy35)
   }
-  return attachRatingCompatibility(truth)
+  return attachRatingCompatibility(truth, legacy35)
 }
 
 function normalizeTendencies(
@@ -402,9 +409,8 @@ function variation(id: string, key: string): number {
 /** V1 seven-signal migration directly into the current 80-rating Player Truth. */
 export function canonicalizeLegacyRatings(id: PlayerId, legacy: LegacyPlayerRatings): PlayerRatings {
   validateLegacyRatings(legacy)
-  return attachRatingCompatibility(
-    migrateLegacyCanonicalRatingsToTruth(canonicalizeLegacyRatings35(id, legacy)),
-  )
+  const legacy35 = canonicalizeLegacyRatings35(id, legacy)
+  return attachRatingCompatibility(migrateLegacyCanonicalRatingsToTruth(legacy35), legacy35)
 }
 
 function canonicalizeLegacyRatings35(
@@ -590,7 +596,9 @@ export function legacyCanonicalRatingSignals(
 
 /** Explicit, pure V1 compatibility projection. It is never stored on PlayerTruth. */
 export function legacyRatingSignals(ratings: PlayerRatings): LegacyPlayerRatings {
-  const legacy = legacyCanonicalRatingSignals(ratings)
+  const legacy = CANONICAL_RATING_KEYS.every((key) => Object.hasOwn(ratings, key))
+    ? ratings as LegacyCanonicalPlayerRatings
+    : legacyCanonicalRatingSignals(ratings)
   return {
     finishing: average(
       legacy.rimFinishing,
@@ -641,13 +649,13 @@ export function legacyRatingSignals(ratings: PlayerRatings): LegacyPlayerRatings
   }
 }
 
-function attachRatingCompatibility(truth: PlayerTruthRatings): PlayerRatings {
+function attachRatingCompatibility(truth: PlayerTruthRatings, sourceLegacy35?: LegacyCanonicalPlayerRatings): PlayerRatings {
   const ratings = { ...truth } as Record<string, number>
-  const legacy35 = legacyCanonicalRatingSignals(truth)
+  const legacy35 = sourceLegacy35 ?? legacyCanonicalRatingSignals(truth)
   const temporary = ratings as unknown as PlayerRatings
   const legacy7 = legacyRatingSignalsFrom35(legacy35)
   defineNonEnumerableSignals(ratings, legacy35)
-  defineNonEnumerableSignals(ratings, legacy7)
+  defineNonEnumerableSignals(ratings, legacy7 as unknown as Readonly<Record<string, number>>)
   return temporary
 }
 
@@ -713,6 +721,7 @@ function defineNonEnumerableSignals(
   signals: Readonly<Record<string, number>>,
 ): void {
   for (const [key, value] of Object.entries(signals)) {
+    if (Object.hasOwn(target, key)) continue
     Object.defineProperty(target, key, {
       configurable: false,
       enumerable: false,

@@ -34,6 +34,8 @@ describe('GameWorld', () => {
     expect(world.schemaVersion).toBe(GAME_WORLD_SCHEMA_VERSION)
     expect(world.currentDate).toBe(input.currentDate)
     expect(world.userCoachId).toBe(input.userCoachId)
+    expect(Object.keys(world.personsById)).toHaveLength(3)
+    expect(world.personsById['person:coach:coach-user' as never]!.profileRefs).toEqual([{ kind: 'coach', profileId: 'coach-user' }])
     expect(world.players[playerIdFromString('player-home')]).toBe(input.players[0])
     expect(world.teams[teamIdFromString('team-home')]).toBe(input.teams[0])
   })
