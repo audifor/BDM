@@ -1,4 +1,5 @@
 mod world_db;
+mod world_db_bootstrap;
 mod world_db_matches;
 mod world_db_rules;
 mod world_db_selection;
@@ -85,6 +86,19 @@ fn load_world_db_match_realizations_v1(
     competition_season_id: String,
 ) -> Result<world_db_matches::WorldDbMatchRealizationBundleV1, String> {
     world_db_matches::load_match_realizations_v1(&database_path, &competition_season_id)
+}
+
+#[tauri::command]
+fn load_world_db_game_bootstrap_slice_v1(
+    database_path: String,
+    competition_season_id: String,
+    ecosystem_id: String,
+) -> Result<world_db_bootstrap::WorldDbGameBootstrapSliceV1, String> {
+    world_db_bootstrap::load_game_bootstrap_slice_v1(
+        &database_path,
+        &competition_season_id,
+        &ecosystem_id,
+    )
 }
 
 #[tauri::command]
@@ -220,6 +234,7 @@ pub fn run() {
             load_world_db_selection_catalog_v1,
             load_world_db_competition_bundle_v1,
             load_world_db_match_realizations_v1,
+            load_world_db_game_bootstrap_slice_v1,
             load_world_db_competition_runtime_bundle_v1
         ])
         .run(tauri::generate_context!())

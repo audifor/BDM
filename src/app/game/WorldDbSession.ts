@@ -7,6 +7,7 @@ import {
 } from '@/domain/world'
 import type { WorldDbDatabaseInfoV1 } from '@/domain/worldDb/DatabaseInfo'
 import type { WorldDbSelectionCatalogV1 } from '@/domain/worldDb/SelectionCatalog'
+import { validateWorldDbGameBootstrapSelectionV1, type WorldDbGameBootstrapSelectionV1 } from '@/domain/worldDb/GameBootstrap'
 import {
   createWorldCompetitionCatalog,
   type WorldCompetitionCatalog,
@@ -18,6 +19,7 @@ import {
   loadWorldDbCompetitionPlanningContextsV1,
   loadWorldDbCompetitionRuntimeCatalogV1,
 } from './WorldDbCompetitionContextLoader'
+import { bootstrapGameWorldFromWorldDb } from './WorldDbGameBootstrap'
 
 export interface WorldDbSessionAccessV1 {
   readonly repository: WorldDatabaseRepository
@@ -138,6 +140,19 @@ export class WorldDbSessionV1 {
       competitionPlanIds: [],
       competitionSeasonIds: ids,
     })
+  }
+
+  async bootstrapGameWorld(selection: WorldDbGameBootstrapSelectionV1): Promise<GameWorld> {
+    this.requireOpen()
+    const catalog = await this.discoverSelectionCatalog()
+    validateWorldDbGameBootstrapSelectionV1(catalog, selection)
+    this.assertSeasonSelection([selection.competitionSeasonId])
+    const slice = await this.repository.loadGameBootstrapSlice(this.databasePath, selection.competitionSeasonId, selection.ecosystemId)
+    if (slice.source.databaseId !== this.requireDatabaseInfo().source.databaseId || slice.source.schemaId !== this.requireDatabaseInfo().source.schemaId) {
+      throw new Error('World DB bootstrap slice source identity mismatch')
+    }
+    if (slice.season.competitionSeasonId !== selection.competitionSeasonId) throw new Error(`World DB bootstrap competition season mismatch: expected ${selection.competitionSeasonId}, received ${slice.season.competitionSeasonId}`)
+    return bootstrapGameWorldFromWorldDb(slice, selection, runtimeBundlePin(this.requireRuntimeBundle()))
   }
 
   /**

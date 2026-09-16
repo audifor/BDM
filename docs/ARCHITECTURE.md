@@ -177,6 +177,15 @@ derived projections with no persisted date index. The user team is derived throu
 
 ## First playable prototype
 
+The World DB bootstrap path is `WorldDbSessionV1.bootstrapGameWorld`: it validates a
+canonical ecosystem/competition/season/team selection, asks the native repository for
+that competition-season's teams, active roster players, runtime ratings and scheduled
+matches, then materializes the existing `GameWorld`. World DB IDs remain the runtime
+entity IDs. The external session and source identity stay outside Save/GameWorld, while
+the application/UI consumes the resulting normal world without World DB knowledge.
+The current GameWorld has no mandatory staff rows, so staff loading is intentionally
+deferred; no overall rating is created.
+
 `app/game` is the application boundary for the first UI loop. It creates the
 prototype world and schedule, coordinates MatchEngine with result application,
 and resolves today's games before requesting CalendarEngine to advance the date.

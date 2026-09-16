@@ -99,6 +99,7 @@ function repository(
     loadSelectionCatalog: vi.fn(async () => selectionCatalog(info.source.databaseId)),
     loadCompetitionSeason: vi.fn(async (_path, id) => competitionBundle(id)),
     loadMatchRealizations: vi.fn(async (_path, id) => matchBundle(id)),
+    loadGameBootstrapSlice: vi.fn(),
     loadCompetitionRuntimeBundle: vi.fn(async () => bundle),
   }
 }

@@ -35,6 +35,7 @@ export {
   type WorldDbSessionAccessV1,
   type WorldDbSessionSnapshotV1,
 } from './WorldDbSession'
+export { bootstrapGameWorldFromWorldDb } from './WorldDbGameBootstrap'
 export {
   createPrototypeGameRandom,
   completeMatch,
