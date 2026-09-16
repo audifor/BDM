@@ -1,4 +1,5 @@
 mod world_db;
+mod world_db_discovery;
 mod world_db_matches;
 mod world_db_rules;
 mod world_db_session;
@@ -61,6 +62,13 @@ fn inspect_world_db_v1(
     database_path: String,
 ) -> Result<world_db_session::WorldDbDatabaseInfoV1, String> {
     world_db_session::inspect_database_v1(&database_path)
+}
+
+#[tauri::command]
+fn discover_world_db_playable_v1(
+    database_path: String,
+) -> Result<world_db_discovery::WorldDbPlayableCatalogV1, String> {
+    world_db_discovery::discover_playable_catalog_v1(&database_path)
 }
 
 #[tauri::command]
@@ -209,6 +217,7 @@ pub fn run() {
             load_game_v1,
             get_save_info_v1,
             inspect_world_db_v1,
+            discover_world_db_playable_v1,
             load_world_db_competition_bundle_v1,
             load_world_db_match_realizations_v1,
             load_world_db_competition_runtime_bundle_v1
