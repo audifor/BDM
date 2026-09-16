@@ -1,0 +1,497 @@
+/*
+ * Coach · Development board.
+ * Cyan = system / information / progression. Gold = spend / develop / unlock.
+ * The two panels share one surface language: thin cyan edge plus corner ticks, floating directly
+ * on the workspace surface instead of sitting inside filled cards.
+ */
+
+.ng-coach-dev {
+  --ng-coach-common: #93a6b3;
+  --ng-coach-rare: #4da7d9;
+  --ng-coach-epic: #a78bfa;
+  --ng-coach-legendary: var(--ng-amber-bright);
+  display: grid;
+  grid-template-columns: minmax(0, 65fr) minmax(320px, 35fr);
+  gap: var(--ng-spacing-12);
+  align-items: stretch;
+  min-height: 100%;
+}
+
+/* ── Panels ── */
+
+.ng-coach-dev__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid rgba(22, 217, 243, 0.22);
+  border-radius: var(--ng-radius-panel);
+  background-color: transparent;
+  background-image:
+    linear-gradient(var(--ng-cyan), var(--ng-cyan)),
+    linear-gradient(var(--ng-cyan), var(--ng-cyan)),
+    linear-gradient(var(--ng-amber), var(--ng-amber)),
+    linear-gradient(var(--ng-amber), var(--ng-amber));
+  background-repeat: no-repeat;
+  background-size: 12px 1px, 1px 12px, 12px 1px, 1px 12px;
+  background-position:
+    8px 0,
+    0 8px,
+    calc(100% - 8px) 100%,
+    100% calc(100% - 8px);
+}
+
+.ng-coach-dev__panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ng-spacing-12);
+  padding: 7px 12px 6px;
+  border-bottom: 1px solid var(--bdm-border-subtle);
+}
+
+.ng-coach-dev__panel-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.ng-coach-dev__panel-title {
+  margin: 0;
+  font-family: var(--ng-font-display);
+  font-size: var(--ng-font-size-lg);
+  font-weight: 700;
+  letter-spacing: var(--ng-track-display);
+  text-transform: uppercase;
+  color: var(--ng-text-primary);
+}
+
+.ng-coach-dev__panel-subtitle {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  color: var(--ng-text-muted);
+}
+
+.ng-coach-dev__panel-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.ng-coach-dev__stat {
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: var(--ng-track-chrome);
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ng-coach-dev__stat-chip {
+  padding: 2px 7px;
+  border: 1px solid rgba(22, 217, 243, 0.24);
+  border-radius: 2px;
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ng-cyan);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ng-coach-dev__stat-chip--gold {
+  border-color: rgba(230, 183, 77, 0.32);
+  color: var(--ng-amber-bright);
+}
+
+.ng-coach-dev__panel-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ng-spacing-8);
+  padding: 5px 12px;
+  border-top: 1px solid var(--bdm-border-subtle);
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: var(--ng-track-chrome);
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.ng-coach-dev__foot-value {
+  color: var(--ng-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.ng-coach-dev__failure {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 12px;
+  border-top: 1px solid var(--ng-border-negative);
+  background-color: rgba(232, 93, 103, 0.06);
+  color: var(--ng-negative);
+  font-size: 11px;
+}
+
+.ng-coach-dev__failure::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ng-negative);
+  box-shadow: 0 0 6px rgba(232, 93, 103, 0.5);
+}
+
+/* ── Rows ── */
+
+.ng-coach-dev__list {
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ng-coach-dev__list > li:last-child {
+  border-bottom: 0;
+}
+
+.ng-coach-dev__skill,
+.ng-coach-dev__perk {
+  border-bottom: 1px solid rgba(116, 150, 168, 0.08);
+}
+
+.ng-coach-dev__skill:nth-child(odd),
+.ng-coach-dev__perk:nth-child(odd) {
+  background-color: rgba(255, 255, 255, 0.012);
+}
+
+.ng-coach-dev__glyph {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(22, 217, 243, 0.26);
+  border-radius: var(--ng-radius-sm);
+  background-color: rgba(22, 217, 243, 0.055);
+  color: var(--ng-cyan);
+  box-shadow: var(--ng-glow-cyan-low);
+}
+
+.ng-coach-dev__glyph--perk {
+  width: 28px;
+  height: 28px;
+}
+
+.ng-coach-dev__glyph-svg {
+  display: block;
+}
+
+.ng-coach-dev__name {
+  font-family: var(--ng-font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  color: var(--ng-text-primary);
+  white-space: nowrap;
+}
+
+.ng-coach-dev__meta {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.ng-coach-dev__cost {
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: right;
+  white-space: nowrap;
+  color: rgba(230, 183, 77, 0.78);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Skills ── */
+
+.ng-coach-dev__skill {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 196px 54px auto;
+  align-items: center;
+  gap: var(--ng-spacing-12);
+  min-height: 37px;
+  padding: 2px 12px;
+}
+
+.ng-coach-dev__identity {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ng-coach-dev__rank {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.ng-coach-dev__rank-label {
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+  white-space: nowrap;
+}
+
+.ng-coach-dev__rank-track {
+  position: relative;
+  height: 6px;
+  border: 1px solid var(--bdm-border-subtle);
+  border-radius: 2px;
+  background-color: var(--ng-rating-bar-track);
+  overflow: hidden;
+}
+
+.ng-coach-dev__rank-track::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0 33.33%,
+    rgba(255, 255, 255, 0.09) 33.33% 33.4%
+  );
+}
+
+.ng-coach-dev__rank-fill {
+  display: block;
+  height: 100%;
+  background-image: linear-gradient(90deg, rgba(22, 217, 243, 0.5), var(--ng-cyan));
+  transition: width 140ms ease;
+}
+
+.ng-coach-dev__rank-value {
+  font-size: 11px;
+  color: var(--ng-text-secondary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ng-coach-dev__skill[data-maxed='true'] .ng-coach-dev__rank-fill {
+  background-image: linear-gradient(90deg, rgba(230, 183, 77, 0.45), var(--ng-amber-bright));
+}
+
+/* ── Perks ── */
+
+.ng-coach-dev__perk {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 3px 12px;
+}
+
+.ng-coach-dev__perk-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ng-coach-dev__perk-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ng-coach-dev__perk-top .ng-coach-dev__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ng-coach-dev__perk-top .ng-coach-dev__cta {
+  flex: none;
+}
+
+.ng-coach-dev__rarity {
+  flex: none;
+  padding: 1px 5px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  font-family: var(--ng-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ng-coach-dev__requirements {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  color: var(--ng-text-muted);
+}
+
+.ng-coach-dev__perk-type {
+  color: var(--ng-text-faint);
+  letter-spacing: 0.06em;
+}
+
+.ng-coach-dev__perk[data-rarity='common'] .ng-coach-dev__rarity {
+  color: var(--ng-coach-common);
+}
+
+.ng-coach-dev__perk[data-rarity='rare'] .ng-coach-dev__rarity {
+  color: var(--ng-coach-rare);
+}
+
+.ng-coach-dev__perk[data-rarity='epic'] .ng-coach-dev__rarity {
+  color: var(--ng-coach-epic);
+}
+
+.ng-coach-dev__perk[data-rarity='legendary'] .ng-coach-dev__rarity {
+  color: var(--ng-coach-legendary);
+}
+
+.ng-coach-dev__perk[data-rarity='common'] .ng-coach-dev__glyph {
+  border-color: rgba(147, 166, 179, 0.3);
+  background-color: rgba(147, 166, 179, 0.06);
+  color: var(--ng-coach-common);
+  box-shadow: none;
+}
+
+.ng-coach-dev__perk[data-rarity='rare'] .ng-coach-dev__glyph {
+  border-color: rgba(77, 167, 217, 0.38);
+  background-color: rgba(77, 167, 217, 0.07);
+  color: var(--ng-coach-rare);
+  box-shadow: none;
+}
+
+.ng-coach-dev__perk[data-rarity='epic'] .ng-coach-dev__glyph {
+  border-color: rgba(167, 139, 250, 0.42);
+  background-color: rgba(167, 139, 250, 0.08);
+  color: var(--ng-coach-epic);
+  box-shadow: 0 0 8px rgba(167, 139, 250, 0.18);
+}
+
+.ng-coach-dev__perk[data-rarity='legendary'] .ng-coach-dev__glyph {
+  border-color: rgba(230, 183, 77, 0.45);
+  background-color: rgba(230, 183, 77, 0.08);
+  color: var(--ng-coach-legendary);
+  box-shadow: var(--ng-glow-amber-low);
+}
+
+.ng-coach-dev__perk[data-rarity='legendary'] {
+  background-image: linear-gradient(90deg, rgba(230, 183, 77, 0.055), transparent 62%);
+}
+
+.ng-coach-dev__perk[data-owned='true'] {
+  opacity: 0.78;
+}
+
+.ng-coach-dev__owned {
+  flex: none;
+  padding: 3px 8px;
+  border: 1px solid var(--ng-border-positive);
+  border-radius: var(--ng-radius-sm);
+  font-family: var(--ng-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ng-positive);
+  white-space: nowrap;
+}
+
+/* ── Progression action ── */
+
+.ng-coach-dev__cta {
+  padding: 3px 10px;
+  border: 1px solid rgba(230, 183, 77, 0.42);
+  border-radius: var(--ng-radius-sm);
+  background-color: rgba(230, 183, 77, 0.06);
+  color: var(--ng-amber-bright);
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.ng-coach-dev__cta:hover:not(:disabled) {
+  border-color: var(--ng-amber-bright);
+  background-color: rgba(230, 183, 77, 0.16);
+  box-shadow: var(--ng-glow-amber-low);
+}
+
+.ng-coach-dev__cta:focus-visible {
+  outline: 1px solid var(--ng-focus-ring);
+  outline-offset: 1px;
+}
+
+.ng-coach-dev__cta:disabled {
+  border-color: var(--bdm-border-subtle);
+  background-color: transparent;
+  color: var(--ng-text-disabled);
+  box-shadow: none;
+  cursor: default;
+}
+
+@media (max-width: 1400px) {
+  .ng-coach-dev__skill {
+    grid-template-columns: 34px minmax(0, 1fr) 164px 48px auto;
+    gap: var(--ng-spacing-8);
+  }
+}
+
+@media (max-width: 1100px) {
+  .ng-coach-dev {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .ng-coach-dev__skill {
+    grid-template-columns: 34px minmax(0, 1fr) 150px 46px auto;
+  }
+}
