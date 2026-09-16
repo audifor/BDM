@@ -5,6 +5,7 @@ import type { GameWorld } from '@/domain/world'
 import type { WorldDbCompetitionBundleV1 } from '@/domain/worldDb/CompetitionBundle'
 import type { WorldDbDatabaseInfoV1 } from '@/domain/worldDb/DatabaseInfo'
 import type { WorldDbMatchRealizationBundleV1 } from '@/domain/worldDb/MatchRealizationBundle'
+import type { WorldDbPlayableCatalogV1 } from '@/domain/worldDb/PlayableCatalog'
 import type { WorldDatabaseRepository } from '@/tauri/TauriWorldDatabaseRepository'
 
 import { WorldDbSessionV1 } from './WorldDbSession'
@@ -14,6 +15,22 @@ const databaseInfo: WorldDbDatabaseInfoV1 = {
   schemaVersion: 1,
   source: { databaseId: 'bdm_world_phase1a.db', schemaId: 'DDL-PHASE1-A' },
   competitionSeasonIds: ['season:cup', 'season:regular'],
+}
+const playableCatalog: WorldDbPlayableCatalogV1 = {
+  schemaVersion: 1,
+  source: databaseInfo.source,
+  ecosystems: [
+    {
+      competitionEcosystemId: 'ecosystem:spain',
+      code: 'ESP_M',
+      name: 'Spain Men',
+      gender: 'M',
+      levels: [],
+      units: [],
+      competitions: [],
+      teams: [],
+    },
+  ],
 }
 const runtimeBundle: WorldCompetitionRuntimeBundle = {
   bundleSchemaVersion: 1,
@@ -79,6 +96,7 @@ function repository(
 ): WorldDatabaseRepository {
   return {
     inspectDatabase: vi.fn(async () => info),
+    discoverPlayableCatalog: vi.fn(async () => playableCatalog),
     loadCompetitionSeason: vi.fn(async (_path, id) => competitionBundle(id)),
     loadMatchRealizations: vi.fn(async (_path, id) => matchBundle(id)),
     loadCompetitionRuntimeBundle: vi.fn(async () => bundle),
@@ -135,6 +153,34 @@ describe('WorldDbSessionV1', () => {
     expect(repo.inspectDatabase).toHaveBeenCalledWith(
       'C:/BDM_DB/DDL-PHASE1-A/output/bdm_world_phase1a.db',
     )
+  })
+
+  it('discovers the playable hierarchy once per open session', async () => {
+    const repo = repository()
+    const runtime = session(repo)
+    await runtime.open()
+
+    const first = await runtime.discoverPlayableCatalog()
+    const second = await runtime.discoverPlayableCatalog()
+
+    expect(first).toBe(playableCatalog)
+    expect(second).toBe(first)
+    expect(repo.discoverPlayableCatalog).toHaveBeenCalledTimes(1)
+    expect(repo.discoverPlayableCatalog).toHaveBeenCalledWith(
+      'C:/BDM_DB/DDL-PHASE1-A/output/bdm_world_phase1a.db',
+    )
+  })
+
+  it('rejects playable discovery from a different physical source identity', async () => {
+    const repo = repository()
+    repo.discoverPlayableCatalog = vi.fn(async () => ({
+      ...playableCatalog,
+      source: { ...playableCatalog.source, databaseId: 'other.db' },
+    }))
+    const runtime = session(repo)
+    await runtime.open()
+
+    await expect(runtime.discoverPlayableCatalog()).rejects.toThrow('discovery database identity mismatch')
   })
 
   it('rejects an incompatible database/runtime schema pair', async () => {
@@ -203,14 +249,17 @@ describe('WorldDbSessionV1', () => {
     const repo = repository()
     const runtime = session(repo)
     await runtime.open()
+    await runtime.discoverPlayableCatalog()
     runtime.close()
 
     expect(runtime.isOpen).toBe(false)
     expect(() => runtime.snapshot()).toThrow('session is closed')
 
     await runtime.reopen()
+    await runtime.discoverPlayableCatalog()
     expect(runtime.isOpen).toBe(true)
     expect(repo.inspectDatabase).toHaveBeenCalledTimes(2)
+    expect(repo.discoverPlayableCatalog).toHaveBeenCalledTimes(2)
   })
 
   it('rejects empty external paths before repository access', () => {
