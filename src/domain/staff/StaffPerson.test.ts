@@ -11,6 +11,11 @@ describe('StaffPerson',()=>{
   it('derives role proficiency for every role from centralized weights',()=>{for(const weights of Object.values(STAFF_ROLE_ATTRIBUTE_WEIGHTS))expect(Object.values(weights).reduce((sum,value)=>sum+value,0)).toBeCloseTo(1);expect(calculateStaffRoleProficiency(medical,'medical')).toBeGreaterThan(calculateStaffRoleProficiency(medical,'assistantCoach'));expect(()=>calculateStaffRoleProficiency(medical,'scout')).not.toThrow()})
   it('validates role assignment structure using the canonical StaffRoleId, without making role part of the person',()=>expect(createTeamStaffAssignment({id:teamStaffAssignmentIdFromString('assignment'),staffPersonId:medical.id,teamId:teamIdFromString('team'),role:'physiotherapist',assignedOn:createGameDate(2032,10,1)}).role).toBe('physiotherapist'))
   it('exposes StaffPerson as the canonical StaffProfile compatibility name with a Person root reference',()=>{expect(medical.personId).toBe('person:staff:staff-medical');expect(medical.professional.attributes.medicalKnowledge).toBe(90)})
+  it('accepts headCoach as the canonical coaching StaffProfile role',()=>{
+    const headCoach=createStaffPerson({...medical,id:staffPersonIdFromString('staff-head-coach'),marketRole:'headCoach',roleFamily:'coaching'})
+    expect(headCoach.marketRole).toBe('headCoach')
+    expect(headCoach.roleFamily).toBe('coaching')
+  })
   it('regression: accepts a non-legacy canonical StaffRoleId as a real assignment (STAFF_ROLE_REGISTRY is the true assignment authority, not a display-only catalogue)',()=>{
     expect(createTeamStaffAssignment({id:teamStaffAssignmentIdFromString('assignment-canonical'),staffPersonId:medical.id,teamId:teamIdFromString('team'),role:'teamDoctor',assignedOn:createGameDate(2032,10,1)}).role).toBe('teamDoctor')
     expect(createTeamStaffAssignment({id:teamStaffAssignmentIdFromString('assignment-canonical-2'),staffPersonId:medical.id,teamId:teamIdFromString('team'),role:'headScout',assignedOn:createGameDate(2032,10,1)}).role).toBe('headScout')

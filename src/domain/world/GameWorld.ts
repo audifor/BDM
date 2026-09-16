@@ -36,7 +36,7 @@ import { deriveOrganizationEvaluationPolicy, type OrganizationEvaluationPolicy }
 import type { Agency, Agent, ContractNegotiation, MarketKnowledge, MarketReality, MarketSignal, PlayerRepresentation, RolePromise } from '@/domain/market'
 import { organizationIdForTeam, type OrganizationId } from '@/domain/ids'
 import type { PlayerKnowledgeId } from '@/domain/ids'
-import { createStaffPerson, createTeamStaffAssignment, staffRoleDefinition, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
+import { createStaffPerson, createTeamStaffAssignment, staffRoleDefinition, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
 import type { StaffPersonId, TeamStaffAssignmentId } from '@/domain/ids'
 import { createStaffEmployment, createStaffJobOpening, isStaffOfferCandidacyStateConsistent, type StaffCareerHistoryEntry, type StaffEmployment, type StaffInterview, type StaffJobCandidacy, type StaffJobCandidacyId, type StaffJobOffer, type StaffJobOfferId, type StaffJobOpening, type StaffJobOpeningId } from '@/domain/staffCareer'
 import { createStaffContract, isStaffContractActiveOn, type StaffContract, type StaffContractId } from '@/domain/staffContract'
@@ -443,11 +443,13 @@ export class GameWorldValidationError extends Error {
 }
 
 export function createGameWorld(input: CreateGameWorldInput): GameWorld {
+  const staffPeople = ensureCoachStaffProfiles(input.staffPeople ?? [], input.coaches)
+  const normalizedInput = { ...input, staffPeople }
   const seasons = indexById(input.seasons, 'Season')
   const currentSeasonId = input.currentSeasonId ?? selectLegacyCurrentSeasonId(seasons)
   const currentDate = parseGameDate(input.currentDate)
   const employment = coachCareerForCoaches(input.coaches, input.teams, currentDate, input.coachEmploymentByCoachId, input.coachCareerHistoryByCoachId)
-  const persons = input.persons === undefined ? derivePersons(input) : input.persons.map(createPerson)
+  const persons = input.persons === undefined ? derivePersons(normalizedInput) : input.persons.map(createPerson)
   const suppliedEcosystems = input.ecosystems === undefined ? [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike' })] : Array.isArray(input.ecosystems) ? input.ecosystems : Object.values(input.ecosystems)
   const ecosystems = [
     ...suppliedEcosystems,
@@ -497,7 +499,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     evaluatorReportsById: indexById(input.evaluatorReports ?? [], 'Evaluator report'),
     organizationEvaluationPoliciesById: organizationPolicies(input.teams, input.organizationEvaluationPoliciesById),
     agentsById: indexById(input.agents ?? [], 'Agent'), agenciesById: indexById(input.agencies ?? [], 'Agency'), playerRepresentations: Object.freeze([...(input.playerRepresentations ?? [])]), marketRealityByPlayerId: Object.freeze(Object.fromEntries((input.marketReality ?? []).map(item => [item.playerId, item]))), marketKnowledge: Object.freeze([...(input.marketKnowledge ?? [])]), marketSignalsById: indexById(input.marketSignals ?? [], 'Market signal'), negotiationsById: indexById(input.negotiations ?? [], 'Negotiation'), rolePromisesById: indexById(input.rolePromises ?? [], 'Role promise'),
-    staffPeopleById: indexById(input.staffPeople ?? [], 'Staff person'),
+    staffPeopleById: indexById(staffPeople, 'Staff person'),
     teamStaffAssignmentsById: indexById(input.teamStaffAssignments ?? [], 'Staff assignment'),
     responsibilitiesById: indexById(input.responsibilities ?? [], 'Responsibility'),
     delegationOutcomesById: indexById(input.delegationOutcomes ?? [], 'Delegation outcome'),
@@ -534,8 +536,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     staffPoliticalAlliancesById: indexById((input.staffPoliticalAlliances ?? []).map(createStaffPoliticalAlliance), 'Staff political alliance'),
     staffPoliticalFactionsById: indexById((input.staffPoliticalFactions ?? []).map(createStaffPoliticalFaction), 'Staff political faction'),
     relationshipsByKey: Object.freeze({ ...(input.relationshipsByKey ?? {}) }),
-    personalitiesByPersonId: peopleProfiles([...input.coaches, ...input.players, ...(input.staffPeople ?? [])], input.personalitiesByPersonId, generatePersonality),
-    moraleByPersonId: peopleProfiles([...input.coaches, ...input.players, ...(input.staffPeople ?? [])], input.moraleByPersonId, createMoraleProfile),
+    personalitiesByPersonId: peopleProfiles([...input.coaches, ...input.players, ...staffPeople], input.personalitiesByPersonId, generatePersonality),
+    moraleByPersonId: peopleProfiles([...input.coaches, ...input.players, ...staffPeople], input.moraleByPersonId, createMoraleProfile),
     inboxItemsById: Object.freeze({ ...(input.inboxItemsById ?? {}) }), newsItemsById: Object.freeze({ ...(input.newsItemsById ?? {}) }),
     trainingPlansByTeamId: Object.freeze(Object.fromEntries(input.teams.map((team)=>[team.id,input.trainingPlansByTeamId?.[team.id]??createDefaultTrainingPlan(team.id)]))), individualTrainingPlansByPlayerId: Object.freeze(Object.fromEntries(Object.entries(input.individualTrainingPlansByPlayerId??{}).map(([id,plan])=>[id,createIndividualTrainingPlan(plan)]))), trainingResponsibilitiesByTeamId: Object.freeze(Object.fromEntries(Object.entries(input.trainingResponsibilitiesByTeamId??{}).map(([id,responsibilities])=>[id,Object.freeze({...responsibilities})]))), tacticalPlansByTeamId:Object.freeze(Object.fromEntries(input.teams.map(team=>[team.id,input.tacticalPlansByTeamId?.[team.id]??createDefaultTeamTacticalPlan(team.id)]))),lineupsByTeamId:Object.freeze(Object.fromEntries(input.teams.map(team=>[team.id,input.lineupsByTeamId?.[team.id]??createDefaultTeamLineup(team.id)]))),rotationPlansByTeamId:Object.freeze({...input.rotationPlansByTeamId}),gamePlansByKey:Object.freeze({...input.gamePlansByKey}), savedPlaysById:Object.freeze(Object.fromEntries(Object.entries(input.savedPlaysById??{}).map(([id,play])=>[id,createSavedPlay(play)]))), playbooksById:Object.freeze(Object.fromEntries(Object.entries(input.playbooksById??{}).map(([id,playbook])=>[id,createPlaybook(playbook)]))), trainingSessionsById:Object.freeze({...(input.trainingSessionsById??{})}),
     scheduledTrainingSessionsById: Object.freeze(Object.fromEntries(Object.entries(input.scheduledTrainingSessionsById ?? {}).map(([id, session]) => [id, createScheduledTrainingSession(session)]))),
@@ -616,7 +618,9 @@ export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorld
 
   const patched = { ...world, ...remainingPatch, ...worldPatch } as GameWorld
   const profilesChanged = worldPatch.coaches !== undefined || worldPatch.players !== undefined || worldPatch.staffPeopleById !== undefined
-  const withPersonRoots = profilesChanged && worldPatch.persons === undefined ? { ...patched, personsById: synchronizePersonRoots(patched) } : patched
+  const normalizedStaff = profilesChanged ? ensureCoachStaffProfiles(Object.values(patched.staffPeopleById), Object.values(patched.coaches)) : Object.values(patched.staffPeopleById)
+  const normalized = profilesChanged ? { ...patched, staffPeopleById: indexById(normalizedStaff, 'Staff person') } : patched
+  const withPersonRoots = profilesChanged && worldPatch.persons === undefined ? { ...normalized, personsById: synchronizePersonRoots(normalized) } : normalized
   const updated = profilesChanged
     ? {
         ...withPersonRoots,
@@ -1336,6 +1340,33 @@ function synchronizePersonRoots(world: GameWorld): Readonly<Record<import('@/dom
   return indexById([...merged.values()], 'Person')
 }
 
+function ensureCoachStaffProfiles(staffPeople: readonly StaffPerson[], coaches: readonly Coach[]): readonly StaffPerson[] {
+  const normalized = staffPeople.map(createStaffPerson)
+  indexById(normalized, 'Staff person')
+  const byId = new Map(normalized.map((staff) => [staff.id, staff]))
+  for (const coach of coaches) {
+    const existing = byId.get(coach.staffProfileId)
+    if (existing === undefined) {
+      byId.set(coach.staffProfileId, createStaffPerson({
+        id: coach.staffProfileId,
+        personId: coach.personId,
+        identity: { firstName: coach.firstName, lastName: coach.lastName, nationality: coach.nationalityId },
+        professional: { attributes: Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 50])) as StaffPerson['professional']['attributes'] },
+        marketRole: 'headCoach',
+        roleFamily: 'coaching',
+      }))
+      continue
+    }
+    if (existing.personId !== coach.personId) throw new GameWorldValidationError(`Coach ${coach.id} does not match Staff profile ${existing.id}`)
+    if (existing.marketRole === undefined) {
+      byId.set(existing.id, createStaffPerson({ ...existing, marketRole: 'headCoach', roleFamily: existing.roleFamily ?? 'coaching' }))
+    } else if (existing.marketRole !== 'headCoach') {
+      throw new GameWorldValidationError(`Coach ${coach.id} requires Staff profile ${existing.id} to have headCoach role`)
+    }
+  }
+  return [...byId.values()]
+}
+
 function derivePersons(input: CreateGameWorldInput): readonly Person[] {
   type PersonCandidate = {
     readonly id: import('@/domain/ids').PersonId
@@ -1349,12 +1380,12 @@ function derivePersons(input: CreateGameWorldInput): readonly Person[] {
   }
   const candidates: readonly PersonCandidate[] = [
     ...input.coaches.map((coach) => ({
-      id: coach.personId ?? personIdForProfile('coach', coach.id),
+      id: coach.personId,
       firstName: coach.firstName,
       lastName: coach.lastName,
       gender: coach.gender,
       nationalityIds: [coach.nationalityId],
-      profile: { kind: 'coach' as const, profileId: coach.id },
+      profile: { kind: 'staff' as const, profileId: coach.staffProfileId },
     })),
     ...input.players.map((player) => ({
       id: player.personId ?? personIdForProfile('player', player.id),
@@ -1418,16 +1449,18 @@ function validatePersons(world: GameWorld): void {
     for (const ref of person.profileRefs) {
       const profile = ref.kind === 'player'
         ? world.players[ref.profileId as PlayerId]
-        : ref.kind === 'coach'
-          ? world.coaches[ref.profileId as CoachId]
-          : ref.kind === 'staff'
+        : ref.kind === 'staff'
             ? world.staffPeopleById[ref.profileId as StaffPersonId]
             : undefined
-      if (profile === undefined && (ref.kind === 'player' || ref.kind === 'coach' || ref.kind === 'staff')) throw new GameWorldValidationError(`Person ${person.id} references missing ${ref.kind} profile ${ref.profileId}`)
+      if (profile === undefined && (ref.kind === 'player' || ref.kind === 'staff')) throw new GameWorldValidationError(`Person ${person.id} references missing ${ref.kind} profile ${ref.profileId}`)
       if (profile !== undefined && 'personId' in profile && profile.personId !== undefined && profile.personId !== person.id) throw new GameWorldValidationError(`Person ${person.id} does not match ${ref.kind} profile ${ref.profileId}`)
     }
   }
-  for (const coach of Object.values(world.coaches)) requirePersonRoot(world, coach.personId ?? personIdForProfile('coach', coach.id), 'coach', coach.id)
+  for (const coach of Object.values(world.coaches)) {
+    const staff = requireEntity(world.staffPeopleById, coach.staffProfileId, `Coach ${coach.id} Staff profile`)
+    if (staff.personId !== coach.personId || staff.marketRole !== 'headCoach') throw new GameWorldValidationError(`Coach ${coach.id} is not backed by its canonical headCoach StaffProfile`)
+    requirePersonRoot(world, coach.personId, 'staff', staff.id)
+  }
   for (const player of Object.values(world.players)) requirePersonRoot(world, player.personId ?? personIdForProfile('player', player.id), 'player', player.id)
   for (const staff of Object.values(world.staffPeopleById)) requirePersonRoot(world, staff.personId ?? personIdForProfile('staff', staff.id), 'staff', staff.id)
 }

@@ -99,6 +99,28 @@ describe('GameWorldSaveV1', () => {
     expect(deserializeGameWorldV1(serializeGameWorldV1(partial, envelope.savedAt))).toEqual(partial)
   })
 
+  it('migrates legacy Coaches without Person or Staff references into canonical roots', () => {
+    const world = createNewGame()
+    const envelope = serializeGameWorldV1(world, '2032-10-01T12:00:00.000Z')
+    const legacyPayload = {
+      ...envelope.payload,
+      coaches: envelope.payload.coaches.map(({ personId: _personId, staffProfileId: _staffProfileId, ...coach }) => coach),
+    }
+    delete (legacyPayload as Record<string, unknown>).persons
+    delete (legacyPayload as Record<string, unknown>).staffPeople
+    delete (legacyPayload as Record<string, unknown>).teamStaffAssignments
+
+    const loaded = deserializeGameWorldV1({ ...envelope, payload: legacyPayload })
+    for (const coach of Object.values(loaded.coaches)) {
+      const staff = loaded.staffPeopleById[coach.staffProfileId]
+      expect(staff.personId).toBe(coach.personId)
+      expect(staff.marketRole).toBe('headCoach')
+      expect(loaded.personsById[coach.personId].profileRefs).toContainEqual({ kind: 'staff', profileId: staff.id })
+      expect(coach.id).toBe(world.coaches[coach.id].id)
+    }
+    expect(Object.keys(loaded.personsById).every((id) => !id.startsWith('person:coach:'))).toBe(true)
+  })
+
   it('rejects unsupported schemas and corrupted collections', () => {
     expect(() => deserializeGameWorldV1({ schemaVersion: 2, savedAt: '2032-10-01T12:00:00.000Z', payload: {} })).toThrow('Unsupported save version')
     expect(() => deserializeGameWorldV1({ schemaVersion: 1, savedAt: '2032-10-01T12:00:00.000Z', payload: { countries: {} } })).toThrow('Save seasons')

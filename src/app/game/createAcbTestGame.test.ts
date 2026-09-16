@@ -205,9 +205,11 @@ describe('createAcbTestGame', () => {
     for (const item of afterSingleDays) expect(afterContinue.some((later) => later.outcomeId === item.outcomeId)).toBe(true)
   })
 
-  it('leaves the prototype staff fixture unchanged', () => {
+  it('keeps the prototype staff assignment fixture while materializing head-coach Staff profiles', () => {
     const prototype = createNewGame()
     expect(Object.values(prototype.teamStaffAssignmentsById).every((assignment) => ['assistantCoach', 'regionalScout', 'physiotherapist'].includes(assignment.role))).toBe(true)
-    expect(Object.values(prototype.teamStaffAssignmentsById)).toHaveLength(Object.keys(prototype.staffPeopleById).length)
+    const assignedStaffIds = new Set(Object.values(prototype.teamStaffAssignmentsById).map((assignment) => assignment.staffPersonId))
+    expect(Object.values(prototype.staffPeopleById).every((staff) => assignedStaffIds.has(staff.id) || staff.marketRole === 'headCoach')).toBe(true)
+    expect(Object.values(prototype.staffPeopleById).filter((staff) => staff.marketRole === 'headCoach')).toHaveLength(Object.keys(prototype.coaches).length)
   })
 })

@@ -51,13 +51,13 @@ Domain entities are plain serializable data created through validating factories
 Relationships have one canonical direction: teams hold their roster and optional
 coach reference, while players and coaches do not hold a team reference.
 
-Human identity is rooted in the serializable `Person` collection. `Player`,
-`Coach`, and `StaffPerson` are role profiles that reference a stable `PersonId`;
-the runtime keeps existing field names as compatibility surfaces while new save
-data persists the shared person root. A person may reference player, staff,
-coach, official, agent, and media-person profiles without duplicating human
-identity. Coach RPG remains available through the explicit coaching Staff-role
-projection.
+Human identity is rooted in the serializable `Person` collection. The canonical
+Person profile kinds are `player`, `staff`, `official`, `agent`, and
+`mediaPerson`. `Player` and `StaffPerson` are role profiles that reference a
+stable `PersonId`; the runtime keeps existing field names as compatibility
+surfaces while new save data persists the shared person root. `Coach` is not a
+Person profile: it is a gameplay/RPG facade over `Person + StaffProfile` with
+the `headCoach` StaffRole.
 
 `Competition` is the enduring institution and `Season` is one dated edition of it.
 `Game` is independent of `MatchEngine`; it records only a scheduled/completed state
@@ -497,8 +497,8 @@ different attribute schemas. Role proficiency is a rounded derived weighted scor
 not stored state or Fit. Zero role weight does not imply the person lacks that
 capability. Personality, knowledge, relationships, memory and contextual Fit remain
 separate future domains. Staff is normalized in `GameWorld` through people and
-assignments rather than role-based person subtypes. The shared profile is intended
-to be adaptable to Head Coaches later, without conflating professional ability with
+assignments rather than role-based person subtypes. Head Coaches use the same
+`StaffProfile` through the canonical `headCoach` role, without conflating professional ability with
 future RPG skills, traits or perks.
 
 Staff v1 world integration stores normalized `staffPeopleById` and
@@ -535,9 +535,10 @@ remain distinct from Staff Truth and role proficiency.
 ## Coach RPG domain foundation
 
 Coach RPG is a pure Domain foundation reusable by any `Coach`, never a user-only
-subsystem. Head Coaches will converge on the same common professional attribute
-framework as Staff, but 040.1 does not yet integrate a profile into `Coach`,
-`GameWorld`, generation or saves; 040.2 owns that integration.
+subsystem. Head Coaches use the same common professional attribute framework as
+Staff. The Coach facade is backed by the canonical `Person` and coaching
+`StaffProfile` in `GameWorld` and Save V1; it does not create a parallel human
+profile.
 
 Professional attributes, accumulated experience, Skills, Professional Traits,
 Perks and Personality are separate concepts. Experience is an unbounded,
@@ -580,11 +581,12 @@ courses remain outside this milestone.
 
 `GameWorld` normalizes `coachProfessionalProfilesByCoachId` and
 `coachRpgProfilesByCoachId` separately. Any Coach may participate; the
-user-controlled Coach is not a special RPG entity. Coach identity, nationality and
-team assignment remain authoritative in the existing `Coach` and `Team` models.
+user-controlled Coach is not a special RPG entity. Person identity is
+authoritative, StaffProfile carries the professional role, and Coach/Team fields
+remain compatibility gameplay projections.
 
 Head Coaches use the same thirteen professional attributes as Staff. Their
-bootstrap role weights only evaluate and generate a Head Coach professional profile;
+bootstrap role weights evaluate the canonical Head Coach StaffProfile;
 they are not a new capability taxonomy or contextual Fit. The user starts from a
 deterministic rookie baseline, where `blank` means no preset modifier rather than
 zero attributes. Optional presets are applied once during setup and are not stored
@@ -597,11 +599,10 @@ different: a capable generated Coach still begins with an experience ledger of z
 in this bootstrap phase. Runtime transformations unrelated to Coach RPG preserve
 both maps exactly.
 
-040.2 does not serialize or regenerate Coach profiles. Save loads therefore create
-empty runtime maps until 040.5 adds persistence and legacy handling; missing maps
-after a normal runtime transformation remain corruption, not a signal to regenerate.
-Coach and StaffPerson technical identities also remain distinct for now, while the
-shared professional profile keeps a future Staff-to-Coach career path open. Future
+Coach RPG maps remain separate gameplay state, while the Coach identity itself is
+always resolved through Person and StaffProfile. Legacy saves without those roots
+are deterministically migrated during load. The shared professional profile keeps
+a future Staff-to-Coach career path open. Future
 paid education will feed targeted Experience, never direct professional attributes.
 
 > Every Coach may participate in the same Coach RPG architecture; the

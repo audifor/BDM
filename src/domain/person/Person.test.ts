@@ -27,4 +27,8 @@ describe('Person', () => {
     expect(() => createPerson(input)).toThrow(RangeError)
     expect(() => createPerson({ ...input, profileRefs: [{ kind: 'player', profileId: 'player-1' }], nationalityIds: [countryIdFromString('country-a'), countryIdFromString('country-a')] })).toThrow(RangeError)
   })
+
+  it('does not accept Coach as a canonical Person profile kind', () => {
+    expect(() => createPerson({ id: personIdFromString('person:coach-legacy'), firstName: 'A', lastName: 'B', profileRefs: [{ kind: 'coach' as never, profileId: 'coach-1' }] })).toThrow(RangeError)
+  })
 })

@@ -3,7 +3,7 @@ import { parseGameDate, type GameDate } from '@/domain/date'
 import { requireGender, type Gender } from '@/domain/primitives'
 import { requireNonEmptyString } from '@/domain/validation'
 
-export type PersonProfileKind = 'player' | 'staff' | 'coach' | 'official' | 'agent' | 'mediaPerson'
+export type PersonProfileKind = 'player' | 'staff' | 'official' | 'agent' | 'mediaPerson'
 
 export interface PersonProfileRef {
   readonly kind: PersonProfileKind
@@ -38,7 +38,7 @@ export interface CreatePersonInput extends Omit<Person, 'id' | 'gender' | 'dateO
 
 export function createPerson(input: CreatePersonInput): Person {
   const refs = input.profileRefs.map((ref) => {
-    if (!(['player', 'staff', 'coach', 'official', 'agent', 'mediaPerson'] as readonly string[]).includes(ref.kind)) throw new RangeError('Person profile kind is invalid')
+    if (!(['player', 'staff', 'official', 'agent', 'mediaPerson'] as readonly string[]).includes(ref.kind)) throw new RangeError('Person profile kind is invalid')
     return { kind: ref.kind, profileId: requireNonEmptyString(ref.profileId, 'Person profile id') }
   })
   if (new Set(refs.map((ref) => `${ref.kind}:${ref.profileId}`)).size !== refs.length) {

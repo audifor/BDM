@@ -35,7 +35,13 @@ describe('GameWorld', () => {
     expect(world.currentDate).toBe(input.currentDate)
     expect(world.userCoachId).toBe(input.userCoachId)
     expect(Object.keys(world.personsById)).toHaveLength(3)
-    expect(world.personsById['person:coach:coach-user' as never]!.profileRefs).toEqual([{ kind: 'coach', profileId: 'coach-user' }])
+    const coach = world.coaches[input.userCoachId]
+    const staff = world.staffPeopleById[coach.staffProfileId]
+    expect(staff.personId).toBe(coach.personId)
+    expect(staff.marketRole).toBe('headCoach')
+    expect(world.personsById[coach.personId].profileRefs).toContainEqual({ kind: 'staff', profileId: staff.id })
+    expect(world.personsById[coach.personId].profileRefs.some((ref) => (ref.kind as string) === 'coach')).toBe(false)
+    expect(Object.keys(world.personsById).every((id) => !id.startsWith('person:coach:'))).toBe(true)
     expect(world.players[playerIdFromString('player-home')]).toBe(input.players[0])
     expect(world.teams[teamIdFromString('team-home')]).toBe(input.teams[0])
   })
