@@ -5,7 +5,7 @@ import { generateCanonicalDevelopmentProfile, generateCanonicalRatings } from '@
 import { generatePlayerBio } from '@/engine/world/PlayerBioGenerator'
 import { generateInitialPlayerContract } from '@/engine/world/PlayerContractGenerator'
 import { generateInitialTeamFinances } from '@/engine/world/TeamFinancesGenerator'
-import { createCoach } from '@/domain/coach'
+import { coachProfileRefsForCoachId, createCoach } from '@/domain/coach'
 import { createDefaultStaffReputationProfile } from '@/domain/staffReputation'
 import { createStaffContract, staffContractIdFromString } from '@/domain/staffContract'
 import { calculateStaffRoleProficiencyByRoleId, staffRoleDefinition, type StaffPerson, type StaffRoleId } from '@/domain/staff'
@@ -20,6 +20,7 @@ import {
   countryIdFromString,
   playerIdFromString,
   seasonIdFromString,
+  teamStaffAssignmentIdFromString,
   teamIdFromString,
 } from '@/domain/ids'
 import { calculateAge, createPlayer } from '@/domain/player'
@@ -57,12 +58,12 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
     createCountry({ id: SPAIN_ID, name: 'Spain', code: 'ESP' }),
     createCountry({ id: UNKNOWN_COUNTRY_ID, name: 'Unknown', code: 'UNK' }),
   ]
-  const userCoach = createCoach({ id: USER_COACH_ID, firstName: 'BDM', lastName: 'Test Coach', gender: 'male', nationalityId: SPAIN_ID })
+  const userCoach = createCanonicalCoach({ id: USER_COACH_ID, firstName: 'BDM', lastName: 'Test Coach', gender: 'male', nationalityId: SPAIN_ID })
   const aiCoaches = ACB_2026_27_TEAMS
     .filter((team) => team.key !== userTeamKey)
     .map((team) => {
       const name = splitPersonName(team.headCoachName)
-      return createCoach({
+      return createCanonicalCoach({
         id: coachIdFromString(`acb-coach-${team.key}`),
         firstName: name.firstName,
         lastName: name.lastName,
@@ -118,7 +119,7 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
       contracts.filter((contract) => contract.teamId === team.id).reduce((sum, contract) => sum + contract.compensation.annualSalary, 0),
     ),
   )
-  const freeAgentCoaches = Array.from({ length: 5 }, (_, index) => createCoach({ id: coachIdFromString(`acb-free-agent-head-coach-${index + 1}`), firstName: 'Free', lastName: `Coach ${index + 1}`, gender: 'male', nationalityId: SPAIN_ID }))
+  const freeAgentCoaches = Array.from({ length: 5 }, (_, index) => createCanonicalCoach({ id: coachIdFromString(`acb-free-agent-head-coach-${index + 1}`), firstName: 'Free', lastName: `Coach ${index + 1}`, gender: 'male', nationalityId: SPAIN_ID }))
   const coaches = [userCoach, ...aiCoaches, ...freeAgentCoaches]
   const staffSandbox = generateStaffSandbox({ teams, assignedOn: CURRENT_DATE, idPrefix: 'acb-staff-sandbox-v1' })
   const assignmentsByStaffId = new Map(staffSandbox.assignments.map((assignment) => [assignment.staffPersonId, assignment]))
@@ -140,6 +141,20 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
     return { ...finance, staffSalaryBudget: Math.max(finance.staffSalaryBudget, staffPayroll + 250_000) }
   })
   const coachProfiles = generateCoachRpgProfiles(coaches, USER_COACH_ID, options.coachRpgPreset)
+  const coachStaffProfiles = coaches.map((coach) => ({ id: coach.staffProfileId, personId: coach.personId, identity: { firstName: coach.firstName, lastName: coach.lastName, nationality: coach.nationalityId }, professional: coachProfiles.professionalProfiles[coach.id]!, marketRole: 'headCoach' as const, roleFamily: 'coaching' as const }))
+  const coachAssignments = teams.flatMap((team) => team.coachId === undefined ? [] : [{ id: teamStaffAssignmentIdFromString(`staff-assignment:${team.coachId}:headCoach:${team.id}:${CURRENT_DATE}`), staffPersonId: coaches.find((coach) => coach.id === team.coachId)!.staffProfileId, teamId: team.id, role: 'headCoach' as const, assignedOn: CURRENT_DATE }])
+  const coachStaffEmployment = Object.fromEntries(coaches.map((coach) => {
+    const assignment = coachAssignments.find((item) => item.staffPersonId === coach.staffProfileId)
+    return [coach.staffProfileId, assignment === undefined ? { status: 'unemployed' as const } : { status: 'employed' as const, teamId: assignment.teamId, roleId: 'headCoach' as const, startedOn: assignment.assignedOn }]
+  }))
+  const coachStaffCareerHistoryByStaffId = Object.fromEntries(coaches.map((coach) => {
+    const assignment = coachAssignments.find((item) => item.staffPersonId === coach.staffProfileId)
+    return [coach.staffProfileId, assignment === undefined ? [] : [{ kind: 'appointment' as const, staffId: coach.staffProfileId, teamId: assignment.teamId, roleId: 'headCoach' as const, date: assignment.assignedOn, reason: 'initialAppointment' as const }]]
+  }))
+  const coachStaffContracts = coachAssignments.map((assignment) => {
+    const staff = coachStaffProfiles.find((item) => item.id === assignment.staffPersonId)!
+    return createStaffContract({ id: staffContractIdFromString(`acb-staff-contract:${staff.id}:${assignment.teamId}`), staffId: staff.id, teamId: assignment.teamId, kind: 'standard', term: { startsOn: CURRENT_DATE, expiresOn: createGameDate(2028, 6, 30) }, compensation: { annualSalary: initialStaffSalary(staff, 'headCoach') } })
+  })
   const userTeam = teams.find((team) => team.coachId === USER_COACH_ID)!
 
   const buildWorld = (games: readonly Game[]) =>
@@ -157,12 +172,12 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
       games,
       contracts,
       teamFinances: financedTeams,
-      staffPeople: staffSandbox.people,
-      teamStaffAssignments: staffSandbox.assignments,
-      staffEmploymentByStaffId,
-      staffCareerHistoryByStaffId,
+      staffPeople: [...staffSandbox.people, ...coachStaffProfiles],
+      teamStaffAssignments: [...staffSandbox.assignments, ...coachAssignments],
+      staffEmploymentByStaffId: { ...staffEmploymentByStaffId, ...coachStaffEmployment },
+      staffCareerHistoryByStaffId: { ...staffCareerHistoryByStaffId, ...coachStaffCareerHistoryByStaffId },
       staffReputationProfilesByStaffId,
-      staffContracts,
+      staffContracts: [...staffContracts, ...coachStaffContracts],
       coachProfessionalProfilesByCoachId: coachProfiles.professionalProfiles,
       coachRpgProfilesByCoachId: coachProfiles.rpgProfiles,
     })
@@ -171,6 +186,10 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
   world = buildWorld(generateRoundRobinSchedule({ world, seasonId: season.id, daysBetweenRounds: 7 }))
   world = ensurePlayerKnowledge(world)
   return initializeBoardState(world, userTeam.id)
+}
+
+function createCanonicalCoach(input: Omit<Parameters<typeof createCoach>[0], 'personId' | 'staffProfileId'>) {
+  return createCoach({ ...input, ...coachProfileRefsForCoachId(input.id) })
 }
 
 function initialStaffSalary(staff: StaffPerson, roleId: StaffRoleId): number {

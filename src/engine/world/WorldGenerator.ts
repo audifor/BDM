@@ -1,4 +1,4 @@
-import { createCoach } from '@/domain/coach'
+import { coachProfileRefsForCoachId, createCoach } from '@/domain/coach'
 import { createCompetition } from '@/domain/competition'
 import { createSportsEcosystem, DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, DEFAULT_NBA_LIKE_ECOSYSTEM_ID, DEFAULT_NCAA_LIKE_ECOSYSTEM_ID } from '@/domain/ecosystem'
 import { createConference, createConferenceMembership } from '@/domain/conference'
@@ -11,6 +11,7 @@ import {
   conferenceIdFromString,
   playerIdFromString,
   seasonIdFromString,
+  teamStaffAssignmentIdFromString,
   teamIdFromString,
 } from '@/domain/ids'
 import { calculateAge, createPlayer } from '@/domain/player'
@@ -25,6 +26,7 @@ import { generateInitialPlayerContract } from './PlayerContractGenerator'
 import { generateInitialTeamFinances } from './TeamFinancesGenerator'
 import { generateInitialStaffStructure } from './StaffGenerator'
 import { generateCoachRpgProfiles } from './CoachProfessionalProfileGenerator'
+import { createStaffPerson, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
 import type { CoachRpgPreset } from '@/domain/coachRpg'
 import { createNbaLikeSalaryRules } from '@/engine/salary'
 import { createNbaLikeTradeRules } from '@/engine/trade'
@@ -115,14 +117,10 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
   const includeNcaaLike = options.includeNcaaLike ?? false
   const teamCount = FIBA_TEAM_COUNT + (options.includeNbaLike ? 4 : 0) + (includeNcaaLike ? 12 : 0)
   const professionalTeamCount = FIBA_TEAM_COUNT + (options.includeNbaLike ? 4 : 0)
-  const coaches = Array.from({ length: teamCount }, (_, index) =>
-    createCoach({
-      id: coachIdFromString(`generated-coach-${formatSequence(index + 1)}`),
-      ...generatePersonName(random),
-      gender,
-      nationalityId: country.id,
-    }),
-  )
+  const coaches = Array.from({ length: teamCount }, (_, index) => {
+    const id = coachIdFromString(`generated-coach-${formatSequence(index + 1)}`)
+    return createCoach({ id, ...coachProfileRefsForCoachId(id), ...generatePersonName(random), gender, nationalityId: country.id })
+  })
   const baseTeamNames = shuffle([...TEAM_NAMES.slice(0, options.includeNbaLike ? 12 : 10)], random)
   const ncaaTeamNames = includeNcaaLike ? shuffle([...TEAM_NAMES.slice(12)], new SeededRandomSource(hashStringToSeed(`ncaa-team-names-v1:${options.seed}`))) : []
   const teamNames = [...baseTeamNames, ...ncaaTeamNames].slice(0, teamCount)
@@ -192,6 +190,12 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
   const staff = generateInitialStaffStructure(professionalTeams, season.startDate)
   const userCoachId = coaches[0]!.id
   const coachProfiles = generateCoachRpgProfiles(coaches, userCoachId, options.userCoachRpgPreset)
+  const coachStaffProfiles = coaches.map((coach) => createStaffPerson({ id: coach.staffProfileId, personId: coach.personId, identity: { firstName: coach.firstName, lastName: coach.lastName, nationality: coach.nationalityId }, professional: coachProfiles.professionalProfiles[coach.id]!, marketRole: 'headCoach', roleFamily: 'coaching' }))
+  const coachAssignments = teams.flatMap((team): TeamStaffAssignment[] => team.coachId === undefined ? [] : [{ id: teamStaffAssignmentIdFromString(`staff-assignment:${team.coachId}:headCoach:${team.id}:${season.startDate}`), staffPersonId: coaches.find((coach) => coach.id === team.coachId)!.staffProfileId, teamId: team.id, role: 'headCoach', assignedOn: season.startDate }])
+  const coachStaffEmployment = Object.fromEntries(coaches.map((coach) => {
+    const assignment = coachAssignments.find((item) => item.staffPersonId === coach.staffProfileId)
+    return [coach.staffProfileId, assignment === undefined ? { status: 'unemployed' as const } : { status: 'employed' as const, teamId: assignment.teamId, roleId: 'headCoach' as const, startedOn: assignment.assignedOn }]
+  }))
   return createGameWorld({
     currentDate: startDate,
     currentSeasonId: season.id,
@@ -209,7 +213,7 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     teamFinances: teams.map((team) => generateInitialTeamFinances(team.id, contracts.filter((contract) => contract.teamId === team.id).reduce((sum, contract) => sum + contract.compensation.annualSalary, 0))),
     ...(nbaSeason === undefined ? {} : { salaryRulesBySeasonId: { [nbaSeason.id]: createNbaLikeSalaryRules(nbaSeason.id, gender) } }),
     ...(nbaSeason === undefined ? {} : { tradeRulesBySeasonId: { [nbaSeason.id]: createNbaLikeTradeRules(nbaSeason.id, DEFAULT_NBA_LIKE_ECOSYSTEM_ID) } }),
-    staffPeople: staff.map((item) => item.person), teamStaffAssignments: staff.map((item) => item.assignment),
+    staffPeople: [...staff.map((item) => item.person), ...coachStaffProfiles], teamStaffAssignments: [...staff.map((item) => item.assignment), ...coachAssignments], staffEmploymentByStaffId: coachStaffEmployment,
     coachProfessionalProfilesByCoachId: coachProfiles.professionalProfiles,
     coachRpgProfilesByCoachId: coachProfiles.rpgProfiles,
   })

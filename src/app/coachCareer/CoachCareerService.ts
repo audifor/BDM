@@ -1,5 +1,5 @@
 import { appointCoachToTeam, coachJobCandidacyIdFromString, coachJobOfferIdFromString, coachJobOpeningIdFromString, createCoachJobOpening, decideCoachJobOffer, evaluateCoachJobEligibility, fireCoach, leaveForAnotherJob, transitionCoachInterview, transitionCoachJobCandidacy, type CoachJobOpening } from '@/domain/coachCareer'
-import type { CoachId, TeamId } from '@/domain/ids'
+import { teamStaffAssignmentIdFromString, type CoachId, type TeamId } from '@/domain/ids'
 import type { CoachReputationRequirement } from '@/domain/coachReputation'
 import { addInboxItem, addNewsItem, updateGameWorld, type GameWorld } from '@/domain/world'
 import { interpretMemoryValence, recordMemory } from '@/engine/memory'
@@ -75,7 +75,7 @@ export function acceptCoachJobOffer(world: GameWorld, offerId: string): GameWorl
   if (offer.status !== 'pending' || opening.status !== 'open' || world.teams[opening.teamId]!.coachId !== undefined) throw new Error('Coach job offer cannot be accepted')
   const accepted = decideCoachJobOffer(offer, 'accepted'); const hired = transitionCoachJobCandidacy(candidacy, 'hired'); if (!accepted.ok || !hired.ok) throw new Error('Coach job offer cannot be accepted')
   let teams = Object.values(world.teams); let employment = world.coachEmploymentByCoachId[offer.coachId]!; let history = world.coachCareerHistoryByCoachId[offer.coachId]!; let openings = { ...world.coachJobOpeningsById }; let departedTeamId: TeamId | undefined
-  if (employment.status === 'employed') { const oldTeamId = employment.teamId!; departedTeamId = oldTeamId; const leaving = leaveForAnotherJob({ employment, history, coachId: offer.coachId, date: world.currentDate }); if (!leaving.ok) throw new Error('Coach cannot leave current Team'); teams = teams.map((team) => team.id === oldTeamId ? { ...team, coachId: undefined } : team); employment = leaving.employment; history = leaving.history; const created = createCoachJobOpeningForTeam(rebuild(world, { teams, employment: { ...world.coachEmploymentByCoachId, [offer.coachId]: employment }, history: { ...world.coachCareerHistoryByCoachId, [offer.coachId]: history }, openings }), { teamId: oldTeamId }); openings = { ...created.world.coachJobOpeningsById }; teams = Object.values(created.world.teams) }
+  if (employment.status === 'employed') { const oldTeamId = employment.teamId!; departedTeamId = oldTeamId; const leaving = leaveForAnotherJob({ employment, history, coachId: offer.coachId, date: world.currentDate }); if (!leaving.ok) throw new Error('Coach cannot leave current Team'); teams = teams.map((team) => team.id === oldTeamId ? { ...team, coachId: undefined } : team); employment = leaving.employment; history = leaving.history; const staffState = coachStaffState(world, offer.coachId, undefined, 'resigned'); const created = createCoachJobOpeningForTeam(rebuild(world, { teams, employment: { ...world.coachEmploymentByCoachId, [offer.coachId]: employment }, history: { ...world.coachCareerHistoryByCoachId, [offer.coachId]: history }, openings, ...staffState }), { teamId: oldTeamId }); openings = { ...created.world.coachJobOpeningsById }; teams = Object.values(created.world.teams) }
   const appointed = appointCoachToTeam({ employment, history, coachId: offer.coachId, teamId: opening.teamId, date: world.currentDate }); if (!appointed.ok) throw new Error('Coach cannot be appointed')
   teams = teams.map((team) => team.id === opening.teamId ? { ...team, coachId: offer.coachId } : team)
   openings[opening.id] = { ...opening, status: 'filled' }
@@ -83,7 +83,7 @@ export function acceptCoachJobOffer(world: GameWorld, offerId: string): GameWorl
   const offers: Record<string, any> = { ...world.coachJobOffersById, [offer.id]: accepted.offer }
   for (const candidate of Object.values(candidacies)) if (candidate.jobOpeningId === opening.id && candidate.id !== candidacy.id && ['identified', 'interviewing', 'offered'].includes(candidate.status)) { const rejected = transitionCoachJobCandidacy(candidate, 'rejected'); if (rejected.ok) candidacies[candidate.id] = rejected.candidacy }
   for (const other of Object.values(offers)) if (other.jobOpeningId === opening.id && other.id !== offer.id && other.status === 'pending') offers[other.id] = { ...other, status: 'withdrawn' }
-  const next=updateGameWorld(rebuild(world, { teams, openings, candidacies, offers, employment: { ...world.coachEmploymentByCoachId, [offer.coachId]: appointed.employment }, history: { ...world.coachCareerHistoryByCoachId, [offer.coachId]: appointed.history } }), { coachFinancesByCoachId: { ...world.coachFinancesByCoachId, [offer.coachId]: { ...world.coachFinancesByCoachId[offer.coachId]!, annualSalary: offer.annualSalary ?? world.coachFinancesByCoachId[offer.coachId]!.annualSalary } } })
+  const next=updateGameWorld(rebuild(world, { teams, openings, candidacies, offers, employment: { ...world.coachEmploymentByCoachId, [offer.coachId]: appointed.employment }, history: { ...world.coachCareerHistoryByCoachId, [offer.coachId]: appointed.history }, ...coachStaffState(world, offer.coachId, opening.teamId, 'resigned') }), { coachFinancesByCoachId: { ...world.coachFinancesByCoachId, [offer.coachId]: { ...world.coachFinancesByCoachId[offer.coachId]!, annualSalary: offer.annualSalary ?? world.coachFinancesByCoachId[offer.coachId]!.annualSalary } } })
   const coach=world.coaches[offer.coachId]!, team=world.teams[opening.teamId]!
   let remembered = recordMemory(recordMemory(next, { id: `memory:hired:coach:${offer.id}`, owner: { kind: 'coach', id: coach.id }, type: 'hired', occurredOn: world.currentDate, entityRefs: [{ kind: 'team', id: team.id }], sourceId: offer.id, semanticKey: `hired:${offer.id}`, importance: 'important', valence: 60, intensity: 70, decayPerMonth: 1, permanent: false, tags: ['career', 'hiring'], context: { teamId: team.id, offerId: offer.id } }), { id: `memory:hired:team:${offer.id}`, owner: { kind: 'team', id: team.id }, type: 'hired', occurredOn: world.currentDate, entityRefs: [{ kind: 'coach', id: coach.id }], sourceId: offer.id, semanticKey: `hired:${offer.id}`, importance: 'important', valence: 45, intensity: 60, decayPerMonth: 1, permanent: false, tags: ['career', 'hiring'], context: { coachId: coach.id, offerId: offer.id } })
   if (departedTeamId !== undefined) {
@@ -96,7 +96,18 @@ export function acceptCoachJobOffer(world: GameWorld, offerId: string): GameWorl
 
 export function declineCoachJobOffer(world: GameWorld, offerId: string): GameWorld { const offer = requireOffer(world, offerId); const candidacy = requireCandidacy(world, findCandidacy(world, offer)); const declined = decideCoachJobOffer(offer, 'declined'); const rejected = transitionCoachJobCandidacy(candidacy, 'rejected'); if (!declined.ok || !rejected.ok) throw new Error('Coach job offer cannot be declined'); return rebuild(world, { offers: { ...world.coachJobOffersById, [offer.id]: declined.offer }, candidacies: { ...world.coachJobCandidaciesById, [candidacy.id]: rejected.candidacy } }) }
 export function withdrawCoachJobOffer(world: GameWorld, offerId: string): GameWorld { const offer = requireOffer(world, offerId); const candidacy = requireCandidacy(world, findCandidacy(world, offer)); const withdrawn = decideCoachJobOffer(offer, 'withdrawn'); const result = transitionCoachJobCandidacy(candidacy, 'withdrawn'); if (!withdrawn.ok || !result.ok) throw new Error('Coach job offer cannot be withdrawn'); return rebuild(world, { offers: { ...world.coachJobOffersById, [offer.id]: withdrawn.offer }, candidacies: { ...world.coachJobCandidaciesById, [candidacy.id]: result.candidacy } }) }
-export function fireCoachFromTeam(world: GameWorld, teamId: TeamId): GameWorld { const team = requireTeam(world, teamId); if (team.coachId === undefined) throw new Error('Team has no Coach'); const coachId = team.coachId; const result = fireCoach({ employment: world.coachEmploymentByCoachId[coachId]!, history: world.coachCareerHistoryByCoachId[coachId]!, decision: { coachId, teamId, date: world.currentDate, reason: 'performance' } }); if (!result.ok) throw new Error('Coach cannot be fired'); const vacant = rebuild(world, { teams: Object.values(world.teams).map((item) => item.id === teamId ? { ...item, coachId: undefined } : item), employment: { ...world.coachEmploymentByCoachId, [coachId]: result.employment }, history: { ...world.coachCareerHistoryByCoachId, [coachId]: result.history } }); const opened=createCoachJobOpeningForTeam(vacant, { teamId }).world; const remembered=recordMemory(recordMemory(opened,{id:`memory:fired:coach:${coachId}:${teamId}:${world.currentDate}`,owner:{kind:'coach',id:coachId},type:'fired',occurredOn:world.currentDate,entityRefs:[{kind:'team',id:teamId}],semanticKey:`fired:${coachId}:${teamId}:${world.currentDate}`,importance:'major',valence:-80,intensity:85,decayPerMonth:1,permanent:false,tags:['career','dismissal'],context:{teamId}}),{id:`memory:fired:team:${coachId}:${teamId}:${world.currentDate}`,owner:{kind:'team',id:teamId},type:'fired',occurredOn:world.currentDate,entityRefs:[{kind:'coach',id:coachId}],semanticKey:`fired:${coachId}:${teamId}:${world.currentDate}`,importance:'major',valence:-50,intensity:70,decayPerMonth:1,permanent:false,tags:['career','dismissal'],context:{coachId}}); const coach=world.coaches[coachId]!;return closeCoachTenure(addNewsItem(remembered,{id:`news:coach-fired:${coachId}:${teamId}:${world.currentDate}`,gameDate:world.currentDate,category:'career',headline:`${coach.firstName} ${coach.lastName} dismissed by ${team.name}`,body:`${coach.firstName} ${coach.lastName} is no longer head coach of ${team.name}.`,context:{coachId,teamId}}),coachId,teamId) }
+export function fireCoachFromTeam(world: GameWorld, teamId: TeamId): GameWorld {
+  const team = requireTeam(world, teamId)
+  if (team.coachId === undefined) throw new Error('Team has no Coach')
+  const coachId = team.coachId
+  const result = fireCoach({ employment: world.coachEmploymentByCoachId[coachId]!, history: world.coachCareerHistoryByCoachId[coachId]!, decision: { coachId, teamId, date: world.currentDate, reason: 'performance' } })
+  if (!result.ok) throw new Error('Coach cannot be fired')
+  const vacant = rebuild(world, { teams: Object.values(world.teams).map((item) => item.id === teamId ? { ...item, coachId: undefined } : item), employment: { ...world.coachEmploymentByCoachId, [coachId]: result.employment }, history: { ...world.coachCareerHistoryByCoachId, [coachId]: result.history }, ...coachStaffState(world, coachId, undefined, 'performance') })
+  const opened = createCoachJobOpeningForTeam(vacant, { teamId }).world
+  const coach = world.coaches[coachId]!
+  const remembered = recordMemory(recordMemory(opened, { id: `memory:fired:coach:${coachId}:${teamId}:${world.currentDate}`, owner: { kind: 'coach', id: coachId }, type: 'fired', occurredOn: world.currentDate, entityRefs: [{ kind: 'team', id: teamId }], semanticKey: `fired:${coachId}:${teamId}:${world.currentDate}`, importance: 'major', valence: -80, intensity: 85, decayPerMonth: 1, permanent: false, tags: ['career', 'dismissal'], context: { teamId } }), { id: `memory:fired:team:${coachId}:${teamId}:${world.currentDate}`, owner: { kind: 'team', id: teamId }, type: 'fired', occurredOn: world.currentDate, entityRefs: [{ kind: 'coach', id: coachId }], semanticKey: `fired:${coachId}:${teamId}:${world.currentDate}`, importance: 'major', valence: -50, intensity: 70, decayPerMonth: 1, permanent: false, tags: ['career', 'dismissal'], context: { coachId } })
+  return closeCoachTenure(addNewsItem(remembered, { id: `news:coach-fired:${coachId}:${teamId}:${world.currentDate}`, gameDate: world.currentDate, category: 'career', headline: `${coach.firstName} ${coach.lastName} dismissed by ${team.name}`, body: `${coach.firstName} ${coach.lastName} is no longer head coach of ${team.name}.`, context: { coachId, teamId } }), coachId, teamId)
+}
 export function applyBoardFiringRecommendation(world: GameWorld, teamId: TeamId): GameWorld { const state = world.boardStatesByTeamId[teamId]; return state !== undefined && evaluateFiringRisk(state) ? fireCoachFromTeam(world, teamId) : world }
 export function closeCoachJobOpening(world: GameWorld, openingId: string): GameWorld { const opening = requireOpening(world, openingId); if (opening.status !== 'open') throw new Error('Coach job opening is not open'); return rebuild(world, { openings: { ...world.coachJobOpeningsById, [opening.id]: { ...opening, status: 'closed' } } }) }
 
@@ -111,7 +122,30 @@ function requireOpening(world: GameWorld, id: string) { const opening = world.co
 function requireCandidacy(world: GameWorld, id: string) { const candidacy = world.coachJobCandidaciesById[coachJobCandidacyIdFromString(id)]; if (candidacy === undefined) throw new Error('Coach candidacy does not exist'); return candidacy }
 function requireOffer(world: GameWorld, id: string) { const offer = world.coachJobOffersById[coachJobOfferIdFromString(id)]; if (offer === undefined) throw new Error('Coach job offer does not exist'); return offer }
 function nextId(world: GameWorld, prefix: string): string { return `${prefix}${Object.keys(world.coachJobOpeningsById).concat(Object.keys(world.coachJobCandidaciesById), Object.keys(world.coachJobOffersById)).filter((id) => id.startsWith(prefix)).length + 1}` }
-function rebuild(world: GameWorld, changes: Partial<{ teams: readonly (typeof world.teams)[keyof typeof world.teams][]; openings: typeof world.coachJobOpeningsById; candidacies: typeof world.coachJobCandidaciesById; interviews: typeof world.coachInterviewsByCandidacyId; offers: typeof world.coachJobOffersById; employment: typeof world.coachEmploymentByCoachId; history: typeof world.coachCareerHistoryByCoachId }>): GameWorld {
+function coachStaffState(world: GameWorld, coachId: CoachId, teamId?: TeamId, terminationReason: 'performance' | 'resigned' = 'resigned') {
+  const coach = world.coaches[coachId]!
+  const assignments = Object.values(world.teamStaffAssignmentsById).filter((assignment) => assignment.staffPersonId !== coach.staffProfileId)
+  if (teamId !== undefined) {
+    assignments.push({
+      id: teamStaffAssignmentIdFromString(`staff-assignment:${coach.id}:headCoach:${teamId}:${world.currentDate}`),
+      staffPersonId: coach.staffProfileId,
+      teamId,
+      role: 'headCoach',
+      assignedOn: world.currentDate,
+    })
+  }
+  return {
+    assignments,
+    staffEmployment: {
+      ...world.staffEmploymentByStaffId,
+      [coach.staffProfileId]: teamId === undefined
+        ? { status: 'unemployed' as const }
+        : { status: 'employed' as const, teamId, roleId: 'headCoach' as const, startedOn: world.currentDate },
+    },
+    staffContracts: Object.values(world.staffContractsById).map((contract) => contract.staffId !== coach.staffProfileId || contract.termination !== undefined ? contract : { ...contract, termination: { effectiveOn: world.currentDate, reason: terminationReason } }),
+  }
+}
+function rebuild(world: GameWorld, changes: Partial<{ teams: readonly (typeof world.teams)[keyof typeof world.teams][]; openings: typeof world.coachJobOpeningsById; candidacies: typeof world.coachJobCandidaciesById; interviews: typeof world.coachInterviewsByCandidacyId; offers: typeof world.coachJobOffersById; employment: typeof world.coachEmploymentByCoachId; history: typeof world.coachCareerHistoryByCoachId; assignments: readonly (typeof world.teamStaffAssignmentsById)[keyof typeof world.teamStaffAssignmentsById][]; staffEmployment: typeof world.staffEmploymentByStaffId; staffContracts: readonly (typeof world.staffContractsById)[keyof typeof world.staffContractsById][] }>): GameWorld {
   return updateGameWorld(world, {
     ...(changes.teams === undefined ? {} : { teams: changes.teams }),
     coachJobOpeningsById: changes.openings ?? world.coachJobOpeningsById,
@@ -120,5 +154,8 @@ function rebuild(world: GameWorld, changes: Partial<{ teams: readonly (typeof wo
     coachJobOffersById: changes.offers ?? world.coachJobOffersById,
     coachEmploymentByCoachId: changes.employment ?? world.coachEmploymentByCoachId,
     coachCareerHistoryByCoachId: changes.history ?? world.coachCareerHistoryByCoachId,
+    teamStaffAssignments: changes.assignments ?? Object.values(world.teamStaffAssignmentsById),
+    staffEmploymentByStaffId: changes.staffEmployment ?? world.staffEmploymentByStaffId,
+    staffContracts: changes.staffContracts ?? Object.values(world.staffContractsById),
   } as never)
 }

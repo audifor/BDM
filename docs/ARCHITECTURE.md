@@ -58,6 +58,10 @@ stable `PersonId`; the runtime keeps existing field names as compatibility
 surfaces while new save data persists the shared person root. `Coach` is not a
 Person profile: it is a gameplay/RPG facade over `Person + StaffProfile` with
 the `headCoach` StaffRole.
+Canonical `GameWorld` construction requires that StaffProfile and, for an
+employed coach, exactly one matching `TeamStaffAssignment(role: headCoach)`;
+it never synthesizes Staff. Save V1 is the explicit legacy migration boundary
+that may deterministically materialize missing compatibility Staff roots.
 
 `Competition` is the enduring institution and `Season` is one dated edition of it.
 `Game` is independent of `MatchEngine`; it records only a scheduled/completed state

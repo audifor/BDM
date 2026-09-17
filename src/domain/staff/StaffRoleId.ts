@@ -6,7 +6,7 @@
  *
  * `headCoach` is the canonical coaching role on a StaffProfile. The `Coach` entity is only
  * a gameplay/RPG facade over that StaffProfile. Supporting `TeamStaffAssignment` contracts
- * may still exclude `headCoach` while the team-assignment migration remains scoped separately.
+ * may still exclude `headCoach` because it is filled through the Coach facade.
  */
 export const STAFF_ROLE_IDS = [
   // coaching
@@ -25,5 +25,5 @@ export const STAFF_ROLE_IDS = [
 ] as const
 export type StaffRoleId = typeof STAFF_ROLE_IDS[number]
 
-/** Supporting assignment roles only — excludes `headCoach`, which is represented by the Coach facade. */
+/** Market/generator roles only — `headCoach` is assigned through the Coach facade's StaffProfile. */
 export const ASSIGNABLE_STAFF_ROLE_IDS = STAFF_ROLE_IDS.filter((id): id is Exclude<StaffRoleId, 'headCoach'> => id !== 'headCoach')

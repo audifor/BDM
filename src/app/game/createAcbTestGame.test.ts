@@ -51,14 +51,14 @@ describe('createAcbTestGame', () => {
     expect(roles).toHaveLength(28)
     for (const team of Object.values(world.teams)) {
       const assignments = Object.values(world.teamStaffAssignmentsById).filter((assignment) => assignment.teamId === team.id)
-      expect(assignments).toHaveLength(roles.length + 3)
+      expect(assignments).toHaveLength(roles.length + 4)
       expect(assignments.every((assignment) => isStaffRoleApplicableToEcosystem(assignment.role, 'fibaLike'))).toBe(true)
       expect(assignments.filter((assignment) => assignment.role === 'assistantCoach')).toHaveLength(2)
       expect(assignments.filter((assignment) => assignment.role === 'physiotherapist')).toHaveLength(2)
       expect(assignments.filter((assignment) => assignment.role === 'regionalScout')).toHaveLength(2)
     }
     for (const role of roles) expect(listFreeAgentStaff(world, role)).toHaveLength(5)
-    expect(listFreeAgentStaff(world)).toHaveLength(roles.length * 5)
+    expect(listFreeAgentStaff(world)).toHaveLength(roles.length * 5 + 5)
     const freeCoachIds = Object.values(world.coaches).filter((coach) => String(coach.id).startsWith('acb-free-agent-head-coach-')).map((coach) => coach.id)
     expect(freeCoachIds).toHaveLength(5)
     expect(freeCoachIds.every((coachId) => world.coachEmploymentByCoachId[coachId]!.status === 'unemployed')).toBe(true)
@@ -91,8 +91,8 @@ describe('createAcbTestGame', () => {
     for (const team of Object.values(world.teams)) {
       const employed = Object.entries(world.staffEmploymentByStaffId).filter(([, employment]) => employment.status === 'employed' && employment.teamId === team.id).map(([staffId]) => staffId)
       const activeContracts = Object.values(world.staffContractsById).filter((contract) => contract.teamId === team.id && isStaffContractActiveOn(contract, world.currentDate))
-      expect(employed).toHaveLength(31)
-      expect(activeContracts).toHaveLength(31)
+      expect(employed).toHaveLength(32)
+      expect(activeContracts).toHaveLength(32)
       expect(activeContracts.every((contract) => contract.compensation.annualSalary > 0)).toBe(true)
       const payroll = getTeamStaffPayroll(world, team.id)
       expect(payroll.activeAnnualSalary).toBe(activeContracts.reduce((sum, contract) => sum + contract.compensation.annualSalary, 0))
@@ -136,7 +136,7 @@ describe('createAcbTestGame', () => {
     expect(hired.teams[team.id]!.coachId).toBe(coachId)
     expect(hired.coachEmploymentByCoachId[coachId]).toMatchObject({ status: 'employed', teamId: team.id })
     expect(Object.values(hired.teams).filter((item) => item.coachId === coachId)).toHaveLength(1)
-    expect(Object.values(hired.teamStaffAssignmentsById).some((assignment) => assignment.role === 'headCoach')).toBe(false)
+    expect(Object.values(hired.teamStaffAssignmentsById)).toContainEqual(expect.objectContaining({ staffPersonId: hired.coaches[coachId]!.staffProfileId, teamId: team.id, role: 'headCoach' }))
     const loaded = deserializeGameWorldV1(serializeGameWorldV1(hired, '2026-09-19T00:00:00.000Z'))
     expect(loaded.teams[team.id]!.coachId).toBe(coachId)
     expect(loaded.coachEmploymentByCoachId[coachId]).toEqual(hired.coachEmploymentByCoachId[coachId])
@@ -207,7 +207,7 @@ describe('createAcbTestGame', () => {
 
   it('keeps the prototype staff assignment fixture while materializing head-coach Staff profiles', () => {
     const prototype = createNewGame()
-    expect(Object.values(prototype.teamStaffAssignmentsById).every((assignment) => ['assistantCoach', 'regionalScout', 'physiotherapist'].includes(assignment.role))).toBe(true)
+    expect(Object.values(prototype.teamStaffAssignmentsById).some((assignment) => assignment.role === 'headCoach')).toBe(true)
     const assignedStaffIds = new Set(Object.values(prototype.teamStaffAssignmentsById).map((assignment) => assignment.staffPersonId))
     expect(Object.values(prototype.staffPeopleById).every((staff) => assignedStaffIds.has(staff.id) || staff.marketRole === 'headCoach')).toBe(true)
     expect(Object.values(prototype.staffPeopleById).filter((staff) => staff.marketRole === 'headCoach')).toHaveLength(Object.keys(prototype.coaches).length)

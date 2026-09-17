@@ -1,4 +1,4 @@
-import { coachProfileRefsForCoachId, createCoach } from '@/domain/coach'
+import { coachProfileRefsForCoachId, createLegacyCoach } from '@/domain/coach'
 import { createPerson } from '@/domain/person'
 import { createCompetition, createCompetitionRules, FIBA_GAME_FORMAT } from '@/domain/competition'
 import { createSportsEcosystem } from '@/domain/ecosystem'
@@ -44,7 +44,7 @@ import { createStaffCareerAutonomyState, createStaffCareerRequest } from '@/doma
 import { playerKnowledgeIdFromString } from '@/domain/ids'
 import { createCoachRpgProfile } from '@/domain/coachRpg'
 import { createCoachFinanceProfile } from '@/domain/coachFinances'
-import { createStaffProfessionalProfile, LEGACY_STAFF_ROLE_TO_ROLE_ID } from '@/domain/staff'
+import { createStaffPerson, createStaffProfessionalProfile, createTeamStaffAssignment, LEGACY_STAFF_ROLE_TO_ROLE_ID, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
 import { createCoachReputationProfile, type CoachReputationSource } from '@/domain/coachReputation'
 import { migrateLegacyDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
 import { coachJobCandidacyIdFromString, coachJobOfferIdFromString, coachJobOpeningIdFromString, createCoachEmployment, createCoachJobOpening } from '@/domain/coachCareer'
@@ -290,11 +290,17 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
     contracts,
     teamFinances: payload.teamFinances === undefined ? [] : array(payload.teamFinances, 'Save teamFinances').map(readTeamFinances),
   })
-  const coaches = array(payload.coaches, 'Save coaches').map(readCoach)
+  const rawCoaches = array(payload.coaches, 'Save coaches')
+  const coaches = rawCoaches.map(readCoach)
   const professionalProfiles = payload.coachProfessionalProfilesByCoachId === undefined ? Object.fromEntries(coaches.map((coach) => [coach.id, createLegacyProfessionalProfile()])) : readCoachProfessionalProfiles(payload.coachProfessionalProfilesByCoachId)
   const rpgProfiles = payload.coachRpgProfilesByCoachId === undefined ? Object.fromEntries(coaches.map((coach) => [coach.id, createLegacyRpgProfile()])) : readCoachRpgProfiles(payload.coachRpgProfilesByCoachId)
   const reputationProfiles = payload.coachReputationProfilesByCoachId === undefined ? undefined : readCoachReputationProfiles(payload.coachReputationProfilesByCoachId)
-  const staffPeople = payload.staffPeople === undefined ? [] : array(payload.staffPeople, 'Save staffPeople').map(readStaffPerson)
+  const parsedStaffPeople = payload.staffPeople === undefined ? [] : array(payload.staffPeople, 'Save staffPeople').map(readStaffPerson)
+  const parsedTeamStaffAssignments = payload.teamStaffAssignments === undefined ? [] : array(payload.teamStaffAssignments, 'Save teamStaffAssignments').map(readStaffAssignment)
+  // This is the only compatibility boundary allowed to create missing Coach StaffProfiles.
+  // Canonical GameWorld construction validates supplied StaffProfiles and never synthesizes them.
+  const legacyCoachStructure = migrateLegacyCoachStructure({ coaches, rawCoaches, teams, staffPeople: parsedStaffPeople, assignments: parsedTeamStaffAssignments, professionalProfiles, assignedOn: currentDate })
+  const staffPeople = legacyCoachStructure.staffPeople
   const rawPersons = payload.persons === undefined ? undefined : array(payload.persons, 'Save persons')
   const parsedPersons = rawPersons !== undefined && !containsLegacyCoachPersonRoot(rawPersons) ? rawPersons.map(readPerson) : undefined
   const persons = parsedPersons !== undefined && personRootsMatchProfiles(parsedPersons, coaches, players, staffPeople) ? parsedPersons : undefined
@@ -332,7 +338,7 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
     teamFinances,
     playerKnowledge: payload.playerKnowledge === undefined ? [] : array(payload.playerKnowledge, 'Save playerKnowledge').map(readPlayerKnowledge),
     ...(payload.organizationEvaluationPolicies === undefined ? {} : { organizationEvaluationPoliciesById: readOrganizationEvaluationPolicies(payload.organizationEvaluationPolicies) }),
-    staffPeople, teamStaffAssignments: payload.teamStaffAssignments === undefined ? [] : array(payload.teamStaffAssignments, 'Save teamStaffAssignments').map(readStaffAssignment),
+    staffPeople, teamStaffAssignments: legacyCoachStructure.assignments,
     ...(payload.responsibilities === undefined ? {} : { responsibilities: array(payload.responsibilities, 'Save responsibilities').map(readResponsibility) }),
     ...(payload.delegationOutcomes === undefined ? {} : { delegationOutcomes: array(payload.delegationOutcomes, 'Save delegationOutcomes').map(readDelegationOutcome) }),
     ...(payload.staffHumanContexts === undefined ? {} : { staffHumanContexts: array(payload.staffHumanContexts, 'Save staffHumanContexts').map(readStaffHumanContext) }),
@@ -396,7 +402,31 @@ function indexJsonRecords(value: unknown, name: string) { return Object.fromEntr
 function indexJsonRecordsByCoach(value: unknown, name: string) { return Object.fromEntries(array(value, name).map((item) => { const entry = record(item, name); return [string(entry.coachId, `${name} coach`), entry] })) }
 function indexJsonRecordsByTeam(value: unknown, name: string) { return Object.fromEntries(array(value, name).map((item) => { const entry = record(item, name); return [string(entry.teamId, `${name} team`), entry] })) }
 function indexJsonRecordsByLegacyKey(value: unknown, name: string) { return Object.fromEntries(array(value, name).map((item) => { const entry = record(item, name); return [`${string(entry.coachId, `${name} coach`)}:${string(entry.teamId, `${name} team`)}`, entry] })) }
-function readCoach(value: unknown) { const v = record(value, 'Coach'); const id = coachIdFromString(string(v.id, 'Coach id')); const defaults = coachProfileRefsForCoachId(id); const legacyPersonId = v.personId === undefined ? undefined : personIdFromString(string(v.personId, 'Coach personId')); const personId = legacyPersonId !== undefined && !String(legacyPersonId).startsWith('person:coach:') ? legacyPersonId : defaults.personId; return createCoach({ id, personId, staffProfileId: v.staffProfileId === undefined ? defaults.staffProfileId : staffPersonIdFromString(string(v.staffProfileId, 'Coach staffProfileId')), firstName: string(v.firstName, 'Coach firstName'), lastName: string(v.lastName, 'Coach lastName'), gender: gender(v.gender), nationalityId: countryIdFromString(string(v.nationalityId, 'Coach nationalityId')) }) }
+function readCoach(value: unknown) { const v = record(value, 'Coach'); const id = coachIdFromString(string(v.id, 'Coach id')); const defaults = coachProfileRefsForCoachId(id); const legacyPersonId = v.personId === undefined ? undefined : personIdFromString(string(v.personId, 'Coach personId')); const personId = legacyPersonId !== undefined && !String(legacyPersonId).startsWith('person:coach:') ? legacyPersonId : defaults.personId; return createLegacyCoach({ id, personId, staffProfileId: v.staffProfileId === undefined ? defaults.staffProfileId : staffPersonIdFromString(string(v.staffProfileId, 'Coach staffProfileId')), firstName: string(v.firstName, 'Coach firstName'), lastName: string(v.lastName, 'Coach lastName'), gender: gender(v.gender), nationalityId: countryIdFromString(string(v.nationalityId, 'Coach nationalityId')) }) }
+function migrateLegacyCoachStructure(input: { readonly coaches: readonly import('@/domain/coach').Coach[]; readonly rawCoaches: readonly unknown[]; readonly teams: readonly import('@/domain/team').Team[]; readonly staffPeople: readonly StaffPerson[]; readonly assignments: readonly TeamStaffAssignment[]; readonly professionalProfiles: Readonly<Record<import('@/domain/ids').CoachId, import('@/domain/staff').StaffProfessionalProfile>>; readonly assignedOn: import('@/domain/date').GameDate }): { readonly staffPeople: readonly StaffPerson[]; readonly assignments: readonly TeamStaffAssignment[] } {
+  const suppliedStaffIds = new Set(input.staffPeople.map((staff) => staff.id))
+  const legacyCoachIds = new Set([...input.rawCoaches.filter(isLegacyCoachRecord).map((value) => coachIdFromString(string(record(value, 'Coach').id, 'Coach id'))), ...input.coaches.filter((coach) => !suppliedStaffIds.has(coach.staffProfileId)).map((coach) => coach.id)])
+  if (legacyCoachIds.size === 0) return { staffPeople: input.staffPeople, assignments: input.assignments }
+  const legacyCoaches = input.coaches.filter((coach) => legacyCoachIds.has(coach.id))
+  const legacyStaffIds = new Set(legacyCoaches.map((coach) => coach.staffProfileId))
+  const staffById = new Map(input.staffPeople.map((staff) => [staff.id, staff]))
+  for (const coach of legacyCoaches) {
+    const existing = staffById.get(coach.staffProfileId)
+    staffById.set(coach.staffProfileId, createStaffPerson(existing === undefined ? {
+      id: coach.staffProfileId, personId: coach.personId,
+      identity: { firstName: coach.firstName, lastName: coach.lastName, nationality: String(coach.nationalityId) },
+      professional: input.professionalProfiles[coach.id] ?? { attributes: Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 50])) as StaffPerson['professional']['attributes'] },
+      marketRole: 'headCoach', roleFamily: 'coaching',
+    } : { ...existing, personId: coach.personId, marketRole: 'headCoach', roleFamily: 'coaching' }))
+  }
+  const assignments = input.assignments.filter((assignment) => !legacyStaffIds.has(assignment.staffPersonId))
+  for (const coach of legacyCoaches) {
+    const team = input.teams.find((item) => item.coachId === coach.id)
+    if (team !== undefined) assignments.push(createTeamStaffAssignment({ id: teamStaffAssignmentIdFromString(`legacy:coach-headCoach:${coach.id}:${team.id}:${input.assignedOn}`), staffPersonId: coach.staffProfileId, teamId: team.id, role: 'headCoach', assignedOn: input.assignedOn }))
+  }
+  return { staffPeople: [...staffById.values()], assignments }
+}
+function isLegacyCoachRecord(value: unknown): boolean { const coach = record(value, 'Coach'); return coach.personId === undefined || coach.staffProfileId === undefined || String(coach.personId).startsWith('person:coach:') }
 function readPlayer(value: unknown, referenceDate: import('@/domain/date').GameDate, currentDate: import('@/domain/date').GameDate) {
   const v = record(value, 'Player'); const basketball = record(v.basketball, 'Player basketball'); const ratings = record(basketball.ratings, 'Player ratings')
   const id = playerIdFromString(string(v.id, 'Player id')); const primaryPosition = position(basketball.primaryPosition)

@@ -93,9 +93,13 @@ describe('GameWorldSaveV1', () => {
     const partial = deserializeGameWorldV1({ ...envelope, payload: partialPayload })
 
     expect(legacy.staffPeopleById).toEqual(world.staffPeopleById)
-    expect(legacy.teamStaffAssignmentsById).toEqual(world.teamStaffAssignmentsById)
+    for (const team of Object.values(legacy.teams)) {
+      if (team.coachId === undefined) continue
+      const coach = legacy.coaches[team.coachId]!
+      expect(Object.values(legacy.teamStaffAssignmentsById)).toContainEqual(expect.objectContaining({ staffPersonId: coach.staffProfileId, teamId: team.id, role: 'headCoach' }))
+    }
     expect(partial.staffPeopleById[removedAssignment.staffPersonId]).toEqual(world.staffPeopleById[removedAssignment.staffPersonId])
-    expect(partial.teamStaffAssignmentsById[removedAssignment.id]).toEqual(world.teamStaffAssignmentsById[removedAssignment.id])
+    expect(Object.values(partial.teamStaffAssignmentsById).some((assignment) => assignment.staffPersonId === removedAssignment.staffPersonId)).toBe(true)
     expect(deserializeGameWorldV1(serializeGameWorldV1(partial, envelope.savedAt))).toEqual(partial)
   })
 
@@ -115,6 +119,8 @@ describe('GameWorldSaveV1', () => {
       const staff = loaded.staffPeopleById[coach.staffProfileId]
       expect(staff.personId).toBe(coach.personId)
       expect(staff.marketRole).toBe('headCoach')
+      const assignedTeam = Object.values(loaded.teams).find((team) => team.coachId === coach.id)
+      if (assignedTeam !== undefined) expect(Object.values(loaded.teamStaffAssignmentsById)).toContainEqual(expect.objectContaining({ staffPersonId: staff.id, teamId: assignedTeam.id, role: 'headCoach' }))
       expect(loaded.personsById[coach.personId].profileRefs).toContainEqual({ kind: 'staff', profileId: staff.id })
       expect(coach.id).toBe(world.coaches[coach.id].id)
     }

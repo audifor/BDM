@@ -1,5 +1,5 @@
 import type { CreateGameWorldInput } from './GameWorld'
-import { createCoach } from '@/domain/coach'
+import { coachProfileRefsForCoachId, createCoach } from '@/domain/coach'
 import { createCompetition } from '@/domain/competition'
 import { createCountry } from '@/domain/country'
 import { createGameDate } from '@/domain/date'
@@ -11,11 +11,13 @@ import {
   gameIdFromString,
   playerIdFromString,
   seasonIdFromString,
+  teamStaffAssignmentIdFromString,
   teamIdFromString,
 } from '@/domain/ids'
 import { createPlayer } from '@/domain/player'
 import { createTestBasketballProfile, createTestPlayerBio } from '@/domain/player/testFixtures'
 import { createSeason } from '@/domain/season'
+import { createStaffPerson, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { createTeam } from '@/domain/team'
 
 export function createValidGameWorldInput(): CreateGameWorldInput {
@@ -24,8 +26,10 @@ export function createValidGameWorldInput(): CreateGameWorldInput {
     name: 'Arcadia',
     code: 'ARC',
   })
+  const coachId = coachIdFromString('coach-user')
   const coach = createCoach({
-    id: coachIdFromString('coach-user'),
+    id: coachId,
+    ...coachProfileRefsForCoachId(coachId),
     firstName: 'Jordan',
     lastName: 'Reyes',
     gender: 'male',
@@ -87,6 +91,8 @@ export function createValidGameWorldInput(): CreateGameWorldInput {
     status: 'scheduled',
     result: null,
   })
+  const coachStaff = createStaffPerson({ id: coach.staffProfileId, personId: coach.personId, identity: { firstName: coach.firstName, lastName: coach.lastName, nationality: country.id }, professional: { attributes: Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 50])) as never }, marketRole: 'headCoach', roleFamily: 'coaching' })
+  const coachAssignment = { id: teamStaffAssignmentIdFromString(`staff-assignment:${coach.id}:headCoach:${homeTeam.id}:${season.startDate}`), staffPersonId: coach.staffProfileId, teamId: homeTeam.id, role: 'headCoach' as const, assignedOn: season.startDate }
 
   return {
     currentDate: createGameDate(2032, 10, 1),
@@ -98,5 +104,8 @@ export function createValidGameWorldInput(): CreateGameWorldInput {
     competitions: [competition],
     seasons: [season],
     games: [game],
+    staffPeople: [coachStaff],
+    teamStaffAssignments: [coachAssignment],
+    staffEmploymentByStaffId: { [coach.staffProfileId]: { status: 'employed', teamId: homeTeam.id, roleId: 'headCoach', startedOn: season.startDate } },
   }
 }

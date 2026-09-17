@@ -20,8 +20,8 @@ describe('StaffPerson',()=>{
     expect(createTeamStaffAssignment({id:teamStaffAssignmentIdFromString('assignment-canonical'),staffPersonId:medical.id,teamId:teamIdFromString('team'),role:'teamDoctor',assignedOn:createGameDate(2032,10,1)}).role).toBe('teamDoctor')
     expect(createTeamStaffAssignment({id:teamStaffAssignmentIdFromString('assignment-canonical-2'),staffPersonId:medical.id,teamId:teamIdFromString('team'),role:'headScout',assignedOn:createGameDate(2032,10,1)}).role).toBe('headScout')
   })
-  it('rejects headCoach as a TeamStaffAssignment role (it is a Coach-entity marker, never assignable to a StaffPerson)',()=>{
-    expect(()=>createTeamStaffAssignment({id:teamStaffAssignmentIdFromString('assignment-invalid'),staffPersonId:medical.id,teamId:teamIdFromString('team'),role:'headCoach' as never,assignedOn:createGameDate(2032,10,1)})).toThrow()
+  it('accepts headCoach as the canonical employment authority for a Coach facade',()=>{
+    expect(createTeamStaffAssignment({id:teamStaffAssignmentIdFromString('assignment-head-coach'),staffPersonId:medical.id,teamId:teamIdFromString('team'),role:'headCoach',assignedOn:createGameDate(2032,10,1)}).role).toBe('headCoach')
   })
   it('rejects an unknown role id',()=>{
     expect(()=>createTeamStaffAssignment({id:teamStaffAssignmentIdFromString('assignment-unknown'),staffPersonId:medical.id,teamId:teamIdFromString('team'),role:'notARole' as never,assignedOn:createGameDate(2032,10,1)})).toThrow()

@@ -443,13 +443,12 @@ export class GameWorldValidationError extends Error {
 }
 
 export function createGameWorld(input: CreateGameWorldInput): GameWorld {
-  const staffPeople = ensureCoachStaffProfiles(input.staffPeople ?? [], input.coaches)
-  const normalizedInput = { ...input, staffPeople }
+  const staffPeople = input.staffPeople ?? []
   const seasons = indexById(input.seasons, 'Season')
   const currentSeasonId = input.currentSeasonId ?? selectLegacyCurrentSeasonId(seasons)
   const currentDate = parseGameDate(input.currentDate)
   const employment = coachCareerForCoaches(input.coaches, input.teams, currentDate, input.coachEmploymentByCoachId, input.coachCareerHistoryByCoachId)
-  const persons = input.persons === undefined ? derivePersons(normalizedInput) : input.persons.map(createPerson)
+  const persons = input.persons === undefined ? derivePersons(input) : input.persons.map(createPerson)
   const suppliedEcosystems = input.ecosystems === undefined ? [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike' })] : Array.isArray(input.ecosystems) ? input.ecosystems : Object.values(input.ecosystems)
   const ecosystems = [
     ...suppliedEcosystems,
@@ -618,9 +617,7 @@ export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorld
 
   const patched = { ...world, ...remainingPatch, ...worldPatch } as GameWorld
   const profilesChanged = worldPatch.coaches !== undefined || worldPatch.players !== undefined || worldPatch.staffPeopleById !== undefined
-  const normalizedStaff = profilesChanged ? ensureCoachStaffProfiles(Object.values(patched.staffPeopleById), Object.values(patched.coaches)) : Object.values(patched.staffPeopleById)
-  const normalized = profilesChanged ? { ...patched, staffPeopleById: indexById(normalizedStaff, 'Staff person') } : patched
-  const withPersonRoots = profilesChanged && worldPatch.persons === undefined ? { ...normalized, personsById: synchronizePersonRoots(normalized) } : normalized
+  const withPersonRoots = profilesChanged && worldPatch.persons === undefined ? { ...patched, personsById: synchronizePersonRoots(patched) } : patched
   const updated = profilesChanged
     ? {
         ...withPersonRoots,
@@ -973,11 +970,20 @@ function validateWorld(world: GameWorld): void {
     if (!hasRelationshipPerson(world, profile.sourceId) || !hasRelationshipPerson(world, profile.targetId)) throw new GameWorldValidationError(`Relationship references missing person: ${key}`)
   }
   for (const [coachId, employment] of Object.entries(world.coachEmploymentByCoachId) as [CoachId, CoachEmployment][]) {
-    requireEntity(world.coaches, coachId, 'Coach employment')
+    const coach = requireEntity(world.coaches, coachId, 'Coach employment')
     createCoachEmployment(employment)
     const assignedTeam = Object.values(world.teams).find((team) => team.coachId === coachId)
     if (employment.status === 'employed' && (assignedTeam === undefined || employment.teamId !== assignedTeam.id)) throw new GameWorldValidationError(`Coach ${coachId} employment does not match Team assignment`)
     if (employment.status === 'unemployed' && assignedTeam !== undefined) throw new GameWorldValidationError(`Coach ${coachId} employment does not match Team assignment`)
+    const headCoachAssignments = Object.values(world.teamStaffAssignmentsById).filter((assignment) => assignment.staffPersonId === coach.staffProfileId)
+    if (employment.status === 'employed') {
+      const assignment = headCoachAssignments[0]
+      if (headCoachAssignments.length !== 1 || assignment === undefined || assignment.teamId !== employment.teamId || assignment.role !== 'headCoach') throw new GameWorldValidationError(`Coach ${coachId} employment requires one matching headCoach Staff assignment`)
+      const staffEmployment = world.staffEmploymentByStaffId[coach.staffProfileId]
+      if (staffEmployment !== undefined && (staffEmployment.status !== 'employed' || staffEmployment.teamId !== employment.teamId || staffEmployment.roleId !== 'headCoach')) throw new GameWorldValidationError(`Coach ${coachId} Staff employment does not match Coach employment`)
+    } else if (headCoachAssignments.length !== 0) {
+      throw new GameWorldValidationError(`Unemployed Coach ${coachId} cannot retain a headCoach Staff assignment`)
+    }
   }
   for (const [coachId, history] of Object.entries(world.coachCareerHistoryByCoachId) as [CoachId, readonly CoachCareerHistoryEntry[]][]) for (let index = 0; index < history.length; index += 1) { const entry = history[index]!; if (entry.coachId !== coachId || (entry.kind === 'appointment' && entry.reason !== 'initialAppointment' && entry.reason !== 'hired') || (entry.kind === 'departure' && entry.reason !== 'fired' && entry.reason !== 'acceptedOtherJob')) throw new GameWorldValidationError(`Coach career history does not match Coach ${coachId}`); if (index > 0 && compareGameDates(history[index - 1]!.date, entry.date) > 0) throw new GameWorldValidationError(`Coach career history is not ordered for Coach ${coachId}`); requireEntity(world.teams, entry.teamId, 'Coach career history Team') }
   for (const opening of Object.values(world.coachJobOpeningsById)) { createCoachJobOpening(opening); requireEntity(world.teams, opening.teamId, 'Coach job opening Team') }
@@ -1338,33 +1344,6 @@ function synchronizePersonRoots(world: GameWorld): Readonly<Record<import('@/dom
     return [person.id, preservedRefs.length === 0 ? person : { ...person, profileRefs: [...person.profileRefs, ...preservedRefs] }] as const
   }))
   return indexById([...merged.values()], 'Person')
-}
-
-function ensureCoachStaffProfiles(staffPeople: readonly StaffPerson[], coaches: readonly Coach[]): readonly StaffPerson[] {
-  const normalized = staffPeople.map(createStaffPerson)
-  indexById(normalized, 'Staff person')
-  const byId = new Map(normalized.map((staff) => [staff.id, staff]))
-  for (const coach of coaches) {
-    const existing = byId.get(coach.staffProfileId)
-    if (existing === undefined) {
-      byId.set(coach.staffProfileId, createStaffPerson({
-        id: coach.staffProfileId,
-        personId: coach.personId,
-        identity: { firstName: coach.firstName, lastName: coach.lastName, nationality: coach.nationalityId },
-        professional: { attributes: Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 50])) as StaffPerson['professional']['attributes'] },
-        marketRole: 'headCoach',
-        roleFamily: 'coaching',
-      }))
-      continue
-    }
-    if (existing.personId !== coach.personId) throw new GameWorldValidationError(`Coach ${coach.id} does not match Staff profile ${existing.id}`)
-    if (existing.marketRole === undefined) {
-      byId.set(existing.id, createStaffPerson({ ...existing, marketRole: 'headCoach', roleFamily: existing.roleFamily ?? 'coaching' }))
-    } else if (existing.marketRole !== 'headCoach') {
-      throw new GameWorldValidationError(`Coach ${coach.id} requires Staff profile ${existing.id} to have headCoach role`)
-    }
-  }
-  return [...byId.values()]
 }
 
 function derivePersons(input: CreateGameWorldInput): readonly Person[] {

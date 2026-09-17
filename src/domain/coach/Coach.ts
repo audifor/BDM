@@ -17,8 +17,10 @@ export interface Coach {
 
 export interface CreateCoachInput {
   id: CoachId
-  readonly personId?: PersonId
-  readonly staffProfileId?: StaffPersonId
+  /** Existing canonical Person root for this gameplay facade. */
+  readonly personId: PersonId
+  /** Existing canonical StaffProfile for this gameplay facade. */
+  readonly staffProfileId: StaffPersonId
   firstName: string
   lastName: string
   gender: Gender
@@ -26,18 +28,29 @@ export interface CreateCoachInput {
 }
 
 export function createCoach(input: CreateCoachInput): Coach {
-  const defaults = coachProfileRefsForCoachId(input.id)
-  const personId = input.personId ?? defaults.personId
+  const personId = requireNonEmptyString(input.personId, 'Coach person id') as PersonId
+  const staffProfileId = requireNonEmptyString(input.staffProfileId, 'Coach Staff profile id') as StaffPersonId
   if (String(personId).startsWith('person:coach:')) throw new RangeError('Coach must reference a Staff-backed Person, not a Coach Person profile')
   return {
     id: requireNonEmptyString(input.id, 'Coach id') as CoachId,
     personId,
-    staffProfileId: input.staffProfileId ?? defaults.staffProfileId,
+    staffProfileId,
     firstName: requireNonEmptyString(input.firstName, 'Coach first name'),
     lastName: requireNonEmptyString(input.lastName, 'Coach last name'),
     gender: requireGender(input.gender),
     nationalityId: requireNonEmptyString(input.nationalityId, 'Coach nationality id') as CountryId,
   }
+}
+
+/** Legacy save/caller adapter only. New runtime state must use `createCoach`. */
+export interface CreateLegacyCoachInput extends Omit<CreateCoachInput, 'personId' | 'staffProfileId'> {
+  readonly personId?: PersonId
+  readonly staffProfileId?: StaffPersonId
+}
+
+export function createLegacyCoach(input: CreateLegacyCoachInput): Coach {
+  const defaults = coachProfileRefsForCoachId(input.id)
+  return createCoach({ ...input, personId: input.personId ?? defaults.personId, staffProfileId: input.staffProfileId ?? defaults.staffProfileId })
 }
 
 export interface CoachProfileRefs { readonly personId: PersonId; readonly staffProfileId: StaffPersonId }

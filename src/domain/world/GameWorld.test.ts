@@ -42,8 +42,20 @@ describe('GameWorld', () => {
     expect(world.personsById[coach.personId].profileRefs).toContainEqual({ kind: 'staff', profileId: staff.id })
     expect(world.personsById[coach.personId].profileRefs.some((ref) => (ref.kind as string) === 'coach')).toBe(false)
     expect(Object.keys(world.personsById).every((id) => !id.startsWith('person:coach:'))).toBe(true)
+    const assignment = Object.values(world.teamStaffAssignmentsById).find((item) => item.staffPersonId === coach.staffProfileId)
+    expect(assignment).toMatchObject({ teamId: input.teams[0]!.id, role: 'headCoach' })
     expect(world.players[playerIdFromString('player-home')]).toBe(input.players[0])
     expect(world.teams[teamIdFromString('team-home')]).toBe(input.teams[0])
+  })
+
+  it('requires a supplied StaffProfile and one matching headCoach assignment for an employed Coach', () => {
+    const missingStaff = createValidGameWorldInput()
+    missingStaff.staffPeople = []
+    expect(() => createGameWorld(missingStaff)).toThrow('references missing staff profile')
+
+    const missingAssignment = createValidGameWorldInput()
+    missingAssignment.teamStaffAssignments = []
+    expect(() => createGameWorld(missingAssignment)).toThrow('Coach coach-user employment requires one matching headCoach Staff assignment')
   })
 
   it('rejects duplicate entity IDs', () => {
