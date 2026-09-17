@@ -1,4 +1,5 @@
-import { createCoach } from '@/domain/coach'
+import { coachProfileRefsForCoachId, createLegacyCoach } from '@/domain/coach'
+import { createPerson } from '@/domain/person'
 import { createCompetition, createCompetitionRules, FIBA_GAME_FORMAT } from '@/domain/competition'
 import { createSportsEcosystem } from '@/domain/ecosystem'
 import { createConference, createConferenceMembership } from '@/domain/conference'
@@ -7,6 +8,7 @@ import { parseGameDate } from '@/domain/date'
 import { createGame } from '@/domain/game'
 import {
   coachIdFromString,
+  personIdFromString,
   competitionIdFromString,
   ecosystemIdFromString,
   conferenceIdFromString,
@@ -22,7 +24,7 @@ import {
   teamStaffAssignmentIdFromString,
   organizationIdFromString,
 } from '@/domain/ids'
-import { CANONICAL_RATING_KEYS, calculateAge, createPlayer } from '@/domain/player'
+import { CANONICAL_RATING_KEYS, calculateAge, createPlayer, PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS } from '@/domain/player'
 import { createSeason } from '@/domain/season'
 import type { MatchStatLog, PlayerGameStatsSnapshot } from '@/domain/stats/MatchStatLog'
 import type { SeasonHistoryRecord } from '@/domain/season'
@@ -42,7 +44,7 @@ import { createStaffCareerAutonomyState, createStaffCareerRequest } from '@/doma
 import { playerKnowledgeIdFromString } from '@/domain/ids'
 import { createCoachRpgProfile } from '@/domain/coachRpg'
 import { createCoachFinanceProfile } from '@/domain/coachFinances'
-import { createStaffProfessionalProfile, LEGACY_STAFF_ROLE_TO_ROLE_ID } from '@/domain/staff'
+import { createStaffPerson, createStaffProfessionalProfile, createTeamStaffAssignment, LEGACY_STAFF_ROLE_TO_ROLE_ID, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
 import { createCoachReputationProfile, type CoachReputationSource } from '@/domain/coachReputation'
 import { migrateLegacyDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
 import { coachJobCandidacyIdFromString, coachJobOfferIdFromString, coachJobOpeningIdFromString, createCoachEmployment, createCoachJobOpening } from '@/domain/coachCareer'
@@ -60,6 +62,7 @@ export interface GameWorldSaveV1 {
   readonly currentDate: string
   readonly currentSeasonId: string
   readonly userCoachId: string
+  readonly persons?: readonly JsonRecord[]
   readonly countries: readonly JsonRecord[]
   readonly coaches: readonly JsonRecord[]
   readonly players: readonly JsonRecord[]
@@ -193,6 +196,7 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
       currentDate: world.currentDate,
       currentSeasonId: world.currentSeasonId,
       userCoachId: world.userCoachId,
+      persons: copyRecords(Object.values(world.personsById)),
       countries: copyRecords(Object.values(world.countries)),
       coaches: copyRecords(Object.values(world.coaches)),
       players: copyRecords(Object.values(world.players)).map((player, index) => ({ ...player, potential: Object.values(world.players)[index]!.potential })),
@@ -278,6 +282,7 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
   const historyWasOmitted = payload.seasonHistoryBySeasonId === undefined
   const currentDate = parseGameDate(string(payload.currentDate, 'Save currentDate'))
   const teams = array(payload.teams, 'Save teams').map(readTeam)
+  const players = array(payload.players, 'Save players').map((player) => (options.readPlayer ?? readPlayer)(player, referenceDate, currentDate))
   const contracts = payload.contracts === undefined ? [] : array(payload.contracts, 'Save contracts').map(readContract)
   const teamFinances = ensureTeamFinances({
     currentDate,
@@ -285,18 +290,28 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
     contracts,
     teamFinances: payload.teamFinances === undefined ? [] : array(payload.teamFinances, 'Save teamFinances').map(readTeamFinances),
   })
-  const coaches = array(payload.coaches, 'Save coaches').map(readCoach)
+  const rawCoaches = array(payload.coaches, 'Save coaches')
+  const coaches = rawCoaches.map(readCoach)
   const professionalProfiles = payload.coachProfessionalProfilesByCoachId === undefined ? Object.fromEntries(coaches.map((coach) => [coach.id, createLegacyProfessionalProfile()])) : readCoachProfessionalProfiles(payload.coachProfessionalProfilesByCoachId)
   const rpgProfiles = payload.coachRpgProfilesByCoachId === undefined ? Object.fromEntries(coaches.map((coach) => [coach.id, createLegacyRpgProfile()])) : readCoachRpgProfiles(payload.coachRpgProfilesByCoachId)
   const reputationProfiles = payload.coachReputationProfilesByCoachId === undefined ? undefined : readCoachReputationProfiles(payload.coachReputationProfilesByCoachId)
-  const staffPeople = payload.staffPeople === undefined ? [] : array(payload.staffPeople, 'Save staffPeople').map(readStaffPerson)
+  const parsedStaffPeople = payload.staffPeople === undefined ? [] : array(payload.staffPeople, 'Save staffPeople').map(readStaffPerson)
+  const parsedTeamStaffAssignments = payload.teamStaffAssignments === undefined ? [] : array(payload.teamStaffAssignments, 'Save teamStaffAssignments').map(readStaffAssignment)
+  // This is the only compatibility boundary allowed to create missing Coach StaffProfiles.
+  // Canonical GameWorld construction validates supplied StaffProfiles and never synthesizes them.
+  const legacyCoachStructure = migrateLegacyCoachStructure({ coaches, rawCoaches, teams, staffPeople: parsedStaffPeople, assignments: parsedTeamStaffAssignments, professionalProfiles, assignedOn: currentDate })
+  const staffPeople = legacyCoachStructure.staffPeople
+  const rawPersons = payload.persons === undefined ? undefined : array(payload.persons, 'Save persons')
+  const parsedPersons = rawPersons !== undefined && !containsLegacyCoachPersonRoot(rawPersons) ? rawPersons.map(readPerson) : undefined
+  const persons = parsedPersons !== undefined && personRootsMatchProfiles(parsedPersons, coaches, players, staffPeople) ? parsedPersons : undefined
   const world = createGameWorld({
     currentDate,
     ...(payload.currentSeasonId === undefined ? {} : { currentSeasonId: seasonIdFromString(string(payload.currentSeasonId, 'Save currentSeasonId')) }),
     userCoachId: coachIdFromString(string(payload.userCoachId, 'Save userCoachId')),
+    ...(persons === undefined ? {} : { persons }),
     countries: array(payload.countries, 'Save countries').map(readCountry),
     coaches,
-    players: array(payload.players, 'Save players').map((player) => (options.readPlayer ?? readPlayer)(player, referenceDate, currentDate)),
+    players,
     teams,
     competitions: array(payload.competitions, 'Save competitions').map(readCompetition),
     ...(payload.ecosystems === undefined ? {} : { ecosystems: array(payload.ecosystems, 'Save ecosystems').map(readEcosystem) }),
@@ -323,7 +338,7 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
     teamFinances,
     playerKnowledge: payload.playerKnowledge === undefined ? [] : array(payload.playerKnowledge, 'Save playerKnowledge').map(readPlayerKnowledge),
     ...(payload.organizationEvaluationPolicies === undefined ? {} : { organizationEvaluationPoliciesById: readOrganizationEvaluationPolicies(payload.organizationEvaluationPolicies) }),
-    staffPeople, teamStaffAssignments: payload.teamStaffAssignments === undefined ? [] : array(payload.teamStaffAssignments, 'Save teamStaffAssignments').map(readStaffAssignment),
+    staffPeople, teamStaffAssignments: legacyCoachStructure.assignments,
     ...(payload.responsibilities === undefined ? {} : { responsibilities: array(payload.responsibilities, 'Save responsibilities').map(readResponsibility) }),
     ...(payload.delegationOutcomes === undefined ? {} : { delegationOutcomes: array(payload.delegationOutcomes, 'Save delegationOutcomes').map(readDelegationOutcome) }),
     ...(payload.staffHumanContexts === undefined ? {} : { staffHumanContexts: array(payload.staffHumanContexts, 'Save staffHumanContexts').map(readStaffHumanContext) }),
@@ -379,20 +394,48 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
   return payload.nilProfiles === undefined ? ensureNcaaNil(enriched) : enriched
 }
 
+function readPerson(value: unknown) { const v = record(value, 'Person'); const physical = v.physical === undefined ? undefined : record(v.physical, 'Person physical'); return createPerson({ id: personIdFromString(string(v.id, 'Person id')), firstName: string(v.firstName, 'Person firstName'), lastName: string(v.lastName, 'Person lastName'), ...(v.gender === undefined ? {} : { gender: gender(v.gender) }), ...(v.dateOfBirth === undefined ? {} : { dateOfBirth: parseGameDate(string(v.dateOfBirth, 'Person dateOfBirth')) }), nationalityIds: v.nationalityIds === undefined ? [] : array(v.nationalityIds, 'Person nationalities').map((id) => countryIdFromString(string(id, 'Person nationality'))), ...(physical === undefined ? {} : { physical: { ...(physical.heightCm === undefined ? {} : { heightCm: number(physical.heightCm, 'Person heightCm') }), ...(physical.weightKg === undefined ? {} : { weightKg: number(physical.weightKg, 'Person weightKg') }), ...(physical.wingspanCm === undefined ? {} : { wingspanCm: number(physical.wingspanCm, 'Person wingspanCm') }), ...(physical.standingReachCm === undefined ? {} : { standingReachCm: number(physical.standingReachCm, 'Person standingReachCm') }) } }), profileRefs: array(v.profileRefs, 'Person profileRefs').map((ref) => { const item = record(ref, 'Person profile reference'); return { kind: string(item.kind, 'Person profile kind') as import('@/domain/person').PersonProfileKind, profileId: string(item.profileId, 'Person profile id') } }) }) }
+function personRootsMatchProfiles(persons: readonly import('@/domain/person').Person[], coaches: readonly import('@/domain/coach').Coach[], players: readonly import('@/domain/player').Player[], staffPeople: readonly import('@/domain/staff').StaffPerson[]): boolean { const playerIds = new Set(players.map((player) => player.id)); const staffIds = new Set(staffPeople.map((staff) => staff.id)); const rootIds = new Set(persons.map((person) => person.id)); const expectedRootIds = [...coaches.map((coach) => coach.personId), ...players.map((player) => player.personId ?? `person:player:${player.id}`), ...staffPeople.map((staff) => staff.personId ?? `person:staff:${staff.id}`)]; return expectedRootIds.every((id) => rootIds.has(id as never)) && persons.every((person) => person.profileRefs.every((ref) => ref.kind === 'player' ? playerIds.has(ref.profileId as never) : ref.kind === 'staff' ? staffIds.has(ref.profileId as never) : true)) }
+function containsLegacyCoachPersonRoot(values: readonly unknown[]): boolean { return values.some((value) => { const person = record(value, 'Person'); if (String(person.id).startsWith('person:coach:')) return true; return Array.isArray(person.profileRefs) && person.profileRefs.some((ref) => { const profile = record(ref, 'Person profile reference'); return profile.kind === 'coach' }) }) }
 function readCountry(value: unknown) { const v = record(value, 'Country'); return createCountry({ id: countryIdFromString(string(v.id, 'Country id')), name: string(v.name, 'Country name'), code: string(v.code, 'Country code') }) }
 function indexJsonRecords(value: unknown, name: string) { return Object.fromEntries(array(value, name).map((item) => { const entry = record(item, name); return [string(entry.id, `${name} id`), entry] })) }
 function indexJsonRecordsByCoach(value: unknown, name: string) { return Object.fromEntries(array(value, name).map((item) => { const entry = record(item, name); return [string(entry.coachId, `${name} coach`), entry] })) }
 function indexJsonRecordsByTeam(value: unknown, name: string) { return Object.fromEntries(array(value, name).map((item) => { const entry = record(item, name); return [string(entry.teamId, `${name} team`), entry] })) }
 function indexJsonRecordsByLegacyKey(value: unknown, name: string) { return Object.fromEntries(array(value, name).map((item) => { const entry = record(item, name); return [`${string(entry.coachId, `${name} coach`)}:${string(entry.teamId, `${name} team`)}`, entry] })) }
-function readCoach(value: unknown) { const v = record(value, 'Coach'); return createCoach({ id: coachIdFromString(string(v.id, 'Coach id')), firstName: string(v.firstName, 'Coach firstName'), lastName: string(v.lastName, 'Coach lastName'), gender: gender(v.gender), nationalityId: countryIdFromString(string(v.nationalityId, 'Coach nationalityId')) }) }
+function readCoach(value: unknown) { const v = record(value, 'Coach'); const id = coachIdFromString(string(v.id, 'Coach id')); const defaults = coachProfileRefsForCoachId(id); const legacyPersonId = v.personId === undefined ? undefined : personIdFromString(string(v.personId, 'Coach personId')); const personId = legacyPersonId !== undefined && !String(legacyPersonId).startsWith('person:coach:') ? legacyPersonId : defaults.personId; return createLegacyCoach({ id, personId, staffProfileId: v.staffProfileId === undefined ? defaults.staffProfileId : staffPersonIdFromString(string(v.staffProfileId, 'Coach staffProfileId')), firstName: string(v.firstName, 'Coach firstName'), lastName: string(v.lastName, 'Coach lastName'), gender: gender(v.gender), nationalityId: countryIdFromString(string(v.nationalityId, 'Coach nationalityId')) }) }
+function migrateLegacyCoachStructure(input: { readonly coaches: readonly import('@/domain/coach').Coach[]; readonly rawCoaches: readonly unknown[]; readonly teams: readonly import('@/domain/team').Team[]; readonly staffPeople: readonly StaffPerson[]; readonly assignments: readonly TeamStaffAssignment[]; readonly professionalProfiles: Readonly<Record<import('@/domain/ids').CoachId, import('@/domain/staff').StaffProfessionalProfile>>; readonly assignedOn: import('@/domain/date').GameDate }): { readonly staffPeople: readonly StaffPerson[]; readonly assignments: readonly TeamStaffAssignment[] } {
+  const suppliedStaffIds = new Set(input.staffPeople.map((staff) => staff.id))
+  const legacyCoachIds = new Set([...input.rawCoaches.filter(isLegacyCoachRecord).map((value) => coachIdFromString(string(record(value, 'Coach').id, 'Coach id'))), ...input.coaches.filter((coach) => !suppliedStaffIds.has(coach.staffProfileId)).map((coach) => coach.id)])
+  if (legacyCoachIds.size === 0) return { staffPeople: input.staffPeople, assignments: input.assignments }
+  const legacyCoaches = input.coaches.filter((coach) => legacyCoachIds.has(coach.id))
+  const legacyStaffIds = new Set(legacyCoaches.map((coach) => coach.staffProfileId))
+  const staffById = new Map(input.staffPeople.map((staff) => [staff.id, staff]))
+  for (const coach of legacyCoaches) {
+    const existing = staffById.get(coach.staffProfileId)
+    staffById.set(coach.staffProfileId, createStaffPerson(existing === undefined ? {
+      id: coach.staffProfileId, personId: coach.personId,
+      identity: { firstName: coach.firstName, lastName: coach.lastName, nationality: String(coach.nationalityId) },
+      professional: input.professionalProfiles[coach.id] ?? { attributes: Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 50])) as StaffPerson['professional']['attributes'] },
+      marketRole: 'headCoach', roleFamily: 'coaching',
+    } : { ...existing, personId: coach.personId, marketRole: 'headCoach', roleFamily: 'coaching' }))
+  }
+  const assignments = input.assignments.filter((assignment) => !legacyStaffIds.has(assignment.staffPersonId))
+  for (const coach of legacyCoaches) {
+    const team = input.teams.find((item) => item.coachId === coach.id)
+    if (team !== undefined) assignments.push(createTeamStaffAssignment({ id: teamStaffAssignmentIdFromString(`legacy:coach-headCoach:${coach.id}:${team.id}:${input.assignedOn}`), staffPersonId: coach.staffProfileId, teamId: team.id, role: 'headCoach', assignedOn: input.assignedOn }))
+  }
+  return { staffPeople: [...staffById.values()], assignments }
+}
+function isLegacyCoachRecord(value: unknown): boolean { const coach = record(value, 'Coach'); return coach.personId === undefined || coach.staffProfileId === undefined || String(coach.personId).startsWith('person:coach:') }
 function readPlayer(value: unknown, referenceDate: import('@/domain/date').GameDate, currentDate: import('@/domain/date').GameDate) {
   const v = record(value, 'Player'); const basketball = record(v.basketball, 'Player basketball'); const ratings = record(basketball.ratings, 'Player ratings')
   const id = playerIdFromString(string(v.id, 'Player id')); const primaryPosition = position(basketball.primaryPosition)
-  const parsedRatings: import('@/domain/player').LegacyPlayerRatings | import('@/domain/player').PlayerRatings = ratings.midRangeShooting === undefined ? { finishing: integer(ratings.finishing, 'finishing'), shooting: integer(ratings.shooting, 'shooting'), playmaking: integer(ratings.playmaking, 'playmaking'), perimeterDefense: integer(ratings.perimeterDefense, 'perimeterDefense'), interiorDefense: integer(ratings.interiorDefense, 'interiorDefense'), rebounding: integer(ratings.rebounding, 'rebounding'), athleticism: integer(ratings.athleticism, 'athleticism') } : Object.fromEntries(CANONICAL_RATING_KEYS.map((key) => [key, number(ratings[key], `Player ${key}`)])) as import('@/domain/player').PlayerRatings
+  const parsedRatings: import('@/domain/player').LegacyPlayerRatings | import('@/domain/player').PlayerRatings = ratings.FREE_THROW !== undefined ? Object.fromEntries(PLAYER_TRUTH_RATING_KEYS.map((key) => [key, number(ratings[key], `Player ${key}`)])) as import('@/domain/player').PlayerRatings : ratings.midRangeShooting === undefined ? { finishing: integer(ratings.finishing, 'finishing'), shooting: integer(ratings.shooting, 'shooting'), playmaking: integer(ratings.playmaking, 'playmaking'), perimeterDefense: integer(ratings.perimeterDefense, 'perimeterDefense'), interiorDefense: integer(ratings.interiorDefense, 'interiorDefense'), rebounding: integer(ratings.rebounding, 'rebounding'), athleticism: integer(ratings.athleticism, 'athleticism') } : Object.fromEntries(CANONICAL_RATING_KEYS.map((key) => [key, number(ratings[key], `Player ${key}`)])) as import('@/domain/player').PlayerRatings
   const bio = v.bio === undefined ? generatePlayerBio(id, primaryPosition, referenceDate) : readBio(v.bio)
   const potential = v.potential === undefined ? generatePlayerPotential(id, parsedRatings, calculateAge(bio.dateOfBirth, currentDate)) : readPotential(v.potential)
   const development = v.development === undefined ? undefined : readDevelopmentProfile(v.development)
-  return createPlayer({ id, firstName: string(v.firstName, 'Player firstName'), lastName: string(v.lastName, 'Player lastName'), gender: gender(v.gender), nationalityId: countryIdFromString(string(v.nationalityId, 'Player nationalityId')), basketball: { primaryPosition, ratings: parsedRatings as never, ...(basketball.tendencies === undefined ? {} : { tendencies: Object.fromEntries(['drive','attackContact','dunkAttempt','floaterAttempt','postUp','midRangeAttempt','threePointAttempt','pullUpAttempt','catchAndShoot','pickAndRollBallHandler','pickAndRollRoll','isolation','creativePassing','transitionPush','cut','offBallScreenUse','crashOffensiveGlass','helpDefense','gambleForSteal','switchDefense','foulAggression'].map((key) => [key, number(record(basketball.tendencies, 'Player tendencies')[key], `Player tendency ${key}`)])) as never }), ...(basketball.traitIds === undefined ? {} : { traitIds: array(basketball.traitIds, 'Player traits').map((trait) => string(trait, 'Player trait')) }) }, bio, ...(development === undefined ? { potential } : { development }) })
+  const parsedTendencies = basketball.tendencies === undefined ? undefined : (() => { const source = record(basketball.tendencies, 'Player tendencies'); const keys = source.SHOT_FREQUENCY === undefined ? ['drive','attackContact','dunkAttempt','floaterAttempt','postUp','midRangeAttempt','threePointAttempt','pullUpAttempt','catchAndShoot','pickAndRollBallHandler','pickAndRollRoll','isolation','creativePassing','transitionPush','cut','offBallScreenUse','crashOffensiveGlass','helpDefense','gambleForSteal','switchDefense','foulAggression'] : PLAYER_TRUTH_TENDENCY_KEYS; return Object.fromEntries(keys.map((key) => [key, number(source[key], `Player tendency ${key}`)])) })()
+  return createPlayer({ id, firstName: string(v.firstName, 'Player firstName'), lastName: string(v.lastName, 'Player lastName'), gender: gender(v.gender), nationalityId: countryIdFromString(string(v.nationalityId, 'Player nationalityId')), ...(v.personId === undefined ? {} : { personId: personIdFromString(string(v.personId, 'Player personId')) }), basketball: { primaryPosition, ratings: parsedRatings as never, ...(parsedTendencies === undefined ? {} : { tendencies: parsedTendencies as never }), ...(basketball.traitIds === undefined ? {} : { traitIds: array(basketball.traitIds, 'Player traits').map((trait) => string(trait, 'Player trait')) }) }, bio, ...(development === undefined ? { potential } : { development }) })
 }
 function readPotential(value: unknown) { const v = record(value, 'Player potential'); const ceiling = integer(v.ceiling, 'Player potential ceiling'); if (ceiling < 0 || ceiling > 100) throw new RangeError('Player potential ceiling must be from 0 to 100'); return { ceiling } }
 function readBio(value: unknown) { const v = record(value, 'Player bio'); return { dateOfBirth: parseGameDate(string(v.dateOfBirth, 'Player bio dateOfBirth')), heightCm: integer(v.heightCm, 'Player bio heightCm'), weightKg: integer(v.weightKg, 'Player bio weightKg'), ...(v.wingspanCm === undefined ? {} : { wingspanCm: number(v.wingspanCm, 'Player bio wingspanCm') }), ...(v.standingReachCm === undefined ? {} : { standingReachCm: number(v.standingReachCm, 'Player bio standingReachCm') }), ...(v.dominantHand === undefined ? {} : { dominantHand: string(v.dominantHand, 'Player bio dominantHand') as 'LEFT' | 'RIGHT' }), ...(v.measurementProvenance === undefined ? {} : { measurementProvenance: record(v.measurementProvenance, 'Player measurement provenance') as never }) } }
@@ -438,7 +481,7 @@ function readTransaction(value:unknown){const v=record(value,'Player transaction
 function readTeamFinances(value:unknown){const v=record(value,'Team finances');const playerSalaryBudget=integer(v.playerSalaryBudget,'Team finances playerSalaryBudget');return{teamId:teamIdFromString(string(v.teamId,'Team finances teamId')),playerSalaryBudget,staffSalaryBudget:v.staffSalaryBudget===undefined?backfillStaffSalaryBudget(playerSalaryBudget):integer(v.staffSalaryBudget,'Team finances staffSalaryBudget')}}
 function backfillStaffSalaryBudget(playerSalaryBudget:number):number{return Math.max(100_000,Math.ceil(playerSalaryBudget*0.12/50_000)*50_000)}
 function readPlayerKnowledge(value:unknown){const v=record(value,'Player knowledge');const basketball=record(v.basketball,'Player knowledge basketball');const ratings=record(basketball.ratings,'Player knowledge ratings');const read=(key:string)=>{const rating=record(ratings[key],`Player knowledge ${key}`);return{estimatedValue:integer(rating.estimatedValue,`Player knowledge ${key} estimate`),uncertainty:integer(rating.uncertainty,`Player knowledge ${key} uncertainty`)}};return{id:playerKnowledgeIdFromString(string(v.id,'Player knowledge id')),observerTeamId:teamIdFromString(string(v.observerTeamId,'Player knowledge observerTeamId')),subjectPlayerId:playerIdFromString(string(v.subjectPlayerId,'Player knowledge subjectPlayerId')),assessedOn:parseGameDate(string(v.assessedOn,'Player knowledge assessedOn')),basketball:{ratings:{finishing:read('finishing'),shooting:read('shooting'),playmaking:read('playmaking'),perimeterDefense:read('perimeterDefense'),interiorDefense:read('interiorDefense'),rebounding:read('rebounding'),athleticism:read('athleticism')}}}}
-function readStaffPerson(value:unknown){const v=record(value,'Staff person');const identity=record(v.identity,'Staff identity');const profile=record(v.professional,'Staff professional');const a=record(profile.attributes,'Staff attributes');const read=(key:string)=>integer(a[key],`Staff ${key}`);return{id:staffPersonIdFromString(string(v.id,'Staff id')),identity:{firstName:string(identity.firstName,'Staff firstName'),lastName:string(identity.lastName,'Staff lastName'),...(identity.dateOfBirth===undefined?{}:{dateOfBirth:parseGameDate(string(identity.dateOfBirth,'Staff dateOfBirth'))}),...(identity.nationality===undefined?{}:{nationality:string(identity.nationality,'Staff nationality')})},professional:{attributes:{coaching:read('coaching'),tacticalKnowledge:read('tacticalKnowledge'),playerDevelopment:read('playerDevelopment'),talentEvaluation:read('talentEvaluation'),potentialEvaluation:read('potentialEvaluation'),medicalKnowledge:read('medicalKnowledge'),rehabilitation:read('rehabilitation'),analysis:read('analysis'),leadership:read('leadership'),communication:read('communication'),motivation:read('motivation'),discipline:read('discipline'),adaptability:read('adaptability')}},...(v.marketRole===undefined?{}:{marketRole:string(v.marketRole,'Staff market role') as import('@/domain/staff').StaffRoleId})}}
+function readStaffPerson(value:unknown){const v=record(value,'Staff person');const identity=record(v.identity,'Staff identity');const profile=record(v.professional,'Staff professional');const a=record(profile.attributes,'Staff attributes');const read=(key:string)=>integer(a[key],`Staff ${key}`);return{id:staffPersonIdFromString(string(v.id,'Staff id')),...(v.personId===undefined?{}:{personId:personIdFromString(string(v.personId,'Staff personId'))}),identity:{firstName:string(identity.firstName,'Staff firstName'),lastName:string(identity.lastName,'Staff lastName'),...(identity.dateOfBirth===undefined?{}:{dateOfBirth:parseGameDate(string(identity.dateOfBirth,'Staff dateOfBirth'))}),...(identity.nationality===undefined?{}:{nationality:string(identity.nationality,'Staff nationality')})},professional:{attributes:{coaching:read('coaching'),tacticalKnowledge:read('tacticalKnowledge'),playerDevelopment:read('playerDevelopment'),talentEvaluation:read('talentEvaluation'),potentialEvaluation:read('potentialEvaluation'),medicalKnowledge:read('medicalKnowledge'),rehabilitation:read('rehabilitation'),analysis:read('analysis'),leadership:read('leadership'),communication:read('communication'),motivation:read('motivation'),discipline:read('discipline'),adaptability:read('adaptability')}},...(v.marketRole===undefined?{}:{marketRole:string(v.marketRole,'Staff market role') as import('@/domain/staff').StaffRoleId}),...(v.roleFamily===undefined?{}:{roleFamily:string(v.roleFamily,'Staff role family') as import('@/domain/staff').StaffRoleFamily}),...(v.specialismIds===undefined?{}:{specialismIds:array(v.specialismIds,'Staff specialisms').map((id)=>string(id,'Staff specialism'))})}}
 function readOrganizationEvaluationPolicies(value:unknown){return Object.fromEntries(array(value,'Save organization evaluation policies').map((entry)=>{const v=record(entry,'Organization evaluation policy'),read=(key:string)=>integer(v[key],`Organization policy ${key}`);return[organizationIdFromString(string(v.organizationId,'Organization policy organizationId')),{riskTolerance:read('riskTolerance'),certaintyPreference:read('certaintyPreference'),upsidePreference:read('upsidePreference'),currentAbilityPreference:read('currentAbilityPreference'),scoutingReliance:read('scoutingReliance')}] }))}
 /** Legacy save values ('scout'/'medical'/'assistantCoach') deterministically map onto the canonical StaffRoleId; any already-canonical id round-trips unchanged. No second role vocabulary is kept — this is a read-time projection only. */
 function readStaffAssignment(value:unknown){const v=record(value,'Staff assignment');const role=string(v.role,'Staff role');const canonicalRole=Object.hasOwn(LEGACY_STAFF_ROLE_TO_ROLE_ID,role)?LEGACY_STAFF_ROLE_TO_ROLE_ID[role as import('@/domain/staff').StaffRole]:role as import('@/domain/staff').StaffRoleId;return{id:teamStaffAssignmentIdFromString(string(v.id,'Staff assignment id')),staffPersonId:staffPersonIdFromString(string(v.staffPersonId,'Staff assignment person')),teamId:teamIdFromString(string(v.teamId,'Staff assignment team')),role:canonicalRole,assignedOn:parseGameDate(string(v.assignedOn,'Staff assignedOn'))}}

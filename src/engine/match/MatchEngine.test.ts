@@ -159,5 +159,5 @@ function withoutPlayerAttribution(simulation: ReturnType<typeof simulateMatchDet
 }
 
 function recreateWorld(source: GameWorld, games: readonly GameWorld['games'][keyof GameWorld['games']][]): GameWorld {
-  return createGameWorld({ currentDate: source.currentDate, userCoachId: source.userCoachId, countries: Object.values(source.countries), coaches: Object.values(source.coaches), players: Object.values(source.players), teams: Object.values(source.teams), competitions: Object.values(source.competitions), seasons: Object.values(source.seasons), games })
+  return createGameWorld({ currentDate: source.currentDate, userCoachId: source.userCoachId, countries: Object.values(source.countries), coaches: Object.values(source.coaches), players: Object.values(source.players), teams: Object.values(source.teams), staffPeople: Object.values(source.staffPeopleById), teamStaffAssignments: Object.values(source.teamStaffAssignmentsById), competitions: Object.values(source.competitions), seasons: Object.values(source.seasons), games })
 }

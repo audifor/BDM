@@ -6,7 +6,7 @@ import { createNewGame, getCurrentSeason, simulateAndApplyGame, startNextSeason 
 import { NAVIGATION } from '@/ui/App'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
-import { staffPersonIdFromString, teamStaffAssignmentIdFromString } from '@/domain/ids'
+import { personIdFromString, staffPersonIdFromString, teamStaffAssignmentIdFromString } from '@/domain/ids'
 import type { StaffPerson, TeamStaffAssignment } from '@/domain/staff'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/ui/staffPresentation'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSaveV1'
@@ -65,21 +65,23 @@ describe('StaffScreen', () => {
     const world = createNewGame()
     const userTeam = getUserTeam(world)!
     const source = Object.values(world.staffPeopleById)[0]!
-    const assistant: StaffPerson = { ...source, id: staffPersonIdFromString('test-staff-second-assistant'), identity: { firstName: 'Second', lastName: 'Assistant' } }
+    const assistant: StaffPerson = { ...source, id: staffPersonIdFromString('test-staff-second-assistant'), personId: personIdFromString('person:staff:test-staff-second-assistant'), identity: { firstName: 'Second', lastName: 'Assistant' } }
     const assignment: TeamStaffAssignment = { id: teamStaffAssignmentIdFromString('test-staff-assignment-second-assistant'), staffPersonId: assistant.id, teamId: userTeam.id, role: 'assistantCoach', assignedOn: world.currentDate }
     const markup = renderToStaticMarkup(createElement(StaffScreen, { world: rebuildWorld(world, [...Object.values(world.staffPeopleById), assistant], [...Object.values(world.teamStaffAssignmentsById), assignment]) }))
 
     expect(markup).toContain('Second Assistant')
   })
 
-  it('renders an empty state when the user Team has no Staff', () => {
+  it('renders the canonical head coach when no non-coach Staff remains', () => {
     const world = createNewGame()
     const userTeam = getUserTeam(world)!
-    const retainedAssignments = Object.values(world.teamStaffAssignmentsById).filter((assignment) => assignment.teamId !== userTeam.id)
-    const retainedPeople = retainedAssignments.map((assignment) => world.staffPeopleById[assignment.staffPersonId]!)
-    const markup = renderToStaticMarkup(createElement(StaffScreen, { world: rebuildWorld(world, retainedPeople, retainedAssignments) }))
+    const retainedAssignments = Object.values(world.teamStaffAssignmentsById).filter((assignment) => assignment.teamId !== userTeam.id || assignment.role === 'headCoach')
+    const markup = renderToStaticMarkup(createElement(StaffScreen, { world: rebuildWorld(world, Object.values(world.staffPeopleById), retainedAssignments) }))
 
-    expect(markup).toContain('No staff')
+    const headCoachAssignment = retainedAssignments.find((assignment) => assignment.teamId === userTeam.id && assignment.role === 'headCoach')!
+    const headCoach = world.staffPeopleById[headCoachAssignment.staffPersonId]!
+    expect(markup).toContain(`${headCoach.identity.firstName} ${headCoach.identity.lastName}`)
+    expect(markup).not.toContain('No staff')
   })
 
   it('renders the same Staff after save/load and a season transition', () => {

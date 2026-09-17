@@ -1,4 +1,5 @@
 import { CANONICAL_RATING_KEYS, LEGACY_BASKETBALL_RATING_KEYS, type LegacyPlayerRatings, type PlayerRatings } from './Player'
+import { PLAYER_TRUTH_RATING_KEYS } from './PlayerTruthCatalog'
 import type { PlayerDevelopmentProfile } from './PlayerDevelopmentProfile'
 
 /** Hidden canonical development capacity. This bootstrap proxy is not an overall rating. */
@@ -8,6 +9,7 @@ export type PlayerPotentialBand = 'limited' | 'average' | 'good' | 'high' | 'eli
 /** Bootstrap-only arithmetic mean used by development; never persist or present it. */
 export function calculateBootstrapAbilityProxy(ratings: PlayerRatings | LegacyPlayerRatings): number {
   if ('finishing' in ratings && !('midRangeShooting' in ratings)) return LEGACY_BASKETBALL_RATING_KEYS.reduce((total, rating) => total + ratings[rating], 0) / LEGACY_BASKETBALL_RATING_KEYS.length
+  if ('FREE_THROW' in ratings) return PLAYER_TRUTH_RATING_KEYS.reduce((total, rating) => total + ratings[rating], 0) / PLAYER_TRUTH_RATING_KEYS.length
   return CANONICAL_RATING_KEYS.reduce((total, rating) => total + (ratings as PlayerRatings)[rating], 0) / CANONICAL_RATING_KEYS.length
 }
 

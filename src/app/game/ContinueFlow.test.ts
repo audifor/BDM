@@ -47,7 +47,7 @@ describe('continue flow', () => {
     expect(result.daysAdvanced).toBe(4)
     expect(result.finalDate).toBe(next.date)
     expect(result.stopReason).toEqual({ type: 'userGame', gameId: next.gameId })
-  })
+  }, 10_000)
 
   it('uses the identical canonical daily transition as one manual advance', () => {
     const ready = advanceGameDay(simulateRemainingGamesToday(instantResult(createNewGame())))

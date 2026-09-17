@@ -71,6 +71,29 @@ function staffWithRole(
   return assignment.staffPersonId;
 }
 
+function withOnlyCanonicalHeadCoach(w: GameWorld, teamId: TeamId): GameWorld {
+  const removedStaffIds = new Set(
+    getTeamStaffAssignments(w, teamId)
+      .filter((assignment) => assignment.role !== "headCoach")
+      .map((assignment) => assignment.staffPersonId),
+  );
+  return updateGameWorld(w, {
+    teamStaffAssignments: Object.values(w.teamStaffAssignmentsById).filter(
+      (assignment) =>
+        assignment.teamId !== teamId || assignment.role === "headCoach",
+    ),
+    staffEmploymentByStaffId: {
+      ...w.staffEmploymentByStaffId,
+      ...Object.fromEntries(
+        [...removedStaffIds].map((id) => [id, { status: "unemployed" }]),
+      ),
+    } as never,
+    staffContracts: Object.values(w.staffContractsById).filter(
+      (contract) => !removedStaffIds.has(contract.staffId),
+    ),
+  });
+}
+
 describe("StaffScreen", () => {
   afterEach(cleanup);
 
@@ -124,37 +147,13 @@ describe("StaffScreen", () => {
     fireEvent.pointerUp(detail!, { button: 2 });
   });
 
-  it("handles a team with no staff explicitly, without crashing", () => {
+  it("handles a team with only its canonical head coach, without crashing", () => {
     const w = world();
     const teamId = userTeamId(w);
-    const assignments = getTeamStaffAssignments(w, teamId);
-    const remainingAssignments = Object.values(
-      w.teamStaffAssignmentsById,
-    ).filter(
-      (assignment) =>
-        !assignments.some((removed) => removed.id === assignment.id),
-    );
-    // Employment/assignment consistency is a canonical world invariant: removing every assignment
-    // for this team must also mark those staff unemployed and drop their now-inconsistent contracts.
-    const removedStaffIds = new Set(
-      assignments.map((assignment) => assignment.staffPersonId),
-    );
-    const employmentUpdates = Object.fromEntries(
-      [...removedStaffIds].map((id) => [id, { status: "unemployed" }]),
-    );
-    const remainingContracts = Object.values(w.staffContractsById).filter(
-      (contract) => !removedStaffIds.has(contract.staffId),
-    );
-    const stripped = updateGameWorld(w, {
-      teamStaffAssignments: remainingAssignments,
-      staffEmploymentByStaffId: {
-        ...w.staffEmploymentByStaffId,
-        ...employmentUpdates,
-      } as never,
-      staffContracts: remainingContracts,
-    });
+    const stripped = withOnlyCanonicalHeadCoach(w, teamId);
     render(<StaffScreen teamId={teamId} world={stripped} />);
-    expect(screen.getByText("No staff")).toBeTruthy();
+    expect(getTeamStaffPresentation(stripped, teamId)).toHaveLength(1);
+    expect(screen.getByText("STAFF PERSON")).toBeTruthy();
   });
 
   it("does not crash for a team id with no assigned team", () => {
@@ -331,33 +330,10 @@ describe("StaffScreen", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("a Team with no Staff can still open Responsibilities", () => {
+  it("a Team with only its canonical head coach can still open Responsibilities", () => {
     const w = world();
     const teamId = userTeamId(w);
-    const assignments = getTeamStaffAssignments(w, teamId);
-    const remainingAssignments = Object.values(
-      w.teamStaffAssignmentsById,
-    ).filter(
-      (assignment) =>
-        !assignments.some((removed) => removed.id === assignment.id),
-    );
-    const removedStaffIds = new Set(
-      assignments.map((assignment) => assignment.staffPersonId),
-    );
-    const employmentUpdates = Object.fromEntries(
-      [...removedStaffIds].map((id) => [id, { status: "unemployed" }]),
-    );
-    const remainingContracts = Object.values(w.staffContractsById).filter(
-      (contract) => !removedStaffIds.has(contract.staffId),
-    );
-    const stripped = updateGameWorld(w, {
-      teamStaffAssignments: remainingAssignments,
-      staffEmploymentByStaffId: {
-        ...w.staffEmploymentByStaffId,
-        ...employmentUpdates,
-      } as never,
-      staffContracts: remainingContracts,
-    });
+    const stripped = withOnlyCanonicalHeadCoach(w, teamId);
     render(<StaffScreen teamId={teamId} world={stripped} />);
     fireEvent.click(screen.getByRole("button", { name: "RESPONSIBILITIES" }));
     expect(
@@ -799,35 +775,10 @@ describe("StaffScreen Advisory tab", () => {
     expect(screen.queryByRole("button", { name: "DISMISS" })).toBeNull();
   });
 
-  it("a Team with no Staff does not break Advisory (still renders the tab/grid)", () => {
+  it("a Team with only its canonical head coach does not break Advisory", () => {
     const w = createNewGame();
     const teamId = userTeamId(w);
-    const assignments = Object.values(w.teamStaffAssignmentsById).filter(
-      (assignment) => assignment.teamId === teamId,
-    );
-    const remainingAssignments = Object.values(
-      w.teamStaffAssignmentsById,
-    ).filter(
-      (assignment) =>
-        !assignments.some((removed) => removed.id === assignment.id),
-    );
-    const removedStaffIds = new Set(
-      assignments.map((assignment) => assignment.staffPersonId),
-    );
-    const employmentUpdates = Object.fromEntries(
-      [...removedStaffIds].map((id) => [id, { status: "unemployed" }]),
-    );
-    const remainingContracts = Object.values(w.staffContractsById).filter(
-      (contract) => !removedStaffIds.has(contract.staffId),
-    );
-    const stripped = updateGameWorld(w, {
-      teamStaffAssignments: remainingAssignments,
-      staffEmploymentByStaffId: {
-        ...w.staffEmploymentByStaffId,
-        ...employmentUpdates,
-      } as never,
-      staffContracts: remainingContracts,
-    });
+    const stripped = withOnlyCanonicalHeadCoach(w, teamId);
     render(<StaffScreen teamId={teamId} world={stripped} />);
     fireEvent.click(screen.getByRole("button", { name: /^ADVISORY/ }));
     expect(screen.getByRole("region", { name: "staff-advisory" })).toBeTruthy();

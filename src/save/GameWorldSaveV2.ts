@@ -1,8 +1,8 @@
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { createOrganizationKnowledge, migrateLegacyPlayerKnowledge, type OrganizationKnowledge } from '@/domain/knowledge'
-import { organizationIdFromString, playerIdFromString } from '@/domain/ids'
+import { organizationIdFromString, personIdFromString, playerIdFromString } from '@/domain/ids'
 import { parseGameDate } from '@/domain/date'
-import { CANONICAL_RATING_KEYS, TENDENCY_KEYS, createPlayer, type Player, type PlayerRatings, type PlayerTendencies } from '@/domain/player'
+import { CANONICAL_RATING_KEYS, PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS, TENDENCY_KEYS, createPlayer, type Player, type PlayerRatings, type PlayerTendencies } from '@/domain/player'
 import { DEVELOPMENT_DOMAINS, createDevelopmentProfile, type PlayerDevelopmentProfile } from '@/domain/player/PlayerDevelopmentProfile'
 import { PERSONALITY_DIMENSIONS } from '@/domain/personality'
 import { createEvaluatorProfile, EVIDENCE_SOURCES, SCOUTING_MISSIONS, type Evidence, type EvaluatorProfile, type EvaluatorReport, type ScoutingAssignment } from '@/domain/scouting'
@@ -49,12 +49,20 @@ export function assertExactKeys(value: Record<string, unknown>, expected: readon
 
 export function parseCanonicalRatingsV2(value: unknown): PlayerRatings {
   const ratings = record(value, 'Player V2 ratings')
+  if (Object.hasOwn(ratings, 'FREE_THROW')) {
+    assertExactKeys(ratings, PLAYER_TRUTH_RATING_KEYS, 'Player V2 ratings')
+    return Object.fromEntries(PLAYER_TRUTH_RATING_KEYS.map((key) => [key, rating(ratings[key], `Player rating ${key}`)])) as PlayerRatings
+  }
   assertExactKeys(ratings, CANONICAL_RATING_KEYS, 'Player V2 ratings')
   return Object.fromEntries(CANONICAL_RATING_KEYS.map((key) => [key, rating(ratings[key], `Player rating ${key}`)])) as PlayerRatings
 }
 
 export function parsePlayerTendenciesV2(value: unknown): PlayerTendencies {
   const tendencies = record(value, 'Player V2 tendencies')
+  if (Object.hasOwn(tendencies, 'SHOT_FREQUENCY')) {
+    assertExactKeys(tendencies, PLAYER_TRUTH_TENDENCY_KEYS, 'Player V2 tendencies')
+    return Object.fromEntries(PLAYER_TRUTH_TENDENCY_KEYS.map((key) => [key, rating(tendencies[key], `Player tendency ${key}`)])) as PlayerTendencies
+  }
   assertExactKeys(tendencies, TENDENCY_KEYS, 'Player V2 tendencies')
   return Object.fromEntries(TENDENCY_KEYS.map((key) => [key, rating(tendencies[key], `Player tendency ${key}`)])) as PlayerTendencies
 }
@@ -69,7 +77,7 @@ export function parseDevelopmentProfileV2(value: unknown): PlayerDevelopmentProf
 
 export function parsePlayerV2(value: unknown, _referenceDate: import('@/domain/date').GameDate, _currentDate: import('@/domain/date').GameDate): Player {
   const player = record(value, 'Player V2')
-  assertExactKeys(player, ['id', 'firstName', 'lastName', 'gender', 'nationalityId', 'basketball', 'bio', 'development'], 'Player V2')
+  assertExactKeys(player, ['id', 'firstName', 'lastName', 'gender', 'nationalityId', 'basketball', 'bio', 'development', ...(player.personId === undefined ? [] : ['personId'])], 'Player V2')
   const basketball = record(player.basketball, 'Player V2 basketball')
   const basketballKeys = basketball.secondaryPositions === undefined ? ['primaryPosition', 'ratings', 'tendencies', 'traitIds'] : ['primaryPosition', 'secondaryPositions', 'ratings', 'tendencies', 'traitIds']
   assertExactKeys(basketball, basketballKeys, 'Player V2 basketball')
@@ -78,7 +86,7 @@ export function parsePlayerV2(value: unknown, _referenceDate: import('@/domain/d
   const provenance = record(bio.measurementProvenance, 'Player V2 measurement provenance')
   assertExactKeys(provenance, ['wingspanCm', 'standingReachCm', 'dominantHand'], 'Player V2 measurement provenance')
   const positions = basketball.secondaryPositions === undefined ? undefined : array(basketball.secondaryPositions, 'Player V2 secondary positions').map((position) => enumValue(position, ['PG', 'SG', 'SF', 'PF', 'C'], 'Player secondary position') as Player['basketball']['primaryPosition'])
-  return createPlayer({ id: playerIdFromString(text(player.id, 'Player id')), firstName: text(player.firstName, 'Player firstName'), lastName: text(player.lastName, 'Player lastName'), gender: enumValue(player.gender, ['male', 'female'], 'Player gender') as Player['gender'], nationalityId: text(player.nationalityId, 'Player nationalityId') as Player['nationalityId'], basketball: { primaryPosition: enumValue(basketball.primaryPosition, ['PG', 'SG', 'SF', 'PF', 'C'], 'Player primary position') as Player['basketball']['primaryPosition'], ...(positions === undefined ? {} : { secondaryPositions: positions }), ratings: parseCanonicalRatingsV2(basketball.ratings), tendencies: parsePlayerTendenciesV2(basketball.tendencies), traitIds: array(basketball.traitIds, 'Player V2 traits').map((item) => text(item, 'Player trait')) }, bio: { dateOfBirth: parseGameDate(text(bio.dateOfBirth, 'Player dateOfBirth')), heightCm: finite(bio.heightCm, 'Player heightCm'), weightKg: finite(bio.weightKg, 'Player weightKg'), wingspanCm: finite(bio.wingspanCm, 'Player wingspanCm'), standingReachCm: finite(bio.standingReachCm, 'Player standingReachCm'), dominantHand: enumValue(bio.dominantHand, ['LEFT', 'RIGHT'], 'Player dominant hand') as 'LEFT' | 'RIGHT', measurementProvenance: { wingspanCm: provenanceValue(provenance.wingspanCm), standingReachCm: provenanceValue(provenance.standingReachCm), dominantHand: provenanceValue(provenance.dominantHand) } }, development: parseDevelopmentProfileV2(player.development) })
+  return createPlayer({ id: playerIdFromString(text(player.id, 'Player id')), ...(player.personId === undefined ? {} : { personId: personIdFromString(text(player.personId, 'Player personId')) }), firstName: text(player.firstName, 'Player firstName'), lastName: text(player.lastName, 'Player lastName'), gender: enumValue(player.gender, ['male', 'female'], 'Player gender') as Player['gender'], nationalityId: text(player.nationalityId, 'Player nationalityId') as Player['nationalityId'], basketball: { primaryPosition: enumValue(basketball.primaryPosition, ['PG', 'SG', 'SF', 'PF', 'C'], 'Player primary position') as Player['basketball']['primaryPosition'], ...(positions === undefined ? {} : { secondaryPositions: positions }), ratings: parseCanonicalRatingsV2(basketball.ratings), tendencies: parsePlayerTendenciesV2(basketball.tendencies), traitIds: array(basketball.traitIds, 'Player V2 traits').map((item) => text(item, 'Player trait')) }, bio: { dateOfBirth: parseGameDate(text(bio.dateOfBirth, 'Player dateOfBirth')), heightCm: finite(bio.heightCm, 'Player heightCm'), weightKg: finite(bio.weightKg, 'Player weightKg'), wingspanCm: finite(bio.wingspanCm, 'Player wingspanCm'), standingReachCm: finite(bio.standingReachCm, 'Player standingReachCm'), dominantHand: enumValue(bio.dominantHand, ['LEFT', 'RIGHT'], 'Player dominant hand') as 'LEFT' | 'RIGHT', measurementProvenance: { wingspanCm: provenanceValue(provenance.wingspanCm), standingReachCm: provenanceValue(provenance.standingReachCm), dominantHand: provenanceValue(provenance.dominantHand) } }, development: parseDevelopmentProfileV2(player.development) })
 }
 
 export function parsePersonalityV2(value: unknown): void {

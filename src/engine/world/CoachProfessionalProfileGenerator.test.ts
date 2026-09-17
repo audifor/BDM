@@ -39,7 +39,8 @@ describe('Coach RPG world setup', () => {
     expect(tactician.coachProfessionalProfilesByCoachId[blank.userCoachId]).not.toEqual(blank.coachProfessionalProfilesByCoachId[blank.userCoachId])
     for (const coach of Object.values(blank.coaches).filter((coach) => coach.id !== blank.userCoachId)) expect(tactician.coachProfessionalProfilesByCoachId[coach.id]).toEqual(blank.coachProfessionalProfilesByCoachId[coach.id])
     expect(tactician.coachRpgProfilesByCoachId).toEqual(blank.coachRpgProfilesByCoachId)
-    expect(tactician.players).toEqual(blank.players); expect(tactician.staffPeopleById).toEqual(blank.staffPeopleById); expect(tactician.games).toEqual(blank.games)
+    expect(tactician.players).toEqual(blank.players); expect(tactician.games).toEqual(blank.games)
+    expect(tactician.staffPeopleById[tactician.coaches[tactician.userCoachId]!.staffProfileId]!.professional).toEqual(tactician.coachProfessionalProfilesByCoachId[tactician.userCoachId])
     expect(advanceDay(blank).coachProfessionalProfilesByCoachId).toEqual(blank.coachProfessionalProfilesByCoachId)
     const game = Object.values(blank.games)[0]!
     const result = applyMatchResult(blank, { gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, homeScore: 80, awayScore: 70 })

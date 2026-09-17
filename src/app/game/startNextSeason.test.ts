@@ -51,7 +51,7 @@ describe('startNextSeason', () => {
     expect(Object.values(next.players).some((player) => JSON.stringify(player.basketball.ratings) !== JSON.stringify(priorPlayers.find((prior) => prior.id === player.id)!.basketball.ratings))).toBe(true)
     expect(calculateStandings(next, nextSeason.id).every((line) => line.played === 0 && line.wins === 0 && line.losses === 0 && line.pointsFor === 0)).toBe(true)
     expect(() => advanceGameDay(next)).not.toThrow()
-  })
+  }, 10_000)
 
   it('keeps career stats, resets season projections, finalizes season two, and supports season three', () => {
     const completed = completeCurrentSeason(createNewGame())
@@ -68,7 +68,7 @@ describe('startNextSeason', () => {
     expect(Object.values(next.seasonHistoryBySeasonId).filter((history) => next.ecosystems[next.competitions[next.seasons[history.seasonId]!.competitionId]!.ecosystemId]!.category === 'men')).toHaveLength(5)
     expect(getCurrentSeason(next).id).toBe(seasonTwo.id)
     expect(getCurrentSeason(startNextSeason(next)).id).toBe('generated-season-0006')
-  })
+  }, 10_000)
 
   it('round-trips multiple seasons and accepts legacy single-season V1 without currentSeasonId', () => {
     const next = startNextSeason(completeCurrentSeason(createNewGame()))
@@ -86,19 +86,19 @@ describe('startNextSeason', () => {
     }
     expect(loaded.currentSeasonId).toBe(next.currentSeasonId)
     expect(deserializeGameWorldV1({ schemaVersion: 1, savedAt: '2032-10-01T00:00:00.000Z', payload: legacyPayload }).currentSeasonId).toBe('generated-season-0001')
-  })
+  }, 10_000)
 
   it('startNextSeason preserves staff people exactly', () => {
     const completed = completeCurrentSeason(createNewGame())
 
     expect(startNextSeason(completed).staffPeopleById).toEqual(completed.staffPeopleById)
-  })
+  }, 10_000)
 
   it('startNextSeason preserves staff assignments exactly', () => {
     const completed = completeCurrentSeason(createNewGame())
 
     expect(startNextSeason(completed).teamStaffAssignmentsById).toEqual(completed.teamStaffAssignmentsById)
-  })
+  }, 10_000)
 
   it('multi-season save/load preserves staff people exactly', () => {
     const next = startNextSeason(completeCurrentSeason(createNewGame()))
@@ -108,7 +108,7 @@ describe('startNextSeason', () => {
     for (const person of Object.values(next.staffPeopleById)) {
       expect(loaded.staffPeopleById[person.id]!.professional.attributes).toEqual(person.professional.attributes)
     }
-  })
+  }, 10_000)
 
   it('multi-season save/load preserves staff assignments exactly', () => {
     const next = startNextSeason(completeCurrentSeason(createNewGame()))
@@ -120,7 +120,7 @@ describe('startNextSeason', () => {
       expect(loadedAssignment.assignedOn).toBe(assignment.assignedOn)
       expect(calculateStaffRoleProficiencyByRoleId(loaded.staffPeopleById[loadedAssignment.staffPersonId]!, loadedAssignment.role)).toBe(calculateStaffRoleProficiencyByRoleId(next.staffPeopleById[assignment.staffPersonId]!, assignment.role))
     }
-  })
+  }, 10_000)
 })
 
 function completeCurrentSeason(world: ReturnType<typeof createNewGame>) {

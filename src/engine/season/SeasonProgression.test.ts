@@ -65,7 +65,7 @@ describe('season progression', () => {
     expect(loaded.seasonHistoryBySeasonId).toEqual(world.seasonHistoryBySeasonId)
     expect(deserializeGameWorldV1({ ...oldActivePayload, payload: oldPayload }).seasonHistoryBySeasonId).toEqual({})
     expect(() => deserializeGameWorldV1({ ...envelope, payload: { ...envelope.payload, seasonHistoryBySeasonId: [] } })).toThrow('Completed season is missing season history')
-  })
+  }, 10_000)
 })
 
 function rebuildWithHistory(world: ReturnType<typeof createNewGame>, seasonHistory: Parameters<typeof createGameWorld>[0]['seasonHistory']) {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { updateGameWorld } from '@/domain/world'
+import { teamStaffAssignmentIdFromString } from '@/domain/ids'
 import { deserializeGameWorldV3, serializeGameWorldV3 } from '@/save/GameWorldSaveV3'
 import { deriveGovernanceDecisionStatus } from '@/domain/governance'
 import { createGovernanceManagerEvaluation, deriveGovernanceJobSecurityState } from '@/domain/governance'
@@ -121,7 +122,8 @@ describe('executeGovernanceCoachFiringDecision', () => {
   it('validates a firing from immutable departure history rather than current unemployment', () => {
     const executed = executeGovernanceCoachFiringDecision(fixture(), { decisionId: 'fire', executorBodyId: 'exec', effectiveOn: fixture().currentDate }).world
     const teamId = Object.values(executed.teams).find((team) => team.coachId === undefined)!.id, coachId = executed.userCoachId
-    const rehired = updateGameWorld(executed, { teams: Object.values(executed.teams).map((team) => team.id === teamId ? { ...team, coachId } : team), coachEmploymentByCoachId: { ...executed.coachEmploymentByCoachId, [coachId]: { status: 'employed', teamId, startedOn: executed.currentDate } }, coachCareerHistoryByCoachId: { ...executed.coachCareerHistoryByCoachId, [coachId]: [...executed.coachCareerHistoryByCoachId[coachId]!, { kind: 'appointment', coachId, teamId, date: executed.currentDate, reason: 'hired' }] } } as never)
+    const staffId = executed.coaches[coachId]!.staffProfileId
+    const rehired = updateGameWorld(executed, { teams: Object.values(executed.teams).map((team) => team.id === teamId ? { ...team, coachId } : team), coachEmploymentByCoachId: { ...executed.coachEmploymentByCoachId, [coachId]: { status: 'employed', teamId, startedOn: executed.currentDate } }, staffEmploymentByStaffId: { ...executed.staffEmploymentByStaffId, [staffId]: { status: 'employed', teamId, roleId: 'headCoach', startedOn: executed.currentDate } }, teamStaffAssignments: [...Object.values(executed.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString(`test-rehire-head-coach-${coachId}`), staffPersonId: staffId, teamId, role: 'headCoach', assignedOn: executed.currentDate }], coachCareerHistoryByCoachId: { ...executed.coachCareerHistoryByCoachId, [coachId]: [...executed.coachCareerHistoryByCoachId[coachId]!, { kind: 'appointment', coachId, teamId, date: executed.currentDate, reason: 'hired' }] } } as never)
     expect(Object.values(rehired.governanceDecisionEventsById).some((event) => event.kind === 'EXECUTED')).toBe(true)
   })
 })

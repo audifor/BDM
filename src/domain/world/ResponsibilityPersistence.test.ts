@@ -83,15 +83,15 @@ describe('GameWorld responsibilities', () => {
     expect(getResponsibility(delegated, teamId, 'treatmentRecommendation')?.holderStaffId).toBe(doctorId)
   })
 
-  it('rejects a StaffRoleId that is not assignable (headCoach is a marker for the Head Coach, never a TeamStaffAssignment role)', () => {
+  it('accepts headCoach as the canonical TeamStaffAssignment authority', () => {
     const input = createValidGameWorldInput()
     const world = createGameWorld(input)
     const teamId = teamIdFromString('team-home')
     const staffId = staffPersonIdFromString('resp-world-headcoach-attempt')
-    expect(() => updateGameWorld(world, {
+    expect(updateGameWorld(world, {
       staffPeople: [...Object.values(world.staffPeopleById), { id: staffId, identity: { firstName: 'Ivo', lastName: 'Kade' }, professional: { attributes } }],
       teamStaffAssignments: [...Object.values(world.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('resp-world-headcoach-assignment'), staffPersonId: staffId, teamId, role: 'headCoach', assignedOn: createGameDate(2032, 10, 1) }],
-    })).toThrow()
+    }).teamStaffAssignmentsById[teamStaffAssignmentIdFromString('resp-world-headcoach-assignment')]!.role).toBe('headCoach')
   })
 })
 

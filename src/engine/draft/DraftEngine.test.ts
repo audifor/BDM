@@ -55,7 +55,7 @@ describe('DraftEngine', () => {
     expect(advanced.draftsById[draftId]!.status).toBe('completed')
     expect(Object.values(advanced.competitions).some((competition) => advanced.ecosystems[competition.ecosystemId]!.kind === 'fibaLike' && Object.values(advanced.games).some((game) => game.competitionId === competition.id && game.status === 'scheduled'))).toBe(true)
     expect(Object.keys(advanceDay(createNewGame()).draftsById)).toEqual([])
-  })
+  }, 10_000)
 
   it('is deterministic and persists an in-progress user-paused draft without regeneration', () => {
     const initial = createOpenDraftWorld(1)

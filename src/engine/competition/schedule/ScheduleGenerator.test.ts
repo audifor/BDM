@@ -187,6 +187,8 @@ function recreateWorld(
     coaches: Object.values(world.coaches),
     players: Object.values(world.players),
     teams: Object.values(world.teams),
+    staffPeople: Object.values(world.staffPeopleById),
+    teamStaffAssignments: Object.values(world.teamStaffAssignmentsById),
     competitions: overrides.competitions ?? Object.values(world.competitions),
     seasons: overrides.seasons ?? Object.values(world.seasons),
     games: overrides.games ?? Object.values(world.games),

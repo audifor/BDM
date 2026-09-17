@@ -1,5 +1,6 @@
 export {
   coachIdFromString,
+  personIdFromString,
   competitionIdFromString,
   ecosystemIdFromString,
   conferenceIdFromString,
@@ -33,6 +34,7 @@ export {
 
 export type {
   CoachId,
+  PersonId,
   CompetitionId,
   EcosystemId,
   ConferenceId,

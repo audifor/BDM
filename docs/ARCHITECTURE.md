@@ -51,6 +51,18 @@ Domain entities are plain serializable data created through validating factories
 Relationships have one canonical direction: teams hold their roster and optional
 coach reference, while players and coaches do not hold a team reference.
 
+Human identity is rooted in the serializable `Person` collection. The canonical
+Person profile kinds are `player`, `staff`, `official`, `agent`, and
+`mediaPerson`. `Player` and `StaffPerson` are role profiles that reference a
+stable `PersonId`; the runtime keeps existing field names as compatibility
+surfaces while new save data persists the shared person root. `Coach` is not a
+Person profile: it is a gameplay/RPG facade over `Person + StaffProfile` with
+the `headCoach` StaffRole.
+Canonical `GameWorld` construction requires that StaffProfile and, for an
+employed coach, exactly one matching `TeamStaffAssignment(role: headCoach)`;
+it never synthesizes Staff. Save V1 is the explicit legacy migration boundary
+that may deterministically materialize missing compatibility Staff roots.
+
 `Competition` is the enduring institution and `Season` is one dated edition of it.
 `Game` is independent of `MatchEngine`; it records only a scheduled/completed state
 and a completed game's basic final score.
@@ -231,10 +243,10 @@ been removed from productive simulation.
 
 ## Player basketball domain
 
-Player now persists a `BasketballProfile` with one primary position and seven
-source ratings. No overall is stored. MatchEngine does not consume these ratings
-yet; WorldGenerator uses a temporary constant profile only to satisfy the new
-contract until its procedural player-profile migration in the next milestone.
+Player now persists a `BasketballProfile` with one primary position, the exact
+80-key World DB rating truth, and the exact 40-key tendency truth. No overall is
+stored. The former 35-key and seven-key rating surfaces, plus the former
+21-key tendency surface, are explicit non-persisted compatibility projections.
 
 WorldGenerator now creates deterministic player profiles with a provisional
 2 PG / 3 SG / 2 SF / 3 PF / 2 C roster composition. Each profile uses a
@@ -297,14 +309,13 @@ attribution uses the separate deterministic stream
 `match-actors-v1:${gameId}`, so assists and rebounder identity do not alter the
 established match-outcome RNG.
 
-The seven persisted bootstrap ratings are not BDM's final attribute model.
-Application adapts them into transient `MatchPlayerProfile` signals before a
-match, so MatchEngine consumes usage, rim attack, shooting, creation, ball
-security, defensive signals, and rebound impact rather than reaching into Player
-ratings. Rebound impact currently derives from rebounding and athleticism. Future
-larger attribute sets, traits, perks, tendencies, and contextual modifiers can
-change this adapter or add composable modifiers without changing the possession
-loop. There is no persisted overall.
+The 80 persisted ratings and 40 tendencies are BDM's current canonical Player
+Truth model. Application adapts the rating truth into transient
+`MatchPlayerProfile` signals before a match, so MatchEngine consumes usage, rim
+attack, shooting, creation, ball security, defensive signals, and rebound
+impact rather than reaching into Player ratings. Legacy consumers use explicit
+35-key or seven-key projections; they are not written back as truth. There is
+no persisted overall.
 
 Player-driven offense uses a dedicated deterministic decision RNG
 (`match-decisions-v1:${gameId}`) for weighted offensive-actor and shot-zone
@@ -490,8 +501,8 @@ different attribute schemas. Role proficiency is a rounded derived weighted scor
 not stored state or Fit. Zero role weight does not imply the person lacks that
 capability. Personality, knowledge, relationships, memory and contextual Fit remain
 separate future domains. Staff is normalized in `GameWorld` through people and
-assignments rather than role-based person subtypes. The shared profile is intended
-to be adaptable to Head Coaches later, without conflating professional ability with
+assignments rather than role-based person subtypes. Head Coaches use the same
+`StaffProfile` through the canonical `headCoach` role, without conflating professional ability with
 future RPG skills, traits or perks.
 
 Staff v1 world integration stores normalized `staffPeopleById` and
@@ -528,9 +539,10 @@ remain distinct from Staff Truth and role proficiency.
 ## Coach RPG domain foundation
 
 Coach RPG is a pure Domain foundation reusable by any `Coach`, never a user-only
-subsystem. Head Coaches will converge on the same common professional attribute
-framework as Staff, but 040.1 does not yet integrate a profile into `Coach`,
-`GameWorld`, generation or saves; 040.2 owns that integration.
+subsystem. Head Coaches use the same common professional attribute framework as
+Staff. The Coach facade is backed by the canonical `Person` and coaching
+`StaffProfile` in `GameWorld` and Save V1; it does not create a parallel human
+profile.
 
 Professional attributes, accumulated experience, Skills, Professional Traits,
 Perks and Personality are separate concepts. Experience is an unbounded,
@@ -573,11 +585,12 @@ courses remain outside this milestone.
 
 `GameWorld` normalizes `coachProfessionalProfilesByCoachId` and
 `coachRpgProfilesByCoachId` separately. Any Coach may participate; the
-user-controlled Coach is not a special RPG entity. Coach identity, nationality and
-team assignment remain authoritative in the existing `Coach` and `Team` models.
+user-controlled Coach is not a special RPG entity. Person identity is
+authoritative, StaffProfile carries the professional role, and Coach/Team fields
+remain compatibility gameplay projections.
 
 Head Coaches use the same thirteen professional attributes as Staff. Their
-bootstrap role weights only evaluate and generate a Head Coach professional profile;
+bootstrap role weights evaluate the canonical Head Coach StaffProfile;
 they are not a new capability taxonomy or contextual Fit. The user starts from a
 deterministic rookie baseline, where `blank` means no preset modifier rather than
 zero attributes. Optional presets are applied once during setup and are not stored
@@ -590,11 +603,10 @@ different: a capable generated Coach still begins with an experience ledger of z
 in this bootstrap phase. Runtime transformations unrelated to Coach RPG preserve
 both maps exactly.
 
-040.2 does not serialize or regenerate Coach profiles. Save loads therefore create
-empty runtime maps until 040.5 adds persistence and legacy handling; missing maps
-after a normal runtime transformation remain corruption, not a signal to regenerate.
-Coach and StaffPerson technical identities also remain distinct for now, while the
-shared professional profile keeps a future Staff-to-Coach career path open. Future
+Coach RPG maps remain separate gameplay state, while the Coach identity itself is
+always resolved through Person and StaffProfile. Legacy saves without those roots
+are deterministically migrated during load. The shared professional profile keeps
+a future Staff-to-Coach career path open. Future
 paid education will feed targeted Experience, never direct professional attributes.
 
 > Every Coach may participate in the same Coach RPG architecture; the
@@ -670,7 +682,7 @@ New Alpha players receive deterministic adult bios relative to the earliest Seas
 
 ## Player development v1
 
-Offseason development is a pure Engine step invoked exactly once by `startNextSeason`, using each player's age at the target Season start. It changes only canonical bootstrap ratings; IDs, bio, rosters, coaches, logs, and history remain unchanged. The age curve and growth-room calculation are explicitly provisional and do not represent Potential.
+Offseason development is a pure Engine step invoked exactly once by `startNextSeason`, using each player's age at the target Season start. It changes only the canonical 80-key Player rating truth; IDs, bio, rosters, coaches, logs, tendencies, and history remain unchanged. The age curve and growth-room calculation are explicitly provisional and do not represent Potential.
 
 Each Player/rating/season transition has an independent deterministic seed. This makes development independent of Player and rating-key ordering, and ensures adding a future rating cannot perturb existing rolls. Development results are transient diagnostics; only the updated Player ratings persist in Save V1. No development happens on load, calendar advance, birthday, or season finalization.
 

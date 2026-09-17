@@ -4,10 +4,9 @@
  * `StaffRoleRegistry.ts`). Split into its own leaf module (no dependencies) because both of
  * those files need it and must not import each other.
  *
- * `headCoach` is included only so shared code can reason about "who coaches this team"
- * uniformly; it is not a `StaffPerson` role — Head Coach remains the existing `Coach` entity,
- * and Responsibility eligibility for it routes through `eligibleParticipant: 'coach'` (see
- * `@/domain/responsibility`), never through a `TeamStaffAssignment`.
+ * `headCoach` is the canonical coaching role on a StaffProfile. The `Coach` entity is only
+ * a gameplay/RPG facade over that StaffProfile. Supporting `TeamStaffAssignment` contracts
+ * may still exclude `headCoach` because it is filled through the Coach facade.
  */
 export const STAFF_ROLE_IDS = [
   // coaching
@@ -26,5 +25,5 @@ export const STAFF_ROLE_IDS = [
 ] as const
 export type StaffRoleId = typeof STAFF_ROLE_IDS[number]
 
-/** Assignable roles only — excludes `headCoach`, which is never a `TeamStaffAssignment.role`. */
+/** Market/generator roles only — `headCoach` is assigned through the Coach facade's StaffProfile. */
 export const ASSIGNABLE_STAFF_ROLE_IDS = STAFF_ROLE_IDS.filter((id): id is Exclude<StaffRoleId, 'headCoach'> => id !== 'headCoach')

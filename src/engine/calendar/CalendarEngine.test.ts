@@ -196,13 +196,17 @@ function recreateWorld(
     games: Game[]
   }>,
 ): GameWorld {
+  const teams = overrides.teams ?? Object.values(source.teams)
+  const assignments = Object.values(source.teamStaffAssignmentsById).filter((assignment) => assignment.role !== 'headCoach' || teams.some((team) => team.id === assignment.teamId && team.coachId !== undefined && source.coaches[team.coachId]!.staffProfileId === assignment.staffPersonId))
   return createGameWorld({
     currentDate: source.currentDate,
     userCoachId: source.userCoachId,
     countries: Object.values(source.countries),
     coaches: Object.values(source.coaches),
     players: Object.values(source.players),
-    teams: overrides.teams ?? Object.values(source.teams),
+    teams,
+    staffPeople: Object.values(source.staffPeopleById),
+    teamStaffAssignments: assignments,
     competitions: Object.values(source.competitions),
     seasons: Object.values(source.seasons),
     games: overrides.games ?? Object.values(source.games),
