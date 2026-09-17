@@ -72,14 +72,16 @@ describe('StaffScreen', () => {
     expect(markup).toContain('Second Assistant')
   })
 
-  it('renders an empty state when the user Team has no Staff', () => {
+  it('renders the canonical head coach when no non-coach Staff remains', () => {
     const world = createNewGame()
     const userTeam = getUserTeam(world)!
-    const retainedAssignments = Object.values(world.teamStaffAssignmentsById).filter((assignment) => assignment.teamId !== userTeam.id)
-    const retainedPeople = retainedAssignments.map((assignment) => world.staffPeopleById[assignment.staffPersonId]!)
-    const markup = renderToStaticMarkup(createElement(StaffScreen, { world: rebuildWorld(world, retainedPeople, retainedAssignments) }))
+    const retainedAssignments = Object.values(world.teamStaffAssignmentsById).filter((assignment) => assignment.teamId !== userTeam.id || assignment.role === 'headCoach')
+    const markup = renderToStaticMarkup(createElement(StaffScreen, { world: rebuildWorld(world, Object.values(world.staffPeopleById), retainedAssignments) }))
 
-    expect(markup).toContain('No staff')
+    const headCoachAssignment = retainedAssignments.find((assignment) => assignment.teamId === userTeam.id && assignment.role === 'headCoach')!
+    const headCoach = world.staffPeopleById[headCoachAssignment.staffPersonId]!
+    expect(markup).toContain(`${headCoach.identity.firstName} ${headCoach.identity.lastName}`)
+    expect(markup).not.toContain('No staff')
   })
 
   it('renders the same Staff after save/load and a season transition', () => {

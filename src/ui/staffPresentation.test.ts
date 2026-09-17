@@ -312,12 +312,12 @@ describe('getStaffRoleEvaluations', () => {
     expect(evaluations.some((entry) => entry.role === 'headCoach')).toBe(false)
   })
 
-  it('never includes headCoach for any staff member in the fixture world', () => {
+  it('includes headCoach only for the canonical head-coach StaffProfile', () => {
     const w = world()
     const teamId = userTeamId(w)
     for (const assignment of getTeamStaffAssignments(w, teamId)) {
       const evaluations = getStaffRoleEvaluations(w, assignment.staffPersonId)
-      expect(evaluations.some((entry) => entry.role === 'headCoach')).toBe(false)
+      expect(evaluations.some((entry) => entry.role === 'headCoach')).toBe(assignment.role === 'headCoach')
     }
   })
 })

@@ -57,13 +57,12 @@ describe('progressStaffCultureAndCohesion', () => {
     }
   })
 
-  it('does not create a culture state for a team without current Staff', () => {
+  it('initializes a culture state for every coached team through its canonical head coach Staff', () => {
     const base = createNewGame()
-    const emptyTeam = Object.values(base.teams).find((team) => !Object.values(base.teamStaffAssignmentsById).some((assignment) => assignment.teamId === team.id))
-    expect(emptyTeam).toBeDefined()
-    if (emptyTeam === undefined) return
     const progressed = progressStaffCultureAndCohesion(base)
-    expect(progressed.staffCultureStatesByScopeKey[emptyTeam.id]).toBeUndefined()
+    for (const team of Object.values(base.teams).filter((candidate) => candidate.coachId !== undefined)) {
+      expect(progressed.staffCultureStatesByScopeKey[team.id]).toBeDefined()
+    }
   })
 
   it('is idempotent on a non-weekly tick once states exist (returns the same world unchanged)', () => {
