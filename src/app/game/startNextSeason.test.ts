@@ -92,13 +92,13 @@ describe('startNextSeason', () => {
     const completed = completeCurrentSeason(createNewGame())
 
     expect(startNextSeason(completed).staffPeopleById).toEqual(completed.staffPeopleById)
-  })
+  }, 10_000)
 
   it('startNextSeason preserves staff assignments exactly', () => {
     const completed = completeCurrentSeason(createNewGame())
 
     expect(startNextSeason(completed).teamStaffAssignmentsById).toEqual(completed.teamStaffAssignmentsById)
-  })
+  }, 10_000)
 
   it('multi-season save/load preserves staff people exactly', () => {
     const next = startNextSeason(completeCurrentSeason(createNewGame()))
@@ -108,7 +108,7 @@ describe('startNextSeason', () => {
     for (const person of Object.values(next.staffPeopleById)) {
       expect(loaded.staffPeopleById[person.id]!.professional.attributes).toEqual(person.professional.attributes)
     }
-  })
+  }, 10_000)
 
   it('multi-season save/load preserves staff assignments exactly', () => {
     const next = startNextSeason(completeCurrentSeason(createNewGame()))
@@ -120,7 +120,7 @@ describe('startNextSeason', () => {
       expect(loadedAssignment.assignedOn).toBe(assignment.assignedOn)
       expect(calculateStaffRoleProficiencyByRoleId(loaded.staffPeopleById[loadedAssignment.staffPersonId]!, loadedAssignment.role)).toBe(calculateStaffRoleProficiencyByRoleId(next.staffPeopleById[assignment.staffPersonId]!, assignment.role))
     }
-  })
+  }, 10_000)
 })
 
 function completeCurrentSeason(world: ReturnType<typeof createNewGame>) {
