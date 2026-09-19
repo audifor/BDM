@@ -73,7 +73,7 @@ export async function createWorldDbSpainGame(
     const selection = await readWorldDbSpainSelection(session)
     const chosen = selection.teams.find((team) => team.key === teamId)
     if (chosen === undefined) throw new Error(`Selected Spain ACB team is not in the canonical World DB catalog: ${teamId}`)
-    return session.bootstrapGameWorld({
+    return await session.bootstrapGameWorld({
       source: selection.source,
       ecosystemId: selection.ecosystemId,
       competitionId: selection.competitionId,

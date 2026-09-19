@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { WorldCompetitionRuntimeBundle } from '@/domain/competition'
 import type { WorldDbDatabaseInfoV1 } from '@/domain/worldDb/DatabaseInfo'
+import type { WorldDbGameBootstrapSelectionV1 } from '@/domain/worldDb/GameBootstrap'
 import type { WorldDbSelectionCatalogV1 } from '@/domain/worldDb/SelectionCatalog'
 import type { WorldDatabaseRepository } from '@/tauri/TauriWorldDatabaseRepository'
 
@@ -110,6 +111,64 @@ describe('World DB Spain ACB new-game selection', () => {
       competitionSeasonId: SPAIN_ACB_COMPETITION_SEASON_ID,
       teamId: selectedTeamId,
     }))
+  })
+
+  it('keeps the session open through asynchronous bootstrap and closes it after success', async () => {
+    let sessionDuringBootstrap: WorldDbSessionV1 | undefined
+    let startBootstrap!: () => void
+    let finishBootstrap!: () => void
+    const bootstrapStarted = new Promise<void>((resolve) => { startBootstrap = resolve })
+    const bootstrapGate = new Promise<void>((resolve) => { finishBootstrap = resolve })
+    const createdWorld = {} as Awaited<ReturnType<WorldDbSessionV1['bootstrapGameWorld']>>
+    const bootstrap = vi.spyOn(WorldDbSessionV1.prototype, 'bootstrapGameWorld').mockImplementation(async function (
+      this: WorldDbSessionV1,
+      _selection: WorldDbGameBootstrapSelectionV1,
+    ) {
+      sessionDuringBootstrap = this
+      expect(this.isOpen).toBe(true)
+      startBootstrap()
+      await bootstrapGate
+      this.snapshot()
+      expect(this.isOpen).toBe(true)
+      return createdWorld
+    })
+    const close = vi.spyOn(WorldDbSessionV1.prototype, 'close')
+    const access = { repository: repository(), databasePath: 'world.db', runtimeBundlePath: 'runtime.json' }
+
+    const creation = createWorldDbSpainGame(catalog().teamMemberships[11]!.teamId, access)
+    await bootstrapStarted
+
+    expect(sessionDuringBootstrap?.isOpen).toBe(true)
+    expect(close).not.toHaveBeenCalled()
+    finishBootstrap()
+    await expect(creation).resolves.toBe(createdWorld)
+
+    expect(bootstrap).toHaveBeenCalledOnce()
+    expect(sessionDuringBootstrap?.isOpen).toBe(false)
+    expect(close).toHaveBeenCalledOnce()
+  })
+
+  it('closes the session after asynchronous bootstrap rejects', async () => {
+    let sessionDuringBootstrap: WorldDbSessionV1 | undefined
+    const bootstrap = vi.spyOn(WorldDbSessionV1.prototype, 'bootstrapGameWorld').mockImplementation(async function (
+      this: WorldDbSessionV1,
+      _selection: WorldDbGameBootstrapSelectionV1,
+    ) {
+      sessionDuringBootstrap = this
+      expect(this.isOpen).toBe(true)
+      await Promise.resolve()
+      this.snapshot()
+      expect(this.isOpen).toBe(true)
+      throw new Error('bootstrap failed')
+    })
+    const close = vi.spyOn(WorldDbSessionV1.prototype, 'close')
+    const access = { repository: repository(), databasePath: 'world.db', runtimeBundlePath: 'runtime.json' }
+
+    await expect(createWorldDbSpainGame(catalog().teamMemberships[11]!.teamId, access)).rejects.toThrow('bootstrap failed')
+
+    expect(bootstrap).toHaveBeenCalledOnce()
+    expect(sessionDuringBootstrap?.isOpen).toBe(false)
+    expect(close).toHaveBeenCalledOnce()
   })
 
   it('rejects an unknown team instead of falling back to the prototype or test ACB game', async () => {
