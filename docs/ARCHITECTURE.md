@@ -179,12 +179,17 @@ derived projections with no persisted date index. The user team is derived throu
 
 The World DB bootstrap path is `WorldDbSessionV1.bootstrapGameWorld`: it validates a
 canonical ecosystem/competition/season/team selection, asks the native repository for
-that competition-season's teams, active roster players, runtime ratings and scheduled
-matches, then materializes the existing `GameWorld`. World DB IDs remain the runtime
-entity IDs. The external session and source identity stay outside Save/GameWorld, while
-the application/UI consumes the resulting normal world without World DB knowledge.
-The current GameWorld has no mandatory staff rows, so staff loading is intentionally
-deferred; no overall rating is created.
+that ecosystem's B02 Team memberships, canonical `roster`/`roster_membership` players,
+runtime truth ratings/tendencies, Person roots and Staff assignments, then materializes
+the existing `GameWorld`. World DB IDs remain the runtime entity IDs. A competition's
+persisted fixtures are optional for a new game: when B12 fixture rows are absent,
+`ScheduleGenerator` derives the deterministic B04 home-and-away schedule in
+`GameWorld`/Save only, with provenance `DERIVED_SIMULATION_FROM_B04`; it never writes
+back to the World DB. The external session and source identity stay outside Save/GameWorld,
+while the application/UI consumes the resulting normal world without World DB knowledge.
+Coach is only a facade over the selected real Person and Staff `headCoach` assignment;
+the bootstrap never creates a synthetic manager or coach Person. No overall rating is
+created.
 
 `app/game` is the application boundary for the first UI loop. It creates the
 prototype world and schedule, coordinates MatchEngine with result application,
