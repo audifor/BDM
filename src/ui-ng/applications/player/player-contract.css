@@ -2,25 +2,269 @@
 
 .pc-root {
   display: grid;
-  grid-template-rows: minmax(0, auto) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
+  /* Content-sized rows: a row is never squeezed below its panels, so nothing overlaps. */
+  grid-auto-rows: max-content;
+  align-content: start;
   gap: var(--ng-panel-gap);
   height: 100%;
   min-height: 0;
   padding: var(--ng-workspace-padding);
-  overflow: hidden;
+  overflow: auto;
 }
 
-.pc-root__upper {
+.pc-root__row {
   display: grid;
-  gap: var(--ng-panel-gap);
-}
-
-.pc-root__main {
-  display: grid;
-  grid-template-columns: 0.95fr 1.05fr;
   gap: var(--ng-panel-gap);
   min-height: 0;
-  overflow: hidden;
+}
+
+/* Row 1 — summary | snapshot + timeline | intelligence. */
+.pc-root__row--summary {
+  grid-template-columns: 34fr 40fr 26fr;
+  align-items: start;
+}
+
+.pc-root__snapshot-stack {
+  display: grid;
+  gap: var(--ng-panel-gap);
+  min-height: 0;
+}
+
+.pc-root__row--schedule {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.pc-root__row--closing {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Shared panel frame for the rebuilt contract panels. */
+.pc-summary,
+.pc-snapshot,
+.pc-intel,
+.pc-gap-panel {
+  display: grid;
+  gap: var(--ng-spacing-8);
+  align-content: start;
+  min-width: 0;
+  padding: var(--ng-spacing-12);
+  border: 1px solid var(--ng-border-subtle);
+  border-radius: var(--ng-radius-panel);
+}
+
+.pc-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ng-spacing-8);
+  padding-bottom: var(--ng-spacing-4);
+  border-bottom: 1px solid var(--ng-border-subtle);
+}
+
+.pc-panel-head__title {
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ng-text-secondary);
+}
+
+.pc-panel-head__meta {
+  font-family: var(--po-font);
+  font-size: 10px;
+  color: var(--ng-text-muted);
+}
+
+.pc-panel-note {
+  font-family: var(--po-font);
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--ng-text-faint);
+}
+
+.pc-panel-empty {
+  margin: 0;
+  font-family: var(--po-font);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ng-text-muted);
+}
+
+/* Summary */
+.pc-summary__club {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 0 var(--ng-spacing-8);
+}
+
+.pc-summary__crest {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--ng-border-subtle);
+  border-radius: 3px;
+  background: var(--po-team-primary);
+  color: var(--ng-text-primary);
+  font-family: var(--ng-font-display);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.pc-summary__team {
+  font-family: var(--po-font);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ng-text-primary);
+}
+
+.pc-summary__competition {
+  font-family: var(--po-font);
+  font-size: 10px;
+  color: var(--ng-text-muted);
+}
+
+.pc-summary__facts,
+.pc-intel__facts {
+  display: grid;
+  gap: var(--ng-spacing-4);
+  margin: 0;
+}
+
+.pc-summary__facts > div,
+.pc-intel__facts > div {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  gap: var(--ng-spacing-8);
+  align-items: baseline;
+}
+
+.pc-summary__facts dt,
+.pc-intel__facts dt {
+  font-family: var(--po-font);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.pc-summary__facts dd,
+.pc-intel__facts dd {
+  margin: 0;
+  text-align: right;
+  font-family: var(--po-font);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ng-text-primary);
+}
+
+/* Snapshot */
+.pc-snapshot__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ng-spacing-8);
+}
+
+.pc-snapshot__cell {
+  display: grid;
+  gap: 2px;
+}
+
+.pc-snapshot__label {
+  font-family: var(--po-font);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.pc-snapshot__value {
+  font-family: var(--ng-font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ng-text-primary);
+}
+
+/* Intelligence */
+.pc-intel__facts dd {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+.pc-intel__note {
+  font-family: var(--po-font);
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--ng-text-muted);
+}
+
+.pc-intel__risk.is-low {
+  color: var(--ng-positive);
+}
+
+.pc-intel__risk.is-moderate {
+  color: var(--ng-amber-bright);
+}
+
+.pc-intel__risk.is-high {
+  color: var(--ng-negative);
+}
+
+.pc-intel__section {
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ng-text-secondary);
+}
+
+.pc-intel__events {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pc-intel__events li {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) minmax(70px, auto);
+  align-items: baseline;
+  gap: var(--ng-spacing-8);
+  font-family: var(--po-font);
+  font-size: 11px;
+  color: var(--ng-text-secondary);
+}
+
+.pc-intel__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ng-text-muted);
+}
+
+.pc-intel__events li.is-positive .pc-intel__dot {
+  background: var(--ng-positive);
+}
+
+.pc-intel__event-date {
+  text-align: right;
+  color: var(--ng-text-muted);
+}
+
+/* Closing gaps row */
+.pc-closing {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--ng-panel-gap);
+  min-height: 0;
 }
 
 /* Shared stat hierarchy */

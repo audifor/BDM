@@ -1,0 +1,403 @@
+/* Player Scouting Report workspace — rebuilt against the per-page reference. */
+
+.ps-root {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  /* Content-sized rows: a row is never squeezed below its panels, so nothing overlaps. */
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: var(--ng-panel-gap);
+  height: 100%;
+  min-height: 0;
+  padding: var(--ng-workspace-padding);
+  overflow: auto;
+}
+
+.ps-root__row {
+  display: grid;
+  gap: var(--ng-panel-gap);
+  min-height: 0;
+}
+
+/* Row 1 — status | knowledge areas. */
+.ps-root__row--status {
+  grid-template-columns: 46fr 54fr;
+  align-items: start;
+}
+
+/* Row 2 — profile | consensus | archetype | actions. */
+.ps-root__row--profile {
+  grid-template-columns: 34fr 22fr 26fr 18fr;
+  align-items: start;
+}
+
+.ps-root__row--games {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Row 3 — the four projection panels. */
+.ps-projections {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--ng-panel-gap);
+  min-height: 0;
+}
+
+.ps-closing {
+  display: grid;
+  gap: var(--ng-panel-gap);
+  min-height: 0;
+}
+
+/* Shared panel frame. */
+.ps-status,
+.ps-areas,
+.ps-profile,
+.ps-consensus,
+.ps-archetype,
+.ps-games,
+.ps-gap-panel,
+.ps-empty {
+  display: grid;
+  gap: var(--ng-spacing-8);
+  align-content: start;
+  min-height: 0;
+  padding: var(--ng-spacing-12);
+  border: 1px solid var(--ng-border-subtle);
+  border-radius: var(--ng-radius-panel);
+}
+
+.ps-empty {
+  grid-column: 1 / -1;
+}
+
+.ps-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ng-spacing-8);
+  padding-bottom: var(--ng-spacing-4);
+  border-bottom: 1px solid var(--ng-border-subtle);
+}
+
+.ps-panel-head__title {
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ng-text-secondary);
+}
+
+.ps-panel-head__meta {
+  font-family: var(--po-font);
+  font-size: 10px;
+  color: var(--ng-text-muted);
+}
+
+.ps-panel-empty {
+  margin: 0;
+  font-family: var(--po-font);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ng-text-muted);
+}
+
+.ps-note {
+  font-family: var(--po-font);
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--ng-text-faint);
+}
+
+/* Status */
+.ps-status__knowledge {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: var(--ng-spacing-8);
+}
+
+.ps-status__label {
+  font-family: var(--po-font);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.ps-status__track {
+  height: 8px;
+  border: 1px solid var(--ng-border-subtle);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.ps-status__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ng-amber);
+}
+
+.ps-status__value {
+  font-family: var(--ng-font-display);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: right;
+  color: var(--ng-text-primary);
+}
+
+.ps-status__facts {
+  display: grid;
+  gap: var(--ng-spacing-4);
+  margin: 0;
+}
+
+.ps-status__facts > div {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  gap: var(--ng-spacing-8);
+  align-items: baseline;
+}
+
+.ps-status__facts dt {
+  font-family: var(--po-font);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.ps-status__facts dd {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  margin: 0;
+  font-family: var(--po-font);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+  color: var(--ng-text-primary);
+}
+
+.ps-status__facts dd .ps-note {
+  font-weight: 400;
+}
+
+/* Knowledge areas */
+.ps-areas__list {
+  display: grid;
+  gap: var(--ng-spacing-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ps-areas__row {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr) 62px;
+  align-items: center;
+  gap: var(--ng-spacing-8);
+}
+
+.ps-areas__label {
+  font-family: var(--po-font);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.ps-areas__track {
+  height: 8px;
+  border: 1px solid var(--ng-border-subtle);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.ps-areas__row.is-empty .ps-areas__track {
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0 4px,
+    transparent 4px 8px
+  );
+}
+
+.ps-areas__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ng-amber);
+}
+
+.ps-areas__value {
+  font-family: var(--po-font);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+  color: var(--ng-text-secondary);
+}
+
+/* Attribute profile */
+.ps-profile__table,
+.ps-consensus__table,
+.ps-games__table {
+  display: grid;
+  gap: 2px;
+}
+
+.ps-profile__head,
+.ps-profile__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(64px, 0.8fr) minmax(56px, 0.6fr);
+  gap: var(--ng-spacing-8);
+  padding: 2px var(--ng-spacing-4);
+}
+
+.ps-profile__head,
+.ps-consensus__head,
+.ps-games__head {
+  border-bottom: 1px solid var(--ng-border-subtle);
+  font-family: var(--po-font);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.ps-profile__head > span:not(:first-child),
+.ps-profile__row > span:not(:first-child) {
+  text-align: right;
+}
+
+.ps-profile__row {
+  font-family: var(--po-font);
+  font-size: 11px;
+  color: var(--ng-text-secondary);
+}
+
+.ps-profile__label {
+  color: var(--ng-text-primary);
+  font-weight: 700;
+}
+
+/* Consensus */
+.ps-consensus__head,
+.ps-consensus__row {
+  display: grid;
+  grid-template-columns: minmax(70px, 0.8fr) 68px minmax(0, 1.2fr) minmax(70px, auto);
+  gap: var(--ng-spacing-8);
+  padding: 2px var(--ng-spacing-4);
+}
+
+.ps-consensus__head > span:not(:first-child),
+.ps-consensus__row > span:not(:first-child) {
+  text-align: right;
+}
+
+.ps-consensus__row {
+  font-family: var(--po-font);
+  font-size: 11px;
+  color: var(--ng-text-secondary);
+}
+
+.ps-consensus__label {
+  color: var(--ng-text-primary);
+  font-weight: 700;
+}
+
+/* Archetype */
+.ps-archetype__title {
+  font-family: var(--po-font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ng-text-primary);
+}
+
+.ps-archetype__role {
+  font-family: var(--po-font);
+  font-size: 11px;
+  color: var(--ng-text-muted);
+}
+
+.ps-archetype__lists {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ng-panel-gap);
+}
+
+.ps-archetype__list-title {
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ng-text-secondary);
+}
+
+.ps-archetype__list {
+  display: grid;
+  gap: 2px;
+  margin: var(--ng-spacing-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ps-archetype__list li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ng-spacing-8);
+  font-family: var(--po-font);
+  font-size: 11px;
+  color: var(--ng-text-secondary);
+}
+
+.ps-archetype__list li.is-strong .ng-type-numeric {
+  color: var(--ng-positive);
+}
+
+.ps-archetype__list li.is-weak .ng-type-numeric {
+  color: var(--ng-negative);
+}
+
+/* Observed games */
+.ps-games__head,
+.ps-games__row {
+  display: grid;
+  grid-template-columns: minmax(84px, auto) minmax(90px, 1fr) minmax(60px, auto) repeat(5, 40px);
+  gap: var(--ng-spacing-8);
+  padding: 2px var(--ng-spacing-4);
+}
+
+.ps-games__head > span:nth-child(n + 4),
+.ps-games__row > span:nth-child(n + 4) {
+  text-align: right;
+}
+
+.ps-games__row {
+  font-family: var(--po-font);
+  font-size: 11px;
+  color: var(--ng-text-secondary);
+}
+
+.ps-games__competition {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ng-text-muted);
+}
+
+@media (max-width: 1500px) {
+  .ps-root__row--status,
+  .ps-root__row--profile {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ps-projections {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -1,6 +1,7 @@
 import type { CanonicalRatingKey } from '@/domain/player'
 
 import type { RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
+import type { CompareSession } from '@/ui-ng/applications/player/context/compareSession'
 import type { PerformanceSession } from '@/ui-ng/applications/player/context/performanceSession'
 import type { ContractSession } from '@/ui-ng/applications/player/context/contractSession'
 import type { MedicalSession } from '@/ui-ng/applications/player/context/medicalSession'
@@ -19,6 +20,7 @@ export interface PlayerWorkspaceSession {
   readonly setAttributesCategory: (category: RatingCategory) => void
   readonly inspectorCollapsed: boolean
   readonly setInspectorCollapsed: (collapsed: boolean) => void
+  readonly compare: CompareSession
   readonly performance: PerformanceSession
   readonly contract: ContractSession
   readonly medical: MedicalSession

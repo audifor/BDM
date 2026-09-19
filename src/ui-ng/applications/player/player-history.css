@@ -2,12 +2,181 @@
 
 .ph-root {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  /* Content-sized rows: a row is never squeezed below its panels, so nothing overlaps. */
+  grid-auto-rows: max-content;
+  align-content: start;
   gap: var(--ng-panel-gap);
   height: 100%;
   min-height: 0;
   padding: var(--ng-workspace-padding);
+  overflow: auto;
+}
+
+.ph-root__row {
+  display: grid;
+  gap: var(--ng-panel-gap);
+  min-height: 0;
+}
+
+.ph-root__row--timeline {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ph-root__row--seasons {
+  grid-template-columns: 58fr 24fr 18fr;
+  align-items: start;
+}
+
+.ph-root__row--milestones {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+}
+
+/* New panels share one frame; the page-level head inside them loses its own padding. */
+.ph-team,
+.ph-milestones,
+.ph-totals,
+.ph-gap-panel {
+  display: grid;
+  gap: var(--ng-spacing-8);
+  align-content: start;
+  min-height: 0;
+  padding: var(--ng-spacing-12);
+  border: 1px solid var(--ng-border-subtle);
+  border-radius: var(--ng-radius-panel);
+}
+
+.ph-team > .ph-panel-head,
+.ph-milestones > .ph-panel-head,
+.ph-totals > .ph-panel-head,
+.ph-gap-panel > .ph-panel-head {
+  padding: 0 0 var(--ng-spacing-4);
+  background: transparent;
+  min-height: 0;
+}
+
+.ph-team > .ph-panel-empty,
+.ph-milestones > .ph-panel-empty {
+  padding: 0;
+}
+
+.ph-note {
+  font-family: var(--po-font);
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--ng-text-faint);
+}
+
+.ph-team__table,
+.ph-milestones__list {
+  display: grid;
+  gap: 2px;
+}
+
+.ph-team__head,
+.ph-team__row {
+  display: grid;
+  grid-template-columns:
+    minmax(64px, auto) minmax(110px, 1fr) minmax(90px, 0.9fr) minmax(70px, auto)
+    repeat(6, 38px);
+  gap: var(--ng-spacing-8);
+  padding: 2px var(--ng-spacing-4);
+}
+
+.ph-team__head {
+  border-bottom: 1px solid var(--ng-border-subtle);
+  font-family: var(--po-font);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.ph-team__head > span:nth-child(n + 5),
+.ph-team__row > span:nth-child(n + 5) {
+  text-align: right;
+}
+
+.ph-team__row {
+  font-family: var(--po-font);
+  font-size: 11px;
+  color: var(--ng-text-secondary);
+}
+
+.ph-team__label {
+  color: var(--ng-text-primary);
+  font-weight: 700;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ph-team__competition,
+.ph-team__role {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ng-text-muted);
+}
+
+.ph-milestones__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ph-milestones__list li {
+  display: grid;
+  grid-template-columns: minmax(84px, auto) minmax(120px, 0.8fr) minmax(0, 1.2fr);
+  gap: var(--ng-spacing-8);
+  padding: 2px var(--ng-spacing-4);
+  font-family: var(--po-font);
+  font-size: 11px;
+  color: var(--ng-text-secondary);
+}
+
+.ph-milestones__date {
+  color: var(--ng-text-muted);
+}
+
+.ph-milestones__label {
+  color: var(--ng-text-primary);
+  font-weight: 700;
+}
+
+.ph-totals__grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--ng-spacing-8);
+}
+
+.ph-totals__cell {
+  display: grid;
+  gap: 2px;
+}
+
+.ph-totals__value {
+  font-family: var(--ng-font-display);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ng-text-primary);
+}
+
+.ph-totals__label {
+  font-family: var(--po-font);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+@media (max-width: 1500px) {
+  .ph-root__row--seasons,
+  .ph-root__row--milestones {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .ph-stat-label {

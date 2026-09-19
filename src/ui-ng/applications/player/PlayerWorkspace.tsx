@@ -2,20 +2,32 @@ import type { CSSProperties } from 'react'
 
 import './player-overview.css'
 import './player-attributes.css'
+import './player-attributes-board.css'
 import './player-performance.css'
+import './player-performance-board.css'
 import './player-contract.css'
 import './player-medical.css'
+import './player-medical-board.css'
 import './player-development.css'
+import './player-development-board.css'
 import './player-history.css'
+import './player-history-board.css'
+import './player-compare.css'
+import './player-scouting.css'
+import './player-scouting-board.css'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import type { GameId, InjuryId } from '@/domain/ids'
+import type { GameId, InjuryId, PlayerId, SeasonId } from '@/domain/ids'
 
-import { PlayerWorkspaceTabActions } from '@/ui-ng/applications/player/components/PlayerWorkspaceHeader'
+import { CompareWithPanel } from '@/ui-ng/applications/player/components/CompareWithPanel'
 import { EntityIdentityBand } from '@/ui-ng/applications/player/components/EntityIdentityBand'
-import type { HistoryFilterId } from '@/ui-ng/applications/player/data/buildPlayerHistoryModel'
-import type { PerformanceCompetitionFilter } from '@/ui-ng/applications/player/data/buildPlayerPerformanceModel'
+import { PlayerScoutingReportView } from '@/ui-ng/applications/player/views/PlayerScoutingReportView'
+import type {
+  PerformanceCompetitionFilter,
+  PerformancePhaseFilter,
+  PerformanceSplitFilter,
+} from '@/ui-ng/applications/player/data/buildPlayerPerformanceModel'
 import { RADAR_CATEGORY_ORDER, type RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
 import {
   usePlayerWorkspaceModel,
@@ -32,13 +44,10 @@ import {
 import { PlayerAttributesView } from '@/ui-ng/applications/player/views/PlayerAttributesView'
 import { PlayerOverviewView } from '@/ui-ng/applications/player/views/PlayerOverviewView'
 import {
-  PerformanceGameInspectorContent,
-  PlayerPerformanceView,
-} from '@/ui-ng/applications/player/views/PlayerPerformanceView'
-import {
   ContractInspectorContent,
   PlayerContractView,
 } from '@/ui-ng/applications/player/views/PlayerContractView'
+import { PlayerPerformanceView } from '@/ui-ng/applications/player/views/PlayerPerformanceView'
 import {
   MedicalInspectorContent,
   PlayerMedicalView,
@@ -48,7 +57,6 @@ import {
   PlayerDevelopmentView,
 } from '@/ui-ng/applications/player/views/PlayerDevelopmentView'
 import {
-  HistoryInspectorContent,
   PlayerHistoryView,
 } from '@/ui-ng/applications/player/views/PlayerHistoryView'
 import { ApplicationWorkspace } from '@/ui-ng/workspace/ApplicationWorkspace'
@@ -73,12 +81,19 @@ function PlayerWorkspaceShell({
   const [attributesCategory, setAttributesCategory] = useState<RatingCategory>(RADAR_CATEGORY_ORDER[0]!)
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false)
   const [selectedGameId, setSelectedGameId] = useState<GameId | null>(null)
+  const [performanceSeasonId, setPerformanceSeasonId] = useState<SeasonId | null>(null)
   const [competitionFilter, setCompetitionFilter] = useState<PerformanceCompetitionFilter>('all')
+  const [phaseFilter, setPhaseFilter] = useState<PerformancePhaseFilter>('all')
+  const [splitFilter, setSplitFilter] = useState<PerformanceSplitFilter>('all')
   const [selectedContractItemId, setSelectedContractItemId] = useState<string | null>(null)
   const [selectedMedicalEventId, setSelectedMedicalEventId] = useState<InjuryId | null>(null)
   const [selectedDevelopmentItemId, setSelectedDevelopmentItemId] = useState<string | null>(null)
   const [selectedHistoryItemId, setSelectedHistoryItemId] = useState<string | null>(null)
-  const [activeHistoryFilter, setActiveHistoryFilter] = useState<HistoryFilterId>('all')
+  const [compareOpen, setCompareOpen] = useState(false)
+  const [comparePlayerId, setComparePlayerId] = useState<PlayerId | null>(null)
+
+  const openCompare = useCallback(() => setCompareOpen(true), [])
+  const closeCompare = useCallback(() => setCompareOpen(false), [])
 
   const setActiveView = useCallback((view: PlayerWorkspaceViewId) => {
     setActiveViewState(view)
@@ -119,21 +134,25 @@ function PlayerWorkspaceShell({
   useEffect(() => {
     if (model === null) {
       setSelectedGameId(null)
+      setPerformanceSeasonId(null)
       setCompetitionFilter('all')
+      setPhaseFilter('all')
+      setSplitFilter('all')
       setSelectedContractItemId(null)
       setSelectedMedicalEventId(null)
       setSelectedDevelopmentItemId(null)
       setSelectedHistoryItemId(null)
-      setActiveHistoryFilter('all')
       return
     }
     setSelectedGameId(null)
+    setPerformanceSeasonId(null)
     setCompetitionFilter('all')
+    setPhaseFilter('all')
+    setSplitFilter('all')
     setSelectedContractItemId(model.contract.defaultSelectedItemId)
     setSelectedMedicalEventId(model.medical.defaultSelectedEventId)
     setSelectedDevelopmentItemId(model.development.defaultSelectedItemId)
     setSelectedHistoryItemId(model.history.defaultSelectedItemId)
-    setActiveHistoryFilter('all')
   }, [model?.identity.playerId])
 
   const session = useMemo<PlayerWorkspaceSession>(
@@ -148,11 +167,24 @@ function PlayerWorkspaceShell({
       setAttributesCategory,
       inspectorCollapsed,
       setInspectorCollapsed,
+      compare: {
+        isOpen: compareOpen,
+        playerId: comparePlayerId,
+        open: openCompare,
+        close: closeCompare,
+        setPlayerId: setComparePlayerId,
+      },
       performance: {
         selectedGameId,
         setSelectedGameId,
+        seasonId: performanceSeasonId,
+        setSeasonId: setPerformanceSeasonId,
         competitionFilter,
         setCompetitionFilter,
+        phaseFilter,
+        setPhaseFilter,
+        splitFilter,
+        setSplitFilter,
       },
       contract: {
         selectedItemId: selectedContractItemId,
@@ -169,16 +201,19 @@ function PlayerWorkspaceShell({
       history: {
         selectedItemId: selectedHistoryItemId,
         setSelectedItemId: setSelectedHistoryItemId,
-        activeFilter: activeHistoryFilter,
-        setActiveFilter: setActiveHistoryFilter,
       },
     }),
     [
-      activeHistoryFilter,
       activeView,
       attributesCategory,
+      closeCompare,
+      compareOpen,
+      comparePlayerId,
       competitionFilter,
       inspectorCollapsed,
+      openCompare,
+      performanceSeasonId,
+      phaseFilter,
       selectedCategory,
       selectedContractItemId,
       selectedDevelopmentItemId,
@@ -187,6 +222,7 @@ function PlayerWorkspaceShell({
       selectedMedicalEventId,
       selectedRatingId,
       setActiveView,
+      splitFilter,
     ],
   )
 
@@ -246,8 +282,6 @@ function PlayerWorkspaceLayout({
         tabs={
           <WorkspaceTabs
             activeTabId={activeView}
-            insertAfterTabId="medical"
-            insertedContent={<PlayerWorkspaceTabActions />}
             onTabSelect={(tabId) => setActiveView(tabId as PlayerWorkspaceViewId)}
             tabs={tabs}
           />
@@ -279,22 +313,6 @@ function PlayerWorkspaceLayout({
               >
                 <DevelopmentInspectorContent />
               </InspectorPane>
-            ) : activeView === 'history' ? (
-              <InspectorPane
-                collapsed={inspectorCollapsed}
-                onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
-                title="History Detail"
-              >
-                <HistoryInspectorContent />
-              </InspectorPane>
-            ) : activeView === 'performance' ? (
-              <InspectorPane
-                collapsed={inspectorCollapsed}
-                onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
-                title="Game Detail"
-              >
-                <PerformanceGameInspectorContent />
-              </InspectorPane>
             ) : undefined
           }
           main={
@@ -305,10 +323,12 @@ function PlayerWorkspaceLayout({
               {activeView === 'contract' && <PlayerContractView />}
               {activeView === 'medical' && <PlayerMedicalView />}
               {activeView === 'development' && <PlayerDevelopmentView />}
+              {activeView === 'scouting' && <PlayerScoutingReportView />}
               {activeView === 'history' && <PlayerHistoryView />}
             </div>
           }
         />
+        <CompareWithPanel />
       </ApplicationWorkspace>
     </div>
   )

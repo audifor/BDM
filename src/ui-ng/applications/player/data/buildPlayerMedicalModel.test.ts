@@ -19,8 +19,7 @@ import {
 } from './buildPlayerMedicalModel'
 import { buildPlayerWorkspaceModel, defaultPlayerIdForNg } from './buildPlayerWorkspaceModel'
 
-function withInjury(
-  world: ReturnType<typeof createNewGame>,
+function withInjury(  world: ReturnType<typeof createNewGame>,
   playerId: PlayerId,
   input: {
     readonly id?: string
@@ -60,6 +59,93 @@ describe('buildPlayerMedicalModel', () => {
     expect(model.fatigue.value).toBeLessThanOrEqual(100)
     expect(model.risk?.displayLabel).toBe('Low · 0')
     expect(model.riskUnavailableLabel).toBeNull()
+  })
+
+  it('reports five readiness instruments, only filling the ones that are real shares', () => {
+    const world = createNewGame()
+    const playerId = defaultPlayerIdForNg(world)!
+    const model = buildPlayerMedicalModel(world, playerId)
+    const byId = new Map(model.readiness.map((meter) => [meter.id, meter]))
+
+    expect([...byId.keys()]).toEqual([
+      'fatigue',
+      'match-load',
+      'training-load',
+      'recovery',
+      'injury-risk',
+    ])
+    expect(byId.get('fatigue')!.fill).toBe(model.fatigue.value)
+    expect(byId.get('injury-risk')!.fill).toBe(model.risk?.riskScore)
+    // The workload bars are each window measured against the busiest one, in its own unit: no two
+    // units are ever added, and the daily recovery rate has no share at all.
+    const peakMatch = Math.max(...model.loadWindows.map((window) => window.matchMinutes), 1)
+    const peakProgramme = Math.max(...model.loadWindows.map((window) => window.programmeLoad), 1)
+    const week = model.loadWindows[0]!
+    expect(byId.get('match-load')!.fill).toBe(Math.round((week.matchMinutes / peakMatch) * 100))
+    expect(byId.get('training-load')!.fill).toBe(
+      Math.round((week.programmeLoad / peakProgramme) * 100),
+    )
+    expect(byId.get('recovery')!.fill).toBeNull()
+    for (const meter of model.readiness) {
+      if (meter.fill !== null) {
+        expect(meter.fill).toBeGreaterThanOrEqual(0)
+        expect(meter.fill).toBeLessThanOrEqual(100)
+      }
+    }
+  })
+
+  it('measures the real workload windows without mixing units', () => {
+    const world = createNewGame()
+    const playerId = defaultPlayerIdForNg(world)!
+    const model = buildPlayerMedicalModel(world, playerId)
+
+    expect(model.loadWindows.map((window) => window.label)).toEqual(['7D', '14D', '30D'])
+    const [week, fortnight, month] = model.loadWindows
+    expect(week!.matchMinutes).toBeLessThanOrEqual(fortnight!.matchMinutes)
+    expect(fortnight!.matchMinutes).toBeLessThanOrEqual(month!.matchMinutes)
+    expect(month!.changeLabel).toBe('Baseline')
+    for (const window of model.loadWindows) {
+      expect(window.programmeLoad).toBeGreaterThanOrEqual(0)
+      expect(window.sessionCount).toBeGreaterThanOrEqual(0)
+    }
+    expect(model.loadNote).toContain('different units')
+  })
+
+  it('states the injury pattern from recorded injuries only', () => {
+    const world = createNewGame()
+    const playerId = defaultPlayerIdForNg(world)!
+    // Start from a world with no injuries at all, so the expectations do not depend on whatever
+    // the generator happened to seed for this player.
+    const clean = updateGameWorld(world, { injuries: [] })
+    const healthy = buildPlayerMedicalModel(clean, playerId)
+
+    expect(healthy.history).toEqual([])
+    expect(healthy.injuryPattern.status).toBe('unavailable')
+    expect(healthy.injuryPattern.summary).toContain('No injury has been recorded')
+
+    const injured = buildPlayerMedicalModel(withInjury(clean, playerId), playerId)
+    expect(injured.injuryPattern.status).toBe('available')
+    expect(injured.injuryPattern.rows).toHaveLength(1)
+    const row = injured.injuryPattern.rows[0]!
+    expect(row.occurrences).toBe(1)
+    expect(row.daysLost).toBe(14)
+    expect(injured.injuryPattern.summary).toContain('none repeated')
+  })
+
+  it('declares the medical blocks that would need invented data', () => {
+    const world = createNewGame()
+    const playerId = defaultPlayerIdForNg(world)!
+    const gaps = buildPlayerMedicalModel(world, playerId).gaps
+
+    expect(gaps.map((gap) => gap.label)).toEqual([
+      'Recovery readiness %',
+      'Total load index',
+      'Treatment & restrictions',
+      'Medical staff notes',
+    ])
+    for (const gap of gaps) {
+      expect(gap.reason.length).toBeGreaterThan(0)
+    }
   })
 
   it('builds an active injury model when the player is unavailable', () => {

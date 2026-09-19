@@ -141,6 +141,22 @@ export function ratingTone(value: number): string {
   return 'poor'
 }
 
+/** `82` becomes `82nd`, `1` becomes `1st`. One formatter so every page reads the same. */
+export function ordinalPercentile(value: number): string {
+  const withinHundred = value % 100
+  if (withinHundred >= 11 && withinHundred <= 13) return `${value}th`
+  switch (value % 10) {
+    case 1:
+      return `${value}st`
+    case 2:
+      return `${value}nd`
+    case 3:
+      return `${value}rd`
+    default:
+      return `${value}th`
+  }
+}
+
 export function buildOverviewRatingKeys(playerRatings: Readonly<Record<CanonicalRatingKey, number>>): CanonicalRatingKey[] {
   const selected = new Set<CanonicalRatingKey>(OVERVIEW_HEADLINE_RATINGS)
   const remaining = CANONICAL_RATING_KEYS
@@ -189,22 +205,6 @@ export function ratingsForCategory(
     .filter((rating) => rating.category === category)
     .slice()
     .sort((left, right) => right.value - left.value || left.label.localeCompare(right.label))
-}
-
-const PRIMARY_MAX = 4
-const PRIMARY_MIN = 3
-
-export function splitPrimarySecondaryRatings<T extends { readonly value: number }>(
-  ratings: readonly T[],
-): { readonly primary: readonly T[]; readonly secondary: readonly T[] } {
-  if (ratings.length <= PRIMARY_MAX) {
-    return { primary: ratings, secondary: [] }
-  }
-  const primaryCount = Math.min(PRIMARY_MAX, Math.max(PRIMARY_MIN, Math.ceil(ratings.length * 0.4)))
-  return {
-    primary: ratings.slice(0, primaryCount),
-    secondary: ratings.slice(primaryCount),
-  }
 }
 
 export function rankInCategory(

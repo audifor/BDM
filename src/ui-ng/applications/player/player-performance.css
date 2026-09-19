@@ -24,6 +24,111 @@
   min-height: 0;
 }
 
+.pp-root__lanes2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--ng-panel-gap);
+  min-height: 0;
+}
+
+/* ── Efficiency / shot profile / splits ── */
+.pp-efficiency,
+.pp-shot,
+.pp-splits {
+  min-width: 0;
+  padding: var(--ng-spacing-8) var(--ng-spacing-12);
+  border: 1px solid var(--ng-border-subtle);
+  border-radius: var(--ng-radius-panel);
+}
+
+.pp-efficiency__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ng-spacing-8);
+  margin-top: var(--ng-spacing-8);
+}
+
+.pp-efficiency__attempts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ng-spacing-4) var(--ng-spacing-16);
+  margin-top: var(--ng-spacing-8);
+  padding-top: var(--ng-spacing-8);
+  border-top: 1px solid var(--ng-border-subtle);
+}
+
+.pp-efficiency__attempt {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--ng-spacing-4);
+  font-size: 11px;
+  color: var(--ng-text-secondary);
+}
+
+.pp-efficiency__attempt-label {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.pp-efficiency__cell {
+  display: grid;
+  gap: 2px;
+}
+
+.pp-shot .po-gaps {
+  margin-top: var(--ng-spacing-8);
+}
+
+.pp-splits__table {
+  display: grid;
+  gap: 2px;
+  margin-top: var(--ng-spacing-8);
+}
+
+.pp-splits__head,
+.pp-splits__row {
+  display: grid;
+  grid-template-columns: minmax(90px, 1.4fr) repeat(7, minmax(38px, 0.7fr));
+  gap: var(--ng-spacing-8);
+  padding: 2px var(--ng-spacing-4);
+}
+
+.pp-splits__head {
+  border-bottom: 1px solid var(--ng-border-subtle);
+  font-family: var(--po-font);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.pp-splits__head > span:not(:first-child),
+.pp-splits__row > span:not(:first-child) {
+  text-align: right;
+}
+
+.pp-splits__row {
+  font-family: var(--po-font);
+  font-size: 11px;
+  color: var(--ng-text-secondary);
+}
+
+.pp-splits__label {
+  color: var(--ng-text-primary);
+  font-weight: 700;
+}
+
+.pp-splits__note {
+  display: block;
+  margin-top: var(--ng-spacing-4);
+  font-family: var(--po-font);
+  font-size: 9px;
+  line-height: 1.4;
+  color: var(--ng-text-faint);
+}
+
 .pp-root__lower {
   min-height: 0;
   overflow: hidden;

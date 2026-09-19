@@ -1,5 +1,6 @@
 /** Structural UI constants for NG player workspace — not game data. */
 
+/** Definitive PLAYER page order: Compare is a contextual action, never a tab. */
 export const PLAYER_WORKSPACE_VIEWS = [
   'overview',
   'attributes',
@@ -7,6 +8,7 @@ export const PLAYER_WORKSPACE_VIEWS = [
   'development',
   'contract',
   'medical',
+  'scouting',
   'history',
 ] as const
 
@@ -19,16 +21,15 @@ export const PLAYER_VIEW_LABELS: Record<PlayerWorkspaceViewId, string> = {
   development: 'Development',
   contract: 'Contract',
   medical: 'Medical',
+  scouting: 'Scouting Report',
   history: 'History',
 }
 
-export const PLAYER_VIEW_PLACEHOLDERS: Partial<Record<PlayerWorkspaceViewId, string>> = {
-  performance: 'Performance workspace not implemented in NG yet.',
-  development: 'Development workspace not implemented in NG yet.',
-  contract: 'Contract workspace not implemented in NG yet.',
-  medical: 'Medical workspace not implemented in NG yet.',
-  history: 'History workspace not implemented in NG yet.',
-}
+/**
+ * Every page of the PLAYER workspace has its own implementation, so no page falls back to a
+ * placeholder message any more. Kept as an explicit empty contract so the invariant is testable.
+ */
+export const PLAYER_VIEW_PLACEHOLDERS: Partial<Record<PlayerWorkspaceViewId, string>> = {}
 
 export const TASKBAR_APPS = [
   { id: 'home', label: 'Home' },

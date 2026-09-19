@@ -15,6 +15,10 @@ import {
 } from '@/domain/world'
 
 import { formatGameDateLabel } from './presentationHelpers'
+// One date-difference helper for the whole app: it lives with the medical model, its first
+// consumer, and every other page imports it from there rather than re-deriving the arithmetic.
+import { calendarDaysBetween } from './buildPlayerMedicalModel'
+import type { OverviewGapModel } from './playerWorkspaceModel'
 
 export type ContractViewStatus = 'none' | PlayerContractStatus
 
@@ -93,6 +97,33 @@ export interface ContractInspectorSeasonDetail {
   readonly contractStatus: string
 }
 
+/** The three headline money figures of the season the schedule is anchored on. */
+export interface ContractMoneySnapshotModel {
+  readonly status: 'available' | 'unavailable'
+  readonly seasonLabel: string | null
+  readonly baseSalary: string | null
+  readonly guaranteed: string | null
+  readonly capHit: string | null
+  readonly note: string
+}
+
+/** Dated, decision-shaped readings taken from the contract term itself. */
+export interface ContractIntelligenceModel {
+  readonly nextKeyDateLabel: string
+  readonly nextKeyDateNote: string
+  readonly expiryRiskLabel: string
+  readonly expiryRiskTone: 'low' | 'moderate' | 'high'
+  readonly expiryRiskNote: string
+  readonly decisionLabel: string
+  readonly decisionNote: string
+  readonly events: readonly {
+    readonly id: string
+    readonly dateLabel: string
+    readonly label: string
+    readonly tone: 'positive' | 'neutral'
+  }[]
+}
+
 export interface PlayerContractModel {
   readonly viewStatus: ContractViewStatus
   readonly emptyMessage: string | null
@@ -104,6 +135,9 @@ export interface PlayerContractModel {
   readonly financialSchedule: readonly ContractFinancialRowModel[]
   readonly history: readonly ContractHistoryEntryModel[]
   readonly rights: ContractRightsModel
+  readonly snapshot: ContractMoneySnapshotModel
+  readonly intelligence: ContractIntelligenceModel
+  readonly gaps: readonly OverviewGapModel[]
   readonly defaultSelectedItemId: string | null
 }
 
@@ -331,6 +365,25 @@ export function buildPlayerContractModel(world: GameWorld, playerId: PlayerId): 
       financialSchedule: [],
       history: buildHistory(world, contracts, undefined, onDate),
       rights,
+      snapshot: {
+        status: 'unavailable',
+        seasonLabel: null,
+        baseSalary: null,
+        guaranteed: null,
+        capHit: null,
+        note: 'No contract is recorded, so there is no compensation schedule to show.',
+      },
+      intelligence: {
+        nextKeyDateLabel: '—',
+        nextKeyDateNote: 'No contract is recorded for this player.',
+        expiryRiskLabel: '—',
+        expiryRiskTone: 'low',
+        expiryRiskNote: 'No contract is recorded for this player.',
+        decisionLabel: '—',
+        decisionNote: 'No contract decision applies.',
+        events: [],
+      },
+      gaps: buildContractGaps(),
       defaultSelectedItemId: null,
     }
   }
@@ -380,8 +433,122 @@ export function buildPlayerContractModel(world: GameWorld, playerId: PlayerId): 
     financialSchedule,
     history: buildHistory(world, contracts, primaryContract, onDate),
     rights,
+    snapshot: buildMoneySnapshot(world, primaryContract, financialSchedule, currentRow),
+    intelligence: buildContractIntelligence(world, primaryContract, status, contracts, onDate),
+    gaps: buildContractGaps(),
     defaultSelectedItemId: currentRow?.id ?? null,
   }
+}
+
+/**
+ * The three money figures the reference puts side by side, taken from the season the schedule is
+ * anchored on rather than recomputed.
+ */
+function buildMoneySnapshot(
+  world: GameWorld,
+  contract: PlayerContract,
+  schedule: readonly ContractFinancialRowModel[],
+  row: ContractFinancialRowModel | undefined,
+): ContractMoneySnapshotModel {
+  if (row === undefined) {
+    return {
+      status: 'unavailable',
+      seasonLabel: null,
+      baseSalary: null,
+      guaranteed: null,
+      capHit: null,
+      note: 'No compensation schedule is recorded for this contract.',
+    }
+  }
+
+  const isCurrent = row.isCurrent
+  return {
+    status: 'available',
+    seasonLabel: row.seasonLabel,
+    baseSalary: row.baseSalary.formatted,
+    guaranteed: row.guaranteed.formatted,
+    capHit: row.capHit.formatted,
+    note: isCurrent
+      ? `Figures for ${row.seasonLabel}, the season in progress.`
+      : `${row.seasonLabel} is the first season of this deal; the current season is not part of it.`,
+  }
+}
+
+/**
+ * Expiry risk and the decision it implies, both read from the contract term. The engine stores no
+ * negotiation state, so the panel reports dates instead of inventing a market reading.
+ */
+function buildContractIntelligence(
+  world: GameWorld,
+  contract: PlayerContract,
+  status: string,
+  contracts: readonly PlayerContract[],
+  onDate: GameDate,
+): ContractIntelligenceModel {
+  const daysToExpiry = calendarDaysBetween(onDate, contract.term.expiresOn)
+  const expiryRiskTone: ContractIntelligenceModel['expiryRiskTone'] =
+    daysToExpiry <= 365 ? 'high' : daysToExpiry <= 730 ? 'moderate' : 'low'
+
+  return {
+    nextKeyDateLabel: formatGameDateLabel(contract.term.expiresOn),
+    nextKeyDateNote: `Contract ${status === 'scheduled' ? 'starts' : 'ends'} in ${daysToExpiry} days.`,
+    expiryRiskLabel:
+      expiryRiskTone === 'high' ? 'High' : expiryRiskTone === 'moderate' ? 'Moderate' : 'Low',
+    expiryRiskTone,
+    expiryRiskNote: `${daysToExpiry} days of contract remain (${deriveSeasonsRemainingLabel(contract, onDate) ?? 'duration not tracked'}).`,
+    decisionLabel: daysToExpiry <= 365 ? 'Yes' : 'No',
+    decisionNote:
+      daysToExpiry <= 365
+        ? `Contract expires ${formatGameDateLabel(contract.term.expiresOn)}.`
+        : 'No contract decision is due yet.',
+    events: contracts
+      .map((entry) => ({
+        id: entry.id,
+        dateLabel: formatGameDateLabel(entry.term.startsOn),
+        label:
+          entry.id === contract.id
+            ? `Contract ${status === 'scheduled' ? 'starts' : 'signed'} · ${teamName(world, entry.teamId)}`
+            : `Previous deal · ${teamName(world, entry.teamId)}`,
+        tone: (entry.termination === undefined ? 'positive' : 'neutral') as 'positive' | 'neutral',
+      }))
+      .sort((left, right) => right.dateLabel.localeCompare(left.dateLabel)),
+  }
+}
+
+/** Reference blocks the save has no data for. */
+function buildContractGaps(): readonly OverviewGapModel[] {
+  return [
+    {
+      id: 'clauses',
+      label: 'Clauses & options',
+      reason: 'The contract model holds a term and compensation only: no option, buyout or trade clause is stored.',
+    },
+    {
+      id: 'registration',
+      label: 'Registration fields',
+      reason: 'Only draft and international rights are recorded; domestic and FIBA registration are not.',
+    },
+    {
+      id: 'negotiation',
+      label: 'Negotiation intelligence',
+      reason: 'No negotiation state is persisted, so no demand, stance or outcome can be reported.',
+    },
+    {
+      id: 'market',
+      label: 'Market context',
+      reason: 'The world carries no market valuation model for players.',
+    },
+    {
+      id: 'decision-center',
+      label: 'Decision center actions',
+      reason: 'Player contract negotiation does not exist yet: no action can be offered here.',
+    },
+    {
+      id: 'bonuses',
+      label: 'Bonus column',
+      reason: 'Compensation records salary, guarantee and cap hit; bonuses are not part of the model.',
+    },
+  ]
 }
 
 export function findContractInspectorDetail(

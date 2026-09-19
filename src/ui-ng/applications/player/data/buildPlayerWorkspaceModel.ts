@@ -1,6 +1,6 @@
 import { formatInjuryKind } from '@/domain/injury'
 import type { PlayerId } from '@/domain/ids'
-import { getPlayerAge, type PlayerRatings } from '@/domain/player'
+import { getPlayerAge, type Player, type PlayerRatings } from '@/domain/player'
 import {
   getCareerFatigueForPlayer,
   getCurrentPlayerInjury,
@@ -26,7 +26,6 @@ import {
   ratingLabel,
   RADAR_CATEGORY_ORDER,
   ratingsForCategory,
-  splitPrimarySecondaryRatings,
 } from './ratingCatalog'
 import {
   buildPlayerPerformanceModel,
@@ -44,6 +43,13 @@ import {
 import {
   buildPlayerHistoryModel,
 } from './buildPlayerHistoryModel'
+import {
+  buildAttributeGaps,
+  buildAttributeHighlights,
+  buildPlayerAttributesEvolution,
+} from './buildPlayerAttributesEvolution'
+import { buildPlayerOverviewModel } from './buildPlayerOverviewModel'
+import { trueShootingPercentage } from './statFormulas'
 import {
   availableField,
   deriveTeamColors,
@@ -80,22 +86,38 @@ function buildRatings(playerRatings: PlayerRatings): PlayerRatingRow[] {
   }))
 }
 
-function buildAttributes(playerRatings: PlayerRatings): PlayerAttributesModel {
+function buildAttributes(world: GameWorld, player: Player): PlayerAttributesModel {
+  const playerRatings = player.basketball.ratings
   const allRatings = buildFullRatingRows(playerRatings)
   const categories = RADAR_CATEGORY_ORDER.map((category) => {
-    const categoryRatings = ratingsForCategory(category, allRatings)
-    const split = splitPrimarySecondaryRatings(categoryRatings)
+    const rows = ratingsForCategory(category, allRatings)
     return {
       category,
       label: CATEGORY_LABELS[category],
       profileValue: aggregateCategoryValue(category, playerRatings),
-      primary: split.primary,
-      secondary: split.secondary,
-      all: categoryRatings,
+      all: rows,
+      // A factual reading of the family, built from its own ratings instead of authored prose.
+      note: categoryNote(rows),
     }
   }).filter((entry) => entry.all.length > 0)
 
-  return { categories, allRatings }
+  const evolutionByRating = buildPlayerAttributesEvolution(world, player)
+
+  return {
+    categories,
+    allRatings,
+    evolutionByRating,
+    ...buildAttributeHighlights(evolutionByRating),
+    gaps: buildAttributeGaps(),
+  }
+}
+
+/** `Strongest X 78 · Weakest Y 64 · mean 73.8` — derived from the rows, never written by hand. */
+function categoryNote(rows: readonly PlayerRatingRow[]): string {
+  const best = rows.reduce((left, right) => (right.value > left.value ? right : left))
+  const worst = rows.reduce((left, right) => (right.value < left.value ? right : left))
+  const mean = rows.reduce((sum, row) => sum + row.value, 0) / rows.length
+  return `Strongest ${best.label} ${best.value} · weakest ${worst.label} ${worst.value} · mean ${mean.toFixed(1)}.`
 }
 
 function buildEvaluations(
@@ -134,10 +156,7 @@ function buildSeasonPerformance(world: GameWorld, playerId: PlayerId): PlayerWor
     }
   }
 
-  const trueShooting =
-    stats.fieldGoalsAttempted + 0.44 * stats.freeThrowsAttempted === 0
-      ? undefined
-      : stats.points / (2 * (stats.fieldGoalsAttempted + 0.44 * stats.freeThrowsAttempted))
+  const trueShooting = trueShootingPercentage(stats)
   const valuation = (boxScoreValuation(stats) / stats.gamesPlayed).toFixed(1)
 
   const primary = [
@@ -235,6 +254,8 @@ export function buildPlayerWorkspaceModel(
   if (development === undefined) return undefined
   const history = buildPlayerHistoryModel(world, player.id)
   if (history === undefined) return undefined
+  const overview = buildPlayerOverviewModel(world, player.id)
+  if (overview === undefined) return undefined
 
   return {
     identity: {
@@ -287,7 +308,8 @@ export function buildPlayerWorkspaceModel(
       riskTone: riskPresentation.status === 'available' ? riskPresentation.overviewTone ?? null : null,
     },
     ratings,
-    attributes: buildAttributes(player.basketball.ratings),
+    attributes: buildAttributes(world, player),
+    overview,
     performance: buildPlayerPerformanceModel(world, player.id),
     contract: buildPlayerContractModel(world, player.id),
     medical: buildPlayerMedicalModel(world, player.id),

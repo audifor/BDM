@@ -1,13 +1,25 @@
 import { useMemo } from 'react'
 
-import { DevelopmentContextBand } from '@/ui-ng/applications/player/components/DevelopmentContextBand'
+import {
+  CareerCurvePanel,
+  CategoryDevelopmentPanel,
+  DevelopmentDetailPanel,
+  DevelopmentDriversPanel,
+  DevelopmentEventsPanel,
+  DevelopmentOverviewPanel,
+  DevelopmentStagePanel,
+  RatingMoversPanel,
+  ScoutingProjectionPanel,
+  TrainingEffectPanel,
+  TrainingPlanPanel,
+} from '@/ui-ng/applications/player/components/DevelopmentBoardPanels'
 import { DevelopmentDetailInspector } from '@/ui-ng/applications/player/components/DevelopmentDetailInspector'
-import { DevelopmentLongitudinalNotice } from '@/ui-ng/applications/player/components/DevelopmentLongitudinalNotice'
-import { DevelopmentScoutPotential } from '@/ui-ng/applications/player/components/DevelopmentScoutPotential'
-import { DevelopmentSeasonStimulus } from '@/ui-ng/applications/player/components/DevelopmentSeasonStimulus'
-import { DevelopmentTrainingContext } from '@/ui-ng/applications/player/components/DevelopmentTrainingContext'
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
-import { findDevelopmentInspectorDetail } from '@/ui-ng/applications/player/data/buildPlayerDevelopmentModel'
+import {
+  findDevelopmentInspectorDetail,
+  type PlayerDevelopmentModel,
+} from '@/ui-ng/applications/player/data/buildPlayerDevelopmentModel'
+import type { RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
 
 export function PlayerDevelopmentView() {
   const { model, session } = usePlayerWorkspace()
@@ -16,29 +28,88 @@ export function PlayerDevelopmentView() {
   if (model === null) return null
 
   const development = model.development
+  const selectedCategory = selectedCategoryOf(development, selectedItemId)
 
   return (
-    <div className="pd-root" data-ng-region="player-development">
-      <DevelopmentContextBand band={development.contextBand} />
-
-      <div className="pd-root__upper">
-        <DevelopmentSeasonStimulus
-          model={development.seasonStimulus}
-          onSelectItem={setSelectedItemId}
-          selectedItemId={selectedItemId}
-        />
-        <DevelopmentTrainingContext model={development.trainingContext} />
+    <div className="po-dev-board" data-ng-region="player-development">
+      <div className="po-dev-band po-dev-band--overview">
+        <DevelopmentOverviewPanel insight={development.insight} overview={development.overview} />
       </div>
 
-      <div className="pd-root__main">
-        <DevelopmentScoutPotential
-          model={development.scoutPotential}
-          onSelectItem={setSelectedItemId}
-          selectedItemId={selectedItemId}
+      <div className="po-dev-band po-dev-band--curve">
+        <CareerCurvePanel
+          markers={development.markers}
+          seasons={seasonLabelsOf(development)}
+          series={development.categoryCurve}
         />
-        <DevelopmentLongitudinalNotice model={development.longitudinal} />
+        <DevelopmentStagePanel lifecycle={development.lifecycle} />
+        <DevelopmentDetailPanel
+          detail={development.detailByCategory[selectedCategory ?? 'shooting']}
+          onClose={() => setSelectedItemId(null)}
+          selectedCategoryLabel={selectedCategory === null ? null : development.lifecycle.focusLabel}
+        />
+      </div>
+
+      <div className="po-dev-band po-dev-band--middle">
+        <div className="po-dev-band__stack">
+          <CategoryDevelopmentPanel
+            onSelectCategory={setSelectedItemId}
+            rows={development.categoryDevelopment}
+            selectedCategory={selectedCategory}
+          />
+          <RatingMoversPanel note={development.longitudinal.note} rows={development.longitudinal.movers} />
+          <TrainingPlanPanel plan={development.trainingPlan} />
+          <TrainingEffectPanel effect={development.trainingEffect} />
+        </div>
+        <DevelopmentGapPanel gaps={development.gaps} />
+      </div>
+
+      <div className="po-dev-band po-dev-band--last">
+        <DevelopmentDriversPanel rows={development.drivers} />
+        <DevelopmentEventsPanel events={development.longitudinal.events} />
+        <ScoutingProjectionPanel projection={development.projection} />
       </div>
     </div>
+  )
+}
+
+/** The gaps this page still cannot produce, kept visible instead of filled with invented copy. */
+function DevelopmentGapPanel({ gaps }: { readonly gaps: PlayerDevelopmentModel['gaps'] }) {
+  return (
+    <section className="po-dev-panel" data-ng-region="development-declared-gaps">
+      <header className="po-dev-panel__head">
+        <span className="po-dev-panel__title">Not in the save</span>
+        <span className="po-dev-panel__meta ng-type-numeric">{gaps.length}</span>
+      </header>
+      <ul className="po-dev-gaps">
+        {gaps.map((gap) => (
+          <li key={gap.id}>
+            <span className="po-dev-gaps__label">{gap.label}</span>
+            <span className="po-dev-stat__note">{gap.reason}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+/** The category a selection points at, whichever stimulus id the session happens to hold. */
+function selectedCategoryOf(
+  development: PlayerDevelopmentModel,
+  selectedItemId: string | null,
+): RatingCategory | null {
+  if (selectedItemId === null) return null
+  const direct = development.categoryCurve.find((entry) => entry.id === selectedItemId)
+  if (direct !== undefined) return direct.id
+  const stimulus = development.seasonStimulus.categories.find((entry) => entry.id === selectedItemId)
+  return stimulus?.id ?? null
+}
+
+function seasonLabelsOf(development: PlayerDevelopmentModel): readonly string[] {
+  const columns = Math.max(0, ...development.categoryCurve.map((entry) => entry.points.length))
+  const events = development.longitudinal.events
+  return Array.from({ length: columns }, (_value, index) =>
+    index === columns - 1 ? 'Current' : events[index]?.dateLabel ?? `S${index + 1}`,
   )
 }
 

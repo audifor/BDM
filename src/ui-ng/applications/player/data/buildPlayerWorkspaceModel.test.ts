@@ -38,7 +38,7 @@ describe('buildPlayerWorkspaceModel', () => {
     expect(model!.identity.wingspan.status).toBe('available')
     expect(model!.attributes.allRatings.length).toBe(CANONICAL_RATING_KEYS.length)
     expect(model!.attributes.categories.length).toBe(8)
-    expect(model!.development.longitudinal.message).toContain('not currently tracked')
+    expect(model!.development.longitudinal.status).toBe('unavailable')
     expect(model!.history.scope.scopeNote).toContain('persisted in this save')
   })
 

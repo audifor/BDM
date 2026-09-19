@@ -43,12 +43,28 @@
 /* ── Attributes workspace ── */
 .po-attributes {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  /* The reference's three columns: category rail, attribute matrix, attribute detail rail. */
+  grid-template-columns: 220px minmax(0, 1.45fr) minmax(0, 1fr);
+  /* Content-sized row so a tall column grows the page instead of overflowing it. */
+  grid-auto-rows: max-content;
+  align-content: start;
   gap: var(--ng-panel-gap);
   height: 100%;
   min-height: 0;
   padding: var(--ng-workspace-padding);
-  overflow: hidden;
+  overflow: auto;
+}
+
+.po-attributes__matrix {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ng-spacing-12);
+  min-height: 0;
+  padding: var(--ng-spacing-12) var(--ng-spacing-16);
+}
+
+.po-attributes__detail-head--rail {
+  align-items: center;
 }
 
 .po-attributes__rail {
@@ -68,6 +84,20 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ng-text-muted);
+}
+
+/* Compact radar above the category rail: the profile at a glance before the numbers. */
+.po-attributes__radar {
+  display: grid;
+  place-items: center;
+  padding: var(--ng-spacing-4) 0 var(--ng-spacing-8);
+  border-bottom: 1px solid var(--ng-border-subtle);
+}
+
+.po-attributes__radar .po-radar {
+  width: 100%;
+  max-width: 190px;
+  height: auto;
 }
 
 .po-attributes__category {
@@ -188,37 +218,19 @@
   color: var(--ng-text-muted);
 }
 
-.po-attributes__group {
-  display: grid;
-  gap: var(--ng-spacing-6);
-}
-
-.po-attributes__group-title {
-  font-family: var(--po-font);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--ng-text-muted);
-}
-
 .po-attributes__rating-list {
   display: grid;
-  gap: 2px;
-}
-
-.po-attributes__rating-list--secondary {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--ng-spacing-4);
 }
 
 .po-attr-rating {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(72px, 120px) 8px auto;
+  grid-template-columns: minmax(150px, 260px) minmax(90px, 1fr) 8px 40px 64px 44px;
   align-items: center;
   gap: var(--ng-spacing-8);
   width: 100%;
-  padding: 7px var(--ng-spacing-8);
+  padding: 6px var(--ng-spacing-8);
   border: 1px solid transparent;
   border-radius: 4px;
   background: transparent;
@@ -245,6 +257,9 @@
   font-size: 12px;
   font-weight: 400;
   line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .po-attr-rating__scale {
@@ -300,7 +315,555 @@
     grid-template-columns: 260px minmax(0, 1fr);
   }
 
-  .po-attributes__rating-list--secondary {
+  .po-attributes__rating-list {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+/* ── Attribute evolution chart + league baseline + trainings ── */
+.po-attr-evolution {
+  display: grid;
+  gap: var(--ng-spacing-4);
+  margin: 0;
+  padding: var(--ng-spacing-8) var(--ng-spacing-12);
+}
+
+.po-attr-evolution__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ng-spacing-12);
+}
+
+.po-attr-evolution__title {
+  font-family: var(--po-font);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ng-text-secondary);
+}
+
+.po-attr-evolution__legend {
+  display: flex;
+  gap: var(--ng-spacing-12);
+}
+
+.po-attr-evolution__key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ng-spacing-4);
+  font-family: var(--po-font);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.po-attr-evolution__key b {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ng-text-primary);
+}
+
+.po-attr-evolution__key::before {
+  content: '';
+  width: 10px;
+  height: 2px;
+  border-radius: 999px;
+}
+
+.po-attr-evolution__key--player::before {
+  background: var(--ng-cyan);
+}
+
+.po-attr-evolution__key--league::before {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--ng-amber) 0 3px,
+    transparent 3px 6px
+  );
+}
+
+.po-attr-evolution__plot {
+  /* The canvas is fixed: every attribute plots with identical geometry, whatever its value span.
+     `--po-attr-plot-axis` reserves the season label row, and the scale re-uses both numbers so its
+     three ticks sit exactly on the three gridlines. */
+  --po-attr-plot-canvas: 134px;
+  --po-attr-plot-axis: 14px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: var(--ng-spacing-4);
+  height: calc(var(--po-attr-plot-canvas) + var(--po-attr-plot-axis));
+}
+
+.po-attr-evolution__scale {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-top: calc(var(--po-attr-plot-canvas) * 0.08);
+  padding-bottom: calc(var(--po-attr-plot-canvas) * 0.08 + var(--po-attr-plot-axis));
+  font-family: var(--po-font);
+  font-size: 10px;
+  color: var(--ng-text-faint);
+  text-align: right;
+}
+
+.po-attr-evolution__area {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 2px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.po-attr-evolution__canvas {
+  position: relative;
+  min-height: 0;
+}
+
+.po-attr-evolution__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.po-attr-evolution__points {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.po-attr-evolution__grid {
+  stroke: var(--ng-border-subtle);
+  stroke-width: 1;
+}
+
+.po-attr-evolution__league {
+  stroke: var(--ng-amber);
+  stroke-dasharray: 5 4;
+  stroke-width: 1.4;
+  opacity: 0.85;
+}
+
+.po-attr-evolution__line {
+  fill: none;
+  stroke: var(--ng-cyan);
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.po-attr-evolution__point {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ng-cyan);
+  transform: translate(-50%, -50%);
+}
+
+.po-attr-evolution__point.is-current {
+  width: 10px;
+  height: 10px;
+  background: var(--ng-cyan-bright);
+  box-shadow: var(--ng-glow-cyan-medium);
+}
+
+.po-attr-evolution__axis {
+  position: relative;
+  height: 12px;
+}
+
+.po-attr-evolution__tick {
+  position: absolute;
+  transform: translateX(-50%);
+  font-family: var(--po-font);
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  color: var(--ng-text-muted);
+  white-space: nowrap;
+}
+
+.po-attr-evolution__tick.is-first {
+  transform: none;
+}
+
+.po-attr-evolution__tick.is-last {
+  transform: translateX(-100%);
+}
+
+.po-attr-evolution__tick.is-current {
+  color: var(--ng-cyan-bright);
+}
+
+.po-attr-evolution__caption {
+  margin: 0;
+  font-family: var(--po-font);
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--ng-text-faint);
+}
+
+.po-attributes__league {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px var(--ng-spacing-12);
+  align-items: center;
+  padding: var(--ng-spacing-8) var(--ng-spacing-12);
+  border-left: 2px solid var(--ng-amber);
+  background: linear-gradient(90deg, var(--ng-amber-muted), transparent 60%);
+}
+
+.po-attributes__league-label {
+  font-family: var(--po-font);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ng-text-secondary);
+}
+
+.po-attributes__league-value {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  font-family: var(--po-font);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ng-amber-bright);
+  text-align: right;
+}
+
+.po-attributes__league-note {
+  font-family: var(--po-font);
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--ng-text-muted);
+}
+
+.po-attr-training {
+  display: grid;
+  gap: var(--ng-spacing-4);
+  padding: var(--ng-spacing-8) var(--ng-spacing-12);
+}
+
+.po-attr-training__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ng-spacing-12);
+}
+
+.po-attr-training__title {
+  font-family: var(--po-font);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.po-attr-training__count {
+  font-family: var(--po-font);
+  font-size: 10px;
+  color: var(--ng-text-faint);
+}
+
+.po-attr-training__stimulus {
+  font-family: var(--po-font);
+  font-size: 10px;
+  color: var(--ng-text-faint);
+}
+
+.po-attr-training__next,
+.po-attr-training__blocked,
+.po-attr-training__error {
+  margin: 0;
+  font-family: var(--po-font);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.po-attr-training__next {
+  color: var(--ng-text-secondary);
+}
+
+.po-attr-training__next b {
+  color: var(--ng-cyan-bright);
+  font-weight: 700;
+}
+
+.po-attr-training__blocked {
+  color: var(--ng-text-muted);
+}
+
+.po-attr-training__error {
+  color: var(--ng-negative);
+}
+
+.po-attr-training__empty {
+  margin: 0;
+  font-family: var(--po-font);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ng-text-muted);
+}
+
+.po-attr-training__list {
+  display: grid;
+  gap: var(--ng-spacing-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.po-attr-training__option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto;
+  gap: 2px var(--ng-spacing-12);
+  padding: var(--ng-spacing-6) var(--ng-spacing-8);
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.po-attr-training__action {
+  grid-column: 1 / span 2;
+  display: flex;
+  justify-content: flex-end;
+  min-height: 22px;
+}
+
+.po-attr-training__assign {
+  padding: 2px 10px;
+  border: 1px solid var(--ng-border-standard);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ng-cyan);
+  font-family: var(--po-font);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.po-attr-training__assign:hover,
+.po-attr-training__assign:focus-visible {
+  border-color: var(--ng-cyan);
+  background: var(--ng-cyan-muted);
+  color: var(--ng-cyan-bright);
+  outline: none;
+}
+
+.po-attr-training__assign:disabled,
+.po-attr-training__assign.is-active {
+  border-color: var(--ng-border-subtle);
+  background: transparent;
+  color: var(--ng-text-muted);
+  cursor: default;
+}
+
+.po-attr-training__hint {
+  font-family: var(--po-font);
+  font-size: 10px;
+  color: var(--ng-text-faint);
+}
+
+.po-attr-training__option:hover {
+  border-color: var(--ng-border-subtle);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.po-attr-training__name {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ng-spacing-4);
+  font-family: var(--po-font);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ng-text-primary);
+}
+
+.po-attr-training__tag {
+  padding: 0 4px;
+  border: 1px solid var(--ng-cyan-muted);
+  border-radius: 999px;
+  color: var(--ng-cyan);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.po-attr-training__meta {
+  grid-column: 1;
+  font-family: var(--po-font);
+  font-size: 10px;
+  color: var(--ng-text-muted);
+}
+
+.po-attr-training__load {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  align-content: center;
+}
+
+.po-attr-training__weight {
+  font-family: var(--po-font);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ng-amber-bright);
+}
+
+.po-attr-training__fatigue {
+  font-family: var(--po-font);
+  font-size: 10px;
+  color: var(--ng-text-faint);
+}
+
+/* ── Attribute table: Δ and percentile columns ── */
+.po-attributes__detail-note {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--po-font);
+  font-size: 10px;
+  color: var(--ng-text-muted);
+}
+
+.po-attributes__rating-table {
+  display: grid;
+  gap: 2px;
+  min-height: 0;
+}
+
+.po-attributes__rating-head {
+  display: grid;
+  grid-template-columns: minmax(150px, 260px) minmax(90px, 1fr) 8px 40px 64px 44px;
+  gap: var(--ng-spacing-8);
+  padding: 0 var(--ng-spacing-8) var(--ng-spacing-4);
+  border-bottom: 1px solid var(--ng-border-subtle);
+  font-family: var(--po-font);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.po-attributes__rating-head > span:nth-child(2) {
+  grid-column: 2 / span 3;
+}
+
+.po-attributes__rating-head > span:nth-child(3),
+.po-attributes__rating-head > span:nth-child(4),
+.po-attr-rating__change,
+.po-attr-rating__percentile {
+  text-align: right;
+}
+
+.po-attr-rating__change,
+.po-attr-rating__percentile {
+  font-family: var(--po-font);
+  font-size: 11px;
+  color: var(--ng-text-muted);
+}
+
+.po-attr-rating__change.is-positive {
+  color: var(--ng-positive);
+}
+
+.po-attr-rating__change.is-negative {
+  color: var(--ng-negative);
+}
+
+/* ── Standing block ── */
+.po-attributes__standing {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--ng-spacing-8);
+  padding: var(--ng-spacing-8);
+  border: 1px solid var(--ng-border-subtle);
+  border-radius: 4px;
+}
+
+.po-attributes__standing-item {
+  display: grid;
+  gap: 2px;
+}
+
+.po-attributes__standing-label {
+  font-family: var(--po-font);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ng-text-muted);
+}
+
+.po-attributes__standing-value {
+  font-family: var(--po-font);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ng-text-primary);
+}
+
+/* ── Signature skills / weak links ── */
+.po-attributes__signals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ng-panel-gap);
+}
+
+.po-attr-highlights {
+  display: grid;
+  gap: var(--ng-spacing-4);
+  min-height: 0;
+}
+
+.po-attr-highlights__title {
+  font-family: var(--ng-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ng-text-secondary);
+}
+
+.po-attr-highlights__list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.po-attr-highlight {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px 48px;
+  align-items: baseline;
+  gap: var(--ng-spacing-8);
+  padding: 2px 0;
+  font-family: var(--po-font);
+  font-size: 11px;
+  color: var(--ng-text-secondary);
+}
+
+.po-attr-highlight__value {
+  font-weight: 700;
+  text-align: right;
+}
+
+.po-attr-highlight__standing {
+  text-align: right;
+  color: var(--ng-text-muted);
+}
+
+.po-attr-highlight.is-positive .po-attr-highlight__value {
+  color: var(--ng-positive);
+}
+
+.po-attr-highlight.is-negative .po-attr-highlight__value {
+  color: var(--ng-negative);
 }

@@ -1,0 +1,908 @@
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   PLAYER · ATTRIBUTES — the 1:1 reference board.
+
+   Namespaced under `po-at-board` so the shared `.po-attributes*` classes the STAFF workspace also
+   uses keep their own behaviour. Palette comes from the workspace root (`--po-ov-*`).
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.po-at-board {
+  display: grid;
+  /* Reference: LEFT 310, CENTER 878, RIGHT 685 of the 1896 content width. */
+  grid-template-columns: 310fr 878fr 685fr;
+  /* One row that fills the board, so the columns can never push the page into a scroll. */
+  grid-template-rows: minmax(0, 1fr);
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
+  padding: 11px 12px 0;
+  overflow: hidden;
+}
+
+.po-at-col {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+}
+
+/*
+ * Column weights of the reference: left 54/46, centre 61/39, right 50/25/25.
+ */
+.po-at-col--left {
+  grid-template-rows: minmax(348px, 54fr) minmax(232px, 46fr);
+}
+
+.po-at-col--center {
+  grid-template-rows: minmax(330px, 61fr) minmax(196px, 39fr);
+}
+
+.po-at-col--right {
+  grid-template-rows: minmax(300px, 50fr) minmax(124px, 25fr) minmax(112px, 25fr);
+}
+
+.po-at-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-height: 0;
+}
+
+/* The notes lead the row; the training block next to them is what makes the board actionable. */
+.po-at-split--notes {
+  grid-template-columns: 58fr 42fr;
+}
+
+/* ── Panel frame, same language as the rest of the boards ── */
+.po-at-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0 10px 10px;
+  overflow: hidden;
+  border: 1px solid var(--po-ov-border);
+  border-radius: 2px;
+  background: var(--po-ov-panel-bg);
+}
+
+/* The right column of the reference is almost pure blue-black. */
+.po-at-col--right .po-at-panel {
+  background: var(--po-ov-panel-bg-neutral);
+}
+
+.po-at-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  border-top: 1px solid var(--po-ov-cyan);
+  border-left: 1px solid var(--po-ov-cyan);
+  pointer-events: none;
+}
+
+.po-at-panel::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 12px;
+  height: 12px;
+  border-right: 1px solid rgb(248 224 101 / 55%);
+  border-bottom: 1px solid rgb(248 224 101 / 55%);
+  pointer-events: none;
+}
+
+.po-at-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  gap: 8px;
+  min-height: 28px;
+  margin: 0 -10px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--po-ov-border-muted);
+  background: rgb(0 0 0 / 20%);
+}
+
+/*
+ * Panel blocks keep their natural height: a flex-shrunk text box paints its lines over the block
+ * below it, which is exactly the overlap the reference never has.
+ */
+.po-at-panel > p,
+.po-at-panel > dl,
+.po-at-panel > ul,
+.po-at-panel > ol,
+.po-at-panel > figure,
+.po-at-panel > span {
+  flex: 0 0 auto;
+}
+
+/* The detail panel gives its leftover room to the training list, which scrolls on its own. */
+.po-at-detail > * {
+  flex: 0 0 auto;
+}
+
+.po-at-detail > .po-attr-training {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+
+.po-at-detail .po-attr-training__list {
+  flex: 1 1 auto;
+  min-height: 48px;
+  overflow: auto;
+}
+
+/* The detail head carries the big rating, so it needs more than the standard 28px band. */
+.po-at-detail .po-at-panel__head {
+  min-height: 42px;
+}
+
+.po-at-panel__title {
+  font-family: var(--po-font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--po-ov-text);
+}
+
+.po-at-panel__meta {
+  font-family: var(--po-font);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--po-ov-text-3);
+}
+
+.po-at-empty {
+  margin: 0;
+  font-family: var(--po-font);
+  font-size: 10px;
+  line-height: 1.45;
+  color: var(--po-ov-text-2);
+}
+
+.po-at-panel .po-gaps {
+  margin-top: auto;
+}
+
+.po-at-panel .po-gap {
+  font-size: 9px;
+}
+
+.po-at-panel .po-gap__label {
+  border-color: var(--po-ov-border);
+  color: var(--po-ov-text-3);
+}
+
+.po-at-panel .po-gap__reason {
+  color: var(--po-ov-text-3);
+}
+
+/* ── Category profiles ── */
+.po-at-categories__list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.po-at-category {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 74px 34px;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 38px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.po-at-category:hover,
+.po-at-category:focus-visible {
+  border-color: rgb(24 221 232 / 40%);
+  background: rgb(22 217 229 / 5%);
+  outline: none;
+}
+
+.po-at-category.is-active {
+  border-color: var(--po-ov-cyan);
+  background: rgb(22 217 229 / 9%);
+}
+
+.po-at-category__label {
+  font-family: var(--po-font);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--po-ov-text-2);
+}
+
+.po-at-category.is-active .po-at-category__label {
+  font-weight: 700;
+  color: var(--po-ov-text);
+}
+
+.po-at-category__track {
+  display: block;
+  height: 6px;
+  border-radius: 1px;
+  background: rgb(41 67 75 / 85%);
+}
+
+.po-at-category__fill {
+  display: block;
+  height: 100%;
+  border-radius: 1px;
+  background: var(--po-ov-green);
+}
+
+.po-at-category__value {
+  font-family: var(--po-font-display);
+  font-size: 17px;
+  font-weight: 800;
+  text-align: right;
+  color: var(--po-ov-text);
+}
+
+.po-at-category.is-active .po-at-category__value {
+  color: var(--po-ov-cyan);
+}
+
+/* ── Attribute radar ── */
+.po-at-radar__plot {
+  display: grid;
+  place-items: center;
+  flex: 1;
+  min-height: 0;
+}
+
+.po-at-radar__plot .po-radar {
+  width: 218px;
+  height: 218px;
+}
+
+.po-at-radar__plot .po-radar__label,
+.po-at-radar__plot .po-radar__axis-label {
+  font-family: var(--po-font);
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  color: var(--po-ov-text-2);
+}
+
+.po-at-radar__plot .po-radar__value {
+  font-family: var(--po-font);
+  font-size: 9px;
+  color: var(--po-ov-yellow);
+}
+
+/* ── Centre · category matrix ── */
+.po-at-matrix__head {
+  display: grid;
+  gap: 1px;
+  padding-top: 9px;
+}
+
+.po-at-matrix__title {
+  margin: 0;
+  font-family: var(--po-font-display);
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--po-ov-cyan);
+}
+
+.po-at-matrix__note {
+  margin: 0;
+  font-family: var(--po-font);
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--po-ov-text-2);
+}
+
+.po-at-matrix__table {
+  display: grid;
+  align-content: start;
+  gap: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.po-at-matrix__thead {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.35fr) 46px minmax(80px, 1fr) 44px 62px;
+  gap: 10px;
+  padding: 0 8px 4px;
+  border-bottom: 1px solid var(--po-ov-border-muted);
+  font-family: var(--po-font);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--po-ov-text-3);
+}
+
+.po-at-matrix__thead > span:nth-child(n + 2) {
+  text-align: right;
+}
+
+/* Rows: attribute · rating · bar · delta · percentile (reference order). */
+.po-at-matrix .po-attr-rating {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.35fr) 46px minmax(80px, 1fr) 44px 62px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 48px;
+  padding: 0 8px;
+  border: none;
+  border-bottom: 1px solid rgb(41 67 75 / 45%);
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.po-at-matrix .po-attr-rating:last-child {
+  border-bottom: none;
+}
+
+.po-at-matrix .po-attr-rating:hover,
+.po-at-matrix .po-attr-rating:focus-visible {
+  background: rgb(22 217 229 / 5%);
+  outline: none;
+}
+
+.po-at-matrix .po-attr-rating.is-selected {
+  background: rgb(22 217 229 / 9%);
+  box-shadow: inset 0 0 0 1px rgb(24 221 232 / 45%);
+}
+
+.po-at-matrix .po-attr-rating__label {
+  grid-column: 1;
+  font-family: var(--po-font);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--po-ov-text-2);
+}
+
+/*
+ * The row element order is label, bar, delta, percentile, rating: every cell is placed explicitly
+ * so the dense table reads attribute · rating · bar · Δ · percentile as in the reference.
+ */
+.po-at-matrix .po-attr-rating__value {
+  grid-column: 2;
+  font-family: var(--po-font-display);
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1;
+  text-align: right;
+  color: var(--po-ov-text);
+}
+
+.po-at-matrix .po-attr-rating__scale {
+  grid-column: 3;
+  position: relative;
+  display: block;
+  height: 8px;
+  border-radius: 1px;
+  background: rgb(41 67 75 / 85%);
+  overflow: hidden;
+}
+
+.po-at-matrix .po-attr-rating__change {
+  grid-column: 4;
+}
+
+.po-at-matrix .po-attr-rating__percentile {
+  grid-column: 5;
+}
+
+.po-at-matrix .po-attr-rating.is-selected .po-attr-rating__label {
+  font-weight: 700;
+  color: var(--po-ov-text);
+}
+
+.po-at-matrix .po-attr-rating__scale-fill {
+  display: block;
+  height: 100%;
+  background: var(--po-ov-green);
+}
+
+/* A rating that trails the sample turns the bar amber, the same signal the reference gives it. */
+.po-at-matrix .po-attr-rating--average .po-attr-rating__scale-fill {
+  background: var(--po-ov-yellow);
+}
+
+.po-at-matrix .po-attr-rating--below .po-attr-rating__scale-fill,
+.po-at-matrix .po-attr-rating--poor .po-attr-rating__scale-fill {
+  background: var(--po-ov-red);
+}
+
+/* The marker repeats what the bar colour already says, so it stays out of the dense row. */
+.po-at-matrix .po-attr-rating__marker {
+  display: none;
+}
+
+.po-at-matrix .po-attr-rating__change,
+.po-at-matrix .po-attr-rating__percentile {
+  font-family: var(--po-font);
+  font-size: 11px;
+  text-align: right;
+  color: var(--po-ov-text-2);
+}
+
+.po-at-matrix .po-attr-rating__change.is-positive {
+  color: var(--po-ov-green);
+}
+
+.po-at-matrix .po-attr-rating__change.is-negative {
+  color: var(--po-ov-red);
+}
+
+.po-at-matrix .po-attr-rating__percentile {
+  color: var(--po-ov-text);
+}
+
+/* ── Centre · strengths and notes ── */
+.po-at-notes {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.po-at-note {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+}
+
+.po-at-note__glyph {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+  font-size: 9px;
+  line-height: 1;
+}
+
+.po-at-note.is-positive .po-at-note__glyph {
+  color: var(--po-ov-green);
+}
+
+.po-at-note.is-warning .po-at-note__glyph {
+  color: var(--po-ov-yellow);
+}
+
+.po-at-note__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.po-at-note__label {
+  font-family: var(--po-font);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--po-ov-text);
+}
+
+.po-at-note__detail {
+  font-family: var(--po-font);
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--po-ov-text-2);
+}
+
+/* ── Right · attribute detail ── */
+.po-at-detail__value {
+  font-family: var(--po-font-display);
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--po-ov-text);
+}
+
+.po-at-detail__name {
+  font-family: var(--po-font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--po-ov-text);
+}
+
+.po-at-detail__description {
+  font-family: var(--po-font);
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--po-ov-text-2);
+}
+
+.po-at-detail__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+  padding: 6px 0;
+  border-top: 1px solid var(--po-ov-border-muted);
+  border-bottom: 1px solid var(--po-ov-border-muted);
+}
+
+.po-at-detail__metrics > div {
+  display: grid;
+  gap: 1px;
+  padding: 0 8px;
+  border-left: 1px solid var(--po-ov-border-muted);
+}
+
+.po-at-detail__metrics > div:first-child {
+  padding-left: 0;
+  border-left: none;
+}
+
+.po-at-detail__metrics dt {
+  font-family: var(--po-font);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--po-ov-text-3);
+}
+
+.po-at-detail__metrics dd {
+  margin: 0;
+  font-family: var(--po-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--po-ov-text);
+}
+
+.po-at-detail__metrics dd.is-positive {
+  color: var(--po-ov-green);
+}
+
+.po-at-detail__metrics dd.is-negative {
+  color: var(--po-ov-red);
+}
+
+.po-at-detail__metrics dd.is-accent {
+  color: var(--po-ov-yellow);
+}
+
+.po-at-detail__history {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* The chart already draws its own axis, so the panel only constrains its height. */
+.po-at-detail__history .po-attr-evolution {
+  display: grid;
+  gap: 4px;
+  min-height: 0;
+}
+
+.po-at-detail__history .po-attr-evolution__head {
+  align-items: baseline;
+  gap: 8px;
+  padding: 0;
+  border: none;
+}
+
+.po-at-detail__history .po-attr-evolution__title {
+  font-family: var(--po-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--po-ov-text-2);
+}
+
+.po-at-detail__history .po-attr-evolution__legend {
+  font-family: var(--po-font);
+  font-size: 9px;
+  color: var(--po-ov-text-3);
+}
+
+/* The chart keeps its own geometry, scaled down to the room this board gives it. */
+.po-at-detail__history .po-attr-evolution__plot {
+  --po-attr-plot-canvas: 80px;
+  --po-attr-plot-axis: 13px;
+  height: calc(var(--po-attr-plot-canvas) + var(--po-attr-plot-axis));
+}
+
+.po-at-detail__history .po-attr-evolution__scale {
+  font-size: 9px;
+}
+
+/* The panel already states that note under the metrics, so the chart does not repeat it. */
+.po-at-detail__history .po-attr-evolution__caption {
+  display: none;
+}
+
+.po-at-detail__history .po-attr-evolution__axis-label {
+  font-family: var(--po-font);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  color: var(--po-ov-text-3);
+}
+
+.po-at-detail__history .po-attr-evolution__line {
+  stroke: var(--po-ov-cyan);
+}
+
+.po-at-detail__history .po-attr-evolution__league {
+  stroke: rgb(103 138 158 / 60%);
+}
+
+.po-at-detail__history .po-attr-evolution__point {
+  background: var(--po-ov-cyan);
+}
+
+.po-at-detail__note {
+  font-family: var(--po-font);
+  font-size: 9px;
+  line-height: 1.4;
+  color: var(--po-ov-text-3);
+}
+
+/* Training block: real functionality, kept compact inside its own panel. */
+.po-at-trainings .po-attr-training {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+
+.po-at-trainings .po-attr-training__head {
+  display: flex;
+  align-items: baseline;
+  flex: 0 0 auto;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.po-at-trainings .po-attr-training__title {
+  font-family: var(--po-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--po-ov-text-2);
+}
+
+.po-at-trainings .po-attr-training__count,
+.po-at-trainings .po-attr-training__stimulus,
+.po-at-trainings .po-attr-training__next,
+.po-at-trainings .po-attr-training__blocked,
+.po-at-trainings .po-attr-training__empty {
+  margin: 0;
+  font-family: var(--po-font);
+  font-size: 9px;
+  line-height: 1.4;
+  color: var(--po-ov-text-3);
+}
+
+/* The catalog can target an attribute with more trainings than the panel shows: it scrolls here. */
+.po-at-trainings .po-attr-training__list {
+  flex: 1 1 auto;
+  min-height: 40px;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.po-at-trainings .po-attr-training__option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 8px;
+  padding: 3px 0;
+  border-bottom: 1px solid rgb(41 67 75 / 45%);
+  font-family: var(--po-font);
+  font-size: 10px;
+  color: var(--po-ov-text-2);
+}
+
+.po-at-trainings .po-attr-training__list li:last-child {
+  border-bottom: none;
+}
+
+.po-at-trainings .po-attr-training__name {
+  font-weight: 700;
+  color: var(--po-ov-text);
+}
+
+.po-at-trainings .po-attr-training__meta,
+.po-at-trainings .po-attr-training__load,
+.po-at-trainings .po-attr-training__hint {
+  grid-column: 1;
+  font-size: 9px;
+  color: var(--po-ov-text-3);
+}
+
+.po-at-trainings .po-attr-training__action {
+  grid-row: 1 / span 3;
+  grid-column: 2;
+  align-self: center;
+}
+
+.po-at-trainings .po-attr-training__assign {
+  padding: 3px 8px;
+  border: 1px solid rgb(24 221 232 / 55%);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--po-ov-cyan);
+  font-family: var(--po-font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.po-at-trainings .po-attr-training__assign[disabled] {
+  border-color: var(--po-ov-border);
+  color: var(--po-ov-text-3);
+  cursor: default;
+}
+
+.po-at-trainings .po-attr-training__tag {
+  margin-left: 6px;
+  padding: 0 4px;
+  border: 1px solid var(--po-ov-border);
+  border-radius: 999px;
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--po-ov-text-3);
+}
+
+/* ── Right · compact modules ── */
+.po-at-compact {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.po-at-compact__row {
+  display: grid;
+  grid-template-columns: 15px minmax(0, 1fr);
+  align-items: start;
+  gap: 7px;
+}
+
+.po-at-compact__glyph {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+  font-size: 8px;
+  line-height: 1;
+}
+
+.po-at-compact__row.is-positive .po-at-compact__glyph {
+  color: var(--po-ov-cyan);
+}
+
+.po-at-compact__row.is-negative .po-at-compact__glyph {
+  color: var(--po-ov-red);
+}
+
+.po-at-compact__row.is-quiet .po-at-compact__glyph {
+  color: var(--po-ov-text-3);
+}
+
+.po-at-compact__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.po-at-compact__label {
+  font-family: var(--po-font);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--po-ov-text);
+}
+
+.po-at-compact__detail {
+  font-family: var(--po-font);
+  font-size: 9px;
+  line-height: 1.35;
+  color: var(--po-ov-text-2);
+}
+
+/* ── Right · compare CTA ── */
+.po-at-compare {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 0;
+  padding: 0 10px;
+  border: 1px solid rgb(158 126 34 / 85%);
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgb(30 24 8 / 90%), rgb(8 14 18 / 98%) 60%);
+  color: var(--po-ov-yellow);
+  font-family: var(--po-font-display);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.po-at-compare:hover,
+.po-at-compare:focus-visible {
+  border-color: var(--po-ov-yellow);
+  color: #f5d04f;
+  outline: none;
+}
+
+.po-at-compare__glyph {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+/* Below the reference width the composition holds; only the type and the gaps tighten. */
+@media (max-width: 1599px) {
+  .po-at-board {
+    grid-template-columns: 268fr 878fr 600fr;
+    gap: 9px;
+    padding: 8px 9px 0;
+  }
+
+  .po-at-col {
+    gap: 9px;
+  }
+
+  .po-at-matrix__title {
+    font-size: 18px;
+  }
+
+  .po-at-matrix .po-attr-rating {
+    height: 40px;
+    grid-template-columns: minmax(120px, 1.3fr) 40px minmax(70px, 1fr) 38px 54px;
+    gap: 8px;
+  }
+
+  .po-at-matrix .po-attr-rating__value {
+    font-size: 17px;
+  }
+
+  .po-at-detail__value {
+    font-size: 30px;
+  }
+
+  .po-at-compare {
+    font-size: 12px;
+  }
+}
