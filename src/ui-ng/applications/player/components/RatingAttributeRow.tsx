@@ -1,13 +1,13 @@
-import type { CanonicalRatingKey } from '@/domain/player'
+import type { PlayerTruthRatingKey } from '@/domain/player'
 
 import { CATEGORY_LABELS, ratingTone } from '@/ui-ng/applications/player/data/ratingCatalog'
 
 export interface RatingAttributeRowProps {
-  readonly id: CanonicalRatingKey
+  readonly id: PlayerTruthRatingKey
   readonly label: string
   readonly value: number
   readonly selected?: boolean
-  readonly onSelect: (id: CanonicalRatingKey) => void
+  readonly onSelect: (id: PlayerTruthRatingKey) => void
 }
 
 export function RatingAttributeRow({
