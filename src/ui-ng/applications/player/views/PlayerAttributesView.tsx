@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-import type { CanonicalRatingKey } from '@/domain/player'
+import type { PlayerTruthRatingKey } from '@/domain/player'
 
 import { RatingAttributeRow, categoryProfileLabel } from '@/ui-ng/applications/player/components/RatingAttributeRow'
 import type { RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
@@ -16,7 +16,7 @@ export function PlayerAttributesView() {
     [attributesCategory, model.attributes.categories],
   )
 
-  const activeRatingId = useMemo((): CanonicalRatingKey | null => {
+  const activeRatingId = useMemo((): PlayerTruthRatingKey | null => {
     if (categoryModel === undefined) return null
     if (
       selectedRatingId !== null &&

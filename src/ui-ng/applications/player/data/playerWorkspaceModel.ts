@@ -1,5 +1,5 @@
 import type { PlayerId, TeamId } from '@/domain/ids'
-import type { CanonicalRatingKey } from '@/domain/player'
+import type { PlayerTruthRatingKey } from '@/domain/player'
 
 import type { PlayerPerformanceModel } from './buildPlayerPerformanceModel'
 import type { PlayerContractModel } from './buildPlayerContractModel'
@@ -56,7 +56,7 @@ export interface PlayerStatusModel {
 }
 
 export interface PlayerRatingRow {
-  readonly id: CanonicalRatingKey
+  readonly id: PlayerTruthRatingKey
   readonly label: string
   readonly category: RatingCategory
   readonly value: number

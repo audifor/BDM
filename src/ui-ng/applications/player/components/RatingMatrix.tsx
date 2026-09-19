@@ -1,13 +1,13 @@
-import type { CanonicalRatingKey } from '@/domain/player'
+import type { PlayerTruthRatingKey } from '@/domain/player'
 
 import type { RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
 import { CATEGORY_LABELS, ratingTone } from '@/ui-ng/applications/player/data/ratingCatalog'
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 
 export interface RatingMatrixProps {
-  readonly selectedId: CanonicalRatingKey
+  readonly selectedId: PlayerTruthRatingKey
   readonly categoryFilter: RatingCategory | null
-  readonly onSelect: (id: CanonicalRatingKey) => void
+  readonly onSelect: (id: PlayerTruthRatingKey) => void
 }
 export function RatingMatrix({ selectedId, categoryFilter, onSelect }: RatingMatrixProps) {
   const { model } = usePlayerWorkspace()
