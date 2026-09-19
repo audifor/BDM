@@ -1,7 +1,9 @@
 import type { CoachRpgPreset } from '@/domain/coachRpg'
 import { ACB_2026_27_TEAMS, ACB_QUICK_START_TEAM_KEY, ACB_TEST_UNIVERSE_ID } from '@/data/acb2026'
 
-export type NewGameUniverseId = 'prototype' | typeof ACB_TEST_UNIVERSE_ID
+export const WORLD_DB_SPAIN_UNIVERSE_ID = 'worldDbSpain' as const
+
+export type NewGameUniverseId = 'prototype' | typeof ACB_TEST_UNIVERSE_ID | typeof WORLD_DB_SPAIN_UNIVERSE_ID
 
 export interface NewGameConfiguration {
   readonly universeId?: NewGameUniverseId
@@ -20,6 +22,13 @@ export interface NewGameUniverseOption {
 }
 
 export const NEW_GAME_UNIVERSES: readonly NewGameUniverseOption[] = [
+  {
+    id: WORLD_DB_SPAIN_UNIVERSE_ID,
+    label: 'WORLD DB · SPAIN ACB',
+    description: 'Canonical Spain ACB 2025/26 GameWorld from the read-only DDL-12 World DB.',
+    isTest: false,
+    teams: [],
+  },
   { id: 'prototype', label: 'BDM World', description: 'Current deterministic BDM development universe.', isTest: false, teams: [] },
   {
     id: ACB_TEST_UNIVERSE_ID,

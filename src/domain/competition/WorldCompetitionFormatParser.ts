@@ -55,9 +55,9 @@ function parseVariant(value: unknown): WorldCompetitionFormatVariant {
     key: text(raw.key, 'variant.key'),
     ...(name === undefined ? {} : { name }),
     ...(scope === undefined ? {} : { scope }),
-    isRealVariant: raw.is_real_variant === undefined ? false : boolean(raw.is_real_variant, 'variant.is_real_variant'),
-    ...(raw.entry_selection === undefined ? {} : { entrySelection: parseEntrySelection(raw.entry_selection) }),
-    ...(raw.seeding === undefined ? {} : { seeding: parseSeeding(raw.seeding) }),
+    isRealVariant: raw.is_real_variant === undefined || raw.is_real_variant === null ? false : boolean(raw.is_real_variant, 'variant.is_real_variant'),
+    ...(raw.entry_selection === undefined || raw.entry_selection === null ? {} : { entrySelection: parseEntrySelection(raw.entry_selection) }),
+    ...(raw.seeding === undefined || raw.seeding === null ? {} : { seeding: parseSeeding(raw.seeding) }),
     nodes: Object.freeze(nodes),
     edges: Object.freeze(optionalArray(raw.edges, 'variant.edges').map(parseEdge)),
   })
@@ -82,7 +82,7 @@ function parseNode(value: unknown): WorldCompetitionFormatNode {
     nodeType: enumValue(raw.node_type, ['STAGE', 'GROUP', 'ROUND', 'SERIES', 'BRACKET', 'SUBDIVISION'] as const, 'node.node_type'),
     role: enumValue(raw.role, ['REGULAR_SEASON', 'GROUP_STAGE', 'CONFERENCE_STAGE', 'SPLIT_STAGE', 'PLAY_IN', 'PLAYOFF', 'PLAYOUT', 'PROMOTION_STAGE', 'RELEGATION_STAGE', 'QUALIFIER', 'FINAL_FOUR', 'FINAL_EIGHT', 'FINAL', 'PLACEMENT'] as const, 'node.role'),
     ...(specializedType === undefined ? {} : { specializedType }), ...(name === undefined ? {} : { name }), ...(parent === undefined ? {} : { parent }), ...(teamCount === undefined ? {} : { teamCount }),
-    ...(raw.pairing === undefined ? {} : { pairing: parsePairing(raw.pairing) }), ...(raw.opponent_scope === undefined ? {} : { opponentScope: parseOpponentScope(raw.opponent_scope) }), ...(raw.contest === undefined ? {} : { contest: parseContest(raw.contest) }), ...(raw.hosting === undefined ? {} : { hosting: parseHosting(raw.hosting) }), ...(raw.carryover === undefined ? {} : { carryover: parseCarryover(raw.carryover) }),
+    ...(raw.pairing === undefined || raw.pairing === null ? {} : { pairing: parsePairing(raw.pairing) }), ...(raw.opponent_scope === undefined || raw.opponent_scope === null ? {} : { opponentScope: parseOpponentScope(raw.opponent_scope) }), ...(raw.contest === undefined || raw.contest === null ? {} : { contest: parseContest(raw.contest) }), ...(raw.hosting === undefined || raw.hosting === null ? {} : { hosting: parseHosting(raw.hosting) }), ...(raw.carryover === undefined || raw.carryover === null ? {} : { carryover: parseCarryover(raw.carryover) }),
   })
 }
 function parsePairing(value: unknown): WorldCompetitionPairing {
@@ -92,7 +92,7 @@ function parsePairing(value: unknown): WorldCompetitionPairing {
 function parseOpponentScope(value: unknown): WorldCompetitionOpponentScope { const raw = record(value, 'opponent_scope'); return Object.freeze({ type: enumValue(raw.type, ['ALL_STAGE', 'SAME_GROUP', 'SAME_SUBDIVISION', 'CROSS_SUBDIVISION', 'SELECTIVE', 'SCHEDULE_MATRIX'] as const, 'opponent_scope.type'), payload: jsonObject(raw.payload, 'opponent_scope.payload') }) }
 function parseContest(value: unknown): WorldCompetitionContest {
   const raw = record(value, 'contest'); const bestOf = optionalPositiveInteger(raw.best_of, 'contest.best_of'); const winsRequired = optionalPositiveInteger(raw.wins_required, 'contest.wins_required'); if (bestOf !== undefined && winsRequired !== undefined && winsRequired > bestOf) throw new RangeError('contest.wins_required cannot exceed contest.best_of'); const legCount = optionalPositiveInteger(raw.leg_count, 'contest.leg_count'); const aggregateMetric = optionalText(raw.aggregate_metric, 'contest.aggregate_metric')
-  return Object.freeze({ formatType: enumValue(raw.format_type, ['SINGLE_GAME', 'SERIES', 'AGGREGATE'] as const, 'contest.format_type'), ...(raw.requires_winner === undefined ? {} : { requiresWinner: boolean(raw.requires_winner, 'contest.requires_winner') }), ...(bestOf === undefined ? {} : { bestOf }), ...(winsRequired === undefined ? {} : { winsRequired }), ...(legCount === undefined ? {} : { legCount }), ...(aggregateMetric === undefined ? {} : { aggregateMetric }), ...(raw.tie_resolution === undefined ? {} : { tieResolution: parseTieResolution(raw.tie_resolution) }) })
+  return Object.freeze({ formatType: enumValue(raw.format_type, ['SINGLE_GAME', 'SERIES', 'AGGREGATE'] as const, 'contest.format_type'), ...(raw.requires_winner === undefined || raw.requires_winner === null ? {} : { requiresWinner: boolean(raw.requires_winner, 'contest.requires_winner') }), ...(bestOf === undefined ? {} : { bestOf }), ...(winsRequired === undefined ? {} : { winsRequired }), ...(legCount === undefined ? {} : { legCount }), ...(aggregateMetric === undefined ? {} : { aggregateMetric }), ...(raw.tie_resolution === undefined || raw.tie_resolution === null ? {} : { tieResolution: parseTieResolution(raw.tie_resolution) }) })
 }
 function parseTieResolution(value: unknown): WorldCompetitionTieResolution { const raw = record(value, 'tie_resolution'); const trigger = optionalText(raw.trigger, 'tie_resolution.trigger'); const method = optionalText(raw.method, 'tie_resolution.method'); const location = optionalText(raw.location, 'tie_resolution.location'); return Object.freeze({ ...(trigger === undefined ? {} : { trigger }), ...(method === undefined ? {} : { method }), ...(location === undefined ? {} : { location }) }) }
 function parseHosting(value: unknown): WorldCompetitionHosting { const raw = record(value, 'hosting'); const pattern = optionalText(raw.pattern, 'hosting.pattern'); const priorityBasis = optionalText(raw.priority_basis, 'hosting.priority_basis'); return Object.freeze({ ruleType: enumValue(raw.rule_type, ['NEUTRAL', 'HIGHER_SEED', 'BALANCED', 'SERIES_PATTERN', 'ASSIGNED_HOST', 'DRAWN_HOST'] as const, 'hosting.rule_type'), ...(pattern === undefined ? {} : { pattern }), ...(priorityBasis === undefined ? {} : { priorityBasis }), payload: jsonObject(raw.payload, 'hosting.payload') }) }

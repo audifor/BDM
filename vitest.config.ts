@@ -14,6 +14,7 @@ export default defineConfig({
       'src/ui/entityContextMenu/**/*.test.tsx',
       'src/ui/navigation/EntityLink.test.tsx',
       'src/ui/screens/StaffScreen.test.tsx',
+      'src/ui/startup/**/*.test.tsx',
       'src/ui-ng/applications/roster/**/*.test.tsx',
       'src/ui-ng/applications/scouting/**/*.test.tsx',
       'src/ui-ng/applications/tactics/**/*.test.tsx',

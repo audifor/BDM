@@ -11,6 +11,10 @@ export default defineConfig({
     },
   },
   clearScreen: false,
+  define: {
+    __BDM_WORLD_DB_PATH__: JSON.stringify(process.env.BDM_WORLD_DB_PATH ?? ''),
+    __BDM_WORLD_DB_RUNTIME_BUNDLE_PATH__: JSON.stringify(process.env.BDM_WORLD_DB_RUNTIME_BUNDLE_PATH ?? ''),
+  },
   server: {
     port: 1420,
     strictPort: true,

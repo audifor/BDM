@@ -11,8 +11,20 @@ export {
 } from './simulateUntilDate'
 export { createNewGame, PROTOTYPE_GAME_CONFIGURATION } from './createNewGame'
 export { createAcbTestGame, type CreateAcbTestGameOptions } from './createAcbTestGame'
-export { createConfiguredGame } from './createConfiguredGame'
-export { NEW_GAME_UNIVERSES, type NewGameConfiguration, type NewGameTeamOption, type NewGameUniverseId, type NewGameUniverseOption } from './NewGameUniverseCatalog'
+export { createConfiguredGame, createConfiguredGameAsync } from './createConfiguredGame'
+export { NEW_GAME_UNIVERSES, WORLD_DB_SPAIN_UNIVERSE_ID, type NewGameConfiguration, type NewGameTeamOption, type NewGameUniverseId, type NewGameUniverseOption } from './NewGameUniverseCatalog'
+export {
+  createWorldDbSpainGame,
+  discoverWorldDbSpainSelection,
+  defaultWorldDbSpainAccess,
+  SPAIN_ACB_CODE,
+  SPAIN_ACB_COMPETITION_ID,
+  SPAIN_ACB_COMPETITION_SEASON_ID,
+  SPAIN_ACB_ECOSYSTEM_ID,
+  type WorldDbSpainGameAccess,
+  type WorldDbSpainSelection,
+  type WorldDbSpainTeamOption,
+} from './WorldDbSpainGame'
 export {
   loadWorldDbCompetitionPlanningContextsV1,
   loadWorldDbCompetitionRuntimeCatalogV1,

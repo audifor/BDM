@@ -2,6 +2,7 @@
 .bdm-start-actions { display:grid; gap:10px; }
 .bdm-quick-start { width:100%; margin-top:8px; font-size:10px; }
 .bdm-start-message { margin:16px 0 0; color:#efad42; font-size:12px; }
+.bdm-world-db-status { margin:-6px 0 0; color:#79c8d6; font-size:11px; letter-spacing:.08em; }
 .bdm-new-game-card { display:grid; gap:18px; }
 .bdm-new-game-card h1 { margin:2px 0 0; font-size:36px; letter-spacing:.05em; }
 .bdm-new-game-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
