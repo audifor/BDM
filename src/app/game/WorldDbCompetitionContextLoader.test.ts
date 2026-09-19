@@ -82,6 +82,7 @@ function repository(bundle: WorldCompetitionRuntimeBundle = runtimeBundle): Worl
     loadSelectionCatalog: vi.fn(),
     loadCompetitionSeason: vi.fn(async (_databasePath, competitionSeasonId) => competitionBundle(competitionSeasonId)),
     loadMatchRealizations: vi.fn(async (_databasePath, competitionSeasonId) => matchBundle(competitionSeasonId)),
+    loadGameBootstrapSlice: vi.fn(),
     loadCompetitionRuntimeBundle: vi.fn(async () => bundle),
   }
 }

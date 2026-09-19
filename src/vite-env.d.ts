@@ -18,3 +18,6 @@ interface BdmDesignerViewportBridge {
 interface Window {
   __bdmDesignerViewportBridge?: BdmDesignerViewportBridge
 }
+
+declare const __BDM_WORLD_DB_PATH__: string
+declare const __BDM_WORLD_DB_RUNTIME_BUNDLE_PATH__: string

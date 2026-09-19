@@ -73,4 +73,26 @@ describe('Phase 1 runtime bundle bridge', () => {
     }
     expect(() => parseWorldCompetitionRuntimeBundle(blocked)).toThrow('BLOCKED')
   })
+
+  it('treats null optional node objects as absent, matching the canonical runtime wire bundle', () => {
+    const withNullOptionalFields = {
+      ...bundle,
+      competition_formats: [{
+        ...bundle.competition_formats[0],
+        variants: [{
+          ...bundle.competition_formats[0].variants[0],
+          nodes: [{
+            ...bundle.competition_formats[0].variants[0].nodes[0],
+            pairing: null,
+            opponent_scope: null,
+            contest: null,
+            hosting: null,
+            carryover: null,
+          }],
+          edges: [],
+        }],
+      }],
+    }
+    expect(() => parseWorldCompetitionRuntimeBundle(withNullOptionalFields)).not.toThrow()
+  })
 })

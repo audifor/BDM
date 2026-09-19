@@ -21,6 +21,25 @@ describe('GameWorldSaveV1', () => {
     expect(saved.payload.players).not.toBe(Object.values(world.players))
   })
 
+  it('preserves decimal source measurements for Player bio and Person roots', () => {
+    const world = createNewGame()
+    const player = Object.values(world.players)[0]!
+    const decimalHeight = player.bio.heightCm + 0.4
+    const decimalWeight = player.bio.weightKg + 0.25
+    const measured = updateGameWorld(world, {
+      players: Object.values(world.players).map((item) => item.id === player.id
+        ? { ...item, bio: { ...item.bio, heightCm: decimalHeight, weightKg: decimalWeight } }
+        : item),
+    })
+    const saved = serializeGameWorldV1(measured, '2032-10-01T12:00:00.000Z')
+    const loaded = deserializeGameWorldV1(JSON.parse(JSON.stringify(saved)) as unknown)
+
+    expect(loaded.players[player.id]?.bio.heightCm).toBe(decimalHeight)
+    expect(loaded.players[player.id]?.bio.weightKg).toBe(decimalWeight)
+    expect(loaded.personsById[player.personId!]?.physical?.heightCm).toBe(decimalHeight)
+    expect(loaded.personsById[player.personId!]?.physical?.weightKg).toBe(decimalWeight)
+  })
+
   it('round-trips eligibility history and initializes neutral NCAA profiles for legacy saves', () => {
     const world = createNewGame()
     const profile = Object.values(world.eligibilityProfilesById)[0]!

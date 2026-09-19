@@ -48,6 +48,7 @@ describe('WorldDbSessionV1 partial Phase 1 availability', () => {
       loadSelectionCatalog: vi.fn(),
       loadCompetitionSeason: vi.fn(),
       loadMatchRealizations: vi.fn(),
+      loadGameBootstrapSlice: vi.fn(),
       loadCompetitionRuntimeBundle: vi.fn(async () => runtimeBundle),
     }
     const session = new WorldDbSessionV1({
