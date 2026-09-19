@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { CANONICAL_RATING_KEYS } from '@/domain/player'
+import { PLAYER_TRUTH_RATING_KEYS } from '@/domain/player'
 import { completeMatch, createConfiguredGame, createNewGame, prepareUserMatch } from '@/app/game'
 import { boxScoreValuation } from '@/engine/stats/boxScoreValuation'
 import { getPlayerSeasonStats } from '@/engine/stats/PlayerHistory'
@@ -36,7 +36,8 @@ describe('buildPlayerWorkspaceModel', () => {
     expect(model!.identity.teamId.status).toBe('available')
     expect(model!.identity.dateOfBirth.status).toBe('available')
     expect(model!.identity.wingspan.status).toBe('available')
-    expect(model!.attributes.allRatings.length).toBe(CANONICAL_RATING_KEYS.length)
+    expect(model!.attributes.allRatings).toHaveLength(80)
+    expect(model!.attributes.allRatings.map((rating) => rating.id)).toEqual([...PLAYER_TRUTH_RATING_KEYS])
     expect(model!.attributes.categories.length).toBe(8)
     expect(model!.development.longitudinal.message).toContain('not currently tracked')
     expect(model!.history.scope.scopeNote).toContain('persisted in this save')
