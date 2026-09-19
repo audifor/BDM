@@ -58,6 +58,7 @@ import { generatePersonality, type Personality } from '@/domain/personality'
 import { createMoraleProfile, type MoraleProfile } from '@/domain/morale'
 import type { InboxItem, NewsItem } from '@/domain/inbox'
 import { EMPTY_DEVELOPMENT_STIMULUS, type PlayerDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
+import { createPlayerSeasonRatingChange, type PlayerRatingHistory } from '@/domain/development/PlayerRatingHistory'
 import { clampCareerFatigue } from '@/domain/careerFatigue/CareerFatigue'
 import { clampTeamCohesion, createDefaultTrainingPlan, createIndividualTrainingPlan, createScheduledTrainingSession, createUserTrainingModule, findCollidingSession, type IndividualTrainingPlan, type ScheduledTrainingSession, type TeamTrainingPlan, type TrainingResponsibility, type TrainingSession, type UserTrainingModule } from '@/domain/training'
 import { createDefaultTeamLineup, createDefaultTeamTacticalPlan, createOppositionScoutingReport, createPlaybook, createSavedPlay, oppositionScoutingReportId, validateTeamLineup, type OppositionScoutingReport, type Playbook, type SavedPlay, type TeamGamePlan, type TeamLineup, type TeamTacticalPlan } from '@/domain/tactics'
@@ -184,6 +185,14 @@ export interface GameWorld {
   /** User-created training modules, composing the built-in catalog. */
   readonly userTrainingModulesById: Readonly<Record<string, UserTrainingModule>>
   readonly developmentStimulusByPlayerId: Readonly<Record<string, PlayerDevelopmentStimulus>>
+  /**
+   * Canonical rating movement recorded per offseason transition, oldest first.
+   *
+   * This is the only rating history in the world: the current ratings stay the single source of
+   * truth and past values are reconstructed from the deltas (`ratingHistorySeries`). Players
+   * without a recorded transition are absent from the map.
+   */
+  readonly playerRatingHistoryByPlayerId: Readonly<Record<string, PlayerRatingHistory>>
   readonly careerFatigueByPlayerId: Readonly<Record<string, number>>
   readonly teamCohesionByTeamId: Readonly<Record<string, number>>
   readonly promotionRelegationResolutionsById: Readonly<Record<string, PromotionRelegationResolution>>
@@ -355,6 +364,7 @@ export interface CreateGameWorldInput {
   scheduledTrainingSessionsById?: Readonly<Record<string, ScheduledTrainingSession>>
   userTrainingModulesById?: Readonly<Record<string, UserTrainingModule>>
   developmentStimulusByPlayerId?: Readonly<Record<string, PlayerDevelopmentStimulus>>
+  playerRatingHistoryByPlayerId?: Readonly<Record<string, PlayerRatingHistory>>
   careerFatigueByPlayerId?: Readonly<Record<string, number>>
   teamCohesionByTeamId?: Readonly<Record<string, number>>
   promotionRelegationResolutions?: readonly PromotionRelegationResolution[]
@@ -542,6 +552,10 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     scheduledTrainingSessionsById: Object.freeze(Object.fromEntries(Object.entries(input.scheduledTrainingSessionsById ?? {}).map(([id, session]) => [id, createScheduledTrainingSession(session)]))),
     userTrainingModulesById: Object.freeze(Object.fromEntries(Object.entries(input.userTrainingModulesById ?? {}).map(([id, module]) => [id, createUserTrainingModule(module)]))),
     developmentStimulusByPlayerId:Object.freeze(Object.fromEntries(input.players.map((player)=>[player.id,input.developmentStimulusByPlayerId?.[player.id]??{playerId:player.id,byRating:{...EMPTY_DEVELOPMENT_STIMULUS}}]))), careerFatigueByPlayerId:Object.freeze(Object.fromEntries(input.players.map((player)=>[player.id,clampCareerFatigue(input.careerFatigueByPlayerId?.[player.id]??0)]))),
+    playerRatingHistoryByPlayerId: Object.freeze(Object.fromEntries(input.players.flatMap((player) => {
+      const history = input.playerRatingHistoryByPlayerId?.[player.id]
+      return history === undefined || history.length === 0 ? [] : [[player.id, Object.freeze(history.map(createPlayerSeasonRatingChange))]]
+    }))),
     teamCohesionByTeamId: Object.freeze(Object.fromEntries(input.teams.map((team) => [team.id, clampTeamCohesion(input.teamCohesionByTeamId?.[team.id] ?? 50)]))),
     promotionRelegationResolutionsById: indexById(input.promotionRelegationResolutions ?? [], 'Promotion/relegation resolution'),
     draftsById: indexById(input.drafts ?? [], 'Draft'),

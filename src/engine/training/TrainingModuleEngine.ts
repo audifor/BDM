@@ -53,6 +53,7 @@ export function assignTrainingModuleToPlayer(
     scope: 'individual',
     playerId: input.playerId,
     definitionId: definition.id,
+    moduleId: input.moduleId,
     intensity,
     assignedStaffPersonIds: input.assignedStaffPersonIds,
   })
@@ -85,6 +86,7 @@ export function scheduleTeamModuleSession(
     durationMinutes: input.durationMinutes,
     scope: 'team',
     definitionId: definition.id,
+    moduleId: input.moduleId,
     intensity,
     assignedStaffPersonIds: input.assignedStaffPersonIds,
   })

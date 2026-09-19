@@ -14,21 +14,26 @@ import type { ContractId, InjuryId, PlayerId, SeasonId, TeamId } from '@/domain/
 import type { PlayerTransaction, PlayerTransactionKind } from '@/domain/transaction'
 import {
   getPlayerContracts,
+  getPlayerRosterTeamId,
   getPlayerTransactions,
   type GameWorld,
 } from '@/domain/world'
+import { boxScoreValuation } from '@/engine/stats/boxScoreValuation'
 import {
   calculatePlayerStatAverages,
   getPlayerGameLogs,
   getPlayerSeasonStatLines,
+  getPlayerSeasonStats,
 } from '@/engine/stats/PlayerHistory'
 
 import {
   calendarDaysBetween,
   formatDurationLabel,
 } from './buildPlayerMedicalModel'
+import { buildPlayerDevelopmentModel } from './buildPlayerDevelopmentModel'
 import { formatSeasonSpanLabel, resolveSeasonLabelForYear } from './buildPlayerContractModel'
-import { formatGameDateLabel } from './presentationHelpers'
+import type { OverviewGapModel } from './playerWorkspaceModel'
+import { formatGameDateLabel, opponentShortCode } from './presentationHelpers'
 
 export type HistoryEventType =
   | 'contract'
@@ -50,6 +55,7 @@ export type HistoryEventSource =
 
 export type HistoryDatePrecision = 'exact' | 'season'
 
+/** Event family an item belongs to. Every item carries the one it was built from. */
 export type HistoryFilterId =
   | 'all'
   | 'contract'
@@ -88,12 +94,6 @@ export interface HistorySummaryModel {
   readonly draftCount: number
   readonly ecosystemCount: number
   readonly gameCount: number
-}
-
-export interface HistoryFilterModel {
-  readonly id: HistoryFilterId
-  readonly label: string
-  readonly count: number
 }
 
 export interface HistoryInspectorContractDetail {
@@ -164,12 +164,121 @@ export type HistoryInspectorDetail =
   | HistoryInspectorDraftDetail
   | HistoryInspectorEcosystemDetail
   | HistoryInspectorSeasonDetail
+  | HistoryMilestoneDetailModel
+
+/** One season of the career, as the team-history table shows it. */
+export interface HistoryTeamSeasonRowModel {
+  readonly id: string
+  readonly seasonLabel: string
+  readonly teamName: string
+  readonly competitionLabel: string
+  readonly roleLabel: string
+  readonly gamesPlayed: number
+  readonly minutesPerGame: string
+  readonly pointsPerGame: string
+  readonly reboundsPerGame: string
+  readonly assistsPerGame: string
+  readonly valuationPerGame: string
+  /** Selection id that opens this season in the detail panel. */
+  readonly selectionId: string
+}
+
+/** A dated career milestone read off the saved records. */
+export interface HistoryMilestoneRowModel {
+  readonly id: string
+  readonly dateLabel: string
+  readonly label: string
+  readonly detail: string
+  /** Value the milestone reports, when it reports one. */
+  readonly value: string | null
+  /** Selection id that opens this milestone in the detail panel. */
+  readonly selectionId: string
+}
+
+/** One node of the career timeline. Every event is derived from a record, never authored. */
+export interface HistoryTimelineEventModel {
+  readonly id: string
+  readonly type: 'debut' | 'breakout' | 'transfer' | 'career-high' | 'contract'
+  readonly dateLabel: string
+  readonly sortDate: string
+  readonly title: string
+  readonly subtitle: string
+  readonly selectionId: string
+}
+
+/** One row of the contract ledger. */
+export interface HistoryContractRowModel {
+  readonly id: string
+  readonly dateLabel: string
+  readonly teamName: string
+  readonly salaryLabel: string
+  readonly statusLabel: string
+  readonly tone: 'positive' | 'accent'
+  readonly selectionId: string
+}
+
+/** One honour. `derived` is false when the save holds no ledger for it. */
+export interface HistoryHonourRowModel {
+  readonly id: string
+  readonly label: string
+  readonly seasonLabel: string | null
+  readonly derived: boolean
+  readonly selectionId: string | null
+}
+
+export interface HistoryDetailStatModel {
+  readonly id: string
+  readonly label: string
+  readonly value: string
+}
+
+export interface HistoryDetailMetaModel {
+  readonly id: string
+  readonly label: string
+  readonly value: string
+}
+
+/**
+ * Detail of a timeline event, a performance milestone or a development transition. Numbers come
+ * from the recorded box score or record; the prose is a reading of them, never authored copy.
+ */
+export interface HistoryMilestoneDetailModel {
+  readonly kind: 'milestone'
+  readonly title: string
+  readonly dateLabel: string
+  readonly contextLabel: string | null
+  readonly description: string
+  readonly stats: readonly HistoryDetailStatModel[]
+  readonly metadata: readonly HistoryDetailMetaModel[]
+  readonly imageNote: string
+  readonly sourceNote: string
+}
+
+export interface HistoryCareerTotalsModel {
+  readonly games: number
+  readonly minutesPerGame: string
+  readonly pointsPerGame: string
+  readonly reboundsPerGame: string
+  readonly assistsPerGame: string
+  readonly valuationPerGame: string
+  readonly note: string
+}
 
 export interface PlayerHistoryModel {
   readonly scope: HistoryScopeModel
   readonly summary: HistorySummaryModel
-  readonly filters: readonly HistoryFilterModel[]
   readonly items: readonly PlayerHistoryItemModel[]
+  /** The career arc: debut, breakout, transfer, career high and contract, in date order. */
+  readonly timeline: readonly HistoryTimelineEventModel[]
+  readonly contractHistory: readonly HistoryContractRowModel[]
+  readonly honours: readonly HistoryHonourRowModel[]
+  readonly honoursNote: string
+  readonly transactions: readonly HistoryMilestoneRowModel[]
+  readonly teamHistory: readonly HistoryTeamSeasonRowModel[]
+  readonly performanceMilestones: readonly HistoryMilestoneRowModel[]
+  readonly developmentMilestones: readonly HistoryMilestoneRowModel[]
+  readonly careerTotals: HistoryCareerTotalsModel
+  readonly gaps: readonly OverviewGapModel[]
   readonly emptyMessage: string | null
   readonly defaultSelectedItemId: string | null
 }
@@ -423,30 +532,6 @@ function buildSeasonEvents(world: GameWorld, playerId: PlayerId): PlayerHistoryI
   })
 }
 
-function buildFilters(items: readonly PlayerHistoryItemModel[]): readonly HistoryFilterModel[] {
-  const counts = new Map<Exclude<HistoryFilterId, 'all'>, number>()
-  for (const item of items) {
-    counts.set(item.filterCategory, (counts.get(item.filterCategory) ?? 0) + 1)
-  }
-
-  const labels: Record<Exclude<HistoryFilterId, 'all'>, string> = {
-    contract: 'Contracts',
-    transaction: 'Transactions',
-    medical: 'Medical',
-    season: 'Seasons',
-    trade: 'Trades',
-    draft: 'Draft',
-    ecosystem: 'Ecosystem',
-  }
-
-  const filters: HistoryFilterModel[] = [{ id: 'all', label: 'All', count: items.length }]
-  for (const [id, label] of Object.entries(labels) as [Exclude<HistoryFilterId, 'all'>, string][]) {
-    const count = counts.get(id) ?? 0
-    if (count > 0) filters.push({ id, label, count })
-  }
-  return filters
-}
-
 export function buildPlayerHistoryModel(
   world: GameWorld,
   playerId: PlayerId,
@@ -464,6 +549,7 @@ export function buildPlayerHistoryModel(
     ...buildEcosystemEvents(world, playerId),
     ...buildSeasonEvents(world, playerId),
   ].sort(compareHistoryItems)
+  const careerTotals = buildCareerTotals(world, playerId)
 
   const summary: HistorySummaryModel = {
     contractCount: items.filter((item) => item.type === 'contract').length,
@@ -483,14 +569,437 @@ export function buildPlayerHistoryModel(
       gapsNote: GAPS_NOTE,
     },
     summary,
-    filters: buildFilters(items),
     items,
+    timeline: buildCareerTimeline(world, playerId),
+    contractHistory: buildContractHistory(world, playerId),
+    honours: buildHonours(world, playerId, careerTotals),
+    honoursNote: HONOURS_NOTE,
+    transactions: buildTransactions(world, playerId),
+    teamHistory: buildTeamHistory(world, playerId),
+    performanceMilestones: buildPerformanceMilestones(world, playerId),
+    developmentMilestones: (buildPlayerDevelopmentModel(world, playerId)?.longitudinal.events ?? []).map(
+      (event) => ({
+        id: event.id,
+        dateLabel: event.dateLabel,
+        label: event.label,
+        detail: event.detail,
+        value: event.impact === null ? null : String(event.impact),
+        selectionId: `development:${event.id.replace('transition:', '')}`,
+      }),
+    ),
+    careerTotals,
+    gaps: buildHistoryGaps(),
     emptyMessage:
       items.length === 0
         ? 'No recorded career history is available for this player in the current save.'
         : null,
     defaultSelectedItemId: items[0]?.id ?? null,
   }
+}
+
+/** One row per season the save holds, taken from the season aggregates the engine already keeps. */
+function buildTeamHistory(
+  world: GameWorld,
+  playerId: PlayerId,
+): readonly HistoryTeamSeasonRowModel[] {
+  const rosterTeamId = getPlayerRosterTeamId(world, playerId)
+
+  return Object.values(world.seasons)
+    .sort((left, right) => right.startDate.localeCompare(left.startDate) || left.id.localeCompare(right.id))
+    .flatMap((season) => {
+      const stats = getPlayerSeasonStats(world, playerId, season.id)
+      if (stats.gamesPlayed === 0) return []
+      const averages = calculatePlayerStatAverages(stats)
+      return [
+        {
+          id: season.id,
+          seasonLabel: season.label,
+          selectionId: `season:${season.id}`,
+          teamName:
+            rosterTeamId === undefined ? 'Free agent' : world.teams[rosterTeamId]?.name ?? 'Club not tracked',
+          competitionLabel: world.competitions[season.competitionId]?.name ?? 'Competition not tracked',
+          roleLabel:
+            stats.gamesStarted === 0
+              ? 'Bench'
+              : stats.gamesStarted === stats.gamesPlayed
+                ? 'Starter'
+                : `Rotation (${stats.gamesStarted} of ${stats.gamesPlayed} starts)`,
+          gamesPlayed: stats.gamesPlayed,
+          minutesPerGame: averages.mpg.toFixed(1),
+          pointsPerGame: averages.ppg.toFixed(1),
+          reboundsPerGame: averages.rpg.toFixed(1),
+          assistsPerGame: averages.apg.toFixed(1),
+          valuationPerGame: (boxScoreValuation(stats) / stats.gamesPlayed).toFixed(1),
+        },
+      ]
+    })
+}
+
+/** Career bests, read from the tracked game log rather than from an authored biography. */
+function buildPerformanceMilestones(
+  world: GameWorld,
+  playerId: PlayerId,
+): readonly HistoryMilestoneRowModel[] {
+  const logs = orderedGameLogs(world, playerId)
+  if (logs.length === 0) return []
+
+  const milestones: HistoryMilestoneRowModel[] = []
+  const push = (
+    id: string,
+    line: (typeof logs)[number],
+    label: string,
+    value: number,
+    detail: string,
+  ): void => {
+    milestones.push({
+      id,
+      dateLabel: formatGameDateLabel(line.gameDate),
+      label,
+      detail,
+      value: String(value),
+      selectionId: `performance:${id}`,
+    })
+  }
+
+  const scoring = bestGame(logs, (line) => line.stats.points)
+  if (scoring !== undefined && scoring.stats.points > 0) {
+    push(
+      CAREER_HIGH_SELECTION,
+      scoring,
+      'Career High (Points)',
+      scoring.stats.points,
+      `vs ${opponentShortCode(teamName(world, scoring.opponentTeamId))} · ${scoring.stats.fieldGoalsMade}/${scoring.stats.fieldGoalsAttempted} from the field`,
+    )
+  }
+
+  const playmaking = bestGame(logs, (line) => line.stats.assists)
+  if (playmaking !== undefined && playmaking.stats.assists > 0) {
+    push(
+      'most-assists',
+      playmaking,
+      'Most Assists (Game)',
+      playmaking.stats.assists,
+      `vs ${opponentShortCode(teamName(world, playmaking.opponentTeamId))} · ${playmaking.stats.turnovers} turnovers`,
+    )
+  }
+
+  const rebounding = bestGame(logs, (line) => line.stats.rebounds)
+  if (rebounding !== undefined && rebounding.stats.rebounds > 0) {
+    push(
+      'most-rebounds',
+      rebounding,
+      'Most Rebounds (Game)',
+      rebounding.stats.rebounds,
+      `vs ${opponentShortCode(teamName(world, rebounding.opponentTeamId))} · ${rebounding.stats.offensiveRebounds} offensive`,
+    )
+  }
+
+  const firstTwenty = logs.find((line) => line.stats.points >= 20)
+  if (firstTwenty !== undefined) {
+    push(
+      'twenty-points',
+      firstTwenty,
+      '20+ Points Game',
+      firstTwenty.stats.points,
+      `First game of 20 points or more, vs ${opponentShortCode(teamName(world, firstTwenty.opponentTeamId))}`,
+    )
+  }
+
+  const firstTenAssists = logs.find((line) => line.stats.assists >= 10)
+  if (firstTenAssists !== undefined) {
+    push(
+      'ten-assists',
+      firstTenAssists,
+      '10+ Assists Game',
+      firstTenAssists.stats.assists,
+      `First game of 10 assists or more, vs ${opponentShortCode(teamName(world, firstTenAssists.opponentTeamId))}`,
+    )
+  }
+
+  return milestones.sort(
+    (left, right) => right.dateLabel.localeCompare(left.dateLabel) || left.id.localeCompare(right.id),
+  )
+}
+
+/** Aggregated totals over every season the save holds, with the scope stated. */
+function buildCareerTotals(world: GameWorld, playerId: PlayerId): HistoryCareerTotalsModel {
+  let games = 0
+  let points = 0
+  let rebounds = 0
+  let assists = 0
+  let seconds = 0
+  let valuation = 0
+
+  for (const season of Object.values(world.seasons)) {
+    const stats = getPlayerSeasonStats(world, playerId, season.id)
+    if (stats.gamesPlayed === 0) continue
+    games += stats.gamesPlayed
+    points += stats.points
+    rebounds += stats.rebounds
+    assists += stats.assists
+    seconds += stats.secondsPlayed
+    valuation += boxScoreValuation(stats)
+  }
+
+  const perGame = (total: number) => (games === 0 ? '0.0' : (total / games).toFixed(1))
+  return {
+    games,
+    minutesPerGame: games === 0 ? '0.0' : (seconds / 60 / games).toFixed(1),
+    pointsPerGame: perGame(points),
+    reboundsPerGame: perGame(rebounds),
+    assistsPerGame: perGame(assists),
+    valuationPerGame: perGame(valuation),
+    note: 'Totals cover every season this save holds; earlier seasons were never persisted.',
+  }
+}
+
+/** Every game the player appears in, oldest first. */
+function orderedGameLogs(
+  world: GameWorld,
+  playerId: PlayerId,
+): readonly ReturnType<typeof getPlayerGameLogs>[number][] {
+  return [...getPlayerGameLogs(world, playerId)].sort((left, right) =>
+    left.gameDate.localeCompare(right.gameDate) || left.gameId.localeCompare(right.gameId),
+  )
+}
+
+function bestGame(
+  logs: readonly ReturnType<typeof getPlayerGameLogs>[number][],
+  pick: (line: ReturnType<typeof getPlayerGameLogs>[number]) => number,
+): ReturnType<typeof getPlayerGameLogs>[number] | undefined {
+  return [...logs].sort(
+    (left, right) => pick(right) - pick(left) || left.gameDate.localeCompare(right.gameDate),
+  )[0]
+}
+
+export const CAREER_HIGH_SELECTION = 'career-high-points'
+export const DEBUT_SELECTION = 'debut-game'
+
+/**
+ * The career arc: the five milestones the reference draws, each one taken from a record the save
+ * holds. A milestone whose record does not exist is simply absent.
+ */
+function buildCareerTimeline(
+  world: GameWorld,
+  playerId: PlayerId,
+): readonly HistoryTimelineEventModel[] {
+  const logs = orderedGameLogs(world, playerId)
+  const seasons = Object.values(world.seasons).sort((left, right) =>
+    left.startDate.localeCompare(right.startDate) || left.id.localeCompare(right.id),
+  )
+  const contracts = [...getPlayerContracts(world, playerId)].sort((left, right) =>
+    left.term.startsOn.localeCompare(right.term.startsOn),
+  )
+  const events: HistoryTimelineEventModel[] = []
+
+  const first = logs[0]
+  if (first !== undefined) {
+    events.push({
+      id: 'debut',
+      type: 'debut',
+      dateLabel: formatGameDateLabel(first.gameDate),
+      sortDate: first.gameDate,
+      title: 'Debut',
+      subtitle: 'First team appearance',
+      selectionId: `timeline:debut`,
+    })
+  }
+
+  // Breakout: the first season the player was given a start, which is when a rotation place shows.
+  const breakoutSeason = seasons.find((season) => {
+    const stats = getPlayerSeasonStats(world, playerId, season.id)
+    return stats.gamesStarted > 0
+  })
+  if (breakoutSeason !== undefined) {
+    const stats = getPlayerSeasonStats(world, playerId, breakoutSeason.id)
+    events.push({
+      id: 'breakout',
+      type: 'breakout',
+      dateLabel: formatGameDateLabel(breakoutSeason.startDate),
+      sortDate: breakoutSeason.startDate,
+      title: 'Breakout',
+      subtitle: 'Established in rotation',
+      selectionId: `timeline:breakout:${breakoutSeason.id}`,
+    })
+    void stats
+  }
+
+  // Transfer: the market move that took the player to the club he currently plays for.
+  const transfers = getPlayerTransactions(world, playerId)
+    .filter((transaction) => transaction.kind === 'signedFreeAgent' && transaction.toTeamId !== undefined)
+    .sort((left, right) => left.occurredOn.localeCompare(right.occurredOn))
+  const transfer = transfers.at(-1)
+  if (transfer !== undefined && transfers.length > 1) {
+    events.push({
+      id: 'transfer',
+      type: 'transfer',
+      dateLabel: formatGameDateLabel(transfer.occurredOn),
+      sortDate: transfer.occurredOn,
+      title: 'Transfer',
+      subtitle: `Joined ${teamName(world, transfer.toTeamId)}`,
+      selectionId: `timeline:transfer:${transfer.id}`,
+    })
+  }
+
+  const scoring = bestGame(logs, (line) => line.stats.points)
+  if (scoring !== undefined && scoring.stats.points > 0) {
+    events.push({
+      id: 'career-high',
+      type: 'career-high',
+      dateLabel: formatGameDateLabel(scoring.gameDate),
+      sortDate: scoring.gameDate,
+      title: 'Career High',
+      subtitle: `${scoring.stats.points} PTS vs ${opponentShortCode(teamName(world, scoring.opponentTeamId))}`,
+      selectionId: `timeline:${CAREER_HIGH_SELECTION}`,
+    })
+  }
+
+  const latestContract = contracts.at(-1)
+  if (latestContract !== undefined) {
+    const earlier = contracts.some(
+      (contract) => contract.id !== latestContract.id && contract.teamId === latestContract.teamId,
+    )
+    events.push({
+      id: 'contract',
+      type: 'contract',
+      dateLabel: formatGameDateLabel(latestContract.term.startsOn),
+      sortDate: latestContract.term.startsOn,
+      title: earlier ? 'New Contract' : 'First Contract',
+      subtitle: earlier ? 'Contract extension' : 'Turned professional',
+      selectionId: `contract:${latestContract.id}`,
+    })
+  }
+
+  return events.sort((left, right) => left.sortDate.localeCompare(right.sortDate))
+}
+
+/** The contract ledger, newest first. `Extension` marks a second deal with the same club. */
+function buildContractHistory(
+  world: GameWorld,
+  playerId: PlayerId,
+): readonly HistoryContractRowModel[] {
+  const contracts = [...getPlayerContracts(world, playerId)].sort((left, right) =>
+    right.term.startsOn.localeCompare(left.term.startsOn),
+  )
+
+  return contracts.map((contract) => {
+    const earlierWithTeam = contracts.some(
+      (candidate) =>
+        candidate.id !== contract.id &&
+        candidate.teamId === contract.teamId &&
+        candidate.term.startsOn < contract.term.startsOn,
+    )
+    return {
+      id: contract.id,
+      dateLabel: formatGameDateLabel(contract.term.startsOn),
+      teamName: teamName(world, contract.teamId),
+      salaryLabel: contract.compensation.annualSalary.toLocaleString('en-US'),
+      statusLabel: earlierWithTeam ? 'Extension' : 'Signed',
+      tone: earlierWithTeam ? 'accent' : 'positive',
+      selectionId: `contract:${contract.id}`,
+    }
+  })
+}
+
+const HONOURS_NOTE =
+  'Awards are not persisted: no trophy, all-league or award ledger exists in the world model, so only honours that can be read from records are listed.'
+
+/**
+ * Honours read from records: the career best and the game-count thresholds actually crossed.
+ * Everything else is named in the note instead of being invented.
+ */
+function buildHonours(
+  world: GameWorld,
+  playerId: PlayerId,
+  totals: HistoryCareerTotalsModel,
+): readonly HistoryHonourRowModel[] {
+  const honours: HistoryHonourRowModel[] = []
+  const scoring = bestGame(orderedGameLogs(world, playerId), (line) => line.stats.points)
+
+  if (scoring !== undefined && scoring.stats.points > 0) {
+    honours.push({
+      id: 'career-high',
+      label: `Career high — ${scoring.stats.points} points`,
+      seasonLabel: seasonLabelOfGame(world, scoring.seasonId),
+      derived: true,
+      selectionId: `performance:${CAREER_HIGH_SELECTION}`,
+    })
+  }
+
+  const threshold = [100, 50, 25, 10].find((value) => totals.games >= value)
+  if (threshold !== undefined) {
+    honours.push({
+      id: 'games-threshold',
+      label: `${threshold}+ professional games`,
+      seasonLabel: seasonReachingGameCount(world, playerId, threshold),
+      derived: true,
+      selectionId: null,
+    })
+  }
+
+  return honours
+}
+
+function seasonLabelOfGame(world: GameWorld, seasonId: SeasonId): string | null {
+  return world.seasons[seasonId]?.label ?? null
+}
+
+/** Season in which the player's career game count first reached the threshold. */
+function seasonReachingGameCount(
+  world: GameWorld,
+  playerId: PlayerId,
+  threshold: number,
+): string | null {
+  const seasons = Object.values(world.seasons).sort((left, right) =>
+    left.startDate.localeCompare(right.startDate) || left.id.localeCompare(right.id),
+  )
+  let games = 0
+  for (const season of seasons) {
+    games += getPlayerSeasonStats(world, playerId, season.id).gamesPlayed
+    if (games >= threshold) return season.label
+  }
+  return null
+}
+
+/** Formal movements recorded for the player: the transaction ledger, newest first. */
+function buildTransactions(
+  world: GameWorld,
+  playerId: PlayerId,
+): readonly HistoryMilestoneRowModel[] {
+  return getPlayerTransactions(world, playerId)
+    .sort((left, right) => right.occurredOn.localeCompare(left.occurredOn))
+    .map((transaction) => ({
+      id: transaction.id,
+      dateLabel: formatGameDateLabel(transaction.occurredOn),
+      label:
+        transaction.kind === 'signedFreeAgent'
+          ? `Signed with ${teamName(world, transaction.toTeamId)}`
+          : TRANSACTION_LABELS[transaction.kind],
+      detail: '',
+      value: null,
+      selectionId: `transaction:${transaction.id}`,
+    }))
+}
+
+/** Reference blocks the save has no record for. */
+function buildHistoryGaps(): readonly OverviewGapModel[] {
+  return [
+    {
+      id: 'honours',
+      label: 'Honours & milestones',
+      reason: 'No trophy or award record is stored for a player, so none can be listed.',
+    },
+    {
+      id: 'international',
+      label: 'International career',
+      reason: 'National team appearances are not part of the world model.',
+    },
+    {
+      id: 'pre-save-seasons',
+      label: 'Seasons before this save',
+      reason: 'The world only holds the seasons it has simulated, so earlier career seasons do not exist.',
+    },
+  ]
 }
 
 function findInjury(world: GameWorld, injuryId: InjuryId): InjuryRecord | undefined {
@@ -501,6 +1010,256 @@ function findContract(world: GameWorld, contractId: ContractId): PlayerContract 
   return world.contractsById[contractId]
 }
 
+const NO_IMAGE_NOTE = 'No photograph is stored for this event.'
+
+function statRows(
+  stats: ReturnType<typeof getPlayerGameLogs>[number]['stats'],
+): readonly HistoryDetailStatModel[] {
+  return [
+    { id: 'pts', label: 'PTS', value: String(stats.points) },
+    { id: 'reb', label: 'REB', value: String(stats.rebounds) },
+    { id: 'ast', label: 'AST', value: String(stats.assists) },
+    { id: 'stl', label: 'STL', value: String(stats.steals) },
+    { id: 'val', label: 'VAL', value: String(boxScoreValuation(stats)) },
+  ]
+}
+
+function minutesOf(stats: ReturnType<typeof getPlayerGameLogs>[number]['stats']): number {
+  return Math.round(stats.secondsPlayed / 60)
+}
+
+/** Detail of one recorded game, shared by the debut and every performance milestone. */
+function buildGameMilestoneDetail(
+  world: GameWorld,
+  line: ReturnType<typeof getPlayerGameLogs>[number],
+  title: string,
+  description: string,
+  sourceNote = 'Derived from the persisted game log',
+): HistoryMilestoneDetailModel {
+  const team = teamName(world, line.teamId)
+  const opponent = teamName(world, line.opponentTeamId)
+
+  return {
+    kind: 'milestone',
+    title,
+    dateLabel: formatGameDateLabel(line.gameDate),
+    contextLabel: `${team} vs ${opponent}`,
+    description,
+    stats: statRows(line.stats),
+    metadata: [
+      { id: 'competition', label: 'Competition', value: world.competitions[line.competitionId]?.name ?? '—' },
+      { id: 'date', label: 'Date', value: formatGameDateLabel(line.gameDate) },
+      { id: 'team', label: 'Team', value: team },
+      { id: 'opponent', label: 'Opponent', value: opponent },
+      { id: 'role', label: 'Role', value: line.started ? 'Starter' : 'Bench Player' },
+      { id: 'minutes', label: 'Minutes', value: String(minutesOf(line.stats)) },
+    ],
+    imageNote: NO_IMAGE_NOTE,
+    sourceNote,
+  }
+}
+
+/** Season-shaped milestone: the breakout season and the recorded transitions use it. */
+function buildSeasonMilestoneDetail(
+  world: GameWorld,
+  playerId: PlayerId,
+  seasonId: SeasonId,
+  title: string,
+  description: string,
+  sourceNote: string,
+): HistoryMilestoneDetailModel | undefined {
+  const season = world.seasons[seasonId]
+  if (season === undefined) return undefined
+  const stats = getPlayerSeasonStats(world, playerId, seasonId)
+  if (stats.gamesPlayed === 0) return undefined
+  const averages = calculatePlayerStatAverages(stats)
+  const rosterTeamId = getPlayerRosterTeamId(world, playerId)
+
+  return {
+    kind: 'milestone',
+    title,
+    dateLabel: formatGameDateLabel(season.startDate),
+    contextLabel: teamName(world, rosterTeamId),
+    description,
+    stats: [
+      { id: 'pts', label: 'PTS', value: averages.ppg.toFixed(1) },
+      { id: 'reb', label: 'REB', value: averages.rpg.toFixed(1) },
+      { id: 'ast', label: 'AST', value: averages.apg.toFixed(1) },
+      { id: 'stl', label: 'STL', value: averages.spg.toFixed(1) },
+      { id: 'val', label: 'VAL', value: (boxScoreValuation(stats) / stats.gamesPlayed).toFixed(1) },
+    ],
+    metadata: [
+      { id: 'competition', label: 'Competition', value: world.competitions[season.competitionId]?.name ?? '—' },
+      { id: 'season', label: 'Season', value: season.label },
+      { id: 'starts', label: 'Starts', value: `${stats.gamesStarted} of ${stats.gamesPlayed}` },
+      { id: 'role', label: 'Role', value: stats.gamesStarted > 0 ? 'Rotation' : 'Bench' },
+      { id: 'minutes', label: 'Minutes per game', value: averages.mpg.toFixed(1) },
+      { id: 'games', label: 'Games', value: String(stats.gamesPlayed) },
+    ],
+    imageNote: NO_IMAGE_NOTE,
+    sourceNote,
+  }
+}
+
+/** Market move: the date, the club joined and the club left, with no invented box score. */
+function buildTransferMilestoneDetail(
+  world: GameWorld,
+  transaction: PlayerTransaction,
+): HistoryMilestoneDetailModel {
+  const toTeam = teamName(world, transaction.toTeamId)
+  return {
+    kind: 'milestone',
+    title: 'Transfer',
+    dateLabel: formatGameDateLabel(transaction.occurredOn),
+    contextLabel: `Joined ${toTeam}`,
+    description: `Signed for ${toTeam} on ${formatGameDateLabel(transaction.occurredOn)}, arriving from ${teamName(world, transaction.fromTeamId)}.`,
+    stats: [],
+    metadata: [
+      { id: 'date', label: 'Date', value: formatGameDateLabel(transaction.occurredOn) },
+      { id: 'team', label: 'Team', value: toTeam },
+      { id: 'from', label: 'Previous team', value: teamName(world, transaction.fromTeamId) },
+      { id: 'contract', label: 'Contract', value: transaction.contractId ?? '—' },
+    ],
+    imageNote: NO_IMAGE_NOTE,
+    sourceNote: 'Market transaction record · no box score is attached to this event',
+  }
+}
+
+/** The game a performance milestone points at, or undefined when the id is unknown. */
+function gameForMilestone(
+  world: GameWorld,
+  playerId: PlayerId,
+  milestoneId: string,
+): ReturnType<typeof getPlayerGameLogs>[number] | undefined {
+  const logs = orderedGameLogs(world, playerId)
+  switch (milestoneId) {
+    case CAREER_HIGH_SELECTION:
+      return bestGame(logs, (line) => line.stats.points)
+    case 'most-assists':
+      return bestGame(logs, (line) => line.stats.assists)
+    case 'most-rebounds':
+      return bestGame(logs, (line) => line.stats.rebounds)
+    case 'twenty-points':
+      return logs.find((line) => line.stats.points >= 20)
+    case 'ten-assists':
+      return logs.find((line) => line.stats.assists >= 10)
+    case DEBUT_SELECTION:
+      return logs[0]
+    default:
+      return undefined
+  }
+}
+
+const MILESTONE_TITLES: Record<string, string> = {
+  [CAREER_HIGH_SELECTION]: 'Career High',
+  'most-assists': 'Most Assists',
+  'most-rebounds': 'Most Rebounds',
+  'twenty-points': '20+ Points Game',
+  'ten-assists': '10+ Assists Game',
+  [DEBUT_SELECTION]: 'Debut',
+}
+
+/** Reading of a game milestone, written from the box score it shows. */
+function describeGameMilestone(
+  milestoneId: string,
+  line: ReturnType<typeof getPlayerGameLogs>[number],
+): string {
+  const stats = line.stats
+  const shot = `${stats.fieldGoalsMade}/${stats.fieldGoalsAttempted} from the field`
+  const minutes = minutesOf(stats)
+
+  switch (milestoneId) {
+    case DEBUT_SELECTION:
+      return `First recorded appearance, ${line.started ? 'in the starting five' : 'coming off the bench'}, with ${stats.points} points on ${shot} in ${minutes} minutes.`
+    case CAREER_HIGH_SELECTION:
+      return `Highest scoring game on record: ${stats.points} points on ${shot} and ${stats.threePointMade}/${stats.threePointAttempted} from three in ${minutes} minutes.`
+    case 'most-assists':
+      return `Most assists in a single game: ${stats.assists} in ${minutes} minutes, with ${stats.points} points and ${stats.turnovers} turnovers.`
+    case 'most-rebounds':
+      return `Most rebounds in a single game: ${stats.rebounds} (${stats.offensiveRebounds} offensive) in ${minutes} minutes.`
+    case 'twenty-points':
+      return `First game of ${stats.points} points or more, on ${shot} in ${minutes} minutes.`
+    case 'ten-assists':
+      return `First game of ${stats.assists} assists or more, in ${minutes} minutes.`
+    default:
+      return `${stats.points} points on ${shot} in ${minutes} minutes.`
+  }
+}
+
+/** Detail for the selection ids the timeline and the milestone tables produce. */
+function buildMilestoneSelectionDetail(
+  world: GameWorld,
+  playerId: PlayerId,
+  model: PlayerHistoryModel,
+  selectionId: string,
+): HistoryInspectorDetail | undefined {
+  if (selectionId.startsWith('timeline:')) {
+    const event = model.timeline.find((entry) => entry.selectionId === selectionId)
+    if (event === undefined) return undefined
+    if (event.type === 'breakout') {
+      const seasonId = selectionId.replace('timeline:breakout:', '') as SeasonId
+      const stats = getPlayerSeasonStats(world, playerId, seasonId)
+      return buildSeasonMilestoneDetail(
+        world,
+        playerId,
+        seasonId,
+        'Breakout',
+        `Established in the rotation: ${stats.gamesStarted} starts in ${stats.gamesPlayed} games at ${minutesPerGame(stats)} minutes per game.`,
+        'Derived from the persisted season record',
+      )
+    }
+    if (event.type === 'transfer') {
+      const transactionId = selectionId.replace('timeline:transfer:', '')
+      const transaction = getPlayerTransactions(world, playerId).find((entry) => entry.id === transactionId)
+      return transaction === undefined ? undefined : buildTransferMilestoneDetail(world, transaction)
+    }
+    const milestoneId = selectionId === 'timeline:debut' ? DEBUT_SELECTION : CAREER_HIGH_SELECTION
+    const line = gameForMilestone(world, playerId, milestoneId)
+    return line === undefined
+      ? undefined
+      : buildGameMilestoneDetail(
+          world,
+          line,
+          MILESTONE_TITLES[milestoneId] ?? event.title,
+          describeGameMilestone(milestoneId, line),
+        )
+  }
+
+  if (selectionId.startsWith('performance:')) {
+    const milestoneId = selectionId.replace('performance:', '')
+    const line = gameForMilestone(world, playerId, milestoneId)
+    return line === undefined
+      ? undefined
+      : buildGameMilestoneDetail(
+          world,
+          line,
+          MILESTONE_TITLES[milestoneId] ?? 'Performance milestone',
+          describeGameMilestone(milestoneId, line),
+        )
+  }
+
+  if (selectionId.startsWith('development:')) {
+    const seasonId = selectionId.replace('development:', '') as SeasonId
+    const row = model.developmentMilestones.find((entry) => entry.selectionId === selectionId)
+    if (row === undefined) return undefined
+    const movement = row.value ?? '0'
+    return buildSeasonMilestoneDetail(
+      world,
+      playerId,
+      seasonId,
+      row.label,
+      `${movement} rating points moved when the season closed.`,
+      'Rating history record',
+    )
+  }
+
+  return undefined
+}
+
+function minutesPerGame(stats: ReturnType<typeof getPlayerSeasonStats>): string {
+  return stats.gamesPlayed === 0 ? '0.0' : (stats.secondsPlayed / 60 / stats.gamesPlayed).toFixed(1)
+}
+
 export function findHistoryInspectorDetail(
   world: GameWorld,
   playerId: PlayerId,
@@ -509,6 +1268,10 @@ export function findHistoryInspectorDetail(
   onDate: typeof world.currentDate = world.currentDate,
 ): HistoryInspectorDetail | undefined {
   if (selectedItemId === null) return undefined
+
+  const milestone = buildMilestoneSelectionDetail(world, playerId, model, selectedItemId)
+  if (milestone !== undefined) return milestone
+
   const item = model.items.find((entry) => entry.id === selectedItemId)
   if (item === undefined) return undefined
 
@@ -620,12 +1383,4 @@ export function findHistoryInspectorDetail(
     pointsPerGame: averages.ppg.toFixed(1),
     sourceNote: 'Derived from persisted game logs · not an explicit career event',
   }
-}
-
-export function filterHistoryItems(
-  items: readonly PlayerHistoryItemModel[],
-  filterId: HistoryFilterId,
-): readonly PlayerHistoryItemModel[] {
-  if (filterId === 'all') return items
-  return items.filter((item) => item.filterCategory === filterId)
 }

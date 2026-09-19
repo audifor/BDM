@@ -1,11 +1,12 @@
 import type { RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
 
 const SIZE = 120
-const VIEW_PAD = 28
+/** Room around the plot for the axis labels, which can hold a full category name now. */
+const VIEW_PAD = 36
 const VIEW_SIZE = SIZE + VIEW_PAD * 2
 const CENTER = SIZE / 2
 const MAX_RADIUS = 46
-const LABEL_RADIUS = MAX_RADIUS + 20
+const LABEL_RADIUS = MAX_RADIUS + 16
 
 function polarPoint(index: number, total: number, radius: number): [number, number] {
   const angle = (Math.PI * 2 * index) / total - Math.PI / 2
@@ -31,6 +32,8 @@ export interface AttributeRadarProps {
   readonly selectedCategory?: RatingCategory | null
   readonly onCategorySelect?: (category: RatingCategory) => void
   readonly accent?: string
+  /** Draws each axis value under its label, as the attributes board's reference does. */
+  readonly showValues?: boolean
 }
 
 export function AttributeRadar({
@@ -38,6 +41,7 @@ export function AttributeRadar({
   selectedCategory = null,
   onCategorySelect,
   accent = 'var(--ng-cyan)',
+  showValues = false,
 }: AttributeRadarProps) {
   const total = axes.length
   const gridLevels = [0.25, 0.5, 0.75, 1]
@@ -140,9 +144,14 @@ export function AttributeRadar({
               dominantBaseline="middle"
               textAnchor="middle"
               x={lx}
-              y={ly}
+              y={showValues ? ly - 4 : ly}
             >
               {axis.label}
+              {showValues && (
+                <tspan className="po-radar__value ng-type-numeric" x={lx} dy="1.15em">
+                  {axis.value}
+                </tspan>
+              )}
             </text>
           </g>
         )

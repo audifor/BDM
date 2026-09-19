@@ -1,11 +1,15 @@
 import type { CanonicalRatingKey } from '@/domain/player'
 
-import { CATEGORY_LABELS, ratingTone } from '@/ui-ng/applications/player/data/ratingCatalog'
+import { ordinalPercentile, ratingTone } from '@/ui-ng/applications/player/data/ratingCatalog'
 
 export interface RatingAttributeRowProps {
   readonly id: CanonicalRatingKey
   readonly label: string
   readonly value: number
+  /** Movement recorded for this attribute since the first tracked season, 0 when unknown. */
+  readonly change: number
+  /** Share of the competition this value beats, null when there is no sample. */
+  readonly percentile: number | null
   readonly selected?: boolean
   readonly onSelect: (id: CanonicalRatingKey) => void
 }
@@ -14,6 +18,8 @@ export function RatingAttributeRow({
   id,
   label,
   value,
+  change,
+  percentile,
   selected = false,
   onSelect,
 }: RatingAttributeRowProps) {
@@ -30,6 +36,14 @@ export function RatingAttributeRow({
         <span className="po-attr-rating__scale-fill" style={{ width: `${value}%` }} />
       </span>
       <span className="po-attr-rating__marker" data-tone={tone} />
+      <span
+        className={`po-attr-rating__change ng-type-numeric${change < 0 ? ' is-negative' : change > 0 ? ' is-positive' : ''}`}
+      >
+        {change === 0 ? '—' : `${change > 0 ? '+' : ''}${change}`}
+      </span>
+      <span className="po-attr-rating__percentile ng-type-numeric">
+        {percentile === null ? '—' : ordinalPercentile(percentile)}
+      </span>
       <span className="po-attr-rating__value ng-type-numeric">{value}</span>
     </button>
   )
@@ -37,8 +51,4 @@ export function RatingAttributeRow({
 
 export function RatingToneLegend({ label }: { readonly label: string }) {
   return <span className="po-attr-tone-label">{label}</span>
-}
-
-export function categoryProfileLabel(category: keyof typeof CATEGORY_LABELS): string {
-  return `${CATEGORY_LABELS[category]} profile`
 }

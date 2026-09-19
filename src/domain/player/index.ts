@@ -1,6 +1,6 @@
 export { createPlayer } from './Player'
 export { BASKETBALL_RATING_KEYS, CANONICAL_RATING_KEYS, LEGACY_BASKETBALL_RATING_KEYS, TENDENCY_KEYS, canonicalizeLegacyRatings, generateDefaultTendencies, legacyCanonicalRatingSignals, legacyRatingSignals, migrateLegacyCanonicalRatingsToTruth } from './Player'
-export type { BasketballProfile, BasketballRatingKey, CanonicalRatingKey, CreatePlayerInput, DominantHand, LegacyPlayerRatings, Player, PlayerBio, PlayerBioInput, PlayerRatings, PlayerTendencies, TendencyKey } from './Player'
+export type { BasketballProfile, BasketballRatingKey, CanonicalRatingKey, CreatePlayerInput, DominantHand, LegacyCanonicalPlayerRatings, LegacyPlayerRatings, Player, PlayerBio, PlayerBioInput, PlayerRatings, PlayerTendencies, TendencyKey } from './Player'
 export { calculateBootstrapAbilityProxy, deriveLegacyPotential, getPlayerPotentialBand } from './PlayerPotential'
 export type { PlayerPotential, PlayerPotentialBand } from './PlayerPotential'
 export { DEVELOPMENT_DOMAINS, createDevelopmentProfile } from './PlayerDevelopmentProfile'

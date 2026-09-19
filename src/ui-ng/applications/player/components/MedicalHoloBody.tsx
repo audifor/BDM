@@ -1,6 +1,13 @@
 import { useId } from 'react'
 
-export function MedicalHoloBody({ className }: { readonly className?: string }) {
+export function MedicalHoloBody({
+  className,
+  viewBox = '0 0 120 200',
+}: {
+  readonly className?: string
+  /** Widen the box when the figure shares its coordinate space with an overlay, as the body map does. */
+  readonly viewBox?: string
+}) {
   const glowFilterId = useId()
 
   return (
@@ -8,7 +15,7 @@ export function MedicalHoloBody({ className }: { readonly className?: string }) 
       aria-hidden
       className={className}
       fill="none"
-      viewBox="0 0 120 200"
+      viewBox={viewBox}
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>

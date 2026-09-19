@@ -14,6 +14,12 @@ export interface ScheduledTrainingSession {
   readonly scope: 'team' | 'individual'
   readonly playerId?: PlayerId
   readonly definitionId: string
+  /**
+   * Module the caller scheduled, when the session came from a training module rather than a raw
+   * definition. A user-created module executes as its base definition, so without this the chosen
+   * module would be unrecoverable from the scheduled session.
+   */
+  readonly moduleId?: string
   readonly intensity: TrainingIntensity
   readonly status: ScheduledTrainingSessionStatus
   /**
@@ -41,6 +47,7 @@ export function createScheduledTrainingSession(input: Omit<ScheduledTrainingSess
   }
   if (input.scope === 'individual' && input.playerId === undefined) throw new RangeError('Individual sessions require a playerId')
   if (input.scope === 'team' && input.playerId !== undefined) throw new RangeError('Team sessions must not specify a playerId')
+  if (input.moduleId !== undefined && input.moduleId.trim() === '') throw new RangeError('Scheduled session moduleId must not be blank')
   trainingDefinitionById(input.definitionId)
   if (!['light', 'normal', 'high'].includes(input.intensity)) throw new RangeError('Invalid session intensity')
   const assigned = input.assignedStaffPersonIds

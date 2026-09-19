@@ -1,131 +1,126 @@
 import { useMemo } from 'react'
 
-import type { GameId } from '@/domain/ids'
+import type { GameId, SeasonId } from '@/domain/ids'
 import { useGameStore } from '@/stores/gameStore'
 
-import { GameDetailInspector } from '@/ui-ng/applications/player/components/GameDetailInspector'
-import { PerformanceGameLog } from '@/ui-ng/applications/player/components/PerformanceGameLog'
-import { PerformanceRecentForm } from '@/ui-ng/applications/player/components/PerformanceRecentForm'
-import { PerformanceSeasonSummary } from '@/ui-ng/applications/player/components/PerformanceSeasonSummary'
-import { PerformanceShootingPanel } from '@/ui-ng/applications/player/components/PerformanceShootingPanel'
+import {
+  PerformanceEfficiencyPanel,
+  PerformanceFiltersBar,
+  PerformanceGameInspectorPanel,
+  PerformanceGameLogPanel,
+  PerformanceKpiStrip,
+  PerformanceRecentFormChart,
+  PerformanceShotProfilePanel,
+  PerformanceSplitsPanel,
+} from '@/ui-ng/applications/player/components/PerformanceBoardPanels'
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import {
+  buildPerformanceFilterBar,
   findGameLogRow,
   selectPerformanceSnapshot,
   type PerformanceCompetitionFilter,
+  type PerformanceFilterModel,
+  type PerformancePhaseFilter,
+  type PerformanceSplitFilter,
 } from '@/ui-ng/applications/player/data/buildPlayerPerformanceModel'
 
 export function PlayerPerformanceView() {
   const { model, playerId, session } = usePlayerWorkspace()
   const world = useGameStore((state) => state.world)
+  const {
+    selectedGameId,
+    setSelectedGameId,
+    seasonId,
+    setSeasonId,
+    competitionFilter,
+    setCompetitionFilter,
+    phaseFilter,
+    setPhaseFilter,
+    splitFilter,
+    setSplitFilter,
+  } = session.performance
 
-  const { selectedGameId, setSelectedGameId, competitionFilter, setCompetitionFilter } =
-    session.performance
+  const effectiveSeasonId = seasonId ?? model?.performance.seasonId ?? null
 
   const snapshot = useMemo(() => {
-    if (model === null || world === null || playerId === null) return null
-    return selectPerformanceSnapshot(model.performance, world, playerId, competitionFilter)
-  }, [competitionFilter, model, playerId, world])
+    if (model === null || world === null || playerId === null || effectiveSeasonId === null) return null
+    return selectPerformanceSnapshot(model.performance, world, playerId, {
+      seasonId: effectiveSeasonId,
+      competition: competitionFilter,
+      phase: phaseFilter,
+      split: splitFilter,
+    })
+  }, [competitionFilter, effectiveSeasonId, model, phaseFilter, playerId, splitFilter, world])
 
-  if (model === null || snapshot === null) return null
+  const filters = useMemo(() => {
+    if (world === null || playerId === null || effectiveSeasonId === null) return []
+    return buildPerformanceFilterBar(world, playerId, effectiveSeasonId, {
+      competition: competitionFilter,
+      phase: phaseFilter,
+      split: splitFilter,
+    })
+  }, [competitionFilter, effectiveSeasonId, phaseFilter, playerId, splitFilter, world])
 
-  const showCompetitionFilter = snapshot.competitionOptions.length > 1
+  if (model === null || snapshot === null || effectiveSeasonId === null) return null
+
+  const onFilterChange = (id: PerformanceFilterModel['id'], value: string): void => {
+    switch (id) {
+      case 'season':
+        setSeasonId(value as SeasonId)
+        return
+      case 'competition':
+        setCompetitionFilter(value as PerformanceCompetitionFilter)
+        return
+      case 'phase':
+        setPhaseFilter(value as PerformancePhaseFilter)
+        return
+      case 'split':
+        setSplitFilter(value as PerformanceSplitFilter)
+        return
+    }
+  }
+
+  const onSelectGame = (gameId: GameId): void => setSelectedGameId(gameId)
+  const activeGameId = findGameLogRow(snapshot, selectedGameId)?.gameId ?? null
 
   return (
-    <div className="pp-root" data-ng-region="player-performance">
-      <div className="pp-root__upper">
-        <PerformanceSeasonSummary snapshot={snapshot} />
+    <div className="po-pf-board" data-ng-region="player-performance">
+      <PerformanceFiltersBar
+        filters={filters}
+        onChange={onFilterChange}
+        values={{
+          season: effectiveSeasonId,
+          competition: competitionFilter,
+          phase: phaseFilter,
+          split: splitFilter,
+        }}
+      />
 
-        {showCompetitionFilter && (
-          <div className="pp-competition-filter">
-            <label className="pp-competition-filter__label" htmlFor="pp-competition-select">
-              Competition
-            </label>
-            <select
-              className="pp-competition-filter__select ng-btn"
-              id="pp-competition-select"
-              onChange={(event) =>
-                setCompetitionFilter(event.target.value as PerformanceCompetitionFilter)
-              }
-              value={competitionFilter}
-            >
-              {snapshot.competitionOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+      <PerformanceKpiStrip cells={snapshot.kpiStrip} />
 
-        {snapshot.status === 'available' && (
-          <div className="pp-root__lanes">
-            <section className="pp-production-lane" data-ng-region="performance-production">
-              <header className="pp-panel-head">
-                <span className="pp-panel-head__title">Production</span>
-                <span className="pp-panel-head__meta">Per game</span>
-              </header>
-              <div className="pp-production-lane__grid">
-                {snapshot.productionPrimary.map((cell) => (
-                  <div className="pp-production-lane__cell" key={cell.label}>
-                    <span className="pp-stat-label pp-stat-label--primary">{cell.label}</span>
-                    <span className="pp-stat-value pp-stat-value--primary ng-type-numeric">
-                      {cell.value}
-                    </span>
-                  </div>
-                ))}
-                {snapshot.productionSecondary.map((cell) => (
-                  <div
-                    className="pp-production-lane__cell pp-production-lane__cell--secondary"
-                    key={cell.label}
-                  >
-                    <span className="pp-stat-label pp-stat-label--secondary">{cell.label}</span>
-                    <span className="pp-stat-value pp-stat-value--secondary ng-type-numeric">
-                      {cell.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <PerformanceShootingPanel snapshot={snapshot} />
-
-            <PerformanceRecentForm
-              onSelectGame={(gameId: GameId) => setSelectedGameId(gameId)}
-              selectedGameId={selectedGameId}
-              snapshot={snapshot}
-            />
-          </div>
-        )}
+      <div className="po-pf-band--upper">
+        <PerformanceEfficiencyPanel metrics={snapshot.efficiencyMetrics} />
+        <PerformanceShotProfilePanel profile={snapshot.shotProfile} />
+        <PerformanceSplitsPanel note={snapshot.splitsNote} rows={snapshot.splits} />
       </div>
 
-      <div className="pp-root__lower">
-        <PerformanceGameLog
-          emptyMessage="No game log entries for this season."
-          onSelectGame={(gameId) => setSelectedGameId(gameId)}
-          rows={snapshot.gameLogs}
-          selectedGameId={selectedGameId}
-        />
-      </div>
+      <PerformanceRecentFormChart
+        games={snapshot.recentForm}
+        onSelectGame={onSelectGame}
+        selectedGameId={activeGameId}
+      />
+
+      <PerformanceGameLogPanel
+        onSelectGame={onSelectGame}
+        rows={snapshot.gameLogs}
+        selectedGameId={activeGameId}
+      />
+
+      <PerformanceGameInspectorPanel
+        onSelectGame={onSelectGame}
+        rows={snapshot.gameLogs}
+        selectedGameId={activeGameId}
+      />
     </div>
   )
-}
-
-/** Used by PlayerWorkspace shell for the inspector pane. */
-export function PerformanceGameInspectorContent() {
-  const { model, playerId, session } = usePlayerWorkspace()
-  const world = useGameStore((state) => state.world)
-  const { selectedGameId, competitionFilter } = session.performance
-
-  const snapshot = useMemo(() => {
-    if (model === null || world === null || playerId === null) return null
-    return selectPerformanceSnapshot(model.performance, world, playerId, competitionFilter)
-  }, [competitionFilter, model, playerId, world])
-
-  const selectedRow = useMemo(
-    () => (snapshot === null ? undefined : findGameLogRow(snapshot, selectedGameId)),
-    [selectedGameId, snapshot],
-  )
-
-  return <GameDetailInspector row={selectedRow} />
 }

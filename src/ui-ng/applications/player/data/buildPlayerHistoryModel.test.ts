@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { createNewGame } from '@/app/game'
+import { completeMatch, createNewGame, prepareUserMatch } from '@/app/game'
 import { addDays } from '@/domain/date'
 import { injuryIdFromString } from '@/domain/ids'
 import { createInjury } from '@/domain/injury'
@@ -9,7 +9,6 @@ import { updateGameWorld } from '@/domain/world'
 
 import {
   buildPlayerHistoryModel,
-  filterHistoryItems,
   findHistoryInspectorDetail,
 } from './buildPlayerHistoryModel'
 import { buildPlayerWorkspaceModel, defaultPlayerIdForNg } from './buildPlayerWorkspaceModel'
@@ -76,14 +75,40 @@ describe('buildPlayerHistoryModel', () => {
     }
   })
 
-  it('filters history items by populated event families only', () => {
+  it('builds the career arc, the contract ledger and the honours from records', () => {
     const world = createNewGame()
     const playerId = defaultPlayerIdForNg(world)!
-    const model = buildPlayerHistoryModel(withInjury(world, playerId), playerId)!
+    const model = buildPlayerHistoryModel(world, playerId)!
 
-    expect(model.filters.some((filter) => filter.id === 'medical')).toBe(true)
-    expect(filterHistoryItems(model.items, 'medical').every((item) => item.type === 'medical')).toBe(true)
-    expect(filterHistoryItems(model.items, 'all')).toHaveLength(model.items.length)
+    // Every timeline event comes from a record and is selectable.
+    for (const event of model.timeline) {
+      expect(['debut', 'breakout', 'transfer', 'career-high', 'contract']).toContain(event.type)
+      expect(event.title.length).toBeGreaterThan(0)
+      expect(event.subtitle.length).toBeGreaterThan(0)
+      expect(event.selectionId.length).toBeGreaterThan(0)
+    }
+    // The timeline is ordered oldest first, so it reads as an arc.
+    for (let index = 0; index + 1 < model.timeline.length; index += 1) {
+      expect(
+        model.timeline[index]!.sortDate.localeCompare(model.timeline[index + 1]!.sortDate),
+      ).toBeLessThanOrEqual(0)
+    }
+
+    expect(model.contractHistory.length).toBeGreaterThan(0)
+    for (const row of model.contractHistory) {
+      expect(row.salaryLabel.length).toBeGreaterThan(0)
+      expect(['Signed', 'Extension']).toContain(row.statusLabel)
+      expect(row.selectionId).toBe(`contract:${row.id}`)
+    }
+
+    // Honours are only what the records evidence; the note names what is not stored.
+    expect(model.honours.every((honour) => honour.derived)).toBe(true)
+    expect(model.honoursNote).toContain('not persisted')
+    expect(
+      model.honours.some((honour) => honour.id === 'games-threshold') ||
+        model.careerTotals.games < 10,
+    ).toBe(true)
+    expect(model.transactions.every((row) => row.selectionId.startsWith('transaction:'))).toBe(true)
   })
 
   it('does not include development or rating progression events', () => {
@@ -93,7 +118,7 @@ describe('buildPlayerHistoryModel', () => {
 
     expect(model!.items.some((item) => item.title.toLowerCase().includes('rating'))).toBe(false)
     expect(model!.items.some((item) => item.title.toLowerCase().includes('development'))).toBe(false)
-    expect(model!.scope.gapsNote).toContain('rating progression history')
+    expect(model!.gaps.map((gap) => gap.label)).toContain('International career')
   })
 
   it('transforms inspector detail for contract and medical selections', () => {
@@ -106,6 +131,51 @@ describe('buildPlayerHistoryModel', () => {
 
     expect(findHistoryInspectorDetail(injuredWorld, playerId, model, contractItem?.id ?? null)?.kind).toBe('contract')
     expect(findHistoryInspectorDetail(injuredWorld, playerId, model, medicalItem?.id ?? null)?.kind).toBe('medical')
+  })
+
+  it('opens the detail of a timeline event and of a performance milestone', () => {
+    const base = createNewGame()
+    const simulation = prepareUserMatch(base)
+    const world = completeMatch(base, simulation)
+    const playerId = simulation.squads.home[0]!
+    const model = buildPlayerHistoryModel(world, playerId)!
+    const line = world.matchStatLogsByGameId[simulation.gameId]!.playerLines.find(
+      (entry) => entry.playerId === playerId,
+    )!
+
+    // The debut of the timeline and the career-high milestone both open a real box score.
+    const debut = findHistoryInspectorDetail(world, playerId, model, 'timeline:debut')
+    expect(debut?.kind).toBe('milestone')
+    if (debut?.kind === 'milestone') {
+      expect(debut.title).toBe('Debut')
+      expect(debut.stats.map((stat) => stat.label)).toEqual(['PTS', 'REB', 'AST', 'STL', 'VAL'])
+      expect(debut.stats.find((stat) => stat.label === 'PTS')?.value).toBe(String(line.stats.points))
+      expect(debut.metadata.map((row) => row.label)).toEqual([
+        'Competition',
+        'Date',
+        'Team',
+        'Opponent',
+        'Role',
+        'Minutes',
+      ])
+      // No photograph is stored, and the panel says so instead of showing a stand-in.
+      expect(debut.imageNote).toContain('No photograph')
+      expect(debut.description).toContain('First recorded appearance')
+    }
+
+    const milestone = model.performanceMilestones.find(
+      (row) => row.id === 'career-high-points',
+    )
+    const detail = findHistoryInspectorDetail(world, playerId, model, milestone?.selectionId ?? null)
+    expect(detail?.kind).toBe('milestone')
+    if (detail?.kind === 'milestone') {
+      expect(detail.title).toBe('Career High')
+      expect(detail.stats.find((stat) => stat.label === 'PTS')?.value).toBe(
+        String(line.stats.points),
+      )
+    }
+
+    expect(findHistoryInspectorDetail(world, playerId, model, 'performance:unknown')).toBeUndefined()
   })
 
   it('connects history into the player workspace model', () => {

@@ -1,13 +1,18 @@
 import { useMemo } from 'react'
 
-import { ContractAgreementSummary, ContractTermTimeline } from '@/ui-ng/applications/player/components/ContractTermTimeline'
+import { ContractTermTimeline } from '@/ui-ng/applications/player/components/ContractTermTimeline'
+import {
+  ContractClosingPanels,
+  ContractFinancialSnapshotPanel,
+  ContractIntelligencePanel,
+  ContractSummaryPanel,
+} from '@/ui-ng/applications/player/components/ContractPanels'
 import { ContractDetailInspector } from '@/ui-ng/applications/player/components/ContractDetailInspector'
 import { ContractFinancialSchedule } from '@/ui-ng/applications/player/components/ContractFinancialSchedule'
 import {
   ContractHistoryStrip,
   ContractRightsStrip,
 } from '@/ui-ng/applications/player/components/ContractHistoryStrip'
-import { ContractStatusBand } from '@/ui-ng/applications/player/components/ContractStatusBand'
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
 import { findContractInspectorDetail } from '@/ui-ng/applications/player/data/buildPlayerContractModel'
 
@@ -21,23 +26,25 @@ export function PlayerContractView() {
 
   return (
     <div className="pc-root" data-ng-region="player-contract">
-      <div className="pc-root__upper">
-        <ContractStatusBand
+      {/* Row 1 — summary | financial snapshot | intelligence, as in the reference. */}
+      <div className="pc-root__row pc-root__row--summary">
+        <ContractSummaryPanel
           band={contract.statusBand}
-          compensationContextNote={contract.compensationContextNote}
+          compensationNote={contract.compensationContextNote}
           emptyMessage={contract.emptyMessage}
-        />
-        <ContractAgreementSummary agreement={contract.agreement} />
-        <ContractRightsStrip rights={contract.rights} />
-      </div>
-
-      {contract.viewStatus !== 'none' && (
-        <div className="pc-root__main">
+        />        <div className="pc-root__snapshot-stack">
+          <ContractFinancialSnapshotPanel snapshot={contract.snapshot} />
           <ContractTermTimeline
             nodes={contract.timeline}
             onSelectItem={setSelectedItemId}
             selectedItemId={selectedItemId}
           />
+        </div>
+        <ContractIntelligencePanel intelligence={contract.intelligence} />
+      </div>
+
+      {contract.viewStatus !== 'none' && (
+        <div className="pc-root__row pc-root__row--schedule">
           <ContractFinancialSchedule
             onSelectRow={setSelectedItemId}
             rows={contract.financialSchedule}
@@ -46,7 +53,12 @@ export function PlayerContractView() {
         </div>
       )}
 
-      <ContractHistoryStrip entries={contract.history} />
+      <ContractClosingPanels gaps={contract.gaps} />
+
+      <div className="pc-root__row pc-root__row--closing">
+        <ContractRightsStrip rights={contract.rights} />
+        <ContractHistoryStrip entries={contract.history} />
+      </div>
     </div>
   )
 }

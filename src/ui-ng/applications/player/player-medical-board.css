@@ -1,0 +1,1124 @@
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   PLAYER · MEDICAL — the 1:1 reference board.
+
+   Namespaced `po-med-*`; the palette comes from the workspace root (`--po-ov-*`).
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.po-med-board {
+  display: grid;
+  /* Reference: LEFT 620, CENTER 596, RIGHT 657 of the content width, plus a full-width filter strip. */
+  grid-template-columns: 620fr 596fr 657fr;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 10px;
+  height: 100%;
+  min-height: 0;
+  padding: 11px 12px 10px;
+  overflow: hidden;
+}
+
+.po-med-col {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Column weights of the reference: left 250/105/rest, centre 445/rest, right 445/rest. */
+.po-med-col--left {
+  grid-template-rows: minmax(280px, 250fr) minmax(92px, 105fr) minmax(200px, 315fr);
+}
+
+.po-med-col--center {
+  grid-template-rows: minmax(380px, 445fr) minmax(150px, 225fr);
+}
+
+.po-med-col--right {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(410px, 445fr) minmax(190px, 235fr);
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.po-med-split {
+  display: grid;
+  grid-template-columns: 62fr 38fr;
+  gap: 10px;
+  min-height: 0;
+}
+
+.po-med-stack {
+  display: grid;
+  grid-template-rows: minmax(84px, 1fr) minmax(78px, 1fr);
+  gap: 10px;
+  min-height: 0;
+}
+
+/* ── Panel frame, same language as the other boards ── */
+.po-med-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0 10px 10px;
+  overflow: hidden;
+  border: 1px solid var(--po-ov-border);
+  border-radius: 2px;
+  background: var(--po-ov-panel-bg);
+}
+
+/* The technical blocks of the right column barely keep the green tint. */
+.po-med-col--right .po-med-panel {
+  background: var(--po-ov-panel-bg-neutral);
+}
+
+.po-med-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  border-top: 1px solid var(--po-ov-cyan);
+  border-left: 1px solid var(--po-ov-cyan);
+  pointer-events: none;
+}
+
+.po-med-panel::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 12px;
+  height: 12px;
+  border-right: 1px solid rgb(248 224 101 / 50%);
+  border-bottom: 1px solid rgb(248 224 101 / 50%);
+  pointer-events: none;
+}
+
+.po-med-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  gap: 8px;
+  min-height: 28px;
+  margin: 0 -10px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--po-ov-border-muted);
+  background: rgb(0 0 0 / 20%);
+}
+
+.po-med-panel__title {
+  font-family: var(--po-font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--po-ov-text);
+}
+
+.po-med-panel__meta {
+  overflow: hidden;
+  font-family: var(--po-font);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--po-ov-text-3);
+}
+
+/* Blocks keep their natural height: a flex-shrunk text box paints over the block below it. */
+.po-med-panel > p,
+.po-med-panel > dl,
+.po-med-panel > ul,
+.po-med-panel > ol,
+.po-med-panel > div {
+  flex: 0 0 auto;
+}
+
+/* ...except the two blocks that are meant to fill what is left of their panel. */
+.po-med-panel > .po-med-bodymap,
+.po-med-panel > .po-med-injury__body {
+  flex: 1 1 auto;
+}
+
+.po-med-note {
+  margin: auto 0 0;
+  font-family: var(--po-font);
+  font-size: 9px;
+  line-height: 1.4;
+  color: var(--po-ov-text-3);
+}
+
+/* ── Physical readiness ── */
+.po-med-readiness__list {
+  display: grid;
+  align-content: start;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.po-med-readiness__row {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) minmax(80px, 1.1fr) 54px;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  border-bottom: 1px solid rgb(41 67 75 / 45%);
+}
+
+.po-med-readiness__row:last-child {
+  border-bottom: none;
+}
+
+.po-med-readiness__glyph {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+  font-size: 7px;
+  line-height: 1;
+  color: var(--po-ov-green);
+}
+
+.po-med-readiness__row.is-moderate .po-med-readiness__glyph,
+.po-med-readiness__row.is-elevated .po-med-readiness__glyph {
+  color: var(--po-ov-yellow);
+}
+
+.po-med-readiness__row.is-high .po-med-readiness__glyph {
+  color: var(--po-ov-red);
+}
+
+.po-med-readiness__row.is-neutral .po-med-readiness__glyph {
+  color: var(--po-ov-cyan-soft);
+}
+
+.po-med-readiness__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.po-med-readiness__label {
+  font-family: var(--po-font);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--po-ov-text);
+}
+
+.po-med-readiness__band {
+  overflow: hidden;
+  font-family: var(--po-font);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--po-ov-green);
+}
+
+.po-med-readiness__row.is-moderate .po-med-readiness__band,
+.po-med-readiness__row.is-elevated .po-med-readiness__band {
+  color: var(--po-ov-yellow);
+}
+
+.po-med-readiness__row.is-high .po-med-readiness__band {
+  color: var(--po-ov-red);
+}
+
+.po-med-readiness__row.is-neutral .po-med-readiness__band {
+  color: var(--po-ov-text-2);
+}
+
+.po-med-readiness__track {
+  display: block;
+  height: 9px;
+  border-radius: 1px;
+  background: rgb(41 67 75 / 85%);
+  overflow: hidden;
+}
+
+.po-med-readiness__track.is-empty {
+  background: repeating-linear-gradient(
+    90deg,
+    rgb(41 67 75 / 85%) 0 4px,
+    rgb(41 67 75 / 35%) 4px 8px
+  );
+}
+
+.po-med-readiness__fill {
+  display: block;
+  height: 100%;
+  border-radius: 1px;
+  background: var(--po-ov-green);
+}
+
+.po-med-readiness__row.is-moderate .po-med-readiness__fill,
+.po-med-readiness__row.is-elevated .po-med-readiness__fill {
+  background: var(--po-ov-yellow);
+}
+
+.po-med-readiness__row.is-high .po-med-readiness__fill {
+  background: var(--po-ov-red);
+}
+
+.po-med-readiness__row.is-neutral .po-med-readiness__fill {
+  background: var(--po-ov-cyan-soft);
+}
+
+.po-med-readiness__value {
+  font-family: var(--po-font-display);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: right;
+  color: var(--po-ov-text);
+}
+
+/* ── Current injury ── */
+.po-med-injury__body {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+}
+
+.po-med-injury__glyph {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.po-med-injury__body.is-clear .po-med-injury__glyph {
+  color: var(--po-ov-green);
+  box-shadow: 0 0 8px rgb(59 229 155 / 25%);
+}
+
+.po-med-injury__body.is-active .po-med-injury__glyph {
+  color: var(--po-ov-red);
+}
+
+.po-med-injury__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.po-med-injury__title {
+  font-family: var(--po-font-display);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--po-ov-green);
+}
+
+.po-med-injury__body.is-active .po-med-injury__title {
+  color: var(--po-ov-red);
+}
+
+.po-med-injury__detail {
+  font-family: var(--po-font);
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--po-ov-text-2);
+}
+
+/* ── Load management ── */
+.po-med-load {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  column-gap: 10px;
+}
+
+.po-med-load .po-med-panel__head {
+  grid-column: 1 / -1;
+}
+
+.po-med-load__legend {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--po-font);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--po-ov-text-2);
+}
+
+.po-med-load__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.po-med-load__key {
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  background: var(--po-ov-green);
+}
+
+.po-med-load__legend li.is-match .po-med-load__key {
+  background: var(--po-ov-yellow);
+}
+
+.po-med-load__legend li.is-trend .po-med-load__key {
+  width: 12px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--po-ov-text);
+}
+
+.po-med-load__chart {
+  display: grid;
+  grid-column: 1;
+  min-height: 0;
+  padding: 6px 0 0;
+  border-top: 1px solid var(--po-ov-border-muted);
+}
+
+.po-med-load__groups {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: end;
+  height: 100%;
+  min-height: 96px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.po-med-load__group {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  justify-items: center;
+  gap: 4px;
+  height: 100%;
+  min-height: 0;
+  padding-bottom: 4px;
+}
+
+.po-med-load__bars {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.po-med-load__bar {
+  width: 16px;
+  min-height: 3px;
+  border-radius: 1px 1px 0 0;
+  background: var(--po-ov-green);
+}
+
+.po-med-load__bar.is-match {
+  background: var(--po-ov-yellow);
+}
+
+.po-med-load__trend-point {
+  position: absolute;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--po-ov-text);
+  border-radius: 999px;
+  background: #061016;
+  transform: translate(-50%, 50%);
+}
+
+.po-med-load__group-label {
+  font-family: var(--po-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--po-ov-text-2);
+}
+
+.po-med-load__group-values {
+  display: grid;
+  justify-items: center;
+  font-family: var(--po-font);
+  font-size: 9px;
+  line-height: 1.3;
+  color: var(--po-ov-text-3);
+}
+
+.po-med-load__change {
+  display: grid;
+  grid-column: 2;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 8px 0 0 10px;
+  border-top: 1px solid var(--po-ov-border-muted);
+  border-left: 1px solid var(--po-ov-border-muted);
+}
+
+.po-med-load__change-title {
+  font-family: var(--po-font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--po-ov-text);
+}
+
+.po-med-load__change ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.po-med-load__change li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px;
+  font-family: var(--po-font);
+  font-size: 10px;
+  color: var(--po-ov-text-3);
+}
+
+.po-med-load__change li > span:last-child {
+  text-align: right;
+  font-weight: 700;
+}
+
+.po-med-load__change .is-up {
+  color: var(--po-ov-green);
+}
+
+.po-med-load__change .is-down {
+  color: var(--po-ov-cyan-soft);
+}
+
+.po-med-load .po-med-note {
+  grid-column: 1 / -1;
+}
+
+/* ── Body map ── */
+.po-med-bodymap-panel {
+  gap: 4px;
+}
+
+.po-med-bodymap-panel__health {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--po-font);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--po-ov-green);
+}
+
+.po-med-bodymap-panel__health.is-attention {
+  color: var(--po-ov-yellow);
+}
+
+.po-med-bodymap {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+
+.po-med-bodymap__stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.po-med-bodymap__figure,
+.po-med-bodymap__overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.po-med-bodymap__figure {
+  color: #20e9f3;
+  filter: drop-shadow(0 0 6px rgb(32 233 243 / 30%));
+}
+
+.po-med-bodymap__link {
+  fill: none;
+  stroke: rgb(103 138 158 / 55%);
+  stroke-width: 0.6;
+}
+
+.po-med-bodymap__node {
+  fill: var(--po-ov-green);
+  stroke: #061016;
+  stroke-width: 0.6;
+}
+
+.po-med-bodymap__label {
+  font-family: var(--po-font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  fill: var(--po-ov-text);
+}
+
+.po-med-bodymap__state {
+  font-family: var(--po-font);
+  font-size: 7.5px;
+  letter-spacing: 0.03em;
+  fill: var(--po-ov-green);
+}
+
+.po-med-bodymap__region {
+  cursor: pointer;
+}
+
+.po-med-bodymap__region:hover .po-med-bodymap__label,
+.po-med-bodymap__region:focus-visible .po-med-bodymap__label,
+.po-med-bodymap__region.is-selected .po-med-bodymap__label {
+  fill: var(--po-ov-cyan);
+}
+
+.po-med-bodymap__region:hover .po-med-bodymap__link,
+.po-med-bodymap__region.is-selected .po-med-bodymap__link {
+  stroke: rgb(24 221 232 / 80%);
+}
+
+.po-med-bodymap__region:focus-visible {
+  outline: none;
+}
+
+.po-med-bodymap__region.is-attention .po-med-bodymap__node {
+  fill: var(--po-ov-yellow);
+}
+
+.po-med-bodymap__region.is-attention .po-med-bodymap__state {
+  fill: var(--po-ov-yellow);
+}
+
+.po-med-bodymap__region.is-attention .po-med-bodymap__link {
+  stroke: rgb(240 201 90 / 65%);
+}
+
+.po-med-bodymap__legend {
+  margin: 0;
+  font-family: var(--po-font);
+  font-size: 9px;
+  color: var(--po-ov-text-3);
+}
+
+/* ── Recovery timeline ── */
+.po-med-timeline__track {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 8px;
+  align-content: center;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.po-med-timeline__track::before {
+  content: '';
+  position: absolute;
+  top: 26px;
+  right: 12%;
+  left: 12%;
+  height: 1px;
+  background: rgb(59 229 155 / 45%);
+}
+
+.po-med-timeline__node {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  min-width: 0;
+  text-align: center;
+}
+
+.po-med-timeline__glyph {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+  background: #061016;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--po-ov-green);
+}
+
+.po-med-timeline__node.is-caution .po-med-timeline__glyph {
+  color: var(--po-ov-yellow);
+}
+
+.po-med-timeline__label {
+  font-family: var(--po-font);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--po-ov-text);
+}
+
+.po-med-timeline__state {
+  font-family: var(--po-font);
+  font-size: 9px;
+  color: var(--po-ov-green);
+}
+
+.po-med-timeline__node.is-caution .po-med-timeline__state {
+  color: var(--po-ov-yellow);
+}
+
+.po-med-timeline__note {
+  font-family: var(--po-font);
+  font-size: 8px;
+  line-height: 1.3;
+  color: var(--po-ov-text-3);
+}
+
+/* ── Medical detail ── */
+.po-med-detail__card {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid var(--po-med-detail-border, var(--po-ov-border));
+  border-radius: 2px;
+  background: rgb(0 0 0 / 22%);
+}
+
+.po-med-detail__card.is-positive {
+  --po-med-detail-border: rgb(59 229 155 / 45%);
+}
+
+.po-med-detail__card.is-caution {
+  --po-med-detail-border: rgb(240 201 90 / 45%);
+}
+
+.po-med-detail__glyph {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgb(59 229 155 / 14%);
+  font-size: 15px;
+  line-height: 1;
+  color: var(--po-ov-green);
+}
+
+.po-med-detail__card.is-caution .po-med-detail__glyph {
+  background: rgb(240 201 90 / 14%);
+  color: var(--po-ov-yellow);
+}
+
+.po-med-detail__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.po-med-detail__kicker {
+  font-family: var(--po-font);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--po-ov-text-3);
+}
+
+.po-med-detail__status {
+  font-family: var(--po-font-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--po-ov-green);
+}
+
+.po-med-detail__card.is-caution .po-med-detail__status {
+  color: var(--po-ov-yellow);
+}
+
+.po-med-detail__detail {
+  font-family: var(--po-font);
+  font-size: 9px;
+  line-height: 1.4;
+  color: var(--po-ov-text-2);
+}
+
+.po-med-detail__rows {
+  display: grid;
+  align-content: start;
+  gap: 0;
+  margin: 0;
+}
+
+.po-med-detail__rows > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgb(41 67 75 / 45%);
+}
+
+.po-med-detail__rows > div:last-child {
+  border-bottom: none;
+}
+
+.po-med-detail__rows dt {
+  font-family: var(--po-font);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--po-ov-text-3);
+}
+
+.po-med-detail__rows dd {
+  margin: 0;
+  font-family: var(--po-font);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--po-ov-text);
+}
+
+.po-med-detail__rows > div.is-positive dd {
+  color: var(--po-ov-green);
+}
+
+.po-med-detail__rows > div.is-caution dd {
+  color: var(--po-ov-yellow);
+}
+
+/* ── Medical history ── */
+.po-med-history__table {
+  display: grid;
+  align-content: start;
+  gap: 0;
+  min-height: 0;
+}
+
+.po-med-history__head,
+.po-med-history__row {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) 58px 50px 54px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border: none;
+  border-bottom: 1px solid rgb(41 67 75 / 45%);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.po-med-history__head {
+  font-family: var(--po-font);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--po-ov-text-3);
+}
+
+.po-med-history__row {
+  font-family: var(--po-font);
+  font-size: 10px;
+  color: var(--po-ov-text-2);
+  cursor: pointer;
+}
+
+.po-med-history__row.is-empty {
+  grid-template-columns: 62px minmax(0, 1fr);
+  color: var(--po-ov-text-3);
+  cursor: default;
+}
+
+.po-med-history__row.is-empty > span:nth-child(n + 3):not(:last-child) {
+  display: none;
+}
+
+.po-med-history__row:hover,
+.po-med-history__row:focus-visible {
+  background: rgb(22 217 229 / 5%);
+  outline: none;
+}
+
+.po-med-history__row.is-selected {
+  background: rgb(22 217 229 / 9%);
+}
+
+.po-med-history__row > span:first-child,
+.po-med-history__row > span:nth-child(4) {
+  color: var(--po-ov-text-3);
+}
+
+.po-med-history__row > span:last-child.is-active {
+  color: var(--po-ov-yellow);
+}
+
+.po-med-history__row > span:last-child.is-recovered {
+  color: var(--po-ov-green);
+}
+
+/* ── Injury pattern + staff notes ── */
+.po-med-pattern__body,
+.po-med-staff__body {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.po-med-pattern__glyph,
+.po-med-staff__glyph {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.po-med-pattern__body.is-clean .po-med-pattern__glyph {
+  color: var(--po-ov-green);
+}
+
+.po-med-pattern__body.is-watch .po-med-pattern__glyph {
+  color: var(--po-ov-yellow);
+}
+
+.po-med-staff__glyph {
+  border-radius: 3px;
+  color: var(--po-ov-cyan-soft);
+}
+
+.po-med-pattern__text,
+.po-med-staff__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.po-med-pattern__title,
+.po-med-staff__title {
+  font-family: var(--po-font);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--po-ov-text);
+}
+
+.po-med-pattern__body.is-clean .po-med-pattern__title {
+  color: var(--po-ov-green);
+}
+
+.po-med-pattern__detail,
+.po-med-staff__detail {
+  font-family: var(--po-font);
+  font-size: 9px;
+  line-height: 1.35;
+  color: var(--po-ov-text-2);
+}
+
+/* ── Bottom filter strip ── */
+.po-med-filters {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  gap: 6px;
+  padding-bottom: 8px;
+}
+
+.po-med-filters__bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 26px;
+}
+
+.po-med-filters__title {
+  font-family: var(--po-font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--po-ov-text);
+}
+
+.po-med-filters__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.po-med-pill {
+  padding: 2px 9px;
+  border: 1px solid var(--po-ov-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--po-ov-text-3);
+  font-family: var(--po-font);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.po-med-pill:hover,
+.po-med-pill:focus-visible {
+  border-color: var(--po-ov-cyan);
+  color: var(--po-ov-cyan);
+  outline: none;
+}
+
+.po-med-pill.is-active {
+  border-color: var(--po-ov-cyan);
+  background: rgb(0 213 224 / 12%);
+  color: var(--po-ov-cyan);
+}
+
+.po-med-filters__count {
+  font-family: var(--po-font);
+  font-size: 9px;
+  color: var(--po-ov-text-3);
+}
+
+.po-med-filters__link {
+  margin-left: auto;
+  border: none;
+  background: none;
+  color: var(--po-ov-text-3);
+  font-family: var(--po-font);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.po-med-filters__link:hover,
+.po-med-filters__link:focus-visible {
+  color: var(--po-ov-cyan);
+  outline: none;
+}
+
+.po-med-filters__list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.po-med-filters__item {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1.2fr) minmax(0, 2fr) auto;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--po-font);
+  font-size: 10px;
+}
+
+.po-med-filters__glyph {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+  font-size: 8px;
+  line-height: 1;
+  color: var(--po-ov-cyan-soft);
+}
+
+.po-med-filters__item.is-critical .po-med-filters__glyph {
+  color: var(--po-ov-red);
+}
+
+.po-med-filters__item.is-warning .po-med-filters__glyph {
+  color: var(--po-ov-yellow);
+}
+
+.po-med-filters__label {
+  font-weight: 700;
+  color: var(--po-ov-text);
+}
+
+.po-med-filters__detail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--po-ov-text-2);
+}
+
+.po-med-filters__date,
+.po-med-filters__empty {
+  font-family: var(--po-font);
+  font-size: 9px;
+  color: var(--po-ov-text-3);
+}
+
+/* Below the reference width the composition holds; only the type and the gaps tighten. */
+@media (max-width: 1599px) {
+  .po-med-board {
+    grid-template-columns: 470fr 470fr 540fr;
+    gap: 8px;
+    padding: 8px 9px 0;
+  }
+
+  .po-med-col,
+  .po-med-split,
+  .po-med-stack {
+    gap: 8px;
+  }
+
+  .po-med-readiness__row {
+    grid-template-columns: 18px minmax(0, 1fr) minmax(60px, 1fr) 46px;
+    min-height: 40px;
+  }
+
+  .po-med-detail__status {
+    font-size: 17px;
+  }
+}
