@@ -119,15 +119,20 @@ regular-season window. The schedule has no RNG or simulation logic.
 
 ## Competition Rules
 
-`Competition.rules` is canonical, serializable configuration; fixtures, results,
-standings and season history are competition state. The current single-competition
-ruleset is a league round robin with two balanced home/away meetings per pair,
-standings ordered by wins, point difference, points scored and TeamId, completion
-only after every scheduled game is completed, and champion as the final standings
-leader. `ScheduleGenerator`, standings and season finalization consume these rules;
-no derived team count or standings is persisted. Save V1 preserves rules and enriches
-legacy competitions with this canonical ruleset deterministically. Hito 047 supports
-only the current single competition; multi-competition world coordination belongs to
+`Competition.rules` is canonical, serializable sporting configuration; each `Season`
+may also retain its immutable B04 `WorldCompetitionFormatDocument` for stage,
+qualification, bracket, series and hosting rules. Fixtures and results are canonical
+Games; standings and tournament state are derived from Games plus those rules. The
+league rules use balanced home/away meetings and order standings by wins, point
+difference, points scored and TeamId. Regular-season standings exclude Games tagged
+with postseason stages. A completed B04 regular season seeds the declared bracket;
+the existing fixed-bracket and series engines resolve it while materializing only
+the next required Game for each series. A season with a postseason completes only
+after its final series is decided. Bracket and series state are rebuilt from the
+edition format and Games after save/load; history stores regular-season standings and
+marks a postseason-decided champion. Save V1 preserves the edition format and Game stage/series
+identity, while legacy competitions without a format keep the standings-leader
+champion rule. Hito 047 supports only the current single competition; multi-competition world coordination belongs to
 Hito 048 supports multiple simultaneous competitions using the current league/
 round-robin rules engine. `GameWorld.competitions` is the canonical normalized
 collection; a Team may occur in multiple Competition participant lists, while every

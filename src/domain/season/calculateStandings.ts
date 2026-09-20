@@ -7,10 +7,13 @@ export function calculateSeasonStandings(world: GameWorld, seasonId: keyof GameW
   const season = world.seasons[seasonId]
   if (season === undefined) throw new Error(`Season does not exist: ${seasonId}`)
   const competition = world.competitions[season.competitionId]!
+  const formatVariant = season.worldCompetitionFormat?.variants.find((variant) => variant.isRealVariant) ?? season.worldCompetitionFormat?.variants[0]
+  const regularStageKeys = new Set(formatVariant?.nodes.filter((node) => node.role === 'REGULAR_SEASON').map((node) => node.key) ?? [])
   const entries = (season.participantTeamIds ?? competition.participantTeamIds).map((teamId) => ({ teamId, played: 0, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 }))
   const byTeam = Object.fromEntries(entries.map((entry) => [entry.teamId, entry])) as Record<TeamId, typeof entries[number]>
   for (const game of Object.values(world.games)) {
     if (game.seasonId !== seasonId || game.status !== 'completed') continue
+    if (regularStageKeys.size > 0 && game.competitionStageKey !== undefined && !regularStageKeys.has(game.competitionStageKey)) continue
     const home = byTeam[game.homeTeamId]!; const away = byTeam[game.awayTeamId]!; const result = game.result
     home.played += 1; away.played += 1; home.pointsFor += result.homeScore; home.pointsAgainst += result.awayScore; away.pointsFor += result.awayScore; away.pointsAgainst += result.homeScore
     if (result.homeScore > result.awayScore) { home.wins += 1; away.losses += 1 } else { away.wins += 1; home.losses += 1 }

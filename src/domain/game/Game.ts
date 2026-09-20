@@ -21,6 +21,11 @@ interface GameBase {
   readonly awayTeamId: TeamId
   readonly classification?: GameClassification
   readonly stakes: GameStakes
+  /** Key of the B04 competition-format node represented by this game. */
+  readonly competitionStageKey?: string
+  /** Deterministic virtual bracket fixture for a dynamically materialized series game. */
+  readonly postseasonFixtureId?: string
+  readonly postseasonGameNo?: number
 }
 
 export interface ScheduledGame extends GameBase {
@@ -46,6 +51,9 @@ export interface CreateGameInput {
   result: GameResult | null
   classification?: GameClassification
   stakes?: GameStakes
+  competitionStageKey?: string
+  postseasonFixtureId?: string
+  postseasonGameNo?: number
 }
 
 export function createGame(input: CreateGameInput): Game {
@@ -65,9 +73,15 @@ export function createGame(input: CreateGameInput): Game {
     awayTeamId,
     ...(input.classification === undefined ? {} : { classification: input.classification === 'conference' || input.classification === 'nonConference' ? input.classification : (() => { throw new TypeError('Game classification is invalid') })() }),
     stakes: input.stakes ?? 'regular',
+    ...(input.competitionStageKey === undefined ? {} : { competitionStageKey: requireNonEmptyString(input.competitionStageKey, 'Game competition stage key') }),
+    ...(input.postseasonFixtureId === undefined ? {} : { postseasonFixtureId: requireNonEmptyString(input.postseasonFixtureId, 'Game postseason fixture id') }),
+    ...(input.postseasonGameNo === undefined ? {} : { postseasonGameNo: input.postseasonGameNo }),
   }
 
   if (!['regular', 'important', 'elimination', 'final'].includes(base.stakes)) throw new TypeError('Game stakes are invalid')
+  if ((base.postseasonFixtureId === undefined) !== (base.postseasonGameNo === undefined)) throw new TypeError('Postseason fixture and game number must be provided together')
+  if (base.postseasonGameNo !== undefined && (!Number.isInteger(base.postseasonGameNo) || base.postseasonGameNo < 1)) throw new RangeError('Postseason game number must be a positive integer')
+  if (base.postseasonFixtureId !== undefined && base.competitionStageKey === undefined) throw new TypeError('Postseason games require a competition stage key')
 
 
   if (input.status === 'scheduled') {

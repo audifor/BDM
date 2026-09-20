@@ -18,7 +18,10 @@ import {
 import { array, boolean, enumValue, jsonObject, optionalArray, optionalPositiveInteger, optionalText, record, requireUnique, text } from './WorldCompetitionFormatParserHelpers'
 
 export function parseWorldCompetitionFormatDocument(value: unknown): WorldCompetitionFormatDocument {
-  const raw = record(value, 'competition format')
+  const rawInput = record(value, 'competition format')
+  const raw = rawInput.schema_version === undefined && rawInput.schemaVersion !== undefined
+    ? toWireFormat(rawInput)
+    : rawInput
   const schemaVersion = text(raw.schema_version, 'schema_version')
   if (schemaVersion !== WORLD_COMPETITION_FORMAT_SCHEMA_VERSION) throw new RangeError(`Unsupported competition format schema_version: ${schemaVersion}`)
   const status = enumValue(raw.status, ['COMPLETE', 'PARTIAL', 'RECONCILE', 'BLOCKED'] as const, 'status')
@@ -42,6 +45,43 @@ export function parseWorldCompetitionFormatDocument(value: unknown): WorldCompet
     consequences: Object.freeze(consequences),
     sources: Object.freeze(sources),
   })
+}
+
+/** Converts the normalized save representation back to the B04 wire shape before validation. */
+function toWireFormat(value: Record<string, unknown>): Record<string, unknown> {
+  const variants = Array.isArray(value.variants) ? value.variants.map((entry) => {
+    const variant = record(entry, 'competition format variant')
+    const nodes = Array.isArray(variant.nodes) ? variant.nodes.map((rawNode) => {
+      const node = record(rawNode, 'competition format node')
+      const pairing = node.pairing === undefined ? undefined : record(node.pairing, 'competition format pairing')
+      const opponentScope = node.opponentScope === undefined ? undefined : record(node.opponentScope, 'competition format opponent scope')
+      const contest = node.contest === undefined ? undefined : record(node.contest, 'competition format contest')
+      const hosting = node.hosting === undefined ? undefined : record(node.hosting, 'competition format hosting')
+      const carryover = node.carryover === undefined ? undefined : record(node.carryover, 'competition format carryover')
+      return {
+        key: node.key, node_type: node.nodeType, role: node.role,
+        ...(node.specializedType === undefined ? {} : { specialized_type: node.specializedType }),
+        ...(node.name === undefined ? {} : { name: node.name }),
+        ...(node.parent === undefined ? {} : { parent: node.parent }),
+        ...(node.teamCount === undefined ? {} : { team_count: node.teamCount }),
+        ...(pairing === undefined ? {} : { pairing: { type: pairing.type, meetings_per_pair: pairing.meetingsPerPair, payload: pairing.payload } }),
+        ...(opponentScope === undefined ? {} : { opponent_scope: { type: opponentScope.type, payload: opponentScope.payload } }),
+        ...(contest === undefined ? {} : { contest: { format_type: contest.formatType, requires_winner: contest.requiresWinner, best_of: contest.bestOf, wins_required: contest.winsRequired, leg_count: contest.legCount, aggregate_metric: contest.aggregateMetric, tie_resolution: contest.tieResolution === undefined ? undefined : { trigger: record(contest.tieResolution, 'tie resolution').trigger, method: record(contest.tieResolution, 'tie resolution').method, location: record(contest.tieResolution, 'tie resolution').location } } }),
+        ...(hosting === undefined ? {} : { hosting: { rule_type: hosting.ruleType, pattern: hosting.pattern, priority_basis: hosting.priorityBasis, payload: hosting.payload } }),
+        ...(carryover === undefined ? {} : { carryover: { rule_type: carryover.ruleType, source_node: carryover.sourceNode, payload: carryover.payload } }),
+      }
+    }) : variant.nodes
+    return {
+      key: variant.key, name: variant.name, scope: variant.scope, is_real_variant: variant.isRealVariant,
+      entry_selection: variant.entrySelection === undefined ? undefined : { method: record(variant.entrySelection, 'entry selection').method, payload: record(variant.entrySelection, 'entry selection').payload },
+      seeding: variant.seeding === undefined ? undefined : { scheme_type: record(variant.seeding, 'seeding').schemeType, basis: record(variant.seeding, 'seeding').basis },
+      nodes,
+      edges: Array.isArray(variant.edges) ? variant.edges.map((edgeValue) => { const edge = record(edgeValue, 'competition progression edge'); return { from: edge.from, to: edge.to, selector: edge.selector, rank_from: edge.rankFrom, rank_to: edge.rankTo, count: edge.count, payload: edge.payload } }) : variant.edges,
+    }
+  }) : value.variants
+  const consequences = Array.isArray(value.consequences) ? value.consequences.map((item) => { const consequence = record(item, 'competition consequence'); return { variant_key: consequence.variantKey, source_node: consequence.sourceNode, selector: consequence.selector, type: consequence.type, rank_from: consequence.rankFrom, rank_to: consequence.rankTo, count: consequence.count, target_competition_id: consequence.targetCompetitionId, target_competition_season_id: consequence.targetCompetitionSeasonId, payload: consequence.payload } }) : value.consequences
+  const sources = Array.isArray(value.sources) ? value.sources.map((item) => { const source = record(item, 'competition source'); return { url: source.url, type: source.type, scope: source.scope, notes: source.notes } }) : value.sources
+  return { schema_version: value.schemaVersion, competition_id: value.competitionId, competition_season_id: value.competitionSeasonId, season_label: value.seasonLabel, status: value.status, notes: value.notes, variants, consequences, sources }
 }
 
 function parseVariant(value: unknown): WorldCompetitionFormatVariant {

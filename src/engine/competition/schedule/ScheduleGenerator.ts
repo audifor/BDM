@@ -7,6 +7,8 @@ import {
   type GameWorld,
 } from '@/domain/world'
 import type { SchedulePolicy } from './SchedulePolicy'
+import { distributeRoundsAcrossSeason } from './SchedulePolicy'
+import { deriveCompetitionSeasonWindows } from '../WorldCompetitionCalendar'
 
 const DEFAULT_DAYS_BETWEEN_ROUNDS = 4
 
@@ -16,6 +18,7 @@ export interface GenerateRoundRobinScheduleOptions {
   readonly daysBetweenRounds?: number
   readonly schedulePolicy?: SchedulePolicy
   readonly startDate?: import('@/domain/date').GameDate
+  readonly competitionStageKey?: string
 }
 
 interface Matchup {
@@ -38,15 +41,17 @@ export function generateRoundRobinSchedule(options: GenerateRoundRobinScheduleOp
   const firstLegRounds = createFirstLegRounds(teamIds)
   const rounds = Array.from({ length: competition.rules.schedule.meetingsPerPair }, (_, legIndex) => legIndex % 2 === 0 ? firstLegRounds : firstLegRounds.map(invertRound)).flat()
   const startDate = options.startDate ?? season.startDate
-  const roundDates = options.schedulePolicy === undefined
+  const seasonWindows = deriveCompetitionSeasonWindows(startDate, season.endDate, season.worldCompetitionFormat)
+  const schedulePolicy = options.schedulePolicy ?? (options.daysBetweenRounds === undefined && season.worldCompetitionFormat !== undefined ? distributeRoundsAcrossSeason : undefined)
+  const roundDates = schedulePolicy === undefined
     ? rounds.map((_, roundIndex) => addDays(startDate, roundIndex * (options.daysBetweenRounds ?? DEFAULT_DAYS_BETWEEN_ROUNDS)))
-    : options.schedulePolicy(rounds.length, startDate, season.endDate)
+    : schedulePolicy(rounds.length, startDate, seasonWindows.regularSeasonEnd)
 
   if (roundDates.length !== rounds.length || new Set(roundDates).size !== roundDates.length) {
     throw new RangeError('Schedule policy must provide one distinct date per round')
   }
 
-  if (roundDates.some((date) => compareGameDates(date, startDate) < 0 || compareGameDates(date, season.endDate) > 0)) {
+  if (roundDates.some((date) => compareGameDates(date, startDate) < 0 || compareGameDates(date, seasonWindows.regularSeasonEnd) > 0)) {
     throw new RangeError(`Schedule for Season ${season.id} does not fit within its date range`)
   }
 
@@ -62,6 +67,7 @@ export function generateRoundRobinSchedule(options: GenerateRoundRobinScheduleOp
         date,
         homeTeamId: matchup.homeTeamId,
         awayTeamId: matchup.awayTeamId,
+        ...(options.competitionStageKey === undefined ? {} : { competitionStageKey: options.competitionStageKey }),
         status: 'scheduled',
         result: null,
       }),

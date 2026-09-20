@@ -18,5 +18,6 @@ export interface SeasonHistoryRecord {
   readonly competitionId: CompetitionId
   readonly completedOn: GameDate
   readonly championTeamId: TeamId
+  readonly championSource?: 'regularSeason' | 'postseason'
   readonly finalStandings: readonly FinalStandingLine[]
 }

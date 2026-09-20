@@ -10,6 +10,7 @@ import type { WorldDbSelectionCatalogV1 } from '@/domain/worldDb/SelectionCatalo
 import { validateWorldDbGameBootstrapSelectionV1, type WorldDbGameBootstrapSelectionV1 } from '@/domain/worldDb/GameBootstrap'
 import {
   createWorldCompetitionCatalog,
+  requireWorldCompetitionFormat,
   type WorldCompetitionCatalog,
 } from '@/engine/competition/WorldCompetitionCatalog'
 import type { WorldDbCompetitionPlanningContextV1 } from '@/engine/competition/WorldDbPhysicalGamePlanner'
@@ -152,7 +153,8 @@ export class WorldDbSessionV1 {
       throw new Error('World DB bootstrap slice source identity mismatch')
     }
     if (slice.season.competitionSeasonId !== selection.competitionSeasonId) throw new Error(`World DB bootstrap competition season mismatch: expected ${selection.competitionSeasonId}, received ${slice.season.competitionSeasonId}`)
-    return bootstrapGameWorldFromWorldDb(slice, selection, runtimeBundlePin(this.requireRuntimeBundle()))
+    const format = requireWorldCompetitionFormat(this.requireCatalog(), selection.competitionSeasonId)
+    return bootstrapGameWorldFromWorldDb(slice, selection, runtimeBundlePin(this.requireRuntimeBundle()), format.variants.length === 0 ? undefined : format)
   }
 
   /**

@@ -1,8 +1,9 @@
 import { compareGameDates } from '@/domain/date'
 import type { CompetitionId } from '@/domain/ids'
 import type { SeasonHistoryRecord } from '@/domain/season'
-import { addNewsItem, updateGameWorld, type GameWorld } from '@/domain/world'
+import { addNewsItem, attachWorldDbCompetitionRuntime, updateGameWorld, type GameWorld } from '@/domain/world'
 import { calculateStandings } from '@/engine/competition/standings'
+import { getCompetitionPostseasonChampion, getCompetitionPostseasonState } from '@/engine/competition'
 import { applySeasonChampionCoachReputation } from '@/engine/coach'
 import { resolvePromotionRelegation } from '@/engine/competition'
 import { resolveEligibilitySeason } from '@/engine/eligibility'
@@ -14,15 +15,23 @@ import { processSeasonContentLifecycle } from './SeasonContentLifecycle'
 export function isSeasonComplete(world: GameWorld, seasonId: keyof GameWorld['seasons']): boolean {
   const season = world.seasons[seasonId]
   if (season === undefined) throw new Error(`Season does not exist: ${seasonId}`)
-  return isCompetitionComplete(world, season.competitionId)
+  return isCompetitionSeasonComplete(world, seasonId)
 }
 
 export function isCompetitionComplete(world: GameWorld, competitionId: CompetitionId): boolean {
-  const competition = world.competitions[competitionId]
-  if (competition === undefined) throw new Error(`Competition does not exist: ${competitionId}`)
+  const season = Object.values(world.seasons).filter((candidate) => candidate.competitionId === competitionId).sort((a, b) => b.startDate.localeCompare(a.startDate) || b.id.localeCompare(a.id))[0]
+  if (season === undefined) throw new Error(`Competition has no Season: ${competitionId}`)
+  return isCompetitionSeasonComplete(world, season.id)
+}
+
+function isCompetitionSeasonComplete(world: GameWorld, seasonId: keyof GameWorld['seasons']): boolean {
+  const season = world.seasons[seasonId]!
+  const competition = world.competitions[season.competitionId]!
   if (competition.rules.completion !== 'allScheduledGamesCompleted') return false
-  const games = Object.values(world.games).filter((game) => game.competitionId === competitionId)
-  return games.length > 0 && games.every((game) => game.status === 'completed')
+  const games = Object.values(world.games).filter((game) => game.seasonId === seasonId)
+  if (games.length === 0 || games.some((game) => game.status !== 'completed')) return false
+  const postseason = getCompetitionPostseasonState(world, seasonId)
+  return postseason === null || postseason.championTeamId !== null
 }
 
 export function finalizeSeason(world: GameWorld, seasonId: keyof GameWorld['seasons']): GameWorld {
@@ -30,22 +39,24 @@ export function finalizeSeason(world: GameWorld, seasonId: keyof GameWorld['seas
   if (season === undefined || !isCompetitionComplete(world, season.competitionId)) throw new Error(`Season ${seasonId} is not complete`)
   if (world.seasonHistoryBySeasonId[seasonId] !== undefined) throw new Error(`Season ${seasonId} is already finalized`)
   const standings = calculateStandings(world, seasonId)
-  const champion = world.competitions[season.competitionId]!.rules.champion === 'standingsLeader' ? standings[0] : undefined
-  if (champion === undefined) throw new Error(`Season ${seasonId} has no standings`)
+  const postseasonChampion = getCompetitionPostseasonChampion(world, seasonId)
+  const championTeamId = postseasonChampion ?? (world.competitions[season.competitionId]!.rules.champion === 'standingsLeader' ? standings[0]?.teamId : undefined)
+  if (championTeamId === undefined) throw new Error(`Season ${seasonId} has no champion`)
   const games = Object.values(world.games).filter((game) => game.seasonId === seasonId)
   const completedOn = games.reduce((latest, game) => compareGameDates(game.date, latest) > 0 ? game.date : latest, games[0]!.date)
-  const history: SeasonHistoryRecord = { seasonId, competitionId: season.competitionId, completedOn, championTeamId: champion.teamId, finalStandings: standings.map((line) => ({ ...line })) }
+  const history: SeasonHistoryRecord = { seasonId, competitionId: season.competitionId, completedOn, championTeamId, ...(postseasonChampion === undefined ? {} : { championSource: 'postseason' as const }), finalStandings: standings.map((line) => ({ ...line })) }
   const finalized=resolveEligibilitySeason(applySeasonChampionCoachReputation(rebuildWorld(world, [...Object.values(world.seasonHistoryBySeasonId), history]), seasonId), seasonId)
-  const team=finalized.teams[champion.teamId]!, competition=finalized.competitions[season.competitionId]!
+  const team=finalized.teams[championTeamId]!, competition=finalized.competitions[season.competitionId]!
   const remembered = recordChampionMemories(finalized, { seasonId, competitionId: competition.id, teamId: team.id, coachId: team.coachId, occurredOn: completedOn })
   let withLegacy = Object.values(remembered.teams).reduce((current, candidate) => candidate.coachId === undefined ? current : processCoachSeason(current, { coachId: candidate.coachId, teamId: candidate.id, seasonId: String(seasonId) }), remembered)
   if (team.coachId !== undefined) withLegacy = recordCoachAchievement(withLegacy,{coachId:team.coachId,teamId:team.id,seasonId,type:'championship',sourceEventKey:`championship:${seasonId}:${team.id}`,outsider:(remembered.boardStatesByTeamId[team.id]?.expectation.baselinePosition??1)>2})
   const withNews = Object.values(withLegacy.teams).reduce((current, candidate) => evaluateBoardSeason(current, candidate.id, seasonId), addNewsItem(withLegacy,{id:`news:champion:${seasonId}:${team.id}`,gameDate:completedOn,category:'competition',headline:`${team.name} win ${competition.name}`,body:`${team.name} are champions of ${season.label}.`,context:{seasonId,competitionId:competition.id,teamId:team.id}}))
-  const rule = Object.values(withNews.ecosystems).flatMap((ecosystem) => ecosystem.tierMovementRules).find((item) => item.upperCompetitionId === season.competitionId || item.lowerCompetitionId === season.competitionId)
-  if (rule === undefined) return processSeasonContentLifecycle(withNews, seasonId)
+  const completedCompetitionSeason = releaseCompletedWorldDbCompetitionSeason(withNews, seasonId)
+  const rule = Object.values(completedCompetitionSeason.ecosystems).flatMap((ecosystem) => ecosystem.tierMovementRules).find((item) => item.upperCompetitionId === season.competitionId || item.lowerCompetitionId === season.competitionId)
+  if (rule === undefined) return processSeasonContentLifecycle(completedCompetitionSeason, seasonId)
   const otherCompetitionId = rule.upperCompetitionId === season.competitionId ? rule.lowerCompetitionId : rule.upperCompetitionId
-  const other = Object.values(withNews.seasons).filter((candidate) => candidate.competitionId === otherCompetitionId && withNews.seasonHistoryBySeasonId[candidate.id] !== undefined).sort((a, b) => b.startDate.localeCompare(a.startDate) || b.id.localeCompare(a.id))[0]
-  let resolved = other === undefined ? withNews : resolvePromotionRelegation(withNews, rule.upperCompetitionId === season.competitionId ? season.id : other.id, rule.lowerCompetitionId === season.competitionId ? season.id : other.id)
+  const other = Object.values(completedCompetitionSeason.seasons).filter((candidate) => candidate.competitionId === otherCompetitionId && completedCompetitionSeason.seasonHistoryBySeasonId[candidate.id] !== undefined).sort((a, b) => b.startDate.localeCompare(a.startDate) || b.id.localeCompare(a.id))[0]
+  let resolved = other === undefined ? completedCompetitionSeason : resolvePromotionRelegation(completedCompetitionSeason, rule.upperCompetitionId === season.competitionId ? season.id : other.id, rule.lowerCompetitionId === season.competitionId ? season.id : other.id)
   resolved = Object.keys(resolved.boardStatesByTeamId).reduce((current, teamId) => applyBoardTierMovement(current, teamId as import('@/domain/ids').TeamId), resolved)
   for (const movement of Object.values(resolved.promotionRelegationResolutionsById)) for (const teamId of [...movement.promotedTeamIds, ...movement.relegatedTeamIds]) {
     const coached = resolved.teams[teamId]!
@@ -56,6 +67,13 @@ export function finalizeSeason(world: GameWorld, seasonId: keyof GameWorld['seas
     resolved = recordTierLegacy(resolved, { coachId: coached.coachId, teamId, seasonId: relatedSeason, resolutionId: movement.id, movement: promoted ? 'promotion' : 'relegation', unexpected })
   }
   return processSeasonContentLifecycle(resolved, seasonId)
+}
+
+function releaseCompletedWorldDbCompetitionSeason(world: GameWorld, seasonId: keyof GameWorld['seasons']): GameWorld {
+  const competitionSeasonId = world.seasons[seasonId]?.worldCompetitionFormat?.competitionSeasonId
+  const runtime = world.worldDbCompetitionRuntime
+  if (competitionSeasonId === undefined || runtime === undefined || !runtime.competitionSeasonIds.includes(competitionSeasonId)) return world
+  return attachWorldDbCompetitionRuntime(world, { ...runtime, competitionSeasonIds: runtime.competitionSeasonIds.filter((id) => id !== competitionSeasonId) })
 }
 
 /** Finalizes only after the result that made its season complete has been applied. */

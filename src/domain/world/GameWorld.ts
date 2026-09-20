@@ -1276,7 +1276,16 @@ function validateSeasonHistory(world: GameWorld, history: SeasonHistoryRecord): 
     if (!Number.isInteger(line.position) || line.position < 1 || line.position > participants.length || positions.has(line.position)) throw new GameWorldValidationError(`Season history ${history.seasonId} has invalid standings positions`)
     teams.add(line.teamId); positions.add(line.position)
   }
-  if (history.finalStandings.find((line) => line.position === 1)?.teamId !== history.championTeamId) throw new GameWorldValidationError(`Season history ${history.seasonId} champion must be first`)
+  if (history.championSource === 'postseason') {
+    const formatVariant = season.worldCompetitionFormat?.variants.find((variant) => variant.isRealVariant) ?? season.worldCompetitionFormat?.variants[0]
+    const finalNode = formatVariant?.nodes.find((node) => node.role === 'FINAL')
+    const winsRequired = finalNode?.contest?.winsRequired ?? 1
+    const finalGames = Object.values(world.games).filter((game) => game.seasonId === season.id && game.competitionStageKey === finalNode?.key && game.status === 'completed')
+    const wins = finalGames.filter((game) => game.result !== null && (game.homeTeamId === history.championTeamId ? game.result.homeScore > game.result.awayScore : game.awayTeamId === history.championTeamId && game.result.awayScore > game.result.homeScore)).length
+    if (finalNode === undefined || wins < winsRequired) throw new GameWorldValidationError(`Season history ${history.seasonId} champion has not won the final`)
+  } else if (history.finalStandings.find((line) => line.position === 1)?.teamId !== history.championTeamId) {
+    throw new GameWorldValidationError(`Season history ${history.seasonId} champion must be first without a completed postseason`)
+  }
   const expected = calculateSeasonStandings(world, history.seasonId)
   if (history.finalStandings.length !== expected.length || history.finalStandings.some((line, index) => !sameStanding(line, expected[index]!))) throw new GameWorldValidationError(`Season history ${history.seasonId} standings do not match completed Games`)
 }

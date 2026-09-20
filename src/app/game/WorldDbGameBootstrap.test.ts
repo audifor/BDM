@@ -1,16 +1,21 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createGameWorld } from '@/domain/world'
+import { createGameWorld, updateGameWorld } from '@/domain/world'
 import { parseGameDate } from '@/domain/date'
+import { createGame } from '@/domain/game'
 import { PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS } from '@/domain/player/PlayerTruthCatalog'
 import type { WorldDbSelectionCatalogV1 } from '@/domain/worldDb/SelectionCatalog'
 import type { WorldDbGameBootstrapSelectionV1, WorldDbGameBootstrapSliceV1 } from '@/domain/worldDb/GameBootstrap'
 import type { WorldDbDatabaseInfoV1 } from '@/domain/worldDb/DatabaseInfo'
 import type { WorldDatabaseRepository } from '@/tauri/TauriWorldDatabaseRepository'
-import type { WorldCompetitionRuntimeBundle } from '@/domain/competition'
+import { parseWorldCompetitionFormatDocument, type WorldCompetitionRuntimeBundle } from '@/domain/competition'
 import { bootstrapGameWorldFromWorldDb } from './WorldDbGameBootstrap'
 import { WorldDbSessionV1 } from './WorldDbSession'
 import { advanceGameDay } from './advanceGameDay'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
+import { applyMatchResult } from '@/engine/match'
+import { getCompetitionPostseasonState, materializeCompetitionPostseason } from '@/engine/competition'
+import { calculateStandings } from '@/engine/competition/standings'
+import { finalizeCompletedSeason, isSeasonComplete } from '@/engine/season'
 
 const source = { databaseId: 'real-world.db', schemaId: 'DDL-PHASE1-A' } as const
 const runtimeBundle: WorldCompetitionRuntimeBundle = { bundleSchemaVersion: 1, contentId: 'bdm-phase1-competition-runtime-v1', contentHashAlgorithm: 'BLAKE3', contentHash: 'a'.repeat(64), worldDbSchema: 'DDL-PHASE1-A', competitionFormats: [{ schemaVersion: '1.0', competitionId: 'competition:ESP:liga-endesa', competitionSeasonId: 'edition:ESP:liga-endesa:2025-26', seasonLabel: '2025-26', status: 'COMPLETE', variants: [], consequences: [], sources: [] }], initialScoreDocuments: [] }
@@ -100,4 +105,86 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
   })
   it('is deterministic and preserves canonical 80/40 truth vectors', () => { const pin = { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }; const first = bootstrapGameWorldFromWorldDb(slice(), selection, pin); const second = bootstrapGameWorldFromWorldDb(slice(), selection, pin); expect(JSON.stringify(first)).toBe(JSON.stringify(second)); expect(Object.values(first.players).every((player) => Object.keys(player.basketball.ratings).length === 80 && Object.keys(player.basketball.tendencies).length === 40)).toBe(true) })
   it('rejects a selected team outside the B02 slice', async () => { const session = openSession(); await session.open(); await expect(session.bootstrapGameWorld({ ...selection, teamId: 'team:ESP:male:missing' })).rejects.toThrow('not in ecosystem') })
+
+  it('plays RealWorldSpain through ranked ACB playoffs, crowns a champion and survives save/load', () => {
+    const worldCompetitionFormat = parseWorldCompetitionFormatDocument({
+      schema_version: '1.0', competition_id: selection.competitionId, competition_season_id: selection.competitionSeasonId, season_label: '2025-26', status: 'COMPLETE',
+      variants: [{ key: 'MAIN', is_real_variant: true, nodes: [
+        { key: 'REGULAR', node_type: 'STAGE', role: 'REGULAR_SEASON', team_count: 18, pairing: { type: 'ROUND_ROBIN', meetings_per_pair: 2 }, opponent_scope: { type: 'ALL_STAGE' } },
+        { key: 'QUARTERFINALS', node_type: 'ROUND', role: 'PLAYOFF', team_count: 8, pairing: { type: 'FIXED_BRACKET', payload: { matchups: ['1-8', '4-5', '2-7', '3-6'] } }, contest: { format_type: 'SERIES', best_of: 3, wins_required: 2 }, hosting: { rule_type: 'SERIES_PATTERN', pattern: 'HAH', priority_basis: 'HIGHER_SEED' } },
+        { key: 'SEMIFINALS', node_type: 'ROUND', role: 'PLAYOFF', team_count: 4, pairing: { type: 'FIXED_BRACKET', payload: { paths: ['WINNER_1_VS_8_VS_WINNER_4_VS_5', 'WINNER_2_VS_7_VS_WINNER_3_VS_6'] } }, contest: { format_type: 'SERIES', best_of: 5, wins_required: 3 }, hosting: { rule_type: 'SERIES_PATTERN', pattern: 'HHAAH', priority_basis: 'HIGHER_SEED' } },
+        { key: 'FINAL', node_type: 'ROUND', role: 'FINAL', team_count: 2, contest: { format_type: 'SERIES', best_of: 5, wins_required: 3 }, hosting: { rule_type: 'SERIES_PATTERN', pattern: 'HHAAH', priority_basis: 'HIGHER_SEED' } },
+      ], edges: [
+        { from: 'REGULAR', to: 'QUARTERFINALS', selector: 'RANK_RANGE', rank_from: 1, rank_to: 8 },
+        { from: 'QUARTERFINALS', to: 'SEMIFINALS', selector: 'WINNER' },
+        { from: 'SEMIFINALS', to: 'FINAL', selector: 'WINNER' },
+      ] }],
+      sources: [{ url: 'https://acb.com', type: 'OFFICIAL' }],
+    })
+    const sourceSlice = slice()
+    const baseWorld = bootstrapGameWorldFromWorldDb(sourceSlice, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema }, worldCompetitionFormat)
+    const season = baseWorld.seasons[baseWorld.currentSeasonId]!
+    const regularGames = Object.values(baseWorld.games).filter((game) => game.competitionStageKey === 'REGULAR')
+    expect(regularGames).toHaveLength(306)
+    expect(Math.max(...regularGames.map((game) => Number(game.date.replaceAll('-', ''))))).toBe(20260617)
+    expect(regularGames.some((game) => game.date.startsWith('2026-03-'))).toBe(true)
+    expect(regularGames.some((game) => game.date.startsWith('2026-04-'))).toBe(true)
+    expect(Object.values(baseWorld.games).some((game) => game.competitionStageKey === 'QUARTERFINALS')).toBe(false)
+
+    const lastRegularGame = [...regularGames].sort((left, right) => right.date.localeCompare(left.date) || right.id.localeCompare(left.id))[0]!
+    const almostComplete = updateGameWorld(baseWorld, { games: Object.values(baseWorld.games).map((game) => game.id === lastRegularGame.id ? game : game.competitionStageKey === 'REGULAR' ? createGame({ ...game, status: 'completed', result: { homeScore: 100, awayScore: 80 } }) : game) })
+    const afterRegularSeason = applyMatchResult(almostComplete, { gameId: lastRegularGame.id, homeTeamId: lastRegularGame.homeTeamId, awayTeamId: lastRegularGame.awayTeamId, homeScore: 100, awayScore: 80 })
+    const regularStandings = calculateStandings(afterRegularSeason, season.id)
+    const initialPostseason = getCompetitionPostseasonState(afterRegularSeason, season.id)!
+    expect(getCompetitionPostseasonState(afterRegularSeason, season.id)).toEqual(initialPostseason)
+    expect(initialPostseason.seeds).toHaveLength(8)
+    expect(initialPostseason.seeds.map((entry) => entry.competitionSeasonEntryId)).toEqual(regularStandings.slice(0, 8).map((line) => line.teamId))
+    expect(Object.values(afterRegularSeason.games).filter((game) => game.competitionStageKey === 'QUARTERFINALS')).toHaveLength(4)
+    expect(Object.values(afterRegularSeason.games).filter((game) => game.competitionStageKey === 'QUARTERFINALS').every((game) => game.date === '2026-06-18')).toBe(true)
+    expect(calculateStandings(afterRegularSeason, season.id)).toEqual(regularStandings)
+    const idempotentPostseason = materializeCompetitionPostseason(afterRegularSeason, season.id)
+    expect(Object.keys(idempotentPostseason.games)).toHaveLength(Object.keys(afterRegularSeason.games).length)
+
+    const firstPostseasonGame = Object.values(afterRegularSeason.games).find((game) => game.competitionStageKey === 'QUARTERFINALS')!
+    const afterOnePlayoffResult = applyMatchResult(afterRegularSeason, { gameId: firstPostseasonGame.id, homeTeamId: firstPostseasonGame.homeTeamId, awayTeamId: firstPostseasonGame.awayTeamId, homeScore: 100, awayScore: 80 })
+    const savedMidSeries = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(afterOnePlayoffResult, '2026-09-01T00:00:00.000Z'))))
+    expect(Object.values(savedMidSeries.games)).toHaveLength(Object.values(afterOnePlayoffResult.games).length)
+    expect(getCompetitionPostseasonState(savedMidSeries, season.id)).toEqual(getCompetitionPostseasonState(afterOnePlayoffResult, season.id))
+
+    let playoffWorld = savedMidSeries
+    for (let step = 0; step < 27; step += 1) {
+      const next = Object.values(playoffWorld.games).filter((game) => game.competitionStageKey !== 'REGULAR' && game.status === 'scheduled').sort((left, right) => left.date.localeCompare(right.date) || left.id.localeCompare(right.id))[0]
+      if (next === undefined) break
+      const lowerSeedWinsFinal = next.competitionStageKey === 'FINAL' && [1, 2, 5].includes(next.postseasonGameNo!)
+      playoffWorld = applyMatchResult(playoffWorld, { gameId: next.id, homeTeamId: next.homeTeamId, awayTeamId: next.awayTeamId, homeScore: lowerSeedWinsFinal ? 80 : 100, awayScore: lowerSeedWinsFinal ? 100 : 80 })
+    }
+
+    const postseasonGames = Object.values(playoffWorld.games).filter((game) => game.competitionStageKey !== 'REGULAR')
+    expect(postseasonGames.filter((game) => game.competitionStageKey === 'QUARTERFINALS')).toHaveLength(12)
+    expect(postseasonGames.filter((game) => game.competitionStageKey === 'SEMIFINALS')).toHaveLength(10)
+    expect(postseasonGames.filter((game) => game.competitionStageKey === 'FINAL')).toHaveLength(3)
+    expect(postseasonGames.every((game) => game.status === 'completed')).toBe(true)
+    expect(postseasonGames.every((game) => game.date >= '2026-06-18' && game.date <= '2026-06-30')).toBe(true)
+    const completedPostseason = getCompetitionPostseasonState(playoffWorld, season.id)!
+    const finalSeries = Object.values(completedPostseason.seriesByFixtureId).find((series) => series.plan.nodeKey === 'FINAL')!
+    expect(Object.values(completedPostseason.seriesByFixtureId).filter((series) => series.plan.nodeKey === 'QUARTERFINALS').every((series) => series.plan.bestOf === 3 && series.plan.winsRequired === 2)).toBe(true)
+    expect(Object.values(completedPostseason.seriesByFixtureId).filter((series) => series.plan.nodeKey === 'SEMIFINALS').every((series) => series.plan.bestOf === 5 && series.plan.winsRequired === 3)).toBe(true)
+    expect(finalSeries.plan.bestOf).toBe(5)
+    expect(finalSeries.plan.winsRequired).toBe(3)
+    expect(new Set(Object.values(playoffWorld.games).map((game) => game.id)).size).toBe(Object.values(playoffWorld.games).length)
+    expect(getCompetitionPostseasonState(playoffWorld, season.id)?.championTeamId).toBe(initialPostseason.seeds[1]!.competitionSeasonEntryId)
+    expect(isSeasonComplete(playoffWorld, season.id)).toBe(true)
+
+    const completed = finalizeCompletedSeason(playoffWorld, season.id)
+    const history = completed.seasonHistoryBySeasonId[season.id]!
+    expect(history.championTeamId).toBe(initialPostseason.seeds[1]!.competitionSeasonEntryId)
+    expect(history.championSource).toBe('postseason')
+    expect(history.finalStandings).toEqual(regularStandings)
+    expect(calculateStandings(completed, season.id)).toEqual(regularStandings)
+    expect(completed.worldDbCompetitionRuntime?.competitionSeasonIds).toEqual([])
+    const savedChampion = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(completed, '2026-09-01T00:00:00.000Z'))))
+    expect(Object.values(savedChampion.games)).toEqual(Object.values(completed.games))
+    expect(savedChampion.seasonHistoryBySeasonId[season.id]).toEqual(history)
+    expect(getCompetitionPostseasonState(savedChampion, season.id)).toEqual(getCompetitionPostseasonState(completed, season.id))
+  })
 })
