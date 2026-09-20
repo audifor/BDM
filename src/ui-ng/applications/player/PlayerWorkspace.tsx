@@ -15,6 +15,7 @@ import './player-history-board.css'
 import './player-compare.css'
 import './player-scouting.css'
 import './player-scouting-board.css'
+import './player-responsive.css'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 

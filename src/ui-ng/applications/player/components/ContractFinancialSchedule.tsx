@@ -32,21 +32,26 @@ export function ContractFinancialSchedule({
           className="pc-schedule__table"
           columns={ngTableColumns(rows, [
             ngCol<ContractFinancialRowModel>('season', 'Season', (row) => row.seasonLabel, {
+              responsivePriority: 1,
               value: (row) => row.seasonLabel,
             }),
             ngCol<ContractFinancialRowModel>('base', 'Base', (row) => row.baseSalary.formatted, {
               numeric: true,
+              responsivePriority: 1,
               value: (row) => row.baseSalary.amount,
             }),
             ngCol<ContractFinancialRowModel>('guaranteed', 'Guaranteed', (row) => row.guaranteed.formatted, {
               numeric: true,
+              responsivePriority: 1,
               value: (row) => row.guaranteed.amount,
             }),
             ngCol<ContractFinancialRowModel>('capHit', 'Cap hit', (row) => row.capHit.formatted, {
               numeric: true,
+              responsivePriority: 1,
               value: (row) => row.capHit.amount,
             }),
             ngCol<ContractFinancialRowModel>('status', 'Status', (row) => row.guaranteeState, {
+              responsivePriority: 2,
               value: (row) => row.guaranteeState,
             }),
           ])}
