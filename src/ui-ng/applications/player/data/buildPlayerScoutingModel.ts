@@ -1,5 +1,3 @@
-import type { CanonicalRatingKey } from '@/domain/player'
-import { CANONICAL_RATING_KEYS } from '@/domain/player'
 import { organizationIdForTeam, type PlayerId, type StaffPersonId } from '@/domain/ids'
 import {
   formatRatingEvaluation,

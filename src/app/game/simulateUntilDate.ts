@@ -47,9 +47,6 @@ export function tickSimulateUntilDate(world: GameWorld, targetDate: GameDate): S
   }
 
   const interruption = getContinueStopReason(world)
-  if (interruption?.type === 'seasonComplete') {
-    return { world, event: { type: 'finished', stopReason: interruption } }
-  }
   if (interruption?.type === 'mediaOpportunity') {
     return { world: skipMediaOpportunity(world, interruption.opportunityId), event: { type: 'mediaSkipped' } }
   }

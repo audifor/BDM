@@ -7,7 +7,7 @@ import {
   type GameWorld,
 } from '@/domain/world'
 import type { SchedulePolicy } from './SchedulePolicy'
-import { distributeRoundsAcrossSeason } from './SchedulePolicy'
+import { scheduleRoundsByCalendar } from './SchedulePolicy'
 import { deriveCompetitionSeasonWindows } from '../WorldCompetitionCalendar'
 
 const DEFAULT_DAYS_BETWEEN_ROUNDS = 4
@@ -41,11 +41,11 @@ export function generateRoundRobinSchedule(options: GenerateRoundRobinScheduleOp
   const firstLegRounds = createFirstLegRounds(teamIds)
   const rounds = Array.from({ length: competition.rules.schedule.meetingsPerPair }, (_, legIndex) => legIndex % 2 === 0 ? firstLegRounds : firstLegRounds.map(invertRound)).flat()
   const startDate = options.startDate ?? season.startDate
-  const seasonWindows = deriveCompetitionSeasonWindows(startDate, season.endDate, season.worldCompetitionFormat)
-  const schedulePolicy = options.schedulePolicy ?? (options.daysBetweenRounds === undefined && season.worldCompetitionFormat !== undefined ? distributeRoundsAcrossSeason : undefined)
+  const seasonWindows = deriveCompetitionSeasonWindows(startDate, season.endDate, season.worldCompetitionFormat, season.calendarPolicy)
+  const schedulePolicy = options.schedulePolicy ?? (options.daysBetweenRounds === undefined && (season.worldCompetitionFormat !== undefined || season.calendarPolicy !== undefined) ? scheduleRoundsByCalendar : undefined)
   const roundDates = schedulePolicy === undefined
     ? rounds.map((_, roundIndex) => addDays(startDate, roundIndex * (options.daysBetweenRounds ?? DEFAULT_DAYS_BETWEEN_ROUNDS)))
-    : schedulePolicy(rounds.length, startDate, seasonWindows.regularSeasonEnd)
+    : schedulePolicy(rounds.length, startDate, seasonWindows.regularSeasonEnd, season.calendarPolicy)
 
   if (roundDates.length !== rounds.length || new Set(roundDates).size !== roundDates.length) {
     throw new RangeError('Schedule policy must provide one distinct date per round')

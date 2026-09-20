@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { parseGameDate } from '@/domain/date'
 import { parseWorldCompetitionFormatDocument } from '@/domain/competition'
 import { deriveCompetitionSeasonWindows } from './WorldCompetitionCalendar'
+import { SPAIN_ACB_2025_26_CALENDAR } from '@/data/worldCompetitionCalendars'
 
 const format = parseWorldCompetitionFormatDocument({
   schema_version: '1.0', competition_id: 'competition:acb', competition_season_id: 'edition:acb:2025-26', season_label: '2025-26', status: 'COMPLETE',
@@ -31,6 +32,15 @@ describe('WorldCompetitionCalendar', () => {
 
   it('validates normalized format documents through the same B04 parser on save/load', () => {
     expect(parseWorldCompetitionFormatDocument(format)).toEqual(format)
+  })
+
+  it('respects configured regular-season and playoff windows with rest between series games', () => {
+    const windows = deriveCompetitionSeasonWindows(parseGameDate('2025-10-01'), parseGameDate('2026-06-30'), format, SPAIN_ACB_2025_26_CALENDAR)
+
+    expect(windows.regularSeasonEnd).toBe('2026-05-30')
+    expect(windows.postseasonStart).toBe('2026-06-02')
+    expect(windows.postseasonStartByNodeKey).toEqual({ QUARTERFINALS: '2026-06-02', SEMIFINALS: '2026-06-09', FINAL: '2026-06-20' })
+    expect(windows.postseasonDaysBetweenGames).toBe(2)
   })
 
   it('rejects a season window too short for its configured regular and postseason periods', () => {

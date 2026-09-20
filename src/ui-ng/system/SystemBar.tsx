@@ -20,7 +20,7 @@ export function SystemBar() {
   const season = world === null ? undefined : world.seasons[world.currentSeasonId]
   const competition = season === undefined || world === null ? undefined : world.competitions[season.competitionId]
   const stop = world === null ? undefined : getContinueStopReason(world)
-  const blocked = world === null || stop?.type === 'seasonComplete'
+  const blocked = world === null
 
   return (
     <header className="ng-system-bar" data-ng-region="system-bar">

@@ -67,7 +67,7 @@ describe('simulate until date', () => {
     }
   })
 
-  it('stops at the completed-season boundary instead of inventing extra days', () => {
+  it('continues the world clock beyond a completed competition season', () => {
     const world = createNewGame()
     const complete = {
       ...world,
@@ -76,9 +76,9 @@ describe('simulate until date', () => {
 
     const result = simulateUntilDate(complete, addDays(complete.currentDate, 10))
 
-    expect(result.daysAdvanced).toBe(0)
-    expect(result.stopReason).toEqual({ type: 'seasonComplete' })
-    expect(result.world.currentDate).toBe(complete.currentDate)
+    expect(result.daysAdvanced).toBe(10)
+    expect(result.stopReason).toEqual({ type: 'arrived' })
+    expect(result.world.currentDate).toBe(addDays(complete.currentDate, 10))
   })
 
   it('exposes one holiday tick so the UI can show the passing date and a resolved user match', () => {

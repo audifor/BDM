@@ -1,5 +1,6 @@
 import { addDays, compareGameDates, type GameDate } from '@/domain/date'
 import type { WorldCompetitionFormatDocument, WorldCompetitionFormatNode, WorldCompetitionFormatVariant } from '@/domain/competition'
+import type { CompetitionCalendarPolicy } from '@/domain/season'
 
 export interface CompetitionSeasonWindows {
   readonly regularSeasonStart: GameDate
@@ -7,6 +8,7 @@ export interface CompetitionSeasonWindows {
   readonly postseasonStart: GameDate | null
   readonly seasonEnd: GameDate
   readonly postseasonStartByNodeKey: Readonly<Record<string, GameDate>>
+  readonly postseasonDaysBetweenGames: number
 }
 
 /** Reserves the maximum configured playoff game days inside a season's overall calendar window. */
@@ -14,17 +16,29 @@ export function deriveCompetitionSeasonWindows(
   seasonStart: GameDate,
   seasonEnd: GameDate,
   format?: WorldCompetitionFormatDocument,
+  calendarPolicy?: CompetitionCalendarPolicy,
 ): CompetitionSeasonWindows {
   if (compareGameDates(seasonStart, seasonEnd) > 0) throw new RangeError('Competition season starts after it ends')
-  if (format === undefined) return Object.freeze({ regularSeasonStart: seasonStart, regularSeasonEnd: seasonEnd, postseasonStart: null, seasonEnd, postseasonStartByNodeKey: Object.freeze({}) })
+  if (calendarPolicy !== undefined) {
+    const postseasonStart = calendarPolicy.postseasonWindow?.startDate ?? Object.values(calendarPolicy.postseasonStageStartDates).sort()[0] ?? null
+    return Object.freeze({
+      regularSeasonStart: calendarPolicy.regularSeasonWindow.startDate,
+      regularSeasonEnd: calendarPolicy.regularSeasonWindow.endDate,
+      postseasonStart,
+      seasonEnd,
+      postseasonStartByNodeKey: calendarPolicy.postseasonStageStartDates,
+      postseasonDaysBetweenGames: calendarPolicy.postseasonCadence.daysBetweenGames,
+    })
+  }
+  if (format === undefined) return Object.freeze({ regularSeasonStart: seasonStart, regularSeasonEnd: seasonEnd, postseasonStart: null, seasonEnd, postseasonStartByNodeKey: Object.freeze({}), postseasonDaysBetweenGames: 1 })
 
   const variant = requireCompetitionFormatVariant(format)
   const regularNode = variant.nodes.find((node) => node.role === 'REGULAR_SEASON')
-  if (regularNode === undefined) return Object.freeze({ regularSeasonStart: seasonStart, regularSeasonEnd: seasonEnd, postseasonStart: null, seasonEnd, postseasonStartByNodeKey: Object.freeze({}) })
+  if (regularNode === undefined) return Object.freeze({ regularSeasonStart: seasonStart, regularSeasonEnd: seasonEnd, postseasonStart: null, seasonEnd, postseasonStartByNodeKey: Object.freeze({}), postseasonDaysBetweenGames: 1 })
 
   const postseasonKeys = reachableNodes(regularNode.key, variant)
   postseasonKeys.delete(regularNode.key)
-  if (postseasonKeys.size === 0) return Object.freeze({ regularSeasonStart: seasonStart, regularSeasonEnd: seasonEnd, postseasonStart: null, seasonEnd, postseasonStartByNodeKey: Object.freeze({}) })
+  if (postseasonKeys.size === 0) return Object.freeze({ regularSeasonStart: seasonStart, regularSeasonEnd: seasonEnd, postseasonStart: null, seasonEnd, postseasonStartByNodeKey: Object.freeze({}), postseasonDaysBetweenGames: 1 })
 
   const ordered = topologicalNodes(variant)
   const durations = new Map<string, number>()
@@ -33,23 +47,23 @@ export function deriveCompetitionSeasonWindows(
     const duration = maxGameDays(node)
     if (duration > 0) durations.set(node.key, duration)
   }
-  if (durations.size === 0) return Object.freeze({ regularSeasonStart: seasonStart, regularSeasonEnd: seasonEnd, postseasonStart: null, seasonEnd, postseasonStartByNodeKey: Object.freeze({}) })
+  if (durations.size === 0) return Object.freeze({ regularSeasonStart: seasonStart, regularSeasonEnd: seasonEnd, postseasonStart: null, seasonEnd, postseasonStartByNodeKey: Object.freeze({}), postseasonDaysBetweenGames: 1 })
 
   const startOffsets = new Map<string, number>()
   const endOffsets = new Map<string, number>()
   for (const node of ordered) {
     if (!durations.has(node.key)) continue
     const incoming = variant.edges.filter((edge) => edge.to === node.key && durations.has(edge.from))
-    const startOffset = incoming.length === 0 ? 0 : Math.max(...incoming.map((edge) => endOffsets.get(edge.from) ?? 0))
+    const startOffset = incoming.length === 0 ? 0 : Math.max(...incoming.map((edge) => (endOffsets.get(edge.from) ?? 0) + 1))
     startOffsets.set(node.key, startOffset)
-    endOffsets.set(node.key, startOffset + durations.get(node.key)!)
+    endOffsets.set(node.key, startOffset + durations.get(node.key)! - 1)
   }
-  const reserveDays = Math.max(...endOffsets.values())
+  const reserveDays = Math.max(...endOffsets.values()) + 1
   const regularSeasonEnd = addDays(seasonEnd, -reserveDays)
   if (compareGameDates(regularSeasonEnd, seasonStart) < 0) throw new RangeError('Competition season window cannot fit regular season and configured postseason')
   const postseasonStart = addDays(regularSeasonEnd, 1)
   const postseasonStartByNodeKey = Object.fromEntries([...startOffsets].map(([nodeKey, offset]) => [nodeKey, addDays(postseasonStart, offset)]))
-  return Object.freeze({ regularSeasonStart: seasonStart, regularSeasonEnd, postseasonStart, seasonEnd, postseasonStartByNodeKey: Object.freeze(postseasonStartByNodeKey) })
+  return Object.freeze({ regularSeasonStart: seasonStart, regularSeasonEnd, postseasonStart, seasonEnd, postseasonStartByNodeKey: Object.freeze(postseasonStartByNodeKey), postseasonDaysBetweenGames: 1 })
 }
 
 export function requireCompetitionFormatVariant(format: WorldCompetitionFormatDocument): WorldCompetitionFormatVariant {

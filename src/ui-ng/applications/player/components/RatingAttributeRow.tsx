@@ -1,9 +1,9 @@
-import type { CanonicalRatingKey } from '@/domain/player'
+import type { PlayerTruthRatingKey } from '@/domain/player'
 
 import { ordinalPercentile, ratingTone } from '@/ui-ng/applications/player/data/ratingCatalog'
 
 export interface RatingAttributeRowProps {
-  readonly id: CanonicalRatingKey
+  readonly id: PlayerTruthRatingKey
   readonly label: string
   readonly value: number
   /** Movement recorded for this attribute since the first tracked season, 0 when unknown. */
@@ -11,7 +11,7 @@ export interface RatingAttributeRowProps {
   /** Share of the competition this value beats, null when there is no sample. */
   readonly percentile: number | null
   readonly selected?: boolean
-  readonly onSelect: (id: CanonicalRatingKey) => void
+  readonly onSelect: (id: PlayerTruthRatingKey) => void
 }
 
 export function RatingAttributeRow({

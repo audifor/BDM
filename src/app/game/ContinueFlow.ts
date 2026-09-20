@@ -2,7 +2,9 @@ import type { GameId, TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
 import { getPendingMediaOpportunities } from '@/domain/world'
+import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
 import { advanceGameDay } from './advanceGameDay'
+import { getCurrentSeason } from './selectors'
 
 export type ContinueStopReason =
   | { readonly type: 'userGame'; readonly gameId: GameId }
@@ -20,7 +22,11 @@ export function getContinueStopReason(world: GameWorld): ContinueStopReason | un
   const team = getUserTeam(world)
   const userGame = team === undefined ? undefined : getGamesToday(world).find((game) => game.status === 'scheduled' && (game.homeTeamId === team.id || game.awayTeamId === team.id))
   if (userGame !== undefined) return { type: 'userGame', gameId: userGame.id }
-  return Object.values(world.games).every((game) => game.status === 'completed') ? { type: 'seasonComplete' } : undefined
+  if (getNextUserGame(world) === undefined) {
+    const primary = getCurrentSeason(world)
+    if (isSeasonComplete(world, primary.id) && getSeasonHistoryRecord(world, primary.id) !== undefined) return { type: 'seasonComplete' }
+  }
+  return undefined
 }
 
 /** Repeats the canonical daily application flow until a supported interruption. */

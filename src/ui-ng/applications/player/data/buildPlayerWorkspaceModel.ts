@@ -1,6 +1,6 @@
 import { formatInjuryKind } from '@/domain/injury'
 import type { PlayerId } from '@/domain/ids'
-import { getPlayerAge, type Player, type PlayerRatings } from '@/domain/player'
+import { getPlayerAge, type Player, type PlayerTruthRatings } from '@/domain/player'
 import {
   getCareerFatigueForPlayer,
   getCurrentPlayerInjury,
@@ -20,10 +20,7 @@ import { getUserTeam } from '@/engine/calendar'
 import {
   aggregateCategoryValue,
   buildFullRatingRows,
-  buildOverviewRatingKeys,
   CATEGORY_LABELS,
-  ratingCategory,
-  ratingLabel,
   RADAR_CATEGORY_ORDER,
   ratingsForCategory,
 } from './ratingCatalog'
@@ -77,13 +74,8 @@ const MORALE_BAND_LABELS = {
 
 const OVERVIEW_EVALUATION_COUNT = 3
 
-function buildRatings(playerRatings: PlayerRatings): PlayerRatingRow[] {
-  return buildOverviewRatingKeys(playerRatings).map((key) => ({
-    id: key,
-    label: ratingLabel(key),
-    category: ratingCategory(key),
-    value: playerRatings[key],
-  }))
+function buildRatings(playerRatings: PlayerTruthRatings): PlayerRatingRow[] {
+  return [...buildFullRatingRows(playerRatings)]
 }
 
 function buildAttributes(world: GameWorld, player: Player): PlayerAttributesModel {
@@ -258,6 +250,8 @@ export function buildPlayerWorkspaceModel(
   if (overview === undefined) return undefined
 
   return {
+    player,
+    person: player.personId === undefined ? undefined : world.personsById[player.personId],
     identity: {
       playerId: player.id,
       firstName: player.firstName,

@@ -39,17 +39,19 @@ export function CoachWorkspace() {
   }
 
   const coach = world.coaches[world.userCoachId]
-  const reputation = world.coachReputationProfilesByCoachId[world.userCoachId]
   const rpg = world.coachRpgProfilesByCoachId[world.userCoachId]
-  const professional = world.coachProfessionalProfilesByCoachId[world.userCoachId]
-  if (coach === undefined || reputation === undefined || rpg === undefined || professional === undefined) {
+  const staffProfile = coach === undefined ? undefined : world.staffPeopleById[coach.staffProfileId]
+  if (coach === undefined || staffProfile === undefined) {
     return <NgHoloShell appLabel="Coach" empty emptyMessage="Coach profile unavailable." region="coach-workspace" />
   }
 
-  const employment = world.coachEmploymentByCoachId[world.userCoachId]
+  const headCoachAssignment = Object.values(world.teamStaffAssignmentsById).find(
+    (assignment) => assignment.staffPersonId === staffProfile.id && assignment.role === 'headCoach',
+  )
   const relationships = getRelationshipsForPerson(world, coach.id)
-  const teamName =
-    employment?.status === 'employed' && employment.teamId !== undefined ? world.teams[employment.teamId]?.name ?? 'Employed' : 'Unemployed'
+  const teamName = headCoachAssignment === undefined
+    ? 'Unemployed'
+    : world.teams[headCoachAssignment.teamId]?.name ?? 'Unassigned'
   const personName = (id: string) => {
     const player = world.players[id as never]
     if (player !== undefined) return `${player.firstName} ${player.lastName}`
@@ -69,8 +71,8 @@ export function CoachWorkspace() {
       onTabSelect={(id) => setTab(id as (typeof TABS)[number]['id'])}
       region="coach-workspace"
       tabs={TABS}
-      teamId={employment?.teamId}
-      title={`${coach.firstName} ${coach.lastName}`}
+      teamId={headCoachAssignment?.teamId}
+      title={`${staffProfile.identity.firstName} ${staffProfile.identity.lastName}`}
     >
       {tab === 'overview' ? (
         <CoachOverviewScreen
@@ -125,7 +127,11 @@ export function CoachWorkspace() {
         </div>
       ) : null}
       {tab === 'development' ? (
-        <CoachDevelopmentWorkspace onDevelopSkill={purchaseUserCoachSkill} onPurchasePerk={purchaseUserCoachPerk} rpg={rpg} />
+        rpg === undefined ? (
+          <p className="ng-canon__empty">Coach development data is not available for this career.</p>
+        ) : (
+          <CoachDevelopmentWorkspace onDevelopSkill={purchaseUserCoachSkill} onPurchasePerk={purchaseUserCoachPerk} rpg={rpg} />
+        )
       ) : null}
       {tab === 'legacy' ? <CoachLegacyScreen onOpenTab={openTab} /> : null}
     </NgHoloShell>

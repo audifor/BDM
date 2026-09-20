@@ -20,6 +20,7 @@ describe('DesktopWidgetLayer runtime wiring', () => {
       onOpenApp: () => undefined,
       onOpenPendingGame: () => undefined,
       onPlayGame: () => undefined,
+      onStartNextSeason: () => undefined,
     }))
 
     expect(markup).toContain('Club identity')

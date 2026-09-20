@@ -91,11 +91,10 @@ describe('buildPlayerDevelopmentModel', () => {
     const model = buildPlayerDevelopmentModel(trained, playerId)!
 
     expect(model.seasonStimulus.totalStimulus).toBeGreaterThan(0)
-    expect(model.seasonStimulus.categories.length).toBeGreaterThan(0)
-    const categorySum = model.seasonStimulus.categories.reduce((sum, row) => sum + row.stimulusTotal, 0)
-    expect(categorySum).toBeCloseTo(model.seasonStimulus.totalStimulus, 5)
-    expect(model.seasonStimulus.topRatings.length).toBeGreaterThan(0)
-    expect(model.defaultSelectedItemId).not.toBeNull()
+    expect(model.seasonStimulus.categories).toHaveLength(0)
+    expect(model.seasonStimulus.topRatings).toHaveLength(0)
+    expect(model.seasonStimulus.contextNote).toContain('legacy rating profile')
+    expect(model.defaultSelectedItemId).toBeNull()
   })
 
   it('transforms inspector detail for selected stimulus and potential rows', () => {
@@ -104,12 +103,10 @@ describe('buildPlayerDevelopmentModel', () => {
     const playerId = world.teams[teamId]!.rosterPlayerIds[0]!
     const trained = executeTeamTraining(world, teamId)
     const model = buildPlayerDevelopmentModel(trained, playerId)!
-    const categoryId = model.seasonStimulus.categories.find((row) => row.stimulusTotal > 0)!.id
-    const ratingId = model.seasonStimulus.topRatings[0]!.id
     const potentialId = model.scoutPotential.rows[0]!.id
 
-    expect(findDevelopmentInspectorDetail(model, categoryId)?.kind).toBe('stimulus-category')
-    expect(findDevelopmentInspectorDetail(model, ratingId)?.kind).toBe('stimulus-rating')
+    expect(model.seasonStimulus.categories).toHaveLength(0)
+    expect(model.seasonStimulus.topRatings).toHaveLength(0)
     expect(findDevelopmentInspectorDetail(model, potentialId)?.kind).toBe('scout-potential')
     expect(findDevelopmentInspectorDetail(model, null)).toBeUndefined()
   })
@@ -137,16 +134,10 @@ describe('buildPlayerDevelopmentModel', () => {
     )
     const model = buildPlayerDevelopmentModel(advanced, playerId)!
 
-    expect(model.longitudinal.status).toBe('available')
-    expect(model.longitudinal.series.length).toBeGreaterThan(0)
-    expect(model.longitudinal.series.length).toBeLessThanOrEqual(4)
-    for (const series of model.longitudinal.series) {
-      expect(series.points.length).toBeGreaterThanOrEqual(2)
-      const player = advanced.players[playerId]!
-      expect(series.points[series.points.length - 1]).toBe(player.basketball.ratings[series.id])
-      expect(series.delta).toBe(series.points[series.points.length - 1]! - series.points[0]!)
-    }
-    expect(model.longitudinal.movers.length).toBeGreaterThan(0)
+    expect(model.longitudinal.status).toBe('unavailable')
+    expect(model.longitudinal.message).toContain('legacy 35-rating history')
+    expect(model.longitudinal.series).toHaveLength(0)
+    expect(model.longitudinal.movers).toHaveLength(0)
     expect(model.longitudinal.events.some((event) => event.label === 'Offseason development')).toBe(true)
   })
 
@@ -203,7 +194,7 @@ describe('buildPlayerDevelopmentModel', () => {
 
     expect(model.categoryCurve).toHaveLength(RADAR_CATEGORY_ORDER.length)
     const columns = Math.max(...model.categoryCurve.map((entry) => entry.points.length))
-    expect(columns).toBeGreaterThanOrEqual(2)
+    expect(columns).toBe(1)
     for (const series of model.categoryCurve) {
       expect(series.points).toHaveLength(columns)
       expect(series.delta).toBe(series.points[series.points.length - 1]! - series.points[0]!)
@@ -216,17 +207,14 @@ describe('buildPlayerDevelopmentModel', () => {
         model.categoryDevelopment.find((row) => row.id === series.id)!.potential,
       )
     }
-    expect(model.markers.length).toBeGreaterThan(0)
-    for (const marker of model.markers) {
-      expect(['injury', 'transition']).toContain(marker.kind)
-      expect(marker.columnIndex).toBeLessThan(columns)
-    }
-    expect(model.longitudinal.movers.length).toBeGreaterThan(0)
-    expect(model.detailByCategory.shooting.rateLabel).not.toBe('No transition recorded')
+    expect(model.markers).toEqual([])
+    expect(model.longitudinal.status).toBe('unavailable')
+    expect(model.longitudinal.movers).toHaveLength(0)
+    expect(model.detailByCategory.shooting.rateLabel).toBe('No transition recorded')
     // The projection reads the reported scouting ranges, or says it has none: never invents one.
     expect(model.projection.note.length).toBeGreaterThan(0)
     expect(model.projection.status === 'available' ? 3 : 0).toBe(model.projection.outcomes.length)
-    expect(model.trainingEffect.note).toContain('projection')
+    expect(model.trainingEffect.note).toContain('legacy rating profile')
   })
 
   it('rebuilds the category curve honestly when no transition exists yet', () => {

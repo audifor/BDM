@@ -8,6 +8,7 @@ import {
   getCoachMonthlyExternalIncome,
 } from '@/domain/coachFinances'
 import { getRelationshipBandForPeople, getRelationshipsForPerson } from '@/domain/world'
+import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { formatMoney } from '@/ui/formatters'
 import { buildCoachCareerModel } from '@/ui-ng/applications/coach/CoachCareerScreen'
 import { buildCoachLegacyModel } from '@/ui-ng/applications/coach/CoachLegacyScreen'
@@ -37,17 +38,23 @@ describe('buildCoachOverviewModel', () => {
   const model = buildCoachOverviewModel(world)
 
   it('reads identity from the employed coach and their club', () => {
-    expect(model.identity.name).toBe(`${coach.firstName} ${coach.lastName}`)
+    const staff = world.staffPeopleById[coach.staffProfileId]!
+    expect(model.identity.name).toBe(`${staff.identity.firstName} ${staff.identity.lastName}`)
     expect(model.identity.club).toBe(team.name)
     expect(model.identity.role).toBe('Head Coach')
     expect(model.identity.developmentPoints).toBe(developmentPoints)
   })
 
-  it('keeps level, career XP, archetype, attributes and personality on the mock', () => {
+  it('reads professional attributes directly from the Coach StaffProfile', () => {
+    const staff = world.staffPeopleById[coach.staffProfileId]!
     expect(model.identity.level).toBe(COACH_OVERVIEW_MOCK.identity.level)
     expect(model.identity.careerXp).toEqual(COACH_OVERVIEW_MOCK.identity.careerXp)
     expect(model.identity.rows).toEqual(COACH_OVERVIEW_MOCK.identity.rows)
-    expect(model.attributes).toEqual(COACH_OVERVIEW_MOCK.attributes)
+    expect(model.staffProfile).toBe(staff)
+    expect(model.attributes.map((attribute) => attribute.id)).toEqual(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS)
+    expect(model.attributes.map((attribute) => attribute.value)).toEqual(
+      STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => staff.professional.attributes[key]),
+    )
     expect(model.personality).toEqual(COACH_OVERVIEW_MOCK.personality)
   })
 

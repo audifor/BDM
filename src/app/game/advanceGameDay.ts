@@ -17,9 +17,6 @@ export function simulateRemainingGamesToday(world: GameWorld): GameWorld {
 /** Resolves today's pending games, then advances the game calendar by one day. */
 export function advanceGameDay(world: GameWorld): GameWorld {
   const resolvedWorld = simulateRemainingGamesToday(world)
-  if (Object.values(resolvedWorld.games).every((game) => game.status === 'completed')) {
-    return resolvedWorld
-  }
   const advancedWorld = advanceDay(resolvedWorld)
 
   const pastScheduledGame = Object.values(advancedWorld.games).find(

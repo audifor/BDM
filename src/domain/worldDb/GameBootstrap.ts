@@ -1,4 +1,5 @@
 import type { WorldDbDatabaseInfoV1 } from './DatabaseInfo'
+import { PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS } from '@/domain/player/PlayerTruthCatalog'
 
 export interface WorldDbGameBootstrapSelectionV1 {
   readonly source: WorldDbDatabaseInfoV1['source']
@@ -90,7 +91,7 @@ export function assertWorldDbGameBootstrapSliceV1(value: unknown): asserts value
   assertArray(value.countries, 'countries', (entry) => { for (const field of ['countryId', 'name', 'code'] as const) requireText(entry[field], `World DB bootstrap country ${field}`) }, 'countryId')
   assertArray(value.teams, 'teams', (entry) => { for (const field of ['teamId', 'name', 'gender', 'countryId'] as const) requireText(entry[field], `World DB bootstrap team ${field}`) }, 'teamId')
   assertArray(value.persons, 'persons', (entry) => { for (const field of ['personId', 'firstName', 'lastName', 'gender', 'dateOfBirth'] as const) requireText(entry[field], `World DB bootstrap person ${field}`); if (!Array.isArray(entry.nationalityIds) || !isRecord(entry.physical)) throw new TypeError('World DB bootstrap person identity is incomplete') }, 'personId')
-  assertArray(value.players, 'players', (entry) => { for (const field of ['playerId', 'personId', 'primaryPosition', 'dominantHand'] as const) requireText(entry[field], `World DB bootstrap player ${field}`); for (const field of ['ratings', 'tendencies'] as const) if (!isRecord(entry[field])) throw new TypeError(`World DB bootstrap player ${field} must be an object`); if (!Array.isArray(entry.development)) throw new TypeError('World DB bootstrap player development must be an array') }, 'playerId')
+  assertArray(value.players, 'players', (entry) => { for (const field of ['playerId', 'personId', 'primaryPosition', 'dominantHand'] as const) requireText(entry[field], `World DB bootstrap player ${field}`); assertExactKeys(entry.ratings, PLAYER_TRUTH_RATING_KEYS, 'ratings'); assertExactKeys(entry.tendencies, PLAYER_TRUTH_TENDENCY_KEYS, 'tendencies'); if (!Array.isArray(entry.development)) throw new TypeError('World DB bootstrap player development must be an array') }, 'playerId')
   assertArray(value.staffProfiles, 'staffProfiles', (entry) => { for (const field of ['staffId', 'personId'] as const) requireText(entry[field], `World DB bootstrap staff ${field}`); if (!isRecord(entry.attributes) || !Array.isArray(entry.specialismIds)) throw new TypeError('World DB bootstrap staff profile is incomplete') }, 'staffId')
   assertArray(value.staffAssignments, 'staffAssignments', (entry) => { for (const field of ['assignmentId', 'staffId', 'teamId', 'roleCode', 'assignedOn'] as const) requireText(entry[field], `World DB bootstrap staff assignment ${field}`) }, 'assignmentId')
   assertArray(value.rosterAssignments, 'rosterAssignments', (entry) => { for (const field of ['rosterId', 'teamId', 'playerId', 'status'] as const) requireText(entry[field], `World DB bootstrap roster assignment ${field}`) }, undefined)
@@ -100,5 +101,12 @@ export function assertWorldDbGameBootstrapSliceV1(value: unknown): asserts value
 function assertArray(value: unknown, label: string, assertEntry: (entry: Record<string, unknown>) => void, idField: string | undefined): void { if (!Array.isArray(value)) throw new TypeError(`World DB bootstrap ${label} must be an array`); const ids = new Set<string>(); for (const item of value) { if (!isRecord(item)) throw new TypeError(`World DB bootstrap ${label} entries must be objects`); assertEntry(item); if (idField !== undefined) { const id = item[idField]; if (typeof id !== 'string') throw new TypeError(`World DB bootstrap ${label} ID must be a string`); if (ids.has(id)) throw new TypeError(`World DB bootstrap ${label} must not contain duplicate IDs`); ids.add(id) } } }
 function requireSource(value: unknown): asserts value is WorldDbDatabaseInfoV1['source'] { if (!isRecord(value)) throw new TypeError('World DB bootstrap source must be an object'); requireText(value.databaseId, 'World DB bootstrap databaseId'); requireText(value.schemaId, 'World DB bootstrap schemaId') }
 function isRecord(value: unknown): value is Record<string, unknown> { return typeof value === 'object' && value !== null && !Array.isArray(value) }
+function assertExactKeys(value: unknown, expected: readonly string[], field: string): void {
+  if (!isRecord(value)) throw new TypeError(`World DB bootstrap player ${field} must be an object`)
+  const keys = Object.keys(value)
+  if (keys.length !== expected.length || keys.some((key) => !expected.includes(key))) {
+    throw new RangeError(`World DB bootstrap player ${field} must contain exactly ${expected.length} canonical keys`)
+  }
+}
 function requireRecord(value: unknown, label: string): asserts value is Record<string, unknown> { if (!isRecord(value)) throw new TypeError(`${label} must be an object`) }
 function requireText(value: unknown, label: string): asserts value is string { if (typeof value !== 'string' || value.trim().length === 0) throw new TypeError(`${label} must be a non-empty string`) }

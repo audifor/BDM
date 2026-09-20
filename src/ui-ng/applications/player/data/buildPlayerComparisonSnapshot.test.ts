@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createNewGame } from '@/app/game'
-import { CANONICAL_RATING_KEYS, getPlayerAge } from '@/domain/player'
+import { PLAYER_TRUTH_RATING_KEYS, getPlayerAge } from '@/domain/player'
 import { updateGameWorld } from '@/domain/world'
 
 import {
@@ -23,9 +23,9 @@ describe('buildPlayerComparisonSnapshot', () => {
     expect(snapshot.name.length).toBeGreaterThan(0)
     expect(snapshot.teamName.length).toBeGreaterThan(0)
     expect(snapshot.age).toBe(getPlayerAge(world, playerId))
-    expect(Object.keys(snapshot.ratings)).toHaveLength(CANONICAL_RATING_KEYS.length)
-    expect(snapshot.ratings.threePointShooting).toBe(
-      world.players[playerId]!.basketball.ratings.threePointShooting,
+    expect(Object.keys(snapshot.ratings)).toHaveLength(PLAYER_TRUTH_RATING_KEYS.length)
+    expect(snapshot.ratings.THREE_POINT_STATIC).toBe(
+      world.players[playerId]!.basketball.ratings.THREE_POINT_STATIC,
     )
   })
 

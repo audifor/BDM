@@ -1,9 +1,10 @@
 import type { TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
+import type { GameDate } from '@/domain/date'
 import type { FinalStandingLine } from './SeasonHistory'
 
 /** Pure domain projection of completed game results for one season. */
-export function calculateSeasonStandings(world: GameWorld, seasonId: keyof GameWorld['seasons']): FinalStandingLine[] {
+export function calculateSeasonStandings(world: GameWorld, seasonId: keyof GameWorld['seasons'], throughDate?: GameDate): FinalStandingLine[] {
   const season = world.seasons[seasonId]
   if (season === undefined) throw new Error(`Season does not exist: ${seasonId}`)
   const competition = world.competitions[season.competitionId]!
@@ -12,7 +13,7 @@ export function calculateSeasonStandings(world: GameWorld, seasonId: keyof GameW
   const entries = (season.participantTeamIds ?? competition.participantTeamIds).map((teamId) => ({ teamId, played: 0, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 }))
   const byTeam = Object.fromEntries(entries.map((entry) => [entry.teamId, entry])) as Record<TeamId, typeof entries[number]>
   for (const game of Object.values(world.games)) {
-    if (game.seasonId !== seasonId || game.status !== 'completed') continue
+    if (game.seasonId !== seasonId || game.status !== 'completed' || (throughDate !== undefined && game.date > throughDate)) continue
     if (regularStageKeys.size > 0 && game.competitionStageKey !== undefined && !regularStageKeys.has(game.competitionStageKey)) continue
     const home = byTeam[game.homeTeamId]!; const away = byTeam[game.awayTeamId]!; const result = game.result
     home.played += 1; away.played += 1; home.pointsFor += result.homeScore; home.pointsAgainst += result.awayScore; away.pointsFor += result.awayScore; away.pointsAgainst += result.homeScore

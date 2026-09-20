@@ -1,4 +1,4 @@
-import type { WorldCompetitionRuntimeBundle } from '@/domain/competition'
+import type { WorldCompetitionFormatDocument, WorldCompetitionRuntimeBundle } from '@/domain/competition'
 import {
   createWorldDbCompetitionRuntime,
   type GameWorld,
@@ -7,6 +7,7 @@ import {
 } from '@/domain/world'
 import type { WorldDbDatabaseInfoV1 } from '@/domain/worldDb/DatabaseInfo'
 import type { WorldDbSelectionCatalogV1 } from '@/domain/worldDb/SelectionCatalog'
+import type { CompetitionCalendarPolicy } from '@/domain/season'
 import { validateWorldDbGameBootstrapSelectionV1, type WorldDbGameBootstrapSelectionV1 } from '@/domain/worldDb/GameBootstrap'
 import {
   createWorldCompetitionCatalog,
@@ -132,6 +133,11 @@ export class WorldDbSessionV1 {
     return this.cachedSelectionCatalog
   }
 
+  getCompetitionFormat(competitionSeasonId: string): WorldCompetitionFormatDocument {
+    this.requireOpen()
+    return requireWorldCompetitionFormat(this.requireCatalog(), competitionSeasonId)
+  }
+
   selectCompetitionSeasons(competitionSeasonIds: readonly string[]): WorldDbCompetitionRuntime {
     this.requireOpen()
     const ids = normalizeSelectedSeasonIds(competitionSeasonIds)
@@ -143,7 +149,7 @@ export class WorldDbSessionV1 {
     })
   }
 
-  async bootstrapGameWorld(selection: WorldDbGameBootstrapSelectionV1): Promise<GameWorld> {
+  async bootstrapGameWorld(selection: WorldDbGameBootstrapSelectionV1, calendarPolicy?: CompetitionCalendarPolicy): Promise<GameWorld> {
     this.requireOpen()
     const catalog = await this.discoverSelectionCatalog()
     validateWorldDbGameBootstrapSelectionV1(catalog, selection)
@@ -154,7 +160,7 @@ export class WorldDbSessionV1 {
     }
     if (slice.season.competitionSeasonId !== selection.competitionSeasonId) throw new Error(`World DB bootstrap competition season mismatch: expected ${selection.competitionSeasonId}, received ${slice.season.competitionSeasonId}`)
     const format = requireWorldCompetitionFormat(this.requireCatalog(), selection.competitionSeasonId)
-    return bootstrapGameWorldFromWorldDb(slice, selection, runtimeBundlePin(this.requireRuntimeBundle()), format.variants.length === 0 ? undefined : format)
+    return bootstrapGameWorldFromWorldDb(slice, selection, runtimeBundlePin(this.requireRuntimeBundle()), format.variants.length === 0 ? undefined : format, calendarPolicy)
   }
 
   /**

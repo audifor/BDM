@@ -1,4 +1,4 @@
-import type { CanonicalRatingKey } from '@/domain/player'
+import type { PlayerTruthRatingKey } from '@/domain/player'
 
 import type { RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
 import type { CompareSession } from '@/ui-ng/applications/player/context/compareSession'
@@ -12,8 +12,8 @@ import type { PlayerWorkspaceViewId } from '@/ui-ng/applications/player/playerSt
 export interface PlayerWorkspaceSession {
   readonly activeView: PlayerWorkspaceViewId
   readonly setActiveView: (view: PlayerWorkspaceViewId) => void
-  readonly selectedRatingId: CanonicalRatingKey | null
-  readonly setSelectedRatingId: (ratingId: CanonicalRatingKey | null) => void
+  readonly selectedRatingId: PlayerTruthRatingKey | null
+  readonly setSelectedRatingId: (ratingId: PlayerTruthRatingKey | null) => void
   readonly selectedCategory: RatingCategory | null
   readonly setSelectedCategory: (category: RatingCategory | null) => void
   readonly attributesCategory: RatingCategory

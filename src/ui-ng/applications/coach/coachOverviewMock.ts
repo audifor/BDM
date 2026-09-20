@@ -183,6 +183,8 @@ export interface CoachOverviewTimelineEvent {
 
 export interface CoachOverviewModel {
   readonly identity: CoachOverviewIdentity
+  /** Canonical Staff source for live profiles; absent only from the design fixture. */
+  readonly staffProfile?: import('@/domain/staff').StaffPerson
   readonly attributes: readonly CoachOverviewAttribute[]
   readonly personality: {
     readonly traits: readonly CoachOverviewPersonalityTrait[]

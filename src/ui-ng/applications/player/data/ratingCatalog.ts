@@ -1,9 +1,6 @@
-import {
-  CANONICAL_RATING_KEYS,
-  type CanonicalRatingKey,
-} from '@/domain/player'
+import { PLAYER_TRUTH_RATING_KEYS, type PlayerTruthRatingKey, type PlayerTruthRatings } from '@/domain/player/PlayerTruthCatalog'
 
-/** NG overview categories aligned with BDM canonical rating families. */
+/** Rating families used by the player workspace. Every raw World DB rating belongs to one family. */
 export type RatingCategory =
   | 'shooting'
   | 'finishing'
@@ -26,110 +23,46 @@ export const CATEGORY_LABELS: Record<RatingCategory, string> = {
 }
 
 export const RADAR_CATEGORY_ORDER: readonly RatingCategory[] = [
-  'shooting',
-  'finishing',
-  'ballHandling',
-  'playmaking',
-  'offBall',
-  'defense',
-  'physical',
-  'mental',
+  'shooting', 'finishing', 'ballHandling', 'playmaking', 'offBall', 'defense', 'physical', 'mental',
 ]
 
-const CANONICAL_RATING_LABELS: Record<CanonicalRatingKey, string> = {
-  midRangeShooting: 'Mid-Range Shooting',
-  threePointShooting: 'Three-Point Shooting',
-  freeThrowShooting: 'Free Throw Shooting',
-  rimFinishing: 'Rim Finishing',
-  contactFinishing: 'Contact Finishing',
-  dunking: 'Dunking',
-  floater: 'Floater',
-  postScoring: 'Post Scoring',
-  ballHandling: 'Ball Handling',
-  ballSecurity: 'Ball Security',
-  firstStep: 'First Step',
-  changeOfDirection: 'Change of Direction',
-  passing: 'Passing',
-  courtVision: 'Court Vision',
-  perimeterDefense: 'Perimeter Defense',
-  interiorDefense: 'Interior Defense',
-  screenNavigation: 'Screen Navigation',
-  defensiveAwareness: 'Defensive Awareness',
-  steal: 'Steal',
-  rimProtection: 'Rim Protection',
-  shotContest: 'Shot Contest',
-  offensiveRebounding: 'Offensive Rebounding',
-  defensiveRebounding: 'Defensive Rebounding',
-  boxOut: 'Box Out',
-  acceleration: 'Acceleration',
-  speed: 'Speed',
-  lateralAgility: 'Lateral Agility',
-  strength: 'Strength',
-  vertical: 'Vertical',
-  stamina: 'Stamina',
-  decisionMaking: 'Decision Making',
-  anticipation: 'Anticipation',
-  composure: 'Composure',
-  offBallAwareness: 'Off-Ball Awareness',
-  discipline: 'Discipline',
+const RATING_KEYS_BY_CATEGORY: Readonly<Record<RatingCategory, readonly PlayerTruthRatingKey[]>> = {
+  shooting: ['FREE_THROW', 'SHORT_MIDRANGE', 'LONG_MIDRANGE', 'MIDRANGE_PULLUP', 'THREE_POINT_STATIC', 'THREE_POINT_PULLUP', 'DEEP_SHOOTING', 'MOVEMENT_SHOOTING', 'CONTESTED_SHOOTING', 'SHOT_TOUCH'],
+  finishing: ['RIM_FINISHING', 'CONTACT_FINISHING', 'FINISHING_THROUGH_LENGTH', 'OFF_HAND_FINISHING', 'DUNKING', 'VERTICAL_FINISHING', 'ACROBATIC_FINISHING', 'POST_FINISHING', 'FOUL_DRAWING', 'CLOSE_TOUCH'],
+  ballHandling: ['BALL_CONTROL', 'DRIBBLE_SECURITY', 'CHANGE_OF_DIRECTION', 'CHANGE_OF_PACE', 'DRIVE_CREATION', 'PRESSURE_HANDLING', 'OPEN_COURT_HANDLING', 'DRIBBLE_SEPARATION', 'BODY_CONTROL_WITH_BALL'],
+  playmaking: ['PASSING_ACCURACY', 'PASSING_VISION', 'PASSING_TIMING', 'LIVE_DRIBBLE_PASSING', 'PICK_AND_ROLL_PLAYMAKING', 'SHORT_ROLL_PLAYMAKING', 'POST_PLAYMAKING', 'TRANSITION_PLAYMAKING', 'ADVANTAGE_CREATION', 'ADVANTAGE_EXPLOITATION'],
+  offBall: ['OFF_BALL_MOVEMENT', 'CUTTING', 'SCREENING', 'SCREEN_USAGE', 'SPACING', 'OFFENSIVE_POSITIONING', 'RELOCATION', 'ROLL_GRAVITY'],
+  defense: ['POINT_OF_ATTACK_DEFENSE', 'LATERAL_DEFENSE', 'SCREEN_NAVIGATION_DEFENSE', 'POST_DEFENSE', 'RIM_PROTECTION', 'SHOT_CONTEST', 'STEAL_ABILITY', 'DEFLECTION_ABILITY', 'HELP_DEFENSE', 'DEFENSIVE_ROTATION', 'DEFENSIVE_POSITIONING', 'OFFENSIVE_REBOUNDING', 'DEFENSIVE_REBOUNDING'],
+  physical: ['SPEED', 'ACCELERATION', 'AGILITY', 'STRENGTH', 'VERTICAL_LEAP', 'EXPLOSIVENESS', 'BALANCE', 'STAMINA', 'ENDURANCE', 'BODY_CONTROL'],
+  mental: ['DECISION_MAKING', 'ANTICIPATION', 'OFFENSIVE_AWARENESS', 'DEFENSIVE_AWARENESS', 'SPATIAL_AWARENESS', 'CONCENTRATION', 'REACTION_SPEED', 'COMPOSURE', 'ADAPTABILITY', 'DISCIPLINE'],
 }
 
-const CANONICAL_RATING_CATEGORY: Record<CanonicalRatingKey, RatingCategory> = {
-  midRangeShooting: 'shooting',
-  threePointShooting: 'shooting',
-  freeThrowShooting: 'shooting',
-  rimFinishing: 'finishing',
-  contactFinishing: 'finishing',
-  dunking: 'finishing',
-  floater: 'finishing',
-  postScoring: 'finishing',
-  ballHandling: 'ballHandling',
-  ballSecurity: 'ballHandling',
-  firstStep: 'ballHandling',
-  changeOfDirection: 'ballHandling',
-  passing: 'playmaking',
-  courtVision: 'playmaking',
-  perimeterDefense: 'defense',
-  interiorDefense: 'defense',
-  screenNavigation: 'defense',
-  defensiveAwareness: 'defense',
-  steal: 'defense',
-  rimProtection: 'defense',
-  shotContest: 'defense',
-  offensiveRebounding: 'defense',
-  defensiveRebounding: 'defense',
-  boxOut: 'defense',
-  acceleration: 'physical',
-  speed: 'physical',
-  lateralAgility: 'physical',
-  strength: 'physical',
-  vertical: 'physical',
-  stamina: 'physical',
-  decisionMaking: 'mental',
-  anticipation: 'mental',
-  composure: 'mental',
-  offBallAwareness: 'offBall',
-  discipline: 'mental',
+const RATING_CATEGORY = Object.fromEntries(
+  Object.entries(RATING_KEYS_BY_CATEGORY).flatMap(([category, keys]) => keys.map((key) => [key, category])),
+) as Readonly<Record<PlayerTruthRatingKey, RatingCategory>>
+
+const PLAYER_TRUTH_KEY_SET = new Set<string>(PLAYER_TRUTH_RATING_KEYS)
+if (
+  PLAYER_TRUTH_RATING_KEYS.length !== 80
+  || Object.keys(RATING_CATEGORY).length !== PLAYER_TRUTH_RATING_KEYS.length
+  || PLAYER_TRUTH_RATING_KEYS.some((key) => !Object.hasOwn(RATING_CATEGORY, key))
+  || Object.keys(RATING_CATEGORY).some((key) => !PLAYER_TRUTH_KEY_SET.has(key))
+) {
+  throw new Error('Player rating family catalog must cover all 80 Player Truth keys exactly once')
 }
 
-/** Representative overview picks: one headline skill per category. */
-const OVERVIEW_HEADLINE_RATINGS: readonly CanonicalRatingKey[] = [
-  'threePointShooting',
-  'rimFinishing',
-  'ballHandling',
-  'courtVision',
-  'offBallAwareness',
-  'perimeterDefense',
-  'firstStep',
-  'decisionMaking',
+/** Representative overview picks. The full 80-key list remains on Attributes. */
+const OVERVIEW_HEADLINE_RATINGS: readonly PlayerTruthRatingKey[] = [
+  'THREE_POINT_STATIC', 'RIM_FINISHING', 'BALL_CONTROL', 'PASSING_VISION',
+  'OFF_BALL_MOVEMENT', 'POINT_OF_ATTACK_DEFENSE', 'SPEED', 'DECISION_MAKING',
 ]
 
-export function ratingLabel(key: CanonicalRatingKey): string {
-  return CANONICAL_RATING_LABELS[key]
+export function ratingLabel(key: PlayerTruthRatingKey): string {
+  return key.split('_').map((part) => part[0] + part.slice(1).toLowerCase()).join(' ')
 }
 
-export function ratingCategory(key: CanonicalRatingKey): RatingCategory {
-  return CANONICAL_RATING_CATEGORY[key]
+export function ratingCategory(key: PlayerTruthRatingKey): RatingCategory {
+  return RATING_CATEGORY[key]
 }
 
 export function ratingTone(value: number): string {
@@ -141,88 +74,56 @@ export function ratingTone(value: number): string {
   return 'poor'
 }
 
-/** `82` becomes `82nd`, `1` becomes `1st`. One formatter so every page reads the same. */
 export function ordinalPercentile(value: number): string {
   const withinHundred = value % 100
   if (withinHundred >= 11 && withinHundred <= 13) return `${value}th`
   switch (value % 10) {
-    case 1:
-      return `${value}st`
-    case 2:
-      return `${value}nd`
-    case 3:
-      return `${value}rd`
-    default:
-      return `${value}th`
+    case 1: return `${value}st`
+    case 2: return `${value}nd`
+    case 3: return `${value}rd`
+    default: return `${value}th`
   }
 }
 
-export function buildOverviewRatingKeys(playerRatings: Readonly<Record<CanonicalRatingKey, number>>): CanonicalRatingKey[] {
-  const selected = new Set<CanonicalRatingKey>(OVERVIEW_HEADLINE_RATINGS)
-  const remaining = CANONICAL_RATING_KEYS
-    .filter((key) => !selected.has(key))
-    .slice()
-    .sort((left, right) => playerRatings[right] - playerRatings[left] || left.localeCompare(right))
-
+export function buildOverviewRatingKeys(playerRatings: PlayerTruthRatings): PlayerTruthRatingKey[] {
+  const selected = new Set<PlayerTruthRatingKey>(OVERVIEW_HEADLINE_RATINGS)
+  const remaining = PLAYER_TRUTH_RATING_KEYS.filter((key) => !selected.has(key))
+    .slice().sort((left, right) => playerRatings[right] - playerRatings[left] || left.localeCompare(right))
   for (const key of remaining) {
     if (selected.size >= 12) break
     selected.add(key)
   }
-
-  return [...selected]
-    .slice()
-    .sort((left, right) => playerRatings[right] - playerRatings[left] || left.localeCompare(right))
-    .slice(0, 12)
+  return [...selected].sort((left, right) => playerRatings[right] - playerRatings[left] || left.localeCompare(right)).slice(0, 12)
 }
 
-/** Category radar value = rounded mean of canonical ratings in that category. */
-export function aggregateCategoryValue(
-  category: RatingCategory,
-  playerRatings: Readonly<Record<CanonicalRatingKey, number>>,
-): number {
-  const keys = CANONICAL_RATING_KEYS.filter((key) => CANONICAL_RATING_CATEGORY[key] === category)
-  if (keys.length === 0) return 0
+export function aggregateCategoryValue(category: RatingCategory, playerRatings: PlayerTruthRatings): number {
+  const keys = RATING_KEYS_BY_CATEGORY[category]
   const total = keys.reduce((sum, key) => sum + playerRatings[key], 0)
   return Math.round(total / keys.length)
 }
 
-export function buildFullRatingRows(
-  playerRatings: Readonly<Record<CanonicalRatingKey, number>>,
-): readonly { readonly id: CanonicalRatingKey; readonly label: string; readonly category: RatingCategory; readonly value: number }[] {
-  return CANONICAL_RATING_KEYS.map((key) => ({
-    id: key,
-    label: ratingLabel(key),
-    category: ratingCategory(key),
-    value: playerRatings[key],
-  }))
+export interface PlayerRatingRowData {
+  readonly id: PlayerTruthRatingKey
+  readonly label: string
+  readonly category: RatingCategory
+  readonly value: number
 }
 
-export function ratingsForCategory(
-  category: RatingCategory,
-  allRatings: readonly { readonly id: CanonicalRatingKey; readonly label: string; readonly category: RatingCategory; readonly value: number }[],
-): readonly { readonly id: CanonicalRatingKey; readonly label: string; readonly category: RatingCategory; readonly value: number }[] {
-  return allRatings
-    .filter((rating) => rating.category === category)
-    .slice()
+export function buildFullRatingRows(playerRatings: PlayerTruthRatings): readonly PlayerRatingRowData[] {
+  return PLAYER_TRUTH_RATING_KEYS.map((key) => ({ id: key, label: ratingLabel(key), category: ratingCategory(key), value: playerRatings[key] }))
+}
+
+export function ratingsForCategory(category: RatingCategory, allRatings: readonly PlayerRatingRowData[]): readonly PlayerRatingRowData[] {
+  return allRatings.filter((rating) => rating.category === category).slice()
     .sort((left, right) => right.value - left.value || left.label.localeCompare(right.label))
 }
 
-export function rankInCategory(
-  ratingId: CanonicalRatingKey,
-  categoryRatings: readonly { readonly id: CanonicalRatingKey; readonly value: number }[],
-): number {
+export function rankInCategory(ratingId: PlayerTruthRatingKey, categoryRatings: readonly { readonly id: PlayerTruthRatingKey; readonly value: number }[]): number {
   const sorted = [...categoryRatings].sort((left, right) => right.value - left.value || left.id.localeCompare(right.id))
   return sorted.findIndex((rating) => rating.id === ratingId) + 1
 }
 
-export function relatedRatingsInCategory(
-  ratingId: CanonicalRatingKey,
-  categoryRatings: readonly { readonly id: CanonicalRatingKey; readonly label: string; readonly value: number }[],
-  limit = 3,
-): readonly { readonly id: CanonicalRatingKey; readonly label: string; readonly value: number }[] {
-  return categoryRatings
-    .filter((rating) => rating.id !== ratingId)
-    .slice()
-    .sort((left, right) => right.value - left.value || left.label.localeCompare(right.label))
-    .slice(0, limit)
+export function relatedRatingsInCategory(ratingId: PlayerTruthRatingKey, categoryRatings: readonly { readonly id: PlayerTruthRatingKey; readonly label: string; readonly value: number }[], limit = 3) {
+  return categoryRatings.filter((rating) => rating.id !== ratingId).slice()
+    .sort((left, right) => right.value - left.value || left.label.localeCompare(right.label)).slice(0, limit)
 }

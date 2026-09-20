@@ -9,6 +9,7 @@ import { deriveCompetitionSeasonWindows, requireCompetitionFormatVariant } from 
 import { evaluateWorldCompetitionSeriesV1, instantiateWorldCompetitionSeriesV1, type WorldCompetitionSeriesPlanV1, type WorldCompetitionSeriesStateV1 } from './WorldCompetitionSeries'
 import { instantiateWorldCompetitionFixedBracketV1, type WorldCompetitionFixedBracketPlanV1, type WorldCompetitionSeededEntryV1 } from './WorldCompetitionFixedBracket'
 import { resolveWorldCompetitionVirtualFixturesV1, selectWorldCompetitionHigherSeedV1, type WorldCompetitionResolvedVirtualFixtureV1, type WorldCompetitionVirtualFixtureOutcomeV1 } from './WorldCompetitionVirtualFixtureResolver'
+import { getWorldCompetitionSingleEliminationState, materializeDependentCompetitionSeasons, materializeWorldCompetitionSingleElimination } from './WorldCompetitionSingleElimination'
 
 export interface CompetitionPostseasonSeriesStateV1 {
   readonly plan: WorldCompetitionSeriesPlanV1
@@ -34,7 +35,7 @@ export function getCompetitionPostseasonState(world: GameWorld, seasonId: keyof 
   if (format === undefined) return null
   const variant = requireCompetitionFormatVariant(format)
   const regularNode = variant.nodes.find((node) => node.role === 'REGULAR_SEASON')
-  if (regularNode === undefined) return null
+  if (regularNode === undefined) return getWorldCompetitionSingleEliminationState(world, seasonId)
   const postseasonKeys = reachableNodes(regularNode.key, variant)
   postseasonKeys.delete(regularNode.key)
   if (postseasonKeys.size === 0) return null
@@ -80,6 +81,8 @@ export function materializeCompetitionPostseason(world: GameWorld, seasonId: key
   if (season.worldCompetitionFormat === undefined) return world
   const state = getCompetitionPostseasonState(world, seasonId)
   if (state === null || !state.regularSeasonComplete || state.bracketPlan === null) return world
+  const variant = requireCompetitionFormatVariant(season.worldCompetitionFormat)
+  if (!variant.nodes.some((node) => node.role === 'REGULAR_SEASON')) return materializeWorldCompetitionSingleElimination(world, seasonId, state)
   const additions = state.readyFixtures.flatMap((fixture) => {
     const series = state.seriesByFixtureId[fixture.fixtureId]
     if (series === undefined || series.state.completed || series.state.nextGame === null) return []
@@ -90,15 +93,17 @@ export function materializeCompetitionPostseason(world: GameWorld, seasonId: key
       return []
     }
     const node = requireNode(season.worldCompetitionFormat!, fixture.nodeKey)
-    const stageStart = deriveCompetitionSeasonWindows(season.startDate, season.endDate, season.worldCompetitionFormat).postseasonStartByNodeKey[node.key]
+    const calendar = deriveCompetitionSeasonWindows(season.startDate, season.endDate, season.worldCompetitionFormat, season.calendarPolicy)
+    const stageStart = calendar.postseasonStartByNodeKey[node.key]
     if (stageStart === undefined) throw new Error(`Competition postseason node has no allocated calendar window: ${node.key}`)
     return [createGame({
       id: gameIdFromString(`competition-postseason:${season.id}:${fixture.fixtureId}:g${next.gameNo}`),
       seasonId: season.id,
       competitionId: season.competitionId,
-      date: addDays(stageStart, next.gameNo - 1),
+      date: addDays(stageStart, (next.gameNo - 1) * calendar.postseasonDaysBetweenGames),
       homeTeamId: teamIdFromString(next.homeEntryId),
       awayTeamId: teamIdFromString(next.awayEntryId),
+      ...(node.hosting?.ruleType === 'NEUTRAL' ? { neutralSite: true } : {}),
       status: 'scheduled',
       result: null,
       stakes: node.role === 'FINAL' ? 'final' : 'elimination',
@@ -112,7 +117,28 @@ export function materializeCompetitionPostseason(world: GameWorld, seasonId: key
 
 export function areRegularSeasonGamesComplete(world: GameWorld, seasonId: keyof GameWorld['seasons'], regularStageKey: string): boolean {
   const games = Object.values(world.games).filter((game) => game.seasonId === seasonId && (game.competitionStageKey === undefined || game.competitionStageKey === regularStageKey))
+  const season = world.seasons[seasonId]
+  const variant = season?.worldCompetitionFormat === undefined ? undefined : requireCompetitionFormatVariant(season.worldCompetitionFormat)
+  const regularNode = variant?.nodes.find((node) => node.key === regularStageKey)
+  const teamCount = regularNode?.teamCount ?? season?.participantTeamIds?.length
+  const meetingsPerPair = regularNode?.pairing?.meetingsPerPair
+  if (teamCount !== undefined && meetingsPerPair !== undefined) {
+    const expectedRounds = (teamCount - 1) * meetingsPerPair
+    const expectedGames = teamCount * (teamCount - 1) / 2 * meetingsPerPair
+    if (games.length !== expectedGames) return false
+    const rounds = new Map<string, typeof games>()
+    for (const game of games) rounds.set(game.date, [...(rounds.get(game.date) ?? []), game])
+    if (rounds.size !== expectedRounds) return false
+    for (const round of rounds.values()) {
+      if (round.length !== teamCount / 2) return false
+      if (new Set(round.flatMap((game) => [game.homeTeamId, game.awayTeamId])).size !== teamCount) return false
+    }
+  }
   return games.length > 0 && games.every((game) => game.status === 'completed')
+}
+
+export function materializeCompetitionDependencies(world: GameWorld, sourceSeasonId: keyof GameWorld['seasons']): GameWorld {
+  return materializeDependentCompetitionSeasons(world, sourceSeasonId)
 }
 
 export function getCompetitionPostseasonChampion(world: GameWorld, seasonId: keyof GameWorld['seasons']): TeamId | undefined {

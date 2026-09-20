@@ -12,10 +12,13 @@ import {
   SPAIN_ACB_COMPETITION_ID,
   SPAIN_ACB_COMPETITION_SEASON_ID,
   SPAIN_ACB_ECOSYSTEM_ID,
+  SPAIN_COPA_COMPETITION_SEASON_ID,
 } from './WorldDbSpainGame'
 import { WorldDbSessionV1 } from './WorldDbSession'
 import { createConfiguredGameAsync } from './createConfiguredGame'
 import { WORLD_DB_SPAIN_UNIVERSE_ID } from './NewGameUniverseCatalog'
+import { createNewGame } from './createNewGame'
+import { attachWorldDbCompetitionRuntime } from '@/domain/world'
 
 afterEach(() => vi.restoreAllMocks())
 
@@ -26,7 +29,10 @@ const runtimeBundle: WorldCompetitionRuntimeBundle = {
   contentHashAlgorithm: 'BLAKE3',
   contentHash: 'a'.repeat(64),
   worldDbSchema: 'DDL-PHASE1-A',
-  competitionFormats: [{ schemaVersion: '1.0', competitionId: SPAIN_ACB_COMPETITION_ID, competitionSeasonId: SPAIN_ACB_COMPETITION_SEASON_ID, seasonLabel: '2025-26', status: 'COMPLETE', variants: [], consequences: [], sources: [] }],
+  competitionFormats: [
+    { schemaVersion: '1.0', competitionId: SPAIN_ACB_COMPETITION_ID, competitionSeasonId: SPAIN_ACB_COMPETITION_SEASON_ID, seasonLabel: '2025-26', status: 'COMPLETE', variants: [], consequences: [], sources: [] },
+    { schemaVersion: '1.0', competitionId: 'competition:ESP:copa-del-rey', competitionSeasonId: SPAIN_COPA_COMPETITION_SEASON_ID, seasonLabel: '2025-26', status: 'COMPLETE', variants: [], consequences: [], sources: [] },
+  ],
   initialScoreDocuments: [],
 }
 
@@ -48,14 +54,17 @@ function catalog(): WorldDbSelectionCatalogV1 {
     levels: [],
     units: [],
     competitionAssignments: [{ assignmentId: 'assignment:acb', ecosystemId: SPAIN_ACB_ECOSYSTEM_ID, competitionId: SPAIN_ACB_COMPETITION_ID, competitionName: 'Liga Endesa', levelId: null, unitId: null, roleType: 'PRIMARY_LEAGUE' }],
-    competitionSeasons: [{ competitionSeasonId: SPAIN_ACB_COMPETITION_SEASON_ID, competitionId: SPAIN_ACB_COMPETITION_ID, competitionName: 'Liga Endesa', seasonId: 'season:2025_26', editionNumber: 70 }],
+    competitionSeasons: [
+      { competitionSeasonId: SPAIN_ACB_COMPETITION_SEASON_ID, competitionId: SPAIN_ACB_COMPETITION_ID, competitionName: 'Liga Endesa', seasonId: 'season:2025_26', editionNumber: 70 },
+      { competitionSeasonId: SPAIN_COPA_COMPETITION_SEASON_ID, competitionId: 'competition:ESP:copa-del-rey', competitionName: 'Copa del Rey', seasonId: 'season:2025_26', editionNumber: 1 },
+    ],
     teamMemberships,
     teamUnitMemberships: [],
   }
 }
 
 function repository(): WorldDatabaseRepository {
-  const info: WorldDbDatabaseInfoV1 = { schemaVersion: 1, source, competitionSeasonIds: [SPAIN_ACB_COMPETITION_SEASON_ID] }
+  const info: WorldDbDatabaseInfoV1 = { schemaVersion: 1, source, competitionSeasonIds: [SPAIN_ACB_COMPETITION_SEASON_ID, SPAIN_COPA_COMPETITION_SEASON_ID] }
   return {
     inspectDatabase: vi.fn(async () => info),
     loadSelectionCatalog: vi.fn(async () => catalog()),
@@ -93,7 +102,7 @@ describe('World DB Spain ACB new-game selection', () => {
   })
 
   it('routes async New Game creation through the selected canonical World DB team', async () => {
-    const createdWorld = {} as Awaited<ReturnType<WorldDbSessionV1['bootstrapGameWorld']>>
+    const createdWorld = worldWithRuntime()
     const bootstrap = vi.spyOn(WorldDbSessionV1.prototype, 'bootstrapGameWorld').mockResolvedValue(createdWorld)
     const selectedTeamId = catalog().teamMemberships[11]!.teamId
     const access = {
@@ -102,15 +111,22 @@ describe('World DB Spain ACB new-game selection', () => {
       runtimeBundlePath: 'runtime.json',
     }
 
-    await expect(createConfiguredGameAsync({ universeId: WORLD_DB_SPAIN_UNIVERSE_ID, userTeamKey: selectedTeamId }, access)).resolves.toBe(createdWorld)
+    const result = await createConfiguredGameAsync({ universeId: WORLD_DB_SPAIN_UNIVERSE_ID, userTeamKey: selectedTeamId }, access)
+    expect(Object.values(result.competitions).some((competition) => competition.id === 'competition:ESP:copa-del-rey')).toBe(true)
+    expect(Object.values(result.seasons).some((season) => season.worldCompetitionFormat?.competitionSeasonId === SPAIN_COPA_COMPETITION_SEASON_ID)).toBe(true)
     expect(bootstrap).toHaveBeenCalledOnce()
-    expect(bootstrap).toHaveBeenCalledWith(expect.objectContaining({
-      source,
-      ecosystemId: SPAIN_ACB_ECOSYSTEM_ID,
-      competitionId: SPAIN_ACB_COMPETITION_ID,
-      competitionSeasonId: SPAIN_ACB_COMPETITION_SEASON_ID,
-      teamId: selectedTeamId,
-    }))
+    expect(bootstrap).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source,
+        ecosystemId: SPAIN_ACB_ECOSYSTEM_ID,
+        competitionId: SPAIN_ACB_COMPETITION_ID,
+        competitionSeasonId: SPAIN_ACB_COMPETITION_SEASON_ID,
+        teamId: selectedTeamId,
+      }),
+      expect.objectContaining({
+        seasonWindow: expect.objectContaining({ startDate: '2025-10-01', endDate: '2026-06-30' }),
+      }),
+    )
   })
 
   it('keeps the session open through asynchronous bootstrap and closes it after success', async () => {
@@ -119,7 +135,7 @@ describe('World DB Spain ACB new-game selection', () => {
     let finishBootstrap!: () => void
     const bootstrapStarted = new Promise<void>((resolve) => { startBootstrap = resolve })
     const bootstrapGate = new Promise<void>((resolve) => { finishBootstrap = resolve })
-    const createdWorld = {} as Awaited<ReturnType<WorldDbSessionV1['bootstrapGameWorld']>>
+    const createdWorld = worldWithRuntime()
     const bootstrap = vi.spyOn(WorldDbSessionV1.prototype, 'bootstrapGameWorld').mockImplementation(async function (
       this: WorldDbSessionV1,
       _selection: WorldDbGameBootstrapSelectionV1,
@@ -141,7 +157,7 @@ describe('World DB Spain ACB new-game selection', () => {
     expect(sessionDuringBootstrap?.isOpen).toBe(true)
     expect(close).not.toHaveBeenCalled()
     finishBootstrap()
-    await expect(creation).resolves.toBe(createdWorld)
+    await expect(creation).resolves.toMatchObject({ competitions: expect.any(Object), seasons: expect.any(Object) })
 
     expect(bootstrap).toHaveBeenCalledOnce()
     expect(sessionDuringBootstrap?.isOpen).toBe(false)
@@ -179,3 +195,12 @@ describe('World DB Spain ACB new-game selection', () => {
     expect(repositoryStub.loadGameBootstrapSlice).not.toHaveBeenCalled()
   })
 })
+
+function worldWithRuntime() {
+  const world = createNewGame()
+  return attachWorldDbCompetitionRuntime(world, {
+    competitionRuntimeBundle: { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema },
+    competitionPlanIds: [],
+    competitionSeasonIds: [SPAIN_ACB_COMPETITION_SEASON_ID],
+  })
+}

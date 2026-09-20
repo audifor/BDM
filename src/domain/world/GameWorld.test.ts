@@ -58,6 +58,40 @@ describe('GameWorld', () => {
     expect(() => createGameWorld(missingAssignment)).toThrow('Coach coach-user employment requires one matching headCoach Staff assignment')
   })
 
+  it('preserves canonical Person data when a Player or Staff profile is replaced', () => {
+    const input = createValidGameWorldInput()
+    const world = createGameWorld(input)
+    const coach = input.coaches[0]!
+    const staff = input.staffPeople![0]!
+    const sourcePerson = world.personsById[coach.personId]!
+    const enrichedPerson = {
+      ...sourcePerson,
+      dateOfBirth: createGameDate(1980, 1, 1),
+      physical: { heightCm: 177, weightKg: 72 },
+    }
+    const withPersonDetail = updateGameWorld(world, {
+      persons: Object.values(world.personsById).map((person) => person.id === sourcePerson.id ? enrichedPerson : person),
+    })
+    const changedCoach = { ...coach, lastName: 'Reconstructed' }
+    const changedStaff = { ...staff, identity: { ...staff.identity, lastName: 'Reconstructed' } }
+    const rebuilt = updateGameWorld(withPersonDetail, {
+      coaches: Object.values(withPersonDetail.coaches).map((profile) => profile.id === coach.id ? changedCoach : profile),
+      staffPeople: Object.values(withPersonDetail.staffPeopleById).map((profile) => profile.id === staff.id ? changedStaff : profile),
+    })
+
+    expect(rebuilt.personsById[sourcePerson.id]).toMatchObject({
+      firstName: sourcePerson.firstName,
+      lastName: 'Reconstructed',
+      gender: sourcePerson.gender,
+      dateOfBirth: createGameDate(1980, 1, 1),
+      physical: { heightCm: 177, weightKg: 72 },
+      profileRefs: [{ kind: 'staff', profileId: staff.id }],
+    })
+    expect(rebuilt.coaches[coach.id]).toEqual(changedCoach)
+    expect(rebuilt.staffPeopleById[staff.id]).toEqual(changedStaff)
+    expect(rebuilt.teamStaffAssignmentsById).toEqual(world.teamStaffAssignmentsById)
+  })
+
   it('rejects duplicate entity IDs', () => {
     const duplicateCountryInput = createValidGameWorldInput()
     duplicateCountryInput.countries = [...duplicateCountryInput.countries, duplicateCountryInput.countries[0]!]

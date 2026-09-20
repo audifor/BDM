@@ -32,7 +32,7 @@ function trainingOption(
 
 function evolutionWith(overrides: Partial<RatingEvolutionModel> = {}): RatingEvolutionModel {
   return {
-    ratingId: 'threePointShooting',
+    ratingId: 'THREE_POINT_STATIC',
     current: 76,
     points: [
       { id: 'season-1', label: '2032/33', value: 70, delta: 0, isCurrent: false },

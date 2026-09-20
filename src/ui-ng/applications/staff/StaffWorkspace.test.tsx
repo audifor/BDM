@@ -110,5 +110,21 @@ describe('StaffWorkspace', () => {
     expect(screen.getByRole('menuitem', { name: 'Overview' })).toBeInTheDocument()
     expect(screen.getByRole('menuitem', { name: 'COACHING' })).toBeInTheDocument()
   })
+
+  it('opens a staff dossier with one click on the name in a department table', () => {
+    const { team, world } = mountStaffWorkspace()
+    const assignment = Object.values(world.teamStaffAssignmentsById).find(
+      (item) => item.teamId === team.id && item.role === 'headCoach',
+    )!
+    const person = world.staffPeopleById[assignment.staffPersonId]!
+    const fullName = `${person.identity.firstName} ${person.identity.lastName}`
+
+    fireEvent.click(screen.getByRole('button', { name: /coaching/i }))
+    fireEvent.click(screen.getByRole('button', { name: fullName }))
+
+    expect(new URL(window.location.href).searchParams.get('staffId')).toBe(assignment.staffPersonId)
+    expect(screen.getByRole('button', { name: 'Attributes' })).toBeInTheDocument()
+    expect(screen.getByText('Role evaluation')).toBeInTheDocument()
+  })
 })
 

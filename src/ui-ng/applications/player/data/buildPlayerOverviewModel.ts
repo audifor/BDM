@@ -1,5 +1,5 @@
 import { formatInjuryKind } from '@/domain/injury'
-import { CANONICAL_RATING_KEYS, getPlayerAge, type CanonicalRatingKey, type Player } from '@/domain/player'
+import { PLAYER_TRUTH_RATING_KEYS, getPlayerAge, type PlayerTruthRatingKey, type Player } from '@/domain/player'
 import type { PlayerGameStatsSnapshot } from '@/domain/stats/MatchStatLog'
 import { getTrainingPlanForTeam } from '@/domain/world'
 import {
@@ -22,7 +22,7 @@ import {
   getOrganizationRatingEvaluation,
   intelligenceSortValue,
 } from '@/domain/intelligence/OrganizationPlayerEvaluation'
-import { ratingHistorySeries, type PlayerRatingHistory } from '@/domain/development/PlayerRatingHistory'
+import type { PlayerRatingHistory } from '@/domain/development/PlayerRatingHistory'
 import { getBaseDevelopmentTrend } from '@/engine/development'
 import { boxScoreValuation } from '@/engine/stats/boxScoreValuation'
 import {
@@ -63,7 +63,7 @@ import type {
   PresentationField,
 } from './playerWorkspaceModel'
 
-const CANONICAL_KEYS = new Set<string>(CANONICAL_RATING_KEYS)
+const PLAYER_TRUTH_KEYS = new Set<string>(PLAYER_TRUTH_RATING_KEYS)
 
 /** How many recent games the form bars and the trend readings look at. */
 const FORM_WINDOW = 5
@@ -118,13 +118,13 @@ function mean(values: readonly number[]): number {
  * Canonical ratings are attached as non-enumerable properties, so they must be read by key:
  * Object.entries only ever returns the persisted 80-key truth surface.
  */
-function canonicalRatings(ratings: Player['basketball']['ratings']): [CanonicalRatingKey, number][] {
-  return CANONICAL_RATING_KEYS.map((key) => [key, ratings[key]])
+function canonicalRatings(ratings: Player['basketball']['ratings']): [PlayerTruthRatingKey, number][] {
+  return PLAYER_TRUTH_RATING_KEYS.map((key) => [key, ratings[key]])
 }
 
 /** Average of the current canonical ratings. Used only to rank players, never shown as a rating. */
 function canonicalMean(ratings: Player['basketball']['ratings']): number {
-  return mean(CANONICAL_RATING_KEYS.map((key) => ratings[key]))
+  return mean(PLAYER_TRUTH_RATING_KEYS.map((key) => ratings[key]))
 }
 
 function strongCategory(player: Player): (typeof RADAR_CATEGORY_ORDER)[number] {
@@ -658,12 +658,15 @@ function buildRatingSeries(
   player: Player,
   history: PlayerRatingHistory,
   currentSeasonId: GameWorld['currentSeasonId'],
-  tracked: CanonicalRatingKey,
+  tracked: PlayerTruthRatingKey,
 ): readonly OverviewRatingSeriesModel[] {
-  const totals = new Map<CanonicalRatingKey, number>()
+  const totals = new Map<PlayerTruthRatingKey, number>()
   for (const entry of history) {
-    for (const [key, delta] of Object.entries(entry.deltas) as [CanonicalRatingKey, number][]) {
-      totals.set(key, (totals.get(key) ?? 0) + delta)
+    for (const [key, delta] of Object.entries(entry.deltas)) {
+      if (PLAYER_TRUTH_KEYS.has(key)) {
+        const ratingKey = key as PlayerTruthRatingKey
+        totals.set(ratingKey, (totals.get(ratingKey) ?? 0) + Number(delta))
+      }
     }
   }
 
@@ -675,12 +678,14 @@ function buildRatingSeries(
     .map(([key]) => key)
 
   return [...new Set([...moved, tracked, ...strongest])].slice(0, MAX_SERIES).map((key) => {
-    const points = ratingHistorySeries(
-      player.basketball.ratings,
-      history,
-      key,
-      currentSeasonId,
-    ).map((point) => point.value)
+    const canonicalHistory = history.filter((entry) => PLAYER_TRUTH_KEYS.has(key) && (Number((entry.deltas as Readonly<Record<string, number>>)[key]) || 0) !== 0)
+    let running = player.basketball.ratings[key] - canonicalHistory.reduce((sum, entry) => sum + ((entry.deltas as Readonly<Record<string, number>>)[key] ?? 0), 0)
+    const points = canonicalHistory.flatMap((entry) => {
+      const point = entry.seasonId === currentSeasonId ? [] : [running]
+      running += (entry.deltas as Readonly<Record<string, number>>)[key] ?? 0
+      return point
+    })
+    points.push(player.basketball.ratings[key])
     return {
       id: key,
       label: ratingLabel(key),
@@ -698,16 +703,17 @@ function buildDevelopmentPulse(
   const stimulus = world.developmentStimulusByPlayerId[player.id]?.byRating
   const concentrated = stimulus === undefined
     ? undefined
-    : [...Object.entries(stimulus) as [CanonicalRatingKey, number][]]
-        .filter(([key]) => CANONICAL_KEYS.has(key) && (stimulus[key] ?? 0) > 0)
+    : Object.entries(stimulus)
+        .filter(([key, value]) => PLAYER_TRUTH_KEYS.has(key) && Number(value) > 0)
+        .map(([key, value]) => [key as PlayerTruthRatingKey, Number(value)] as const)
         .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))[0]
 
-  const tracked: CanonicalRatingKey =
+  const tracked: PlayerTruthRatingKey =
     concentrated?.[0] ??
     (canonicalRatings(player.basketball.ratings).sort(
       (left, right) => right[1] - left[1] || left[0].localeCompare(right[0]),
     )[0]?.[0] ??
-      'passing')
+      'PASSING_ACCURACY')
 
   const history = world.playerRatingHistoryByPlayerId[player.id] ?? []
   const series = buildRatingSeries(player, history, world.currentSeasonId, tracked)
@@ -716,7 +722,9 @@ function buildDevelopmentPulse(
   const movers: OverviewMoverModel[] =
     lastTransition === undefined
       ? []
-      : [...Object.entries(lastTransition.deltas) as [CanonicalRatingKey, number][]]
+      : Object.entries(lastTransition.deltas)
+          .filter(([key]) => PLAYER_TRUTH_KEYS.has(key))
+          .map(([key, delta]) => [key as PlayerTruthRatingKey, Number(delta)] as const)
           .sort((left, right) => Math.abs(right[1]) - Math.abs(left[1]) || left[0].localeCompare(right[0]))
           .slice(0, MAX_MOVERS)
           .map(([key, delta]) => ({ label: ratingLabel(key), delta }))

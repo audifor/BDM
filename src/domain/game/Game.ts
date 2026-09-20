@@ -19,6 +19,7 @@ interface GameBase {
   readonly date: GameDate
   readonly homeTeamId: TeamId
   readonly awayTeamId: TeamId
+  readonly neutralSite?: boolean
   readonly classification?: GameClassification
   readonly stakes: GameStakes
   /** Key of the B04 competition-format node represented by this game. */
@@ -47,6 +48,7 @@ export interface CreateGameInput {
   date: GameDate
   homeTeamId: TeamId
   awayTeamId: TeamId
+  neutralSite?: boolean
   status: GameStatus
   result: GameResult | null
   classification?: GameClassification
@@ -57,6 +59,7 @@ export interface CreateGameInput {
 }
 
 export function createGame(input: CreateGameInput): Game {
+  if (input.neutralSite !== undefined && typeof input.neutralSite !== 'boolean') throw new TypeError('Game neutralSite must be boolean')
   const homeTeamId = requireNonEmptyString(input.homeTeamId, 'Game home team id') as TeamId
   const awayTeamId = requireNonEmptyString(input.awayTeamId, 'Game away team id') as TeamId
 
@@ -71,6 +74,7 @@ export function createGame(input: CreateGameInput): Game {
     date: parseGameDate(input.date),
     homeTeamId,
     awayTeamId,
+    ...(input.neutralSite === undefined ? {} : { neutralSite: input.neutralSite }),
     ...(input.classification === undefined ? {} : { classification: input.classification === 'conference' || input.classification === 'nonConference' ? input.classification : (() => { throw new TypeError('Game classification is invalid') })() }),
     stakes: input.stakes ?? 'regular',
     ...(input.competitionStageKey === undefined ? {} : { competitionStageKey: requireNonEmptyString(input.competitionStageKey, 'Game competition stage key') }),
