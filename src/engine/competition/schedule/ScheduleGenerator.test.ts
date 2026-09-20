@@ -9,7 +9,7 @@ import { createSeason } from '@/domain/season'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import { generateWorld } from '@/engine/world'
 
-import { generateRoundRobinSchedule } from './index'
+import { distributeRoundsAcrossSeason, generateRoundRobinSchedule } from './index'
 
 describe('ScheduleGenerator', () => {
   it('generates 56 scheduled games in 14 rounds of four', () => {
@@ -96,6 +96,17 @@ describe('ScheduleGenerator', () => {
     expect(roundDates[0]).toBe(season.startDate)
     expect(roundDates).toEqual(Array.from({ length: 14 }, (_, index) => addDays(season.startDate, index * 4)))
     expect(roundDates[13]).toBe(addDays(season.startDate, 52))
+  })
+
+  it('accepts a generic policy that spreads rounds through the season window', () => {
+    const { world, seasonId, season } = createGeneratedWorld()
+    const games = generateRoundRobinSchedule({ world, seasonId, schedulePolicy: distributeRoundsAcrossSeason })
+    const roundDates = groupByDate(games).map((round) => round[0]!.date)
+
+    expect(roundDates[0]).toBe(season.startDate)
+    expect(roundDates.at(-1)).toBe(season.endDate)
+    expect(new Set(roundDates).size).toBe(14)
+    expect(roundDates.every((date) => date >= season.startDate && date <= season.endDate)).toBe(true)
   })
 
   it('supports a custom positive round spacing', () => {

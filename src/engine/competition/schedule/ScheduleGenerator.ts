@@ -6,6 +6,7 @@ import {
   getSeason,
   type GameWorld,
 } from '@/domain/world'
+import type { SchedulePolicy } from './SchedulePolicy'
 
 const DEFAULT_DAYS_BETWEEN_ROUNDS = 4
 
@@ -13,6 +14,7 @@ export interface GenerateRoundRobinScheduleOptions {
   readonly world: GameWorld
   readonly seasonId: SeasonId
   readonly daysBetweenRounds?: number
+  readonly schedulePolicy?: SchedulePolicy
   readonly startDate?: import('@/domain/date').GameDate
 }
 
@@ -23,8 +25,10 @@ interface Matchup {
 
 /** Generates a deterministic home-and-away round robin without mutating the world. */
 export function generateRoundRobinSchedule(options: GenerateRoundRobinScheduleOptions): Game[] {
-  const daysBetweenRounds = options.daysBetweenRounds ?? DEFAULT_DAYS_BETWEEN_ROUNDS
-  validateDaysBetweenRounds(daysBetweenRounds)
+  if (options.daysBetweenRounds !== undefined) validateDaysBetweenRounds(options.daysBetweenRounds)
+  if (options.daysBetweenRounds !== undefined && options.schedulePolicy !== undefined) {
+    throw new RangeError('Specify either a schedule policy or a round interval, not both')
+  }
 
   const season = getSeason(options.world, options.seasonId)
   const competition = getCompetition(options.world, season.competitionId)
@@ -34,15 +38,21 @@ export function generateRoundRobinSchedule(options: GenerateRoundRobinScheduleOp
   const firstLegRounds = createFirstLegRounds(teamIds)
   const rounds = Array.from({ length: competition.rules.schedule.meetingsPerPair }, (_, legIndex) => legIndex % 2 === 0 ? firstLegRounds : firstLegRounds.map(invertRound)).flat()
   const startDate = options.startDate ?? season.startDate
-  const lastRoundDate = addDays(startDate, (rounds.length - 1) * daysBetweenRounds)
+  const roundDates = options.schedulePolicy === undefined
+    ? rounds.map((_, roundIndex) => addDays(startDate, roundIndex * (options.daysBetweenRounds ?? DEFAULT_DAYS_BETWEEN_ROUNDS)))
+    : options.schedulePolicy(rounds.length, startDate, season.endDate)
 
-  if (compareGameDates(lastRoundDate, season.endDate) > 0) {
+  if (roundDates.length !== rounds.length || new Set(roundDates).size !== roundDates.length) {
+    throw new RangeError('Schedule policy must provide one distinct date per round')
+  }
+
+  if (roundDates.some((date) => compareGameDates(date, startDate) < 0 || compareGameDates(date, season.endDate) > 0)) {
     throw new RangeError(`Schedule for Season ${season.id} does not fit within its date range`)
   }
 
   let gameSequence = 1
   return rounds.flatMap((round, roundIndex) => {
-    const date = addDays(startDate, roundIndex * daysBetweenRounds)
+    const date = roundDates[roundIndex]!
 
     return round.map((matchup) =>
       createGame({

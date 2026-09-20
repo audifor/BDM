@@ -111,10 +111,11 @@ factory. Its procedural content uses deterministic `RandomSource`; generated IDs
 are deterministic sequence strings independent of that random stream. The same
 seed and generator options reproduce the same world.
 
-`ScheduleGenerator` belongs to Engine. It reads participants from `Competition`,
-returns scheduled Domain `Game` data, and never modifies `GameWorld`. The current
-schedule is a deterministic home-and-away round robin with no RNG or simulation
-logic.
+`ScheduleGenerator` belongs to Engine. It reads participants and meetings-per-pair
+from `Competition.rules`, returns scheduled Domain `Game` data, and never modifies
+`GameWorld`. `SchedulePolicy` controls dates independently from those sporting
+rules; World DB fallback schedules use deterministic distribution across the
+regular-season window. The schedule has no RNG or simulation logic.
 
 ## Competition Rules
 

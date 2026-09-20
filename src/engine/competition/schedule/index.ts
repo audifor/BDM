@@ -1,3 +1,5 @@
 export { generateRoundRobinSchedule } from './ScheduleGenerator'
+export { distributeRoundsAcrossSeason } from './SchedulePolicy'
+export type { SchedulePolicy } from './SchedulePolicy'
 export type { GenerateRoundRobinScheduleOptions } from './ScheduleGenerator'
 export { generateNcaaLikeSchedule, classifyNcaaGame } from './NcaaLikeSchedule'
