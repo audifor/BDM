@@ -53,10 +53,12 @@ export function Taskbar() {
           return (
             <div className="ng-taskbar__app-slot" data-app={id} key={id}>
               <button
+                aria-label={label}
                 aria-current={id === activeApp ? 'page' : undefined}
                 aria-expanded={closable ? menuOpen : undefined}
                 aria-haspopup={closable ? 'menu' : undefined}
                 className={`ng-taskbar__app${id === activeApp ? ' is-active' : ''}`}
+                title={label}
                 onAuxClick={(event) => {
                   if (event.button !== 1 || !closable) return
                   event.preventDefault()
