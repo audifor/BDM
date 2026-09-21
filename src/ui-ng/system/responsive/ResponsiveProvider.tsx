@@ -1,11 +1,21 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
-import { BDM_BREAKPOINTS, resolveBdmViewport, type BdmViewportMode } from './breakpoints'
+import {
+  BDM_BREAKPOINTS,
+  resolveBdmHeightMode,
+  resolveBdmViewport,
+  type BdmHeightMode,
+  type BdmViewportMode,
+} from './breakpoints'
 
 type BdmResponsiveState = {
   readonly width: number
   readonly height: number
+  readonly viewportWidth: number
+  readonly viewportHeight: number
+  readonly aspectRatio: number
   readonly viewportMode: BdmViewportMode
+  readonly heightMode: BdmHeightMode
   readonly isUltrawide: boolean
   readonly isMaster: boolean
   readonly isCompact: boolean
@@ -13,6 +23,10 @@ type BdmResponsiveState = {
   readonly isUltraDense: boolean
   readonly isBelowMaster: boolean
   readonly isBelowCompact: boolean
+  readonly isTall: boolean
+  readonly isStandardHeight: boolean
+  readonly isShort: boolean
+  readonly isVeryShort: boolean
 }
 
 const ResponsiveContext = createContext<BdmResponsiveState | null>(null)
@@ -68,9 +82,14 @@ export function ResponsiveProvider({ children }: { readonly children: ReactNode 
   }, [])
 
   const viewportMode = resolveBdmViewport(size.width)
+  const heightMode = resolveBdmHeightMode(size.height)
   const responsive = useMemo<BdmResponsiveState>(() => ({
     ...size,
+    viewportWidth: size.width,
+    viewportHeight: size.height,
+    aspectRatio: size.height === 0 ? 0 : Number((size.width / size.height).toFixed(3)),
     viewportMode,
+    heightMode,
     isUltrawide: viewportMode === 'ultrawide',
     isMaster: viewportMode === 'master',
     isCompact: viewportMode === 'compact',
@@ -78,7 +97,11 @@ export function ResponsiveProvider({ children }: { readonly children: ReactNode 
     isUltraDense: viewportMode === 'ultraDense',
     isBelowMaster: size.width < BDM_BREAKPOINTS.master,
     isBelowCompact: size.width < BDM_BREAKPOINTS.compact,
-  }), [size, viewportMode])
+    isTall: heightMode === 'tall',
+    isStandardHeight: heightMode === 'standard',
+    isShort: heightMode === 'short',
+    isVeryShort: heightMode === 'veryShort',
+  }), [size, viewportMode, heightMode])
 
   return (
     <ResponsiveContext.Provider value={responsive}>
@@ -86,12 +109,13 @@ export function ResponsiveProvider({ children }: { readonly children: ReactNode 
         className="bdm-responsive-root"
         data-bdm-responsive-debug={showDebug ? 'true' : undefined}
         data-bdm-viewport-mode={viewportMode}
+        data-bdm-height-mode={heightMode}
         ref={rootRef}
       >
         {children}
         {showDebug ? (
           <output aria-hidden="true" className="bdm-responsive-debug">
-            {size.width}×{size.height} · {viewportMode.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}
+            {size.width}×{size.height} · {viewportMode.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()} · {heightMode.toUpperCase()}
           </output>
         ) : null}
       </div>

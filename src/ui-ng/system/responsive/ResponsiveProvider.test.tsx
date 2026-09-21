@@ -29,8 +29,8 @@ class TestResizeObserver {
 }
 
 function ResponsiveProbe() {
-  const { width, height, viewportMode, isDense } = useBdmResponsive()
-  return <output data-testid="responsive-state">{`${width}×${height} · ${viewportMode} · ${isDense}`}</output>
+  const { width, height, viewportWidth, viewportHeight, aspectRatio, viewportMode, heightMode, isDense, isShort } = useBdmResponsive()
+  return <output data-testid="responsive-state">{`${width}×${height} · ${viewportWidth}×${viewportHeight} · ${aspectRatio} · ${viewportMode} · ${heightMode} · ${isDense} · ${isShort}`}</output>
 }
 
 afterEach(() => {
@@ -50,7 +50,8 @@ describe('ResponsiveProvider', () => {
 
     TestResizeObserver.current?.resize(1366, 768)
 
-    await waitFor(() => expect(screen.getByTestId('responsive-state').textContent).toBe('1366×768 · dense · true'))
+    await waitFor(() => expect(screen.getByTestId('responsive-state').textContent).toBe('1366×768 · 1366×768 · 1.779 · dense · short · true · true'))
     expect(document.querySelector('.bdm-responsive-root')?.getAttribute('data-bdm-viewport-mode')).toBe('dense')
+    expect(document.querySelector('.bdm-responsive-root')?.getAttribute('data-bdm-height-mode')).toBe('short')
   })
 })

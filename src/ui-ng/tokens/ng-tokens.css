@@ -143,11 +143,27 @@
   --ng-panel-gap: var(--bdm-panel-gap);
   --ng-workspace-padding: var(--bdm-workspace-padding);
 
+  --bdm-systembar-height: 48px;
+  --bdm-taskbar-height: 56px;
+  --bdm-page-header-height: 56px;
+  --bdm-page-tabs-height: 44px;
+  --bdm-space-y-1: var(--ng-spacing-4);
+  --bdm-space-y-2: var(--ng-spacing-8);
+  --bdm-space-y-3: var(--ng-spacing-12);
+  --bdm-space-y-4: var(--ng-spacing-16);
+  --bdm-section-gap-y: var(--bdm-panel-gap);
+  --bdm-panel-padding-y: var(--ng-spacing-16);
+  --bdm-font-min-functional: 11px;
+  --bdm-font-min-secondary: 10px;
+  --bdm-font-min-rating: 13px;
+  --bdm-control-min-height: 28px;
+  --bdm-row-min-height: 32px;
+
   /* ── Shell geometry ── */
-  --ng-system-bar-height: 48px;
-  --ng-taskbar-height: 56px;
-  --ng-workspace-header-height: 56px;
-  --ng-workspace-tabs-height: 44px;
+  --ng-system-bar-height: var(--bdm-systembar-height);
+  --ng-taskbar-height: var(--bdm-taskbar-height);
+  --ng-workspace-header-height: var(--bdm-page-header-height);
+  --ng-workspace-tabs-height: var(--bdm-page-tabs-height);
   --ng-workspace-toolbar-height: 36px;
 
   /* ── Inspector ── */

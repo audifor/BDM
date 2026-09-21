@@ -12,7 +12,8 @@
 @container player-space (max-width: 1799px) {
   .po-root .ng-application-workspace {
     --po-identity-height: 156px;
-    --ng-workspace-tabs-height: 40px;
+    --bdm-page-tabs-height: 40px;
+    --ng-workspace-tabs-height: var(--bdm-page-tabs-height);
   }
 
   .po-root .ng-application-workspace__identity-slot {
@@ -161,7 +162,8 @@
 @container player-space (max-width: 1440px) {
   .po-root .ng-application-workspace {
     --po-identity-height: 154px;
-    --ng-workspace-tabs-height: 38px;
+    --bdm-page-tabs-height: 38px;
+    --ng-workspace-tabs-height: var(--bdm-page-tabs-height);
   }
 
   /* The main page is the vertical scroll region at short workstation heights. */
@@ -220,7 +222,7 @@
 
   /* Skills retain the category and rating matrix side by side; detail modules use the full row. */
   .po-root .po-at-board {
-    grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1.7fr);
+    grid-template-columns: minmax(272px, 0.72fr) minmax(302px, 1.7fr);
     grid-template-rows: auto auto;
     min-height: 700px;
   }
@@ -413,7 +415,8 @@
 @container player-space (max-width: 1280px) {
   .po-root .ng-application-workspace {
     --po-identity-height: 210px;
-    --ng-workspace-tabs-height: 36px;
+    --bdm-page-tabs-height: 36px;
+    --ng-workspace-tabs-height: var(--bdm-page-tabs-height);
   }
 
   .po-root .po-identity {
@@ -472,7 +475,7 @@
 
   .po-root .po-status__label {
     overflow: hidden;
-    font-size: 9px;
+    font-size: var(--bdm-font-min-secondary, 10px);
     letter-spacing: 0.06em;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -486,7 +489,7 @@
   .po-root .po-identity__fact-label,
   .po-root .po-identity__pos-label,
   .po-root .po-identity__measure-label {
-    font-size: 9px;
+    font-size: var(--bdm-font-min-secondary, 10px);
   }
 
   .po-root .po-identity__fact-value,
@@ -510,9 +513,10 @@
   }
 
   .po-root .po-identity__actions .ng-btn {
-    height: 20px;
+    min-height: var(--bdm-control-min-height, 28px);
+    height: auto;
     padding-inline: 4px;
-    font-size: 10px;
+    font-size: max(10px, var(--bdm-font-min-secondary, 10px));
   }
 
   .po-root .ng-inspector-pane {
@@ -524,17 +528,17 @@
   }
 
   .po-root .po-at-board {
-    grid-template-columns: minmax(0, 0.62fr) minmax(0, 1.38fr);
+    grid-template-columns: minmax(272px, 0.62fr) minmax(302px, 1.38fr);
     min-height: 760px;
   }
 
   .po-root .po-at-matrix .po-attr-rating {
-    grid-template-columns: minmax(92px, 1.3fr) 34px minmax(48px, 0.9fr) 28px 46px;
+    grid-template-columns: minmax(92px, 1.3fr) 32px minmax(48px, 2fr) 28px 46px;
     gap: 5px;
   }
 
   .po-root .po-at-matrix__thead {
-    grid-template-columns: minmax(92px, 1.3fr) 34px minmax(48px, 0.9fr) 28px 46px;
+    grid-template-columns: minmax(92px, 1.3fr) 32px minmax(48px, 2fr) 28px 46px;
     gap: 5px;
   }
 
@@ -568,7 +572,8 @@
   /* This fallback is for a genuinely narrow PlayerSpace embedded beside other desktop regions. */
   .po-root .ng-application-workspace {
     --po-identity-height: 286px;
-    --ng-workspace-tabs-height: 34px;
+    --bdm-page-tabs-height: 34px;
+    --ng-workspace-tabs-height: var(--bdm-page-tabs-height);
   }
 
   .po-root .po-identity {
@@ -739,5 +744,337 @@
 
   .po-root .po-pf-board {
     min-height: 1120px;
+  }
+}
+
+/* Height modes act on the real PlayerSpace size; its page body owns vertical scrolling. */
+.po-root[data-bdm-player-height-mode='compact'] .ng-workspace-body__main,
+.po-root[data-bdm-player-height-mode='dense'] .ng-workspace-body__main {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(22, 217, 243, 0.38) rgba(116, 150, 168, 0.08);
+}
+
+.po-root .ng-workspace-body__main::-webkit-scrollbar {
+  width: 10px;
+}
+
+.po-root .ng-workspace-body__main::-webkit-scrollbar-track {
+  background: rgba(116, 150, 168, 0.08);
+}
+
+.po-root .ng-workspace-body__main::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: rgba(22, 217, 243, 0.42);
+  background-clip: padding-box;
+}
+
+.po-root[data-bdm-player-height-mode='compact'] .po-workspace-content,
+.po-root[data-bdm-player-height-mode='dense'] .po-workspace-content {
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+}
+
+.po-root[data-bdm-player-height-mode='compact'] .po-overview,
+.po-root[data-bdm-player-height-mode='dense'] .po-overview {
+  height: auto;
+  min-height: 680px;
+  gap: var(--bdm-section-gap-y, 8px);
+  padding: var(--bdm-panel-padding-y, 10px);
+  overflow: visible;
+}
+
+@container player-space (min-width: 1100px) {
+  .po-root[data-bdm-player-height-mode='compact'] .ng-application-workspace {
+    --po-identity-height: 132px;
+    --bdm-page-tabs-height: 38px;
+    --ng-workspace-tabs-height: var(--bdm-page-tabs-height);
+  }
+
+  .po-root[data-bdm-player-height-mode='dense'] .ng-application-workspace {
+    --po-identity-height: 116px;
+    --bdm-page-tabs-height: 34px;
+    --ng-workspace-tabs-height: var(--bdm-page-tabs-height);
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity {
+    grid-template-columns:
+      minmax(310px, 1.3fr)
+      minmax(90px, 0.44fr)
+      minmax(205px, 0.9fr)
+      minmax(180px, 0.78fr)
+      minmax(225px, 0.95fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity > *,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity > * {
+    grid-column: auto;
+    grid-row: auto;
+    padding: 6px 8px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__person,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__person {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-portrait {
+    width: 76px;
+    height: 108px;
+  }
+
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__person {
+    grid-template-columns: 68px minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  .po-root[data-bdm-player-height-mode='dense'] .po-portrait {
+    width: 68px;
+    height: 96px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__positions,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__positions {
+    align-items: flex-start;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__pos-row,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__pos-row {
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__measures,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__measures {
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__measure,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__measure {
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__condition,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__condition,
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__contract,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__contract {
+    gap: 5px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__status-list,
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__contract-list,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__status-list,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__contract-list {
+    gap: 3px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__actions,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__actions {
+    gap: 2px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .ng-workspace-tabs__tab,
+  .po-root[data-bdm-player-height-mode='dense'] .ng-workspace-tabs__tab {
+    padding-block: 0;
+    border-bottom-width: 2px;
+  }
+}
+
+/* Attributes switch when the measured board can no longer hold both readable columns. */
+@container player-space (max-width: 920px) {
+  .po-root .po-at-board:not([data-bdm-structural-compact='true']) {
+    grid-template-columns: minmax(272px, 0.62fr) minmax(302px, 1.38fr);
+    grid-template-rows: auto auto;
+  }
+
+  .po-root .po-at-board:not([data-bdm-structural-compact='true']) .po-at-col--left {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .po-root .po-at-board:not([data-bdm-structural-compact='true']) .po-at-col--center {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .po-root .po-at-board:not([data-bdm-structural-compact='true']) .po-at-col--right {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-col--left,
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-col--center,
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-col--right,
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-split {
+  display: contents;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-categories {
+  position: relative;
+  z-index: 4;
+  grid-column: 1 / -1;
+  order: -10;
+  min-height: 44px;
+  padding-bottom: 0;
+  overflow: visible;
+  background: var(--po-ov-panel-bg-neutral);
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-categories .po-at-panel__head {
+  min-height: 42px;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-categories .po-at-panel__meta {
+  display: none;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-category-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: min(240px, 55%);
+  min-height: var(--bdm-control-min-height, 28px);
+  padding: 3px 8px;
+  border: 1px solid var(--po-ov-border);
+  border-radius: 2px;
+  background: rgb(22 217 229 / 5%);
+  color: var(--po-ov-text);
+  font: inherit;
+  font-size: var(--bdm-font-min-functional, 11px);
+  text-align: left;
+  cursor: pointer;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-category-trigger:hover,
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-category-trigger:focus-visible {
+  border-color: var(--po-ov-cyan);
+  outline: 2px solid rgb(24 221 232 / 45%);
+  outline-offset: 1px;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-category-trigger__label {
+  flex: 1;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-category-trigger__indicator {
+  font-size: 14px;
+  color: var(--po-ov-cyan);
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-categories__list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  z-index: 12;
+  max-height: min(360px, 80dvh);
+  padding: 6px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid var(--po-ov-border);
+  border-radius: 2px;
+  background: #071017;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 55%);
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-categories__list[hidden] {
+  display: none;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-matrix {
+  order: -9;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-detail {
+  grid-column: 1 / -1;
+  order: -8;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-split--notes {
+  display: contents;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-strengths {
+  order: -7;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-trainings {
+  order: -6;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-skills {
+  order: -5;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-roles {
+  order: -4;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-weak {
+  order: -3;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-radar {
+  order: -2;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-compare {
+  order: -1;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-matrix__table {
+  overflow: visible;
+}
+
+@container player-attributes-board (max-width: 320px) {
+  .po-root .po-at-board .po-at-matrix__thead {
+    grid-template-areas: "attribute rating delta percentile";
+    grid-template-columns: minmax(0, 1fr) 36px 36px 52px;
+    gap: 5px;
+  }
+
+  .po-root .po-at-board .po-at-matrix__thead > span:nth-child(3) {
+    display: none;
+  }
+
+  .po-root .po-at-board .po-at-matrix .po-attr-rating {
+    grid-template-areas:
+      "attribute rating delta percentile"
+      "bar bar bar bar";
+    grid-template-columns: minmax(0, 1fr) 36px 36px 52px;
+    grid-template-rows: auto 8px;
+    gap: 5px;
+    height: auto;
+    min-height: 48px;
+    padding-block: 7px;
+  }
+
+  .po-root .po-at-board .po-at-matrix .po-attr-rating__value {
+    font-size: max(13px, var(--bdm-font-min-rating, 13px));
+  }
+
+  .po-root .po-at-board .po-at-matrix .po-attr-rating__scale {
+    width: 100%;
   }
 }

@@ -34,12 +34,20 @@ body,
   --bdm-font-lg: 16px;
   --bdm-font-xl: 20px;
   --bdm-sidebar-width: 360px;
-  --bdm-topbar-height: 48px;
-  --bdm-dock-height: 56px;
+  --bdm-systembar-height: 48px;
+  --bdm-taskbar-height: 56px;
+  --bdm-page-header-height: 56px;
+  --bdm-page-tabs-height: 44px;
+  --bdm-space-y-1: 4px;
+  --bdm-space-y-2: 8px;
+  --bdm-space-y-3: 12px;
+  --bdm-space-y-4: 16px;
   --bdm-taskbar-app-min-width: 88px;
   --bdm-system-search-width: 190px;
 
   --bdm-panel-gap: 10px;
+  --bdm-section-gap-y: var(--bdm-panel-gap);
+  --bdm-panel-padding-y: var(--bdm-panel-padding);
   --bdm-workspace-padding: 12px;
   --ng-spacing-4: var(--bdm-space-1);
   --ng-spacing-8: var(--bdm-space-2);
@@ -49,8 +57,10 @@ body,
   --ng-spacing-32: 32px;
   --ng-panel-gap: var(--bdm-panel-gap);
   --ng-workspace-padding: var(--bdm-workspace-padding);
-  --ng-system-bar-height: var(--bdm-topbar-height);
-  --ng-taskbar-height: var(--bdm-dock-height);
+  --ng-system-bar-height: var(--bdm-systembar-height);
+  --ng-taskbar-height: var(--bdm-taskbar-height);
+  --ng-workspace-header-height: var(--bdm-page-header-height);
+  --ng-workspace-tabs-height: var(--bdm-page-tabs-height);
   --ng-inspector-width: var(--bdm-sidebar-width);
   --ng-inspector-min-width: 320px;
   --ng-inspector-max-width: 420px;
@@ -74,6 +84,8 @@ body,
   --bdm-space-5: 26px;
   --bdm-panel-padding: 18px;
   --bdm-panel-gap: 12px;
+  --bdm-section-gap-y: var(--bdm-panel-gap);
+  --bdm-panel-padding-y: var(--bdm-panel-padding);
   --bdm-workspace-padding: 14px;
   --bdm-sidebar-width: 380px;
   --ng-inspector-width: var(--bdm-sidebar-width);
@@ -96,8 +108,8 @@ body,
   --bdm-font-lg: 15px;
   --bdm-font-xl: 19px;
   --bdm-sidebar-width: 320px;
-  --bdm-topbar-height: 46px;
-  --bdm-dock-height: 52px;
+  --bdm-systembar-height: 46px;
+  --bdm-taskbar-height: 52px;
   --bdm-taskbar-app-min-width: 72px;
   --bdm-system-search-width: 164px;
   --bdm-panel-gap: 8px;
@@ -126,8 +138,8 @@ body,
   --bdm-font-lg: 14px;
   --bdm-font-xl: 18px;
   --bdm-sidebar-width: 276px;
-  --bdm-topbar-height: 44px;
-  --bdm-dock-height: 48px;
+  --bdm-systembar-height: 44px;
+  --bdm-taskbar-height: 48px;
   --bdm-taskbar-app-min-width: 62px;
   --bdm-system-search-width: 144px;
   --bdm-panel-gap: 6px;
@@ -156,8 +168,8 @@ body,
   --bdm-font-lg: 14px;
   --bdm-font-xl: 17px;
   --bdm-sidebar-width: 256px;
-  --bdm-topbar-height: 42px;
-  --bdm-dock-height: 44px;
+  --bdm-systembar-height: 42px;
+  --bdm-taskbar-height: 44px;
   --bdm-taskbar-app-min-width: 36px;
   --bdm-system-search-width: 120px;
   --bdm-panel-gap: 6px;
@@ -170,6 +182,52 @@ body,
   --ng-text-md: var(--bdm-font-md);
   --ng-text-lg: var(--bdm-font-lg);
   --ng-text-xl: var(--bdm-font-xl);
+}
+
+.bdm-responsive-root[data-bdm-height-mode='standard'] {
+  --bdm-systembar-height: 46px;
+  --bdm-taskbar-height: 52px;
+  --bdm-page-header-height: 52px;
+  --bdm-page-tabs-height: 42px;
+  --bdm-space-y-2: 7px;
+  --bdm-space-y-3: 10px;
+  --bdm-space-y-4: 14px;
+  --bdm-section-gap-y: 9px;
+  --bdm-panel-padding-y: 14px;
+}
+
+.bdm-responsive-root[data-bdm-height-mode='short'] {
+  --bdm-systembar-height: 44px;
+  --bdm-taskbar-height: 48px;
+  --bdm-page-header-height: 48px;
+  --bdm-page-tabs-height: 38px;
+  --bdm-space-y-2: 6px;
+  --bdm-space-y-3: 8px;
+  --bdm-space-y-4: 12px;
+  --bdm-section-gap-y: 7px;
+  --bdm-panel-padding-y: 11px;
+}
+
+.bdm-responsive-root[data-bdm-height-mode='veryShort'] {
+  --bdm-systembar-height: 42px;
+  --bdm-taskbar-height: 44px;
+  --bdm-page-header-height: 44px;
+  --bdm-page-tabs-height: 36px;
+  --bdm-space-y-1: 3px;
+  --bdm-space-y-2: 5px;
+  --bdm-space-y-3: 7px;
+  --bdm-space-y-4: 10px;
+  --bdm-section-gap-y: 6px;
+  --bdm-panel-padding-y: 9px;
+}
+
+.bdm-responsive-root[data-bdm-height-mode='standard'] .ng-taskbar__app {
+  --bdm-taskbar-control-height: 34px;
+}
+
+.bdm-responsive-root[data-bdm-height-mode='short'] .ng-taskbar__app,
+.bdm-responsive-root[data-bdm-height-mode='veryShort'] .ng-taskbar__app {
+  --bdm-taskbar-control-height: 32px;
 }
 
 .bdm-responsive-debug {

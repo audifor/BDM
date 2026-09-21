@@ -2,6 +2,7 @@ import '@/ui-ng/styles/reset.css'
 import '@/ui-ng/styles/ng-global.css'
 
 import { useEffect, useState } from 'react'
+import type { CSSProperties } from 'react'
 
 import { useGameStore } from '@/stores/gameStore'
 import { EntityContextMenuProvider } from '@/ui/entityContextMenu/EntityContextMenuProvider'
@@ -9,12 +10,20 @@ import { SystemBar } from '@/ui-ng/system/SystemBar'
 import { Taskbar } from '@/ui-ng/system/Taskbar'
 import { DesignerViewport } from '@/ui-ng/designer/DesignerViewport'
 import { isDesignerMode } from '@/ui-ng/designer/designerMode'
+import { resolveBdmPlayerHeightMode } from '@/ui-ng/system/responsive/breakpoints'
+import { useContainerSize } from '@/ui-ng/system/responsive/useContainerSize'
 import { NgWorkspaceNavigationProvider, useNgWorkspaceNavigation } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
 import { WorkspaceHost } from '@/ui-ng/workspace/WorkspaceHost'
 
 function BdmOsNgShell() {
   const world = useGameStore((state) => state.world)
   const { openEntity } = useNgWorkspaceNavigation()
+  const workspaceSize = useContainerSize<HTMLDivElement>()
+  const workspaceStyle = {
+    '--bdm-workspace-width': `${workspaceSize.width}px`,
+    '--bdm-workspace-height': `${workspaceSize.height}px`,
+    '--bdm-workspace-aspect-ratio': workspaceSize.aspectRatio,
+  } as CSSProperties
 
   if (world === null) {
     return (
@@ -28,7 +37,12 @@ function BdmOsNgShell() {
     <EntityContextMenuProvider onOpenEntity={openEntity} world={world}>
       <div className="bdm-os-ng" data-ng-shell="bdm-os-ng">
         <SystemBar />
-        <div className="bdm-os-ng__workspace-region">
+        <div
+          className="bdm-os-ng__workspace-region"
+          data-bdm-workspace-height-mode={workspaceSize.height > 0 ? resolveBdmPlayerHeightMode(workspaceSize.height) : undefined}
+          ref={workspaceSize.ref}
+          style={workspaceStyle}
+        >
           <WorkspaceHost />
         </div>
         <Taskbar />

@@ -52,6 +52,9 @@
 }
 
 .bdm-os-ng__workspace-region {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  width: 100%;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
