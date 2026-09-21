@@ -12,7 +12,7 @@ import {
   simulateRemainingGamesToday,
 } from '@/app/game'
 import { releasePlayer, signFreeAgent } from '@/app/market'
-import { organizationIdForTeam, type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
+import { type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
 import type { CoachPerkId, CoachSkillId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { getInboxItemsForCoach, getNewsFeed, getRelationshipsForPerson, getUnreadInboxCount, getUserCoachReputationProfile } from '@/domain/world'
@@ -225,7 +225,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (scout === undefined) return
     set({
       world: requestScouting(world, {
-        organizationId: organizationIdForTeam(team.id),
+        organizationId: team.organizationId,
         playerId,
         missionType: 'QUICK_LOOK',
         requestedBy: 'HEAD_COACH',

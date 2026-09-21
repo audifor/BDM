@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { advanceDay } from '@/engine/calendar'
-import { attachWorldDbCompetitionRuntime, hasAppliedAnnualDevelopmentCycle, markAnnualDevelopmentCycleApplied } from '@/domain/world'
+import { createGovernanceInstitution } from '@/domain/governance'
+import { createSupporterRelationship } from '@/domain/supporters'
+import { attachWorldDbCompetitionRuntime, hasAppliedAnnualDevelopmentCycle, markAnnualDevelopmentCycleApplied, updateGameWorld } from '@/domain/world'
 import { serializeGameWorldV3 } from './GameWorldSaveV3'
 import { deserializeGameWorldSaveV4, deserializeGameWorldV4, migrateGameWorldSaveV3ToV4, serializeGameWorldV4 } from './GameWorldSaveV4'
 
@@ -101,10 +103,26 @@ describe('GameWorldSaveV4 competition runtime', () => {
     expect(Object.values(current.players).map((player) => player.basketball.ratings)).toEqual(developedRatings)
   }, 120_000)
 
+  it('preserves CORE-ORG1 records and BG7 canonical runtime through Save V4', () => {
+    const base = createNewGame()
+    const team = Object.values(base.teams)[0]!
+    const institution = createGovernanceInstitution({ id: 'university:save-v4', universe: 'NCAA', name: 'Save V4 University', teamIds: [team.id] })
+    const relationship = createSupporterRelationship({ id: 'donor:save-v4', actor: { kind: 'EXTERNAL', id: 'person:save-v4-donor' }, kind: 'DONOR', institutionId: institution.id, scope: 'INSTITUTION_WIDE', programTeamIds: [], startedOn: '2032-01-01' as never, donorPattern: 'RECURRING', restricted: false })
+    const world = updateGameWorld(base, { governanceInstitutions: [institution], supporterRelationships: [relationship] })
+    const v3 = serializeGameWorldV3(world, savedAt)
+    const v4 = serializeGameWorldV4(world, savedAt)
+    expect(v4.payload.staffCareerRuntime).toEqual(v3.payload.staffCareerRuntime)
+    const restored = deserializeGameWorldV4(v4)
+    expect(restored.organizationsById).toEqual(world.organizationsById)
+    expect(restored.organizationSectionsById).toEqual(world.organizationSectionsById)
+    expect(restored.supporterRelationshipsById).toEqual(world.supporterRelationshipsById)
+    expect(restored.governanceInstitutionsById).toEqual(world.governanceInstitutionsById)
+  })
+
   it('migrates canonical V3 by preserving V3 fields and adding empty runtime state', () => {
     const v3 = serializeGameWorldV3(createNewGame(), savedAt)
     const v4 = migrateGameWorldSaveV3ToV4(v3)
-    const { worldDbCompetitionRuntime, worldAnnualDevelopmentCycle, ...v4CompatibilityPayload } = v4.payload
+    const { worldDbCompetitionRuntime, worldAnnualDevelopmentCycle, organizations, organizationSections, ...v4CompatibilityPayload } = v4.payload
 
     expect(v4.schemaVersion).toBe(4)
     expect(v4CompatibilityPayload).toEqual(v3.payload)
@@ -114,6 +132,8 @@ describe('GameWorldSaveV4 competition runtime', () => {
       competitionSeasonIds: [],
     })
     expect(worldAnnualDevelopmentCycle).toEqual({ lastAppliedCycleId: null })
+    expect(organizations.length).toBeGreaterThan(0)
+    expect(organizationSections.length).toBeGreaterThan(0)
   })
 
   it('continues to read V3 through the V4 reader with an empty runtime projection', () => {

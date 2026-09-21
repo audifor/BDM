@@ -27,6 +27,7 @@ export {
   coachProfessionalTraitIdFromString,
   coachPerkIdFromString,
   organizationIdFromString,
+  organizationSectionIdFromString,
   organizationIdForTeam,
   agentIdFromString,
   agencyIdFromString,
@@ -53,6 +54,7 @@ export type {
   CoachProfessionalTraitId,
   CoachPerkId,
   OrganizationId,
+  OrganizationSectionId,
   AgentId,
   AgencyId,
 } from './EntityIds'

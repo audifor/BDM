@@ -5,7 +5,7 @@ import {
   type RatingEvaluation,
 } from '@/domain/intelligence'
 import type { GameWorld } from '@/domain/world'
-import { organizationIdForTeam, type PlayerId, type TeamId } from '@/domain/ids'
+import { type PlayerId, type TeamId } from '@/domain/ids'
 import {
   CANONICAL_RATING_KEYS,
   type BasketballRatingKey,
@@ -86,7 +86,7 @@ export function evaluateRosterOrganizationRating(
   dimension: string,
 ): RatingEvaluation {
   return getOrganizationRatingEvaluation({
-    organizationId: organizationIdForTeam(teamId),
+    organizationId: world.teams[teamId]!.organizationId,
     playerId: player.id,
     dimension,
     knowledge: world.organizationKnowledge,

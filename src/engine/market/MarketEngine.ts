@@ -1,5 +1,5 @@
 import { consolidateMarketSignal, type ContractNegotiation, type MarketSignal } from '@/domain/market'
-import { agencyIdFromString, agentIdFromString, organizationIdForTeam, type OrganizationId, type PlayerId } from '@/domain/ids'
+import { agencyIdFromString, agentIdFromString, type OrganizationId, type PlayerId } from '@/domain/ids'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 
 /** Deterministic Wave 4 bootstrap: a portfolio model, not one agent per player. */
@@ -9,4 +9,4 @@ export function initializeMarketAgents(world:GameWorld):GameWorld{if(Object.keys
 export function receiveMarketSignal(world:GameWorld,signal:MarketSignal):GameWorld{return updateGameWorld(world,{marketSignals:[...Object.values(world.marketSignalsById),signal],marketKnowledge:consolidateMarketSignal(world.marketKnowledge,signal)})}
 export function openNegotiation(world:GameWorld,input:Omit<ContractNegotiation,'id'|'status'|'round'>):GameWorld{const id=`negotiation:${input.organizationId}:${input.playerId}:${world.currentDate}`;return updateGameWorld(world,{negotiations:[...Object.values(world.negotiationsById),{...input,id,status:'OPEN',round:0}]})}
 export function agentForPlayer(world:GameWorld,playerId:PlayerId){const representation=world.playerRepresentations.find(item=>item.playerId===playerId);return representation===undefined?undefined:world.agentsById[representation.agentId]}
-export function organizationMarketContact(world:GameWorld,teamId:import('@/domain/ids').TeamId,playerId:PlayerId):OrganizationId{return organizationIdForTeam(teamId)}
+export function organizationMarketContact(world:GameWorld,teamId:import('@/domain/ids').TeamId,playerId:PlayerId):OrganizationId{return world.teams[teamId]!.organizationId}

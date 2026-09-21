@@ -1,4 +1,4 @@
-import { organizationIdForTeam, type TeamId } from '@/domain/ids'
+import { type TeamId } from '@/domain/ids'
 import { deriveOrganizationPlayerValuation } from '@/domain/intelligence'
 import { createDelegationOutcome, delegationOutcomeIdFromString } from '@/domain/responsibility'
 import { resolveAdvisoryResponsibility, scoutingQuality } from '@/engine/staff'
@@ -60,7 +60,7 @@ export function progressDraftProspectAdvisories(world: GameWorld, draftId: strin
 
 /** Ranks available prospects using ONLY the existing Draft organization valuation path — identical knowledge source to `chooseAiDraftProspect`, never hidden Player truth. */
 function rankAvailableProspects(world: GameWorld, teamId: TeamId, draftId: string) {
-  const organizationId = organizationIdForTeam(teamId)
+  const organizationId = world.teams[teamId]!.organizationId
   const policy = world.organizationEvaluationPoliciesById[organizationId]
   return getAvailableDraftProspects(world, draftId).slice().sort((a, b) => {
     const first = world.players[a]!

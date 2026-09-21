@@ -18,10 +18,12 @@ import type {
   PlayerId,
   SeasonId,
   TeamId,
+  OrganizationSectionId,
 } from '@/domain/ids'
 import type { Player } from '@/domain/player'
 import { calculateSeasonStandings, type Season, type SeasonHistoryRecord } from '@/domain/season'
 import type { Team } from '@/domain/team'
+import { createOrganization, createOrganizationSection, type Organization, type OrganizationSection } from '@/domain/organization'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
 import { createInjury, isInjuryActive, type InjuryRecord } from '@/domain/injury'
 import type { InjuryId } from '@/domain/ids'
@@ -34,7 +36,7 @@ import { createOrganizationKnowledge, createPlayerKnowledge, type OrganizationKn
 import { createEvaluatorProfile, type Evidence, type EvaluatorProfile, type EvaluatorReport, type ScoutingAssignment } from '@/domain/scouting'
 import { deriveOrganizationEvaluationPolicy, type OrganizationEvaluationPolicy } from '@/domain/intelligence'
 import type { Agency, Agent, ContractNegotiation, MarketKnowledge, MarketReality, MarketSignal, PlayerRepresentation, RolePromise } from '@/domain/market'
-import { organizationIdForTeam, type OrganizationId } from '@/domain/ids'
+import type { OrganizationId } from '@/domain/ids'
 import type { PlayerKnowledgeId } from '@/domain/ids'
 import { createStaffPerson, createTeamStaffAssignment, staffRoleDefinition, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
 import type { StaffPersonId, TeamStaffAssignmentId } from '@/domain/ids'
@@ -70,6 +72,7 @@ import type { EligibilityProfile, EligibilityRestriction, EligibilityRules } fro
 import type { AcademicProfile, AcademicRules, AcademicSupportPlan, AcademicTermRecord } from '@/domain/academic'
 import type { Collective, NilDeal, NilOpportunity, NilProfile, NilRules } from '@/domain/nil'
 import type { Booster, BoosterContribution, BoosterRequest } from '@/domain/boosters'
+import { createCollectiveInstitutionAffiliation, createCollectiveInstitutionalLiaison, createCollectiveInstitutionalStatusEvent, createCollectiveParticipantAffiliation, createSupportComplianceCase, createSupportComplianceCaseEvent, createSupportComplianceFinding, createSupportConflictDisclosure, createSupportConsequence, createSupportRemediation, createSupportContribution, createSupporterExpectation, createSupporterExpectationEvent, createSupporterPressureEvent, createSupporterReaction, createSupporterRelationship, createSupportFundingPledge, createSupportFundingPledgeEvent, selectPledgeContributions, sortSupportFundingPledgeEvents, type CollectiveInstitutionAffiliation, type CollectiveInstitutionalLiaison, type CollectiveInstitutionalStatusEvent, type CollectiveParticipantAffiliation, type SupportComplianceCase, type SupportComplianceCaseEvent, type SupportComplianceFinding, type SupportConflictDisclosure, type SupportConsequence, type SupportRemediation, type SupportContribution, type SupporterExpectation, type SupporterExpectationEvent, type SupporterPressureEvent, type SupporterReaction, type SupportFundingPledge, type SupportFundingPledgeEvent, type SupporterRelationship } from '@/domain/supporters'
 import type { EnforcementFinding, EnforcementRules, Investigation, ProgramComplianceState, Sanction, Violation } from '@/domain/enforcement'
 import type { EcosystemTransition } from '@/domain/career'
 import { createMemory, type MemoryRecord } from '@/domain/memory'
@@ -97,6 +100,8 @@ export interface GameWorld {
   readonly coaches: Readonly<Record<CoachId, Coach>>
   readonly players: Readonly<Record<PlayerId, Player>>
   readonly teams: Readonly<Record<TeamId, Team>>
+  readonly organizationsById: Readonly<Record<OrganizationId, Organization>>
+  readonly organizationSectionsById: Readonly<Record<OrganizationSectionId, OrganizationSection>>
   readonly competitions: Readonly<Record<CompetitionId, Competition>>
   readonly ecosystems: Readonly<Record<EcosystemId, SportsEcosystem>>
   readonly conferencesById: Readonly<Record<ConferenceId, Conference>>
@@ -232,6 +237,24 @@ export interface GameWorld {
   readonly boostersById: Readonly<Record<string, Booster>>
   readonly boosterContributionsById: Readonly<Record<string, BoosterContribution>>
   readonly boosterRequestsById: Readonly<Record<string, BoosterRequest>>
+  readonly supporterRelationshipsById: Readonly<Record<string, SupporterRelationship>>
+  readonly collectiveInstitutionAffiliationsById: Readonly<Record<string, CollectiveInstitutionAffiliation>>
+  readonly collectiveParticipantAffiliationsById: Readonly<Record<string, CollectiveParticipantAffiliation>>
+  readonly collectiveInstitutionalStatusEventsById: Readonly<Record<string, CollectiveInstitutionalStatusEvent>>
+  readonly collectiveInstitutionalLiaisonsById: Readonly<Record<string, CollectiveInstitutionalLiaison>>
+  readonly supporterExpectationsById: Readonly<Record<string, SupporterExpectation>>
+  readonly supporterExpectationEventsById: Readonly<Record<string, SupporterExpectationEvent>>
+  readonly supporterPressureEventsById: Readonly<Record<string, SupporterPressureEvent>>
+  readonly supporterReactionsById: Readonly<Record<string, SupporterReaction>>
+  readonly supportFundingPledgesById: Readonly<Record<string, SupportFundingPledge>>
+  readonly supportFundingPledgeEventsById: Readonly<Record<string, SupportFundingPledgeEvent>>
+  readonly supportContributionsById: Readonly<Record<string, SupportContribution>>
+  readonly supportComplianceCasesById: Readonly<Record<string, SupportComplianceCase>>
+  readonly supportComplianceCaseEventsById: Readonly<Record<string, SupportComplianceCaseEvent>>
+  readonly supportComplianceFindingsById: Readonly<Record<string, SupportComplianceFinding>>
+  readonly supportConflictDisclosuresById: Readonly<Record<string, SupportConflictDisclosure>>
+  readonly supportConsequencesById: Readonly<Record<string, SupportConsequence>>
+  readonly supportRemediationsById: Readonly<Record<string, SupportRemediation>>
   readonly enforcementRulesByEcosystemId: Readonly<Record<EcosystemId, EnforcementRules>>
   readonly violationsById: Readonly<Record<string, Violation>>
   readonly investigationsById: Readonly<Record<string, Investigation>>
@@ -283,6 +306,9 @@ export interface CreateGameWorldInput {
   coaches: readonly Coach[]
   players: readonly Player[]
   teams: readonly Team[]
+  /** Omit only for legacy/generated worlds; World DB worlds pass canonical source records. */
+  organizations?: readonly Organization[]
+  organizationSections?: readonly OrganizationSection[]
   competitions: readonly Competition[]
   ecosystems?: readonly SportsEcosystem[] | Readonly<Record<EcosystemId, SportsEcosystem>>
   conferences?: readonly Conference[]
@@ -404,6 +430,24 @@ export interface CreateGameWorldInput {
   boosters?: readonly Booster[]
   boosterContributions?: readonly BoosterContribution[]
   boosterRequests?: readonly BoosterRequest[]
+  supporterRelationships?: readonly SupporterRelationship[]
+  collectiveInstitutionAffiliations?: readonly CollectiveInstitutionAffiliation[]
+  collectiveParticipantAffiliations?: readonly CollectiveParticipantAffiliation[]
+  collectiveInstitutionalStatusEvents?: readonly CollectiveInstitutionalStatusEvent[]
+  collectiveInstitutionalLiaisons?: readonly CollectiveInstitutionalLiaison[]
+  supporterExpectations?: readonly SupporterExpectation[]
+  supporterExpectationEvents?: readonly SupporterExpectationEvent[]
+  supporterPressureEvents?: readonly SupporterPressureEvent[]
+  supporterReactions?: readonly SupporterReaction[]
+  supportFundingPledges?: readonly SupportFundingPledge[]
+  supportFundingPledgeEvents?: readonly SupportFundingPledgeEvent[]
+  supportContributions?: readonly SupportContribution[]
+  supportComplianceCases?: readonly SupportComplianceCase[]
+  supportComplianceCaseEvents?: readonly SupportComplianceCaseEvent[]
+  supportComplianceFindings?: readonly SupportComplianceFinding[]
+  supportConflictDisclosures?: readonly SupportConflictDisclosure[]
+  supportConsequences?: readonly SupportConsequence[]
+  supportRemediations?: readonly SupportRemediation[]
   enforcementRulesByEcosystemId?: Readonly<Record<EcosystemId, EnforcementRules>>
   violations?: readonly Violation[]
   investigations?: readonly Investigation[]
@@ -453,11 +497,18 @@ export class GameWorldValidationError extends Error {
 }
 
 export function createGameWorld(input: CreateGameWorldInput): GameWorld {
+  const teams = input.teams
+  const organizations = input.organizations === undefined
+    ? createLegacyOrganizations(teams)
+    : input.organizations.map(createOrganization)
+  const organizationSections = input.organizationSections === undefined
+    ? createLegacyOrganizationSections(teams)
+    : input.organizationSections.map(createOrganizationSection)
   const staffPeople = input.staffPeople ?? []
   const seasons = indexById(input.seasons, 'Season')
   const currentSeasonId = input.currentSeasonId ?? selectLegacyCurrentSeasonId(seasons)
   const currentDate = parseGameDate(input.currentDate)
-  const employment = coachCareerForCoaches(input.coaches, input.teams, currentDate, input.coachEmploymentByCoachId, input.coachCareerHistoryByCoachId)
+  const employment = coachCareerForCoaches(input.coaches, teams, currentDate, input.coachEmploymentByCoachId, input.coachCareerHistoryByCoachId)
   const persons = input.persons === undefined ? derivePersons(input) : input.persons.map(createPerson)
   const suppliedEcosystems = input.ecosystems === undefined ? [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike' })] : Array.isArray(input.ecosystems) ? input.ecosystems : Object.values(input.ecosystems)
   const ecosystems = [
@@ -487,7 +538,9 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     countries: indexById(input.countries, 'Country'),
     coaches: indexById(input.coaches, 'Coach'),
     players: indexById(input.players, 'Player'),
-    teams: indexById(input.teams, 'Team'),
+    teams: indexById(teams, 'Team'),
+    organizationsById: indexById(organizations, 'Organization'),
+    organizationSectionsById: indexById(organizationSections, 'Organization section'),
     competitions: indexById(input.competitions, 'Competition'),
     ecosystems: indexById(ecosystems, 'Sports ecosystem'),
     conferencesById: indexById(conferences.map(createConference), 'Conference'),
@@ -506,7 +559,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     evaluatorProfilesByStaffId: Object.freeze(Object.fromEntries(Object.entries(input.evaluatorProfilesByStaffId ?? {}).map(([id, profile]) => [id, createEvaluatorProfile(profile)]))) as Readonly<Record<StaffPersonId, EvaluatorProfile>>,
     scoutingAssignmentsById: indexById(input.scoutingAssignments ?? [], 'Scouting assignment'),
     evaluatorReportsById: indexById(input.evaluatorReports ?? [], 'Evaluator report'),
-    organizationEvaluationPoliciesById: organizationPolicies(input.teams, input.organizationEvaluationPoliciesById),
+    organizationEvaluationPoliciesById: organizationPolicies(teams, input.organizationEvaluationPoliciesById),
     agentsById: indexById(input.agents ?? [], 'Agent'), agenciesById: indexById(input.agencies ?? [], 'Agency'), playerRepresentations: Object.freeze([...(input.playerRepresentations ?? [])]), marketRealityByPlayerId: Object.freeze(Object.fromEntries((input.marketReality ?? []).map(item => [item.playerId, item]))), marketKnowledge: Object.freeze([...(input.marketKnowledge ?? [])]), marketSignalsById: indexById(input.marketSignals ?? [], 'Market signal'), negotiationsById: indexById(input.negotiations ?? [], 'Negotiation'), rolePromisesById: indexById(input.rolePromises ?? [], 'Role promise'),
     staffPeopleById: indexById(staffPeople, 'Staff person'),
     teamStaffAssignmentsById: indexById(input.teamStaffAssignments ?? [], 'Staff assignment'),
@@ -585,6 +638,11 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     academicRulesByEcosystemId: Object.freeze({ ...(input.academicRulesByEcosystemId ?? {}) }), academicProfilesById: indexById(input.academicProfiles ?? [], 'Academic profile'), academicTermRecordsById: indexById(input.academicTermRecords ?? [], 'Academic term record'), academicSupportPlansById: indexById(input.academicSupportPlans ?? [], 'Academic support plan'),
     nilRulesByEcosystemId:Object.freeze({...(input.nilRulesByEcosystemId??{})}),nilProfilesById:indexById(input.nilProfiles??[],'NIL profile'),nilOpportunitiesById:indexById(input.nilOpportunities??[],'NIL opportunity'),nilDealsById:indexById(input.nilDeals??[],'NIL deal'),collectivesById:indexById(input.collectives??[],'Collective'),
     boostersById:indexById(input.boosters??[],'Booster'),boosterContributionsById:indexById(input.boosterContributions??[],'Booster contribution'),boosterRequestsById:indexById(input.boosterRequests??[],'Booster request'),
+    supporterRelationshipsById:indexById((input.supporterRelationships??[]).map(createSupporterRelationship),'Supporter relationship'), collectiveInstitutionAffiliationsById:indexById((input.collectiveInstitutionAffiliations??[]).map(createCollectiveInstitutionAffiliation),'Collective institution affiliation'), collectiveParticipantAffiliationsById:indexById((input.collectiveParticipantAffiliations??[]).map(createCollectiveParticipantAffiliation),'Collective participant affiliation'),
+    collectiveInstitutionalStatusEventsById:indexById((input.collectiveInstitutionalStatusEvents??[]).map(createCollectiveInstitutionalStatusEvent),'Collective institutional status event'), collectiveInstitutionalLiaisonsById:indexById((input.collectiveInstitutionalLiaisons??[]).map(createCollectiveInstitutionalLiaison),'Collective institutional liaison'),
+    supporterExpectationsById:indexById((input.supporterExpectations??[]).map(createSupporterExpectation),'Supporter expectation'), supporterExpectationEventsById:indexById((input.supporterExpectationEvents??[]).map(createSupporterExpectationEvent),'Supporter expectation event'), supporterPressureEventsById:indexById((input.supporterPressureEvents??[]).map(createSupporterPressureEvent),'Supporter pressure event'), supporterReactionsById:indexById((input.supporterReactions??[]).map(createSupporterReaction),'Supporter reaction'),
+    supportFundingPledgesById:indexById((input.supportFundingPledges??[]).map(createSupportFundingPledge),'Support funding pledge'), supportFundingPledgeEventsById:indexById((input.supportFundingPledgeEvents??[]).map(createSupportFundingPledgeEvent),'Support funding pledge event'), supportContributionsById:indexById((input.supportContributions??[]).map(createSupportContribution),'Support contribution'),
+    supportComplianceCasesById:indexById((input.supportComplianceCases??[]).map(createSupportComplianceCase),'Support compliance case'), supportComplianceCaseEventsById:indexById((input.supportComplianceCaseEvents??[]).map(createSupportComplianceCaseEvent),'Support compliance case event'), supportComplianceFindingsById:indexById((input.supportComplianceFindings??[]).map(createSupportComplianceFinding),'Support compliance finding'), supportConflictDisclosuresById:indexById((input.supportConflictDisclosures??[]).map(createSupportConflictDisclosure),'Support conflict disclosure'), supportConsequencesById:indexById((input.supportConsequences??[]).map(createSupportConsequence),'Support consequence'), supportRemediationsById:indexById((input.supportRemediations??[]).map(createSupportRemediation),'Support remediation'),
     enforcementRulesByEcosystemId: Object.freeze({ ...(input.enforcementRulesByEcosystemId ?? {}) }), violationsById: indexById(input.violations ?? [], 'Violation'), investigationsById: indexById(input.investigations ?? [], 'Investigation'), findingsById: indexById(input.findings ?? [], 'Finding'), sanctionsById: indexById(input.sanctions ?? [], 'Sanction'), programComplianceByProgramId: Object.freeze({ ...(input.programComplianceByProgramId ?? {}) }),
     ecosystemTransitionsById:indexById(input.ecosystemTransitions??[],'Ecosystem transition'),
     memoriesById:indexById((input.memories??[]).map(createMemory),'Memory'),
@@ -661,8 +719,10 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
   governanceInstitutions: 'governanceInstitutionsById', governanceUniverseProfiles: 'governanceUniverseProfilesById', governanceBodies: 'governanceBodiesById', governanceAppointments: 'governanceAppointmentsById', governanceAuthorityGrants: 'governanceAuthorityGrantsById', governanceExternalRelationships: 'governanceExternalRelationshipsById', governanceExpectationPeriods: 'governanceExpectationPeriodsById', governanceObjectives: 'governanceObjectivesById',
+  supporterRelationships: 'supporterRelationshipsById', collectiveInstitutionAffiliations: 'collectiveInstitutionAffiliationsById', collectiveParticipantAffiliations: 'collectiveParticipantAffiliationsById', collectiveInstitutionalStatusEvents: 'collectiveInstitutionalStatusEventsById', collectiveInstitutionalLiaisons: 'collectiveInstitutionalLiaisonsById', supporterExpectations: 'supporterExpectationsById', supporterExpectationEvents: 'supporterExpectationEventsById', supporterPressureEvents: 'supporterPressureEventsById', supporterReactions: 'supporterReactionsById', supportFundingPledges: 'supportFundingPledgesById', supportFundingPledgeEvents: 'supportFundingPledgeEventsById', supportContributions: 'supportContributionsById',
+  supportComplianceCases: 'supportComplianceCasesById', supportComplianceCaseEvents: 'supportComplianceCaseEventsById', supportComplianceFindings: 'supportComplianceFindingsById', supportConflictDisclosures: 'supportConflictDisclosuresById', supportConsequences: 'supportConsequencesById', supportRemediations: 'supportRemediationsById',
   governanceManagerEvaluationPeriods: 'governanceManagerEvaluationPeriodsById', governanceManagerEvaluations: 'governanceManagerEvaluationsById', governanceJobSecurityTransitions: 'governanceJobSecurityTransitionsById', governanceDecisions: 'governanceDecisionsById', governanceDecisionParticipationGrants: 'governanceDecisionParticipationGrantsById', governanceDecisionEvents: 'governanceDecisionEventsById', governanceMeetings:'governanceMeetingsById', governanceMeetingParticipants:'governanceMeetingParticipantsById', governanceMeetingAgendaItems:'governanceMeetingAgendaItemsById', governanceMeetingEvents:'governanceMeetingEventsById', governanceRequests:'governanceRequestsById', governanceRequestEvents:'governanceRequestEventsById', governanceCommitments:'governanceCommitmentsById', governanceCommitmentEvents:'governanceCommitmentEventsById',
-  persons: 'personsById', countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
+  persons: 'personsById', countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', organizations: 'organizationsById', organizationSections: 'organizationSectionsById', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
 }
 
 const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unknown>> = {
@@ -684,6 +744,10 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   governanceMeetings: (value) => indexById((value as readonly GovernanceMeeting[]).map(createGovernanceMeeting), 'Governance meeting'), governanceMeetingParticipants: (value) => indexById((value as readonly GovernanceMeetingParticipant[]).map(createGovernanceMeetingParticipant), 'Governance meeting participant'), governanceMeetingAgendaItems: (value) => indexById((value as readonly GovernanceMeetingAgendaItem[]).map(createGovernanceMeetingAgendaItem), 'Governance meeting agenda item'), governanceMeetingEvents: (value) => indexById((value as readonly GovernanceMeetingEvent[]).map(createGovernanceMeetingEvent), 'Governance meeting event'),
   governanceRequests: (value) => indexById((value as readonly GovernanceRequest[]).map(createGovernanceRequest), 'Governance request'), governanceRequestEvents: (value) => indexById((value as readonly GovernanceRequestEvent[]).map(createGovernanceRequestEvent), 'Governance request event'),
   governanceCommitments: (value) => indexById((value as readonly GovernanceCommitment[]).map(createGovernanceCommitment), 'Governance commitment'), governanceCommitmentEvents: (value) => indexById((value as readonly GovernanceCommitmentEvent[]).map(createGovernanceCommitmentEvent), 'Governance commitment event'),
+  organizations: (value) => indexById((value as readonly Organization[]).map(createOrganization), 'Organization'),
+  organizationSections: (value) => indexById((value as readonly OrganizationSection[]).map(createOrganizationSection), 'Organization section'),
+  supporterRelationships: (value) => indexById((value as readonly SupporterRelationship[]).map(createSupporterRelationship), 'Supporter relationship'), collectiveInstitutionAffiliations: (value) => indexById((value as readonly CollectiveInstitutionAffiliation[]).map(createCollectiveInstitutionAffiliation), 'Collective institution affiliation'), collectiveParticipantAffiliations: (value) => indexById((value as readonly CollectiveParticipantAffiliation[]).map(createCollectiveParticipantAffiliation), 'Collective participant affiliation'), collectiveInstitutionalStatusEvents: (value) => indexById((value as readonly CollectiveInstitutionalStatusEvent[]).map(createCollectiveInstitutionalStatusEvent), 'Collective institutional status event'), collectiveInstitutionalLiaisons: (value) => indexById((value as readonly CollectiveInstitutionalLiaison[]).map(createCollectiveInstitutionalLiaison), 'Collective institutional liaison'), supporterExpectations: (value) => indexById((value as readonly SupporterExpectation[]).map(createSupporterExpectation), 'Supporter expectation'), supporterExpectationEvents: (value) => indexById((value as readonly SupporterExpectationEvent[]).map(createSupporterExpectationEvent), 'Supporter expectation event'), supporterPressureEvents: (value) => indexById((value as readonly SupporterPressureEvent[]).map(createSupporterPressureEvent), 'Supporter pressure event'), supporterReactions: (value) => indexById((value as readonly SupporterReaction[]).map(createSupporterReaction), 'Supporter reaction'), supportFundingPledges: (value) => indexById((value as readonly SupportFundingPledge[]).map(createSupportFundingPledge), 'Support funding pledge'), supportFundingPledgeEvents: (value) => indexById((value as readonly SupportFundingPledgeEvent[]).map(createSupportFundingPledgeEvent), 'Support funding pledge event'), supportContributions: (value) => indexById((value as readonly SupportContribution[]).map(createSupportContribution), 'Support contribution'),
+  supportComplianceCases: (value) => indexById((value as readonly SupportComplianceCase[]).map(createSupportComplianceCase), 'Support compliance case'), supportComplianceCaseEvents: (value) => indexById((value as readonly SupportComplianceCaseEvent[]).map(createSupportComplianceCaseEvent), 'Support compliance case event'), supportComplianceFindings: (value) => indexById((value as readonly SupportComplianceFinding[]).map(createSupportComplianceFinding), 'Support compliance finding'), supportConflictDisclosures: (value) => indexById((value as readonly SupportConflictDisclosure[]).map(createSupportConflictDisclosure), 'Support conflict disclosure'), supportConsequences: (value) => indexById((value as readonly SupportConsequence[]).map(createSupportConsequence), 'Support consequence'), supportRemediations: (value) => indexById((value as readonly SupportRemediation[]).map(createSupportRemediation), 'Support remediation'),
   matchStatLogs: (value) => indexLogsByGameId(value as readonly MatchStatLog[]),
   seasonHistory: (value) => indexHistoryBySeasonId(value as readonly SeasonHistoryRecord[]),
   teamFinances: (value) => indexTeamFinances(value as readonly TeamFinances[]),
@@ -701,6 +765,18 @@ function validateWorld(world: GameWorld): void {
   requireEntity(world.coaches, world.userCoachId, 'User coach')
   validatePersons(world)
   validateGovernance(world)
+  validateInstitutionalSupport(world)
+
+  for (const organization of Object.values(world.organizationsById)) createOrganization(organization)
+  for (const section of Object.values(world.organizationSectionsById)) {
+    createOrganizationSection(section)
+    requireEntity(world.organizationsById, section.organizationId, `Organization section ${section.id} organization`)
+  }
+  for (const team of Object.values(world.teams)) {
+    requireEntity(world.organizationsById, team.organizationId, `Team ${team.id} organization`)
+    const section = requireEntity(world.organizationSectionsById, team.organizationSectionId, `Team ${team.id} organization section`)
+    if (section.organizationId !== team.organizationId) throw new GameWorldValidationError(`Team ${team.id} organization section belongs to a different organization`)
+  }
 
   for (const coach of Object.values(world.coaches)) {
     requireEntity(world.countries, coach.nationalityId, `Coach ${coach.id} nationality`)
@@ -861,7 +937,7 @@ function validateWorld(world: GameWorld): void {
   for (const [staffId, profile] of Object.entries(world.evaluatorProfilesByStaffId) as [StaffPersonId, EvaluatorProfile][]) { requireEntity(world.staffPeopleById, staffId, 'Evaluator profile staff'); createEvaluatorProfile(profile) }
   for (const assignment of Object.values(world.scoutingAssignmentsById)) { requireEntity(world.players, assignment.subjectPlayerId, 'Scouting assignment subject Player'); requireEntity(world.staffPeopleById, assignment.evaluatorStaffId, 'Scouting assignment evaluator') }
   for (const report of Object.values(world.evaluatorReportsById)) { requireEntity(world.players, report.subjectPlayerId, 'Evaluator report subject Player'); requireEntity(world.staffPeopleById, report.evaluatorStaffId, 'Evaluator report evaluator'); for (const evidenceId of report.evidenceIds) requireEntity(world.evidenceById, evidenceId, 'Evaluator report Evidence') }
-  for (const [organizationId, policy] of Object.entries(world.organizationEvaluationPoliciesById) as [OrganizationId, OrganizationEvaluationPolicy][]) { if (!Object.values(world.teams).some((team) => organizationIdForTeam(team.id) === organizationId) || Object.values(policy).some((value) => !Number.isInteger(value) || value < 0 || value > 100)) throw new GameWorldValidationError('Organization evaluation policy is invalid') }
+  for (const [organizationId, policy] of Object.entries(world.organizationEvaluationPoliciesById) as [OrganizationId, OrganizationEvaluationPolicy][]) { if (!Object.values(world.teams).some((team) => team.organizationId === organizationId) || Object.values(policy).some((value) => !Number.isInteger(value) || value < 0 || value > 100)) throw new GameWorldValidationError('Organization evaluation policy is invalid') }
   const assignedStaff = new Set<StaffPersonId>(); for (const person of Object.values(world.staffPeopleById)) createStaffPerson(person); for (const assignment of Object.values(world.teamStaffAssignmentsById)) { createTeamStaffAssignment(assignment); requireEntity(world.staffPeopleById, assignment.staffPersonId, 'Staff assignment person'); requireEntity(world.teams, assignment.teamId, 'Staff assignment team'); if (assignedStaff.has(assignment.staffPersonId)) throw new GameWorldValidationError('Staff person has multiple active assignments'); assignedStaff.add(assignment.staffPersonId) }
   const responsibilityKeys = new Set<string>()
   for (const responsibility of Object.values(world.responsibilitiesById)) {
@@ -1245,6 +1321,81 @@ function validateGovernance(world: GameWorld): void {
   }
 }
 
+/** BG7A records structural supporter facts only; authority and Staff Politics remain untouched. */
+function validateInstitutionalSupport(world: GameWorld): void {
+  const institutions = world.governanceInstitutionsById
+  const validateActor = (actor: { readonly kind: string; readonly id: string }, label: string) => {
+    if (actor.kind === 'COACH') requireEntity(world.coaches, actor.id as CoachId, `${label} coach`)
+    if (actor.kind === 'STAFF') requireEntity(world.staffPeopleById, actor.id as StaffPersonId, `${label} staff`)
+  }
+  const validatePrograms = (institutionId: string, programIds: readonly TeamId[], label: string) => {
+    const institution = requireEntity(institutions, institutionId, `${label} institution`)
+    for (const teamId of programIds) {
+      requireEntity(world.teams, teamId, `${label} program`)
+      if (!institution.teamIds.includes(teamId)) throw new GameWorldValidationError(`${label} program is not linked to its institution`)
+    }
+  }
+  for (const relationship of Object.values(world.supporterRelationshipsById)) {
+    createSupporterRelationship(relationship); validateActor(relationship.actor, `Supporter relationship ${relationship.id}`); validatePrograms(relationship.institutionId, relationship.programTeamIds, `Supporter relationship ${relationship.id}`)
+  }
+  for (const affiliation of Object.values(world.collectiveInstitutionAffiliationsById)) {
+    createCollectiveInstitutionAffiliation(affiliation); const collective = requireEntity(world.collectivesById, affiliation.collectiveId, `Collective affiliation ${affiliation.id} collective`); validatePrograms(affiliation.institutionId, affiliation.programTeamIds, `Collective affiliation ${affiliation.id}`); const institution = requireEntity(institutions, affiliation.institutionId, `Collective affiliation ${affiliation.id} institution`); if (!institution.teamIds.includes(collective.programTeamId)) throw new GameWorldValidationError(`Collective affiliation ${affiliation.id} collective is not linked to its institution`); for (const teamId of affiliation.programTeamIds) { const team = requireEntity(world.teams, teamId, `Collective affiliation ${affiliation.id} program`); if ((affiliation.scope === 'MEN_BASKETBALL' && team.gender !== 'male') || (affiliation.scope === 'WOMEN_BASKETBALL' && team.gender !== 'female')) throw new GameWorldValidationError(`Collective affiliation ${affiliation.id} scope does not match program gender`) }
+  }
+  for (const affiliation of Object.values(world.collectiveParticipantAffiliationsById)) {
+    createCollectiveParticipantAffiliation(affiliation); requireEntity(world.collectivesById, affiliation.collectiveId, `Collective participant ${affiliation.id} collective`); validateActor(affiliation.actor, `Collective participant ${affiliation.id}`)
+  }
+  for (const event of Object.values(world.collectiveInstitutionalStatusEventsById)) {
+    createCollectiveInstitutionalStatusEvent(event); requireEntity(world.collectivesById, event.collectiveId, `Collective status ${event.id} collective`); requireEntity(institutions, event.institutionId, `Collective status ${event.id} institution`)
+  }
+  for (const liaison of Object.values(world.collectiveInstitutionalLiaisonsById)) {
+    createCollectiveInstitutionalLiaison(liaison); requireEntity(world.collectivesById, liaison.collectiveId, `Collective liaison ${liaison.id} collective`); const institution = requireEntity(institutions, liaison.institutionId, `Collective liaison ${liaison.id} institution`); validateActor(liaison.actor, `Collective liaison ${liaison.id}`); if (liaison.programTeamId !== undefined && (!institution.teamIds.includes(liaison.programTeamId) || world.teams[liaison.programTeamId] === undefined)) throw new GameWorldValidationError(`Collective liaison ${liaison.id} program is not linked to its institution`)
+  }
+  const validateInfluenceTarget = (target: { readonly kind: string; readonly id: string }, institutionId: string, label: string) => {
+    if (target.kind === 'INSTITUTION' || target.kind === 'ATHLETICS') { if (target.id !== institutionId) throw new GameWorldValidationError(`${label} institution target mismatches institution`) }
+    if (target.kind === 'PROGRAM') { if (!requireEntity(institutions, institutionId, `${label} institution`).teamIds.includes(target.id as TeamId)) throw new GameWorldValidationError(`${label} program is not linked to its institution`) }
+    if (target.kind === 'COACH') requireEntity(world.coaches, target.id as CoachId, `${label} coach`)
+    if (target.kind === 'STAFF') requireEntity(world.staffPeopleById, target.id as StaffPersonId, `${label} staff`)
+    if (target.kind === 'GOVERNANCE_BODY' && requireEntity(world.governanceBodiesById, target.id, `${label} body`).institutionId !== institutionId) throw new GameWorldValidationError(`${label} governance body crosses institution`)
+    if (target.kind === 'COLLECTIVE') requireEntity(world.collectivesById, target.id, `${label} collective`)
+  }
+  for (const expectation of Object.values(world.supporterExpectationsById)) { createSupporterExpectation(expectation); const relationship = requireEntity(world.supporterRelationshipsById, expectation.supporterRelationshipId, `Supporter expectation ${expectation.id} relationship`); if (relationship.institutionId !== expectation.institutionId) throw new GameWorldValidationError(`Supporter expectation ${expectation.id} crosses institution`); validateInfluenceTarget(expectation.target, expectation.institutionId, `Supporter expectation ${expectation.id}`); if (expectation.linkedGovernanceRequestId !== undefined && requireEntity(world.governanceRequestsById, expectation.linkedGovernanceRequestId, `Supporter expectation ${expectation.id} request`).institutionId !== expectation.institutionId) throw new GameWorldValidationError(`Supporter expectation ${expectation.id} request crosses institution`); if (expectation.linkedGovernanceCommitmentId !== undefined && requireEntity(world.governanceCommitmentsById, expectation.linkedGovernanceCommitmentId, `Supporter expectation ${expectation.id} commitment`).institutionId !== expectation.institutionId) throw new GameWorldValidationError(`Supporter expectation ${expectation.id} commitment crosses institution`) }
+  for (const event of Object.values(world.supporterExpectationEventsById)) { createSupporterExpectationEvent(event); const expectation = requireEntity(world.supporterExpectationsById, event.expectationId, `Supporter expectation event ${event.id} expectation`); if (event.effectiveOn < expectation.createdOn) throw new GameWorldValidationError(`Supporter expectation event ${event.id} predates expectation`) }
+  for (const pressure of Object.values(world.supporterPressureEventsById)) { createSupporterPressureEvent(pressure); const relationship = requireEntity(world.supporterRelationshipsById, pressure.supporterRelationshipId, `Supporter pressure ${pressure.id} relationship`); if (relationship.institutionId !== pressure.institutionId) throw new GameWorldValidationError(`Supporter pressure ${pressure.id} crosses institution`); validateInfluenceTarget(pressure.target, pressure.institutionId, `Supporter pressure ${pressure.id}`); if (pressure.linkedGovernanceMeetingId !== undefined && requireEntity(world.governanceMeetingsById, pressure.linkedGovernanceMeetingId, `Supporter pressure ${pressure.id} meeting`).institutionId !== pressure.institutionId) throw new GameWorldValidationError(`Supporter pressure ${pressure.id} meeting crosses institution`); if (pressure.linkedGovernanceRequestId !== undefined && requireEntity(world.governanceRequestsById, pressure.linkedGovernanceRequestId, `Supporter pressure ${pressure.id} request`).institutionId !== pressure.institutionId) throw new GameWorldValidationError(`Supporter pressure ${pressure.id} request crosses institution`); if (pressure.linkedFundingPledgeId !== undefined) requireEntity(world.supportFundingPledgesById, pressure.linkedFundingPledgeId, `Supporter pressure ${pressure.id} pledge`) }
+  for (const reaction of Object.values(world.supporterReactionsById)) { createSupporterReaction(reaction); const relationship = requireEntity(world.supporterRelationshipsById, reaction.supporterRelationshipId, `Supporter reaction ${reaction.id} relationship`); if (relationship.institutionId !== reaction.institutionId) throw new GameWorldValidationError(`Supporter reaction ${reaction.id} crosses institution`); if (reaction.expectationId !== undefined) { const expectation = requireEntity(world.supporterExpectationsById, reaction.expectationId, `Supporter reaction ${reaction.id} expectation`); if (expectation.supporterRelationshipId !== reaction.supporterRelationshipId || reaction.effectiveOn < expectation.createdOn) throw new GameWorldValidationError(`Supporter reaction ${reaction.id} does not match expectation`) } }
+  const validateTarget = (fundingTarget: { readonly institutionId: string; readonly programTeamIds: readonly TeamId[]; readonly collectiveId?: string }, label: string) => {
+    validatePrograms(fundingTarget.institutionId, fundingTarget.programTeamIds, label)
+    if (fundingTarget.collectiveId !== undefined) {
+      const collective = requireEntity(world.collectivesById, fundingTarget.collectiveId, `${label} collective`)
+      if (!requireEntity(institutions, fundingTarget.institutionId, `${label} institution`).teamIds.includes(collective.programTeamId)) throw new GameWorldValidationError(`${label} collective is not linked to its institution`)
+    }
+  }
+  const sameActor = (left: { readonly kind: string; readonly id: string }, right: { readonly kind: string; readonly id: string }) => left.kind === right.kind && left.id === right.id
+  for (const pledge of Object.values(world.supportFundingPledgesById)) {
+    createSupportFundingPledge(pledge); validateActor(pledge.contributor, `Support funding pledge ${pledge.id}`); validateTarget(pledge.target, `Support funding pledge ${pledge.id}`)
+    if (pledge.supporterRelationshipId !== undefined) { const relationship = requireEntity(world.supporterRelationshipsById, pledge.supporterRelationshipId, `Support funding pledge ${pledge.id} relationship`); if (!sameActor(pledge.contributor, relationship.actor) || pledge.target.institutionId !== relationship.institutionId) throw new GameWorldValidationError(`Support funding pledge ${pledge.id} relationship does not match contributor or institution`) }
+  }
+  for (const contribution of Object.values(world.supportContributionsById)) {
+    createSupportContribution(contribution); validateActor(contribution.contributor, `Support contribution ${contribution.id}`); validateTarget(contribution.target, `Support contribution ${contribution.id}`)
+    if (contribution.supporterRelationshipId !== undefined) { const relationship = requireEntity(world.supporterRelationshipsById, contribution.supporterRelationshipId, `Support contribution ${contribution.id} relationship`); if (!sameActor(contribution.contributor, relationship.actor) || contribution.target.institutionId !== relationship.institutionId) throw new GameWorldValidationError(`Support contribution ${contribution.id} relationship does not match contributor or institution`) }
+    if (contribution.pledgeId !== undefined) { const pledge = requireEntity(world.supportFundingPledgesById, contribution.pledgeId, `Support contribution ${contribution.id} pledge`); if (contribution.effectiveOn < pledge.effectiveOn || contribution.medium !== pledge.medium || !sameActor(contribution.contributor, pledge.contributor) || JSON.stringify(contribution.target) !== JSON.stringify(pledge.target) || (contribution.medium === 'CASH' && contribution.currencyCode !== pledge.currencyCode)) throw new GameWorldValidationError(`Support contribution ${contribution.id} does not match its pledge`) }
+  }
+  for (const event of Object.values(world.supportFundingPledgeEventsById)) {
+    createSupportFundingPledgeEvent(event); const pledge = requireEntity(world.supportFundingPledgesById, event.pledgeId, `Support funding pledge event ${event.id} pledge`); if (event.effectiveOn < pledge.effectiveOn) throw new GameWorldValidationError(`Support funding pledge event ${event.id} predates its pledge`)
+  }
+  for (const pledge of Object.values(world.supportFundingPledgesById)) {
+    const events = sortSupportFundingPledgeEvents(Object.values(world.supportFundingPledgeEventsById).filter((event) => event.pledgeId === pledge.id)); const terminal = events.filter((event) => event.kind !== 'CONFIRMED'); if (terminal.length > 1) throw new GameWorldValidationError(`Support funding pledge ${pledge.id} has multiple terminal events`)
+    if (terminal[0] !== undefined && selectPledgeContributions(Object.values(world.supportContributionsById), pledge.id).some((contribution) => contribution.effectiveOn > terminal[0]!.effectiveOn)) throw new GameWorldValidationError(`Support funding pledge ${pledge.id} has a contribution after its terminal event`)
+    if (pledge.medium === 'CASH' && selectPledgeContributions(Object.values(world.supportContributionsById), pledge.id).reduce((sum, contribution) => sum + contribution.amountMinorUnits!, 0) > pledge.amountMinorUnits!) throw new GameWorldValidationError(`Support funding pledge ${pledge.id} cannot be over-fulfilled; record excess as an unlinked contribution`)
+  }
+  const sourceExists = (source: { readonly kind: string; readonly id: string }, label: string) => { const collections: Readonly<Record<string, Readonly<Record<string, unknown>>>> = { SUPPORTER_RELATIONSHIP: world.supporterRelationshipsById, PLEDGE: world.supportFundingPledgesById, CONTRIBUTION: world.supportContributionsById, COLLECTIVE_AFFILIATION: world.collectiveInstitutionAffiliationsById, COLLECTIVE_LIAISON: world.collectiveInstitutionalLiaisonsById, COLLECTIVE_PARTICIPANT: world.collectiveParticipantAffiliationsById, EXPECTATION: world.supporterExpectationsById, PRESSURE_EVENT: world.supporterPressureEventsById, REACTION: world.supporterReactionsById, GOVERNANCE_APPOINTMENT: world.governanceAppointmentsById, GOVERNANCE_DECISION: world.governanceDecisionsById, GOVERNANCE_REQUEST: world.governanceRequestsById, GOVERNANCE_MEETING: world.governanceMeetingsById }; if (collections[source.kind]?.[source.id] === undefined) throw new GameWorldValidationError(`${label} references missing ${source.kind}`) }
+  for (const item of Object.values(world.supportComplianceCasesById)) { createSupportComplianceCase(item); requireEntity(institutions, item.institutionId, `Support compliance case ${item.id} institution`); item.sourceRefs.forEach((source) => sourceExists(source, `Support compliance case ${item.id}`)); if (item.relatedCaseId !== undefined) requireEntity(world.supportComplianceCasesById, item.relatedCaseId, `Support compliance case ${item.id} related case`) }
+  for (const event of Object.values(world.supportComplianceCaseEventsById)) { createSupportComplianceCaseEvent(event); const item = requireEntity(world.supportComplianceCasesById, event.caseId, `Support compliance event ${event.id} case`); if (event.effectiveOn < item.openedOn) throw new GameWorldValidationError(`Support compliance event ${event.id} predates its case`) }
+  for (const finding of Object.values(world.supportComplianceFindingsById)) { createSupportComplianceFinding(finding); const item = requireEntity(world.supportComplianceCasesById, finding.caseId, `Support compliance finding ${finding.id} case`); if (finding.issuedOn < item.openedOn) throw new GameWorldValidationError(`Support compliance finding ${finding.id} predates its case`); finding.sourceRefs.forEach((source) => sourceExists(source, `Support compliance finding ${finding.id}`)) }
+  for (const disclosure of Object.values(world.supportConflictDisclosuresById)) { createSupportConflictDisclosure(disclosure); requireEntity(institutions, disclosure.institutionId, `Support disclosure ${disclosure.id} institution`); validateActor(disclosure.actor, `Support disclosure ${disclosure.id}`); if (disclosure.caseId !== undefined) { const item = requireEntity(world.supportComplianceCasesById, disclosure.caseId, `Support disclosure ${disclosure.id} case`); if (item.institutionId !== disclosure.institutionId || disclosure.effectiveOn < item.openedOn) throw new GameWorldValidationError(`Support disclosure ${disclosure.id} does not match its case`) }; disclosure.sourceRefs.forEach((source) => sourceExists(source, `Support disclosure ${disclosure.id}`)) }
+  for (const consequence of Object.values(world.supportConsequencesById)) { createSupportConsequence(consequence); const item = requireEntity(world.supportComplianceCasesById, consequence.caseId, `Support consequence ${consequence.id} case`); if (consequence.effectiveOn < item.openedOn) throw new GameWorldValidationError(`Support consequence ${consequence.id} predates its case`); if (consequence.findingId !== undefined) { const finding = requireEntity(world.supportComplianceFindingsById, consequence.findingId, `Support consequence ${consequence.id} finding`); if (finding.caseId !== consequence.caseId || consequence.effectiveOn < finding.issuedOn) throw new GameWorldValidationError(`Support consequence ${consequence.id} does not match its finding`) } }
+  for (const remediation of Object.values(world.supportRemediationsById)) { createSupportRemediation(remediation); const item = requireEntity(world.supportComplianceCasesById, remediation.caseId, `Support remediation ${remediation.id} case`); if (remediation.effectiveOn < item.openedOn) throw new GameWorldValidationError(`Support remediation ${remediation.id} predates its case`); if (remediation.disclosureId !== undefined) requireEntity(world.supportConflictDisclosuresById, remediation.disclosureId, `Support remediation ${remediation.id} disclosure`) }
+}
+
 function partyKey(p:GovernanceInteractionParty):string{return p.kind==='BODY'?`B:${p.bodyId}`:p.kind==='APPOINTMENT'?`A:${p.appointmentId}`:`P:${p.actor.kind}:${p.actor.id}`}
 function validateParty(world:GameWorld,owner:{readonly institutionId:string},p:GovernanceInteractionParty,on?:GameDate):void{if(p.kind==='BODY'){if(requireEntity(world.governanceBodiesById,p.bodyId,'Governance party body').institutionId!==owner.institutionId)throw new GameWorldValidationError('Governance party body crosses institution');return}if(p.kind==='APPOINTMENT'){const a=requireEntity(world.governanceAppointmentsById,p.appointmentId,'Governance party appointment');if(requireEntity(world.governanceBodiesById,a.bodyId,'Governance party appointment body').institutionId!==owner.institutionId||(on!==undefined&&(a.startedOn>on||(a.endedOn!==undefined&&a.endedOn<on))))throw new GameWorldValidationError('Governance party appointment inactive');return}if(p.actor.kind==='COACH')requireEntity(world.coaches,p.actor.id as CoachId,'Governance party coach');else requireEntity(world.staffPeopleById,p.actor.id as StaffPersonId,'Governance party staff')}
 function hasRelationshipPerson(world: GameWorld, id: string): boolean { return world.coaches[id as CoachId] !== undefined || world.players[id as PlayerId] !== undefined || world.staffPeopleById[id as StaffPersonId] !== undefined }
@@ -1546,7 +1697,19 @@ function indexHistoryBySeasonId(history: readonly SeasonHistoryRecord[]): Readon
 function indexTeamFinances(finances: readonly TeamFinances[]): Readonly<Record<TeamId, TeamFinances>> { const indexed = Object.create(null) as Record<TeamId, TeamFinances>; for (const finance of finances) { if (Object.hasOwn(indexed, finance.teamId)) throw new GameWorldValidationError(`Duplicate Team finances ID: ${finance.teamId}`); indexed[finance.teamId] = finance } return Object.freeze(indexed) }
 
 function peopleProfiles<Value>(people: readonly { readonly id: string }[], supplied: Readonly<Record<string, Value>> | undefined, create: (id: string) => Value): Readonly<Record<string, Value>> { const result: Record<string, Value> = {}; for (const person of people) result[person.id] = supplied?.[person.id] ?? create(person.id); return Object.freeze(result) }
-function organizationPolicies(teams: readonly Team[], supplied: Readonly<Record<OrganizationId, OrganizationEvaluationPolicy>> | undefined): Readonly<Record<OrganizationId, OrganizationEvaluationPolicy>> { const policies = Object.create(null) as Record<OrganizationId, OrganizationEvaluationPolicy>; for (const team of teams) { const id=organizationIdForTeam(team.id), policy=supplied?.[id]??deriveOrganizationEvaluationPolicy(id); for(const value of Object.values(policy))if(!Number.isInteger(value)||value<0||value>100)throw new GameWorldValidationError('Organization evaluation policy is invalid'); policies[id]=Object.freeze({...policy}) } return Object.freeze(policies) }
+function organizationPolicies(teams: readonly Team[], supplied: Readonly<Record<OrganizationId, OrganizationEvaluationPolicy>> | undefined): Readonly<Record<OrganizationId, OrganizationEvaluationPolicy>> { const policies = Object.create(null) as Record<OrganizationId, OrganizationEvaluationPolicy>; for (const id of new Set(teams.map((team) => team.organizationId))) { const policy=supplied?.[id]??deriveOrganizationEvaluationPolicy(id); for(const value of Object.values(policy))if(!Number.isInteger(value)||value<0||value>100)throw new GameWorldValidationError('Organization evaluation policy is invalid'); policies[id]=Object.freeze({...policy}) } return Object.freeze(policies) }
+
+function createLegacyOrganizations(teams: readonly Team[]): Organization[] {
+  const organizations = new Map<OrganizationId, Organization>()
+  for (const team of teams) if (!organizations.has(team.organizationId)) organizations.set(team.organizationId, createOrganization({ id: team.organizationId, entityId: null, legalName: team.name, foundedYear: null, dissolvedYear: null, primaryPlaceId: null, website: null }))
+  return [...organizations.values()]
+}
+
+function createLegacyOrganizationSections(teams: readonly Team[]): OrganizationSection[] {
+  const sections = new Map<OrganizationSectionId, OrganizationSection>()
+  for (const team of teams) if (!sections.has(team.organizationSectionId)) sections.set(team.organizationSectionId, createOrganizationSection({ id: team.organizationSectionId, organizationId: team.organizationId, sport: 'basketball', gender: team.gender, categoryScope: 'legacy', canonicalName: team.name, validFrom: null, validTo: null }))
+  return [...sections.values()]
+}
 
 function coachReputationProfilesForCoaches(coaches: readonly Coach[], supplied: Readonly<Record<CoachId, CoachReputationProfile>> | undefined): Readonly<Record<CoachId, CoachReputationProfile>> {
   const profiles = Object.create(null) as Record<CoachId, CoachReputationProfile>

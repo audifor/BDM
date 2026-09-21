@@ -1,11 +1,13 @@
-import { getContinueStopReason, getNextKnownEvent, type ContinueResult } from '@/app/game'
+import { getContinueStopReason, getNextKnownEvent, type ContinueResult, type SimulateUntilResult } from '@/app/game'
+import type { GameDate } from '@/domain/date'
 import type { GameId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { BdmButton } from '@/ui/components/designSystem'
 import { formatPrototypeDate } from '@/ui/formatters'
 import { useState } from 'react'
+import { SimulateUntilDateControl } from './SimulateUntilDateControl'
 
-export function ContinueControl({ world, onAdvanceDay, onContinue, onOpenPendingGame, onStartNextSeason }: { readonly world: GameWorld; readonly onAdvanceDay: () => void; readonly onContinue: () => ContinueResult; readonly onOpenPendingGame: (gameId: GameId) => void; readonly onStartNextSeason: () => void }) {
+export function ContinueControl({ world, onAdvanceDay, onContinue, onOpenPendingGame, onStartNextSeason, onSimulateUntilDate }: { readonly world: GameWorld; readonly onAdvanceDay: () => void; readonly onContinue: () => ContinueResult; readonly onOpenPendingGame: (gameId: GameId) => void; readonly onStartNextSeason: () => void; readonly onSimulateUntilDate: (date: GameDate) => SimulateUntilResult }) {
   const [isAdvancing, setIsAdvancing] = useState(false); const [lastResult, setLastResult] = useState<ContinueResult | null>(null)
   const next = getNextKnownEvent(world)
   const opponent = next === undefined ? undefined : world.teams[next.opponentTeamId]?.name
@@ -22,5 +24,6 @@ export function ContinueControl({ world, onAdvanceDay, onContinue, onOpenPending
     {!stoppedForGame && !seasonComplete && next !== undefined && <p className="desktop-continue-control__next">Próximo partido · {formatPrototypeDate(next.date)}{opponent === undefined ? '' : ` · vs ${opponent}`}</p>}
     {!stoppedForGame && !seasonComplete && next === undefined && <p className="desktop-continue-control__next">No hay próximo partido programado</p>}
     <BdmButton className="desktop-continue-control__secondary" onClick={() => { onAdvanceDay(); setLastResult(null) }} size="compact" variant="ghost">Avanzar 1 día</BdmButton>
+    <SimulateUntilDateControl onSimulateUntilDate={onSimulateUntilDate} world={world} />
   </section>
 }

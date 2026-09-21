@@ -46,11 +46,36 @@ pub struct WorldDbGameBootstrapCountryV1 {
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct WorldDbGameBootstrapOrganizationV1 {
+    organization_id: String,
+    entity_id: String,
+    legal_name: Option<String>,
+    founded_year: Option<i64>,
+    dissolved_year: Option<i64>,
+    primary_place_id: Option<String>,
+    website: Option<String>,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldDbGameBootstrapOrganizationSectionV1 {
+    section_id: String,
+    organization_id: String,
+    sport: Option<String>,
+    gender: Option<String>,
+    category_scope: Option<String>,
+    canonical_name: String,
+    valid_from: Option<String>,
+    valid_to: Option<String>,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WorldDbGameBootstrapTeamV1 {
     team_id: String,
     name: String,
     gender: String,
     country_id: String,
+    organization_id: String,
+    organization_section_id: String,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -138,6 +163,8 @@ pub struct WorldDbGameBootstrapSliceV1 {
     competition: WorldDbGameBootstrapCompetitionV1,
     season: WorldDbGameBootstrapSeasonV1,
     countries: Vec<WorldDbGameBootstrapCountryV1>,
+    organizations: Vec<WorldDbGameBootstrapOrganizationV1>,
+    organization_sections: Vec<WorldDbGameBootstrapOrganizationSectionV1>,
     teams: Vec<WorldDbGameBootstrapTeamV1>,
     persons: Vec<WorldDbGameBootstrapPersonV1>,
     players: Vec<WorldDbGameBootstrapPlayerV1>,
@@ -188,6 +215,27 @@ pub fn load_game_bootstrap_slice_v1(
         );
     }
     let team_ids: Vec<String> = teams.iter().map(|team| team.team_id.clone()).collect();
+    let organization_ids: Vec<String> =
+        BTreeSet::from_iter(teams.iter().map(|team| team.organization_id.clone()))
+            .into_iter()
+            .collect();
+    let organization_section_ids: Vec<String> = BTreeSet::from_iter(
+        teams
+            .iter()
+            .map(|team| team.organization_section_id.clone()),
+    )
+    .into_iter()
+    .collect();
+    let organizations = query_organizations(&connection, &organization_ids)?;
+    let organization_sections =
+        query_organization_sections(&connection, &organization_section_ids)?;
+    if organizations.len() != organization_ids.len()
+        || organization_sections.len() != organization_section_ids.len()
+    {
+        return Err(
+            "World DB team references a missing Organization or OrganizationSection".to_owned(),
+        );
+    }
     let roster_assignments = query_roster_assignments(&connection, &team_ids, &season.season_id)?;
     if roster_assignments.is_empty() {
         return Err("World DB bootstrap ecosystem has no canonical roster assignments".to_owned());
@@ -254,6 +302,8 @@ pub fn load_game_bootstrap_slice_v1(
         },
         season,
         countries,
+        organizations,
+        organization_sections,
         teams,
         persons,
         players,
@@ -317,7 +367,7 @@ fn query_teams(
     ecosystem_id: &str,
     expected_gender: &str,
 ) -> Result<Vec<WorldDbGameBootstrapTeamV1>, String> {
-    let mut statement = connection.prepare("SELECT DISTINCT t.team_id,e.canonical_name,t.gender,t.country_place_id FROM team_ecosystem_membership m JOIN team t ON t.team_id=m.team_id JOIN entity e ON e.entity_id=t.entity_id WHERE m.competition_ecosystem_id=?1 AND UPPER(m.membership_status)='ACTIVE' AND m.valid_to IS NULL ORDER BY t.team_id").map_err(|error| format!("Unable to prepare World DB ecosystem team query: {error}"))?;
+    let mut statement = connection.prepare("SELECT DISTINCT t.team_id,e.canonical_name,t.gender,t.country_place_id,t.organization_id,t.section_id FROM team_ecosystem_membership m JOIN team t ON t.team_id=m.team_id JOIN entity e ON e.entity_id=t.entity_id WHERE m.competition_ecosystem_id=?1 AND UPPER(m.membership_status)='ACTIVE' AND m.valid_to IS NULL ORDER BY t.team_id").map_err(|error| format!("Unable to prepare World DB ecosystem team query: {error}"))?;
     let rows = statement
         .query_map([ecosystem_id], |row| {
             Ok(WorldDbGameBootstrapTeamV1 {
@@ -325,6 +375,8 @@ fn query_teams(
                 name: row.get(1)?,
                 gender: gender_from_ecosystem(row.get::<_, Option<String>>(2)?.as_deref()),
                 country_id: row.get(3)?,
+                organization_id: row.get(4)?,
+                organization_section_id: row.get(5)?,
             })
         })
         .map_err(|error| format!("Unable to query World DB ecosystem teams: {error}"))?;
@@ -337,6 +389,73 @@ fn query_teams(
         );
     }
     Ok(teams)
+}
+
+fn query_organizations(
+    connection: &Connection,
+    ids: &[String],
+) -> Result<Vec<WorldDbGameBootstrapOrganizationV1>, String> {
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+    let sql = format!("SELECT organization_id,entity_id,legal_name,founded_year,dissolved_year,primary_place_id,website FROM organization WHERE organization_id IN ({}) ORDER BY organization_id", placeholders_from(1, ids.len()));
+    let owned = ids.to_vec();
+    let params: Vec<&dyn rusqlite::ToSql> = owned
+        .iter()
+        .map(|value| value as &dyn rusqlite::ToSql)
+        .collect();
+    let mut statement = connection
+        .prepare(&sql)
+        .map_err(|error| format!("Unable to prepare World DB organization query: {error}"))?;
+    let rows = statement
+        .query_map(rusqlite::params_from_iter(params), |row| {
+            Ok(WorldDbGameBootstrapOrganizationV1 {
+                organization_id: row.get(0)?,
+                entity_id: row.get(1)?,
+                legal_name: row.get(2)?,
+                founded_year: row.get(3)?,
+                dissolved_year: row.get(4)?,
+                primary_place_id: row.get(5)?,
+                website: row.get(6)?,
+            })
+        })
+        .map_err(|error| format!("Unable to query World DB organizations: {error}"))?;
+    rows.collect::<rusqlite::Result<Vec<_>>>()
+        .map_err(|error| format!("Unable to decode World DB organization: {error}"))
+}
+
+fn query_organization_sections(
+    connection: &Connection,
+    ids: &[String],
+) -> Result<Vec<WorldDbGameBootstrapOrganizationSectionV1>, String> {
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+    let sql = format!("SELECT section_id,organization_id,sport,gender,category_scope,COALESCE(canonical_name,section_id),valid_from,valid_to FROM organization_section WHERE section_id IN ({}) ORDER BY section_id", placeholders_from(1, ids.len()));
+    let owned = ids.to_vec();
+    let params: Vec<&dyn rusqlite::ToSql> = owned
+        .iter()
+        .map(|value| value as &dyn rusqlite::ToSql)
+        .collect();
+    let mut statement = connection.prepare(&sql).map_err(|error| {
+        format!("Unable to prepare World DB organization-section query: {error}")
+    })?;
+    let rows = statement
+        .query_map(rusqlite::params_from_iter(params), |row| {
+            Ok(WorldDbGameBootstrapOrganizationSectionV1 {
+                section_id: row.get(0)?,
+                organization_id: row.get(1)?,
+                sport: row.get(2)?,
+                gender: row.get(3)?,
+                category_scope: row.get(4)?,
+                canonical_name: row.get(5)?,
+                valid_from: row.get(6)?,
+                valid_to: row.get(7)?,
+            })
+        })
+        .map_err(|error| format!("Unable to query World DB organization sections: {error}"))?;
+    rows.collect::<rusqlite::Result<Vec<_>>>()
+        .map_err(|error| format!("Unable to decode World DB organization section: {error}"))
 }
 
 fn query_roster_assignments(
@@ -684,6 +803,12 @@ fn placeholders(count: usize) -> String {
         .collect::<Vec<_>>()
         .join(",")
 }
+fn placeholders_from(start: usize, count: usize) -> String {
+    (start..start + count)
+        .map(|index| format!("?{index}"))
+        .collect::<Vec<_>>()
+        .join(",")
+}
 fn gender_from_ecosystem(value: Option<&str>) -> String {
     if value.is_some_and(|value| {
         value.eq_ignore_ascii_case("F") || value.eq_ignore_ascii_case("FEMALE")
@@ -707,6 +832,35 @@ fn ecosystem_kind(name: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn bootstrap_projection_reads_canonical_organization_ids_and_records() {
+        let connection = Connection::open_in_memory().expect("in-memory SQLite");
+        connection.execute_batch(
+            "CREATE TABLE entity(entity_id TEXT PRIMARY KEY, canonical_name TEXT NOT NULL);
+             CREATE TABLE team(team_id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, gender TEXT, country_place_id TEXT, organization_id TEXT NOT NULL, section_id TEXT NOT NULL);
+             CREATE TABLE team_ecosystem_membership(team_id TEXT NOT NULL, competition_ecosystem_id TEXT NOT NULL, membership_status TEXT NOT NULL, valid_to TEXT);
+             CREATE TABLE organization(organization_id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, legal_name TEXT, founded_year INTEGER, dissolved_year INTEGER, primary_place_id TEXT, website TEXT);
+             CREATE TABLE organization_section(section_id TEXT PRIMARY KEY, organization_id TEXT NOT NULL, sport TEXT, gender TEXT, category_scope TEXT, canonical_name TEXT, valid_from TEXT, valid_to TEXT);
+             INSERT INTO entity VALUES ('team-entity-1', 'Club A'), ('org-entity-1', 'Club A legal entity');
+             INSERT INTO team VALUES ('team-1', 'team-entity-1', 'M', 'place:ESP', 'org-42', 'section-7');
+             INSERT INTO team_ecosystem_membership VALUES ('team-1', 'ecosystem-1', 'ACTIVE', NULL);
+             INSERT INTO organization VALUES ('org-42', 'org-entity-1', 'Club A S.A.', 1980, NULL, 'place:ESP', 'https://club.example');
+             INSERT INTO organization_section VALUES ('section-7', 'org-42', 'BASKETBALL', 'MALE', 'SENIOR', NULL, '1980-01-01', NULL);",
+        ).expect("canonical Organization fixture");
+
+        let teams = query_teams(&connection, "ecosystem-1", "male").expect("team source row");
+        assert_eq!(teams[0].organization_id, "org-42");
+        assert_eq!(teams[0].organization_section_id, "section-7");
+        let organizations = query_organizations(&connection, &["org-42".to_owned()])
+            .expect("Organization source row");
+        assert_eq!(organizations[0].legal_name.as_deref(), Some("Club A S.A."));
+        assert_eq!(organizations[0].founded_year, Some(1980));
+        let sections = query_organization_sections(&connection, &["section-7".to_owned()])
+            .expect("OrganizationSection source row");
+        assert_eq!(sections[0].organization_id, "org-42");
+        assert_eq!(sections[0].canonical_name, "section-7");
+    }
 
     #[test]
     fn production_spain_slice_smoke_is_opt_in_and_read_only() {

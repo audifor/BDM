@@ -1,4 +1,4 @@
-import { organizationIdForTeam, type PlayerId, type TeamId } from '@/domain/ids'
+import { type OrganizationId, type PlayerId, type TeamId } from '@/domain/ids'
 import { getNextScheduledGame, getTeam, type GameWorld } from '@/domain/world'
 import { createDelegationOutcome, delegationOutcomeIdFromString } from '@/domain/responsibility'
 import { resolveAdvisoryResponsibility, scoutingQuality } from '@/engine/staff'
@@ -32,7 +32,7 @@ function progressOppositionReport(world: GameWorld, teamId: TeamId): GameWorld {
   if (nextGame === undefined) return world
   const opponentTeamId = nextGame.homeTeamId === teamId ? nextGame.awayTeamId : nextGame.homeTeamId
   const opponent = getTeam(world, opponentTeamId)
-  const organizationId = organizationIdForTeam(teamId)
+  const organizationId = world.teams[teamId]!.organizationId
   const target = [...opponent.rosterPlayerIds].filter((playerId) => !world.organizationKnowledge.some((knowledge) => knowledge.organizationId === organizationId && knowledge.subjectPlayerId === playerId)).sort()[0]
   if (target === undefined) return world
   return recordAdvisoryScoutingRequest(world, teamId, resolution, 'oppositionReport', organizationId, target, 'FULL_REPORT')
@@ -42,7 +42,7 @@ function progressOppositionReport(world: GameWorld, teamId: TeamId): GameWorld {
 function progressProspectReport(world: GameWorld, teamId: TeamId): GameWorld {
   const resolution = resolveAdvisoryResponsibility(world, teamId, 'prospectReport')
   if (resolution === undefined) return world
-  const organizationId = organizationIdForTeam(teamId)
+  const organizationId = world.teams[teamId]!.organizationId
   const boardRecruitIds = world.recruitingBoards.filter((entry) => entry.programTeamId === teamId).map((entry) => entry.recruitId).sort()
   const target = boardRecruitIds
     .map((recruitId) => world.recruitProfilesById[recruitId]?.playerId)
@@ -56,7 +56,7 @@ function recordAdvisoryScoutingRequest(
   teamId: TeamId,
   resolution: ReturnType<typeof resolveAdvisoryResponsibility>,
   kind: 'oppositionReport' | 'prospectReport',
-  organizationId: ReturnType<typeof organizationIdForTeam>,
+  organizationId: OrganizationId,
   target: PlayerId,
   missionType: 'FULL_REPORT',
 ): GameWorld {

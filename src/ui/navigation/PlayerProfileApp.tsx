@@ -1,6 +1,5 @@
 import { getPlayerAge } from '@/domain/player'
 import { formatRatingEvaluation, getOrganizationRatingEvaluation } from '@/domain/intelligence'
-import { organizationIdForTeam } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { getCareerFatigueForPlayer } from '@/domain/world'
 import { AppFrame, AppHeader, DetailGroup } from '@/ui/desktop/AppFramework'
@@ -18,7 +17,7 @@ export function PlayerProfileApp({ destination, onOpenEntity, world }: { readonl
   const age = getPlayerAge(world, player.id)
   const fatigue = getCareerFatigueForPlayer(world, player.id)
   const observer = Object.values(world.teams).find((item) => item.coachId === world.userCoachId) ?? team ?? Object.values(world.teams)[0]!
-  const ratings = ['finishing','shooting','creation','perimeterDefense','interiorDefense','rebounding','physical'].map((key) => getOrganizationRatingEvaluation({ organizationId: organizationIdForTeam(observer.id), playerId: player.id, dimension: key, knowledge: world.organizationKnowledge, currentDate: world.currentDate, publicPosition: player.basketball.primaryPosition }))
+  const ratings = ['finishing','shooting','creation','perimeterDefense','interiorDefense','rebounding','physical'].map((key) => getOrganizationRatingEvaluation({ organizationId: observer.organizationId, playerId: player.id, dimension: key, knowledge: world.organizationKnowledge, currentDate: world.currentDate, publicPosition: player.basketball.primaryPosition }))
   return <AppFrame header={<AppHeader meta={<Badge tone={team === undefined ? 'neutral' : 'info'}>{team === undefined ? 'FREE AGENT' : 'ROSTERED'}</Badge>} title={name} />} navigation={<Tabs onChange={() => undefined} tabs={[{ id: 'overview', label: 'Overview' }, { id: 'attributes', label: 'Attributes' }, { id: 'history', label: 'History' }, { id: 'notes', label: 'Notes' }]} value="overview" />}>
     <section className="player-profile__canonical">
       <header className="player-profile__hero"><div aria-hidden="true" className="player-profile__portrait">{player.firstName[0]}{player.lastName[0]}</div><div><p>{player.basketball.primaryPosition} · Age {age}</p><strong>{team === undefined ? 'Free agent' : team.name}</strong></div><div className="player-profile__condition">CONDITION <b>{Math.max(0, 100 - fatigue)}%</b></div></header>

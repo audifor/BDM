@@ -28,9 +28,8 @@ const MONTH_NAMES = [
 
 export function SimulateUntilControl({ blocked, world }: { readonly blocked: boolean; readonly world: GameWorld }) {
   const tomorrow = addDays(world.currentDate, 1)
-  const maxDate = latestScheduledGameDate(world) ?? tomorrow
   const [open, setOpen] = useState(false)
-  const [draft, setDraft] = useState(defaultTargetDate(world, tomorrow, maxDate))
+  const [draft, setDraft] = useState(defaultTargetDate(world, tomorrow))
   const [monthCursor, setMonthCursor] = useState(() => monthStart(draft))
   const [running, setRunning] = useState(false)
   const [liveDate, setLiveDate] = useState(world.currentDate)
@@ -40,10 +39,10 @@ export function SimulateUntilControl({ blocked, world }: { readonly blocked: boo
 
   useEffect(() => {
     if (open || running) return
-    const nextDraft = defaultTargetDate(world, tomorrow, maxDate)
+    const nextDraft = defaultTargetDate(world, tomorrow)
     setDraft(nextDraft)
     setMonthCursor(monthStart(nextDraft))
-  }, [maxDate, open, running, tomorrow, world])
+  }, [open, running, tomorrow, world])
 
   useEffect(() => {
     if (!open) return
@@ -62,14 +61,28 @@ export function SimulateUntilControl({ blocked, world }: { readonly blocked: boo
   }, [open])
 
   useEffect(() => {
+    if (!running) return
+    const stopOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      cancelRef.current = true
+      setRunning(false)
+      setMatches([])
+    }
+    document.addEventListener('keydown', stopOnEscape)
+    return () => {
+      document.removeEventListener('keydown', stopOnEscape)
+    }
+  }, [running])
+
+  useEffect(() => {
     return () => {
       cancelRef.current = true
     }
   }, [])
 
-  const canConfirm = isValidTarget(world.currentDate, draft) && compareGameDates(parseGameDate(draft), maxDate) <= 0
+  const canConfirm = isValidTarget(world.currentDate, draft)
   const minMonth = monthStart(tomorrow)
-  const maxMonth = monthStart(maxDate)
 
   const startHoliday = () => {
     if (!canConfirm) return
@@ -143,7 +156,7 @@ export function SimulateUntilControl({ blocked, world }: { readonly blocked: boo
             <button
               aria-label="Next month"
               className="ng-sim-cal__nav"
-              disabled={compareGameDates(monthCursor, maxMonth) >= 0}
+              disabled={monthCursor.slice(0, 7) === '9999-12'}
               onClick={() => setMonthCursor((current) => shiftMonth(current, 1))}
               type="button"
             >
@@ -160,7 +173,7 @@ export function SimulateUntilControl({ blocked, world }: { readonly blocked: boo
           <div className="ng-sim-cal__grid">
             {monthGrid(monthCursor).map((date) => {
               const selectable =
-                compareGameDates(date, world.currentDate) > 0 && compareGameDates(date, maxDate) <= 0
+                compareGameDates(date, world.currentDate) > 0
               const selected = date === draft
               return (
                 <button
@@ -242,21 +255,12 @@ function HourglassIcon() {
   )
 }
 
-function defaultTargetDate(world: GameWorld, tomorrow: GameDate, maxDate: GameDate): GameDate {
+function defaultTargetDate(world: GameWorld, tomorrow: GameDate): GameDate {
   const next = getNextKnownEvent(world)
-  if (next !== undefined && compareGameDates(next.date, world.currentDate) > 0 && compareGameDates(next.date, maxDate) <= 0) {
+  if (next !== undefined && compareGameDates(next.date, world.currentDate) > 0) {
     return next.date
   }
-  return compareGameDates(tomorrow, maxDate) <= 0 ? tomorrow : maxDate
-}
-
-function latestScheduledGameDate(world: GameWorld): GameDate | undefined {
-  let latest: GameDate | undefined
-  for (const game of Object.values(world.games)) {
-    if (game.status !== 'scheduled') continue
-    if (latest === undefined || compareGameDates(game.date, latest) > 0) latest = game.date
-  }
-  return latest
+  return tomorrow
 }
 
 function isValidTarget(current: GameDate, draft: string): boolean {
@@ -292,5 +296,13 @@ function monthTitle(date: GameDate): string {
 function monthGrid(month: GameDate): readonly GameDate[] {
   const start = monthStart(month)
   const gridStart = addDays(start, -(isoWeekday(start) - 1))
-  return Array.from({ length: 42 }, (_, index) => addDays(gridStart, index))
+  const dates: GameDate[] = []
+  for (let index = 0; index < 42; index += 1) {
+    try {
+      dates.push(addDays(gridStart, index))
+    } catch {
+      break
+    }
+  }
+  return dates
 }

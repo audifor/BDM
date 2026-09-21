@@ -1,6 +1,6 @@
 import { playerIdFromString, teamIdFromString } from '@/domain/ids'
 import type { Team } from '@/domain/team'
-import type { CountryId, TeamId } from '@/domain/ids'
+import type { CountryId, OrganizationId, OrganizationSectionId, TeamId } from '@/domain/ids'
 import { CourtRenderer } from '../CourtRenderer'
 import { CourtDynamicRenderer } from '../CourtDynamicRenderer'
 import { resolveCourtConfiguration } from '../core/CourtConfigurationResolver'
@@ -74,6 +74,8 @@ function asTeam(id: string, name: string): Team {
     name,
     gender: 'male',
     countryId: 'XX' as CountryId,
+    organizationId: id as OrganizationId,
+    organizationSectionId: `legacy-section:${id}` as OrganizationSectionId,
     rosterPlayerIds: [],
   }
 }

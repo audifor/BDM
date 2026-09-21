@@ -5,6 +5,7 @@ export {
   GameWorldValidationError,
 } from './GameWorld'
 export type { CreateGameWorldInput, GameWorld } from './GameWorld'
+export type { Organization, OrganizationSection } from '@/domain/organization'
 export type { Person } from '@/domain/person'
 export {
   EMPTY_WORLD_DB_COMPETITION_RUNTIME,

@@ -1,6 +1,6 @@
 import type { RecruitingBoardEntry, RecruitingCycle, RecruitingInterest, RecruitingOffer, RecruitProfile } from '@/domain/recruiting'
 import type { GameDate } from '@/domain/date'
-import { organizationIdForTeam, type TeamId } from '@/domain/ids'
+import { type TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { updateGameWorld } from '@/domain/world'
 import { createTeam } from '@/domain/team'
@@ -106,7 +106,7 @@ export function getTeamRecruitingNeeds(world: GameWorld, teamId: TeamId): Readon
 /** Bounded, organization-specific target ordering for recruiting decisions. */
 export function rankAiRecruitingTargets(world: GameWorld, cycleId: string, programTeamId: TeamId): readonly RecruitProfile[] {
   const needs = getTeamRecruitingNeeds(world, programTeamId)
-  const organizationId = organizationIdForTeam(programTeamId)
+  const organizationId = world.teams[programTeamId]!.organizationId
   const policy = world.organizationEvaluationPoliciesById[organizationId]
   return Object.values(world.recruitProfilesById).filter((profile) => profile.cycleId === cycleId && profile.status === 'open').sort((a, b) => {
     const first = world.players[a.playerId]!, second = world.players[b.playerId]!

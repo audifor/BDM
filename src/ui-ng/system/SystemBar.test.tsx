@@ -83,4 +83,43 @@ describe('SystemBar continue', () => {
     expect(Object.values(useGameStore.getState().world!.games).some((game) => game.date === world.currentDate && game.status === 'scheduled')).toBe(false)
     expect(new URL(window.location.href).searchParams.get('app')).toBe('home')
   })
+
+  it('stops an active simulation when Escape is pressed', () => {
+    const world = createAcbTestGame()
+    const target = addDays(world.currentDate, 3)
+    useGameStore.getState().replaceWorld(world)
+    mountBar()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Simulate until date' }))
+    fireEvent.click(screen.getByRole('button', { name: `Choose ${target}` }))
+    fireEvent.click(screen.getByRole('button', { name: 'Simulate' }))
+    expect(screen.getByRole('dialog', { name: 'Simulation progress' })).toBeInTheDocument()
+
+    fireEvent.keyDown(document, { key: 'Escape' })
+
+    expect(screen.queryByRole('dialog', { name: 'Simulation progress' })).not.toBeInTheDocument()
+  })
+
+  it('keeps dates after the last scheduled fixture selectable', () => {
+    const world = createAcbTestGame()
+    const latestScheduledDate = Object.values(world.games)
+      .filter((game) => game.status === 'scheduled')
+      .map((game) => game.date)
+      .sort()
+      .at(-1)
+    expect(latestScheduledDate).toBeDefined()
+    const target = addDays(latestScheduledDate!, 1)
+    const [currentYear, currentMonth] = world.currentDate.split('-').slice(0, 2).map(Number)
+    const [targetYear, targetMonth] = target.split('-').slice(0, 2).map(Number)
+    const monthsToAdvance = (targetYear! - currentYear!) * 12 + (targetMonth! - currentMonth!)
+
+    useGameStore.getState().replaceWorld(world)
+    mountBar()
+    fireEvent.click(screen.getByRole('button', { name: 'Simulate until date' }))
+    for (let index = 0; index < monthsToAdvance; index += 1) {
+      fireEvent.click(screen.getByRole('button', { name: 'Next month' }))
+    }
+
+    expect(screen.getByRole('button', { name: `Choose ${target}` })).toBeEnabled()
+  })
 })

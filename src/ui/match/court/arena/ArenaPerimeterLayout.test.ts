@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Team } from '@/domain/team'
-import type { CountryId, TeamId } from '@/domain/ids'
+import type { CountryId, OrganizationId, OrganizationSectionId, TeamId } from '@/domain/ids'
 import { resolveCourtConfiguration } from '../core/CourtConfigurationResolver'
 import { createCourtProjection } from '../CourtProjection'
 import { rulesetToRegulation } from '../rules/CourtRuleset'
@@ -13,6 +13,8 @@ function team(id: string, name: string): Team {
     name,
     gender: 'male',
     countryId: 'US' as CountryId,
+    organizationId: id as OrganizationId,
+    organizationSectionId: `legacy-section:${id}` as OrganizationSectionId,
     rosterPlayerIds: [],
   }
 }

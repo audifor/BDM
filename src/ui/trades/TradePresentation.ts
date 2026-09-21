@@ -1,5 +1,5 @@
 import type { TradeAsset, TradeAssetMovement, TradeProposal } from '@/domain/trade'
-import { organizationIdForTeam, type OrganizationId, type TeamId } from '@/domain/ids'
+import { type OrganizationId, type TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { deriveOrganizationPlayerValuation, formatRatingEvaluation, getOrganizationRatingEvaluation, type OrganizationPlayerValuation } from '@/domain/intelligence'
 import { getUserTeam } from '@/engine/calendar'
@@ -41,7 +41,7 @@ export function buildTradePresentation(world: GameWorld, rules: NonNullable<Game
     allowed: validation.allowed,
     globalReasons: validation.globalReasons,
     hasSalaryMatching: world.salaryRulesBySeasonId[rules.seasonId] !== undefined,
-    teams: draft.participantTeamIds.map((teamId) => ({ teamId, teamName: world.teams[teamId]?.name ?? 'Unknown team', received: draft.movements.filter((movement) => movement.toTeamId === teamId).map((movement) => ({ movement, label: tradeAssetLabel(world, movement.asset), sourceTeamName: world.teams[movement.fromTeamId]?.name ?? 'Unknown team', intelligence: tradeAssetIntelligence(world, organizationIdForTeam(teamId), movement.asset) })), validation: validation.teamResults.find((result) => result.teamId === teamId) })),
+    teams: draft.participantTeamIds.map((teamId) => ({ teamId, teamName: world.teams[teamId]?.name ?? 'Unknown team', received: draft.movements.filter((movement) => movement.toTeamId === teamId).map((movement) => ({ movement, label: tradeAssetLabel(world, movement.asset), sourceTeamName: world.teams[movement.fromTeamId]?.name ?? 'Unknown team', intelligence: tradeAssetIntelligence(world, world.teams[teamId]!.organizationId, movement.asset) })), validation: validation.teamResults.find((result) => result.teamId === teamId) })),
   }
 }
 export function tradeAssetIntelligence(world:GameWorld,organizationId:OrganizationId,asset:TradeAsset):string|undefined{if(asset.kind!=='player')return undefined;const player=world.players[asset.playerId];if(!player)return undefined;return formatRatingEvaluation(getOrganizationRatingEvaluation({organizationId,playerId:player.id,dimension:'creation',knowledge:world.organizationKnowledge,currentDate:world.currentDate,publicPosition:player.basketball.primaryPosition}))}

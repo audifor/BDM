@@ -1,4 +1,4 @@
-import { organizationIdForTeam, type PlayerId, type TeamId } from '@/domain/ids'
+import { type OrganizationId, type PlayerId, type TeamId } from '@/domain/ids'
 import { createDelegationOutcome, delegationOutcomeIdFromString } from '@/domain/responsibility'
 import { createOppositionScoutingReport, oppositionScoutingReportId, MAX_FLAGGED_PLAYERS, type DefensiveEmphasis, type OppositionScoutingReport, type PaceAdjustment } from '@/domain/tactics'
 import { attributeKnowledgeDimension, getNextScheduledGame, getTeam, type GameWorld } from '@/domain/world'
@@ -106,7 +106,7 @@ const PACE_SIGNAL_SCALE = 25
  */
 function deriveRecommendations(world: GameWorld, teamId: TeamId, opponentTeamId: TeamId, qualityScore: number): Recommendations {
   const opponent = getTeam(world, opponentTeamId)
-  const organizationId = organizationIdForTeam(teamId)
+  const organizationId = world.teams[teamId]!.organizationId
   const roster = opponent.rosterPlayerIds.map((playerId) => ({ playerId, knowledge: findKnowledge(world.organizationKnowledge, organizationId, playerId) }))
 
   const perimeterThreat = aggregateThreat(roster, PERIMETER_THREAT_DIMENSIONS)
@@ -146,7 +146,7 @@ function deriveRecommendations(world: GameWorld, teamId: TeamId, opponentTeamId:
   }
 }
 
-function findKnowledge(knowledge: readonly OrganizationKnowledge[], organizationId: ReturnType<typeof organizationIdForTeam>, playerId: PlayerId): OrganizationKnowledge | undefined {
+function findKnowledge(knowledge: readonly OrganizationKnowledge[], organizationId: OrganizationId, playerId: PlayerId): OrganizationKnowledge | undefined {
   return knowledge.find((item) => item.organizationId === organizationId && item.subjectPlayerId === playerId)
 }
 
@@ -223,7 +223,7 @@ function familiarityMarker(staffId: import('@/domain/ids').StaffPersonId): strin
  *   per holder per dimension.
  */
 function applyStaffFamiliarity(world: GameWorld, teamId: TeamId, opponentTeamId: TeamId, holderStaffId: import('@/domain/ids').StaffPersonId): readonly import('@/domain/knowledge').OrganizationKnowledge[] {
-  const organizationId = organizationIdForTeam(teamId)
+  const organizationId = world.teams[teamId]!.organizationId
   const opponent = getTeam(world, opponentTeamId)
   return world.organizationKnowledge.map((entry) => {
     if (entry.organizationId !== organizationId || !opponent.rosterPlayerIds.includes(entry.subjectPlayerId)) return entry

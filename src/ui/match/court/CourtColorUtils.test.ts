@@ -10,7 +10,7 @@ import {
 import { resolveCourtConfiguration } from './core/CourtConfigurationResolver'
 import { CourtRenderer } from './CourtRenderer'
 import type { Team } from '@/domain/team'
-import type { CountryId, TeamId } from '@/domain/ids'
+import type { CountryId, OrganizationId, OrganizationSectionId, TeamId } from '@/domain/ids'
 
 function team(id: string, name: string): Team {
   return {
@@ -18,6 +18,8 @@ function team(id: string, name: string): Team {
     name,
     gender: 'male',
     countryId: 'ES' as CountryId,
+    organizationId: id as OrganizationId,
+    organizationSectionId: `legacy-section:${id}` as OrganizationSectionId,
     rosterPlayerIds: [],
   }
 }
