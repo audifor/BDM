@@ -32,7 +32,7 @@ function trainingOption(
 
 function evolutionWith(overrides: Partial<RatingEvolutionModel> = {}): RatingEvolutionModel {
   return {
-    ratingId: 'threePointShooting',
+    ratingId: 'THREE_POINT_STATIC',
     current: 76,
     points: [
       { id: 'season-1', label: '2032/33', value: 70, delta: 0, isCurrent: false },
@@ -53,15 +53,22 @@ function evolutionWith(overrides: Partial<RatingEvolutionModel> = {}): RatingEvo
     },
     league: {
       status: 'available',
-      mean: 64.4,
+      average: 64.4,
       sampleSize: 95,
       scopeLabel: 'Virelia Horizon League',
-      note: 'Mean of this rating across every rostered rival in the competition.',
+      note: 'Average of this rating across every rostered rival in the competition.',
+    },
+    team: {
+      status: 'available',
+      average: 69.2,
+      sampleSize: 11,
+      scopeLabel: 'Virelia Falcons',
+      note: 'Average of this rating across the player\'s teammates; the inspected player is excluded.',
     },
     standing: {
       status: 'available',
       percentile: 82,
-      positionMean: 71.4,
+      positionAverage: 71.4,
       positionLabel: 'PG',
       positionSampleSize: 24,
       note: 'Percentile is the share of rivalling rosters this value beats; the player never counts in their own sample.',
@@ -82,7 +89,7 @@ function dotCount(markup: string): number {
 }
 
 describe('AttributeEvolutionChart', () => {
-  it('draws one point per season and a league reference line', () => {
+  it('draws one point per season and league and team average lines', () => {
     const markup = render(
       createElement(AttributeEvolutionChart, {
         evolution: evolutionWith(),
@@ -93,6 +100,9 @@ describe('AttributeEvolutionChart', () => {
     expect(dotCount(markup)).toBe(3)
     expect(markup.match(/class="po-attr-evolution__point is-current"/g)).toHaveLength(1)
     expect(markup).toContain('po-attr-evolution__league')
+    expect(markup).toContain('po-attr-evolution__team')
+    expect(markup).toContain('League average')
+    expect(markup).toContain('Team average')
     expect(markup).toContain('po-attr-evolution__line')
     // Season labels are plotted for every recorded season.
     expect(markup).toContain('2032/33')
@@ -123,7 +133,7 @@ describe('AttributeEvolutionChart', () => {
         evolution: evolutionWith({
           league: {
             status: 'unavailable',
-            mean: null,
+            average: null,
             sampleSize: 0,
             scopeLabel: null,
             note: 'No rivalling roster available for this competition.',
@@ -134,7 +144,8 @@ describe('AttributeEvolutionChart', () => {
     )
 
     expect(markup).not.toContain('po-attr-evolution__league"')
-    expect(markup).toContain('League mean <b class="ng-type-numeric">—</b>')
+    expect(markup).toContain('League average <b class="ng-type-numeric">—</b>')
+    expect(markup).toContain('Team average <b class="ng-type-numeric">69.2</b>')
   })
 })
 

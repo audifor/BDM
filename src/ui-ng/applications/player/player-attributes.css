@@ -385,6 +385,14 @@
   );
 }
 
+.po-attr-evolution__key--team::before {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--ng-positive) 0 3px,
+    transparent 3px 6px
+  );
+}
+
 .po-attr-evolution__plot {
   /* The canvas is fixed: every attribute plots with identical geometry, whatever its value span.
      `--po-attr-plot-axis` reserves the season label row, and the scale re-uses both numbers so its
@@ -443,6 +451,13 @@
 .po-attr-evolution__league {
   stroke: var(--ng-amber);
   stroke-dasharray: 5 4;
+  stroke-width: 1.4;
+  opacity: 0.85;
+}
+
+.po-attr-evolution__team {
+  stroke: var(--ng-positive);
+  stroke-dasharray: 2 3;
   stroke-width: 1.4;
   opacity: 0.85;
 }

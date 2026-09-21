@@ -1,5 +1,5 @@
-import type { CanonicalRatingKey, Player } from '@/domain/player'
-import { CANONICAL_RATING_KEYS } from '@/domain/player'
+import type { PlayerTruthRatingKey, PlayerTruthRatings, Player } from '@/domain/player'
+import { PLAYER_TRUTH_RATING_KEYS } from '@/domain/player'
 import type { PlayerId } from '@/domain/ids'
 import { getPlayerAge } from '@/domain/player'
 import { getPlayerRosterTeamId, type GameWorld } from '@/domain/world'
@@ -19,7 +19,7 @@ export interface PlayerComparisonSnapshot {
   readonly position: string
   readonly teamName: string
   readonly age: number
-  readonly ratings: Readonly<Record<CanonicalRatingKey, number>>
+  readonly ratings: PlayerTruthRatings
 }
 
 function displayName(player: Player): string {
@@ -67,7 +67,7 @@ export function buildPlayerComparisonSnapshot(
     teamName: teamNameFor(world, playerId),
     age: getPlayerAge(world, playerId),
     ratings: Object.fromEntries(
-      CANONICAL_RATING_KEYS.map((key) => [key, player.basketball.ratings[key]]),
-    ) as Readonly<Record<CanonicalRatingKey, number>>,
+      PLAYER_TRUTH_RATING_KEYS.map((key) => [key, player.basketball.ratings[key]]),
+    ) as Readonly<Record<PlayerTruthRatingKey, number>>,
   }
 }

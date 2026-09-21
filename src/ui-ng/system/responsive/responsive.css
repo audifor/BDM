@@ -1,0 +1,289 @@
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+.bdm-responsive-root {
+  position: relative;
+  width: 100dvw;
+  height: 100dvh;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  container-name: bdm-viewport;
+  container-type: inline-size;
+
+  --bdm-density: 1;
+  --bdm-space-1: 4px;
+  --bdm-space-2: 8px;
+  --bdm-space-3: 12px;
+  --bdm-space-4: 16px;
+  --bdm-space-5: 24px;
+  --bdm-panel-padding: 16px;
+  --bdm-row-height: 28px;
+  --bdm-font-micro: 10px;
+  --bdm-font-xs: 11px;
+  --bdm-font-sm: 12px;
+  --bdm-font-md: 13px;
+  --bdm-font-lg: 16px;
+  --bdm-font-xl: 20px;
+  --bdm-sidebar-width: 360px;
+  --bdm-systembar-height: 48px;
+  --bdm-taskbar-height: 56px;
+  --bdm-page-header-height: 56px;
+  --bdm-page-tabs-height: 44px;
+  --bdm-space-y-1: 4px;
+  --bdm-space-y-2: 8px;
+  --bdm-space-y-3: 12px;
+  --bdm-space-y-4: 16px;
+  --bdm-taskbar-app-min-width: 88px;
+  --bdm-system-search-width: 190px;
+
+  --bdm-panel-gap: 10px;
+  --bdm-section-gap-y: var(--bdm-panel-gap);
+  --bdm-panel-padding-y: var(--bdm-panel-padding);
+  --bdm-workspace-padding: 12px;
+  --ng-spacing-4: var(--bdm-space-1);
+  --ng-spacing-8: var(--bdm-space-2);
+  --ng-spacing-12: var(--bdm-space-3);
+  --ng-spacing-16: var(--bdm-space-4);
+  --ng-spacing-24: var(--bdm-space-5);
+  --ng-spacing-32: 32px;
+  --ng-panel-gap: var(--bdm-panel-gap);
+  --ng-workspace-padding: var(--bdm-workspace-padding);
+  --ng-system-bar-height: var(--bdm-systembar-height);
+  --ng-taskbar-height: var(--bdm-taskbar-height);
+  --ng-workspace-header-height: var(--bdm-page-header-height);
+  --ng-workspace-tabs-height: var(--bdm-page-tabs-height);
+  --ng-inspector-width: var(--bdm-sidebar-width);
+  --ng-inspector-min-width: 320px;
+  --ng-inspector-max-width: 420px;
+  --ng-text-2xs: var(--bdm-font-micro);
+  --ng-text-xs: var(--bdm-font-xs);
+  --ng-text-sm: var(--bdm-font-sm);
+  --ng-text-md: var(--bdm-font-md);
+  --ng-text-lg: var(--bdm-font-lg);
+  --ng-text-xl: var(--bdm-font-xl);
+  --ng-font-size-meta: var(--ng-text-xs);
+  --ng-font-size-secondary: var(--ng-text-sm);
+  --ng-font-size-data: var(--ng-text-md);
+  --ng-font-size-body: var(--ng-text-md);
+  --ng-font-size-md: var(--ng-text-lg);
+  --ng-font-size-xl: var(--ng-text-xl);
+  --ng-precision-row-h: var(--bdm-row-height);
+}
+
+.bdm-responsive-root[data-bdm-viewport-mode='ultrawide'] {
+  --bdm-space-4: 18px;
+  --bdm-space-5: 26px;
+  --bdm-panel-padding: 18px;
+  --bdm-panel-gap: 12px;
+  --bdm-section-gap-y: var(--bdm-panel-gap);
+  --bdm-panel-padding-y: var(--bdm-panel-padding);
+  --bdm-workspace-padding: 14px;
+  --bdm-sidebar-width: 380px;
+  --ng-inspector-width: var(--bdm-sidebar-width);
+  --ng-spacing-32: 36px;
+  --ng-inspector-min-width: 340px;
+  --ng-inspector-max-width: 440px;
+}
+
+.bdm-responsive-root[data-bdm-viewport-mode='compact'] {
+  --bdm-density: 0.94;
+  --bdm-space-2: 7px;
+  --bdm-space-3: 10px;
+  --bdm-space-4: 14px;
+  --bdm-space-5: 20px;
+  --bdm-panel-padding: 14px;
+  --bdm-row-height: 32px;
+  --bdm-font-xs: 10px;
+  --bdm-font-sm: 11px;
+  --bdm-font-md: 12px;
+  --bdm-font-lg: 15px;
+  --bdm-font-xl: 19px;
+  --bdm-sidebar-width: 320px;
+  --bdm-systembar-height: 46px;
+  --bdm-taskbar-height: 52px;
+  --bdm-taskbar-app-min-width: 72px;
+  --bdm-system-search-width: 164px;
+  --bdm-panel-gap: 8px;
+  --bdm-workspace-padding: 10px;
+  --ng-spacing-32: 28px;
+  --ng-inspector-min-width: 280px;
+  --ng-inspector-max-width: 360px;
+  --ng-text-xs: var(--bdm-font-xs);
+  --ng-text-sm: var(--bdm-font-sm);
+  --ng-text-md: var(--bdm-font-md);
+  --ng-text-lg: var(--bdm-font-lg);
+  --ng-text-xl: var(--bdm-font-xl);
+}
+
+.bdm-responsive-root[data-bdm-viewport-mode='dense'] {
+  --bdm-density: 0.86;
+  --bdm-space-2: 6px;
+  --bdm-space-3: 9px;
+  --bdm-space-4: 12px;
+  --bdm-space-5: 16px;
+  --bdm-panel-padding: 10px;
+  --bdm-row-height: 28px;
+  --bdm-font-xs: 10px;
+  --bdm-font-sm: 11px;
+  --bdm-font-md: 12px;
+  --bdm-font-lg: 14px;
+  --bdm-font-xl: 18px;
+  --bdm-sidebar-width: 276px;
+  --bdm-systembar-height: 44px;
+  --bdm-taskbar-height: 48px;
+  --bdm-taskbar-app-min-width: 62px;
+  --bdm-system-search-width: 144px;
+  --bdm-panel-gap: 6px;
+  --bdm-workspace-padding: 8px;
+  --ng-spacing-32: 24px;
+  --ng-inspector-min-width: 240px;
+  --ng-inspector-max-width: 320px;
+  --ng-text-xs: var(--bdm-font-xs);
+  --ng-text-sm: var(--bdm-font-sm);
+  --ng-text-md: var(--bdm-font-md);
+  --ng-text-lg: var(--bdm-font-lg);
+  --ng-text-xl: var(--bdm-font-xl);
+}
+
+.bdm-responsive-root[data-bdm-viewport-mode='ultraDense'] {
+  --bdm-density: 0.82;
+  --bdm-space-2: 6px;
+  --bdm-space-3: 8px;
+  --bdm-space-4: 10px;
+  --bdm-space-5: 14px;
+  --bdm-panel-padding: 8px;
+  --bdm-row-height: 28px;
+  --bdm-font-xs: 10px;
+  --bdm-font-sm: 11px;
+  --bdm-font-md: 12px;
+  --bdm-font-lg: 14px;
+  --bdm-font-xl: 17px;
+  --bdm-sidebar-width: 256px;
+  --bdm-systembar-height: 42px;
+  --bdm-taskbar-height: 44px;
+  --bdm-taskbar-app-min-width: 36px;
+  --bdm-system-search-width: 120px;
+  --bdm-panel-gap: 6px;
+  --bdm-workspace-padding: 6px;
+  --ng-spacing-32: 20px;
+  --ng-inspector-min-width: 224px;
+  --ng-inspector-max-width: 300px;
+  --ng-text-xs: var(--bdm-font-xs);
+  --ng-text-sm: var(--bdm-font-sm);
+  --ng-text-md: var(--bdm-font-md);
+  --ng-text-lg: var(--bdm-font-lg);
+  --ng-text-xl: var(--bdm-font-xl);
+}
+
+.bdm-responsive-root[data-bdm-height-mode='standard'] {
+  --bdm-systembar-height: 46px;
+  --bdm-taskbar-height: 52px;
+  --bdm-page-header-height: 52px;
+  --bdm-page-tabs-height: 42px;
+  --bdm-space-y-2: 7px;
+  --bdm-space-y-3: 10px;
+  --bdm-space-y-4: 14px;
+  --bdm-section-gap-y: 9px;
+  --bdm-panel-padding-y: 14px;
+}
+
+.bdm-responsive-root[data-bdm-height-mode='short'] {
+  --bdm-systembar-height: 44px;
+  --bdm-taskbar-height: 48px;
+  --bdm-page-header-height: 48px;
+  --bdm-page-tabs-height: 38px;
+  --bdm-space-y-2: 6px;
+  --bdm-space-y-3: 8px;
+  --bdm-space-y-4: 12px;
+  --bdm-section-gap-y: 7px;
+  --bdm-panel-padding-y: 11px;
+}
+
+.bdm-responsive-root[data-bdm-height-mode='veryShort'] {
+  --bdm-systembar-height: 42px;
+  --bdm-taskbar-height: 44px;
+  --bdm-page-header-height: 44px;
+  --bdm-page-tabs-height: 36px;
+  --bdm-space-y-1: 3px;
+  --bdm-space-y-2: 5px;
+  --bdm-space-y-3: 7px;
+  --bdm-space-y-4: 10px;
+  --bdm-section-gap-y: 6px;
+  --bdm-panel-padding-y: 9px;
+}
+
+.bdm-responsive-root[data-bdm-height-mode='standard'] .ng-taskbar__app {
+  --bdm-taskbar-control-height: 34px;
+}
+
+.bdm-responsive-root[data-bdm-height-mode='short'] .ng-taskbar__app,
+.bdm-responsive-root[data-bdm-height-mode='veryShort'] .ng-taskbar__app {
+  --bdm-taskbar-control-height: 32px;
+}
+
+.bdm-responsive-debug {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  z-index: 10000;
+  padding: 3px 6px;
+  border: 1px solid rgba(22, 217, 243, 0.5);
+  border-radius: 3px;
+  background: rgba(5, 8, 11, 0.92);
+  color: #40eaff;
+  font: 11px/1.2 ui-monospace, monospace;
+  pointer-events: none;
+}
+
+.bdm-responsive-container {
+  min-width: 0;
+  container-name: bdm-content;
+  container-type: inline-size;
+}
+
+.bdm-responsive-panel {
+  min-width: 0;
+  min-height: 0;
+  padding: var(--bdm-panel-padding);
+}
+
+.bdm-layout-grid {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--bdm-grid-min-column, 220px)), 1fr));
+}
+
+.bdm-layout-grid > *,
+.bdm-layout-flex > * {
+  min-width: 0;
+  min-height: 0;
+}
+
+.bdm-layout-flex {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+
+.bdm-scrollable-content {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+@container bdm-content (max-width: 720px) {
+  .bdm-layout-grid--adaptive {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

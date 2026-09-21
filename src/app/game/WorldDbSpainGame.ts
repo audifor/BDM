@@ -5,10 +5,13 @@ import { WORLD_DB_SPAIN_UNIVERSE_ID } from './NewGameUniverseCatalog'
 import { WorldDbSessionV1, type WorldDbSessionAccessV1 } from './WorldDbSession'
 import { bootstrapGameWorldFromWorldDb } from './WorldDbGameBootstrap'
 import { worldDbDatabasePath, worldDbRuntimeBundlePath } from './WorldDbRuntimeConfig'
+import { spainAcbCalendarForStartYear } from '@/data/worldCompetitionCalendars'
+import { attachWorldDbSpainCup } from './WorldDbSpainCupBootstrap'
 
 export const SPAIN_ACB_ECOSYSTEM_ID = 'ecosystem:ESP:acb'
 export const SPAIN_ACB_COMPETITION_ID = 'competition:ESP:liga-endesa'
 export const SPAIN_ACB_COMPETITION_SEASON_ID = 'edition:ESP:liga-endesa:2025-26'
+export const SPAIN_COPA_COMPETITION_SEASON_ID = 'edition:ESP:copa-del-rey:2025-26'
 export const SPAIN_ACB_CODE = 'SPAIN_ACB'
 
 export interface WorldDbSpainTeamOption {
@@ -73,13 +76,15 @@ export async function createWorldDbSpainGame(
     const selection = await readWorldDbSpainSelection(session)
     const chosen = selection.teams.find((team) => team.key === teamId)
     if (chosen === undefined) throw new Error(`Selected Spain ACB team is not in the canonical World DB catalog: ${teamId}`)
-    return await session.bootstrapGameWorld({
+    session.selectCompetitionSeasons([selection.competitionSeasonId, SPAIN_COPA_COMPETITION_SEASON_ID])
+    const world = await session.bootstrapGameWorld({
       source: selection.source,
       ecosystemId: selection.ecosystemId,
       competitionId: selection.competitionId,
       competitionSeasonId: selection.competitionSeasonId,
       teamId: chosen.key,
-    })
+    }, spainAcbCalendarForStartYear(2025))
+    return attachWorldDbSpainCup(world, session.getCompetitionFormat(SPAIN_COPA_COMPETITION_SEASON_ID))
   } finally {
     session.close()
   }

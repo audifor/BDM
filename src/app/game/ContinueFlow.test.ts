@@ -79,12 +79,14 @@ describe('continue flow', () => {
     expect(result.stopReason.type).toBe('safetyLimit')
   })
 
-  it('stops at the existing completed-season boundary without advancing', () => {
+  it('keeps the world clock moving after every currently scheduled game is complete', () => {
     const resolved = instantResult(createNewGame())
     const complete = { ...resolved, games: Object.fromEntries(Object.entries(resolved.games).map(([id, game]) => [id, { ...game, status: 'completed' }])) } as typeof resolved
 
-    expect(continueGame(complete).stopReason).toEqual({ type: 'seasonComplete' })
-    expect(getContinueStopReason(complete)).toEqual({ type: 'seasonComplete' })
+    expect(getContinueStopReason(complete)).toBeUndefined()
+    const result = continueGame(complete, 1)
+    expect(result.daysAdvanced).toBe(1)
+    expect(result.world.currentDate).toBe(addDays(complete.currentDate, 1))
   })
 
   it('rejects an invalid safety limit before changing the world', () => {

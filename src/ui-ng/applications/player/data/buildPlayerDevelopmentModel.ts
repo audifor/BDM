@@ -1,9 +1,9 @@
 import { DEVELOPMENT_DOMAINS, type DevelopmentDomain } from '@/domain/player/PlayerDevelopmentProfile'
-import { getPlayerAge, CANONICAL_RATING_KEYS, type CanonicalRatingKey } from '@/domain/player'
+import { getPlayerAge, PLAYER_TRUTH_RATING_KEYS, type PlayerTruthRatingKey } from '@/domain/player'
 import type { PlayerId, SeasonId } from '@/domain/ids'
 import { organizationIdForTeam } from '@/domain/ids'
 import { formatInjuryKind } from '@/domain/injury'
-import { ratingHistorySeries } from '@/domain/development/PlayerRatingHistory'
+import type { PlayerRatingHistory } from '@/domain/development/PlayerRatingHistory'
 import {
   formatRatingEvaluation,
   getOrganizationRatingEvaluation,
@@ -32,8 +32,8 @@ import { findTeamForPlayer, formatGameDateLabel } from './presentationHelpers'
 import type { OverviewGapModel, PresentationAvailability } from './playerWorkspaceModel'
 
 /** Canonical ratings of one family, in catalog order. */
-function ratingKeysForCategory(category: RatingCategory): readonly CanonicalRatingKey[] {
-  return CANONICAL_RATING_KEYS.filter((key) => ratingCategory(key) === category)
+function ratingKeysForCategory(category: RatingCategory): readonly PlayerTruthRatingKey[] {
+  return PLAYER_TRUTH_RATING_KEYS.filter((key) => ratingCategory(key) === category)
 }
 
 export interface DevelopmentContextBandModel {
@@ -53,7 +53,7 @@ export interface DevelopmentStimulusCategoryRowModel {
 }
 
 export interface DevelopmentStimulusRatingRowModel {
-  readonly id: CanonicalRatingKey
+  readonly id: PlayerTruthRatingKey
   readonly ratingLabel: string
   readonly categoryLabel: string
   readonly stimulus: number
@@ -90,7 +90,7 @@ export interface DevelopmentTrainingContextModel {
 
 /** One rating's season-by-season curve, reconstructed from the recorded rating deltas. */
 export interface DevelopmentCurveSeriesModel {
-  readonly id: CanonicalRatingKey
+  readonly id: PlayerTruthRatingKey
   readonly label: string
   readonly points: readonly number[]
   readonly delta: number
@@ -98,7 +98,7 @@ export interface DevelopmentCurveSeriesModel {
 
 /** A rating that moved in the last recorded offseason transition, with the season it moved in. */
 export interface DevelopmentMoverRowModel {
-  readonly id: CanonicalRatingKey
+  readonly id: PlayerTruthRatingKey
   readonly label: string
   readonly delta: number
   readonly seasonLabel: string
@@ -327,6 +327,36 @@ const POTENTIAL_NOTE =
   'Scouting evaluation ranges only; hidden internal ceilings are never shown as exact values.'
 const TRAINING_NOTE =
   'Training builds season stimulus; it does not mutate ratings directly during the season.'
+const PLAYER_TRUTH_KEYS = new Set<string>(PLAYER_TRUTH_RATING_KEYS)
+
+function playerTruthDeltas(change: PlayerRatingHistory[number]): Partial<Record<PlayerTruthRatingKey, number>> {
+  const deltas: Partial<Record<PlayerTruthRatingKey, number>> = {}
+  for (const [key, delta] of Object.entries(change.deltas)) {
+    if (PLAYER_TRUTH_KEYS.has(key) && delta !== 0) deltas[key as PlayerTruthRatingKey] = Number(delta)
+  }
+  return deltas
+}
+
+function playerTruthHistory(history: PlayerRatingHistory): PlayerRatingHistory {
+  return history.filter((change) => Object.keys(playerTruthDeltas(change)).length > 0)
+}
+
+function playerTruthRatingSeries(
+  currentRatings: Readonly<Record<string, number>>,
+  history: PlayerRatingHistory,
+  key: PlayerTruthRatingKey,
+  currentSeasonId: SeasonId,
+): readonly number[] {
+  const changes = history.map((entry) => playerTruthDeltas(entry)[key] ?? 0)
+  let running = currentRatings[key]! - changes.reduce((sum, delta) => sum + delta, 0)
+  const points = history.flatMap((entry, index) => {
+    const point = entry.seasonId === currentSeasonId ? [] : [running]
+    running += changes[index] ?? 0
+    return point
+  })
+  points.push(currentRatings[key]!)
+  return points
+}
 
 function formatSignedTrend(value: number): string {
   if (value > 0) return `+${value.toFixed(1)}`
@@ -336,24 +366,25 @@ function formatSignedTrend(value: number): string {
 
 function buildSeasonStimulus(world: GameWorld, playerId: PlayerId): DevelopmentSeasonStimulusModel {
   const stimulus = getDevelopmentStimulusForPlayer(world, playerId)
-  const byRating = stimulus?.byRating ?? Object.fromEntries(CANONICAL_RATING_KEYS.map((key) => [key, 0]))
+  const byRating = stimulus?.byRating as Readonly<Record<string, number>> | undefined
 
   const categoryTotals = new Map<RatingCategory, { total: number; count: number }>()
   for (const category of RADAR_CATEGORY_ORDER) {
     categoryTotals.set(category, { total: 0, count: 0 })
   }
 
-  const ratingRows: DevelopmentStimulusRatingRowModel[] = CANONICAL_RATING_KEYS.map((key) => {
-    const value = byRating[key] ?? 0
+  const ratingRows: DevelopmentStimulusRatingRowModel[] = PLAYER_TRUTH_RATING_KEYS.flatMap((key) => {
+    if (byRating === undefined || !Object.hasOwn(byRating, key)) return []
+    const value = byRating[key]!
     const category = ratingCategory(key)
     const bucket = categoryTotals.get(category)!
     categoryTotals.set(category, { total: bucket.total + value, count: bucket.count + 1 })
-    return {
+    return [{
       id: key,
       ratingLabel: ratingLabel(key),
       categoryLabel: CATEGORY_LABELS[category],
       stimulus: value,
-    }
+    }]
   })
 
   const categories = RADAR_CATEGORY_ORDER.map((category) => {
@@ -364,9 +395,9 @@ function buildSeasonStimulus(world: GameWorld, playerId: PlayerId): DevelopmentS
       stimulusTotal: bucket.total,
       ratingCount: bucket.count,
     }
-  }).filter((row) => row.stimulusTotal > 0)
+  }).filter((row) => row.ratingCount > 0)
 
-  const totalStimulus = ratingRows.reduce((sum, row) => sum + row.stimulus, 0)
+  const totalStimulus = byRating === undefined ? 0 : Object.values(byRating).reduce((sum, value) => sum + value, 0)
   const topRatings = [...ratingRows]
     .sort((left, right) => right.stimulus - left.stimulus || left.ratingLabel.localeCompare(right.ratingLabel))
     .filter((row) => row.stimulus > 0)
@@ -374,14 +405,13 @@ function buildSeasonStimulus(world: GameWorld, playerId: PlayerId): DevelopmentS
 
   return {
     totalStimulus,
-    categories: categories.length > 0 ? categories : RADAR_CATEGORY_ORDER.map((category) => ({
-      id: category,
-      categoryLabel: CATEGORY_LABELS[category],
-      stimulusTotal: 0,
-      ratingCount: categoryTotals.get(category)?.count ?? 0,
-    })),
+    categories,
     topRatings,
-    contextNote: STIMULUS_NOTE,
+    contextNote: byRating === undefined
+      ? STIMULUS_NOTE
+      : ratingRows.length > 0
+        ? STIMULUS_NOTE
+        : 'Training stimulus exists only on the legacy rating profile; no canonical 80-key breakdown is available.',
   }
 }
 
@@ -477,13 +507,15 @@ function buildLongitudinal(
     }
   }
 
-  const history = world.playerRatingHistoryByPlayerId[playerId] ?? []
+  const storedHistory = world.playerRatingHistoryByPlayerId[playerId] ?? []
+  const history = playerTruthHistory(storedHistory)
   if (history.length === 0) {
     return {
       headline: 'Career development curve',
       status: 'unavailable',
-      message:
-        'No offseason transition has been recorded yet, so there is no curve to draw. It appears after the first season closes.',
+      message: storedHistory.length > 0
+        ? 'The save contains legacy 35-rating history, but no season-by-season movement for the canonical 80 ratings.'
+        : 'No offseason transition has been recorded yet, so there is no curve to draw. It appears after the first season closes.',
       series: [],
       movers: [],
       events: buildDevelopmentEvents(world, playerId),
@@ -491,28 +523,28 @@ function buildLongitudinal(
     }
   }
 
-  const movedKeys = new Set<CanonicalRatingKey>()
+  const movedKeys = new Set<PlayerTruthRatingKey>()
   for (const transition of history) {
-    for (const key of Object.keys(transition.deltas) as CanonicalRatingKey[]) {
-      movedKeys.add(key)
+    for (const key of Object.keys(playerTruthDeltas(transition))) {
+      movedKeys.add(key as PlayerTruthRatingKey)
     }
   }
 
   const ranked = [...movedKeys].sort((left, right) => {
-    const leftTotal = history.reduce((sum, t) => sum + (t.deltas[left] ?? 0), 0)
-    const rightTotal = history.reduce((sum, t) => sum + (t.deltas[right] ?? 0), 0)
+    const leftTotal = history.reduce((sum, t) => sum + (playerTruthDeltas(t)[left] ?? 0), 0)
+    const rightTotal = history.reduce((sum, t) => sum + (playerTruthDeltas(t)[right] ?? 0), 0)
     return Math.abs(rightTotal) - Math.abs(leftTotal) || left.localeCompare(right)
   })
 
   const series: DevelopmentCurveSeriesModel[] = ranked
     .slice(0, MAX_CURVE_SERIES)
     .map((key) => {
-      const points = ratingHistorySeries(
+      const points = playerTruthRatingSeries(
         player.basketball.ratings,
         history,
         key,
         world.currentSeasonId,
-      ).map((point) => point.value)
+      )
       return {
         id: key,
         label: ratingLabel(key),
@@ -522,9 +554,8 @@ function buildLongitudinal(
     })
 
   const lastTransition = history[history.length - 1]!
-  const movers: DevelopmentMoverRowModel[] = (
-    Object.entries(lastTransition.deltas) as [CanonicalRatingKey, number][]
-  )
+  const movers: DevelopmentMoverRowModel[] = Object.entries(playerTruthDeltas(lastTransition))
+    .map(([key, delta]) => [key as PlayerTruthRatingKey, Number(delta)] as const)
     .sort((left, right) => Math.abs(right[1]) - Math.abs(left[1]) || left[0].localeCompare(right[0]))
     .map(([key, delta]) => ({
       id: key,
@@ -533,12 +564,7 @@ function buildLongitudinal(
       seasonLabel: seasonLabelFor(world, lastTransition.seasonId),
     }))
 
-  const totalMovement = history.reduce(
-    (sum, transition) =>
-      sum +
-      Object.values(transition.deltas).reduce((inner, delta) => inner + Math.abs(delta), 0),
-    0,
-  )
+  const totalMovement = history.reduce((sum, transition) => sum + Object.values(playerTruthDeltas(transition)).reduce((inner, delta) => inner + Math.abs(delta), 0), 0)
 
   return {
     headline: 'Career development curve',
@@ -633,14 +659,14 @@ function buildCategoryDevelopment(
 ): readonly DevelopmentCategoryRowModel[] {
   const player = world.players[playerId]
   if (player === undefined) return []
-  const history = world.playerRatingHistoryByPlayerId[playerId] ?? []
+  const history = playerTruthHistory(world.playerRatingHistoryByPlayerId[playerId] ?? [])
 
   return RADAR_CATEGORY_ORDER.map((category) => {
     const ratings = ratingKeysForCategory(category)
     const trend = ratings.reduce(
       (sum, key) =>
         sum +
-        history.reduce((inner, transition) => inner + (transition.deltas[key] ?? 0), 0),
+        history.reduce((inner, transition) => inner + (playerTruthDeltas(transition)[key] ?? 0), 0),
       0,
     )
     const scouted = scoutPotential.rows.find(
@@ -785,17 +811,13 @@ function buildCategoryCurve(
   const player = world.players[playerId]
   if (player === undefined) return { categoryCurve: [], markers: [] }
 
-  const history = world.playerRatingHistoryByPlayerId[playerId] ?? []
+  const history = playerTruthHistory(world.playerRatingHistoryByPlayerId[playerId] ?? [])
   const seasonIds = [...history.map((entry) => entry.seasonId), world.currentSeasonId]
   const lastTransition = history.at(-1)
 
   const categoryCurve = RADAR_CATEGORY_ORDER.map((category) => {
     const keys = ratingKeysForCategory(category)
-    const series = keys.map((key) =>
-      ratingHistorySeries(player.basketball.ratings, history, key, world.currentSeasonId).map(
-        (point) => point.value,
-      ),
-    )
+    const series = keys.map((key) => playerTruthRatingSeries(player.basketball.ratings, history, key, world.currentSeasonId))
     const points = series[0]?.map((_value, index) =>
       Math.round(
         series.reduce((sum, entry) => sum + (entry[index] ?? entry[entry.length - 1] ?? 0), 0) /
@@ -809,7 +831,7 @@ function buildCategoryCurve(
       delta: points.length < 2 ? 0 : points[points.length - 1]! - points[0]!,
       lastDelta: lastTransition === undefined
         ? 0
-        : keys.reduce((sum, key) => sum + (lastTransition.deltas[key] ?? 0), 0),
+        : keys.reduce((sum, key) => sum + (playerTruthDeltas(lastTransition)[key] ?? 0), 0),
     }
   })
 
@@ -821,7 +843,7 @@ function buildCategoryCurve(
       kind: 'transition',
       dateLabel: seasonLabelFor(world, transition.seasonId),
       columnIndex: Math.max(0, seasonIds.indexOf(transition.seasonId)),
-      detail: `${Object.values(transition.deltas).reduce((sum, delta) => sum + Math.abs(delta), 0)} rating points moved.`,
+      detail: `${Object.values(playerTruthDeltas(transition)).reduce((sum, delta) => sum + Math.abs(delta), 0)} canonical rating points moved.`,
     })
   }
   for (const injury of Object.values(world.injuriesById)) {
@@ -847,7 +869,7 @@ function buildDetailByCategory(
   curve: readonly DevelopmentCategoryCurveModel[],
 ): Readonly<Record<RatingCategory, DevelopmentDetailModel>> {
   const player = world.players[playerId]!
-  const history = world.playerRatingHistoryByPlayerId[playerId] ?? []
+  const history = playerTruthHistory(world.playerRatingHistoryByPlayerId[playerId] ?? [])
   const trend = getBaseDevelopmentTrend(getPlayerAge(world, playerId))
   const perTransition = history.length === 0 ? 0 : trend
 
@@ -857,7 +879,7 @@ function buildDetailByCategory(
     const movements = keys
       .map((key) => ({
         key,
-        delta: history.reduce((sum, entry) => sum + (entry.deltas[key] ?? 0), 0),
+        delta: history.reduce((sum, entry) => sum + (playerTruthDeltas(entry)[key] ?? 0), 0),
         value: player.basketball.ratings[key],
       }))
       .sort((left, right) => right.delta - left.delta || right.value - left.value)
@@ -913,9 +935,12 @@ function buildTrainingPlan(
   )
   const primary = ranked[0]
   const secondary = ranked.find((entry) => entry.id !== primary?.id)
+  const hasCanonicalBreakdown = ranked.length > 0
   // A season of stimulus above the player's own average category load reads as a heavy plan.
   const averageLoad = ranked.length === 0 ? 0 : stimulusTotal / ranked.length
-  const loadFill = stimulusTotal === 0 ? null : Math.min(100, Math.round((stimulusTotal / Math.max(1, averageLoad * 2)) * 100))
+  const loadFill = !hasCanonicalBreakdown || stimulusTotal === 0
+    ? null
+    : Math.min(100, Math.round((stimulusTotal / Math.max(1, averageLoad * 2)) * 100))
 
   return {
     focusLabel: trainingContext.individualPlanActive
@@ -926,14 +951,19 @@ function buildTrainingPlan(
       : trainingContext.teamFocus === null
         ? 'Neither the team nor the player has a plan in force.'
         : `Team plan · ${trainingContext.teamIntensity ?? 'intensity not set'}`,
-    secondaryLabel: primary === undefined ? 'Nothing assigned' : `${primary.categoryLabel} development`,
+    secondaryLabel: !hasCanonicalBreakdown
+      ? 'Canonical category breakdown unavailable'
+      : primary === undefined ? 'Nothing assigned' : `${primary.categoryLabel} development`,
     secondaryDetail:
-      secondary === undefined
+      !hasCanonicalBreakdown
+        ? seasonStimulus.contextNote
+        : secondary === undefined
         ? 'No second category has received stimulus this season.'
         : `${primary?.categoryLabel ?? '—'} carries ${Math.round(primary?.stimulusTotal ?? 0)} of the ${Math.round(stimulusTotal)} stimulus points; ${secondary.categoryLabel} follows with ${Math.round(secondary.stimulusTotal)}.`,
     loadFill,
-    loadLabel:
-      stimulusTotal === 0
+    loadLabel: !hasCanonicalBreakdown
+      ? 'Unknown'
+      : stimulusTotal === 0
         ? 'None'
         : loadFill !== null && loadFill >= 75
           ? 'High'
@@ -941,7 +971,7 @@ function buildTrainingPlan(
             ? 'Moderate'
             : 'Low',
     loadTone:
-      stimulusTotal === 0
+      !hasCanonicalBreakdown || stimulusTotal === 0
         ? 'neutral'
         : loadFill !== null && loadFill >= 75
           ? 'high'
@@ -956,7 +986,7 @@ function buildTrainingEffect(
   playerId: PlayerId,
   seasonStimulus: DevelopmentSeasonStimulusModel,
 ): DevelopmentTrainingEffectModel {
-  const history = world.playerRatingHistoryByPlayerId[playerId] ?? []
+  const history = playerTruthHistory(world.playerRatingHistoryByPlayerId[playerId] ?? [])
   const transitions = Math.max(1, history.length)
   const rows = [...seasonStimulus.categories]
     .filter((entry) => entry.stimulusTotal > 0)
@@ -981,7 +1011,9 @@ function buildTrainingEffect(
     confidenceLabel:
       confidenceFill === null ? 'Unknown' : confidenceFill >= 75 ? 'High' : confidenceFill >= 40 ? 'Medium' : 'Low',
     confidenceFill,
-    note: `Estimated impact (next transition), from the stimulus recorded this season over ${transitions} recorded ${transitions === 1 ? 'transition' : 'transitions'}. A projection, never a guarantee.`,
+    note: seasonStimulus.categories.length === 0
+      ? seasonStimulus.contextNote
+      : `Estimated impact (next transition), from the stimulus recorded this season over ${transitions} recorded ${transitions === 1 ? 'transition' : 'transitions'}. A projection, never a guarantee.`,
   }
 }
 

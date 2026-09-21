@@ -4,6 +4,7 @@ import { createCompetition, defaultLeagueCompetitionRules } from '@/domain/compe
 import { competitionIdFromString, seasonIdFromString } from '@/domain/ids'
 import { createSeason } from '@/domain/season'
 import { createGameWorld, migrateTrainingResponsibilities, updateGameWorld, type GameWorld } from '@/domain/world'
+import { createPlayer } from '@/domain/player'
 import { generateNcaaLikeSchedule, generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { generateWorld } from '@/engine/world'
 import { ensureNcaaEligibility } from '@/engine/eligibility'
@@ -75,7 +76,12 @@ function createSingleNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset
 
 function namespaceWorld(world: GameWorld, prefix: string): GameWorld {
   const serialized = JSON.stringify(world).replaceAll('generated-staff-', '__staff__').replaceAll('generated-', prefix).replaceAll('__staff__', 'generated-staff-')
-  return JSON.parse(serialized) as GameWorld
+  const parsed = JSON.parse(serialized) as GameWorld
+  // JSON.stringify/parse drops the non-enumerable, canonical-factory-derived `Player.potential`
+  // property, leaving every renamed player without it. Rebuilding each one through the same
+  // `createPlayer` factory the original construction used restores it deterministically from
+  // the (JSON-safe, enumerable) `development` data that did survive the round-trip.
+  return { ...parsed, players: Object.fromEntries(Object.entries(parsed.players).map(([id, player]) => [id, createPlayer(player)])) }
 }
 
 function mergeIndependentWorlds(primary: GameWorld, secondary: GameWorld): GameWorld {

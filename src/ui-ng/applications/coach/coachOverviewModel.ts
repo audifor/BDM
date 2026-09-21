@@ -10,7 +10,7 @@
  * derivation or formula is duplicated, and it never writes to the world.
  *
  * REAL (source in brackets):
- *   · Employment        → identity.role / identity.club  [coachEmploymentByCoachId + teams]
+ *   · Employment        → identity.role / identity.club  [headCoach TeamStaffAssignment + teams]
  *   · Development       → identity.developmentPoints, the development summary and its skill bars
  *                         [coachRpgProfilesByCoachId → buildCoachDevelopmentSummary / buildCoachSkillRows]
  *   · Reputation        → the reputation summary metrics and trend  [coachReputationProfilesByCoachId,
@@ -29,8 +29,7 @@
  * they surface as copy, so they can never be mistaken for runtime data):
  *   · identity.level / identity.careerXp — the RPG profile stores progress points, never a level.
  *   · identity.rows — archetype, shadow archetype and moral alignment are not modelled.
- *   · attributes / personality — the display labels ("Politics", "Integrity", "Empathy"…) do not map
- *     1:1 onto `StaffProfessionalProfile` or `Personality`, so re-sourcing them would invent a rule.
+ *   · personality — the display labels do not map 1:1 onto the current `Personality` dimensions.
  *   · risks — the four heat/risk categories are not modelled.
  *   · favors, network (agent / federation / underground), power (leverage) — character fiction the
  *     simulation does not track.
@@ -51,6 +50,7 @@ import {
 } from '@/domain/coachFinances'
 import type { CoachRpgProfile } from '@/domain/coachRpg'
 import type { CoachId, PlayerId, StaffPersonId } from '@/domain/ids'
+import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { getRelationshipBandForPeople, getRelationshipsForPerson, type GameWorld } from '@/domain/world'
 import { formatCoachReputationDelta } from '@/ui/coachReputationPresentation'
 import { formatMoney } from '@/ui/formatters'
@@ -267,7 +267,7 @@ function buildStatusRows({
       detail: 'No club currently employs you.',
       badge: career.role,
       tone: 'warning',
-      tooltip: 'Employment is read from coachEmploymentByCoachId.',
+      tooltip: 'Employment is read from the current headCoach Staff assignment.',
     })
   }
 
@@ -533,12 +533,17 @@ export function buildCoachOverviewModel(
   const coachId = world.userCoachId
   const coach = world.coaches[coachId]
   if (coach === undefined) return mock
+  const staffProfile = world.staffPeopleById[coach.staffProfileId]
 
-  const employment = world.coachEmploymentByCoachId[coachId]
-  const teamId = employment?.status === 'employed' ? employment.teamId : undefined
+  const headCoachAssignment = staffProfile === undefined
+    ? undefined
+    : Object.values(world.teamStaffAssignmentsById).find(
+        (assignment) => assignment.staffPersonId === staffProfile.id && assignment.role === 'headCoach',
+      )
+  const teamId = headCoachAssignment?.teamId
   const team = teamId === undefined ? undefined : world.teams[teamId]
   const board = teamId === undefined ? undefined : world.boardStatesByTeamId[teamId]
-  const isEmployed = employment?.status === 'employed' && team !== undefined
+  const isEmployed = headCoachAssignment !== undefined && team !== undefined
 
   const rpg = world.coachRpgProfilesByCoachId[coachId]
   const finances = world.coachFinancesByCoachId[coachId]
@@ -579,8 +584,11 @@ export function buildCoachOverviewModel(
   })
 
   return {
+    ...(staffProfile === undefined ? {} : { staffProfile }),
     identity: {
-      name: `${coach.firstName} ${coach.lastName}`,
+      name: staffProfile === undefined
+        ? `${coach.firstName} ${coach.lastName}`
+        : `${staffProfile.identity.firstName} ${staffProfile.identity.lastName}`,
       // MOCK: the RPG profile stores progress points, never a character level.
       level: mock.identity.level,
       role: isEmployed ? 'Head Coach' : 'Free agent',
@@ -591,8 +599,13 @@ export function buildCoachOverviewModel(
       careerXp: mock.identity.careerXp,
       developmentPoints: development?.developmentPoints ?? mock.identity.developmentPoints,
     },
-    // MOCK: the display labels do not map 1:1 onto `StaffProfessionalProfile`.
-    attributes: mock.attributes,
+    attributes: staffProfile === undefined
+      ? []
+      : STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((id) => ({
+          id,
+          label: id.replace(/[A-Z]/g, (letter) => ` ${letter}`).replace(/^./, (letter) => letter.toUpperCase()),
+          value: staffProfile.professional.attributes[id],
+        })),
     // MOCK: the display labels do not map 1:1 onto `Personality`.
     personality: mock.personality,
     status: buildStatusRows({ board, career, development, isEmployed, legacy, opportunities, reputation }),

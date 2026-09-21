@@ -1,0 +1,1080 @@
+/*
+ * PlayerSpace responsive pilot.
+ * These are named container thresholds for the width PlayerSpace actually receives; they do not
+ * introduce viewport breakpoints. The 1920px master layout remains governed by the original CSS.
+ */
+.po-root {
+  min-width: 0;
+  container-name: player-space;
+  container-type: inline-size;
+}
+
+@container player-space (max-width: 1799px) {
+  .po-root .ng-application-workspace {
+    --po-identity-height: 156px;
+    --bdm-page-tabs-height: 40px;
+    --ng-workspace-tabs-height: var(--bdm-page-tabs-height);
+  }
+
+  .po-root .ng-application-workspace__identity-slot {
+    margin-inline: var(--ng-workspace-padding);
+  }
+
+  .po-root .ng-workspace-tabs__tab {
+    padding-inline: clamp(10px, 1.2cqi, 18px);
+    font-size: clamp(11px, 0.9cqi, 13px);
+  }
+
+  .po-root .po-identity {
+    grid-template-columns:
+      minmax(210px, 1.3fr)
+      minmax(84px, 0.55fr)
+      minmax(148px, 0.8fr)
+      minmax(156px, 0.9fr)
+      minmax(180px, 1fr);
+  }
+
+  .po-root .po-identity > * {
+    padding: 8px 10px;
+  }
+
+  .po-root .po-identity__person {
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .po-root .po-portrait {
+    width: 92px;
+    height: 136px;
+  }
+
+  .po-root .po-identity__name {
+    font-size: clamp(22px, 1.8cqi, 31px);
+  }
+
+  .po-root .po-identity__measure-value {
+    font-size: clamp(18px, 1.45cqi, 24px);
+  }
+
+  .po-root .po-identity__pos-row {
+    gap: 12px;
+  }
+
+  .po-root .ng-inspector-pane {
+    width: clamp(208px, 22cqi, 288px);
+    min-width: 0;
+    max-width: none;
+  }
+
+  .po-root .ng-inspector-pane.is-collapsed {
+    width: auto;
+  }
+
+  .po-root .ng-inspector-pane__content {
+    padding: var(--ng-spacing-8);
+  }
+
+  .po-root .po-compare__panel {
+    width: clamp(300px, 36cqi, 420px);
+  }
+
+  .po-root .ng-workspace-body__content,
+  .po-root .ng-workspace-body__main,
+  .po-root .po-workspace-content {
+    min-width: 0;
+  }
+
+  .po-root .po-workspace-content {
+    min-height: 100%;
+    overflow-x: hidden;
+  }
+
+  .po-root .po-overview,
+  .po-root .po-at-board,
+  .po-root .po-med-board,
+  .po-root .po-sc-board,
+  .po-root .po-dev-board,
+  .po-root .po-pf-board,
+  .po-root .po-hs-board {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .po-root .po-overview {
+    grid-template-rows: minmax(250px, 1fr) minmax(230px, 1fr) minmax(145px, 0.7fr);
+  }
+
+  .po-root .po-ov-row {
+    gap: 8px;
+  }
+
+  .po-root .po-ov-panel {
+    padding-inline: 9px;
+  }
+
+  .po-root .po-ov-panel__head {
+    margin-inline: -9px;
+    padding-inline: 9px;
+  }
+
+  .po-root .po-at-board,
+  .po-root .po-med-board,
+  .po-root .po-sc-board,
+  .po-root .po-dev-board,
+  .po-root .po-pf-board,
+  .po-root .po-hs-board {
+    gap: 8px;
+  }
+
+  .po-root .po-at-col,
+  .po-root .po-med-col,
+  .po-root .po-med-split,
+  .po-root .po-med-stack,
+  .po-root .po-sc-band,
+  .po-root .po-dev-band,
+  .po-root .po-dev-band__stack,
+  .po-root .po-pf-band--upper,
+  .po-root .po-hs-main,
+  .po-root .po-hs-row--middle,
+  .po-root .po-hs-row--stack,
+  .po-root .po-hs-row--milestones {
+    gap: 8px;
+  }
+
+  .po-root .po-hs-board {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 24cqi);
+  }
+
+  .po-root .po-hs-panel,
+  .po-root .po-dev-panel,
+  .po-root .po-pf-panel,
+  .po-root .po-at-panel,
+  .po-root .po-med-panel,
+  .po-root .po-sc-panel {
+    padding-inline: 8px;
+  }
+
+  .po-root svg {
+    max-width: 100%;
+  }
+}
+
+@container player-space (max-width: 1440px) {
+  .po-root .ng-application-workspace {
+    --po-identity-height: 154px;
+    --bdm-page-tabs-height: 38px;
+    --ng-workspace-tabs-height: var(--bdm-page-tabs-height);
+  }
+
+  /* The main page is the vertical scroll region at short workstation heights. */
+  .po-root .ng-workspace-body__main {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .po-root .ng-workspace-body__content {
+    overflow: hidden;
+  }
+
+  .po-root .ng-workspace-tabs__list {
+    scrollbar-width: thin;
+    overscroll-behavior-x: contain;
+  }
+
+  .po-root .ng-workspace-tabs__tab {
+    flex: 0 0 auto;
+    min-width: max-content;
+    padding-inline: clamp(8px, 1.1cqi, 15px);
+  }
+
+  .po-root .po-overview,
+  .po-root .po-at-board,
+  .po-root .po-med-board,
+  .po-root .po-sc-board,
+  .po-root .po-dev-board,
+  .po-root .po-pf-board,
+  .po-root .po-hs-board {
+    height: auto;
+    min-height: 680px;
+    overflow: visible;
+  }
+
+  /* Overview keeps all three bands; independent modules get room in two columns. */
+  .po-root .po-overview {
+    grid-template-rows: auto auto auto;
+    grid-auto-rows: minmax(180px, auto);
+  }
+
+  .po-root .po-ov-row--identity,
+  .po-root .po-ov-row--intel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .po-root .po-ov-row--identity > :nth-child(3),
+  .po-root .po-ov-row--intel > :nth-child(3) {
+    grid-column: 1 / -1;
+  }
+
+  .po-root .po-ov-row--actions {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  }
+
+  /* Skills retain the category and rating matrix side by side; detail modules use the full row. */
+  .po-root .po-at-board {
+    grid-template-columns: minmax(272px, 0.72fr) minmax(302px, 1.7fr);
+    grid-template-rows: auto auto;
+    min-height: 700px;
+  }
+
+  .po-root .po-at-col--left {
+    grid-column: 1;
+  }
+
+  .po-root .po-at-col--center {
+    grid-column: 2;
+  }
+
+  .po-root .po-at-col--right {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: minmax(250px, auto) auto;
+  }
+
+  .po-root .po-at-detail {
+    grid-column: 1 / -1;
+  }
+
+  /* Medical's detail and history span both columns; readiness and body map stay adjacent. */
+  .po-root .po-med-board {
+    grid-template-columns: minmax(250px, 0.88fr) minmax(0, 1.12fr);
+    grid-template-rows: auto auto auto;
+    min-height: 760px;
+  }
+
+  .po-root .po-med-col--left {
+    grid-column: 1;
+  }
+
+  .po-root .po-med-col--center {
+    grid-column: 2;
+  }
+
+  .po-root .po-med-col--right {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: minmax(340px, auto);
+  }
+
+  .po-root .po-med-detail {
+    grid-column: 1 / -1;
+  }
+
+  .po-root .po-med-filters {
+    grid-column: 1 / -1;
+  }
+
+  /* Scouting knowledge and evaluation panels keep a two-column reading order. */
+  .po-root .po-sc-board {
+    grid-template-rows: auto auto auto auto;
+    min-height: 820px;
+  }
+
+  .po-root .po-sc-band--profile,
+  .po-root .po-sc-band--projection {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .po-root .po-sc-band--status {
+    grid-template-columns: minmax(260px, 0.75fr) minmax(0, 1.25fr);
+  }
+
+  /* Development charts reflow independently while preserving every band and panel. */
+  .po-root .po-dev-board {
+    grid-template-rows: auto auto auto auto;
+    min-height: 820px;
+  }
+
+  .po-root .po-dev-band--overview {
+    grid-template-columns: minmax(0, 1.8fr) minmax(180px, 0.7fr);
+  }
+
+  .po-root .po-dev-band--curve {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr);
+  }
+
+  .po-root .po-dev-band--curve > :last-child {
+    grid-column: 1 / -1;
+  }
+
+  .po-root .po-dev-band__stack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .po-root .po-dev-band--last {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .po-root .po-dev-band--last > :last-child {
+    grid-column: 1 / -1;
+  }
+
+  /* Performance log remains a local table area; its inspector keeps its own column. */
+  .po-root .po-pf-board {
+    min-height: 720px;
+  }
+
+  .po-root .po-pf-band--upper {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .po-root .po-pf-band--upper > :last-child {
+    grid-column: 1 / -1;
+  }
+
+  .po-root .po-pf-log__scroll,
+  .po-root .pc-schedule__scroll {
+    min-width: 0;
+    overflow: auto;
+    overscroll-behavior-x: contain;
+  }
+
+  .po-root .po-pf-log__table [data-responsive-priority='4'] {
+    display: none !important;
+  }
+
+  /* Column controls reveal the full game log; the surrounding log region scrolls locally. */
+  .po-root .po-pf-log__table:has(.bdm-data-grid__column-manager) {
+    overflow-x: auto;
+  }
+
+  .po-root .po-pf-log__table:has(.bdm-data-grid__column-manager) table {
+    min-width: 1040px;
+  }
+
+  .po-root .po-pf-log__table:has(.bdm-data-grid__column-manager) [data-responsive-priority] {
+    display: table-cell !important;
+  }
+
+  /* History detail is secondary to the career record and moves below it at this width. */
+  .po-root .po-hs-board {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    min-height: 720px;
+  }
+
+  .po-root .po-hs-main {
+    grid-template-rows: minmax(112px, auto) minmax(220px, auto) minmax(150px, auto) minmax(48px, auto);
+  }
+
+  .po-root .po-hs-detail {
+    min-height: 280px;
+  }
+
+  .po-root .po-hs-row--milestones {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .po-root [class*='__label'],
+  .po-root [class*='__meta'],
+  .po-root [class*='__note'],
+  .po-root [class*='__date'] {
+    font-size: max(10px, 1em);
+  }
+
+  .po-root .po-hs-table {
+    overflow: auto;
+  }
+
+  .po-root .po-hs-table__head.is-team,
+  .po-root .po-hs-table__row.is-team {
+    min-width: 640px;
+  }
+
+  /* Contract facts remain visible while its independent summary panels use two columns. */
+  .po-root .pc-root {
+    min-height: 680px;
+    height: auto;
+    overflow: visible;
+  }
+
+  .po-root .pc-root__row--summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .po-root .pc-root__row--summary > :last-child {
+    grid-column: 1 / -1;
+  }
+
+  .po-root .pc-root__row--closing {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container player-space (max-width: 1280px) {
+  .po-root .ng-application-workspace {
+    --po-identity-height: 210px;
+    --bdm-page-tabs-height: 36px;
+    --ng-workspace-tabs-height: var(--bdm-page-tabs-height);
+  }
+
+  .po-root .po-identity {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.85fr) minmax(0, 0.95fr);
+    grid-template-rows: minmax(112px, 1fr) minmax(74px, 0.72fr);
+  }
+
+  .po-root .po-identity__person {
+    grid-column: 1 / 3;
+    grid-row: 1;
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .po-root .po-identity__positions {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .po-root .po-portrait {
+    width: 72px;
+    height: 108px;
+  }
+
+  .po-root .po-identity__name {
+    font-size: clamp(20px, 2.6cqi, 27px);
+  }
+
+  .po-root .po-identity__measures {
+    grid-column: 1;
+    grid-row: 2;
+    justify-content: space-around;
+    gap: 4px;
+  }
+
+  .po-root .po-identity__condition {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .po-root .po-identity__contract {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  .po-root .po-identity__status-list,
+  .po-root .po-identity__contract-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .po-root .po-status {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: center;
+    gap: 2px;
+  }
+
+  .po-root .po-status__label {
+    overflow: hidden;
+    font-size: var(--bdm-font-min-secondary, 10px);
+    letter-spacing: 0.06em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .po-root .po-status__value {
+    font-size: 11px;
+  }
+
+  .po-root .po-identity__section-label,
+  .po-root .po-identity__fact-label,
+  .po-root .po-identity__pos-label,
+  .po-root .po-identity__measure-label {
+    font-size: var(--bdm-font-min-secondary, 10px);
+  }
+
+  .po-root .po-identity__fact-value,
+  .po-root .po-identity__team,
+  .po-root .po-identity__meta-team-link.entity-link {
+    font-size: 12px;
+  }
+
+  .po-root .po-identity__measure-value {
+    font-size: 18px;
+  }
+
+  .po-root .po-identity__pos-value {
+    font-size: 22px;
+  }
+
+  .po-root .po-identity__contract-top {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .po-root .po-identity__actions .ng-btn {
+    min-height: var(--bdm-control-min-height, 28px);
+    height: auto;
+    padding-inline: 4px;
+    font-size: max(10px, var(--bdm-font-min-secondary, 10px));
+  }
+
+  .po-root .ng-inspector-pane {
+    width: clamp(184px, 21cqi, 226px);
+  }
+
+  .po-root .ng-inspector-pane.is-collapsed {
+    width: auto;
+  }
+
+  .po-root .po-at-board {
+    grid-template-columns: minmax(272px, 0.62fr) minmax(302px, 1.38fr);
+    min-height: 760px;
+  }
+
+  .po-root .po-at-matrix .po-attr-rating {
+    grid-template-columns: minmax(92px, 1.3fr) 32px minmax(48px, 2fr) 28px 46px;
+    gap: 5px;
+  }
+
+  .po-root .po-at-matrix__thead {
+    grid-template-columns: minmax(92px, 1.3fr) 32px minmax(48px, 2fr) 28px 46px;
+    gap: 5px;
+  }
+
+  .po-root .po-med-board {
+    grid-template-columns: minmax(220px, 0.82fr) minmax(0, 1.18fr);
+    min-height: 800px;
+  }
+
+  .po-root .po-med-col--right {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .po-root .po-sc-band--status {
+    grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1.28fr);
+  }
+
+  .po-root .po-dev-board {
+    min-height: 860px;
+  }
+
+  .po-root .po-hs-row--middle {
+    grid-template-columns: minmax(0, 1.35fr) minmax(250px, 0.8fr);
+  }
+
+  .po-root .pc-root__row--summary {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+@container player-space (max-width: 920px) {
+  /* This fallback is for a genuinely narrow PlayerSpace embedded beside other desktop regions. */
+  .po-root .ng-application-workspace {
+    --po-identity-height: 286px;
+    --bdm-page-tabs-height: 34px;
+    --ng-workspace-tabs-height: var(--bdm-page-tabs-height);
+  }
+
+  .po-root .po-identity {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: minmax(112px, auto) repeat(2, minmax(74px, auto));
+  }
+
+  .po-root .po-identity__person {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .po-root .po-identity__positions {
+    grid-column: 1;
+    grid-row: 2;
+    align-items: center;
+  }
+
+  .po-root .po-identity__measures {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .po-root .po-identity__condition {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .po-root .po-identity__contract {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .po-root .ng-inspector-pane {
+    width: 184px;
+  }
+
+  .po-root .ng-inspector-pane.is-collapsed {
+    width: auto;
+  }
+
+  .po-root .po-ov-row--identity,
+  .po-root .po-ov-row--intel,
+  .po-root .po-ov-row--actions,
+  .po-root .po-at-board,
+  .po-root .po-med-board,
+  .po-root .po-sc-band--profile,
+  .po-root .po-sc-band--projection,
+  .po-root .po-dev-band--overview,
+  .po-root .po-dev-band--curve,
+  .po-root .po-dev-band--middle,
+  .po-root .po-dev-band__stack,
+  .po-root .po-dev-band--last,
+  .po-root .po-pf-band--upper,
+  .po-root .po-hs-row--middle,
+  .po-root .po-hs-row--milestones,
+  .po-root .pc-root__row--summary,
+  .po-root .pc-root__row--closing {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .po-root .po-ov-row--identity > :nth-child(3),
+  .po-root .po-ov-row--intel > :nth-child(3),
+  .po-root .po-at-col--left,
+  .po-root .po-at-col--center,
+  .po-root .po-at-col--right,
+  .po-root .po-med-col--left,
+  .po-root .po-med-col--center,
+  .po-root .po-med-col--right,
+  .po-root .po-sc-band--profile > *,
+  .po-root .po-sc-band--projection > *,
+  .po-root .po-dev-band--curve > :last-child,
+  .po-root .po-dev-band--middle > :last-child,
+  .po-root .po-dev-band--last > :last-child,
+  .po-root .po-pf-band--upper > :last-child,
+  .po-root .pc-root__row--summary > :last-child {
+    grid-column: 1 / -1;
+  }
+
+  .po-root .po-at-col--left,
+  .po-root .po-at-col--center,
+  .po-root .po-at-col--right {
+    grid-column: 1;
+  }
+
+  .po-root .po-at-col--right {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .po-root .po-at-detail {
+    grid-column: 1 / -1;
+  }
+
+  .po-root .po-med-col--right {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .po-root .po-med-detail {
+    grid-column: 1;
+  }
+
+  .po-root .po-sc-board {
+    min-height: 1040px;
+  }
+
+  .po-root .po-dev-board {
+    min-height: 1040px;
+  }
+
+  .po-root .po-pf-board {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto auto;
+    min-height: 980px;
+  }
+
+  .po-root .po-pf-board > .po-pf-filters,
+  .po-root .po-pf-board > .po-pf-kpis,
+  .po-root .po-pf-board > .po-pf-band--upper,
+  .po-root .po-pf-board > .po-pf-form,
+  .po-root .po-pf-board > .po-pf-log,
+  .po-root .po-pf-board > .po-pf-inspector {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .po-root .po-pf-inspector {
+    min-height: 280px;
+  }
+
+  .po-root .po-pf-log__table [data-responsive-priority='3'],
+  .po-root .po-pf-log__table [data-responsive-priority='4'] {
+    display: none !important;
+  }
+
+  .po-root .po-pf-log__table:has(.bdm-data-grid__column-manager) [data-responsive-priority] {
+    display: table-cell !important;
+  }
+
+  .po-root .po-hs-board {
+    min-height: 800px;
+  }
+
+  .po-root .po-hs-row--milestones > * {
+    grid-column: 1;
+  }
+
+  .po-root .pc-root {
+    min-height: 900px;
+  }
+}
+
+@container player-space (max-width: 620px) {
+  /* Preserve two independent work areas until the available width is truly too small. */
+  .po-root .po-at-col--left,
+  .po-root .po-at-col--right {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .po-root .po-at-col--right > *,
+  .po-root .po-at-detail {
+    grid-column: 1;
+  }
+
+  .po-root .po-med-filters__detail,
+  .po-root .po-hs-panel__meta {
+    max-width: 34cqi;
+  }
+
+  .po-root .po-pf-board {
+    min-height: 1120px;
+  }
+}
+
+/* Height modes act on the real PlayerSpace size; its page body owns vertical scrolling. */
+.po-root[data-bdm-player-height-mode='compact'] .ng-workspace-body__main,
+.po-root[data-bdm-player-height-mode='dense'] .ng-workspace-body__main {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(22, 217, 243, 0.38) rgba(116, 150, 168, 0.08);
+}
+
+.po-root .ng-workspace-body__main::-webkit-scrollbar {
+  width: 10px;
+}
+
+.po-root .ng-workspace-body__main::-webkit-scrollbar-track {
+  background: rgba(116, 150, 168, 0.08);
+}
+
+.po-root .ng-workspace-body__main::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: rgba(22, 217, 243, 0.42);
+  background-clip: padding-box;
+}
+
+.po-root[data-bdm-player-height-mode='compact'] .po-workspace-content,
+.po-root[data-bdm-player-height-mode='dense'] .po-workspace-content {
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+}
+
+.po-root[data-bdm-player-height-mode='compact'] .po-overview,
+.po-root[data-bdm-player-height-mode='dense'] .po-overview {
+  height: auto;
+  min-height: 680px;
+  gap: var(--bdm-section-gap-y, 8px);
+  padding: var(--bdm-panel-padding-y, 10px);
+  overflow: visible;
+}
+
+@container player-space (min-width: 1100px) {
+  .po-root[data-bdm-player-height-mode='compact'] .ng-application-workspace {
+    --po-identity-height: 132px;
+    --bdm-page-tabs-height: 38px;
+    --ng-workspace-tabs-height: var(--bdm-page-tabs-height);
+  }
+
+  .po-root[data-bdm-player-height-mode='dense'] .ng-application-workspace {
+    --po-identity-height: 116px;
+    --bdm-page-tabs-height: 34px;
+    --ng-workspace-tabs-height: var(--bdm-page-tabs-height);
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity {
+    grid-template-columns:
+      minmax(310px, 1.3fr)
+      minmax(90px, 0.44fr)
+      minmax(205px, 0.9fr)
+      minmax(180px, 0.78fr)
+      minmax(225px, 0.95fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity > *,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity > * {
+    grid-column: auto;
+    grid-row: auto;
+    padding: 6px 8px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__person,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__person {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-portrait {
+    width: 76px;
+    height: 108px;
+  }
+
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__person {
+    grid-template-columns: 68px minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  .po-root[data-bdm-player-height-mode='dense'] .po-portrait {
+    width: 68px;
+    height: 96px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__positions,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__positions {
+    align-items: flex-start;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__pos-row,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__pos-row {
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__measures,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__measures {
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__measure,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__measure {
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__condition,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__condition,
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__contract,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__contract {
+    gap: 5px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__status-list,
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__contract-list,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__status-list,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__contract-list {
+    gap: 3px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .po-identity__actions,
+  .po-root[data-bdm-player-height-mode='dense'] .po-identity__actions {
+    gap: 2px;
+  }
+
+  .po-root[data-bdm-player-height-mode='compact'] .ng-workspace-tabs__tab,
+  .po-root[data-bdm-player-height-mode='dense'] .ng-workspace-tabs__tab {
+    padding-block: 0;
+    border-bottom-width: 2px;
+  }
+}
+
+/* Attributes switch when the measured board can no longer hold both readable columns. */
+@container player-space (max-width: 920px) {
+  .po-root .po-at-board:not([data-bdm-structural-compact='true']) {
+    grid-template-columns: minmax(272px, 0.62fr) minmax(302px, 1.38fr);
+    grid-template-rows: auto auto;
+  }
+
+  .po-root .po-at-board:not([data-bdm-structural-compact='true']) .po-at-col--left {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .po-root .po-at-board:not([data-bdm-structural-compact='true']) .po-at-col--center {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .po-root .po-at-board:not([data-bdm-structural-compact='true']) .po-at-col--right {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-col--left,
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-col--center,
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-col--right,
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-split {
+  display: contents;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-categories {
+  position: relative;
+  z-index: 4;
+  grid-column: 1 / -1;
+  order: -10;
+  min-height: 44px;
+  padding-bottom: 0;
+  overflow: visible;
+  background: var(--po-ov-panel-bg-neutral);
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-categories .po-at-panel__head {
+  min-height: 42px;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-categories .po-at-panel__meta {
+  display: none;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-category-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: min(240px, 55%);
+  min-height: var(--bdm-control-min-height, 28px);
+  padding: 3px 8px;
+  border: 1px solid var(--po-ov-border);
+  border-radius: 2px;
+  background: rgb(22 217 229 / 5%);
+  color: var(--po-ov-text);
+  font: inherit;
+  font-size: var(--bdm-font-min-functional, 11px);
+  text-align: left;
+  cursor: pointer;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-category-trigger:hover,
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-category-trigger:focus-visible {
+  border-color: var(--po-ov-cyan);
+  outline: 2px solid rgb(24 221 232 / 45%);
+  outline-offset: 1px;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-category-trigger__label {
+  flex: 1;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-category-trigger__indicator {
+  font-size: 14px;
+  color: var(--po-ov-cyan);
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-categories__list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  z-index: 12;
+  max-height: min(360px, 80dvh);
+  padding: 6px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid var(--po-ov-border);
+  border-radius: 2px;
+  background: #071017;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 55%);
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-categories__list[hidden] {
+  display: none;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-matrix {
+  order: -9;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-detail {
+  grid-column: 1 / -1;
+  order: -8;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-split--notes {
+  display: contents;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-strengths {
+  order: -7;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-trainings {
+  order: -6;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-skills {
+  order: -5;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-roles {
+  order: -4;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-weak {
+  order: -3;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-radar {
+  order: -2;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-compare {
+  order: -1;
+}
+
+.po-root .po-at-board[data-bdm-structural-compact='true'] .po-at-matrix__table {
+  overflow: visible;
+}
+
+@container player-attributes-board (max-width: 320px) {
+  .po-root .po-at-board .po-at-matrix__thead {
+    grid-template-areas: "attribute rating delta percentile";
+    grid-template-columns: minmax(0, 1fr) 36px 36px 52px;
+    gap: 5px;
+  }
+
+  .po-root .po-at-board .po-at-matrix__thead > span:nth-child(3) {
+    display: none;
+  }
+
+  .po-root .po-at-board .po-at-matrix .po-attr-rating {
+    grid-template-areas:
+      "attribute rating delta percentile"
+      "bar bar bar bar";
+    grid-template-columns: minmax(0, 1fr) 36px 36px 52px;
+    grid-template-rows: auto 8px;
+    gap: 5px;
+    height: auto;
+    min-height: 48px;
+    padding-block: 7px;
+  }
+
+  .po-root .po-at-board .po-at-matrix .po-attr-rating__value {
+    font-size: max(13px, var(--bdm-font-min-rating, 13px));
+  }
+
+  .po-root .po-at-board .po-at-matrix .po-attr-rating__scale {
+    width: 100%;
+  }
+}

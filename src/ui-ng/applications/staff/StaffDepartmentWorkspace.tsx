@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-import type { TeamId } from '@/domain/ids'
+import type { StaffPersonId, TeamId } from '@/domain/ids'
 import type { StaffDepartment, StaffProfessionalAttributeKey } from '@/domain/staff'
 import type { GameWorld } from '@/domain/world'
 import {
@@ -17,6 +17,7 @@ import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPr
 import { ApplicationWorkspace } from '@/ui-ng/workspace/ApplicationWorkspace'
 import { ScrollRegion } from '@/ui-ng/workspace/ScrollRegion'
 import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
+import { navigateToStaff } from '@/ui-ng/workspace/workspaceApps'
 
 const PERSON_STACK_COLORS = ['#7dd3fc', '#a78bfa', '#facc15', '#34d399', '#fb923c', '#f472b6', '#60a5fa', '#4ade80'] as const
 
@@ -136,7 +137,13 @@ function LeagueComparisonColumn({ comparisons }: { readonly comparisons: ReturnT
   )
 }
 
-function DepartmentPeopleTable({ people }: { readonly people: readonly StaffDepartmentPersonRow[] }) {
+function DepartmentPeopleTable({
+  onOpenStaff,
+  people,
+}: {
+  readonly onOpenStaff: (staffPersonId: StaffPersonId) => void
+  readonly people: readonly StaffDepartmentPersonRow[]
+}) {
   if (people.length === 0) {
     return <p className="staff-workspace__empty">No staff assigned to this department.</p>
   }
@@ -146,7 +153,18 @@ function DepartmentPeopleTable({ people }: { readonly people: readonly StaffDepa
       <NgPrecisionTable
         className="staff-workspace__table"
         columns={ngTableColumns(rows, [
-          ngCol('name', 'Staff', (row) => row.name, { value: (row) => row.name }),
+          ngCol('name', 'Staff', (row) => (
+            <button
+              className="staff-workspace__link"
+              onClick={(event) => {
+                event.stopPropagation()
+                onOpenStaff(row.staffPersonId)
+              }}
+              type="button"
+            >
+              {row.name}
+            </button>
+          ), { value: (row) => row.name }),
           ngCol('role', 'Role', (row) => STAFF_ROLE_LABELS[row.role], { value: (row) => STAFF_ROLE_LABELS[row.role] }),
           ngCol(
             'workload',
@@ -208,7 +226,7 @@ export function StaffDepartmentWorkspace({
               <PersonStackedAttributes attributes={model.attributes} people={model.people} />
               <LeagueComparisonColumn comparisons={model.comparisons} />
             </div>
-            <DepartmentPeopleTable people={model.people} />
+            <DepartmentPeopleTable onOpenStaff={navigateToStaff} people={model.people} />
           </div>
         </ScrollRegion>
       </ApplicationWorkspace>

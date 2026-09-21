@@ -1,6 +1,6 @@
 import { formatInjuryKind } from '@/domain/injury'
 import type { PlayerId } from '@/domain/ids'
-import { getPlayerAge, type Player, type PlayerRatings } from '@/domain/player'
+import { getPlayerAge, type Player, type PlayerTruthRatings } from '@/domain/player'
 import {
   getCareerFatigueForPlayer,
   getCurrentPlayerInjury,
@@ -20,10 +20,7 @@ import { getUserTeam } from '@/engine/calendar'
 import {
   aggregateCategoryValue,
   buildFullRatingRows,
-  buildOverviewRatingKeys,
   CATEGORY_LABELS,
-  ratingCategory,
-  ratingLabel,
   RADAR_CATEGORY_ORDER,
   ratingsForCategory,
 } from './ratingCatalog'
@@ -77,13 +74,8 @@ const MORALE_BAND_LABELS = {
 
 const OVERVIEW_EVALUATION_COUNT = 3
 
-function buildRatings(playerRatings: PlayerRatings): PlayerRatingRow[] {
-  return buildOverviewRatingKeys(playerRatings).map((key) => ({
-    id: key,
-    label: ratingLabel(key),
-    category: ratingCategory(key),
-    value: playerRatings[key],
-  }))
+function buildRatings(playerRatings: PlayerTruthRatings): PlayerRatingRow[] {
+  return [...buildFullRatingRows(playerRatings)]
 }
 
 function buildAttributes(world: GameWorld, player: Player): PlayerAttributesModel {
@@ -112,12 +104,12 @@ function buildAttributes(world: GameWorld, player: Player): PlayerAttributesMode
   }
 }
 
-/** `Strongest X 78 · Weakest Y 64 · mean 73.8` — derived from the rows, never written by hand. */
+/** `Strongest X 78 · Weakest Y 64 · average 73.8` — derived from the rows, never written by hand. */
 function categoryNote(rows: readonly PlayerRatingRow[]): string {
   const best = rows.reduce((left, right) => (right.value > left.value ? right : left))
   const worst = rows.reduce((left, right) => (right.value < left.value ? right : left))
-  const mean = rows.reduce((sum, row) => sum + row.value, 0) / rows.length
-  return `Strongest ${best.label} ${best.value} · weakest ${worst.label} ${worst.value} · mean ${mean.toFixed(1)}.`
+  const average = rows.reduce((sum, row) => sum + row.value, 0) / rows.length
+  return `Strongest ${best.label} ${best.value} · weakest ${worst.label} ${worst.value} · average ${average.toFixed(1)}.`
 }
 
 function buildEvaluations(
@@ -258,6 +250,8 @@ export function buildPlayerWorkspaceModel(
   if (overview === undefined) return undefined
 
   return {
+    player,
+    person: player.personId === undefined ? undefined : world.personsById[player.personId],
     identity: {
       playerId: player.id,
       firstName: player.firstName,

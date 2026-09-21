@@ -2,13 +2,14 @@ import { calculateSeasonStandings } from '@/domain/season'
 import type { FinalStandingLine } from '@/domain/season'
 import type { CompetitionId } from '@/domain/ids'
 import type { ConferenceId, SeasonId, TeamId } from '@/domain/ids'
+import type { GameDate } from '@/domain/date'
 import type { GameWorld } from '@/domain/world'
 
 export type StandingsEntry = FinalStandingLine
 
 /** Compatibility boundary: standings remain an Engine-facing projection. */
-export function calculateStandings(world: GameWorld, seasonId: SeasonId): StandingsEntry[] {
-  return calculateSeasonStandings(world, seasonId)
+export function calculateStandings(world: GameWorld, seasonId: SeasonId, throughDate?: GameDate): StandingsEntry[] {
+  return calculateSeasonStandings(world, seasonId, throughDate)
 }
 
 export function calculateStandingsForCompetition(world: GameWorld, competitionId: CompetitionId): StandingsEntry[] {

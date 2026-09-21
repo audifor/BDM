@@ -1,8 +1,10 @@
 import {
+  EMPTY_WORLD_ANNUAL_DEVELOPMENT_CYCLE,
   EMPTY_WORLD_DB_COMPETITION_RUNTIME,
   attachWorldDbCompetitionRuntime,
   createWorldDbCompetitionRuntime,
   type GameWorld,
+  type WorldAnnualDevelopmentCycle,
   type WorldDbCompetitionRuntime,
 } from '@/domain/world'
 import {
@@ -23,9 +25,14 @@ export interface WorldDbCompetitionRuntimeSaveV4 {
   readonly competitionSeasonIds: readonly string[]
 }
 
+export interface WorldAnnualDevelopmentCycleSaveV4 {
+  readonly lastAppliedCycleId: string | null
+}
+
 /** Save V4 persists the minimal World DB competition runtime projection. */
 export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly worldDbCompetitionRuntime: WorldDbCompetitionRuntimeSaveV4
+  readonly worldAnnualDevelopmentCycle: WorldAnnualDevelopmentCycleSaveV4
 }
 
 export interface SaveGameEnvelopeV4 {
@@ -46,6 +53,7 @@ export function migrateGameWorldSaveV3ToV4(value: SaveGameEnvelopeV3): SaveGameE
     payload: Object.freeze({
       ...value.payload,
       worldDbCompetitionRuntime: serializeWorldDbCompetitionRuntimeV4(EMPTY_WORLD_DB_COMPETITION_RUNTIME),
+      worldAnnualDevelopmentCycle: serializeWorldAnnualDevelopmentCycleV4(EMPTY_WORLD_ANNUAL_DEVELOPMENT_CYCLE),
     }),
   })
 }
@@ -60,6 +68,9 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       worldDbCompetitionRuntime: serializeWorldDbCompetitionRuntimeV4(
         world.worldDbCompetitionRuntime ?? EMPTY_WORLD_DB_COMPETITION_RUNTIME,
       ),
+      worldAnnualDevelopmentCycle: serializeWorldAnnualDevelopmentCycleV4(
+        world.worldAnnualDevelopmentCycle ?? EMPTY_WORLD_ANNUAL_DEVELOPMENT_CYCLE,
+      ),
     }),
   })
 }
@@ -71,23 +82,24 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const savedAt = isoTimestamp(envelope.savedAt, 'Save V4 savedAt')
   const payload = record(envelope.payload, 'Save V4 payload')
   const runtime = parseWorldDbCompetitionRuntimeV4(payload.worldDbCompetitionRuntime)
-  const { worldDbCompetitionRuntime: _runtime, ...compatibilityPayload } = payload
+  const developmentCycle = parseWorldAnnualDevelopmentCycleV4(payload.worldAnnualDevelopmentCycle)
+  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, ...compatibilityPayload } = payload
   const world = deserializeGameWorldV3({
     schemaVersion: 3,
     savedAt,
     payload: compatibilityPayload as unknown as GameWorldSaveV3,
   })
-  return attachWorldDbCompetitionRuntime(world, runtime)
+  return Object.freeze({ ...attachWorldDbCompetitionRuntime(world, runtime), worldAnnualDevelopmentCycle: developmentCycle })
 }
 
 /** Reads V1-V4. Legacy saves normalize the V4-owned runtime projection to empty state. */
 export function deserializeGameWorldSaveV4(value: unknown): GameWorld {
   const envelope = record(value, 'Save file')
   if (envelope.schemaVersion === 4) return deserializeGameWorldV4(value)
-  return attachWorldDbCompetitionRuntime(
-    deserializeLegacyGameWorldSave(value),
-    EMPTY_WORLD_DB_COMPETITION_RUNTIME,
-  )
+  return Object.freeze({
+    ...attachWorldDbCompetitionRuntime(deserializeLegacyGameWorldSave(value), EMPTY_WORLD_DB_COMPETITION_RUNTIME),
+    worldAnnualDevelopmentCycle: EMPTY_WORLD_ANNUAL_DEVELOPMENT_CYCLE,
+  })
 }
 
 function serializeWorldDbCompetitionRuntimeV4(
@@ -145,6 +157,19 @@ function parseRuntimeBundlePin(
       'World DB competition runtime bundle worldDbSchema V4',
     ),
   }
+}
+
+function serializeWorldAnnualDevelopmentCycleV4(value: WorldAnnualDevelopmentCycle): WorldAnnualDevelopmentCycleSaveV4 {
+  return Object.freeze({ lastAppliedCycleId: value.lastAppliedCycleId })
+}
+
+function parseWorldAnnualDevelopmentCycleV4(value: unknown): WorldAnnualDevelopmentCycle {
+  const cycle = record(value, 'World annual development cycle V4')
+  exactKeys(cycle, ['lastAppliedCycleId'], 'World annual development cycle V4')
+  if (cycle.lastAppliedCycleId !== null && (typeof cycle.lastAppliedCycleId !== 'string' || cycle.lastAppliedCycleId.length === 0)) {
+    throw new TypeError('World annual development cycle V4 lastAppliedCycleId must be a non-empty string or null')
+  }
+  return Object.freeze({ lastAppliedCycleId: cycle.lastAppliedCycleId })
 }
 
 function idArray(value: unknown, label: string): readonly string[] {

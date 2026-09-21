@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { CANONICAL_RATING_KEYS } from '@/domain/player'
+import { PLAYER_TRUTH_RATING_KEYS } from '@/domain/player'
 import { completeMatch, createConfiguredGame, createNewGame, prepareUserMatch } from '@/app/game'
 import { boxScoreValuation } from '@/engine/stats/boxScoreValuation'
 import { getPlayerSeasonStats } from '@/engine/stats/PlayerHistory'
@@ -26,7 +26,10 @@ describe('buildPlayerWorkspaceModel', () => {
 
     const model = buildPlayerWorkspaceModel(world, playerId!)
     expect(model).toBeDefined()
-    expect(model!.ratings.length).toBeGreaterThan(0)
+    expect(model!.ratings.map((rating) => rating.id)).toEqual(PLAYER_TRUTH_RATING_KEYS)
+    expect(model!.ratings.map((rating) => rating.value)).toEqual(
+      PLAYER_TRUTH_RATING_KEYS.map((key) => world.players[playerId!]!.basketball.ratings[key]),
+    )
     expect(model!.ratings.every((rating) => rating.value >= 1 && rating.value <= 100)).toBe(true)
     expect(model!.strengths).toHaveLength(3)
     expect(model!.limitations).toHaveLength(3)
@@ -36,8 +39,13 @@ describe('buildPlayerWorkspaceModel', () => {
     expect(model!.identity.teamId.status).toBe('available')
     expect(model!.identity.dateOfBirth.status).toBe('available')
     expect(model!.identity.wingspan.status).toBe('available')
-    expect(model!.attributes.allRatings.length).toBe(CANONICAL_RATING_KEYS.length)
+    expect(model!.attributes.allRatings.map((rating) => rating.id)).toEqual(PLAYER_TRUTH_RATING_KEYS)
+    expect(model!.player).toBe(world.players[playerId!])
+    expect(model!.person).toBe(world.personsById[world.players[playerId!]!.personId!])
     expect(model!.attributes.categories.length).toBe(8)
+    expect(model!.attributes.categories.reduce((count, category) => count + category.all.length, 0)).toBe(80)
+    expect(model!.attributes.categories[0]!.note).toContain('average ')
+    expect(model!.attributes.categories[0]!.note).not.toContain('mean')
     expect(model!.development.longitudinal.status).toBe('unavailable')
     expect(model!.history.scope.scopeNote).toContain('persisted in this save')
   })

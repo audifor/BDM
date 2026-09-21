@@ -96,7 +96,8 @@ function validateParts(year: number, month: number, day: number): void {
   }
 }
 
-function daysInMonth(year: number, month: number): number {
+/** Number of days in a given proleptic Gregorian calendar month, honoring leap years. */
+export function daysInMonth(year: number, month: number): number {
   if (month === 2) {
     return isLeapYear(year) ? 29 : 28
   }

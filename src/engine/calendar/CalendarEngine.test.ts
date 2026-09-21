@@ -48,6 +48,69 @@ describe('CalendarEngine', () => {
     expect(advanceDay(world).currentDate).toBe(expectedDate)
   })
 
+  describe('RWS-BUG-002 world clock invariants', () => {
+    it('advances exactly one day regardless of games, competitions, or season state', () => {
+      const { world } = createScheduledGameWorld()
+      expect(advanceDay(world).currentDate).toBe('2032-10-02')
+    })
+
+    it('advances exactly N days over N calls with no future games remaining', () => {
+      const { world, games } = createScheduledGameWorld()
+      let current = games.reduce((acc, game) => applyScore(acc, game, 90, 80), world)
+      for (let day = 0; day < 10; day += 1) current = advanceDay(current)
+      expect(current.currentDate).toBe('2032-10-11')
+    })
+
+    it('does not block on a completed CompetitionSeason with no active competition', () => {
+      const { world, games, seasonId } = createScheduledGameWorld()
+      let current = games.reduce((acc, game) => applyScore(acc, game, 90, 80), world)
+      expect(current.seasons[seasonId]).toBeDefined()
+      for (let day = 0; day < 40; day += 1) current = advanceDay(current)
+      expect(current.currentDate).toBe('2032-11-10')
+    })
+
+    it('crosses 30 June without stopping or altering the daily step', () => {
+      const world = generateWorld({ seed: 7, gender: 'female', startDate: createGameDate(2026, 6, 28) })
+      const dates = [world.currentDate]
+      let current = world
+      for (let day = 0; day < 5; day += 1) { current = advanceDay(current); dates.push(current.currentDate) }
+      expect(dates).toEqual(['2026-06-28', '2026-06-29', '2026-06-30', '2026-07-01', '2026-07-02', '2026-07-03'])
+    })
+
+    it('crosses 31 December to 1 January', () => {
+      const world = generateWorld({ seed: 7, gender: 'female', startDate: createGameDate(2032, 12, 31) })
+      expect(advanceDay(world).currentDate).toBe('2033-01-01')
+    })
+
+    it('handles a leap year 28 February to 29 February', () => {
+      const world = generateWorld({ seed: 7, gender: 'female', startDate: createGameDate(2032, 2, 28) })
+      expect(advanceDay(world).currentDate).toBe('2032-02-29')
+    })
+
+    it('produces a valid empty day with no games, transfers, or events', () => {
+      const { world, games } = createScheduledGameWorld()
+      const completed = games.reduce((acc, game) => applyScore(acc, game, 90, 80), world)
+      const emptyDay = advanceDay(completed)
+      expect(emptyDay.currentDate).toBe('2032-10-02')
+      expect(getGamesToday(emptyDay)).toHaveLength(0)
+    })
+
+    it('never jumps more than one day per advanceDay call, with or without a game tomorrow', () => {
+      const { world } = createScheduledGameWorld()
+      const withGameTomorrow = advanceDay(world)
+      const withoutGameTomorrow = advanceDay(withGameTomorrow)
+      expect(withGameTomorrow.currentDate).toBe('2032-10-02')
+      expect(withoutGameTomorrow.currentDate).toBe('2032-10-03')
+    })
+
+    it('advances 365 consecutive days to exactly one calendar year later', () => {
+      const { world } = createScheduledGameWorld()
+      let current = world
+      for (let day = 0; day < 365; day += 1) current = advanceDay(current)
+      expect(current.currentDate).toBe('2033-10-01')
+    })
+  })
+
   it('preserves completed games while advancing the date', () => {
     const { world, games } = createScheduledGameWorld()
     const completedWorld = applyScore(world, games[0]!, 90, 80)

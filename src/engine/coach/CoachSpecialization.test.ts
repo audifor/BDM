@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createGameWorld } from '@/domain/world'
+import { createGameWorld, updateGameWorld } from '@/domain/world'
 import { generateWorld } from '@/engine/world'
 import { COACH_PERK_CATALOG, COACH_SKILL_CATALOG, COACH_TRAIT_CATALOG, calculateCoachLearningReduction, hasCoachCapability, purchaseCoachPerk, purchaseCoachSkillRank, reconcileProfessionalTraits, recordProfessionalTraitEvidence } from './CoachSpecialization'
 
@@ -27,6 +27,23 @@ describe('Coach specialization', () => {
     const traits = reconcileProfessionalTraits(evidence.world, coachId); expect(traits.ok).toBe(true); if (!traits.ok) return
     expect(traits.world.coachRpgProfilesByCoachId[coachId]!.professionalTraits).toContain('youthDeveloper')
     const perk = purchaseCoachPerk(traits.world, coachId, 'filmRoomSpecialist' as never); expect(perk.ok).toBe(true); if (perk.ok) expect(hasCoachCapability(perk.world.coachRpgProfilesByCoachId[coachId]!, 'advancedOpponentInsights')).toBe(true)
+  })
+  it('preserves Person and canonical headCoach Staff assignment through Coach profile rebuilds', () => {
+    const { world, coachId } = preparedWorld(6, 60)
+    const coach = world.coaches[coachId]!
+    const sourcePerson = world.personsById[coach.personId]!
+    const enrichedPerson = { ...sourcePerson, physical: { heightCm: 180, weightKg: 82 } }
+    const withPerson = updateGameWorld(world, {
+      persons: Object.values(world.personsById).map((person) => person.id === sourcePerson.id ? enrichedPerson : person),
+    })
+    const skill = COACH_SKILL_CATALOG.find((entry) => entry.id === 'gamePreparation')!
+    const result = purchaseCoachSkillRank(withPerson, coachId, skill.id)
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.world.personsById[sourcePerson.id]).toEqual(enrichedPerson)
+    expect(result.world.staffPeopleById[coach.staffProfileId]).toBe(world.staffPeopleById[coach.staffProfileId])
+    expect(Object.values(result.world.teamStaffAssignmentsById).find((assignment) => assignment.staffPersonId === coach.staffProfileId)).toMatchObject({ role: 'headCoach' })
   })
 })
 function preparedWorld(points:number, attribute:number) {

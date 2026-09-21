@@ -2,7 +2,7 @@ import type { RatingEvolutionModel } from '@/ui-ng/applications/player/data/play
 
 /**
  * Plot geometry. The SVG stretches to the panel width, so its own shapes stay ratio-free: the
- * gridlines and the league reference are lines and the series is a polyline. The points are HTML so
+ * gridlines and the averages are lines and the series is a polyline. The points are HTML so
  * they stay round instead of being stretched into wide ellipses.
  */
 const VIEW = 100
@@ -27,8 +27,13 @@ export function AttributeEvolutionChart({
   readonly title?: string
 }) {
   const points = evolution.points
-  const leagueMean = evolution.league.status === 'available' ? evolution.league.mean : null
-  const values = [...points.map((point) => point.value), ...(leagueMean === null ? [] : [leagueMean])]
+  const leagueAverage = evolution.league.status === 'available' ? evolution.league.average : null
+  const teamAverage = evolution.team.status === 'available' ? evolution.team.average : null
+  const values = [
+    ...points.map((point) => point.value),
+    ...(leagueAverage === null ? [] : [leagueAverage]),
+    ...(teamAverage === null ? [] : [teamAverage]),
+  ]
   const rawMin = Math.min(...values)
   const rawMax = Math.max(...values)
   const centre = (rawMin + rawMax) / 2
@@ -46,7 +51,8 @@ export function AttributeEvolutionChart({
   const description = [
     `${label} evolution across ${points.length} ${points.length === 1 ? 'season' : 'seasons'}`,
     points.map((point) => `${point.label} ${formatValue(point.value)}`).join(', '),
-    leagueMean === null ? 'League mean not available' : `League mean ${formatValue(leagueMean)}`,
+    leagueAverage === null ? 'League average not available' : `League average ${formatValue(leagueAverage)}`,
+    teamAverage === null ? 'Team average not available' : `Team average ${formatValue(teamAverage)}`,
     evolution.note,
   ].join('. ')
 
@@ -59,8 +65,12 @@ export function AttributeEvolutionChart({
             Player <b className="ng-type-numeric">{formatValue(evolution.current)}</b>
           </span>
           <span className="po-attr-evolution__key po-attr-evolution__key--league">
-            League mean{' '}
-            <b className="ng-type-numeric">{leagueMean === null ? '—' : formatValue(leagueMean)}</b>
+            League average{' '}
+            <b className="ng-type-numeric">{leagueAverage === null ? '—' : formatValue(leagueAverage)}</b>
+          </span>
+          <span className="po-attr-evolution__key po-attr-evolution__key--team">
+            Team average{' '}
+            <b className="ng-type-numeric">{teamAverage === null ? '—' : formatValue(teamAverage)}</b>
           </span>
         </span>
       </figcaption>
@@ -92,14 +102,24 @@ export function AttributeEvolutionChart({
                 />
               ))}
 
-              {leagueMean === null ? null : (
+              {leagueAverage === null ? null : (
                 <line
                   className="po-attr-evolution__league"
                   vectorEffect="non-scaling-stroke"
                   x1={0}
                   x2={VIEW}
-                  y1={yFor(leagueMean)}
-                  y2={yFor(leagueMean)}
+                  y1={yFor(leagueAverage)}
+                  y2={yFor(leagueAverage)}
+                />
+              )}
+              {teamAverage === null ? null : (
+                <line
+                  className="po-attr-evolution__team"
+                  vectorEffect="non-scaling-stroke"
+                  x1={0}
+                  x2={VIEW}
+                  y1={yFor(teamAverage)}
+                  y2={yFor(teamAverage)}
                 />
               )}
 

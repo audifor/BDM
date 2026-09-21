@@ -47,7 +47,9 @@ export function AttributeTrainingOptions({
       </header>
 
       <p className="po-attr-training__stimulus ng-type-numeric">
-        {evolution.accumulatedStimulus.toFixed(1)} stimulus accumulated this season
+        {evolution.accumulatedStimulus === null
+          ? 'Canonical 80-key training stimulus is not tracked yet.'
+          : `${evolution.accumulatedStimulus.toFixed(1)} stimulus accumulated this season`}
       </p>
 
       {assignment.status === 'available' ? (

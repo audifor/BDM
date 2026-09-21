@@ -1,19 +1,14 @@
-import type { CanonicalRatingKey, Player } from '@/domain/player'
-import { CANONICAL_RATING_KEYS } from '@/domain/player'
+import { PLAYER_TRUTH_RATING_KEYS, type PlayerTruthRatingKey, type Player } from '@/domain/player'
 import type { SeasonId } from '@/domain/ids'
-import { ratingHistorySeries, EMPTY_PLAYER_RATING_HISTORY } from '@/domain/development/PlayerRatingHistory'
-import { TRAINING_CATALOG, isPositionEligible, type TrainingCategory, type TrainingDefinition } from '@/domain/training'
-import { getPlayerRosterTeamId, type GameWorld } from '@/domain/world'
-import { nextEligibleTrainingDate, resolveTrainingModule } from '@/engine/training'
-import { getUserTeam } from '@/engine/calendar'
+import { type GameWorld } from '@/domain/world'
 
 import { formatSeasonSpanLabel } from './buildPlayerContractModel'
 import { ratingLabel } from './ratingCatalog'
 import type {
   AttributeHighlightModel,
   AttributeLeagueBaselineModel,
-  AttributeNextSessionModel,
   AttributeStandingModel,
+  AttributeTeamBaselineModel,
   AttributeTrainingAssignmentModel,
   AttributeTrainingOptionModel,
   OverviewGapModel,
@@ -24,36 +19,24 @@ import type {
 
 const HISTORY_NOTE = 'One movement per offseason transition; past values are reconstructed from it.'
 const NO_HISTORY_NOTE = 'No progression recorded yet: the curve starts at the first offseason transition.'
-const LEAGUE_NOTE = 'Mean of this rating across every rostered rival in the competition.'
+const LEAGUE_NOTE = 'Average of this rating across every rostered rival in the competition.'
 const NO_LEAGUE_NOTE = 'No rivalling roster available for this competition.'
+const TEAM_NOTE = 'Average of this rating across the player\'s teammates; the inspected player is excluded.'
+const NO_TEAM_NOTE = 'No teammate roster is available for this player.'
 const STANDING_NOTE =
   'Percentile is the share of rivalling rosters this value beats; the player never counts in their own sample.'
 const NO_STANDING_NOTE = 'No rivalling roster available, so no percentile can be computed.'
 /** Same slot the Personal training planner books when it assigns a module to a player. */
-const INDIVIDUAL_SESSION_START = '09:00'
-const NO_OWN_ROSTER_REASON = 'Only players on your own roster can be scheduled from here.'
-
-const TRAINING_CATEGORY_LABELS: Record<TrainingCategory, string> = {
-  shooting: 'Shooting',
-  finishing: 'Finishing',
-  ballHandling: 'Ball Handling',
-  playmaking: 'Playmaking',
-  defense: 'Defense',
-  rebounding: 'Rebounding',
-  physical: 'Physical',
-  recovery: 'Recovery',
-  tactical: 'Tactical',
-}
-
-const TRAINING_SCOPE_LABELS = {
-  team: 'Team session',
-  individual: 'Individual session',
-  both: 'Team or individual',
-} as const
 
 interface LeagueSample {
   readonly label: string | null
   /** Rivals only: the inspected player never contributes to their own baseline. */
+  readonly players: readonly Player[]
+}
+
+interface TeamSample {
+  readonly label: string | null
+  /** Teammates only: the inspected player never contributes to their own baseline. */
   readonly players: readonly Player[]
 }
 
@@ -76,13 +59,27 @@ function competitionLeagueSample(world: GameWorld, player: Player): LeagueSample
   return { label: competition.name, players }
 }
 
+/** Every other player rostered on the inspected player's current team. */
+function teamRosterSample(world: GameWorld, player: Player): TeamSample {
+  const team = Object.values(world.teams).find((candidate) => candidate.rosterPlayerIds.includes(player.id))
+  if (team === undefined) return { label: null, players: [] }
+
+  return {
+    label: team.name,
+    players: team.rosterPlayerIds.flatMap((playerId) => {
+      const teammate = world.players[playerId]
+      return teammate === undefined || teammate.id === player.id ? [] : [teammate]
+    }),
+  }
+}
+
 function buildLeagueBaseline(
   player: Player,
   league: LeagueSample,
-  ratingId: CanonicalRatingKey,
+  ratingId: PlayerTruthRatingKey,
 ): AttributeLeagueBaselineModel {
   if (league.players.length === 0) {
-    return { status: 'unavailable', mean: null, sampleSize: 0, scopeLabel: league.label, note: NO_LEAGUE_NOTE }
+    return { status: 'unavailable', average: null, sampleSize: 0, scopeLabel: league.label, note: NO_LEAGUE_NOTE }
   }
 
   const total = league.players.reduce(
@@ -91,10 +88,25 @@ function buildLeagueBaseline(
   )
   return {
     status: 'available',
-    mean: Math.round((total / league.players.length) * 10) / 10,
+    average: Math.round((total / league.players.length) * 10) / 10,
     sampleSize: league.players.length,
     scopeLabel: league.label,
     note: LEAGUE_NOTE,
+  }
+}
+
+function buildTeamBaseline(team: TeamSample, ratingId: PlayerTruthRatingKey): AttributeTeamBaselineModel {
+  if (team.players.length === 0) {
+    return { status: 'unavailable', average: null, sampleSize: 0, scopeLabel: team.label, note: NO_TEAM_NOTE }
+  }
+
+  const total = team.players.reduce((sum, teammate) => sum + teammate.basketball.ratings[ratingId], 0)
+  return {
+    status: 'available',
+    average: Math.round((total / team.players.length) * 10) / 10,
+    sampleSize: team.players.length,
+    scopeLabel: team.label,
+    note: TEAM_NOTE,
   }
 }
 
@@ -105,14 +117,14 @@ function buildLeagueBaseline(
 function buildStanding(
   player: Player,
   league: LeagueSample,
-  ratingId: CanonicalRatingKey,
+  ratingId: PlayerTruthRatingKey,
 ): AttributeStandingModel {
   const position = player.basketball.primaryPosition
   if (league.players.length === 0) {
     return {
       status: 'unavailable',
       percentile: null,
-      positionMean: null,
+      positionAverage: null,
       positionLabel: position,
       positionSampleSize: 0,
       note: NO_STANDING_NOTE,
@@ -126,7 +138,7 @@ function buildStanding(
   const peers = league.players.filter(
     (rival) => rival.basketball.primaryPosition === position,
   )
-  const positionMean =
+  const positionAverage =
     peers.length === 0
       ? null
       : Math.round(
@@ -136,103 +148,23 @@ function buildStanding(
   return {
     status: 'available',
     percentile: Math.round((beaten / league.players.length) * 100),
-    positionMean,
+    positionAverage,
     positionLabel: position,
     positionSampleSize: peers.length,
     note:
-      positionMean === null
+      positionAverage === null
         ? STANDING_NOTE
-        : `${STANDING_NOTE} Position mean covers ${peers.length} rival ${position} players.`,
+        : `${STANDING_NOTE} Position average covers ${peers.length} rival ${position} players.`,
   }
 }
 
 function buildTrainingOptions(
-  world: GameWorld,
-  player: Player,
-  ratingId: CanonicalRatingKey,
+  _world: GameWorld,
+  _player: Player,
+  _ratingId: PlayerTruthRatingKey,
 ): readonly AttributeTrainingOptionModel[] {
-  const fromCatalog = TRAINING_CATALOG.filter(
-    (definition) =>
-      definition.effects.targetRatings.includes(ratingId) &&
-      definition.effects.developmentWeight > 0 &&
-      isPositionEligible(definition, player.basketball.primaryPosition),
-  ).map((definition) => toTrainingOption(definition, definition.id, definition.name, false, definition.scope))
-
-  // Modules the user already created execute as their base definition, so they belong on the same
-  // list as the definition they are built on. `resolveTrainingModule` is the canonical resolution
-  // path shared with individual assignment and the team planner.
-  const fromUserModules = Object.values(world.userTrainingModulesById).flatMap((module) => {
-    const { definition, scope, intensity } = resolveTrainingModule(world, module.id)
-    if (
-      !definition.effects.targetRatings.includes(ratingId) ||
-      definition.effects.developmentWeight <= 0 ||
-      !isPositionEligible(definition, player.basketball.primaryPosition)
-    ) {
-      return []
-    }
-    return [toTrainingOption(definition, module.id, module.name, true, scope, intensity)]
-  })
-
-  return [...fromCatalog, ...fromUserModules].sort(
-    (left, right) =>
-      right.developmentWeight - left.developmentWeight ||
-      left.name.localeCompare(right.name) ||
-      left.id.localeCompare(right.id),
-  )
-}
-
-function toTrainingOption(
-  definition: TrainingDefinition,
-  id: string,
-  name: string,
-  isUserModule: boolean,
-  scope: TrainingDefinition['scope'],
-  intensity?: string,
-): AttributeTrainingOptionModel {
-  return {
-    id,
-    definitionId: definition.id,
-    name,
-    categoryLabel: TRAINING_CATEGORY_LABELS[definition.category],
-    scopeLabel: TRAINING_SCOPE_LABELS[scope],
-    defaultIntensity: intensity ?? definition.defaultIntensity,
-    developmentWeight: definition.effects.developmentWeight,
-    fatigueMultiplier: definition.effects.fatigueMultiplier,
-    durationMinutes: definition.durationMinutes,
-    isUserModule,
-    individualAssignable: scope !== 'team',
-  }
-}
-
-/** The player's earliest pending individual session, exactly as the world has it scheduled. */
-function nextIndividualSession(world: GameWorld, playerId: Player['id']): AttributeNextSessionModel | null {
-  const pending = Object.values(world.scheduledTrainingSessionsById)
-    .filter(
-      (session) =>
-        session.scope === 'individual' && session.playerId === playerId && session.status === 'scheduled',
-    )
-    .sort((left, right) =>
-      left.date === right.date
-        ? left.startTime.localeCompare(right.startTime)
-        : left.date.localeCompare(right.date),
-    )[0]
-  if (pending === undefined) return null
-
-  const moduleId = pending.moduleId ?? null
-  const definition = TRAINING_CATALOG.find((entry) => entry.id === pending.definitionId)
-  return {
-    sessionId: pending.id,
-    definitionId: pending.definitionId,
-    moduleId,
-    // The user picked a module, so name it — falling back to the definition it executes as.
-    label:
-      (moduleId === null ? undefined : world.userTrainingModulesById[moduleId]?.name) ??
-      definition?.name ??
-      pending.definitionId,
-    date: pending.date,
-    startTime: pending.startTime,
-    intensity: pending.intensity,
-  }
+  // Current training definitions target only the separate legacy 35-key surface.
+  return []
 }
 
 /**
@@ -240,29 +172,14 @@ function nextIndividualSession(world: GameWorld, playerId: Player['id']): Attrib
  * Personal training planner uses. Scheduling itself stays canonical — the store action runs
  * `assignTrainingModuleToPlayer`, which validates the slot and rejects a real collision.
  */
-function buildAssignmentContext(world: GameWorld, player: Player): AttributeTrainingAssignmentModel {
-  const userTeam = getUserTeam(world)
-  const nextSession = nextIndividualSession(world, player.id)
-  if (userTeam === undefined || getPlayerRosterTeamId(world, player.id) !== userTeam.id) {
-    return {
-      status: 'unavailable',
-      reason: NO_OWN_ROSTER_REASON,
-      date: null,
-      startTime: null,
-      sessionId: null,
-      nextSession,
-    }
-  }
-
-  const date = nextEligibleTrainingDate(world.currentDate)
+function buildAssignmentContext(): AttributeTrainingAssignmentModel {
   return {
-    status: 'available',
-    reason: null,
-    date,
-    startTime: INDIVIDUAL_SESSION_START,
-    // Re-assigning for the same day replaces that pending session instead of colliding with it.
-    sessionId: `session:individual:${player.id}:${date}`,
-    nextSession,
+    status: 'unavailable',
+    reason: 'Training plans do not target the canonical 80-key rating model yet.',
+    date: null,
+    startTime: null,
+    sessionId: null,
+    nextSession: null,
   }
 }
 
@@ -270,12 +187,27 @@ function buildEvolution(
   world: GameWorld,
   player: Player,
   league: LeagueSample,
+  team: TeamSample,
   assignment: AttributeTrainingAssignmentModel,
-  ratingId: CanonicalRatingKey,
+  ratingId: PlayerTruthRatingKey,
 ): RatingEvolutionModel {
   const current = player.basketball.ratings[ratingId]
-  const history = world.playerRatingHistoryByPlayerId[player.id] ?? EMPTY_PLAYER_RATING_HISTORY
-  const rated = ratingHistorySeries(player.basketball.ratings, history, ratingId, world.currentSeasonId)
+  const history = world.playerRatingHistoryByPlayerId[player.id] ?? []
+  const canonicalDeltas = history.map((entry) => (entry.deltas as Readonly<Record<string, number>>)[ratingId] ?? 0)
+  const hasCanonicalHistory = canonicalDeltas.some((delta) => delta !== 0)
+  let rated: { seasonId: SeasonId; value: number }[]
+  if (hasCanonicalHistory) {
+    let running = current - canonicalDeltas.reduce((sum, delta) => sum + delta, 0)
+    rated = history.flatMap((entry, index) => {
+      const point = entry.seasonId === world.currentSeasonId ? [] : [{ seasonId: entry.seasonId, value: running }]
+      running += canonicalDeltas[index] ?? 0
+      return point
+    })
+    rated.push({ seasonId: world.currentSeasonId, value: current })
+  } else {
+    // Legacy transitions cannot establish season-by-season values for the truth rating model.
+    rated = [{ seasonId: world.currentSeasonId, value: current }]
+  }
 
   const points: RatingEvolutionPointModel[] = rated.map((point, index) => ({
     id: point.seasonId,
@@ -290,10 +222,11 @@ function buildEvolution(
     current,
     points,
     changeSinceFirst: points.length < 2 ? 0 : current - points[0]!.value,
-    hasRecordedHistory: history.length > 0,
-    note: history.length > 0 ? HISTORY_NOTE : NO_HISTORY_NOTE,
-    accumulatedStimulus: world.developmentStimulusByPlayerId[player.id]?.byRating[ratingId] ?? 0,
+    hasRecordedHistory: hasCanonicalHistory,
+    note: hasCanonicalHistory ? HISTORY_NOTE : NO_HISTORY_NOTE,
+    accumulatedStimulus: null,
     league: buildLeagueBaseline(player, league, ratingId),
+    team: buildTeamBaseline(team, ratingId),
     standing: buildStanding(player, league, ratingId),
     trainings: buildTrainingOptions(world, player, ratingId),
     assignment,
@@ -304,8 +237,8 @@ function buildEvolution(
 const HIGHLIGHT_COUNT = 4
 
 function toHighlight(
-  ratingId: CanonicalRatingKey,
-  evolutionByRating: Readonly<Record<CanonicalRatingKey, RatingEvolutionModel>>,
+  ratingId: PlayerTruthRatingKey,
+  evolutionByRating: Readonly<Record<PlayerTruthRatingKey, RatingEvolutionModel>>,
 ): AttributeHighlightModel {
   const evolution = evolutionByRating[ratingId]
   return {
@@ -321,9 +254,9 @@ function toHighlight(
  * raw values: an 80 means something different for a guard than for a centre.
  */
 export function buildAttributeHighlights(
-  evolutionByRating: Readonly<Record<CanonicalRatingKey, RatingEvolutionModel>>,
+  evolutionByRating: Readonly<Record<PlayerTruthRatingKey, RatingEvolutionModel>>,
 ): Pick<PlayerAttributesModel, 'signatureSkills' | 'weakLinks'> {
-  const ranked = CANONICAL_RATING_KEYS.filter(
+  const ranked = PLAYER_TRUTH_RATING_KEYS.filter(
     (key) => evolutionByRating[key].standing.percentile !== null,
   ).sort((left, right) => {
     const leftPercentile = evolutionByRating[left].standing.percentile ?? 0
@@ -371,10 +304,11 @@ function seasonLabel(world: GameWorld, seasonId: SeasonId): string {
 export function buildPlayerAttributesEvolution(
   world: GameWorld,
   player: Player,
-): Readonly<Record<CanonicalRatingKey, RatingEvolutionModel>> {
+): Readonly<Record<PlayerTruthRatingKey, RatingEvolutionModel>> {
   const league = competitionLeagueSample(world, player)
-  const assignment = buildAssignmentContext(world, player)
+  const team = teamRosterSample(world, player)
+  const assignment = buildAssignmentContext()
   return Object.fromEntries(
-    CANONICAL_RATING_KEYS.map((key) => [key, buildEvolution(world, player, league, assignment, key)]),
-  ) as Readonly<Record<CanonicalRatingKey, RatingEvolutionModel>>
+    PLAYER_TRUTH_RATING_KEYS.map((key) => [key, buildEvolution(world, player, league, team, assignment, key)]),
+  ) as Readonly<Record<PlayerTruthRatingKey, RatingEvolutionModel>>
 }

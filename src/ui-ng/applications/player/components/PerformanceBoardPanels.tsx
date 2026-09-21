@@ -427,10 +427,10 @@ export function PerformanceGameLogPanel({
           <NgPrecisionTable
             className="po-pf-log__table"
             columns={ngTableColumns(tableRows, [
-              ngCol<GameLogTableRow>('date', 'Date', (row) => row.date, { value: (row) => row.date }),
-              ngCol<GameLogTableRow>('opponent', 'Opponent', (row) => row.opponent, { value: (row) => row.opponent }),
-              ngCol<GameLogTableRow>('competition', 'Competition', (row) => row.competition, { value: (row) => row.competition }),
-              ngCol<GameLogTableRow>('homeAway', 'H/A', (row) => row.homeAway, { defaultWidth: 46, value: (row) => row.homeAway }),
+              ngCol<GameLogTableRow>('date', 'Date', (row) => row.date, { responsivePriority: 1, value: (row) => row.date }),
+              ngCol<GameLogTableRow>('opponent', 'Opponent', (row) => row.opponent, { responsivePriority: 1, value: (row) => row.opponent }),
+              ngCol<GameLogTableRow>('competition', 'Competition', (row) => row.competition, { responsivePriority: 3, value: (row) => row.competition }),
+              ngCol<GameLogTableRow>('homeAway', 'H/A', (row) => row.homeAway, { defaultWidth: 46, responsivePriority: 3, value: (row) => row.homeAway }),
               ngCol<GameLogTableRow>(
                 'result',
                 'Result',
@@ -439,19 +439,19 @@ export function PerformanceGameLogPanel({
                     {row.result}
                   </span>
                 ),
-                { defaultWidth: 84, value: (row) => row.result },
+                { defaultWidth: 84, responsivePriority: 2, value: (row) => row.result },
               ),
-              ngCol<GameLogTableRow>('minutes', 'MIN', (row) => row.minutes, { defaultWidth: 50, numeric: true, value: (row) => row.minutes }),
-              ngCol<GameLogTableRow>('points', 'PTS', (row) => row.points, { defaultWidth: 46, numeric: true, value: (row) => row.points }),
-              ngCol<GameLogTableRow>('rebounds', 'REB', (row) => row.rebounds, { defaultWidth: 46, numeric: true, value: (row) => row.rebounds }),
-              ngCol<GameLogTableRow>('assists', 'AST', (row) => row.assists, { defaultWidth: 46, numeric: true, value: (row) => row.assists }),
-              ngCol<GameLogTableRow>('steals', 'STL', (row) => row.steals, { defaultWidth: 46, numeric: true, value: (row) => row.steals }),
-              ngCol<GameLogTableRow>('blocks', 'BLK', (row) => row.blocks, { defaultWidth: 46, numeric: true, value: (row) => row.blocks }),
-              ngCol<GameLogTableRow>('turnovers', 'TOV', (row) => row.turnovers, { defaultWidth: 46, numeric: true, value: (row) => row.turnovers }),
-              ngCol<GameLogTableRow>('fg', 'FG', (row) => row.fg, { defaultWidth: 54, numeric: true, value: (row) => row.fg }),
-              ngCol<GameLogTableRow>('threePt', '3PT', (row) => row.threePt, { defaultWidth: 54, numeric: true, value: (row) => row.threePt }),
-              ngCol<GameLogTableRow>('ft', 'FT', (row) => row.ft, { defaultWidth: 54, numeric: true, value: (row) => row.ft }),
-              ngCol<GameLogTableRow>('valuation', 'VAL', (row) => row.valuation, { defaultWidth: 48, numeric: true, value: (row) => row.valuation }),
+              ngCol<GameLogTableRow>('minutes', 'MIN', (row) => row.minutes, { defaultWidth: 50, numeric: true, responsivePriority: 1, value: (row) => row.minutes }),
+              ngCol<GameLogTableRow>('points', 'PTS', (row) => row.points, { defaultWidth: 46, numeric: true, responsivePriority: 1, value: (row) => row.points }),
+              ngCol<GameLogTableRow>('rebounds', 'REB', (row) => row.rebounds, { defaultWidth: 46, numeric: true, responsivePriority: 2, value: (row) => row.rebounds }),
+              ngCol<GameLogTableRow>('assists', 'AST', (row) => row.assists, { defaultWidth: 46, numeric: true, responsivePriority: 2, value: (row) => row.assists }),
+              ngCol<GameLogTableRow>('steals', 'STL', (row) => row.steals, { defaultWidth: 46, numeric: true, responsivePriority: 3, value: (row) => row.steals }),
+              ngCol<GameLogTableRow>('blocks', 'BLK', (row) => row.blocks, { defaultWidth: 46, numeric: true, responsivePriority: 3, value: (row) => row.blocks }),
+              ngCol<GameLogTableRow>('turnovers', 'TOV', (row) => row.turnovers, { defaultWidth: 46, numeric: true, responsivePriority: 3, value: (row) => row.turnovers }),
+              ngCol<GameLogTableRow>('fg', 'FG', (row) => row.fg, { defaultWidth: 54, numeric: true, responsivePriority: 4, value: (row) => row.fg }),
+              ngCol<GameLogTableRow>('threePt', '3PT', (row) => row.threePt, { defaultWidth: 54, numeric: true, responsivePriority: 4, value: (row) => row.threePt }),
+              ngCol<GameLogTableRow>('ft', 'FT', (row) => row.ft, { defaultWidth: 54, numeric: true, responsivePriority: 4, value: (row) => row.ft }),
+              ngCol<GameLogTableRow>('valuation', 'VAL', (row) => row.valuation, { defaultWidth: 48, numeric: true, responsivePriority: 3, value: (row) => row.valuation }),
             ])}
             gridId="ng-player-game-log"
             onRowClick={(row) => onSelectGame(row.gameId)}

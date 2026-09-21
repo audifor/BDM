@@ -2,7 +2,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 
-import { continueGame, createNewGame } from '@/app/game'
+import { continueGame, createNewGame, simulateUntilDate } from '@/app/game'
 import { useDesktopPreferencesStore } from '@/stores/desktopPreferencesStore'
 import { formatPrototypeDate } from '@/ui/formatters'
 import { DesktopWidgetLayer } from './DesktopWidgetLayer'
@@ -20,6 +20,8 @@ describe('DesktopWidgetLayer runtime wiring', () => {
       onOpenApp: () => undefined,
       onOpenPendingGame: () => undefined,
       onPlayGame: () => undefined,
+      onStartNextSeason: () => undefined,
+      onSimulateUntilDate: (date) => simulateUntilDate(world, date),
     }))
 
     expect(markup).toContain('Club identity')

@@ -14,7 +14,7 @@
  *   - `world.coachInterviewsByCandidacyId`         → "Interviews" metric.
  *   - `world.coachJobOffersById`                   → board Accept/Decline, pipeline, real salary.
  *   - `evaluateCoachJobEligibility`                → Fit %, tone and unmet requirements (previously discarded).
- *   - `world.coachProfessionalProfilesByCoachId`   → the five real fit-profile dimensions.
+ *   - the coach's canonical `StaffPerson.professional` profile → the five real fit-profile dimensions.
  *   - `world.coachReputationProfilesByCoachId`     → Leverage.
  *   - `getRelationshipsForPerson` / `getRelationshipBandForPeople` → professional network strength.
  *   - `world.teamStaffAssignmentsById` + `STAFF_ROLE_REGISTRY`     → contact role and influence.
@@ -431,7 +431,7 @@ export function buildCoachOpportunitiesModel(
   const userCoachId = world.userCoachId
   const coach = world.coaches[userCoachId]
   const reputation = world.coachReputationProfilesByCoachId[userCoachId]
-  const professional = world.coachProfessionalProfilesByCoachId[userCoachId]
+  const professional = coach === undefined ? undefined : world.staffPeopleById[coach.staffProfileId]?.professional
   if (coach === undefined || reputation === undefined || professional === undefined) return null
 
   const employment = world.coachEmploymentByCoachId[userCoachId] ?? { status: 'unemployed' as const }

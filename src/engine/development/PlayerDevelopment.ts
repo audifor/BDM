@@ -3,7 +3,22 @@ import type { GameDate } from '@/domain/date'
 import type { SeasonId } from '@/domain/ids'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 
-export interface PlayerDevelopmentContext { readonly fromSeasonId: SeasonId; readonly toSeasonId: SeasonId; readonly targetDate: GameDate; readonly stimulusByRating?: Readonly<Partial<Record<CanonicalRatingKey, number>>> }
+export interface PlayerDevelopmentContext {
+  readonly fromSeasonId: SeasonId
+  readonly toSeasonId: SeasonId
+  readonly targetDate: GameDate
+  readonly stimulusByRating?: Readonly<Partial<Record<CanonicalRatingKey, number>>>
+  /**
+   * The WORLD-LEVEL annual development cycle identity (e.g. `annual-development:2027`), used as
+   * the deterministic seed instead of `fromSeasonId`/`toSeasonId`. Player development is a
+   * world-year event, not a Competition-season event: the same player may belong to several
+   * independently-rolling competitions, so seeding by season identity would make the result
+   * depend on which competition happened to trigger it. Optional only for legacy/isolated test
+   * callers that still exercise a single-season development calculation directly; production
+   * calendar-driven development always supplies it.
+   */
+  readonly cycleId?: string
+}
 export interface PlayerRatingDevelopment { readonly rating: PlayerTruthRatingKey; readonly before: number; readonly delta: number; readonly after: number }
 export interface PlayerDevelopmentResult { readonly playerId: Player['id']; readonly age: number; readonly ratings: readonly PlayerRatingDevelopment[] }
 
@@ -29,7 +44,7 @@ export function developPlayerForSeason(player: Player, context: PlayerDevelopmen
 
 function developRating(player: Player, rating: PlayerTruthRatingKey, age: number, context: PlayerDevelopmentContext): PlayerRatingDevelopment {
   const before = player.basketball.ratings[rating]
-  const random = new SeededRandomSource(hashStringToSeed(`player-development-v2:${context.fromSeasonId}:${context.toSeasonId}:${player.id}:${rating}`))
+  const random = new SeededRandomSource(hashStringToSeed(`player-development-v2:${context.cycleId ?? `${context.fromSeasonId}:${context.toSeasonId}`}:${player.id}:${rating}`))
   // Training is an input to the canonical seasonal development calculation, never
   // a direct ratings mutation. The cap keeps a full season of work modest.
   const stimulus = Math.min(2, (context.stimulusByRating?.[legacyStimulusKey(rating)] ?? 0) * 0.05)

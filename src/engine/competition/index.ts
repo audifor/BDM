@@ -4,7 +4,7 @@ export { createWorldCompetitionCatalog, listWorldCompetitionFormats, requireWorl
 export type { WorldCompetitionCatalog } from './WorldCompetitionCatalog'
 export { deriveCompetitionSeasonWindows, requireCompetitionFormatVariant } from './WorldCompetitionCalendar'
 export type { CompetitionSeasonWindows } from './WorldCompetitionCalendar'
-export { areRegularSeasonGamesComplete, getCompetitionPostseasonChampion, getCompetitionPostseasonState, materializeCompetitionPostseason } from './WorldCompetitionPostseason'
+export { areRegularSeasonGamesComplete, getCompetitionPostseasonChampion, getCompetitionPostseasonState, materializeCompetitionDependencies, materializeCompetitionPostseason } from './WorldCompetitionPostseason'
 export type { CompetitionPostseasonSeriesStateV1, CompetitionPostseasonStateV1 } from './WorldCompetitionPostseason'
 export { instantiateWorldCompetitionFixedBracketV1 } from './WorldCompetitionFixedBracket'
 export type { WorldCompetitionSeededEntryV1, WorldCompetitionFixtureParticipantRefV1, WorldCompetitionVirtualFixtureV1, WorldCompetitionFixedBracketPlanV1 } from './WorldCompetitionFixedBracket'

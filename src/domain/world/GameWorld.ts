@@ -1364,7 +1364,15 @@ function synchronizePersonRoots(world: GameWorld): Readonly<Record<import('@/dom
   const merged = new Map(derived.map((person) => {
     const prior = previous.get(person.id)
     const preservedRefs = prior?.profileRefs.filter((ref) => ref.kind === 'official' || ref.kind === 'agent' || ref.kind === 'mediaPerson') ?? []
-    return [person.id, preservedRefs.length === 0 ? person : { ...person, profileRefs: [...person.profileRefs, ...preservedRefs] }] as const
+    if (prior === undefined) return [person.id, person] as const
+    return [person.id, createPerson({
+      ...person,
+      gender: person.gender ?? prior.gender,
+      dateOfBirth: person.dateOfBirth ?? prior.dateOfBirth,
+      nationalityIds: person.nationalityIds.length === 0 ? prior.nationalityIds : person.nationalityIds,
+      physical: person.physical ?? prior.physical,
+      profileRefs: [...person.profileRefs, ...preservedRefs],
+    })] as const
   }))
   return indexById([...merged.values()], 'Person')
 }

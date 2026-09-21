@@ -4,13 +4,26 @@ import { createGameWorld, updateGameWorld } from '@/domain/world'
 import { calculateStaffRoleProficiencyByRoleId } from '@/domain/staff'
 import { calculateStandings } from '@/engine/competition/standings'
 import { getPlayerCareerStats, getPlayerSeasonStats } from '@/engine/stats/PlayerHistory'
+import { getSeasonHistoryRecord } from '@/engine/season'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSaveV1'
 
 import { createNewGame } from './createNewGame'
 import { simulateAndApplyGame } from './playUserGame'
 import { getCurrentSeason } from './selectors'
-import { startNextSeason } from './startNextSeason'
+import { startNextSeason, startNextSeasonFor } from './startNextSeason'
 import { advanceGameDay } from './advanceGameDay'
+
+/**
+ * `startNextSeason` no longer moves `world.currentSeasonId` (see startNextSeason.ts): it only
+ * migrates naturally once the world clock reaches the new edition's `startDate`. These tests
+ * assert against the newly-created edition directly, by competitionId + latest startDate,
+ * exactly like `CalendarEngine`'s own successor lookup.
+ */
+function latestSeasonFor(world: ReturnType<typeof createNewGame>, competitionId: string) {
+  return Object.values(world.seasons)
+    .filter((season) => season.competitionId === competitionId)
+    .sort((a, b) => (a.startDate < b.startDate ? 1 : a.startDate > b.startDate ? -1 : 0))[0]!
+}
 
 describe('startNextSeason', () => {
   it('requires a finalized current season', () => {
@@ -29,13 +42,18 @@ describe('startNextSeason', () => {
     const priorLogs = Object.values(completed.matchStatLogsByGameId)
     const priorHistory = Object.values(completed.seasonHistoryBySeasonId)
     const priorPlayers = Object.values(completed.players)
+    const currentSeasonBefore = getCurrentSeason(completed)
     const next = startNextSeason(completed)
-    const nextSeason = getCurrentSeason(next)
+    const nextSeason = latestSeasonFor(next, currentSeasonBefore.competitionId)
     const newGames = Object.values(next.games).filter((game) => game.seasonId === nextSeason.id)
 
     expect(nextSeason.id).toBe('generated-season-0004')
     expect(nextSeason.startDate).toBe('2033-10-01')
-    expect(next.currentDate).toBe(nextSeason.startDate)
+    // Rollover NEVER moves the world clock, even for the world's current season: `currentDate`
+    // and `currentSeasonId` stay exactly where they were until `advanceDay` naturally reaches the
+    // new edition's startDate (see CalendarEngine.migrateCurrentSeasonIfElapsed).
+    expect(next.currentDate).toBe(completed.currentDate)
+    expect(next.currentSeasonId).toBe(completed.currentSeasonId)
     expect(Object.values(next.seasons).filter((season) => next.ecosystems[next.competitions[season.competitionId]!.ecosystemId]!.category === 'men')).toHaveLength(5)
     expect(Object.values(next.games)).toHaveLength(priorGames.length + 56)
     expect(new Set(Object.keys(next.games)).size).toBe(Object.keys(next.games).length)
@@ -48,26 +66,32 @@ describe('startNextSeason', () => {
     expect(Object.values(next.players)).toHaveLength(priorPlayers.length)
     expect(Object.values(next.players).every((player) => priorPlayers.some((prior) => prior.id === player.id))).toBe(true)
     expect(Object.values(next.players).map((player) => player.development)).toEqual(priorPlayers.map((player) => player.development))
-    expect(Object.values(next.players).some((player) => JSON.stringify(player.basketball.ratings) !== JSON.stringify(priorPlayers.find((prior) => prior.id === player.id)!.basketball.ratings))).toBe(true)
+    // Player development is a WORLD-LEVEL annual event (see CalendarEngine.advanceDay and
+    // WorldAnnualDevelopmentCycle), never a Competition-rollover event: startNextSeason no
+    // longer changes ratings by itself, so every player's ratings survive the rollover exactly.
+    expect(Object.values(next.players).map((player) => player.basketball.ratings)).toEqual(priorPlayers.map((player) => player.basketball.ratings))
     expect(calculateStandings(next, nextSeason.id).every((line) => line.played === 0 && line.wins === 0 && line.losses === 0 && line.pointsFor === 0)).toBe(true)
     expect(() => advanceGameDay(next)).not.toThrow()
   }, 10_000)
 
   it('keeps career stats, resets season projections, finalizes season two, and supports season three', () => {
     const completed = completeCurrentSeason(createNewGame())
+    const primaryCompetitionId = getCurrentSeason(completed).competitionId
     const playerId = Object.values(completed.players)[0]!.id
     const career = getPlayerCareerStats(completed, playerId)
     let next = startNextSeason(completed)
-    const seasonTwo = getCurrentSeason(next)
+    const seasonTwo = latestSeasonFor(next, primaryCompetitionId)
     expect(getPlayerSeasonStats(next, playerId, seasonTwo.id).gamesPlayed).toBe(0)
     expect(getPlayerCareerStats(next, playerId)).toEqual(career)
     next = simulateAndApplyGame(next, Object.values(next.games).find((game) => game.seasonId === seasonTwo.id)!)
     expect(getPlayerSeasonStats(next, playerId, seasonTwo.id).gamesPlayed).toBeLessThanOrEqual(1)
     expect(getPlayerCareerStats(next, playerId).gamesPlayed).toBeGreaterThanOrEqual(career.gamesPlayed)
+    // Rollover never moved currentSeasonId, so completeCurrentSeason (which resolves every
+    // scheduled game regardless of season) still finalizes season two's own remaining games here.
     next = completeCurrentSeason(next)
     expect(Object.values(next.seasonHistoryBySeasonId).filter((history) => next.ecosystems[next.competitions[next.seasons[history.seasonId]!.competitionId]!.ecosystemId]!.category === 'men')).toHaveLength(5)
-    expect(getCurrentSeason(next).id).toBe(seasonTwo.id)
-    expect(getCurrentSeason(startNextSeason(next)).id).toBe('generated-season-0006')
+    expect(getSeasonHistoryRecord(next, seasonTwo.id)).toBeDefined()
+    expect(latestSeasonFor(startNextSeasonFor(next, seasonTwo.id), primaryCompetitionId).id).toBe('generated-season-0006')
   }, 10_000)
 
   it('round-trips multiple seasons and accepts legacy single-season V1 without currentSeasonId', () => {

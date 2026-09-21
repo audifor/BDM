@@ -7,7 +7,7 @@ import { calculateTeamStrength } from '@/engine/team'
 
 import { calculateMatchPlayerStats } from './PlayerMatchStats'
 import { finalizeCompletedSeason } from '@/engine/season'
-import { materializeCompetitionPostseason } from '@/engine/competition'
+import { materializeCompetitionDependencies, materializeCompetitionPostseason } from '@/engine/competition'
 import { recordEligibilityParticipation } from '@/engine/eligibility'
 import { processNarrativeMatch } from '@/engine/narrative'
 import { processMediaMatch } from '@/engine/media'
@@ -62,7 +62,8 @@ export function applyMatchResult(world: GameWorld, result: MatchSimulationResult
 
   const resultWorld = updateGameWorld(world, { games })
   const narrated = processNarrativeMatch(applyMatchMorale(applyMatchCoachExperience(world, applyMatchCoachReputationConsequences(resultWorld, completedGame), completedGame), completedGame), completedGame.id)
-  return materializeCompetitionPostseason(processMediaMatch(narrated, completedGame.id), originalGame.seasonId)
+  const afterOwnCompetition = materializeCompetitionPostseason(processMediaMatch(narrated, completedGame.id), originalGame.seasonId)
+  return materializeCompetitionDependencies(afterOwnCompetition, originalGame.seasonId)
 }
 
 function applyMatchMorale(world: GameWorld, game: ReturnType<typeof createGame>): GameWorld {

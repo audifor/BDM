@@ -1,5 +1,7 @@
 import type { PlayerId, TeamId } from '@/domain/ids'
-import type { CanonicalRatingKey } from '@/domain/player'
+import type { PlayerTruthRatingKey } from '@/domain/player'
+import type { Player } from '@/domain/player'
+import type { Person } from '@/domain/person'
 import type { GameDate } from '@/domain/date'
 
 import type { PlayerPerformanceModel } from './buildPlayerPerformanceModel'
@@ -58,7 +60,7 @@ export interface PlayerStatusModel {
 }
 
 export interface PlayerRatingRow {
-  readonly id: CanonicalRatingKey
+  readonly id: PlayerTruthRatingKey
   readonly label: string
   readonly category: RatingCategory
   readonly value: number
@@ -134,7 +136,15 @@ export interface RatingEvolutionPointModel {
 
 export interface AttributeLeagueBaselineModel {
   readonly status: PresentationAvailability
-  readonly mean: number | null
+  readonly average: number | null
+  readonly sampleSize: number
+  readonly scopeLabel: string | null
+  readonly note: string
+}
+
+export interface AttributeTeamBaselineModel {
+  readonly status: PresentationAvailability
+  readonly average: number | null
   readonly sampleSize: number
   readonly scopeLabel: string | null
   readonly note: string
@@ -145,7 +155,7 @@ export interface AttributeStandingModel {
   readonly status: PresentationAvailability
   /** Share of the competition sample this value beats, 0-100. Null when there is no sample. */
   readonly percentile: number | null
-  readonly positionMean: number | null
+  readonly positionAverage: number | null
   readonly positionLabel: string
   readonly positionSampleSize: number
   readonly note: string
@@ -153,7 +163,7 @@ export interface AttributeStandingModel {
 
 /** A rating the profile leans on, or one it is held back by, with its standing. */
 export interface AttributeHighlightModel {
-  readonly id: CanonicalRatingKey
+  readonly id: PlayerTruthRatingKey
   readonly label: string
   readonly value: number
   readonly percentile: number | null
@@ -205,7 +215,7 @@ export interface AttributeTrainingAssignmentModel {
 }
 
 export interface RatingEvolutionModel {
-  readonly ratingId: CanonicalRatingKey
+  readonly ratingId: PlayerTruthRatingKey
   readonly current: number
   readonly points: readonly RatingEvolutionPointModel[]
   readonly changeSinceFirst: number
@@ -213,8 +223,9 @@ export interface RatingEvolutionModel {
   readonly note: string
   /** Season training stimulus already accumulated for this attribute; it is a property of the
    *  attribute, not of any single training option. */
-  readonly accumulatedStimulus: number
+  readonly accumulatedStimulus: number | null
   readonly league: AttributeLeagueBaselineModel
+  readonly team: AttributeTeamBaselineModel
   readonly standing: AttributeStandingModel
   readonly trainings: readonly AttributeTrainingOptionModel[]
   /** Per-player, not per-rating: the same value is shared by every attribute of the player. */
@@ -224,7 +235,7 @@ export interface RatingEvolutionModel {
 export interface PlayerAttributesModel {
   readonly categories: readonly AttributeCategoryModel[]
   readonly allRatings: readonly PlayerRatingRow[]
-  readonly evolutionByRating: Readonly<Record<CanonicalRatingKey, RatingEvolutionModel>>
+  readonly evolutionByRating: Readonly<Record<PlayerTruthRatingKey, RatingEvolutionModel>>
   /** Ratings the profile is built on: the best standing in the competition sample. */
   readonly signatureSkills: readonly AttributeHighlightModel[]
   /** Ratings that trail the competition sample the most. */
@@ -234,7 +245,7 @@ export interface PlayerAttributesModel {
 
 /** Top attribute shown as a chip on the identity module. */
 export interface OverviewChipModel {
-  readonly id: CanonicalRatingKey
+  readonly id: PlayerTruthRatingKey
   readonly label: string
   readonly value: number
 }
@@ -341,7 +352,7 @@ export interface OverviewMoverModel {
 
 /** One rating's season-by-season curve, reconstructed from the recorded rating deltas. */
 export interface OverviewRatingSeriesModel {
-  readonly id: CanonicalRatingKey
+  readonly id: PlayerTruthRatingKey
   readonly label: string
   readonly points: readonly number[]
   readonly delta: number
@@ -427,6 +438,9 @@ export interface PlayerOverviewModel {
 }
 
 export interface PlayerWorkspaceModel {
+  /** Complete canonical runtime records; view-specific projections must not discard fields. */
+  readonly player: Player
+  readonly person: Person | undefined
   readonly identity: PlayerIdentityModel
   readonly status: PlayerStatusModel
   readonly ratings: readonly PlayerRatingRow[]

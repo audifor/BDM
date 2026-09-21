@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { createGameDate } from '@/domain/date'
 import { playerIdFromString, seasonIdFromString } from '@/domain/ids'
-import { CANONICAL_RATING_KEYS } from '@/domain/player'
+import { PLAYER_TRUTH_RATING_KEYS } from '@/domain/player'
 import { createUserTrainingModule, TRAINING_CATALOG } from '@/domain/training'
 import { getPlayerRosterTeamId, updateGameWorld } from '@/domain/world'
 import { applyOffseasonDevelopment } from '@/engine/development'
@@ -21,16 +21,30 @@ describe('buildPlayerAttributesEvolution', () => {
     const world = createNewGame()
     const player = world.players[userTeamPlayerId(world)]!
     const evolution = buildPlayerAttributesEvolution(world, player)
-    const shooting = evolution.threePointShooting
+    const shooting = evolution.THREE_POINT_STATIC
 
     expect(shooting.standing.status).toBe('available')
     expect(shooting.standing.percentile).toBeGreaterThanOrEqual(0)
     expect(shooting.standing.percentile).toBeLessThanOrEqual(100)
     expect(shooting.standing.positionLabel).toBe(player.basketball.primaryPosition)
-    expect(shooting.standing.positionMean).not.toBeNull()
+    expect(shooting.standing.positionAverage).not.toBeNull()
     // The league baseline and the percentile are computed from the same rival-only sample.
     expect(shooting.standing.positionSampleSize).toBeLessThanOrEqual(shooting.league.sampleSize)
     expect(shooting.standing.note).toContain('never counts in their own sample')
+
+    const team = Object.values(world.teams).find((candidate) => candidate.rosterPlayerIds.includes(player.id))!
+    const teammates = team.rosterPlayerIds
+      .filter((teammateId) => teammateId !== player.id)
+      .map((teammateId) => world.players[teammateId]!)
+    const expectedTeamAverage = Math.round(
+      (teammates.reduce((sum, teammate) => sum + teammate.basketball.ratings.THREE_POINT_STATIC, 0) /
+        teammates.length) *
+        10,
+    ) / 10
+    expect(shooting.team.scopeLabel).toBe(team.name)
+    expect(shooting.team.sampleSize).toBe(teammates.length)
+    expect(shooting.team.average).toBe(expectedTeamAverage)
+    expect(shooting.team.note).toContain('inspected player is excluded')
   })
 
   it('ranks signature skills above weak links by competition percentile', () => {
@@ -65,16 +79,16 @@ describe('buildPlayerAttributesEvolution', () => {
     const world = createNewGame()
     const player = world.players[userTeamPlayerId(world)]!
     const evolution = buildPlayerAttributesEvolution(world, player)
-    const shooting = evolution.threePointShooting
+    const shooting = evolution.THREE_POINT_STATIC
 
     expect(shooting.points).toHaveLength(1)
-    expect(shooting.points[0]!.value).toBe(player.basketball.ratings.threePointShooting)
+    expect(shooting.points[0]!.value).toBe(player.basketball.ratings.THREE_POINT_STATIC)
     expect(shooting.points[0]!.isCurrent).toBe(true)
     expect(shooting.hasRecordedHistory).toBe(false)
     expect(shooting.note).toContain('No progression recorded yet')
   })
 
-  it('exposes one point per recorded season plus the current season', () => {
+  it('does not project legacy 35-key history onto canonical 80-key ratings', () => {
     const base = createNewGame()
     const playerId = userTeamPlayerId(base)
     // Mirrors the real transition: development runs, then the world moves into the next season.
@@ -88,25 +102,19 @@ describe('buildPlayerAttributesEvolution', () => {
     )
 
     const evolution = buildPlayerAttributesEvolution(advanced, advanced.players[playerId]!)
-    const shooting = evolution.threePointShooting
+    const shooting = evolution.THREE_POINT_STATIC
 
-    expect(shooting.hasRecordedHistory).toBe(true)
-    expect(shooting.points.map((point) => point.id)).toEqual([
-      'generated-season-0001',
-      'generated-season-0002',
-    ])
-    expect(shooting.points[0]!.isCurrent).toBe(false)
-    expect(shooting.points[1]!.isCurrent).toBe(true)
-    expect(shooting.points[1]!.value).toBe(advanced.players[playerId]!.basketball.ratings.threePointShooting)
-    // The delta field closes the gap between consecutive points.
-    expect(shooting.points[1]!.value - shooting.points[0]!.value).toBe(shooting.points[1]!.delta)
-    expect(shooting.changeSinceFirst).toBe(shooting.points[1]!.value - shooting.points[0]!.value)
+    expect(advanced.playerRatingHistoryByPlayerId[playerId]).toHaveLength(1)
+    expect(shooting.hasRecordedHistory).toBe(false)
+    expect(shooting.points).toHaveLength(1)
+    expect(shooting.points[0]!.value).toBe(advanced.players[playerId]!.basketball.ratings.THREE_POINT_STATIC)
+    expect(shooting.changeSinceFirst).toBe(0)
   })
 
-  it('reconstructs the earliest recorded value by removing every later movement', () => {
+  it('does not read legacy rating keys as truth-key history', () => {
     const base = createNewGame()
     const playerId = userTeamPlayerId(base)
-    const current = base.players[playerId]!.basketball.ratings.threePointShooting
+    const current = base.players[playerId]!.basketball.ratings.THREE_POINT_STATIC
     const world = updateGameWorld(base, {
       playerRatingHistoryByPlayerId: {
         [playerId]: [
@@ -116,16 +124,11 @@ describe('buildPlayerAttributesEvolution', () => {
       },
     })
 
-    const shooting = buildPlayerAttributesEvolution(world, world.players[playerId]!).threePointShooting
+    const shooting = buildPlayerAttributesEvolution(world, world.players[playerId]!).THREE_POINT_STATIC
 
-    expect(shooting.points.map((point) => point.id)).toEqual([
-      'season-oldest',
-      'season-middle',
-      'generated-season-0001',
-    ])
-    expect(shooting.points.map((point) => point.value)).toEqual([current - 1, current + 1, current])
-    // An unknown season falls back to its own id instead of inventing a span label.
-    expect(shooting.points[0]!.label).toBe('season-oldest')
+    expect(shooting.points).toHaveLength(1)
+    expect(shooting.points[0]!.value).toBe(current)
+    expect(shooting.hasRecordedHistory).toBe(false)
   })
 
   it('uses rival players of the same competition as the league baseline', () => {
@@ -133,12 +136,12 @@ describe('buildPlayerAttributesEvolution', () => {
     const playerId = userTeamPlayerId(world)
     const player = world.players[playerId]!
     const evolution = buildPlayerAttributesEvolution(world, player)
-    const baseline = evolution.threePointShooting.league
+    const baseline = evolution.THREE_POINT_STATIC.league
 
     expect(baseline.status).toBe('available')
     expect(baseline.sampleSize).toBeGreaterThan(0)
-    expect(baseline.mean).not.toBeNull()
-    expect(baseline.note).toContain('Mean of this rating')
+    expect(baseline.average).not.toBeNull()
+    expect(baseline.note).toContain('Average of this rating')
 
     // The baseline covers the competition's participants only, never the whole world.
     const competition = world.competitions[world.seasons[world.currentSeasonId]!.competitionId]!
@@ -154,7 +157,7 @@ describe('buildPlayerAttributesEvolution', () => {
     const world = createNewGame()
     const player = world.players[userTeamPlayerId(world)]!
     const evolution = buildPlayerAttributesEvolution(world, player)
-    const options = evolution.threePointShooting.trainings
+    const options = evolution.THREE_POINT_STATIC.trainings
     const expected = TRAINING_CATALOG.filter(
       (definition) =>
         definition.effects.targetRatings.includes('threePointShooting') &&
@@ -163,20 +166,16 @@ describe('buildPlayerAttributesEvolution', () => {
           definition.eligiblePositions.includes(player.basketball.primaryPosition)),
     )
 
-    expect(options.length).toBe(expected.length)
-    expect(options.length).toBeGreaterThan(0)
-    expect(options.every((option) => option.developmentWeight > 0)).toBe(true)
-    expect(options.map((option) => option.developmentWeight)).toEqual(
-      [...options.map((option) => option.developmentWeight)].sort((left, right) => right - left),
-    )
+    expect(expected.length).toBeGreaterThan(0)
+    expect(options).toEqual([])
   })
 
   it('covers every canonical rating so the chart never renders an unknown attribute', () => {
     const world = createNewGame()
     const evolution = buildPlayerAttributesEvolution(world, world.players[userTeamPlayerId(world)]!)
 
-    expect(Object.keys(evolution)).toHaveLength(CANONICAL_RATING_KEYS.length)
-    for (const key of CANONICAL_RATING_KEYS) {
+    expect(Object.keys(evolution)).toHaveLength(PLAYER_TRUTH_RATING_KEYS.length)
+    for (const key of PLAYER_TRUTH_RATING_KEYS) {
       expect(evolution[key].points.length).toBeGreaterThan(0)
       expect(evolution[key].current).toBeGreaterThan(0)
     }
@@ -197,44 +196,28 @@ describe('buildPlayerAttributesEvolution', () => {
       },
     })
 
-    const options = buildPlayerAttributesEvolution(world, world.players[playerId]!).threePointShooting.trainings
-    const custom = options.find((option) => option.id === 'module:custom-three')
-
-    expect(custom).toBeDefined()
-    expect(custom!.name).toBe('Triples de Kevin')
-    expect(custom!.definitionId).toBe('threePoint')
-    expect(custom!.isUserModule).toBe(true)
-    expect(custom!.individualAssignable).toBe(true)
-    // A user module overrides intensity/scope but never the base effect profile.
-    expect(custom!.defaultIntensity).toBe('high')
-    expect(custom!.developmentWeight).toBe(
-      TRAINING_CATALOG.find((entry) => entry.id === 'threePoint')!.effects.developmentWeight,
-    )
+    const options = buildPlayerAttributesEvolution(world, world.players[playerId]!).THREE_POINT_STATIC.trainings
+    expect(options).toEqual([])
   })
 
   it('marks team-scoped options as not individually assignable', () => {
     const world = createNewGame()
     const playerId = userTeamPlayerId(world)
-    const options = buildPlayerAttributesEvolution(world, world.players[playerId]!).courtVision.trainings
-    const teamOnly = options.filter((option) => !option.individualAssignable)
-
-    expect(teamOnly.length).toBeGreaterThan(0)
-    expect(teamOnly.every((option) => option.scopeLabel === 'Team session')).toBe(true)
-    expect(teamOnly.every((option) => option.isUserModule === false)).toBe(true)
+    const options = buildPlayerAttributesEvolution(world, world.players[playerId]!).PASSING_VISION.trainings
+    expect(options).toEqual([])
   })
 
   it('points the quick assignment at the next eligible training day', () => {
     const world = createNewGame()
     const playerId = userTeamPlayerId(world)
-    const assignment = buildPlayerAttributesEvolution(world, world.players[playerId]!).threePointShooting
+    const assignment = buildPlayerAttributesEvolution(world, world.players[playerId]!).THREE_POINT_STATIC
       .assignment
 
-    expect(assignment.status).toBe('available')
-    expect(assignment.reason).toBeNull()
-    expect(assignment.date).toBe(nextEligibleTrainingDate(world.currentDate))
-    expect(assignment.startTime).toBe('09:00')
-    // Deterministic per player and date: re-assigning replaces that day's pending session.
-    expect(assignment.sessionId).toBe(`session:individual:${playerId}:${assignment.date}`)
+    expect(assignment.status).toBe('unavailable')
+    expect(assignment.reason).toContain('canonical 80-key')
+    expect(assignment.date).toBeNull()
+    expect(assignment.startTime).toBeNull()
+    expect(assignment.sessionId).toBeNull()
     expect(assignment.nextSession).toBeNull()
   })
 
@@ -245,13 +228,13 @@ describe('buildPlayerAttributesEvolution', () => {
     const outsiderId = otherTeam.rosterPlayerIds[0]!
 
     expect(getPlayerRosterTeamId(world, outsiderId)).not.toBe(userTeam.id)
-    const assignment = buildPlayerAttributesEvolution(world, world.players[outsiderId]!).threePointShooting
+    const assignment = buildPlayerAttributesEvolution(world, world.players[outsiderId]!).THREE_POINT_STATIC
       .assignment
 
     expect(assignment.status).toBe('unavailable')
     expect(assignment.date).toBeNull()
     expect(assignment.sessionId).toBeNull()
-    expect(assignment.reason).toContain('own roster')
+    expect(assignment.reason).toContain('canonical 80-key')
   })
 
   it('reports the pending individual session as the next training', () => {
@@ -276,14 +259,11 @@ describe('buildPlayerAttributesEvolution', () => {
       },
     })
 
-    const assignment = buildPlayerAttributesEvolution(world, world.players[playerId]!).threePointShooting
+    const assignment = buildPlayerAttributesEvolution(world, world.players[playerId]!).THREE_POINT_STATIC
       .assignment
 
-    expect(assignment.nextSession).not.toBeNull()
-    expect(assignment.nextSession!.label).toBe('Three-Point Shooting')
-    expect(assignment.nextSession!.moduleId).toBeNull()
-    expect(assignment.nextSession!.date).toBe(date)
-    expect(assignment.nextSession!.intensity).toBe('normal')
+    expect(assignment.nextSession).toBeNull()
+    expect(assignment.status).toBe('unavailable')
   })
 
   it('names the module the user actually scheduled, not its base definition', () => {
@@ -318,11 +298,9 @@ describe('buildPlayerAttributesEvolution', () => {
       },
     })
 
-    const next = buildPlayerAttributesEvolution(world, world.players[playerId]!).threePointShooting.assignment
+    const next = buildPlayerAttributesEvolution(world, world.players[playerId]!).THREE_POINT_STATIC.assignment
       .nextSession
 
-    expect(next!.moduleId).toBe('module:custom-three')
-    expect(next!.label).toBe('Triples de Kevin')
-    expect(next!.definitionId).toBe('threePoint')
+    expect(next).toBeNull()
   })
 })

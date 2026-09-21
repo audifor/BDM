@@ -1,4 +1,4 @@
-import type { CanonicalRatingKey } from '@/domain/player'
+import type { PlayerTruthRatingKey } from '@/domain/player'
 
 import {
   CATEGORY_LABELS,
@@ -29,7 +29,7 @@ export function RatingInspectorDetail({
   ratingId,
   viewId,
 }: {
-  readonly ratingId: CanonicalRatingKey
+  readonly ratingId: PlayerTruthRatingKey
   readonly viewId: PlayerWorkspaceViewId
 }) {
   const { model } = usePlayerWorkspace()

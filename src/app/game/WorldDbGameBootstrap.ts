@@ -7,11 +7,12 @@ import { DEVELOPMENT_DOMAINS, createDevelopmentProfile, type DevelopmentStage } 
 import { PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS, type PlayerTruthRatings, type PlayerTruthTendencies } from '@/domain/player/PlayerTruthCatalog'
 import { createPlayer } from '@/domain/player'
 import { createSeason } from '@/domain/season'
+import type { CompetitionCalendarPolicy } from '@/domain/season'
 import { createSportsEcosystem } from '@/domain/ecosystem'
 import { coachIdFromString, competitionIdFromString, countryIdFromString, ecosystemIdFromString, gameIdFromString, playerIdFromString, seasonIdFromString, staffPersonIdFromString, teamIdFromString, teamStaffAssignmentIdFromString, type PlayerId } from '@/domain/ids'
 import { createStaffPerson, createTeamStaffAssignment, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS, type StaffPerson, type StaffRoleFamily } from '@/domain/staff'
 import { createTeam } from '@/domain/team'
-import { createGame } from '@/domain/game'
+import { createGame, type Game } from '@/domain/game'
 import type { WorldCompetitionFormatDocument } from '@/domain/competition'
 import { attachWorldDbCompetitionRuntime, createGameWorld, type GameWorld, type WorldDbCompetitionRuntimeBundlePin } from '@/domain/world'
 import { distributeRoundsAcrossSeason, generateRoundRobinSchedule } from '@/engine/competition/schedule'
@@ -42,7 +43,7 @@ const DEVELOPMENT_MAP: Readonly<Record<string, readonly string[]>> = {
   OFF_BALL_OFFENSE: ['creation'], DEFENSE_REBOUNDING: ['defense', 'rebounding'], PHYSICAL: ['physical'], MENTAL: ['mental'],
 }
 
-export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1, selection: WorldDbGameBootstrapSelectionV1, runtimeBundlePin: WorldDbCompetitionRuntimeBundlePin, worldCompetitionFormat?: WorldCompetitionFormatDocument): GameWorld {
+export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1, selection: WorldDbGameBootstrapSelectionV1, runtimeBundlePin: WorldDbCompetitionRuntimeBundlePin, worldCompetitionFormat?: WorldCompetitionFormatDocument, calendarPolicy?: CompetitionCalendarPolicy): GameWorld {
   assertSelectionMatchesSlice(slice, selection)
   if (runtimeBundlePin.worldDbSchema !== slice.source.schemaId) throw new Error('World DB bootstrap runtime schema identity mismatch')
   if (worldCompetitionFormat !== undefined && (worldCompetitionFormat.competitionId !== selection.competitionId || worldCompetitionFormat.competitionSeasonId !== selection.competitionSeasonId)) throw new Error('World DB bootstrap competition format identity mismatch')
@@ -56,6 +57,8 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
   const ecosystemId = ecosystemIdFromString(slice.ecosystem.ecosystemId)
   const rosterAssignments = activeRosterAssignments(slice)
   const players = slice.players.map((source) => {
+    assertExactPlayerKeys(source.ratings, PLAYER_TRUTH_RATING_KEYS, `${source.playerId} ratings`)
+    assertExactPlayerKeys(source.tendencies, PLAYER_TRUTH_TENDENCY_KEYS, `${source.playerId} tendencies`)
     const person = personById.get(source.personId)
     if (person === undefined) throw new Error(`World DB bootstrap player person is missing: ${source.personId}`)
     return createPlayer({
@@ -89,13 +92,46 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
   const persons = slice.persons.map((person) => createPerson({ id: person.personId as never, firstName: person.firstName, lastName: person.lastName, gender: person.gender, dateOfBirth: parseGameDate(person.dateOfBirth), nationalityIds: person.nationalityIds.map(countryIdFromString), physical: person.physical, profileRefs: [...(playerPersonIds.has(person.personId) ? [{ kind: 'player' as const, profileId: person.personId }] : []), ...slice.staffProfiles.filter((staffProfile) => staffProfile.personId === person.personId).map((staffProfile) => ({ kind: 'staff' as const, profileId: staffProfile.staffId }))] }))
   const teams = slice.teams.map((team) => createTeam({ id: teamIdFromString(team.teamId), name: team.name, gender: team.gender, countryId: countryIdFromString(team.countryId), rosterPlayerIds: rosterForTeam(rosterAssignments, team.teamId), ...(team.teamId === selectedTeam.teamId ? { coachId: coach.id } : {}) }))
   const competition = createCompetition({ id: competitionId, name: slice.competition.name, gender: slice.competition.gender, ecosystemId, participantTeamIds: teams.map((team) => team.id), rules: defaultLeagueCompetitionRules })
-  const season = createSeason({ id: seasonId, competitionId, label: slice.season.label, startDate: parseGameDate(slice.season.startDate), endDate: parseGameDate(slice.season.endDate), participantTeamIds: teams.map((team) => team.id), ...(worldCompetitionFormat === undefined ? {} : { worldCompetitionFormat }) })
+  const season = createSeason({ id: seasonId, competitionId, label: slice.season.label, startDate: parseGameDate(slice.season.startDate), endDate: parseGameDate(slice.season.endDate), participantTeamIds: teams.map((team) => team.id), ...(worldCompetitionFormat === undefined ? {} : { worldCompetitionFormat }), ...(calendarPolicy === undefined ? {} : { calendarPolicy }) })
   const ecosystem = createSportsEcosystem({ id: ecosystemId, name: slice.ecosystem.name, kind: slice.ecosystem.kind, category: slice.ecosystem.category })
   const baseWorld = createGameWorld({ currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games: [], staffPeople: staff, teamStaffAssignments: staffAssignments })
   const regularSeasonNodeKey = worldCompetitionFormat?.variants.find((variant) => variant.isRealVariant)?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key ?? worldCompetitionFormat?.variants[0]?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key
-  const games = slice.matches.length === 0 ? generateRoundRobinSchedule({ world: baseWorld, seasonId, schedulePolicy: distributeRoundsAcrossSeason, ...(regularSeasonNodeKey === undefined ? {} : { competitionStageKey: regularSeasonNodeKey }) }).map((game, index) => ({ ...game, id: gameIdFromString(`derived-simulation-from-b04:${slice.season.competitionSeasonId}:${String(index + 1).padStart(4, '0')}`) })) : slice.matches.map((match) => materializeMatch(slice, match))
+  const generatedGames = generateRoundRobinSchedule({ world: baseWorld, seasonId, schedulePolicy: distributeRoundsAcrossSeason, ...(regularSeasonNodeKey === undefined ? {} : { competitionStageKey: regularSeasonNodeKey }) }).map((game, index) => ({ ...game, id: gameIdFromString(`derived-simulation-from-b04:${slice.season.competitionSeasonId}:${String(index + 1).padStart(4, '0')}`) }))
+  const importedGames = slice.matches.map((match) => materializeMatch(slice, match))
+  const games = importedGames.length === generatedGames.length
+    ? assertCompleteRoundRobin(importedGames, teams.length, competition.rules.schedule.meetingsPerPair)
+    : generatedGames
   const world = createGameWorld({ currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games, staffPeople: staff, teamStaffAssignments: staffAssignments })
   return attachWorldDbCompetitionRuntime(world, { competitionRuntimeBundle: runtimeBundlePin, competitionPlanIds: [], competitionSeasonIds: [slice.season.competitionSeasonId] })
+}
+
+function assertCompleteRoundRobin(games: readonly Game[], teamCount: number, meetingsPerPair: number): Game[] {
+  const expectedRounds = (teamCount - 1) * meetingsPerPair
+  const expectedGames = teamCount * (teamCount - 1) / 2 * meetingsPerPair
+  if (games.length !== expectedGames) throw new RangeError(`RealWorldSpain regular schedule requires ${expectedGames} games; found ${games.length}`)
+  const rounds = new Map<string, Game[]>()
+  const pairs = new Map<string, Game[]>()
+  for (const game of games) {
+    rounds.set(game.date, [...(rounds.get(game.date) ?? []), game])
+    const key = [game.homeTeamId, game.awayTeamId].sort().join(':')
+    pairs.set(key, [...(pairs.get(key) ?? []), game])
+  }
+  if (rounds.size !== expectedRounds) throw new RangeError(`RealWorldSpain regular schedule requires ${expectedRounds} rounds; found ${rounds.size}`)
+  for (const [date, round] of rounds) {
+    if (round.length !== teamCount / 2 || new Set(round.flatMap((game) => [game.homeTeamId, game.awayTeamId])).size !== teamCount) throw new RangeError(`RealWorldSpain round ${date} is incomplete or contains a duplicate team`)
+  }
+  for (const pair of pairs.values()) {
+    if (pair.length !== meetingsPerPair || (meetingsPerPair === 2 && (pair[0]!.homeTeamId !== pair[1]!.awayTeamId || pair[0]!.awayTeamId !== pair[1]!.homeTeamId))) throw new RangeError('RealWorldSpain round-robin schedule has an incomplete or unbalanced matchup')
+  }
+  if (pairs.size !== teamCount * (teamCount - 1) / 2) throw new RangeError('RealWorldSpain regular schedule does not cover every team pair')
+  return [...games]
+}
+
+function assertExactPlayerKeys(values: Readonly<Record<string, number>>, expected: readonly string[], label: string): void {
+  const keys = Object.keys(values)
+  if (keys.length !== expected.length || keys.some((key) => !expected.includes(key))) {
+    throw new RangeError(`World DB bootstrap player ${label} must contain exactly ${expected.length} canonical keys`)
+  }
 }
 
 function createPlayerDevelopment(dimensions: WorldDbGameBootstrapSliceV1['players'][number]['development'], dateOfBirth: string, seasonStart: string) {

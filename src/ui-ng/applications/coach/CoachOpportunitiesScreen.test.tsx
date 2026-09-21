@@ -17,6 +17,7 @@ import type { CoachJobCandidacyId, CoachJobOfferId } from '@/domain/coachCareer'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import {
   COACH_OPPORTUNITIES_MOCK,
+  buildCoachOpportunitiesModel,
   CoachOpportunitiesScreen,
 } from '@/ui-ng/applications/coach/CoachOpportunitiesScreen'
 
@@ -157,7 +158,8 @@ describe('CoachOpportunitiesScreen', () => {
 
   it('builds the fit profile from the real professional attributes and flags the invented row', () => {
     const world = createNewGame()
-    const professional = world.coachProfessionalProfilesByCoachId[world.userCoachId]!
+    const coach = world.coaches[world.userCoachId]!
+    const professional = world.staffPeopleById[coach.staffProfileId]!.professional
     const { container } = render(<CoachOpportunitiesScreen world={world} />)
 
     const cases = [
@@ -176,6 +178,25 @@ describe('CoachOpportunitiesScreen', () => {
     const salary = container.querySelector<HTMLElement>('[data-fit="salary"]')
     expect(salary).toHaveAttribute('data-source', 'mock')
     expect(within(salary!).getByText(String(COACH_OPPORTUNITIES_MOCK.salaryExpectations))).toBeInTheDocument()
+  })
+
+  it('builds the live fit profile from canonical Staff when the legacy Coach profile map is absent', () => {
+    const world = updateGameWorld(createNewGame(), { coachProfessionalProfilesByCoachId: {} })
+    const coach = world.coaches[world.userCoachId]!
+    const professional = world.staffPeopleById[coach.staffProfileId]!.professional
+
+    const model = buildCoachOpportunitiesModel(world)
+
+    expect(model).not.toBeNull()
+    for (const [id, attribute] of [
+      ['tactical', 'tacticalKnowledge'],
+      ['youth', 'playerDevelopment'],
+      ['pressure', 'discipline'],
+      ['politics', 'communication'],
+      ['ambition', 'motivation'],
+    ] as const) {
+      expect(model!.fit.find((row) => row.id === id)).toMatchObject({ source: 'live', value: professional.attributes[attribute] })
+    }
   })
 
   it('turns a live candidacy into signals, board status and pipeline events', () => {
@@ -245,13 +266,14 @@ describe('CoachOpportunitiesScreen', () => {
     }
   })
 
-  it('renders the empty shells instead of throwing', () => {
+  it('renders the empty shell without a world and uses canonical Staff without legacy Coach profiles', () => {
     const { unmount } = render(<CoachOpportunitiesScreen />)
     expect(screen.getByText('No career loaded.')).toBeInTheDocument()
     unmount()
 
-    const broken = updateGameWorld(createNewGame(), { coachProfessionalProfilesByCoachId: {} })
-    render(<CoachOpportunitiesScreen world={broken} />)
-    expect(screen.getByText('Coach profile unavailable.')).toBeInTheDocument()
+    const world = updateGameWorld(createNewGame(), { coachProfessionalProfilesByCoachId: {} })
+    render(<CoachOpportunitiesScreen world={world} />)
+    expect(screen.getByRole('heading', { name: /Market overview/ })).toBeInTheDocument()
+    expect(screen.queryByText('Coach profile unavailable.')).not.toBeInTheDocument()
   })
 })

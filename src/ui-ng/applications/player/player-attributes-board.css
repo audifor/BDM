@@ -16,6 +16,8 @@
   min-height: 0;
   padding: 11px 12px 0;
   overflow: hidden;
+  container-name: player-attributes-board;
+  container-type: inline-size;
 }
 
 .po-at-col {
@@ -26,14 +28,14 @@
 }
 
 /*
- * Column weights of the reference: left 54/46, centre 61/39, right 50/25/25.
+ * Reference: balanced left/right panels, content-sized centre matrix and flexible notes below.
  */
 .po-at-col--left {
   grid-template-rows: minmax(348px, 54fr) minmax(232px, 46fr);
 }
 
 .po-at-col--center {
-  grid-template-rows: minmax(330px, 61fr) minmax(196px, 39fr);
+  grid-template-rows: max-content minmax(196px, 1fr);
 }
 
 .po-at-col--right {
@@ -204,6 +206,7 @@
   gap: 8px;
   width: 100%;
   height: 38px;
+  min-height: var(--bdm-control-min-height, 28px);
   padding: 0 8px;
   border: 1px solid transparent;
   border-radius: 2px;
@@ -295,7 +298,11 @@
 .po-at-matrix__head {
   display: grid;
   gap: 1px;
-  padding-top: 9px;
+  padding-top: 4px;
+}
+
+.po-at-matrix {
+  gap: 4px;
 }
 
 .po-at-matrix__title {
@@ -326,9 +333,10 @@
 
 .po-at-matrix__thead {
   display: grid;
-  grid-template-columns: minmax(140px, 1.35fr) 46px minmax(80px, 1fr) 44px 62px;
-  gap: 10px;
-  padding: 0 8px 4px;
+  grid-template-areas: "attribute rating bar delta percentile";
+  grid-template-columns: minmax(140px, 1.2fr) 38px minmax(100px, 2fr) 42px 62px;
+  gap: 8px;
+  padding: 0 8px 2px;
   border-bottom: 1px solid var(--po-ov-border-muted);
   font-family: var(--po-font);
   font-size: 9px;
@@ -337,6 +345,12 @@
   color: var(--po-ov-text-3);
 }
 
+.po-at-matrix__thead > span:nth-child(1) { grid-area: attribute; }
+.po-at-matrix__thead > span:nth-child(2) { grid-area: rating; }
+.po-at-matrix__thead > span:nth-child(3) { grid-area: bar; }
+.po-at-matrix__thead > span:nth-child(4) { grid-area: delta; }
+.po-at-matrix__thead > span:nth-child(5) { grid-area: percentile; }
+
 .po-at-matrix__thead > span:nth-child(n + 2) {
   text-align: right;
 }
@@ -344,11 +358,12 @@
 /* Rows: attribute · rating · bar · delta · percentile (reference order). */
 .po-at-matrix .po-attr-rating {
   display: grid;
-  grid-template-columns: minmax(140px, 1.35fr) 46px minmax(80px, 1fr) 44px 62px;
+  grid-template-areas: "attribute rating bar delta percentile";
+  grid-template-columns: minmax(140px, 1.2fr) 38px minmax(100px, 2fr) 42px 62px;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
-  height: 48px;
+  height: 32px;
   padding: 0 8px;
   border: none;
   border-bottom: 1px solid rgb(41 67 75 / 45%);
@@ -375,19 +390,16 @@
 }
 
 .po-at-matrix .po-attr-rating__label {
-  grid-column: 1;
+  grid-area: attribute;
   font-family: var(--po-font);
   font-size: 12px;
   letter-spacing: 0.02em;
   color: var(--po-ov-text-2);
 }
 
-/*
- * The row element order is label, bar, delta, percentile, rating: every cell is placed explicitly
- * so the dense table reads attribute · rating · bar · Δ · percentile as in the reference.
- */
+/* Named areas keep every rating cell on the same line, regardless of DOM or auto-placement order. */
 .po-at-matrix .po-attr-rating__value {
-  grid-column: 2;
+  grid-area: rating;
   font-family: var(--po-font-display);
   font-size: 19px;
   font-weight: 800;
@@ -397,7 +409,7 @@
 }
 
 .po-at-matrix .po-attr-rating__scale {
-  grid-column: 3;
+  grid-area: bar;
   position: relative;
   display: block;
   height: 8px;
@@ -407,11 +419,11 @@
 }
 
 .po-at-matrix .po-attr-rating__change {
-  grid-column: 4;
+  grid-area: delta;
 }
 
 .po-at-matrix .po-attr-rating__percentile {
-  grid-column: 5;
+  grid-area: percentile;
 }
 
 .po-at-matrix .po-attr-rating.is-selected .po-attr-rating__label {
@@ -541,7 +553,7 @@
 
 .po-at-detail__metrics {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0;
   margin: 0;
   padding: 6px 0;
@@ -619,6 +631,9 @@
 }
 
 .po-at-detail__history .po-attr-evolution__legend {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 8px;
   font-family: var(--po-font);
   font-size: 9px;
   color: var(--po-ov-text-3);
@@ -653,6 +668,10 @@
 
 .po-at-detail__history .po-attr-evolution__league {
   stroke: rgb(103 138 158 / 60%);
+}
+
+.po-at-detail__history .po-attr-evolution__team {
+  stroke: var(--po-ov-green);
 }
 
 .po-at-detail__history .po-attr-evolution__point {
@@ -846,7 +865,7 @@
   justify-content: center;
   gap: 8px;
   width: 100%;
-  min-height: 0;
+  min-height: var(--bdm-control-min-height, 28px);
   padding: 0 10px;
   border: 1px solid rgb(158 126 34 / 85%);
   border-radius: 2px;
@@ -889,9 +908,8 @@
   }
 
   .po-at-matrix .po-attr-rating {
-    height: 40px;
-    grid-template-columns: minmax(120px, 1.3fr) 40px minmax(70px, 1fr) 38px 54px;
-    gap: 8px;
+    grid-template-columns: minmax(120px, 1.2fr) 34px minmax(80px, 2fr) 38px 54px;
+    gap: 7px;
   }
 
   .po-at-matrix .po-attr-rating__value {
@@ -905,4 +923,133 @@
   .po-at-compare {
     font-size: 12px;
   }
+}
+
+/* The structural mode shares the same category list; it only moves the list behind a picker. */
+.po-at-category-trigger {
+  display: none;
+}
+
+.po-at-category-trigger__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.po-at-category-trigger__value {
+  font-size: max(14px, var(--bdm-font-min-rating, 13px));
+  font-weight: 800;
+  color: var(--po-ov-cyan);
+}
+
+.po-at-board[data-bdm-structural-compact='true'] .po-at-category-trigger:hover,
+.po-at-board[data-bdm-structural-compact='true'] .po-at-category-trigger:focus-visible {
+  border-color: var(--po-ov-cyan);
+  outline: 2px solid rgb(24 221 232 / 45%);
+  outline-offset: 1px;
+}
+
+.po-at-board[data-bdm-structural-compact='true'] .po-at-category-trigger__label {
+  flex: 1;
+}
+
+.po-at-board[data-bdm-structural-compact='true'] .po-at-category-trigger__indicator {
+  font-size: 14px;
+  color: var(--po-ov-cyan);
+}
+
+.po-at-board[data-bdm-structural-compact='true'] .po-at-categories__list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  z-index: 12;
+  max-height: min(360px, 80dvh);
+  padding: 6px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid var(--po-ov-border);
+  border-radius: 2px;
+  background: #071017;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 55%);
+}
+
+.po-at-board[data-bdm-structural-compact='true'] .po-at-categories__list[hidden] {
+  display: none;
+}
+
+/* Fixed functional text floors; glyphs remain small because they are decorative markers. */
+.po-at-board .po-at-panel__meta,
+.po-at-board .po-at-matrix__thead,
+.po-at-board .po-at-detail__metrics dt,
+.po-at-board .po-at-detail__history .po-attr-evolution__legend,
+.po-at-board .po-at-detail__history .po-attr-evolution__scale,
+.po-at-board .po-at-detail__history .po-attr-evolution__axis-label,
+.po-at-board .po-at-detail__note,
+.po-at-board .po-at-trainings .po-attr-training__count,
+.po-at-board .po-at-trainings .po-attr-training__stimulus,
+.po-at-board .po-at-trainings .po-attr-training__next,
+.po-at-board .po-at-trainings .po-attr-training__blocked,
+.po-at-board .po-at-trainings .po-attr-training__empty,
+.po-at-board .po-at-trainings .po-attr-training__meta,
+.po-at-board .po-at-trainings .po-attr-training__load,
+.po-at-board .po-at-trainings .po-attr-training__hint,
+.po-at-board .po-at-trainings .po-attr-training__tag,
+.po-at-board .po-at-compact__detail,
+.po-at-board .po-at-panel .po-gap {
+  font-size: max(10px, var(--bdm-font-min-secondary, 10px));
+}
+
+.po-at-board .po-at-empty,
+.po-at-board .po-at-matrix__note,
+.po-at-board .po-at-note__detail,
+.po-at-board .po-at-detail__description {
+  font-size: max(11px, var(--bdm-font-min-functional, 11px));
+}
+
+.po-at-board .po-at-detail__metrics dd,
+.po-at-board .po-at-detail__value,
+.po-at-board .po-at-category__value,
+.po-at-board .po-at-matrix .po-attr-rating__value {
+  font-size: max(13px, var(--bdm-font-min-rating, 13px));
+}
+
+.po-at-board .po-at-category__label,
+.po-at-board .po-at-matrix .po-attr-rating__label,
+.po-at-board .po-at-matrix .po-attr-rating__change,
+.po-at-board .po-at-matrix .po-attr-rating__percentile,
+.po-at-board .po-at-note__label,
+.po-at-board .po-at-detail__name,
+.po-at-board .po-at-trainings .po-attr-training__option,
+.po-at-board .po-at-trainings .po-attr-training__assign,
+.po-at-board .po-at-compact__label {
+  font-size: max(11px, var(--bdm-font-min-functional, 11px));
+}
+
+.po-at-board .po-at-detail__metrics dt,
+.po-at-board .po-at-detail__metrics dd {
+  overflow-wrap: anywhere;
+}
+
+.po-at-board .po-at-matrix .po-attr-rating {
+  min-height: var(--bdm-row-min-height, 32px);
+}
+
+.po-at-board .po-attr-rating__scale {
+  min-width: 48px;
+  min-height: 8px;
+}
+
+.po-at-board .po-at-radar__plot .po-radar__label,
+.po-at-board .po-at-radar__plot .po-radar__axis-label {
+  font-size: max(10px, var(--bdm-font-min-secondary, 10px));
+}
+
+.po-at-board .po-at-radar__plot .po-radar__value {
+  font-size: max(12px, var(--bdm-font-min-rating, 13px));
+}
+
+.po-at-board .po-at-trainings .po-attr-training__assign {
+  min-height: var(--bdm-control-min-height, 28px);
 }

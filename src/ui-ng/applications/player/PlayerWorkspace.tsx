@@ -15,6 +15,7 @@ import './player-history-board.css'
 import './player-compare.css'
 import './player-scouting.css'
 import './player-scouting-board.css'
+import './player-responsive.css'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -63,6 +64,8 @@ import { ApplicationWorkspace } from '@/ui-ng/workspace/ApplicationWorkspace'
 import { InspectorPane } from '@/ui-ng/workspace/InspectorPane'
 import { WorkspaceBody } from '@/ui-ng/workspace/WorkspaceBody'
 import { WorkspaceTabs } from '@/ui-ng/workspace/WorkspaceTabs'
+import { resolveBdmPlayerHeightMode } from '@/ui-ng/system/responsive/breakpoints'
+import { useContainerSize } from '@/ui-ng/system/responsive/useContainerSize'
 
 import { syncPlayerViewQueryFromApps } from '@/ui-ng/workspace/workspaceApps'
 
@@ -255,6 +258,7 @@ function PlayerWorkspaceLayout({
 }) {
   const { model, session } = usePlayerWorkspace()
   const { inspectorCollapsed, setInspectorCollapsed } = session
+  const playerSize = useContainerSize<HTMLDivElement>()
 
   const teamStyle = useMemo(() => {
     if (model === null) return undefined
@@ -264,6 +268,13 @@ function PlayerWorkspaceLayout({
       '--po-team-muted': model.identity.teamColors.muted,
     } as CSSProperties
   }, [model])
+
+  const playerStyle = useMemo(() => ({
+    ...teamStyle,
+    '--bdm-player-width': `${playerSize.width}px`,
+    '--bdm-player-height': `${playerSize.height}px`,
+    '--bdm-player-aspect-ratio': playerSize.aspectRatio,
+  }) as CSSProperties, [playerSize.aspectRatio, playerSize.height, playerSize.width, teamStyle])
 
   const tabs = useMemo(
     () =>
@@ -276,7 +287,15 @@ function PlayerWorkspaceLayout({
   )
 
   return (
-    <div className="po-root" style={teamStyle}>
+    <div
+      className="po-root"
+      data-bdm-player-height={playerSize.height}
+      data-bdm-player-height-mode={playerSize.height > 0 ? resolveBdmPlayerHeightMode(playerSize.height) : undefined}
+      data-bdm-player-width={playerSize.width}
+      data-bdm-player-aspect-ratio={playerSize.aspectRatio}
+      ref={playerSize.ref}
+      style={playerStyle}
+    >
       <ApplicationWorkspace
         identityBand={<EntityIdentityBand />}
         tabs={

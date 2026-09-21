@@ -98,13 +98,13 @@ describe('ScheduleGenerator', () => {
     expect(roundDates[13]).toBe(addDays(season.startDate, 52))
   })
 
-  it('accepts a generic policy that spreads rounds through the season window', () => {
+  it('accepts a generic weekly policy without stretching rounds across every available date', () => {
     const { world, seasonId, season } = createGeneratedWorld()
     const games = generateRoundRobinSchedule({ world, seasonId, schedulePolicy: distributeRoundsAcrossSeason })
     const roundDates = groupByDate(games).map((round) => round[0]!.date)
 
     expect(roundDates[0]).toBe(season.startDate)
-    expect(roundDates.at(-1)).toBe(season.endDate)
+    expect(roundDates.at(-1)).toBe(addDays(season.startDate, 13 * 7))
     expect(new Set(roundDates).size).toBe(14)
     expect(roundDates.every((date) => date >= season.startDate && date <= season.endDate)).toBe(true)
   })
