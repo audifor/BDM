@@ -27,10 +27,24 @@ describe('buildPlayerAttributesEvolution', () => {
     expect(shooting.standing.percentile).toBeGreaterThanOrEqual(0)
     expect(shooting.standing.percentile).toBeLessThanOrEqual(100)
     expect(shooting.standing.positionLabel).toBe(player.basketball.primaryPosition)
-    expect(shooting.standing.positionMean).not.toBeNull()
+    expect(shooting.standing.positionAverage).not.toBeNull()
     // The league baseline and the percentile are computed from the same rival-only sample.
     expect(shooting.standing.positionSampleSize).toBeLessThanOrEqual(shooting.league.sampleSize)
     expect(shooting.standing.note).toContain('never counts in their own sample')
+
+    const team = Object.values(world.teams).find((candidate) => candidate.rosterPlayerIds.includes(player.id))!
+    const teammates = team.rosterPlayerIds
+      .filter((teammateId) => teammateId !== player.id)
+      .map((teammateId) => world.players[teammateId]!)
+    const expectedTeamAverage = Math.round(
+      (teammates.reduce((sum, teammate) => sum + teammate.basketball.ratings.THREE_POINT_STATIC, 0) /
+        teammates.length) *
+        10,
+    ) / 10
+    expect(shooting.team.scopeLabel).toBe(team.name)
+    expect(shooting.team.sampleSize).toBe(teammates.length)
+    expect(shooting.team.average).toBe(expectedTeamAverage)
+    expect(shooting.team.note).toContain('inspected player is excluded')
   })
 
   it('ranks signature skills above weak links by competition percentile', () => {
@@ -126,8 +140,8 @@ describe('buildPlayerAttributesEvolution', () => {
 
     expect(baseline.status).toBe('available')
     expect(baseline.sampleSize).toBeGreaterThan(0)
-    expect(baseline.mean).not.toBeNull()
-    expect(baseline.note).toContain('Mean of this rating')
+    expect(baseline.average).not.toBeNull()
+    expect(baseline.note).toContain('Average of this rating')
 
     // The baseline covers the competition's participants only, never the whole world.
     const competition = world.competitions[world.seasons[world.currentSeasonId]!.competitionId]!

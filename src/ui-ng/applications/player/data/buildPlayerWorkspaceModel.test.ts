@@ -44,6 +44,8 @@ describe('buildPlayerWorkspaceModel', () => {
     expect(model!.person).toBe(world.personsById[world.players[playerId!]!.personId!])
     expect(model!.attributes.categories.length).toBe(8)
     expect(model!.attributes.categories.reduce((count, category) => count + category.all.length, 0)).toBe(80)
+    expect(model!.attributes.categories[0]!.note).toContain('average ')
+    expect(model!.attributes.categories[0]!.note).not.toContain('mean')
     expect(model!.development.longitudinal.status).toBe('unavailable')
     expect(model!.history.scope.scopeNote).toContain('persisted in this save')
   })

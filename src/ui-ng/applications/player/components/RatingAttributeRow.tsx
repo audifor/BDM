@@ -32,6 +32,7 @@ export function RatingAttributeRow({
       type="button"
     >
       <span className="po-attr-rating__label">{label}</span>
+      <span className="po-attr-rating__value ng-type-numeric">{value}</span>
       <span aria-hidden className="po-attr-rating__scale">
         <span className="po-attr-rating__scale-fill" style={{ width: `${value}%` }} />
       </span>
@@ -44,7 +45,6 @@ export function RatingAttributeRow({
       <span className="po-attr-rating__percentile ng-type-numeric">
         {percentile === null ? '—' : ordinalPercentile(percentile)}
       </span>
-      <span className="po-attr-rating__value ng-type-numeric">{value}</span>
     </button>
   )
 }

@@ -8,6 +8,7 @@ import type {
   AttributeHighlightModel,
   AttributeLeagueBaselineModel,
   AttributeStandingModel,
+  AttributeTeamBaselineModel,
   AttributeTrainingAssignmentModel,
   AttributeTrainingOptionModel,
   OverviewGapModel,
@@ -18,8 +19,10 @@ import type {
 
 const HISTORY_NOTE = 'One movement per offseason transition; past values are reconstructed from it.'
 const NO_HISTORY_NOTE = 'No progression recorded yet: the curve starts at the first offseason transition.'
-const LEAGUE_NOTE = 'Mean of this rating across every rostered rival in the competition.'
+const LEAGUE_NOTE = 'Average of this rating across every rostered rival in the competition.'
 const NO_LEAGUE_NOTE = 'No rivalling roster available for this competition.'
+const TEAM_NOTE = 'Average of this rating across the player\'s teammates; the inspected player is excluded.'
+const NO_TEAM_NOTE = 'No teammate roster is available for this player.'
 const STANDING_NOTE =
   'Percentile is the share of rivalling rosters this value beats; the player never counts in their own sample.'
 const NO_STANDING_NOTE = 'No rivalling roster available, so no percentile can be computed.'
@@ -28,6 +31,12 @@ const NO_STANDING_NOTE = 'No rivalling roster available, so no percentile can be
 interface LeagueSample {
   readonly label: string | null
   /** Rivals only: the inspected player never contributes to their own baseline. */
+  readonly players: readonly Player[]
+}
+
+interface TeamSample {
+  readonly label: string | null
+  /** Teammates only: the inspected player never contributes to their own baseline. */
   readonly players: readonly Player[]
 }
 
@@ -50,13 +59,27 @@ function competitionLeagueSample(world: GameWorld, player: Player): LeagueSample
   return { label: competition.name, players }
 }
 
+/** Every other player rostered on the inspected player's current team. */
+function teamRosterSample(world: GameWorld, player: Player): TeamSample {
+  const team = Object.values(world.teams).find((candidate) => candidate.rosterPlayerIds.includes(player.id))
+  if (team === undefined) return { label: null, players: [] }
+
+  return {
+    label: team.name,
+    players: team.rosterPlayerIds.flatMap((playerId) => {
+      const teammate = world.players[playerId]
+      return teammate === undefined || teammate.id === player.id ? [] : [teammate]
+    }),
+  }
+}
+
 function buildLeagueBaseline(
   player: Player,
   league: LeagueSample,
   ratingId: PlayerTruthRatingKey,
 ): AttributeLeagueBaselineModel {
   if (league.players.length === 0) {
-    return { status: 'unavailable', mean: null, sampleSize: 0, scopeLabel: league.label, note: NO_LEAGUE_NOTE }
+    return { status: 'unavailable', average: null, sampleSize: 0, scopeLabel: league.label, note: NO_LEAGUE_NOTE }
   }
 
   const total = league.players.reduce(
@@ -65,10 +88,25 @@ function buildLeagueBaseline(
   )
   return {
     status: 'available',
-    mean: Math.round((total / league.players.length) * 10) / 10,
+    average: Math.round((total / league.players.length) * 10) / 10,
     sampleSize: league.players.length,
     scopeLabel: league.label,
     note: LEAGUE_NOTE,
+  }
+}
+
+function buildTeamBaseline(team: TeamSample, ratingId: PlayerTruthRatingKey): AttributeTeamBaselineModel {
+  if (team.players.length === 0) {
+    return { status: 'unavailable', average: null, sampleSize: 0, scopeLabel: team.label, note: NO_TEAM_NOTE }
+  }
+
+  const total = team.players.reduce((sum, teammate) => sum + teammate.basketball.ratings[ratingId], 0)
+  return {
+    status: 'available',
+    average: Math.round((total / team.players.length) * 10) / 10,
+    sampleSize: team.players.length,
+    scopeLabel: team.label,
+    note: TEAM_NOTE,
   }
 }
 
@@ -86,7 +124,7 @@ function buildStanding(
     return {
       status: 'unavailable',
       percentile: null,
-      positionMean: null,
+      positionAverage: null,
       positionLabel: position,
       positionSampleSize: 0,
       note: NO_STANDING_NOTE,
@@ -100,7 +138,7 @@ function buildStanding(
   const peers = league.players.filter(
     (rival) => rival.basketball.primaryPosition === position,
   )
-  const positionMean =
+  const positionAverage =
     peers.length === 0
       ? null
       : Math.round(
@@ -110,13 +148,13 @@ function buildStanding(
   return {
     status: 'available',
     percentile: Math.round((beaten / league.players.length) * 100),
-    positionMean,
+    positionAverage,
     positionLabel: position,
     positionSampleSize: peers.length,
     note:
-      positionMean === null
+      positionAverage === null
         ? STANDING_NOTE
-        : `${STANDING_NOTE} Position mean covers ${peers.length} rival ${position} players.`,
+        : `${STANDING_NOTE} Position average covers ${peers.length} rival ${position} players.`,
   }
 }
 
@@ -149,6 +187,7 @@ function buildEvolution(
   world: GameWorld,
   player: Player,
   league: LeagueSample,
+  team: TeamSample,
   assignment: AttributeTrainingAssignmentModel,
   ratingId: PlayerTruthRatingKey,
 ): RatingEvolutionModel {
@@ -187,6 +226,7 @@ function buildEvolution(
     note: hasCanonicalHistory ? HISTORY_NOTE : NO_HISTORY_NOTE,
     accumulatedStimulus: null,
     league: buildLeagueBaseline(player, league, ratingId),
+    team: buildTeamBaseline(team, ratingId),
     standing: buildStanding(player, league, ratingId),
     trainings: buildTrainingOptions(world, player, ratingId),
     assignment,
@@ -266,8 +306,9 @@ export function buildPlayerAttributesEvolution(
   player: Player,
 ): Readonly<Record<PlayerTruthRatingKey, RatingEvolutionModel>> {
   const league = competitionLeagueSample(world, player)
+  const team = teamRosterSample(world, player)
   const assignment = buildAssignmentContext()
   return Object.fromEntries(
-    PLAYER_TRUTH_RATING_KEYS.map((key) => [key, buildEvolution(world, player, league, assignment, key)]),
+    PLAYER_TRUTH_RATING_KEYS.map((key) => [key, buildEvolution(world, player, league, team, assignment, key)]),
   ) as Readonly<Record<PlayerTruthRatingKey, RatingEvolutionModel>>
 }

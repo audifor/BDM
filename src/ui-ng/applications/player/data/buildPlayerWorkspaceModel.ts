@@ -104,12 +104,12 @@ function buildAttributes(world: GameWorld, player: Player): PlayerAttributesMode
   }
 }
 
-/** `Strongest X 78 · Weakest Y 64 · mean 73.8` — derived from the rows, never written by hand. */
+/** `Strongest X 78 · Weakest Y 64 · average 73.8` — derived from the rows, never written by hand. */
 function categoryNote(rows: readonly PlayerRatingRow[]): string {
   const best = rows.reduce((left, right) => (right.value > left.value ? right : left))
   const worst = rows.reduce((left, right) => (right.value < left.value ? right : left))
-  const mean = rows.reduce((sum, row) => sum + row.value, 0) / rows.length
-  return `Strongest ${best.label} ${best.value} · weakest ${worst.label} ${worst.value} · mean ${mean.toFixed(1)}.`
+  const average = rows.reduce((sum, row) => sum + row.value, 0) / rows.length
+  return `Strongest ${best.label} ${best.value} · weakest ${worst.label} ${worst.value} · average ${average.toFixed(1)}.`
 }
 
 function buildEvaluations(

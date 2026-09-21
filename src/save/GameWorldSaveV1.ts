@@ -200,7 +200,7 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
       persons: copyRecords(Object.values(world.personsById)),
       countries: copyRecords(Object.values(world.countries)),
       coaches: copyRecords(Object.values(world.coaches)),
-      players: copyRecords(Object.values(world.players)).map((player, index) => ({ ...player, potential: Object.values(world.players)[index]!.potential })),
+      players: copyRecords(Object.values(world.players)).map((player) => ({ ...player, potential: world.players[(player as { id: import('@/domain/ids').PlayerId }).id]!.potential })),
       teams: copyRecords(Object.values(world.teams)),
       competitions: copyRecords(Object.values(world.competitions)),
       ecosystems: copyRecords(Object.values(world.ecosystems)),

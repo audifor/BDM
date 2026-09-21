@@ -7,14 +7,21 @@ import { AttributeEvolutionChart } from '@/ui-ng/applications/player/components/
 import { AttributeTrainingOptions } from '@/ui-ng/applications/player/components/AttributeTrainingOptions'
 import { GapList } from '@/ui-ng/applications/player/components/DeclaredGaps'
 import { RatingAttributeRow } from '@/ui-ng/applications/player/components/RatingAttributeRow'
+import { AttributeCategoryProfiles } from '@/ui-ng/applications/player/components/AttributeCategoryProfiles'
 import { AttributeRadar } from '@/ui-ng/applications/player/components/visual/BasketballVisuals'
 import { ordinalPercentile, CATEGORY_LABELS } from '@/ui-ng/applications/player/data/ratingCatalog'
 import { usePlayerWorkspace } from '@/ui-ng/applications/player/context/PlayerWorkspaceContext'
+import { useStructuralCompact } from '@/ui-ng/system/responsive/useStructuralCompact'
 
 /** How many readings the compact skills and weak-link panels show, as in the reference. */
 const COMPACT_LIST_SIZE = 2
 /** The centre notes panel draws four readings, the number the reference gives it. */
 const NOTES_SIZE = 4
+/**
+ * Below 600px the current profile + matrix columns no longer fit at their readability widths:
+ * 272px profile + 302px matrix + 8px gap + 18px board insets.
+ */
+const STRUCTURAL_COMPACT_MIN_WIDTH = 600
 
 /**
  * PLAYER · ATTRIBUTES — the reference's three columns: category profiles and the radar on the left,
@@ -26,6 +33,7 @@ export function PlayerAttributesView() {
   const { model, session } = usePlayerWorkspace()
   const assignTrainingModuleToPlayer = useGameStore((state) => state.assignTrainingModuleToPlayer)
   const { attributesCategory, setAttributesCategory, selectedRatingId, setSelectedRatingId } = session
+  const structuralCompact = useStructuralCompact<HTMLDivElement>(STRUCTURAL_COMPACT_MIN_WIDTH)
 
   const categoryModel = useMemo(
     () => model?.attributes.categories.find((entry) => entry.category === attributesCategory),
@@ -58,11 +66,16 @@ export function PlayerAttributesView() {
 
   const evolution = model.attributes.evolutionByRating[activeRatingId]
   const league = evolution.league
+  const team = evolution.team
   const standing = evolution.standing
   const comparedToLeague =
-    league.status !== 'available' || league.mean === null
+    league.status !== 'available' || league.average === null
       ? null
-      : Math.round((evolution.current - league.mean) * 10) / 10
+      : Math.round((evolution.current - league.average) * 10) / 10
+  const comparedToTeam =
+    team.status !== 'available' || team.average === null
+      ? null
+      : Math.round((evolution.current - team.average) * 10) / 10
   const firstSeason = evolution.points[0]
   const slot = evolution.assignment
   const assignSlot =
@@ -85,39 +98,25 @@ export function PlayerAttributesView() {
   }))
 
   return (
-    <div className="po-attributes po-at-board" data-ng-region="player-attributes">
+    <div
+      className="po-attributes po-at-board"
+      data-bdm-attributes-width={structuralCompact.width}
+      data-bdm-structural-compact={structuralCompact.isStructuralCompact ? 'true' : 'false'}
+      data-ng-region="player-attributes"
+      ref={structuralCompact.ref}
+    >
       {/* Left column — category profiles over the eight-axis radar. */}
       <div className="po-at-col po-at-col--left">
-        <section className="po-at-panel po-at-categories">
-          <header className="po-at-panel__head">
-            <span className="po-at-panel__title">Category profiles</span>
-            <span className="po-at-panel__meta">{categoryModel.label} selected</span>
-          </header>
-          <ul className="po-at-categories__list">
-            {model.attributes.categories.map((entry) => (
-              <li key={entry.category}>
-                <button
-                  aria-current={entry.category === attributesCategory ? 'true' : undefined}
-                  className={`po-at-category${entry.category === attributesCategory ? ' is-active' : ''}`}
-                  onClick={() => {
-                    setAttributesCategory(entry.category)
-                    setSelectedRatingId(entry.all[0]?.id ?? null)
-                  }}
-                  type="button"
-                >
-                  <span className="po-at-category__label">{entry.label}</span>
-                  <span aria-hidden className="po-at-category__track">
-                    <span
-                      className="po-at-category__fill"
-                      style={{ width: `${entry.profileValue}%` }}
-                    />
-                  </span>
-                  <span className="po-at-category__value ng-type-numeric">{entry.profileValue}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <AttributeCategoryProfiles
+          categories={model.attributes.categories}
+          onSelect={(category) => {
+            const nextCategory = model.attributes.categories.find((entry) => entry.category === category)
+            setAttributesCategory(category)
+            setSelectedRatingId(nextCategory?.all[0]?.id ?? null)
+          }}
+          selectedCategory={attributesCategory}
+          structuralCompact={structuralCompact.isStructuralCompact}
+        />
 
         <section className="po-at-panel po-at-radar">
           <header className="po-at-panel__head">
@@ -257,15 +256,21 @@ export function PlayerAttributesView() {
               </dd>
             </div>
             <div>
-              <dt>League mean</dt>
+              <dt>League average</dt>
               <dd className="ng-type-numeric">
-                {league.mean === null ? '—' : league.mean.toFixed(1)}
+                {league.average === null ? '—' : league.average.toFixed(1)}
               </dd>
             </div>
             <div>
-              <dt>Position mean ({standing.positionLabel})</dt>
+              <dt>Team average</dt>
               <dd className="ng-type-numeric">
-                {standing.positionMean === null ? '—' : standing.positionMean.toFixed(1)}
+                {team.average === null ? '—' : team.average.toFixed(1)}
+              </dd>
+            </div>
+            <div>
+              <dt>Position average ({standing.positionLabel})</dt>
+              <dd className="ng-type-numeric">
+                {standing.positionAverage === null ? '—' : standing.positionAverage.toFixed(1)}
               </dd>
             </div>
             <div>
@@ -287,7 +292,7 @@ export function PlayerAttributesView() {
           <span className="po-at-detail__note">
             {standing.status !== 'available'
               ? standing.note
-              : `${standing.note} ${league.status === 'available' ? `${league.sampleSize} rivals, player ${comparedToLeague === null ? '—' : `${comparedToLeague > 0 ? '+' : ''}${comparedToLeague}`} over the competition mean.` : league.note}`}
+              : `${standing.note} ${league.status === 'available' ? `${league.sampleSize} rivals; player ${comparedToLeague === null ? '—' : `${comparedToLeague > 0 ? '+' : ''}${comparedToLeague}`} over the league average.` : league.note} ${team.status === 'available' ? `${team.sampleSize} teammates; player ${comparedToTeam === null ? '—' : `${comparedToTeam > 0 ? '+' : ''}${comparedToTeam}`} over the team average.` : team.note}`}
           </span>
         </section>
 

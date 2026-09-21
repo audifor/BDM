@@ -136,7 +136,15 @@ export interface RatingEvolutionPointModel {
 
 export interface AttributeLeagueBaselineModel {
   readonly status: PresentationAvailability
-  readonly mean: number | null
+  readonly average: number | null
+  readonly sampleSize: number
+  readonly scopeLabel: string | null
+  readonly note: string
+}
+
+export interface AttributeTeamBaselineModel {
+  readonly status: PresentationAvailability
+  readonly average: number | null
   readonly sampleSize: number
   readonly scopeLabel: string | null
   readonly note: string
@@ -147,7 +155,7 @@ export interface AttributeStandingModel {
   readonly status: PresentationAvailability
   /** Share of the competition sample this value beats, 0-100. Null when there is no sample. */
   readonly percentile: number | null
-  readonly positionMean: number | null
+  readonly positionAverage: number | null
   readonly positionLabel: string
   readonly positionSampleSize: number
   readonly note: string
@@ -217,6 +225,7 @@ export interface RatingEvolutionModel {
    *  attribute, not of any single training option. */
   readonly accumulatedStimulus: number | null
   readonly league: AttributeLeagueBaselineModel
+  readonly team: AttributeTeamBaselineModel
   readonly standing: AttributeStandingModel
   readonly trainings: readonly AttributeTrainingOptionModel[]
   /** Per-player, not per-rating: the same value is shared by every attribute of the player. */
