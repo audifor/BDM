@@ -15,6 +15,13 @@ export type {
   WorldDbCompetitionRuntime,
   WorldDbCompetitionRuntimeBundlePin,
 } from './WorldDbCompetitionRuntime'
+export {
+  EMPTY_WORLD_ANNUAL_DEVELOPMENT_CYCLE,
+  annualDevelopmentCycleId,
+  hasAppliedAnnualDevelopmentCycle,
+  markAnnualDevelopmentCycleApplied,
+} from './WorldAnnualDevelopmentCycle'
+export type { WorldAnnualDevelopmentCycle } from './WorldAnnualDevelopmentCycle'
 export { addMemoriesToGameWorld } from './GameWorld'
 export { applyRelationshipEventToWorld, applyRelationshipEventsToWorld } from './RelationshipEvents'
 export { applyMoraleEventToWorld } from './MoraleEvents'

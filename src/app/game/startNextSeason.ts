@@ -1,4 +1,4 @@
-import { addDays, addYears, formatGameDate } from '@/domain/date'
+import { addYears, formatGameDate } from '@/domain/date'
 import { seasonIdFromString } from '@/domain/ids'
 import { createSeason } from '@/domain/season'
 import type { CompetitionCalendarPolicy, Season } from '@/domain/season'
@@ -7,18 +7,40 @@ import type { WorldCompetitionFormatDocument } from '@/domain/competition'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { generateNcaaLikeSchedule, generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
-import { applyOffseasonDevelopment } from '@/engine/development'
 import { reconcileExpiredPlayerContracts } from '@/engine/market'
 import { maintainAiTeamMinimumRosters } from '@/app/market'
 import { getCurrentSeason } from './selectors'
 import { buildNextCompetitionParticipants } from '@/engine/competition'
+import { deriveNextEditionCalendarPolicy } from '@/engine/competition/WorldCompetitionCalendar'
 import { ensureNcaaEligibility } from '@/engine/eligibility'
 import { ensureNcaaAcademics } from '@/engine/academic'
 import { rolloverBoardState } from '@/engine/board'
 
-/** Starts the next edition of the current competition without synchronizing others. */
+/** Starts the next edition of the world's current (user-facing) competition. */
 export function startNextSeason(world: GameWorld): GameWorld {
-  const primary = getCurrentSeason(world)
+  return startNextSeasonFor(world, getCurrentSeason(world).id)
+}
+
+/**
+ * Starts the next edition of any Season's competition, independently of whether it is the
+ * world's current (user-facing) one. Competition lifecycle capability is a property of the
+ * GameWorld, not of which competition the user happens to be following: rolling a competition
+ * forward NEVER moves `world.currentDate`, even when `seasonId` is the world's current season.
+ * `GameWorld.currentDate` is the single universal clock and only ever advances via
+ * `CalendarEngine.advanceDay` (one day at a time) or `simulateUntilDate` walking day by day --
+ * never as a side effect of a competition's lifecycle transition. The next edition can (and
+ * routinely will) have a `startDate` far in the future; the world does not jump to meet it.
+ *
+ * `world.currentSeasonId` is likewise left untouched here: it is a UI/gameplay-selection concern,
+ * not a clock. It migrates to the new edition naturally, inside `CalendarEngine.advanceDay`, once
+ * `currentDate` actually reaches the new edition's `startDate` -- see
+ * `migrateCurrentSeasonIfElapsed` there. This keeps it valid for a completed
+ * `CompetitionSeason A 2025-26` to coexist with a `SCHEDULED CompetitionSeason A 2026-27` while
+ * `currentDate` is still anywhere in between (including still inside the old season's window).
+ */
+export function startNextSeasonFor(world: GameWorld, seasonId: Season['id']): GameWorld {
+  const primary = world.seasons[seasonId]
+  if (primary === undefined) throw new Error(`GameWorld has no Season: ${seasonId}`)
   if (!isSeasonComplete(world, primary.id)) throw new Error('Current season is not complete')
   if (getSeasonHistoryRecord(world, primary.id) === undefined) throw new Error('Current season requires a history record')
   const linkedEditions = linkedCompetitionEditions(world, primary)
@@ -28,33 +50,44 @@ export function startNextSeason(world: GameWorld): GameWorld {
     const previousId = linked.worldCompetitionFormat!.competitionSeasonId
     editionIds.set(previousId, nextCompetitionSeasonId(previousId, addYears(linked.startDate, 1)))
   }
+  const nextParticipants = buildNextCompetitionParticipants(world, primary.id)
+  const primaryRoundCount = regularSeasonRoundCount(world, primary, nextParticipants.length)
+  const nextPrimaryCalendar = primary.calendarPolicy === undefined ? undefined : rollForwardCalendar(primary.calendarPolicy, editionIds, primaryRoundCount)
   const nextPrimary = createSeason({
     id: nextIds[0]!,
     competitionId: primary.competitionId,
     label: nextSeasonLabel(primary),
-    startDate: addYears(primary.startDate, 1),
-    endDate: addYears(primary.endDate, 1),
-    participantTeamIds: buildNextCompetitionParticipants(world, primary.id),
+    startDate: nextPrimaryCalendar?.seasonWindow.startDate ?? addYears(primary.startDate, 1),
+    endDate: nextPrimaryCalendar?.seasonWindow.endDate ?? addYears(primary.endDate, 1),
+    participantTeamIds: nextParticipants,
     ...(primary.worldCompetitionFormat === undefined ? {} : { worldCompetitionFormat: rollForwardFormat(primary.worldCompetitionFormat, editionIds, nextSeasonLabel(primary)) }),
-    ...(primary.calendarPolicy === undefined ? {} : { calendarPolicy: rollForwardCalendar(primary.calendarPolicy, editionIds) }),
+    ...(nextPrimaryCalendar === undefined ? {} : { calendarPolicy: nextPrimaryCalendar }),
   })
-  const nextLinkedSeasons = linkedEditions.map((previous, index) => createSeason({
-    ...previous,
-    id: nextIds[index + 1]!,
-    label: previous.worldCompetitionFormat?.seasonLabel === undefined ? nextSeasonLabel(previous) : incrementEditionLabel(previous.worldCompetitionFormat.seasonLabel),
-    startDate: addYears(previous.startDate, 1),
-    endDate: addYears(previous.endDate, 1),
-    participantTeamIds: [],
-    worldCompetitionFormat: rollForwardFormat(previous.worldCompetitionFormat!, editionIds, incrementEditionLabel(previous.worldCompetitionFormat!.seasonLabel)),
-    ...(previous.calendarPolicy === undefined ? {} : { calendarPolicy: rollForwardCalendar(previous.calendarPolicy, editionIds) }),
-  }))
-  const developed = applyOffseasonDevelopment(world, { fromSeasonId: primary.id, toSeasonId: nextPrimary.id, targetDate: nextPrimary.startDate }).world
-  const rolledCompetitions = new Map(Object.values(developed.competitions).map((competition) => [competition.id, competition] as const))
+  const nextLinkedSeasons = linkedEditions.map((previous, index) => {
+    // Linked editions here are bracket/cup-style competitions with no round-robin regular
+    // season of their own (their "regular season window" is just their qualification/bracket
+    // window), so they always use the simple year-shift, never round-count-driven derivation.
+    const nextCalendar = previous.calendarPolicy === undefined ? undefined : rollForwardCalendar(previous.calendarPolicy, editionIds, undefined)
+    return createSeason({
+      ...previous,
+      id: nextIds[index + 1]!,
+      label: previous.worldCompetitionFormat?.seasonLabel === undefined ? nextSeasonLabel(previous) : incrementEditionLabel(previous.worldCompetitionFormat.seasonLabel),
+      startDate: nextCalendar?.seasonWindow.startDate ?? addYears(previous.startDate, 1),
+      endDate: nextCalendar?.seasonWindow.endDate ?? addYears(previous.endDate, 1),
+      participantTeamIds: [],
+      worldCompetitionFormat: rollForwardFormat(previous.worldCompetitionFormat!, editionIds, incrementEditionLabel(previous.worldCompetitionFormat!.seasonLabel)),
+      ...(nextCalendar === undefined ? {} : { calendarPolicy: nextCalendar }),
+    })
+  })
+  // Player development is a WORLD-LEVEL annual event (see CalendarEngine.advanceDay and
+  // WorldAnnualDevelopmentCycle), never a Competition-lifecycle event: a rollover here only
+  // resolves this competition's own season/calendar/schedule/participants.
+  const rolledCompetitions = new Map(Object.values(world.competitions).map((competition) => [competition.id, competition] as const))
   for (const nextSeason of nextLinkedSeasons) {
     const competition = rolledCompetitions.get(nextSeason.competitionId)!
     rolledCompetitions.set(competition.id, createCompetition({ ...competition, participantTeamIds: [] }))
   }
-  const staged = updateGameWorld(developed, { currentDate: nextPrimary.startDate, currentSeasonId: nextPrimary.id, seasons: [...Object.values(developed.seasons), nextPrimary, ...nextLinkedSeasons], competitions: [...rolledCompetitions.values()] })
+  const staged = updateGameWorld(world, { seasons: [...Object.values(world.seasons), nextPrimary, ...nextLinkedSeasons], competitions: [...rolledCompetitions.values()] })
   const regularSeasonNodeKey = nextPrimary.worldCompetitionFormat?.variants.find((variant) => variant.isRealVariant)?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key
     ?? nextPrimary.worldCompetitionFormat?.variants[0]?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key
   const schedule = staged.ecosystems[staged.competitions[nextPrimary.competitionId]!.ecosystemId]!.kind === 'ncaaLike'
@@ -99,37 +132,39 @@ function replaceEditionIds(value: unknown, editionIds: ReadonlyMap<string, strin
   return value
 }
 
-function rollForwardCalendar(calendar: CompetitionCalendarPolicy, editionIds: ReadonlyMap<string, string>): CompetitionCalendarPolicy {
+/**
+ * Rolls a CompetitionCalendarPolicy forward to its next edition. When `roundCount` is given
+ * (a real round-robin regular season), the regular-season window's length is derived from the
+ * cadence and round count via `deriveNextEditionCalendarPolicy` instead of being a fixed shift
+ * of the reference edition's window -- this is what keeps every future edition's calendar
+ * self-consistent regardless of how the aligned start date's weekday falls. When `roundCount` is
+ * undefined (a bracket/cup-style linked edition with no round-robin regular season), the window
+ * is simply shifted by one year, since there is no round-robin capacity to derive from.
+ */
+function rollForwardCalendar(calendar: CompetitionCalendarPolicy, editionIds: ReadonlyMap<string, string>, roundCount: number | undefined): CompetitionCalendarPolicy {
   const shiftWindow = (window: CompetitionCalendarPolicy['seasonWindow']) => ({ startDate: addYears(window.startDate, 1), endDate: addYears(window.endDate, 1) })
-  const seasonWindow = shiftWindow(calendar.seasonWindow)
-  const shiftedRegularWindow = shiftWindow(calendar.regularSeasonWindow)
-  const regularSeasonWindow = {
-    ...shiftedRegularWindow,
-    startDate: alignToPreferredWeekday(shiftedRegularWindow.startDate, seasonWindow.startDate, calendar.regularSeasonCadence.preferredWeekdays),
+  const remapSpecialWindows = (windows: CompetitionCalendarPolicy['specialCompetitionWindows']) => windows.map((window) => ({ ...shiftWindow(window), competitionSeasonId: editionIds.get(window.competitionSeasonId) ?? nextCompetitionSeasonId(window.competitionSeasonId, addYears(calendar.seasonWindow.startDate, 1)) }))
+
+  if (roundCount === undefined) {
+    return {
+      seasonWindow: shiftWindow(calendar.seasonWindow),
+      regularSeasonWindow: shiftWindow(calendar.regularSeasonWindow),
+      specialCompetitionWindows: remapSpecialWindows(calendar.specialCompetitionWindows),
+      postseasonWindow: calendar.postseasonWindow === null ? null : shiftWindow(calendar.postseasonWindow),
+      postseasonStageStartDates: Object.fromEntries(Object.entries(calendar.postseasonStageStartDates).map(([key, date]) => [key, addYears(date, 1)])),
+      offseasonWindow: calendar.offseasonWindow === null ? null : shiftWindow(calendar.offseasonWindow),
+      regularSeasonCadence: calendar.regularSeasonCadence,
+      postseasonCadence: calendar.postseasonCadence,
+    }
   }
-  return {
-    seasonWindow,
-    regularSeasonWindow,
-    specialCompetitionWindows: calendar.specialCompetitionWindows.map((window) => ({ ...shiftWindow(window), competitionSeasonId: editionIds.get(window.competitionSeasonId) ?? nextCompetitionSeasonId(window.competitionSeasonId, addYears(calendar.seasonWindow.startDate, 1)) })),
-    postseasonWindow: calendar.postseasonWindow === null ? null : shiftWindow(calendar.postseasonWindow),
-    postseasonStageStartDates: Object.fromEntries(Object.entries(calendar.postseasonStageStartDates).map(([key, date]) => [key, addYears(date, 1)])),
-    offseasonWindow: calendar.offseasonWindow === null ? null : shiftWindow(calendar.offseasonWindow),
-    regularSeasonCadence: calendar.regularSeasonCadence,
-    postseasonCadence: calendar.postseasonCadence,
-  }
+
+  const derived = deriveNextEditionCalendarPolicy(calendar, roundCount)
+  return { ...derived, specialCompetitionWindows: remapSpecialWindows(calendar.specialCompetitionWindows) }
 }
 
-function alignToPreferredWeekday(date: Season['startDate'], windowStart: Season['startDate'], preferredWeekdays: readonly number[]): Season['startDate'] {
-  const weekday = (candidate: Season['startDate']) => new Date(`${candidate}T00:00:00.000Z`).getUTCDay()
-  for (let offset = 0; offset <= 6; offset += 1) {
-    const candidate = addDays(date, -offset)
-    if (candidate >= windowStart && preferredWeekdays.includes(weekday(candidate))) return candidate
-  }
-  for (let offset = 1; offset <= 6; offset += 1) {
-    const candidate = addDays(date, offset)
-    if (preferredWeekdays.includes(weekday(candidate))) return candidate
-  }
-  return date
+function regularSeasonRoundCount(world: GameWorld, season: Season, participantCount: number): number {
+  const meetingsPerPair = world.competitions[season.competitionId]!.rules.schedule.meetingsPerPair
+  return (participantCount - 1) * meetingsPerPair
 }
 
 function nextSeasonIds(world: GameWorld, count: number) { let ordinal = 1; const ids = []; while (ids.length < count) { const id = seasonIdFromString(`generated-season-${ordinal.toString().padStart(4, '0')}`); if (world.seasons[id] === undefined) ids.push(id); ordinal += 1 } return ids }

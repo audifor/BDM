@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createGameWorld, updateGameWorld } from '@/domain/world'
+import * as CalendarEngine from '@/engine/calendar'
+import * as PlayerDevelopmentEngine from '@/engine/development'
 import { addDays, parseGameDate } from '@/domain/date'
 import { createGame } from '@/domain/game'
 import { PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS } from '@/domain/player/PlayerTruthCatalog'
@@ -19,7 +21,9 @@ import { finalizeCompletedSeason, isSeasonComplete } from '@/engine/season'
 import { SPAIN_ACB_2025_26_CALENDAR } from '@/data/worldCompetitionCalendars'
 import { spainCopaCompetitionSeasonId } from '@/data/worldCompetitionCalendars'
 import { createWorldDbSpainGame } from './WorldDbSpainGame'
-import { startNextSeason } from './startNextSeason'
+import { startNextSeason, startNextSeasonFor } from './startNextSeason'
+import * as SeasonLifecycle from './startNextSeason'
+import { simulateUntilDate } from './simulateUntilDate'
 
 const source = { databaseId: 'real-world.db', schemaId: 'DDL-PHASE1-A' } as const
 const runtimeBundle: WorldCompetitionRuntimeBundle = { bundleSchemaVersion: 1, contentId: 'bdm-phase1-competition-runtime-v1', contentHashAlgorithm: 'BLAKE3', contentHash: 'a'.repeat(64), worldDbSchema: 'DDL-PHASE1-A', competitionFormats: [leagueFormat(), cupFormat()], initialScoreDocuments: [] }
@@ -277,8 +281,13 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     const atJuly1 = advanceGameDay(advanceGameDay(advanceGameDay(atFinalWindow)))
     expect(atJuly1.currentDate).toBe('2026-07-01')
 
+    // Rollover never moves the world clock or currentSeasonId (see startNextSeason.ts): the new
+    // edition is located by competitionId, not by re-reading currentSeasonId.
     const nextSeasonWorld = startNextSeason(atJuly1)
-    const nextLeague = nextSeasonWorld.seasons[nextSeasonWorld.currentSeasonId]!
+    expect(nextSeasonWorld.currentDate).toBe(atJuly1.currentDate)
+    expect(nextSeasonWorld.currentSeasonId).toBe(atJuly1.currentSeasonId)
+    const leagueCompetitionId = atJuly1.seasons[leagueSeasonId]!.competitionId
+    const nextLeague = Object.values(nextSeasonWorld.seasons).find((season) => season.competitionId === leagueCompetitionId && season.id !== leagueSeasonId)!
     const nextLeagueGames = Object.values(nextSeasonWorld.games).filter((game) => game.seasonId === nextLeague.id && game.competitionStageKey === 'REGULAR')
     const nextCup = Object.values(nextSeasonWorld.seasons).find((season) => season.worldCompetitionFormat?.competitionSeasonId === spainCopaCompetitionSeasonId(2026))
     expect(nextLeague.worldCompetitionFormat?.competitionSeasonId).toBe('edition:ESP:liga-endesa:2026-27')
@@ -289,28 +298,30 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     expect(nextLeague.calendarPolicy?.seasonWindow.startDate).toBe('2026-10-01')
   })
 
-  // Known limitation (found while certifying this suite, tracked separately from RWS-BUG-002):
-  // SPAIN_ACB_2025_26_CALENDAR's regular-season margin cannot absorb the worst-case round-1
-  // weekday slip (when 1 Oct falls on a Sunday, round 1 moves to the following Saturday) plus
-  // its configured winter break, so startNextSeason's 4th rollover fails scheduling with
-  // "Regular-season calendar cannot place round 34 before <date>". This is a calendar-data
-  // margin defect, not a World Clock coupling issue: advanceDay/advanceGameDay/isSeasonComplete
-  // all behave correctly right up to that point. This test therefore certifies the clock across
-  // 700 days / 2 full season rollovers, the full range unaffected by that separate defect.
-  it('RWS-BUG-002 long run: advances the world clock exactly 700 calendar days through two ACB season rollovers without stopping', async () => {
+  // RWS-BUG-002A: the calendar's regular-season window is now derived from the actual round
+  // count and cadence (deriveNextEditionCalendarPolicy), never a fixed offset copied from the
+  // reference 2025-26 edition, so it can no longer run out of margin however the aligned
+  // start date's weekday falls across repeated rollovers.
+  it('RWS-BUG-002 long run: advances the world clock exactly 1000 calendar days through multiple ACB season rollovers without stopping', async () => {
     const initialWorld = await createWorldDbSpainGame(selection.teamId, {
       repository: repository(slice()),
       databasePath: source.databaseId,
       runtimeBundlePath: 'runtime-bundle.json',
     })
     const startDate = initialWorld.currentDate
-    const expectedFinalDate = addDays(startDate, 700)
+    const expectedFinalDate = addDays(startDate, 1000)
+
+    const primaryCompetitionId = initialWorld.seasons[initialWorld.currentSeasonId]!.competitionId
 
     let world = initialWorld
     let seasonsCreated = 0
-    let seasonsCompleted = 0
     let postseasonsCreated = 0
     let gamesCompletedTotal = 0
+    // Rollover NEVER moves currentDate/currentSeasonId (see startNextSeason.ts): a Season, once
+    // rolled, must never be handed to startNextSeasonFor again -- track which ones already have a
+    // next edition so the world clock's own day-by-day walk is the only thing driving progress,
+    // exactly as CalendarEngine.migrateCurrentSeasonIfElapsed will once currentDate reaches it.
+    const rolledSeasonIds = new Set<string>()
     const seasonIdsSeen = new Set<string>([world.currentSeasonId as string])
 
     let safety = 0
@@ -327,32 +338,153 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
       const afterPostseasonGames = Object.values(world.games).filter((game) => game.competitionStageKey !== 'REGULAR').length
       if (afterPostseasonGames > beforePostseasonGames) postseasonsCreated += 1
 
-      const currentSeason = world.seasons[world.currentSeasonId]!
-      if (isSeasonComplete(world, currentSeason.id) && world.seasonHistoryBySeasonId[currentSeason.id] !== undefined) {
-        const rolledOver = startNextSeason(world)
-        if (rolledOver.currentDate <= expectedFinalDate) {
-          seasonsCompleted += 1
-          world = rolledOver
-          seasonsCreated += 1
-          seasonIdsSeen.add(world.currentSeasonId as string)
-        }
-        // Otherwise the rollover would jump past the target date: the world clock keeps
-        // advancing one empty offseason day at a time (Paso 9), exactly as an unattended
-        // UI clock would if the player has not yet triggered the next-season event.
+      const latestPrimarySeason = Object.values(world.seasons)
+        .filter((season) => season.competitionId === primaryCompetitionId)
+        .sort((a, b) => (a.startDate < b.startDate ? 1 : a.startDate > b.startDate ? -1 : 0))[0]!
+      if (!rolledSeasonIds.has(latestPrimarySeason.id) && isSeasonComplete(world, latestPrimarySeason.id) && world.seasonHistoryBySeasonId[latestPrimarySeason.id] !== undefined) {
+        world = startNextSeasonFor(world, latestPrimarySeason.id)
+        rolledSeasonIds.add(latestPrimarySeason.id)
+        seasonsCreated += 1
+        const newest = Object.values(world.seasons)
+          .filter((season) => season.competitionId === primaryCompetitionId)
+          .sort((a, b) => (a.startDate < b.startDate ? 1 : a.startDate > b.startDate ? -1 : 0))[0]!
+        seasonIdsSeen.add(newest.id)
       }
     }
 
     expect(world.currentDate).toBe(expectedFinalDate)
-    expect(seasonsCompleted).toBeGreaterThanOrEqual(1)
-    expect(seasonsCreated).toBe(seasonsCompleted)
+    expect(seasonsCreated).toBeGreaterThanOrEqual(1)
     expect(postseasonsCreated).toBeGreaterThanOrEqual(1)
     expect(gamesCompletedTotal).toBeGreaterThan(306)
 
-    // No duplicated CompetitionSeasons: every currentSeasonId transition produced a distinct Season identity.
-    expect(seasonIdsSeen.size).toBe(seasonsCompleted + 1)
+    // No duplicated CompetitionSeasons: every rollover produced a distinct Season identity.
+    expect(seasonIdsSeen.size).toBe(seasonsCreated + 1)
     // No duplicated Games: canonical Game IDs remain unique across the whole run.
     expect(new Set(Object.values(world.games).map((game) => game.id)).size).toBe(Object.values(world.games).length)
-  }, 60_000)
+  }, 120_000)
+
+  it('RWS-BUG-002 ten-year run: reaches 2035-10-01 through canonical simulation, rollovers, and annual development', async () => {
+    const startDate = parseGameDate('2025-10-01')
+    const targetDate = parseGameDate('2035-10-01')
+    const initialWorld = await createWorldDbSpainGame(selection.teamId, {
+      repository: repository(slice()),
+      databasePath: source.databaseId,
+      runtimeBundlePath: 'runtime-bundle.json',
+    })
+    expect(initialWorld.currentDate).toBe(startDate)
+    const expectedCycleIds = expectedAnnualDevelopmentCycleIds(startDate, targetDate)
+    const deterministicCycleContext = {
+      fromSeasonId: initialWorld.currentSeasonId,
+      toSeasonId: initialWorld.currentSeasonId,
+      targetDate: startDate,
+      cycleId: expectedCycleIds[0]!,
+    }
+    expect(PlayerDevelopmentEngine.applyOffseasonDevelopment(initialWorld, deterministicCycleContext)).toEqual(
+      PlayerDevelopmentEngine.applyOffseasonDevelopment(initialWorld, deterministicCycleContext),
+    )
+
+    const advancedDates: string[] = []
+    const noGameDates: string[] = []
+    const originalAdvanceDay = CalendarEngine.advanceDay
+    const advanceDaySpy = vi.spyOn(CalendarEngine, 'advanceDay').mockImplementation((world) => {
+      const next = originalAdvanceDay(world)
+      advancedDates.push(next.currentDate)
+      if (!Object.values(next.games).some((game) => game.status === 'scheduled' && game.date === next.currentDate)) {
+        noGameDates.push(next.currentDate)
+      }
+      return next
+    })
+
+    const originalStartNextSeasonFor = SeasonLifecycle.startNextSeasonFor
+    const rolloverDates: string[] = []
+    const rolloverSpy = vi.spyOn(SeasonLifecycle, 'startNextSeasonFor').mockImplementation((world, seasonId) => {
+      const currentDateBeforeRollover = world.currentDate
+      const next = originalStartNextSeasonFor(world, seasonId)
+      expect(next.currentDate).toBe(currentDateBeforeRollover)
+      rolloverDates.push(currentDateBeforeRollover)
+      return next
+    })
+
+    const observedApplications: { readonly cycleId: string | undefined; readonly date: string }[] = []
+    const originalApplyOffseasonDevelopment = PlayerDevelopmentEngine.applyOffseasonDevelopment
+    const developmentSpy = vi.spyOn(PlayerDevelopmentEngine, 'applyOffseasonDevelopment').mockImplementation((world, context) => {
+      observedApplications.push({ cycleId: context.cycleId, date: world.currentDate })
+      return originalApplyOffseasonDevelopment(world, context)
+    })
+
+    let result: ReturnType<typeof simulateUntilDate>
+    let capturedSpyCalls: { readonly cycleId: string | undefined; readonly date: string }[] = []
+    try {
+      result = simulateUntilDate(initialWorld, targetDate)
+      // Capture the spy history while it is still active; mockRestore() clears its call history.
+      capturedSpyCalls = developmentSpy.mock.calls.map(([world, context]) => ({ cycleId: context.cycleId, date: world.currentDate }))
+    } finally {
+      developmentSpy.mockRestore()
+      rolloverSpy.mockRestore()
+      advanceDaySpy.mockRestore()
+    }
+
+    const { world } = result!
+    const seasons = Object.values(world.seasons)
+    const seasonIds = seasons.map((season) => season.id)
+    const duplicateSeasonIds = seasonIds.filter((id, index) => seasonIds.indexOf(id) !== index)
+    const competitionSeasonIds = seasons.flatMap((season) =>
+      season.worldCompetitionFormat === undefined ? [] : [season.worldCompetitionFormat.competitionSeasonId],
+    )
+    const duplicateCompetitionSeasonIds = competitionSeasonIds.filter((id, index) => competitionSeasonIds.indexOf(id) !== index)
+    const games = Object.values(world.games)
+    const gameIds = games.map((game) => game.id)
+    const duplicateGameIds = gameIds.filter((id, index) => gameIds.indexOf(id) !== index)
+    const pendingGamesInPast = games.filter((game) => game.status === 'scheduled' && game.date < world.currentDate)
+    const observedCycleIds = observedApplications.map((application) => application.cycleId).filter((id): id is string => id !== undefined)
+    const duplicateCycleIds = observedCycleIds.filter((id, index) => observedCycleIds.indexOf(id) !== index)
+    const competitionSeasonsCreated = seasons.length - Object.keys(initialWorld.seasons).length
+
+    console.log(JSON.stringify({
+      startDate,
+      targetDate,
+      finalDate: result!.finalDate,
+      expectedCycleIds,
+      observedCycleIds,
+      applications: observedApplications,
+      capturedSpyCalls,
+      duplicateCycleIds,
+      competitionSeasonsCreated,
+      competitionSeasonsInWorld: seasons.length,
+      pendingGamesInPast: pendingGamesInPast.length,
+      duplicateSeasonIds,
+      duplicateCompetitionSeasonIds,
+      duplicateGameIds,
+    }))
+
+    expect(result!.finalDate).toBe(targetDate)
+    expect(world.currentDate).toBe(targetDate)
+    expect(result!.daysAdvanced).toBe(3652)
+    expect(['arrived', 'userGame', 'mediaOpportunity']).toContain(result!.stopReason.type)
+    expect(advancedDates.at(-1)).toBe(targetDate)
+    expect(noGameDates.length).toBeGreaterThan(0)
+    expect(pendingGamesInPast).toHaveLength(0)
+    expect(duplicateSeasonIds).toEqual([])
+    expect(duplicateCompetitionSeasonIds).toEqual([])
+    expect(seasons.every((season) => season.startDate <= season.endDate)).toBe(true)
+    for (const competitionId of new Set(seasons.map((season) => season.competitionId))) {
+      const editions = seasons
+        .filter((season) => season.competitionId === competitionId)
+        .sort((left, right) => left.startDate.localeCompare(right.startDate))
+      expect(editions.every((season, index) => index === 0 || editions[index - 1]!.endDate < season.startDate)).toBe(true)
+    }
+    expect(duplicateGameIds).toEqual([])
+    expect(rolloverDates.length).toBeGreaterThanOrEqual(10)
+    expect(rolloverDates.every((date) => date >= startDate && date < targetDate)).toBe(true)
+    expect(capturedSpyCalls).toEqual(observedApplications)
+    expect(observedCycleIds).toEqual(expectedCycleIds)
+    expect(new Set(observedCycleIds).size).toBe(observedCycleIds.length)
+    expect(duplicateCycleIds).toEqual([])
+    expect(observedApplications.map((application) => application.date)).toEqual(
+      expectedCycleIds.map((cycleId) => `${cycleId.slice('annual-development:'.length)}-07-01`),
+    )
+    expect(world.worldAnnualDevelopmentCycle?.lastAppliedCycleId).toBe(expectedCycleIds.at(-1))
+  }, 900_000)
 
   it.each([100, 365])('measures advanceGameDay performance over %i consecutive days', async (dayCount) => {
     let world = await createWorldDbSpainGame(selection.teamId, {
@@ -367,7 +499,70 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     console.log(`advanceGameDay x${dayCount}: ${elapsedMs.toFixed(1)}ms (${(elapsedMs / dayCount).toFixed(2)}ms/day)`)
     expect(world.currentDate).toBeDefined()
   }, 60_000)
+
+  it.each([10, 20])('RWS-BUG-002A lifecycle: rolls over %i consecutive ACB seasons without duplicate IDs, dates, or fixtures', async (seasonCount) => {
+    let world = await createWorldDbSpainGame(selection.teamId, {
+      repository: repository(slice()),
+      databasePath: source.databaseId,
+      runtimeBundlePath: 'runtime-bundle.json',
+    })
+    const primaryCompetitionId = world.seasons[world.currentSeasonId]!.competitionId
+    const seasonIds = new Set<string>()
+    const seasonStartDates: string[] = []
+    let previousSeasonEnd = ''
+    // Rollover never moves currentSeasonId (see startNextSeason.ts): each edition is located by
+    // competitionId + latest startDate, exactly like CalendarEngine's own successor lookup.
+    let season = world.seasons[world.currentSeasonId]!
+
+    for (let seasonNumber = 0; seasonNumber < seasonCount; seasonNumber += 1) {
+      expect(seasonIds.has(season.id)).toBe(false)
+      seasonIds.add(season.id)
+      seasonStartDates.push(season.startDate)
+      if (previousSeasonEnd !== '') expect(season.startDate > previousSeasonEnd).toBe(true)
+      previousSeasonEnd = season.endDate
+
+      const regularGames = Object.values(world.games).filter((game) => game.seasonId === season.id && game.competitionStageKey === 'REGULAR')
+      expect(regularGames).toHaveLength(306)
+      expect(new Set(regularGames.map((game) => game.date)).size).toBe(34)
+
+      world = completeGamesWithTrigger(world, regularGames)
+      let playoffWorld = world
+      while (true) {
+        const next = Object.values(playoffWorld.games).find((game) => game.seasonId === season.id && game.competitionStageKey !== 'REGULAR' && game.status === 'scheduled')
+        if (next === undefined) break
+        playoffWorld = applyMatchResult(playoffWorld, { gameId: next.id, homeTeamId: next.homeTeamId, awayTeamId: next.awayTeamId, homeScore: 100, awayScore: 80 })
+      }
+      world = playoffWorld
+      expect(isSeasonComplete(world, season.id)).toBe(true)
+      world = finalizeCompletedSeason(world, season.id)
+      expect(world.seasonHistoryBySeasonId[season.id]).toBeDefined()
+
+      world = startNextSeasonFor(world, season.id)
+      season = Object.values(world.seasons)
+        .filter((candidate) => candidate.competitionId === primaryCompetitionId)
+        .sort((a, b) => (a.startDate < b.startDate ? 1 : a.startDate > b.startDate ? -1 : 0))[0]!
+    }
+
+    // No duplicated CompetitionSeasons/fixtures across the whole run.
+    expect(seasonIds.size).toBe(seasonCount)
+    expect(new Set(Object.values(world.games).map((game) => game.id)).size).toBe(Object.values(world.games).length)
+    // No CompetitionSeason ever reused an absolute date range from the reference 2025-26 edition
+    // (season index 0), except that first edition itself.
+    expect(new Set(seasonStartDates).size).toBe(seasonCount)
+    expect(seasonStartDates.slice(1).every((date) => date !== seasonStartDates[0])).toBe(true)
+  }, 300_000)
 })
+
+function expectedAnnualDevelopmentCycleIds(startDate: string, targetDate: string): string[] {
+  const cycleIds: string[] = []
+  const firstYear = Number(startDate.slice(0, 4))
+  const lastYear = Number(targetDate.slice(0, 4))
+  for (let year = firstYear; year <= lastYear; year += 1) {
+    const triggerDate = `${year}-07-01`
+    if (triggerDate > startDate && triggerDate <= targetDate) cycleIds.push(`annual-development:${year}`)
+  }
+  return cycleIds
+}
 
 function leagueFormat() {
   return parseWorldCompetitionFormatDocument({

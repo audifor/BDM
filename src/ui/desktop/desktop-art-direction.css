@@ -128,6 +128,13 @@
 .desktop-continue-control__secondary { margin-top: 2px; opacity: .66; }
 .desktop-continue-control__secondary:hover:not(:disabled) { opacity: 1; }
 
+.desktop-simulate-until-control__trigger { margin-top: 2px; opacity: .66; }
+.desktop-simulate-until-control__trigger:hover:not(:disabled) { opacity: 1; }
+.desktop-simulate-until-control { display: flex; flex-direction: column; gap: var(--space-3); min-width: 320px; }
+.desktop-simulate-until-control__current { color: rgb(184 207 210 / 71%); font-size: .75rem; }
+.desktop-simulate-until-control__fields { display: flex; gap: var(--space-2); }
+.desktop-simulate-until-control__fields > * { flex: 1; min-width: 0; }
+
 .desktop-widget-actions { right: var(--desktop-safe-x); bottom: clamp(132px, 15vh, 188px); }
 .desktop-widget-actions.is-empty { top: auto; bottom: clamp(132px, 15vh, 188px); left: calc(50% + min(210px, 18vw)); transform: none; }
 .desktop-widget-add { width: 42px; height: 42px; border: 1px solid rgb(157 211 215 / 28%); background: rgb(16 34 45 / 66%); box-shadow: none; font-size: 1.35rem; }

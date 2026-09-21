@@ -49,6 +49,7 @@ export function App() {
   const simulateRemainingGamesToday = useGameStore((state) => state.simulateRemainingGamesToday)
   const advanceDay = useGameStore((state) => state.advanceDay)
   const continueGame = useGameStore((state) => state.continueGame)
+  const simulateUntilDate = useGameStore((state) => state.simulateUntilDate)
   const startNextSeason = useGameStore((state) => state.startNextSeason)
   const signFreeAgent = useGameStore((state) => state.signFreeAgent)
   const releasePlayer = useGameStore((state) => state.releasePlayer)
@@ -204,7 +205,7 @@ export function App() {
       context={<GameContextBar onOpenSettings={() => openDesktopApp('settings')} onSearch={() => setGlobalSearchOpen(true)} world={world} />}
       density={density}
       dockAutoHide={dockAutoHide}
-      widgets={<><DesktopWidgetLayer world={world} onAdvanceDay={advanceDay} onContinue={continueGame} onInstantResult={() => instantResult(tacticalPlan)} onOpenApp={openDesktopApp} onOpenPendingGame={(gameId) => { if (world.games[gameId]?.status === 'scheduled') startMatch(startLiveMatch(tacticalPlan)) }} onPlayGame={() => startMatch(startLiveMatch(tacticalPlan))} onStartNextSeason={startNextSeason} /><DesktopCanonicalSurfaceLayer visible={visualQaFixture} world={world} /></>}
+      widgets={<><DesktopWidgetLayer world={world} onAdvanceDay={advanceDay} onContinue={continueGame} onInstantResult={() => instantResult(tacticalPlan)} onOpenApp={openDesktopApp} onOpenPendingGame={(gameId) => { if (world.games[gameId]?.status === 'scheduled') startMatch(startLiveMatch(tacticalPlan)) }} onPlayGame={() => startMatch(startLiveMatch(tacticalPlan))} onStartNextSeason={startNextSeason} onSimulateUntilDate={simulateUntilDate} /><DesktopCanonicalSurfaceLayer visible={visualQaFixture} world={world} /></>}
       dock={<DesktopDock activeAppId={activeAppId} dockPinnedAppIds={dockPinnedAppIds} launcherOpen={launcherOpen} onAppOpen={openDesktopApp} onLauncherToggle={toggleLauncher} onPinApp={pinDockApp} onUnpinApp={unpinDockApp} unreadCount={unreadInboxCount} />}
       overlay={<><DesktopLauncher activeAppId={activeAppId} capabilities={capabilities} canAdvanceDay canLoad={hasSave} isOpen={launcherOpen && !globalSearchOpen} launcherOrder={launcherOrder} onAdvanceDay={advanceDay} onAppOpen={openDesktopApp} onClose={closeLauncher} onCustomizeDesktop={enterDesktopWidgetEditMode} onLoad={() => void loadGame()} onPinDockApp={pinDockApp} onQueryChange={setLauncherQuery} onReorder={reorderLauncher} onSave={() => void saveGame()} query={launcherQuery} recentAppIds={recentAppIds} world={world} /><GlobalSearchOverlay canAdvanceDay canLoad={hasSave} isOpen={globalSearchOpen} onAdvanceDay={advanceDay} onClose={() => setGlobalSearchOpen(false)} onCustomize={enterDesktopWidgetEditMode} onLoad={() => void loadGame()} onOpenApp={openDesktopApp} onSave={() => void saveGame()} world={world} /><EntityActionComposer onResult={executeComposerAction} /></>}
       status={<StatusCluster saveMessage={saveMessage} />}

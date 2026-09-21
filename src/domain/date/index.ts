@@ -3,6 +3,7 @@ export {
   addYears,
   compareGameDates,
   createGameDate,
+  daysInMonth,
   formatGameDate,
   isAfterGameDate,
   isBeforeGameDate,
