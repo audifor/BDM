@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { coachIdFromString, countryIdFromString, playerIdFromString, teamIdFromString } from '@/domain/ids'
+import { coachIdFromString, countryIdFromString, organizationIdForTeam, organizationIdFromString, organizationSectionIdFromString, playerIdFromString, teamIdFromString } from '@/domain/ids'
 
 import { createTeam } from './index'
 
@@ -19,8 +19,21 @@ describe('Team', () => {
   it('creates a valid team and preserves its roster', () => {
     const team = createTeam(input)
 
-    expect(team).toEqual(input)
+    expect(team).toEqual({
+      ...input,
+      organizationId: organizationIdForTeam(input.id),
+      organizationSectionId: organizationSectionIdFromString('legacy-section:team-a'),
+    })
     expect(team.rosterPlayerIds).not.toBe(input.rosterPlayerIds)
+  })
+
+  it('preserves explicit canonical Organization and Section IDs', () => {
+    const organizationId = organizationIdFromString('organization:physical-42')
+    const organizationSectionId = organizationSectionIdFromString('section:physical-7')
+    const team = createTeam({ ...input, organizationId, organizationSectionId })
+
+    expect(team.organizationId).toBe(organizationId)
+    expect(team.organizationSectionId).toBe(organizationSectionId)
   })
 
   it('rejects duplicate roster players and empty names', () => {

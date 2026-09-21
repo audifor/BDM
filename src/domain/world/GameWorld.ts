@@ -18,10 +18,12 @@ import type {
   PlayerId,
   SeasonId,
   TeamId,
+  OrganizationSectionId,
 } from '@/domain/ids'
 import type { Player } from '@/domain/player'
 import { calculateSeasonStandings, type Season, type SeasonHistoryRecord } from '@/domain/season'
 import type { Team } from '@/domain/team'
+import { createOrganization, createOrganizationSection, type Organization, type OrganizationSection } from '@/domain/organization'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
 import { createInjury, isInjuryActive, type InjuryRecord } from '@/domain/injury'
 import type { InjuryId } from '@/domain/ids'
@@ -34,7 +36,7 @@ import { createOrganizationKnowledge, createPlayerKnowledge, type OrganizationKn
 import { createEvaluatorProfile, type Evidence, type EvaluatorProfile, type EvaluatorReport, type ScoutingAssignment } from '@/domain/scouting'
 import { deriveOrganizationEvaluationPolicy, type OrganizationEvaluationPolicy } from '@/domain/intelligence'
 import type { Agency, Agent, ContractNegotiation, MarketKnowledge, MarketReality, MarketSignal, PlayerRepresentation, RolePromise } from '@/domain/market'
-import { organizationIdForTeam, type OrganizationId } from '@/domain/ids'
+import type { OrganizationId } from '@/domain/ids'
 import type { PlayerKnowledgeId } from '@/domain/ids'
 import { createStaffPerson, createTeamStaffAssignment, staffRoleDefinition, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
 import type { StaffPersonId, TeamStaffAssignmentId } from '@/domain/ids'
@@ -97,6 +99,8 @@ export interface GameWorld {
   readonly coaches: Readonly<Record<CoachId, Coach>>
   readonly players: Readonly<Record<PlayerId, Player>>
   readonly teams: Readonly<Record<TeamId, Team>>
+  readonly organizationsById: Readonly<Record<OrganizationId, Organization>>
+  readonly organizationSectionsById: Readonly<Record<OrganizationSectionId, OrganizationSection>>
   readonly competitions: Readonly<Record<CompetitionId, Competition>>
   readonly ecosystems: Readonly<Record<EcosystemId, SportsEcosystem>>
   readonly conferencesById: Readonly<Record<ConferenceId, Conference>>
@@ -283,6 +287,9 @@ export interface CreateGameWorldInput {
   coaches: readonly Coach[]
   players: readonly Player[]
   teams: readonly Team[]
+  /** Omit only for legacy/generated worlds; World DB worlds pass canonical source records. */
+  organizations?: readonly Organization[]
+  organizationSections?: readonly OrganizationSection[]
   competitions: readonly Competition[]
   ecosystems?: readonly SportsEcosystem[] | Readonly<Record<EcosystemId, SportsEcosystem>>
   conferences?: readonly Conference[]
@@ -453,11 +460,18 @@ export class GameWorldValidationError extends Error {
 }
 
 export function createGameWorld(input: CreateGameWorldInput): GameWorld {
+  const teams = input.teams
+  const organizations = input.organizations === undefined
+    ? createLegacyOrganizations(teams)
+    : input.organizations.map(createOrganization)
+  const organizationSections = input.organizationSections === undefined
+    ? createLegacyOrganizationSections(teams)
+    : input.organizationSections.map(createOrganizationSection)
   const staffPeople = input.staffPeople ?? []
   const seasons = indexById(input.seasons, 'Season')
   const currentSeasonId = input.currentSeasonId ?? selectLegacyCurrentSeasonId(seasons)
   const currentDate = parseGameDate(input.currentDate)
-  const employment = coachCareerForCoaches(input.coaches, input.teams, currentDate, input.coachEmploymentByCoachId, input.coachCareerHistoryByCoachId)
+  const employment = coachCareerForCoaches(input.coaches, teams, currentDate, input.coachEmploymentByCoachId, input.coachCareerHistoryByCoachId)
   const persons = input.persons === undefined ? derivePersons(input) : input.persons.map(createPerson)
   const suppliedEcosystems = input.ecosystems === undefined ? [createSportsEcosystem({ id: DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, name: 'Virelia Basketball Federation', kind: 'fibaLike' })] : Array.isArray(input.ecosystems) ? input.ecosystems : Object.values(input.ecosystems)
   const ecosystems = [
@@ -487,7 +501,9 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     countries: indexById(input.countries, 'Country'),
     coaches: indexById(input.coaches, 'Coach'),
     players: indexById(input.players, 'Player'),
-    teams: indexById(input.teams, 'Team'),
+    teams: indexById(teams, 'Team'),
+    organizationsById: indexById(organizations, 'Organization'),
+    organizationSectionsById: indexById(organizationSections, 'Organization section'),
     competitions: indexById(input.competitions, 'Competition'),
     ecosystems: indexById(ecosystems, 'Sports ecosystem'),
     conferencesById: indexById(conferences.map(createConference), 'Conference'),
@@ -506,7 +522,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     evaluatorProfilesByStaffId: Object.freeze(Object.fromEntries(Object.entries(input.evaluatorProfilesByStaffId ?? {}).map(([id, profile]) => [id, createEvaluatorProfile(profile)]))) as Readonly<Record<StaffPersonId, EvaluatorProfile>>,
     scoutingAssignmentsById: indexById(input.scoutingAssignments ?? [], 'Scouting assignment'),
     evaluatorReportsById: indexById(input.evaluatorReports ?? [], 'Evaluator report'),
-    organizationEvaluationPoliciesById: organizationPolicies(input.teams, input.organizationEvaluationPoliciesById),
+    organizationEvaluationPoliciesById: organizationPolicies(teams, input.organizationEvaluationPoliciesById),
     agentsById: indexById(input.agents ?? [], 'Agent'), agenciesById: indexById(input.agencies ?? [], 'Agency'), playerRepresentations: Object.freeze([...(input.playerRepresentations ?? [])]), marketRealityByPlayerId: Object.freeze(Object.fromEntries((input.marketReality ?? []).map(item => [item.playerId, item]))), marketKnowledge: Object.freeze([...(input.marketKnowledge ?? [])]), marketSignalsById: indexById(input.marketSignals ?? [], 'Market signal'), negotiationsById: indexById(input.negotiations ?? [], 'Negotiation'), rolePromisesById: indexById(input.rolePromises ?? [], 'Role promise'),
     staffPeopleById: indexById(staffPeople, 'Staff person'),
     teamStaffAssignmentsById: indexById(input.teamStaffAssignments ?? [], 'Staff assignment'),
@@ -662,7 +678,7 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
 const collectionPatchTargets: Readonly<Record<string, string>> = {
   governanceInstitutions: 'governanceInstitutionsById', governanceUniverseProfiles: 'governanceUniverseProfilesById', governanceBodies: 'governanceBodiesById', governanceAppointments: 'governanceAppointmentsById', governanceAuthorityGrants: 'governanceAuthorityGrantsById', governanceExternalRelationships: 'governanceExternalRelationshipsById', governanceExpectationPeriods: 'governanceExpectationPeriodsById', governanceObjectives: 'governanceObjectivesById',
   governanceManagerEvaluationPeriods: 'governanceManagerEvaluationPeriodsById', governanceManagerEvaluations: 'governanceManagerEvaluationsById', governanceJobSecurityTransitions: 'governanceJobSecurityTransitionsById', governanceDecisions: 'governanceDecisionsById', governanceDecisionParticipationGrants: 'governanceDecisionParticipationGrantsById', governanceDecisionEvents: 'governanceDecisionEventsById', governanceMeetings:'governanceMeetingsById', governanceMeetingParticipants:'governanceMeetingParticipantsById', governanceMeetingAgendaItems:'governanceMeetingAgendaItemsById', governanceMeetingEvents:'governanceMeetingEventsById', governanceRequests:'governanceRequestsById', governanceRequestEvents:'governanceRequestEventsById', governanceCommitments:'governanceCommitmentsById', governanceCommitmentEvents:'governanceCommitmentEventsById',
-  persons: 'personsById', countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
+  persons: 'personsById', countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', organizations: 'organizationsById', organizationSections: 'organizationSectionsById', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
 }
 
 const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unknown>> = {
@@ -684,6 +700,8 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   governanceMeetings: (value) => indexById((value as readonly GovernanceMeeting[]).map(createGovernanceMeeting), 'Governance meeting'), governanceMeetingParticipants: (value) => indexById((value as readonly GovernanceMeetingParticipant[]).map(createGovernanceMeetingParticipant), 'Governance meeting participant'), governanceMeetingAgendaItems: (value) => indexById((value as readonly GovernanceMeetingAgendaItem[]).map(createGovernanceMeetingAgendaItem), 'Governance meeting agenda item'), governanceMeetingEvents: (value) => indexById((value as readonly GovernanceMeetingEvent[]).map(createGovernanceMeetingEvent), 'Governance meeting event'),
   governanceRequests: (value) => indexById((value as readonly GovernanceRequest[]).map(createGovernanceRequest), 'Governance request'), governanceRequestEvents: (value) => indexById((value as readonly GovernanceRequestEvent[]).map(createGovernanceRequestEvent), 'Governance request event'),
   governanceCommitments: (value) => indexById((value as readonly GovernanceCommitment[]).map(createGovernanceCommitment), 'Governance commitment'), governanceCommitmentEvents: (value) => indexById((value as readonly GovernanceCommitmentEvent[]).map(createGovernanceCommitmentEvent), 'Governance commitment event'),
+  organizations: (value) => indexById((value as readonly Organization[]).map(createOrganization), 'Organization'),
+  organizationSections: (value) => indexById((value as readonly OrganizationSection[]).map(createOrganizationSection), 'Organization section'),
   matchStatLogs: (value) => indexLogsByGameId(value as readonly MatchStatLog[]),
   seasonHistory: (value) => indexHistoryBySeasonId(value as readonly SeasonHistoryRecord[]),
   teamFinances: (value) => indexTeamFinances(value as readonly TeamFinances[]),
@@ -701,6 +719,17 @@ function validateWorld(world: GameWorld): void {
   requireEntity(world.coaches, world.userCoachId, 'User coach')
   validatePersons(world)
   validateGovernance(world)
+
+  for (const organization of Object.values(world.organizationsById)) createOrganization(organization)
+  for (const section of Object.values(world.organizationSectionsById)) {
+    createOrganizationSection(section)
+    requireEntity(world.organizationsById, section.organizationId, `Organization section ${section.id} organization`)
+  }
+  for (const team of Object.values(world.teams)) {
+    requireEntity(world.organizationsById, team.organizationId, `Team ${team.id} organization`)
+    const section = requireEntity(world.organizationSectionsById, team.organizationSectionId, `Team ${team.id} organization section`)
+    if (section.organizationId !== team.organizationId) throw new GameWorldValidationError(`Team ${team.id} organization section belongs to a different organization`)
+  }
 
   for (const coach of Object.values(world.coaches)) {
     requireEntity(world.countries, coach.nationalityId, `Coach ${coach.id} nationality`)
@@ -861,7 +890,7 @@ function validateWorld(world: GameWorld): void {
   for (const [staffId, profile] of Object.entries(world.evaluatorProfilesByStaffId) as [StaffPersonId, EvaluatorProfile][]) { requireEntity(world.staffPeopleById, staffId, 'Evaluator profile staff'); createEvaluatorProfile(profile) }
   for (const assignment of Object.values(world.scoutingAssignmentsById)) { requireEntity(world.players, assignment.subjectPlayerId, 'Scouting assignment subject Player'); requireEntity(world.staffPeopleById, assignment.evaluatorStaffId, 'Scouting assignment evaluator') }
   for (const report of Object.values(world.evaluatorReportsById)) { requireEntity(world.players, report.subjectPlayerId, 'Evaluator report subject Player'); requireEntity(world.staffPeopleById, report.evaluatorStaffId, 'Evaluator report evaluator'); for (const evidenceId of report.evidenceIds) requireEntity(world.evidenceById, evidenceId, 'Evaluator report Evidence') }
-  for (const [organizationId, policy] of Object.entries(world.organizationEvaluationPoliciesById) as [OrganizationId, OrganizationEvaluationPolicy][]) { if (!Object.values(world.teams).some((team) => organizationIdForTeam(team.id) === organizationId) || Object.values(policy).some((value) => !Number.isInteger(value) || value < 0 || value > 100)) throw new GameWorldValidationError('Organization evaluation policy is invalid') }
+  for (const [organizationId, policy] of Object.entries(world.organizationEvaluationPoliciesById) as [OrganizationId, OrganizationEvaluationPolicy][]) { if (!Object.values(world.teams).some((team) => team.organizationId === organizationId) || Object.values(policy).some((value) => !Number.isInteger(value) || value < 0 || value > 100)) throw new GameWorldValidationError('Organization evaluation policy is invalid') }
   const assignedStaff = new Set<StaffPersonId>(); for (const person of Object.values(world.staffPeopleById)) createStaffPerson(person); for (const assignment of Object.values(world.teamStaffAssignmentsById)) { createTeamStaffAssignment(assignment); requireEntity(world.staffPeopleById, assignment.staffPersonId, 'Staff assignment person'); requireEntity(world.teams, assignment.teamId, 'Staff assignment team'); if (assignedStaff.has(assignment.staffPersonId)) throw new GameWorldValidationError('Staff person has multiple active assignments'); assignedStaff.add(assignment.staffPersonId) }
   const responsibilityKeys = new Set<string>()
   for (const responsibility of Object.values(world.responsibilitiesById)) {
@@ -1546,7 +1575,19 @@ function indexHistoryBySeasonId(history: readonly SeasonHistoryRecord[]): Readon
 function indexTeamFinances(finances: readonly TeamFinances[]): Readonly<Record<TeamId, TeamFinances>> { const indexed = Object.create(null) as Record<TeamId, TeamFinances>; for (const finance of finances) { if (Object.hasOwn(indexed, finance.teamId)) throw new GameWorldValidationError(`Duplicate Team finances ID: ${finance.teamId}`); indexed[finance.teamId] = finance } return Object.freeze(indexed) }
 
 function peopleProfiles<Value>(people: readonly { readonly id: string }[], supplied: Readonly<Record<string, Value>> | undefined, create: (id: string) => Value): Readonly<Record<string, Value>> { const result: Record<string, Value> = {}; for (const person of people) result[person.id] = supplied?.[person.id] ?? create(person.id); return Object.freeze(result) }
-function organizationPolicies(teams: readonly Team[], supplied: Readonly<Record<OrganizationId, OrganizationEvaluationPolicy>> | undefined): Readonly<Record<OrganizationId, OrganizationEvaluationPolicy>> { const policies = Object.create(null) as Record<OrganizationId, OrganizationEvaluationPolicy>; for (const team of teams) { const id=organizationIdForTeam(team.id), policy=supplied?.[id]??deriveOrganizationEvaluationPolicy(id); for(const value of Object.values(policy))if(!Number.isInteger(value)||value<0||value>100)throw new GameWorldValidationError('Organization evaluation policy is invalid'); policies[id]=Object.freeze({...policy}) } return Object.freeze(policies) }
+function organizationPolicies(teams: readonly Team[], supplied: Readonly<Record<OrganizationId, OrganizationEvaluationPolicy>> | undefined): Readonly<Record<OrganizationId, OrganizationEvaluationPolicy>> { const policies = Object.create(null) as Record<OrganizationId, OrganizationEvaluationPolicy>; for (const id of new Set(teams.map((team) => team.organizationId))) { const policy=supplied?.[id]??deriveOrganizationEvaluationPolicy(id); for(const value of Object.values(policy))if(!Number.isInteger(value)||value<0||value>100)throw new GameWorldValidationError('Organization evaluation policy is invalid'); policies[id]=Object.freeze({...policy}) } return Object.freeze(policies) }
+
+function createLegacyOrganizations(teams: readonly Team[]): Organization[] {
+  const organizations = new Map<OrganizationId, Organization>()
+  for (const team of teams) if (!organizations.has(team.organizationId)) organizations.set(team.organizationId, createOrganization({ id: team.organizationId, entityId: null, legalName: team.name, foundedYear: null, dissolvedYear: null, primaryPlaceId: null, website: null }))
+  return [...organizations.values()]
+}
+
+function createLegacyOrganizationSections(teams: readonly Team[]): OrganizationSection[] {
+  const sections = new Map<OrganizationSectionId, OrganizationSection>()
+  for (const team of teams) if (!sections.has(team.organizationSectionId)) sections.set(team.organizationSectionId, createOrganizationSection({ id: team.organizationSectionId, organizationId: team.organizationId, sport: 'basketball', gender: team.gender, categoryScope: 'legacy', canonicalName: team.name, validFrom: null, validTo: null }))
+  return [...sections.values()]
+}
 
 function coachReputationProfilesForCoaches(coaches: readonly Coach[], supplied: Readonly<Record<CoachId, CoachReputationProfile>> | undefined): Readonly<Record<CoachId, CoachReputationProfile>> {
   const profiles = Object.create(null) as Record<CoachId, CoachReputationProfile>

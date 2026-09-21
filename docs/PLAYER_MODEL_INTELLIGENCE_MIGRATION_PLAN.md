@@ -96,7 +96,7 @@ V1 replaces `PlayerKnowledgeRecord` with sparse organization entries containing 
 
 ## 12. Observer/Organization Contract
 
-Introduce an opaque `OrganizationId` type now, with a transition resolver `organizationIdForTeam(teamId)` whose v1 implementation is one-to-one `TeamId`. Team APIs accept `OrganizationId` at Knowledge boundaries; game rules continue accepting TeamId. This prevents permanent TeamId leakage while avoiding a new organization entity/mapping table before clubs can own multiple teams.
+CORE-ORG1 implements the canonical `Organization` and `OrganizationSection` runtime projection from BDM-DB. Teams carry their source `organizationId` and `organizationSectionId`; Organization-scoped Knowledge and policy consumers use that canonical identity. `organizationIdForTeam(teamId)` remains only as the explicit fallback for legacy and generated worlds. Governance institutions and ownership remain separate, out-of-scope concepts.
 
 ## 13. Compatibility Strategy
 

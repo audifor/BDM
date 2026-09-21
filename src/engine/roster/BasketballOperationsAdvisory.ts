@@ -1,7 +1,7 @@
 import { deriveOrganizationPlayerValuation } from '@/domain/intelligence'
 import { getMarketKnowledge } from '@/domain/market'
 import { compareGameDates } from '@/domain/date'
-import { organizationIdForTeam, type EcosystemId, type OrganizationId, type PlayerId, type SeasonId, type TeamId } from '@/domain/ids'
+import { type EcosystemId, type OrganizationId, type PlayerId, type SeasonId, type TeamId } from '@/domain/ids'
 import { createDelegationOutcome, delegationOutcomeIdFromString, type DelegationOutcome, type DelegationOutcomeId, type ResponsibilityKind } from '@/domain/responsibility'
 import { getActivePlayerContract, getEcosystemForTeam, getTeamFinancialSnapshot, isPlayerFreeAgent, type GameWorld } from '@/domain/world'
 import { basketballOperationsQuality, resolveAdvisoryResponsibility } from '@/engine/staff'
@@ -22,7 +22,7 @@ function record(world: GameWorld, teamId: TeamId, kind: typeof KINDS[number]): G
   if (resolution === undefined) return world
   const id = delegationOutcomeIdFromString(`delegation-outcome:${resolution.responsibilityId}:${kind}:${world.currentDate}`)
   if (world.delegationOutcomesById[id] !== undefined) return world
-  const organizationId = organizationIdForTeam(teamId)
+  const organizationId = world.teams[teamId]!.organizationId
   const qualityScore = basketballOperationsQuality(resolution.context, `staff-decision-quality-v1:${resolution.responsibilityId}:${world.currentDate}`)
   const rngSeed = `staff-basketball-ops:${resolution.responsibilityId}:${world.currentDate}`
 
@@ -186,9 +186,9 @@ function tradeRecommendation(world: GameWorld, teamId: TeamId, organizationId: O
   return { teamId, incomingPlayerId: picked.incoming, outgoingPlayerId: picked.outgoing, counterpartTeamId: picked.counterpartTeamId, proposalId: picked.proposal.id, ecosystemId: ecosystem.id, seasonId, rank: 1, candidateCount: bounded, confidence: certainty(world, organizationId, picked.incoming, 'TRADE') }
 }
 
-function evaluation(world: GameWorld, organizationId: ReturnType<typeof organizationIdForTeam>, playerId: PlayerId, context: 'FREE_AGENCY' | 'TRADE') { return deriveOrganizationPlayerValuation({ organizationId, playerId, knowledge: world.organizationKnowledge, currentDate: world.currentDate, context, publicPosition: world.players[playerId]!.basketball.primaryPosition, policy: world.organizationEvaluationPoliciesById[organizationId] }) }
-function value(world: GameWorld, organizationId: ReturnType<typeof organizationIdForTeam>, playerId: PlayerId, context: 'FREE_AGENCY' | 'TRADE') { return evaluation(world, organizationId, playerId, context).priorityScore }
-function certainty(world: GameWorld, organizationId: ReturnType<typeof organizationIdForTeam>, playerId: PlayerId, context: 'FREE_AGENCY' | 'TRADE') { return evaluation(world, organizationId, playerId, context).certainty }
+function evaluation(world: GameWorld, organizationId: OrganizationId, playerId: PlayerId, context: 'FREE_AGENCY' | 'TRADE') { return deriveOrganizationPlayerValuation({ organizationId, playerId, knowledge: world.organizationKnowledge, currentDate: world.currentDate, context, publicPosition: world.players[playerId]!.basketball.primaryPosition, policy: world.organizationEvaluationPoliciesById[organizationId] }) }
+function value(world: GameWorld, organizationId: OrganizationId, playerId: PlayerId, context: 'FREE_AGENCY' | 'TRADE') { return evaluation(world, organizationId, playerId, context).priorityScore }
+function certainty(world: GameWorld, organizationId: OrganizationId, playerId: PlayerId, context: 'FREE_AGENCY' | 'TRADE') { return evaluation(world, organizationId, playerId, context).certainty }
 /** A low/negative need for a position means surplus (safer to trade/retain-lower-priority); a high need means scarcity (higher retention/acquisition priority). */
 function need(world: GameWorld, teamId: TeamId, position: string): number { return Math.max(0, 2 - world.teams[teamId]!.rosterPlayerIds.filter((id) => world.players[id]!.basketball.primaryPosition === position).length) }
 

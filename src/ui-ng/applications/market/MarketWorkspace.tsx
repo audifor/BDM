@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 
 import { getFreeAgentMarketTerms } from '@/app/market'
-import { organizationIdForTeam, type PlayerId } from '@/domain/ids'
+import { type PlayerId } from '@/domain/ids'
 import { formatRatingEvaluation, getOrganizationRatingEvaluation } from '@/domain/intelligence'
 import { getPlayerAge, type Player } from '@/domain/player'
 import { canTeamAffordAdditionalSalary, getFreeAgents, getPlayerKnowledge, getTeamFinancialSnapshot } from '@/domain/world'
@@ -41,7 +41,7 @@ export function MarketWorkspace() {
   const evaluate = (player: Player, dimension: string) =>
     formatRatingEvaluation(
       getOrganizationRatingEvaluation({
-        organizationId: organizationIdForTeam(team.id),
+        organizationId: team.organizationId,
         playerId: player.id,
         dimension,
         knowledge: world.organizationKnowledge,

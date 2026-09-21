@@ -2,9 +2,11 @@ import {
   EMPTY_WORLD_DB_COMPETITION_RUNTIME,
   attachWorldDbCompetitionRuntime,
   createWorldDbCompetitionRuntime,
+  updateGameWorld,
   type GameWorld,
   type WorldDbCompetitionRuntime,
 } from '@/domain/world'
+import { createOrganization, createOrganizationSection, type Organization, type OrganizationSection } from '@/domain/organization'
 import {
   deserializeGameWorldSave as deserializeLegacyGameWorldSave,
   deserializeGameWorldV3,
@@ -23,9 +25,11 @@ export interface WorldDbCompetitionRuntimeSaveV4 {
   readonly competitionSeasonIds: readonly string[]
 }
 
-/** Save V4 persists the minimal World DB competition runtime projection. */
+/** Save V4 persists canonical Organization records and the minimal World DB competition runtime. */
 export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly worldDbCompetitionRuntime: WorldDbCompetitionRuntimeSaveV4
+  readonly organizations: readonly Organization[]
+  readonly organizationSections: readonly OrganizationSection[]
 }
 
 export interface SaveGameEnvelopeV4 {
@@ -36,16 +40,18 @@ export interface SaveGameEnvelopeV4 {
 
 /**
  * V3 owns no World DB competition runtime. Migration validates the canonical V3 payload, preserves
- * every V3 field as-is, and adds the explicit empty V4 runtime projection exactly once.
+ * every V3 field as-is, then adds normalized Organization records and the explicit empty V4 runtime.
  */
 export function migrateGameWorldSaveV3ToV4(value: SaveGameEnvelopeV3): SaveGameEnvelopeV4 {
-  deserializeGameWorldV3(value)
+  const world = deserializeGameWorldV3(value)
   return Object.freeze({
     schemaVersion: 4,
     savedAt: value.savedAt,
     payload: Object.freeze({
       ...value.payload,
       worldDbCompetitionRuntime: serializeWorldDbCompetitionRuntimeV4(EMPTY_WORLD_DB_COMPETITION_RUNTIME),
+      organizations: Object.values(world.organizationsById),
+      organizationSections: Object.values(world.organizationSectionsById),
     }),
   })
 }
@@ -60,6 +66,8 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       worldDbCompetitionRuntime: serializeWorldDbCompetitionRuntimeV4(
         world.worldDbCompetitionRuntime ?? EMPTY_WORLD_DB_COMPETITION_RUNTIME,
       ),
+      organizations: Object.values(world.organizationsById),
+      organizationSections: Object.values(world.organizationSectionsById),
     }),
   })
 }
@@ -71,13 +79,56 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const savedAt = isoTimestamp(envelope.savedAt, 'Save V4 savedAt')
   const payload = record(envelope.payload, 'Save V4 payload')
   const runtime = parseWorldDbCompetitionRuntimeV4(payload.worldDbCompetitionRuntime)
-  const { worldDbCompetitionRuntime: _runtime, ...compatibilityPayload } = payload
+  const hasOrganizations = Object.prototype.hasOwnProperty.call(payload, 'organizations')
+  const hasOrganizationSections = Object.prototype.hasOwnProperty.call(payload, 'organizationSections')
+  if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
+  const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
+  const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
+  const { worldDbCompetitionRuntime: _runtime, organizations: _organizations, organizationSections: _sections, ...compatibilityPayload } = payload
   const world = deserializeGameWorldV3({
     schemaVersion: 3,
     savedAt,
     payload: compatibilityPayload as unknown as GameWorldSaveV3,
   })
-  return attachWorldDbCompetitionRuntime(world, runtime)
+  const withOrganizations = organizations === undefined || organizationSections === undefined
+    ? world
+    : updateGameWorld(world, { organizations, organizationSections })
+  return attachWorldDbCompetitionRuntime(withOrganizations, runtime)
+}
+
+function parseOrganizations(value: unknown): readonly Organization[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 organizations must be an array')
+  return Object.freeze(value.map((entry) => {
+    const organization = record(entry, 'Save V4 Organization')
+    exactKeys(organization, ['id', 'entityId', 'legalName', 'foundedYear', 'dissolvedYear', 'primaryPlaceId', 'website'], 'Save V4 Organization')
+    return createOrganization({
+      id: nonEmptyText(organization.id, 'Save V4 Organization id') as Organization['id'],
+      entityId: nullableText(organization.entityId, 'Save V4 Organization entityId'),
+      legalName: nullableText(organization.legalName, 'Save V4 Organization legalName'),
+      foundedYear: nullableInteger(organization.foundedYear, 'Save V4 Organization foundedYear'),
+      dissolvedYear: nullableInteger(organization.dissolvedYear, 'Save V4 Organization dissolvedYear'),
+      primaryPlaceId: nullableText(organization.primaryPlaceId, 'Save V4 Organization primaryPlaceId'),
+      website: nullableText(organization.website, 'Save V4 Organization website'),
+    })
+  }))
+}
+
+function parseOrganizationSections(value: unknown): readonly OrganizationSection[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 organizationSections must be an array')
+  return Object.freeze(value.map((entry) => {
+    const section = record(entry, 'Save V4 OrganizationSection')
+    exactKeys(section, ['id', 'organizationId', 'sport', 'gender', 'categoryScope', 'canonicalName', 'validFrom', 'validTo'], 'Save V4 OrganizationSection')
+    return createOrganizationSection({
+      id: nonEmptyText(section.id, 'Save V4 OrganizationSection id') as OrganizationSection['id'],
+      organizationId: nonEmptyText(section.organizationId, 'Save V4 OrganizationSection organizationId') as OrganizationSection['organizationId'],
+      sport: nullableText(section.sport, 'Save V4 OrganizationSection sport'),
+      gender: nullableText(section.gender, 'Save V4 OrganizationSection gender'),
+      categoryScope: nullableText(section.categoryScope, 'Save V4 OrganizationSection categoryScope'),
+      canonicalName: nonEmptyText(section.canonicalName, 'Save V4 OrganizationSection canonicalName'),
+      validFrom: nullableText(section.validFrom, 'Save V4 OrganizationSection validFrom'),
+      validTo: nullableText(section.validTo, 'Save V4 OrganizationSection validTo'),
+    })
+  }))
 }
 
 /** Reads V1-V4. Legacy saves normalize the V4-owned runtime projection to empty state. */
@@ -162,6 +213,16 @@ function idArray(value: unknown, label: string): readonly string[] {
 function nonEmptyText(value: unknown, label: string): string {
   if (typeof value !== 'string' || value.length === 0) throw new TypeError(`${label} must be non-empty`)
   return value
+}
+
+function nullableText(value: unknown, label: string): string | null {
+  if (value !== null && typeof value !== 'string') throw new TypeError(`${label} must be a string or null`)
+  return value as string | null
+}
+
+function nullableInteger(value: unknown, label: string): number | null {
+  if (value !== null && (typeof value !== 'number' || !Number.isInteger(value))) throw new TypeError(`${label} must be an integer or null`)
+  return value as number | null
 }
 
 function record(value: unknown, label: string): Record<string, unknown> {

@@ -1,4 +1,4 @@
-import { organizationIdForTeam, type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
+import { type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
 import { calculateStaffWorkload, getNextScheduledGame, getTeam, getTeamStaffAssignments, type GameWorld } from '@/domain/world'
 import { createDelegationOutcome, delegationOutcomeIdFromString } from '@/domain/responsibility'
 import { resolveDelegatedResponsibility, scoutingQuality } from '@/engine/staff'
@@ -53,7 +53,7 @@ function progressTeamDelegatedScouting(world: GameWorld, teamId: TeamId): GameWo
 
   const target = pickFromTopN(targets, qualityScore, `${seed}:target`)
   const evaluatorStaffId = pickFromTopN(evaluators, qualityScore, `${seed}:evaluator`)
-  const organizationId = organizationIdForTeam(teamId)
+  const organizationId = world.teams[teamId]!.organizationId
 
   const before = withPrioritization.world.scoutingAssignmentsById
   const withRequest = requestScouting(withPrioritization.world, {
@@ -97,7 +97,7 @@ function selectBoundedScoutingTargets(world: GameWorld, teamId: TeamId, national
   if (nextGame === undefined) return []
   const opponentTeamId = nextGame.homeTeamId === teamId ? nextGame.awayTeamId : nextGame.homeTeamId
   const opponent = getTeam(world, opponentTeamId)
-  const organizationId = organizationIdForTeam(teamId)
+  const organizationId = world.teams[teamId]!.organizationId
   const unknownRoster = [...opponent.rosterPlayerIds].filter((playerId) => !world.organizationKnowledge.some((knowledge) => knowledge.organizationId === organizationId && knowledge.subjectPlayerId === playerId))
   if (unknownRoster.length === 0) return []
 
@@ -188,7 +188,7 @@ function applyPrioritizeRegions(world: GameWorld, teamId: TeamId): { readonly wo
   if (nextGame === undefined) return { world, nationalityOrder: undefined }
   const opponentTeamId = nextGame.homeTeamId === teamId ? nextGame.awayTeamId : nextGame.homeTeamId
   const opponent = getTeam(world, opponentTeamId)
-  const organizationId = organizationIdForTeam(teamId)
+  const organizationId = world.teams[teamId]!.organizationId
 
   const unknownByNationality = new Map<string, number>()
   for (const playerId of opponent.rosterPlayerIds) {

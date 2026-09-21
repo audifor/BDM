@@ -23,8 +23,9 @@ export type CoachSkillId = EntityId<'CoachSkillId'>
 export type CoachProfessionalTraitId = EntityId<'CoachProfessionalTraitId'>
 export type CoachPerkId = EntityId<'CoachPerkId'>
 export type CountryId = EntityId<'CountryId'>
-/** Identity boundary for organization-owned knowledge. A team is its temporary resolver. */
+/** Identity boundary for canonical Organization-owned runtime data. */
 export type OrganizationId = EntityId<'OrganizationId'>
+export type OrganizationSectionId = EntityId<'OrganizationSectionId'>
 export type AgentId = EntityId<'AgentId'>
 export type AgencyId = EntityId<'AgencyId'>
 
@@ -65,9 +66,10 @@ export const coachProfessionalTraitIdFromString = (value: string): CoachProfessi
 export const coachPerkIdFromString = (value: string): CoachPerkId => idFromString<CoachPerkId>(value, 'CoachPerkId')
 export const countryIdFromString = (value: string): CountryId => idFromString<CountryId>(value, 'CountryId')
 export const organizationIdFromString = (value: string): OrganizationId => idFromString<OrganizationId>(value, 'OrganizationId')
+export const organizationSectionIdFromString = (value: string): OrganizationSectionId => idFromString<OrganizationSectionId>(value, 'OrganizationSectionId')
 export const agentIdFromString = (value: string): AgentId => idFromString<AgentId>(value, 'AgentId')
 export const agencyIdFromString = (value: string): AgencyId => idFromString<AgencyId>(value, 'AgencyId')
-/** TEMPORARY 1:1 resolver until organizations become first-class entities. */
+/** Legacy/generated-world compatibility resolver. World DB runtime uses the canonical Team relation. */
 export const organizationIdForTeam = (teamId: TeamId): OrganizationId => organizationIdFromString(teamId)
 
 export const createCoachId = (): CoachId => coachIdFromString(generateId())

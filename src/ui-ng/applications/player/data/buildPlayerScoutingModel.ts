@@ -1,4 +1,4 @@
-import { organizationIdForTeam, type PlayerId, type StaffPersonId } from '@/domain/ids'
+import { type PlayerId, type StaffPersonId } from '@/domain/ids'
 import {
   formatRatingEvaluation,
   getOrganizationRatingEvaluation,
@@ -272,7 +272,7 @@ export function buildPlayerScoutingModel(
     }
   }
 
-  const organizationId = organizationIdForTeam(team.id)
+  const organizationId = team.organizationId
   const summary = getPlayerKnowledgeSummary(world, organizationId, playerId)
   const knowledge = world.organizationKnowledge.find(
     (entry) => entry.organizationId === organizationId && entry.subjectPlayerId === playerId,

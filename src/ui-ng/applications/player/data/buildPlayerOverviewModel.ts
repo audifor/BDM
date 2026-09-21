@@ -16,7 +16,6 @@ import {
 import { getPlayerContractStatus } from '@/domain/contract'
 import { DEVELOPMENT_DOMAINS } from '@/domain/player/PlayerDevelopmentProfile'
 import type { PlayerId } from '@/domain/ids'
-import { organizationIdForTeam } from '@/domain/ids'
 import {
   formatRatingEvaluation,
   getOrganizationRatingEvaluation,
@@ -782,7 +781,7 @@ function buildPotential(
     }
   }
 
-  const organizationId = organizationIdForTeam(teamId)
+  const organizationId = world.teams[teamId]!.organizationId
   const scouted = DEVELOPMENT_DOMAINS.map((domain) => ({
     domain,
     evaluation: getOrganizationRatingEvaluation({

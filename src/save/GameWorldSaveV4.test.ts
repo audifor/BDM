@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
+import { organizationIdForTeam } from '@/domain/ids'
 import { attachWorldDbCompetitionRuntime } from '@/domain/world'
 import { serializeGameWorldV3 } from './GameWorldSaveV3'
 import { deserializeGameWorldSaveV4, deserializeGameWorldV4, migrateGameWorldSaveV3ToV4, serializeGameWorldV4 } from './GameWorldSaveV4'
@@ -9,9 +10,13 @@ const savedAt = '2032-10-01T00:00:00.000Z'
 describe('GameWorldSaveV4 competition runtime', () => {
   it('writes the required empty runtime for a world created before V4 runtime exists', () => {
     const world = createNewGame()
+    const team = Object.values(world.teams)[0]!
     const v4 = serializeGameWorldV4(world, savedAt)
 
     expect(v4.schemaVersion).toBe(4)
+    expect(team.organizationId).toBe(organizationIdForTeam(team.id))
+    expect(v4.payload.organizations.some((organization) => organization.id === team.organizationId)).toBe(true)
+    expect(v4.payload.organizationSections.some((section) => section.id === team.organizationSectionId)).toBe(true)
     expect(v4.payload.worldDbCompetitionRuntime).toEqual({
       competitionRuntimeBundle: null,
       competitionPlanIds: [],
@@ -29,10 +34,11 @@ describe('GameWorldSaveV4 competition runtime', () => {
   it('continues to read pre-91 V4 runtime payloads without a bundle pin', () => {
     const current = serializeGameWorldV4(createNewGame(), savedAt)
     const { competitionRuntimeBundle: _pin, ...pre91Runtime } = current.payload.worldDbCompetitionRuntime
+    const { organizations: _organizations, organizationSections: _sections, ...legacyPayload } = current.payload
     const restored = deserializeGameWorldV4({
       ...current,
       payload: {
-        ...current.payload,
+        ...legacyPayload,
         worldDbCompetitionRuntime: pre91Runtime,
       },
     })
@@ -42,6 +48,7 @@ describe('GameWorldSaveV4 competition runtime', () => {
       competitionPlanIds: [],
       competitionSeasonIds: [],
     })
+    expect(Object.keys(restored.organizationsById).length).toBeGreaterThan(0)
   })
 
   it('round-trips populated competition runtime identities and bundle pin', () => {
@@ -63,10 +70,12 @@ describe('GameWorldSaveV4 competition runtime', () => {
   it('migrates canonical V3 by preserving V3 fields and adding empty runtime state', () => {
     const v3 = serializeGameWorldV3(createNewGame(), savedAt)
     const v4 = migrateGameWorldSaveV3ToV4(v3)
-    const { worldDbCompetitionRuntime, ...v4CompatibilityPayload } = v4.payload
+    const { worldDbCompetitionRuntime, organizations, organizationSections, ...v4CompatibilityPayload } = v4.payload
 
     expect(v4.schemaVersion).toBe(4)
     expect(v4CompatibilityPayload).toEqual(v3.payload)
+    expect(organizations.length).toBeGreaterThan(0)
+    expect(organizationSections.length).toBeGreaterThan(0)
     expect(worldDbCompetitionRuntime).toEqual({
       competitionRuntimeBundle: null,
       competitionPlanIds: [],

@@ -12,11 +12,13 @@ import { createSportsEcosystem } from '@/domain/ecosystem'
 import { coachIdFromString, competitionIdFromString, countryIdFromString, ecosystemIdFromString, gameIdFromString, playerIdFromString, seasonIdFromString, staffPersonIdFromString, teamIdFromString, teamStaffAssignmentIdFromString, type PlayerId } from '@/domain/ids'
 import { createStaffPerson, createTeamStaffAssignment, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS, type StaffPerson, type StaffRoleFamily } from '@/domain/staff'
 import { createTeam } from '@/domain/team'
+import { createOrganization, createOrganizationSection } from '@/domain/organization'
+import { organizationIdFromString, organizationSectionIdFromString } from '@/domain/ids'
 import { createGame, type Game } from '@/domain/game'
 import type { WorldCompetitionFormatDocument } from '@/domain/competition'
 import { attachWorldDbCompetitionRuntime, createGameWorld, type GameWorld, type WorldDbCompetitionRuntimeBundlePin } from '@/domain/world'
 import { distributeRoundsAcrossSeason, generateRoundRobinSchedule } from '@/engine/competition/schedule'
-import type { WorldDbGameBootstrapSelectionV1, WorldDbGameBootstrapSliceV1 } from '@/domain/worldDb/GameBootstrap'
+import { assertWorldDbGameBootstrapSliceV1, type WorldDbGameBootstrapSelectionV1, type WorldDbGameBootstrapSliceV1 } from '@/domain/worldDb/GameBootstrap'
 
 const ROLE_FAMILIES: Readonly<Record<string, StaffRoleFamily>> = {
   headCoach: 'coaching', assistantCoach: 'coaching', playerDevelopmentCoach: 'coaching',
@@ -44,10 +46,13 @@ const DEVELOPMENT_MAP: Readonly<Record<string, readonly string[]>> = {
 }
 
 export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1, selection: WorldDbGameBootstrapSelectionV1, runtimeBundlePin: WorldDbCompetitionRuntimeBundlePin, worldCompetitionFormat?: WorldCompetitionFormatDocument, calendarPolicy?: CompetitionCalendarPolicy): GameWorld {
+  assertWorldDbGameBootstrapSliceV1(slice)
   assertSelectionMatchesSlice(slice, selection)
   if (runtimeBundlePin.worldDbSchema !== slice.source.schemaId) throw new Error('World DB bootstrap runtime schema identity mismatch')
   if (worldCompetitionFormat !== undefined && (worldCompetitionFormat.competitionId !== selection.competitionId || worldCompetitionFormat.competitionSeasonId !== selection.competitionSeasonId)) throw new Error('World DB bootstrap competition format identity mismatch')
   const countries = slice.countries.map((country) => createCountry({ id: countryIdFromString(country.countryId), name: country.name, code: country.code }))
+  const organizations = slice.organizations.map((organization) => createOrganization({ id: organizationIdFromString(organization.organizationId), entityId: organization.entityId, legalName: organization.legalName, foundedYear: organization.foundedYear, dissolvedYear: organization.dissolvedYear, primaryPlaceId: organization.primaryPlaceId, website: organization.website }))
+  const organizationSections = slice.organizationSections.map((section) => createOrganizationSection({ id: organizationSectionIdFromString(section.sectionId), organizationId: organizationIdFromString(section.organizationId), sport: section.sport, gender: section.gender, categoryScope: section.categoryScope, canonicalName: section.canonicalName, validFrom: section.validFrom, validTo: section.validTo }))
   const countryIds = new Set(countries.map((country) => String(country.id)))
   const personById = new Map(slice.persons.map((person) => [person.personId, person]))
   for (const team of slice.teams) if (!countryIds.has(team.countryId)) throw new Error(`World DB bootstrap team country is missing: ${team.countryId}`)
@@ -90,18 +95,18 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
   const coach = createCoach({ id: coachIdFromString(`worlddb:coach:${selectedTeam.teamId}`), personId: selectedHeadCoachStaff.personId as never, staffProfileId: selectedHeadCoachStaff.id, firstName: selectedHeadCoachPerson.firstName, lastName: selectedHeadCoachPerson.lastName, gender: selectedHeadCoachPerson.gender, nationalityId: countryIdFromString(selectedHeadCoachPerson.nationalityIds[0]!) })
   const playerPersonIds = new Set(slice.players.map((player) => player.personId))
   const persons = slice.persons.map((person) => createPerson({ id: person.personId as never, firstName: person.firstName, lastName: person.lastName, gender: person.gender, dateOfBirth: parseGameDate(person.dateOfBirth), nationalityIds: person.nationalityIds.map(countryIdFromString), physical: person.physical, profileRefs: [...(playerPersonIds.has(person.personId) ? [{ kind: 'player' as const, profileId: person.personId }] : []), ...slice.staffProfiles.filter((staffProfile) => staffProfile.personId === person.personId).map((staffProfile) => ({ kind: 'staff' as const, profileId: staffProfile.staffId }))] }))
-  const teams = slice.teams.map((team) => createTeam({ id: teamIdFromString(team.teamId), name: team.name, gender: team.gender, countryId: countryIdFromString(team.countryId), rosterPlayerIds: rosterForTeam(rosterAssignments, team.teamId), ...(team.teamId === selectedTeam.teamId ? { coachId: coach.id } : {}) }))
+  const teams = slice.teams.map((team) => createTeam({ id: teamIdFromString(team.teamId), name: team.name, gender: team.gender, countryId: countryIdFromString(team.countryId), organizationId: organizationIdFromString(team.organizationId), organizationSectionId: organizationSectionIdFromString(team.organizationSectionId), rosterPlayerIds: rosterForTeam(rosterAssignments, team.teamId), ...(team.teamId === selectedTeam.teamId ? { coachId: coach.id } : {}) }))
   const competition = createCompetition({ id: competitionId, name: slice.competition.name, gender: slice.competition.gender, ecosystemId, participantTeamIds: teams.map((team) => team.id), rules: defaultLeagueCompetitionRules })
   const season = createSeason({ id: seasonId, competitionId, label: slice.season.label, startDate: parseGameDate(slice.season.startDate), endDate: parseGameDate(slice.season.endDate), participantTeamIds: teams.map((team) => team.id), ...(worldCompetitionFormat === undefined ? {} : { worldCompetitionFormat }), ...(calendarPolicy === undefined ? {} : { calendarPolicy }) })
   const ecosystem = createSportsEcosystem({ id: ecosystemId, name: slice.ecosystem.name, kind: slice.ecosystem.kind, category: slice.ecosystem.category })
-  const baseWorld = createGameWorld({ currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games: [], staffPeople: staff, teamStaffAssignments: staffAssignments })
+  const baseWorld = createGameWorld({ currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games: [], staffPeople: staff, teamStaffAssignments: staffAssignments })
   const regularSeasonNodeKey = worldCompetitionFormat?.variants.find((variant) => variant.isRealVariant)?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key ?? worldCompetitionFormat?.variants[0]?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key
   const generatedGames = generateRoundRobinSchedule({ world: baseWorld, seasonId, schedulePolicy: distributeRoundsAcrossSeason, ...(regularSeasonNodeKey === undefined ? {} : { competitionStageKey: regularSeasonNodeKey }) }).map((game, index) => ({ ...game, id: gameIdFromString(`derived-simulation-from-b04:${slice.season.competitionSeasonId}:${String(index + 1).padStart(4, '0')}`) }))
   const importedGames = slice.matches.map((match) => materializeMatch(slice, match))
   const games = importedGames.length === generatedGames.length
     ? assertCompleteRoundRobin(importedGames, teams.length, competition.rules.schedule.meetingsPerPair)
     : generatedGames
-  const world = createGameWorld({ currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games, staffPeople: staff, teamStaffAssignments: staffAssignments })
+  const world = createGameWorld({ currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games, staffPeople: staff, teamStaffAssignments: staffAssignments })
   return attachWorldDbCompetitionRuntime(world, { competitionRuntimeBundle: runtimeBundlePin, competitionPlanIds: [], competitionSeasonIds: [slice.season.competitionSeasonId] })
 }
 

@@ -1,4 +1,4 @@
-import { organizationIdForTeam, type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
+import { type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
 import { formatRatingEvaluation, getOrganizationRatingEvaluation } from '@/domain/intelligence'
 import { RESPONSIBILITY_DOMAINS, type ResponsibilityDomain } from '@/domain/responsibility'
 import type { GameWorld } from '@/domain/world'
@@ -61,7 +61,7 @@ function advisoryComments(world: GameWorld, teamId: TeamId, playerId: PlayerId):
 }
 
 function scoutingComments(world: GameWorld, teamId: TeamId, playerId: PlayerId): RosterStaffComment[] {
-  const organizationId = organizationIdForTeam(teamId)
+  const organizationId = world.teams[teamId]!.organizationId
   const player = world.players[playerId]
   return Object.values(world.evaluatorReportsById)
     .filter((report) => report.organizationId === organizationId && report.subjectPlayerId === playerId)

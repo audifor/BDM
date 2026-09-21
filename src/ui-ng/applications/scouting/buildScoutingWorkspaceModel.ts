@@ -1,4 +1,4 @@
-import { organizationIdForTeam, type PlayerId, type StaffPersonId } from '@/domain/ids'
+import { type PlayerId, type StaffPersonId } from '@/domain/ids'
 import {
   deriveOrganizationPlayerValuation,
   formatRatingEvaluation,
@@ -42,7 +42,7 @@ export function buildScoutingWorkspaceModel(world: GameWorld): ScoutingWorkspace
   const team = getUserTeam(world)
   if (team === undefined) return null
 
-  const organizationId = organizationIdForTeam(team.id)
+  const organizationId = team.organizationId
   const ownRoster = new Set(team.rosterPlayerIds)
   const subjectIds = new Set<PlayerId>([
     ...world.organizationKnowledge

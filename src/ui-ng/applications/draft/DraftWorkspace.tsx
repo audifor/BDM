@@ -1,4 +1,3 @@
-import { organizationIdForTeam } from '@/domain/ids'
 import { formatRatingEvaluation, getOrganizationRatingEvaluation } from '@/domain/intelligence'
 import { getPlayerAge } from '@/domain/player'
 import { getUserTeam } from '@/engine/calendar'
@@ -61,7 +60,7 @@ export function DraftWorkspace() {
                     player,
                     evaluation: formatRatingEvaluation(
                       getOrganizationRatingEvaluation({
-                        organizationId: organizationIdForTeam(team!.id),
+                        organizationId: team!.organizationId,
                         playerId: player.id,
                         dimension: 'shooting',
                         knowledge: world.organizationKnowledge,
@@ -100,7 +99,7 @@ export function DraftWorkspace() {
                     player,
                     evaluation: formatRatingEvaluation(
                       getOrganizationRatingEvaluation({
-                        organizationId: organizationIdForTeam(team!.id),
+                        organizationId: team!.organizationId,
                         playerId: player.id,
                         dimension: 'shooting',
                         knowledge: world.organizationKnowledge,

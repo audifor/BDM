@@ -5,7 +5,7 @@ import { getNextUserGame, getUserTeam } from '@/engine/calendar'
 import type { Player } from '@/domain/player'
 import { legacyRatingSignals } from '@/domain/player'
 import type { PlayerId, TeamId } from '@/domain/ids'
-import { createEntityId, organizationIdForTeam } from '@/domain/ids'
+import { createEntityId } from '@/domain/ids'
 import { formatRatingEvaluation, getOrganizationRatingEvaluation, intelligenceSortValue } from '@/domain/intelligence/OrganizationPlayerEvaluation'
 import { getLineupAssignments, getLineupSlotForPlayer, isValidRotationMinutes, LINEUP_SLOTS, PLAYERS_ON_COURT, type DefensiveMatchupAssignment, type LineupSlot, type Playbook, type SavedPlay, type TeamLineup, type TeamRotationIntent } from '@/domain/tactics'
 import type { MatchTacticalPlan, TacticalLevel } from '@/engine/match'
@@ -217,7 +217,7 @@ function Matchups({
   }, [opponentTeam, teamId, world])
   const threatByOpponent = useMemo(() => {
     if (world === undefined || teamId === undefined) return new Map<string, { readonly label: string; readonly sort: number | undefined }>()
-    const organizationId = organizationIdForTeam(teamId)
+    const organizationId = world.teams[teamId]!.organizationId
     return new Map(opponentRoster.map((player) => {
       const evaluation = getOrganizationRatingEvaluation({
         organizationId,

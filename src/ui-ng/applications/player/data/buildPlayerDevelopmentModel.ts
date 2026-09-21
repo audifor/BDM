@@ -1,7 +1,6 @@
 import { DEVELOPMENT_DOMAINS, type DevelopmentDomain } from '@/domain/player/PlayerDevelopmentProfile'
 import { getPlayerAge, PLAYER_TRUTH_RATING_KEYS, type PlayerTruthRatingKey } from '@/domain/player'
 import type { PlayerId, SeasonId } from '@/domain/ids'
-import { organizationIdForTeam } from '@/domain/ids'
 import { formatInjuryKind } from '@/domain/injury'
 import type { PlayerRatingHistory } from '@/domain/development/PlayerRatingHistory'
 import {
@@ -427,7 +426,7 @@ function buildScoutPotential(world: GameWorld, playerId: PlayerId): DevelopmentS
     }
   }
 
-  const organizationId = organizationIdForTeam(team.id)
+  const organizationId = team.organizationId
   const rows = DEVELOPMENT_DOMAINS.map((domain) => {
     const evaluation = getOrganizationRatingEvaluation({
       organizationId,
