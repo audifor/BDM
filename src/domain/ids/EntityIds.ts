@@ -73,6 +73,16 @@ export type FacilityOperationalIncidentId = EntityId<'FacilityOperationalInciden
 export type FacilityDevelopmentProjectId = EntityId<'FacilityDevelopmentProjectId'>
 /** CFI6 — one sequential phase of a `FacilityDevelopmentProject`. */
 export type FacilityDevelopmentProjectPhaseId = EntityId<'FacilityDevelopmentProjectPhaseId'>
+export type FinancialAccountId = EntityId<'FinancialAccountId'>
+export type FinancialTransactionId = EntityId<'FinancialTransactionId'>
+export type FiscalPeriodId = EntityId<'FiscalPeriodId'>
+export type ReceivableId = EntityId<'ReceivableId'>
+export type PayableId = EntityId<'PayableId'>
+export type TreasurySettlementId = EntityId<'TreasurySettlementId'>
+export type RevenueRecognitionId = EntityId<'RevenueRecognitionId'>
+export type ExpenseRecognitionId = EntityId<'ExpenseRecognitionId'>
+export type FinancialCommitmentId = EntityId<'FinancialCommitmentId'>
+export type FinancialEntitlementId = EntityId<'FinancialEntitlementId'>
 
 function idFromString<Id extends string>(value: string, name: string): Id {
   if (typeof value !== 'string' || value.trim().length === 0) {
@@ -147,6 +157,16 @@ export const facilityInspectionIdFromString = (value: string): FacilityInspectio
 export const facilityOperationalIncidentIdFromString = (value: string): FacilityOperationalIncidentId => idFromString<FacilityOperationalIncidentId>(value, 'FacilityOperationalIncidentId')
 export const facilityDevelopmentProjectIdFromString = (value: string): FacilityDevelopmentProjectId => idFromString<FacilityDevelopmentProjectId>(value, 'FacilityDevelopmentProjectId')
 export const facilityDevelopmentProjectPhaseIdFromString = (value: string): FacilityDevelopmentProjectPhaseId => idFromString<FacilityDevelopmentProjectPhaseId>(value, 'FacilityDevelopmentProjectPhaseId')
+export const financialAccountIdFromString = (value: string): FinancialAccountId => idFromString<FinancialAccountId>(value, 'FinancialAccountId')
+export const financialTransactionIdFromString = (value: string): FinancialTransactionId => idFromString<FinancialTransactionId>(value, 'FinancialTransactionId')
+export const fiscalPeriodIdFromString = (value: string): FiscalPeriodId => idFromString<FiscalPeriodId>(value, 'FiscalPeriodId')
+export const receivableIdFromString = (value: string): ReceivableId => idFromString<ReceivableId>(value, 'ReceivableId')
+export const payableIdFromString = (value: string): PayableId => idFromString<PayableId>(value, 'PayableId')
+export const treasurySettlementIdFromString = (value: string): TreasurySettlementId => idFromString<TreasurySettlementId>(value, 'TreasurySettlementId')
+export const revenueRecognitionIdFromString = (value: string): RevenueRecognitionId => idFromString<RevenueRecognitionId>(value, 'RevenueRecognitionId')
+export const expenseRecognitionIdFromString = (value: string): ExpenseRecognitionId => idFromString<ExpenseRecognitionId>(value, 'ExpenseRecognitionId')
+export const financialCommitmentIdFromString = (value: string): FinancialCommitmentId => idFromString<FinancialCommitmentId>(value, 'FinancialCommitmentId')
+export const financialEntitlementIdFromString = (value: string): FinancialEntitlementId => idFromString<FinancialEntitlementId>(value, 'FinancialEntitlementId')
 /** Legacy/generated-world compatibility resolver. World DB runtime uses the canonical Team relation. */
 export const organizationIdForTeam = (teamId: TeamId): OrganizationId => organizationIdFromString(teamId)
 

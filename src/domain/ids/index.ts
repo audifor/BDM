@@ -64,6 +64,16 @@ export {
   facilityOperationalIncidentIdFromString,
   facilityDevelopmentProjectIdFromString,
   facilityDevelopmentProjectPhaseIdFromString,
+  financialAccountIdFromString,
+  financialTransactionIdFromString,
+  fiscalPeriodIdFromString,
+  receivableIdFromString,
+  payableIdFromString,
+  treasurySettlementIdFromString,
+  revenueRecognitionIdFromString,
+  expenseRecognitionIdFromString,
+  financialCommitmentIdFromString,
+  financialEntitlementIdFromString,
 } from './EntityIds'
 
 export type {
@@ -123,4 +133,14 @@ export type {
   FacilityOperationalIncidentId,
   FacilityDevelopmentProjectId,
   FacilityDevelopmentProjectPhaseId,
+  FinancialAccountId,
+  FinancialTransactionId,
+  FiscalPeriodId,
+  ReceivableId,
+  PayableId,
+  TreasurySettlementId,
+  RevenueRecognitionId,
+  ExpenseRecognitionId,
+  FinancialCommitmentId,
+  FinancialEntitlementId,
 } from './EntityIds'
