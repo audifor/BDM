@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { advanceDay } from '@/engine/calendar'
 import { createGovernanceInstitution } from '@/domain/governance'
+import { createOrganization } from '@/domain/organization'
+import { organizationIdFromString, personIdFromString } from '@/domain/ids'
+import { createPerson } from '@/domain/person'
+import { createOrganizationControl, createOrganizationOwnership } from '@/domain/ownership'
 import { createSupporterRelationship } from '@/domain/supporters'
 import { attachWorldDbCompetitionRuntime, hasAppliedAnnualDevelopmentCycle, markAnnualDevelopmentCycleApplied, updateGameWorld } from '@/domain/world'
 import { serializeGameWorldV3 } from './GameWorldSaveV3'
@@ -119,10 +123,40 @@ describe('GameWorldSaveV4 competition runtime', () => {
     expect(restored.governanceInstitutionsById).toEqual(world.governanceInstitutionsById)
   })
 
+  it('round-trips BG8A ownership and independent control records through Save V4', () => {
+    const base = createNewGame()
+    const target = Object.values(base.teams)[0]!.organizationId
+    const holding = createOrganization({ id: organizationIdFromString('organization:save-v4-holding'), entityId: null, legalName: 'Save V4 Holding', foundedYear: 2000, dissolvedYear: null, primaryPlaceId: null, website: null })
+    const owner = createPerson({ id: personIdFromString('person:save-v4-owner'), firstName: 'Save', lastName: 'Owner', profileRefs: [] })
+    const ownership = createOrganizationOwnership({ id: 'ownership:save-v4', organizationId: target, owner: { kind: 'ORGANIZATION', organizationId: holding.id }, ownershipPercentage: null, validFrom: '2030-01-01', validTo: null })
+    const control = createOrganizationControl({ id: 'control:save-v4', organizationId: target, controller: { kind: 'PERSON', personId: owner.id }, validFrom: '2030-01-01', validTo: null })
+    const world = updateGameWorld(base, {
+      organizations: [...Object.values(base.organizationsById), holding],
+      persons: [...Object.values(base.personsById), owner],
+      organizationOwnership: [ownership],
+      organizationControl: [control],
+    })
+
+    const saved = serializeGameWorldV4(world, savedAt)
+    expect(saved.payload.organizationOwnership).toEqual([ownership])
+    expect(saved.payload.organizationControl).toEqual([control])
+    const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(saved)))
+    expect(restored.organizationOwnershipById).toEqual({ [ownership.id]: ownership })
+    expect(restored.organizationControlById).toEqual({ [control.id]: control })
+  })
+
+  it('defaults ownership and control to empty when loading a pre-BG8A V4 payload', () => {
+    const current = serializeGameWorldV4(createNewGame(), savedAt)
+    const { organizationOwnership: _ownership, organizationControl: _control, ...legacyPayload } = current.payload
+    const restored = deserializeGameWorldV4({ ...current, payload: legacyPayload })
+    expect(restored.organizationOwnershipById).toEqual({})
+    expect(restored.organizationControlById).toEqual({})
+  })
+
   it('migrates canonical V3 by preserving V3 fields and adding empty runtime state', () => {
     const v3 = serializeGameWorldV3(createNewGame(), savedAt)
     const v4 = migrateGameWorldSaveV3ToV4(v3)
-    const { worldDbCompetitionRuntime, worldAnnualDevelopmentCycle, organizations, organizationSections, ...v4CompatibilityPayload } = v4.payload
+    const { worldDbCompetitionRuntime, worldAnnualDevelopmentCycle, organizations, organizationSections, organizationOwnership, organizationControl, ...v4CompatibilityPayload } = v4.payload
 
     expect(v4.schemaVersion).toBe(4)
     expect(v4CompatibilityPayload).toEqual(v3.payload)
@@ -132,6 +166,8 @@ describe('GameWorldSaveV4 competition runtime', () => {
       competitionSeasonIds: [],
     })
     expect(worldAnnualDevelopmentCycle).toEqual({ lastAppliedCycleId: null })
+    expect(organizationOwnership).toEqual([])
+    expect(organizationControl).toEqual([])
     expect(organizations.length).toBeGreaterThan(0)
     expect(organizationSections.length).toBeGreaterThan(0)
   })

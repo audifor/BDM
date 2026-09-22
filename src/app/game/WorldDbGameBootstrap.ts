@@ -9,11 +9,12 @@ import { createPlayer } from '@/domain/player'
 import { createSeason } from '@/domain/season'
 import type { CompetitionCalendarPolicy } from '@/domain/season'
 import { createSportsEcosystem } from '@/domain/ecosystem'
-import { coachIdFromString, competitionIdFromString, countryIdFromString, ecosystemIdFromString, gameIdFromString, playerIdFromString, seasonIdFromString, staffPersonIdFromString, teamIdFromString, teamStaffAssignmentIdFromString, type PlayerId } from '@/domain/ids'
+import { coachIdFromString, competitionIdFromString, countryIdFromString, ecosystemIdFromString, gameIdFromString, personIdFromString, playerIdFromString, seasonIdFromString, staffPersonIdFromString, teamIdFromString, teamStaffAssignmentIdFromString, type PlayerId } from '@/domain/ids'
 import { createStaffPerson, createTeamStaffAssignment, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS, type StaffPerson, type StaffRoleFamily } from '@/domain/staff'
 import { createTeam } from '@/domain/team'
 import { createOrganization, createOrganizationSection } from '@/domain/organization'
 import { organizationIdFromString, organizationSectionIdFromString } from '@/domain/ids'
+import { createOrganizationOwnership } from '@/domain/ownership'
 import { createGame, type Game } from '@/domain/game'
 import type { WorldCompetitionFormatDocument } from '@/domain/competition'
 import { attachWorldDbCompetitionRuntime, createGameWorld, type GameWorld, type WorldDbCompetitionRuntimeBundlePin } from '@/domain/world'
@@ -66,12 +67,13 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
     assertExactPlayerKeys(source.tendencies, PLAYER_TRUTH_TENDENCY_KEYS, `${source.playerId} tendencies`)
     const person = personById.get(source.personId)
     if (person === undefined) throw new Error(`World DB bootstrap player person is missing: ${source.personId}`)
+    const profilePerson = requireProfilePerson(person, source.personId)
     return createPlayer({
       id: playerIdFromString(source.playerId), personId: source.personId as never, firstName: person.firstName, lastName: person.lastName,
-      gender: person.gender, nationalityId: countryIdFromString(person.nationalityIds[0]!),
+      gender: profilePerson.gender, nationalityId: countryIdFromString(person.nationalityIds[0]!),
       basketball: { primaryPosition: source.primaryPosition, secondaryPositions: source.secondaryPositions, ratings: source.ratings as PlayerTruthRatings, tendencies: source.tendencies as PlayerTruthTendencies },
-      bio: { dateOfBirth: parseGameDate(person.dateOfBirth), ...person.physical, dominantHand: source.dominantHand, measurementProvenance: { wingspanCm: 'sourced', standingReachCm: 'sourced', dominantHand: 'sourced' } },
-      development: createPlayerDevelopment(source.development, person.dateOfBirth, slice.season.startDate),
+      bio: { dateOfBirth: parseGameDate(profilePerson.dateOfBirth), ...profilePerson.physical, dominantHand: source.dominantHand, measurementProvenance: { wingspanCm: 'sourced', standingReachCm: 'sourced', dominantHand: 'sourced' } },
+      development: createPlayerDevelopment(source.development, profilePerson.dateOfBirth, slice.season.startDate),
     })
   })
   const staffAssignments = slice.staffAssignments.map((assignment) => {
@@ -81,9 +83,10 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
   const staff = slice.staffProfiles.map((source) => {
     const person = personById.get(source.personId)
     if (person === undefined) throw new Error(`World DB bootstrap staff person is missing: ${source.personId}`)
+    const profilePerson = requireProfilePerson(person, source.personId)
     const assignments = slice.staffAssignments.filter((assignment) => assignment.staffId === source.staffId)
     const marketRole = assignments[0]?.roleCode
-    return createStaffPerson({ id: staffPersonIdFromString(source.staffId), personId: source.personId as never, identity: { firstName: person.firstName, lastName: person.lastName, dateOfBirth: parseGameDate(person.dateOfBirth), nationality: person.nationalityIds[0] }, professional: { attributes: projectStaffAttributes(source.attributes) }, ...(marketRole === undefined ? {} : { marketRole: marketRole as never, roleFamily: ROLE_FAMILIES[marketRole] }), specialismIds: source.specialismIds })
+    return createStaffPerson({ id: staffPersonIdFromString(source.staffId), personId: source.personId as never, identity: { firstName: person.firstName, lastName: person.lastName, dateOfBirth: parseGameDate(profilePerson.dateOfBirth), nationality: person.nationalityIds[0] }, professional: { attributes: projectStaffAttributes(source.attributes) }, ...(marketRole === undefined ? {} : { marketRole: marketRole as never, roleFamily: ROLE_FAMILIES[marketRole] }), specialismIds: source.specialismIds })
   })
   const selectedTeam = slice.teams.find((team) => team.teamId === selection.teamId)!
   const selectedHeadCoachAssignment = staffAssignments.find((assignment) => assignment.teamId === selectedTeam.teamId && assignment.role === 'headCoach')
@@ -92,22 +95,33 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
   if (selectedHeadCoachStaff === undefined || selectedHeadCoachStaff.personId === undefined) throw new Error('World DB selected head coach staff profile is missing')
   const selectedHeadCoachPerson = personById.get(selectedHeadCoachStaff.personId)
   if (selectedHeadCoachPerson === undefined) throw new Error('World DB selected head coach Person is missing')
-  const coach = createCoach({ id: coachIdFromString(`worlddb:coach:${selectedTeam.teamId}`), personId: selectedHeadCoachStaff.personId as never, staffProfileId: selectedHeadCoachStaff.id, firstName: selectedHeadCoachPerson.firstName, lastName: selectedHeadCoachPerson.lastName, gender: selectedHeadCoachPerson.gender, nationalityId: countryIdFromString(selectedHeadCoachPerson.nationalityIds[0]!) })
+  const selectedHeadCoachProfile = requireProfilePerson(selectedHeadCoachPerson, selectedHeadCoachStaff.personId)
+  const coach = createCoach({ id: coachIdFromString(`worlddb:coach:${selectedTeam.teamId}`), personId: selectedHeadCoachStaff.personId as never, staffProfileId: selectedHeadCoachStaff.id, firstName: selectedHeadCoachPerson.firstName, lastName: selectedHeadCoachPerson.lastName, gender: selectedHeadCoachProfile.gender, nationalityId: countryIdFromString(selectedHeadCoachPerson.nationalityIds[0]!) })
   const playerPersonIds = new Set(slice.players.map((player) => player.personId))
-  const persons = slice.persons.map((person) => createPerson({ id: person.personId as never, firstName: person.firstName, lastName: person.lastName, gender: person.gender, dateOfBirth: parseGameDate(person.dateOfBirth), nationalityIds: person.nationalityIds.map(countryIdFromString), physical: person.physical, profileRefs: [...(playerPersonIds.has(person.personId) ? [{ kind: 'player' as const, profileId: person.personId }] : []), ...slice.staffProfiles.filter((staffProfile) => staffProfile.personId === person.personId).map((staffProfile) => ({ kind: 'staff' as const, profileId: staffProfile.staffId }))] }))
+  const persons = slice.persons.map((person) => createPerson({ id: personIdFromString(person.personId), firstName: person.firstName, lastName: person.lastName, ...(person.gender === undefined ? {} : { gender: person.gender }), ...(person.dateOfBirth === undefined ? {} : { dateOfBirth: parseGameDate(person.dateOfBirth) }), nationalityIds: person.nationalityIds.map(countryIdFromString), ...(person.physical === undefined ? {} : { physical: person.physical }), profileRefs: [...(playerPersonIds.has(person.personId) ? [{ kind: 'player' as const, profileId: person.personId }] : []), ...slice.staffProfiles.filter((staffProfile) => staffProfile.personId === person.personId).map((staffProfile) => ({ kind: 'staff' as const, profileId: staffProfile.staffId }))] }))
   const teams = slice.teams.map((team) => createTeam({ id: teamIdFromString(team.teamId), name: team.name, gender: team.gender, countryId: countryIdFromString(team.countryId), organizationId: organizationIdFromString(team.organizationId), organizationSectionId: organizationSectionIdFromString(team.organizationSectionId), rosterPlayerIds: rosterForTeam(rosterAssignments, team.teamId), ...(team.teamId === selectedTeam.teamId ? { coachId: coach.id } : {}) }))
   const competition = createCompetition({ id: competitionId, name: slice.competition.name, gender: slice.competition.gender, ecosystemId, participantTeamIds: teams.map((team) => team.id), rules: defaultLeagueCompetitionRules })
   const season = createSeason({ id: seasonId, competitionId, label: slice.season.label, startDate: parseGameDate(slice.season.startDate), endDate: parseGameDate(slice.season.endDate), participantTeamIds: teams.map((team) => team.id), ...(worldCompetitionFormat === undefined ? {} : { worldCompetitionFormat }), ...(calendarPolicy === undefined ? {} : { calendarPolicy }) })
   const ecosystem = createSportsEcosystem({ id: ecosystemId, name: slice.ecosystem.name, kind: slice.ecosystem.kind, category: slice.ecosystem.category })
-  const baseWorld = createGameWorld({ currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games: [], staffPeople: staff, teamStaffAssignments: staffAssignments })
+  const organizationOwnership = (slice.organizationOwnership ?? []).map((record) => createOrganizationOwnership({ id: record.ownershipId, organizationId: record.organizationId, owner: record.ownerKind === 'PERSON' ? { kind: 'PERSON', personId: personIdFromString(record.ownerId) } : { kind: 'ORGANIZATION', organizationId: organizationIdFromString(record.ownerId) }, ownershipPercentage: record.ownershipPercentage, validFrom: record.validFrom, validTo: record.validTo }))
+  const baseWorld = createGameWorld({ currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, organizationOwnership, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games: [], staffPeople: staff, teamStaffAssignments: staffAssignments })
   const regularSeasonNodeKey = worldCompetitionFormat?.variants.find((variant) => variant.isRealVariant)?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key ?? worldCompetitionFormat?.variants[0]?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key
   const generatedGames = generateRoundRobinSchedule({ world: baseWorld, seasonId, schedulePolicy: distributeRoundsAcrossSeason, ...(regularSeasonNodeKey === undefined ? {} : { competitionStageKey: regularSeasonNodeKey }) }).map((game, index) => ({ ...game, id: gameIdFromString(`derived-simulation-from-b04:${slice.season.competitionSeasonId}:${String(index + 1).padStart(4, '0')}`) }))
   const importedGames = slice.matches.map((match) => materializeMatch(slice, match))
   const games = importedGames.length === generatedGames.length
     ? assertCompleteRoundRobin(importedGames, teams.length, competition.rules.schedule.meetingsPerPair)
     : generatedGames
-  const world = createGameWorld({ currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games, staffPeople: staff, teamStaffAssignments: staffAssignments })
+  const world = createGameWorld({ currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, organizationOwnership, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games, staffPeople: staff, teamStaffAssignments: staffAssignments })
   return attachWorldDbCompetitionRuntime(world, { competitionRuntimeBundle: runtimeBundlePin, competitionPlanIds: [], competitionSeasonIds: [slice.season.competitionSeasonId] })
+}
+
+function requireProfilePerson(person: WorldDbGameBootstrapSliceV1['persons'][number], personId: string): {
+  readonly gender: 'male' | 'female'
+  readonly dateOfBirth: string
+  readonly physical: { readonly heightCm: number; readonly weightKg: number; readonly wingspanCm: number; readonly standingReachCm: number }
+} {
+  if (person.gender === undefined || person.dateOfBirth === undefined || person.physical === undefined) throw new Error(`World DB bootstrap profiled person is incomplete: ${personId}`)
+  return { gender: person.gender, dateOfBirth: person.dateOfBirth, physical: person.physical }
 }
 
 function assertCompleteRoundRobin(games: readonly Game[], teamCount: number, meetingsPerPair: number): Game[] {

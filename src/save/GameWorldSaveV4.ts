@@ -9,6 +9,8 @@ import {
   type WorldDbCompetitionRuntime,
 } from '@/domain/world'
 import { createOrganization, createOrganizationSection, type Organization, type OrganizationSection } from '@/domain/organization'
+import { createOrganizationControl, createOrganizationOwnership, type OrganizationControl, type OrganizationOwnership, type OrganizationOwnershipActor } from '@/domain/ownership'
+import { organizationIdFromString, personIdFromString } from '@/domain/ids'
 import {
   deserializeGameWorldSave as deserializeLegacyGameWorldSave,
   deserializeGameWorldV3,
@@ -37,6 +39,8 @@ export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly worldAnnualDevelopmentCycle: WorldAnnualDevelopmentCycleSaveV4
   readonly organizations: readonly Organization[]
   readonly organizationSections: readonly OrganizationSection[]
+  readonly organizationOwnership: readonly OrganizationOwnership[]
+  readonly organizationControl: readonly OrganizationControl[]
 }
 
 export interface SaveGameEnvelopeV4 {
@@ -60,6 +64,8 @@ export function migrateGameWorldSaveV3ToV4(value: SaveGameEnvelopeV3): SaveGameE
       worldAnnualDevelopmentCycle: serializeWorldAnnualDevelopmentCycleV4(EMPTY_WORLD_ANNUAL_DEVELOPMENT_CYCLE),
       organizations: Object.values(world.organizationsById),
       organizationSections: Object.values(world.organizationSectionsById),
+      organizationOwnership: [],
+      organizationControl: [],
     }),
   })
 }
@@ -79,6 +85,8 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       ),
       organizations: Object.values(world.organizationsById),
       organizationSections: Object.values(world.organizationSectionsById),
+      organizationOwnership: Object.values(world.organizationOwnershipById),
+      organizationControl: Object.values(world.organizationControlById),
     }),
   })
 }
@@ -93,10 +101,16 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const developmentCycle = parseWorldAnnualDevelopmentCycleV4(payload.worldAnnualDevelopmentCycle)
   const hasOrganizations = Object.prototype.hasOwnProperty.call(payload, 'organizations')
   const hasOrganizationSections = Object.prototype.hasOwnProperty.call(payload, 'organizationSections')
+  const ownership = Object.prototype.hasOwnProperty.call(payload, 'organizationOwnership')
+    ? parseOrganizationOwnership(payload.organizationOwnership)
+    : []
+  const control = Object.prototype.hasOwnProperty.call(payload, 'organizationControl')
+    ? parseOrganizationControl(payload.organizationControl)
+    : []
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
-  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, organizations: _organizations, organizationSections: _sections, ...compatibilityPayload } = payload
+  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, ...compatibilityPayload } = payload
   const world = deserializeGameWorldV3({
     schemaVersion: 3,
     savedAt,
@@ -105,7 +119,8 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const withOrganizations = organizations === undefined || organizationSections === undefined
     ? world
     : updateGameWorld(world, { organizations, organizationSections })
-  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withOrganizations, runtime), worldAnnualDevelopmentCycle: developmentCycle })
+  const withOwnership = updateGameWorld(withOrganizations, { organizationOwnership: ownership, organizationControl: control })
+  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withOwnership, runtime), worldAnnualDevelopmentCycle: developmentCycle })
 }
 
 /** Reads V1-V4. Legacy saves normalize the V4-owned runtime projection to empty state. */
@@ -134,6 +149,50 @@ function parseOrganizationSections(value: unknown): readonly OrganizationSection
     exactKeys(section, ['id', 'organizationId', 'sport', 'gender', 'categoryScope', 'canonicalName', 'validFrom', 'validTo'], 'Save V4 OrganizationSection')
     return createOrganizationSection({ id: nonEmptyText(section.id, 'Save V4 OrganizationSection id') as OrganizationSection['id'], organizationId: nonEmptyText(section.organizationId, 'Save V4 OrganizationSection organizationId') as OrganizationSection['organizationId'], sport: nullableText(section.sport, 'Save V4 OrganizationSection sport'), gender: nullableText(section.gender, 'Save V4 OrganizationSection gender'), categoryScope: nullableText(section.categoryScope, 'Save V4 OrganizationSection categoryScope'), canonicalName: nonEmptyText(section.canonicalName, 'Save V4 OrganizationSection canonicalName'), validFrom: nullableText(section.validFrom, 'Save V4 OrganizationSection validFrom'), validTo: nullableText(section.validTo, 'Save V4 OrganizationSection validTo') })
   }))
+}
+
+function parseOrganizationOwnership(value: unknown): readonly OrganizationOwnership[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 organizationOwnership must be an array')
+  return Object.freeze(value.map((entry) => {
+    const ownership = record(entry, 'Save V4 OrganizationOwnership')
+    exactKeys(ownership, ['id', 'organizationId', 'owner', 'ownershipPercentage', 'validFrom', 'validTo'], 'Save V4 OrganizationOwnership')
+    return createOrganizationOwnership({
+      id: nonEmptyText(ownership.id, 'Save V4 OrganizationOwnership id'),
+      organizationId: nonEmptyText(ownership.organizationId, 'Save V4 OrganizationOwnership organizationId'),
+      owner: parseOrganizationOwnershipActor(ownership.owner, 'Save V4 OrganizationOwnership owner'),
+      ownershipPercentage: nullableNumber(ownership.ownershipPercentage, 'Save V4 OrganizationOwnership ownershipPercentage'),
+      validFrom: nullableText(ownership.validFrom, 'Save V4 OrganizationOwnership validFrom'),
+      validTo: nullableText(ownership.validTo, 'Save V4 OrganizationOwnership validTo'),
+    })
+  }))
+}
+
+function parseOrganizationControl(value: unknown): readonly OrganizationControl[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 organizationControl must be an array')
+  return Object.freeze(value.map((entry) => {
+    const control = record(entry, 'Save V4 OrganizationControl')
+    exactKeys(control, ['id', 'organizationId', 'controller', 'validFrom', 'validTo'], 'Save V4 OrganizationControl')
+    return createOrganizationControl({
+      id: nonEmptyText(control.id, 'Save V4 OrganizationControl id'),
+      organizationId: nonEmptyText(control.organizationId, 'Save V4 OrganizationControl organizationId'),
+      controller: parseOrganizationOwnershipActor(control.controller, 'Save V4 OrganizationControl controller'),
+      validFrom: nullableText(control.validFrom, 'Save V4 OrganizationControl validFrom'),
+      validTo: nullableText(control.validTo, 'Save V4 OrganizationControl validTo'),
+    })
+  }))
+}
+
+function parseOrganizationOwnershipActor(value: unknown, label: string): OrganizationOwnershipActor {
+  const actor = record(value, label)
+  if (actor.kind === 'PERSON') {
+    exactKeys(actor, ['kind', 'personId'], label)
+    return { kind: 'PERSON', personId: personIdFromString(nonEmptyText(actor.personId, `${label} personId`)) }
+  }
+  if (actor.kind === 'ORGANIZATION') {
+    exactKeys(actor, ['kind', 'organizationId'], label)
+    return { kind: 'ORGANIZATION', organizationId: organizationIdFromString(nonEmptyText(actor.organizationId, `${label} organizationId`)) }
+  }
+  throw new TypeError(`${label} kind must be PERSON or ORGANIZATION`)
 }
 
 function serializeWorldDbCompetitionRuntimeV4(
@@ -230,6 +289,11 @@ function nullableText(value: unknown, label: string): string | null {
 
 function nullableInteger(value: unknown, label: string): number | null {
   if (value !== null && (typeof value !== 'number' || !Number.isInteger(value))) throw new TypeError(`${label} must be an integer or null`)
+  return value as number | null
+}
+
+function nullableNumber(value: unknown, label: string): number | null {
+  if (value !== null && (typeof value !== 'number' || !Number.isFinite(value))) throw new TypeError(`${label} must be a finite number or null`)
   return value as number | null
 }
 

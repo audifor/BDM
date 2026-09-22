@@ -1,4 +1,4 @@
-use rusqlite::{Connection, OpenFlags};
+use rusqlite::{Connection, OpenFlags, OptionalExtension};
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -69,6 +69,17 @@ pub struct WorldDbGameBootstrapOrganizationSectionV1 {
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct WorldDbGameBootstrapOrganizationOwnershipV1 {
+    ownership_id: String,
+    organization_id: String,
+    owner_kind: String,
+    owner_id: String,
+    ownership_percentage: Option<f64>,
+    valid_from: Option<String>,
+    valid_to: Option<String>,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WorldDbGameBootstrapTeamV1 {
     team_id: String,
     name: String,
@@ -91,10 +102,11 @@ pub struct WorldDbGameBootstrapPersonV1 {
     person_id: String,
     first_name: String,
     last_name: String,
-    gender: String,
-    date_of_birth: String,
+    gender: Option<String>,
+    date_of_birth: Option<String>,
     nationality_ids: Vec<String>,
-    physical: WorldDbGameBootstrapPersonPhysicalV1,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    physical: Option<WorldDbGameBootstrapPersonPhysicalV1>,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -165,6 +177,7 @@ pub struct WorldDbGameBootstrapSliceV1 {
     countries: Vec<WorldDbGameBootstrapCountryV1>,
     organizations: Vec<WorldDbGameBootstrapOrganizationV1>,
     organization_sections: Vec<WorldDbGameBootstrapOrganizationSectionV1>,
+    organization_ownership: Vec<WorldDbGameBootstrapOrganizationOwnershipV1>,
     teams: Vec<WorldDbGameBootstrapTeamV1>,
     persons: Vec<WorldDbGameBootstrapPersonV1>,
     players: Vec<WorldDbGameBootstrapPlayerV1>,
@@ -215,10 +228,18 @@ pub fn load_game_bootstrap_slice_v1(
         );
     }
     let team_ids: Vec<String> = teams.iter().map(|team| team.team_id.clone()).collect();
-    let organization_ids: Vec<String> =
-        BTreeSet::from_iter(teams.iter().map(|team| team.organization_id.clone()))
-            .into_iter()
-            .collect();
+    let mut organization_ids_set =
+        BTreeSet::from_iter(teams.iter().map(|team| team.organization_id.clone()));
+    let organization_ownership = query_organization_ownership(
+        &connection,
+        &organization_ids_set.iter().cloned().collect::<Vec<_>>(),
+    )?;
+    for ownership in &organization_ownership {
+        if ownership.owner_kind == "ORGANIZATION" {
+            organization_ids_set.insert(ownership.owner_id.clone());
+        }
+    }
+    let organization_ids: Vec<String> = organization_ids_set.into_iter().collect();
     let organization_section_ids: Vec<String> = BTreeSet::from_iter(
         teams
             .iter()
@@ -258,17 +279,30 @@ pub fn load_game_bootstrap_slice_v1(
     let staff_ids: Vec<String> = BTreeSet::from_iter(staff_ids).into_iter().collect();
     let mut persons = Vec::new();
     let mut players = Vec::new();
-    for person_id in player_ids.iter() {
+    let mut required_person_ids = BTreeSet::from_iter(player_ids.iter().cloned());
+    for staff_id in staff_ids.iter() {
+        let person_id = staff_id
+            .strip_prefix("staff:")
+            .ok_or_else(|| format!("World DB Staff profile has invalid identity: {staff_id}"))?;
+        required_person_ids.insert(person_id.to_owned());
+    }
+    for ownership in &organization_ownership {
+        if ownership.owner_kind == "PERSON" {
+            required_person_ids.insert(ownership.owner_id.clone());
+        }
+    }
+    for person_id in required_person_ids.iter() {
         let person = query_person(&connection, person_id)?;
         persons.push(person);
-        players.push(query_player(&connection, person_id)?);
+        if player_ids.iter().any(|player_id| player_id == person_id) {
+            players.push(query_player(&connection, person_id)?);
+        }
     }
     let mut staff_profiles = Vec::new();
     for staff_id in staff_ids.iter() {
         let person_id = staff_id
             .strip_prefix("staff:")
             .ok_or_else(|| format!("World DB Staff profile has invalid identity: {staff_id}"))?;
-        persons.push(query_person(&connection, person_id)?);
         staff_profiles.push(query_staff(&connection, person_id)?);
     }
     persons.sort_by(|a, b| a.person_id.cmp(&b.person_id));
@@ -304,6 +338,7 @@ pub fn load_game_bootstrap_slice_v1(
         countries,
         organizations,
         organization_sections,
+        organization_ownership,
         teams,
         persons,
         players,
@@ -458,6 +493,53 @@ fn query_organization_sections(
         .map_err(|error| format!("Unable to decode World DB organization section: {error}"))
 }
 
+fn query_organization_ownership(
+    connection: &Connection,
+    organization_ids: &[String],
+) -> Result<Vec<WorldDbGameBootstrapOrganizationOwnershipV1>, String> {
+    if organization_ids.is_empty() {
+        return Ok(Vec::new());
+    }
+    let sql = format!("SELECT organization_ownership_id,organization_id,owner_kind,owner_id,ownership_percentage,valid_from,valid_to FROM organization_ownership WHERE organization_id IN ({}) ORDER BY organization_ownership_id", placeholders_from(1, organization_ids.len()));
+    let params: Vec<&dyn rusqlite::ToSql> = organization_ids
+        .iter()
+        .map(|value| value as &dyn rusqlite::ToSql)
+        .collect();
+    let mut statement = connection.prepare(&sql).map_err(|error| {
+        format!("Unable to prepare World DB organization ownership query: {error}")
+    })?;
+    let rows = statement
+        .query_map(rusqlite::params_from_iter(params), |row| {
+            let raw_kind: String = row.get(2)?;
+            let owner_kind = match raw_kind.to_ascii_uppercase().as_str() {
+                "PERSON" => "PERSON".to_owned(),
+                "ORGANIZATION" => "ORGANIZATION".to_owned(),
+                _ => {
+                    return Err(rusqlite::Error::FromSqlConversionFailure(
+                        2,
+                        rusqlite::types::Type::Text,
+                        Box::new(std::io::Error::new(
+                            std::io::ErrorKind::InvalidData,
+                            format!("unsupported organization ownership owner_kind: {raw_kind}"),
+                        )),
+                    ))
+                }
+            };
+            Ok(WorldDbGameBootstrapOrganizationOwnershipV1 {
+                ownership_id: row.get(0)?,
+                organization_id: row.get(1)?,
+                owner_kind,
+                owner_id: row.get(3)?,
+                ownership_percentage: row.get(4)?,
+                valid_from: row.get(5)?,
+                valid_to: row.get(6)?,
+            })
+        })
+        .map_err(|error| format!("Unable to query World DB organization ownership: {error}"))?;
+    rows.collect::<rusqlite::Result<Vec<_>>>()
+        .map_err(|error| format!("Unable to decode World DB organization ownership: {error}"))
+}
+
 fn query_roster_assignments(
     connection: &Connection,
     team_ids: &[String],
@@ -512,22 +594,24 @@ fn query_person(
         .query_row(
             "SELECT sex,birth_date FROM person WHERE person_id=?1",
             [person_id],
-            |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
+            |row| {
+                Ok((
+                    row.get::<_, Option<String>>(0)?,
+                    row.get::<_, Option<String>>(1)?,
+                ))
+            },
         )
         .map_err(|error| format!("Unable to load World DB person {person_id}: {error}"))?;
     let (first_name, last_name) = connection.query_row("SELECT given_name,family_name FROM person_name WHERE person_id=?1 AND valid_to IS NULL ORDER BY is_primary DESC,is_preferred DESC,person_name_id LIMIT 1", [person_id], |row| Ok((row.get::<_, String>(0)?,row.get::<_, String>(1)?))).map_err(|error| format!("Unable to load World DB primary name {person_id}: {error}"))?;
     let nationalities = query_string_column(connection, "SELECT place_id FROM person_nationality WHERE person_id=?1 AND valid_to IS NULL ORDER BY is_primary DESC,person_nationality_id", person_id)?;
-    if nationalities.is_empty() {
-        return Err(format!(
-            "World DB person has no canonical nationality: {person_id}"
-        ));
-    }
-    let physical = connection.query_row("SELECT height_cm,weight_kg,wingspan_cm,standing_reach_cm FROM person_physical_snapshot WHERE person_id=?1 ORDER BY effective_date DESC,physical_snapshot_id DESC LIMIT 1", [person_id], |row| Ok(WorldDbGameBootstrapPersonPhysicalV1 { height_cm: row.get(0)?,weight_kg: row.get(1)?,wingspan_cm: row.get(2)?,standing_reach_cm: row.get(3)? })).map_err(|error| format!("Unable to load World DB physical snapshot {person_id}: {error}"))?;
+    let physical = connection.query_row("SELECT height_cm,weight_kg,wingspan_cm,standing_reach_cm FROM person_physical_snapshot WHERE person_id=?1 ORDER BY effective_date DESC,physical_snapshot_id DESC LIMIT 1", [person_id], |row| Ok((row.get::<_, Option<f64>>(0)?, row.get::<_, Option<f64>>(1)?, row.get::<_, Option<f64>>(2)?, row.get::<_, Option<f64>>(3)?))).optional().map_err(|error| format!("Unable to load World DB physical snapshot {person_id}: {error}"))?.and_then(|(height_cm, weight_kg, wingspan_cm, standing_reach_cm)| Some(WorldDbGameBootstrapPersonPhysicalV1 { height_cm: height_cm?, weight_kg: weight_kg?, wingspan_cm: wingspan_cm?, standing_reach_cm: standing_reach_cm? }));
     Ok(WorldDbGameBootstrapPersonV1 {
         person_id: person_id.to_owned(),
         first_name,
         last_name,
-        gender: gender_from_ecosystem(Some(&sex)),
+        gender: sex
+            .as_deref()
+            .map(|value| gender_from_ecosystem(Some(value))),
         date_of_birth,
         nationality_ids: nationalities,
         physical,
@@ -842,11 +926,15 @@ mod tests {
              CREATE TABLE team_ecosystem_membership(team_id TEXT NOT NULL, competition_ecosystem_id TEXT NOT NULL, membership_status TEXT NOT NULL, valid_to TEXT);
              CREATE TABLE organization(organization_id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, legal_name TEXT, founded_year INTEGER, dissolved_year INTEGER, primary_place_id TEXT, website TEXT);
              CREATE TABLE organization_section(section_id TEXT PRIMARY KEY, organization_id TEXT NOT NULL, sport TEXT, gender TEXT, category_scope TEXT, canonical_name TEXT, valid_from TEXT, valid_to TEXT);
+             CREATE TABLE organization_ownership(organization_ownership_id TEXT PRIMARY KEY, organization_id TEXT NOT NULL, owner_kind TEXT NOT NULL, owner_id TEXT NOT NULL, ownership_percentage REAL, valid_from TEXT, valid_to TEXT);
              INSERT INTO entity VALUES ('team-entity-1', 'Club A'), ('org-entity-1', 'Club A legal entity');
              INSERT INTO team VALUES ('team-1', 'team-entity-1', 'M', 'place:ESP', 'org-42', 'section-7');
              INSERT INTO team_ecosystem_membership VALUES ('team-1', 'ecosystem-1', 'ACTIVE', NULL);
              INSERT INTO organization VALUES ('org-42', 'org-entity-1', 'Club A S.A.', 1980, NULL, 'place:ESP', 'https://club.example');
-             INSERT INTO organization_section VALUES ('section-7', 'org-42', 'BASKETBALL', 'MALE', 'SENIOR', NULL, '1980-01-01', NULL);",
+             INSERT INTO organization VALUES ('holding-1', 'holding-entity-1', 'Holding Company', NULL, NULL, NULL, NULL);
+             INSERT INTO organization_section VALUES ('section-7', 'org-42', 'BASKETBALL', 'MALE', 'SENIOR', NULL, '1980-01-01', NULL);
+             INSERT INTO organization_ownership VALUES ('ownership-person', 'org-42', 'person', 'person:owner-1', 60.0, '2020-01-01', NULL);
+             INSERT INTO organization_ownership VALUES ('ownership-organization', 'org-42', 'ORGANIZATION', 'holding-1', NULL, NULL, '2019-12-31');",
         ).expect("canonical Organization fixture");
 
         let teams = query_teams(&connection, "ecosystem-1", "male").expect("team source row");
@@ -860,6 +948,19 @@ mod tests {
             .expect("OrganizationSection source row");
         assert_eq!(sections[0].organization_id, "org-42");
         assert_eq!(sections[0].canonical_name, "section-7");
+        let ownership = query_organization_ownership(&connection, &["org-42".to_owned()])
+            .expect("Organization ownership source rows");
+        assert_eq!(
+            ownership
+                .iter()
+                .map(|row| row.ownership_id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["ownership-organization", "ownership-person"]
+        );
+        assert_eq!(ownership[0].owner_kind, "ORGANIZATION");
+        assert_eq!(ownership[0].owner_id, "holding-1");
+        assert_eq!(ownership[1].owner_kind, "PERSON");
+        assert_eq!(ownership[1].owner_id, "person:owner-1");
     }
 
     #[test]
