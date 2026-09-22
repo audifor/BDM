@@ -52,7 +52,7 @@ import { createInjury, isInjuryActive, type InjuryRecord } from '@/domain/injury
 import type { InjuryId } from '@/domain/ids'
 import type { ContractId } from '@/domain/ids'
 import { createPlayerContract, type PlayerContract } from '@/domain/contract'
-import { createExpenseRecognition, createFinancialAccount, createFinancialBudget, createFinancialCommitment, createFinancialEntitlement, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile, createPayable, createReceivable, createRevenueRecognition, createTeamFinances, createTreasurySettlement, createBudgetAllocation, createBudgetLine, createBudgetRevision, createForecastAssumption, validateFinancialPlanningCollections, isCashAccount, createRevenueSource, validateRevenueSources, type BudgetAllocation, type BudgetLine, type BudgetRevision, type ExpenseRecognition, type FinancialAccount, type FinancialBudget, type FinancialCommitment, type FinancialEntitlement, type FinancialTransaction, type FiscalPeriod, type ForecastAssumption, type OrganizationFinancialProfile, type Payable, type Receivable, type RevenueRecognition, type RevenueSource, type TeamFinances, type TreasurySettlement } from '@/domain/finance'
+import { createExpenseRecognition, createFinancialAccount, createFinancialBudget, createFinancialCommitment, createFinancialEntitlement, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile, createPayable, createReceivable, createRevenueRecognition, createTeamFinances, createTreasurySettlement, createBudgetAllocation, createBudgetLine, createBudgetRevision, createForecastAssumption, validateFinancialPlanningCollections, isCashAccount, createRevenueSource, validateRevenueSources, createOperatingCostSource, createAuthorizedOperatingCostFact, validateOperatingCostCollections, type AuthorizedOperatingCostFact, type OperatingCostSource, type BudgetAllocation, type BudgetLine, type BudgetRevision, type ExpenseRecognition, type FinancialAccount, type FinancialBudget, type FinancialCommitment, type FinancialEntitlement, type FinancialTransaction, type FiscalPeriod, type ForecastAssumption, type OrganizationFinancialProfile, type Payable, type Receivable, type RevenueRecognition, type RevenueSource, type TeamFinances, type TreasurySettlement } from '@/domain/finance'
 import type { PlayerTransaction } from '@/domain/transaction'
 import type { PlayerTransactionId } from '@/domain/ids'
 import { createOrganizationKnowledge, createPlayerKnowledge, type OrganizationKnowledge, type PlayerKnowledgeRecord } from '@/domain/knowledge'
@@ -165,6 +165,8 @@ export interface GameWorld {
   readonly financialCommitmentsById: Readonly<Record<FinancialCommitmentId, FinancialCommitment>>
   readonly financialEntitlementsById: Readonly<Record<FinancialEntitlementId, FinancialEntitlement>>
   readonly revenueSourcesById: Readonly<Record<string, RevenueSource>>
+  readonly operatingCostSourcesById: Readonly<Record<string, OperatingCostSource>>
+  readonly operatingCostFactsById: Readonly<Record<string, AuthorizedOperatingCostFact>>
   readonly financialBudgetsById: Readonly<Record<string, FinancialBudget>>
   readonly budgetLinesById: Readonly<Record<string, BudgetLine>>
   readonly budgetRevisionsById: Readonly<Record<string, BudgetRevision>>
@@ -404,6 +406,8 @@ export interface CreateGameWorldInput {
   financialCommitments?: readonly FinancialCommitment[]
   financialEntitlements?: readonly FinancialEntitlement[]
   revenueSources?: readonly RevenueSource[]
+  operatingCostSources?: readonly OperatingCostSource[]
+  operatingCostFacts?: readonly AuthorizedOperatingCostFact[]
   financialBudgets?: readonly FinancialBudget[]
   budgetLines?: readonly BudgetLine[]
   budgetRevisions?: readonly BudgetRevision[]
@@ -669,6 +673,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     financialCommitmentsById: indexById((input.financialCommitments ?? []).map(createFinancialCommitment), 'Financial commitment'),
     financialEntitlementsById: indexById((input.financialEntitlements ?? []).map(createFinancialEntitlement), 'Financial entitlement'),
     revenueSourcesById: indexById((input.revenueSources ?? []).map(createRevenueSource), 'Revenue source'),
+    operatingCostSourcesById: indexById((input.operatingCostSources ?? []).map(createOperatingCostSource), 'Operating cost source'),
+    operatingCostFactsById: indexById((input.operatingCostFacts ?? []).map(createAuthorizedOperatingCostFact), 'Operating cost fact'),
     financialBudgetsById: indexById((input.financialBudgets ?? []).map(createFinancialBudget), 'Financial budget'),
     budgetLinesById: indexById((input.budgetLines ?? []).map(createBudgetLine), 'Budget line'),
     budgetRevisionsById: indexById((input.budgetRevisions ?? []).map(createBudgetRevision), 'Budget revision'),
@@ -795,6 +801,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
 
   validateFinancialPlanningCollections(Object.values(world.financialBudgetsById), Object.values(world.budgetLinesById), Object.values(world.budgetRevisionsById), Object.values(world.budgetAllocationsById), Object.values(world.forecastAssumptionsById))
   validateRevenueSources(Object.values(world.revenueSourcesById), world)
+  validateOperatingCostCollections(Object.values(world.operatingCostSourcesById), Object.values(world.operatingCostFactsById), world)
   validateWorld(world)
   return world
 }
@@ -815,6 +822,8 @@ export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorld
     if (inputKey === 'financialCommitments') assertFinancialCommitmentsAppendOnly(world, value as readonly FinancialCommitment[])
     if (inputKey === 'financialEntitlements') assertFinancialEntitlementsAppendOnly(world, value as readonly FinancialEntitlement[])
     if (inputKey === 'revenueSources') assertRevenueSourcesAppendOnly(world, value as readonly RevenueSource[])
+    if (inputKey === 'operatingCostSources') assertOperatingCostSourcesAppendOnly(world, value as readonly OperatingCostSource[])
+    if (inputKey === 'operatingCostFacts') assertOperatingCostFactsAppendOnly(world, value as readonly AuthorizedOperatingCostFact[])
     if (inputKey === 'financialBudgets' || inputKey === 'budgetLines' || inputKey === 'budgetRevisions' || inputKey === 'budgetAllocations' || inputKey === 'forecastAssumptions') assertPlanningCollectionsAppendOnly(world, inputKey, value as readonly { readonly id: string }[])
     worldPatch[worldKey] = collectionPatchIndexers[inputKey]!(value)
   }
@@ -831,6 +840,7 @@ export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorld
     : withPersonRoots
   validateFinancialPlanningCollections(Object.values(updated.financialBudgetsById), Object.values(updated.budgetLinesById), Object.values(updated.budgetRevisionsById), Object.values(updated.budgetAllocationsById), Object.values(updated.forecastAssumptionsById))
   validateRevenueSources(Object.values(updated.revenueSourcesById), updated)
+  validateOperatingCostCollections(Object.values(updated.operatingCostSourcesById), Object.values(updated.operatingCostFactsById), updated)
   validateWorld(updated)
   return updated
 }
@@ -852,7 +862,7 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
 }
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
-  financialBudgets: 'financialBudgetsById', budgetLines: 'budgetLinesById', budgetRevisions: 'budgetRevisionsById', budgetAllocations: 'budgetAllocationsById', forecastAssumptions: 'forecastAssumptionsById', revenueSources: 'revenueSourcesById',
+  financialBudgets: 'financialBudgetsById', budgetLines: 'budgetLinesById', budgetRevisions: 'budgetRevisionsById', budgetAllocations: 'budgetAllocationsById', forecastAssumptions: 'forecastAssumptionsById', revenueSources: 'revenueSourcesById', operatingCostSources: 'operatingCostSourcesById', operatingCostFacts: 'operatingCostFactsById',
   multiClubOwnershipPolicies: 'multiClubOwnershipPoliciesById',
   organizationStructuralChanges: 'organizationStructuralChangesById', organizationLifecycleStates: 'organizationLifecycleStatesById', organizationSuccessions: 'organizationSuccessionsById', regulatoryOrders: 'regulatoryOrdersById', regulatoryRemediationPlans: 'regulatoryRemediationPlansById', organizationLicenses: 'organizationLicensesById',
   organizationInvestorInterests: 'organizationInvestorInterestsById', organizationCapitalRaises: 'organizationCapitalRaisesById', organizationCapitalRaiseEvents: 'organizationCapitalRaiseEventsById', organizationInvestmentProposals: 'organizationInvestmentProposalsById', organizationInvestmentProposalEvents: 'organizationInvestmentProposalEventsById',
@@ -871,6 +881,8 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   budgetAllocations: (value) => indexById((value as readonly BudgetAllocation[]).map(createBudgetAllocation), 'Budget allocation'),
   forecastAssumptions: (value) => indexById((value as readonly ForecastAssumption[]).map(createForecastAssumption), 'Forecast assumption'),
   revenueSources: (value) => indexById((value as readonly RevenueSource[]).map(createRevenueSource), 'Revenue source'),
+  operatingCostSources: (value) => indexById((value as readonly OperatingCostSource[]).map(createOperatingCostSource), 'Operating cost source'),
+  operatingCostFacts: (value) => indexById((value as readonly AuthorizedOperatingCostFact[]).map(createAuthorizedOperatingCostFact), 'Operating cost fact'),
   governanceInstitutions: (value) => indexById((value as readonly GovernanceInstitution[]).map(createGovernanceInstitution), 'Governance institution'),
   organizationOwnership: (value) => indexById((value as readonly OrganizationOwnership[]).map(createOrganizationOwnership), 'Organization ownership'),
   organizationControl: (value) => indexById((value as readonly OrganizationControl[]).map(createOrganizationControl), 'Organization control'),
@@ -2300,6 +2312,14 @@ function assertFinancialEntitlementsAppendOnly(world: GameWorld, proposed: reado
 
 function assertRevenueSourcesAppendOnly(world: GameWorld, proposed: readonly RevenueSource[]): void {
   assertImmutableCollection(world.revenueSourcesById, proposed.map(createRevenueSource), 'Revenue source')
+}
+
+function assertOperatingCostSourcesAppendOnly(world: GameWorld, proposed: readonly OperatingCostSource[]): void {
+  assertImmutableCollection(world.operatingCostSourcesById, proposed.map(createOperatingCostSource), 'Operating cost source')
+}
+
+function assertOperatingCostFactsAppendOnly(world: GameWorld, proposed: readonly AuthorizedOperatingCostFact[]): void {
+  assertImmutableCollection(world.operatingCostFactsById, proposed.map(createAuthorizedOperatingCostFact), 'Operating cost fact')
 }
 
 function assertPlanningCollectionsAppendOnly(world: GameWorld, inputKey: string, proposed: readonly { readonly id: string }[]): void {

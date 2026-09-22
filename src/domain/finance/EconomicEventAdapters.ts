@@ -54,6 +54,7 @@ export type EconomicEventType =
   | 'COMPETITION_SOLIDARITY_DISTRIBUTION'
   | 'COMPETITION_MEDIA_DISTRIBUTION'
   | 'REVENUE_SOURCE_RECOGNITION'
+  | 'OPERATING_COST_RECOGNITION'
   | 'OWNER_FUNDING'
   | (string & {})
 
@@ -75,6 +76,7 @@ export interface AuthorizedEconomicEvent {
   readonly teamId: TeamId | null
   readonly organizationSectionId: OrganizationSectionId | null
   readonly revenueCategory?: string
+  readonly expenseCategory?: string
 }
 
 export function createAuthorizedEconomicEvent(input: {
@@ -95,6 +97,7 @@ export function createAuthorizedEconomicEvent(input: {
   readonly teamId?: TeamId | string | null
   readonly organizationSectionId?: OrganizationSectionId | string | null
   readonly revenueCategory?: string
+  readonly expenseCategory?: string
 }): AuthorizedEconomicEvent {
   if (typeof input.id !== 'string' || input.id.trim().length === 0) throw new TypeError('Authorized economic event id must be non-empty')
   if (typeof input.eventType !== 'string' || input.eventType.trim().length === 0) throw new TypeError('Authorized economic event type must be non-empty')
@@ -133,6 +136,7 @@ export function createAuthorizedEconomicEvent(input: {
     teamId: teamId ?? dimensions?.teamId ?? null,
     organizationSectionId: organizationSectionId ?? dimensions?.organizationSectionId ?? null,
     ...(input.revenueCategory === undefined ? {} : { revenueCategory: input.revenueCategory.trim() === '' ? (() => { throw new TypeError('Authorized economic event revenueCategory must be non-empty') })() : input.revenueCategory }),
+    ...(input.expenseCategory === undefined ? {} : { expenseCategory: input.expenseCategory.trim() === '' ? (() => { throw new TypeError('Authorized economic event expenseCategory must be non-empty') })() : input.expenseCategory }),
   })
 }
 
@@ -208,6 +212,17 @@ export function processRevenueEconomicEvent(world: GameWorld, event: AuthorizedE
   }
 }
 
+export function processOperatingCostEconomicEvent(world: GameWorld, event: AuthorizedEconomicEvent, options: EconomicEventAdapterOptions = {}): EconomicEventAdapterResult {
+  try {
+    assertEventAuthority(event, 'FUTURE_COST_ENGINE')
+    if (event.eventType !== 'OPERATING_COST_RECOGNITION') throw new TypeError(`Unsupported operating cost economic event type ${event.eventType}`)
+    if (event.dueOn === null) throw new RangeError('Operating cost economic events require an explicit dueOn')
+    return processExpenseEvent(world, event, options, true, event.teamId)
+  } catch (error) {
+    return rejected(world, event, error)
+  }
+}
+
 export function processOwnerFundingEconomicEvent(world: GameWorld, event: AuthorizedEconomicEvent, options: EconomicEventAdapterOptions): EconomicEventAdapterResult {
   try {
     if (event.sourceAuthority !== 'OWNERSHIP' && event.sourceAuthority !== 'GOVERNANCE') throw new TypeError('Owner funding requires OWNERSHIP or GOVERNANCE authority')
@@ -224,17 +239,19 @@ export function processOwnerFundingEconomicEvent(world: GameWorld, event: Author
   }
 }
 
-function processExpenseEvent(world: GameWorld, event: AuthorizedEconomicEvent, options: EconomicEventAdapterOptions, recognizeDefault: boolean, teamId: TeamId): EconomicEventAdapterResult {
+function processExpenseEvent(world: GameWorld, event: AuthorizedEconomicEvent, options: EconomicEventAdapterOptions, recognizeDefault: boolean, teamId: TeamId | null): EconomicEventAdapterResult {
   const existing = existingArtifacts(world, event)
   assertReplayCompatible(event, existing)
   if (existing.commitment !== undefined || existing.recognition !== undefined || existing.payable !== undefined || existing.transaction !== undefined) return alreadyProcessed(world, event, existing)
-  const commitment = createFinancialCommitment({ id: `commitment:authorized:${eventKey(event)}`, organizationId: event.organizationId, amount: event.amount, startsOn: event.effectiveOn, dueOn: event.dueOn!, category: event.eventType, provenance: eventProvenance(event), counterparty: event.counterparty, dimensions: event.dimensions ?? { teamId } })
+  const dimensions = event.dimensions ?? { ...(teamId === null ? {} : { teamId }) }
+  const category = event.expenseCategory ?? event.eventType
+  const commitment = createFinancialCommitment({ id: `commitment:authorized:${eventKey(event)}`, organizationId: event.organizationId, amount: event.amount, startsOn: event.effectiveOn, dueOn: event.dueOn!, category, provenance: eventProvenance(event), counterparty: event.counterparty, dimensions })
   const shouldRecognize = options.recognize ?? recognizeDefault
   if (!shouldRecognize) return accepted(world, event, { financialCommitments: [...Object.values(world.financialCommitmentsById), commitment] }, { commitment })
   if (options.ledger === undefined) throw new TypeError('Expense economic recognition requires explicit ledger account mapping')
   const shouldMaterialize = options.materializeSubledger ?? true
   const payableId = `payable:authorized:${eventKey(event)}`
-  const recognitionBase = createExpenseRecognition({ id: `expense:authorized:${eventKey(event)}`, organizationId: event.organizationId, amount: event.amount, recognizedOn: event.effectiveOn, category: event.eventType, provenance: eventProvenance(event), counterparty: event.counterparty, commitmentId: commitment.id, payableId: shouldMaterialize ? payableId : null, dimensions: event.dimensions ?? { teamId } })
+  const recognitionBase = createExpenseRecognition({ id: `expense:authorized:${eventKey(event)}`, organizationId: event.organizationId, amount: event.amount, recognizedOn: event.effectiveOn, category, provenance: eventProvenance(event), counterparty: event.counterparty, commitmentId: commitment.id, payableId: shouldMaterialize ? payableId : null, dimensions })
   const payable = shouldMaterialize ? createPayable({ id: payableId, organizationId: event.organizationId, amount: event.amount, counterparty: event.counterparty ?? { kind: 'EXTERNAL', label: 'Authorized economic event' }, recognizedOn: event.effectiveOn, dueOn: event.dueOn!, provenance: { kind: 'EXPENSE_RECOGNITION', id: String(recognitionBase.id) }, dimensions: recognitionBase.dimensions }) : undefined
   if (options.ledger.resultAccountId === undefined) throw new TypeError('Expense economic recognition requires a result ledger account')
   const ledgerResult = createExpenseRecognitionLedgerTransaction(world, recognitionBase, { transactionId: `financial:authorized:${eventKey(event)}:expense`, offsetAccountId: options.ledger.offsetAccountId, resultAccountId: options.ledger.resultAccountId })
@@ -291,7 +308,7 @@ function assertReplayCompatible(event: AuthorizedEconomicEvent, artifacts: Pick<
   const facts = [artifacts.commitment, artifacts.entitlement, artifacts.recognition, artifacts.receivable, artifacts.payable, artifacts.transaction].filter((fact): fact is NonNullable<typeof fact> => fact !== undefined)
   for (const fact of facts) {
     if (fact.organizationId !== event.organizationId || fact.amount.currencyCode !== event.amount.currencyCode || fact.amount.minorUnits !== event.amount.minorUnits) throw new Error('Economic event idempotency key conflicts with an existing financial consequence')
-    if ('category' in fact && fact.category !== (event.revenueCategory ?? event.eventType)) throw new Error('Economic event idempotency key conflicts with an existing event category')
+    if ('category' in fact && fact.category !== (event.revenueCategory ?? event.expenseCategory ?? event.eventType)) throw new Error('Economic event idempotency key conflicts with an existing event category')
   }
 }
 

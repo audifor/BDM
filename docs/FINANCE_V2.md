@@ -216,6 +216,27 @@ GameWorld and Save V4 persist only `RevenueSource` records. Old V4 and V1–V3 s
 
 CF7 remains conceptually aligned with BDM-DB's canonical `financial_account`, `financial_transaction`, `financial_posting` and `revenue_stream` vocabulary. Runtime revenue sources and game recognitions are additive runtime/save state; `C:\BDM_DB` remains read-only and no second incompatible database semantic is introduced.
 
-## Deferred by CF1/CF2/CF3/CF4/CF5/CF6/CF7
+## CF8 Operating Cost Engine
 
-Attendance-based ticket sales, full media-rights adapters, merchandising/facility operating engines, prize calculation, travel, debt/loans/amortization, taxation, FFP, luxury tax, salary-cap enforcement, valuation, inflation, FX simulation, owner/budget AI, financial UI, bankruptcy, administration, insolvency, debt collection AI and automatic treasury policy remain future work.
+CF8 adds the canonical non-contractual operating-cost producer while keeping every accounting and authority boundary explicit:
+
+```text
+OperatingCostSource / AuthorizedOperatingCostFact
+  -> AuthorizedEconomicEvent (CF4)
+  -> ExpenseRecognition (CF3)
+  -> Payable
+  -> Settlement
+  -> FinancialTransaction / Ledger / Cash
+```
+
+An `OperatingCostSource` is an Organization-owned, persisted source for explicit OPEX policy and deterministic schedules. An `AuthorizedOperatingCostFact` is an already-authorized amount for a concrete event such as travel, medical treatment, scouting, academy, facility or competition operations. Source, commitment, expense recognition, payable, cash, budget and forecast remain different concepts. CF8 never creates an expense from activity alone: facility, Competition, travel, medical, scouting and academy producers require an explicit amount from their owning authority. Payroll remains CF5-owned and is rejected from CF8; CAPEX is classified separately and is not materialized as OPEX.
+
+Schedules are derived and deterministic (`ONE_OFF`, `ANNUAL`, `SEASONAL`, or `EXPLICIT_SCHEDULE`). `materializeOperatingCostsForDate` is an explicit, atomic, idempotent hook; it does not become a broad daily loop. Recognition does not move cash, and settlement does not duplicate expense. Queries remain Organization-scoped, currency-separated and as-of/range compatible, with category, Team, Section, Competition, Facility, Match, source/provenance, paid/unpaid, trial-balance and future-commitment dimensions. CF6 consumes future OPEX commitments in budgets and forecasts; assumptions never create OPEX facts.
+
+GameWorld and Save V4 persist only sources and authorized facts, with additive optional collections. Schedules, totals, variances and other derived values are reconstructed. V1-V3 and older V4 saves load with empty CF8 collections. `TeamFinances`, `src/domain/world/finances.ts` and existing finance UI remain legacy/derived or presentation surfaces; Organization, OrganizationOwnership, Governance, Contract, Salary Cap, Competition and Facilities remain authorities for their own facts. CF8 does not copy those models or make them financial authorities.
+
+CF8 is conceptually aligned with BDM-DB's `financial_account`, `financial_transaction`, `financial_posting` and `expense_commitment` vocabulary. BDM-DB remains read-only for this milestone: runtime OPEX source/fact ownership and persistence belong to the game save, while BDM remains responsible for runtime/database integration.
+
+## Deferred by CF1/CF2/CF3/CF4/CF5/CF6/CF7/CF8
+
+Attendance-based ticket sales, full media-rights adapters, prize calculation, dynamic travel/medical/scouting/academy fact producers, debt/loans/amortization, taxation, FFP, luxury tax, salary-cap enforcement, valuation, inflation, FX simulation, owner/budget AI, financial UI, bankruptcy, administration, insolvency, debt collection AI, depreciation/asset accounting and automatic treasury policy remain future work.
