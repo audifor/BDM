@@ -37,6 +37,7 @@ export const ECONOMIC_EVENT_AUTHORITIES = [
   'ORGANIZATION',
   'FUTURE_REVENUE_ENGINE',
   'FUTURE_COST_ENGINE',
+  'DEBT_ENGINE',
   'MANUAL_SYSTEM_ACTION',
 ] as const
 
@@ -56,6 +57,7 @@ export type EconomicEventType =
   | 'REVENUE_SOURCE_RECOGNITION'
   | 'OPERATING_COST_RECOGNITION'
   | 'OWNER_FUNDING'
+  | 'DEBT_INTEREST_RECOGNITION'
   | (string & {})
 
 export interface AuthorizedEconomicEvent {
@@ -218,6 +220,17 @@ export function processOperatingCostEconomicEvent(world: GameWorld, event: Autho
     if (event.eventType !== 'OPERATING_COST_RECOGNITION') throw new TypeError(`Unsupported operating cost economic event type ${event.eventType}`)
     if (event.dueOn === null) throw new RangeError('Operating cost economic events require an explicit dueOn')
     return processExpenseEvent(world, event, options, true, event.teamId)
+  } catch (error) {
+    return rejected(world, event, error)
+  }
+}
+
+export function processDebtInterestEconomicEvent(world: GameWorld, event: AuthorizedEconomicEvent, options: EconomicEventAdapterOptions = {}): EconomicEventAdapterResult {
+  try {
+    assertEventAuthority(event, 'DEBT_ENGINE')
+    if (event.eventType !== 'DEBT_INTEREST_RECOGNITION') throw new TypeError(`Unsupported Debt economic event type ${event.eventType}`)
+    if (event.dueOn === null) throw new RangeError('Debt interest economic events require an explicit dueOn')
+    return processExpenseEvent(world, event, options, true, null)
   } catch (error) {
     return rejected(world, event, error)
   }

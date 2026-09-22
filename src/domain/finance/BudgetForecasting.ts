@@ -15,6 +15,7 @@ import type { ExpenseRecognition } from './Recognition'
 import { getOutstandingCommitments } from './RecognitionQueries'
 import { getRevenueSchedule } from './RevenueEngine'
 import { getFutureOperatingCostCommitments } from './OperatingCostEngine'
+import { getDebtServiceForecast } from './DebtEngine'
 
 export const BUDGET_STATUSES = ['DRAFT', 'PROPOSED', 'APPROVED', 'SUPERSEDED', 'CLOSED'] as const
 export type BudgetStatus = typeof BUDGET_STATUSES[number]
@@ -141,6 +142,7 @@ export interface ProjectedLiquidityRow {
   readonly cashNowMinorUnits: number
   readonly receivablesDueMinorUnits: number
   readonly payablesDueMinorUnits: number
+  readonly debtServiceDueMinorUnits: number
   readonly explicitCashAssumptionsMinorUnits: number
   readonly projectedClosingCashMinorUnits: number
 }
@@ -243,6 +245,7 @@ export function createFinancialForecast(world: GameWorld, input: { readonly orga
   for (const item of Object.values(world.expenseRecognitionsById)) if (item.organizationId === input.organizationId && item.amount.currencyCode === currencyCode && within(item.recognizedOn, input.period) && compareGameDates(item.recognizedOn, asOfDate) <= 0) add(normalizeCategory(item.category), 'EXPENSE', 'actual', item.amount.minorUnits)
   for (const item of knownCommitments(world, input.organizationId, input.period, asOfDate, currencyCode)) add(item.category, 'EXPENSE', 'committed', item.amount)
   for (const item of getFutureOperatingCostCommitments(world, input.organizationId, asOfDate, currencyCode)) if (within(item.recognitionOn, input.period)) add(item.category, 'EXPENSE', 'committed', item.amount.minorUnits)
+  for (const item of getDebtServiceForecast(world, { organizationId: input.organizationId, from: input.period.startsOn, to: input.period.endsOn, currencyCode }).filter((item) => item.interestMinorUnits > 0 && compareGameDates(item.effectiveOn, asOfDate) > 0)) add('INTEREST_EXPENSE', 'EXPENSE', 'committed', item.interestMinorUnits)
   for (const item of getRevenueSchedule(world, { organizationId: input.organizationId, from: input.period.startsOn, to: input.period.endsOn, currencyCode })) add(item.category, 'INCOME', 'committed', item.amount.minorUnits)
   for (const item of assumptions) if (item.kind === 'INCOME' || item.kind === 'EXPENSE') add(item.category ?? 'UNSPECIFIED', item.kind, 'assumption', item.amount.minorUnits)
   const lines = [...categories.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([category, row]) => { const baseline = row.direction === 'INCOME' ? Math.max(row.actual, row.committed) : row.actual + row.committed; return Object.freeze({ category, direction: row.direction, amount: createMoney({ currencyCode, minorUnits: baseline + row.assumption }), actualMinorUnits: row.actual, committedMinorUnits: row.committed, assumptionMinorUnits: row.assumption }) })
@@ -253,8 +256,10 @@ export function getProjectedLiquidity(world: GameWorld, input: { readonly organi
   const asOfDate = input.asOfDate ?? world.currentDate
   const base = getCashFlowProjection(world, input.organizationId, { asOfDate, throughDate: input.throughDate })
   const assumptions = Object.values(world.forecastAssumptionsById).filter((item) => item.organizationId === input.organizationId && item.scenario === (input.scenario ?? 'BASELINE') && (item.kind === 'CASH_INFLOW' || item.kind === 'CASH_OUTFLOW') && compareGameDates(item.period.endsOn, parseGameDate(asOfDate)) >= 0 && compareGameDates(item.period.startsOn, parseGameDate(input.throughDate)) <= 0)
-  return Object.freeze(base.byCurrency.map((row) => { const explicit = assumptions.filter((item) => item.amount.currencyCode === row.currencyCode).reduce((sum, item) => sum + (item.kind === 'CASH_INFLOW' ? item.amount.minorUnits : -item.amount.minorUnits), 0); return Object.freeze({ currencyCode: row.currencyCode, cashNowMinorUnits: row.openingCashMinorUnits, receivablesDueMinorUnits: row.receivablesDueMinorUnits, payablesDueMinorUnits: row.payablesDueMinorUnits, explicitCashAssumptionsMinorUnits: explicit, projectedClosingCashMinorUnits: row.projectedClosingCashMinorUnits + explicit }) }))
+  return Object.freeze(base.byCurrency.map((row) => { const explicit = assumptions.filter((item) => item.amount.currencyCode === row.currencyCode).reduce((sum, item) => sum + (item.kind === 'CASH_INFLOW' ? item.amount.minorUnits : -item.amount.minorUnits), 0); const debtServiceDue = getDebtServiceForecast(world, { organizationId: input.organizationId, from: addDate(asOfDate, 1), to: parseGameDate(input.throughDate), currencyCode: row.currencyCode }).filter((item) => item.effectiveOn > asOfDate).reduce((sum, item) => sum + item.cashOutflowMinorUnits, 0); return Object.freeze({ currencyCode: row.currencyCode, cashNowMinorUnits: row.openingCashMinorUnits, receivablesDueMinorUnits: row.receivablesDueMinorUnits, payablesDueMinorUnits: row.payablesDueMinorUnits, debtServiceDueMinorUnits: debtServiceDue, explicitCashAssumptionsMinorUnits: explicit, projectedClosingCashMinorUnits: row.projectedClosingCashMinorUnits + explicit - debtServiceDue }) }))
 }
+
+function addDate(date: GameDate | string, days: number): GameDate { const parsed = parseGameDate(date); const value = new Date(`${parsed}T00:00:00Z`); value.setUTCDate(value.getUTCDate() + days); return parseGameDate(value.toISOString().slice(0, 10)) }
 
 export function validateFinancialPlanningCollections(budgets: readonly FinancialBudget[], lines: readonly BudgetLine[], revisions: readonly BudgetRevision[], allocations: readonly BudgetAllocation[], assumptions: readonly ForecastAssumption[]): void {
   const budgetIds = new Set(budgets.map((item) => item.id)); const lineIds = new Set(lines.map((item) => item.id)); const lineById = new Map(lines.map((item) => [item.id, item]));

@@ -239,4 +239,32 @@ CF8 is conceptually aligned with BDM-DB's `financial_account`, `financial_transa
 
 ## Deferred by CF1/CF2/CF3/CF4/CF5/CF6/CF7/CF8
 
-Attendance-based ticket sales, full media-rights adapters, prize calculation, dynamic travel/medical/scouting/academy fact producers, debt/loans/amortization, taxation, FFP, luxury tax, salary-cap enforcement, valuation, inflation, FX simulation, owner/budget AI, financial UI, bankruptcy, administration, insolvency, debt collection AI, depreciation/asset accounting and automatic treasury policy remain future work.
+Attendance-based ticket sales, full media-rights adapters, prize calculation, dynamic travel/medical/scouting/academy fact producers, taxation, FFP, luxury tax, salary-cap enforcement, valuation, inflation, FX simulation, owner/budget AI, financial UI, bankruptcy, administration, insolvency, debt collection AI, depreciation/asset accounting and automatic treasury policy remain future work.
+
+## CF9 Debt, Capital & Competition Economy
+
+CF9 adds Organization financing and authorized Competition-economy consumption without changing sporting or ownership authority:
+
+```text
+DebtInstrument / authorized capital action
+  -> explicit deterministic materialization
+  -> Ledger / ExpenseRecognition / Payable where applicable
+  -> Treasury settlement / Cash
+
+Competition economic fact
+  -> CF4 Competition adapter -> CF3 entitlement/recognition -> Treasury
+```
+
+`DebtInstrument` is the only persisted Organization debt authority. It records lender, debt type, currency, original principal, dates, explicit interest terms, explicit repayment terms, status, provenance, and optional Governance/Ownership authorization reference. Drawdown and principal repayment are financing postings; interest is recognized through the CF4 `DEBT_ENGINE` event boundary as `INTEREST_EXPENSE`, with an optional payable. Outstanding principal, schedules, debt service, maturity, interest paid/unpaid and financing totals are derived from the immutable ledger and the instrument terms. There is no amortization inference, FX conversion, automatic daily loop or mutable cash field.
+
+Owner loans are `DebtInstrument` records of type `OWNER_LOAN`. Capital contributions use the existing authorized `OWNER_FUNDING` path and equity accounts; owner distributions require an explicit authorized action and debit equity/credit cash. `OrganizationOwnership`, `OrganizationCapitalRaise`, Governance decisions and ownership/control transactions remain authorities for authorization, ownership and control. Finance records only the authorized monetary consequence and never creates owners or converts investment intent into cash by inference.
+
+`CompetitionDistributionFact` is the persisted, authorized Competition-economy fact. It carries Competition, Season, recipient Organization/Team, integer Money, category (`PRIZE`, participation distribution, media distribution, solidarity, revenue share, league/development/other distribution or participation fee), effective/due dates, source rule, provenance and optional payer Organization. Finance never calculates awards from standings. Distributions consume the existing CF4 Competition adapter and CF3 entitlement/recognition path. Participation fees are translated into the existing CF8 `AuthorizedOperatingCostFact` path and are not given a second fee engine. Linked inter-Organization transfers use two Organization-scoped linked postings with one source fact: payer cash decreases once and recipient cash increases once.
+
+Competition remains the sporting and entitlement authority; contracts, salary-cap rules, Governance, ownership and Organization remain authorities for their own domains. `TeamFinances`, `src/domain/world/finances.ts`, coach finance and existing finance UI remain legacy, derived, personal or presentation surfaces. None is a competing Organization-finance authority. Save V4 persists only DebtInstrument and CompetitionDistributionFact collections; schedules, outstanding balances, forecasts and totals are reconstructed. Older V4 and V1-V3 saves default the additive collections to empty.
+
+CF9 is conceptually aligned with BDM-DB's canonical `financial_account`, `financial_transaction` and `financial_posting` boundary, and with its adjacent `expense_commitment` and competition award/reward vocabulary. Runtime CF9 facts are game-save state; `C:\BDM_DB` remains read-only and no second incompatible database semantic is introduced.
+
+## CF10 readiness
+
+CF10 may add explicit tax/FFP or valuation policy only after those authorities and their source rules are approved. It should consume CF9 debt service and Competition facts, preserve the ledger/treasury distinction, and avoid deriving economic awards or financing from sporting outcomes without an authoritative rule.
