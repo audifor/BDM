@@ -80,6 +80,18 @@ pub struct WorldDbGameBootstrapOrganizationOwnershipV1 {
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct WorldDbGameBootstrapOrganizationInvestorInterestV1 {
+    interest_id: String,
+    organization_id: String,
+    investor_kind: String,
+    investor_id: String,
+    interest_type: String,
+    status: Option<String>,
+    opened_on: Option<String>,
+    closed_on: Option<String>,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WorldDbGameBootstrapTeamV1 {
     team_id: String,
     name: String,
@@ -178,6 +190,7 @@ pub struct WorldDbGameBootstrapSliceV1 {
     organizations: Vec<WorldDbGameBootstrapOrganizationV1>,
     organization_sections: Vec<WorldDbGameBootstrapOrganizationSectionV1>,
     organization_ownership: Vec<WorldDbGameBootstrapOrganizationOwnershipV1>,
+    organization_investor_interest: Vec<WorldDbGameBootstrapOrganizationInvestorInterestV1>,
     teams: Vec<WorldDbGameBootstrapTeamV1>,
     persons: Vec<WorldDbGameBootstrapPersonV1>,
     players: Vec<WorldDbGameBootstrapPlayerV1>,
@@ -230,10 +243,16 @@ pub fn load_game_bootstrap_slice_v1(
     let team_ids: Vec<String> = teams.iter().map(|team| team.team_id.clone()).collect();
     let mut organization_ids_set =
         BTreeSet::from_iter(teams.iter().map(|team| team.organization_id.clone()));
-    let organization_ownership = query_organization_ownership(
-        &connection,
-        &organization_ids_set.iter().cloned().collect::<Vec<_>>(),
-    )?;
+    let selected_organization_ids: Vec<String> = organization_ids_set.iter().cloned().collect();
+    let organization_investor_interest =
+        query_organization_investor_interest(&connection, &selected_organization_ids)?;
+    let organization_ownership =
+        query_organization_ownership(&connection, &selected_organization_ids)?;
+    for interest in &organization_investor_interest {
+        if interest.investor_kind == "ORGANIZATION" {
+            organization_ids_set.insert(interest.investor_id.clone());
+        }
+    }
     for ownership in &organization_ownership {
         if ownership.owner_kind == "ORGANIZATION" {
             organization_ids_set.insert(ownership.owner_id.clone());
@@ -291,6 +310,11 @@ pub fn load_game_bootstrap_slice_v1(
             required_person_ids.insert(ownership.owner_id.clone());
         }
     }
+    for interest in &organization_investor_interest {
+        if interest.investor_kind == "PERSON" {
+            required_person_ids.insert(interest.investor_id.clone());
+        }
+    }
     for person_id in required_person_ids.iter() {
         let person = query_person(&connection, person_id)?;
         persons.push(person);
@@ -339,6 +363,7 @@ pub fn load_game_bootstrap_slice_v1(
         organizations,
         organization_sections,
         organization_ownership,
+        organization_investor_interest,
         teams,
         persons,
         players,
@@ -538,6 +563,59 @@ fn query_organization_ownership(
         .map_err(|error| format!("Unable to query World DB organization ownership: {error}"))?;
     rows.collect::<rusqlite::Result<Vec<_>>>()
         .map_err(|error| format!("Unable to decode World DB organization ownership: {error}"))
+}
+
+fn query_organization_investor_interest(
+    connection: &Connection,
+    organization_ids: &[String],
+) -> Result<Vec<WorldDbGameBootstrapOrganizationInvestorInterestV1>, String> {
+    if organization_ids.is_empty() {
+        return Ok(Vec::new());
+    }
+    let sql = format!("SELECT investor_interest_id,organization_id,investor_kind,investor_id,interest_type,status,opened_on,closed_on FROM organization_investor_interest WHERE organization_id IN ({}) ORDER BY investor_interest_id", placeholders_from(1, organization_ids.len()));
+    let params: Vec<&dyn rusqlite::ToSql> = organization_ids
+        .iter()
+        .map(|value| value as &dyn rusqlite::ToSql)
+        .collect();
+    let mut statement = connection.prepare(&sql).map_err(|error| {
+        format!("Unable to prepare World DB organization investor interest query: {error}")
+    })?;
+    let rows = statement
+        .query_map(rusqlite::params_from_iter(params), |row| {
+            let raw_kind: String = row.get(2)?;
+            let investor_kind = match raw_kind.to_ascii_uppercase().as_str() {
+                "PERSON" => "PERSON".to_owned(),
+                "ORGANIZATION" => "ORGANIZATION".to_owned(),
+                _ => return Err(unsupported_organization_investor_kind(raw_kind)),
+            };
+            Ok(WorldDbGameBootstrapOrganizationInvestorInterestV1 {
+                interest_id: row.get(0)?,
+                organization_id: row.get(1)?,
+                investor_kind,
+                investor_id: row.get(3)?,
+                interest_type: row.get(4)?,
+                status: row.get(5)?,
+                opened_on: row.get(6)?,
+                closed_on: row.get(7)?,
+            })
+        })
+        .map_err(|error| {
+            format!("Unable to query World DB organization investor interest: {error}")
+        })?;
+    rows.collect::<rusqlite::Result<Vec<_>>>().map_err(|error| {
+        format!("Unable to decode World DB organization investor interest: {error}")
+    })
+}
+
+fn unsupported_organization_investor_kind(raw_kind: String) -> rusqlite::Error {
+    rusqlite::Error::FromSqlConversionFailure(
+        2,
+        rusqlite::types::Type::Text,
+        Box::new(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("unsupported organization investor interest investor_kind: {raw_kind}"),
+        )),
+    )
 }
 
 fn query_roster_assignments(
@@ -961,6 +1039,37 @@ mod tests {
         assert_eq!(ownership[0].owner_id, "holding-1");
         assert_eq!(ownership[1].owner_kind, "PERSON");
         assert_eq!(ownership[1].owner_id, "person:owner-1");
+    }
+
+    #[test]
+    fn investor_interest_query_maps_supported_actors_and_allows_zero_rows() {
+        let connection = Connection::open_in_memory().expect("in-memory SQLite");
+        connection.execute_batch(
+            "CREATE TABLE organization_investor_interest (
+                investor_interest_id TEXT PRIMARY KEY NOT NULL,
+                organization_id TEXT NOT NULL,
+                investor_kind TEXT NOT NULL,
+                investor_id TEXT NOT NULL,
+                interest_type TEXT NOT NULL,
+                status TEXT,
+                opened_on TEXT,
+                closed_on TEXT
+            );
+            INSERT INTO organization_investor_interest VALUES
+                ('interest:person', 'organization:target', 'person', 'person:investor', 'ACQUISITION', 'OPEN', '2030-01-01', NULL),
+                ('interest:organization', 'organization:target', 'ORGANIZATION', 'organization:investor', 'PARTNERSHIP', NULL, NULL, '2030-12-31');",
+        )
+        .expect("investor interest fixture");
+
+        let interests =
+            query_organization_investor_interest(&connection, &["organization:target".to_owned()])
+                .expect("investor interest rows");
+        assert_eq!(interests.len(), 2);
+        assert_eq!(interests[0].investor_kind, "ORGANIZATION");
+        assert_eq!(interests[1].investor_kind, "PERSON");
+        assert!(query_organization_investor_interest(&connection, &[])
+            .unwrap()
+            .is_empty());
     }
 
     #[test]

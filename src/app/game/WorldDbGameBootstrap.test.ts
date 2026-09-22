@@ -62,6 +62,25 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     expect(restored.organizationSectionsById[second.organizationSectionId]?.organizationId).toBe(first.organizationId)
     expect(restored.organizationsById[first.organizationId]).toEqual(world.organizationsById[first.organizationId])
   })
+  it('loads person and organization investor interests with identity closure but no ownership/control effects', () => {
+    const sourceSlice = slice()
+    const targetOrganizationId = sourceSlice.teams[0]!.organizationId
+    const investorPerson = { personId: 'person:interested-only', firstName: 'Interested', lastName: 'Only', nationalityIds: [] as readonly string[] }
+    const interestedSlice = {
+      ...sourceSlice,
+      persons: [...sourceSlice.persons, investorPerson],
+      organizationInvestorInterest: [
+        { interestId: 'interest:person', organizationId: targetOrganizationId, investorKind: 'PERSON' as const, investorId: investorPerson.personId, interestType: 'ACQUISITION', status: 'OPEN', openedOn: '2025-10-01', closedOn: null },
+        { interestId: 'interest:organization', organizationId: targetOrganizationId, investorKind: 'ORGANIZATION' as const, investorId: 'organization:holding', interestType: 'PARTNERSHIP', status: null, openedOn: null, closedOn: null },
+      ],
+    }
+    const world = bootstrapGameWorldFromWorldDb(interestedSlice, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema })
+    expect(Object.keys(world.organizationInvestorInterestsById)).toEqual(['interest:person', 'interest:organization'])
+    expect(world.personsById['person:interested-only' as never]?.profileRefs).toEqual([])
+    expect(world.organizationsById['organization:holding' as never]?.legalName).toBe('Holding Organization')
+    expect(Object.keys(world.organizationOwnershipById)).toEqual(['ownership:worlddb'])
+    expect(Object.keys(world.organizationControlById)).toEqual([])
+  })
   it('rejects a team whose organization does not own its referenced section', () => {
     const sourceSlice = slice()
     const invalidSlice = { ...sourceSlice, teams: sourceSlice.teams.map((team, index) => index === 1 ? { ...team, organizationId: 'organization:2' } : team) }

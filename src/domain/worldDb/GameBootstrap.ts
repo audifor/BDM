@@ -32,6 +32,16 @@ export interface WorldDbGameBootstrapOrganizationOwnershipV1 {
   readonly validFrom: string | null
   readonly validTo: string | null
 }
+export interface WorldDbGameBootstrapOrganizationInvestorInterestV1 {
+  readonly interestId: string
+  readonly organizationId: string
+  readonly investorKind: 'PERSON' | 'ORGANIZATION'
+  readonly investorId: string
+  readonly interestType: string
+  readonly status: string | null
+  readonly openedOn: string | null
+  readonly closedOn: string | null
+}
 
 export interface WorldDbGameBootstrapPersonV1 {
   readonly personId: string
@@ -70,6 +80,7 @@ export interface WorldDbGameBootstrapSliceV1 {
   readonly organizations: readonly WorldDbGameBootstrapOrganizationV1[]
   readonly organizationSections: readonly WorldDbGameBootstrapOrganizationSectionV1[]
   readonly organizationOwnership?: readonly WorldDbGameBootstrapOrganizationOwnershipV1[]
+  readonly organizationInvestorInterest?: readonly WorldDbGameBootstrapOrganizationInvestorInterestV1[]
   readonly teams: readonly WorldDbGameBootstrapTeamV1[]
   readonly persons: readonly WorldDbGameBootstrapPersonV1[]
   readonly players: readonly WorldDbGameBootstrapPlayerV1[]
@@ -106,6 +117,7 @@ export function assertWorldDbGameBootstrapSliceV1(value: unknown): asserts value
   assertArray(value.organizations, 'organizations', (entry) => { for (const field of ['organizationId', 'entityId'] as const) requireText(entry[field], `World DB bootstrap organization ${field}`); for (const field of ['legalName', 'primaryPlaceId', 'website'] as const) requireNullableText(entry[field], `World DB bootstrap organization ${field}`); for (const field of ['foundedYear', 'dissolvedYear'] as const) requireNullableInteger(entry[field], `World DB bootstrap organization ${field}`) }, 'organizationId')
   assertArray(value.organizationSections, 'organizationSections', (entry) => { for (const field of ['sectionId', 'organizationId', 'canonicalName'] as const) requireText(entry[field], `World DB bootstrap organization section ${field}`); for (const field of ['sport', 'gender', 'categoryScope', 'validFrom', 'validTo'] as const) requireNullableText(entry[field], `World DB bootstrap organization section ${field}`) }, 'sectionId')
   assertArray(value.organizationOwnership ?? [], 'organizationOwnership', (entry) => { for (const field of ['ownershipId', 'organizationId', 'ownerKind', 'ownerId'] as const) requireText(entry[field], `World DB bootstrap ownership ${field}`); if (entry.ownerKind !== 'PERSON' && entry.ownerKind !== 'ORGANIZATION') throw new TypeError(`World DB bootstrap ownership ownerKind is unsupported: ${String(entry.ownerKind)}`); if (typeof entry.ownershipPercentage !== 'number' && entry.ownershipPercentage !== null) throw new TypeError('World DB bootstrap ownership percentage must be a number or null'); for (const field of ['validFrom', 'validTo'] as const) requireNullableText(entry[field], `World DB bootstrap ownership ${field}`) }, 'ownershipId')
+  assertArray(value.organizationInvestorInterest ?? [], 'organizationInvestorInterest', (entry) => { for (const field of ['interestId', 'organizationId', 'investorKind', 'investorId', 'interestType'] as const) requireText(entry[field], `World DB bootstrap investor interest ${field}`); if (entry.investorKind !== 'PERSON' && entry.investorKind !== 'ORGANIZATION') throw new TypeError(`World DB bootstrap investor interest investorKind is unsupported: ${String(entry.investorKind)}`); requireNullableText(entry.status, 'World DB bootstrap investor interest status'); requireNullableText(entry.openedOn, 'World DB bootstrap investor interest openedOn'); requireNullableText(entry.closedOn, 'World DB bootstrap investor interest closedOn') }, 'interestId')
   assertArray(value.teams, 'teams', (entry) => { for (const field of ['teamId', 'name', 'gender', 'countryId', 'organizationId', 'organizationSectionId'] as const) requireText(entry[field], `World DB bootstrap team ${field}`) }, 'teamId')
   const organizationIds = new Set((value.organizations as Record<string, unknown>[]).map((entry) => entry.organizationId as string))
   const sectionsById = new Map((value.organizationSections as Record<string, unknown>[]).map((entry) => [entry.sectionId as string, entry]))

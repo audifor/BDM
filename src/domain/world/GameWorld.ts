@@ -26,6 +26,10 @@ import type { Team } from '@/domain/team'
 import { createOrganization, createOrganizationSection, type Organization, type OrganizationSection } from '@/domain/organization'
 import { createOrganizationControl, createOrganizationOwnership, type OrganizationControl, type OrganizationOwnership } from '@/domain/ownership/OrganizationOwnership'
 import { createOrganizationOwnershipTransaction, createOrganizationOwnershipTransactionEvent, isOrganizationOwnershipGovernanceApproved, validateOrganizationOwnershipTransactionLifecycle, type OrganizationOwnershipTransaction, type OrganizationOwnershipTransactionEvent } from '@/domain/ownership/OrganizationOwnershipTransaction'
+import { createOrganizationInvestorInterest, type OrganizationInvestorInterest } from '@/domain/investment/OrganizationInvestorInterest'
+import { createOrganizationCapitalRaise, createOrganizationCapitalRaiseEvent, validateOrganizationCapitalRaiseLifecycle, type OrganizationCapitalRaise, type OrganizationCapitalRaiseEvent } from '@/domain/investment/OrganizationCapitalRaise'
+import { createOrganizationInvestmentProposal, createOrganizationInvestmentProposalEvent, deriveOrganizationInvestmentProposalStatus, validateOrganizationInvestmentProposalLifecycle, type OrganizationInvestmentProposal, type OrganizationInvestmentProposalEvent } from '@/domain/investment/OrganizationInvestmentProposal'
+import { isLinkedGovernanceDecisionApproved } from '@/domain/investment/InvestmentGovernance'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
 import { createInjury, isInjuryActive, type InjuryRecord } from '@/domain/injury'
 import type { InjuryId } from '@/domain/ids'
@@ -108,6 +112,11 @@ export interface GameWorld {
   readonly organizationControlById: Readonly<Record<import('@/domain/ids').OrganizationControlId, OrganizationControl>>
   readonly organizationOwnershipTransactionsById: Readonly<Record<import('@/domain/ids').OrganizationOwnershipTransactionId, OrganizationOwnershipTransaction>>
   readonly organizationOwnershipTransactionEventsById: Readonly<Record<string, OrganizationOwnershipTransactionEvent>>
+  readonly organizationInvestorInterestsById: Readonly<Record<import('@/domain/ids').InvestorInterestId, OrganizationInvestorInterest>>
+  readonly organizationCapitalRaisesById: Readonly<Record<import('@/domain/ids').OrganizationCapitalRaiseId, OrganizationCapitalRaise>>
+  readonly organizationCapitalRaiseEventsById: Readonly<Record<string, OrganizationCapitalRaiseEvent>>
+  readonly organizationInvestmentProposalsById: Readonly<Record<import('@/domain/ids').OrganizationInvestmentProposalId, OrganizationInvestmentProposal>>
+  readonly organizationInvestmentProposalEventsById: Readonly<Record<string, OrganizationInvestmentProposalEvent>>
   readonly competitions: Readonly<Record<CompetitionId, Competition>>
   readonly ecosystems: Readonly<Record<EcosystemId, SportsEcosystem>>
   readonly conferencesById: Readonly<Record<ConferenceId, Conference>>
@@ -319,6 +328,11 @@ export interface CreateGameWorldInput {
   organizationControl?: readonly OrganizationControl[]
   organizationOwnershipTransactions?: readonly OrganizationOwnershipTransaction[]
   organizationOwnershipTransactionEvents?: readonly OrganizationOwnershipTransactionEvent[]
+  organizationInvestorInterests?: readonly OrganizationInvestorInterest[]
+  organizationCapitalRaises?: readonly OrganizationCapitalRaise[]
+  organizationCapitalRaiseEvents?: readonly OrganizationCapitalRaiseEvent[]
+  organizationInvestmentProposals?: readonly OrganizationInvestmentProposal[]
+  organizationInvestmentProposalEvents?: readonly OrganizationInvestmentProposalEvent[]
   competitions: readonly Competition[]
   ecosystems?: readonly SportsEcosystem[] | Readonly<Record<EcosystemId, SportsEcosystem>>
   conferences?: readonly Conference[]
@@ -555,6 +569,11 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     organizationControlById: indexById((input.organizationControl ?? []).map(createOrganizationControl), 'Organization control'),
     organizationOwnershipTransactionsById: indexById((input.organizationOwnershipTransactions ?? []).map(createOrganizationOwnershipTransaction), 'Organization ownership transaction'),
     organizationOwnershipTransactionEventsById: indexById((input.organizationOwnershipTransactionEvents ?? []).map(createOrganizationOwnershipTransactionEvent), 'Organization ownership transaction event'),
+    organizationInvestorInterestsById: indexById((input.organizationInvestorInterests ?? []).map(createOrganizationInvestorInterest), 'Organization investor interest'),
+    organizationCapitalRaisesById: indexById((input.organizationCapitalRaises ?? []).map(createOrganizationCapitalRaise), 'Organization capital raise'),
+    organizationCapitalRaiseEventsById: indexById((input.organizationCapitalRaiseEvents ?? []).map(createOrganizationCapitalRaiseEvent), 'Organization capital raise event'),
+    organizationInvestmentProposalsById: indexById((input.organizationInvestmentProposals ?? []).map(createOrganizationInvestmentProposal), 'Organization investment proposal'),
+    organizationInvestmentProposalEventsById: indexById((input.organizationInvestmentProposalEvents ?? []).map(createOrganizationInvestmentProposalEvent), 'Organization investment proposal event'),
     competitions: indexById(input.competitions, 'Competition'),
     ecosystems: indexById(ecosystems, 'Sports ecosystem'),
     conferencesById: indexById(conferences.map(createConference), 'Conference'),
@@ -732,6 +751,7 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
 }
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
+  organizationInvestorInterests: 'organizationInvestorInterestsById', organizationCapitalRaises: 'organizationCapitalRaisesById', organizationCapitalRaiseEvents: 'organizationCapitalRaiseEventsById', organizationInvestmentProposals: 'organizationInvestmentProposalsById', organizationInvestmentProposalEvents: 'organizationInvestmentProposalEventsById',
   governanceInstitutions: 'governanceInstitutionsById', governanceUniverseProfiles: 'governanceUniverseProfilesById', governanceBodies: 'governanceBodiesById', governanceAppointments: 'governanceAppointmentsById', governanceAuthorityGrants: 'governanceAuthorityGrantsById', governanceExternalRelationships: 'governanceExternalRelationshipsById', governanceExpectationPeriods: 'governanceExpectationPeriodsById', governanceObjectives: 'governanceObjectivesById',
   supporterRelationships: 'supporterRelationshipsById', collectiveInstitutionAffiliations: 'collectiveInstitutionAffiliationsById', collectiveParticipantAffiliations: 'collectiveParticipantAffiliationsById', collectiveInstitutionalStatusEvents: 'collectiveInstitutionalStatusEventsById', collectiveInstitutionalLiaisons: 'collectiveInstitutionalLiaisonsById', supporterExpectations: 'supporterExpectationsById', supporterExpectationEvents: 'supporterExpectationEventsById', supporterPressureEvents: 'supporterPressureEventsById', supporterReactions: 'supporterReactionsById', supportFundingPledges: 'supportFundingPledgesById', supportFundingPledgeEvents: 'supportFundingPledgeEventsById', supportContributions: 'supportContributionsById',
   supportComplianceCases: 'supportComplianceCasesById', supportComplianceCaseEvents: 'supportComplianceCaseEventsById', supportComplianceFindings: 'supportComplianceFindingsById', supportConflictDisclosures: 'supportConflictDisclosuresById', supportConsequences: 'supportConsequencesById', supportRemediations: 'supportRemediationsById',
@@ -746,6 +766,11 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   organizationControl: (value) => indexById((value as readonly OrganizationControl[]).map(createOrganizationControl), 'Organization control'),
   organizationOwnershipTransactions: (value) => indexById((value as readonly OrganizationOwnershipTransaction[]).map(createOrganizationOwnershipTransaction), 'Organization ownership transaction'),
   organizationOwnershipTransactionEvents: (value) => indexById((value as readonly OrganizationOwnershipTransactionEvent[]).map(createOrganizationOwnershipTransactionEvent), 'Organization ownership transaction event'),
+  organizationInvestorInterests: (value) => indexById((value as readonly OrganizationInvestorInterest[]).map(createOrganizationInvestorInterest), 'Organization investor interest'),
+  organizationCapitalRaises: (value) => indexById((value as readonly OrganizationCapitalRaise[]).map(createOrganizationCapitalRaise), 'Organization capital raise'),
+  organizationCapitalRaiseEvents: (value) => indexById((value as readonly OrganizationCapitalRaiseEvent[]).map(createOrganizationCapitalRaiseEvent), 'Organization capital raise event'),
+  organizationInvestmentProposals: (value) => indexById((value as readonly OrganizationInvestmentProposal[]).map(createOrganizationInvestmentProposal), 'Organization investment proposal'),
+  organizationInvestmentProposalEvents: (value) => indexById((value as readonly OrganizationInvestmentProposalEvent[]).map(createOrganizationInvestmentProposalEvent), 'Organization investment proposal event'),
   governanceUniverseProfiles: (value) => indexById((value as readonly GovernanceUniverseProfile[]).map(createGovernanceUniverseProfile), 'Governance universe profile'),
   governanceBodies: (value) => indexById((value as readonly GovernanceBody[]).map(createGovernanceBody), 'Governance body'),
   governanceAppointments: (value) => indexById((value as readonly GovernanceAppointment[]).map(createGovernanceAppointment), 'Governance appointment'),
@@ -795,6 +820,7 @@ function validateWorld(world: GameWorld): void {
   }
   validateOrganizationOwnershipAndControl(world)
   validateOrganizationOwnershipTransactions(world)
+  validateOrganizationInvestments(world)
   validateGovernance(world)
   validateInstitutionalSupport(world)
 
@@ -1229,6 +1255,56 @@ function validateOrganizationOwnershipTransactions(world: GameWorld): void {
 function validateOrganizationOwnershipActor(world: GameWorld, actor: import('@/domain/ownership/OrganizationOwnership').OrganizationOwnershipActor, label: string): void {
   if (actor.kind === 'PERSON') requireEntity(world.personsById, actor.personId, `${label} Person`)
   else requireEntity(world.organizationsById, actor.organizationId, `${label} Organization`)
+}
+
+function validateOrganizationInvestments(world: GameWorld): void {
+  for (const interest of Object.values(world.organizationInvestorInterestsById)) {
+    createOrganizationInvestorInterest(interest)
+    requireEntity(world.organizationsById, interest.organizationId, `Organization investor interest ${interest.id} target`)
+    validateOrganizationOwnershipActor(world, interest.investor, `Organization investor interest ${interest.id} investor`)
+  }
+  for (const raise of Object.values(world.organizationCapitalRaisesById)) {
+    createOrganizationCapitalRaise(raise)
+    requireEntity(world.organizationsById, raise.organizationId, `Organization capital raise ${raise.id} target`)
+    validateLinkedInvestmentGovernance(world, raise.governanceDecisionId, `Organization capital raise ${raise.id}`)
+    const events = Object.values(world.organizationCapitalRaiseEventsById).filter((event) => event.capitalRaiseId === raise.id)
+    if (events.length === 0) throw new GameWorldValidationError(`Organization capital raise ${raise.id} requires historical events`)
+    try { validateOrganizationCapitalRaiseLifecycle(events) } catch (error) { throw new GameWorldValidationError((error as Error).message) }
+    const opened = events.find((event) => event.kind === 'OPENED')!
+    if (opened.effectiveOn !== raise.openedOn) throw new GameWorldValidationError(`Organization capital raise ${raise.id} OPENED date differs from openedOn`)
+    for (const event of events) {
+      if (compareGameDates(event.effectiveOn, raise.openedOn) < 0) throw new GameWorldValidationError(`Organization capital raise event ${event.id} precedes openedOn`)
+      if (event.governanceDecisionId !== undefined && event.governanceDecisionId !== raise.governanceDecisionId) throw new GameWorldValidationError(`Organization capital raise event ${event.id} Governance decision link differs from its raise`)
+    }
+  }
+  for (const event of Object.values(world.organizationCapitalRaiseEventsById)) requireEntity(world.organizationCapitalRaisesById, event.capitalRaiseId, `Organization capital raise event ${event.id} raise`)
+  for (const proposal of Object.values(world.organizationInvestmentProposalsById)) {
+    createOrganizationInvestmentProposal(proposal)
+    const raise = requireEntity(world.organizationCapitalRaisesById, proposal.capitalRaiseId, `Organization investment proposal ${proposal.id} capital raise`)
+    validateOrganizationOwnershipActor(world, proposal.investor, `Organization investment proposal ${proposal.id} investor`)
+    if (proposal.currencyCode !== raise.currencyCode) throw new GameWorldValidationError(`Organization investment proposal ${proposal.id} currency does not match its capital raise`)
+    if (proposal.amount > raise.targetAmount) throw new GameWorldValidationError(`Organization investment proposal ${proposal.id} exceeds its capital raise target amount`)
+    if (proposal.requestedEquityPercentage > raise.maximumEquityPercentage) throw new GameWorldValidationError(`Organization investment proposal ${proposal.id} exceeds its capital raise equity ceiling`)
+    if (compareGameDates(proposal.proposedOn, raise.openedOn) < 0) throw new GameWorldValidationError(`Organization investment proposal ${proposal.id} precedes its capital raise`)
+    validateLinkedInvestmentGovernance(world, proposal.governanceDecisionId, `Organization investment proposal ${proposal.id}`)
+    const events = Object.values(world.organizationInvestmentProposalEventsById).filter((event) => event.proposalId === proposal.id)
+    if (events.length === 0) throw new GameWorldValidationError(`Organization investment proposal ${proposal.id} requires historical events`)
+    try { validateOrganizationInvestmentProposalLifecycle(events) } catch (error) { throw new GameWorldValidationError((error as Error).message) }
+    const proposed = events.find((event) => event.kind === 'PROPOSED')!
+    if (proposed.effectiveOn !== proposal.proposedOn) throw new GameWorldValidationError(`Organization investment proposal ${proposal.id} PROPOSED date differs from proposedOn`)
+    for (const event of events) {
+      if (compareGameDates(event.effectiveOn, proposal.proposedOn) < 0) throw new GameWorldValidationError(`Organization investment proposal event ${event.id} precedes proposedOn`)
+      if (event.governanceDecisionId !== undefined && event.governanceDecisionId !== proposal.governanceDecisionId) throw new GameWorldValidationError(`Organization investment proposal event ${event.id} Governance decision link differs from its proposal`)
+      if (event.kind === 'EXECUTED' && (!isLinkedGovernanceDecisionApproved(world, raise.governanceDecisionId, event.effectiveOn) || !isLinkedGovernanceDecisionApproved(world, proposal.governanceDecisionId, event.effectiveOn))) throw new GameWorldValidationError(`Organization investment proposal event ${event.id} lacks linked Governance approval`)
+    }
+  }
+  for (const event of Object.values(world.organizationInvestmentProposalEventsById)) requireEntity(world.organizationInvestmentProposalsById, event.proposalId, `Organization investment proposal event ${event.id} proposal`)
+}
+
+function validateLinkedInvestmentGovernance(world: GameWorld, governanceDecisionId: string | undefined, label: string): void {
+  if (governanceDecisionId === undefined) return
+  const decision = requireEntity(world.governanceDecisionsById, governanceDecisionId, `${label} Governance decision`)
+  if (decision.decisionType !== 'OWNERSHIP_CHANGE') throw new GameWorldValidationError(`${label} requires an OWNERSHIP_CHANGE Governance decision`)
 }
 
 function validateGovernance(world: GameWorld): void {
