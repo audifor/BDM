@@ -31,7 +31,7 @@ no `--ours`/`--theirs`.
 
 ## 5. Final SHA
 
-`d87a16acfef192e45834b28b5e850afc45971ab3`.
+`1ac4b23` (certification doc; final code SHA `d87a16acfef192e45834b28b5e850afc45971ab3`).
 
 ## 6. Feature commits
 
@@ -42,6 +42,7 @@ Merge convergence is deliberately distinguishable from CFI7 feature work:
 | `a8fd8f5` | MERGE CONVERGENCE | `Merge commit '706dced...' into club-facilities-infrastructure-v2-cfi7-finance-integration` |
 | `9da1826` | CFI7 FEATURE | `feat(facilities): add CFI7 Facilities/Finance integration layer` |
 | `d87a16a` | CFI7 FEATURE | `test(facilities): add CFI7 Facilities/Finance integration tests` |
+| `1ac4b23` | CFI7 DOCS | `docs(facilities): add CFI7 finance integration certification report` |
 
 ## 7. Merge conflicts encountered
 
@@ -540,4 +541,4 @@ one.
 ---
 
 *Certified on branch `club-facilities-infrastructure-v2-cfi7-finance-integration` at
-`d87a16acfef192e45834b28b5e850afc45971ab3`. No push, no PR, no merge to main.*
+`1ac4b23` (certification doc; final code SHA `d87a16acfef192e45834b28b5e850afc45971ab3`). No push, no PR, no merge to main.*
