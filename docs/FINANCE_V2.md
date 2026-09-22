@@ -170,6 +170,28 @@ Contract termination changes only future derived entries. Existing Recognition, 
 
 CF5 payroll queries derive committed, player, staff, current-season, next-season, future-by-contract/person/season, guaranteed, conditional, recognized-YTD, paid, unpaid, Team, Section, and currency-separated views. These queries feed later forecasting work without creating a Budget or persisting a schedule cache.
 
-## Deferred by CF1/CF2/CF3/CF4/CF5
+## CF6 Budget & Forecasting
 
-Ticket sales, sponsorships, merchandising, media rights, annual budgets, forecasting assumptions, payroll progression, debt/loans/amortization, taxation, FFP, luxury tax, salary-cap enforcement, valuation, inflation, FX simulation, owner/budget AI, financial UI, bankruptcy, administration, insolvency, debt collection AI and automatic treasury policy remain future work.
+CF6 adds Organization-owned planning facts without making planning an accounting or cash authority:
+
+```text
+Ledger facts -> Recognition actuals
+Contract/other authorities -> Commitments
+Organization + Governance/Ownership approval -> Budget -> Budget lines/allocations
+Actuals + known commitments + explicit assumptions -> Forecast
+Treasury cash + due receivables/payables + explicit cash assumptions -> Liquidity forecast
+```
+
+`FinancialBudget` has an explicit season, fiscal-year, or arbitrary date-range period, currency, lifecycle, provenance, and optional Governance/Ownership approval metadata. `BudgetLine` and `BudgetAllocation` preserve Organization, Team, Section, category, currency, and analytical dimensions. Approved budgets are immutable; a revision creates a new approved budget with lineage, while the prior version remains in history and is reported as `SUPERSEDED` by the derived lifecycle query. Finance records approval provenance but does not decide who has authority or whether a board approved it.
+
+Budget headroom is not cash and is not Salary Cap space. Budget comparisons read actuals from CF3 Recognition, commitments from CF3 and the CF5 contract schedule, and cash only from CF2 Treasury. Control queries report variance, commitment headroom, projected over-budget, unused/unbudgeted amounts, and insufficient budget; they never block Contracts, Treasury, Governance, or Salary Cap operations.
+
+`FinancialForecast` is a derived current expectation, separate from Recognition. It combines actual recognized amounts, known future commitments, and only explicitly persisted assumptions. `ForecastAssumption` is not a financial fact and never creates Recognition, Commitment, Receivable, Payable, Ledger, or Cash. Scenarios (`BASELINE`, `UPSIDE`, `DOWNSIDE`, `CUSTOM`) are labels; there are no implicit percentages or invented ticket, sponsor, media, merchandising, prize, or other future revenue. Cash forecasting is a separate Treasury projection and never infers liquidity from a budget amount. Currencies remain separate with no FX.
+
+Budget, revision, allocation, and assumption facts are additive optional Save V4 collections. Derived totals, variances, headroom, and baseline forecasts are not persisted. Old V4 and V1–V3 saves load with empty CF6 collections. `TeamFinances`, `world/finances.ts`, existing finance UI, Organization, OrganizationOwnership, Governance, Contract, Salary Cap, and Competition rules remain legacy/derived or their own authorities; none is replaced by CF6.
+
+CF6 is conceptually aligned with BDM-DB's separate `budget`, `financial_account`, `financial_transaction`, `financial_posting`, `revenue_stream`, and `expense_commitment` vocabulary. Runtime game planning facts remain in GameWorld/Save and are not written back to BDM-DB.
+
+## Deferred by CF1/CF2/CF3/CF4/CF5/CF6
+
+Ticket sales, sponsorships, merchandising, media rights, revenue engines, prize calculation, travel, facilities, debt/loans/amortization, taxation, FFP, luxury tax, salary-cap enforcement, valuation, inflation, FX simulation, owner/budget AI, financial UI, bankruptcy, administration, insolvency, debt collection AI and automatic treasury policy remain future work.

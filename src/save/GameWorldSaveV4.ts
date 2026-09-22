@@ -21,7 +21,7 @@ import { createOrganizationSuccession, type OrganizationSuccession } from '@/dom
 import { createRegulatoryOrder, type RegulatoryOrder } from '@/domain/structuralRegulation/RegulatoryOrder'
 import { createRegulatoryRemediationPlan, type RegulatoryRemediationPlan } from '@/domain/structuralRegulation/RegulatoryRemediationPlan'
 import { createOrganizationLicense, type OrganizationLicense } from '@/domain/structuralRegulation/OrganizationLicense'
-import { createExpenseRecognition, createFinancialAccount, createFinancialCommitment, createFinancialEntitlement, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile, createPayable, createReceivable, createRevenueRecognition, createTreasurySettlement, type ExpenseRecognition, type FinancialAccount, type FinancialCommitment, type FinancialDimensions, type FinancialEntitlement, type FinancialTransaction, type FiscalPeriod, type OrganizationFinancialProfile, type Payable, type Receivable, type RevenueRecognition, type TreasuryCounterparty, type TreasurySettlement } from '@/domain/finance'
+import { createBudgetAllocation, createBudgetLine, createBudgetRevision, createExpenseRecognition, createFinancialAccount, createFinancialBudget, createFinancialCommitment, createFinancialEntitlement, createFinancialTransaction, createFiscalPeriod, createForecastAssumption, createOrganizationFinancialProfile, createPayable, createReceivable, createRevenueRecognition, createTreasurySettlement, type BudgetAllocation, type BudgetLine, type BudgetRevision, type ExpenseRecognition, type FinancialAccount, type FinancialBudget, type FinancialCommitment, type FinancialDimensions, type FinancialEntitlement, type FinancialTransaction, type FiscalPeriod, type ForecastAssumption, type OrganizationFinancialProfile, type Payable, type Receivable, type RevenueRecognition, type TreasuryCounterparty, type TreasurySettlement } from '@/domain/finance'
 import { parseGameDate } from '@/domain/date'
 import { competitionIdFromString, ecosystemIdFromString, expenseRecognitionIdFromString, financialAccountIdFromString, financialCommitmentIdFromString, financialEntitlementIdFromString, financialTransactionIdFromString, fiscalPeriodIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, receivableIdFromString, payableIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, revenueRecognitionIdFromString, seasonIdFromString, treasurySettlementIdFromString, contractIdFromString, teamIdFromString, organizationSectionIdFromString } from '@/domain/ids'
 import {
@@ -79,6 +79,11 @@ export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly expenseRecognitions?: readonly ExpenseRecognition[]
   readonly financialCommitments?: readonly FinancialCommitment[]
   readonly financialEntitlements?: readonly FinancialEntitlement[]
+  readonly financialBudgets?: readonly FinancialBudget[]
+  readonly budgetLines?: readonly BudgetLine[]
+  readonly budgetRevisions?: readonly BudgetRevision[]
+  readonly budgetAllocations?: readonly BudgetAllocation[]
+  readonly forecastAssumptions?: readonly ForecastAssumption[]
 }
 
 export interface SaveGameEnvelopeV4 {
@@ -146,6 +151,7 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       financialAccounts: Object.values(world.financialAccountsById), financialTransactions: Object.values(world.financialTransactionsById), fiscalPeriods: Object.values(world.fiscalPeriodsById), organizationFinancialProfiles: Object.values(world.organizationFinancialProfilesById),
       receivables: Object.values(world.receivablesById), payables: Object.values(world.payablesById), treasuryApplications: Object.values(world.treasuryApplicationsById),
       revenueRecognitions: Object.values(world.revenueRecognitionsById), expenseRecognitions: Object.values(world.expenseRecognitionsById), financialCommitments: Object.values(world.financialCommitmentsById), financialEntitlements: Object.values(world.financialEntitlementsById),
+      financialBudgets: Object.values(world.financialBudgetsById), budgetLines: Object.values(world.budgetLinesById), budgetRevisions: Object.values(world.budgetRevisionsById), budgetAllocations: Object.values(world.budgetAllocationsById), forecastAssumptions: Object.values(world.forecastAssumptionsById),
     }),
   })
 }
@@ -207,10 +213,15 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const expenseRecognitions = Object.prototype.hasOwnProperty.call(payload, 'expenseRecognitions') ? parseExpenseRecognitions(payload.expenseRecognitions) : []
   const financialCommitments = Object.prototype.hasOwnProperty.call(payload, 'financialCommitments') ? parseFinancialCommitments(payload.financialCommitments) : []
   const financialEntitlements = Object.prototype.hasOwnProperty.call(payload, 'financialEntitlements') ? parseFinancialEntitlements(payload.financialEntitlements) : []
+  const financialBudgets = Object.prototype.hasOwnProperty.call(payload, 'financialBudgets') ? parseFinancialBudgets(payload.financialBudgets) : []
+  const budgetLines = Object.prototype.hasOwnProperty.call(payload, 'budgetLines') ? parseBudgetLines(payload.budgetLines) : []
+  const budgetRevisions = Object.prototype.hasOwnProperty.call(payload, 'budgetRevisions') ? parseBudgetRevisions(payload.budgetRevisions) : []
+  const budgetAllocations = Object.prototype.hasOwnProperty.call(payload, 'budgetAllocations') ? parseBudgetAllocations(payload.budgetAllocations) : []
+  const forecastAssumptions = Object.prototype.hasOwnProperty.call(payload, 'forecastAssumptions') ? parseForecastAssumptions(payload.forecastAssumptions) : []
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
-  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _structuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, ...compatibilityPayload } = payload
+  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalsEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _structuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, financialBudgets: _financialBudgets, budgetLines: _budgetLines, budgetRevisions: _budgetRevisions, budgetAllocations: _budgetAllocations, forecastAssumptions: _forecastAssumptions, ...compatibilityPayload } = payload
   const world = deserializeGameWorldV3({
     schemaVersion: 3,
     savedAt,
@@ -224,7 +235,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const withInvestments = updateGameWorld(withTransactions, { organizationInvestorInterests: investorInterests, organizationCapitalRaises: capitalRaises, organizationCapitalRaiseEvents: capitalRaiseEvents, organizationInvestmentProposals: investmentProposals, organizationInvestmentProposalEvents: investmentProposalEvents })
   const withPolicies = updateGameWorld(withInvestments, { multiClubOwnershipPolicies })
   const withStructuralRegulation = updateGameWorld(withPolicies, { organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses })
-  const withFinance = updateGameWorld(withStructuralRegulation, { financialAccounts, financialTransactions, fiscalPeriods, organizationFinancialProfiles, receivables, payables, treasuryApplications, revenueRecognitions, expenseRecognitions, financialCommitments, financialEntitlements })
+  const withFinance = updateGameWorld(withStructuralRegulation, { financialAccounts, financialTransactions, fiscalPeriods, organizationFinancialProfiles, receivables, payables, treasuryApplications, revenueRecognitions, expenseRecognitions, financialCommitments, financialEntitlements, financialBudgets, budgetLines, budgetRevisions, budgetAllocations, forecastAssumptions })
   return Object.freeze({ ...attachWorldDbCompetitionRuntime(withFinance, runtime), worldAnnualDevelopmentCycle: developmentCycle })
 }
 
@@ -650,6 +661,50 @@ function parseFinancialEntitlements(value: unknown): readonly FinancialEntitleme
     exactKeys(entitlement, ['id', 'organizationId', 'amount', 'availableOn', 'dueOn', 'category', 'provenance', 'counterparty', 'dimensions', 'cancelledOn'], 'Save V4 FinancialEntitlement')
     return createFinancialEntitlement({ id: financialEntitlementIdFromString(nonEmptyText(entitlement.id, 'Save V4 FinancialEntitlement id')), organizationId: organizationIdFromString(nonEmptyText(entitlement.organizationId, 'Save V4 FinancialEntitlement organizationId')), amount: parseFinancialMoney(entitlement.amount, 'Save V4 FinancialEntitlement amount'), availableOn: nonEmptyText(entitlement.availableOn, 'Save V4 FinancialEntitlement availableOn'), dueOn: nonEmptyText(entitlement.dueOn, 'Save V4 FinancialEntitlement dueOn'), category: nonEmptyText(entitlement.category, 'Save V4 FinancialEntitlement category'), provenance: parseFinancialSource(entitlement.provenance, 'Save V4 FinancialEntitlement provenance'), counterparty: parseRecognitionCounterparty(entitlement.counterparty, 'Save V4 FinancialEntitlement counterparty'), dimensions: parseFinancialDimensions(entitlement.dimensions), cancelledOn: nullableText(entitlement.cancelledOn, 'Save V4 FinancialEntitlement cancelledOn') })
   }))
+}
+
+function parsePlanningPeriod(value: unknown, label: string) {
+  const period = record(value, label)
+  const hasSeason = period.seasonId !== undefined
+  exactKeys(period, ['kind', 'startsOn', 'endsOn', ...(hasSeason ? ['seasonId'] : [])], label)
+  return { kind: period.kind as 'SEASON' | 'FISCAL_YEAR' | 'DATE_RANGE', startsOn: nonEmptyText(period.startsOn, `${label} startsOn`), endsOn: nonEmptyText(period.endsOn, `${label} endsOn`), ...(hasSeason ? { seasonId: nonEmptyText(period.seasonId, `${label} seasonId`) } : {}) }
+}
+
+function parseFinancialBudgets(value: unknown): readonly FinancialBudget[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 financialBudgets must be an array')
+  return Object.freeze(value.map((entry) => {
+    const budget = record(entry, 'Save V4 FinancialBudget')
+    const hasRevision = budget.revisionOfId !== null
+    const hasApproval = budget.approval !== null
+    exactKeys(budget, ['id', 'organizationId', 'currencyCode', 'period', 'status', 'label', 'createdOn', 'revisionOfId', 'approval', 'provenance'], 'Save V4 FinancialBudget')
+    const approval = hasApproval ? record(budget.approval, 'Save V4 BudgetApproval') : null
+    if (approval !== null) { exactKeys(approval, ['authorityKind', 'authorityId', 'approvedOn', 'provenance'], 'Save V4 BudgetApproval') }
+    return createFinancialBudget({ id: nonEmptyText(budget.id, 'Save V4 FinancialBudget id'), organizationId: nonEmptyText(budget.organizationId, 'Save V4 FinancialBudget organizationId'), currencyCode: nonEmptyText(budget.currencyCode, 'Save V4 FinancialBudget currencyCode'), period: parsePlanningPeriod(budget.period, 'Save V4 FinancialBudget period'), status: budget.status as 'DRAFT' | 'PROPOSED' | 'APPROVED' | 'SUPERSEDED' | 'CLOSED', label: nonEmptyText(budget.label, 'Save V4 FinancialBudget label'), createdOn: nonEmptyText(budget.createdOn, 'Save V4 FinancialBudget createdOn'), revisionOfId: hasRevision ? nonEmptyText(budget.revisionOfId, 'Save V4 FinancialBudget revisionOfId') : null, approval: approval === null ? null : { authorityKind: approval.authorityKind as 'GOVERNANCE' | 'OWNERSHIP' | 'MANUAL_SYSTEM_ACTION', authorityId: nonEmptyText(approval.authorityId, 'Save V4 BudgetApproval authorityId'), approvedOn: parseGameDate(nonEmptyText(approval.approvedOn, 'Save V4 BudgetApproval approvedOn')), provenance: parseFinancialSource(approval.provenance, 'Save V4 BudgetApproval provenance') }, provenance: parseFinancialSource(budget.provenance, 'Save V4 FinancialBudget provenance') })
+  }))
+}
+
+function parseBudgetLines(value: unknown): readonly BudgetLine[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 budgetLines must be an array')
+  return Object.freeze(value.map((entry) => {
+    const line = record(entry, 'Save V4 BudgetLine'); const hasTeam = line.teamId !== undefined; const hasSection = line.organizationSectionId !== undefined; const hasPurpose = line.purpose !== undefined
+    exactKeys(line, ['id', 'budgetId', 'organizationId', 'category', 'direction', 'amount', ...(hasTeam ? ['teamId'] : []), ...(hasSection ? ['organizationSectionId'] : []), ...(hasPurpose ? ['purpose'] : []), 'provenance'], 'Save V4 BudgetLine')
+    return createBudgetLine({ id: nonEmptyText(line.id, 'Save V4 BudgetLine id'), budgetId: nonEmptyText(line.budgetId, 'Save V4 BudgetLine budgetId'), organizationId: nonEmptyText(line.organizationId, 'Save V4 BudgetLine organizationId'), category: nonEmptyText(line.category, 'Save V4 BudgetLine category'), direction: line.direction as 'INCOME' | 'EXPENSE', amount: parseFinancialMoney(line.amount, 'Save V4 BudgetLine amount'), ...(hasTeam ? { teamId: nonEmptyText(line.teamId, 'Save V4 BudgetLine teamId') } : {}), ...(hasSection ? { organizationSectionId: nonEmptyText(line.organizationSectionId, 'Save V4 BudgetLine organizationSectionId') } : {}), ...(hasPurpose ? { purpose: nonEmptyText(line.purpose, 'Save V4 BudgetLine purpose') } : {}), provenance: parseFinancialSource(line.provenance, 'Save V4 BudgetLine provenance') })
+  }))
+}
+
+function parseBudgetRevisions(value: unknown): readonly BudgetRevision[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 budgetRevisions must be an array')
+  return Object.freeze(value.map((entry) => { const revision = record(entry, 'Save V4 BudgetRevision'); exactKeys(revision, ['id', 'organizationId', 'budgetId', 'supersedesBudgetId', 'revisionNumber', 'createdOn', 'reason', 'provenance'], 'Save V4 BudgetRevision'); return createBudgetRevision({ id: nonEmptyText(revision.id, 'Save V4 BudgetRevision id'), organizationId: nonEmptyText(revision.organizationId, 'Save V4 BudgetRevision organizationId'), budgetId: nonEmptyText(revision.budgetId, 'Save V4 BudgetRevision budgetId'), supersedesBudgetId: nonEmptyText(revision.supersedesBudgetId, 'Save V4 BudgetRevision supersedesBudgetId'), revisionNumber: integer(revision.revisionNumber, 'Save V4 BudgetRevision revisionNumber'), createdOn: nonEmptyText(revision.createdOn, 'Save V4 BudgetRevision createdOn'), reason: nonEmptyText(revision.reason, 'Save V4 BudgetRevision reason'), provenance: parseFinancialSource(revision.provenance, 'Save V4 BudgetRevision provenance') }) }))
+}
+
+function parseBudgetAllocations(value: unknown): readonly BudgetAllocation[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 budgetAllocations must be an array')
+  return Object.freeze(value.map((entry) => { const allocation = record(entry, 'Save V4 BudgetAllocation'); const hasTeam = allocation.teamId !== undefined; const hasSection = allocation.organizationSectionId !== undefined; const hasPurpose = allocation.purpose !== undefined; exactKeys(allocation, ['id', 'budgetId', 'budgetLineId', 'organizationId', 'amount', ...(hasTeam ? ['teamId'] : []), ...(hasSection ? ['organizationSectionId'] : []), ...(hasPurpose ? ['purpose'] : []), 'provenance'], 'Save V4 BudgetAllocation'); return createBudgetAllocation({ id: nonEmptyText(allocation.id, 'Save V4 BudgetAllocation id'), budgetId: nonEmptyText(allocation.budgetId, 'Save V4 BudgetAllocation budgetId'), budgetLineId: nonEmptyText(allocation.budgetLineId, 'Save V4 BudgetAllocation budgetLineId'), organizationId: nonEmptyText(allocation.organizationId, 'Save V4 BudgetAllocation organizationId'), amount: parseFinancialMoney(allocation.amount, 'Save V4 BudgetAllocation amount'), ...(hasTeam ? { teamId: nonEmptyText(allocation.teamId, 'Save V4 BudgetAllocation teamId') } : {}), ...(hasSection ? { organizationSectionId: nonEmptyText(allocation.organizationSectionId, 'Save V4 BudgetAllocation organizationSectionId') } : {}), ...(hasPurpose ? { purpose: nonEmptyText(allocation.purpose, 'Save V4 BudgetAllocation purpose') } : {}), provenance: parseFinancialSource(allocation.provenance, 'Save V4 BudgetAllocation provenance') }) }))
+}
+
+function parseForecastAssumptions(value: unknown): readonly ForecastAssumption[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 forecastAssumptions must be an array')
+  return Object.freeze(value.map((entry) => { const assumption = record(entry, 'Save V4 ForecastAssumption'); const hasCategory = assumption.category !== undefined; const hasTeam = assumption.teamId !== undefined; const hasSection = assumption.organizationSectionId !== undefined; exactKeys(assumption, ['id', 'organizationId', 'scenario', 'kind', 'amount', 'period', ...(hasCategory ? ['category'] : []), ...(hasTeam ? ['teamId'] : []), ...(hasSection ? ['organizationSectionId'] : []), 'explanation', 'provenance'], 'Save V4 ForecastAssumption'); return createForecastAssumption({ id: nonEmptyText(assumption.id, 'Save V4 ForecastAssumption id'), organizationId: nonEmptyText(assumption.organizationId, 'Save V4 ForecastAssumption organizationId'), scenario: assumption.scenario as 'BASELINE' | 'UPSIDE' | 'DOWNSIDE' | 'CUSTOM', kind: assumption.kind as 'INCOME' | 'EXPENSE' | 'CASH_INFLOW' | 'CASH_OUTFLOW', amount: parseFinancialMoney(assumption.amount, 'Save V4 ForecastAssumption amount'), period: parsePlanningPeriod(assumption.period, 'Save V4 ForecastAssumption period'), ...(hasCategory ? { category: nonEmptyText(assumption.category, 'Save V4 ForecastAssumption category') } : {}), ...(hasTeam ? { teamId: nonEmptyText(assumption.teamId, 'Save V4 ForecastAssumption teamId') } : {}), ...(hasSection ? { organizationSectionId: nonEmptyText(assumption.organizationSectionId, 'Save V4 ForecastAssumption organizationSectionId') } : {}), explanation: nonEmptyText(assumption.explanation, 'Save V4 ForecastAssumption explanation'), provenance: parseFinancialSource(assumption.provenance, 'Save V4 ForecastAssumption provenance') }) }))
 }
 
 function serializeWorldDbCompetitionRuntimeV4(
