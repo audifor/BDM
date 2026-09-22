@@ -41,6 +41,9 @@ export type RegulatoryRemediationPlanId = EntityId<'RegulatoryRemediationPlanId'
 export type OrganizationLicenseId = EntityId<'OrganizationLicenseId'>
 export type AgentId = EntityId<'AgentId'>
 export type AgencyId = EntityId<'AgencyId'>
+export type FinancialAccountId = EntityId<'FinancialAccountId'>
+export type FinancialTransactionId = EntityId<'FinancialTransactionId'>
+export type FiscalPeriodId = EntityId<'FiscalPeriodId'>
 
 function idFromString<Id extends string>(value: string, name: string): Id {
   if (typeof value !== 'string' || value.trim().length === 0) {
@@ -95,6 +98,9 @@ export const regulatoryRemediationPlanIdFromString = (value: string): Regulatory
 export const organizationLicenseIdFromString = (value: string): OrganizationLicenseId => idFromString<OrganizationLicenseId>(value, 'OrganizationLicenseId')
 export const agentIdFromString = (value: string): AgentId => idFromString<AgentId>(value, 'AgentId')
 export const agencyIdFromString = (value: string): AgencyId => idFromString<AgencyId>(value, 'AgencyId')
+export const financialAccountIdFromString = (value: string): FinancialAccountId => idFromString<FinancialAccountId>(value, 'FinancialAccountId')
+export const financialTransactionIdFromString = (value: string): FinancialTransactionId => idFromString<FinancialTransactionId>(value, 'FinancialTransactionId')
+export const fiscalPeriodIdFromString = (value: string): FiscalPeriodId => idFromString<FiscalPeriodId>(value, 'FiscalPeriodId')
 /** Legacy/generated-world compatibility resolver. World DB runtime uses the canonical Team relation. */
 export const organizationIdForTeam = (teamId: TeamId): OrganizationId => organizationIdFromString(teamId)
 

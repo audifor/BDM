@@ -21,8 +21,9 @@ import { createOrganizationSuccession, type OrganizationSuccession } from '@/dom
 import { createRegulatoryOrder, type RegulatoryOrder } from '@/domain/structuralRegulation/RegulatoryOrder'
 import { createRegulatoryRemediationPlan, type RegulatoryRemediationPlan } from '@/domain/structuralRegulation/RegulatoryRemediationPlan'
 import { createOrganizationLicense, type OrganizationLicense } from '@/domain/structuralRegulation/OrganizationLicense'
+import { createFinancialAccount, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile, type FinancialAccount, type FinancialDimensions, type FinancialTransaction, type FiscalPeriod, type OrganizationFinancialProfile } from '@/domain/finance'
 import { parseGameDate } from '@/domain/date'
-import { competitionIdFromString, ecosystemIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, seasonIdFromString } from '@/domain/ids'
+import { competitionIdFromString, ecosystemIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, seasonIdFromString, financialAccountIdFromString, financialTransactionIdFromString, fiscalPeriodIdFromString, contractIdFromString, teamIdFromString, organizationSectionIdFromString } from '@/domain/ids'
 import {
   deserializeGameWorldSave as deserializeLegacyGameWorldSave,
   deserializeGameWorldV3,
@@ -67,6 +68,10 @@ export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly regulatoryOrders: readonly RegulatoryOrder[]
   readonly regulatoryRemediationPlans: readonly RegulatoryRemediationPlan[]
   readonly organizationLicenses: readonly OrganizationLicense[]
+  readonly financialAccounts?: readonly FinancialAccount[]
+  readonly financialTransactions?: readonly FinancialTransaction[]
+  readonly fiscalPeriods?: readonly FiscalPeriod[]
+  readonly organizationFinancialProfiles?: readonly OrganizationFinancialProfile[]
 }
 
 export interface SaveGameEnvelopeV4 {
@@ -131,6 +136,7 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       organizationInvestmentProposalEvents: Object.values(world.organizationInvestmentProposalEventsById),
       multiClubOwnershipPolicies: Object.values(world.multiClubOwnershipPoliciesById),
       organizationStructuralChanges: Object.values(world.organizationStructuralChangesById), organizationLifecycleStates: Object.values(world.organizationLifecycleStatesById), organizationSuccessions: Object.values(world.organizationSuccessionsById), regulatoryOrders: Object.values(world.regulatoryOrdersById), regulatoryRemediationPlans: Object.values(world.regulatoryRemediationPlansById), organizationLicenses: Object.values(world.organizationLicensesById),
+      financialAccounts: Object.values(world.financialAccountsById), financialTransactions: Object.values(world.financialTransactionsById), fiscalPeriods: Object.values(world.fiscalPeriodsById), organizationFinancialProfiles: Object.values(world.organizationFinancialProfilesById),
     }),
   })
 }
@@ -181,10 +187,14 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const regulatoryOrders = Object.prototype.hasOwnProperty.call(payload, 'regulatoryOrders') ? parseRegulatoryOrders(payload.regulatoryOrders) : []
   const regulatoryRemediationPlans = Object.prototype.hasOwnProperty.call(payload, 'regulatoryRemediationPlans') ? parseRegulatoryRemediationPlans(payload.regulatoryRemediationPlans) : []
   const organizationLicenses = Object.prototype.hasOwnProperty.call(payload, 'organizationLicenses') ? parseOrganizationLicenses(payload.organizationLicenses) : []
+  const financialAccounts = Object.prototype.hasOwnProperty.call(payload, 'financialAccounts') ? parseFinancialAccounts(payload.financialAccounts) : []
+  const financialTransactions = Object.prototype.hasOwnProperty.call(payload, 'financialTransactions') ? parseFinancialTransactions(payload.financialTransactions) : []
+  const fiscalPeriods = Object.prototype.hasOwnProperty.call(payload, 'fiscalPeriods') ? parseFiscalPeriods(payload.fiscalPeriods) : []
+  const organizationFinancialProfiles = Object.prototype.hasOwnProperty.call(payload, 'organizationFinancialProfiles') ? parseOrganizationFinancialProfiles(payload.organizationFinancialProfiles) : []
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
-  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _structuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, ...compatibilityPayload } = payload
+  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _structuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, ...compatibilityPayload } = payload
   const world = deserializeGameWorldV3({
     schemaVersion: 3,
     savedAt,
@@ -198,7 +208,8 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const withInvestments = updateGameWorld(withTransactions, { organizationInvestorInterests: investorInterests, organizationCapitalRaises: capitalRaises, organizationCapitalRaiseEvents: capitalRaiseEvents, organizationInvestmentProposals: investmentProposals, organizationInvestmentProposalEvents: investmentProposalEvents })
   const withPolicies = updateGameWorld(withInvestments, { multiClubOwnershipPolicies })
   const withStructuralRegulation = updateGameWorld(withPolicies, { organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses })
-  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withStructuralRegulation, runtime), worldAnnualDevelopmentCycle: developmentCycle })
+  const withFinance = updateGameWorld(withStructuralRegulation, { financialAccounts, financialTransactions, fiscalPeriods, organizationFinancialProfiles })
+  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withFinance, runtime), worldAnnualDevelopmentCycle: developmentCycle })
 }
 
 /** Reads V1-V4. Legacy saves normalize the V4-owned runtime projection to empty state. */
@@ -480,6 +491,77 @@ function parseOrganizationOwnershipActor(value: unknown, label: string): Organiz
   throw new TypeError(`${label} kind must be PERSON or ORGANIZATION`)
 }
 
+function parseFinancialAccounts(value: unknown): readonly FinancialAccount[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 financialAccounts must be an array')
+  return Object.freeze(value.map((entry) => {
+    const account = record(entry, 'Save V4 FinancialAccount')
+    exactKeys(account, ['id', 'organizationId', 'accountType', 'currencyCode', 'openedOn', 'closedOn'], 'Save V4 FinancialAccount')
+    return createFinancialAccount({ id: financialAccountIdFromString(nonEmptyText(account.id, 'Save V4 FinancialAccount id')), organizationId: organizationIdFromString(nonEmptyText(account.organizationId, 'Save V4 FinancialAccount organizationId')), accountType: nonEmptyText(account.accountType, 'Save V4 FinancialAccount accountType'), currencyCode: nonEmptyText(account.currencyCode, 'Save V4 FinancialAccount currencyCode'), openedOn: nullableText(account.openedOn, 'Save V4 FinancialAccount openedOn'), closedOn: nullableText(account.closedOn, 'Save V4 FinancialAccount closedOn') })
+  }))
+}
+
+function parseFinancialMoney(value: unknown, label: string) {
+  const money = record(value, label)
+  exactKeys(money, ['currencyCode', 'minorUnits'], label)
+  return { currencyCode: nonEmptyText(money.currencyCode, `${label} currencyCode`), minorUnits: integer(money.minorUnits, `${label} minorUnits`) }
+}
+
+function parseFinancialSource(value: unknown, label: string) {
+  const source = record(value, label)
+  exactKeys(source, ['kind', ...(source.id === undefined ? [] : ['id']), ...(source.description === undefined ? [] : ['description'])], label)
+  return { kind: nonEmptyText(source.kind, `${label} kind`), ...(source.id === undefined ? {} : { id: nonEmptyText(source.id, `${label} id`) }), ...(source.description === undefined ? {} : { description: nonEmptyText(source.description, `${label} description`) }) }
+}
+
+function parseFinancialDimensions(value: unknown): FinancialDimensions | null {
+  if (value === null) return null
+  const dimensions = record(value, 'Save V4 FinancialDimensions')
+  exactKeys(dimensions, ['teamId', 'organizationSectionId', 'competitionId', 'contractId', 'reference'].filter((key) => dimensions[key] !== undefined), 'Save V4 FinancialDimensions')
+  const reference = dimensions.reference === undefined ? undefined : record(dimensions.reference, 'Save V4 FinancialDimensions reference')
+  if (reference !== undefined) exactKeys(reference, ['kind', 'id'], 'Save V4 FinancialDimensions reference')
+  return {
+    ...(dimensions.teamId === undefined ? {} : { teamId: teamIdFromString(nonEmptyText(dimensions.teamId, 'Save V4 FinancialDimensions teamId')) }),
+    ...(dimensions.organizationSectionId === undefined ? {} : { organizationSectionId: organizationSectionIdFromString(nonEmptyText(dimensions.organizationSectionId, 'Save V4 FinancialDimensions organizationSectionId')) }),
+    ...(dimensions.competitionId === undefined ? {} : { competitionId: competitionIdFromString(nonEmptyText(dimensions.competitionId, 'Save V4 FinancialDimensions competitionId')) }),
+    ...(dimensions.contractId === undefined ? {} : { contractId: contractIdFromString(nonEmptyText(dimensions.contractId, 'Save V4 FinancialDimensions contractId')) }),
+    ...(reference === undefined ? {} : { reference: { kind: nonEmptyText(reference.kind, 'Save V4 FinancialDimensions reference kind'), id: nonEmptyText(reference.id, 'Save V4 FinancialDimensions reference id') } }),
+  }
+}
+
+function parseFinancialTransactions(value: unknown): readonly FinancialTransaction[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 financialTransactions must be an array')
+  return Object.freeze(value.map((entry) => {
+    const transaction = record(entry, 'Save V4 FinancialTransaction')
+    const hasContract = transaction.relatedContractId !== undefined
+    const hasEvent = transaction.relatedEventId !== undefined
+    exactKeys(transaction, ['id', 'organizationId', 'effectiveOn', 'transactionType', 'amount', 'postings', 'provenance', 'description', 'dimensions', ...(hasContract ? ['relatedContractId'] : []), ...(hasEvent ? ['relatedEventId'] : [])], 'Save V4 FinancialTransaction')
+    if (!Array.isArray(transaction.postings)) throw new TypeError('Save V4 FinancialTransaction postings must be an array')
+    const postings = transaction.postings.map((entry) => {
+      const posting = record(entry, 'Save V4 FinancialPosting')
+      exactKeys(posting, ['accountId', 'direction', 'amount'], 'Save V4 FinancialPosting')
+      return { accountId: financialAccountIdFromString(nonEmptyText(posting.accountId, 'Save V4 FinancialPosting accountId')), direction: posting.direction as 'DEBIT' | 'CREDIT', amount: parseFinancialMoney(posting.amount, 'Save V4 FinancialPosting amount') }
+    })
+    return createFinancialTransaction({ id: financialTransactionIdFromString(nonEmptyText(transaction.id, 'Save V4 FinancialTransaction id')), organizationId: organizationIdFromString(nonEmptyText(transaction.organizationId, 'Save V4 FinancialTransaction organizationId')), effectiveOn: nonEmptyText(transaction.effectiveOn, 'Save V4 FinancialTransaction effectiveOn'), transactionType: nonEmptyText(transaction.transactionType, 'Save V4 FinancialTransaction transactionType'), amount: parseFinancialMoney(transaction.amount, 'Save V4 FinancialTransaction amount'), postings, provenance: parseFinancialSource(transaction.provenance, 'Save V4 FinancialTransaction provenance'), description: nullableText(transaction.description, 'Save V4 FinancialTransaction description'), dimensions: parseFinancialDimensions(transaction.dimensions), ...(hasContract ? { relatedContractId: contractIdFromString(nonEmptyText(transaction.relatedContractId, 'Save V4 FinancialTransaction relatedContractId')) } : {}), ...(hasEvent ? { relatedEventId: nonEmptyText(transaction.relatedEventId, 'Save V4 FinancialTransaction relatedEventId') } : {}) })
+  }))
+}
+
+function parseFiscalPeriods(value: unknown): readonly FiscalPeriod[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 fiscalPeriods must be an array')
+  return Object.freeze(value.map((entry) => {
+    const period = record(entry, 'Save V4 FiscalPeriod')
+    exactKeys(period, ['id', 'organizationId', 'label', 'startsOn', 'endsOn', 'status'], 'Save V4 FiscalPeriod')
+    return createFiscalPeriod({ id: fiscalPeriodIdFromString(nonEmptyText(period.id, 'Save V4 FiscalPeriod id')), organizationId: organizationIdFromString(nonEmptyText(period.organizationId, 'Save V4 FiscalPeriod organizationId')), label: nonEmptyText(period.label, 'Save V4 FiscalPeriod label'), startsOn: nonEmptyText(period.startsOn, 'Save V4 FiscalPeriod startsOn'), endsOn: nonEmptyText(period.endsOn, 'Save V4 FiscalPeriod endsOn'), status: period.status as 'OPEN' | 'CLOSED' })
+  }))
+}
+
+function parseOrganizationFinancialProfiles(value: unknown): readonly OrganizationFinancialProfile[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 organizationFinancialProfiles must be an array')
+  return Object.freeze(value.map((entry) => {
+    const profile = record(entry, 'Save V4 OrganizationFinancialProfile')
+    exactKeys(profile, ['organizationId', 'baseCurrencyCode', 'fiscalYearStartMonth'], 'Save V4 OrganizationFinancialProfile')
+    return createOrganizationFinancialProfile({ organizationId: organizationIdFromString(nonEmptyText(profile.organizationId, 'Save V4 OrganizationFinancialProfile organizationId')), baseCurrencyCode: nonEmptyText(profile.baseCurrencyCode, 'Save V4 OrganizationFinancialProfile baseCurrencyCode'), fiscalYearStartMonth: integer(profile.fiscalYearStartMonth, 'Save V4 OrganizationFinancialProfile fiscalYearStartMonth') })
+  }))
+}
+
 function serializeWorldDbCompetitionRuntimeV4(
   value: WorldDbCompetitionRuntime,
 ): WorldDbCompetitionRuntimeSaveV4 {
@@ -589,6 +671,11 @@ function nullableNumber(value: unknown, label: string): number | null {
 
 function number(value: unknown, label: string): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) throw new TypeError(`${label} must be a finite number`)
+  return value
+}
+
+function integer(value: unknown, label: string): number {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value)) throw new TypeError(`${label} must be a safe integer`)
   return value
 }
 

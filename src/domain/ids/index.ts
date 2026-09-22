@@ -44,6 +44,9 @@ export {
   organizationIdForTeam,
   agentIdFromString,
   agencyIdFromString,
+  financialAccountIdFromString,
+  financialTransactionIdFromString,
+  fiscalPeriodIdFromString,
 } from './EntityIds'
 
 export type {
@@ -83,4 +86,7 @@ export type {
   OrganizationLicenseId,
   AgentId,
   AgencyId,
+  FinancialAccountId,
+  FinancialTransactionId,
+  FiscalPeriodId,
 } from './EntityIds'
