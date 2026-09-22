@@ -33,6 +33,12 @@ export type InvestorInterestId = EntityId<'InvestorInterestId'>
 export type OrganizationCapitalRaiseId = EntityId<'OrganizationCapitalRaiseId'>
 export type OrganizationInvestmentProposalId = EntityId<'OrganizationInvestmentProposalId'>
 export type MultiClubOwnershipPolicyId = EntityId<'MultiClubOwnershipPolicyId'>
+export type OrganizationStructuralChangeId = EntityId<'OrganizationStructuralChangeId'>
+export type OrganizationLifecycleStateId = EntityId<'OrganizationLifecycleStateId'>
+export type OrganizationSuccessionId = EntityId<'OrganizationSuccessionId'>
+export type RegulatoryOrderId = EntityId<'RegulatoryOrderId'>
+export type RegulatoryRemediationPlanId = EntityId<'RegulatoryRemediationPlanId'>
+export type OrganizationLicenseId = EntityId<'OrganizationLicenseId'>
 export type AgentId = EntityId<'AgentId'>
 export type AgencyId = EntityId<'AgencyId'>
 
@@ -81,6 +87,12 @@ export const investorInterestIdFromString = (value: string): InvestorInterestId 
 export const organizationCapitalRaiseIdFromString = (value: string): OrganizationCapitalRaiseId => idFromString<OrganizationCapitalRaiseId>(value, 'OrganizationCapitalRaiseId')
 export const organizationInvestmentProposalIdFromString = (value: string): OrganizationInvestmentProposalId => idFromString<OrganizationInvestmentProposalId>(value, 'OrganizationInvestmentProposalId')
 export const multiClubOwnershipPolicyIdFromString = (value: string): MultiClubOwnershipPolicyId => idFromString<MultiClubOwnershipPolicyId>(value, 'MultiClubOwnershipPolicyId')
+export const organizationStructuralChangeIdFromString = (value: string): OrganizationStructuralChangeId => idFromString<OrganizationStructuralChangeId>(value, 'OrganizationStructuralChangeId')
+export const organizationLifecycleStateIdFromString = (value: string): OrganizationLifecycleStateId => idFromString<OrganizationLifecycleStateId>(value, 'OrganizationLifecycleStateId')
+export const organizationSuccessionIdFromString = (value: string): OrganizationSuccessionId => idFromString<OrganizationSuccessionId>(value, 'OrganizationSuccessionId')
+export const regulatoryOrderIdFromString = (value: string): RegulatoryOrderId => idFromString<RegulatoryOrderId>(value, 'RegulatoryOrderId')
+export const regulatoryRemediationPlanIdFromString = (value: string): RegulatoryRemediationPlanId => idFromString<RegulatoryRemediationPlanId>(value, 'RegulatoryRemediationPlanId')
+export const organizationLicenseIdFromString = (value: string): OrganizationLicenseId => idFromString<OrganizationLicenseId>(value, 'OrganizationLicenseId')
 export const agentIdFromString = (value: string): AgentId => idFromString<AgentId>(value, 'AgentId')
 export const agencyIdFromString = (value: string): AgencyId => idFromString<AgencyId>(value, 'AgencyId')
 /** Legacy/generated-world compatibility resolver. World DB runtime uses the canonical Team relation. */

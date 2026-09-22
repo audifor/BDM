@@ -233,7 +233,7 @@ describe('GameWorldSaveV4 competition runtime', () => {
   it('migrates canonical V3 by preserving V3 fields and adding empty runtime state', () => {
     const v3 = serializeGameWorldV3(createNewGame(), savedAt)
     const v4 = migrateGameWorldSaveV3ToV4(v3)
-    const { worldDbCompetitionRuntime, worldAnnualDevelopmentCycle, organizations, organizationSections, organizationOwnership, organizationControl, organizationOwnershipTransactions, organizationOwnershipTransactionEvents, organizationInvestorInterests, organizationCapitalRaises, organizationCapitalRaiseEvents, organizationInvestmentProposals, organizationInvestmentProposalEvents, multiClubOwnershipPolicies, ...v4CompatibilityPayload } = v4.payload
+    const { worldDbCompetitionRuntime, worldAnnualDevelopmentCycle, organizations, organizationSections, organizationOwnership, organizationControl, organizationOwnershipTransactions, organizationOwnershipTransactionEvents, organizationInvestorInterests, organizationCapitalRaises, organizationCapitalRaiseEvents, organizationInvestmentProposals, organizationInvestmentProposalEvents, multiClubOwnershipPolicies, organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses, ...v4CompatibilityPayload } = v4.payload
 
     expect(v4.schemaVersion).toBe(4)
     expect(v4CompatibilityPayload).toEqual(v3.payload)
@@ -253,6 +253,12 @@ describe('GameWorldSaveV4 competition runtime', () => {
     expect(organizationInvestmentProposals).toEqual([])
     expect(organizationInvestmentProposalEvents).toEqual([])
     expect(multiClubOwnershipPolicies).toEqual([])
+    expect(organizationStructuralChanges).toEqual([])
+    expect(organizationLifecycleStates).toEqual([])
+    expect(organizationSuccessions).toEqual([])
+    expect(regulatoryOrders).toEqual([])
+    expect(regulatoryRemediationPlans).toEqual([])
+    expect(organizationLicenses).toEqual([])
     expect(organizations.length).toBeGreaterThan(0)
     expect(organizationSections.length).toBeGreaterThan(0)
   })

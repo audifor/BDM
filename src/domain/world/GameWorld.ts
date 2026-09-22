@@ -31,6 +31,12 @@ import { createOrganizationCapitalRaise, createOrganizationCapitalRaiseEvent, va
 import { createOrganizationInvestmentProposal, createOrganizationInvestmentProposalEvent, deriveOrganizationInvestmentProposalStatus, validateOrganizationInvestmentProposalLifecycle, type OrganizationInvestmentProposal, type OrganizationInvestmentProposalEvent } from '@/domain/investment/OrganizationInvestmentProposal'
 import { isLinkedGovernanceDecisionApproved } from '@/domain/investment/InvestmentGovernance'
 import { createMultiClubOwnershipPolicy, type MultiClubOwnershipPolicy } from '@/domain/multiClub/MultiClubOwnershipPolicy'
+import { createOrganizationStructuralChange, type OrganizationStructuralChange } from '@/domain/structuralRegulation/OrganizationStructuralChange'
+import { createOrganizationLifecycleState, type OrganizationLifecycleState } from '@/domain/structuralRegulation/OrganizationLifecycle'
+import { createOrganizationSuccession, type OrganizationSuccession } from '@/domain/structuralRegulation/OrganizationSuccession'
+import { createRegulatoryOrder, type RegulatoryOrder } from '@/domain/structuralRegulation/RegulatoryOrder'
+import { createRegulatoryRemediationPlan, type RegulatoryRemediationPlan } from '@/domain/structuralRegulation/RegulatoryRemediationPlan'
+import { createOrganizationLicense, type OrganizationLicense } from '@/domain/structuralRegulation/OrganizationLicense'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
 import { createInjury, isInjuryActive, type InjuryRecord } from '@/domain/injury'
 import type { InjuryId } from '@/domain/ids'
@@ -119,6 +125,12 @@ export interface GameWorld {
   readonly organizationInvestmentProposalsById: Readonly<Record<import('@/domain/ids').OrganizationInvestmentProposalId, OrganizationInvestmentProposal>>
   readonly organizationInvestmentProposalEventsById: Readonly<Record<string, OrganizationInvestmentProposalEvent>>
   readonly multiClubOwnershipPoliciesById: Readonly<Record<import('@/domain/ids').MultiClubOwnershipPolicyId, MultiClubOwnershipPolicy>>
+  readonly organizationStructuralChangesById: Readonly<Record<import('@/domain/ids').OrganizationStructuralChangeId, OrganizationStructuralChange>>
+  readonly organizationLifecycleStatesById: Readonly<Record<import('@/domain/ids').OrganizationLifecycleStateId, OrganizationLifecycleState>>
+  readonly organizationSuccessionsById: Readonly<Record<import('@/domain/ids').OrganizationSuccessionId, OrganizationSuccession>>
+  readonly regulatoryOrdersById: Readonly<Record<import('@/domain/ids').RegulatoryOrderId, RegulatoryOrder>>
+  readonly regulatoryRemediationPlansById: Readonly<Record<import('@/domain/ids').RegulatoryRemediationPlanId, RegulatoryRemediationPlan>>
+  readonly organizationLicensesById: Readonly<Record<import('@/domain/ids').OrganizationLicenseId, OrganizationLicense>>
   readonly competitions: Readonly<Record<CompetitionId, Competition>>
   readonly ecosystems: Readonly<Record<EcosystemId, SportsEcosystem>>
   readonly conferencesById: Readonly<Record<ConferenceId, Conference>>
@@ -336,6 +348,12 @@ export interface CreateGameWorldInput {
   organizationInvestmentProposals?: readonly OrganizationInvestmentProposal[]
   organizationInvestmentProposalEvents?: readonly OrganizationInvestmentProposalEvent[]
   multiClubOwnershipPolicies?: readonly MultiClubOwnershipPolicy[]
+  organizationStructuralChanges?: readonly OrganizationStructuralChange[]
+  organizationLifecycleStates?: readonly OrganizationLifecycleState[]
+  organizationSuccessions?: readonly OrganizationSuccession[]
+  regulatoryOrders?: readonly RegulatoryOrder[]
+  regulatoryRemediationPlans?: readonly RegulatoryRemediationPlan[]
+  organizationLicenses?: readonly OrganizationLicense[]
   competitions: readonly Competition[]
   ecosystems?: readonly SportsEcosystem[] | Readonly<Record<EcosystemId, SportsEcosystem>>
   conferences?: readonly Conference[]
@@ -578,6 +596,12 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     organizationInvestmentProposalsById: indexById((input.organizationInvestmentProposals ?? []).map(createOrganizationInvestmentProposal), 'Organization investment proposal'),
     organizationInvestmentProposalEventsById: indexById((input.organizationInvestmentProposalEvents ?? []).map(createOrganizationInvestmentProposalEvent), 'Organization investment proposal event'),
     multiClubOwnershipPoliciesById: indexById((input.multiClubOwnershipPolicies ?? []).map(createMultiClubOwnershipPolicy), 'Multi-club ownership policy'),
+    organizationStructuralChangesById: indexById((input.organizationStructuralChanges ?? []).map(createOrganizationStructuralChange), 'Organization structural change'),
+    organizationLifecycleStatesById: indexById((input.organizationLifecycleStates ?? []).map(createOrganizationLifecycleState), 'Organization lifecycle state'),
+    organizationSuccessionsById: indexById((input.organizationSuccessions ?? []).map(createOrganizationSuccession), 'Organization succession'),
+    regulatoryOrdersById: indexById((input.regulatoryOrders ?? []).map(createRegulatoryOrder), 'Regulatory order'),
+    regulatoryRemediationPlansById: indexById((input.regulatoryRemediationPlans ?? []).map(createRegulatoryRemediationPlan), 'Regulatory remediation plan'),
+    organizationLicensesById: indexById((input.organizationLicenses ?? []).map(createOrganizationLicense), 'Organization license'),
     competitions: indexById(input.competitions, 'Competition'),
     ecosystems: indexById(ecosystems, 'Sports ecosystem'),
     conferencesById: indexById(conferences.map(createConference), 'Conference'),
@@ -756,6 +780,7 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
   multiClubOwnershipPolicies: 'multiClubOwnershipPoliciesById',
+  organizationStructuralChanges: 'organizationStructuralChangesById', organizationLifecycleStates: 'organizationLifecycleStatesById', organizationSuccessions: 'organizationSuccessionsById', regulatoryOrders: 'regulatoryOrdersById', regulatoryRemediationPlans: 'regulatoryRemediationPlansById', organizationLicenses: 'organizationLicensesById',
   organizationInvestorInterests: 'organizationInvestorInterestsById', organizationCapitalRaises: 'organizationCapitalRaisesById', organizationCapitalRaiseEvents: 'organizationCapitalRaiseEventsById', organizationInvestmentProposals: 'organizationInvestmentProposalsById', organizationInvestmentProposalEvents: 'organizationInvestmentProposalEventsById',
   governanceInstitutions: 'governanceInstitutionsById', governanceUniverseProfiles: 'governanceUniverseProfilesById', governanceBodies: 'governanceBodiesById', governanceAppointments: 'governanceAppointmentsById', governanceAuthorityGrants: 'governanceAuthorityGrantsById', governanceExternalRelationships: 'governanceExternalRelationshipsById', governanceExpectationPeriods: 'governanceExpectationPeriodsById', governanceObjectives: 'governanceObjectivesById',
   supporterRelationships: 'supporterRelationshipsById', collectiveInstitutionAffiliations: 'collectiveInstitutionAffiliationsById', collectiveParticipantAffiliations: 'collectiveParticipantAffiliationsById', collectiveInstitutionalStatusEvents: 'collectiveInstitutionalStatusEventsById', collectiveInstitutionalLiaisons: 'collectiveInstitutionalLiaisonsById', supporterExpectations: 'supporterExpectationsById', supporterExpectationEvents: 'supporterExpectationEventsById', supporterPressureEvents: 'supporterPressureEventsById', supporterReactions: 'supporterReactionsById', supportFundingPledges: 'supportFundingPledgesById', supportFundingPledgeEvents: 'supportFundingPledgeEventsById', supportContributions: 'supportContributionsById',
@@ -777,6 +802,12 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   organizationInvestmentProposals: (value) => indexById((value as readonly OrganizationInvestmentProposal[]).map(createOrganizationInvestmentProposal), 'Organization investment proposal'),
   organizationInvestmentProposalEvents: (value) => indexById((value as readonly OrganizationInvestmentProposalEvent[]).map(createOrganizationInvestmentProposalEvent), 'Organization investment proposal event'),
   multiClubOwnershipPolicies: (value) => indexById((value as readonly MultiClubOwnershipPolicy[]).map(createMultiClubOwnershipPolicy), 'Multi-club ownership policy'),
+  organizationStructuralChanges: (value) => indexById((value as readonly OrganizationStructuralChange[]).map(createOrganizationStructuralChange), 'Organization structural change'),
+  organizationLifecycleStates: (value) => indexById((value as readonly OrganizationLifecycleState[]).map(createOrganizationLifecycleState), 'Organization lifecycle state'),
+  organizationSuccessions: (value) => indexById((value as readonly OrganizationSuccession[]).map(createOrganizationSuccession), 'Organization succession'),
+  regulatoryOrders: (value) => indexById((value as readonly RegulatoryOrder[]).map(createRegulatoryOrder), 'Regulatory order'),
+  regulatoryRemediationPlans: (value) => indexById((value as readonly RegulatoryRemediationPlan[]).map(createRegulatoryRemediationPlan), 'Regulatory remediation plan'),
+  organizationLicenses: (value) => indexById((value as readonly OrganizationLicense[]).map(createOrganizationLicense), 'Organization license'),
   governanceUniverseProfiles: (value) => indexById((value as readonly GovernanceUniverseProfile[]).map(createGovernanceUniverseProfile), 'Governance universe profile'),
   governanceBodies: (value) => indexById((value as readonly GovernanceBody[]).map(createGovernanceBody), 'Governance body'),
   governanceAppointments: (value) => indexById((value as readonly GovernanceAppointment[]).map(createGovernanceAppointment), 'Governance appointment'),
@@ -828,6 +859,7 @@ function validateWorld(world: GameWorld): void {
   validateOrganizationOwnershipTransactions(world)
   validateOrganizationInvestments(world)
   validateMultiClubOwnershipPolicies(world)
+  validateStructuralRegulation(world)
   validateGovernance(world)
   validateInstitutionalSupport(world)
 
@@ -1315,6 +1347,68 @@ function validateMultiClubOwnershipPolicies(world: GameWorld): void {
     if (policy.scope.kind === 'COMPETITION') requireEntity(world.competitions, policy.scope.competitionId, `Multi-club ownership policy ${policy.id} competition`)
     else requireEntity(world.ecosystems, policy.scope.ecosystemId, `Multi-club ownership policy ${policy.id} ecosystem`)
   }
+}
+
+function validateStructuralRegulation(world: GameWorld): void {
+  for (const change of Object.values(world.organizationStructuralChangesById)) {
+    createOrganizationStructuralChange(change)
+    requireEntity(world.organizationsById, change.organizationId, `Organization structural change ${change.id} organization`)
+    for (const organizationId of [...change.predecessorOrganizationIds, ...change.successorOrganizationIds]) requireEntity(world.organizationsById, organizationId, `Organization structural change ${change.id} related organization`)
+    if (change.sourceDecisionId !== null) requireEntity(world.governanceDecisionsById, change.sourceDecisionId, `Organization structural change ${change.id} Governance decision`)
+    if (change.regulatoryOrderId !== null) requireEntity(world.regulatoryOrdersById, change.regulatoryOrderId as never, `Organization structural change ${change.id} regulatory order`)
+  }
+  for (const state of Object.values(world.organizationLifecycleStatesById)) {
+    createOrganizationLifecycleState(state)
+    requireEntity(world.organizationsById, state.organizationId, `Organization lifecycle state ${state.id} organization`)
+    if (state.sourceStructuralChangeId !== null) requireEntity(world.organizationStructuralChangesById, state.sourceStructuralChangeId as never, `Organization lifecycle state ${state.id} structural change`)
+  }
+  for (const succession of Object.values(world.organizationSuccessionsById)) {
+    createOrganizationSuccession(succession)
+    requireEntity(world.organizationsById, succession.predecessorOrganizationId, `Organization succession ${succession.id} predecessor`)
+    requireEntity(world.organizationsById, succession.successorOrganizationId, `Organization succession ${succession.id} successor`)
+  }
+  validateSuccessionGraph(world)
+  for (const order of Object.values(world.regulatoryOrdersById)) {
+    createRegulatoryOrder(order)
+    requireEntity(world.organizationsById, order.issuerOrganizationId, `Regulatory order ${order.id} issuer`)
+    requireEntity(world.organizationsById, order.targetOrganizationId, `Regulatory order ${order.id} target`)
+    if (order.sourceDecisionId !== null) requireEntity(world.governanceDecisionsById, order.sourceDecisionId, `Regulatory order ${order.id} Governance decision`)
+    if (order.sourceAssessmentId !== null && order.sourceAssessmentId.length === 0) throw new GameWorldValidationError(`Regulatory order ${order.id} source assessment is empty`)
+  }
+  for (const plan of Object.values(world.regulatoryRemediationPlansById)) {
+    createRegulatoryRemediationPlan(plan)
+    const order = requireEntity(world.regulatoryOrdersById, plan.regulatoryOrderId, `Regulatory remediation plan ${plan.id} order`)
+    for (const action of plan.actions) {
+      if (action.organizationStructuralChangeId !== null) requireEntity(world.organizationStructuralChangesById, action.organizationStructuralChangeId, `Remediation action ${action.id} structural change`)
+      if (action.ownershipTransactionId !== null) requireEntity(world.organizationOwnershipTransactionsById, action.ownershipTransactionId as never, `Remediation action ${action.id} ownership transaction`)
+      if (action.competitionId !== null) requireEntity(world.competitions, action.competitionId as never, `Remediation action ${action.id} competition`)
+      if (action.seasonId !== null) requireEntity(world.seasons, action.seasonId as never, `Remediation action ${action.id} season`)
+      if (action.type === 'DIVEST_OWNERSHIP' && order.orderType !== 'DIVESTMENT_REQUIRED') throw new GameWorldValidationError(`Remediation action ${action.id} does not match its order`)
+    }
+  }
+  for (const license of Object.values(world.organizationLicensesById)) {
+    createOrganizationLicense(license)
+    requireEntity(world.organizationsById, license.issuerOrganizationId, `Organization license ${license.id} issuer`)
+    requireEntity(world.organizationsById, license.holderOrganizationId, `Organization license ${license.id} holder`)
+    if (license.scope.kind === 'COMPETITION') requireEntity(world.competitions, license.scope.competitionId, `Organization license ${license.id} competition`)
+    else requireEntity(world.ecosystems, license.scope.ecosystemId, `Organization license ${license.id} ecosystem`)
+    if (license.seasonId !== null) requireEntity(world.seasons, license.seasonId, `Organization license ${license.id} season`)
+  }
+}
+
+function validateSuccessionGraph(world: GameWorld): void {
+  const successors = new Map<string, string[]>()
+  for (const succession of Object.values(world.organizationSuccessionsById)) {
+    const values = successors.get(succession.predecessorOrganizationId) ?? []
+    values.push(succession.successorOrganizationId)
+    successors.set(succession.predecessorOrganizationId, values)
+  }
+  const visit = (organizationId: string, path: Set<string>): void => {
+    if (path.has(organizationId)) throw new GameWorldValidationError(`Organization succession cycle detected at ${organizationId}`)
+    const nextPath = new Set(path); nextPath.add(organizationId)
+    for (const successor of successors.get(organizationId) ?? []) visit(successor, nextPath)
+  }
+  for (const organizationId of successors.keys()) visit(organizationId, new Set())
 }
 
 function validateLinkedInvestmentGovernance(world: GameWorld, governanceDecisionId: string | undefined, label: string): void {

@@ -15,7 +15,14 @@ import { createOrganizationInvestorInterest, type OrganizationInvestorInterest }
 import { createOrganizationCapitalRaise, createOrganizationCapitalRaiseEvent, type OrganizationCapitalRaise, type OrganizationCapitalRaiseEvent } from '@/domain/investment/OrganizationCapitalRaise'
 import { createOrganizationInvestmentProposal, createOrganizationInvestmentProposalEvent, type OrganizationInvestmentProposal, type OrganizationInvestmentProposalEvent } from '@/domain/investment/OrganizationInvestmentProposal'
 import { createMultiClubOwnershipPolicy, type MultiClubOwnershipPolicy } from '@/domain/multiClub/MultiClubOwnershipPolicy'
-import { competitionIdFromString, ecosystemIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString } from '@/domain/ids'
+import { createOrganizationStructuralChange, type OrganizationStructuralChange } from '@/domain/structuralRegulation/OrganizationStructuralChange'
+import { createOrganizationLifecycleState, type OrganizationLifecycleState } from '@/domain/structuralRegulation/OrganizationLifecycle'
+import { createOrganizationSuccession, type OrganizationSuccession } from '@/domain/structuralRegulation/OrganizationSuccession'
+import { createRegulatoryOrder, type RegulatoryOrder } from '@/domain/structuralRegulation/RegulatoryOrder'
+import { createRegulatoryRemediationPlan, type RegulatoryRemediationPlan } from '@/domain/structuralRegulation/RegulatoryRemediationPlan'
+import { createOrganizationLicense, type OrganizationLicense } from '@/domain/structuralRegulation/OrganizationLicense'
+import { parseGameDate } from '@/domain/date'
+import { competitionIdFromString, ecosystemIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, seasonIdFromString } from '@/domain/ids'
 import {
   deserializeGameWorldSave as deserializeLegacyGameWorldSave,
   deserializeGameWorldV3,
@@ -54,6 +61,12 @@ export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly organizationInvestmentProposals: readonly OrganizationInvestmentProposal[]
   readonly organizationInvestmentProposalEvents: readonly OrganizationInvestmentProposalEvent[]
   readonly multiClubOwnershipPolicies: readonly MultiClubOwnershipPolicy[]
+  readonly organizationStructuralChanges: readonly OrganizationStructuralChange[]
+  readonly organizationLifecycleStates: readonly OrganizationLifecycleState[]
+  readonly organizationSuccessions: readonly OrganizationSuccession[]
+  readonly regulatoryOrders: readonly RegulatoryOrder[]
+  readonly regulatoryRemediationPlans: readonly RegulatoryRemediationPlan[]
+  readonly organizationLicenses: readonly OrganizationLicense[]
 }
 
 export interface SaveGameEnvelopeV4 {
@@ -87,6 +100,7 @@ export function migrateGameWorldSaveV3ToV4(value: SaveGameEnvelopeV3): SaveGameE
       organizationInvestmentProposals: [],
       organizationInvestmentProposalEvents: [],
       multiClubOwnershipPolicies: [],
+      organizationStructuralChanges: [], organizationLifecycleStates: [], organizationSuccessions: [], regulatoryOrders: [], regulatoryRemediationPlans: [], organizationLicenses: [],
     }),
   })
 }
@@ -116,6 +130,7 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       organizationInvestmentProposals: Object.values(world.organizationInvestmentProposalsById),
       organizationInvestmentProposalEvents: Object.values(world.organizationInvestmentProposalEventsById),
       multiClubOwnershipPolicies: Object.values(world.multiClubOwnershipPoliciesById),
+      organizationStructuralChanges: Object.values(world.organizationStructuralChangesById), organizationLifecycleStates: Object.values(world.organizationLifecycleStatesById), organizationSuccessions: Object.values(world.organizationSuccessionsById), regulatoryOrders: Object.values(world.regulatoryOrdersById), regulatoryRemediationPlans: Object.values(world.regulatoryRemediationPlansById), organizationLicenses: Object.values(world.organizationLicensesById),
     }),
   })
 }
@@ -160,10 +175,16 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const multiClubOwnershipPolicies = Object.prototype.hasOwnProperty.call(payload, 'multiClubOwnershipPolicies')
     ? parseMultiClubOwnershipPolicies(payload.multiClubOwnershipPolicies)
     : []
+  const organizationStructuralChanges = Object.prototype.hasOwnProperty.call(payload, 'organizationStructuralChanges') ? parseOrganizationStructuralChanges(payload.organizationStructuralChanges) : []
+  const organizationLifecycleStates = Object.prototype.hasOwnProperty.call(payload, 'organizationLifecycleStates') ? parseOrganizationLifecycleStates(payload.organizationLifecycleStates) : []
+  const organizationSuccessions = Object.prototype.hasOwnProperty.call(payload, 'organizationSuccessions') ? parseOrganizationSuccessions(payload.organizationSuccessions) : []
+  const regulatoryOrders = Object.prototype.hasOwnProperty.call(payload, 'regulatoryOrders') ? parseRegulatoryOrders(payload.regulatoryOrders) : []
+  const regulatoryRemediationPlans = Object.prototype.hasOwnProperty.call(payload, 'regulatoryRemediationPlans') ? parseRegulatoryRemediationPlans(payload.regulatoryRemediationPlans) : []
+  const organizationLicenses = Object.prototype.hasOwnProperty.call(payload, 'organizationLicenses') ? parseOrganizationLicenses(payload.organizationLicenses) : []
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
-  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, ...compatibilityPayload } = payload
+  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _structuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, ...compatibilityPayload } = payload
   const world = deserializeGameWorldV3({
     schemaVersion: 3,
     savedAt,
@@ -176,7 +197,8 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const withTransactions = updateGameWorld(withOwnership, { organizationOwnershipTransactions: transactions, organizationOwnershipTransactionEvents: transactionEvents })
   const withInvestments = updateGameWorld(withTransactions, { organizationInvestorInterests: investorInterests, organizationCapitalRaises: capitalRaises, organizationCapitalRaiseEvents: capitalRaiseEvents, organizationInvestmentProposals: investmentProposals, organizationInvestmentProposalEvents: investmentProposalEvents })
   const withPolicies = updateGameWorld(withInvestments, { multiClubOwnershipPolicies })
-  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withPolicies, runtime), worldAnnualDevelopmentCycle: developmentCycle })
+  const withStructuralRegulation = updateGameWorld(withPolicies, { organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses })
+  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withStructuralRegulation, runtime), worldAnnualDevelopmentCycle: developmentCycle })
 }
 
 /** Reads V1-V4. Legacy saves normalize the V4-owned runtime projection to empty state. */
@@ -381,6 +403,63 @@ function parseMultiClubOwnershipPolicies(value: unknown): readonly MultiClubOwne
   }))
 }
 
+function parseOrganizationStructuralChanges(value: unknown): readonly OrganizationStructuralChange[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 organizationStructuralChanges must be an array')
+  return Object.freeze(value.map((entry) => {
+    const change = record(entry, 'Save V4 OrganizationStructuralChange')
+    exactKeys(change, ['id', 'organizationId', 'changeType', 'status', 'effectiveDate', 'requestedAt', 'approvedAt', 'executedAt', 'sourceDecisionId', 'regulatoryOrderId', 'predecessorOrganizationIds', 'successorOrganizationIds', 'notes'], 'Save V4 OrganizationStructuralChange')
+    return createOrganizationStructuralChange({ id: organizationStructuralChangeIdFromString(nonEmptyText(change.id, 'Save V4 OrganizationStructuralChange id')), organizationId: organizationIdFromString(nonEmptyText(change.organizationId, 'Save V4 OrganizationStructuralChange organizationId')), changeType: change.changeType as OrganizationStructuralChange['changeType'], status: change.status as OrganizationStructuralChange['status'], effectiveDate: parseGameDate(nonEmptyText(change.effectiveDate, 'Save V4 OrganizationStructuralChange effectiveDate')), requestedAt: parseGameDate(nonEmptyText(change.requestedAt, 'Save V4 OrganizationStructuralChange requestedAt')), approvedAt: nullableText(change.approvedAt, 'Save V4 OrganizationStructuralChange approvedAt') === null ? null : parseGameDate(nullableText(change.approvedAt, 'Save V4 OrganizationStructuralChange approvedAt')!), executedAt: nullableText(change.executedAt, 'Save V4 OrganizationStructuralChange executedAt') === null ? null : parseGameDate(nullableText(change.executedAt, 'Save V4 OrganizationStructuralChange executedAt')!), sourceDecisionId: nullableText(change.sourceDecisionId, 'Save V4 OrganizationStructuralChange sourceDecisionId'), regulatoryOrderId: nullableText(change.regulatoryOrderId, 'Save V4 OrganizationStructuralChange regulatoryOrderId'), predecessorOrganizationIds: stringArray(change.predecessorOrganizationIds, 'Save V4 OrganizationStructuralChange predecessorOrganizationIds'), successorOrganizationIds: stringArray(change.successorOrganizationIds, 'Save V4 OrganizationStructuralChange successorOrganizationIds'), notes: nullableText(change.notes, 'Save V4 OrganizationStructuralChange notes') })
+  }))
+}
+
+function parseOrganizationLifecycleStates(value: unknown): readonly OrganizationLifecycleState[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 organizationLifecycleStates must be an array')
+  return Object.freeze(value.map((entry) => {
+    const state = record(entry, 'Save V4 OrganizationLifecycleState')
+    exactKeys(state, ['id', 'organizationId', 'status', 'effectiveFrom', 'effectiveTo', 'sourceStructuralChangeId', 'notes'], 'Save V4 OrganizationLifecycleState')
+    return createOrganizationLifecycleState({ id: organizationLifecycleStateIdFromString(nonEmptyText(state.id, 'Save V4 OrganizationLifecycleState id')), organizationId: organizationIdFromString(nonEmptyText(state.organizationId, 'Save V4 OrganizationLifecycleState organizationId')), status: state.status as OrganizationLifecycleState['status'], effectiveFrom: nonEmptyText(state.effectiveFrom, 'Save V4 OrganizationLifecycleState effectiveFrom'), effectiveTo: nullableText(state.effectiveTo, 'Save V4 OrganizationLifecycleState effectiveTo'), sourceStructuralChangeId: nullableText(state.sourceStructuralChangeId, 'Save V4 OrganizationLifecycleState sourceStructuralChangeId'), notes: nullableText(state.notes, 'Save V4 OrganizationLifecycleState notes') })
+  }))
+}
+
+function parseOrganizationSuccessions(value: unknown): readonly OrganizationSuccession[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 organizationSuccessions must be an array')
+  return Object.freeze(value.map((entry) => {
+    const succession = record(entry, 'Save V4 OrganizationSuccession')
+    exactKeys(succession, ['id', 'predecessorOrganizationId', 'successorOrganizationId', 'effectiveDate', 'successionType', 'transfersRights', 'transfersObligations', 'transfersCompetitionRights', 'notes'], 'Save V4 OrganizationSuccession')
+    return createOrganizationSuccession({ id: organizationSuccessionIdFromString(nonEmptyText(succession.id, 'Save V4 OrganizationSuccession id')), predecessorOrganizationId: organizationIdFromString(nonEmptyText(succession.predecessorOrganizationId, 'Save V4 OrganizationSuccession predecessorOrganizationId')), successorOrganizationId: organizationIdFromString(nonEmptyText(succession.successorOrganizationId, 'Save V4 OrganizationSuccession successorOrganizationId')), effectiveDate: nonEmptyText(succession.effectiveDate, 'Save V4 OrganizationSuccession effectiveDate'), successionType: succession.successionType as OrganizationSuccession['successionType'], transfersRights: boolean(succession.transfersRights, 'Save V4 OrganizationSuccession transfersRights'), transfersObligations: boolean(succession.transfersObligations, 'Save V4 OrganizationSuccession transfersObligations'), transfersCompetitionRights: boolean(succession.transfersCompetitionRights, 'Save V4 OrganizationSuccession transfersCompetitionRights'), notes: nullableText(succession.notes, 'Save V4 OrganizationSuccession notes') })
+  }))
+}
+
+function parseRegulatoryOrders(value: unknown): readonly RegulatoryOrder[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 regulatoryOrders must be an array')
+  return Object.freeze(value.map((entry) => {
+    const order = record(entry, 'Save V4 RegulatoryOrder')
+    exactKeys(order, ['id', 'issuerOrganizationId', 'targetOrganizationId', 'orderType', 'status', 'issuedAt', 'effectiveDate', 'deadline', 'resolvedAt', 'sourceAssessmentId', 'sourceDecisionId', 'reasonCode', 'notes'], 'Save V4 RegulatoryOrder')
+    return createRegulatoryOrder({ id: regulatoryOrderIdFromString(nonEmptyText(order.id, 'Save V4 RegulatoryOrder id')), issuerOrganizationId: organizationIdFromString(nonEmptyText(order.issuerOrganizationId, 'Save V4 RegulatoryOrder issuerOrganizationId')), targetOrganizationId: organizationIdFromString(nonEmptyText(order.targetOrganizationId, 'Save V4 RegulatoryOrder targetOrganizationId')), orderType: order.orderType as RegulatoryOrder['orderType'], status: order.status as RegulatoryOrder['status'], issuedAt: parseGameDate(nonEmptyText(order.issuedAt, 'Save V4 RegulatoryOrder issuedAt')), effectiveDate: parseGameDate(nonEmptyText(order.effectiveDate, 'Save V4 RegulatoryOrder effectiveDate')), deadline: nullableText(order.deadline, 'Save V4 RegulatoryOrder deadline') === null ? null : parseGameDate(nullableText(order.deadline, 'Save V4 RegulatoryOrder deadline')!), resolvedAt: nullableText(order.resolvedAt, 'Save V4 RegulatoryOrder resolvedAt') === null ? null : parseGameDate(nullableText(order.resolvedAt, 'Save V4 RegulatoryOrder resolvedAt')!), sourceAssessmentId: nullableText(order.sourceAssessmentId, 'Save V4 RegulatoryOrder sourceAssessmentId'), sourceDecisionId: nullableText(order.sourceDecisionId, 'Save V4 RegulatoryOrder sourceDecisionId'), reasonCode: nullableText(order.reasonCode, 'Save V4 RegulatoryOrder reasonCode'), notes: nullableText(order.notes, 'Save V4 RegulatoryOrder notes') })
+  }))
+}
+
+function parseRegulatoryRemediationPlans(value: unknown): readonly RegulatoryRemediationPlan[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 regulatoryRemediationPlans must be an array')
+  return Object.freeze(value.map((entry) => {
+    const plan = record(entry, 'Save V4 RegulatoryRemediationPlan')
+    exactKeys(plan, ['id', 'regulatoryOrderId', 'actions', 'deadline', 'status', 'proposedAt', 'completedAt', 'evidenceIds'], 'Save V4 RegulatoryRemediationPlan')
+    const actions = Array.isArray(plan.actions) ? plan.actions.map((raw) => { const action = record(raw, 'Save V4 RegulatoryRemediationAction'); exactKeys(action, ['id', 'type', 'organizationStructuralChangeId', 'ownershipTransactionId', 'competitionId', 'seasonId', 'notes'], 'Save V4 RegulatoryRemediationAction'); const structuralChangeId = nullableText(action.organizationStructuralChangeId, 'Save V4 Remediation action structural change'); const ownershipTransactionId = nullableText(action.ownershipTransactionId, 'Save V4 Remediation action ownership transaction'); const competitionId = nullableText(action.competitionId, 'Save V4 Remediation action competition'); const seasonId = nullableText(action.seasonId, 'Save V4 Remediation action season'); return { id: nonEmptyText(action.id, 'Save V4 Remediation action id'), type: action.type as RegulatoryRemediationPlan['actions'][number]['type'], organizationStructuralChangeId: structuralChangeId === null ? null : organizationStructuralChangeIdFromString(structuralChangeId), ownershipTransactionId: ownershipTransactionId === null ? null : organizationOwnershipTransactionIdFromString(ownershipTransactionId), competitionId: competitionId === null ? null : competitionIdFromString(competitionId), seasonId: seasonId === null ? null : seasonIdFromString(seasonId), notes: nullableText(action.notes, 'Save V4 Remediation action notes') } }) : (() => { throw new TypeError('Save V4 RegulatoryRemediationPlan actions must be an array') })()
+    return createRegulatoryRemediationPlan({ id: regulatoryRemediationPlanIdFromString(nonEmptyText(plan.id, 'Save V4 RegulatoryRemediationPlan id')), regulatoryOrderId: regulatoryOrderIdFromString(nonEmptyText(plan.regulatoryOrderId, 'Save V4 RegulatoryRemediationPlan regulatoryOrderId')), actions, deadline: nullableText(plan.deadline, 'Save V4 RegulatoryRemediationPlan deadline'), status: plan.status as RegulatoryRemediationPlan['status'], proposedAt: nonEmptyText(plan.proposedAt, 'Save V4 RegulatoryRemediationPlan proposedAt'), completedAt: nullableText(plan.completedAt, 'Save V4 RegulatoryRemediationPlan completedAt'), evidenceIds: stringArray(plan.evidenceIds, 'Save V4 RegulatoryRemediationPlan evidenceIds') })
+  }))
+}
+
+function parseOrganizationLicenses(value: unknown): readonly OrganizationLicense[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 organizationLicenses must be an array')
+  return Object.freeze(value.map((entry) => {
+    const license = record(entry, 'Save V4 OrganizationLicense')
+    exactKeys(license, ['id', 'issuerOrganizationId', 'holderOrganizationId', 'scope', 'seasonId', 'status', 'validFrom', 'validTo', 'conditions'], 'Save V4 OrganizationLicense')
+    const scope = record(license.scope, 'Save V4 OrganizationLicense scope')
+    const normalizedScope = scope.kind === 'COMPETITION' ? (exactKeys(scope, ['kind', 'competitionId'], 'Save V4 OrganizationLicense competition scope'), { kind: 'COMPETITION' as const, competitionId: competitionIdFromString(nonEmptyText(scope.competitionId, 'Save V4 OrganizationLicense competitionId')) }) : scope.kind === 'ECOSYSTEM' ? (exactKeys(scope, ['kind', 'ecosystemId'], 'Save V4 OrganizationLicense ecosystem scope'), { kind: 'ECOSYSTEM' as const, ecosystemId: ecosystemIdFromString(nonEmptyText(scope.ecosystemId, 'Save V4 OrganizationLicense ecosystemId')) }) : (() => { throw new TypeError('Save V4 OrganizationLicense scope kind is invalid') })()
+    return createOrganizationLicense({ id: organizationLicenseIdFromString(nonEmptyText(license.id, 'Save V4 OrganizationLicense id')), issuerOrganizationId: organizationIdFromString(nonEmptyText(license.issuerOrganizationId, 'Save V4 OrganizationLicense issuerOrganizationId')), holderOrganizationId: organizationIdFromString(nonEmptyText(license.holderOrganizationId, 'Save V4 OrganizationLicense holderOrganizationId')), scope: normalizedScope, seasonId: nullableText(license.seasonId, 'Save V4 OrganizationLicense seasonId'), status: license.status as OrganizationLicense['status'], validFrom: nonEmptyText(license.validFrom, 'Save V4 OrganizationLicense validFrom'), validTo: nullableText(license.validTo, 'Save V4 OrganizationLicense validTo'), conditions: stringArray(license.conditions, 'Save V4 OrganizationLicense conditions') })
+  }))
+}
+
 function parseConsideration(value: unknown): OrganizationOwnershipTransaction['consideration'] {
   if (value === null) return null
   const consideration = record(value, 'Save V4 OrganizationOwnershipTransaction consideration')
@@ -481,6 +560,11 @@ function idArray(value: unknown, label: string): readonly string[] {
   })
   if (new Set(ids).size !== ids.length) throw new TypeError(`${label} must not contain duplicates`)
   return Object.freeze(ids)
+}
+
+function stringArray(value: unknown, label: string): readonly string[] {
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string')) throw new TypeError(`${label} must be an array of strings`)
+  return Object.freeze(value as string[])
 }
 
 function nonEmptyText(value: unknown, label: string): string {
