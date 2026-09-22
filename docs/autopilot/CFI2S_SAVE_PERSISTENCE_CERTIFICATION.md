@@ -10,14 +10,14 @@
 
 ## 3. Final SHA
 
-The commit carrying this file (recorded via a small follow-up SHA-reference commit after this file's own commit, matching the CFI2 lineage's own convention).
+`6d00863bfe8686db17b290aac4893061eff4bda8` (`docs(facilities): add CFI2S save persistence certification report`).
 
 ## 4. Commits
 
 Two atomic commits, matching CFI1/CFI2's own convention:
 
 1. `482e6ec` — `feat(save): persist Club Facilities & Infrastructure V2 in Save V4 (CFI2S)` — the Save V4 extension (`GameWorldSaveV4.ts`), the pre-existing V4 migration test's updated field list (`GameWorldSaveV4.test.ts`), and the new round-trip/query-equivalence/malformed-input test file (`GameWorldSaveV4.Facilities.test.ts`).
-2. `docs(facilities): add CFI2S save persistence certification report` — this file.
+2. `6d00863` — `docs(facilities): add CFI2S save persistence certification report` — this file.
 
 No push, no merge, per instructions.
 
