@@ -1,4 +1,5 @@
 import { addDays, compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
+import { assertNoBlockingMultiClubImpact } from '@/domain/multiClub/MultiClubConflict'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import {
   createOrganizationOwnershipTransactionEvent,
@@ -6,11 +7,12 @@ import {
   isOrganizationOwnershipGovernanceApproved,
   sameOrganizationOwnershipActor,
   validateOrganizationOwnershipTransactionLifecycle,
+  type OrganizationOwnershipTransaction,
 } from './OrganizationOwnershipTransaction'
-import { createOrganizationOwnership, getActiveOrganizationOwnership } from './OrganizationOwnership'
+import { createOrganizationOwnership, getActiveOrganizationOwnership, type OrganizationOwnership } from './OrganizationOwnership'
 
-/** Applies one approved economic transfer and records only its immutable execution event. */
-export function executeOrganizationOwnershipTransaction(world: GameWorld, transactionId: string, effectiveOn: GameDate | string): GameWorld {
+/** Projects one approved transfer without appending its execution event. */
+export function projectOrganizationOwnershipTransactionOwnership(world: GameWorld, transactionId: string, effectiveOn: GameDate | string): readonly OrganizationOwnership[] {
   const transaction = Object.values(world.organizationOwnershipTransactionsById).find((candidate) => candidate.id === transactionId)
   if (transaction === undefined) throw new Error(`Organization ownership transaction does not exist: ${transactionId}`)
   const executionDate = parseGameDate(effectiveOn)
@@ -19,7 +21,32 @@ export function executeOrganizationOwnershipTransaction(world: GameWorld, transa
   if (deriveOrganizationOwnershipTransactionStatus(events) !== 'APPROVED') throw new Error(`Organization ownership transaction ${transaction.id} is not approved for execution`)
   if (compareGameDates(executionDate, transaction.agreedOn) < 0) throw new RangeError(`Organization ownership transaction ${transaction.id} executes before its agreed date`)
   if (!isOrganizationOwnershipGovernanceApproved(world, transaction, executionDate)) throw new Error(`Organization ownership transaction ${transaction.id} lacks linked Governance approval`)
+  return calculateOwnershipAfterTransfer(world, transaction, executionDate)
+}
 
+/** Applies one approved economic transfer and records only its immutable execution event. */
+export function executeOrganizationOwnershipTransaction(world: GameWorld, transactionId: string, effectiveOn: GameDate | string): GameWorld {
+  const transaction = Object.values(world.organizationOwnershipTransactionsById).find((candidate) => candidate.id === transactionId)
+  if (transaction === undefined) throw new Error(`Organization ownership transaction does not exist: ${transactionId}`)
+  const executionDate = parseGameDate(effectiveOn)
+  const nextOwnership = projectOrganizationOwnershipTransactionOwnership(world, transactionId, executionDate)
+  const events = Object.values(world.organizationOwnershipTransactionEventsById).filter((event) => event.transactionId === transaction.id)
+  const projectedWorld = updateGameWorld(world, { organizationOwnership: nextOwnership })
+  assertNoBlockingMultiClubImpact(projectedWorld, transaction.organizationId, executionDate)
+  const executionEvent = createOrganizationOwnershipTransactionEvent({
+    id: `ownership-transaction:${transaction.id}:executed`,
+    transactionId: transaction.id,
+    kind: 'EXECUTED',
+    effectiveOn: executionDate,
+    ...(transaction.governanceDecisionId === undefined ? {} : { governanceDecisionId: transaction.governanceDecisionId }),
+  })
+  return updateGameWorld(world, {
+    organizationOwnership: nextOwnership,
+    organizationOwnershipTransactionEvents: [...events, executionEvent],
+  })
+}
+
+function calculateOwnershipAfterTransfer(world: GameWorld, transaction: OrganizationOwnershipTransaction, executionDate: GameDate): readonly OrganizationOwnership[] {
   const active = getActiveOrganizationOwnership(world, transaction.organizationId, executionDate)
   const sellerRows = active.filter((row) => sameOrganizationOwnershipActor(row.owner, transaction.seller))
   const buyerRows = active.filter((row) => sameOrganizationOwnershipActor(row.owner, transaction.buyer))
@@ -55,16 +82,5 @@ export function executeOrganizationOwnershipTransaction(world: GameWorld, transa
     validFrom: executionDate,
     validTo: null,
   }))
-
-  const executionEvent = createOrganizationOwnershipTransactionEvent({
-    id: `ownership-transaction:${transaction.id}:executed`,
-    transactionId: transaction.id,
-    kind: 'EXECUTED',
-    effectiveOn: executionDate,
-    ...(transaction.governanceDecisionId === undefined ? {} : { governanceDecisionId: transaction.governanceDecisionId }),
-  })
-  return updateGameWorld(world, {
-    organizationOwnership: nextOwnership,
-    organizationOwnershipTransactionEvents: [...events, executionEvent],
-  })
+  return nextOwnership
 }

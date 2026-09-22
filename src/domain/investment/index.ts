@@ -43,7 +43,7 @@ export type {
   OrganizationInvestmentProposalEventKind,
   OrganizationInvestmentProposalStatus,
 } from './OrganizationInvestmentProposal'
-export { executeOrganizationInvestmentProposal, ORGANIZATION_OWNERSHIP_TOTAL_TOLERANCE } from './OrganizationInvestmentExecution'
+export { executeOrganizationInvestmentProposal, projectOrganizationInvestmentProposalOwnership, ORGANIZATION_OWNERSHIP_TOTAL_TOLERANCE } from './OrganizationInvestmentExecution'
 export { isLinkedGovernanceDecisionApproved } from './InvestmentGovernance'
 export {
   findActiveCapitalRaises,

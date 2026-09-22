@@ -32,4 +32,4 @@ export type {
   OrganizationOwnershipTransactionEventKind,
   OrganizationOwnershipTransactionStatus,
 } from './OrganizationOwnershipTransaction'
-export { executeOrganizationOwnershipTransaction } from './OrganizationOwnershipTransactionExecution'
+export { executeOrganizationOwnershipTransaction, projectOrganizationOwnershipTransactionOwnership } from './OrganizationOwnershipTransactionExecution'

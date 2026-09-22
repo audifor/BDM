@@ -32,6 +32,7 @@ export type OrganizationOwnershipTransactionId = EntityId<'OrganizationOwnership
 export type InvestorInterestId = EntityId<'InvestorInterestId'>
 export type OrganizationCapitalRaiseId = EntityId<'OrganizationCapitalRaiseId'>
 export type OrganizationInvestmentProposalId = EntityId<'OrganizationInvestmentProposalId'>
+export type MultiClubOwnershipPolicyId = EntityId<'MultiClubOwnershipPolicyId'>
 export type AgentId = EntityId<'AgentId'>
 export type AgencyId = EntityId<'AgencyId'>
 
@@ -79,6 +80,7 @@ export const organizationOwnershipTransactionIdFromString = (value: string): Org
 export const investorInterestIdFromString = (value: string): InvestorInterestId => idFromString<InvestorInterestId>(value, 'InvestorInterestId')
 export const organizationCapitalRaiseIdFromString = (value: string): OrganizationCapitalRaiseId => idFromString<OrganizationCapitalRaiseId>(value, 'OrganizationCapitalRaiseId')
 export const organizationInvestmentProposalIdFromString = (value: string): OrganizationInvestmentProposalId => idFromString<OrganizationInvestmentProposalId>(value, 'OrganizationInvestmentProposalId')
+export const multiClubOwnershipPolicyIdFromString = (value: string): MultiClubOwnershipPolicyId => idFromString<MultiClubOwnershipPolicyId>(value, 'MultiClubOwnershipPolicyId')
 export const agentIdFromString = (value: string): AgentId => idFromString<AgentId>(value, 'AgentId')
 export const agencyIdFromString = (value: string): AgencyId => idFromString<AgencyId>(value, 'AgencyId')
 /** Legacy/generated-world compatibility resolver. World DB runtime uses the canonical Team relation. */

@@ -34,6 +34,7 @@ export {
   investorInterestIdFromString,
   organizationCapitalRaiseIdFromString,
   organizationInvestmentProposalIdFromString,
+  multiClubOwnershipPolicyIdFromString,
   organizationIdForTeam,
   agentIdFromString,
   agencyIdFromString,
@@ -67,6 +68,7 @@ export type {
   InvestorInterestId,
   OrganizationCapitalRaiseId,
   OrganizationInvestmentProposalId,
+  MultiClubOwnershipPolicyId,
   AgentId,
   AgencyId,
 } from './EntityIds'

@@ -14,7 +14,8 @@ import { createOrganizationOwnershipTransaction, createOrganizationOwnershipTran
 import { createOrganizationInvestorInterest, type OrganizationInvestorInterest } from '@/domain/investment/OrganizationInvestorInterest'
 import { createOrganizationCapitalRaise, createOrganizationCapitalRaiseEvent, type OrganizationCapitalRaise, type OrganizationCapitalRaiseEvent } from '@/domain/investment/OrganizationCapitalRaise'
 import { createOrganizationInvestmentProposal, createOrganizationInvestmentProposalEvent, type OrganizationInvestmentProposal, type OrganizationInvestmentProposalEvent } from '@/domain/investment/OrganizationInvestmentProposal'
-import { investorInterestIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString } from '@/domain/ids'
+import { createMultiClubOwnershipPolicy, type MultiClubOwnershipPolicy } from '@/domain/multiClub/MultiClubOwnershipPolicy'
+import { competitionIdFromString, ecosystemIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString } from '@/domain/ids'
 import {
   deserializeGameWorldSave as deserializeLegacyGameWorldSave,
   deserializeGameWorldV3,
@@ -52,6 +53,7 @@ export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly organizationCapitalRaiseEvents: readonly OrganizationCapitalRaiseEvent[]
   readonly organizationInvestmentProposals: readonly OrganizationInvestmentProposal[]
   readonly organizationInvestmentProposalEvents: readonly OrganizationInvestmentProposalEvent[]
+  readonly multiClubOwnershipPolicies: readonly MultiClubOwnershipPolicy[]
 }
 
 export interface SaveGameEnvelopeV4 {
@@ -84,6 +86,7 @@ export function migrateGameWorldSaveV3ToV4(value: SaveGameEnvelopeV3): SaveGameE
       organizationCapitalRaiseEvents: [],
       organizationInvestmentProposals: [],
       organizationInvestmentProposalEvents: [],
+      multiClubOwnershipPolicies: [],
     }),
   })
 }
@@ -112,6 +115,7 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       organizationCapitalRaiseEvents: Object.values(world.organizationCapitalRaiseEventsById),
       organizationInvestmentProposals: Object.values(world.organizationInvestmentProposalsById),
       organizationInvestmentProposalEvents: Object.values(world.organizationInvestmentProposalEventsById),
+      multiClubOwnershipPolicies: Object.values(world.multiClubOwnershipPoliciesById),
     }),
   })
 }
@@ -153,10 +157,13 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const investmentProposalEvents = Object.prototype.hasOwnProperty.call(payload, 'organizationInvestmentProposalEvents')
     ? parseOrganizationInvestmentProposalEvents(payload.organizationInvestmentProposalEvents)
     : []
+  const multiClubOwnershipPolicies = Object.prototype.hasOwnProperty.call(payload, 'multiClubOwnershipPolicies')
+    ? parseMultiClubOwnershipPolicies(payload.multiClubOwnershipPolicies)
+    : []
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
-  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalEvents, ...compatibilityPayload } = payload
+  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, ...compatibilityPayload } = payload
   const world = deserializeGameWorldV3({
     schemaVersion: 3,
     savedAt,
@@ -168,7 +175,8 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const withOwnership = updateGameWorld(withOrganizations, { organizationOwnership: ownership, organizationControl: control })
   const withTransactions = updateGameWorld(withOwnership, { organizationOwnershipTransactions: transactions, organizationOwnershipTransactionEvents: transactionEvents })
   const withInvestments = updateGameWorld(withTransactions, { organizationInvestorInterests: investorInterests, organizationCapitalRaises: capitalRaises, organizationCapitalRaiseEvents: capitalRaiseEvents, organizationInvestmentProposals: investmentProposals, organizationInvestmentProposalEvents: investmentProposalEvents })
-  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withInvestments, runtime), worldAnnualDevelopmentCycle: developmentCycle })
+  const withPolicies = updateGameWorld(withInvestments, { multiClubOwnershipPolicies })
+  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withPolicies, runtime), worldAnnualDevelopmentCycle: developmentCycle })
 }
 
 /** Reads V1-V4. Legacy saves normalize the V4-owned runtime projection to empty state. */
@@ -345,6 +353,34 @@ function parseOrganizationInvestmentProposalEvents(value: unknown): readonly Org
   }))
 }
 
+function parseMultiClubOwnershipPolicies(value: unknown): readonly MultiClubOwnershipPolicy[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 multiClubOwnershipPolicies must be an array')
+  return Object.freeze(value.map((entry) => {
+    const policy = record(entry, 'Save V4 MultiClubOwnershipPolicy')
+    exactKeys(policy, ['id', 'scope', 'effectiveFrom', 'effectiveTo', 'commonControlRule', 'ownershipThresholdPercentage', 'includeIndirectOwnership', 'enforcement'], 'Save V4 MultiClubOwnershipPolicy')
+    const scope = record(policy.scope, 'Save V4 MultiClubOwnershipPolicy scope')
+    if (scope.kind === 'COMPETITION') {
+      exactKeys(scope, ['kind', 'competitionId'], 'Save V4 MultiClubOwnershipPolicy competition scope')
+    } else if (scope.kind === 'ECOSYSTEM') {
+      exactKeys(scope, ['kind', 'ecosystemId'], 'Save V4 MultiClubOwnershipPolicy ecosystem scope')
+    } else {
+      throw new TypeError('Save V4 MultiClubOwnershipPolicy scope kind is invalid')
+    }
+    return createMultiClubOwnershipPolicy({
+      id: multiClubOwnershipPolicyIdFromString(nonEmptyText(policy.id, 'Save V4 MultiClubOwnershipPolicy id')),
+      scope: scope.kind === 'COMPETITION'
+        ? { kind: 'COMPETITION', competitionId: competitionIdFromString(nonEmptyText(scope.competitionId, 'Save V4 MultiClubOwnershipPolicy competitionId')) }
+        : { kind: 'ECOSYSTEM', ecosystemId: ecosystemIdFromString(nonEmptyText(scope.ecosystemId, 'Save V4 MultiClubOwnershipPolicy ecosystemId')) },
+      effectiveFrom: nullableText(policy.effectiveFrom, 'Save V4 MultiClubOwnershipPolicy effectiveFrom'),
+      effectiveTo: nullableText(policy.effectiveTo, 'Save V4 MultiClubOwnershipPolicy effectiveTo'),
+      commonControlRule: policy.commonControlRule as MultiClubOwnershipPolicy['commonControlRule'],
+      ownershipThresholdPercentage: policy.ownershipThresholdPercentage === null ? null : number(policy.ownershipThresholdPercentage, 'Save V4 MultiClubOwnershipPolicy ownershipThresholdPercentage'),
+      includeIndirectOwnership: boolean(policy.includeIndirectOwnership, 'Save V4 MultiClubOwnershipPolicy includeIndirectOwnership'),
+      enforcement: policy.enforcement as MultiClubOwnershipPolicy['enforcement'],
+    })
+  }))
+}
+
 function parseConsideration(value: unknown): OrganizationOwnershipTransaction['consideration'] {
   if (value === null) return null
   const consideration = record(value, 'Save V4 OrganizationOwnershipTransaction consideration')
@@ -469,6 +505,11 @@ function nullableNumber(value: unknown, label: string): number | null {
 
 function number(value: unknown, label: string): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) throw new TypeError(`${label} must be a finite number`)
+  return value
+}
+
+function boolean(value: unknown, label: string): boolean {
+  if (typeof value !== 'boolean') throw new TypeError(`${label} must be boolean`)
   return value
 }
 

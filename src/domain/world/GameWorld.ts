@@ -30,6 +30,7 @@ import { createOrganizationInvestorInterest, type OrganizationInvestorInterest }
 import { createOrganizationCapitalRaise, createOrganizationCapitalRaiseEvent, validateOrganizationCapitalRaiseLifecycle, type OrganizationCapitalRaise, type OrganizationCapitalRaiseEvent } from '@/domain/investment/OrganizationCapitalRaise'
 import { createOrganizationInvestmentProposal, createOrganizationInvestmentProposalEvent, deriveOrganizationInvestmentProposalStatus, validateOrganizationInvestmentProposalLifecycle, type OrganizationInvestmentProposal, type OrganizationInvestmentProposalEvent } from '@/domain/investment/OrganizationInvestmentProposal'
 import { isLinkedGovernanceDecisionApproved } from '@/domain/investment/InvestmentGovernance'
+import { createMultiClubOwnershipPolicy, type MultiClubOwnershipPolicy } from '@/domain/multiClub/MultiClubOwnershipPolicy'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
 import { createInjury, isInjuryActive, type InjuryRecord } from '@/domain/injury'
 import type { InjuryId } from '@/domain/ids'
@@ -117,6 +118,7 @@ export interface GameWorld {
   readonly organizationCapitalRaiseEventsById: Readonly<Record<string, OrganizationCapitalRaiseEvent>>
   readonly organizationInvestmentProposalsById: Readonly<Record<import('@/domain/ids').OrganizationInvestmentProposalId, OrganizationInvestmentProposal>>
   readonly organizationInvestmentProposalEventsById: Readonly<Record<string, OrganizationInvestmentProposalEvent>>
+  readonly multiClubOwnershipPoliciesById: Readonly<Record<import('@/domain/ids').MultiClubOwnershipPolicyId, MultiClubOwnershipPolicy>>
   readonly competitions: Readonly<Record<CompetitionId, Competition>>
   readonly ecosystems: Readonly<Record<EcosystemId, SportsEcosystem>>
   readonly conferencesById: Readonly<Record<ConferenceId, Conference>>
@@ -333,6 +335,7 @@ export interface CreateGameWorldInput {
   organizationCapitalRaiseEvents?: readonly OrganizationCapitalRaiseEvent[]
   organizationInvestmentProposals?: readonly OrganizationInvestmentProposal[]
   organizationInvestmentProposalEvents?: readonly OrganizationInvestmentProposalEvent[]
+  multiClubOwnershipPolicies?: readonly MultiClubOwnershipPolicy[]
   competitions: readonly Competition[]
   ecosystems?: readonly SportsEcosystem[] | Readonly<Record<EcosystemId, SportsEcosystem>>
   conferences?: readonly Conference[]
@@ -574,6 +577,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     organizationCapitalRaiseEventsById: indexById((input.organizationCapitalRaiseEvents ?? []).map(createOrganizationCapitalRaiseEvent), 'Organization capital raise event'),
     organizationInvestmentProposalsById: indexById((input.organizationInvestmentProposals ?? []).map(createOrganizationInvestmentProposal), 'Organization investment proposal'),
     organizationInvestmentProposalEventsById: indexById((input.organizationInvestmentProposalEvents ?? []).map(createOrganizationInvestmentProposalEvent), 'Organization investment proposal event'),
+    multiClubOwnershipPoliciesById: indexById((input.multiClubOwnershipPolicies ?? []).map(createMultiClubOwnershipPolicy), 'Multi-club ownership policy'),
     competitions: indexById(input.competitions, 'Competition'),
     ecosystems: indexById(ecosystems, 'Sports ecosystem'),
     conferencesById: indexById(conferences.map(createConference), 'Conference'),
@@ -751,6 +755,7 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
 }
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
+  multiClubOwnershipPolicies: 'multiClubOwnershipPoliciesById',
   organizationInvestorInterests: 'organizationInvestorInterestsById', organizationCapitalRaises: 'organizationCapitalRaisesById', organizationCapitalRaiseEvents: 'organizationCapitalRaiseEventsById', organizationInvestmentProposals: 'organizationInvestmentProposalsById', organizationInvestmentProposalEvents: 'organizationInvestmentProposalEventsById',
   governanceInstitutions: 'governanceInstitutionsById', governanceUniverseProfiles: 'governanceUniverseProfilesById', governanceBodies: 'governanceBodiesById', governanceAppointments: 'governanceAppointmentsById', governanceAuthorityGrants: 'governanceAuthorityGrantsById', governanceExternalRelationships: 'governanceExternalRelationshipsById', governanceExpectationPeriods: 'governanceExpectationPeriodsById', governanceObjectives: 'governanceObjectivesById',
   supporterRelationships: 'supporterRelationshipsById', collectiveInstitutionAffiliations: 'collectiveInstitutionAffiliationsById', collectiveParticipantAffiliations: 'collectiveParticipantAffiliationsById', collectiveInstitutionalStatusEvents: 'collectiveInstitutionalStatusEventsById', collectiveInstitutionalLiaisons: 'collectiveInstitutionalLiaisonsById', supporterExpectations: 'supporterExpectationsById', supporterExpectationEvents: 'supporterExpectationEventsById', supporterPressureEvents: 'supporterPressureEventsById', supporterReactions: 'supporterReactionsById', supportFundingPledges: 'supportFundingPledgesById', supportFundingPledgeEvents: 'supportFundingPledgeEventsById', supportContributions: 'supportContributionsById',
@@ -771,6 +776,7 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   organizationCapitalRaiseEvents: (value) => indexById((value as readonly OrganizationCapitalRaiseEvent[]).map(createOrganizationCapitalRaiseEvent), 'Organization capital raise event'),
   organizationInvestmentProposals: (value) => indexById((value as readonly OrganizationInvestmentProposal[]).map(createOrganizationInvestmentProposal), 'Organization investment proposal'),
   organizationInvestmentProposalEvents: (value) => indexById((value as readonly OrganizationInvestmentProposalEvent[]).map(createOrganizationInvestmentProposalEvent), 'Organization investment proposal event'),
+  multiClubOwnershipPolicies: (value) => indexById((value as readonly MultiClubOwnershipPolicy[]).map(createMultiClubOwnershipPolicy), 'Multi-club ownership policy'),
   governanceUniverseProfiles: (value) => indexById((value as readonly GovernanceUniverseProfile[]).map(createGovernanceUniverseProfile), 'Governance universe profile'),
   governanceBodies: (value) => indexById((value as readonly GovernanceBody[]).map(createGovernanceBody), 'Governance body'),
   governanceAppointments: (value) => indexById((value as readonly GovernanceAppointment[]).map(createGovernanceAppointment), 'Governance appointment'),
@@ -821,6 +827,7 @@ function validateWorld(world: GameWorld): void {
   validateOrganizationOwnershipAndControl(world)
   validateOrganizationOwnershipTransactions(world)
   validateOrganizationInvestments(world)
+  validateMultiClubOwnershipPolicies(world)
   validateGovernance(world)
   validateInstitutionalSupport(world)
 
@@ -1299,6 +1306,15 @@ function validateOrganizationInvestments(world: GameWorld): void {
     }
   }
   for (const event of Object.values(world.organizationInvestmentProposalEventsById)) requireEntity(world.organizationInvestmentProposalsById, event.proposalId, `Organization investment proposal event ${event.id} proposal`)
+}
+
+function validateMultiClubOwnershipPolicies(world: GameWorld): void {
+  for (const [key, policy] of Object.entries(world.multiClubOwnershipPoliciesById)) {
+    createMultiClubOwnershipPolicy(policy)
+    if (key !== policy.id) throw new GameWorldValidationError(`Multi-club ownership policy ${key} ID does not match its key`)
+    if (policy.scope.kind === 'COMPETITION') requireEntity(world.competitions, policy.scope.competitionId, `Multi-club ownership policy ${policy.id} competition`)
+    else requireEntity(world.ecosystems, policy.scope.ecosystemId, `Multi-club ownership policy ${policy.id} ecosystem`)
+  }
 }
 
 function validateLinkedInvestmentGovernance(world: GameWorld, governanceDecisionId: string | undefined, label: string): void {

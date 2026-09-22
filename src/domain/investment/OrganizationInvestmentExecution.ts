@@ -1,6 +1,8 @@
 import { addDays, compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
+import type { OrganizationId } from '@/domain/ids'
+import { assertNoBlockingMultiClubImpact } from '@/domain/multiClub/MultiClubConflict'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
-import { createOrganizationOwnership, getActiveOrganizationOwnership } from '@/domain/ownership/OrganizationOwnership'
+import { createOrganizationOwnership, getActiveOrganizationOwnership, type OrganizationOwnership } from '@/domain/ownership/OrganizationOwnership'
 import { actorKey } from './OrganizationInvestorInterest'
 import { createOrganizationInvestmentProposalEvent, deriveOrganizationInvestmentProposalStatus, type OrganizationInvestmentProposal } from './OrganizationInvestmentProposal'
 import { createOrganizationCapitalRaise, deriveOrganizationCapitalRaiseStatusAt } from './OrganizationCapitalRaise'
@@ -9,8 +11,8 @@ import { isLinkedGovernanceDecisionApproved } from './InvestmentGovernance'
 export const ORGANIZATION_OWNERSHIP_TOTAL_TOLERANCE = 1e-9
 const PERCENTAGE_NORMALIZATION_DECIMALS = 12
 
-/** Executes one accepted primary-equity proposal atomically through canonical ownership history. */
-export function executeOrganizationInvestmentProposal(world: GameWorld, proposalId: string, effectiveOn: GameDate | string): GameWorld {
+/** Projects one accepted primary-equity proposal without appending its execution event. */
+export function projectOrganizationInvestmentProposalOwnership(world: GameWorld, proposalId: string, effectiveOn: GameDate | string): readonly OrganizationOwnership[] {
   const proposal = Object.values(world.organizationInvestmentProposalsById).find((candidate) => candidate.id === proposalId)
   if (proposal === undefined) throw new Error(`Organization investment proposal does not exist: ${proposalId}`)
   const executionDate = parseGameDate(effectiveOn)
@@ -22,7 +24,8 @@ export function executeOrganizationInvestmentProposal(world: GameWorld, proposal
   if (capitalRaise === undefined) throw new Error(`Organization capital raise does not exist: ${proposal.capitalRaiseId}`)
   const raiseEvents = Object.values(world.organizationCapitalRaiseEventsById).filter((event) => event.capitalRaiseId === capitalRaise.id)
   createOrganizationCapitalRaise(capitalRaise)
-  if (deriveOrganizationCapitalRaiseStatusAt(raiseEvents, executionDate) !== 'OPENED' && deriveOrganizationCapitalRaiseStatusAt(raiseEvents, executionDate) !== 'REOPENED') throw new Error(`Organization capital raise ${capitalRaise.id} is not active for execution`)
+  const raiseStatus = deriveOrganizationCapitalRaiseStatusAt(raiseEvents, executionDate)
+  if (raiseStatus !== 'OPENED' && raiseStatus !== 'REOPENED') throw new Error(`Organization capital raise ${capitalRaise.id} is not active for execution`)
   if (proposal.currencyCode !== capitalRaise.currencyCode) throw new Error(`Organization investment proposal ${proposal.id} currency does not match its capital raise`)
   if (proposal.amount > capitalRaise.targetAmount || proposal.requestedEquityPercentage > capitalRaise.maximumEquityPercentage) throw new RangeError(`Organization investment proposal ${proposal.id} exceeds its capital raise boundary`)
   if (!isLinkedGovernanceDecisionApproved(world, capitalRaise.governanceDecisionId, executionDate) || !isLinkedGovernanceDecisionApproved(world, proposal.governanceDecisionId, executionDate)) throw new Error(`Organization investment proposal ${proposal.id} lacks linked Governance approval`)
@@ -34,12 +37,35 @@ export function executeOrganizationInvestmentProposal(world: GameWorld, proposal
   const committedEquity = priorExecuted.reduce((sum, candidate) => sum + candidate.requestedEquityPercentage, 0)
   if (committedAmount + proposal.amount > capitalRaise.targetAmount + ORGANIZATION_OWNERSHIP_TOTAL_TOLERANCE || committedEquity + proposal.requestedEquityPercentage > capitalRaise.maximumEquityPercentage + ORGANIZATION_OWNERSHIP_TOTAL_TOLERANCE) throw new RangeError(`Organization capital raise ${capitalRaise.id} would exceed its remaining capacity`)
 
-  const active = getActiveOrganizationOwnership(world, capitalRaise.organizationId, executionDate)
-  if (active.length === 0) throw new Error(`Organization ${capitalRaise.organizationId} has no active ownership basis for dilution`)
-  if (active.some((row) => row.ownershipPercentage === null)) throw new Error(`Organization ${capitalRaise.organizationId} has unknown ownership percentage and cannot be diluted`)
+  return calculateOwnershipAfterInvestment(world, proposal, capitalRaise.organizationId, executionDate)
+}
+
+/** Executes one accepted primary-equity proposal atomically through canonical ownership history. */
+export function executeOrganizationInvestmentProposal(world: GameWorld, proposalId: string, effectiveOn: GameDate | string): GameWorld {
+  const proposal = Object.values(world.organizationInvestmentProposalsById).find((candidate) => candidate.id === proposalId)
+  if (proposal === undefined) throw new Error(`Organization investment proposal does not exist: ${proposalId}`)
+  const executionDate = parseGameDate(effectiveOn)
+  const nextOwnership = projectOrganizationInvestmentProposalOwnership(world, proposalId, executionDate)
+  const proposalEvents = Object.values(world.organizationInvestmentProposalEventsById).filter((event) => event.proposalId === proposal.id)
+  const projectedWorld = updateGameWorld(world, { organizationOwnership: nextOwnership })
+  assertNoBlockingMultiClubImpact(projectedWorld, world.organizationCapitalRaisesById[proposal.capitalRaiseId]!.organizationId, executionDate)
+  const executionEvent = createOrganizationInvestmentProposalEvent({
+    id: `investment-proposal:${proposal.id}:executed`,
+    proposalId: proposal.id,
+    kind: 'EXECUTED',
+    effectiveOn: executionDate,
+    ...(proposal.governanceDecisionId === undefined ? {} : { governanceDecisionId: proposal.governanceDecisionId }),
+  })
+  return updateGameWorld(world, { organizationOwnership: nextOwnership, organizationInvestmentProposalEvents: [...proposalEvents, executionEvent] })
+}
+
+function calculateOwnershipAfterInvestment(world: GameWorld, proposal: OrganizationInvestmentProposal, organizationId: OrganizationId, executionDate: GameDate): readonly OrganizationOwnership[] {
+  const active = getActiveOrganizationOwnership(world, organizationId, executionDate)
+  if (active.length === 0) throw new Error(`Organization ${organizationId} has no active ownership basis for dilution`)
+  if (active.some((row) => row.ownershipPercentage === null)) throw new Error(`Organization ${organizationId} has unknown ownership percentage and cannot be diluted`)
   if (active.some((row) => row.validFrom === executionDate)) throw new Error(`Organization investment proposal ${proposal.id} conflicts with ownership effective on its execution date`)
   const total = active.reduce((sum, row) => sum + (row.ownershipPercentage ?? 0), 0)
-  if (Math.abs(total - 100) > ORGANIZATION_OWNERSHIP_TOTAL_TOLERANCE) throw new Error(`Organization ${capitalRaise.organizationId} ownership basis is incomplete: expected 100 percent, found ${total}`)
+  if (Math.abs(total - 100) > ORGANIZATION_OWNERSHIP_TOTAL_TOLERANCE) throw new Error(`Organization ${organizationId} ownership basis is incomplete: expected 100 percent, found ${total}`)
 
   const byActor = new Map<string, { readonly actor: typeof active[number]['owner']; readonly percentage: number }>()
   for (const row of active) {
@@ -54,21 +80,13 @@ export function executeOrganizationInvestmentProposal(world: GameWorld, proposal
   const nextOwnership = Object.values(world.organizationOwnershipById).map((row) => active.some((current) => current.id === row.id) ? createOrganizationOwnership({ ...row, validTo: closeDate }) : row)
   normalized.forEach((holder, index) => nextOwnership.push(createOrganizationOwnership({
     id: `ownership:${proposal.id}:holder:${String(index + 1).padStart(3, '0')}`,
-    organizationId: capitalRaise.organizationId,
+    organizationId,
     owner: holder.actor,
     ownershipPercentage: holder.percentage,
     validFrom: executionDate,
     validTo: null,
   })))
-
-  const executionEvent = createOrganizationInvestmentProposalEvent({
-    id: `investment-proposal:${proposal.id}:executed`,
-    proposalId: proposal.id,
-    kind: 'EXECUTED',
-    effectiveOn: executionDate,
-    ...(proposal.governanceDecisionId === undefined ? {} : { governanceDecisionId: proposal.governanceDecisionId }),
-  })
-  return updateGameWorld(world, { organizationOwnership: nextOwnership, organizationInvestmentProposalEvents: [...proposalEvents, executionEvent] })
+  return nextOwnership
 }
 
 function normalizePercentages(holders: readonly { readonly key: string; readonly actor: OrganizationInvestmentProposal['investor']; readonly percentage: number }[]): readonly { readonly actor: OrganizationInvestmentProposal['investor']; readonly percentage: number }[] {
