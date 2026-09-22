@@ -44,6 +44,7 @@ export type EconomicEventAuthority = typeof ECONOMIC_EVENT_AUTHORITIES[number]
 export type EconomicEventType =
   | 'CONTRACT_COMMITMENT_OPENED'
   | 'CONTRACT_EXPENSE_DUE'
+  | 'CONTRACT_PLAYER_SALARY_DUE'
   | 'STAFF_CONTRACT_EXPENSE_DUE'
   | 'CONTRACT_BONUS_DUE'
   | 'CONTRACT_BUYOUT_DUE'
@@ -158,7 +159,7 @@ export interface EconomicEventAdapterResult {
 export function processContractEconomicEvent(world: GameWorld, event: AuthorizedEconomicEvent, options: EconomicEventAdapterOptions = {}): EconomicEventAdapterResult {
   try {
     assertEventAuthority(event, 'CONTRACT')
-    if (!['CONTRACT_COMMITMENT_OPENED', 'CONTRACT_EXPENSE_DUE', 'STAFF_CONTRACT_EXPENSE_DUE', 'CONTRACT_BONUS_DUE', 'CONTRACT_BUYOUT_DUE', 'CONTRACT_TERMINATION_PAYMENT'].includes(event.eventType)) throw new TypeError(`Unsupported Contract economic event type ${event.eventType}`)
+    if (!['CONTRACT_COMMITMENT_OPENED', 'CONTRACT_EXPENSE_DUE', 'CONTRACT_PLAYER_SALARY_DUE', 'STAFF_CONTRACT_EXPENSE_DUE', 'CONTRACT_BONUS_DUE', 'CONTRACT_BUYOUT_DUE', 'CONTRACT_TERMINATION_PAYMENT'].includes(event.eventType)) throw new TypeError(`Unsupported Contract economic event type ${event.eventType}`)
     if (event.dueOn === null) throw new RangeError('Contract economic events require an explicit dueOn; Finance does not invent contract calendars')
     const playerContract = world.contractsById[contractIdFromString(event.sourceEntityId)]
     const staffContract = world.staffContractsById[staffContractIdFromString(event.sourceEntityId)]

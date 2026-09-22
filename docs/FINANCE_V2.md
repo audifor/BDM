@@ -142,6 +142,34 @@ Processing validates references and account mappings, constructs all immutable c
 
 CF4 deliberately does not connect all contracts to daily progression: the current contract model does not expose enough payment-schedule facts to generate correct events. Callers may submit explicit authorized events now; specialized revenue/cost engines can connect later without moving authority into Finance. Save V4 needs no new event collection because idempotency is derivable from persisted financial facts; CF1-CF3 and legacy save defaults remain unchanged.
 
-## Deferred by CF1/CF2/CF3/CF4
+## CF5 Contract Financial Scheduling & Payroll Obligations
+
+CF5 derives the first automatic financial producer from the existing Contract authorities:
+
+```text
+Contract terms
+  -> ContractFinancialSchedule
+  -> AuthorizedEconomicEvent
+  -> ExpenseRecognition
+  -> Payable
+  -> Settlement
+  -> Ledger / Cash
+```
+
+The schedule is a deterministic view, not a second contract system and not persisted. Player contracts contribute `cashSalary` and `guaranteedAmount` from their canonical annual/year compensation; staff contracts contribute their canonical `annualSalary`. The financial schedule never uses `capHit` as expense and never writes salary or contract value back into Finance. Team, Organization Section, beneficiary, Contract provenance, period, season association, and currency are derived at read time.
+
+The current contract models contain no payment dates, bonus definitions, options, buyouts, release clauses, or trigger records. They also contain no currency field. CF5 therefore uses an explicit annual contract-year recognition policy, requires a currency policy or Organization financial profile, and does not assume twelve monthly payments. Schedule entries expose `dueOn: null`; materialization requires the explicit `ON_RECOGNITION` simulation policy for the payable date. This is a deliberate boundary between economic recognition and an absent contractual payment schedule.
+
+If expiry or termination cuts an annual contract period short, CF5 omits that partial period because Contracts has no authoritative proration rule. A future Contract-owned proration or termination-payment term can add a separate explicit event without rewriting existing finance facts.
+
+Guaranteed and conditional portions are separate derived entries. Only guaranteed entries can be materialized automatically. Conditional exposure remains queryable and cannot become an ExpenseRecognition or Payable until an authorized trigger exists. No bonus engine, payroll negotiation, proration rule, or termination payment is invented.
+
+`materializeContractFinanceForDate` receives a `GameWorld`, explicit date, Contract/Team/Organization scope, currency policy, ledger mapping, and due-date policy. It emits CF4 `AuthorizedEconomicEvent` values and calls the Contract adapter; it never bypasses CF4 or calls Treasury directly. The operation is idempotent through the schedule entry id and applies all entries atomically for the requested date. The current daily loop is not connected automatically because it does not yet provide a safe payment schedule; this function is the controlled hook for a future producer integration.
+
+Contract termination changes only future derived entries. Existing Recognition, Commitment, Payable, Settlement, and Ledger facts remain append-only and are not deleted. Salary Cap continues to calculate `capHit` and regulatory effects independently from financial payroll. Multiple currencies remain separate and no FX conversion is performed.
+
+CF5 payroll queries derive committed, player, staff, current-season, next-season, future-by-contract/person/season, guaranteed, conditional, recognized-YTD, paid, unpaid, Team, Section, and currency-separated views. These queries feed later forecasting work without creating a Budget or persisting a schedule cache.
+
+## Deferred by CF1/CF2/CF3/CF4/CF5
 
 Ticket sales, sponsorships, merchandising, media rights, annual budgets, forecasting assumptions, payroll progression, debt/loans/amortization, taxation, FFP, luxury tax, salary-cap enforcement, valuation, inflation, FX simulation, owner/budget AI, financial UI, bankruptcy, administration, insolvency, debt collection AI and automatic treasury policy remain future work.
