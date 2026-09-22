@@ -192,6 +192,30 @@ Budget, revision, allocation, and assumption facts are additive optional Save V4
 
 CF6 is conceptually aligned with BDM-DB's separate `budget`, `financial_account`, `financial_transaction`, `financial_posting`, `revenue_stream`, and `expense_commitment` vocabulary. Runtime game planning facts remain in GameWorld/Save and are not written back to BDM-DB.
 
-## Deferred by CF1/CF2/CF3/CF4/CF5/CF6
+## CF7 Revenue Engine
 
-Ticket sales, sponsorships, merchandising, media rights, revenue engines, prize calculation, travel, facilities, debt/loans/amortization, taxation, FFP, luxury tax, salary-cap enforcement, valuation, inflation, FX simulation, owner/budget AI, financial UI, bankruptcy, administration, insolvency, debt collection AI and automatic treasury policy remain future work.
+CF7 adds the first canonical revenue producer while preserving the accounting and treasury boundaries:
+
+```text
+RevenueSource (Organization-owned contract/fact)
+  -> derived deterministic RevenueSchedule
+  -> AuthorizedEconomicEvent (CF4)
+  -> RevenueRecognition (CF3)
+  -> Receivable
+  -> Settlement
+  -> Ledger / Cash (CF2)
+```
+
+`RevenueSource` is persisted; its schedule, contracted totals, future totals, recognized totals, collected totals, YTD and variances are derived. `RevenueSource`, Forecast, Recognition, Receivable and Cash are separate concepts. A source does not create money merely by existing, and a forecast assumption never creates recognition or cash.
+
+The taxonomy covers ticketing, season tickets, hospitality, sponsorship, media, merchandising, licensing, competition, transfer buyout, facility, academy, grants, donations and other operating revenue. The current producers are deliberately narrow: contractual sponsorship/commercial sources and explicitly supplied facts. Competition revenue consumes an already-authorized Competition entitlement through CF4; it does not calculate eligibility, prize rules or distributions. Ticketing and media expose validated input/source seams but do not invent revenue when canonical attendance, capacity/pricing or rights facts are absent. Tax and revenue sharing are not assumed.
+
+Revenue schedules are deterministic, effective-dated and currency-separated. Recognition requires an explicit due-date policy, uses CF4 idempotency, and materialization is atomic. Receivable settlement later increases cash without duplicating revenue. Queries support Organization, category, Team, Section, Competition, counterparty, source/provenance, currency, as-of and range dimensions. Known contractual revenue is consumed by CF6 budgets and forecasts as committed/known revenue, while assumptions remain hypothetical.
+
+GameWorld and Save V4 persist only `RevenueSource` records. Old V4 and V1–V3 saves default the optional collection to empty. `TeamFinances` remains legacy/derived, `src/domain/world/finances.ts` remains a derived projection, and existing finance UI remains presentation/legacy surface; none is a competing revenue authority. Organization, OrganizationOwnership, Governance, Contract, Salary Cap and Competition rules remain authorities for their own concerns.
+
+CF7 remains conceptually aligned with BDM-DB's canonical `financial_account`, `financial_transaction`, `financial_posting` and `revenue_stream` vocabulary. Runtime revenue sources and game recognitions are additive runtime/save state; `C:\BDM_DB` remains read-only and no second incompatible database semantic is introduced.
+
+## Deferred by CF1/CF2/CF3/CF4/CF5/CF6/CF7
+
+Attendance-based ticket sales, full media-rights adapters, merchandising/facility operating engines, prize calculation, travel, debt/loans/amortization, taxation, FFP, luxury tax, salary-cap enforcement, valuation, inflation, FX simulation, owner/budget AI, financial UI, bankruptcy, administration, insolvency, debt collection AI and automatic treasury policy remain future work.
