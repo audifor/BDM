@@ -41,6 +41,18 @@ export type RegulatoryRemediationPlanId = EntityId<'RegulatoryRemediationPlanId'
 export type OrganizationLicenseId = EntityId<'OrganizationLicenseId'>
 export type AgentId = EntityId<'AgentId'>
 export type AgencyId = EntityId<'AgencyId'>
+/** Geographic/location identity (city, campus, complex, parcel, address, district). Never a Facility. */
+export type PlaceId = EntityId<'PlaceId'>
+/** Physical or functional installation identity. Persistent across renaming, ownership and operator change. */
+export type FacilityId = EntityId<'FacilityId'>
+export type FacilityComponentId = EntityId<'FacilityComponentId'>
+export type FacilityNameRecordId = EntityId<'FacilityNameRecordId'>
+export type FacilityOwnershipInterestId = EntityId<'FacilityOwnershipInterestId'>
+export type FacilityOrganizationRelationshipId = EntityId<'FacilityOrganizationRelationshipId'>
+export type FacilityTeamRelationshipId = EntityId<'FacilityTeamRelationshipId'>
+export type FacilityUsageRightId = EntityId<'FacilityUsageRightId'>
+export type FacilityCompetitionApprovalId = EntityId<'FacilityCompetitionApprovalId'>
+export type FacilityStatusRecordId = EntityId<'FacilityStatusRecordId'>
 
 function idFromString<Id extends string>(value: string, name: string): Id {
   if (typeof value !== 'string' || value.trim().length === 0) {
@@ -95,6 +107,16 @@ export const regulatoryRemediationPlanIdFromString = (value: string): Regulatory
 export const organizationLicenseIdFromString = (value: string): OrganizationLicenseId => idFromString<OrganizationLicenseId>(value, 'OrganizationLicenseId')
 export const agentIdFromString = (value: string): AgentId => idFromString<AgentId>(value, 'AgentId')
 export const agencyIdFromString = (value: string): AgencyId => idFromString<AgencyId>(value, 'AgencyId')
+export const placeIdFromString = (value: string): PlaceId => idFromString<PlaceId>(value, 'PlaceId')
+export const facilityIdFromString = (value: string): FacilityId => idFromString<FacilityId>(value, 'FacilityId')
+export const facilityComponentIdFromString = (value: string): FacilityComponentId => idFromString<FacilityComponentId>(value, 'FacilityComponentId')
+export const facilityNameRecordIdFromString = (value: string): FacilityNameRecordId => idFromString<FacilityNameRecordId>(value, 'FacilityNameRecordId')
+export const facilityOwnershipInterestIdFromString = (value: string): FacilityOwnershipInterestId => idFromString<FacilityOwnershipInterestId>(value, 'FacilityOwnershipInterestId')
+export const facilityOrganizationRelationshipIdFromString = (value: string): FacilityOrganizationRelationshipId => idFromString<FacilityOrganizationRelationshipId>(value, 'FacilityOrganizationRelationshipId')
+export const facilityTeamRelationshipIdFromString = (value: string): FacilityTeamRelationshipId => idFromString<FacilityTeamRelationshipId>(value, 'FacilityTeamRelationshipId')
+export const facilityUsageRightIdFromString = (value: string): FacilityUsageRightId => idFromString<FacilityUsageRightId>(value, 'FacilityUsageRightId')
+export const facilityCompetitionApprovalIdFromString = (value: string): FacilityCompetitionApprovalId => idFromString<FacilityCompetitionApprovalId>(value, 'FacilityCompetitionApprovalId')
+export const facilityStatusRecordIdFromString = (value: string): FacilityStatusRecordId => idFromString<FacilityStatusRecordId>(value, 'FacilityStatusRecordId')
 /** Legacy/generated-world compatibility resolver. World DB runtime uses the canonical Team relation. */
 export const organizationIdForTeam = (teamId: TeamId): OrganizationId => organizationIdFromString(teamId)
 

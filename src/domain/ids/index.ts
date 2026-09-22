@@ -44,6 +44,16 @@ export {
   organizationIdForTeam,
   agentIdFromString,
   agencyIdFromString,
+  placeIdFromString,
+  facilityIdFromString,
+  facilityComponentIdFromString,
+  facilityNameRecordIdFromString,
+  facilityOwnershipInterestIdFromString,
+  facilityOrganizationRelationshipIdFromString,
+  facilityTeamRelationshipIdFromString,
+  facilityUsageRightIdFromString,
+  facilityCompetitionApprovalIdFromString,
+  facilityStatusRecordIdFromString,
 } from './EntityIds'
 
 export type {
@@ -83,4 +93,14 @@ export type {
   OrganizationLicenseId,
   AgentId,
   AgencyId,
+  PlaceId,
+  FacilityId,
+  FacilityComponentId,
+  FacilityNameRecordId,
+  FacilityOwnershipInterestId,
+  FacilityOrganizationRelationshipId,
+  FacilityTeamRelationshipId,
+  FacilityUsageRightId,
+  FacilityCompetitionApprovalId,
+  FacilityStatusRecordId,
 } from './EntityIds'
