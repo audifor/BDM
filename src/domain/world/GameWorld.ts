@@ -2074,12 +2074,20 @@ function validateTreasuryState(world: GameWorld): void {
     requireEntity(world.organizationsById, receivable.organizationId, `Receivable ${receivable.id} organization`)
     validateTreasuryDimensions(world, receivable.organizationId, receivable.dimensions, `Receivable ${receivable.id}`)
     validateTreasuryCounterparty(world, receivable.counterparty, `Receivable ${receivable.id}`)
+    if (receivable.provenance.kind === 'REVENUE_RECOGNITION') {
+      const recognition = Object.values(world.revenueRecognitionsById).find((item) => String(item.id) === receivable.provenance.id)
+      if (recognition === undefined || recognition.receivableId !== receivable.id) throw new GameWorldValidationError(`Receivable ${receivable.id} has no matching revenue recognition link`)
+    }
   }
   for (const payable of Object.values(world.payablesById)) {
     createPayable(payable)
     requireEntity(world.organizationsById, payable.organizationId, `Payable ${payable.id} organization`)
     validateTreasuryDimensions(world, payable.organizationId, payable.dimensions, `Payable ${payable.id}`)
     validateTreasuryCounterparty(world, payable.counterparty, `Payable ${payable.id}`)
+    if (payable.provenance.kind === 'EXPENSE_RECOGNITION') {
+      const recognition = Object.values(world.expenseRecognitionsById).find((item) => String(item.id) === payable.provenance.id)
+      if (recognition === undefined || recognition.payableId !== payable.id) throw new GameWorldValidationError(`Payable ${payable.id} has no matching expense recognition link`)
+    }
   }
   const settledByObligation = new Map<string, number>()
   const seenTransactions = new Set<string>()

@@ -117,6 +117,31 @@ CF3 queries derive recognized revenue, recognized expense, net operating result,
 
 Save V4 persists recognition, commitment, and entitlement facts as additive optional collections. CF1/CF2 and older saves default them to empty. BDM-DB `revenue_stream` and `expense_commitment` remain canonical source vocabulary for streams and commitments; the runtime records game-specific recognition and entitlement facts without modifying BDM-DB or inventing a competing database authority.
 
-## Deferred by CF1/CF2/CF3
+## CF4 Economic Event Adapters
+
+CF4 adds one explicit integration boundary for externally authorized economic facts:
+
+```text
+External Authority
+  -> AuthorizedEconomicEvent
+  -> Finance Adapter
+  -> Commitment / Entitlement
+  -> Recognition
+  -> Receivable / Payable
+  -> Settlement
+  -> Ledger / Cash
+```
+
+`AuthorizedEconomicEvent` is immutable and carries a stable event id, source authority and entity, Organization, effective/due dates, integer Money, provenance, analytical dimensions, counterparty, and an external idempotency key. Valid source authorities are explicit (`CONTRACT`, `COMPETITION`, `GOVERNANCE`, `OWNERSHIP`, `ORGANIZATION`, future revenue/cost engines, and controlled manual system actions). Finance validates the boundary and records consequences; it does not decide contractual terms, competition awards, or Governance/Ownership authorization.
+
+Contract, Competition, and Governance/Ownership adapters are explicit entry points. Contract events require an already-authorized due date and preserve Contract/Team/Organization ownership; they do not invent payroll schedules. Competition events require a supplied entitlement amount, Competition identity, due date, and participating Team; the adapter does not calculate prize or distribution amounts. Owner funding is recorded as an equity/financing receipt and never as revenue.
+
+Idempotency is derived from the stable tuple `sourceAuthority + sourceEntityId + idempotencyKey` and the provenance of the resulting commitment, entitlement, recognition, subledger item, and ledger transaction. Reprocessing returns the existing consequence without adding money. A conflicting replay with changed Organization, currency, amount, or category is rejected. No processed-event cache is persisted.
+
+Processing validates references and account mappings, constructs all immutable consequences, and applies one `GameWorld` update. If validation or construction fails, the original world is returned unchanged. Recognition is the accounting fact; Receivable/Payable is its operational subledger and settlement only moves cash against the asset/liability. The reconciliation checks reject orphan recognition-linked subledger items, while existing Treasury and Ledger validation covers settlement bounds, balanced postings, Organization isolation, and duplicate materialization.
+
+CF4 deliberately does not connect all contracts to daily progression: the current contract model does not expose enough payment-schedule facts to generate correct events. Callers may submit explicit authorized events now; specialized revenue/cost engines can connect later without moving authority into Finance. Save V4 needs no new event collection because idempotency is derivable from persisted financial facts; CF1-CF3 and legacy save defaults remain unchanged.
+
+## Deferred by CF1/CF2/CF3/CF4
 
 Ticket sales, sponsorships, merchandising, media rights, annual budgets, forecasting assumptions, payroll progression, debt/loans/amortization, taxation, FFP, luxury tax, salary-cap enforcement, valuation, inflation, FX simulation, owner/budget AI, financial UI, bankruptcy, administration, insolvency, debt collection AI and automatic treasury policy remain future work.
