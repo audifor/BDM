@@ -58,6 +58,10 @@ export {
   facilityOperatorAssignmentIdFromString,
   facilityComponentConditionRecordIdFromString,
   facilityConditionRecordIdFromString,
+  facilityMaintenanceNeedIdFromString,
+  facilityMaintenanceActionIdFromString,
+  facilityInspectionIdFromString,
+  facilityOperationalIncidentIdFromString,
 } from './EntityIds'
 
 export type {
@@ -111,4 +115,8 @@ export type {
   FacilityOperatorAssignmentId,
   FacilityComponentConditionRecordId,
   FacilityConditionRecordId,
+  FacilityMaintenanceNeedId,
+  FacilityMaintenanceActionId,
+  FacilityInspectionId,
+  FacilityOperationalIncidentId,
 } from './EntityIds'

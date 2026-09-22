@@ -61,6 +61,14 @@ export type FacilityOperatorAssignmentId = EntityId<'FacilityOperatorAssignmentI
 export type FacilityComponentConditionRecordId = EntityId<'FacilityComponentConditionRecordId'>
 /** CFI4 — temporal physical condition truth for a Facility-wide dimension (structural integrity, envelope, utilities, accessibility infrastructure), never an aggregate of component records. */
 export type FacilityConditionRecordId = EntityId<'FacilityConditionRecordId'>
+/** CFI5 — a recorded need for maintenance/repair attention. */
+export type FacilityMaintenanceNeedId = EntityId<'FacilityMaintenanceNeedId'>
+/** CFI5 — a recorded maintenance/repair intervention. */
+export type FacilityMaintenanceActionId = EntityId<'FacilityMaintenanceActionId'>
+/** CFI5 — a recorded observation/operation, never a regulatory license. */
+export type FacilityInspectionId = EntityId<'FacilityInspectionId'>
+/** CFI5 — a recorded discrete physical/operational failure. */
+export type FacilityOperationalIncidentId = EntityId<'FacilityOperationalIncidentId'>
 
 function idFromString<Id extends string>(value: string, name: string): Id {
   if (typeof value !== 'string' || value.trim().length === 0) {
@@ -129,6 +137,10 @@ export const facilityControlRightIdFromString = (value: string): FacilityControl
 export const facilityOperatorAssignmentIdFromString = (value: string): FacilityOperatorAssignmentId => idFromString<FacilityOperatorAssignmentId>(value, 'FacilityOperatorAssignmentId')
 export const facilityComponentConditionRecordIdFromString = (value: string): FacilityComponentConditionRecordId => idFromString<FacilityComponentConditionRecordId>(value, 'FacilityComponentConditionRecordId')
 export const facilityConditionRecordIdFromString = (value: string): FacilityConditionRecordId => idFromString<FacilityConditionRecordId>(value, 'FacilityConditionRecordId')
+export const facilityMaintenanceNeedIdFromString = (value: string): FacilityMaintenanceNeedId => idFromString<FacilityMaintenanceNeedId>(value, 'FacilityMaintenanceNeedId')
+export const facilityMaintenanceActionIdFromString = (value: string): FacilityMaintenanceActionId => idFromString<FacilityMaintenanceActionId>(value, 'FacilityMaintenanceActionId')
+export const facilityInspectionIdFromString = (value: string): FacilityInspectionId => idFromString<FacilityInspectionId>(value, 'FacilityInspectionId')
+export const facilityOperationalIncidentIdFromString = (value: string): FacilityOperationalIncidentId => idFromString<FacilityOperationalIncidentId>(value, 'FacilityOperationalIncidentId')
 /** Legacy/generated-world compatibility resolver. World DB runtime uses the canonical Team relation. */
 export const organizationIdForTeam = (teamId: TeamId): OrganizationId => organizationIdFromString(teamId)
 

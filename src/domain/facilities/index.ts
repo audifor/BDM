@@ -85,6 +85,71 @@ export {
 } from './FacilityCondition'
 
 export {
+  BASE_MONTHLY_DETERIORATION_RATE,
+  DEFAULT_FACILITY_DETERIORATION_THRESHOLDS,
+  FACILITY_WEAR_PROFILES,
+  isFacilityWearProfile,
+  isServiceabilityAtLeastAsSevereAs,
+  utilizationMultiplier,
+  wearProfileForComponentType,
+  worstServiceabilityImpliedByCondition,
+  type FacilityDeteriorationThresholds,
+  type FacilityWearProfile,
+} from './FacilityDeteriorationPolicy'
+
+export {
+  createFacilityUsageLoad,
+  type CreateFacilityUsageLoadInput,
+  type FacilityUsageLoad,
+} from './FacilityUsageLoad'
+
+export {
+  FACILITY_MAINTENANCE_NEED_SEVERITIES,
+  FACILITY_MAINTENANCE_NEED_STATUSES,
+  FACILITY_MAINTENANCE_NEED_TYPES,
+  createFacilityMaintenanceNeed,
+  isFacilityMaintenanceNeedOpenStatus,
+  isFacilityMaintenanceNeedSeverity,
+  isFacilityMaintenanceNeedStatus,
+  isFacilityMaintenanceNeedType,
+  type CreateFacilityMaintenanceNeedInput,
+  type FacilityMaintenanceNeed,
+  type FacilityMaintenanceNeedSeverity,
+  type FacilityMaintenanceNeedStatus,
+  type FacilityMaintenanceNeedType,
+} from './FacilityMaintenanceNeed'
+
+export {
+  FACILITY_MAINTENANCE_ACTION_OUTCOMES,
+  FACILITY_MAINTENANCE_ACTION_TYPES,
+  createFacilityMaintenanceAction,
+  isFacilityMaintenanceActionOutcome,
+  isFacilityMaintenanceActionType,
+  type CreateFacilityMaintenanceActionInput,
+  type FacilityMaintenanceAction,
+  type FacilityMaintenanceActionOutcome,
+  type FacilityMaintenanceActionType,
+} from './FacilityMaintenanceAction'
+
+export {
+  FACILITY_INSPECTION_FINDINGS,
+  createFacilityInspection,
+  isFacilityInspectionFinding,
+  type CreateFacilityInspectionInput,
+  type FacilityInspection,
+  type FacilityInspectionFinding,
+} from './FacilityInspection'
+
+export {
+  FACILITY_OPERATIONAL_INCIDENT_CATEGORIES,
+  createFacilityOperationalIncident,
+  isFacilityOperationalIncidentCategory,
+  type CreateFacilityOperationalIncidentInput,
+  type FacilityOperationalIncident,
+  type FacilityOperationalIncidentCategory,
+} from './FacilityOperationalIncident'
+
+export {
   createFacilityNameRecord,
   resolveFacilityNameAt,
   type CreateFacilityNameRecordInput,
@@ -177,15 +242,18 @@ export {
   capabilitiesOfFacility,
   childComponentsOf,
   componentConditionAt,
+  componentOperationalReadinessAt,
   componentServiceabilityAt,
   componentsBelowConditionAt,
   componentsOfFacility,
   componentsOfFacilityByCategory,
   componentsOfFacilityByType,
   componentsOutOfServiceAt,
+  componentsRequiringMaintenanceAt,
   componentsWithLimitedServiceAt,
   controllersOfFacilityAt,
   courtsOfFacility,
+  criticalMaintenanceNeedsAt,
   facilitiesOperatedByOrganizationAt,
   facilitiesOwnedByOrganizationAt,
   facilitiesUsedByOrganizationAt,
@@ -197,11 +265,19 @@ export {
   facilityHasCapability,
   facilityHasUsableCapabilityAt,
   facilityNameAt,
+  facilityOperationalReadinessAt,
   facilityOwnershipAt,
   facilityRightsConflictsAt,
   facilityStatusAt,
   homeFacilitiesForTeamAt,
+  inspectionsForFacility,
+  latestInspectionForComponentAt,
+  maintenanceActionsForFacility,
+  maintenanceHistoryForComponent,
+  maintenanceNeedsForComponentAt,
+  maintenanceNeedsForFacilityAt,
   medicalComponentsOfFacility,
+  openMaintenanceNeedsAt,
   operatorsOfFacilityAt,
   organizationsRelatedToFacilityAt,
   organizationsUsingFacilityAt,
@@ -220,6 +296,8 @@ export {
   usageRightsForTeamAt,
   usersOfFacilityAt,
   whoControlsFacilityAt,
+  type FacilityComponentOperationalReadiness,
   type FacilityConditionSummary,
+  type FacilityOperationalReadiness,
   type FacilityRightsConflict,
 } from './FacilityQueries'

@@ -7,6 +7,9 @@ import { capabilitiesOfFacility, facilitiesWithCapability, facilityHasCapability
 import { componentConditionAt, componentServiceabilityAt, facilityConditionRecordsAt, type FacilityComponentConditionRecord, type FacilityConditionRecord } from './FacilityCondition'
 import { facilityRightsConflictsAt, type FacilityRightsConflict } from './FacilityConflict'
 import { controllersOfFacilityAt, whoControlsFacilityAt } from './FacilityControl'
+import type { FacilityInspection } from './FacilityInspection'
+import { isFacilityMaintenanceNeedOpenStatus, type FacilityMaintenanceNeed } from './FacilityMaintenanceNeed'
+import type { FacilityMaintenanceAction } from './FacilityMaintenanceAction'
 import { resolveFacilityNameAt, type FacilityNameRecord } from './FacilityNameHistory'
 import { facilitiesOwnedByOrganizationAt, facilityOwnershipAt, ownershipShareOfAt, ownersOfFacilityAt, type FacilityOwnershipInterest, type FacilityOwnershipSnapshot } from './FacilityOwnership'
 import { facilitiesOperatedByOrganizationAt, operatorsOfFacilityAt } from './FacilityOperator'
@@ -211,6 +214,110 @@ export function facilityConditionSummaryAt(components: readonly FacilityComponen
     limitedServiceComponentIds: componentsWithLimitedServiceAt(active, conditionRecords, onDate),
     worstKnownCondition: knownConditions.length === 0 ? null : Math.min(...knownConditions),
     averageKnownCondition: knownConditions.length === 0 ? null : knownConditions.reduce((sum, value) => sum + value, 0) / knownConditions.length,
+  })
+}
+
+// --- Maintenance / inspections / operational readiness (CFI5) ------------
+
+/** All maintenance needs recorded for a Facility as of a date (i.e. `detectedAt <= onDate`, and if resolved, `resolvedAt > onDate` or still open) — an immutable-history view, not merely "currently open" (see `openMaintenanceNeedsAt` for that narrower question). */
+export function maintenanceNeedsForFacilityAt(needs: readonly FacilityMaintenanceNeed[], facilityId: FacilityId, onDate: GameDate): readonly FacilityMaintenanceNeed[] {
+  return needs.filter((need) => need.facilityId === facilityId && need.detectedAt <= onDate && (need.resolvedAt === null || need.resolvedAt > onDate)).sort((a, b) => a.id.localeCompare(b.id))
+}
+
+/** All maintenance needs recorded for one specific component as of a date. */
+export function maintenanceNeedsForComponentAt(needs: readonly FacilityMaintenanceNeed[], componentId: FacilityComponentId, onDate: GameDate): readonly FacilityMaintenanceNeed[] {
+  return needs.filter((need) => need.componentId === componentId && need.detectedAt <= onDate && (need.resolvedAt === null || need.resolvedAt > onDate)).sort((a, b) => a.id.localeCompare(b.id))
+}
+
+/** Every maintenance need across the given set whose status is not terminal (`COMPLETED`/`CANCELLED`) as of a date. */
+export function openMaintenanceNeedsAt(needs: readonly FacilityMaintenanceNeed[], onDate: GameDate): readonly FacilityMaintenanceNeed[] {
+  return needs.filter((need) => need.detectedAt <= onDate && isFacilityMaintenanceNeedOpenStatus(need.status)).sort((a, b) => a.id.localeCompare(b.id))
+}
+
+/** Every open (non-terminal) `CRITICAL`-severity maintenance need across the given set as of a date. */
+export function criticalMaintenanceNeedsAt(needs: readonly FacilityMaintenanceNeed[], onDate: GameDate): readonly FacilityMaintenanceNeed[] {
+  return openMaintenanceNeedsAt(needs, onDate).filter((need) => need.severity === 'CRITICAL')
+}
+
+/** Every maintenance action recorded against one Facility, in full immutable history (no date filter — actions are point-in-time historical facts, not temporally-resolved state). */
+export function maintenanceActionsForFacility(actions: readonly FacilityMaintenanceAction[], facilityId: FacilityId): readonly FacilityMaintenanceAction[] {
+  return actions.filter((action) => action.facilityId === facilityId).sort((a, b) => a.id.localeCompare(b.id))
+}
+
+/** Every maintenance action recorded against one specific component, in full immutable history. */
+export function maintenanceHistoryForComponent(actions: readonly FacilityMaintenanceAction[], componentId: FacilityComponentId): readonly FacilityMaintenanceAction[] {
+  return actions.filter((action) => action.componentId === componentId).sort((a, b) => a.id.localeCompare(b.id))
+}
+
+/** Every inspection recorded against one Facility, in full immutable history. */
+export function inspectionsForFacility(inspections: readonly FacilityInspection[], facilityId: FacilityId): readonly FacilityInspection[] {
+  return inspections.filter((inspection) => inspection.facilityId === facilityId).sort((a, b) => a.id.localeCompare(b.id))
+}
+
+/** The most recent inspection recorded for one component at or before a date, or `undefined` if none exists — never assumed to be "no issue" when absent. */
+export function latestInspectionForComponentAt(inspections: readonly FacilityInspection[], componentId: FacilityComponentId, onDate: GameDate): FacilityInspection | undefined {
+  const candidates = inspections.filter((inspection) => inspection.componentId === componentId && inspection.inspectedAt <= onDate)
+  if (candidates.length === 0) return undefined
+  return [...candidates].sort((a, b) => {
+    const byDate = b.inspectedAt.localeCompare(a.inspectedAt)
+    return byDate !== 0 ? byDate : b.id.localeCompare(a.id)
+  })[0]
+}
+
+/** Component IDs, across the given set, that currently have at least one open (non-terminal) maintenance need as of a date. */
+export function componentsRequiringMaintenanceAt(components: readonly FacilityComponent[], needs: readonly FacilityMaintenanceNeed[], onDate: GameDate): readonly FacilityComponentId[] {
+  const open = openMaintenanceNeedsAt(needs, onDate)
+  const componentIds = new Set(components.map((component) => component.id))
+  const result = new Set<FacilityComponentId>()
+  for (const need of open) if (need.componentId !== null && componentIds.has(need.componentId)) result.add(need.componentId)
+  return Object.freeze([...result].sort((a, b) => a.localeCompare(b)))
+}
+
+/**
+ * A derived, non-persisted operational-readiness breakdown for one Facility at a date. Deliberately
+ * a structured explanation, never a single OVERALL readiness number — the brief's own explicit
+ * instruction. Recomputed on every call from the same canonical records every other CFI4/CFI5 query
+ * reads; never itself a source of truth.
+ */
+export interface FacilityOperationalReadiness {
+  readonly facilityId: FacilityId
+  readonly activeComponentIds: readonly FacilityComponentId[]
+  readonly limitedComponentIds: readonly FacilityComponentId[]
+  readonly unavailableComponentIds: readonly FacilityComponentId[]
+  readonly openMaintenanceNeeds: readonly FacilityMaintenanceNeed[]
+  readonly criticalMaintenanceNeeds: readonly FacilityMaintenanceNeed[]
+}
+
+export function facilityOperationalReadinessAt(components: readonly FacilityComponent[], conditionRecords: readonly FacilityComponentConditionRecord[], needs: readonly FacilityMaintenanceNeed[], facilityId: FacilityId, onDate: GameDate): FacilityOperationalReadiness {
+  const active = activeFacilityComponentsAt(components, facilityId, onDate)
+  const unavailable = componentsOutOfServiceAt(active, conditionRecords, onDate)
+  const limited = componentsWithLimitedServiceAt(active, conditionRecords, onDate)
+  const facilityNeeds = maintenanceNeedsForFacilityAt(needs, facilityId, onDate)
+  return Object.freeze({
+    facilityId,
+    activeComponentIds: Object.freeze(active.map((component) => component.id)),
+    limitedComponentIds: limited,
+    unavailableComponentIds: unavailable,
+    openMaintenanceNeeds: Object.freeze(facilityNeeds.filter((need) => isFacilityMaintenanceNeedOpenStatus(need.status))),
+    criticalMaintenanceNeeds: Object.freeze(facilityNeeds.filter((need) => isFacilityMaintenanceNeedOpenStatus(need.status) && need.severity === 'CRITICAL')),
+  })
+}
+
+/** Same breakdown as `facilityOperationalReadinessAt`, scoped to one component (its own serviceability plus its own open/critical maintenance needs). */
+export interface FacilityComponentOperationalReadiness {
+  readonly componentId: FacilityComponentId
+  readonly serviceability: ReturnType<typeof componentServiceabilityAt>
+  readonly openMaintenanceNeeds: readonly FacilityMaintenanceNeed[]
+  readonly criticalMaintenanceNeeds: readonly FacilityMaintenanceNeed[]
+}
+
+export function componentOperationalReadinessAt(conditionRecords: readonly FacilityComponentConditionRecord[], needs: readonly FacilityMaintenanceNeed[], componentId: FacilityComponentId, onDate: GameDate): FacilityComponentOperationalReadiness {
+  const componentNeeds = maintenanceNeedsForComponentAt(needs, componentId, onDate)
+  return Object.freeze({
+    componentId,
+    serviceability: componentServiceabilityAt(conditionRecords, componentId, onDate),
+    openMaintenanceNeeds: Object.freeze(componentNeeds.filter((need) => isFacilityMaintenanceNeedOpenStatus(need.status))),
+    criticalMaintenanceNeeds: Object.freeze(componentNeeds.filter((need) => isFacilityMaintenanceNeedOpenStatus(need.status) && need.severity === 'CRITICAL')),
   })
 }
 

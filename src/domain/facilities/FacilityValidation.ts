@@ -6,7 +6,11 @@ import { createFacilityCompetitionApproval, type FacilityCompetitionApproval } f
 import { createFacilityControlRight, type FacilityControlRight } from './FacilityControl'
 import { createFacilityComponentConditionRecord, createFacilityConditionRecord, type FacilityComponentConditionRecord, type FacilityConditionRecord } from './FacilityCondition'
 import { facilityRightsOverlapInTime } from './FacilityConflict'
+import { createFacilityInspection, type FacilityInspection } from './FacilityInspection'
+import { createFacilityMaintenanceAction, type FacilityMaintenanceAction } from './FacilityMaintenanceAction'
+import { createFacilityMaintenanceNeed, type FacilityMaintenanceNeed } from './FacilityMaintenanceNeed'
 import { createFacilityNameRecord, type FacilityNameRecord } from './FacilityNameHistory'
+import { createFacilityOperationalIncident, type FacilityOperationalIncident } from './FacilityOperationalIncident'
 import { createFacilityOperatorAssignment, type FacilityOperatorAssignment } from './FacilityOperator'
 import { createFacilityOwnershipInterest, totalKnownFacilityOwnershipPercentage, type FacilityOwnershipInterest } from './FacilityOwnership'
 import { createFacilityOrganizationRelationship, createFacilityTeamRelationship, type FacilityOrganizationRelationship, type FacilityTeamRelationship } from './FacilityRelationship'
@@ -35,6 +39,10 @@ export interface FacilityValidationContext {
   readonly statusRecords: readonly FacilityStatusRecord[]
   readonly componentConditionRecords: readonly FacilityComponentConditionRecord[]
   readonly conditionRecords: readonly FacilityConditionRecord[]
+  readonly maintenanceNeeds: readonly FacilityMaintenanceNeed[]
+  readonly maintenanceActions: readonly FacilityMaintenanceAction[]
+  readonly inspections: readonly FacilityInspection[]
+  readonly operationalIncidents: readonly FacilityOperationalIncident[]
   readonly knownOrganizationIds: ReadonlySet<OrganizationId>
   readonly knownTeamIds: ReadonlySet<TeamId>
   readonly knownPersonIds: ReadonlySet<PersonId>
@@ -217,10 +225,79 @@ export function validateFacilitiesDomain(context: FacilityValidationContext): vo
     (record) => `${record.facilityId}:${record.dimension}`,
     'Facility condition record',
   )
+
+  const maintenanceNeedIds = new Set<string>()
+  for (const need of context.maintenanceNeeds) {
+    createFacilityMaintenanceNeed(need)
+    if (maintenanceNeedIds.has(need.id)) throw new FacilityValidationError(`Duplicate Facility maintenance need ID: ${need.id}`)
+    maintenanceNeedIds.add(need.id)
+    requireFacility(facilityIds, need.facilityId, `Facility maintenance need ${need.id}`)
+    if (need.componentId !== null) {
+      const component = requireComponent(context.components, need.componentId, `Facility maintenance need ${need.id}`)
+      if (component.facilityId !== need.facilityId) throw new FacilityValidationError(`Facility maintenance need ${need.id} component ${need.componentId} belongs to a different Facility`)
+    }
+  }
+
+  const maintenanceActionIds = new Set<string>()
+  for (const action of context.maintenanceActions) {
+    createFacilityMaintenanceAction(action)
+    if (maintenanceActionIds.has(action.id)) throw new FacilityValidationError(`Duplicate Facility maintenance action ID: ${action.id}`)
+    maintenanceActionIds.add(action.id)
+    requireFacility(facilityIds, action.facilityId, `Facility maintenance action ${action.id}`)
+    if (action.componentId !== null) {
+      const component = requireComponent(context.components, action.componentId, `Facility maintenance action ${action.id}`)
+      if (component.facilityId !== action.facilityId) throw new FacilityValidationError(`Facility maintenance action ${action.id} component ${action.componentId} belongs to a different Facility`)
+    }
+    if (action.needId !== null) {
+      const need = context.maintenanceNeeds.find((candidate) => candidate.id === action.needId)
+      if (need === undefined) throw new FacilityValidationError(`Facility maintenance action ${action.id} references missing maintenance need ${action.needId}`)
+      if (need.facilityId !== action.facilityId) throw new FacilityValidationError(`Facility maintenance action ${action.id} need ${action.needId} belongs to a different Facility`)
+    }
+  }
+
+  const inspectionIds = new Set<string>()
+  for (const inspection of context.inspections) {
+    createFacilityInspection(inspection)
+    if (inspectionIds.has(inspection.id)) throw new FacilityValidationError(`Duplicate Facility inspection ID: ${inspection.id}`)
+    inspectionIds.add(inspection.id)
+    requireFacility(facilityIds, inspection.facilityId, `Facility inspection ${inspection.id}`)
+    if (inspection.componentId !== null) {
+      const component = requireComponent(context.components, inspection.componentId, `Facility inspection ${inspection.id}`)
+      if (component.facilityId !== inspection.facilityId) throw new FacilityValidationError(`Facility inspection ${inspection.id} component ${inspection.componentId} belongs to a different Facility`)
+    }
+    if (inspection.producedNeedId !== null) {
+      const need = context.maintenanceNeeds.find((candidate) => candidate.id === inspection.producedNeedId)
+      if (need === undefined) throw new FacilityValidationError(`Facility inspection ${inspection.id} references missing maintenance need ${inspection.producedNeedId}`)
+      if (need.facilityId !== inspection.facilityId) throw new FacilityValidationError(`Facility inspection ${inspection.id} need ${inspection.producedNeedId} belongs to a different Facility`)
+    }
+  }
+
+  const incidentIds = new Set<string>()
+  for (const incident of context.operationalIncidents) {
+    createFacilityOperationalIncident(incident)
+    if (incidentIds.has(incident.id)) throw new FacilityValidationError(`Duplicate Facility operational incident ID: ${incident.id}`)
+    incidentIds.add(incident.id)
+    requireFacility(facilityIds, incident.facilityId, `Facility operational incident ${incident.id}`)
+    if (incident.componentId !== null) {
+      const component = requireComponent(context.components, incident.componentId, `Facility operational incident ${incident.id}`)
+      if (component.facilityId !== incident.facilityId) throw new FacilityValidationError(`Facility operational incident ${incident.id} component ${incident.componentId} belongs to a different Facility`)
+    }
+    if (incident.producedNeedId !== null) {
+      const need = context.maintenanceNeeds.find((candidate) => candidate.id === incident.producedNeedId)
+      if (need === undefined) throw new FacilityValidationError(`Facility operational incident ${incident.id} references missing maintenance need ${incident.producedNeedId}`)
+      if (need.facilityId !== incident.facilityId) throw new FacilityValidationError(`Facility operational incident ${incident.id} need ${incident.producedNeedId} belongs to a different Facility`)
+    }
+  }
 }
 
 function requireFacility(facilityIds: ReadonlySet<FacilityId>, facilityId: FacilityId, label: string): void {
   if (!facilityIds.has(facilityId)) throw new FacilityValidationError(`${label} references missing Facility ${facilityId}`)
+}
+
+function requireComponent(components: readonly FacilityComponent[], componentId: FacilityComponent['id'], label: string): FacilityComponent {
+  const component = components.find((candidate) => candidate.id === componentId)
+  if (component === undefined) throw new FacilityValidationError(`${label} references missing Facility component ${componentId}`)
+  return component
 }
 
 function assertNoOverlap(records: readonly { readonly id: string; readonly validFrom: GameDate | null; readonly validTo: GameDate | null }[], label: string): void {

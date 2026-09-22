@@ -30,7 +30,11 @@ import {
   createFacilityCompetitionApproval,
   createFacilityConditionRecord,
   createFacilityControlRight,
+  createFacilityInspection,
+  createFacilityMaintenanceAction,
+  createFacilityMaintenanceNeed,
   createFacilityNameRecord,
+  createFacilityOperationalIncident,
   createFacilityOperatorAssignment,
   createFacilityOrganizationRelationship,
   createFacilityOwnershipInterest,
@@ -47,7 +51,11 @@ import {
   type FacilityConditionRecord,
   type FacilityControlActor,
   type FacilityControlRight,
+  type FacilityInspection,
+  type FacilityMaintenanceAction,
+  type FacilityMaintenanceNeed,
   type FacilityNameRecord,
+  type FacilityOperationalIncident,
   type FacilityOperatorAssignment,
   type FacilityOrganizationRelationship,
   type FacilityOwnershipActor,
@@ -58,7 +66,7 @@ import {
   type Place,
 } from '@/domain/facilities'
 import { parseGameDate } from '@/domain/date'
-import { competitionIdFromString, ecosystemIdFromString, facilityCompetitionApprovalIdFromString, facilityComponentConditionRecordIdFromString, facilityComponentIdFromString, facilityConditionRecordIdFromString, facilityControlRightIdFromString, facilityIdFromString, facilityNameRecordIdFromString, facilityOperatorAssignmentIdFromString, facilityOrganizationRelationshipIdFromString, facilityOwnershipInterestIdFromString, facilityStatusRecordIdFromString, facilityTeamRelationshipIdFromString, facilityUsageRightIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, placeIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, seasonIdFromString, teamIdFromString } from '@/domain/ids'
+import { competitionIdFromString, ecosystemIdFromString, facilityCompetitionApprovalIdFromString, facilityComponentConditionRecordIdFromString, facilityComponentIdFromString, facilityConditionRecordIdFromString, facilityControlRightIdFromString, facilityIdFromString, facilityInspectionIdFromString, facilityMaintenanceActionIdFromString, facilityMaintenanceNeedIdFromString, facilityNameRecordIdFromString, facilityOperationalIncidentIdFromString, facilityOperatorAssignmentIdFromString, facilityOrganizationRelationshipIdFromString, facilityOwnershipInterestIdFromString, facilityStatusRecordIdFromString, facilityTeamRelationshipIdFromString, facilityUsageRightIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, placeIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, seasonIdFromString, teamIdFromString } from '@/domain/ids'
 import {
   deserializeGameWorldSave as deserializeLegacyGameWorldSave,
   deserializeGameWorldV3,
@@ -119,6 +127,11 @@ export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   /** CFI4 — Condition, Standard & Serviceability. Additive to the twelve CFI2S collections above. */
   readonly facilityComponentConditionRecords: readonly FacilityComponentConditionRecord[]
   readonly facilityConditionRecords: readonly FacilityConditionRecord[]
+  /** CFI5 — Operations, Maintenance & Deterioration. Additive canonical world truth only: maintenance needs, actions, inspections and incidents. Readiness summaries and deterioration calculations are query-time and never persisted. */
+  readonly facilityMaintenanceNeeds: readonly FacilityMaintenanceNeed[]
+  readonly facilityMaintenanceActions: readonly FacilityMaintenanceAction[]
+  readonly facilityInspections: readonly FacilityInspection[]
+  readonly facilityOperationalIncidents: readonly FacilityOperationalIncident[]
 }
 
 export interface SaveGameEnvelopeV4 {
@@ -154,6 +167,7 @@ export function migrateGameWorldSaveV3ToV4(value: SaveGameEnvelopeV3): SaveGameE
       multiClubOwnershipPolicies: [],
       organizationStructuralChanges: [], organizationLifecycleStates: [], organizationSuccessions: [], regulatoryOrders: [], regulatoryRemediationPlans: [], organizationLicenses: [],
       places: [], facilities: [], facilityComponents: [], facilityNameRecords: [], facilityOwnershipInterests: [], facilityControlRights: [], facilityOperatorAssignments: [], facilityOrganizationRelationships: [], facilityTeamRelationships: [], facilityUsageRights: [], facilityCompetitionApprovals: [], facilityStatusRecords: [], facilityComponentConditionRecords: [], facilityConditionRecords: [],
+      facilityMaintenanceNeeds: [], facilityMaintenanceActions: [], facilityInspections: [], facilityOperationalIncidents: [],
     }),
   })
 }
@@ -185,6 +199,7 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       multiClubOwnershipPolicies: Object.values(world.multiClubOwnershipPoliciesById),
       organizationStructuralChanges: Object.values(world.organizationStructuralChangesById), organizationLifecycleStates: Object.values(world.organizationLifecycleStatesById), organizationSuccessions: Object.values(world.organizationSuccessionsById), regulatoryOrders: Object.values(world.regulatoryOrdersById), regulatoryRemediationPlans: Object.values(world.regulatoryRemediationPlansById), organizationLicenses: Object.values(world.organizationLicensesById),
       places: Object.values(world.placesById), facilities: Object.values(world.facilitiesById), facilityComponents: Object.values(world.facilityComponentsById), facilityNameRecords: Object.values(world.facilityNameRecordsById), facilityOwnershipInterests: Object.values(world.facilityOwnershipInterestsById), facilityControlRights: Object.values(world.facilityControlRightsById), facilityOperatorAssignments: Object.values(world.facilityOperatorAssignmentsById), facilityOrganizationRelationships: Object.values(world.facilityOrganizationRelationshipsById), facilityTeamRelationships: Object.values(world.facilityTeamRelationshipsById), facilityUsageRights: Object.values(world.facilityUsageRightsById), facilityCompetitionApprovals: Object.values(world.facilityCompetitionApprovalsById), facilityStatusRecords: Object.values(world.facilityStatusRecordsById), facilityComponentConditionRecords: Object.values(world.facilityComponentConditionRecordsById), facilityConditionRecords: Object.values(world.facilityConditionRecordsById),
+      facilityMaintenanceNeeds: Object.values(world.facilityMaintenanceNeedsById), facilityMaintenanceActions: Object.values(world.facilityMaintenanceActionsById), facilityInspections: Object.values(world.facilityInspectionsById), facilityOperationalIncidents: Object.values(world.facilityOperationalIncidentsById),
     }),
   })
 }
@@ -249,6 +264,10 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const facilityStatusRecords = Object.prototype.hasOwnProperty.call(payload, 'facilityStatusRecords') ? parseFacilityStatusRecords(payload.facilityStatusRecords) : []
   const facilityComponentConditionRecords = Object.prototype.hasOwnProperty.call(payload, 'facilityComponentConditionRecords') ? parseFacilityComponentConditionRecords(payload.facilityComponentConditionRecords) : []
   const facilityConditionRecords = Object.prototype.hasOwnProperty.call(payload, 'facilityConditionRecords') ? parseFacilityConditionRecords(payload.facilityConditionRecords) : []
+  const facilityMaintenanceNeeds = Object.prototype.hasOwnProperty.call(payload, 'facilityMaintenanceNeeds') ? parseFacilityMaintenanceNeeds(payload.facilityMaintenanceNeeds) : []
+  const facilityMaintenanceActions = Object.prototype.hasOwnProperty.call(payload, 'facilityMaintenanceActions') ? parseFacilityMaintenanceActions(payload.facilityMaintenanceActions) : []
+  const facilityInspections = Object.prototype.hasOwnProperty.call(payload, 'facilityInspections') ? parseFacilityInspections(payload.facilityInspections) : []
+  const facilityOperationalIncidents = Object.prototype.hasOwnProperty.call(payload, 'facilityOperationalIncidents') ? parseFacilityOperationalIncidents(payload.facilityOperationalIncidents) : []
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
@@ -267,7 +286,8 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const withPolicies = updateGameWorld(withInvestments, { multiClubOwnershipPolicies })
   const withStructuralRegulation = updateGameWorld(withPolicies, { organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses })
   const withFacilities = updateGameWorld(withStructuralRegulation, { places, facilities, facilityComponents, facilityNameRecords, facilityOwnershipInterests, facilityControlRights, facilityOperatorAssignments, facilityOrganizationRelationships, facilityTeamRelationships, facilityUsageRights, facilityCompetitionApprovals, facilityStatusRecords, facilityComponentConditionRecords, facilityConditionRecords })
-  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withFacilities, runtime), worldAnnualDevelopmentCycle: developmentCycle })
+  const withFacilityOperations = updateGameWorld(withFacilities, { facilityMaintenanceNeeds, facilityMaintenanceActions, facilityInspections, facilityOperationalIncidents })
+  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withFacilityOperations, runtime), worldAnnualDevelopmentCycle: developmentCycle })
 }
 
 /** Reads V1-V4. Legacy saves normalize the V4-owned runtime projection to empty state. */
@@ -851,6 +871,82 @@ function parseFacilityConditionRecords(value: unknown): readonly FacilityConditi
       physicalCondition: nullableNumber(record_.physicalCondition, 'Save V4 FacilityConditionRecord physicalCondition'),
       serviceability: record_.serviceability as FacilityConditionRecord['serviceability'],
       notes: nullableText(record_.notes, 'Save V4 FacilityConditionRecord notes'),
+    })
+  }))
+}
+
+// --- CFI5: Operations, Maintenance & Deterioration --------------------------
+
+function parseFacilityMaintenanceNeeds(value: unknown): readonly FacilityMaintenanceNeed[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 facilityMaintenanceNeeds must be an array')
+  return Object.freeze(value.map((entry) => {
+    const need = record(entry, 'Save V4 FacilityMaintenanceNeed')
+    exactKeys(need, ['id', 'facilityId', 'componentId', 'detectedAt', 'type', 'severity', 'status', 'source', 'resolvedAt'], 'Save V4 FacilityMaintenanceNeed')
+    return createFacilityMaintenanceNeed({
+      id: facilityMaintenanceNeedIdFromString(nonEmptyText(need.id, 'Save V4 FacilityMaintenanceNeed id')),
+      facilityId: facilityIdFromString(nonEmptyText(need.facilityId, 'Save V4 FacilityMaintenanceNeed facilityId')),
+      componentId: nullableText(need.componentId, 'Save V4 FacilityMaintenanceNeed componentId'),
+      detectedAt: nonEmptyText(need.detectedAt, 'Save V4 FacilityMaintenanceNeed detectedAt'),
+      type: need.type as FacilityMaintenanceNeed['type'],
+      severity: need.severity as FacilityMaintenanceNeed['severity'],
+      status: need.status as FacilityMaintenanceNeed['status'],
+      source: nonEmptyText(need.source, 'Save V4 FacilityMaintenanceNeed source'),
+      resolvedAt: nullableText(need.resolvedAt, 'Save V4 FacilityMaintenanceNeed resolvedAt'),
+    })
+  }))
+}
+
+function parseFacilityMaintenanceActions(value: unknown): readonly FacilityMaintenanceAction[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 facilityMaintenanceActions must be an array')
+  return Object.freeze(value.map((entry) => {
+    const action = record(entry, 'Save V4 FacilityMaintenanceAction')
+    exactKeys(action, ['id', 'needId', 'facilityId', 'componentId', 'type', 'startedAt', 'completedAt', 'outcome', 'resultingCondition', 'resultingServiceability'], 'Save V4 FacilityMaintenanceAction')
+    return createFacilityMaintenanceAction({
+      id: facilityMaintenanceActionIdFromString(nonEmptyText(action.id, 'Save V4 FacilityMaintenanceAction id')),
+      needId: nullableText(action.needId, 'Save V4 FacilityMaintenanceAction needId'),
+      facilityId: facilityIdFromString(nonEmptyText(action.facilityId, 'Save V4 FacilityMaintenanceAction facilityId')),
+      componentId: nullableText(action.componentId, 'Save V4 FacilityMaintenanceAction componentId'),
+      type: action.type as FacilityMaintenanceAction['type'],
+      startedAt: nonEmptyText(action.startedAt, 'Save V4 FacilityMaintenanceAction startedAt'),
+      completedAt: nullableText(action.completedAt, 'Save V4 FacilityMaintenanceAction completedAt'),
+      outcome: nullableText(action.outcome, 'Save V4 FacilityMaintenanceAction outcome') as FacilityMaintenanceAction['outcome'],
+      resultingCondition: nullableNumber(action.resultingCondition, 'Save V4 FacilityMaintenanceAction resultingCondition'),
+      resultingServiceability: nullableText(action.resultingServiceability, 'Save V4 FacilityMaintenanceAction resultingServiceability') as FacilityMaintenanceAction['resultingServiceability'],
+    })
+  }))
+}
+
+function parseFacilityInspections(value: unknown): readonly FacilityInspection[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 facilityInspections must be an array')
+  return Object.freeze(value.map((entry) => {
+    const inspection = record(entry, 'Save V4 FacilityInspection')
+    exactKeys(inspection, ['id', 'facilityId', 'componentId', 'inspectedAt', 'finding', 'observedCondition', 'observedServiceability', 'producedNeedId'], 'Save V4 FacilityInspection')
+    return createFacilityInspection({
+      id: facilityInspectionIdFromString(nonEmptyText(inspection.id, 'Save V4 FacilityInspection id')),
+      facilityId: facilityIdFromString(nonEmptyText(inspection.facilityId, 'Save V4 FacilityInspection facilityId')),
+      componentId: nullableText(inspection.componentId, 'Save V4 FacilityInspection componentId'),
+      inspectedAt: nonEmptyText(inspection.inspectedAt, 'Save V4 FacilityInspection inspectedAt'),
+      finding: inspection.finding as FacilityInspection['finding'],
+      observedCondition: nullableNumber(inspection.observedCondition, 'Save V4 FacilityInspection observedCondition'),
+      observedServiceability: nullableText(inspection.observedServiceability, 'Save V4 FacilityInspection observedServiceability') as FacilityInspection['observedServiceability'],
+      producedNeedId: nullableText(inspection.producedNeedId, 'Save V4 FacilityInspection producedNeedId'),
+    })
+  }))
+}
+
+function parseFacilityOperationalIncidents(value: unknown): readonly FacilityOperationalIncident[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 facilityOperationalIncidents must be an array')
+  return Object.freeze(value.map((entry) => {
+    const incident = record(entry, 'Save V4 FacilityOperationalIncident')
+    exactKeys(incident, ['id', 'facilityId', 'componentId', 'category', 'occurredAt', 'resultingServiceability', 'producedNeedId'], 'Save V4 FacilityOperationalIncident')
+    return createFacilityOperationalIncident({
+      id: facilityOperationalIncidentIdFromString(nonEmptyText(incident.id, 'Save V4 FacilityOperationalIncident id')),
+      facilityId: facilityIdFromString(nonEmptyText(incident.facilityId, 'Save V4 FacilityOperationalIncident facilityId')),
+      componentId: nullableText(incident.componentId, 'Save V4 FacilityOperationalIncident componentId'),
+      category: incident.category as FacilityOperationalIncident['category'],
+      occurredAt: nonEmptyText(incident.occurredAt, 'Save V4 FacilityOperationalIncident occurredAt'),
+      resultingServiceability: nullableText(incident.resultingServiceability, 'Save V4 FacilityOperationalIncident resultingServiceability') as FacilityOperationalIncident['resultingServiceability'],
+      producedNeedId: nullableText(incident.producedNeedId, 'Save V4 FacilityOperationalIncident producedNeedId'),
     })
   }))
 }
