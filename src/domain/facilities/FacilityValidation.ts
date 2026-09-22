@@ -4,6 +4,7 @@ import { createFacility, type Facility } from './Facility'
 import { createFacilityComponent, type FacilityComponent } from './FacilityComponent'
 import { createFacilityCompetitionApproval, type FacilityCompetitionApproval } from './FacilityCompetitionApproval'
 import { createFacilityControlRight, type FacilityControlRight } from './FacilityControl'
+import { createFacilityComponentConditionRecord, createFacilityConditionRecord, type FacilityComponentConditionRecord, type FacilityConditionRecord } from './FacilityCondition'
 import { facilityRightsOverlapInTime } from './FacilityConflict'
 import { createFacilityNameRecord, type FacilityNameRecord } from './FacilityNameHistory'
 import { createFacilityOperatorAssignment, type FacilityOperatorAssignment } from './FacilityOperator'
@@ -32,6 +33,8 @@ export interface FacilityValidationContext {
   readonly usageRights: readonly FacilityUsageRight[]
   readonly competitionApprovals: readonly FacilityCompetitionApproval[]
   readonly statusRecords: readonly FacilityStatusRecord[]
+  readonly componentConditionRecords: readonly FacilityComponentConditionRecord[]
+  readonly conditionRecords: readonly FacilityConditionRecord[]
   readonly knownOrganizationIds: ReadonlySet<OrganizationId>
   readonly knownTeamIds: ReadonlySet<TeamId>
   readonly knownPersonIds: ReadonlySet<PersonId>
@@ -188,6 +191,32 @@ export function validateFacilitiesDomain(context: FacilityValidationContext): vo
     statusRecordIds.add(record.id)
     requireFacility(facilityIds, record.facilityId, `Facility status record ${record.id}`)
   }
+
+  const componentConditionRecordIds = new Set<string>()
+  for (const record of context.componentConditionRecords) {
+    createFacilityComponentConditionRecord(record)
+    if (componentConditionRecordIds.has(record.id)) throw new FacilityValidationError(`Duplicate Facility component condition record ID: ${record.id}`)
+    componentConditionRecordIds.add(record.id)
+    if (!componentIds.has(record.componentId)) throw new FacilityValidationError(`Facility component condition record ${record.id} references missing Facility component ${record.componentId}`)
+  }
+  assertNoDuplicateEffectivePeriods(
+    context.componentConditionRecords,
+    (record) => record.componentId,
+    'Facility component condition record',
+  )
+
+  const conditionRecordIds = new Set<string>()
+  for (const record of context.conditionRecords) {
+    createFacilityConditionRecord(record)
+    if (conditionRecordIds.has(record.id)) throw new FacilityValidationError(`Duplicate Facility condition record ID: ${record.id}`)
+    conditionRecordIds.add(record.id)
+    requireFacility(facilityIds, record.facilityId, `Facility condition record ${record.id}`)
+  }
+  assertNoDuplicateEffectivePeriods(
+    context.conditionRecords,
+    (record) => `${record.facilityId}:${record.dimension}`,
+    'Facility condition record',
+  )
 }
 
 function requireFacility(facilityIds: ReadonlySet<FacilityId>, facilityId: FacilityId, label: string): void {
@@ -219,6 +248,27 @@ function assertOwnershipDoesNotOverlapPast100(interests: readonly FacilityOwners
     const activeOnBoundary = interests.filter((interest) => (interest.validFrom === null || interest.validFrom <= boundary) && (interest.validTo === null || boundary <= interest.validTo))
     const total = totalKnownFacilityOwnershipPercentage(activeOnBoundary)
     if (total !== null && total > 100) throw new FacilityValidationError(`Facility ${facilityId} ownership exceeds 100% when fully known as of ${boundary}`)
+  }
+}
+
+/**
+ * Same overlap-detection semantics as `assertNoDuplicateActiveRelationships`, adapted for records
+ * whose interval fields are named `effectiveFrom`/`effectiveTo` (CFI4's condition records) rather
+ * than `validFrom`/`validTo` (CFI1/CFI2's relationship-style records) — kept as a separate small
+ * adapter rather than renaming either family's fields or generalizing the shared helper's field
+ * names, so no existing CFI1/CFI2 caller changes shape.
+ */
+function assertNoDuplicateEffectivePeriods<T extends { readonly effectiveFrom: GameDate; readonly effectiveTo: GameDate | null }>(records: readonly T[], key: (record: T) => string, label: string): void {
+  const byKey = new Map<string, T[]>()
+  for (const record of records) {
+    const k = key(record)
+    const bucket = byKey.get(k) ?? []
+    bucket.push(record)
+    byKey.set(k, bucket)
+  }
+  for (const bucket of byKey.values()) {
+    if (bucket.length < 2) continue
+    assertNoOverlap(bucket.map((item, index) => ({ id: String(index), validFrom: item.effectiveFrom, validTo: item.effectiveTo })), label)
   }
 }
 

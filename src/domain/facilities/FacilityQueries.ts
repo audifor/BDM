@@ -3,7 +3,8 @@ import type { FacilityComponentId, FacilityId, OrganizationId, TeamId } from '@/
 import type { Facility } from './Facility'
 import { activeFacilityComponentsAt, componentCategory, type FacilityComponent, type FacilityComponentType } from './FacilityComponent'
 import type { FacilityComponentCategory } from './FacilityComponentCategory'
-import { capabilitiesOfFacility, facilitiesWithCapability, facilityHasCapability, type FacilityComponentCapability } from './FacilityComponentCapability'
+import { capabilitiesOfFacility, facilitiesWithCapability, facilityHasCapability, facilityHasUsableCapabilityAt, usableCapabilitiesOfFacilityAt, type FacilityComponentCapability } from './FacilityComponentCapability'
+import { componentConditionAt, componentServiceabilityAt, facilityConditionRecordsAt, type FacilityComponentConditionRecord, type FacilityConditionRecord } from './FacilityCondition'
 import { facilityRightsConflictsAt, type FacilityRightsConflict } from './FacilityConflict'
 import { controllersOfFacilityAt, whoControlsFacilityAt } from './FacilityControl'
 import { resolveFacilityNameAt, type FacilityNameRecord } from './FacilityNameHistory'
@@ -151,11 +152,90 @@ export function trainingComponentsOfFacility(components: readonly FacilityCompon
 
 export { capabilitiesOfFacility, facilitiesWithCapability, facilityHasCapability, type FacilityComponentCapability }
 
+// --- Condition / serviceability (CFI4) ------------------------------------
+
+export { componentConditionAt, componentServiceabilityAt, facilityConditionRecordsAt, type FacilityComponentConditionRecord, type FacilityConditionRecord }
+
+/** Component IDs across the given set whose resolved `physicalCondition` is known and strictly below `threshold` at a date. A component with unknown condition is never included — unknown is never treated as "presumably below threshold". */
+export function componentsBelowConditionAt(components: readonly FacilityComponent[], conditionRecords: readonly FacilityComponentConditionRecord[], threshold: number, onDate: GameDate): readonly FacilityComponentId[] {
+  const result: FacilityComponentId[] = []
+  for (const component of components) {
+    const record = componentConditionAt(conditionRecords, component.id, onDate)
+    if (record !== undefined && record.physicalCondition !== null && record.physicalCondition < threshold) result.push(component.id)
+  }
+  return Object.freeze([...result].sort((a, b) => a.localeCompare(b)))
+}
+
+/** Component IDs across the given set whose resolved serviceability is `OUT_OF_SERVICE` at a date. */
+export function componentsOutOfServiceAt(components: readonly FacilityComponent[], conditionRecords: readonly FacilityComponentConditionRecord[], onDate: GameDate): readonly FacilityComponentId[] {
+  return Object.freeze(components.filter((component) => componentServiceabilityAt(conditionRecords, component.id, onDate) === 'OUT_OF_SERVICE').map((component) => component.id).sort((a, b) => a.localeCompare(b)))
+}
+
+/** Component IDs across the given set whose resolved serviceability is `LIMITED` or `SEVERELY_LIMITED` at a date. */
+export function componentsWithLimitedServiceAt(components: readonly FacilityComponent[], conditionRecords: readonly FacilityComponentConditionRecord[], onDate: GameDate): readonly FacilityComponentId[] {
+  return Object.freeze(components.filter((component) => {
+    const serviceability = componentServiceabilityAt(conditionRecords, component.id, onDate)
+    return serviceability === 'LIMITED' || serviceability === 'SEVERELY_LIMITED'
+  }).map((component) => component.id).sort((a, b) => a.localeCompare(b)))
+}
+
+/**
+ * A derived, non-persisted summary of a Facility's component condition landscape at a date. Never
+ * treated as world truth — it is recomputed on every call from the same canonical records
+ * `componentConditionAt` reads. `averageCondition` is explicitly documented as a derived
+ * convenience (over components with a known condition only) and must never be mistaken for a
+ * stored "facility condition" value; `null` when no active component has a known condition.
+ */
+export interface FacilityConditionSummary {
+  readonly facilityId: FacilityId
+  readonly componentCount: number
+  readonly knownConditionComponentCount: number
+  readonly outOfServiceComponentIds: readonly FacilityComponentId[]
+  readonly limitedServiceComponentIds: readonly FacilityComponentId[]
+  readonly worstKnownCondition: number | null
+  readonly averageKnownCondition: number | null
+}
+
+export function facilityConditionSummaryAt(components: readonly FacilityComponent[], conditionRecords: readonly FacilityComponentConditionRecord[], facilityId: FacilityId, onDate: GameDate): FacilityConditionSummary {
+  const active = activeFacilityComponentsAt(components, facilityId, onDate)
+  const knownConditions: number[] = []
+  for (const component of active) {
+    const record = componentConditionAt(conditionRecords, component.id, onDate)
+    if (record !== undefined && record.physicalCondition !== null) knownConditions.push(record.physicalCondition)
+  }
+  return Object.freeze({
+    facilityId,
+    componentCount: active.length,
+    knownConditionComponentCount: knownConditions.length,
+    outOfServiceComponentIds: componentsOutOfServiceAt(active, conditionRecords, onDate),
+    limitedServiceComponentIds: componentsWithLimitedServiceAt(active, conditionRecords, onDate),
+    worstKnownCondition: knownConditions.length === 0 ? null : Math.min(...knownConditions),
+    averageKnownCondition: knownConditions.length === 0 ? null : knownConditions.reduce((sum, value) => sum + value, 0) / knownConditions.length,
+  })
+}
+
+// --- Capability availability (CFI3 presence + CFI4 serviceability) -------
+
+export { usableCapabilitiesOfFacilityAt, facilityHasUsableCapabilityAt }
+
 // --- Access integration (CFI3 reuses CFI2's usage-right scoping; no duplicated logic) ---
 
-/** Alias of `facilityComponentsUsableByTeamAt` under the CFI3-requested name; delegates to the same CFI2 scope-resolution logic rather than reimplementing it. */
+/** Alias of `facilityComponentsUsableByTeamAt` under the CFI3-requested name; delegates to the same CFI2 scope-resolution logic rather than reimplementing it. Access only — does not consider physical serviceability; see `availableComponentsForTeamAt` for the CFI4 combination. */
 export function usableComponentsForTeamAt(rights: readonly FacilityUsageRight[], components: readonly FacilityComponent[], teamId: TeamId, onDate: GameDate): readonly FacilityComponentId[] {
   return facilityComponentsUsableByTeamAt(rights, components, teamId, onDate)
+}
+
+/**
+ * CFI4: the intersection of CFI2 access (`usableComponentsForTeamAt`) and CFI4 physical
+ * serviceability (excluding `OUT_OF_SERVICE`). Deliberately a new, separate function rather than a
+ * silent redefinition of `usableComponentsForTeamAt`/`facilityComponentsUsableByTeamAt` — those
+ * remain pure access-rights resolvers so any existing caller's semantics are preserved unchanged.
+ * `LIMITED`/`SEVERELY_LIMITED` components remain available here (they are usable, just degraded);
+ * only `OUT_OF_SERVICE` is excluded.
+ */
+export function availableComponentsForTeamAt(rights: readonly FacilityUsageRight[], components: readonly FacilityComponent[], conditionRecords: readonly FacilityComponentConditionRecord[], teamId: TeamId, onDate: GameDate): readonly FacilityComponentId[] {
+  const accessible = usableComponentsForTeamAt(rights, components, teamId, onDate)
+  return Object.freeze(accessible.filter((componentId) => componentServiceabilityAt(conditionRecords, componentId, onDate) !== 'OUT_OF_SERVICE'))
 }
 
 export function facilityNameAt(nameRecords: readonly FacilityNameRecord[], facilityId: FacilityId, onDate: GameDate, fallbackCanonicalName: string): string {

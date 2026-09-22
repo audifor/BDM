@@ -233,7 +233,7 @@ describe('GameWorldSaveV4 competition runtime', () => {
   it('migrates canonical V3 by preserving V3 fields and adding empty runtime state', () => {
     const v3 = serializeGameWorldV3(createNewGame(), savedAt)
     const v4 = migrateGameWorldSaveV3ToV4(v3)
-    const { worldDbCompetitionRuntime, worldAnnualDevelopmentCycle, organizations, organizationSections, organizationOwnership, organizationControl, organizationOwnershipTransactions, organizationOwnershipTransactionEvents, organizationInvestorInterests, organizationCapitalRaises, organizationCapitalRaiseEvents, organizationInvestmentProposals, organizationInvestmentProposalEvents, multiClubOwnershipPolicies, organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses, places, facilities, facilityComponents, facilityNameRecords, facilityOwnershipInterests, facilityControlRights, facilityOperatorAssignments, facilityOrganizationRelationships, facilityTeamRelationships, facilityUsageRights, facilityCompetitionApprovals, facilityStatusRecords, ...v4CompatibilityPayload } = v4.payload
+    const { worldDbCompetitionRuntime, worldAnnualDevelopmentCycle, organizations, organizationSections, organizationOwnership, organizationControl, organizationOwnershipTransactions, organizationOwnershipTransactionEvents, organizationInvestorInterests, organizationCapitalRaises, organizationCapitalRaiseEvents, organizationInvestmentProposals, organizationInvestmentProposalEvents, multiClubOwnershipPolicies, organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses, places, facilities, facilityComponents, facilityNameRecords, facilityOwnershipInterests, facilityControlRights, facilityOperatorAssignments, facilityOrganizationRelationships, facilityTeamRelationships, facilityUsageRights, facilityCompetitionApprovals, facilityStatusRecords, facilityComponentConditionRecords, facilityConditionRecords, ...v4CompatibilityPayload } = v4.payload
 
     expect(v4.schemaVersion).toBe(4)
     expect(v4CompatibilityPayload).toEqual(v3.payload)
@@ -271,6 +271,8 @@ describe('GameWorldSaveV4 competition runtime', () => {
     expect(facilityUsageRights).toEqual([])
     expect(facilityCompetitionApprovals).toEqual([])
     expect(facilityStatusRecords).toEqual([])
+    expect(facilityComponentConditionRecords).toEqual([])
+    expect(facilityConditionRecords).toEqual([])
     expect(organizations.length).toBeGreaterThan(0)
     expect(organizationSections.length).toBeGreaterThan(0)
   })

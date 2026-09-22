@@ -1,7 +1,7 @@
-import type { FacilityId } from '@/domain/ids'
+import type { FacilityComponentId, FacilityId } from '@/domain/ids'
 import type { GameDate } from '@/domain/date'
-import { activeFacilityComponentsAt } from './FacilityQueries'
-import type { FacilityComponent, FacilityComponentType } from './FacilityComponent'
+import { activeFacilityComponentsAt, type FacilityComponent, type FacilityComponentType } from './FacilityComponent'
+import { componentServiceabilityAt, type FacilityComponentConditionRecord } from './FacilityCondition'
 
 /**
  * A discrete, world-truth-derived capability a Facility can offer, resolved deterministically from
@@ -76,6 +76,11 @@ function componentSupportsCapability(component: FacilityComponent, capability: F
   return true
 }
 
+/** The component IDs that justify a Facility's support of a given capability, among its currently active components — used by the CFI4 usable-capability resolvers to check whether at least one justifying component remains in service. */
+function justifyingComponentIds(active: readonly FacilityComponent[], capability: FacilityComponentCapability): readonly FacilityComponentId[] {
+  return active.filter((component) => componentSupportsCapability(component, capability)).map((component) => component.id)
+}
+
 /** The full set of derived capabilities a Facility currently supports, resolved from its active components at a date. Deterministic, side-effect-free, and never persisted. */
 export function capabilitiesOfFacility(components: readonly FacilityComponent[], facilityId: FacilityId, onDate: GameDate): readonly FacilityComponentCapability[] {
   const active = activeFacilityComponentsAt(components, facilityId, onDate)
@@ -99,4 +104,28 @@ export function facilitiesWithCapability(components: readonly FacilityComponent[
     if (facilityHasCapability(components, facilityId, capability, onDate)) facilityIds.add(facilityId)
   }
   return Object.freeze([...facilityIds].sort((a, b) => a.localeCompare(b)))
+}
+
+/**
+ * CFI4: the subset of `capabilitiesOfFacility` that is not merely physically present but
+ * *currently usable* — at least one justifying component must have a serviceability other than
+ * `OUT_OF_SERVICE`. A capability whose only justifying component is `OUT_OF_SERVICE` still exists
+ * physically (it remains in `capabilitiesOfFacility`'s result) but drops out of this usable set.
+ * `LIMITED`/`SEVERELY_LIMITED` still count as usable here — CFI4 records the degraded state without
+ * deciding how much a specific consumer should discount it; that policy belongs to a future
+ * consumer (e.g. a training-effect system), not to this presence/usability boundary.
+ */
+export function usableCapabilitiesOfFacilityAt(components: readonly FacilityComponent[], conditionRecords: readonly FacilityComponentConditionRecord[], facilityId: FacilityId, onDate: GameDate): readonly FacilityComponentCapability[] {
+  const active = activeFacilityComponentsAt(components, facilityId, onDate)
+  const usable = new Set<FacilityComponentCapability>()
+  for (const capability of FACILITY_COMPONENT_CAPABILITIES) {
+    const justifying = justifyingComponentIds(active, capability)
+    if (justifying.some((componentId) => componentServiceabilityAt(conditionRecords, componentId, onDate) !== 'OUT_OF_SERVICE')) usable.add(capability)
+  }
+  return Object.freeze([...usable].sort())
+}
+
+/** Whether a Facility currently, usably, supports a given capability at a date (physical presence AND at least one justifying component not OUT_OF_SERVICE). */
+export function facilityHasUsableCapabilityAt(components: readonly FacilityComponent[], conditionRecords: readonly FacilityComponentConditionRecord[], facilityId: FacilityId, capability: FacilityComponentCapability, onDate: GameDate): boolean {
+  return usableCapabilitiesOfFacilityAt(components, conditionRecords, facilityId, onDate).includes(capability)
 }

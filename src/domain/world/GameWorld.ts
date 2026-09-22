@@ -100,8 +100,8 @@ import { createGovernanceRequest, createGovernanceRequestEvent, sameGovernanceIn
 import { createGovernanceCommitment, createGovernanceCommitmentEvent, sortGovernanceCommitmentEvents, validateGovernanceCommitmentLifecycle, type GovernanceCommitment, type GovernanceCommitmentEvent } from '@/domain/governance'
 import { createGovernanceUniverseProfile, governanceUniverseForProfile, type GovernanceUniverseProfile } from '@/domain/governance'
 import type { CoachAchievement, CoachLegacyState, CoachTeamLegacy, CoachTenure } from '@/domain/legacy'
-import { createFacility, createFacilityComponent, createFacilityCompetitionApproval, createFacilityControlRight, createFacilityNameRecord, createFacilityOperatorAssignment, createFacilityOrganizationRelationship, createFacilityOwnershipInterest, createFacilityStatusRecord, createFacilityTeamRelationship, createFacilityUsageRight, createPlace, validateFacilitiesDomain, type Facility, type FacilityComponent, type FacilityCompetitionApproval, type FacilityControlRight, type FacilityNameRecord, type FacilityOperatorAssignment, type FacilityOrganizationRelationship, type FacilityOwnershipInterest, type FacilityTeamRelationship, type FacilityUsageRight, type FacilityStatusRecord, type Place } from '@/domain/facilities'
-import type { FacilityComponentId, FacilityCompetitionApprovalId, FacilityControlRightId, FacilityId, FacilityNameRecordId, FacilityOperatorAssignmentId, FacilityOrganizationRelationshipId, FacilityOwnershipInterestId, FacilityStatusRecordId, FacilityTeamRelationshipId, FacilityUsageRightId, PlaceId } from '@/domain/ids'
+import { createFacility, createFacilityComponent, createFacilityComponentConditionRecord, createFacilityCompetitionApproval, createFacilityConditionRecord, createFacilityControlRight, createFacilityNameRecord, createFacilityOperatorAssignment, createFacilityOrganizationRelationship, createFacilityOwnershipInterest, createFacilityStatusRecord, createFacilityTeamRelationship, createFacilityUsageRight, createPlace, validateFacilitiesDomain, type Facility, type FacilityComponent, type FacilityComponentConditionRecord, type FacilityCompetitionApproval, type FacilityConditionRecord, type FacilityControlRight, type FacilityNameRecord, type FacilityOperatorAssignment, type FacilityOrganizationRelationship, type FacilityOwnershipInterest, type FacilityTeamRelationship, type FacilityUsageRight, type FacilityStatusRecord, type Place } from '@/domain/facilities'
+import type { FacilityComponentConditionRecordId, FacilityComponentId, FacilityCompetitionApprovalId, FacilityConditionRecordId, FacilityControlRightId, FacilityId, FacilityNameRecordId, FacilityOperatorAssignmentId, FacilityOrganizationRelationshipId, FacilityOwnershipInterestId, FacilityStatusRecordId, FacilityTeamRelationshipId, FacilityUsageRightId, PlaceId } from '@/domain/ids'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -140,6 +140,8 @@ export interface GameWorld {
   readonly facilityOwnershipInterestsById: Readonly<Record<FacilityOwnershipInterestId, FacilityOwnershipInterest>>
   readonly facilityControlRightsById: Readonly<Record<FacilityControlRightId, FacilityControlRight>>
   readonly facilityOperatorAssignmentsById: Readonly<Record<FacilityOperatorAssignmentId, FacilityOperatorAssignment>>
+  readonly facilityComponentConditionRecordsById: Readonly<Record<FacilityComponentConditionRecordId, FacilityComponentConditionRecord>>
+  readonly facilityConditionRecordsById: Readonly<Record<FacilityConditionRecordId, FacilityConditionRecord>>
   readonly facilityOrganizationRelationshipsById: Readonly<Record<FacilityOrganizationRelationshipId, FacilityOrganizationRelationship>>
   readonly facilityTeamRelationshipsById: Readonly<Record<FacilityTeamRelationshipId, FacilityTeamRelationship>>
   readonly facilityUsageRightsById: Readonly<Record<FacilityUsageRightId, FacilityUsageRight>>
@@ -375,6 +377,8 @@ export interface CreateGameWorldInput {
   facilityOwnershipInterests?: readonly FacilityOwnershipInterest[]
   facilityControlRights?: readonly FacilityControlRight[]
   facilityOperatorAssignments?: readonly FacilityOperatorAssignment[]
+  facilityComponentConditionRecords?: readonly FacilityComponentConditionRecord[]
+  facilityConditionRecords?: readonly FacilityConditionRecord[]
   facilityOrganizationRelationships?: readonly FacilityOrganizationRelationship[]
   facilityTeamRelationships?: readonly FacilityTeamRelationship[]
   facilityUsageRights?: readonly FacilityUsageRight[]
@@ -635,6 +639,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     facilityOwnershipInterestsById: indexById((input.facilityOwnershipInterests ?? []).map(createFacilityOwnershipInterest), 'Facility ownership interest'),
     facilityControlRightsById: indexById((input.facilityControlRights ?? []).map(createFacilityControlRight), 'Facility control right'),
     facilityOperatorAssignmentsById: indexById((input.facilityOperatorAssignments ?? []).map(createFacilityOperatorAssignment), 'Facility operator assignment'),
+    facilityComponentConditionRecordsById: indexById((input.facilityComponentConditionRecords ?? []).map(createFacilityComponentConditionRecord), 'Facility component condition record'),
+    facilityConditionRecordsById: indexById((input.facilityConditionRecords ?? []).map(createFacilityConditionRecord), 'Facility condition record'),
     facilityOrganizationRelationshipsById: indexById((input.facilityOrganizationRelationships ?? []).map(createFacilityOrganizationRelationship), 'Facility organization relationship'),
     facilityTeamRelationshipsById: indexById((input.facilityTeamRelationships ?? []).map(createFacilityTeamRelationship), 'Facility team relationship'),
     facilityUsageRightsById: indexById((input.facilityUsageRights ?? []).map(createFacilityUsageRight), 'Facility usage right'),
@@ -820,7 +826,7 @@ const collectionPatchTargets: Readonly<Record<string, string>> = {
   multiClubOwnershipPolicies: 'multiClubOwnershipPoliciesById',
   organizationStructuralChanges: 'organizationStructuralChangesById', organizationLifecycleStates: 'organizationLifecycleStatesById', organizationSuccessions: 'organizationSuccessionsById', regulatoryOrders: 'regulatoryOrdersById', regulatoryRemediationPlans: 'regulatoryRemediationPlansById', organizationLicenses: 'organizationLicensesById',
   organizationInvestorInterests: 'organizationInvestorInterestsById', organizationCapitalRaises: 'organizationCapitalRaisesById', organizationCapitalRaiseEvents: 'organizationCapitalRaiseEventsById', organizationInvestmentProposals: 'organizationInvestmentProposalsById', organizationInvestmentProposalEvents: 'organizationInvestmentProposalEventsById',
-  places: 'placesById', facilities: 'facilitiesById', facilityComponents: 'facilityComponentsById', facilityNameRecords: 'facilityNameRecordsById', facilityOwnershipInterests: 'facilityOwnershipInterestsById', facilityControlRights: 'facilityControlRightsById', facilityOperatorAssignments: 'facilityOperatorAssignmentsById', facilityOrganizationRelationships: 'facilityOrganizationRelationshipsById', facilityTeamRelationships: 'facilityTeamRelationshipsById', facilityUsageRights: 'facilityUsageRightsById', facilityCompetitionApprovals: 'facilityCompetitionApprovalsById', facilityStatusRecords: 'facilityStatusRecordsById',
+  places: 'placesById', facilities: 'facilitiesById', facilityComponents: 'facilityComponentsById', facilityNameRecords: 'facilityNameRecordsById', facilityOwnershipInterests: 'facilityOwnershipInterestsById', facilityControlRights: 'facilityControlRightsById', facilityOperatorAssignments: 'facilityOperatorAssignmentsById', facilityOrganizationRelationships: 'facilityOrganizationRelationshipsById', facilityTeamRelationships: 'facilityTeamRelationshipsById', facilityUsageRights: 'facilityUsageRightsById', facilityCompetitionApprovals: 'facilityCompetitionApprovalsById', facilityStatusRecords: 'facilityStatusRecordsById', facilityComponentConditionRecords: 'facilityComponentConditionRecordsById', facilityConditionRecords: 'facilityConditionRecordsById',
   governanceInstitutions: 'governanceInstitutionsById', governanceUniverseProfiles: 'governanceUniverseProfilesById', governanceBodies: 'governanceBodiesById', governanceAppointments: 'governanceAppointmentsById', governanceAuthorityGrants: 'governanceAuthorityGrantsById', governanceExternalRelationships: 'governanceExternalRelationshipsById', governanceExpectationPeriods: 'governanceExpectationPeriodsById', governanceObjectives: 'governanceObjectivesById',
   supporterRelationships: 'supporterRelationshipsById', collectiveInstitutionAffiliations: 'collectiveInstitutionAffiliationsById', collectiveParticipantAffiliations: 'collectiveParticipantAffiliationsById', collectiveInstitutionalStatusEvents: 'collectiveInstitutionalStatusEventsById', collectiveInstitutionalLiaisons: 'collectiveInstitutionalLiaisonsById', supporterExpectations: 'supporterExpectationsById', supporterExpectationEvents: 'supporterExpectationEventsById', supporterPressureEvents: 'supporterPressureEventsById', supporterReactions: 'supporterReactionsById', supportFundingPledges: 'supportFundingPledgesById', supportFundingPledgeEvents: 'supportFundingPledgeEventsById', supportContributions: 'supportContributionsById',
   supportComplianceCases: 'supportComplianceCasesById', supportComplianceCaseEvents: 'supportComplianceCaseEventsById', supportComplianceFindings: 'supportComplianceFindingsById', supportConflictDisclosures: 'supportConflictDisclosuresById', supportConsequences: 'supportConsequencesById', supportRemediations: 'supportRemediationsById',
@@ -838,6 +844,8 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   facilityOwnershipInterests: (value) => indexById((value as readonly FacilityOwnershipInterest[]).map(createFacilityOwnershipInterest), 'Facility ownership interest'),
   facilityControlRights: (value) => indexById((value as readonly FacilityControlRight[]).map(createFacilityControlRight), 'Facility control right'),
   facilityOperatorAssignments: (value) => indexById((value as readonly FacilityOperatorAssignment[]).map(createFacilityOperatorAssignment), 'Facility operator assignment'),
+  facilityComponentConditionRecords: (value) => indexById((value as readonly FacilityComponentConditionRecord[]).map(createFacilityComponentConditionRecord), 'Facility component condition record'),
+  facilityConditionRecords: (value) => indexById((value as readonly FacilityConditionRecord[]).map(createFacilityConditionRecord), 'Facility condition record'),
   facilityOrganizationRelationships: (value) => indexById((value as readonly FacilityOrganizationRelationship[]).map(createFacilityOrganizationRelationship), 'Facility organization relationship'),
   facilityTeamRelationships: (value) => indexById((value as readonly FacilityTeamRelationship[]).map(createFacilityTeamRelationship), 'Facility team relationship'),
   facilityUsageRights: (value) => indexById((value as readonly FacilityUsageRight[]).map(createFacilityUsageRight), 'Facility usage right'),
@@ -1363,6 +1371,8 @@ function validateFacilities(world: GameWorld): void {
       usageRights: Object.values(world.facilityUsageRightsById),
       competitionApprovals: Object.values(world.facilityCompetitionApprovalsById),
       statusRecords: Object.values(world.facilityStatusRecordsById),
+      componentConditionRecords: Object.values(world.facilityComponentConditionRecordsById),
+      conditionRecords: Object.values(world.facilityConditionRecordsById),
       knownOrganizationIds: new Set(Object.keys(world.organizationsById) as OrganizationId[]),
       knownTeamIds: new Set(Object.keys(world.teams) as TeamId[]),
       knownPersonIds: new Set(Object.keys(world.personsById) as import('@/domain/ids').PersonId[]),

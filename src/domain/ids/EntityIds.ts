@@ -57,6 +57,10 @@ export type FacilityStatusRecordId = EntityId<'FacilityStatusRecordId'>
 export type FacilityControlRightId = EntityId<'FacilityControlRightId'>
 /** CFI2 — day-to-day operator of a Facility, independent of who owns or controls it. */
 export type FacilityOperatorAssignmentId = EntityId<'FacilityOperatorAssignmentId'>
+/** CFI4 — temporal physical condition/serviceability truth for one FacilityComponent. */
+export type FacilityComponentConditionRecordId = EntityId<'FacilityComponentConditionRecordId'>
+/** CFI4 — temporal physical condition truth for a Facility-wide dimension (structural integrity, envelope, utilities, accessibility infrastructure), never an aggregate of component records. */
+export type FacilityConditionRecordId = EntityId<'FacilityConditionRecordId'>
 
 function idFromString<Id extends string>(value: string, name: string): Id {
   if (typeof value !== 'string' || value.trim().length === 0) {
@@ -123,6 +127,8 @@ export const facilityCompetitionApprovalIdFromString = (value: string): Facility
 export const facilityStatusRecordIdFromString = (value: string): FacilityStatusRecordId => idFromString<FacilityStatusRecordId>(value, 'FacilityStatusRecordId')
 export const facilityControlRightIdFromString = (value: string): FacilityControlRightId => idFromString<FacilityControlRightId>(value, 'FacilityControlRightId')
 export const facilityOperatorAssignmentIdFromString = (value: string): FacilityOperatorAssignmentId => idFromString<FacilityOperatorAssignmentId>(value, 'FacilityOperatorAssignmentId')
+export const facilityComponentConditionRecordIdFromString = (value: string): FacilityComponentConditionRecordId => idFromString<FacilityComponentConditionRecordId>(value, 'FacilityComponentConditionRecordId')
+export const facilityConditionRecordIdFromString = (value: string): FacilityConditionRecordId => idFromString<FacilityConditionRecordId>(value, 'FacilityConditionRecordId')
 /** Legacy/generated-world compatibility resolver. World DB runtime uses the canonical Team relation. */
 export const organizationIdForTeam = (teamId: TeamId): OrganizationId => organizationIdFromString(teamId)
 
