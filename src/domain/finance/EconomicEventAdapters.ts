@@ -236,6 +236,15 @@ export function processDebtInterestEconomicEvent(world: GameWorld, event: Author
   }
 }
 
+/** An external authority supplies the sanction fact; an assessment alone cannot create money. */
+export function processAuthorizedFinancialFine(world: GameWorld, event: AuthorizedEconomicEvent, options: EconomicEventAdapterOptions): EconomicEventAdapterResult {
+  try {
+    assertEventAuthority(event, 'GOVERNANCE')
+    if (event.eventType !== 'AUTHORIZED_FINANCIAL_FINE' || event.dueOn === null) throw new TypeError('Authorized fine requires a due date')
+    return processExpenseEvent(world, event, options, true, event.teamId)
+  } catch (error) { return rejected(world, event, error) }
+}
+
 export function processOwnerFundingEconomicEvent(world: GameWorld, event: AuthorizedEconomicEvent, options: EconomicEventAdapterOptions): EconomicEventAdapterResult {
   try {
     if (event.sourceAuthority !== 'OWNERSHIP' && event.sourceAuthority !== 'GOVERNANCE') throw new TypeError('Owner funding requires OWNERSHIP or GOVERNANCE authority')

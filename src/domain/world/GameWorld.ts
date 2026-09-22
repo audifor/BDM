@@ -53,6 +53,7 @@ import type { InjuryId } from '@/domain/ids'
 import type { ContractId } from '@/domain/ids'
 import { createPlayerContract, type PlayerContract } from '@/domain/contract'
 import { createExpenseRecognition, createFinancialAccount, createFinancialBudget, createFinancialCommitment, createFinancialEntitlement, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile, createPayable, createReceivable, createRevenueRecognition, createTeamFinances, createTreasurySettlement, createBudgetAllocation, createBudgetLine, createBudgetRevision, createForecastAssumption, validateFinancialPlanningCollections, isCashAccount, createRevenueSource, validateRevenueSources, createOperatingCostSource, createAuthorizedOperatingCostFact, validateOperatingCostCollections, createDebtInstrument, validateDebtInstrumentCollections, createCompetitionDistributionFact, validateCompetitionDistributionFacts, type DebtInstrument, type CompetitionDistributionFact, type AuthorizedOperatingCostFact, type OperatingCostSource, type BudgetAllocation, type BudgetLine, type BudgetRevision, type ExpenseRecognition, type FinancialAccount, type FinancialBudget, type FinancialCommitment, type FinancialEntitlement, type FinancialTransaction, type FiscalPeriod, type ForecastAssumption, type OrganizationFinancialProfile, type Payable, type Receivable, type RevenueRecognition, type RevenueSource, type TeamFinances, type TreasurySettlement } from '@/domain/finance'
+import { createEconomicObservation, createExchangeRate, createFinancialRegulationAssessment, validateEconomicCollections, type EconomicObservation, type ExchangeRate, type FinancialRegulationAssessment } from '@/domain/finance'
 import type { PlayerTransaction } from '@/domain/transaction'
 import type { PlayerTransactionId } from '@/domain/ids'
 import { createOrganizationKnowledge, createPlayerKnowledge, type OrganizationKnowledge, type PlayerKnowledgeRecord } from '@/domain/knowledge'
@@ -174,6 +175,9 @@ export interface GameWorld {
   readonly budgetRevisionsById: Readonly<Record<string, BudgetRevision>>
   readonly budgetAllocationsById: Readonly<Record<string, BudgetAllocation>>
   readonly forecastAssumptionsById: Readonly<Record<string, ForecastAssumption>>
+  readonly financialRegulationAssessmentsById: Readonly<Record<string, FinancialRegulationAssessment>>
+  readonly economicObservationsById: Readonly<Record<string, EconomicObservation>>
+  readonly exchangeRatesById: Readonly<Record<string, ExchangeRate>>
   readonly playerTransactionsById: Readonly<Record<PlayerTransactionId, PlayerTransaction>>
   readonly playerKnowledgeById: Readonly<Record<PlayerKnowledgeId, PlayerKnowledgeRecord>>
   readonly organizationKnowledge: readonly OrganizationKnowledge[]
@@ -417,6 +421,9 @@ export interface CreateGameWorldInput {
   budgetRevisions?: readonly BudgetRevision[]
   budgetAllocations?: readonly BudgetAllocation[]
   forecastAssumptions?: readonly ForecastAssumption[]
+  financialRegulationAssessments?: readonly FinancialRegulationAssessment[]
+  economicObservations?: readonly EconomicObservation[]
+  exchangeRates?: readonly ExchangeRate[]
   playerTransactions?: readonly PlayerTransaction[]
   playerKnowledge?: readonly PlayerKnowledgeRecord[]
   organizationKnowledge?: readonly OrganizationKnowledge[]
@@ -686,6 +693,9 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     budgetRevisionsById: indexById((input.budgetRevisions ?? []).map(createBudgetRevision), 'Budget revision'),
     budgetAllocationsById: indexById((input.budgetAllocations ?? []).map(createBudgetAllocation), 'Budget allocation'),
     forecastAssumptionsById: indexById((input.forecastAssumptions ?? []).map(createForecastAssumption), 'Forecast assumption'),
+    financialRegulationAssessmentsById: indexById((input.financialRegulationAssessments ?? []).map(createFinancialRegulationAssessment), 'Financial regulation assessment'),
+    economicObservationsById: indexById((input.economicObservations ?? []).map(createEconomicObservation), 'Economic observation'),
+    exchangeRatesById: indexById((input.exchangeRates ?? []).map(createExchangeRate), 'Exchange rate'),
     playerTransactionsById: indexById(input.playerTransactions ?? [], 'Player transaction'),
     playerKnowledgeById: indexById(input.playerKnowledge ?? [], 'Player knowledge'),
     organizationKnowledge: Object.freeze((input.organizationKnowledge ?? []).map(createOrganizationKnowledge)),
@@ -835,6 +845,9 @@ export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorld
     if (inputKey === 'debtInstruments') assertImmutableCollection(world.debtInstrumentsById, (value as readonly DebtInstrument[]).map(createDebtInstrument), 'Debt instrument')
     if (inputKey === 'competitionDistributionFacts') assertImmutableCollection(world.competitionDistributionFactsById, (value as readonly CompetitionDistributionFact[]).map(createCompetitionDistributionFact), 'Competition distribution fact')
     if (inputKey === 'financialBudgets' || inputKey === 'budgetLines' || inputKey === 'budgetRevisions' || inputKey === 'budgetAllocations' || inputKey === 'forecastAssumptions') assertPlanningCollectionsAppendOnly(world, inputKey, value as readonly { readonly id: string }[])
+    if (inputKey === 'financialRegulationAssessments') assertImmutableCollection(world.financialRegulationAssessmentsById, (value as readonly FinancialRegulationAssessment[]).map(createFinancialRegulationAssessment), 'Financial assessment')
+    if (inputKey === 'economicObservations') assertImmutableCollection(world.economicObservationsById, (value as readonly EconomicObservation[]).map(createEconomicObservation), 'Economic observation')
+    if (inputKey === 'exchangeRates') assertImmutableCollection(world.exchangeRatesById, (value as readonly ExchangeRate[]).map(createExchangeRate), 'Exchange rate')
     worldPatch[worldKey] = collectionPatchIndexers[inputKey]!(value)
   }
 
@@ -874,7 +887,7 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
 }
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
-  financialBudgets: 'financialBudgetsById', budgetLines: 'budgetLinesById', budgetRevisions: 'budgetRevisionsById', budgetAllocations: 'budgetAllocationsById', forecastAssumptions: 'forecastAssumptionsById', revenueSources: 'revenueSourcesById', operatingCostSources: 'operatingCostSourcesById', operatingCostFacts: 'operatingCostFactsById', debtInstruments: 'debtInstrumentsById', competitionDistributionFacts: 'competitionDistributionFactsById',
+  financialBudgets: 'financialBudgetsById', budgetLines: 'budgetLinesById', budgetRevisions: 'budgetRevisionsById', budgetAllocations: 'budgetAllocationsById', forecastAssumptions: 'forecastAssumptionsById', financialRegulationAssessments: 'financialRegulationAssessmentsById', economicObservations: 'economicObservationsById', exchangeRates: 'exchangeRatesById', revenueSources: 'revenueSourcesById', operatingCostSources: 'operatingCostSourcesById', operatingCostFacts: 'operatingCostFactsById', debtInstruments: 'debtInstrumentsById', competitionDistributionFacts: 'competitionDistributionFactsById',
   multiClubOwnershipPolicies: 'multiClubOwnershipPoliciesById',
   organizationStructuralChanges: 'organizationStructuralChangesById', organizationLifecycleStates: 'organizationLifecycleStatesById', organizationSuccessions: 'organizationSuccessionsById', regulatoryOrders: 'regulatoryOrdersById', regulatoryRemediationPlans: 'regulatoryRemediationPlansById', organizationLicenses: 'organizationLicensesById',
   organizationInvestorInterests: 'organizationInvestorInterestsById', organizationCapitalRaises: 'organizationCapitalRaisesById', organizationCapitalRaiseEvents: 'organizationCapitalRaiseEventsById', organizationInvestmentProposals: 'organizationInvestmentProposalsById', organizationInvestmentProposalEvents: 'organizationInvestmentProposalEventsById',
@@ -892,6 +905,9 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   budgetRevisions: (value) => indexById((value as readonly BudgetRevision[]).map(createBudgetRevision), 'Budget revision'),
   budgetAllocations: (value) => indexById((value as readonly BudgetAllocation[]).map(createBudgetAllocation), 'Budget allocation'),
   forecastAssumptions: (value) => indexById((value as readonly ForecastAssumption[]).map(createForecastAssumption), 'Forecast assumption'),
+  financialRegulationAssessments: (value) => indexById((value as readonly FinancialRegulationAssessment[]).map(createFinancialRegulationAssessment), 'Financial regulation assessment'),
+  economicObservations: (value) => indexById((value as readonly EconomicObservation[]).map(createEconomicObservation), 'Economic observation'),
+  exchangeRates: (value) => indexById((value as readonly ExchangeRate[]).map(createExchangeRate), 'Exchange rate'),
   revenueSources: (value) => indexById((value as readonly RevenueSource[]).map(createRevenueSource), 'Revenue source'),
   operatingCostSources: (value) => indexById((value as readonly OperatingCostSource[]).map(createOperatingCostSource), 'Operating cost source'),
   operatingCostFacts: (value) => indexById((value as readonly AuthorizedOperatingCostFact[]).map(createAuthorizedOperatingCostFact), 'Operating cost fact'),
@@ -2089,6 +2105,12 @@ function indexHistoryBySeasonId(history: readonly SeasonHistoryRecord[]): Readon
 function indexTeamFinances(finances: readonly TeamFinances[]): Readonly<Record<TeamId, TeamFinances>> { const indexed = Object.create(null) as Record<TeamId, TeamFinances>; for (const finance of finances) { if (Object.hasOwn(indexed, finance.teamId)) throw new GameWorldValidationError(`Duplicate Team finances ID: ${finance.teamId}`); indexed[finance.teamId] = finance } return Object.freeze(indexed) }
 
 function validateFinancialState(world: GameWorld): void {
+  validateEconomicCollections(Object.values(world.economicObservationsById), Object.values(world.exchangeRatesById))
+  for (const assessment of Object.values(world.financialRegulationAssessmentsById)) {
+    requireEntity(world.organizationsById, assessment.organizationId, `Financial assessment ${assessment.id} organization`)
+    requireEntity(world.organizationsById, assessment.authorityOrganizationId, `Financial assessment ${assessment.id} authority`)
+    if (assessment.competitionId !== null) requireEntity(world.competitions, assessment.competitionId as CompetitionId, `Financial assessment ${assessment.id} competition`)
+  }
   for (const [organizationId, profile] of Object.entries(world.organizationFinancialProfilesById) as [OrganizationId, OrganizationFinancialProfile][]) {
     requireEntity(world.organizationsById, organizationId, `Organization financial profile ${organizationId} organization`)
     createOrganizationFinancialProfile(profile)
