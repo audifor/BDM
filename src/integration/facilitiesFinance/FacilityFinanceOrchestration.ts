@@ -365,7 +365,14 @@ export function executeFacilityProjectCapitalPayment(
   const project = world.facilityDevelopmentProjectsById[input.projectId as FacilityDevelopmentProjectId]
   if (project === undefined) throw new RangeError(`Unknown facility development project: ${input.projectId}`)
   const key = `${String(project.id)}:payment:${input.paymentSequence}`
-  const provenance: FinancialSource = { kind: 'FACILITY_DEVELOPMENT_PROJECT', id: String(project.id) }
+  /**
+   * CF3/GameWorld enforces a globally unique `provenance` (kind:id) per FinancialCommitment, so a
+   * project's Nth payment cannot reuse the bare project id — that would make a second payment against
+   * the same project impossible, defeating "one project, many financial facts". The provenance id is
+   * therefore the payment's own natural key, while the binding (sourceId = project id) remains what
+   * carries the 1:N project relationship and bidirectional traceability.
+   */
+  const provenance: FinancialSource = { kind: 'FACILITY_DEVELOPMENT_PROJECT_PAYMENT', id: key }
   const commitment = createFinancialCommitment({
     id: `commitment:project:${key}`,
     organizationId: input.organizationId,
@@ -382,18 +389,19 @@ export function executeFacilityProjectCapitalPayment(
     expenseRecognitions: [...Object.values(currentWorld.expenseRecognitionsById), ledgerResult.recognition],
     financialTransactions: [...Object.values(currentWorld.financialTransactionsById), ledgerResult.transaction],
   })
-  const binding = createFacilityFinancialBinding({
-    id: `facility-financial-binding:project:${key}`,
-    sourceKind: 'FACILITY_DEVELOPMENT_PROJECT',
-    sourceId: project.id,
-    facilityId: project.facilityId,
-    factKind: 'FINANCIAL_TRANSACTION',
-    factId: ledgerResult.transaction.id,
-    organizationId: input.organizationId,
-    createdOn: input.paidOn,
-    role: 'CAPITAL_PAYMENT',
-  })
-  currentWorld = updateGameWorld(currentWorld, { facilityFinancialBindings: [...Object.values(currentWorld.facilityFinancialBindingsById), binding] })
+  /**
+   * A capital payment produces THREE real Finance facts (commitment -> recognition -> ledger
+   * transaction), so it records a binding for each rather than only for the transaction. Binding only
+   * the transaction would leave the recognition unreachable from the project, which is precisely what
+   * `recognizedFacilityExpenditureAt` (recognized, as distinct from committed and paid) has to read.
+   * This is also the concrete shape of "one project, many financial facts".
+   */
+  const bindings = [
+    createFacilityFinancialBinding({ id: `facility-financial-binding:project:${key}:commitment`, sourceKind: 'FACILITY_DEVELOPMENT_PROJECT', sourceId: project.id, facilityId: project.facilityId, factKind: 'FINANCIAL_COMMITMENT', factId: commitment.id, organizationId: input.organizationId, createdOn: input.paidOn, role: 'CAPITAL_PAYMENT_COMMITMENT' }),
+    createFacilityFinancialBinding({ id: `facility-financial-binding:project:${key}:recognition`, sourceKind: 'FACILITY_DEVELOPMENT_PROJECT', sourceId: project.id, facilityId: project.facilityId, factKind: 'EXPENSE_RECOGNITION', factId: String(ledgerResult.recognition.id), organizationId: input.organizationId, createdOn: input.paidOn, role: 'CAPITAL_PAYMENT_RECOGNITION' }),
+    createFacilityFinancialBinding({ id: `facility-financial-binding:project:${key}`, sourceKind: 'FACILITY_DEVELOPMENT_PROJECT', sourceId: project.id, facilityId: project.facilityId, factKind: 'FINANCIAL_TRANSACTION', factId: String(ledgerResult.transaction.id), organizationId: input.organizationId, createdOn: input.paidOn, role: 'CAPITAL_PAYMENT' }),
+  ]
+  currentWorld = updateGameWorld(currentWorld, { facilityFinancialBindings: [...Object.values(currentWorld.facilityFinancialBindingsById), ...bindings] })
   return {
     world: currentWorld,
     outcome: Object.freeze({
@@ -401,7 +409,7 @@ export function executeFacilityProjectCapitalPayment(
       facilityActionOrProjectId: project.id,
       createdCommitmentIds: Object.freeze([commitment.id]),
       createdTransactionIds: Object.freeze([String(ledgerResult.transaction.id)]),
-      createdBindingIds: Object.freeze([binding.id]),
+      createdBindingIds: Object.freeze(bindings.map((binding) => binding.id)),
       debtInstrumentIds: Object.freeze([]),
       physicalOutcome: 'PROJECT_STARTED',
       financialOutcome: 'FACILITY_PAYMENT_MADE',
