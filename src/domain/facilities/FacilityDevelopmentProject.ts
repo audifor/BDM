@@ -1,6 +1,7 @@
 import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import { facilityDevelopmentProjectIdFromString, facilityIdFromString, organizationIdFromString, type FacilityDevelopmentProjectId, type FacilityId, type OrganizationId } from '@/domain/ids'
 import { requireNonEmptyString } from '@/domain/validation'
+import { isFacilityStatus, type FacilityStatus } from './FacilityLifecycle'
 import { createFacilityDevelopmentProjectScope, type CreateFacilityDevelopmentProjectScopeInput, type FacilityDevelopmentProjectScope } from './FacilityDevelopmentProjectScope'
 
 /**
@@ -82,6 +83,15 @@ export function isValidFacilityDevelopmentProjectTransition(from: FacilityDevelo
  *
  * No monetary field exists anywhere on this entity — cost/budget/financing is CFI7's exclusive
  * domain; CFI6 only prepares an identity (`id`) stable enough for CFI7 to reference later.
+ *
+ * `facilityLifecyclePriorStatus` (CFI6a) is the one piece of state the lifecycle-restoration fix
+ * required: when `startFacilityDevelopmentProject` temporarily moves a facility-wide project's
+ * target Facility out of its current status (e.g. `ACTIVE -> UNDER_RENOVATION`), it records that
+ * prior status here so `completeFacilityDevelopmentProject`/`cancelFacilityDevelopmentProject` can
+ * restore it precisely — never by assuming `ACTIVE`, which would be wrong for a Facility that was
+ * genuinely `TEMPORARILY_CLOSED`/`PARTIALLY_CLOSED` before the project began. `null` means either
+ * the project never altered Facility-wide lifecycle (most projects: single-component scopes) or it
+ * has not started yet.
  */
 export interface FacilityDevelopmentProject {
   readonly id: FacilityDevelopmentProjectId
@@ -98,6 +108,7 @@ export interface FacilityDevelopmentProject {
   readonly cancelledAt: GameDate | null
   readonly reason: string | null
   readonly externalReferenceId: string | null
+  readonly facilityLifecyclePriorStatus: FacilityStatus | null
 }
 
 export interface CreateFacilityDevelopmentProjectInput {
@@ -115,6 +126,7 @@ export interface CreateFacilityDevelopmentProjectInput {
   readonly cancelledAt?: GameDate | string | null
   readonly reason?: string | null
   readonly externalReferenceId?: string | null
+  readonly facilityLifecyclePriorStatus?: FacilityStatus | null
 }
 
 export function createFacilityDevelopmentProject(input: CreateFacilityDevelopmentProjectInput): FacilityDevelopmentProject {
@@ -156,6 +168,14 @@ export function createFacilityDevelopmentProject(input: CreateFacilityDevelopmen
     throw new RangeError(`Facility development project with scope ${scope.kind} requires a facilityId`)
   }
 
+  const facilityLifecyclePriorStatus = input.facilityLifecyclePriorStatus === undefined || input.facilityLifecyclePriorStatus === null ? null : input.facilityLifecyclePriorStatus
+  if (facilityLifecyclePriorStatus !== null && !isFacilityStatus(facilityLifecyclePriorStatus)) {
+    throw new TypeError(`Facility development project facilityLifecyclePriorStatus is invalid: ${String(facilityLifecyclePriorStatus)}`)
+  }
+  if (facilityLifecyclePriorStatus !== null && actualStartDate === null) {
+    throw new RangeError('Facility development project facilityLifecyclePriorStatus requires an actualStartDate (it can only be recorded once the project has started)')
+  }
+
   return Object.freeze({
     id: facilityDevelopmentProjectIdFromString(input.id),
     organizationId: organizationIdFromString(input.organizationId),
@@ -171,6 +191,7 @@ export function createFacilityDevelopmentProject(input: CreateFacilityDevelopmen
     cancelledAt,
     reason: input.reason === undefined || input.reason === null ? null : requireNonEmptyString(input.reason, 'Facility development project reason'),
     externalReferenceId: input.externalReferenceId === undefined || input.externalReferenceId === null ? null : requireNonEmptyString(input.externalReferenceId, 'Facility development project externalReferenceId'),
+    facilityLifecyclePriorStatus,
   })
 }
 

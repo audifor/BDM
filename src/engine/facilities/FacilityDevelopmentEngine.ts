@@ -9,6 +9,7 @@ import {
   createFacilityMaintenanceNeed,
   createFacilityStatusRecord,
   isFacilityMaintenanceNeedOpenStatus,
+  isTerminalFacilityStatus,
   isValidFacilityDevelopmentProjectTransition,
   maintenanceNeedsForComponentAt,
   type ComponentBlueprint,
@@ -18,6 +19,7 @@ import {
   type FacilityDevelopmentProjectStatus,
   type FacilityMaintenanceNeed,
   type FacilityServiceability,
+  type FacilityStatus,
 } from '@/domain/facilities'
 import {
   facilityComponentConditionRecordIdFromString,
@@ -88,11 +90,18 @@ function transition(world: GameWorld, project: FacilityDevelopmentProject, to: F
  * optional per the brief) into `IN_PROGRESS`. For a `CREATE_FACILITY` scope, this is the moment the
  * real `Facility` entity is born — in `UNDER_CONSTRUCTION` lifecycle status — closing the gap
  * between "a project plans a facility" and "the facility exists as PLANNED real-world asset". For
- * every other scope, the existing target Facility (if `ACTIVE`) is temporarily moved to
- * `UNDER_RENOVATION` only when the project's scope is facility-wide in character
- * (`RECONFIGURE_FACILITY`, `DEMOLISH_FACILITY`) — a single-component addition/renovation does not
- * force the whole Facility into a renovation lifecycle status, per the brief's explicit instruction
- * not to close the entire Facility for a scoped project.
+ * every other scope, the existing target Facility is temporarily moved to `UNDER_RENOVATION` only
+ * when the project's scope is facility-wide in character (`RECONFIGURE_FACILITY`,
+ * `DEMOLISH_FACILITY`) AND the Facility is not already `UNDER_RENOVATION`/terminal — a
+ * single-component addition/renovation does not force the whole Facility into a renovation
+ * lifecycle status, per the brief's explicit instruction not to close the entire Facility for a
+ * scoped project.
+ *
+ * CFI6a: whenever this temporary transition is made, the Facility's *actual* prior status (whatever
+ * it genuinely was — `ACTIVE`, `TEMPORARILY_CLOSED`, `PARTIALLY_CLOSED`, ...) is recorded on the
+ * project itself as `facilityLifecyclePriorStatus`, so `completeFacilityDevelopmentProject`/
+ * `cancelFacilityDevelopmentProject` can restore that exact status later rather than hardcoding a
+ * restoration to `ACTIVE`.
  */
 export function startFacilityDevelopmentProject(world: GameWorld, projectId: FacilityDevelopmentProjectId, startedAt: GameDate): FacilityDevelopmentCommandResult {
   const project = requireProject(world, projectId)
@@ -103,6 +112,7 @@ export function startFacilityDevelopmentProject(world: GameWorld, projectId: Fac
   let createdFacilityIds: readonly FacilityId[] = Object.freeze([])
   let world2 = world
   let facilityId = project.facilityId
+  let facilityLifecyclePriorStatus: FacilityStatus | null = null
 
   if (project.scope.kind === 'CREATE_FACILITY') {
     const newFacilityId = facilityIdFromString(`facility:${project.id}`)
@@ -128,7 +138,7 @@ export function startFacilityDevelopmentProject(world: GameWorld, projectId: Fac
     facilityId = newFacilityId
   } else if ((project.scope.kind === 'RECONFIGURE_FACILITY' || project.scope.kind === 'DEMOLISH_FACILITY') && facilityId !== null) {
     const target = world2.facilitiesById[facilityId]
-    if (target !== undefined && target.status === 'ACTIVE') {
+    if (target !== undefined && target.status !== 'UNDER_RENOVATION' && !isTerminalFacilityStatus(target.status)) {
       const statusRecord = createFacilityStatusRecord({
         id: facilityStatusRecordIdFromString(`facility-status:${facilityId}:${startedAt}`),
         facilityId,
@@ -139,10 +149,11 @@ export function startFacilityDevelopmentProject(world: GameWorld, projectId: Fac
         facilities: Object.values(world2.facilitiesById).map((candidate) => (candidate.id === facilityId ? { ...candidate, status: 'UNDER_RENOVATION' } : candidate)),
         facilityStatusRecords: [...Object.values(world2.facilityStatusRecordsById), statusRecord],
       })
+      facilityLifecyclePriorStatus = target.status
     }
   }
 
-  const worldAfterTransition = transition(world2, project, 'IN_PROGRESS', { facilityId, actualStartDate: startedAt })
+  const worldAfterTransition = transition(world2, project, 'IN_PROGRESS', { facilityId, actualStartDate: startedAt, facilityLifecyclePriorStatus })
   return {
     world: worldAfterTransition,
     outcome: Object.freeze({ ...emptyOutcome(project, 'IN_PROGRESS'), createdFacilityIds }),
@@ -167,11 +178,46 @@ export function resumeFacilityDevelopmentProject(world: GameWorld, projectId: Fa
  * attempt to resolve every physical consequence of a partially-built project (e.g. undoing a
  * half-finished component) — any components/condition records already written by a prior partial
  * completion remain as they are; only the project's own status changes here.
+ *
+ * CFI6a: if this project had temporarily altered its target Facility's lifecycle on start (i.e.
+ * `facilityLifecyclePriorStatus` is non-null), cancelling it restores that exact prior status —
+ * never a hardcoded `ACTIVE` — so an abandoned renovation does not leave the Facility stuck in
+ * `UNDER_RENOVATION` forever. A project that never altered lifecycle (most single-component scopes,
+ * or one cancelled before it ever started) leaves the Facility completely untouched, as before.
  */
 export function cancelFacilityDevelopmentProject(world: GameWorld, projectId: FacilityDevelopmentProjectId, cancelledAt: GameDate): FacilityDevelopmentCommandResult {
   const project = requireProject(world, projectId)
-  const updatedWorld = transition(world, project, 'CANCELLED', { cancelledAt })
+  const restoredWorld = restoreFacilityLifecycleIfNeeded(world, project, cancelledAt)
+  const updatedWorld = transition(restoredWorld, project, 'CANCELLED', { cancelledAt })
   return { world: updatedWorld, outcome: emptyOutcome(project, 'CANCELLED') }
+}
+
+/**
+ * CFI6a: restores a project's target Facility to `facilityLifecyclePriorStatus` (writing a new,
+ * additive `FacilityStatusRecord` — the prior `UNDER_RENOVATION` record is never edited or removed)
+ * when, and only when, that field is set AND the Facility has not since reached a terminal status.
+ * A completed `DEMOLISH_FACILITY` project also sets `facilityLifecyclePriorStatus` on start (the
+ * Facility genuinely does pass through `UNDER_RENOVATION` while being torn down), but by the time
+ * `completeFacilityDevelopmentProject` calls this (after `applyFacilityDevelopmentScope` has already
+ * written the terminal `DEMOLISHED` status), the `isTerminalFacilityStatus` guard below makes this a
+ * correct no-op — demolition is never "restored" to its pre-project status, per the brief.
+ */
+function restoreFacilityLifecycleIfNeeded(world: GameWorld, project: FacilityDevelopmentProject, effectiveFrom: GameDate): GameWorld {
+  if (project.facilityLifecyclePriorStatus === null || project.facilityId === null) return world
+  const facilityId = project.facilityId
+  const target = world.facilitiesById[facilityId]
+  if (target === undefined || isTerminalFacilityStatus(target.status)) return world
+  const priorStatus = project.facilityLifecyclePriorStatus
+  const statusRecord = createFacilityStatusRecord({
+    id: facilityStatusRecordIdFromString(`facility-status:${facilityId}:${effectiveFrom}`),
+    facilityId,
+    status: priorStatus,
+    effectiveFrom,
+  })
+  return updateGameWorld(world, {
+    facilities: Object.values(world.facilitiesById).map((candidate) => (candidate.id === facilityId ? { ...candidate, status: priorStatus } : candidate)),
+    facilityStatusRecords: [...Object.values(world.facilityStatusRecordsById), statusRecord],
+  })
 }
 
 /**
@@ -190,7 +236,8 @@ export function completeFacilityDevelopmentProject(world: GameWorld, projectId: 
   if (project.status !== 'IN_PROGRESS') throw new RangeError(`Facility development project ${projectId} cannot be completed from status ${project.status}`)
 
   const application = applyFacilityDevelopmentScope(world, project, completedAt)
-  const worldAfterTransition = transition(application.world, project, 'COMPLETED', { actualCompletionDate: completedAt })
+  const restoredWorld = restoreFacilityLifecycleIfNeeded(application.world, project, completedAt)
+  const worldAfterTransition = transition(restoredWorld, project, 'COMPLETED', { actualCompletionDate: completedAt })
 
   return {
     world: worldAfterTransition,

@@ -970,7 +970,11 @@ function parseFacilityDevelopmentProjects(value: unknown): readonly FacilityDeve
   if (!Array.isArray(value)) throw new TypeError('Save V4 facilityDevelopmentProjects must be an array')
   return Object.freeze(value.map((entry) => {
     const project = record(entry, 'Save V4 FacilityDevelopmentProject')
-    exactKeys(project, ['id', 'organizationId', 'facilityId', 'projectType', 'status', 'scope', 'plannedStartDate', 'actualStartDate', 'plannedCompletionDate', 'actualCompletionDate', 'createdAt', 'cancelledAt', 'reason', 'externalReferenceId'], 'Save V4 FacilityDevelopmentProject')
+    const hasFacilityLifecyclePriorStatus = Object.prototype.hasOwnProperty.call(project, 'facilityLifecyclePriorStatus')
+    exactKeys(project, hasFacilityLifecyclePriorStatus
+      ? ['id', 'organizationId', 'facilityId', 'projectType', 'status', 'scope', 'plannedStartDate', 'actualStartDate', 'plannedCompletionDate', 'actualCompletionDate', 'createdAt', 'cancelledAt', 'reason', 'externalReferenceId', 'facilityLifecyclePriorStatus']
+      : ['id', 'organizationId', 'facilityId', 'projectType', 'status', 'scope', 'plannedStartDate', 'actualStartDate', 'plannedCompletionDate', 'actualCompletionDate', 'createdAt', 'cancelledAt', 'reason', 'externalReferenceId'],
+      'Save V4 FacilityDevelopmentProject')
     return createFacilityDevelopmentProject({
       id: facilityDevelopmentProjectIdFromString(nonEmptyText(project.id, 'Save V4 FacilityDevelopmentProject id')),
       organizationId: organizationIdFromString(nonEmptyText(project.organizationId, 'Save V4 FacilityDevelopmentProject organizationId')),
@@ -986,6 +990,9 @@ function parseFacilityDevelopmentProjects(value: unknown): readonly FacilityDeve
       cancelledAt: nullableText(project.cancelledAt, 'Save V4 FacilityDevelopmentProject cancelledAt'),
       reason: nullableText(project.reason, 'Save V4 FacilityDevelopmentProject reason'),
       externalReferenceId: nullableText(project.externalReferenceId, 'Save V4 FacilityDevelopmentProject externalReferenceId'),
+      facilityLifecyclePriorStatus: hasFacilityLifecyclePriorStatus
+        ? (nullableText(project.facilityLifecyclePriorStatus, 'Save V4 FacilityDevelopmentProject facilityLifecyclePriorStatus') as FacilityDevelopmentProject['facilityLifecyclePriorStatus'])
+        : null,
     })
   }))
 }

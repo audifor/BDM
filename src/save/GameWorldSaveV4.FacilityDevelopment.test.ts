@@ -153,6 +153,62 @@ describe('GameWorldSaveV4 — Construction, Renovation & Development Projects (C
     expect(restored.facilityDevelopmentProjectsById[project.id]!.cancelledAt).toBe('2029-12-01')
   })
 
+  it('CFI6a: round-trips facilityLifecyclePriorStatus and the resulting UNDER_RENOVATION status-history record', async () => {
+    const { startFacilityDevelopmentProject } = await import('@/engine/facilities')
+    const { parseGameDate } = await import('@/domain/date')
+    const base = createNewGame()
+    const organization = Object.values(base.organizationsById)[0]!
+    const place = createPlace({ id: 'place:dev-save-8', kind: 'CAMPUS', name: 'Dev Save Campus 8' })
+    const facility = createFacility({ id: 'facility:dev-save-8', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Dev Save Center 8' })
+    const project = createFacilityDevelopmentProject({
+      id: 'project:save-lifecycle-restoration',
+      organizationId: organization.id,
+      facilityId: facility.id,
+      projectType: 'RECONFIGURATION',
+      scope: { kind: 'RECONFIGURE_FACILITY', additions: [{ type: 'HYDROTHERAPY_POOL' }], renovations: [], replacements: [], removals: [] },
+      plannedStartDate: '2030-01-01',
+      plannedCompletionDate: '2030-06-01',
+      createdAt: '2029-11-01',
+    })
+    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityDevelopmentProjects: [project] })
+    const started = startFacilityDevelopmentProject(world, project.id, parseGameDate('2030-01-01'))
+
+    const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(started.world, savedAt))))
+    expect(restored.facilityDevelopmentProjectsById[project.id]!.facilityLifecyclePriorStatus).toBe('ACTIVE')
+    expect(restored.facilitiesById[facility.id]!.status).toBe('UNDER_RENOVATION')
+    const statusRecords = Object.values(restored.facilityStatusRecordsById).filter((record) => record.facilityId === facility.id)
+    expect(statusRecords.some((record) => record.status === 'UNDER_RENOVATION')).toBe(true)
+  })
+
+  it('a pre-CFI6a payload (project missing facilityLifecyclePriorStatus entirely) still loads, defaulting it to null', () => {
+    const base = createNewGame()
+    const organization = Object.values(base.organizationsById)[0]!
+    const place = createPlace({ id: 'place:dev-save-9', kind: 'CAMPUS', name: 'Dev Save Campus 9' })
+    const facility = createFacility({ id: 'facility:dev-save-9', placeId: place.id, type: 'TRAINING_CENTER', purposes: ['TRAINING'], status: 'ACTIVE', canonicalName: 'Dev Save Center 9' })
+    const project = createFacilityDevelopmentProject({
+      id: 'project:pre-cfi6a',
+      organizationId: organization.id,
+      facilityId: facility.id,
+      projectType: 'FACILITY_EXPANSION',
+      scope: { kind: 'ADD_COMPONENT', components: [{ type: 'HYDROTHERAPY_POOL' }] },
+      plannedStartDate: '2030-01-01',
+      plannedCompletionDate: '2031-01-01',
+      createdAt: '2029-11-01',
+    })
+    const world = updateGameWorld(base, { places: [place], facilities: [facility], facilityDevelopmentProjects: [project] })
+    const saved = serializeGameWorldV4(world, savedAt)
+
+    // Simulate a genuinely pre-CFI6a payload: strip the new field from the serialized project.
+    const legacyPayload = JSON.parse(JSON.stringify(saved)) as { schemaVersion: 4; savedAt: string; payload: { facilityDevelopmentProjects: Record<string, unknown>[] } & Record<string, unknown> }
+    legacyPayload.payload.facilityDevelopmentProjects = legacyPayload.payload.facilityDevelopmentProjects.map((entry) => {
+      const { facilityLifecyclePriorStatus: _omit, ...rest } = entry
+      return rest
+    })
+
+    const restored = deserializeGameWorldV4(legacyPayload)
+    expect(restored.facilityDevelopmentProjectsById[project.id]!.facilityLifecyclePriorStatus).toBeNull()
+  })
+
   it('a pre-CFI6 V4 payload (missing both new collections entirely) still loads with empty, valid defaults', () => {
     const base = createNewGame()
     const place = createPlace({ id: 'place:dev-save-6', kind: 'CITY', name: 'Dev Save City 6' })
