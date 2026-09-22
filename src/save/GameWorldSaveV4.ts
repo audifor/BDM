@@ -21,8 +21,36 @@ import { createOrganizationSuccession, type OrganizationSuccession } from '@/dom
 import { createRegulatoryOrder, type RegulatoryOrder } from '@/domain/structuralRegulation/RegulatoryOrder'
 import { createRegulatoryRemediationPlan, type RegulatoryRemediationPlan } from '@/domain/structuralRegulation/RegulatoryRemediationPlan'
 import { createOrganizationLicense, type OrganizationLicense } from '@/domain/structuralRegulation/OrganizationLicense'
+import {
+  createFacility,
+  createFacilityComponent,
+  createFacilityCompetitionApproval,
+  createFacilityControlRight,
+  createFacilityNameRecord,
+  createFacilityOperatorAssignment,
+  createFacilityOrganizationRelationship,
+  createFacilityOwnershipInterest,
+  createFacilityStatusRecord,
+  createFacilityTeamRelationship,
+  createFacilityUsageRight,
+  createPlace,
+  type Facility,
+  type FacilityComponent,
+  type FacilityCompetitionApproval,
+  type FacilityControlActor,
+  type FacilityControlRight,
+  type FacilityNameRecord,
+  type FacilityOperatorAssignment,
+  type FacilityOrganizationRelationship,
+  type FacilityOwnershipActor,
+  type FacilityOwnershipInterest,
+  type FacilityStatusRecord,
+  type FacilityTeamRelationship,
+  type FacilityUsageRight,
+  type Place,
+} from '@/domain/facilities'
 import { parseGameDate } from '@/domain/date'
-import { competitionIdFromString, ecosystemIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, seasonIdFromString } from '@/domain/ids'
+import { competitionIdFromString, ecosystemIdFromString, facilityCompetitionApprovalIdFromString, facilityComponentIdFromString, facilityControlRightIdFromString, facilityIdFromString, facilityNameRecordIdFromString, facilityOperatorAssignmentIdFromString, facilityOrganizationRelationshipIdFromString, facilityOwnershipInterestIdFromString, facilityStatusRecordIdFromString, facilityTeamRelationshipIdFromString, facilityUsageRightIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, placeIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, seasonIdFromString, teamIdFromString } from '@/domain/ids'
 import {
   deserializeGameWorldSave as deserializeLegacyGameWorldSave,
   deserializeGameWorldV3,
@@ -67,6 +95,19 @@ export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly regulatoryOrders: readonly RegulatoryOrder[]
   readonly regulatoryRemediationPlans: readonly RegulatoryRemediationPlan[]
   readonly organizationLicenses: readonly OrganizationLicense[]
+  /** CFI2S — Club Facilities & Infrastructure V2. Twelve normalized GameWorld collections, persisted exactly as GameWorld stores them; none are derived/query-time state (see CFI2S certification for the full audit). */
+  readonly places: readonly Place[]
+  readonly facilities: readonly Facility[]
+  readonly facilityComponents: readonly FacilityComponent[]
+  readonly facilityNameRecords: readonly FacilityNameRecord[]
+  readonly facilityOwnershipInterests: readonly FacilityOwnershipInterest[]
+  readonly facilityControlRights: readonly FacilityControlRight[]
+  readonly facilityOperatorAssignments: readonly FacilityOperatorAssignment[]
+  readonly facilityOrganizationRelationships: readonly FacilityOrganizationRelationship[]
+  readonly facilityTeamRelationships: readonly FacilityTeamRelationship[]
+  readonly facilityUsageRights: readonly FacilityUsageRight[]
+  readonly facilityCompetitionApprovals: readonly FacilityCompetitionApproval[]
+  readonly facilityStatusRecords: readonly FacilityStatusRecord[]
 }
 
 export interface SaveGameEnvelopeV4 {
@@ -101,6 +142,7 @@ export function migrateGameWorldSaveV3ToV4(value: SaveGameEnvelopeV3): SaveGameE
       organizationInvestmentProposalEvents: [],
       multiClubOwnershipPolicies: [],
       organizationStructuralChanges: [], organizationLifecycleStates: [], organizationSuccessions: [], regulatoryOrders: [], regulatoryRemediationPlans: [], organizationLicenses: [],
+      places: [], facilities: [], facilityComponents: [], facilityNameRecords: [], facilityOwnershipInterests: [], facilityControlRights: [], facilityOperatorAssignments: [], facilityOrganizationRelationships: [], facilityTeamRelationships: [], facilityUsageRights: [], facilityCompetitionApprovals: [], facilityStatusRecords: [],
     }),
   })
 }
@@ -131,6 +173,7 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       organizationInvestmentProposalEvents: Object.values(world.organizationInvestmentProposalEventsById),
       multiClubOwnershipPolicies: Object.values(world.multiClubOwnershipPoliciesById),
       organizationStructuralChanges: Object.values(world.organizationStructuralChangesById), organizationLifecycleStates: Object.values(world.organizationLifecycleStatesById), organizationSuccessions: Object.values(world.organizationSuccessionsById), regulatoryOrders: Object.values(world.regulatoryOrdersById), regulatoryRemediationPlans: Object.values(world.regulatoryRemediationPlansById), organizationLicenses: Object.values(world.organizationLicensesById),
+      places: Object.values(world.placesById), facilities: Object.values(world.facilitiesById), facilityComponents: Object.values(world.facilityComponentsById), facilityNameRecords: Object.values(world.facilityNameRecordsById), facilityOwnershipInterests: Object.values(world.facilityOwnershipInterestsById), facilityControlRights: Object.values(world.facilityControlRightsById), facilityOperatorAssignments: Object.values(world.facilityOperatorAssignmentsById), facilityOrganizationRelationships: Object.values(world.facilityOrganizationRelationshipsById), facilityTeamRelationships: Object.values(world.facilityTeamRelationshipsById), facilityUsageRights: Object.values(world.facilityUsageRightsById), facilityCompetitionApprovals: Object.values(world.facilityCompetitionApprovalsById), facilityStatusRecords: Object.values(world.facilityStatusRecordsById),
     }),
   })
 }
@@ -181,6 +224,18 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const regulatoryOrders = Object.prototype.hasOwnProperty.call(payload, 'regulatoryOrders') ? parseRegulatoryOrders(payload.regulatoryOrders) : []
   const regulatoryRemediationPlans = Object.prototype.hasOwnProperty.call(payload, 'regulatoryRemediationPlans') ? parseRegulatoryRemediationPlans(payload.regulatoryRemediationPlans) : []
   const organizationLicenses = Object.prototype.hasOwnProperty.call(payload, 'organizationLicenses') ? parseOrganizationLicenses(payload.organizationLicenses) : []
+  const places = Object.prototype.hasOwnProperty.call(payload, 'places') ? parsePlaces(payload.places) : []
+  const facilities = Object.prototype.hasOwnProperty.call(payload, 'facilities') ? parseFacilities(payload.facilities) : []
+  const facilityComponents = Object.prototype.hasOwnProperty.call(payload, 'facilityComponents') ? parseFacilityComponents(payload.facilityComponents) : []
+  const facilityNameRecords = Object.prototype.hasOwnProperty.call(payload, 'facilityNameRecords') ? parseFacilityNameRecords(payload.facilityNameRecords) : []
+  const facilityOwnershipInterests = Object.prototype.hasOwnProperty.call(payload, 'facilityOwnershipInterests') ? parseFacilityOwnershipInterests(payload.facilityOwnershipInterests) : []
+  const facilityControlRights = Object.prototype.hasOwnProperty.call(payload, 'facilityControlRights') ? parseFacilityControlRights(payload.facilityControlRights) : []
+  const facilityOperatorAssignments = Object.prototype.hasOwnProperty.call(payload, 'facilityOperatorAssignments') ? parseFacilityOperatorAssignments(payload.facilityOperatorAssignments) : []
+  const facilityOrganizationRelationships = Object.prototype.hasOwnProperty.call(payload, 'facilityOrganizationRelationships') ? parseFacilityOrganizationRelationships(payload.facilityOrganizationRelationships) : []
+  const facilityTeamRelationships = Object.prototype.hasOwnProperty.call(payload, 'facilityTeamRelationships') ? parseFacilityTeamRelationships(payload.facilityTeamRelationships) : []
+  const facilityUsageRights = Object.prototype.hasOwnProperty.call(payload, 'facilityUsageRights') ? parseFacilityUsageRights(payload.facilityUsageRights) : []
+  const facilityCompetitionApprovals = Object.prototype.hasOwnProperty.call(payload, 'facilityCompetitionApprovals') ? parseFacilityCompetitionApprovals(payload.facilityCompetitionApprovals) : []
+  const facilityStatusRecords = Object.prototype.hasOwnProperty.call(payload, 'facilityStatusRecords') ? parseFacilityStatusRecords(payload.facilityStatusRecords) : []
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
@@ -198,7 +253,8 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const withInvestments = updateGameWorld(withTransactions, { organizationInvestorInterests: investorInterests, organizationCapitalRaises: capitalRaises, organizationCapitalRaiseEvents: capitalRaiseEvents, organizationInvestmentProposals: investmentProposals, organizationInvestmentProposalEvents: investmentProposalEvents })
   const withPolicies = updateGameWorld(withInvestments, { multiClubOwnershipPolicies })
   const withStructuralRegulation = updateGameWorld(withPolicies, { organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses })
-  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withStructuralRegulation, runtime), worldAnnualDevelopmentCycle: developmentCycle })
+  const withFacilities = updateGameWorld(withStructuralRegulation, { places, facilities, facilityComponents, facilityNameRecords, facilityOwnershipInterests, facilityControlRights, facilityOperatorAssignments, facilityOrganizationRelationships, facilityTeamRelationships, facilityUsageRights, facilityCompetitionApprovals, facilityStatusRecords })
+  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withFacilities, runtime), worldAnnualDevelopmentCycle: developmentCycle })
 }
 
 /** Reads V1-V4. Legacy saves normalize the V4-owned runtime projection to empty state. */
@@ -457,6 +513,250 @@ function parseOrganizationLicenses(value: unknown): readonly OrganizationLicense
     const scope = record(license.scope, 'Save V4 OrganizationLicense scope')
     const normalizedScope = scope.kind === 'COMPETITION' ? (exactKeys(scope, ['kind', 'competitionId'], 'Save V4 OrganizationLicense competition scope'), { kind: 'COMPETITION' as const, competitionId: competitionIdFromString(nonEmptyText(scope.competitionId, 'Save V4 OrganizationLicense competitionId')) }) : scope.kind === 'ECOSYSTEM' ? (exactKeys(scope, ['kind', 'ecosystemId'], 'Save V4 OrganizationLicense ecosystem scope'), { kind: 'ECOSYSTEM' as const, ecosystemId: ecosystemIdFromString(nonEmptyText(scope.ecosystemId, 'Save V4 OrganizationLicense ecosystemId')) }) : (() => { throw new TypeError('Save V4 OrganizationLicense scope kind is invalid') })()
     return createOrganizationLicense({ id: organizationLicenseIdFromString(nonEmptyText(license.id, 'Save V4 OrganizationLicense id')), issuerOrganizationId: organizationIdFromString(nonEmptyText(license.issuerOrganizationId, 'Save V4 OrganizationLicense issuerOrganizationId')), holderOrganizationId: organizationIdFromString(nonEmptyText(license.holderOrganizationId, 'Save V4 OrganizationLicense holderOrganizationId')), scope: normalizedScope, seasonId: nullableText(license.seasonId, 'Save V4 OrganizationLicense seasonId'), status: license.status as OrganizationLicense['status'], validFrom: nonEmptyText(license.validFrom, 'Save V4 OrganizationLicense validFrom'), validTo: nullableText(license.validTo, 'Save V4 OrganizationLicense validTo'), conditions: stringArray(license.conditions, 'Save V4 OrganizationLicense conditions') })
+  }))
+}
+
+// --- CFI2S: Club Facilities & Infrastructure V2 ---------------------------------------------
+
+function parsePlaces(value: unknown): readonly Place[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 places must be an array')
+  return Object.freeze(value.map((entry) => {
+    const place = record(entry, 'Save V4 Place')
+    exactKeys(place, ['id', 'kind', 'name', 'countryId', 'parentPlaceId', 'latitude', 'longitude'], 'Save V4 Place')
+    return createPlace({
+      id: placeIdFromString(nonEmptyText(place.id, 'Save V4 Place id')),
+      kind: place.kind as Place['kind'],
+      name: nonEmptyText(place.name, 'Save V4 Place name'),
+      countryId: nullableText(place.countryId, 'Save V4 Place countryId'),
+      parentPlaceId: nullableText(place.parentPlaceId, 'Save V4 Place parentPlaceId'),
+      latitude: nullableNumber(place.latitude, 'Save V4 Place latitude'),
+      longitude: nullableNumber(place.longitude, 'Save V4 Place longitude'),
+    })
+  }))
+}
+
+function parseFacilityPhysicalProfile(value: unknown): Facility['physical'] {
+  const profile = record(value, 'Save V4 Facility physical profile')
+  exactKeys(profile, ['openedOn', 'totalCapacity', 'seatedCapacity', 'standingCapacity', 'courtCount', 'hasAccessibilityProvision'], 'Save V4 Facility physical profile')
+  const hasAccessibilityProvision = profile.hasAccessibilityProvision
+  if (hasAccessibilityProvision !== null && typeof hasAccessibilityProvision !== 'boolean') throw new TypeError('Save V4 Facility physical profile hasAccessibilityProvision must be boolean or null')
+  return {
+    openedOn: nullableText(profile.openedOn, 'Save V4 Facility physical profile openedOn'),
+    totalCapacity: nullableInteger(profile.totalCapacity, 'Save V4 Facility physical profile totalCapacity'),
+    seatedCapacity: nullableInteger(profile.seatedCapacity, 'Save V4 Facility physical profile seatedCapacity'),
+    standingCapacity: nullableInteger(profile.standingCapacity, 'Save V4 Facility physical profile standingCapacity'),
+    courtCount: nullableInteger(profile.courtCount, 'Save V4 Facility physical profile courtCount'),
+    hasAccessibilityProvision,
+  } as Facility['physical']
+}
+
+function parseFacilities(value: unknown): readonly Facility[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 facilities must be an array')
+  return Object.freeze(value.map((entry) => {
+    const facility = record(entry, 'Save V4 Facility')
+    exactKeys(facility, ['id', 'placeId', 'type', 'purposes', 'capabilities', 'status', 'canonicalName', 'physical', 'closedOn'], 'Save V4 Facility')
+    return createFacility({
+      id: facilityIdFromString(nonEmptyText(facility.id, 'Save V4 Facility id')),
+      placeId: placeIdFromString(nonEmptyText(facility.placeId, 'Save V4 Facility placeId')),
+      type: facility.type as Facility['type'],
+      purposes: stringArray(facility.purposes, 'Save V4 Facility purposes') as readonly Facility['purposes'][number][],
+      capabilities: stringArray(facility.capabilities, 'Save V4 Facility capabilities') as readonly Facility['capabilities'][number][],
+      status: facility.status as Facility['status'],
+      canonicalName: nonEmptyText(facility.canonicalName, 'Save V4 Facility canonicalName'),
+      physical: parseFacilityPhysicalProfile(facility.physical),
+      closedOn: nullableText(facility.closedOn, 'Save V4 Facility closedOn'),
+    })
+  }))
+}
+
+function parseFacilityComponents(value: unknown): readonly FacilityComponent[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 facilityComponents must be an array')
+  return Object.freeze(value.map((entry) => {
+    const component = record(entry, 'Save V4 FacilityComponent')
+    exactKeys(component, ['id', 'facilityId', 'type', 'name', 'status', 'capacity', 'quantity', 'openedAt', 'closedAt'], 'Save V4 FacilityComponent')
+    return createFacilityComponent({
+      id: facilityComponentIdFromString(nonEmptyText(component.id, 'Save V4 FacilityComponent id')),
+      facilityId: facilityIdFromString(nonEmptyText(component.facilityId, 'Save V4 FacilityComponent facilityId')),
+      type: component.type as FacilityComponent['type'],
+      name: nullableText(component.name, 'Save V4 FacilityComponent name'),
+      status: component.status as FacilityComponent['status'],
+      capacity: nullableInteger(component.capacity, 'Save V4 FacilityComponent capacity'),
+      quantity: nullableInteger(component.quantity, 'Save V4 FacilityComponent quantity'),
+      openedAt: nullableText(component.openedAt, 'Save V4 FacilityComponent openedAt'),
+      closedAt: nullableText(component.closedAt, 'Save V4 FacilityComponent closedAt'),
+    })
+  }))
+}
+
+function parseFacilityNameRecords(value: unknown): readonly FacilityNameRecord[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 facilityNameRecords must be an array')
+  return Object.freeze(value.map((entry) => {
+    const record_ = record(entry, 'Save V4 FacilityNameRecord')
+    exactKeys(record_, ['id', 'facilityId', 'name', 'isCanonical', 'validFrom', 'validTo'], 'Save V4 FacilityNameRecord')
+    return createFacilityNameRecord({
+      id: facilityNameRecordIdFromString(nonEmptyText(record_.id, 'Save V4 FacilityNameRecord id')),
+      facilityId: facilityIdFromString(nonEmptyText(record_.facilityId, 'Save V4 FacilityNameRecord facilityId')),
+      name: nonEmptyText(record_.name, 'Save V4 FacilityNameRecord name'),
+      isCanonical: boolean(record_.isCanonical, 'Save V4 FacilityNameRecord isCanonical'),
+      validFrom: nullableText(record_.validFrom, 'Save V4 FacilityNameRecord validFrom'),
+      validTo: nullableText(record_.validTo, 'Save V4 FacilityNameRecord validTo'),
+    })
+  }))
+}
+
+function parseFacilityOwnershipActor(value: unknown, label: string): FacilityOwnershipActor {
+  const actor = record(value, label)
+  if (actor.kind === 'PERSON') {
+    exactKeys(actor, ['kind', 'personId'], label)
+    return { kind: 'PERSON', personId: personIdFromString(nonEmptyText(actor.personId, `${label} personId`)) }
+  }
+  if (actor.kind === 'ORGANIZATION') {
+    exactKeys(actor, ['kind', 'organizationId'], label)
+    return { kind: 'ORGANIZATION', organizationId: organizationIdFromString(nonEmptyText(actor.organizationId, `${label} organizationId`)) }
+  }
+  throw new TypeError(`${label} kind must be PERSON or ORGANIZATION`)
+}
+
+function parseFacilityOwnershipInterests(value: unknown): readonly FacilityOwnershipInterest[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 facilityOwnershipInterests must be an array')
+  return Object.freeze(value.map((entry) => {
+    const interest = record(entry, 'Save V4 FacilityOwnershipInterest')
+    exactKeys(interest, ['id', 'facilityId', 'owner', 'ownershipPercentage', 'validFrom', 'validTo'], 'Save V4 FacilityOwnershipInterest')
+    return createFacilityOwnershipInterest({
+      id: facilityOwnershipInterestIdFromString(nonEmptyText(interest.id, 'Save V4 FacilityOwnershipInterest id')),
+      facilityId: facilityIdFromString(nonEmptyText(interest.facilityId, 'Save V4 FacilityOwnershipInterest facilityId')),
+      owner: parseFacilityOwnershipActor(interest.owner, 'Save V4 FacilityOwnershipInterest owner'),
+      ownershipPercentage: nullableNumber(interest.ownershipPercentage, 'Save V4 FacilityOwnershipInterest ownershipPercentage'),
+      validFrom: nullableText(interest.validFrom, 'Save V4 FacilityOwnershipInterest validFrom'),
+      validTo: nullableText(interest.validTo, 'Save V4 FacilityOwnershipInterest validTo'),
+    })
+  }))
+}
+
+function parseFacilityControlActor(value: unknown, label: string): FacilityControlActor {
+  const actor = record(value, label)
+  if (actor.kind === 'PERSON') {
+    exactKeys(actor, ['kind', 'personId'], label)
+    return { kind: 'PERSON', personId: personIdFromString(nonEmptyText(actor.personId, `${label} personId`)) }
+  }
+  if (actor.kind === 'ORGANIZATION') {
+    exactKeys(actor, ['kind', 'organizationId'], label)
+    return { kind: 'ORGANIZATION', organizationId: organizationIdFromString(nonEmptyText(actor.organizationId, `${label} organizationId`)) }
+  }
+  throw new TypeError(`${label} kind must be PERSON or ORGANIZATION`)
+}
+
+function parseFacilityControlRights(value: unknown): readonly FacilityControlRight[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 facilityControlRights must be an array')
+  return Object.freeze(value.map((entry) => {
+    const right = record(entry, 'Save V4 FacilityControlRight')
+    exactKeys(right, ['id', 'facilityId', 'controller', 'validFrom', 'validTo'], 'Save V4 FacilityControlRight')
+    return createFacilityControlRight({
+      id: facilityControlRightIdFromString(nonEmptyText(right.id, 'Save V4 FacilityControlRight id')),
+      facilityId: facilityIdFromString(nonEmptyText(right.facilityId, 'Save V4 FacilityControlRight facilityId')),
+      controller: parseFacilityControlActor(right.controller, 'Save V4 FacilityControlRight controller'),
+      validFrom: nullableText(right.validFrom, 'Save V4 FacilityControlRight validFrom'),
+      validTo: nullableText(right.validTo, 'Save V4 FacilityControlRight validTo'),
+    })
+  }))
+}
+
+function parseFacilityOperatorAssignments(value: unknown): readonly FacilityOperatorAssignment[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 facilityOperatorAssignments must be an array')
+  return Object.freeze(value.map((entry) => {
+    const assignment = record(entry, 'Save V4 FacilityOperatorAssignment')
+    exactKeys(assignment, ['id', 'facilityId', 'operatorOrganizationId', 'validFrom', 'validTo'], 'Save V4 FacilityOperatorAssignment')
+    return createFacilityOperatorAssignment({
+      id: facilityOperatorAssignmentIdFromString(nonEmptyText(assignment.id, 'Save V4 FacilityOperatorAssignment id')),
+      facilityId: facilityIdFromString(nonEmptyText(assignment.facilityId, 'Save V4 FacilityOperatorAssignment facilityId')),
+      operatorOrganizationId: organizationIdFromString(nonEmptyText(assignment.operatorOrganizationId, 'Save V4 FacilityOperatorAssignment operatorOrganizationId')),
+      validFrom: nullableText(assignment.validFrom, 'Save V4 FacilityOperatorAssignment validFrom'),
+      validTo: nullableText(assignment.validTo, 'Save V4 FacilityOperatorAssignment validTo'),
+    })
+  }))
+}
+
+function parseFacilityOrganizationRelationships(value: unknown): readonly FacilityOrganizationRelationship[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 facilityOrganizationRelationships must be an array')
+  return Object.freeze(value.map((entry) => {
+    const relationship = record(entry, 'Save V4 FacilityOrganizationRelationship')
+    exactKeys(relationship, ['id', 'facilityId', 'organizationId', 'kind', 'validFrom', 'validTo'], 'Save V4 FacilityOrganizationRelationship')
+    return createFacilityOrganizationRelationship({
+      id: facilityOrganizationRelationshipIdFromString(nonEmptyText(relationship.id, 'Save V4 FacilityOrganizationRelationship id')),
+      facilityId: facilityIdFromString(nonEmptyText(relationship.facilityId, 'Save V4 FacilityOrganizationRelationship facilityId')),
+      organizationId: organizationIdFromString(nonEmptyText(relationship.organizationId, 'Save V4 FacilityOrganizationRelationship organizationId')),
+      kind: relationship.kind as FacilityOrganizationRelationship['kind'],
+      validFrom: nullableText(relationship.validFrom, 'Save V4 FacilityOrganizationRelationship validFrom'),
+      validTo: nullableText(relationship.validTo, 'Save V4 FacilityOrganizationRelationship validTo'),
+    })
+  }))
+}
+
+function parseFacilityTeamRelationships(value: unknown): readonly FacilityTeamRelationship[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 facilityTeamRelationships must be an array')
+  return Object.freeze(value.map((entry) => {
+    const relationship = record(entry, 'Save V4 FacilityTeamRelationship')
+    exactKeys(relationship, ['id', 'facilityId', 'teamId', 'kind', 'validFrom', 'validTo'], 'Save V4 FacilityTeamRelationship')
+    return createFacilityTeamRelationship({
+      id: facilityTeamRelationshipIdFromString(nonEmptyText(relationship.id, 'Save V4 FacilityTeamRelationship id')),
+      facilityId: facilityIdFromString(nonEmptyText(relationship.facilityId, 'Save V4 FacilityTeamRelationship facilityId')),
+      teamId: teamIdFromString(nonEmptyText(relationship.teamId, 'Save V4 FacilityTeamRelationship teamId')),
+      kind: relationship.kind as FacilityTeamRelationship['kind'],
+      validFrom: nullableText(relationship.validFrom, 'Save V4 FacilityTeamRelationship validFrom'),
+      validTo: nullableText(relationship.validTo, 'Save V4 FacilityTeamRelationship validTo'),
+    })
+  }))
+}
+
+function parseFacilityUsageRights(value: unknown): readonly FacilityUsageRight[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 facilityUsageRights must be an array')
+  return Object.freeze(value.map((entry) => {
+    const right = record(entry, 'Save V4 FacilityUsageRight')
+    exactKeys(right, ['id', 'facilityId', 'componentIds', 'organizationId', 'teamId', 'purpose', 'exclusivity', 'priority', 'validFrom', 'validTo', 'agreementReferenceId'], 'Save V4 FacilityUsageRight')
+    const componentIds = right.componentIds === null ? null : stringArray(right.componentIds, 'Save V4 FacilityUsageRight componentIds').map((id) => facilityComponentIdFromString(id))
+    return createFacilityUsageRight({
+      id: facilityUsageRightIdFromString(nonEmptyText(right.id, 'Save V4 FacilityUsageRight id')),
+      facilityId: facilityIdFromString(nonEmptyText(right.facilityId, 'Save V4 FacilityUsageRight facilityId')),
+      componentIds,
+      organizationId: nullableText(right.organizationId, 'Save V4 FacilityUsageRight organizationId'),
+      teamId: nullableText(right.teamId, 'Save V4 FacilityUsageRight teamId'),
+      purpose: right.purpose as FacilityUsageRight['purpose'],
+      exclusivity: right.exclusivity as FacilityUsageRight['exclusivity'],
+      priority: right.priority as FacilityUsageRight['priority'],
+      validFrom: nonEmptyText(right.validFrom, 'Save V4 FacilityUsageRight validFrom'),
+      validTo: nullableText(right.validTo, 'Save V4 FacilityUsageRight validTo'),
+      agreementReferenceId: nullableText(right.agreementReferenceId, 'Save V4 FacilityUsageRight agreementReferenceId'),
+    })
+  }))
+}
+
+function parseFacilityCompetitionApprovals(value: unknown): readonly FacilityCompetitionApproval[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 facilityCompetitionApprovals must be an array')
+  return Object.freeze(value.map((entry) => {
+    const approval = record(entry, 'Save V4 FacilityCompetitionApproval')
+    exactKeys(approval, ['id', 'facilityId', 'competitionId', 'approved', 'validFrom', 'validTo'], 'Save V4 FacilityCompetitionApproval')
+    return createFacilityCompetitionApproval({
+      id: facilityCompetitionApprovalIdFromString(nonEmptyText(approval.id, 'Save V4 FacilityCompetitionApproval id')),
+      facilityId: facilityIdFromString(nonEmptyText(approval.facilityId, 'Save V4 FacilityCompetitionApproval facilityId')),
+      competitionId: competitionIdFromString(nonEmptyText(approval.competitionId, 'Save V4 FacilityCompetitionApproval competitionId')),
+      approved: boolean(approval.approved, 'Save V4 FacilityCompetitionApproval approved'),
+      validFrom: nullableText(approval.validFrom, 'Save V4 FacilityCompetitionApproval validFrom'),
+      validTo: nullableText(approval.validTo, 'Save V4 FacilityCompetitionApproval validTo'),
+    })
+  }))
+}
+
+function parseFacilityStatusRecords(value: unknown): readonly FacilityStatusRecord[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 facilityStatusRecords must be an array')
+  return Object.freeze(value.map((entry) => {
+    const record_ = record(entry, 'Save V4 FacilityStatusRecord')
+    exactKeys(record_, ['id', 'facilityId', 'status', 'effectiveFrom'], 'Save V4 FacilityStatusRecord')
+    return createFacilityStatusRecord({
+      id: facilityStatusRecordIdFromString(nonEmptyText(record_.id, 'Save V4 FacilityStatusRecord id')),
+      facilityId: facilityIdFromString(nonEmptyText(record_.facilityId, 'Save V4 FacilityStatusRecord facilityId')),
+      status: record_.status as FacilityStatusRecord['status'],
+      effectiveFrom: nonEmptyText(record_.effectiveFrom, 'Save V4 FacilityStatusRecord effectiveFrom'),
+    })
   }))
 }
 
