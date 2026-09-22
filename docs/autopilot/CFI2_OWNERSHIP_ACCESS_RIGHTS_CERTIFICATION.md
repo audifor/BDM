@@ -10,11 +10,16 @@
 
 ## 3. SHA final
 
-Not yet committed at the time of writing this report (see §29/commit plan). This document is written against the certified, fully-tested working tree; the final commit SHA(s) will be appended once created.
+`aa439b95` (`docs(facilities): add CFI2 ownership/access-rights certification report`) — the commit that carries this file. Working tree was clean and fully certified (§21–§26) before either commit was made.
 
 ## 4. Commits
 
-CFI2 will be committed as coherent, atomic commits once fully certified (see §29), following the same convention CFI1 used (one feature commit, one docs commit). No push, no merge, per instructions.
+Two atomic commits, matching CFI1's own convention:
+
+1. `dddf529` — `feat(facilities): add ownership, control, operator and access-rights layer (CFI2)` (14 files, 1142 insertions, 37 deletions — all within `src/domain/facilities/`, `src/domain/ids/`, `src/domain/world/GameWorld.ts`).
+2. `aa439b95` — `docs(facilities): add CFI2 ownership/access-rights certification report` (this file).
+
+No push, no merge, per instructions.
 
 ## 5. Auditoría del modelo CFI1
 
