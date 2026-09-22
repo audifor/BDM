@@ -350,3 +350,14 @@ export {
   type FacilityOperationalReadiness,
   type FacilityRightsConflict,
 } from './FacilityQueries'
+
+export {
+  FACILITY_FINANCIAL_BINDING_SOURCE_KINDS,
+  FACILITY_FINANCIAL_FACT_KINDS,
+  createFacilityFinancialBinding,
+  validateFacilityFinancialBindingCollection,
+  type CreateFacilityFinancialBindingInput,
+  type FacilityFinancialBinding,
+  type FacilityFinancialBindingSourceKind,
+  type FacilityFinancialFactKind,
+} from './FacilityFinancialBinding'
