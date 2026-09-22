@@ -17,6 +17,9 @@ import type {
   FinancialAccountId,
   FinancialTransactionId,
   FiscalPeriodId,
+  ReceivableId,
+  PayableId,
+  TreasurySettlementId,
   GameId,
   PlayerId,
   SeasonId,
@@ -45,7 +48,7 @@ import { createInjury, isInjuryActive, type InjuryRecord } from '@/domain/injury
 import type { InjuryId } from '@/domain/ids'
 import type { ContractId } from '@/domain/ids'
 import { createPlayerContract, type PlayerContract } from '@/domain/contract'
-import { createFinancialAccount, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile, createTeamFinances, type FinancialAccount, type FinancialTransaction, type FiscalPeriod, type OrganizationFinancialProfile, type TeamFinances } from '@/domain/finance'
+import { createFinancialAccount, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile, createPayable, createReceivable, createTeamFinances, createTreasurySettlement, isCashAccount, type FinancialAccount, type FinancialTransaction, type FiscalPeriod, type OrganizationFinancialProfile, type Payable, type Receivable, type TeamFinances, type TreasurySettlement } from '@/domain/finance'
 import type { PlayerTransaction } from '@/domain/transaction'
 import type { PlayerTransactionId } from '@/domain/ids'
 import { createOrganizationKnowledge, createPlayerKnowledge, type OrganizationKnowledge, type PlayerKnowledgeRecord } from '@/domain/knowledge'
@@ -150,6 +153,9 @@ export interface GameWorld {
   readonly financialTransactionsById: Readonly<Record<FinancialTransactionId, FinancialTransaction>>
   readonly fiscalPeriodsById: Readonly<Record<FiscalPeriodId, FiscalPeriod>>
   readonly organizationFinancialProfilesById: Readonly<Record<OrganizationId, OrganizationFinancialProfile>>
+  readonly receivablesById: Readonly<Record<ReceivableId, Receivable>>
+  readonly payablesById: Readonly<Record<PayableId, Payable>>
+  readonly treasuryApplicationsById: Readonly<Record<TreasurySettlementId, TreasurySettlement>>
   readonly playerTransactionsById: Readonly<Record<PlayerTransactionId, PlayerTransaction>>
   readonly playerKnowledgeById: Readonly<Record<PlayerKnowledgeId, PlayerKnowledgeRecord>>
   readonly organizationKnowledge: readonly OrganizationKnowledge[]
@@ -376,6 +382,9 @@ export interface CreateGameWorldInput {
   financialTransactions?: readonly FinancialTransaction[]
   fiscalPeriods?: readonly FiscalPeriod[]
   organizationFinancialProfiles?: readonly OrganizationFinancialProfile[]
+  receivables?: readonly Receivable[]
+  payables?: readonly Payable[]
+  treasuryApplications?: readonly TreasurySettlement[]
   playerTransactions?: readonly PlayerTransaction[]
   playerKnowledge?: readonly PlayerKnowledgeRecord[]
   organizationKnowledge?: readonly OrganizationKnowledge[]
@@ -628,6 +637,9 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     financialTransactionsById: indexById((input.financialTransactions ?? []).map(createFinancialTransaction), 'Financial transaction'),
     fiscalPeriodsById: indexById((input.fiscalPeriods ?? []).map(createFiscalPeriod), 'Fiscal period'),
     organizationFinancialProfilesById: indexFinancialProfiles(input.organizationFinancialProfiles ?? []),
+    receivablesById: indexById((input.receivables ?? []).map(createReceivable), 'Receivable'),
+    payablesById: indexById((input.payables ?? []).map(createPayable), 'Payable'),
+    treasuryApplicationsById: indexById((input.treasuryApplications ?? []).map(createTreasurySettlement), 'Treasury application'),
     playerTransactionsById: indexById(input.playerTransactions ?? [], 'Player transaction'),
     playerKnowledgeById: indexById(input.playerKnowledge ?? [], 'Player knowledge'),
     organizationKnowledge: Object.freeze((input.organizationKnowledge ?? []).map(createOrganizationKnowledge)),
@@ -761,6 +773,7 @@ export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorld
     if (value === undefined) continue
     delete remainingPatch[inputKey]
     if (inputKey === 'financialTransactions') assertFinancialTransactionsAppendOnly(world, value as readonly FinancialTransaction[])
+    if (inputKey === 'treasuryApplications') assertTreasurySettlementsAppendOnly(world, value as readonly TreasurySettlement[])
     worldPatch[worldKey] = collectionPatchIndexers[inputKey]!(value)
   }
 
@@ -802,7 +815,7 @@ const collectionPatchTargets: Readonly<Record<string, string>> = {
   supporterRelationships: 'supporterRelationshipsById', collectiveInstitutionAffiliations: 'collectiveInstitutionAffiliationsById', collectiveParticipantAffiliations: 'collectiveParticipantAffiliationsById', collectiveInstitutionalStatusEvents: 'collectiveInstitutionalStatusEventsById', collectiveInstitutionalLiaisons: 'collectiveInstitutionalLiaisonsById', supporterExpectations: 'supporterExpectationsById', supporterExpectationEvents: 'supporterExpectationEventsById', supporterPressureEvents: 'supporterPressureEventsById', supporterReactions: 'supporterReactionsById', supportFundingPledges: 'supportFundingPledgesById', supportFundingPledgeEvents: 'supportFundingPledgeEventsById', supportContributions: 'supportContributionsById',
   supportComplianceCases: 'supportComplianceCasesById', supportComplianceCaseEvents: 'supportComplianceCaseEventsById', supportComplianceFindings: 'supportComplianceFindingsById', supportConflictDisclosures: 'supportConflictDisclosuresById', supportConsequences: 'supportConsequencesById', supportRemediations: 'supportRemediationsById',
   governanceManagerEvaluationPeriods: 'governanceManagerEvaluationPeriodsById', governanceManagerEvaluations: 'governanceManagerEvaluationsById', governanceJobSecurityTransitions: 'governanceJobSecurityTransitionsById', governanceDecisions: 'governanceDecisionsById', governanceDecisionParticipationGrants: 'governanceDecisionParticipationGrantsById', governanceDecisionEvents: 'governanceDecisionEventsById', governanceMeetings:'governanceMeetingsById', governanceMeetingParticipants:'governanceMeetingParticipantsById', governanceMeetingAgendaItems:'governanceMeetingAgendaItemsById', governanceMeetingEvents:'governanceMeetingEventsById', governanceRequests:'governanceRequestsById', governanceRequestEvents:'governanceRequestEventsById', governanceCommitments:'governanceCommitmentsById', governanceCommitmentEvents:'governanceCommitmentEventsById',
-  persons: 'personsById', countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', organizations: 'organizationsById', organizationSections: 'organizationSectionsById', organizationOwnership: 'organizationOwnershipById', organizationControl: 'organizationControlById', organizationOwnershipTransactions: 'organizationOwnershipTransactionsById', organizationOwnershipTransactionEvents: 'organizationOwnershipTransactionEventsById', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', financialAccounts: 'financialAccountsById', financialTransactions: 'financialTransactionsById', fiscalPeriods: 'fiscalPeriodsById', organizationFinancialProfiles: 'organizationFinancialProfilesById', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
+  persons: 'personsById', countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', organizations: 'organizationsById', organizationSections: 'organizationSectionsById', organizationOwnership: 'organizationOwnershipById', organizationControl: 'organizationControlById', organizationOwnershipTransactions: 'organizationOwnershipTransactionsById', organizationOwnershipTransactionEvents: 'organizationOwnershipTransactionEventsById', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', financialAccounts: 'financialAccountsById', financialTransactions: 'financialTransactionsById', fiscalPeriods: 'fiscalPeriodsById', organizationFinancialProfiles: 'organizationFinancialProfilesById', receivables: 'receivablesById', payables: 'payablesById', treasuryApplications: 'treasuryApplicationsById', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
 }
 
 const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unknown>> = {
@@ -851,6 +864,9 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   financialTransactions: (value) => indexById((value as readonly FinancialTransaction[]).map(createFinancialTransaction), 'Financial transaction'),
   fiscalPeriods: (value) => indexById((value as readonly FiscalPeriod[]).map(createFiscalPeriod), 'Fiscal period'),
   organizationFinancialProfiles: (value) => indexFinancialProfiles(value as readonly OrganizationFinancialProfile[]),
+  receivables: (value) => indexById((value as readonly Receivable[]).map(createReceivable), 'Receivable'),
+  payables: (value) => indexById((value as readonly Payable[]).map(createPayable), 'Payable'),
+  treasuryApplications: (value) => indexById((value as readonly TreasurySettlement[]).map(createTreasurySettlement), 'Treasury application'),
   marketReality: (value) => Object.freeze(Object.fromEntries((value as readonly MarketReality[]).map((item) => [item.playerId, item]))),
   staffHumanStates: (value) => indexHumanStatesByContextId(value as readonly StaffHumanState[]),
   staffExpectationProfiles: (value) => indexExpectationProfilesByContextId(value as readonly StaffExpectationProfile[]),
@@ -1036,6 +1052,7 @@ function validateWorld(world: GameWorld): void {
   for (const contract of Object.values(world.contractsById)) { createPlayerContract(contract); requireEntity(world.players,contract.playerId,`Contract ${contract.id} Player`); requireEntity(world.teams,contract.teamId,`Contract ${contract.id} Team`) }
   for (const finances of Object.values(world.teamFinancesByTeamId)) { createTeamFinances(finances); requireEntity(world.teams,finances.teamId,`Team finances ${finances.teamId} Team`) }
   validateFinancialState(world)
+  validateTreasuryState(world)
   for (const transaction of Object.values(world.playerTransactionsById)) { requireEntity(world.players,transaction.playerId,`Transaction ${transaction.id} Player`); if(transaction.fromTeamId)requireEntity(world.teams,transaction.fromTeamId,`Transaction ${transaction.id} from Team`); if(transaction.toTeamId)requireEntity(world.teams,transaction.toTeamId,`Transaction ${transaction.id} to Team`); if(transaction.contractId)requireEntity(world.contractsById,transaction.contractId,`Transaction ${transaction.id} Contract`) }
   const pairs = new Set<string>(); for (const knowledge of Object.values(world.playerKnowledgeById)) { createPlayerKnowledge(knowledge); requireEntity(world.teams, knowledge.observerTeamId, 'Knowledge observer Team'); requireEntity(world.players, knowledge.subjectPlayerId, 'Knowledge subject Player'); const pair=`${knowledge.observerTeamId}:${knowledge.subjectPlayerId}`; if(pairs.has(pair)) throw new GameWorldValidationError('Duplicate Player knowledge observer and subject'); pairs.add(pair) }
   for (const knowledge of world.organizationKnowledge) { createOrganizationKnowledge(knowledge); requireEntity(world.players, knowledge.subjectPlayerId, 'Organization knowledge subject Player') }
@@ -2026,6 +2043,66 @@ function validateFinancialState(world: GameWorld): void {
   }
 }
 
+function validateTreasuryState(world: GameWorld): void {
+  for (const receivable of Object.values(world.receivablesById)) {
+    createReceivable(receivable)
+    requireEntity(world.organizationsById, receivable.organizationId, `Receivable ${receivable.id} organization`)
+    validateTreasuryDimensions(world, receivable.organizationId, receivable.dimensions, `Receivable ${receivable.id}`)
+    validateTreasuryCounterparty(world, receivable.counterparty, `Receivable ${receivable.id}`)
+  }
+  for (const payable of Object.values(world.payablesById)) {
+    createPayable(payable)
+    requireEntity(world.organizationsById, payable.organizationId, `Payable ${payable.id} organization`)
+    validateTreasuryDimensions(world, payable.organizationId, payable.dimensions, `Payable ${payable.id}`)
+    validateTreasuryCounterparty(world, payable.counterparty, `Payable ${payable.id}`)
+  }
+  const settledByObligation = new Map<string, number>()
+  const seenTransactions = new Set<string>()
+  for (const settlement of Object.values(world.treasuryApplicationsById)) {
+    createTreasurySettlement(settlement)
+    requireEntity(world.organizationsById, settlement.organizationId, `Treasury settlement ${settlement.id} organization`)
+    const transaction = requireEntity(world.financialTransactionsById, settlement.transactionId, `Treasury settlement ${settlement.id} transaction`)
+    if (seenTransactions.has(String(transaction.id))) throw new GameWorldValidationError(`Treasury settlement transaction ${transaction.id} is referenced more than once`)
+    seenTransactions.add(String(transaction.id))
+    if (transaction.organizationId !== settlement.organizationId || transaction.amount.currencyCode !== settlement.amount.currencyCode || transaction.amount.minorUnits !== settlement.amount.minorUnits || transaction.effectiveOn !== settlement.settledOn) throw new GameWorldValidationError(`Treasury settlement ${settlement.id} does not match its financial transaction`)
+    const obligation = settlement.obligationKind === 'RECEIVABLE' ? world.receivablesById[settlement.obligationId as ReceivableId] : world.payablesById[settlement.obligationId as PayableId]
+    if (obligation === undefined) throw new GameWorldValidationError(`Treasury settlement ${settlement.id} references a missing ${settlement.obligationKind.toLowerCase()}`)
+    if (obligation.organizationId !== settlement.organizationId || obligation.amount.currencyCode !== settlement.amount.currencyCode) throw new GameWorldValidationError(`Treasury settlement ${settlement.id} crosses Organization or currency boundaries`)
+    if (compareGameDates(settlement.settledOn, obligation.recognizedOn) < 0 || (obligation.cancelledOn !== null && compareGameDates(settlement.settledOn, obligation.cancelledOn) >= 0)) throw new GameWorldValidationError(`Treasury settlement ${settlement.id} has an invalid settlement date`)
+    const expectedType = settlement.obligationKind === 'RECEIVABLE' ? 'RECEIVABLE_COLLECTION' : 'PAYABLE_SETTLEMENT'
+    if (transaction.transactionType !== expectedType || transaction.postings.length !== 2) throw new GameWorldValidationError(`Treasury settlement ${settlement.id} transaction shape is invalid`)
+    const cashPosting = transaction.postings.find((posting) => isCashAccount(world.financialAccountsById[posting.accountId] ?? { accountType: '' }))
+    const offsetPosting = transaction.postings.find((posting) => !isCashAccount(world.financialAccountsById[posting.accountId] ?? { accountType: '' }))
+    if (cashPosting === undefined || offsetPosting === undefined) throw new GameWorldValidationError(`Treasury settlement ${settlement.id} must contain cash and offset postings`)
+    const cashAccount = requireEntity(world.financialAccountsById, cashPosting.accountId, `Treasury settlement ${settlement.id} cash account`)
+    const offsetAccount = requireEntity(world.financialAccountsById, offsetPosting.accountId, `Treasury settlement ${settlement.id} offset account`)
+    const expectedOffsetType = settlement.obligationKind === 'RECEIVABLE' ? 'RECEIVABLE' : 'PAYABLE'
+    if (cashAccount.organizationId !== settlement.organizationId || offsetAccount.organizationId !== settlement.organizationId || offsetAccount.accountType !== expectedOffsetType || cashAccount.currencyCode !== settlement.amount.currencyCode || offsetAccount.currencyCode !== settlement.amount.currencyCode) throw new GameWorldValidationError(`Treasury settlement ${settlement.id} account shape is invalid`)
+    if ((settlement.obligationKind === 'RECEIVABLE' && (cashPosting.direction !== 'DEBIT' || offsetPosting.direction !== 'CREDIT')) || (settlement.obligationKind === 'PAYABLE' && (cashPosting.direction !== 'CREDIT' || offsetPosting.direction !== 'DEBIT'))) throw new GameWorldValidationError(`Treasury settlement ${settlement.id} posting directions are invalid`)
+    const key = `${settlement.obligationKind}:${String(settlement.obligationId)}`
+    const total = (settledByObligation.get(key) ?? 0) + settlement.amount.minorUnits
+    if (!Number.isSafeInteger(total) || total > obligation.amount.minorUnits) throw new GameWorldValidationError(`Treasury settlement ${settlement.id} exceeds the obligation amount`)
+    settledByObligation.set(key, total)
+  }
+}
+
+function validateTreasuryDimensions(world: GameWorld, organizationId: OrganizationId, dimensions: import('@/domain/finance').FinancialDimensions | null, label: string): void {
+  if (dimensions?.teamId !== undefined) {
+    const team = requireEntity(world.teams, dimensions.teamId, `${label} team dimension`)
+    if (team.organizationId !== organizationId) throw new GameWorldValidationError(`${label} team dimension crosses organizations`)
+  }
+  if (dimensions?.organizationSectionId !== undefined) {
+    const section = requireEntity(world.organizationSectionsById, dimensions.organizationSectionId, `${label} section dimension`)
+    if (section.organizationId !== organizationId) throw new GameWorldValidationError(`${label} section dimension crosses organizations`)
+  }
+  if (dimensions?.competitionId !== undefined) requireEntity(world.competitions, dimensions.competitionId, `${label} competition dimension`)
+  if (dimensions?.contractId !== undefined) requireEntity(world.contractsById, dimensions.contractId, `${label} contract dimension`)
+}
+
+function validateTreasuryCounterparty(world: GameWorld, counterparty: import('@/domain/finance').TreasuryCounterparty, label: string): void {
+  if (counterparty.kind === 'ORGANIZATION') requireEntity(world.organizationsById, counterparty.id as OrganizationId, `${label} counterparty organization`)
+}
+
 function assertFinancialTransactionsAppendOnly(world: GameWorld, proposed: readonly FinancialTransaction[]): void {
   const nextById = new Map(proposed.map((transaction) => {
     const normalized = createFinancialTransaction(transaction)
@@ -2035,6 +2112,15 @@ function assertFinancialTransactionsAppendOnly(world: GameWorld, proposed: reado
     const next = nextById.get(String(existing.id))
     if (next === undefined) throw new GameWorldValidationError(`Financial transaction ${existing.id} cannot be removed from the ledger`)
     if (JSON.stringify(next) !== JSON.stringify(existing)) throw new GameWorldValidationError(`Financial transaction ${existing.id} is immutable`)
+  }
+}
+
+function assertTreasurySettlementsAppendOnly(world: GameWorld, proposed: readonly TreasurySettlement[]): void {
+  const nextById = new Map(proposed.map((settlement) => [String(settlement.id), createTreasurySettlement(settlement)] as const))
+  for (const existing of Object.values(world.treasuryApplicationsById)) {
+    const next = nextById.get(String(existing.id))
+    if (next === undefined) throw new GameWorldValidationError(`Treasury settlement ${existing.id} cannot be removed`)
+    if (JSON.stringify(next) !== JSON.stringify(existing)) throw new GameWorldValidationError(`Treasury settlement ${existing.id} is immutable`)
   }
 }
 

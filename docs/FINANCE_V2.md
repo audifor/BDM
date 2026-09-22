@@ -46,6 +46,49 @@ The runtime vocabulary intentionally follows the DB account/transaction/posting 
 
 Treasury & Cash Flow can begin from the stable CF1 seam: Organization-owned accounts, integer money, effective dates, immutable balanced transactions, provenance, fiscal periods, and deterministic as-of queries. CF2 should define cash-account semantics and cash-flow projections on top of this ledger, then add explicit approved inputs for owner funding, capital injections, distributions, and future bank/debt instruments. It should not move ownership, contract, Governance, or salary-cap authority into Finance.
 
-## Deferred by CF1
+## CF2 Treasury & Cash Flow Authority
 
-Ticket sales, sponsorships, merchandising, media rights, payroll progression, debt/loans/amortization, taxation, FFP, luxury tax, salary-cap enforcement, valuation, inflation, FX simulation, owner/budget AI, financial UI, bankruptcy, administration, and insolvency remain future work.
+CF2 adds the canonical treasury layer without adding a mutable cash field to `Organization` or `GameWorld`.
+
+- Cash accounts are existing `FinancialAccount` records whose `accountType` is one of `CASH`, `CASH_OPERATING_BANK`, `CASH_SECONDARY_BANK`, `CASH_PETTY`, `CASH_RESTRICTED`, or `CASH_ESCROW`. Restricted and unrestricted balances remain separate. Multiple currencies are never converted or summed together.
+- `Receivable` and `Payable` are Organization-owned recognized rights and obligations. Their remaining amount and status are derived from immutable treasury applications; a receivable is not cash and a payable is not a cash outflow until settlement.
+- `TreasurySettlement` records are persisted as `treasuryApplications` and point to the FinancialTransaction that records the settlement. They are append-only and cannot over-collect, over-pay, cross Organizations, cross currencies, or settle cancelled obligations.
+- Cash balances, inflows, outflows, opening/closing cash, due items, committed projection, liquidity and drill-downs are queries over ledger postings and treasury facts. No parallel cash-movement history or persisted cash projection exists.
+
+The semantic distinctions are intentional:
+
+`recognized revenue/expense != cash movement`
+
+`receivable != cash`
+
+`payable != cash outflow`
+
+`budget != cash`
+
+`salary cap != cash`
+
+Known cash flow is projected only from current cash plus open receivables and payables due inside the requested horizon. CF2 does not invent ticket sales, sponsors, attendance, future salaries, budgets, FX conversion, debt or forecasting assumptions.
+
+Treasury settlement flows are:
+
+```text
+External entitlement
+  -> receivable
+  -> authorized collection settlement
+  -> FinancialTransaction / FinancialPosting
+  -> cash account balance
+
+External obligation
+  -> payable
+  -> payment settlement
+  -> FinancialTransaction / FinancialPosting
+  -> cash account balance
+```
+
+Owner funding and competition distributions are accepted only as externally authorized provenance and produce ledger cash receipts; Treasury does not create owners, decide ownership, calculate competition awards, or approve Governance operations. Contracts and Competition remain authorities for obligations and entitlements. `GameWorld.currentDate` remains the only clock; CF2 exposes due queries and explicit settlement APIs but does not auto-pay items on their due date.
+
+CF2 persists receivables, payables and settlement references in Save V4. Older V4 and V1–V3 saves default these collections to empty. BDM-DB remains read-only and continues to provide the canonical `financial_account`, `financial_transaction`, `financial_posting`, `revenue_stream` and `expense_commitment` vocabulary; runtime treasury facts belong to the individual game save and are not written back to BDM-DB.
+
+## Deferred by CF1/CF2
+
+Ticket sales, sponsorships, merchandising, media rights, annual budgets, forecasting assumptions, payroll progression, debt/loans/amortization, taxation, FFP, luxury tax, salary-cap enforcement, valuation, inflation, FX simulation, owner/budget AI, financial UI, bankruptcy, administration, insolvency, debt collection AI and automatic treasury policy remain future work.

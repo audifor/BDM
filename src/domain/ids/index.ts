@@ -47,6 +47,9 @@ export {
   financialAccountIdFromString,
   financialTransactionIdFromString,
   fiscalPeriodIdFromString,
+  receivableIdFromString,
+  payableIdFromString,
+  treasurySettlementIdFromString,
 } from './EntityIds'
 
 export type {
@@ -89,4 +92,7 @@ export type {
   FinancialAccountId,
   FinancialTransactionId,
   FiscalPeriodId,
+  ReceivableId,
+  PayableId,
+  TreasurySettlementId,
 } from './EntityIds'

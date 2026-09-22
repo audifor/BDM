@@ -21,9 +21,9 @@ import { createOrganizationSuccession, type OrganizationSuccession } from '@/dom
 import { createRegulatoryOrder, type RegulatoryOrder } from '@/domain/structuralRegulation/RegulatoryOrder'
 import { createRegulatoryRemediationPlan, type RegulatoryRemediationPlan } from '@/domain/structuralRegulation/RegulatoryRemediationPlan'
 import { createOrganizationLicense, type OrganizationLicense } from '@/domain/structuralRegulation/OrganizationLicense'
-import { createFinancialAccount, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile, type FinancialAccount, type FinancialDimensions, type FinancialTransaction, type FiscalPeriod, type OrganizationFinancialProfile } from '@/domain/finance'
+import { createFinancialAccount, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile, createPayable, createReceivable, createTreasurySettlement, type FinancialAccount, type FinancialDimensions, type FinancialTransaction, type FiscalPeriod, type OrganizationFinancialProfile, type Payable, type Receivable, type TreasuryCounterparty, type TreasurySettlement } from '@/domain/finance'
 import { parseGameDate } from '@/domain/date'
-import { competitionIdFromString, ecosystemIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, seasonIdFromString, financialAccountIdFromString, financialTransactionIdFromString, fiscalPeriodIdFromString, contractIdFromString, teamIdFromString, organizationSectionIdFromString } from '@/domain/ids'
+import { competitionIdFromString, ecosystemIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, seasonIdFromString, financialAccountIdFromString, financialTransactionIdFromString, fiscalPeriodIdFromString, receivableIdFromString, payableIdFromString, treasurySettlementIdFromString, contractIdFromString, teamIdFromString, organizationSectionIdFromString } from '@/domain/ids'
 import {
   deserializeGameWorldSave as deserializeLegacyGameWorldSave,
   deserializeGameWorldV3,
@@ -72,6 +72,9 @@ export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly financialTransactions?: readonly FinancialTransaction[]
   readonly fiscalPeriods?: readonly FiscalPeriod[]
   readonly organizationFinancialProfiles?: readonly OrganizationFinancialProfile[]
+  readonly receivables?: readonly Receivable[]
+  readonly payables?: readonly Payable[]
+  readonly treasuryApplications?: readonly TreasurySettlement[]
 }
 
 export interface SaveGameEnvelopeV4 {
@@ -137,6 +140,7 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       multiClubOwnershipPolicies: Object.values(world.multiClubOwnershipPoliciesById),
       organizationStructuralChanges: Object.values(world.organizationStructuralChangesById), organizationLifecycleStates: Object.values(world.organizationLifecycleStatesById), organizationSuccessions: Object.values(world.organizationSuccessionsById), regulatoryOrders: Object.values(world.regulatoryOrdersById), regulatoryRemediationPlans: Object.values(world.regulatoryRemediationPlansById), organizationLicenses: Object.values(world.organizationLicensesById),
       financialAccounts: Object.values(world.financialAccountsById), financialTransactions: Object.values(world.financialTransactionsById), fiscalPeriods: Object.values(world.fiscalPeriodsById), organizationFinancialProfiles: Object.values(world.organizationFinancialProfilesById),
+      receivables: Object.values(world.receivablesById), payables: Object.values(world.payablesById), treasuryApplications: Object.values(world.treasuryApplicationsById),
     }),
   })
 }
@@ -191,10 +195,13 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const financialTransactions = Object.prototype.hasOwnProperty.call(payload, 'financialTransactions') ? parseFinancialTransactions(payload.financialTransactions) : []
   const fiscalPeriods = Object.prototype.hasOwnProperty.call(payload, 'fiscalPeriods') ? parseFiscalPeriods(payload.fiscalPeriods) : []
   const organizationFinancialProfiles = Object.prototype.hasOwnProperty.call(payload, 'organizationFinancialProfiles') ? parseOrganizationFinancialProfiles(payload.organizationFinancialProfiles) : []
+  const receivables = Object.prototype.hasOwnProperty.call(payload, 'receivables') ? parseReceivables(payload.receivables) : []
+  const payables = Object.prototype.hasOwnProperty.call(payload, 'payables') ? parsePayables(payload.payables) : []
+  const treasuryApplications = Object.prototype.hasOwnProperty.call(payload, 'treasuryApplications') ? parseTreasurySettlements(payload.treasuryApplications) : []
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
-  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _structuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, ...compatibilityPayload } = payload
+  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _structuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, ...compatibilityPayload } = payload
   const world = deserializeGameWorldV3({
     schemaVersion: 3,
     savedAt,
@@ -208,7 +215,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const withInvestments = updateGameWorld(withTransactions, { organizationInvestorInterests: investorInterests, organizationCapitalRaises: capitalRaises, organizationCapitalRaiseEvents: capitalRaiseEvents, organizationInvestmentProposals: investmentProposals, organizationInvestmentProposalEvents: investmentProposalEvents })
   const withPolicies = updateGameWorld(withInvestments, { multiClubOwnershipPolicies })
   const withStructuralRegulation = updateGameWorld(withPolicies, { organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses })
-  const withFinance = updateGameWorld(withStructuralRegulation, { financialAccounts, financialTransactions, fiscalPeriods, organizationFinancialProfiles })
+  const withFinance = updateGameWorld(withStructuralRegulation, { financialAccounts, financialTransactions, fiscalPeriods, organizationFinancialProfiles, receivables, payables, treasuryApplications })
   return Object.freeze({ ...attachWorldDbCompetitionRuntime(withFinance, runtime), worldAnnualDevelopmentCycle: developmentCycle })
 }
 
@@ -559,6 +566,40 @@ function parseOrganizationFinancialProfiles(value: unknown): readonly Organizati
     const profile = record(entry, 'Save V4 OrganizationFinancialProfile')
     exactKeys(profile, ['organizationId', 'baseCurrencyCode', 'fiscalYearStartMonth'], 'Save V4 OrganizationFinancialProfile')
     return createOrganizationFinancialProfile({ organizationId: organizationIdFromString(nonEmptyText(profile.organizationId, 'Save V4 OrganizationFinancialProfile organizationId')), baseCurrencyCode: nonEmptyText(profile.baseCurrencyCode, 'Save V4 OrganizationFinancialProfile baseCurrencyCode'), fiscalYearStartMonth: integer(profile.fiscalYearStartMonth, 'Save V4 OrganizationFinancialProfile fiscalYearStartMonth') })
+  }))
+}
+
+function parseTreasuryCounterparty(value: unknown): TreasuryCounterparty {
+  const counterparty = record(value, 'Save V4 TreasuryCounterparty')
+  const hasId = counterparty.id !== undefined
+  exactKeys(counterparty, ['kind', 'label', ...(hasId ? ['id'] : [])], 'Save V4 TreasuryCounterparty')
+  return { kind: counterparty.kind as TreasuryCounterparty['kind'], ...(hasId ? { id: nonEmptyText(counterparty.id, 'Save V4 TreasuryCounterparty id') } : {}), label: nonEmptyText(counterparty.label, 'Save V4 TreasuryCounterparty label') }
+}
+
+function parseReceivables(value: unknown): readonly Receivable[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 receivables must be an array')
+  return Object.freeze(value.map((entry) => {
+    const receivable = record(entry, 'Save V4 Receivable')
+    exactKeys(receivable, ['id', 'organizationId', 'amount', 'counterparty', 'recognizedOn', 'dueOn', 'provenance', 'dimensions', 'cancelledOn'], 'Save V4 Receivable')
+    return createReceivable({ id: receivableIdFromString(nonEmptyText(receivable.id, 'Save V4 Receivable id')), organizationId: organizationIdFromString(nonEmptyText(receivable.organizationId, 'Save V4 Receivable organizationId')), amount: parseFinancialMoney(receivable.amount, 'Save V4 Receivable amount'), counterparty: parseTreasuryCounterparty(receivable.counterparty), recognizedOn: nonEmptyText(receivable.recognizedOn, 'Save V4 Receivable recognizedOn'), dueOn: nonEmptyText(receivable.dueOn, 'Save V4 Receivable dueOn'), provenance: parseFinancialSource(receivable.provenance, 'Save V4 Receivable provenance'), dimensions: parseFinancialDimensions(receivable.dimensions), cancelledOn: nullableText(receivable.cancelledOn, 'Save V4 Receivable cancelledOn') })
+  }))
+}
+
+function parsePayables(value: unknown): readonly Payable[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 payables must be an array')
+  return Object.freeze(value.map((entry) => {
+    const payable = record(entry, 'Save V4 Payable')
+    exactKeys(payable, ['id', 'organizationId', 'amount', 'counterparty', 'recognizedOn', 'dueOn', 'provenance', 'dimensions', 'cancelledOn'], 'Save V4 Payable')
+    return createPayable({ id: payableIdFromString(nonEmptyText(payable.id, 'Save V4 Payable id')), organizationId: organizationIdFromString(nonEmptyText(payable.organizationId, 'Save V4 Payable organizationId')), amount: parseFinancialMoney(payable.amount, 'Save V4 Payable amount'), counterparty: parseTreasuryCounterparty(payable.counterparty), recognizedOn: nonEmptyText(payable.recognizedOn, 'Save V4 Payable recognizedOn'), dueOn: nonEmptyText(payable.dueOn, 'Save V4 Payable dueOn'), provenance: parseFinancialSource(payable.provenance, 'Save V4 Payable provenance'), dimensions: parseFinancialDimensions(payable.dimensions), cancelledOn: nullableText(payable.cancelledOn, 'Save V4 Payable cancelledOn') })
+  }))
+}
+
+function parseTreasurySettlements(value: unknown): readonly TreasurySettlement[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 treasury applications must be an array')
+  return Object.freeze(value.map((entry) => {
+    const settlement = record(entry, 'Save V4 TreasurySettlement')
+    exactKeys(settlement, ['id', 'organizationId', 'obligationKind', 'obligationId', 'amount', 'settledOn', 'transactionId', 'provenance'], 'Save V4 TreasurySettlement')
+    return createTreasurySettlement({ id: treasurySettlementIdFromString(nonEmptyText(settlement.id, 'Save V4 TreasurySettlement id')), organizationId: organizationIdFromString(nonEmptyText(settlement.organizationId, 'Save V4 TreasurySettlement organizationId')), obligationKind: settlement.obligationKind as 'RECEIVABLE' | 'PAYABLE', obligationId: nonEmptyText(settlement.obligationId, 'Save V4 TreasurySettlement obligationId'), amount: parseFinancialMoney(settlement.amount, 'Save V4 TreasurySettlement amount'), settledOn: nonEmptyText(settlement.settledOn, 'Save V4 TreasurySettlement settledOn'), transactionId: financialTransactionIdFromString(nonEmptyText(settlement.transactionId, 'Save V4 TreasurySettlement transactionId')), provenance: parseFinancialSource(settlement.provenance, 'Save V4 TreasurySettlement provenance') })
   }))
 }
 
