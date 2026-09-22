@@ -10,14 +10,14 @@
 
 ## 3. Final SHA
 
-Recorded via a small follow-up commit carrying this line (see §4), matching the lineage's own convention.
+`ba01830081e6fe4fa13884f06296814abb9700d1` (`docs(facilities): add CFI4 condition/standard/serviceability certification report`).
 
 ## 4. Commits
 
 Two atomic commits, matching the CFI1/CFI2/CFI2S/CFI3 lineage's own convention:
 
 1. `42e9620` — `feat(facilities): add component/facility condition, serviceability and technical standard (CFI4)` — the domain model (`FacilityCondition.ts`), the capability+condition integration in `FacilityComponentCapability.ts`, the extended `FacilityQueries.ts`/`FacilityValidation.ts`/`index.ts`, the `GameWorld.ts` wiring, the localized Save V4 extension, and both new test files.
-2. `docs(facilities): add CFI4 condition/standard/serviceability certification report` — this file.
+2. `ba01830` — `docs(facilities): add CFI4 condition/standard/serviceability certification report` — this file.
 
 No push, no merge, per instructions.
 
