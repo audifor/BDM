@@ -10,14 +10,14 @@
 
 ## 3. Final SHA
 
-`83537eb60153ef1c32eddc2f7e0ff1e73701508b`, plus the small SHA-reference follow-up commit carrying this line (matching the CFI2/CFI2S lineage's own convention).
+`0825a1abf54fa33dc5777a8d26a415c387d5e31d` (`docs(facilities): add CFI3 anatomy & capabilities certification report`).
 
 ## 4. Commits
 
 Two atomic commits, matching the CFI1/CFI2/CFI2S lineage's own convention:
 
 1. `83537eb` — `feat(facilities): add component anatomy, hierarchy and derived capabilities (CFI3)` — the domain model (`FacilityComponent.ts`, new `FacilityComponentCategory.ts`, `FacilityComponentSpecification.ts`, `FacilityComponentCapability.ts`), extended `FacilityValidation.ts`/`FacilityQueries.ts`/`index.ts`, the localized Save V4 extension, and both new test files.
-2. `docs(facilities): add CFI3 anatomy & capabilities certification report` — this file.
+2. `0825a1a` — `docs(facilities): add CFI3 anatomy & capabilities certification report` — this file.
 
 No push, no merge, per instructions.
 
