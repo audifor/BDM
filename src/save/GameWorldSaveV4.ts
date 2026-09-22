@@ -9,8 +9,9 @@ import {
   type WorldDbCompetitionRuntime,
 } from '@/domain/world'
 import { createOrganization, createOrganizationSection, type Organization, type OrganizationSection } from '@/domain/organization'
-import { createOrganizationControl, createOrganizationOwnership, type OrganizationControl, type OrganizationOwnership, type OrganizationOwnershipActor } from '@/domain/ownership'
-import { organizationIdFromString, personIdFromString } from '@/domain/ids'
+import { createOrganizationControl, createOrganizationOwnership, type OrganizationControl, type OrganizationOwnership, type OrganizationOwnershipActor } from '@/domain/ownership/OrganizationOwnership'
+import { createOrganizationOwnershipTransaction, createOrganizationOwnershipTransactionEvent, type OrganizationOwnershipTransaction, type OrganizationOwnershipTransactionEvent } from '@/domain/ownership/OrganizationOwnershipTransaction'
+import { organizationIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString } from '@/domain/ids'
 import {
   deserializeGameWorldSave as deserializeLegacyGameWorldSave,
   deserializeGameWorldV3,
@@ -41,6 +42,8 @@ export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly organizationSections: readonly OrganizationSection[]
   readonly organizationOwnership: readonly OrganizationOwnership[]
   readonly organizationControl: readonly OrganizationControl[]
+  readonly organizationOwnershipTransactions: readonly OrganizationOwnershipTransaction[]
+  readonly organizationOwnershipTransactionEvents: readonly OrganizationOwnershipTransactionEvent[]
 }
 
 export interface SaveGameEnvelopeV4 {
@@ -66,6 +69,8 @@ export function migrateGameWorldSaveV3ToV4(value: SaveGameEnvelopeV3): SaveGameE
       organizationSections: Object.values(world.organizationSectionsById),
       organizationOwnership: [],
       organizationControl: [],
+      organizationOwnershipTransactions: [],
+      organizationOwnershipTransactionEvents: [],
     }),
   })
 }
@@ -87,6 +92,8 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       organizationSections: Object.values(world.organizationSectionsById),
       organizationOwnership: Object.values(world.organizationOwnershipById),
       organizationControl: Object.values(world.organizationControlById),
+      organizationOwnershipTransactions: Object.values(world.organizationOwnershipTransactionsById),
+      organizationOwnershipTransactionEvents: Object.values(world.organizationOwnershipTransactionEventsById),
     }),
   })
 }
@@ -107,10 +114,16 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const control = Object.prototype.hasOwnProperty.call(payload, 'organizationControl')
     ? parseOrganizationControl(payload.organizationControl)
     : []
+  const transactions = Object.prototype.hasOwnProperty.call(payload, 'organizationOwnershipTransactions')
+    ? parseOrganizationOwnershipTransactions(payload.organizationOwnershipTransactions)
+    : []
+  const transactionEvents = Object.prototype.hasOwnProperty.call(payload, 'organizationOwnershipTransactionEvents')
+    ? parseOrganizationOwnershipTransactionEvents(payload.organizationOwnershipTransactionEvents)
+    : []
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
-  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, ...compatibilityPayload } = payload
+  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, ...compatibilityPayload } = payload
   const world = deserializeGameWorldV3({
     schemaVersion: 3,
     savedAt,
@@ -120,7 +133,8 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
     ? world
     : updateGameWorld(world, { organizations, organizationSections })
   const withOwnership = updateGameWorld(withOrganizations, { organizationOwnership: ownership, organizationControl: control })
-  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withOwnership, runtime), worldAnnualDevelopmentCycle: developmentCycle })
+  const withTransactions = updateGameWorld(withOwnership, { organizationOwnershipTransactions: transactions, organizationOwnershipTransactionEvents: transactionEvents })
+  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withTransactions, runtime), worldAnnualDevelopmentCycle: developmentCycle })
 }
 
 /** Reads V1-V4. Legacy saves normalize the V4-owned runtime projection to empty state. */
@@ -180,6 +194,46 @@ function parseOrganizationControl(value: unknown): readonly OrganizationControl[
       validTo: nullableText(control.validTo, 'Save V4 OrganizationControl validTo'),
     })
   }))
+}
+
+function parseOrganizationOwnershipTransactions(value: unknown): readonly OrganizationOwnershipTransaction[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 organizationOwnershipTransactions must be an array')
+  return Object.freeze(value.map((entry) => {
+    const transaction = record(entry, 'Save V4 OrganizationOwnershipTransaction')
+    exactKeys(transaction, transaction.governanceDecisionId === undefined ? ['id', 'organizationId', 'seller', 'buyer', 'transferredPercentage', 'agreedOn', 'consideration'] : ['id', 'organizationId', 'seller', 'buyer', 'transferredPercentage', 'agreedOn', 'consideration', 'governanceDecisionId'], 'Save V4 OrganizationOwnershipTransaction')
+    return createOrganizationOwnershipTransaction({
+      id: organizationOwnershipTransactionIdFromString(nonEmptyText(transaction.id, 'Save V4 OrganizationOwnershipTransaction id')),
+      organizationId: nonEmptyText(transaction.organizationId, 'Save V4 OrganizationOwnershipTransaction organizationId'),
+      seller: parseOrganizationOwnershipActor(transaction.seller, 'Save V4 OrganizationOwnershipTransaction seller'),
+      buyer: parseOrganizationOwnershipActor(transaction.buyer, 'Save V4 OrganizationOwnershipTransaction buyer'),
+      transferredPercentage: number(transaction.transferredPercentage, 'Save V4 OrganizationOwnershipTransaction transferredPercentage'),
+      agreedOn: nonEmptyText(transaction.agreedOn, 'Save V4 OrganizationOwnershipTransaction agreedOn'),
+      consideration: parseConsideration(transaction.consideration),
+      ...(transaction.governanceDecisionId === undefined ? {} : { governanceDecisionId: nonEmptyText(transaction.governanceDecisionId, 'Save V4 OrganizationOwnershipTransaction governanceDecisionId') }),
+    })
+  }))
+}
+
+function parseOrganizationOwnershipTransactionEvents(value: unknown): readonly OrganizationOwnershipTransactionEvent[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 organizationOwnershipTransactionEvents must be an array')
+  return Object.freeze(value.map((entry) => {
+    const event = record(entry, 'Save V4 OrganizationOwnershipTransactionEvent')
+    exactKeys(event, event.governanceDecisionId === undefined ? ['id', 'transactionId', 'kind', 'effectiveOn'] : ['id', 'transactionId', 'kind', 'effectiveOn', 'governanceDecisionId'], 'Save V4 OrganizationOwnershipTransactionEvent')
+    return createOrganizationOwnershipTransactionEvent({
+      id: nonEmptyText(event.id, 'Save V4 OrganizationOwnershipTransactionEvent id'),
+      transactionId: organizationOwnershipTransactionIdFromString(nonEmptyText(event.transactionId, 'Save V4 OrganizationOwnershipTransactionEvent transactionId')),
+      kind: event.kind as OrganizationOwnershipTransactionEvent['kind'],
+      effectiveOn: nonEmptyText(event.effectiveOn, 'Save V4 OrganizationOwnershipTransactionEvent effectiveOn'),
+      ...(event.governanceDecisionId === undefined ? {} : { governanceDecisionId: nonEmptyText(event.governanceDecisionId, 'Save V4 OrganizationOwnershipTransactionEvent governanceDecisionId') }),
+    })
+  }))
+}
+
+function parseConsideration(value: unknown): OrganizationOwnershipTransaction['consideration'] {
+  if (value === null) return null
+  const consideration = record(value, 'Save V4 OrganizationOwnershipTransaction consideration')
+  exactKeys(consideration, ['amount', 'currencyCode'], 'Save V4 OrganizationOwnershipTransaction consideration')
+  return { amount: number(consideration.amount, 'Save V4 OrganizationOwnershipTransaction consideration amount'), currencyCode: nonEmptyText(consideration.currencyCode, 'Save V4 OrganizationOwnershipTransaction consideration currencyCode') }
 }
 
 function parseOrganizationOwnershipActor(value: unknown, label: string): OrganizationOwnershipActor {
@@ -295,6 +349,11 @@ function nullableInteger(value: unknown, label: string): number | null {
 function nullableNumber(value: unknown, label: string): number | null {
   if (value !== null && (typeof value !== 'number' || !Number.isFinite(value))) throw new TypeError(`${label} must be a finite number or null`)
   return value as number | null
+}
+
+function number(value: unknown, label: string): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) throw new TypeError(`${label} must be a finite number`)
+  return value
 }
 
 function record(value: unknown, label: string): Record<string, unknown> {

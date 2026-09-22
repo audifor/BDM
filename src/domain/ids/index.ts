@@ -30,6 +30,7 @@ export {
   organizationSectionIdFromString,
   organizationOwnershipIdFromString,
   organizationControlIdFromString,
+  organizationOwnershipTransactionIdFromString,
   organizationIdForTeam,
   agentIdFromString,
   agencyIdFromString,
@@ -59,6 +60,7 @@ export type {
   OrganizationSectionId,
   OrganizationOwnershipId,
   OrganizationControlId,
+  OrganizationOwnershipTransactionId,
   AgentId,
   AgencyId,
 } from './EntityIds'

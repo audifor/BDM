@@ -28,6 +28,7 @@ export type OrganizationId = EntityId<'OrganizationId'>
 export type OrganizationSectionId = EntityId<'OrganizationSectionId'>
 export type OrganizationOwnershipId = EntityId<'OrganizationOwnershipId'>
 export type OrganizationControlId = EntityId<'OrganizationControlId'>
+export type OrganizationOwnershipTransactionId = EntityId<'OrganizationOwnershipTransactionId'>
 export type AgentId = EntityId<'AgentId'>
 export type AgencyId = EntityId<'AgencyId'>
 
@@ -71,6 +72,7 @@ export const organizationIdFromString = (value: string): OrganizationId => idFro
 export const organizationSectionIdFromString = (value: string): OrganizationSectionId => idFromString<OrganizationSectionId>(value, 'OrganizationSectionId')
 export const organizationOwnershipIdFromString = (value: string): OrganizationOwnershipId => idFromString<OrganizationOwnershipId>(value, 'OrganizationOwnershipId')
 export const organizationControlIdFromString = (value: string): OrganizationControlId => idFromString<OrganizationControlId>(value, 'OrganizationControlId')
+export const organizationOwnershipTransactionIdFromString = (value: string): OrganizationOwnershipTransactionId => idFromString<OrganizationOwnershipTransactionId>(value, 'OrganizationOwnershipTransactionId')
 export const agentIdFromString = (value: string): AgentId => idFromString<AgentId>(value, 'AgentId')
 export const agencyIdFromString = (value: string): AgencyId => idFromString<AgencyId>(value, 'AgencyId')
 /** Legacy/generated-world compatibility resolver. World DB runtime uses the canonical Team relation. */

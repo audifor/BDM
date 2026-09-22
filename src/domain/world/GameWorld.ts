@@ -24,7 +24,8 @@ import type { Player } from '@/domain/player'
 import { calculateSeasonStandings, type Season, type SeasonHistoryRecord } from '@/domain/season'
 import type { Team } from '@/domain/team'
 import { createOrganization, createOrganizationSection, type Organization, type OrganizationSection } from '@/domain/organization'
-import { createOrganizationControl, createOrganizationOwnership, type OrganizationControl, type OrganizationOwnership } from '@/domain/ownership'
+import { createOrganizationControl, createOrganizationOwnership, type OrganizationControl, type OrganizationOwnership } from '@/domain/ownership/OrganizationOwnership'
+import { createOrganizationOwnershipTransaction, createOrganizationOwnershipTransactionEvent, isOrganizationOwnershipGovernanceApproved, validateOrganizationOwnershipTransactionLifecycle, type OrganizationOwnershipTransaction, type OrganizationOwnershipTransactionEvent } from '@/domain/ownership/OrganizationOwnershipTransaction'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
 import { createInjury, isInjuryActive, type InjuryRecord } from '@/domain/injury'
 import type { InjuryId } from '@/domain/ids'
@@ -105,6 +106,8 @@ export interface GameWorld {
   readonly organizationSectionsById: Readonly<Record<OrganizationSectionId, OrganizationSection>>
   readonly organizationOwnershipById: Readonly<Record<import('@/domain/ids').OrganizationOwnershipId, OrganizationOwnership>>
   readonly organizationControlById: Readonly<Record<import('@/domain/ids').OrganizationControlId, OrganizationControl>>
+  readonly organizationOwnershipTransactionsById: Readonly<Record<import('@/domain/ids').OrganizationOwnershipTransactionId, OrganizationOwnershipTransaction>>
+  readonly organizationOwnershipTransactionEventsById: Readonly<Record<string, OrganizationOwnershipTransactionEvent>>
   readonly competitions: Readonly<Record<CompetitionId, Competition>>
   readonly ecosystems: Readonly<Record<EcosystemId, SportsEcosystem>>
   readonly conferencesById: Readonly<Record<ConferenceId, Conference>>
@@ -314,6 +317,8 @@ export interface CreateGameWorldInput {
   organizationSections?: readonly OrganizationSection[]
   organizationOwnership?: readonly OrganizationOwnership[]
   organizationControl?: readonly OrganizationControl[]
+  organizationOwnershipTransactions?: readonly OrganizationOwnershipTransaction[]
+  organizationOwnershipTransactionEvents?: readonly OrganizationOwnershipTransactionEvent[]
   competitions: readonly Competition[]
   ecosystems?: readonly SportsEcosystem[] | Readonly<Record<EcosystemId, SportsEcosystem>>
   conferences?: readonly Conference[]
@@ -548,6 +553,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     organizationSectionsById: indexById(organizationSections, 'Organization section'),
     organizationOwnershipById: indexById((input.organizationOwnership ?? []).map(createOrganizationOwnership), 'Organization ownership'),
     organizationControlById: indexById((input.organizationControl ?? []).map(createOrganizationControl), 'Organization control'),
+    organizationOwnershipTransactionsById: indexById((input.organizationOwnershipTransactions ?? []).map(createOrganizationOwnershipTransaction), 'Organization ownership transaction'),
+    organizationOwnershipTransactionEventsById: indexById((input.organizationOwnershipTransactionEvents ?? []).map(createOrganizationOwnershipTransactionEvent), 'Organization ownership transaction event'),
     competitions: indexById(input.competitions, 'Competition'),
     ecosystems: indexById(ecosystems, 'Sports ecosystem'),
     conferencesById: indexById(conferences.map(createConference), 'Conference'),
@@ -729,7 +736,7 @@ const collectionPatchTargets: Readonly<Record<string, string>> = {
   supporterRelationships: 'supporterRelationshipsById', collectiveInstitutionAffiliations: 'collectiveInstitutionAffiliationsById', collectiveParticipantAffiliations: 'collectiveParticipantAffiliationsById', collectiveInstitutionalStatusEvents: 'collectiveInstitutionalStatusEventsById', collectiveInstitutionalLiaisons: 'collectiveInstitutionalLiaisonsById', supporterExpectations: 'supporterExpectationsById', supporterExpectationEvents: 'supporterExpectationEventsById', supporterPressureEvents: 'supporterPressureEventsById', supporterReactions: 'supporterReactionsById', supportFundingPledges: 'supportFundingPledgesById', supportFundingPledgeEvents: 'supportFundingPledgeEventsById', supportContributions: 'supportContributionsById',
   supportComplianceCases: 'supportComplianceCasesById', supportComplianceCaseEvents: 'supportComplianceCaseEventsById', supportComplianceFindings: 'supportComplianceFindingsById', supportConflictDisclosures: 'supportConflictDisclosuresById', supportConsequences: 'supportConsequencesById', supportRemediations: 'supportRemediationsById',
   governanceManagerEvaluationPeriods: 'governanceManagerEvaluationPeriodsById', governanceManagerEvaluations: 'governanceManagerEvaluationsById', governanceJobSecurityTransitions: 'governanceJobSecurityTransitionsById', governanceDecisions: 'governanceDecisionsById', governanceDecisionParticipationGrants: 'governanceDecisionParticipationGrantsById', governanceDecisionEvents: 'governanceDecisionEventsById', governanceMeetings:'governanceMeetingsById', governanceMeetingParticipants:'governanceMeetingParticipantsById', governanceMeetingAgendaItems:'governanceMeetingAgendaItemsById', governanceMeetingEvents:'governanceMeetingEventsById', governanceRequests:'governanceRequestsById', governanceRequestEvents:'governanceRequestEventsById', governanceCommitments:'governanceCommitmentsById', governanceCommitmentEvents:'governanceCommitmentEventsById',
-  persons: 'personsById', countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', organizations: 'organizationsById', organizationSections: 'organizationSectionsById', organizationOwnership: 'organizationOwnershipById', organizationControl: 'organizationControlById', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
+  persons: 'personsById', countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', organizations: 'organizationsById', organizationSections: 'organizationSectionsById', organizationOwnership: 'organizationOwnershipById', organizationControl: 'organizationControlById', organizationOwnershipTransactions: 'organizationOwnershipTransactionsById', organizationOwnershipTransactionEvents: 'organizationOwnershipTransactionEventsById', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
 }
 
 const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unknown>> = {
@@ -737,6 +744,8 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   governanceInstitutions: (value) => indexById((value as readonly GovernanceInstitution[]).map(createGovernanceInstitution), 'Governance institution'),
   organizationOwnership: (value) => indexById((value as readonly OrganizationOwnership[]).map(createOrganizationOwnership), 'Organization ownership'),
   organizationControl: (value) => indexById((value as readonly OrganizationControl[]).map(createOrganizationControl), 'Organization control'),
+  organizationOwnershipTransactions: (value) => indexById((value as readonly OrganizationOwnershipTransaction[]).map(createOrganizationOwnershipTransaction), 'Organization ownership transaction'),
+  organizationOwnershipTransactionEvents: (value) => indexById((value as readonly OrganizationOwnershipTransactionEvent[]).map(createOrganizationOwnershipTransactionEvent), 'Organization ownership transaction event'),
   governanceUniverseProfiles: (value) => indexById((value as readonly GovernanceUniverseProfile[]).map(createGovernanceUniverseProfile), 'Governance universe profile'),
   governanceBodies: (value) => indexById((value as readonly GovernanceBody[]).map(createGovernanceBody), 'Governance body'),
   governanceAppointments: (value) => indexById((value as readonly GovernanceAppointment[]).map(createGovernanceAppointment), 'Governance appointment'),
@@ -785,6 +794,7 @@ function validateWorld(world: GameWorld): void {
     if (section.organizationId !== team.organizationId) throw new GameWorldValidationError(`Team ${team.id} organization section belongs to a different organization`)
   }
   validateOrganizationOwnershipAndControl(world)
+  validateOrganizationOwnershipTransactions(world)
   validateGovernance(world)
   validateInstitutionalSupport(world)
 
@@ -1190,6 +1200,35 @@ function validateOrganizationOwnershipAndControl(world: GameWorld): void {
       if (control.controller.organizationId === control.organizationId) throw new GameWorldValidationError(`Organization control ${control.id} cannot self-control`)
     }
   }
+}
+
+function validateOrganizationOwnershipTransactions(world: GameWorld): void {
+  for (const transaction of Object.values(world.organizationOwnershipTransactionsById)) {
+    createOrganizationOwnershipTransaction(transaction)
+    requireEntity(world.organizationsById, transaction.organizationId, `Organization ownership transaction ${transaction.id} target`)
+    validateOrganizationOwnershipActor(world, transaction.seller, `Organization ownership transaction ${transaction.id} seller`)
+    validateOrganizationOwnershipActor(world, transaction.buyer, `Organization ownership transaction ${transaction.id} buyer`)
+    if (transaction.governanceDecisionId !== undefined) {
+      const decision = requireEntity(world.governanceDecisionsById, transaction.governanceDecisionId, `Organization ownership transaction ${transaction.id} Governance decision`)
+      if (decision.decisionType !== 'OWNERSHIP_CHANGE') throw new GameWorldValidationError(`Organization ownership transaction ${transaction.id} requires an OWNERSHIP_CHANGE Governance decision`)
+    }
+    const events = Object.values(world.organizationOwnershipTransactionEventsById).filter((event) => event.transactionId === transaction.id)
+    if (events.length === 0) throw new GameWorldValidationError(`Organization ownership transaction ${transaction.id} requires historical events`)
+    try { validateOrganizationOwnershipTransactionLifecycle(events) } catch (error) { throw new GameWorldValidationError((error as Error).message) }
+    const proposed = events.find((event) => event.kind === 'PROPOSED')!
+    if (proposed.effectiveOn !== transaction.agreedOn) throw new GameWorldValidationError(`Organization ownership transaction ${transaction.id} proposal date differs from agreedOn`)
+    for (const event of events) {
+      if (compareGameDates(event.effectiveOn, transaction.agreedOn) < 0) throw new GameWorldValidationError(`Organization ownership transaction event ${event.id} precedes its agreed date`)
+      if (event.governanceDecisionId !== undefined && event.governanceDecisionId !== transaction.governanceDecisionId) throw new GameWorldValidationError(`Organization ownership transaction event ${event.id} Governance decision link differs from its transaction`)
+      if ((event.kind === 'APPROVED' || event.kind === 'EXECUTED') && !isOrganizationOwnershipGovernanceApproved(world, transaction, event.effectiveOn)) throw new GameWorldValidationError(`Organization ownership transaction event ${event.id} lacks linked Governance approval`)
+    }
+  }
+  for (const event of Object.values(world.organizationOwnershipTransactionEventsById)) requireEntity(world.organizationOwnershipTransactionsById, event.transactionId, `Organization ownership transaction event ${event.id} transaction`)
+}
+
+function validateOrganizationOwnershipActor(world: GameWorld, actor: import('@/domain/ownership/OrganizationOwnership').OrganizationOwnershipActor, label: string): void {
+  if (actor.kind === 'PERSON') requireEntity(world.personsById, actor.personId, `${label} Person`)
+  else requireEntity(world.organizationsById, actor.organizationId, `${label} Organization`)
 }
 
 function validateGovernance(world: GameWorld): void {

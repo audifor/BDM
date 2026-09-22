@@ -14,3 +14,22 @@ export type {
   OrganizationOwnership,
   OrganizationOwnershipActor,
 } from './OrganizationOwnership'
+export {
+  createOrganizationOwnershipTransaction,
+  createOrganizationOwnershipTransactionEvent,
+  deriveOrganizationOwnershipTransactionStatus,
+  isOrganizationOwnershipGovernanceApproved,
+  sameOrganizationOwnershipActor,
+  sortOrganizationOwnershipTransactionEvents,
+  validateOrganizationOwnershipTransactionLifecycle,
+} from './OrganizationOwnershipTransaction'
+export type {
+  CreateOrganizationOwnershipTransactionEventInput,
+  CreateOrganizationOwnershipTransactionInput,
+  OrganizationOwnershipTransaction,
+  OrganizationOwnershipTransactionConsideration,
+  OrganizationOwnershipTransactionEvent,
+  OrganizationOwnershipTransactionEventKind,
+  OrganizationOwnershipTransactionStatus,
+} from './OrganizationOwnershipTransaction'
+export { executeOrganizationOwnershipTransaction } from './OrganizationOwnershipTransactionExecution'
