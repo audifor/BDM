@@ -25,6 +25,7 @@ export { createFacility, type CreateFacilityInput, type CreateFacilityPhysicalPr
 export {
   FACILITY_COMPONENT_STATUSES,
   FACILITY_COMPONENT_TYPES,
+  componentCategory,
   createFacilityComponent,
   isFacilityComponentType,
   type CreateFacilityComponentInput,
@@ -32,6 +33,36 @@ export {
   type FacilityComponentStatus,
   type FacilityComponentType,
 } from './FacilityComponent'
+
+export {
+  FACILITY_COMPONENT_CATEGORIES,
+  isFacilityComponentCategory,
+  type FacilityComponentCategory,
+} from './FacilityComponentCategory'
+
+export {
+  CAPACITY_UNITS,
+  COURT_SURFACE_TYPES,
+  createCapacitySpecification,
+  createCourtSpecification,
+  createFacilityComponentSpecification,
+  isCapacityUnit,
+  isCourtSurfaceType,
+  type CapacitySpecification,
+  type CapacityUnit,
+  type CourtSpecification,
+  type CourtSurfaceType,
+  type CreateCapacitySpecificationInput,
+  type CreateCourtSpecificationInput,
+  type CreateFacilityComponentSpecificationInput,
+  type FacilityComponentSpecification,
+} from './FacilityComponentSpecification'
+
+export {
+  FACILITY_COMPONENT_CAPABILITIES,
+  isFacilityComponentCapability,
+  type FacilityComponentCapability,
+} from './FacilityComponentCapability'
 
 export {
   createFacilityNameRecord,
@@ -122,24 +153,38 @@ export {
 
 export {
   activeFacilityComponentsAt,
+  capabilitiesOfFacility,
+  childComponentsOf,
+  componentsOfFacility,
+  componentsOfFacilityByCategory,
+  componentsOfFacilityByType,
   controllersOfFacilityAt,
+  courtsOfFacility,
   facilitiesOperatedByOrganizationAt,
   facilitiesOwnedByOrganizationAt,
   facilitiesUsedByOrganizationAt,
   facilitiesUsedByTeamAt,
+  facilitiesWithCapability,
   facilityComponentsUsableByTeamAt,
+  facilityHasCapability,
   facilityNameAt,
   facilityOwnershipAt,
   facilityRightsConflictsAt,
   facilityStatusAt,
   homeFacilitiesForTeamAt,
+  medicalComponentsOfFacility,
   operatorsOfFacilityAt,
   organizationsRelatedToFacilityAt,
   organizationsUsingFacilityAt,
   ownershipShareOfAt,
   ownersOfFacilityAt,
+  practiceCourtsOfFacility,
+  recoveryComponentsOfFacility,
+  rootComponentsOfFacility,
   teamsUsingFacilityAt,
+  trainingComponentsOfFacility,
   trainingFacilitiesForTeamAt,
+  usableComponentsForTeamAt,
   usageRightsForFacilityAt,
   usageRightsForOrganizationAt,
   usageRightsForTeamAt,

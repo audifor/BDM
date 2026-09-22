@@ -1,7 +1,9 @@
 import type { GameDate } from '@/domain/date'
 import type { FacilityComponentId, FacilityId, OrganizationId, TeamId } from '@/domain/ids'
 import type { Facility } from './Facility'
-import type { FacilityComponent } from './FacilityComponent'
+import { activeFacilityComponentsAt, componentCategory, type FacilityComponent, type FacilityComponentType } from './FacilityComponent'
+import type { FacilityComponentCategory } from './FacilityComponentCategory'
+import { capabilitiesOfFacility, facilitiesWithCapability, facilityHasCapability, type FacilityComponentCapability } from './FacilityComponentCapability'
 import { facilityRightsConflictsAt, type FacilityRightsConflict } from './FacilityConflict'
 import { controllersOfFacilityAt, whoControlsFacilityAt } from './FacilityControl'
 import { resolveFacilityNameAt, type FacilityNameRecord } from './FacilityNameHistory'
@@ -89,17 +91,71 @@ export { usageRightsForFacilityAt, usageRightsForTeamAt, usageRightsForOrganizat
 
 export { facilityRightsConflictsAt, type FacilityRightsConflict }
 
-// --- Components / naming / status ----------------------------------------
+// --- Components / hierarchy / anatomy (CFI3) ------------------------------
 
-export function activeFacilityComponentsAt(components: readonly FacilityComponent[], facilityId: FacilityId, onDate: GameDate): readonly FacilityComponent[] {
-  return components
-    .filter((component) => component.facilityId === facilityId)
-    .filter((component) => {
-      if (component.openedAt !== null && component.openedAt > onDate) return false
-      if (component.closedAt !== null && component.closedAt <= onDate) return false
-      return component.status !== 'CLOSED'
-    })
-    .sort((a, b) => a.id.localeCompare(b.id))
+export { activeFacilityComponentsAt }
+
+/** All ACTIVE, currently-open components of a Facility at a date. Alias of `activeFacilityComponentsAt` under the CFI3-requested name. */
+export function componentsOfFacility(components: readonly FacilityComponent[], facilityId: FacilityId, onDate: GameDate): readonly FacilityComponent[] {
+  return activeFacilityComponentsAt(components, facilityId, onDate)
+}
+
+/** Active components of a Facility whose type falls in a given category (see `componentCategory`). */
+export function componentsOfFacilityByCategory(components: readonly FacilityComponent[], facilityId: FacilityId, category: FacilityComponentCategory, onDate: GameDate): readonly FacilityComponent[] {
+  return activeFacilityComponentsAt(components, facilityId, onDate).filter((component) => componentCategory(component.type) === category)
+}
+
+/** Active components of a Facility of one exact type. */
+export function componentsOfFacilityByType(components: readonly FacilityComponent[], facilityId: FacilityId, type: FacilityComponentType, onDate: GameDate): readonly FacilityComponent[] {
+  return activeFacilityComponentsAt(components, facilityId, onDate).filter((component) => component.type === type)
+}
+
+/** Direct children of a component (its `parentComponentId` matches), restricted to the same Facility and active at the date, deterministically ordered. */
+export function childComponentsOf(components: readonly FacilityComponent[], parentComponentId: FacilityComponentId, onDate: GameDate): readonly FacilityComponent[] {
+  const parent = components.find((component) => component.id === parentComponentId)
+  if (parent === undefined) return Object.freeze([])
+  return activeFacilityComponentsAt(components, parent.facilityId, onDate).filter((component) => component.parentComponentId === parentComponentId)
+}
+
+/** Every active component of a Facility with no parent (`parentComponentId === null`) at a date. */
+export function rootComponentsOfFacility(components: readonly FacilityComponent[], facilityId: FacilityId, onDate: GameDate): readonly FacilityComponent[] {
+  return activeFacilityComponentsAt(components, facilityId, onDate).filter((component) => component.parentComponentId === null)
+}
+
+/** All BASKETBALL-category active components of a Facility (main, practice, secondary, half, shooting, academy, outdoor courts). */
+export function courtsOfFacility(components: readonly FacilityComponent[], facilityId: FacilityId, onDate: GameDate): readonly FacilityComponent[] {
+  return componentsOfFacilityByCategory(components, facilityId, 'BASKETBALL', onDate)
+}
+
+/** Active PRACTICE_COURT components of a Facility specifically. */
+export function practiceCourtsOfFacility(components: readonly FacilityComponent[], facilityId: FacilityId, onDate: GameDate): readonly FacilityComponent[] {
+  return componentsOfFacilityByType(components, facilityId, 'PRACTICE_COURT', onDate)
+}
+
+/** All MEDICAL-category active components of a Facility. */
+export function medicalComponentsOfFacility(components: readonly FacilityComponent[], facilityId: FacilityId, onDate: GameDate): readonly FacilityComponent[] {
+  return componentsOfFacilityByCategory(components, facilityId, 'MEDICAL', onDate)
+}
+
+/** All RECOVERY-category active components of a Facility. */
+export function recoveryComponentsOfFacility(components: readonly FacilityComponent[], facilityId: FacilityId, onDate: GameDate): readonly FacilityComponent[] {
+  return componentsOfFacilityByCategory(components, facilityId, 'RECOVERY', onDate)
+}
+
+/** All TRAINING-category active components of a Facility. */
+export function trainingComponentsOfFacility(components: readonly FacilityComponent[], facilityId: FacilityId, onDate: GameDate): readonly FacilityComponent[] {
+  return componentsOfFacilityByCategory(components, facilityId, 'TRAINING', onDate)
+}
+
+// --- Derived component capabilities (CFI3) --------------------------------
+
+export { capabilitiesOfFacility, facilitiesWithCapability, facilityHasCapability, type FacilityComponentCapability }
+
+// --- Access integration (CFI3 reuses CFI2's usage-right scoping; no duplicated logic) ---
+
+/** Alias of `facilityComponentsUsableByTeamAt` under the CFI3-requested name; delegates to the same CFI2 scope-resolution logic rather than reimplementing it. */
+export function usableComponentsForTeamAt(rights: readonly FacilityUsageRight[], components: readonly FacilityComponent[], teamId: TeamId, onDate: GameDate): readonly FacilityComponentId[] {
+  return facilityComponentsUsableByTeamAt(rights, components, teamId, onDate)
 }
 
 export function facilityNameAt(nameRecords: readonly FacilityNameRecord[], facilityId: FacilityId, onDate: GameDate, fallbackCanonicalName: string): string {

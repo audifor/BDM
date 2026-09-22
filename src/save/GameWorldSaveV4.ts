@@ -22,6 +22,8 @@ import { createRegulatoryOrder, type RegulatoryOrder } from '@/domain/structural
 import { createRegulatoryRemediationPlan, type RegulatoryRemediationPlan } from '@/domain/structuralRegulation/RegulatoryRemediationPlan'
 import { createOrganizationLicense, type OrganizationLicense } from '@/domain/structuralRegulation/OrganizationLicense'
 import {
+  createCapacitySpecification,
+  createCourtSpecification,
   createFacility,
   createFacilityComponent,
   createFacilityCompetitionApproval,
@@ -34,6 +36,8 @@ import {
   createFacilityTeamRelationship,
   createFacilityUsageRight,
   createPlace,
+  type CapacitySpecification,
+  type CourtSpecification,
   type Facility,
   type FacilityComponent,
   type FacilityCompetitionApproval,
@@ -569,11 +573,21 @@ function parseFacilities(value: unknown): readonly Facility[] {
   }))
 }
 
+/**
+ * CFI3 adds `parentComponentId`, `specification`, and `equipmentTags` to `FacilityComponent`. All
+ * three are treated as optional keys here (present-or-absent, not present-but-null) so a Save V4
+ * payload written before CFI3 — which never had these keys at all — continues to load unchanged;
+ * `hasOwnProperty` gates each one independently, matching the same backward-compatibility idiom
+ * already used for every top-level Facilities collection in this file.
+ */
 function parseFacilityComponents(value: unknown): readonly FacilityComponent[] {
   if (!Array.isArray(value)) throw new TypeError('Save V4 facilityComponents must be an array')
   return Object.freeze(value.map((entry) => {
     const component = record(entry, 'Save V4 FacilityComponent')
-    exactKeys(component, ['id', 'facilityId', 'type', 'name', 'status', 'capacity', 'quantity', 'openedAt', 'closedAt'], 'Save V4 FacilityComponent')
+    const hasParent = Object.prototype.hasOwnProperty.call(component, 'parentComponentId')
+    const hasSpecification = Object.prototype.hasOwnProperty.call(component, 'specification')
+    const hasEquipmentTags = Object.prototype.hasOwnProperty.call(component, 'equipmentTags')
+    exactKeys(component, ['id', 'facilityId', 'type', 'name', 'status', 'capacity', 'quantity', 'openedAt', 'closedAt', ...(hasParent ? ['parentComponentId'] : []), ...(hasSpecification ? ['specification'] : []), ...(hasEquipmentTags ? ['equipmentTags'] : [])], 'Save V4 FacilityComponent')
     return createFacilityComponent({
       id: facilityComponentIdFromString(nonEmptyText(component.id, 'Save V4 FacilityComponent id')),
       facilityId: facilityIdFromString(nonEmptyText(component.facilityId, 'Save V4 FacilityComponent facilityId')),
@@ -584,8 +598,42 @@ function parseFacilityComponents(value: unknown): readonly FacilityComponent[] {
       quantity: nullableInteger(component.quantity, 'Save V4 FacilityComponent quantity'),
       openedAt: nullableText(component.openedAt, 'Save V4 FacilityComponent openedAt'),
       closedAt: nullableText(component.closedAt, 'Save V4 FacilityComponent closedAt'),
+      ...(hasParent ? { parentComponentId: nullableText(component.parentComponentId, 'Save V4 FacilityComponent parentComponentId') as FacilityComponent['parentComponentId'] } : {}),
+      ...(hasSpecification ? { specification: parseFacilityComponentSpecification(component.specification) } : {}),
+      ...(hasEquipmentTags ? { equipmentTags: stringArray(component.equipmentTags, 'Save V4 FacilityComponent equipmentTags') } : {}),
     })
   }))
+}
+
+function parseFacilityComponentSpecification(value: unknown): FacilityComponent['specification'] {
+  if (value === null) return null
+  const specification = record(value, 'Save V4 FacilityComponent specification')
+  if (specification.kind === 'COURT') {
+    exactKeys(specification, ['kind', 'isFullCourt', 'isIndoor', 'lengthMeters', 'widthMeters', 'surface', 'basketCount', 'competitionCapable', 'spectatorCapacity', 'hasCompetitionLighting', 'hasShotTrackingTechnology', 'hasVideoTrackingTechnology'], 'Save V4 FacilityComponent COURT specification')
+    return createCourtSpecification({
+      kind: 'COURT',
+      isFullCourt: boolean(specification.isFullCourt, 'Save V4 court specification isFullCourt'),
+      isIndoor: boolean(specification.isIndoor, 'Save V4 court specification isIndoor'),
+      lengthMeters: nullableNumber(specification.lengthMeters, 'Save V4 court specification lengthMeters'),
+      widthMeters: nullableNumber(specification.widthMeters, 'Save V4 court specification widthMeters'),
+      surface: specification.surface as CourtSpecification['surface'],
+      basketCount: nullableInteger(specification.basketCount, 'Save V4 court specification basketCount'),
+      competitionCapable: boolean(specification.competitionCapable, 'Save V4 court specification competitionCapable'),
+      spectatorCapacity: nullableInteger(specification.spectatorCapacity, 'Save V4 court specification spectatorCapacity'),
+      hasCompetitionLighting: specification.hasCompetitionLighting as boolean | null,
+      hasShotTrackingTechnology: specification.hasShotTrackingTechnology as boolean | null,
+      hasVideoTrackingTechnology: specification.hasVideoTrackingTechnology as boolean | null,
+    })
+  }
+  if (specification.kind === 'CAPACITY') {
+    exactKeys(specification, ['kind', 'unit', 'amount'], 'Save V4 FacilityComponent CAPACITY specification')
+    return createCapacitySpecification({
+      kind: 'CAPACITY',
+      unit: specification.unit as CapacitySpecification['unit'],
+      amount: number(specification.amount, 'Save V4 capacity specification amount'),
+    })
+  }
+  throw new TypeError('Save V4 FacilityComponent specification kind must be COURT or CAPACITY')
 }
 
 function parseFacilityNameRecords(value: unknown): readonly FacilityNameRecord[] {

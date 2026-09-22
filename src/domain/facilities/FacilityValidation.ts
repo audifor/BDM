@@ -71,6 +71,7 @@ export function validateFacilitiesDomain(context: FacilityValidationContext): vo
     componentIds.add(component.id)
     requireFacility(facilityIds, component.facilityId, `Facility component ${component.id}`)
   }
+  assertValidComponentHierarchy(context.components)
 
   const nameRecordIds = new Set<string>()
   for (const record of context.nameRecords) {
@@ -245,6 +246,39 @@ function assertNoExactDuplicateUsageRights(rights: readonly FacilityUsageRight[]
     if (existing !== undefined) throw new FacilityValidationError(`Facility usage rights ${existing.id} and ${right.id} are exact duplicates`)
     seen.set(key, right)
   }
+}
+
+/**
+ * CFI3: validates the optional `FacilityComponent.parentComponentId` hierarchy. A parent must
+ * exist, must belong to the same Facility as its child (a component cannot be parented across
+ * Facility boundaries), and the graph must be acyclic. The hierarchy is intentionally shallow by
+ * convention rather than by hard depth limit — depth itself is not restricted, only cycles and
+ * cross-Facility parenting, which are the two combinations that are never physically coherent.
+ */
+function assertValidComponentHierarchy(components: readonly FacilityComponent[]): void {
+  const byId = new Map(components.map((component) => [component.id, component] as const))
+  for (const component of components) {
+    if (component.parentComponentId === null) continue
+    const parent = byId.get(component.parentComponentId)
+    if (parent === undefined) throw new FacilityValidationError(`Facility component ${component.id} references missing parent component ${component.parentComponentId}`)
+    if (parent.facilityId !== component.facilityId) throw new FacilityValidationError(`Facility component ${component.id} parent ${parent.id} belongs to a different Facility`)
+  }
+  const visiting = new Set<FacilityComponent['id']>()
+  const resolved = new Set<FacilityComponent['id']>()
+  const visit = (componentId: FacilityComponent['id']): void => {
+    if (resolved.has(componentId)) return
+    if (visiting.has(componentId)) throw new FacilityValidationError(`Facility component hierarchy contains a cycle involving ${componentId}`)
+    const component = byId.get(componentId)
+    if (component === undefined || component.parentComponentId === null) {
+      resolved.add(componentId)
+      return
+    }
+    visiting.add(componentId)
+    visit(component.parentComponentId)
+    visiting.delete(componentId)
+    resolved.add(componentId)
+  }
+  for (const component of components) visit(component.id)
 }
 
 /**
