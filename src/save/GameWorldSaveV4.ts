@@ -21,9 +21,9 @@ import { createOrganizationSuccession, type OrganizationSuccession } from '@/dom
 import { createRegulatoryOrder, type RegulatoryOrder } from '@/domain/structuralRegulation/RegulatoryOrder'
 import { createRegulatoryRemediationPlan, type RegulatoryRemediationPlan } from '@/domain/structuralRegulation/RegulatoryRemediationPlan'
 import { createOrganizationLicense, type OrganizationLicense } from '@/domain/structuralRegulation/OrganizationLicense'
-import { createFinancialAccount, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile, createPayable, createReceivable, createTreasurySettlement, type FinancialAccount, type FinancialDimensions, type FinancialTransaction, type FiscalPeriod, type OrganizationFinancialProfile, type Payable, type Receivable, type TreasuryCounterparty, type TreasurySettlement } from '@/domain/finance'
+import { createExpenseRecognition, createFinancialAccount, createFinancialCommitment, createFinancialEntitlement, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile, createPayable, createReceivable, createRevenueRecognition, createTreasurySettlement, type ExpenseRecognition, type FinancialAccount, type FinancialCommitment, type FinancialDimensions, type FinancialEntitlement, type FinancialTransaction, type FiscalPeriod, type OrganizationFinancialProfile, type Payable, type Receivable, type RevenueRecognition, type TreasuryCounterparty, type TreasurySettlement } from '@/domain/finance'
 import { parseGameDate } from '@/domain/date'
-import { competitionIdFromString, ecosystemIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, seasonIdFromString, financialAccountIdFromString, financialTransactionIdFromString, fiscalPeriodIdFromString, receivableIdFromString, payableIdFromString, treasurySettlementIdFromString, contractIdFromString, teamIdFromString, organizationSectionIdFromString } from '@/domain/ids'
+import { competitionIdFromString, ecosystemIdFromString, expenseRecognitionIdFromString, financialAccountIdFromString, financialCommitmentIdFromString, financialEntitlementIdFromString, financialTransactionIdFromString, fiscalPeriodIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, receivableIdFromString, payableIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, revenueRecognitionIdFromString, seasonIdFromString, treasurySettlementIdFromString, contractIdFromString, teamIdFromString, organizationSectionIdFromString } from '@/domain/ids'
 import {
   deserializeGameWorldSave as deserializeLegacyGameWorldSave,
   deserializeGameWorldV3,
@@ -75,6 +75,10 @@ export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly receivables?: readonly Receivable[]
   readonly payables?: readonly Payable[]
   readonly treasuryApplications?: readonly TreasurySettlement[]
+  readonly revenueRecognitions?: readonly RevenueRecognition[]
+  readonly expenseRecognitions?: readonly ExpenseRecognition[]
+  readonly financialCommitments?: readonly FinancialCommitment[]
+  readonly financialEntitlements?: readonly FinancialEntitlement[]
 }
 
 export interface SaveGameEnvelopeV4 {
@@ -141,6 +145,7 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       organizationStructuralChanges: Object.values(world.organizationStructuralChangesById), organizationLifecycleStates: Object.values(world.organizationLifecycleStatesById), organizationSuccessions: Object.values(world.organizationSuccessionsById), regulatoryOrders: Object.values(world.regulatoryOrdersById), regulatoryRemediationPlans: Object.values(world.regulatoryRemediationPlansById), organizationLicenses: Object.values(world.organizationLicensesById),
       financialAccounts: Object.values(world.financialAccountsById), financialTransactions: Object.values(world.financialTransactionsById), fiscalPeriods: Object.values(world.fiscalPeriodsById), organizationFinancialProfiles: Object.values(world.organizationFinancialProfilesById),
       receivables: Object.values(world.receivablesById), payables: Object.values(world.payablesById), treasuryApplications: Object.values(world.treasuryApplicationsById),
+      revenueRecognitions: Object.values(world.revenueRecognitionsById), expenseRecognitions: Object.values(world.expenseRecognitionsById), financialCommitments: Object.values(world.financialCommitmentsById), financialEntitlements: Object.values(world.financialEntitlementsById),
     }),
   })
 }
@@ -198,10 +203,14 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const receivables = Object.prototype.hasOwnProperty.call(payload, 'receivables') ? parseReceivables(payload.receivables) : []
   const payables = Object.prototype.hasOwnProperty.call(payload, 'payables') ? parsePayables(payload.payables) : []
   const treasuryApplications = Object.prototype.hasOwnProperty.call(payload, 'treasuryApplications') ? parseTreasurySettlements(payload.treasuryApplications) : []
+  const revenueRecognitions = Object.prototype.hasOwnProperty.call(payload, 'revenueRecognitions') ? parseRevenueRecognitions(payload.revenueRecognitions) : []
+  const expenseRecognitions = Object.prototype.hasOwnProperty.call(payload, 'expenseRecognitions') ? parseExpenseRecognitions(payload.expenseRecognitions) : []
+  const financialCommitments = Object.prototype.hasOwnProperty.call(payload, 'financialCommitments') ? parseFinancialCommitments(payload.financialCommitments) : []
+  const financialEntitlements = Object.prototype.hasOwnProperty.call(payload, 'financialEntitlements') ? parseFinancialEntitlements(payload.financialEntitlements) : []
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
-  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _structuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, ...compatibilityPayload } = payload
+  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _structuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, ...compatibilityPayload } = payload
   const world = deserializeGameWorldV3({
     schemaVersion: 3,
     savedAt,
@@ -215,7 +224,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const withInvestments = updateGameWorld(withTransactions, { organizationInvestorInterests: investorInterests, organizationCapitalRaises: capitalRaises, organizationCapitalRaiseEvents: capitalRaiseEvents, organizationInvestmentProposals: investmentProposals, organizationInvestmentProposalEvents: investmentProposalEvents })
   const withPolicies = updateGameWorld(withInvestments, { multiClubOwnershipPolicies })
   const withStructuralRegulation = updateGameWorld(withPolicies, { organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses })
-  const withFinance = updateGameWorld(withStructuralRegulation, { financialAccounts, financialTransactions, fiscalPeriods, organizationFinancialProfiles, receivables, payables, treasuryApplications })
+  const withFinance = updateGameWorld(withStructuralRegulation, { financialAccounts, financialTransactions, fiscalPeriods, organizationFinancialProfiles, receivables, payables, treasuryApplications, revenueRecognitions, expenseRecognitions, financialCommitments, financialEntitlements })
   return Object.freeze({ ...attachWorldDbCompetitionRuntime(withFinance, runtime), worldAnnualDevelopmentCycle: developmentCycle })
 }
 
@@ -600,6 +609,46 @@ function parseTreasurySettlements(value: unknown): readonly TreasurySettlement[]
     const settlement = record(entry, 'Save V4 TreasurySettlement')
     exactKeys(settlement, ['id', 'organizationId', 'obligationKind', 'obligationId', 'amount', 'settledOn', 'transactionId', 'provenance'], 'Save V4 TreasurySettlement')
     return createTreasurySettlement({ id: treasurySettlementIdFromString(nonEmptyText(settlement.id, 'Save V4 TreasurySettlement id')), organizationId: organizationIdFromString(nonEmptyText(settlement.organizationId, 'Save V4 TreasurySettlement organizationId')), obligationKind: settlement.obligationKind as 'RECEIVABLE' | 'PAYABLE', obligationId: nonEmptyText(settlement.obligationId, 'Save V4 TreasurySettlement obligationId'), amount: parseFinancialMoney(settlement.amount, 'Save V4 TreasurySettlement amount'), settledOn: nonEmptyText(settlement.settledOn, 'Save V4 TreasurySettlement settledOn'), transactionId: financialTransactionIdFromString(nonEmptyText(settlement.transactionId, 'Save V4 TreasurySettlement transactionId')), provenance: parseFinancialSource(settlement.provenance, 'Save V4 TreasurySettlement provenance') })
+  }))
+}
+
+function parseRecognitionCounterparty(value: unknown, label: string): TreasuryCounterparty | null {
+  return value === null ? null : parseTreasuryCounterparty(value)
+}
+
+function parseRevenueRecognitions(value: unknown): readonly RevenueRecognition[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 revenueRecognitions must be an array')
+  return Object.freeze(value.map((entry) => {
+    const recognition = record(entry, 'Save V4 RevenueRecognition')
+    exactKeys(recognition, ['id', 'organizationId', 'amount', 'recognizedOn', 'category', 'provenance', 'counterparty', 'dimensions', 'entitlementId', 'receivableId', 'ledgerTransactionId'], 'Save V4 RevenueRecognition')
+    return createRevenueRecognition({ id: revenueRecognitionIdFromString(nonEmptyText(recognition.id, 'Save V4 RevenueRecognition id')), organizationId: organizationIdFromString(nonEmptyText(recognition.organizationId, 'Save V4 RevenueRecognition organizationId')), amount: parseFinancialMoney(recognition.amount, 'Save V4 RevenueRecognition amount'), recognizedOn: nonEmptyText(recognition.recognizedOn, 'Save V4 RevenueRecognition recognizedOn'), category: nonEmptyText(recognition.category, 'Save V4 RevenueRecognition category'), provenance: parseFinancialSource(recognition.provenance, 'Save V4 RevenueRecognition provenance'), counterparty: parseRecognitionCounterparty(recognition.counterparty, 'Save V4 RevenueRecognition counterparty'), dimensions: parseFinancialDimensions(recognition.dimensions), entitlementId: recognition.entitlementId === null ? null : financialEntitlementIdFromString(nonEmptyText(recognition.entitlementId, 'Save V4 RevenueRecognition entitlementId')), receivableId: recognition.receivableId === null ? null : receivableIdFromString(nonEmptyText(recognition.receivableId, 'Save V4 RevenueRecognition receivableId')), ledgerTransactionId: recognition.ledgerTransactionId === null ? null : financialTransactionIdFromString(nonEmptyText(recognition.ledgerTransactionId, 'Save V4 RevenueRecognition ledgerTransactionId')) })
+  }))
+}
+
+function parseExpenseRecognitions(value: unknown): readonly ExpenseRecognition[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 expenseRecognitions must be an array')
+  return Object.freeze(value.map((entry) => {
+    const recognition = record(entry, 'Save V4 ExpenseRecognition')
+    exactKeys(recognition, ['id', 'organizationId', 'amount', 'recognizedOn', 'category', 'provenance', 'counterparty', 'dimensions', 'commitmentId', 'payableId', 'ledgerTransactionId'], 'Save V4 ExpenseRecognition')
+    return createExpenseRecognition({ id: expenseRecognitionIdFromString(nonEmptyText(recognition.id, 'Save V4 ExpenseRecognition id')), organizationId: organizationIdFromString(nonEmptyText(recognition.organizationId, 'Save V4 ExpenseRecognition organizationId')), amount: parseFinancialMoney(recognition.amount, 'Save V4 ExpenseRecognition amount'), recognizedOn: nonEmptyText(recognition.recognizedOn, 'Save V4 ExpenseRecognition recognizedOn'), category: nonEmptyText(recognition.category, 'Save V4 ExpenseRecognition category'), provenance: parseFinancialSource(recognition.provenance, 'Save V4 ExpenseRecognition provenance'), counterparty: parseRecognitionCounterparty(recognition.counterparty, 'Save V4 ExpenseRecognition counterparty'), dimensions: parseFinancialDimensions(recognition.dimensions), commitmentId: recognition.commitmentId === null ? null : financialCommitmentIdFromString(nonEmptyText(recognition.commitmentId, 'Save V4 ExpenseRecognition commitmentId')), payableId: recognition.payableId === null ? null : payableIdFromString(nonEmptyText(recognition.payableId, 'Save V4 ExpenseRecognition payableId')), ledgerTransactionId: recognition.ledgerTransactionId === null ? null : financialTransactionIdFromString(nonEmptyText(recognition.ledgerTransactionId, 'Save V4 ExpenseRecognition ledgerTransactionId')) })
+  }))
+}
+
+function parseFinancialCommitments(value: unknown): readonly FinancialCommitment[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 financialCommitments must be an array')
+  return Object.freeze(value.map((entry) => {
+    const commitment = record(entry, 'Save V4 FinancialCommitment')
+    exactKeys(commitment, ['id', 'organizationId', 'amount', 'startsOn', 'dueOn', 'category', 'provenance', 'counterparty', 'dimensions', 'cancelledOn'], 'Save V4 FinancialCommitment')
+    return createFinancialCommitment({ id: financialCommitmentIdFromString(nonEmptyText(commitment.id, 'Save V4 FinancialCommitment id')), organizationId: organizationIdFromString(nonEmptyText(commitment.organizationId, 'Save V4 FinancialCommitment organizationId')), amount: parseFinancialMoney(commitment.amount, 'Save V4 FinancialCommitment amount'), startsOn: nonEmptyText(commitment.startsOn, 'Save V4 FinancialCommitment startsOn'), dueOn: nonEmptyText(commitment.dueOn, 'Save V4 FinancialCommitment dueOn'), category: nonEmptyText(commitment.category, 'Save V4 FinancialCommitment category'), provenance: parseFinancialSource(commitment.provenance, 'Save V4 FinancialCommitment provenance'), counterparty: parseRecognitionCounterparty(commitment.counterparty, 'Save V4 FinancialCommitment counterparty'), dimensions: parseFinancialDimensions(commitment.dimensions), cancelledOn: nullableText(commitment.cancelledOn, 'Save V4 FinancialCommitment cancelledOn') })
+  }))
+}
+
+function parseFinancialEntitlements(value: unknown): readonly FinancialEntitlement[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 financialEntitlements must be an array')
+  return Object.freeze(value.map((entry) => {
+    const entitlement = record(entry, 'Save V4 FinancialEntitlement')
+    exactKeys(entitlement, ['id', 'organizationId', 'amount', 'availableOn', 'dueOn', 'category', 'provenance', 'counterparty', 'dimensions', 'cancelledOn'], 'Save V4 FinancialEntitlement')
+    return createFinancialEntitlement({ id: financialEntitlementIdFromString(nonEmptyText(entitlement.id, 'Save V4 FinancialEntitlement id')), organizationId: organizationIdFromString(nonEmptyText(entitlement.organizationId, 'Save V4 FinancialEntitlement organizationId')), amount: parseFinancialMoney(entitlement.amount, 'Save V4 FinancialEntitlement amount'), availableOn: nonEmptyText(entitlement.availableOn, 'Save V4 FinancialEntitlement availableOn'), dueOn: nonEmptyText(entitlement.dueOn, 'Save V4 FinancialEntitlement dueOn'), category: nonEmptyText(entitlement.category, 'Save V4 FinancialEntitlement category'), provenance: parseFinancialSource(entitlement.provenance, 'Save V4 FinancialEntitlement provenance'), counterparty: parseRecognitionCounterparty(entitlement.counterparty, 'Save V4 FinancialEntitlement counterparty'), dimensions: parseFinancialDimensions(entitlement.dimensions), cancelledOn: nullableText(entitlement.cancelledOn, 'Save V4 FinancialEntitlement cancelledOn') })
   }))
 }
 

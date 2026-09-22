@@ -9,6 +9,7 @@ CF1 establishes the runtime financial foundation. It does not simulate revenue, 
 - Player and staff contract domains remain the authority for contractual obligations. Finance may later post their economic consequences, but does not create a financial contract copy.
 - Competition rules and salary systems remain the authority for salary-cap and sporting regulation. Finance will later record monetary consequences only.
 - Governance decides whether an operation is authorized. Finance records its consequences and provenance.
+- Competition remains the authority for sporting eligibility and economic entitlements; Contracts remain the authority for contractual obligations. Finance records authorized economic consequences without copying either domain.
 - `GameWorld.currentDate` is the only gameplay clock. Finance has no clock or `Date`-based progression.
 
 ## Runtime model
@@ -89,6 +90,33 @@ Owner funding and competition distributions are accepted only as externally auth
 
 CF2 persists receivables, payables and settlement references in Save V4. Older V4 and V1–V3 saves default these collections to empty. BDM-DB remains read-only and continues to provide the canonical `financial_account`, `financial_transaction`, `financial_posting`, `revenue_stream` and `expense_commitment` vocabulary; runtime treasury facts belong to the individual game save and are not written back to BDM-DB.
 
-## Deferred by CF1/CF2
+## CF3 Revenue & Expense Recognition / Financial Commitments
+
+CF3 records why an economic amount exists while keeping profitability and liquidity separate.
+
+- `RevenueRecognition` is an immutable Organization-owned accrual fact with amount, currency, recognition date, category, provenance, optional counterparty, analytical dimensions, optional entitlement link, and optional receivable/ledger links.
+- `ExpenseRecognition` is the equivalent accrual fact for player contracts, staff, operations, competition, facilities, fees, bonuses, travel, and future cost-engine categories. CF3 receives the amount from the owning authority; it does not calculate payroll or operating costs.
+- `FinancialCommitment` represents a known future obligation. Its amount remains outstanding until linked expense recognitions reduce it; signing a multi-year commitment does not recognize the full amount on the signing date.
+- `FinancialEntitlement` represents a known economic right supplied by Competition or another authorized source. Its amount remains outstanding until linked revenue recognitions reduce it.
+
+The canonical chain is:
+
+```text
+Economic Authority
+  -> Entitlement / Commitment
+  -> Recognition
+  -> Receivable / Payable
+  -> Settlement
+  -> Ledger Posting
+  -> Cash
+```
+
+Recognition postings are non-cash double-entry facts: revenue debits an asset/receivable and credits revenue; expense debits expense and credits a liability/payable. Treasury settlement later changes receivable/payable and cash, without recognizing revenue or expense again. Owner funding remains an equity/financing movement and is never revenue.
+
+CF3 queries derive recognized revenue, recognized expense, net operating result, category/source/team/section breakdowns, outstanding commitments and entitlements, and recognized-but-uncollected/unpaid amounts. All queries are Organization-scoped, currency-separated, and as-of-date compatible; no FX or aggregate is persisted.
+
+Save V4 persists recognition, commitment, and entitlement facts as additive optional collections. CF1/CF2 and older saves default them to empty. BDM-DB `revenue_stream` and `expense_commitment` remain canonical source vocabulary for streams and commitments; the runtime records game-specific recognition and entitlement facts without modifying BDM-DB or inventing a competing database authority.
+
+## Deferred by CF1/CF2/CF3
 
 Ticket sales, sponsorships, merchandising, media rights, annual budgets, forecasting assumptions, payroll progression, debt/loans/amortization, taxation, FFP, luxury tax, salary-cap enforcement, valuation, inflation, FX simulation, owner/budget AI, financial UI, bankruptcy, administration, insolvency, debt collection AI and automatic treasury policy remain future work.

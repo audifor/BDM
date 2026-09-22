@@ -1,5 +1,7 @@
 export * from './TeamFinances'
 export * from './Treasury'
 export * from './CashFlowQueries'
+export * from './Recognition'
+export * from './RecognitionQueries'
 export * from './FinancialLedger'
 export * from './FinancialQueries'

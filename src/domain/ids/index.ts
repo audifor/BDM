@@ -50,6 +50,10 @@ export {
   receivableIdFromString,
   payableIdFromString,
   treasurySettlementIdFromString,
+  revenueRecognitionIdFromString,
+  expenseRecognitionIdFromString,
+  financialCommitmentIdFromString,
+  financialEntitlementIdFromString,
 } from './EntityIds'
 
 export type {
@@ -95,4 +99,8 @@ export type {
   ReceivableId,
   PayableId,
   TreasurySettlementId,
+  RevenueRecognitionId,
+  ExpenseRecognitionId,
+  FinancialCommitmentId,
+  FinancialEntitlementId,
 } from './EntityIds'
