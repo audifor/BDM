@@ -30,6 +30,9 @@ import {
   createFacilityCompetitionApproval,
   createFacilityConditionRecord,
   createFacilityControlRight,
+  createFacilityDevelopmentProject,
+  createFacilityDevelopmentProjectPhase,
+  createFacilityDevelopmentProjectScope,
   createFacilityInspection,
   createFacilityMaintenanceAction,
   createFacilityMaintenanceNeed,
@@ -51,6 +54,8 @@ import {
   type FacilityConditionRecord,
   type FacilityControlActor,
   type FacilityControlRight,
+  type FacilityDevelopmentProject,
+  type FacilityDevelopmentProjectPhase,
   type FacilityInspection,
   type FacilityMaintenanceAction,
   type FacilityMaintenanceNeed,
@@ -66,7 +71,7 @@ import {
   type Place,
 } from '@/domain/facilities'
 import { parseGameDate } from '@/domain/date'
-import { competitionIdFromString, ecosystemIdFromString, facilityCompetitionApprovalIdFromString, facilityComponentConditionRecordIdFromString, facilityComponentIdFromString, facilityConditionRecordIdFromString, facilityControlRightIdFromString, facilityIdFromString, facilityInspectionIdFromString, facilityMaintenanceActionIdFromString, facilityMaintenanceNeedIdFromString, facilityNameRecordIdFromString, facilityOperationalIncidentIdFromString, facilityOperatorAssignmentIdFromString, facilityOrganizationRelationshipIdFromString, facilityOwnershipInterestIdFromString, facilityStatusRecordIdFromString, facilityTeamRelationshipIdFromString, facilityUsageRightIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, placeIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, seasonIdFromString, teamIdFromString } from '@/domain/ids'
+import { competitionIdFromString, ecosystemIdFromString, facilityCompetitionApprovalIdFromString, facilityComponentConditionRecordIdFromString, facilityComponentIdFromString, facilityConditionRecordIdFromString, facilityControlRightIdFromString, facilityDevelopmentProjectIdFromString, facilityDevelopmentProjectPhaseIdFromString, facilityIdFromString, facilityInspectionIdFromString, facilityMaintenanceActionIdFromString, facilityMaintenanceNeedIdFromString, facilityNameRecordIdFromString, facilityOperationalIncidentIdFromString, facilityOperatorAssignmentIdFromString, facilityOrganizationRelationshipIdFromString, facilityOwnershipInterestIdFromString, facilityStatusRecordIdFromString, facilityTeamRelationshipIdFromString, facilityUsageRightIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, placeIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, seasonIdFromString, teamIdFromString } from '@/domain/ids'
 import {
   deserializeGameWorldSave as deserializeLegacyGameWorldSave,
   deserializeGameWorldV3,
@@ -132,6 +137,9 @@ export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly facilityMaintenanceActions: readonly FacilityMaintenanceAction[]
   readonly facilityInspections: readonly FacilityInspection[]
   readonly facilityOperationalIncidents: readonly FacilityOperationalIncident[]
+  /** CFI6 — Construction, Renovation & Development Projects. Additive canonical world truth only: the project and phase entities themselves. Outcomes/summaries are command-return-value-only and never persisted. */
+  readonly facilityDevelopmentProjects: readonly FacilityDevelopmentProject[]
+  readonly facilityDevelopmentProjectPhases: readonly FacilityDevelopmentProjectPhase[]
 }
 
 export interface SaveGameEnvelopeV4 {
@@ -168,6 +176,7 @@ export function migrateGameWorldSaveV3ToV4(value: SaveGameEnvelopeV3): SaveGameE
       organizationStructuralChanges: [], organizationLifecycleStates: [], organizationSuccessions: [], regulatoryOrders: [], regulatoryRemediationPlans: [], organizationLicenses: [],
       places: [], facilities: [], facilityComponents: [], facilityNameRecords: [], facilityOwnershipInterests: [], facilityControlRights: [], facilityOperatorAssignments: [], facilityOrganizationRelationships: [], facilityTeamRelationships: [], facilityUsageRights: [], facilityCompetitionApprovals: [], facilityStatusRecords: [], facilityComponentConditionRecords: [], facilityConditionRecords: [],
       facilityMaintenanceNeeds: [], facilityMaintenanceActions: [], facilityInspections: [], facilityOperationalIncidents: [],
+      facilityDevelopmentProjects: [], facilityDevelopmentProjectPhases: [],
     }),
   })
 }
@@ -200,6 +209,7 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       organizationStructuralChanges: Object.values(world.organizationStructuralChangesById), organizationLifecycleStates: Object.values(world.organizationLifecycleStatesById), organizationSuccessions: Object.values(world.organizationSuccessionsById), regulatoryOrders: Object.values(world.regulatoryOrdersById), regulatoryRemediationPlans: Object.values(world.regulatoryRemediationPlansById), organizationLicenses: Object.values(world.organizationLicensesById),
       places: Object.values(world.placesById), facilities: Object.values(world.facilitiesById), facilityComponents: Object.values(world.facilityComponentsById), facilityNameRecords: Object.values(world.facilityNameRecordsById), facilityOwnershipInterests: Object.values(world.facilityOwnershipInterestsById), facilityControlRights: Object.values(world.facilityControlRightsById), facilityOperatorAssignments: Object.values(world.facilityOperatorAssignmentsById), facilityOrganizationRelationships: Object.values(world.facilityOrganizationRelationshipsById), facilityTeamRelationships: Object.values(world.facilityTeamRelationshipsById), facilityUsageRights: Object.values(world.facilityUsageRightsById), facilityCompetitionApprovals: Object.values(world.facilityCompetitionApprovalsById), facilityStatusRecords: Object.values(world.facilityStatusRecordsById), facilityComponentConditionRecords: Object.values(world.facilityComponentConditionRecordsById), facilityConditionRecords: Object.values(world.facilityConditionRecordsById),
       facilityMaintenanceNeeds: Object.values(world.facilityMaintenanceNeedsById), facilityMaintenanceActions: Object.values(world.facilityMaintenanceActionsById), facilityInspections: Object.values(world.facilityInspectionsById), facilityOperationalIncidents: Object.values(world.facilityOperationalIncidentsById),
+      facilityDevelopmentProjects: Object.values(world.facilityDevelopmentProjectsById), facilityDevelopmentProjectPhases: Object.values(world.facilityDevelopmentProjectPhasesById),
     }),
   })
 }
@@ -268,6 +278,8 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const facilityMaintenanceActions = Object.prototype.hasOwnProperty.call(payload, 'facilityMaintenanceActions') ? parseFacilityMaintenanceActions(payload.facilityMaintenanceActions) : []
   const facilityInspections = Object.prototype.hasOwnProperty.call(payload, 'facilityInspections') ? parseFacilityInspections(payload.facilityInspections) : []
   const facilityOperationalIncidents = Object.prototype.hasOwnProperty.call(payload, 'facilityOperationalIncidents') ? parseFacilityOperationalIncidents(payload.facilityOperationalIncidents) : []
+  const facilityDevelopmentProjects = Object.prototype.hasOwnProperty.call(payload, 'facilityDevelopmentProjects') ? parseFacilityDevelopmentProjects(payload.facilityDevelopmentProjects) : []
+  const facilityDevelopmentProjectPhases = Object.prototype.hasOwnProperty.call(payload, 'facilityDevelopmentProjectPhases') ? parseFacilityDevelopmentProjectPhases(payload.facilityDevelopmentProjectPhases) : []
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
@@ -287,7 +299,8 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const withStructuralRegulation = updateGameWorld(withPolicies, { organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses })
   const withFacilities = updateGameWorld(withStructuralRegulation, { places, facilities, facilityComponents, facilityNameRecords, facilityOwnershipInterests, facilityControlRights, facilityOperatorAssignments, facilityOrganizationRelationships, facilityTeamRelationships, facilityUsageRights, facilityCompetitionApprovals, facilityStatusRecords, facilityComponentConditionRecords, facilityConditionRecords })
   const withFacilityOperations = updateGameWorld(withFacilities, { facilityMaintenanceNeeds, facilityMaintenanceActions, facilityInspections, facilityOperationalIncidents })
-  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withFacilityOperations, runtime), worldAnnualDevelopmentCycle: developmentCycle })
+  const withFacilityDevelopment = updateGameWorld(withFacilityOperations, { facilityDevelopmentProjects, facilityDevelopmentProjectPhases })
+  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withFacilityDevelopment, runtime), worldAnnualDevelopmentCycle: developmentCycle })
 }
 
 /** Reads V1-V4. Legacy saves normalize the V4-owned runtime projection to empty state. */
@@ -947,6 +960,65 @@ function parseFacilityOperationalIncidents(value: unknown): readonly FacilityOpe
       occurredAt: nonEmptyText(incident.occurredAt, 'Save V4 FacilityOperationalIncident occurredAt'),
       resultingServiceability: nullableText(incident.resultingServiceability, 'Save V4 FacilityOperationalIncident resultingServiceability') as FacilityOperationalIncident['resultingServiceability'],
       producedNeedId: nullableText(incident.producedNeedId, 'Save V4 FacilityOperationalIncident producedNeedId'),
+    })
+  }))
+}
+
+// --- CFI6: Construction, Renovation & Development Projects ------------------
+
+function parseFacilityDevelopmentProjects(value: unknown): readonly FacilityDevelopmentProject[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 facilityDevelopmentProjects must be an array')
+  return Object.freeze(value.map((entry) => {
+    const project = record(entry, 'Save V4 FacilityDevelopmentProject')
+    exactKeys(project, ['id', 'organizationId', 'facilityId', 'projectType', 'status', 'scope', 'plannedStartDate', 'actualStartDate', 'plannedCompletionDate', 'actualCompletionDate', 'createdAt', 'cancelledAt', 'reason', 'externalReferenceId'], 'Save V4 FacilityDevelopmentProject')
+    return createFacilityDevelopmentProject({
+      id: facilityDevelopmentProjectIdFromString(nonEmptyText(project.id, 'Save V4 FacilityDevelopmentProject id')),
+      organizationId: organizationIdFromString(nonEmptyText(project.organizationId, 'Save V4 FacilityDevelopmentProject organizationId')),
+      facilityId: nullableText(project.facilityId, 'Save V4 FacilityDevelopmentProject facilityId'),
+      projectType: project.projectType as FacilityDevelopmentProject['projectType'],
+      status: project.status as FacilityDevelopmentProject['status'],
+      scope: parseFacilityDevelopmentProjectScope(project.scope),
+      plannedStartDate: nonEmptyText(project.plannedStartDate, 'Save V4 FacilityDevelopmentProject plannedStartDate'),
+      actualStartDate: nullableText(project.actualStartDate, 'Save V4 FacilityDevelopmentProject actualStartDate'),
+      plannedCompletionDate: nonEmptyText(project.plannedCompletionDate, 'Save V4 FacilityDevelopmentProject plannedCompletionDate'),
+      actualCompletionDate: nullableText(project.actualCompletionDate, 'Save V4 FacilityDevelopmentProject actualCompletionDate'),
+      createdAt: nonEmptyText(project.createdAt, 'Save V4 FacilityDevelopmentProject createdAt'),
+      cancelledAt: nullableText(project.cancelledAt, 'Save V4 FacilityDevelopmentProject cancelledAt'),
+      reason: nullableText(project.reason, 'Save V4 FacilityDevelopmentProject reason'),
+      externalReferenceId: nullableText(project.externalReferenceId, 'Save V4 FacilityDevelopmentProject externalReferenceId'),
+    })
+  }))
+}
+
+/**
+ * The scope is stored exactly as `FacilityDevelopmentProjectScope`'s own canonical shape (already
+ * validated once at write time) and reconstructed through the same `createFacilityDevelopmentProjectScope`
+ * factory used everywhere else — no bespoke re-implementation of the discriminated union's
+ * validation rules here, keeping this parser thin and the domain factory the single source of
+ * truth for what a valid scope looks like.
+ */
+function parseFacilityDevelopmentProjectScope(value: unknown): FacilityDevelopmentProject['scope'] {
+  const scope = record(value, 'Save V4 FacilityDevelopmentProject scope')
+  if (typeof scope.kind !== 'string') throw new TypeError('Save V4 FacilityDevelopmentProject scope kind must be a string')
+  return createFacilityDevelopmentProjectScope(scope as unknown as Parameters<typeof createFacilityDevelopmentProjectScope>[0])
+}
+
+function parseFacilityDevelopmentProjectPhases(value: unknown): readonly FacilityDevelopmentProjectPhase[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 facilityDevelopmentProjectPhases must be an array')
+  return Object.freeze(value.map((entry) => {
+    const phase = record(entry, 'Save V4 FacilityDevelopmentProjectPhase')
+    exactKeys(phase, ['id', 'projectId', 'sequence', 'name', 'status', 'plannedStart', 'plannedCompletion', 'actualStart', 'actualCompletion', 'scopeComponentIndexes'], 'Save V4 FacilityDevelopmentProjectPhase')
+    return createFacilityDevelopmentProjectPhase({
+      id: facilityDevelopmentProjectPhaseIdFromString(nonEmptyText(phase.id, 'Save V4 FacilityDevelopmentProjectPhase id')),
+      projectId: facilityDevelopmentProjectIdFromString(nonEmptyText(phase.projectId, 'Save V4 FacilityDevelopmentProjectPhase projectId')),
+      sequence: number(phase.sequence, 'Save V4 FacilityDevelopmentProjectPhase sequence'),
+      name: nullableText(phase.name, 'Save V4 FacilityDevelopmentProjectPhase name'),
+      status: phase.status as FacilityDevelopmentProjectPhase['status'],
+      plannedStart: nonEmptyText(phase.plannedStart, 'Save V4 FacilityDevelopmentProjectPhase plannedStart'),
+      plannedCompletion: nonEmptyText(phase.plannedCompletion, 'Save V4 FacilityDevelopmentProjectPhase plannedCompletion'),
+      actualStart: nullableText(phase.actualStart, 'Save V4 FacilityDevelopmentProjectPhase actualStart'),
+      actualCompletion: nullableText(phase.actualCompletion, 'Save V4 FacilityDevelopmentProjectPhase actualCompletion'),
+      scopeComponentIndexes: phase.scopeComponentIndexes === null || phase.scopeComponentIndexes === undefined ? null : (phase.scopeComponentIndexes as readonly number[]),
     })
   }))
 }

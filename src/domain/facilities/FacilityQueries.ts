@@ -1,5 +1,6 @@
 import type { GameDate } from '@/domain/date'
-import type { FacilityComponentId, FacilityId, OrganizationId, TeamId } from '@/domain/ids'
+import { compareGameDates } from '@/domain/date'
+import type { FacilityComponentId, FacilityDevelopmentProjectId, FacilityId, OrganizationId, TeamId } from '@/domain/ids'
 import type { Facility } from './Facility'
 import { activeFacilityComponentsAt, componentCategory, type FacilityComponent, type FacilityComponentType } from './FacilityComponent'
 import type { FacilityComponentCategory } from './FacilityComponentCategory'
@@ -7,6 +8,8 @@ import { capabilitiesOfFacility, facilitiesWithCapability, facilityHasCapability
 import { componentConditionAt, componentServiceabilityAt, facilityConditionRecordsAt, type FacilityComponentConditionRecord, type FacilityConditionRecord } from './FacilityCondition'
 import { facilityRightsConflictsAt, type FacilityRightsConflict } from './FacilityConflict'
 import { controllersOfFacilityAt, whoControlsFacilityAt } from './FacilityControl'
+import { isFacilityDevelopmentProjectTerminalStatus, type FacilityDevelopmentProject } from './FacilityDevelopmentProject'
+import type { FacilityDevelopmentProjectPhase } from './FacilityDevelopmentProjectPhase'
 import type { FacilityInspection } from './FacilityInspection'
 import { isFacilityMaintenanceNeedOpenStatus, type FacilityMaintenanceNeed } from './FacilityMaintenanceNeed'
 import type { FacilityMaintenanceAction } from './FacilityMaintenanceAction'
@@ -352,4 +355,90 @@ export function facilityNameAt(nameRecords: readonly FacilityNameRecord[], facil
 
 export function facilityStatusAt(statusRecords: readonly FacilityStatusRecord[], facility: Facility, onDate: GameDate): FacilityStatus {
   return resolveFacilityStatusAt(statusRecords, facility.id, onDate, facility.status)
+}
+
+// --- Development projects (CFI6) -------------------------------------------
+
+/** Every development project targeting one Facility (its `facilityId` matches), in full immutable history — a project is a point-in-time record, not temporally resolved state, so no `onDate` filter narrows this to "active as of". Use `activeDevelopmentProjectsAt` for that narrower question. */
+export function developmentProjectsForFacility(projects: readonly FacilityDevelopmentProject[], facilityId: FacilityId): readonly FacilityDevelopmentProject[] {
+  return projects.filter((project) => project.facilityId === facilityId).sort((a, b) => a.id.localeCompare(b.id))
+}
+
+/** Every development project undertaken by one Organization, in full immutable history. */
+export function developmentProjectsForOrganization(projects: readonly FacilityDevelopmentProject[], organizationId: OrganizationId): readonly FacilityDevelopmentProject[] {
+  return projects.filter((project) => project.organizationId === organizationId).sort((a, b) => a.id.localeCompare(b.id))
+}
+
+/**
+ * Every project whose status is non-terminal (`COMPLETED`/`CANCELLED`) AND whose `plannedStartDate`
+ * has already arrived as of the given date — i.e. genuinely "underway or due" rather than merely
+ * "not yet cancelled". A `PLANNED` project scheduled for a future date is not considered active yet.
+ */
+export function activeDevelopmentProjectsAt(projects: readonly FacilityDevelopmentProject[], onDate: GameDate): readonly FacilityDevelopmentProject[] {
+  return projects
+    .filter((project) => !isFacilityDevelopmentProjectTerminalStatus(project.status) && compareGameDates(project.plannedStartDate, onDate) <= 0)
+    .sort((a, b) => a.id.localeCompare(b.id))
+}
+
+/** Every non-terminal project whose scope names the given component (as a renovation/replacement/removal target, directly or inside a `RECONFIGURE_FACILITY` bundle), as of a date — the CFI6 answer to "is anything currently being done to this component". */
+export function projectsAffectingComponentAt(projects: readonly FacilityDevelopmentProject[], componentId: FacilityComponentId, onDate: GameDate): readonly FacilityDevelopmentProject[] {
+  return activeDevelopmentProjectsAt(projects, onDate).filter((project) => scopeReferencesComponent(project.scope, componentId))
+}
+
+function scopeReferencesComponent(scope: FacilityDevelopmentProject['scope'], componentId: FacilityComponentId): boolean {
+  if (scope.kind === 'RENOVATE_COMPONENT') return scope.componentId === componentId
+  if (scope.kind === 'REPLACE_COMPONENT') return scope.retiredComponentId === componentId
+  if (scope.kind === 'REMOVE_COMPONENT') return scope.componentId === componentId
+  if (scope.kind === 'RECONFIGURE_FACILITY') {
+    return (
+      scope.renovations.some((renovation) => renovation.componentId === componentId) ||
+      scope.replacements.some((replacement) => replacement.retiredComponentId === componentId) ||
+      scope.removals.includes(componentId)
+    )
+  }
+  return false
+}
+
+/** Every phase belonging to one project, in ascending `sequence` order. */
+export function projectPhases(phases: readonly FacilityDevelopmentProjectPhase[], projectId: FacilityDevelopmentProjectId): readonly FacilityDevelopmentProjectPhase[] {
+  return phases.filter((phase) => phase.projectId === projectId).sort((a, b) => a.sequence - b.sequence)
+}
+
+/**
+ * The one phase, if any, that is genuinely "current" for a project at a date: the lowest-sequence
+ * phase that is not yet `COMPLETED`/`CANCELLED` (i.e. the next phase still to be worked through).
+ * `undefined` when every phase is terminal (or the project has no phases at all — a single-phase
+ * project simply has no phase entities and this always returns `undefined` for it, which is
+ * expected, not an error).
+ */
+export function currentProjectPhaseAt(phases: readonly FacilityDevelopmentProjectPhase[], projectId: FacilityDevelopmentProjectId): FacilityDevelopmentProjectPhase | undefined {
+  return projectPhases(phases, projectId).find((phase) => phase.status !== 'COMPLETED' && phase.status !== 'CANCELLED')
+}
+
+/**
+ * `true` when a project's `plannedCompletionDate` has passed as of the given date while the project
+ * is still not `COMPLETED`/`CANCELLED` — a derived fact, never persisted. A completed project is
+ * never "delayed" retroactively just because its `actualCompletionDate` came after the plan; this
+ * answers only "is this still outstanding past when it should have finished".
+ */
+export function isDevelopmentProjectDelayedAt(project: FacilityDevelopmentProject, onDate: GameDate): boolean {
+  if (isFacilityDevelopmentProjectTerminalStatus(project.status)) return false
+  return compareGameDates(project.plannedCompletionDate, onDate) < 0
+}
+
+/** Facility IDs, across the given set, targeted by an active (non-terminal, already-started-by-plan) `NEW_FACILITY`/expansion/renovation project as of a date — i.e. "under any kind of development work right now". */
+export function facilitiesUnderDevelopmentAt(projects: readonly FacilityDevelopmentProject[], onDate: GameDate): readonly FacilityId[] {
+  const facilityIds = new Set<FacilityId>()
+  for (const project of activeDevelopmentProjectsAt(projects, onDate)) if (project.facilityId !== null) facilityIds.add(project.facilityId)
+  return Object.freeze([...facilityIds].sort((a, b) => a.localeCompare(b)))
+}
+
+/** Narrower than `facilitiesUnderDevelopmentAt`: only Facilities with an active project whose `projectType` is renovation/modernization-flavored (`FACILITY_RENOVATION`, `FACILITY_MODERNIZATION`, `COMPONENT_RENOVATION`, `RECONFIGURATION`). */
+export function facilitiesUnderRenovationAt(projects: readonly FacilityDevelopmentProject[], onDate: GameDate): readonly FacilityId[] {
+  const renovationTypes: readonly FacilityDevelopmentProject['projectType'][] = ['FACILITY_RENOVATION', 'FACILITY_MODERNIZATION', 'COMPONENT_RENOVATION', 'RECONFIGURATION']
+  const facilityIds = new Set<FacilityId>()
+  for (const project of activeDevelopmentProjectsAt(projects, onDate)) {
+    if (project.facilityId !== null && renovationTypes.includes(project.projectType)) facilityIds.add(project.facilityId)
+  }
+  return Object.freeze([...facilityIds].sort((a, b) => a.localeCompare(b)))
 }

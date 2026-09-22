@@ -6,6 +6,8 @@ import { createFacilityCompetitionApproval, type FacilityCompetitionApproval } f
 import { createFacilityControlRight, type FacilityControlRight } from './FacilityControl'
 import { createFacilityComponentConditionRecord, createFacilityConditionRecord, type FacilityComponentConditionRecord, type FacilityConditionRecord } from './FacilityCondition'
 import { facilityRightsOverlapInTime } from './FacilityConflict'
+import { createFacilityDevelopmentProject, type FacilityDevelopmentProject } from './FacilityDevelopmentProject'
+import { createFacilityDevelopmentProjectPhase, type FacilityDevelopmentProjectPhase } from './FacilityDevelopmentProjectPhase'
 import { createFacilityInspection, type FacilityInspection } from './FacilityInspection'
 import { createFacilityMaintenanceAction, type FacilityMaintenanceAction } from './FacilityMaintenanceAction'
 import { createFacilityMaintenanceNeed, type FacilityMaintenanceNeed } from './FacilityMaintenanceNeed'
@@ -43,6 +45,8 @@ export interface FacilityValidationContext {
   readonly maintenanceActions: readonly FacilityMaintenanceAction[]
   readonly inspections: readonly FacilityInspection[]
   readonly operationalIncidents: readonly FacilityOperationalIncident[]
+  readonly developmentProjects: readonly FacilityDevelopmentProject[]
+  readonly developmentProjectPhases: readonly FacilityDevelopmentProjectPhase[]
   readonly knownOrganizationIds: ReadonlySet<OrganizationId>
   readonly knownTeamIds: ReadonlySet<TeamId>
   readonly knownPersonIds: ReadonlySet<PersonId>
@@ -288,6 +292,25 @@ export function validateFacilitiesDomain(context: FacilityValidationContext): vo
       if (need.facilityId !== incident.facilityId) throw new FacilityValidationError(`Facility operational incident ${incident.id} need ${incident.producedNeedId} belongs to a different Facility`)
     }
   }
+
+  const developmentProjectIds = new Set<string>()
+  for (const project of context.developmentProjects) {
+    createFacilityDevelopmentProject(project)
+    if (developmentProjectIds.has(project.id)) throw new FacilityValidationError(`Duplicate Facility development project ID: ${project.id}`)
+    developmentProjectIds.add(project.id)
+    if (!context.knownOrganizationIds.has(project.organizationId)) throw new FacilityValidationError(`Facility development project ${project.id} references missing Organization ${project.organizationId}`)
+    if (project.facilityId !== null) requireFacility(facilityIds, project.facilityId, `Facility development project ${project.id}`)
+    assertScopeReferencesResolve(project, context.components, facilityIds)
+  }
+
+  const developmentProjectPhaseIds = new Set<string>()
+  for (const phase of context.developmentProjectPhases) {
+    createFacilityDevelopmentProjectPhase(phase)
+    if (developmentProjectPhaseIds.has(phase.id)) throw new FacilityValidationError(`Duplicate Facility development project phase ID: ${phase.id}`)
+    developmentProjectPhaseIds.add(phase.id)
+    if (!developmentProjectIds.has(phase.projectId)) throw new FacilityValidationError(`Facility development project phase ${phase.id} references missing project ${phase.projectId}`)
+  }
+  assertValidPhaseSequencing(context.developmentProjectPhases)
 }
 
 function requireFacility(facilityIds: ReadonlySet<FacilityId>, facilityId: FacilityId, label: string): void {
@@ -298,6 +321,53 @@ function requireComponent(components: readonly FacilityComponent[], componentId:
   const component = components.find((candidate) => candidate.id === componentId)
   if (component === undefined) throw new FacilityValidationError(`${label} references missing Facility component ${componentId}`)
   return component
+}
+
+/**
+ * CFI6: every component a project's scope names (to renovate, replace, or remove) must already
+ * exist and must belong to the same Facility the project targets — a project can never reach across
+ * Facility boundaries to touch a component it was not scoped to. `ADD_COMPONENT`/`CREATE_FACILITY`
+ * blueprints reference no existing component (they describe not-yet-created ones), so they need no
+ * check here; `RECONFIGURE_FACILITY` checks every one of its renovation/replacement/removal
+ * sub-scopes the same way a single-purpose scope would.
+ */
+function assertScopeReferencesResolve(project: FacilityDevelopmentProject, components: readonly FacilityComponent[], facilityIds: ReadonlySet<FacilityId>): void {
+  const scope = project.scope
+  const label = `Facility development project ${project.id}`
+  const checkComponent = (componentId: FacilityComponent['id']): void => {
+    const component = requireComponent(components, componentId, label)
+    if (project.facilityId !== null && component.facilityId !== project.facilityId) {
+      throw new FacilityValidationError(`${label} scope references component ${componentId} from a different Facility`)
+    }
+  }
+  if (scope.kind === 'RENOVATE_COMPONENT') checkComponent(scope.componentId)
+  if (scope.kind === 'REPLACE_COMPONENT') checkComponent(scope.retiredComponentId)
+  if (scope.kind === 'REMOVE_COMPONENT') checkComponent(scope.componentId)
+  if (scope.kind === 'DEMOLISH_FACILITY' && !facilityIds.has(scope.facilityId as FacilityId)) {
+    throw new FacilityValidationError(`${label} scope references missing Facility ${scope.facilityId}`)
+  }
+  if (scope.kind === 'RECONFIGURE_FACILITY') {
+    for (const renovation of scope.renovations) checkComponent(renovation.componentId)
+    for (const replacement of scope.replacements) checkComponent(replacement.retiredComponentId)
+    for (const componentId of scope.removals) checkComponent(componentId)
+  }
+}
+
+/** CFI6: within one project, phase `sequence` numbers must be unique and form a contiguous 1..N run — no gaps, no duplicates, so `currentProjectPhaseAt` can resolve "the" active phase unambiguously. */
+function assertValidPhaseSequencing(phases: readonly FacilityDevelopmentProjectPhase[]): void {
+  const byProject = new Map<string, FacilityDevelopmentProjectPhase[]>()
+  for (const phase of phases) {
+    const bucket = byProject.get(phase.projectId) ?? []
+    bucket.push(phase)
+    byProject.set(phase.projectId, bucket)
+  }
+  for (const [projectId, projectPhases] of byProject) {
+    const sequences = projectPhases.map((phase) => phase.sequence).sort((a, b) => a - b)
+    if (new Set(sequences).size !== sequences.length) throw new FacilityValidationError(`Facility development project ${projectId} has duplicate phase sequence numbers`)
+    for (let i = 0; i < sequences.length; i += 1) {
+      if (sequences[i] !== i + 1) throw new FacilityValidationError(`Facility development project ${projectId} phase sequence numbers must be contiguous starting at 1`)
+    }
+  }
 }
 
 function assertNoOverlap(records: readonly { readonly id: string; readonly validFrom: GameDate | null; readonly validTo: GameDate | null }[], label: string): void {

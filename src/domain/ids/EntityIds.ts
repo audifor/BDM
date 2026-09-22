@@ -69,6 +69,10 @@ export type FacilityMaintenanceActionId = EntityId<'FacilityMaintenanceActionId'
 export type FacilityInspectionId = EntityId<'FacilityInspectionId'>
 /** CFI5 — a recorded discrete physical/operational failure. */
 export type FacilityOperationalIncidentId = EntityId<'FacilityOperationalIncidentId'>
+/** CFI6 — a canonical construction/renovation/development project against a Facility (or planning a new one). */
+export type FacilityDevelopmentProjectId = EntityId<'FacilityDevelopmentProjectId'>
+/** CFI6 — one sequential phase of a `FacilityDevelopmentProject`. */
+export type FacilityDevelopmentProjectPhaseId = EntityId<'FacilityDevelopmentProjectPhaseId'>
 
 function idFromString<Id extends string>(value: string, name: string): Id {
   if (typeof value !== 'string' || value.trim().length === 0) {
@@ -141,6 +145,8 @@ export const facilityMaintenanceNeedIdFromString = (value: string): FacilityMain
 export const facilityMaintenanceActionIdFromString = (value: string): FacilityMaintenanceActionId => idFromString<FacilityMaintenanceActionId>(value, 'FacilityMaintenanceActionId')
 export const facilityInspectionIdFromString = (value: string): FacilityInspectionId => idFromString<FacilityInspectionId>(value, 'FacilityInspectionId')
 export const facilityOperationalIncidentIdFromString = (value: string): FacilityOperationalIncidentId => idFromString<FacilityOperationalIncidentId>(value, 'FacilityOperationalIncidentId')
+export const facilityDevelopmentProjectIdFromString = (value: string): FacilityDevelopmentProjectId => idFromString<FacilityDevelopmentProjectId>(value, 'FacilityDevelopmentProjectId')
+export const facilityDevelopmentProjectPhaseIdFromString = (value: string): FacilityDevelopmentProjectPhaseId => idFromString<FacilityDevelopmentProjectPhaseId>(value, 'FacilityDevelopmentProjectPhaseId')
 /** Legacy/generated-world compatibility resolver. World DB runtime uses the canonical Team relation. */
 export const organizationIdForTeam = (teamId: TeamId): OrganizationId => organizationIdFromString(teamId)
 

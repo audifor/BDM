@@ -150,6 +150,46 @@ export {
 } from './FacilityOperationalIncident'
 
 export {
+  componentBlueprintToCreateInput,
+  createFacilityDevelopmentProjectScope,
+  type AddComponentScope,
+  type ComponentBlueprint,
+  type CreateFacilityDevelopmentProjectScopeInput,
+  type CreateFacilityScope,
+  type DemolishFacilityScope,
+  type ExpandFacilityScope,
+  type FacilityDevelopmentProjectScope,
+  type ReconfigureFacilityScope,
+  type RemoveComponentScope,
+  type RenovateComponentScope,
+  type ReplaceComponentScope,
+} from './FacilityDevelopmentProjectScope'
+
+export {
+  FACILITY_DEVELOPMENT_PROJECT_ALLOWED_TRANSITIONS,
+  FACILITY_DEVELOPMENT_PROJECT_STATUSES,
+  FACILITY_DEVELOPMENT_PROJECT_TYPES,
+  createFacilityDevelopmentProject,
+  isFacilityDevelopmentProjectStatus,
+  isFacilityDevelopmentProjectTerminalStatus,
+  isFacilityDevelopmentProjectType,
+  isValidFacilityDevelopmentProjectTransition,
+  type CreateFacilityDevelopmentProjectInput,
+  type FacilityDevelopmentProject,
+  type FacilityDevelopmentProjectStatus,
+  type FacilityDevelopmentProjectType,
+} from './FacilityDevelopmentProject'
+
+export {
+  FACILITY_DEVELOPMENT_PROJECT_PHASE_STATUSES,
+  createFacilityDevelopmentProjectPhase,
+  isFacilityDevelopmentProjectPhaseStatus,
+  type CreateFacilityDevelopmentProjectPhaseInput,
+  type FacilityDevelopmentProjectPhase,
+  type FacilityDevelopmentProjectPhaseStatus,
+} from './FacilityDevelopmentProjectPhase'
+
+export {
   createFacilityNameRecord,
   resolveFacilityNameAt,
   type CreateFacilityNameRecordInput,
@@ -237,6 +277,7 @@ export {
 } from './FacilityValidation'
 
 export {
+  activeDevelopmentProjectsAt,
   activeFacilityComponentsAt,
   availableComponentsForTeamAt,
   capabilitiesOfFacility,
@@ -254,8 +295,13 @@ export {
   controllersOfFacilityAt,
   courtsOfFacility,
   criticalMaintenanceNeedsAt,
+  currentProjectPhaseAt,
+  developmentProjectsForFacility,
+  developmentProjectsForOrganization,
   facilitiesOperatedByOrganizationAt,
   facilitiesOwnedByOrganizationAt,
+  facilitiesUnderDevelopmentAt,
+  facilitiesUnderRenovationAt,
   facilitiesUsedByOrganizationAt,
   facilitiesUsedByTeamAt,
   facilitiesWithCapability,
@@ -271,6 +317,7 @@ export {
   facilityStatusAt,
   homeFacilitiesForTeamAt,
   inspectionsForFacility,
+  isDevelopmentProjectDelayedAt,
   latestInspectionForComponentAt,
   maintenanceActionsForFacility,
   maintenanceHistoryForComponent,
@@ -284,6 +331,8 @@ export {
   ownershipShareOfAt,
   ownersOfFacilityAt,
   practiceCourtsOfFacility,
+  projectPhases,
+  projectsAffectingComponentAt,
   recoveryComponentsOfFacility,
   rootComponentsOfFacility,
   teamsUsingFacilityAt,
