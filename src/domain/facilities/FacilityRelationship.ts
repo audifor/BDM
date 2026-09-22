@@ -2,15 +2,18 @@ import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import { facilityIdFromString, facilityOrganizationRelationshipIdFromString, facilityTeamRelationshipIdFromString, organizationIdFromString, teamIdFromString, type FacilityId, type FacilityOrganizationRelationshipId, type FacilityTeamRelationshipId, type OrganizationId, type TeamId } from '@/domain/ids'
 
 /**
- * Non-ownership functional relationships between a Facility and an Organization. Deliberately
- * does not assume single-relationship exclusivity: an Organization can simultaneously OPERATE
- * and be a TENANT is impossible here (mutually exclusive per active kind is not enforced by this
- * type — GameWorld validation blocks exact-duplicate active relationships, not differing kinds).
+ * Structural functional relationships between a Facility and an Organization that are NEITHER
+ * ownership (`FacilityOwnershipInterest`), control (`FacilityControlRight`), nor operation
+ * (`FacilityOperatorAssignment`) — each of those CFI1 hook kinds (OWNER, CO_OWNER, OPERATOR) was
+ * promoted to its own dedicated, queryable model in CFI2 so ownership/control/operation never
+ * have two disagreeing sources of truth. TENANT/LESSOR/LESSEE record the operational relationship
+ * only; the future economic lease contract is a separate, not-yet-built concept (see
+ * `FacilityUsageRight.agreementReferenceId`). FINANCIER and DEVELOPMENT_PARTNER remain explicit
+ * hooks for Finance/Projects systems that do not exist yet. Deliberately does not assume
+ * single-relationship exclusivity: GameWorld validation blocks exact-duplicate active
+ * relationships of the same kind, not differing kinds held at once.
  */
 export const FACILITY_ORGANIZATION_RELATIONSHIP_KINDS = [
-  'OWNER',
-  'CO_OWNER',
-  'OPERATOR',
   'TENANT',
   'LESSOR',
   'LESSEE',

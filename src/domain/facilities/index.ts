@@ -48,7 +48,22 @@ export {
   type CreateFacilityOwnershipInterestInput,
   type FacilityOwnershipActor,
   type FacilityOwnershipInterest,
+  type FacilityOwnershipSnapshot,
 } from './FacilityOwnership'
+
+export {
+  createFacilityControlActor,
+  createFacilityControlRight,
+  type CreateFacilityControlRightInput,
+  type FacilityControlActor,
+  type FacilityControlRight,
+} from './FacilityControl'
+
+export {
+  createFacilityOperatorAssignment,
+  type CreateFacilityOperatorAssignmentInput,
+  type FacilityOperatorAssignment,
+} from './FacilityOperator'
 
 export {
   FACILITY_ORGANIZATION_RELATIONSHIP_KINDS,
@@ -67,11 +82,24 @@ export {
 } from './FacilityRelationship'
 
 export {
+  FACILITY_USAGE_EXCLUSIVITIES,
+  FACILITY_USAGE_PRIORITIES,
+  FACILITY_USAGE_PURPOSES,
   createFacilityUsageRight,
   getActiveFacilityUsageRights,
+  isActiveFacilityUsageRightOn,
+  isFacilityUsagePurpose,
+  usageRightCoversComponent,
   type CreateFacilityUsageRightInput,
+  type FacilityUsageExclusivity,
+  type FacilityUsagePriority,
+  type FacilityUsagePurpose,
   type FacilityUsageRight,
 } from './FacilityUsageRight'
+
+export {
+  facilityRightsOverlapInTime,
+} from './FacilityConflict'
 
 export {
   createFacilityCompetitionApproval,
@@ -94,10 +122,28 @@ export {
 
 export {
   activeFacilityComponentsAt,
-  facilityNameAt,
-  facilityStatusAt,
+  controllersOfFacilityAt,
+  facilitiesOperatedByOrganizationAt,
+  facilitiesOwnedByOrganizationAt,
+  facilitiesUsedByOrganizationAt,
   facilitiesUsedByTeamAt,
+  facilityComponentsUsableByTeamAt,
+  facilityNameAt,
+  facilityOwnershipAt,
+  facilityRightsConflictsAt,
+  facilityStatusAt,
+  homeFacilitiesForTeamAt,
+  operatorsOfFacilityAt,
   organizationsRelatedToFacilityAt,
+  organizationsUsingFacilityAt,
+  ownershipShareOfAt,
   ownersOfFacilityAt,
+  teamsUsingFacilityAt,
+  trainingFacilitiesForTeamAt,
+  usageRightsForFacilityAt,
+  usageRightsForOrganizationAt,
+  usageRightsForTeamAt,
   usersOfFacilityAt,
+  whoControlsFacilityAt,
+  type FacilityRightsConflict,
 } from './FacilityQueries'

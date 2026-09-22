@@ -71,3 +71,37 @@ export function totalKnownFacilityOwnershipPercentage(interests: readonly Facili
   if (interests.some((interest) => interest.ownershipPercentage === null)) return null
   return interests.reduce((sum, interest) => sum + (interest.ownershipPercentage as number), 0)
 }
+
+/** CFI2 alias matching the query-layer naming convention. Identical to `getActiveFacilityOwnership`. */
+export function ownersOfFacilityAt(interests: readonly FacilityOwnershipInterest[], facilityId: FacilityId, onDate: GameDate): readonly FacilityOwnershipInterest[] {
+  return getActiveFacilityOwnership(interests, facilityId, onDate)
+}
+
+/** The full, deterministic ownership picture of one Facility at a date: every active interest plus the known/unknown total. */
+export interface FacilityOwnershipSnapshot {
+  readonly facilityId: FacilityId
+  readonly interests: readonly FacilityOwnershipInterest[]
+  readonly totalKnownPercentage: number | null
+}
+
+export function facilityOwnershipAt(interests: readonly FacilityOwnershipInterest[], facilityId: FacilityId, onDate: GameDate): FacilityOwnershipSnapshot {
+  const active = getActiveFacilityOwnership(interests, facilityId, onDate)
+  return Object.freeze({ facilityId, interests: active, totalKnownPercentage: totalKnownFacilityOwnershipPercentage(active) })
+}
+
+/** The known or unknown share a specific Organization actor holds in a Facility at a date. Returns null when that Organization has no active interest at all (distinct from an interest with a known-null/unspecified percentage). */
+export function ownershipShareOfAt(interests: readonly FacilityOwnershipInterest[], facilityId: FacilityId, organizationId: OrganizationId, onDate: GameDate): number | null | undefined {
+  const active = getActiveFacilityOwnership(interests, facilityId, onDate).find((interest) => interest.owner.kind === 'ORGANIZATION' && interest.owner.organizationId === organizationId)
+  return active === undefined ? undefined : active.ownershipPercentage
+}
+
+/** Every Facility a given Organization actively owns (any known or unknown share) at a date, ordered deterministically by FacilityId. */
+export function facilitiesOwnedByOrganizationAt(interests: readonly FacilityOwnershipInterest[], organizationId: OrganizationId, onDate: GameDate): readonly FacilityId[] {
+  const facilityIds = new Set<FacilityId>()
+  for (const interest of interests) {
+    if (interest.owner.kind === 'ORGANIZATION' && interest.owner.organizationId === organizationId && isActiveOn(interest.validFrom, interest.validTo, onDate)) {
+      facilityIds.add(interest.facilityId)
+    }
+  }
+  return Object.freeze([...facilityIds].sort((a, b) => a.localeCompare(b)))
+}

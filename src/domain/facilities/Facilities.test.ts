@@ -18,9 +18,15 @@ import {
   facilitiesUsedByTeamAt,
   facilityNameAt,
   facilityStatusAt,
+  ownershipShareOfAt,
   ownersOfFacilityAt,
   usersOfFacilityAt,
 } from './index'
+
+/** Test convenience: CFI2 moved OWNER out of FacilityOrganizationRelationship into FacilityOwnershipInterest. */
+function ownerInterest(id: string, facilityId: string, organizationId: string, validFrom: string) {
+  return createFacilityOwnershipInterest({ id, facilityId, owner: { kind: 'ORGANIZATION', organizationId: organizationId as never }, ownershipPercentage: 100, validFrom })
+}
 
 function fixture() {
   const world = createNewGame()
@@ -40,7 +46,7 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const world = updateGameWorld(f.world, {
       places: [place],
       facilities: [arena],
-      facilityOrganizationRelationships: [createFacilityOrganizationRelationship({ id: 'rel:owner', facilityId: arena.id, organizationId: f.organizationA, kind: 'OWNER', validFrom: '2000-01-01' })],
+      facilityOwnershipInterests: [ownerInterest('own:club', arena.id, f.organizationA, '2000-01-01')],
       facilityTeamRelationships: [createFacilityTeamRelationship({ id: 'rel:home', facilityId: arena.id, teamId: f.teamA.id, kind: 'HOME_VENUE', validFrom: '2000-01-01' })],
     })
     const onDate = parseGameDate('2030-01-01')
@@ -56,13 +62,15 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const world = updateGameWorld(f.world, {
       places: [place],
       facilities: [municipalArena],
-      facilityOrganizationRelationships: [createFacilityOrganizationRelationship({ id: 'rel:owner-muni', facilityId: municipalArena.id, organizationId: municipalOrg.id, kind: 'OWNER', validFrom: '2010-01-01' })],
+      facilityOwnershipInterests: [ownerInterest('own:municipality', municipalArena.id, municipalOrg.id, '2010-01-01')],
       facilityTeamRelationships: [createFacilityTeamRelationship({ id: 'rel:lease', facilityId: municipalArena.id, teamId: f.teamA.id, kind: 'HOME_VENUE', validFrom: '2010-01-01' })],
-      facilityUsageRights: [createFacilityUsageRight({ id: 'usage:lease', facilityId: municipalArena.id, teamId: f.teamA.id, purpose: 'home matches', validFrom: '2010-01-01', exclusive: false })],
+      facilityUsageRights: [createFacilityUsageRight({ id: 'usage:lease', facilityId: municipalArena.id, teamId: f.teamA.id, purpose: 'HOME_VENUE', validFrom: '2010-01-01', exclusivity: 'NON_EXCLUSIVE' })],
     })
-    // The club has NO ownership interest recorded — usage does not imply ownership.
-    expect(ownersOfFacilityAt(Object.values(world.facilityOwnershipInterestsById), municipalArena.id, parseGameDate('2030-01-01'))).toEqual([])
-    expect(usersOfFacilityAt(Object.values(world.facilityTeamRelationshipsById), municipalArena.id, parseGameDate('2030-01-01')).map((r) => r.teamId)).toEqual([f.teamA.id])
+    // The municipality owns; the club has NO ownership interest recorded — usage does not imply ownership.
+    const onDate = parseGameDate('2030-01-01')
+    expect(ownersOfFacilityAt(Object.values(world.facilityOwnershipInterestsById), municipalArena.id, onDate).map((o) => o.owner)).toEqual([{ kind: 'ORGANIZATION', organizationId: municipalOrg.id }])
+    expect(ownershipShareOfAt(Object.values(world.facilityOwnershipInterestsById), municipalArena.id, f.organizationA, onDate)).toBeUndefined()
+    expect(usersOfFacilityAt(Object.values(world.facilityTeamRelationshipsById), municipalArena.id, onDate).map((r) => r.teamId)).toEqual([f.teamA.id])
   })
 
   it('3. models two teams sharing one arena', () => {
@@ -88,7 +96,7 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const world = updateGameWorld(f.world, {
       places: [place],
       facilities: [trainingCenter],
-      facilityOrganizationRelationships: [createFacilityOrganizationRelationship({ id: 'rel:owner-org', facilityId: trainingCenter.id, organizationId: f.organizationA, kind: 'OWNER', validFrom: '2018-01-01' })],
+      facilityOwnershipInterests: [ownerInterest('own:multi-team-org', trainingCenter.id, f.organizationA, '2018-01-01')],
       facilityTeamRelationships: [
         createFacilityTeamRelationship({ id: 'rel:train-a', facilityId: trainingCenter.id, teamId: f.teamA.id, kind: 'TRAINING', validFrom: '2018-01-01' }),
         createFacilityTeamRelationship({ id: 'rel:train-b', facilityId: trainingCenter.id, teamId: f.teamB.id, kind: 'TRAINING', validFrom: '2018-01-01' }),
@@ -123,7 +131,7 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     const world = updateGameWorld(f.world, {
       places: [university],
       facilities: [fieldhouse],
-      facilityOrganizationRelationships: [createFacilityOrganizationRelationship({ id: 'rel:university-owner', facilityId: fieldhouse.id, organizationId: f.organizationA, kind: 'OWNER', validFrom: '1990-01-01' })],
+      facilityOwnershipInterests: [ownerInterest('own:university', fieldhouse.id, f.organizationA, '1990-01-01')],
       facilityTeamRelationships: [
         createFacilityTeamRelationship({ id: 'rel:men', facilityId: fieldhouse.id, teamId: f.teamA.id, kind: 'HOME_VENUE', validFrom: '1990-01-01' }),
         createFacilityTeamRelationship({ id: 'rel:women', facilityId: fieldhouse.id, teamId: f.teamB.id, kind: 'HOME_VENUE', validFrom: '1990-01-01' }),
@@ -238,7 +246,7 @@ describe('Facilities & Infrastructure V2 domain foundation (CFI1)', () => {
     expect(() => updateGameWorld(f.world, {
       places: [place],
       facilities: [createFacility({ id: 'facility:ok-2', placeId: place.id, type: 'ARENA', purposes: ['MATCH_HOSTING'], status: 'ACTIVE', canonicalName: 'OK Arena 2' })],
-      facilityOrganizationRelationships: [createFacilityOrganizationRelationship({ id: 'rel:missing-org', facilityId: 'facility:ok-2', organizationId: 'organization:does-not-exist', kind: 'OWNER', validFrom: '2020-01-01' })],
+      facilityOrganizationRelationships: [createFacilityOrganizationRelationship({ id: 'rel:missing-org', facilityId: 'facility:ok-2', organizationId: 'organization:does-not-exist', kind: 'TENANT', validFrom: '2020-01-01' })],
     })).toThrow(GameWorldValidationError)
 
     expect(() => updateGameWorld(f.world, {

@@ -3,7 +3,10 @@ import type { FacilityId, OrganizationId, PersonId, TeamId } from '@/domain/ids'
 import { createFacility, type Facility } from './Facility'
 import { createFacilityComponent, type FacilityComponent } from './FacilityComponent'
 import { createFacilityCompetitionApproval, type FacilityCompetitionApproval } from './FacilityCompetitionApproval'
+import { createFacilityControlRight, type FacilityControlRight } from './FacilityControl'
+import { facilityRightsOverlapInTime } from './FacilityConflict'
 import { createFacilityNameRecord, type FacilityNameRecord } from './FacilityNameHistory'
+import { createFacilityOperatorAssignment, type FacilityOperatorAssignment } from './FacilityOperator'
 import { createFacilityOwnershipInterest, totalKnownFacilityOwnershipPercentage, type FacilityOwnershipInterest } from './FacilityOwnership'
 import { createFacilityOrganizationRelationship, createFacilityTeamRelationship, type FacilityOrganizationRelationship, type FacilityTeamRelationship } from './FacilityRelationship'
 import { createFacilityStatusRecord, type FacilityStatusRecord } from './FacilityStatusHistory'
@@ -22,6 +25,8 @@ export interface FacilityValidationContext {
   readonly components: readonly FacilityComponent[]
   readonly nameRecords: readonly FacilityNameRecord[]
   readonly ownershipInterests: readonly FacilityOwnershipInterest[]
+  readonly controlRights: readonly FacilityControlRight[]
+  readonly operatorAssignments: readonly FacilityOperatorAssignment[]
   readonly organizationRelationships: readonly FacilityOrganizationRelationship[]
   readonly teamRelationships: readonly FacilityTeamRelationship[]
   readonly usageRights: readonly FacilityUsageRight[]
@@ -96,6 +101,29 @@ export function validateFacilitiesDomain(context: FacilityValidationContext): vo
     assertOwnershipDoesNotOverlapPast100(active, facility.id)
   }
 
+  const controlRightIds = new Set<string>()
+  for (const right of context.controlRights) {
+    createFacilityControlRight(right)
+    if (controlRightIds.has(right.id)) throw new FacilityValidationError(`Duplicate Facility control right ID: ${right.id}`)
+    controlRightIds.add(right.id)
+    requireFacility(facilityIds, right.facilityId, `Facility control right ${right.id}`)
+    if (right.controller.kind === 'PERSON') {
+      if (!context.knownPersonIds.has(right.controller.personId)) throw new FacilityValidationError(`Facility control right ${right.id} references missing Person ${right.controller.personId}`)
+    } else {
+      if (!context.knownOrganizationIds.has(right.controller.organizationId)) throw new FacilityValidationError(`Facility control right ${right.id} references missing Organization ${right.controller.organizationId}`)
+    }
+  }
+
+  const operatorAssignmentIds = new Set<string>()
+  for (const assignment of context.operatorAssignments) {
+    createFacilityOperatorAssignment(assignment)
+    if (operatorAssignmentIds.has(assignment.id)) throw new FacilityValidationError(`Duplicate Facility operator assignment ID: ${assignment.id}`)
+    operatorAssignmentIds.add(assignment.id)
+    requireFacility(facilityIds, assignment.facilityId, `Facility operator assignment ${assignment.id}`)
+    if (!context.knownOrganizationIds.has(assignment.operatorOrganizationId)) throw new FacilityValidationError(`Facility operator assignment ${assignment.id} references missing Organization ${assignment.operatorOrganizationId}`)
+  }
+  assertNoDuplicateActiveRelationships(context.operatorAssignments, (assignment) => assignment.facilityId, 'Facility operator assignment')
+
   const orgRelationshipIds = new Set<string>()
   for (const relationship of context.organizationRelationships) {
     createFacilityOrganizationRelationship(relationship)
@@ -132,7 +160,16 @@ export function validateFacilitiesDomain(context: FacilityValidationContext): vo
     requireFacility(facilityIds, right.facilityId, `Facility usage right ${right.id}`)
     if (right.organizationId !== null && !context.knownOrganizationIds.has(right.organizationId)) throw new FacilityValidationError(`Facility usage right ${right.id} references missing Organization ${right.organizationId}`)
     if (right.teamId !== null && !context.knownTeamIds.has(right.teamId)) throw new FacilityValidationError(`Facility usage right ${right.id} references missing Team ${right.teamId}`)
+    if (right.componentIds !== null) {
+      for (const componentId of right.componentIds) {
+        const component = context.components.find((candidate) => candidate.id === componentId)
+        if (component === undefined) throw new FacilityValidationError(`Facility usage right ${right.id} references missing Facility component ${componentId}`)
+        if (component.facilityId !== right.facilityId) throw new FacilityValidationError(`Facility usage right ${right.id} component ${componentId} belongs to a different Facility`)
+      }
+    }
   }
+  assertNoExactDuplicateUsageRights(context.usageRights)
+  assertNoIncompatibleExclusiveUsageRights(context.usageRights)
 
   const approvalIds = new Set<string>()
   for (const approval of context.competitionApprovals) {
@@ -195,5 +232,42 @@ function assertNoDuplicateActiveRelationships<T extends { readonly validFrom: Ga
   for (const bucket of byKey.values()) {
     if (bucket.length < 2) continue
     assertNoOverlap(bucket.map((item, index) => ({ id: String(index), validFrom: item.validFrom, validTo: item.validTo })), label)
+  }
+}
+
+/** Two rights are an exact duplicate when every semantically meaningful field matches (same facility, scope, beneficiary, purpose and interval) — a data-entry accident, never a legitimate second record. Differing IDs alone do not exempt a pair from this check. */
+function assertNoExactDuplicateUsageRights(rights: readonly FacilityUsageRight[]): void {
+  const seen = new Map<string, FacilityUsageRight>()
+  for (const right of rights) {
+    const scopeKey = right.componentIds === null ? 'WHOLE' : [...right.componentIds].sort().join(',')
+    const key = [right.facilityId, scopeKey, right.organizationId ?? '', right.teamId ?? '', right.purpose, right.validFrom, right.validTo ?? ''].join('|')
+    const existing = seen.get(key)
+    if (existing !== undefined) throw new FacilityValidationError(`Facility usage rights ${existing.id} and ${right.id} are exact duplicates`)
+    seen.set(key, right)
+  }
+}
+
+/**
+ * An EXCLUSIVE right whose scope and interval overlap another right (of any exclusivity) for a
+ * *different* beneficiary is an invalid, temporally-impossible state — not merely a queryable
+ * runtime conflict. `facilityRightsConflictsAt` answers "what conflicts exist right now"; this
+ * validator additionally guarantees such an incoherent pair can never be constructed into
+ * GameWorld state at all. Two SHARED/NON_EXCLUSIVE rights over the same scope never trip this,
+ * matching CFI2's explicit requirement that ordinary coexistence is not a conflict.
+ */
+function assertNoIncompatibleExclusiveUsageRights(rights: readonly FacilityUsageRight[]): void {
+  for (let i = 0; i < rights.length; i += 1) {
+    for (let j = i + 1; j < rights.length; j += 1) {
+      const a = rights[i]!
+      const b = rights[j]!
+      if (a.facilityId !== b.facilityId) continue
+      if (a.exclusivity !== 'EXCLUSIVE' && b.exclusivity !== 'EXCLUSIVE') continue
+      const sameBeneficiary = (a.teamId !== null && a.teamId === b.teamId) || (a.teamId === null && b.teamId === null && a.organizationId !== null && a.organizationId === b.organizationId)
+      if (sameBeneficiary) continue
+      const scopesOverlap = a.componentIds === null || b.componentIds === null || a.componentIds.some((id) => b.componentIds!.includes(id))
+      if (!scopesOverlap) continue
+      if (!facilityRightsOverlapInTime(a, b)) continue
+      throw new FacilityValidationError(`Facility usage rights ${a.id} and ${b.id} hold incompatible EXCLUSIVE claims over overlapping scope and time`)
+    }
   }
 }

@@ -54,6 +54,8 @@ export {
   facilityUsageRightIdFromString,
   facilityCompetitionApprovalIdFromString,
   facilityStatusRecordIdFromString,
+  facilityControlRightIdFromString,
+  facilityOperatorAssignmentIdFromString,
 } from './EntityIds'
 
 export type {
@@ -103,4 +105,6 @@ export type {
   FacilityUsageRightId,
   FacilityCompetitionApprovalId,
   FacilityStatusRecordId,
+  FacilityControlRightId,
+  FacilityOperatorAssignmentId,
 } from './EntityIds'

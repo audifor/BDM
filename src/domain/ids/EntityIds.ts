@@ -53,6 +53,10 @@ export type FacilityTeamRelationshipId = EntityId<'FacilityTeamRelationshipId'>
 export type FacilityUsageRightId = EntityId<'FacilityUsageRightId'>
 export type FacilityCompetitionApprovalId = EntityId<'FacilityCompetitionApprovalId'>
 export type FacilityStatusRecordId = EntityId<'FacilityStatusRecordId'>
+/** CFI2 — operational control over a Facility, independent of ownership and of Governance's institutional authority graph. */
+export type FacilityControlRightId = EntityId<'FacilityControlRightId'>
+/** CFI2 — day-to-day operator of a Facility, independent of who owns or controls it. */
+export type FacilityOperatorAssignmentId = EntityId<'FacilityOperatorAssignmentId'>
 
 function idFromString<Id extends string>(value: string, name: string): Id {
   if (typeof value !== 'string' || value.trim().length === 0) {
@@ -117,6 +121,8 @@ export const facilityTeamRelationshipIdFromString = (value: string): FacilityTea
 export const facilityUsageRightIdFromString = (value: string): FacilityUsageRightId => idFromString<FacilityUsageRightId>(value, 'FacilityUsageRightId')
 export const facilityCompetitionApprovalIdFromString = (value: string): FacilityCompetitionApprovalId => idFromString<FacilityCompetitionApprovalId>(value, 'FacilityCompetitionApprovalId')
 export const facilityStatusRecordIdFromString = (value: string): FacilityStatusRecordId => idFromString<FacilityStatusRecordId>(value, 'FacilityStatusRecordId')
+export const facilityControlRightIdFromString = (value: string): FacilityControlRightId => idFromString<FacilityControlRightId>(value, 'FacilityControlRightId')
+export const facilityOperatorAssignmentIdFromString = (value: string): FacilityOperatorAssignmentId => idFromString<FacilityOperatorAssignmentId>(value, 'FacilityOperatorAssignmentId')
 /** Legacy/generated-world compatibility resolver. World DB runtime uses the canonical Team relation. */
 export const organizationIdForTeam = (teamId: TeamId): OrganizationId => organizationIdFromString(teamId)
 
