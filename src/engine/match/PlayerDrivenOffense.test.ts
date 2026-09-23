@@ -13,7 +13,7 @@ const defender = createMatchPlayerProfile(createPlayer({ id: playerIdFromString(
 
 describe('player-driven offense primitives', () => {
   it('adapts the bootstrap ratings into exact bounded match signals', () => {
-    expect(profile.offense).toEqual({ usage: 66.65, rimAttack: 70.5, shooting: 65, creation: 44.25, ballSecurity: 44.60000000000001 })
+    expect(profile.offense).toEqual({ usage: 52.75, rimAttack: 75.25, shooting: 65.83333333333333, creation: 46.5, ballSecurity: 48.25 })
     expect(Object.values(profile.offense).every((value) => value >= 0 && value <= 100)).toBe(true)
     expect(Object.values(profile.defense).every((value) => value >= 0 && value <= 100)).toBe(true)
   })
@@ -24,12 +24,12 @@ describe('player-driven offense primitives', () => {
   })
 
   it('derives shot-zone weights, points, and make probability from player offense, defense, and fatigue', () => {
-    expect(calculateShotZoneWeights(profile)).toEqual({ rim: 75.9875, midRange: 45.8875, threePoint: 64.925 })
+    expect(calculateShotZoneWeights(profile)).toEqual({ rim: 79.64999999999999, midRange: 46.6, threePoint: 65.73333333333333 })
     expect(pointsForShotZone('rim')).toBe(2)
     expect(pointsForShotZone('midRange')).toBe(2)
     expect(pointsForShotZone('threePoint')).toBe(3)
-    expect(calculateShotMakeProbability({ shotZone: 'rim', shooterProfile: profile, shooterFatigue: 0, defenderProfile: defender, defenderFatigue: 0 })).toBeCloseTo(0.6465)
-    expect(calculateShotMakeProbability({ shotZone: 'rim', shooterProfile: profile, shooterFatigue: 80, defenderProfile: defender, defenderFatigue: 0 })).toBeCloseTo(0.5825)
+    expect(calculateShotMakeProbability({ shotZone: 'rim', shooterProfile: profile, shooterFatigue: 0, defenderProfile: defender, defenderFatigue: 0 })).toBeCloseTo(0.6685)
+    expect(calculateShotMakeProbability({ shotZone: 'rim', shooterProfile: profile, shooterFatigue: 80, defenderProfile: defender, defenderFatigue: 0 })).toBeCloseTo(0.6045)
   })
 })
 

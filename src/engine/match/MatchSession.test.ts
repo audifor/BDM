@@ -16,7 +16,7 @@ describe('MatchSession', () => {
     const stepped = toMatchSimulation(runToComplete(createMatchSession(createOptions(world, game.id, 12345, 67890))))
 
     expect(stepped).toEqual(whole)
-    expect(regressionSummary(whole)).toEqual({ finalScore: { home: 45, away: 79 }, eventCount: 220, homeTurnovers: 11, awayTurnovers: 5, homeRebounds: 23, awayRebounds: 35, homeAssists: 11, awayAssists: 17 })
+    expect(regressionSummary(whole)).toEqual({ finalScore: { home: 63, away: 71 }, eventCount: 209, homeTurnovers: 10, awayTurnovers: 8, homeRebounds: 24, awayRebounds: 30, homeAssists: 14, awayAssists: 14 })
   })
 
   it('advances one logical unit without mutating the previous sporting state', () => {

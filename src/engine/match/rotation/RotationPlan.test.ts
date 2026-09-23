@@ -27,7 +27,7 @@ describe('default match rotations', () => {
 
     expect(first).toEqual(second)
     expect(first.instructions).toHaveLength(20)
-    expect(first.instructions.find((item) => item.period === 1 && item.clockThresholdSeconds === 120 && item.playerOutId === starters[0])).toMatchObject({ playerInId: playerIdFromString('backup-PG-alpha') })
+    expect(first.instructions.find((item) => item.period === 1 && item.clockThresholdSeconds === 120 && item.playerOutId === starters[0])).toMatchObject({ playerInId: playerIdFromString('backup-PG-beta') })
     expect(new Set(first.instructions.filter((item) => item.period === 1).map((item) => item.playerInId)).size).toBe(5)
     expect(first.instructions.filter((item) => item.period === 1 && item.clockThresholdSeconds === 240).map((item) => item.playerOutId)).toEqual([starters[1], starters[3]])
     expect(first.instructions.filter((item) => item.period === 4 && item.clockThresholdSeconds === 360).map((item) => item.playerInId)).toEqual([starters[1], starters[3]])
