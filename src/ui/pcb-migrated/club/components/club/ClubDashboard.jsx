@@ -5,7 +5,7 @@ export default function ClubDashboard({
   teamDivision = "",
   leaguePosition = 0,
   nextOpponent = "",
-  balance = 0,
+  cashSummary = "",
   objectives = {},
   topPlayers = [],
   upcomingMatches = [],
@@ -16,9 +16,6 @@ export default function ClubDashboard({
   onPlayerClick,
 }) {
   const [showAllAlerts, setShowAllAlerts] = useState(false);
-
-  const balanceK = Math.round(Number(balance || 0) / 1000);
-  const economicHealth = balance > 500000 ? "Excelente" : balance > 100000 ? "Estable" : "Precaria";
 
   const objectivesArray = useMemo(() => Object.values(objectives || {}), [objectives]);
 
@@ -93,12 +90,12 @@ export default function ClubDashboard({
           </div>
           <div className="row club-kpis-table">
             <div>Salud econÃ³mica</div>
-            <div className="mono">{economicHealth}</div>
-            <div>{Number.isFinite(balanceK) ? `${balanceK}K disponible` : "â€”"}</div>
+            <div className="mono">Sin clasificación</div>
+            <div>Sin política financiera aprobada</div>
           </div>
           <div className="row club-kpis-table">
-            <div>Balance</div>
-            <div className="mono">{fmtMoney(balance)}</div>
+            <div>Caja</div>
+            <div className="mono">{cashSummary || "Sin hechos de caja"}</div>
             <div>{""}</div>
           </div>
           <div className="row club-kpis-table">
