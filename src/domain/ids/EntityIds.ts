@@ -26,8 +26,63 @@ export type CountryId = EntityId<'CountryId'>
 /** Identity boundary for canonical Organization-owned runtime data. */
 export type OrganizationId = EntityId<'OrganizationId'>
 export type OrganizationSectionId = EntityId<'OrganizationSectionId'>
+export type OrganizationOwnershipId = EntityId<'OrganizationOwnershipId'>
+export type OrganizationControlId = EntityId<'OrganizationControlId'>
+export type OrganizationOwnershipTransactionId = EntityId<'OrganizationOwnershipTransactionId'>
+export type InvestorInterestId = EntityId<'InvestorInterestId'>
+export type OrganizationCapitalRaiseId = EntityId<'OrganizationCapitalRaiseId'>
+export type OrganizationInvestmentProposalId = EntityId<'OrganizationInvestmentProposalId'>
+export type MultiClubOwnershipPolicyId = EntityId<'MultiClubOwnershipPolicyId'>
+export type OrganizationStructuralChangeId = EntityId<'OrganizationStructuralChangeId'>
+export type OrganizationLifecycleStateId = EntityId<'OrganizationLifecycleStateId'>
+export type OrganizationSuccessionId = EntityId<'OrganizationSuccessionId'>
+export type RegulatoryOrderId = EntityId<'RegulatoryOrderId'>
+export type RegulatoryRemediationPlanId = EntityId<'RegulatoryRemediationPlanId'>
+export type OrganizationLicenseId = EntityId<'OrganizationLicenseId'>
 export type AgentId = EntityId<'AgentId'>
 export type AgencyId = EntityId<'AgencyId'>
+/** Geographic/location identity (city, campus, complex, parcel, address, district). Never a Facility. */
+export type PlaceId = EntityId<'PlaceId'>
+/** Physical or functional installation identity. Persistent across renaming, ownership and operator change. */
+export type FacilityId = EntityId<'FacilityId'>
+export type FacilityComponentId = EntityId<'FacilityComponentId'>
+export type FacilityNameRecordId = EntityId<'FacilityNameRecordId'>
+export type FacilityOwnershipInterestId = EntityId<'FacilityOwnershipInterestId'>
+export type FacilityOrganizationRelationshipId = EntityId<'FacilityOrganizationRelationshipId'>
+export type FacilityTeamRelationshipId = EntityId<'FacilityTeamRelationshipId'>
+export type FacilityUsageRightId = EntityId<'FacilityUsageRightId'>
+export type FacilityCompetitionApprovalId = EntityId<'FacilityCompetitionApprovalId'>
+export type FacilityStatusRecordId = EntityId<'FacilityStatusRecordId'>
+/** CFI2 — operational control over a Facility, independent of ownership and of Governance's institutional authority graph. */
+export type FacilityControlRightId = EntityId<'FacilityControlRightId'>
+/** CFI2 — day-to-day operator of a Facility, independent of who owns or controls it. */
+export type FacilityOperatorAssignmentId = EntityId<'FacilityOperatorAssignmentId'>
+/** CFI4 — temporal physical condition/serviceability truth for one FacilityComponent. */
+export type FacilityComponentConditionRecordId = EntityId<'FacilityComponentConditionRecordId'>
+/** CFI4 — temporal physical condition truth for a Facility-wide dimension (structural integrity, envelope, utilities, accessibility infrastructure), never an aggregate of component records. */
+export type FacilityConditionRecordId = EntityId<'FacilityConditionRecordId'>
+/** CFI5 — a recorded need for maintenance/repair attention. */
+export type FacilityMaintenanceNeedId = EntityId<'FacilityMaintenanceNeedId'>
+/** CFI5 — a recorded maintenance/repair intervention. */
+export type FacilityMaintenanceActionId = EntityId<'FacilityMaintenanceActionId'>
+/** CFI5 — a recorded observation/operation, never a regulatory license. */
+export type FacilityInspectionId = EntityId<'FacilityInspectionId'>
+/** CFI5 — a recorded discrete physical/operational failure. */
+export type FacilityOperationalIncidentId = EntityId<'FacilityOperationalIncidentId'>
+/** CFI6 — a canonical construction/renovation/development project against a Facility (or planning a new one). */
+export type FacilityDevelopmentProjectId = EntityId<'FacilityDevelopmentProjectId'>
+/** CFI6 — one sequential phase of a `FacilityDevelopmentProject`. */
+export type FacilityDevelopmentProjectPhaseId = EntityId<'FacilityDevelopmentProjectPhaseId'>
+export type FinancialAccountId = EntityId<'FinancialAccountId'>
+export type FinancialTransactionId = EntityId<'FinancialTransactionId'>
+export type FiscalPeriodId = EntityId<'FiscalPeriodId'>
+export type ReceivableId = EntityId<'ReceivableId'>
+export type PayableId = EntityId<'PayableId'>
+export type TreasurySettlementId = EntityId<'TreasurySettlementId'>
+export type RevenueRecognitionId = EntityId<'RevenueRecognitionId'>
+export type ExpenseRecognitionId = EntityId<'ExpenseRecognitionId'>
+export type FinancialCommitmentId = EntityId<'FinancialCommitmentId'>
+export type FinancialEntitlementId = EntityId<'FinancialEntitlementId'>
 
 function idFromString<Id extends string>(value: string, name: string): Id {
   if (typeof value !== 'string' || value.trim().length === 0) {
@@ -67,8 +122,51 @@ export const coachPerkIdFromString = (value: string): CoachPerkId => idFromStrin
 export const countryIdFromString = (value: string): CountryId => idFromString<CountryId>(value, 'CountryId')
 export const organizationIdFromString = (value: string): OrganizationId => idFromString<OrganizationId>(value, 'OrganizationId')
 export const organizationSectionIdFromString = (value: string): OrganizationSectionId => idFromString<OrganizationSectionId>(value, 'OrganizationSectionId')
+export const organizationOwnershipIdFromString = (value: string): OrganizationOwnershipId => idFromString<OrganizationOwnershipId>(value, 'OrganizationOwnershipId')
+export const organizationControlIdFromString = (value: string): OrganizationControlId => idFromString<OrganizationControlId>(value, 'OrganizationControlId')
+export const organizationOwnershipTransactionIdFromString = (value: string): OrganizationOwnershipTransactionId => idFromString<OrganizationOwnershipTransactionId>(value, 'OrganizationOwnershipTransactionId')
+export const investorInterestIdFromString = (value: string): InvestorInterestId => idFromString<InvestorInterestId>(value, 'InvestorInterestId')
+export const organizationCapitalRaiseIdFromString = (value: string): OrganizationCapitalRaiseId => idFromString<OrganizationCapitalRaiseId>(value, 'OrganizationCapitalRaiseId')
+export const organizationInvestmentProposalIdFromString = (value: string): OrganizationInvestmentProposalId => idFromString<OrganizationInvestmentProposalId>(value, 'OrganizationInvestmentProposalId')
+export const multiClubOwnershipPolicyIdFromString = (value: string): MultiClubOwnershipPolicyId => idFromString<MultiClubOwnershipPolicyId>(value, 'MultiClubOwnershipPolicyId')
+export const organizationStructuralChangeIdFromString = (value: string): OrganizationStructuralChangeId => idFromString<OrganizationStructuralChangeId>(value, 'OrganizationStructuralChangeId')
+export const organizationLifecycleStateIdFromString = (value: string): OrganizationLifecycleStateId => idFromString<OrganizationLifecycleStateId>(value, 'OrganizationLifecycleStateId')
+export const organizationSuccessionIdFromString = (value: string): OrganizationSuccessionId => idFromString<OrganizationSuccessionId>(value, 'OrganizationSuccessionId')
+export const regulatoryOrderIdFromString = (value: string): RegulatoryOrderId => idFromString<RegulatoryOrderId>(value, 'RegulatoryOrderId')
+export const regulatoryRemediationPlanIdFromString = (value: string): RegulatoryRemediationPlanId => idFromString<RegulatoryRemediationPlanId>(value, 'RegulatoryRemediationPlanId')
+export const organizationLicenseIdFromString = (value: string): OrganizationLicenseId => idFromString<OrganizationLicenseId>(value, 'OrganizationLicenseId')
 export const agentIdFromString = (value: string): AgentId => idFromString<AgentId>(value, 'AgentId')
 export const agencyIdFromString = (value: string): AgencyId => idFromString<AgencyId>(value, 'AgencyId')
+export const placeIdFromString = (value: string): PlaceId => idFromString<PlaceId>(value, 'PlaceId')
+export const facilityIdFromString = (value: string): FacilityId => idFromString<FacilityId>(value, 'FacilityId')
+export const facilityComponentIdFromString = (value: string): FacilityComponentId => idFromString<FacilityComponentId>(value, 'FacilityComponentId')
+export const facilityNameRecordIdFromString = (value: string): FacilityNameRecordId => idFromString<FacilityNameRecordId>(value, 'FacilityNameRecordId')
+export const facilityOwnershipInterestIdFromString = (value: string): FacilityOwnershipInterestId => idFromString<FacilityOwnershipInterestId>(value, 'FacilityOwnershipInterestId')
+export const facilityOrganizationRelationshipIdFromString = (value: string): FacilityOrganizationRelationshipId => idFromString<FacilityOrganizationRelationshipId>(value, 'FacilityOrganizationRelationshipId')
+export const facilityTeamRelationshipIdFromString = (value: string): FacilityTeamRelationshipId => idFromString<FacilityTeamRelationshipId>(value, 'FacilityTeamRelationshipId')
+export const facilityUsageRightIdFromString = (value: string): FacilityUsageRightId => idFromString<FacilityUsageRightId>(value, 'FacilityUsageRightId')
+export const facilityCompetitionApprovalIdFromString = (value: string): FacilityCompetitionApprovalId => idFromString<FacilityCompetitionApprovalId>(value, 'FacilityCompetitionApprovalId')
+export const facilityStatusRecordIdFromString = (value: string): FacilityStatusRecordId => idFromString<FacilityStatusRecordId>(value, 'FacilityStatusRecordId')
+export const facilityControlRightIdFromString = (value: string): FacilityControlRightId => idFromString<FacilityControlRightId>(value, 'FacilityControlRightId')
+export const facilityOperatorAssignmentIdFromString = (value: string): FacilityOperatorAssignmentId => idFromString<FacilityOperatorAssignmentId>(value, 'FacilityOperatorAssignmentId')
+export const facilityComponentConditionRecordIdFromString = (value: string): FacilityComponentConditionRecordId => idFromString<FacilityComponentConditionRecordId>(value, 'FacilityComponentConditionRecordId')
+export const facilityConditionRecordIdFromString = (value: string): FacilityConditionRecordId => idFromString<FacilityConditionRecordId>(value, 'FacilityConditionRecordId')
+export const facilityMaintenanceNeedIdFromString = (value: string): FacilityMaintenanceNeedId => idFromString<FacilityMaintenanceNeedId>(value, 'FacilityMaintenanceNeedId')
+export const facilityMaintenanceActionIdFromString = (value: string): FacilityMaintenanceActionId => idFromString<FacilityMaintenanceActionId>(value, 'FacilityMaintenanceActionId')
+export const facilityInspectionIdFromString = (value: string): FacilityInspectionId => idFromString<FacilityInspectionId>(value, 'FacilityInspectionId')
+export const facilityOperationalIncidentIdFromString = (value: string): FacilityOperationalIncidentId => idFromString<FacilityOperationalIncidentId>(value, 'FacilityOperationalIncidentId')
+export const facilityDevelopmentProjectIdFromString = (value: string): FacilityDevelopmentProjectId => idFromString<FacilityDevelopmentProjectId>(value, 'FacilityDevelopmentProjectId')
+export const facilityDevelopmentProjectPhaseIdFromString = (value: string): FacilityDevelopmentProjectPhaseId => idFromString<FacilityDevelopmentProjectPhaseId>(value, 'FacilityDevelopmentProjectPhaseId')
+export const financialAccountIdFromString = (value: string): FinancialAccountId => idFromString<FinancialAccountId>(value, 'FinancialAccountId')
+export const financialTransactionIdFromString = (value: string): FinancialTransactionId => idFromString<FinancialTransactionId>(value, 'FinancialTransactionId')
+export const fiscalPeriodIdFromString = (value: string): FiscalPeriodId => idFromString<FiscalPeriodId>(value, 'FiscalPeriodId')
+export const receivableIdFromString = (value: string): ReceivableId => idFromString<ReceivableId>(value, 'ReceivableId')
+export const payableIdFromString = (value: string): PayableId => idFromString<PayableId>(value, 'PayableId')
+export const treasurySettlementIdFromString = (value: string): TreasurySettlementId => idFromString<TreasurySettlementId>(value, 'TreasurySettlementId')
+export const revenueRecognitionIdFromString = (value: string): RevenueRecognitionId => idFromString<RevenueRecognitionId>(value, 'RevenueRecognitionId')
+export const expenseRecognitionIdFromString = (value: string): ExpenseRecognitionId => idFromString<ExpenseRecognitionId>(value, 'ExpenseRecognitionId')
+export const financialCommitmentIdFromString = (value: string): FinancialCommitmentId => idFromString<FinancialCommitmentId>(value, 'FinancialCommitmentId')
+export const financialEntitlementIdFromString = (value: string): FinancialEntitlementId => idFromString<FinancialEntitlementId>(value, 'FinancialEntitlementId')
 /** Legacy/generated-world compatibility resolver. World DB runtime uses the canonical Team relation. */
 export const organizationIdForTeam = (teamId: TeamId): OrganizationId => organizationIdFromString(teamId)
 

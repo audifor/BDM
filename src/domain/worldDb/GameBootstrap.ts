@@ -23,15 +23,34 @@ export interface WorldDbGameBootstrapSeasonV1 {
 export interface WorldDbGameBootstrapOrganizationV1 { readonly organizationId: string; readonly entityId: string; readonly legalName: string | null; readonly foundedYear: number | null; readonly dissolvedYear: number | null; readonly primaryPlaceId: string | null; readonly website: string | null }
 export interface WorldDbGameBootstrapOrganizationSectionV1 { readonly sectionId: string; readonly organizationId: string; readonly sport: string | null; readonly gender: string | null; readonly categoryScope: string | null; readonly canonicalName: string; readonly validFrom: string | null; readonly validTo: string | null }
 export interface WorldDbGameBootstrapTeamV1 { readonly teamId: string; readonly name: string; readonly gender: 'male' | 'female'; readonly countryId: string; readonly organizationId: string; readonly organizationSectionId: string }
+export interface WorldDbGameBootstrapOrganizationOwnershipV1 {
+  readonly ownershipId: string
+  readonly organizationId: string
+  readonly ownerKind: 'PERSON' | 'ORGANIZATION'
+  readonly ownerId: string
+  readonly ownershipPercentage: number | null
+  readonly validFrom: string | null
+  readonly validTo: string | null
+}
+export interface WorldDbGameBootstrapOrganizationInvestorInterestV1 {
+  readonly interestId: string
+  readonly organizationId: string
+  readonly investorKind: 'PERSON' | 'ORGANIZATION'
+  readonly investorId: string
+  readonly interestType: string
+  readonly status: string | null
+  readonly openedOn: string | null
+  readonly closedOn: string | null
+}
 
 export interface WorldDbGameBootstrapPersonV1 {
   readonly personId: string
   readonly firstName: string
   readonly lastName: string
-  readonly gender: 'male' | 'female'
-  readonly dateOfBirth: string
+  readonly gender?: 'male' | 'female'
+  readonly dateOfBirth?: string
   readonly nationalityIds: readonly string[]
-  readonly physical: { readonly heightCm: number; readonly weightKg: number; readonly wingspanCm: number; readonly standingReachCm: number }
+  readonly physical?: { readonly heightCm: number; readonly weightKg: number; readonly wingspanCm: number; readonly standingReachCm: number }
 }
 export interface WorldDbGameBootstrapDevelopmentDimensionV1 { readonly dimensionCode: string; readonly ceiling: number; readonly growthRate: number; readonly declineSensitivity: number }
 export interface WorldDbGameBootstrapPlayerV1 {
@@ -60,6 +79,8 @@ export interface WorldDbGameBootstrapSliceV1 {
   readonly countries: readonly WorldDbGameBootstrapCountryV1[]
   readonly organizations: readonly WorldDbGameBootstrapOrganizationV1[]
   readonly organizationSections: readonly WorldDbGameBootstrapOrganizationSectionV1[]
+  readonly organizationOwnership?: readonly WorldDbGameBootstrapOrganizationOwnershipV1[]
+  readonly organizationInvestorInterest?: readonly WorldDbGameBootstrapOrganizationInvestorInterestV1[]
   readonly teams: readonly WorldDbGameBootstrapTeamV1[]
   readonly persons: readonly WorldDbGameBootstrapPersonV1[]
   readonly players: readonly WorldDbGameBootstrapPlayerV1[]
@@ -95,14 +116,21 @@ export function assertWorldDbGameBootstrapSliceV1(value: unknown): asserts value
   assertArray(value.countries, 'countries', (entry) => { for (const field of ['countryId', 'name', 'code'] as const) requireText(entry[field], `World DB bootstrap country ${field}`) }, 'countryId')
   assertArray(value.organizations, 'organizations', (entry) => { for (const field of ['organizationId', 'entityId'] as const) requireText(entry[field], `World DB bootstrap organization ${field}`); for (const field of ['legalName', 'primaryPlaceId', 'website'] as const) requireNullableText(entry[field], `World DB bootstrap organization ${field}`); for (const field of ['foundedYear', 'dissolvedYear'] as const) requireNullableInteger(entry[field], `World DB bootstrap organization ${field}`) }, 'organizationId')
   assertArray(value.organizationSections, 'organizationSections', (entry) => { for (const field of ['sectionId', 'organizationId', 'canonicalName'] as const) requireText(entry[field], `World DB bootstrap organization section ${field}`); for (const field of ['sport', 'gender', 'categoryScope', 'validFrom', 'validTo'] as const) requireNullableText(entry[field], `World DB bootstrap organization section ${field}`) }, 'sectionId')
+  assertArray(value.organizationOwnership ?? [], 'organizationOwnership', (entry) => { for (const field of ['ownershipId', 'organizationId', 'ownerKind', 'ownerId'] as const) requireText(entry[field], `World DB bootstrap ownership ${field}`); if (entry.ownerKind !== 'PERSON' && entry.ownerKind !== 'ORGANIZATION') throw new TypeError(`World DB bootstrap ownership ownerKind is unsupported: ${String(entry.ownerKind)}`); if (typeof entry.ownershipPercentage !== 'number' && entry.ownershipPercentage !== null) throw new TypeError('World DB bootstrap ownership percentage must be a number or null'); for (const field of ['validFrom', 'validTo'] as const) requireNullableText(entry[field], `World DB bootstrap ownership ${field}`) }, 'ownershipId')
+  assertArray(value.organizationInvestorInterest ?? [], 'organizationInvestorInterest', (entry) => { for (const field of ['interestId', 'organizationId', 'investorKind', 'investorId', 'interestType'] as const) requireText(entry[field], `World DB bootstrap investor interest ${field}`); if (entry.investorKind !== 'PERSON' && entry.investorKind !== 'ORGANIZATION') throw new TypeError(`World DB bootstrap investor interest investorKind is unsupported: ${String(entry.investorKind)}`); requireNullableText(entry.status, 'World DB bootstrap investor interest status'); requireNullableText(entry.openedOn, 'World DB bootstrap investor interest openedOn'); requireNullableText(entry.closedOn, 'World DB bootstrap investor interest closedOn') }, 'interestId')
   assertArray(value.teams, 'teams', (entry) => { for (const field of ['teamId', 'name', 'gender', 'countryId', 'organizationId', 'organizationSectionId'] as const) requireText(entry[field], `World DB bootstrap team ${field}`) }, 'teamId')
   const organizationIds = new Set((value.organizations as Record<string, unknown>[]).map((entry) => entry.organizationId as string))
   const sectionsById = new Map((value.organizationSections as Record<string, unknown>[]).map((entry) => [entry.sectionId as string, entry]))
   for (const section of value.organizationSections as Record<string, unknown>[]) if (!organizationIds.has(section.organizationId as string)) throw new TypeError(`World DB bootstrap organization section references a missing organization: ${String(section.sectionId)}`)
   for (const team of value.teams as Record<string, unknown>[]) { const section = sectionsById.get(team.organizationSectionId as string); if (!organizationIds.has(team.organizationId as string) || section === undefined || section.organizationId !== team.organizationId) throw new TypeError(`World DB bootstrap team organization relation is invalid: ${String(team.teamId)}`) }
-  assertArray(value.persons, 'persons', (entry) => { for (const field of ['personId', 'firstName', 'lastName', 'gender', 'dateOfBirth'] as const) requireText(entry[field], `World DB bootstrap person ${field}`); if (!Array.isArray(entry.nationalityIds) || !isRecord(entry.physical)) throw new TypeError('World DB bootstrap person identity is incomplete') }, 'personId')
+  assertArray(value.persons, 'persons', (entry) => { for (const field of ['personId', 'firstName', 'lastName'] as const) requireText(entry[field], `World DB bootstrap person ${field}`); if (entry.gender !== undefined) requireText(entry.gender, 'World DB bootstrap person gender'); if (entry.dateOfBirth !== undefined) requireText(entry.dateOfBirth, 'World DB bootstrap person dateOfBirth'); if (!Array.isArray(entry.nationalityIds)) throw new TypeError('World DB bootstrap person nationalityIds must be an array'); if (entry.physical !== undefined && !isRecord(entry.physical)) throw new TypeError('World DB bootstrap person physical must be an object') }, 'personId')
   assertArray(value.players, 'players', (entry) => { for (const field of ['playerId', 'personId', 'primaryPosition', 'dominantHand'] as const) requireText(entry[field], `World DB bootstrap player ${field}`); assertExactKeys(entry.ratings, PLAYER_TRUTH_RATING_KEYS, 'ratings'); assertExactKeys(entry.tendencies, PLAYER_TRUTH_TENDENCY_KEYS, 'tendencies'); if (!Array.isArray(entry.development)) throw new TypeError('World DB bootstrap player development must be an array') }, 'playerId')
   assertArray(value.staffProfiles, 'staffProfiles', (entry) => { for (const field of ['staffId', 'personId'] as const) requireText(entry[field], `World DB bootstrap staff ${field}`); if (!isRecord(entry.attributes) || !Array.isArray(entry.specialismIds)) throw new TypeError('World DB bootstrap staff profile is incomplete') }, 'staffId')
+  const profiledPersonIds = new Set<string>([
+    ...((value.players as Record<string, unknown>[]).map((entry) => entry.personId as string)),
+    ...((value.staffProfiles as Record<string, unknown>[]).map((entry) => entry.personId as string)),
+  ])
+  for (const person of value.persons as Record<string, unknown>[]) if (profiledPersonIds.has(person.personId as string) && (person.gender === undefined || person.dateOfBirth === undefined || !isRecord(person.physical))) throw new TypeError(`World DB bootstrap profiled person is incomplete: ${String(person.personId)}`)
   assertArray(value.staffAssignments, 'staffAssignments', (entry) => { for (const field of ['assignmentId', 'staffId', 'teamId', 'roleCode', 'assignedOn'] as const) requireText(entry[field], `World DB bootstrap staff assignment ${field}`) }, 'assignmentId')
   assertArray(value.rosterAssignments, 'rosterAssignments', (entry) => { for (const field of ['rosterId', 'teamId', 'playerId', 'status'] as const) requireText(entry[field], `World DB bootstrap roster assignment ${field}`) }, undefined)
   assertArray(value.matches, 'matches', (entry) => { for (const field of ['matchId', 'status', 'homeTeamId', 'awayTeamId'] as const) requireText(entry[field], `World DB bootstrap match ${field}`) }, 'matchId')

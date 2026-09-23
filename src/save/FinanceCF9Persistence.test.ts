@@ -1,0 +1,11 @@
+import { describe, expect, it } from 'vitest'
+import { createValidGameWorldInput } from '@/domain/world/testFixtures'
+import { createGameWorld } from '@/domain/world'
+import { createDebtInstrument } from '@/domain/finance/DebtEngine'
+import { createCompetitionDistributionFact } from '@/domain/finance/CompetitionEconomy'
+import { deserializeGameWorldV4, serializeGameWorldV4 } from './GameWorldSaveV4'
+
+describe('CF9 Save V4 persistence', () => {
+  it('round-trips debt instruments and competition facts while keeping derived schedules absent', () => { const input = createValidGameWorldInput(); const debt = createDebtInstrument({ id: 'debt:save', organizationId: 'team-home', lender: { kind: 'EXTERNAL', label: 'Bank' }, debtType: 'OWNER_LOAN', currencyCode: 'EUR', originalPrincipal: { currencyCode: 'EUR', minorUnits: 5_000 }, startsOn: '2032-10-01', maturityOn: '2032-10-31', provenance: { kind: 'CF9_TEST', id: 'debt-save' } }); const fact = createCompetitionDistributionFact({ id: 'distribution:save', competitionId: 'competition-a', seasonId: 'season-a', recipientOrganizationId: 'team-home', recipientTeamId: 'team-home', amount: { currencyCode: 'EUR', minorUnits: 7_000 }, category: 'LEAGUE_DISTRIBUTION', effectiveOn: '2032-10-02', dueOn: '2032-10-03', sourceRule: 'db-rule', provenance: { kind: 'CF9_TEST', id: 'distribution-save' } }); const world = createGameWorld({ ...input, debtInstruments: [debt], competitionDistributionFacts: [fact] }); const restored = deserializeGameWorldV4(serializeGameWorldV4(world, '2032-10-01T00:00:00.000Z')); expect(restored.debtInstrumentsById).toEqual(world.debtInstrumentsById); expect(restored.competitionDistributionFactsById).toEqual(world.competitionDistributionFactsById) })
+  it('defaults the additive CF9 collections for an old V4 payload', () => { const saved = serializeGameWorldV4(createGameWorld(createValidGameWorldInput()), '2032-10-01T00:00:00.000Z'); const payload = { ...saved.payload } as Record<string, unknown>; delete payload.debtInstruments; delete payload.competitionDistributionFacts; const restored = deserializeGameWorldV4({ ...saved, payload }); expect(restored.debtInstrumentsById).toEqual({}); expect(restored.competitionDistributionFactsById).toEqual({}) })
+})

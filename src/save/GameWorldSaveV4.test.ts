@@ -1,7 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { advanceDay } from '@/engine/calendar'
+import { parseGameDate } from '@/domain/date'
 import { createGovernanceInstitution } from '@/domain/governance'
+import { createOrganization } from '@/domain/organization'
+import { organizationIdFromString, personIdFromString } from '@/domain/ids'
+import { createPerson } from '@/domain/person'
+import { createOrganizationControl, createOrganizationOwnership } from '@/domain/ownership/OrganizationOwnership'
+import { createOrganizationOwnershipTransaction, createOrganizationOwnershipTransactionEvent } from '@/domain/ownership/OrganizationOwnershipTransaction'
+import { executeOrganizationOwnershipTransaction } from '@/domain/ownership/OrganizationOwnershipTransactionExecution'
+import { createOrganizationInvestorInterest } from '@/domain/investment/OrganizationInvestorInterest'
+import { createOrganizationCapitalRaise, createOrganizationCapitalRaiseEvent } from '@/domain/investment/OrganizationCapitalRaise'
+import { createOrganizationInvestmentProposal, createOrganizationInvestmentProposalEvent } from '@/domain/investment/OrganizationInvestmentProposal'
+import { executeOrganizationInvestmentProposal } from '@/domain/investment/OrganizationInvestmentExecution'
 import { createSupporterRelationship } from '@/domain/supporters'
 import { attachWorldDbCompetitionRuntime, hasAppliedAnnualDevelopmentCycle, markAnnualDevelopmentCycleApplied, updateGameWorld } from '@/domain/world'
 import { serializeGameWorldV3 } from './GameWorldSaveV3'
@@ -119,10 +130,110 @@ describe('GameWorldSaveV4 competition runtime', () => {
     expect(restored.governanceInstitutionsById).toEqual(world.governanceInstitutionsById)
   })
 
+  it('round-trips BG8A ownership and independent control records through Save V4', () => {
+    const base = createNewGame()
+    const target = Object.values(base.teams)[0]!.organizationId
+    const holding = createOrganization({ id: organizationIdFromString('organization:save-v4-holding'), entityId: null, legalName: 'Save V4 Holding', foundedYear: 2000, dissolvedYear: null, primaryPlaceId: null, website: null })
+    const owner = createPerson({ id: personIdFromString('person:save-v4-owner'), firstName: 'Save', lastName: 'Owner', profileRefs: [] })
+    const ownership = createOrganizationOwnership({ id: 'ownership:save-v4', organizationId: target, owner: { kind: 'ORGANIZATION', organizationId: holding.id }, ownershipPercentage: null, validFrom: '2030-01-01', validTo: null })
+    const control = createOrganizationControl({ id: 'control:save-v4', organizationId: target, controller: { kind: 'PERSON', personId: owner.id }, validFrom: '2030-01-01', validTo: null })
+    const world = updateGameWorld(base, {
+      organizations: [...Object.values(base.organizationsById), holding],
+      persons: [...Object.values(base.personsById), owner],
+      organizationOwnership: [ownership],
+      organizationControl: [control],
+    })
+
+    const saved = serializeGameWorldV4(world, savedAt)
+    expect(saved.payload.organizationOwnership).toEqual([ownership])
+    expect(saved.payload.organizationControl).toEqual([control])
+    const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(saved)))
+    expect(restored.organizationOwnershipById).toEqual({ [ownership.id]: ownership })
+    expect(restored.organizationControlById).toEqual({ [control.id]: control })
+  })
+
+  it('round-trips BG8B ownership transactions and defaults missing transaction collections to empty', () => {
+    const base = createNewGame()
+    const target = Object.values(base.teams)[0]!
+    const people = Object.values(base.personsById).slice(0, 2)
+    const transaction = createOrganizationOwnershipTransaction({
+      id: 'transaction:save-v4',
+      organizationId: target.organizationId,
+      seller: { kind: 'PERSON', personId: people[0]!.id },
+      buyer: { kind: 'PERSON', personId: people[1]!.id },
+      transferredPercentage: 25,
+      agreedOn: '2030-01-01',
+      consideration: null,
+    })
+    const events = [
+      createOrganizationOwnershipTransactionEvent({ id: 'event:save-v4-proposed', transactionId: transaction.id, kind: 'PROPOSED', effectiveOn: '2030-01-01' }),
+      createOrganizationOwnershipTransactionEvent({ id: 'event:save-v4-approved', transactionId: transaction.id, kind: 'APPROVED', effectiveOn: '2030-01-02' }),
+    ]
+    const world = updateGameWorld(base, {
+      organizationOwnership: [createOrganizationOwnership({ id: 'ownership:save-v4-seller', organizationId: target.organizationId, owner: { kind: 'PERSON', personId: people[0]!.id }, ownershipPercentage: 100, validFrom: '2020-01-01', validTo: null })],
+      organizationOwnershipTransactions: [transaction], organizationOwnershipTransactionEvents: events,
+    })
+    const executed = executeOrganizationOwnershipTransaction(world, transaction.id, parseGameDate('2030-01-03'))
+    const saved = serializeGameWorldV4(executed, savedAt)
+    expect(saved.payload.organizationOwnershipTransactions).toEqual([transaction])
+    expect(saved.payload.organizationOwnershipTransactionEvents).toHaveLength(3)
+    expect(saved.payload.organizationOwnershipTransactionEvents.at(-1)?.kind).toBe('EXECUTED')
+    const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(saved)))
+    expect(restored.organizationOwnershipTransactionsById).toEqual({ [transaction.id]: transaction })
+    expect(restored.organizationOwnershipTransactionEventsById).toEqual(Object.fromEntries(saved.payload.organizationOwnershipTransactionEvents.map((event) => [event.id, event])))
+    expect(restored.organizationOwnershipById).toEqual(executed.organizationOwnershipById)
+
+    const { organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _events, ...legacyPayload } = saved.payload
+    const legacyRestored = deserializeGameWorldV4({ ...saved, payload: legacyPayload })
+    expect(legacyRestored.organizationOwnershipTransactionsById).toEqual({})
+    expect(legacyRestored.organizationOwnershipTransactionEventsById).toEqual({})
+  })
+
+  it('round-trips BG8C interest, capital raise, proposal, execution history and old-V4 defaults', () => {
+    const base = createNewGame()
+    const target = Object.values(base.teams)[0]!
+    const people = Object.values(base.personsById).slice(0, 2)
+    const interest = createOrganizationInvestorInterest({ id: 'interest:save-v4', organizationId: target.organizationId, investor: { kind: 'PERSON', personId: people[1]!.id }, interestType: 'ACQUISITION', status: 'OPEN', openedOn: '2029-01-01', closedOn: null })
+    const raise = createOrganizationCapitalRaise({ id: 'raise:save-v4', organizationId: target.organizationId, openedOn: '2030-01-01', targetAmount: 100, currencyCode: 'EUR', maximumEquityPercentage: 40 })
+    const raiseEvents = [createOrganizationCapitalRaiseEvent({ id: 'raise-event:save-v4-opened', capitalRaiseId: raise.id, kind: 'OPENED', effectiveOn: '2030-01-01' })]
+    const proposal = createOrganizationInvestmentProposal({ id: 'proposal:save-v4', capitalRaiseId: raise.id, investor: { kind: 'PERSON', personId: people[1]!.id }, amount: 20, currencyCode: 'EUR', requestedEquityPercentage: 20, proposedOn: '2030-01-02' })
+    const proposalEvents = [
+      createOrganizationInvestmentProposalEvent({ id: 'proposal-event:save-v4-proposed', proposalId: proposal.id, kind: 'PROPOSED', effectiveOn: '2030-01-02' }),
+      createOrganizationInvestmentProposalEvent({ id: 'proposal-event:save-v4-accepted', proposalId: proposal.id, kind: 'ACCEPTED', effectiveOn: '2030-01-03' }),
+    ]
+    const world = updateGameWorld(base, {
+      organizationOwnership: [createOrganizationOwnership({ id: 'ownership:save-v4-primary', organizationId: target.organizationId, owner: { kind: 'PERSON', personId: people[0]!.id }, ownershipPercentage: 100, validFrom: '2020-01-01', validTo: null })],
+      organizationInvestorInterests: [interest], organizationCapitalRaises: [raise], organizationCapitalRaiseEvents: raiseEvents, organizationInvestmentProposals: [proposal], organizationInvestmentProposalEvents: proposalEvents,
+    })
+    const executed = executeOrganizationInvestmentProposal(world, proposal.id, parseGameDate('2030-01-04'))
+    const saved = serializeGameWorldV4(executed, savedAt)
+    const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(saved)))
+    expect(restored.organizationInvestorInterestsById).toEqual({ [interest.id]: interest })
+    expect(restored.organizationCapitalRaisesById).toEqual({ [raise.id]: raise })
+    expect(restored.organizationCapitalRaiseEventsById).toEqual({ [raiseEvents[0]!.id]: raiseEvents[0] })
+    expect(restored.organizationInvestmentProposalsById).toEqual({ [proposal.id]: proposal })
+    expect(Object.values(restored.organizationInvestmentProposalEventsById).at(-1)?.kind).toBe('EXECUTED')
+    expect(restored.organizationOwnershipById).toEqual(executed.organizationOwnershipById)
+
+    const { organizationInvestorInterests: _interests, organizationCapitalRaises: _raises, organizationCapitalRaiseEvents: _raiseEvents, organizationInvestmentProposals: _proposals, organizationInvestmentProposalEvents: _proposalEvents, ...legacyPayload } = saved.payload
+    const legacyRestored = deserializeGameWorldV4({ ...saved, payload: legacyPayload })
+    expect(legacyRestored.organizationInvestorInterestsById).toEqual({})
+    expect(legacyRestored.organizationCapitalRaisesById).toEqual({})
+    expect(legacyRestored.organizationInvestmentProposalsById).toEqual({})
+  })
+
+  it('defaults ownership and control to empty when loading a pre-BG8A V4 payload', () => {
+    const current = serializeGameWorldV4(createNewGame(), savedAt)
+    const { organizationOwnership: _ownership, organizationControl: _control, ...legacyPayload } = current.payload
+    const restored = deserializeGameWorldV4({ ...current, payload: legacyPayload })
+    expect(restored.organizationOwnershipById).toEqual({})
+    expect(restored.organizationControlById).toEqual({})
+  })
+
   it('migrates canonical V3 by preserving V3 fields and adding empty runtime state', () => {
     const v3 = serializeGameWorldV3(createNewGame(), savedAt)
     const v4 = migrateGameWorldSaveV3ToV4(v3)
-    const { worldDbCompetitionRuntime, worldAnnualDevelopmentCycle, organizations, organizationSections, ...v4CompatibilityPayload } = v4.payload
+    const { worldDbCompetitionRuntime, worldAnnualDevelopmentCycle, organizations, organizationSections, organizationOwnership, organizationControl, organizationOwnershipTransactions, organizationOwnershipTransactionEvents, organizationInvestorInterests, organizationCapitalRaises, organizationCapitalRaiseEvents, organizationInvestmentProposals, organizationInvestmentProposalEvents, multiClubOwnershipPolicies, organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses, places, facilities, facilityComponents, facilityNameRecords, facilityOwnershipInterests, facilityControlRights, facilityOperatorAssignments, facilityOrganizationRelationships, facilityTeamRelationships, facilityUsageRights, facilityCompetitionApprovals, facilityStatusRecords, facilityComponentConditionRecords, facilityConditionRecords, facilityMaintenanceNeeds, facilityMaintenanceActions, facilityInspections, facilityOperationalIncidents, facilityDevelopmentProjects, facilityDevelopmentProjectPhases, facilityFinancialBindings, ...v4CompatibilityPayload } = v4.payload
 
     expect(v4.schemaVersion).toBe(4)
     expect(v4CompatibilityPayload).toEqual(v3.payload)
@@ -132,6 +243,42 @@ describe('GameWorldSaveV4 competition runtime', () => {
       competitionSeasonIds: [],
     })
     expect(worldAnnualDevelopmentCycle).toEqual({ lastAppliedCycleId: null })
+    expect(organizationOwnership).toEqual([])
+    expect(organizationControl).toEqual([])
+    expect(organizationOwnershipTransactions).toEqual([])
+    expect(organizationOwnershipTransactionEvents).toEqual([])
+    expect(organizationInvestorInterests).toEqual([])
+    expect(organizationCapitalRaises).toEqual([])
+    expect(organizationCapitalRaiseEvents).toEqual([])
+    expect(organizationInvestmentProposals).toEqual([])
+    expect(organizationInvestmentProposalEvents).toEqual([])
+    expect(multiClubOwnershipPolicies).toEqual([])
+    expect(organizationStructuralChanges).toEqual([])
+    expect(organizationLifecycleStates).toEqual([])
+    expect(organizationSuccessions).toEqual([])
+    expect(regulatoryOrders).toEqual([])
+    expect(regulatoryRemediationPlans).toEqual([])
+    expect(organizationLicenses).toEqual([])
+    expect(places).toEqual([])
+    expect(facilities).toEqual([])
+    expect(facilityComponents).toEqual([])
+    expect(facilityNameRecords).toEqual([])
+    expect(facilityOwnershipInterests).toEqual([])
+    expect(facilityControlRights).toEqual([])
+    expect(facilityOperatorAssignments).toEqual([])
+    expect(facilityOrganizationRelationships).toEqual([])
+    expect(facilityTeamRelationships).toEqual([])
+    expect(facilityUsageRights).toEqual([])
+    expect(facilityCompetitionApprovals).toEqual([])
+    expect(facilityStatusRecords).toEqual([])
+    expect(facilityComponentConditionRecords).toEqual([])
+    expect(facilityConditionRecords).toEqual([])
+    expect(facilityMaintenanceNeeds).toEqual([])
+    expect(facilityMaintenanceActions).toEqual([])
+    expect(facilityInspections).toEqual([])
+    expect(facilityOperationalIncidents).toEqual([])
+    expect(facilityDevelopmentProjects).toEqual([])
+    expect(facilityDevelopmentProjectPhases).toEqual([])
     expect(organizations.length).toBeGreaterThan(0)
     expect(organizationSections.length).toBeGreaterThan(0)
   })
