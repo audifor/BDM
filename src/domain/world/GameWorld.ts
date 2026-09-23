@@ -54,6 +54,7 @@ import type { ContractId } from '@/domain/ids'
 import { createPlayerContract, type PlayerContract } from '@/domain/contract'
 import { createExpenseRecognition, createFinancialAccount, createFinancialBudget, createFinancialCommitment, createFinancialEntitlement, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile, createPayable, createReceivable, createRevenueRecognition, createTeamFinances, createTreasurySettlement, createBudgetAllocation, createBudgetLine, createBudgetRevision, createForecastAssumption, validateFinancialPlanningCollections, isCashAccount, createRevenueSource, validateRevenueSources, createOperatingCostSource, createAuthorizedOperatingCostFact, validateOperatingCostCollections, createDebtInstrument, validateDebtInstrumentCollections, createCompetitionDistributionFact, validateCompetitionDistributionFacts, type DebtInstrument, type CompetitionDistributionFact, type AuthorizedOperatingCostFact, type OperatingCostSource, type BudgetAllocation, type BudgetLine, type BudgetRevision, type ExpenseRecognition, type FinancialAccount, type FinancialBudget, type FinancialCommitment, type FinancialEntitlement, type FinancialTransaction, type FiscalPeriod, type ForecastAssumption, type OrganizationFinancialProfile, type Payable, type Receivable, type RevenueRecognition, type RevenueSource, type TeamFinances, type TreasurySettlement } from '@/domain/finance'
 import { createEconomicObservation, createExchangeRate, createFinancialRegulationAssessment, validateEconomicCollections, type EconomicObservation, type ExchangeRate, type FinancialRegulationAssessment } from '@/domain/finance'
+import { createFinanceDecisionProposal, type FinanceDecisionProposal } from '@/domain/finance/FinanceAI'
 import type { PlayerTransaction } from '@/domain/transaction'
 import type { PlayerTransactionId } from '@/domain/ids'
 import { createOrganizationKnowledge, createPlayerKnowledge, type OrganizationKnowledge, type PlayerKnowledgeRecord } from '@/domain/knowledge'
@@ -176,6 +177,7 @@ export interface GameWorld {
   readonly budgetAllocationsById: Readonly<Record<string, BudgetAllocation>>
   readonly forecastAssumptionsById: Readonly<Record<string, ForecastAssumption>>
   readonly financialRegulationAssessmentsById: Readonly<Record<string, FinancialRegulationAssessment>>
+  readonly financeDecisionProposalsById: Readonly<Record<string, FinanceDecisionProposal>>
   readonly economicObservationsById: Readonly<Record<string, EconomicObservation>>
   readonly exchangeRatesById: Readonly<Record<string, ExchangeRate>>
   readonly playerTransactionsById: Readonly<Record<PlayerTransactionId, PlayerTransaction>>
@@ -422,6 +424,7 @@ export interface CreateGameWorldInput {
   budgetAllocations?: readonly BudgetAllocation[]
   forecastAssumptions?: readonly ForecastAssumption[]
   financialRegulationAssessments?: readonly FinancialRegulationAssessment[]
+  financeDecisionProposals?: readonly FinanceDecisionProposal[]
   economicObservations?: readonly EconomicObservation[]
   exchangeRates?: readonly ExchangeRate[]
   playerTransactions?: readonly PlayerTransaction[]
@@ -694,6 +697,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     budgetAllocationsById: indexById((input.budgetAllocations ?? []).map(createBudgetAllocation), 'Budget allocation'),
     forecastAssumptionsById: indexById((input.forecastAssumptions ?? []).map(createForecastAssumption), 'Forecast assumption'),
     financialRegulationAssessmentsById: indexById((input.financialRegulationAssessments ?? []).map(createFinancialRegulationAssessment), 'Financial regulation assessment'),
+    financeDecisionProposalsById: indexById((input.financeDecisionProposals ?? []).map(createFinanceDecisionProposal), 'Finance decision proposal'),
     economicObservationsById: indexById((input.economicObservations ?? []).map(createEconomicObservation), 'Economic observation'),
     exchangeRatesById: indexById((input.exchangeRates ?? []).map(createExchangeRate), 'Exchange rate'),
     playerTransactionsById: indexById(input.playerTransactions ?? [], 'Player transaction'),
@@ -887,7 +891,7 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
 }
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
-  financialBudgets: 'financialBudgetsById', budgetLines: 'budgetLinesById', budgetRevisions: 'budgetRevisionsById', budgetAllocations: 'budgetAllocationsById', forecastAssumptions: 'forecastAssumptionsById', financialRegulationAssessments: 'financialRegulationAssessmentsById', economicObservations: 'economicObservationsById', exchangeRates: 'exchangeRatesById', revenueSources: 'revenueSourcesById', operatingCostSources: 'operatingCostSourcesById', operatingCostFacts: 'operatingCostFactsById', debtInstruments: 'debtInstrumentsById', competitionDistributionFacts: 'competitionDistributionFactsById',
+  financialBudgets: 'financialBudgetsById', budgetLines: 'budgetLinesById', budgetRevisions: 'budgetRevisionsById', budgetAllocations: 'budgetAllocationsById', forecastAssumptions: 'forecastAssumptionsById', financialRegulationAssessments: 'financialRegulationAssessmentsById', financeDecisionProposals: 'financeDecisionProposalsById', economicObservations: 'economicObservationsById', exchangeRates: 'exchangeRatesById', revenueSources: 'revenueSourcesById', operatingCostSources: 'operatingCostSourcesById', operatingCostFacts: 'operatingCostFactsById', debtInstruments: 'debtInstrumentsById', competitionDistributionFacts: 'competitionDistributionFactsById',
   multiClubOwnershipPolicies: 'multiClubOwnershipPoliciesById',
   organizationStructuralChanges: 'organizationStructuralChangesById', organizationLifecycleStates: 'organizationLifecycleStatesById', organizationSuccessions: 'organizationSuccessionsById', regulatoryOrders: 'regulatoryOrdersById', regulatoryRemediationPlans: 'regulatoryRemediationPlansById', organizationLicenses: 'organizationLicensesById',
   organizationInvestorInterests: 'organizationInvestorInterestsById', organizationCapitalRaises: 'organizationCapitalRaisesById', organizationCapitalRaiseEvents: 'organizationCapitalRaiseEventsById', organizationInvestmentProposals: 'organizationInvestmentProposalsById', organizationInvestmentProposalEvents: 'organizationInvestmentProposalEventsById',
