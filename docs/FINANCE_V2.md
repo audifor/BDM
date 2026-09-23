@@ -1,4 +1,6 @@
-# Club Finance & Economy V2 — CF1
+# Club Finance & Economy V2
+
+This document records CF1–CF11 implementation history. The final CF12 architecture and current legacy status are at the end; earlier readiness and deferred lists describe their respective milestones, not the final state.
 
 CF1 establishes the runtime financial foundation. It does not simulate revenue, payroll, debt, tax, valuation, cash flow, or financial UI.
 
@@ -268,3 +270,82 @@ CF9 is conceptually aligned with BDM-DB's canonical `financial_account`, `financ
 ## CF10 readiness
 
 CF10 may add explicit tax/FFP or valuation policy only after those authorities and their source rules are approved. It should consume CF9 debt service and Competition facts, preserve the ledger/treasury distinction, and avoid deriving economic awards or financing from sporting outcomes without an authoritative rule.
+
+## CF10 Financial Regulation and Economy Simulation
+
+Financial facts, regulation assessments, and economic assumptions are separate. A `FinancialRegulationRule` is supplied by a Competition or governing authority with jurisdiction, applicable Organizations, effective dates, version, metric, threshold, measurement window, consequence type, and provenance. Finance does not generate regulatory thresholds. `assessFinancialRegulation` reads existing Organization facts and returns an immutable assessment with the rule version and supporting fact IDs; `recordFinancialAssessment` preserves history in GameWorld. An assessment never posts to the ledger. The implemented metrics are minimum unrestricted cash, operating loss, overdue payables, recognized payroll to recognized revenue in basis points, and outstanding debt principal. A zero revenue denominator produces `INSUFFICIENT_DATA`. Unsupported financial sustainability metrics remain pending until their source facts and semantics are adequate.
+
+Assessment breaches are evidence for Governance, Competition, and licensing. Existing `RegulatoryOrder`, `RegulatoryRemediationPlan`, and `OrganizationLicense` own their lifecycles; CF10 creates none automatically. A fine requires a distinct, externally authorized sanction fact and uses the CF4 expense event path: expense recognition, payable, non-cash ledger posting, then optional Treasury settlement. Salary Cap, including its luxury tax rule, stays in the Salary engine. Finance consumes an externally authorized tax liability only when one is supplied; it never calculates cap legality or tax tiers.
+
+`EconomicObservation` holds dated region/currency index factors and `ExchangeRate` holds dated currency pairs. Factors are positive integer rationals. Monetary conversion uses BigInt intermediate arithmetic with half-up rounding to minor units and checks the safe-integer result. Reporting conversion has an explicit missing-rate result and never changes original amounts or currencies. Consolidated cash, debt, recognized revenue and expense, and forecast reporting totals are derived queries. Missing rates produce a partial result with named missing currencies. No accounting FX revaluation or gains/losses are posted.
+
+Only future RevenueSource and OperatingCostSource amounts explicitly marked `INDEXED` use a named observation in a forecast. `FIXED`, `EXTERNALLY_SUPPLIED`, and unmarked sources retain their supplied amounts. Scenario observations and rates can be passed explicitly to forecast/reporting queries without entering GameWorld or creating Recognition. Existing recognitions, settlements, contract amounts, debt principal, and approved budgets are not changed. Debt fixed interest terms remain fixed; CF10 does not infer a floating benchmark. Daily progression has no automatic macro simulation or random inflation. Economic facts enter through explicit `applyEconomicObservation` and `applyExchangeRate` APIs; assessments enter through explicit assess/record calls.
+
+### Audit and authority classification
+
+- **CANONICAL:** Organization finance ledger, Treasury, Recognition, payroll schedule, budget, revenue/cost sources, debt instruments, Competition economic facts, Governance decisions, structural regulatory orders, remediation plans and licenses, SalaryRules and NCAA enforcement sanctions in their respective domains.
+- **DERIVED:** cash/liquidity, overdue balances, operating loss, payroll/revenue ratio, outstanding principal, financial assessments before history is recorded, forecasts, converted reporting totals and current breach views.
+- **LEGACY:** `TeamFinances` budget pools and older payroll projections; they are not Organization cash or regulation authority.
+- **DORMANT:** Competition `LICENSE` entry selection is parsed but does not itself define financial licensing thresholds. Salary luxury tax tiers exist but no authorized tax-liability producer crosses into Finance.
+- **UI_ONLY:** existing finances screens and Salary UI; CF10 adds no Finance UI.
+- **MISSING_AUTHORITY:** concrete financial sustainability thresholds, NCAA financial restrictions, European/FIBA financial licensing formulas, indexation clauses for existing contracts, floating debt benchmarks, accounting FX revaluation policy and sanction-to-Governance routing rules. CF10 supplies no defaults for them.
+
+`C:\BDM_DB` was inspected read-only. DDL-12 has canonical `financial_account`, `financial_transaction`, `financial_posting`, `budget`, `revenue_stream`, and `expense_commitment` tables with currency columns. It also has generic `sanction`, `sanction_effect`, `sanction_scope`, and `sanction_type` tables. The inspected canonical schema has no dedicated financial-regulation threshold/version table, FX-rate series, or macroeconomic indicator series; generic sanction records do not define a finance assessment formula. Runtime observations, rates, and assessment history belong to individual saves, not the source database. No BDM-DB file was modified.
+
+Save V4 adds optional assessment, observation, and exchange-rate collections. Older V4 and V1–V3 saves load with empty collections. Explicit source indexation policies round-trip; old sources remain unmarked. Derived totals, dashboards, and conversion results are never persisted.
+
+## CF11 Valuation, Financial Health and Finance AI
+
+The three CF11 surfaces are separate pure queries over the existing authorities. `FinancialHealthSnapshot` reads Organization scoped ledger cash, Treasury obligations, Recognition, contract and operating commitments, CF9 debt, owner funding transactions, and CF10 regulation assessments. It reports one row per original currency, with an explicit observation window and 30 day due horizon by default. A shortfall, overdue amount, unfunded maturity or operating loss is evidence, not an insolvency procedure. `FinancialHealthPolicy` is an explicit versioned input for ratio thresholds; none is installed globally. Unknown contract currency prevents a future payroll projection rather than inventing a currency.
+
+`OrganizationValuation` is a reproducible indication from recognized revenue or positive operating result and an explicit rational multiple. It reports operating metric, enterprise value and net debt components in their original currencies, along with CF10 reporting conversions. Missing FX makes the consolidated estimate incomplete. Net debt is subtracted from enterprise value to obtain indicative equity value; a historical capital contribution is neither revenue nor current equity value. No facility value is added because runtime Facilities does not provide an authorized market value. There is no DCF or default multiple. No current valuation, health total or forecast is persisted.
+
+`FinanceDecisionProposal` is typed advice. An explicit versioned `FinanceAiPolicy` controls whether liquidity shortfalls yield financing, capital or spending recommendations and whether projected budget variance yields a revision recommendation. Advice never creates a `DebtInstrument`, capital contribution, revised budget, acquisition price, ownership change or financial transaction. A recorded proposal is a gameplay history item in GameWorld and optional Save V4 state. Approval for a Governance owned action requires a matching approved Governance decision; Ownership actions remain with Ownership and cannot be approved by Finance. Finance provides no execution API for these actions. Old saves receive an empty proposal collection.
+
+The audit classified the ledger, Treasury, Recognition, CF5 contracts, CF6 budgets, CF7 revenue, CF8 costs, CF9 debt, CF10 regulation and FX, Governance and Ownership as **CANONICAL** in their respective boundaries. Cash, health, forecasts and valuation are **DERIVED**. `TeamFinances` and old club finance panels remain **LEGACY/UI_ONLY**. Investor interest and acquisition workflows remain **CANONICAL** for bidding and transaction price; their finance data feeds are currently **DORMANT**. Facility market value, universal valuation multiples, health thresholds and automatic capital approval are **MISSING_AUTHORITY**. Reputation has no approved CF11 valuation weight.
+
+`C:\BDM_DB` was inspected read only. DDL 11/12 contain facility, facility ownership, investment asset/position, Organization investor interest/ownership and the shared finance ledger vocabulary. The inspected schema does not establish a current Organization enterprise value, facility market value, valuation multiple or health threshold for this runtime. CF11 adds no write path to BDM DB.
+
+Boundaries: Financial Fact != Financial Health Assessment; Financial Health != Valuation; Valuation != Transaction Price; Valuation != Accounting Balance; AI Recommendation != Governance Approval; Forecast != Valuation Fact; Capital Contribution != Revenue; Cash != Club Value.
+
+## CF12 Finance UI and final architecture
+
+CF12 closes the Finance V2 sequence with a read-only Organization finance workspace. The UI presenter in `src/ui-ng/applications/finances/financeWorkspaceModel.ts` derives one selected section from canonical GameWorld queries. The React workspace memoizes that section, renders currency-labeled facts with provenance and source references, and holds only navigation, reporting-currency, scenario, and valuation-input state. No displayed total is written to GameWorld. The Club PCB Finance tab now opens this canonical workspace when a world is available; its former fixture-backed Finance panel is no longer mounted. The Salary Cap section remains explicitly separate and uses the existing Salary engine.
+
+### Authority map
+
+| Area | Authority | Finance V2 role |
+| --- | --- | --- |
+| Economic owner | Organization, OrganizationOwnership and control | Organization is the finance root; Team and Section are analytical dimensions. |
+| Contracts and payroll terms | Player and staff Contract domains | CF5 derives dated financial obligations; Finance does not rewrite contract terms. |
+| Competition economics | Competition and supplied authorized distribution facts | CF9 records monetary consequences through CF4; no award is inferred from standings. |
+| Governance and capital authorization | Governance, Ownership and investment workflows | Finance consumes approved events and records their ledger consequences. |
+| Ledger and cash | CF1 FinancialAccount/Transaction/Posting and CF2 Treasury | Immutable double-entry facts, receivables, payables, settlements and derived cash balances. |
+| Operating performance | CF3 Recognition, CF7 RevenueSource, CF8 OperatingCostSource | Recognition and source schedules remain distinct from cash and forecast. |
+| Planning | CF6 Budget and Forecast | Approved budgets and explicit assumptions; variance and forecast are derived. |
+| Financing | CF9 DebtInstrument and authorized owner capital | Debt service and principal are derived; capital is not revenue. |
+| Regulation and economy | Governing rule authority and CF10 observations/FX | Versioned assessments and reporting conversion; no implicit sanctions or revaluation. |
+| Health, value and advice | CF11 policies and queries | Evidence, indicative valuation and recommendations, never a new transaction authority. |
+| Salary Cap | Salary rules and engine | Competition roster charge, separate from financial payroll and cash. |
+
+The data path is `authority -> authorized CF4 event or source fact -> commitment/entitlement -> recognition -> receivable/payable -> settlement -> ledger/cash -> health/forecast/valuation -> UI`. Some facts start directly at the ledger (authorized capital and debt movements). Each step preserves provenance and effective dates. The UI offers traceable IDs where a query exposes them; it does not synthesize transactions from screen state.
+
+### Persistence and boundaries
+
+GameWorld and Save V4 persist optional source facts: accounts, transactions, obligations, settlements, recognitions, commitments, entitlements, budgets, approved assumptions, revenue/cost sources, debt, competition facts, regulation observations and assessments, and recorded Finance AI proposals. Queries reconstruct balances, schedules, comparisons, projections, ratios and valuation. Earlier saves default absent optional Finance collections to empty. BDM-DB remains a read-only source of initial canonical world facts and schema vocabulary; per-career runtime facts are saved in BDM, with no Finance V2 write-back to BDM-DB.
+
+Money remains integer minor units with its original currency. Overview and Health group by currency. Reporting views require a selected or configured currency and explicit CF10 FX; incomplete conversion keeps original components visible and names missing rates. A missing source, contract currency, rule or valuation assumption is displayed as unavailable. Zero is displayed only for a quantity derived from an existing fact or explicit query context. Financial regulation rules belong to governing authorities, and an assessment alone does not create a sanction. Finance AI advice cannot approve Governance or Ownership actions. Salary Cap is never treated as Organization cash, financial payroll or an Organization budget.
+
+### Legacy status and limitations
+
+`TeamFinances` remains a legacy budget pool for older market and coach-opportunity projections; it is not the authority for the new Organization Finance workspace or the home dashboard's Finance tile. The old `ClubFinances.jsx` component remains in the tree for historical reference but is no longer rendered by the Club PCB Finance tab. The Club PCB dashboard shows currency-separated canonical cash and leaves health unclassified without policy. Coach personal finances are a separate career feature. Older market affordability projections still consume legacy TeamFinances and must be migrated with their owning product flows before they can represent Organization cash. CF12 does not convert them into Finance V2 facts.
+
+The runtime still lacks some dynamic fact producers. No attendance-based ticket pricing, commercial negotiation, media-rights bidding, merchandising demand, dynamic travel-cost generation, advanced medical economics, full asset accounting/depreciation, bankruptcy/administration lifecycle, advanced macro simulation, tax engine, M&A execution, external valuation data or advanced financial markets were added. Empty screens remain honest until an authorized producer supplies facts. No global health policy, financial sustainability thresholds, universal valuation multiple or facility market value is assumed.
+
+### Roadmap after Finance V2
+
+1. **Economy activation:** connect authoritative attendance, ticketing, sponsorship, media, merchandising, facilities, travel, medical, scouting and competition-economic producers to the existing event seams.
+2. **Financial distress and institutional lifecycle:** define approved rules for insolvency, administration, restructuring, defaults, rescue financing, forced sales and capital rescue before implementing consequences.
+3. **Economic AI and market dynamics V2:** extend interactions among clubs, owners, boards, lenders, sponsors, competitions and markets after the required authorities and market facts exist.
+
+Final test inventory, shards, pass counts and gate evidence are recorded in `docs/autopilot/CF12_FINANCE_V2_FINAL_CERTIFICATION.md`.

@@ -1,0 +1,24 @@
+.finance-workspace .ng-workspace-tabs__list { overflow-x: auto; scrollbar-width: thin; }
+.finance-workspace__controls { display: flex; flex-wrap: wrap; gap: 12px; padding: 16px 20px 0; }
+.finance-workspace__controls label { display: grid; gap: 4px; color: var(--ng-text-muted, #aab6c4); font-size: 12px; }
+.finance-workspace__controls input, .finance-workspace__controls select { min-width: 95px; padding: 7px 9px; color: inherit; background: var(--ng-surface-2, #1c2635); border: 1px solid var(--ng-border, #405064); border-radius: 5px; }
+.finance-workspace__section { display: grid; gap: 16px; padding: 20px; }
+.finance-workspace__section h2, .finance-workspace__section h3 { margin: 0; }
+.finance-workspace__metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 12px; margin: 0; }
+.finance-workspace__metric, .finance-workspace__table-panel { padding: 16px; background: var(--ng-surface-2, #1c2635); border: 1px solid var(--ng-border, #405064); border-radius: 8px; }
+.finance-workspace__metric dt { color: var(--ng-text-muted, #aab6c4); font-size: 12px; }
+.finance-workspace__metric dd { margin: 8px 0 0; font-size: 20px; font-weight: 650; }
+.finance-workspace__metric small { display: block; margin-top: 4px; }
+.finance-workspace__note { margin: 0; color: var(--ng-text-muted, #aab6c4); }
+.finance-workspace__table-panel { min-width: 0; }
+.finance-workspace__table-panel h3 { margin-bottom: 12px; font-size: 16px; }
+.finance-workspace__table-scroll { overflow-x: auto; }
+.finance-workspace__table-panel table { width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
+.finance-workspace__table-panel th, .finance-workspace__table-panel td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--ng-border, #405064); }
+.finance-workspace__table-panel th { color: var(--ng-text-muted, #aab6c4); }
+.finance-workspace__table-panel details { max-width: 290px; white-space: normal; overflow-wrap: anywhere; }
+.finance-workspace__table-panel details summary { cursor: pointer; }
+.finance-workspace__table-panel details ul { padding-left: 20px; }
+.finance-workspace__empty { margin: 0; color: var(--ng-text-muted, #aab6c4); }
+.finance-workspace__input-error { margin: 8px 20px 0; color: var(--ng-danger, #ff9c9c); }
+@media (max-width: 600px) { .finance-workspace__section { padding: 12px; } .finance-workspace__controls { padding: 12px 12px 0; } }

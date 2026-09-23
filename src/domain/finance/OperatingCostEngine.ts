@@ -5,6 +5,7 @@ import { createAuthorizedEconomicEvent, processOperatingCostEconomicEvent, type 
 import { createFinancialSource, createMoney, type CurrencyCode, type FinancialDimensions, type FinancialSource, type Money } from './FinancialLedger'
 import { createTreasuryCounterparty, getPayableSettledAmount, type TreasuryCounterparty } from './Treasury'
 import type { ExpenseRecognition } from './Recognition'
+import { createIndexationPolicy, type IndexationPolicy } from './EconomicEnvironment'
 
 export const OPERATING_COST_CATEGORIES = ['FACILITY', 'VENUE', 'TRAVEL', 'ACCOMMODATION', 'MEDICAL', 'SCOUTING', 'ACADEMY', 'EQUIPMENT', 'SECURITY', 'INSURANCE', 'ADMINISTRATION', 'UTILITIES', 'EXTERNAL_SERVICES', 'COMPETITION', 'MATCH_OPERATIONS', 'OTHER_OPERATING'] as const
 export type OperatingCostCategory = typeof OPERATING_COST_CATEGORIES[number]
@@ -21,6 +22,7 @@ export interface OperatingCostPaymentTerm {
 }
 
 export interface OperatingCostSource {
+  readonly indexation?: IndexationPolicy
   readonly id: string
   readonly organizationId: OrganizationId
   readonly category: OperatingCostCategory
@@ -96,6 +98,7 @@ export interface OperatingCostMaterialization {
 }
 
 export function createOperatingCostSource(input: {
+  readonly indexation?: IndexationPolicy
   readonly id: string
   readonly organizationId: OrganizationId | string
   readonly category: OperatingCostCategory
@@ -134,7 +137,7 @@ export function createOperatingCostSource(input: {
     if (dueOn !== null && compareGameDates(dueOn, recognitionOn) < 0) throw new RangeError('Operating cost dueOn cannot precede recognitionOn')
     return Object.freeze({ recognitionOn, dueOn, amount: termAmount })
   }))
-  return Object.freeze({ id: nonEmpty(input.id, 'Operating cost source id'), organizationId: String(input.organizationId) as OrganizationId, category: input.category, costNature: input.costNature ?? 'OPERATING', currencyCode: amount.currencyCode, amount, startsOn, endsOn, sourceAuthority: input.sourceAuthority, status: input.status ?? 'ACTIVE', generationPolicy: input.generationPolicy, dueDatePolicy: input.dueDatePolicy ?? 'NO_DUE_DATE', teamId: nullableId(input.teamId) as TeamId | null, organizationSectionId: nullableId(input.organizationSectionId) as OrganizationSectionId | null, competitionId: nullableId(input.competitionId) as CompetitionId | null, facilityId: nullableText(input.facilityId), matchId: nullableText(input.matchId), counterparty: input.counterparty === undefined || input.counterparty === null ? null : createTreasuryCounterparty(input.counterparty), paymentSchedule, provenance: createFinancialSource(input.provenance) })
+  return Object.freeze({ id: nonEmpty(input.id, 'Operating cost source id'), organizationId: String(input.organizationId) as OrganizationId, category: input.category, costNature: input.costNature ?? 'OPERATING', currencyCode: amount.currencyCode, amount, startsOn, endsOn, sourceAuthority: input.sourceAuthority, status: input.status ?? 'ACTIVE', generationPolicy: input.generationPolicy, dueDatePolicy: input.dueDatePolicy ?? 'NO_DUE_DATE', teamId: nullableId(input.teamId) as TeamId | null, organizationSectionId: nullableId(input.organizationSectionId) as OrganizationSectionId | null, competitionId: nullableId(input.competitionId) as CompetitionId | null, facilityId: nullableText(input.facilityId), matchId: nullableText(input.matchId), counterparty: input.counterparty === undefined || input.counterparty === null ? null : createTreasuryCounterparty(input.counterparty), paymentSchedule, provenance: createFinancialSource(input.provenance), ...(input.indexation === undefined ? {} : { indexation: createIndexationPolicy(input.indexation) }) })
 }
 
 export function createAuthorizedOperatingCostFact(input: {

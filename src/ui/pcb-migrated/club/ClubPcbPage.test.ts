@@ -36,6 +36,13 @@ function StaffSandbox() {
 }
 
 describe('ClubPcbPage staff sandbox', () => {
+  it('does not present fixture cash or an invented financial health class on the club dashboard', () => {
+    render(createElement(ClubPcbPage, { world: createAcbTestGame({ userTeamKey: 'caz' }) }))
+    expect(screen.getByText('Sin clasificación')).toBeInTheDocument()
+    expect(screen.getByText('Sin política financiera aprobada')).toBeInTheDocument()
+    expect(screen.getByText('Sin hechos de caja')).toBeInTheDocument()
+  })
+
   it('renders canonical ACB staff rather than fixture staff', () => {
     const world = createAcbTestGame({ userTeamKey: 'caz' })
     const assigned = Object.values(world.teamStaffAssignmentsById).find((assignment) => assignment.teamId === getUserTeam(world)!.id)!

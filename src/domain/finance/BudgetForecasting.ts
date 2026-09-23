@@ -16,6 +16,7 @@ import { getOutstandingCommitments } from './RecognitionQueries'
 import { getRevenueSchedule } from './RevenueEngine'
 import { getFutureOperatingCostCommitments } from './OperatingCostEngine'
 import { getDebtServiceForecast } from './DebtEngine'
+import { indexFutureMoney, type EconomicObservation } from './EconomicEnvironment'
 
 export const BUDGET_STATUSES = ['DRAFT', 'PROPOSED', 'APPROVED', 'SUPERSEDED', 'CLOSED'] as const
 export type BudgetStatus = typeof BUDGET_STATUSES[number]
@@ -234,19 +235,20 @@ export function getUnbudgetedRecognizedExpenses(world: GameWorld, organizationId
   return Object.values(world.expenseRecognitionsById).filter((item) => item.organizationId === organizationId && item.amount.currencyCode === currencyCode && within(item.recognizedOn, period) && !budgeted.has(normalizeCategory(item.category)))
 }
 
-export function createFinancialForecast(world: GameWorld, input: { readonly organizationId: string; readonly asOfDate: GameDate | string; readonly period: FinancialPlanningPeriod; readonly currencyCode: string; readonly scenario?: ForecastScenario; readonly linkedBudgetId?: string | null }): FinancialForecast {
+export function createFinancialForecast(world: GameWorld, input: { readonly organizationId: string; readonly asOfDate: GameDate | string; readonly period: FinancialPlanningPeriod; readonly currencyCode: string; readonly scenario?: ForecastScenario; readonly linkedBudgetId?: string | null; readonly economicObservations?: readonly EconomicObservation[] }): FinancialForecast {
   const asOfDate = parseGameDate(input.asOfDate)
   const currencyCode = createMoney({ currencyCode: input.currencyCode, minorUnits: 0 }).currencyCode
   const scenario = input.scenario ?? 'BASELINE'
+  const observations = { ...Object.fromEntries(Object.values(world.economicObservationsById).filter((item) => item.effectiveOn <= asOfDate).map((item) => [item.id, item])), ...Object.fromEntries((input.economicObservations ?? []).map((item) => [item.id, item])) }
   const assumptions = Object.values(world.forecastAssumptionsById).filter((item) => item.organizationId === input.organizationId && item.scenario === scenario && item.amount.currencyCode === currencyCode && overlaps(item.period, input.period))
   const categories = new Map<string, { direction: BudgetDirection; actual: number; committed: number; assumption: number }>()
   const add = (category: string, direction: BudgetDirection, field: 'actual' | 'committed' | 'assumption', amount: number) => { const row = categories.get(category) ?? { direction, actual: 0, committed: 0, assumption: 0 }; row[field] += amount; categories.set(category, row) }
   for (const item of Object.values(world.revenueRecognitionsById)) if (item.organizationId === input.organizationId && item.amount.currencyCode === currencyCode && within(item.recognizedOn, input.period) && compareGameDates(item.recognizedOn, asOfDate) <= 0) add(item.category, 'INCOME', 'actual', item.amount.minorUnits)
   for (const item of Object.values(world.expenseRecognitionsById)) if (item.organizationId === input.organizationId && item.amount.currencyCode === currencyCode && within(item.recognizedOn, input.period) && compareGameDates(item.recognizedOn, asOfDate) <= 0) add(normalizeCategory(item.category), 'EXPENSE', 'actual', item.amount.minorUnits)
   for (const item of knownCommitments(world, input.organizationId, input.period, asOfDate, currencyCode)) add(item.category, 'EXPENSE', 'committed', item.amount)
-  for (const item of getFutureOperatingCostCommitments(world, input.organizationId, asOfDate, currencyCode)) if (within(item.recognitionOn, input.period)) add(item.category, 'EXPENSE', 'committed', item.amount.minorUnits)
+  for (const item of getFutureOperatingCostCommitments(world, input.organizationId, asOfDate, currencyCode)) if (within(item.recognitionOn, input.period)) add(item.category, 'EXPENSE', 'committed', indexFutureMoney(item.amount, item.sourceId === null ? undefined : world.operatingCostSourcesById[item.sourceId]?.indexation, observations, item.recognitionOn).minorUnits)
   for (const item of getDebtServiceForecast(world, { organizationId: input.organizationId, from: input.period.startsOn, to: input.period.endsOn, currencyCode }).filter((item) => item.interestMinorUnits > 0 && compareGameDates(item.effectiveOn, asOfDate) > 0)) add('INTEREST_EXPENSE', 'EXPENSE', 'committed', item.interestMinorUnits)
-  for (const item of getRevenueSchedule(world, { organizationId: input.organizationId, from: input.period.startsOn, to: input.period.endsOn, currencyCode })) add(item.category, 'INCOME', 'committed', item.amount.minorUnits)
+  for (const item of getRevenueSchedule(world, { organizationId: input.organizationId, from: input.period.startsOn, to: input.period.endsOn, currencyCode })) add(item.category, 'INCOME', 'committed', compareGameDates(item.recognitionOn, asOfDate) > 0 ? indexFutureMoney(item.amount, world.revenueSourcesById[item.sourceId]?.indexation, observations, item.recognitionOn).minorUnits : item.amount.minorUnits)
   for (const item of assumptions) if (item.kind === 'INCOME' || item.kind === 'EXPENSE') add(item.category ?? 'UNSPECIFIED', item.kind, 'assumption', item.amount.minorUnits)
   const lines = [...categories.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([category, row]) => { const baseline = row.direction === 'INCOME' ? Math.max(row.actual, row.committed) : row.actual + row.committed; return Object.freeze({ category, direction: row.direction, amount: createMoney({ currencyCode, minorUnits: baseline + row.assumption }), actualMinorUnits: row.actual, committedMinorUnits: row.committed, assumptionMinorUnits: row.assumption }) })
   return Object.freeze({ organizationId: input.organizationId, asOfDate, period: input.period, scenario, currencyCode, linkedBudgetId: input.linkedBudgetId ?? null, lines: Object.freeze(lines), assumptionIds: Object.freeze(assumptions.map((item) => item.id)) })

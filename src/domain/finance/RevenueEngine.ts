@@ -6,6 +6,7 @@ import { createFinancialSource, createMoney, type CurrencyCode, type FinancialSo
 import { createTreasuryCounterparty, getReceivableSettledAmount, type TreasuryCounterparty } from './Treasury'
 import type { RevenueRecognition } from './Recognition'
 import { getOutstandingEntitlements } from './RecognitionQueries'
+import { createIndexationPolicy, type IndexationPolicy } from './EconomicEnvironment'
 
 export const REVENUE_CATEGORIES = ['TICKETING', 'SEASON_TICKETS', 'HOSPITALITY', 'SPONSORSHIP', 'MEDIA', 'MERCHANDISING', 'LICENSING', 'COMPETITION', 'TRANSFER_BUYOUT', 'FACILITY', 'ACADEMY', 'GRANT', 'DONATION', 'OTHER_OPERATING'] as const
 export type RevenueCategory = typeof REVENUE_CATEGORIES[number]
@@ -21,6 +22,7 @@ export interface RevenuePaymentTerm {
 }
 
 export interface RevenueSource {
+  readonly indexation?: IndexationPolicy
   readonly id: string
   readonly organizationId: OrganizationId
   readonly category: RevenueCategory
@@ -86,6 +88,7 @@ export interface RevenueMaterialization {
 }
 
 export function createRevenueSource(input: {
+  readonly indexation?: IndexationPolicy
   readonly id: string
   readonly organizationId: OrganizationId | string
   readonly category: RevenueCategory
@@ -124,7 +127,7 @@ export function createRevenueSource(input: {
   const teamId = input.teamId === undefined || input.teamId === null ? null : String(input.teamId) as TeamId
   const organizationSectionId = input.organizationSectionId === undefined || input.organizationSectionId === null ? null : String(input.organizationSectionId) as OrganizationSectionId
   const competitionId = input.competitionId === undefined || input.competitionId === null ? null : String(input.competitionId) as CompetitionId
-  return Object.freeze({ id: nonEmpty(input.id, 'Revenue source id'), organizationId: String(input.organizationId) as OrganizationId, category: input.category, currencyCode: amount.currencyCode, amount, startsOn, endsOn, sourceAuthority: input.sourceAuthority, status: input.status ?? 'ACTIVE', generationPolicy: input.generationPolicy, dueDatePolicy: input.dueDatePolicy ?? 'NO_DUE_DATE', teamId, organizationSectionId, competitionId, counterparty: input.counterparty === undefined || input.counterparty === null ? null : createTreasuryCounterparty(input.counterparty), paymentSchedule, provenance: createFinancialSource(input.provenance) })
+  return Object.freeze({ id: nonEmpty(input.id, 'Revenue source id'), organizationId: String(input.organizationId) as OrganizationId, category: input.category, currencyCode: amount.currencyCode, amount, startsOn, endsOn, sourceAuthority: input.sourceAuthority, status: input.status ?? 'ACTIVE', generationPolicy: input.generationPolicy, dueDatePolicy: input.dueDatePolicy ?? 'NO_DUE_DATE', teamId, organizationSectionId, competitionId, counterparty: input.counterparty === undefined || input.counterparty === null ? null : createTreasuryCounterparty(input.counterparty), paymentSchedule, provenance: createFinancialSource(input.provenance), ...(input.indexation === undefined ? {} : { indexation: createIndexationPolicy(input.indexation) }) })
 }
 
 export function getActiveRevenueSources(world: GameWorld, organizationId: OrganizationId | string, asOfDate: GameDate | string = world.currentDate): readonly RevenueSource[] {

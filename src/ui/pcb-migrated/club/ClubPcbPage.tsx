@@ -4,13 +4,15 @@ import type { GameWorld } from '@/domain/world'
 import { ASSIGNABLE_STAFF_ROLE_IDS, calculateStaffRoleProficiencyByRoleId, isStaffRoleApplicableToEcosystem, STAFF_ROLE_REGISTRY, type StaffRoleId } from '@/domain/staff'
 import { getStaffMarketRole, listFreeAgentStaff } from '@/app/staffCareer'
 import { getUserTeam } from '@/engine/calendar'
+import { getCashBalancesByCurrency } from '@/domain/finance'
 import { STAFF_ROLE_LABELS } from '@/ui/staffPresentation'
+import { financeMoney } from '@/ui-ng/applications/finances/financeWorkspaceModel'
 import DraggableSubnav from './components/DraggableSubnav'
 import ClubAnalytics from './components/club/ClubAnalytics'
 import ClubBoard from './components/club/ClubBoard'
 import ClubDashboard from './components/club/ClubDashboard'
 import ClubFacilities from './components/club/ClubFacilities'
-import ClubFinances from './components/club/ClubFinances'
+import { FinancesWorkspace } from '@/ui-ng/applications/finances/FinancesWorkspace'
 import ClubHistory from './components/club/ClubHistory'
 import ClubStaffAssignments from './components/club/ClubStaffAssignments'
 import { clubFixtures } from './fixtures/clubFixtures'
@@ -28,16 +30,18 @@ export function ClubPcbPage({ initialTab = 'dashboard', onAcceptStaffOffer, onCo
   const [confidence, setConfidence] = useState(76)
   const [selectedPlayer, setSelectedPlayer] = useState<(typeof players)[number] | null>(null)
   const staffData = world === undefined ? undefined : getCanonicalStaffData(world)
+  const organizationId = world === undefined ? undefined : getUserTeam(world)?.organizationId
+  const cashSummary = world && organizationId ? getCashBalancesByCurrency(world, organizationId, world.currentDate).map((item) => financeMoney(item.totalCashMinorUnits, item.currencyCode)).join(' · ') : ''
   const onNegotiateObjectives = () => setConfidence((value) => (value >= 55 ? Math.min(100, value + 4) : value))
 
   return <section className="pcb-club" aria-label="Club PCB migrado">
     <DraggableSubnav className="subnav club-subnav" items={tabs.map(([id, label]) => ({ id, label, active: tab === id, onClick: () => setTab(id) }))} storageKey="pcbasket.subnav.club" />
-    {tab === 'dashboard' && <ClubDashboard alerts={clubFixtures.alerts} balance={balance} boardConfidence={confidence} jobSecurity={82} leaguePosition={3} nextOpponent="Real Madrid" objectives={clubFixtures.objectives} onPlayerClick={setSelectedPlayer} reputation={68} teamDivision="ACB" teamName="Casademont Zaragoza" topPlayers={players} upcomingMatches={clubFixtures.matches} />}
+    {tab === 'dashboard' && <ClubDashboard alerts={clubFixtures.alerts} cashSummary={cashSummary} boardConfidence={confidence} jobSecurity={82} leaguePosition={3} nextOpponent="Real Madrid" objectives={clubFixtures.objectives} onPlayerClick={setSelectedPlayer} reputation={68} teamDivision="ACB" teamName="Casademont Zaragoza" topPlayers={players} upcomingMatches={clubFixtures.matches} />}
     {selectedPlayer && <aside aria-label="Detalle de jugador" className="pcb-club__detail" style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,.12)', borderRadius: 10, background: 'rgba(15,23,42,.6)', padding: 14 }}><header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h3 style={{ margin: 0 }}>{selectedPlayer.name}</h3><button onClick={() => setSelectedPlayer(null)} type="button">Cerrar</button></header><dl style={{ display: 'grid', gridTemplateColumns: 'repeat(4, auto)', gap: 12, margin: 0 }}><div><dt style={{ color: '#94a3b8', fontSize: 10, textTransform: 'uppercase' }}>PosiciÃ³n</dt><dd style={{ margin: 0 }}>{selectedPlayer.data.bio.pos}</dd></div><div><dt style={{ color: '#94a3b8', fontSize: 10, textTransform: 'uppercase' }}>Edad</dt><dd style={{ margin: 0 }}>{selectedPlayer.data.bio.age}</dd></div><div><dt style={{ color: '#94a3b8', fontSize: 10, textTransform: 'uppercase' }}>Potencial</dt><dd style={{ margin: 0 }}>{selectedPlayer.data.potential}</dd></div><div><dt style={{ color: '#94a3b8', fontSize: 10, textTransform: 'uppercase' }}>Valor de mercado</dt><dd style={{ margin: 0 }}>{selectedPlayer.data.market_value}</dd></div></dl></aside>}
     {tab === 'facilities' && <ClubFacilities onUpgradeFacility={(facilityId: string) => { setBalance((value) => value - 50000); setFacilities((value) => ({ ...value, [facilityId]: { level: (value[facilityId]?.level ?? 0) + 1 } })) }} teamBudget={balance} teamFacilities={facilities} teamLevel={4} />}
     {tab === 'staff' && (staffData === undefined ? <section className="content-panel">No hay mundo de juego activo.</section> : <ClubStaffAssignments marketCandidates={staffData.marketCandidates} onAcceptStaffOffer={onAcceptStaffOffer} onCompleteStaffInterview={onCompleteStaffInterview} onCreateStaffOffer={onCreateStaffOffer} onDeclineStaffOffer={onDeclineStaffOffer} onFireStaff={onFireStaff} onStartStaffCandidacy={onStartStaffCandidacy} onStartStaffInterview={onStartStaffInterview} roles={staffData.roles} staffMembers={staffData.staffMembers} />)}
     {tab === 'board' && <ClubBoard confidence={confidence} currentMetrics={{ league_position: 3, wins: 16, balance }} currentObjectives={clubFixtures.objectives} onNegotiateObjectives={onNegotiateObjectives} season={22} />}
-    {tab === 'finances' && <ClubFinances currentBalance={balance} fiscalYear={2027} projectedExpenses={{ wages: 300000, operations: 100000, facilities: 50000 }} projectedIncome={{ ticket_sales: 420000, sponsorships: 280000, tv_rights: 190000 }} seasonBudget={1200000} transactions={clubFixtures.transactions} />}
+    {tab === 'finances' && (world ? <FinancesWorkspace world={world} /> : <section className="content-panel">No hay mundo de juego activo.</section>)}
     {tab === 'analytics' && <ClubAnalytics analytics={analytics} teamName="Casademont Zaragoza" />}
     {tab === 'history' && <ClubHistory clubFounded={1990} hallOfFame={clubFixtures.hallOfFame} milestones={clubFixtures.milestones} records={clubFixtures.records} seasonHistory={clubFixtures.seasons} trophies={clubFixtures.trophies} />}
   </section>

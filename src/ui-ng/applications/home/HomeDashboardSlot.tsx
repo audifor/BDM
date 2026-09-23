@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 
-import { getContractYearCompensation, getPlayerContractStatus } from '@/domain/contract'
+import { getPlayerContractStatus } from '@/domain/contract'
+import { getCashAccountBalances, getFinancialHealthSnapshot } from '@/domain/finance'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { getInboxItemsForCoach, getNewsFeed, getTeamRoster } from '@/domain/world'
@@ -16,6 +17,7 @@ import {
   standingsZoneForPosition,
 } from '@/ui-ng/applications/competition/standingsZones'
 import { StandingsZoneLegend } from '@/ui-ng/applications/competition/StandingsZoneLegend'
+import { financeMoney } from '@/ui-ng/applications/finances/financeWorkspaceModel'
 import {
   HOME_DASHBOARD_MODULE_IDS,
   homeDashboardModuleLabel,
@@ -307,7 +309,13 @@ function ObjectivesModule({ context }: { readonly context: HomeDashboardSlotCont
 
 function FinancesModule({ context }: { readonly context: HomeDashboardSlotContext }) {
   if (context.teamId === undefined) return <p className="ng-canon__empty">Sin equipo asignado.</p>
-  const finances = context.world.teamFinancesByTeamId[context.teamId]
+  const organizationId = context.world.teams[context.teamId]?.organizationId
+  if (organizationId === undefined) return <p className="ng-canon__empty">Sin organización financiera asignada.</p>
+  const asOf = context.world.currentDate
+  const startsOn = `${asOf.slice(0, 4)}-01-01`
+  const health = getFinancialHealthSnapshot(context.world, organizationId, asOf, startsOn)
+  const cash = getCashAccountBalances(context.world, organizationId, asOf)
+  const recognizedCurrencies = new Set([...Object.values(context.world.revenueRecognitionsById), ...Object.values(context.world.expenseRecognitionsById)].filter((item) => item.organizationId === organizationId && item.recognizedOn >= startsOn && item.recognizedOn <= asOf).map((item) => item.amount.currencyCode))
   const rules = context.world.salaryRulesBySeasonId[context.world.currentSeasonId]
   const contracts =
     rules === undefined
@@ -324,44 +332,18 @@ function FinancesModule({ context }: { readonly context: HomeDashboardSlotContex
           .reduce((sum, charge) => sum + charge.amount, 0)
   const status =
     rules === undefined ? undefined : calculateTeamSalaryStatus(rules, calculateTeamPayroll(contracts, context.world.currentDate, deadMoney))
-  const topContracts = contracts
-    .map((contract) => ({
-      id: contract.id,
-      playerId: contract.playerId,
-      name: (() => {
-        const player = context.world.players[contract.playerId]
-        return player === undefined ? contract.playerId : `${player.firstName} ${player.lastName}`
-      })(),
-      salary: getContractYearCompensation(contract, context.world.currentDate).cashSalary,
-    }))
-    .sort((a, b) => b.salary - a.salary)
-    .slice(0, 4)
 
   return (
     <div className="home-finances">
       <dl className="ng-canon__metrics">
-        <NgMetric label="Presupuesto jugadores" value={finances === undefined ? '—' : formatMoney(finances.playerSalaryBudget)} />
-        <NgMetric label="Presupuesto staff" value={finances === undefined ? '—' : formatMoney(finances.staffSalaryBudget)} />
-        <NgMetric label="Nómina" value={status === undefined ? '—' : formatMoney(status.payroll.totalCapHit)} />
-        <NgMetric
-          label="Espacio"
-          value={status === undefined ? '—' : formatMoney(status.capSpace)}
-        />
+        {health.byCurrency.flatMap((row) => [
+          <NgMetric key={`${row.currencyCode}-cash`} label={`Caja ${row.currencyCode}`} value={cash.some((account) => account.currencyCode === row.currencyCode) ? financeMoney(row.cashMinorUnits, row.currencyCode) : 'Sin datos de caja'} />,
+          <NgMetric key={`${row.currencyCode}-result`} label={`Resultado operativo ${row.currencyCode}`} value={recognizedCurrencies.has(row.currencyCode) ? financeMoney(row.operatingResultMinorUnits, row.currencyCode) : 'Sin reconocimientos'} />,
+        ])}
+        <NgMetric label="Cargo Salary Cap" value={status === undefined ? 'Sin reglas' : formatMoney(status.payroll.totalCapHit)} />
+        <NgMetric label="Espacio Salary Cap" value={status === undefined ? 'Sin reglas' : formatMoney(status.capSpace)} />
       </dl>
-      {topContracts.length === 0 ? (
-        <p className="ng-canon__empty">Sin contratos activos.</p>
-      ) : (
-        <ul className="home-slot-list">
-          {topContracts.map((row) => (
-            <li key={row.id}>
-              <div className="home-slot-list__row">
-                <HomePlayerLink name={row.name} playerId={row.playerId} />
-                <span>{formatMoney(row.salary)}</span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+      {health.byCurrency.length === 0 && <p className="ng-canon__empty">Sin hechos financieros de la organización.</p>}
     </div>
   )
 }
