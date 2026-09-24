@@ -21,6 +21,7 @@ import { assignBaseSpatialTargets, stepPlayersTowardBaseSpacing } from './BaseSp
 import { stepPlayersTowardTransitionTargets } from './TransitionSpatial'
 import { createOffBallCutIntent, selectOffBallCutter, updateOffBallCutIntent, type OffBallCutIntent } from './OffBallMovement'
 import { advanceScreenIntent, createPostScreenIntent, createScreenIntent, reduceScreenedDefenderMovement, screenIntersectsDefenderRoute, selectScreenScreener, type ScreenIntent } from './ScreenInteractions'
+import { advanceDriveIntent, reduceDriveHandlerMovement, selectDriveIntent, type DriveIntent } from './DribbleDrives'
 
 /**
  * Default game-clock rules, used only as the fallback when a game's actual competition cannot
@@ -230,6 +231,7 @@ export interface MatchSessionState {
   readonly spatial: SpatialState
   readonly offBallCut?: OffBallCutIntent
   readonly screenIntent?: ScreenIntent
+  readonly driveIntent?: DriveIntent
   readonly coachingState: MatchCoachingState
   readonly defensiveMatchups?: { readonly home:readonly DefensiveMatchupOverride[]; readonly away:readonly DefensiveMatchupOverride[] }
   readonly homeStrength: TeamStrength
@@ -341,7 +343,9 @@ export function substitutePlayer(session: MatchSession, substitution: Substitute
   }
   const screen = state.screenIntent
   const removesScreenParticipant = screen !== undefined && [screen.screenerId, screen.ballHandlerId, screen.defenderId].includes(substitution.playerOutId)
-  return { ...session, state: { ...state, activeLineups, spatial, ...(state.offBallCut?.playerId === substitution.playerOutId ? { offBallCut: undefined } : {}), ...(removesScreenParticipant ? { screenIntent: undefined } : {}), nextSequence: state.nextSequence + 1, events: [...state.events, event] } }
+  const drive = state.driveIntent
+  const removesDriveParticipant = drive !== undefined && [drive.handlerId, drive.defenderId].includes(substitution.playerOutId)
+  return { ...session, state: { ...state, activeLineups, spatial, ...(state.offBallCut?.playerId === substitution.playerOutId ? { offBallCut: undefined } : {}), ...(removesScreenParticipant ? { screenIntent: undefined } : {}), ...(removesDriveParticipant ? { driveIntent: undefined } : {}), nextSequence: state.nextSequence + 1, events: [...state.events, event] } }
 }
 
 /** Advances one possession action or one period transition. RNG streams mutate only inside this runtime. */
@@ -408,6 +412,18 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     const cutPlayerId = selectOffBallCutter(lineup, profiles, playerId, session.decisionRandom)
     cutForMovement = cutPlayerId === undefined ? undefined : createOffBallCutIntent({ teamId: state.attackingTeamId, playerId: cutPlayerId, spatial: state.spatial, attackingBasket })
   }
+  const savedDrive = state.driveIntent
+  let driveForMovement: DriveIntent | undefined = savedDrive !== undefined
+    && handlerId === savedDrive.handlerId
+    && handlerDefenderId === savedDrive.defenderId
+    && lineup.includes(savedDrive.handlerId)
+    && defendingLineup.includes(savedDrive.defenderId)
+    ? savedDrive
+    : undefined
+  if (savedDrive === undefined && handlerId !== undefined && handlerDefenderId !== undefined) {
+    const handler = profiles.find((profile) => profile.playerId === handlerId)
+    if (handler !== undefined) driveForMovement = selectDriveIntent({ handler, defenderId: handlerDefenderId, spatial: state.spatial, attackingBasket, random: session.decisionRandom })
+  }
   const baseInput = {
     homeTeamId: state.homeTeamId,
     awayTeamId: state.awayTeamId,
@@ -425,10 +441,15 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const defenderTarget = baseTargets?.defensive.find((target) => target.playerId === screenForMovement?.defenderId)?.position
   const screenAffectsDefender = screenForMovement?.phase === 'set'
     && screenIntersectsDefenderRoute({ screen: screenForMovement, spatial: baseInput.spatial, defenderTarget })
-  const movementProfiles = screenAffectsDefender && screenForMovement !== undefined ? reduceScreenedDefenderMovement(state.playerProfiles, screenForMovement.defenderId) : state.playerProfiles
-  let spatial = stepPlayersTowardBaseSpacing({ ...baseInput, playerProfiles: movementProfiles }, possessionDuration,
-    cutForMovement !== undefined ? [{ playerId: cutForMovement.playerId, position: cutForMovement.target }] : screenOverride)
+  let movementProfiles = screenAffectsDefender && screenForMovement !== undefined ? reduceScreenedDefenderMovement(state.playerProfiles, screenForMovement.defenderId) : state.playerProfiles
+  if (driveForMovement !== undefined) movementProfiles = reduceDriveHandlerMovement(movementProfiles, driveForMovement.handlerId)
+  const targetOverrides = [
+    ...(cutForMovement !== undefined ? [{ playerId: cutForMovement.playerId, position: cutForMovement.target }] : screenOverride),
+    ...(driveForMovement === undefined ? [] : [{ playerId: driveForMovement.handlerId, position: driveForMovement.target }]),
+  ]
+  let spatial = stepPlayersTowardBaseSpacing({ ...baseInput, playerProfiles: movementProfiles }, possessionDuration, targetOverrides)
   const progressedCut = updateOffBallCutIntent(cutForMovement, { teamId: state.attackingTeamId, lineup, ballHandlerId: playerId, spatial })
+  const progressedDrive = advanceDriveIntent(driveForMovement, spatial)
   let progressedScreen = advanceScreenIntent(screenForMovement, spatial)
   if (progressedScreen === undefined && screenForMovement?.phase === 'set' && screenForMovement.stepsRemaining <= 1) {
     const screener = profiles.find((profile) => profile.playerId === screenForMovement.screenerId)
@@ -534,7 +555,9 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const offBallCut = attackingTeamId === state.attackingTeamId && cutRemainsOffBall ? progressedCut : undefined
   const screenRetainsHandler = spatial.ball.kind === 'playerControlled' && spatial.ball.teamId === state.attackingTeamId && spatial.ball.playerId === progressedScreen?.ballHandlerId
   const screenIntent = attackingTeamId === state.attackingTeamId && screenRetainsHandler ? progressedScreen : undefined
-  const stateAfterAction = { ...state, clockSecondsRemaining, homeScore, awayScore, attackingTeamId, spatial, offBallCut, screenIntent, passesThisPossession, nextSequence: sequence }
+  const driveRetainsHandler = spatial.ball.kind === 'playerControlled' && spatial.ball.teamId === state.attackingTeamId && spatial.ball.playerId === progressedDrive?.handlerId
+  const driveIntent = attackingTeamId === state.attackingTeamId && driveRetainsHandler ? progressedDrive : undefined
+  const stateAfterAction = { ...state, clockSecondsRemaining, homeScore, awayScore, attackingTeamId, spatial, offBallCut, screenIntent, driveIntent, passesThisPossession, nextSequence: sequence }
   const fatiguedSession = updateSessionFatigue(session, stateAfterAction, possessionDuration)
   if (clockSecondsRemaining === 0) return finishPeriod(fatiguedSession, fatiguedSession.state, newEvents)
   const nextState = { ...fatiguedSession.state, events: [...state.events, ...newEvents] }
@@ -571,7 +594,7 @@ function finishPeriod(session: MatchSession, state: MatchSessionState, newEvents
   if (state.period >= state.clockRules.periodCount && state.homeScore !== state.awayScore) {
     const gameEnd: MatchEvent = { sequence, period: state.period, clockSecondsRemaining: 0, type: 'gameEnd', homeScore: state.homeScore, awayScore: state.awayScore }
     newEvents.push(gameEnd)
-    const completeState = { ...state, spatial: releaseSpatialBall(state.spatial), offBallCut: undefined, screenIntent: undefined, passesThisPossession: 0, nextSequence: sequence + 1, events: [...state.events, ...newEvents], isComplete: true }
+    const completeState = { ...state, spatial: releaseSpatialBall(state.spatial), offBallCut: undefined, screenIntent: undefined, driveIntent: undefined, passesThisPossession: 0, nextSequence: sequence + 1, events: [...state.events, ...newEvents], isComplete: true }
     return { session: { ...session, state: completeState }, newEvents }
   }
   if (state.period >= state.clockRules.periodCount + MAX_OVERTIME_PERIODS) {
@@ -583,7 +606,7 @@ function finishPeriod(session: MatchSession, state: MatchSessionState, newEvents
   const attackingTeamId = period % 2 === 1 ? state.openingTeamId : otherTeamId(state.openingTeamId, state)
   const periodStart: MatchEvent = { sequence: sequence++, period, clockSecondsRemaining, type: 'periodStart', homeScore: state.homeScore, awayScore: state.awayScore }
   newEvents.push(periodStart)
-  const nextState = { ...state, period, clockSecondsRemaining, attackingTeamId, offBallCut: undefined, screenIntent: undefined, passesThisPossession: 0, spatial: releaseSpatialBall(state.spatial), nextSequence: sequence, events: [...state.events, ...newEvents] }
+  const nextState = { ...state, period, clockSecondsRemaining, attackingTeamId, offBallCut: undefined, screenIntent: undefined, driveIntent: undefined, passesThisPossession: 0, spatial: releaseSpatialBall(state.spatial), nextSequence: sequence, events: [...state.events, ...newEvents] }
   return { session: { ...session, state: nextState }, newEvents }
 }
 

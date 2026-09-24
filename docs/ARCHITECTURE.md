@@ -193,6 +193,20 @@ Post-screen movement does not force a pass or shot and adds no receiver bonus.
 Handler drives, coverages, help defense and playbooks remain deferred. Live and
 Instant Result share this MatchEngine state; the renderer remains presentation-only.
 
+MG6F adds a transient `DriveIntent` only for the actual controlled handler and
+the existing primary defender. `DRIVE_FREQUENCY` supplies inclination; a bounded
+opportunity factor uses defender distance and distance to the attacked basket.
+The target approaches a near-rim point on the side opposite the defender, using
+live handler/defender/basket positions and court bounds. `BALL_CONTROL` and
+`DRIBBLE_SECURITY` form the ball-handling skill signal: while driving, it scales
+the handler's MG6A/B speed and acceleration by 0.85--1.0, with braking unchanged.
+The ball follows the handler through the existing spatial movement primitive.
+A set screen can still slow its assigned defender through MG6D's existing effect;
+MG6F adds no separate screen bonus and leaves the screener's roll/pop intent active.
+Drive intent ends on arrival, after three movement steps, possession or handler
+change, or substitution of the handler or defender. Existing shots and passes
+remain the only shot/pass authorities.
+
 For live matches, `LiveMatchController` supplies read-only before/after spatial
 snapshots to the presentation segment. The UI bridge copies active player IDs,
 team IDs, ball ownership and positions, then projects court metres to normalized

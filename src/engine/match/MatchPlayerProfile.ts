@@ -26,6 +26,7 @@ export interface MatchPlayerProfile {
   readonly tendencies: PlayerTendencies
   readonly physical: Pick<PlayerBio, 'heightCm' | 'weightKg' | 'wingspanCm' | 'standingReachCm'>
   readonly kinematics: PlayerKinematicProfile
+  readonly ballHandling?: number
   readonly offense: {
     readonly usage: number
     readonly rimAttack: number
@@ -72,6 +73,7 @@ export function createMatchPlayerProfile(player: Player): MatchPlayerProfile {
       standingReachCm: player.bio.standingReachCm,
     },
     kinematics: derivePlayerKinematicProfile(truth),
+    ballHandling: clampSignal(average(truth, ['BALL_CONTROL', 'DRIBBLE_SECURITY'])),
     offense: {
       usage: clampSignal(average(truth, ['SHOT_TOUCH', 'ADVANTAGE_CREATION', 'DRIVE_CREATION', 'OFFENSIVE_AWARENESS'])),
       rimAttack: clampSignal(average(truth, ['RIM_FINISHING', 'CONTACT_FINISHING', 'VERTICAL_FINISHING', 'FINISHING_THROUGH_LENGTH'])),

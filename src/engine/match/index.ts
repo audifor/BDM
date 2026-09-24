@@ -23,6 +23,8 @@ export { createOffBallCutIntent, MAX_OFF_BALL_CUT_STEPS, selectOffBallCutter, up
 export type { OffBallCutIntent } from './OffBallMovement'
 export { advanceScreenIntent, createPostScreenIntent, createPostScreenTarget, createScreenIntent, reduceScreenedDefenderMovement, screenIntersectsDefenderRoute, selectScreenScreener, SCREEN_RULES_V1 } from './ScreenInteractions'
 export type { ScreenIntent } from './ScreenInteractions'
+export { advanceDriveIntent, createDriveTarget, driveMovementFactor, reduceDriveHandlerMovement, selectDriveIntent, DRIVE_RULES_V1 } from './DribbleDrives'
+export type { DriveIntent } from './DribbleDrives'
 export { assignTransitionSpatialTargets, stepPlayersTowardTransitionTargets } from './TransitionSpatial'
 export type { TransitionSpatialInput, TransitionSpatialTarget, TransitionSpatialTargets } from './TransitionSpatial'
 export { calculateDefenseExecution, calculateEffectiveDefense, calculateShotLocation, calculateShotMakeProbability, calculateShotZoneWeights, calculateSpatialContestBonus, pointsForShotZone, SHOT_RESOLUTION_V1, SPATIAL_CONTEST_V1 } from './ShotResolution'
