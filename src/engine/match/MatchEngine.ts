@@ -1,5 +1,5 @@
 import type { GameId, PlayerId, TeamId } from '@/domain/ids'
-import { getGame, resolveGameClockRulesForGame, type GameWorld, type ResolvedGameClockRules } from '@/domain/world'
+import { getEcosystemForCompetition, getGame, resolveGameClockRulesForGame, type GameWorld, type ResolvedGameClockRules } from '@/domain/world'
 import type { RandomSource } from '@/engine/random'
 import { advanceFatigue, createInitialFatigue, type FatigueByPlayerId } from './Fatigue'
 import { calculateAssistProbability, selectAssister } from './AssistResolution'
@@ -14,6 +14,7 @@ import { createDefaultTacticalPlan, validateTacticalPlan, type MatchTacticalPlan
 import { applyPaceToPossessionDuration, applyShotProfile, calculateTacticalDefenseModifier, tacticalUsageWeight } from './tactics/TacticalEffects'
 import { clonePlan, type MatchCoachingState } from './coaching/MatchCoachingState'
 import { calculateBlockCreditProbability, calculateStealCreditProbability } from './DefensiveAttribution'
+import { applySpatialSubstitution, createInitialSpatialState, type SpatialState } from './SpatialState'
 
 /**
  * Default game-clock rules, used only as the fallback when a game's actual competition cannot
@@ -207,6 +208,7 @@ export interface MatchSessionState {
   readonly squads: MatchSquads
   readonly fatigueByPlayerId: FatigueByPlayerId
   readonly playerProfiles: MatchPlayerProfiles
+  readonly spatial: SpatialState
   readonly coachingState: MatchCoachingState
   readonly defensiveMatchups?: { readonly home:readonly DefensiveMatchupOverride[]; readonly away:readonly DefensiveMatchupOverride[] }
   readonly homeStrength: TeamStrength
@@ -270,14 +272,23 @@ export function simulateMatch(options: SimulateMatchOptions): MatchSimulationRes
 export function createMatchSession(options: SimulateMatchOptions): MatchSession {
   const game = validateOptions(options)
   const clockRules = resolveGameClockRulesForGame(options.world, game)
+  const ecosystem = getEcosystemForCompetition(options.world, game.competitionId)
   const openingTeamId = options.random.chance(0.5) ? game.homeTeamId : game.awayTeamId
+  const spatial = createInitialSpatialState({
+    homeTeamId: game.homeTeamId,
+    awayTeamId: game.awayTeamId,
+    lineups: options.lineups,
+    playerProfiles: options.playerProfiles,
+    ecosystemKind: ecosystem.kind,
+    category: ecosystem.category,
+  })
   const initialEvent: MatchEvent = { sequence: 1, period: 1, clockSecondsRemaining: clockRules.periodSeconds, type: 'periodStart', homeScore: 0, awayScore: 0 }
   return {
     state: {
       gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId,
       initialLineups: options.lineups, activeLineups: options.lineups, squads: options.squads,
       fatigueByPlayerId: createInitialFatigue(options.squads),
-      playerProfiles: options.playerProfiles, coachingState: { home: { currentTacticalPlan: clonePlan(options.tacticalPlans?.home ?? createDefaultTacticalPlan()) }, away: { currentTacticalPlan: clonePlan(options.tacticalPlans?.away ?? createDefaultTacticalPlan()) } }, defensiveMatchups:options.defensiveMatchups??{home:[],away:[]},
+      playerProfiles: options.playerProfiles, spatial, coachingState: { home: { currentTacticalPlan: clonePlan(options.tacticalPlans?.home ?? createDefaultTacticalPlan()) }, away: { currentTacticalPlan: clonePlan(options.tacticalPlans?.away ?? createDefaultTacticalPlan()) } }, defensiveMatchups:options.defensiveMatchups??{home:[],away:[]},
       homeStrength: options.homeStrength, awayStrength: options.awayStrength, clockRules, openingTeamId,
       period: 1, clockSecondsRemaining: clockRules.periodSeconds, homeScore: 0, awayScore: 0,
       attackingTeamId: openingTeamId, nextSequence: 2, events: [initialEvent], isComplete: false,
@@ -293,6 +304,7 @@ export function substitutePlayer(session: MatchSession, substitution: Substitute
   const state = session.state
   if (state.isComplete) throw new MatchSimulationError('Cannot substitute in a completed MatchSession')
   const activeLineups = applySubstitution(state.activeLineups, state.homeTeamId, state.awayTeamId, state.squads, substitution)
+  const spatial = applySpatialSubstitution(state.spatial, substitution.teamId, substitution.playerOutId, substitution.playerInId)
   const event: MatchEvent = {
     sequence: state.nextSequence,
     period: state.period,
@@ -305,7 +317,7 @@ export function substitutePlayer(session: MatchSession, substitution: Substitute
     homeScore: state.homeScore,
     awayScore: state.awayScore,
   }
-  return { ...session, state: { ...state, activeLineups, nextSequence: state.nextSequence + 1, events: [...state.events, event] } }
+  return { ...session, state: { ...state, activeLineups, spatial, nextSequence: state.nextSequence + 1, events: [...state.events, event] } }
 }
 
 /** Advances one logical possession or one period transition. RNG streams mutate only inside this runtime. */

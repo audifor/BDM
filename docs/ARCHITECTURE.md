@@ -421,8 +421,12 @@ milestone.
 MatchViewer consumes the transient lineup snapshot in MatchSimulation; it never
 selects starters. UI resolves those PlayerIds and sporting-event PlayerIds through
 GameWorld at render time, so names are not duplicated into MatchEvents. Court
-coordinates are presentation-only UI slots derived from primary position, never
-data on Player, Team, MatchSimulation, or GameWorld. Individual player statistics
+coordinates in MatchViewer remain presentation projections. MatchEngine also owns
+a runtime-only `SpatialState` on `MatchSession`, initialized from each game's
+canonical court geometry and active five; substitutions keep its player set aligned
+with `activeLineups`. Its initial positions are bootstrap anchors, not tactical
+spacing or movement, and the viewer does not own or mutate them. Spatial state is
+not saved and does not affect sporting resolution. Individual player statistics
 are a transient Engine projection: PlayerMatchStats is reconstructed from
 MatchSimulation lineups and MatchEvents and is never persisted. MatchViewer passes
 only revealed events to that projection, so its live boxscore cannot expose future
@@ -439,10 +443,11 @@ transient `MatchPresentationSegment`. The viewer presents every game-clock secon
 of that segment before requesting the next sporting step. Playback speed changes
 only presentation duration, never sporting time, RNG, fatigue, or results.
 
-Court positions and abstract motion are deterministic presentation projections,
-not sporting state or invented basketball events. A future Engine may add timed
-microactions inside the same segment model, and future highlight modes may choose
-which segments to present. Coaching remains a sporting-boundary operation: it
+The existing MatchViewer court positions and abstract motion remain deterministic
+presentation projections; they do not replace Engine-owned `SpatialState` or
+create basketball events. A future Engine may add timed microactions inside the
+same segment model, and future highlight modes may choose which segments to
+present. Coaching remains a sporting-boundary operation: it
 cannot rewrite a segment that has already been resolved.
 
 > Every second of game clock may be represented by MatchViewer even when MatchEngine resolves sporting outcomes at a coarser granularity.

@@ -1,13 +1,14 @@
 import type { CourtRuleset } from './CourtRuleset'
+import { COURT_DIMENSIONS } from '@/domain/court'
 
 const FT = 0.3048
 
 /** NCAA men's — 94' × 50', 12' lane, 22'1.75" three. */
 export const NCAA_MEN_COURT_RULESET: CourtRuleset = {
   id: 'NCAA_M',
-  length: 94 * FT,
-  width: 50 * FT,
-  hoopOffset: 5.25 * FT,
+  length: COURT_DIMENSIONS.NCAA_M.lengthMeters,
+  width: COURT_DIMENSIONS.NCAA_M.widthMeters,
+  hoopOffset: COURT_DIMENSIONS.NCAA_M.basketOffsetMeters,
   backboardOffset: 4 * FT,
   keyDepth: 19 * FT,
   keyWidth: 12 * FT,

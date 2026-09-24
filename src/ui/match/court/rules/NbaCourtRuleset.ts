@@ -1,13 +1,14 @@
 import type { CourtRuleset } from './CourtRuleset'
+import { COURT_DIMENSIONS } from '@/domain/court'
 
 const FT = 0.3048
 
 /** NBA 94' × 50' converted to metres. */
 export const NBA_COURT_RULESET: CourtRuleset = {
   id: 'NBA',
-  length: 94 * FT,
-  width: 50 * FT,
-  hoopOffset: 5.25 * FT,
+  length: COURT_DIMENSIONS.NBA.lengthMeters,
+  width: COURT_DIMENSIONS.NBA.widthMeters,
+  hoopOffset: COURT_DIMENSIONS.NBA.basketOffsetMeters,
   backboardOffset: 4 * FT,
   keyDepth: 19 * FT,
   keyWidth: 16 * FT,

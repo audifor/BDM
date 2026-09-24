@@ -4,8 +4,9 @@
  */
 
 import type { CourtRegulation, CourtRegulationKind } from '../CourtGeometry'
+import type { CourtRulesetId } from '@/domain/court'
 
-export type CourtRulesetId = 'FIBA' | 'NBA' | 'WNBA' | 'NCAA_M' | 'NCAA_W' | 'HIGH_SCHOOL'
+export type { CourtRulesetId } from '@/domain/court'
 
 export type CourtRuleset = {
   readonly id: CourtRulesetId

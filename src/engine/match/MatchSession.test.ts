@@ -7,7 +7,7 @@ import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
-import { MATCH_RULES_V2, MatchSimulationError, calculateActiveLineups, calculateDefensiveAssignments, createMatchPlayerProfile, createMatchSession, simulateMatchDetailed, stepMatchSession, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
+import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, isSpatialStateInsideCourt, simulateMatchDetailed, stepMatchSession, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
 
 describe('MatchSession', () => {
   it('produces the same complete simulation through stepping as through the wrapper', () => {
@@ -29,6 +29,43 @@ describe('MatchSession', () => {
     expect(result.newEvents.length).toBeGreaterThan(0)
     expect(result.session.state.events.length).toBeGreaterThan(session.state.events.length)
     expect(result.session.state.clockSecondsRemaining).toBeLessThanOrEqual(session.state.clockSecondsRemaining)
+  })
+
+  it('bootstraps one deterministic court position for each active player and an unassigned center ball', () => {
+    const { world, game } = createScheduledGameWorld()
+    const options = createOptions(world, game.id, 12345, 67890)
+    const first = createMatchSession(options).state
+    const second = createMatchSession(createOptions(world, game.id, 12345, 67890)).state
+
+    expect(first.spatial).toEqual(second.spatial)
+    expect(first.spatial.players.map((player) => player.playerId).sort()).toEqual([...first.activeLineups.home, ...first.activeLineups.away].sort())
+    expect(first.spatial.players).toHaveLength(10)
+    expect(isSpatialStateInsideCourt(first.spatial)).toBe(true)
+    expect(first.spatial.ball).toEqual({ kind: 'unassigned', position: { x: first.spatial.court.lengthMeters / 2, y: first.spatial.court.widthMeters / 2 } })
+    expect(attackingBasketForTeam({ teamId: game.homeTeamId, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, period: 1, court: first.spatial.court })).toEqual(first.spatial.court.baskets.right)
+    expect(attackingBasketForTeam({ teamId: game.homeTeamId, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, period: 3, court: first.spatial.court })).toEqual(first.spatial.court.baskets.left)
+    expect(attackingBasketForTeam({ teamId: game.awayTeamId, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, period: 1, court: first.spatial.court })).toEqual(first.spatial.court.baskets.left)
+  })
+
+  it('synchronizes the active spatial players on substitution and keeps the incoming player in the outgoing position', () => {
+    const { world, game } = createScheduledGameWorld()
+    const options = createOptions(world, game.id, 12345, 67890)
+    const session = createMatchSession(options)
+    const playerOutId = session.state.activeLineups.home[0]!
+    const playerInId = session.state.squads.home.find((playerId) => !session.state.activeLineups.home.includes(playerId))!
+    const heldSpatial = controlBallByPlayer(session.state.spatial, playerOutId)
+    const outgoingPosition = heldSpatial.ball.position
+    const heldSession = { ...session, state: { ...session.state, spatial: heldSpatial } }
+
+    const substituted = substitutePlayer(heldSession, { teamId: game.homeTeamId, playerOutId, playerInId })
+    const spatialIds = substituted.state.spatial.players.map((player) => player.playerId)
+
+    expect(spatialIds).toHaveLength(10)
+    expect(spatialIds).not.toContain(playerOutId)
+    expect(spatialIds).toContain(playerInId)
+    expect(substituted.state.spatial.players.find((player) => player.playerId === playerInId)).toMatchObject({ teamId: game.homeTeamId, position: outgoingPosition })
+    expect(substituted.state.spatial.ball).toEqual({ kind: 'playerControlled', playerId: playerInId, teamId: game.homeTeamId, position: outgoingPosition })
+    expect(isSpatialStateInsideCourt(substituted.state.spatial)).toBe(true)
   })
 
   it('resumes after five steps with the same final simulation as uninterrupted stepping', () => {
