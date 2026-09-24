@@ -40,6 +40,7 @@ export class LiveMatchController {
   public get isComplete(): boolean { return this.session.state.isComplete }
   public get gameId() { return this.session.state.gameId }
   public get currentPlans() { return this.session.state.coachingState }
+  public get currentMatchups() { return this.session.state.defensiveMatchups }
 }
 
 export interface LiveMatchStep {

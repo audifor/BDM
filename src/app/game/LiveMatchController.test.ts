@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { createDefaultTacticalPlan } from '@/engine/match'
+import { createDefaultTacticalPlan, createMatchSession } from '@/engine/match'
 import { getUserTeam } from '@/engine/calendar'
 import { assignLineupSlot, createDefaultTeamLineup } from '@/domain/tactics'
-import { updateGameWorld } from '@/domain/world'
-import { createLiveUserMatch, prepareUserMatch } from './playUserGame'
+import { resolveGameClockRulesForGame, updateGameWorld } from '@/domain/world'
+import { resolveStartingFive } from '@/engine/team'
+import { updateGamePlan } from './TacticalPlanning'
+import { createLiveUserMatch, prepareMatchOptions, prepareUserMatch } from './playUserGame'
 import { createNewGame } from './createNewGame'
 
 describe('LiveMatchController', () => {
@@ -39,6 +41,47 @@ describe('LiveMatchController', () => {
 
     expect(prepared.lineups[side]).toEqual(expected)
     expect(live.lineups[side]).toEqual(expected)
+  })
+
+  it('shares persisted tactics, matchup overrides, profiles, and rules across live and instant startup', () => {
+    const original = createNewGame()
+    const team = getUserTeam(original)!
+    const game = Object.values(original.games).find((candidate) => candidate.status === 'scheduled' && (candidate.homeTeamId === team.id || candidate.awayTeamId === team.id))!
+    const homeStarters = resolveStartingFive(original, game.homeTeamId, game.date)
+    const awayStarters = resolveStartingFive(original, game.awayTeamId, game.date)
+    const homeMatchups = [{ ourPlayerId: homeStarters[4]!, opponentPlayerId: awayStarters[0]! }]
+    const awayMatchups = [{ ourPlayerId: awayStarters[3]!, opponentPlayerId: homeStarters[1]! }]
+    let world = updateGamePlan(original, {
+      gameId: game.id,
+      teamId: game.homeTeamId,
+      matchups: homeMatchups,
+      tacticalOverride: { pace: 2, shotProfile: { rim: -1, midRange: 1, threePoint: 2 } },
+    })
+    world = updateGamePlan(world, {
+      gameId: game.id,
+      teamId: game.awayTeamId,
+      matchups: awayMatchups,
+      tacticalOverride: { pace: -2, shotProfile: { rim: 2, midRange: -1, threePoint: 0 } },
+    })
+
+    const instantInput = prepareMatchOptions(world, game)
+    const instantSession = createMatchSession(instantInput)
+    const repeatedInput = prepareMatchOptions(world, game)
+    const repeatedSession = createMatchSession(repeatedInput)
+    const live = createLiveUserMatch(world)
+
+    expect(instantSession.state.coachingState.home.currentTacticalPlan).toMatchObject({ pace: 2, shotProfile: { rim: -1, midRange: 1, threePoint: 2 } })
+    expect(instantSession.state.coachingState.away.currentTacticalPlan).toMatchObject({ pace: -2, shotProfile: { rim: 2, midRange: -1, threePoint: 0 } })
+    expect(instantSession.state.defensiveMatchups).toEqual({ home: homeMatchups, away: awayMatchups })
+    expect(instantSession.state.playerProfiles).toEqual(instantInput.playerProfiles)
+    expect(instantSession.state.initialLineups).toEqual(instantInput.lineups)
+    expect(instantSession.state.clockRules).toEqual(resolveGameClockRulesForGame(world, game))
+    expect(instantSession.state.openingTeamId).toBe(repeatedSession.state.openingTeamId)
+    expect(instantInput.decisionRandom.nextInt(0, 1_000_000)).toBe(repeatedInput.decisionRandom.nextInt(0, 1_000_000))
+    expect(instantInput.actorRandom.nextInt(0, 1_000_000)).toBe(repeatedInput.actorRandom.nextInt(0, 1_000_000))
+    expect(live.currentPlans).toEqual(instantSession.state.coachingState)
+    expect(live.currentMatchups).toEqual(instantSession.state.defensiveMatchups)
+    expect(live.snapshot().lineups).toEqual(instantSession.state.initialLineups)
   })
 
   it('simulates only the remainder of the current quarter', () => {
