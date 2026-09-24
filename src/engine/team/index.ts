@@ -1,1 +1,1 @@
-export { calculatePlayerImpact, calculateTeamStrength, selectStartingFive } from './TeamEvaluation'
+export { calculatePlayerImpact, calculateTeamStrength, resolveStartingFive, selectStartingFive } from './TeamEvaluation'

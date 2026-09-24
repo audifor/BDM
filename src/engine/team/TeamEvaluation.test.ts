@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { generateWorld } from '@/engine/world'
 import { createPlayer } from '@/domain/player'
 import { countryIdFromString, playerIdFromString } from '@/domain/ids'
-import { calculatePlayerImpact, calculateTeamStrength, selectStartingFive } from './index'
+import { assignLineupSlot, createDefaultTeamLineup } from '@/domain/tactics'
+import { updateGameWorld } from '@/domain/world'
+import { calculatePlayerImpact, calculateTeamStrength, resolveStartingFive, selectStartingFive } from './index'
 
 describe('roster team evaluation', () => {
   const playerWith = (ratings: Record<string, number>) => createPlayer({ id: playerIdFromString('controlled-player'), firstName: 'Test', lastName: 'Player', gender: 'male', nationalityId: countryIdFromString('country'), basketball: { primaryPosition: 'PG', ratings: { finishing: ratings.finishing ?? 50, shooting: ratings.shooting ?? 50, playmaking: ratings.playmaking ?? 50, perimeterDefense: ratings.perimeterDefense ?? 50, interiorDefense: ratings.interiorDefense ?? 50, rebounding: ratings.rebounding ?? 50, athleticism: ratings.athleticism ?? 50 } }, bio: { dateOfBirth: '2008-06-14', heightCm: 188, weightKg: 86 } })
@@ -35,6 +37,31 @@ describe('roster team evaluation', () => {
     expect(starters).toEqual(expect.arrayContaining(team.rosterPlayerIds.filter((id) => starters.includes(id))))
     expect(starters.map((id) => world.players[id]!.basketball.primaryPosition)).toEqual(['PG','SG','SF','PF','C'])
     expect(strength.value).toBe(starters.reduce((sum, id) => sum + calculatePlayerImpact(world.players[id]!), 0) / 5)
+  })
+
+  it('honors a complete explicit lineup even when automatic selection prefers different players', () => {
+    const world = generateWorld({ seed: 12345, gender: 'male' })
+    const team = Object.values(world.teams)[0]!
+    const automatic = selectStartingFive(world, team.id)
+    const explicit = team.rosterPlayerIds.filter((id) => !automatic.includes(id)).slice(0, 5)
+    expect(explicit).toHaveLength(5)
+    let lineup = createDefaultTeamLineup(team.id)
+    for (const [index, playerId] of explicit.entries()) lineup = assignLineupSlot(lineup, (['PG', 'SG', 'SF', 'PF', 'C'] as const)[index]!, playerId)
+    const prepared = updateGameWorld(world, { lineupsByTeamId: { ...world.lineupsByTeamId, [team.id]: lineup } })
+
+    expect(automatic).not.toEqual(explicit)
+    expect(resolveStartingFive(prepared, team.id)).toEqual(explicit)
+    expect(calculateTeamStrength(prepared, team.id).value).toBe(explicit.reduce((sum, id) => sum + calculatePlayerImpact(prepared.players[id]!), 0) / 5)
+  })
+
+  it('falls back to automatic selection for an incomplete explicit lineup', () => {
+    const world = generateWorld({ seed: 12345, gender: 'male' })
+    const team = Object.values(world.teams)[0]!
+    let lineup = createDefaultTeamLineup(team.id)
+    for (const [index, playerId] of team.rosterPlayerIds.slice(0, 4).entries()) lineup = assignLineupSlot(lineup, (['PG', 'SG', 'SF', 'PF'] as const)[index]!, playerId)
+    const prepared = updateGameWorld(world, { lineupsByTeamId: { ...world.lineupsByTeamId, [team.id]: lineup } })
+
+    expect(resolveStartingFive(prepared, team.id)).toEqual(selectStartingFive(prepared, team.id))
   })
 
   it('produces varied deterministic strengths for generated teams', () => {
