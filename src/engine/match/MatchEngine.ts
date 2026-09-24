@@ -20,7 +20,7 @@ import { applySpatialSubstitution, controlBallByPlayer, createInitialSpatialStat
 import { assignBaseSpatialTargets, stepPlayersTowardBaseSpacing } from './BaseSpacing'
 import { stepPlayersTowardTransitionTargets } from './TransitionSpatial'
 import { createOffBallCutIntent, selectOffBallCutter, updateOffBallCutIntent, type OffBallCutIntent } from './OffBallMovement'
-import { advanceScreenIntent, createScreenIntent, reduceScreenedDefenderMovement, screenIntersectsDefenderRoute, selectScreenScreener, type ScreenIntent } from './ScreenInteractions'
+import { advanceScreenIntent, createPostScreenIntent, createScreenIntent, reduceScreenedDefenderMovement, screenIntersectsDefenderRoute, selectScreenScreener, type ScreenIntent } from './ScreenInteractions'
 
 /**
  * Default game-clock rules, used only as the fallback when a game's actual competition cannot
@@ -419,7 +419,8 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     ballHandlerId: playerId,
   }
   const screenScreenerPosition = screenForMovement?.phase === 'set' ? baseInput.spatial.players.find((player) => player.playerId === screenForMovement.screenerId)?.position : undefined
-  const screenOverride = screenForMovement === undefined ? [] : [{ playerId: screenForMovement.screenerId, position: screenScreenerPosition ?? screenForMovement.target }]
+  const screenTarget = screenForMovement?.phase === 'postScreen' ? screenForMovement.postScreenTarget : screenForMovement?.target
+  const screenOverride = screenForMovement === undefined ? [] : [{ playerId: screenForMovement.screenerId, position: screenScreenerPosition ?? screenTarget ?? screenForMovement.target }]
   const baseTargets = screenForMovement?.phase === 'set' ? assignBaseSpatialTargets(baseInput) : undefined
   const defenderTarget = baseTargets?.defensive.find((target) => target.playerId === screenForMovement?.defenderId)?.position
   const screenAffectsDefender = screenForMovement?.phase === 'set'
@@ -428,7 +429,11 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   let spatial = stepPlayersTowardBaseSpacing({ ...baseInput, playerProfiles: movementProfiles }, possessionDuration,
     cutForMovement !== undefined ? [{ playerId: cutForMovement.playerId, position: cutForMovement.target }] : screenOverride)
   const progressedCut = updateOffBallCutIntent(cutForMovement, { teamId: state.attackingTeamId, lineup, ballHandlerId: playerId, spatial })
-  const progressedScreen = advanceScreenIntent(screenForMovement, spatial)
+  let progressedScreen = advanceScreenIntent(screenForMovement, spatial)
+  if (progressedScreen === undefined && screenForMovement?.phase === 'set' && screenForMovement.stepsRemaining <= 1) {
+    const screener = profiles.find((profile) => profile.playerId === screenForMovement.screenerId)
+    if (screener !== undefined) progressedScreen = createPostScreenIntent({ intent: screenForMovement, spatial, attackingBasket, screener, random: session.decisionRandom })
+  }
   const primaryDefender = profileForPlayer(defendingProfiles, primaryDefenderId)
   const shooterSpatial = spatial.players.find((player) => player.playerId === playerId)
   if (shooterSpatial === undefined) throw new MatchSimulationError(`Active shooter ${playerId} is missing from SpatialState`)

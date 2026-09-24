@@ -1,5 +1,5 @@
 import type { PlayerId } from '@/domain/ids'
-import { type CourtPosition } from '@/domain/court'
+import { isInsideCourt, type CourtPosition } from '@/domain/court'
 import type { RandomSource } from '@/engine/random'
 import { chooseWeighted } from './WeightedChoice'
 import type { MatchPlayerProfile, MatchPlayerProfiles } from './MatchPlayerProfile'
@@ -9,6 +9,10 @@ export const SCREEN_RULES_V1 = {
   maximumApproachSteps: 2,
   setDurationSteps: 2,
   setThresholdMeters: 0.45,
+  postScreenCompletionThresholdMeters: 0.45,
+  maximumPostScreenSteps: 4,
+  rollTargetBasketDistanceMeters: 2,
+  popTargetThreePointOffsetMeters: 0.45,
   influenceRadiusMeters: 1.25,
   defenderMovementFactor: 0.65,
   targetForwardOffsetMeters: 0.9,
@@ -21,8 +25,10 @@ export interface ScreenIntent {
   readonly ballHandlerId: PlayerId
   readonly defenderId: PlayerId
   readonly target: CourtPosition
-  readonly phase: 'approach' | 'set'
+  readonly phase: 'approach' | 'set' | 'postScreen'
   readonly stepsRemaining: number
+  readonly postScreenAction?: 'roll' | 'pop'
+  readonly postScreenTarget?: CourtPosition
 }
 
 /** Selects an active teammate other than the handler/current cutter using on-ball-screen tendency. */
@@ -84,7 +90,66 @@ export function advanceScreenIntent(intent: ScreenIntent | undefined, spatial: S
     }
     return intent.stepsRemaining <= 1 ? undefined : { ...intent, stepsRemaining: intent.stepsRemaining - 1 }
   }
-  return intent.stepsRemaining <= 1 ? undefined : { ...intent, stepsRemaining: intent.stepsRemaining - 1 }
+  if (intent.phase === 'set') return intent.stepsRemaining <= 1 ? undefined : { ...intent, stepsRemaining: intent.stepsRemaining - 1 }
+  const screener = spatial.players.find((player) => player.playerId === intent.screenerId)
+  if (screener === undefined || intent.stepsRemaining <= 1 || (intent.postScreenTarget !== undefined && distance(screener.position, intent.postScreenTarget) <= SCREEN_RULES_V1.postScreenCompletionThresholdMeters)) return undefined
+  return { ...intent, stepsRemaining: intent.stepsRemaining - 1 }
+}
+
+/** Starts the screener's one post-screen action after the SET window expires. */
+export function createPostScreenIntent(input: {
+  readonly intent: ScreenIntent
+  readonly spatial: SpatialState
+  readonly attackingBasket: CourtPosition
+  readonly screener: MatchPlayerProfile
+  readonly random: RandomSource
+}): ScreenIntent {
+  const action = chooseWeighted([
+    { item: 'roll' as const, weight: input.screener.tendencies.PICK_AND_ROLL_ROLL_FREQUENCY },
+    { item: 'pop' as const, weight: input.screener.tendencies.PICK_AND_POP_FREQUENCY },
+  ], input.random)
+  const target = createPostScreenTarget({ action, intent: input.intent, spatial: input.spatial, attackingBasket: input.attackingBasket })
+  return {
+    ...input.intent,
+    phase: 'postScreen',
+    stepsRemaining: SCREEN_RULES_V1.maximumPostScreenSteps,
+    postScreenAction: action,
+    postScreenTarget: target,
+  }
+}
+
+/** Uses basket and live participant geometry; pop radius follows this court's three-point arc. */
+export function createPostScreenTarget(input: {
+  readonly action: 'roll' | 'pop'
+  readonly intent: ScreenIntent
+  readonly spatial: SpatialState
+  readonly attackingBasket: CourtPosition
+}): CourtPosition {
+  const screener = input.spatial.players.find((player) => player.playerId === input.intent.screenerId)
+  const handler = input.spatial.players.find((player) => player.playerId === input.intent.ballHandlerId)
+  if (screener === undefined || handler === undefined) throw new Error('Post-screen participants must be active in SpatialState')
+
+  const reference = {
+    x: (screener.position.x + handler.position.x) / 2,
+    y: (screener.position.y + handler.position.y) / 2,
+  }
+  let dx = reference.x - input.attackingBasket.x
+  let dy = reference.y - input.attackingBasket.y
+  const attacksRight = input.attackingBasket.x > input.spatial.court.lengthMeters / 2
+  const inwardX = attacksRight ? -1 : 1
+  if (dx * inwardX < 0) dx = -dx
+  let length = Math.hypot(dx, dy)
+  if (length < 1e-6) { dx = inwardX; dy = 0; length = 1 }
+  const radius = input.action === 'roll'
+    ? SCREEN_RULES_V1.rollTargetBasketDistanceMeters
+    : input.spatial.court.threePointLine.arcRadiusMeters + SCREEN_RULES_V1.popTargetThreePointOffsetMeters
+  const margin = SCREEN_RULES_V1.courtMarginMeters
+  const target = {
+    x: clamp(input.attackingBasket.x + dx / length * radius, margin, input.spatial.court.lengthMeters - margin),
+    y: clamp(input.attackingBasket.y + dy / length * radius, margin, input.spatial.court.widthMeters - margin),
+  }
+  if (!isInsideCourt(target, input.spatial.court)) throw new Error('Post-screen target must be inside the court')
+  return target
 }
 
 /** Returns whether the assigned defender's current-to-spacing movement crosses the screen zone. */

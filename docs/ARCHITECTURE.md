@@ -179,6 +179,20 @@ foundation. MG6A later replaces the fixed two-metre displacement with
 time-based canonical kinematics; MG6B supplies each player’s derived athletic
 limits without changing these targets.
 
+MG6E extends the transient `ScreenIntent`: after its two-step SET window, the
+screener chooses `roll` or `pop` from the canonical
+`PICK_AND_ROLL_ROLL_FREQUENCY` and `PICK_AND_POP_FREQUENCY` tendencies using one
+weighted draw from `decisionRandom`. A roll target is two metres from the
+attacking basket along the inward ray derived from the live handler and screener
+positions. A pop target uses the current court's three-point arc radius plus a
+small offset; both targets are clamped inside that court. The screener reaches
+the target through their MG6A/B kinematic profile. The intent ends within 0.45 m
+or after four movement steps, then BaseSpacing resumes on the next step. Existing
+possession, handler and participant-substitution cancellation still applies.
+Post-screen movement does not force a pass or shot and adds no receiver bonus.
+Handler drives, coverages, help defense and playbooks remain deferred. Live and
+Instant Result share this MatchEngine state; the renderer remains presentation-only.
+
 For live matches, `LiveMatchController` supplies read-only before/after spatial
 snapshots to the presentation segment. The UI bridge copies active player IDs,
 team IDs, ball ownership and positions, then projects court metres to normalized

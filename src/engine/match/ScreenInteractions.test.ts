@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import { createGameWorld } from '@/domain/world'
+import { distanceFromBasket, isBeyondThreePointLine, isInsideCourt } from '@/domain/court'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { generateWorld } from '@/engine/world'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
-import { advanceScreenIntent, assignBaseSpatialTargets, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, createScreenIntent, reduceScreenedDefenderMovement, screenIntersectsDefenderRoute, selectScreenScreener, stepMatchSession, stepPlayersTowardBaseSpacing, substitutePlayer, type MatchPlayerProfiles, type ScreenIntent, type SpatialState } from './index'
+import { advanceScreenIntent, assignBaseSpatialTargets, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, createPostScreenIntent, createPostScreenTarget, createScreenIntent, reduceScreenedDefenderMovement, screenIntersectsDefenderRoute, selectScreenScreener, stepMatchSession, stepPlayersTowardBaseSpacing, substitutePlayer, type MatchPlayerProfiles, type ScreenIntent, type SpatialState } from './index'
 
 describe('on-ball screen spatial foundation', () => {
   it('moves an eligible screener away from BaseSpacing toward a court-valid target with MG6B kinematics', () => {
@@ -70,7 +71,7 @@ describe('on-ball screen spatial foundation', () => {
     const { handlerId, screenerId, defenderId, basket, offenseKey, defenseKey } = participants(state)
     const intent = createScreenIntent({ screenerId, ballHandlerId: handlerId, defenderId, spatial: state.spatial, attackingBasket: basket })
     const heldSpatial = controlBallByPlayer(state.spatial, handlerId)
-    const sessionWithScreen = { ...session, state: { ...state, spatial: heldSpatial, screenIntent: { ...intent, phase: 'set' as const } } }
+    const sessionWithScreen = { ...session, state: { ...state, spatial: heldSpatial, screenIntent: { ...intent, phase: 'postScreen' as const, stepsRemaining: 2, postScreenAction: 'roll' as const, postScreenTarget: intent.target } } }
     const screenOutId = screenerId
     const screenOutBenchId = state.squads[offenseKey].find((id) => !state.activeLineups[offenseKey].includes(id))!
     expect(substitutePlayer(sessionWithScreen, { teamId: state.attackingTeamId, playerOutId: screenOutId, playerInId: screenOutBenchId }).state.screenIntent).toBeUndefined()
@@ -87,6 +88,68 @@ describe('on-ball screen spatial foundation', () => {
     const newHandlerId = state.activeLineups[offenseKey][1]!
     const handlerChanged = { ...sessionWithScreen, state: { ...sessionWithScreen.state, spatial: controlBallByPlayer(heldSpatial, newHandlerId) }, decisionRandom: new FixedRandom(0.99) }
     expect(stepMatchSession(handlerChanged).session.state.screenIntent).toBeUndefined()
+  })
+
+  it('enters post-screen only after SET expires and controls roll versus pop from canonical tendencies', () => {
+    const { state } = createFixture()
+    const { handlerId, screenerId, defenderId, basket, offenseKey } = participants(state)
+    const setIntent = { ...createScreenIntent({ screenerId, ballHandlerId: handlerId, defenderId, spatial: state.spatial, attackingBasket: basket }), phase: 'set' as const, stepsRemaining: 1 }
+    const baseProfile = state.playerProfiles[offenseKey].find((profile) => profile.playerId === screenerId)!
+    const rollProfile = { ...baseProfile, tendencies: { ...baseProfile.tendencies, PICK_AND_ROLL_ROLL_FREQUENCY: 100, PICK_AND_POP_FREQUENCY: 1 } }
+    const popProfile = { ...baseProfile, tendencies: { ...baseProfile.tendencies, PICK_AND_ROLL_ROLL_FREQUENCY: 1, PICK_AND_POP_FREQUENCY: 100 } }
+
+    expect(advanceScreenIntent(setIntent, state.spatial)).toBeUndefined()
+    const rollIntent = createPostScreenIntent({ intent: setIntent, spatial: state.spatial, attackingBasket: basket, screener: rollProfile, random: new FixedRandom(0) })
+    const popIntent = createPostScreenIntent({ intent: setIntent, spatial: state.spatial, attackingBasket: basket, screener: popProfile, random: new FixedRandom(0.99) })
+    expect(rollIntent).toMatchObject({ phase: 'postScreen', postScreenAction: 'roll' })
+    expect(popIntent).toMatchObject({ phase: 'postScreen', postScreenAction: 'pop' })
+  })
+
+  it('persists the post-screen choice through MatchEngine when a SET screen window expires', () => {
+    const { session, state } = createFixture()
+    const { handlerId, screenerId, defenderId, basket, offenseKey } = participants(state)
+    const screen = { ...createScreenIntent({ screenerId, ballHandlerId: handlerId, defenderId, spatial: state.spatial, attackingBasket: basket }), phase: 'set' as const, stepsRemaining: 1 }
+    const heldSpatial = controlBallByPlayer(state.spatial, handlerId)
+    const playerProfiles = {
+      ...state.playerProfiles,
+      [offenseKey]: state.playerProfiles[offenseKey].map((profile) => profile.playerId === screenerId
+        ? { ...profile, tendencies: { ...profile.tendencies, PICK_AND_ROLL_ROLL_FREQUENCY: 100, PICK_AND_POP_FREQUENCY: 1 } }
+        : profile),
+    }
+    const sessionWithSet = {
+      ...session,
+      random: new SequenceRandom([0.99], [0.99, 0]),
+      decisionRandom: new FixedRandom(0),
+      actorRandom: new FixedRandom(0),
+      state: { ...state, spatial: heldSpatial, playerProfiles, screenIntent: screen },
+    }
+
+    const stepped = stepMatchSession(sessionWithSet).session.state.screenIntent
+    expect(stepped).toMatchObject({ phase: 'postScreen', postScreenAction: 'roll' })
+  })
+
+  it('moves a roller toward a near-hoop target and keeps a pop target farther out on this court arc', () => {
+    const { state } = createFixture()
+    const { handlerId, screenerId, defenderId, basket } = participants(state)
+    const screen = createScreenIntent({ screenerId, ballHandlerId: handlerId, defenderId, spatial: state.spatial, attackingBasket: basket })
+    const rollTarget = createPostScreenTarget({ action: 'roll', intent: screen, spatial: state.spatial, attackingBasket: basket })
+    const popTarget = createPostScreenTarget({ action: 'pop', intent: screen, spatial: state.spatial, attackingBasket: basket })
+    const rollIntent: ScreenIntent = { ...screen, phase: 'postScreen', stepsRemaining: 4, postScreenAction: 'roll', postScreenTarget: rollTarget }
+    const before = playerAt(state.spatial, screenerId)
+    const moved = stepPlayersTowardBaseSpacing(spacingInput(state, handlerId), 0.5, [{ playerId: screenerId, position: rollTarget }])
+
+    expect(rollTarget).not.toEqual(popTarget)
+    expect(distanceFromBasket(rollTarget, basket)).toBeLessThan(distanceFromBasket(popTarget, basket))
+    expect(isInsideCourt(rollTarget, state.spatial.court)).toBe(true)
+    expect(isInsideCourt(popTarget, state.spatial.court)).toBe(true)
+    expect(isBeyondThreePointLine(popTarget, basket, state.spatial.court)).toBe(true)
+    expect(distance(playerAt(moved, screenerId).position, rollTarget)).toBeLessThan(distance(before.position, rollTarget))
+
+    const arrived = placePlayer(state.spatial, screenerId, popTarget)
+    const popIntent: ScreenIntent = { ...rollIntent, postScreenAction: 'pop', postScreenTarget: popTarget }
+    expect(advanceScreenIntent(popIntent, arrived)).toBeUndefined()
+    const spacingResumes = stepPlayersTowardBaseSpacing({ ...spacingInput(state, handlerId), spatial: arrived }, 0.5)
+    expect(playerAt(spacingResumes, screenerId).position).not.toEqual(popTarget)
   })
 })
 
@@ -138,5 +201,14 @@ class FixedRandom implements RandomSource {
   public nextInt(minInclusive: number): number { return minInclusive }
   public nextFloat(minInclusive: number): number { return minInclusive }
   public chance(probability: number): boolean { return this.value < probability }
+  public pick<Item>(items: readonly Item[]): Item { return items[0]! }
+}
+
+class SequenceRandom implements RandomSource {
+  public constructor(private readonly nextValues: number[], private readonly chanceValues: number[]) {}
+  public next(): number { return this.nextValues.shift() ?? 0.99 }
+  public nextInt(minInclusive: number): number { return minInclusive }
+  public nextFloat(minInclusive: number): number { return minInclusive }
+  public chance(probability: number): boolean { return (this.chanceValues.shift() ?? 0.99) < probability }
   public pick<Item>(items: readonly Item[]): Item { return items[0]! }
 }
