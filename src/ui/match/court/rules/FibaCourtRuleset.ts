@@ -1,11 +1,12 @@
 import type { CourtRuleset } from './CourtRuleset'
+import { COURT_DIMENSIONS } from '@/domain/court'
 
 /** Official FIBA court — 28 × 15 m. */
 export const FIBA_COURT_RULESET: CourtRuleset = {
   id: 'FIBA',
-  length: 28,
-  width: 15,
-  hoopOffset: 1.575,
+  length: COURT_DIMENSIONS.FIBA.lengthMeters,
+  width: COURT_DIMENSIONS.FIBA.widthMeters,
+  hoopOffset: COURT_DIMENSIONS.FIBA.basketOffsetMeters,
   backboardOffset: 1.2,
   keyDepth: 5.8,
   keyWidth: 4.9,

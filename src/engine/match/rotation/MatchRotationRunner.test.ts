@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import { createNewGame, createPrototypeGameRandom, prepareMatch } from '@/app/game'
+import { createMatchRandomSources, createNewGame, prepareMatch } from '@/app/game'
 import { getGamesToday } from '@/engine/calendar'
-import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import { calculateTeamStrength, selectStartingFive } from '@/engine/team'
 
 import { calculateFatigueAtEvents, createMatchPlayerProfile } from '../index'
@@ -21,11 +20,9 @@ describe('automatic match rotation runner', () => {
       lineups,
       squads: { home: world.teams[game.homeTeamId]!.rosterPlayerIds, away: world.teams[game.awayTeamId]!.rosterPlayerIds },
       playerProfiles: { home: world.teams[game.homeTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)), away: world.teams[game.awayTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)) },
-      random: createPrototypeGameRandom(game.id),
-      decisionRandom: new SeededRandomSource(hashStringToSeed(`match-decisions-v1:${game.id}`)),
-      actorRandom: new SeededRandomSource(hashStringToSeed(`match-actors-v1:${game.id}`)),
+      ...createMatchRandomSources(12345),
     })
-    const withRotations = prepareMatch(world, game)
+    const withRotations = prepareMatch(world, game, undefined, 12345)
 
     expect(withRotations.events.filter((event) => event.type === 'substitution').length).toBeGreaterThan(0)
     expect(withRotations.finalScore.home).toBeGreaterThanOrEqual(0)

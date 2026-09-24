@@ -50,7 +50,17 @@ export function formatMatchEvent(event: MatchEvent, world: GameWorld): string {
     return `${getPlayer(world, event.playerId).lastName} ${formatShotZoneMade(event.shotZone)}${assist}`
   }
   if (event.type === 'shotMissed') return event.blockedByPlayerId === undefined ? `${getPlayer(world, event.playerId).lastName} misses ${formatShotZone(event.shotZone)}` : `${getPlayer(world, event.blockedByPlayerId).lastName} blocks ${getPlayer(world, event.playerId).lastName}'s shot`
-  if (event.type === 'turnover') return event.stealPlayerId === undefined ? `${getPlayer(world, event.playerId).lastName} turnover` : `${getPlayer(world, event.stealPlayerId).lastName} steals the ball from ${getPlayer(world, event.playerId).lastName}`
+  if (event.type === 'turnover') {
+    const playerName = getPlayer(world, event.playerId).lastName
+    if (event.turnoverType === 'failedPass' && event.passTargetPlayerId !== undefined) {
+      const targetName = getPlayer(world, event.passTargetPlayerId).lastName
+      return event.stealPlayerId === undefined
+        ? `${playerName}'s pass to ${targetName} is incomplete`
+        : `${getPlayer(world, event.stealPlayerId).lastName} intercepts ${playerName}'s pass to ${targetName}`
+    }
+    return event.stealPlayerId === undefined ? `${playerName} turnover` : `${getPlayer(world, event.stealPlayerId).lastName} steals the ball from ${playerName}`
+  }
+  if (event.type === 'passCompleted') return `${getPlayer(world, event.passerPlayerId).lastName} passes to ${getPlayer(world, event.receiverPlayerId).lastName}`
   if (event.type === 'rebound') return `${getPlayer(world, event.playerId).lastName} ${event.reboundType} rebound`
   if (event.type === 'foul') return `${getPlayer(world, event.playerId).lastName} shooting foul`
   if (event.type === 'freeThrowMade') return `${getPlayer(world, event.playerId).lastName} makes free throw`

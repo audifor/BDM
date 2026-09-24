@@ -1,4 +1,5 @@
 import type { MatchPlayerProfile } from './MatchPlayerProfile'
+import { distanceFromBasket, isBeyondThreePointLine, type CourtGeometry, type CourtPosition } from '@/domain/court'
 
 export type ShotZone = 'rim' | 'midRange' | 'threePoint'
 
@@ -9,6 +10,13 @@ export interface ShotAttemptContext {
   readonly defenderProfile: MatchPlayerProfile
   readonly defenderFatigue: number
   readonly tacticalDefenseModifier?: number
+  readonly shotDistanceMeters?: number
+  readonly defenderDistanceMeters?: number
+}
+
+export interface ShotLocation {
+  readonly shotZone: ShotZone
+  readonly distanceMeters: number
 }
 
 export const SHOT_RESOLUTION_V1 = {
@@ -23,21 +31,46 @@ export const SHOT_RESOLUTION_V1 = {
   defenseAdjustmentPerPoint: 0.003,
   maximumFatiguePenalty: 0.08,
   defenderFatiguePenaltyAtMaximum: 12,
+  rimDistanceMeters: 1.5,
+  distanceAdjustmentPerMeter: 0.008,
+  maximumDistanceAdjustment: 0.04,
 } as const
+
+export const SPATIAL_CONTEST_V1 = {
+  fullContestDistanceMeters: 1,
+  noContestDistanceMeters: 4,
+  maximumDefenseBonusPoints: 12,
+} as const
+
+export function calculateShotLocation(position: CourtPosition, attackingBasket: CourtPosition, court: CourtGeometry): ShotLocation {
+  const distanceMeters = distanceFromBasket(position, attackingBasket)
+  const shotZone = distanceMeters <= SHOT_RESOLUTION_V1.rimDistanceMeters
+    ? 'rim'
+    : isBeyondThreePointLine(position, attackingBasket, court) ? 'threePoint' : 'midRange'
+  return { shotZone, distanceMeters }
+}
 
 export function calculateShotZoneWeights(profile: MatchPlayerProfile): Readonly<Record<ShotZone, number>> {
   return Object.fromEntries((['rim', 'midRange', 'threePoint'] as const).map((zone) => {
     const weights = SHOT_RESOLUTION_V1.zoneWeights[zone]
-    return [zone, weights.base + profile.offense.rimAttack * weights.rimAttack + profile.offense.shooting * weights.shooting + profile.offense.creation * weights.creation]
+    const naturalWeight = weights.base + profile.offense.rimAttack * weights.rimAttack + profile.offense.shooting * weights.shooting + profile.offense.creation * weights.creation
+    const tendency = zone === 'rim'
+      ? profile.tendencies.RIM_ATTEMPT_FREQUENCY
+      : zone === 'midRange'
+        ? profile.tendencies.MIDRANGE_FREQUENCY
+        : profile.tendencies.THREE_POINT_FREQUENCY
+    return [zone, naturalWeight * shotTendencyFactor(tendency)]
   })) as Record<ShotZone, number>
 }
 
 export function calculateShotMakeProbability(context: ShotAttemptContext): number {
   const execution = calculateExecution(context.shotZone, context.shooterProfile)
+  const effectiveDefense = calculateEffectiveDefense(context.shotZone, context.defenderProfile, context.defenderFatigue)
   const probability = SHOT_RESOLUTION_V1.baseProbability[context.shotZone]
     + (execution - 50) * SHOT_RESOLUTION_V1.skillAdjustmentPerPoint
-    - (clamp(calculateEffectiveDefense(context.shotZone, context.defenderProfile, context.defenderFatigue) + (context.tacticalDefenseModifier ?? 0), 0, 100) - 50) * SHOT_RESOLUTION_V1.defenseAdjustmentPerPoint
+    - (clamp(effectiveDefense + calculateSpatialContestBonus(effectiveDefense, context.defenderDistanceMeters) + (context.tacticalDefenseModifier ?? 0), 0, 100) - 50) * SHOT_RESOLUTION_V1.defenseAdjustmentPerPoint
     - (clamp(context.shooterFatigue, 0, 100) / 100) * SHOT_RESOLUTION_V1.maximumFatiguePenalty
+    + calculateDistanceAdjustment(context.shotZone, context.shotDistanceMeters)
   const [minimum, maximum] = SHOT_RESOLUTION_V1.probabilityClamp[context.shotZone]
   return clamp(probability, minimum, maximum)
 }
@@ -52,6 +85,17 @@ export function calculateEffectiveDefense(shotZone: ShotZone, profile: MatchPlay
   return clamp(calculateDefenseExecution(shotZone, profile) - (clamp(fatigue, 0, 100) / 100) * SHOT_RESOLUTION_V1.defenderFatiguePenaltyAtMaximum, 0, 100)
 }
 
+export function calculateSpatialContestBonus(effectiveDefense: number, defenderDistanceMeters: number | undefined): number {
+  if (defenderDistanceMeters === undefined || !Number.isFinite(defenderDistanceMeters)) return 0
+  const proximity = clamp(
+    (SPATIAL_CONTEST_V1.noContestDistanceMeters - defenderDistanceMeters)
+      / (SPATIAL_CONTEST_V1.noContestDistanceMeters - SPATIAL_CONTEST_V1.fullContestDistanceMeters),
+    0,
+    1,
+  )
+  return proximity * (clamp(effectiveDefense, 0, 100) / 100) * SPATIAL_CONTEST_V1.maximumDefenseBonusPoints
+}
+
 export function pointsForShotZone(shotZone: ShotZone): 2 | 3 { return shotZone === 'threePoint' ? 3 : 2 }
 
 function calculateExecution(shotZone: ShotZone, profile: MatchPlayerProfile): number {
@@ -60,4 +104,11 @@ function calculateExecution(shotZone: ShotZone, profile: MatchPlayerProfile): nu
   return profile.offense.shooting * 0.90 + profile.offense.creation * 0.10
 }
 
+function shotTendencyFactor(value: number): number { return 0.5 + value / 100 }
 function clamp(value: number, minimum: number, maximum: number): number { return Math.min(maximum, Math.max(minimum, value)) }
+
+function calculateDistanceAdjustment(shotZone: ShotZone, distanceMeters: number | undefined): number {
+  if (distanceMeters === undefined || !Number.isFinite(distanceMeters)) return 0
+  const referenceDistance = shotZone === 'rim' ? 1 : shotZone === 'midRange' ? 4.5 : 7.5
+  return clamp((referenceDistance - distanceMeters) * SHOT_RESOLUTION_V1.distanceAdjustmentPerMeter, -SHOT_RESOLUTION_V1.maximumDistanceAdjustment, SHOT_RESOLUTION_V1.maximumDistanceAdjustment)
+}

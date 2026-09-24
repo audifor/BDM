@@ -1,5 +1,6 @@
 import type { Player } from '@/domain/player'
 import type { PlayerId, TeamId } from '@/domain/ids'
+import type { TeamRotationIntent } from '@/domain/tactics'
 import { calculatePlayerImpact } from '@/engine/team'
 
 import type { MatchLineups, MatchSquads } from '../MatchEngine'
@@ -51,6 +52,40 @@ export function createDefaultRotationPlan(options: RotationPlanOptions): TeamRot
     ...substitutionsFor(4, 480, SECOND_WINDOW, starters, backups, true),
     ...substitutionsFor(4, 360, FIRST_WINDOW, starters, backups, true),
   ] }
+}
+
+/** Compiles a validated per-period allocation into substitutions consumed by the existing runner. */
+export function createRotationPlanFromMinutes(options: RotationPlanOptions & { readonly minutesByPeriod: NonNullable<TeamRotationIntent['minutesByPeriod']>; readonly periodMinutes: readonly number[] }): TeamRotationPlan | undefined {
+  const { squad, minutesByPeriod, periodMinutes } = options
+  if (periodMinutes.length === 0 || periodMinutes.some((minutes) => !Number.isInteger(minutes) || minutes <= 0)) return undefined
+  if (Object.keys(minutesByPeriod).some((playerId) => !squad.includes(playerId as PlayerId))) return undefined
+  for (const [periodIndex, length] of periodMinutes.entries()) {
+    const total = squad.reduce((sum, playerId) => {
+      const minutes = minutesByPeriod[playerId]?.[periodIndex] ?? 0
+      return Number.isInteger(minutes) && minutes >= 0 && minutes <= length ? sum + minutes : Number.NaN
+    }, 0)
+    if (total !== length * 5) return undefined
+  }
+
+  const instructions: RotationInstruction[] = []
+  let active = [...options.initialLineup]
+  for (const [periodIndex, length] of periodMinutes.entries()) {
+    const remaining = new Map(squad.map((playerId) => [playerId, minutesByPeriod[playerId]?.[periodIndex] ?? 0]))
+    for (let elapsed = 0; elapsed < length; elapsed += 1) {
+      const next = [...squad]
+        .sort((left, right) => (remaining.get(right)! - remaining.get(left)!) || Number(active.includes(right)) - Number(active.includes(left)) || left.localeCompare(right))
+        .slice(0, 5)
+      const outgoing = active.filter((playerId) => !next.includes(playerId))
+      const incoming = next.filter((playerId) => !active.includes(playerId))
+      const clockThresholdSeconds = (length - elapsed) * 60
+      for (let index = 0; index < outgoing.length; index += 1) {
+        instructions.push({ period: periodIndex + 1, clockThresholdSeconds, playerOutId: outgoing[index]!, playerInId: incoming[index]! })
+      }
+      active = next
+      for (const playerId of next) remaining.set(playerId, remaining.get(playerId)! - 1)
+    }
+  }
+  return { teamId: options.teamId, instructions }
 }
 
 function substitutionsFor(

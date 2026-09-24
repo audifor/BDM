@@ -49,30 +49,34 @@ export class CourtDynamicRenderer {
   }
 
   public syncFrame(frame: CourtDynamicFrame, now: number): void {
-    syncPauseState(this.animation, frame.isPlaying, now)
+    if (!frame.snapshotInterpolated) syncPauseState(this.animation, frame.isPlaying, now)
     const active = new Set<PlayerId>()
     for (const player of frame.players) {
       active.add(player.playerId)
-      retargetPlayerMotion(
-        this.animation,
-        player.playerId,
-        { x: player.xPercent, y: player.yPercent },
-        now,
-        frame.playbackSpeed,
-        frame.isPlaying,
-        player.facingHint,
-      )
+      const target = { x: player.xPercent, y: player.yPercent }
+      if (frame.snapshotInterpolated) {
+        this.animation.players.set(player.playerId, {
+          from: target,
+          to: target,
+          startedAt: now,
+          durationMs: 0,
+          facing: player.facingHint ?? 0,
+          pausedAt: null,
+          pauseAccumMs: 0,
+        })
+      } else {
+        retargetPlayerMotion(this.animation, player.playerId, target, now, frame.playbackSpeed, frame.isPlaying, player.facingHint)
+      }
     }
     pruneStalePlayers(this.animation, active)
 
     if (frame.ball !== null) {
-      retargetBallMotion(
-        this.animation,
-        { x: frame.ball.xPercent, y: frame.ball.yPercent, z: frame.ball.z },
-        now,
-        frame.playbackSpeed,
-        frame.isPlaying,
-      )
+      const target = { x: frame.ball.xPercent, y: frame.ball.yPercent, z: frame.ball.z }
+      if (frame.snapshotInterpolated) {
+        this.animation.ball = { from: target, to: target, startedAt: now, durationMs: 0, pausedAt: null, pauseAccumMs: 0 }
+      } else {
+        retargetBallMotion(this.animation, target, now, frame.playbackSpeed, frame.isPlaying)
+      }
     } else {
       this.animation.ball = null
     }

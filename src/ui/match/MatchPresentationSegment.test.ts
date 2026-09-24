@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { LiveMatchStep } from '@/app/game'
-import { createNewGame, prepareUserMatch } from '@/app/game'
+import { createLiveUserMatch, createNewGame } from '@/app/game'
 
 import { createPresentationSegment, displayClockAtProgress, presentationDurationMs } from './MatchPresentationSegment'
 
@@ -27,8 +27,9 @@ describe('MatchPresentationSegment', () => {
 })
 
 function controlledStep(startClockSeconds: number, endClockSeconds: number, startPeriod = 1, endPeriod = 1): LiveMatchStep {
-  const simulation = prepareUserMatch(createNewGame())
-  const base = { ...simulation, events: [{ sequence: 1, period: startPeriod, clockSecondsRemaining: startClockSeconds, type: 'periodStart' as const, homeScore: 0, awayScore: 0 }] }
-  const after = { ...simulation, events: [{ sequence: 1, period: startPeriod, clockSecondsRemaining: startClockSeconds, type: 'periodStart' as const, homeScore: 0, awayScore: 0 }, { sequence: 2, period: endPeriod, clockSecondsRemaining: endClockSeconds, type: 'periodEnd' as const, homeScore: 0, awayScore: 0 }] }
-  return { before: base, after, attackingTeamId: simulation.homeTeamId, endAttackingTeamId: simulation.awayTeamId }
+  const controller = createLiveUserMatch(createNewGame())
+  const step = controller.advanceOneStepWithSnapshots()
+  const base = { ...step.before, events: [{ sequence: 1, period: startPeriod, clockSecondsRemaining: startClockSeconds, type: 'periodStart' as const, homeScore: 0, awayScore: 0 }] }
+  const after = { ...step.after, events: [{ sequence: 1, period: startPeriod, clockSecondsRemaining: startClockSeconds, type: 'periodStart' as const, homeScore: 0, awayScore: 0 }, { sequence: 2, period: endPeriod, clockSecondsRemaining: endClockSeconds, type: 'periodEnd' as const, homeScore: 0, awayScore: 0 }] }
+  return { ...step, before: { ...step.before, events: base.events }, after }
 }

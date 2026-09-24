@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest'
 
 import { playerIdFromString } from '@/domain/ids'
+import { PLAYER_TRUTH_TENDENCY_KEYS, type PlayerTruthTendencies } from '@/domain/player/PlayerTruthCatalog'
 import type { BasketballPosition } from '@/domain/primitives'
 
 import { calculateDefensiveAssignments } from './Matchups'
-import type { MatchPlayerProfile } from './MatchPlayerProfile'
-import { calculateDefenseExecution, calculateEffectiveDefense, calculateShotMakeProbability } from './ShotResolution'
+import { BASELINE_PLAYER_KINEMATIC_PROFILE, type MatchPlayerProfile } from './MatchPlayerProfile'
+import { calculateDefenseExecution, calculateEffectiveDefense, calculateShotMakeProbability, calculateSpatialContestBonus } from './ShotResolution'
 
 const positions: readonly BasketballPosition[] = ['PG', 'SG', 'SF', 'PF', 'C']
+const neutralTendencies = Object.fromEntries(PLAYER_TRUTH_TENDENCY_KEYS.map((key) => [key, 50])) as unknown as PlayerTruthTendencies
 const offense = positions.map((position, index) => profile(`offense-${index}`, position))
 const defense = positions.map((position, index) => profile(`defense-${index}`, position))
 
@@ -60,10 +62,35 @@ describe('individual defensive matchups', () => {
     expect(calculateShotMakeProbability({ shotZone: 'threePoint', shooterProfile: shooter, shooterFatigue: 0, defenderProfile: strong, defenderFatigue: 80 })).toBeGreaterThan(fresh)
     expect(calculateShotMakeProbability({ shotZone: 'threePoint', shooterProfile: shooter, shooterFatigue: 80, defenderProfile: strong, defenderFatigue: 0 })).toBeLessThan(fresh)
   })
+
+  it('makes a closer spatial contest stronger while retaining defensive skill and tactics', () => {
+    const shooter = profile('spatial-shooter', 'SG')
+    const strong = profile('spatial-strong', 'SG', 90, 90, 90)
+    const weak = profile('spatial-weak', 'SG', 20, 20, 20)
+    const probability = (defenderProfile: MatchPlayerProfile, defenderDistanceMeters: number, tacticalDefenseModifier = 0) => calculateShotMakeProbability({
+      shotZone: 'threePoint',
+      shooterProfile: shooter,
+      shooterFatigue: 0,
+      defenderProfile,
+      defenderFatigue: 0,
+      defenderDistanceMeters,
+      tacticalDefenseModifier,
+    })
+    const strongFar = probability(strong, 4)
+    const strongClose = probability(strong, 0.5)
+    const weakFar = probability(weak, 4)
+    const weakClose = probability(weak, 0.5)
+
+    expect(strongClose).toBeLessThan(strongFar)
+    expect(strongFar - strongClose).toBeGreaterThan(weakFar - weakClose)
+    expect(probability(strong, 100)).toBe(strongFar)
+    expect(probability(weak, 0.5, 10)).toBeLessThan(weakClose)
+    expect(calculateSpatialContestBonus(100, 0)).toBe(12)
+  })
 })
 
 function profile(id: string, primaryPosition: BasketballPosition, pointOfAttack = 50, interior = 50, mobility = 50): MatchPlayerProfile {
-  return { playerId: playerIdFromString(id), primaryPosition, offense: { usage: 50, rimAttack: 50, shooting: 50, creation: 50, ballSecurity: 50 }, defense: { pointOfAttack, interior, mobility }, rebounding: { impact: 50 } }
+  return { playerId: playerIdFromString(id), primaryPosition, tendencies: neutralTendencies as unknown as MatchPlayerProfile['tendencies'], physical: { heightCm: 200, weightKg: 100, wingspanCm: 205, standingReachCm: 250 }, kinematics: BASELINE_PLAYER_KINEMATIC_PROFILE, offense: { usage: 50, rimAttack: 50, shooting: 50, creation: 50, ballSecurity: 50 }, defense: { pointOfAttack, interior, mobility }, rebounding: { impact: 50 } }
 }
 
 function ids(profiles: readonly MatchPlayerProfile[]) { return profiles.map((profile) => profile.playerId) }

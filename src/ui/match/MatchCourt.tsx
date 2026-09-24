@@ -5,6 +5,7 @@ import type { SportsCategory } from '@/domain/primitives'
 import type { MatchEvent, MatchLineups } from '@/engine/match'
 import { useMemo } from 'react'
 
+import type { VisualMatchSnapshot } from './SpatialVisualBridge'
 import { attacksRight, createCourtPresentation } from './CourtPresentation'
 import {
   CourtCanvas,
@@ -112,6 +113,7 @@ export function MatchCourt({
   proceduralSkin = true,
   playbackSpeed = 1,
   isPlaying = true,
+  visualSnapshot,
   selectedPlayerId = null,
   canvasPlayers = true,
   debugDynamic = false,
@@ -133,6 +135,7 @@ export function MatchCourt({
   readonly proceduralSkin?: boolean
   readonly playbackSpeed?: number
   readonly isPlaying?: boolean
+  readonly visualSnapshot?: VisualMatchSnapshot | null
   readonly selectedPlayerId?: PlayerId | null
   /** CT3 canvas players (default true when procedural skin). */
   readonly canvasPlayers?: boolean
@@ -157,7 +160,21 @@ export function MatchCourt({
     events,
     progress: visualProgress,
   })
-  const focused = tokens.find((token) => token.focused)
+  const presentedPlayers = visualSnapshot == null
+    ? tokens
+    : visualSnapshot.players.flatMap((spatialPlayer) => {
+        const player = world.players[spatialPlayer.playerId]
+        if (player === undefined) throw new Error(`Spatial player ${spatialPlayer.playerId} is missing from GameWorld`)
+        return [{
+          player,
+          teamId: spatialPlayer.teamId,
+          side: spatialPlayer.teamId === attackingTeamId ? 'offense' as const : 'defense' as const,
+          x: spatialPlayer.xPercent,
+          y: spatialPlayer.yPercent,
+          focused: visualSnapshot.ball.ownerPlayerId === spatialPlayer.playerId,
+        }]
+      })
+  const focused = presentedPlayers.find((token) => token.focused)
   const game = world.games[gameId]
   const competition = game === undefined ? undefined : world.competitions[game.competitionId]
   const ecosystem =
@@ -191,7 +208,7 @@ export function MatchCourt({
 
   const dynamicFrame = useMemo((): CourtDynamicFrame | null => {
     if (!useCanvasEntities) return null
-    const players: CourtDynamicPlayer[] = tokens.map((token) => {
+    const players: CourtDynamicPlayer[] = presentedPlayers.map((token) => {
       const side = token.teamId === homeTeamId ? 'home' : 'away'
       const onOffense = token.side === 'offense'
       const facingHint = onOffense ? (offenseRight ? 0 : Math.PI) : offenseRight ? Math.PI : 0
@@ -211,7 +228,15 @@ export function MatchCourt({
     })
 
     let ball: CourtDynamicBall | null = null
-    if (focused !== undefined) {
+    if (visualSnapshot !== null && visualSnapshot !== undefined) {
+      ball = {
+        xPercent: visualSnapshot.ball.xPercent,
+        yPercent: visualSnapshot.ball.yPercent,
+        z: visualSnapshot.ball.ownerPlayerId === null ? 0 : 0.5,
+        ownerPlayerId: visualSnapshot.ball.ownerPlayerId,
+        state: visualSnapshot.ball.isPassing ? 'PASS' : visualSnapshot.ball.ownerPlayerId === null ? 'LOOSE' : 'HELD',
+      }
+    } else if (focused !== undefined) {
       const derived = deriveBallState(visualProgress, events)
       ball = {
         xPercent: focused.x,
@@ -227,11 +252,13 @@ export function MatchCourt({
       ball,
       playbackSpeed,
       isPlaying,
+      snapshotInterpolated: visualSnapshot !== null && visualSnapshot !== undefined,
       debug: debugDynamic,
     }
   }, [
     useCanvasEntities,
     tokens,
+    presentedPlayers,
     homeTeamId,
     offenseRight,
     kits,
@@ -242,6 +269,7 @@ export function MatchCourt({
     playbackSpeed,
     isPlaying,
     debugDynamic,
+    visualSnapshot,
   ])
 
   return (
@@ -271,7 +299,7 @@ export function MatchCourt({
       {/* Accessibility roster — not visible; Canvas is the primary presentation */}
       {useCanvasEntities ? (
         <ul className="match-court__a11y-roster">
-          {tokens.map((token) => (
+          {presentedPlayers.map((token) => (
             <li key={token.player.id}>
               {onPlayerSelect === undefined ? (
                 <span>
@@ -293,7 +321,7 @@ export function MatchCourt({
           ))}
         </ul>
       ) : (
-        tokens.map((token) => {
+        presentedPlayers.map((token) => {
           const className = `token ${token.teamId === homeTeamId ? 'home-token' : 'away-token'}${
             token.focused ? ' focused-token' : ''
           }`
@@ -328,7 +356,18 @@ export function MatchCourt({
           )
         })
       )}
-      {!useCanvasEntities && focused !== undefined ? (
+      {!useCanvasEntities && visualSnapshot != null ? (
+        <span
+          aria-label="Ball"
+          className="ball-indicator"
+          style={{
+            left: `${visualSnapshot.ball.xPercent}%`,
+            top: `${visualSnapshot.ball.yPercent}%`,
+          }}
+        >
+          ●
+        </span>
+      ) : !useCanvasEntities && focused !== undefined ? (
         <span
           aria-label="Ball"
           className="ball-indicator"

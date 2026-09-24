@@ -163,6 +163,57 @@ the deterministic default FIBA-like ecosystem. Promotion/relegation belongs to H
 uses temporary `TeamStrength` inputs, which are not persisted in Team or GameWorld,
 and does not yet create possessions or events.
 
+The MatchEngine V3 spatial simulation keeps transient player positions in
+`SpatialState`. Shot location, basket distance, defensive contest, pass length,
+passing lanes, rebound geometry and transition positioning are resolved from that
+state. Rebound probability combines existing rebounding ratings and standing reach
+with a bounded proximity context measured from active players to the basket that
+was attacked; rebounder selection also weights current proximity. The winning
+rebounder immediately controls the ball, while offensive rebounds retain possession
+and defensive rebounds change it. MG5I added a bounded transition target step after
+a made basket, turnover or defensive rebound; MG6I gives that movement a single
+runtime step of explicit authority so it does not run after a second BaseSpacing
+movement in the same MatchSession step. Rebound and transition tactics, fast-break
+decisions, rebound trajectories and rendering remain outside this foundation.
+MG6A/B movement and player-specific kinematics govern all subsequent motion.
+
+MG6E extends the transient `ScreenIntent`: after its two-step SET window, the
+screener chooses `roll` or `pop` from the canonical
+`PICK_AND_ROLL_ROLL_FREQUENCY` and `PICK_AND_POP_FREQUENCY` tendencies using one
+weighted draw from `decisionRandom`. A roll target is two metres from the
+attacking basket along the inward ray derived from the live handler and screener
+positions. A pop target uses the current court's three-point arc radius plus a
+small offset; both targets are clamped inside that court. The screener reaches
+the target through their MG6A/B kinematic profile. The intent ends within 0.45 m
+or after four movement steps, then BaseSpacing resumes on the next step. Existing
+possession, handler and participant-substitution cancellation still applies.
+Post-screen movement does not force a pass or shot and adds no receiver bonus.
+Handler drives, coverages, help defense and playbooks remain deferred. Live and
+Instant Result share this MatchEngine state; the renderer remains presentation-only.
+
+MG6F adds a transient `DriveIntent` only for the actual controlled handler and
+the existing primary defender. `DRIVE_FREQUENCY` supplies inclination; a bounded
+opportunity factor uses defender distance and distance to the attacked basket.
+The target approaches a near-rim point on the side opposite the defender, using
+live handler/defender/basket positions and court bounds. `BALL_CONTROL` and
+`DRIBBLE_SECURITY` form the ball-handling skill signal: while driving, it scales
+the handler's MG6A/B speed and acceleration by 0.85--1.0, with braking unchanged.
+The ball follows the handler through the existing spatial movement primitive.
+A set screen can still slow its assigned defender through MG6D's existing effect;
+MG6F adds no separate screen bonus and leaves the screener's roll/pop intent active.
+Drive intent ends on arrival, after three movement steps, possession or handler
+change, or substitution of the handler or defender. Existing shots and passes
+remain the only shot/pass authorities.
+
+For live matches, `LiveMatchController` supplies read-only before/after spatial
+snapshots to the presentation segment. The UI bridge copies active player IDs,
+team IDs, ball ownership and positions, then projects court metres to normalized
+court percentages for `CourtProjection`. It interpolates positions by presentation
+progress; the canvas renderer draws those sampled positions and does not feed them
+back to MatchSession. Animation progress and browser frame timing remain entirely
+outside sporting resolution. Instant results continue to use the same MatchEngine
+core and do not depend on the visual bridge.
+
 The match pipeline is `MatchEngine -> MatchSimulationResult -> Match Result
 Application -> GameWorld`. Simulation does not mutate state; result application
 does not simulate. `MatchSimulationResult` is transient, while `Game.result` is
@@ -203,18 +254,25 @@ and resolves today's games before requesting CalendarEngine to advance the date.
 Zustand stores only the current `GameWorld` and delegates each command to that
 layer; React only renders derived information and invokes store commands.
 
-Team strength is temporarily a non-persisted value of 50 for every team. Match
-randomness is provisionally seeded from a stable explicit hash of each `GameId`;
-this makes one game's instant result reproducible without introducing persistent
-career RNG state. A future ratings and save-system design will replace both
-prototype choices.
+Team strength is temporarily a non-persisted value of 50 for every team. At the
+Application match-run boundary, a fresh unsigned 32-bit seed is generated from
+Web Crypto once; the same seed derives the sporting, decision, and actor
+`SeededRandomSource` streams. MatchEngine consumes only those injected streams;
+the decision stream owns action and spatial actor selection, while the actor
+stream owns assist/block attribution. The same canonical input, seed, and
+commands therefore reproduce the same canonical match, independently of stat
+attribution draws. Callers may pass an explicit seed for tests, debug, or replay.
+Live and Instant use the same preparation function and seed authority. Match seeds and
+mid-match sessions are not persisted: Save stores only the completed game's
+canonical score, so save/resume replay remains deferred until match-session
+persistence is designed.
 
 ## Match simulation and viewer
 
 `MatchEngine` can produce either a final `MatchSimulationResult` for Instant
 Result or a transient `MatchSimulation` containing a chronological `MatchEvent`
 stream. Its core is a transient MatchSession: it retains immutable sporting state
-and the supplied sporting and actor RNG runtimes while advancing one logical
+and the supplied sporting, decision, and actor RNG runtimes while advancing one logical
 possession or period transition at a time. `simulateMatchDetailed` simply steps a
 MatchSession until completion, so it remains the convenient complete-simulation
 API and no second sporting algorithm exists.
@@ -261,6 +319,168 @@ universal FIBA/NBA/NCAA rule: bonus, foul-out, substitutions, and future variant
 are deferred to CompetitionRules. The previous abstract one-point field goal has
 been removed from productive simulation.
 
+## MatchEngine v3 human movement foundation (MG6A)
+
+`SpatialState` is the canonical owner of each active player's position and
+velocity in metres and metres per second. `advancePlayerTowardTarget` is a pure,
+deterministic Engine primitive with a 6 m/s maximum speed, a 3 m/s² acceleration
+limit, and a 4 m/s² braking limit. It approaches a target by reducing desired
+speed according to stopping distance, safely stops at the target without
+overshoot, and bounds motion to the court. A controlled ball remains at its
+holder's updated position.
+
+MatchEngine's existing possession duration, after tactical pace adjustment, is
+the movement time authority in seconds. BaseSpacing and TransitionSpatial still
+choose the targets; they pass that same elapsed duration into the kinematics
+primitive. Substitutions preserve the outgoing position and initialize the new
+player at zero velocity. Live and Instant Result use this shared MatchEngine
+path. The visual bridge and renderer consume canonical snapshots and do not
+calculate or write back movement. No RNG, player ratings, physical attributes,
+stamina, collision handling, or pathfinding are part of MG6A.
+
+MG6B derives each player's transient `PlayerKinematicProfile` while constructing
+`MatchPlayerProfile`. Canonical Player Truth `SPEED`, `ACCELERATION`, and
+`AGILITY` respectively control maximum speed, acceleration, and braking / target
+redirection. Ratings in the current Player domain validate from 1 to 100; a
+piecewise linear mapping keeps 50 exactly at the MG6A baseline. Bounds are
+5.4–6.6 m/s, 2.4–3.6 m/s², and 3.2–4.8 m/s². The profile is derived from
+Player Truth and is not persisted or copied into `SpatialState`; that state still
+contains only position and velocity. Body measurements, position, and stamina do
+not modify locomotor capacity. BaseSpacing and TransitionSpatial retain target
+authority, and the shared Live / Instant MatchEngine path supplies each player's
+profile to the same canonical movement primitive. The visual bridge remains a
+consumer of snapshots and has no athletic-rating or movement authority.
+
+MG6C adds one transient `OffBallCutIntent` to `MatchSessionState`. The active
+offense may select one cutter from its current lineup, excluding the ball handler;
+bench players and defenders cannot be selected. Canonical `CUT_FREQUENCY`
+controls the cut chance and weights cutter selection. A successful decision uses
+the existing `decisionRandom` stream: one tendency chance draw, followed by one
+weighted player draw. No stream or saved `GameWorld` state is added.
+
+The cut target is derived from the attacking basket and court geometry. Players
+more than 20% of court length from the basket receive a rim target 1.5 metres
+inside the court with a one-metre lateral offset; closer players receive a space
+target 4.5 metres from the basket at the opposite court-side margin. While active,
+that player's cut target overrides only their BaseSpacing target. All movement
+continues through `advancePlayerTowardTarget` with that player's MG6B kinematics.
+The intent ends on target arrival, after at most three movement steps, if the
+cutter becomes the ball handler, on possession change, or immediately when that
+player is substituted out. BaseSpacing resumes on the next movement step without
+teleporting the player.
+
+Cuts do not trigger passes or shots. Existing receiver selection does not favor
+cutters; defender behavior, collisions and pathfinding are unchanged. Live and
+Instant Result use the same MatchEngine state and movement. The visual bridge may
+show the resulting spatial snapshots, but the renderer has no gameplay authority.
+
+MG6D adds one transient `ScreenIntent` to `MatchSessionState`. A screen requires
+the actual player controlling the ball in `SpatialState`; its relevant defender
+comes from the existing deterministic `calculateDefensiveAssignments` result,
+including configured matchup overrides. An active screen and an off-ball cut are
+mutually exclusive. An existing cut has priority; while a screen is active, no
+cut can begin.
+
+An eligible screener is an active offensive teammate, excluding the ball handler
+and current cutter. Canonical `ON_BALL_SCREENING_FREQUENCY` gates the selection
+chance and weights the screener choice through the existing `decisionRandom`
+stream. When there is no active off-ball action, a failed screen selection may
+fall through to the existing cut selection. Screen geometry and its defender
+effect consume no RNG.
+
+The target is placed 0.9 metres along the handler-to-basket route and 0.8 metres
+to the side of that route on which the assigned defender lies. Coordinates are
+clamped 0.6 metres inside court bounds. The screener approaches with their own
+MG6B kinematics. At 0.45 metres or closer, the screen enters `set` for two
+subsequent movement steps; a failed approach expires after two steps. While set,
+the screener holds their current point and brakes through the regular movement
+primitive.
+
+A set screen affects only its assigned defender and only when the line from that
+defender's current position to their existing BaseSpacing target comes within
+1.25 metres of the screener. That step multiplies the defender's maximum speed
+and acceleration by 0.65; braking and all other player profiles remain unchanged.
+The effect is position-based, bounded, and does not stop or teleport the defender.
+Possession changes, a new ball handler, or substitution of the screener, handler,
+or assigned defender cancels the intent. No strength, weight, or screen-navigation
+rating is used. There is no roll, pop, pick-and-roll read, coverage logic, or
+screen animation; Live and Instant still share MatchEngine and the renderer only
+consumes resulting snapshots.
+
+MG6G adds one transient `DefensiveReaction` to `MatchSessionState`. It recognizes
+only an active ball-handler drive, an active rim cut, or a post-screen roll when
+the threat player is inside its source-specific distance from the attacked basket.
+Pop and ordinary spacing never trigger help. The threat's primary defender is
+excluded; among the remaining active defenders, the one closest to the geometric
+help point is selected deterministically. That point lies on the line from the
+threat toward the attacked basket, two metres short of the threat.
+
+The helper's target temporarily overrides only its BaseSpacing defensive target.
+A single remaining defender may rotate toward the helper's exposed assignment;
+that defender gets no follow-up rotation. The other original assignment remains
+spatially exposed. Both helper and rotator move through the ordinary MG6A/B
+kinematics path. When no qualifying intent remains, their targets return to
+current BaseSpacing assignments and the transient reaction enters recovery until
+they arrive. Possession changes clear it immediately; handler changes are checked
+against current drive/roll ownership and the current cut intent. Substitution of
+the helper, rotator, threat, or either protected assignment clears the references.
+
+Help and recovery add no contest, defense, or passing modifier and consume no RNG.
+Existing spatial shot contests and passing-lane calculations observe the resulting
+player positions. The shared MatchEngine path serves Live and Instant Result; the
+renderer remains a consumer of canonical spatial snapshots.
+
+MG6H adds an optional `pickAndRollCoverage` instruction to the canonical defense
+plan, with `switch` as the default for legacy plans. The runtime tactical plan in
+`MatchSession.coachingState` is the authority. `coverageForCurrentScreen` derives
+the behavior only while a valid set/post-screen `ScreenIntent` and its original
+handler and screener defensive assignments remain active. It does not create a
+separate persisted state or consume RNG. A substitution of either offensive
+participant or either captured primary defender cancels the screen context.
+
+Switch temporarily swaps the handler/screener assignments and targets the
+defenders toward their new opponents, allowing the mismatch to emerge. Drop
+keeps assignments and sends the screener defender toward the basket from the
+handler or roll threat. Hedge steps that defender toward the handler/screener
+lane, then releases the override on the post-screen action so MG6A/B movement
+returns it toward BaseSpacing. Blitz sends both primary defenders to separate
+targets around the handler and leaves the screener without a direct coverage
+target. These targets override MG6G and BaseSpacing for involved defenders;
+MG6G excludes those defenders from generic help/rotation while uninvolved
+defenders may still react. All movement uses MG6A/B kinematics. Passing lanes,
+shot contests, and roll/pop availability emerge from player positions.
+
+The pre-existing interior/perimeter tactical modifier remains independent and
+unchanged; coverage itself adds no abstract shot, contest, turnover, or passing
+modifier. Coverage clears when its screen/handler/possession context ends. Zone
+defense, ICE, press, traps outside P&R, scram/peel switching, chain rotations,
+contact, fouls, playbook defense, and animation remain deferred.
+
+MG6I defines one movement authority per active player per MatchSession step.
+Within half court, `MatchEngine` supplies one ordered override set: drive movement
+overrides the ball handler, screen or cut owns its distinct off-ball player,
+coverage targets override MG6G help targets for directly committed defenders, and
+remaining players follow BaseSpacing. MG6G excludes coverage defenders from its
+helper/rotator choices, so those direct targets do not compete. On a possession
+change, screen, drive, cut, and help/recovery intents from the prior possession
+are cleared and a transient `TransitionIntent` is created for the new attacking
+team. The next step is owned solely by transition targets; it consumes that intent
+and the following step returns to BaseSpacing. Period transitions and game end
+clear the transition intent. This runtime marker is not save data.
+
+Transition roles are derived from the same BaseSpacing lineup roles and live
+ball/player positions. The controlled handler advances most, the SG/SF lane
+runners move to distinct court-relative lanes, the center rim-runs and the other
+interior player trails. The nearest defender to the ball targets its path; another
+defender targets a point just off their own basket; the remaining defenders retreat
+toward it. Each player moves once through MG6A/B kinematics for the selected target.
+The transition lasts one movement step, uses no RNG, makes no automatic shot/pass,
+and returns to ordinary offensive/defensive decision flow without changing shot,
+pass, or rebound authority. When no player was resolved as ball handler during a
+possession change, the ball remains unassigned under the existing possession rule
+until the next offensive actor is selected. MatchViewer remains presentation-only;
+Live and Instant Result share the same MatchEngine.
+
 ## Player basketball domain
 
 Player now persists a `BasketballProfile` with one primary position, the exact
@@ -297,6 +517,8 @@ between `stepMatchSession` calls through `substitutePlayer`. Rotation v1 uses up
 to ten players (starters plus one unique primary backup per position), with a
 temporary Q1--Q4 pattern; deeper bench players may not play. Plans and their
 controller state are transient, consume no RNG or clock, and do not change score.
+Persisted `minutesByPeriod` intent is compiled into ordered substitutions for the
+same runner; an unusable matrix falls back to the deterministic default rotation.
 The user team and AI teams both use this automatic plan temporarily. MatchViewer
 reconstructs court tokens from revealed substitution events, so playback, pause,
 and skip cannot reveal a future lineup. Base TeamStrength remains fixed while
@@ -333,14 +555,16 @@ The 80 persisted ratings and 40 tendencies are BDM's current canonical Player
 Truth model. Application adapts the rating truth into transient
 `MatchPlayerProfile` signals before a match, so MatchEngine consumes usage, rim
 attack, shooting, creation, ball security, defensive signals, and rebound
-impact rather than reaching into Player ratings. Legacy consumers use explicit
-35-key or seven-key projections; they are not written back as truth. There is
-no persisted overall.
+impact rather than reaching into Player ratings. The profile also carries the
+full tendency truth and canonical height, weight, wingspan, and standing reach.
+Legacy consumers use explicit 35-key or seven-key projections; they are not
+written back as truth. There is no persisted overall.
 
 Player-driven offense uses a dedicated deterministic decision RNG
-(`match-decisions-v1:${gameId}`) for weighted offensive-actor and shot-zone
-selection. Sporting RNG resolves the contextual sporting outcome, while actor RNG
-remains detail attribution for assists and rebounders.
+(`match-decisions-v1:${gameId}`) for weighted offensive-actor selection. Sporting
+RNG resolves the contextual sporting outcome, including whether the current spatial
+shot opportunity is attempted; actor RNG remains detail attribution for assists and
+rebounders.
 Field-goal events carry `rim`, `midRange`, or `threePoint`; zone determines points.
 MatchPlayerProfile also adapts the persisted bootstrap ratings into defensive
 point-of-attack, interior, and mobility signals; MatchEngine remains isolated from
@@ -365,22 +589,26 @@ eligible non-scorer is selected by creation weight. Rebound ownership is a
 sporting-RNG result of the active five's average rebound impact on each side; the
 capturing active player is then selected by rebound-impact weight through
 actorRandom. TeamStrength does not directly participate in shooting, defense,
-turnovers, assists, or rebounds. Decision RNG remains limited to offensive actor
-and shot-zone selection. Steals, blocks, schemes, new attributes, traits, and
+turnovers, assists, or rebounds. Decision RNG remains limited to offensive-actor
+selection. Steals, blocks, schemes, new attributes, traits, and
 perks do not yet exist; all current formulas are replaceable prototypes.
 
 ## Pre-match tactics v1
 
-`MatchTacticalPlan` is transient match configuration, retained by MatchSession but
-not persisted in Team, Coach, GameWorld, or saves. The balanced default is neutral:
-pace changes only the existing possession-duration draw, shot profile changes only
-shot-zone decision weights, defensive emphasis changes contextual effective defense
-with explicit trade-offs, and a featured active player receives a usage-weight
-multiplier. No tactic mutates ratings or MatchPlayerProfile. Application supplies
-the user-selected pre-match plan to both Play and Instant Result; AI uses balanced.
-There are no live tactical changes or events in 023, though the session boundary is
-ready for a future between-steps update. Plays, schemes, scouting, tactical AI, and
-the final tactical model remain intentionally open for a later overhaul.
+`MatchTacticalPlan` is transient match configuration derived from each team's
+canonical tactical instructions, then that game's partial override, then an
+optional explicit runtime override. Live and Instant share this prepared input;
+opponent plans are resolved by the same rule. A neutral default is used only when
+the canonical team plan is unavailable. Pace changes possession duration, shot
+profile and player tendencies affect whether the current spatial shot opportunity
+is accepted, defensive emphasis changes contextual effective defense with explicit
+trade-offs, and a featured active player receives a usage-weight multiplier. The
+actual shot zone always comes from the shooter's SpatialState location. No tactic
+mutates ratings or MatchPlayerProfile. Prepared matches require canonical team
+instructions; direct MatchEngine callers that omit tactical plans retain the
+neutral engine fallback. `TACTICAL_DEFENSE_OPTIONS` is the shared domain list used
+by validation and the Live UI. Plays, schemes, scouting, tactical AI, and the final
+tactical model remain intentionally open for a later overhaul.
 
 ## Live coaching v1
 
@@ -420,8 +648,34 @@ milestone.
 MatchViewer consumes the transient lineup snapshot in MatchSimulation; it never
 selects starters. UI resolves those PlayerIds and sporting-event PlayerIds through
 GameWorld at render time, so names are not duplicated into MatchEvents. Court
-coordinates are presentation-only UI slots derived from primary position, never
-data on Player, Team, MatchSimulation, or GameWorld. Individual player statistics
+coordinates in MatchViewer remain presentation projections. MatchEngine also owns
+a runtime-only `SpatialState` on `MatchSession`, initialized from each game's
+canonical court geometry and active five; substitutions keep its player set aligned
+with `activeLineups`. Its initial positions are bootstrap anchors; the Engine's
+canonical movement primitive can move one active player toward a legal court target
+by a bounded distance in meters and keeps a controlled ball with its holder. It does
+not choose targets, and the viewer does not own or mutate spatial positions. Spatial
+state is not saved. For field-goal attempts, the selected shooter's active spatial position
+and possession-derived attacking basket determine canonical shot distance and the existing
+rim/midrange/three-point event zone. CourtGeometry carries the selected ecosystem's arc and
+corner-line dimensions; distance contributes a small bounded adjustment to make probability.
+Tendency and offensive-tactic weights remain the shot-preference input, while they cannot
+override the actual location. For the shot's existing assigned defender, Engine also reads
+the current spatial position and adds a bounded proximity signal scaled by the existing
+zone-specific defensive rating and fatigue. This signal combines with the existing tactical
+defense modifier before make probability is resolved; no help defense or defensive movement
+is inferred. MatchSession can also resolve one canonical pass action per possession: the
+current ball handler selects an active teammate, current court positions determine pass
+length and the maximum steal-skilled defender pressure to the segment, and a completed pass
+transfers spatial ball control while keeping the attacking team. A failed pass is an existing
+turnover with optional steal attribution. No pass trajectory is simulated. Spatial possession views derive
+offense, defense and attacking basket from `MatchSessionState.attackingTeamId` and
+the current period. The existing offensive actor, rebounder and credited stealer
+drive ball control when known; unresolved possession changes release it until a
+handler is selected. At each possession step, Engine derives base offensive and
+defensive targets from primary-position roles and the attacking direction, then
+moves the ten active players by a bounded step through the canonical primitive.
+Targets are not persisted and do not affect sporting decisions. Individual player statistics
 are a transient Engine projection: PlayerMatchStats is reconstructed from
 MatchSimulation lineups and MatchEvents and is never persisted. MatchViewer passes
 only revealed events to that projection, so its live boxscore cannot expose future
@@ -438,10 +692,11 @@ transient `MatchPresentationSegment`. The viewer presents every game-clock secon
 of that segment before requesting the next sporting step. Playback speed changes
 only presentation duration, never sporting time, RNG, fatigue, or results.
 
-Court positions and abstract motion are deterministic presentation projections,
-not sporting state or invented basketball events. A future Engine may add timed
-microactions inside the same segment model, and future highlight modes may choose
-which segments to present. Coaching remains a sporting-boundary operation: it
+The existing MatchViewer court positions and abstract motion remain deterministic
+presentation projections; they do not replace Engine-owned `SpatialState` or
+create basketball events. A future Engine may add timed microactions inside the
+same segment model, and future highlight modes may choose which segments to
+present. Coaching remains a sporting-boundary operation: it
 cannot rewrite a segment that has already been resolved.
 
 > Every second of game clock may be represented by MatchViewer even when MatchEngine resolves sporting outcomes at a coarser granularity.
@@ -696,9 +951,9 @@ The next Season starts one calendar year after the preceding Season start and ke
 
 ## Player bio and age
 
-Players persist canonical `bio` metadata: `dateOfBirth` as a `GameDate`, plus integer `heightCm` and `weightKg`. Age is never stored; it is a pure calendar projection from date of birth and an arbitrary game date (or the world's current date). The Player Bio generator uses a separate deterministic stream keyed by PlayerId, so generating human metadata cannot change names, ratings, roster construction, schedules, or sporting simulation.
+Players persist canonical `bio` metadata: `dateOfBirth` as a `GameDate`, plus numeric `heightCm`, `weightKg`, `wingspanCm`, and `standingReachCm`. Age is never stored; it is a pure calendar projection from date of birth and an arbitrary game date (or the world's current date). When wingspan or standing reach is omitted at the Player factory input, it is materialized deterministically from PlayerId, height, and position. The Player Bio generator uses a separate deterministic stream keyed by PlayerId, so generating human metadata cannot perturb names, ratings, roster construction, schedules, or other generation streams.
 
-New Alpha players receive deterministic adult bios relative to the earliest Season start. Save V1 reads legacy players without bio by enriching them from that same earliest-season reference, then writes explicit bio data on the next save. Height, weight, and age do not affect MatchEngine, MatchPlayerProfile, ratings, fatigue, or team strength in this milestone; future systems may consume them deliberately.
+New Alpha players receive deterministic adult bios relative to the earliest Season start. Save V1 reads legacy players without bio by enriching them from that same earliest-season reference, then writes explicit bio data on the next save. MatchPlayerProfile carries all four dimensions in centimeters/kilograms. Standing reach currently modifies the existing offensive rebound probability through a clamped team-average reach difference; height, weight, and wingspan remain available in the profile without a gameplay consumer. Physical dimensions do not alter ratings, fatigue, age, or team strength.
 
 ## Player development v1
 

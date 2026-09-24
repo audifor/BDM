@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createNewGame, prepareUserMatch } from '@/app/game'
-import { playerIdFromString, type PlayerId } from '@/domain/ids'
+import { playerIdFromString, teamIdFromString, type PlayerId } from '@/domain/ids'
 import type { MatchEvent } from '@/engine/match'
 
 import { createMatchViewerTokens, formatMatchEvent, resolveActiveMatchLineups, resolveMatchLineup } from './matchViewer'
@@ -42,6 +42,14 @@ describe('MatchViewer presentation helpers', () => {
     expect(formatMatchEvent(freeThrow, world)).toContain(world.players[freeThrow.playerId]!.lastName)
     const substitution = { sequence: 999, period: 1, clockSecondsRemaining: 500, type: 'substitution' as const, teamId: simulation.homeTeamId, playerOutId: simulation.lineups.home[0]!, playerInId: world.teams[simulation.homeTeamId]!.rosterPlayerIds[5]!, homeScore: 0, awayScore: 0 }
     expect(formatMatchEvent(substitution, world)).toContain(`${world.players[substitution.playerInId]!.lastName} replaces ${world.players[substitution.playerOutId]!.lastName}`)
+  })
+
+  it('formats a completed pass with its canonical passer and receiver', () => {
+    const world = createNewGame()
+    const [passer, receiver] = Object.values(world.players)
+    const event: MatchEvent = { sequence: 1, period: 1, clockSecondsRemaining: 580, type: 'passCompleted', teamId: teamIdFromString(Object.keys(world.teams)[0]!), passerPlayerId: passer!.id, receiverPlayerId: receiver!.id, homeScore: 0, awayScore: 0 }
+
+    expect(formatMatchEvent(event, world)).toBe(`${passer!.lastName} passes to ${receiver!.lastName}`)
   })
 
   it('fails explicitly when a lineup PlayerId cannot be resolved', () => {

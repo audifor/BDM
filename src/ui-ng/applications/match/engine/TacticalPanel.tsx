@@ -2,7 +2,7 @@ import type { Player } from '@/domain/player'
 import type { PlayerId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { getPlayer } from '@/domain/world'
-import type { ManualSubstitution, MatchEvent, MatchTacticalPlan, PlayerMatchStats, TacticalLevel } from '@/engine/match'
+import { PICK_AND_ROLL_COVERAGE_OPTIONS, TACTICAL_DEFENSE_OPTIONS, type ManualSubstitution, type MatchEvent, type MatchTacticalPlan, type PlayerMatchStats, type TacticalLevel } from '@/engine/match'
 import { ManualSubstitutionsPanel } from '@/ui/screens/ManualSubstitutionsPanel'
 import { navigateToPlayer } from '@/ui-ng/workspace/workspaceApps'
 import { PlayByPlay } from '@/ui-ng/applications/match/engine/LiveStage'
@@ -32,6 +32,7 @@ export function TacticalPanel({
   draft,
   onDraftChange,
   onApplyTactics,
+  applyError,
   players,
   activeLineup,
   canApplySubs,
@@ -52,6 +53,7 @@ export function TacticalPanel({
   readonly draft: MatchTacticalPlan
   readonly onDraftChange: (plan: MatchTacticalPlan) => void
   readonly onApplyTactics: (plan: MatchTacticalPlan) => void
+  readonly applyError?: string | null
   readonly players: readonly Player[]
   readonly activeLineup: readonly PlayerId[]
   readonly canApplySubs: boolean
@@ -123,6 +125,7 @@ export function TacticalPanel({
 
           {(tab === 'general' || tab === 'ataque' || tab === 'defensa') && (
             <TacticalSettings
+              applyError={applyError}
               draft={draft}
               mode={tab}
               onApply={() => onApplyTactics(draft)}
@@ -264,11 +267,13 @@ function TacticalSettings({
   draft,
   onChange,
   onApply,
+  applyError,
   mode,
 }: {
   readonly draft: MatchTacticalPlan
   readonly onChange: (plan: MatchTacticalPlan) => void
   readonly onApply: () => void
+  readonly applyError?: string | null
   readonly mode: TacticalPanelTab
 }) {
   const pace = paceToSlider(draft.pace)
@@ -302,24 +307,16 @@ function TacticalSettings({
               }}
               value={`${draft.defense.interior}/${draft.defense.perimeter}`}
             >
-              <option value="0/0">Individual</option>
-              <option value="2/-1">Proteger pintura</option>
-              <option value="-1/2">Presión perimetral</option>
+              {TACTICAL_DEFENSE_OPTIONS.map(({ label, interior, perimeter }) => <option key={`${interior}/${perimeter}`} value={`${interior}/${perimeter}`}>{label}</option>)}
             </select>
           </label>
           <label>
-            Presión
+            Cobertura pick-and-roll
             <select
-              onChange={(event) => {
-                const perimeter = Number(event.target.value) as TacticalLevel
-                onChange({ ...draft, defense: { ...draft.defense, perimeter } })
-              }}
-              value={draft.defense.perimeter}
+              onChange={(event) => onChange({ ...draft, defense: { ...draft.defense, pickAndRollCoverage: event.target.value as NonNullable<MatchTacticalPlan['defense']['pickAndRollCoverage']> } })}
+              value={draft.defense.pickAndRollCoverage ?? 'switch'}
             >
-              <option value={0}>Sin presión</option>
-              <option value={1}>Media</option>
-              <option value={2}>Alta</option>
-              <option value={-1}>Baja</option>
+              {PICK_AND_ROLL_COVERAGE_OPTIONS.map(({ label, value }) => <option key={value} value={value}>{label}</option>)}
             </select>
           </label>
         </>
@@ -344,6 +341,7 @@ function TacticalSettings({
       <button className="me-settings__apply" onClick={onApply} type="button">
         Aplicar plan
       </button>
+      {applyError ? <p role="alert">{applyError}</p> : null}
     </section>
   )
 }
