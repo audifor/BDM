@@ -170,14 +170,12 @@ state. Rebound probability combines existing rebounding ratings and standing rea
 with a bounded proximity context measured from active players to the basket that
 was attacked; rebounder selection also weights current proximity. The winning
 rebounder immediately controls the ball, while offensive rebounds retain possession
-and defensive rebounds change it. After a made basket, turnover or defensive
-rebound, both teams take one bounded `movePlayerToward` step: the new offense moves
-toward its attacking basket and the other team toward its defensive end. The next
-ordinary possession step resumes BaseSpacing. Rebound and transition tactics,
-fast-break decisions, rebound trajectories and rendering remain outside this
-foundation. MG6A later replaces the fixed two-metre displacement with
-time-based canonical kinematics; MG6B supplies each player’s derived athletic
-limits without changing these targets.
+and defensive rebounds change it. MG5I added a bounded transition target step after
+a made basket, turnover or defensive rebound; MG6I gives that movement a single
+runtime step of explicit authority so it does not run after a second BaseSpacing
+movement in the same MatchSession step. Rebound and transition tactics, fast-break
+decisions, rebound trajectories and rendering remain outside this foundation.
+MG6A/B movement and player-specific kinematics govern all subsequent motion.
 
 MG6E extends the transient `ScreenIntent`: after its two-step SET window, the
 screener chooses `roll` or `pop` from the canonical
@@ -450,6 +448,31 @@ unchanged; coverage itself adds no abstract shot, contest, turnover, or passing
 modifier. Coverage clears when its screen/handler/possession context ends. Zone
 defense, ICE, press, traps outside P&R, scram/peel switching, chain rotations,
 contact, fouls, playbook defense, and animation remain deferred.
+
+MG6I defines one movement authority per active player per MatchSession step.
+Within half court, `MatchEngine` supplies one ordered override set: drive movement
+overrides the ball handler, screen or cut owns its distinct off-ball player,
+coverage targets override MG6G help targets for directly committed defenders, and
+remaining players follow BaseSpacing. MG6G excludes coverage defenders from its
+helper/rotator choices, so those direct targets do not compete. On a possession
+change, screen, drive, cut, and help/recovery intents from the prior possession
+are cleared and a transient `TransitionIntent` is created for the new attacking
+team. The next step is owned solely by transition targets; it consumes that intent
+and the following step returns to BaseSpacing. Period transitions and game end
+clear the transition intent. This runtime marker is not save data.
+
+Transition roles are derived from the same BaseSpacing lineup roles and live
+ball/player positions. The controlled handler advances most, the SG/SF lane
+runners move to distinct court-relative lanes, the center rim-runs and the other
+interior player trails. The nearest defender to the ball targets its path; another
+defender targets a point just off their own basket; the remaining defenders retreat
+toward it. Each player moves once through MG6A/B kinematics for the selected target.
+The transition lasts one movement step, uses no RNG, makes no automatic shot/pass,
+and returns to ordinary offensive/defensive decision flow without changing shot,
+pass, or rebound authority. When no player was resolved as ball handler during a
+possession change, the ball remains unassigned under the existing possession rule
+until the next offensive actor is selected. MatchViewer remains presentation-only;
+Live and Instant Result share the same MatchEngine.
 
 ## Player basketball domain
 
