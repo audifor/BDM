@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { createDefaultTacticalPlan, createMatchSession } from '@/engine/match'
+import { createDefaultTacticalPlan, createMatchSession, type MatchTacticalPlan } from '@/engine/match'
 import { getUserTeam } from '@/engine/calendar'
 import { assignLineupSlot, createDefaultTeamLineup } from '@/domain/tactics'
 import { resolveGameClockRulesForGame, updateGameWorld } from '@/domain/world'
@@ -95,27 +95,77 @@ describe('LiveMatchController', () => {
     expect(controller.isComplete).toBe(false)
   })
 
-  it('keeps live coaching disabled for now', () => {
+  it('applies live tactics to runtime state consumed by the next gameplay step', () => {
     const world = createNewGame()
-    const controller = createLiveUserMatch(world)
-    const before = controller.snapshot()
-    const userTeam = getUserTeam(world)!
-    const plan = { ...createDefaultTacticalPlan(), pace: 2 as const }
+    const baseline = createLiveUserMatch(world)
+    const coached = createLiveUserMatch(world)
+    const replay = createLiveUserMatch(world)
+    const initial = coached.snapshot()
+    const plans = {
+      home: { ...createDefaultTacticalPlan(), pace: 2 as const, shotProfile: { rim: 2 as const, midRange: -1 as const, threePoint: 1 as const }, defense: { interior: 2 as const, perimeter: -1 as const }, featuredPlayerId: world.teams[initial.homeTeamId]!.rosterPlayerIds[0]! },
+      away: { ...createDefaultTacticalPlan(), pace: 2 as const, shotProfile: { rim: 1 as const, midRange: -2 as const, threePoint: 2 as const }, defense: { interior: 2 as const, perimeter: -1 as const }, featuredPlayerId: world.teams[initial.awayTeamId]!.rosterPlayerIds[0]! },
+    }
 
-    expect(controller.applyTactics(userTeam.id, plan)).toEqual(before)
-    expect(controller.snapshot()).toEqual(before)
+    for (const controller of [coached, replay]) {
+      controller.applyTactics(initial.homeTeamId, plans.home)
+      controller.applyTactics(initial.awayTeamId, plans.away)
+    }
+    expect(coached.currentPlans.home.currentTacticalPlan).toEqual(plans.home)
+    expect(coached.currentPlans.away.currentTacticalPlan).toEqual(plans.away)
+    expect(coached.snapshot().events.filter((event) => event.type === 'tacticalChange')).toHaveLength(2)
+    const beforeInvalidTactics = coached.snapshot()
+    const invalidPlan = { ...plans.home, pace: 3 } as unknown as MatchTacticalPlan
+    expect(() => coached.applyTactics(initial.homeTeamId, invalidPlan)).toThrow()
+    expect(coached.snapshot()).toEqual(beforeInvalidTactics)
+
+    const defaultStep = baseline.advanceOneStep()
+    const coachedStep = coached.advanceOneStep()
+    const replayStep = replay.advanceOneStep()
+    const firstGameplayClock = (events: typeof defaultStep.events) => events.find((event) => event.type !== 'periodStart' && event.type !== 'tacticalChange' && event.type !== 'substitution')!.clockSecondsRemaining
+
+    expect(600 - firstGameplayClock(coachedStep.events)).toBe(600 - firstGameplayClock(defaultStep.events) - 4)
+    expect(replayStep).toEqual(coachedStep)
   })
 
-  it('keeps manual substitutions disabled for now', () => {
+  it('updates the runtime active five and the next gameplay step after substitution', () => {
     const world = createNewGame()
     const controller = createLiveUserMatch(world)
-    const before = controller.snapshot()
     const userTeam = getUserTeam(world)!
-    const playerOutId = userTeam.rosterPlayerIds[0]!
-    const playerInId = userTeam.rosterPlayerIds[1]!
+    const side = userTeam.id === controller.snapshot().homeTeamId ? 'home' : 'away'
+    const activeBefore = controller.activeLineups[side]
+    const playerOutId = activeBefore[0]!
+    const playerInId = controller.replacementCandidates(userTeam.id, playerOutId)[0]!
+    const updated = controller.applySubstitution(userTeam.id, playerOutId, playerInId)
+    const activeAfter = controller.activeLineups[side]
 
-    expect(controller.applyManualSubstitutions(userTeam.id, [{ playerOutId, playerInId }])).toEqual(before)
+    expect(activeAfter).toHaveLength(5)
+    expect(new Set(activeAfter)).toHaveLength(5)
+    expect(activeAfter).not.toContain(playerOutId)
+    expect(activeAfter).toContain(playerInId)
     expect(controller.replacementCandidates(userTeam.id, playerOutId)).toEqual([])
+    expect(updated.events.at(-1)).toMatchObject({ type: 'substitution', teamId: userTeam.id, playerOutId, playerInId, source: 'manual' })
+
+    const afterStep = controller.advanceOneStep()
+    const gameplayEvent = afterStep.events.at(-1)!
+    expect('teamId' in gameplayEvent && 'playerId' in gameplayEvent).toBe(true)
+    if ('teamId' in gameplayEvent && 'playerId' in gameplayEvent) {
+      const eventLineup = gameplayEvent.teamId === controller.snapshot().homeTeamId ? controller.activeLineups.home : controller.activeLineups.away
+      expect(eventLineup).toContain(gameplayEvent.playerId)
+    }
+  })
+
+  it('rejects an invalid substitution batch without partially changing the runtime', () => {
+    const world = createNewGame()
+    const controller = createLiveUserMatch(world)
+    const userTeam = getUserTeam(world)!
+    const active = controller.activeLineups[userTeam.id === controller.snapshot().homeTeamId ? 'home' : 'away']
+    const before = controller.snapshot()
+
+    expect(() => controller.applyManualSubstitutions(userTeam.id, [
+      { playerOutId: active[0]!, playerInId: controller.replacementCandidates(userTeam.id, active[0]!)[0]! },
+      { playerOutId: active[1]!, playerInId: active[2]! },
+    ])).toThrow()
     expect(controller.snapshot()).toEqual(before)
+    expect(controller.activeLineups[userTeam.id === before.homeTeamId ? 'home' : 'away']).toEqual(active)
   })
 })
