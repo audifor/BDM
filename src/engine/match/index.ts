@@ -21,6 +21,8 @@ export { assignBaseSpatialTargets, stepPlayersTowardBaseSpacing } from './BaseSp
 export type { BaseSpacingInput, BaseSpacingTargets, BaseSpatialTarget } from './BaseSpacing'
 export { createOffBallCutIntent, MAX_OFF_BALL_CUT_STEPS, selectOffBallCutter, updateOffBallCutIntent } from './OffBallMovement'
 export type { OffBallCutIntent } from './OffBallMovement'
+export { advanceScreenIntent, createScreenIntent, reduceScreenedDefenderMovement, screenIntersectsDefenderRoute, selectScreenScreener, SCREEN_RULES_V1 } from './ScreenInteractions'
+export type { ScreenIntent } from './ScreenInteractions'
 export { assignTransitionSpatialTargets, stepPlayersTowardTransitionTargets } from './TransitionSpatial'
 export type { TransitionSpatialInput, TransitionSpatialTarget, TransitionSpatialTargets } from './TransitionSpatial'
 export { calculateDefenseExecution, calculateEffectiveDefense, calculateShotLocation, calculateShotMakeProbability, calculateShotZoneWeights, calculateSpatialContestBonus, pointsForShotZone, SHOT_RESOLUTION_V1, SPATIAL_CONTEST_V1 } from './ShotResolution'

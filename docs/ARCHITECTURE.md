@@ -341,6 +341,39 @@ cutters; defender behavior, collisions and pathfinding are unchanged. Live and
 Instant Result use the same MatchEngine state and movement. The visual bridge may
 show the resulting spatial snapshots, but the renderer has no gameplay authority.
 
+MG6D adds one transient `ScreenIntent` to `MatchSessionState`. A screen requires
+the actual player controlling the ball in `SpatialState`; its relevant defender
+comes from the existing deterministic `calculateDefensiveAssignments` result,
+including configured matchup overrides. An active screen and an off-ball cut are
+mutually exclusive. An existing cut has priority; while a screen is active, no
+cut can begin.
+
+An eligible screener is an active offensive teammate, excluding the ball handler
+and current cutter. Canonical `ON_BALL_SCREENING_FREQUENCY` gates the selection
+chance and weights the screener choice through the existing `decisionRandom`
+stream. When there is no active off-ball action, a failed screen selection may
+fall through to the existing cut selection. Screen geometry and its defender
+effect consume no RNG.
+
+The target is placed 0.9 metres along the handler-to-basket route and 0.8 metres
+to the side of that route on which the assigned defender lies. Coordinates are
+clamped 0.6 metres inside court bounds. The screener approaches with their own
+MG6B kinematics. At 0.45 metres or closer, the screen enters `set` for two
+subsequent movement steps; a failed approach expires after two steps. While set,
+the screener holds their current point and brakes through the regular movement
+primitive.
+
+A set screen affects only its assigned defender and only when the line from that
+defender's current position to their existing BaseSpacing target comes within
+1.25 metres of the screener. That step multiplies the defender's maximum speed
+and acceleration by 0.65; braking and all other player profiles remain unchanged.
+The effect is position-based, bounded, and does not stop or teleport the defender.
+Possession changes, a new ball handler, or substitution of the screener, handler,
+or assigned defender cancels the intent. No strength, weight, or screen-navigation
+rating is used. There is no roll, pop, pick-and-roll read, coverage logic, or
+screen animation; Live and Instant still share MatchEngine and the renderer only
+consumes resulting snapshots.
+
 ## Player basketball domain
 
 Player now persists a `BasketballProfile` with one primary position, the exact
