@@ -19,6 +19,7 @@ import { calculateBlockCreditProbability, calculateStealCreditProbability } from
 import { applySpatialSubstitution, controlBallByPlayer, createInitialSpatialState, getSpatialPossessionView, releaseSpatialBall, type SpatialState } from './SpatialState'
 import { stepPlayersTowardBaseSpacing } from './BaseSpacing'
 import { stepPlayersTowardTransitionTargets } from './TransitionSpatial'
+import { createOffBallCutIntent, selectOffBallCutter, updateOffBallCutIntent, type OffBallCutIntent } from './OffBallMovement'
 
 /**
  * Default game-clock rules, used only as the fallback when a game's actual competition cannot
@@ -226,6 +227,7 @@ export interface MatchSessionState {
   readonly fatigueByPlayerId: FatigueByPlayerId
   readonly playerProfiles: MatchPlayerProfiles
   readonly spatial: SpatialState
+  readonly offBallCut?: OffBallCutIntent
   readonly coachingState: MatchCoachingState
   readonly defensiveMatchups?: { readonly home:readonly DefensiveMatchupOverride[]; readonly away:readonly DefensiveMatchupOverride[] }
   readonly homeStrength: TeamStrength
@@ -335,7 +337,7 @@ export function substitutePlayer(session: MatchSession, substitution: Substitute
     homeScore: state.homeScore,
     awayScore: state.awayScore,
   }
-  return { ...session, state: { ...state, activeLineups, spatial, nextSequence: state.nextSequence + 1, events: [...state.events, event] } }
+  return { ...session, state: { ...state, activeLineups, spatial, ...(state.offBallCut?.playerId === substitution.playerOutId ? { offBallCut: undefined } : {}), nextSequence: state.nextSequence + 1, events: [...state.events, event] } }
 }
 
 /** Advances one possession action or one period transition. RNG streams mutate only inside this runtime. */
@@ -362,6 +364,16 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     : undefined
   const offensiveActor = currentHandler ?? chooseWeighted(lineup.map((playerId) => ({ item: profileForPlayer(profiles, playerId), weight: tacticalUsageWeight(playerId, profileForPlayer(profiles, playerId).offense.usage, lineup, attackingPlan) })), session.decisionRandom)
   const playerId = offensiveActor.playerId
+  const existingCut = state.offBallCut
+  const activeCut = existingCut !== undefined
+    && existingCut.teamId === state.attackingTeamId
+    && existingCut.playerId !== playerId
+    && lineup.includes(existingCut.playerId)
+    ? existingCut
+    : undefined
+  const cutPlayerId = activeCut?.playerId ?? selectOffBallCutter(lineup, profiles, playerId, session.decisionRandom)
+  const cutAttackingBasket = getSpatialPossessionView({ homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, attackingTeamId: state.attackingTeamId, period: state.period, spatial: state.spatial }).attackingBasket
+  const cutForMovement = activeCut ?? (cutPlayerId === undefined ? undefined : createOffBallCutIntent({ teamId: state.attackingTeamId, playerId: cutPlayerId, spatial: state.spatial, attackingBasket: cutAttackingBasket }))
   let spatial = stepPlayersTowardBaseSpacing({
     homeTeamId: state.homeTeamId,
     awayTeamId: state.awayTeamId,
@@ -371,7 +383,8 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     playerProfiles: state.playerProfiles,
     spatial: controlBallByPlayer(state.spatial, playerId),
     ballHandlerId: playerId,
-  }, possessionDuration)
+  }, possessionDuration, cutForMovement === undefined ? [] : [{ playerId: cutForMovement.playerId, position: cutForMovement.target }])
+  const progressedCut = updateOffBallCutIntent(cutForMovement, { teamId: state.attackingTeamId, lineup, ballHandlerId: playerId, spatial })
   const defendingTeamId = otherTeamId(state.attackingTeamId, state)
   const defendingLineup = defendingTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
   const defendingProfiles = defendingTeamId === state.homeTeamId ? state.playerProfiles.home : state.playerProfiles.away
@@ -475,7 +488,9 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   if (shouldStartSpatialTransition(newEvents)) {
     spatial = stepPlayersTowardTransitionTargets({ homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, attackingTeamId, period: state.period, activeLineups: state.activeLineups, spatial }, possessionDuration, state.playerProfiles)
   }
-  const stateAfterAction = { ...state, clockSecondsRemaining, homeScore, awayScore, attackingTeamId, spatial, passesThisPossession, nextSequence: sequence }
+  const cutRemainsOffBall = spatial.ball.kind !== 'playerControlled' || spatial.ball.playerId !== progressedCut?.playerId
+  const offBallCut = attackingTeamId === state.attackingTeamId && cutRemainsOffBall ? progressedCut : undefined
+  const stateAfterAction = { ...state, clockSecondsRemaining, homeScore, awayScore, attackingTeamId, spatial, offBallCut, passesThisPossession, nextSequence: sequence }
   const fatiguedSession = updateSessionFatigue(session, stateAfterAction, possessionDuration)
   if (clockSecondsRemaining === 0) return finishPeriod(fatiguedSession, fatiguedSession.state, newEvents)
   const nextState = { ...fatiguedSession.state, events: [...state.events, ...newEvents] }
@@ -512,7 +527,7 @@ function finishPeriod(session: MatchSession, state: MatchSessionState, newEvents
   if (state.period >= state.clockRules.periodCount && state.homeScore !== state.awayScore) {
     const gameEnd: MatchEvent = { sequence, period: state.period, clockSecondsRemaining: 0, type: 'gameEnd', homeScore: state.homeScore, awayScore: state.awayScore }
     newEvents.push(gameEnd)
-    const completeState = { ...state, spatial: releaseSpatialBall(state.spatial), passesThisPossession: 0, nextSequence: sequence + 1, events: [...state.events, ...newEvents], isComplete: true }
+    const completeState = { ...state, spatial: releaseSpatialBall(state.spatial), offBallCut: undefined, passesThisPossession: 0, nextSequence: sequence + 1, events: [...state.events, ...newEvents], isComplete: true }
     return { session: { ...session, state: completeState }, newEvents }
   }
   if (state.period >= state.clockRules.periodCount + MAX_OVERTIME_PERIODS) {
@@ -524,7 +539,7 @@ function finishPeriod(session: MatchSession, state: MatchSessionState, newEvents
   const attackingTeamId = period % 2 === 1 ? state.openingTeamId : otherTeamId(state.openingTeamId, state)
   const periodStart: MatchEvent = { sequence: sequence++, period, clockSecondsRemaining, type: 'periodStart', homeScore: state.homeScore, awayScore: state.awayScore }
   newEvents.push(periodStart)
-  const nextState = { ...state, period, clockSecondsRemaining, attackingTeamId, passesThisPossession: 0, spatial: releaseSpatialBall(state.spatial), nextSequence: sequence, events: [...state.events, ...newEvents] }
+  const nextState = { ...state, period, clockSecondsRemaining, attackingTeamId, offBallCut: undefined, passesThisPossession: 0, spatial: releaseSpatialBall(state.spatial), nextSequence: sequence, events: [...state.events, ...newEvents] }
   return { session: { ...session, state: nextState }, newEvents }
 }
 

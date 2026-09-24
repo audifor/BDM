@@ -318,6 +318,29 @@ authority, and the shared Live / Instant MatchEngine path supplies each player's
 profile to the same canonical movement primitive. The visual bridge remains a
 consumer of snapshots and has no athletic-rating or movement authority.
 
+MG6C adds one transient `OffBallCutIntent` to `MatchSessionState`. The active
+offense may select one cutter from its current lineup, excluding the ball handler;
+bench players and defenders cannot be selected. Canonical `CUT_FREQUENCY`
+controls the cut chance and weights cutter selection. A successful decision uses
+the existing `decisionRandom` stream: one tendency chance draw, followed by one
+weighted player draw. No stream or saved `GameWorld` state is added.
+
+The cut target is derived from the attacking basket and court geometry. Players
+more than 20% of court length from the basket receive a rim target 1.5 metres
+inside the court with a one-metre lateral offset; closer players receive a space
+target 4.5 metres from the basket at the opposite court-side margin. While active,
+that player's cut target overrides only their BaseSpacing target. All movement
+continues through `advancePlayerTowardTarget` with that player's MG6B kinematics.
+The intent ends on target arrival, after at most three movement steps, if the
+cutter becomes the ball handler, on possession change, or immediately when that
+player is substituted out. BaseSpacing resumes on the next movement step without
+teleporting the player.
+
+Cuts do not trigger passes or shots. Existing receiver selection does not favor
+cutters; defender behavior, collisions and pathfinding are unchanged. Live and
+Instant Result use the same MatchEngine state and movement. The visual bridge may
+show the resulting spatial snapshots, but the renderer has no gameplay authority.
+
 ## Player basketball domain
 
 Player now persists a `BasketballProfile` with one primary position, the exact

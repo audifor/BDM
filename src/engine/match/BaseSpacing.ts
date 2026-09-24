@@ -76,13 +76,19 @@ export function assignBaseSpatialTargets(input: BaseSpacingInput): BaseSpacingTa
 }
 
 /** Advances all ten active players one bounded step toward the current base-spacing targets. */
-export function stepPlayersTowardBaseSpacing(input: BaseSpacingInput, deltaTimeSeconds: number): SpatialState {
+export function stepPlayersTowardBaseSpacing(
+  input: BaseSpacingInput,
+  deltaTimeSeconds: number,
+  targetOverrides: readonly { readonly playerId: PlayerId; readonly position: CourtPosition }[] = [],
+): SpatialState {
   const targets = assignBaseSpatialTargets(input)
+  const overrideByPlayerId = new Map<PlayerId, CourtPosition>()
+  for (const override of targetOverrides) overrideByPlayerId.set(override.playerId, override.position)
   return [...targets.offensive, ...targets.defensive].reduce(
     (spatial, target) => {
       const profile = [...input.playerProfiles.home, ...input.playerProfiles.away].find((candidate) => candidate.playerId === target.playerId)
       if (profile === undefined) throw new Error(`Match player profile ${target.playerId} is missing`)
-      return advancePlayerTowardTarget(spatial, target.playerId, target.position, deltaTimeSeconds, profile.kinematics)
+      return advancePlayerTowardTarget(spatial, target.playerId, overrideByPlayerId.get(target.playerId) ?? target.position, deltaTimeSeconds, profile.kinematics)
     },
     input.spatial,
   )
