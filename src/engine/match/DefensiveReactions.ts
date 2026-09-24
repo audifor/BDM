@@ -47,11 +47,13 @@ export function resolveDefensiveReaction(input: {
   readonly previous?: DefensiveReaction
   readonly assignments: readonly PlayerMatchup[]
   readonly defensiveLineup: readonly PlayerId[]
+  readonly excludedDefenderIds?: readonly PlayerId[]
   readonly baseTargets: BaseSpacingTargets
   readonly spatial: SpatialState
   readonly attackingBasket: CourtPosition
 }): DefensiveReactionResolution {
   const threat = input.threat
+  const excludedDefenders = new Set(input.excludedDefenderIds ?? [])
   if (threat !== undefined) {
     const threatPlayer = input.spatial.players.find((player) => player.playerId === threat.playerId)
     const primaryDefenderId = input.assignments.find((assignment) => assignment.offensivePlayerId === threat.playerId)?.defensivePlayerId
@@ -61,15 +63,16 @@ export function resolveDefensiveReaction(input: {
         const previousCanHelp = input.previous?.phase === 'HELP'
           && input.previous.threatPlayerId === threat.playerId
           && input.defensiveLineup.includes(input.previous.defenderId)
+          && !excludedDefenders.has(input.previous.defenderId)
         const helperId = previousCanHelp
           ? input.previous!.defenderId
-          : closestTo(input.defensiveLineup.filter((id) => id !== primaryDefenderId), helpTarget, input.spatial)
+          : closestTo(input.defensiveLineup.filter((id) => id !== primaryDefenderId && !excludedDefenders.has(id)), helpTarget, input.spatial)
         if (helperId !== undefined) {
           const protectedAssignment = input.assignments.find((assignment) => assignment.defensivePlayerId === helperId)
           if (protectedAssignment !== undefined && protectedAssignment.offensivePlayerId !== threat.playerId) {
             const rotationId = previousCanHelp
-              ? validRotation(input.previous, input.defensiveLineup, helperId, primaryDefenderId)
-              : closestTo(input.defensiveLineup.filter((id) => id !== primaryDefenderId && id !== helperId), positionOf(protectedAssignment.offensivePlayerId, input.spatial), input.spatial)
+              ? validRotation(input.previous, input.defensiveLineup, helperId, primaryDefenderId, excludedDefenders)
+              : closestTo(input.defensiveLineup.filter((id) => id !== primaryDefenderId && id !== helperId && !excludedDefenders.has(id)), positionOf(protectedAssignment.offensivePlayerId, input.spatial), input.spatial)
             const rotationAssignment = rotationId === undefined ? undefined : input.assignments.find((assignment) => assignment.defensivePlayerId === rotationId)
             const rotationTarget = rotationAssignment === undefined
               ? undefined
@@ -138,9 +141,9 @@ function closestTo(playerIds: readonly PlayerId[], target: CourtPosition, spatia
   return [...playerIds].sort((left, right) => distanceBetween(positionOf(left, spatial), target) - distanceBetween(positionOf(right, spatial), target) || compareIds(left, right))[0]
 }
 
-function validRotation(reaction: DefensiveReaction | undefined, lineup: readonly PlayerId[], helperId: PlayerId, primaryDefenderId: PlayerId): PlayerId | undefined {
+function validRotation(reaction: DefensiveReaction | undefined, lineup: readonly PlayerId[], helperId: PlayerId, primaryDefenderId: PlayerId, excludedDefenders: ReadonlySet<PlayerId>): PlayerId | undefined {
   const defenderId = reaction?.rotationDefenderId
-  return defenderId !== undefined && defenderId !== helperId && defenderId !== primaryDefenderId && lineup.includes(defenderId) ? defenderId : undefined
+  return defenderId !== undefined && defenderId !== helperId && defenderId !== primaryDefenderId && !excludedDefenders.has(defenderId) && lineup.includes(defenderId) ? defenderId : undefined
 }
 
 function targetFor(targets: readonly BaseSpatialTarget[], playerId: PlayerId): CourtPosition | undefined {

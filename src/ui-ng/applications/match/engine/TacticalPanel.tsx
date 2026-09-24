@@ -2,7 +2,7 @@ import type { Player } from '@/domain/player'
 import type { PlayerId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { getPlayer } from '@/domain/world'
-import { TACTICAL_DEFENSE_OPTIONS, type ManualSubstitution, type MatchEvent, type MatchTacticalPlan, type PlayerMatchStats, type TacticalLevel } from '@/engine/match'
+import { PICK_AND_ROLL_COVERAGE_OPTIONS, TACTICAL_DEFENSE_OPTIONS, type ManualSubstitution, type MatchEvent, type MatchTacticalPlan, type PlayerMatchStats, type TacticalLevel } from '@/engine/match'
 import { ManualSubstitutionsPanel } from '@/ui/screens/ManualSubstitutionsPanel'
 import { navigateToPlayer } from '@/ui-ng/workspace/workspaceApps'
 import { PlayByPlay } from '@/ui-ng/applications/match/engine/LiveStage'
@@ -308,6 +308,15 @@ function TacticalSettings({
               value={`${draft.defense.interior}/${draft.defense.perimeter}`}
             >
               {TACTICAL_DEFENSE_OPTIONS.map(({ label, interior, perimeter }) => <option key={`${interior}/${perimeter}`} value={`${interior}/${perimeter}`}>{label}</option>)}
+            </select>
+          </label>
+          <label>
+            Cobertura pick-and-roll
+            <select
+              onChange={(event) => onChange({ ...draft, defense: { ...draft.defense, pickAndRollCoverage: event.target.value as NonNullable<MatchTacticalPlan['defense']['pickAndRollCoverage']> } })}
+              value={draft.defense.pickAndRollCoverage ?? 'switch'}
+            >
+              {PICK_AND_ROLL_COVERAGE_OPTIONS.map(({ label, value }) => <option key={value} value={value}>{label}</option>)}
             </select>
           </label>
         </>

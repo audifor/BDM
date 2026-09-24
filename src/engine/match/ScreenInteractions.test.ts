@@ -5,7 +5,7 @@ import { distanceFromBasket, isBeyondThreePointLine, isInsideCourt } from '@/dom
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { generateWorld } from '@/engine/world'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
-import { advanceScreenIntent, assignBaseSpatialTargets, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, createPostScreenIntent, createPostScreenTarget, createScreenIntent, reduceScreenedDefenderMovement, screenIntersectsDefenderRoute, selectScreenScreener, stepMatchSession, stepPlayersTowardBaseSpacing, substitutePlayer, type MatchPlayerProfiles, type ScreenIntent, type SpatialState } from './index'
+import { advanceScreenIntent, applyTacticalPlanChange, assignBaseSpatialTargets, calculateDefensiveAssignments, controlBallByPlayer, createDefaultTacticalPlan, createMatchPlayerProfile, createMatchSession, createPostScreenIntent, createPostScreenTarget, createScreenIntent, coverageForCurrentScreen, reduceScreenedDefenderMovement, resolveDefensiveReaction, screenIntersectsDefenderRoute, selectScreenScreener, stepMatchSession, stepPlayersTowardBaseSpacing, substitutePlayer, type MatchPlayerProfiles, type MatchTacticalPlan, type ScreenIntent, type SpatialState } from './index'
 
 describe('on-ball screen spatial foundation', () => {
   it('moves an eligible screener away from BaseSpacing toward a court-valid target with MG6B kinematics', () => {
@@ -69,7 +69,8 @@ describe('on-ball screen spatial foundation', () => {
   it('cancels on possession or handler changes and when any screen participant is substituted', () => {
     const { session, state } = createFixture()
     const { handlerId, screenerId, defenderId, basket, offenseKey, defenseKey } = participants(state)
-    const intent = createScreenIntent({ screenerId, ballHandlerId: handlerId, defenderId, spatial: state.spatial, attackingBasket: basket })
+    const screenerDefenderId = calculateDefensiveAssignments(state.activeLineups[offenseKey], state.activeLineups[defenseKey], [...state.playerProfiles.home, ...state.playerProfiles.away], state.defensiveMatchups?.[defenseKey]).find((assignment) => assignment.offensivePlayerId === screenerId)!.defensivePlayerId
+    const intent = createScreenIntent({ screenerId, ballHandlerId: handlerId, defenderId, screenerDefenderId, spatial: state.spatial, attackingBasket: basket })
     const heldSpatial = controlBallByPlayer(state.spatial, handlerId)
     const sessionWithScreen = { ...session, state: { ...state, spatial: heldSpatial, screenIntent: { ...intent, phase: 'postScreen' as const, stepsRemaining: 2, postScreenAction: 'roll' as const, postScreenTarget: intent.target } } }
     const screenOutId = screenerId
@@ -81,6 +82,7 @@ describe('on-ball screen spatial foundation', () => {
     const defenderBenchId = state.squads[defenseKey].find((id) => !state.activeLineups[defenseKey].includes(id))!
     const defendingTeamId = state.attackingTeamId === state.homeTeamId ? state.awayTeamId : state.homeTeamId
     expect(substitutePlayer(sessionWithScreen, { teamId: defendingTeamId, playerOutId: defenderId, playerInId: defenderBenchId }).state.screenIntent).toBeUndefined()
+    expect(substitutePlayer(sessionWithScreen, { teamId: defendingTeamId, playerOutId: screenerDefenderId, playerInId: defenderBenchId }).state.screenIntent).toBeUndefined()
 
     const flippedSession = { ...sessionWithScreen, random: new FixedRandom(0) }
     expect(stepMatchSession(flippedSession).session.state.screenIntent).toBeUndefined()
@@ -150,6 +152,81 @@ describe('on-ball screen spatial foundation', () => {
     expect(advanceScreenIntent(popIntent, arrived)).toBeUndefined()
     const spacingResumes = stepPlayersTowardBaseSpacing({ ...spacingInput(state, handlerId), spatial: arrived }, 0.5)
     expect(playerAt(spacingResumes, screenerId).position).not.toEqual(popTarget)
+  })
+
+  it('derives distinct P&R coverages from the current tactical plan and active screen', () => {
+    const { session, state } = createFixture()
+    const { handlerId, screenerId, defenderId, basket, offenseKey, defenseKey } = participants(state)
+    const baseScreen = createScreenIntent({ screenerId, ballHandlerId: handlerId, defenderId, spatial: state.spatial, attackingBasket: basket })
+    const spatial = controlBallByPlayer(placePlayer(state.spatial, screenerId, baseScreen.target), handlerId)
+    const screen: ScreenIntent = { ...baseScreen, phase: 'set', stepsRemaining: 2 }
+    const offense = state.activeLineups[offenseKey]
+    const defense = state.activeLineups[defenseKey]
+    const assignments = calculateDefensiveAssignments(offense, defense, [...state.playerProfiles.home, ...state.playerProfiles.away], state.defensiveMatchups?.[defenseKey])
+    const effective = (coverage: NonNullable<MatchTacticalPlan['defense']['pickAndRollCoverage']>) => ({
+      ...createDefaultTacticalPlan(),
+      defense: { ...createDefaultTacticalPlan().defense, pickAndRollCoverage: coverage },
+    })
+    const resolutions = new Map(['switch', 'drop', 'hedge', 'blitz'].map((coverage) => {
+      const plan = effective(coverage as NonNullable<MatchTacticalPlan['defense']['pickAndRollCoverage']>)
+      return [coverage, coverageForCurrentScreen({ plan, screen, offensiveLineup: offense, defensiveLineup: defense, assignments, spatial, attackingBasket: basket })!] as const
+    }))
+    const switchCoverage = resolutions.get('switch')!
+    const handlerDefenderId = assignments.find((assignment) => assignment.offensivePlayerId === handlerId)!.defensivePlayerId
+    const screenerDefenderId = assignments.find((assignment) => assignment.offensivePlayerId === screenerId)!.defensivePlayerId
+
+    expect(switchCoverage.assignments.find((assignment) => assignment.offensivePlayerId === handlerId)?.defensivePlayerId).toBe(screenerDefenderId)
+    expect(switchCoverage.assignments.find((assignment) => assignment.offensivePlayerId === screenerId)?.defensivePlayerId).toBe(handlerDefenderId)
+    expect(resolutions.get('drop')!.targetOverrides).toHaveLength(1)
+    expect(resolutions.get('hedge')!.targetOverrides).toHaveLength(1)
+    expect(resolutions.get('blitz')!.targetOverrides).toHaveLength(2)
+    expect(resolutions.get('blitz')!.targetOverrides[0]!.position).not.toEqual(resolutions.get('blitz')!.targetOverrides[1]!.position)
+    const dropTarget = resolutions.get('drop')!.targetOverrides[0]!.position
+    const hedgeTarget = resolutions.get('hedge')!.targetOverrides[0]!.position
+    const blitzTarget = resolutions.get('blitz')!.targetOverrides.find((target) => target.playerId === screenerDefenderId)!.position
+    expect(distance(dropTarget, basket)).toBeLessThan(distance(hedgeTarget, basket))
+    expect(distance(dropTarget, basket)).toBeLessThan(distance(blitzTarget, basket))
+    expect(distance(hedgeTarget, playerAt(spatial, handlerId).position)).toBeLessThan(distance(hedgeTarget, playerAt(spatial, screenerId).position))
+    expect(distance(blitzTarget, playerAt(spatial, handlerId).position)).toBeLessThan(distance(blitzTarget, playerAt(spatial, screenerId).position))
+    for (const resolution of resolutions.values()) for (const target of resolution.targetOverrides) expect(isInsideCourt(target.position, spatial.court)).toBe(true)
+    expect(new Set([...resolutions.values()].map((resolution) => JSON.stringify(resolution.targetOverrides))).size).toBe(4)
+    const coverageMovements = [...resolutions.values()].flatMap((resolution) => resolution.targetOverrides.map((target) => {
+      const moved = stepPlayersTowardBaseSpacing({ ...spacingInput({ ...state, spatial }, handlerId), spatial }, 0.5, resolution.targetOverrides)
+      expect(distance(playerAt(moved, target.playerId).position, target.position)).toBeLessThan(distance(playerAt(spatial, target.playerId).position, target.position))
+      return playerAt(moved, target.playerId).position
+    }))
+    expect(new Set(coverageMovements.map(({ x, y }) => `${x.toFixed(2)},${y.toFixed(2)}`)).size).toBeGreaterThan(3)
+
+    const rollTarget = createPostScreenTarget({ action: 'roll', intent: screen, spatial, attackingBasket: basket })
+    const postScreen = { ...screen, phase: 'postScreen' as const, postScreenAction: 'roll' as const, postScreenTarget: rollTarget }
+    const hedgeRecovery = coverageForCurrentScreen({ plan: effective('hedge'), screen: postScreen, offensiveLineup: offense, defensiveLineup: defense, assignments, spatial, attackingBasket: basket })!
+    expect(hedgeRecovery.state.phase).toBe('RECOVER')
+    expect(hedgeRecovery.targetOverrides).toEqual([])
+    expect(coverageForCurrentScreen({ plan: effective('blitz'), screen: undefined, offensiveLineup: offense, defensiveLineup: defense, assignments, spatial, attackingBasket: basket })).toBeUndefined()
+    expect(coverageForCurrentScreen({ plan: effective('blitz'), screen, offensiveLineup: offense, defensiveLineup: defense, assignments, spatial: controlBallByPlayer(spatial, offense[1]!), attackingBasket: basket })).toBeUndefined()
+    expect(coverageForCurrentScreen({ plan: effective('blitz'), screen, offensiveLineup: offense, defensiveLineup: defense, assignments, spatial: controlBallByPlayer(spatial, defense[0]!), attackingBasket: basket })).toBeUndefined()
+    expect(coverageForCurrentScreen({ plan: effective('blitz'), screen, offensiveLineup: offense.filter((id) => id !== screenerId), defensiveLineup: defense, assignments, spatial, attackingBasket: basket })).toBeUndefined()
+
+    const blitz = resolutions.get('blitz')!
+    const spacing = assignBaseSpatialTargets(spacingInput({ ...state, spatial }, handlerId))
+    const help = resolveDefensiveReaction({
+      threat: { playerId: handlerId, type: 'drive', target: basket },
+      assignments,
+      defensiveLineup: defense,
+      excludedDefenderIds: blitz.committedDefenderIds,
+      baseTargets: spacing,
+      spatial,
+      attackingBasket: basket,
+    }).reaction!
+    expect(blitz.committedDefenderIds).not.toContain(help.defenderId)
+    expect(blitz.committedDefenderIds).not.toContain(help.rotationDefenderId)
+
+    const defensiveTeamId = defenseKey === 'home' ? state.homeTeamId : state.awayTeamId
+    const blitzPlan = effective('blitz')
+    const coachedSession = applyTacticalPlanChange(session, { teamId: defensiveTeamId, tacticalPlan: blitzPlan })
+    const coachingSide = defenseKey
+    expect(coachedSession.state.coachingState[coachingSide].currentTacticalPlan.defense.pickAndRollCoverage).toBe('blitz')
+    expect(coverageForCurrentScreen({ plan: coachedSession.state.coachingState[coachingSide].currentTacticalPlan, screen, offensiveLineup: offense, defensiveLineup: defense, assignments, spatial, attackingBasket: basket })?.state.type).toBe('blitz')
   })
 })
 

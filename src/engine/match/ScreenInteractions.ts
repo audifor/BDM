@@ -24,6 +24,7 @@ export interface ScreenIntent {
   readonly screenerId: PlayerId
   readonly ballHandlerId: PlayerId
   readonly defenderId: PlayerId
+  readonly screenerDefenderId?: PlayerId
   readonly target: CourtPosition
   readonly phase: 'approach' | 'set' | 'postScreen'
   readonly stepsRemaining: number
@@ -55,6 +56,7 @@ export function createScreenIntent(input: {
   readonly screenerId: PlayerId
   readonly ballHandlerId: PlayerId
   readonly defenderId: PlayerId
+  readonly screenerDefenderId?: PlayerId
   readonly spatial: SpatialState
   readonly attackingBasket: CourtPosition
 }): ScreenIntent {
@@ -76,7 +78,7 @@ export function createScreenIntent(input: {
     x: clamp(handler.position.x + attackX * SCREEN_RULES_V1.targetForwardOffsetMeters + perpendicular.x * defenderSide * SCREEN_RULES_V1.targetLateralOffsetMeters, margin, input.spatial.court.lengthMeters - margin),
     y: clamp(handler.position.y + attackY * SCREEN_RULES_V1.targetForwardOffsetMeters + perpendicular.y * defenderSide * SCREEN_RULES_V1.targetLateralOffsetMeters, margin, input.spatial.court.widthMeters - margin),
   }
-  return { screenerId: input.screenerId, ballHandlerId: input.ballHandlerId, defenderId: input.defenderId, target, phase: 'approach', stepsRemaining: SCREEN_RULES_V1.maximumApproachSteps }
+  return { screenerId: input.screenerId, ballHandlerId: input.ballHandlerId, defenderId: input.defenderId, ...(input.screenerDefenderId === undefined ? {} : { screenerDefenderId: input.screenerDefenderId }), target, phase: 'approach', stepsRemaining: SCREEN_RULES_V1.maximumApproachSteps }
 }
 
 /** Advances the small approach/set lifecycle from canonical positions, without wall-clock timers. */

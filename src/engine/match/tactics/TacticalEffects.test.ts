@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { playerIdFromString } from '@/domain/ids'
+import { PICK_AND_ROLL_COVERAGE_OPTIONS } from '@/domain/tactics'
 import { createDefaultTacticalPlan, TACTICAL_DEFENSE_OPTIONS, validateTacticalPlan } from './MatchTacticalPlan'
 import { applyPaceToPossessionDuration, applyShotProfile, calculateTacticalDefenseModifier, spatialShotAttemptWeight, tacticalShotFactor, tacticalUsageWeight } from './TacticalEffects'
 import { choosePossessionOutcome } from '../MatchEngine'
@@ -9,11 +10,12 @@ import { calculateShotLocation } from '../ShotResolution'
 describe('pre-match tactical plan', () => {
   it('defaults to neutral balanced values and validates only Alpha defense presets', () => {
     const plan = createDefaultTacticalPlan()
-    expect(plan).toEqual({ pace: 0, shotProfile: { rim: 0, midRange: 0, threePoint: 0 }, defense: { interior: 0, perimeter: 0 } })
+    expect(plan).toEqual({ pace: 0, shotProfile: { rim: 0, midRange: 0, threePoint: 0 }, defense: { interior: 0, perimeter: 0, pickAndRollCoverage: 'switch' } })
     expect(() => validateTacticalPlan({ ...plan, pace: 3 as 2 }, [])).toThrow()
     expect(() => validateTacticalPlan({ ...plan, pace: 0.5 as 0 }, [])).toThrow()
     expect(() => validateTacticalPlan({ ...plan, defense: { interior: 2, perimeter: 2 } }, [])).toThrow()
     for (const { interior, perimeter } of TACTICAL_DEFENSE_OPTIONS) expect(() => validateTacticalPlan({ ...plan, defense: { interior, perimeter } }, [])).not.toThrow()
+    for (const { value } of PICK_AND_ROLL_COVERAGE_OPTIONS) expect(() => validateTacticalPlan({ ...plan, defense: { ...plan.defense, pickAndRollCoverage: value } }, [])).not.toThrow()
   })
   it('applies pace, shot profile, featured usage, and defensive trade-offs without randomness', () => {
     expect([-2, -1, 0, 1, 2].map((level) => applyPaceToPossessionDuration(18, level as -2))).toEqual([22, 20, 18, 16, 14])

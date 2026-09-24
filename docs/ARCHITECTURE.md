@@ -423,8 +423,33 @@ the helper, rotator, threat, or either protected assignment clears the reference
 Help and recovery add no contest, defense, or passing modifier and consume no RNG.
 Existing spatial shot contests and passing-lane calculations observe the resulting
 player positions. The shared MatchEngine path serves Live and Instant Result; the
-renderer remains a consumer of canonical spatial snapshots. Switch, drop, hedge,
-blitz, zone, traps, and chain rotations remain deferred.
+renderer remains a consumer of canonical spatial snapshots.
+
+MG6H adds an optional `pickAndRollCoverage` instruction to the canonical defense
+plan, with `switch` as the default for legacy plans. The runtime tactical plan in
+`MatchSession.coachingState` is the authority. `coverageForCurrentScreen` derives
+the behavior only while a valid set/post-screen `ScreenIntent` and its original
+handler and screener defensive assignments remain active. It does not create a
+separate persisted state or consume RNG. A substitution of either offensive
+participant or either captured primary defender cancels the screen context.
+
+Switch temporarily swaps the handler/screener assignments and targets the
+defenders toward their new opponents, allowing the mismatch to emerge. Drop
+keeps assignments and sends the screener defender toward the basket from the
+handler or roll threat. Hedge steps that defender toward the handler/screener
+lane, then releases the override on the post-screen action so MG6A/B movement
+returns it toward BaseSpacing. Blitz sends both primary defenders to separate
+targets around the handler and leaves the screener without a direct coverage
+target. These targets override MG6G and BaseSpacing for involved defenders;
+MG6G excludes those defenders from generic help/rotation while uninvolved
+defenders may still react. All movement uses MG6A/B kinematics. Passing lanes,
+shot contests, and roll/pop availability emerge from player positions.
+
+The pre-existing interior/perimeter tactical modifier remains independent and
+unchanged; coverage itself adds no abstract shot, contest, turnover, or passing
+modifier. Coverage clears when its screen/handler/possession context ends. Zone
+defense, ICE, press, traps outside P&R, scram/peel switching, chain rotations,
+contact, fouls, playbook defense, and animation remain deferred.
 
 ## Player basketball domain
 
