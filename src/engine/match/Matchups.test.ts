@@ -6,7 +6,7 @@ import type { BasketballPosition } from '@/domain/primitives'
 
 import { calculateDefensiveAssignments } from './Matchups'
 import type { MatchPlayerProfile } from './MatchPlayerProfile'
-import { calculateDefenseExecution, calculateEffectiveDefense, calculateShotMakeProbability } from './ShotResolution'
+import { calculateDefenseExecution, calculateEffectiveDefense, calculateShotMakeProbability, calculateSpatialContestBonus } from './ShotResolution'
 
 const positions: readonly BasketballPosition[] = ['PG', 'SG', 'SF', 'PF', 'C']
 const neutralTendencies = Object.fromEntries(PLAYER_TRUTH_TENDENCY_KEYS.map((key) => [key, 50])) as unknown as PlayerTruthTendencies
@@ -61,6 +61,31 @@ describe('individual defensive matchups', () => {
     expect(fresh).toBeLessThan(calculateShotMakeProbability({ shotZone: 'threePoint', shooterProfile: shooter, shooterFatigue: 0, defenderProfile: weak, defenderFatigue: 0 }))
     expect(calculateShotMakeProbability({ shotZone: 'threePoint', shooterProfile: shooter, shooterFatigue: 0, defenderProfile: strong, defenderFatigue: 80 })).toBeGreaterThan(fresh)
     expect(calculateShotMakeProbability({ shotZone: 'threePoint', shooterProfile: shooter, shooterFatigue: 80, defenderProfile: strong, defenderFatigue: 0 })).toBeLessThan(fresh)
+  })
+
+  it('makes a closer spatial contest stronger while retaining defensive skill and tactics', () => {
+    const shooter = profile('spatial-shooter', 'SG')
+    const strong = profile('spatial-strong', 'SG', 90, 90, 90)
+    const weak = profile('spatial-weak', 'SG', 20, 20, 20)
+    const probability = (defenderProfile: MatchPlayerProfile, defenderDistanceMeters: number, tacticalDefenseModifier = 0) => calculateShotMakeProbability({
+      shotZone: 'threePoint',
+      shooterProfile: shooter,
+      shooterFatigue: 0,
+      defenderProfile,
+      defenderFatigue: 0,
+      defenderDistanceMeters,
+      tacticalDefenseModifier,
+    })
+    const strongFar = probability(strong, 4)
+    const strongClose = probability(strong, 0.5)
+    const weakFar = probability(weak, 4)
+    const weakClose = probability(weak, 0.5)
+
+    expect(strongClose).toBeLessThan(strongFar)
+    expect(strongFar - strongClose).toBeGreaterThan(weakFar - weakClose)
+    expect(probability(strong, 100)).toBe(strongFar)
+    expect(probability(weak, 0.5, 10)).toBeLessThan(weakClose)
+    expect(calculateSpatialContestBonus(100, 0)).toBe(12)
   })
 })
 

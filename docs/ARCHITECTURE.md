@@ -433,7 +433,11 @@ and possession-derived attacking basket determine canonical shot distance and th
 rim/midrange/three-point event zone. CourtGeometry carries the selected ecosystem's arc and
 corner-line dimensions; distance contributes a small bounded adjustment to make probability.
 Tendency and offensive-tactic weights remain the shot-preference input, while they cannot
-override the actual location. Spatial possession views derive
+override the actual location. For the shot's existing assigned defender, Engine also reads
+the current spatial position and adds a bounded proximity signal scaled by the existing
+zone-specific defensive rating and fatigue. This signal combines with the existing tactical
+defense modifier before make probability is resolved; no help defense or defensive movement
+is inferred. Spatial possession views derive
 offense, defense and attacking basket from `MatchSessionState.attackingTeamId` and
 the current period. The existing offensive actor, rebounder and credited stealer
 drive ball control when known; unresolved possession changes release it until a

@@ -11,6 +11,7 @@ export interface ShotAttemptContext {
   readonly defenderFatigue: number
   readonly tacticalDefenseModifier?: number
   readonly shotDistanceMeters?: number
+  readonly defenderDistanceMeters?: number
 }
 
 export interface ShotLocation {
@@ -33,6 +34,12 @@ export const SHOT_RESOLUTION_V1 = {
   rimDistanceMeters: 1.5,
   distanceAdjustmentPerMeter: 0.008,
   maximumDistanceAdjustment: 0.04,
+} as const
+
+export const SPATIAL_CONTEST_V1 = {
+  fullContestDistanceMeters: 1,
+  noContestDistanceMeters: 4,
+  maximumDefenseBonusPoints: 12,
 } as const
 
 export function calculateShotLocation(position: CourtPosition, attackingBasket: CourtPosition, court: CourtGeometry): ShotLocation {
@@ -58,9 +65,10 @@ export function calculateShotZoneWeights(profile: MatchPlayerProfile): Readonly<
 
 export function calculateShotMakeProbability(context: ShotAttemptContext): number {
   const execution = calculateExecution(context.shotZone, context.shooterProfile)
+  const effectiveDefense = calculateEffectiveDefense(context.shotZone, context.defenderProfile, context.defenderFatigue)
   const probability = SHOT_RESOLUTION_V1.baseProbability[context.shotZone]
     + (execution - 50) * SHOT_RESOLUTION_V1.skillAdjustmentPerPoint
-    - (clamp(calculateEffectiveDefense(context.shotZone, context.defenderProfile, context.defenderFatigue) + (context.tacticalDefenseModifier ?? 0), 0, 100) - 50) * SHOT_RESOLUTION_V1.defenseAdjustmentPerPoint
+    - (clamp(effectiveDefense + calculateSpatialContestBonus(effectiveDefense, context.defenderDistanceMeters) + (context.tacticalDefenseModifier ?? 0), 0, 100) - 50) * SHOT_RESOLUTION_V1.defenseAdjustmentPerPoint
     - (clamp(context.shooterFatigue, 0, 100) / 100) * SHOT_RESOLUTION_V1.maximumFatiguePenalty
     + calculateDistanceAdjustment(context.shotZone, context.shotDistanceMeters)
   const [minimum, maximum] = SHOT_RESOLUTION_V1.probabilityClamp[context.shotZone]
@@ -75,6 +83,17 @@ export function calculateDefenseExecution(shotZone: ShotZone, profile: MatchPlay
 
 export function calculateEffectiveDefense(shotZone: ShotZone, profile: MatchPlayerProfile, fatigue: number): number {
   return clamp(calculateDefenseExecution(shotZone, profile) - (clamp(fatigue, 0, 100) / 100) * SHOT_RESOLUTION_V1.defenderFatiguePenaltyAtMaximum, 0, 100)
+}
+
+export function calculateSpatialContestBonus(effectiveDefense: number, defenderDistanceMeters: number | undefined): number {
+  if (defenderDistanceMeters === undefined || !Number.isFinite(defenderDistanceMeters)) return 0
+  const proximity = clamp(
+    (SPATIAL_CONTEST_V1.noContestDistanceMeters - defenderDistanceMeters)
+      / (SPATIAL_CONTEST_V1.noContestDistanceMeters - SPATIAL_CONTEST_V1.fullContestDistanceMeters),
+    0,
+    1,
+  )
+  return proximity * (clamp(effectiveDefense, 0, 100) / 100) * SPATIAL_CONTEST_V1.maximumDefenseBonusPoints
 }
 
 export function pointsForShotZone(shotZone: ShotZone): 2 | 3 { return shotZone === 'threePoint' ? 3 : 2 }
