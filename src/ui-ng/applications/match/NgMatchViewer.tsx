@@ -60,15 +60,16 @@ export function NgMatchViewer() {
   const replaceSimulation = useMatchViewerStore((state) => state.replaceSimulation)
   const markResultApplied = useMatchViewerStore((state) => state.markResultApplied)
   const clearMatch = useMatchViewerStore((state) => state.clear)
-  const coachingPlan = useTacticalPlanStore((state) => state.plan)
-  const setCoachingPlan = useTacticalPlanStore((state) => state.setPlan)
+  const storedCoachingPlan = useTacticalPlanStore((state) => state.plan)
+  const activeMatchController = useGameStore((state) => state.getActiveMatchSession())
 
   const [stageMode, setStageMode] = useState<LiveStageMode>('tracking')
   const [tacticalTab, setTacticalTab] = useState<TacticalPanelTab>('general')
   const [boxScoresCollapsed, setBoxScoresCollapsed] = useState(false)
-  const [draft, setDraft] = useState(coachingPlan)
+  const [draft, setDraft] = useState(storedCoachingPlan)
   const [segment, setSegment] = useState<MatchPresentationSegment | null>(null)
   const [presentationProgress, setPresentationProgress] = useState(0)
+  const [applyError, setApplyError] = useState<string | null>(null)
   const requestingSegmentRef = useRef(false)
 
   const revealedEvents = simulation?.events ?? []
@@ -155,6 +156,8 @@ export function NgMatchViewer() {
   const activeLineups = resolveActiveMatchLineups(simulation, revealedEvents)
   const fatigueByPlayerId = resolveMatchFatigue(world, simulation, revealedEvents)
   const coachingTeamId = team?.id ?? simulation.homeTeamId
+  const coachingSide = coachingTeamId === simulation.homeTeamId ? 'home' : 'away'
+  const coachingPlan = activeMatchController?.currentPlans[coachingSide].currentTacticalPlan ?? storedCoachingPlan
   const coachingPlayers = (team ?? world.teams[coachingTeamId]!).rosterPlayerIds.map((playerId) => world.players[playerId]!)
   const coachingActiveLineup = coachingTeamId === simulation.homeTeamId ? activeLineups.home : activeLineups.away
   const homeStats = playerStats.filter((stat) => simulation.squads.home.includes(stat.playerId))
@@ -352,10 +355,15 @@ export function NgMatchViewer() {
             setTacticalTab('general')
           }}
           onApplyTactics={(plan: MatchTacticalPlan) => {
-            replaceSimulation(applyLiveTactics(coachingTeamId, plan), false)
-            setCoachingPlan(plan)
-            setTacticalTab('general')
+            try {
+              replaceSimulation(applyLiveTactics(coachingTeamId, plan), false)
+              setApplyError(null)
+              setTacticalTab('general')
+            } catch (error) {
+              setApplyError(error instanceof Error ? error.message : 'No se pudo aplicar el plan táctico')
+            }
           }}
+          applyError={applyError}
           onDraftChange={setDraft}
           onStageModeChange={setStageMode}
           onTabChange={(tab) => {

@@ -1,12 +1,14 @@
 import type { Game } from '@/domain/game'
-import type { GameWorld } from '@/domain/world'
+import type { PlayerId, TeamId } from '@/domain/ids'
+import type { TeamRotationIntent } from '@/domain/tactics'
+import { resolveGameClockRulesForGame, type GameWorld } from '@/domain/world'
 import { getGamesToday, getUserTeam } from '@/engine/calendar'
 import {
   applyCompletedMatch,
   createDefaultRotationPlan,
+  createRotationPlanFromMinutes,
   createMatchPlayerProfile,
   simulateMatchWithRotations,
-  createDefaultTacticalPlan,
   type MatchTacticalPlan,
   type MatchSimulation,
   type SimulateMatchWithRotationsOptions,
@@ -63,16 +65,19 @@ export function createLiveUserMatch(world: GameWorld, userTacticalPlan?: MatchTa
   return new LiveMatchController(prepareMatchOptions(world, game, userMatchTacticalPlans(game, userTeam.id, userTacticalPlan)))
 }
 
-export function prepareMatch(world: GameWorld, game: Game, tacticalPlans?: { home: MatchTacticalPlan; away: MatchTacticalPlan }): MatchSimulation {
+export function prepareMatch(world: GameWorld, game: Game, tacticalPlans?: Partial<{ home: MatchTacticalPlan; away: MatchTacticalPlan }>): MatchSimulation {
   return simulateMatchWithRotations(prepareMatchOptions(world, game, tacticalPlans))
 }
 
 /** Builds the shared immutable pre-match input consumed by both instant and live execution. */
-export function prepareMatchOptions(world: GameWorld, game: Game, tacticalPlans?: { home: MatchTacticalPlan; away: MatchTacticalPlan }): SimulateMatchWithRotationsOptions {
+export function prepareMatchOptions(world: GameWorld, game: Game, tacticalPlans?: Partial<{ home: MatchTacticalPlan; away: MatchTacticalPlan }>): SimulateMatchWithRotationsOptions {
   const squads = availableSquads(world, game)
   const lineups = { home: resolveStartingFive(world, game.homeTeamId, game.date, squads.home), away: resolveStartingFive(world, game.awayTeamId, game.date, squads.away) }
   const playerProfiles = { home: squads.home.map((playerId) => createMatchPlayerProfile(world.players[playerId]!)), away: squads.away.map((playerId) => createMatchPlayerProfile(world.players[playerId]!)) }
-  const resolvedTactics = tacticalPlans ?? { home: getEffectiveTacticalPlan(world, game.id, game.homeTeamId), away: getEffectiveTacticalPlan(world, game.id, game.awayTeamId) }
+  const resolvedTactics = {
+    home: tacticalPlans?.home ?? getEffectiveTacticalPlan(world, game.id, game.homeTeamId),
+    away: tacticalPlans?.away ?? getEffectiveTacticalPlan(world, game.id, game.awayTeamId),
+  }
   const homeGamePlan = getGamePlan(world, game.id, game.homeTeamId)
   const awayGamePlan = getGamePlan(world, game.id, game.awayTeamId)
   return {
@@ -83,8 +88,8 @@ export function prepareMatchOptions(world: GameWorld, game: Game, tacticalPlans?
     lineups,
     squads,
     playerProfiles,
-    homeRotationPlan: homeGamePlan?.rotationOverride??world.rotationPlansByTeamId[game.homeTeamId]??createDefaultRotationPlan({ teamId: game.homeTeamId, squad: squads.home, initialLineup: lineups.home, players: world.players }),
-    awayRotationPlan: awayGamePlan?.rotationOverride??world.rotationPlansByTeamId[game.awayTeamId]??createDefaultRotationPlan({ teamId: game.awayTeamId, squad: squads.away, initialLineup: lineups.away, players: world.players }),
+    homeRotationPlan: resolveRotationPlan(world, game, game.homeTeamId, squads.home, lineups.home, homeGamePlan?.rotationOverride ?? world.rotationPlansByTeamId[game.homeTeamId]),
+    awayRotationPlan: resolveRotationPlan(world, game, game.awayTeamId, squads.away, lineups.away, awayGamePlan?.rotationOverride ?? world.rotationPlansByTeamId[game.awayTeamId]),
     random: createPrototypeGameRandom(game.id),
     decisionRandom: new SeededRandomSource(hashStringToSeed(`match-decisions-v1:${game.id}`)),
     actorRandom: new SeededRandomSource(hashStringToSeed(`match-actors-v1:${game.id}`)),
@@ -93,11 +98,21 @@ export function prepareMatchOptions(world: GameWorld, game: Game, tacticalPlans?
   }
 }
 
-function userMatchTacticalPlans(game: Game, userTeamId: Game['homeTeamId'], userTacticalPlan?: MatchTacticalPlan) {
+function userMatchTacticalPlans(game: Game, userTeamId: Game['homeTeamId'], userTacticalPlan?: MatchTacticalPlan): Partial<{ home: MatchTacticalPlan; away: MatchTacticalPlan }> | undefined {
   if (userTacticalPlan === undefined) return undefined
   return userTeamId === game.homeTeamId
-    ? { home: userTacticalPlan, away: createDefaultTacticalPlan() }
-    : { home: createDefaultTacticalPlan(), away: userTacticalPlan }
+    ? { home: userTacticalPlan }
+    : { away: userTacticalPlan }
+}
+
+function resolveRotationPlan(world: GameWorld, game: Game, teamId: TeamId, squad: readonly PlayerId[], initialLineup: readonly PlayerId[], intent: TeamRotationIntent | undefined) {
+  const options = { teamId, squad, initialLineup, players: world.players }
+  const fallback = () => createDefaultRotationPlan(options)
+  if (intent?.minutesByPeriod !== undefined) {
+    const rules = resolveGameClockRulesForGame(world, game)
+    return createRotationPlanFromMinutes({ ...options, minutesByPeriod: intent.minutesByPeriod, periodMinutes: Array.from({ length: rules.periodCount }, () => rules.periodSeconds / 60) }) ?? fallback()
+  }
+  return intent?.instructions.length ? { teamId, instructions: intent.instructions } : fallback()
 }
 
 function availableSquads(world: GameWorld, game: Game) {

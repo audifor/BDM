@@ -21,6 +21,8 @@ export function MatchWorkspace() {
   const startMatch = useMatchViewerStore((state) => state.startMatch)
   const simulation = useMatchViewerStore((state) => state.simulation)
   const tacticalPlan = useTacticalPlanStore((state) => state.plan)
+  const hasExplicitTacticalPlan = useTacticalPlanStore((state) => state.hasExplicitPlan)
+  const tacticalPlanOverride = hasExplicitTacticalPlan ? tacticalPlan : undefined
 
   if (world === null) {
     return <NgHoloShell appLabel="Match" empty region="match-workspace" />
@@ -83,12 +85,12 @@ export function MatchWorkspace() {
               <>
                 <button
                   className="ng-canon__action"
-                  onClick={() => startMatch(startLiveMatch(tacticalPlan))}
+                  onClick={() => startMatch(startLiveMatch(tacticalPlanOverride))}
                   type="button"
                 >
                   Play match
                 </button>
-                <button className="ng-canon__action" onClick={() => instantResult(tacticalPlan)} type="button">
+                <button className="ng-canon__action" onClick={() => instantResult(tacticalPlanOverride)} type="button">
                   Instant result
                 </button>
                 <button className="ng-canon__action" onClick={() => simulateRemainingGamesToday()} type="button">

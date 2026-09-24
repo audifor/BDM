@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { createDefaultTacticalPlan, createMatchSession, type MatchTacticalPlan } from '@/engine/match'
+import { applyDueRotations, createDefaultTacticalPlan, createMatchSession, INITIAL_ROTATION_CONTROLLER_STATE, type MatchTacticalPlan } from '@/engine/match'
 import { getUserTeam } from '@/engine/calendar'
 import { assignLineupSlot, createDefaultTeamLineup } from '@/domain/tactics'
-import { resolveGameClockRulesForGame, updateGameWorld } from '@/domain/world'
+import { getTeamRoster, resolveGameClockRulesForGame, updateGameWorld } from '@/domain/world'
 import { resolveStartingFive } from '@/engine/team'
+import { activeLineupPlayerIds, rotationRegulationPeriodMinutes, updateRotationMinutesForTeam } from '@/engine/tactics/RotationEngine'
 import { updateGamePlan } from './TacticalPlanning'
 import { createLiveUserMatch, prepareMatchOptions, prepareUserMatch } from './playUserGame'
 import { createNewGame } from './createNewGame'
@@ -82,6 +83,65 @@ describe('LiveMatchController', () => {
     expect(live.currentPlans).toEqual(instantSession.state.coachingState)
     expect(live.currentMatchups).toEqual(instantSession.state.defensiveMatchups)
     expect(live.snapshot().lineups).toEqual(instantSession.state.initialLineups)
+  })
+
+  it('resolves base then game override then explicit user override identically for Live and Instant', () => {
+    const original = createNewGame()
+    const team = getUserTeam(original)!
+    const game = Object.values(original.games).find((candidate) => candidate.status === 'scheduled' && (candidate.homeTeamId === team.id || candidate.awayTeamId === team.id))!
+    const basePlan = { ...createDefaultTacticalPlan(), pace: -1 as const, shotProfile: { rim: 0 as const, midRange: 1 as const, threePoint: 0 as const } }
+    const awayBasePlan = { ...createDefaultTacticalPlan(), pace: 1 as const }
+    let world = updateGameWorld(original, { tacticalPlansByTeamId: {
+      ...original.tacticalPlansByTeamId,
+      [game.homeTeamId]: { teamId: game.homeTeamId, instructions: basePlan },
+      [game.awayTeamId]: { teamId: game.awayTeamId, instructions: awayBasePlan },
+    } })
+    const gameOverride = { ...createDefaultTacticalPlan(), pace: 1 as const, shotProfile: { rim: -1 as const, midRange: 0 as const, threePoint: 2 as const } }
+    world = updateGamePlan(world, { gameId: game.id, teamId: game.homeTeamId, tacticalOverride: gameOverride })
+    const explicit = { ...createDefaultTacticalPlan(), pace: 2 as const }
+    const userIsHome = team.id === game.homeTeamId
+    const explicitBySide = userIsHome ? { home: explicit } : { away: explicit }
+    const canonicalOptions = prepareMatchOptions(world, game)
+    const effectiveHome = prepareMatchOptions(world, game, explicitBySide)
+    const instant = createMatchSession(effectiveHome)
+    const live = createLiveUserMatch(world, explicit)
+
+    expect(canonicalOptions.tacticalPlans?.home).toEqual({ ...basePlan, ...gameOverride, shotProfile: gameOverride.shotProfile, defense: gameOverride.defense })
+    expect(effectiveHome.tacticalPlans?.[userIsHome ? 'home' : 'away']).toEqual(explicit)
+    expect(instant.state.coachingState).toEqual(live.currentPlans)
+    expect(instant.state.coachingState[userIsHome ? 'away' : 'home'].currentTacticalPlan.pace).toBe(userIsHome ? awayBasePlan.pace : gameOverride.pace)
+  })
+
+  it('compiles saved minutes into runner substitutions and falls back for unusable minutes', () => {
+    const original = createNewGame()
+    const team = getUserTeam(original)!
+    const roster = getTeamRoster(original, team.id)
+    const slots = ['PG', 'SG', 'SF', 'PF', 'C', 'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7'] as const
+    const lineup = slots.reduce((current, slot, index) => assignLineupSlot(current, slot, roster[index]!.id), createDefaultTeamLineup(team.id))
+    const world = updateGameWorld(original, { lineupsByTeamId: { ...original.lineupsByTeamId, [team.id]: lineup } })
+    const game = Object.values(world.games).find((candidate) => candidate.status === 'scheduled' && (candidate.homeTeamId === team.id || candidate.awayTeamId === team.id))!
+    const periods = rotationRegulationPeriodMinutes(world, team.id)
+    const minutes = Object.fromEntries(roster.map((player, index) => [player.id, periods.map((length) => index < 5 ? length - 1 : index === 5 ? 5 : 0)]))
+    const withMinutes = updateRotationMinutesForTeam(world, team.id, minutes)
+    const options = prepareMatchOptions(withMinutes, game)
+    const side = team.id === game.homeTeamId ? 'home' : 'away'
+    const rotation = side === 'home' ? options.homeRotationPlan : options.awayRotationPlan
+    const session = createMatchSession(options)
+    const firstRotationClock = rotation.instructions[0]!.clockThresholdSeconds
+    const atRotationClock = { ...session, state: { ...session.state, clockSecondsRemaining: firstRotationClock } }
+    const applied = applyDueRotations(atRotationClock, rotation, INITIAL_ROTATION_CONTROLLER_STATE)
+    const initialLineup = side === 'home' ? session.state.activeLineups.home : session.state.activeLineups.away
+    const rotatedLineup = side === 'home' ? applied.session.state.activeLineups.home : applied.session.state.activeLineups.away
+    const invalidWorld = { ...world, rotationPlansByTeamId: { ...world.rotationPlansByTeamId, [team.id]: { teamId: team.id, instructions: [], minutesByPeriod: {} } } }
+    const fallbackOptions = prepareMatchOptions(invalidWorld, game)
+    const fallbackPlan = side === 'home' ? fallbackOptions.homeRotationPlan : fallbackOptions.awayRotationPlan
+    const defaultOptions = prepareMatchOptions(world, game)
+    const defaultPlan = side === 'home' ? defaultOptions.homeRotationPlan : defaultOptions.awayRotationPlan
+
+    expect(activeLineupPlayerIds(world, team.id)).toHaveLength(roster.length)
+    expect(rotation.instructions.length).toBeGreaterThan(0)
+    expect(rotatedLineup).not.toEqual(initialLineup)
+    expect(fallbackPlan.instructions).toEqual(defaultPlan.instructions)
   })
 
   it('simulates only the remainder of the current quarter', () => {

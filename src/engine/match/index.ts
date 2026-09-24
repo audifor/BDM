@@ -23,17 +23,17 @@ export { calculatePassActionProbability, calculatePassCompletionProbability, cal
 export { chooseWeighted } from './WeightedChoice'
 export { calculateDefensiveAssignments } from './Matchups'
 export { calculateBlockCreditProbability, calculateStealCreditProbability } from './DefensiveAttribution'
-export { createDefaultTacticalPlan, validateTacticalPlan } from './tactics/MatchTacticalPlan'
+export { createDefaultTacticalPlan, TACTICAL_DEFENSE_OPTIONS, validateTacticalPlan } from './tactics/MatchTacticalPlan'
 export { applyTacticalPlanChange, calculateTacticalPlanAtEvents } from './coaching/MatchCoachingState'
 export { applyManualSubstitutions } from './coaching/ManualSubstitutions'
-export { applyPaceToPossessionDuration, applyShotProfile, calculateTacticalDefenseModifier, tacticalShotFactor, tacticalUsageWeight } from './tactics/TacticalEffects'
+export { applyPaceToPossessionDuration, applyShotProfile, calculateTacticalDefenseModifier, spatialShotAttemptWeight, tacticalShotFactor, tacticalUsageWeight } from './tactics/TacticalEffects'
 export { calculateAssistProbability, selectAssister, ASSIST_RESOLUTION_V1 } from './AssistResolution'
 export { calculateOffensiveReboundProbability, selectRebounder, REBOUND_RESOLUTION_V1 } from './ReboundResolution'
 export { calculateDefensivePressure, calculateTurnoverProbability, TURNOVER_RESOLUTION_V1 } from './TurnoverResolution'
 export { advanceFatigue, calculateFatigueAdjustedTeamStrength, calculateFatigueAtEvents, clampFatigue, createInitialFatigue, FATIGUE_GAIN_PER_SECOND, FATIGUE_RECOVERY_PER_SECOND, MAX_FATIGUE, MAX_FATIGUE_STRENGTH_PENALTY } from './Fatigue'
 export { applyDueRotations, INITIAL_ROTATION_CONTROLLER_STATE } from './rotation/RotationController'
 export { simulateMatchWithRotations } from './rotation/MatchRotationRunner'
-export { createDefaultRotationPlan } from './rotation/RotationPlan'
+export { createDefaultRotationPlan, createRotationPlanFromMinutes } from './rotation/RotationPlan'
 export type {
   MatchSimulationResult,
   MatchSimulation,

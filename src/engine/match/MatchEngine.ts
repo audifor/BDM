@@ -13,7 +13,7 @@ import { calculateShotLocation, calculateShotMakeProbability, calculateShotZoneW
 import { calculateTurnoverProbability } from './TurnoverResolution'
 import { chooseWeighted } from './WeightedChoice'
 import { createDefaultTacticalPlan, validateTacticalPlan, type MatchTacticalPlan } from './tactics/MatchTacticalPlan'
-import { applyPaceToPossessionDuration, applyShotProfile, calculateTacticalDefenseModifier, tacticalUsageWeight } from './tactics/TacticalEffects'
+import { applyPaceToPossessionDuration, spatialShotAttemptWeight, calculateTacticalDefenseModifier, tacticalUsageWeight } from './tactics/TacticalEffects'
 import { clonePlan, type MatchCoachingState } from './coaching/MatchCoachingState'
 import { calculateBlockCreditProbability, calculateStealCreditProbability } from './DefensiveAttribution'
 import { applySpatialSubstitution, controlBallByPlayer, createInitialSpatialState, getSpatialPossessionView, releaseSpatialBall, type SpatialState } from './SpatialState'
@@ -378,9 +378,15 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const primaryDefenderId = calculateDefensiveAssignments(lineup, defendingLineup, [...profiles, ...defendingProfiles],matchupOverrides).find((matchup) => matchup.offensivePlayerId === playerId)?.defensivePlayerId
   if (primaryDefenderId === undefined) throw new MatchSimulationError(`Active Player ${playerId} has no primary defender`)
   const primaryDefender = profileForPlayer(defendingProfiles, primaryDefenderId)
+  const shooterSpatial = spatial.players.find((player) => player.playerId === playerId)
+  if (shooterSpatial === undefined) throw new MatchSimulationError(`Active shooter ${playerId} is missing from SpatialState`)
+  const attackingBasket = getSpatialPossessionView({ homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, attackingTeamId: state.attackingTeamId, period: state.period, spatial }).attackingBasket
+  const shotLocation = calculateShotLocation(shooterSpatial.position, attackingBasket, spatial.court)
+  const shotZone = shotLocation.shotZone
+  const shotAttemptWeight = spatialShotAttemptWeight(calculateShotZoneWeights(offensiveActor), attackingPlan, shotZone)
   const turnoverProbability = calculateTurnoverProbability({ ballHandlerProfile: offensiveActor, ballHandlerFatigue: state.fatigueByPlayerId[playerId] ?? 0, defenderProfile: primaryDefender, defenderFatigue: state.fatigueByPlayerId[primaryDefenderId] ?? 0 })
   const passActionProbability = calculatePassActionProbability(offensiveActor.tendencies.PASS_FIRST_BIAS ?? 0, state.passesThisPossession ?? 0)
-  const outcome = choosePossessionOutcome(turnoverProbability, passActionProbability, session.random)
+  const outcome = choosePossessionOutcome(turnoverProbability, passActionProbability, shotAttemptWeight, session.random)
   let attackingTeamId = state.attackingTeamId
   let passesThisPossession = state.passesThisPossession ?? 0
 
@@ -427,17 +433,8 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
       passesThisPossession = 0
     }
   } else if (outcome === 'fieldGoalAttempt') {
-    const shotWeights = applyShotProfile(calculateShotZoneWeights(offensiveActor), attackingPlan)
-    // Tendencies and tactics still select the preferred action; the current location
-    // determines the actual shot category until spatial movement can satisfy preferences.
-    void chooseWeighted((['rim', 'midRange', 'threePoint'] as const).map((zone) => ({ item: zone, weight: shotWeights[zone] })), session.decisionRandom)
-    const shooterSpatial = spatial.players.find((player) => player.playerId === playerId)
-    if (shooterSpatial === undefined) throw new MatchSimulationError(`Active shooter ${playerId} is missing from SpatialState`)
     const defenderSpatial = spatial.players.find((player) => player.playerId === primaryDefenderId)
     const defenderDistanceMeters = defenderSpatial === undefined ? undefined : distanceBetween(shooterSpatial.position, defenderSpatial.position)
-    const attackingBasket = getSpatialPossessionView({ homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, attackingTeamId, period: state.period, spatial }).attackingBasket
-    const shotLocation = calculateShotLocation(shooterSpatial.position, attackingBasket, spatial.court)
-    const shotZone = shotLocation.shotZone
     const defendingPlan = defendingTeamId === state.homeTeamId ? state.coachingState.home.currentTacticalPlan : state.coachingState.away.currentTacticalPlan
     const made = session.random.chance(calculateShotMakeProbability({ shotZone, shotDistanceMeters: shotLocation.distanceMeters, defenderDistanceMeters, shooterProfile: offensiveActor, shooterFatigue: state.fatigueByPlayerId[playerId] ?? 0, defenderProfile: primaryDefender, defenderFatigue: state.fatigueByPlayerId[primaryDefenderId] ?? 0, tacticalDefenseModifier: calculateTacticalDefenseModifier(defendingPlan, shotZone) }))
     const points = pointsForShotZone(shotZone)
@@ -631,8 +628,11 @@ function validateOptions(options: SimulateMatchOptions) {
   return game
 }
 
-function choosePossessionOutcome(turnoverProbability: number, passProbability: number, random: RandomSource): PossessionOutcome {
-  const roll = random.next()
+export function choosePossessionOutcome(turnoverProbability: number, passProbability: number, shotAttemptWeight: number, random: RandomSource): PossessionOutcome {
+  const baseShotWeight = Math.max(0, 1 - turnoverProbability - SHOOTING_FOUL_PROBABILITY - passProbability)
+  const shotWeight = baseShotWeight * Math.max(0, shotAttemptWeight)
+  const totalWeight = turnoverProbability + SHOOTING_FOUL_PROBABILITY + passProbability + shotWeight
+  const roll = random.next() * totalWeight
 
   if (roll < turnoverProbability) return 'turnover'
   if (roll < turnoverProbability + SHOOTING_FOUL_PROBABILITY) return 'shootingFoul'

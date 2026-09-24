@@ -5,6 +5,12 @@ import type { MatchTacticalPlan, TacticalLevel } from './MatchTacticalPlan'
 export function applyPaceToPossessionDuration(duration: number, pace: TacticalLevel): number { return clamp(duration - pace * 2, 6, 30) }
 export function tacticalShotFactor(level: TacticalLevel): number { return 1 + level * 0.20 }
 export function applyShotProfile(weights: Readonly<Record<ShotZone, number>>, plan: MatchTacticalPlan): Readonly<Record<ShotZone, number>> { return { rim: weights.rim * tacticalShotFactor(plan.shotProfile.rim), midRange: weights.midRange * tacticalShotFactor(plan.shotProfile.midRange), threePoint: weights.threePoint * tacticalShotFactor(plan.shotProfile.threePoint) } }
+/** Scales the chance of accepting the shot available at the shooter's actual spatial location. */
+export function spatialShotAttemptWeight(weights: Readonly<Record<ShotZone, number>>, plan: MatchTacticalPlan, actualZone: ShotZone): number {
+  const preferred = applyShotProfile(weights, plan)
+  const naturalAverage = (weights.rim + weights.midRange + weights.threePoint) / 3
+  return naturalAverage <= 0 ? 1 : preferred[actualZone] / naturalAverage
+}
 export function tacticalUsageWeight(playerId: PlayerId, naturalWeight: number, activeLineup: readonly PlayerId[], plan: MatchTacticalPlan): number { return plan.featuredPlayerId === playerId && activeLineup.includes(playerId) ? naturalWeight * 1.25 : naturalWeight }
 export function calculateTacticalDefenseModifier(plan: MatchTacticalPlan, zone: ShotZone): number {
   if (plan.defense.interior === 2) return zone === 'rim' ? 6 : -3
