@@ -14,6 +14,19 @@ import { calculateDefensivePressure, calculateTurnoverProbability, TURNOVER_RESO
 const neutralTendencies = Object.fromEntries(PLAYER_TRUTH_TENDENCY_KEYS.map((key) => [key, 50])) as unknown as PlayerTruthTendencies
 
 describe('player-driven secondary action resolution', () => {
+  it('uses standing reach as a bounded contextual modifier to offensive rebound probability', () => {
+    const neutral = ['PG', 'SG', 'SF', 'PF', 'C'].map((position, index) => profile(`reach-${index}`, position as BasketballPosition))
+    const highReach = neutral.map((candidate) => ({ ...candidate, physical: { ...candidate.physical, standingReachCm: candidate.physical.standingReachCm + 20 } }))
+    const highAgainstNeutral = calculateOffensiveReboundProbability({ offensiveProfiles: highReach, defensiveProfiles: neutral })
+    const neutralAgainstHigh = calculateOffensiveReboundProbability({ offensiveProfiles: neutral, defensiveProfiles: highReach })
+    const maximumReach = neutral.map((candidate) => ({ ...candidate, physical: { ...candidate.physical, standingReachCm: 310 } }))
+    const minimumReach = neutral.map((candidate) => ({ ...candidate, physical: { ...candidate.physical, standingReachCm: 150 } }))
+
+    expect(highAgainstNeutral).toBeCloseTo(0.2575)
+    expect(neutralAgainstHigh).toBeCloseTo(0.2425)
+    expect(calculateOffensiveReboundProbability({ offensiveProfiles: maximumReach, defensiveProfiles: minimumReach })).toBeCloseTo(0.26125)
+  })
+
   it('adapts a known rebounding vector and keeps its signal bounded', () => {
     const profile = createMatchPlayerProfile(createPlayer({ id: playerIdFromString('rebound-profile'), firstName: 'Test', lastName: 'Rebounder', gender: 'male', nationalityId: countryIdFromString('country'), basketball: { primaryPosition: 'PF', ratings: { finishing: 0, shooting: 0, playmaking: 0, perimeterDefense: 0, interiorDefense: 0, rebounding: 80, athleticism: 60 } }, bio: { dateOfBirth: '2008-06-14', heightCm: 188, weightKg: 86 } }))
     expect(profile.rebounding.impact).toBe(69.75)
@@ -58,7 +71,7 @@ describe('player-driven secondary action resolution', () => {
 })
 
 function profile(id: string, primaryPosition: BasketballPosition, ballSecurity = 50, pointOfAttack = 50, mobility = 50, creation = 50, reboundImpact = 50): MatchPlayerProfile {
-  return { playerId: playerIdFromString(id), primaryPosition, tendencies: neutralTendencies as unknown as MatchPlayerProfile['tendencies'], offense: { usage: 50, rimAttack: 50, shooting: 50, creation, ballSecurity }, defense: { pointOfAttack, interior: 50, mobility }, rebounding: { impact: reboundImpact } }
+  return { playerId: playerIdFromString(id), primaryPosition, tendencies: neutralTendencies as unknown as MatchPlayerProfile['tendencies'], physical: { heightCm: 200, weightKg: 100, wingspanCm: 205, standingReachCm: 250 }, offense: { usage: 50, rimAttack: 50, shooting: 50, creation, ballSecurity }, defense: { pointOfAttack, interior: 50, mobility }, rebounding: { impact: reboundImpact } }
 }
 
 class FixedRandom implements RandomSource {

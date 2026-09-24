@@ -333,9 +333,10 @@ The 80 persisted ratings and 40 tendencies are BDM's current canonical Player
 Truth model. Application adapts the rating truth into transient
 `MatchPlayerProfile` signals before a match, so MatchEngine consumes usage, rim
 attack, shooting, creation, ball security, defensive signals, and rebound
-impact rather than reaching into Player ratings. Legacy consumers use explicit
-35-key or seven-key projections; they are not written back as truth. There is
-no persisted overall.
+impact rather than reaching into Player ratings. The profile also carries the
+full tendency truth and canonical height, weight, wingspan, and standing reach.
+Legacy consumers use explicit 35-key or seven-key projections; they are not
+written back as truth. There is no persisted overall.
 
 Player-driven offense uses a dedicated deterministic decision RNG
 (`match-decisions-v1:${gameId}`) for weighted offensive-actor and shot-zone
@@ -696,9 +697,9 @@ The next Season starts one calendar year after the preceding Season start and ke
 
 ## Player bio and age
 
-Players persist canonical `bio` metadata: `dateOfBirth` as a `GameDate`, plus integer `heightCm` and `weightKg`. Age is never stored; it is a pure calendar projection from date of birth and an arbitrary game date (or the world's current date). The Player Bio generator uses a separate deterministic stream keyed by PlayerId, so generating human metadata cannot change names, ratings, roster construction, schedules, or sporting simulation.
+Players persist canonical `bio` metadata: `dateOfBirth` as a `GameDate`, plus numeric `heightCm`, `weightKg`, `wingspanCm`, and `standingReachCm`. Age is never stored; it is a pure calendar projection from date of birth and an arbitrary game date (or the world's current date). When wingspan or standing reach is omitted at the Player factory input, it is materialized deterministically from PlayerId, height, and position. The Player Bio generator uses a separate deterministic stream keyed by PlayerId, so generating human metadata cannot perturb names, ratings, roster construction, schedules, or other generation streams.
 
-New Alpha players receive deterministic adult bios relative to the earliest Season start. Save V1 reads legacy players without bio by enriching them from that same earliest-season reference, then writes explicit bio data on the next save. Height, weight, and age do not affect MatchEngine, MatchPlayerProfile, ratings, fatigue, or team strength in this milestone; future systems may consume them deliberately.
+New Alpha players receive deterministic adult bios relative to the earliest Season start. Save V1 reads legacy players without bio by enriching them from that same earliest-season reference, then writes explicit bio data on the next save. MatchPlayerProfile carries all four dimensions in centimeters/kilograms. Standing reach currently modifies the existing offensive rebound probability through a clamped team-average reach difference; height, weight, and wingspan remain available in the profile without a gameplay consumer. Physical dimensions do not alter ratings, fatigue, age, or team strength.
 
 ## Player development v1
 

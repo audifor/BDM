@@ -24,11 +24,22 @@ function playerWithTruth(id: string, overrides: Partial<PlayerTruthRatings>, ten
     gender: 'male',
     nationalityId: countryIdFromString('country'),
     basketball: { primaryPosition: 'SF', ratings: { ...baseRatings, ...overrides }, tendencies },
-    bio: { dateOfBirth: '2008-06-14', heightCm: 198, weightKg: 90 },
+    bio: { dateOfBirth: '2008-06-14', heightCm: 198, weightKg: 90, wingspanCm: 207, standingReachCm: 258 },
   })
 }
 
 describe('MG4B · player truth gameplay authority', () => {
+  it('transports the complete canonical physical truth to MatchPlayerProfile', () => {
+    const player = playerWithTruth('physical-profile', {})
+
+    expect(createMatchPlayerProfile(player).physical).toEqual({
+      heightCm: 198,
+      weightKg: 90,
+      wingspanCm: 207,
+      standingReachCm: 258,
+    })
+  })
+
   it('transports the complete canonical tendency truth to MatchPlayerProfile', () => {
     const tendencies = { ...baseTendencies, RIM_ATTEMPT_FREQUENCY: 83, MIDRANGE_FREQUENCY: 27, THREE_POINT_FREQUENCY: 91 }
     const player = playerWithTruth('tendency-profile', {}, tendencies)

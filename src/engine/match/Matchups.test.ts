@@ -65,7 +65,7 @@ describe('individual defensive matchups', () => {
 })
 
 function profile(id: string, primaryPosition: BasketballPosition, pointOfAttack = 50, interior = 50, mobility = 50): MatchPlayerProfile {
-  return { playerId: playerIdFromString(id), primaryPosition, tendencies: neutralTendencies as unknown as MatchPlayerProfile['tendencies'], offense: { usage: 50, rimAttack: 50, shooting: 50, creation: 50, ballSecurity: 50 }, defense: { pointOfAttack, interior, mobility }, rebounding: { impact: 50 } }
+  return { playerId: playerIdFromString(id), primaryPosition, tendencies: neutralTendencies as unknown as MatchPlayerProfile['tendencies'], physical: { heightCm: 200, weightKg: 100, wingspanCm: 205, standingReachCm: 250 }, offense: { usage: 50, rimAttack: 50, shooting: 50, creation: 50, ballSecurity: 50 }, defense: { pointOfAttack, interior, mobility }, rebounding: { impact: 50 } }
 }
 
 function ids(profiles: readonly MatchPlayerProfile[]) { return profiles.map((profile) => profile.playerId) }

@@ -1,4 +1,4 @@
-import type { Player, PlayerTendencies, PlayerTruthRatings } from '@/domain/player'
+import type { Player, PlayerBio, PlayerTendencies, PlayerTruthRatings } from '@/domain/player'
 import type { PlayerId } from '@/domain/ids'
 import type { BasketballPosition } from '@/domain/primitives'
 
@@ -6,6 +6,7 @@ export interface MatchPlayerProfile {
   readonly playerId: PlayerId
   readonly primaryPosition: BasketballPosition
   readonly tendencies: PlayerTendencies
+  readonly physical: Pick<PlayerBio, 'heightCm' | 'weightKg' | 'wingspanCm' | 'standingReachCm'>
   readonly offense: {
     readonly usage: number
     readonly rimAttack: number
@@ -29,9 +30,9 @@ export interface MatchPlayerProfiles {
 }
 
 /**
- * Builds match-only action signals directly from the 80-key PlayerTruthRatings. Each signal
- * uses only the rating keys semantically relevant to that gameplay context; no legacy 35/7-key
- * projection or aggregate "overall" participates in this construction.
+ * Builds a transient match profile from Player Truth, canonical tendencies, and physical bio.
+ * Rating signals use only semantically relevant truth keys; no legacy projection or overall
+ * participates in their construction.
  */
 export function createMatchPlayerProfile(player: Player): MatchPlayerProfile {
   const truth = player.basketball.ratings
@@ -39,6 +40,12 @@ export function createMatchPlayerProfile(player: Player): MatchPlayerProfile {
     playerId: player.id,
     primaryPosition: player.basketball.primaryPosition,
     tendencies: player.basketball.tendencies,
+    physical: {
+      heightCm: player.bio.heightCm,
+      weightKg: player.bio.weightKg,
+      wingspanCm: player.bio.wingspanCm,
+      standingReachCm: player.bio.standingReachCm,
+    },
     offense: {
       usage: clampSignal(average(truth, ['SHOT_TOUCH', 'ADVANTAGE_CREATION', 'DRIVE_CREATION', 'OFFENSIVE_AWARENESS'])),
       rimAttack: clampSignal(average(truth, ['RIM_FINISHING', 'CONTACT_FINISHING', 'VERTICAL_FINISHING', 'FINISHING_THROUGH_LENGTH'])),
