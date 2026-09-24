@@ -428,7 +428,12 @@ with `activeLineups`. Its initial positions are bootstrap anchors; the Engine's
 canonical movement primitive can move one active player toward a legal court target
 by a bounded distance in meters and keeps a controlled ball with its holder. It does
 not choose targets, and the viewer does not own or mutate spatial positions. Spatial
-state is not saved and does not affect sporting resolution. Spatial possession views derive
+state is not saved. For field-goal attempts, the selected shooter's active spatial position
+and possession-derived attacking basket determine canonical shot distance and the existing
+rim/midrange/three-point event zone. CourtGeometry carries the selected ecosystem's arc and
+corner-line dimensions; distance contributes a small bounded adjustment to make probability.
+Tendency and offensive-tactic weights remain the shot-preference input, while they cannot
+override the actual location. Spatial possession views derive
 offense, defense and attacking basket from `MatchSessionState.attackingTeamId` and
 the current period. The existing offensive actor, rebounder and credited stealer
 drive ball control when known; unresolved possession changes release it until a

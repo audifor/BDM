@@ -3,6 +3,8 @@ export {
   courtRulesetForEcosystem,
   createCourtGeometry,
   distanceBetween,
+  distanceFromBasket,
+  isBeyondThreePointLine,
   isInsideCourt,
 } from './CourtGeometry'
 export type { CourtGeometry, CourtPosition, CourtRulesetId } from './CourtGeometry'

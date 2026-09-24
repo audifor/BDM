@@ -6,7 +6,8 @@ import { PLAYER_TRUTH_TENDENCY_KEYS, type PlayerTruthTendencies } from '@/domain
 import type { RandomSource } from '@/engine/random'
 
 import { createMatchPlayerProfile } from './MatchPlayerProfile'
-import { calculateShotMakeProbability, calculateShotZoneWeights, pointsForShotZone } from './ShotResolution'
+import { createCourtGeometry } from '@/domain/court'
+import { calculateShotLocation, calculateShotMakeProbability, calculateShotZoneWeights, pointsForShotZone } from './ShotResolution'
 import { chooseWeighted } from './WeightedChoice'
 
 const neutralTendencies = Object.fromEntries(PLAYER_TRUTH_TENDENCY_KEYS.map((key) => [key, 50])) as unknown as PlayerTruthTendencies
@@ -52,6 +53,34 @@ describe('player-driven offense primitives', () => {
     expect(highWeights.midRange).toBe(lowWeights.midRange)
     expect(calculateShotMakeProbability({ shotZone: 'threePoint', shooterProfile: high, shooterFatigue: 0, defenderProfile: defender, defenderFatigue: 0 }))
       .toBe(calculateShotMakeProbability({ shotZone: 'threePoint', shooterProfile: low, shooterFatigue: 0, defenderProfile: defender, defenderFatigue: 0 }))
+  })
+
+  it('derives canonical shot zone and distance from mirrored spatial positions', () => {
+    const court = createCourtGeometry('FIBA')
+    const right = court.baskets.right
+    const left = court.baskets.left
+    const mirrored = (position: { x: number; y: number }) => ({ x: court.lengthMeters - position.x, y: position.y })
+    const rightLocations = [
+      calculateShotLocation({ x: right.x - 1, y: right.y }, right, court),
+      calculateShotLocation({ x: right.x - 4.5, y: right.y }, right, court),
+      calculateShotLocation({ x: right.x - 7, y: right.y }, right, court),
+    ]
+    const leftLocations = [
+      calculateShotLocation(mirrored({ x: right.x - 1, y: right.y }), left, court),
+      calculateShotLocation(mirrored({ x: right.x - 4.5, y: right.y }), left, court),
+      calculateShotLocation(mirrored({ x: right.x - 7, y: right.y }), left, court),
+    ]
+
+    expect(rightLocations.map((location) => location.shotZone)).toEqual(['rim', 'midRange', 'threePoint'])
+    expect(leftLocations.map((location) => location.shotZone)).toEqual(['rim', 'midRange', 'threePoint'])
+    leftLocations.forEach((location, index) => expect(location.distanceMeters).toBeCloseTo(rightLocations[index]!.distanceMeters))
+  })
+
+  it('applies a bounded continuous distance adjustment after zone and skill resolution', () => {
+    const makeProbability = (shotDistanceMeters: number) => calculateShotMakeProbability({ shotZone: 'threePoint', shotDistanceMeters, shooterProfile: profile, shooterFatigue: 0, defenderProfile: defender, defenderFatigue: 0 })
+    const reference = makeProbability(7.5)
+    expect(makeProbability(12.5)).toBeLessThan(reference)
+    expect(makeProbability(100)).toBeCloseTo(reference - 0.04)
   })
 })
 

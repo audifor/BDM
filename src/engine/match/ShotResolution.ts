@@ -1,4 +1,5 @@
 import type { MatchPlayerProfile } from './MatchPlayerProfile'
+import { distanceFromBasket, isBeyondThreePointLine, type CourtGeometry, type CourtPosition } from '@/domain/court'
 
 export type ShotZone = 'rim' | 'midRange' | 'threePoint'
 
@@ -9,6 +10,12 @@ export interface ShotAttemptContext {
   readonly defenderProfile: MatchPlayerProfile
   readonly defenderFatigue: number
   readonly tacticalDefenseModifier?: number
+  readonly shotDistanceMeters?: number
+}
+
+export interface ShotLocation {
+  readonly shotZone: ShotZone
+  readonly distanceMeters: number
 }
 
 export const SHOT_RESOLUTION_V1 = {
@@ -23,7 +30,18 @@ export const SHOT_RESOLUTION_V1 = {
   defenseAdjustmentPerPoint: 0.003,
   maximumFatiguePenalty: 0.08,
   defenderFatiguePenaltyAtMaximum: 12,
+  rimDistanceMeters: 1.5,
+  distanceAdjustmentPerMeter: 0.008,
+  maximumDistanceAdjustment: 0.04,
 } as const
+
+export function calculateShotLocation(position: CourtPosition, attackingBasket: CourtPosition, court: CourtGeometry): ShotLocation {
+  const distanceMeters = distanceFromBasket(position, attackingBasket)
+  const shotZone = distanceMeters <= SHOT_RESOLUTION_V1.rimDistanceMeters
+    ? 'rim'
+    : isBeyondThreePointLine(position, attackingBasket, court) ? 'threePoint' : 'midRange'
+  return { shotZone, distanceMeters }
+}
 
 export function calculateShotZoneWeights(profile: MatchPlayerProfile): Readonly<Record<ShotZone, number>> {
   return Object.fromEntries((['rim', 'midRange', 'threePoint'] as const).map((zone) => {
@@ -44,6 +62,7 @@ export function calculateShotMakeProbability(context: ShotAttemptContext): numbe
     + (execution - 50) * SHOT_RESOLUTION_V1.skillAdjustmentPerPoint
     - (clamp(calculateEffectiveDefense(context.shotZone, context.defenderProfile, context.defenderFatigue) + (context.tacticalDefenseModifier ?? 0), 0, 100) - 50) * SHOT_RESOLUTION_V1.defenseAdjustmentPerPoint
     - (clamp(context.shooterFatigue, 0, 100) / 100) * SHOT_RESOLUTION_V1.maximumFatiguePenalty
+    + calculateDistanceAdjustment(context.shotZone, context.shotDistanceMeters)
   const [minimum, maximum] = SHOT_RESOLUTION_V1.probabilityClamp[context.shotZone]
   return clamp(probability, minimum, maximum)
 }
@@ -68,3 +87,9 @@ function calculateExecution(shotZone: ShotZone, profile: MatchPlayerProfile): nu
 
 function shotTendencyFactor(value: number): number { return 0.5 + value / 100 }
 function clamp(value: number, minimum: number, maximum: number): number { return Math.min(maximum, Math.max(minimum, value)) }
+
+function calculateDistanceAdjustment(shotZone: ShotZone, distanceMeters: number | undefined): number {
+  if (distanceMeters === undefined || !Number.isFinite(distanceMeters)) return 0
+  const referenceDistance = shotZone === 'rim' ? 1 : shotZone === 'midRange' ? 4.5 : 7.5
+  return clamp((referenceDistance - distanceMeters) * SHOT_RESOLUTION_V1.distanceAdjustmentPerMeter, -SHOT_RESOLUTION_V1.maximumDistanceAdjustment, SHOT_RESOLUTION_V1.maximumDistanceAdjustment)
+}
