@@ -26,6 +26,9 @@ describe('LiveMatchController', () => {
     expect(step.before.events).toHaveLength(1)
     expect(step.after.events.length).toBeGreaterThan(step.before.events.length)
     expect(step.after.events.at(-1)!.clockSecondsRemaining).toBeLessThan(step.before.events.at(-1)!.clockSecondsRemaining)
+    expect(step.endAttackingTeamId).toBe(controller.attackingTeamId)
+    expect(step.beforeSpatial.players).toHaveLength(10)
+    expect(step.afterSpatial.players).toHaveLength(10)
   })
 
   it('uses the same explicit starting five in instant preparation and live match bootstrap', () => {

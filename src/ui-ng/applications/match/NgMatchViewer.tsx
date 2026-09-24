@@ -16,6 +16,7 @@ import {
   type MatchPresentationSegment,
 } from '@/ui/match/MatchPresentationSegment'
 import { formatClock, formatPeriod, resolveActiveMatchLineups, resolveMatchFatigue } from '@/ui/matchViewer'
+import { createVisualMatchSnapshot, interpolateVisualMatchSnapshot, type VisualMatchSnapshot } from '@/ui/match/SpatialVisualBridge'
 import { isMatchComplete } from '@/ui/screens/MatchViewerScreen'
 import { deriveTeamColors } from '@/ui-ng/applications/player/data/presentationHelpers'
 import { LiveCourtStage } from '@/ui-ng/applications/match/engine/LiveCourtStage'
@@ -69,6 +70,13 @@ export function NgMatchViewer() {
   const [draft, setDraft] = useState(storedCoachingPlan)
   const [segment, setSegment] = useState<MatchPresentationSegment | null>(null)
   const [presentationProgress, setPresentationProgress] = useState(0)
+  const lastVisualSnapshotRef = useRef<VisualMatchSnapshot | null>(null)
+  const liveSpatial = activeMatchController?.spatialSnapshot()
+  if (liveSpatial !== undefined) lastVisualSnapshotRef.current = createVisualMatchSnapshot(liveSpatial)
+  if (segment !== null) lastVisualSnapshotRef.current = segment.endVisualSnapshot
+  const visualSnapshot = segment === null
+    ? lastVisualSnapshotRef.current
+    : interpolateVisualMatchSnapshot(segment.startVisualSnapshot, segment.endVisualSnapshot, presentationProgress)
   const [applyError, setApplyError] = useState<string | null>(null)
   const requestingSegmentRef = useRef(false)
 
@@ -297,7 +305,7 @@ export function NgMatchViewer() {
         <div className="me-left">
           <div className="me-live-view">
             <LiveCourtStage
-              attackingTeamId={segment?.attackingTeamId ?? simulation.homeTeamId}
+              attackingTeamId={segment?.attackingTeamId ?? activeMatchController?.attackingTeamId ?? simulation.homeTeamId}
               awayName={awayName}
               awayTeamId={simulation.awayTeamId}
               courtStyle={courtStyle}
@@ -307,11 +315,12 @@ export function NgMatchViewer() {
               homeName={homeName}
               homeTeamId={simulation.homeTeamId}
               isPlaying={isPlaying}
-              lineups={segment?.startLineups ?? activeLineups}
+              lineups={segment?.endLineups ?? activeLineups}
               onPlayerSelect={navigateToPlayer}
               period={segment?.period ?? period}
               playbackSpeed={speed}
               progress={presentationProgress}
+              visualSnapshot={visualSnapshot}
               world={world}
             />
           </div>

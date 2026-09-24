@@ -177,6 +177,15 @@ ordinary possession step resumes BaseSpacing. Rebound and transition tactics,
 fast-break decisions, rebound trajectories and rendering remain outside this
 foundation.
 
+For live matches, `LiveMatchController` supplies read-only before/after spatial
+snapshots to the presentation segment. The UI bridge copies active player IDs,
+team IDs, ball ownership and positions, then projects court metres to normalized
+court percentages for `CourtProjection`. It interpolates positions by presentation
+progress; the canvas renderer draws those sampled positions and does not feed them
+back to MatchSession. Animation progress and browser frame timing remain entirely
+outside sporting resolution. Instant results continue to use the same MatchEngine
+core and do not depend on the visual bridge.
+
 The match pipeline is `MatchEngine -> MatchSimulationResult -> Match Result
 Application -> GameWorld`. Simulation does not mutate state; result application
 does not simulate. `MatchSimulationResult` is transient, while `Game.result` is

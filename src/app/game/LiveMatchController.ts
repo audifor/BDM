@@ -1,4 +1,4 @@
-import { applyManualSubstitutions as applyManualSubstitutionsToSession, applyTacticalPlanChange, createMatchSession, stepMatchSession, toMatchSimulation, type ManualSubstitution, type MatchSimulation, type MatchTacticalPlan, type MatchSession } from '@/engine/match'
+import { applyManualSubstitutions as applyManualSubstitutionsToSession, applyTacticalPlanChange, createMatchSession, stepMatchSession, toMatchSimulation, type ManualSubstitution, type MatchSimulation, type MatchTacticalPlan, type MatchSession, type SpatialState } from '@/engine/match'
 import { applyDueRotations, INITIAL_ROTATION_CONTROLLER_STATE, type RotationControllerState, type SimulateMatchWithRotationsOptions } from '@/engine/match'
 
 /** Application owner for a transient live session; UI receives only snapshots. */
@@ -19,10 +19,14 @@ export class LiveMatchController {
   /** A resolved sporting boundary for the presentation layer; it does not expose MatchSession. */
   public advanceOneStepWithSnapshots(): LiveMatchStep {
     const before = this.snapshot()
+    const beforeSpatial = this.session.state.spatial
     const attackingTeamId = this.session.state.attackingTeamId
     const after = this.advanceOneStep()
-    return { before, after, attackingTeamId, endAttackingTeamId: this.session.state.attackingTeamId }
+    return { before, after, beforeSpatial, afterSpatial: this.session.state.spatial, attackingTeamId, endAttackingTeamId: this.session.state.attackingTeamId }
   }
+  /** Read-only canonical geometry for the visual bridge; the view cannot write it back. */
+  public spatialSnapshot(): SpatialState { return this.session.state.spatial }
+  public get attackingTeamId(): MatchSession['state']['attackingTeamId'] { return this.session.state.attackingTeamId }
   /** Applies validated tactics to the session state used by the next simulation step. */
   public applyTactics(teamId: MatchSession['state']['homeTeamId'], tacticalPlan: MatchTacticalPlan): MatchSimulation {
     this.session = applyTacticalPlanChange(this.session, { teamId, tacticalPlan })
@@ -62,6 +66,8 @@ export class LiveMatchController {
 export interface LiveMatchStep {
   readonly before: MatchSimulation
   readonly after: MatchSimulation
+  readonly beforeSpatial: SpatialState
+  readonly afterSpatial: SpatialState
   readonly attackingTeamId: MatchSession['state']['attackingTeamId']
   readonly endAttackingTeamId: MatchSession['state']['attackingTeamId']
 }

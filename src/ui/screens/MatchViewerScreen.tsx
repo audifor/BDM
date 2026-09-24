@@ -26,6 +26,7 @@ import {
 } from "../matchViewer";
 import { ManualSubstitutionsPanel } from "./ManualSubstitutionsPanel";
 import { MatchCourt } from "../match/MatchCourt";
+import { createVisualMatchSnapshot, interpolateVisualMatchSnapshot, type VisualMatchSnapshot } from "../match/SpatialVisualBridge";
 import {
   createPresentationSegment,
   displayClockAtProgress,
@@ -74,6 +75,14 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
   const [segment, setSegment] = useState<MatchPresentationSegment | null>(null);
   const [presentationProgress, setPresentationProgress] = useState(0);
   const requestingSegmentRef = useRef(false);
+  const lastVisualSnapshotRef = useRef<VisualMatchSnapshot | null>(null);
+  const liveController = useGameStore.getState().getActiveMatchSession();
+  const liveSpatial = liveController?.spatialSnapshot();
+  if (liveSpatial !== undefined) lastVisualSnapshotRef.current = createVisualMatchSnapshot(liveSpatial);
+  if (segment !== null) lastVisualSnapshotRef.current = segment.endVisualSnapshot;
+  const visualSnapshot = segment === null
+    ? lastVisualSnapshotRef.current
+    : interpolateVisualMatchSnapshot(segment.startVisualSnapshot, segment.endVisualSnapshot, presentationProgress);
   const revealedEvents = props.simulation.events.slice(
     0,
     props.currentEventIndex,
@@ -248,14 +257,13 @@ export function MatchViewerScreen(props: MatchViewerScreenProps) {
             gameId={props.simulation.gameId}
             homeTeamId={props.simulation.homeTeamId}
             awayTeamId={props.simulation.awayTeamId}
-            lineups={segment?.startLineups ?? activeLineups}
-            attackingTeamId={
-              segment?.attackingTeamId ?? props.simulation.homeTeamId
-            }
+            lineups={segment?.endLineups ?? activeLineups}
+            attackingTeamId={segment?.attackingTeamId ?? liveController?.attackingTeamId ?? props.simulation.homeTeamId}
             period={segment?.period ?? period}
             events={segment?.events ?? []}
             progress={presentationProgress}
             detail={visualDetailForSpeed(props.speed)}
+            visualSnapshot={visualSnapshot}
           />
         </section>
         <section className="boxscore match-viewer__section" id="match-stats">

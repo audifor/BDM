@@ -69,6 +69,8 @@ export type CourtDynamicFrame = {
   readonly ball: CourtDynamicBall | null
   readonly playbackSpeed: number
   readonly isPlaying: boolean
+  /** Positions already sampled between canonical spatial snapshots by the UI bridge. */
+  readonly snapshotInterpolated?: boolean
   readonly debug?: boolean
 }
 

@@ -1,5 +1,6 @@
 import type { LiveMatchStep } from '@/app/game'
 import { calculateActiveLineups, type MatchEvent, type MatchLineups, type MatchSimulation } from '@/engine/match'
+import { createVisualMatchSnapshot, type VisualMatchSnapshot } from './SpatialVisualBridge'
 
 export interface MatchPresentationSegment {
   readonly period: number
@@ -9,6 +10,8 @@ export interface MatchPresentationSegment {
   readonly attackingTeamId: LiveMatchStep['attackingTeamId']
   readonly startLineups: MatchLineups
   readonly endLineups: MatchLineups
+  readonly startVisualSnapshot: VisualMatchSnapshot
+  readonly endVisualSnapshot: VisualMatchSnapshot
   readonly events: readonly MatchEvent[]
   readonly startScore: MatchSimulation['finalScore']
   readonly endScore: MatchSimulation['finalScore']
@@ -29,9 +32,11 @@ export function createPresentationSegment(step: LiveMatchStep): MatchPresentatio
     startClockSeconds,
     endClockSeconds,
     gameSeconds: samePeriod ? Math.max(0, startClockSeconds - endClockSeconds) : 0,
-    attackingTeamId: step.attackingTeamId,
+    attackingTeamId: step.endAttackingTeamId,
     startLineups: calculateActiveLineups(step.before.lineups, step.before.homeTeamId, step.before.awayTeamId, step.before.events),
     endLineups: calculateActiveLineups(step.after.lineups, step.after.homeTeamId, step.after.awayTeamId, step.after.events),
+    startVisualSnapshot: createVisualMatchSnapshot(step.beforeSpatial),
+    endVisualSnapshot: createVisualMatchSnapshot(step.afterSpatial),
     events,
     startScore: scoreAt(step.before),
     endScore: scoreAt(step.after),

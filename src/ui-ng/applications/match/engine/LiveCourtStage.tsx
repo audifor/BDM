@@ -3,6 +3,7 @@ import type { PlayerId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import type { MatchEvent, MatchLineups } from '@/engine/match'
 import { MatchCourt } from '@/ui/match/MatchCourt'
+import type { VisualMatchSnapshot } from '@/ui/match/SpatialVisualBridge'
 import { displayJerseyNumber } from './matchPresentation'
 
 export function LiveCourtStage({
@@ -21,6 +22,7 @@ export function LiveCourtStage({
   onPlayerSelect,
   playbackSpeed = 1,
   isPlaying = true,
+  visualSnapshot,
 }: {
   readonly world: GameWorld
   readonly gameId: keyof GameWorld['games']
@@ -39,6 +41,7 @@ export function LiveCourtStage({
   readonly onPlayerSelect?: (playerId: PlayerId) => void
   readonly playbackSpeed?: number
   readonly isPlaying?: boolean
+  readonly visualSnapshot?: VisualMatchSnapshot | null
 }) {
   return (
     <div className="me-court-stage" style={courtStyle}>
@@ -57,6 +60,7 @@ export function LiveCourtStage({
           period={period}
           playbackSpeed={playbackSpeed}
           progress={progress}
+          visualSnapshot={visualSnapshot}
           world={world}
         />
         {overlay}
