@@ -1,6 +1,7 @@
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { CourtPosition } from '@/domain/court'
 import type { MatchLineups } from './MatchEngine'
+import type { MatchPlayerProfiles } from './MatchPlayerProfile'
 import { advancePlayerTowardTarget, getSpatialPossessionView, type SpatialState } from './SpatialState'
 
 export interface TransitionSpatialTarget {
@@ -36,10 +37,14 @@ export function assignTransitionSpatialTargets(input: TransitionSpatialInput): T
 }
 
 /** Takes one bounded transition step; the next possession step returns to BaseSpacing. */
-export function stepPlayersTowardTransitionTargets(input: TransitionSpatialInput, deltaTimeSeconds: number): SpatialState {
+export function stepPlayersTowardTransitionTargets(input: TransitionSpatialInput, deltaTimeSeconds: number, playerProfiles: MatchPlayerProfiles): SpatialState {
   const targets = assignTransitionSpatialTargets(input)
   return [...targets.offense, ...targets.defense].reduce(
-    (spatial, target) => advancePlayerTowardTarget(spatial, target.playerId, target.position, deltaTimeSeconds),
+    (spatial, target) => {
+      const profile = [...playerProfiles.home, ...playerProfiles.away].find((candidate) => candidate.playerId === target.playerId)
+      if (profile === undefined) throw new Error(`Match player profile ${target.playerId} is missing`)
+      return advancePlayerTowardTarget(spatial, target.playerId, target.position, deltaTimeSeconds, profile.kinematics)
+    },
     input.spatial,
   )
 }

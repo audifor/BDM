@@ -3,7 +3,7 @@ import { createCourtGeometry, courtRulesetForEcosystem, distanceBetween, isInsid
 import { BASKETBALL_POSITIONS, type SportsCategory } from '@/domain/primitives'
 import type { SportsEcosystemKind } from '@/domain/ecosystem'
 import type { MatchLineups } from './MatchEngine'
-import type { MatchPlayerProfiles } from './MatchPlayerProfile'
+import { BASELINE_PLAYER_KINEMATIC_PROFILE, type MatchPlayerProfiles, type PlayerKinematicProfile } from './MatchPlayerProfile'
 
 const SLOT_POSITIONS = BASKETBALL_POSITIONS
 const RIGHT_ATTACKING_FORMATION: Readonly<Record<(typeof SLOT_POSITIONS)[number], CourtPosition>> = {
@@ -22,9 +22,9 @@ export interface SpatialPlayerState {
   readonly velocity: CourtPosition
 }
 
-export const PLAYER_MAX_SPEED_METERS_PER_SECOND = 6
-export const PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED = 3
-export const PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED = 4
+export const PLAYER_MAX_SPEED_METERS_PER_SECOND = BASELINE_PLAYER_KINEMATIC_PROFILE.maxSpeedMps
+export const PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED = BASELINE_PLAYER_KINEMATIC_PROFILE.accelerationMps2
+export const PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED = BASELINE_PLAYER_KINEMATIC_PROFILE.brakingMps2
 const MOVEMENT_EPSILON = 1e-9
 
 /** No player handler is selected at session creation, so the ball starts unassigned at center. */
@@ -152,6 +152,7 @@ export function advancePlayerTowardTarget(
   playerId: PlayerId,
   target: CourtPosition,
   deltaTimeSeconds: number,
+  kinematics: PlayerKinematicProfile,
 ): SpatialState {
   const playerIndex = spatial.players.findIndex((candidate) => candidate.playerId === playerId)
   if (playerIndex < 0) throw new Error(`Spatial player ${playerId} is not active`)
@@ -165,20 +166,21 @@ export function advancePlayerTowardTarget(
   const dy = target.y - player.position.y
   const distance = Math.hypot(dx, dy)
   const currentSpeed = Math.hypot(player.velocity.x, player.velocity.y)
-  const velocityScale = currentSpeed > PLAYER_MAX_SPEED_METERS_PER_SECOND ? PLAYER_MAX_SPEED_METERS_PER_SECOND / currentSpeed : 1
+  const velocityScale = currentSpeed > kinematics.maxSpeedMps ? kinematics.maxSpeedMps / currentSpeed : 1
   const currentVelocity = { x: player.velocity.x * velocityScale, y: player.velocity.y * velocityScale }
 
   if (distance <= MOVEMENT_EPSILON) {
-    const stoppedVelocity = moveVectorToward(currentVelocity, { x: 0, y: 0 }, PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED * deltaTimeSeconds)
+    const stoppedVelocity = moveVectorToward(currentVelocity, { x: 0, y: 0 }, kinematics.brakingMps2 * deltaTimeSeconds)
     if (stoppedVelocity.x === player.velocity.x && stoppedVelocity.y === player.velocity.y) return spatial
     return updatePlayerAndBall(spatial, playerIndex, player, player.position, stoppedVelocity)
   }
 
   const direction = { x: dx / distance, y: dy / distance }
-  const desiredSpeed = Math.min(PLAYER_MAX_SPEED_METERS_PER_SECOND, Math.sqrt(2 * PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED * distance))
+  const desiredSpeed = Math.min(kinematics.maxSpeedMps, Math.sqrt(2 * kinematics.brakingMps2 * distance))
   const desiredVelocity = { x: direction.x * desiredSpeed, y: direction.y * desiredSpeed }
-  const isBrakingTowardTarget = desiredSpeed < currentSpeed && currentVelocity.x * direction.x + currentVelocity.y * direction.y > 0
-  const accelerationLimit = isBrakingTowardTarget ? PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED : PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED
+  const movingAgainstTarget = currentVelocity.x * direction.x + currentVelocity.y * direction.y < 0
+  const reducingSpeedTowardTarget = desiredSpeed < currentSpeed && currentVelocity.x * direction.x + currentVelocity.y * direction.y > 0
+  const accelerationLimit = movingAgainstTarget || reducingSpeedTowardTarget ? kinematics.brakingMps2 : kinematics.accelerationMps2
   const velocity = moveVectorToward(currentVelocity, desiredVelocity, accelerationLimit * deltaTimeSeconds)
   const displacement = { x: (currentVelocity.x + velocity.x) * deltaTimeSeconds / 2, y: (currentVelocity.y + velocity.y) * deltaTimeSeconds / 2 }
   const nextPosition = { x: player.position.x + displacement.x, y: player.position.y + displacement.y }

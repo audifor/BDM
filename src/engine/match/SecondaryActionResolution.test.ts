@@ -7,7 +7,7 @@ import type { BasketballPosition } from '@/domain/primitives'
 import type { RandomSource } from '@/engine/random'
 
 import { calculateAssistProbability, selectAssister } from './AssistResolution'
-import { createMatchPlayerProfile, type MatchPlayerProfile } from './MatchPlayerProfile'
+import { BASELINE_PLAYER_KINEMATIC_PROFILE, createMatchPlayerProfile, type MatchPlayerProfile } from './MatchPlayerProfile'
 import { calculateOffensiveReboundProbability, selectRebounder } from './ReboundResolution'
 import { calculateDefensivePressure, calculateTurnoverProbability, TURNOVER_RESOLUTION_V1 } from './TurnoverResolution'
 
@@ -89,7 +89,7 @@ describe('player-driven secondary action resolution', () => {
 })
 
 function profile(id: string, primaryPosition: BasketballPosition, ballSecurity = 50, pointOfAttack = 50, mobility = 50, creation = 50, reboundImpact = 50): MatchPlayerProfile {
-  return { playerId: playerIdFromString(id), primaryPosition, tendencies: neutralTendencies as unknown as MatchPlayerProfile['tendencies'], physical: { heightCm: 200, weightKg: 100, wingspanCm: 205, standingReachCm: 250 }, offense: { usage: 50, rimAttack: 50, shooting: 50, creation, ballSecurity }, defense: { pointOfAttack, interior: 50, mobility }, rebounding: { impact: reboundImpact } }
+  return { playerId: playerIdFromString(id), primaryPosition, tendencies: neutralTendencies as unknown as MatchPlayerProfile['tendencies'], physical: { heightCm: 200, weightKg: 100, wingspanCm: 205, standingReachCm: 250 }, kinematics: BASELINE_PLAYER_KINEMATIC_PROFILE, offense: { usage: 50, rimAttack: 50, shooting: 50, creation, ballSecurity }, defense: { pointOfAttack, interior: 50, mobility }, rebounding: { impact: reboundImpact } }
 }
 
 class FixedRandom implements RandomSource {

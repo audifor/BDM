@@ -7,7 +7,7 @@ import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
-import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, assignBaseSpatialTargets, assignTransitionSpatialTargets, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, advancePlayerTowardTarget, PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED, PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED, PLAYER_MAX_SPEED_METERS_PER_SECOND, releaseSpatialBall, simulateMatchDetailed, stepMatchSession, stepPlayersTowardBaseSpacing, stepPlayersTowardTransitionTargets, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
+import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, assignBaseSpatialTargets, assignTransitionSpatialTargets, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, advancePlayerTowardTarget, BASELINE_PLAYER_KINEMATIC_PROFILE, PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED, PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED, PLAYER_MAX_SPEED_METERS_PER_SECOND, releaseSpatialBall, simulateMatchDetailed, stepMatchSession, stepPlayersTowardBaseSpacing, stepPlayersTowardTransitionTargets, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
 
 describe('MatchSession', () => {
   it('produces the same complete simulation through stepping as through the wrapper', () => {
@@ -52,26 +52,26 @@ describe('MatchSession', () => {
     const spatial = createMatchSession(createOptions(world, game.id, 12345, 67890)).state.spatial
     const player = spatial.players[0]!
     const farTarget = { x: spatial.court.lengthMeters * 0.9, y: player.position.y }
-    const first = advancePlayerTowardTarget(spatial, player.playerId, farTarget, 0.25)
+    const first = advancePlayerTowardTarget(spatial, player.playerId, farTarget, 0.25, BASELINE_PLAYER_KINEMATIC_PROFILE)
     const firstPlayer = first.players.find((candidate) => candidate.playerId === player.playerId)!
     expect(Math.hypot(firstPlayer.velocity.x, firstPlayer.velocity.y)).toBeCloseTo(PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED * 0.25)
     expect(Math.hypot(firstPlayer.velocity.x, firstPlayer.velocity.y)).toBeLessThan(PLAYER_MAX_SPEED_METERS_PER_SECOND)
 
     let moving = spatial
-    for (let step = 0; step < 8; step += 1) moving = advancePlayerTowardTarget(moving, player.playerId, farTarget, 0.25)
+    for (let step = 0; step < 8; step += 1) moving = advancePlayerTowardTarget(moving, player.playerId, farTarget, 0.25, BASELINE_PLAYER_KINEMATIC_PROFILE)
     const speed = Math.hypot(moving.players.find((candidate) => candidate.playerId === player.playerId)!.velocity.x, moving.players.find((candidate) => candidate.playerId === player.playerId)!.velocity.y)
     expect(speed).toBeLessThanOrEqual(PLAYER_MAX_SPEED_METERS_PER_SECOND)
 
     const movingPlayer = moving.players.find((candidate) => candidate.playerId === player.playerId)!
     const brakingTarget = { x: movingPlayer.position.x + Math.sign(movingPlayer.velocity.x) * 2, y: movingPlayer.position.y }
-    const braking = advancePlayerTowardTarget(moving, player.playerId, brakingTarget, 0.25).players.find((candidate) => candidate.playerId === player.playerId)!
+    const braking = advancePlayerTowardTarget(moving, player.playerId, brakingTarget, 0.25, BASELINE_PLAYER_KINEMATIC_PROFILE).players.find((candidate) => candidate.playerId === player.playerId)!
     const brakingSpeed = Math.hypot(braking.velocity.x, braking.velocity.y)
     expect(brakingSpeed).toBeLessThan(speed)
     expect(speed - brakingSpeed).toBeLessThanOrEqual(PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED * 0.25 + 1e-9)
 
     const closePlayer = moving.players.find((candidate) => candidate.playerId === player.playerId)!
     const closeTarget = { x: closePlayer.position.x + 0.15, y: closePlayer.position.y }
-    const arrived = advancePlayerTowardTarget(moving, player.playerId, closeTarget, 1)
+    const arrived = advancePlayerTowardTarget(moving, player.playerId, closeTarget, 1, BASELINE_PLAYER_KINEMATIC_PROFILE)
     expect(arrived.players.find((candidate) => candidate.playerId === player.playerId)!.position).toEqual(closeTarget)
     expect(arrived.players.find((candidate) => candidate.playerId === player.playerId)!.velocity).toEqual({ x: 0, y: 0 })
     expect(isSpatialStateInsideCourt(arrived)).toBe(true)
@@ -85,16 +85,16 @@ describe('MatchSession', () => {
     const holder = held.players.find((player) => player.playerId === holderId)!
     const target = { x: 0, y: holder.position.y }
     const withVelocity = { ...held, players: held.players.map((player) => player.playerId === holderId ? { ...player, velocity: { x: 2, y: 0 } } : player) }
-    const movedHeld = advancePlayerTowardTarget(withVelocity, holderId, target, 0.25)
+    const movedHeld = advancePlayerTowardTarget(withVelocity, holderId, target, 0.25, BASELINE_PLAYER_KINEMATIC_PROFILE)
     const movedHolder = movedHeld.players.find((player) => player.playerId === holderId)!
 
     expect(movedHeld.ball).toMatchObject({ kind: 'playerControlled', playerId: holderId, teamId: holder.teamId, position: movedHolder.position })
     expect(movedHeld.players.filter((player) => player.playerId !== holderId)).toEqual(held.players.filter((player) => player.playerId !== holderId))
-    expect(Math.hypot(movedHolder.velocity.x - 2, movedHolder.velocity.y)).toBeLessThanOrEqual(PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED * 0.25 + 1e-9)
-    const movedUnassigned = advancePlayerTowardTarget(spatial, holderId, target, 0.25)
+    expect(Math.hypot(movedHolder.velocity.x - 2, movedHolder.velocity.y)).toBeLessThanOrEqual(PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED * 0.25 + 1e-9)
+    const movedUnassigned = advancePlayerTowardTarget(spatial, holderId, target, 0.25, BASELINE_PLAYER_KINEMATIC_PROFILE)
     expect(movedUnassigned.ball).toBe(spatial.ball)
     const loose = { ...spatial, ball: { kind: 'loose' as const, position: spatial.ball.position } }
-    expect(advancePlayerTowardTarget(loose, holderId, target, 0.25).ball).toBe(loose.ball)
+    expect(advancePlayerTowardTarget(loose, holderId, target, 0.25, BASELINE_PLAYER_KINEMATIC_PROFILE).ball).toBe(loose.ball)
   })
 
   it('rejects invalid movement distance and off-court targets', () => {
@@ -102,9 +102,9 @@ describe('MatchSession', () => {
     const spatial = createMatchSession(createOptions(world, game.id, 12345, 67890)).state.spatial
     const playerId = spatial.players[0]!.playerId
 
-    expect(() => advancePlayerTowardTarget(spatial, playerId, { x: 0, y: 0 }, -1)).toThrow(RangeError)
-    expect(() => advancePlayerTowardTarget(spatial, playerId, { x: spatial.court.lengthMeters + 1, y: 0 }, 1)).toThrow(RangeError)
-    expect(() => advancePlayerTowardTarget(spatial, playerIdFromString('inactive-player'), { x: 0, y: 0 }, 1)).toThrow(/not active/)
+    expect(() => advancePlayerTowardTarget(spatial, playerId, { x: 0, y: 0 }, -1, BASELINE_PLAYER_KINEMATIC_PROFILE)).toThrow(RangeError)
+    expect(() => advancePlayerTowardTarget(spatial, playerId, { x: spatial.court.lengthMeters + 1, y: 0 }, 1, BASELINE_PLAYER_KINEMATIC_PROFILE)).toThrow(RangeError)
+    expect(() => advancePlayerTowardTarget(spatial, playerIdFromString('inactive-player'), { x: 0, y: 0 }, 1, BASELINE_PLAYER_KINEMATIC_PROFILE)).toThrow(/not active/)
   })
 
   it('assigns deterministic, distinct court-valid targets to all five players on each side', () => {
@@ -154,7 +154,7 @@ describe('MatchSession', () => {
     const nextAttackingTeamId = state.attackingTeamId === game.homeTeamId ? game.awayTeamId : game.homeTeamId
     const input = { homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, attackingTeamId: nextAttackingTeamId, period: state.period, activeLineups: state.activeLineups, spatial: state.spatial }
     const targets = assignTransitionSpatialTargets(input)
-    const moved = stepPlayersTowardTransitionTargets(input, 0.25)
+    const moved = stepPlayersTowardTransitionTargets(input, 0.25, state.playerProfiles)
     const basket = getSpatialPossessionView({ ...input, spatial: moved }).attackingBasket
     const offenseDirection = basket.x > moved.court.lengthMeters / 2 ? 1 : -1
 
@@ -279,7 +279,7 @@ describe('MatchSession', () => {
     const deltaTimeSeconds = session.state.clockSecondsRemaining - result.session.state.clockSecondsRemaining
     const baseSpacing = stepPlayersTowardBaseSpacing({ ...baseSpacingInput(session.state, expectedHandlerId), spatial: controlBallByPlayer(session.state.spatial, expectedHandlerId) }, deltaTimeSeconds)
     const nextTeamId = previousAttackingTeamId === game.homeTeamId ? game.awayTeamId : game.homeTeamId
-    const expectedSpatial = stepPlayersTowardTransitionTargets({ homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, attackingTeamId: nextTeamId, period: session.state.period, activeLineups: session.state.activeLineups, spatial: releaseSpatialBall(baseSpacing) }, deltaTimeSeconds)
+    const expectedSpatial = stepPlayersTowardTransitionTargets({ homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, attackingTeamId: nextTeamId, period: session.state.period, activeLineups: session.state.activeLineups, spatial: releaseSpatialBall(baseSpacing) }, deltaTimeSeconds, session.state.playerProfiles)
     const view = getSpatialPossessionView(result.session.state)
 
     expect(result.newEvents.some((event) => event.type === 'turnover')).toBe(true)
@@ -358,7 +358,7 @@ describe('MatchSession', () => {
     const deltaTimeSeconds = session.state.clockSecondsRemaining - result.session.state.clockSecondsRemaining
     const spatialBeforeShot = stepPlayersTowardBaseSpacing({ ...baseSpacingInput(session.state, previousLineup[0]!), spatial: controlBallByPlayer(session.state.spatial, previousLineup[0]!) }, deltaTimeSeconds)
     const nextTeamId = previousAttackingTeamId === game.homeTeamId ? game.awayTeamId : game.homeTeamId
-    const expectedSpatial = stepPlayersTowardTransitionTargets({ homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, attackingTeamId: nextTeamId, period: session.state.period, activeLineups: session.state.activeLineups, spatial: releaseSpatialBall(spatialBeforeShot) }, deltaTimeSeconds)
+    const expectedSpatial = stepPlayersTowardTransitionTargets({ homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, attackingTeamId: nextTeamId, period: session.state.period, activeLineups: session.state.activeLineups, spatial: releaseSpatialBall(spatialBeforeShot) }, deltaTimeSeconds, session.state.playerProfiles)
     const view = getSpatialPossessionView(result.session.state)
 
     expect(result.newEvents.some((event) => event.type === 'shotMade')).toBe(true)
@@ -380,7 +380,7 @@ describe('MatchSession', () => {
     const rebound = result.newEvents.find((event) => event.type === 'rebound')
     const view = getSpatialPossessionView(result.session.state)
     const holder = result.session.state.spatial.players.find((player) => player.playerId === rebound?.playerId)
-    const expectedSpatial = rebound?.type === 'rebound' ? stepPlayersTowardTransitionTargets({ homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, attackingTeamId: rebound.teamId, period: session.state.period, activeLineups: session.state.activeLineups, spatial: controlBallByPlayer(spatialBeforeShot, rebound.playerId) }, deltaTimeSeconds) : undefined
+    const expectedSpatial = rebound?.type === 'rebound' ? stepPlayersTowardTransitionTargets({ homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, attackingTeamId: rebound.teamId, period: session.state.period, activeLineups: session.state.activeLineups, spatial: controlBallByPlayer(spatialBeforeShot, rebound.playerId) }, deltaTimeSeconds, session.state.playerProfiles) : undefined
 
     expect(result.newEvents.some((event) => event.type === 'shotMissed')).toBe(true)
     expect(rebound).toBeDefined()

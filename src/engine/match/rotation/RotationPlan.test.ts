@@ -6,7 +6,7 @@ import { PLAYER_TRUTH_TENDENCY_KEYS, type PlayerTruthTendencies } from '@/domain
 
 import { type MatchSession, type MatchSquads } from '../MatchEngine'
 import { createInitialSpatialState } from '../SpatialState'
-import type { MatchPlayerProfile } from '../MatchPlayerProfile'
+import { BASELINE_PLAYER_KINEMATIC_PROFILE, type MatchPlayerProfile } from '../MatchPlayerProfile'
 import { applyDueRotations, INITIAL_ROTATION_CONTROLLER_STATE } from './RotationController'
 import { createDefaultRotationPlan } from './RotationPlan'
 
@@ -72,7 +72,7 @@ function player(id: string, position: typeof positions[number], impact: number):
 function playerRecord(players: readonly Player[]): Record<Player['id'], Player> { return Object.fromEntries(players.map((item) => [item.id, item])) as Record<Player['id'], Player> }
 
 function sessionAt(clockSecondsRemaining: number, squads: MatchSquads): MatchSession {
-  const profile = (playerId: typeof starters[number]) => ({ playerId, primaryPosition: 'PG' as const, tendencies: neutralTendencies as unknown as MatchPlayerProfile['tendencies'], physical: { heightCm: 200, weightKg: 100, wingspanCm: 205, standingReachCm: 250 }, offense: { usage: 50, rimAttack: 50, shooting: 50, creation: 50, ballSecurity: 50 }, defense: { pointOfAttack: 50, interior: 50, mobility: 50 }, rebounding: { impact: 50 } })
+  const profile = (playerId: typeof starters[number]) => ({ playerId, primaryPosition: 'PG' as const, tendencies: neutralTendencies as unknown as MatchPlayerProfile['tendencies'], physical: { heightCm: 200, weightKg: 100, wingspanCm: 205, standingReachCm: 250 }, kinematics: BASELINE_PLAYER_KINEMATIC_PROFILE, offense: { usage: 50, rimAttack: 50, shooting: 50, creation: 50, ballSecurity: 50 }, defense: { pointOfAttack: 50, interior: 50, mobility: 50 }, rebounding: { impact: 50 } })
   const lineups = { home: starters, away: squads.away }
   const playerProfiles = { home: squads.home.map(profile), away: squads.away.map(profile) }
   const spatial = createInitialSpatialState({ homeTeamId: TEAM_ID, awayTeamId: OPPONENT_ID, lineups, playerProfiles, ecosystemKind: 'fibaLike', category: 'men' })

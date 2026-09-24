@@ -79,7 +79,11 @@ export function assignBaseSpatialTargets(input: BaseSpacingInput): BaseSpacingTa
 export function stepPlayersTowardBaseSpacing(input: BaseSpacingInput, deltaTimeSeconds: number): SpatialState {
   const targets = assignBaseSpatialTargets(input)
   return [...targets.offensive, ...targets.defensive].reduce(
-    (spatial, target) => advancePlayerTowardTarget(spatial, target.playerId, target.position, deltaTimeSeconds),
+    (spatial, target) => {
+      const profile = [...input.playerProfiles.home, ...input.playerProfiles.away].find((candidate) => candidate.playerId === target.playerId)
+      if (profile === undefined) throw new Error(`Match player profile ${target.playerId} is missing`)
+      return advancePlayerTowardTarget(spatial, target.playerId, target.position, deltaTimeSeconds, profile.kinematics)
+    },
     input.spatial,
   )
 }

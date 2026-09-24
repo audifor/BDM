@@ -175,7 +175,9 @@ rebound, both teams take one bounded `movePlayerToward` step: the new offense mo
 toward its attacking basket and the other team toward its defensive end. The next
 ordinary possession step resumes BaseSpacing. Rebound and transition tactics,
 fast-break decisions, rebound trajectories and rendering remain outside this
-foundation.
+foundation. MG6A later replaces the fixed two-metre displacement with
+time-based canonical kinematics; MG6B supplies each player’s derived athletic
+limits without changing these targets.
 
 For live matches, `LiveMatchController` supplies read-only before/after spatial
 snapshots to the presentation segment. The UI bridge copies active player IDs,
@@ -302,6 +304,19 @@ player at zero velocity. Live and Instant Result use this shared MatchEngine
 path. The visual bridge and renderer consume canonical snapshots and do not
 calculate or write back movement. No RNG, player ratings, physical attributes,
 stamina, collision handling, or pathfinding are part of MG6A.
+
+MG6B derives each player's transient `PlayerKinematicProfile` while constructing
+`MatchPlayerProfile`. Canonical Player Truth `SPEED`, `ACCELERATION`, and
+`AGILITY` respectively control maximum speed, acceleration, and braking / target
+redirection. Ratings in the current Player domain validate from 1 to 100; a
+piecewise linear mapping keeps 50 exactly at the MG6A baseline. Bounds are
+5.4–6.6 m/s, 2.4–3.6 m/s², and 3.2–4.8 m/s². The profile is derived from
+Player Truth and is not persisted or copied into `SpatialState`; that state still
+contains only position and velocity. Body measurements, position, and stamina do
+not modify locomotor capacity. BaseSpacing and TransitionSpatial retain target
+authority, and the shared Live / Instant MatchEngine path supplies each player's
+profile to the same canonical movement primitive. The visual bridge remains a
+consumer of snapshots and has no athletic-rating or movement authority.
 
 ## Player basketball domain
 

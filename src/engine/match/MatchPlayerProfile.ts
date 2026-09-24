@@ -2,11 +2,30 @@ import type { Player, PlayerBio, PlayerTendencies, PlayerTruthRatings } from '@/
 import type { PlayerId } from '@/domain/ids'
 import type { BasketballPosition } from '@/domain/primitives'
 
+export interface PlayerKinematicProfile {
+  readonly maxSpeedMps: number
+  readonly accelerationMps2: number
+  readonly brakingMps2: number
+}
+
+export const BASELINE_PLAYER_KINEMATIC_PROFILE: PlayerKinematicProfile = {
+  maxSpeedMps: 6,
+  accelerationMps2: 3,
+  brakingMps2: 4,
+}
+
+export const PLAYER_KINEMATIC_BOUNDS = {
+  maxSpeedMps: { min: 5.4, max: 6.6 },
+  accelerationMps2: { min: 2.4, max: 3.6 },
+  brakingMps2: { min: 3.2, max: 4.8 },
+} as const
+
 export interface MatchPlayerProfile {
   readonly playerId: PlayerId
   readonly primaryPosition: BasketballPosition
   readonly tendencies: PlayerTendencies
   readonly physical: Pick<PlayerBio, 'heightCm' | 'weightKg' | 'wingspanCm' | 'standingReachCm'>
+  readonly kinematics: PlayerKinematicProfile
   readonly offense: {
     readonly usage: number
     readonly rimAttack: number
@@ -52,6 +71,7 @@ export function createMatchPlayerProfile(player: Player): MatchPlayerProfile {
       wingspanCm: player.bio.wingspanCm,
       standingReachCm: player.bio.standingReachCm,
     },
+    kinematics: derivePlayerKinematicProfile(truth),
     offense: {
       usage: clampSignal(average(truth, ['SHOT_TOUCH', 'ADVANTAGE_CREATION', 'DRIVE_CREATION', 'OFFENSIVE_AWARENESS'])),
       rimAttack: clampSignal(average(truth, ['RIM_FINISHING', 'CONTACT_FINISHING', 'VERTICAL_FINISHING', 'FINISHING_THROUGH_LENGTH'])),
@@ -74,6 +94,21 @@ export function createMatchPlayerProfile(player: Player): MatchPlayerProfile {
       impact: clampSignal(average(truth, ['OFFENSIVE_REBOUNDING', 'DEFENSIVE_REBOUNDING', 'STRENGTH', 'VERTICAL_LEAP'])),
     },
   }
+}
+
+export function derivePlayerKinematicProfile(ratings: PlayerTruthRatings): PlayerKinematicProfile {
+  return {
+    maxSpeedMps: mapRating(ratings.SPEED, PLAYER_KINEMATIC_BOUNDS.maxSpeedMps, BASELINE_PLAYER_KINEMATIC_PROFILE.maxSpeedMps),
+    accelerationMps2: mapRating(ratings.ACCELERATION, PLAYER_KINEMATIC_BOUNDS.accelerationMps2, BASELINE_PLAYER_KINEMATIC_PROFILE.accelerationMps2),
+    brakingMps2: mapRating(ratings.AGILITY, PLAYER_KINEMATIC_BOUNDS.brakingMps2, BASELINE_PLAYER_KINEMATIC_PROFILE.brakingMps2),
+  }
+}
+
+function mapRating(rating: number, bounds: { readonly min: number; readonly max: number }, baseline: number): number {
+  const value = Math.min(100, Math.max(1, rating))
+  return value <= 50
+    ? bounds.min + (baseline - bounds.min) * (value - 1) / 49
+    : baseline + (bounds.max - baseline) * (value - 50) / 50
 }
 
 function average(ratings: PlayerTruthRatings, keys: readonly (keyof PlayerTruthRatings)[]): number {

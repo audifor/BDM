@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { playerIdFromString } from '@/domain/ids'
 
-import type { MatchPlayerProfile } from './MatchPlayerProfile'
+import { BASELINE_PLAYER_KINEMATIC_PROFILE, type MatchPlayerProfile } from './MatchPlayerProfile'
 import { calculatePassActionProbability, calculatePassCompletionProbability, calculatePassingLaneContext, distanceFromPointToSegment, PASS_RESOLUTION_V1 } from './PassingResolution'
 
 describe('canonical spatial passing resolution', () => {
@@ -55,6 +55,7 @@ function profile(passing: number): MatchPlayerProfile {
     primaryPosition: 'PG',
     tendencies: {} as MatchPlayerProfile['tendencies'],
     physical: { heightCm: 190, weightKg: 85, wingspanCm: 195, standingReachCm: 245 },
+    kinematics: BASELINE_PLAYER_KINEMATIC_PROFILE,
     offense: { usage: 50, rimAttack: 50, shooting: 50, creation: 50, ballSecurity: 50 },
     passing: { accuracy: passing, vision: passing, timing: passing },
     defense: { pointOfAttack: 50, interior: 50, mobility: 50, steal: 50 },
