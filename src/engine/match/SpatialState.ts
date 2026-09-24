@@ -32,6 +32,13 @@ export interface SpatialState {
   readonly ball: BallSpatialState
 }
 
+export interface SpatialPossessionView {
+  readonly offensiveTeamId: TeamId
+  readonly defensiveTeamId: TeamId
+  readonly attackingBasket: CourtPosition
+  readonly ballHandlerId?: PlayerId
+}
+
 export function createInitialSpatialState(input: {
   readonly homeTeamId: TeamId
   readonly awayTeamId: TeamId
@@ -71,6 +78,46 @@ export function defendingBasketForTeam(input: {
   return attacking === input.court.baskets.right ? input.court.baskets.left : input.court.baskets.right
 }
 
+/** Derives spatial offense/defense from MatchSession possession authority; no second possession state is stored. */
+export function getSpatialPossessionView(input: {
+  readonly homeTeamId: TeamId
+  readonly awayTeamId: TeamId
+  readonly attackingTeamId: TeamId
+  readonly period: number
+  readonly spatial: SpatialState
+}): SpatialPossessionView {
+  if (input.attackingTeamId !== input.homeTeamId && input.attackingTeamId !== input.awayTeamId) {
+    throw new Error(`Attacking team ${input.attackingTeamId} is not in this match`)
+  }
+  const defensiveTeamId = input.attackingTeamId === input.homeTeamId ? input.awayTeamId : input.homeTeamId
+  const ballHandlerId = input.spatial.ball.kind === 'playerControlled' ? input.spatial.ball.playerId : undefined
+  return {
+    offensiveTeamId: input.attackingTeamId,
+    defensiveTeamId,
+    attackingBasket: attackingBasketForTeam({
+      teamId: input.attackingTeamId,
+      homeTeamId: input.homeTeamId,
+      awayTeamId: input.awayTeamId,
+      period: input.period,
+      court: input.spatial.court,
+    }),
+    ...(ballHandlerId === undefined ? {} : { ballHandlerId }),
+  }
+}
+
+export function isSpatialStateCoherentWithPossession(input: {
+  readonly homeTeamId: TeamId
+  readonly awayTeamId: TeamId
+  readonly attackingTeamId: TeamId
+  readonly period: number
+  readonly spatial: SpatialState
+}): boolean {
+  const ball = input.spatial.ball
+  return (input.attackingTeamId === input.homeTeamId || input.attackingTeamId === input.awayTeamId)
+    && isSpatialStateInsideCourt(input.spatial)
+    && (ball.kind !== 'playerControlled' || ball.teamId === input.attackingTeamId)
+}
+
 export function isSpatialStateInsideCourt(spatial: SpatialState): boolean {
   const ball = spatial.ball
   return spatial.players.every((player) => isInsideCourt(player.position, spatial.court))
@@ -86,6 +133,10 @@ export function controlBallByPlayer(spatial: SpatialState, playerId: PlayerId): 
   const player = spatial.players.find((candidate) => candidate.playerId === playerId)
   if (player === undefined) throw new Error(`Spatial player ${playerId} is not active`)
   return { ...spatial, ball: { kind: 'playerControlled', playerId: player.playerId, teamId: player.teamId, position: player.position } }
+}
+
+export function releaseSpatialBall(spatial: SpatialState): SpatialState {
+  return { ...spatial, ball: { kind: 'unassigned', position: spatial.ball.position } }
 }
 
 export function applySpatialSubstitution(

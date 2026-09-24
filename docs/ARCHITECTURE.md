@@ -426,7 +426,11 @@ a runtime-only `SpatialState` on `MatchSession`, initialized from each game's
 canonical court geometry and active five; substitutions keep its player set aligned
 with `activeLineups`. Its initial positions are bootstrap anchors, not tactical
 spacing or movement, and the viewer does not own or mutate them. Spatial state is
-not saved and does not affect sporting resolution. Individual player statistics
+not saved and does not affect sporting resolution. Spatial possession views derive
+offense, defense and attacking basket from `MatchSessionState.attackingTeamId` and
+the current period. The existing offensive actor, rebounder and credited stealer
+drive ball control when known; unresolved possession changes release it until a
+handler is selected. Individual player statistics
 are a transient Engine projection: PlayerMatchStats is reconstructed from
 MatchSimulation lineups and MatchEvents and is never persisted. MatchViewer passes
 only revealed events to that projection, so its live boxscore cannot expose future

@@ -14,7 +14,7 @@ import { createDefaultTacticalPlan, validateTacticalPlan, type MatchTacticalPlan
 import { applyPaceToPossessionDuration, applyShotProfile, calculateTacticalDefenseModifier, tacticalUsageWeight } from './tactics/TacticalEffects'
 import { clonePlan, type MatchCoachingState } from './coaching/MatchCoachingState'
 import { calculateBlockCreditProbability, calculateStealCreditProbability } from './DefensiveAttribution'
-import { applySpatialSubstitution, createInitialSpatialState, type SpatialState } from './SpatialState'
+import { applySpatialSubstitution, controlBallByPlayer, createInitialSpatialState, releaseSpatialBall, type SpatialState } from './SpatialState'
 
 /**
  * Default game-clock rules, used only as the fallback when a game's actual competition cannot
@@ -340,6 +340,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const profiles = state.attackingTeamId === state.homeTeamId ? state.playerProfiles.home : state.playerProfiles.away
   const offensiveActor = chooseWeighted(lineup.map((playerId) => ({ item: profileForPlayer(profiles, playerId), weight: tacticalUsageWeight(playerId, profileForPlayer(profiles, playerId).offense.usage, lineup, attackingPlan) })), session.decisionRandom)
   const playerId = offensiveActor.playerId
+  let spatial = controlBallByPlayer(state.spatial, playerId)
   const defendingTeamId = otherTeamId(state.attackingTeamId, state)
   const defendingLineup = defendingTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
   const defendingProfiles = defendingTeamId === state.homeTeamId ? state.playerProfiles.home : state.playerProfiles.away
@@ -363,6 +364,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
       }
     }
     attackingTeamId = defendingTeamId
+    spatial = releaseSpatialBall(spatial)
   } else if (outcome === 'fieldGoalAttempt') {
     const shotWeights = applyShotProfile(calculateShotZoneWeights(offensiveActor), attackingPlan)
     const shotZone = chooseWeighted((['rim', 'midRange', 'threePoint'] as const).map((zone) => ({ item: zone, weight: shotWeights[zone] })), session.decisionRandom)
@@ -376,6 +378,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
       else awayScore += points
       newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'shotMade', teamId: attackingTeamId, playerId, defenderPlayerId: primaryDefenderId, ...(assistPlayerId === undefined ? {} : { assistPlayerId }), points, shotZone, homeScore, awayScore })
       attackingTeamId = otherTeamId(attackingTeamId, state)
+      spatial = releaseSpatialBall(spatial)
     } else {
       const blockedByPlayerId = session.actorRandom.chance(calculateBlockCreditProbability(primaryDefender, shotZone)) ? primaryDefenderId : undefined
       newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'shotMissed', teamId: attackingTeamId, playerId, defenderPlayerId: primaryDefenderId, ...(blockedByPlayerId === undefined ? {} : { blockedByPlayerId }), shotZone, homeScore, awayScore })
@@ -387,14 +390,16 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
       const reboundPlayerId = selectRebounder(reboundLineup.map((candidateId) => profileForPlayer(reboundProfiles, candidateId)), session.actorRandom).playerId
       newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'rebound', teamId: reboundTeamId, playerId: reboundPlayerId, reboundType, homeScore, awayScore })
       attackingTeamId = reboundTeamId
+      spatial = controlBallByPlayer(spatial, reboundPlayerId)
     }
   } else {
     const stealPlayerId = session.actorRandom.chance(calculateStealCreditProbability(primaryDefender)) ? primaryDefenderId : undefined
     newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'turnover', teamId: attackingTeamId, playerId, ...(stealPlayerId === undefined ? {} : { stealPlayerId }), homeScore, awayScore })
     attackingTeamId = otherTeamId(attackingTeamId, state)
+    spatial = stealPlayerId === undefined ? releaseSpatialBall(spatial) : controlBallByPlayer(spatial, stealPlayerId)
   }
 
-  const stateAfterPossession = { ...state, clockSecondsRemaining, homeScore, awayScore, attackingTeamId, nextSequence: sequence }
+  const stateAfterPossession = { ...state, clockSecondsRemaining, homeScore, awayScore, attackingTeamId, spatial, nextSequence: sequence }
   const fatiguedSession = updateSessionFatigue(session, stateAfterPossession, possessionDuration)
   if (clockSecondsRemaining === 0) return finishPeriod(fatiguedSession, fatiguedSession.state, newEvents)
   const nextState = { ...fatiguedSession.state, events: [...state.events, ...newEvents] }
@@ -427,7 +432,7 @@ function finishPeriod(session: MatchSession, state: MatchSessionState, newEvents
   if (state.period >= state.clockRules.periodCount && state.homeScore !== state.awayScore) {
     const gameEnd: MatchEvent = { sequence, period: state.period, clockSecondsRemaining: 0, type: 'gameEnd', homeScore: state.homeScore, awayScore: state.awayScore }
     newEvents.push(gameEnd)
-    const completeState = { ...state, nextSequence: sequence + 1, events: [...state.events, ...newEvents], isComplete: true }
+    const completeState = { ...state, spatial: releaseSpatialBall(state.spatial), nextSequence: sequence + 1, events: [...state.events, ...newEvents], isComplete: true }
     return { session: { ...session, state: completeState }, newEvents }
   }
   if (state.period >= state.clockRules.periodCount + MAX_OVERTIME_PERIODS) {
@@ -439,7 +444,7 @@ function finishPeriod(session: MatchSession, state: MatchSessionState, newEvents
   const attackingTeamId = period % 2 === 1 ? state.openingTeamId : otherTeamId(state.openingTeamId, state)
   const periodStart: MatchEvent = { sequence: sequence++, period, clockSecondsRemaining, type: 'periodStart', homeScore: state.homeScore, awayScore: state.awayScore }
   newEvents.push(periodStart)
-  const nextState = { ...state, period, clockSecondsRemaining, attackingTeamId, nextSequence: sequence, events: [...state.events, ...newEvents] }
+  const nextState = { ...state, period, clockSecondsRemaining, attackingTeamId, spatial: releaseSpatialBall(state.spatial), nextSequence: sequence, events: [...state.events, ...newEvents] }
   return { session: { ...session, state: nextState }, newEvents }
 }
 

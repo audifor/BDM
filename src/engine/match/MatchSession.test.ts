@@ -7,7 +7,7 @@ import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
-import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, isSpatialStateInsideCourt, simulateMatchDetailed, stepMatchSession, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
+import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, simulateMatchDetailed, stepMatchSession, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
 
 describe('MatchSession', () => {
   it('produces the same complete simulation through stepping as through the wrapper', () => {
@@ -50,7 +50,7 @@ describe('MatchSession', () => {
   it('synchronizes the active spatial players on substitution and keeps the incoming player in the outgoing position', () => {
     const { world, game } = createScheduledGameWorld()
     const options = createOptions(world, game.id, 12345, 67890)
-    const session = createMatchSession(options)
+    const session = createMatchSession({ ...options, random: new FirstSportingRandom() })
     const playerOutId = session.state.activeLineups.home[0]!
     const playerInId = session.state.squads.home.find((playerId) => !session.state.activeLineups.home.includes(playerId))!
     const heldSpatial = controlBallByPlayer(session.state.spatial, playerOutId)
@@ -66,6 +66,101 @@ describe('MatchSession', () => {
     expect(substituted.state.spatial.players.find((player) => player.playerId === playerInId)).toMatchObject({ teamId: game.homeTeamId, position: outgoingPosition })
     expect(substituted.state.spatial.ball).toEqual({ kind: 'playerControlled', playerId: playerInId, teamId: game.homeTeamId, position: outgoingPosition })
     expect(isSpatialStateInsideCourt(substituted.state.spatial)).toBe(true)
+    expect(isSpatialStateCoherentWithPossession(substituted.state)).toBe(true)
+  })
+
+  it('derives offense, defense and basket from engine possession authority', () => {
+    const { world, game } = createScheduledGameWorld()
+    const session = createMatchSession(createOptions(world, game.id, 12345, 67890))
+    const view = getSpatialPossessionView(session.state)
+
+    expect(view.offensiveTeamId).toBe(session.state.attackingTeamId)
+    expect(view.defensiveTeamId).toBe(session.state.attackingTeamId === game.homeTeamId ? game.awayTeamId : game.homeTeamId)
+    expect(view.attackingBasket).toEqual(attackingBasketForTeam({ teamId: session.state.attackingTeamId, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, period: session.state.period, court: session.state.spatial.court }))
+    expect(view.ballHandlerId).toBeUndefined()
+    expect(isSpatialStateCoherentWithPossession(session.state)).toBe(true)
+  })
+
+  it('synchronizes a turnover possession flip without assigning a handler that gameplay did not resolve', () => {
+    const { world, game } = createScheduledGameWorld()
+    const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new TurnoverRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() })
+    const previousAttackingTeamId = session.state.attackingTeamId
+    const result = stepMatchSession(session)
+    const view = getSpatialPossessionView(result.session.state)
+
+    expect(result.newEvents.some((event) => event.type === 'turnover')).toBe(true)
+    expect(view.offensiveTeamId).toBe(previousAttackingTeamId === game.homeTeamId ? game.awayTeamId : game.homeTeamId)
+    expect(view.defensiveTeamId).toBe(previousAttackingTeamId)
+    expect(view.attackingBasket).toEqual(result.session.state.spatial.court.baskets.left)
+    expect(view.ballHandlerId).toBeUndefined()
+    expect(isSpatialStateCoherentWithPossession(result.session.state)).toBe(true)
+  })
+
+  it('assigns a credited steal to the existing defensive actor', () => {
+    const { world, game } = createScheduledGameWorld()
+    const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new TurnoverRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new StealTurnoverRandom() })
+    const previousAttackingTeamId = session.state.attackingTeamId
+    const result = stepMatchSession(session)
+    const turnover = result.newEvents.find((event) => event.type === 'turnover')
+    const view = getSpatialPossessionView(result.session.state)
+
+    expect(turnover?.type).toBe('turnover')
+    if (turnover?.type !== 'turnover' || turnover.stealPlayerId === undefined) throw new Error('Expected a credited steal')
+    expect(view.offensiveTeamId).toBe(previousAttackingTeamId === game.homeTeamId ? game.awayTeamId : game.homeTeamId)
+    expect(view.ballHandlerId).toBe(turnover.stealPlayerId)
+    expect(result.session.state.spatial.ball).toMatchObject({ kind: 'playerControlled', playerId: turnover.stealPlayerId, teamId: view.offensiveTeamId })
+    expect(isSpatialStateCoherentWithPossession(result.session.state)).toBe(true)
+  })
+
+  it('releases the completed handler and follows engine possession after a made basket', () => {
+    const { world, game } = createScheduledGameWorld()
+    const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() })
+    const previousAttackingTeamId = session.state.attackingTeamId
+    const result = stepMatchSession(session)
+    const view = getSpatialPossessionView(result.session.state)
+
+    expect(result.newEvents.some((event) => event.type === 'shotMade')).toBe(true)
+    expect(view.offensiveTeamId).toBe(previousAttackingTeamId === game.homeTeamId ? game.awayTeamId : game.homeTeamId)
+    expect(view.ballHandlerId).toBeUndefined()
+    expect(result.session.state.spatial.ball.kind).toBe('unassigned')
+    expect(isSpatialStateCoherentWithPossession(result.session.state)).toBe(true)
+  })
+
+  it('synchronizes rebound control and does not spend RNG for spatial bookkeeping', () => {
+    const { world, game } = createScheduledGameWorld()
+    const random = new MissAndDefensiveReboundRandom()
+    const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random, decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() })
+    const result = stepMatchSession(session)
+    const rebound = result.newEvents.find((event) => event.type === 'rebound')
+    const view = getSpatialPossessionView(result.session.state)
+    const holder = result.session.state.spatial.players.find((player) => player.playerId === rebound?.playerId)
+
+    expect(result.newEvents.some((event) => event.type === 'shotMissed')).toBe(true)
+    expect(rebound).toBeDefined()
+    expect(view.offensiveTeamId).toBe(rebound!.teamId)
+    expect(view.ballHandlerId).toBe(rebound!.playerId)
+    expect(result.session.state.spatial.ball).toMatchObject({ kind: 'playerControlled', playerId: rebound!.playerId, teamId: rebound!.teamId, position: holder!.position })
+    expect(result.session.state.spatial.players).toEqual(session.state.spatial.players)
+    expect(isSpatialStateCoherentWithPossession(result.session.state)).toBe(true)
+    expect(random).toMatchObject({ nextIntCalls: 1, nextCalls: 1, chanceCalls: 3 })
+  })
+
+  it('releases the ball and resolves the switched basket at a period transition', () => {
+    const { world, game } = createScheduledGameWorld()
+    const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new FirstSportingRandom() })
+    const holderId = session.state.activeLineups.home[0]!
+    const atSecondPeriodEnd = {
+      ...session,
+      state: { ...session.state, period: 2, clockSecondsRemaining: 1, spatial: controlBallByPlayer(session.state.spatial, holderId) },
+    }
+    const transition = stepMatchSession(atSecondPeriodEnd).session.state
+    const view = getSpatialPossessionView(transition)
+
+    expect(transition.period).toBe(3)
+    expect(view.offensiveTeamId).toBe(game.homeTeamId)
+    expect(view.attackingBasket).toEqual(transition.spatial.court.baskets.left)
+    expect(transition.spatial.ball.kind).toBe('unassigned')
+    expect(isSpatialStateCoherentWithPossession(transition)).toBe(true)
   })
 
   it('resumes after five steps with the same final simulation as uninterrupted stepping', () => {
@@ -248,6 +343,28 @@ class FirstSportingRandom implements RandomSource {
   nextFloat(minInclusive: number): number { return minInclusive }
   chance(probability: number): boolean { return probability === 0.5 }
   pick<Item>(items: readonly Item[]): Item { return items[0]! }
+}
+
+class TurnoverRandom extends FirstSportingRandom {
+  next(): number { return 0 }
+}
+
+class StealTurnoverRandom extends FirstSportingRandom {
+  chance(_probability: number): boolean { return true }
+}
+
+class MadeBasketRandom extends FirstSportingRandom {
+  next(): number { return 0.99 }
+  chance(_probability: number): boolean { return true }
+}
+
+class MissAndDefensiveReboundRandom extends FirstSportingRandom {
+  public nextCalls = 0
+  public nextIntCalls = 0
+  public chanceCalls = 0
+  next(): number { this.nextCalls += 1; return 0.99 }
+  nextInt(minInclusive: number): number { this.nextIntCalls += 1; return minInclusive }
+  chance(_probability: number): boolean { this.chanceCalls += 1; return this.chanceCalls === 1 }
 }
 
 class FirstActorRandom extends FirstSportingRandom {}
