@@ -7,7 +7,7 @@ import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
-import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, simulateMatchDetailed, stepMatchSession, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
+import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, movePlayerToward, simulateMatchDetailed, stepMatchSession, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
 
 describe('MatchSession', () => {
   it('produces the same complete simulation through stepping as through the wrapper', () => {
@@ -45,6 +45,53 @@ describe('MatchSession', () => {
     expect(attackingBasketForTeam({ teamId: game.homeTeamId, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, period: 1, court: first.spatial.court })).toEqual(first.spatial.court.baskets.right)
     expect(attackingBasketForTeam({ teamId: game.homeTeamId, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, period: 3, court: first.spatial.court })).toEqual(first.spatial.court.baskets.left)
     expect(attackingBasketForTeam({ teamId: game.awayTeamId, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, period: 1, court: first.spatial.court })).toEqual(first.spatial.court.baskets.left)
+  })
+
+  it('moves an active player partially toward a legal target and can reach it', () => {
+    const { world, game } = createScheduledGameWorld()
+    const spatial = createMatchSession(createOptions(world, game.id, 12345, 67890)).state.spatial
+    const player = spatial.players[0]!
+    const target = { x: 0, y: player.position.y }
+    const distance = player.position.x
+    const maxDistance = distance / 2
+    const partial = movePlayerToward(spatial, player.playerId, target, maxDistance)
+    const movedPlayer = partial.players.find((candidate) => candidate.playerId === player.playerId)!
+
+    expect(movedPlayer.position.x).toBeCloseTo(player.position.x - maxDistance)
+    expect(movedPlayer.position.y).toBe(player.position.y)
+    expect(Math.hypot(movedPlayer.position.x - player.position.x, movedPlayer.position.y - player.position.y)).toBeCloseTo(maxDistance)
+    expect(isSpatialStateInsideCourt(partial)).toBe(true)
+    expect(movePlayerToward(spatial, player.playerId, target, distance).players.find((candidate) => candidate.playerId === player.playerId)!.position).toEqual(target)
+    expect(movePlayerToward(spatial, player.playerId, target, 0)).toBe(spatial)
+    expect(movePlayerToward(spatial, player.playerId, player.position, 1)).toBe(spatial)
+  })
+
+  it('keeps a controlled ball with its moved handler and leaves an unassigned ball alone', () => {
+    const { world, game } = createScheduledGameWorld()
+    const spatial = createMatchSession(createOptions(world, game.id, 12345, 67890)).state.spatial
+    const holderId = spatial.players[0]!.playerId
+    const held = controlBallByPlayer(spatial, holderId)
+    const holder = held.players.find((player) => player.playerId === holderId)!
+    const target = { x: 0, y: holder.position.y }
+    const movedHeld = movePlayerToward(held, holderId, target, 1)
+    const movedHolder = movedHeld.players.find((player) => player.playerId === holderId)!
+
+    expect(movedHeld.ball).toMatchObject({ kind: 'playerControlled', playerId: holderId, teamId: holder.teamId, position: movedHolder.position })
+    expect(movedHeld.players.filter((player) => player.playerId !== holderId)).toEqual(held.players.filter((player) => player.playerId !== holderId))
+    const movedUnassigned = movePlayerToward(spatial, holderId, target, 1)
+    expect(movedUnassigned.ball).toBe(spatial.ball)
+    const loose = { ...spatial, ball: { kind: 'loose' as const, position: spatial.ball.position } }
+    expect(movePlayerToward(loose, holderId, target, 1).ball).toBe(loose.ball)
+  })
+
+  it('rejects invalid movement distance and off-court targets', () => {
+    const { world, game } = createScheduledGameWorld()
+    const spatial = createMatchSession(createOptions(world, game.id, 12345, 67890)).state.spatial
+    const playerId = spatial.players[0]!.playerId
+
+    expect(() => movePlayerToward(spatial, playerId, { x: 0, y: 0 }, -1)).toThrow(RangeError)
+    expect(() => movePlayerToward(spatial, playerId, { x: spatial.court.lengthMeters + 1, y: 0 }, 1)).toThrow(RangeError)
+    expect(() => movePlayerToward(spatial, playerIdFromString('inactive-player'), { x: 0, y: 0 }, 1)).toThrow(/not active/)
   })
 
   it('synchronizes the active spatial players on substitution and keeps the incoming player in the outgoing position', () => {

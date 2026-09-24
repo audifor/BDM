@@ -15,7 +15,7 @@ export {
 export { applyMatchResult, applyCompletedMatch, createMatchStatLog, MatchResultApplicationError } from './MatchResultApplication'
 export { calculateMatchPlayerStats, calculateTeamMatchStats } from './PlayerMatchStats'
 export { createMatchPlayerProfile } from './MatchPlayerProfile'
-export { applySpatialSubstitution, attackingBasketForTeam, controlBallByPlayer, createInitialSpatialState, defendingBasketForTeam, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, releaseSpatialBall } from './SpatialState'
+export { applySpatialSubstitution, attackingBasketForTeam, controlBallByPlayer, createInitialSpatialState, defendingBasketForTeam, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, movePlayerToward, releaseSpatialBall } from './SpatialState'
 export { calculateDefenseExecution, calculateEffectiveDefense, calculateShotMakeProbability, calculateShotZoneWeights, pointsForShotZone, SHOT_RESOLUTION_V1 } from './ShotResolution'
 export { chooseWeighted } from './WeightedChoice'
 export { calculateDefensiveAssignments } from './Matchups'

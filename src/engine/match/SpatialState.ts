@@ -1,5 +1,5 @@
 import type { PlayerId, TeamId } from '@/domain/ids'
-import { createCourtGeometry, courtRulesetForEcosystem, isInsideCourt, type CourtGeometry, type CourtPosition } from '@/domain/court'
+import { createCourtGeometry, courtRulesetForEcosystem, distanceBetween, isInsideCourt, type CourtGeometry, type CourtPosition } from '@/domain/court'
 import type { SportsCategory } from '@/domain/primitives'
 import type { SportsEcosystemKind } from '@/domain/ecosystem'
 import type { MatchLineups } from './MatchEngine'
@@ -137,6 +137,35 @@ export function controlBallByPlayer(spatial: SpatialState, playerId: PlayerId): 
 
 export function releaseSpatialBall(spatial: SpatialState): SpatialState {
   return { ...spatial, ball: { kind: 'unassigned', position: spatial.ball.position } }
+}
+
+/** Moves one active player toward a legal court target by at most maxDistance meters. */
+export function movePlayerToward(
+  spatial: SpatialState,
+  playerId: PlayerId,
+  target: CourtPosition,
+  maxDistance: number,
+): SpatialState {
+  const playerIndex = spatial.players.findIndex((candidate) => candidate.playerId === playerId)
+  if (playerIndex < 0) throw new Error(`Spatial player ${playerId} is not active`)
+  if (!isInsideCourt(target, spatial.court)) throw new RangeError('Movement target must be inside the court')
+  if (!Number.isFinite(maxDistance) || maxDistance < 0) throw new RangeError('Maximum movement distance must be finite and non-negative')
+
+  const player = spatial.players[playerIndex]!
+  const distance = distanceBetween(player.position, target)
+  if (distance === 0 || maxDistance === 0) return spatial
+
+  const distanceMoved = Math.min(distance, maxDistance)
+  const ratio = distanceMoved / distance
+  const position = {
+    x: player.position.x + (target.x - player.position.x) * ratio,
+    y: player.position.y + (target.y - player.position.y) * ratio,
+  }
+  const players = spatial.players.map((candidate, index) => index === playerIndex ? { ...candidate, position } : candidate)
+  const ball = spatial.ball.kind === 'playerControlled' && spatial.ball.playerId === playerId
+    ? { ...spatial.ball, position }
+    : spatial.ball
+  return { ...spatial, players, ball }
 }
 
 export function applySpatialSubstitution(

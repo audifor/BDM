@@ -424,9 +424,11 @@ GameWorld at render time, so names are not duplicated into MatchEvents. Court
 coordinates in MatchViewer remain presentation projections. MatchEngine also owns
 a runtime-only `SpatialState` on `MatchSession`, initialized from each game's
 canonical court geometry and active five; substitutions keep its player set aligned
-with `activeLineups`. Its initial positions are bootstrap anchors, not tactical
-spacing or movement, and the viewer does not own or mutate them. Spatial state is
-not saved and does not affect sporting resolution. Spatial possession views derive
+with `activeLineups`. Its initial positions are bootstrap anchors; the Engine's
+canonical movement primitive can move one active player toward a legal court target
+by a bounded distance in meters and keeps a controlled ball with its holder. It does
+not choose targets, and the viewer does not own or mutate spatial positions. Spatial
+state is not saved and does not affect sporting resolution. Spatial possession views derive
 offense, defense and attacking basket from `MatchSessionState.attackingTeamId` and
 the current period. The existing offensive actor, rebounder and credited stealer
 drive ball control when known; unresolved possession changes release it until a
