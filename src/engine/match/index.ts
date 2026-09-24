@@ -19,6 +19,7 @@ export { applySpatialSubstitution, attackingBasketForTeam, controlBallByPlayer, 
 export { assignBaseSpatialTargets, BASE_SPATIAL_STEP_METERS, stepPlayersTowardBaseSpacing } from './BaseSpacing'
 export type { BaseSpacingInput, BaseSpacingTargets, BaseSpatialTarget } from './BaseSpacing'
 export { calculateDefenseExecution, calculateEffectiveDefense, calculateShotLocation, calculateShotMakeProbability, calculateShotZoneWeights, calculateSpatialContestBonus, pointsForShotZone, SHOT_RESOLUTION_V1, SPATIAL_CONTEST_V1 } from './ShotResolution'
+export { calculatePassActionProbability, calculatePassCompletionProbability, calculatePassingLaneContext, distanceFromPointToSegment, PASS_RESOLUTION_V1 } from './PassingResolution'
 export { chooseWeighted } from './WeightedChoice'
 export { calculateDefensiveAssignments } from './Matchups'
 export { calculateBlockCreditProbability, calculateStealCreditProbability } from './DefensiveAttribution'

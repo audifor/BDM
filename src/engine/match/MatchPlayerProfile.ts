@@ -14,10 +14,16 @@ export interface MatchPlayerProfile {
     readonly creation: number
     readonly ballSecurity: number
   }
+  readonly passing?: {
+    readonly accuracy: number
+    readonly vision: number
+    readonly timing: number
+  }
   readonly defense: {
     readonly pointOfAttack: number
     readonly interior: number
     readonly mobility: number
+    readonly steal?: number
   }
   readonly rebounding: {
     readonly impact: number
@@ -53,10 +59,16 @@ export function createMatchPlayerProfile(player: Player): MatchPlayerProfile {
       creation: clampSignal(average(truth, ['DRIVE_CREATION', 'ADVANTAGE_CREATION', 'CHANGE_OF_DIRECTION', 'PRESSURE_HANDLING'])),
       ballSecurity: clampSignal(average(truth, ['BALL_CONTROL', 'DRIBBLE_SECURITY', 'DECISION_MAKING', 'PRESSURE_HANDLING'])),
     },
+    passing: {
+      accuracy: clampSignal(average(truth, ['PASSING_ACCURACY', 'LIVE_DRIBBLE_PASSING'])),
+      vision: clampSignal(average(truth, ['PASSING_VISION', 'DECISION_MAKING'])),
+      timing: clampSignal(truth.PASSING_TIMING),
+    },
     defense: {
       pointOfAttack: clampSignal(average(truth, ['POINT_OF_ATTACK_DEFENSE', 'LATERAL_DEFENSE', 'SCREEN_NAVIGATION_DEFENSE'])),
       interior: clampSignal(average(truth, ['RIM_PROTECTION', 'POST_DEFENSE', 'SHOT_CONTEST'])),
       mobility: clampSignal(average(truth, ['AGILITY', 'SPEED', 'ACCELERATION', 'LATERAL_DEFENSE'])),
+      steal: clampSignal(truth.STEAL_ABILITY),
     },
     rebounding: {
       impact: clampSignal(average(truth, ['OFFENSIVE_REBOUNDING', 'DEFENSIVE_REBOUNDING', 'STRENGTH', 'VERTICAL_LEAP'])),

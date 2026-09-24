@@ -246,6 +246,48 @@ describe('MatchSession', () => {
     expect(isSpatialStateCoherentWithPossession(result.session.state)).toBe(true)
   })
 
+  it('continues a completed pass with the receiver holding the ball and enforces the pass-chain limit', () => {
+    const { world, game } = createScheduledGameWorld()
+    const options = withPassProfiles(createOptions(world, game.id, 1, 2))
+    const session = createMatchSession({ ...options, random: new ForcedPassRandom(true), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() })
+    const passerId = session.state.activeLineups.home[0]!
+    const expectedReceiverId = session.state.activeLineups.home[1]!
+    const completed = stepMatchSession(session)
+    const pass = completed.newEvents.find((event) => event.type === 'passCompleted')
+    const receiverSpatial = completed.session.state.spatial.players.find((player) => player.playerId === expectedReceiverId)!
+
+    expect(pass).toMatchObject({ type: 'passCompleted', passerPlayerId: passerId, receiverPlayerId: expectedReceiverId })
+    expect(completed.session.state.attackingTeamId).toBe(session.state.attackingTeamId)
+    expect(completed.session.state.passesThisPossession).toBe(1)
+    expect(completed.session.state.spatial.ball).toMatchObject({ kind: 'playerControlled', playerId: expectedReceiverId, position: receiverSpatial.position })
+    expect(getSpatialPossessionView(completed.session.state).ballHandlerId).toBe(expectedReceiverId)
+
+    const nextAction = stepMatchSession(completed.session)
+    expect(nextAction.newEvents.some((event) => event.type === 'passCompleted')).toBe(false)
+    const nextActorEvent = nextAction.newEvents.find((event) => event.type === 'shotMade' || event.type === 'shotMissed' || event.type === 'turnover')
+    expect(nextActorEvent && 'playerId' in nextActorEvent ? nextActorEvent.playerId : undefined).toBe(expectedReceiverId)
+    expect(nextAction.session.state.passesThisPossession).toBe(0)
+  })
+
+  it('turns a failed pass into a possession change with coherent ball ownership', () => {
+    const { world, game } = createScheduledGameWorld()
+    const options = withPassProfiles(createOptions(world, game.id, 1, 2))
+    const session = createMatchSession({ ...options, random: new ForcedPassRandom(false), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() })
+    const previousAttackingTeamId = session.state.attackingTeamId
+    const offenseLineup = previousAttackingTeamId === game.homeTeamId ? session.state.activeLineups.home : session.state.activeLineups.away
+    const passerId = offenseLineup[0]!
+    const receiverId = offenseLineup[1]!
+    const result = stepMatchSession(session)
+    const turnover = result.newEvents.find((event) => event.type === 'turnover')
+    const nextTeamId = previousAttackingTeamId === game.homeTeamId ? game.awayTeamId : game.homeTeamId
+
+    expect(turnover).toMatchObject({ type: 'turnover', playerId: passerId, turnoverType: 'failedPass', passTargetPlayerId: receiverId })
+    expect(result.session.state.attackingTeamId).toBe(nextTeamId)
+    expect(result.session.state.passesThisPossession).toBe(0)
+    expect(isSpatialStateCoherentWithPossession(result.session.state)).toBe(true)
+    if (result.session.state.spatial.ball.kind === 'playerControlled') expect(result.session.state.spatial.ball.teamId).toBe(nextTeamId)
+  })
+
   it('assigns a credited steal to the existing defensive actor', () => {
     const { world, game } = createScheduledGameWorld()
     const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new TurnoverRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new StealTurnoverRandom() })
@@ -470,6 +512,17 @@ function createOptions(world: GameWorld, gameId: GameWorld['games'][keyof GameWo
   return { world, gameId, homeStrength: { teamId: game.homeTeamId, value: 50 }, awayStrength: { teamId: game.awayTeamId, value: 50 }, lineups: lineupsFor(world, game), squads: squadsFor(world, game), playerProfiles: profilesFor(world, game), random: new SeededRandomSource(sportingSeed), decisionRandom: new SeededRandomSource(sportingSeed + 1), actorRandom: new SeededRandomSource(actorSeed) }
 }
 
+function withPassProfiles(options: SimulateMatchOptions): SimulateMatchOptions {
+  const enhance = (profiles: SimulateMatchOptions['playerProfiles']['home']) => profiles.map((profile) => ({
+    ...profile,
+    tendencies: { ...profile.tendencies, PASS_FIRST_BIAS: 100 },
+    offense: { ...profile.offense, ballSecurity: 100 },
+    passing: { accuracy: 100, vision: 100, timing: 100 },
+    defense: { ...profile.defense, pointOfAttack: 0, mobility: 0, steal: 100 },
+  }))
+  return { ...options, playerProfiles: { home: enhance(options.playerProfiles.home), away: enhance(options.playerProfiles.away) } }
+}
+
 function baseSpacingInput(state: ReturnType<typeof createMatchSession>['state'], ballHandlerId: ReturnType<typeof createMatchSession>['state']['activeLineups']['home'][number]) {
   return { homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, attackingTeamId: state.attackingTeamId, period: state.period, activeLineups: state.activeLineups, playerProfiles: state.playerProfiles, spatial: state.spatial, ballHandlerId }
 }
@@ -528,3 +581,9 @@ class MissAndDefensiveReboundRandom extends FirstSportingRandom {
 class FirstActorRandom extends FirstSportingRandom {}
 
 class ZeroDecisionRandom extends FirstSportingRandom { next(): number { return 0 } }
+
+class ForcedPassRandom extends FirstSportingRandom {
+  public constructor(private readonly completePass: boolean) { super() }
+  next(): number { return 0.2 }
+  chance(_probability: number): boolean { return this.completePass }
+}

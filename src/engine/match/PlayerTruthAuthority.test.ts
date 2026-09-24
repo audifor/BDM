@@ -52,6 +52,14 @@ describe('MG4B · player truth gameplay authority', () => {
     expect(Object.keys(profile.tendencies)).toHaveLength(PLAYER_TRUTH_TENDENCY_KEYS.length)
   })
 
+  it('transports canonical passing and steal ratings without collapsing them into overall signals', () => {
+    const player = playerWithTruth('passing-profile', { PASSING_ACCURACY: 90, PASSING_VISION: 70, PASSING_TIMING: 80, LIVE_DRIBBLE_PASSING: 70, STEAL_ABILITY: 85 })
+    const profile = createMatchPlayerProfile(player)
+
+    expect(profile.passing).toEqual({ accuracy: 80, vision: 60, timing: 80 })
+    expect(profile.defense.steal).toBe(85)
+  })
+
   it('TEST A · MatchPlayerProfile is built directly from the 80-key PlayerTruthRatings, not a 35/7-key collapse', () => {
     const rimSpecialist = playerWithTruth('rim-specialist', { RIM_FINISHING: 95, CONTACT_FINISHING: 95, VERTICAL_FINISHING: 95, FINISHING_THROUGH_LENGTH: 95 })
     const rimAverage = playerWithTruth('rim-average', {})

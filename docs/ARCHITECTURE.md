@@ -437,7 +437,11 @@ override the actual location. For the shot's existing assigned defender, Engine 
 the current spatial position and adds a bounded proximity signal scaled by the existing
 zone-specific defensive rating and fatigue. This signal combines with the existing tactical
 defense modifier before make probability is resolved; no help defense or defensive movement
-is inferred. Spatial possession views derive
+is inferred. MatchSession can also resolve one canonical pass action per possession: the
+current ball handler selects an active teammate, current court positions determine pass
+length and the maximum steal-skilled defender pressure to the segment, and a completed pass
+transfers spatial ball control while keeping the attacking team. A failed pass is an existing
+turnover with optional steal attribution. No pass trajectory is simulated. Spatial possession views derive
 offense, defense and attacking basket from `MatchSessionState.attackingTeamId` and
 the current period. The existing offensive actor, rebounder and credited stealer
 drive ball control when known; unresolved possession changes release it until a
