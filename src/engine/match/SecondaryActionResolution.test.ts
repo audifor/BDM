@@ -68,6 +68,24 @@ describe('player-driven secondary action resolution', () => {
     expect(selectRebounder([profile('rebound-a', 'PG', 50, 50, 50, 50, 10), profile('rebound-b', 'SG', 50, 50, 50, 50, 20), profile('rebound-c', 'SF', 50, 50, 50, 50, 70)], new FixedRandom(0.35)).playerId).toBe(playerIdFromString('rebound-c'))
     expect(selectRebounder(neutral.map((candidate) => ({ ...candidate, rebounding: { impact: 0 } })), new FixedRandom(0.9)).playerId).toBe(neutral[4]!.playerId)
   })
+
+  it('uses distance to the attacked basket for bounded rebound chances and rebounder selection', () => {
+    const offense = ['PG', 'SG', 'SF', 'PF', 'C'].map((position, index) => profile(`spatial-offense-${index}`, position as BasketballPosition))
+    const defense = ['PG', 'SG', 'SF', 'PF', 'C'].map((position, index) => profile(`spatial-defense-${index}`, position as BasketballPosition))
+    const closeDistances = Object.fromEntries([...offense.map(({ playerId }) => [playerId, 0.5] as const), ...defense.map(({ playerId }) => [playerId, 4] as const)])
+    const farDistances = Object.fromEntries([...offense.map(({ playerId }) => [playerId, 7] as const), ...defense.map(({ playerId }) => [playerId, 4] as const)])
+    const closeProbability = calculateOffensiveReboundProbability({ offensiveProfiles: offense, defensiveProfiles: defense, distanceToBasketMetersByPlayerId: closeDistances })
+    const farProbability = calculateOffensiveReboundProbability({ offensiveProfiles: offense, defensiveProfiles: defense, distanceToBasketMetersByPlayerId: farDistances })
+    const candidates = [profile('near-rebounder', 'PG'), profile('far-rebounder', 'C')]
+    const rebounderDistances = { [candidates[0]!.playerId]: 0.5, [candidates[1]!.playerId]: 7 }
+    const equivalentPositionRandom = new FixedRandom(0.5)
+
+    expect(closeProbability).toBeGreaterThan(farProbability)
+    expect(closeProbability).toBeLessThanOrEqual(0.40)
+    expect(farProbability).toBeGreaterThanOrEqual(0.12)
+    expect(selectRebounder(candidates, equivalentPositionRandom, { distanceToBasketMetersByPlayerId: rebounderDistances }).playerId).toBe(candidates[0]!.playerId)
+    expect(selectRebounder(candidates.map((candidate, index) => ({ ...candidate, rebounding: { impact: index === 0 ? 10 : 90 } })), equivalentPositionRandom, { distanceToBasketMetersByPlayerId: { [candidates[0]!.playerId]: 1, [candidates[1]!.playerId]: 1 } }).playerId).toBe(candidates[1]!.playerId)
+  })
 })
 
 function profile(id: string, primaryPosition: BasketballPosition, ballSecurity = 50, pointOfAttack = 50, mobility = 50, creation = 50, reboundImpact = 50): MatchPlayerProfile {

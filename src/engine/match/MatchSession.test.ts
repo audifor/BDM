@@ -7,7 +7,7 @@ import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
-import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, assignBaseSpatialTargets, BASE_SPATIAL_STEP_METERS, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, movePlayerToward, simulateMatchDetailed, stepMatchSession, stepPlayersTowardBaseSpacing, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
+import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, assignBaseSpatialTargets, assignTransitionSpatialTargets, BASE_SPATIAL_STEP_METERS, TRANSITION_SPATIAL_STEP_METERS, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, movePlayerToward, releaseSpatialBall, simulateMatchDetailed, stepMatchSession, stepPlayersTowardBaseSpacing, stepPlayersTowardTransitionTargets, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
 
 describe('MatchSession', () => {
   it('produces the same complete simulation through stepping as through the wrapper', () => {
@@ -16,7 +16,7 @@ describe('MatchSession', () => {
     const stepped = toMatchSimulation(runToComplete(createMatchSession(createOptions(world, game.id, 12345, 67890))))
 
     expect(stepped).toEqual(whole)
-    expect(regressionSummary(whole)).toEqual({ finalScore: { home: 63, away: 71 }, eventCount: 209, homeTurnovers: 10, awayTurnovers: 8, homeRebounds: 24, awayRebounds: 30, homeAssists: 14, awayAssists: 14 })
+    expect(regressionSummary(whole)).toEqual({ finalScore: { home: 44, away: 75 }, eventCount: 208, homeTurnovers: 13, awayTurnovers: 3, homeRebounds: 23, awayRebounds: 27, homeAssists: 9, awayAssists: 15 })
   })
 
   it('advances one logical unit without mutating the previous sporting state', () => {
@@ -135,6 +135,31 @@ describe('MatchSession', () => {
     expect(new Set(flipped.defensive.map(({ teamId }) => teamId))).toEqual(new Set([state.attackingTeamId]))
   })
 
+  it('targets a transition toward the new attacking basket and moves no farther than the shared step', () => {
+    const { world, game } = createScheduledGameWorld()
+    const state = createMatchSession(createOptions(world, game.id, 12345, 67890)).state
+    const nextAttackingTeamId = state.attackingTeamId === game.homeTeamId ? game.awayTeamId : game.homeTeamId
+    const input = { homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, attackingTeamId: nextAttackingTeamId, period: state.period, activeLineups: state.activeLineups, spatial: state.spatial }
+    const targets = assignTransitionSpatialTargets(input)
+    const moved = stepPlayersTowardTransitionTargets(input)
+    const basket = getSpatialPossessionView({ ...input, spatial: moved }).attackingBasket
+    const offenseDirection = basket.x > moved.court.lengthMeters / 2 ? 1 : -1
+
+    expect(targets.offense).toHaveLength(5)
+    expect(targets.defense).toHaveLength(5)
+    for (const [group, direction] of [[targets.offense, offenseDirection], [targets.defense, -offenseDirection]] as const) {
+      for (const target of group) {
+      const before = state.spatial.players.find((player) => player.playerId === target.playerId)!
+      const after = moved.players.find((player) => player.playerId === target.playerId)!
+      const movedDistance = Math.hypot(after.position.x - before.position.x, after.position.y - before.position.y)
+      expect(Math.sign(target.position.x - before.position.x)).toBe(direction)
+      expect(movedDistance).toBeLessThanOrEqual(TRANSITION_SPATIAL_STEP_METERS + 1e-9)
+      expect(Math.hypot(after.position.x - target.position.x, after.position.y - target.position.y)).toBeLessThanOrEqual(Math.hypot(before.position.x - target.position.x, before.position.y - target.position.y))
+      }
+    }
+    expect(isSpatialStateInsideCourt(moved)).toBe(true)
+  })
+
   it('mirrors offensive and defensive targets when the attacking basket changes', () => {
     const { world, game } = createScheduledGameWorld()
     const state = createMatchSession(createOptions(world, game.id, 12345, 67890)).state
@@ -233,8 +258,13 @@ describe('MatchSession', () => {
 
   it('synchronizes a turnover possession flip without assigning a handler that gameplay did not resolve', () => {
     const { world, game } = createScheduledGameWorld()
-    const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new TurnoverRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() })
+    const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new TurnoverRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new NoCreditActorRandom() })
     const previousAttackingTeamId = session.state.attackingTeamId
+    const previousLineup = previousAttackingTeamId === game.homeTeamId ? session.state.activeLineups.home : session.state.activeLineups.away
+    const expectedHandlerId = previousLineup[0]!
+    const baseSpacing = stepPlayersTowardBaseSpacing({ ...baseSpacingInput(session.state, expectedHandlerId), spatial: controlBallByPlayer(session.state.spatial, expectedHandlerId) })
+    const nextTeamId = previousAttackingTeamId === game.homeTeamId ? game.awayTeamId : game.homeTeamId
+    const expectedSpatial = stepPlayersTowardTransitionTargets({ homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, attackingTeamId: nextTeamId, period: session.state.period, activeLineups: session.state.activeLineups, spatial: releaseSpatialBall(baseSpacing) })
     const result = stepMatchSession(session)
     const view = getSpatialPossessionView(result.session.state)
 
@@ -243,6 +273,7 @@ describe('MatchSession', () => {
     expect(view.defensiveTeamId).toBe(previousAttackingTeamId)
     expect(view.attackingBasket).toEqual(result.session.state.spatial.court.baskets.left)
     expect(view.ballHandlerId).toBeUndefined()
+    expect(result.session.state.spatial).toEqual(expectedSpatial)
     expect(isSpatialStateCoherentWithPossession(result.session.state)).toBe(true)
   })
 
@@ -308,6 +339,10 @@ describe('MatchSession', () => {
     const { world, game } = createScheduledGameWorld()
     const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() })
     const previousAttackingTeamId = session.state.attackingTeamId
+    const previousLineup = previousAttackingTeamId === game.homeTeamId ? session.state.activeLineups.home : session.state.activeLineups.away
+    const spatialBeforeShot = stepPlayersTowardBaseSpacing({ ...baseSpacingInput(session.state, previousLineup[0]!), spatial: controlBallByPlayer(session.state.spatial, previousLineup[0]!) })
+    const nextTeamId = previousAttackingTeamId === game.homeTeamId ? game.awayTeamId : game.homeTeamId
+    const expectedSpatial = stepPlayersTowardTransitionTargets({ homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, attackingTeamId: nextTeamId, period: session.state.period, activeLineups: session.state.activeLineups, spatial: releaseSpatialBall(spatialBeforeShot) })
     const result = stepMatchSession(session)
     const view = getSpatialPossessionView(result.session.state)
 
@@ -315,6 +350,7 @@ describe('MatchSession', () => {
     expect(view.offensiveTeamId).toBe(previousAttackingTeamId === game.homeTeamId ? game.awayTeamId : game.homeTeamId)
     expect(view.ballHandlerId).toBeUndefined()
     expect(result.session.state.spatial.ball.kind).toBe('unassigned')
+    expect(result.session.state.spatial).toEqual(expectedSpatial)
     expect(isSpatialStateCoherentWithPossession(result.session.state)).toBe(true)
   })
 
@@ -322,19 +358,41 @@ describe('MatchSession', () => {
     const { world, game } = createScheduledGameWorld()
     const random = new MissAndDefensiveReboundRandom()
     const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random, decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() })
+    const previousLineup = session.state.attackingTeamId === game.homeTeamId ? session.state.activeLineups.home : session.state.activeLineups.away
+    const spatialBeforeShot = stepPlayersTowardBaseSpacing({ ...baseSpacingInput(session.state, previousLineup[0]!), spatial: controlBallByPlayer(session.state.spatial, previousLineup[0]!) })
     const result = stepMatchSession(session)
     const rebound = result.newEvents.find((event) => event.type === 'rebound')
     const view = getSpatialPossessionView(result.session.state)
     const holder = result.session.state.spatial.players.find((player) => player.playerId === rebound?.playerId)
+    const expectedSpatial = rebound?.type === 'rebound' ? stepPlayersTowardTransitionTargets({ homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, attackingTeamId: rebound.teamId, period: session.state.period, activeLineups: session.state.activeLineups, spatial: controlBallByPlayer(spatialBeforeShot, rebound.playerId) }) : undefined
 
     expect(result.newEvents.some((event) => event.type === 'shotMissed')).toBe(true)
     expect(rebound).toBeDefined()
     expect(view.offensiveTeamId).toBe(rebound!.teamId)
     expect(view.ballHandlerId).toBe(rebound!.playerId)
     expect(result.session.state.spatial.ball).toMatchObject({ kind: 'playerControlled', playerId: rebound!.playerId, teamId: rebound!.teamId, position: holder!.position })
-    expect(result.session.state.spatial.players).toEqual(session.state.spatial.players)
+    expect(result.session.state.spatial).toEqual(expectedSpatial)
     expect(isSpatialStateCoherentWithPossession(result.session.state)).toBe(true)
     expect(random).toMatchObject({ nextIntCalls: 1, nextCalls: 1, chanceCalls: 3 })
+  })
+
+  it('keeps possession and gives the ball to the rebounder on an offensive rebound', () => {
+    const { world, game } = createScheduledGameWorld()
+    const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new MissAndOffensiveReboundRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() })
+    const previousAttackingTeamId = session.state.attackingTeamId
+    const offenseLineup = previousAttackingTeamId === game.homeTeamId ? session.state.activeLineups.home : session.state.activeLineups.away
+    const spatialBeforeShot = stepPlayersTowardBaseSpacing({ ...baseSpacingInput(session.state, offenseLineup[0]!), spatial: controlBallByPlayer(session.state.spatial, offenseLineup[0]!) })
+    const result = stepMatchSession(session)
+    const rebound = result.newEvents.find((event) => event.type === 'rebound')
+    const rebounder = rebound === undefined ? undefined : result.session.state.spatial.players.find((player) => player.playerId === rebound.playerId)
+    const expectedSpatial = rebound?.type === 'rebound' ? controlBallByPlayer(spatialBeforeShot, rebound.playerId) : undefined
+
+    expect(rebound).toMatchObject({ type: 'rebound', teamId: previousAttackingTeamId, reboundType: 'offensive' })
+    expect(result.session.state.attackingTeamId).toBe(previousAttackingTeamId)
+    expect(rebounder).toBeDefined()
+    expect(result.session.state.spatial.ball).toMatchObject({ kind: 'playerControlled', playerId: rebound!.playerId, teamId: previousAttackingTeamId, position: rebounder!.position })
+    expect(result.session.state.spatial).toEqual(expectedSpatial)
+    expect(isSpatialStateCoherentWithPossession(result.session.state)).toBe(true)
   })
 
   it('releases the ball and resolves the switched basket at a period transition', () => {
@@ -541,10 +599,11 @@ function lineupsFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['
 
 class OvertimeRandom implements RandomSource {
   private outcomes = 0
-  next(): number { this.outcomes += 1; return this.outcomes <= 100 ? 0.99 : this.outcomes === 101 ? 0.3 : 0.99 }
+  private chanceCallsSinceOutcome = 0
+  next(): number { this.outcomes += 1; this.chanceCallsSinceOutcome = 0; return 0.99 }
   nextInt(): number { return 24 }
   nextFloat(minInclusive: number): number { return minInclusive }
-  chance(probability: number): boolean { return probability === 0.25 || probability === 0.5 || (this.outcomes === 101 && probability > 0.1 && probability < 0.9) }
+  chance(_probability: number): boolean { if (this.outcomes === 0) return true; this.chanceCallsSinceOutcome += 1; return this.chanceCallsSinceOutcome === 2 || (this.chanceCallsSinceOutcome === 1 && this.outcomes === 101) }
   pick<Item>(items: readonly Item[]): Item { return items[0]! }
 }
 
@@ -578,7 +637,14 @@ class MissAndDefensiveReboundRandom extends FirstSportingRandom {
   chance(_probability: number): boolean { this.chanceCalls += 1; return this.chanceCalls === 1 }
 }
 
+class MissAndOffensiveReboundRandom extends FirstSportingRandom {
+  private chanceCalls = 0
+  chance(_probability: number): boolean { this.chanceCalls += 1; return this.chanceCalls === 1 || this.chanceCalls === 3 }
+}
+
 class FirstActorRandom extends FirstSportingRandom {}
+
+class NoCreditActorRandom extends FirstActorRandom { chance(_probability: number): boolean { return false } }
 
 class ZeroDecisionRandom extends FirstSportingRandom { next(): number { return 0 } }
 

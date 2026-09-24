@@ -163,6 +163,20 @@ the deterministic default FIBA-like ecosystem. Promotion/relegation belongs to H
 uses temporary `TeamStrength` inputs, which are not persisted in Team or GameWorld,
 and does not yet create possessions or events.
 
+The MatchEngine V3 spatial simulation keeps transient player positions in
+`SpatialState`. Shot location, basket distance, defensive contest, pass length,
+passing lanes, rebound geometry and transition positioning are resolved from that
+state. Rebound probability combines existing rebounding ratings and standing reach
+with a bounded proximity context measured from active players to the basket that
+was attacked; rebounder selection also weights current proximity. The winning
+rebounder immediately controls the ball, while offensive rebounds retain possession
+and defensive rebounds change it. After a made basket, turnover or defensive
+rebound, both teams take one bounded `movePlayerToward` step: the new offense moves
+toward its attacking basket and the other team toward its defensive end. The next
+ordinary possession step resumes BaseSpacing. Rebound and transition tactics,
+fast-break decisions, rebound trajectories and rendering remain outside this
+foundation.
+
 The match pipeline is `MatchEngine -> MatchSimulationResult -> Match Result
 Application -> GameWorld`. Simulation does not mutate state; result application
 does not simulate. `MatchSimulationResult` is transient, while `Game.result` is

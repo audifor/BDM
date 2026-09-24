@@ -18,6 +18,7 @@ import { clonePlan, type MatchCoachingState } from './coaching/MatchCoachingStat
 import { calculateBlockCreditProbability, calculateStealCreditProbability } from './DefensiveAttribution'
 import { applySpatialSubstitution, controlBallByPlayer, createInitialSpatialState, getSpatialPossessionView, releaseSpatialBall, type SpatialState } from './SpatialState'
 import { stepPlayersTowardBaseSpacing } from './BaseSpacing'
+import { stepPlayersTowardTransitionTargets } from './TransitionSpatial'
 
 /**
  * Default game-clock rules, used only as the fallback when a game's actual competition cannot
@@ -450,12 +451,14 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     } else {
       const blockedByPlayerId = session.actorRandom.chance(calculateBlockCreditProbability(primaryDefender, shotZone)) ? primaryDefenderId : undefined
       newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'shotMissed', teamId: attackingTeamId, playerId, defenderPlayerId: primaryDefenderId, ...(blockedByPlayerId === undefined ? {} : { blockedByPlayerId }), shotZone, homeScore, awayScore })
-      const offensiveReboundProbability = calculateOffensiveReboundProbability({ offensiveProfiles: lineup.map((candidateId) => profileForPlayer(profiles, candidateId)), defensiveProfiles: defendingLineup.map((candidateId) => profileForPlayer(defendingProfiles, candidateId)) })
+      const distanceToBasketMetersByPlayerId = Object.fromEntries(spatial.players.map((player) => [player.playerId, distanceBetween(player.position, attackingBasket)]))
+      const reboundSpatialContext = { distanceToBasketMetersByPlayerId }
+      const offensiveReboundProbability = calculateOffensiveReboundProbability({ offensiveProfiles: lineup.map((candidateId) => profileForPlayer(profiles, candidateId)), defensiveProfiles: defendingLineup.map((candidateId) => profileForPlayer(defendingProfiles, candidateId)), ...reboundSpatialContext })
       const reboundType = session.random.chance(offensiveReboundProbability) ? 'offensive' : 'defensive'
       const reboundTeamId = reboundType === 'offensive' ? attackingTeamId : otherTeamId(attackingTeamId, state)
       const reboundLineup = reboundTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
       const reboundProfiles = reboundTeamId === state.homeTeamId ? state.playerProfiles.home : state.playerProfiles.away
-      const reboundPlayerId = selectRebounder(reboundLineup.map((candidateId) => profileForPlayer(reboundProfiles, candidateId)), session.actorRandom).playerId
+      const reboundPlayerId = selectRebounder(reboundLineup.map((candidateId) => profileForPlayer(reboundProfiles, candidateId)), session.actorRandom, reboundSpatialContext).playerId
       newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'rebound', teamId: reboundTeamId, playerId: reboundPlayerId, reboundType, homeScore, awayScore })
       attackingTeamId = reboundTeamId
       spatial = controlBallByPlayer(spatial, reboundPlayerId)
@@ -469,6 +472,9 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     passesThisPossession = 0
   }
 
+  if (shouldStartSpatialTransition(newEvents)) {
+    spatial = stepPlayersTowardTransitionTargets({ homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, attackingTeamId, period: state.period, activeLineups: state.activeLineups, spatial })
+  }
   const stateAfterAction = { ...state, clockSecondsRemaining, homeScore, awayScore, attackingTeamId, spatial, passesThisPossession, nextSequence: sequence }
   const fatiguedSession = updateSessionFatigue(session, stateAfterAction, possessionDuration)
   if (clockSecondsRemaining === 0) return finishPeriod(fatiguedSession, fatiguedSession.state, newEvents)
@@ -478,6 +484,10 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
 
 function updateSessionFatigue(session: MatchSession, state: MatchSessionState, elapsedSeconds: number): MatchSession {
   return { ...session, state: { ...state, fatigueByPlayerId: advanceFatigue(state.fatigueByPlayerId, state.squads, state.activeLineups, elapsedSeconds) } }
+}
+
+function shouldStartSpatialTransition(events: readonly MatchEvent[]): boolean {
+  return events.some((event) => event.type === 'shotMade' || event.type === 'turnover' || (event.type === 'rebound' && event.reboundType === 'defensive'))
 }
 
 /** Converts a completed transient session into the existing MatchSimulation contract. */
