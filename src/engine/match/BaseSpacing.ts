@@ -4,7 +4,7 @@ import type { CourtGeometry, CourtPosition } from '@/domain/court'
 
 import type { MatchLineups } from './MatchEngine'
 import type { MatchPlayerProfile, MatchPlayerProfiles } from './MatchPlayerProfile'
-import { getSpatialPossessionView, movePlayerToward, type SpatialState } from './SpatialState'
+import { advancePlayerTowardTarget, getSpatialPossessionView, type SpatialState } from './SpatialState'
 
 const SPATIAL_ROLES: readonly BasketballPosition[] = BASKETBALL_POSITIONS
 const OFFENSIVE_SPOTS: Readonly<Record<BasketballPosition, CourtPosition>> = {
@@ -15,8 +15,6 @@ const OFFENSIVE_SPOTS: Readonly<Record<BasketballPosition, CourtPosition>> = {
   C: { x: 0.82, y: 0.7 },
 }
 const DEFENDER_DISTANCE_FROM_BASKET = 0.55
-
-export const BASE_SPATIAL_STEP_METERS = 2
 
 export interface BaseSpatialTarget {
   readonly playerId: PlayerId
@@ -78,10 +76,10 @@ export function assignBaseSpatialTargets(input: BaseSpacingInput): BaseSpacingTa
 }
 
 /** Advances all ten active players one bounded step toward the current base-spacing targets. */
-export function stepPlayersTowardBaseSpacing(input: BaseSpacingInput): SpatialState {
+export function stepPlayersTowardBaseSpacing(input: BaseSpacingInput, deltaTimeSeconds: number): SpatialState {
   const targets = assignBaseSpatialTargets(input)
   return [...targets.offensive, ...targets.defensive].reduce(
-    (spatial, target) => movePlayerToward(spatial, target.playerId, target.position, BASE_SPATIAL_STEP_METERS),
+    (spatial, target) => advancePlayerTowardTarget(spatial, target.playerId, target.position, deltaTimeSeconds),
     input.spatial,
   )
 }

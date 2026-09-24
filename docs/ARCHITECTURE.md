@@ -284,6 +284,25 @@ universal FIBA/NBA/NCAA rule: bonus, foul-out, substitutions, and future variant
 are deferred to CompetitionRules. The previous abstract one-point field goal has
 been removed from productive simulation.
 
+## MatchEngine v3 human movement foundation (MG6A)
+
+`SpatialState` is the canonical owner of each active player's position and
+velocity in metres and metres per second. `advancePlayerTowardTarget` is a pure,
+deterministic Engine primitive with a 6 m/s maximum speed, a 3 m/s² acceleration
+limit, and a 4 m/s² braking limit. It approaches a target by reducing desired
+speed according to stopping distance, safely stops at the target without
+overshoot, and bounds motion to the court. A controlled ball remains at its
+holder's updated position.
+
+MatchEngine's existing possession duration, after tactical pace adjustment, is
+the movement time authority in seconds. BaseSpacing and TransitionSpatial still
+choose the targets; they pass that same elapsed duration into the kinematics
+primitive. Substitutions preserve the outgoing position and initialize the new
+player at zero velocity. Live and Instant Result use this shared MatchEngine
+path. The visual bridge and renderer consume canonical snapshots and do not
+calculate or write back movement. No RNG, player ratings, physical attributes,
+stamina, collision handling, or pathfinding are part of MG6A.
+
 ## Player basketball domain
 
 Player now persists a `BasketballProfile` with one primary position, the exact

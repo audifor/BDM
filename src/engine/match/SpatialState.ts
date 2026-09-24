@@ -18,7 +18,14 @@ export interface SpatialPlayerState {
   readonly playerId: PlayerId
   readonly teamId: TeamId
   readonly position: CourtPosition
+  /** Canonical movement velocity in metres per second. */
+  readonly velocity: CourtPosition
 }
+
+export const PLAYER_MAX_SPEED_METERS_PER_SECOND = 6
+export const PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED = 3
+export const PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED = 4
+const MOVEMENT_EPSILON = 1e-9
 
 /** No player handler is selected at session creation, so the ball starts unassigned at center. */
 export type BallSpatialState =
@@ -139,30 +146,69 @@ export function releaseSpatialBall(spatial: SpatialState): SpatialState {
   return { ...spatial, ball: { kind: 'unassigned', position: spatial.ball.position } }
 }
 
-/** Moves one active player toward a legal court target by at most maxDistance meters. */
-export function movePlayerToward(
+/** Advances one active player toward a legal court target using the elapsed match-clock seconds. */
+export function advancePlayerTowardTarget(
   spatial: SpatialState,
   playerId: PlayerId,
   target: CourtPosition,
-  maxDistance: number,
+  deltaTimeSeconds: number,
 ): SpatialState {
   const playerIndex = spatial.players.findIndex((candidate) => candidate.playerId === playerId)
   if (playerIndex < 0) throw new Error(`Spatial player ${playerId} is not active`)
   if (!isInsideCourt(target, spatial.court)) throw new RangeError('Movement target must be inside the court')
-  if (!Number.isFinite(maxDistance) || maxDistance < 0) throw new RangeError('Maximum movement distance must be finite and non-negative')
+  if (!Number.isFinite(deltaTimeSeconds) || deltaTimeSeconds < 0) throw new RangeError('Movement delta time must be finite and non-negative')
 
   const player = spatial.players[playerIndex]!
-  const distance = distanceBetween(player.position, target)
-  if (distance === 0 || maxDistance === 0) return spatial
+  if (deltaTimeSeconds === 0) return spatial
 
-  const distanceMoved = Math.min(distance, maxDistance)
-  const ratio = distanceMoved / distance
-  const position = {
-    x: player.position.x + (target.x - player.position.x) * ratio,
-    y: player.position.y + (target.y - player.position.y) * ratio,
+  const dx = target.x - player.position.x
+  const dy = target.y - player.position.y
+  const distance = Math.hypot(dx, dy)
+  const currentSpeed = Math.hypot(player.velocity.x, player.velocity.y)
+  const velocityScale = currentSpeed > PLAYER_MAX_SPEED_METERS_PER_SECOND ? PLAYER_MAX_SPEED_METERS_PER_SECOND / currentSpeed : 1
+  const currentVelocity = { x: player.velocity.x * velocityScale, y: player.velocity.y * velocityScale }
+
+  if (distance <= MOVEMENT_EPSILON) {
+    const stoppedVelocity = moveVectorToward(currentVelocity, { x: 0, y: 0 }, PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED * deltaTimeSeconds)
+    if (stoppedVelocity.x === player.velocity.x && stoppedVelocity.y === player.velocity.y) return spatial
+    return updatePlayerAndBall(spatial, playerIndex, player, player.position, stoppedVelocity)
   }
-  const players = spatial.players.map((candidate, index) => index === playerIndex ? { ...candidate, position } : candidate)
-  const ball = spatial.ball.kind === 'playerControlled' && spatial.ball.playerId === playerId
+
+  const direction = { x: dx / distance, y: dy / distance }
+  const desiredSpeed = Math.min(PLAYER_MAX_SPEED_METERS_PER_SECOND, Math.sqrt(2 * PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED * distance))
+  const desiredVelocity = { x: direction.x * desiredSpeed, y: direction.y * desiredSpeed }
+  const isBrakingTowardTarget = desiredSpeed < currentSpeed && currentVelocity.x * direction.x + currentVelocity.y * direction.y > 0
+  const accelerationLimit = isBrakingTowardTarget ? PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED : PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED
+  const velocity = moveVectorToward(currentVelocity, desiredVelocity, accelerationLimit * deltaTimeSeconds)
+  const displacement = { x: (currentVelocity.x + velocity.x) * deltaTimeSeconds / 2, y: (currentVelocity.y + velocity.y) * deltaTimeSeconds / 2 }
+  const nextPosition = { x: player.position.x + displacement.x, y: player.position.y + displacement.y }
+  const passedTarget = (target.x - player.position.x) * (target.x - nextPosition.x) + (target.y - player.position.y) * (target.y - nextPosition.y) <= 0
+  const reachedTarget = passedTarget || distanceBetween(nextPosition, target) <= MOVEMENT_EPSILON
+  const boundedPosition = {
+    x: Math.max(0, Math.min(spatial.court.lengthMeters, nextPosition.x)),
+    y: Math.max(0, Math.min(spatial.court.widthMeters, nextPosition.y)),
+  }
+  const reachedCourtEdgeX = boundedPosition.x !== nextPosition.x
+  const reachedCourtEdgeY = boundedPosition.y !== nextPosition.y
+  const position = reachedTarget ? target : boundedPosition
+  const nextVelocity = reachedTarget
+    ? { x: 0, y: 0 }
+    : { x: reachedCourtEdgeX ? 0 : velocity.x, y: reachedCourtEdgeY ? 0 : velocity.y }
+  return updatePlayerAndBall(spatial, playerIndex, player, position, nextVelocity)
+}
+
+function moveVectorToward(current: CourtPosition, target: CourtPosition, maxDelta: number): CourtPosition {
+  const dx = target.x - current.x
+  const dy = target.y - current.y
+  const distance = Math.hypot(dx, dy)
+  if (distance <= maxDelta || distance === 0) return target
+  const ratio = maxDelta / distance
+  return { x: current.x + dx * ratio, y: current.y + dy * ratio }
+}
+
+function updatePlayerAndBall(spatial: SpatialState, playerIndex: number, player: SpatialPlayerState, position: CourtPosition, velocity: CourtPosition): SpatialState {
+  const players = spatial.players.map((candidate, index) => index === playerIndex ? { ...candidate, position, velocity } : candidate)
+  const ball = spatial.ball.kind === 'playerControlled' && spatial.ball.playerId === player.playerId
     ? { ...spatial.ball, position }
     : spatial.ball
   return { ...spatial, players, ball }
@@ -177,7 +223,7 @@ export function applySpatialSubstitution(
   const outgoingIndex = spatial.players.findIndex((player) => player.playerId === playerOutId && player.teamId === teamId)
   if (outgoingIndex < 0) throw new Error(`Spatial player ${playerOutId} is not active for team ${teamId}`)
   const outgoing = spatial.players[outgoingIndex]!
-  const incoming: SpatialPlayerState = { playerId: playerInId, teamId, position: outgoing.position }
+  const incoming: SpatialPlayerState = { playerId: playerInId, teamId, position: outgoing.position, velocity: { x: 0, y: 0 } }
   const ball = spatial.ball.kind === 'playerControlled' && spatial.ball.playerId === playerOutId
     ? { ...spatial.ball, playerId: playerInId, teamId, position: incoming.position }
     : spatial.ball
@@ -208,6 +254,6 @@ function lineupPositions(
     const forwardX = formation.x * court.lengthMeters
     const leftX = court.lengthMeters - forwardX
     const y = formation.y * court.widthMeters
-    return { playerId, teamId, position: { x: attacksRight ? forwardX : leftX, y } }
+    return { playerId, teamId, position: { x: attacksRight ? forwardX : leftX, y }, velocity: { x: 0, y: 0 } }
   })
 }

@@ -1,10 +1,7 @@
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { CourtPosition } from '@/domain/court'
-import { BASE_SPATIAL_STEP_METERS } from './BaseSpacing'
 import type { MatchLineups } from './MatchEngine'
-import { getSpatialPossessionView, movePlayerToward, type SpatialState } from './SpatialState'
-
-export const TRANSITION_SPATIAL_STEP_METERS = BASE_SPATIAL_STEP_METERS
+import { advancePlayerTowardTarget, getSpatialPossessionView, type SpatialState } from './SpatialState'
 
 export interface TransitionSpatialTarget {
   readonly playerId: PlayerId
@@ -39,10 +36,10 @@ export function assignTransitionSpatialTargets(input: TransitionSpatialInput): T
 }
 
 /** Takes one bounded transition step; the next possession step returns to BaseSpacing. */
-export function stepPlayersTowardTransitionTargets(input: TransitionSpatialInput): SpatialState {
+export function stepPlayersTowardTransitionTargets(input: TransitionSpatialInput, deltaTimeSeconds: number): SpatialState {
   const targets = assignTransitionSpatialTargets(input)
   return [...targets.offense, ...targets.defense].reduce(
-    (spatial, target) => movePlayerToward(spatial, target.playerId, target.position, TRANSITION_SPATIAL_STEP_METERS),
+    (spatial, target) => advancePlayerTowardTarget(spatial, target.playerId, target.position, deltaTimeSeconds),
     input.spatial,
   )
 }

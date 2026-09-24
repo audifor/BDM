@@ -371,7 +371,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     playerProfiles: state.playerProfiles,
     spatial: controlBallByPlayer(state.spatial, playerId),
     ballHandlerId: playerId,
-  })
+  }, possessionDuration)
   const defendingTeamId = otherTeamId(state.attackingTeamId, state)
   const defendingLineup = defendingTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
   const defendingProfiles = defendingTeamId === state.homeTeamId ? state.playerProfiles.home : state.playerProfiles.away
@@ -473,7 +473,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   }
 
   if (shouldStartSpatialTransition(newEvents)) {
-    spatial = stepPlayersTowardTransitionTargets({ homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, attackingTeamId, period: state.period, activeLineups: state.activeLineups, spatial })
+    spatial = stepPlayersTowardTransitionTargets({ homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, attackingTeamId, period: state.period, activeLineups: state.activeLineups, spatial }, possessionDuration)
   }
   const stateAfterAction = { ...state, clockSecondsRemaining, homeScore, awayScore, attackingTeamId, spatial, passesThisPossession, nextSequence: sequence }
   const fatiguedSession = updateSessionFatigue(session, stateAfterAction, possessionDuration)
