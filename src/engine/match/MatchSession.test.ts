@@ -7,7 +7,7 @@ import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
-import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, movePlayerToward, simulateMatchDetailed, stepMatchSession, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
+import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, assignBaseSpatialTargets, BASE_SPATIAL_STEP_METERS, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, movePlayerToward, simulateMatchDetailed, stepMatchSession, stepPlayersTowardBaseSpacing, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
 
 describe('MatchSession', () => {
   it('produces the same complete simulation through stepping as through the wrapper', () => {
@@ -92,6 +92,109 @@ describe('MatchSession', () => {
     expect(() => movePlayerToward(spatial, playerId, { x: 0, y: 0 }, -1)).toThrow(RangeError)
     expect(() => movePlayerToward(spatial, playerId, { x: spatial.court.lengthMeters + 1, y: 0 }, 1)).toThrow(RangeError)
     expect(() => movePlayerToward(spatial, playerIdFromString('inactive-player'), { x: 0, y: 0 }, 1)).toThrow(/not active/)
+  })
+
+  it('assigns deterministic, distinct court-valid targets to all five players on each side', () => {
+    const { world, game } = createScheduledGameWorld()
+    const state = createMatchSession(createOptions(world, game.id, 12345, 67890)).state
+    const input = baseSpacingInput(state, openingHandlerId(state))
+    const targets = assignBaseSpatialTargets(input)
+
+    expect(assignBaseSpatialTargets(input)).toEqual(targets)
+    expect(targets.offensive).toHaveLength(5)
+    expect(targets.defensive).toHaveLength(5)
+    expect(new Set(targets.offensive.map(({ playerId }) => playerId))).toEqual(new Set(input.activeLineups[state.attackingTeamId === state.homeTeamId ? 'home' : 'away']))
+    expect(new Set(targets.defensive.map(({ playerId }) => playerId))).toEqual(new Set(input.activeLineups[state.attackingTeamId === state.homeTeamId ? 'away' : 'home']))
+    expect(new Set([...targets.offensive, ...targets.defensive].map(({ position }) => `${position.x},${position.y}`)).size).toBe(10)
+    expect([...targets.offensive, ...targets.defensive].every(({ position }) =>
+      position.x >= 0 && position.x <= state.spatial.court.lengthMeters && position.y >= 0 && position.y <= state.spatial.court.widthMeters,
+    )).toBe(true)
+    expect(new Set(targets.offensive.map(({ role }) => role))).toEqual(new Set(['PG', 'SG', 'SF', 'PF', 'C']))
+    expect(targets.offensive.find(({ playerId }) => playerId === input.ballHandlerId)?.role).toBe('PG')
+    const basket = getSpatialPossessionView(input).attackingBasket
+    const attackDirection = basket.x > state.spatial.court.lengthMeters / 2 ? 1 : -1
+    expect(targets.offensive.every(({ position }) =>
+      attackDirection * (position.x - state.spatial.court.lengthMeters / 2) > 0
+      && attackDirection * (basket.x - position.x) > 0,
+    )).toBe(true)
+
+    const offenseIsHome = getSpatialPossessionView(input).offensiveTeamId === state.homeTeamId
+    const offenseLineup = offenseIsHome ? state.activeLineups.home : state.activeLineups.away
+    const offenseProfiles = offenseIsHome ? state.playerProfiles.home : state.playerProfiles.away
+    const fallbackProfiles = offenseProfiles.filter((profile) => profile.playerId !== offenseLineup[4]).map((profile) => ({ ...profile, primaryPosition: 'PG' as const }))
+    const playerProfiles = offenseIsHome
+      ? { ...state.playerProfiles, home: fallbackProfiles }
+      : { ...state.playerProfiles, away: fallbackProfiles }
+    const fallbackRoles = assignBaseSpatialTargets({ ...input, playerProfiles }).offensive.map(({ role }) => role)
+    expect(new Set(fallbackRoles)).toEqual(new Set(['PG', 'SG', 'SF', 'PF', 'C']))
+
+    const nextOffensiveTeamId = state.attackingTeamId === state.homeTeamId ? state.awayTeamId : state.homeTeamId
+    const nextOffensiveLineup = nextOffensiveTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
+    const flipped = assignBaseSpatialTargets({ ...input, attackingTeamId: nextOffensiveTeamId, ballHandlerId: nextOffensiveLineup[0] })
+    expect(new Set(flipped.offensive.map(({ teamId }) => teamId))).toEqual(new Set([nextOffensiveTeamId]))
+    expect(new Set(flipped.defensive.map(({ teamId }) => teamId))).toEqual(new Set([state.attackingTeamId]))
+  })
+
+  it('mirrors offensive and defensive targets when the attacking basket changes', () => {
+    const { world, game } = createScheduledGameWorld()
+    const state = createMatchSession(createOptions(world, game.id, 12345, 67890)).state
+    const handlerId = openingHandlerId(state)
+    const rightTargets = assignBaseSpatialTargets(baseSpacingInput({ ...state, period: 1 }, handlerId))
+    const leftTargets = assignBaseSpatialTargets(baseSpacingInput({ ...state, period: 3 }, handlerId))
+
+    for (const side of ['offensive', 'defensive'] as const) {
+      const leftByPlayer = new Map(leftTargets[side].map((target) => [target.playerId, target.position]))
+      for (const target of rightTargets[side]) {
+        const mirrored = leftByPlayer.get(target.playerId)!
+        expect(mirrored.x + target.position.x).toBeCloseTo(state.spatial.court.lengthMeters)
+        expect(mirrored.y).toBeCloseTo(target.position.y)
+      }
+    }
+  })
+
+  it('places defenders between their paired offensive role and basket', () => {
+    const { world, game } = createScheduledGameWorld()
+    const state = createMatchSession(createOptions(world, game.id, 12345, 67890)).state
+    const input = baseSpacingInput(state, openingHandlerId(state))
+    const targets = assignBaseSpatialTargets(input)
+    const basket = getSpatialPossessionView(input).attackingBasket
+    const offenseByRole = new Map(targets.offensive.map((target) => [target.role, target.position]))
+
+    for (const defender of targets.defensive) {
+      const offense = offenseByRole.get(defender.role)!
+      const basketToDefender = Math.hypot(defender.position.x - basket.x, defender.position.y - basket.y)
+      const basketToOffense = Math.hypot(offense.x - basket.x, offense.y - basket.y)
+      expect(basketToDefender).toBeGreaterThan(0)
+      expect(basketToDefender).toBeLessThan(basketToOffense)
+    }
+  })
+
+  it('steps all players toward their base targets within the movement budget', () => {
+    const { world, game } = createScheduledGameWorld()
+    const state = createMatchSession(createOptions(world, game.id, 12345, 67890)).state
+    const handlerId = openingHandlerId(state)
+    const input = { ...baseSpacingInput(state, handlerId), spatial: controlBallByPlayer(state.spatial, handlerId) }
+    const targets = assignBaseSpatialTargets(input)
+    const pgTarget = targets.offensive.find((target) => target.role === 'PG')!
+    const before = input.spatial.players.find((player) => player.playerId === pgTarget.playerId)!
+    const beforeDistance = Math.hypot(before.position.x - pgTarget.position.x, before.position.y - pgTarget.position.y)
+    const stepped = stepPlayersTowardBaseSpacing(input)
+    const after = stepped.players.find((player) => player.playerId === pgTarget.playerId)!
+    const afterDistance = Math.hypot(after.position.x - pgTarget.position.x, after.position.y - pgTarget.position.y)
+    const distanceMoved = Math.hypot(after.position.x - before.position.x, after.position.y - before.position.y)
+    for (const target of [...targets.offensive, ...targets.defensive]) {
+      const start = input.spatial.players.find((player) => player.playerId === target.playerId)!.position
+      const end = stepped.players.find((player) => player.playerId === target.playerId)!.position
+      expect(Math.hypot(end.x - start.x, end.y - start.y)).toBeLessThanOrEqual(BASE_SPATIAL_STEP_METERS + 1e-9)
+      expect(Math.hypot(end.x - target.position.x, end.y - target.position.y)).toBeLessThanOrEqual(Math.hypot(start.x - target.position.x, start.y - target.position.y))
+    }
+    const runtimeStepped = stepMatchSession(createMatchSession(createOptions(world, game.id, 12345, 67890))).session.state
+
+    expect(afterDistance).toBeLessThan(beforeDistance)
+    expect(distanceMoved).toBeLessThanOrEqual(BASE_SPATIAL_STEP_METERS + 1e-9)
+    expect(stepped.ball).toMatchObject({ kind: 'playerControlled', playerId: handlerId, position: stepped.players.find((player) => player.playerId === handlerId)!.position })
+    expect(isSpatialStateInsideCourt(stepped)).toBe(true)
+    expect(runtimeStepped.spatial.players).not.toEqual(state.spatial.players)
   })
 
   it('synchronizes the active spatial players on substitution and keeps the incoming player in the outgoing position', () => {
@@ -365,6 +468,14 @@ function worldInputFor(world: GameWorld) {
 function createOptions(world: GameWorld, gameId: GameWorld['games'][keyof GameWorld['games']]['id'], sportingSeed: number, actorSeed: number): SimulateMatchOptions {
   const game = world.games[gameId]!
   return { world, gameId, homeStrength: { teamId: game.homeTeamId, value: 50 }, awayStrength: { teamId: game.awayTeamId, value: 50 }, lineups: lineupsFor(world, game), squads: squadsFor(world, game), playerProfiles: profilesFor(world, game), random: new SeededRandomSource(sportingSeed), decisionRandom: new SeededRandomSource(sportingSeed + 1), actorRandom: new SeededRandomSource(actorSeed) }
+}
+
+function baseSpacingInput(state: ReturnType<typeof createMatchSession>['state'], ballHandlerId: ReturnType<typeof createMatchSession>['state']['activeLineups']['home'][number]) {
+  return { homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, attackingTeamId: state.attackingTeamId, period: state.period, activeLineups: state.activeLineups, playerProfiles: state.playerProfiles, spatial: state.spatial, ballHandlerId }
+}
+
+function openingHandlerId(state: ReturnType<typeof createMatchSession>['state']) {
+  return state.attackingTeamId === state.homeTeamId ? state.activeLineups.home[0]! : state.activeLineups.away[0]!
 }
 
 function profilesFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['games']]) { return { home: world.teams[game.homeTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)), away: world.teams[game.awayTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)) } }

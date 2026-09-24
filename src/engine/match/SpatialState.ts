@@ -1,11 +1,11 @@
 import type { PlayerId, TeamId } from '@/domain/ids'
 import { createCourtGeometry, courtRulesetForEcosystem, distanceBetween, isInsideCourt, type CourtGeometry, type CourtPosition } from '@/domain/court'
-import type { SportsCategory } from '@/domain/primitives'
+import { BASKETBALL_POSITIONS, type SportsCategory } from '@/domain/primitives'
 import type { SportsEcosystemKind } from '@/domain/ecosystem'
 import type { MatchLineups } from './MatchEngine'
 import type { MatchPlayerProfiles } from './MatchPlayerProfile'
 
-const SLOT_POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'] as const
+const SLOT_POSITIONS = BASKETBALL_POSITIONS
 const RIGHT_ATTACKING_FORMATION: Readonly<Record<(typeof SLOT_POSITIONS)[number], CourtPosition>> = {
   PG: { x: 0.42, y: 0.5 },
   SG: { x: 0.56, y: 0.2 },

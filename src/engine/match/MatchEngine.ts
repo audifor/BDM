@@ -15,6 +15,7 @@ import { applyPaceToPossessionDuration, applyShotProfile, calculateTacticalDefen
 import { clonePlan, type MatchCoachingState } from './coaching/MatchCoachingState'
 import { calculateBlockCreditProbability, calculateStealCreditProbability } from './DefensiveAttribution'
 import { applySpatialSubstitution, controlBallByPlayer, createInitialSpatialState, releaseSpatialBall, type SpatialState } from './SpatialState'
+import { stepPlayersTowardBaseSpacing } from './BaseSpacing'
 
 /**
  * Default game-clock rules, used only as the fallback when a game's actual competition cannot
@@ -340,7 +341,16 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const profiles = state.attackingTeamId === state.homeTeamId ? state.playerProfiles.home : state.playerProfiles.away
   const offensiveActor = chooseWeighted(lineup.map((playerId) => ({ item: profileForPlayer(profiles, playerId), weight: tacticalUsageWeight(playerId, profileForPlayer(profiles, playerId).offense.usage, lineup, attackingPlan) })), session.decisionRandom)
   const playerId = offensiveActor.playerId
-  let spatial = controlBallByPlayer(state.spatial, playerId)
+  let spatial = stepPlayersTowardBaseSpacing({
+    homeTeamId: state.homeTeamId,
+    awayTeamId: state.awayTeamId,
+    attackingTeamId: state.attackingTeamId,
+    period: state.period,
+    activeLineups: state.activeLineups,
+    playerProfiles: state.playerProfiles,
+    spatial: controlBallByPlayer(state.spatial, playerId),
+    ballHandlerId: playerId,
+  })
   const defendingTeamId = otherTeamId(state.attackingTeamId, state)
   const defendingLineup = defendingTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
   const defendingProfiles = defendingTeamId === state.homeTeamId ? state.playerProfiles.home : state.playerProfiles.away

@@ -432,7 +432,10 @@ state is not saved and does not affect sporting resolution. Spatial possession v
 offense, defense and attacking basket from `MatchSessionState.attackingTeamId` and
 the current period. The existing offensive actor, rebounder and credited stealer
 drive ball control when known; unresolved possession changes release it until a
-handler is selected. Individual player statistics
+handler is selected. At each possession step, Engine derives base offensive and
+defensive targets from primary-position roles and the attacking direction, then
+moves the ten active players by a bounded step through the canonical primitive.
+Targets are not persisted and do not affect sporting decisions. Individual player statistics
 are a transient Engine projection: PlayerMatchStats is reconstructed from
 MatchSimulation lineups and MatchEvents and is never persisted. MatchViewer passes
 only revealed events to that projection, so its live boxscore cannot expose future

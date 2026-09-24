@@ -16,6 +16,8 @@ export { applyMatchResult, applyCompletedMatch, createMatchStatLog, MatchResultA
 export { calculateMatchPlayerStats, calculateTeamMatchStats } from './PlayerMatchStats'
 export { createMatchPlayerProfile } from './MatchPlayerProfile'
 export { applySpatialSubstitution, attackingBasketForTeam, controlBallByPlayer, createInitialSpatialState, defendingBasketForTeam, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, movePlayerToward, releaseSpatialBall } from './SpatialState'
+export { assignBaseSpatialTargets, BASE_SPATIAL_STEP_METERS, stepPlayersTowardBaseSpacing } from './BaseSpacing'
+export type { BaseSpacingInput, BaseSpacingTargets, BaseSpatialTarget } from './BaseSpacing'
 export { calculateDefenseExecution, calculateEffectiveDefense, calculateShotMakeProbability, calculateShotZoneWeights, pointsForShotZone, SHOT_RESOLUTION_V1 } from './ShotResolution'
 export { chooseWeighted } from './WeightedChoice'
 export { calculateDefensiveAssignments } from './Matchups'
