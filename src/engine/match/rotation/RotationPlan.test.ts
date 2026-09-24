@@ -2,14 +2,17 @@ import { describe, expect, it } from 'vitest'
 
 import { countryIdFromString, playerIdFromString, teamIdFromString } from '@/domain/ids'
 import { createPlayer, type Player } from '@/domain/player'
+import { PLAYER_TRUTH_TENDENCY_KEYS, type PlayerTruthTendencies } from '@/domain/player/PlayerTruthCatalog'
 
 import { type MatchSession, type MatchSquads } from '../MatchEngine'
+import type { MatchPlayerProfile } from '../MatchPlayerProfile'
 import { applyDueRotations, INITIAL_ROTATION_CONTROLLER_STATE } from './RotationController'
 import { createDefaultRotationPlan } from './RotationPlan'
 
 const TEAM_ID = teamIdFromString('rotation-team')
 const OPPONENT_ID = teamIdFromString('opponent-team')
 const positions = ['PG', 'SG', 'SF', 'PF', 'C'] as const
+const neutralTendencies = Object.fromEntries(PLAYER_TRUTH_TENDENCY_KEYS.map((key) => [key, 50])) as unknown as PlayerTruthTendencies
 const starters = positions.map((position) => playerIdFromString(`starter-${position}`))
 const backups = positions.map((position) => playerIdFromString(`backup-${position}`))
 
@@ -68,6 +71,6 @@ function player(id: string, position: typeof positions[number], impact: number):
 function playerRecord(players: readonly Player[]): Record<Player['id'], Player> { return Object.fromEntries(players.map((item) => [item.id, item])) as Record<Player['id'], Player> }
 
 function sessionAt(clockSecondsRemaining: number, squads: MatchSquads): MatchSession {
-  const profile = (playerId: typeof starters[number]) => ({ playerId, primaryPosition: 'PG' as const, offense: { usage: 50, rimAttack: 50, shooting: 50, creation: 50, ballSecurity: 50 }, defense: { pointOfAttack: 50, interior: 50, mobility: 50 }, rebounding: { impact: 50 } })
+  const profile = (playerId: typeof starters[number]) => ({ playerId, primaryPosition: 'PG' as const, tendencies: neutralTendencies as unknown as MatchPlayerProfile['tendencies'], offense: { usage: 50, rimAttack: 50, shooting: 50, creation: 50, ballSecurity: 50 }, defense: { pointOfAttack: 50, interior: 50, mobility: 50 }, rebounding: { impact: 50 } })
   return { state: { gameId: 'game' as MatchSession['state']['gameId'], homeTeamId: TEAM_ID, awayTeamId: OPPONENT_ID, initialLineups: { home: starters, away: squads.away }, activeLineups: { home: starters, away: squads.away }, squads, fatigueByPlayerId: Object.fromEntries([...squads.home, ...squads.away].map((id) => [id, 0])), playerProfiles: { home: squads.home.map(profile), away: squads.away.map(profile) }, coachingState: { home: { currentTacticalPlan: { pace: 0, shotProfile: { rim: 0, midRange: 0, threePoint: 0 }, defense: { interior: 0, perimeter: 0 } } }, away: { currentTacticalPlan: { pace: 0, shotProfile: { rim: 0, midRange: 0, threePoint: 0 }, defense: { interior: 0, perimeter: 0 } } } }, homeStrength: { teamId: TEAM_ID, value: 50 }, awayStrength: { teamId: OPPONENT_ID, value: 50 }, clockRules: { periodCount: 4, periodSeconds: 600, overtimeSeconds: 300 }, openingTeamId: TEAM_ID, period: 1, clockSecondsRemaining, homeScore: 42, awayScore: 40, attackingTeamId: TEAM_ID, nextSequence: 1, events: [], isComplete: false }, random: {} as MatchSession['random'], decisionRandom: {} as MatchSession['decisionRandom'], actorRandom: {} as MatchSession['actorRandom'] }
 }

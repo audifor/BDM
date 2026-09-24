@@ -1,10 +1,11 @@
-import type { Player, PlayerTruthRatings } from '@/domain/player'
+import type { Player, PlayerTendencies, PlayerTruthRatings } from '@/domain/player'
 import type { PlayerId } from '@/domain/ids'
 import type { BasketballPosition } from '@/domain/primitives'
 
 export interface MatchPlayerProfile {
   readonly playerId: PlayerId
   readonly primaryPosition: BasketballPosition
+  readonly tendencies: PlayerTendencies
   readonly offense: {
     readonly usage: number
     readonly rimAttack: number
@@ -37,6 +38,7 @@ export function createMatchPlayerProfile(player: Player): MatchPlayerProfile {
   return {
     playerId: player.id,
     primaryPosition: player.basketball.primaryPosition,
+    tendencies: player.basketball.tendencies,
     offense: {
       usage: clampSignal(average(truth, ['SHOT_TOUCH', 'ADVANTAGE_CREATION', 'DRIVE_CREATION', 'OFFENSIVE_AWARENESS'])),
       rimAttack: clampSignal(average(truth, ['RIM_FINISHING', 'CONTACT_FINISHING', 'VERTICAL_FINISHING', 'FINISHING_THROUGH_LENGTH'])),

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { countryIdFromString, playerIdFromString } from '@/domain/ids'
 import { createPlayer } from '@/domain/player'
+import { PLAYER_TRUTH_TENDENCY_KEYS, type PlayerTruthTendencies } from '@/domain/player/PlayerTruthCatalog'
 import type { BasketballPosition } from '@/domain/primitives'
 import type { RandomSource } from '@/engine/random'
 
@@ -9,6 +10,8 @@ import { calculateAssistProbability, selectAssister } from './AssistResolution'
 import { createMatchPlayerProfile, type MatchPlayerProfile } from './MatchPlayerProfile'
 import { calculateOffensiveReboundProbability, selectRebounder } from './ReboundResolution'
 import { calculateDefensivePressure, calculateTurnoverProbability, TURNOVER_RESOLUTION_V1 } from './TurnoverResolution'
+
+const neutralTendencies = Object.fromEntries(PLAYER_TRUTH_TENDENCY_KEYS.map((key) => [key, 50])) as unknown as PlayerTruthTendencies
 
 describe('player-driven secondary action resolution', () => {
   it('adapts a known rebounding vector and keeps its signal bounded', () => {
@@ -55,7 +58,7 @@ describe('player-driven secondary action resolution', () => {
 })
 
 function profile(id: string, primaryPosition: BasketballPosition, ballSecurity = 50, pointOfAttack = 50, mobility = 50, creation = 50, reboundImpact = 50): MatchPlayerProfile {
-  return { playerId: playerIdFromString(id), primaryPosition, offense: { usage: 50, rimAttack: 50, shooting: 50, creation, ballSecurity }, defense: { pointOfAttack, interior: 50, mobility }, rebounding: { impact: reboundImpact } }
+  return { playerId: playerIdFromString(id), primaryPosition, tendencies: neutralTendencies as unknown as MatchPlayerProfile['tendencies'], offense: { usage: 50, rimAttack: 50, shooting: 50, creation, ballSecurity }, defense: { pointOfAttack, interior: 50, mobility }, rebounding: { impact: reboundImpact } }
 }
 
 class FixedRandom implements RandomSource {

@@ -1,15 +1,18 @@
 import { describe, expect, it } from 'vitest'
 
-import { countryIdFromString, playerIdFromString, teamIdFromString } from '@/domain/ids'
-import { createPlayer } from '@/domain/player'
+import { countryIdFromString, playerIdFromString } from '@/domain/ids'
+import { createPlayer, PLAYER_TRUTH_RATING_KEYS, type PlayerTruthRatings } from '@/domain/player'
+import { PLAYER_TRUTH_TENDENCY_KEYS, type PlayerTruthTendencies } from '@/domain/player/PlayerTruthCatalog'
 import type { RandomSource } from '@/engine/random'
 
 import { createMatchPlayerProfile } from './MatchPlayerProfile'
 import { calculateShotMakeProbability, calculateShotZoneWeights, pointsForShotZone } from './ShotResolution'
 import { chooseWeighted } from './WeightedChoice'
 
-const profile = createMatchPlayerProfile(createPlayer({ id: playerIdFromString('offense-player'), firstName: 'Test', lastName: 'Shooter', gender: 'male', nationalityId: countryIdFromString('country'), basketball: { primaryPosition: 'SG', ratings: { finishing: 80, shooting: 70, playmaking: 50, perimeterDefense: 50, interiorDefense: 50, rebounding: 50, athleticism: 40 } }, bio: { dateOfBirth: '2008-06-14', heightCm: 188, weightKg: 86 } }))
-const defender = createMatchPlayerProfile(createPlayer({ id: playerIdFromString('defense-player'), firstName: 'Test', lastName: 'Defender', gender: 'male', nationalityId: countryIdFromString('country'), basketball: { primaryPosition: 'SG', ratings: { finishing: 50, shooting: 50, playmaking: 50, perimeterDefense: 50, interiorDefense: 50, rebounding: 50, athleticism: 50 } }, bio: { dateOfBirth: '2008-06-14', heightCm: 188, weightKg: 86 } }))
+const neutralTendencies = Object.fromEntries(PLAYER_TRUTH_TENDENCY_KEYS.map((key) => [key, 50])) as unknown as PlayerTruthTendencies
+const neutralRatings = Object.fromEntries(PLAYER_TRUTH_RATING_KEYS.map((key) => [key, 50])) as unknown as PlayerTruthRatings
+const profile = createMatchPlayerProfile(createPlayer({ id: playerIdFromString('offense-player'), firstName: 'Test', lastName: 'Shooter', gender: 'male', nationalityId: countryIdFromString('country'), basketball: { primaryPosition: 'SG', ratings: { finishing: 80, shooting: 70, playmaking: 50, perimeterDefense: 50, interiorDefense: 50, rebounding: 50, athleticism: 40 }, tendencies: neutralTendencies }, bio: { dateOfBirth: '2008-06-14', heightCm: 188, weightKg: 86 } }))
+const defender = createMatchPlayerProfile(createPlayer({ id: playerIdFromString('defense-player'), firstName: 'Test', lastName: 'Defender', gender: 'male', nationalityId: countryIdFromString('country'), basketball: { primaryPosition: 'SG', ratings: { finishing: 50, shooting: 50, playmaking: 50, perimeterDefense: 50, interiorDefense: 50, rebounding: 50, athleticism: 50 }, tendencies: neutralTendencies }, bio: { dateOfBirth: '2008-06-14', heightCm: 188, weightKg: 86 } }))
 
 describe('player-driven offense primitives', () => {
   it('adapts the bootstrap ratings into exact bounded match signals', () => {
@@ -30,6 +33,25 @@ describe('player-driven offense primitives', () => {
     expect(pointsForShotZone('threePoint')).toBe(3)
     expect(calculateShotMakeProbability({ shotZone: 'rim', shooterProfile: profile, shooterFatigue: 0, defenderProfile: defender, defenderFatigue: 0 })).toBeCloseTo(0.6685)
     expect(calculateShotMakeProbability({ shotZone: 'rim', shooterProfile: profile, shooterFatigue: 80, defenderProfile: defender, defenderFatigue: 0 })).toBeCloseTo(0.6045)
+  })
+
+  it('uses shot tendencies to change zone selection weights without changing shot execution skill', () => {
+    const shooter = (id: string, threePointTendency: number) => createMatchPlayerProfile(createPlayer({
+      id: playerIdFromString(id), firstName: 'Test', lastName: 'Shooter', gender: 'male', nationalityId: countryIdFromString('country'),
+      basketball: { primaryPosition: 'SG', ratings: neutralRatings, tendencies: { ...neutralTendencies, THREE_POINT_FREQUENCY: threePointTendency } },
+      bio: { dateOfBirth: '2008-06-14', heightCm: 188, weightKg: 86 },
+    }))
+    const low = shooter('low-three-tendency', 10)
+    const high = shooter('high-three-tendency', 90)
+    const lowWeights = calculateShotZoneWeights(low)
+    const highWeights = calculateShotZoneWeights(high)
+
+    expect(high.offense).toEqual(low.offense)
+    expect(highWeights.threePoint).toBeGreaterThan(lowWeights.threePoint)
+    expect(highWeights.rim).toBe(lowWeights.rim)
+    expect(highWeights.midRange).toBe(lowWeights.midRange)
+    expect(calculateShotMakeProbability({ shotZone: 'threePoint', shooterProfile: high, shooterFatigue: 0, defenderProfile: defender, defenderFatigue: 0 }))
+      .toBe(calculateShotMakeProbability({ shotZone: 'threePoint', shooterProfile: low, shooterFatigue: 0, defenderProfile: defender, defenderFatigue: 0 }))
   })
 })
 

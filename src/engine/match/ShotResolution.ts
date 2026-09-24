@@ -28,7 +28,13 @@ export const SHOT_RESOLUTION_V1 = {
 export function calculateShotZoneWeights(profile: MatchPlayerProfile): Readonly<Record<ShotZone, number>> {
   return Object.fromEntries((['rim', 'midRange', 'threePoint'] as const).map((zone) => {
     const weights = SHOT_RESOLUTION_V1.zoneWeights[zone]
-    return [zone, weights.base + profile.offense.rimAttack * weights.rimAttack + profile.offense.shooting * weights.shooting + profile.offense.creation * weights.creation]
+    const naturalWeight = weights.base + profile.offense.rimAttack * weights.rimAttack + profile.offense.shooting * weights.shooting + profile.offense.creation * weights.creation
+    const tendency = zone === 'rim'
+      ? profile.tendencies.RIM_ATTEMPT_FREQUENCY
+      : zone === 'midRange'
+        ? profile.tendencies.MIDRANGE_FREQUENCY
+        : profile.tendencies.THREE_POINT_FREQUENCY
+    return [zone, naturalWeight * shotTendencyFactor(tendency)]
   })) as Record<ShotZone, number>
 }
 
@@ -60,4 +66,5 @@ function calculateExecution(shotZone: ShotZone, profile: MatchPlayerProfile): nu
   return profile.offense.shooting * 0.90 + profile.offense.creation * 0.10
 }
 
+function shotTendencyFactor(value: number): number { return 0.5 + value / 100 }
 function clamp(value: number, minimum: number, maximum: number): number { return Math.min(maximum, Math.max(minimum, value)) }

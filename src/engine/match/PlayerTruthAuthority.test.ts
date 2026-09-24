@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { countryIdFromString, playerIdFromString } from '@/domain/ids'
 import { createPlayer, PLAYER_TRUTH_RATING_KEYS, type Player, type PlayerTruthRatings } from '@/domain/player'
+import { PLAYER_TRUTH_TENDENCY_KEYS, type PlayerTruthTendencies } from '@/domain/player/PlayerTruthCatalog'
 
 import { createMatchPlayerProfile } from './MatchPlayerProfile'
 import { calculateShotMakeProbability } from './ShotResolution'
@@ -11,20 +12,35 @@ import { generateWorld } from '@/engine/world'
 const baseRatings: PlayerTruthRatings = Object.fromEntries(
   PLAYER_TRUTH_RATING_KEYS.map((key) => [key, 50]),
 ) as unknown as PlayerTruthRatings
+const baseTendencies: PlayerTruthTendencies = Object.fromEntries(
+  PLAYER_TRUTH_TENDENCY_KEYS.map((key) => [key, 50]),
+) as unknown as PlayerTruthTendencies
 
-function playerWithTruth(id: string, overrides: Partial<PlayerTruthRatings>): Player {
+function playerWithTruth(id: string, overrides: Partial<PlayerTruthRatings>, tendencies: PlayerTruthTendencies = baseTendencies): Player {
   return createPlayer({
     id: playerIdFromString(id),
     firstName: 'Test',
     lastName: 'Player',
     gender: 'male',
     nationalityId: countryIdFromString('country'),
-    basketball: { primaryPosition: 'SF', ratings: { ...baseRatings, ...overrides } },
+    basketball: { primaryPosition: 'SF', ratings: { ...baseRatings, ...overrides }, tendencies },
     bio: { dateOfBirth: '2008-06-14', heightCm: 198, weightKg: 90 },
   })
 }
 
 describe('MG4B · player truth gameplay authority', () => {
+  it('transports the complete canonical tendency truth to MatchPlayerProfile', () => {
+    const tendencies = { ...baseTendencies, RIM_ATTEMPT_FREQUENCY: 83, MIDRANGE_FREQUENCY: 27, THREE_POINT_FREQUENCY: 91 }
+    const player = playerWithTruth('tendency-profile', {}, tendencies)
+    const profile = createMatchPlayerProfile(player)
+
+    expect(profile.tendencies).toEqual(player.basketball.tendencies)
+    expect(profile.tendencies.RIM_ATTEMPT_FREQUENCY).toBe(83)
+    expect(profile.tendencies.MIDRANGE_FREQUENCY).toBe(27)
+    expect(profile.tendencies.THREE_POINT_FREQUENCY).toBe(91)
+    expect(Object.keys(profile.tendencies)).toHaveLength(PLAYER_TRUTH_TENDENCY_KEYS.length)
+  })
+
   it('TEST A · MatchPlayerProfile is built directly from the 80-key PlayerTruthRatings, not a 35/7-key collapse', () => {
     const rimSpecialist = playerWithTruth('rim-specialist', { RIM_FINISHING: 95, CONTACT_FINISHING: 95, VERTICAL_FINISHING: 95, FINISHING_THROUGH_LENGTH: 95 })
     const rimAverage = playerWithTruth('rim-average', {})
