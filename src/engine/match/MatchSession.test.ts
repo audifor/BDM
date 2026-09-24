@@ -16,7 +16,7 @@ describe('MatchSession', () => {
     const stepped = toMatchSimulation(runToComplete(createMatchSession(createOptions(world, game.id, 12345, 67890))))
 
     expect(stepped).toEqual(whole)
-    expect(regressionSummary(whole)).toEqual({ finalScore: { home: 22, away: 58 }, eventCount: 223, homeTurnovers: 12, awayTurnovers: 9, homeRebounds: 20, awayRebounds: 42, homeAssists: 5, awayAssists: 11 })
+    expect(regressionSummary(whole)).toEqual({ finalScore: { home: 27, away: 69 }, eventCount: 221, homeTurnovers: 13, awayTurnovers: 7, homeRebounds: 22, awayRebounds: 37, homeAssists: 7, awayAssists: 19 })
   })
 
   it('advances one logical unit without mutating the previous sporting state', () => {
@@ -335,7 +335,7 @@ describe('MatchSession', () => {
     expect(continued.session.state.attackingTeamId).toBe(continuingSession.state.attackingTeamId)
     expect(continued.session.state.screenIntent).toBeUndefined()
 
-    const session = withActivePickAndRollContext(createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new TurnoverRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new StealTurnoverRandom() }))
+    const session = withActivePickAndRollContext(createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new TurnoverRandom(), decisionRandom: new StealTurnoverRandom(), actorRandom: new FirstActorRandom() }))
     const oldAttackingTeamId = session.state.attackingTeamId
     const result = stepMatchSession(session)
     const turnover = result.newEvents.find((event) => event.type === 'turnover')
@@ -424,7 +424,7 @@ describe('MatchSession', () => {
 
   it('assigns a credited steal to the existing defensive actor', () => {
     const { world, game } = createScheduledGameWorld()
-    const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new TurnoverRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new StealTurnoverRandom() })
+    const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new TurnoverRandom(), decisionRandom: new StealTurnoverRandom(), actorRandom: new FirstActorRandom() })
     const previousAttackingTeamId = session.state.attackingTeamId
     const result = stepMatchSession(session)
     const turnover = result.newEvents.find((event) => event.type === 'turnover')
@@ -781,7 +781,7 @@ class TurnoverRandom extends FirstSportingRandom {
   next(): number { return 0 }
 }
 
-class StealTurnoverRandom extends FirstSportingRandom {
+class StealTurnoverRandom extends TurnoverRandom {
   chance(_probability: number): boolean { return true }
 }
 

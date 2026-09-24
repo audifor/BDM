@@ -254,18 +254,25 @@ and resolves today's games before requesting CalendarEngine to advance the date.
 Zustand stores only the current `GameWorld` and delegates each command to that
 layer; React only renders derived information and invokes store commands.
 
-Team strength is temporarily a non-persisted value of 50 for every team. Match
-randomness is provisionally seeded from a stable explicit hash of each `GameId`;
-this makes one game's instant result reproducible without introducing persistent
-career RNG state. A future ratings and save-system design will replace both
-prototype choices.
+Team strength is temporarily a non-persisted value of 50 for every team. At the
+Application match-run boundary, a fresh unsigned 32-bit seed is generated from
+Web Crypto once; the same seed derives the sporting, decision, and actor
+`SeededRandomSource` streams. MatchEngine consumes only those injected streams;
+the decision stream owns action and spatial actor selection, while the actor
+stream owns assist/block attribution. The same canonical input, seed, and
+commands therefore reproduce the same canonical match, independently of stat
+attribution draws. Callers may pass an explicit seed for tests, debug, or replay.
+Live and Instant use the same preparation function and seed authority. Match seeds and
+mid-match sessions are not persisted: Save stores only the completed game's
+canonical score, so save/resume replay remains deferred until match-session
+persistence is designed.
 
 ## Match simulation and viewer
 
 `MatchEngine` can produce either a final `MatchSimulationResult` for Instant
 Result or a transient `MatchSimulation` containing a chronological `MatchEvent`
 stream. Its core is a transient MatchSession: it retains immutable sporting state
-and the supplied sporting and actor RNG runtimes while advancing one logical
+and the supplied sporting, decision, and actor RNG runtimes while advancing one logical
 possession or period transition at a time. `simulateMatchDetailed` simply steps a
 MatchSession until completion, so it remains the convenient complete-simulation
 API and no second sporting algorithm exists.

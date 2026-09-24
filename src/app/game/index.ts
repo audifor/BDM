@@ -49,7 +49,9 @@ export {
 } from './WorldDbSession'
 export { bootstrapGameWorldFromWorldDb } from './WorldDbGameBootstrap'
 export {
-  createPrototypeGameRandom,
+  createMatchSeed,
+  createMatchRandomSources,
+  type MatchSeedFactory,
   completeMatch,
   createLiveUserMatch,
   instantResult,

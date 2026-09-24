@@ -6,7 +6,9 @@ export class LiveMatchController {
   private session: MatchSession
   private homeController: RotationControllerState = INITIAL_ROTATION_CONTROLLER_STATE
   private awayController: RotationControllerState = INITIAL_ROTATION_CONTROLLER_STATE
-  public constructor(private readonly options: SimulateMatchWithRotationsOptions) { this.session = createMatchSession(options) }
+  public constructor(private readonly options: SimulateMatchWithRotationsOptions & { readonly matchSeed: number }) { this.session = createMatchSession(options) }
+  /** Seed retained for this live run so it can be recorded or reused for replay/debug. */
+  public get matchSeed(): number { return this.options.matchSeed }
   public advanceOneStep(): MatchSimulation {
     if (!this.session.state.isComplete) {
       const home = applyDueRotations(this.session, this.options.homeRotationPlan, this.homeController)
@@ -55,7 +57,7 @@ export class LiveMatchController {
     return this.snapshot()
   }
   public skipToEnd(): MatchSimulation { while (!this.session.state.isComplete) this.advanceOneStep(); return this.snapshot() }
-  public snapshot(): MatchSimulation { const state = this.session.state; return state.isComplete ? toMatchSimulation(this.session) : { gameId: state.gameId, homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, lineups: state.initialLineups, squads: state.squads, events: state.events, finalScore: { home: state.homeScore, away: state.awayScore } } }
+  public snapshot(): MatchSimulation { const state = this.session.state; return state.isComplete ? toMatchSimulation(this.session) : { gameId: state.gameId, matchSeed: state.matchSeed, homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, lineups: state.initialLineups, squads: state.squads, events: state.events, finalScore: { home: state.homeScore, away: state.awayScore } } }
   public get isComplete(): boolean { return this.session.state.isComplete }
   public get gameId() { return this.session.state.gameId }
   public get currentPlans() { return this.session.state.coachingState }

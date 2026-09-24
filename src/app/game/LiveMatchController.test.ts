@@ -13,10 +13,10 @@ import { createNewGame } from './createNewGame'
 describe('LiveMatchController', () => {
   it('starts without future sporting events and reaches the batch result through the same steps', () => {
     const world = createNewGame()
-    const controller = createLiveUserMatch(world)
+    const controller = createLiveUserMatch(world, undefined, 12345)
     expect(controller.snapshot().events).toHaveLength(1)
     while (!controller.isComplete) controller.advanceOneStep()
-    expect(controller.snapshot()).toEqual(prepareUserMatch(world))
+    expect(controller.snapshot()).toEqual(prepareUserMatch(world, undefined, 12345))
   })
 
   it('returns presentation snapshots around exactly one live sporting step', () => {
@@ -68,11 +68,11 @@ describe('LiveMatchController', () => {
       tacticalOverride: { pace: -2, shotProfile: { rim: 2, midRange: -1, threePoint: 0 } },
     })
 
-    const instantInput = prepareMatchOptions(world, game)
+    const instantInput = prepareMatchOptions(world, game, undefined, 24680)
     const instantSession = createMatchSession(instantInput)
-    const repeatedInput = prepareMatchOptions(world, game)
+    const repeatedInput = prepareMatchOptions(world, game, undefined, 24680)
     const repeatedSession = createMatchSession(repeatedInput)
-    const live = createLiveUserMatch(world)
+    const live = createLiveUserMatch(world, undefined, 24680)
 
     expect(instantSession.state.coachingState.home.currentTacticalPlan).toMatchObject({ pace: 2, shotProfile: { rim: -1, midRange: 1, threePoint: 2 } })
     expect(instantSession.state.coachingState.away.currentTacticalPlan).toMatchObject({ pace: -2, shotProfile: { rim: 2, midRange: -1, threePoint: 0 } })
@@ -160,13 +160,13 @@ describe('LiveMatchController', () => {
 
   it('applies live tactics to runtime state consumed by the next gameplay step', () => {
     const world = createNewGame()
-    const baseline = createLiveUserMatch(world)
-    const coached = createLiveUserMatch(world)
-    const replay = createLiveUserMatch(world)
+    const baseline = createLiveUserMatch(world, undefined, 424242)
+    const coached = createLiveUserMatch(world, undefined, 424242)
+    const replay = createLiveUserMatch(world, undefined, 424242)
     const initial = coached.snapshot()
     const plans = {
-      home: { ...createDefaultTacticalPlan(), pace: 2 as const, shotProfile: { rim: 2 as const, midRange: -1 as const, threePoint: 1 as const }, defense: { interior: 2 as const, perimeter: -1 as const }, featuredPlayerId: world.teams[initial.homeTeamId]!.rosterPlayerIds[0]! },
-      away: { ...createDefaultTacticalPlan(), pace: 2 as const, shotProfile: { rim: 1 as const, midRange: -2 as const, threePoint: 2 as const }, defense: { interior: 2 as const, perimeter: -1 as const }, featuredPlayerId: world.teams[initial.awayTeamId]!.rosterPlayerIds[0]! },
+      home: { ...createDefaultTacticalPlan(), pace: 2 as const, shotProfile: { rim: 2 as const, midRange: -1 as const, threePoint: 1 as const }, defense: { interior: 2 as const, perimeter: -1 as const, pickAndRollCoverage: 'switch' as const }, featuredPlayerId: world.teams[initial.homeTeamId]!.rosterPlayerIds[0]! },
+      away: { ...createDefaultTacticalPlan(), pace: 2 as const, shotProfile: { rim: 1 as const, midRange: -2 as const, threePoint: 2 as const }, defense: { interior: 2 as const, perimeter: -1 as const, pickAndRollCoverage: 'switch' as const }, featuredPlayerId: world.teams[initial.awayTeamId]!.rosterPlayerIds[0]! },
     }
 
     for (const controller of [coached, replay]) {
@@ -208,10 +208,14 @@ describe('LiveMatchController', () => {
     expect(controller.replacementCandidates(userTeam.id, playerOutId)).toEqual([])
     expect(updated.events.at(-1)).toMatchObject({ type: 'substitution', teamId: userTeam.id, playerOutId, playerInId, source: 'manual' })
 
-    const afterStep = controller.advanceOneStep()
-    const gameplayEvent = afterStep.events.at(-1)!
-    expect('teamId' in gameplayEvent && 'playerId' in gameplayEvent).toBe(true)
-    if ('teamId' in gameplayEvent && 'playerId' in gameplayEvent) {
+    let afterStep = updated
+    let gameplayEvent = afterStep.events.find((event, index) => index >= updated.events.length && 'teamId' in event && 'playerId' in event)
+    for (let step = 0; gameplayEvent === undefined && step < 3; step += 1) {
+      afterStep = controller.advanceOneStep()
+      gameplayEvent = afterStep.events.find((event, index) => index >= updated.events.length && 'teamId' in event && 'playerId' in event)
+    }
+    expect(gameplayEvent).toBeDefined()
+    if (gameplayEvent !== undefined && 'teamId' in gameplayEvent && 'playerId' in gameplayEvent) {
       const eventLineup = gameplayEvent.teamId === controller.snapshot().homeTeamId ? controller.activeLineups.home : controller.activeLineups.away
       expect(eventLineup).toContain(gameplayEvent.playerId)
     }

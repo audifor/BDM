@@ -58,6 +58,8 @@ export interface TeamStrength {
 
 export interface MatchSimulationResult {
   readonly gameId: GameId
+  /** Transient replay/debug seed; GameWorld persists only the final score. */
+  readonly matchSeed?: number
   readonly homeTeamId: TeamId
   readonly awayTeamId: TeamId
   readonly homeScore: number
@@ -192,6 +194,8 @@ interface MatchPeriodEvent {
 
 export interface MatchSimulation {
   readonly gameId: GameId
+  /** Transient replay/debug seed; GameWorld persists only the final score. */
+  readonly matchSeed?: number
   readonly homeTeamId: TeamId
   readonly awayTeamId: TeamId
   readonly lineups: MatchLineups
@@ -206,6 +210,7 @@ export interface MatchSimulation {
 export interface SimulateMatchOptions {
   readonly world: GameWorld
   readonly gameId: GameId
+  readonly matchSeed?: number
   readonly homeStrength: TeamStrength
   readonly awayStrength: TeamStrength
   readonly squads: MatchSquads
@@ -221,6 +226,7 @@ export interface SimulateMatchOptions {
 /** Immutable sporting state for one transient, resumable match. */
 export interface MatchSessionState {
   readonly gameId: GameId
+  readonly matchSeed?: number
   readonly homeTeamId: TeamId
   readonly awayTeamId: TeamId
   /** Historical starting-five snapshot retained in the completed MatchSimulation. */
@@ -289,6 +295,7 @@ export function simulateMatch(options: SimulateMatchOptions): MatchSimulationRes
   const simulation = simulateMatchDetailed(options)
   return {
     gameId: simulation.gameId,
+    ...(simulation.matchSeed === undefined ? {} : { matchSeed: simulation.matchSeed }),
     homeTeamId: simulation.homeTeamId,
     awayTeamId: simulation.awayTeamId,
     homeScore: simulation.finalScore.home,
@@ -313,7 +320,7 @@ export function createMatchSession(options: SimulateMatchOptions): MatchSession 
   const initialEvent: MatchEvent = { sequence: 1, period: 1, clockSecondsRemaining: clockRules.periodSeconds, type: 'periodStart', homeScore: 0, awayScore: 0 }
   return {
     state: {
-      gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId,
+      gameId: game.id, ...(options.matchSeed === undefined ? {} : { matchSeed: options.matchSeed }), homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId,
       initialLineups: options.lineups, activeLineups: options.lineups, squads: options.squads,
       fatigueByPlayerId: createInitialFatigue(options.squads),
       playerProfiles: options.playerProfiles, spatial, coachingState: { home: { currentTacticalPlan: clonePlan(options.tacticalPlans?.home ?? createDefaultTacticalPlan()) }, away: { currentTacticalPlan: clonePlan(options.tacticalPlans?.away ?? createDefaultTacticalPlan()) } }, defensiveMatchups:options.defensiveMatchups??{home:[],away:[]},
@@ -535,7 +542,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
       passesThisPossession += 1
     } else {
       const interceptorId = laneContext.mostDangerousDefenderId
-      const stealPlayerId = interceptorId !== undefined && session.actorRandom.chance(calculateStealCreditProbability(profileForPlayer(defendingProfiles, interceptorId)))
+      const stealPlayerId = interceptorId !== undefined && session.decisionRandom.chance(calculateStealCreditProbability(profileForPlayer(defendingProfiles, interceptorId)))
         ? interceptorId
         : undefined
       newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'turnover', teamId: attackingTeamId, playerId, turnoverType: 'failedPass', passTargetPlayerId: receiverPlayerId, ...(stealPlayerId === undefined ? {} : { stealPlayerId }), homeScore, awayScore })
@@ -567,14 +574,16 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
       const reboundTeamId = reboundType === 'offensive' ? attackingTeamId : otherTeamId(attackingTeamId, state)
       const reboundLineup = reboundTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
       const reboundProfiles = reboundTeamId === state.homeTeamId ? state.playerProfiles.home : state.playerProfiles.away
-      const reboundPlayerId = selectRebounder(reboundLineup.map((candidateId) => profileForPlayer(reboundProfiles, candidateId)), session.actorRandom, reboundSpatialContext).playerId
+      // The rebounder becomes the spatial ball owner, so selecting one belongs to the decision
+      // stream; stat attribution draws must not alter possession geometry or match outcomes.
+      const reboundPlayerId = selectRebounder(reboundLineup.map((candidateId) => profileForPlayer(reboundProfiles, candidateId)), session.decisionRandom, reboundSpatialContext).playerId
       newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'rebound', teamId: reboundTeamId, playerId: reboundPlayerId, reboundType, homeScore, awayScore })
       attackingTeamId = reboundTeamId
       spatial = controlBallByPlayer(spatial, reboundPlayerId)
       if (reboundTeamId !== state.attackingTeamId) passesThisPossession = 0
     }
   } else {
-    const stealPlayerId = session.actorRandom.chance(calculateStealCreditProbability(primaryDefender)) ? primaryDefenderId : undefined
+    const stealPlayerId = session.decisionRandom.chance(calculateStealCreditProbability(primaryDefender)) ? primaryDefenderId : undefined
     newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'turnover', teamId: attackingTeamId, playerId, ...(stealPlayerId === undefined ? {} : { stealPlayerId }), homeScore, awayScore })
     attackingTeamId = otherTeamId(attackingTeamId, state)
     spatial = stealPlayerId === undefined ? releaseSpatialBall(spatial) : controlBallByPlayer(spatial, stealPlayerId)
@@ -623,7 +632,7 @@ function updateSessionFatigue(session: MatchSession, state: MatchSessionState, e
 export function toMatchSimulation(session: MatchSession): MatchSimulation {
   const state = session.state
   if (!state.isComplete) throw new MatchSimulationError('Cannot convert an incomplete MatchSession to MatchSimulation')
-  return { gameId: state.gameId, homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, lineups: state.initialLineups, squads: state.squads, events: state.events, finalScore: { home: state.homeScore, away: state.awayScore } }
+  return { gameId: state.gameId, ...(state.matchSeed === undefined ? {} : { matchSeed: state.matchSeed }), homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, lineups: state.initialLineups, squads: state.squads, events: state.events, finalScore: { home: state.homeScore, away: state.awayScore } }
 }
 
 /** Runs the single incremental MatchSession engine through completion. */

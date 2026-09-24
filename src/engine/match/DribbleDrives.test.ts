@@ -46,7 +46,7 @@ describe('ball-handler drive foundation', () => {
     const controlledSession = {
       ...session,
       random: new SequenceRandom([0.99], [0.99, 0]),
-      decisionRandom: new SequenceRandom([], [0.99, 0.99, 0]),
+      decisionRandom: new FixedRandom(0),
       actorRandom: new FixedRandom(0),
       state: { ...state, spatial: heldSpatial, playerProfiles },
     }
