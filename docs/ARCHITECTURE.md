@@ -402,6 +402,30 @@ rating is used. There is no roll, pop, pick-and-roll read, coverage logic, or
 screen animation; Live and Instant still share MatchEngine and the renderer only
 consumes resulting snapshots.
 
+MG6G adds one transient `DefensiveReaction` to `MatchSessionState`. It recognizes
+only an active ball-handler drive, an active rim cut, or a post-screen roll when
+the threat player is inside its source-specific distance from the attacked basket.
+Pop and ordinary spacing never trigger help. The threat's primary defender is
+excluded; among the remaining active defenders, the one closest to the geometric
+help point is selected deterministically. That point lies on the line from the
+threat toward the attacked basket, two metres short of the threat.
+
+The helper's target temporarily overrides only its BaseSpacing defensive target.
+A single remaining defender may rotate toward the helper's exposed assignment;
+that defender gets no follow-up rotation. The other original assignment remains
+spatially exposed. Both helper and rotator move through the ordinary MG6A/B
+kinematics path. When no qualifying intent remains, their targets return to
+current BaseSpacing assignments and the transient reaction enters recovery until
+they arrive. Possession changes clear it immediately; handler changes are checked
+against current drive/roll ownership and the current cut intent. Substitution of
+the helper, rotator, threat, or either protected assignment clears the references.
+
+Help and recovery add no contest, defense, or passing modifier and consume no RNG.
+Existing spatial shot contests and passing-lane calculations observe the resulting
+player positions. The shared MatchEngine path serves Live and Instant Result; the
+renderer remains a consumer of canonical spatial snapshots. Switch, drop, hedge,
+blitz, zone, traps, and chain rotations remain deferred.
+
 ## Player basketball domain
 
 Player now persists a `BasketballProfile` with one primary position, the exact

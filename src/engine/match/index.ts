@@ -31,6 +31,8 @@ export { calculateDefenseExecution, calculateEffectiveDefense, calculateShotLoca
 export { calculatePassActionProbability, calculatePassCompletionProbability, calculatePassingLaneContext, distanceFromPointToSegment, PASS_RESOLUTION_V1 } from './PassingResolution'
 export { chooseWeighted } from './WeightedChoice'
 export { calculateDefensiveAssignments } from './Matchups'
+export { detectDefensiveThreat, resolveDefensiveReaction, DEFENSIVE_REACTION_RULES_V1 } from './DefensiveReactions'
+export type { DefensiveReaction, DefensiveReactionPhase, DefensiveThreat, DefensiveThreatType } from './DefensiveReactions'
 export { calculateBlockCreditProbability, calculateStealCreditProbability } from './DefensiveAttribution'
 export { createDefaultTacticalPlan, TACTICAL_DEFENSE_OPTIONS, validateTacticalPlan } from './tactics/MatchTacticalPlan'
 export { applyTacticalPlanChange, calculateTacticalPlanAtEvents } from './coaching/MatchCoachingState'

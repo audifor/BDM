@@ -12,12 +12,14 @@ import {
   calculateDefensiveAssignments,
   controlBallByPlayer,
   createDriveTarget,
+  detectDefensiveThreat,
   createMatchPlayerProfile,
   createMatchSession,
   driveMovementFactor,
   isSpatialStateInsideCourt,
   reduceDriveHandlerMovement,
   reduceScreenedDefenderMovement,
+  resolveDefensiveReaction,
   screenIntersectsDefenderRoute,
   stepMatchSession,
   stepPlayersTowardBaseSpacing,
@@ -127,7 +129,7 @@ describe('ball-handler drive foundation', () => {
 
   it('ends at arrival or timeout and cancels on a changed handler, possession flip or participant substitution', () => {
     const { session, state } = createFixture()
-    const { handlerId, defenderId, basket, offenseKey, defenseKey } = participants(state)
+    const { handlerId, defenderId, basket, offenseKey, defenseKey, screenerId } = participants(state)
     const target = createDriveTarget({ handlerId, defenderId, spatial: state.spatial, attackingBasket: basket })
     const drive: DriveIntent = { handlerId, defenderId, target, stepsRemaining: 3 }
     expect(advanceDriveIntent(drive, placePlayer(state.spatial, handlerId, target))).toBeUndefined()
@@ -144,8 +146,102 @@ describe('ball-handler drive foundation', () => {
     const handlerChanged = { ...withDrive, state: { ...withDrive.state, spatial: controlBallByPlayer(withDrive.state.spatial, nextHandlerId) } }
     expect(stepMatchSession(handlerChanged).session.state.driveIntent).toBeUndefined()
 
-    const possessionFlip = { ...withDrive, random: new FixedRandom(0), actorRandom: new FixedRandom(0.99) }
-    expect(stepMatchSession(possessionFlip).session.state.driveIntent).toBeUndefined()
+    const possessionFlip = {
+      ...withDrive,
+      random: new FixedRandom(0),
+      actorRandom: new FixedRandom(0.99),
+      state: { ...withDrive.state, defensiveReaction: { defenderId, protectedPlayerId: screenerId, threatPlayerId: handlerId, type: 'drive' as const, target: basket, phase: 'HELP' as const } },
+    }
+    const flippedState = stepMatchSession(possessionFlip).session.state
+    expect(flippedState.driveIntent).toBeUndefined()
+    expect(flippedState.defensiveReaction).toBeUndefined()
+  })
+
+  it('sends one secondary defender to help on a drive, exposes an assignment, then recovers through BaseSpacing', () => {
+    const { session, state } = createFixture()
+    const { handlerId, defenderId, basket, offenseKey, defenseKey } = participants(state)
+    const centerY = state.spatial.court.widthMeters / 2
+    const attackDirection = basket.x > state.spatial.court.lengthMeters / 2 ? 1 : -1
+    const spatial = controlBallByPlayer(placePlayer(state.spatial, handlerId, { x: basket.x - attackDirection * 6, y: centerY }), handlerId)
+    const target = createDriveTarget({ handlerId, defenderId, spatial, attackingBasket: basket })
+    const drive: DriveIntent = { handlerId, defenderId, target, stepsRemaining: 3 }
+    const liveProfiles: MatchPlayerProfiles = {
+      ...state.playerProfiles,
+      [offenseKey]: state.playerProfiles[offenseKey].map((profile) => profile.playerId === handlerId
+        ? { ...profile, tendencies: { ...profile.tendencies, PASS_FIRST_BIAS: 100 } }
+        : profile),
+    }
+    const live = {
+      ...session,
+      random: new SequenceRandom([0.26, 0], []),
+      decisionRandom: new FixedRandom(0.99),
+      actorRandom: new FixedRandom(0),
+      state: { ...state, spatial, playerProfiles: liveProfiles, driveIntent: drive },
+    }
+    const lineup = state.activeLineups[offenseKey]
+    const defenders = state.activeLineups[defenseKey]
+    const assignments = calculateDefensiveAssignments(lineup, defenders, [...state.playerProfiles.home, ...state.playerProfiles.away], state.defensiveMatchups?.[defenseKey])
+    const baseInput = { ...spacingInput(state, handlerId), spatial, activeLineups: state.activeLineups }
+    const baseTargets = assignBaseSpatialTargets(baseInput)
+    const threat = detectDefensiveThreat({ drive: { playerId: handlerId, target }, spatial, attackingBasket: basket })
+    const reaction = resolveDefensiveReaction({ threat, assignments, defensiveLineup: defenders, baseTargets, spatial, attackingBasket: basket }).reaction!
+    const withoutHelp = stepPlayersTowardBaseSpacing(baseInput, 12, [{ playerId: handlerId, position: target }])
+    const withHelp = stepPlayersTowardBaseSpacing(baseInput, 12, [
+      { playerId: handlerId, position: target },
+      { playerId: reaction.defenderId, position: reaction.target },
+      ...(reaction.rotationDefenderId === undefined || reaction.rotationTarget === undefined ? [] : [{ playerId: reaction.rotationDefenderId, position: reaction.rotationTarget }]),
+    ])
+    const result = stepMatchSession(live).session.state
+    const helperAfter = playerAt(result.spatial, reaction.defenderId)
+    const protectedPosition = playerAt(result.spatial, reaction.protectedPlayerId).position
+
+    expect(reaction.phase).toBe('HELP')
+    expect(reaction.defenderId).not.toBe(defenderId)
+    expect(result.spatial.players.find((player) => player.playerId === reaction.defenderId)!.position).not.toEqual(
+      playerAt(withoutHelp, reaction.defenderId).position,
+    )
+    expect(distanceBetween(helperAfter.position, playerAt(result.spatial, handlerId).position)).toBeLessThan(
+      distanceBetween(playerAt(withoutHelp, reaction.defenderId).position, playerAt(withoutHelp, handlerId).position),
+    )
+    expect(distanceBetween(helperAfter.position, protectedPosition)).toBeGreaterThan(
+      distanceBetween(playerAt(withoutHelp, reaction.defenderId).position, playerAt(withoutHelp, reaction.protectedPlayerId).position),
+    )
+    expect(reaction.rotationDefenderId).toBeDefined()
+    expect(reaction.rotationDefenderId).not.toBe(reaction.defenderId)
+    expect(distanceBetween(playerAt(withHelp, reaction.rotationDefenderId!).position, playerAt(spatial, reaction.protectedPlayerId).position)).toBeLessThan(
+      distanceBetween(playerAt(withoutHelp, reaction.rotationDefenderId!).position, playerAt(spatial, reaction.protectedPlayerId).position),
+    )
+    expect(resolveDefensiveReaction({ previous: reaction, assignments, defensiveLineup: defenders, baseTargets, spatial: result.spatial, attackingBasket: basket }).reaction?.phase).toBe('RECOVER')
+
+    const recoverInput = { ...baseInput, spatial: result.spatial, ballHandlerId: result.spatial.ball.kind === 'playerControlled' ? result.spatial.ball.playerId : undefined }
+    const recoverTargets = assignBaseSpatialTargets(recoverInput).defensive
+    const beforeRecovery = distanceBetween(helperAfter.position, recoverTargets.find((entry) => entry.playerId === reaction.defenderId)!.position)
+    const recoveredSpatial = stepPlayersTowardBaseSpacing(recoverInput, 12)
+    expect(distanceBetween(playerAt(recoveredSpatial, reaction.defenderId).position, recoverTargets.find((entry) => entry.playerId === reaction.defenderId)!.position)).toBeLessThan(beforeRecovery)
+  })
+
+  it('does not react to ordinary spacing or a pop and clears help references on substitution', () => {
+    const { session, state } = createFixture()
+    const { handlerId, defenderId, basket, offenseKey, defenseKey } = participants(state)
+    const defenders = state.activeLineups[defenseKey]
+    const assignments = calculateDefensiveAssignments(state.activeLineups[offenseKey], defenders, [...state.playerProfiles.home, ...state.playerProfiles.away])
+    expect(detectDefensiveThreat({ spatial: state.spatial, attackingBasket: basket })).toBeUndefined()
+    expect(detectDefensiveThreat({ roll: { playerId: state.activeLineups[offenseKey][1]!, action: 'pop', target: basket }, spatial: state.spatial, attackingBasket: basket })).toBeUndefined()
+    const attackDirection = basket.x > state.spatial.court.lengthMeters / 2 ? 1 : -1
+    const nearRim = placePlayer(state.spatial, state.activeLineups[offenseKey][1]!, { x: basket.x - attackDirection * 4, y: state.spatial.court.widthMeters / 2 })
+    const rimwardTarget = { x: basket.x - attackDirection * 1.5, y: state.spatial.court.widthMeters / 2 }
+    expect(detectDefensiveThreat({ drive: { playerId: state.activeLineups[offenseKey][1]!, target: { x: basket.x - attackDirection * 6, y: state.spatial.court.widthMeters / 2 } }, spatial: nearRim, attackingBasket: basket })).toBeUndefined()
+    expect(detectDefensiveThreat({ cut: { playerId: state.activeLineups[offenseKey][1]!, type: 'rimCut', target: rimwardTarget }, spatial: nearRim, attackingBasket: basket })).toMatchObject({ type: 'rimCut' })
+    expect(detectDefensiveThreat({ roll: { playerId: state.activeLineups[offenseKey][1]!, action: 'roll', target: rimwardTarget }, spatial: nearRim, attackingBasket: basket })).toMatchObject({ type: 'roll' })
+    const farAway = placePlayer(state.spatial, handlerId, { x: basket.x - attackDirection * 12, y: state.spatial.court.widthMeters / 2 })
+    expect(detectDefensiveThreat({ drive: { playerId: handlerId, target: { x: basket.x - attackDirection * 2.25, y: basket.y } }, spatial: farAway, attackingBasket: basket })).toBeUndefined()
+
+    const helperId = defenders.find((id) => id !== defenderId)!
+    const protectedId = assignments.find((assignment) => assignment.defensivePlayerId === helperId)!.offensivePlayerId
+    const reaction = { defenderId: helperId, protectedPlayerId: protectedId, threatPlayerId: handlerId, type: 'drive' as const, target: playerAt(state.spatial, handlerId).position, phase: 'HELP' as const }
+    const withReaction = { ...session, state: { ...state, defensiveReaction: reaction } }
+    const benchId = state.squads[defenseKey].find((id) => !state.activeLineups[defenseKey].includes(id))!
+    expect(substitutePlayer(withReaction, { teamId: defenseKey === 'home' ? state.homeTeamId : state.awayTeamId, playerOutId: helperId, playerInId: benchId }).state.defensiveReaction).toBeUndefined()
   })
 })
 
