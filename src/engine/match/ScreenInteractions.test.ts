@@ -5,7 +5,7 @@ import { distanceFromBasket, isBeyondThreePointLine, isInsideCourt } from '@/dom
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { generateWorld } from '@/engine/world'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
-import { advanceScreenIntent, applyTacticalPlanChange, assignBaseSpatialTargets, calculateDefensiveAssignments, controlBallByPlayer, createDefaultTacticalPlan, createMatchPlayerProfile, createMatchSession, createPostScreenIntent, createPostScreenTarget, createScreenIntent, coverageForCurrentScreen, reduceScreenedDefenderMovement, resolveDefensiveReaction, screenIntersectsDefenderRoute, selectScreenScreener, stepMatchSession, stepPlayersTowardBaseSpacing, substitutePlayer, type MatchPlayerProfiles, type MatchTacticalPlan, type ScreenIntent, type SpatialState } from './index'
+import { advanceScreenIntent, applyTacticalPlanChange, assignBaseSpatialTargets, calculateDefensiveAssignments, controlBallByPlayer, createDefaultTacticalPlan, createMatchPlayerProfile, createMatchSession, createOffensiveAction, createPostScreenIntent, createPostScreenTarget, createScreenIntent, coverageForCurrentScreen, decidePickAndRollScreenUse, reduceScreenedDefenderMovement, resolveDefensiveReaction, screenIntersectsDefenderRoute, selectPickAndRollHandlerContinuation, selectPickAndRollScreenerContinuation, selectScreenScreener, stepMatchSession, stepPlayersTowardBaseSpacing, substitutePlayer, type MatchPlayerProfiles, type MatchTacticalPlan, type ScreenIntent, type SpatialState } from './index'
 
 describe('on-ball screen spatial foundation', () => {
   it('moves an eligible screener away from BaseSpacing toward a court-valid target with MG6B kinematics', () => {
@@ -101,29 +101,52 @@ describe('on-ball screen spatial foundation', () => {
     const popProfile = { ...baseProfile, tendencies: { ...baseProfile.tendencies, PICK_AND_ROLL_ROLL_FREQUENCY: 1, PICK_AND_POP_FREQUENCY: 100 } }
 
     expect(advanceScreenIntent(setIntent, state.spatial)).toBeUndefined()
-    const rollIntent = createPostScreenIntent({ intent: setIntent, spatial: state.spatial, attackingBasket: basket, screener: rollProfile, random: new FixedRandom(0) })
-    const popIntent = createPostScreenIntent({ intent: setIntent, spatial: state.spatial, attackingBasket: basket, screener: popProfile, random: new FixedRandom(0.99) })
+    const roll = selectPickAndRollScreenerContinuation(rollProfile, new FixedRandom(0))
+    const pop = selectPickAndRollScreenerContinuation(popProfile, new FixedRandom(0.99))
+    const rollIntent = createPostScreenIntent({ intent: setIntent, spatial: state.spatial, attackingBasket: basket, action: roll })
+    const popIntent = createPostScreenIntent({ intent: setIntent, spatial: state.spatial, attackingBasket: basket, action: pop })
     expect(rollIntent).toMatchObject({ phase: 'postScreen', postScreenAction: 'roll' })
     expect(popIntent).toMatchObject({ phase: 'postScreen', postScreenAction: 'pop' })
+  })
+
+  it('rejects a set screen that does not affect the defender route and reads coverage for handler options', () => {
+    const { state } = createFixture()
+    const { handlerId, screenerId, defenderId, basket, offenseKey } = participants(state)
+    const screen = { ...createScreenIntent({ screenerId, ballHandlerId: handlerId, defenderId, spatial: state.spatial, attackingBasket: basket }), phase: 'set' as const, stepsRemaining: 1 }
+    const handler = state.playerProfiles[offenseKey].find((profile) => profile.playerId === handlerId)!
+    const driveHandler = { ...handler, tendencies: { ...handler.tendencies, DRIVE_FREQUENCY: 100, PULLUP_FREQUENCY: 0, ADVANTAGE_PASS_FREQUENCY: 0 } }
+    const spatial = controlBallByPlayer(state.spatial, handlerId)
+
+    expect(decidePickAndRollScreenUse({ screen, screenAffectsDefender: false })).toBe('REJECT_SCREEN')
+    expect(decidePickAndRollScreenUse({ screen, screenAffectsDefender: true })).toBe('USE_SCREEN')
+    expect(selectPickAndRollHandlerContinuation({ handler: driveHandler, screen, coverage: 'drop', driveAvailable: true, passesThisPossession: 0, activeLineup: state.activeLineups[offenseKey], spatial, random: new FixedRandom(0) })).toBe('HANDLER_DRIVE')
+    expect(selectPickAndRollHandlerContinuation({ handler: driveHandler, screen, coverage: 'blitz', driveAvailable: true, passesThisPossession: 0, activeLineup: state.activeLineups[offenseKey], spatial, random: new FixedRandom(0) })).toBe('RESET')
   })
 
   it('persists the post-screen choice through MatchEngine when a SET screen window expires', () => {
     const { session, state } = createFixture()
     const { handlerId, screenerId, defenderId, basket, offenseKey } = participants(state)
-    const screen = { ...createScreenIntent({ screenerId, ballHandlerId: handlerId, defenderId, spatial: state.spatial, attackingBasket: basket }), phase: 'set' as const, stepsRemaining: 1 }
     const heldSpatial = controlBallByPlayer(state.spatial, handlerId)
+    const defenderTarget = assignBaseSpatialTargets(spacingInput({ ...state, spatial: heldSpatial }, handlerId)).defensive.find((target) => target.playerId === defenderId)!.position
+    const defenderPosition = heldSpatial.players.find((player) => player.playerId === defenderId)!.position
+    const routeMidpoint = { x: (defenderPosition.x + defenderTarget.x) / 2, y: (defenderPosition.y + defenderTarget.y) / 2 }
+    const routeSpatial = placePlayer(heldSpatial, screenerId, routeMidpoint)
+    const screen = { ...createScreenIntent({ screenerId, ballHandlerId: handlerId, defenderId, spatial: routeSpatial, attackingBasket: basket }), phase: 'set' as const, stepsRemaining: 1, target: routeMidpoint }
+    expect(screenIntersectsDefenderRoute({ screen, spatial: routeSpatial, defenderTarget })).toBe(true)
     const playerProfiles = {
       ...state.playerProfiles,
       [offenseKey]: state.playerProfiles[offenseKey].map((profile) => profile.playerId === screenerId
         ? { ...profile, tendencies: { ...profile.tendencies, PICK_AND_ROLL_ROLL_FREQUENCY: 100, PICK_AND_POP_FREQUENCY: 1 } }
-        : profile),
+        : profile.playerId === handlerId
+          ? { ...profile, tendencies: { ...profile.tendencies, DRIVE_FREQUENCY: 0, PULLUP_FREQUENCY: 100, ADVANTAGE_PASS_FREQUENCY: 0 } }
+          : profile),
     }
     const sessionWithSet = {
       ...session,
       random: new SequenceRandom([0.99], [0.99, 0]),
       decisionRandom: new FixedRandom(0),
       actorRandom: new FixedRandom(0),
-      state: { ...state, spatial: heldSpatial, playerProfiles, screenIntent: screen },
+      state: { ...state, spatial: routeSpatial, playerProfiles, screenIntent: screen, offensiveAction: createOffensiveAction({ kind: 'PICK_AND_ROLL', teamId: state.attackingTeamId, initiatorId: handlerId, participantIds: [handlerId, screenerId], activeLineup: state.activeLineups[offenseKey] }) },
     }
 
     const stepped = stepMatchSession(sessionWithSet).session.state.screenIntent

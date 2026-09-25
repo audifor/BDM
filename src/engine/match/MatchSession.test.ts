@@ -7,7 +7,7 @@ import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
-import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, assignBaseSpatialTargets, assignTransitionSpatialTargets, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, createOffensiveAction, createScreenIntent, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, advancePlayerTowardTarget, BASELINE_PLAYER_KINEMATIC_PROFILE, PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED, PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED, PLAYER_MAX_SPEED_METERS_PER_SECOND, releaseSpatialBall, simulateMatchDetailed, stepMatchSession, stepPlayersTowardBaseSpacing, stepPlayersTowardTransitionTargets, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
+import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, assignBaseSpatialTargets, assignTransitionSpatialTargets, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, createOffensiveAction, createPostScreenTarget, createScreenIntent, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, advancePlayerTowardTarget, BASELINE_PLAYER_KINEMATIC_PROFILE, PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED, PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED, PLAYER_MAX_SPEED_METERS_PER_SECOND, releaseSpatialBall, simulateMatchDetailed, stepMatchSession, stepPlayersTowardBaseSpacing, stepPlayersTowardTransitionTargets, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
 
 describe('MatchSession', () => {
   it('represents an offensive action with distinct active participants from its team lineup', () => {
@@ -23,7 +23,7 @@ describe('MatchSession', () => {
 
   it('uses a canonical pick-and-roll action to activate the existing screen movement branch', () => {
     const { world, game } = createScheduledGameWorld()
-    const createPreparedSession = () => withActivePickAndRollContext(createMatchSession({ ...createOptions(world, game.id, 10, 20), random: new FirstSportingRandom(), decisionRandom: new ZeroDecisionRandom() }))
+    const createPreparedSession = () => withScreenerOnAssignedDefenderRoute(withActivePickAndRollContext(createMatchSession({ ...createOptions(world, game.id, 10, 20), random: new FirstSportingRandom(), decisionRandom: new ZeroDecisionRandom() })))
     const authorized = createPreparedSession()
     const unauthorized = createPreparedSession()
     const action = authorized.state.offensiveAction
@@ -32,6 +32,58 @@ describe('MatchSession', () => {
     expect(action).toMatchObject({ kind: 'PICK_AND_ROLL', initiatorId: authorized.state.screenIntent?.ballHandlerId })
     expect(action?.participantIds).toEqual([authorized.state.screenIntent?.ballHandlerId, authorized.state.screenIntent?.screenerId])
     expect(stepMatchSession(authorized).session.state.spatial).not.toEqual(stepMatchSession(withoutAction).session.state.spatial)
+  })
+
+  it('lets a selected handler drive activate MG6 drive movement after the screen', () => {
+    const { world, game } = createScheduledGameWorld()
+    const createDriveSession = (driveFrequency: number, pullUpFrequency: number) => {
+      const base = withActivePickAndRollContext(createMatchSession({ ...createOptions(world, game.id, 10, 20), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() }))
+      const state = base.state
+      const offenseKey = state.attackingTeamId === state.homeTeamId ? 'home' : 'away'
+      const handlerId = state.offensiveAction!.initiatorId
+      const screen = state.screenIntent!
+      const basket = getSpatialPossessionView(state).attackingBasket
+      const postScreenTarget = createPostScreenTarget({ action: 'roll', intent: screen, spatial: state.spatial, attackingBasket: basket })
+      const playerProfiles = {
+        ...state.playerProfiles,
+        [offenseKey]: state.playerProfiles[offenseKey].map((profile) => profile.playerId === handlerId
+          ? { ...profile, tendencies: { ...profile.tendencies, DRIVE_FREQUENCY: driveFrequency, PULLUP_FREQUENCY: pullUpFrequency, ADVANTAGE_PASS_FREQUENCY: 0 } }
+          : profile),
+      }
+      return { ...base, state: { ...state, playerProfiles, screenIntent: { ...screen, phase: 'postScreen' as const, stepsRemaining: 4, postScreenAction: 'roll' as const, postScreenTarget } } }
+    }
+    const driveSession = createDriveSession(100, 0)
+    const shotSession = createDriveSession(0, 100)
+    const driveHandlerId = driveSession.state.offensiveAction!.initiatorId
+    const drivePosition = stepMatchSession(driveSession).session.state.spatial.players.find((player) => player.playerId === driveHandlerId)!.position
+    const shotPosition = stepMatchSession(shotSession).session.state.spatial.players.find((player) => player.playerId === driveHandlerId)!.position
+
+    expect(drivePosition).not.toEqual(shotPosition)
+  })
+
+  it('routes a selected P&R pass to the active roller through canonical pass resolution', () => {
+    const { world, game } = createScheduledGameWorld()
+    const base = withActivePickAndRollContext(createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new ForcedPassRandom(true), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() }))
+    const state = base.state
+    const offenseKey = state.attackingTeamId === state.homeTeamId ? 'home' : 'away'
+    const handlerId = state.offensiveAction!.initiatorId
+    const rollerId = state.offensiveAction!.participantIds.find((playerId) => playerId !== handlerId)!
+    const screen = state.screenIntent!
+    const basket = getSpatialPossessionView(state).attackingBasket
+    const postScreenTarget = createPostScreenTarget({ action: 'roll', intent: screen, spatial: state.spatial, attackingBasket: basket })
+    const playerProfiles = {
+      ...state.playerProfiles,
+      [offenseKey]: state.playerProfiles[offenseKey].map((profile) => profile.playerId === handlerId
+        ? { ...profile, tendencies: { ...profile.tendencies, DRIVE_FREQUENCY: 0, PULLUP_FREQUENCY: 0, ADVANTAGE_PASS_FREQUENCY: 100 } }
+        : profile),
+    }
+    const session = { ...base, state: { ...state, playerProfiles, driveIntent: undefined, screenIntent: { ...screen, phase: 'postScreen' as const, stepsRemaining: 4, postScreenAction: 'roll' as const, postScreenTarget } } }
+    const result = stepMatchSession(session)
+
+    expect(result.newEvents.find((event) => event.type === 'passCompleted')).toMatchObject({ passerPlayerId: handlerId, receiverPlayerId: rollerId })
+    expect(result.session.state.spatial.ball).toMatchObject({ kind: 'playerControlled', playerId: rollerId, teamId: state.attackingTeamId })
+    expect(result.session.state.screenIntent).toBeUndefined()
+    expect(result.session.state.offensiveAction).toBeUndefined()
   })
 
   it('produces the same complete simulation through stepping as through the wrapper', () => {
@@ -774,6 +826,18 @@ function withActivePickAndRollContext(session: ReturnType<typeof createMatchSess
     defensiveReaction: { defenderId: helperId, protectedPlayerId, threatPlayerId: handlerId, type: 'drive' as const, target: basket, phase: 'HELP' as const },
   }
   return { ...session, state: stateWithContext }
+}
+
+function withScreenerOnAssignedDefenderRoute(session: ReturnType<typeof createMatchSession>) {
+  const state = session.state
+  const screen = state.screenIntent!
+  const spatial = controlBallByPlayer(state.spatial, screen.ballHandlerId)
+  const targets = assignBaseSpatialTargets({ ...baseSpacingInput(state, screen.ballHandlerId), spatial })
+  const defenderTarget = targets.defensive.find((target) => target.playerId === screen.defenderId)!.position
+  const defender = spatial.players.find((player) => player.playerId === screen.defenderId)!.position
+  const routeMidpoint = { x: (defender.x + defenderTarget.x) / 2, y: (defender.y + defenderTarget.y) / 2 }
+  const routeSpatial = { ...spatial, players: spatial.players.map((player) => player.playerId === screen.screenerId ? { ...player, position: routeMidpoint } : player) }
+  return { ...session, state: { ...state, spatial: routeSpatial, screenIntent: { ...screen, target: routeMidpoint } } }
 }
 
 function profilesFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['games']]) { return { home: world.teams[game.homeTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)), away: world.teams[game.awayTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)) } }

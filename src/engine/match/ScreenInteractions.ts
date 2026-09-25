@@ -103,19 +103,14 @@ export function createPostScreenIntent(input: {
   readonly intent: ScreenIntent
   readonly spatial: SpatialState
   readonly attackingBasket: CourtPosition
-  readonly screener: MatchPlayerProfile
-  readonly random: RandomSource
+  readonly action: 'roll' | 'pop'
 }): ScreenIntent {
-  const action = chooseWeighted([
-    { item: 'roll' as const, weight: input.screener.tendencies.PICK_AND_ROLL_ROLL_FREQUENCY },
-    { item: 'pop' as const, weight: input.screener.tendencies.PICK_AND_POP_FREQUENCY },
-  ], input.random)
-  const target = createPostScreenTarget({ action, intent: input.intent, spatial: input.spatial, attackingBasket: input.attackingBasket })
+  const target = createPostScreenTarget({ action: input.action, intent: input.intent, spatial: input.spatial, attackingBasket: input.attackingBasket })
   return {
     ...input.intent,
     phase: 'postScreen',
     stepsRemaining: SCREEN_RULES_V1.maximumPostScreenSteps,
-    postScreenAction: action,
+    postScreenAction: input.action,
     postScreenTarget: target,
   }
 }
