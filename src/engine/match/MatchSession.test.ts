@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createGameWorld, type GameWorld } from '@/domain/world'
+import { distanceFromBasket } from '@/domain/court'
 import { playerIdFromString } from '@/domain/ids'
 import { NCAA_MEN_GAME_FORMAT } from '@/domain/competition'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
@@ -19,6 +20,56 @@ describe('MatchSession', () => {
 
     expect(action).toEqual({ kind: 'PICK_AND_ROLL', teamId, initiatorId: lineup[0], participantIds: [lineup[0], lineup[1]] })
     expect(() => createOffensiveAction({ kind: 'PICK_AND_ROLL', teamId, initiatorId: lineup[0]!, participantIds: [lineup[0]!, state.squads.home.at(-1)!], activeLineup: lineup })).toThrow('Offensive action participants must be distinct active players and include the initiator')
+  })
+
+  it('routes a valid post-up back-down through MG6 movement toward the basket', () => {
+    const { world, game } = createScheduledGameWorld()
+    const backDown = withPostUpContext(createMatchSession({ ...createOptions(world, game.id, 20, 40), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), { backDown: 100, shot: 0, pass: 0 })
+    const postShot = withPostUpContext(createMatchSession({ ...createOptions(world, game.id, 20, 40), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), { backDown: 0, shot: 100, pass: 0 })
+    const postPlayerId = backDown.state.offensiveAction!.initiatorId
+    const basket = getSpatialPossessionView(backDown.state).attackingBasket
+    const beforeDistance = distanceFromBasket(backDown.state.spatial.players.find((player) => player.playerId === postPlayerId)!.position, basket)
+    const backDownResult = stepMatchSession(backDown)
+    const shotResult = stepMatchSession(postShot)
+    const backDownPosition = backDownResult.session.state.spatial.players.find((player) => player.playerId === postPlayerId)!.position
+    const shotPosition = shotResult.session.state.spatial.players.find((player) => player.playerId === postPlayerId)!.position
+
+    expect(distanceFromBasket(backDownPosition, basket)).toBeLessThan(beforeDistance)
+    expect(backDownPosition).not.toEqual(shotPosition)
+  })
+
+  it('routes a post shot into existing shot resolution and clears the action', () => {
+    const { world, game } = createScheduledGameWorld()
+    const session = withPostUpContext(createMatchSession({ ...createOptions(world, game.id, 22, 44), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), { backDown: 0, shot: 100, pass: 0 })
+    const result = stepMatchSession(session)
+
+    expect(result.newEvents.some((event) => event.type === 'shotMade' || event.type === 'shotMissed')).toBe(true)
+    expect(result.session.state.offensiveAction).toBeUndefined()
+  })
+
+  it('routes a post pass-out through canonical pass resolution to an active teammate', () => {
+    const { world, game } = createScheduledGameWorld()
+    const session = withPostUpContext(createMatchSession({ ...createOptions(world, game.id, 24, 48), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() }), { backDown: 0, shot: 0, pass: 100 })
+    const postPlayerId = session.state.offensiveAction!.initiatorId
+    const offenseKey = session.state.attackingTeamId === session.state.homeTeamId ? 'home' : 'away'
+    const teammates = session.state.activeLineups[offenseKey].filter((playerId) => playerId !== postPlayerId)
+    const result = stepMatchSession(session)
+    const pass = result.newEvents.find((event) => event.type === 'passCompleted')
+
+    expect(pass).toMatchObject({ passerPlayerId: postPlayerId })
+    expect(teammates).toContain(pass?.type === 'passCompleted' ? pass.receiverPlayerId : '')
+    expect(result.session.state.spatial.ball).toMatchObject({ kind: 'playerControlled', playerId: pass?.type === 'passCompleted' ? pass.receiverPlayerId : undefined })
+    expect(result.session.state.offensiveAction).toBeUndefined()
+  })
+
+  it('clears a post-up from an invalid court location and continues ordinary offense', () => {
+    const { world, game } = createScheduledGameWorld()
+    const session = withPostUpContext(createMatchSession({ ...createOptions(world, game.id, 26, 52), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), { backDown: 100, shot: 100, pass: 100 }, false)
+    const result = stepMatchSession(session)
+
+    expect(result.session.state.offensiveAction).toBeUndefined()
+    expect(result.session.state.clockSecondsRemaining).toBeLessThan(session.state.clockSecondsRemaining)
+    expect(result.newEvents.length).toBeGreaterThan(0)
   })
 
   it('uses a canonical pick-and-roll action to activate the existing screen movement branch', () => {
@@ -901,6 +952,58 @@ function withIsolationContext(
       offBallCut: undefined,
       driveIntent: undefined,
       offensiveAction: createOffensiveAction({ kind: 'ISOLATION', teamId: state.attackingTeamId, initiatorId: handlerId, participantIds: [handlerId], activeLineup: offense }),
+    },
+  }
+}
+
+function withPostUpContext(
+  session: ReturnType<typeof createMatchSession>,
+  frequency: { readonly backDown: number; readonly shot: number; readonly pass: number },
+  validPosition = true,
+) {
+  const state = session.state
+  const offenseIsHome = state.attackingTeamId === state.homeTeamId
+  const offenseKey = offenseIsHome ? 'home' : 'away'
+  const defenseKey = offenseIsHome ? 'away' : 'home'
+  const offense = state.activeLineups[offenseKey]
+  const defense = state.activeLineups[defenseKey]
+  const postPlayerId = offense[2]!
+  const playerProfiles = {
+    ...state.playerProfiles,
+    [offenseKey]: state.playerProfiles[offenseKey].map((profile) => ({
+      ...profile,
+      tendencies: profile.playerId === postPlayerId
+        ? { ...profile.tendencies, POST_UP_FREQUENCY: frequency.backDown, RIM_ATTEMPT_FREQUENCY: frequency.shot, SHOT_FREQUENCY: frequency.shot, ADVANTAGE_PASS_FREQUENCY: frequency.pass, PASS_FIRST_BIAS: frequency.pass, ON_BALL_SCREENING_FREQUENCY: 0, CUT_FREQUENCY: 0 }
+        : { ...profile.tendencies, ON_BALL_SCREENING_FREQUENCY: 0, CUT_FREQUENCY: 0 },
+    })),
+  }
+  const assignments = calculateDefensiveAssignments(offense, defense, [...playerProfiles.home, ...playerProfiles.away], state.defensiveMatchups?.[defenseKey])
+  const defenderId = assignments.find((assignment) => assignment.offensivePlayerId === postPlayerId)!.defensivePlayerId
+  const basket = getSpatialPossessionView(state).attackingBasket
+  const attackDirection = basket.x > state.spatial.court.lengthMeters / 2 ? 1 : -1
+  const postPosition = validPosition
+    ? { x: basket.x - attackDirection * 5.4, y: basket.y }
+    : { x: state.spatial.court.lengthMeters / 2, y: state.spatial.court.widthMeters / 2 }
+  const defenderPosition = { x: postPosition.x + attackDirection * 0.9, y: postPosition.y }
+  const positionedSpatial = {
+    ...state.spatial,
+    players: state.spatial.players.map((player) => player.playerId === postPlayerId
+      ? { ...player, position: postPosition, velocity: { x: 0, y: 0 } }
+      : player.playerId === defenderId
+        ? { ...player, position: defenderPosition, velocity: { x: 0, y: 0 } }
+        : player),
+  }
+  const spatial = controlBallByPlayer(positionedSpatial, postPlayerId)
+  return {
+    ...session,
+    state: {
+      ...state,
+      spatial,
+      playerProfiles,
+      screenIntent: undefined,
+      offBallCut: undefined,
+      driveIntent: undefined,
+      offensiveAction: createOffensiveAction({ kind: 'POST_UP', teamId: state.attackingTeamId, initiatorId: postPlayerId, participantIds: [postPlayerId], activeLineup: offense }),
     },
   }
 }

@@ -24,6 +24,8 @@ import { advanceScreenIntent, createPostScreenIntent, createScreenIntent, reduce
 import { advanceDriveIntent, reduceDriveHandlerMovement, selectDriveIntent, type DriveIntent } from './DribbleDrives'
 import { createOffensiveAction, type OffensiveAction } from './OffensiveActions'
 import { selectIsolationContinuation, type IsolationContinuation } from './IsolationOffense'
+import { selectPostUpContinuation, type PostUpContinuation } from './PostUpOffense'
+import { isPostUpContextValid } from './PostUpMovement'
 import { decidePickAndRollScreenUse, selectPickAndRollHandlerContinuation, selectPickAndRollScreenerContinuation, type PickAndRollHandlerContinuation } from './PickAndRollOffense'
 import { detectDefensiveThreat, resolveDefensiveReaction, type DefensiveReaction } from './DefensiveReactions'
 import { coverageForCurrentScreen } from './DefensiveCoverages'
@@ -423,6 +425,15 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     : undefined
   const possessionView = getSpatialPossessionView({ homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, attackingTeamId: state.attackingTeamId, period: state.period, spatial: state.spatial })
   const attackingBasket = possessionView.attackingBasket
+  const activePostUp = savedAction?.kind === 'POST_UP'
+    && savedAction.teamId === state.attackingTeamId
+    && handlerId === savedAction.initiatorId
+    && savedAction.participantIds.includes(savedAction.initiatorId)
+    && savedAction.participantIds.every((participantId) => lineup.includes(participantId))
+    && assignedHandlerDefenderId !== undefined
+    && isPostUpContextValid({ postPlayerId: savedAction.initiatorId, defenderId: assignedHandlerDefenderId, spatial: state.spatial, attackingBasket })
+    ? savedAction
+    : undefined
   const savedScreen = state.screenIntent
   const activeScreen = savedScreen !== undefined
     && !transitionActive
@@ -439,8 +450,8 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     : undefined
   let screenForMovement: ScreenIntent | undefined = activeScreen
   let cutForMovement = activeCut
-  const canStartOffBallAction = !transitionActive && activeIsolation === undefined && state.screenIntent === undefined && state.offBallCut === undefined
-  let offensiveAction = activeIsolation ?? state.offensiveAction
+  const canStartOffBallAction = !transitionActive && activeIsolation === undefined && activePostUp === undefined && state.screenIntent === undefined && state.offBallCut === undefined
+  let offensiveAction = activeIsolation ?? activePostUp ?? state.offensiveAction
   if (screenForMovement !== undefined && (offensiveAction?.kind !== 'PICK_AND_ROLL' || offensiveAction.teamId !== state.attackingTeamId || offensiveAction.initiatorId !== screenForMovement.ballHandlerId || !offensiveAction.participantIds.includes(screenForMovement.screenerId))) {
     offensiveAction = createOffensiveAction({ kind: 'PICK_AND_ROLL', teamId: state.attackingTeamId, initiatorId: screenForMovement.ballHandlerId, participantIds: [screenForMovement.ballHandlerId, screenForMovement.screenerId], activeLineup: lineup })
   } else if (cutForMovement !== undefined && (offensiveAction?.kind !== 'CUT' || offensiveAction.teamId !== cutForMovement.teamId || !offensiveAction.participantIds.includes(cutForMovement.playerId))) {
@@ -500,7 +511,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     && defendingLineup.includes(savedDrive.defenderId)
     ? savedDrive
     : undefined
-  if (!transitionActive && activeIsolation === undefined && savedDrive === undefined && handlerId !== undefined && handlerDefenderId !== undefined) {
+  if (!transitionActive && activeIsolation === undefined && activePostUp === undefined && savedDrive === undefined && handlerId !== undefined && handlerDefenderId !== undefined) {
     const handler = profiles.find((profile) => profile.playerId === handlerId)
     if (handler !== undefined) driveForMovement = selectDriveIntent({ handler, defenderId: handlerDefenderId, spatial: state.spatial, attackingBasket, random: session.decisionRandom })
   }
@@ -535,6 +546,24 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
       }
     }
   }
+  let postUpContinuation: PostUpContinuation | undefined
+  let postUpTarget: { readonly playerId: PlayerId; readonly position: { readonly x: number; readonly y: number } } | undefined
+  if (activePostUp !== undefined && handlerId !== undefined && handlerDefenderId !== undefined) {
+    const postPlayer = profiles.find((profile) => profile.playerId === handlerId)
+    const defender = defendingProfiles.find((profile) => profile.playerId === handlerDefenderId)
+    if (postPlayer !== undefined && defender !== undefined) {
+      const read = selectPostUpContinuation({ postPlayer, defender, teamId: state.attackingTeamId, activeLineup: lineup, spatial: baseInput.spatial, attackingBasket, passesThisPossession: state.passesThisPossession ?? 0, random: session.decisionRandom })
+      postUpContinuation = read.continuation
+      driveForMovement = undefined
+      if (read.continuation === 'BACK_DOWN' && read.backDownTarget !== undefined) {
+        postUpTarget = { playerId: handlerId, position: read.backDownTarget }
+      } else if (read.continuation === 'POST_SHOT') {
+        const position = baseInput.spatial.players.find((player) => player.playerId === handlerId)?.position
+        if (position !== undefined) postUpTarget = { playerId: handlerId, position }
+      }
+      if (read.continuation === 'RESET') offensiveAction = undefined
+    }
+  }
   if (primaryDefenderId === undefined) throw new MatchSimulationError(`Active Player ${playerId} has no primary defender`)
   const screenScreenerPosition = screenForMovement?.phase === 'set' ? baseInput.spatial.players.find((player) => player.playerId === screenForMovement.screenerId)?.position : undefined
   const screenTarget = screenForMovement?.phase === 'postScreen' ? screenForMovement.postScreenTarget : screenForMovement?.target
@@ -554,6 +583,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const targetOverrides = [
     ...(cutForMovement !== undefined ? [{ playerId: cutForMovement.playerId, position: cutForMovement.target }] : screenOverride),
     ...(driveForMovement === undefined ? [] : [{ playerId: driveForMovement.handlerId, position: driveForMovement.target }]),
+    ...(postUpTarget === undefined ? [] : [postUpTarget]),
     ...movementReaction.targetOverrides,
     ...(coverage?.state.phase === 'ACTIVE' ? coverage.targetOverrides : []),
   ]
@@ -577,12 +607,12 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const shotZone = shotLocation.shotZone
   const shotAttemptWeight = spatialShotAttemptWeight(calculateShotZoneWeights(offensiveActor), attackingPlan, shotZone)
   const turnoverProbability = calculateTurnoverProbability({ ballHandlerProfile: offensiveActor, ballHandlerFatigue: state.fatigueByPlayerId[playerId] ?? 0, defenderProfile: primaryDefender, defenderFatigue: state.fatigueByPlayerId[primaryDefenderId] ?? 0 })
-  const passActionProbability = isolationContinuation === 'PASS' || pickAndRollContinuation === 'PASS_TO_ROLLER' || pickAndRollContinuation === 'PASS_TO_POPPER'
+  const passActionProbability = postUpContinuation === 'PASS_OUT' || isolationContinuation === 'PASS' || pickAndRollContinuation === 'PASS_TO_ROLLER' || pickAndRollContinuation === 'PASS_TO_POPPER'
     ? 1
-    : isolationContinuation === 'DRIVE' || isolationContinuation === 'SHOT' || pickAndRollContinuation === 'HANDLER_DRIVE' || pickAndRollContinuation === 'HANDLER_SHOT'
+    : postUpContinuation === 'POST_SHOT' || isolationContinuation === 'DRIVE' || isolationContinuation === 'SHOT' || pickAndRollContinuation === 'HANDLER_DRIVE' || pickAndRollContinuation === 'HANDLER_SHOT'
       ? 0
       : calculatePassActionProbability(offensiveActor.tendencies.PASS_FIRST_BIAS ?? 0, state.passesThisPossession ?? 0)
-  const selectedShotWeight = isolationContinuation === 'SHOT' || pickAndRollContinuation === 'HANDLER_SHOT' ? Math.max(shotAttemptWeight, 1) : shotAttemptWeight
+  const selectedShotWeight = postUpContinuation === 'POST_SHOT' || isolationContinuation === 'SHOT' || pickAndRollContinuation === 'HANDLER_SHOT' ? Math.max(shotAttemptWeight, 1) : shotAttemptWeight
   const outcome = choosePossessionOutcome(turnoverProbability, passActionProbability, selectedShotWeight, session.random)
   let attackingTeamId = state.attackingTeamId
   let passesThisPossession = state.passesThisPossession ?? 0
