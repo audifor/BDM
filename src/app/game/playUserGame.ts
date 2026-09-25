@@ -145,8 +145,8 @@ export function instantResult(world: GameWorld, tacticalPlan?: MatchTacticalPlan
 }
 
 /** Retained application alias for existing instant-result callers. */
-export function playUserGame(world: GameWorld): GameWorld {
-  return instantResult(world)
+export function playUserGame(world: GameWorld, matchSeed?: number): GameWorld {
+  return instantResult(world, undefined, matchSeed)
 }
 
 export function simulateAndApplyGame(world: GameWorld, game: Game, matchSeed?: number): GameWorld {

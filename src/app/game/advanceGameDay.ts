@@ -4,19 +4,19 @@ import { advanceDay, getScheduledGamesToday } from '@/engine/calendar'
 import { createPreMatchMediaOpportunity } from '@/engine/media'
 import { getUserTeam } from '@/engine/calendar'
 
-import { simulateAndApplyGame } from './playUserGame'
+import { createMatchSeed, simulateAndApplyGame, type MatchSeedFactory } from './playUserGame'
 
 /** Resolves every remaining game today without changing the calendar date. */
-export function simulateRemainingGamesToday(world: GameWorld): GameWorld {
+export function simulateRemainingGamesToday(world: GameWorld, createSeed: MatchSeedFactory = createMatchSeed): GameWorld {
   return getScheduledGamesToday(world).reduce(
-    (updatedWorld, game) => simulateAndApplyGame(updatedWorld, game),
+    (updatedWorld, game) => simulateAndApplyGame(updatedWorld, game, createSeed()),
     world,
   )
 }
 
 /** Resolves today's pending games, then advances the game calendar by one day. */
-export function advanceGameDay(world: GameWorld): GameWorld {
-  const resolvedWorld = simulateRemainingGamesToday(world)
+export function advanceGameDay(world: GameWorld, createSeed: MatchSeedFactory = createMatchSeed): GameWorld {
+  const resolvedWorld = simulateRemainingGamesToday(world, createSeed)
   const advancedWorld = advanceDay(resolvedWorld)
 
   const pastScheduledGame = Object.values(advancedWorld.games).find(

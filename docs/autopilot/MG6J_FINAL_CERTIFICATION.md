@@ -62,9 +62,20 @@
   not open the local app. Render-level and Visual Bridge tests were run instead.
 - MatchEngine, seed lifecycle, Live controller, MatchViewer, visual bridge, and
   court projection focused suite: **32 files, 234 tests passed**.
+- Full repository suite on the final integration candidate: **437 files passed,
+  1 skipped; 3,391 tests passed, 1 skipped**.
 - `npm run typecheck`: **passed**.
-- Full repository validation is run after the final branch is merged into the
-  integration worktree, once as required by MG6J.
+- `npm run build`: **passed** (Vite reported the existing large-chunk advisory).
+- `cargo fmt --check --manifest-path src-tauri/Cargo.toml`: **passed**.
+- `cargo check --offline --manifest-path src-tauri/Cargo.toml`: **passed** using
+  the existing local cache; no package installation or network access was used.
+- `git diff --check`: **passed**.
+- The full suite exposed app tests that had assumed repeated normal runs reused
+  a fixed seed. Batch simulation now accepts the same injectable seed factory
+  used by individual matches, and replay-oriented tests provide a fixed seed.
+  It also exposed a stale substitution-candidate expectation and a floating
+  point interpolation endpoint; both were corrected and covered by passing
+  targeted tests before the final full run.
 
 ## Known deferrals
 
@@ -78,7 +89,8 @@
 ## Integration and cleanup record
 
 Integration branch/SHA, `main` and `origin/main` SHAs, push result, and the
-worktree cleanup inventory are recorded here after the final integration run.
+worktree cleanup inventory are completed after the certified integration
+candidate is pushed and remote ancestry is verified.
 
 ```text
 MG6J_BRANCH: matchengine-v3-mg6j-final-certification
@@ -86,8 +98,11 @@ MG6J_BASE: 85a4cf54f68da204daeeaa53e63f94b09e2e9bde
 MG6I_SHA: 85a4cf54f68da204daeeaa53e63f94b09e2e9bde
 FOCUSED_TESTS: 32 files / 234 tests passed
 TYPECHECK: passed
-BUILD: pending after integration
-DIFF_CHECK: pending
+FULL_TESTS: 437 files passed / 1 skipped; 3,391 tests passed / 1 skipped
+BUILD: passed
+RUST_FMT: passed (`--manifest-path src-tauri/Cargo.toml`)
+RUST_CHECK: passed offline from existing cache
+DIFF_CHECK: passed
 MAIN_BEFORE: 9539eafd1613d1daace8392921a5d38541f0c176
 MAIN_AFTER: pending
 ORIGIN_MAIN: pending

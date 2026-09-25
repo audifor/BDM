@@ -40,8 +40,8 @@ describe('prototype game application', () => {
   })
 
   it('returns the same user result for the same world and game inputs', () => {
-    const first = playUserGame(createNewGame())
-    const second = playUserGame(createNewGame())
+    const first = playUserGame(createNewGame(), 12345)
+    const second = playUserGame(createNewGame(), 12345)
     const gameId = getGamesToday(first).find((game) => game.status === 'completed')!.id
 
     expect(first.games[gameId]?.result).toEqual(second.games[gameId]?.result)
@@ -74,8 +74,8 @@ describe('prototype game application', () => {
 
   it('uses the same final score for Instant Result and MatchViewer preparation', () => {
     const world = createNewGame()
-    const simulation = prepareUserMatch(world)
-    const instantWorld = instantResult(world)
+    const simulation = prepareUserMatch(world, undefined, 12345)
+    const instantWorld = instantResult(world, undefined, 12345)
 
     expect(instantWorld.games[simulation.gameId]?.result).toEqual({ homeScore: simulation.finalScore.home, awayScore: simulation.finalScore.away })
   })

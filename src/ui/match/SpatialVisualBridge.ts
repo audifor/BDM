@@ -59,6 +59,8 @@ export function interpolateVisualMatchSnapshot(
   progress: number,
 ): VisualMatchSnapshot {
   const t = Math.min(1, Math.max(0, progress))
+  if (t === 0) return previous
+  if (t === 1) return current
   const previousById = new Map(previous.players.map((player) => [player.playerId, player]))
   const players = current.players.map((player) => {
     const from = previousById.get(player.playerId)

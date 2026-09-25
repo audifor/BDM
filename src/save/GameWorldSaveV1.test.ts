@@ -152,13 +152,13 @@ describe('GameWorldSaveV1', () => {
   })
 
   it('preserves completed match logs and the deterministic next result', () => {
-    const completed = playUserGame(createNewGame())
+    const completed = playUserGame(createNewGame(), 12345)
     const loaded = deserializeGameWorldV1(serializeGameWorldV1(completed, '2032-10-01T12:00:00.000Z'))
     const original = createNewGame()
     const loadedBeforePlay = deserializeGameWorldV1(serializeGameWorldV1(original, '2032-10-01T12:00:00.000Z'))
 
     expect(loaded.matchStatLogsByGameId).toEqual(completed.matchStatLogsByGameId)
-    expect(withoutCoachRpgProfiles(playUserGame(loadedBeforePlay))).toEqual(withoutCoachRpgProfiles(playUserGame(original)))
+    expect(withoutCoachRpgProfiles(playUserGame(loadedBeforePlay, 12345))).toEqual(withoutCoachRpgProfiles(playUserGame(original, 12345)))
   })
 
   it('enriches legacy players without bio deterministically', () => {

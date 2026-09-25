@@ -19,8 +19,10 @@ describe('EntityActionExecutor', () => {
     expect(executeEntityActionResult(world, createEntityCommand({ type: 'player.talk', entity: createEntityRef('player', playerId) }), { controlledTeamId: team.id })).toEqual({ kind: 'noExecutor' })
   })
 
-  it('does not expose live substitution candidates while substitutions are disabled', () => {
+  it('exposes substitution candidates only while a live match is in progress', () => {
     const world = createNewGame(); const team = getUserTeam(world)!; const controller = createLiveUserMatch(world); const playerOutId = [...controller.snapshot().lineups.home, ...controller.snapshot().lineups.away].find((id) => team.rosterPlayerIds.includes(id))!
+    expect(controller.replacementCandidates(team.id, playerOutId).length).toBeGreaterThan(0)
+    controller.skipToEnd()
     expect(controller.replacementCandidates(team.id, playerOutId)).toEqual([])
   })
 })

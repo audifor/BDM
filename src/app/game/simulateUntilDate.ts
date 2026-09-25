@@ -6,7 +6,7 @@ import { skipMediaOpportunity } from '@/engine/media'
 
 import { advanceGameDay } from './advanceGameDay'
 import { getContinueStopReason, type ContinueStopReason } from './ContinueFlow'
-import { instantResult } from './playUserGame'
+import { createMatchSeed, instantResult, type MatchSeedFactory } from './playUserGame'
 import { advanceCompetitionLifecycles, type UnsupportedLifecycleDiagnostic } from './CompetitionLifecycleCoordinator'
 
 export type SimulateUntilStopReason = ContinueStopReason | { readonly type: 'arrived' } | { readonly type: 'unsupportedLifecycle'; readonly diagnostic: UnsupportedLifecycleDiagnostic }
@@ -54,7 +54,7 @@ export interface SimulateUntilTick {
  * that is reported as an explicit `unsupportedLifecycle` stop rather than silently skipped,
  * silently deleting its orphaned fixtures, or moving their dates -- see Paso 10.
  */
-export function tickSimulateUntilDate(world: GameWorld, targetDate: GameDate): SimulateUntilTick {
+export function tickSimulateUntilDate(world: GameWorld, targetDate: GameDate, createSeed: MatchSeedFactory = createMatchSeed): SimulateUntilTick {
   const target = parseGameDate(targetDate)
   if (compareGameDates(world.currentDate, target) >= 0) {
     return { world, event: { type: 'finished', stopReason: getContinueStopReason(world) ?? { type: 'arrived' } } }
@@ -80,24 +80,24 @@ export function tickSimulateUntilDate(world: GameWorld, targetDate: GameDate): S
     // The primary's next edition already exists (rolled above, if it was FULLY_SUPPORTED) with a
     // future `startDate`; keep advancing one day at a time until the world clock reaches it and
     // `currentSeasonId` migrates naturally (see CalendarEngine.migrateCurrentSeasonIfElapsed).
-    return { world: advanceGameDay(world), event: { type: 'dayAdvanced' } }
+    return { world: advanceGameDay(world, createSeed), event: { type: 'dayAdvanced' } }
   }
   if (interruption?.type === 'mediaOpportunity') {
     return { world: skipMediaOpportunity(world, interruption.opportunityId), event: { type: 'mediaSkipped' } }
   }
   if (interruption?.type === 'userGame') {
-    const next = instantResult(world)
+    const next = instantResult(world, undefined, createSeed())
     const match = summarizeResolvedUserMatch(world, next)
     return match === undefined
       ? { world: next, event: { type: 'mediaSkipped' } }
       : { world: next, event: { type: 'userMatch', match } }
   }
 
-  return { world: advanceGameDay(world), event: { type: 'dayAdvanced' } }
+  return { world: advanceGameDay(world, createSeed), event: { type: 'dayAdvanced' } }
 }
 
 /** Advances the canonical daily pipeline until the chosen morning, simulating every pending event on the way. */
-export function simulateUntilDate(world: GameWorld, targetDate: GameDate): SimulateUntilResult {
+export function simulateUntilDate(world: GameWorld, targetDate: GameDate, createSeed: MatchSeedFactory = createMatchSeed): SimulateUntilResult {
   const target = parseGameDate(targetDate)
   if (compareGameDates(target, world.currentDate) <= 0) {
     throw new RangeError('Simulate-until date must be after the current game date')
@@ -115,7 +115,7 @@ export function simulateUntilDate(world: GameWorld, targetDate: GameDate): Simul
       return result(current, daysAdvanced, { type: 'safetyLimit' })
     }
 
-    const tick = tickSimulateUntilDate(current, target)
+    const tick = tickSimulateUntilDate(current, target, createSeed)
     if (tick.event.type === 'finished') {
       return result(tick.world, daysAdvanced, tick.event.stopReason)
     }
