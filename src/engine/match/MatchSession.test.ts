@@ -7,9 +7,33 @@ import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
-import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, assignBaseSpatialTargets, assignTransitionSpatialTargets, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, createScreenIntent, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, advancePlayerTowardTarget, BASELINE_PLAYER_KINEMATIC_PROFILE, PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED, PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED, PLAYER_MAX_SPEED_METERS_PER_SECOND, releaseSpatialBall, simulateMatchDetailed, stepMatchSession, stepPlayersTowardBaseSpacing, stepPlayersTowardTransitionTargets, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
+import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, assignBaseSpatialTargets, assignTransitionSpatialTargets, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, createOffensiveAction, createScreenIntent, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, advancePlayerTowardTarget, BASELINE_PLAYER_KINEMATIC_PROFILE, PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED, PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED, PLAYER_MAX_SPEED_METERS_PER_SECOND, releaseSpatialBall, simulateMatchDetailed, stepMatchSession, stepPlayersTowardBaseSpacing, stepPlayersTowardTransitionTargets, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
 
 describe('MatchSession', () => {
+  it('represents an offensive action with distinct active participants from its team lineup', () => {
+    const { world, game } = createScheduledGameWorld()
+    const state = createMatchSession(createOptions(world, game.id, 5, 6)).state
+    const teamId = state.attackingTeamId
+    const lineup = teamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
+    const action = createOffensiveAction({ kind: 'PICK_AND_ROLL', teamId, initiatorId: lineup[0]!, participantIds: [lineup[0]!, lineup[1]!], activeLineup: lineup })
+
+    expect(action).toEqual({ kind: 'PICK_AND_ROLL', teamId, initiatorId: lineup[0], participantIds: [lineup[0], lineup[1]] })
+    expect(() => createOffensiveAction({ kind: 'PICK_AND_ROLL', teamId, initiatorId: lineup[0]!, participantIds: [lineup[0]!, state.squads.home.at(-1)!], activeLineup: lineup })).toThrow('Offensive action participants must be distinct active players and include the initiator')
+  })
+
+  it('uses a canonical pick-and-roll action to activate the existing screen movement branch', () => {
+    const { world, game } = createScheduledGameWorld()
+    const createPreparedSession = () => withActivePickAndRollContext(createMatchSession({ ...createOptions(world, game.id, 10, 20), random: new FirstSportingRandom(), decisionRandom: new ZeroDecisionRandom() }))
+    const authorized = createPreparedSession()
+    const unauthorized = createPreparedSession()
+    const action = authorized.state.offensiveAction
+    const withoutAction = { ...unauthorized, state: { ...unauthorized.state, offensiveAction: undefined } }
+
+    expect(action).toMatchObject({ kind: 'PICK_AND_ROLL', initiatorId: authorized.state.screenIntent?.ballHandlerId })
+    expect(action?.participantIds).toEqual([authorized.state.screenIntent?.ballHandlerId, authorized.state.screenIntent?.screenerId])
+    expect(stepMatchSession(authorized).session.state.spatial).not.toEqual(stepMatchSession(withoutAction).session.state.spatial)
+  })
+
   it('produces the same complete simulation through stepping as through the wrapper', () => {
     const { world, game } = createScheduledGameWorld()
     const whole = simulateMatchDetailed(createOptions(world, game.id, 12345, 67890))
@@ -744,6 +768,7 @@ function withActivePickAndRollContext(session: ReturnType<typeof createMatchSess
     spatial,
     coachingState,
     screenIntent,
+    offensiveAction: createOffensiveAction({ kind: 'PICK_AND_ROLL', teamId: state.attackingTeamId, initiatorId: handlerId, participantIds: [handlerId, screenerId], activeLineup: offense }),
     driveIntent: { handlerId, defenderId: handlerDefenderId, target: basket, stepsRemaining: 2 },
     offBallCut: { type: 'rimCut' as const, teamId: state.attackingTeamId, playerId: offense[2]!, target: basket, stepsRemaining: 2 },
     defensiveReaction: { defenderId: helperId, protectedPlayerId, threatPlayerId: handlerId, type: 'drive' as const, target: basket, phase: 'HELP' as const },

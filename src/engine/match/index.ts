@@ -21,6 +21,8 @@ export { assignBaseSpatialTargets, stepPlayersTowardBaseSpacing } from './BaseSp
 export type { BaseSpacingInput, BaseSpacingTargets, BaseSpatialTarget } from './BaseSpacing'
 export { createOffBallCutIntent, MAX_OFF_BALL_CUT_STEPS, selectOffBallCutter, updateOffBallCutIntent } from './OffBallMovement'
 export type { OffBallCutIntent } from './OffBallMovement'
+export { createOffensiveAction } from './OffensiveActions'
+export type { OffensiveAction, OffensiveActionKind } from './OffensiveActions'
 export { advanceScreenIntent, createPostScreenIntent, createPostScreenTarget, createScreenIntent, reduceScreenedDefenderMovement, screenIntersectsDefenderRoute, selectScreenScreener, SCREEN_RULES_V1 } from './ScreenInteractions'
 export type { ScreenIntent } from './ScreenInteractions'
 export { advanceDriveIntent, createDriveTarget, driveMovementFactor, reduceDriveHandlerMovement, selectDriveIntent, DRIVE_RULES_V1 } from './DribbleDrives'
