@@ -1,0 +1,197 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "match-engine-core",
+      "patterns": [
+        "src/engine/match/MatchEngine.ts",
+        "src/engine/match/index.ts"
+      ],
+      "level": "T2",
+      "tests": [
+        "src/engine/match/MatchSession.test.ts",
+        "src/engine/match/MatchEngine.test.ts",
+        "src/engine/match/DetailedMatchSimulation.test.ts",
+        "src/engine/match/PlayerDrivenOffense.test.ts",
+        "src/app/game/LiveMatchController.test.ts"
+      ],
+      "reason": "Core match/session authority affects action sequencing, completed simulations, and Live execution.",
+      "typecheck": true
+    },
+    {
+      "id": "spatial-authority",
+      "patterns": [
+        "src/engine/match/SpatialState.ts",
+        "src/engine/match/BaseSpacing.ts",
+        "src/engine/match/TransitionSpatial.ts",
+        "src/engine/match/ScreenInteractions.ts",
+        "src/engine/match/PostUpMovement.ts",
+        "src/engine/match/PlayerKinematics.ts",
+        "src/engine/match/Matchups.ts",
+        "src/engine/match/DefensiveCoverages.ts",
+        "src/engine/match/DefensiveReactions.ts"
+      ],
+      "level": "T2",
+      "tests": [
+        "src/engine/match/MatchSession.test.ts",
+        "src/engine/match/ScreenInteractions.test.ts",
+        "src/engine/match/PlayerKinematics.test.ts",
+        "src/engine/match/Matchups.test.ts",
+        "src/engine/match/PlayerDrivenOffense.test.ts",
+        "src/ui/match/SpatialVisualBridge.test.ts"
+      ],
+      "reason": "Shared spatial state, movement, assignment, and coverage changes need authority and presentation regressions.",
+      "typecheck": true
+    },
+    {
+      "id": "offensive-action-decisions",
+      "patterns": [
+        "src/engine/match/OffensivePlaycalling.ts",
+        "src/engine/match/OffensiveActions.ts",
+        "src/engine/match/*Offense.ts",
+        "src/engine/match/DribbleDrives.ts",
+        "src/engine/match/OffBallMovement.ts"
+      ],
+      "level": "T1",
+      "tests": [
+        "src/engine/match/MatchSession.test.ts",
+        "src/engine/match/PlayerDrivenOffense.test.ts",
+        "src/engine/match/DribbleDrives.test.ts",
+        "src/engine/match/OffBallMovement.test.ts",
+        "src/engine/match/DetailedMatchSimulation.test.ts"
+      ],
+      "reason": "Focused coverage for primary action selection, action continuations, drives, and secondary cuts.",
+      "typecheck": false
+    },
+    {
+      "id": "sporting-resolution",
+      "patterns": [
+        "src/engine/match/PassingResolution.ts",
+        "src/engine/match/ShotResolution.ts",
+        "src/engine/match/TurnoverResolution.ts",
+        "src/engine/match/AssistResolution.ts",
+        "src/engine/match/ReboundResolution.ts",
+        "src/engine/match/DefensiveAttribution.ts"
+      ],
+      "level": "T1",
+      "tests": [
+        "src/engine/match/PassingResolution.test.ts",
+        "src/engine/match/MatchEngine.test.ts",
+        "src/engine/match/MatchSession.test.ts",
+        "src/engine/match/PlayerDrivenOffense.test.ts"
+      ],
+      "reason": "Outcome and attribution changes are checked against direct resolution and canonical match events.",
+      "typecheck": false
+    },
+    {
+      "id": "player-profile-contract",
+      "patterns": [
+        "src/engine/match/MatchPlayerProfile.ts"
+      ],
+      "level": "T2",
+      "tests": [
+        "src/engine/match/PlayerTruthAuthority.test.ts",
+        "src/engine/match/MatchSession.test.ts",
+        "src/engine/match/DetailedMatchSimulation.test.ts"
+      ],
+      "reason": "The match profile is a shared player-truth contract used throughout simulation.",
+      "typecheck": true
+    },
+    {
+      "id": "fatigue",
+      "patterns": [
+        "src/engine/match/Fatigue.ts"
+      ],
+      "level": "T1",
+      "tests": [
+        "src/engine/match/Fatigue.test.ts",
+        "src/engine/match/MatchSession.test.ts",
+        "src/engine/match/DetailedMatchSimulation.test.ts"
+      ],
+      "reason": "Focused fatigue rules plus session and full-match integration coverage.",
+      "typecheck": false
+    },
+    {
+      "id": "match-result-and-stats",
+      "patterns": [
+        "src/engine/match/MatchResultApplication.ts",
+        "src/engine/match/PlayerMatchStats.ts"
+      ],
+      "level": "T1",
+      "tests": [
+        "src/engine/match/MatchResultApplication.test.ts",
+        "src/engine/match/PlayerMatchStats.test.ts"
+      ],
+      "reason": "Result persistence and derived player match lines have direct tests.",
+      "typecheck": false
+    },
+    {
+      "id": "rotation",
+      "patterns": [
+        "src/engine/match/rotation/*.ts"
+      ],
+      "level": "T2",
+      "tests": [
+        "src/engine/match/rotation/MatchRotationRunner.test.ts",
+        "src/engine/match/rotation/RotationPlan.test.ts",
+        "src/engine/match/MatchSession.test.ts"
+      ],
+      "reason": "Rotation is a shared lineup authority and must be checked with session integration.",
+      "typecheck": true
+    },
+    {
+      "id": "tactics",
+      "patterns": [
+        "src/engine/match/tactics/*.ts"
+      ],
+      "level": "T1",
+      "tests": [
+        "src/engine/match/tactics/TacticalEffects.test.ts",
+        "src/engine/match/MatchSession.test.ts",
+        "src/app/game/TacticalPlanning.test.ts"
+      ],
+      "reason": "Tactical-plan contracts and their match-use effects have focused coverage.",
+      "typecheck": true
+    },
+    {
+      "id": "live-match-application",
+      "patterns": [
+        "src/app/game/LiveMatchController.ts",
+        "src/app/game/playUserGame.ts"
+      ],
+      "level": "T1",
+      "tests": [
+        "src/app/game/LiveMatchController.test.ts",
+        "src/app/game/matchSeedLifecycle.test.ts",
+        "src/ui/match/MatchPresentationSegment.test.ts"
+      ],
+      "reason": "Live startup, seed authority, and step presentation share this boundary.",
+      "typecheck": true
+    },
+    {
+      "id": "match-presentation",
+      "patterns": [
+        "src/ui/match/MatchPresentationSegment.ts",
+        "src/ui/match/SpatialVisualBridge.ts"
+      ],
+      "level": "T1",
+      "tests": [
+        "src/ui/match/MatchPresentationSegment.test.ts",
+        "src/ui/match/SpatialVisualBridge.test.ts",
+        "src/engine/match/MatchSession.test.ts"
+      ],
+      "reason": "Presentation projections are checked with their direct tests and canonical match steps.",
+      "typecheck": false
+    },
+    {
+      "id": "match-engine-tests",
+      "patterns": [
+        "src/engine/match/*.test.ts"
+      ],
+      "level": "T0",
+      "tests": [],
+      "reason": "A changed MatchEngine test file is itself the focused validation target.",
+      "typecheck": false
+    }
+  ]
+}
