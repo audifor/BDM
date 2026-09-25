@@ -254,6 +254,96 @@ describe('MatchSession', () => {
     expect(result.session.state.offensiveAction).toBeUndefined()
   })
 
+  it('reads a completed pass catch and routes catch-and-shoot through existing shot resolution', () => {
+    const { world, game } = createScheduledGameWorld()
+    const caught = createPassedCatchSession(world, game.id, 41, { CATCH_AND_SHOOT_FREQUENCY: 100, SHOT_FREQUENCY: 0, DRIVE_FREQUENCY: 0, ADVANTAGE_PASS_FREQUENCY: 0 })
+    const receiverId = caught.receiverId
+    const result = stepMatchSession({ ...placeCatchReceiverOnPerimeter(caught.session, receiverId), random: new MadeBasketRandom() })
+
+    expect(caught.session.state.spatial.ball).toMatchObject({ kind: 'playerControlled', playerId: receiverId })
+    expect(caught.session.state.catchContext).toBe(receiverId)
+    expect(result.newEvents.some((event) => (event.type === 'shotMade' || event.type === 'shotMissed') && event.playerId === receiverId)).toBe(true)
+    expect(result.session.state.catchContext).toBeUndefined()
+  })
+
+  it('attacks a real defender closeout through the shared DriveIntent and MG6 movement', () => {
+    const { world, game } = createScheduledGameWorld()
+    const caught = createPassedCatchSession(world, game.id, 42, { CATCH_AND_SHOOT_FREQUENCY: 0, SHOT_FREQUENCY: 0, MIDRANGE_FREQUENCY: 0, THREE_POINT_FREQUENCY: 0, DEEP_THREE_FREQUENCY: 0, DRIVE_FREQUENCY: 100, ADVANTAGE_PASS_FREQUENCY: 0 })
+    const prepared = placeCatchReceiverOnPerimeter(caught.session, caught.receiverId)
+    const closing = placeAssignedDefenderClosing(prepared, caught.receiverId)
+    const basket = getSpatialPossessionView(closing.state).attackingBasket
+    const before = closing.state.spatial.players.find((player) => player.playerId === caught.receiverId)!.position
+    const result = stepMatchSession(closing).session.state
+    const after = result.spatial.players.find((player) => player.playerId === caught.receiverId)!.position
+
+    expect(distanceFromBasket(after, basket)).toBeLessThan(distanceFromBasket(before, basket))
+    expect(result.catchContext).toBeUndefined()
+  })
+
+  it('does not treat an interior catch as a perimeter closeout drive', () => {
+    const { world, game } = createScheduledGameWorld()
+    const caught = createPassedCatchSession(world, game.id, 47, { CATCH_AND_SHOOT_FREQUENCY: 100, SHOT_FREQUENCY: 0, RIM_ATTEMPT_FREQUENCY: 0, DRIVE_FREQUENCY: 100, ADVANTAGE_PASS_FREQUENCY: 0 })
+    const nearRim = placeCatchReceiverNearBasket(caught.session, caught.receiverId)
+    const closing = placeAssignedDefenderClosing(nearRim, caught.receiverId)
+    const result = stepMatchSession(closing).session.state
+
+    expect(result.driveIntent).toBeUndefined()
+    expect(result.catchContext).toBeUndefined()
+  })
+
+  it('routes a catch pass through existing receiver selection and pass resolution', () => {
+    const { world, game } = createScheduledGameWorld()
+    const caught = createPassedCatchSession(world, game.id, 43, { CATCH_AND_SHOOT_FREQUENCY: 0, SHOT_FREQUENCY: 0, RIM_ATTEMPT_FREQUENCY: 0, MIDRANGE_FREQUENCY: 0, THREE_POINT_FREQUENCY: 0, DEEP_THREE_FREQUENCY: 0, DRIVE_FREQUENCY: 0, ADVANTAGE_PASS_FREQUENCY: 100 }, new ForcedPassRandom(true))
+    const result = stepMatchSession({ ...placeCatchReceiverOnPerimeter(caught.session, caught.receiverId), random: new MadeBasketRandom() })
+    const pass = result.newEvents.find((event) => event.type === 'passCompleted')
+
+    expect(pass?.type).toBe('passCompleted')
+    expect(result.session.state.spatial.ball).toMatchObject({ kind: 'playerControlled', playerId: pass?.type === 'passCompleted' ? pass.receiverPlayerId : undefined })
+    expect(result.session.state.catchContext).toBe(pass?.type === 'passCompleted' ? pass.receiverPlayerId : undefined)
+  })
+
+  it('resets an unexploited catch and resumes ordinary possession without retaining the marker', () => {
+    const { world, game } = createScheduledGameWorld()
+    const caught = createPassedCatchSession(world, game.id, 44, { CATCH_AND_SHOOT_FREQUENCY: 0, SHOT_FREQUENCY: 0, RIM_ATTEMPT_FREQUENCY: 0, MIDRANGE_FREQUENCY: 0, THREE_POINT_FREQUENCY: 0, DRIVE_FREQUENCY: 0, ADVANTAGE_PASS_FREQUENCY: 0 })
+    const result = stepMatchSession(caught.session)
+
+    expect(result.session.state.clockSecondsRemaining).toBeLessThan(caught.session.state.clockSecondsRemaining)
+    expect(result.session.state.catchContext).toBeUndefined()
+  })
+
+  it('gives an explicit SPOT_UP action a receiver continuation without a catch marker', () => {
+    const { world, game } = createScheduledGameWorld()
+    const caught = createPassedCatchSession(world, game.id, 45, { CATCH_AND_SHOOT_FREQUENCY: 0, SHOT_FREQUENCY: 100, DRIVE_FREQUENCY: 0, ADVANTAGE_PASS_FREQUENCY: 0 })
+    const receiverId = caught.receiverId
+    const positioned = placeCatchReceiverOnPerimeter(caught.session, receiverId)
+    const offense = positioned.state.attackingTeamId === positioned.state.homeTeamId ? positioned.state.activeLineups.home : positioned.state.activeLineups.away
+    const session = { ...positioned, state: { ...positioned.state, catchContext: undefined, offensiveAction: createOffensiveAction({ kind: 'SPOT_UP', teamId: positioned.state.attackingTeamId, initiatorId: receiverId, participantIds: [receiverId], activeLineup: offense }) } }
+    const result = stepMatchSession({ ...session, random: new MadeBasketRandom() })
+
+    expect(result.newEvents.some((event) => (event.type === 'shotMade' || event.type === 'shotMissed') && event.playerId === receiverId)).toBe(true)
+    expect(result.session.state.offensiveAction).toBeUndefined()
+  })
+
+  it('does not double-read a handoff receiver as a generic catch', () => {
+    const { world, game } = createScheduledGameWorld()
+    const base = withHandoffContext(createMatchSession({ ...createOptions(world, game.id, 46, 92), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), true, { drive: 0, shot: 0, pass: 0 })
+    const receiverId = handoffActors(base.state).receiverId
+    const transferred = stepMatchSession(base).session
+    const offenseKey = transferred.state.attackingTeamId === transferred.state.homeTeamId ? 'home' : 'away'
+    const playerProfiles = {
+      ...transferred.state.playerProfiles,
+      [offenseKey]: transferred.state.playerProfiles[offenseKey].map((profile) => profile.playerId === receiverId
+        ? { ...profile, tendencies: { ...profile.tendencies, CATCH_AND_SHOOT_FREQUENCY: 100, SHOT_FREQUENCY: 0, PULLUP_FREQUENCY: 0, DRIVE_FREQUENCY: 0, ADVANTAGE_PASS_FREQUENCY: 0, CUT_FREQUENCY: 0 } }
+        : { ...profile, tendencies: { ...profile.tendencies, CUT_FREQUENCY: 0 } }),
+    }
+    const decisionRandom = new CountingZeroDecisionRandom()
+    const staleCatch = { ...transferred, decisionRandom, state: { ...transferred.state, playerProfiles, catchContext: receiverId } }
+    const result = stepMatchSession(staleCatch).session.state
+
+    expect(result.catchContext).toBeUndefined()
+    expect(decisionRandom.nextCalls).toBe(0)
+  })
+
   it('resets an isolation with no specialized option and resumes ordinary possession behavior', () => {
     const { world, game } = createScheduledGameWorld()
     const session = withIsolationContext(createMatchSession({ ...createOptions(world, game.id, 16, 32), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), { drive: 0, shot: 0, pass: 0 })
@@ -1116,6 +1206,77 @@ function handoffActors(state: ReturnType<typeof createMatchSession>['state']) {
   return { giverId: action.initiatorId, receiverId: action.participantIds.find((playerId) => playerId !== action.initiatorId)! }
 }
 
+function createPassedCatchSession(
+  world: GameWorld,
+  gameId: GameWorld['games'][keyof GameWorld['games']]['id'],
+  seed: number,
+  tendencies: Partial<ReturnType<typeof createMatchSession>['state']['playerProfiles']['home'][number]['tendencies']>,
+  sportingRandom: RandomSource = new ForcedPassRandom(true),
+) {
+  const prepared = withIsolationContext(createMatchSession({
+    ...createOptions(world, gameId, seed, seed * 2),
+    random: sportingRandom,
+    decisionRandom: new ZeroDecisionRandom(),
+    actorRandom: new FirstActorRandom(),
+  }), { drive: 0, shot: 0, pass: 100 })
+  const passerId = prepared.state.offensiveAction!.initiatorId
+  const passed = stepMatchSession(prepared).session
+  const receiverId = passed.state.spatial.ball.kind === 'playerControlled' ? passed.state.spatial.ball.playerId : passerId
+  const offenseKey = passed.state.attackingTeamId === passed.state.homeTeamId ? 'home' : 'away'
+  const playerProfiles = {
+    ...passed.state.playerProfiles,
+    [offenseKey]: passed.state.playerProfiles[offenseKey].map((profile) => profile.playerId === receiverId
+      ? { ...profile, tendencies: { ...profile.tendencies, ...tendencies } }
+      : profile),
+  }
+  return { session: { ...passed, state: { ...passed.state, playerProfiles } }, receiverId }
+}
+
+function placeCatchReceiverOnPerimeter(session: ReturnType<typeof createMatchSession>, receiverId: ReturnType<typeof createMatchSession>['state']['activeLineups']['home'][number]) {
+  const basket = getSpatialPossessionView(session.state).attackingBasket
+  const direction = basket.x > session.state.spatial.court.lengthMeters / 2 ? 1 : -1
+  const position = { x: basket.x - direction * 8, y: basket.y }
+  const spatial = controlBallByPlayer({
+    ...session.state.spatial,
+    players: session.state.spatial.players.map((player) => player.playerId === receiverId
+      ? { ...player, position, velocity: { x: 0, y: 0 } }
+      : player),
+  }, receiverId)
+  return { ...session, state: { ...session.state, spatial } }
+}
+
+function placeCatchReceiverNearBasket(session: ReturnType<typeof createMatchSession>, receiverId: ReturnType<typeof createMatchSession>['state']['activeLineups']['home'][number]) {
+  const basket = getSpatialPossessionView(session.state).attackingBasket
+  const direction = basket.x > session.state.spatial.court.lengthMeters / 2 ? 1 : -1
+  const position = { x: basket.x - direction * 2, y: basket.y }
+  const spatial = controlBallByPlayer({
+    ...session.state.spatial,
+    players: session.state.spatial.players.map((player) => player.playerId === receiverId
+      ? { ...player, position, velocity: { x: 0, y: 0 } }
+      : player),
+  }, receiverId)
+  return { ...session, state: { ...session.state, spatial } }
+}
+
+function placeAssignedDefenderClosing(session: ReturnType<typeof createMatchSession>, receiverId: ReturnType<typeof createMatchSession>['state']['activeLineups']['home'][number]) {
+  const state = session.state
+  const offenseKey = state.attackingTeamId === state.homeTeamId ? 'home' : 'away'
+  const defenseKey = offenseKey === 'home' ? 'away' : 'home'
+  const offense = state.activeLineups[offenseKey]
+  const defense = state.activeLineups[defenseKey]
+  const assignments = calculateDefensiveAssignments(offense, defense, [...state.playerProfiles.home, ...state.playerProfiles.away], state.defensiveMatchups?.[defenseKey])
+  const defenderId = assignments.find((assignment) => assignment.offensivePlayerId === receiverId)!.defensivePlayerId
+  const receiver = state.spatial.players.find((player) => player.playerId === receiverId)!
+  const side = receiver.position.x + 2 < state.spatial.court.lengthMeters - 0.5 ? 1 : -1
+  const spatial = {
+    ...state.spatial,
+    players: state.spatial.players.map((player) => player.playerId === defenderId
+      ? { ...player, position: { x: receiver.position.x + side * 2, y: receiver.position.y }, velocity: { x: -side, y: 0 } }
+      : player),
+  }
+  return { ...session, state: { ...state, spatial } }
+}
+
 function withHandoffContext(
   session: ReturnType<typeof createMatchSession>,
   receiverNearby: boolean,
@@ -1310,6 +1471,11 @@ class FirstActorRandom extends FirstSportingRandom {}
 class NoCreditActorRandom extends FirstActorRandom { chance(_probability: number): boolean { return false } }
 
 class ZeroDecisionRandom extends FirstSportingRandom { next(): number { return 0 } }
+
+class CountingZeroDecisionRandom extends ZeroDecisionRandom {
+  public nextCalls = 0
+  next(): number { this.nextCalls += 1; return 0 }
+}
 
 class CertainDecisionRandom extends ZeroDecisionRandom { chance(probability: number): boolean { return probability > 0 } }
 

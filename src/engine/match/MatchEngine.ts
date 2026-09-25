@@ -30,6 +30,7 @@ import { decidePickAndRollScreenUse, selectPickAndRollHandlerContinuation, selec
 import { detectDefensiveThreat, resolveDefensiveReaction, type DefensiveReaction } from './DefensiveReactions'
 import { coverageForCurrentScreen } from './DefensiveCoverages'
 import { handoffApproachTarget, isHandoffTransferReady, selectHandoffContinuation, transferHandoffBall, validateHandoff, type HandoffContinuation } from './HandoffOffense'
+import { isSpotUpActionValid, selectSpotUpContinuation, type SpotUpContinuation } from './SpotUpOffense'
 
 /**
  * Default game-clock rules, used only as the fallback when a game's actual competition cannot
@@ -243,6 +244,8 @@ export interface MatchSessionState {
   readonly fatigueByPlayerId: FatigueByPlayerId
   readonly playerProfiles: MatchPlayerProfiles
   readonly spatial: SpatialState
+  /** One-step catch read set only after a completed canonical pass. */
+  readonly catchContext?: PlayerId
   readonly offBallCut?: OffBallCutIntent
   readonly screenIntent?: ScreenIntent
   readonly driveIntent?: DriveIntent
@@ -366,7 +369,7 @@ export function substitutePlayer(session: MatchSession, substitution: Substitute
   const reaction = state.defensiveReaction
   const removesReactionParticipant = reaction !== undefined && [reaction.defenderId, reaction.protectedPlayerId, reaction.threatPlayerId, reaction.rotationDefenderId, reaction.rotationProtectedPlayerId].includes(substitution.playerOutId)
   const removesActionParticipant = state.offensiveAction?.participantIds.includes(substitution.playerOutId) ?? false
-  return { ...session, state: { ...state, activeLineups, spatial, ...(state.offBallCut?.playerId === substitution.playerOutId ? { offBallCut: undefined } : {}), ...(removesScreenParticipant ? { screenIntent: undefined } : {}), ...(removesDriveParticipant ? { driveIntent: undefined } : {}), ...(removesReactionParticipant ? { defensiveReaction: undefined } : {}), ...(removesActionParticipant ? { offensiveAction: undefined } : {}), nextSequence: state.nextSequence + 1, events: [...state.events, event] } }
+  return { ...session, state: { ...state, activeLineups, spatial, ...(state.catchContext === substitution.playerOutId ? { catchContext: undefined } : {}), ...(state.offBallCut?.playerId === substitution.playerOutId ? { offBallCut: undefined } : {}), ...(removesScreenParticipant ? { screenIntent: undefined } : {}), ...(removesDriveParticipant ? { driveIntent: undefined } : {}), ...(removesReactionParticipant ? { defensiveReaction: undefined } : {}), ...(removesActionParticipant ? { offensiveAction: undefined } : {}), nextSequence: state.nextSequence + 1, events: [...state.events, event] } }
 }
 
 /** Advances one possession action or one period transition. RNG streams mutate only inside this runtime. */
@@ -455,10 +458,19 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     && defendingLineup.includes(savedScreen.defenderId)
     ? savedScreen
     : undefined
+  const activeSpotUp = isSpotUpActionValid({ action: savedAction, teamId: state.attackingTeamId, activeLineup: lineup, handlerId, spatial: state.spatial, attackingBasket })
+    && !transitionActive && activeIsolation === undefined && activePostUp === undefined && activeHandoff === undefined && activeScreen === undefined
+    ? savedAction
+    : undefined
+  const activeCatch = !transitionActive && activeSpotUp === undefined && activeIsolation === undefined && activePostUp === undefined && activeHandoff === undefined && activeScreen === undefined
+    && handlerId !== undefined && state.catchContext === handlerId
+    ? handlerId
+    : undefined
   let screenForMovement: ScreenIntent | undefined = activeScreen
   let cutForMovement = activeCut
-  const canStartOffBallAction = !transitionActive && activeIsolation === undefined && activePostUp === undefined && activeHandoff === undefined && state.screenIntent === undefined && state.offBallCut === undefined
-  let offensiveAction = activeIsolation ?? activePostUp ?? (activeHandoff === undefined ? state.offensiveAction : savedAction)
+  const canStartOffBallAction = !transitionActive && activeIsolation === undefined && activePostUp === undefined && activeHandoff === undefined && activeSpotUp === undefined && activeCatch === undefined && state.screenIntent === undefined && state.offBallCut === undefined
+  let offensiveAction = activeIsolation ?? activePostUp ?? activeSpotUp ?? (activeCatch === undefined ? state.offensiveAction : undefined)
+  if (activeHandoff !== undefined) offensiveAction = savedAction
   if (screenForMovement !== undefined && (offensiveAction?.kind !== 'PICK_AND_ROLL' || offensiveAction.teamId !== state.attackingTeamId || offensiveAction.initiatorId !== screenForMovement.ballHandlerId || !offensiveAction.participantIds.includes(screenForMovement.screenerId))) {
     offensiveAction = createOffensiveAction({ kind: 'PICK_AND_ROLL', teamId: state.attackingTeamId, initiatorId: screenForMovement.ballHandlerId, participantIds: [screenForMovement.ballHandlerId, screenForMovement.screenerId], activeLineup: lineup })
   }
@@ -528,7 +540,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     && defendingLineup.includes(savedDrive.defenderId)
     ? savedDrive
     : undefined
-  if (!transitionActive && activeIsolation === undefined && activePostUp === undefined && activeHandoff === undefined && savedDrive === undefined && handlerId !== undefined && handlerDefenderId !== undefined) {
+  if (!transitionActive && activeIsolation === undefined && activePostUp === undefined && activeHandoff === undefined && activeSpotUp === undefined && activeCatch === undefined && savedDrive === undefined && handlerId !== undefined && handlerDefenderId !== undefined) {
     const handler = profiles.find((profile) => profile.playerId === handlerId)
     if (handler !== undefined) driveForMovement = selectDriveIntent({ handler, defenderId: handlerDefenderId, spatial: state.spatial, attackingBasket, random: session.decisionRandom })
   }
@@ -570,6 +582,16 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
       const read = selectHandoffContinuation({ handler, teamId: state.attackingTeamId, defenderId: handlerDefenderId, activeLineup: lineup, spatial: baseInput.spatial, attackingBasket, passesThisPossession: state.passesThisPossession ?? 0, random: session.decisionRandom })
       handoffContinuation = read.continuation
       if (read.continuation === 'DRIVE') driveForMovement = read.driveIntent
+      offensiveAction = undefined
+    }
+  }
+  let spotUpContinuation: SpotUpContinuation | undefined
+  if ((activeCatch !== undefined || activeSpotUp !== undefined) && handlerId !== undefined && handlerDefenderId !== undefined) {
+    const handler = profiles.find((profile) => profile.playerId === handlerId)
+    if (handler !== undefined) {
+      const read = selectSpotUpContinuation({ handler, teamId: state.attackingTeamId, defenderId: handlerDefenderId, activeLineup: lineup, spatial: baseInput.spatial, attackingBasket, isCatch: activeCatch !== undefined, random: session.decisionRandom })
+      spotUpContinuation = read.continuation
+      driveForMovement = read.driveIntent
       offensiveAction = undefined
     }
   }
@@ -644,17 +666,18 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const turnoverProbability = calculateTurnoverProbability({ ballHandlerProfile: offensiveActor, ballHandlerFatigue: state.fatigueByPlayerId[playerId] ?? 0, defenderProfile: primaryDefender, defenderFatigue: state.fatigueByPlayerId[primaryDefenderId] ?? 0 })
   const handoffTransferReady = activeHandoff !== undefined && !activeHandoff.transferred
     && isHandoffTransferReady(spatial, activeHandoff.giverId, activeHandoff.receiverId)
-  const passActionProbability = postUpContinuation === 'PASS_OUT' || isolationContinuation === 'PASS' || handoffContinuation === 'PASS' || pickAndRollContinuation === 'PASS_TO_ROLLER' || pickAndRollContinuation === 'PASS_TO_POPPER'
+  const passActionProbability = postUpContinuation === 'PASS_OUT' || isolationContinuation === 'PASS' || handoffContinuation === 'PASS' || spotUpContinuation === 'PASS' || pickAndRollContinuation === 'PASS_TO_ROLLER' || pickAndRollContinuation === 'PASS_TO_POPPER'
     ? 1
-    : postUpContinuation === 'POST_SHOT' || isolationContinuation === 'DRIVE' || isolationContinuation === 'SHOT' || handoffContinuation === 'DRIVE' || handoffContinuation === 'SHOT' || pickAndRollContinuation === 'HANDLER_DRIVE' || pickAndRollContinuation === 'HANDLER_SHOT'
+    : postUpContinuation === 'POST_SHOT' || isolationContinuation === 'DRIVE' || isolationContinuation === 'SHOT' || handoffContinuation === 'DRIVE' || handoffContinuation === 'SHOT' || spotUpContinuation === 'DRIVE' || spotUpContinuation === 'SHOT' || pickAndRollContinuation === 'HANDLER_DRIVE' || pickAndRollContinuation === 'HANDLER_SHOT'
       ? 0
       : calculatePassActionProbability(offensiveActor.tendencies.PASS_FIRST_BIAS ?? 0, state.passesThisPossession ?? 0)
-  const selectedShotWeight = postUpContinuation === 'POST_SHOT' || isolationContinuation === 'SHOT' || handoffContinuation === 'SHOT' || pickAndRollContinuation === 'HANDLER_SHOT' ? Math.max(shotAttemptWeight, 1) : shotAttemptWeight
+  const selectedShotWeight = postUpContinuation === 'POST_SHOT' || isolationContinuation === 'SHOT' || handoffContinuation === 'SHOT' || spotUpContinuation === 'SHOT' || pickAndRollContinuation === 'HANDLER_SHOT' ? Math.max(shotAttemptWeight, 1) : shotAttemptWeight
   const outcome = activeHandoff !== undefined && !activeHandoff.transferred
     ? handoffTransferReady ? 'handoff' : 'handoffApproach'
     : choosePossessionOutcome(turnoverProbability, passActionProbability, selectedShotWeight, session.random)
   let attackingTeamId = state.attackingTeamId
   let passesThisPossession = state.passesThisPossession ?? 0
+  let nextCatchContext: PlayerId | undefined
 
   if (outcome === 'handoff') {
     const transferred = activeHandoff === undefined ? undefined : transferHandoffBall({ spatial, teamId: state.attackingTeamId, giverId: activeHandoff.giverId, receiverId: activeHandoff.receiverId, activeLineup: lineup })
@@ -698,6 +721,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     if (session.random.chance(completionProbability)) {
       newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'passCompleted', teamId: attackingTeamId, passerPlayerId: playerId, receiverPlayerId, homeScore, awayScore })
       spatial = controlBallByPlayer(spatial, receiverPlayerId)
+      nextCatchContext = receiverPlayerId
       passesThisPossession += 1
     } else {
       const interceptorId = laneContext.mostDangerousDefenderId
@@ -789,7 +813,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     }
   }
   const transitionIntent = possessionFlipped ? { attackingTeamId } : undefined
-  const stateAfterAction = { ...state, clockSecondsRemaining, homeScore, awayScore, attackingTeamId, spatial, offBallCut, screenIntent, driveIntent, offensiveAction: activeOffensiveAction, defensiveReaction, transitionIntent, passesThisPossession, nextSequence: sequence }
+  const stateAfterAction = { ...state, clockSecondsRemaining, homeScore, awayScore, attackingTeamId, spatial, catchContext: nextCatchContext, offBallCut, screenIntent, driveIntent, offensiveAction: activeOffensiveAction, defensiveReaction, transitionIntent, passesThisPossession, nextSequence: sequence }
   const fatiguedSession = updateSessionFatigue(session, stateAfterAction, possessionDuration)
   if (clockSecondsRemaining === 0) return finishPeriod(fatiguedSession, fatiguedSession.state, newEvents)
   const nextState = { ...fatiguedSession.state, events: [...state.events, ...newEvents] }
@@ -822,7 +846,7 @@ function finishPeriod(session: MatchSession, state: MatchSessionState, newEvents
   if (state.period >= state.clockRules.periodCount && state.homeScore !== state.awayScore) {
     const gameEnd: MatchEvent = { sequence, period: state.period, clockSecondsRemaining: 0, type: 'gameEnd', homeScore: state.homeScore, awayScore: state.awayScore }
     newEvents.push(gameEnd)
-    const completeState = { ...state, spatial: releaseSpatialBall(state.spatial), offBallCut: undefined, screenIntent: undefined, driveIntent: undefined, offensiveAction: undefined, defensiveReaction: undefined, transitionIntent: undefined, passesThisPossession: 0, nextSequence: sequence + 1, events: [...state.events, ...newEvents], isComplete: true }
+    const completeState = { ...state, spatial: releaseSpatialBall(state.spatial), catchContext: undefined, offBallCut: undefined, screenIntent: undefined, driveIntent: undefined, offensiveAction: undefined, defensiveReaction: undefined, transitionIntent: undefined, passesThisPossession: 0, nextSequence: sequence + 1, events: [...state.events, ...newEvents], isComplete: true }
     return { session: { ...session, state: completeState }, newEvents }
   }
   if (state.period >= state.clockRules.periodCount + MAX_OVERTIME_PERIODS) {
@@ -834,7 +858,7 @@ function finishPeriod(session: MatchSession, state: MatchSessionState, newEvents
   const attackingTeamId = period % 2 === 1 ? state.openingTeamId : otherTeamId(state.openingTeamId, state)
   const periodStart: MatchEvent = { sequence: sequence++, period, clockSecondsRemaining, type: 'periodStart', homeScore: state.homeScore, awayScore: state.awayScore }
   newEvents.push(periodStart)
-  const nextState = { ...state, period, clockSecondsRemaining, attackingTeamId, offBallCut: undefined, screenIntent: undefined, driveIntent: undefined, offensiveAction: undefined, defensiveReaction: undefined, transitionIntent: undefined, passesThisPossession: 0, spatial: releaseSpatialBall(state.spatial), nextSequence: sequence, events: [...state.events, ...newEvents] }
+  const nextState = { ...state, period, clockSecondsRemaining, attackingTeamId, catchContext: undefined, offBallCut: undefined, screenIntent: undefined, driveIntent: undefined, offensiveAction: undefined, defensiveReaction: undefined, transitionIntent: undefined, passesThisPossession: 0, spatial: releaseSpatialBall(state.spatial), nextSequence: sequence, events: [...state.events, ...newEvents] }
   return { session: { ...session, state: nextState }, newEvents }
 }
 
