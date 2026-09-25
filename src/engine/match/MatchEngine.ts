@@ -293,7 +293,7 @@ export interface SubstitutePlayerOptions {
 }
 export type SubstitutionSource = 'automatic' | 'manual'
 
-type PossessionOutcome = 'shootingFoul' | 'fieldGoalAttempt' | 'passAttempt' | 'turnover' | 'handoff' | 'handoffApproach' | 'transitionAttack' | 'transitionSettle' | 'playcallSetup'
+type PossessionOutcome = 'shootingFoul' | 'fieldGoalAttempt' | 'passAttempt' | 'turnover' | 'handoff' | 'handoffApproach' | 'transitionAttack' | 'transitionSettle'
 
 export class MatchSimulationError extends Error {
   public constructor(message: string) {
@@ -381,8 +381,9 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const transitionMovementActive = state.transitionIntent?.attackingTeamId === state.attackingTeamId
   const newEvents: MatchEvent[] = []
   const attackingPlan = state.attackingTeamId === state.homeTeamId ? state.coachingState.home.currentTacticalPlan : state.coachingState.away.currentTacticalPlan
-  const possessionDuration = applyPaceToPossessionDuration(session.random.nextInt(MATCH_RULES_V2.possessionMinSeconds, MATCH_RULES_V2.possessionMaxSeconds), attackingPlan.pace)
-  if (possessionDuration > state.clockSecondsRemaining) {
+  const minimumPossessionDuration = applyPaceToPossessionDuration(MATCH_RULES_V2.possessionMinSeconds, attackingPlan.pace)
+  if (state.clockSecondsRemaining < minimumPossessionDuration) {
+    session.random.nextInt(MATCH_RULES_V2.possessionMinSeconds, MATCH_RULES_V2.possessionMaxSeconds)
     const fatiguedSession = updateSessionFatigue(session, state, state.clockSecondsRemaining)
     return finishPeriod(fatiguedSession, { ...fatiguedSession.state, clockSecondsRemaining: 0 }, newEvents)
   }
@@ -390,7 +391,6 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   let homeScore = state.homeScore
   let awayScore = state.awayScore
   let sequence = state.nextSequence
-  const clockSecondsRemaining = state.clockSecondsRemaining - possessionDuration
   const lineup = state.attackingTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
   const profiles = state.attackingTeamId === state.homeTeamId ? state.playerProfiles.home : state.playerProfiles.away
   const controlledBall = state.spatial.ball
@@ -543,6 +543,16 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     const cutPlayerId = selectOffBallCutter({ teamId: state.attackingTeamId, lineup, profiles, ballHandlerId: callHandlerId, excludedPlayerIds: offensiveAction.participantIds, matchups, spatial: baseInput.spatial, attackingBasket, random: session.decisionRandom })
     if (cutPlayerId !== undefined) cutForMovement = createOffBallCutIntent({ teamId: state.attackingTeamId, playerId: cutPlayerId, spatial: baseInput.spatial, attackingBasket })
   }
+  if (selectedPlaycall !== undefined) {
+    const nextState = { ...state, catchContext: undefined, offBallCut: cutForMovement, screenIntent: screenForMovement, driveIntent: undefined, offensiveAction: selectedPlaycall }
+    return { session: { ...session, state: nextState }, newEvents }
+  }
+  const possessionDuration = applyPaceToPossessionDuration(session.random.nextInt(MATCH_RULES_V2.possessionMinSeconds, MATCH_RULES_V2.possessionMaxSeconds), attackingPlan.pace)
+  if (possessionDuration > state.clockSecondsRemaining) {
+    const fatiguedSession = updateSessionFatigue(session, state, state.clockSecondsRemaining)
+    return finishPeriod(fatiguedSession, { ...fatiguedSession.state, clockSecondsRemaining: 0 }, newEvents)
+  }
+  const clockSecondsRemaining = state.clockSecondsRemaining - possessionDuration
   const baseTargets = assignBaseSpatialTargets(baseInput)
   const candidateCoverage = coverageForCurrentScreen({ plan: defendingPlan, screen: screenForMovement, offensiveLineup: lineup, defensiveLineup: defendingLineup, assignments: matchups, spatial: state.spatial, attackingBasket })
   const screenRouteDefenderId = candidateCoverage?.state.type === 'switch'
@@ -709,8 +719,6 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     ? 'transitionAttack'
     : transitionContinuation === 'SETTLE'
       ? 'transitionSettle'
-      : selectedPlaycall !== undefined
-        ? 'playcallSetup'
       : activeHandoff !== undefined && !activeHandoff.transferred
         ? handoffTransferReady ? 'handoff' : 'handoffApproach'
         : choosePossessionOutcome(turnoverProbability, passActionProbability, selectedShotWeight, session.random)
@@ -718,7 +726,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   let passesThisPossession = state.passesThisPossession ?? 0
   let nextCatchContext: PlayerId | undefined
 
-  if (outcome === 'transitionAttack' || outcome === 'transitionSettle' || outcome === 'playcallSetup') {
+  if (outcome === 'transitionAttack' || outcome === 'transitionSettle') {
     // The selected authority runs through its existing movement and execution path on the next step.
   } else if (outcome === 'handoff') {
     const transferred = activeHandoff === undefined ? undefined : transferHandoffBall({ spatial, teamId: state.attackingTeamId, giverId: activeHandoff.giverId, receiverId: activeHandoff.receiverId, activeLineup: lineup })
@@ -863,16 +871,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const transitionActionToPersist = transitionActionHandlerId === undefined
     ? undefined
     : createOffensiveAction({ kind: 'TRANSITION', teamId: attackingTeamId, initiatorId: transitionActionHandlerId, participantIds: [transitionActionHandlerId], activeLineup: transitionActionLineup })
-  const selectedPlaycallRetainsAuthority = selectedPlaycall !== undefined
-    && attackingTeamId === state.attackingTeamId
-    && spatial.ball.kind === 'playerControlled'
-    && spatial.ball.teamId === attackingTeamId
-    && (selectedPlaycall.kind === 'PICK_AND_ROLL'
-      ? spatial.ball.playerId === selectedPlaycall.initiatorId && screenIntent !== undefined
-      : selectedPlaycall.kind === 'CUT'
-        ? offBallCut?.playerId === selectedPlaycall.initiatorId
-        : spatial.ball.playerId === selectedPlaycall.initiatorId)
-  const activeOffensiveAction = transitionActionToPersist ?? (selectedPlaycallRetainsAuthority ? selectedPlaycall : undefined) ?? (!transitionActionActive && attackingTeamId === state.attackingTeamId
+  const activeOffensiveAction = transitionActionToPersist ?? (!transitionActionActive && attackingTeamId === state.attackingTeamId
     && ((screenIntent !== undefined && offensiveAction?.kind === 'PICK_AND_ROLL')
       || (offBallCut !== undefined && offensiveAction?.kind === 'CUT' && offensiveAction.participantIds.includes(offBallCut.playerId))
       || (offensiveAction?.kind === 'HANDOFF' && handoffContinuation === undefined && activeHandoff !== undefined)

@@ -37,14 +37,18 @@ describe('MatchSession', () => {
 
     expect(result.session.state.offensiveAction).toMatchObject({ kind: 'ISOLATION', initiatorId: handlerId })
     expect(result.newEvents).toEqual([])
-    expect(result.session.state.clockSecondsRemaining).toBeLessThan(ready.state.clockSecondsRemaining)
+    expect(result.session.state.clockSecondsRemaining).toBe(ready.state.clockSecondsRemaining)
   })
 
   it('selects a valid off-ball cutter, moves through MG6, and uses canonical pass resolution', () => {
     const { world, game } = createScheduledGameWorld()
-    const prepared = withOpenOffBallCutContext(createMatchSession({ ...createOptions(world, game.id, 18, 36), random: new OffBallPassRandom(), decisionRandom: new CertainDecisionRandom() }), 1, { passFirstBias: 100 })
+    const cutContext = withOpenOffBallCutContext(createMatchSession({ ...createOptions(world, game.id, 18, 36), random: new OffBallPassRandom(), decisionRandom: new CertainDecisionRandom() }), 1, { passFirstBias: 100 })
+    const attackingLineup = cutContext.session.state.attackingTeamId === cutContext.session.state.homeTeamId ? cutContext.session.state.activeLineups.home : cutContext.session.state.activeLineups.away
+    const intent = createOffBallCutIntent({ teamId: cutContext.session.state.attackingTeamId, playerId: cutContext.cutterId, spatial: cutContext.session.state.spatial, attackingBasket: getSpatialPossessionView(cutContext.session.state).attackingBasket })
+    const cutAction = createOffensiveAction({ kind: 'CUT', teamId: cutContext.session.state.attackingTeamId, initiatorId: cutContext.cutterId, participantIds: [cutContext.cutterId, cutContext.handlerId], activeLineup: attackingLineup })
+    const cutSession = { ...cutContext.session, state: { ...cutContext.session.state, offBallCut: intent, offensiveAction: cutAction } }
+    const prepared = { ...cutContext, session: withoutHalfCourtPlaycalls(cutSession) }
     const before = prepared.session.state.spatial.players.find((player) => player.playerId === prepared.cutterId)!.position
-    const intent = createOffBallCutIntent({ teamId: prepared.session.state.attackingTeamId, playerId: prepared.cutterId, spatial: prepared.session.state.spatial, attackingBasket: getSpatialPossessionView(prepared.session.state).attackingBasket })
     const result = stepMatchSession(prepared.session)
     const after = result.session.state.spatial.players.find((player) => player.playerId === prepared.cutterId)!.position
 
@@ -147,7 +151,7 @@ describe('MatchSession', () => {
 
   it('clears a post-up from an invalid court location and continues ordinary offense', () => {
     const { world, game } = createScheduledGameWorld()
-    const session = withPostUpContext(createMatchSession({ ...createOptions(world, game.id, 26, 52), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), { backDown: 100, shot: 100, pass: 100 }, false)
+    const session = withoutHalfCourtPlaycalls(withPostUpContext(createMatchSession({ ...createOptions(world, game.id, 26, 52), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), { backDown: 100, shot: 100, pass: 100 }, false))
     const result = stepMatchSession(session)
 
     expect(result.session.state.offensiveAction).toBeUndefined()
@@ -441,7 +445,7 @@ describe('MatchSession', () => {
     const stepped = toMatchSimulation(runToComplete(createMatchSession(createOptions(world, game.id, 12345, 67890))))
 
     expect(stepped).toEqual(whole)
-    expect(regressionSummary(whole)).toEqual({ finalScore: { home: 27, away: 69 }, eventCount: 221, homeTurnovers: 13, awayTurnovers: 7, homeRebounds: 22, awayRebounds: 37, homeAssists: 7, awayAssists: 19 })
+    expect(regressionSummary(whole)).toEqual({ finalScore: { home: 14, away: 17 }, eventCount: 140, homeTurnovers: 11, awayTurnovers: 11, homeRebounds: 13, awayRebounds: 21, homeAssists: 3, awayAssists: 4 })
   })
 
   it('advances one logical unit without mutating the previous sporting state', () => {
@@ -451,9 +455,13 @@ describe('MatchSession', () => {
     const result = stepMatchSession(session)
 
     expect(JSON.stringify(session.state)).toBe(before)
-    expect(result.newEvents.length).toBeGreaterThan(0)
-    expect(result.session.state.events.length).toBeGreaterThan(session.state.events.length)
-    expect(result.session.state.clockSecondsRemaining).toBeLessThanOrEqual(session.state.clockSecondsRemaining)
+    if (result.newEvents.length === 0) {
+      expect(result.session.state.offensiveAction).toBeDefined()
+      expect(result.session.state.clockSecondsRemaining).toBe(session.state.clockSecondsRemaining)
+    } else {
+      expect(result.session.state.events.length).toBeGreaterThan(session.state.events.length)
+      expect(result.session.state.clockSecondsRemaining).toBeLessThan(session.state.clockSecondsRemaining)
+    }
   })
 
   it('bootstraps one deterministic court position for each active player and an unassigned center ball', () => {
@@ -665,7 +673,8 @@ describe('MatchSession', () => {
       expect(Math.hypot(end.x - start.x, end.y - start.y)).toBeLessThanOrEqual(PLAYER_MAX_SPEED_METERS_PER_SECOND * 0.25 + 1e-9)
       expect(Math.hypot(end.x - target.position.x, end.y - target.position.y)).toBeLessThanOrEqual(Math.hypot(start.x - target.position.x, start.y - target.position.y))
     }
-    const runtimeStepped = stepMatchSession(createMatchSession(createOptions(world, game.id, 12345, 67890))).session.state
+    const setup = stepMatchSession(createMatchSession(createOptions(world, game.id, 12345, 67890))).session
+    const runtimeStepped = stepMatchSession(setup).session.state
 
     expect(afterDistance).toBeLessThan(beforeDistance)
     expect(distanceMoved).toBeLessThanOrEqual(PLAYER_MAX_SPEED_METERS_PER_SECOND * 0.25 + 1e-9)
@@ -730,7 +739,7 @@ describe('MatchSession', () => {
 
   it('synchronizes a turnover possession flip without assigning a handler that gameplay did not resolve', () => {
     const { world, game } = createScheduledGameWorld()
-    const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new TurnoverRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new NoCreditActorRandom() })
+    const session = withoutHalfCourtPlaycalls(createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new TurnoverRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new NoCreditActorRandom() }))
     const previousAttackingTeamId = session.state.attackingTeamId
     const previousLineup = previousAttackingTeamId === game.homeTeamId ? session.state.activeLineups.home : session.state.activeLineups.away
     const expectedHandlerId = previousLineup[0]!
@@ -867,7 +876,7 @@ describe('MatchSession', () => {
   it('continues a completed pass with the receiver holding the ball and enforces the pass-chain limit', () => {
     const { world, game } = createScheduledGameWorld()
     const options = withPassProfiles(createOptions(world, game.id, 1, 2))
-    const session = createMatchSession({ ...options, random: new ForcedPassRandom(true), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() })
+    const session = withoutHalfCourtPlaycalls(createMatchSession({ ...options, random: new ForcedPassRandom(true), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() }))
     const passerId = session.state.activeLineups.home[0]!
     const expectedReceiverId = session.state.activeLineups.home[1]!
     const completed = stepMatchSession(session)
@@ -890,7 +899,7 @@ describe('MatchSession', () => {
   it('turns a failed pass into a possession change with coherent ball ownership', () => {
     const { world, game } = createScheduledGameWorld()
     const options = withPassProfiles(createOptions(world, game.id, 1, 2))
-    const session = createMatchSession({ ...options, random: new ForcedPassRandom(false), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() })
+    const session = withoutHalfCourtPlaycalls(createMatchSession({ ...options, random: new ForcedPassRandom(false), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() }))
     const previousAttackingTeamId = session.state.attackingTeamId
     const offenseLineup = previousAttackingTeamId === game.homeTeamId ? session.state.activeLineups.home : session.state.activeLineups.away
     const passerId = offenseLineup[0]!
@@ -908,7 +917,7 @@ describe('MatchSession', () => {
 
   it('assigns a credited steal to the existing defensive actor', () => {
     const { world, game } = createScheduledGameWorld()
-    const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new TurnoverRandom(), decisionRandom: new StealTurnoverRandom(), actorRandom: new FirstActorRandom() })
+    const session = withoutHalfCourtPlaycalls(createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new TurnoverRandom(), decisionRandom: new StealTurnoverRandom(), actorRandom: new FirstActorRandom() }))
     const previousAttackingTeamId = session.state.attackingTeamId
     const result = stepMatchSession(session)
     const turnover = result.newEvents.find((event) => event.type === 'turnover')
@@ -924,7 +933,7 @@ describe('MatchSession', () => {
 
   it('releases the completed handler and follows engine possession after a made basket', () => {
     const { world, game } = createScheduledGameWorld()
-    const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() })
+    const session = withoutHalfCourtPlaycalls(createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() }))
     const previousAttackingTeamId = session.state.attackingTeamId
     const previousLineup = previousAttackingTeamId === game.homeTeamId ? session.state.activeLineups.home : session.state.activeLineups.away
     const result = stepMatchSession(session)
@@ -946,7 +955,7 @@ describe('MatchSession', () => {
   it('synchronizes rebound control and does not spend RNG for spatial bookkeeping', () => {
     const { world, game } = createScheduledGameWorld()
     const random = new MissAndDefensiveReboundRandom()
-    const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random, decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() })
+    const session = withoutHalfCourtPlaycalls(createMatchSession({ ...createOptions(world, game.id, 1, 1), random, decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() }))
     const previousLineup = session.state.attackingTeamId === game.homeTeamId ? session.state.activeLineups.home : session.state.activeLineups.away
     const result = stepMatchSession(session)
     const deltaTimeSeconds = session.state.clockSecondsRemaining - result.session.state.clockSecondsRemaining
@@ -989,7 +998,7 @@ describe('MatchSession', () => {
 
   it('keeps possession and gives the ball to the rebounder on an offensive rebound', () => {
     const { world, game } = createScheduledGameWorld()
-    const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new MissAndOffensiveReboundRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() })
+    const session = withoutHalfCourtPlaycalls(createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new MissAndOffensiveReboundRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() }))
     const previousAttackingTeamId = session.state.attackingTeamId
     const offenseLineup = previousAttackingTeamId === game.homeTeamId ? session.state.activeLineups.home : session.state.activeLineups.away
     const result = stepMatchSession(session)
@@ -1012,7 +1021,7 @@ describe('MatchSession', () => {
     const session = createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new FirstSportingRandom() })
     const holderId = session.state.activeLineups.home[0]!
     const atSecondPeriodEnd = {
-      ...session,
+      ...withoutHalfCourtPlaycalls(session),
       state: { ...session.state, period: 2, clockSecondsRemaining: 1, spatial: controlBallByPlayer(session.state.spatial, holderId) },
     }
     const transition = stepMatchSession(atSecondPeriodEnd).session.state
@@ -1037,7 +1046,7 @@ describe('MatchSession', () => {
 
   it('handles overtime incrementally and rejects a step after completion', () => {
     const { world, game } = createScheduledGameWorld()
-    const completeSession = runToComplete(createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new OvertimeRandom() }))
+    const completeSession = runToComplete(withoutHalfCourtPlaycalls(createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new OvertimeRandom() })))
     const simulation = toMatchSimulation(completeSession)
 
     expect(simulation.events.some((event) => event.type === 'periodStart' && event.period === 5)).toBe(true)
@@ -1121,7 +1130,7 @@ describe('MatchSession', () => {
     const second = stepMatchSession(restored)
     expect(second.newEvents.map(withoutSequence)).toEqual(first.newEvents.map(withoutSequence))
 
-    const subbed = substitutePlayer(createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new FirstSportingRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() }), { teamId: game.homeTeamId, playerOutId: createOptions(world, game.id, 1, 1).lineups.home[0]!, playerInId: world.teams[game.homeTeamId]!.rosterPlayerIds[5]! })
+    const subbed = substitutePlayer(withoutHalfCourtPlaycalls(createMatchSession({ ...createOptions(world, game.id, 1, 1), random: new FirstSportingRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() })), { teamId: game.homeTeamId, playerOutId: createOptions(world, game.id, 1, 1).lineups.home[0]!, playerInId: world.teams[game.homeTeamId]!.rosterPlayerIds[5]! })
     const afterSub = stepMatchSession(subbed)
     const sporting = afterSub.newEvents.find((event) => event.type === 'shotMade' || event.type === 'shotMissed' || event.type === 'turnover')!
     expect(sporting).toMatchObject({ teamId: game.homeTeamId, playerId: subbed.state.activeLineups.home[0] })
@@ -1180,6 +1189,23 @@ function worldInputFor(world: GameWorld) {
 function createOptions(world: GameWorld, gameId: GameWorld['games'][keyof GameWorld['games']]['id'], sportingSeed: number, actorSeed: number): SimulateMatchOptions {
   const game = world.games[gameId]!
   return { world, gameId, homeStrength: { teamId: game.homeTeamId, value: 50 }, awayStrength: { teamId: game.awayTeamId, value: 50 }, lineups: lineupsFor(world, game), squads: squadsFor(world, game), playerProfiles: profilesFor(world, game), random: new SeededRandomSource(sportingSeed), decisionRandom: new SeededRandomSource(sportingSeed + 1), actorRandom: new SeededRandomSource(actorSeed) }
+}
+
+function withoutHalfCourtPlaycalls(session: ReturnType<typeof createMatchSession>) {
+  const withoutActions = (profiles: typeof session.state.playerProfiles.home) => profiles.map((profile) => ({
+    ...profile,
+    tendencies: {
+      ...profile.tendencies,
+      PICK_AND_ROLL_HANDLER_FREQUENCY: 0,
+      ISOLATION_FREQUENCY: 0,
+      POST_UP_FREQUENCY: 0,
+      ADVANTAGE_PASS_FREQUENCY: 0,
+      ON_BALL_SCREENING_FREQUENCY: 0,
+      CUT_FREQUENCY: 0,
+    },
+  }))
+  const playerProfiles = { home: withoutActions(session.state.playerProfiles.home), away: withoutActions(session.state.playerProfiles.away) }
+  return { ...session, state: { ...session.state, playerProfiles } }
 }
 
 function withPassProfiles(options: SimulateMatchOptions): SimulateMatchOptions {
@@ -1594,12 +1620,11 @@ function lineupsFor(world: GameWorld, game: GameWorld['games'][keyof GameWorld['
 }
 
 class OvertimeRandom implements RandomSource {
-  private outcomes = 0
-  private chanceCallsSinceOutcome = 0
-  next(): number { this.outcomes += 1; this.chanceCallsSinceOutcome = 0; return 0.99 }
-  nextInt(): number { return 24 }
+  private steps = 0
+  next(): number { return 0.99 }
+  nextInt(): number { this.steps += 1; return 24 }
   nextFloat(minInclusive: number): number { return minInclusive }
-  chance(_probability: number): boolean { if (this.outcomes === 0) return true; this.chanceCallsSinceOutcome += 1; return this.chanceCallsSinceOutcome === 2 || (this.chanceCallsSinceOutcome === 1 && this.outcomes === 101) }
+  chance(_probability: number): boolean { return this.steps > 100 }
   pick<Item>(items: readonly Item[]): Item { return items[0]! }
 }
 

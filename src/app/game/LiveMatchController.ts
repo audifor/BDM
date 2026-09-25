@@ -21,10 +21,12 @@ export class LiveMatchController {
   /** A resolved sporting boundary for the presentation layer; it does not expose MatchSession. */
   public advanceOneStepWithSnapshots(): LiveMatchStep {
     const before = this.snapshot()
+    const startPeriod = this.session.state.period
+    const startClockSeconds = this.session.state.clockSecondsRemaining
     const beforeSpatial = this.session.state.spatial
     const attackingTeamId = this.session.state.attackingTeamId
     const after = this.advanceOneStep()
-    return { before, after, beforeSpatial, afterSpatial: this.session.state.spatial, attackingTeamId, endAttackingTeamId: this.session.state.attackingTeamId }
+    return { before, after, startPeriod, startClockSeconds, endPeriod: this.session.state.period, endClockSeconds: this.session.state.clockSecondsRemaining, beforeSpatial, afterSpatial: this.session.state.spatial, attackingTeamId, endAttackingTeamId: this.session.state.attackingTeamId }
   }
   /** Read-only canonical geometry for the visual bridge; the view cannot write it back. */
   public spatialSnapshot(): SpatialState { return this.session.state.spatial }
@@ -68,6 +70,10 @@ export class LiveMatchController {
 export interface LiveMatchStep {
   readonly before: MatchSimulation
   readonly after: MatchSimulation
+  readonly startPeriod: number
+  readonly startClockSeconds: number
+  readonly endPeriod: number
+  readonly endClockSeconds: number
   readonly beforeSpatial: SpatialState
   readonly afterSpatial: SpatialState
   readonly attackingTeamId: MatchSession['state']['attackingTeamId']

@@ -48,7 +48,7 @@ describe('ball-handler drive foundation', () => {
       random: new SequenceRandom([0.99], [0.99, 0]),
       decisionRandom: new FixedRandom(0),
       actorRandom: new FixedRandom(0),
-      state: { ...state, spatial: heldSpatial, playerProfiles },
+      state: { ...state, spatial: heldSpatial, playerProfiles, driveIntent: { handlerId, defenderId, target, stepsRemaining: 3 } },
     }
     const result = stepMatchSession(controlledSession).session.state
     const handler = playerAt(result.spatial, handlerId)

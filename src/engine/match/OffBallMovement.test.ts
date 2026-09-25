@@ -4,7 +4,7 @@ import { createGameWorld } from '@/domain/world'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { generateWorld } from '@/engine/world'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
-import { calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, createOffBallCutIntent, selectOffBallCutter, stepMatchSession, stepPlayersTowardBaseSpacing, substitutePlayer, updateOffBallCutIntent } from './index'
+import { calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, createOffBallCutIntent, createOffensiveAction, selectOffBallCutter, stepMatchSession, stepPlayersTowardBaseSpacing, substitutePlayer, updateOffBallCutIntent } from './index'
 import type { MatchPlayerProfiles, OffBallCutIntent, SpatialState } from './index'
 
 describe('off-ball cut movement', () => {
@@ -88,7 +88,8 @@ describe('off-ball cut movement', () => {
     expect(updateOffBallCutIntent(intent, { teamId: state.attackingTeamId, lineup, ballHandlerId: cutter, spatial: state.spatial })).toBeUndefined()
     expect(updateOffBallCutIntent(intent, { teamId: state.attackingTeamId, lineup: lineup.filter((id) => id !== cutter), ballHandlerId: handler, spatial: state.spatial })).toBeUndefined()
 
-    const cutSession = { ...session, state: { ...state, spatial: controlBallByPlayer(state.spatial, handler), offBallCut: intent } }
+    const cutAction = createOffensiveAction({ kind: 'CUT', teamId: state.attackingTeamId, initiatorId: cutter, participantIds: [cutter, handler], activeLineup: lineup })
+    const cutSession = { ...session, state: { ...state, spatial: controlBallByPlayer(state.spatial, handler), offBallCut: intent, offensiveAction: cutAction } }
     expect(stepMatchSession(cutSession).session.state.offBallCut).toBeUndefined()
     const teamId = state.attackingTeamId
     const benchId = state.squads[offenseKey].find((playerId) => !lineup.includes(playerId))!

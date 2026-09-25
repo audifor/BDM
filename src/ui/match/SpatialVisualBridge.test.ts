@@ -11,6 +11,7 @@ import { createVisualMatchSnapshot, interpolateVisualMatchSnapshot, interpolateV
 describe('SpatialVisualBridge', () => {
   it('projects a live MatchSession step into stable visual snapshots and interpolates between them', () => {
     const controller = createLiveUserMatch(createNewGame())
+    controller.advanceOneStep()
     const beforeSpatial = controller.spatialSnapshot()
     const step = controller.advanceOneStepWithSnapshots()
     const segment = createPresentationSegment(step)

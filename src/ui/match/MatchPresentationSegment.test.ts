@@ -24,6 +24,17 @@ describe('MatchPresentationSegment', () => {
     expect(createPresentationSegment(controlledStep(0, 600, 1, 2)).gameSeconds).toBe(0)
     expect(createPresentationSegment(controlledStep(500, 500)).gameSeconds).toBe(0)
   })
+
+  it('presents elapsed MatchSession time even when the step adds no events', () => {
+    const controller = createLiveUserMatch(createNewGame(), undefined, 12345)
+    const step = controller.advanceOneStepWithSnapshots()
+    const eventlessStep = { ...step, startClockSeconds: 500, endClockSeconds: 489 }
+    const segment = createPresentationSegment(eventlessStep)
+
+    expect(eventlessStep.after.events).toEqual(eventlessStep.before.events)
+    expect(segment.gameSeconds).toBe(11)
+    expect(displayClockAtProgress(segment, 1)).toBe(489)
+  })
 })
 
 function controlledStep(startClockSeconds: number, endClockSeconds: number, startPeriod = 1, endPeriod = 1): LiveMatchStep {
@@ -31,5 +42,5 @@ function controlledStep(startClockSeconds: number, endClockSeconds: number, star
   const step = controller.advanceOneStepWithSnapshots()
   const base = { ...step.before, events: [{ sequence: 1, period: startPeriod, clockSecondsRemaining: startClockSeconds, type: 'periodStart' as const, homeScore: 0, awayScore: 0 }] }
   const after = { ...step.after, events: [{ sequence: 1, period: startPeriod, clockSecondsRemaining: startClockSeconds, type: 'periodStart' as const, homeScore: 0, awayScore: 0 }, { sequence: 2, period: endPeriod, clockSecondsRemaining: endClockSeconds, type: 'periodEnd' as const, homeScore: 0, awayScore: 0 }] }
-  return { ...step, before: { ...step.before, events: base.events }, after }
+  return { ...step, startPeriod, startClockSeconds, endPeriod, endClockSeconds, before: { ...step.before, events: base.events }, after }
 }

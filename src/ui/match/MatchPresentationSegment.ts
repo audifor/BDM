@@ -20,13 +20,11 @@ export interface MatchPresentationSegment {
 
 /** Presentation-only conversion of one already-resolved sporting step. */
 export function createPresentationSegment(step: LiveMatchStep): MatchPresentationSegment {
-  const startEvent = step.before.events.at(-1)
-  const endEvent = step.after.events.at(-1)
-  const period = endEvent?.period ?? startEvent?.period ?? 1
-  const startClockSeconds = startEvent?.clockSecondsRemaining ?? 600
-  const endClockSeconds = endEvent?.clockSecondsRemaining ?? startClockSeconds
+  const period = step.endPeriod
+  const startClockSeconds = step.startClockSeconds
+  const endClockSeconds = step.endClockSeconds
   const events = step.after.events.slice(step.before.events.length)
-  const samePeriod = period === (startEvent?.period ?? period)
+  const samePeriod = step.startPeriod === step.endPeriod
   return {
     period,
     startClockSeconds,

@@ -19,13 +19,15 @@ describe('LiveMatchController', () => {
     expect(controller.snapshot()).toEqual(prepareUserMatch(world, undefined, 12345))
   })
 
-  it('returns presentation snapshots around exactly one live sporting step', () => {
+  it('returns presentation snapshots and clock bounds around exactly one live sporting step', () => {
     const controller = createLiveUserMatch(createNewGame())
     const step = controller.advanceOneStepWithSnapshots()
 
     expect(step.before.events).toHaveLength(1)
-    expect(step.after.events.length).toBeGreaterThan(step.before.events.length)
-    expect(step.after.events.at(-1)!.clockSecondsRemaining).toBeLessThan(step.before.events.at(-1)!.clockSecondsRemaining)
+    expect(step.after.events.length).toBe(step.before.events.length)
+    expect(step.startPeriod).toBe(1)
+    expect(step.startClockSeconds).toBe(600)
+    expect(step.endClockSeconds).toBe(step.startClockSeconds)
     expect(step.endAttackingTeamId).toBe(controller.attackingTeamId)
     expect(step.beforeSpatial.players).toHaveLength(10)
     expect(step.afterSpatial.players).toHaveLength(10)
@@ -181,13 +183,17 @@ describe('LiveMatchController', () => {
     expect(() => coached.applyTactics(initial.homeTeamId, invalidPlan)).toThrow()
     expect(coached.snapshot()).toEqual(beforeInvalidTactics)
 
-    const defaultStep = baseline.advanceOneStep()
-    const coachedStep = coached.advanceOneStep()
-    const replayStep = replay.advanceOneStep()
-    const firstGameplayClock = (events: typeof defaultStep.events) => events.find((event) => event.type !== 'periodStart' && event.type !== 'tacticalChange' && event.type !== 'substitution')!.clockSecondsRemaining
+    const defaultSetup = baseline.advanceOneStepWithSnapshots()
+    const coachedSetup = coached.advanceOneStepWithSnapshots()
+    const replaySetup = replay.advanceOneStepWithSnapshots()
+    const defaultStep = baseline.advanceOneStepWithSnapshots()
+    const coachedStep = coached.advanceOneStepWithSnapshots()
+    const replayStep = replay.advanceOneStepWithSnapshots()
 
-    expect(600 - firstGameplayClock(coachedStep.events)).toBe(600 - firstGameplayClock(defaultStep.events) - 4)
-    expect(replayStep).toEqual(coachedStep)
+    expect(defaultSetup.startClockSeconds).toBe(defaultSetup.endClockSeconds)
+    expect(coachedSetup.startClockSeconds).toBe(coachedSetup.endClockSeconds)
+    expect(defaultStep.startClockSeconds - defaultStep.endClockSeconds - (coachedStep.startClockSeconds - coachedStep.endClockSeconds)).toBe(4)
+    expect([replaySetup, replayStep]).toEqual([coachedSetup, coachedStep])
   })
 
   it('updates the runtime active five and the next gameplay step after substitution', () => {
