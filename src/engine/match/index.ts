@@ -27,6 +27,8 @@ export { HANDOFF_RULES_V1, handoffApproachTarget, isHandoffTransferReady, select
 export type { ActiveHandoff, HandoffContinuation, HandoffRead } from './HandoffOffense'
 export { isSpotUpActionValid, selectSpotUpContinuation, SPOT_UP_RULES_V1 } from './SpotUpOffense'
 export type { SpotUpContinuation, SpotUpRead } from './SpotUpOffense'
+export { inspectTransitionOpportunity, isTransitionActionValid, selectTransitionContinuation, TRANSITION_OFFENSE_RULES_V1 } from './TransitionOffense'
+export type { TransitionContinuation, TransitionOpportunity, TransitionRead } from './TransitionOffense'
 export { decidePickAndRollScreenUse, selectPickAndRollHandlerContinuation, selectPickAndRollScreenerContinuation } from './PickAndRollOffense'
 export type { PickAndRollHandlerContinuation, PickAndRollScreenDecision, PickAndRollScreenerContinuation } from './PickAndRollOffense'
 export { advanceScreenIntent, createPostScreenIntent, createPostScreenTarget, createScreenIntent, reduceScreenedDefenderMovement, screenIntersectsDefenderRoute, selectScreenScreener, SCREEN_RULES_V1 } from './ScreenInteractions'

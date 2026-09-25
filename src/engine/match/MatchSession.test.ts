@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createGameWorld, type GameWorld } from '@/domain/world'
-import { distanceFromBasket } from '@/domain/court'
+import { distanceBetween, distanceFromBasket } from '@/domain/court'
 import { playerIdFromString } from '@/domain/ids'
 import { NCAA_MEN_GAME_FORMAT } from '@/domain/competition'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
@@ -752,8 +752,8 @@ describe('MatchSession', () => {
 
     const transitionState = result.session.state
     const passProfiles = {
-      home: transitionState.playerProfiles.home.map((profile) => ({ ...profile, tendencies: { ...profile.tendencies, PASS_FIRST_BIAS: 100, ON_BALL_SCREENING_FREQUENCY: 0, CUT_FREQUENCY: 0, DRIVE_FREQUENCY: 0 } })),
-      away: transitionState.playerProfiles.away.map((profile) => ({ ...profile, tendencies: { ...profile.tendencies, PASS_FIRST_BIAS: 100, ON_BALL_SCREENING_FREQUENCY: 0, CUT_FREQUENCY: 0, DRIVE_FREQUENCY: 0 } })),
+      home: transitionState.playerProfiles.home.map((profile) => ({ ...profile, tendencies: { ...profile.tendencies, PASS_FIRST_BIAS: 100, ON_BALL_SCREENING_FREQUENCY: 0, CUT_FREQUENCY: 0, DRIVE_FREQUENCY: 0, TRANSITION_ATTACK_FREQUENCY: 0, ADVANTAGE_PASS_FREQUENCY: 0, SHOT_FREQUENCY: 0, PULLUP_FREQUENCY: 0, RIM_ATTEMPT_FREQUENCY: 0, MIDRANGE_FREQUENCY: 0, THREE_POINT_FREQUENCY: 0 } })),
+      away: transitionState.playerProfiles.away.map((profile) => ({ ...profile, tendencies: { ...profile.tendencies, PASS_FIRST_BIAS: 100, ON_BALL_SCREENING_FREQUENCY: 0, CUT_FREQUENCY: 0, DRIVE_FREQUENCY: 0, TRANSITION_ATTACK_FREQUENCY: 0, ADVANTAGE_PASS_FREQUENCY: 0, SHOT_FREQUENCY: 0, PULLUP_FREQUENCY: 0, RIM_ATTEMPT_FREQUENCY: 0, MIDRANGE_FREQUENCY: 0, THREE_POINT_FREQUENCY: 0 } })),
     }
     const transitionSession = { ...result.session, random: new ForcedPassRandom(true), decisionRandom: new ZeroDecisionRandom(), state: { ...transitionState, playerProfiles: passProfiles } }
     const transitioned = stepMatchSession(transitionSession)
@@ -761,7 +761,7 @@ describe('MatchSession', () => {
     const transitionInput = { homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, attackingTeamId: transitionState.attackingTeamId, period: transitionState.period, activeLineups: transitionState.activeLineups, playerProfiles: passProfiles, spatial: controlBallByPlayer(transitionState.spatial, view.ballHandlerId!) }
     const expectedTransition = stepPlayersTowardTransitionTargets(transitionInput, transitionElapsed)
 
-    expect(transitioned.newEvents.some((event) => event.type === 'passCompleted')).toBe(true)
+    expect(transitioned.newEvents.some((event) => event.type === 'passCompleted')).toBe(false)
     expect(transitioned.session.state.spatial.players).toEqual(expectedTransition.players)
     expect(transitioned.session.state.transitionIntent).toBeUndefined()
 
@@ -774,6 +774,65 @@ describe('MatchSession', () => {
     expect(settled.session.state.spatial.players).toEqual(settledBase.players)
     const terminalTransitionEvent = settled.session.state.attackingTeamId !== transitioned.session.state.attackingTeamId
     expect(settled.session.state.transitionIntent !== undefined).toBe(terminalTransitionEvent)
+  })
+
+  it('attacks the rim from transition through DriveIntent after the single MG6 transition step', () => {
+    const { world, game } = createScheduledGameWorld()
+    const prepared = withTransitionContext(createMatchSession({ ...createOptions(world, game.id, 51, 102), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), { attack: 100, transitionMovement: true })
+    const state = prepared.state
+    const handlerId = getSpatialPossessionView(state).ballHandlerId!
+    const first = stepMatchSession(prepared).session
+    const transitionElapsed = state.clockSecondsRemaining - first.state.clockSecondsRemaining
+    const transitionInput = { ...baseSpacingInput(state, handlerId), spatial: state.spatial }
+    const expectedTransitionStep = stepPlayersTowardTransitionTargets(transitionInput, transitionElapsed)
+    const beforeDrive = first.state.spatial.players.find((player) => player.playerId === handlerId)!.position
+    const second = stepMatchSession(first).session.state
+    const afterDrive = second.spatial.players.find((player) => player.playerId === handlerId)!.position
+
+    expect(first.state.spatial.players).toEqual(expectedTransitionStep.players)
+    expect(first.state.transitionIntent).toBeUndefined()
+    expect(first.state.driveIntent?.handlerId).toBe(handlerId)
+    expect(distanceBetween(beforeDrive, first.state.driveIntent!.target)).toBeGreaterThan(distanceBetween(afterDrive, first.state.driveIntent!.target))
+  })
+
+  it('passes ahead, transfers canonical ownership, and keeps transition ahead of catch logic until settle', () => {
+    const { world, game } = createScheduledGameWorld()
+    const prepared = withTransitionContext(createMatchSession({ ...createOptions(world, game.id, 52, 104), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), { pass: 100, catchAndShootReceiver: true, slowMovement: true })
+    const passed = stepMatchSession(prepared)
+    const pass = passed.newEvents.find((event) => event.type === 'passCompleted')
+    if (pass?.type !== 'passCompleted') throw new Error('Expected transition pass ahead completion')
+    const receiverId = pass.receiverPlayerId
+    const settled = stepMatchSession(passed.session)
+
+    expect(pass.passerPlayerId).toBe(getSpatialPossessionView(prepared.state).ballHandlerId)
+    expect(passed.session.state.spatial.ball).toMatchObject({ kind: 'playerControlled', playerId: receiverId })
+    expect(passed.session.state.catchContext).toBe(receiverId)
+    expect(passed.session.state.offensiveAction).toMatchObject({ kind: 'TRANSITION', initiatorId: receiverId })
+    expect(settled.newEvents.some((event) => event.type === 'shotMade' || event.type === 'shotMissed')).toBe(false)
+    expect(settled.session.state.catchContext).toBeUndefined()
+    expect(settled.session.state.offensiveAction).toBeUndefined()
+  })
+
+  it('uses the existing shot path for an early transition shot', () => {
+    const { world, game } = createScheduledGameWorld()
+    const prepared = withTransitionContext(createMatchSession({ ...createOptions(world, game.id, 53, 106), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() }), { shot: 100, passFirstBias: 100, slowMovement: true })
+    const result = stepMatchSession(prepared)
+
+    expect(result.newEvents.some((event) => (event.type === 'shotMade' || event.type === 'shotMissed') && event.playerId === getSpatialPossessionView(prepared.state).ballHandlerId)).toBe(true)
+    expect(result.session.state.offensiveAction?.kind).not.toBe('TRANSITION')
+  })
+
+  it('settles when defenders are set and returns to ordinary offense on the following step', () => {
+    const { world, game } = createScheduledGameWorld()
+    const prepared = withTransitionContext(createMatchSession({ ...createOptions(world, game.id, 54, 108), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), { defenseSet: true, slowMovement: true })
+    const settled = stepMatchSession(prepared)
+    const resumed = stepMatchSession(settled.session)
+
+    expect(settled.newEvents).toHaveLength(0)
+    expect(settled.session.state.offensiveAction).toBeUndefined()
+    expect(settled.session.state.clockSecondsRemaining).toBeLessThan(prepared.state.clockSecondsRemaining)
+    expect(resumed.session.state.clockSecondsRemaining).toBeLessThan(settled.session.state.clockSecondsRemaining)
+    expect(resumed.session.state.offensiveAction?.kind).not.toBe('TRANSITION')
   })
 
   it('continues a completed pass with the receiver holding the ball and enforces the pass-chain limit', () => {
@@ -1204,6 +1263,90 @@ function withActivePickAndRollContext(session: ReturnType<typeof createMatchSess
 function handoffActors(state: ReturnType<typeof createMatchSession>['state']) {
   const action = state.offensiveAction!
   return { giverId: action.initiatorId, receiverId: action.participantIds.find((playerId) => playerId !== action.initiatorId)! }
+}
+
+function withTransitionContext(
+  session: ReturnType<typeof createMatchSession>,
+  options: { readonly attack?: number; readonly pass?: number; readonly shot?: number; readonly passFirstBias?: number; readonly catchAndShootReceiver?: boolean; readonly transitionMovement?: boolean; readonly defenseSet?: boolean; readonly slowMovement?: boolean },
+) {
+  const state = session.state
+  const offenseIsHome = state.attackingTeamId === state.homeTeamId
+  const offenseKey = offenseIsHome ? 'home' : 'away'
+  const defenseKey = offenseIsHome ? 'away' : 'home'
+  const offense = state.activeLineups[offenseKey]
+  const defense = state.activeLineups[defenseKey]
+  const handlerId = offense[0]!
+  const receiverId = offense[2]!
+  const basket = getSpatialPossessionView(state).attackingBasket
+  const direction = basket.x > state.spatial.court.lengthMeters / 2 ? 1 : -1
+  const centerY = state.spatial.court.widthMeters / 2
+  const handlerPosition = { x: basket.x - direction * 14, y: centerY }
+  const offensePositions = new Map([
+    [handlerId, handlerPosition],
+    [offense[1]!, { x: basket.x - direction * 9, y: centerY - 1 }],
+    [receiverId, { x: basket.x - direction * 6, y: centerY + 1 }],
+    [offense[3]!, { x: handlerPosition.x - direction * 2, y: centerY - 2 }],
+    [offense[4]!, { x: handlerPosition.x - direction * 4, y: centerY + 2 }],
+  ])
+  const defensePositions = new Map(defense.map((playerId, index) => [playerId, options.defenseSet
+    ? { x: handlerPosition.x + direction * 2, y: centerY + (index - 2) * 0.5 }
+    : { x: handlerPosition.x - direction * 4, y: centerY + (index - 2) * 1.5 }]))
+  const positioned = {
+    ...state.spatial,
+    players: state.spatial.players.map((player) => ({
+      ...player,
+      position: offensePositions.get(player.playerId) ?? defensePositions.get(player.playerId) ?? player.position,
+      velocity: { x: 0, y: 0 },
+    })),
+  }
+  const spatial = controlBallByPlayer(positioned, handlerId)
+  const playerProfiles = {
+    ...state.playerProfiles,
+    home: state.playerProfiles.home.map((profile) => options.slowMovement ? { ...profile, kinematics: { ...profile.kinematics, maxSpeedMps: 0.05, accelerationMps2: 0.05, brakingMps2: 0.05 } } : profile),
+    away: state.playerProfiles.away.map((profile) => options.slowMovement ? { ...profile, kinematics: { ...profile.kinematics, maxSpeedMps: 0.05, accelerationMps2: 0.05, brakingMps2: 0.05 } } : profile),
+  }
+  const playerProfilesWithTendencies = {
+    ...playerProfiles,
+    [offenseKey]: playerProfiles[offenseKey].map((profile) => ({
+      ...profile,
+      tendencies: {
+        ...profile.tendencies,
+        TRANSITION_ATTACK_FREQUENCY: profile.playerId === handlerId ? options.attack ?? 0 : 0,
+        PASS_FIRST_BIAS: options.passFirstBias ?? 0,
+        DRIVE_FREQUENCY: 0,
+        ADVANTAGE_PASS_FREQUENCY: profile.playerId === handlerId ? options.pass ?? 0 : 0,
+        SHOT_FREQUENCY: profile.playerId === handlerId ? options.shot ?? 0 : 0,
+        PULLUP_FREQUENCY: 0,
+        RIM_ATTEMPT_FREQUENCY: 0,
+        MIDRANGE_FREQUENCY: 0,
+        THREE_POINT_FREQUENCY: 0,
+        DEEP_THREE_FREQUENCY: 0,
+        CATCH_AND_SHOOT_FREQUENCY: options.catchAndShootReceiver && profile.playerId === receiverId ? 100 : 0,
+        ON_BALL_SCREENING_FREQUENCY: 0,
+        CUT_FREQUENCY: 0,
+      },
+    })),
+  }
+  const defensiveMatchups = {
+    home: state.defensiveMatchups?.home ?? [],
+    away: state.defensiveMatchups?.away ?? [],
+    [defenseKey]: defense.map((playerId, index) => ({ ourPlayerId: playerId, opponentPlayerId: offense[index]! })),
+  }
+  return {
+    ...session,
+    state: {
+      ...state,
+      spatial,
+      playerProfiles: playerProfilesWithTendencies,
+      defensiveMatchups,
+      offBallCut: undefined,
+      screenIntent: undefined,
+      driveIntent: undefined,
+      catchContext: undefined,
+      transitionIntent: options.transitionMovement ? { attackingTeamId: state.attackingTeamId } : undefined,
+      offensiveAction: createOffensiveAction({ kind: 'TRANSITION', teamId: state.attackingTeamId, initiatorId: handlerId, participantIds: [handlerId], activeLineup: offense }),
+    },
+  }
 }
 
 function createPassedCatchSession(
