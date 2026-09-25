@@ -34,6 +34,54 @@ describe('MatchSession', () => {
     expect(stepMatchSession(authorized).session.state.spatial).not.toEqual(stepMatchSession(withoutAction).session.state.spatial)
   })
 
+  it('routes a canonical isolation action through the shared MG6 drive path', () => {
+    const { world, game } = createScheduledGameWorld()
+    const driveSession = withIsolationContext(createMatchSession({ ...createOptions(world, game.id, 12, 24), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), { drive: 100, shot: 0, pass: 0 })
+    const shotSession = withIsolationContext(createMatchSession({ ...createOptions(world, game.id, 12, 24), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), { drive: 0, shot: 100, pass: 0 })
+    const handlerId = driveSession.state.offensiveAction!.initiatorId
+    const driveResult = stepMatchSession(driveSession)
+    const shotResult = stepMatchSession(shotSession)
+    const drivePosition = driveResult.session.state.spatial.players.find((player) => player.playerId === handlerId)!.position
+    const shotPosition = shotResult.session.state.spatial.players.find((player) => player.playerId === handlerId)!.position
+
+    expect(drivePosition).not.toEqual(shotPosition)
+    expect(driveResult.newEvents.some((event) => event.type === 'shotMade')).toBe(true)
+  })
+
+  it('routes an isolation shot selection into the existing shot resolution and clears the action', () => {
+    const { world, game } = createScheduledGameWorld()
+    const session = withIsolationContext(createMatchSession({ ...createOptions(world, game.id, 14, 28), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), { drive: 0, shot: 100, pass: 0 })
+    const result = stepMatchSession(session)
+
+    expect(result.newEvents.some((event) => event.type === 'shotMade' || event.type === 'shotMissed')).toBe(true)
+    expect(result.session.state.offensiveAction).toBeUndefined()
+  })
+
+  it('routes an isolation pass selection to an active teammate through existing pass resolution', () => {
+    const { world, game } = createScheduledGameWorld()
+    const session = withIsolationContext(createMatchSession({ ...createOptions(world, game.id, 15, 30), random: new ForcedPassRandom(true), decisionRandom: new ZeroDecisionRandom(), actorRandom: new FirstActorRandom() }), { drive: 0, shot: 0, pass: 100 })
+    const handlerId = session.state.offensiveAction!.initiatorId
+    const offenseKey = session.state.attackingTeamId === session.state.homeTeamId ? 'home' : 'away'
+    const offensiveTeammates = session.state.activeLineups[offenseKey].filter((playerId) => playerId !== handlerId)
+    const result = stepMatchSession(session)
+    const completedPass = result.newEvents.find((event) => event.type === 'passCompleted')
+
+    expect(completedPass).toMatchObject({ passerPlayerId: handlerId })
+    expect(offensiveTeammates).toContain(completedPass?.type === 'passCompleted' ? completedPass.receiverPlayerId : '')
+    expect(result.session.state.spatial.ball).toMatchObject({ kind: 'playerControlled', playerId: completedPass?.type === 'passCompleted' ? completedPass.receiverPlayerId : undefined })
+    expect(result.session.state.offensiveAction).toBeUndefined()
+  })
+
+  it('resets an isolation with no specialized option and resumes ordinary possession behavior', () => {
+    const { world, game } = createScheduledGameWorld()
+    const session = withIsolationContext(createMatchSession({ ...createOptions(world, game.id, 16, 32), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), { drive: 0, shot: 0, pass: 0 })
+    const result = stepMatchSession(session)
+
+    expect(result.session.state.offensiveAction).toBeUndefined()
+    expect(result.session.state.clockSecondsRemaining).toBeLessThan(session.state.clockSecondsRemaining)
+    expect(result.newEvents.length).toBeGreaterThan(0)
+  })
+
   it('lets a selected handler drive activate MG6 drive movement after the screen', () => {
     const { world, game } = createScheduledGameWorld()
     const createDriveSession = (driveFrequency: number, pullUpFrequency: number) => {
@@ -826,6 +874,35 @@ function withActivePickAndRollContext(session: ReturnType<typeof createMatchSess
     defensiveReaction: { defenderId: helperId, protectedPlayerId, threatPlayerId: handlerId, type: 'drive' as const, target: basket, phase: 'HELP' as const },
   }
   return { ...session, state: stateWithContext }
+}
+
+function withIsolationContext(
+  session: ReturnType<typeof createMatchSession>,
+  frequency: { readonly drive: number; readonly shot: number; readonly pass: number },
+) {
+  const state = session.state
+  const offenseIsHome = state.attackingTeamId === state.homeTeamId
+  const offense = offenseIsHome ? state.activeLineups.home : state.activeLineups.away
+  const handlerId = offense[0]!
+  const spatial = controlBallByPlayer(state.spatial, handlerId)
+  const playerProfiles = {
+    ...state.playerProfiles,
+    [offenseIsHome ? 'home' : 'away']: (offenseIsHome ? state.playerProfiles.home : state.playerProfiles.away).map((profile) => profile.playerId === handlerId
+      ? { ...profile, tendencies: { ...profile.tendencies, DRIVE_FREQUENCY: frequency.drive, SHOT_FREQUENCY: frequency.shot, PULLUP_FREQUENCY: frequency.shot, ADVANTAGE_PASS_FREQUENCY: frequency.pass, PASS_FIRST_BIAS: frequency.pass } }
+      : profile),
+  }
+  return {
+    ...session,
+    state: {
+      ...state,
+      spatial,
+      playerProfiles,
+      screenIntent: undefined,
+      offBallCut: undefined,
+      driveIntent: undefined,
+      offensiveAction: createOffensiveAction({ kind: 'ISOLATION', teamId: state.attackingTeamId, initiatorId: handlerId, participantIds: [handlerId], activeLineup: offense }),
+    },
+  }
 }
 
 function withScreenerOnAssignedDefenderRoute(session: ReturnType<typeof createMatchSession>) {

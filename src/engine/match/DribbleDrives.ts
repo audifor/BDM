@@ -28,21 +28,42 @@ export function selectDriveIntent(input: {
   readonly attackingBasket: CourtPosition
   readonly random: RandomSource
 }): DriveIntent | undefined {
-  const handler = input.spatial.players.find((player) => player.playerId === input.handler.playerId)
+  const opportunity = driveOpportunity({ handlerId: input.handler.playerId, defenderId: input.defenderId, spatial: input.spatial, attackingBasket: input.attackingBasket })
+  if (opportunity === undefined) return undefined
+  const probability = input.handler.tendencies.DRIVE_FREQUENCY / 100 * opportunity
+  if (!input.random.chance(probability)) return undefined
+
+  return createDriveIntent({ handlerId: input.handler.playerId, defenderId: input.defenderId, spatial: input.spatial, attackingBasket: input.attackingBasket })
+}
+
+/** Scores whether the live handler and defender positions leave a usable drive context. */
+export function driveOpportunity(input: {
+  readonly handlerId: PlayerId
+  readonly defenderId: PlayerId
+  readonly spatial: SpatialState
+  readonly attackingBasket: CourtPosition
+}): number | undefined {
+  const handler = input.spatial.players.find((player) => player.playerId === input.handlerId)
   const defender = input.spatial.players.find((player) => player.playerId === input.defenderId)
   if (handler === undefined || defender === undefined) return undefined
 
   const defenderSpace = clamp(distanceBetween(handler.position, defender.position) / 4, 0.25, 1)
   const rimDistance = distanceBetween(handler.position, input.attackingBasket)
   const rimOpportunity = clamp((rimDistance - 1) / 8, 0.3, 1)
-  const opportunity = (defenderSpace + rimOpportunity) / 2
-  const probability = input.handler.tendencies.DRIVE_FREQUENCY / 100 * opportunity
-  if (!input.random.chance(probability)) return undefined
+  return (defenderSpace + rimOpportunity) / 2
+}
 
+/** Creates the canonical drive intent after an offensive action has selected DRIVE. */
+export function createDriveIntent(input: {
+  readonly handlerId: PlayerId
+  readonly defenderId: PlayerId
+  readonly spatial: SpatialState
+  readonly attackingBasket: CourtPosition
+}): DriveIntent {
   return {
-    handlerId: input.handler.playerId,
+    handlerId: input.handlerId,
     defenderId: input.defenderId,
-    target: createDriveTarget({ handlerId: input.handler.playerId, defenderId: input.defenderId, spatial: input.spatial, attackingBasket: input.attackingBasket }),
+    target: createDriveTarget(input),
     stepsRemaining: DRIVE_RULES_V1.maximumSteps,
   }
 }
