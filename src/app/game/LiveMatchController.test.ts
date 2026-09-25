@@ -216,7 +216,7 @@ describe('LiveMatchController', () => {
 
     let afterStep = updated
     let gameplayEvent = afterStep.events.find((event, index) => index >= updated.events.length && 'teamId' in event && 'playerId' in event)
-    for (let step = 0; gameplayEvent === undefined && step < 3; step += 1) {
+    for (let step = 0; gameplayEvent === undefined && step < 12; step += 1) {
       afterStep = controller.advanceOneStep()
       gameplayEvent = afterStep.events.find((event, index) => index >= updated.events.length && 'teamId' in event && 'playerId' in event)
     }

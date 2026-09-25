@@ -16,7 +16,7 @@ import { createDefaultTacticalPlan, validateTacticalPlan, type MatchTacticalPlan
 import { applyPaceToPossessionDuration, spatialShotAttemptWeight, calculateTacticalDefenseModifier, tacticalUsageWeight } from './tactics/TacticalEffects'
 import { clonePlan, type MatchCoachingState } from './coaching/MatchCoachingState'
 import { calculateBlockCreditProbability, calculateStealCreditProbability } from './DefensiveAttribution'
-import { applySpatialSubstitution, controlBallByPlayer, createInitialSpatialState, getSpatialPossessionView, releaseSpatialBall, type SpatialState } from './SpatialState'
+import { applySpatialSubstitution, controlBallByPlayer, createInitialSpatialState, defendingBasketForTeam, getSpatialPossessionView, releaseSpatialBall, type SpatialState } from './SpatialState'
 import { assignBaseSpatialTargets, stepPlayersTowardBaseSpacing } from './BaseSpacing'
 import { stepPlayersTowardTransitionTargets, type TransitionIntent } from './TransitionSpatial'
 import { createOffBallCutIntent, selectOffBallCutter, updateOffBallCutIntent, type OffBallCutIntent } from './OffBallMovement'
@@ -29,6 +29,7 @@ import { isPostUpContextValid } from './PostUpMovement'
 import { decidePickAndRollScreenUse, selectPickAndRollHandlerContinuation, selectPickAndRollScreenerContinuation, type PickAndRollHandlerContinuation } from './PickAndRollOffense'
 import { detectDefensiveThreat, resolveDefensiveReaction, type DefensiveReaction } from './DefensiveReactions'
 import { coverageForCurrentScreen } from './DefensiveCoverages'
+import { resolveOnBallDefensiveIntent } from './OnBallDefense'
 import { handoffApproachTarget, isHandoffTransferReady, selectHandoffContinuation, transferHandoffBall, validateHandoff, type HandoffContinuation } from './HandoffOffense'
 import { isSpotUpActionValid, selectSpotUpContinuation, type SpotUpContinuation } from './SpotUpOffense'
 import { inspectTransitionOpportunity, isTransitionActionValid, selectTransitionContinuation, type TransitionContinuation } from './TransitionOffense'
@@ -685,6 +686,21 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const movementReaction = transitionActionActive && transitionContinuation !== 'ATTACK_RIM'
     ? { targetOverrides: [] }
     : resolveDefensiveReaction({ threat: movementThreat, previous: state.defensiveReaction, assignments: effectiveMatchups, defensiveLineup: defendingLineup, excludedDefenderIds: coverage?.committedDefenderIds, baseTargets, spatial: baseInput.spatial, attackingBasket })
+  const onBallIntent = transitionMovementActive ? undefined : resolveOnBallDefensiveIntent({
+    attackingTeamId: state.attackingTeamId,
+    activeOffensiveLineup: lineup,
+    authority: effectiveAuthority,
+    defensiveProfiles: defendingProfiles,
+    defendingBasket: defendingBasketForTeam({ teamId: defendingTeamId, homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, period: state.period, court: baseInput.spatial.court }),
+    spatial: state.spatial,
+    driveIntent: driveForMovement,
+  })
+  const onBallTargetIsClaimed = onBallIntent !== undefined
+    && (movementReaction.targetOverrides.some((target) => target.playerId === onBallIntent.defenderId)
+      || (coverage?.targetOverrides.some((target) => target.playerId === onBallIntent.defenderId) ?? false))
+  const onBallTargetOverrides = onBallIntent === undefined || onBallTargetIsClaimed
+    ? []
+    : [{ playerId: onBallIntent.defenderId, position: onBallIntent.targetPosition }]
   const handoffApproachPosition = activeHandoff === undefined || activeHandoff.transferred ? undefined : handoffApproachTarget(baseInput.spatial, activeHandoff.giverId)
   const targetOverrides = [
     ...(cutForMovement === undefined ? [] : [{ playerId: cutForMovement.playerId, position: cutForMovement.target }]),
@@ -693,6 +709,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     ...screenOverride,
     ...(driveForMovement === undefined ? [] : [{ playerId: driveForMovement.handlerId, position: driveForMovement.target }]),
     ...(postUpTarget === undefined ? [] : [postUpTarget]),
+    ...onBallTargetOverrides,
     ...movementReaction.targetOverrides,
     ...(coverage?.state.phase === 'ACTIVE' ? coverage.targetOverrides : []),
   ]
