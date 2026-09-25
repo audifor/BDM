@@ -24,6 +24,11 @@ export interface OffBallCutIntent {
   readonly stepsRemaining: number
 }
 
+export interface OffBallCutCandidate {
+  readonly playerId: PlayerId
+  readonly weight: number
+}
+
 /** Filters for a clear spatial cut first, then applies CUT_FREQUENCY and canonical RNG. */
 export function selectOffBallCutter(input: {
   readonly teamId: TeamId
@@ -36,9 +41,28 @@ export function selectOffBallCutter(input: {
   readonly attackingBasket: CourtPosition
   readonly random: RandomSource
 }): PlayerId | undefined {
+  const candidates = getViableOffBallCutCandidates(input)
+  if (candidates.length === 0) return undefined
+
+  const highestFrequency = Math.max(...candidates.map((candidate) => candidate.weight))
+  if (!input.random.chance(highestFrequency / 100)) return undefined
+  return chooseWeighted(candidates.map(({ playerId, weight }) => ({ item: playerId, weight })), input.random)
+}
+
+/** Returns the valid active cutters in lineup order so primary playcalling can weigh CUT alongside other actions. */
+export function getViableOffBallCutCandidates(input: {
+  readonly teamId: TeamId
+  readonly lineup: readonly PlayerId[]
+  readonly profiles: readonly MatchPlayerProfile[]
+  readonly ballHandlerId: PlayerId
+  readonly excludedPlayerIds?: readonly PlayerId[]
+  readonly matchups: readonly PlayerMatchup[]
+  readonly spatial: SpatialState
+  readonly attackingBasket: CourtPosition
+}): readonly OffBallCutCandidate[] {
   const excluded = new Set(input.excludedPlayerIds ?? [])
   const defenders = input.spatial.players.filter((player) => player.teamId !== input.teamId)
-  const candidates = input.lineup
+  return input.lineup
     .filter((playerId) => playerId !== input.ballHandlerId && !excluded.has(playerId))
     .map((playerId) => {
       const profile = input.profiles.find((candidate) => candidate.playerId === playerId)
@@ -52,12 +76,7 @@ export function selectOffBallCutter(input: {
         ? { playerId, weight: profile.tendencies.CUT_FREQUENCY }
         : undefined
     })
-    .filter((candidate): candidate is { readonly playerId: PlayerId; readonly weight: number } => candidate !== undefined)
-  if (candidates.length === 0) return undefined
-
-  const highestFrequency = Math.max(...candidates.map((candidate) => candidate.weight))
-  if (!input.random.chance(highestFrequency / 100)) return undefined
-  return chooseWeighted(candidates.map(({ playerId, weight }) => ({ item: playerId, weight })), input.random)
+    .filter((candidate): candidate is OffBallCutCandidate => candidate !== undefined)
 }
 
 /** Builds one of two deterministic targets from the active player's location and court geometry. */

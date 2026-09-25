@@ -20,7 +20,7 @@ import { applySpatialSubstitution, controlBallByPlayer, createInitialSpatialStat
 import { assignBaseSpatialTargets, stepPlayersTowardBaseSpacing } from './BaseSpacing'
 import { stepPlayersTowardTransitionTargets, type TransitionIntent } from './TransitionSpatial'
 import { createOffBallCutIntent, selectOffBallCutter, updateOffBallCutIntent, type OffBallCutIntent } from './OffBallMovement'
-import { advanceScreenIntent, createPostScreenIntent, createScreenIntent, reduceScreenedDefenderMovement, screenIntersectsDefenderRoute, selectScreenScreener, type ScreenIntent } from './ScreenInteractions'
+import { advanceScreenIntent, createPostScreenIntent, createScreenIntent, reduceScreenedDefenderMovement, screenIntersectsDefenderRoute, type ScreenIntent } from './ScreenInteractions'
 import { advanceDriveIntent, reduceDriveHandlerMovement, selectDriveIntent, type DriveIntent } from './DribbleDrives'
 import { createOffensiveAction, type OffensiveAction } from './OffensiveActions'
 import { selectIsolationContinuation, type IsolationContinuation } from './IsolationOffense'
@@ -32,6 +32,7 @@ import { coverageForCurrentScreen } from './DefensiveCoverages'
 import { handoffApproachTarget, isHandoffTransferReady, selectHandoffContinuation, transferHandoffBall, validateHandoff, type HandoffContinuation } from './HandoffOffense'
 import { isSpotUpActionValid, selectSpotUpContinuation, type SpotUpContinuation } from './SpotUpOffense'
 import { inspectTransitionOpportunity, isTransitionActionValid, selectTransitionContinuation, type TransitionContinuation } from './TransitionOffense'
+import { selectNextOffensiveAction } from './OffensivePlaycalling'
 
 /**
  * Default game-clock rules, used only as the fallback when a game's actual competition cannot
@@ -292,7 +293,7 @@ export interface SubstitutePlayerOptions {
 }
 export type SubstitutionSource = 'automatic' | 'manual'
 
-type PossessionOutcome = 'shootingFoul' | 'fieldGoalAttempt' | 'passAttempt' | 'turnover' | 'handoff' | 'handoffApproach' | 'transitionAttack' | 'transitionSettle'
+type PossessionOutcome = 'shootingFoul' | 'fieldGoalAttempt' | 'passAttempt' | 'turnover' | 'handoff' | 'handoffApproach' | 'transitionAttack' | 'transitionSettle' | 'playcallSetup'
 
 export class MatchSimulationError extends Error {
   public constructor(message: string) {
@@ -421,7 +422,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     && lineup.includes(existingCut.playerId)
     && state.spatial.players.some((player) => player.playerId === existingCut.playerId && player.teamId === state.attackingTeamId)
     && (savedAction?.kind === 'CUT'
-      ? savedAction.participantIds.includes(existingCut.playerId)
+      ? savedAction.teamId === state.attackingTeamId && savedAction.initiatorId === existingCut.playerId && savedAction.participantIds.includes(existingCut.playerId) && savedAction.participantIds.every((participantId) => lineup.includes(participantId))
       : !savedAction?.participantIds.includes(existingCut.playerId))
     ? existingCut
     : undefined
@@ -475,37 +476,17 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     : undefined
   let screenForMovement: ScreenIntent | undefined = activeScreen
   let cutForMovement = activeCut
-  const canStartOffBallAction = !transitionActionActive && activeIsolation === undefined && activePostUp === undefined && activeHandoff === undefined && activeSpotUp === undefined && activeCatch === undefined && state.screenIntent === undefined && state.offBallCut === undefined
+  const activeDriveContinuation = state.driveIntent !== undefined
+    && handlerId === state.driveIntent.handlerId
+    && assignedHandlerDefenderId === state.driveIntent.defenderId
+    && lineup.includes(state.driveIntent.handlerId)
+    && defendingLineup.includes(state.driveIntent.defenderId)
+  const activePrimaryCut = savedAction?.kind === 'CUT' && activeCut !== undefined
+  const canStartOffBallAction = !transitionActionActive && activeIsolation === undefined && activePostUp === undefined && activeHandoff === undefined && activeSpotUp === undefined && activeCatch === undefined && state.screenIntent === undefined && !activePrimaryCut && !activeDriveContinuation
   let offensiveAction = transitionActionActive ? activeTransitionAction : activeIsolation ?? activePostUp ?? activeSpotUp ?? (activeCatch === undefined ? state.offensiveAction : undefined)
   if (activeHandoff !== undefined) offensiveAction = savedAction
   if (screenForMovement !== undefined && (offensiveAction?.kind !== 'PICK_AND_ROLL' || offensiveAction.teamId !== state.attackingTeamId || offensiveAction.initiatorId !== screenForMovement.ballHandlerId || !offensiveAction.participantIds.includes(screenForMovement.screenerId))) {
     offensiveAction = createOffensiveAction({ kind: 'PICK_AND_ROLL', teamId: state.attackingTeamId, initiatorId: screenForMovement.ballHandlerId, participantIds: [screenForMovement.ballHandlerId, screenForMovement.screenerId], activeLineup: lineup })
-  }
-  if (screenForMovement === undefined && cutForMovement === undefined && canStartOffBallAction && handlerId !== undefined && assignedHandlerDefenderId !== undefined) {
-    const screenerId = selectScreenScreener(lineup, profiles, handlerId, existingCut?.playerId, session.decisionRandom)
-    if (screenerId !== undefined) {
-      offensiveAction = createOffensiveAction({ kind: 'PICK_AND_ROLL', teamId: state.attackingTeamId, initiatorId: handlerId, participantIds: [handlerId, screenerId], activeLineup: lineup })
-      if (offensiveAction.kind === 'PICK_AND_ROLL') screenForMovement = createScreenIntent({ screenerId, ballHandlerId: offensiveAction.initiatorId, defenderId: assignedHandlerDefenderId, screenerDefenderId: matchups.find((matchup) => matchup.offensivePlayerId === screenerId)?.defensivePlayerId, spatial: state.spatial, attackingBasket })
-    }
-  }
-  if (screenForMovement === undefined && cutForMovement === undefined && canStartOffBallAction) {
-    const cutPlayerId = selectOffBallCutter({ teamId: state.attackingTeamId, lineup, profiles, ballHandlerId: playerId, matchups, spatial: state.spatial, attackingBasket, random: session.decisionRandom })
-    if (cutPlayerId !== undefined) {
-      offensiveAction = createOffensiveAction({ kind: 'CUT', teamId: state.attackingTeamId, initiatorId: cutPlayerId, participantIds: [cutPlayerId, playerId], activeLineup: lineup })
-      if (offensiveAction.kind === 'CUT') cutForMovement = createOffBallCutIntent({ teamId: offensiveAction.teamId, playerId: cutPlayerId, spatial: state.spatial, attackingBasket })
-    }
-  }
-  const canAddSecondaryCut = !transitionActionActive
-    && cutForMovement === undefined
-    && existingCut === undefined
-    && handlerId !== undefined
-    && ((screenForMovement !== undefined && offensiveAction?.kind === 'PICK_AND_ROLL')
-      || (activeIsolation !== undefined && offensiveAction?.kind === 'ISOLATION')
-      || (activePostUp !== undefined && offensiveAction?.kind === 'POST_UP')
-      || (activeHandoff !== undefined && !activeHandoff.transferred && offensiveAction?.kind === 'HANDOFF'))
-  if (canAddSecondaryCut && offensiveAction !== undefined) {
-    const cutPlayerId = selectOffBallCutter({ teamId: state.attackingTeamId, lineup, profiles, ballHandlerId: playerId, excludedPlayerIds: offensiveAction.participantIds, matchups, spatial: state.spatial, attackingBasket, random: session.decisionRandom })
-    if (cutPlayerId !== undefined) cutForMovement = createOffBallCutIntent({ teamId: state.attackingTeamId, playerId: cutPlayerId, spatial: state.spatial, attackingBasket })
   }
   const baseInput = {
     homeTeamId: state.homeTeamId,
@@ -531,6 +512,36 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
       transitionDriveIntent = read.driveIntent
       offensiveAction = undefined
     }
+  }
+  let selectedPlaycall: OffensiveAction | undefined
+  if (canStartOffBallAction && baseInput.spatial.ball.kind === 'playerControlled') {
+    const callHandlerId = baseInput.spatial.ball.playerId
+    selectedPlaycall = selectNextOffensiveAction({ teamId: state.attackingTeamId, activeLineup: lineup, profiles, spatial: baseInput.spatial, attackingBasket, matchups, tacticalPlan: attackingPlan, random: session.decisionRandom, passesThisPossession: state.passesThisPossession ?? 0, excludedPlayerIds: cutForMovement === undefined ? [] : [cutForMovement.playerId], allowCut: cutForMovement === undefined })
+    offensiveAction = selectedPlaycall
+    if (selectedPlaycall?.kind === 'PICK_AND_ROLL') {
+      const screenerId = selectedPlaycall.participantIds.find((participantId) => participantId !== callHandlerId)
+      const defenderId = matchups.find((matchup) => matchup.offensivePlayerId === callHandlerId)?.defensivePlayerId
+      if (screenerId !== undefined && defenderId !== undefined) {
+        screenForMovement = createScreenIntent({ screenerId, ballHandlerId: callHandlerId, defenderId, screenerDefenderId: matchups.find((matchup) => matchup.offensivePlayerId === screenerId)?.defensivePlayerId, spatial: baseInput.spatial, attackingBasket })
+      }
+    } else if (selectedPlaycall?.kind === 'CUT') {
+      cutForMovement = createOffBallCutIntent({ teamId: state.attackingTeamId, playerId: selectedPlaycall.initiatorId, spatial: baseInput.spatial, attackingBasket })
+    }
+  }
+  const callHandlerId = baseInput.spatial.ball.kind === 'playerControlled' && baseInput.spatial.ball.teamId === state.attackingTeamId
+    ? baseInput.spatial.ball.playerId
+    : undefined
+  const canAddSecondaryCut = !transitionActionActive
+    && cutForMovement === undefined
+    && existingCut === undefined
+    && callHandlerId !== undefined
+    && ((screenForMovement !== undefined && offensiveAction?.kind === 'PICK_AND_ROLL')
+      || ((activeIsolation !== undefined || selectedPlaycall?.kind === 'ISOLATION') && offensiveAction?.kind === 'ISOLATION')
+      || ((activePostUp !== undefined || selectedPlaycall?.kind === 'POST_UP') && offensiveAction?.kind === 'POST_UP')
+      || ((activeHandoff !== undefined && !activeHandoff.transferred || selectedPlaycall?.kind === 'HANDOFF') && offensiveAction?.kind === 'HANDOFF'))
+  if (canAddSecondaryCut && offensiveAction !== undefined) {
+    const cutPlayerId = selectOffBallCutter({ teamId: state.attackingTeamId, lineup, profiles, ballHandlerId: callHandlerId, excludedPlayerIds: offensiveAction.participantIds, matchups, spatial: baseInput.spatial, attackingBasket, random: session.decisionRandom })
+    if (cutPlayerId !== undefined) cutForMovement = createOffBallCutIntent({ teamId: state.attackingTeamId, playerId: cutPlayerId, spatial: baseInput.spatial, attackingBasket })
   }
   const baseTargets = assignBaseSpatialTargets(baseInput)
   const candidateCoverage = coverageForCurrentScreen({ plan: defendingPlan, screen: screenForMovement, offensiveLineup: lineup, defensiveLineup: defendingLineup, assignments: matchups, spatial: state.spatial, attackingBasket })
@@ -698,6 +709,8 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     ? 'transitionAttack'
     : transitionContinuation === 'SETTLE'
       ? 'transitionSettle'
+      : selectedPlaycall !== undefined
+        ? 'playcallSetup'
       : activeHandoff !== undefined && !activeHandoff.transferred
         ? handoffTransferReady ? 'handoff' : 'handoffApproach'
         : choosePossessionOutcome(turnoverProbability, passActionProbability, selectedShotWeight, session.random)
@@ -705,8 +718,8 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   let passesThisPossession = state.passesThisPossession ?? 0
   let nextCatchContext: PlayerId | undefined
 
-  if (outcome === 'transitionAttack' || outcome === 'transitionSettle') {
-    // The selected continuation changes authority; the existing movement and execution paths run on the next step.
+  if (outcome === 'transitionAttack' || outcome === 'transitionSettle' || outcome === 'playcallSetup') {
+    // The selected authority runs through its existing movement and execution path on the next step.
   } else if (outcome === 'handoff') {
     const transferred = activeHandoff === undefined ? undefined : transferHandoffBall({ spatial, teamId: state.attackingTeamId, giverId: activeHandoff.giverId, receiverId: activeHandoff.receiverId, activeLineup: lineup })
     if (transferred === undefined) throw new MatchSimulationError('A ready handoff failed canonical ball transfer validation')
@@ -850,7 +863,16 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const transitionActionToPersist = transitionActionHandlerId === undefined
     ? undefined
     : createOffensiveAction({ kind: 'TRANSITION', teamId: attackingTeamId, initiatorId: transitionActionHandlerId, participantIds: [transitionActionHandlerId], activeLineup: transitionActionLineup })
-  const activeOffensiveAction = transitionActionToPersist ?? (!transitionActionActive && attackingTeamId === state.attackingTeamId
+  const selectedPlaycallRetainsAuthority = selectedPlaycall !== undefined
+    && attackingTeamId === state.attackingTeamId
+    && spatial.ball.kind === 'playerControlled'
+    && spatial.ball.teamId === attackingTeamId
+    && (selectedPlaycall.kind === 'PICK_AND_ROLL'
+      ? spatial.ball.playerId === selectedPlaycall.initiatorId && screenIntent !== undefined
+      : selectedPlaycall.kind === 'CUT'
+        ? offBallCut?.playerId === selectedPlaycall.initiatorId
+        : spatial.ball.playerId === selectedPlaycall.initiatorId)
+  const activeOffensiveAction = transitionActionToPersist ?? (selectedPlaycallRetainsAuthority ? selectedPlaycall : undefined) ?? (!transitionActionActive && attackingTeamId === state.attackingTeamId
     && ((screenIntent !== undefined && offensiveAction?.kind === 'PICK_AND_ROLL')
       || (offBallCut !== undefined && offensiveAction?.kind === 'CUT' && offensiveAction.participantIds.includes(offBallCut.playerId))
       || (offensiveAction?.kind === 'HANDOFF' && handoffContinuation === undefined && activeHandoff !== undefined)

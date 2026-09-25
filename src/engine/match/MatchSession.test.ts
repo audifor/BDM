@@ -11,6 +11,35 @@ import { generateWorld } from '@/engine/world'
 import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, assignBaseSpatialTargets, assignTransitionSpatialTargets, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, createOffBallCutIntent, createOffensiveAction, createPostScreenTarget, createScreenIntent, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, advancePlayerTowardTarget, BASELINE_PLAYER_KINEMATIC_PROFILE, PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED, PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED, PLAYER_MAX_SPEED_METERS_PER_SECOND, releaseSpatialBall, simulateMatchDetailed, stepMatchSession, stepPlayersTowardBaseSpacing, stepPlayersTowardTransitionTargets, substitutePlayer, toMatchSimulation, transferHandoffBall, type MatchLineups, type SimulateMatchOptions } from './index'
 
 describe('MatchSession', () => {
+  it('selects a half-court action at a clean boundary and spends one setup step', () => {
+    const { world, game } = createScheduledGameWorld()
+    const session = createMatchSession({ ...createOptions(world, game.id, 7, 14), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() })
+    const state = session.state
+    const offenseKey = state.attackingTeamId === state.homeTeamId ? 'home' : 'away'
+    const handlerId = openingHandlerId(state)
+    const playerProfiles = {
+      ...state.playerProfiles,
+      [offenseKey]: state.playerProfiles[offenseKey].map((profile) => ({
+        ...profile,
+        tendencies: {
+          ...profile.tendencies,
+          PICK_AND_ROLL_HANDLER_FREQUENCY: 0,
+          ON_BALL_SCREENING_FREQUENCY: 0,
+          ISOLATION_FREQUENCY: profile.playerId === handlerId ? 100 : 0,
+          POST_UP_FREQUENCY: 0,
+          ADVANTAGE_PASS_FREQUENCY: 0,
+          CUT_FREQUENCY: 0,
+        },
+      })),
+    }
+    const ready = { ...session, state: { ...state, playerProfiles, spatial: controlBallByPlayer(state.spatial, handlerId), offensiveAction: undefined, screenIntent: undefined, driveIntent: undefined, offBallCut: undefined, catchContext: undefined } }
+    const result = stepMatchSession(ready)
+
+    expect(result.session.state.offensiveAction).toMatchObject({ kind: 'ISOLATION', initiatorId: handlerId })
+    expect(result.newEvents).toEqual([])
+    expect(result.session.state.clockSecondsRemaining).toBeLessThan(ready.state.clockSecondsRemaining)
+  })
+
   it('selects a valid off-ball cutter, moves through MG6, and uses canonical pass resolution', () => {
     const { world, game } = createScheduledGameWorld()
     const prepared = withOpenOffBallCutContext(createMatchSession({ ...createOptions(world, game.id, 18, 36), random: new OffBallPassRandom(), decisionRandom: new CertainDecisionRandom() }), 1, { passFirstBias: 100 })
