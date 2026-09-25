@@ -2,6 +2,9 @@
 param(
     [switch]$DryRun,
     [switch]$ContinueOnFailure,
+    [switch]$Serial,
+    [ValidateRange(1, 64)]
+    [int]$MaxWorkers = 4,
     [string]$ReportPath
 )
 
@@ -45,12 +48,13 @@ function New-CertificationStep {
     }
 }
 
-$focusedArguments = @('test', '--') + $focusedTests
-$engineArguments = @('test', '--', 'src/engine/match')
+$focusedArguments = @('test', '--', '--maxWorkers=1') + $focusedTests
+$engineArguments = @('test', '--', '--maxWorkers=1', 'src/engine/match')
+$fullSuiteArguments = if ($Serial) { @('test', '--', '--maxWorkers=1') } else { @('test', '--', "--maxWorkers=$MaxWorkers") }
 $steps = @(
     (New-CertificationStep -Number 1 -Name 'Focused MatchEngine tests' -Executable 'npm' -Arguments $focusedArguments),
     (New-CertificationStep -Number 2 -Name 'MatchEngine regression' -Executable 'npm' -Arguments $engineArguments),
-    (New-CertificationStep -Number 3 -Name 'Full test suite' -Executable 'npm' -Arguments @('test')),
+    (New-CertificationStep -Number 3 -Name 'Full test suite' -Executable 'npm' -Arguments $fullSuiteArguments),
     (New-CertificationStep -Number 4 -Name 'Typecheck' -Executable 'npm' -Arguments @('run', 'typecheck')),
     (New-CertificationStep -Number 5 -Name 'Build' -Executable 'npm' -Arguments @('run', 'build')),
     (New-CertificationStep -Number 6 -Name 'Git diff check' -Executable 'git' -Arguments @('diff', '--check')),

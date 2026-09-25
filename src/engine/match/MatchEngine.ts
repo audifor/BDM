@@ -263,6 +263,8 @@ export interface MatchSessionState {
   readonly openingTeamId: TeamId
   readonly period: number
   readonly clockSecondsRemaining: number
+  /** Tracks the first full pace interval within the current attacking possession. */
+  readonly possessionDurationApplied: boolean
   readonly homeScore: number
   readonly awayScore: number
   readonly attackingTeamId: TeamId
@@ -337,7 +339,7 @@ export function createMatchSession(options: SimulateMatchOptions): MatchSession 
       fatigueByPlayerId: createInitialFatigue(options.squads),
       playerProfiles: options.playerProfiles, spatial, coachingState: { home: { currentTacticalPlan: clonePlan(options.tacticalPlans?.home ?? createDefaultTacticalPlan()) }, away: { currentTacticalPlan: clonePlan(options.tacticalPlans?.away ?? createDefaultTacticalPlan()) } }, defensiveMatchups:options.defensiveMatchups??{home:[],away:[]},
       homeStrength: options.homeStrength, awayStrength: options.awayStrength, clockRules, openingTeamId,
-      period: 1, clockSecondsRemaining: clockRules.periodSeconds, homeScore: 0, awayScore: 0,
+      period: 1, clockSecondsRemaining: clockRules.periodSeconds, possessionDurationApplied: false, homeScore: 0, awayScore: 0,
       attackingTeamId: openingTeamId, passesThisPossession: 0, nextSequence: 2, events: [initialEvent], isComplete: false,
     },
     random: options.random,
@@ -547,12 +549,17 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     const nextState = { ...state, catchContext: undefined, offBallCut: cutForMovement, screenIntent: screenForMovement, driveIntent: undefined, offensiveAction: selectedPlaycall }
     return { session: { ...session, state: nextState }, newEvents }
   }
-  const possessionDuration = applyPaceToPossessionDuration(session.random.nextInt(MATCH_RULES_V2.possessionMinSeconds, MATCH_RULES_V2.possessionMaxSeconds), attackingPlan.pace)
-  if (possessionDuration > state.clockSecondsRemaining) {
+  const possessionInterval = applyPaceToPossessionDuration(session.random.nextInt(MATCH_RULES_V2.possessionMinSeconds, MATCH_RULES_V2.possessionMaxSeconds), attackingPlan.pace)
+  // One complete pace interval belongs to the possession. Later action steps in that same
+  // possession get only a short movement interval, rather than repeatedly charging a full interval.
+  const actionDurationSeconds = state.possessionDurationApplied
+    ? Math.max(1, Math.ceil(possessionInterval / 6))
+    : possessionInterval
+  if (actionDurationSeconds > state.clockSecondsRemaining) {
     const fatiguedSession = updateSessionFatigue(session, state, state.clockSecondsRemaining)
     return finishPeriod(fatiguedSession, { ...fatiguedSession.state, clockSecondsRemaining: 0 }, newEvents)
   }
-  const clockSecondsRemaining = state.clockSecondsRemaining - possessionDuration
+  const clockSecondsRemaining = state.clockSecondsRemaining - actionDurationSeconds
   const baseTargets = assignBaseSpatialTargets(baseInput)
   const candidateCoverage = coverageForCurrentScreen({ plan: defendingPlan, screen: screenForMovement, offensiveLineup: lineup, defensiveLineup: defendingLineup, assignments: matchups, spatial: state.spatial, attackingBasket })
   const screenRouteDefenderId = candidateCoverage?.state.type === 'switch'
@@ -684,8 +691,8 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     ...(coverage?.state.phase === 'ACTIVE' ? coverage.targetOverrides : []),
   ]
   let spatial = transitionMovementActive
-    ? stepPlayersTowardTransitionTargets({ ...baseInput, attackingTeamId: state.attackingTeamId }, possessionDuration)
-    : stepPlayersTowardBaseSpacing({ ...baseInput, playerProfiles: movementProfiles }, possessionDuration, targetOverrides)
+    ? stepPlayersTowardTransitionTargets({ ...baseInput, attackingTeamId: state.attackingTeamId }, actionDurationSeconds)
+    : stepPlayersTowardBaseSpacing({ ...baseInput, playerProfiles: movementProfiles }, actionDurationSeconds, targetOverrides)
   const cutReceiver = cutForMovement === undefined ? undefined : spatial.players.find((player) => player.playerId === cutForMovement?.playerId)
   const cutterIsAvailableReceiver = cutForMovement !== undefined
     && cutReceiver !== undefined
@@ -878,8 +885,12 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
       || secondaryCutRetainsPrimaryAction)
     ? offensiveAction
     : undefined)
-  const stateAfterAction = { ...state, clockSecondsRemaining, homeScore, awayScore, attackingTeamId, spatial, catchContext: nextCatchContext, offBallCut, screenIntent, driveIntent, offensiveAction: activeOffensiveAction, defensiveReaction, transitionIntent, passesThisPossession, nextSequence: sequence }
-  const fatiguedSession = updateSessionFatigue(session, stateAfterAction, possessionDuration)
+  const possessionDurationApplied = attackingTeamId !== state.attackingTeamId
+    || newEvents.some((event) => event.type === 'rebound' && event.reboundType === 'offensive')
+    ? false
+    : state.possessionDurationApplied || actionDurationSeconds > 0
+  const stateAfterAction = { ...state, clockSecondsRemaining, possessionDurationApplied, homeScore, awayScore, attackingTeamId, spatial, catchContext: nextCatchContext, offBallCut, screenIntent, driveIntent, offensiveAction: activeOffensiveAction, defensiveReaction, transitionIntent, passesThisPossession, nextSequence: sequence }
+  const fatiguedSession = updateSessionFatigue(session, stateAfterAction, actionDurationSeconds)
   if (clockSecondsRemaining === 0) return finishPeriod(fatiguedSession, fatiguedSession.state, newEvents)
   const nextState = { ...fatiguedSession.state, events: [...state.events, ...newEvents] }
   return { session: { ...fatiguedSession, state: nextState }, newEvents }
@@ -923,7 +934,7 @@ function finishPeriod(session: MatchSession, state: MatchSessionState, newEvents
   const attackingTeamId = period % 2 === 1 ? state.openingTeamId : otherTeamId(state.openingTeamId, state)
   const periodStart: MatchEvent = { sequence: sequence++, period, clockSecondsRemaining, type: 'periodStart', homeScore: state.homeScore, awayScore: state.awayScore }
   newEvents.push(periodStart)
-  const nextState = { ...state, period, clockSecondsRemaining, attackingTeamId, catchContext: undefined, offBallCut: undefined, screenIntent: undefined, driveIntent: undefined, offensiveAction: undefined, defensiveReaction: undefined, transitionIntent: undefined, passesThisPossession: 0, spatial: releaseSpatialBall(state.spatial), nextSequence: sequence, events: [...state.events, ...newEvents] }
+  const nextState = { ...state, period, clockSecondsRemaining, possessionDurationApplied: false, attackingTeamId, catchContext: undefined, offBallCut: undefined, screenIntent: undefined, driveIntent: undefined, offensiveAction: undefined, defensiveReaction: undefined, transitionIntent: undefined, passesThisPossession: 0, spatial: releaseSpatialBall(state.spatial), nextSequence: sequence, events: [...state.events, ...newEvents] }
   return { session: { ...session, state: nextState }, newEvents }
 }
 

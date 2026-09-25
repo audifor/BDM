@@ -11,9 +11,17 @@ import { createVisualMatchSnapshot, interpolateVisualMatchSnapshot, interpolateV
 describe('SpatialVisualBridge', () => {
   it('projects a live MatchSession step into stable visual snapshots and interpolates between them', () => {
     const controller = createLiveUserMatch(createNewGame())
-    controller.advanceOneStep()
-    const beforeSpatial = controller.spatialSnapshot()
-    const step = controller.advanceOneStepWithSnapshots()
+    let step: ReturnType<typeof controller.advanceOneStepWithSnapshots> | undefined
+    let hasMovement = false
+    for (let attempt = 0; attempt < 20 && !hasMovement; attempt += 1) {
+      step = controller.advanceOneStepWithSnapshots()
+      hasMovement = step.afterSpatial.players.some((player) => {
+        const previous = step!.beforeSpatial.players.find((candidate) => candidate.playerId === player.playerId)
+        return previous !== undefined && (previous.position.x !== player.position.x || previous.position.y !== player.position.y)
+      })
+    }
+    if (step === undefined || !hasMovement) throw new Error('Expected a live match step with spatial movement')
+    const beforeSpatial = step.beforeSpatial
     const segment = createPresentationSegment(step)
     const start = segment.startVisualSnapshot
     const end = segment.endVisualSnapshot

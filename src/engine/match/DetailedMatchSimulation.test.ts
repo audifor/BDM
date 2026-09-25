@@ -5,9 +5,22 @@ import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 
-import { MATCH_RULES_V2, createMatchPlayerProfile, simulateMatchDetailed, type MatchEvent, type MatchLineups } from './index'
+import { MATCH_RULES_V2, createMatchPlayerProfile, createMatchSession, simulateMatchDetailed, stepMatchSession, type MatchEvent, type MatchLineups } from './index'
 
 describe('possession-based MatchEngine v2', () => {
+  it('audits deterministic full-game pace across five seeds', () => {
+    const { world, game } = createScheduledGameWorld()
+    const audits = [17, 42, 12345, 90001, 98765].map((seed) => auditGame(world, game.id, seed))
+
+    console.info('MATCH PACE AUDIT', JSON.stringify(audits))
+    expect(audits).toHaveLength(5)
+    expect(audits.every((audit) => audit.regulationMinutes === audit.periodCount * audit.periodMinutes)).toBe(true)
+    expect(audits.every((audit) => audit.fga === audit.fgm + audit.missedFieldGoals)).toBe(true)
+    expect(audits.every((audit) => audit.threePointAttempts >= audit.threePointMakes)).toBe(true)
+    expect(audits.every((audit) => audit.possessions > 0 && audit.timedSteps > 0)).toBe(true)
+    expect(audits.every((audit) => audit.maxContinuationStepSeconds <= 5)).toBe(true)
+  })
+
   it('derives the final score exactly from field goals and made free throws', () => {
     const { world, game } = createScheduledGameWorld()
     const simulation = simulate(world, game.id, 12_345)
@@ -149,8 +162,12 @@ function simulateWithStrengths(world: GameWorld, gameId: GameWorld['games'][keyo
 }
 
 function simulateWithRandom(world: GameWorld, gameId: GameWorld['games'][keyof GameWorld['games']]['id'], random: RandomSource, homeStrength = 50, awayStrength = 50, actorRandom: RandomSource = new SeededRandomSource(67890)) {
+  return simulateMatchDetailed(matchOptions(world, gameId, random, homeStrength, awayStrength, actorRandom))
+}
+
+function matchOptions(world: GameWorld, gameId: GameWorld['games'][keyof GameWorld['games']]['id'], random: RandomSource, homeStrength = 50, awayStrength = 50, actorRandom: RandomSource = new SeededRandomSource(67890)) {
   const game = world.games[gameId]!
-  return simulateMatchDetailed({
+  return {
     world,
     gameId,
     homeStrength: { teamId: game.homeTeamId, value: homeStrength },
@@ -161,7 +178,162 @@ function simulateWithRandom(world: GameWorld, gameId: GameWorld['games'][keyof G
     playerProfiles: { home: world.teams[game.homeTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)), away: world.teams[game.awayTeamId]!.rosterPlayerIds.map((id) => createMatchPlayerProfile(world.players[id]!)) },
     decisionRandom: new SeededRandomSource(13579),
     actorRandom,
-  })
+  }
+}
+
+function auditGame(world: GameWorld, gameId: GameWorld['games'][keyof GameWorld['games']]['id'], seed: number) {
+  let session = createMatchSession(matchOptions(world, gameId, new SeededRandomSource(seed)))
+  const { periodCount, periodSeconds, overtimeSeconds } = session.state.clockRules
+  let elapsedSeconds = 0
+  let timedSteps = 0
+  let eventlessTimedSteps = 0
+  let noClockNoEventSteps = 0
+  let playcalls = 0
+  let possessions = 0
+  let possessionSeconds = 0
+  let possessionStart = 0
+  const possessionDurations: number[] = []
+  let inferredResets = 0
+  let fga = 0
+  let fgm = 0
+  let missedFieldGoals = 0
+  let threePointAttempts = 0
+  let threePointMakes = 0
+  let turnovers = 0
+  let offensiveRebounds = 0
+  let defensiveRebounds = 0
+  let freeThrowAttempts = 0
+  let freeThrowsMade = 0
+  const terminalReasons = { fieldGoal: 0, turnover: 0, defensiveRebound: 0, shootingFoul: 0, periodEnd: 0 }
+  const teamStats = new Map<string, { fga: number; fgm: number; threePointAttempts: number; threePointMakes: number; turnovers: number; fta: number }>()
+  let eventlessSeconds = 0
+  let maxContinuationStepSeconds = 0
+  const actionKinds: Record<string, number> = {}
+
+  while (!session.state.isComplete) {
+    const before = session.state
+    const result = stepMatchSession(session)
+    session = result.session
+    const after = session.state
+    const elapsed = before.period === after.period
+      ? before.clockSecondsRemaining - after.clockSecondsRemaining
+      : before.clockSecondsRemaining
+    if (before.possessionDurationApplied && before.period === after.period && !result.newEvents.some((event) => event.type === 'periodEnd')) {
+      maxContinuationStepSeconds = Math.max(maxContinuationStepSeconds, elapsed)
+    }
+    if (elapsed > 0) {
+      elapsedSeconds += elapsed
+      timedSteps += 1
+      if (result.newEvents.length === 0) {
+        eventlessTimedSteps += 1
+        eventlessSeconds += elapsed
+      }
+    } else if (result.newEvents.length === 0) {
+      noClockNoEventSteps += 1
+    }
+    const terminalInStep = result.newEvents.some((event) => event.type === 'shotMade' || event.type === 'turnover' || event.type === 'foul' || (event.type === 'rebound' && event.reboundType === 'defensive'))
+    if (before.offensiveAction !== undefined && after.offensiveAction === undefined && after.attackingTeamId === before.attackingTeamId && !terminalInStep) inferredResets += 1
+    const action = after.offensiveAction
+    if (elapsed === 0 && result.newEvents.length === 0 && action !== undefined && action !== before.offensiveAction) {
+      playcalls += 1
+      actionKinds[action.kind] = (actionKinds[action.kind] ?? 0) + 1
+    }
+    for (const event of result.newEvents) {
+      if ('teamId' in event) {
+        const stats = teamStats.get(event.teamId) ?? { fga: 0, fgm: 0, threePointAttempts: 0, threePointMakes: 0, turnovers: 0, fta: 0 }
+        if (event.type === 'shotMade' || event.type === 'shotMissed') {
+          stats.fga += 1
+          if (event.shotZone === 'threePoint') stats.threePointAttempts += 1
+        }
+        if (event.type === 'shotMade') {
+          stats.fgm += 1
+          if (event.shotZone === 'threePoint') stats.threePointMakes += 1
+        }
+        if (event.type === 'turnover') stats.turnovers += 1
+        if (event.type === 'freeThrowMade' || event.type === 'freeThrowMissed') stats.fta += 1
+        teamStats.set(event.teamId, stats)
+      }
+      if (event.type === 'shotMade') {
+        fga += 1
+        fgm += 1
+        if (event.shotZone === 'threePoint') { threePointAttempts += 1; threePointMakes += 1 }
+      }
+      if (event.type === 'shotMissed') {
+        fga += 1
+        missedFieldGoals += 1
+        if (event.shotZone === 'threePoint') threePointAttempts += 1
+      }
+      if (event.type === 'freeThrowMade' || event.type === 'freeThrowMissed') freeThrowAttempts += 1
+      if (event.type === 'freeThrowMade') freeThrowsMade += 1
+      if (event.type === 'turnover') turnovers += 1
+      if (event.type === 'rebound' && event.reboundType === 'offensive') offensiveRebounds += 1
+      if (event.type === 'rebound' && event.reboundType === 'defensive') defensiveRebounds += 1
+      const terminalReason = event.type === 'shotMade'
+        ? 'fieldGoal'
+        : event.type === 'turnover'
+          ? 'turnover'
+          : event.type === 'foul'
+            ? 'shootingFoul'
+            : event.type === 'rebound' && event.reboundType === 'defensive'
+              ? 'defensiveRebound'
+              : undefined
+      if (terminalReason !== undefined) {
+        terminalReasons[terminalReason] += 1
+        possessions += 1
+        const duration = elapsedSeconds - possessionStart
+        possessionDurations.push(duration)
+        possessionSeconds += duration
+        possessionStart = elapsedSeconds
+      } else if (event.type === 'periodEnd' && !terminalInStep) {
+        terminalReasons.periodEnd += 1
+        possessions += 1
+        const duration = elapsedSeconds - possessionStart
+        possessionDurations.push(duration)
+        possessionSeconds += duration
+        possessionStart = elapsedSeconds
+      }
+    }
+  }
+  const final = session.state
+  const sortedDurations = [...possessionDurations].sort((a, b) => a - b)
+  const medianPossessionSeconds = sortedDurations.length % 2 === 0
+    ? (sortedDurations[sortedDurations.length / 2 - 1]! + sortedDurations[sortedDurations.length / 2]!) / 2
+    : sortedDurations[Math.floor(sortedDurations.length / 2)]!
+  return {
+    seed,
+    periodCount,
+    periodMinutes: periodSeconds / 60,
+    regulationMinutes: periodCount * periodSeconds / 60,
+    overtimeMinutes: final.period > periodCount ? (final.period - periodCount) * overtimeSeconds / 60 : 0,
+    periodsPlayed: final.period,
+    score: `${final.homeScore}-${final.awayScore}`,
+    teams: { home: teamStats.get(final.homeTeamId), away: teamStats.get(final.awayTeamId) },
+    possessions,
+    meanPossessionSeconds: Number((possessionSeconds / possessions).toFixed(1)),
+    medianPossessionSeconds,
+    longestPossessionSeconds: Math.max(...possessionDurations),
+    fga,
+    fgm,
+    missedFieldGoals,
+    threePointAttempts,
+    threePointMakes,
+    fgPercent: Number((100 * fgm / fga).toFixed(1)),
+    turnovers,
+    terminalReasons,
+    offensiveRebounds,
+    defensiveRebounds,
+    freeThrowAttempts,
+    freeThrowsMade,
+    elapsedGameMinutes: Number((elapsedSeconds / 60).toFixed(1)),
+    timedSteps,
+    eventlessTimedSteps,
+    eventlessSeconds,
+    maxContinuationStepSeconds,
+    noClockNoEventSteps,
+    playcalls,
+    inferredResets,
+    actionKinds,
+  }
 }
 
 function assertFirstRebound(simulation: ReturnType<typeof simulateMatchDetailed>, reboundType: 'offensive' | 'defensive') {
@@ -195,7 +367,7 @@ class OvertimeRandom implements RandomSource {
   next(): number { return 0.99 }
   nextInt(): number { this.steps += 1; return 24 }
   nextFloat(minInclusive: number): number { return minInclusive }
-  chance(_probability: number): boolean { return this.steps > 100 }
+  chance(_probability: number): boolean { return this.steps > 150 }
   pick<Item>(items: readonly Item[]): Item { return items[0]! }
 }
 

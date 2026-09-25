@@ -443,9 +443,8 @@ describe('MatchSession', () => {
     const { world, game } = createScheduledGameWorld()
     const whole = simulateMatchDetailed(createOptions(world, game.id, 12345, 67890))
     const stepped = toMatchSimulation(runToComplete(createMatchSession(createOptions(world, game.id, 12345, 67890))))
-
     expect(stepped).toEqual(whole)
-    expect(regressionSummary(whole)).toEqual({ finalScore: { home: 14, away: 17 }, eventCount: 140, homeTurnovers: 11, awayTurnovers: 11, homeRebounds: 13, awayRebounds: 21, homeAssists: 3, awayAssists: 4 })
+    expect(regressionSummary(whole)).toEqual({ finalScore: { home: 42, away: 54 }, eventCount: 223, homeTurnovers: 10, awayTurnovers: 8, homeRebounds: 24, awayRebounds: 26, homeAssists: 7, awayAssists: 9 })
   })
 
   it('advances one logical unit without mutating the previous sporting state', () => {
@@ -1624,7 +1623,7 @@ class OvertimeRandom implements RandomSource {
   next(): number { return 0.99 }
   nextInt(): number { this.steps += 1; return 24 }
   nextFloat(minInclusive: number): number { return minInclusive }
-  chance(_probability: number): boolean { return this.steps > 100 }
+  chance(_probability: number): boolean { return this.steps > 150 }
   pick<Item>(items: readonly Item[]): Item { return items[0]! }
 }
 
