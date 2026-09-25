@@ -88,9 +88,10 @@
 
 ## Integration and cleanup record
 
-Integration branch/SHA, `main` and `origin/main` SHAs, push result, and the
-worktree cleanup inventory are completed after the certified integration
-candidate is pushed and remote ancestry is verified.
+The certified integration candidate was pushed without force, and remote
+ancestry was verified before cleanup. A documentation-only receipt commit on
+`main` records the cleanup results; the final remote SHA is the receipt commit
+and is reported by the final `git rev-parse origin/main` check.
 
 ```text
 MG6J_BRANCH: matchengine-v3-mg6j-final-certification
@@ -104,9 +105,16 @@ RUST_FMT: passed (`--manifest-path src-tauri/Cargo.toml`)
 RUST_CHECK: passed offline from existing cache
 DIFF_CHECK: passed
 MAIN_BEFORE: 9539eafd1613d1daace8392921a5d38541f0c176
-MAIN_AFTER: pending
-ORIGIN_MAIN: pending
-PUSH: pending
-WORKTREE_CLEANUP: pending
-MG6_FINAL_CERTIFICATION: pending
+INTEGRATION_BRANCH: matchengine-v3-mg6-final-integration
+INTEGRATION_MERGE: a6a9337d7a239f83adbb4e229f458693eff053d5
+INTEGRATION_VALIDATION_COMMIT: 8d1cafa24c073a28a2326afb83a1cca629cceb6b
+MAIN_AFTER_INTEGRATION_PUSH: 8d1cafa24c073a28a2326afb83a1cca629cceb6b
+ORIGIN_MAIN_AFTER_INTEGRATION_PUSH: 8d1cafa24c073a28a2326afb83a1cca629cceb6b
+MG6I_ANCESTOR_OF_ORIGIN_MAIN: yes
+MG6J_ANCESTOR_OF_ORIGIN_MAIN: yes
+PUSH: success; normal fast-forward, no force
+WORKTREE_CLEANUP: removed 33 clean integrated worktrees; kept C:\BDM-CORE-ORG1 because it has an uncommitted src-tauri/Cargo.toml change
+FINAL_WORKTREES: C:\BDM; C:\BDM-CORE-ORG1 (kept dirty)
+MATCHENGINE_V3_MG_BRANCHES_REMOVED: 29 merged local branches (MG4A-H, MG5A-J, MG6A-J, and MG6 integration)
+MG6_FINAL_CERTIFICATION: pass
 ```
