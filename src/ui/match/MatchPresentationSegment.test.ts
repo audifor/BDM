@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { LiveMatchStep } from '@/app/game'
 import { createLiveUserMatch, createNewGame } from '@/app/game'
 
-import { createPresentationSegment, displayClockAtProgress, presentationDurationMs } from './MatchPresentationSegment'
+import { createPresentationSegment, displayClockAtProgress, presentationDurationMs, PRESENTATION_BASE_COMPRESSION } from './MatchPresentationSegment'
 
 describe('MatchPresentationSegment', () => {
   it('represents every game second between sporting boundaries', () => {
@@ -14,10 +14,15 @@ describe('MatchPresentationSegment', () => {
     expect(displayClockAtProgress(segment, 0)).toBe(842)
     expect(displayClockAtProgress(segment, .5)).toBe(832)
     expect(displayClockAtProgress(segment, 1)).toBe(821)
-    expect(presentationDurationMs(21, 1)).toBe(21_000)
-    expect(presentationDurationMs(21, 2)).toBe(10_500)
-    expect(presentationDurationMs(21, 4)).toBe(5_250)
-    expect(presentationDurationMs(21, 8)).toBe(2_625)
+    expect(PRESENTATION_BASE_COMPRESSION).toBe(4)
+    expect(presentationDurationMs(21, 1)).toBe(5_250)
+    expect(presentationDurationMs(21, 2)).toBe(2_625)
+    expect(presentationDurationMs(21, 4)).toBe(1_312.5)
+    expect(presentationDurationMs(21, 8)).toBe(656.25)
+    // 2x/4x/8x remain exact fractions of 1x wall time: speed only scales presentation, never simulation.
+    expect(presentationDurationMs(21, 2)).toBe(presentationDurationMs(21, 1) / 2)
+    expect(presentationDurationMs(21, 4)).toBe(presentationDurationMs(21, 1) / 4)
+    expect(presentationDurationMs(21, 8)).toBe(presentationDurationMs(21, 1) / 8)
   })
 
   it('keeps period transitions and same-clock changes instant', () => {
