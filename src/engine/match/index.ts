@@ -23,6 +23,8 @@ export { createOffBallCutIntent, MAX_OFF_BALL_CUT_STEPS, selectOffBallCutter, up
 export type { OffBallCutIntent } from './OffBallMovement'
 export { createOffensiveAction } from './OffensiveActions'
 export type { OffensiveAction, OffensiveActionKind } from './OffensiveActions'
+export { HANDOFF_RULES_V1, handoffApproachTarget, isHandoffTransferReady, selectHandoffContinuation, transferHandoffBall, validateHandoff } from './HandoffOffense'
+export type { ActiveHandoff, HandoffContinuation, HandoffRead } from './HandoffOffense'
 export { decidePickAndRollScreenUse, selectPickAndRollHandlerContinuation, selectPickAndRollScreenerContinuation } from './PickAndRollOffense'
 export type { PickAndRollHandlerContinuation, PickAndRollScreenDecision, PickAndRollScreenerContinuation } from './PickAndRollOffense'
 export { advanceScreenIntent, createPostScreenIntent, createPostScreenTarget, createScreenIntent, reduceScreenedDefenderMovement, screenIntersectsDefenderRoute, selectScreenScreener, SCREEN_RULES_V1 } from './ScreenInteractions'

@@ -29,6 +29,7 @@ import { isPostUpContextValid } from './PostUpMovement'
 import { decidePickAndRollScreenUse, selectPickAndRollHandlerContinuation, selectPickAndRollScreenerContinuation, type PickAndRollHandlerContinuation } from './PickAndRollOffense'
 import { detectDefensiveThreat, resolveDefensiveReaction, type DefensiveReaction } from './DefensiveReactions'
 import { coverageForCurrentScreen } from './DefensiveCoverages'
+import { handoffApproachTarget, isHandoffTransferReady, selectHandoffContinuation, transferHandoffBall, validateHandoff, type HandoffContinuation } from './HandoffOffense'
 
 /**
  * Default game-clock rules, used only as the fallback when a game's actual competition cannot
@@ -287,7 +288,7 @@ export interface SubstitutePlayerOptions {
 }
 export type SubstitutionSource = 'automatic' | 'manual'
 
-type PossessionOutcome = 'shootingFoul' | 'fieldGoalAttempt' | 'passAttempt' | 'turnover'
+type PossessionOutcome = 'shootingFoul' | 'fieldGoalAttempt' | 'passAttempt' | 'turnover' | 'handoff' | 'handoffApproach'
 
 export class MatchSimulationError extends Error {
   public constructor(message: string) {
@@ -434,6 +435,12 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     && isPostUpContextValid({ postPlayerId: savedAction.initiatorId, defenderId: assignedHandlerDefenderId, spatial: state.spatial, attackingBasket })
     ? savedAction
     : undefined
+  const handoff = !transitionActive && state.screenIntent === undefined
+    ? validateHandoff({ action: savedAction, teamId: state.attackingTeamId, activeLineup: lineup, spatial: state.spatial })
+    : undefined
+  const handoffConflictsWithCut = handoff !== undefined && (existingCut?.playerId === handoff.giverId || existingCut?.playerId === handoff.receiverId)
+  const handoffConflictsWithDrive = handoff !== undefined && (state.driveIntent?.handlerId === handoff.giverId || state.driveIntent?.handlerId === handoff.receiverId)
+  const activeHandoff = handoffConflictsWithCut || handoffConflictsWithDrive ? undefined : handoff
   const savedScreen = state.screenIntent
   const activeScreen = savedScreen !== undefined
     && !transitionActive
@@ -450,8 +457,8 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     : undefined
   let screenForMovement: ScreenIntent | undefined = activeScreen
   let cutForMovement = activeCut
-  const canStartOffBallAction = !transitionActive && activeIsolation === undefined && activePostUp === undefined && state.screenIntent === undefined && state.offBallCut === undefined
-  let offensiveAction = activeIsolation ?? activePostUp ?? state.offensiveAction
+  const canStartOffBallAction = !transitionActive && activeIsolation === undefined && activePostUp === undefined && activeHandoff === undefined && state.screenIntent === undefined && state.offBallCut === undefined
+  let offensiveAction = activeIsolation ?? activePostUp ?? (activeHandoff === undefined ? state.offensiveAction : savedAction)
   if (screenForMovement !== undefined && (offensiveAction?.kind !== 'PICK_AND_ROLL' || offensiveAction.teamId !== state.attackingTeamId || offensiveAction.initiatorId !== screenForMovement.ballHandlerId || !offensiveAction.participantIds.includes(screenForMovement.screenerId))) {
     offensiveAction = createOffensiveAction({ kind: 'PICK_AND_ROLL', teamId: state.attackingTeamId, initiatorId: screenForMovement.ballHandlerId, participantIds: [screenForMovement.ballHandlerId, screenForMovement.screenerId], activeLineup: lineup })
   }
@@ -475,7 +482,8 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     && handlerId !== undefined
     && ((screenForMovement !== undefined && offensiveAction?.kind === 'PICK_AND_ROLL')
       || (activeIsolation !== undefined && offensiveAction?.kind === 'ISOLATION')
-      || (activePostUp !== undefined && offensiveAction?.kind === 'POST_UP'))
+      || (activePostUp !== undefined && offensiveAction?.kind === 'POST_UP')
+      || (activeHandoff !== undefined && !activeHandoff.transferred && offensiveAction?.kind === 'HANDOFF'))
   if (canAddSecondaryCut && offensiveAction !== undefined) {
     const cutPlayerId = selectOffBallCutter({ teamId: state.attackingTeamId, lineup, profiles, ballHandlerId: playerId, excludedPlayerIds: offensiveAction.participantIds, matchups, spatial: state.spatial, attackingBasket, random: session.decisionRandom })
     if (cutPlayerId !== undefined) cutForMovement = createOffBallCutIntent({ teamId: state.attackingTeamId, playerId: cutPlayerId, spatial: state.spatial, attackingBasket })
@@ -520,7 +528,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     && defendingLineup.includes(savedDrive.defenderId)
     ? savedDrive
     : undefined
-  if (!transitionActive && activeIsolation === undefined && activePostUp === undefined && savedDrive === undefined && handlerId !== undefined && handlerDefenderId !== undefined) {
+  if (!transitionActive && activeIsolation === undefined && activePostUp === undefined && activeHandoff === undefined && savedDrive === undefined && handlerId !== undefined && handlerDefenderId !== undefined) {
     const handler = profiles.find((profile) => profile.playerId === handlerId)
     if (handler !== undefined) driveForMovement = selectDriveIntent({ handler, defenderId: handlerDefenderId, spatial: state.spatial, attackingBasket, random: session.decisionRandom })
   }
@@ -553,6 +561,16 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
         driveForMovement = read.driveIntent
         if (read.continuation === 'RESET') offensiveAction = undefined
       }
+    }
+  }
+  let handoffContinuation: HandoffContinuation | undefined
+  if (activeHandoff?.transferred && handlerId === activeHandoff.receiverId && handlerDefenderId !== undefined) {
+    const handler = profiles.find((profile) => profile.playerId === handlerId)
+    if (handler !== undefined) {
+      const read = selectHandoffContinuation({ handler, teamId: state.attackingTeamId, defenderId: handlerDefenderId, activeLineup: lineup, spatial: baseInput.spatial, attackingBasket, passesThisPossession: state.passesThisPossession ?? 0, random: session.decisionRandom })
+      handoffContinuation = read.continuation
+      if (read.continuation === 'DRIVE') driveForMovement = read.driveIntent
+      offensiveAction = undefined
     }
   }
   let postUpContinuation: PostUpContinuation | undefined
@@ -589,8 +607,11 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const movementReaction = transitionActive
     ? { targetOverrides: [] }
     : resolveDefensiveReaction({ threat: movementThreat, previous: state.defensiveReaction, assignments: effectiveMatchups, defensiveLineup: defendingLineup, excludedDefenderIds: coverage?.committedDefenderIds, baseTargets, spatial: baseInput.spatial, attackingBasket })
+  const handoffApproachPosition = activeHandoff === undefined || activeHandoff.transferred ? undefined : handoffApproachTarget(baseInput.spatial, activeHandoff.giverId)
   const targetOverrides = [
     ...(cutForMovement === undefined ? [] : [{ playerId: cutForMovement.playerId, position: cutForMovement.target }]),
+    ...(activeHandoff === undefined || activeHandoff.transferred || handoffApproachPosition === undefined ? [] : [{ playerId: activeHandoff.giverId, position: handoffApproachPosition }]),
+    ...(activeHandoff === undefined || activeHandoff.transferred || handoffApproachPosition === undefined ? [] : [{ playerId: activeHandoff.receiverId, position: handoffApproachPosition }]),
     ...screenOverride,
     ...(driveForMovement === undefined ? [] : [{ playerId: driveForMovement.handlerId, position: driveForMovement.target }]),
     ...(postUpTarget === undefined ? [] : [postUpTarget]),
@@ -621,17 +642,27 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const shotZone = shotLocation.shotZone
   const shotAttemptWeight = spatialShotAttemptWeight(calculateShotZoneWeights(offensiveActor), attackingPlan, shotZone)
   const turnoverProbability = calculateTurnoverProbability({ ballHandlerProfile: offensiveActor, ballHandlerFatigue: state.fatigueByPlayerId[playerId] ?? 0, defenderProfile: primaryDefender, defenderFatigue: state.fatigueByPlayerId[primaryDefenderId] ?? 0 })
-  const passActionProbability = postUpContinuation === 'PASS_OUT' || isolationContinuation === 'PASS' || pickAndRollContinuation === 'PASS_TO_ROLLER' || pickAndRollContinuation === 'PASS_TO_POPPER'
+  const handoffTransferReady = activeHandoff !== undefined && !activeHandoff.transferred
+    && isHandoffTransferReady(spatial, activeHandoff.giverId, activeHandoff.receiverId)
+  const passActionProbability = postUpContinuation === 'PASS_OUT' || isolationContinuation === 'PASS' || handoffContinuation === 'PASS' || pickAndRollContinuation === 'PASS_TO_ROLLER' || pickAndRollContinuation === 'PASS_TO_POPPER'
     ? 1
-    : postUpContinuation === 'POST_SHOT' || isolationContinuation === 'DRIVE' || isolationContinuation === 'SHOT' || pickAndRollContinuation === 'HANDLER_DRIVE' || pickAndRollContinuation === 'HANDLER_SHOT'
+    : postUpContinuation === 'POST_SHOT' || isolationContinuation === 'DRIVE' || isolationContinuation === 'SHOT' || handoffContinuation === 'DRIVE' || handoffContinuation === 'SHOT' || pickAndRollContinuation === 'HANDLER_DRIVE' || pickAndRollContinuation === 'HANDLER_SHOT'
       ? 0
       : calculatePassActionProbability(offensiveActor.tendencies.PASS_FIRST_BIAS ?? 0, state.passesThisPossession ?? 0)
-  const selectedShotWeight = postUpContinuation === 'POST_SHOT' || isolationContinuation === 'SHOT' || pickAndRollContinuation === 'HANDLER_SHOT' ? Math.max(shotAttemptWeight, 1) : shotAttemptWeight
-  const outcome = choosePossessionOutcome(turnoverProbability, passActionProbability, selectedShotWeight, session.random)
+  const selectedShotWeight = postUpContinuation === 'POST_SHOT' || isolationContinuation === 'SHOT' || handoffContinuation === 'SHOT' || pickAndRollContinuation === 'HANDLER_SHOT' ? Math.max(shotAttemptWeight, 1) : shotAttemptWeight
+  const outcome = activeHandoff !== undefined && !activeHandoff.transferred
+    ? handoffTransferReady ? 'handoff' : 'handoffApproach'
+    : choosePossessionOutcome(turnoverProbability, passActionProbability, selectedShotWeight, session.random)
   let attackingTeamId = state.attackingTeamId
   let passesThisPossession = state.passesThisPossession ?? 0
 
-  if (outcome === 'shootingFoul') {
+  if (outcome === 'handoff') {
+    const transferred = activeHandoff === undefined ? undefined : transferHandoffBall({ spatial, teamId: state.attackingTeamId, giverId: activeHandoff.giverId, receiverId: activeHandoff.receiverId, activeLineup: lineup })
+    if (transferred === undefined) throw new MatchSimulationError('A ready handoff failed canonical ball transfer validation')
+    spatial = transferred
+  } else if (outcome === 'handoffApproach') {
+    // Keep the handoff primary while MG6 advances the receiver toward the giver.
+  } else if (outcome === 'shootingFoul') {
     newEvents.push({ sequence: sequence++, period: state.period, clockSecondsRemaining, type: 'foul', teamId: defendingTeamId, playerId: primaryDefenderId, foulType: 'shooting', homeScore, awayScore })
     for (let attempt = 0; attempt < 2; attempt += 1) {
       if (session.random.chance(FREE_THROW_MADE_PROBABILITY)) {
@@ -731,10 +762,11 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     && offensiveAction.teamId === attackingTeamId
     && offensiveAction.initiatorId === nextHandlerId
     && offensiveAction.participantIds.every((participantId) => lineup.includes(participantId))
-    && (offensiveAction.kind === 'PICK_AND_ROLL' || offensiveAction.kind === 'ISOLATION' || offensiveAction.kind === 'POST_UP')
+    && (offensiveAction.kind === 'PICK_AND_ROLL' || offensiveAction.kind === 'ISOLATION' || offensiveAction.kind === 'POST_UP' || (offensiveAction.kind === 'HANDOFF' && handoffContinuation === undefined))
   const activeOffensiveAction = attackingTeamId === state.attackingTeamId
     && ((screenIntent !== undefined && offensiveAction?.kind === 'PICK_AND_ROLL')
       || (offBallCut !== undefined && offensiveAction?.kind === 'CUT' && offensiveAction.participantIds.includes(offBallCut.playerId))
+      || (offensiveAction?.kind === 'HANDOFF' && handoffContinuation === undefined && activeHandoff !== undefined)
       || secondaryCutRetainsPrimaryAction)
     ? offensiveAction
     : undefined

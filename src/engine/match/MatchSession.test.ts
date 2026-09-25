@@ -8,7 +8,7 @@ import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
-import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, assignBaseSpatialTargets, assignTransitionSpatialTargets, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, createOffBallCutIntent, createOffensiveAction, createPostScreenTarget, createScreenIntent, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, advancePlayerTowardTarget, BASELINE_PLAYER_KINEMATIC_PROFILE, PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED, PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED, PLAYER_MAX_SPEED_METERS_PER_SECOND, releaseSpatialBall, simulateMatchDetailed, stepMatchSession, stepPlayersTowardBaseSpacing, stepPlayersTowardTransitionTargets, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
+import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, assignBaseSpatialTargets, assignTransitionSpatialTargets, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, createOffBallCutIntent, createOffensiveAction, createPostScreenTarget, createScreenIntent, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, advancePlayerTowardTarget, BASELINE_PLAYER_KINEMATIC_PROFILE, PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED, PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED, PLAYER_MAX_SPEED_METERS_PER_SECOND, releaseSpatialBall, simulateMatchDetailed, stepMatchSession, stepPlayersTowardBaseSpacing, stepPlayersTowardTransitionTargets, substitutePlayer, toMatchSimulation, transferHandoffBall, type MatchLineups, type SimulateMatchOptions } from './index'
 
 describe('MatchSession', () => {
   it('selects a valid off-ball cutter, moves through MG6, and uses canonical pass resolution', () => {
@@ -174,6 +174,83 @@ describe('MatchSession', () => {
     expect(completedPass).toMatchObject({ passerPlayerId: handlerId })
     expect(offensiveTeammates).toContain(completedPass?.type === 'passCompleted' ? completedPass.receiverPlayerId : '')
     expect(result.session.state.spatial.ball).toMatchObject({ kind: 'playerControlled', playerId: completedPass?.type === 'passCompleted' ? completedPass.receiverPlayerId : undefined })
+    expect(result.session.state.offensiveAction).toBeUndefined()
+  })
+
+  it('approaches through MG6 and transfers canonical ownership only when a handoff is in range', () => {
+    const { world, game } = createScheduledGameWorld()
+    const session = withHandoffContext(createMatchSession({ ...createOptions(world, game.id, 31, 62), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), true)
+    const { giverId, receiverId } = handoffActors(session.state)
+    const result = stepMatchSession(session).session.state
+
+    expect(session.state.spatial.ball).toMatchObject({ kind: 'playerControlled', playerId: giverId })
+    expect(result.spatial.ball).toMatchObject({ kind: 'playerControlled', playerId: receiverId, teamId: session.state.attackingTeamId })
+    expect(result.offensiveAction).toMatchObject({ kind: 'HANDOFF', initiatorId: giverId, participantIds: [giverId, receiverId] })
+  })
+
+  it('leaves canonical ownership unchanged when the receiver is invalid', () => {
+    const { world, game } = createScheduledGameWorld()
+    const session = withHandoffContext(createMatchSession(createOptions(world, game.id, 35, 70)), true)
+    const { giverId, receiverId } = handoffActors(session.state)
+    const offense = session.state.attackingTeamId === session.state.homeTeamId ? session.state.activeLineups.home : session.state.activeLineups.away
+
+    expect(transferHandoffBall({ spatial: session.state.spatial, teamId: session.state.attackingTeamId, giverId, receiverId, activeLineup: offense.filter((playerId) => playerId !== receiverId) })).toBeUndefined()
+    expect(session.state.spatial.ball).toMatchObject({ kind: 'playerControlled', playerId: giverId })
+  })
+
+  it('keeps a distant handoff viable while the receiver approaches under MG6', () => {
+    const { world, game } = createScheduledGameWorld()
+    const session = withHandoffContext(createMatchSession({ ...createOptions(world, game.id, 32, 64), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), false)
+    const { giverId, receiverId } = handoffActors(session.state)
+    const before = session.state.spatial.players.find((player) => player.playerId === receiverId)!.position
+    const result = stepMatchSession(session).session.state
+    const after = result.spatial.players.find((player) => player.playerId === receiverId)!.position
+
+    expect(result.spatial.ball).toMatchObject({ kind: 'playerControlled', playerId: giverId })
+    expect(result.offensiveAction).toMatchObject({ kind: 'HANDOFF' })
+    expect(after).not.toEqual(before)
+    expect(result.clockSecondsRemaining).toBeLessThan(session.state.clockSecondsRemaining)
+  })
+
+  it('preserves MG7E secondary cuts by a nonparticipant during a handoff', () => {
+    const { world, game } = createScheduledGameWorld()
+    const base = withHandoffContext(createMatchSession({ ...createOptions(world, game.id, 36, 72), random: new MadeBasketRandom(), decisionRandom: new CertainDecisionRandom() }), true)
+    const prepared = withOpenOffBallCutContext(base, 2)
+    const cut = createOffBallCutIntent({ teamId: prepared.session.state.attackingTeamId, playerId: prepared.cutterId, spatial: prepared.session.state.spatial, attackingBasket: getSpatialPossessionView(prepared.session.state).attackingBasket })
+    const session = { ...prepared.session, state: { ...prepared.session.state, offBallCut: cut } }
+    const before = session.state.spatial.players.find((player) => player.playerId === prepared.cutterId)!.position
+    const result = stepMatchSession(session).session.state
+    const after = result.spatial.players.find((player) => player.playerId === prepared.cutterId)!.position
+
+    expect(prepared.cutterId).not.toBe(handoffActors(session.state).receiverId)
+    expect(after).not.toEqual(before)
+    expect(result.offensiveAction?.kind).toBe('HANDOFF')
+  })
+
+  it('continues a completed handoff into the receiver drive using DriveIntent and MG6', () => {
+    const { world, game } = createScheduledGameWorld()
+    let session: ReturnType<typeof createMatchSession> = withHandoffContext(createMatchSession({ ...createOptions(world, game.id, 33, 66), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), true, { drive: 100, shot: 0, pass: 0 })
+    const receiverId = handoffActors(session.state).receiverId
+    session = stepMatchSession(session).session
+    const basket = getSpatialPossessionView(session.state).attackingBasket
+    const before = session.state.spatial.players.find((player) => player.playerId === receiverId)!.position
+    const result = stepMatchSession(session).session.state
+    const after = result.spatial.players.find((player) => player.playerId === receiverId)!.position
+
+    expect(session.state.spatial.ball).toMatchObject({ kind: 'playerControlled', playerId: receiverId })
+    expect(result.offensiveAction).toBeUndefined()
+    expect(distanceFromBasket(after, basket)).toBeLessThan(distanceFromBasket(before, basket))
+  })
+
+  it('continues a completed handoff into the receiver existing shot resolution', () => {
+    const { world, game } = createScheduledGameWorld()
+    let session: ReturnType<typeof createMatchSession> = withHandoffContext(createMatchSession({ ...createOptions(world, game.id, 34, 68), random: new MadeBasketRandom(), decisionRandom: new ZeroDecisionRandom() }), true, { drive: 0, shot: 100, pass: 0 })
+    const receiverId = handoffActors(session.state).receiverId
+    session = stepMatchSession(session).session
+    const result = stepMatchSession(session)
+
+    expect(result.newEvents.some((event) => event.type === 'shotMade' || event.type === 'shotMissed')).toBe(true)
+    expect(result.newEvents.some((event) => (event.type === 'shotMade' || event.type === 'shotMissed') && event.playerId === receiverId)).toBe(true)
     expect(result.session.state.offensiveAction).toBeUndefined()
   })
 
@@ -1032,6 +1109,54 @@ function withActivePickAndRollContext(session: ReturnType<typeof createMatchSess
     defensiveReaction: { defenderId: helperId, protectedPlayerId, threatPlayerId: handlerId, type: 'drive' as const, target: basket, phase: 'HELP' as const },
   }
   return { ...session, state: stateWithContext }
+}
+
+function handoffActors(state: ReturnType<typeof createMatchSession>['state']) {
+  const action = state.offensiveAction!
+  return { giverId: action.initiatorId, receiverId: action.participantIds.find((playerId) => playerId !== action.initiatorId)! }
+}
+
+function withHandoffContext(
+  session: ReturnType<typeof createMatchSession>,
+  receiverNearby: boolean,
+  frequency: { readonly drive: number; readonly shot: number; readonly pass: number } = { drive: 0, shot: 0, pass: 0 },
+) {
+  const state = session.state
+  const offenseIsHome = state.attackingTeamId === state.homeTeamId
+  const offenseKey = offenseIsHome ? 'home' : 'away'
+  const offense = state.activeLineups[offenseKey]
+  const giverId = offense[0]!
+  const receiverId = offense[1]!
+  let spatial = controlBallByPlayer(state.spatial, giverId)
+  const giver = spatial.players.find((player) => player.playerId === giverId)!
+  spatial = {
+    ...spatial,
+    players: spatial.players.map((player) => player.playerId !== receiverId ? player : {
+      ...player,
+      position: receiverNearby
+        ? { x: giver.position.x + (giver.position.x + 0.4 < spatial.court.lengthMeters - 0.5 ? 0.4 : -0.4), y: giver.position.y }
+        : { x: giver.position.x < spatial.court.lengthMeters / 2 ? spatial.court.lengthMeters - 2 : 2, y: spatial.court.widthMeters - giver.position.y },
+      velocity: { x: 0, y: 0 },
+    }),
+  }
+  const playerProfiles = {
+    ...state.playerProfiles,
+    [offenseKey]: state.playerProfiles[offenseKey].map((profile) => profile.playerId === receiverId
+      ? { ...profile, tendencies: { ...profile.tendencies, DRIVE_FREQUENCY: frequency.drive, SHOT_FREQUENCY: frequency.shot, PULLUP_FREQUENCY: frequency.shot, ADVANTAGE_PASS_FREQUENCY: frequency.pass }, ...(receiverNearby ? {} : { kinematics: { maxSpeedMps: 0.05, accelerationMps2: 0.05, brakingMps2: 0.05 } }) }
+      : profile),
+  }
+  return {
+    ...session,
+    state: {
+      ...state,
+      spatial,
+      playerProfiles,
+      offBallCut: undefined,
+      screenIntent: undefined,
+      driveIntent: undefined,
+      offensiveAction: createOffensiveAction({ kind: 'HANDOFF', teamId: state.attackingTeamId, initiatorId: giverId, participantIds: [giverId, receiverId], activeLineup: offense }),
+    },
+  }
 }
 
 function withIsolationContext(
