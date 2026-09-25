@@ -48,8 +48,15 @@ export function displayClockAtProgress(segment: MatchPresentationSegment, progre
   return Math.max(segment.endClockSeconds, Math.ceil(segment.startClockSeconds - elapsed))
 }
 
+/**
+ * At speed=1, one real second of playback represents this many game-clock seconds.
+ * Real-time (1) reads as far too slow for a spectator viewer; higher speeds still scale
+ * linearly from this base, so 2x/4x/8x remain exactly half/quarter/eighth of 1x wall time.
+ */
+export const PRESENTATION_BASE_COMPRESSION = 4
+
 export function presentationDurationMs(gameSeconds: number, speed: number): number {
-  return gameSeconds * 1000 / speed
+  return gameSeconds * 1000 / (speed * PRESENTATION_BASE_COMPRESSION)
 }
 
 export function visualDetailForSpeed(speed: number): 'full' | 'compressed' | 'compact' {
