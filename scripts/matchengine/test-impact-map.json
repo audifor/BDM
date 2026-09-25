@@ -31,7 +31,9 @@
         "src/engine/match/DefensiveAuthority.ts",
         "src/engine/match/OnBallDefense.ts",
         "src/engine/match/DefensiveCoverages.ts",
-        "src/engine/match/DefensiveReactions.ts"
+        "src/engine/match/DefensiveReactions.ts",
+        "src/engine/match/MovementIntentArbiter.ts",
+        "src/engine/match/MovementIntentArbiter.test.ts"
       ],
       "level": "T2",
       "tests": [
@@ -40,7 +42,8 @@
         "src/engine/match/PlayerKinematics.test.ts",
         "src/engine/match/Matchups.test.ts",
         "src/engine/match/PlayerDrivenOffense.test.ts",
-        "src/ui/match/SpatialVisualBridge.test.ts"
+        "src/ui/match/SpatialVisualBridge.test.ts",
+        "src/engine/match/MovementIntentArbiter.test.ts"
       ],
       "reason": "Shared spatial state, movement, assignment, and coverage changes need authority and presentation regressions.",
       "typecheck": true

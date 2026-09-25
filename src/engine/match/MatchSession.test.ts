@@ -8,6 +8,7 @@ import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
+import type { ActiveMovementIntent } from './MovementIntentArbiter'
 import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, assignBaseSpatialTargets, assignTransitionSpatialTargets, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, createOffBallCutIntent, createOffensiveAction, createPostScreenTarget, createScreenIntent, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, advancePlayerTowardTarget, BASELINE_PLAYER_KINEMATIC_PROFILE, PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED, PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED, PLAYER_MAX_SPEED_METERS_PER_SECOND, releaseSpatialBall, simulateMatchDetailed, stepMatchSession, stepPlayersTowardBaseSpacing, stepPlayersTowardTransitionTargets, substitutePlayer, toMatchSimulation, transferHandoffBall, type MatchLineups, type SimulateMatchOptions } from './index'
 
 describe('MatchSession', () => {
@@ -444,7 +445,32 @@ describe('MatchSession', () => {
     const whole = simulateMatchDetailed(createOptions(world, game.id, 12345, 67890))
     const stepped = toMatchSimulation(runToComplete(createMatchSession(createOptions(world, game.id, 12345, 67890))))
     expect(stepped).toEqual(whole)
-    expect(regressionSummary(whole)).toEqual({ finalScore: { home: 26, away: 50 }, eventCount: 216, homeTurnovers: 18, awayTurnovers: 14, homeRebounds: 18, awayRebounds: 27, homeAssists: 5, awayAssists: 12 })
+    expect(regressionSummary(whole)).toEqual({ finalScore: { home: 34, away: 43 }, eventCount: 209, homeTurnovers: 17, awayTurnovers: 14, homeRebounds: 20, awayRebounds: 25, homeAssists: 7, awayAssists: 8 })
+  })
+
+  it('keeps one traced locomotor authority for every active player through a multi-step possession', () => {
+    const { world, game } = createScheduledGameWorld()
+    let session: ReturnType<typeof createMatchSession> = withActivePickAndRollContext(createMatchSession({
+      ...createOptions(world, game.id, 12345, 67890),
+      random: new MissAndOffensiveReboundRandom(),
+      decisionRandom: new ZeroDecisionRandom(),
+      actorRandom: new FirstActorRandom(),
+      debugMovementTrace: true,
+    }))
+    const initialAttackingTeamId = session.state.attackingTeamId
+    const timeline: Array<readonly ActiveMovementIntent[]> = []
+    for (let step = 0; step < 30 && !session.state.isComplete && session.state.attackingTeamId === initialAttackingTeamId; step += 1) {
+      const result = stepMatchSession(session)
+      session = result.session
+      const activeIntents = Object.values(session.state.movementIntentTrace ?? {}).flatMap((resolution) => resolution?.active === undefined ? [] : [resolution.active])
+      if (activeIntents.length === 0) continue
+      expect(new Set(activeIntents.map((intent) => intent.playerId)).size).toBe(activeIntents.length)
+      expect(activeIntents).toHaveLength(10)
+      timeline.push(activeIntents)
+    }
+    expect(timeline.length).toBeGreaterThan(1)
+    expect(session.state.attackingTeamId).not.toBe(initialAttackingTeamId)
+    expect(session.state.movementIntentsByPlayerId).toEqual({})
   })
 
   it('advances one logical unit without mutating the previous sporting state', () => {
@@ -454,6 +480,7 @@ describe('MatchSession', () => {
     const result = stepMatchSession(session)
 
     expect(JSON.stringify(session.state)).toBe(before)
+    expect(result.session.state.movementIntentTrace).toBeUndefined()
     if (result.newEvents.length === 0) {
       expect(result.session.state.offensiveAction).toBeDefined()
       expect(result.session.state.clockSecondsRemaining).toBe(session.state.clockSecondsRemaining)
@@ -1091,14 +1118,17 @@ describe('MatchSession', () => {
 
   it('records valid substitutions and permits re-entry without advancing match state', () => {
     const { world, game } = createScheduledGameWorld()
-    const session = createMatchSession(createOptions(world, game.id, 12345, 67890))
-    const playerOutId = session.state.activeLineups.home[0]!
-    const playerInId = session.state.squads.home[5]!
+    const originalSession = createMatchSession(createOptions(world, game.id, 12345, 67890))
+    const playerOutId = originalSession.state.activeLineups.home[0]!
+    const playerInId = originalSession.state.squads.home[5]!
+    const activeIntent: ActiveMovementIntent = { key: `baseSpacing:${playerOutId}`, playerId: playerOutId, source: 'baseSpacing', target: { x: 1, y: 1 }, priority: 0, startedAtStep: 0 }
+    const session = { ...originalSession, state: { ...originalSession.state, movementIntentsByPlayerId: { [playerOutId]: activeIntent } } }
     const substituted = substitutePlayer(session, { teamId: session.state.homeTeamId, playerOutId, playerInId })
     const event = substituted.state.events.at(-1)!
 
     expect(substituted.state.initialLineups).toEqual(session.state.activeLineups)
     expect(substituted.state.activeLineups.home).toEqual([playerInId, ...session.state.activeLineups.home.slice(1)])
+    expect(substituted.state.movementIntentsByPlayerId).toEqual({})
     expect(event).toMatchObject({ type: 'substitution', teamId: session.state.homeTeamId, playerOutId, playerInId, clockSecondsRemaining: session.state.clockSecondsRemaining, homeScore: session.state.homeScore, awayScore: session.state.awayScore, sequence: session.state.nextSequence })
     const reentered = substitutePlayer(substituted, { teamId: session.state.homeTeamId, playerOutId: playerInId, playerInId: playerOutId })
     expect(reentered.state.activeLineups).toEqual(session.state.activeLineups)

@@ -18,7 +18,8 @@ import { clonePlan, type MatchCoachingState } from './coaching/MatchCoachingStat
 import { calculateBlockCreditProbability, calculateStealCreditProbability } from './DefensiveAttribution'
 import { applySpatialSubstitution, controlBallByPlayer, createInitialSpatialState, defendingBasketForTeam, getSpatialPossessionView, releaseSpatialBall, type SpatialState } from './SpatialState'
 import { assignBaseSpatialTargets, stepPlayersTowardBaseSpacing } from './BaseSpacing'
-import { stepPlayersTowardTransitionTargets, type TransitionIntent } from './TransitionSpatial'
+import { assignTransitionSpatialTargets, type TransitionIntent } from './TransitionSpatial'
+import { arbitrateMovementIntentSet, MOVEMENT_INTENT_PRIORITY, type ActiveMovementIntent, type MovementIntentProposal, type MovementIntentResolution, type MovementIntentSource } from './MovementIntentArbiter'
 import { createOffBallCutIntent, selectOffBallCutter, updateOffBallCutIntent, type OffBallCutIntent } from './OffBallMovement'
 import { advanceScreenIntent, createPostScreenIntent, createScreenIntent, reduceScreenedDefenderMovement, screenIntersectsDefenderRoute, type ScreenIntent } from './ScreenInteractions'
 import { advanceDriveIntent, reduceDriveHandlerMovement, selectDriveIntent, type DriveIntent } from './DribbleDrives'
@@ -229,6 +230,8 @@ export interface SimulateMatchOptions {
   readonly random: RandomSource
   readonly decisionRandom: RandomSource
   readonly actorRandom: RandomSource
+  /** Opt-in transient locomotor trace for tests and debugging. */
+  readonly debugMovementTrace?: boolean
   readonly tacticalPlans?: { readonly home: MatchTacticalPlan; readonly away: MatchTacticalPlan }
   readonly defensiveMatchups?: { readonly home:readonly DefensiveMatchupOverride[]; readonly away:readonly DefensiveMatchupOverride[] }
 }
@@ -255,6 +258,11 @@ export interface MatchSessionState {
   readonly offensiveAction?: OffensiveAction
   readonly defensiveReaction?: DefensiveReaction
   readonly transitionIntent?: TransitionIntent
+  /** Transient per-player locomotor authority; never copied to GameWorld or saves. */
+  readonly movementIntentsByPlayerId?: Readonly<Partial<Record<PlayerId, ActiveMovementIntent>>>
+  /** Last resolved movement step, available to tests/debuggers without runtime logging. */
+  readonly movementIntentTrace?: Readonly<Partial<Record<PlayerId, MovementIntentResolution>>>
+  readonly debugMovementTrace?: boolean
   readonly coachingState: MatchCoachingState
   readonly defensiveMatchups?: { readonly home:readonly DefensiveMatchupOverride[]; readonly away:readonly DefensiveMatchupOverride[] }
   readonly homeStrength: TeamStrength
@@ -342,6 +350,7 @@ export function createMatchSession(options: SimulateMatchOptions): MatchSession 
       homeStrength: options.homeStrength, awayStrength: options.awayStrength, clockRules, openingTeamId,
       period: 1, clockSecondsRemaining: clockRules.periodSeconds, possessionDurationApplied: false, homeScore: 0, awayScore: 0,
       attackingTeamId: openingTeamId, passesThisPossession: 0, nextSequence: 2, events: [initialEvent], isComplete: false,
+      debugMovementTrace: options.debugMovementTrace ?? false,
     },
     random: options.random,
     decisionRandom: options.decisionRandom,
@@ -374,7 +383,7 @@ export function substitutePlayer(session: MatchSession, substitution: Substitute
   const reaction = state.defensiveReaction
   const removesReactionParticipant = reaction !== undefined && [reaction.defenderId, reaction.protectedPlayerId, reaction.threatPlayerId, reaction.rotationDefenderId, reaction.rotationProtectedPlayerId].includes(substitution.playerOutId)
   const removesActionParticipant = state.offensiveAction?.participantIds.includes(substitution.playerOutId) ?? false
-  return { ...session, state: { ...state, activeLineups, spatial, ...(state.catchContext === substitution.playerOutId ? { catchContext: undefined } : {}), ...(state.offBallCut?.playerId === substitution.playerOutId ? { offBallCut: undefined } : {}), ...(removesScreenParticipant ? { screenIntent: undefined } : {}), ...(removesDriveParticipant ? { driveIntent: undefined } : {}), ...(removesReactionParticipant ? { defensiveReaction: undefined } : {}), ...(removesActionParticipant ? { offensiveAction: undefined } : {}), nextSequence: state.nextSequence + 1, events: [...state.events, event] } }
+  return { ...session, state: { ...state, activeLineups, spatial, movementIntentsByPlayerId: {}, movementIntentTrace: {}, ...(state.catchContext === substitution.playerOutId ? { catchContext: undefined } : {}), ...(state.offBallCut?.playerId === substitution.playerOutId ? { offBallCut: undefined } : {}), ...(removesScreenParticipant ? { screenIntent: undefined } : {}), ...(removesDriveParticipant ? { driveIntent: undefined } : {}), ...(removesReactionParticipant ? { defensiveReaction: undefined } : {}), ...(removesActionParticipant ? { offensiveAction: undefined } : {}), nextSequence: state.nextSequence + 1, events: [...state.events, event] } }
 }
 
 /** Advances one possession action or one period transition. RNG streams mutate only inside this runtime. */
@@ -702,20 +711,36 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     ? []
     : [{ playerId: onBallIntent.defenderId, position: onBallIntent.targetPosition }]
   const handoffApproachPosition = activeHandoff === undefined || activeHandoff.transferred ? undefined : handoffApproachTarget(baseInput.spatial, activeHandoff.giverId)
-  const targetOverrides = [
-    ...(cutForMovement === undefined ? [] : [{ playerId: cutForMovement.playerId, position: cutForMovement.target }]),
-    ...(activeHandoff === undefined || activeHandoff.transferred || handoffApproachPosition === undefined ? [] : [{ playerId: activeHandoff.giverId, position: handoffApproachPosition }]),
-    ...(activeHandoff === undefined || activeHandoff.transferred || handoffApproachPosition === undefined ? [] : [{ playerId: activeHandoff.receiverId, position: handoffApproachPosition }]),
-    ...screenOverride,
-    ...(driveForMovement === undefined ? [] : [{ playerId: driveForMovement.handlerId, position: driveForMovement.target }]),
-    ...(postUpTarget === undefined ? [] : [postUpTarget]),
-    ...onBallTargetOverrides,
-    ...movementReaction.targetOverrides,
-    ...(coverage?.state.phase === 'ACTIVE' ? coverage.targetOverrides : []),
+  const transitionTargets = transitionMovementActive
+    ? assignTransitionSpatialTargets({ ...baseInput, attackingTeamId: state.attackingTeamId })
+    : undefined
+  const movementProposals: MovementIntentProposal[] = [
+    ...[...baseTargets.offensive, ...baseTargets.defensive].map((target) => movementProposal(target.playerId, 'baseSpacing', target.position, MOVEMENT_INTENT_PRIORITY.baseSpacing)),
+    ...(transitionTargets !== undefined
+      ? [...transitionTargets.offense, ...transitionTargets.defense]
+        .map((target) => movementProposal(target.playerId, 'transition', target.position, MOVEMENT_INTENT_PRIORITY.transition))
+      : []),
+    ...(cutForMovement === undefined ? [] : [movementProposal(cutForMovement.playerId, 'cut', cutForMovement.target, MOVEMENT_INTENT_PRIORITY.cut)]),
+    ...(activeHandoff === undefined || activeHandoff.transferred || handoffApproachPosition === undefined ? [] : [
+      movementProposal(activeHandoff.giverId, 'handoff', handoffApproachPosition, MOVEMENT_INTENT_PRIORITY.handoff),
+      movementProposal(activeHandoff.receiverId, 'handoff', handoffApproachPosition, MOVEMENT_INTENT_PRIORITY.handoff),
+    ]),
+    ...screenOverride.map(({ playerId, position }) => movementProposal(playerId, 'screen', position, MOVEMENT_INTENT_PRIORITY.screen)),
+    ...(driveForMovement === undefined ? [] : [movementProposal(driveForMovement.handlerId, 'drive', driveForMovement.target, MOVEMENT_INTENT_PRIORITY.drive)]),
+    ...(postUpTarget === undefined ? [] : [movementProposal(postUpTarget.playerId, 'postUp', postUpTarget.position, MOVEMENT_INTENT_PRIORITY.postUp)]),
+    ...onBallTargetOverrides.map(({ playerId, position }) => movementProposal(playerId, 'onBallContainment', position, MOVEMENT_INTENT_PRIORITY.onBallContainment, onBallIntent?.ballHandlerId)),
+    ...movementReaction.targetOverrides.map(({ playerId, position }) => movementProposal(playerId, 'defensiveReaction', position, MOVEMENT_INTENT_PRIORITY.defensiveReaction)),
+    ...(coverage?.state.phase === 'ACTIVE' ? coverage.targetOverrides.map(({ playerId, position }) => movementProposal(playerId, 'screenCoverage', position, MOVEMENT_INTENT_PRIORITY.screenCoverage)) : []),
   ]
-  let spatial = transitionMovementActive
-    ? stepPlayersTowardTransitionTargets({ ...baseInput, attackingTeamId: state.attackingTeamId }, actionDurationSeconds)
-    : stepPlayersTowardBaseSpacing({ ...baseInput, playerProfiles: movementProfiles }, actionDurationSeconds, targetOverrides)
+  const movementResolutions = arbitrateMovementIntentSet({
+    proposals: movementProposals,
+    currentByPlayerId: state.movementIntentsByPlayerId ?? {},
+    step: state.nextSequence,
+  })
+  const activeMovementIntents = Object.fromEntries(Object.entries(movementResolutions)
+    .flatMap(([playerId, resolution]) => resolution?.active === undefined ? [] : [[playerId, resolution.active]])) as Partial<Record<PlayerId, ActiveMovementIntent>>
+  const resolvedTargets = Object.values(activeMovementIntents).flatMap((intent) => intent === undefined ? [] : [{ playerId: intent.playerId, position: intent.target }])
+  let spatial = stepPlayersTowardBaseSpacing({ ...baseInput, playerProfiles: movementProfiles }, actionDurationSeconds, resolvedTargets)
   const cutReceiver = cutForMovement === undefined ? undefined : spatial.players.find((player) => player.playerId === cutForMovement?.playerId)
   const cutterIsAvailableReceiver = cutForMovement !== undefined
     && cutReceiver !== undefined
@@ -912,7 +937,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     || newEvents.some((event) => event.type === 'rebound' && event.reboundType === 'offensive')
     ? false
     : state.possessionDurationApplied || actionDurationSeconds > 0
-  const stateAfterAction = { ...state, clockSecondsRemaining, possessionDurationApplied, homeScore, awayScore, attackingTeamId, spatial, catchContext: nextCatchContext, offBallCut, screenIntent, driveIntent, offensiveAction: activeOffensiveAction, defensiveReaction, transitionIntent, passesThisPossession, nextSequence: sequence }
+  const stateAfterAction = { ...state, clockSecondsRemaining, possessionDurationApplied, homeScore, awayScore, attackingTeamId, spatial, catchContext: nextCatchContext, offBallCut, screenIntent, driveIntent, offensiveAction: activeOffensiveAction, defensiveReaction, transitionIntent, movementIntentsByPlayerId: possessionFlipped ? {} : activeMovementIntents, movementIntentTrace: state.debugMovementTrace ? movementResolutions : undefined, passesThisPossession, nextSequence: sequence }
   const fatiguedSession = updateSessionFatigue(session, stateAfterAction, actionDurationSeconds)
   if (clockSecondsRemaining === 0) return finishPeriod(fatiguedSession, fatiguedSession.state, newEvents)
   const nextState = { ...fatiguedSession.state, events: [...state.events, ...newEvents] }
@@ -945,7 +970,7 @@ function finishPeriod(session: MatchSession, state: MatchSessionState, newEvents
   if (state.period >= state.clockRules.periodCount && state.homeScore !== state.awayScore) {
     const gameEnd: MatchEvent = { sequence, period: state.period, clockSecondsRemaining: 0, type: 'gameEnd', homeScore: state.homeScore, awayScore: state.awayScore }
     newEvents.push(gameEnd)
-    const completeState = { ...state, spatial: releaseSpatialBall(state.spatial), catchContext: undefined, offBallCut: undefined, screenIntent: undefined, driveIntent: undefined, offensiveAction: undefined, defensiveReaction: undefined, transitionIntent: undefined, passesThisPossession: 0, nextSequence: sequence + 1, events: [...state.events, ...newEvents], isComplete: true }
+    const completeState = { ...state, spatial: releaseSpatialBall(state.spatial), catchContext: undefined, offBallCut: undefined, screenIntent: undefined, driveIntent: undefined, offensiveAction: undefined, defensiveReaction: undefined, transitionIntent: undefined, movementIntentsByPlayerId: {}, passesThisPossession: 0, nextSequence: sequence + 1, events: [...state.events, ...newEvents], isComplete: true }
     return { session: { ...session, state: completeState }, newEvents }
   }
   if (state.period >= state.clockRules.periodCount + MAX_OVERTIME_PERIODS) {
@@ -957,7 +982,7 @@ function finishPeriod(session: MatchSession, state: MatchSessionState, newEvents
   const attackingTeamId = period % 2 === 1 ? state.openingTeamId : otherTeamId(state.openingTeamId, state)
   const periodStart: MatchEvent = { sequence: sequence++, period, clockSecondsRemaining, type: 'periodStart', homeScore: state.homeScore, awayScore: state.awayScore }
   newEvents.push(periodStart)
-  const nextState = { ...state, period, clockSecondsRemaining, possessionDurationApplied: false, attackingTeamId, catchContext: undefined, offBallCut: undefined, screenIntent: undefined, driveIntent: undefined, offensiveAction: undefined, defensiveReaction: undefined, transitionIntent: undefined, passesThisPossession: 0, spatial: releaseSpatialBall(state.spatial), nextSequence: sequence, events: [...state.events, ...newEvents] }
+  const nextState = { ...state, period, clockSecondsRemaining, possessionDurationApplied: false, attackingTeamId, catchContext: undefined, offBallCut: undefined, screenIntent: undefined, driveIntent: undefined, offensiveAction: undefined, defensiveReaction: undefined, transitionIntent: undefined, movementIntentsByPlayerId: {}, passesThisPossession: 0, spatial: releaseSpatialBall(state.spatial), nextSequence: sequence, events: [...state.events, ...newEvents] }
   return { session: { ...session, state: nextState }, newEvents }
 }
 
@@ -1006,6 +1031,10 @@ function profileForPlayer(profiles: readonly MatchPlayerProfile[], playerId: Pla
   const profile = profiles.find((candidate) => candidate.playerId === playerId)
   if (profile === undefined) throw new MatchSimulationError(`Active Player ${playerId} has no MatchPlayerProfile`)
   return profile
+}
+
+function movementProposal(playerId: PlayerId, source: MovementIntentSource, target: { readonly x: number; readonly y: number }, priority: number, semanticParticipantId?: PlayerId): MovementIntentProposal {
+  return { key: `${source}:${playerId}${semanticParticipantId === undefined ? '' : `:${semanticParticipantId}`}`, playerId, source, target, priority }
 }
 
 /** Reconstructs current five from an initial snapshot and an ordered event subset. */
