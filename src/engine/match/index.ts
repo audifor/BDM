@@ -42,6 +42,8 @@ export { calculateDefenseExecution, calculateEffectiveDefense, calculateShotLoca
 export { calculatePassActionProbability, calculatePassCompletionProbability, calculatePassingLaneContext, distanceFromPointToSegment, PASS_RESOLUTION_V1 } from './PassingResolution'
 export { chooseWeighted } from './WeightedChoice'
 export { calculateDefensiveAssignments } from './Matchups'
+export { createDefensiveAuthority, applyTemporaryDefenderOverrides, getPrimaryDefender, getEffectiveDefender, getEffectiveMatchups } from './DefensiveAuthority'
+export type { DefensiveAssignment, DefensiveAuthority } from './DefensiveAuthority'
 export { coverageForCurrentScreen, DEFENSIVE_COVERAGE_RULES_V1 } from './DefensiveCoverages'
 export type { DefensiveCoveragePhase, DefensiveCoverageResolution, DefensiveCoverageState } from './DefensiveCoverages'
 export { detectDefensiveThreat, resolveDefensiveReaction, DEFENSIVE_REACTION_RULES_V1 } from './DefensiveReactions'

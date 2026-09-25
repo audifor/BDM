@@ -28,6 +28,7 @@
         "src/engine/match/PostUpMovement.ts",
         "src/engine/match/PlayerKinematics.ts",
         "src/engine/match/Matchups.ts",
+        "src/engine/match/DefensiveAuthority.ts",
         "src/engine/match/DefensiveCoverages.ts",
         "src/engine/match/DefensiveReactions.ts"
       ],

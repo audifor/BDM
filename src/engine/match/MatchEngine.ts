@@ -4,8 +4,8 @@ import { getEcosystemForCompetition, getGame, resolveGameClockRulesForGame, type
 import type { RandomSource } from '@/engine/random'
 import { advanceFatigue, createInitialFatigue, type FatigueByPlayerId } from './Fatigue'
 import { calculateAssistProbability, selectAssister } from './AssistResolution'
-import { calculateDefensiveAssignments } from './Matchups'
 import type { DefensiveMatchupOverride } from './Matchups'
+import { applyTemporaryDefenderOverrides, createDefensiveAuthority, getEffectiveDefender, getEffectiveMatchups, getPrimaryDefender } from './DefensiveAuthority'
 import type { MatchPlayerProfile, MatchPlayerProfiles } from './MatchPlayerProfile'
 import { calculateOffensiveReboundProbability, selectRebounder } from './ReboundResolution'
 import { calculatePassActionProbability, calculatePassCompletionProbability, calculatePassingLaneContext, type PassingLaneDefender } from './PassingResolution'
@@ -406,11 +406,12 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const defendingProfiles = defendingTeamId === state.homeTeamId ? state.playerProfiles.home : state.playerProfiles.away
   const defendingPlan = defendingTeamId === state.homeTeamId ? state.coachingState.home.currentTacticalPlan : state.coachingState.away.currentTacticalPlan
   const matchupOverrides = defendingTeamId === state.homeTeamId ? (state.defensiveMatchups?.home ?? []) : (state.defensiveMatchups?.away ?? [])
-  const matchups = calculateDefensiveAssignments(lineup, defendingLineup, [...profiles, ...defendingProfiles], matchupOverrides)
-  const assignedPrimaryDefenderId = matchups.find((matchup) => matchup.offensivePlayerId === playerId)?.defensivePlayerId
+  const defensiveAuthority = createDefensiveAuthority({ homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, attackingTeamId: state.attackingTeamId, activeLineups: state.activeLineups, playerProfiles: state.playerProfiles, spatial: state.spatial, matchupOverrides })
+  const matchups = getEffectiveMatchups(defensiveAuthority)
+  const assignedPrimaryDefenderId = getPrimaryDefender(defensiveAuthority, playerId)
   if (assignedPrimaryDefenderId === undefined) throw new MatchSimulationError(`Active Player ${playerId} has no primary defender`)
   const handlerId = currentHandler?.playerId
-  const assignedHandlerDefenderId = handlerId === undefined ? undefined : matchups.find((matchup) => matchup.offensivePlayerId === handlerId)?.defensivePlayerId
+  const assignedHandlerDefenderId = handlerId === undefined ? undefined : getPrimaryDefender(defensiveAuthority, handlerId)
   const savedAction = state.offensiveAction
   const activeTransitionAction = isTransitionActionValid({ action: savedAction, teamId: state.attackingTeamId, activeLineup: lineup, handlerId, spatial: state.spatial })
     ? savedAction
@@ -463,7 +464,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     && state.offensiveAction.participantIds.includes(savedScreen.screenerId)
     && handlerId === savedScreen.ballHandlerId
     && savedScreen.defenderId === assignedHandlerDefenderId
-    && (savedScreen.screenerDefenderId === undefined || savedScreen.screenerDefenderId === matchups.find((matchup) => matchup.offensivePlayerId === savedScreen.screenerId)?.defensivePlayerId)
+    && (savedScreen.screenerDefenderId === undefined || savedScreen.screenerDefenderId === getPrimaryDefender(defensiveAuthority, savedScreen.screenerId))
     && lineup.includes(savedScreen.screenerId)
     && defendingLineup.includes(savedScreen.defenderId)
     ? savedScreen
@@ -506,7 +507,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   if (transitionActionActive && baseInput.spatial.ball.kind === 'playerControlled') {
     const transitionHandlerId = baseInput.spatial.ball.playerId
     const transitionHandler = profiles.find((profile) => profile.playerId === transitionHandlerId)
-    const transitionDefenderId = matchups.find((matchup) => matchup.offensivePlayerId === transitionHandlerId)?.defensivePlayerId
+    const transitionDefenderId = getPrimaryDefender(defensiveAuthority, transitionHandlerId)
     if (transitionHandler !== undefined && transitionDefenderId !== undefined && lineup.includes(transitionHandlerId)) {
       const read = selectTransitionContinuation({ handler: transitionHandler, teamId: state.attackingTeamId, activeLineup: lineup, defendingLineup, defendingProfiles, defenderId: transitionDefenderId, spatial: baseInput.spatial, attackingBasket, random: session.decisionRandom })
       transitionContinuation = read.continuation
@@ -522,9 +523,9 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     offensiveAction = selectedPlaycall
     if (selectedPlaycall?.kind === 'PICK_AND_ROLL') {
       const screenerId = selectedPlaycall.participantIds.find((participantId) => participantId !== callHandlerId)
-      const defenderId = matchups.find((matchup) => matchup.offensivePlayerId === callHandlerId)?.defensivePlayerId
+      const defenderId = getPrimaryDefender(defensiveAuthority, callHandlerId)
       if (screenerId !== undefined && defenderId !== undefined) {
-        screenForMovement = createScreenIntent({ screenerId, ballHandlerId: callHandlerId, defenderId, screenerDefenderId: matchups.find((matchup) => matchup.offensivePlayerId === screenerId)?.defensivePlayerId, spatial: baseInput.spatial, attackingBasket })
+        screenForMovement = createScreenIntent({ screenerId, ballHandlerId: callHandlerId, defenderId, screenerDefenderId: getPrimaryDefender(defensiveAuthority, screenerId), spatial: baseInput.spatial, attackingBasket })
       }
     } else if (selectedPlaycall?.kind === 'CUT') {
       cutForMovement = createOffBallCutIntent({ teamId: state.attackingTeamId, playerId: selectedPlaycall.initiatorId, spatial: baseInput.spatial, attackingBasket })
@@ -562,8 +563,11 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const clockSecondsRemaining = state.clockSecondsRemaining - actionDurationSeconds
   const baseTargets = assignBaseSpatialTargets(baseInput)
   const candidateCoverage = coverageForCurrentScreen({ plan: defendingPlan, screen: screenForMovement, offensiveLineup: lineup, defensiveLineup: defendingLineup, assignments: matchups, spatial: state.spatial, attackingBasket })
+  const candidateCoverageAuthority = candidateCoverage === undefined
+    ? undefined
+    : applyTemporaryDefenderOverrides(defensiveAuthority, candidateCoverage.assignments)
   const screenRouteDefenderId = candidateCoverage?.state.type === 'switch'
-    ? candidateCoverage.assignments.find((matchup) => matchup.offensivePlayerId === handlerId)?.defensivePlayerId
+    ? handlerId === undefined ? undefined : getEffectiveDefender(candidateCoverageAuthority!, handlerId)
     : screenForMovement?.defenderId
   const defenderTarget = candidateCoverage?.targetOverrides.find((target) => target.playerId === screenRouteDefenderId)?.position
     ?? baseTargets.defensive.find((target) => target.playerId === screenRouteDefenderId)?.position
@@ -577,9 +581,10 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     screenAffectsDefender = false
   }
   let coverage = screenForMovement === undefined ? undefined : candidateCoverage
-  let effectiveMatchups = coverage?.assignments ?? matchups
-  let primaryDefenderId = effectiveMatchups.find((matchup) => matchup.offensivePlayerId === playerId)?.defensivePlayerId
-  let handlerDefenderId = handlerId === undefined ? undefined : effectiveMatchups.find((matchup) => matchup.offensivePlayerId === handlerId)?.defensivePlayerId
+  let effectiveAuthority = coverage === undefined ? defensiveAuthority : candidateCoverageAuthority!
+  let effectiveMatchups = getEffectiveMatchups(effectiveAuthority)
+  let primaryDefenderId = getEffectiveDefender(effectiveAuthority, playerId)
+  let handlerDefenderId = handlerId === undefined ? undefined : getEffectiveDefender(effectiveAuthority, handlerId)
   if (primaryDefenderId === undefined) throw new MatchSimulationError(`Active Player ${playerId} has no primary defender`)
   const savedDrive = state.driveIntent
   let driveForMovement: DriveIntent | undefined = savedDrive !== undefined
@@ -604,9 +609,10 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
         screenForMovement = undefined
         offensiveAction = undefined
         coverage = undefined
-        effectiveMatchups = matchups
-        primaryDefenderId = effectiveMatchups.find((matchup) => matchup.offensivePlayerId === playerId)?.defensivePlayerId
-        handlerDefenderId = effectiveMatchups.find((matchup) => matchup.offensivePlayerId === handlerId)?.defensivePlayerId
+        effectiveAuthority = defensiveAuthority
+        effectiveMatchups = getEffectiveMatchups(effectiveAuthority)
+        primaryDefenderId = getEffectiveDefender(effectiveAuthority, playerId)
+        handlerDefenderId = handlerId === undefined ? undefined : getEffectiveDefender(effectiveAuthority, handlerId)
         screenAffectsDefender = false
       }
     }

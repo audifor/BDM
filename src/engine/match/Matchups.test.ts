@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import { playerIdFromString } from '@/domain/ids'
+import { playerIdFromString, teamIdFromString } from '@/domain/ids'
 import { PLAYER_TRUTH_TENDENCY_KEYS, type PlayerTruthTendencies } from '@/domain/player/PlayerTruthCatalog'
 import type { BasketballPosition } from '@/domain/primitives'
 
+import { applyTemporaryDefenderOverrides, createDefensiveAuthority, getEffectiveDefender, getEffectiveMatchups, getPrimaryDefender } from './DefensiveAuthority'
 import { calculateDefensiveAssignments } from './Matchups'
 import { BASELINE_PLAYER_KINEMATIC_PROFILE, type MatchPlayerProfile } from './MatchPlayerProfile'
 import { calculateDefenseExecution, calculateEffectiveDefense, calculateShotMakeProbability, calculateSpatialContestBonus } from './ShotResolution'
+import { createInitialSpatialState } from './SpatialState'
 
 const positions: readonly BasketballPosition[] = ['PG', 'SG', 'SF', 'PF', 'C']
 const neutralTendencies = Object.fromEntries(PLAYER_TRUTH_TENDENCY_KEYS.map((key) => [key, 50])) as unknown as PlayerTruthTendencies
@@ -86,6 +88,95 @@ describe('individual defensive matchups', () => {
     expect(probability(strong, 100)).toBe(strongFar)
     expect(probability(weak, 0.5, 10)).toBeLessThan(weakClose)
     expect(calculateSpatialContestBonus(100, 0)).toBe(12)
+  })
+})
+
+describe('defensive authority', () => {
+  const homeTeamId = teamIdFromString('authority-home')
+  const awayTeamId = teamIdFromString('authority-away')
+  const homeProfiles = positions.map((position, index) => profile(`authority-home-${index}`, position))
+  const awayProfiles = positions.map((position, index) => profile(`authority-away-${index}`, position))
+  const homeLineup = ids(homeProfiles)
+  const awayLineup = ids(awayProfiles)
+
+  function authority(attackingTeamId = awayTeamId, home = homeLineup, away = awayLineup, extraHomeProfiles: readonly MatchPlayerProfile[] = []) {
+    const playerProfiles = { home: [...homeProfiles, ...extraHomeProfiles], away: awayProfiles }
+    const activeLineups = { home, away }
+    const spatial = createInitialSpatialState({ homeTeamId, awayTeamId, lineups: activeLineups, playerProfiles, ecosystemKind: 'fibaLike', category: 'men' })
+    return createDefensiveAuthority({ homeTeamId, awayTeamId, attackingTeamId, activeLineups, playerProfiles, spatial })
+  }
+
+  it('creates one opposing primary assignment for every active offensive player', () => {
+    const result = authority()
+    expect(result.baseAssignments).toHaveLength(5)
+    expect(result.baseAssignments.every((entry) => entry.attackingTeamId === awayTeamId && entry.defendingTeamId === homeTeamId && entry.intent === 'GUARD')).toBe(true)
+    expect(new Set(result.baseAssignments.map((entry) => entry.defenderId)).size).toBe(5)
+    expect(result.baseAssignments.every((entry) => awayLineup.includes(entry.offensivePlayerId) && homeLineup.includes(entry.defenderId))).toBe(true)
+  })
+
+  it('derives the defending team from the current possession when possession flips', () => {
+    const awayAttacks = authority(awayTeamId)
+    const homeAttacks = authority(homeTeamId)
+    expect(awayAttacks.defendingTeamId).toBe(homeTeamId)
+    expect(homeAttacks.defendingTeamId).toBe(awayTeamId)
+    expect(homeAttacks.baseAssignments.every((entry) => entry.attackingTeamId === homeTeamId && entry.defendingTeamId === awayTeamId)).toBe(true)
+  })
+
+  it('repairs primary assignments to active players after a substitution', () => {
+    const bench = profile('authority-home-bench', 'PG')
+    const nextHomeLineup = [bench.playerId, ...homeLineup.slice(1)]
+    const result = authority(awayTeamId, nextHomeLineup, awayLineup, [bench])
+    expect(result.baseAssignments.some((entry) => entry.defenderId === homeLineup[0])).toBe(false)
+    expect(result.baseAssignments.some((entry) => entry.defenderId === bench.playerId)).toBe(true)
+    expect(result.baseAssignments.every((entry) => nextHomeLineup.includes(entry.defenderId))).toBe(true)
+  })
+
+  it('resolves a valid temporary switch before the base assignment and restores base when removed', () => {
+    const base = authority()
+    const first = awayLineup[0]!
+    const second = awayLineup[1]!
+    const firstDefender = getPrimaryDefender(base, first)!
+    const secondDefender = getPrimaryDefender(base, second)!
+    const effective = getEffectiveMatchups(base).map((matchup) => matchup.offensivePlayerId === first
+      ? { ...matchup, defensivePlayerId: secondDefender }
+      : matchup.offensivePlayerId === second
+        ? { ...matchup, defensivePlayerId: firstDefender }
+        : matchup)
+    const switched = applyTemporaryDefenderOverrides(base, effective)
+    expect(getEffectiveDefender(switched, first)).toBe(secondDefender)
+    expect(getEffectiveDefender(switched, second)).toBe(firstDefender)
+    expect(getEffectiveDefender(base, first)).toBe(firstDefender)
+    expect(switched.temporaryAssignments.every((entry) => entry.kind === 'TEMPORARY_OVERRIDE')).toBe(true)
+  })
+
+  it('rejects temporary assignments that leave a defender with two primary targets', () => {
+    const base = authority()
+    const first = awayLineup[0]!
+    const secondDefender = getPrimaryDefender(base, awayLineup[1]!)!
+    const conflicting = getEffectiveMatchups(base).map((matchup) => matchup.offensivePlayerId === first
+      ? { ...matchup, defensivePlayerId: secondDefender }
+      : matchup)
+    expect(() => applyTemporaryDefenderOverrides(base, conflicting)).toThrow('remain one-to-one')
+  })
+
+  it('produces identical assignment ordering for the same active state', () => {
+    expect(authority()).toEqual(authority())
+  })
+
+  it('rejects temporary defenders from the attacking lineup', () => {
+    const base = authority()
+    const invalid = getEffectiveMatchups(base).map((matchup, index) => index === 0
+      ? { ...matchup, defensivePlayerId: awayLineup[1]! }
+      : matchup)
+    expect(() => applyTemporaryDefenderOverrides(base, invalid)).toThrow('invalid team')
+  })
+
+  it('rejects an active lineup player missing from SpatialState', () => {
+    const bench = profile('authority-home-missing', 'PG')
+    const activeLineups = { home: [bench.playerId, ...homeLineup.slice(1)], away: awayLineup }
+    const playerProfiles = { home: [...homeProfiles, bench], away: awayProfiles }
+    const spatial = createInitialSpatialState({ homeTeamId, awayTeamId, lineups: { home: homeLineup, away: awayLineup }, playerProfiles, ecosystemKind: 'fibaLike', category: 'men' })
+    expect(() => createDefensiveAuthority({ homeTeamId, awayTeamId, attackingTeamId: awayTeamId, activeLineups, playerProfiles, spatial })).toThrow('missing from SpatialState')
   })
 })
 
