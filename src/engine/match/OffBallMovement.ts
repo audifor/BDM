@@ -1,8 +1,9 @@
 import type { PlayerId, TeamId } from '@/domain/ids'
-import type { CourtPosition } from '@/domain/court'
+import { distanceBetween, distanceFromBasket, isInsideCourt, type CourtPosition } from '@/domain/court'
 import type { RandomSource } from '@/engine/random'
 import { chooseWeighted } from './WeightedChoice'
 import type { MatchPlayerProfile } from './MatchPlayerProfile'
+import type { PlayerMatchup } from './Matchups'
 import type { SpatialState } from './SpatialState'
 
 export const MAX_OFF_BALL_CUT_STEPS = 3
@@ -11,6 +12,9 @@ const RIM_CUT_OFFSET_METERS = 1.5
 const RIM_CUT_LATERAL_OFFSET_METERS = 1
 const SPACE_CUT_DEPTH_METERS = 4.5
 const SPACE_CUT_MARGIN_METERS = 1.5
+const CUT_TARGET_CLEARANCE_METERS = 1.25
+const CUT_LANE_CLEARANCE_METERS = 0.75
+const MINIMUM_CUT_ADVANCE_METERS = 0.75
 
 export interface OffBallCutIntent {
   readonly type: 'rimCut' | 'spaceCut'
@@ -20,22 +24,40 @@ export interface OffBallCutIntent {
   readonly stepsRemaining: number
 }
 
-/** Selects a cutter using the canonical CUT_FREQUENCY tendency and the existing decision stream. */
-export function selectOffBallCutter(
-  lineup: readonly PlayerId[],
-  profiles: readonly MatchPlayerProfile[],
-  ballHandlerId: PlayerId,
-  random: RandomSource,
-): PlayerId | undefined {
-  const candidates = lineup
-    .filter((playerId) => playerId !== ballHandlerId)
-    .map((playerId) => profiles.find((profile) => profile.playerId === playerId))
-    .filter((profile): profile is MatchPlayerProfile => profile !== undefined && profile.tendencies.CUT_FREQUENCY > 0)
+/** Filters for a clear spatial cut first, then applies CUT_FREQUENCY and canonical RNG. */
+export function selectOffBallCutter(input: {
+  readonly teamId: TeamId
+  readonly lineup: readonly PlayerId[]
+  readonly profiles: readonly MatchPlayerProfile[]
+  readonly ballHandlerId: PlayerId
+  readonly excludedPlayerIds?: readonly PlayerId[]
+  readonly matchups: readonly PlayerMatchup[]
+  readonly spatial: SpatialState
+  readonly attackingBasket: CourtPosition
+  readonly random: RandomSource
+}): PlayerId | undefined {
+  const excluded = new Set(input.excludedPlayerIds ?? [])
+  const defenders = input.spatial.players.filter((player) => player.teamId !== input.teamId)
+  const candidates = input.lineup
+    .filter((playerId) => playerId !== input.ballHandlerId && !excluded.has(playerId))
+    .map((playerId) => {
+      const profile = input.profiles.find((candidate) => candidate.playerId === playerId)
+      const spatialPlayer = input.spatial.players.find((candidate) => candidate.playerId === playerId)
+      const defenderId = input.matchups.find((matchup) => matchup.offensivePlayerId === playerId)?.defensivePlayerId
+      const defender = defenderId === undefined ? undefined : defenders.find((candidate) => candidate.playerId === defenderId)
+      const ownsBall = input.spatial.ball.kind === 'playerControlled' && input.spatial.ball.playerId === playerId
+      if (profile === undefined || profile.tendencies.CUT_FREQUENCY <= 0 || spatialPlayer?.teamId !== input.teamId || !isInsideCourt(spatialPlayer.position, input.spatial.court) || ownsBall || defender === undefined) return undefined
+      const intent = createOffBallCutIntent({ teamId: input.teamId, playerId, spatial: input.spatial, attackingBasket: input.attackingBasket })
+      return isViableCut(input.spatial, spatialPlayer.position, intent.target, input.attackingBasket, defenders)
+        ? { playerId, weight: profile.tendencies.CUT_FREQUENCY }
+        : undefined
+    })
+    .filter((candidate): candidate is { readonly playerId: PlayerId; readonly weight: number } => candidate !== undefined)
   if (candidates.length === 0) return undefined
 
-  const highestFrequency = Math.max(...candidates.map((profile) => profile.tendencies.CUT_FREQUENCY))
-  if (!random.chance(highestFrequency / 100)) return undefined
-  return chooseWeighted(candidates.map((profile) => ({ item: profile.playerId, weight: profile.tendencies.CUT_FREQUENCY })), random)
+  const highestFrequency = Math.max(...candidates.map((candidate) => candidate.weight))
+  if (!input.random.chance(highestFrequency / 100)) return undefined
+  return chooseWeighted(candidates.map(({ playerId, weight }) => ({ item: playerId, weight })), input.random)
 }
 
 /** Builds one of two deterministic targets from the active player's location and court geometry. */
@@ -76,3 +98,18 @@ export function updateOffBallCutIntent(
 }
 
 function clamp(value: number, min: number, max: number): number { return Math.max(min, Math.min(max, value)) }
+
+function isViableCut(spatial: SpatialState, playerPosition: CourtPosition, target: CourtPosition, basket: CourtPosition, defenders: SpatialState['players']): boolean {
+  if (!isInsideCourt(playerPosition, spatial.court) || !isInsideCourt(target, spatial.court) || distanceFromBasket(playerPosition, basket) <= distanceFromBasket(target, basket) + MINIMUM_CUT_ADVANCE_METERS) return false
+  if (defenders.some((defender) => distanceBetween(defender.position, target) < CUT_TARGET_CLEARANCE_METERS)) return false
+  return defenders.every((defender) => distanceToSegment(defender.position, playerPosition, target) >= CUT_LANE_CLEARANCE_METERS)
+}
+
+function distanceToSegment(point: CourtPosition, start: CourtPosition, end: CourtPosition): number {
+  const dx = end.x - start.x
+  const dy = end.y - start.y
+  const lengthSquared = dx * dx + dy * dy
+  if (lengthSquared === 0) return distanceBetween(point, start)
+  const projection = Math.max(0, Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared))
+  return distanceBetween(point, { x: start.x + projection * dx, y: start.y + projection * dy })
+}

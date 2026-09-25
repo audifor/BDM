@@ -8,9 +8,63 @@ import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { SeededRandomSource, type RandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
 
-import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, assignBaseSpatialTargets, assignTransitionSpatialTargets, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, createOffensiveAction, createPostScreenTarget, createScreenIntent, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, advancePlayerTowardTarget, BASELINE_PLAYER_KINEMATIC_PROFILE, PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED, PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED, PLAYER_MAX_SPEED_METERS_PER_SECOND, releaseSpatialBall, simulateMatchDetailed, stepMatchSession, stepPlayersTowardBaseSpacing, stepPlayersTowardTransitionTargets, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
+import { MATCH_RULES_V2, MatchSimulationError, attackingBasketForTeam, assignBaseSpatialTargets, assignTransitionSpatialTargets, calculateActiveLineups, calculateDefensiveAssignments, controlBallByPlayer, createMatchPlayerProfile, createMatchSession, createOffBallCutIntent, createOffensiveAction, createPostScreenTarget, createScreenIntent, getSpatialPossessionView, isSpatialStateCoherentWithPossession, isSpatialStateInsideCourt, advancePlayerTowardTarget, BASELINE_PLAYER_KINEMATIC_PROFILE, PLAYER_ACCELERATION_METERS_PER_SECOND_SQUARED, PLAYER_DECELERATION_METERS_PER_SECOND_SQUARED, PLAYER_MAX_SPEED_METERS_PER_SECOND, releaseSpatialBall, simulateMatchDetailed, stepMatchSession, stepPlayersTowardBaseSpacing, stepPlayersTowardTransitionTargets, substitutePlayer, toMatchSimulation, type MatchLineups, type SimulateMatchOptions } from './index'
 
 describe('MatchSession', () => {
+  it('selects a valid off-ball cutter, moves through MG6, and uses canonical pass resolution', () => {
+    const { world, game } = createScheduledGameWorld()
+    const prepared = withOpenOffBallCutContext(createMatchSession({ ...createOptions(world, game.id, 18, 36), random: new OffBallPassRandom(), decisionRandom: new CertainDecisionRandom() }), 1, { passFirstBias: 100 })
+    const before = prepared.session.state.spatial.players.find((player) => player.playerId === prepared.cutterId)!.position
+    const intent = createOffBallCutIntent({ teamId: prepared.session.state.attackingTeamId, playerId: prepared.cutterId, spatial: prepared.session.state.spatial, attackingBasket: getSpatialPossessionView(prepared.session.state).attackingBasket })
+    const result = stepMatchSession(prepared.session)
+    const after = result.session.state.spatial.players.find((player) => player.playerId === prepared.cutterId)!.position
+
+    expect(result.newEvents.find((event) => event.type === 'passCompleted')).toMatchObject({ passerPlayerId: prepared.handlerId, receiverPlayerId: prepared.cutterId })
+    expect(result.session.state.spatial.ball).toMatchObject({ kind: 'playerControlled', playerId: prepared.cutterId })
+    expect(distanceFromBasket(after, intent.target)).toBeLessThan(distanceFromBasket(before, intent.target))
+  })
+
+  it('keeps P&R primary while a nonparticipant makes a secondary cut', () => {
+    const { world, game } = createScheduledGameWorld()
+    const base = withActivePickAndRollContext(createMatchSession({ ...createOptions(world, game.id, 19, 38), random: new MissAndOffensiveReboundRandom(), decisionRandom: new CertainDecisionRandom() }))
+    const prepared = withOpenOffBallCutContext(base, 2)
+    const session = withScreenerOnAssignedDefenderRoute({ ...prepared.session, state: { ...prepared.session.state, screenIntent: { ...prepared.session.state.screenIntent!, phase: 'approach' as const, stepsRemaining: 5 }, driveIntent: undefined } })
+    const intent = createOffBallCutIntent({ teamId: session.state.attackingTeamId, playerId: prepared.cutterId, spatial: session.state.spatial, attackingBasket: getSpatialPossessionView(session.state).attackingBasket })
+    const before = session.state.spatial.players.find((player) => player.playerId === prepared.cutterId)!.position
+    const result = stepMatchSession(session).session.state
+    const screenerId = session.state.offensiveAction!.participantIds.find((playerId) => playerId !== prepared.handlerId)!
+    const after = result.spatial.players.find((player) => player.playerId === prepared.cutterId)!.position
+    const delta = session.state.clockSecondsRemaining - result.clockSecondsRemaining
+    const baseSpacing = stepPlayersTowardBaseSpacing(baseSpacingInput(session.state, prepared.handlerId), delta)
+    const baseSpacingPosition = baseSpacing.players.find((player) => player.playerId === prepared.cutterId)!.position
+
+    expect(result.offensiveAction).toMatchObject({ kind: 'PICK_AND_ROLL', initiatorId: prepared.handlerId })
+    expect(prepared.cutterId).not.toBe(screenerId)
+    expect(distanceFromBasket(after, intent.target)).toBeLessThan(distanceFromBasket(before, intent.target))
+    expect(after).not.toEqual(baseSpacingPosition)
+  })
+
+  it('leaves BaseSpacing in control when the cut lane is blocked', () => {
+    const { world, game } = createScheduledGameWorld()
+    const prepared = withOpenOffBallCutContext(createMatchSession({ ...createOptions(world, game.id, 21, 42), random: new MadeBasketRandom(), decisionRandom: new CertainDecisionRandom() }), 1)
+    const state = prepared.session.state
+    const offense = state.attackingTeamId === state.homeTeamId ? state.activeLineups.home : state.activeLineups.away
+    const defense = state.attackingTeamId === state.homeTeamId ? state.activeLineups.away : state.activeLineups.home
+    const profiles = state.attackingTeamId === state.homeTeamId ? state.playerProfiles.home : state.playerProfiles.away
+    const defenders = state.attackingTeamId === state.homeTeamId ? state.playerProfiles.away : state.playerProfiles.home
+    const assignment = calculateDefensiveAssignments(offense, defense, [...profiles, ...defenders]).find((matchup) => matchup.offensivePlayerId === prepared.cutterId)!
+    const target = createOffBallCutIntent({ teamId: state.attackingTeamId, playerId: prepared.cutterId, spatial: state.spatial, attackingBasket: getSpatialPossessionView(state).attackingBasket }).target
+    const blockedSpatial = { ...state.spatial, players: state.spatial.players.map((player) => player.playerId === assignment.defensivePlayerId ? { ...player, position: target } : player) }
+    const blockedSession = { ...prepared.session, state: { ...state, spatial: blockedSpatial } }
+    const result = stepMatchSession(blockedSession).session.state
+    const elapsed = state.clockSecondsRemaining - result.clockSecondsRemaining
+    const baseSpacing = stepPlayersTowardBaseSpacing(baseSpacingInput(state, prepared.handlerId), elapsed)
+
+    expect(result.offBallCut).toBeUndefined()
+    expect(result.spatial.players.find((player) => player.playerId === prepared.cutterId)?.position)
+      .toEqual(baseSpacing.players.find((player) => player.playerId === prepared.cutterId)?.position)
+  })
+
   it('represents an offensive action with distinct active participants from its team lineup', () => {
     const { world, game } = createScheduledGameWorld()
     const state = createMatchSession(createOptions(world, game.id, 5, 6)).state
@@ -892,6 +946,59 @@ function openingHandlerId(state: ReturnType<typeof createMatchSession>['state'])
   return state.attackingTeamId === state.homeTeamId ? state.activeLineups.home[0]! : state.activeLineups.away[0]!
 }
 
+function withOpenOffBallCutContext(
+  session: ReturnType<typeof createMatchSession>,
+  cutterIndex: number,
+  options: { readonly passFirstBias?: number } = {},
+) {
+  const state = session.state
+  const offenseIsHome = state.attackingTeamId === state.homeTeamId
+  const offenseKey = offenseIsHome ? 'home' : 'away'
+  const defenseKey = offenseIsHome ? 'away' : 'home'
+  const offense = state.activeLineups[offenseKey]
+  const handlerId = offense[0]!
+  const cutterId = offense[cutterIndex]!
+  const basket = getSpatialPossessionView(state).attackingBasket
+  const direction = basket.x > state.spatial.court.lengthMeters / 2 ? 1 : -1
+  const playerProfiles = {
+    ...state.playerProfiles,
+    [offenseKey]: state.playerProfiles[offenseKey].map((profile) => ({
+      ...profile,
+      tendencies: {
+        ...profile.tendencies,
+        CUT_FREQUENCY: profile.playerId === cutterId ? 100 : 0,
+        ON_BALL_SCREENING_FREQUENCY: 0,
+        ...(profile.playerId === handlerId ? { PASS_FIRST_BIAS: options.passFirstBias ?? 0, DRIVE_FREQUENCY: 0, PULLUP_FREQUENCY: 0 } : {}),
+      },
+    })),
+  }
+  const spatial = {
+    ...state.spatial,
+    players: state.spatial.players.map((player) => player.playerId === handlerId
+      ? { ...player, position: { x: basket.x - direction * 9, y: basket.y }, velocity: { x: 0, y: 0 } }
+      : player.playerId === cutterId
+        ? { ...player, position: { x: basket.x - direction * 5.8, y: basket.y }, velocity: { x: 0, y: 0 } }
+        : state.activeLineups[defenseKey].includes(player.playerId)
+          ? { ...player, position: { x: state.spatial.court.lengthMeters / 2, y: player.position.y < basket.y ? 0.2 : state.spatial.court.widthMeters - 0.2 }, velocity: { x: 0, y: 0 } }
+          : player),
+  }
+  return {
+    handlerId,
+    cutterId,
+    session: {
+      ...session,
+      state: {
+        ...state,
+        spatial: controlBallByPlayer(spatial, handlerId),
+        playerProfiles,
+        offBallCut: undefined,
+        screenIntent: state.offensiveAction?.kind === 'PICK_AND_ROLL' ? state.screenIntent : undefined,
+        driveIntent: state.offensiveAction?.kind === 'PICK_AND_ROLL' ? state.driveIntent : undefined,
+      },
+    },
+  }
+}
+
 function withActivePickAndRollContext(session: ReturnType<typeof createMatchSession>) {
   const state = session.state
   const offenseIsHome = state.attackingTeamId === state.homeTeamId
@@ -1079,8 +1186,15 @@ class NoCreditActorRandom extends FirstActorRandom { chance(_probability: number
 
 class ZeroDecisionRandom extends FirstSportingRandom { next(): number { return 0 } }
 
+class CertainDecisionRandom extends ZeroDecisionRandom { chance(probability: number): boolean { return probability > 0 } }
+
 class ForcedPassRandom extends FirstSportingRandom {
   public constructor(private readonly completePass: boolean) { super() }
   next(): number { return 0.2 }
   chance(_probability: number): boolean { return this.completePass }
+}
+
+class OffBallPassRandom extends FirstSportingRandom {
+  next(): number { return 0.3 }
+  chance(_probability: number): boolean { return true }
 }

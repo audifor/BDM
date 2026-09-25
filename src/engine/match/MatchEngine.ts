@@ -403,19 +403,19 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   if (assignedPrimaryDefenderId === undefined) throw new MatchSimulationError(`Active Player ${playerId} has no primary defender`)
   const handlerId = currentHandler?.playerId
   const assignedHandlerDefenderId = handlerId === undefined ? undefined : matchups.find((matchup) => matchup.offensivePlayerId === handlerId)?.defensivePlayerId
+  const savedAction = state.offensiveAction
   const existingCut = state.offBallCut
   const activeCut = existingCut !== undefined
     && !transitionActive
-    && state.offensiveAction?.kind === 'CUT'
-    && state.offensiveAction.teamId === state.attackingTeamId
-    && state.offensiveAction.participantIds.includes(existingCut.playerId)
-    && state.screenIntent === undefined
     && existingCut.teamId === state.attackingTeamId
     && existingCut.playerId !== playerId
     && lineup.includes(existingCut.playerId)
+    && state.spatial.players.some((player) => player.playerId === existingCut.playerId && player.teamId === state.attackingTeamId)
+    && (savedAction?.kind === 'CUT'
+      ? savedAction.participantIds.includes(existingCut.playerId)
+      : !savedAction?.participantIds.includes(existingCut.playerId))
     ? existingCut
     : undefined
-  const savedAction = state.offensiveAction
   const activeIsolation = savedAction?.kind === 'ISOLATION'
     && savedAction.teamId === state.attackingTeamId
     && handlerId === savedAction.initiatorId
@@ -454,8 +454,6 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   let offensiveAction = activeIsolation ?? activePostUp ?? state.offensiveAction
   if (screenForMovement !== undefined && (offensiveAction?.kind !== 'PICK_AND_ROLL' || offensiveAction.teamId !== state.attackingTeamId || offensiveAction.initiatorId !== screenForMovement.ballHandlerId || !offensiveAction.participantIds.includes(screenForMovement.screenerId))) {
     offensiveAction = createOffensiveAction({ kind: 'PICK_AND_ROLL', teamId: state.attackingTeamId, initiatorId: screenForMovement.ballHandlerId, participantIds: [screenForMovement.ballHandlerId, screenForMovement.screenerId], activeLineup: lineup })
-  } else if (cutForMovement !== undefined && (offensiveAction?.kind !== 'CUT' || offensiveAction.teamId !== cutForMovement.teamId || !offensiveAction.participantIds.includes(cutForMovement.playerId))) {
-    offensiveAction = createOffensiveAction({ kind: 'CUT', teamId: cutForMovement.teamId, initiatorId: cutForMovement.playerId, participantIds: [cutForMovement.playerId, playerId], activeLineup: lineup })
   }
   if (screenForMovement === undefined && cutForMovement === undefined && canStartOffBallAction && handlerId !== undefined && assignedHandlerDefenderId !== undefined) {
     const screenerId = selectScreenScreener(lineup, profiles, handlerId, existingCut?.playerId, session.decisionRandom)
@@ -465,11 +463,22 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     }
   }
   if (screenForMovement === undefined && cutForMovement === undefined && canStartOffBallAction) {
-    const cutPlayerId = selectOffBallCutter(lineup, profiles, playerId, session.decisionRandom)
+    const cutPlayerId = selectOffBallCutter({ teamId: state.attackingTeamId, lineup, profiles, ballHandlerId: playerId, matchups, spatial: state.spatial, attackingBasket, random: session.decisionRandom })
     if (cutPlayerId !== undefined) {
       offensiveAction = createOffensiveAction({ kind: 'CUT', teamId: state.attackingTeamId, initiatorId: cutPlayerId, participantIds: [cutPlayerId, playerId], activeLineup: lineup })
       if (offensiveAction.kind === 'CUT') cutForMovement = createOffBallCutIntent({ teamId: offensiveAction.teamId, playerId: cutPlayerId, spatial: state.spatial, attackingBasket })
     }
+  }
+  const canAddSecondaryCut = !transitionActive
+    && cutForMovement === undefined
+    && existingCut === undefined
+    && handlerId !== undefined
+    && ((screenForMovement !== undefined && offensiveAction?.kind === 'PICK_AND_ROLL')
+      || (activeIsolation !== undefined && offensiveAction?.kind === 'ISOLATION')
+      || (activePostUp !== undefined && offensiveAction?.kind === 'POST_UP'))
+  if (canAddSecondaryCut && offensiveAction !== undefined) {
+    const cutPlayerId = selectOffBallCutter({ teamId: state.attackingTeamId, lineup, profiles, ballHandlerId: playerId, excludedPlayerIds: offensiveAction.participantIds, matchups, spatial: state.spatial, attackingBasket, random: session.decisionRandom })
+    if (cutPlayerId !== undefined) cutForMovement = createOffBallCutIntent({ teamId: state.attackingTeamId, playerId: cutPlayerId, spatial: state.spatial, attackingBasket })
   }
   const baseInput = {
     homeTeamId: state.homeTeamId,
@@ -581,7 +590,8 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     ? { targetOverrides: [] }
     : resolveDefensiveReaction({ threat: movementThreat, previous: state.defensiveReaction, assignments: effectiveMatchups, defensiveLineup: defendingLineup, excludedDefenderIds: coverage?.committedDefenderIds, baseTargets, spatial: baseInput.spatial, attackingBasket })
   const targetOverrides = [
-    ...(cutForMovement !== undefined ? [{ playerId: cutForMovement.playerId, position: cutForMovement.target }] : screenOverride),
+    ...(cutForMovement === undefined ? [] : [{ playerId: cutForMovement.playerId, position: cutForMovement.target }]),
+    ...screenOverride,
     ...(driveForMovement === undefined ? [] : [{ playerId: driveForMovement.handlerId, position: driveForMovement.target }]),
     ...(postUpTarget === undefined ? [] : [postUpTarget]),
     ...movementReaction.targetOverrides,
@@ -590,6 +600,10 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   let spatial = transitionActive
     ? stepPlayersTowardTransitionTargets({ ...baseInput, attackingTeamId: state.attackingTeamId }, possessionDuration)
     : stepPlayersTowardBaseSpacing({ ...baseInput, playerProfiles: movementProfiles }, possessionDuration, targetOverrides)
+  const cutReceiver = cutForMovement === undefined ? undefined : spatial.players.find((player) => player.playerId === cutForMovement?.playerId)
+  const cutterIsAvailableReceiver = cutForMovement !== undefined
+    && cutReceiver !== undefined
+    && distanceBetween(cutReceiver.position, cutForMovement.target) <= 0.75
   const progressedCut = updateOffBallCutIntent(cutForMovement, { teamId: state.attackingTeamId, lineup, ballHandlerId: playerId, spatial })
   const progressedDrive = advanceDriveIntent(driveForMovement, spatial)
   let progressedScreen = advanceScreenIntent(screenForMovement, spatial)
@@ -635,7 +649,9 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     const receiverCandidates = lineup.filter((candidateId) => candidateId !== playerId)
     const receiverPlayerId = pickAndRollContinuation === 'PASS_TO_ROLLER' || pickAndRollContinuation === 'PASS_TO_POPPER'
       ? screenForMovement?.screenerId
-      : session.decisionRandom.pick(receiverCandidates)
+      : cutterIsAvailableReceiver && cutForMovement !== undefined && receiverCandidates.includes(cutForMovement.playerId)
+        ? cutForMovement.playerId
+        : session.decisionRandom.pick(receiverCandidates)
     if (receiverPlayerId === undefined || !receiverCandidates.includes(receiverPlayerId)) throw new MatchSimulationError('Selected pass target must be an active teammate')
     const passerSpatial = spatial.players.find((player) => player.playerId === playerId)
     const receiverSpatial = spatial.players.find((player) => player.playerId === receiverPlayerId)
@@ -708,12 +724,20 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
   const screenIntent = attackingTeamId === state.attackingTeamId && screenRetainsHandler ? progressedScreen : undefined
   const driveRetainsHandler = spatial.ball.kind === 'playerControlled' && spatial.ball.teamId === state.attackingTeamId && spatial.ball.playerId === progressedDrive?.handlerId
   const driveIntent = attackingTeamId === state.attackingTeamId && driveRetainsHandler ? progressedDrive : undefined
-  const activeOffensiveAction = attackingTeamId === state.attackingTeamId
-    && ((screenIntent !== undefined && offensiveAction?.kind === 'PICK_AND_ROLL') || (offBallCut !== undefined && offensiveAction?.kind === 'CUT'))
-    ? offensiveAction
-    : undefined
   const possessionFlipped = attackingTeamId !== state.attackingTeamId
   const nextHandlerId = spatial.ball.kind === 'playerControlled' && spatial.ball.teamId === attackingTeamId ? spatial.ball.playerId : undefined
+  const secondaryCutRetainsPrimaryAction = offBallCut !== undefined
+    && offensiveAction !== undefined
+    && offensiveAction.teamId === attackingTeamId
+    && offensiveAction.initiatorId === nextHandlerId
+    && offensiveAction.participantIds.every((participantId) => lineup.includes(participantId))
+    && (offensiveAction.kind === 'PICK_AND_ROLL' || offensiveAction.kind === 'ISOLATION' || offensiveAction.kind === 'POST_UP')
+  const activeOffensiveAction = attackingTeamId === state.attackingTeamId
+    && ((screenIntent !== undefined && offensiveAction?.kind === 'PICK_AND_ROLL')
+      || (offBallCut !== undefined && offensiveAction?.kind === 'CUT' && offensiveAction.participantIds.includes(offBallCut.playerId))
+      || secondaryCutRetainsPrimaryAction)
+    ? offensiveAction
+    : undefined
   const nextThreat = possessionFlipped ? undefined : detectDefensiveThreat({
     drive: driveIntent === undefined ? undefined : { playerId: driveIntent.handlerId, target: driveIntent.target },
     cut: offBallCut === undefined ? undefined : { playerId: offBallCut.playerId, type: offBallCut.type, target: offBallCut.target },
