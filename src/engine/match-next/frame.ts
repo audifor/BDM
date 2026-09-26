@@ -5,6 +5,7 @@ import type { MovementIntent } from './movement/MovementIntent'
 import type { PlayerResponsibility, StructuralDecision } from './responsibility/Responsibility'
 import type { OffensiveStructureState } from './structure/FiveOutStructure'
 import type { DefensiveAssignment, DefensiveStructureState } from './state'
+import type { MatchActionState } from './actions/ActionState'
 
 export interface MatchFramePlayer {
   readonly playerId: PlayerId
@@ -41,6 +42,12 @@ export interface MatchFrameBall {
   }
   readonly deadReason?: string
   readonly inboundTeamId?: TeamId
+  readonly passQuality?: number
+  readonly shotValue?: 2 | 3
+  readonly shotProbability?: number
+  readonly contestScore?: number
+  readonly contestDefenderPlayerId?: PlayerId
+  readonly actionId?: string
 }
 
 export interface MatchFramePossession {
@@ -70,7 +77,8 @@ export interface MatchFrame {
   readonly decisions: MatchState['decisions']
   readonly movementIntents: MatchState['movementIntents']
   readonly events: readonly MatchNextEvent[]
-  readonly actions: readonly []
+  readonly currentDecision: MatchState['currentDecision']
+  readonly actions: readonly MatchActionState[]
   readonly offensiveStructure: OffensiveStructureState | null
   readonly defensiveStructure: DefensiveStructureState | null
 }
@@ -96,6 +104,14 @@ export function toFrame(state: MatchState): MatchFrame {
       ...(ball.kind === 'HELD' ? { ownerPlayerId: ball.ownerPlayerId, ownerTeamId: ball.ownerTeamId } : {}),
       ...(ball.kind === 'PASS_IN_FLIGHT' ? { teamId: ball.passerTeamId } : {}),
       ...(ball.kind === 'SHOT_IN_FLIGHT' ? { teamId: ball.shooterTeamId } : {}),
+      ...(ball.kind === 'PASS_IN_FLIGHT' && ball.passQuality !== undefined ? { passQuality: ball.passQuality, actionId: ball.actionId } : {}),
+      ...(ball.kind === 'SHOT_IN_FLIGHT' ? {
+        ...(ball.shotValue === undefined ? {} : { shotValue: ball.shotValue }),
+        ...(ball.shotProbability === undefined ? {} : { shotProbability: ball.shotProbability }),
+        ...(ball.contestScore === undefined ? {} : { contestScore: ball.contestScore }),
+        ...(ball.contestDefenderPlayerId === undefined ? {} : { contestDefenderPlayerId: ball.contestDefenderPlayerId }),
+        ...(ball.actionId === undefined ? {} : { actionId: ball.actionId }),
+      } : {}),
       ...(ball.kind === 'REBOUNDABLE' ? { teamId: ball.shootingTeamId } : {}),
       ...(ball.kind === 'PASS_IN_FLIGHT' ? { flight: { kind: 'pass' as const, from: { ...ball.from }, target: { ...ball.target }, releaseT: ball.releaseT, arrivalT: ball.arrivalT } } : {}),
       ...(ball.kind === 'SHOT_IN_FLIGHT' ? { flight: { kind: 'shot' as const, from: { ...ball.from }, target: { ...ball.targetBasket }, releaseT: ball.releaseT, arrivalT: ball.arrivalT } } : {}),
@@ -132,7 +148,13 @@ export function toFrame(state: MatchState): MatchFrame {
     decisions: state.decisions.map((item) => ({ ...item })),
     movementIntents: state.movementIntents.map((item) => ({ ...item, target: { ...item.target }, facing: item.facing.kind === 'POINT' ? { ...item.facing, position: { ...item.facing.position } } : { ...item.facing }, provenance: { ...item.provenance } })),
     events: state.events.map((event) => ({ ...event })),
-    actions: [],
+    currentDecision: state.currentDecision === null ? null : { ...state.currentDecision },
+    actions: state.actions.map((action) => ({
+      ...action,
+      ...(action.target === undefined ? {} : { target: { ...action.target } }),
+      ...(action.targetBasket === undefined ? {} : { targetBasket: { ...action.targetBasket } }),
+      ...(action.startPosition === undefined ? {} : { startPosition: { ...action.startPosition } }),
+    })),
     offensiveStructure: state.offensiveStructure === null ? null : {
       ...state.offensiveStructure,
       attackingBasket: { ...state.offensiveStructure.attackingBasket },

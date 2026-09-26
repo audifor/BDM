@@ -46,6 +46,7 @@ export interface MatchSetup {
   readonly tacticalPlans: { readonly home: MatchNextTacticalPlan; readonly away: MatchNextTacticalPlan }
   readonly defensiveMatchupOverrides: { readonly home: readonly DefensiveMatchupOverride[]; readonly away: readonly DefensiveMatchupOverride[] }
   readonly matchSeed: number
+  readonly autonomousActions?: boolean
 }
 
 export function validateMatchSetup(setup: MatchSetup): void {

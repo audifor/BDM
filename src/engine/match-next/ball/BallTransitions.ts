@@ -14,12 +14,20 @@ export interface ReleasePassCommand {
   readonly target: CourtPosition
   readonly passKind: BallPassKind
   readonly travelTicks: number
+  readonly catchRadiusMeters?: number
+  readonly actionId?: string
+  readonly passQuality?: number
 }
 
 export interface ReleaseShotCommand {
   readonly targetBasket: CourtPosition
   readonly travelTicks: number
   readonly plannedOutcome: PlannedShotOutcome
+  readonly actionId?: string
+  readonly shotValue?: 2 | 3
+  readonly shotProbability?: number
+  readonly contestScore?: number
+  readonly contestDefenderPlayerId?: PlayerId
 }
 
 export function startInbound(state: MatchState, teamId: TeamId, inbounderPlayerId: PlayerId, reason: InboundStartReason): MatchState {
@@ -72,9 +80,14 @@ export function releasePass(state: MatchState, command: ReleasePassCommand): Mat
   if (!possession || possession.teamId !== owner.teamId) throw new Error('Pass release requires an open possession for the ball owner team')
   if (receiver.teamId !== owner.teamId) throw new Error('Intended pass receiver must be on the passer team')
   validateCourtPosition(state, command.target, 'Pass target')
-  const ball = createPass(state, owner.playerId, receiver.playerId, command.target, command.passKind, command.travelTicks, false)
+  if (command.catchRadiusMeters !== undefined && (!Number.isFinite(command.catchRadiusMeters) || command.catchRadiusMeters <= 0 || command.catchRadiusMeters > BALL_ACQUISITION_RADIUS_METERS)) throw new Error('Pass catch radius must be positive and cannot exceed physical acquisition range')
+  const ball = createPass(state, owner.playerId, receiver.playerId, command.target, command.passKind, command.travelTicks, false, undefined, command)
   const next = { ...state, ball }
-  return emitEvent(next, 'passReleased', { possessionId: possession.id, teamId: owner.teamId, passerPlayerId: owner.playerId, receiverPlayerId: receiver.playerId })
+  return emitEvent(next, 'passReleased', {
+    possessionId: possession.id, teamId: owner.teamId, passerPlayerId: owner.playerId, receiverPlayerId: receiver.playerId,
+    ...(command.actionId === undefined ? {} : { actionId: command.actionId }),
+    ...(command.passQuality === undefined ? {} : { passQuality: command.passQuality }),
+  })
 }
 
 export function interceptPass(state: MatchState, defenderPlayerId: PlayerId): MatchState {
@@ -108,10 +121,21 @@ export function releaseShot(state: MatchState, command: ReleaseShotCommand): Mat
     from: state.ball.position, targetBasket: command.targetBasket, releaseT: state.t, arrivalT,
     position: state.ball.position, heightMeters: state.ball.heightMeters, previousPosition: state.ball.position,
     plannedOutcome: command.plannedOutcome,
+    ...(command.actionId === undefined ? {} : { actionId: command.actionId }),
+    ...(command.shotValue === undefined ? {} : { shotValue: command.shotValue }),
+    ...(command.shotProbability === undefined ? {} : { shotProbability: command.shotProbability }),
+    ...(command.contestScore === undefined ? {} : { contestScore: command.contestScore }),
+    ...(command.contestDefenderPlayerId === undefined ? {} : { contestDefenderPlayerId: command.contestDefenderPlayerId }),
   }
   let next: MatchState = { ...state, ball }
   next = changePossessionPhase(next, 'SHOT')
-  return emitEvent(next, 'shotReleased', { possessionId: possession.id, teamId: owner.teamId, shooterPlayerId: owner.playerId })
+  return emitEvent(next, 'shotReleased', {
+    possessionId: possession.id, teamId: owner.teamId, shooterPlayerId: owner.playerId,
+    ...(command.actionId === undefined ? {} : { actionId: command.actionId }),
+    ...(command.shotValue === undefined ? {} : { points: command.shotValue }),
+    ...(command.shotProbability === undefined ? {} : { shotProbability: command.shotProbability }),
+    ...(command.contestScore === undefined ? {} : { contestScore: command.contestScore }),
+  })
 }
 
 export function secureRebound(state: MatchState, playerId: PlayerId): MatchState {
@@ -201,7 +225,7 @@ export function advanceBallAtTick(state: MatchState): MatchState {
     const receiver = findActivePlayer(moved, ball.intendedReceiverPlayerId)
     if (receiver && receiver.teamId === ball.passerTeamId) {
       const acquisitionDistanceMeters = distanceBetween(receiver.position, position)
-      if (acquisitionDistanceMeters <= BALL_ACQUISITION_RADIUS_METERS) return receivePass(moved, receiver.playerId, receiver.teamId, acquisitionDistanceMeters, ball.isInbound)
+      if (acquisitionDistanceMeters <= (ball.catchRadiusMeters ?? BALL_ACQUISITION_RADIUS_METERS)) return receivePass(moved, receiver.playerId, receiver.teamId, acquisitionDistanceMeters, ball.isInbound)
     }
     const loose: BallState = { kind: 'LOOSE', position, heightMeters: Math.max(0.08, moved.ball.heightMeters), velocity: looseBallVelocity(ball.from, ball.target), cause: 'badPass', previousPosition: position }
     let next: MatchState = { ...moved, ball: loose }
@@ -278,7 +302,7 @@ function resolveMadeShot(state: MatchState, points: 2 | 3): MatchState {
   return emitEvent(next, 'ballDead', { teamId: opponent, ballReason: 'madeBasket' })
 }
 
-function createPass(state: MatchState, passerPlayerId: PlayerId, receiverPlayerId: PlayerId, target: CourtPosition, passKind: BallPassKind, travelTicks: number, isInbound: boolean, releasePosition?: CourtPosition) {
+function createPass(state: MatchState, passerPlayerId: PlayerId, receiverPlayerId: PlayerId, target: CourtPosition, passKind: BallPassKind, travelTicks: number, isInbound: boolean, releasePosition?: CourtPosition, command?: ReleasePassCommand) {
   validateTravelTicks(travelTicks)
   validateCourtPosition(state, target, 'Pass target')
   const passer = activePlayer(state, passerPlayerId)
@@ -296,6 +320,9 @@ function createPass(state: MatchState, passerPlayerId: PlayerId, receiverPlayerI
     heightMeters: HELD_BALL_HEIGHT_METERS,
     previousPosition: { ...passer.position },
     isInbound,
+    ...(command?.catchRadiusMeters === undefined ? {} : { catchRadiusMeters: command.catchRadiusMeters }),
+    ...(command?.actionId === undefined ? {} : { actionId: command.actionId }),
+    ...(command?.passQuality === undefined ? {} : { passQuality: command.passQuality }),
   }
 }
 

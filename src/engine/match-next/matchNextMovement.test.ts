@@ -67,7 +67,7 @@ function intent(playerId: MatchPlayerState['playerId'], target: CourtPosition, u
 }
 
 function kineticPlayer(position: CourtPosition, velocity: CourtPosition = { x: 0, y: 0 }): MatchPlayerState {
-  return { playerId: homeIds[0]!, teamId: homeTeamId, active: true, position, velocity, facing: { x: 1, y: 0 }, primaryPosition: 'PG', heightCm: 190, defensiveMobility: 50, kinematics: { maxSpeedMps: 6, accelerationMps2: 3, brakingMps2: 4 } }
+  return { playerId: homeIds[0]!, teamId: homeTeamId, active: true, position, velocity, facing: { x: 1, y: 0 }, primaryPosition: 'PG', heightCm: 190, defensiveMobility: 50, offense: { usage: 50, rimAttack: 50, shooting: 50, creation: 50, ballSecurity: 50 }, passing: { accuracy: 50, vision: 50, timing: 50 }, defense: { pointOfAttack: 50, interior: 50, mobility: 50 }, kinematics: { maxSpeedMps: 6, accelerationMps2: 3, brakingMps2: 4 } }
 }
 
 describe('Match Next movement and 5OUT authority', () => {

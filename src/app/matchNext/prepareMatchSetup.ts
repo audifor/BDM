@@ -50,5 +50,6 @@ export function prepareMatchSetup(world: GameWorld, game: Game, matchSeed?: numb
       away: (options.defensiveMatchups?.away ?? []).map(({ ourPlayerId, opponentPlayerId }) => ({ playerId: ourPlayerId, opponentPlayerId })),
     },
     matchSeed: options.matchSeed,
+    autonomousActions: true,
   }
 }

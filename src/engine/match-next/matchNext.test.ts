@@ -13,7 +13,7 @@ function generatedSetup() {
   const worldSnapshot = JSON.stringify(world)
   const team = Object.values(world.teams).find((candidate) => candidate.coachId === world.userCoachId)!
   const game = getGamesForTeam(world, team.id).find((candidate) => candidate.status === 'scheduled')!
-  const setup = prepareMatchSetup(world, game, 123456)
+  const setup = { ...prepareMatchSetup(world, game, 123456), autonomousActions: false }
   return { world, game, setup, worldSnapshot }
 }
 

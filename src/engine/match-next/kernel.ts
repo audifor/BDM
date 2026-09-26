@@ -9,6 +9,7 @@ import { integrateMatchPlayers } from './movement/PlayerKinematics'
 import { isInOffensiveFrontcourt, reconcileOffensiveStructure } from './structure/OffensiveStructure'
 import { attackingBasketForTeam } from './structure/FiveOutStructure'
 import { reconcileManDefense } from './defense/ManDefense'
+import { reconcileActions } from './actions/ActionCore'
 
 export type MatchNextCommand =
   | { readonly type: 'startInbound'; readonly teamId: TeamId; readonly inbounderPlayerId: PlayerId; readonly reason: InboundStartReason }
@@ -126,5 +127,5 @@ function finishPeriod(state: MatchState): MatchState {
 }
 
 function reconcileStructures(state: MatchState): MatchState {
-  return reconcileManDefense(reconcileOffensiveStructure(state))
+  return reconcileActions(reconcileManDefense(reconcileOffensiveStructure(state)))
 }

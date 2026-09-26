@@ -44,6 +44,15 @@ export function reconcileManDefense(input: MatchState): MatchState {
     && state.ball.kind !== 'DEAD'
   const ballHandlerId = currentOrPriorHandler(state, possession.teamId)
   const onBallAssignment = ballHandlerId === null ? undefined : assignments.find((item) => item.attackerPlayerId === ballHandlerId)
+  const playerById = new Map(state.players.map((player) => [player.playerId, player]))
+  const activeDrive = state.actions.find((action) => action.kind === 'DRIVE' && action.status === 'ACTIVE')
+  const driveHelperDefenderId = activeDrive && ballHandlerId === activeDrive.playerId
+    ? assignments.filter((item) => item.attackerPlayerId !== ballHandlerId)
+      .map((item) => ({ item, attacker: playerById.get(item.attackerPlayerId) }))
+      .filter((entry): entry is { item: DefensiveAssignment; attacker: MatchPlayerState } => entry.attacker !== undefined)
+      .sort((left, right) => distanceBetween(right.attacker.position, state.ball.position) - distanceBetween(left.attacker.position, state.ball.position)
+        || String(left.item.defenderPlayerId).localeCompare(String(right.item.defenderPlayerId)))[0]?.item.defenderPlayerId
+    : undefined
   const previousResponsibilities = new Map(state.responsibilities.filter((item) => item.owner === 'defensiveStructure').map((item) => [item.playerId, item]))
   const previousDecisions = new Map(state.decisions.filter((item) => item.owner === 'defensiveStructure').map((item) => [item.playerId, item]))
   const nextResponsibilitySequenceStart = state.nextResponsibilitySequence
@@ -54,7 +63,6 @@ export function reconcileManDefense(input: MatchState): MatchState {
   const decisions: StructuralDecision[] = []
   const intents: MovementIntent[] = []
   const assignmentByDefender = new Map(assignments.map((item) => [item.defenderPlayerId, item]))
-  const playerById = new Map(state.players.map((player) => [player.playerId, player]))
 
   if (liveDefense) {
     for (const defender of defenders) {
@@ -64,7 +72,9 @@ export function reconcileManDefense(input: MatchState): MatchState {
       const previous = previousResponsibilities.get(defender.playerId)
       const baseKind: DefensiveResponsibilityKind = assignment.attackerPlayerId === ballHandlerId
         ? 'ON_BALL'
-        : distanceBetween(attacker.position, state.ball.position) <= ONE_PASS_AWAY_METERS ? 'GAP' : 'HELP'
+        : defender.playerId === driveHelperDefenderId
+          ? 'HELP'
+          : distanceBetween(attacker.position, state.ball.position) <= ONE_PASS_AWAY_METERS ? 'GAP' : 'HELP'
       const baseTarget = guardPosition(attacker.position, state.ball.position, defendedBasket, baseKind, state.court)
       let kind: DefensiveResponsibilityKind = baseKind
       let recoveryTarget: 'GAP' | 'HELP' | undefined

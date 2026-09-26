@@ -32,6 +32,9 @@ export interface PassInFlightBallState {
   readonly heightMeters: number
   readonly previousPosition: CourtPosition
   readonly isInbound: boolean
+  readonly catchRadiusMeters?: number
+  readonly actionId?: string
+  readonly passQuality?: number
 }
 
 export interface ShotInFlightBallState {
@@ -46,6 +49,11 @@ export interface ShotInFlightBallState {
   readonly heightMeters: number
   readonly previousPosition: CourtPosition
   readonly plannedOutcome: PlannedShotOutcome
+  readonly actionId?: string
+  readonly shotValue?: 2 | 3
+  readonly shotProbability?: number
+  readonly contestScore?: number
+  readonly contestDefenderPlayerId?: PlayerId
 }
 
 export interface ReboundableBallState {

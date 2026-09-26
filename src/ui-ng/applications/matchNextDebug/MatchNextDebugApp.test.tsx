@@ -3,16 +3,18 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { MatchNextDebugApp } from './MatchNextDebugApp'
 
-describe('Match Next man-to-man debug surface', () => {
-  it('projects assignments, defensive targets, responsibilities, and scenarios A through E', () => {
+describe('Match Next debug surface', () => {
+  it('projects actions, defensive structure, and scenarios A through G plus the vertical slice', () => {
     render(<MatchNextDebugApp />)
     expect(screen.getByText(/Defense:/)).toBeTruthy()
     expect(screen.getByText(/ON_BALL defender:/)).toBeTruthy()
     expect(screen.getByLabelText('Match state').textContent).toContain('MAN')
     expect(screen.getByRole('img', { name: 'Match Next court showing player movement, facing, and target vectors' })).toBeTruthy()
+    expect(screen.getByLabelText('Action inspector')).toBeTruthy()
     expect(screen.getByLabelText('Defensive player inspector')).toBeTruthy()
     expect(screen.getByText(/Assignment source:/)).toBeTruthy()
-    for (const scenario of ['A', 'B', 'C', 'D', 'E']) expect(screen.getByRole('button', { name: `Scenario ${scenario}` })).toBeTruthy()
+    for (const scenario of ['A', 'B', 'C', 'D', 'E', 'F', 'G']) expect(screen.getByRole('button', { name: `Scenario ${scenario}` })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Vertical Slice' })).toBeTruthy()
 
     const selectedPosition = () => screen.getByText(/^Position:/).textContent
     const initialPosition = selectedPosition()
@@ -50,9 +52,19 @@ describe('Match Next man-to-man debug surface', () => {
     expect(screen.getAllByText('RECOVER').length).toBeGreaterThan(0)
 
     fireEvent.click(screen.getByRole('button', { name: 'Scenario E' }))
-    expect(screen.getByText(/periodo 3/)).toBeTruthy()
+    expect(screen.getByText(/Drive, help, kick-out, catch/)).toBeTruthy()
     expect(screen.getByText(/Period \/ tick:/).parentElement?.textContent).toContain('3 /')
     fireEvent.click(screen.getByRole('button', { name: 'Check JSON resume' }))
     expect(screen.getByText('Serialization: PASS')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Scenario F' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Step 0.1s' }))
+    expect(screen.getByLabelText('Action inspector').textContent).toContain('SHOOT / GATHER')
+    for (let index = 0; index < 4; index += 1) fireEvent.click(screen.getByRole('button', { name: 'Step 0.1s' }))
+    expect(screen.getByLabelText('Action inspector').textContent).not.toContain('Shot probability: --')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Scenario G' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Step 0.1s' }))
+    expect(screen.getByLabelText('Action inspector').textContent).toContain('PASS_IN_FLIGHT')
   })
 })

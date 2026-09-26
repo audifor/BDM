@@ -4,7 +4,7 @@ import { createCourtGeometry, distanceBetween } from '@/domain/court'
 import { gameIdFromString, playerIdFromString, teamIdFromString } from '@/domain/ids'
 import { activePossession, applyCommand, createMatchState, tick, toFrame, type MatchNextCommand, type MatchSetup, type MatchState } from '@/engine/match-next'
 
-type ScenarioName = 'A' | 'B' | 'C' | 'D' | 'E'
+type ScenarioName = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'VERTICAL SLICE'
 interface ScheduledCommand { readonly atT: number; readonly command: MatchNextCommand }
 interface ScenarioStart { readonly state: MatchState; readonly commands: readonly ScheduledCommand[]; readonly description: string }
 function debugSetup(): MatchSetup {
@@ -22,8 +22,14 @@ function debugSetup(): MatchSetup {
       { maxSpeedMps: 5.0, accelerationMps2: 2.4, brakingMps2: 3.2 },
       { maxSpeedMps: 6.1, accelerationMps2: 3.4, brakingMps2: 4.2 },
     ][index]! : { maxSpeedMps: 5.8, accelerationMps2: 3, brakingMps2: 3.8 },
-    offense: { usage: 50, rimAttack: 50, shooting: 50, creation: 50, ballSecurity: 50 },
-    passing: { accuracy: 50, vision: 50, timing: 50 },
+    offense: {
+      usage: 50,
+      rimAttack: isHome && index === 1 ? 84 : 50,
+      shooting: isHome && index === 2 ? 90 : 50,
+      creation: isHome && index === 1 ? 82 : 50,
+      ballSecurity: 50,
+    },
+    passing: { accuracy: isHome && index === 1 ? 72 : 50, vision: isHome && index === 1 ? 74 : 50, timing: 68 },
     defense: { pointOfAttack: 50, interior: 50, mobility: 50, steal: 50 }, rebounding: { impact: 50 },
   })
   const emptyPlan = { pace: 0, shotProfile: { rim: 0, midRange: 0, threePoint: 0 }, defense: { interior: 0, perimeter: 0 } }
@@ -46,12 +52,31 @@ function debugSetup(): MatchSetup {
 }
 
 function scenarioStart(name: ScenarioName, setup: MatchSetup): ScenarioStart {
-  let initial = createMatchState(setup)
+  let scenarioSetup = setup
+  if (name === 'F' || name === 'G') {
+    const handlerId = setup.initialLineups.home[1]!
+    const shootingScenario = name === 'F'
+    scenarioSetup = {
+      ...setup,
+      players: setup.players.map((profile) => profile.playerId === handlerId
+        ? {
+            ...profile,
+            offense: { ...profile.offense, rimAttack: shootingScenario ? 42 : 38, shooting: shootingScenario ? 100 : 42, creation: shootingScenario ? 48 : 40 },
+          }
+        : profile),
+      initialPlayerPositions: setup.initialPlayerPositions?.map((entry) => entry.playerId === handlerId
+        ? { ...entry, position: shootingScenario ? { x: 22, y: 7.5 } : entry.position }
+        : entry.playerId === setup.initialLineups.away[1] && shootingScenario
+          ? { ...entry, position: { x: 23.5, y: 7.85 } }
+          : entry),
+    }
+  }
+  let initial = createMatchState(scenarioSetup)
   if (name === 'E') initial = { ...initial, period: 3, events: initial.events.map((event) => ({ ...event, period: 3 })) }
   let state = tick(initial)
-  state = applyCommand(state, { type: 'startInbound', teamId: setup.homeTeamId, inbounderPlayerId: setup.initialLineups.home[0]!, reason: 'periodStart' })
+  state = applyCommand(state, { type: 'startInbound', teamId: scenarioSetup.homeTeamId, inbounderPlayerId: scenarioSetup.initialLineups.home[0]!, reason: 'periodStart' })
   state = tick(state)
-  state = applyCommand(state, { type: 'releaseInbound', receiverPlayerId: setup.initialLineups.home[1]!, passKind: 'chest', travelTicks: 4 })
+  state = applyCommand(state, { type: 'releaseInbound', receiverPlayerId: scenarioSetup.initialLineups.home[1]!, passKind: 'chest', travelTicks: 4 })
   for (let index = 0; index < 320 && activePossession(state)?.phase !== 'SETUP'; index += 1) state = tick(state)
   if (name === 'D') for (let index = 0; index < 24; index += 1) state = tick(state)
 
@@ -85,13 +110,21 @@ function scenarioStart(name: ScenarioName, setup: MatchSetup): ScenarioStart {
       description: 'D · Pase que acerca el balón al hombre asignado a la ayuda: sigue HELP → RECOVER → GAP con movimiento físico.',
     }
   }
-  return {
-    state,
-    commands: [],
-    description: name === 'E'
-      ? 'E · Media cancha con home atacando a la izquierda (periodo 3); A–D muestran el sentido contrario.'
-      : 'A - Five recognizable MAN assignments while players are still moving into the 5OUT structure. Select defenders to inspect assignment and movement intent.',
+  const actionScenario = name === 'E' || name === 'F' || name === 'G' || name === 'VERTICAL SLICE'
+  if (actionScenario) {
+    for (let index = 0; index < 24; index += 1) state = tick(state)
+    state = { ...state, autonomousActions: true }
   }
+  const description = name === 'E'
+    ? 'E - Drive, help, kick-out, catch, closeout, catch-and-shoot and shot resolution from live MatchState.'
+    : name === 'VERTICAL SLICE'
+      ? 'Vertical Slice - Main reference: drive, help, kick-out, physical pass and catch, closeout, catch-and-shoot and shot resolution.'
+      : name === 'F'
+        ? 'F - Shooting decision under a live defender. Watch the actual contest, shot probability, flight and result.'
+        : name === 'G'
+          ? 'G - Ordinary PASS decision. Watch the passing lane, physical catch, defensive reassignment and next live decision.'
+          : 'A - Five recognizable MAN assignments while players are still moving into the 5OUT structure. Select defenders to inspect assignment and movement intent.'
+  return { state, commands: [], description }
 }
 
 function schedulePerimeterPass(state: MatchState, receiverPlayerId: MatchState['players'][number]['playerId']): ScheduledCommand {
@@ -179,8 +212,14 @@ export function MatchNextDebugApp() {
       + (frame.defensiveStructure.defendedBasket.y - selectedMan.position.y) * (selected.position.y - selectedMan.position.y)) >= 0 ? 'basket side' : 'behind man'
     : 'n/a'
   const ballRadius = 0.2 + Math.min(0.15, frame.ball.heightMeters * 0.04)
+  const activeOffensiveAction = [...frame.actions].reverse().find((action) => action.status === 'ACTIVE' && action.kind !== 'CLOSEOUT')
+  const closeoutAction = [...frame.actions].reverse().find((action) => action.kind === 'CLOSEOUT' && action.status === 'ACTIVE')
+  const latestShotAction = [...frame.actions].reverse().find((action) => action.kind === 'SHOOT' || action.kind === 'CATCH_AND_SHOOT')
+  const driveTarget = activeOffensiveAction?.kind === 'DRIVE' ? activeOffensiveAction.target : undefined
+  const closeoutDefender = closeoutAction && frame.players.find((player) => player.playerId === closeoutAction.playerId)
+  const closeoutShooter = closeoutAction?.targetPlayerId && frame.players.find((player) => player.playerId === closeoutAction.targetPlayerId)
   return <main style={{ minHeight: '100vh', background: '#101820', color: '#ecf1f4', padding: 24, fontFamily: 'system-ui, sans-serif' }}>
-    <h1 style={{ marginTop: 0 }}>Match Next · Man-to-Man Defense Debug</h1>
+    <h1 style={{ marginTop: 0 }}>Match Next · Actions and Defense Debug</h1>
     <p>{description}</p>
     <div aria-label="Match state" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(150px, 1fr))', gap: 8, maxWidth: 1100, marginBottom: 16 }}>
       <span>Ball: <strong>{frame.ball.kind}{frame.ball.ownerPlayerId ? ` · ${frame.ball.ownerPlayerId}` : ''}</strong></span>
@@ -206,6 +245,8 @@ export function MatchNextDebugApp() {
         <text x={slot.position.x} y={slot.position.y - 0.38} textAnchor="middle" fill="#fff8dc" fontSize="0.32">{slot.slot.replace('_', ' ')}</text>
       </g>)}
       {frame.ball.flight && <line x1={frame.ball.flight.from.x} y1={frame.ball.flight.from.y} x2={frame.ball.flight.target.x} y2={frame.ball.flight.target.y} stroke="#312115" strokeWidth="0.07" strokeDasharray="0.25 0.25" opacity="0.7" />}
+      {driveTarget && <g aria-label="Drive target"><circle cx={driveTarget.x} cy={driveTarget.y} r="0.5" fill="none" stroke="#ff3bd4" strokeWidth="0.12" /><text x={driveTarget.x} y={driveTarget.y - 0.62} textAnchor="middle" fill="#ffb8f0" fontSize="0.3">DRIVE</text></g>}
+      {closeoutDefender && closeoutShooter && <line x1={closeoutDefender.position.x} y1={closeoutDefender.position.y} x2={closeoutShooter.position.x} y2={closeoutShooter.position.y} stroke="#ff3bd4" strokeWidth="0.16" opacity="0.95" />}
       {frame.players.map((player, index) => {
         const isHome = player.teamId === setup.homeTeamId
         const isSelected = player.playerId === selected?.playerId
@@ -227,7 +268,8 @@ export function MatchNextDebugApp() {
     </svg>
     <p style={{ maxWidth: 1100, color: '#c8d0d6' }}>Línea roja clara: asignación defensor → hombre. Amarillo: ON_BALL. Línea punteada de cada jugador: target de intent; cian: velocidad; amarillo corto: facing.</p>
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginTop: 16 }}>
-      {(['A', 'B', 'C', 'D', 'E'] as const).map((name) => <button key={name} onClick={() => chooseScenario(name)} aria-pressed={scenario === name}>Scenario {name}</button>)}
+      {(['A', 'B', 'C', 'D', 'E', 'F', 'G'] as const).map((name) => <button key={name} onClick={() => chooseScenario(name)} aria-pressed={scenario === name}>Scenario {name}</button>)}
+      <button onClick={() => chooseScenario('VERTICAL SLICE')} aria-pressed={scenario === 'VERTICAL SLICE'}>Vertical Slice</button>
       <button onClick={() => setPlaying(false)}>Pause</button>
       <button onClick={() => setPlaying(true)}>Play</button>
       <button onClick={step}>Step 0.1s</button>
@@ -236,6 +278,13 @@ export function MatchNextDebugApp() {
       {scenario === 'E' && <button onClick={checkSerializedResume}>Check JSON resume</button>}
       {resumeResult && <strong aria-live="polite">Serialization: {resumeResult}</strong>}
     </div>
+    <section aria-label="Action inspector" style={{ marginTop: 20, background: '#1b2832', padding: 16, maxWidth: 1100, borderRadius: 6 }}>
+      <h2 style={{ marginTop: 0 }}>Live action</h2>
+      <div>Ball handler: <strong>{frame.ball.ownerPlayerId ?? '--'}</strong> | Decision: <strong>{frame.currentDecision?.kind ?? '--'}{frame.currentDecision ? ` (${frame.currentDecision.reason})` : ''}</strong></div>
+      <div>Action: <strong>{activeOffensiveAction ? `${activeOffensiveAction.kind} / ${activeOffensiveAction.phase ?? 'active'}` : '--'}</strong> | Defender: <strong>{frame.defensiveStructure?.onBallDefenderPlayerId ?? '--'}</strong> | Help: <strong>{activeOffensiveAction?.helpDefenderPlayerId ?? (frame.defensiveStructure?.helpDefenderPlayerIds.join(', ') || '--')}</strong></div>
+      <div>Drive target: <strong>{driveTarget ? `${driveTarget.x.toFixed(2)}, ${driveTarget.y.toFixed(2)} m` : '--'}</strong> | Passing lane: <strong>{frame.ball.flight?.kind === 'pass' ? `${frame.ball.flight.from.x.toFixed(1)}, ${frame.ball.flight.from.y.toFixed(1)} -> ${frame.ball.flight.target.x.toFixed(1)}, ${frame.ball.flight.target.y.toFixed(1)} m` : '--'}</strong></div>
+      <div>Closeout: <strong>{closeoutAction ? `${closeoutAction.playerId} -> ${closeoutAction.targetPlayerId} (${closeoutAction.contestScore?.toFixed(2) ?? 'moving'})` : '--'}</strong> | Contest: <strong>{frame.ball.contestScore?.toFixed(2) ?? latestShotAction?.contestScore?.toFixed(2) ?? '--'}</strong> | Shot probability: <strong>{frame.ball.shotProbability?.toFixed(3) ?? latestShotAction?.shotProbability?.toFixed(3) ?? '--'}</strong> | Outcome: <strong>{latestShotAction?.outcome ?? '--'}</strong></div>
+    </section>
     <section aria-label="Player inspector" style={{ marginTop: 20, background: '#1b2832', padding: 16, maxWidth: 1100, borderRadius: 6 }}>
       <h2 style={{ marginTop: 0 }}>Player inspector</h2>
       <label>Player <select value={selected?.playerId ?? ''} onChange={(event) => setSelectedPlayerId(event.target.value)}>{frame.players.map((player) => <option key={player.playerId} value={player.playerId}>{player.playerId}</option>)}</select></label>
@@ -249,7 +298,7 @@ export function MatchNextDebugApp() {
         <div><strong>DEFENSIVE STRUCTURE</strong><div>Responsibility: {selected.responsibility?.kind ?? 'none'}</div><div>Decision: {selected.decision?.kind ?? 'none'}</div><div>Ball distance: {selectedBallDistance?.toFixed(2)} m</div><div>Target: {selected.intent ? `${selected.intent.target.x.toFixed(2)}, ${selected.intent.target.y.toFixed(2)} m` : 'none'}</div></div>
         <div><strong>INTENT / PROVENANCE</strong><div>Urgency: {selected.intent?.urgency ?? 'none'} · facing {selected.intent?.facing.kind ?? 'none'}</div><div>Owner: {selected.intent?.provenance.owner ?? 'none'}</div><div>Assignment → responsibility → decision → intent</div><div>{selected.assignment.source} → {selected.responsibility?.id ?? 'none'} → {selected.decision?.id ?? 'none'} → {selected.intent?.playerId ?? 'none'}</div></div>
       </div>}
-      <p>Structure: {frame.offensiveStructure ? `${frame.offensiveStructure.formation} · ${frame.offensiveStructure.assignments.find((item) => item.playerId === selected?.playerId)?.slot ?? 'no slot'}` : 'none'}. No autonomous basketball decision is being simulated.</p>
+      <p>Structure: {frame.offensiveStructure ? `${frame.offensiveStructure.formation} · ${frame.offensiveStructure.assignments.find((item) => item.playerId === selected?.playerId)?.slot ?? 'no slot'}` : 'none'}. Actions and outcomes come from MatchState.</p>
     </section>
   </main>
 }

@@ -7,6 +7,7 @@ import type { MovementIntent } from './movement/MovementIntent'
 import type { PlayerResponsibility, StructuralDecision } from './responsibility/Responsibility'
 import { attackingBasketForTeam, type OffensiveStructureState } from './structure/FiveOutStructure'
 import type { DefensiveMatchupOverride } from './setup'
+import type { MatchActionState, MatchDecision } from './actions/ActionState'
 
 export type DefensiveAssignmentSource = 'INITIAL' | 'OVERRIDE' | 'STRUCTURAL_REASSIGNMENT'
 
@@ -52,6 +53,7 @@ export type MatchNextEventType =
   | 'reboundBecameAvailable' | 'reboundSecured'
   | 'looseBallCreated' | 'looseBallRecovered'
   | 'defensiveAssignmentsEstablished' | 'defensiveResponsibilityChanged'
+  | 'decisionSelected' | 'actionStarted' | 'actionResolved'
   | 'shotClockViolation' | 'ballDead'
 
 export interface MatchNextEvent {
@@ -74,6 +76,14 @@ export interface MatchNextEvent {
   readonly ballReason?: string
   readonly acquisitionDistanceMeters?: number
   readonly responsibilityKind?: 'ON_BALL' | 'GAP' | 'HELP' | 'RECOVER'
+  readonly decisionId?: string
+  readonly decisionKind?: string
+  readonly actionId?: string
+  readonly actionKind?: string
+  readonly actionOutcome?: string
+  readonly shotProbability?: number
+  readonly contestScore?: number
+  readonly passQuality?: number
 }
 
 export interface MatchPlayerState {
@@ -86,11 +96,14 @@ export interface MatchPlayerState {
   readonly primaryPosition: MatchSetup['players'][number]['primaryPosition']
   readonly heightCm: number
   readonly defensiveMobility: number
+  readonly offense: MatchSetup['players'][number]['offense']
+  readonly passing: Required<NonNullable<MatchSetup['players'][number]['passing']>>
+  readonly defense: MatchSetup['players'][number]['defense']
   readonly kinematics: { readonly maxSpeedMps: number; readonly accelerationMps2: number; readonly brakingMps2: number }
 }
 
 export interface MatchState {
-  readonly version: 2
+  readonly version: 3
   readonly gameId: GameId
   readonly homeTeamId: TeamId
   readonly awayTeamId: TeamId
@@ -100,6 +113,7 @@ export interface MatchState {
   readonly court: CourtGeometry
   readonly clockRules: MatchSetup['clockRules']
   readonly defensiveMatchupOverrides: MatchSetup['defensiveMatchupOverrides']
+  readonly autonomousActions: boolean
   readonly clock: { readonly gameRunning: boolean; readonly shotRunning: boolean }
   readonly gameClockTenths: number
   readonly shotClockTenths: number | null
@@ -110,6 +124,10 @@ export interface MatchState {
   readonly movementIntents: readonly MovementIntent[]
   readonly offensiveStructure: OffensiveStructureState | null
   readonly defensiveStructure: DefensiveStructureState | null
+  readonly currentDecision: MatchDecision | null
+  readonly actions: readonly MatchActionState[]
+  readonly nextMatchDecisionSequence: number
+  readonly nextActionSequence: number
   readonly nextResponsibilitySequence: number
   readonly nextDecisionSequence: number
   readonly ball: BallState
@@ -134,20 +152,20 @@ export function createInitialMatchState(setup: MatchSetup): MatchState {
       const position = { ...(initialPosition(playerId) ?? neutralFoundationPosition('home', slot, setup.court)) }
       const basket = attackingBasketForTeam(setup.homeTeamId, setup.homeTeamId, 1, setup.court)
       const profile = setup.players.find((entry) => entry.playerId === playerId)!
-      return { playerId, teamId: setup.homeTeamId, active: true as const, position, velocity: { x: 0, y: 0 }, facing: unitVector({ x: basket.x - position.x, y: basket.y - position.y }), primaryPosition: profile.primaryPosition, heightCm: profile.physical.heightCm, defensiveMobility: profile.defense.mobility, kinematics: { ...profile.kinematics } }
+      return { playerId, teamId: setup.homeTeamId, active: true as const, position, velocity: { x: 0, y: 0 }, facing: unitVector({ x: basket.x - position.x, y: basket.y - position.y }), primaryPosition: profile.primaryPosition, heightCm: profile.physical.heightCm, defensiveMobility: profile.defense.mobility, offense: { ...profile.offense }, passing: { accuracy: profile.passing?.accuracy ?? 50, vision: profile.passing?.vision ?? 50, timing: profile.passing?.timing ?? 50 }, defense: { ...profile.defense }, kinematics: { ...profile.kinematics } }
     }),
     ...setup.initialLineups.away.map((playerId, slot) => {
       const position = { ...(initialPosition(playerId) ?? neutralFoundationPosition('away', slot, setup.court)) }
       const basket = attackingBasketForTeam(setup.awayTeamId, setup.homeTeamId, 1, setup.court)
       const profile = setup.players.find((entry) => entry.playerId === playerId)!
-      return { playerId, teamId: setup.awayTeamId, active: true as const, position, velocity: { x: 0, y: 0 }, facing: unitVector({ x: basket.x - position.x, y: basket.y - position.y }), primaryPosition: profile.primaryPosition, heightCm: profile.physical.heightCm, defensiveMobility: profile.defense.mobility, kinematics: { ...profile.kinematics } }
+      return { playerId, teamId: setup.awayTeamId, active: true as const, position, velocity: { x: 0, y: 0 }, facing: unitVector({ x: basket.x - position.x, y: basket.y - position.y }), primaryPosition: profile.primaryPosition, heightCm: profile.physical.heightCm, defensiveMobility: profile.defense.mobility, offense: { ...profile.offense }, passing: { accuracy: profile.passing?.accuracy ?? 50, vision: profile.passing?.vision ?? 50, timing: profile.passing?.timing ?? 50 }, defense: { ...profile.defense }, kinematics: { ...profile.kinematics } }
     }),
   ]
   const position = { x: setup.court.lengthMeters / 2, y: setup.court.widthMeters / 2 }
   const gameClockTenths = setup.clockRules.periodSeconds * 10
   const initial: MatchNextEvent = { sequence: 1, t: 0, period: 1, gameClockTenths, type: 'periodStart' }
   return {
-    version: 2,
+    version: 3,
     gameId: setup.gameId,
     homeTeamId: setup.homeTeamId,
     awayTeamId: setup.awayTeamId,
@@ -159,6 +177,7 @@ export function createInitialMatchState(setup: MatchSetup): MatchState {
       home: setup.defensiveMatchupOverrides.home.map((item) => ({ ...item })),
       away: setup.defensiveMatchupOverrides.away.map((item) => ({ ...item })),
     },
+    autonomousActions: setup.autonomousActions ?? false,
     clock: { gameRunning: false, shotRunning: false },
     gameClockTenths,
     shotClockTenths: null,
@@ -169,6 +188,10 @@ export function createInitialMatchState(setup: MatchSetup): MatchState {
     movementIntents: [],
     offensiveStructure: null,
     defensiveStructure: null,
+    currentDecision: null,
+    actions: [],
+    nextMatchDecisionSequence: 1,
+    nextActionSequence: 1,
     nextResponsibilitySequence: 1,
     nextDecisionSequence: 1,
     ball: { kind: 'DEAD', reason: 'foundation', position, heightMeters: HELD_BALL_HEIGHT_METERS },
