@@ -2,6 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import type { CourtPosition } from '@/domain/court'
+import type { PlayerId } from '@/domain/ids'
 import { getGamesForTeam } from '@/domain/world'
 import { createNewGame } from '@/app/game/createNewGame'
 import { prepareMatchSetup } from '@/app/matchNext/prepareMatchSetup'
@@ -24,6 +25,15 @@ function positionedSetup(source: MatchSetup, overrides: Readonly<Record<string, 
 }
 
 function ticks(state: MatchState, count: number): MatchState { let current = state; for (let i = 0; i < count; i += 1) current = tick(current); return current }
+
+function projectedPosition(state: MatchState, playerId: PlayerId, count: number): CourtPosition {
+  const future = ticks(state, count)
+  return future.players.find((player) => player.playerId === playerId)!.position
+}
+
+function strongSlotPlayer(state: MatchState): PlayerId {
+  return state.offensiveStructure!.assignments.find((item) => item.slot === 'STRONG_SLOT')!.playerId
+}
 
 function liveHome(source: MatchSetup, changes: Partial<MatchSetup['clockRules']> = {}): MatchState {
   const setup = { ...source, clockRules: { ...source.clockRules, ...changes }, initialPlayerPositions: source.initialPlayerPositions ?? positionedSetup(source).initialPlayerPositions }
@@ -72,7 +82,7 @@ describe('Match Next ball and possession authority', () => {
     expect(middle.ball.kind).toBe('PASS_IN_FLIGHT')
     state = ticks(middle, 5)
     expect(state.ball).toMatchObject({ kind: 'HELD', ownerPlayerId: setup.initialLineups.home[1]!, ownerTeamId: setup.homeTeamId })
-    expect(activePossession(state)?.phase).toBe('ADVANCE')
+    expect(activePossession(state)?.phase).toBe('SETUP')
     expect(state.clock).toEqual({ gameRunning: true, shotRunning: true })
     expect(state.shotClockTenths).toBe(240)
     expect(tick(state).gameClockTenths).toBe(state.gameClockTenths - 1)
@@ -83,8 +93,8 @@ describe('Match Next ball and possession authority', () => {
     const { setup: source } = generatedSetup()
     const setup = positionedSetup(source)
     const held = liveHome(source)
-    const receiver = setup.initialLineups.home[2]!
-    const target = held.players.find((player) => player.playerId === receiver)!.position
+    const receiver = strongSlotPlayer(held)
+    const target = projectedPosition(held, receiver, 10)
     let state = applyCommand(held, { type: 'releasePass', command: { receiverPlayerId: receiver, target, passKind: 'chest', travelTicks: 10 } })
     const start = state.ball.position
     state = ticks(state, 5)
@@ -180,7 +190,7 @@ describe('Match Next ball and possession authority', () => {
 
     const resetSetup = positionedSetup(source, {}, { offensiveReboundShotClockSeconds: 14 })
     const offense = liveHome(resetSetup)
-    const rebounder = resetSetup.initialLineups.home[2]!
+    const rebounder = offense.ball.kind === 'HELD' ? offense.ball.ownerPlayerId : resetSetup.initialLineups.home[2]!
     const offensePosition = offense.players.find((player) => player.playerId === rebounder)!.position
     let offensive = applyCommand(offense, { type: 'releaseShot', command: { targetBasket: resetSetup.court.baskets.right, travelTicks: 5, plannedOutcome: { kind: 'MISS', reboundTarget: offensePosition, reboundAvailableT: offense.t + 25 } } })
     offensive = ticks(offensive, 25)
@@ -191,11 +201,12 @@ describe('Match Next ball and possession authority', () => {
 
     const unresolvedSetup = positionedSetup(source)
     const unresolvedHeld = liveHome(unresolvedSetup)
-    const unresolvedTarget = unresolvedHeld.players.find((player) => player.playerId === unresolvedSetup.initialLineups.home[2])!.position
+    const unresolvedRebounder = unresolvedHeld.ball.kind === 'HELD' ? unresolvedHeld.ball.ownerPlayerId : unresolvedSetup.initialLineups.home[2]!
+    const unresolvedTarget = unresolvedHeld.players.find((player) => player.playerId === unresolvedRebounder)!.position
     let unresolved = applyCommand(unresolvedHeld, { type: 'releaseShot', command: { targetBasket: unresolvedSetup.court.baskets.right, travelTicks: 5, plannedOutcome: { kind: 'MISS', reboundTarget: unresolvedTarget, reboundAvailableT: unresolvedHeld.t + 25 } } })
     unresolved = ticks(unresolved, 25)
     const priorShotClock = unresolved.shotClockTenths
-    unresolved = applyCommand(unresolved, { type: 'secureRebound', playerId: unresolvedSetup.initialLineups.home[2]! })
+    unresolved = applyCommand(unresolved, { type: 'secureRebound', playerId: unresolvedRebounder })
     expect(unresolvedSetup.clockRules.offensiveReboundShotClockSeconds).toBeNull()
     expect(unresolved.shotClockTenths).toBe(priorShotClock)
     expect(activePossession(unresolved)?.phase).toBe('SETUP')
@@ -205,15 +216,17 @@ describe('Match Next ball and possession authority', () => {
     const { setup: source } = generatedSetup()
     const setup = positionedSetup(source)
     let state = liveHome(source)
-    const target = { x: setup.court.lengthMeters / 2 + 4, y: setup.court.widthMeters / 2 }
+    const target = { x: (state.ball.kind === 'HELD' ? state.ball.position.x : 24) - 0.5, y: setup.court.widthMeters / 2 }
     state = applyCommand(state, { type: 'releasePass', command: { receiverPlayerId: setup.initialLineups.home[4]!, target, passKind: 'bounce', travelTicks: 10 } })
     state = ticks(state, 10)
     expect(state.ball).toMatchObject({ kind: 'LOOSE', cause: 'badPass' })
     const x = state.ball.position.x
     state = tick(state)
     expect(state.ball.position.x).toBeLessThan(x)
-    state = applyCommand(state, { type: 'recoverLooseBall', playerId: setup.initialLineups.home[3]! })
-    expect(state.ball).toMatchObject({ kind: 'HELD', ownerPlayerId: setup.initialLineups.home[3]! })
+    const owner = state.ball.kind === 'LOOSE' ? state.players.find((player) => player.teamId === setup.homeTeamId && Math.hypot(player.position.x - state.ball.position.x, player.position.y - state.ball.position.y) <= 1) : undefined
+    expect(owner).toBeTruthy()
+    state = applyCommand(state, { type: 'recoverLooseBall', playerId: owner!.playerId })
+    expect(state.ball).toMatchObject({ kind: 'HELD', ownerPlayerId: owner!.playerId })
     expect(activePossession(state)?.id).toBe('possession-1')
   })
 
@@ -316,8 +329,8 @@ describe('Match Next ball and possession authority', () => {
     const setup = positionedSetup(source)
     const replay = () => {
       let state = liveHome(setup)
-      const receiver = setup.initialLineups.home[2]!
-      state = applyCommand(state, { type: 'releasePass', command: { receiverPlayerId: receiver, target: state.players.find((player) => player.playerId === receiver)!.position, passKind: 'bounce', travelTicks: 10 } })
+      const receiver = strongSlotPlayer(state)
+      state = applyCommand(state, { type: 'releasePass', command: { receiverPlayerId: receiver, target: projectedPosition(state, receiver, 10), passKind: 'bounce', travelTicks: 10 } })
       state = ticks(state, 10)
       state = applyCommand(state, { type: 'releaseShot', command: { targetBasket: setup.court.baskets.right, travelTicks: 10, plannedOutcome: { kind: 'MAKE', points: 2 } } })
       return ticks(state, 10)
@@ -334,8 +347,8 @@ describe('Match Next ball and possession authority', () => {
       const setup = positionedSetup({ ...source, matchSeed: seed })
       let state = liveHome(setup)
       const frames = [toFrame(state)]
-      const receiver = setup.initialLineups.home[2]!
-      state = applyCommand(state, { type: 'releasePass', command: { receiverPlayerId: receiver, target: state.players.find((player) => player.playerId === receiver)!.position, passKind: seed % 2 ? 'chest' : 'lob', travelTicks: 10 } })
+      const receiver = strongSlotPlayer(state)
+      state = applyCommand(state, { type: 'releasePass', command: { receiverPlayerId: receiver, target: projectedPosition(state, receiver, 10), passKind: seed % 2 ? 'chest' : 'lob', travelTicks: 10 } })
       frames.push(toFrame(state))
       state = ticks(state, 10)
       frames.push(toFrame(state))
@@ -394,12 +407,12 @@ describe('Match Next ball and possession authority', () => {
       const owner = state.ball.kind === 'HELD' ? state.ball.ownerPlayerId : workloadSetup.initialLineups.home[1]!
       const receiver = owner === workloadSetup.initialLineups.home[1]! ? workloadSetup.initialLineups.home[2]! : workloadSetup.initialLineups.home[1]!
       const receiverPosition = state.players.find((player) => player.playerId === receiver)!.position
-      state = applyCommand(state, { type: 'releasePass', command: { receiverPlayerId: receiver, target: receiverPosition, passKind: cycle % 2 ? 'chest' : 'bounce', travelTicks: 6 } })
-      state = ticks(state, 6)
+      state = applyCommand(state, { type: 'releasePass', command: { receiverPlayerId: receiver, target: receiverPosition, passKind: cycle % 2 ? 'chest' : 'bounce', travelTicks: 2 } })
+      state = ticks(state, 2)
       const shooter = state.ball.kind === 'HELD' ? state.ball.ownerPlayerId : receiver
-      const landing = state.players.find((player) => player.playerId === shooter)!.position
-      state = applyCommand(state, { type: 'releaseShot', command: { targetBasket: workloadSetup.court.baskets.right, travelTicks: 10, plannedOutcome: { kind: 'MISS', reboundTarget: landing, reboundAvailableT: state.t + 18 } } })
-      state = ticks(state, 18)
+      const landing = projectedPosition(state, shooter, 4)
+      state = applyCommand(state, { type: 'releaseShot', command: { targetBasket: workloadSetup.court.baskets.right, travelTicks: 2, plannedOutcome: { kind: 'MISS', reboundTarget: landing, reboundAvailableT: state.t + 4 } } })
+      state = ticks(state, 4)
       state = applyCommand(state, { type: 'secureRebound', playerId: shooter })
     }
     const workloadMs = performance.now() - started

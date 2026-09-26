@@ -237,6 +237,14 @@ export function advanceBallAtTick(state: MatchState): MatchState {
   return state
 }
 
+/** A HELD ball is physically linked to its owner; follow the kinematics-owned position. */
+export function syncHeldBallToOwner(state: MatchState): MatchState {
+  if (state.ball.kind !== 'HELD') return state
+  const owner = findActivePlayer(state, state.ball.ownerPlayerId)
+  if (!owner || owner.position.x === state.ball.position.x && owner.position.y === state.ball.position.y) return state
+  return { ...state, ball: { ...state.ball, position: { ...owner.position } } }
+}
+
 function receivePass(state: MatchState, receiverPlayerId: PlayerId, receiverTeamId: TeamId, acquisitionDistanceMeters: number, isInbound: boolean): MatchState {
   const flight = state.ball
   if (flight.kind !== 'PASS_IN_FLIGHT') return state

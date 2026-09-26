@@ -62,6 +62,9 @@ export function validateMatchSetup(setup: MatchSetup): void {
   const profiles = new Map<string, MatchNextPlayerProfile>()
   for (const profile of setup.players) {
     if (profiles.has(profile.playerId)) throw new Error(`Duplicate player profile: ${profile.playerId}`)
+    for (const field of ['maxSpeedMps', 'accelerationMps2', 'brakingMps2'] as const) {
+      if (!Number.isFinite(profile.kinematics[field]) || profile.kinematics[field] <= 0) throw new Error(`Player ${profile.playerId} has invalid kinematics ${field}`)
+    }
     profiles.set(profile.playerId, profile)
   }
   const home = new Set(setup.homeSquad)

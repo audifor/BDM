@@ -1,17 +1,22 @@
 import type { CourtPosition } from '@/domain/court'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import { activePossession, type MatchNextEvent, type MatchState, type PossessionPhase, type PossessionStartReason } from './state'
+import type { MovementIntent } from './movement/MovementIntent'
+import type { PlayerResponsibility, StructuralDecision } from './responsibility/Responsibility'
+import type { OffensiveStructureState } from './structure/FiveOutStructure'
 
 export interface MatchFramePlayer {
   readonly playerId: PlayerId
   readonly teamId: TeamId
   readonly position: CourtPosition
   readonly velocity: CourtPosition
+  readonly facing: CourtPosition
+  readonly kinematics: MatchState['players'][number]['kinematics']
   readonly role?: string | null
   readonly slot?: string | number | null
-  readonly responsibility?: Readonly<Record<string, unknown>> | null
-  readonly decision?: Readonly<Record<string, unknown>> | null
-  readonly intent?: Readonly<Record<string, unknown>> | null
+  readonly responsibility: PlayerResponsibility | null
+  readonly decision: StructuralDecision | null
+  readonly intent: MovementIntent | null
   readonly assignment?: Readonly<Record<string, unknown>> | null
   readonly ballRelation?: string | null
 }
@@ -48,6 +53,7 @@ export interface MatchFramePossession {
 export interface MatchFrame {
   readonly t: number
   readonly period: number
+  readonly court: MatchState['court']
   readonly homeTeamId: TeamId
   readonly awayTeamId: TeamId
   readonly gameClock: number
@@ -59,9 +65,12 @@ export interface MatchFrame {
   readonly possessionHistory: MatchState['possessions']
   readonly activePossessionId: string | null
   readonly players: readonly MatchFramePlayer[]
+  readonly responsibilities: MatchState['responsibilities']
+  readonly decisions: MatchState['decisions']
+  readonly movementIntents: MatchState['movementIntents']
   readonly events: readonly MatchNextEvent[]
   readonly actions: readonly []
-  readonly offensiveStructure: null
+  readonly offensiveStructure: OffensiveStructureState | null
   readonly defensiveStructure: null
 }
 
@@ -71,6 +80,7 @@ export function toFrame(state: MatchState): MatchFrame {
   return {
     t: state.t,
     period: state.period,
+    court: { ...state.court, baskets: { left: { ...state.court.baskets.left }, right: { ...state.court.baskets.right } }, threePointLine: { ...state.court.threePointLine } },
     homeTeamId: state.homeTeamId,
     awayTeamId: state.awayTeamId,
     gameClock: state.gameClockTenths,
@@ -95,10 +105,32 @@ export function toFrame(state: MatchState): MatchFrame {
     possession: possession ? { id: possession.id, teamId: possession.teamId, phase: possession.phase, startReason: possession.startReason, shotClock: state.shotClockTenths } : null,
     possessionHistory: state.possessions.map((item) => ({ ...item })),
     activePossessionId: state.activePossessionId,
-    players: state.players.map((player) => ({ ...player, position: { ...player.position }, velocity: { ...player.velocity } })),
+    players: state.players.map((player) => {
+      const responsibility = state.responsibilities.find((item) => item.playerId === player.playerId)
+      const decision = state.decisions.find((item) => item.playerId === player.playerId)
+      const intent = state.movementIntents.find((item) => item.playerId === player.playerId)
+      return {
+        ...player,
+        position: { ...player.position },
+        velocity: { ...player.velocity },
+        facing: { ...player.facing },
+        kinematics: { ...player.kinematics },
+        responsibility: responsibility ? { ...responsibility, endCondition: { ...responsibility.endCondition } } : null,
+        decision: decision ? { ...decision } : null,
+        intent: intent ? { ...intent, target: { ...intent.target }, facing: intent.facing.kind === 'POINT' ? { ...intent.facing, position: { ...intent.facing.position } } : { ...intent.facing }, provenance: { ...intent.provenance } } : null,
+      }
+    }),
+    responsibilities: state.responsibilities.map((item) => ({ ...item, endCondition: { ...item.endCondition } })),
+    decisions: state.decisions.map((item) => ({ ...item })),
+    movementIntents: state.movementIntents.map((item) => ({ ...item, target: { ...item.target }, facing: item.facing.kind === 'POINT' ? { ...item.facing, position: { ...item.facing.position } } : { ...item.facing }, provenance: { ...item.provenance } })),
     events: state.events.map((event) => ({ ...event })),
     actions: [],
-    offensiveStructure: null,
+    offensiveStructure: state.offensiveStructure === null ? null : {
+      ...state.offensiveStructure,
+      attackingBasket: { ...state.offensiveStructure.attackingBasket },
+      slots: state.offensiveStructure.slots.map((slot) => ({ ...slot, position: { ...slot.position } })),
+      assignments: state.offensiveStructure.assignments.map((item) => ({ ...item })),
+    },
     defensiveStructure: null,
   }
 }

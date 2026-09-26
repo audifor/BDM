@@ -1,10 +1,13 @@
 import type { PlayerId, TeamId } from '@/domain/ids'
 import { emitEvent } from './events'
-import { advanceBallAtTick, interceptPass, putBallDead, recoverLooseBall, releaseInbound, releasePass, releaseShot, secureRebound, startInbound, violateShotClock, type InboundStartReason, type ReleasePassCommand, type ReleaseShotCommand } from './ball/BallTransitions'
+import { advanceBallAtTick, interceptPass, putBallDead, recoverLooseBall, releaseInbound, releasePass, releaseShot, secureRebound, startInbound, syncHeldBallToOwner, violateShotClock, type InboundStartReason, type ReleasePassCommand, type ReleaseShotCommand } from './ball/BallTransitions'
 import type { BallPassKind } from './ball/BallState'
-import { endPossession } from './possession'
-import { createInitialMatchState, type MatchState } from './state'
+import { changePossessionPhase, endPossession } from './possession'
+import { activePossession as getActivePossession, createInitialMatchState, type MatchState } from './state'
 import { validateMatchSetup, type MatchSetup } from './setup'
+import { integrateOffensivePlayers } from './movement/PlayerKinematics'
+import { isInOffensiveFrontcourt, reconcileOffensiveStructure } from './structure/OffensiveStructure'
+import { attackingBasketForTeam } from './structure/FiveOutStructure'
 
 export type MatchNextCommand =
   | { readonly type: 'startInbound'; readonly teamId: TeamId; readonly inbounderPlayerId: PlayerId; readonly reason: InboundStartReason }
@@ -22,16 +25,18 @@ export function createMatchState(setup: MatchSetup): MatchState {
 }
 
 export function applyCommand(state: MatchState, command: MatchNextCommand): MatchState {
+  let next: MatchState
   switch (command.type) {
-    case 'startInbound': return startInbound(state, command.teamId, command.inbounderPlayerId, command.reason)
-    case 'releaseInbound': return releaseInbound(state, command.receiverPlayerId, command.passKind, command.travelTicks)
-    case 'releasePass': return releasePass(state, command.command)
-    case 'interceptPass': return interceptPass(state, command.playerId)
-    case 'releaseShot': return releaseShot(state, command.command)
-    case 'secureRebound': return secureRebound(state, command.playerId)
-    case 'recoverLooseBall': return recoverLooseBall(state, command.playerId)
-    case 'putBallDead': return putBallDead(state, command.reason, command.restartTeamId)
+    case 'startInbound': next = startInbound(state, command.teamId, command.inbounderPlayerId, command.reason); break
+    case 'releaseInbound': next = releaseInbound(state, command.receiverPlayerId, command.passKind, command.travelTicks); break
+    case 'releasePass': next = releasePass(state, command.command); break
+    case 'interceptPass': next = interceptPass(state, command.playerId); break
+    case 'releaseShot': next = releaseShot(state, command.command); break
+    case 'secureRebound': next = secureRebound(state, command.playerId); break
+    case 'recoverLooseBall': next = recoverLooseBall(state, command.playerId); break
+    case 'putBallDead': next = putBallDead(state, command.reason, command.restartTeamId); break
   }
+  return reconcileOffensiveStructure(next)
 }
 
 export function tick(state: MatchState): MatchState {
@@ -44,15 +49,47 @@ export function tick(state: MatchState): MatchState {
 
   if (state.clock.gameRunning && gameClockTenths === 0) return finishPeriod(next)
 
+  next = advanceOffensiveMovement(next)
+
   const shotClockExpired = state.clock.shotRunning && state.shotClockTenths !== null && state.shotClockTenths > 0 && shotClockTenths === 0
   const expiredAtPriorTick = state.clock.shotRunning && state.shotClockTenths === 0
   const shotWasReleased = state.ball.kind === 'SHOT_IN_FLIGHT'
   const shotIsLiveOrResolved = next.ball.kind === 'SHOT_IN_FLIGHT' || next.ball.kind === 'REBOUNDABLE' || next.ball.kind === 'DEAD'
-  if ((shotClockExpired || expiredAtPriorTick) && !shotWasReleased && !shotIsLiveOrResolved) return violateShotClock(next)
+  if ((shotClockExpired || expiredAtPriorTick) && !shotWasReleased && !shotIsLiveOrResolved) return reconcileOffensiveStructure(violateShotClock(next))
   if ((shotClockExpired || expiredAtPriorTick) && (shotWasReleased || next.ball.kind === 'REBOUNDABLE')) {
     next = { ...next, clock: { ...next.clock, shotRunning: false } }
   }
   return next
+}
+
+function advanceOffensiveMovement(input: MatchState): MatchState {
+  let state = reconcileOffensiveStructure(input)
+  let possession = getActivePossession(state)
+  if (possession?.phase === 'ADVANCE' && state.ball.kind === 'HELD' && state.ball.ownerTeamId === possession.teamId) {
+    const basket = attackingBasketForTeam(possession.teamId, state.homeTeamId, state.period, state.court)
+    const owner = state.players.find((player) => state.ball.kind === 'HELD' && player.playerId === state.ball.ownerPlayerId)
+    if (owner && isInOffensiveFrontcourt(owner.position, basket, state.court.lengthMeters)) {
+      state = changePossessionPhase(state, 'SETUP')
+      state = reconcileOffensiveStructure(state)
+    }
+  }
+
+  if (!state.offensiveStructure) return state
+  const updated = integrateOffensivePlayers(state)
+  state = syncHeldBallToOwner({ ...state, players: updated })
+  state = reconcileOffensiveStructure(state)
+
+  possession = getActivePossession(state)
+  if (possession?.phase === 'ADVANCE' && state.ball.kind === 'HELD' && state.ball.ownerTeamId === possession.teamId) {
+    const basket = attackingBasketForTeam(possession.teamId, state.homeTeamId, state.period, state.court)
+    const ownerPlayerId = state.ball.ownerPlayerId
+    const owner = state.players.find((player) => player.playerId === ownerPlayerId)
+    if (owner && isInOffensiveFrontcourt(owner.position, basket, state.court.lengthMeters)) {
+      state = changePossessionPhase(state, 'SETUP')
+      state = reconcileOffensiveStructure(state)
+    }
+  }
+  return state
 }
 
 export function runUntil(state: MatchState, predicate: (state: MatchState) => boolean): MatchState {
@@ -75,6 +112,7 @@ function finishPeriod(state: MatchState): MatchState {
     ball: { kind: 'DEAD', reason: 'periodEnd', position: ballPosition, heightMeters: 0.08 },
   }
   next = endPossession(next, 'periodEnd')
+  next = reconcileOffensiveStructure(next)
   next = emitEvent(next, 'ballDead', { ballReason: 'periodEnd' })
   next = emitEvent(next, 'periodEnd')
   if (state.period >= state.clockRules.periodCount) {

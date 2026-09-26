@@ -3,6 +3,9 @@ import type { GameId, PlayerId, TeamId } from '@/domain/ids'
 import { neutralFoundationPosition, type MatchSetup } from './setup'
 import { createRngState } from './rng'
 import { HELD_BALL_HEIGHT_METERS, type BallState } from './ball/BallState'
+import type { MovementIntent } from './movement/MovementIntent'
+import type { PlayerResponsibility, StructuralDecision } from './responsibility/Responsibility'
+import { attackingBasketForTeam, type OffensiveStructureState } from './structure/FiveOutStructure'
 
 export type PossessionStartReason = 'periodStart' | 'madeBasketInbound' | 'defensiveRebound' | 'steal' | 'turnoverInbound' | 'shotClockViolation' | 'other'
 export type PossessionEndReason = 'made' | 'defensiveRebound' | 'turnover' | 'shotClock' | 'periodEnd'
@@ -57,6 +60,8 @@ export interface MatchPlayerState {
   readonly active: true
   readonly position: CourtPosition
   readonly velocity: CourtPosition
+  readonly facing: CourtPosition
+  readonly kinematics: { readonly maxSpeedMps: number; readonly accelerationMps2: number; readonly brakingMps2: number }
 }
 
 export interface MatchState {
@@ -74,6 +79,12 @@ export interface MatchState {
   readonly shotClockTenths: number | null
   readonly score: { readonly home: number; readonly away: number }
   readonly players: readonly MatchPlayerState[]
+  readonly responsibilities: readonly PlayerResponsibility[]
+  readonly decisions: readonly StructuralDecision[]
+  readonly movementIntents: readonly MovementIntent[]
+  readonly offensiveStructure: OffensiveStructureState | null
+  readonly nextResponsibilitySequence: number
+  readonly nextDecisionSequence: number
   readonly ball: BallState
   readonly possessions: readonly PossessionState[]
   readonly activePossessionId: string | null
@@ -92,8 +103,16 @@ export function createInitialMatchState(setup: MatchSetup): MatchState {
   const initialPositions = setup.initialPlayerPositions ?? []
   const initialPosition = (playerId: PlayerId) => initialPositions.find((entry) => entry.playerId === playerId)?.position
   const players: MatchPlayerState[] = [
-    ...setup.initialLineups.home.map((playerId, slot) => ({ playerId, teamId: setup.homeTeamId, active: true as const, position: { ...(initialPosition(playerId) ?? neutralFoundationPosition('home', slot, setup.court)) }, velocity: { x: 0, y: 0 } })),
-    ...setup.initialLineups.away.map((playerId, slot) => ({ playerId, teamId: setup.awayTeamId, active: true as const, position: { ...(initialPosition(playerId) ?? neutralFoundationPosition('away', slot, setup.court)) }, velocity: { x: 0, y: 0 } })),
+    ...setup.initialLineups.home.map((playerId, slot) => {
+      const position = { ...(initialPosition(playerId) ?? neutralFoundationPosition('home', slot, setup.court)) }
+      const basket = attackingBasketForTeam(setup.homeTeamId, setup.homeTeamId, 1, setup.court)
+      return { playerId, teamId: setup.homeTeamId, active: true as const, position, velocity: { x: 0, y: 0 }, facing: unitVector({ x: basket.x - position.x, y: basket.y - position.y }), kinematics: { ...setup.players.find((profile) => profile.playerId === playerId)!.kinematics } }
+    }),
+    ...setup.initialLineups.away.map((playerId, slot) => {
+      const position = { ...(initialPosition(playerId) ?? neutralFoundationPosition('away', slot, setup.court)) }
+      const basket = attackingBasketForTeam(setup.awayTeamId, setup.homeTeamId, 1, setup.court)
+      return { playerId, teamId: setup.awayTeamId, active: true as const, position, velocity: { x: 0, y: 0 }, facing: unitVector({ x: basket.x - position.x, y: basket.y - position.y }), kinematics: { ...setup.players.find((profile) => profile.playerId === playerId)!.kinematics } }
+    }),
   ]
   const position = { x: setup.court.lengthMeters / 2, y: setup.court.widthMeters / 2 }
   const gameClockTenths = setup.clockRules.periodSeconds * 10
@@ -112,6 +131,12 @@ export function createInitialMatchState(setup: MatchSetup): MatchState {
     shotClockTenths: null,
     score: { home: 0, away: 0 },
     players,
+    responsibilities: [],
+    decisions: [],
+    movementIntents: [],
+    offensiveStructure: null,
+    nextResponsibilitySequence: 1,
+    nextDecisionSequence: 1,
     ball: { kind: 'DEAD', reason: 'foundation', position, heightMeters: HELD_BALL_HEIGHT_METERS },
     possessions: [],
     activePossessionId: null,
@@ -121,4 +146,9 @@ export function createInitialMatchState(setup: MatchSetup): MatchState {
     events: [initial],
     isComplete: false,
   }
+}
+
+function unitVector(value: CourtPosition): CourtPosition {
+  const length = Math.hypot(value.x, value.y)
+  return length > 1e-9 ? { x: value.x / length, y: value.y / length } : { x: 1, y: 0 }
 }
