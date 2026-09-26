@@ -15,16 +15,25 @@ export interface KinematicsResult {
   readonly facing: CourtPosition
 }
 
-export function integrateOffensivePlayers(state: MatchState): readonly MatchPlayerState[] {
-  const structure = state.offensiveStructure
-  if (!structure) return state.players
-  const participants = state.players.filter((player) => player.active && player.teamId === structure.teamId)
+export function integrateMatchPlayers(state: MatchState): readonly MatchPlayerState[] {
+  if (state.movementIntents.length === 0) return state.players
   const intents = new Map(state.movementIntents.map((intent) => [intent.playerId, intent]))
+  const positionsByTeam = new Map<MatchPlayerState['teamId'], { readonly playerId: MatchPlayerState['playerId']; readonly position: CourtPosition }[]>()
+  for (const player of state.players) {
+    if (!player.active) continue
+    const teammates = positionsByTeam.get(player.teamId) ?? []
+    teammates.push({ playerId: player.playerId, position: player.position })
+    positionsByTeam.set(player.teamId, teammates)
+  }
   return state.players.map((player) => {
+    const defensiveBallFreeze = state.ball.kind === 'SHOT_IN_FLIGHT' || state.ball.kind === 'REBOUNDABLE' || state.ball.kind === 'LOOSE'
+    if (defensiveBallFreeze && player.teamId === state.defensiveStructure?.teamId) return player
     const intent = intents.get(player.playerId)
     if (!intent) return player
-    const others = participants.filter((other) => other.playerId !== player.playerId).map((other) => other.position)
-    const result = stepPlayerKinematics(player, player.kinematics, intent, state.ball.position, structure.attackingBasket, others, state.court)
+    const teammates = positionsByTeam.get(player.teamId) ?? []
+    const others = teammates.filter((teammate) => teammate.playerId !== player.playerId).map((teammate) => teammate.position)
+    const basket = state.offensiveStructure?.attackingBasket ?? state.defensiveStructure?.defendedBasket ?? state.court.baskets.left
+    const result = stepPlayerKinematics(player, player.kinematics, intent, state.ball.position, basket, others, state.court)
     return { ...player, position: result.position, velocity: result.velocity, facing: result.facing }
   })
 }

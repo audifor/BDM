@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import type { CourtPosition } from '@/domain/court'
+import { distanceBetween, type CourtPosition } from '@/domain/court'
 import type { PlayerId } from '@/domain/ids'
 import { getGamesForTeam } from '@/domain/world'
 import { createNewGame } from '@/app/game/createNewGame'
@@ -233,13 +233,20 @@ describe('Match Next ball and possession authority', () => {
   it('closes the old possession and starts the winner team possession after a loose-ball turnover', () => {
     const { setup: source } = generatedSetup()
     const center = { x: source.court.lengthMeters / 2 + 4, y: source.court.widthMeters / 2 }
-    const awayRecoverer = source.initialLineups.away[0]!
-    const setup = positionedSetup(source, { [awayRecoverer]: center })
+    const setup = positionedSetup(source, { [source.initialLineups.away[0]!]: center })
     let state = liveHome(setup)
     state = applyCommand(state, { type: 'releasePass', command: { receiverPlayerId: setup.initialLineups.home[4]!, target: center, passKind: 'chest', travelTicks: 10 } })
     state = ticks(state, 10)
     const loose = state
     expect(loose.ball.kind).toBe('LOOSE')
+    let awayRecoverer = state.players.filter((player) => player.teamId === setup.awayTeamId)
+      .sort((left, right) => distanceBetween(left.position, state.ball.position) - distanceBetween(right.position, state.ball.position))[0]!.playerId
+    for (let wait = 0; wait < 20 && state.ball.kind === 'LOOSE' && distanceBetween(state.players.find((player) => player.playerId === awayRecoverer)!.position, state.ball.position) > 1; wait += 1) {
+      state = tick(state)
+      awayRecoverer = state.players.filter((player) => player.teamId === setup.awayTeamId)
+        .sort((left, right) => distanceBetween(left.position, state.ball.position) - distanceBetween(right.position, state.ball.position))[0]!.playerId
+    }
+    expect(distanceBetween(state.players.find((player) => player.playerId === awayRecoverer)!.position, state.ball.position)).toBeLessThanOrEqual(1)
     state = applyCommand(state, { type: 'recoverLooseBall', playerId: awayRecoverer })
     expect(state.possessions[0]).toMatchObject({ endReason: 'turnover' })
     expect(activePossession(state)).toMatchObject({ id: 'possession-2', teamId: setup.awayTeamId, startReason: 'other', phase: 'ADVANCE' })

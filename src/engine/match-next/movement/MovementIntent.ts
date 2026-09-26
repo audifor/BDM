@@ -16,7 +16,7 @@ export interface MovementIntent {
   readonly provenance: {
     readonly responsibilityId: string
     readonly decisionId: string
-    readonly owner: 'offensiveStructure' | 'possession' | 'action'
+    readonly owner: 'offensiveStructure' | 'defensiveStructure' | 'possession' | 'action'
   }
 }
 

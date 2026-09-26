@@ -4,6 +4,7 @@ import { activePossession, type MatchNextEvent, type MatchState, type Possession
 import type { MovementIntent } from './movement/MovementIntent'
 import type { PlayerResponsibility, StructuralDecision } from './responsibility/Responsibility'
 import type { OffensiveStructureState } from './structure/FiveOutStructure'
+import type { DefensiveAssignment, DefensiveStructureState } from './state'
 
 export interface MatchFramePlayer {
   readonly playerId: PlayerId
@@ -17,7 +18,7 @@ export interface MatchFramePlayer {
   readonly responsibility: PlayerResponsibility | null
   readonly decision: StructuralDecision | null
   readonly intent: MovementIntent | null
-  readonly assignment?: Readonly<Record<string, unknown>> | null
+  readonly assignment: DefensiveAssignment | null
   readonly ballRelation?: string | null
 }
 
@@ -71,7 +72,7 @@ export interface MatchFrame {
   readonly events: readonly MatchNextEvent[]
   readonly actions: readonly []
   readonly offensiveStructure: OffensiveStructureState | null
-  readonly defensiveStructure: null
+  readonly defensiveStructure: DefensiveStructureState | null
 }
 
 export function toFrame(state: MatchState): MatchFrame {
@@ -109,6 +110,11 @@ export function toFrame(state: MatchState): MatchFrame {
       const responsibility = state.responsibilities.find((item) => item.playerId === player.playerId)
       const decision = state.decisions.find((item) => item.playerId === player.playerId)
       const intent = state.movementIntents.find((item) => item.playerId === player.playerId)
+      const assignment = state.defensiveStructure?.assignments.find((item) => item.defenderPlayerId === player.playerId) ?? null
+      const ballRelation = assignment === null ? null
+        : state.defensiveStructure?.onBallDefenderPlayerId === player.playerId ? 'ON_BALL'
+          : responsibility?.kind === 'HELP' ? 'TWO_PLUS_PASSES_AWAY'
+            : responsibility?.kind === 'GAP' ? 'ONE_PASS_AWAY' : 'ASSIGNED'
       return {
         ...player,
         position: { ...player.position },
@@ -118,6 +124,8 @@ export function toFrame(state: MatchState): MatchFrame {
         responsibility: responsibility ? { ...responsibility, endCondition: { ...responsibility.endCondition } } : null,
         decision: decision ? { ...decision } : null,
         intent: intent ? { ...intent, target: { ...intent.target }, facing: intent.facing.kind === 'POINT' ? { ...intent.facing, position: { ...intent.facing.position } } : { ...intent.facing }, provenance: { ...intent.provenance } } : null,
+        assignment: assignment === null ? null : { ...assignment },
+        ballRelation,
       }
     }),
     responsibilities: state.responsibilities.map((item) => ({ ...item, endCondition: { ...item.endCondition } })),
@@ -131,6 +139,11 @@ export function toFrame(state: MatchState): MatchFrame {
       slots: state.offensiveStructure.slots.map((slot) => ({ ...slot, position: { ...slot.position } })),
       assignments: state.offensiveStructure.assignments.map((item) => ({ ...item })),
     },
-    defensiveStructure: null,
+    defensiveStructure: state.defensiveStructure === null ? null : {
+      ...state.defensiveStructure,
+      defendedBasket: { ...state.defensiveStructure.defendedBasket },
+      assignments: state.defensiveStructure.assignments.map((item) => ({ ...item })),
+      helpDefenderPlayerIds: [...state.defensiveStructure.helpDefenderPlayerIds],
+    },
   }
 }

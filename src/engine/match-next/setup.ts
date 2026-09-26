@@ -92,6 +92,21 @@ export function validateMatchSetup(setup: MatchSetup): void {
       if (profile.teamId !== teamId) throw new Error(`${side} lineup player ${id} is assigned to the wrong team`)
     }
   }
+  for (const [side, overrides, defenders, attackers] of [
+    ['home', setup.defensiveMatchupOverrides.home, new Set(setup.homeSquad), new Set(setup.awaySquad)],
+    ['away', setup.defensiveMatchupOverrides.away, new Set(setup.awaySquad), new Set(setup.homeSquad)],
+  ] as const) {
+    const seenDefenders = new Set<PlayerId>()
+    const seenAttackers = new Set<PlayerId>()
+    for (const override of overrides) {
+      if (!defenders.has(override.playerId)) throw new Error(`${side} defensive matchup defender ${override.playerId} is not on the defending team`)
+      if (!attackers.has(override.opponentPlayerId)) throw new Error(`${side} defensive matchup attacker ${override.opponentPlayerId} is not on the opposing team`)
+      if (seenDefenders.has(override.playerId)) throw new Error(`${side} defensive matchups assign defender ${override.playerId} more than once`)
+      if (seenAttackers.has(override.opponentPlayerId)) throw new Error(`${side} defensive matchups assign attacker ${override.opponentPlayerId} more than once`)
+      seenDefenders.add(override.playerId)
+      seenAttackers.add(override.opponentPlayerId)
+    }
+  }
   for (const profile of setup.players) if (!home.has(profile.playerId) && !away.has(profile.playerId)) throw new Error(`Player profile ${profile.playerId} is absent from both squads`)
   const activeIds = new Set([...setup.initialLineups.home, ...setup.initialLineups.away])
   const initialPositions = setup.initialPlayerPositions ?? []

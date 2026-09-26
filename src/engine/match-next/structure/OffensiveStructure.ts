@@ -13,7 +13,13 @@ export function reconcileOffensiveStructure(state: MatchState): MatchState {
     && state.ball.kind !== 'INBOUND'
   if (!possession || !eligible) {
     if (state.offensiveStructure === null && state.responsibilities.length === 0 && state.decisions.length === 0 && state.movementIntents.length === 0) return state
-    return { ...state, offensiveStructure: null, responsibilities: [], decisions: [], movementIntents: [] }
+    return {
+      ...state,
+      offensiveStructure: null,
+      responsibilities: state.responsibilities.filter((item) => item.owner === 'defensiveStructure'),
+      decisions: state.decisions.filter((item) => item.owner === 'defensiveStructure'),
+      movementIntents: state.movementIntents.filter((item) => item.provenance.owner === 'defensiveStructure'),
+    }
   }
 
   const offense = state.players.filter((player) => player.active && player.teamId === possession.teamId)
@@ -83,8 +89,11 @@ export function reconcileOffensiveStructure(state: MatchState): MatchState {
     reassignmentCount: (prior?.reassignmentCount ?? 0) + (reassign && prior ? 1 : 0),
   }
 
-  const previousResponsibilities = new Map(state.responsibilities.map((item) => [item.playerId, item]))
-  const previousDecisions = new Map(state.decisions.map((item) => [item.playerId, item]))
+  const defensiveResponsibilities = state.responsibilities.filter((item) => item.owner === 'defensiveStructure')
+  const defensiveDecisions = state.decisions.filter((item) => item.owner === 'defensiveStructure')
+  const defensiveIntents = state.movementIntents.filter((item) => item.provenance.owner === 'defensiveStructure')
+  const previousResponsibilities = new Map(state.responsibilities.filter((item) => item.owner !== 'defensiveStructure').map((item) => [item.playerId, item]))
+  const previousDecisions = new Map(state.decisions.filter((item) => item.owner !== 'defensiveStructure').map((item) => [item.playerId, item]))
   let nextResponsibilitySequence = state.nextResponsibilitySequence
   let nextDecisionSequence = state.nextDecisionSequence
   const responsibilities: PlayerResponsibility[] = []
@@ -142,9 +151,9 @@ export function reconcileOffensiveStructure(state: MatchState): MatchState {
   return {
     ...state,
     offensiveStructure: structure,
-    responsibilities,
-    decisions,
-    movementIntents,
+    responsibilities: [...responsibilities, ...defensiveResponsibilities],
+    decisions: [...decisions, ...defensiveDecisions],
+    movementIntents: [...movementIntents, ...defensiveIntents],
     nextResponsibilitySequence,
     nextDecisionSequence,
   }

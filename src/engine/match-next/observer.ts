@@ -34,6 +34,28 @@ export interface MatchObservationReport {
   readonly maximumContinuousDistanceFromTargetSeconds: number
   readonly longTargetDistanceViolations: readonly string[]
   readonly slotChurn: number
+  readonly defensiveAssignmentCompletenessPercentage: number | null
+  readonly invalidDefensiveAssignmentCount: number
+  readonly duplicateDefensiveAssignmentCount: number
+  readonly unassignedAttackerCount: number
+  readonly defenderWithoutResponsibilityCount: number
+  readonly defensiveIntentWithoutDecision: number
+  readonly defensiveDecisionWithoutResponsibility: number
+  readonly defensiveResponsibilityWithoutAssignment: number
+  readonly defensiveAssignmentChurn: number
+  readonly defensiveAssignmentEstablishmentEvents: number
+  readonly defensiveResponsibilityChanges: number
+  readonly onBallSampleCount: number
+  readonly onBallMedianDistanceMeters: number | null
+  readonly onBallP95DistanceMeters: number | null
+  readonly gapSampleCount: number
+  readonly gapMedianManDistanceMeters: number | null
+  readonly helpSampleCount: number
+  readonly helpMedianManDistanceMeters: number | null
+  readonly overallDefenderToAssignedManMeanMeters: number | null
+  readonly onBallWrongSideViolations: number
+  readonly defensiveTargetMirrorViolations: number
+  readonly defensiveOutOfBoundsViolations: readonly string[]
 }
 
 export const MAX_FOUNDATION_PLAYER_DISPLACEMENT_METERS_PER_TICK = 1
@@ -254,6 +276,7 @@ export function observeFrames(frames: readonly MatchFrame[]): MatchObservationRe
   }
   invalidPossessions = possessionViolations.length
   clockViolationCount = clockViolations.length
+  const defensive = observeDefense(frames)
   return {
     frameCount: frames.length,
     maxPlayerDisplacementPerTick,
@@ -285,7 +308,203 @@ export function observeFrames(frames: readonly MatchFrame[]): MatchObservationRe
     maximumContinuousDistanceFromTargetSeconds,
     longTargetDistanceViolations,
     slotChurn,
+    ...defensive,
   }
+}
+
+type DefensiveObservation = Pick<MatchObservationReport,
+  | 'defensiveAssignmentCompletenessPercentage'
+  | 'invalidDefensiveAssignmentCount'
+  | 'duplicateDefensiveAssignmentCount'
+  | 'unassignedAttackerCount'
+  | 'defenderWithoutResponsibilityCount'
+  | 'defensiveIntentWithoutDecision'
+  | 'defensiveDecisionWithoutResponsibility'
+  | 'defensiveResponsibilityWithoutAssignment'
+  | 'defensiveAssignmentChurn'
+  | 'defensiveAssignmentEstablishmentEvents'
+  | 'defensiveResponsibilityChanges'
+  | 'onBallSampleCount'
+  | 'onBallMedianDistanceMeters'
+  | 'onBallP95DistanceMeters'
+  | 'gapSampleCount'
+  | 'gapMedianManDistanceMeters'
+  | 'helpSampleCount'
+  | 'helpMedianManDistanceMeters'
+  | 'overallDefenderToAssignedManMeanMeters'
+  | 'onBallWrongSideViolations'
+  | 'defensiveTargetMirrorViolations'
+  | 'defensiveOutOfBoundsViolations'
+>
+
+function observeDefense(frames: readonly MatchFrame[]): DefensiveObservation {
+  let validAssignmentFrames = 0
+  let assignmentFrames = 0
+  let invalidDefensiveAssignmentCount = 0
+  let duplicateDefensiveAssignmentCount = 0
+  let unassignedAttackerCount = 0
+  let defenderWithoutResponsibilityCount = 0
+  let defensiveIntentWithoutDecision = 0
+  let defensiveDecisionWithoutResponsibility = 0
+  let defensiveResponsibilityWithoutAssignment = 0
+  let defensiveAssignmentChurn = 0
+  let onBallWrongSideViolations = 0
+  let defensiveTargetMirrorViolations = 0
+  const defensiveOutOfBoundsViolations: string[] = []
+  const onBallDistances: number[] = []
+  const gapDistances: number[] = []
+  const helpDistances: number[] = []
+  const allManDistances: number[] = []
+  const settledTickByPossession = new Map<string, number>()
+  let defensiveAssignmentEstablishmentEvents = 0
+  let defensiveResponsibilityChanges = 0
+
+  for (let index = 0; index < frames.length; index += 1) {
+    const frame = frames[index]!
+    if (index === frames.length - 1) {
+      defensiveAssignmentEstablishmentEvents = frame.events.filter((event) => event.type === 'defensiveAssignmentsEstablished').length
+      defensiveResponsibilityChanges = frame.events.filter((event) => event.type === 'defensiveResponsibilityChanged').length
+    }
+    const structure = frame.defensiveStructure
+    if (!structure) continue
+    assignmentFrames += 1
+    const defenders = frame.players.filter((player) => player.teamId === structure.teamId)
+    const attackers = frame.players.filter((player) => player.teamId !== structure.teamId)
+    const defenderIds = new Set(structure.assignments.map((item) => item.defenderPlayerId))
+    const attackerIds = new Set(structure.assignments.map((item) => item.attackerPlayerId))
+    const duplicateCount = structure.assignments.length - defenderIds.size + structure.assignments.length - attackerIds.size
+    duplicateDefensiveAssignmentCount += duplicateCount
+    let frameValid = structure.scheme === 'MAN'
+      && structure.assignments.length === 5
+      && defenders.length === 5
+      && attackers.length === 5
+      && duplicateCount === 0
+    for (const assignment of structure.assignments) {
+      const defender = frame.players.find((player) => player.playerId === assignment.defenderPlayerId)
+      const attacker = frame.players.find((player) => player.playerId === assignment.attackerPlayerId)
+      if (!defender || defender.teamId !== structure.teamId || !attacker || attacker.teamId === structure.teamId || assignment.teamId !== structure.teamId) {
+        invalidDefensiveAssignmentCount += 1
+        frameValid = false
+      }
+      if (defender && !isInsideCourt(defender.position, frame.court)) defensiveOutOfBoundsViolations.push(`Defender ${defender.playerId} is outside court at frame ${index}`)
+      const intent = frame.movementIntents.find((item) => item.playerId === assignment.defenderPlayerId && item.provenance.owner === 'defensiveStructure')
+      if (intent && !isInsideCourt(intent.target, frame.court)) defensiveOutOfBoundsViolations.push(`Defender ${assignment.defenderPlayerId} has an out-of-court target at frame ${index}`)
+    }
+    for (const attacker of attackers) if (!attackerIds.has(attacker.playerId)) {
+      unassignedAttackerCount += 1
+      frameValid = false
+    }
+    if (frameValid) validAssignmentFrames += 1
+
+    const liveDefense = frame.possession !== null && frame.possession.phase !== 'INBOUND' && frame.ball.kind !== 'DEAD' && frame.ball.kind !== 'INBOUND'
+    const stableSetup = liveDefense && frame.possession?.phase === 'SETUP' && frame.ball.kind === 'HELD'
+    const stableKey = frame.possession?.id
+    let stableSetupReached = false
+    if (stableSetup && stableKey) {
+      const firstSetupTick = settledTickByPossession.get(stableKey) ?? frame.t
+      settledTickByPossession.set(stableKey, firstSetupTick)
+      stableSetupReached = frame.t - firstSetupTick >= STRUCTURE_SETTLING_TICKS
+    }
+    const assignmentByDefender = new Map(structure.assignments.map((item) => [item.defenderPlayerId, item]))
+    for (const defender of defenders) {
+      const assignment = assignmentByDefender.get(defender.playerId)
+      const responsibility = frame.responsibilities.find((item) => item.playerId === defender.playerId && item.owner === 'defensiveStructure')
+      const decision = frame.decisions.find((item) => item.playerId === defender.playerId && item.owner === 'defensiveStructure')
+      const intent = frame.movementIntents.find((item) => item.playerId === defender.playerId && item.provenance.owner === 'defensiveStructure')
+      if (liveDefense && !responsibility) defenderWithoutResponsibilityCount += 1
+      if (responsibility && !assignment) defensiveResponsibilityWithoutAssignment += 1
+      if (intent && (!decision || intent.provenance.decisionId !== decision.id || intent.provenance.responsibilityId !== responsibility?.id)) defensiveIntentWithoutDecision += 1
+      if (decision && (!responsibility || decision.responsibilityId !== responsibility.id)) defensiveDecisionWithoutResponsibility += 1
+      if (assignment && responsibility) {
+        const attacker = frame.players.find((player) => player.playerId === assignment.attackerPlayerId)
+        if (!attacker) continue
+        const manDistance = distanceBetween(defender.position, attacker.position)
+        if (stableSetupReached) {
+          allManDistances.push(manDistance)
+          if (responsibility.kind === 'ON_BALL') onBallDistances.push(manDistance)
+          if (responsibility.kind === 'GAP') gapDistances.push(manDistance)
+          if (responsibility.kind === 'HELP') helpDistances.push(manDistance)
+          if (responsibility.kind === 'ON_BALL') {
+            const transitionedRecently = frame.t - responsibility.startedT < 8
+            const toBasket = { x: structure.defendedBasket.x - attacker.position.x, y: structure.defendedBasket.y - attacker.position.y }
+            const defenderFromMan = { x: defender.position.x - attacker.position.x, y: defender.position.y - attacker.position.y }
+            if (!transitionedRecently && toBasket.x * defenderFromMan.x + toBasket.y * defenderFromMan.y < -0.15) onBallWrongSideViolations += 1
+          }
+        }
+      }
+    }
+    const defenseResponsibilities = frame.responsibilities.filter((item) => item.owner === 'defensiveStructure')
+    const defenseDecisions = frame.decisions.filter((item) => item.owner === 'defensiveStructure')
+    for (const decision of defenseDecisions) if (!defenseResponsibilities.some((item) => item.playerId === decision.playerId && item.id === decision.responsibilityId)) defensiveDecisionWithoutResponsibility += 1
+
+    if (index > 0) {
+      const before = frames[index - 1]!
+      const oldStructure = before.defensiveStructure
+      if (oldStructure && before.possession?.id === frame.possession?.id && oldStructure.teamId === structure.teamId) {
+        for (const assignment of oldStructure.assignments) {
+          if (structure.assignments.find((item) => item.defenderPlayerId === assignment.defenderPlayerId)?.attackerPlayerId !== assignment.attackerPlayerId) defensiveAssignmentChurn += 1
+        }
+        const offense = frame.offensiveStructure
+        const oldOffense = before.offensiveStructure
+        if (offense && oldOffense) for (const assignment of structure.assignments) {
+          const priorAssignment = oldStructure.assignments.find((item) => item.defenderPlayerId === assignment.defenderPlayerId)
+          const defender = frame.players.find((item) => item.playerId === assignment.defenderPlayerId)
+          const priorDefender = before.players.find((item) => item.playerId === assignment.defenderPlayerId)
+          const attacker = frame.players.find((item) => item.playerId === assignment.attackerPlayerId)
+          const priorAttacker = before.players.find((item) => item.playerId === assignment.attackerPlayerId)
+          const intent = frame.movementIntents.find((item) => item.playerId === assignment.defenderPlayerId)
+          const priorIntent = before.movementIntents.find((item) => item.playerId === assignment.defenderPlayerId)
+          const slot = offense.assignments.find((item) => item.playerId === assignment.attackerPlayerId)?.slot
+          const oldSlot = oldOffense.assignments.find((item) => item.playerId === assignment.attackerPlayerId)?.slot
+          const target = offense.slots.find((item) => item.slot === slot)?.position
+          const oldTarget = oldOffense.slots.find((item) => item.slot === oldSlot)?.position
+          if (priorAssignment?.attackerPlayerId === assignment.attackerPlayerId && defender && priorDefender && attacker && priorAttacker && intent && priorIntent && target && oldTarget
+            && distanceBetween(attacker.position, priorAttacker.position) <= 0.01
+            && distanceBetween(frame.ball.position, before.ball.position) <= 0.01
+            && distanceBetween(target, oldTarget) >= 2
+            && distanceBetween(intent.target, priorIntent.target) > 0.05) defensiveTargetMirrorViolations += 1
+        }
+      }
+    }
+  }
+
+  return {
+    defensiveAssignmentCompletenessPercentage: assignmentFrames === 0 ? null : 100 * validAssignmentFrames / assignmentFrames,
+    invalidDefensiveAssignmentCount,
+    duplicateDefensiveAssignmentCount,
+    unassignedAttackerCount,
+    defenderWithoutResponsibilityCount,
+    defensiveIntentWithoutDecision,
+    defensiveDecisionWithoutResponsibility,
+    defensiveResponsibilityWithoutAssignment,
+    defensiveAssignmentChurn,
+    defensiveAssignmentEstablishmentEvents,
+    defensiveResponsibilityChanges,
+    onBallSampleCount: onBallDistances.length,
+    onBallMedianDistanceMeters: median(onBallDistances),
+    onBallP95DistanceMeters: percentile(onBallDistances, 0.95),
+    gapSampleCount: gapDistances.length,
+    gapMedianManDistanceMeters: median(gapDistances),
+    helpSampleCount: helpDistances.length,
+    helpMedianManDistanceMeters: median(helpDistances),
+    overallDefenderToAssignedManMeanMeters: allManDistances.length === 0 ? null : allManDistances.reduce((sum, distance) => sum + distance, 0) / allManDistances.length,
+    onBallWrongSideViolations,
+    defensiveTargetMirrorViolations,
+    defensiveOutOfBoundsViolations,
+  }
+}
+
+function median(values: readonly number[]): number | null {
+  if (values.length === 0) return null
+  const sorted = [...values].sort((left, right) => left - right)
+  const middle = Math.floor(sorted.length / 2)
+  return sorted.length % 2 === 0 ? (sorted[middle - 1]! + sorted[middle]!) / 2 : sorted[middle]!
+}
+
+function percentile(values: readonly number[], percentileValue: number): number | null {
+  if (values.length === 0) return null
+  const sorted = [...values].sort((left, right) => left - right)
+  return sorted[Math.min(sorted.length - 1, Math.ceil(sorted.length * percentileValue) - 1)]!
 }
 
 function minimumPairwiseDistance(players: readonly MatchFrame['players'][number][]): number | null {

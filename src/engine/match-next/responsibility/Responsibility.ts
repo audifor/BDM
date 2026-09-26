@@ -1,8 +1,10 @@
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { OffensiveSlotName } from '../structure/FiveOutStructure'
 
-export type ResponsibilityKind = 'BALL' | 'SPACE' | 'ADVANCE'
-export type ResponsibilityOwner = 'offensiveStructure' | 'possession'
+export type OffensiveResponsibilityKind = 'BALL' | 'SPACE' | 'ADVANCE'
+export type DefensiveResponsibilityKind = 'ON_BALL' | 'GAP' | 'HELP' | 'RECOVER'
+export type ResponsibilityKind = OffensiveResponsibilityKind | DefensiveResponsibilityKind
+export type ResponsibilityOwner = 'offensiveStructure' | 'defensiveStructure' | 'possession'
 
 export interface PlayerResponsibility {
   readonly id: string
@@ -14,9 +16,12 @@ export interface PlayerResponsibility {
   readonly reason: string
   readonly endCondition: { readonly kind: 'possessionEnds' | 'ballOwnerChanges' | 'phaseChanges' | 'slotChanges' }
   readonly slot?: OffensiveSlotName
+  readonly recoveryTarget?: 'GAP' | 'HELP'
 }
 
-export type StructuralDecisionKind = 'OCCUPY_SLOT' | 'ADVANCE_BALL' | 'HOLD_STRUCTURE'
+export type OffensiveDecisionKind = 'OCCUPY_SLOT' | 'ADVANCE_BALL' | 'HOLD_STRUCTURE'
+export type DefensiveDecisionKind = 'GUARD_BALL' | 'GUARD_GAP' | 'HELP_POSITION' | 'RECOVER_TO_MAN' | 'RETREAT_TO_DEFENSE'
+export type StructuralDecisionKind = OffensiveDecisionKind | DefensiveDecisionKind
 
 export interface StructuralDecision {
   readonly id: string

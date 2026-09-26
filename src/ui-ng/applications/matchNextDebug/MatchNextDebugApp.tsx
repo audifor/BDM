@@ -2,24 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import type { CourtPosition } from '@/domain/court'
 import { createCourtGeometry, distanceBetween } from '@/domain/court'
 import { gameIdFromString, playerIdFromString, teamIdFromString } from '@/domain/ids'
-import { activePossession, applyCommand, createMatchState, resolveFiveOutTargets, TARGET_ARRIVAL_SPEED_MPS, TARGET_ARRIVAL_TOLERANCE_METERS, tick, toFrame, type MatchNextCommand, type MatchSetup, type MatchState } from '@/engine/match-next'
+import { activePossession, applyCommand, createMatchState, tick, toFrame, type MatchNextCommand, type MatchSetup, type MatchState } from '@/engine/match-next'
 
 type ScenarioName = 'A' | 'B' | 'C' | 'D' | 'E'
 interface ScheduledCommand { readonly atT: number; readonly command: MatchNextCommand }
 interface ScenarioStart { readonly state: MatchState; readonly commands: readonly ScheduledCommand[]; readonly description: string }
-interface AthleticProfileObservation {
-  readonly playerId: string
-  readonly label: string
-  readonly slot: string
-  readonly profile: MatchState['players'][number]['kinematics']
-  readonly startDistanceMeters: number
-  readonly peakSpeedMps: number
-  readonly peakAccelerationMps2: number
-  readonly peakBrakingMps2: number
-  readonly distanceToTargetMeters: number
-  readonly arrivalSeconds: number | null
-}
-
 function debugSetup(): MatchSetup {
   const homeTeamId = teamIdFromString('match-next-debug-home')
   const awayTeamId = teamIdFromString('match-next-debug-away')
@@ -41,7 +28,7 @@ function debugSetup(): MatchSetup {
   })
   const emptyPlan = { pace: 0, shotProfile: { rim: 0, midRange: 0, threePoint: 0 }, defense: { interior: 0, perimeter: 0 } }
   const homeSpots: readonly CourtPosition[] = [{ x: 14, y: 7.5 }, { x: 10.5, y: 7.5 }, { x: 8.5, y: 3.2 }, { x: 8.5, y: 11.8 }, { x: 10, y: 5.2 }]
-  const awaySpots: readonly CourtPosition[] = [{ x: 27, y: 7.5 }, { x: 25.5, y: 3.2 }, { x: 25.5, y: 11.8 }, { x: 23, y: 5.2 }, { x: 23, y: 9.8 }]
+  const awaySpots: readonly CourtPosition[] = homeSpots.map((spot) => ({ x: spot.x + 1.5, y: Math.max(0.5, Math.min(14.5, spot.y + 0.35)) }))
   return {
     gameId: gameIdFromString('match-next-debug-game'), homeTeamId, awayTeamId,
     court: createCourtGeometry('FIBA'),
@@ -49,130 +36,76 @@ function debugSetup(): MatchSetup {
     homeSquad: homeIds, awaySquad: awayIds, initialLineups: { home: homeIds, away: awayIds },
     players: [...homeIds.map((id, index) => profile(id, homeTeamId, index, true)), ...awayIds.map((id, index) => profile(id, awayTeamId, index, false))],
     initialPlayerPositions: [...homeIds.map((playerId, index) => ({ playerId, position: homeSpots[index]! })), ...awayIds.map((playerId, index) => ({ playerId, position: awaySpots[index]! }))],
-    tacticalPlans: { home: emptyPlan, away: emptyPlan }, defensiveMatchupOverrides: { home: [], away: [] }, matchSeed: 20260926,
-  }
-}
-
-function athleticismSetup(setup: MatchSetup): MatchSetup {
-  const profiles = [
-    { maxSpeedMps: 5.2, accelerationMps2: 2.6, brakingMps2: 3.4 },
-    { maxSpeedMps: 5.7, accelerationMps2: 3.0, brakingMps2: 4.0 },
-    { maxSpeedMps: 6.2, accelerationMps2: 4.0, brakingMps2: 5.0 },
-    { maxSpeedMps: 4.8, accelerationMps2: 2.3, brakingMps2: 3.0 },
-    { maxSpeedMps: 5.9, accelerationMps2: 3.4, brakingMps2: 4.4 },
-  ] as const
-  const inbounder = setup.initialLineups.home[0]!
-  const receiver = setup.initialLineups.home[1]!
-  const receiverPosition = { x: 17.5, y: setup.court.widthMeters / 2 }
-  const targets = resolveFiveOutTargets(setup.court, receiverPosition, setup.court.baskets.right, 'BOTTOM')
-  const spacePlayers = setup.initialLineups.home.filter((playerId) => playerId !== receiver)
-  const targetBySlot = new Map(targets.map((item) => [item.slot, item.position]))
-  const inboundPosition = { x: setup.court.lengthMeters / 2, y: setup.court.widthMeters / 2 }
-  const commonDistance = distanceBetween(inboundPosition, targetBySlot.get('STRONG_SLOT')!)
-  const scenarioSlots = ['STRONG_SLOT', 'STRONG_CORNER', 'WEAK_SLOT', 'WEAK_CORNER'] as const
-  const startPositions = new Map(spacePlayers.map((playerId, index) => {
-    if (playerId === inbounder) return [playerId, inboundPosition] as const
-    const target = targetBySlot.get(scenarioSlots[index]!)!
-    return [playerId, { x: target.x - commonDistance, y: target.y }] as const
-  }))
-  return {
-    ...setup,
-    players: setup.players.map((player) => {
-      const homeIndex = setup.initialLineups.home.indexOf(player.playerId)
-      return homeIndex < 0 ? player : { ...player, kinematics: { ...profiles[homeIndex]! } }
-    }),
-    initialPlayerPositions: setup.initialPlayerPositions?.map((item) => ({
-      playerId: item.playerId,
-      position: item.playerId === receiver ? receiverPosition : startPositions.get(item.playerId) ?? item.position,
-    })),
+    tacticalPlans: { home: emptyPlan, away: emptyPlan },
+    defensiveMatchupOverrides: {
+      home: homeIds.map((playerId, index) => ({ playerId, opponentPlayerId: awayIds[index]! })),
+      away: awayIds.map((playerId, index) => ({ playerId, opponentPlayerId: homeIds[index]! })),
+    },
+    matchSeed: 20260926,
   }
 }
 
 function scenarioStart(name: ScenarioName, setup: MatchSetup): ScenarioStart {
-  const scenarioSetup = name === 'C' ? athleticismSetup(setup) : setup
-  const initial = createMatchState(scenarioSetup)
-  const home = scenarioSetup.homeTeamId
-  const inbounder = scenarioSetup.initialLineups.home[0]!
-  const receiver = scenarioSetup.initialLineups.home[1]!
-  const commands: ScheduledCommand[] = [
-    { atT: 1, command: { type: 'startInbound', teamId: home, inbounderPlayerId: inbounder, reason: 'periodStart' } },
-    { atT: 2, command: { type: 'releaseInbound', receiverPlayerId: receiver, passKind: 'chest', travelTicks: 4 } },
-  ]
-  let warmState = initial
-  for (const item of commands) {
-    while (warmState.t < item.atT) warmState = tick(warmState)
-    warmState = applyCommand(warmState, item.command)
-  }
+  let initial = createMatchState(setup)
+  if (name === 'E') initial = { ...initial, period: 3, events: initial.events.map((event) => ({ ...event, period: 3 })) }
+  let state = tick(initial)
+  state = applyCommand(state, { type: 'startInbound', teamId: setup.homeTeamId, inbounderPlayerId: setup.initialLineups.home[0]!, reason: 'periodStart' })
+  state = tick(state)
+  state = applyCommand(state, { type: 'releaseInbound', receiverPlayerId: setup.initialLineups.home[1]!, passKind: 'chest', travelTicks: 4 })
+  for (let index = 0; index < 320 && activePossession(state)?.phase !== 'SETUP'; index += 1) state = tick(state)
+  if (name === 'D') for (let index = 0; index < 24; index += 1) state = tick(state)
+
   if (name === 'B') {
-    while (warmState.t < 150) warmState = tick(warmState)
-    const structure = warmState.offensiveStructure
-    const targetPlayer = structure?.assignments.find((item) => item.slot === 'WEAK_SLOT')?.playerId
-    const targetPosition = warmState.players.find((player) => player.playerId === targetPlayer)?.position
-    if (!targetPlayer || !targetPosition || warmState.ball.kind !== 'HELD') return { state: warmState, commands: [], description: 'B · Structure did not reach a pass-ready state.' }
-    return {
-      state: warmState,
-      commands: [{ atT: warmState.t + 1, command: { type: 'releasePass', command: { receiverPlayerId: targetPlayer, target: { ...targetPosition }, passKind: 'chest', travelTicks: 3 } } }],
-      description: 'B · Scripted opposite-side pass. The former handler moves to the nearest point on the three-point arc; the other three spacers keep their physical lanes.',
-    }
+    const receiver = state.offensiveStructure?.assignments.find((item) => item.slot === 'WEAK_SLOT')?.playerId
+    return receiver
+      ? { state, commands: [schedulePerimeterPass(state, receiver)], description: 'B · Pase al lado débil: el defensor del handler pasa a GAP/HELP y el asignado al receptor toma ON_BALL; los cinco emparejamientos permanecen fijos.' }
+      : { state, commands: [], description: 'B · No hay receptor de lado débil disponible.' }
   }
   if (name === 'C') {
-    // Stop just before the legal inbound receipt starts live player movement.
-    // Playing from here exposes controlled, equal-distance runs in MatchState.
-    while (warmState.t < 5) warmState = tick(warmState)
-    return { state: warmState, commands: [], description: 'C · Play through the inbound catch. Four players cover the same 6.3 m target distance; readings below come from 0.1 s MatchState ticks.' }
+    const handlerId = state.ball.kind === 'HELD' ? state.ball.ownerPlayerId : null
+    const receiver = state.offensiveStructure?.assignments.filter((item) => item.playerId !== handlerId)
+      .sort((left, right) => distanceBetween(state.players.find((player) => player.playerId === right.playerId)!.position, state.ball.position)
+        - distanceBetween(state.players.find((player) => player.playerId === left.playerId)!.position, state.ball.position))[0]?.playerId
+    return receiver
+      ? { state, commands: [schedulePerimeterPass(state, receiver)], description: 'C · Skip pass to the far side: weak-side HELP reacts to the live ball and moves through MatchState kinematics.' }
+      : { state, commands: [], description: 'C · No far-side receiver is available.' }
   }
-  const description = name === 'A' ? 'A · Legal inbound, physical advance, and 5OUT settling.'
-    : name === 'D' ? 'D · Watch acceleration, controlled braking, and slot arrival.'
-      : 'E · Mid-movement state for deterministic JSON resume.'
-  if (name === 'D' || name === 'E') while (warmState.t < 20) warmState = tick(warmState)
-  return { state: warmState, commands: [], description }
+  if (name === 'D') {
+    const helperId = state.responsibilities.find((item) => item.owner === 'defensiveStructure' && item.kind === 'HELP')?.playerId
+    const helperAssignment = state.defensiveStructure?.assignments.find((item) => item.defenderPlayerId === helperId)
+    const handlerId = state.ball.kind === 'HELD' ? state.ball.ownerPlayerId : null
+    const helperMan = helperAssignment && state.players.find((player) => player.playerId === helperAssignment.attackerPlayerId)
+    const receiver = helperMan && state.offensiveStructure
+      ? state.offensiveStructure.assignments.filter((item) => item.playerId !== helperAssignment!.attackerPlayerId && item.playerId !== handlerId)
+        .sort((left, right) => distanceBetween(state.players.find((player) => player.playerId === left.playerId)!.position, helperMan.position) - distanceBetween(state.players.find((player) => player.playerId === right.playerId)!.position, helperMan.position))[0]?.playerId
+      : undefined
+    return {
+      state,
+      commands: receiver ? [schedulePerimeterPass(state, receiver)] : [],
+      description: 'D · Pase que acerca el balón al hombre asignado a la ayuda: sigue HELP → RECOVER → GAP con movimiento físico.',
+    }
+  }
+  return {
+    state,
+    commands: [],
+    description: name === 'E'
+      ? 'E · Media cancha con home atacando a la izquierda (periodo 3); A–D muestran el sentido contrario.'
+      : 'A - Five recognizable MAN assignments while players are still moving into the 5OUT structure. Select defenders to inspect assignment and movement intent.',
+  }
 }
 
-function observeAthleticProfiles(history: readonly MatchState[]): readonly AthleticProfileObservation[] {
-  const firstStructure = history.find((item) => item.offensiveStructure !== null)?.offensiveStructure
-  if (!firstStructure) return []
-  return firstStructure.assignments.filter((item) => item.slot !== 'BALL').map((assignment) => {
-    const samples = history.map((item) => ({
-      t: item.t,
-      player: item.players.find((candidate) => candidate.playerId === assignment.playerId)!,
-      intent: item.movementIntents.find((candidate) => candidate.playerId === assignment.playerId),
-    }))
-    let peakSpeedMps = 0
-    let peakAccelerationMps2 = 0
-    let peakBrakingMps2 = 0
-    for (let index = 0; index < samples.length; index += 1) {
-      const current = samples[index]!
-      const speed = Math.hypot(current.player.velocity.x, current.player.velocity.y)
-      if (current.intent) peakSpeedMps = Math.max(peakSpeedMps, speed)
-      if (index === 0 || !current.intent) continue
-      const previous = samples[index - 1]!
-      const elapsedSeconds = (current.t - previous.t) * 0.1
-      if (elapsedSeconds <= 0) continue
-      const previousSpeed = Math.hypot(previous.player.velocity.x, previous.player.velocity.y)
-      peakAccelerationMps2 = Math.max(peakAccelerationMps2, (speed - previousSpeed) / elapsedSeconds)
-      peakBrakingMps2 = Math.max(peakBrakingMps2, (previousSpeed - speed) / elapsedSeconds)
-    }
-    const current = samples.at(-1)!
-    const distanceToTargetMeters = current.intent ? distanceBetween(current.player.position, current.intent.target) : 0
-    const firstIntent = samples.find((sample) => sample.intent)?.intent
-    const initialPlayer = history[0]!.players.find((player) => player.playerId === assignment.playerId)!
-    const arrival = samples.find((sample) => sample.intent
-      && distanceBetween(sample.player.position, sample.intent.target) <= TARGET_ARRIVAL_TOLERANCE_METERS
-      && Math.hypot(sample.player.velocity.x, sample.player.velocity.y) <= TARGET_ARRIVAL_SPEED_MPS)
-    const homeIndex = history[0]!.players.findIndex((player) => player.playerId === assignment.playerId)
-    return {
-      playerId: assignment.playerId,
-      label: `Home ${homeIndex + 1}`,
-      slot: assignment.slot,
-      profile: current.player.kinematics,
-      startDistanceMeters: firstIntent ? distanceBetween(initialPlayer.position, firstIntent.target) : 0,
-      peakSpeedMps,
-      peakAccelerationMps2: Math.max(0, peakAccelerationMps2),
-      peakBrakingMps2: Math.max(0, peakBrakingMps2),
-      distanceToTargetMeters,
-      arrivalSeconds: arrival ? (arrival.t - history[0]!.t) * 0.1 : null,
-    }
-  })
+function schedulePerimeterPass(state: MatchState, receiverPlayerId: MatchState['players'][number]['playerId']): ScheduledCommand {
+  const target = tickMany(state, 4).players.find((player) => player.playerId === receiverPlayerId)!.position
+  return {
+    atT: state.t + 1,
+    command: { type: 'releasePass', command: { receiverPlayerId, target: { ...target }, passKind: 'chest', travelTicks: 4 } },
+  }
+}
+
+function tickMany(state: MatchState, count: number): MatchState {
+  let current = state
+  for (let index = 0; index < count; index += 1) current = tick(current)
+  return current
 }
 
 function applyDueCommands(state: MatchState, commands: readonly ScheduledCommand[]): { readonly state: MatchState; readonly remaining: readonly ScheduledCommand[] } {
@@ -188,8 +121,8 @@ function applyDueCommands(state: MatchState, commands: readonly ScheduledCommand
 export function MatchNextDebugApp() {
   const setup = useMemo(debugSetup, [])
   const [scenario, setScenario] = useState<ScenarioName>('A')
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
-  const [description, setDescription] = useState('A · Legal inbound, physical advance, and 5OUT settling.')
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(setup.initialLineups.away[0]!)
+  const [description, setDescription] = useState(() => scenarioStart('A', setup).description)
   const [script, setScript] = useState<readonly ScheduledCommand[]>([])
   const [simulation, setSimulation] = useState(() => {
     const initial = scenarioStart('A', setup)
@@ -203,6 +136,7 @@ export function MatchNextDebugApp() {
     setPlaying(false)
     setScenario(name)
     setScript(initial.commands)
+    setSelectedPlayerId(setup.initialLineups.away[0]!)
     setDescription(initial.description)
     setResumeResult(null)
     setSimulation({ state: initial.state, history: [initial.state] })
@@ -235,22 +169,31 @@ export function MatchNextDebugApp() {
   const frame = toFrame(state)
   const court = setup.court
   const selectedTick = Math.max(0, history.findIndex((entry) => entry === state))
-  const athleticProfiles = scenario === 'C' ? observeAthleticProfiles(history.slice(0, selectedTick + 1)) : []
   const possession = activePossession(state)
   const selected = frame.players.find((player) => player.playerId === selectedPlayerId) ?? frame.players[0]
+  const selectedMan = selected?.assignment ? frame.players.find((player) => player.playerId === selected.assignment?.attackerPlayerId) : undefined
+  const selectedManDistance = selectedMan && selected ? distanceBetween(selected.position, selectedMan.position) : null
+  const selectedBallDistance = selected ? distanceBetween(selected.position, frame.ball.position) : null
+  const selectedBasketSide = selectedMan && selected && frame.defensiveStructure
+    ? ((frame.defensiveStructure.defendedBasket.x - selectedMan.position.x) * (selected.position.x - selectedMan.position.x)
+      + (frame.defensiveStructure.defendedBasket.y - selectedMan.position.y) * (selected.position.y - selectedMan.position.y)) >= 0 ? 'basket side' : 'behind man'
+    : 'n/a'
   const ballRadius = 0.2 + Math.min(0.15, frame.ball.heightMeters * 0.04)
   return <main style={{ minHeight: '100vh', background: '#101820', color: '#ecf1f4', padding: 24, fontFamily: 'system-ui, sans-serif' }}>
-    <h1 style={{ marginTop: 0 }}>Match Next · Movement &amp; 5OUT Debug</h1>
+    <h1 style={{ marginTop: 0 }}>Match Next · Man-to-Man Defense Debug</h1>
     <p>{description}</p>
     <div aria-label="Match state" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(150px, 1fr))', gap: 8, maxWidth: 1100, marginBottom: 16 }}>
       <span>Ball: <strong>{frame.ball.kind}{frame.ball.ownerPlayerId ? ` · ${frame.ball.ownerPlayerId}` : ''}</strong></span>
       <span>Possession: <strong>{possession?.phase ?? 'none'} · {possession?.id ?? 'none'}</strong></span>
       <span>Formation: <strong>{frame.offensiveStructure?.formation ?? 'none'}</strong></span>
       <span>Ball side: <strong>{frame.offensiveStructure?.ballSide ?? 'none'}</strong></span>
+      <span>Defense: <strong>{frame.defensiveStructure?.scheme ?? 'none'} · {frame.defensiveStructure?.assignments.length ?? 0} assignments</strong></span>
+      <span>ON_BALL defender: <strong>{frame.defensiveStructure?.onBallDefenderPlayerId ?? 'none'}</strong></span>
+      <span>HELP defenders: <strong>{frame.defensiveStructure?.helpDefenderPlayerIds.join(', ') || 'none'}</strong></span>
       <span>Game clock: <strong>{(frame.gameClock / 10).toFixed(1)}s</strong></span>
-      <span>Shot clock: <strong>{frame.shotClock === null ? '—' : `${(frame.shotClock / 10).toFixed(1)}s`}</strong></span>
+      <span>Shot clock: <strong>{frame.shotClock === null ? '--' : `${(frame.shotClock / 10).toFixed(1)}s`}</strong></span>
       <span>Period / tick: <strong>{frame.period} / {frame.t}</strong></span>
-      <span>Score: <strong>{frame.score.home}–{frame.score.away}</strong></span>
+      <span>Score: <strong>{frame.score.home}-{frame.score.away}</strong></span>
     </div>
     <svg viewBox={`0 0 ${court.lengthMeters} ${court.widthMeters}`} role="img" aria-label="Match Next court showing player movement, facing, and target vectors" style={{ display: 'block', width: 'min(100%, 1100px)', background: '#ca8b50', border: '4px solid #f5ead4' }}>
       <rect x="0.3" y="0.3" width={court.lengthMeters - 0.6} height={court.widthMeters - 0.6} fill="none" stroke="#fff1da" strokeWidth="0.12" />
@@ -266,18 +209,23 @@ export function MatchNextDebugApp() {
       {frame.players.map((player, index) => {
         const isHome = player.teamId === setup.homeTeamId
         const isSelected = player.playerId === selected?.playerId
+        const isOnBallDefender = frame.defensiveStructure?.onBallDefenderPlayerId === player.playerId
         const intent = player.intent
+        const assignedAttacker = player.assignment ? frame.players.find((candidate) => candidate.playerId === player.assignment!.attackerPlayerId) : undefined
         return <g key={player.playerId} onClick={() => setSelectedPlayerId(player.playerId)} style={{ cursor: 'pointer' }}>
-          {isHome && intent && <line x1={player.position.x} y1={player.position.y} x2={intent.target.x} y2={intent.target.y} stroke="#fff" strokeWidth="0.06" strokeDasharray="0.2 0.18" opacity="0.55" />}
-          {isHome && <line x1={player.position.x} y1={player.position.y} x2={player.position.x + player.velocity.x * 0.28} y2={player.position.y + player.velocity.y * 0.28} stroke="#27f4e5" strokeWidth="0.1" />}
-          {isHome && <line x1={player.position.x} y1={player.position.y} x2={player.position.x + player.facing.x * 0.8} y2={player.position.y + player.facing.y * 0.8} stroke="#fff284" strokeWidth="0.08" />}
+          {!isHome && assignedAttacker && <line x1={player.position.x} y1={player.position.y} x2={assignedAttacker.position.x} y2={assignedAttacker.position.y} stroke={isOnBallDefender ? '#fff284' : '#ffe6dc'} strokeWidth={isOnBallDefender ? 0.12 : 0.055} strokeDasharray={isOnBallDefender ? 'none' : '0.18 0.15'} opacity={isOnBallDefender ? 0.95 : 0.45} />}
+          {intent && <line x1={player.position.x} y1={player.position.y} x2={intent.target.x} y2={intent.target.y} stroke={isHome ? '#ffffff' : '#8ff4ed'} strokeWidth={isSelected ? 0.1 : 0.055} strokeDasharray="0.2 0.18" opacity={0.65} />}
+          <line x1={player.position.x} y1={player.position.y} x2={player.position.x + player.velocity.x * 0.28} y2={player.position.y + player.velocity.y * 0.28} stroke="#27f4e5" strokeWidth="0.08" opacity="0.8" />
+          <line x1={player.position.x} y1={player.position.y} x2={player.position.x + player.facing.x * 0.8} y2={player.position.y + player.facing.y * 0.8} stroke="#fff284" strokeWidth="0.06" opacity="0.8" />
+          {isOnBallDefender && <circle cx={player.position.x} cy={player.position.y} r="0.66" fill="none" stroke="#fff284" strokeWidth="0.13" />}
           <circle cx={player.position.x} cy={player.position.y} r={isSelected ? 0.52 : 0.42} fill={isHome ? '#153d72' : '#922638'} stroke={isSelected ? '#fff284' : 'white'} strokeWidth={isSelected ? 0.16 : 0.08} />
           <text x={player.position.x} y={player.position.y + 0.12} textAnchor="middle" fill="white" fontSize="0.32">{index < 5 ? index + 1 : index - 4}</text>
+          {!isHome && <text x={player.position.x} y={player.position.y - 0.55} textAnchor="middle" fill={isOnBallDefender ? '#fff284' : '#ffffff'} fontSize="0.25">{player.responsibility?.kind ?? 'ASSIGNED'}</text>}
         </g>
       })}
       <circle cx={frame.ball.position.x} cy={frame.ball.position.y} r={ballRadius} fill={frame.ball.kind === 'DEAD' ? '#523b2b' : '#f6de7e'} stroke="white" strokeWidth="0.08" />
     </svg>
-    <p style={{ maxWidth: 1100, color: '#c8d0d6' }}>Offense: dashed line = intent target, cyan = velocity, yellow = facing. The five away players are static placeholders and do not defend.</p>
+    <p style={{ maxWidth: 1100, color: '#c8d0d6' }}>Línea roja clara: asignación defensor → hombre. Amarillo: ON_BALL. Línea punteada de cada jugador: target de intent; cian: velocidad; amarillo corto: facing.</p>
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginTop: 16 }}>
       {(['A', 'B', 'C', 'D', 'E'] as const).map((name) => <button key={name} onClick={() => chooseScenario(name)} aria-pressed={scenario === name}>Scenario {name}</button>)}
       <button onClick={() => setPlaying(false)}>Pause</button>
@@ -293,25 +241,15 @@ export function MatchNextDebugApp() {
       <label>Player <select value={selected?.playerId ?? ''} onChange={(event) => setSelectedPlayerId(event.target.value)}>{frame.players.map((player) => <option key={player.playerId} value={player.playerId}>{player.playerId}</option>)}</select></label>
       {selected && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(180px, 1fr))', gap: 12, marginTop: 12 }}>
         <div><strong>Position / motion</strong><div>Position: {selected.position.x.toFixed(2)}, {selected.position.y.toFixed(2)} m</div><div>Velocity: {selected.velocity.x.toFixed(2)}, {selected.velocity.y.toFixed(2)} m/s (current speed {Math.hypot(selected.velocity.x, selected.velocity.y).toFixed(2)})</div><div>Profile max / acceleration / braking: {selected.kinematics.maxSpeedMps.toFixed(1)} / {selected.kinematics.accelerationMps2.toFixed(1)} / {selected.kinematics.brakingMps2.toFixed(1)}</div><div>Facing: {selected.facing.x.toFixed(2)}, {selected.facing.y.toFixed(2)}</div></div>
-        <div><strong>Responsibility</strong><div>{selected.responsibility?.kind ?? 'none'}{selected.responsibility?.slot ? ` · ${selected.responsibility.slot}` : ''}</div><div>{selected.responsibility?.id ?? '—'} · {selected.responsibility?.owner ?? '—'}</div><div>{selected.responsibility?.reason ?? 'No offensive responsibility'}</div><div>Since tick {selected.responsibility?.startedT ?? '—'}</div></div>
-        <div><strong>Decision → movement intent</strong><div>{selected.decision?.kind ?? 'none'} · {selected.decision?.reason ?? '—'}</div><div>Target: {selected.intent ? `${selected.intent.target.x.toFixed(2)}, ${selected.intent.target.y.toFixed(2)} m` : '—'}</div><div>Urgency: {selected.intent?.urgency ?? '—'} · facing {selected.intent?.facing.kind ?? '—'}</div><div>Provenance: {selected.intent?.provenance.owner ?? '—'} / {selected.intent?.provenance.decisionId ?? '—'} / {selected.intent?.provenance.responsibilityId ?? '—'}</div><div>Distance to target: {selected.intent ? `${distanceBetween(selected.position, selected.intent.target).toFixed(2)} m` : '—'}</div></div>
+        <div><strong>Responsibility</strong><div>{selected.responsibility?.kind ?? 'none'}{selected.responsibility?.slot ? ` · ${selected.responsibility.slot}` : ''}</div><div>{selected.responsibility?.id ?? '--'} · {selected.responsibility?.owner ?? '--'}</div><div>{selected.responsibility?.reason ?? 'No offensive responsibility'}</div><div>Since tick {selected.responsibility?.startedT ?? '--'}</div></div>
+        <div><strong>Decision and movement intent</strong><div>{selected.decision?.kind ?? 'none'} · {selected.decision?.reason ?? '--'}</div><div>Target: {selected.intent ? `${selected.intent.target.x.toFixed(2)}, ${selected.intent.target.y.toFixed(2)} m` : '--'}</div><div>Urgency: {selected.intent?.urgency ?? '--'} · facing {selected.intent?.facing.kind ?? '--'}</div><div>Provenance: {selected.intent?.provenance.owner ?? '--'} / {selected.intent?.provenance.decisionId ?? '--'} / {selected.intent?.provenance.responsibilityId ?? '--'}</div><div>Distance to target: {selected.intent ? `${distanceBetween(selected.position, selected.intent.target).toFixed(2)} m` : '--'}</div></div>
+      </div>}
+      {selected?.assignment && selectedMan && <div aria-label="Defensive player inspector" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(180px, 1fr))', gap: 12, marginTop: 16, paddingTop: 12, borderTop: '1px solid #43515c' }}>
+        <div><strong>DEFENDER / ASSIGNMENT</strong><div>Assigned attacker: {selected.assignment.attackerPlayerId}</div><div>Assignment source: {selected.assignment.source} · since tick {selected.assignment.startedT}</div><div>Distance to assigned man: {selectedManDistance?.toFixed(2)} m</div><div>Basket relation: {selectedBasketSide}</div></div>
+        <div><strong>DEFENSIVE STRUCTURE</strong><div>Responsibility: {selected.responsibility?.kind ?? 'none'}</div><div>Decision: {selected.decision?.kind ?? 'none'}</div><div>Ball distance: {selectedBallDistance?.toFixed(2)} m</div><div>Target: {selected.intent ? `${selected.intent.target.x.toFixed(2)}, ${selected.intent.target.y.toFixed(2)} m` : 'none'}</div></div>
+        <div><strong>INTENT / PROVENANCE</strong><div>Urgency: {selected.intent?.urgency ?? 'none'} · facing {selected.intent?.facing.kind ?? 'none'}</div><div>Owner: {selected.intent?.provenance.owner ?? 'none'}</div><div>Assignment → responsibility → decision → intent</div><div>{selected.assignment.source} → {selected.responsibility?.id ?? 'none'} → {selected.decision?.id ?? 'none'} → {selected.intent?.playerId ?? 'none'}</div></div>
       </div>}
       <p>Structure: {frame.offensiveStructure ? `${frame.offensiveStructure.formation} · ${frame.offensiveStructure.assignments.find((item) => item.playerId === selected?.playerId)?.slot ?? 'no slot'}` : 'none'}. No autonomous basketball decision is being simulated.</p>
     </section>
-    {scenario === 'C' && <section aria-label="Athletic profile traces" style={{ marginTop: 16, background: '#1b2832', padding: 16, maxWidth: 1100, borderRadius: 6 }}>
-      <h2 style={{ marginTop: 0 }}>Scenario C · Recorded kinematics</h2>
-      <p>Measured from the recorded MatchState sequence at 0.1 s per tick. Peak speed, acceleration and braking are observed values; arrival is recorded only when the player reaches the real target and settles.</p>
-      {athleticProfiles.length === 0 ? <p>Step or play through the inbound receipt to start the four equal-distance runs.</p> : <div style={{ display: 'grid', gap: 6 }}>
-        {athleticProfiles.map((item) => <div key={item.playerId} style={{ display: 'grid', gridTemplateColumns: '110px 150px repeat(3, minmax(115px, 1fr)) minmax(155px, 1.2fr) minmax(150px, 1.2fr)', gap: 8, padding: '8px 10px', background: '#243542', borderLeft: `4px solid ${item.profile.maxSpeedMps <= 4.8 ? '#ffbb77' : item.profile.maxSpeedMps >= 6.1 ? '#73dfbb' : '#90b9ff'}`, fontVariantNumeric: 'tabular-nums' }}>
-          <strong>{item.label} · {item.slot.replace('_', ' ')}</strong>
-          <span>Profile: {item.profile.maxSpeedMps.toFixed(1)} m/s · {item.profile.accelerationMps2.toFixed(1)} · {item.profile.brakingMps2.toFixed(1)}</span>
-          <span>Peak speed: {item.peakSpeedMps.toFixed(2)} m/s</span>
-          <span>Peak accel: {item.peakAccelerationMps2.toFixed(2)} m/s²</span>
-          <span>Peak braking: {item.peakBrakingMps2.toFixed(2)} m/s²</span>
-          <span>Run start: {item.startDistanceMeters.toFixed(1)} m</span>
-          <span>{item.arrivalSeconds === null ? `Moving · ${item.distanceToTargetMeters.toFixed(2)} m left` : `Arrived: ${item.arrivalSeconds.toFixed(1)} s`}</span>
-        </div>)}
-      </div>}
-    </section>}
   </main>
 }

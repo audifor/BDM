@@ -67,7 +67,7 @@ function intent(playerId: MatchPlayerState['playerId'], target: CourtPosition, u
 }
 
 function kineticPlayer(position: CourtPosition, velocity: CourtPosition = { x: 0, y: 0 }): MatchPlayerState {
-  return { playerId: homeIds[0]!, teamId: homeTeamId, active: true, position, velocity, facing: { x: 1, y: 0 }, kinematics: { maxSpeedMps: 6, accelerationMps2: 3, brakingMps2: 4 } }
+  return { playerId: homeIds[0]!, teamId: homeTeamId, active: true, position, velocity, facing: { x: 1, y: 0 }, primaryPosition: 'PG', heightCm: 190, defensiveMobility: 50, kinematics: { maxSpeedMps: 6, accelerationMps2: 3, brakingMps2: 4 } }
 }
 
 describe('Match Next movement and 5OUT authority', () => {
@@ -185,9 +185,9 @@ describe('Match Next movement and 5OUT authority', () => {
     expect(activePossession(state)?.phase).toBe('ADVANCE')
     expect(state.offensiveStructure?.formation).toBe('5OUT')
     expect(state.offensiveStructure?.assignments).toHaveLength(5)
-    expect(state.responsibilities).toHaveLength(5)
-    expect(state.decisions).toHaveLength(5)
-    expect(state.movementIntents).toHaveLength(5)
+    expect(state.responsibilities).toHaveLength(10)
+    expect(state.decisions).toHaveLength(10)
+    expect(state.movementIntents).toHaveLength(10)
     expect(state.responsibilities.filter((item) => item.kind === 'ADVANCE')).toHaveLength(1)
     expect(state.responsibilities.filter((item) => item.kind === 'SPACE')).toHaveLength(4)
     for (const movement of state.movementIntents) {
@@ -198,7 +198,7 @@ describe('Match Next movement and 5OUT authority', () => {
     }
     const ballHandler = state.ball.kind === 'HELD' ? state.ball.ownerPlayerId : null
     expect(state.movementIntents.find((movement) => movement.playerId === ballHandler)?.target).toEqual(advanceTarget(state, state.offensiveStructure!.attackingBasket))
-    expect(state.movementIntents.filter((movement) => movement.facing.kind === 'BALL')).toHaveLength(4)
+    expect(state.movementIntents.filter((movement) => movement.provenance.owner === 'offensiveStructure' && movement.facing.kind === 'BALL')).toHaveLength(4)
     expect(state.movementIntents.filter((movement) => movement.facing.kind === 'BASKET')).toHaveLength(1)
   })
 
@@ -240,9 +240,8 @@ describe('Match Next movement and 5OUT authority', () => {
       expect(report.movementTeleports).toBe(0)
       expect(report.ballTeleports).toBe(0)
       expect(report.ballStateViolations).toEqual([])
-      for (const defender of state.players.filter((player) => player.teamId !== (side === 'home' ? setup.homeTeamId : setup.awayTeamId))) {
-        expect(defender.position).toEqual(setup.initialPlayerPositions!.find((item) => item.playerId === defender.playerId)!.position)
-      }
+      expect(state.defensiveStructure?.assignments).toHaveLength(5)
+      expect(state.defensiveStructure?.onBallDefenderPlayerId).toBeTruthy()
     }
   })
 
@@ -256,7 +255,7 @@ describe('Match Next movement and 5OUT authority', () => {
     state = tick(state)
     expect(state.ball.kind).toBe('PASS_IN_FLIGHT')
     expect(state.players.find((player) => player.playerId === movingTeammate)!.position).not.toEqual(before)
-    expect(state.movementIntents).toHaveLength(5)
+    expect(state.movementIntents).toHaveLength(10)
   })
 
   it('keeps a settled 5OUT spaced, follows targets, and reports no continuity or provenance violations', () => {
@@ -338,7 +337,7 @@ describe('Match Next movement and 5OUT authority', () => {
     const receiver = settled.offensiveStructure!.assignments.find((item) => item.slot === 'WEAK_SLOT')!.playerId
     const target = projectPlayer(settled, receiver, 4)
     const passFlight = ticks(applyCommand(settled, { type: 'releasePass', command: { receiverPlayerId: receiver, target, passKind: 'bounce', travelTicks: 4 } }), 2)
-    expect(passFlight.movementIntents).toHaveLength(5)
+    expect(passFlight.movementIntents).toHaveLength(10)
     expect(resume(passFlight, 40)).toEqual(ticks(passFlight, 40))
     const reassigned = ticks(passFlight, 2)
     expect(reassigned.ball).toMatchObject({ kind: 'HELD', ownerPlayerId: receiver })
@@ -462,16 +461,22 @@ describe('Match Next movement and 5OUT authority', () => {
     expect(movementMs).toBeLessThan(5000)
 
     let state = settleInSetup(startPossession(setupFor()))
+    const defensiveAssignments = state.defensiveStructure?.assignments
     const workloadStart = performance.now()
     for (let passIndex = 0; passIndex < 32; passIndex += 1) {
       const wantedSlot = passIndex % 2 === 0 ? 'STRONG_SLOT' : 'WEAK_SLOT'
       const receiver = state.offensiveStructure!.assignments.find((item) => item.slot === wantedSlot)!.playerId
       const target = projectPlayer(state, receiver, 4)
       state = ticks(applyCommand(state, { type: 'releasePass', command: { receiverPlayerId: receiver, target, passKind: 'chest', travelTicks: 4 } }), 4)
+      expect(state.defensiveStructure?.assignments).toEqual(defensiveAssignments)
     }
     const structureMs = performance.now() - workloadStart
-    process.stderr.write(`Match Next structure workload: 128 pass-flight ticks, ${state.offensiveStructure?.reassignmentCount ?? 0} reassignments, ${structureMs.toFixed(1)} ms\n`)
+    const assignmentEvents = state.events.filter((event) => event.type === 'defensiveAssignmentsEstablished').length
+    const responsibilityEvents = state.events.filter((event) => event.type === 'defensiveResponsibilityChanged').length
+    process.stderr.write(`Match Next pass-heavy MAN workload: 128 flight ticks, ${(128 / (structureMs / 1000)).toFixed(0)} ticks/s, assignments established ${assignmentEvents}, responsibility changes ${responsibilityEvents}, ${structureMs.toFixed(1)} ms\n`)
     expect(state.ball.kind).toBe('HELD')
+    expect(assignmentEvents).toBe(1)
+    expect(responsibilityEvents).toBeGreaterThan(0)
     expect(state.offensiveStructure?.reassignmentCount).toBeGreaterThan(0)
     expect(structureMs).toBeLessThan(3000)
   })
