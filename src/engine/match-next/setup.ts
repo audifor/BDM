@@ -6,6 +6,8 @@ export interface MatchNextClockRules {
   readonly periodSeconds: number
   readonly overtimeSeconds: number
   readonly shotClockSeconds: number
+  /** Competition-owned rule input. Null/omitted means unresolved; never infer a reset. */
+  readonly offensiveReboundShotClockSeconds?: number | null
 }
 
 export interface MatchNextPlayerProfile {
@@ -39,6 +41,8 @@ export interface MatchSetup {
   readonly awaySquad: readonly PlayerId[]
   readonly initialLineups: { readonly home: readonly PlayerId[]; readonly away: readonly PlayerId[] }
   readonly players: readonly MatchNextPlayerProfile[]
+  /** Optional static positions for test/debug scenarios; this is not a movement system. */
+  readonly initialPlayerPositions?: readonly { readonly playerId: PlayerId; readonly position: CourtPosition }[]
   readonly tacticalPlans: { readonly home: MatchNextTacticalPlan; readonly away: MatchNextTacticalPlan }
   readonly defensiveMatchupOverrides: { readonly home: readonly DefensiveMatchupOverride[]; readonly away: readonly DefensiveMatchupOverride[] }
   readonly matchSeed: number
@@ -49,6 +53,10 @@ export function validateMatchSetup(setup: MatchSetup): void {
   if (!Number.isInteger(setup.clockRules.periodCount) || setup.clockRules.periodCount <= 0) throw new Error('Clock periodCount must be a positive integer')
   for (const field of ['periodSeconds', 'overtimeSeconds', 'shotClockSeconds'] as const) {
     if (!Number.isSafeInteger(setup.clockRules[field]) || setup.clockRules[field] <= 0) throw new Error(`Clock ${field} must be a positive integer number of seconds`)
+  }
+  const offensiveReboundReset = setup.clockRules.offensiveReboundShotClockSeconds
+  if (offensiveReboundReset !== undefined && offensiveReboundReset !== null && (!Number.isFinite(offensiveReboundReset) || offensiveReboundReset <= 0 || !Number.isSafeInteger(offensiveReboundReset * 10))) {
+    throw new Error('Clock offensiveReboundShotClockSeconds must be null or a positive number of seconds representable in tenths')
   }
   if (!Number.isInteger(setup.matchSeed) || setup.matchSeed < 0 || setup.matchSeed > 0xffff_ffff) throw new Error('matchSeed must be an unsigned 32-bit integer')
   const profiles = new Map<string, MatchNextPlayerProfile>()
@@ -82,6 +90,13 @@ export function validateMatchSetup(setup: MatchSetup): void {
     }
   }
   for (const profile of setup.players) if (!home.has(profile.playerId) && !away.has(profile.playerId)) throw new Error(`Player profile ${profile.playerId} is absent from both squads`)
+  const activeIds = new Set([...setup.initialLineups.home, ...setup.initialLineups.away])
+  const initialPositions = setup.initialPlayerPositions ?? []
+  if (new Set(initialPositions.map(({ playerId }) => playerId)).size !== initialPositions.length) throw new Error('Initial player positions contain duplicate player IDs')
+  for (const entry of initialPositions) {
+    if (!activeIds.has(entry.playerId)) throw new Error(`Initial position player ${entry.playerId} is not active`)
+    if (!Number.isFinite(entry.position.x) || !Number.isFinite(entry.position.y) || entry.position.x < 0 || entry.position.x > setup.court.lengthMeters || entry.position.y < 0 || entry.position.y > setup.court.widthMeters) throw new Error(`Initial position for ${entry.playerId} is outside the court`)
+  }
 }
 
 export function neutralFoundationPosition(side: 'home' | 'away', slot: number, court: CourtGeometry): CourtPosition {
