@@ -28,6 +28,46 @@ export interface DefensiveStructureState {
   readonly helpDefenderPlayerIds: readonly PlayerId[]
 }
 
+export type ReboundResponsibilityKind = 'BOX_OUT' | 'CRASH_REBOUND' | 'PURSUE_REBOUND' | 'RETREAT'
+export interface ReboundResponsibility {
+  readonly playerId: PlayerId
+  readonly teamId: TeamId
+  readonly kind: ReboundResponsibilityKind
+  readonly target: CourtPosition
+  readonly boxOutTarget?: CourtPosition
+  readonly responsibilityId: string
+  readonly decisionId: string
+}
+export interface MatchReboundState {
+  readonly shootingTeamId: TeamId
+  readonly startedT: number
+  readonly availableAtT: number
+  /** Fixed physical landing point for this rebound; it is not a winner position. */
+  readonly target: CourtPosition
+  readonly responsibilities: readonly ReboundResponsibility[]
+}
+
+export type TransitionTrigger = 'defensiveRebound' | 'turnover' | 'looseBallRecovery'
+export type TransitionAdvantage = 'ADVANTAGE' | 'NEUTRAL' | 'STOPPED'
+export type TransitionRoleKind = 'BALL_ADVANCE' | 'LANE_LEFT' | 'LANE_RIGHT' | 'RIM_RUN' | 'TRAIL'
+  | 'STOP_BALL' | 'PROTECT_RIM' | 'MATCH'
+export interface TransitionRole {
+  readonly playerId: PlayerId
+  readonly teamId: TeamId
+  readonly kind: TransitionRoleKind
+  readonly target: CourtPosition
+  readonly responsibilityId: string
+  readonly decisionId: string
+}
+export interface MatchTransitionState {
+  readonly teamId: TeamId
+  readonly ballHandlerPlayerId: PlayerId
+  readonly trigger: TransitionTrigger
+  readonly startedT: number
+  readonly advantage: TransitionAdvantage
+  readonly roles: readonly TransitionRole[]
+}
+
 export type PossessionStartReason = 'periodStart' | 'madeBasketInbound' | 'defensiveRebound' | 'steal' | 'turnoverInbound' | 'shotClockViolation' | 'other'
 export type PossessionEndReason = 'made' | 'defensiveRebound' | 'turnover' | 'shotClock' | 'periodEnd'
 export type PossessionPhase = 'INBOUND' | 'ADVANCE' | 'SETUP' | 'ACTION' | 'SHOT' | 'LIVE_REBOUND'
@@ -54,6 +94,7 @@ export type MatchNextEventType =
   | 'looseBallCreated' | 'looseBallRecovered'
   | 'defensiveAssignmentsEstablished' | 'defensiveResponsibilityChanged'
   | 'decisionSelected' | 'actionStarted' | 'actionResolved'
+  | 'reboundResponsibilitiesAssigned' | 'transitionStarted' | 'transitionAdvantageChanged' | 'transitionResolved'
   | 'shotClockViolation' | 'ballDead'
 
 export interface MatchNextEvent {
@@ -84,6 +125,10 @@ export interface MatchNextEvent {
   readonly shotProbability?: number
   readonly contestScore?: number
   readonly passQuality?: number
+  readonly reboundRole?: ReboundResponsibilityKind
+  readonly transitionRole?: TransitionRoleKind
+  readonly transitionTrigger?: TransitionTrigger
+  readonly transitionAdvantage?: TransitionAdvantage
 }
 
 export interface MatchPlayerState {
@@ -95,6 +140,8 @@ export interface MatchPlayerState {
   readonly facing: CourtPosition
   readonly primaryPosition: MatchSetup['players'][number]['primaryPosition']
   readonly heightCm: number
+  readonly standingReachCm: number
+  readonly reboundingImpact: number
   readonly defensiveMobility: number
   readonly offense: MatchSetup['players'][number]['offense']
   readonly passing: Required<NonNullable<MatchSetup['players'][number]['passing']>>
@@ -124,6 +171,8 @@ export interface MatchState {
   readonly movementIntents: readonly MovementIntent[]
   readonly offensiveStructure: OffensiveStructureState | null
   readonly defensiveStructure: DefensiveStructureState | null
+  readonly reboundState: MatchReboundState | null
+  readonly transition: MatchTransitionState | null
   readonly currentDecision: MatchDecision | null
   readonly actions: readonly MatchActionState[]
   readonly nextMatchDecisionSequence: number
@@ -152,13 +201,13 @@ export function createInitialMatchState(setup: MatchSetup): MatchState {
       const position = { ...(initialPosition(playerId) ?? neutralFoundationPosition('home', slot, setup.court)) }
       const basket = attackingBasketForTeam(setup.homeTeamId, setup.homeTeamId, 1, setup.court)
       const profile = setup.players.find((entry) => entry.playerId === playerId)!
-      return { playerId, teamId: setup.homeTeamId, active: true as const, position, velocity: { x: 0, y: 0 }, facing: unitVector({ x: basket.x - position.x, y: basket.y - position.y }), primaryPosition: profile.primaryPosition, heightCm: profile.physical.heightCm, defensiveMobility: profile.defense.mobility, offense: { ...profile.offense }, passing: { accuracy: profile.passing?.accuracy ?? 50, vision: profile.passing?.vision ?? 50, timing: profile.passing?.timing ?? 50 }, defense: { ...profile.defense }, kinematics: { ...profile.kinematics } }
+      return { playerId, teamId: setup.homeTeamId, active: true as const, position, velocity: { x: 0, y: 0 }, facing: unitVector({ x: basket.x - position.x, y: basket.y - position.y }), primaryPosition: profile.primaryPosition, heightCm: profile.physical.heightCm, standingReachCm: profile.physical.standingReachCm, reboundingImpact: profile.rebounding.impact, defensiveMobility: profile.defense.mobility, offense: { ...profile.offense }, passing: { accuracy: profile.passing?.accuracy ?? 50, vision: profile.passing?.vision ?? 50, timing: profile.passing?.timing ?? 50 }, defense: { ...profile.defense }, kinematics: { ...profile.kinematics } }
     }),
     ...setup.initialLineups.away.map((playerId, slot) => {
       const position = { ...(initialPosition(playerId) ?? neutralFoundationPosition('away', slot, setup.court)) }
       const basket = attackingBasketForTeam(setup.awayTeamId, setup.homeTeamId, 1, setup.court)
       const profile = setup.players.find((entry) => entry.playerId === playerId)!
-      return { playerId, teamId: setup.awayTeamId, active: true as const, position, velocity: { x: 0, y: 0 }, facing: unitVector({ x: basket.x - position.x, y: basket.y - position.y }), primaryPosition: profile.primaryPosition, heightCm: profile.physical.heightCm, defensiveMobility: profile.defense.mobility, offense: { ...profile.offense }, passing: { accuracy: profile.passing?.accuracy ?? 50, vision: profile.passing?.vision ?? 50, timing: profile.passing?.timing ?? 50 }, defense: { ...profile.defense }, kinematics: { ...profile.kinematics } }
+      return { playerId, teamId: setup.awayTeamId, active: true as const, position, velocity: { x: 0, y: 0 }, facing: unitVector({ x: basket.x - position.x, y: basket.y - position.y }), primaryPosition: profile.primaryPosition, heightCm: profile.physical.heightCm, standingReachCm: profile.physical.standingReachCm, reboundingImpact: profile.rebounding.impact, defensiveMobility: profile.defense.mobility, offense: { ...profile.offense }, passing: { accuracy: profile.passing?.accuracy ?? 50, vision: profile.passing?.vision ?? 50, timing: profile.passing?.timing ?? 50 }, defense: { ...profile.defense }, kinematics: { ...profile.kinematics } }
     }),
   ]
   const position = { x: setup.court.lengthMeters / 2, y: setup.court.widthMeters / 2 }
@@ -188,6 +237,8 @@ export function createInitialMatchState(setup: MatchSetup): MatchState {
     movementIntents: [],
     offensiveStructure: null,
     defensiveStructure: null,
+    reboundState: null,
+    transition: null,
     currentDecision: null,
     actions: [],
     nextMatchDecisionSequence: 1,

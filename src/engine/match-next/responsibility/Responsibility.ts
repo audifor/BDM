@@ -3,7 +3,12 @@ import type { OffensiveSlotName } from '../structure/FiveOutStructure'
 
 export type OffensiveResponsibilityKind = 'BALL' | 'SPACE' | 'ADVANCE'
 export type DefensiveResponsibilityKind = 'ON_BALL' | 'GAP' | 'HELP' | 'RECOVER'
+export type TemporaryResponsibilityKind =
+  | 'BOX_OUT' | 'CRASH_REBOUND' | 'PURSUE_REBOUND' | 'SECURE_REBOUND' | 'RETREAT'
+  | 'BALL_ADVANCE' | 'LANE_LEFT' | 'LANE_RIGHT' | 'RIM_RUN' | 'TRAIL'
+  | 'STOP_BALL' | 'PROTECT_RIM' | 'MATCH'
 export type ResponsibilityKind = OffensiveResponsibilityKind | DefensiveResponsibilityKind
+  | TemporaryResponsibilityKind
 export type ResponsibilityOwner = 'offensiveStructure' | 'defensiveStructure' | 'possession'
 
 export interface PlayerResponsibility {
@@ -21,7 +26,7 @@ export interface PlayerResponsibility {
 
 export type OffensiveDecisionKind = 'OCCUPY_SLOT' | 'ADVANCE_BALL' | 'HOLD_STRUCTURE'
 export type DefensiveDecisionKind = 'GUARD_BALL' | 'GUARD_GAP' | 'HELP_POSITION' | 'RECOVER_TO_MAN' | 'RETREAT_TO_DEFENSE'
-export type StructuralDecisionKind = OffensiveDecisionKind | DefensiveDecisionKind
+export type StructuralDecisionKind = OffensiveDecisionKind | DefensiveDecisionKind | TemporaryResponsibilityKind
 
 export interface StructuralDecision {
   readonly id: string

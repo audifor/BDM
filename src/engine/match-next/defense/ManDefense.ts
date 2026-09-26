@@ -18,6 +18,8 @@ const RECOVER_END_METERS = 0.6
 /** Reconciles one possession's assignments and defensive structure without changing player positions. */
 export function reconcileManDefense(input: MatchState): MatchState {
   const possession = activePossession(input)
+  if (input.ball.kind === 'REBOUNDABLE'
+    || input.transition !== null && possession?.teamId === input.transition.teamId && possession.phase !== 'SETUP') return input
   if (!possession || input.ball.kind === 'DEAD') return clearDefensiveState(input)
 
   const defendingTeamId = possession.teamId === input.homeTeamId ? input.awayTeamId : input.homeTeamId

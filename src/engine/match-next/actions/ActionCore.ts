@@ -162,7 +162,7 @@ function releaseReadyShots(state: MatchState): MatchState {
     const arrivalT = next.t + 6
     const plannedOutcome = drawResult.value < probability
       ? { kind: 'MAKE' as const, points }
-      : { kind: 'MISS' as const, reboundTarget: { ...shooter.position }, reboundAvailableT: arrivalT + 14 }
+      : { kind: 'MISS' as const, reboundTarget: reboundLandingTarget(shooter.position, basket), reboundAvailableT: arrivalT + 12 }
     next = releaseShot(next, {
       targetBasket: basket,
       travelTicks: 6,
@@ -184,6 +184,18 @@ function releaseReadyShots(state: MatchState): MatchState {
     next = finishCloseoutsForShooter(next, shooter.playerId, contest.score)
   }
   return next
+}
+
+function reboundLandingTarget(shooter: CourtPosition, basket: CourtPosition): CourtPosition {
+  const dx = shooter.x - basket.x
+  const dy = shooter.y - basket.y
+  const shotDistance = Math.hypot(dx, dy)
+  if (shotDistance <= 1e-9) return { ...basket }
+  const reboundDistance = Math.min(3, shotDistance * 0.45)
+  return {
+    x: basket.x + dx / shotDistance * reboundDistance,
+    y: basket.y + dy / shotDistance * reboundDistance,
+  }
 }
 
 function finishCloseoutsForShooter(state: MatchState, shooterPlayerId: string, contestScore: number): MatchState {

@@ -1,6 +1,7 @@
 import { distanceBetween, isInsideCourt } from '@/domain/court'
-import { BALL_ACQUISITION_RADIUS_METERS } from './ball/BallState'
+import { BALL_ACQUISITION_RADIUS_METERS, REBOUND_ACQUISITION_RADIUS_METERS } from './ball/BallState'
 import { MOVEMENT_URGENCY_FACTORS } from './movement/MovementIntent'
+import { attackingBasketForTeam } from './structure/FiveOutStructure'
 import type { MatchFrame, MatchFrameBall } from './frame'
 
 export interface MatchObservationReport {
@@ -56,6 +57,10 @@ export interface MatchObservationReport {
   readonly onBallWrongSideViolations: number
   readonly defensiveTargetMirrorViolations: number
   readonly defensiveOutOfBoundsViolations: readonly string[]
+  readonly reboundResponsibilityViolations: readonly string[]
+  readonly transitionStructureViolations: readonly string[]
+  readonly transitionDirectionViolations: number
+  readonly invalidReboundWinnerCount: number
 }
 
 export const MAX_FOUNDATION_PLAYER_DISPLACEMENT_METERS_PER_TICK = 1
@@ -83,7 +88,11 @@ export function observeFrames(frames: readonly MatchFrame[]): MatchObservationRe
   const possessionViolations: string[] = []
   const clockViolations: string[] = []
   const longTargetDistanceViolations: string[] = []
+  const reboundResponsibilityViolations: string[] = []
+  const transitionStructureViolations: string[] = []
   let illegalAcquisitions = 0
+  let invalidReboundWinnerCount = 0
+  let transitionDirectionViolations = 0
   let ballTeleports = 0
   let movementTeleports = 0
   let invalidPossessions = 0
@@ -99,6 +108,46 @@ export function observeFrames(frames: readonly MatchFrame[]): MatchObservationRe
   for (let index = 0; index < frames.length; index += 1) {
     const frame = frames[index]!
     const playersById = new Map(frame.players.map((player) => [player.playerId, player]))
+    if (frame.reboundState) {
+      const roles = frame.reboundState.responsibilities
+      if (frame.ball.kind !== 'REBOUNDABLE') reboundResponsibilityViolations.push(`Rebound responsibilities are stale at frame ${index}`)
+      if (roles.length !== 10 || new Set(roles.map((item) => item.playerId)).size !== roles.length) reboundResponsibilityViolations.push(`Rebound responsibilities do not cover ten unique players at frame ${index}`)
+      for (const role of roles) {
+        const player = playersById.get(role.playerId)
+        const intent = frame.movementIntents.find((item) => item.playerId === role.playerId)
+        if (!player || player.teamId !== role.teamId || !intent || distanceBetween(intent.target, role.target) > 1e-6) reboundResponsibilityViolations.push(`Rebound role ${role.playerId} has no matching live movement intent at frame ${index}`)
+        if (role.kind === 'BOX_OUT' && !role.boxOutTarget) reboundResponsibilityViolations.push(`Box-out ${role.playerId} has no box-out target at frame ${index}`)
+        if (role.kind === 'CRASH_REBOUND' || role.kind === 'PURSUE_REBOUND') {
+          if (frame.ball.kind === 'REBOUNDABLE' && distanceBetween(role.target, frame.reboundState.target) > 1e-6) reboundResponsibilityViolations.push(`Rebound pursuer ${role.playerId} is not targeting the landing point at frame ${index}`)
+        }
+      }
+      if (frame.reboundState.shootingTeamId !== frame.possession?.teamId) reboundResponsibilityViolations.push(`Rebound shooting team differs from open possession at frame ${index}`)
+    } else if (frame.players.some((player) => player.reboundResponsibility !== null)) {
+      reboundResponsibilityViolations.push(`Rebound player role outlived its rebound state at frame ${index}`)
+    }
+    if (frame.transition) {
+      const transition = frame.transition
+      const roles = transition.roles
+      if (!frame.possession || frame.possession.teamId !== transition.teamId || (frame.possession.phase !== 'ADVANCE' && frame.possession.phase !== 'ACTION')) transitionStructureViolations.push(`Transition does not match the active possession phase at frame ${index}`)
+      if (roles.length !== 10 || new Set(roles.map((role) => role.playerId)).size !== roles.length) transitionStructureViolations.push(`Transition roles do not cover ten unique players at frame ${index}`)
+      const offenseKinds = roles.filter((role) => role.teamId === transition.teamId).map((role) => role.kind).sort()
+      const defenseKinds = roles.filter((role) => role.teamId !== transition.teamId).map((role) => role.kind).sort()
+      if (offenseKinds.join('|') !== ['BALL_ADVANCE', 'LANE_LEFT', 'LANE_RIGHT', 'RIM_RUN', 'TRAIL'].sort().join('|')) transitionStructureViolations.push(`Transition offense roles are duplicated or incomplete at frame ${index}`)
+      if (defenseKinds.join('|') !== ['MATCH', 'MATCH', 'MATCH', 'PROTECT_RIM', 'STOP_BALL'].sort().join('|')) transitionStructureViolations.push(`Transition defense roles are duplicated or incomplete at frame ${index}`)
+      for (const role of roles) {
+        const player = playersById.get(role.playerId)
+        const intent = frame.movementIntents.find((item) => item.playerId === role.playerId)
+        if (!player || player.teamId !== role.teamId || !intent || distanceBetween(intent.target, role.target) > 1e-6) transitionStructureViolations.push(`Transition role ${role.playerId} has no matching live movement intent at frame ${index}`)
+        if (role.kind === 'BALL_ADVANCE' && player) {
+          const basket = attackingBasketForTeam(transition.teamId, frame.homeTeamId, frame.period, frame.court)
+          const direction = basket.x >= frame.court.lengthMeters / 2 ? 1 : -1
+          if ((role.target.x - player.position.x) * direction < -0.2) transitionDirectionViolations += 1
+        }
+      }
+      if (frame.ball.kind === 'HELD' && frame.ball.ownerTeamId !== transition.teamId) transitionStructureViolations.push(`Transition ball owner differs from transition offense at frame ${index}`)
+    } else if (frame.players.some((player) => player.transitionRole !== null)) {
+      transitionStructureViolations.push(`Transition player role outlived its transition state at frame ${index}`)
+    }
     for (const player of frame.players) {
       if (!isInsideCourt(player.position, frame.court)) outOfBoundsViolations.push(`Player ${player.playerId} is outside court at frame ${index}`)
       if (frame.movementIntents.some((item) => item.playerId === player.playerId) && !frame.responsibilities.some((item) => item.playerId === player.playerId)) intentWithoutResponsibilityViolations.push(`Player ${player.playerId} has an intent without responsibility at frame ${index}`)
@@ -184,7 +233,11 @@ export function observeFrames(frames: readonly MatchFrame[]): MatchObservationRe
     if (openPossessions.length > 1) possessionViolations.push(`More than one open possession at frame ${index}`)
     if (frame.activePossessionId === null && openPossessions.length !== 0) possessionViolations.push(`Open possession is not referenced at frame ${index}`)
     if (frame.activePossessionId !== null && (openPossessions.length !== 1 || openPossessions[0]?.id !== frame.activePossessionId)) possessionViolations.push(`Active possession reference is inconsistent at frame ${index}`)
-    if (index === frames.length - 1) for (const event of frame.events) if (event.acquisitionDistanceMeters !== undefined && event.acquisitionDistanceMeters > BALL_ACQUISITION_RADIUS_METERS) illegalAcquisitions += 1
+    if (index === frames.length - 1) for (const event of frame.events) {
+      const acquisitionLimit = event.type === 'reboundSecured' ? REBOUND_ACQUISITION_RADIUS_METERS : BALL_ACQUISITION_RADIUS_METERS
+      if (event.acquisitionDistanceMeters !== undefined && event.acquisitionDistanceMeters > acquisitionLimit) illegalAcquisitions += 1
+      if (event.type === 'reboundSecured' && (event.acquisitionDistanceMeters === undefined || event.acquisitionDistanceMeters > REBOUND_ACQUISITION_RADIUS_METERS)) invalidReboundWinnerCount += 1
+    }
 
     if (index === 0) continue
     const before = frames[index - 1]!
@@ -242,6 +295,7 @@ export function observeFrames(frames: readonly MatchFrame[]): MatchObservationRe
     const ballDistance = distanceBetween(before.ball.position, frame.ball.position)
     maxBallDisplacementPerTick = Math.max(maxBallDisplacementPerTick ?? 0, elapsed === 0 ? (ballDistance === 0 ? 0 : Number.POSITIVE_INFINITY) : ballDistance / elapsed)
     const acquisitionEvent = frame.events.find((event) => event.t === frame.t && event.acquisitionDistanceMeters !== undefined)
+    const acquisitionLimit = acquisitionEvent?.type === 'reboundSecured' ? REBOUND_ACQUISITION_RADIUS_METERS : BALL_ACQUISITION_RADIUS_METERS
     const previousHeldOwner = before.ball.kind === 'HELD' ? before.players.find((player) => player.playerId === before.ball.ownerPlayerId) : undefined
     const currentHeldOwner = frame.ball.kind === 'HELD' ? frame.players.find((player) => player.playerId === frame.ball.ownerPlayerId) : undefined
     const linkedHeldMovement = previousHeldOwner && currentHeldOwner && before.ball.kind === 'HELD' && frame.ball.kind === 'HELD' && before.ball.ownerPlayerId === frame.ball.ownerPlayerId
@@ -249,14 +303,14 @@ export function observeFrames(frames: readonly MatchFrame[]): MatchObservationRe
       : null
     const modeledStep = linkedHeldMovement ?? modeledBallStep(before.ball, elapsed, frame.ball.kind !== before.ball.kind ? 1 : 0)
     if (before.ball.kind !== 'DEAD' && modeledStep < ballDistance - 0.001) {
-      if (frame.ball.kind === 'HELD' && acquisitionEvent && acquisitionEvent.acquisitionDistanceMeters! <= BALL_ACQUISITION_RADIUS_METERS) {
+      if (frame.ball.kind === 'HELD' && acquisitionEvent && acquisitionEvent.acquisitionDistanceMeters! <= acquisitionLimit) {
         // The final within-radius catch is the only allowed snap into the owner's position.
       } else {
         ballTeleports += 1
         ballStateViolations.push(`Ball moved ${ballDistance.toFixed(2)}m without a modeled path at frame ${index}`)
       }
     }
-    if (frame.ball.kind === 'HELD' && before.ball.kind !== 'HELD' && (!acquisitionEvent || acquisitionEvent.acquisitionDistanceMeters! > BALL_ACQUISITION_RADIUS_METERS)) {
+    if (frame.ball.kind === 'HELD' && before.ball.kind !== 'HELD' && (!acquisitionEvent || acquisitionEvent.acquisitionDistanceMeters! > acquisitionLimit)) {
       illegalAcquisitions += 1
       ballStateViolations.push(`Transition into HELD has no legal acquisition evidence at frame ${index}`)
     }
@@ -308,6 +362,10 @@ export function observeFrames(frames: readonly MatchFrame[]): MatchObservationRe
     maximumContinuousDistanceFromTargetSeconds,
     longTargetDistanceViolations,
     slotChurn,
+    reboundResponsibilityViolations,
+    transitionStructureViolations,
+    transitionDirectionViolations,
+    invalidReboundWinnerCount,
     ...defensive,
   }
 }

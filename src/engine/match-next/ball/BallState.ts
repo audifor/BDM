@@ -109,4 +109,5 @@ export type BallState =
   | InboundBallState
 
 export const BALL_ACQUISITION_RADIUS_METERS = 1
+export const REBOUND_ACQUISITION_RADIUS_METERS = 0.12
 export const HELD_BALL_HEIGHT_METERS = 0.6

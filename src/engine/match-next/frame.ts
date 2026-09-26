@@ -4,7 +4,7 @@ import { activePossession, type MatchNextEvent, type MatchState, type Possession
 import type { MovementIntent } from './movement/MovementIntent'
 import type { PlayerResponsibility, StructuralDecision } from './responsibility/Responsibility'
 import type { OffensiveStructureState } from './structure/FiveOutStructure'
-import type { DefensiveAssignment, DefensiveStructureState } from './state'
+import type { DefensiveAssignment, DefensiveStructureState, MatchReboundState, MatchTransitionState, ReboundResponsibility, TransitionRole } from './state'
 import type { MatchActionState } from './actions/ActionState'
 
 export interface MatchFramePlayer {
@@ -21,6 +21,8 @@ export interface MatchFramePlayer {
   readonly intent: MovementIntent | null
   readonly assignment: DefensiveAssignment | null
   readonly ballRelation?: string | null
+  readonly reboundResponsibility: ReboundResponsibility | null
+  readonly transitionRole: TransitionRole | null
 }
 
 export type MatchFrameBallKind = 'HELD' | 'PASS_IN_FLIGHT' | 'SHOT_IN_FLIGHT' | 'REBOUNDABLE' | 'LOOSE' | 'DEAD' | 'INBOUND'
@@ -81,6 +83,8 @@ export interface MatchFrame {
   readonly actions: readonly MatchActionState[]
   readonly offensiveStructure: OffensiveStructureState | null
   readonly defensiveStructure: DefensiveStructureState | null
+  readonly reboundState: MatchReboundState | null
+  readonly transition: MatchTransitionState | null
 }
 
 export function toFrame(state: MatchState): MatchFrame {
@@ -142,6 +146,8 @@ export function toFrame(state: MatchState): MatchFrame {
         intent: intent ? { ...intent, target: { ...intent.target }, facing: intent.facing.kind === 'POINT' ? { ...intent.facing, position: { ...intent.facing.position } } : { ...intent.facing }, provenance: { ...intent.provenance } } : null,
         assignment: assignment === null ? null : { ...assignment },
         ballRelation,
+        reboundResponsibility: state.reboundState?.responsibilities.find((item) => item.playerId === player.playerId) ?? null,
+        transitionRole: state.transition?.roles.find((item) => item.playerId === player.playerId) ?? null,
       }
     }),
     responsibilities: state.responsibilities.map((item) => ({ ...item, endCondition: { ...item.endCondition } })),
@@ -166,6 +172,19 @@ export function toFrame(state: MatchState): MatchFrame {
       defendedBasket: { ...state.defensiveStructure.defendedBasket },
       assignments: state.defensiveStructure.assignments.map((item) => ({ ...item })),
       helpDefenderPlayerIds: [...state.defensiveStructure.helpDefenderPlayerIds],
+    },
+    reboundState: state.reboundState === null ? null : {
+      ...state.reboundState,
+      target: { ...state.reboundState.target },
+      responsibilities: state.reboundState.responsibilities.map((item) => ({
+        ...item,
+        target: { ...item.target },
+        ...(item.boxOutTarget === undefined ? {} : { boxOutTarget: { ...item.boxOutTarget } }),
+      })),
+    },
+    transition: state.transition === null ? null : {
+      ...state.transition,
+      roles: state.transition.roles.map((role) => ({ ...role, target: { ...role.target } })),
     },
   }
 }

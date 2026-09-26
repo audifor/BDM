@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { MatchNextDebugApp } from './MatchNextDebugApp'
 
 describe('Match Next debug surface', () => {
-  it('projects actions, defensive structure, and scenarios A through G plus the vertical slice', () => {
+  it('projects physical rebound and transition state and keeps the A-G validation scenarios selectable', () => {
     render(<MatchNextDebugApp />)
     expect(screen.getByText(/Defense:/)).toBeTruthy()
     expect(screen.getByText(/ON_BALL defender:/)).toBeTruthy()
@@ -13,58 +13,36 @@ describe('Match Next debug surface', () => {
     expect(screen.getByLabelText('Action inspector')).toBeTruthy()
     expect(screen.getByLabelText('Defensive player inspector')).toBeTruthy()
     expect(screen.getByText(/Assignment source:/)).toBeTruthy()
-    for (const scenario of ['A', 'B', 'C', 'D', 'E', 'F', 'G']) expect(screen.getByRole('button', { name: `Scenario ${scenario}` })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Vertical Slice' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /^A/ }))
+    const shotDistance = Number(screen.getByText(/Last shot:/).textContent?.match(/from ([\d.]+) m/)?.[1])
+    expect(screen.getByText(/Last shot:/).textContent).toContain('3 points from')
+    expect(shotDistance).toBeGreaterThan(6.75)
+    expect(shotDistance).toBeLessThan(8)
+    for (const [letter, title] of [['A', 'Defensive rebound'], ['B', 'Offensive rebound'], ['C', 'Rebound + outlet'], ['D', 'Turnover transition'], ['E', 'Fast break advantage'], ['F', 'Defense gets back'], ['G', 'Transition → SETUP']]) {
+      expect(screen.getByRole('button', { name: `${letter} · ${title}` })).toBeTruthy()
+    }
+    expect(screen.getByRole('button', { name: 'Vertical Transition Slice' })).toBeTruthy()
 
-    const selectedPosition = () => screen.getByText(/^Position:/).textContent
-    const initialPosition = selectedPosition()
+    const initialTick = screen.getByText(/Period \/ tick:/).textContent
     for (let index = 0; index < 3; index += 1) fireEvent.click(screen.getByRole('button', { name: 'Step 0.1s' }))
-    expect(selectedPosition()).not.toBe(initialPosition)
+    expect(screen.getByText(/Period \/ tick:/).textContent).not.toBe(initialTick)
 
-    const onBallSummary = () => screen.getByText(/ON_BALL defender:/).parentElement?.textContent
-    const beforePass = onBallSummary()
-    fireEvent.click(screen.getByRole('button', { name: 'Scenario B' }))
-    expect(screen.getByText(/Pase al lado/)).toBeTruthy()
-    for (let index = 0; index < 5; index += 1) fireEvent.click(screen.getByRole('button', { name: 'Step 0.1s' }))
-    expect(onBallSummary()).not.toBe(beforePass)
-
-    fireEvent.click(screen.getByRole('button', { name: 'Scenario C' }))
-    expect(screen.getByText(/Skip pass to the far side/)).toBeTruthy()
-    for (let index = 0; index < 5; index += 1) fireEvent.click(screen.getByRole('button', { name: 'Step 0.1s' }))
-    const helpSummary = screen.getByText(/HELP defenders:/).textContent ?? ''
-    const helpDefenderId = helpSummary.replace('HELP defenders:', '').split(',')[0]?.trim()
-    expect(helpDefenderId).toBeTruthy()
-    expect(helpDefenderId).not.toBe('none')
-    fireEvent.change(screen.getByLabelText('Player'), { target: { value: helpDefenderId } })
-    const helpPosition = selectedPosition()
-    for (let index = 0; index < 3; index += 1) fireEvent.click(screen.getByRole('button', { name: 'Step 0.1s' }))
-    expect(selectedPosition()).not.toBe(helpPosition)
-
-    fireEvent.click(screen.getByRole('button', { name: 'Scenario D' }))
-    expect(screen.getByText(/RECOVER/)).toBeTruthy()
-    const recoverHelperId = (screen.getByText(/HELP defenders:/).textContent ?? '').replace('HELP defenders:', '').split(',')[0]?.trim()
-    expect(recoverHelperId).toBeTruthy()
-    expect(recoverHelperId).not.toBe('none')
-    fireEvent.change(screen.getByLabelText('Player'), { target: { value: recoverHelperId } })
-    const recoverPosition = selectedPosition()
-    for (let index = 0; index < 5; index += 1) fireEvent.click(screen.getByRole('button', { name: 'Step 0.1s' }))
-    expect(selectedPosition()).not.toBe(recoverPosition)
-    expect(screen.getAllByText('RECOVER').length).toBeGreaterThan(0)
-
-    fireEvent.click(screen.getByRole('button', { name: 'Scenario E' }))
-    expect(screen.getByText(/Drive, help, kick-out, catch/)).toBeTruthy()
-    expect(screen.getByText(/Period \/ tick:/).parentElement?.textContent).toContain('3 /')
+    fireEvent.click(screen.getByRole('button', { name: 'C · Rebound + outlet' }))
+    for (let index = 0; index < 7; index += 1) fireEvent.click(screen.getByRole('button', { name: 'Step 0.1s' }))
+    expect(screen.getByLabelText('Rebound target')).toBeTruthy()
+    expect(screen.getByLabelText('Action inspector').textContent).toContain('BOX_OUT')
+    expect(screen.getByText(/Attacker crash:/).textContent).toContain('Attacker crash: 2 | Defender pursuit: 0 | Box-out: 5 | Transition safety: 3')
     fireEvent.click(screen.getByRole('button', { name: 'Check JSON resume' }))
     expect(screen.getByText('Serialization: PASS')).toBeTruthy()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Scenario F' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Step 0.1s' }))
-    expect(screen.getByLabelText('Action inspector').textContent).toContain('SHOOT / GATHER')
-    for (let index = 0; index < 4; index += 1) fireEvent.click(screen.getByRole('button', { name: 'Step 0.1s' }))
-    expect(screen.getByLabelText('Action inspector').textContent).not.toContain('Shot probability: --')
+    fireEvent.click(screen.getByRole('button', { name: 'D · Turnover transition' }))
+    for (let index = 0; index < 30; index += 1) fireEvent.click(screen.getByRole('button', { name: 'Step 0.1s' }))
+    expect(screen.getByLabelText('Action inspector').textContent).toContain('STOP_BALL')
+    expect(Number(screen.getByText(/Interception secured:/).textContent?.match(/at ([\d.]+) m/)?.[1])).toBeLessThanOrEqual(0.12)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Scenario G' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Step 0.1s' }))
-    expect(screen.getByLabelText('Action inspector').textContent).toContain('PASS_IN_FLIGHT')
+    fireEvent.click(screen.getByRole('button', { name: 'E · Fast break advantage' }))
+    expect(screen.getByText(/Fast-break advantage/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Vertical Transition Slice' }))
+    expect(screen.getByText(/miss → pursuit → physical rebound/)).toBeTruthy()
   })
 })

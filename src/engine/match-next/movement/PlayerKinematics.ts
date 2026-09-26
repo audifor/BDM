@@ -26,7 +26,7 @@ export function integrateMatchPlayers(state: MatchState): readonly MatchPlayerSt
     positionsByTeam.set(player.teamId, teammates)
   }
   return state.players.map((player) => {
-    const defensiveBallFreeze = state.ball.kind === 'SHOT_IN_FLIGHT' || state.ball.kind === 'REBOUNDABLE' || state.ball.kind === 'LOOSE'
+    const defensiveBallFreeze = state.ball.kind === 'SHOT_IN_FLIGHT'
     if (defensiveBallFreeze && player.teamId === state.defensiveStructure?.teamId) return player
     const intent = intents.get(player.playerId)
     if (!intent) return player

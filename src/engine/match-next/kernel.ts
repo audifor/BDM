@@ -10,6 +10,7 @@ import { isInOffensiveFrontcourt, reconcileOffensiveStructure } from './structur
 import { attackingBasketForTeam } from './structure/FiveOutStructure'
 import { reconcileManDefense } from './defense/ManDefense'
 import { reconcileActions } from './actions/ActionCore'
+import { clearExpiredReboundTransition, finishStoppedTransition, reconcileReboundTransition, securePhysicalRebound } from './transition/ReboundTransition'
 
 export type MatchNextCommand =
   | { readonly type: 'startInbound'; readonly teamId: TeamId; readonly inbounderPlayerId: PlayerId; readonly reason: InboundStartReason }
@@ -52,11 +53,14 @@ export function tick(state: MatchState): MatchState {
   if (state.clock.gameRunning && gameClockTenths === 0) return finishPeriod(next)
 
   next = advancePlayerMovement(next)
+  next = securePhysicalRebound(next)
+  next = reconcileStructures(next)
 
   const shotClockExpired = state.clock.shotRunning && state.shotClockTenths !== null && state.shotClockTenths > 0 && shotClockTenths === 0
   const expiredAtPriorTick = state.clock.shotRunning && state.shotClockTenths === 0
   const shotWasReleased = state.ball.kind === 'SHOT_IN_FLIGHT'
-  const shotIsLiveOrResolved = next.ball.kind === 'SHOT_IN_FLIGHT' || next.ball.kind === 'REBOUNDABLE' || next.ball.kind === 'DEAD'
+  const reboundSecured = next.events.some((event) => event.t === next.t && event.type === 'reboundSecured')
+  const shotIsLiveOrResolved = next.ball.kind === 'SHOT_IN_FLIGHT' || next.ball.kind === 'REBOUNDABLE' || next.ball.kind === 'DEAD' || reboundSecured
   if ((shotClockExpired || expiredAtPriorTick) && !shotWasReleased && !shotIsLiveOrResolved) return reconcileStructures(violateShotClock(next))
   if ((shotClockExpired || expiredAtPriorTick) && (shotWasReleased || next.ball.kind === 'REBOUNDABLE')) {
     next = { ...next, clock: { ...next.clock, shotRunning: false } }
@@ -80,6 +84,8 @@ function advancePlayerMovement(input: MatchState): MatchState {
   const updated = integrateMatchPlayers(state)
   state = syncHeldBallToOwner({ ...state, players: updated })
   state = reconcileStructures(state)
+  const stopped = finishStoppedTransition(state)
+  if (stopped !== state) state = reconcileStructures(stopped)
 
   possession = getActivePossession(state)
   if (possession?.phase === 'ADVANCE' && state.ball.kind === 'HELD' && state.ball.ownerTeamId === possession.teamId) {
@@ -127,5 +133,11 @@ function finishPeriod(state: MatchState): MatchState {
 }
 
 function reconcileStructures(state: MatchState): MatchState {
-  return reconcileActions(reconcileManDefense(reconcileOffensiveStructure(state)))
+  let next = clearExpiredReboundTransition(state)
+  next = reconcileReboundTransition(reconcileManDefense(reconcileOffensiveStructure(next)))
+  next = reconcileActions(next)
+  next = reconcileReboundTransition(next)
+  const cleared = clearExpiredReboundTransition(next)
+  if (next.transition !== null && cleared.transition === null) return reconcileManDefense(reconcileOffensiveStructure(cleared))
+  return cleared
 }

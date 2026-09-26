@@ -5,7 +5,7 @@ import { emitEvent } from '../events'
 import { changePossessionPhase, endPossession, startPossession } from '../possession'
 import { activePossession, type MatchState, type PossessionStartReason } from '../state'
 import { advanceLooseBall, flightProgress, interpolatePosition, looseBallVelocity, passHeight, shotHeight } from './BallFlight'
-import { BALL_ACQUISITION_RADIUS_METERS, HELD_BALL_HEIGHT_METERS, type BallPassKind, type BallState, type PlannedShotOutcome } from './BallState'
+import { BALL_ACQUISITION_RADIUS_METERS, HELD_BALL_HEIGHT_METERS, REBOUND_ACQUISITION_RADIUS_METERS, type BallPassKind, type BallState, type PlannedShotOutcome } from './BallState'
 
 export type InboundStartReason = 'periodStart' | 'madeBasketInbound' | 'turnoverInbound' | 'shotClockViolation'
 
@@ -143,7 +143,7 @@ export function secureRebound(state: MatchState, playerId: PlayerId): MatchState
   if (state.t < state.ball.availableAtT) throw new Error('Rebound is not available yet')
   const player = activePlayer(state, playerId)
   const acquisitionDistanceMeters = distanceBetween(player.position, state.ball.position)
-  if (acquisitionDistanceMeters > BALL_ACQUISITION_RADIUS_METERS) throw new Error(`Rebounder is ${acquisitionDistanceMeters.toFixed(2)}m from the ball`)
+  if (acquisitionDistanceMeters > REBOUND_ACQUISITION_RADIUS_METERS) throw new Error(`Rebounder is ${acquisitionDistanceMeters.toFixed(2)}m from the ball`)
   const shootingTeamId = state.ball.shootingTeamId
   let next: MatchState = { ...state, ball: heldBall(player.playerId, player.teamId, player.position) }
   const oldPossession = activePossession(next)

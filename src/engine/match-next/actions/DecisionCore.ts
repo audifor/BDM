@@ -50,17 +50,34 @@ export function passQuality(state: MatchState, passer: MatchPlayerState, receive
 /** Selects one possession action from current MatchState and the completed action that led here. */
 export function selectDecision(state: MatchState): MatchDecision | null {
   const possession = activePossession(state)
-  if (!possession || (possession.phase !== 'SETUP' && possession.phase !== 'ACTION') || state.ball.kind !== 'HELD' || state.ball.ownerTeamId !== possession.teamId) return null
+  const liveTransition = possession !== undefined && state.transition?.teamId === possession.teamId
+    && (possession.phase === 'ADVANCE' || possession.phase === 'ACTION')
+  if (!possession || (possession.phase !== 'SETUP' && possession.phase !== 'ACTION' && !liveTransition) || state.ball.kind !== 'HELD' || state.ball.ownerTeamId !== possession.teamId) return null
   const ownerPlayerId = state.ball.ownerPlayerId
   const actor = state.players.find((player) => player.playerId === ownerPlayerId)
   if (!actor) return null
   const basket = attackingBasketForTeam(possession.teamId, state.homeTeamId, state.period, state.court)
+  if (liveTransition && state.transition?.trigger === 'defensiveRebound' && state.t - state.transition.startedT < 4) return null
   const lastOffensive = [...state.actions].reverse().find((action) => action.teamId === possession.teamId && action.kind !== 'CLOSEOUT')
   let kind: MatchDecisionKind
   let targetPlayerId: PlayerId | undefined
   let reason: string
 
-  if (lastOffensive?.kind === 'DRIVE' && lastOffensive.status === 'COMPLETED' && lastOffensive.outcome === 'ADVANTAGE') {
+  const outletAlreadyCaught = state.actions.some((action) => action.teamId === possession.teamId
+    && action.startedT >= (state.transition?.startedT ?? Number.POSITIVE_INFINITY)
+    && (action.kind === 'PASS' || action.kind === 'KICK_OUT') && action.status === 'COMPLETED' && action.outcome === 'CAUGHT')
+  const outlet = liveTransition && state.transition && !outletAlreadyCaught
+    && (state.transition.trigger === 'defensiveRebound' || state.transition.advantage === 'ADVANTAGE')
+    ? bestTransitionReceiver(state, actor, basket) ?? (state.transition.trigger === 'defensiveRebound' ? bestReceiver(state, actor, false) : undefined)
+    : undefined
+
+  if (outlet) {
+    kind = 'PASS'
+    targetPlayerId = outlet.playerId
+    reason = state.transition?.trigger === 'defensiveRebound'
+      ? 'Outlet the defensive rebound to a teammate advancing into open court'
+      : 'Pass ahead to preserve the transition advantage'
+  } else if (lastOffensive?.kind === 'DRIVE' && lastOffensive.status === 'COMPLETED' && lastOffensive.outcome === 'ADVANTAGE') {
     targetPlayerId = bestReceiver(state, actor, true)?.playerId
     kind = targetPlayerId ? 'KICK_OUT' : 'SHOOT'
     reason = targetPlayerId ? 'Help has collapsed on the drive; pass to the most open shooter' : 'No viable kick-out target; finish the advantage at the rim'
@@ -114,6 +131,23 @@ export function bestReceiver(state: MatchState, passer: MatchPlayerState, prefer
       + (preferOpenShooter ? player.offense.shooting * 0.004 : player.offense.creation * 0.002)
     return { player, score }
   }).sort((left, right) => right.score - left.score || String(left.player.playerId).localeCompare(String(right.player.playerId)))[0]?.player
+}
+
+function bestTransitionReceiver(state: MatchState, passer: MatchPlayerState, basket: CourtPosition): MatchPlayerState | undefined {
+  const direction = basket.x >= state.court.lengthMeters / 2 ? 1 : -1
+  return state.players.filter((player) => player.active && player.teamId === passer.teamId && player.playerId !== passer.playerId)
+    .map((player) => {
+      const progress = (player.position.x - passer.position.x) * direction
+      const nearestDefender = Math.min(...state.players.filter((candidate) => candidate.active && candidate.teamId !== passer.teamId)
+        .map((defender) => distanceBetween(defender.position, player.position)), Number.POSITIVE_INFINITY)
+      const lane = Math.min(...state.players.filter((candidate) => candidate.active && candidate.teamId !== passer.teamId)
+        .map((defender) => distanceToSegment(defender.position, passer.position, player.position)), Number.POSITIVE_INFINITY)
+      const score = progress + Math.min(nearestDefender, 8) * 0.28 + player.offense.creation * 0.008
+        - Math.max(0, 1.1 - lane) * 3
+      return { player, score, progress, lane }
+    })
+    .filter((candidate) => candidate.progress > 0.75 && candidate.lane > 0.45)
+    .sort((left, right) => right.score - left.score || String(left.player.playerId).localeCompare(String(right.player.playerId)))[0]?.player
 }
 
 export function driveTarget(state: MatchState, player: MatchPlayerState): CourtPosition {
