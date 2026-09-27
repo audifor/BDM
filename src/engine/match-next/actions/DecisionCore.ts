@@ -3,6 +3,7 @@ import type { PlayerId } from '@/domain/ids'
 import type { MatchActionState, MatchDecision, MatchDecisionKind } from './ActionState'
 import { activePossession, type MatchPlayerState, type MatchState } from '../state'
 import { attackingBasketForTeam } from '../structure/FiveOutStructure'
+import { isInOffensiveFrontcourt } from '../structure/OffensiveStructure'
 
 export interface ShotContest {
   readonly score: number
@@ -57,6 +58,8 @@ export function selectDecision(state: MatchState): MatchDecision | null {
   const actor = state.players.find((player) => player.playerId === ownerPlayerId)
   if (!actor) return null
   const basket = attackingBasketForTeam(possession.teamId, state.homeTeamId, state.period, state.court)
+  if (liveTransition && state.transition?.trigger === 'madeBasketInbound'
+    && !isInOffensiveFrontcourt(actor.position, basket, state.court.lengthMeters)) return null
   const tacticalPlan = possession.teamId === state.homeTeamId ? state.tacticalPlans.home : state.tacticalPlans.away
   if (liveTransition && state.transition?.trigger === 'defensiveRebound' && state.t - state.transition.startedT < 4) return null
   const lastOffensive = [...state.actions].reverse().find((action) => action.teamId === possession.teamId && action.kind !== 'CLOSEOUT')

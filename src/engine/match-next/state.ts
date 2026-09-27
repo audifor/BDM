@@ -64,7 +64,7 @@ export interface MatchReboundState {
   readonly responsibilities: readonly ReboundResponsibility[]
 }
 
-export type TransitionTrigger = 'openingJumpBall' | 'defensiveRebound' | 'turnover' | 'looseBallRecovery'
+export type TransitionTrigger = 'openingJumpBall' | 'madeBasketInbound' | 'defensiveRebound' | 'turnover' | 'looseBallRecovery'
 export type TransitionAdvantage = 'ADVANTAGE' | 'NEUTRAL' | 'STOPPED'
 export type TransitionRoleKind = 'BALL_ADVANCE' | 'LANE_LEFT' | 'LANE_RIGHT' | 'RIM_RUN' | 'TRAIL'
   | 'STOP_BALL' | 'PROTECT_RIM' | 'MATCH'

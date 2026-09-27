@@ -89,6 +89,49 @@ describe('MatchEnginePort integration', () => {
     expect(snapshot.frame.clock.gameRunning).toBe(true)
   })
 
+  it('keeps a five-man defensive retreat after a made-basket inbound until the ball reaches the frontcourt', () => {
+    const world = createNewGame()
+    const game = Object.values(world.games).find((candidate) => candidate.status === 'scheduled')!
+    const prepared = createMatchEnginePort('match-next').prepare(world, game, 653113119)
+    const setup = { ...prepared, clockRules: { ...prepared.clockRules, periodCount: 2, periodSeconds: 300, overtimeSeconds: 20 } }
+    const live = createMatchEnginePort('match-next').createLiveSession(setup)
+
+    for (let step = 0; step < 1700 && !live.matchState.events.some((event) => event.type === 'possessionStart' && event.startReason === 'madeBasketInbound'); step += 1) live.advanceOneStep()
+    for (let step = 0; step < 20 && live.matchState.ball.kind !== 'HELD'; step += 1) live.advanceOneStep()
+
+    const inbound = live.matchState
+    expect(inbound.ball.kind).toBe('HELD')
+    expect(inbound.transition).toMatchObject({ trigger: 'madeBasketInbound' })
+    const defending = inbound.players.filter((player) => player.active && player.teamId !== inbound.transition?.teamId)
+    expect(inbound.transition?.roles.filter((role) => role.teamId === defending[0]?.teamId).map((role) => role.kind))
+      .toEqual(expect.arrayContaining(['STOP_BALL', 'PROTECT_RIM', 'MATCH', 'MATCH', 'MATCH']))
+    expect(inbound.movementIntents.filter((intent) => defending.some((player) => player.playerId === intent.playerId) && intent.urgency === 'sprint')).toHaveLength(5)
+    expect(inbound.actions.some((action) => action.teamId === inbound.transition?.teamId && action.startedT >= inbound.transition.startedT)).toBe(false)
+
+    live.advanceTicks(15)
+    const retreat = live.matchState
+    expect(retreat.transition).toMatchObject({ trigger: 'madeBasketInbound' })
+    const rimProtectorId = inbound.transition!.roles.find((role) => role.kind === 'PROTECT_RIM')!.playerId
+    const before = inbound.players.find((player) => player.playerId === rimProtectorId)!.position
+    const after = retreat.players.find((player) => player.playerId === rimProtectorId)!.position
+    const defendedBasketX = inbound.defensiveStructure?.defendedBasket.x
+    expect(defendedBasketX).toBeDefined()
+    expect(Math.abs(after.x - defendedBasketX!)).toBeLessThan(Math.abs(before.x - defendedBasketX!))
+    const towardBasket = Math.sign(defendedBasketX! - retreat.ball.position.x)
+    const defendersBasketSide = retreat.players.filter((player) => player.active && player.teamId === defending[0]!.teamId
+      && (player.position.x - retreat.ball.position.x) * towardBasket > 0.5)
+    expect(defendersBasketSide.length).toBeGreaterThanOrEqual(3)
+    expect(retreat.actions.some((action) => action.teamId === inbound.transition?.teamId && action.startedT >= inbound.transition.startedT)).toBe(false)
+
+    for (let step = 0; step < 100 && live.matchState.transition?.trigger === 'madeBasketInbound'; step += 1) live.advanceOneStep()
+    const settled = live.matchState
+    expect(settled.transition?.trigger).not.toBe('madeBasketInbound')
+    expect(settled.defensiveStructure?.teamId).toBe(defending[0]!.teamId)
+    const basketSideAtMidcourt = settled.players.filter((player) => player.active && player.teamId === defending[0]!.teamId
+      && (player.position.x - settled.ball.position.x) * Math.sign(defendedBasketX! - settled.ball.position.x) > 0.5)
+    expect(basketSideAtMidcourt.length).toBeGreaterThanOrEqual(2)
+  })
+
   it('runs one real Game through the same Match Next path for LIVE and INSTANT, then applies its event-derived result', () => {
     const world = createNewGame()
     const game = Object.values(world.games).find((candidate) => candidate.status === 'scheduled')!

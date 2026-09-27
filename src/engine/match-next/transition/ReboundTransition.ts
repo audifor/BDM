@@ -71,6 +71,10 @@ export function finishStoppedTransition(state: MatchState): MatchState {
   const possession = activePossession(state)
   if (!state.transition || !possession || possession.phase !== 'ADVANCE' || state.transition.advantage !== 'STOPPED') return state
   if (state.transition.trigger === 'defensiveRebound' && state.t - state.transition.startedT < 4) return state
+  if (state.transition.trigger === 'madeBasketInbound') {
+    const handler = state.ball.kind === 'HELD' ? findPlayer(state, state.ball.ownerPlayerId) : undefined
+    if (handler && !isInFrontcourt(handler.position, possession.teamId, state)) return state
+  }
   return changePossessionPhase(state, 'SETUP')
 }
 
@@ -258,8 +262,8 @@ function installTransitionRoles(input: MatchState, transition: MatchTransitionSt
     const action = input.actions.find((item) => item.playerId === role.playerId && item.kind === 'DRIVE' && item.status === 'ACTIVE')
     return {
       ...role,
-      responsibilityId: old?.responsibilityId ?? `responsibility-${nextResponsibilitySequence++}`,
-      decisionId: action?.decisionId ?? old?.decisionId ?? `decision-${nextDecisionSequence++}`,
+      responsibilityId: old?.responsibilityId || `responsibility-${nextResponsibilitySequence++}`,
+      decisionId: action?.decisionId || old?.decisionId || `decision-${nextDecisionSequence++}`,
     }
   })
   const installedTransition = { ...transition, roles }
@@ -275,7 +279,7 @@ function installTransitionRoles(input: MatchState, transition: MatchTransitionSt
   }))
   const intents: MovementIntent[] = roles.map((role) => ({
     playerId: role.playerId, target: { ...role.target },
-    urgency: role.teamId !== transition.teamId ? 'run' : role.kind === 'BALL_ADVANCE' ? 'run' : 'sprint',
+    urgency: role.teamId !== transition.teamId ? 'sprint' : role.kind === 'BALL_ADVANCE' ? 'run' : 'sprint',
     facing: { kind: role.kind === 'BALL_ADVANCE' || role.kind === 'RIM_RUN' ? 'BASKET' : 'BALL' },
     provenance: { responsibilityId: role.responsibilityId, decisionId: role.decisionId, owner: transitionOwner(role) },
   }))
@@ -359,6 +363,7 @@ function transitionTrigger(state: MatchState): TransitionTrigger | null {
   const possession = activePossession(state)
   if (!possession) return null
   if (possession.startReason === 'openingJumpBall') return 'openingJumpBall'
+  if (possession.startReason === 'madeBasketInbound') return 'madeBasketInbound'
   if (possession.startReason === 'defensiveRebound') return 'defensiveRebound'
   if (possession.startReason === 'steal') return 'turnover'
   const recovery = [...state.events].reverse().find((event) => event.type === 'looseBallRecovered')
