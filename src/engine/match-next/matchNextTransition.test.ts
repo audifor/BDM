@@ -147,6 +147,8 @@ describe('Match Next rebound and transition integration', () => {
     expect(activePossession(state)).toMatchObject({ teamId: setup.awayTeamId, startReason: 'steal', phase: 'ADVANCE' })
     expect(state.transition).toMatchObject({ teamId: setup.awayTeamId, trigger: 'turnover' })
     const ballAdvance = state.transition!.roles.find((role) => role.kind === 'BALL_ADVANCE')!
+    expect(state.movementIntents.find((intent) => intent.playerId === ballAdvance.playerId)?.urgency).toBe('run')
+    expect(state.movementIntents.find((intent) => intent.playerId === state.transition!.roles.find((role) => role.kind === 'LANE_LEFT')!.playerId)?.urgency).toBe('sprint')
     expect(ballAdvance.target.x).toBeLessThan(state.players.find((player) => player.playerId === ballAdvance.playerId)!.position.x)
     expect(state.players.map(({ playerId, position }) => ({ playerId, position }))).toEqual(originalPositions)
 

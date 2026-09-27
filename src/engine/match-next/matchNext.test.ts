@@ -390,7 +390,7 @@ describe('Match Next ball and possession authority', () => {
     const setup = positionedSetup(source, {}, { periodCount: 4, periodSeconds: 600 })
     const samples: number[] = []
     for (let run = 0; run < 3; run += 1) {
-      let state = createMatchState(setup)
+      let state = { ...createMatchState(setup), score: { home: 1, away: 0 } }
       const started = performance.now()
       for (let i = 0; i < 24_000; i += 1) {
         if (!state.clock.gameRunning && !state.isComplete) state = { ...state, clock: { gameRunning: true, shotRunning: false } }

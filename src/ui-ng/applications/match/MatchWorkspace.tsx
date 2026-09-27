@@ -1,3 +1,8 @@
+import { useEffect, useRef, useState } from 'react'
+import { createMatchEnginePort, type MatchNextLiveController, type MatchNextResult } from '@/app/matchNext'
+import type { GameId } from '@/domain/ids'
+import type { MatchSetup } from '@/engine/match-next'
+import { NgMatchNextViewer } from '@/ui-ng/applications/match/NgMatchNextViewer'
 import { getCareerFatigueForPlayer, getTeamRoster, isPlayerAvailable } from '@/domain/world'
 import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
@@ -14,15 +19,21 @@ import './match-workspace.css'
 
 export function MatchWorkspace() {
   const world = useGameStore((state) => state.world)
-  const instantResult = useGameStore((state) => state.instantResult)
   const advanceDay = useGameStore((state) => state.advanceDay)
   const simulateRemainingGamesToday = useGameStore((state) => state.simulateRemainingGamesToday)
-  const startLiveMatch = useGameStore((state) => state.startLiveMatch)
-  const startMatch = useMatchViewerStore((state) => state.startMatch)
+  const replaceWorld = useGameStore((state) => state.replaceWorld)
   const simulation = useMatchViewerStore((state) => state.simulation)
   const tacticalPlan = useTacticalPlanStore((state) => state.plan)
   const hasExplicitTacticalPlan = useTacticalPlanStore((state) => state.hasExplicitPlan)
   const tacticalPlanOverride = hasExplicitTacticalPlan ? tacticalPlan : undefined
+  const [matchNextSession, setMatchNextSession] = useState<{ readonly gameId: GameId; readonly setup: MatchSetup; readonly controller: MatchNextLiveController } | null>(null)
+  const [matchError, setMatchError] = useState<string | null>(null)
+  const [instantProgress, setInstantProgress] = useState<string | null>(null)
+  const instantFrame = useRef<number | null>(null)
+
+  useEffect(() => () => {
+    if (instantFrame.current !== null) globalThis.cancelAnimationFrame(instantFrame.current)
+  }, [])
 
   if (world === null) {
     return <NgHoloShell appLabel="Match" empty region="match-workspace" />
@@ -31,6 +42,25 @@ export function MatchWorkspace() {
   const team = getUserTeam(world)
   if (team === undefined) {
     return <NgHoloShell appLabel="Match" empty region="match-workspace" />
+  }
+
+  if (matchNextSession !== null) {
+    const port = createMatchEnginePort('match-next')
+    return (
+      <NgHoloShell appLabel="Match" hideHeader region="match-workspace" teamId={team.id}>
+        <NgMatchNextViewer
+          controller={matchNextSession.controller}
+          gameId={matchNextSession.gameId}
+          setup={matchNextSession.setup}
+          onComplete={(result: MatchNextResult) => {
+            const current = useGameStore.getState().world
+            if (current !== null) replaceWorld(port.complete(current, result))
+          }}
+          onContinue={() => setMatchNextSession(null)}
+          world={world}
+        />
+      </NgHoloShell>
+    )
   }
 
   if (simulation !== null) {
@@ -62,6 +92,48 @@ export function MatchWorkspace() {
   const opponent = world.teams[game.homeTeamId === team.id ? game.awayTeamId : game.homeTeamId]!
   const isToday = game.date === world.currentDate && game.status === 'scheduled'
   const roster = getTeamRoster(world, team.id)
+  const matchNextPort = createMatchEnginePort('match-next')
+  const tacticalOverrides = tacticalPlanOverride === undefined ? undefined
+    : team.id === game.homeTeamId ? { home: tacticalPlanOverride } : { away: tacticalPlanOverride }
+  const startMatchNext = () => {
+    setMatchError(null)
+    try {
+      const setup = matchNextPort.prepare(world, game, undefined, tacticalOverrides)
+      setMatchNextSession({ gameId: game.id, setup, controller: matchNextPort.createLiveSession(setup) })
+    } catch (error) {
+      setMatchError(error instanceof Error ? error.message : 'No se pudo iniciar el partido ME-NEXT.')
+    }
+  }
+  const simulateMatchNext = () => {
+    setMatchError(null)
+    try {
+      const setup = matchNextPort.prepare(world, game, undefined, tacticalOverrides)
+      const controller = matchNextPort.createLiveSession(setup)
+      setInstantProgress('Simulando resultado ME-NEXT…')
+      const advanceChunk = () => {
+        try {
+          const snapshot = controller.advanceTicks(200)
+          if (snapshot.isComplete) {
+            const current = useGameStore.getState().world
+            if (current !== null) replaceWorld(matchNextPort.complete(current, controller.result()))
+            setInstantProgress(null)
+            instantFrame.current = null
+            return
+          }
+          setInstantProgress(`Simulando ME-NEXT · período ${snapshot.frame.period}`)
+          instantFrame.current = globalThis.requestAnimationFrame(advanceChunk)
+        } catch (error) {
+          setMatchError(error instanceof Error ? error.message : 'No se pudo completar la simulación ME-NEXT.')
+          setInstantProgress(null)
+          instantFrame.current = null
+        }
+      }
+      instantFrame.current = globalThis.requestAnimationFrame(advanceChunk)
+    } catch (error) {
+      setMatchError(error instanceof Error ? error.message : 'No se pudo simular el partido ME-NEXT.')
+      setInstantProgress(null)
+    }
+  }
 
   return (
     <NgHoloShell
@@ -85,15 +157,16 @@ export function MatchWorkspace() {
               <>
                 <button
                   className="ng-canon__action"
-                  onClick={() => startMatch(startLiveMatch(tacticalPlanOverride))}
+                  disabled={instantProgress !== null}
+                  onClick={startMatchNext}
                   type="button"
                 >
                   Play match
                 </button>
-                <button className="ng-canon__action" onClick={() => instantResult(tacticalPlanOverride)} type="button">
+                <button className="ng-canon__action" disabled={instantProgress !== null} onClick={simulateMatchNext} type="button">
                   Instant result
                 </button>
-                <button className="ng-canon__action" onClick={() => simulateRemainingGamesToday()} type="button">
+                <button className="ng-canon__action" disabled={instantProgress !== null} onClick={() => simulateRemainingGamesToday()} type="button">
                   Simulate other games
                 </button>
               </>
@@ -110,6 +183,8 @@ export function MatchWorkspace() {
           </div>
         </section>
       </div>
+      {instantProgress && <p role="status">{instantProgress}</p>}
+      {matchError && <p role="alert" className="ng-canon__error">{matchError}</p>}
       <div className="ng-canon__panel ng-holo-panel" style={{ marginTop: 'var(--ng-spacing-12)' }}>
         <p className="ng-canon__eyebrow">Readiness</p>
         <NgPrecisionTable

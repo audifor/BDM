@@ -2,12 +2,18 @@ import type { Game } from '@/domain/game'
 import type { GameWorld } from '@/domain/world'
 import { courtRulesetForEcosystem, createCourtGeometry } from '@/domain/court'
 import { getEcosystemForCompetition, resolveGameClockRulesForGame } from '@/domain/world'
+import type { MatchTacticalPlan } from '@/engine/match'
 import { prepareMatchOptions, type MatchSeedFactory } from '@/app/game/playUserGame'
 import type { MatchSetup, MatchNextPlayerProfile } from '@/engine/match-next'
 
 /** Resolves canonical game inputs at the app boundary, then returns data-only kernel input. */
-export function prepareMatchSetup(world: GameWorld, game: Game, matchSeed?: number | MatchSeedFactory): MatchSetup {
-  const options = prepareMatchOptions(world, game, undefined, matchSeed)
+export function prepareMatchSetup(
+  world: GameWorld,
+  game: Game,
+  matchSeed?: number | MatchSeedFactory,
+  tacticalPlanOverrides?: Partial<{ home: MatchTacticalPlan; away: MatchTacticalPlan }>,
+): MatchSetup {
+  const options = prepareMatchOptions(world, game, tacticalPlanOverrides, matchSeed)
   const homeTeamId = game.homeTeamId
   const awayTeamId = game.awayTeamId
   const profiles: MatchNextPlayerProfile[] = [
@@ -24,7 +30,7 @@ export function prepareMatchSetup(world: GameWorld, game: Game, matchSeed?: numb
       defense: { ...profile.defense }, rebounding: { ...profile.rebounding },
     })),
   ]
-  const tacticalPlans = options.tacticalPlans ?? {
+  const resolvedTacticalPlans = options.tacticalPlans ?? {
     home: { pace: 0, shotProfile: { rim: 0, midRange: 0, threePoint: 0 }, defense: { interior: 0, perimeter: 0 } },
     away: { pace: 0, shotProfile: { rim: 0, midRange: 0, threePoint: 0 }, defense: { interior: 0, perimeter: 0 } },
   }
@@ -42,8 +48,8 @@ export function prepareMatchSetup(world: GameWorld, game: Game, matchSeed?: numb
     initialLineups: { home: [...options.lineups.home], away: [...options.lineups.away] },
     players: profiles,
     tacticalPlans: {
-      home: { ...tacticalPlans.home, shotProfile: { ...tacticalPlans.home.shotProfile }, defense: { ...tacticalPlans.home.defense } },
-      away: { ...tacticalPlans.away, shotProfile: { ...tacticalPlans.away.shotProfile }, defense: { ...tacticalPlans.away.defense } },
+      home: { ...resolvedTacticalPlans.home, shotProfile: { ...resolvedTacticalPlans.home.shotProfile }, defense: { ...resolvedTacticalPlans.home.defense } },
+      away: { ...resolvedTacticalPlans.away, shotProfile: { ...resolvedTacticalPlans.away.shotProfile }, defense: { ...resolvedTacticalPlans.away.defense } },
     },
     defensiveMatchupOverrides: {
       home: (options.defensiveMatchups?.home ?? []).map(({ ourPlayerId, opponentPlayerId }) => ({ playerId: ourPlayerId, opponentPlayerId })),

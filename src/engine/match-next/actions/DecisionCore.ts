@@ -57,6 +57,7 @@ export function selectDecision(state: MatchState): MatchDecision | null {
   const actor = state.players.find((player) => player.playerId === ownerPlayerId)
   if (!actor) return null
   const basket = attackingBasketForTeam(possession.teamId, state.homeTeamId, state.period, state.court)
+  const tacticalPlan = possession.teamId === state.homeTeamId ? state.tacticalPlans.home : state.tacticalPlans.away
   if (liveTransition && state.transition?.trigger === 'defensiveRebound' && state.t - state.transition.startedT < 4) return null
   const lastOffensive = [...state.actions].reverse().find((action) => action.teamId === possession.teamId && action.kind !== 'CLOSEOUT')
   let kind: MatchDecisionKind
@@ -84,9 +85,10 @@ export function selectDecision(state: MatchState): MatchDecision | null {
   } else if ((lastOffensive?.kind === 'KICK_OUT' || lastOffensive?.kind === 'PASS')
     && lastOffensive.status === 'COMPLETED' && lastOffensive.outcome === 'CAUGHT' && lastOffensive.targetPlayerId === actor.playerId) {
     const value = shotValueAt(actor.position, basket, state)
+    const shotPreference = value === 3 ? tacticalPlan.shotProfile.threePoint : distanceBetween(actor.position, basket) <= 2.2 ? tacticalPlan.shotProfile.rim : tacticalPlan.shotProfile.midRange
     const contest = estimateShotContest(state, actor.playerId)
-    kind = lastOffensive.kind === 'KICK_OUT' && actor.offense.shooting >= 60 ? 'CATCH_AND_SHOOT'
-      : value === 3 && actor.offense.shooting >= 68 && contest.score < 0.35 ? 'CATCH_AND_SHOOT'
+    kind = lastOffensive.kind === 'KICK_OUT' && actor.offense.shooting >= 60 - shotPreference * 5 ? 'CATCH_AND_SHOOT'
+      : value === 3 && actor.offense.shooting >= 68 - shotPreference * 5 && contest.score < 0.35 ? 'CATCH_AND_SHOOT'
         : 'DRIVE'
     reason = kind === 'CATCH_AND_SHOOT' ? 'Catch in shooting range before the closeout arrives' : 'Attack the closeout with a drive'
   } else {
@@ -94,11 +96,12 @@ export function selectDecision(state: MatchState): MatchDecision | null {
     const contest = estimateShotContest(state, actor.playerId)
     const points = shotValueAt(actor.position, basket, state)
     const probability = shotMakeProbability(actor.offense.shooting, distance, points, contest.score)
+    const shotPreference = points === 3 ? tacticalPlan.shotProfile.threePoint : distance <= 2.2 ? tacticalPlan.shotProfile.rim : tacticalPlan.shotProfile.midRange
     const receiver = bestReceiver(state, actor, false)
-    if (distance <= 7.5 && actor.offense.shooting >= 70 && probability >= 0.42) {
+    if (distance <= 7.5 && actor.offense.shooting >= 70 - shotPreference * 5 && probability >= 0.42 - shotPreference * 0.04) {
       kind = 'SHOOT'
       reason = 'Take the available shot from live position and contest'
-    } else if (distance > 3.2 && (actor.offense.rimAttack + actor.offense.creation) / 2 >= 62) {
+    } else if (distance > 3.2 && (actor.offense.rimAttack + actor.offense.creation) / 2 >= 62 - tacticalPlan.shotProfile.rim * 3 - tacticalPlan.pace * 0.5) {
       kind = 'DRIVE'
       reason = 'Use rim pressure and creation to attack the basket'
     } else if (receiver) {
@@ -127,7 +130,8 @@ export function bestReceiver(state: MatchState, passer: MatchPlayerState, prefer
   return candidates.map((player) => {
     const nearestDefenderDistance = Math.min(...state.players.filter((candidate) => candidate.active && candidate.teamId !== player.teamId)
       .map((defender) => distanceBetween(defender.position, player.position)), Number.POSITIVE_INFINITY)
-    const score = Math.min(nearestDefenderDistance, 8) * 0.08
+    const featuredBonus = player.playerId === (passer.teamId === state.homeTeamId ? state.tacticalPlans.home.featuredPlayerId : state.tacticalPlans.away.featuredPlayerId) ? 0.8 : 0
+    const score = featuredBonus + Math.min(nearestDefenderDistance, 8) * 0.08
       + (preferOpenShooter ? player.offense.shooting * 0.004 : player.offense.creation * 0.002)
     return { player, score }
   }).sort((left, right) => right.score - left.score || String(left.player.playerId).localeCompare(String(right.player.playerId)))[0]?.player

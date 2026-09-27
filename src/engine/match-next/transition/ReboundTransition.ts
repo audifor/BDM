@@ -260,7 +260,7 @@ function installTransitionRoles(input: MatchState, transition: MatchTransitionSt
     reason: `Transition role: ${role.kind}`,
   }))
   const intents: MovementIntent[] = roles.map((role) => ({
-    playerId: role.playerId, target: { ...role.target }, urgency: 'sprint', facing: { kind: role.kind === 'BALL_ADVANCE' || role.kind === 'RIM_RUN' ? 'BASKET' : 'BALL' },
+    playerId: role.playerId, target: { ...role.target }, urgency: role.kind === 'BALL_ADVANCE' ? 'run' : 'sprint', facing: { kind: role.kind === 'BALL_ADVANCE' || role.kind === 'RIM_RUN' ? 'BASKET' : 'BALL' },
     provenance: { responsibilityId: role.responsibilityId, decisionId: role.decisionId, owner: transitionOwner(role) },
   }))
   const rolePlayerIds = new Set(roles.map((role) => role.playerId))
@@ -290,6 +290,7 @@ function roleTarget(state: MatchState, role: TransitionRole): CourtPosition {
     ? findPlayer(state, state.ball.ownerPlayerId) : undefined
   const centerY = state.court.widthMeters / 2
   const direction = basket.x >= state.court.lengthMeters / 2 ? 1 : -1
+  const defensiveTactics = role.teamId === state.homeTeamId ? state.tacticalPlans.home.defense : state.tacticalPlans.away.defense
   if (role.kind === 'BALL_ADVANCE') {
     const handler = ballHandler ?? findPlayer(state, role.playerId)
     if (!handler) return role.target
@@ -312,13 +313,13 @@ function roleTarget(state: MatchState, role: TransitionRole): CourtPosition {
   const attacker = assignedAttackerForDefender(state, role.playerId)
   if (role.kind === 'STOP_BALL') {
     const handler = ballHandler
-    return handler ? guardPosition(handler.position, ball, basket, 'ON_BALL', state.court) : guardPosition(role.target, ball, basket, 'ON_BALL', state.court)
+    return handler ? guardPosition(handler.position, ball, basket, 'ON_BALL', state.court, defensiveTactics) : guardPosition(role.target, ball, basket, 'ON_BALL', state.court, defensiveTactics)
   }
   if (role.kind === 'PROTECT_RIM') {
     const towardBall = unitVector({ x: ball.x - basket.x, y: ball.y - basket.y }, { x: basket.x >= state.court.lengthMeters / 2 ? -1 : 1, y: 0 })
     return clampPosition({ x: basket.x + towardBall.x * 2.2, y: basket.y + towardBall.y * 2.2 }, state.court)
   }
-  return attacker ? guardPosition(attacker.position, ball, basket, 'GAP', state.court) : guardPosition(role.target, ball, basket, 'GAP', state.court)
+  return attacker ? guardPosition(attacker.position, ball, basket, 'GAP', state.court, defensiveTactics) : guardPosition(role.target, ball, basket, 'GAP', state.court, defensiveTactics)
 }
 
 function evaluateTransition(state: MatchState, teamId: TeamId): TransitionAdvantage {
@@ -341,6 +342,7 @@ function evaluateTransition(state: MatchState, teamId: TeamId): TransitionAdvant
 function transitionTrigger(state: MatchState): TransitionTrigger | null {
   const possession = activePossession(state)
   if (!possession) return null
+  if (possession.startReason === 'openingJumpBall') return 'openingJumpBall'
   if (possession.startReason === 'defensiveRebound') return 'defensiveRebound'
   if (possession.startReason === 'steal') return 'turnover'
   const recovery = [...state.events].reverse().find((event) => event.type === 'looseBallRecovered')

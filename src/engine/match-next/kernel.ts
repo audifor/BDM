@@ -1,6 +1,6 @@
 import type { PlayerId, TeamId } from '@/domain/ids'
 import { emitEvent } from './events'
-import { advanceBallAtTick, interceptPass, putBallDead, recoverLooseBall, releaseInbound, releasePass, releaseShot, secureRebound, startInbound, syncHeldBallToOwner, violateShotClock, type InboundStartReason, type ReleasePassCommand, type ReleaseShotCommand } from './ball/BallTransitions'
+import { advanceBallAtTick, interceptPass, putBallDead, recoverLooseBall, releaseInbound, releasePass, releaseShot, secureRebound, startInbound, startOpeningJumpBall, syncHeldBallToOwner, violateShotClock, type InboundStartReason, type ReleasePassCommand, type ReleaseShotCommand } from './ball/BallTransitions'
 import type { BallPassKind } from './ball/BallState'
 import { changePossessionPhase, endPossession } from './possession'
 import { activePossession as getActivePossession, createInitialMatchState, type MatchState } from './state'
@@ -13,6 +13,7 @@ import { reconcileActions } from './actions/ActionCore'
 import { clearExpiredReboundTransition, finishStoppedTransition, reconcileReboundTransition, securePhysicalRebound } from './transition/ReboundTransition'
 
 export type MatchNextCommand =
+  | { readonly type: 'startOpeningJumpBall'; readonly homeLineup: readonly PlayerId[]; readonly awayLineup: readonly PlayerId[] }
   | { readonly type: 'startInbound'; readonly teamId: TeamId; readonly inbounderPlayerId: PlayerId; readonly reason: InboundStartReason }
   | { readonly type: 'releaseInbound'; readonly receiverPlayerId: PlayerId; readonly passKind: BallPassKind; readonly travelTicks: number }
   | { readonly type: 'releasePass'; readonly command: ReleasePassCommand }
@@ -30,6 +31,7 @@ export function createMatchState(setup: MatchSetup): MatchState {
 export function applyCommand(state: MatchState, command: MatchNextCommand): MatchState {
   let next: MatchState
   switch (command.type) {
+    case 'startOpeningJumpBall': next = startOpeningJumpBall(state, command.homeLineup, command.awayLineup); break
     case 'startInbound': next = startInbound(state, command.teamId, command.inbounderPlayerId, command.reason); break
     case 'releaseInbound': next = releaseInbound(state, command.receiverPlayerId, command.passKind, command.travelTicks); break
     case 'releasePass': next = releasePass(state, command.command); break
@@ -80,7 +82,7 @@ function advancePlayerMovement(input: MatchState): MatchState {
     }
   }
 
-  if (!state.offensiveStructure && !state.defensiveStructure) return state
+  if (!state.offensiveStructure && !state.defensiveStructure && state.movementIntents.length === 0) return state
   const updated = integrateMatchPlayers(state)
   state = syncHeldBallToOwner({ ...state, players: updated })
   state = reconcileStructures(state)
@@ -123,12 +125,13 @@ function finishPeriod(state: MatchState): MatchState {
   next = reconcileStructures(next)
   next = emitEvent(next, 'ballDead', { ballReason: 'periodEnd' })
   next = emitEvent(next, 'periodEnd')
-  if (state.period >= state.clockRules.periodCount) {
+  if (state.period >= state.clockRules.periodCount && state.score.home !== state.score.away) {
     next = { ...next, isComplete: true }
     return emitEvent(next, 'gameEnd')
   }
   const period = state.period + 1
-  next = { ...next, period, gameClockTenths: state.clockRules.periodSeconds * 10, ball: { kind: 'DEAD', reason: 'periodEnd', position: ballPosition, heightMeters: 0.08 } }
+  const periodSeconds = period > state.clockRules.periodCount ? state.clockRules.overtimeSeconds : state.clockRules.periodSeconds
+  next = { ...next, period, gameClockTenths: periodSeconds * 10, ball: { kind: 'DEAD', reason: 'periodEnd', position: ballPosition, heightMeters: 0.08 } }
   return emitEvent(next, 'periodStart')
 }
 

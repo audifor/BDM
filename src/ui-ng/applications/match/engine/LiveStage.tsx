@@ -44,7 +44,7 @@ export function PlayByPlay({
 function PlayByPlayEvent({ event, world }: { readonly event: MatchEvent; readonly world: GameWorld }) {
   const kind = playByPlayKind(event)
   const highlight = isHighlightPlay(event)
-  const clock = event.type === 'gameEnd' ? '00:00' : formatClock(event.clockSecondsRemaining)
+  const clock = event.type === 'gameEnd' ? '00:00.00' : formatClock(event.clockSecondsRemaining)
   const period = formatPeriod(event.period)
   const score =
     event.type === 'shotMade' || event.type === 'freeThrowMade' || event.type === 'gameEnd'

@@ -47,7 +47,7 @@ export interface MatchReboundState {
   readonly responsibilities: readonly ReboundResponsibility[]
 }
 
-export type TransitionTrigger = 'defensiveRebound' | 'turnover' | 'looseBallRecovery'
+export type TransitionTrigger = 'openingJumpBall' | 'defensiveRebound' | 'turnover' | 'looseBallRecovery'
 export type TransitionAdvantage = 'ADVANTAGE' | 'NEUTRAL' | 'STOPPED'
 export type TransitionRoleKind = 'BALL_ADVANCE' | 'LANE_LEFT' | 'LANE_RIGHT' | 'RIM_RUN' | 'TRAIL'
   | 'STOP_BALL' | 'PROTECT_RIM' | 'MATCH'
@@ -68,7 +68,7 @@ export interface MatchTransitionState {
   readonly roles: readonly TransitionRole[]
 }
 
-export type PossessionStartReason = 'periodStart' | 'madeBasketInbound' | 'defensiveRebound' | 'steal' | 'turnoverInbound' | 'shotClockViolation' | 'other'
+export type PossessionStartReason = 'periodStart' | 'openingJumpBall' | 'madeBasketInbound' | 'defensiveRebound' | 'steal' | 'turnoverInbound' | 'shotClockViolation' | 'other'
 export type PossessionEndReason = 'made' | 'defensiveRebound' | 'turnover' | 'shotClock' | 'periodEnd'
 export type PossessionPhase = 'INBOUND' | 'ADVANCE' | 'SETUP' | 'ACTION' | 'SHOT' | 'LIVE_REBOUND'
 
@@ -86,6 +86,7 @@ export interface PossessionState {
 
 export type MatchNextEventType =
   | 'periodStart' | 'periodEnd' | 'gameEnd'
+  | 'jumpBallStarted' | 'jumpBallResolved'
   | 'possessionStart' | 'possessionPhaseChanged' | 'possessionEnd'
   | 'inboundStarted' | 'inboundReleased'
   | 'passReleased' | 'passReceived' | 'passBecameLoose' | 'passIntercepted'
@@ -110,6 +111,8 @@ export interface MatchNextEvent {
   readonly passerPlayerId?: PlayerId
   readonly receiverPlayerId?: PlayerId
   readonly shooterPlayerId?: PlayerId
+  readonly shootingTeamId?: TeamId
+  readonly reboundType?: 'offensive' | 'defensive'
   readonly points?: 2 | 3
   readonly startReason?: PossessionStartReason
   readonly endReason?: PossessionEndReason
@@ -159,6 +162,7 @@ export interface MatchState {
   readonly period: number
   readonly court: CourtGeometry
   readonly clockRules: MatchSetup['clockRules']
+  readonly tacticalPlans: MatchSetup['tacticalPlans']
   readonly defensiveMatchupOverrides: MatchSetup['defensiveMatchupOverrides']
   readonly autonomousActions: boolean
   readonly clock: { readonly gameRunning: boolean; readonly shotRunning: boolean }
@@ -222,6 +226,10 @@ export function createInitialMatchState(setup: MatchSetup): MatchState {
     period: 1,
     court: { ...setup.court, baskets: { left: { ...setup.court.baskets.left }, right: { ...setup.court.baskets.right } } },
     clockRules: { ...setup.clockRules },
+    tacticalPlans: {
+      home: { ...setup.tacticalPlans.home, shotProfile: { ...setup.tacticalPlans.home.shotProfile }, defense: { ...setup.tacticalPlans.home.defense } },
+      away: { ...setup.tacticalPlans.away, shotProfile: { ...setup.tacticalPlans.away.shotProfile }, defense: { ...setup.tacticalPlans.away.defense } },
+    },
     defensiveMatchupOverrides: {
       home: setup.defensiveMatchupOverrides.home.map((item) => ({ ...item })),
       away: setup.defensiveMatchupOverrides.away.map((item) => ({ ...item })),

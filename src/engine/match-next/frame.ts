@@ -25,7 +25,7 @@ export interface MatchFramePlayer {
   readonly transitionRole: TransitionRole | null
 }
 
-export type MatchFrameBallKind = 'HELD' | 'PASS_IN_FLIGHT' | 'SHOT_IN_FLIGHT' | 'REBOUNDABLE' | 'LOOSE' | 'DEAD' | 'INBOUND'
+export type MatchFrameBallKind = 'HELD' | 'PASS_IN_FLIGHT' | 'SHOT_IN_FLIGHT' | 'REBOUNDABLE' | 'LOOSE' | 'DEAD' | 'INBOUND' | 'JUMP_BALL'
 
 export interface MatchFrameBall {
   readonly kind: MatchFrameBallKind

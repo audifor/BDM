@@ -6,6 +6,7 @@ import { attackingBasketForTeam, resolveBallSide, resolveFiveOutTargets, slotTar
 import { assignFiveOutSlots } from './SlotAssignment'
 
 export function reconcileOffensiveStructure(state: MatchState): MatchState {
+  if (state.responsibilities.some((item) => item.kind === 'PERIOD_RESTART')) return state
   const possession = activePossession(state)
   if (state.ball.kind === 'REBOUNDABLE'
     || state.transition !== null && possession?.teamId === state.transition.teamId && possession.phase !== 'SETUP') return state
@@ -144,7 +145,9 @@ export function reconcileOffensiveStructure(state: MatchState): MatchState {
     movementIntents.push({
       playerId: player.playerId,
       target,
-      urgency: 'run',
+      urgency: kind === 'ADVANCE' && (possession.teamId === state.homeTeamId ? state.tacticalPlans.home.pace : state.tacticalPlans.away.pace) >= 2
+        ? 'sprint'
+        : kind === 'ADVANCE' && (possession.teamId === state.homeTeamId ? state.tacticalPlans.home.pace : state.tacticalPlans.away.pace) <= -2 ? 'jog' : 'run',
       facing,
       provenance: { responsibilityId: responsibility.id, decisionId: decision.id, owner: responsibility.owner },
     })

@@ -6,7 +6,6 @@ import type { DefensiveDecisionKind, DefensiveResponsibilityKind, PlayerResponsi
 import type { MovementFacing, MovementIntent, MovementUrgency } from '../movement/MovementIntent'
 import { attackingBasketForTeam } from '../structure/FiveOutStructure'
 
-const ONE_PASS_AWAY_METERS = 7
 const ON_BALL_CUSHION_METERS = 1.05
 const GAP_DEPTH_METERS = 0.9
 const GAP_SHADE_METERS = 0.65
@@ -17,6 +16,7 @@ const RECOVER_END_METERS = 0.6
 
 /** Reconciles one possession's assignments and defensive structure without changing player positions. */
 export function reconcileManDefense(input: MatchState): MatchState {
+  if (input.responsibilities.some((item) => item.kind === 'PERIOD_RESTART')) return input
   const possession = activePossession(input)
   if (input.ball.kind === 'REBOUNDABLE'
     || input.transition !== null && possession?.teamId === input.transition.teamId && possession.phase !== 'SETUP') return input
@@ -38,6 +38,7 @@ export function reconcileManDefense(input: MatchState): MatchState {
   }
 
   const defendedBasket = attackingBasketForTeam(possession.teamId, state.homeTeamId, state.period, state.court)
+  const defensiveTactics = defendingTeamId === state.homeTeamId ? state.tacticalPlans.home.defense : state.tacticalPlans.away.defense
   const nonReactiveBallPhase = state.ball.kind === 'SHOT_IN_FLIGHT' || state.ball.kind === 'REBOUNDABLE' || state.ball.kind === 'LOOSE'
   if (nonReactiveBallPhase && prior !== null) return state
 
@@ -48,11 +49,11 @@ export function reconcileManDefense(input: MatchState): MatchState {
   const onBallAssignment = ballHandlerId === null ? undefined : assignments.find((item) => item.attackerPlayerId === ballHandlerId)
   const playerById = new Map(state.players.map((player) => [player.playerId, player]))
   const activeDrive = state.actions.find((action) => action.kind === 'DRIVE' && action.status === 'ACTIVE')
-  const driveHelperDefenderId = activeDrive && ballHandlerId === activeDrive.playerId
+  const driveHelperDefenderId = activeDrive && ballHandlerId === activeDrive.playerId && activeDrive.target
     ? assignments.filter((item) => item.attackerPlayerId !== ballHandlerId)
-      .map((item) => ({ item, attacker: playerById.get(item.attackerPlayerId) }))
-      .filter((entry): entry is { item: DefensiveAssignment; attacker: MatchPlayerState } => entry.attacker !== undefined)
-      .sort((left, right) => distanceBetween(right.attacker.position, state.ball.position) - distanceBetween(left.attacker.position, state.ball.position)
+      .map((item) => ({ item, defender: playerById.get(item.defenderPlayerId) }))
+      .filter((entry): entry is { item: DefensiveAssignment; defender: MatchPlayerState } => entry.defender !== undefined)
+      .sort((left, right) => distanceBetween(left.defender.position, activeDrive.target!) - distanceBetween(right.defender.position, activeDrive.target!)
         || String(left.item.defenderPlayerId).localeCompare(String(right.item.defenderPlayerId)))[0]?.item.defenderPlayerId
     : undefined
   const previousResponsibilities = new Map(state.responsibilities.filter((item) => item.owner === 'defensiveStructure').map((item) => [item.playerId, item]))
@@ -76,8 +77,8 @@ export function reconcileManDefense(input: MatchState): MatchState {
         ? 'ON_BALL'
         : defender.playerId === driveHelperDefenderId
           ? 'HELP'
-          : distanceBetween(attacker.position, state.ball.position) <= ONE_PASS_AWAY_METERS ? 'GAP' : 'HELP'
-      const baseTarget = guardPosition(attacker.position, state.ball.position, defendedBasket, baseKind, state.court)
+          : 'GAP'
+      const baseTarget = guardPosition(attacker.position, state.ball.position, defendedBasket, baseKind, state.court, defensiveTactics)
       let kind: DefensiveResponsibilityKind = baseKind
       let recoveryTarget: 'GAP' | 'HELP' | undefined
       if (baseKind === 'GAP' && previous?.kind === 'HELP' && distanceBetween(defender.position, baseTarget) > RECOVER_START_METERS) {
@@ -123,9 +124,12 @@ export function reconcileManDefense(input: MatchState): MatchState {
           }
       decisions.push(decision)
 
-      const target = guardPosition(attacker.position, state.ball.position, defendedBasket, responsibilityTargetKind, state.court)
+      const target = guardPosition(attacker.position, state.ball.position, defendedBasket, responsibilityTargetKind, state.court, defensiveTactics)
       const distanceToTarget = distanceBetween(defender.position, target)
-      const urgency: MovementUrgency = kind === 'RECOVER' && distanceToTarget > 3.5 ? 'sprint' : 'run'
+      const urgency: MovementUrgency = (possession.phase === 'ADVANCE' && distanceToTarget > 2)
+        || (kind === 'RECOVER' && distanceToTarget > 3.5)
+        ? 'run'
+        : 'jog'
       const facing: MovementFacing = { kind: 'BALL' }
       intents.push({
         playerId: defender.playerId,
@@ -167,17 +171,22 @@ export function guardPosition(
   defendedBasket: CourtPosition,
   responsibility: 'ON_BALL' | 'GAP' | 'HELP',
   court: MatchState['court'],
+  tactics?: MatchState['tacticalPlans']['home']['defense'],
 ): CourtPosition {
   const basketSideFallback = { x: defendedBasket.x >= court.lengthMeters / 2 ? -1 : 1, y: 0 }
   const towardBasket = unitVector({ x: defendedBasket.x - attackerPosition.x, y: defendedBasket.y - attackerPosition.y }, basketSideFallback)
   const towardBall = unitVector({ x: ballPosition.x - attackerPosition.x, y: ballPosition.y - attackerPosition.y }, { x: 0, y: 0 })
   const basketDistance = distanceBetween(attackerPosition, defendedBasket)
-  const depth = responsibility === 'ON_BALL' ? Math.min(ON_BALL_CUSHION_METERS, Math.max(0, basketDistance - 0.45))
-    : responsibility === 'GAP' ? Math.min(GAP_DEPTH_METERS, Math.max(0, basketDistance - 0.6))
-      : Math.min(HELP_DEPTH_METERS, Math.max(0, basketDistance - 0.6))
+  const onBallCushion = clamp(ON_BALL_CUSHION_METERS - (tactics?.perimeter ?? 0) * 0.12, 0.6, 1.5)
+  const gapDepth = clamp(GAP_DEPTH_METERS + (tactics?.interior ?? 0) * 0.1, 0.5, 1.3)
+  const helpDepth = clamp(HELP_DEPTH_METERS + (tactics?.interior ?? 0) * 0.2, 0.7, 2.3)
+  const gapShade = clamp(GAP_SHADE_METERS + (tactics?.perimeter ?? 0) * 0.1, 0.35, 0.95)
+  const depth = responsibility === 'ON_BALL' ? Math.min(onBallCushion, Math.max(0, basketDistance - 0.45))
+    : responsibility === 'GAP' ? Math.min(gapDepth, Math.max(0, basketDistance - 0.6))
+      : Math.min(helpDepth, Math.max(0, basketDistance - 0.6))
   const ballLateral = (ballPosition.x - attackerPosition.x) * -towardBasket.y + (ballPosition.y - attackerPosition.y) * towardBasket.x
   const shade = responsibility === 'ON_BALL' ? clamp(ballLateral * 0.05, -0.12, 0.12)
-    : responsibility === 'GAP' ? GAP_SHADE_METERS : responsibility === 'HELP' ? HELP_SHADE_METERS : 0
+    : responsibility === 'GAP' ? gapShade : responsibility === 'HELP' ? HELP_SHADE_METERS : 0
   const target = {
     x: attackerPosition.x + towardBasket.x * depth + (responsibility === 'ON_BALL' ? -towardBasket.y : towardBall.x) * shade,
     y: attackerPosition.y + towardBasket.y * depth + (responsibility === 'ON_BALL' ? towardBasket.x : towardBall.y) * shade,

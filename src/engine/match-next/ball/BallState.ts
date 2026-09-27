@@ -99,6 +99,19 @@ export interface InboundBallState {
   readonly deadlineT: null
 }
 
+export interface JumpBallState {
+  readonly kind: 'JUMP_BALL'
+  readonly homeJumperPlayerId: PlayerId
+  readonly awayJumperPlayerId: PlayerId
+  readonly tippedByPlayerId: PlayerId
+  readonly receiverPlayerId: PlayerId
+  readonly winningTeamId: TeamId
+  readonly position: CourtPosition
+  readonly heightMeters: number
+  readonly startedT: number
+  readonly resolvesAtT: number
+}
+
 export type BallState =
   | HeldBallState
   | PassInFlightBallState
@@ -107,6 +120,7 @@ export type BallState =
   | LooseBallState
   | DeadBallState
   | InboundBallState
+  | JumpBallState
 
 export const BALL_ACQUISITION_RADIUS_METERS = 1
 export const REBOUND_ACQUISITION_RADIUS_METERS = 0.12

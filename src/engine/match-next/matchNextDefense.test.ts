@@ -60,6 +60,17 @@ function passTo(state: MatchState, receiverPlayerId: typeof homeIds[number]): Ma
 }
 
 describe('Match Next man-to-man defense', () => {
+  it('uses the current defensive interior/perimeter plan in live guard geometry', () => {
+    const court = createCourtGeometry('FIBA')
+    const attacker = { x: 6, y: 4 }
+    const ball = { x: 8, y: 7 }
+    const basket = court.baskets.left
+    const neutral = guardPosition(attacker, ball, basket, 'GAP', court, { interior: 0, perimeter: 0 })
+    const perimeterPressure = guardPosition(attacker, ball, basket, 'GAP', court, { interior: -2, perimeter: 2 })
+
+    expect(distanceBetween(neutral, perimeterPressure)).toBeGreaterThan(0.1)
+  })
+
   it('builds five stable 1:1 assignments from position, height, and mobility matching', () => {
     const setup = setupFor()
     const state = liveHome(setup)
@@ -77,6 +88,32 @@ describe('Match Next man-to-man defense', () => {
     expect(state.responsibilities.filter((item) => item.owner === 'defensiveStructure')).toHaveLength(5)
     expect(state.decisions.filter((item) => item.owner === 'defensiveStructure')).toHaveLength(5)
     expect(state.movementIntents.filter((item) => item.provenance.owner === 'defensiveStructure')).toHaveLength(5)
+  })
+
+  it('keeps off-ball defenders with their assignments and sends only one defender to the drive', () => {
+    const state = liveHome(setupFor())
+    const holder = state.ball.kind === 'HELD' ? state.ball.ownerPlayerId : null
+    expect(holder).not.toBeNull()
+    expect(state.responsibilities.filter((item) => item.owner === 'defensiveStructure' && item.kind === 'HELP')).toHaveLength(0)
+    expect(state.responsibilities.filter((item) => item.owner === 'defensiveStructure' && item.kind === 'GAP')).toHaveLength(4)
+
+    const driveTarget = { x: 6, y: state.court.widthMeters / 2 }
+    const driving = reconcileManDefense({
+      ...state,
+      actions: [...state.actions.filter((item) => item.kind !== 'DRIVE'), {
+        id: 'test-drive', kind: 'DRIVE', playerId: holder!, teamId: homeTeamId, startedT: state.t,
+        status: 'ACTIVE', phase: 'DRIVING', target: driveTarget,
+      }],
+    })
+    const helpers = driving.responsibilities.filter((item) => item.owner === 'defensiveStructure' && item.kind === 'HELP')
+    expect(helpers).toHaveLength(1)
+    expect(driving.responsibilities.filter((item) => item.owner === 'defensiveStructure' && item.kind === 'GAP')).toHaveLength(3)
+    const expectedHelper = driving.defensiveStructure!.assignments
+      .filter((assignment) => assignment.attackerPlayerId !== holder)
+      .map((assignment) => ({ assignment, defender: driving.players.find((player) => player.playerId === assignment.defenderPlayerId)! }))
+      .sort((left, right) => distanceBetween(left.defender.position, driveTarget) - distanceBetween(right.defender.position, driveTarget)
+        || String(left.assignment.defenderPlayerId).localeCompare(String(right.assignment.defenderPlayerId)))[0]!.assignment.defenderPlayerId
+    expect(helpers[0]!.playerId).toBe(expectedHelper)
   })
 
   it('applies matchup overrides first and rejects invalid or duplicate overrides', () => {
@@ -174,7 +211,16 @@ describe('Match Next man-to-man defense', () => {
   })
 
   it('uses RECOVER as a temporary physical return to GAP after help geometry changes', () => {
-    let state = settle(liveHome(setupFor()))
+    let state = liveHome(setupFor())
+    const initialHolder = state.ball.kind === 'HELD' ? state.ball.ownerPlayerId : null
+    expect(initialHolder).not.toBeNull()
+    state = reconcileManDefense({
+      ...state,
+      actions: [...state.actions.filter((item) => item.kind !== 'DRIVE'), {
+        id: 'test-drive', kind: 'DRIVE', playerId: initialHolder!, teamId: homeTeamId, startedT: state.t,
+        status: 'ACTIVE', phase: 'DRIVING', target: { x: 6, y: state.court.widthMeters / 2 },
+      }],
+    })
     const helper = state.responsibilities.find((item) => item.owner === 'defensiveStructure' && item.kind === 'HELP')
     expect(helper).toBeDefined()
     const assignment = state.defensiveStructure!.assignments.find((item) => item.defenderPlayerId === helper!.playerId)!
@@ -189,6 +235,7 @@ describe('Match Next man-to-man defense', () => {
     const oldBall = state.ball
     state = {
       ...state,
+      actions: state.actions.filter((item) => item.kind !== 'DRIVE'),
       players: state.players.map((player) => player.playerId === receiver ? { ...player, position: { x: nextHolder.position.x, y: nextHolder.position.y } } : player),
       ball: ballHolder && oldBall.kind === 'HELD' ? { ...oldBall, ownerPlayerId: receiver, position: { ...nextHolder.position } } : oldBall,
     }
@@ -231,7 +278,6 @@ describe('Match Next man-to-man defense', () => {
     expect(report.defensiveAssignmentChurn).toBe(0)
     expect(report.onBallMedianDistanceMeters).toBeLessThanOrEqual(2)
     expect(report.gapMedianManDistanceMeters).toBeLessThanOrEqual(4)
-    expect(report.helpMedianManDistanceMeters).toBeGreaterThan(report.gapMedianManDistanceMeters!)
     expect(report.overallDefenderToAssignedManMeanMeters).toBeLessThan(5)
     expect(report.onBallWrongSideViolations).toBe(0)
     expect(report.defensiveOutOfBoundsViolations).toEqual([])

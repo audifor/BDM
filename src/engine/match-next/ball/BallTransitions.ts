@@ -2,6 +2,7 @@ import type { CourtPosition } from '@/domain/court'
 import { distanceBetween } from '@/domain/court'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import { emitEvent } from '../events'
+import { draw } from '../rng'
 import { changePossessionPhase, endPossession, startPossession } from '../possession'
 import { activePossession, type MatchState, type PossessionStartReason } from '../state'
 import { advanceLooseBall, flightProgress, interpolatePosition, looseBallVelocity, passHeight, shotHeight } from './BallFlight'
@@ -59,6 +60,54 @@ export function startInbound(state: MatchState, teamId: TeamId, inbounderPlayerI
   next = { ...next, ball: { kind: 'INBOUND', teamId, inbounderPlayerId, spot, position: spot, heightMeters: HELD_BALL_HEIGHT_METERS, startedT: next.t, deadlineT: null }, clock: { gameRunning: false, shotRunning: false }, shotClockTenths: null }
   const possession = activePossession(next)
   return emitEvent(next, 'inboundStarted', { possessionId: possession?.id, teamId, playerId: inbounderPlayerId, phase: 'INBOUND', ...(existing ? {} : { startReason: reason }) })
+}
+
+/** Starts the regulation opening tip; physical reach and the seeded outcome stream decide the tip. */
+export function startOpeningJumpBall(state: MatchState, homeLineup: readonly PlayerId[], awayLineup: readonly PlayerId[]): MatchState {
+  if (state.period !== 1 || state.t !== 0 || state.ball.kind !== 'DEAD' || state.ball.reason !== 'foundation' || state.possessions.length > 0) {
+    throw new Error('Opening jump ball can only start at the beginning of period one')
+  }
+  const homeJumper = tallestPlayer(state, homeLineup)
+  const awayJumper = tallestPlayer(state, awayLineup)
+  const drawResult = draw(state.rng, 'outcome')
+  const homeScore = homeJumper.standingReachCm + drawResult.value * 30
+  const awayScore = awayJumper.standingReachCm + (1 - drawResult.value) * 30
+  const winner = homeScore >= awayScore ? homeJumper : awayJumper
+  const winningLineup = winner.teamId === state.homeTeamId ? homeLineup : awayLineup
+  const receiverPlayerId = winningLineup.find((playerId) => playerId !== winner.playerId)!
+  const center = { x: state.court.lengthMeters / 2, y: state.court.widthMeters / 2 }
+  const homeJumpPositions = jumpBallFormation(homeLineup, homeJumper.playerId, -1, center, state.court.widthMeters)
+  const awayJumpPositions = jumpBallFormation(awayLineup, awayJumper.playerId, 1, center, state.court.widthMeters)
+  const players = state.players.map((player) => {
+    const position = homeJumpPositions.get(player.playerId) ?? awayJumpPositions.get(player.playerId)
+    return position ? { ...player, position, velocity: { x: 0, y: 0 } } : player
+  })
+  const jumpBall: BallState = {
+    kind: 'JUMP_BALL', homeJumperPlayerId: homeJumper.playerId, awayJumperPlayerId: awayJumper.playerId,
+    tippedByPlayerId: winner.playerId, receiverPlayerId, winningTeamId: winner.teamId,
+    position: center, heightMeters: 0.6, startedT: state.t, resolvesAtT: state.t + 20,
+  }
+  const next = { ...state, players, rng: drawResult.state, ball: jumpBall }
+  return emitEvent(next, 'jumpBallStarted', { playerId: homeJumper.playerId })
+}
+
+function jumpBallFormation(lineup: readonly PlayerId[], jumperId: PlayerId, side: -1 | 1, center: CourtPosition, courtWidth: number): ReadonlyMap<PlayerId, CourtPosition> {
+  const depth = [2.8, 3.9, 5.6, 6.8]
+  const lateral = [-2.4, 2.4, -4.4, 4.4]
+  const teammates = lineup.filter((playerId) => playerId !== jumperId)
+  const positions = new Map<PlayerId, CourtPosition>([[jumperId, { x: center.x + side * 0.65, y: center.y }]])
+  teammates.forEach((playerId, index) => {
+    positions.set(playerId, {
+      x: center.x + side * depth[index]!,
+      y: Math.max(0.75, Math.min(courtWidth - 0.75, center.y + lateral[index]!)),
+    })
+  })
+  return positions
+}
+
+function tallestPlayer(state: MatchState, lineup: readonly PlayerId[]) {
+  const players = lineup.map((playerId) => activePlayer(state, playerId))
+  return players.sort((left, right) => right.standingReachCm - left.standingReachCm || String(left.playerId).localeCompare(String(right.playerId)))[0]!
 }
 
 export function releaseInbound(state: MatchState, receiverPlayerId: PlayerId, passKind: BallPassKind, travelTicks: number): MatchState {
@@ -147,7 +196,10 @@ export function secureRebound(state: MatchState, playerId: PlayerId): MatchState
   const shootingTeamId = state.ball.shootingTeamId
   let next: MatchState = { ...state, ball: heldBall(player.playerId, player.teamId, player.position) }
   const oldPossession = activePossession(next)
-  next = emitEvent(next, 'reboundSecured', { possessionId: oldPossession?.id, teamId: player.teamId, playerId, acquisitionDistanceMeters })
+  next = emitEvent(next, 'reboundSecured', {
+    possessionId: oldPossession?.id, teamId: player.teamId, playerId, shootingTeamId,
+    reboundType: player.teamId === shootingTeamId ? 'offensive' : 'defensive', acquisitionDistanceMeters,
+  })
   if (player.teamId === shootingTeamId) {
     if (!oldPossession || oldPossession.teamId !== shootingTeamId) throw new Error('Offensive rebound does not match the open shooting possession')
     const possessions = next.possessions.map((item) => item.id === oldPossession.id ? { ...item, offensiveRebounds: item.offensiveRebounds + 1 } : item)
@@ -183,13 +235,23 @@ export function recoverLooseBall(state: MatchState, playerId: PlayerId): MatchSt
 export function putBallDead(state: MatchState, reason: 'outOfBounds' | 'other', restartTeamId?: TeamId): MatchState {
   if (state.ball.kind === 'DEAD' || state.ball.kind === 'INBOUND') throw new Error(`Cannot make the ball dead from ${state.ball.kind}`)
   const active = activePossession(state)
-  const restartTeam = restartTeamId ?? active?.teamId
+  const defaultRestartTeam = active === undefined
+    ? undefined
+    : reason === 'outOfBounds'
+      ? active.teamId === state.homeTeamId ? state.awayTeamId : state.homeTeamId
+      : active.teamId
+  const restartTeam = restartTeamId ?? defaultRestartTeam
   if (restartTeam !== undefined && restartTeam !== state.homeTeamId && restartTeam !== state.awayTeamId) throw new Error('Restart team is not part of this match')
   let next: MatchState = {
     ...state,
     ball: {
       kind: 'DEAD', reason, position: state.ball.position, heightMeters: 0.08,
-      ...(restartTeam === undefined ? {} : { restartTeamId: restartTeam, restartSpot: { x: state.court.lengthMeters / 2, y: state.court.widthMeters / 2 } }),
+      ...(restartTeam === undefined ? {} : {
+        restartTeamId: restartTeam,
+        restartSpot: reason === 'outOfBounds'
+          ? { ...state.ball.position }
+          : { x: state.court.lengthMeters / 2, y: state.court.widthMeters / 2 },
+      }),
     },
     clock: { gameRunning: false, shotRunning: false },
     shotClockTenths: null,
@@ -217,6 +279,21 @@ export function violateShotClock(state: MatchState): MatchState {
 
 export function advanceBallAtTick(state: MatchState): MatchState {
   const ball = state.ball
+  if (ball.kind === 'JUMP_BALL') {
+    const progress = Math.max(0, Math.min(1, (state.t - ball.startedT) / (ball.resolvesAtT - ball.startedT)))
+    const receiver = findActivePlayer(state, ball.receiverPlayerId)
+    const tapProgress = Math.max(0, Math.min(1, (progress - 0.55) / 0.45))
+    const position = interpolatePosition(
+      { x: state.court.lengthMeters / 2, y: state.court.widthMeters / 2 },
+      receiver?.position ?? ball.position,
+      tapProgress,
+    )
+    const heightMeters = progress <= 0.5 ? 0.6 + 3.2 * progress : 2.2 * (1 - progress) + 0.1
+    if (state.t < ball.resolvesAtT || !receiver) return { ...state, ball: { ...ball, position, heightMeters } }
+    let next: MatchState = { ...state, ball: heldBall(receiver.playerId, receiver.teamId, receiver.position) }
+    next = emitEvent(next, 'jumpBallResolved', { teamId: ball.winningTeamId, playerId: ball.tippedByPlayerId, receiverPlayerId: receiver.playerId })
+    return startPossession(next, ball.winningTeamId, 'openingJumpBall', 'ADVANCE', true)
+  }
   if (ball.kind === 'PASS_IN_FLIGHT') {
     const progress = flightProgress(state.t, ball.releaseT, ball.arrivalT)
     const position = interpolatePosition(ball.from, ball.target, progress)
@@ -257,7 +334,19 @@ export function advanceBallAtTick(state: MatchState): MatchState {
     if (state.t >= ball.availableAtT && state.t - 1 < ball.availableAtT) return emitEvent(next, 'reboundBecameAvailable', { possessionId: activePossession(next)?.id, teamId: ball.shootingTeamId, shooterPlayerId: ball.shotByPlayerId })
     return next
   }
-  if (ball.kind === 'LOOSE') return { ...state, ball: advanceLooseBall(ball, state.court) }
+  if (ball.kind === 'LOOSE') {
+    const nextX = ball.position.x + ball.velocity.x * 0.1
+    const nextY = ball.position.y + ball.velocity.y * 0.1
+    const moved = advanceLooseBall(ball, state.court)
+    if (nextX < 0 || nextX > state.court.lengthMeters || nextY < 0 || nextY > state.court.widthMeters) {
+      const possession = activePossession(state)
+      const restartTeamId = possession === undefined
+        ? undefined
+        : possession.teamId === state.homeTeamId ? state.awayTeamId : state.homeTeamId
+      return putBallDead({ ...state, ball: moved }, 'outOfBounds', restartTeamId)
+    }
+    return { ...state, ball: moved }
+  }
   return state
 }
 
