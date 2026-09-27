@@ -10,7 +10,7 @@ import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSa
 import { createNewGame } from './createNewGame'
 import { simulateAndApplyGame } from './playUserGame'
 import { getCurrentSeason } from './selectors'
-import { startNextSeason, startNextSeasonFor } from './startNextSeason'
+import { startNextSeason, startNextSeasonFor, startNextSeasonTransitionFor } from './startNextSeason'
 import { advanceGameDay } from './advanceGameDay'
 
 /**
@@ -146,6 +146,25 @@ describe('startNextSeason', () => {
     }
   }, 10_000)
 })
+
+  it('preserves NBA season finalization and creates a scheduled next closed-league edition', () => {
+    let world = createNewGame()
+    const season = Object.values(world.seasons).find((item) => world.ecosystems[world.competitions[item.competitionId]!.ecosystemId]!.kind === 'nbaLike')!
+    const competition = world.competitions[season.competitionId]!
+    const ecosystem = world.ecosystems[competition.ecosystemId]!
+    for (const game of Object.values(world.games).filter((item) => item.seasonId === season.id)) world = simulateAndApplyGame(world, game)
+    expect(getSeasonHistoryRecord(world, season.id)).toBeDefined()
+    expect(world.draftsById[`draft:${ecosystem.id}:${season.id}`]).toBeDefined()
+
+    const transition = startNextSeasonTransitionFor(world, season.id)
+    const nextSeason = transition.world.seasons[transition.result.targetSeasonId]!
+    expect(transition.result.competitionId).toBe(competition.id)
+    expect(transition.result.schedule.fixtureCount).toBeGreaterThan(0)
+    expect(Object.values(transition.world.games).filter((item) => item.seasonId === nextSeason.id).every((item) => item.status === 'scheduled')).toBe(true)
+    expect(nextSeason.participantTeamIds).toEqual(season.participantTeamIds ?? competition.participantTeamIds)
+    expect(transition.world.seasonHistoryBySeasonId[season.id]).toEqual(world.seasonHistoryBySeasonId[season.id])
+    expect(transition.world.draftsById[`draft:${ecosystem.id}:${season.id}`]).toEqual(world.draftsById[`draft:${ecosystem.id}:${season.id}`])
+  }, 30_000)
 
 function completeCurrentSeason(world: ReturnType<typeof createNewGame>) {
   return Object.values(world.games).filter((game) => game.status === 'scheduled').reduce((current, game) => simulateAndApplyGame(current, game), world)

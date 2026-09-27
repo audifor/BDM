@@ -15,6 +15,7 @@ import { competitionIdFromString, seasonIdFromString } from '@/domain/ids'
 import { advanceGameDay } from './advanceGameDay'
 import { createNewGame } from './createNewGame'
 import { advanceCompetitionLifecycles, classifyCompetitionLifecycles } from './CompetitionLifecycleCoordinator'
+import { evaluateSimulationBreakpoints } from './SimulationBreakpoints'
 
 describe('RWS-BUG-002A CompetitionLifecycleCoordinator: independent multi-competition rollover', () => {
   it('classifies three independently-calendared competitions as FULLY_SUPPORTED_PRIMARY regardless of currentSeasonId', () => {
@@ -85,19 +86,37 @@ describe('RWS-BUG-002A CompetitionLifecycleCoordinator: independent multi-compet
     expect(rolled.world.currentSeasonId).toBe(world.currentSeasonId)
   })
 
-  it('reports an explicit unsupportedLifecycle diagnostic for an ncaaLike competition, instead of throwing "in the past"', () => {
+  it('rolls a valid NCAA-like season with its conference snapshot and exactly one next recruiting cycle', () => {
     const world = createNewGame()
     const ncaaSeason = Object.values(world.seasons).find((season) => world.ecosystems[world.competitions[season.competitionId]!.ecosystemId]!.kind === 'ncaaLike')!
     const capabilities = classifyCompetitionLifecycles(world)
-    expect(capabilities.find((capability) => capability.seasonId === ncaaSeason.id)!.support).toBe('UNSUPPORTED_FUTURE_LIFECYCLE')
+    expect(capabilities.find((capability) => capability.seasonId === ncaaSeason.id)!.support).toBe('FULLY_SUPPORTED_PRIMARY')
 
     const completed = completeSeason(world, ncaaSeason.id)
-    const result = advanceCompetitionLifecycles(completed)
+    const invalidConferenceWorld = updateGameWorld(completed, { seasons: Object.values(completed.seasons).map((season) => season.id === ncaaSeason.id ? { ...season, conferenceMembershipSnapshot: [] } : season) })
+    expect(classifyCompetitionLifecycles(invalidConferenceWorld).find((capability) => capability.seasonId === ncaaSeason.id)!.support).toBe('UNSUPPORTED_FUTURE_LIFECYCLE')
+    expect(evaluateSimulationBreakpoints(invalidConferenceWorld).candidates).toContainEqual(expect.objectContaining({ level: 'BLOCKING', reason: 'unsupportedCompetitionLifecycle', sourceId: ncaaSeason.id }))
+    const ecosystemId = world.competitions[ncaaSeason.competitionId]!.ecosystemId
+    const sourceCycleId = `recruiting:${ecosystemId}:${ncaaSeason.id}`
+    const signing = { id: 'signing:rollover-test', cycleId: sourceCycleId, recruitId: 'recruit-profile:test', playerId: 'recruit:test' as never, programTeamId: world.competitions[ncaaSeason.competitionId]!.participantTeamIds[0]!, targetSeasonId: `${ncaaSeason.id}:next` as never, offerId: 'offer:test', signedOn: ncaaSeason.endDate }
+    const completedWithSigning = updateGameWorld(completed, { recruitSignings: [signing] })
+    const result = advanceCompetitionLifecycles(completedWithSigning)
+    const target = Object.values(result.world.seasons).find((season) => season.competitionId === ncaaSeason.competitionId && season.id !== ncaaSeason.id)!
 
-    expect(result.blockedOn).toBeDefined()
-    expect(result.blockedOn!.seasonId).toBe(ncaaSeason.id)
-    expect(result.blockedOn!.capabilityMissing).toBe('futureSeasonGeneration')
-    expect(result.blockedOn!.lastSupportedDate).toBe(completed.seasons[ncaaSeason.id]!.endDate)
+    expect(result.blockedOn).toBeUndefined()
+    expect(evaluateSimulationBreakpoints(result.world).candidates.some((item) => item.reason === 'unsupportedCompetitionLifecycle' && item.sourceId === ncaaSeason.id)).toBe(false)
+    expect(result.transitions).toHaveLength(1)
+    expect(result.transitions[0]).toMatchObject({ sourceSeasonId: ncaaSeason.id, targetSeasonId: target.id, competitionId: ncaaSeason.competitionId, schedule: { kind: 'generated' } })
+    expect(result.transitions[0]!.schedule.fixtureCount).toBeGreaterThan(0)
+    expect(result.transitions[0]!.annualHooksExecuted).toContain('recruitingCycle')
+    expect(target.conferenceMembershipSnapshot).toEqual(ncaaSeason.conferenceMembershipSnapshot!.map((membership) => ({ ...membership, seasonId: target.id })))
+    expect(Object.values(result.world.games).filter((game) => game.seasonId === target.id)).toHaveLength(result.transitions[0]!.schedule.fixtureCount)
+    expect(Object.values(result.world.recruitingCyclesById).filter((cycle) => cycle.sourceSeasonId === target.id)).toHaveLength(1)
+    expect(result.world.recruitingCyclesById[sourceCycleId]!.targetSeasonId).toBe(target.id)
+    expect(result.world.recruitSigningsById[signing.id]!.targetSeasonId).toBe(target.id)
+    expect(result.world.seasonHistoryBySeasonId[ncaaSeason.id]).toEqual(completed.seasonHistoryBySeasonId[ncaaSeason.id])
+    expect(Object.values(result.world.games).filter((game) => game.seasonId === ncaaSeason.id)).toEqual(Object.values(completed.games).filter((game) => game.seasonId === ncaaSeason.id))
+    expect(advanceCompetitionLifecycles(result.world).transitions).toEqual([])
   })
 })
 

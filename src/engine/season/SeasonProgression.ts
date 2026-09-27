@@ -52,11 +52,14 @@ export function finalizeSeason(world: GameWorld, seasonId: keyof GameWorld['seas
   if (team.coachId !== undefined) withLegacy = recordCoachAchievement(withLegacy,{coachId:team.coachId,teamId:team.id,seasonId,type:'championship',sourceEventKey:`championship:${seasonId}:${team.id}`,outsider:(remembered.boardStatesByTeamId[team.id]?.expectation.baselinePosition??1)>2})
   const withNews = Object.values(withLegacy.teams).reduce((current, candidate) => evaluateBoardSeason(current, candidate.id, seasonId), addNewsItem(withLegacy,{id:`news:champion:${seasonId}:${team.id}`,gameDate:completedOn,category:'competition',headline:`${team.name} win ${competition.name}`,body:`${team.name} are champions of ${season.label}.`,context:{seasonId,competitionId:competition.id,teamId:team.id}}))
   const completedCompetitionSeason = releaseCompletedWorldDbCompetitionSeason(withNews, seasonId)
-  const rule = Object.values(completedCompetitionSeason.ecosystems).flatMap((ecosystem) => ecosystem.tierMovementRules).find((item) => item.upperCompetitionId === season.competitionId || item.lowerCompetitionId === season.competitionId)
-  if (rule === undefined) return processSeasonContentLifecycle(completedCompetitionSeason, seasonId)
-  const otherCompetitionId = rule.upperCompetitionId === season.competitionId ? rule.lowerCompetitionId : rule.upperCompetitionId
-  const other = Object.values(completedCompetitionSeason.seasons).filter((candidate) => candidate.competitionId === otherCompetitionId && completedCompetitionSeason.seasonHistoryBySeasonId[candidate.id] !== undefined).sort((a, b) => b.startDate.localeCompare(a.startDate) || b.id.localeCompare(a.id))[0]
-  let resolved = other === undefined ? completedCompetitionSeason : resolvePromotionRelegation(completedCompetitionSeason, rule.upperCompetitionId === season.competitionId ? season.id : other.id, rule.lowerCompetitionId === season.competitionId ? season.id : other.id)
+  const tierRules = Object.values(completedCompetitionSeason.ecosystems).flatMap((ecosystem) => ecosystem.tierMovementRules).filter((item) => item.upperCompetitionId === season.competitionId || item.lowerCompetitionId === season.competitionId)
+  if (tierRules.length === 0) return processSeasonContentLifecycle(completedCompetitionSeason, seasonId)
+  let resolved = completedCompetitionSeason
+  for (const rule of tierRules) {
+    const otherCompetitionId = rule.upperCompetitionId === season.competitionId ? rule.lowerCompetitionId : rule.upperCompetitionId
+    const other = Object.values(resolved.seasons).filter((candidate) => candidate.competitionId === otherCompetitionId && resolved.seasonHistoryBySeasonId[candidate.id] !== undefined).sort((a, b) => b.startDate.localeCompare(a.startDate) || b.id.localeCompare(a.id))[0]
+    if (other !== undefined) resolved = resolvePromotionRelegation(resolved, rule.upperCompetitionId === season.competitionId ? season.id : other.id, rule.lowerCompetitionId === season.competitionId ? season.id : other.id)
+  }
   resolved = Object.keys(resolved.boardStatesByTeamId).reduce((current, teamId) => applyBoardTierMovement(current, teamId as import('@/domain/ids').TeamId), resolved)
   for (const movement of Object.values(resolved.promotionRelegationResolutionsById)) for (const teamId of [...movement.promotedTeamIds, ...movement.relegatedTeamIds]) {
     const coached = resolved.teams[teamId]!

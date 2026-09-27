@@ -33,4 +33,18 @@ export function buildNextCompetitionParticipants(world: GameWorld, seasonId: Sea
   if (new Set(result).size !== result.length || result.length !== current.length) throw new Error('Promotion/relegation produced invalid next participants')
   return result
 }
+export function areTierMovementDependenciesResolved(world: GameWorld, seasonId: SeasonId): boolean {
+  const season = world.seasons[seasonId]
+  if (!season) return false
+  const ecosystem = world.ecosystems[world.competitions[season.competitionId]!.ecosystemId]!
+  const rules = ecosystem.tierMovementRules.filter((rule) => rule.upperCompetitionId === season.competitionId || rule.lowerCompetitionId === season.competitionId)
+  return rules.every((rule) => {
+    const resolution = Object.values(world.promotionRelegationResolutionsById).find((item) =>
+      item.upperCompetitionId === rule.upperCompetitionId && item.lowerCompetitionId === rule.lowerCompetitionId
+      && (item.upperSeasonId === seasonId || item.lowerSeasonId === seasonId))
+    return resolution !== undefined
+      && world.seasonHistoryBySeasonId[resolution.upperSeasonId] !== undefined
+      && world.seasonHistoryBySeasonId[resolution.lowerSeasonId] !== undefined
+  })
+}
 function isComplete(world: GameWorld, seasonId: SeasonId): boolean { const games = Object.values(world.games).filter((game) => game.seasonId === seasonId); return games.length > 0 && games.every((game) => game.status === 'completed') }

@@ -2,7 +2,8 @@ import type { GameDate } from '@/domain/date'
 import type { CompetitionId, SeasonId } from '@/domain/ids'
 import { getEcosystemForCompetition, type GameWorld } from '@/domain/world'
 import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
-import { startNextSeasonFor } from './startNextSeason'
+import { areTierMovementDependenciesResolved } from '@/engine/competition'
+import { startNextSeasonTransitionFor, type CompetitionSeasonTransitionResult } from './startNextSeason'
 
 /**
  * Whether a Competition's future editions can be generated automatically once its current
@@ -13,8 +14,9 @@ import { startNextSeasonFor } from './startNextSeason'
  * same criterion applies to every competition in the world, independently of each other.
  *
  * FULLY_SUPPORTED_PRIMARY -- `startNextSeasonFor` knows how to regenerate this competition's next
- *                            edition: a round-robin-shaped competition (any ecosystem kind except
- *                            `ncaaLike`) with at least two participants. When the Season also
+ *                            edition: a round-robin-shaped competition with at least two
+ *                            participants, or an NCAA-like competition with a valid conference
+ *                            snapshot. When the Season also
  *                            carries both a `calendarPolicy` and a `worldCompetitionFormat`, the
  *                            next edition's window is derived deterministically from the real
  *                            cadence and round count (`deriveNextEditionCalendarPolicy`); without
@@ -28,16 +30,9 @@ import { startNextSeasonFor } from './startNextSeason'
  *                            Its own lifecycle question ("has it completed / does it need a next
  *                            edition") is resolved atomically together with its parent by
  *                            `startNextSeasonFor(parentSeasonId)`, never on its own.
- * UNSUPPORTED_FUTURE_LIFECYCLE
- *                         -- no future-edition generation exists for this competition today.
- *                            Currently this is exactly `ncaaLike` competitions: their schedule
- *                            depends on conference membership, recruiting and eligibility-year
- *                            state that `startNextSeasonFor` does not attempt to roll forward.
- *                            This is not a defect to patch by copying league rollover rules onto
- *                            it (a real NCAA-like eligibility-year lifecycle, and a real NBA-like
- *                            draft-cycle lifecycle distinct from its ordinary season rollover, are
- *                            unbuilt product systems -- see FUTURE WORK); it is a fact to detect
- *                            and report rather than paper over.
+ * UNSUPPORTED_FUTURE_LIFECYCLE -- no future-edition generation exists for this configuration,
+ *                            e.g. fewer than two participants or an NCAA-like season without a
+ *                            valid, populated conference snapshot.
  */
 export type CompetitionLifecycleSupport = 'FULLY_SUPPORTED_PRIMARY' | 'LINKED_TO_PRIMARY' | 'UNSUPPORTED_FUTURE_LIFECYCLE'
 
@@ -62,9 +57,9 @@ export function classifyCompetitionLifecycles(world: GameWorld): readonly Compet
     const editionId = season.worldCompetitionFormat?.competitionSeasonId
     const linkedToSeasonId = editionId === undefined ? undefined : linkedFrom.get(editionId)
     if (linkedToSeasonId !== undefined) return { competitionId, seasonId: season.id, support: 'LINKED_TO_PRIMARY' as const, linkedToSeasonId }
-    const isNcaaLike = getEcosystemForCompetition(world, competitionId).kind === 'ncaaLike'
     const participantCount = (season.participantTeamIds ?? world.competitions[competitionId]!.participantTeamIds).length
-    const isFullySupported = !isNcaaLike && participantCount >= 2
+    const isNcaaLike = getEcosystemForCompetition(world, competitionId).kind === 'ncaaLike'
+    const isFullySupported = participantCount >= 2 && (!isNcaaLike || hasValidNcaaConferenceSnapshot(world, season.id, season.participantTeamIds ?? world.competitions[competitionId]!.participantTeamIds))
     return { competitionId, seasonId: season.id, support: isFullySupported ? 'FULLY_SUPPORTED_PRIMARY' as const : 'UNSUPPORTED_FUTURE_LIFECYCLE' as const }
   })
 }
@@ -93,25 +88,47 @@ export interface UnsupportedLifecycleDiagnostic {
  * season blocked further progress and the last date its schedule actually covers -- callers must
  * surface this rather than silently continuing, deleting orphaned fixtures, or moving their dates.
  */
-export function advanceCompetitionLifecycles(world: GameWorld): { readonly world: GameWorld; readonly blockedOn?: UnsupportedLifecycleDiagnostic } {
+export function advanceCompetitionLifecycles(world: GameWorld): { readonly world: GameWorld; readonly transitions: readonly CompetitionSeasonTransitionResult[]; readonly blockedOn?: UnsupportedLifecycleDiagnostic } {
   let current = world
+  const transitions: CompetitionSeasonTransitionResult[] = []
   const capabilities = classifyCompetitionLifecycles(current)
+  const readyToRoll = new Set(capabilities.filter((capability) => capability.support === 'FULLY_SUPPORTED_PRIMARY'
+    && isSeasonComplete(world, capability.seasonId)
+    && getSeasonHistoryRecord(world, capability.seasonId) !== undefined
+    && areTierMovementDependenciesResolved(world, capability.seasonId)).map((capability) => capability.seasonId))
 
   for (const capability of capabilities) {
     if (capability.support !== 'FULLY_SUPPORTED_PRIMARY') continue
     if (current.seasons[capability.seasonId] === undefined) continue // already superseded by an earlier iteration's rollover
-    if (!isSeasonComplete(current, capability.seasonId) || getSeasonHistoryRecord(current, capability.seasonId) === undefined) continue
-    current = startNextSeasonFor(current, capability.seasonId)
+    if (!readyToRoll.has(capability.seasonId)) continue
+    const transition = startNextSeasonTransitionFor(current, capability.seasonId)
+    current = transition.world
+    transitions.push(transition.result)
   }
 
   for (const capability of classifyCompetitionLifecycles(current)) {
     if (capability.support !== 'UNSUPPORTED_FUTURE_LIFECYCLE') continue
     if (!isSeasonComplete(current, capability.seasonId) || getSeasonHistoryRecord(current, capability.seasonId) === undefined) continue
     const season = current.seasons[capability.seasonId]!
-    return { world: current, blockedOn: { competitionId: capability.competitionId, seasonId: capability.seasonId, capabilityMissing: 'futureSeasonGeneration', lastSupportedDate: season.endDate } }
+    return { world: current, transitions: Object.freeze(transitions), blockedOn: { competitionId: capability.competitionId, seasonId: capability.seasonId, capabilityMissing: 'futureSeasonGeneration', lastSupportedDate: season.endDate } }
   }
 
-  return { world: current }
+  return { world: current, transitions: Object.freeze(transitions) }
+}
+
+function hasValidNcaaConferenceSnapshot(world: GameWorld, seasonId: SeasonId, participantTeamIds: readonly import('@/domain/ids').TeamId[]): boolean {
+  const season = world.seasons[seasonId]!
+  const memberships = season.conferenceMembershipSnapshot ?? world.conferenceMemberships.filter((membership) => membership.seasonId === seasonId)
+  const groups = new Map<string, Set<string>>()
+  for (const membership of memberships) {
+    const teams = groups.get(membership.conferenceId) ?? new Set<string>()
+    teams.add(membership.teamId)
+    groups.set(membership.conferenceId, teams)
+  }
+  const membershipTeams = new Set([...groups.values()].flatMap((teams) => [...teams]))
+  const participants = new Set(participantTeamIds)
+  return groups.size >= 2 && [...groups.values()].every((teams) => teams.size >= 2)
+    && membershipTeams.size === participants.size && [...participants].every((teamId) => membershipTeams.has(teamId))
 }
 
 function latestSeasonPerCompetition(world: GameWorld): readonly { readonly competitionId: CompetitionId; readonly season: GameWorld['seasons'][SeasonId] }[] {

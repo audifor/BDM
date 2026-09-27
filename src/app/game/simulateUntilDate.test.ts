@@ -78,14 +78,9 @@ describe('simulate until date', () => {
       expect(result.finalDate).toBe(target)
     }, 15_000)
 
-    // createNewGame()'s demo world includes an NCAA-like competition with no future-season
-    // support (UNSUPPORTED_FUTURE_LIFECYCLE, see CompetitionLifecycleCoordinator.ts) and an
-    // unrelated, pre-existing recruiting-pool generation bug that can throw a duplicate-ID error
-    // if its recruiting cycles are advanced across certain date ranges. These tests clear
-    // recruitingCyclesById to isolate SIMULAR HASTA FECHA's own behavior from that separate,
-    // out-of-scope bug; long calendar-year spans and the unsupportedLifecycle diagnostic itself
-    // are certified against RealWorldSpain (ACB + Copa) in WorldDbGameBootstrap.test.ts and
-    // CompetitionLifecycleCoordinator.test.ts (ncaaLike diagnostic) instead.
+    // These date-boundary tests remove unrelated scheduled games and recruiting cycles so their
+    // assertions stay focused on calendar arithmetic. NCAA future-season support and recruiting
+    // cycle IDs are covered by the focused lifecycle tests.
     it('crosses 31 December to 1 January', () => {
       const world = withNoScheduledGames(createNewGame())
       const start = parseGameDate('2032-12-31')
@@ -151,6 +146,7 @@ describe('simulate until date', () => {
 
       expect(result.finalDate).toBe(target)
       expect(result.world.currentSeasonId).toBe(primarySeasonId)
+      expect(result.seasonTransitions).toEqual(expect.arrayContaining([expect.objectContaining({ sourceSeasonId: primarySeasonId, schedule: expect.objectContaining({ kind: 'generated' }) })]))
     })
 
     it('empty days with no games or events still advance correctly', () => {
@@ -195,10 +191,8 @@ function withNoScheduledGames<T extends { readonly games: Record<string, { statu
 }
 
 /**
- * Clears recruiting cycles: they carry date-window state (opensOn/signingOn/closesOn) that a
- * raw currentDate jump, or a long calendar-year span, can leave inconsistent, triggering an
- * unrelated, pre-existing recruiting-pool generation bug (duplicate deterministic player IDs).
- * Out of scope for RWS-BUG-002; this isolates SIMULAR HASTA FECHA's own behavior from it.
+ * Keeps recruiting lifecycle work out of calendar-boundary fixtures; recruiting ID uniqueness is
+ * covered by RecruitingEngine tests.
  */
 function withNoRecruiting<T extends { readonly recruitingCyclesById: Record<string, unknown> }>(world: T): T {
   return { ...world, recruitingCyclesById: {} }

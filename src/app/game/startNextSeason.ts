@@ -10,11 +10,32 @@ import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
 import { reconcileExpiredPlayerContracts } from '@/engine/market'
 import { maintainAiTeamMinimumRosters } from '@/app/market'
 import { getCurrentSeason } from './selectors'
-import { buildNextCompetitionParticipants } from '@/engine/competition'
+import { areTierMovementDependenciesResolved, buildNextCompetitionParticipants } from '@/engine/competition'
 import { deriveNextEditionCalendarPolicy } from '@/engine/competition/WorldCompetitionCalendar'
 import { ensureNcaaEligibility } from '@/engine/eligibility'
 import { ensureNcaaAcademics } from '@/engine/academic'
+import { ensureNcaaNil } from '@/engine/nil'
+import { ensureNcaaBoosters } from '@/engine/boosters'
+import { ensureNcaaEnforcement } from '@/engine/enforcement'
 import { rolloverBoardState } from '@/engine/board'
+import { bindRecruitingCycleTargetToSeason, initializeRecruitingCycle } from '@/engine/season'
+import type { CompetitionId, SeasonId } from '@/domain/ids'
+
+export interface CompetitionSeasonTransitionResult {
+  readonly sourceSeasonId: SeasonId
+  readonly targetSeasonId: SeasonId
+  readonly competitionId: CompetitionId
+  readonly participantDerivation: 'seasonSnapshot' | 'competitionConfiguration' | 'promotionRelegationResolution'
+  readonly schedule: { readonly kind: 'generated'; readonly fixtureCount: number }
+  readonly linkedCompetitionSeasonIds: readonly string[]
+  readonly annualHooksExecuted: readonly string[]
+  readonly diagnostics: readonly []
+}
+
+export interface CompetitionSeasonTransition {
+  readonly world: GameWorld
+  readonly result: CompetitionSeasonTransitionResult
+}
 
 /** Starts the next edition of the world's current (user-facing) competition. */
 export function startNextSeason(world: GameWorld): GameWorld {
@@ -39,10 +60,16 @@ export function startNextSeason(world: GameWorld): GameWorld {
  * `currentDate` is still anywhere in between (including still inside the old season's window).
  */
 export function startNextSeasonFor(world: GameWorld, seasonId: Season['id']): GameWorld {
+  return startNextSeasonTransitionFor(world, seasonId).world
+}
+
+/** Resolves one primary edition rollover and returns transient transition diagnostics. */
+export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season['id']): CompetitionSeasonTransition {
   const primary = world.seasons[seasonId]
   if (primary === undefined) throw new Error(`GameWorld has no Season: ${seasonId}`)
   if (!isSeasonComplete(world, primary.id)) throw new Error('Current season is not complete')
   if (getSeasonHistoryRecord(world, primary.id) === undefined) throw new Error('Current season requires a history record')
+  if (!areTierMovementDependenciesResolved(world, primary.id)) throw new Error(`Season ${primary.id} cannot roll forward before its linked promotion/relegation editions are finalized`)
   const linkedEditions = linkedCompetitionEditions(world, primary)
   const nextIds = nextSeasonIds(world, linkedEditions.length + 1)
   const editionIds = new Map<string, string>([[primary.worldCompetitionFormat?.competitionSeasonId ?? String(primary.id), nextCompetitionSeasonId(primary.worldCompetitionFormat?.competitionSeasonId ?? String(primary.id), addYears(primary.startDate, 1))]])
@@ -60,6 +87,10 @@ export function startNextSeasonFor(world: GameWorld, seasonId: Season['id']): Ga
     startDate: nextPrimaryCalendar?.seasonWindow.startDate ?? addYears(primary.startDate, 1),
     endDate: nextPrimaryCalendar?.seasonWindow.endDate ?? addYears(primary.endDate, 1),
     participantTeamIds: nextParticipants,
+    ...(world.ecosystems[world.competitions[primary.competitionId]!.ecosystemId]!.kind !== 'ncaaLike' ? {} : {
+      conferenceMembershipSnapshot: (primary.conferenceMembershipSnapshot ?? world.conferenceMemberships.filter((membership) => membership.seasonId === primary.id))
+        .map((membership) => ({ ...membership, seasonId: nextIds[0]! })),
+    }),
     ...(primary.worldCompetitionFormat === undefined ? {} : { worldCompetitionFormat: rollForwardFormat(primary.worldCompetitionFormat, editionIds, nextSeasonLabel(primary)) }),
     ...(nextPrimaryCalendar === undefined ? {} : { calendarPolicy: nextPrimaryCalendar }),
   })
@@ -93,8 +124,30 @@ export function startNextSeasonFor(world: GameWorld, seasonId: Season['id']): Ga
   const schedule = staged.ecosystems[staged.competitions[nextPrimary.competitionId]!.ecosystemId]!.kind === 'ncaaLike'
     ? generateNcaaLikeSchedule(staged, nextPrimary.id)
     : generateRoundRobinSchedule({ world: staged, seasonId: nextPrimary.id, ...(regularSeasonNodeKey === undefined ? {} : { competitionStageKey: regularSeasonNodeKey }) })
-  const next = ensureNcaaAcademics(ensureNcaaEligibility(maintainAiTeamMinimumRosters(reconcileExpiredPlayerContracts(updateGameWorld(staged, { games: [...Object.values(staged.games), ...schedule] }), nextPrimary.startDate)).world))
-  return Object.keys(next.boardStatesByTeamId).reduce((current, teamId) => rolloverBoardState(current, teamId as import('@/domain/ids').TeamId, nextPrimary.id), next)
+  let next = maintainAiTeamMinimumRosters(reconcileExpiredPlayerContracts(updateGameWorld(staged, { games: [...Object.values(staged.games), ...schedule] }), nextPrimary.startDate)).world
+  const ecosystem = next.ecosystems[next.competitions[nextPrimary.competitionId]!.ecosystemId]!
+  const annualHooksExecuted = ['contractReconciliation', 'aiRosterMaintenance']
+  if (ecosystem.kind === 'ncaaLike') {
+    next = bindRecruitingCycleTargetToSeason(next, primary.id, nextPrimary.id)
+    next = initializeRecruitingCycle(next, nextPrimary.id)
+    next = ensureNcaaEnforcement(ensureNcaaBoosters(ensureNcaaNil(ensureNcaaAcademics(ensureNcaaEligibility(next)))))
+    annualHooksExecuted.push('recruitingCycle', 'eligibilityInitialization', 'academicInitialization', 'nilInitialization', 'boosterInitialization', 'enforcementInitialization')
+  }
+  const beforeBoards = next
+  next = Object.keys(next.boardStatesByTeamId).reduce((current, teamId) => rolloverBoardState(current, teamId as import('@/domain/ids').TeamId, nextPrimary.id), next)
+  if (next !== beforeBoards) annualHooksExecuted.push('boardStateRollover')
+  const hasTierResolution = Object.values(world.promotionRelegationResolutionsById).some((resolution) => resolution.upperSeasonId === primary.id || resolution.lowerSeasonId === primary.id)
+  const result: CompetitionSeasonTransitionResult = {
+    sourceSeasonId: primary.id,
+    targetSeasonId: nextPrimary.id,
+    competitionId: primary.competitionId,
+    participantDerivation: hasTierResolution ? 'promotionRelegationResolution' : primary.participantTeamIds === undefined ? 'competitionConfiguration' : 'seasonSnapshot',
+    schedule: { kind: 'generated', fixtureCount: schedule.length },
+    linkedCompetitionSeasonIds: nextLinkedSeasons.map((season) => String(season.id)),
+    annualHooksExecuted: Object.freeze(annualHooksExecuted),
+    diagnostics: Object.freeze([]),
+  }
+  return { world: next, result }
 }
 
 function linkedCompetitionEditions(world: GameWorld, primary: Season): Season[] {
