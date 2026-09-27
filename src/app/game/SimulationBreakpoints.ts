@@ -86,7 +86,9 @@ export function evaluateSimulationBreakpoints(world: GameWorld, context: Simulat
 
   if (userTeam !== undefined) {
     for (const negotiation of Object.values(world.negotiationsById).filter((item) => item.organizationId === userTeam.organizationId && (item.status === 'OPEN' || item.status === 'COUNTERED'))) candidates.push(candidate({
-      level: negotiation.status === 'COUNTERED' ? 'ACTION_REQUIRED' : 'INFO',
+      // No current Market response command/detail surface exists for COUNTERED.
+      // Keep it observable without making time advancement depend on a future resolver.
+      level: negotiation.status === 'COUNTERED' ? 'IMPORTANT' : 'INFO',
       reason: negotiation.status === 'COUNTERED' ? 'marketNegotiation' : 'marketNegotiationAwaitingExternalResponse',
       sourceKind: 'MARKET_NEGOTIATION', sourceId: negotiation.id,
       ownership: { kind: 'USER_TEAM', coachId: world.userCoachId, teamId: userTeam.id },
@@ -142,7 +144,8 @@ function governanceCandidates(world: GameWorld): SimulationBreakpoint[] {
     const status = deriveGovernanceRequestStatus(events)
     if (status !== 'ISSUED' && status !== 'ACKNOWLEDGED' && status !== 'ACCEPTED') continue
     results.push(candidate({
-      level: 'ACTION_REQUIRED', reason: 'governanceRequest', sourceKind: 'GOVERNANCE_REQUEST', sourceId: request.id,
+      // Governance has no current user workspace/action path for this breakpoint.
+      level: 'IMPORTANT', reason: 'governanceRequest', sourceKind: 'GOVERNANCE_REQUEST', sourceId: request.id,
       effectiveDate: events.find((event) => event.kind === 'ISSUED')?.effectiveOn ?? date, ...(request.dueOn === undefined ? {} : { deadline: request.dueOn }),
       ownership: { kind: 'USER_COACH', coachId: world.userCoachId }, actionTarget: { requestId: request.id },
       diagnostic: `Governance request ${request.id} is addressed to the user coach${request.dueOn === undefined ? '' : ` and is due ${request.dueOn}`}.`,
@@ -160,7 +163,8 @@ function governanceCandidates(world: GameWorld): SimulationBreakpoint[] {
     const missingUserApprovals = rights.approverBodyIds.filter((bodyId) => activeUserBodies.has(bodyId) && !events.some((event) => event.kind === 'APPROVED' && event.bodyId === bodyId))
     if (missingUserApprovals.length === 0) continue
     results.push(candidate({
-      level: 'ACTION_REQUIRED', reason: 'governanceApproval', sourceKind: 'GOVERNANCE_DECISION', sourceId: decision.id,
+      // Preserve the attributable approval as a candidate; no current Governance resolver exists.
+      level: 'IMPORTANT', reason: 'governanceApproval', sourceKind: 'GOVERNANCE_DECISION', sourceId: decision.id,
       effectiveDate: decision.proposedOn, ownership: { kind: 'USER_COACH', coachId: world.userCoachId }, actionTarget: { decisionId: decision.id, bodyId: missingUserApprovals[0]! },
       diagnostic: `Governance decision ${decision.id} is waiting for the user's approval as an appointed member of body ${missingUserApprovals.join(', ')}.`,
     }))

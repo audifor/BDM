@@ -55,7 +55,7 @@ describe('simulation breakpoints', () => {
     expect(evaluateSimulationBreakpoints(selected).candidates.some((item) => item.reason === 'draftPick')).toBe(false)
   }, 20_000)
 
-  it('projects and clears a Governance request addressed to the user coach', () => {
+  it('keeps a Governance request visible without hard-locking when no resolver exists', () => {
     const base = createAcbTestGame()
     const userTeam = Object.values(base.teams).find((team) => team.coachId === base.userCoachId)!
     const issuerId = Object.values(base.coaches).find((coach) => coach.id !== base.userCoachId)!.id
@@ -63,16 +63,18 @@ describe('simulation breakpoints', () => {
     const request = createGovernanceRequest({ id: 'request:user', institutionId, issuer: { kind: 'ACTOR', actor: { kind: 'COACH', id: issuerId } }, recipient: { kind: 'ACTOR', actor: { kind: 'COACH', id: base.userCoachId } }, category: 'OPERATIONS', summary: 'Review the operating plan', dueOn: addDays(base.currentDate, 2), origin: { kind: 'STANDALONE' } })
     const issued = createGovernanceRequestEvent({ id: 'request:user:issued', requestId: request.id, kind: 'ISSUED', effectiveOn: base.currentDate, actor: request.issuer })
     const world = updateGameWorld(base, { governanceInstitutions: [{ id: institutionId, universe: 'PROFESSIONAL_CLUB', name: 'Test club', teamIds: [userTeam.id] }], governanceRequests: [request], governanceRequestEvents: [issued] })
-    expect(evaluateSimulationBreakpoints(world).breakpoint).toMatchObject({ reason: 'governanceRequest', sourceId: request.id, deadline: request.dueOn })
-    expect(getContinueStopReason(world)).toMatchObject({ type: 'breakpoint', breakpoint: { reason: 'governanceRequest', sourceId: request.id } })
-    expect(simulateUntilDate(world, addDays(world.currentDate, 1)).stopReason).toMatchObject({ type: 'breakpoint', breakpoint: { reason: 'governanceRequest', sourceId: request.id } })
+    const projected = evaluateSimulationBreakpoints(world)
+    expect(projected).toMatchObject({ mayAdvance: true })
+    expect(projected.candidates).toContainEqual(expect.objectContaining({ level: 'IMPORTANT', reason: 'governanceRequest', sourceId: request.id, deadline: request.dueOn, ownership: { kind: 'USER_COACH', coachId: world.userCoachId } }))
+    expect(getContinueStopReason(world)).toBeUndefined()
+    expect(simulateUntilDate(world, addDays(world.currentDate, 1))).toMatchObject({ daysAdvanced: 1, stopReason: { type: 'arrived' } })
     const loaded = deserializeGameWorldV4(serializeGameWorldV4(world, '2032-01-02T00:00:00.000Z'))
     expect(evaluateSimulationBreakpoints(loaded).breakpoint).toEqual(evaluateSimulationBreakpoints(world).breakpoint)
     const resolved = createGovernanceRequestEvent({ id: 'request:user:z-declined', requestId: request.id, kind: 'DECLINED', effectiveOn: base.currentDate, actor: request.recipient })
     expect(evaluateSimulationBreakpoints(updateGameWorld(world, { governanceRequestEvents: [...Object.values(world.governanceRequestEventsById), resolved] })).candidates.some((item) => item.sourceId === request.id)).toBe(false)
   })
 
-  it('projects an unresolved Governance approval only when the user coach holds the active approving appointment', () => {
+  it('keeps an attributable Governance approval visible without hard-locking when no resolver exists', () => {
     const base = createNewGame()
     const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
     const institutionId = 'institution:approval-test'
@@ -90,7 +92,12 @@ describe('simulation breakpoints', () => {
       governanceAuthorityGrants: [grant], governanceDecisionParticipationGrants: participations,
       governanceDecisions: [decision], governanceDecisionEvents: [proposal],
     })
-    expect(evaluateSimulationBreakpoints(world).breakpoint).toMatchObject({ reason: 'governanceApproval', sourceId: decision.id, actionTarget: { decisionId: decision.id } })
+    const withoutTodayGames = updateGameWorld(world, { games: Object.values(world.games).map((game) => game.status === 'scheduled' && game.date === world.currentDate ? { ...game, date: addDays(game.date, 1) } : game) })
+    const projected = evaluateSimulationBreakpoints(withoutTodayGames)
+    expect(projected).toMatchObject({ mayAdvance: true })
+    expect(projected.candidates).toContainEqual(expect.objectContaining({ level: 'IMPORTANT', reason: 'governanceApproval', sourceId: decision.id, actionTarget: expect.objectContaining({ decisionId: decision.id }), ownership: expect.objectContaining({ kind: 'USER_COACH', coachId: world.userCoachId }) }))
+    expect(getContinueStopReason(withoutTodayGames)).toBeUndefined()
+    expect(simulateUntilDate(withoutTodayGames, addDays(withoutTodayGames.currentDate, 1))).toMatchObject({ daysAdvanced: 1 })
   })
 
   it('stops on a durable job offer addressed to the user coach until Career resolves it', () => {
@@ -100,11 +107,16 @@ describe('simulation breakpoints', () => {
     const offer = Object.values(applied.world.coachJobOffersById).find((item) => item.coachId === base.userCoachId && item.status === 'pending')!
     expect(evaluateSimulationBreakpoints(applied.world).candidates).toContainEqual(expect.objectContaining({ reason: 'coachJobOffer', sourceId: offer.id, route: 'coach' }))
 
+    const nextDayGames = updateGameWorld(applied.world, { games: Object.values(applied.world.games).map((game) => game.status === 'scheduled' && game.date === applied.world.currentDate ? { ...game, date: addDays(game.date, 1) } : game) })
+    expect(evaluateSimulationBreakpoints(nextDayGames)).toMatchObject({ mayAdvance: false, breakpoint: { level: 'ACTION_REQUIRED', reason: 'coachJobOffer', sourceId: offer.id } })
+    expect(getContinueStopReason(nextDayGames)).toMatchObject({ type: 'breakpoint', breakpoint: { reason: 'coachJobOffer', sourceId: offer.id } })
+    expect(simulateUntilDate(nextDayGames, addDays(nextDayGames.currentDate, 1)).stopReason).toMatchObject({ type: 'breakpoint', breakpoint: { reason: 'coachJobOffer', sourceId: offer.id } })
+
     const declined = declineCoachJobOffer(applied.world, offer.id)
     expect(evaluateSimulationBreakpoints(declined).candidates.some((item) => item.sourceId === offer.id)).toBe(false)
   })
 
-  it('treats a user-owned market counteroffer as actionable while an open offer remains informational', () => {
+  it('keeps a user-owned market counteroffer visible without hard-locking when no resolver exists', () => {
     const base = createAcbTestGame()
     const userTeam = Object.values(base.teams).find((team) => team.coachId === base.userCoachId)!
     const negotiation = { id: 'negotiation:user-test', organizationId: userTeam.organizationId, playerId: Object.values(base.players)[0]!.id, salary: 100_000, years: 1, role: 'ROTATION' as const, agentFee: 0, status: 'OPEN' as const, round: 0 }
@@ -112,10 +124,12 @@ describe('simulation breakpoints', () => {
     expect(evaluateSimulationBreakpoints(openWorld)).toMatchObject({ mayAdvance: true, breakpoint: { level: 'INFO', reason: 'marketNegotiationAwaitingExternalResponse' } })
 
     const counteredWorld = updateGameWorld(openWorld, { negotiations: [{ ...negotiation, status: 'COUNTERED', round: 1 }] })
-    expect(evaluateSimulationBreakpoints(counteredWorld).breakpoint).toMatchObject({ level: 'ACTION_REQUIRED', reason: 'marketNegotiation', sourceId: negotiation.id, route: 'market' })
-    expect(getContinueStopReason(counteredWorld)).toMatchObject({ type: 'breakpoint', breakpoint: { sourceId: negotiation.id } })
-    expect(simulateUntilDate(counteredWorld, addDays(counteredWorld.currentDate, 1)).stopReason).toMatchObject({ type: 'breakpoint', breakpoint: { sourceId: negotiation.id } })
-    expect(() => advanceGameDay(counteredWorld)).toThrow(SimulationAdvanceBlockedError)
+    const countered = evaluateSimulationBreakpoints(counteredWorld)
+    expect(countered).toMatchObject({ mayAdvance: true })
+    expect(countered.candidates).toContainEqual(expect.objectContaining({ level: 'IMPORTANT', reason: 'marketNegotiation', sourceId: negotiation.id, route: 'market', actionTarget: { negotiationId: negotiation.id }, ownership: expect.objectContaining({ kind: 'USER_TEAM', teamId: userTeam.id }) }))
+    expect(getContinueStopReason(counteredWorld)).toBeUndefined()
+    expect(simulateUntilDate(counteredWorld, addDays(counteredWorld.currentDate, 1))).toMatchObject({ daysAdvanced: 1, stopReason: { type: 'arrived' } })
+    expect(advanceGameDay(counteredWorld).currentDate).toBe(addDays(counteredWorld.currentDate, 1))
 
     const acceptedWorld = updateGameWorld(openWorld, { negotiations: [{ ...negotiation, status: 'ACCEPTED' }] })
     expect(evaluateSimulationBreakpoints(acceptedWorld).candidates.some((item) => item.sourceId === negotiation.id)).toBe(false)
