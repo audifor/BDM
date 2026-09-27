@@ -53,6 +53,18 @@ describe('CalendarEngine', () => {
     expect(first.phases.at(-1)?.phaseId).toBe('EVENT_COLLECTION')
   })
 
+  it('preserves the pre-BS1 fatigue, contract reconciliation, then scheduled training order', () => {
+    const { world } = createScheduledGameWorld()
+    const result = advanceDayWithTrace(world)
+    const order = result.phases.map((phase) => phase.phaseId)
+    const fatigueIndex = order.indexOf('CAREER_FATIGUE_RECOVERY')
+    const trainingIndex = order.indexOf('TRAINING')
+
+    expect(order.slice(fatigueIndex, trainingIndex + 1)).toEqual([
+      'CAREER_FATIGUE_RECOVERY', 'EXPIRED_CONTRACT_RECONCILIATION', 'TRAINING',
+    ])
+  })
+
   it.each([
     [createGameDate(2032, 10, 31), '2032-11-01'],
     [createGameDate(2032, 12, 31), '2033-01-01'],

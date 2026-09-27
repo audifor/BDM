@@ -1,6 +1,6 @@
 # BS1 · Daily Phase Map
 
-Calendar Engine phases use stable IDs and preserve the existing subsystem call order. The application appends its boundary phases. The two World DB phases run only on that path. A skipped cadence phase is still traced with `ran: false` and a reason. Timing is optional diagnostic evidence and does not affect simulation.
+Application pre-transition rows are `PRE_ADVANCE_VALIDATION` and `MATCH_RESOLUTION`. Calendar Engine daily phases run from `DATE_ADVANCE` through `EVENT_COLLECTION`. Application post-transition rows are `SCHEDULE_INTEGRITY` through `DAY_COMPLETE`. The two World DB phases run only on that path. Calendar Engine phases use stable IDs and preserve the existing subsystem call order. A skipped cadence phase is still traced with `ran: false` and a reason. Timing is optional diagnostic evidence and does not affect simulation.
 
 | Phase | Owner | Cadence | Mutates | Can fail | Can create breakpoint | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -8,7 +8,8 @@ Calendar Engine phases use stable IDs and preserve the existing subsystem call o
 | `MATCH_RESOLUTION` | Match application boundary | If scheduled games remain today | Yes | Yes; structured technical failure | Possible through result state; BS2 decides | Existing application match handling, before date advance. |
 | `DATE_ADVANCE` | Calendar Engine | Every day | Yes | Yes; structured failure | Possible through date-driven state; BS2 decides | Advances exactly one date; retains current-season pointer migration check. |
 | `ANNUAL_PLAYER_DEVELOPMENT` | Development Engine | 1 July, once per cycle | Yes | Yes; structured failure | Possible; BS2 decides | Existing annual player development. |
-| `PLAYER_AND_CONTRACT_STATE` | Training + Market Engines | Every day | Yes | Yes; structured failure | Possible; BS2 decides | Career-fatigue recovery then expired-contract reconciliation. |
+| `CAREER_FATIGUE_RECOVERY` | Training Engine | Every day | Yes | Yes; structured failure | Possible; BS2 decides | Matches pre-BS1 source order. |
+| `EXPIRED_CONTRACT_RECONCILIATION` | Market Engine | Every day | Yes | Yes; structured failure | Possible; BS2 decides | Runs after fatigue recovery and before scheduled training, preserving pre-BS1 source order. |
 | `TRAINING` | Scheduled Training Engine | Every day | Yes | Yes; structured failure | Possible; BS2 decides | Existing scheduled sessions remain the automatic training authority. |
 | `RECRUITING` | Recruiting Engine | Every day | Yes | Yes; structured failure | Possible; BS2 decides | Pool, commitment, and AI lifecycle checks. |
 | `ACADEMICS` | Academic Engine | 1 January and 1 July | Yes | Yes; structured failure | Possible; BS2 decides | Academic support then term resolution. |

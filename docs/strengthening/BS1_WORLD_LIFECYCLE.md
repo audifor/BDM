@@ -8,38 +8,46 @@ The daily operation is an immutable, ordered application transition. The exact a
 2. `MATCH_RESOLUTION`
 3. `DATE_ADVANCE`
 4. `ANNUAL_PLAYER_DEVELOPMENT`
-5. `PLAYER_AND_CONTRACT_STATE`
-6. `TRAINING`
-7. `RECRUITING`
-8. `ACADEMICS`
-9. `NIL_LIFECYCLE`
-10. `MONTHLY_NIL_AUTONOMY`
-11. `MONTHLY_BOOSTER_AUTONOMY`
-12. `COACH_FINANCE`
-13. `MEMORY_DECAY`
-14. `ENFORCEMENT`
-15. `SCOUTING_INTAKE`
-16. `MEDICAL_AND_ROSTER_ADVISORIES`
-17. `SCOUTING_ASSIGNMENTS`
-18. `DRAFT`
-19. `STAFF_HUMAN_STATE`
-20. `STAFF_CONFLICTS`
-21. `STAFF_CULTURE_COHESION`
-22. `STAFF_POLITICAL_CASES`
-23. `STAFF_APPRAISAL`
-24. `STAFF_CAREER_AUTONOMY`
-25. `FACILITY_CONDITION`
-26. `CLUB_FINANCE_V2`
-27. `GOVERNANCE`
-28. `EVENT_COLLECTION`
-29. `SCHEDULE_INTEGRITY`
-30. `PRE_MATCH_MEDIA`
-31. `BREAKPOINT_EVALUATION`
-32. `DAY_COMPLETE`
+5. `CAREER_FATIGUE_RECOVERY`
+6. `EXPIRED_CONTRACT_RECONCILIATION`
+7. `TRAINING`
+8. `RECRUITING`
+9. `ACADEMICS`
+10. `NIL_LIFECYCLE`
+11. `MONTHLY_NIL_AUTONOMY`
+12. `MONTHLY_BOOSTER_AUTONOMY`
+13. `COACH_FINANCE`
+14. `MEMORY_DECAY`
+15. `ENFORCEMENT`
+16. `SCOUTING_INTAKE`
+17. `MEDICAL_AND_ROSTER_ADVISORIES`
+18. `SCOUTING_ASSIGNMENTS`
+19. `DRAFT`
+20. `STAFF_HUMAN_STATE`
+21. `STAFF_CONFLICTS`
+22. `STAFF_CULTURE_COHESION`
+23. `STAFF_POLITICAL_CASES`
+24. `STAFF_APPRAISAL`
+25. `STAFF_CAREER_AUTONOMY`
+26. `FACILITY_CONDITION`
+27. `CLUB_FINANCE_V2`
+28. `GOVERNANCE`
+29. `EVENT_COLLECTION`
+30. `SCHEDULE_INTEGRITY`
+31. `PRE_MATCH_MEDIA`
+32. `BREAKPOINT_EVALUATION`
+33. `DAY_COMPLETE`
 
-The first 28 phases are the named Calendar Engine order. Application phases handle the pre-transition match boundary, integrity check, existing media operation, and BS2 post-check. `WORLD_DB_REMATERIALIZATION` and `WORLD_DB_BREAKPOINT_RECONCILIATION` are appended only by the World DB path.
+The order has four boundaries:
+
+- **Application pre-transition:** `PRE_ADVANCE_VALIDATION`, then `MATCH_RESOLUTION`.
+- **Calendar Engine daily phases:** `DATE_ADVANCE` through `EVENT_COLLECTION` (orders 3–29).
+- **Application post-transition:** `SCHEDULE_INTEGRITY`, `PRE_MATCH_MEDIA`, `BREAKPOINT_EVALUATION`, then `DAY_COMPLETE`.
+- **World DB only:** after successful application processing, `WORLD_DB_REMATERIALIZATION` then `WORLD_DB_BREAKPOINT_RECONCILIATION`.
 
 The phase map records owners, cadence, mutation/failure expectations, and breakpoint potential. Skipped cadence phases appear in the trace with `ran: false` and a diagnostic reason. The named phases split the old nested chain for evidence and failure localization; subsystem operations retain their existing call order and authority.
+
+The BS0 narrative listed expired-contract reconciliation before fatigue recovery. Inspection of the pre-BS1 source at the BS2 base showed the nested call evaluated fatigue recovery first, then contract reconciliation, then scheduled training. BS1 retained that existing execution order. No additional product rationale for the ordering was found; the lifecycle now names each operation separately and the focused test locks the observed order.
 
 ## Subsystem ownership
 
