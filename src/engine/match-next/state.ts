@@ -73,6 +73,7 @@ export interface TransitionRole {
   readonly teamId: TeamId
   readonly kind: TransitionRoleKind
   readonly target: CourtPosition
+  readonly matchLaneY?: number
   readonly responsibilityId: string
   readonly decisionId: string
 }

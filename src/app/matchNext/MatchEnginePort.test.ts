@@ -8,7 +8,7 @@ describe('MatchEnginePort integration', () => {
   it('opens a live Match Next session with a deterministic center jump ball before possession', () => {
     const world = createNewGame()
     const game = Object.values(world.games).find((candidate) => candidate.status === 'scheduled')!
-    const prepared = createMatchEnginePort('match-next').prepare(world, game, 20260927)
+    const prepared = createMatchEnginePort('match-next').prepare(world, game, 653113119)
     const setup = { ...prepared, clockRules: { ...prepared.clockRules, periodCount: 2, periodSeconds: 30, overtimeSeconds: 20 } }
     const live = createMatchEnginePort('match-next').createLiveSession(setup)
     const opening = live.snapshot()
@@ -29,6 +29,14 @@ describe('MatchEnginePort integration', () => {
     expect(tipped.frame.movementIntents).toHaveLength(10)
     const defendingIds = new Set(tipped.frame.players.filter((player) => player.teamId !== tipped.frame.possession?.teamId).map((player) => player.playerId))
     expect(tipped.frame.movementIntents.filter((intent) => defendingIds.has(intent.playerId) && intent.urgency === 'sprint')).toHaveLength(5)
+    const towardBasket = Math.sign(tipped.frame.defensiveStructure!.defendedBasket.x - tipped.frame.ball.position.x)
+    const matchRoles = tipped.frame.transition!.roles.filter((role) => role.kind === 'MATCH')
+    expect(matchRoles).toHaveLength(3)
+    expect(matchRoles.every((role) => (role.target.x - tipped.frame.ball.position.x) * towardBasket > 3)).toBe(true)
+    expect(Math.max(...matchRoles.map((role) => role.target.y)) - Math.min(...matchRoles.map((role) => role.target.y))).toBeGreaterThan(5)
+    const next = live.advanceTicks(15).frame
+    expect(next.players.filter((player) => defendingIds.has(player.playerId)
+      && (player.position.x - next.ball.position.x) * towardBasket > 1.5).length).toBeGreaterThanOrEqual(3)
     expect(tipped.frame.events.some((event) => event.type === 'inboundStarted' && event.startReason === 'periodStart')).toBe(false)
     expect(tipped.frame.clock.gameRunning).toBe(true)
   })

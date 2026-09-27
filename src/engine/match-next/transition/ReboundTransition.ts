@@ -236,15 +236,19 @@ function createTransition(state: MatchState, teamId: TeamId, trigger: Transition
     .sort((left, right) => distanceBetween(left.position, basket) - distanceBetween(right.position, basket) || comparePlayerId(left, right))[0]!
   const stopper = findPlayer(state, state.defensiveStructure?.onBallDefenderPlayerId ?? '')
     ?? defense.filter((player) => player.playerId !== rimDefender.playerId).sort((left, right) => distanceBetween(left.position, handler.position) - distanceBetween(right.position, handler.position) || comparePlayerId(left, right))[0]!
+  const matchDefenders = defense.filter((player) => player.playerId !== stopper.playerId && player.playerId !== rimDefender.playerId)
+  const matchLanes = new Map(matchDefenders.slice().sort((left, right) => left.position.y - right.position.y || comparePlayerId(left, right))
+    .map((player, index) => [player.playerId, state.court.widthMeters / 2 + (index - 1) * state.court.widthMeters * 0.22]))
   const offenseRoles: readonly (readonly [MatchPlayerState, TransitionRoleKind])[] = [
     [handler, 'BALL_ADVANCE'], [laneLeft, 'LANE_LEFT'], [laneRight, 'LANE_RIGHT'], [rimRunner, 'RIM_RUN'], [trail, 'TRAIL'],
   ]
   const defenseRoles: readonly (readonly [MatchPlayerState, TransitionRoleKind])[] = [
     [stopper, 'STOP_BALL'], [rimDefender, 'PROTECT_RIM'],
-    ...defense.filter((player) => player.playerId !== stopper.playerId && player.playerId !== rimDefender.playerId).map((player) => [player, 'MATCH'] as const),
+    ...matchDefenders.map((player) => [player, 'MATCH'] as const),
   ]
   const roles = [...offenseRoles, ...defenseRoles].map(([player, kind]) => ({
     playerId: player.playerId, teamId: player.teamId, kind, target: { ...player.position },
+    ...(kind === 'MATCH' ? { matchLaneY: matchLanes.get(player.playerId) } : {}),
     responsibilityId: '', decisionId: '',
   }))
   return {
@@ -339,7 +343,15 @@ function roleTarget(state: MatchState, role: TransitionRole): CourtPosition {
     const towardBall = unitVector({ x: ball.x - basket.x, y: ball.y - basket.y }, { x: basket.x >= state.court.lengthMeters / 2 ? -1 : 1, y: 0 })
     return clampPosition({ x: basket.x + towardBall.x * 2.2, y: basket.y + towardBall.y * 2.2 }, state.court)
   }
-  return attacker ? guardPosition(attacker.position, ball, basket, 'GAP', state.court, defensiveTactics) : guardPosition(role.target, ball, basket, 'GAP', state.court, defensiveTactics)
+  if (role.kind === 'MATCH') {
+    if (attacker && (attacker.position.x - ball.x) * direction > 1.5) {
+      return guardPosition(attacker.position, ball, basket, 'GAP', state.court, defensiveTactics)
+    }
+    const distanceToBasket = Math.abs(basket.x - ball.x)
+    const screenDepth = clamp(distanceToBasket * 0.55, 3.5, 8.5)
+    return clampPosition({ x: basket.x - direction * screenDepth, y: role.matchLaneY ?? role.target.y }, state.court)
+  }
+  return role.target
 }
 
 function evaluateTransition(state: MatchState, teamId: TeamId): TransitionAdvantage {
@@ -376,6 +388,11 @@ function transitionHasEnded(state: MatchState): boolean {
   if (!transition || !possession || possession.teamId !== transition.teamId) return true
   if (possession.phase === 'SETUP' || possession.phase === 'SHOT' || state.ball.kind === 'DEAD' || state.ball.kind === 'INBOUND' || state.ball.kind === 'REBOUNDABLE') return true
   if (state.ball.kind === 'SHOT_IN_FLIGHT') return true
+  if (possession.phase === 'ACTION' && transition.advantage === 'STOPPED'
+    && state.ball.kind === 'HELD' && state.ball.ownerTeamId === transition.teamId) {
+    const handler = findPlayer(state, state.ball.ownerPlayerId)
+    if (handler && isInFrontcourt(handler.position, transition.teamId, state)) return true
+  }
   return false
 }
 
