@@ -11,7 +11,6 @@ import type { MatchActionKind, MatchActionOutcome, MatchActionState, MatchDecisi
 
 const DRIVE_MIN_TICKS = 8
 const DRIVE_MIN_PROGRESS_METERS = 2.4
-const DRIVE_HELP_RADIUS_METERS = 4.2
 const DRIVE_TARGET_RADIUS_METERS = 1.05
 const DRIVE_TIMEOUT_TICKS = 36
 const CLOSEOUT_ARRIVAL_METERS = 1.2
@@ -118,13 +117,11 @@ function updateDrives(state: MatchState): MatchState {
     const targetDistance = distanceBetween(driver.position, action.target)
     const elapsed = next.t - action.startedT
     next = updateAction(next, action.id, { progressMeters: progress })
-    const helper = (next.defensiveStructure?.helpDefenderPlayerIds ?? [])
-      .map((playerId) => next.players.find((player) => player.playerId === playerId))
-      .filter((player): player is NonNullable<typeof player> => player !== undefined)
-      .map((player) => ({ player, distance: distanceBetween(player.position, driver.position) }))
-      .sort((left, right) => left.distance - right.distance || String(left.player.playerId).localeCompare(String(right.player.playerId)))[0]
-    if (elapsed >= DRIVE_MIN_TICKS && progress >= DRIVE_MIN_PROGRESS_METERS && helper && helper.distance <= DRIVE_HELP_RADIUS_METERS) {
-      next = updateAction(next, action.id, { helpDefenderPlayerId: helper.player.playerId })
+    const helpDecision = next.defensiveStructure?.helpDecision
+    const helperId = helpDecision?.status === 'TRIGGERED' && helpDecision.sourceActionId === action.id
+      ? helpDecision.helperPlayerId : undefined
+    if (elapsed >= DRIVE_MIN_TICKS && progress >= DRIVE_MIN_PROGRESS_METERS && helperId) {
+      next = updateAction(next, action.id, { helpDefenderPlayerId: helperId })
       next = resolveAction(next, action.id, 'ADVANTAGE')
       next = setPossessionPhase(next, 'SETUP')
     } else if (elapsed >= DRIVE_MIN_TICKS && targetDistance <= DRIVE_TARGET_RADIUS_METERS) {

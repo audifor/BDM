@@ -172,6 +172,10 @@ export function toFrame(state: MatchState): MatchFrame {
       defendedBasket: { ...state.defensiveStructure.defendedBasket },
       assignments: state.defensiveStructure.assignments.map((item) => ({ ...item })),
       helpDefenderPlayerIds: [...state.defensiveStructure.helpDefenderPlayerIds],
+      helpDecision: {
+        ...state.defensiveStructure.helpDecision,
+        rotations: state.defensiveStructure.helpDecision.rotations.map((item) => ({ ...item })),
+      },
     },
     reboundState: state.reboundState === null ? null : {
       ...state.reboundState,

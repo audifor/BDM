@@ -90,30 +90,49 @@ describe('Match Next man-to-man defense', () => {
     expect(state.movementIntents.filter((item) => item.provenance.owner === 'defensiveStructure')).toHaveLength(5)
   })
 
-  it('keeps off-ball defenders with their assignments and sends only one defender to the drive', () => {
+  it('triggers paint help from a weak-side low man and assigns the rotation chain', () => {
     const state = liveHome(setupFor())
     const holder = state.ball.kind === 'HELD' ? state.ball.ownerPlayerId : null
     expect(holder).not.toBeNull()
     expect(state.responsibilities.filter((item) => item.owner === 'defensiveStructure' && item.kind === 'HELP')).toHaveLength(0)
     expect(state.responsibilities.filter((item) => item.owner === 'defensiveStructure' && item.kind === 'GAP')).toHaveLength(4)
-
-    const driveTarget = { x: 6, y: state.court.widthMeters / 2 }
+    const basket = state.court.baskets.right
+    const onBallDefender = state.defensiveStructure!.assignments.find((item) => item.attackerPlayerId === holder)!.defenderPlayerId
     const driving = reconcileManDefense({
       ...state,
+      ball: { ...state.ball, position: { x: 24, y: 10 } },
+      players: state.players.map((player) => player.playerId === holder
+        ? { ...player, position: { x: 24, y: 10 } }
+        : player.playerId === onBallDefender ? { ...player, position: { x: 22.5, y: 10 } } : player),
       actions: [...state.actions.filter((item) => item.kind !== 'DRIVE'), {
         id: 'test-drive', kind: 'DRIVE', playerId: holder!, teamId: homeTeamId, startedT: state.t,
-        status: 'ACTIVE', phase: 'DRIVING', target: driveTarget,
+        status: 'ACTIVE', phase: 'DRIVING', startPosition: { x: 19, y: 10 }, target: basket,
       }],
     })
-    const helpers = driving.responsibilities.filter((item) => item.owner === 'defensiveStructure' && item.kind === 'HELP')
-    expect(helpers).toHaveLength(1)
-    expect(driving.responsibilities.filter((item) => item.owner === 'defensiveStructure' && item.kind === 'GAP')).toHaveLength(3)
-    const expectedHelper = driving.defensiveStructure!.assignments
-      .filter((assignment) => assignment.attackerPlayerId !== holder)
-      .map((assignment) => ({ assignment, defender: driving.players.find((player) => player.playerId === assignment.defenderPlayerId)! }))
-      .sort((left, right) => distanceBetween(left.defender.position, driveTarget) - distanceBetween(right.defender.position, driveTarget)
-        || String(left.assignment.defenderPlayerId).localeCompare(String(right.assignment.defenderPlayerId)))[0]!.assignment.defenderPlayerId
-    expect(helpers[0]!.playerId).toBe(expectedHelper)
+    const help = driving.defensiveStructure!.helpDecision
+    expect(help.status).toBe('TRIGGERED')
+    expect(help.sourceActionId).toBe('test-drive')
+    expect(help.reason).toContain('entered the paint threat area')
+    expect(driving.responsibilities.find((item) => item.playerId === help.helperPlayerId)?.kind).toBe('LOW_MAN')
+    const lowManAssignment = driving.defensiveStructure!.assignments.find((item) => item.defenderPlayerId === help.helperPlayerId)!
+    expect(driving.players.find((player) => player.playerId === lowManAssignment.attackerPlayerId)!.position.y).toBeLessThan(state.court.widthMeters / 2)
+    expect(driving.movementIntents.find((item) => item.playerId === onBallDefender)?.urgency).toBe('run')
+    expect(driving.movementIntents.find((item) => item.playerId === help.helperPlayerId)?.urgency).toBe('run')
+    expect(help.rotations.map((item) => item.kind)).toEqual(['ROTATE', 'X_OUT'])
+    expect(reconcileManDefense({
+      ...state,
+      ball: { ...state.ball, position: { x: 18, y: 10 } },
+      actions: [{ id: 'outside-drive', kind: 'DRIVE', playerId: holder!, teamId: homeTeamId, startedT: state.t,
+        status: 'ACTIVE', phase: 'DRIVING', startPosition: { x: 17.5, y: 10 }, target: basket }],
+    }).defensiveStructure?.helpDecision.status).toBe('NOT_NEEDED')
+    expect(reconcileManDefense({
+      ...state,
+      ball: { ...state.ball, position: { x: 24, y: 10 } },
+      players: state.players.map((player) => player.playerId === holder ? { ...player, position: { x: 24, y: 10 } }
+        : player.playerId === onBallDefender ? { ...player, position: { x: 22.5, y: 10 } } : player),
+      actions: [{ id: 'test-drive', kind: 'DRIVE', playerId: holder!, teamId: homeTeamId, startedT: state.t,
+        status: 'ACTIVE', phase: 'DRIVING', startPosition: { x: 19, y: 10 }, target: basket }],
+    })).toEqual(driving)
   })
 
   it('applies matchup overrides first and rejects invalid or duplicate overrides', () => {
@@ -214,14 +233,19 @@ describe('Match Next man-to-man defense', () => {
     let state = liveHome(setupFor())
     const initialHolder = state.ball.kind === 'HELD' ? state.ball.ownerPlayerId : null
     expect(initialHolder).not.toBeNull()
+    const basket = state.court.baskets.right
+    const onBallDefender = state.defensiveStructure!.assignments.find((item) => item.attackerPlayerId === initialHolder)!.defenderPlayerId
     state = reconcileManDefense({
       ...state,
+      ball: { ...state.ball, position: { x: 24, y: 10 } },
+      players: state.players.map((player) => player.playerId === initialHolder ? { ...player, position: { x: 24, y: 10 } }
+        : player.playerId === onBallDefender ? { ...player, position: { x: 22.5, y: 10 } } : player),
       actions: [...state.actions.filter((item) => item.kind !== 'DRIVE'), {
         id: 'test-drive', kind: 'DRIVE', playerId: initialHolder!, teamId: homeTeamId, startedT: state.t,
-        status: 'ACTIVE', phase: 'DRIVING', target: { x: 6, y: state.court.widthMeters / 2 },
+        status: 'ACTIVE', phase: 'DRIVING', startPosition: { x: 19, y: 10 }, target: basket,
       }],
     })
-    const helper = state.responsibilities.find((item) => item.owner === 'defensiveStructure' && item.kind === 'HELP')
+    const helper = state.responsibilities.find((item) => item.owner === 'defensiveStructure' && item.kind === 'LOW_MAN')
     expect(helper).toBeDefined()
     const assignment = state.defensiveStructure!.assignments.find((item) => item.defenderPlayerId === helper!.playerId)!
     const heldOwnerId = state.ball.kind === 'HELD' ? state.ball.ownerPlayerId : null

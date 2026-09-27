@@ -110,7 +110,10 @@ export function observeFrames(frames: readonly MatchFrame[]): MatchObservationRe
     const playersById = new Map(frame.players.map((player) => [player.playerId, player]))
     if (frame.reboundState) {
       const roles = frame.reboundState.responsibilities
-      if (frame.ball.kind !== 'REBOUNDABLE') reboundResponsibilityViolations.push(`Rebound responsibilities are stale at frame ${index}`)
+      const reboundPhaseMatchesBall = frame.reboundState.phase === 'SHOT_FLIGHT'
+        ? frame.ball.kind === 'SHOT_IN_FLIGHT'
+        : frame.ball.kind === 'REBOUNDABLE'
+      if (!reboundPhaseMatchesBall) reboundResponsibilityViolations.push(`Rebound responsibilities are stale at frame ${index}`)
       if (roles.length !== 10 || new Set(roles.map((item) => item.playerId)).size !== roles.length) reboundResponsibilityViolations.push(`Rebound responsibilities do not cover ten unique players at frame ${index}`)
       for (const role of roles) {
         const player = playersById.get(role.playerId)
@@ -269,7 +272,8 @@ export function observeFrames(frames: readonly MatchFrame[]): MatchObservationRe
         movementTeleports += 1
         playerContinuityViolations.push(`Player ${player.playerId} moved ${playerDistance.toFixed(2)}m beyond physical reach at frame ${index}`)
       }
-      if (player.intent && speed > player.kinematics.maxSpeedMps * MOVEMENT_URGENCY_FACTORS[player.intent.urgency] + SPEED_TOLERANCE_MPS) speedBoundViolations.push(`Player ${player.playerId} exceeded urgency speed at frame ${index}`)
+      if (player.intent && speed > player.kinematics.maxSpeedMps * MOVEMENT_URGENCY_FACTORS[player.intent.urgency] + SPEED_TOLERANCE_MPS
+        && speed >= Math.hypot(previous.velocity.x, previous.velocity.y) - SPEED_TOLERANCE_MPS) speedBoundViolations.push(`Player ${player.playerId} exceeded urgency speed without braking at frame ${index}`)
       if (elapsedSeconds > 0) {
         const beforeSpeed = Math.hypot(previous.velocity.x, previous.velocity.y)
         const speedChange = speed - beforeSpeed

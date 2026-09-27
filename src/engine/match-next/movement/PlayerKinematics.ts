@@ -18,20 +18,11 @@ export interface KinematicsResult {
 export function integrateMatchPlayers(state: MatchState): readonly MatchPlayerState[] {
   if (state.movementIntents.length === 0) return state.players
   const intents = new Map(state.movementIntents.map((intent) => [intent.playerId, intent]))
-  const positionsByTeam = new Map<MatchPlayerState['teamId'], { readonly playerId: MatchPlayerState['playerId']; readonly position: CourtPosition }[]>()
-  for (const player of state.players) {
-    if (!player.active) continue
-    const teammates = positionsByTeam.get(player.teamId) ?? []
-    teammates.push({ playerId: player.playerId, position: player.position })
-    positionsByTeam.set(player.teamId, teammates)
-  }
+  const activePositions = state.players.filter((player) => player.active).map(({ playerId, position }) => ({ playerId, position }))
   return state.players.map((player) => {
-    const defensiveBallFreeze = state.ball.kind === 'SHOT_IN_FLIGHT'
-    if (defensiveBallFreeze && player.teamId === state.defensiveStructure?.teamId) return player
     const intent = intents.get(player.playerId)
     if (!intent) return player
-    const teammates = positionsByTeam.get(player.teamId) ?? []
-    const others = teammates.filter((teammate) => teammate.playerId !== player.playerId).map((teammate) => teammate.position)
+    const others = activePositions.filter((other) => other.playerId !== player.playerId).map((other) => other.position)
     const basket = state.offensiveStructure?.attackingBasket ?? state.defensiveStructure?.defendedBasket ?? state.court.baskets.left
     const result = stepPlayerKinematics(player, player.kinematics, intent, state.ball.position, basket, others, state.court)
     return { ...player, position: result.position, velocity: result.velocity, facing: result.facing }
@@ -56,9 +47,12 @@ export function stepPlayerKinematics(
   const braking = Math.max(0.01, profile.brakingMps2)
   const maxSpeed = Math.max(0, profile.maxSpeedMps) * MOVEMENT_URGENCY_FACTORS[intent.urgency]
   const remaining = Math.max(0, distance - TARGET_ARRIVAL_TOLERANCE_METERS)
-  const desiredSpeed = distance <= TARGET_ARRIVAL_TOLERANCE_METERS
+  const brakingSpeed = distance <= TARGET_ARRIVAL_TOLERANCE_METERS
     ? 0
     : Math.min(maxSpeed, Math.sqrt(2 * braking * remaining))
+  const headingAlignment = speed <= 1e-6 || distance <= 1e-6 ? 1
+    : clamp(((player.velocity.x * dx + player.velocity.y * dy) / (speed * distance) + 1) * 0.5, 0, 1)
+  const desiredSpeed = Math.min(brakingSpeed, maxSpeed * headingAlignment)
   let desiredVelocity = distance <= 1e-9
     ? { x: 0, y: 0 }
     : { x: dx / distance * desiredSpeed, y: dy / distance * desiredSpeed }
@@ -75,8 +69,7 @@ export function stepPlayerKinematics(
 
   const deltaVelocity = { x: desiredVelocity.x - player.velocity.x, y: desiredVelocity.y - player.velocity.y }
   const deltaMagnitude = Math.hypot(deltaVelocity.x, deltaVelocity.y)
-  const speedReducing = desiredSpeed < speed
-  const maxDelta = (speedReducing ? braking : Math.max(0.01, profile.accelerationMps2)) * MOVEMENT_DT_SECONDS
+  const maxDelta = (desiredSpeed < speed ? braking : Math.max(0.01, profile.accelerationMps2)) * MOVEMENT_DT_SECONDS
   const scale = deltaMagnitude > maxDelta && deltaMagnitude > 0 ? maxDelta / deltaMagnitude : 1
   let velocity = { x: player.velocity.x + deltaVelocity.x * scale, y: player.velocity.y + deltaVelocity.y * scale }
   let nextPosition = {

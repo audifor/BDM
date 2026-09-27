@@ -26,6 +26,22 @@ export interface DefensiveStructureState {
   readonly assignments: readonly DefensiveAssignment[]
   readonly onBallDefenderPlayerId: PlayerId | null
   readonly helpDefenderPlayerIds: readonly PlayerId[]
+  readonly helpDecision: DefensiveHelpDecision
+}
+
+export interface DefensiveHelpDecision {
+  readonly status: 'NOT_NEEDED' | 'TRIGGERED'
+  readonly ballHandlerPlayerId: PlayerId | null
+  readonly sourceActionId?: string
+  readonly reason: string
+  readonly helperPlayerId?: PlayerId
+  readonly helperKind?: 'HELP' | 'LOW_MAN'
+  readonly rotations: readonly {
+    readonly playerId: PlayerId
+    readonly kind: 'ROTATE' | 'X_OUT'
+    readonly targetAttackerPlayerId: PlayerId
+    readonly secondaryAttackerPlayerId?: PlayerId
+  }[]
 }
 
 export type ReboundResponsibilityKind = 'BOX_OUT' | 'CRASH_REBOUND' | 'PURSUE_REBOUND' | 'RETREAT'
@@ -39,6 +55,7 @@ export interface ReboundResponsibility {
   readonly decisionId: string
 }
 export interface MatchReboundState {
+  readonly phase: 'SHOT_FLIGHT' | 'LIVE'
   readonly shootingTeamId: TeamId
   readonly startedT: number
   readonly availableAtT: number
@@ -119,7 +136,7 @@ export interface MatchNextEvent {
   readonly phase?: PossessionPhase
   readonly ballReason?: string
   readonly acquisitionDistanceMeters?: number
-  readonly responsibilityKind?: 'ON_BALL' | 'GAP' | 'HELP' | 'RECOVER'
+  readonly responsibilityKind?: 'ON_BALL' | 'GAP' | 'HELP' | 'LOW_MAN' | 'ROTATE' | 'X_OUT' | 'RECOVER'
   readonly decisionId?: string
   readonly decisionKind?: string
   readonly actionId?: string

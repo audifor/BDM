@@ -86,7 +86,9 @@ describe('Match Next action vertical slice', () => {
     expect(signature(first)).toEqual(signature(second))
     expect(signature(oppositeBasket).map((action) => action.kind)).toEqual(signature(first).map((action) => action.kind))
     expect(first.actions.map((action) => action.kind)).toEqual(expect.arrayContaining(['DRIVE', 'KICK_OUT', 'CLOSEOUT', 'CATCH_AND_SHOOT']))
-    expect(first.actions.find((action) => action.kind === 'DRIVE')).toMatchObject({ status: 'COMPLETED', outcome: 'ADVANTAGE', helpDefenderPlayerId: expect.any(String) })
+    const drive = first.actions.find((action) => action.kind === 'DRIVE')!
+    expect(drive).toMatchObject({ status: 'COMPLETED', outcome: 'ADVANTAGE', helpDefenderPlayerId: expect.any(String) })
+    expect(first.events.find((event) => event.type === 'defensiveResponsibilityChanged' && event.responsibilityKind === 'LOW_MAN')?.playerId).toBe(drive.helpDefenderPlayerId)
     expect(first.actions.find((action) => action.kind === 'KICK_OUT')).toMatchObject({ status: 'COMPLETED', outcome: 'CAUGHT' })
     const closeout = first.actions.find((action) => action.kind === 'CLOSEOUT')!
     const closeoutDefender = first.players.find((player) => player.playerId === closeout.playerId)!

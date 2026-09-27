@@ -61,6 +61,11 @@ describe('Match Next rebound and transition integration', () => {
     const assignedDefenderId = state.defensiveStructure?.assignments.find((item) => item.attackerPlayerId === shooterId)?.defenderPlayerId
     const assignedDefender = state.players.find((player) => player.playerId === assignedDefenderId)!
     state = launchMiss(state, { ...assignedDefender.position }, 6, 1)
+    expect(state.reboundState?.phase).toBe('SHOT_FLIGHT')
+    expect(state.reboundState?.responsibilities.filter((item) => item.teamId !== state.homeTeamId && item.kind === 'BOX_OUT')).toHaveLength(5)
+    const positionsAtRelease = new Map(state.players.map((player) => [player.playerId, player.position]))
+    state = tick(state)
+    expect(state.players.some((player) => distanceBetween(player.position, positionsAtRelease.get(player.playerId)!) > 0)).toBe(true)
     const initialFrame = toFrame(state)
     const frames = [initialFrame]
     let sawBoxOut = false
@@ -84,6 +89,9 @@ describe('Match Next rebound and transition integration', () => {
     expect(rebound?.acquisitionDistanceMeters).toBeLessThanOrEqual(0.12)
     expect(state.possessions[0]).toMatchObject({ endReason: 'defensiveRebound' })
     expect(activePossession(state)).toMatchObject({ teamId: state.awayTeamId, startReason: 'defensiveRebound', phase: 'ADVANCE' })
+    expect(state.ball).toMatchObject({ kind: 'HELD', ownerTeamId: state.awayTeamId })
+    expect(state.events.filter((event) => event.type === 'reboundSecured')).toHaveLength(1)
+    expect(rebound?.playerId).toBe(state.ball.kind === 'HELD' ? state.ball.ownerPlayerId : null)
     expect(state.transition).toMatchObject({ teamId: state.awayTeamId, trigger: 'defensiveRebound' })
     expect(state.transition?.roles.map((role) => role.kind)).toEqual(expect.arrayContaining(['BALL_ADVANCE', 'LANE_LEFT', 'LANE_RIGHT', 'RIM_RUN', 'TRAIL', 'STOP_BALL', 'PROTECT_RIM']))
     expect(distanceBetween(initialFrame.players.find((player) => player.teamId === state.awayTeamId)!.position, state.players.find((player) => player.teamId === state.awayTeamId)!.position)).toBeGreaterThan(0)
@@ -147,6 +155,8 @@ describe('Match Next rebound and transition integration', () => {
     expect(activePossession(state)).toMatchObject({ teamId: setup.awayTeamId, startReason: 'steal', phase: 'ADVANCE' })
     expect(state.transition).toMatchObject({ teamId: setup.awayTeamId, trigger: 'turnover' })
     const ballAdvance = state.transition!.roles.find((role) => role.kind === 'BALL_ADVANCE')!
+    const stopBall = state.transition!.roles.find((role) => role.kind === 'STOP_BALL')!
+    expect(stopBall.playerId).toBe(state.defensiveStructure?.onBallDefenderPlayerId)
     expect(state.movementIntents.find((intent) => intent.playerId === ballAdvance.playerId)?.urgency).toBe('run')
     expect(state.movementIntents.find((intent) => intent.playerId === state.transition!.roles.find((role) => role.kind === 'LANE_LEFT')!.playerId)?.urgency).toBe('sprint')
     expect(ballAdvance.target.x).toBeLessThan(state.players.find((player) => player.playerId === ballAdvance.playerId)!.position.x)

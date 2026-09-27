@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { createCourtGeometry, distanceBetween, isInsideCourt, type CourtPosition } from '@/domain/court'
 import { gameIdFromString, playerIdFromString, teamIdFromString } from '@/domain/ids'
-import { createMatchState, applyCommand, tick, toFrame, observeFrames, activePossession, stepPlayerKinematics, resolveFiveOutTargets, resolveBallSide, slotTargetsAreValid, assignFiveOutSlots, attackingBasketForTeam, advanceTarget, MOVEMENT_DT_SECONDS, TARGET_ARRIVAL_TOLERANCE_METERS, TARGET_ARRIVAL_SPEED_MPS, type MatchPlayerState, type MatchSetup, type MatchState } from './index'
+import { createMatchState, applyCommand, tick, toFrame, observeFrames, activePossession, stepPlayerKinematics, integrateMatchPlayers, resolveFiveOutTargets, resolveBallSide, slotTargetsAreValid, assignFiveOutSlots, attackingBasketForTeam, advanceTarget, MOVEMENT_DT_SECONDS, TARGET_ARRIVAL_TOLERANCE_METERS, TARGET_ARRIVAL_SPEED_MPS, type MatchPlayerState, type MatchSetup, type MatchState } from './index'
 
 const homeTeamId = teamIdFromString('movement-home')
 const awayTeamId = teamIdFromString('movement-away')
@@ -127,6 +127,17 @@ describe('Match Next movement and 5OUT authority', () => {
     expect(faster.ticks).toBeLessThan(slower.ticks)
   })
 
+  it('uses braking acceleration when a moving player must reverse toward a new target', () => {
+    const court = createCourtGeometry('FIBA')
+    const player = kineticPlayer({ x: 15, y: 7.5 }, { x: -4, y: 0 })
+    const target = { x: 26, y: 7.5 }
+    const result = stepPlayerKinematics(player, player.kinematics, intent(player.playerId, target), player.position, target, [], court)
+
+    expect(result.velocity.x).toBeCloseTo(-3.6, 8)
+    expect(result.velocity.y).toBeCloseTo(0, 8)
+    expect(result.position.x).toBeLessThan(player.position.x)
+  })
+
   it('uses bounded deterministic soft separation for overlapping teammates', () => {
     const court = createCourtGeometry('FIBA')
     let first: MatchPlayerState = kineticPlayer({ x: 10, y: 7.5 })
@@ -142,6 +153,25 @@ describe('Match Next movement and 5OUT authority', () => {
       second = { ...second, position: secondResult.position, velocity: secondResult.velocity, facing: secondResult.facing }
     }
     expect(distanceBetween(first.position, second.position)).toBeGreaterThan(0.2)
+  })
+
+  it('applies local separation across both teams when players converge on one rebound point', () => {
+    const setup = setupFor()
+    const center = { x: setup.court.lengthMeters / 2, y: setup.court.widthMeters / 2 }
+    let state = createMatchState(setup)
+    state = {
+      ...state,
+      players: state.players.map((player) => ({ ...player, position: center })),
+      movementIntents: state.players.map((player) => intent(player.playerId, center, 'jog')),
+    }
+    for (let index = 0; index < 60; index += 1) state = { ...state, players: integrateMatchPlayers(state) }
+    let minimumDistance = Number.POSITIVE_INFINITY
+    for (let left = 0; left < state.players.length; left += 1) {
+      for (let right = left + 1; right < state.players.length; right += 1) {
+        minimumDistance = Math.min(minimumDistance, distanceBetween(state.players[left]!.position, state.players[right]!.position))
+      }
+    }
+    expect(minimumDistance).toBeGreaterThan(0.05)
   })
 
   it('keeps all four semantic slots inside court, mirrors for the other basket, and applies side hysteresis', () => {

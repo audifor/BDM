@@ -193,6 +193,25 @@ export function NgMatchNextViewer({
             <p>Balón: <strong>{frame.ball.kind}</strong>{frame.ball.ownerPlayerId ? ` · ${playerName(world, frame.ball.ownerPlayerId)}` : ''}</p>
             <p>{frame.currentDecision?.reason ?? 'Esperando la siguiente decisión de posesión.'}</p>
             <p>Ayudas defensivas: {frame.defensiveStructure?.helpDefenderPlayerIds.length ?? 0} · Rebote: {frame.reboundState ? 'en disputa' : '—'}</p>
+            {frame.defensiveStructure && <details>
+              <summary>Traza defensiva</summary>
+              <p>{frame.defensiveStructure.helpDecision.reason}</p>
+              {frame.defensiveStructure.helpDecision.rotations.map((rotation) => <p key={rotation.playerId}>
+                {playerName(world, rotation.playerId)} · {rotation.kind} → {playerName(world, rotation.targetAttackerPlayerId)}
+                {rotation.secondaryAttackerPlayerId ? ` / ${playerName(world, rotation.secondaryAttackerPlayerId)}` : ''}
+              </p>)}
+              <ol>{frame.defensiveStructure.assignments.map((assignment) => {
+                const defender = frame.players.find((player) => player.playerId === assignment.defenderPlayerId)
+                const responsibility = frame.responsibilities.find((item) => item.playerId === assignment.defenderPlayerId && item.owner === 'defensiveStructure')
+                const intent = frame.movementIntents.find((item) => item.playerId === assignment.defenderPlayerId && item.provenance.owner === 'defensiveStructure')
+                return <li key={assignment.defenderPlayerId}>
+                  {playerName(world, assignment.defenderPlayerId)} → {playerName(world, assignment.attackerPlayerId)} · {responsibility?.kind ?? 'SIN TAREA'}
+                  {responsibility ? `: ${responsibility.reason}` : ''}
+                  {intent ? ` · objetivo (${intent.target.x.toFixed(1)}, ${intent.target.y.toFixed(1)})` : ''}
+                  {defender ? ` · posición (${defender.position.x.toFixed(1)}, ${defender.position.y.toFixed(1)})` : ''}
+                </li>
+              })}</ol>
+            </details>}
             <h3>Play-by-play</h3>
             {liveLines.length === 0 ? <p>El registro aparecerá cuando ocurran acciones.</p> : <ol className="me-next-pbp__list">{liveLines.map((line) => <li key={line.sequence}><time>{formatPeriod(line.period)} {formatClock(line.gameClockTenths / 10)}</time><span>{line.playerId ? `${playerName(world, line.playerId)} ` : ''}{line.type === 'pass' && line.targetPlayerId ? `pasó a ${playerName(world, line.targetPlayerId)}` : line.text}</span></li>)}</ol>}
             {result && <div><h3>Resultado y estadísticas</h3><p>{awayName} {result.score.away} — {result.score.home} {homeName}</p><details><summary>Estadísticas de jugadores</summary><ol>{result.playerStats.filter((stat) => stat.secondsPlayed > 0 || stat.points > 0 || stat.rebounds > 0).sort((left, right) => right.points - left.points).map((stat) => <li key={stat.playerId}>{playerName(world, stat.playerId)} · {stat.points} PTS · {stat.rebounds} REB · {stat.fieldGoalsMade}/{stat.fieldGoalsAttempted} FG</li>)}</ol></details></div>}

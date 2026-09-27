@@ -18,7 +18,8 @@ const FRONTCOURT_ADVANTAGE_DISTANCE_METERS = 0.5
 /** Clears temporary roles before their normal structural authorities run again. */
 export function clearExpiredReboundTransition(state: MatchState): MatchState {
   let next = state
-  if (next.reboundState && next.ball.kind !== 'REBOUNDABLE') {
+  const missedShotInFlight = next.ball.kind === 'SHOT_IN_FLIGHT' && next.ball.plannedOutcome.kind === 'MISS'
+  if (next.reboundState && next.ball.kind !== 'REBOUNDABLE' && !missedShotInFlight) {
     next = removeTemporaryRoles(next, next.reboundState.responsibilities.map((item) => item.responsibilityId))
     next = { ...next, reboundState: null }
   }
@@ -37,7 +38,7 @@ export function clearExpiredReboundTransition(state: MatchState): MatchState {
 
 /** Adds real kinematic intents for a live rebound or a possession-changing transition. */
 export function reconcileReboundTransition(input: MatchState): MatchState {
-  if (input.ball.kind === 'REBOUNDABLE') return reconcileRebound(input)
+  if (input.ball.kind === 'REBOUNDABLE' || input.ball.kind === 'SHOT_IN_FLIGHT' && input.ball.plannedOutcome.kind === 'MISS') return reconcileRebound(input)
   return reconcileTransition(input)
 }
 
@@ -74,21 +75,34 @@ export function finishStoppedTransition(state: MatchState): MatchState {
 }
 
 function reconcileRebound(input: MatchState): MatchState {
-  if (input.ball.kind !== 'REBOUNDABLE') return input
-  const ball = input.ball
+  if (input.ball.kind !== 'REBOUNDABLE' && !(input.ball.kind === 'SHOT_IN_FLIGHT' && input.ball.plannedOutcome.kind === 'MISS')) return input
+  const rebound = input.ball.kind === 'REBOUNDABLE' ? {
+    phase: 'LIVE' as const,
+    shootingTeamId: input.ball.shootingTeamId,
+    availableAtT: input.ball.availableAtT,
+    position: input.ball.position,
+    target: input.ball.landingTarget,
+  } : input.ball.plannedOutcome.kind === 'MISS' ? {
+    phase: 'SHOT_FLIGHT' as const,
+    shootingTeamId: input.ball.shooterTeamId,
+    availableAtT: input.ball.plannedOutcome.reboundAvailableT,
+    position: input.ball.plannedOutcome.reboundTarget,
+    target: input.ball.plannedOutcome.reboundTarget,
+  } : null
+  if (!rebound) return input
   const prior = input.reboundState
-  const shootingPlayers = input.players.filter((player) => player.active && player.teamId === ball.shootingTeamId)
-  const defendingTeamId = ball.shootingTeamId === input.homeTeamId ? input.awayTeamId : input.homeTeamId
+  const shootingPlayers = input.players.filter((player) => player.active && player.teamId === rebound.shootingTeamId)
+  const defendingTeamId = rebound.shootingTeamId === input.homeTeamId ? input.awayTeamId : input.homeTeamId
   const defendingPlayers = input.players.filter((player) => player.active && player.teamId === defendingTeamId)
-  const reboundTarget = ball.landingTarget
+  const reboundTarget = rebound.target
   const crashers = shootingPlayers
-    .map((player) => ({ player, score: distanceBetween(player.position, ball.position) - player.reboundingImpact * 0.008 - player.standingReachCm * 0.001 }))
+    .map((player) => ({ player, score: distanceBetween(player.position, rebound.position) - player.reboundingImpact * 0.008 - player.standingReachCm * 0.001 }))
     .sort((left, right) => left.score - right.score || comparePlayerId(left.player, right.player))
     .slice(0, REBOUND_PURSUERS_PER_TEAM)
   const crasherIds = new Set(crashers.map(({ player }) => player.playerId))
-  const pursuingDefenderIds = input.t >= ball.availableAtT
+  const pursuingDefenderIds = input.ball.kind === 'REBOUNDABLE' && input.t >= rebound.availableAtT
     ? new Set(defendingPlayers.map((player) => player.playerId)
-      .map((playerId) => ({ playerId, distance: distanceBetween(findPlayer(input, playerId)!.position, ball.position) }))
+      .map((playerId) => ({ playerId, distance: distanceBetween(findPlayer(input, playerId)!.position, rebound.position) }))
       .sort((left, right) => left.distance - right.distance || String(left.playerId).localeCompare(String(right.playerId)))
       .slice(0, REBOUND_PURSUERS_PER_TEAM).map((item) => item.playerId))
     : new Set<PlayerId>()
@@ -100,11 +114,11 @@ function reconcileRebound(input: MatchState): MatchState {
   const generalDecisions = [] as MatchState['decisions'][number][]
   const intents: MovementIntent[] = []
   const assignments = input.defensiveStructure?.teamId === defendingTeamId ? input.defensiveStructure.assignments : []
-  const basket = attackingBasketForTeam(ball.shootingTeamId, input.homeTeamId, input.period, input.court)
+  const basket = attackingBasketForTeam(rebound.shootingTeamId, input.homeTeamId, input.period, input.court)
   const activePlayers = [...shootingPlayers, ...defendingPlayers]
 
   for (const player of activePlayers) {
-    const offense = player.teamId === ball.shootingTeamId
+    const offense = player.teamId === rebound.shootingTeamId
     const assignment = assignments.find((item) => item.defenderPlayerId === player.playerId)
     const assignedAttacker = assignment ? findPlayer(input, assignment.attackerPlayerId) : undefined
     let kind: ReboundResponsibility['kind']
@@ -113,7 +127,7 @@ function reconcileRebound(input: MatchState): MatchState {
     let owner: ResponsibilityOwner
     if (offense) {
       owner = 'offensiveStructure'
-      if (input.t >= ball.availableAtT && crasherIds.has(player.playerId)) kind = 'PURSUE_REBOUND'
+      if (input.ball.kind === 'REBOUNDABLE' && input.t >= rebound.availableAtT && crasherIds.has(player.playerId)) kind = 'PURSUE_REBOUND'
       else if (crasherIds.has(player.playerId)) kind = 'CRASH_REBOUND'
       else kind = 'RETREAT'
       target = kind === 'RETREAT' ? reboundSafetyTarget(player, reboundTarget, basket, input) : reboundTarget
@@ -154,14 +168,14 @@ function reconcileRebound(input: MatchState): MatchState {
   const nextState: MatchState = {
     ...input,
     offensiveStructure: null,
-    reboundState: { shootingTeamId: ball.shootingTeamId, startedT: prior?.startedT ?? input.t, availableAtT: ball.availableAtT, target: { ...reboundTarget }, responsibilities },
+    reboundState: { phase: rebound.phase, shootingTeamId: rebound.shootingTeamId, startedT: prior?.startedT ?? input.t, availableAtT: rebound.availableAtT, target: { ...reboundTarget }, responsibilities },
     responsibilities: [...input.responsibilities.filter((item) => !activePlayers.some((player) => player.playerId === item.playerId)), ...generalResponsibilities],
     decisions: [...input.decisions.filter((item) => !activePlayers.some((player) => player.playerId === item.playerId)), ...generalDecisions],
     movementIntents: [...input.movementIntents.filter((item) => !activePlayers.some((player) => player.playerId === item.playerId)), ...intents],
     nextResponsibilitySequence,
     nextDecisionSequence,
   }
-  if (!prior) return emitEvent(nextState, 'reboundResponsibilitiesAssigned', { teamId: ball.shootingTeamId })
+  if (!prior) return emitEvent(nextState, 'reboundResponsibilitiesAssigned', { teamId: rebound.shootingTeamId })
   return nextState
 }
 
@@ -260,7 +274,9 @@ function installTransitionRoles(input: MatchState, transition: MatchTransitionSt
     reason: `Transition role: ${role.kind}`,
   }))
   const intents: MovementIntent[] = roles.map((role) => ({
-    playerId: role.playerId, target: { ...role.target }, urgency: role.kind === 'BALL_ADVANCE' ? 'run' : 'sprint', facing: { kind: role.kind === 'BALL_ADVANCE' || role.kind === 'RIM_RUN' ? 'BASKET' : 'BALL' },
+    playerId: role.playerId, target: { ...role.target },
+    urgency: role.teamId !== transition.teamId ? 'run' : role.kind === 'BALL_ADVANCE' ? 'run' : 'sprint',
+    facing: { kind: role.kind === 'BALL_ADVANCE' || role.kind === 'RIM_RUN' ? 'BASKET' : 'BALL' },
     provenance: { responsibilityId: role.responsibilityId, decisionId: role.decisionId, owner: transitionOwner(role) },
   }))
   const rolePlayerIds = new Set(roles.map((role) => role.playerId))
