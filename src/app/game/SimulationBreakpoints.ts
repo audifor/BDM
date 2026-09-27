@@ -1,11 +1,13 @@
 import type { GameDate } from '@/domain/date'
 import { deriveGovernanceDecisionStatus, deriveGovernanceRequestStatus, resolveGovernanceDecisionRights } from '@/domain/governance'
 import type { GameWorld } from '@/domain/world'
-import { getPendingMediaOpportunities } from '@/domain/world'
+import { canTeamAffordAdditionalSalary, getFreeAgents, getPendingMediaOpportunities } from '@/domain/world'
 import { getCurrentDraftPick } from '@/engine/draft'
 import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
 import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
 import { classifyCompetitionLifecycles } from './CompetitionLifecycleCoordinator'
+import { getFreeAgentMarketTerms } from '@/app/market'
+import { getEcosystemForTeam } from '@/domain/world'
 
 export const SIMULATION_BREAKPOINT_LEVELS = ['BACKGROUND', 'INFO', 'IMPORTANT', 'ACTION_REQUIRED', 'BLOCKING'] as const
 export type SimulationBreakpointLevel = typeof SIMULATION_BREAKPOINT_LEVELS[number]
@@ -62,6 +64,19 @@ export function evaluateSimulationBreakpoints(world: GameWorld, context: Simulat
   }
 
   if (userTeam !== undefined) {
+    if (userTeam.rosterPlayerIds.length < 5) {
+      const ecosystem = getEcosystemForTeam(world, userTeam.id)
+      const marketSupported = ecosystem !== undefined && ecosystem.kind !== 'ncaaLike'
+        && getFreeAgents(world).some((player) => player.gender === userTeam.gender && canTeamAffordAdditionalSalary(world, userTeam.id, getFreeAgentMarketTerms(world, player.id).annualSalary))
+      candidates.push(candidate({
+        level: marketSupported ? 'ACTION_REQUIRED' : 'BLOCKING', reason: 'minimumRoster', sourceKind: 'TEAM_ROSTER_MINIMUM', sourceId: userTeam.id,
+        effectiveDate: world.currentDate, ownership: { kind: 'USER_TEAM', coachId: world.userCoachId, teamId: userTeam.id },
+        ...(marketSupported ? { route: 'market', actionTarget: { teamId: userTeam.id } } : {}),
+        diagnostic: marketSupported
+          ? `User team ${userTeam.id} has ${userTeam.rosterPlayerIds.length} rostered players; at least five are required and an affordable free agent is available.`
+          : `User team ${userTeam.id} has ${userTeam.rosterPlayerIds.length} rostered players; at least five are required and no supported affordable signing is available.`,
+      }))
+    }
     for (const draft of Object.values(world.draftsById).filter((item) => item.status === 'inProgress')) {
       const pick = getCurrentDraftPick(world, draft.id)
       if (pick?.ownerTeamId === userTeam.id) candidates.push(candidate({

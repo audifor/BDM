@@ -14,7 +14,8 @@ import {
   type SimulateMatchWithRotationsOptions,
 } from '@/engine/match'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
-import { calculateTeamStrength, resolveStartingFive } from '@/engine/team'
+import { calculateTeamStrength, resolveStartingFiveWithRepair } from '@/engine/team'
+import type { WorldRepairReport } from '@/domain/repair'
 import { applyPostMatchInjuries } from '@/engine/injury'
 import { getAvailablePlayersForCompetition } from '@/engine/eligibility'
 import { MINIMUM_MATCH_SQUAD_SIZE } from '@/engine/match'
@@ -79,9 +80,11 @@ export function prepareMatch(world: GameWorld, game: Game, tacticalPlans?: Parti
 }
 
 /** Builds the shared immutable pre-match input consumed by both instant and live execution. */
-export function prepareMatchOptions(world: GameWorld, game: Game, tacticalPlans?: Partial<{ home: MatchTacticalPlan; away: MatchTacticalPlan }>, seedOrFactory?: number | MatchSeedFactory): SimulateMatchWithRotationsOptions & { readonly matchSeed: number } {
+export function prepareMatchOptions(world: GameWorld, game: Game, tacticalPlans?: Partial<{ home: MatchTacticalPlan; away: MatchTacticalPlan }>, seedOrFactory?: number | MatchSeedFactory): SimulateMatchWithRotationsOptions & { readonly matchSeed: number; readonly repairReports: readonly WorldRepairReport[] } {
   const squads = availableSquads(world, game)
-  const lineups = { home: resolveStartingFive(world, game.homeTeamId, game.date, squads.home), away: resolveStartingFive(world, game.awayTeamId, game.date, squads.away) }
+  const homeLineup = resolveStartingFiveWithRepair(world, game.homeTeamId, game.date, squads.home)
+  const awayLineup = resolveStartingFiveWithRepair(world, game.awayTeamId, game.date, squads.away)
+  const lineups = { home: homeLineup.playerIds, away: awayLineup.playerIds }
   const playerProfiles = { home: squads.home.map((playerId) => createMatchPlayerProfile(world.players[playerId]!)), away: squads.away.map((playerId) => createMatchPlayerProfile(world.players[playerId]!)) }
   const resolvedTactics = {
     home: tacticalPlans?.home ?? getEffectiveTacticalPlan(world, game.id, game.homeTeamId),
@@ -94,6 +97,7 @@ export function prepareMatchOptions(world: GameWorld, game: Game, tacticalPlans?
   new SeededRandomSource(matchSeed)
   return {
     matchSeed,
+    repairReports: Object.freeze([homeLineup.report, awayLineup.report]),
     world,
     gameId: game.id,
     homeStrength: calculateTeamStrength(world, game.homeTeamId, game.date, squads.home),
@@ -149,6 +153,8 @@ export function playUserGame(world: GameWorld, matchSeed?: number): GameWorld {
   return instantResult(world, undefined, matchSeed)
 }
 
-export function simulateAndApplyGame(world: GameWorld, game: Game, matchSeed?: number): GameWorld {
-  return completeMatch(world, prepareMatch(world, game, undefined, matchSeed))
+export function simulateAndApplyGame(world: GameWorld, game: Game, matchSeed?: number, repairReports?: WorldRepairReport[]): GameWorld {
+  const options = prepareMatchOptions(world, game, undefined, matchSeed)
+  repairReports?.push(...options.repairReports)
+  return completeMatch(world, simulateMatchWithRotations(options))
 }

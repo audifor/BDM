@@ -8,7 +8,8 @@ import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { generateNcaaLikeSchedule, generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
 import { reconcileExpiredPlayerContracts } from '@/engine/market'
-import { maintainAiTeamMinimumRosters } from '@/app/market'
+import { repairWorldAtLifecycleBoundary } from '@/app/repair'
+import type { WorldRepairReport } from '@/domain/repair'
 import { getCurrentSeason } from './selectors'
 import { areTierMovementDependenciesResolved, buildNextCompetitionParticipants } from '@/engine/competition'
 import { deriveNextEditionCalendarPolicy } from '@/engine/competition/WorldCompetitionCalendar'
@@ -30,6 +31,7 @@ export interface CompetitionSeasonTransitionResult {
   readonly linkedCompetitionSeasonIds: readonly string[]
   readonly annualHooksExecuted: readonly string[]
   readonly diagnostics: readonly []
+  readonly repairReports: readonly WorldRepairReport[]
 }
 
 export interface CompetitionSeasonTransition {
@@ -95,6 +97,7 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
         linkedCompetitionSeasonIds: Object.freeze(existingSuccessors.slice(1).map((season) => String(season!.id))),
         annualHooksExecuted: Object.freeze([]),
         diagnostics: Object.freeze([]),
+        repairReports: Object.freeze([]),
       },
     }
   }
@@ -147,7 +150,9 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
   const schedule = staged.ecosystems[staged.competitions[nextPrimary.competitionId]!.ecosystemId]!.kind === 'ncaaLike'
     ? generateNcaaLikeSchedule(staged, nextPrimary.id)
     : generateRoundRobinSchedule({ world: staged, seasonId: nextPrimary.id, ...(regularSeasonNodeKey === undefined ? {} : { competitionStageKey: regularSeasonNodeKey }) })
-  let next = maintainAiTeamMinimumRosters(reconcileExpiredPlayerContracts(updateGameWorld(staged, { games: [...Object.values(staged.games), ...schedule] }), nextPrimary.startDate)).world
+  const reconciled = reconcileExpiredPlayerContracts(updateGameWorld(staged, { games: [...Object.values(staged.games), ...schedule] }), nextPrimary.startDate)
+  const repair = repairWorldAtLifecycleBoundary(reconciled)
+  let next = repair.world
   const ecosystem = next.ecosystems[next.competitions[nextPrimary.competitionId]!.ecosystemId]!
   const annualHooksExecuted = ['contractReconciliation', 'aiRosterMaintenance']
   if (ecosystem.kind === 'ncaaLike') {
@@ -169,6 +174,7 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
     linkedCompetitionSeasonIds: nextLinkedSeasons.map((season) => String(season.id)),
     annualHooksExecuted: Object.freeze(annualHooksExecuted),
     diagnostics: Object.freeze([]),
+    repairReports: repair.reports,
   }
   return { world: next, result }
 }

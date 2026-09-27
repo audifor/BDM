@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { addDays } from '@/domain/date'
 import { updateGameWorld } from '@/domain/world'
+import { releasePlayer } from '@/app/market'
 import { createGovernanceDecision, createGovernanceDecisionEvent, createGovernanceRequest, createGovernanceRequestEvent } from '@/domain/governance'
 import { applyUserCoachForJob, declineCoachJobOffer } from '@/app/coachCareer/CoachCareerService'
 import { createPreMatchMediaOpportunity, skipMediaOpportunity } from '@/engine/media'
@@ -21,6 +22,27 @@ describe('simulation breakpoints', () => {
     const result = evaluateSimulationBreakpoints(createAcbTestGame())
     expect(result).toMatchObject({ mayAdvance: true, level: 'BACKGROUND' })
     expect(result.candidates).toEqual([])
+  })
+
+  it('requires the user to resolve an undersized roster through Market and never auto-fills it', () => {
+    const base = createNewGame()
+    const userTeam = Object.values(base.teams).find((team) => team.coachId === base.userCoachId)!
+    const donor = Object.values(base.teams).find((team) => team.id !== userTeam.id)!
+    const funded = updateGameWorld(base, { teamFinances: Object.values(base.teamFinancesByTeamId).map((finance) => finance.teamId === userTeam.id ? { ...finance, playerSalaryBudget: 100_000_000 } : finance) })
+    const withFreeAgent = releasePlayer(funded, donor.id, donor.rosterPlayerIds[0]!)
+    const short = updateGameWorld(withFreeAgent, { teams: Object.values(withFreeAgent.teams).map((team) => team.id === userTeam.id ? { ...team, rosterPlayerIds: team.rosterPlayerIds.slice(0, 4) } : team) })
+
+    expect(evaluateSimulationBreakpoints(short).candidates).toEqual(expect.arrayContaining([expect.objectContaining({ level: 'ACTION_REQUIRED', reason: 'minimumRoster', sourceKind: 'TEAM_ROSTER_MINIMUM', sourceId: userTeam.id, route: 'market' })]))
+    const result = advanceGameDayWithResult(short)
+    expect(result.status).toBe('BREAKPOINT_PREVENTED')
+    expect(result.world.teams[userTeam.id]!.rosterPlayerIds).toEqual(short.teams[userTeam.id]!.rosterPlayerIds)
+  })
+
+  it('keeps an undersized user roster blocking when no legal affordable Market signing exists', () => {
+    const base = createNewGame()
+    const userTeam = Object.values(base.teams).find((team) => team.coachId === base.userCoachId)!
+    const short = updateGameWorld(base, { teams: Object.values(base.teams).map((team) => team.id === userTeam.id ? { ...team, rosterPlayerIds: team.rosterPlayerIds.slice(0, 4) } : team) })
+    expect(evaluateSimulationBreakpoints(short).breakpoint).toMatchObject({ level: 'BLOCKING', reason: 'minimumRoster', sourceId: userTeam.id })
   })
 
   it.each(['INFO', 'IMPORTANT'] as const)('does not stop advancement for %s', (level) => {

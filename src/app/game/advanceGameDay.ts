@@ -6,6 +6,8 @@ import { getUserTeam } from '@/engine/calendar'
 
 import { createMatchSeed, simulateAndApplyGame, type MatchSeedFactory } from './playUserGame'
 import { evaluateSimulationBreakpoints, type SimulationBreakpointResult } from './SimulationBreakpoints'
+import { repairWorldAtLifecycleBoundary } from '@/app/repair'
+import type { WorldRepairReport } from '@/domain/repair'
 
 export class SimulationAdvanceBlockedError extends Error {
   constructor(readonly decision: SimulationBreakpointResult) {
@@ -32,6 +34,7 @@ export interface WorldDayAdvanceResult {
   readonly diagnostics: readonly DailyLifecycleDiagnostic[]
   readonly breakpointBefore: SimulationBreakpointResult
   readonly breakpointAfter?: SimulationBreakpointResult
+  readonly repairReports: readonly WorldRepairReport[]
   readonly seasonPointerChanged: boolean
   readonly failure?: { readonly kind: 'INVARIANT_VIOLATION' | 'TECHNICAL_FAILURE'; readonly phaseId: string; readonly message: string }
 }
@@ -47,10 +50,10 @@ export function assertSimulationMayAdvance(world: GameWorld, allowedRequiredReas
 }
 
 /** Resolves every remaining game today without changing the calendar date. */
-export function simulateRemainingGamesToday(world: GameWorld, createSeed: MatchSeedFactory = createMatchSeed, allowedRequiredReasons: readonly string[] = ['userGame']): GameWorld {
+export function simulateRemainingGamesToday(world: GameWorld, createSeed: MatchSeedFactory = createMatchSeed, allowedRequiredReasons: readonly string[] = ['userGame'], repairReports: WorldRepairReport[] = []): GameWorld {
   assertSimulationMayAdvance(world, allowedRequiredReasons)
   return getScheduledGamesToday(world).reduce(
-    (updatedWorld, game) => simulateAndApplyGame(updatedWorld, game, createSeed()),
+    (updatedWorld, game) => simulateAndApplyGame(updatedWorld, game, createSeed(), repairReports),
     world,
   )
 }
@@ -80,28 +83,57 @@ export function advanceGameDayWithResult(world: GameWorld, createSeed: MatchSeed
     summary: unhandled === undefined ? 'BS2 permits this day transition.' : `Execution stopped before mutation: ${unhandled.diagnostic}`,
     elapsedMs: Math.round((performance.now() - validationTime) * 100) / 100,
   })
-  if (unhandled !== undefined) return { status: 'BREAKPOINT_PREVENTED', world, phases: Object.freeze(phases), diagnostics: Object.freeze(phases.flatMap((phase) => phase.diagnostics)), breakpointBefore, seasonPointerChanged: false }
+  if (unhandled !== undefined) return { status: 'BREAKPOINT_PREVENTED', world, phases: Object.freeze(phases), diagnostics: Object.freeze(phases.flatMap((phase) => phase.diagnostics)), breakpointBefore, repairReports: Object.freeze([]), seasonPointerChanged: false }
 
   let current = world
+  const repairReports: WorldRepairReport[] = []
   let activePhaseId = 'MATCH_RESOLUTION'
   try {
+    activePhaseId = 'PRE_MATCH_SELF_HEALING'
+    const preMatchRepairStart = performance.now()
+    const scheduledTeams = [...new Set(getScheduledGamesToday(current).flatMap((game) => [game.homeTeamId, game.awayTeamId]))].sort((a, b) => a.localeCompare(b))
+    const preMatchRepair = scheduledTeams.length === 0 ? undefined : repairWorldAtLifecycleBoundary(current, scheduledTeams)
+    if (preMatchRepair !== undefined) {
+      current = preMatchRepair.world
+      repairReports.push(...preMatchRepair.reports)
+      phases.push({ phaseId: activePhaseId, order: phases.length + 1, date: current.currentDate, ran: true, worldChanged: current !== world, diagnostics: repairDiagnostics(preMatchRepair.reports), summary: preMatchRepair.reports.length === 0 ? 'No roster or contract repair was needed for today’s scheduled teams.' : `Evaluated ${preMatchRepair.reports.length} repair report(s) for today’s scheduled teams.`, elapsedMs: Math.round((performance.now() - preMatchRepairStart) * 100) / 100 })
+      const unresolvedIntegrity = preMatchRepair.reports.find((report) => report.classification === 'UNRECOVERABLE' && report.sourceDomain === 'MARKET_ROSTER_CONTRACT')
+      if (unresolvedIntegrity !== undefined) throw Object.assign(new Error(unresolvedIntegrity.diagnostics[0]?.message ?? 'Roster/contract integrity could not be reconciled.'), { phaseId: activePhaseId, kind: 'INVARIANT_VIOLATION' as const })
+    }
+
     const matches = getScheduledGamesToday(current)
     const matchStart = performance.now()
-    current = simulateRemainingGamesToday(current, createSeed, allowedRequiredReasons)
+    const lineupReports: WorldRepairReport[] = []
+    current = simulateRemainingGamesToday(current, createSeed, allowedRequiredReasons, lineupReports)
+    repairReports.push(...lineupReports)
     phases.push({ phaseId: 'MATCH_RESOLUTION', order: phases.length + 1, date: world.currentDate, ran: matches.length > 0, worldChanged: current !== world, diagnostics: [], summary: matches.length === 0 ? 'No scheduled games required resolution.' : `Resolved ${matches.length} scheduled game(s) through the existing match application boundary.`, elapsedMs: Math.round((performance.now() - matchStart) * 100) / 100 })
+    if (lineupReports.length > 0) phases.push({ phaseId: 'MATCH_LINEUP_REPAIR', order: phases.length + 1, date: world.currentDate, ran: true, worldChanged: false, diagnostics: repairDiagnostics(lineupReports), summary: `Resolved ${lineupReports.length} transient match lineup report(s).` })
 
     activePhaseId = 'CALENDAR_LIFECYCLE'
+    const beforeCalendar = current
     const calendar: CalendarDayLifecycleResult = advanceDayWithTrace(current)
     if (calendar.status === 'FAILED') {
       phases.push(...calendar.phases.map((phase, index) => ({ ...phase, order: phases.length + index + 1 })))
       return {
         status: 'FAILED', world, phases: Object.freeze(phases), diagnostics: Object.freeze(phases.flatMap((phase) => phase.diagnostics)),
-        breakpointBefore, seasonPointerChanged: false,
+        breakpointBefore, repairReports: Object.freeze(repairReports), seasonPointerChanged: false,
         ...(calendar.failure === undefined ? {} : { failure: { kind: calendar.failure.kind, phaseId: calendar.failure.phaseId, message: calendar.failure.message } }),
       }
     }
     current = calendar.world
     phases.push(...calendar.phases.map((phase, index) => ({ ...phase, order: phases.length + index + 1 })))
+
+    activePhaseId = 'POST_TRANSITION_SELF_HEALING'
+    const changedTeamIds = Object.values(beforeCalendar.teams).filter((team) => team.rosterPlayerIds.join('|') !== current.teams[team.id]?.rosterPlayerIds.join('|')).map((team) => team.id).sort((a, b) => a.localeCompare(b))
+    if (changedTeamIds.length > 0) {
+      const repairStart = performance.now()
+      const postTransitionRepair = repairWorldAtLifecycleBoundary(current, changedTeamIds)
+      current = postTransitionRepair.world
+      repairReports.push(...postTransitionRepair.reports)
+      phases.push({ phaseId: activePhaseId, order: phases.length + 1, date: current.currentDate, ran: true, worldChanged: postTransitionRepair.world !== beforeCalendar, diagnostics: repairDiagnostics(postTransitionRepair.reports), summary: postTransitionRepair.reports.length === 0 ? 'Roster transitions left no minimum-roster or contract-integrity repair pending.' : `Evaluated ${postTransitionRepair.reports.length} repair report(s) after roster transitions.`, elapsedMs: Math.round((performance.now() - repairStart) * 100) / 100 })
+      const unresolvedIntegrity = postTransitionRepair.reports.find((report) => report.classification === 'UNRECOVERABLE' && report.sourceDomain === 'MARKET_ROSTER_CONTRACT')
+      if (unresolvedIntegrity !== undefined) throw Object.assign(new Error(unresolvedIntegrity.diagnostics[0]?.message ?? 'Roster/contract integrity could not be reconciled.'), { phaseId: activePhaseId, kind: 'INVARIANT_VIOLATION' as const })
+    }
 
     activePhaseId = 'SCHEDULE_INTEGRITY'
     const integrityStart = performance.now()
@@ -127,7 +159,7 @@ export function advanceGameDayWithResult(world: GameWorld, createSeed: MatchSeed
     return {
       status: attention.length === 0 ? 'COMPLETED' : 'BREAKPOINT_AFTER_PROCESSING', world: current, phases: Object.freeze(phases),
       diagnostics: Object.freeze(phases.flatMap((phase) => phase.diagnostics)), breakpointBefore, breakpointAfter,
-      seasonPointerChanged: calendar.seasonPointerChanged,
+      repairReports: Object.freeze(repairReports), seasonPointerChanged: calendar.seasonPointerChanged,
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
@@ -135,6 +167,12 @@ export function advanceGameDayWithResult(world: GameWorld, createSeed: MatchSeed
     const kind = error !== null && typeof error === 'object' && 'kind' in error ? error.kind : error instanceof RangeError || error instanceof TypeError ? 'INVARIANT_VIOLATION' : 'TECHNICAL_FAILURE'
     const diagnostic = { code: String(kind), message }
     phases.push({ phaseId, order: phases.length + 1, date: world.currentDate, ran: true, worldChanged: false, diagnostics: [diagnostic], summary: message })
-    return { status: 'FAILED', world, phases: Object.freeze(phases), diagnostics: Object.freeze(phases.flatMap((phase) => phase.diagnostics)), breakpointBefore, seasonPointerChanged: false, failure: { kind: kind === 'INVARIANT_VIOLATION' ? kind : 'TECHNICAL_FAILURE', phaseId, message } }
+    return { status: 'FAILED', world, phases: Object.freeze(phases), diagnostics: Object.freeze(phases.flatMap((phase) => phase.diagnostics)), breakpointBefore, repairReports: Object.freeze(repairReports), seasonPointerChanged: false, failure: { kind: kind === 'INVARIANT_VIOLATION' ? kind : 'TECHNICAL_FAILURE', phaseId, message } }
   }
+}
+
+function repairDiagnostics(reports: readonly WorldRepairReport[]) {
+  return reports.flatMap((report) => report.diagnostics.length === 0
+    ? [{ code: `REPAIR_${report.classification}`, message: `${report.repairKind}: ${report.actionApplied} ${report.resultingStateSummary}`, sourceId: report.targetEntity }]
+    : report.diagnostics.map((diagnostic) => ({ code: diagnostic.code, message: diagnostic.message, sourceId: report.targetEntity })))
 }

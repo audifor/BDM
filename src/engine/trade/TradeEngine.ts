@@ -5,6 +5,7 @@ import type { TeamId } from '@/domain/ids'
 import { createRetainedSalaryObligation, createTradeRecord } from '@/domain/trade'
 import { getEcosystemForTeam, getTeamsForEcosystem, updateGameWorld, type GameWorld } from '@/domain/world'
 import { calculateTeamPayroll, calculateTeamSalaryStatus, getIncomingSalaryLimit } from '@/engine/salary'
+import { clearPlayerFromLineup } from '@/domain/tactics'
 
 export type TradeValidationReason = 'RULES_UNAVAILABLE' | 'INVALID_PARTICIPANT' | 'TOO_MANY_TEAMS' | 'EMPTY_PARTICIPANT' | 'ASSET_TYPE_NOT_ALLOWED' | 'ASSET_NOT_OWNED' | 'PLAYER_NOT_ON_TEAM' | 'DUPLICATE_ASSET' | 'SAME_TEAM_MOVEMENT' | 'INVALID_FUTURE_PICK' | 'FUTURE_PICK_HORIZON_EXCEEDED' | 'INVALID_SWAP_RIGHT' | 'CASH_NOT_ALLOWED' | 'CASH_LIMIT_EXCEEDED' | 'RETAINED_SALARY_NOT_ALLOWED' | 'RETAINED_SALARY_LIMIT_EXCEEDED' | 'EXCEPTION_UNAVAILABLE' | 'SALARY_MATCHING_FAILED'
 export interface TeamTradeValidation { readonly teamId: string; readonly outgoingSalary: number; readonly incomingSalary: number; readonly incomingSalaryLimit?: number; readonly projectedPayroll?: number; readonly reasons: readonly TradeValidationReason[] }
@@ -54,7 +55,9 @@ export function executeTrade(world: GameWorld, proposal: TradeProposal): TradeEx
   const generated = createTradeExceptions(world, proposal)
   for (const exception of generated) exceptions[exception.id] = exception
   const record = createTradeRecord({ id: `trade:${proposal.seasonId}:${proposal.id}`, proposalId: proposal.id, ecosystemId: proposal.ecosystemId, seasonId: proposal.seasonId, executedAt: world.currentDate, participantTeamIds: proposal.participantTeamIds, movements: proposal.movements, createdExceptionIds: generated.map((item) => item.id), retainedSalaryObligationIds: retained.map((item) => item.id) })
-  return { validation, world: updateGameWorld(world, { teams, draftPicks: picks, playerRights: rights, futureDraftPickRights: future, draftPickSwapRights: swaps, salaryExceptions: Object.values(exceptions), retainedSalaryObligations: [...Object.values(world.retainedSalaryObligationsById), ...retained], tradeHistory: [...Object.values(world.tradeHistoryById), record] }) }
+  const movedPlayerIds = proposal.movements.flatMap((movement) => movement.asset.kind === 'player' ? [movement.asset.playerId] : [])
+  const lineupsByTeamId = Object.fromEntries(Object.entries(world.lineupsByTeamId).map(([teamId, lineup]) => [teamId, movedPlayerIds.reduce((current, playerId) => clearPlayerFromLineup(current, playerId), lineup)]))
+  return { validation, world: updateGameWorld(world, { teams, lineupsByTeamId, draftPicks: picks, playerRights: rights, futureDraftPickRights: future, draftPickSwapRights: swaps, salaryExceptions: Object.values(exceptions), retainedSalaryObligations: [...Object.values(world.retainedSalaryObligationsById), ...retained], tradeHistory: [...Object.values(world.tradeHistoryById), record] }) }
 }
 
 function validateAssetOwnership(world: GameWorld, proposal: TradeProposal, rules: TradeRules | undefined, movement: TradeAssetMovement, add: (teamId: TeamId, reason: TradeValidationReason) => void): void {

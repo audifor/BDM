@@ -4,7 +4,9 @@ import { createPlayer } from '@/domain/player'
 import { countryIdFromString, playerIdFromString } from '@/domain/ids'
 import { assignLineupSlot, createDefaultTeamLineup } from '@/domain/tactics'
 import { updateGameWorld } from '@/domain/world'
-import { calculatePlayerImpact, calculateTeamStrength, resolveStartingFive, selectStartingFive } from './index'
+import { createInjury } from '@/domain/injury'
+import { injuryIdFromString } from '@/domain/ids'
+import { calculatePlayerImpact, calculateTeamStrength, resolveStartingFive, resolveStartingFiveWithRepair, selectStartingFive } from './index'
 
 describe('roster team evaluation', () => {
   const playerWith = (ratings: Record<string, number>) => createPlayer({ id: playerIdFromString('controlled-player'), firstName: 'Test', lastName: 'Player', gender: 'male', nationalityId: countryIdFromString('country'), basketball: { primaryPosition: 'PG', ratings: { finishing: ratings.finishing ?? 50, shooting: ratings.shooting ?? 50, playmaking: ratings.playmaking ?? 50, perimeterDefense: ratings.perimeterDefense ?? 50, interiorDefense: ratings.interiorDefense ?? 50, rebounding: ratings.rebounding ?? 50, athleticism: ratings.athleticism ?? 50 } }, bio: { dateOfBirth: '2008-06-14', heightCm: 188, weightKg: 86 } })
@@ -54,14 +56,45 @@ describe('roster team evaluation', () => {
     expect(calculateTeamStrength(prepared, team.id).value).toBe(explicit.reduce((sum, id) => sum + calculatePlayerImpact(prepared.players[id]!), 0) / 5)
   })
 
-  it('falls back to automatic selection for an incomplete explicit lineup', () => {
+  it('preserves an incomplete saved lineup and deterministically fills its empty slot', () => {
     const world = generateWorld({ seed: 12345, gender: 'male' })
     const team = Object.values(world.teams)[0]!
     let lineup = createDefaultTeamLineup(team.id)
     for (const [index, playerId] of team.rosterPlayerIds.slice(0, 4).entries()) lineup = assignLineupSlot(lineup, (['PG', 'SG', 'SF', 'PF'] as const)[index]!, playerId)
     const prepared = updateGameWorld(world, { lineupsByTeamId: { ...world.lineupsByTeamId, [team.id]: lineup } })
 
-    expect(resolveStartingFive(prepared, team.id)).toEqual(selectStartingFive(prepared, team.id))
+    const starters = resolveStartingFiveWithRepair(prepared, team.id)
+    expect(starters.playerIds.slice(0, 4)).toEqual(team.rosterPlayerIds.slice(0, 4))
+    expect(starters.playerIds).toHaveLength(5)
+    expect(new Set(starters.playerIds).size).toBe(5)
+    expect(starters.report.classification).toBe('RECOVERABLE')
+  })
+
+  it('preserves available saved starters and fills an injured position from the eligible roster', () => {
+    const world = generateWorld({ seed: 12345, gender: 'male' })
+    const team = Object.values(world.teams)[0]!
+    const savedStarters = selectStartingFive(world, team.id)
+    let lineup = createDefaultTeamLineup(team.id)
+    for (const [index, playerId] of savedStarters.entries()) lineup = assignLineupSlot(lineup, (['PG', 'SG', 'SF', 'PF', 'C'] as const)[index]!, playerId)
+    const injuredPlayerId = savedStarters[0]!
+    const injured = updateGameWorld(world, { lineupsByTeamId: { ...world.lineupsByTeamId, [team.id]: lineup }, injuries: [createInjury({ id: injuryIdFromString('lineup-repair-injury'), playerId: injuredPlayerId, kind: 'ankleSprain', severity: 'moderate', injuredOn: world.currentDate, expectedReturnDate: '2099-01-01' as never })] })
+
+    const repaired = resolveStartingFiveWithRepair(injured, team.id)
+    expect(repaired.playerIds).toHaveLength(5)
+    expect(new Set(repaired.playerIds).size).toBe(5)
+    expect(repaired.playerIds).not.toContain(injuredPlayerId)
+    expect(savedStarters.slice(1)).toEqual(expect.arrayContaining(repaired.playerIds.filter((id) => savedStarters.includes(id))))
+    expect(injured.players[repaired.playerIds[0]!]!.basketball.primaryPosition).toBe('PG')
+    expect(repaired.report).toMatchObject({ classification: 'RECOVERABLE', sourceDomain: 'TEAM_LINEUP', worldChanged: false, userActionRequired: false })
+    expect(resolveStartingFiveWithRepair(injured, team.id).playerIds).toEqual(repaired.playerIds)
+  })
+
+  it('does not fabricate starters when fewer than five eligible players remain', () => {
+    const world = generateWorld({ seed: 12345, gender: 'male' })
+    const team = Object.values(world.teams)[0]!
+    const injured = team.rosterPlayerIds.slice(0, team.rosterPlayerIds.length - 4).map((playerId, index) => createInjury({ id: injuryIdFromString(`lineup-shortage-${index}`), playerId, kind: 'ankleSprain' as const, severity: 'moderate' as const, injuredOn: world.currentDate, expectedReturnDate: '2099-01-01' as never }))
+    const short = updateGameWorld(world, { injuries: injured })
+    expect(() => resolveStartingFiveWithRepair(short, team.id)).toThrow('Insufficient available players')
   })
 
   it('produces varied deterministic strengths for generated teams', () => {
