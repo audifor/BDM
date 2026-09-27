@@ -22,6 +22,36 @@ import { progressStaffCultureAndCohesion } from '@/engine/staff/StaffCultureCohe
 import { progressStaffConflicts } from '@/engine/staff/StaffConflictEngine'
 import { progressStaffPoliticalCases } from '@/engine/staff/StaffPoliticalCaseEngine'
 import { progressStaffAutonomousOfferDecisions, progressStaffAutonomousResignations, progressStaffCareerMarketAgency } from '@/app/staffCareerAutonomy'
+import { advanceFacilitiesConditionFromHistory } from '@/engine/facilities'
+
+export const DAILY_LIFECYCLE_PHASE_IDS = [
+  'DATE_ADVANCE', 'ANNUAL_PLAYER_DEVELOPMENT', 'PLAYER_AND_CONTRACT_STATE', 'TRAINING', 'RECRUITING', 'ACADEMICS',
+  'NIL_LIFECYCLE', 'MONTHLY_NIL_AUTONOMY', 'MONTHLY_BOOSTER_AUTONOMY', 'COACH_FINANCE', 'MEMORY_DECAY',
+  'ENFORCEMENT', 'SCOUTING_INTAKE', 'MEDICAL_AND_ROSTER_ADVISORIES', 'SCOUTING_ASSIGNMENTS', 'DRAFT',
+  'STAFF_HUMAN_STATE', 'STAFF_CONFLICTS', 'STAFF_CULTURE_COHESION', 'STAFF_POLITICAL_CASES', 'STAFF_APPRAISAL',
+  'STAFF_CAREER_AUTONOMY', 'FACILITY_CONDITION', 'CLUB_FINANCE_V2', 'GOVERNANCE', 'EVENT_COLLECTION',
+] as const
+export type DailyLifecyclePhaseId = (typeof DAILY_LIFECYCLE_PHASE_IDS)[number]
+
+export interface DailyLifecycleDiagnostic { readonly code: string; readonly message: string; readonly sourceId?: string }
+export interface DailyLifecyclePhase {
+  readonly phaseId: DailyLifecyclePhaseId
+  readonly order: number
+  readonly date: GameWorld['currentDate']
+  readonly ran: boolean
+  readonly worldChanged: boolean
+  readonly diagnostics: readonly DailyLifecycleDiagnostic[]
+  readonly summary: string
+  readonly elapsedMs?: number
+}
+export interface CalendarDayLifecycleResult {
+  readonly status: 'COMPLETED' | 'FAILED'
+  readonly world: GameWorld
+  readonly phases: readonly DailyLifecyclePhase[]
+  readonly diagnostics: readonly DailyLifecycleDiagnostic[]
+  readonly seasonPointerChanged: boolean
+  readonly failure?: { readonly phaseId: DailyLifecyclePhaseId; readonly kind: 'INVARIANT_VIOLATION' | 'TECHNICAL_FAILURE'; readonly message: string }
+}
 
 /**
  * Advances only the simulation date, leaving game resolution to other services.
@@ -38,27 +68,90 @@ import { progressStaffAutonomousOfferDecisions, progressStaffAutonomousResignati
  * `progressOppositionScoutingReports` only ever decide WHICH bounded requests to create.
  */
 export function advanceDay(world: GameWorld): GameWorld {
-  const advanced = migrateCurrentSeasonIfElapsed(updateGameWorld(world, { currentDate: addDays(world.currentDate, 1) }))
-  const developed = progressAnnualPlayerDevelopment(advanced)
-  const maintained = progressAcademicTerms(progressRecruiting(executeScheduledTrainingSessions(reconcileExpiredPlayerContracts(recoverCareerFatigueForDay(developed), developed.currentDate))))
-  const withNil = maintained.currentDate.slice(-2) === '01' ? progressAiNil(progressNilLifecycle(maintained)) : progressNilLifecycle(maintained)
-  const withBoosters = withNil.currentDate.slice(-2) === '01' ? decayMemoriesForMonth(processCoachFinancesForMonth(progressAiBoosters(withNil))) : withNil
-  const staffScoutingRequests = progressOppositionScoutingReports(progressAdvisoryScoutingReports(progressDelegatedScouting(progressEnforcement(withBoosters))))
-  const withMedicalAdvisories = progressBasketballOperationsAdvisories(progressMedicalAdvisories(staffScoutingRequests))
-  const enforced = progressScoutingAssignments(withMedicalAdvisories)
-  const withDrafts = Object.values(enforced.draftsById).reduce((current, draft) => {
-    const opened = openDraft(current, draft.id)
-    if (opened.draftsById[draft.id]?.status !== 'inProgress') return opened
-    return progressDraftAi(progressDraftProspectAdvisories(opened, draft.id), draft.id)
-  }, enforced)
-  // Human State refreshes first; Career Autonomy then consumes the current weekly appraisal while
-  // the application boundary alone performs canonical market transitions.
-  const withHumanState = progressStaffHumanState(withDrafts)
-  const withConflicts = progressStaffConflicts(withHumanState)
-  const withCulture = progressStaffCultureAndCohesion(withConflicts)
-  const withPoliticalCases = progressStaffPoliticalCases(withCulture)
-  const withCareerAutonomy = progressStaffCareerAutonomyAppraisal(withPoliticalCases)
-  return progressStaffAutonomousResignations(progressStaffAutonomousOfferDecisions(progressStaffCareerMarketAgency(withCareerAutonomy)))
+  const result = advanceDayWithTrace(world)
+  if (result.status === 'FAILED') throw new Error(result.failure?.message ?? 'Daily lifecycle failed')
+  return result.world
+}
+
+/** Runs the existing daily subsystem order and returns transient execution evidence. */
+export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResult {
+  const original = world
+  const phases: DailyLifecyclePhase[] = []
+  let current = world
+  let failure: CalendarDayLifecycleResult['failure']
+  const run = (phaseId: DailyLifecyclePhaseId, date: GameWorld['currentDate'], shouldRun: boolean, execute: (input: GameWorld) => GameWorld, skippedReason: string, diagnostics: (before: GameWorld, after: GameWorld) => readonly DailyLifecycleDiagnostic[] = () => []): void => {
+    const order = phases.length + 1
+    if (!shouldRun) {
+      phases.push({ phaseId, order, date, ran: false, worldChanged: false, diagnostics: [{ code: 'PHASE_SKIPPED', message: skippedReason }], summary: skippedReason })
+      return
+    }
+    const before = current
+    const startedAt = performance.now()
+    try {
+      current = execute(before)
+      const phaseDiagnostics = diagnostics(before, current)
+      phases.push({ phaseId, order, date, ran: true, worldChanged: current !== before, diagnostics: phaseDiagnostics, summary: summarizePhase(current !== before, phaseDiagnostics), elapsedMs: Math.round((performance.now() - startedAt) * 100) / 100 })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      const kind = error instanceof RangeError || error instanceof TypeError ? 'INVARIANT_VIOLATION' : 'TECHNICAL_FAILURE'
+      failure = { phaseId, kind, message }
+      phases.push({ phaseId, order, date, ran: true, worldChanged: false, diagnostics: [{ code: kind, message }], summary: `Phase failed: ${message}`, elapsedMs: Math.round((performance.now() - startedAt) * 100) / 100 })
+      throw error
+    }
+  }
+
+  try {
+    const nextDate = addDays(world.currentDate, 1)
+    run('DATE_ADVANCE', nextDate, true, (input) => migrateCurrentSeasonIfElapsed(updateGameWorld(input, { currentDate: nextDate })), 'Always runs exactly one calendar day forward.')
+    run('ANNUAL_PLAYER_DEVELOPMENT', current.currentDate, current.currentDate.slice(5) === '07-01' && !hasAppliedAnnualDevelopmentCycle(current, annualDevelopmentCycleId(current.currentDate)), progressAnnualPlayerDevelopment, 'Runs once on the annual 1 July checkpoint.')
+    run('PLAYER_AND_CONTRACT_STATE', current.currentDate, true, (input) => {
+      const recovered = recoverCareerFatigueForDay(input)
+      return reconcileExpiredPlayerContracts(recovered, input.currentDate)
+    }, 'Always checks daily fatigue recovery and canonical contract expiry.')
+    run('TRAINING', current.currentDate, true, executeScheduledTrainingSessions, 'Scheduled training is checked every simulation day.')
+    run('RECRUITING', current.currentDate, true, progressRecruiting, 'Recruiting cycle status and due lifecycle are checked every simulation day.')
+    run('ACADEMICS', current.currentDate, current.currentDate.slice(5) === '01-01' || current.currentDate.slice(5) === '07-01', progressAcademicTerms, 'Academic terms resolve on 1 January and 1 July.')
+    run('NIL_LIFECYCLE', current.currentDate, true, progressNilLifecycle, 'NIL expiry and lifecycle are checked every simulation day.')
+    run('MONTHLY_NIL_AUTONOMY', current.currentDate, current.currentDate.slice(-2) === '01', progressAiNil, 'NIL AI progression runs on the first day of each month.')
+    run('MONTHLY_BOOSTER_AUTONOMY', current.currentDate, current.currentDate.slice(-2) === '01', progressAiBoosters, 'Booster progression runs on the first day of each month.')
+    run('COACH_FINANCE', current.currentDate, current.currentDate.slice(-2) === '01', processCoachFinancesForMonth, 'Coach Finance runs once on the first day of each month.')
+    run('MEMORY_DECAY', current.currentDate, current.currentDate.slice(-2) === '01', decayMemoriesForMonth, 'Memory decay runs on the first day of each month.')
+    run('ENFORCEMENT', current.currentDate, true, progressEnforcement, 'Enforcement lifecycle is checked every simulation day.')
+    run('SCOUTING_INTAKE', current.currentDate, true, (input) => progressOppositionScoutingReports(progressAdvisoryScoutingReports(progressDelegatedScouting(input))), 'Scouting intake is checked every simulation day.')
+    run('MEDICAL_AND_ROSTER_ADVISORIES', current.currentDate, true, (input) => progressBasketballOperationsAdvisories(progressMedicalAdvisories(input)), 'Medical and basketball-operations advisories are checked every simulation day.')
+    run('SCOUTING_ASSIGNMENTS', current.currentDate, true, progressScoutingAssignments, 'Scouting assignments are progressed every simulation day.')
+    run('DRAFT', current.currentDate, true, (input) => Object.values(input.draftsById).sort((a, b) => a.id.localeCompare(b.id)).reduce((updated, draft) => {
+      const opened = openDraft(updated, draft.id)
+      return opened.draftsById[draft.id]?.status === 'inProgress' ? progressDraftAi(progressDraftProspectAdvisories(opened, draft.id), draft.id) : opened
+    }, input), 'Drafts are opened and eligible AI picks/advisories progress every simulation day.')
+    run('STAFF_HUMAN_STATE', current.currentDate, true, progressStaffHumanState, 'Staff human-state projection is refreshed every simulation day.')
+    run('STAFF_CONFLICTS', current.currentDate, true, progressStaffConflicts, 'Staff conflicts progress every simulation day.')
+    run('STAFF_CULTURE_COHESION', current.currentDate, true, progressStaffCultureAndCohesion, 'Staff culture and cohesion progress every simulation day.')
+    run('STAFF_POLITICAL_CASES', current.currentDate, true, progressStaffPoliticalCases, 'Staff political cases progress every simulation day.')
+    run('STAFF_APPRAISAL', current.currentDate, true, progressStaffCareerAutonomyAppraisal, 'Staff autonomy appraisals are checked every simulation day.')
+    run('STAFF_CAREER_AUTONOMY', current.currentDate, true, (input) => progressStaffAutonomousResignations(progressStaffAutonomousOfferDecisions(progressStaffCareerMarketAgency(input))), 'Staff career-market autonomy runs every simulation day.')
+    let facilityDiagnostics: readonly DailyLifecycleDiagnostic[] = []
+    run('FACILITY_CONDITION', current.currentDate, current.currentDate.slice(-2) === '01', (input) => {
+      const application = advanceFacilitiesConditionFromHistory(input, input.currentDate)
+      facilityDiagnostics = [
+        ...application.results.filter((result) => result.changed).map((result) => ({ code: 'FACILITY_CONDITION_CHANGED', message: `Facility component ${result.componentId} condition changed from ${result.previousCondition ?? 'unknown'} to ${result.nextCondition ?? 'unknown'}.`, sourceId: result.componentId })),
+        ...application.openedNeeds.map((need) => ({ code: 'FACILITY_MAINTENANCE_NEED_OPENED', message: `Facility component ${need.componentId} opened a ${need.severity} maintenance need.`, sourceId: need.id })),
+      ]
+      return application.world
+    }, 'Facility deterioration is evaluated on the first day of each month using elapsed time from each component condition record.', () => facilityDiagnostics)
+    run('CLUB_FINANCE_V2', current.currentDate, false, (input) => input, 'Club Finance V2 has no global calendar processor: materialization requires explicit event, ledger mapping, date policy, or authorization inputs.')
+    run('GOVERNANCE', current.currentDate, false, (input) => input, 'Governance meetings and decisions have dated records but no automatic calendar-resolution processor.')
+    const diagnostics = phases.flatMap((phase) => phase.diagnostics)
+    phases.push({ phaseId: 'EVENT_COLLECTION', order: phases.length + 1, date: current.currentDate, ran: true, worldChanged: false, diagnostics: [], summary: `Collected ${diagnostics.length} phase diagnostic(s) without persisting an event stream.` })
+    return { status: 'COMPLETED', world: current, phases: Object.freeze(phases), diagnostics: Object.freeze(diagnostics), seasonPointerChanged: current.currentSeasonId !== original.currentSeasonId }
+  } catch {
+    return { status: 'FAILED', world: original, phases: Object.freeze(phases), diagnostics: Object.freeze(phases.flatMap((phase) => phase.diagnostics)), seasonPointerChanged: false, ...(failure === undefined ? {} : { failure }) }
+  }
+}
+
+function summarizePhase(changed: boolean, diagnostics: readonly DailyLifecycleDiagnostic[]): string {
+  if (diagnostics.length > 0) return diagnostics.map((diagnostic) => diagnostic.message).join(' ')
+  return changed ? 'Subsystem returned an updated GameWorld.' : 'No canonical state change.'
 }
 function progressAcademicTerms(world: GameWorld): GameWorld { if(world.currentDate.slice(5) !== '01-01' && world.currentDate.slice(5) !== '07-01') return world; const term=`academic:${world.currentDate.slice(0, 4)}:${world.currentDate.slice(5, 7)}`; return resolveAcademicTerm(progressAiAcademicSupport(world,term),term) }
 

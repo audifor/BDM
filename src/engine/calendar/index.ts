@@ -1,4 +1,4 @@
-export { advanceDay } from './CalendarEngine'
+export { advanceDay, advanceDayWithTrace, DAILY_LIFECYCLE_PHASE_IDS, type CalendarDayLifecycleResult, type DailyLifecycleDiagnostic, type DailyLifecyclePhase, type DailyLifecyclePhaseId } from './CalendarEngine'
 export {
   getGamesOnDate,
   getGamesToday,

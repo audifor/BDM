@@ -12,6 +12,7 @@ import { generateWorld } from '@/engine/world'
 
 import {
   advanceDay,
+  advanceDayWithTrace,
   getGamesToday,
   getNextUserGame,
   getScheduledGamesToday,
@@ -36,6 +37,20 @@ describe('CalendarEngine', () => {
     expect(Object.keys(nextWorld.games)).toHaveLength(Object.keys(world.games).length)
     expect(nextWorld.staffPeopleById).toEqual(world.staffPeopleById)
     expect(nextWorld.teamStaffAssignmentsById).toEqual(world.teamStaffAssignmentsById)
+  })
+
+  it('returns a deterministic ordered phase trace and keeps unsupported systems explicit', () => {
+    const { world } = createScheduledGameWorld()
+    const first = advanceDayWithTrace(world)
+    const second = advanceDayWithTrace(world)
+
+    expect(first.status).toBe('COMPLETED')
+    expect(first.phases.map(({ phaseId, order, ran, worldChanged }) => ({ phaseId, order, ran, worldChanged })))
+      .toEqual(second.phases.map(({ phaseId, order, ran, worldChanged }) => ({ phaseId, order, ran, worldChanged })))
+    expect(first.phases.map((phase) => phase.order)).toEqual(first.phases.map((_, index) => index + 1))
+    expect(first.phases.find((phase) => phase.phaseId === 'CLUB_FINANCE_V2')).toMatchObject({ ran: false, diagnostics: [{ code: 'PHASE_SKIPPED' }] })
+    expect(first.phases.find((phase) => phase.phaseId === 'GOVERNANCE')).toMatchObject({ ran: false, diagnostics: [{ code: 'PHASE_SKIPPED' }] })
+    expect(first.phases.at(-1)?.phaseId).toBe('EVENT_COLLECTION')
   })
 
   it.each([

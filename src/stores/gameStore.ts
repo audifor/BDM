@@ -1,5 +1,4 @@
 import {
-  advanceGameDay,
   continueGame as runContinueGame,
   simulateUntilDate as runSimulateUntilDate,
   startNextSeason,
@@ -10,6 +9,7 @@ import {
   createLiveUserMatch,
   playUserGame,
   simulateRemainingGamesToday,
+  advanceGameDayWithResult,
 } from '@/app/game'
 import { releasePlayer, signFreeAgent } from '@/app/market'
 import { type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
@@ -36,7 +36,7 @@ import type { CommandResult } from '@/app/entityActions/EntityCommand'
 import { selectDraftProspect } from '@/app/draft'
 import { executeTrade } from '@/engine/trade'
 import type { TradeProposal } from '@/domain/trade'
-import type { ContinueResult, SimulateUntilResult } from '@/app/game'
+import type { ContinueResult, SimulateUntilResult, WorldDayAdvanceResult } from '@/app/game'
 import { addRecruitingBoardEntry, makeRecruitingOffer, performRecruitingAction, removeRecruitingBoardEntry } from '@/engine/recruiting'
 import type { Priority } from '@/domain/recruiting'
 import { acceptNilOpportunity } from '@/engine/nil'
@@ -56,6 +56,7 @@ import { declineStaffCareerRequest, grantStaffCareerRequest } from '@/app/staffC
 
 interface GameStore {
   readonly world: GameWorld | null
+  readonly lastDayAdvanceResult: WorldDayAdvanceResult | null
   newGame(): void
   prepareUserMatch(tacticalPlan?: MatchTacticalPlan): MatchSimulation
   startLiveMatch(tacticalPlan?: MatchTacticalPlan): MatchSimulation
@@ -68,7 +69,7 @@ interface GameStore {
   instantResult(tacticalPlan?: MatchTacticalPlan): void
   playUserGame(): void
   simulateRemainingGamesToday(): void
-  advanceDay(): void
+  advanceDay(): WorldDayAdvanceResult
   continueGame(): ContinueResult
   simulateUntilDate(date: GameWorld['currentDate']): SimulateUntilResult
   startNextSeason(): void
@@ -131,7 +132,8 @@ interface GameStore {
 let liveController: LiveMatchController | null = null
 export const useGameStore = create<GameStore>((set, get) => ({
   world: null,
-  newGame: () => set({ world: createNewGame() }),
+  lastDayAdvanceResult: null,
+  newGame: () => set({ world: createNewGame(), lastDayAdvanceResult: null }),
   prepareUserMatch: (tacticalPlan) => prepareUserMatch(requireWorld(get().world), tacticalPlan),
   startLiveMatch: (tacticalPlan) => { const world = addPreMatchMedia(requireWorld(get().world)); set({ world }); liveController = createLiveUserMatch(world, tacticalPlan); return liveController.snapshot() },
   advanceLiveMatch: () => requireLiveController().advanceOneStep(),
@@ -158,7 +160,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   advanceDay: () => {
     const world = requireWorld(get().world)
-    set({ world: advanceGameDay(world) })
+    const result = advanceGameDayWithResult(world)
+    set({ world: result.status === 'COMPLETED' || result.status === 'BREAKPOINT_AFTER_PROCESSING' ? result.world : world, lastDayAdvanceResult: result })
+    return result
   },
   continueGame: () => {
     const result = runContinueGame(requireWorld(get().world))
@@ -278,8 +282,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return outcome
   },
   getActiveMatchSession: () => liveController,
-  replaceWorld: (world) => { liveController = null; set({ world }) },
-  resetGame: () => { liveController = null; set({ world: null }) },
+  replaceWorld: (world) => { liveController = null; set({ world, lastDayAdvanceResult: null }) },
+  resetGame: () => { liveController = null; set({ world: null, lastDayAdvanceResult: null }) },
 }))
 
 function requireWorld(world: GameWorld | null): GameWorld {

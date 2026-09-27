@@ -13,6 +13,7 @@ import {
   maintenanceNeedsForComponentAt,
 } from '@/domain/facilities'
 import { updateGameWorld } from '@/domain/world'
+import { advanceDayWithTrace } from '@/engine/calendar'
 import {
   advanceFacilitiesCondition,
   advanceFacilityCondition,
@@ -40,6 +41,19 @@ function fixture() {
 }
 
 describe('Club Facilities & Infrastructure V2 — Operations, Maintenance & Deterioration (CFI5) — engine', () => {
+  it('runs facility condition progression through the canonical monthly calendar phase', () => {
+    const f = fixture()
+    const monthEnd = updateGameWorld(f.world, { currentDate: parseGameDate('2030-01-31') })
+    const result = advanceDayWithTrace(monthEnd)
+    const phase = result.phases.find((item) => item.phaseId === 'FACILITY_CONDITION')!
+
+    expect(result.status).toBe('COMPLETED')
+    expect(result.world.currentDate).toBe('2030-02-01')
+    expect(phase.ran).toBe(true)
+    expect(phase.diagnostics.some((item) => item.code === 'FACILITY_CONDITION_CHANGED')).toBe(true)
+    expect(componentConditionAt(Object.values(result.world.facilityComponentConditionRecordsById), f.indoorComponent.id, parseGameDate('2030-02-01'))?.physicalCondition).toBeLessThan(90)
+  })
+
   it('condition deteriorates over an elapsed period', () => {
     const f = fixture()
     const results = calculateComponentDeterioration(f.world, f.facility.id, parseGameDate('2030-01-01'), parseGameDate('2030-07-01'))

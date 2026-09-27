@@ -131,5 +131,7 @@ describe('World DB daily advance', () => {
     expect(result.world.games[plannedGameKey]?.result).not.toBeNull()
     expect(result.after.plan.games[0]?.gameId).toBe(plannedGameId)
     expect(result.world.currentDate).toBe(nextDate)
+    expect(result.lifecycle.status).toBe('COMPLETED')
+    expect(result.lifecycle.phases.slice(-2).map((phase) => phase.phaseId)).toEqual(['WORLD_DB_REMATERIALIZATION', 'WORLD_DB_BREAKPOINT_RECONCILIATION'])
   })
 })

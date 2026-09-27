@@ -11,7 +11,7 @@ import { createDraftForCompletedSeason, generateDraftProspects, getAvailableDraf
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { createAcbTestGame } from './createAcbTestGame'
 import { createNewGame } from './createNewGame'
-import { advanceGameDay, SimulationAdvanceBlockedError } from './advanceGameDay'
+import { advanceGameDay, advanceGameDayWithResult, SimulationAdvanceBlockedError } from './advanceGameDay'
 import { continueGame, getContinueStopReason } from './ContinueFlow'
 import { evaluateSimulationBreakpoints } from './SimulationBreakpoints'
 import { simulateUntilDate } from './simulateUntilDate'
@@ -49,6 +49,7 @@ describe('simulation breakpoints', () => {
     expect(getContinueStopReason(setup.world)).toMatchObject({ type: 'breakpoint', breakpoint: { reason: 'draftPick', sourceId: setup.pickId } })
     expect(continueGame(setup.world).daysAdvanced).toBe(0)
     expect(() => advanceGameDay(setup.world)).toThrow(SimulationAdvanceBlockedError)
+    expect(advanceGameDayWithResult(setup.world)).toMatchObject({ status: 'BREAKPOINT_PREVENTED', world: setup.world, phases: [{ phaseId: 'PRE_ADVANCE_VALIDATION', ran: true, worldChanged: false }] })
     expect(simulateUntilDate(setup.world, addDays(setup.world.currentDate, 1)).stopReason).toMatchObject({ type: 'breakpoint', breakpoint: { reason: 'draftPick', sourceId: setup.pickId } })
 
     const selected = makeDraftSelection(setup.world, setup.draftId, setup.userTeamId, getAvailableDraftProspects(setup.world, setup.draftId)[0]!)
