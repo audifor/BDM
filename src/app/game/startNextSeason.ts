@@ -71,12 +71,35 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
   if (getSeasonHistoryRecord(world, primary.id) === undefined) throw new Error('Current season requires a history record')
   if (!areTierMovementDependenciesResolved(world, primary.id)) throw new Error(`Season ${primary.id} cannot roll forward before its linked promotion/relegation editions are finalized`)
   const linkedEditions = linkedCompetitionEditions(world, primary)
-  const nextIds = nextSeasonIds(world, linkedEditions.length + 1)
   const editionIds = new Map<string, string>([[primary.worldCompetitionFormat?.competitionSeasonId ?? String(primary.id), nextCompetitionSeasonId(primary.worldCompetitionFormat?.competitionSeasonId ?? String(primary.id), addYears(primary.startDate, 1))]])
   for (const linked of linkedEditions) {
     const previousId = linked.worldCompetitionFormat!.competitionSeasonId
     editionIds.set(previousId, nextCompetitionSeasonId(previousId, addYears(linked.startDate, 1)))
   }
+  const expectedEditionIds = [editionIds.get(primary.worldCompetitionFormat?.competitionSeasonId ?? String(primary.id)), ...linkedEditions.map((linked) => editionIds.get(linked.worldCompetitionFormat!.competitionSeasonId))]
+  const existingSuccessors = expectedEditionIds.map((editionId, index) => {
+    const competitionId = index === 0 ? primary.competitionId : linkedEditions[index - 1]!.competitionId
+    return Object.values(world.seasons).find((candidate) => candidate.competitionId === competitionId && (candidate.worldCompetitionFormat?.competitionSeasonId === editionId || (index === 0 && primary.worldCompetitionFormat === undefined && candidate.startDate === addYears(primary.startDate, 1))))
+  })
+  if (existingSuccessors.every((season) => season !== undefined)) {
+    const target = existingSuccessors[0]!
+    const hasTierResolution = Object.values(world.promotionRelegationResolutionsById).some((resolution) => resolution.upperSeasonId === primary.id || resolution.lowerSeasonId === primary.id)
+    return {
+      world,
+      result: {
+        sourceSeasonId: primary.id,
+        targetSeasonId: target.id,
+        competitionId: primary.competitionId,
+        participantDerivation: hasTierResolution ? 'promotionRelegationResolution' : primary.participantTeamIds === undefined ? 'competitionConfiguration' : 'seasonSnapshot',
+        schedule: { kind: 'generated', fixtureCount: Object.values(world.games).filter((game) => game.seasonId === target.id).length },
+        linkedCompetitionSeasonIds: Object.freeze(existingSuccessors.slice(1).map((season) => String(season!.id))),
+        annualHooksExecuted: Object.freeze([]),
+        diagnostics: Object.freeze([]),
+      },
+    }
+  }
+  if (existingSuccessors.some((season) => season !== undefined)) throw new Error(`Season ${primary.id} has a partial existing successor set`)
+  const nextIds = nextSeasonIds(world, linkedEditions.length + 1)
   const nextParticipants = buildNextCompetitionParticipants(world, primary.id)
   const primaryRoundCount = regularSeasonRoundCount(world, primary, nextParticipants.length)
   const nextPrimaryCalendar = primary.calendarPolicy === undefined ? undefined : rollForwardCalendar(primary.calendarPolicy, editionIds, primaryRoundCount)
