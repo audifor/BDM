@@ -7,9 +7,11 @@ import { formatGameDateLabel } from '@/ui-ng/applications/player/data/presentati
 import { SimulateUntilControl } from '@/ui-ng/system/SimulateUntilControl'
 import { syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
 
-function continueButtonLabel(stopType: ContinueStopReason['type'] | undefined): string {
-  if (stopType === 'userGame') return 'Match'
-  if (stopType === 'mediaOpportunity') return 'Press'
+function continueButtonLabel(stop: ContinueStopReason | undefined): string {
+  if (stop?.type === 'userGame') return 'Match'
+  if (stop?.type === 'mediaOpportunity') return 'Press'
+  if (stop?.type === 'breakpoint' && stop.breakpoint.route === 'draft') return 'Draft'
+  if (stop?.type === 'breakpoint' && stop.breakpoint.route === 'coach') return 'Coach'
   return 'Continue'
 }
 
@@ -43,7 +45,7 @@ export function SystemBar() {
           Inbox
         </button>
         <button
-          aria-label={continueButtonLabel(stop?.type)}
+          aria-label={continueButtonLabel(stop)}
           className="ng-btn ng-btn--primary"
           disabled={blocked}
           onClick={() => {
@@ -57,11 +59,19 @@ export function SystemBar() {
               return
             }
             if (stop?.type === 'seasonComplete') return
+            if (stop?.type === 'breakpoint' && stop.breakpoint.route === 'draft') {
+              syncWorkspaceAppQuery('draft')
+              return
+            }
+            if (stop?.type === 'breakpoint' && stop.breakpoint.route === 'coach') {
+              syncWorkspaceAppQuery('coach')
+              return
+            }
             continueGame()
           }}
           type="button"
         >
-          {continueButtonLabel(stop?.type)}
+          {continueButtonLabel(stop)}
         </button>
         {world !== null ? <SimulateUntilControl blocked={blocked} world={world} /> : null}
         <svg aria-hidden className="ng-system-bar__orbit" viewBox="0 0 28 28">

@@ -19,7 +19,7 @@ describe('continue flow', () => {
     const base=createNewGame(); const userGame=Object.values(base.games).find(game=>game.status==='scheduled'&&(game.homeTeamId===Object.values(base.teams).find(team=>team.coachId===base.userCoachId)!.id||game.awayTeamId===Object.values(base.teams).find(team=>team.coachId===base.userCoachId)!.id))!
     const scheduled=updateGameWorld(base,{games:Object.values(base.games).map(game=>game.id===userGame.id?{...game,date:addDays(base.currentDate,1),stakes:'final' as never}:game)})
     const next=advanceGameDay(scheduled); const pending=Object.values(next.mediaOpportunitiesById)[0]!
-    expect(pending.type).toBe('preMatch'); expect(Object.keys(next.newsItemsById)).toHaveLength(1); expect(getContinueStopReason(next)).toEqual({type:'mediaOpportunity',opportunityId:pending.id})
+    expect(pending.type).toBe('preMatch'); expect(Object.keys(next.newsItemsById)).toHaveLength(1); expect(getContinueStopReason(next)).toMatchObject({type:'mediaOpportunity',opportunityId:pending.id,breakpoint:{level:'ACTION_REQUIRED',reason:'mediaOpportunity'}})
   })
 
   it('advances through ordinary days then stops on the next user game date', () => {
@@ -27,7 +27,7 @@ describe('continue flow', () => {
     const next = getNextKnownEvent(ready)!; const result = continueGame(ready)
     expect(result.daysAdvanced).toBeGreaterThan(0)
     expect(result.finalDate).toBe(next.date)
-    expect(result.stopReason).toEqual({ type: 'userGame', gameId: next.gameId })
+    expect(result.stopReason).toMatchObject({ type: 'userGame', gameId: next.gameId, breakpoint: { level: 'ACTION_REQUIRED', reason: 'userGame' } })
   })
 
   it('keeps advancing to a future user game after the current competition has completed', () => {
@@ -46,7 +46,7 @@ describe('continue flow', () => {
 
     expect(result.daysAdvanced).toBe(4)
     expect(result.finalDate).toBe(next.date)
-    expect(result.stopReason).toEqual({ type: 'userGame', gameId: next.gameId })
+    expect(result.stopReason).toMatchObject({ type: 'userGame', gameId: next.gameId, breakpoint: { level: 'ACTION_REQUIRED', reason: 'userGame' } })
   }, 10_000)
 
   it('uses the identical canonical daily transition as one manual advance', () => {

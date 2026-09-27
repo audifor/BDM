@@ -1,12 +1,10 @@
 import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import type { GameId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
-import { getUserTeam } from '@/engine/calendar'
-import { skipMediaOpportunity } from '@/engine/media'
 
 import { advanceGameDay } from './advanceGameDay'
 import { getContinueStopReason, type ContinueStopReason } from './ContinueFlow'
-import { createMatchSeed, instantResult, type MatchSeedFactory } from './playUserGame'
+import { createMatchSeed, type MatchSeedFactory } from './playUserGame'
 import { advanceCompetitionLifecycles, type UnsupportedLifecycleDiagnostic } from './CompetitionLifecycleCoordinator'
 
 export type SimulateUntilStopReason = ContinueStopReason | { readonly type: 'arrived' } | { readonly type: 'unsupportedLifecycle'; readonly diagnostic: UnsupportedLifecycleDiagnostic }
@@ -60,6 +58,11 @@ export function tickSimulateUntilDate(world: GameWorld, targetDate: GameDate, cr
     return { world, event: { type: 'finished', stopReason: getContinueStopReason(world) ?? { type: 'arrived' } } }
   }
 
+  const interruption = getContinueStopReason(world)
+  if (interruption !== undefined && interruption.type !== 'seasonComplete') {
+    return { world, event: { type: 'finished', stopReason: interruption } }
+  }
+
   // Checked every tick, not only when the primary (user-facing) competition happens to be
   // complete: a background competition (e.g. an NCAA-like season with no future-season
   // support) can complete independently while the primary is still mid-season, and its
@@ -69,29 +72,19 @@ export function tickSimulateUntilDate(world: GameWorld, targetDate: GameDate, cr
   // can never overshoot `target` the way an eager clock jump could.
   const advanced = advanceCompetitionLifecycles(world)
   if (advanced.blockedOn !== undefined) {
-    return { world: advanced.world, event: { type: 'finished', stopReason: { type: 'unsupportedLifecycle', diagnostic: advanced.blockedOn } } }
+    return { world: advanced.world, event: { type: 'finished', stopReason: getContinueStopReason(advanced.world) ?? { type: 'unsupportedLifecycle', diagnostic: advanced.blockedOn } } }
   }
   if (advanced.world !== world) {
     return { world: advanced.world, event: { type: 'seasonRolledOver', previousSeasonId: world.currentSeasonId, nextSeasonId: advanced.world.currentSeasonId } }
   }
 
-  const interruption = getContinueStopReason(world)
   if (interruption?.type === 'seasonComplete') {
     // The primary's next edition already exists (rolled above, if it was FULLY_SUPPORTED) with a
     // future `startDate`; keep advancing one day at a time until the world clock reaches it and
     // `currentSeasonId` migrates naturally (see CalendarEngine.migrateCurrentSeasonIfElapsed).
-    return { world: advanceGameDay(world, createSeed), event: { type: 'dayAdvanced' } }
+    return { world: advanceGameDay(world, createSeed, ['seasonComplete']), event: { type: 'dayAdvanced' } }
   }
-  if (interruption?.type === 'mediaOpportunity') {
-    return { world: skipMediaOpportunity(world, interruption.opportunityId), event: { type: 'mediaSkipped' } }
-  }
-  if (interruption?.type === 'userGame') {
-    const next = instantResult(world, undefined, createSeed())
-    const match = summarizeResolvedUserMatch(world, next)
-    return match === undefined
-      ? { world: next, event: { type: 'mediaSkipped' } }
-      : { world: next, event: { type: 'userMatch', match } }
-  }
+  if (interruption !== undefined) return { world, event: { type: 'finished', stopReason: interruption } }
 
   return { world: advanceGameDay(world, createSeed), event: { type: 'dayAdvanced' } }
 }
@@ -127,36 +120,6 @@ export function simulateUntilDate(world: GameWorld, targetDate: GameDate, create
   }
 
   return result(current, daysAdvanced, getContinueStopReason(current) ?? { type: 'arrived' })
-}
-
-function summarizeResolvedUserMatch(before: GameWorld, after: GameWorld): UserMatchSummary | undefined {
-  const team = getUserTeam(after)
-  if (team === undefined) return undefined
-
-  const resolved = Object.values(after.games).find((game) => {
-    const previous = before.games[game.id]
-    return (
-      game.status === 'completed' &&
-      previous?.status === 'scheduled' &&
-      (game.homeTeamId === team.id || game.awayTeamId === team.id)
-    )
-  })
-  if (resolved === undefined || resolved.status !== 'completed') return undefined
-
-  const userIsHome = resolved.homeTeamId === team.id
-  const userScore = userIsHome ? resolved.result.homeScore : resolved.result.awayScore
-  const oppScore = userIsHome ? resolved.result.awayScore : resolved.result.homeScore
-
-  return {
-    gameId: resolved.id,
-    date: resolved.date,
-    homeName: after.teams[resolved.homeTeamId]?.name ?? resolved.homeTeamId,
-    awayName: after.teams[resolved.awayTeamId]?.name ?? resolved.awayTeamId,
-    homeScore: resolved.result.homeScore,
-    awayScore: resolved.result.awayScore,
-    userSide: userIsHome ? 'home' : 'away',
-    outcome: userScore === oppScore ? 'draw' : userScore > oppScore ? 'win' : 'loss',
-  }
 }
 
 function result(world: GameWorld, daysAdvanced: number, stopReason: SimulateUntilStopReason): SimulateUntilResult {
