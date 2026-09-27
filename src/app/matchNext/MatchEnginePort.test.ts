@@ -140,6 +140,44 @@ describe('MatchEnginePort integration', () => {
     expect(basketSideAtMidcourt.length).toBeGreaterThanOrEqual(2)
   })
 
+  it('keeps trailing matchups from pulling the defense behind the ball after the opening transition', () => {
+    const world = createNewGame()
+    const game = Object.values(world.games).find((candidate) => candidate.status === 'scheduled')!
+    const setup = createMatchEnginePort('match-next').prepare(world, game, 3498342002)
+    const live = createMatchEnginePort('match-next').createLiveSession(setup)
+    live.advanceTicks(35)
+    const state = live.matchState
+    expect(state.transition).toBeNull()
+    expect(state.ball.kind).toBe('HELD')
+    const basketX = state.defensiveStructure!.defendedBasket.x
+    const direction = Math.sign(basketX - state.ball.position.x)
+    const trailing = state.defensiveStructure!.assignments.filter((assignment) => {
+      const attacker = state.players.find((player) => player.playerId === assignment.attackerPlayerId)!
+      return (state.ball.position.x - attacker.position.x) * direction > 2
+    })
+    expect(trailing.length).toBeGreaterThanOrEqual(2)
+    expect(trailing.every((assignment) => {
+      const intent = state.movementIntents.find((item) => item.playerId === assignment.defenderPlayerId)!
+      return (intent.target.x - state.ball.position.x) * direction > 0
+    })).toBe(true)
+  })
+
+  it('hands stop-ball duty to a basket-side defender when the original stopper is beaten', () => {
+    const world = createNewGame()
+    const game = Object.values(world.games).find((candidate) => candidate.status === 'scheduled')!
+    const port = createMatchEnginePort('match-next')
+    const setup = port.prepare(world, game, 3498342002)
+    const live = port.createLiveSession(setup)
+    live.advanceTicks(130)
+    const state = live.matchState
+    expect(state.transition?.trigger).toBe('madeBasketInbound')
+    expect(state.ball.kind).toBe('HELD')
+    const stopper = state.transition!.roles.find((role) => role.kind === 'STOP_BALL')!
+    const player = state.players.find((item) => item.playerId === stopper.playerId)!
+    const direction = Math.sign(state.defensiveStructure!.defendedBasket.x - state.ball.position.x)
+    expect((player.position.x - state.ball.position.x) * direction).toBeGreaterThan(0)
+  })
+
   it('runs one real Game through the same Match Next path for LIVE and INSTANT, then applies its event-derived result', () => {
     const world = createNewGame()
     const game = Object.values(world.games).find((candidate) => candidate.status === 'scheduled')!

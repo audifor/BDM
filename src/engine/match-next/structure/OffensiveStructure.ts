@@ -7,6 +7,7 @@ import { assignFiveOutSlots } from './SlotAssignment'
 
 export function reconcileOffensiveStructure(state: MatchState): MatchState {
   if (state.responsibilities.some((item) => item.kind === 'PERIOD_RESTART')) return state
+  if (state.ball.kind === 'LOOSE') return state
   const possession = activePossession(state)
   if (state.ball.kind === 'REBOUNDABLE'
     || state.transition !== null && possession?.teamId === state.transition.teamId && possession.phase !== 'SETUP') return state

@@ -109,6 +109,26 @@ describe('Match Next ball and possession authority', () => {
     expect(distant.ball).toMatchObject({ kind: 'LOOSE', cause: 'badPass' })
   })
 
+  it('pursues a loose ball with one player per team and recovers it on contact', () => {
+    const { setup } = generatedSetup()
+    const held = liveHome(setup)
+    const ballPosition = { x: setup.court.lengthMeters / 2, y: setup.court.widthMeters / 2 }
+    const loose: MatchState = {
+      ...held,
+      ball: { kind: 'LOOSE', position: ballPosition, previousPosition: ballPosition, heightMeters: 0.08, velocity: { x: 0, y: 0 }, cause: 'badPass' },
+      players: held.players.map((player) => ({ ...player, position: { x: player.teamId === setup.homeTeamId ? 3 : setup.court.lengthMeters - 3, y: player.position.y } })),
+    }
+    const pursuing = tick(loose)
+    expect(pursuing.responsibilities.filter((item) => item.kind === 'PURSUE_LOOSE_BALL')).toHaveLength(2)
+    expect(new Set(pursuing.responsibilities.filter((item) => item.kind === 'PURSUE_LOOSE_BALL').map((item) => item.teamId))).toEqual(new Set([setup.homeTeamId, setup.awayTeamId]))
+    expect(pursuing.movementIntents.filter((item) => pursuing.responsibilities.some((role) => role.id === item.provenance.responsibilityId && role.kind === 'PURSUE_LOOSE_BALL')).map((item) => item.target)).toEqual([ballPosition, ballPosition])
+    let recovered = pursuing
+    for (let index = 0; index < 100 && recovered.ball.kind === 'LOOSE'; index += 1) recovered = tick(recovered)
+    expect(recovered.ball.kind).toBe('HELD')
+    expect(recovered.events.some((event) => event.type === 'looseBallRecovered')).toBe(true)
+    expect(recovered.responsibilities.some((item) => item.kind === 'PURSUE_LOOSE_BALL')).toBe(false)
+  })
+
   it('rejects distant interception, rebound, and loose-ball recovery attempts', () => {
     const { setup: source } = generatedSetup()
     const setup = positionedSetup(source)
@@ -182,7 +202,9 @@ describe('Match Next ball and possession authority', () => {
     const awayRebounder = setup.initialLineups.away[2]!
     const awayPosition = held.players.find((player) => player.playerId === awayRebounder)!.position
     let defensive = applyCommand(held, { type: 'releaseShot', command: { targetBasket: setup.court.baskets.right, travelTicks: 5, plannedOutcome: { kind: 'MISS', reboundTarget: awayPosition, reboundAvailableT: held.t + 25 } } })
-    defensive = ticks(defensive, 25)
+    defensive = ticks(defensive, 24)
+    defensive = { ...defensive, players: defensive.players.map((player) => player.playerId === awayRebounder ? { ...player, position: awayPosition } : player.teamId === setup.homeTeamId ? { ...player, position: { x: 2, y: player.position.y } } : player) }
+    defensive = tick(defensive)
     for (let index = 0; index < 120 && !defensive.events.some((event) => event.type === 'reboundSecured'); index += 1) defensive = tick(defensive)
     expect(defensive.possessions[0]).toMatchObject({ endReason: 'defensiveRebound' })
     expect(activePossession(defensive)).toMatchObject({ teamId: setup.awayTeamId, startReason: 'defensiveRebound', phase: 'ADVANCE' })
@@ -211,21 +233,15 @@ describe('Match Next ball and possession authority', () => {
     expect(activePossession(unresolved)?.phase).toBe('SETUP')
   })
 
-  it('recovers a moving loose ball without changing possession when the same team wins it', () => {
+  it('recovers a loose ball automatically without changing possession when the same team wins it', () => {
     const { setup: source } = generatedSetup()
     const setup = positionedSetup(source)
     let state = liveHome(source)
     const target = { x: (state.ball.kind === 'HELD' ? state.ball.position.x : 24) - 0.5, y: setup.court.widthMeters / 2 }
     state = applyCommand(state, { type: 'releasePass', command: { receiverPlayerId: setup.initialLineups.home[4]!, target, passKind: 'bounce', travelTicks: 10 } })
     state = ticks(state, 10)
-    expect(state.ball).toMatchObject({ kind: 'LOOSE', cause: 'badPass' })
-    const x = state.ball.position.x
-    state = tick(state)
-    expect(state.ball.position.x).toBeLessThan(x)
-    const owner = state.ball.kind === 'LOOSE' ? state.players.find((player) => player.teamId === setup.homeTeamId && Math.hypot(player.position.x - state.ball.position.x, player.position.y - state.ball.position.y) <= 1) : undefined
-    expect(owner).toBeTruthy()
-    state = applyCommand(state, { type: 'recoverLooseBall', playerId: owner!.playerId })
-    expect(state.ball).toMatchObject({ kind: 'HELD', ownerPlayerId: owner!.playerId })
+    expect(state.ball.kind).toBe('HELD')
+    expect(state.events.some((event) => event.type === 'looseBallRecovered' && event.teamId === setup.homeTeamId)).toBe(true)
     expect(activePossession(state)?.id).toBe('possession-1')
   })
 
@@ -238,15 +254,10 @@ describe('Match Next ball and possession authority', () => {
     state = ticks(state, 10)
     const loose = state
     expect(loose.ball.kind).toBe('LOOSE')
-    let awayRecoverer = state.players.filter((player) => player.teamId === setup.awayTeamId)
+    const awayRecoverer = state.players.filter((player) => player.teamId === setup.awayTeamId)
       .sort((left, right) => distanceBetween(left.position, state.ball.position) - distanceBetween(right.position, state.ball.position))[0]!.playerId
-    for (let wait = 0; wait < 20 && state.ball.kind === 'LOOSE' && distanceBetween(state.players.find((player) => player.playerId === awayRecoverer)!.position, state.ball.position) > 1; wait += 1) {
-      state = tick(state)
-      awayRecoverer = state.players.filter((player) => player.teamId === setup.awayTeamId)
-        .sort((left, right) => distanceBetween(left.position, state.ball.position) - distanceBetween(right.position, state.ball.position))[0]!.playerId
-    }
-    expect(distanceBetween(state.players.find((player) => player.playerId === awayRecoverer)!.position, state.ball.position)).toBeLessThanOrEqual(1)
-    state = applyCommand(state, { type: 'recoverLooseBall', playerId: awayRecoverer })
+    state = { ...state, players: state.players.map((player) => player.playerId === awayRecoverer ? { ...player, position: { ...state.ball.position } } : player) }
+    state = tick(state)
     expect(state.possessions[0]).toMatchObject({ endReason: 'turnover' })
     expect(activePossession(state)).toMatchObject({ id: 'possession-2', teamId: setup.awayTeamId, startReason: 'other', phase: 'ADVANCE' })
     expect(state.events.some((event) => event.type === 'looseBallRecovered' && event.teamId === setup.awayTeamId)).toBe(true)
@@ -420,6 +431,7 @@ describe('Match Next ball and possession authority', () => {
       const targetBasket = teamId === workloadSetup.homeTeamId ? workloadSetup.court.baskets.right : workloadSetup.court.baskets.left
       state = applyCommand(state, { type: 'releaseShot', command: { targetBasket, travelTicks: 2, plannedOutcome: { kind: 'MISS', reboundTarget: landing, reboundAvailableT: state.t + 4 } } })
       state = ticks(state, 4)
+      for (let wait = 0; wait < 120 && state.ball.kind === 'REBOUNDABLE'; wait += 1) state = tick(state)
     }
     const workloadMs = performance.now() - started
     process.stderr.write(`Match Next ball-heavy workload: ${state.t} ticks, ${state.events.length} events, ${workloadMs.toFixed(1)} ms, ${(state.t / (workloadMs / 1000)).toFixed(0)} ticks/s\n`)

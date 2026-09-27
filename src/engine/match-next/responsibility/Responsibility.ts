@@ -8,6 +8,7 @@ export type TemporaryResponsibilityKind =
   | 'BALL_ADVANCE' | 'LANE_LEFT' | 'LANE_RIGHT' | 'RIM_RUN' | 'TRAIL'
   | 'STOP_BALL' | 'PROTECT_RIM' | 'MATCH'
   | 'PERIOD_RESTART'
+  | 'PURSUE_LOOSE_BALL'
 export type ResponsibilityKind = OffensiveResponsibilityKind | DefensiveResponsibilityKind
   | TemporaryResponsibilityKind
 export type ResponsibilityOwner = 'offensiveStructure' | 'defensiveStructure' | 'possession'

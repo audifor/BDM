@@ -1,6 +1,7 @@
 import type { PlayerId, TeamId } from '@/domain/ids'
 import { emitEvent } from './events'
 import { advanceBallAtTick, interceptPass, putBallDead, recoverLooseBall, releaseInbound, releasePass, releaseShot, secureRebound, startInbound, startOpeningJumpBall, syncHeldBallToOwner, violateShotClock, type InboundStartReason, type ReleasePassCommand, type ReleaseShotCommand } from './ball/BallTransitions'
+import { reconcileLooseBallPursuit, securePhysicalLooseBall } from './ball/LooseBallPursuit'
 import type { BallPassKind } from './ball/BallState'
 import { changePossessionPhase, endPossession } from './possession'
 import { activePossession as getActivePossession, createInitialMatchState, type MatchState } from './state'
@@ -56,6 +57,7 @@ export function tick(state: MatchState): MatchState {
 
   next = advancePlayerMovement(next)
   next = securePhysicalRebound(next)
+  next = securePhysicalLooseBall(next)
   next = reconcileStructures(next)
 
   const shotClockExpired = state.clock.shotRunning && state.shotClockTenths !== null && state.shotClockTenths > 0 && shotClockTenths === 0
@@ -136,11 +138,11 @@ function finishPeriod(state: MatchState): MatchState {
 }
 
 function reconcileStructures(state: MatchState): MatchState {
-  let next = clearExpiredReboundTransition(state)
+  let next = reconcileLooseBallPursuit(clearExpiredReboundTransition(state))
   next = reconcileReboundTransition(reconcileManDefense(reconcileOffensiveStructure(next)))
   next = reconcileActions(next)
   next = reconcileReboundTransition(next)
   const cleared = clearExpiredReboundTransition(next)
-  if (next.transition !== null && cleared.transition === null) return reconcileManDefense(reconcileOffensiveStructure(cleared))
-  return cleared
+  if (next.transition !== null && cleared.transition === null) return reconcileLooseBallPursuit(reconcileManDefense(reconcileOffensiveStructure(cleared)))
+  return reconcileLooseBallPursuit(cleared)
 }

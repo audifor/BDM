@@ -18,6 +18,7 @@ const DRIVE_PAINT_THREAT_METERS = 4.8
 /** Reconciles one possession's assignments and defensive structure without changing player positions. */
 export function reconcileManDefense(input: MatchState): MatchState {
   if (input.responsibilities.some((item) => item.kind === 'PERIOD_RESTART')) return input
+  if (input.ball.kind === 'LOOSE') return input
   const possession = activePossession(input)
   if (input.ball.kind === 'REBOUNDABLE'
     || input.transition !== null && possession?.teamId === input.transition.teamId && possession.phase !== 'SETUP') return input
@@ -311,6 +312,12 @@ export function guardPosition(
   const target = {
     x: attackerPosition.x + towardBasket.x * depth + (responsibility === 'ON_BALL' ? -towardBasket.y : towardBall.x) * shade,
     y: attackerPosition.y + towardBasket.y * depth + (responsibility === 'ON_BALL' ? towardBasket.x : towardBall.y) * shade,
+  }
+  const basketDirection = defendedBasket.x >= court.lengthMeters / 2 ? 1 : -1
+  if (responsibility === 'GAP' && (ballPosition.x - attackerPosition.x) * basketDirection > 2) {
+    const shellDepth = Math.min(1.8, Math.max(0, Math.abs(defendedBasket.x - ballPosition.x) - 0.6))
+    const shellX = ballPosition.x + basketDirection * shellDepth
+    if ((target.x - shellX) * basketDirection < 0) target.x = shellX
   }
   return { x: clamp(target.x, 0.15, court.lengthMeters - 0.15), y: clamp(target.y, 0.15, court.widthMeters - 0.15) }
 }

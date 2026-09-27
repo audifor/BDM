@@ -207,8 +207,12 @@ describe('Match Next man-to-man defense', () => {
       expect(isInsideCourt(onBall, court)).toBe(true)
       expect(isInsideCourt(gap, court)).toBe(true)
       expect(isInsideCourt(help, court)).toBe(true)
-      expect(distanceBetween(help, attacker)).toBeGreaterThan(distanceBetween(gap, attacker))
-      expect(distanceBetween(help, ball)).toBeLessThan(distanceBetween(gap, ball))
+      if ((ball.x - attacker.x) * Math.sign(basket.x - ball.x) > 2) {
+        expect((gap.x - ball.x) * Math.sign(basket.x - ball.x)).toBeGreaterThan(0)
+      } else {
+        expect(distanceBetween(help, attacker)).toBeGreaterThan(distanceBetween(gap, attacker))
+        expect(distanceBetween(help, ball)).toBeLessThan(distanceBetween(gap, ball))
+      }
     }
   })
 

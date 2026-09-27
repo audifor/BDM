@@ -199,7 +199,7 @@ function reconcileTransition(input: MatchState): MatchState {
   const advantage = evaluateTransition(input, existing.teamId)
   const liveHandlerId = input.ball.kind === 'HELD' && input.ball.ownerTeamId === existing.teamId ? input.ball.ownerPlayerId : existing.ballHandlerPlayerId
   const handlerChanged = liveHandlerId !== existing.ballHandlerPlayerId
-  const refreshedRoles = handlerChanged ? createTransition(input, existing.teamId, existing.trigger).roles : existing.roles
+  const refreshedRoles = handOffBeatenStopper(input, handlerChanged ? createTransition(input, existing.teamId, existing.trigger).roles : existing.roles)
   const transition = {
     ...existing,
     ballHandlerPlayerId: liveHandlerId,
@@ -218,6 +218,28 @@ function reconcileTransition(input: MatchState): MatchState {
     return changePossessionPhase(next, 'SETUP')
   }
   return next
+}
+
+function handOffBeatenStopper(state: MatchState, roles: readonly TransitionRole[]): readonly TransitionRole[] {
+  if (state.ball.kind !== 'HELD') return roles
+  const stopper = roles.find((role) => role.kind === 'STOP_BALL')
+  const stopperPlayer = stopper && findPlayer(state, stopper.playerId)
+  if (!stopper || !stopperPlayer) return roles
+  const basket = attackingBasketForTeam(state.ball.ownerTeamId, state.homeTeamId, state.period, state.court)
+  const direction = basket.x >= state.court.lengthMeters / 2 ? 1 : -1
+  if ((state.ball.position.x - stopperPlayer.position.x) * direction <= 2) return roles
+  const successor = roles.filter((role) => role.kind === 'MATCH')
+    .map((role) => ({ role, player: findPlayer(state, role.playerId) }))
+    .filter((item): item is { role: TransitionRole; player: MatchPlayerState } => item.player !== undefined
+      && (item.player.position.x - state.ball.position.x) * direction > 0.5)
+    .sort((a, b) => distanceBetween(a.player.position, state.ball.position) - distanceBetween(b.player.position, state.ball.position)
+      || comparePlayerId(a.player, b.player))[0]
+  if (!successor) return roles
+  return roles.map((role) => role.playerId === stopper.playerId
+    ? { ...role, kind: 'MATCH', matchLaneY: successor.role.matchLaneY }
+    : role.playerId === successor.player.playerId
+      ? { ...role, kind: 'STOP_BALL', matchLaneY: undefined }
+      : role)
 }
 
 function createTransition(state: MatchState, teamId: TeamId, trigger: TransitionTrigger): MatchTransitionState {
