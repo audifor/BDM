@@ -63,6 +63,9 @@ export function selectDecision(state: MatchState): MatchDecision | null {
   const tacticalPlan = possession.teamId === state.homeTeamId ? state.tacticalPlans.home : state.tacticalPlans.away
   if (liveTransition && state.transition?.trigger === 'defensiveRebound' && state.t - state.transition.startedT < 4) return null
   const lastOffensive = [...state.actions].reverse().find((action) => action.teamId === possession.teamId && action.kind !== 'CLOSEOUT')
+  const containedThisPossession = state.actions.some((action) => action.kind === 'DRIVE'
+    && action.playerId === actor.playerId && action.teamId === possession.teamId
+    && action.startedT >= possession.startedT && action.status === 'COMPLETED' && action.outcome === 'CONTAINED')
   let kind: MatchDecisionKind
   let targetPlayerId: PlayerId | undefined
   let reason: string
@@ -85,15 +88,26 @@ export function selectDecision(state: MatchState): MatchDecision | null {
     targetPlayerId = bestReceiver(state, actor, true)?.playerId
     kind = targetPlayerId ? 'KICK_OUT' : 'SHOOT'
     reason = targetPlayerId ? 'Help has collapsed on the drive; pass to the most open shooter' : 'No viable kick-out target; finish the advantage at the rim'
+  } else if (lastOffensive?.kind === 'DRIVE' && lastOffensive.status === 'COMPLETED'
+    && lastOffensive.outcome === 'CONTAINED' && lastOffensive.playerId === actor.playerId) {
+    targetPlayerId = bestReceiver(state, actor, false)?.playerId
+    kind = targetPlayerId ? 'PASS' : 'SHOOT'
+    reason = targetPlayerId ? 'The drive was contained; move the ball to a teammate' : 'The drive was contained; take the available shot'
+  } else if (lastOffensive?.kind === 'DRIVE' && lastOffensive.status === 'COMPLETED'
+    && lastOffensive.outcome === 'FINISH' && lastOffensive.playerId === actor.playerId) {
+    kind = 'SHOOT'
+    reason = 'Finish the drive with a shot at the rim'
   } else if ((lastOffensive?.kind === 'KICK_OUT' || lastOffensive?.kind === 'PASS')
     && lastOffensive.status === 'COMPLETED' && lastOffensive.outcome === 'CAUGHT' && lastOffensive.targetPlayerId === actor.playerId) {
     const value = shotValueAt(actor.position, basket, state)
     const shotPreference = value === 3 ? tacticalPlan.shotProfile.threePoint : distanceBetween(actor.position, basket) <= 2.2 ? tacticalPlan.shotProfile.rim : tacticalPlan.shotProfile.midRange
     const contest = estimateShotContest(state, actor.playerId)
-    kind = lastOffensive.kind === 'KICK_OUT' && actor.offense.shooting >= 60 - shotPreference * 5 ? 'CATCH_AND_SHOOT'
+    kind = containedThisPossession ? 'SHOOT'
+      : lastOffensive.kind === 'KICK_OUT' && actor.offense.shooting >= 60 - shotPreference * 5 ? 'CATCH_AND_SHOOT'
       : value === 3 && actor.offense.shooting >= 68 - shotPreference * 5 && contest.score < 0.35 ? 'CATCH_AND_SHOOT'
         : 'DRIVE'
-    reason = kind === 'CATCH_AND_SHOOT' ? 'Catch in shooting range before the closeout arrives' : 'Attack the closeout with a drive'
+    reason = containedThisPossession ? 'Attack the return pass with a shot after the earlier drive was contained'
+      : kind === 'CATCH_AND_SHOOT' ? 'Catch in shooting range before the closeout arrives' : 'Attack the closeout with a drive'
   } else {
     const distance = distanceBetween(actor.position, basket)
     const contest = estimateShotContest(state, actor.playerId)
@@ -104,7 +118,7 @@ export function selectDecision(state: MatchState): MatchDecision | null {
     if (distance <= 7.5 && actor.offense.shooting >= 70 - shotPreference * 5 && probability >= 0.42 - shotPreference * 0.04) {
       kind = 'SHOOT'
       reason = 'Take the available shot from live position and contest'
-    } else if (distance > 3.2 && (actor.offense.rimAttack + actor.offense.creation) / 2 >= 62 - tacticalPlan.shotProfile.rim * 3 - tacticalPlan.pace * 0.5) {
+    } else if (!containedThisPossession && distance > 3.2 && (actor.offense.rimAttack + actor.offense.creation) / 2 >= 62 - tacticalPlan.shotProfile.rim * 3 - tacticalPlan.pace * 0.5) {
       kind = 'DRIVE'
       reason = 'Use rim pressure and creation to attack the basket'
     } else if (receiver) {

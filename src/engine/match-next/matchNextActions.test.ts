@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createCourtGeometry, distanceBetween, type CourtPosition } from '@/domain/court'
 import { gameIdFromString, playerIdFromString, teamIdFromString } from '@/domain/ids'
 import { applyCommand, createMatchState, tick, type MatchSetup, type MatchState } from './index'
+import { selectDecision } from './actions/DecisionCore'
 
 function verticalSliceSetup(passFirst = false): MatchSetup {
   const homeTeamId = teamIdFromString('action-slice-home')
@@ -69,6 +70,34 @@ function runOpeningPass(): MatchState {
 }
 
 describe('Match Next action vertical slice', () => {
+  it('does not repeat a contained drive by the same handler in one possession, including after a return pass', () => {
+    const state = readyForAutonomousActions()
+    expect(state.ball.kind).toBe('HELD')
+    if (state.ball.kind !== 'HELD') return
+    const handlerId = state.ball.ownerPlayerId
+    const teamId = state.ball.ownerTeamId
+    const teammateId = state.players.find((player) => player.active && player.teamId === teamId && player.playerId !== handlerId)!.playerId
+    const contained = {
+      id: 'contained-drive', kind: 'DRIVE' as const, playerId: handlerId, teamId,
+      startedT: state.possessions.at(-1)!.startedT, status: 'COMPLETED' as const, outcome: 'CONTAINED' as const,
+    }
+    const afterContainment = { ...state, actions: [...state.actions, contained] }
+    expect(selectDecision(afterContainment)?.kind).toBe('PASS')
+    expect(selectDecision({ ...state, actions: [...state.actions, { ...contained, outcome: 'FINISH' as const }] })?.kind).toBe('SHOOT')
+
+    const afterReturnPass = { ...afterContainment, actions: [...afterContainment.actions, {
+      id: 'return-pass', kind: 'PASS' as const, playerId: teammateId, teamId,
+      targetPlayerId: handlerId, startedT: state.t, status: 'COMPLETED' as const, outcome: 'CAUGHT' as const,
+    }] }
+    expect(selectDecision(afterReturnPass)?.kind).toBe('SHOOT')
+
+    let live: MatchState = afterContainment
+    for (let step = 0; step < 150 && !live.events.some((event) => event.type === 'shotReleased' || event.type === 'possessionEnd'); step += 1) live = tick(live)
+    expect(live.events.some((event) => event.type === 'shotReleased' || event.type === 'possessionEnd')).toBe(true)
+    expect(live.actions.filter((action) => action.kind === 'DRIVE' && action.playerId === handlerId
+      && action.startedT > contained.startedT)).toHaveLength(0)
+  })
+
   it('executes an ordinary PASS as a live decision with a physical catch', () => {
     const state = runOpeningPass()
     const pass = state.actions.find((action) => action.kind === 'PASS')
