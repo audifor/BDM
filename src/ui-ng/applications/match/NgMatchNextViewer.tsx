@@ -12,6 +12,8 @@ import { GameClock, MatchScoreboard, TeamScoreSummary } from '@/ui-ng/applicatio
 import { chromeSafeClubAccent, teamMark, teamRecordLabel, venueLabel } from '@/ui-ng/applications/match/engine/matchPresentation'
 import { deriveTeamColors } from '@/ui-ng/applications/player/data/presentationHelpers'
 import { navigateToPlayer, navigateToTeamInNg } from '@/ui-ng/workspace/workspaceApps'
+import { MatchNextCenterPanel } from './MatchNextCenterPanel'
+import { projectMatchNextPresentation } from './MatchNextPresentation'
 
 import './engine/match-engine.css'
 
@@ -39,6 +41,7 @@ export function NgMatchNextViewer({
   const [isSkipping, setIsSkipping] = useState(false)
   const [speed, setSpeed] = useState<(typeof PLAYBACK_SPEEDS)[number]>(1)
   const [result, setResult] = useState<MatchNextResult | null>(null)
+  const [selectedPlayerId, setSelectedPlayerId] = useState<PlayerId | null>(null)
   const completed = useRef(false)
   const skipFrame = useRef<number | null>(null)
   const visualFrame = useRef<number | null>(null)
@@ -83,7 +86,8 @@ export function NgMatchNextViewer({
     '--me-club-ink': clubColors.ink,
   } as CSSProperties
   const venue = venueLabel(world, game.homeTeamId)
-  const liveLines = projectMatchNextPlayByPlay(frame.events).slice(-20).reverse()
+  const liveLines = projectMatchNextPlayByPlay(result?.events ?? frame.events).slice().reverse()
+  const presentation = projectMatchNextPresentation(world, setup, frame, result)
   const homeName = homeTeam.name
   const awayName = awayTeam.name
   const offenseId = frame.possession?.teamId ?? game.homeTeamId
@@ -152,7 +156,7 @@ export function NgMatchNextViewer({
             ? <button className="me-quick__btn is-emphasis" onClick={onContinue} type="button">Continuar</button>
             : <label className="me-quick__speed">Velocidad<select aria-label="Velocidad del partido" value={speed} onChange={(event) => setSpeed(Number(event.target.value) as (typeof PLAYBACK_SPEEDS)[number])}>{PLAYBACK_SPEEDS.map((value) => <option key={value} value={value}>{value}×</option>)}</select></label>}
         </div>}
-        meta={<div className="me-meta"><div className="me-meta__season"><strong>{world.competitions[game.competitionId]?.name ?? 'Partido'}</strong><em>{String(game.date)}</em><span>ME-NEXT · SEMILLA {controller.matchSeed}</span></div><div className="me-meta__live"><em>Estado de posesión</em><strong>{frame.possession?.phase ?? (snapshot.isComplete ? 'FINAL' : 'REINICIO')}</strong></div></div>}
+        meta={<div className="me-meta"><div className="me-meta__season"><strong>{world.competitions[game.competitionId]?.name ?? 'Partido'}</strong>{game.competitionStageKey && <em>{game.competitionStageKey}</em>}<em>{String(game.date)}</em><span>ME-NEXT · SEMILLA {controller.matchSeed}</span></div><div className="me-meta__live"><em>Estado de posesión</em><strong>{frame.possession?.phase ?? (snapshot.isComplete ? 'FINAL' : 'REINICIO')}</strong></div></div>}
       />
 
       <div className="me-main">
@@ -169,8 +173,8 @@ export function NgMatchNextViewer({
               homeName={homeName}
               homeTeamId={game.homeTeamId}
               isPlaying={isPlaying}
-              lineups={setup.initialLineups}
-              onPlayerSelect={navigateToPlayer}
+              lineups={{ home: presentation.home.currentFive.map((player) => player.playerId), away: presentation.away.currentFive.map((player) => player.playerId) }}
+              onPlayerSelect={(playerId) => setSelectedPlayerId(playerId)}
               period={frame.period}
               playbackSpeed={speed}
               progress={1}
@@ -184,6 +188,12 @@ export function NgMatchNextViewer({
             <span>{frame.currentDecision?.reason ?? 'La defensa y el ataque comparten la posición actual de cada jugador y del balón.'}</span>
             {frame.transition && <span>Transición {frame.transition.trigger} · ventaja {frame.transition.advantage}</span>}
           </section>
+          <MatchNextCenterPanel
+            onSelectPlayer={(playerId) => setSelectedPlayerId((current) => current === playerId ? null : playerId)}
+            presentation={presentation}
+            selectedPlayerId={selectedPlayerId}
+            world={world}
+          />
         </div>
 
         <aside className="me-tactical">
@@ -212,29 +222,24 @@ export function NgMatchNextViewer({
                 </li>
               })}</ol>
             </details>}
-            <details className="me-next-rotation" data-testid="rotation-validation">
-              <summary>RotaciÃ³n / validaciÃ³n</summary>
-              {latestSubstitution(frame) && <p>Ãšltimo cambio: {playerName(world, latestSubstitution(frame)!.playerId!)} entra por {playerName(world, latestSubstitution(frame)!.outgoingPlayerId!)} Â· {formatPeriod(latestSubstitution(frame)!.period)} {formatClock(latestSubstitution(frame)!.gameClockTenths / 10)}{latestSubstitution(frame)!.substitutionReason ? ` Â· ${latestSubstitution(frame)!.substitutionReason}` : ''}</p>}
-              {[game.homeTeamId, game.awayTeamId].map((teamId) => <section key={teamId}>
-                <h4>{world.teams[teamId]?.name ?? String(teamId)}</h4>
-                <div className="me-next-rotation__table" role="table" aria-label={`RotaciÃ³n ${world.teams[teamId]?.name ?? String(teamId)}`}>
-                  <div className="me-next-rotation__row me-next-rotation__head" role="row"><span>Jugador</span><span>Inicio</span><span>Estado</span><span>Min reales / objetivo juego</span><span>Fatiga / previa</span><span>PTS</span><span>REB</span><span>ROB</span><span>TC</span></div>
-                  {frame.rotationPlayers.filter((player) => player.teamId === teamId).map((player) => <div className="me-next-rotation__row" key={player.playerId} role="row">
-                    <span>{playerName(world, player.playerId)}</span><span>{player.started ? 'SÃ­' : 'No'}</span><span>{player.active ? 'COURT' : 'BENCH'}</span>
-                    <span>{formatTenths(player.courtTimeTenths)} / {player.targetMinutes === null ? 'â€”' : formatMinutes(player.targetMinutes)}</span>
-                    <span>{player.matchSessionFatigue.toFixed(0)} / {player.preMatchCareerFatigue.toFixed(0)}</span>
-                    <span>{player.stats.points}</span><span>{player.stats.rebounds}</span><span>{player.stats.steals}</span><span>{player.stats.fieldGoalsMade}/{player.stats.fieldGoalsAttempted}</span>
-                  </div>)}
-                </div>
-              </section>)}
-            </details>
+            {selectedPlayerId && <section className="me-next-inspected-player" aria-label="Jugador seleccionado">
+              <strong>{playerName(world, selectedPlayerId)}</strong>
+              <button className="me-next-inspected-player__link" onClick={() => navigateToPlayer(selectedPlayerId)} type="button">Abrir ficha completa</button>
+              <button className="me-next-inspected-player__close" onClick={() => setSelectedPlayerId(null)} type="button">Cerrar</button>
+            </section>}
+            {presentation.substitutionEvents.length > 0 && <details data-testid="rotation-validation">
+              <summary>Diagnostico de cambios</summary>
+              <ol>{presentation.substitutionEvents.slice().reverse().map((event) => <li key={event.sequence}>
+                {event.playerId ? playerName(world, event.playerId) : 'Jugador'} entra por {event.outgoingPlayerId ? playerName(world, event.outgoingPlayerId) : 'jugador'} - {formatPeriod(event.period)} {formatClock(event.gameClockTenths / 10)}{event.substitutionReason ? ` - ${event.substitutionReason}` : ''}
+              </li>)}</ol>
+            </details>}
             <h3>Play-by-play</h3>
             {liveLines.length === 0 ? <p>El registro aparecerá cuando ocurran acciones.</p> : <ol className="me-next-pbp__list">{liveLines.map((line) => <li key={line.sequence}><time>{formatPeriod(line.period)} {formatClock(line.gameClockTenths / 10)}</time><span>{line.type === 'pass' && line.playerId && line.targetPlayerId
               ? `${playerName(world, line.playerId)} pasó a ${playerName(world, line.targetPlayerId)}`
               : line.type === 'substitution' && line.playerId && line.targetPlayerId
                 ? `${playerName(world, line.playerId)} entra por ${playerName(world, line.targetPlayerId)}${line.substitutionReason ? ` · ${line.substitutionReason}` : ''}`
                 : `${line.playerId ? `${playerName(world, line.playerId)} ` : ''}${line.text}`}</span></li>)}</ol>}
-            {result && <div><h3>Resultado y estadísticas</h3><p>{awayName} {result.score.away} — {result.score.home} {homeName}</p><details><summary>Estadísticas de jugadores</summary><ol>{result.playerStats.filter((stat) => stat.secondsPlayed > 0 || stat.points > 0 || stat.rebounds > 0).sort((left, right) => right.points - left.points).map((stat) => <li key={stat.playerId}>{playerName(world, stat.playerId)} · {stat.points} PTS · {stat.rebounds} REB · {stat.fieldGoalsMade}/{stat.fieldGoalsAttempted} FG</li>)}</ol></details></div>}
+            {result && <div className="me-next-final"><h3>FINAL - Estadisticas</h3><p>{awayName} {result.score.away} - {result.score.home} {homeName}</p><p>El boxscore completo permanece visible junto a la cancha.</p></div>}
           </div>
         </aside>
       </div>
@@ -245,16 +250,6 @@ export function NgMatchNextViewer({
 function playerName(world: GameWorld, playerId: PlayerId): string {
   const player = world.players[playerId]
   return player ? `${player.firstName} ${player.lastName}` : String(playerId)
-}
-
-function latestSubstitution(frame: MatchFrame) {
-  return [...frame.events].reverse().find((event) => event.type === 'substitution' && event.playerId !== undefined && event.outgoingPlayerId !== undefined)
-}
-
-function formatTenths(tenths: number): string { return formatMinutes(tenths / 600) }
-function formatMinutes(minutes: number): string {
-  const totalSeconds = Math.max(0, Math.floor(minutes * 60))
-  return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, '0')}`
 }
 
 function createVisualSnapshot(frame: MatchFrame): VisualMatchSnapshot {
