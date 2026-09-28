@@ -43,21 +43,49 @@ replacement role fit, and late-game score/clock context. Close late games increa
 fatigue tolerance; late blowouts reduce unnecessary load. No possession-by-
 possession hot-hand rule was added.
 
-## Substitution and continuity
+## Competition clock, dead ball, and substitutions
 
-The controller evaluates substitutions only when a new `ballDead` event marks a
-stoppage. It proposes at most one change per team at that boundary. The engine
-command validates team membership, active/bench status, a five-player lineup,
-and position/role fit. It writes the canonical `substitution` event, swaps
-active status, places the incoming player at the outgoing player's court spot,
-and clears the outgoing player's temporary responsibilities. Normal Match Next
-reconciliation then rebuilds offensive slots and defensive assignments.
+Ball dead, game clock stopped, and substitution opportunity are separate states.
+The Match Next setup receives clock behavior resolved from the specific
+`Competition.rules.gameFormat`; it does not infer rules from a league or ecosystem
+label. GameFormatRules carry period and shot-clock lengths, the offensive-rebound
+reset, made-basket final-period thresholds, dead-ball causes that stop time, legal
+substitution causes, and the inbound clock restart point. The named formats
+configure FIBA at 24/14 seconds (full/offensive-rebound reset), NCAA at 30/20, and
+NBA/WNBA at 24/14. FIBA stops a made-basket clock at 120 seconds in the final
+period/overtime; NCAA/WNBA use 60 seconds in the final period; NBA uses 60 seconds
+in its first three periods and 120 in the final period/overtime. Named formats
+restart on inbound receive. FIBA made-basket substitution windows are limited to
+the non-scoring team. Each competition may configure these values independently.
 
-The MatchFrame contains only active players, so the departing token disappears
-and the incoming token appears without bench animation. The substitution event
-is projected into play-by-play with incoming and outgoing player IDs and its
-reason. No foul rule is inferred from unmodeled events: **FOUL TROUBLE ROTATION
-= DEFERRED**.
+A made basket always records the score and creates its inbound state. It stops the
+game clock only when the active competition's final-period threshold says so.
+When time continues, it remains running while both teams form for the inbound and
+through the inbound pass. When rules stop it, it restarts at the configured inbound
+release/receive point. The shot clock starts when the receiver controls the inbound.
+
+The controller considers a substitution only when a dead ball is also a
+competition-defined substitution opportunity. The made-basket substitution window
+has its own final-period threshold, configured independently from the clock-stop
+threshold (the named presets currently use matching values). `ballDead` by itself
+is insufficient, and a legal substitution window does not depend on whether the
+game clock is running. The engine command rechecks competition legality and the
+existing BS8 lineup validation before changing players. It proposes at most one
+change per team. The canonical `substitution` event records incoming/outgoing IDs,
+game clock, period, and reason; normal Match Next reconciliation rebuilds the active
+five's offensive and defensive assignments.
+
+The court MatchFrame contains only active players, so the departing token disappears
+and the incoming token appears without bench animation. A separate read-only
+`Rotación / validación` disclosure in the Live Match workspace shows both complete
+match squads, starter status, COURT/BENCH, actual minutes, MatchSession fatigue,
+pre-match Career Fatigue, total target minutes from the rotation plan, and the latest
+substitution evidence. It also projects points, rebounds, steals, and field-goal
+makes/attempts from authoritative Match Next events. Assists, blocks, fouls, and
+player-attributed turnovers are omitted because Match Next has no authoritative
+event support for them. The disclosure does not edit engine state.
+
+No foul rule is inferred from unmodeled events: **FOUL TROUBLE ROTATION = DEFERRED**.
 
 MatchSession fatigue is not reset on entry. The existing clock-running fatigue
 authority increases fatigue for active players and recovers it for players on the
@@ -80,15 +108,14 @@ the established Career Fatigue and Development Stimulus authorities.
 
 Both teams use the same coaching plan and runtime. A valid user-saved starting
 five and explicit rotation intent are honored. The user team currently uses
-automatic coach substitutions because no live substitution control exists.
-Future manual commands can target a particular substitution before the same
-engine validation boundary; BS8 does not add that interface.
+automatic coach substitutions because no live substitution control exists. The
+validation disclosure is read-only; manual live coaching remains future work.
 
 ## Deferred scope
 
 - **BS12 Medical:** no injury probability, treatment, or medical authority change.
 - **BS19 Human RPG:** no new coach identity, trait, or attribute.
-- **Future UI:** no rotation-plan display or manual live substitution surface.
+- **Future UI:** no manual live substitution surface or final stats screen.
 - **Fouls:** no authoritative Match Next foul event exists, so foul-trouble
   rotation is deferred.
 - No MatchEngine rewrite, movement engine, timeout strategy system, or new
@@ -96,15 +123,26 @@ engine validation boundary; BS8 does not add that interface.
 
 ## Visual validation
 
-Use the user's next scheduled game in Match Next Live and keep playback at 1×
-through the first quarter. The automatic plan produces a substitution during a
-normal full-length match without manual commands. For a deterministic local
-reproduction, prepare that same world/game through `createMatchEnginePort('match-next').prepare(world, game, 20260928)` and create its live session; the focused test
-`CoachRotation.test.ts` uses the same seed and waits for the first substitution.
+Use the user's next scheduled game in Match Next Live and open
+`Rotación / validación`:
 
-Watch the play-by-play and court frame through the stoppage. Confirm the outgoing
-token disappears, the named incoming player appears at that court position, the
-score and clock resume, and five valid defensive assignments return after the
-inbound. The focused test also confirms returning players keep their current
-MatchSession fatigue. Match Next tests verify deterministic event and minute
-outputs; they do not replace this visual approval gate.
+1. At tipoff, confirm five COURT players and five starters per team; remaining
+   dressed players appear as BENCH.
+2. Let the match run. COURT players accrue actual minutes; BENCH players do not.
+3. Compare each player's actual minutes with the plan's total game target.
+4. Watch fatigue rise for active players and recover for bench players; a player
+   returning later retains their current MatchSession fatigue.
+5. At a legal substitution, inspect the latest OUT/IN evidence and clock/period.
+   Confirm COURT/BENCH changes and exactly five active players per team.
+6. Confirm the five defensive assignments after the substitution target active
+   players only and contain no duplicate defender.
+7. Observe made baskets in ordinary time: score and inbound state appear while the
+   game clock continues. In a configured final-period stop window, the clock stops
+   and follows that competition's inbound restart rule. A basket alone does not
+   create a substitution.
+
+The actual-minute display comes from `MatchState.courtTimeTenthsByPlayerId`;
+fatigue comes from the current MatchSession player state; target minutes come from
+the canonical `CoachRotationPlan`; substitution details are projected from its
+canonical event. The test suite validates deterministic state transitions but does
+not replace this visual approval gate.

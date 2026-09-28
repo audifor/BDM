@@ -4,7 +4,7 @@ import { getTeamLineup, updateGameWorld } from '@/domain/world'
 import { assignLineupSlot, createDefaultTeamLineup } from '@/domain/tactics'
 import { createNewGame } from '@/app/game/createNewGame'
 import { createCoachRotationPlan } from '@/engine/tactics/CoachRotationEngine'
-import { applyCommand, createMatchState, decideRotationSubstitutions, tick, type MatchSetup, type MatchState } from '@/engine/match-next'
+import { applyCommand, createMatchState, decideRotationSubstitutions, isSubstitutionOpportunity, tick, type MatchSetup, type MatchState } from '@/engine/match-next'
 import { createMatchNextResult } from './MatchNextResult'
 import { prepareMatchSetup } from './prepareMatchSetup'
 import { MatchNextLiveController } from './MatchNextLiveController'
@@ -174,15 +174,85 @@ describe('BS8 coach and rotation authority', () => {
     expect(homeIds.has(incoming)).toBe(true)
   })
 
-  it('produces an automatic substitution during a regular match without manual UI commands', () => {
+  it('rejects a dead-ball substitution when competition rules do not open a substitution window', () => {
     const { setup } = fixture()
-    const controller = new MatchNextLiveController(setup)
-    const maxTicks = setup.clockRules.periodSeconds * 10
+    const restrictedSetup = { ...setup, clockRules: { ...setup.clockRules, substitutionOpportunityReasons: [] } }
+    const state = createMatchState({ ...restrictedSetup, autonomousActions: true })
+    const starters = setup.initialLineups.home
+    const incoming = setup.homeSquad.find((playerId) => !starters.includes(playerId))!
+    const deadBall = { ...state, ball: { kind: 'DEAD' as const, reason: 'outOfBounds' as const, position: state.ball.position, heightMeters: 0.08 } }
+    const proposal = { teamId: setup.homeTeamId, playerOutId: starters[0]!, playerInId: incoming, reason: 'test', expectedMinutes: 10 }
+
+    expect(decideRotationSubstitutions(deadBall)).toEqual([])
+    expect(() => applyCommand(deadBall, { type: 'coachSubstitutions', proposals: [proposal] })).toThrow('legal competition substitution opportunity')
+
+    const homeStarters = setup.initialLineups.home
+    const windowSetup: MatchSetup = {
+      ...setup,
+      clockRules: { ...setup.clockRules, substitutionOpportunityReasons: ['outOfBounds'] },
+      coachingPlans: { ...setup.coachingPlans!, home: urgentRotation(setup, 'home', 10) },
+    }
+    const liveClockDeadBall = {
+      ...createMatchState(windowSetup),
+      clock: { gameRunning: true, shotRunning: false },
+      ball: { kind: 'DEAD' as const, reason: 'outOfBounds' as const, position: state.ball.position, heightMeters: 0.08 },
+      players: state.players.map((player) => player.playerId === homeStarters[0] ? { ...player, fatigue: 100 } : player),
+    }
+    expect(decideRotationSubstitutions(liveClockDeadBall).some((item) => item.teamId === setup.homeTeamId)).toBe(true)
+  })
+
+  it('applies the competition substitution-team rule after a made basket', () => {
+    const { setup } = fixture()
+    const scoringTeam = setup.homeTeamId
+    const nonScoringTeam = setup.awayTeamId
+    const restartTeamId = nonScoringTeam
+    const period = setup.clockRules.periodCount
+    const remainingTenths = (setup.clockRules.madeBasketSubstitutionUnderSecondsInFinalPeriod ?? 0) * 10
+
+    expect(isSubstitutionOpportunity('madeBasket', period, remainingTenths, setup.clockRules, nonScoringTeam, restartTeamId)).toBe(true)
+    expect(isSubstitutionOpportunity('madeBasket', period, remainingTenths, setup.clockRules, scoringTeam, restartTeamId)).toBe(false)
+  })
+
+  it('produces an automatic substitution during a regular match without manual UI commands', () => {
+    const { world, game, setup } = fixture()
+    const periodMinutes = 3
+    const loadedWorld = updateGameWorld(world, { careerFatigueByPlayerId: {
+      ...world.careerFatigueByPlayerId,
+      ...Object.fromEntries(setup.players.map((player) => [player.playerId, 85])),
+    } })
+    const loadedSetup = prepareMatchSetup(loadedWorld, game, setup.matchSeed)
+    const onePeriod: MatchSetup = {
+      ...loadedSetup,
+      clockRules: { ...setup.clockRules, periodCount: 1, periodSeconds: periodMinutes * 60, overtimeSeconds: 30 },
+      coachingPlans: {
+        ...loadedSetup.coachingPlans!,
+        home: urgentRotation(loadedSetup, 'home', periodMinutes),
+        away: urgentRotation(loadedSetup, 'away', periodMinutes),
+      },
+    }
+    const controller = new MatchNextLiveController(onePeriod)
+    const maxTicks = onePeriod.clockRules.periodSeconds * 10
     for (let step = 0; step < maxTicks && !controller.matchState.events.some((event) => event.type === 'substitution'); step += 1) controller.advanceOneStep()
 
     expect(controller.matchState.events.some((event) => event.type === 'substitution')).toBe(true)
-    expect(controller.matchState.players.filter((player) => player.active && player.teamId === setup.homeTeamId)).toHaveLength(5)
-    expect(controller.matchState.players.filter((player) => player.active && player.teamId === setup.awayTeamId)).toHaveLength(5)
+    expect(controller.matchState.players.filter((player) => player.active && player.teamId === onePeriod.homeTeamId)).toHaveLength(5)
+    expect(controller.matchState.players.filter((player) => player.active && player.teamId === onePeriod.awayTeamId)).toHaveLength(5)
+    const stateBeforeProjection = controller.matchState
+    const frame = controller.snapshot().frame
+    expect(controller.matchState).toBe(stateBeforeProjection)
+    expect(frame.rotationPlayers).toHaveLength(onePeriod.homeSquad.length + onePeriod.awaySquad.length)
+    const change = [...frame.events].reverse().find((event) => event.type === 'substitution')!
+    expect(frame.rotationPlayers.find((player) => player.playerId === change.outgoingPlayerId)).toMatchObject({ active: false })
+    expect(frame.rotationPlayers.find((player) => player.playerId === change.playerId)?.active).toBe(true)
+    expect(frame.rotationPlayers.find((player) => player.playerId === change.playerId)?.targetMinutes).not.toBeNull()
+    expect(frame.rotationPlayers.every((player) => player.courtTimeTenths >= 0 && player.matchSessionFatigue >= 0 && player.matchSessionFatigue <= 100)).toBe(true)
+    expect(frame.rotationPlayers.find((player) => player.playerId === change.outgoingPlayerId)?.stats).toHaveProperty('points')
+    for (const projected of frame.rotationPlayers) {
+      const canonical = controller.matchState.players.find((player) => player.playerId === projected.playerId)!
+      expect(projected.courtTimeTenths).toBe(controller.matchState.courtTimeTenthsByPlayerId?.[projected.playerId] ?? 0)
+      expect(projected.matchSessionFatigue).toBe(canonical.fatigue)
+      expect(projected.preMatchCareerFatigue).toBe(canonical.preMatchCareerFatigue)
+    }
   })
 
   it('uses the same deterministic rotation decisions for live playback and instant completion', () => {

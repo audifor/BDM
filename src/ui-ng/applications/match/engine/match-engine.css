@@ -1544,6 +1544,11 @@ button.me.token,
   box-shadow: 0 0 10px var(--me-btn-glow);
 }
 
+.me-next-rotation__table { display: grid; gap: 2px; overflow-x: auto; font-size: 11px; }
+.me-next-rotation__row { display: grid; grid-template-columns: minmax(120px, 1.5fr) repeat(3, minmax(44px, .55fr)) minmax(80px, .9fr) repeat(4, minmax(36px, .45fr)); gap: 5px; min-width: 650px; padding: 4px; border-bottom: 1px solid color-mix(in srgb, var(--me-blue) 18%, transparent); }
+.me-next-rotation__head { font-weight: 700; }
+.me-next-rotation h4 { margin: 8px 0 4px; }
+
 @media (max-width: 1200px) {
   .me-scoreboard {
     grid-template-columns: 1fr;

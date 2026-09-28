@@ -83,9 +83,10 @@ export class MatchNextLiveController {
     const reachedStoppage = this.state.events.some((event) => event.t === this.state.t && event.type === 'ballDead')
     const substitutions = reachedStoppage ? decideRotationSubstitutions(this.state) : []
     if (substitutions.length > 0) this.state = applyCommand(this.state, { type: 'coachSubstitutions', proposals: substitutions })
-    if (this.pendingInbound && this.teamsReadyForInbound()) this.releasePeriodInbound()
     if (!this.state.isComplete && this.state.period !== previousPeriod) {
       this.state = preparePeriodInbound(this.state, this.setup, (pending) => { this.pendingInbound = pending })
+    } else if (!this.state.isComplete && this.pendingInbound && this.teamsReadyForInbound()) {
+      this.releasePeriodInbound()
     } else if (!this.state.isComplete && !this.pendingInbound && this.state.ball.kind === 'DEAD' && this.state.ball.reason !== 'periodEnd') {
       const restart = this.state.ball
       const teamId = restart.restartTeamId

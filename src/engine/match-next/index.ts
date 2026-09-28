@@ -1,4 +1,5 @@
 export * from './setup'
+export * from './clockRules'
 export { careerFatigueToMatchSession, matchSessionFatigueDeltaToCareer, matchEventFatigueIncrement } from './playerDynamicState'
 export { decideRotationSubstitutions, applyCoachSubstitutions, type CoachSubstitutionProposal } from './coaching/RotationDecision'
 export * from './rng'

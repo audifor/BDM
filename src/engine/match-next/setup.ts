@@ -8,6 +8,14 @@ export interface MatchNextClockRules {
   readonly periodSeconds: number
   readonly overtimeSeconds: number
   readonly shotClockSeconds: number
+  readonly madeBasketClockStopUnderSecondsInFinalPeriod?: number | null
+  readonly madeBasketClockStopUnderSecondsInOtherPeriods?: number | null
+  readonly madeBasketSubstitutionUnderSecondsInFinalPeriod?: number | null
+  readonly madeBasketSubstitutionUnderSecondsInOtherPeriods?: number | null
+  readonly madeBasketSubstitutionEligibleTeam?: 'both' | 'nonScoring'
+  readonly clockStopReasons?: readonly ('outOfBounds' | 'other' | 'shotClockViolation')[]
+  readonly substitutionOpportunityReasons?: readonly ('outOfBounds' | 'other' | 'shotClockViolation')[]
+  readonly clockRestartOnInbound?: 'release' | 'receive'
   /** Competition-owned rule input. Null/omitted means unresolved; never infer a reset. */
   readonly offensiveReboundShotClockSeconds?: number | null
 }

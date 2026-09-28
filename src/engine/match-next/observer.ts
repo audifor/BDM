@@ -3,6 +3,7 @@ import { BALL_ACQUISITION_RADIUS_METERS, REBOUND_ACQUISITION_RADIUS_METERS } fro
 import { MOVEMENT_URGENCY_FACTORS } from './movement/MovementIntent'
 import { attackingBasketForTeam } from './structure/FiveOutStructure'
 import type { MatchFrame, MatchFrameBall } from './frame'
+import { shouldStopGameClock } from './clockRules'
 
 export interface MatchObservationReport {
   readonly frameCount: number
@@ -217,7 +218,7 @@ export function observeFrames(frames: readonly MatchFrame[]): MatchObservationRe
       }
     }
     if (frame.possession && frame.ball.teamId !== undefined && frame.ball.teamId !== frame.possession.teamId) possessionViolations.push(`Live ball team differs from possession team at frame ${index}`)
-    if (frame.ball.kind === 'DEAD' && frame.clock.gameRunning) clockViolations.push(`Game clock runs during DEAD at frame ${index}`)
+    if (frame.ball.kind === 'DEAD' && frame.clock.gameRunning && shouldStopGameClock(frame.ball.deadReason as Parameters<typeof shouldStopGameClock>[0], frame.period, frame.gameClock, frame.clockRules)) clockViolations.push(`Game clock runs during DEAD at frame ${index}`)
     if (frame.ball.kind === 'DEAD' && frame.clock.shotRunning) clockViolations.push(`Shot clock runs during DEAD at frame ${index}`)
     if (frame.gameClock < 0 || frame.shotClock !== null && frame.shotClock < 0) clockViolations.push(`Negative clock at frame ${index}`)
     if (frame.clock.shotRunning && frame.shotClock === null) clockViolations.push(`Shot clock is marked running without a value at frame ${index}`)

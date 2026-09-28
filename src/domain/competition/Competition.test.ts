@@ -22,7 +22,7 @@ describe('Competition', () => {
   })
 
   it('validates only deterministic, balanced round-robin rules', () => {
-    expect(createCompetitionRules(defaultLeagueCompetitionRules)).toEqual(defaultLeagueCompetitionRules)
+    expect(createCompetitionRules(defaultLeagueCompetitionRules)).toMatchObject(defaultLeagueCompetitionRules)
     expect(() => createCompetitionRules({ ...defaultLeagueCompetitionRules, schedule: { ...defaultLeagueCompetitionRules.schedule, meetingsPerPair: 3 } })).toThrow('even')
     expect(() => createCompetitionRules({ ...defaultLeagueCompetitionRules, standings: { tiebreakers: ['wins'] } })).toThrow('teamId')
   })

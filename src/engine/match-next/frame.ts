@@ -60,10 +60,23 @@ export interface MatchFramePossession {
   readonly shotClock: number | null
 }
 
+export interface MatchFrameRotationPlayer {
+  readonly playerId: PlayerId
+  readonly teamId: TeamId
+  readonly started: boolean
+  readonly active: boolean
+  readonly courtTimeTenths: number
+  readonly matchSessionFatigue: number
+  readonly preMatchCareerFatigue: number
+  readonly targetMinutes: number | null
+  readonly stats: { readonly points: number; readonly rebounds: number; readonly steals: number; readonly fieldGoalsMade: number; readonly fieldGoalsAttempted: number }
+}
+
 export interface MatchFrame {
   readonly t: number
   readonly period: number
   readonly court: MatchState['court']
+  readonly clockRules: MatchState['clockRules']
   readonly homeTeamId: TeamId
   readonly awayTeamId: TeamId
   readonly gameClock: number
@@ -85,15 +98,28 @@ export interface MatchFrame {
   readonly defensiveStructure: DefensiveStructureState | null
   readonly reboundState: MatchReboundState | null
   readonly transition: MatchTransitionState | null
+  /** Read-only Match-state projection for validating BS8 rotation behavior. */
+  readonly rotationPlayers: readonly MatchFrameRotationPlayer[]
 }
 
 export function toFrame(state: MatchState): MatchFrame {
   const possession = activePossession(state)
   const ball = state.ball
+  const statsByPlayer = new Map<PlayerId, MatchFrameRotationPlayer['stats']>()
+  for (const event of state.events) {
+    const playerId = event.shooterPlayerId ?? (event.type === 'reboundSecured' || event.type === 'passIntercepted' ? event.playerId : undefined)
+    if (playerId === undefined) continue
+    const current = statsByPlayer.get(playerId) ?? { points: 0, rebounds: 0, steals: 0, fieldGoalsMade: 0, fieldGoalsAttempted: 0 }
+    if (event.type === 'shotMade') statsByPlayer.set(playerId, { ...current, points: current.points + (event.points ?? 0), fieldGoalsMade: current.fieldGoalsMade + 1 })
+    else if (event.type === 'shotReleased') statsByPlayer.set(playerId, { ...current, fieldGoalsAttempted: current.fieldGoalsAttempted + 1 })
+    else if (event.type === 'reboundSecured') statsByPlayer.set(playerId, { ...current, rebounds: current.rebounds + 1 })
+    else if (event.type === 'passIntercepted') statsByPlayer.set(playerId, { ...current, steals: current.steals + 1 })
+  }
   return {
     t: state.t,
     period: state.period,
     court: { ...state.court, baskets: { left: { ...state.court.baskets.left }, right: { ...state.court.baskets.right } }, threePointLine: { ...state.court.threePointLine } },
+    clockRules: { ...state.clockRules, ...(state.clockRules.clockStopReasons ? { clockStopReasons: [...state.clockRules.clockStopReasons] } : {}), ...(state.clockRules.substitutionOpportunityReasons ? { substitutionOpportunityReasons: [...state.clockRules.substitutionOpportunityReasons] } : {}) },
     homeTeamId: state.homeTeamId,
     awayTeamId: state.awayTeamId,
     gameClock: state.gameClockTenths,
@@ -190,5 +216,20 @@ export function toFrame(state: MatchState): MatchFrame {
       ...state.transition,
       roles: state.transition.roles.map((role) => ({ ...role, target: { ...role.target } })),
     },
+    rotationPlayers: state.players.map((player) => {
+      const plan = player.teamId === state.homeTeamId ? state.coachingPlans?.home : state.coachingPlans?.away
+      const periodTargets = plan?.minutesByPeriod[player.playerId]
+      return {
+        playerId: player.playerId,
+        teamId: player.teamId,
+        started: player.started === true,
+        active: player.active,
+        courtTimeTenths: state.courtTimeTenthsByPlayerId?.[player.playerId] ?? 0,
+        matchSessionFatigue: player.fatigue,
+        preMatchCareerFatigue: player.preMatchCareerFatigue,
+        targetMinutes: periodTargets === undefined ? null : periodTargets.reduce((sum, minutes) => sum + minutes, 0),
+        stats: statsByPlayer.get(player.playerId) ?? { points: 0, rebounds: 0, steals: 0, fieldGoalsMade: 0, fieldGoalsAttempted: 0 },
+      }
+    }),
   }
 }

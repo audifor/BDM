@@ -45,8 +45,7 @@ export function prepareMatchSetup(
     homeTeamId,
     awayTeamId,
     court: createCourtGeometry(courtRulesetForEcosystem(ecosystem.kind, ecosystem.category)),
-    // Competition/domain rules do not yet own shot-clock values. This remains an inert adapter placeholder.
-    clockRules: { ...clock, shotClockSeconds: 24, offensiveReboundShotClockSeconds: null },
+    clockRules: { ...clock, shotClockSeconds: clock.shotClockSeconds ?? 24, offensiveReboundShotClockSeconds: clock.offensiveReboundShotClockSeconds ?? null },
     homeSquad: [...options.squads.home],
     awaySquad: [...options.squads.away],
     initialLineups: { home: [...options.lineups.home], away: [...options.lineups.away] },

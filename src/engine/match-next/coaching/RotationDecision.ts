@@ -1,6 +1,7 @@
 import type { BasketballPosition } from '@/domain/primitives'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { MatchState, MatchNextEvent } from '../state'
+import { isSubstitutionOpportunity } from '../clockRules'
 
 export interface CoachSubstitutionProposal {
   readonly teamId: TeamId
@@ -10,21 +11,27 @@ export interface CoachSubstitutionProposal {
   readonly expectedMinutes: number
 }
 
-/** Chooses at most one legal substitution per team at a stopped-ball boundary. */
+/** Chooses at most one legal substitution per team at a competition-defined dead-ball opportunity. */
 export function decideRotationSubstitutions(state: MatchState): readonly CoachSubstitutionProposal[] {
-  if (state.ball.kind !== 'DEAD' || state.clock.gameRunning || state.isComplete) return []
-  const home = decideForTeam(state, state.homeTeamId)
-  const away = decideForTeam(state, state.awayTeamId)
+  if (state.ball.kind !== 'DEAD' || state.isComplete) return []
+  const home = isTeamSubstitutionOpportunity(state, state.homeTeamId) ? decideForTeam(state, state.homeTeamId) : undefined
+  const away = isTeamSubstitutionOpportunity(state, state.awayTeamId) ? decideForTeam(state, state.awayTeamId) : undefined
   return [...(home === undefined ? [] : [home]), ...(away === undefined ? [] : [away])]
 }
 
 /** The engine command is the only mutation boundary for active-lineup changes. */
 export function applyCoachSubstitutions(state: MatchState, proposals: readonly CoachSubstitutionProposal[]): MatchState {
   if (proposals.length === 0) return state
-  if (state.ball.kind !== 'DEAD' || state.clock.gameRunning || state.isComplete) throw new Error('Coach substitutions require a stopped, dead ball')
+  if (state.ball.kind !== 'DEAD' || state.isComplete || proposals.some((proposal) => !isTeamSubstitutionOpportunity(state, proposal.teamId))) throw new Error('Coach substitutions require a legal competition substitution opportunity')
   let next = state
   for (const proposal of proposals) next = applyOne(next, proposal)
   return next
+}
+
+function isTeamSubstitutionOpportunity(state: MatchState, teamId: TeamId): boolean {
+  return state.ball.kind === 'DEAD' && isSubstitutionOpportunity(
+    state.ball.reason, state.period, state.gameClockTenths, state.clockRules, teamId, state.ball.restartTeamId,
+  )
 }
 
 function decideForTeam(state: MatchState, teamId: TeamId): CoachSubstitutionProposal | undefined {

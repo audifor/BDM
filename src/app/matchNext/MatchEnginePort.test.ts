@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game/createNewGame'
 import { applyMatchResult } from '@/engine/match'
-import { createMatchState, tick } from '@/engine/match-next'
+import { createMatchState, decideRotationSubstitutions, tick } from '@/engine/match-next'
 import { createMatchEnginePort } from './MatchEnginePortFactory'
 
 describe('MatchEnginePort integration', () => {
@@ -14,6 +14,10 @@ describe('MatchEnginePort integration', () => {
     const opening = live.snapshot()
 
     expect(opening.frame.ball.kind).toBe('JUMP_BALL')
+    expect(opening.frame.rotationPlayers).toHaveLength(setup.homeSquad.length + setup.awaySquad.length)
+    expect(opening.frame.rotationPlayers.filter((player) => player.active && player.teamId === setup.homeTeamId)).toHaveLength(5)
+    expect(opening.frame.rotationPlayers.filter((player) => player.active && player.teamId === setup.awayTeamId)).toHaveLength(5)
+    expect(opening.frame.rotationPlayers.filter((player) => player.started)).toHaveLength(10)
     expect(opening.frame.clock.gameRunning).toBe(false)
     expect(opening.frame.events.some((event) => event.type === 'jumpBallStarted')).toBe(true)
     expect(opening.frame.players.filter((player) => Math.abs(player.position.x - opening.frame.court.lengthMeters / 2) < 0.8)).toHaveLength(2)
@@ -79,7 +83,7 @@ describe('MatchEnginePort integration', () => {
     }
   })
 
-  it('restarts a real possession after a made basket instead of stalling on DEAD with the game clock stopped', () => {
+  it('continues into a real possession after a made basket under a continuing-clock rule', () => {
     const world = createNewGame()
     const game = Object.values(world.games).find((candidate) => candidate.status === 'scheduled')!
     const prepared = createMatchEnginePort('match-next').prepare(world, game, 20260927)
@@ -90,11 +94,48 @@ describe('MatchEnginePort integration', () => {
     for (let tick = 0; tick < 1200 && !snapshot.frame.events.some((event) => event.type === 'ballDead' && event.ballReason === 'madeBasket'); tick += 1) {
       snapshot = live.advanceOneStep()
     }
-    for (let tick = 0; tick < 500 && !snapshot.frame.clock.gameRunning; tick += 1) snapshot = live.advanceOneStep()
+    for (let tick = 0; tick < 500 && !snapshot.frame.events.some((event) => event.type === 'possessionStart' && event.startReason === 'madeBasketInbound'); tick += 1) snapshot = live.advanceOneStep()
 
     expect(snapshot.frame.events.some((event) => event.type === 'ballDead' && event.ballReason === 'madeBasket')).toBe(true)
     expect(snapshot.frame.events.some((event) => event.type === 'possessionStart' && event.startReason === 'madeBasketInbound')).toBe(true)
-    expect(snapshot.frame.clock.gameRunning).toBe(true)
+    expect(snapshot.frame.clock).toEqual({ gameRunning: true, shotRunning: false })
+  })
+
+  it('continues the competition clock through an ordinary made-basket inbound without opening a substitution window', () => {
+    const world = createNewGame()
+    const game = Object.values(world.games).find((candidate) => candidate.status === 'scheduled')!
+    const prepared = createMatchEnginePort('match-next').prepare(world, game, 20260927)
+    const setup = { ...prepared, clockRules: { ...prepared.clockRules, periodCount: 4, periodSeconds: 300, overtimeSeconds: 20 } }
+    const live = createMatchEnginePort('match-next').createLiveSession(setup)
+    for (let tick = 0; tick < 1200 && !live.matchState.events.some((event) => event.type === 'ballDead' && event.ballReason === 'madeBasket'); tick += 1) live.advanceOneStep()
+
+    expect(live.matchState.ball).toMatchObject({ kind: 'DEAD', reason: 'madeBasket' })
+    expect(live.matchState.clock).toEqual({ gameRunning: true, shotRunning: false })
+    expect(decideRotationSubstitutions(live.matchState)).toEqual([])
+    for (let tick = 0; tick < 500 && !live.matchState.events.some((event) => event.type === 'inboundReleased'); tick += 1) live.advanceOneStep()
+    expect(live.matchState.clock.gameRunning).toBe(true)
+    const inboundRelease = live.matchState.events.find((event) => event.type === 'inboundReleased')!
+    for (let tick = 0; tick < 30 && !live.matchState.events.some((event) => event.type === 'passReceived' && event.receiverPlayerId === inboundRelease.receiverPlayerId); tick += 1) live.advanceOneStep()
+    expect(live.matchState.events.some((event) => event.type === 'passReceived' && event.receiverPlayerId === inboundRelease.receiverPlayerId)).toBe(true)
+    expect(live.matchState.clock).toEqual({ gameRunning: true, shotRunning: true })
+  })
+
+  it('stops made baskets by competition rule and restarts the clock when the inbound is received', () => {
+    const world = createNewGame()
+    const game = Object.values(world.games).find((candidate) => candidate.status === 'scheduled')!
+    const prepared = createMatchEnginePort('match-next').prepare(world, game, 20260927)
+    const setup = { ...prepared, clockRules: { ...prepared.clockRules, periodCount: 1, periodSeconds: 300, overtimeSeconds: 20, madeBasketClockStopUnderSecondsInFinalPeriod: 300, clockRestartOnInbound: 'receive' as const } }
+    const live = createMatchEnginePort('match-next').createLiveSession(setup)
+    for (let tick = 0; tick < 1200 && !live.matchState.events.some((event) => event.type === 'ballDead' && event.ballReason === 'madeBasket'); tick += 1) live.advanceOneStep()
+
+    expect(live.matchState.ball).toMatchObject({ kind: 'DEAD', reason: 'madeBasket' })
+    expect(live.matchState.clock).toEqual({ gameRunning: false, shotRunning: false })
+    for (let tick = 0; tick < 500 && !live.matchState.events.some((event) => event.type === 'inboundReleased'); tick += 1) live.advanceOneStep()
+    expect(live.matchState.clock.gameRunning).toBe(false)
+    const inboundRelease = live.matchState.events.find((event) => event.type === 'inboundReleased')!
+    for (let tick = 0; tick < 30 && !live.matchState.events.some((event) => event.type === 'passReceived' && event.receiverPlayerId === inboundRelease.receiverPlayerId); tick += 1) live.advanceOneStep()
+    expect(live.matchState.events.some((event) => event.type === 'passReceived' && event.receiverPlayerId === inboundRelease.receiverPlayerId)).toBe(true)
+    expect(live.matchState.clock).toEqual({ gameRunning: true, shotRunning: true })
   })
 
   it('keeps a five-man defensive retreat after a made-basket inbound until the ball reaches the frontcourt', () => {

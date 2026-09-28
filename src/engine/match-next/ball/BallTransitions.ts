@@ -7,6 +7,7 @@ import { changePossessionPhase, endPossession, startPossession } from '../posses
 import { activePossession, type MatchState, type PossessionStartReason } from '../state'
 import { advanceLooseBall, flightProgress, interpolatePosition, looseBallVelocity, passHeight, shotHeight } from './BallFlight'
 import { BALL_ACQUISITION_RADIUS_METERS, HELD_BALL_HEIGHT_METERS, REBOUND_ACQUISITION_RADIUS_METERS, type BallPassKind, type BallState, type PlannedShotOutcome } from './BallState'
+import { shouldStopGameClock, whenDoesClockRestart } from '../clockRules'
 
 export type InboundStartReason = 'periodStart' | 'madeBasketInbound' | 'turnoverInbound' | 'shotClockViolation'
 
@@ -57,7 +58,7 @@ export function startInbound(state: MatchState, teamId: TeamId, inbounderPlayerI
   } else {
     next = startPossession(next, teamId, reason as PossessionStartReason, 'INBOUND', false)
   }
-  next = { ...next, ball: { kind: 'INBOUND', teamId, inbounderPlayerId, spot, position: spot, heightMeters: HELD_BALL_HEIGHT_METERS, startedT: next.t, deadlineT: null }, clock: { gameRunning: false, shotRunning: false }, shotClockTenths: null }
+  next = { ...next, ball: { kind: 'INBOUND', teamId, inbounderPlayerId, spot, position: spot, heightMeters: HELD_BALL_HEIGHT_METERS, startedT: next.t, deadlineT: null }, clock: { gameRunning: next.clock.gameRunning, shotRunning: false }, shotClockTenths: null }
   const possession = activePossession(next)
   return emitEvent(next, 'inboundStarted', { possessionId: possession?.id, teamId, playerId: inbounderPlayerId, phase: 'INBOUND', ...(existing ? {} : { startReason: reason }) })
 }
@@ -115,7 +116,7 @@ export function releaseInbound(state: MatchState, receiverPlayerId: PlayerId, pa
   const receiver = activePlayer(state, receiverPlayerId)
   if (receiver.teamId !== state.ball.teamId) throw new Error('Inbound receiver must be on the inbounding team')
   const ball = createPass(state, state.ball.inbounderPlayerId, receiverPlayerId, receiver.position, passKind, travelTicks, true, state.ball.position)
-  let next: MatchState = { ...state, ball }
+  let next: MatchState = { ...state, ball, ...(whenDoesClockRestart(state.clockRules) === 'release' ? { clock: { gameRunning: true, shotRunning: false } } : {}) }
   const possession = activePossession(next)
   next = emitEvent(next, 'inboundReleased', { possessionId: possession?.id, teamId: state.ball.teamId, playerId: state.ball.inbounderPlayerId, receiverPlayerId })
   return emitEvent(next, 'passReleased', { possessionId: possession?.id, teamId: state.ball.teamId, passerPlayerId: state.ball.inbounderPlayerId, receiverPlayerId })
@@ -253,7 +254,7 @@ export function putBallDead(state: MatchState, reason: 'outOfBounds' | 'other', 
           : { x: state.court.lengthMeters / 2, y: state.court.widthMeters / 2 },
       }),
     },
-    clock: { gameRunning: false, shotRunning: false },
+    clock: { gameRunning: !shouldStopGameClock(reason, state.period, state.gameClockTenths, state.clockRules), shotRunning: false },
     shotClockTenths: null,
   }
   if (active && restartTeam !== undefined && active.teamId !== restartTeam) next = endPossession(next, 'turnover')
@@ -268,7 +269,7 @@ export function violateShotClock(state: MatchState): MatchState {
   let next: MatchState = {
     ...state,
     ball: { kind: 'DEAD', reason: 'shotClockViolation', position, heightMeters: 0.08, restartTeamId, restartSpot: { x: state.court.lengthMeters / 2, y: state.court.widthMeters / 2 } },
-    clock: { gameRunning: false, shotRunning: false },
+    clock: { gameRunning: !shouldStopGameClock('shotClockViolation', state.period, state.gameClockTenths, state.clockRules), shotRunning: false },
     shotClockTenths: 0,
   }
   next = emitEvent(next, 'shotClockViolation', { possessionId: possession.id, teamId: possession.teamId })
@@ -388,7 +389,7 @@ function resolveMadeShot(state: MatchState, points: 2 | 3): MatchState {
     ...state,
     score: isHome ? { ...state.score, home: state.score.home + points } : { ...state.score, away: state.score.away + points },
     ball: { kind: 'DEAD', reason: 'madeBasket', position: ball.targetBasket, heightMeters: 0.08, restartTeamId: opponent, restartSpot },
-    clock: { gameRunning: false, shotRunning: false },
+    clock: { gameRunning: !shouldStopGameClock('madeBasket', state.period, state.gameClockTenths, state.clockRules), shotRunning: false },
     shotClockTenths: null,
   }
   next = emitEvent(next, 'shotMade', { possessionId: activePossession(next)?.id, teamId: ball.shooterTeamId, shooterPlayerId: ball.shooterPlayerId, points })

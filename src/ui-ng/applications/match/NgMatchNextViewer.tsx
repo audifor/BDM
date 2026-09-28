@@ -212,6 +212,22 @@ export function NgMatchNextViewer({
                 </li>
               })}</ol>
             </details>}
+            <details className="me-next-rotation" data-testid="rotation-validation">
+              <summary>RotaciÃ³n / validaciÃ³n</summary>
+              {latestSubstitution(frame) && <p>Ãšltimo cambio: {playerName(world, latestSubstitution(frame)!.playerId!)} entra por {playerName(world, latestSubstitution(frame)!.outgoingPlayerId!)} Â· {formatPeriod(latestSubstitution(frame)!.period)} {formatClock(latestSubstitution(frame)!.gameClockTenths / 10)}{latestSubstitution(frame)!.substitutionReason ? ` Â· ${latestSubstitution(frame)!.substitutionReason}` : ''}</p>}
+              {[game.homeTeamId, game.awayTeamId].map((teamId) => <section key={teamId}>
+                <h4>{world.teams[teamId]?.name ?? String(teamId)}</h4>
+                <div className="me-next-rotation__table" role="table" aria-label={`RotaciÃ³n ${world.teams[teamId]?.name ?? String(teamId)}`}>
+                  <div className="me-next-rotation__row me-next-rotation__head" role="row"><span>Jugador</span><span>Inicio</span><span>Estado</span><span>Min reales / objetivo juego</span><span>Fatiga / previa</span><span>PTS</span><span>REB</span><span>ROB</span><span>TC</span></div>
+                  {frame.rotationPlayers.filter((player) => player.teamId === teamId).map((player) => <div className="me-next-rotation__row" key={player.playerId} role="row">
+                    <span>{playerName(world, player.playerId)}</span><span>{player.started ? 'SÃ­' : 'No'}</span><span>{player.active ? 'COURT' : 'BENCH'}</span>
+                    <span>{formatTenths(player.courtTimeTenths)} / {player.targetMinutes === null ? 'â€”' : formatMinutes(player.targetMinutes)}</span>
+                    <span>{player.matchSessionFatigue.toFixed(0)} / {player.preMatchCareerFatigue.toFixed(0)}</span>
+                    <span>{player.stats.points}</span><span>{player.stats.rebounds}</span><span>{player.stats.steals}</span><span>{player.stats.fieldGoalsMade}/{player.stats.fieldGoalsAttempted}</span>
+                  </div>)}
+                </div>
+              </section>)}
+            </details>
             <h3>Play-by-play</h3>
             {liveLines.length === 0 ? <p>El registro aparecerá cuando ocurran acciones.</p> : <ol className="me-next-pbp__list">{liveLines.map((line) => <li key={line.sequence}><time>{formatPeriod(line.period)} {formatClock(line.gameClockTenths / 10)}</time><span>{line.type === 'pass' && line.playerId && line.targetPlayerId
               ? `${playerName(world, line.playerId)} pasó a ${playerName(world, line.targetPlayerId)}`
@@ -229,6 +245,16 @@ export function NgMatchNextViewer({
 function playerName(world: GameWorld, playerId: PlayerId): string {
   const player = world.players[playerId]
   return player ? `${player.firstName} ${player.lastName}` : String(playerId)
+}
+
+function latestSubstitution(frame: MatchFrame) {
+  return [...frame.events].reverse().find((event) => event.type === 'substitution' && event.playerId !== undefined && event.outgoingPlayerId !== undefined)
+}
+
+function formatTenths(tenths: number): string { return formatMinutes(tenths / 600) }
+function formatMinutes(minutes: number): string {
+  const totalSeconds = Math.max(0, Math.floor(minutes * 60))
+  return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, '0')}`
 }
 
 function createVisualSnapshot(frame: MatchFrame): VisualMatchSnapshot {
