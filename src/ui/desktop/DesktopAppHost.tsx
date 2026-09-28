@@ -23,6 +23,7 @@ import { ClubPcbPage } from '@/ui/pcb-migrated/club/ClubPcbPage'
 import { MedicalPcbPage } from '@/ui/pcb-migrated/medical/MedicalPcbPage'
 import { CompetitionPcbPage } from '@/ui/pcb-migrated/competition/CompetitionPcbPage'
 import { TeamWorkspacePage } from '@/ui/pcb-migrated/team/TeamWorkspacePage'
+import { ClubStrategyScreen } from '@/ui-ng/applications/analysis/ClubStrategyScreen'
 
 export interface DesktopAppActions {
   readonly grantStaffCareerRequest?: (requestId: string) => void
@@ -31,7 +32,7 @@ export interface DesktopAppActions {
 
 export function DesktopAppHost({ appId, entityDestination, world, actions }: { readonly appId: string; readonly entityDestination?: EntityDestination; readonly world: GameWorld; readonly actions: DesktopAppActions }) {
   const key = getDesktopApp(appId)?.renderKey
-  if (appId === 'analysis') return <TeamWorkspacePage appName="Análisis" sections={['Depth Chart', 'Plan de futuro', 'Informes']} />
+  if (appId === 'analysis') return <ClubStrategyScreen world={world} />
   if (appId === 'locker-room') return <TeamWorkspacePage appName="Vestuario" sections={['Overview', 'Estructura del equipo', 'Grupos', 'Felicidad', 'Código de conducta', 'Reunión con el equipo', 'Reacción']} />
   if (appId === 'mentoring') return <MentoringPcbPage world={world} />
   if (appId === 'squad') return <PlantillaPcbPage onLineupSlotChange={actions.setLineupSlot} onLineupSlotClear={actions.clearLineupSlot} onOpenEntity={actions.openEntity} world={world} />

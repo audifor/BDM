@@ -115,6 +115,7 @@ import { createGovernanceUniverseProfile, governanceUniverseForProfile, type Gov
 import type { CoachAchievement, CoachLegacyState, CoachTeamLegacy, CoachTenure } from '@/domain/legacy'
 import { createFacility, createFacilityComponent, createFacilityComponentConditionRecord, createFacilityCompetitionApproval, createFacilityConditionRecord, createFacilityControlRight, createFacilityDevelopmentProject, createFacilityDevelopmentProjectPhase, createFacilityInspection, createFacilityMaintenanceAction, createFacilityMaintenanceNeed, createFacilityNameRecord, createFacilityOperationalIncident, createFacilityOperatorAssignment, createFacilityOrganizationRelationship, createFacilityOwnershipInterest, createFacilityStatusRecord, createFacilityTeamRelationship, createFacilityUsageRight, createPlace, validateFacilitiesDomain, type Facility, type FacilityComponent, type FacilityComponentConditionRecord, type FacilityCompetitionApproval, type FacilityConditionRecord, type FacilityControlRight, type FacilityDevelopmentProject, type FacilityDevelopmentProjectPhase, type FacilityInspection, type FacilityMaintenanceAction, type FacilityMaintenanceNeed, type FacilityNameRecord, type FacilityOperationalIncident, type FacilityOperatorAssignment, type FacilityOrganizationRelationship, type FacilityOwnershipInterest, type FacilityTeamRelationship, type FacilityUsageRight, type FacilityStatusRecord, type Place } from '@/domain/facilities'
 import type { FacilityComponentConditionRecordId, FacilityComponentId, FacilityCompetitionApprovalId, FacilityConditionRecordId, FacilityControlRightId, FacilityDevelopmentProjectId, FacilityDevelopmentProjectPhaseId, FacilityId, FacilityInspectionId, FacilityMaintenanceActionId, FacilityMaintenanceNeedId, FacilityNameRecordId, FacilityOperationalIncidentId, FacilityOperatorAssignmentId, FacilityOrganizationRelationshipId, FacilityOwnershipInterestId, FacilityStatusRecordId, FacilityTeamRelationshipId, FacilityUsageRightId, PlaceId } from '@/domain/ids'
+import { createClubStrategicState, type ClubStrategicState } from '@/domain/clubStrategy'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -359,6 +360,7 @@ export interface GameWorld {
   readonly mediaInteractionsById: Readonly<Record<string, MediaInteraction>>
   readonly mediaProfilesByCoachId: Readonly<Record<string, MediaProfile>>
   readonly boardStatesByTeamId: Readonly<Record<string, BoardState>>
+  readonly clubStrategicStatesByTeamId: Readonly<Record<string, ClubStrategicState>>
   readonly governanceInstitutionsById: Readonly<Record<string, GovernanceInstitution>>
   readonly governanceUniverseProfilesById: Readonly<Record<string, GovernanceUniverseProfile>>
   readonly governanceBodiesById: Readonly<Record<string, GovernanceBody>>
@@ -614,6 +616,7 @@ export interface CreateGameWorldInput {
   mediaInteractionsById?: Readonly<Record<string, MediaInteraction>>
   mediaProfilesByCoachId?: Readonly<Record<string, MediaProfile>>
   boardStatesByTeamId?: Readonly<Record<string, BoardState>>
+  clubStrategicStatesByTeamId?: Readonly<Record<string, ClubStrategicState>>
   governanceInstitutions?: readonly GovernanceInstitution[]
   governanceUniverseProfiles?: readonly GovernanceUniverseProfile[]
   governanceBodies?: readonly GovernanceBody[]
@@ -866,6 +869,11 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     mediaInteractionsById: Object.freeze({ ...(input.mediaInteractionsById ?? {}) }),
     mediaProfilesByCoachId: Object.freeze({ ...(input.mediaProfilesByCoachId ?? {}) }),
     boardStatesByTeamId: Object.freeze(Object.fromEntries(Object.entries(input.boardStatesByTeamId ?? {}).map(([teamId, state]) => [teamId, createBoardState(state)]))),
+    clubStrategicStatesByTeamId: Object.freeze(Object.fromEntries(Object.entries(input.clubStrategicStatesByTeamId ?? {}).map(([teamId, state]) => {
+      const strategicState = createClubStrategicState(state)
+      if (teamId !== strategicState.teamId || !input.teams.some((team) => team.id === strategicState.teamId)) throw new GameWorldValidationError(`Club strategic state references unknown Team ${teamId}`)
+      return [teamId, strategicState]
+    }))),
     governanceInstitutionsById: indexById((input.governanceInstitutions ?? []).map(createGovernanceInstitution), 'Governance institution'),
     governanceUniverseProfilesById: indexById((input.governanceUniverseProfiles ?? []).map(createGovernanceUniverseProfile), 'Governance universe profile'),
     governanceBodiesById: indexById((input.governanceBodies ?? []).map(createGovernanceBody), 'Governance body'),
@@ -1083,6 +1091,10 @@ function validateWorld(world: GameWorld): void {
     requireEntity(world.organizationsById, team.organizationId, `Team ${team.id} organization`)
     const section = requireEntity(world.organizationSectionsById, team.organizationSectionId, `Team ${team.id} organization section`)
     if (section.organizationId !== team.organizationId) throw new GameWorldValidationError(`Team ${team.id} organization section belongs to a different organization`)
+  }
+  for (const [teamId, state] of Object.entries(world.clubStrategicStatesByTeamId)) {
+    if (teamId !== state.teamId || !world.teams[teamId as TeamId]) throw new GameWorldValidationError(`Club strategic state references unknown Team ${teamId}`)
+    createClubStrategicState(state)
   }
   validateOrganizationOwnershipAndControl(world)
   validateOrganizationOwnershipTransactions(world)

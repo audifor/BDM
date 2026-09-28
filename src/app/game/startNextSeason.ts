@@ -19,6 +19,7 @@ import { ensureNcaaNil } from '@/engine/nil'
 import { ensureNcaaBoosters } from '@/engine/boosters'
 import { ensureNcaaEnforcement } from '@/engine/enforcement'
 import { rolloverBoardState } from '@/engine/board'
+import { reviewAiClubStrategies } from '@/engine/clubStrategy/ClubStrategyEngine'
 import { bindRecruitingCycleTargetToSeason, initializeRecruitingCycle } from '@/engine/season'
 import type { CompetitionId, SeasonId } from '@/domain/ids'
 
@@ -164,6 +165,8 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
   const beforeBoards = next
   next = Object.keys(next.boardStatesByTeamId).reduce((current, teamId) => rolloverBoardState(current, teamId as import('@/domain/ids').TeamId, nextPrimary.id), next)
   if (next !== beforeBoards) annualHooksExecuted.push('boardStateRollover')
+  next = reviewAiClubStrategies(next, 'PRESEASON')
+  annualHooksExecuted.push('clubStrategicReview')
   const hasTierResolution = Object.values(world.promotionRelegationResolutionsById).some((resolution) => resolution.upperSeasonId === primary.id || resolution.lowerSeasonId === primary.id)
   const result: CompetitionSeasonTransitionResult = {
     sourceSeasonId: primary.id,

@@ -76,6 +76,7 @@ import { createEconomicObservation, createExchangeRate, createFinancialRegulatio
 import { createFinanceDecisionProposal, type FinanceDecisionProposal } from '@/domain/finance/FinanceAI'
 import { createIndexationPolicy, type IndexationPolicy } from '@/domain/finance'
 import { parseGameDate } from '@/domain/date'
+import { createClubStrategicState, type ClubStrategicState } from '@/domain/clubStrategy'
 import { competitionIdFromString, ecosystemIdFromString, expenseRecognitionIdFromString, facilityCompetitionApprovalIdFromString, facilityComponentConditionRecordIdFromString, facilityComponentIdFromString, facilityConditionRecordIdFromString, facilityControlRightIdFromString, facilityDevelopmentProjectIdFromString, facilityDevelopmentProjectPhaseIdFromString, facilityIdFromString, facilityInspectionIdFromString, facilityMaintenanceActionIdFromString, facilityMaintenanceNeedIdFromString, facilityNameRecordIdFromString, facilityOperationalIncidentIdFromString, facilityOperatorAssignmentIdFromString, facilityOrganizationRelationshipIdFromString, facilityOwnershipInterestIdFromString, facilityStatusRecordIdFromString, facilityTeamRelationshipIdFromString, facilityUsageRightIdFromString, financialAccountIdFromString, financialCommitmentIdFromString, financialEntitlementIdFromString, financialTransactionIdFromString, fiscalPeriodIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, placeIdFromString, receivableIdFromString, payableIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, revenueRecognitionIdFromString, seasonIdFromString, treasurySettlementIdFromString, contractIdFromString, teamIdFromString, organizationSectionIdFromString } from '@/domain/ids'
 import {
   deserializeGameWorldSave as deserializeLegacyGameWorldSave,
@@ -103,6 +104,8 @@ export interface WorldAnnualDevelopmentCycleSaveV4 {
 export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly worldDbCompetitionRuntime: WorldDbCompetitionRuntimeSaveV4
   readonly worldAnnualDevelopmentCycle: WorldAnnualDevelopmentCycleSaveV4
+  /** Minimal accepted club intent and review memory; assessment projections remain derived. */
+  readonly clubStrategicStates: readonly ClubStrategicState[]
   readonly organizations: readonly Organization[]
   readonly organizationSections: readonly OrganizationSection[]
   readonly organizationOwnership: readonly OrganizationOwnership[]
@@ -193,6 +196,7 @@ export function migrateGameWorldSaveV3ToV4(value: SaveGameEnvelopeV3): SaveGameE
       ...value.payload,
       worldDbCompetitionRuntime: serializeWorldDbCompetitionRuntimeV4(EMPTY_WORLD_DB_COMPETITION_RUNTIME),
       worldAnnualDevelopmentCycle: serializeWorldAnnualDevelopmentCycleV4(EMPTY_WORLD_ANNUAL_DEVELOPMENT_CYCLE),
+      clubStrategicStates: [],
       organizations: Object.values(world.organizationsById),
       organizationSections: Object.values(world.organizationSectionsById),
       organizationOwnership: [],
@@ -227,6 +231,7 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       worldAnnualDevelopmentCycle: serializeWorldAnnualDevelopmentCycleV4(
         world.worldAnnualDevelopmentCycle ?? EMPTY_WORLD_ANNUAL_DEVELOPMENT_CYCLE,
       ),
+      clubStrategicStates: Object.values(world.clubStrategicStatesByTeamId),
       organizations: Object.values(world.organizationsById),
       organizationSections: Object.values(world.organizationSectionsById),
       organizationOwnership: Object.values(world.organizationOwnershipById),
@@ -265,6 +270,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const payload = record(envelope.payload, 'Save V4 payload')
   const runtime = parseWorldDbCompetitionRuntimeV4(payload.worldDbCompetitionRuntime)
   const developmentCycle = parseWorldAnnualDevelopmentCycleV4(payload.worldAnnualDevelopmentCycle)
+  const clubStrategicStates = Object.prototype.hasOwnProperty.call(payload, 'clubStrategicStates') ? parseClubStrategicStates(payload.clubStrategicStates) : []
   const hasOrganizations = Object.prototype.hasOwnProperty.call(payload, 'organizations')
   const hasOrganizationSections = Object.prototype.hasOwnProperty.call(payload, 'organizationSections')
   const ownership = Object.prototype.hasOwnProperty.call(payload, 'organizationOwnership')
@@ -352,7 +358,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
-  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalsEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _structuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, revenueSources: _revenueSources, operatingCostSources: _operatingCostSources, operatingCostFacts: _operatingCostFacts, debtInstruments: _debtInstruments, competitionDistributionFacts: _competitionDistributionFacts, financialBudgets: _financialBudgets, budgetLines: _budgetLines, budgetRevisions: _budgetRevisions, budgetAllocations: _budgetAllocations, forecastAssumptions: _forecastAssumptions, facilityFinancialBindings: _facilityFinancialBindings, financialRegulationAssessments: _assessments, financeDecisionProposals: _financeProposals, economicObservations: _observations, exchangeRates: _rates, ...compatibilityPayload } = payload
+  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, clubStrategicStates: _clubStrategicStates, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalsEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _structuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, revenueSources: _revenueSources, operatingCostSources: _operatingCostSources, operatingCostFacts: _operatingCostFacts, debtInstruments: _debtInstruments, competitionDistributionFacts: _competitionDistributionFacts, financialBudgets: _financialBudgets, budgetLines: _budgetLines, budgetRevisions: _budgetRevisions, budgetAllocations: _budgetAllocations, forecastAssumptions: _forecastAssumptions, facilityFinancialBindings: _facilityFinancialBindings, financialRegulationAssessments: _assessments, financeDecisionProposals: _financeProposals, economicObservations: _observations, exchangeRates: _rates, ...compatibilityPayload } = payload
   const world = deserializeGameWorldV3({
     schemaVersion: 3,
     savedAt,
@@ -371,7 +377,32 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const withFacilityDevelopment = updateGameWorld(withFacilityOperations, { facilityDevelopmentProjects, facilityDevelopmentProjectPhases })
   const withFinance = updateGameWorld(withFacilityDevelopment, { financialAccounts, financialTransactions, fiscalPeriods, organizationFinancialProfiles, receivables, payables, treasuryApplications, revenueRecognitions, expenseRecognitions, financialCommitments, financialEntitlements, revenueSources, operatingCostSources, operatingCostFacts, debtInstruments, competitionDistributionFacts, financialBudgets, budgetLines, budgetRevisions, budgetAllocations, forecastAssumptions, financialRegulationAssessments, financeDecisionProposals, economicObservations, exchangeRates })
   const withFacilityFinanceIntegration = updateGameWorld(withFinance, { facilityFinancialBindings })
-  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withFacilityFinanceIntegration, runtime), worldAnnualDevelopmentCycle: developmentCycle })
+  const withClubStrategy = updateGameWorld(withFacilityFinanceIntegration, { clubStrategicStatesByTeamId: Object.fromEntries(clubStrategicStates.map((state) => [state.teamId, state])) })
+  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withClubStrategy, runtime), worldAnnualDevelopmentCycle: developmentCycle })
+}
+
+function parseClubStrategicStates(value: unknown): readonly ClubStrategicState[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 clubStrategicStates must be an array')
+  const states = value.map((entry) => {
+    const state = record(entry, 'Save V4 club strategic state')
+    exactKeys(state, ['teamId', 'mode', 'horizon', 'financialPosture', 'riskTolerance', 'developmentEmphasis', 'retentionPosture', 'acquisitionAggression', 'sellingWillingness', 'establishedOn', 'lastReviewedOn', 'transitionReason'], 'Save V4 club strategic state')
+    return createClubStrategicState({
+      teamId: teamIdFromString(nonEmptyText(state.teamId, 'Club strategic teamId')),
+      mode: nonEmptyText(state.mode, 'Club strategic mode') as ClubStrategicState['mode'],
+      horizon: nonEmptyText(state.horizon, 'Club strategic horizon') as ClubStrategicState['horizon'],
+      financialPosture: nonEmptyText(state.financialPosture, 'Club strategic financialPosture') as ClubStrategicState['financialPosture'],
+      riskTolerance: nonEmptyText(state.riskTolerance, 'Club strategic riskTolerance') as ClubStrategicState['riskTolerance'],
+      developmentEmphasis: integer(state.developmentEmphasis, 'Club strategic developmentEmphasis'),
+      retentionPosture: nonEmptyText(state.retentionPosture, 'Club strategic retentionPosture') as ClubStrategicState['retentionPosture'],
+      acquisitionAggression: nonEmptyText(state.acquisitionAggression, 'Club strategic acquisitionAggression') as ClubStrategicState['acquisitionAggression'],
+      sellingWillingness: nonEmptyText(state.sellingWillingness, 'Club strategic sellingWillingness') as ClubStrategicState['sellingWillingness'],
+      establishedOn: parseGameDate(nonEmptyText(state.establishedOn, 'Club strategic establishedOn')),
+      lastReviewedOn: parseGameDate(nonEmptyText(state.lastReviewedOn, 'Club strategic lastReviewedOn')),
+      transitionReason: nonEmptyText(state.transitionReason, 'Club strategic transitionReason') as ClubStrategicState['transitionReason'],
+    })
+  })
+  if (new Set(states.map((state) => state.teamId)).size !== states.length) throw new TypeError('Save V4 clubStrategicStates contains duplicate Teams')
+  return Object.freeze(states)
 }
 
 /** Reads V1-V4. Legacy saves normalize the V4-owned runtime projection to empty state. */
