@@ -17,4 +17,15 @@ describe('ClubStrategyScreen', () => {
     expect(within(card).getByText(world.clubStrategicStatesByTeamId[team.id]!.lastReviewedOn)).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
+
+  it('shows derived top needs for both AI clubs and the user club as advisory data', () => {
+    const world = createNewGame()
+    const userTeam = Object.values(world.teams).find((candidate) => candidate.coachId === world.userCoachId)!
+    render(<ClubStrategyScreen world={world} />)
+    expect(screen.getByRole('heading', { name: 'Club strategy and needs' })).toBeInTheDocument()
+    const userArticle = screen.getByRole('article', { name: `${userTeam.name} ${userTeam.gender} strategy` })
+    expect(within(userArticle).getByRole('region', { name: `${userTeam.name} ${userTeam.gender} top needs` })).toBeInTheDocument()
+    expect(screen.getByText(/Your club, advisory/)).toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
 })
