@@ -29,7 +29,7 @@ function mountMatch() {
 }
 
 describe('MatchWorkspace', () => {
-  it('opens the live MatchEngine centre instead of instantly resolving the fixture', () => {
+  it('opens the normal live match centre with ME-NEXT canonical frames', () => {
     useGameStore.getState().replaceWorld(createNewGame())
     const scheduledId = Object.values(useGameStore.getState().world!.games).find((game) => game.status === 'scheduled')!.id
     mountMatch()
@@ -37,12 +37,14 @@ describe('MatchWorkspace', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Play match' }))
 
     expect(document.querySelector('[data-ng-region="match-live"]')).not.toBeNull()
+    expect(document.querySelector('[data-me-engine="match-next"]')).not.toBeNull()
     expect(document.querySelector('.match-court')).not.toBeNull()
     expect(screen.getByRole('button', { name: 'Pausar partido' })).toBeInTheDocument()
+    expect(useMatchViewerStore.getState().simulation).toBeNull()
     expect(useGameStore.getState().world?.games[scheduledId]?.status).toBe('scheduled')
   })
 
-  it('keeps instant result as a world completion without opening the viewer', () => {
+  it('runs the normal instant-result path through ME-NEXT without blocking the workspace', async () => {
     useGameStore.getState().replaceWorld(createNewGame())
     const scheduledId = Object.values(useGameStore.getState().world!.games).find((game) => game.status === 'scheduled')!.id
     mountMatch()
@@ -50,6 +52,7 @@ describe('MatchWorkspace', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Instant result' }))
 
     expect(document.querySelector('[data-ng-region="match-live"]')).toBeNull()
-    expect(useGameStore.getState().world?.games[scheduledId]?.status).toBe('completed')
+    expect(await screen.findByRole('status')).toHaveTextContent('Simulando resultado ME-NEXT')
+    expect(useGameStore.getState().world?.games[scheduledId]?.status).toBe('scheduled')
   })
 })

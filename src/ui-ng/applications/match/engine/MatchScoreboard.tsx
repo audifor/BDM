@@ -112,7 +112,7 @@ export function GameClock({
         <b className="me-game-clock__score">{homeScore}</b>
         <div className="me-game-clock__core">
           <em>{finished ? 'FINAL' : periodLabel}</em>
-          <strong>{finished ? '00:00' : clockLabel}</strong>
+          <strong>{finished ? '00:00.00' : clockLabel}</strong>
           <span className="me-game-clock__shot" title={shotClock === null ? 'Shot clock no modelado en el engine' : 'Shot clock'}>
             {shotClock === null ? '—' : shotClock}
           </span>

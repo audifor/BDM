@@ -80,7 +80,11 @@ function formatShotZone(shotZone: 'rim' | 'midRange' | 'threePoint'): string {
 }
 
 export function formatClock(seconds: number): string {
-  return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`
+  const centiseconds = Math.round(Math.max(0, seconds) * 100)
+  const minutes = Math.floor(centiseconds / 6000)
+  const secondsInMinute = Math.floor((centiseconds % 6000) / 100)
+  const hundredths = centiseconds % 100
+  return `${minutes.toString().padStart(2, '0')}:${secondsInMinute.toString().padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`
 }
 
 export function formatPeriod(period: number): string {
