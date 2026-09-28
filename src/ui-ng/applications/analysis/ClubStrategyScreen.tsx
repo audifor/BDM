@@ -1,6 +1,7 @@
 import type { GameWorld } from '@/domain/world'
 import { assessClubStrategy } from '@/engine/clubStrategy/ClubStrategyEngine'
-import { assessClubNeeds, type ClubNeedKind } from '@/engine/clubNeeds'
+import type { ClubNeedKind } from '@/engine/clubNeeds'
+import { assessGMDecisionContext, type GMResponseOptionKind } from '@/engine/gmDecisionContext'
 
 const REASON_LABELS: Readonly<Record<string, string>> = {
   FINANCIAL_STRESS: 'Financial pressure',
@@ -33,6 +34,19 @@ const NEED_LABELS: Readonly<Record<ClubNeedKind, string>> = {
   FINANCIAL_PRESSURE: 'Financial pressure',
 }
 
+const OPTION_LABELS: Readonly<Record<GMResponseOptionKind, string>> = {
+  INTERNAL_ROLE_REALLOCATION: 'Internal role redistribution',
+  INTERNAL_DEVELOPMENT: 'Internal development',
+  EXTERNAL_ACQUISITION: 'External acquisition',
+  SHORT_TERM_COVER: 'Short-term cover',
+  CONTRACT_RETENTION_REVIEW: 'Contract continuity review',
+  SUCCESSION_PLANNING: 'Succession planning',
+  OUTGOING_MARKET_REVIEW: 'Outgoing market review',
+  FINANCIAL_CONTAINMENT: 'Financial containment',
+  SCOUTING_EXPANSION: 'Scouting expansion',
+  WAIT_AND_MONITOR: 'Wait and monitor',
+}
+
 function formatEvidenceValue(value: string | number | boolean | readonly (string | number | boolean)[] | readonly Readonly<Record<string, string | number | boolean>>[]): string {
   return Array.isArray(value) ? value.map((item) => typeof item === 'object' ? JSON.stringify(item) : String(item)).join(', ') : String(value)
 }
@@ -47,7 +61,8 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
     <div className="content-panel" style={{ display: 'grid', gap: 16 }}>
       {clubs.map((team) => {
         const assessment = assessClubStrategy(world, team.id)
-        const needsAssessment = assessClubNeeds(world, team.id)
+        const decisionContext = assessGMDecisionContext(world, team.id)
+        const needsAssessment = decisionContext.needsAssessment
         const state = world.clubStrategicStatesByTeamId[team.id]
         const isUserTeam = team.coachId === world.userCoachId
         return <article key={team.id} aria-label={`${team.name} ${team.gender} strategy`} style={{ borderBottom: '1px solid rgba(255,255,255,.12)', paddingBottom: 16 }}>
@@ -76,6 +91,21 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
               {need.relatedPlayerIds.length > 0 && <div>Related roster players: {need.relatedPlayerIds.map((id) => `${world.players[id]?.firstName ?? 'Unknown'} ${world.players[id]?.lastName ?? ''} (${id})`).join(', ')}</div>}
               {need.evidence.map((evidence) => <div key={evidence.code}><small>{evidence.code}: {Object.entries(evidence.values).map(([key, value]) => `${key}=${formatEvidenceValue(value)}`).join(' · ')}</small></div>)}
             </li>)}</ol>}
+          </section>
+          <section aria-label={`${team.name} ${team.gender} response options`}>
+            <h3>Management response options</h3>
+            <p>{decisionContext.decisionMakerStatus === 'ASSIGNED'
+              ? `Decision participants: ${decisionContext.decisionParticipants.map((person) => `${person.role.replaceAll(/([A-Z])/g, ' $1')} ${person.firstName} ${person.lastName}`).join('; ')}`
+              : 'Decision context: organizational fallback; no valid basketball operations responsibility holder is assigned.'}</p>
+            {decisionContext.options.length === 0 ? <p>No high priority needs currently require response options.</p> : <ol>{decisionContext.options.map((option) => {
+              const need = needsAssessment.needs.find((item) => item.id === option.needId)
+              return <li key={option.id}>
+                <strong>{need ? NEED_LABELS[need.kind] : 'Club need'}: {OPTION_LABELS[option.kind]}</strong>
+                <div>Strategic alignment: {option.strategicAlignment} · Staff style: {option.staffStyleAlignment} · Feasibility: {option.feasibility} · Knowledge: {option.knowledgeReadiness}</div>
+                {option.reasons.length > 0 && <div>Why: {option.reasons.map((reason) => reason.replaceAll('_', ' ').toLowerCase()).join('; ')}</div>}
+                {option.blockers.length > 0 && <div>Approval context: {option.blockers.map((blocker) => blocker.replaceAll('_', ' ').toLowerCase()).join('; ')}</div>}
+              </li>
+            })}</ol>}
           </section>
         </article>
       })}
