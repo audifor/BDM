@@ -19,6 +19,7 @@ export function prepareMatchSetup(
   const profiles: MatchNextPlayerProfile[] = [
     ...options.playerProfiles.home.map((profile) => ({
       playerId: profile.playerId, teamId: homeTeamId, primaryPosition: profile.primaryPosition,
+      secondaryPositions: world.players[profile.playerId]!.basketball.secondaryPositions,
       physical: { ...profile.physical }, kinematics: { ...profile.kinematics }, offense: { ...profile.offense },
       passing: profile.passing === undefined ? undefined : { ...profile.passing },
       defense: { ...profile.defense }, rebounding: { ...profile.rebounding },
@@ -26,6 +27,7 @@ export function prepareMatchSetup(
     })),
     ...options.playerProfiles.away.map((profile) => ({
       playerId: profile.playerId, teamId: awayTeamId, primaryPosition: profile.primaryPosition,
+      secondaryPositions: world.players[profile.playerId]!.basketball.secondaryPositions,
       physical: { ...profile.physical }, kinematics: { ...profile.kinematics }, offense: { ...profile.offense },
       passing: profile.passing === undefined ? undefined : { ...profile.passing },
       defense: { ...profile.defense }, rebounding: { ...profile.rebounding },
@@ -49,6 +51,7 @@ export function prepareMatchSetup(
     awaySquad: [...options.squads.away],
     initialLineups: { home: [...options.lineups.home], away: [...options.lineups.away] },
     players: profiles,
+    coachingPlans: options.coachingPlans,
     tacticalPlans: {
       home: { ...resolvedTacticalPlans.home, shotProfile: { ...resolvedTacticalPlans.home.shotProfile }, defense: { ...resolvedTacticalPlans.home.defense } },
       away: { ...resolvedTacticalPlans.away, shotProfile: { ...resolvedTacticalPlans.away.shotProfile }, defense: { ...resolvedTacticalPlans.away.defense } },

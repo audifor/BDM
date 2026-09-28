@@ -1,0 +1,140 @@
+import type { BasketballPosition } from '@/domain/primitives'
+import type { PlayerId, TeamId } from '@/domain/ids'
+import type { MatchState, MatchNextEvent } from '../state'
+
+export interface CoachSubstitutionProposal {
+  readonly teamId: TeamId
+  readonly playerOutId: PlayerId
+  readonly playerInId: PlayerId
+  readonly reason: string
+  readonly expectedMinutes: number
+}
+
+/** Chooses at most one legal substitution per team at a stopped-ball boundary. */
+export function decideRotationSubstitutions(state: MatchState): readonly CoachSubstitutionProposal[] {
+  if (state.ball.kind !== 'DEAD' || state.clock.gameRunning || state.isComplete) return []
+  const home = decideForTeam(state, state.homeTeamId)
+  const away = decideForTeam(state, state.awayTeamId)
+  return [...(home === undefined ? [] : [home]), ...(away === undefined ? [] : [away])]
+}
+
+/** The engine command is the only mutation boundary for active-lineup changes. */
+export function applyCoachSubstitutions(state: MatchState, proposals: readonly CoachSubstitutionProposal[]): MatchState {
+  if (proposals.length === 0) return state
+  if (state.ball.kind !== 'DEAD' || state.clock.gameRunning || state.isComplete) throw new Error('Coach substitutions require a stopped, dead ball')
+  let next = state
+  for (const proposal of proposals) next = applyOne(next, proposal)
+  return next
+}
+
+function decideForTeam(state: MatchState, teamId: TeamId): CoachSubstitutionProposal | undefined {
+  const plan = teamId === state.homeTeamId ? state.coachingPlans?.home : state.coachingPlans?.away
+  if (plan === undefined) return undefined
+  const active = state.players.filter((player) => player.active && player.teamId === teamId)
+  const bench = state.players.filter((player) => !player.active && player.teamId === teamId)
+  if (active.length !== 5 || bench.length === 0) return undefined
+  const explicit = plan.rotationInstructions.find((instruction) => instruction.period === state.period
+    && state.gameClockTenths <= instruction.clockThresholdSeconds * 10
+    && active.some((player) => player.playerId === instruction.playerOutId)
+    && bench.some((player) => player.playerId === instruction.playerInId))
+  if (explicit !== undefined) {
+    const outgoing = active.find((player) => player.playerId === explicit.playerOutId)!
+    const role = plan.roleByPlayerId[outgoing.playerId]
+    const incoming = bench.find((player) => player.playerId === explicit.playerInId)!
+    if (roleCompatible(incoming.primaryPosition, incoming.secondaryPositions, role) || roleFit(plan, incoming.playerId, role) >= 46) {
+      return { teamId, playerOutId: explicit.playerOutId, playerInId: explicit.playerInId, reason: 'saved rotation instruction at its requested game-clock window', expectedMinutes: plan.minutesByPeriod[explicit.playerOutId]?.[state.period - 1] ?? 0 }
+    }
+  }
+  const periodIndex = state.period - 1
+  const closeLateGame = state.period >= state.clockRules.periodCount && state.gameClockTenths <= 1800
+    && Math.abs(state.score.home - state.score.away) <= 5
+  const lateBlowout = state.period >= state.clockRules.periodCount && state.gameClockTenths <= 600
+    && Math.abs(state.score.home - state.score.away) >= 18
+  const plannedPeriodCount = Math.max(0, ...Object.values(plan.minutesByPeriod).map((minutes) => minutes.length))
+  const expectedMinutes = (playerId: PlayerId) => plan.minutesByPeriod[playerId]?.[periodIndex]
+    ?? (state.period > state.clockRules.periodCount && periodIndex >= plannedPeriodCount ? state.clockRules.overtimeSeconds / 60 : 0)
+  let best: { readonly proposal: CoachSubstitutionProposal; readonly pressure: number; readonly candidateFit: number } | undefined
+
+  for (const outgoing of active) {
+    const playerTargetMinutes = expectedMinutes(outgoing.playerId)
+    const playedMinutes = (state.periodCourtTimeTenthsByPlayerId?.[outgoing.playerId] ?? 0) / 600
+    const overTarget = Math.max(0, playedMinutes - playerTargetMinutes - 0.35)
+    const fatiguePressure = Math.max(0, outgoing.fatigue - 35) * 0.105 / plan.fatigueTolerance
+    const minutePressure = overTarget * 2.15
+    const contextAdjustment = (closeLateGame ? 1.8 : 0) + (lateBlowout ? -1.35 : 0)
+    const pressure = fatiguePressure + minutePressure
+    const role = plan.roleByPlayerId[outgoing.playerId]
+    const replacement = bench
+      .map((player) => ({
+        player,
+        target: expectedMinutes(player.playerId),
+        fit: roleFit(plan, player.playerId, role),
+      }))
+      .filter((item) => item.target > (state.periodCourtTimeTenthsByPlayerId?.[item.player.playerId] ?? 0) / 600 + 0.25)
+      .filter((item) => roleCompatible(item.player.primaryPosition, item.player.secondaryPositions, role) || item.fit >= 46)
+      .sort((left, right) => right.fit - left.fit || right.target - left.target || String(left.player.playerId).localeCompare(String(right.player.playerId)))[0]
+    if (replacement === undefined) continue
+    const qualityPenalty = Math.max(-1, (roleFit(plan, outgoing.playerId, role) - replacement.fit) * 0.035)
+    const threshold = 3.1 + qualityPenalty + contextAdjustment
+    if (pressure < threshold) continue
+    const reason = outgoing.fatigue >= 55
+      ? `fatigue ${Math.round(outgoing.fatigue)} with ${playedMinutes.toFixed(1)}/${playerTargetMinutes} target minutes`
+      : `${playedMinutes.toFixed(1)} minutes exceeds the ${playerTargetMinutes}-minute period target`
+    const candidate = { proposal: { teamId, playerOutId: outgoing.playerId, playerInId: replacement.player.playerId, reason, expectedMinutes: playerTargetMinutes }, pressure, candidateFit: replacement.fit }
+    if (best === undefined || candidate.pressure > best.pressure || (candidate.pressure === best.pressure && candidate.candidateFit > best.candidateFit)
+      || (candidate.pressure === best.pressure && candidate.candidateFit === best.candidateFit && String(candidate.proposal.playerOutId).localeCompare(String(best.proposal.playerOutId)) < 0)) best = candidate
+  }
+  return best?.proposal
+}
+
+function applyOne(state: MatchState, proposal: CoachSubstitutionProposal): MatchState {
+  if (proposal.teamId !== state.homeTeamId && proposal.teamId !== state.awayTeamId) throw new Error('Substitution team is not participating in this game')
+  if (proposal.playerOutId === proposal.playerInId) throw new Error('Substitution players must differ')
+  const outgoing = state.players.find((player) => player.playerId === proposal.playerOutId)
+  const incoming = state.players.find((player) => player.playerId === proposal.playerInId)
+  if (outgoing === undefined || incoming === undefined || outgoing.teamId !== proposal.teamId || incoming.teamId !== proposal.teamId) throw new Error('Substitution players must belong to the same game team')
+  if (!outgoing.active || incoming.active) throw new Error('Substitution requires one active player out and one bench player in')
+  const current = state.players.filter((player) => player.active && player.teamId === proposal.teamId)
+  if (current.length !== 5 || current.some((player) => player.playerId === proposal.playerInId)) throw new Error('Substitution would create an illegal active lineup')
+  const plan = proposal.teamId === state.homeTeamId ? state.coachingPlans?.home : state.coachingPlans?.away
+  if (plan === undefined) throw new Error('Substitution requires the team coaching plan')
+  const role = plan.roleByPlayerId[proposal.playerOutId]
+  if (!roleCompatible(incoming.primaryPosition, incoming.secondaryPositions, role) && roleFit(plan, incoming.playerId, role) < 46) throw new Error(`Replacement ${incoming.playerId} is not a valid ${role ?? 'basketball'} role fit`)
+  const players = state.players.map((player) => {
+    if (player.playerId === outgoing.playerId) return { ...player, active: false }
+    if (player.playerId === incoming.playerId) return { ...player, active: true, position: { ...outgoing.position }, velocity: { x: 0, y: 0 }, facing: { ...outgoing.facing } }
+    return player
+  })
+  const cleaned: MatchState = {
+    ...state,
+    players,
+    responsibilities: state.responsibilities.filter((item) => item.playerId !== outgoing.playerId),
+    decisions: state.decisions.filter((item) => item.playerId !== outgoing.playerId),
+    movementIntents: state.movementIntents.filter((item) => item.playerId !== outgoing.playerId),
+  }
+  return appendSubstitutionEvent(cleaned, proposal)
+}
+
+function appendSubstitutionEvent(state: MatchState, proposal: CoachSubstitutionProposal): MatchState {
+  const event: MatchNextEvent = {
+    sequence: state.nextEventSequence,
+    t: state.t,
+    period: state.period,
+    gameClockTenths: state.gameClockTenths,
+    type: 'substitution',
+    teamId: proposal.teamId,
+    playerId: proposal.playerInId,
+    outgoingPlayerId: proposal.playerOutId,
+    substitutionReason: proposal.reason,
+    expectedMinutes: proposal.expectedMinutes,
+  }
+  return { ...state, events: [...state.events, event], nextEventSequence: state.nextEventSequence + 1 }
+}
+
+function roleFit(plan: NonNullable<MatchState['coachingPlans']>['home'], playerId: PlayerId, role: BasketballPosition | undefined): number {
+  return role === undefined ? 0 : plan.roleFitByPlayerId[playerId]?.[role] ?? 0
+}
+
+function roleCompatible(primary: BasketballPosition, secondary: readonly BasketballPosition[] | undefined, role: BasketballPosition | undefined): boolean {
+  return role === undefined || primary === role || secondary?.includes(role) === true
+}

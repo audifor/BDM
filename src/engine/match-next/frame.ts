@@ -126,7 +126,7 @@ export function toFrame(state: MatchState): MatchFrame {
     possession: possession ? { id: possession.id, teamId: possession.teamId, phase: possession.phase, startReason: possession.startReason, shotClock: state.shotClockTenths } : null,
     possessionHistory: state.possessions.map((item) => ({ ...item })),
     activePossessionId: state.activePossessionId,
-    players: state.players.map((player) => {
+    players: state.players.filter((player) => player.active).map((player) => {
       const responsibility = state.responsibilities.find((item) => item.playerId === player.playerId)
       const decision = state.decisions.find((item) => item.playerId === player.playerId)
       const intent = state.movementIntents.find((item) => item.playerId === player.playerId)

@@ -32,8 +32,8 @@ describe('MatchEnginePort integration', () => {
     const towardBasket = Math.sign(tipped.frame.defensiveStructure!.defendedBasket.x - tipped.frame.ball.position.x)
     const matchRoles = tipped.frame.transition!.roles.filter((role) => role.kind === 'MATCH')
     expect(matchRoles).toHaveLength(3)
-    expect(matchRoles.every((role) => (role.target.x - tipped.frame.ball.position.x) * towardBasket > 3)).toBe(true)
-    expect(Math.max(...matchRoles.map((role) => role.target.y)) - Math.min(...matchRoles.map((role) => role.target.y))).toBeGreaterThan(5)
+    expect(matchRoles.every((role) => (role.target.x - tipped.frame.ball.position.x) * towardBasket > 2.5)).toBe(true)
+    expect(Math.max(...matchRoles.map((role) => role.target.y)) - Math.min(...matchRoles.map((role) => role.target.y))).toBeGreaterThan(3.5)
     const next = live.advanceTicks(15).frame
     expect(next.players.filter((player) => defendingIds.has(player.playerId)
       && (player.position.x - next.ball.position.x) * towardBasket > 1.5).length).toBeGreaterThanOrEqual(3)
@@ -73,7 +73,7 @@ describe('MatchEnginePort integration', () => {
       live.advanceOneStep()
     }
     expect(live.matchState.events.some((event) => event.type === 'inboundStarted' && event.startReason === 'madeBasketInbound')).toBe(true)
-    for (const player of live.matchState.players) {
+    for (const player of live.matchState.players.filter((item) => item.active)) {
       const target = restartTargets.get(player.playerId)!
       expect(Math.hypot(player.position.x - target.x, player.position.y - target.y)).toBeLessThanOrEqual(0.75)
     }

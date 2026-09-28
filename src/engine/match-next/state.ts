@@ -9,6 +9,7 @@ import { attackingBasketForTeam, type OffensiveStructureState } from './structur
 import type { DefensiveMatchupOverride } from './setup'
 import type { MatchActionState, MatchDecision } from './actions/ActionState'
 import { careerFatigueToMatchSession } from './playerDynamicState'
+import type { CoachRotationPlan } from '@/engine/tactics/CoachRotationEngine'
 
 export type DefensiveAssignmentSource = 'INITIAL' | 'OVERRIDE' | 'STRUCTURAL_REASSIGNMENT'
 
@@ -116,6 +117,7 @@ export type MatchNextEventType =
   | 'decisionSelected' | 'actionStarted' | 'actionResolved'
   | 'reboundResponsibilitiesAssigned' | 'transitionStarted' | 'transitionAdvantageChanged' | 'transitionResolved'
   | 'shotClockViolation' | 'ballDead'
+  | 'substitution'
 
 export interface MatchNextEvent {
   readonly sequence: number
@@ -151,12 +153,16 @@ export interface MatchNextEvent {
   readonly transitionRole?: TransitionRoleKind
   readonly transitionTrigger?: TransitionTrigger
   readonly transitionAdvantage?: TransitionAdvantage
+  readonly outgoingPlayerId?: PlayerId
+  readonly substitutionReason?: string
+  readonly expectedMinutes?: number
 }
 
 export interface MatchPlayerState {
   readonly playerId: PlayerId
   readonly teamId: TeamId
-  readonly active: true
+  readonly active: boolean
+  readonly started?: boolean
   /** Transient fatigue: session baseline and current value, separate from Player Truth. */
   readonly preMatchCareerFatigue: number
   readonly initialFatigue: number
@@ -165,6 +171,7 @@ export interface MatchPlayerState {
   readonly velocity: CourtPosition
   readonly facing: CourtPosition
   readonly primaryPosition: MatchSetup['players'][number]['primaryPosition']
+  readonly secondaryPositions?: MatchSetup['players'][number]['secondaryPositions']
   readonly heightCm: number
   readonly standingReachCm: number
   readonly reboundingImpact: number
@@ -176,7 +183,7 @@ export interface MatchPlayerState {
 }
 
 export interface MatchState {
-  readonly version: 4
+  readonly version: 5
   readonly gameId: GameId
   readonly homeTeamId: TeamId
   readonly awayTeamId: TeamId
@@ -193,6 +200,10 @@ export interface MatchState {
   readonly shotClockTenths: number | null
   readonly score: { readonly home: number; readonly away: number }
   readonly players: readonly MatchPlayerState[]
+  readonly coachingPlans?: { readonly home: CoachRotationPlan; readonly away: CoachRotationPlan }
+  /** Actual court time in tenths of seconds, updated only while the game clock runs. */
+  readonly courtTimeTenthsByPlayerId?: Readonly<Record<PlayerId, number>>
+  readonly periodCourtTimeTenthsByPlayerId?: Readonly<Record<PlayerId, number>>
   readonly responsibilities: readonly PlayerResponsibility[]
   readonly decisions: readonly StructuralDecision[]
   readonly movementIntents: readonly MovementIntent[]
@@ -223,29 +234,17 @@ export function activePossession(state: MatchState): PossessionState | undefined
 export function createInitialMatchState(setup: MatchSetup): MatchState {
   const initialPositions = setup.initialPlayerPositions ?? []
   const initialPosition = (playerId: PlayerId) => initialPositions.find((entry) => entry.playerId === playerId)?.position
-  const players: MatchPlayerState[] = [
-    ...setup.initialLineups.home.map((playerId, slot) => {
-      const position = { ...(initialPosition(playerId) ?? neutralFoundationPosition('home', slot, setup.court)) }
-      const basket = attackingBasketForTeam(setup.homeTeamId, setup.homeTeamId, 1, setup.court)
-      const profile = setup.players.find((entry) => entry.playerId === playerId)!
-      const preMatchCareerFatigue = profile.dynamicState?.careerFatigue ?? 0
-      const initialFatigue = careerFatigueToMatchSession(preMatchCareerFatigue)
-      return { playerId, teamId: setup.homeTeamId, active: true as const, preMatchCareerFatigue, initialFatigue, fatigue: initialFatigue, position, velocity: { x: 0, y: 0 }, facing: unitVector({ x: basket.x - position.x, y: basket.y - position.y }), primaryPosition: profile.primaryPosition, heightCm: profile.physical.heightCm, standingReachCm: profile.physical.standingReachCm, reboundingImpact: profile.rebounding.impact, defensiveMobility: profile.defense.mobility, offense: { ...profile.offense }, passing: { accuracy: profile.passing?.accuracy ?? 50, vision: profile.passing?.vision ?? 50, timing: profile.passing?.timing ?? 50 }, defense: { ...profile.defense }, kinematics: { ...profile.kinematics } }
-    }),
-    ...setup.initialLineups.away.map((playerId, slot) => {
-      const position = { ...(initialPosition(playerId) ?? neutralFoundationPosition('away', slot, setup.court)) }
-      const basket = attackingBasketForTeam(setup.awayTeamId, setup.homeTeamId, 1, setup.court)
-      const profile = setup.players.find((entry) => entry.playerId === playerId)!
-      const preMatchCareerFatigue = profile.dynamicState?.careerFatigue ?? 0
-      const initialFatigue = careerFatigueToMatchSession(preMatchCareerFatigue)
-      return { playerId, teamId: setup.awayTeamId, active: true as const, preMatchCareerFatigue, initialFatigue, fatigue: initialFatigue, position, velocity: { x: 0, y: 0 }, facing: unitVector({ x: basket.x - position.x, y: basket.y - position.y }), primaryPosition: profile.primaryPosition, heightCm: profile.physical.heightCm, standingReachCm: profile.physical.standingReachCm, reboundingImpact: profile.rebounding.impact, defensiveMobility: profile.defense.mobility, offense: { ...profile.offense }, passing: { accuracy: profile.passing?.accuracy ?? 50, vision: profile.passing?.vision ?? 50, timing: profile.passing?.timing ?? 50 }, defense: { ...profile.defense }, kinematics: { ...profile.kinematics } }
-    }),
+  const startingIds = new Set([...setup.initialLineups.home, ...setup.initialLineups.away])
+  const players = [
+    ...setup.homeSquad.map((playerId, slot) => createMatchPlayer(setup, playerId, setup.homeTeamId, startingIds.has(playerId), 'home', slot, initialPosition(playerId))),
+    ...setup.awaySquad.map((playerId, slot) => createMatchPlayer(setup, playerId, setup.awayTeamId, startingIds.has(playerId), 'away', slot, initialPosition(playerId))),
   ]
+  const playerIds = [...setup.homeSquad, ...setup.awaySquad]
   const position = { x: setup.court.lengthMeters / 2, y: setup.court.widthMeters / 2 }
   const gameClockTenths = setup.clockRules.periodSeconds * 10
   const initial: MatchNextEvent = { sequence: 1, t: 0, period: 1, gameClockTenths, type: 'periodStart' }
   return {
-    version: 4,
+    version: 5,
     gameId: setup.gameId,
     homeTeamId: setup.homeTeamId,
     awayTeamId: setup.awayTeamId,
@@ -267,6 +266,9 @@ export function createInitialMatchState(setup: MatchSetup): MatchState {
     shotClockTenths: null,
     score: { home: 0, away: 0 },
     players,
+    ...(setup.coachingPlans === undefined ? {} : { coachingPlans: setup.coachingPlans }),
+    courtTimeTenthsByPlayerId: Object.fromEntries(playerIds.map((playerId) => [playerId, 0])),
+    periodCourtTimeTenthsByPlayerId: Object.fromEntries(playerIds.map((playerId) => [playerId, 0])),
     responsibilities: [],
     decisions: [],
     movementIntents: [],
@@ -288,6 +290,24 @@ export function createInitialMatchState(setup: MatchSetup): MatchState {
     nextEventSequence: 2,
     events: [initial],
     isComplete: false,
+  }
+}
+
+function createMatchPlayer(setup: MatchSetup, playerId: PlayerId, teamId: TeamId, active: boolean, side: 'home' | 'away', slot: number, providedPosition?: CourtPosition): MatchPlayerState {
+  const profile = setup.players.find((entry) => entry.playerId === playerId)!
+  const position = { ...(providedPosition ?? neutralFoundationPosition(side, slot, setup.court)) }
+  const basket = attackingBasketForTeam(teamId, setup.homeTeamId, 1, setup.court)
+  const preMatchCareerFatigue = profile.dynamicState?.careerFatigue ?? 0
+  const initialFatigue = careerFatigueToMatchSession(preMatchCareerFatigue)
+  return {
+    playerId, teamId, active, started: active, preMatchCareerFatigue, initialFatigue, fatigue: initialFatigue,
+    position, velocity: { x: 0, y: 0 }, facing: unitVector({ x: basket.x - position.x, y: basket.y - position.y }),
+    primaryPosition: profile.primaryPosition,
+    ...(profile.secondaryPositions === undefined ? {} : { secondaryPositions: [...profile.secondaryPositions] }),
+    heightCm: profile.physical.heightCm, standingReachCm: profile.physical.standingReachCm,
+    reboundingImpact: profile.rebounding.impact, defensiveMobility: profile.defense.mobility,
+    offense: { ...profile.offense }, passing: { accuracy: profile.passing?.accuracy ?? 50, vision: profile.passing?.vision ?? 50, timing: profile.passing?.timing ?? 50 },
+    defense: { ...profile.defense }, kinematics: { ...profile.kinematics },
   }
 }
 

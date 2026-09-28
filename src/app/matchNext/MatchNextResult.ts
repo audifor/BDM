@@ -13,7 +13,8 @@ export interface MatchNextPbpLine {
   readonly teamId?: TeamId
   readonly playerId?: PlayerId
   readonly targetPlayerId?: PlayerId
-  readonly type: 'score' | 'miss' | 'rebound' | 'pass' | 'turnover' | 'drive' | 'period'
+  readonly substitutionReason?: string
+  readonly type: 'score' | 'miss' | 'rebound' | 'pass' | 'turnover' | 'drive' | 'period' | 'substitution'
   readonly text: string
 }
 
@@ -71,8 +72,8 @@ export function projectMatchNextPlayByPlay(events: readonly MatchNextEvent[]): r
   const passerByPossession = new Map<string, PlayerId>()
   const interceptedPossessions = new Set<string>()
   const lines: MatchNextPbpLine[] = []
-  const add = (event: MatchNextEvent, type: MatchNextPbpLine['type'], text: string, playerId?: PlayerId, targetPlayerId?: PlayerId) => {
-    lines.push({ sequence: event.sequence, t: event.t, period: event.period, gameClockTenths: event.gameClockTenths, ...(event.teamId ? { teamId: event.teamId } : {}), ...(playerId ? { playerId } : {}), ...(targetPlayerId ? { targetPlayerId } : {}), type, text })
+  const add = (event: MatchNextEvent, type: MatchNextPbpLine['type'], text: string, playerId?: PlayerId, targetPlayerId?: PlayerId, substitutionReason?: string) => {
+    lines.push({ sequence: event.sequence, t: event.t, period: event.period, gameClockTenths: event.gameClockTenths, ...(event.teamId ? { teamId: event.teamId } : {}), ...(playerId ? { playerId } : {}), ...(targetPlayerId ? { targetPlayerId } : {}), ...(substitutionReason === undefined ? {} : { substitutionReason }), type, text })
   }
   for (const event of events) {
     if (event.type === 'passReleased' && event.possessionId && event.passerPlayerId) passerByPossession.set(event.possessionId, event.passerPlayerId)
@@ -93,6 +94,9 @@ export function projectMatchNextPlayByPlay(events: readonly MatchNextEvent[]): r
     if (event.type === 'periodStart') add(event, 'period', 'period started')
     if (event.type === 'jumpBallResolved' && event.playerId) add(event, 'period', 'won the opening tip', event.playerId)
     if (event.type === 'periodEnd') add(event, 'period', 'period ended')
+    if (event.type === 'substitution' && event.playerId && event.outgoingPlayerId) {
+      add(event, 'substitution', 'substitution', event.playerId, event.outgoingPlayerId, event.substitutionReason)
+    }
   }
   return lines
 }
@@ -120,7 +124,7 @@ export function createMatchStatLogFromMatchNext(world: GameWorld, result: MatchN
         teamId,
         opponentTeamId: isHome ? game.awayTeamId : game.homeTeamId,
         isHome,
-        started: result.finalState.players.some((player) => player.playerId === stats.playerId),
+        started: result.finalState.players.some((player) => player.playerId === stats.playerId && player.started === true),
         stats: { ...stats },
       }
     }),
@@ -128,16 +132,13 @@ export function createMatchStatLogFromMatchNext(world: GameWorld, result: MatchN
 }
 
 function derivePlayerStats(setup: MatchSetup, state: MatchState): PlayerGameStatsSnapshot[] {
-  const starts = new Map<number, number>()
-  const playedSeconds = new Map<number, number>()
-  for (const event of state.events) {
-    if (event.type === 'periodStart') starts.set(event.period, event.gameClockTenths)
-    if (event.type === 'periodEnd') playedSeconds.set(event.period, Math.max(0, (starts.get(event.period) ?? event.gameClockTenths) - event.gameClockTenths) / 10)
-  }
   const totals = new Map<PlayerId, PlayerGameStatsSnapshot>([...setup.homeSquad, ...setup.awaySquad].map((playerId) => [playerId, emptyStats(playerId)]))
-  const starters = new Set([...setup.initialLineups.home, ...setup.initialLineups.away])
-  const fullGameSeconds = [...playedSeconds.values()].reduce((sum, value) => sum + value, 0)
-  for (const playerId of starters) update(totals, playerId, { secondsPlayed: fullGameSeconds })
+  for (const playerId of totals.keys()) {
+    const tenths = state.courtTimeTenthsByPlayerId?.[playerId]
+    if (tenths !== undefined) update(totals, playerId, { secondsPlayed: tenths / 10 })
+  }
+  let homeLineup = new Set(setup.initialLineups.home)
+  let awayLineup = new Set(setup.initialLineups.away)
   let homeScore = 0
   let awayScore = 0
   const passerByPossession = new Map<string, PlayerId>()
@@ -165,10 +166,16 @@ function derivePlayerStats(setup: MatchSetup, state: MatchState): PlayerGameStat
     const scoreDeltaAway = event.type === 'shotMade' && event.teamId === setup.awayTeamId ? event.points ?? 0 : 0
     if (scoreDeltaHome !== 0 || scoreDeltaAway !== 0) {
       const margin = scoreDeltaHome - scoreDeltaAway
-      for (const playerId of setup.initialLineups.home) update(totals, playerId, { plusMinus: margin })
-      for (const playerId of setup.initialLineups.away) update(totals, playerId, { plusMinus: -margin })
+      for (const playerId of homeLineup) update(totals, playerId, { plusMinus: margin })
+      for (const playerId of awayLineup) update(totals, playerId, { plusMinus: -margin })
       homeScore += scoreDeltaHome
       awayScore += scoreDeltaAway
+    }
+    if (event.type === 'substitution' && event.playerId !== undefined && event.outgoingPlayerId !== undefined) {
+      const lineup = event.teamId === setup.homeTeamId ? homeLineup : event.teamId === setup.awayTeamId ? awayLineup : undefined
+      if (lineup === undefined || !lineup.has(event.outgoingPlayerId) || lineup.has(event.playerId)) throw new Error('Match Next substitution event does not match the active lineup')
+      lineup.delete(event.outgoingPlayerId)
+      lineup.add(event.playerId)
     }
   }
   if (homeScore !== state.score.home || awayScore !== state.score.away) throw new Error('Match Next score does not match canonical shot events')

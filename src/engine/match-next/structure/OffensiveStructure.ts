@@ -203,7 +203,7 @@ function findBallPlayer(state: MatchState, teamId: MatchState['homeTeamId'], pri
   if (state.ball.kind === 'HELD' && state.ball.ownerTeamId === teamId) return state.ball.ownerPlayerId
   if (state.ball.kind === 'PASS_IN_FLIGHT' && state.ball.passerTeamId === teamId) return state.ball.passerPlayerId
   if (state.ball.kind === 'SHOT_IN_FLIGHT' && state.ball.shooterTeamId === teamId) return state.ball.shooterPlayerId
-  if (prior && state.players.some((player) => player.playerId === prior.ballPlayerId && player.teamId === teamId)) return prior.ballPlayerId
+  if (prior && state.players.some((player) => player.active && player.playerId === prior.ballPlayerId && player.teamId === teamId)) return prior.ballPlayerId
   return state.players.find((player) => player.active && player.teamId === teamId)?.playerId
 }
 

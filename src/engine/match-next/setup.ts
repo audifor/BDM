@@ -1,5 +1,7 @@
 import type { GameId, PlayerId, TeamId } from '@/domain/ids'
 import type { CourtGeometry, CourtPosition } from '@/domain/court'
+import type { BasketballPosition } from '@/domain/primitives'
+import type { CoachRotationPlan } from '@/engine/tactics/CoachRotationEngine'
 
 export interface MatchNextClockRules {
   readonly periodCount: number
@@ -13,7 +15,8 @@ export interface MatchNextClockRules {
 export interface MatchNextPlayerProfile {
   readonly playerId: PlayerId
   readonly teamId: TeamId
-  readonly primaryPosition: 'PG' | 'SG' | 'SF' | 'PF' | 'C'
+  readonly primaryPosition: BasketballPosition
+  readonly secondaryPositions?: readonly BasketballPosition[]
   readonly physical: { readonly heightCm: number; readonly weightKg: number; readonly wingspanCm: number; readonly standingReachCm: number }
   readonly kinematics: { readonly maxSpeedMps: number; readonly accelerationMps2: number; readonly brakingMps2: number }
   readonly offense: { readonly usage: number; readonly rimAttack: number; readonly shooting: number; readonly creation: number; readonly ballSecurity: number }
@@ -46,6 +49,7 @@ export interface MatchSetup {
   /** Optional static positions for test/debug scenarios; this is not a movement system. */
   readonly initialPlayerPositions?: readonly { readonly playerId: PlayerId; readonly position: CourtPosition }[]
   readonly tacticalPlans: { readonly home: MatchNextTacticalPlan; readonly away: MatchNextTacticalPlan }
+  readonly coachingPlans?: { readonly home: CoachRotationPlan; readonly away: CoachRotationPlan }
   readonly defensiveMatchupOverrides: { readonly home: readonly DefensiveMatchupOverride[]; readonly away: readonly DefensiveMatchupOverride[] }
   readonly matchSeed: number
   readonly autonomousActions?: boolean

@@ -22,7 +22,7 @@ export function advanceMatchSessionFatigue(state: MatchState, gameClockRunning: 
     ...state,
     players: state.players.map((player) => ({
       ...player,
-      fatigue: clamp(player.fatigue + 0.0005, 0, 100),
+      fatigue: clamp(player.fatigue + (player.active ? 0.0005 : -0.0003125), 0, 100),
     })),
   }
 }

@@ -213,7 +213,11 @@ export function NgMatchNextViewer({
               })}</ol>
             </details>}
             <h3>Play-by-play</h3>
-            {liveLines.length === 0 ? <p>El registro aparecerá cuando ocurran acciones.</p> : <ol className="me-next-pbp__list">{liveLines.map((line) => <li key={line.sequence}><time>{formatPeriod(line.period)} {formatClock(line.gameClockTenths / 10)}</time><span>{line.playerId ? `${playerName(world, line.playerId)} ` : ''}{line.type === 'pass' && line.targetPlayerId ? `pasó a ${playerName(world, line.targetPlayerId)}` : line.text}</span></li>)}</ol>}
+            {liveLines.length === 0 ? <p>El registro aparecerá cuando ocurran acciones.</p> : <ol className="me-next-pbp__list">{liveLines.map((line) => <li key={line.sequence}><time>{formatPeriod(line.period)} {formatClock(line.gameClockTenths / 10)}</time><span>{line.type === 'pass' && line.playerId && line.targetPlayerId
+              ? `${playerName(world, line.playerId)} pasó a ${playerName(world, line.targetPlayerId)}`
+              : line.type === 'substitution' && line.playerId && line.targetPlayerId
+                ? `${playerName(world, line.playerId)} entra por ${playerName(world, line.targetPlayerId)}${line.substitutionReason ? ` · ${line.substitutionReason}` : ''}`
+                : `${line.playerId ? `${playerName(world, line.playerId)} ` : ''}${line.text}`}</span></li>)}</ol>}
             {result && <div><h3>Resultado y estadísticas</h3><p>{awayName} {result.score.away} — {result.score.home} {homeName}</p><details><summary>Estadísticas de jugadores</summary><ol>{result.playerStats.filter((stat) => stat.secondsPlayed > 0 || stat.points > 0 || stat.rebounds > 0).sort((left, right) => right.points - left.points).map((stat) => <li key={stat.playerId}>{playerName(world, stat.playerId)} · {stat.points} PTS · {stat.rebounds} REB · {stat.fieldGoalsMade}/{stat.fieldGoalsAttempted} FG</li>)}</ol></details></div>}
           </div>
         </aside>

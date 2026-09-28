@@ -1,6 +1,6 @@
 import { distanceBetween } from '@/domain/court'
 import { attackingBasketForTeam } from '@/engine/match-next/structure/FiveOutStructure'
-import { applyCommand, createMatchState, tick, toFrame, type MatchFrame, type MatchSetup, type MatchState } from '@/engine/match-next'
+import { applyCommand, createMatchState, decideRotationSubstitutions, tick, toFrame, type MatchFrame, type MatchSetup, type MatchState } from '@/engine/match-next'
 import type { MovementIntent } from '@/engine/match-next/movement/MovementIntent'
 import type { InboundStartReason } from '@/engine/match-next/ball/BallTransitions'
 import { createMatchNextResult, type MatchNextResult } from './MatchNextResult'
@@ -58,7 +58,7 @@ export class MatchNextLiveController {
   private teamsReadyForInbound(): boolean {
     const pending = this.pendingInbound
     if (!pending) return false
-    return this.state.players.every((player) => {
+    return this.state.players.filter((player) => player.active).every((player) => {
       const intent = this.state.movementIntents.find((item) => item.playerId === player.playerId)
       return intent !== undefined && distanceBetween(player.position, intent.target) <= 0.75
     })
@@ -80,6 +80,9 @@ export class MatchNextLiveController {
   private stepState(): void {
     const previousPeriod = this.state.period
     this.state = tick(this.state)
+    const reachedStoppage = this.state.events.some((event) => event.t === this.state.t && event.type === 'ballDead')
+    const substitutions = reachedStoppage ? decideRotationSubstitutions(this.state) : []
+    if (substitutions.length > 0) this.state = applyCommand(this.state, { type: 'coachSubstitutions', proposals: substitutions })
     if (this.pendingInbound && this.teamsReadyForInbound()) this.releasePeriodInbound()
     if (!this.state.isComplete && this.state.period !== previousPeriod) {
       this.state = preparePeriodInbound(this.state, this.setup, (pending) => { this.pendingInbound = pending })
@@ -107,8 +110,7 @@ function prepareRestartInbound(
   setPending: (pending: PendingInbound) => void,
   requestedSpot?: { readonly x: number; readonly y: number },
 ): MatchState {
-  const isHome = teamId === setup.homeTeamId
-  const lineup = isHome ? setup.initialLineups.home : setup.initialLineups.away
+  const lineup = state.players.filter((player) => player.active && player.teamId === teamId).map((player) => player.playerId)
   const inbounderPlayerId = lineup[0]!
   const receiverPlayerId = lineup[1]!
   const target = requestedSpot ?? inboundSpot(state)
@@ -150,8 +152,9 @@ function prepareRestartInbound(
 
 function restartTargets(state: MatchState, setup: MatchSetup, inboundTeamId: MatchSetup['homeTeamId'], inbounderPlayerId: MatchSetup['initialLineups']['home'][number], spot: { readonly x: number; readonly y: number }, reason: InboundStartReason): Map<MatchSetup['initialLineups']['home'][number], { readonly x: number; readonly y: number }> {
   const inboundIsHome = inboundTeamId === setup.homeTeamId
-  const inboundLineup = inboundIsHome ? setup.initialLineups.home : setup.initialLineups.away
-  const defenseLineup = inboundIsHome ? setup.initialLineups.away : setup.initialLineups.home
+  const inboundLineup = state.players.filter((player) => player.active && player.teamId === inboundTeamId).map((player) => player.playerId)
+  const defenseTeamId = inboundIsHome ? setup.awayTeamId : setup.homeTeamId
+  const defenseLineup = state.players.filter((player) => player.active && player.teamId === defenseTeamId).map((player) => player.playerId)
   const basket = attackingBasketForTeam(inboundTeamId, setup.homeTeamId, state.period, state.court)
   const direction = basket.x >= state.court.lengthMeters / 2 ? 1 : -1
   const centerY = state.court.widthMeters / 2
