@@ -14,15 +14,25 @@
  */
 
 import type { PlayerId, TeamId } from '@/domain/ids'
-import type { MatchEvent, MatchSessionState, OffensiveAction } from '@/engine/match'
-import { getSpatialPossessionView } from '@/engine/match'
+import type {
+  DriveIntent,
+  MatchEvent,
+  MatchSessionState,
+  OffBallCutIntent,
+  OffensiveAction,
+  ScreenIntent,
+} from '@/engine/match'
+import { calculateDefensiveAssignments, getSpatialPossessionView } from '@/engine/match'
 import type {
   MatchPresentationEvent,
   MatchPresentationEventKind,
   MatchPresentationState,
+  PresentationActionIntent,
   PresentationBall,
   PresentationBallState,
   PresentationCourt,
+  PresentationDebugTargets,
+  PresentationDefensiveIntent,
   PresentationPlayer,
   PresentationPoint,
   PresentationSide,
@@ -54,14 +64,83 @@ function orientationFromVelocity(velocity: { readonly x: number; readonly y: num
   return Math.atan2(velocity.y, velocity.x)
 }
 
-function ballStateFor(ball: MatchSessionState['spatial']['ball']): PresentationBallState {
+/**
+ * Presentation-only refinement of the engine's 3-state ball.kind into the richer MP1C state set.
+ * 'loose' engine state maps to 'reboundLoose' after a miss (state.offensiveAction absent + last
+ * event was a miss) or 'inbound' otherwise; both are purely cosmetic labels over the same
+ * engine-owned 'loose' fact and never change who ends up with the ball.
+ */
+function ballStateFor(ball: MatchSessionState['spatial']['ball'], looseBallContext: 'postMiss' | 'postTurnover' | 'other'): PresentationBallState {
   if (ball.kind === 'unassigned') return 'unassigned'
-  if (ball.kind === 'loose') return 'loose'
+  if (ball.kind === 'loose') {
+    if (looseBallContext === 'postMiss') return 'reboundLoose'
+    if (looseBallContext === 'postTurnover') return 'deadBall'
+    return 'inbound'
+  }
   return 'held'
 }
 
 function fallbackLabel(playerId: PlayerId): PresentationPlayerLabel {
   return { label: String(playerId).slice(0, 8), jersey: 0 }
+}
+
+/**
+ * Derives a per-player offensive action-intent label purely from already-existing, read-only
+ * engine intent state (offBallCut, screenIntent, driveIntent, possession-level offensiveAction,
+ * ball ownership) plus, as a last resort, the player's own velocity (a trajectory fallback, never
+ * a guessed basketball decision). No new intent is invented beyond what the engine already decided.
+ */
+function actionIntentFor(input: {
+  readonly playerId: PlayerId
+  readonly hasBall: boolean
+  readonly isOffense: boolean
+  readonly speedMetersPerSecond: number
+  readonly offBallCut: OffBallCutIntent | undefined
+  readonly screenIntent: ScreenIntent | undefined
+  readonly driveIntent: DriveIntent | undefined
+  readonly transitionActive: boolean
+}): PresentationActionIntent {
+  const { playerId, hasBall, isOffense, speedMetersPerSecond, offBallCut, screenIntent, driveIntent, transitionActive } = input
+  if (!isOffense) return speedMetersPerSecond > 0.2 ? 'moving' : 'idle'
+
+  if (driveIntent !== undefined && driveIntent.handlerId === playerId) return 'drive'
+
+  if (screenIntent !== undefined) {
+    if (screenIntent.screenerId === playerId) {
+      if (screenIntent.phase === 'approach') return 'screenApproach'
+      if (screenIntent.phase === 'set') return 'screenSet'
+      if (screenIntent.postScreenAction === 'pop') return 'screenPop'
+      return 'screenRoll'
+    }
+    if (screenIntent.ballHandlerId === playerId) return 'dribble'
+  }
+
+  if (offBallCut !== undefined && offBallCut.playerId === playerId) {
+    return offBallCut.type === 'rimCut' ? 'cutRim' : 'cutSpace'
+  }
+
+  if (hasBall) return speedMetersPerSecond > 0.2 ? 'dribble' : 'spotUp'
+  if (transitionActive) return 'transitionLane'
+  return speedMetersPerSecond > 0.2 ? 'moving' : 'spotUp'
+}
+
+/**
+ * Derives a per-player defensive-intent label purely from the engine's own defensiveReaction
+ * state (help/recover) plus a trajectory fallback (shuffle vs idle) when no explicit reaction is
+ * active for that defender. Never invents a defensive scheme.
+ */
+function defensiveIntentFor(input: {
+  readonly playerId: PlayerId
+  readonly speedMetersPerSecond: number
+  readonly reactionDefenderIds: ReadonlySet<PlayerId>
+  readonly reactionPhaseByDefenderId: ReadonlyMap<PlayerId, 'HELP' | 'RECOVER'>
+  readonly transitionActive: boolean
+}): PresentationDefensiveIntent {
+  const phase = input.reactionPhaseByDefenderId.get(input.playerId)
+  if (phase === 'HELP') return 'help'
+  if (phase === 'RECOVER') return 'recover'
+  if (input.transitionActive) return 'transition'
+  return input.speedMetersPerSecond > 0.2 ? 'shuffle' : 'onBall'
 }
 
 /**
@@ -86,29 +165,6 @@ export function toMatchPresentationState(
   const ownerPlayerId = ball.kind === 'playerControlled' ? ball.playerId : undefined
   const ownerTeamId = ball.kind === 'playerControlled' ? ball.teamId : undefined
 
-  const players: readonly PresentationPlayer[] = state.spatial.players.map((player) => {
-    const meta = labels.get(player.playerId) ?? fallbackLabel(player.playerId)
-    return {
-      playerId: player.playerId,
-      teamId: player.teamId,
-      side: sideForTeam(player.teamId, state.homeTeamId),
-      label: meta.label,
-      jersey: meta.jersey,
-      position: toPercent(player.position, court.lengthMeters, court.widthMeters),
-      speedMetersPerSecond: Math.hypot(player.velocity.x, player.velocity.y),
-      orientationRadians: orientationFromVelocity(player.velocity),
-      hasBall: ownerPlayerId === player.playerId,
-    }
-  })
-
-  const presentationBall: PresentationBall = {
-    position: toPercent(ball.position, court.lengthMeters, court.widthMeters),
-    state: ballStateFor(ball),
-    ownerPlayerId,
-    ownerTeamId,
-    visualHeight: 0,
-  }
-
   const possessionView = getSpatialPossessionView({
     homeTeamId: state.homeTeamId,
     awayTeamId: state.awayTeamId,
@@ -116,6 +172,101 @@ export function toMatchPresentationState(
     period: state.period,
     spatial: state.spatial,
   })
+
+  // Read-only: the engine's own pure, deterministic (no RNG) assignment calculator, driven from
+  // the same activeLineups + playerProfiles + defensiveMatchups already carried on MatchSessionState.
+  // This performs NO decision — it reproduces exactly the assignment the engine itself would derive.
+  // calculateDefensiveAssignments looks up BOTH lineups' profiles by id, so the profile pool passed
+  // in must cover both teams' active players, not just the offensive side.
+  const offensiveLineup = state.activeLineups[sideKeyForTeam(possessionView.offensiveTeamId, state.homeTeamId)]
+  const defensiveLineup = state.activeLineups[sideKeyForTeam(possessionView.defensiveTeamId, state.homeTeamId)]
+  const combinedProfiles = [...state.playerProfiles.home, ...state.playerProfiles.away]
+  const overrideKey = sideKeyForTeam(possessionView.defensiveTeamId, state.homeTeamId)
+  const overrides = state.defensiveMatchups?.[overrideKey] ?? []
+  let matchups: readonly { readonly offensivePlayerId: PlayerId; readonly defensivePlayerId: PlayerId }[] = []
+  try {
+    matchups = calculateDefensiveAssignments(offensiveLineup, defensiveLineup, combinedProfiles, overrides)
+  } catch {
+    matchups = []
+  }
+  const defenderByOffensivePlayerId = new Map(matchups.map((m) => [m.offensivePlayerId, m.defensivePlayerId]))
+  const offensiveByDefensivePlayerId = new Map(matchups.map((m) => [m.defensivePlayerId, m.offensivePlayerId]))
+
+  const screenIntent = state.screenIntent
+  const screenPartnerByPlayerId = new Map<PlayerId, PlayerId>()
+  if (screenIntent !== undefined) {
+    screenPartnerByPlayerId.set(screenIntent.screenerId, screenIntent.ballHandlerId)
+    screenPartnerByPlayerId.set(screenIntent.ballHandlerId, screenIntent.screenerId)
+  }
+
+  const reactionPhaseByDefenderId = new Map<PlayerId, 'HELP' | 'RECOVER'>()
+  if (state.defensiveReaction !== undefined) {
+    reactionPhaseByDefenderId.set(state.defensiveReaction.defenderId, state.defensiveReaction.phase)
+    if (state.defensiveReaction.rotationDefenderId !== undefined) {
+      reactionPhaseByDefenderId.set(state.defensiveReaction.rotationDefenderId, state.defensiveReaction.phase)
+    }
+  }
+  const transitionActive = state.transitionIntent !== undefined
+
+  const lastEvent = state.events.length > 0 ? state.events[state.events.length - 1] : undefined
+  const looseBallContext: 'postMiss' | 'postTurnover' | 'other' =
+    lastEvent?.type === 'shotMissed' ? 'postMiss' : lastEvent?.type === 'turnover' ? 'postTurnover' : 'other'
+
+  const players: readonly PresentationPlayer[] = state.spatial.players.map((player) => {
+    const meta = labels.get(player.playerId) ?? fallbackLabel(player.playerId)
+    const isOffense = player.teamId === possessionView.offensiveTeamId
+    const speedMetersPerSecond = Math.hypot(player.velocity.x, player.velocity.y)
+    const hasBall = ownerPlayerId === player.playerId
+    return {
+      playerId: player.playerId,
+      teamId: player.teamId,
+      side: sideForTeam(player.teamId, state.homeTeamId),
+      label: meta.label,
+      jersey: meta.jersey,
+      position: toPercent(player.position, court.lengthMeters, court.widthMeters),
+      speedMetersPerSecond,
+      orientationRadians: orientationFromVelocity(player.velocity),
+      hasBall,
+      isOffense,
+      actionIntent: actionIntentFor({
+        playerId: player.playerId,
+        hasBall,
+        isOffense,
+        speedMetersPerSecond,
+        offBallCut: state.offBallCut,
+        screenIntent: state.screenIntent,
+        driveIntent: state.driveIntent,
+        transitionActive,
+      }),
+      defensiveIntent: isOffense
+        ? undefined
+        : defensiveIntentFor({
+            playerId: player.playerId,
+            speedMetersPerSecond,
+            reactionDefenderIds: new Set(reactionPhaseByDefenderId.keys()),
+            reactionPhaseByDefenderId,
+            transitionActive,
+          }),
+      defendingPlayerId: isOffense ? undefined : offensiveByDefensivePlayerId.get(player.playerId),
+      defendedByPlayerId: isOffense ? defenderByOffensivePlayerId.get(player.playerId) : undefined,
+      screenPartnerId: screenPartnerByPlayerId.get(player.playerId),
+    }
+  })
+
+  const presentationBall: PresentationBall = {
+    position: toPercent(ball.position, court.lengthMeters, court.widthMeters),
+    state: ballStateFor(ball, looseBallContext),
+    ownerPlayerId,
+    ownerTeamId,
+    visualHeight: 0,
+    isPassFlight: false,
+    isShotFlight: false,
+  }
+
+  const screenTarget = state.screenIntent !== undefined ? toPercent(state.screenIntent.target, court.lengthMeters, court.widthMeters) : undefined
+  const driveTarget = state.driveIntent !== undefined ? toPercent(state.driveIntent.target, court.lengthMeters, court.widthMeters) : undefined
+  const shotTargetBasket =
+    ownerPlayerId !== undefined ? toPercent(possessionView.attackingBasket, court.lengthMeters, court.widthMeters) : undefined
 
   return {
     simulationTick: state.nextSequence,
@@ -136,7 +287,17 @@ export function toMatchPresentationState(
     },
     isComplete: state.isComplete,
     currentActionKind: describeOffensiveAction(state.offensiveAction),
+    debugTargets: {
+      screenTarget,
+      driveTarget,
+      passTargetPlayerId: undefined,
+      shotTargetBasket,
+    },
   }
+}
+
+function sideKeyForTeam(teamId: TeamId, homeTeamId: TeamId): 'home' | 'away' {
+  return teamId === homeTeamId ? 'home' : 'away'
 }
 
 function describeOffensiveAction(action: OffensiveAction | undefined): string | undefined {

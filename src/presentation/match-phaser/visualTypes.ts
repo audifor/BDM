@@ -26,6 +26,39 @@ export interface PresentationPoint {
 
 export type PresentationSide = 'home' | 'away'
 
+/**
+ * Off-ball / on-ball / defensive presentation intent labels. These are DERIVED, read-only
+ * projections of engine state that already exists in MatchSessionState (offBallCut, screenIntent,
+ * driveIntent, defensiveReaction, transitionIntent, offensiveAction, defensiveMatchups via the
+ * engine's own pure calculateDefensiveAssignments). None of these labels are invented: when the
+ * engine does not expose an explicit intent for a player, the label falls back to a small set of
+ * trajectory-derived categories (e.g. 'moving' vs 'idle') rather than guessing a basketball intent.
+ */
+export type PresentationActionIntent =
+  | 'idle'
+  | 'spotUp'
+  | 'cutRim'
+  | 'cutSpace'
+  | 'screenApproach'
+  | 'screenSet'
+  | 'screenRoll'
+  | 'screenPop'
+  | 'drive'
+  | 'transitionLane'
+  | 'dribble'
+  | 'passPrep'
+  | 'shotPrep'
+  | 'moving'
+
+export type PresentationDefensiveIntent =
+  | 'onBall'
+  | 'shuffle'
+  | 'help'
+  | 'recover'
+  | 'boxOut'
+  | 'transition'
+  | 'idle'
+
 export interface PresentationPlayer {
   readonly playerId: PlayerId
   readonly teamId: TeamId
@@ -38,9 +71,37 @@ export interface PresentationPlayer {
   /** Radians, screen convention (0 = facing +x / right). Undefined when the player is stationary. */
   readonly orientationRadians: number | undefined
   readonly hasBall: boolean
+  readonly isOffense: boolean
+  /** Read-only projection of the engine's current per-player offensive intent, or a trajectory fallback. */
+  readonly actionIntent: PresentationActionIntent
+  /** Read-only projection of the engine's current per-player defensive intent, or a trajectory fallback. */
+  readonly defensiveIntent: PresentationDefensiveIntent | undefined
+  /** The opposing player this player is defending, from the engine's own calculateDefensiveAssignments. Debug only. */
+  readonly defendingPlayerId: PlayerId | undefined
+  /** The opposing player defending this player, when this player is on offense. Debug only. */
+  readonly defendedByPlayerId: PlayerId | undefined
+  /** Screen partner (screener<->user) when this player is currently part of a screen intent. Debug only. */
+  readonly screenPartnerId: PlayerId | undefined
 }
 
-export type PresentationBallState = 'unassigned' | 'loose' | 'held' | 'inFlight'
+/**
+ * Ball presentation states (MP1C). 'dribble'/'catch'/'shotFlight'/'rimInteraction'/'reboundLoose'/
+ * 'reboundSecured'/'inbound'/'deadBall' are all presentation-only refinements of the same
+ * underlying engine facts (ball.kind, and shotAttempt/rebound/turnover events); none of them can
+ * change whether a shot goes in, a pass completes, or who ends up with the ball.
+ */
+export type PresentationBallState =
+  | 'unassigned'
+  | 'dribble'
+  | 'held'
+  | 'passFlight'
+  | 'catch'
+  | 'shotFlight'
+  | 'rimInteraction'
+  | 'reboundLoose'
+  | 'reboundSecured'
+  | 'inbound'
+  | 'deadBall'
 
 export interface PresentationBall {
   readonly position: PresentationPoint
@@ -53,6 +114,10 @@ export interface PresentationBall {
    * shot is made or a pass completes, both of which are engine outcomes.
    */
   readonly visualHeight: number
+  /** True while a pass is visually in flight between two players. Presentation-only. */
+  readonly isPassFlight: boolean
+  /** True while a shot is visually in flight toward the rim. Presentation-only. */
+  readonly isShotFlight: boolean
 }
 
 export interface PresentationClock {
@@ -82,6 +147,14 @@ export interface PresentationPossession {
   readonly ballHandlerId: PlayerId | undefined
 }
 
+/** Debug-only spatial targets, read verbatim from engine intent state. Never used for gameplay. */
+export interface PresentationDebugTargets {
+  readonly screenTarget: PresentationPoint | undefined
+  readonly driveTarget: PresentationPoint | undefined
+  readonly passTargetPlayerId: PlayerId | undefined
+  readonly shotTargetBasket: PresentationPoint | undefined
+}
+
 /** One immutable rendering-ready snapshot, derived from exactly one MatchSessionState. */
 export interface MatchPresentationState {
   /** Monotonically increasing MatchEngine tick this snapshot was derived from (nextSequence at capture time). */
@@ -95,6 +168,7 @@ export interface MatchPresentationState {
   readonly isComplete: boolean
   /** Current possession-level offensive action, for label/debug display only (e.g. "PICK_AND_ROLL"). */
   readonly currentActionKind: string | undefined
+  readonly debugTargets: PresentationDebugTargets
 }
 
 export type MatchPresentationEventKind =

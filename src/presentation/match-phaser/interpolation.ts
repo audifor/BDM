@@ -82,7 +82,10 @@ export function interpolatePresentationState(
   })
 
   const ballOwnerChanged = from.ball.ownerPlayerId !== to.ball.ownerPlayerId
-  const ballInFlight = ballOwnerChanged && from.ball.ownerPlayerId !== undefined && to.ball.ownerPlayerId !== undefined
+  const samTeamPossession = from.ball.ownerTeamId === to.ball.ownerTeamId
+  const isPassFlight = ballOwnerChanged && from.ball.ownerPlayerId !== undefined && to.ball.ownerPlayerId !== undefined && samTeamPossession
+  const isShotFlight = to.ball.state === 'shotFlight' || (ballOwnerChanged && to.ball.ownerPlayerId === undefined && from.ball.ownerPlayerId !== undefined && to.ball.state !== 'reboundLoose' && to.ball.state !== 'deadBall')
+  const ballInFlight = isPassFlight || isShotFlight
   const ballPosition = lerpPoint(from.ball.position, to.ball.position, t)
 
   return {
@@ -91,9 +94,11 @@ export function interpolatePresentationState(
     ball: {
       ...to.ball,
       position: ballPosition,
-      state: ballInFlight ? 'inFlight' : to.ball.state,
+      state: isPassFlight ? 'passFlight' : isShotFlight ? 'shotFlight' : to.ball.state,
       ownerPlayerId: ballInFlight ? undefined : to.ball.ownerPlayerId,
       visualHeight: ballVisualHeight(ballInFlight, t),
+      isPassFlight,
+      isShotFlight,
     },
     // Clock/score/possession/period/isComplete are authoritative facts: never blended, always the
     // later snapshot's values, so the HUD never shows a number MatchEngine did not itself produce.

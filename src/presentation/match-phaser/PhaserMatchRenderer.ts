@@ -10,8 +10,10 @@
 
 import Phaser from 'phaser'
 import { PresentationPlayback } from './interpolation'
-import { PhaserMatchScene } from './PhaserMatchScene'
+import { PhaserMatchScene, type SceneDebugOptions, type SceneIdentificationOptions } from './PhaserMatchScene'
+import type { CameraMode } from './camera'
 import type { MatchPresentationEvent, MatchPresentationState } from './visualTypes'
+import { DEFAULT_PRESENTATION_CONFIG, type PresentationConfig } from './presentationConfig'
 
 export interface PhaserMatchRendererOptions {
   readonly parent: HTMLElement
@@ -19,8 +21,16 @@ export interface PhaserMatchRendererOptions {
   readonly height: number
   /** Wall-clock duration (ms) over which one engine step is visually interpolated. */
   readonly stepDurationMs?: number
+  readonly presentationConfig?: PresentationConfig
 }
 
+/**
+ * MP1M Game Speed Controls. This ONLY scales how fast the wall-clock interpolation buffer is
+ * consumed by the renderer (`playbackSpeed` multiplies deltaMs before it reaches
+ * PresentationPlayback.advance). It never changes how often or how the demo driver calls
+ * `stepMatchSession` — simulation speed and presentation playback speed stay fully independent, so
+ * there is no risk of the renderer "catching up" by skipping or re-deriving engine snapshots.
+ */
 export class PhaserMatchRenderer {
   private readonly game: Phaser.Game
   private readonly scene: PhaserMatchScene
@@ -28,10 +38,12 @@ export class PhaserMatchRenderer {
   private playback: PresentationPlayback | undefined
   private pendingEvents: MatchPresentationEvent[] = []
   private lastFrameTimeMs: number | undefined
+  private playbackSpeed = 1
+  private paused = false
 
   public constructor(options: PhaserMatchRendererOptions) {
     this.stepDurationMs = options.stepDurationMs ?? 650
-    this.scene = new PhaserMatchScene()
+    this.scene = new PhaserMatchScene({ marginPx: 48, presentation: options.presentationConfig ?? DEFAULT_PRESENTATION_CONFIG })
     this.game = new Phaser.Game({
       type: Phaser.AUTO,
       parent: options.parent,
@@ -67,12 +79,47 @@ export class PhaserMatchRenderer {
     this.game.destroy(true)
   }
 
+  /** MP1M: presentation-only playback speed. Does not affect how often the engine itself steps. */
+  public setPlaybackSpeed(speed: number): void {
+    this.playbackSpeed = Math.max(0, speed)
+  }
+
+  public getPlaybackSpeed(): number {
+    return this.playbackSpeed
+  }
+
+  public setPaused(paused: boolean): void {
+    this.paused = paused
+  }
+
+  public isPaused(): boolean {
+    return this.paused
+  }
+
+  public setCameraMode(mode: CameraMode): void {
+    this.scene.setCameraMode(mode)
+  }
+
+  public getCameraMode(): CameraMode {
+    return this.scene.getCameraMode()
+  }
+
+  public get debugOptions(): SceneDebugOptions {
+    return this.scene.debug
+  }
+
+  public get identificationOptions(): SceneIdentificationOptions {
+    return this.scene.identification
+  }
+
   private tick(): void {
     if (this.playback === undefined) return
     const now = performance.now()
-    const deltaMs = this.lastFrameTimeMs === undefined ? 0 : now - this.lastFrameTimeMs
+    const rawDeltaMs = this.lastFrameTimeMs === undefined ? 0 : now - this.lastFrameTimeMs
     this.lastFrameTimeMs = now
-    this.playback.advance(deltaMs)
+    if (this.paused) return
+    const scaledDeltaMs = rawDeltaMs * this.playbackSpeed
+    this.playback.advance(scaledDeltaMs)
     this.scene.renderFrame({ state: this.playback.currentFrame(), recentEvents: this.pendingEvents })
   }
 }

@@ -69,6 +69,50 @@ describe('MatchPresentationBridge', () => {
     }
   })
 
+  it('assigns exactly one defender per offensive player using the engine own calculateDefensiveAssignments (read-only, no new state)', () => {
+    const { world, game } = createScheduledGameWorld()
+    const options = createOptions(world, game.id, 314)
+    const session = createMatchSession(options)
+    const labels = buildLabels([...options.lineups.home, ...options.lineups.away])
+
+    const state = toMatchPresentationState(session.state, labels)
+    const offensivePlayers = state.players.filter((p) => p.isOffense)
+    const defensivePlayers = state.players.filter((p) => !p.isOffense)
+
+    expect(offensivePlayers).toHaveLength(5)
+    expect(defensivePlayers).toHaveLength(5)
+    for (const offensivePlayer of offensivePlayers) {
+      expect(offensivePlayer.defendedByPlayerId).toBeDefined()
+      expect(defensivePlayers.some((d) => d.playerId === offensivePlayer.defendedByPlayerId)).toBe(true)
+    }
+    for (const defensivePlayer of defensivePlayers) {
+      expect(defensivePlayer.defendingPlayerId).toBeDefined()
+      expect(['idle', 'moving']).toContain(defensivePlayer.actionIntent)
+      expect(defensivePlayer.defensiveIntent).toBeDefined()
+    }
+    // One-to-one: no offensive player defended by two different defenders and vice versa.
+    const defenderIds = new Set(offensivePlayers.map((p) => p.defendedByPlayerId))
+    expect(defenderIds.size).toBe(5)
+  })
+
+  it('never assigns an offensive action intent to a defensive player, and vice versa', () => {
+    const { world, game } = createScheduledGameWorld()
+    let session = createMatchSession(createOptions(world, game.id, 909))
+    const labels = buildLabels([...session.state.activeLineups.home, ...session.state.activeLineups.away])
+
+    for (let i = 0; i < 30 && !session.state.isComplete; i += 1) {
+      session = stepMatchSession(session).session
+      const state = toMatchPresentationState(session.state, labels)
+      for (const player of state.players) {
+        if (player.isOffense) {
+          expect(player.defensiveIntent).toBeUndefined()
+        } else {
+          expect(['idle', 'moving']).toContain(player.actionIntent)
+        }
+      }
+    }
+  })
+
   it('interpolation returns the exact endpoint snapshots at t=0 and t=1', () => {
     const { world, game } = createScheduledGameWorld()
     const options = createOptions(world, game.id, 999)
