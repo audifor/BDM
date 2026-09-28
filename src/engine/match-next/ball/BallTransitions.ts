@@ -298,12 +298,17 @@ export function advanceBallAtTick(state: MatchState): MatchState {
     const progress = flightProgress(state.t, ball.releaseT, ball.arrivalT)
     const position = interpolatePosition(ball.from, ball.target, progress)
     const moved: MatchState = { ...state, ball: { ...ball, previousPosition: ball.position, position, heightMeters: passHeight(ball.passKind, progress) } }
-    if (state.t < ball.arrivalT) return moved
     const receiver = findActivePlayer(moved, ball.intendedReceiverPlayerId)
-    if (receiver && receiver.teamId === ball.passerTeamId) {
-      const acquisitionDistanceMeters = distanceBetween(receiver.position, position)
-      if (acquisitionDistanceMeters <= (ball.catchRadiusMeters ?? BALL_ACQUISITION_RADIUS_METERS)) return receivePass(moved, receiver.playerId, receiver.teamId, acquisitionDistanceMeters, ball.isInbound)
-    }
+    const receiverDistance = receiver && receiver.teamId === ball.passerTeamId
+      ? distanceBetween(receiver.position, position) : Number.POSITIVE_INFINITY
+    const receiverCanCatch = receiverDistance <= (ball.catchRadiusMeters ?? BALL_ACQUISITION_RADIUS_METERS)
+    if (state.t < ball.arrivalT) return moved
+    const defender = ball.isInbound ? undefined : moved.players.filter((player) => player.active && player.teamId !== ball.passerTeamId)
+      .map((player) => ({ player, distance: distanceBetween(player.position, position) }))
+      .sort((left, right) => left.distance - right.distance || String(left.player.playerId).localeCompare(String(right.player.playerId)))
+      .find((item) => item.distance <= BALL_ACQUISITION_RADIUS_METERS)
+    if (defender && (!receiverCanCatch || defender.distance < receiverDistance)) return interceptPass(moved, defender.player.playerId)
+    if (receiverCanCatch) return receivePass(moved, receiver!.playerId, receiver!.teamId, receiverDistance, ball.isInbound)
     const loose: BallState = { kind: 'LOOSE', position, heightMeters: Math.max(0.08, moved.ball.heightMeters), velocity: looseBallVelocity(ball.from, ball.target), cause: 'badPass', previousPosition: position }
     let next: MatchState = { ...moved, ball: loose }
     const possession = activePossession(next)

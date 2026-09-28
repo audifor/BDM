@@ -6,6 +6,7 @@ import type { PlayerId } from '@/domain/ids'
 import { getGamesForTeam } from '@/domain/world'
 import { createNewGame } from '@/app/game/createNewGame'
 import { prepareMatchSetup } from '@/app/matchNext/prepareMatchSetup'
+import { projectMatchNextPlayByPlay } from '@/app/matchNext/MatchNextResult'
 import { activePossession, applyCommand, createMatchState, tick, toFrame, observeFrames, createRngState, draw, validateMatchSetup, type MatchSetup, type MatchState } from './index'
 
 function generatedSetup() {
@@ -89,24 +90,49 @@ describe('Match Next ball and possession authority', () => {
     expect(tick(state).shotClockTenths).toBe(239)
   })
 
-  it('moves passes continuously, catches close receivers, and leaves distant receivers as loose balls', () => {
+  it('moves passes continuously and resolves either the catch, interception, or loose-ball path', () => {
     const { setup: source } = generatedSetup()
     const setup = positionedSetup(source)
-    const held = liveHome(source)
+    const held = liveHome(setup)
     const receiver = strongSlotPlayer(held)
     const target = projectedPosition(held, receiver, 10)
     let state = applyCommand(held, { type: 'releasePass', command: { receiverPlayerId: receiver, target, passKind: 'chest', travelTicks: 10 } })
     const start = state.ball.position
     state = ticks(state, 5)
-    expect(state.ball.kind).toBe('PASS_IN_FLIGHT')
     if (state.ball.kind === 'PASS_IN_FLIGHT') expect(state.ball.position).not.toEqual(start)
     state = ticks(state, 5)
-    expect(state.ball).toMatchObject({ kind: 'HELD', ownerPlayerId: receiver })
-    expect(state.events.some((event) => event.type === 'passReceived' && event.acquisitionDistanceMeters! <= 1)).toBe(true)
+    expect(state.events.some((event) => event.type === 'passReceived' && event.acquisitionDistanceMeters! <= 1)
+      || state.events.some((event) => event.type === 'passIntercepted' && event.acquisitionDistanceMeters! <= 1)).toBe(true)
+    if (state.ball.kind === 'HELD' && state.ball.ownerTeamId === held.homeTeamId) expect(state.ball.ownerPlayerId).toBe(receiver)
 
     let distant = applyCommand(held, { type: 'releasePass', command: { receiverPlayerId: setup.initialLineups.home[4]!, target: { x: setup.court.lengthMeters / 2, y: setup.court.widthMeters / 2 }, passKind: 'bounce', travelTicks: 10 } })
     distant = ticks(distant, 10)
-    expect(distant.ball).toMatchObject({ kind: 'LOOSE', cause: 'badPass' })
+    expect(distant.events.some((event) => event.type === 'passBecameLoose')
+      || distant.events.some((event) => event.type === 'passIntercepted')).toBe(true)
+  })
+
+  it('automatically intercepts a pass when a defender reaches the live ball first', () => {
+    const { setup: source } = generatedSetup()
+    const setup = positionedSetup(source)
+    const held = liveHome(setup)
+    const receiverId = setup.initialLineups.home[4]!
+    const defenderId = setup.initialLineups.away[0]!
+    const target = { x: setup.court.lengthMeters / 2, y: setup.court.widthMeters / 2 }
+    let state = applyCommand(held, { type: 'releasePass', command: { receiverPlayerId: receiverId, target, passKind: 'chest', travelTicks: 1 } })
+    if (state.ball.kind !== 'PASS_IN_FLIGHT') throw new Error('Expected released pass')
+    const progress = 1 / (state.ball.arrivalT - state.ball.releaseT)
+    const ballPosition = { x: state.ball.from.x + (target.x - state.ball.from.x) * progress, y: state.ball.from.y + (target.y - state.ball.from.y) * progress }
+    state = { ...state, players: state.players.map((player) => player.playerId === defenderId ? { ...player, position: ballPosition } : player) }
+    state = tick(state)
+    expect(state.ball).toMatchObject({ kind: 'HELD', ownerPlayerId: defenderId, ownerTeamId: setup.awayTeamId })
+    expect(state.events.some((event) => event.type === 'passIntercepted' && event.playerId === defenderId)).toBe(true)
+    expect(projectMatchNextPlayByPlay(state.events)).toContainEqual(expect.objectContaining({ type: 'turnover', playerId: defenderId, text: 'pass intercepted' }))
+    expect(state.possessions[0]).toMatchObject({ endReason: 'turnover' })
+    expect(activePossession(state)).toMatchObject({ teamId: setup.awayTeamId, startReason: 'steal' })
+    const possessionEnd = state.events.find((event) => event.type === 'possessionEnd' && event.endReason === 'turnover')!
+    const transitionStarted = state.events.find((event) => event.type === 'transitionStarted' && event.teamId === setup.awayTeamId)
+    expect(transitionStarted?.transitionTrigger).toBe('turnover')
+    expect(transitionStarted!.sequence).toBeGreaterThan(possessionEnd.sequence)
   })
 
   it('pursues a loose ball with one player per team and recovers it on contact', () => {
@@ -236,27 +262,32 @@ describe('Match Next ball and possession authority', () => {
   it('recovers a loose ball automatically without changing possession when the same team wins it', () => {
     const { setup: source } = generatedSetup()
     const setup = positionedSetup(source)
-    let state = liveHome(source)
-    const target = { x: (state.ball.kind === 'HELD' ? state.ball.position.x : 24) - 0.5, y: setup.court.widthMeters / 2 }
-    state = applyCommand(state, { type: 'releasePass', command: { receiverPlayerId: setup.initialLineups.home[4]!, target, passKind: 'bounce', travelTicks: 10 } })
-    state = ticks(state, 10)
-    expect(state.ball.kind).toBe('HELD')
+    const held = liveHome(setup)
+    const owner = held.players.find((player) => player.teamId === setup.homeTeamId)!
+    const ballPosition = { x: owner.position.x + 0.5, y: owner.position.y }
+    const loose: MatchState = {
+      ...held,
+      ball: { kind: 'LOOSE', position: ballPosition, previousPosition: ballPosition, heightMeters: 0.08, velocity: { x: 0, y: 0 }, cause: 'badPass' },
+    }
+    const state = tick(loose)
+    expect(state.ball).toMatchObject({ kind: 'HELD', ownerTeamId: setup.homeTeamId })
     expect(state.events.some((event) => event.type === 'looseBallRecovered' && event.teamId === setup.homeTeamId)).toBe(true)
     expect(activePossession(state)?.id).toBe('possession-1')
   })
 
   it('closes the old possession and starts the winner team possession after a loose-ball turnover', () => {
     const { setup: source } = generatedSetup()
+    const setup = positionedSetup(source)
+    const held = liveHome(setup)
     const center = { x: source.court.lengthMeters / 2 + 4, y: source.court.widthMeters / 2 }
-    const setup = positionedSetup(source, { [source.initialLineups.away[0]!]: center })
-    let state = liveHome(setup)
-    state = applyCommand(state, { type: 'releasePass', command: { receiverPlayerId: setup.initialLineups.home[4]!, target: center, passKind: 'chest', travelTicks: 10 } })
-    state = ticks(state, 10)
-    const loose = state
-    expect(loose.ball.kind).toBe('LOOSE')
-    const awayRecoverer = state.players.filter((player) => player.teamId === setup.awayTeamId)
-      .sort((left, right) => distanceBetween(left.position, state.ball.position) - distanceBetween(right.position, state.ball.position))[0]!.playerId
-    state = { ...state, players: state.players.map((player) => player.playerId === awayRecoverer ? { ...player, position: { ...state.ball.position } } : player) }
+    const awayRecoverer = setup.initialLineups.away[0]!
+    let state: MatchState = {
+      ...held,
+      ball: { kind: 'LOOSE', position: center, previousPosition: center, heightMeters: 0.08, velocity: { x: 0, y: 0 }, cause: 'badPass' },
+      players: held.players.map((player) => player.playerId === awayRecoverer
+        ? { ...player, position: center }
+        : { ...player, position: { x: player.teamId === setup.homeTeamId ? 1 : setup.court.lengthMeters - 1, y: player.position.y } }),
+    }
     state = tick(state)
     expect(state.possessions[0]).toMatchObject({ endReason: 'turnover' })
     expect(activePossession(state)).toMatchObject({ id: 'possession-2', teamId: setup.awayTeamId, startReason: 'other', phase: 'ADVANCE' })

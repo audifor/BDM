@@ -16,6 +16,8 @@ The possession lifecycle is:
 
 `opening jump ball or later dead-ball inbound -> possession -> 5OUT setup/advance -> decision/action -> defensive response -> shot, turnover, or reset -> rebound/loose-ball resolution -> transition or next possession`.
 
+Passes remain in flight until their scheduled reception. At that point, a defender who is closer to the live ball than the intended receiver may intercept through the same physical acquisition rule as explicit interception commands; the canonical interception event closes the old possession, starts the defender's possession, and feeds PBP/stat projections.
+
 M1-M5 do not implement screens/P&R, so this integration does not claim those actions. Existing action chaining supports drive/help/kick-out/catch-and-shoot, and defensive responsibilities keep reacting to the same live positions. Defensive and offensive rebound outcomes establish possession before transition roles act. Period and made-basket inbounds move the inbounder through engine kinematics before releasing the pass.
 
 ## Court presentation and parity
