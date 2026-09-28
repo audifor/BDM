@@ -128,7 +128,8 @@ function updateDrives(state: MatchState): MatchState {
       const onBallId = next.defensiveStructure?.onBallDefenderPlayerId
       const onBall = next.players.find((player) => player.playerId === onBallId)
       const outcome: MatchActionOutcome = onBall && distanceBetween(onBall.position, driver.position) <= 1.4
-        && Math.max(onBall.defense.interior, onBall.defense.pointOfAttack) > (driver.offense.rimAttack + driver.offense.creation) / 2
+        && Math.max(onBall.defense.interior, onBall.defense.pointOfAttack) - onBall.fatigue * 0.05
+          > (driver.offense.rimAttack + driver.offense.creation) / 2 - driver.fatigue * 0.06
         ? 'CONTAINED' : 'FINISH'
       next = resolveAction(next, action.id, outcome)
       next = setPossessionPhase(next, 'SETUP')
@@ -153,7 +154,7 @@ function releaseReadyShots(state: MatchState): MatchState {
     const points = shotValueAt(shooter.position, basket, next)
     const distance = distanceBetween(shooter.position, basket)
     const contest = estimateShotContest(next, shooter.playerId)
-    const probability = shotMakeProbability(shooter.offense.shooting, distance, points, contest.score)
+    const probability = shotMakeProbability(shooter.offense.shooting, distance, points, contest.score, shooter.fatigue)
     const drawResult = draw(next.rng, 'outcome')
     next = { ...next, rng: drawResult.state }
     const arrivalT = next.t + 6

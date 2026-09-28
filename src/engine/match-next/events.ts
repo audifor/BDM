@@ -1,4 +1,5 @@
 import type { MatchNextEvent, MatchNextEventType, MatchState } from './state'
+import { addMatchEventFatigue } from './playerDynamicState'
 
 type EventDetails = Partial<Omit<MatchNextEvent, 'sequence' | 't' | 'period' | 'gameClockTenths' | 'type'>>
 
@@ -11,5 +12,5 @@ export function emitEvent(state: MatchState, type: MatchNextEventType, details: 
     type,
     ...details,
   }
-  return { ...state, events: [...state.events, event], nextEventSequence: state.nextEventSequence + 1 }
+  return addMatchEventFatigue({ ...state, events: [...state.events, event], nextEventSequence: state.nextEventSequence + 1 }, event)
 }

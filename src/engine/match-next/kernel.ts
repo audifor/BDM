@@ -12,6 +12,7 @@ import { attackingBasketForTeam } from './structure/FiveOutStructure'
 import { reconcileManDefense } from './defense/ManDefense'
 import { reconcileActions } from './actions/ActionCore'
 import { clearExpiredReboundTransition, finishStoppedTransition, reconcileReboundTransition, securePhysicalRebound } from './transition/ReboundTransition'
+import { advanceMatchSessionFatigue } from './playerDynamicState'
 
 export type MatchNextCommand =
   | { readonly type: 'startOpeningJumpBall'; readonly homeLineup: readonly PlayerId[]; readonly awayLineup: readonly PlayerId[] }
@@ -50,7 +51,7 @@ export function tick(state: MatchState): MatchState {
   const t = state.t + 1
   const gameClockTenths = state.clock.gameRunning ? Math.max(0, state.gameClockTenths - 1) : state.gameClockTenths
   const shotClockTenths = state.clock.shotRunning && state.shotClockTenths !== null ? Math.max(0, state.shotClockTenths - 1) : state.shotClockTenths
-  let next: MatchState = { ...state, t, gameClockTenths, shotClockTenths }
+  let next: MatchState = advanceMatchSessionFatigue({ ...state, t, gameClockTenths, shotClockTenths }, state.clock.gameRunning)
   next = advanceBallAtTick(next)
 
   if (state.clock.gameRunning && gameClockTenths === 0) return finishPeriod(next)

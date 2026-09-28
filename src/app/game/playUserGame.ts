@@ -21,6 +21,7 @@ import { getAvailablePlayersForCompetition } from '@/engine/eligibility'
 import { MINIMUM_MATCH_SQUAD_SIZE } from '@/engine/match'
 import { LiveMatchController } from './LiveMatchController'
 import { getEffectiveTacticalPlan, getGamePlan } from './TacticalPlanning'
+import { applyPlayerMatchConsequences, initialMatchFatigue } from './PlayerMatchConsequences'
 
 export class PlayUserGameError extends Error {
   public constructor(message: string, public readonly code: 'INSUFFICIENT_AVAILABLE_PLAYERS' | 'INVALID_MATCH_CONTEXT' = 'INVALID_MATCH_CONTEXT') {
@@ -104,6 +105,7 @@ export function prepareMatchOptions(world: GameWorld, game: Game, tacticalPlans?
     awayStrength: calculateTeamStrength(world, game.awayTeamId, game.date, squads.away),
     lineups,
     squads,
+    initialFatigueByPlayerId: initialMatchFatigue(squads, world.careerFatigueByPlayerId),
     playerProfiles,
     homeRotationPlan: resolveRotationPlan(world, game, game.homeTeamId, squads.home, lineups.home, homeGamePlan?.rotationOverride ?? world.rotationPlansByTeamId[game.homeTeamId]),
     awayRotationPlan: resolveRotationPlan(world, game, game.awayTeamId, squads.away, lineups.away, awayGamePlan?.rotationOverride ?? world.rotationPlansByTeamId[game.awayTeamId]),
@@ -140,7 +142,8 @@ function availableSquads(world: GameWorld, game: Game) {
 
 /** Applies a completed viewer simulation to GameWorld exactly through the result boundary. */
 export function completeMatch(world: GameWorld, simulation: MatchSimulation): GameWorld {
-  return applyPostMatchInjuries(applyCompletedMatch(world, simulation), simulation.gameId)
+  const completed = applyCompletedMatch(world, simulation)
+  return applyPostMatchInjuries(applyPlayerMatchConsequences(world, completed, simulation), simulation.gameId)
 }
 
 /** Instant Result uses the same detailed simulation as MatchViewer, then applies it immediately. */

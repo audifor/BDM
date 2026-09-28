@@ -44,8 +44,9 @@ export function stepPlayerKinematics(
   const dy = intent.target.y - player.position.y
   const distance = Math.hypot(dx, dy)
   const speed = Math.hypot(player.velocity.x, player.velocity.y)
+  const fatigueFactor = 1 - Math.max(0, Math.min(100, player.fatigue)) * 0.0012
   const braking = Math.max(0.01, profile.brakingMps2)
-  const maxSpeed = Math.max(0, profile.maxSpeedMps) * MOVEMENT_URGENCY_FACTORS[intent.urgency]
+  const maxSpeed = Math.max(0, profile.maxSpeedMps) * fatigueFactor * MOVEMENT_URGENCY_FACTORS[intent.urgency]
   const remaining = Math.max(0, distance - TARGET_ARRIVAL_TOLERANCE_METERS)
   const brakingSpeed = distance <= TARGET_ARRIVAL_TOLERANCE_METERS
     ? 0
@@ -69,7 +70,7 @@ export function stepPlayerKinematics(
 
   const deltaVelocity = { x: desiredVelocity.x - player.velocity.x, y: desiredVelocity.y - player.velocity.y }
   const deltaMagnitude = Math.hypot(deltaVelocity.x, deltaVelocity.y)
-  const maxDelta = (desiredSpeed < speed ? braking : Math.max(0.01, profile.accelerationMps2)) * MOVEMENT_DT_SECONDS
+  const maxDelta = (desiredSpeed < speed ? braking : Math.max(0.01, profile.accelerationMps2) * fatigueFactor) * MOVEMENT_DT_SECONDS
   const scale = deltaMagnitude > maxDelta && deltaMagnitude > 0 ? maxDelta / deltaMagnitude : 1
   let velocity = { x: player.velocity.x + deltaVelocity.x * scale, y: player.velocity.y + deltaVelocity.y * scale }
   let nextPosition = {

@@ -1,4 +1,5 @@
 export * from './setup'
+export { careerFatigueToMatchSession, matchSessionFatigueDeltaToCareer, matchEventFatigueIncrement } from './playerDynamicState'
 export * from './rng'
 export * from './ball/BallState'
 export * from './ball/BallTransitions'

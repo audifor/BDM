@@ -20,6 +20,8 @@ export interface MatchNextPlayerProfile {
   readonly passing?: { readonly accuracy: number; readonly vision: number; readonly timing: number }
   readonly defense: { readonly pointOfAttack: number; readonly interior: number; readonly mobility: number; readonly steal?: number }
   readonly rebounding: { readonly impact: number }
+  /** Compact, derived pre-match condition; never a Player Truth rating. */
+  readonly dynamicState?: { readonly careerFatigue: number }
 }
 
 export interface MatchNextTacticalPlan {
@@ -63,6 +65,7 @@ export function validateMatchSetup(setup: MatchSetup): void {
   const profiles = new Map<string, MatchNextPlayerProfile>()
   for (const profile of setup.players) {
     if (profiles.has(profile.playerId)) throw new Error(`Duplicate player profile: ${profile.playerId}`)
+    if (profile.dynamicState !== undefined && (!Number.isFinite(profile.dynamicState.careerFatigue) || profile.dynamicState.careerFatigue < 0 || profile.dynamicState.careerFatigue > 100)) throw new Error(`Player ${profile.playerId} has invalid career fatigue`)
     for (const field of ['maxSpeedMps', 'accelerationMps2', 'brakingMps2'] as const) {
       if (!Number.isFinite(profile.kinematics[field]) || profile.kinematics[field] <= 0) throw new Error(`Player ${profile.playerId} has invalid kinematics ${field}`)
     }

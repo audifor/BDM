@@ -8,6 +8,7 @@ import type { PlayerResponsibility, StructuralDecision } from './responsibility/
 import { attackingBasketForTeam, type OffensiveStructureState } from './structure/FiveOutStructure'
 import type { DefensiveMatchupOverride } from './setup'
 import type { MatchActionState, MatchDecision } from './actions/ActionState'
+import { careerFatigueToMatchSession } from './playerDynamicState'
 
 export type DefensiveAssignmentSource = 'INITIAL' | 'OVERRIDE' | 'STRUCTURAL_REASSIGNMENT'
 
@@ -156,6 +157,10 @@ export interface MatchPlayerState {
   readonly playerId: PlayerId
   readonly teamId: TeamId
   readonly active: true
+  /** Transient fatigue: session baseline and current value, separate from Player Truth. */
+  readonly preMatchCareerFatigue: number
+  readonly initialFatigue: number
+  readonly fatigue: number
   readonly position: CourtPosition
   readonly velocity: CourtPosition
   readonly facing: CourtPosition
@@ -171,7 +176,7 @@ export interface MatchPlayerState {
 }
 
 export interface MatchState {
-  readonly version: 3
+  readonly version: 4
   readonly gameId: GameId
   readonly homeTeamId: TeamId
   readonly awayTeamId: TeamId
@@ -223,20 +228,24 @@ export function createInitialMatchState(setup: MatchSetup): MatchState {
       const position = { ...(initialPosition(playerId) ?? neutralFoundationPosition('home', slot, setup.court)) }
       const basket = attackingBasketForTeam(setup.homeTeamId, setup.homeTeamId, 1, setup.court)
       const profile = setup.players.find((entry) => entry.playerId === playerId)!
-      return { playerId, teamId: setup.homeTeamId, active: true as const, position, velocity: { x: 0, y: 0 }, facing: unitVector({ x: basket.x - position.x, y: basket.y - position.y }), primaryPosition: profile.primaryPosition, heightCm: profile.physical.heightCm, standingReachCm: profile.physical.standingReachCm, reboundingImpact: profile.rebounding.impact, defensiveMobility: profile.defense.mobility, offense: { ...profile.offense }, passing: { accuracy: profile.passing?.accuracy ?? 50, vision: profile.passing?.vision ?? 50, timing: profile.passing?.timing ?? 50 }, defense: { ...profile.defense }, kinematics: { ...profile.kinematics } }
+      const preMatchCareerFatigue = profile.dynamicState?.careerFatigue ?? 0
+      const initialFatigue = careerFatigueToMatchSession(preMatchCareerFatigue)
+      return { playerId, teamId: setup.homeTeamId, active: true as const, preMatchCareerFatigue, initialFatigue, fatigue: initialFatigue, position, velocity: { x: 0, y: 0 }, facing: unitVector({ x: basket.x - position.x, y: basket.y - position.y }), primaryPosition: profile.primaryPosition, heightCm: profile.physical.heightCm, standingReachCm: profile.physical.standingReachCm, reboundingImpact: profile.rebounding.impact, defensiveMobility: profile.defense.mobility, offense: { ...profile.offense }, passing: { accuracy: profile.passing?.accuracy ?? 50, vision: profile.passing?.vision ?? 50, timing: profile.passing?.timing ?? 50 }, defense: { ...profile.defense }, kinematics: { ...profile.kinematics } }
     }),
     ...setup.initialLineups.away.map((playerId, slot) => {
       const position = { ...(initialPosition(playerId) ?? neutralFoundationPosition('away', slot, setup.court)) }
       const basket = attackingBasketForTeam(setup.awayTeamId, setup.homeTeamId, 1, setup.court)
       const profile = setup.players.find((entry) => entry.playerId === playerId)!
-      return { playerId, teamId: setup.awayTeamId, active: true as const, position, velocity: { x: 0, y: 0 }, facing: unitVector({ x: basket.x - position.x, y: basket.y - position.y }), primaryPosition: profile.primaryPosition, heightCm: profile.physical.heightCm, standingReachCm: profile.physical.standingReachCm, reboundingImpact: profile.rebounding.impact, defensiveMobility: profile.defense.mobility, offense: { ...profile.offense }, passing: { accuracy: profile.passing?.accuracy ?? 50, vision: profile.passing?.vision ?? 50, timing: profile.passing?.timing ?? 50 }, defense: { ...profile.defense }, kinematics: { ...profile.kinematics } }
+      const preMatchCareerFatigue = profile.dynamicState?.careerFatigue ?? 0
+      const initialFatigue = careerFatigueToMatchSession(preMatchCareerFatigue)
+      return { playerId, teamId: setup.awayTeamId, active: true as const, preMatchCareerFatigue, initialFatigue, fatigue: initialFatigue, position, velocity: { x: 0, y: 0 }, facing: unitVector({ x: basket.x - position.x, y: basket.y - position.y }), primaryPosition: profile.primaryPosition, heightCm: profile.physical.heightCm, standingReachCm: profile.physical.standingReachCm, reboundingImpact: profile.rebounding.impact, defensiveMobility: profile.defense.mobility, offense: { ...profile.offense }, passing: { accuracy: profile.passing?.accuracy ?? 50, vision: profile.passing?.vision ?? 50, timing: profile.passing?.timing ?? 50 }, defense: { ...profile.defense }, kinematics: { ...profile.kinematics } }
     }),
   ]
   const position = { x: setup.court.lengthMeters / 2, y: setup.court.widthMeters / 2 }
   const gameClockTenths = setup.clockRules.periodSeconds * 10
   const initial: MatchNextEvent = { sequence: 1, t: 0, period: 1, gameClockTenths, type: 'periodStart' }
   return {
-    version: 3,
+    version: 4,
     gameId: setup.gameId,
     homeTeamId: setup.homeTeamId,
     awayTeamId: setup.awayTeamId,

@@ -100,7 +100,7 @@ function reconcileRebound(input: MatchState): MatchState {
   const defendingPlayers = input.players.filter((player) => player.active && player.teamId === defendingTeamId)
   const reboundTarget = rebound.target
   const crashers = shootingPlayers
-    .map((player) => ({ player, score: distanceBetween(player.position, rebound.position) - player.reboundingImpact * 0.008 - player.standingReachCm * 0.001 }))
+    .map((player) => ({ player, score: distanceBetween(player.position, rebound.position) - effectiveReboundingImpact(player) * 0.008 - player.standingReachCm * 0.001 }))
     .sort((left, right) => left.score - right.score || comparePlayerId(left.player, right.player))
     .slice(0, REBOUND_PURSUERS_PER_TEAM)
   const crasherIds = new Set(crashers.map(({ player }) => player.playerId))
@@ -448,12 +448,13 @@ function reboundSafetyTarget(player: MatchPlayerState, rebound: CourtPosition, a
 function reboundWeight(player: MatchPlayerState, rebound: CourtPosition, basket: CourtPosition, state: MatchState): number {
   const distance = distanceBetween(player.position, rebound)
   const heightAdvantage = (player.standingReachCm - 250) * 0.006
-  const ability = (player.reboundingImpact - 50) * 0.012
+  const ability = (effectiveReboundingImpact(player) - 50) * 0.012
   const otherEligible = state.players.filter((candidate) => candidate.teamId !== player.teamId && candidate.active
     && distanceBetween(candidate.position, rebound) <= 1)
   const position = otherEligible.length > 0 && distanceBetween(player.position, basket) < Math.min(...otherEligible.map((candidate) => distanceBetween(candidate.position, basket))) ? 0.16 : 0
   return Math.exp(ability + heightAdvantage + position - distance * 1.6)
 }
+
 
 function assignedAttackerForDefender(state: MatchState, defenderPlayerId: PlayerId): MatchPlayerState | undefined {
   const attackerId = state.defensiveStructure?.assignments.find((item) => item.defenderPlayerId === defenderPlayerId)?.attackerPlayerId
@@ -489,4 +490,8 @@ function clamp(value: number, minimum: number, maximum: number): number {
 
 function comparePlayerId(left: MatchPlayerState, right: MatchPlayerState): number {
   return String(left.playerId).localeCompare(String(right.playerId))
+}
+
+function effectiveReboundingImpact(player: MatchPlayerState): number {
+  return player.reboundingImpact - player.fatigue * 0.08
 }

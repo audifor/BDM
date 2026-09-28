@@ -22,12 +22,14 @@ export function prepareMatchSetup(
       physical: { ...profile.physical }, kinematics: { ...profile.kinematics }, offense: { ...profile.offense },
       passing: profile.passing === undefined ? undefined : { ...profile.passing },
       defense: { ...profile.defense }, rebounding: { ...profile.rebounding },
+      dynamicState: { careerFatigue: world.careerFatigueByPlayerId[profile.playerId] ?? 0 },
     })),
     ...options.playerProfiles.away.map((profile) => ({
       playerId: profile.playerId, teamId: awayTeamId, primaryPosition: profile.primaryPosition,
       physical: { ...profile.physical }, kinematics: { ...profile.kinematics }, offense: { ...profile.offense },
       passing: profile.passing === undefined ? undefined : { ...profile.passing },
       defense: { ...profile.defense }, rebounding: { ...profile.rebounding },
+      dynamicState: { careerFatigue: world.careerFatigueByPlayerId[profile.playerId] ?? 0 },
     })),
   ]
   const resolvedTacticalPlans = options.tacticalPlans ?? {

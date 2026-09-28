@@ -3,6 +3,9 @@ import { calculateStandings } from '@/engine/competition/standings'
 import { getGamesToday, getScheduledGamesToday, getUserTeam } from '@/engine/calendar'
 import { calculateActiveLineups } from '@/engine/match'
 import { describe, expect, it } from 'vitest'
+import { updateGameWorld } from '@/domain/world'
+import { calculateFatigueAtEvents } from '@/engine/match'
+import { createMatchSession } from '@/engine/match'
 
 import {
   advanceGameDay,
@@ -14,6 +17,7 @@ import {
   completeMatch,
   simulateRemainingGamesToday,
 } from './index'
+import { prepareMatchOptions } from './playUserGame'
 
 describe('prototype game application', () => {
   it('creates a playable scheduled world from the fixed prototype configuration', () => {
@@ -54,6 +58,25 @@ describe('prototype game application', () => {
 
     expect(world.games[simulation.gameId]?.status).toBe('scheduled')
     expect(completedWorld.games[simulation.gameId]).toMatchObject({ status: 'completed', result: { homeScore: simulation.finalScore.home, awayScore: simulation.finalScore.away } })
+  })
+
+  it('carries career fatigue into MatchEngine and returns actual legacy match load to the Player world state', () => {
+    const world = createNewGame()
+    const game = getGamesToday(world).find((candidate) => candidate.homeTeamId === getUserTeam(world)?.id)!
+    const starterId = prepareUserMatch(world, undefined, 5678).lineups.home[0]!
+    const fatigueWorld = updateGameWorld(world, { careerFatigueByPlayerId: { ...world.careerFatigueByPlayerId, [starterId]: 40 } })
+    const session = createMatchSession(prepareMatchOptions(fatigueWorld, game, undefined, 5678))
+    const simulation = prepareUserMatch(fatigueWorld, undefined, 5678)
+    const completed = completeMatch(fatigueWorld, simulation)
+    const initialMatchFatigue = 20
+    const finalMatchFatigue = calculateFatigueAtEvents(simulation.lineups, simulation.squads, simulation.homeTeamId, simulation.awayTeamId, simulation.events, { [starterId]: initialMatchFatigue })[starterId]!
+
+    expect(completed.careerFatigueByPlayerId[starterId]).toBeGreaterThan(40)
+    expect(session.state.fatigueByPlayerId[starterId]).toBe(20)
+    expect(completed.developmentStimulusByPlayerId[starterId]!.byRating.stamina).toBeGreaterThan(fatigueWorld.developmentStimulusByPlayerId[starterId]!.byRating.stamina)
+    expect(completed.players[starterId]!.basketball.ratings).toEqual(fatigueWorld.players[starterId]!.basketball.ratings)
+    expect(finalMatchFatigue).toBeGreaterThan(initialMatchFatigue)
+    expect(() => completeMatch(completed, simulation)).toThrow()
   })
 
   it('keeps the completed user result and standings scoped to its canonical competition', () => {

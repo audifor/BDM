@@ -24,7 +24,7 @@ export function estimateShotContest(state: MatchState, shooterPlayerId: PlayerId
       defender,
       distance: distanceBetween(defender.position, shooter.position),
       score: clamp((3.4 - distanceBetween(defender.position, shooter.position)) / 2.8, 0, 1)
-        * (0.6 + clamp(defender.defense.pointOfAttack, 0, 100) / 250),
+        * (0.6 + clamp(defender.defense.pointOfAttack - defender.fatigue * 0.08, 0, 100) / 250),
     }))
     .sort((left, right) => right.score - left.score || String(left.defender.playerId).localeCompare(String(right.defender.playerId)))[0]
   return closest
@@ -32,9 +32,9 @@ export function estimateShotContest(state: MatchState, shooterPlayerId: PlayerId
     : { score: 0, defenderPlayerId: null, distanceMeters: null }
 }
 
-export function shotMakeProbability(shooting: number, distanceMeters: number, points: 2 | 3, contestScore: number): number {
+export function shotMakeProbability(shooting: number, distanceMeters: number, points: 2 | 3, contestScore: number, fatigue = 0): number {
   const base = points === 3 ? 0.35 : distanceMeters <= 2.2 ? 0.66 : distanceMeters <= 5 ? 0.53 : 0.44
-  const ratingEffect = (clamp(shooting, 0, 100) - 50) * 0.004
+  const ratingEffect = (clamp(shooting - clamp(fatigue, 0, 100) * 0.08, 0, 100) - 50) * 0.004
   const longTwoPenalty = points === 2 ? Math.max(0, distanceMeters - 5) * 0.012 : 0
   return clamp(base + ratingEffect - longTwoPenalty - clamp(contestScore, 0, 1) * 0.28, 0.04, 0.82)
 }
@@ -45,7 +45,8 @@ export function passQuality(state: MatchState, passer: MatchPlayerState, receive
     .filter((player) => player.active && player.teamId !== passer.teamId)
     .map((player) => distanceToSegment(player.position, passer.position, receiver.position)), Number.POSITIVE_INFINITY)
   const pressure = clamp((2.1 - laneDistance) / 2.1, 0, 1)
-  return clamp(0.55 + (clamp(average, 0, 100) - 50) * 0.004 - pressure * 0.22, 0.28, 0.94)
+  const effectivePassing = average - passer.fatigue * 0.06
+  return clamp(0.55 + (clamp(effectivePassing, 0, 100) - 50) * 0.004 - pressure * 0.22, 0.28, 0.94)
 }
 
 /** Selects one possession action from current MatchState and the completed action that led here. */

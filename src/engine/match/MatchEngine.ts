@@ -223,6 +223,8 @@ export interface SimulateMatchOptions {
   readonly homeStrength: TeamStrength
   readonly awayStrength: TeamStrength
   readonly squads: MatchSquads
+  /** Initial transient match fatigue projected from canonical player condition. */
+  readonly initialFatigueByPlayerId?: FatigueByPlayerId
   readonly playerProfiles: MatchPlayerProfiles
   readonly lineups: MatchLineups
   readonly random: RandomSource
@@ -336,7 +338,7 @@ export function createMatchSession(options: SimulateMatchOptions): MatchSession 
     state: {
       gameId: game.id, ...(options.matchSeed === undefined ? {} : { matchSeed: options.matchSeed }), homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId,
       initialLineups: options.lineups, activeLineups: options.lineups, squads: options.squads,
-      fatigueByPlayerId: createInitialFatigue(options.squads),
+      fatigueByPlayerId: createInitialFatigue(options.squads, options.initialFatigueByPlayerId),
       playerProfiles: options.playerProfiles, spatial, coachingState: { home: { currentTacticalPlan: clonePlan(options.tacticalPlans?.home ?? createDefaultTacticalPlan()) }, away: { currentTacticalPlan: clonePlan(options.tacticalPlans?.away ?? createDefaultTacticalPlan()) } }, defensiveMatchups:options.defensiveMatchups??{home:[],away:[]},
       homeStrength: options.homeStrength, awayStrength: options.awayStrength, clockRules, openingTeamId,
       period: 1, clockSecondsRemaining: clockRules.periodSeconds, possessionDurationApplied: false, homeScore: 0, awayScore: 0,
