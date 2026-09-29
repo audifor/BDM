@@ -209,16 +209,17 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
             {freeAgentOffers.map((offer) => <article key={offer.id} aria-label={`${offer.outcome.replaceAll('_', ' ').toLowerCase()} ${offer.playerName ?? 'no preferred player'}`}>
               {offer.outcome === 'FREE_AGENT_OFFER' && <>
                 <strong>Preferred player: {offer.playerName}</strong>
+                <div>Contact readiness: {offer.contactReadiness.replaceAll('_', ' ').toLowerCase()} · contact authority: {offer.contactAuthority.toLowerCase()}</div>
                 <div>Prepared salary: {offer.preparedSalary === undefined ? 'unknown' : `${offer.preparedSalary.value.toLocaleString()} · expected market signal · ${offer.preparedSalary.source.toLowerCase()} · confidence ${offer.preparedSalary.confidence}%`}</div>
                 <div>Term: {offer.expectedTermYears === undefined ? 'unknown' : `expected ${offer.expectedTermYears.value} years`} · selected offer term: unknown</div>
                 <div>Role: unknown · Agent fee: unknown</div>
                 <div>Player interest: {offer.playerInterest === undefined ? 'unknown' : `${offer.playerInterest.value} · ${offer.playerInterest.source.toLowerCase()} · confidence ${offer.playerInterest.confidence}%`}</div>
                 <div>Current payroll affordability: {offer.payrollAffordability.toLowerCase()} · BS10B affordability: {offer.bs10bAffordability?.replaceAll('_', ' ').toLowerCase() ?? 'unknown'} · Finance V2: {offer.financeV2Context?.replaceAll('_', ' ').toLowerCase() ?? 'unknown'}</div>
                 <div>Transaction responsibility: {offer.transactionResponsibility.status.replaceAll('_', ' ').toLowerCase()}{offer.transactionResponsibility.mode === undefined ? '' : ` · ${offer.transactionResponsibility.mode}`}{offer.transactionResponsibility.holder === undefined ? '' : ` · ${offer.transactionResponsibility.holder.name} (${offer.transactionResponsibility.holder.role})`}</div>
-                <div>Governance authority: {offer.governanceAuthority.toLowerCase()} · Readiness: {offer.readiness.replaceAll('_', ' ').toLowerCase()}</div>
+                <div>Signing Governance: {offer.governanceAuthority.toLowerCase()} · Formal offer readiness: {offer.readiness.replaceAll('_', ' ').toLowerCase()}</div>
               </>}
               {offer.outcome !== 'FREE_AGENT_OFFER' && <strong>{offer.outcome === 'TRADE_ENQUIRY_ONLY' ? 'Trade enquiry remains read-only' : 'No free-agent offer preparation'}: {offer.blockers.join(', ').replaceAll('_', ' ').toLowerCase()}</strong>}
-              {offer.existingNegotiation !== undefined && <div>Existing negotiation: {offer.existingNegotiation.status.toLowerCase()} · duplicate opening blocked</div>}
+              {offer.existingNegotiation !== undefined && <div>Existing lifecycle record: {offer.existingNegotiation.status.toLowerCase()} · {offer.existingNegotiation.kind === 'ACTIVE' ? 'active team/player attempt blocks another' : 'same attempt is idempotently recognized'}</div>}
               {offer.missingInformation.length > 0 && <div>Missing: {offer.missingInformation.map((item) => item.replaceAll('_', ' ').toLowerCase()).join(', ')}</div>}
               {offer.blockers.length > 0 && offer.outcome === 'FREE_AGENT_OFFER' && <div>Blockers: {offer.blockers.map((item) => item.replaceAll('_', ' ').toLowerCase()).join(', ')}</div>}
             </article>)}

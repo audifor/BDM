@@ -12,6 +12,7 @@ import { serializeGameWorldV1 } from './GameWorldSaveV1'
 import { deserializeGameWorldSave, deserializeGameWorldV2, migrateGameWorldSaveV1ToV2, parseCanonicalRatingsV2, parsePlayerTendenciesV2, serializeGameWorldV2 } from './GameWorldSaveV2'
 import { ensurePlayerKnowledge } from '@/engine/world'
 import { setLineupSlot } from '@/engine/tactics/LineupEngine'
+import { createNegotiationContact } from '@/domain/market'
 
 const savedAt = '2032-10-01T00:00:00.000Z'
 describe('GameWorldSaveV2', () => {
@@ -39,6 +40,21 @@ describe('GameWorldSaveV2', () => {
     expect(loaded.lineupsByTeamId[team.id]).toEqual(world.lineupsByTeamId[team.id])
     expect(loaded.lineupsByTeamId[team.id]!.starters.PG).toBe(first)
     expect(loaded.lineupsByTeamId[team.id]!.bench.B1).toBe(second)
+  })
+  it('round-trips a term-free contact while preserving legacy formal-offer records', () => {
+    const base = createNewGame(); const team = Object.values(base.teams)[0]!; const [player, legacyPlayer] = Object.values(base.players)
+    const oldPlayer = legacyPlayer!
+    const contact = createNegotiationContact({
+      organizationId: team.organizationId, teamId: team.id, playerId: player.id,
+      startedOn: base.currentDate, actionKey: 'contact-save-test',
+      responsibleActor: { kind: 'USER' }, sourcePlanId: 'plan-save-test', sourceProposalId: 'proposal-save-test',
+    })
+    const formalOffer = { id: 'negotiation:legacy-offer', organizationId: team.organizationId, playerId: oldPlayer.id, salary: 650_000, years: 2, role: 'ROTATION' as const, agentFee: 1, status: 'OPEN' as const, round: 0 }
+    const world = updateGameWorld(base, { negotiations: [contact, formalOffer] })
+    const loaded = deserializeGameWorldV2(serializeGameWorldV2(world, savedAt))
+    expect(loaded.negotiationsById[contact.id]).toEqual(contact)
+    expect(loaded.negotiationsById[contact.id]).not.toHaveProperty('salary')
+    expect(loaded.negotiationsById[formalOffer.id]).toEqual(formalOffer)
   })
   it('migrates a V1 envelope deterministically without mutating it', () => {
     const v1 = serializeGameWorldV1(ensurePlayerKnowledge(createNewGame()), savedAt); const snapshot = JSON.stringify(v1)

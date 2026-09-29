@@ -100,7 +100,7 @@ export function evaluateSimulationBreakpoints(world: GameWorld, context: Simulat
   }))
 
   if (userTeam !== undefined) {
-    for (const negotiation of Object.values(world.negotiationsById).filter((item) => item.organizationId === userTeam.organizationId && (item.status === 'OPEN' || item.status === 'COUNTERED'))) candidates.push(candidate({
+    for (const negotiation of Object.values(world.negotiationsById).filter((item) => item.organizationId === userTeam.organizationId && (item.status === 'CONTACTED' || item.status === 'OPEN' || item.status === 'COUNTERED'))) candidates.push(candidate({
       // No current Market response command/detail surface exists for COUNTERED.
       // Keep it observable without making time advancement depend on a future resolver.
       level: negotiation.status === 'COUNTERED' ? 'IMPORTANT' : 'INFO',
@@ -110,7 +110,9 @@ export function evaluateSimulationBreakpoints(world: GameWorld, context: Simulat
       route: 'market', actionTarget: { negotiationId: negotiation.id },
       diagnostic: negotiation.status === 'COUNTERED'
         ? `Market negotiation ${negotiation.id} has countered terms awaiting the user's decision.`
-        : `Market negotiation ${negotiation.id} is open and waiting on an external player response.`,
+        : negotiation.status === 'CONTACTED'
+          ? `Market contact ${negotiation.id} is waiting for a response before any formal offer exists.`
+          : `Market negotiation ${negotiation.id} has a formal offer open and is waiting on an external player response.`,
     }))
   }
 

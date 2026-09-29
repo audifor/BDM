@@ -61,7 +61,7 @@ import type { PlayerTransactionId } from '@/domain/ids'
 import { createOrganizationKnowledge, createPlayerKnowledge, type OrganizationKnowledge, type PlayerKnowledgeRecord } from '@/domain/knowledge'
 import { createEvaluatorProfile, type Evidence, type EvaluatorProfile, type EvaluatorReport, type ScoutingAssignment } from '@/domain/scouting'
 import { deriveOrganizationEvaluationPolicy, type OrganizationEvaluationPolicy } from '@/domain/intelligence'
-import type { Agency, Agent, ContractNegotiation, MarketKnowledge, MarketReality, MarketSignal, PlayerRepresentation, RolePromise } from '@/domain/market'
+import { isActiveNegotiation, type Agency, type Agent, type ContractNegotiation, type MarketKnowledge, type MarketReality, type MarketSignal, type PlayerRepresentation, type RolePromise } from '@/domain/market'
 import type { OrganizationId } from '@/domain/ids'
 import type { PlayerKnowledgeId } from '@/domain/ids'
 import { createStaffPerson, createTeamStaffAssignment, staffRoleDefinition, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
@@ -655,6 +655,18 @@ export class GameWorldValidationError extends Error {
   }
 }
 
+function assertActiveNegotiationUniqueness(negotiations: readonly ContractNegotiation[]): void {
+  const active = negotiations.filter(isActiveNegotiation)
+  for (let index = 0; index < active.length; index += 1) {
+    const current = active[index]!
+    const duplicate = active.slice(0, index).find((prior) => prior.playerId === current.playerId
+      && (prior.teamId !== undefined && current.teamId !== undefined
+        ? prior.teamId === current.teamId
+        : prior.organizationId === current.organizationId))
+    if (duplicate !== undefined) throw new GameWorldValidationError(`Multiple active negotiations exist for ${current.teamId ?? current.organizationId} and ${current.playerId}`)
+  }
+}
+
 export function createGameWorld(input: CreateGameWorldInput): GameWorld {
   const teams = input.teams
   const organizations = input.organizations === undefined
@@ -1082,6 +1094,7 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
 }
 
 function validateWorld(world: GameWorld): void {
+  assertActiveNegotiationUniqueness(Object.values(world.negotiationsById))
   requireEntity(world.seasons, world.currentSeasonId, 'Current season')
   requireEntity(world.coaches, world.userCoachId, 'User coach')
   validatePersons(world)

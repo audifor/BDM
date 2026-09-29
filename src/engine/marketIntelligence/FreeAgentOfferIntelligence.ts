@@ -1,4 +1,5 @@
 import type { AgentId, PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
+import { isActiveNegotiation, negotiationIdForOpening } from '@/domain/market'
 import type { ResponsibilityMode } from '@/domain/responsibility'
 import { validateResponsibilityAssignment } from '@/domain/responsibility'
 import type { GameWorld } from '@/domain/world'
@@ -13,11 +14,12 @@ export type NegotiationOpeningReadiness =
   | 'FINANCIAL_BLOCK'
   | 'UNSUPPORTED'
   | 'NEGOTIATION_ALREADY_EXISTS'
-  | 'NEGOTIATION_ID_COLLISION'
+  | 'STALE_PLAN_OR_PROPOSAL'
 
 export type OfferIntelligenceOutcome = 'FREE_AGENT_OFFER' | 'TRADE_ENQUIRY_ONLY' | 'NO_ACTIONABLE_PROPOSAL'
 export type PayrollAffordability = 'AFFORDABLE' | 'OVER_BUDGET' | 'UNKNOWN'
 export type OpeningAuthority = 'AUTHORIZED' | 'REQUIRES_APPROVAL' | 'BLOCKED' | 'UNKNOWN'
+export type ContactReadiness = 'READY_TO_CONTACT' | 'CANDIDATE_NOT_FREE_AGENT' | 'STALE_PLAN_OR_PROPOSAL' | 'ACTIVE_NEGOTIATION_EXISTS' | 'SAME_ATTEMPT_ALREADY_RECORDED'
 export interface NegotiationOpeningReadinessAssessment {
   readonly readiness: NegotiationOpeningReadiness
   readonly missingInformation: readonly string[]
@@ -41,6 +43,9 @@ export interface FreeAgentOfferIntelligence {
   readonly id: string
   readonly outcome: OfferIntelligenceOutcome
   readonly readiness: NegotiationOpeningReadiness
+  /** Factual contact-stage readiness; this does not grant the authority to contact. */
+  readonly contactReadiness: ContactReadiness
+  readonly contactAuthority: OpeningAuthority
   readonly teamId: TeamId
   readonly needId?: string
   readonly sourceProposalId: string
@@ -65,8 +70,8 @@ export interface FreeAgentOfferIntelligence {
   readonly governanceAuthority: OpeningAuthority
   readonly existingNegotiation?: {
     readonly id: string
-    readonly status: 'OPEN' | 'COUNTERED' | 'ACCEPTED' | 'REJECTED'
-    readonly kind: 'ACTIVE' | 'ID_COLLISION'
+    readonly status: 'CONTACTED' | 'OPEN' | 'COUNTERED' | 'ACCEPTED' | 'REJECTED' | 'CLOSED'
+    readonly kind: 'ACTIVE' | 'SAME_ATTEMPT'
   }
   readonly missingInformation: readonly string[]
   readonly blockers: readonly string[]
@@ -86,7 +91,7 @@ export function assessNegotiationOpeningReadiness(input: {
     readonly role: boolean
     readonly agentFee: boolean
   }
-  readonly existingNegotiation: 'NONE' | 'ACTIVE' | 'ID_COLLISION'
+  readonly existingNegotiation: 'NONE' | 'ACTIVE' | 'SAME_ATTEMPT'
   readonly governanceAuthority: OpeningAuthority
   readonly responsibilityOpeningAuthority: OpeningAuthority
 }): NegotiationOpeningReadinessAssessment {
@@ -100,8 +105,8 @@ export function assessNegotiationOpeningReadiness(input: {
     ? 'UNSUPPORTED'
     : input.existingNegotiation === 'ACTIVE'
       ? 'NEGOTIATION_ALREADY_EXISTS'
-      : input.existingNegotiation === 'ID_COLLISION'
-        ? 'NEGOTIATION_ID_COLLISION'
+      : input.existingNegotiation === 'SAME_ATTEMPT'
+        ? 'NEGOTIATION_ALREADY_EXISTS'
         : input.payrollAffordability === 'OVER_BUDGET'
           ? 'FINANCIAL_BLOCK'
           : missingInformation.length > 0
@@ -135,15 +140,31 @@ export function assessFreeAgentOfferIntelligence(world: GameWorld, proposal: Acq
   const payrollAffordability: PayrollAffordability = preparedSalary === undefined
     ? 'UNKNOWN'
     : canTeamAffordAdditionalSalary(world, proposal.teamId, preparedSalary.value) ? 'AFFORDABLE' : 'OVER_BUDGET'
-  const negotiationId = `negotiation:${organizationId}:${playerId}:${world.currentDate}`
-  const activeNegotiation = Object.values(world.negotiationsById).find((item) => item.organizationId === organizationId
+  const openingId = negotiationIdForOpening({ organizationId, teamId: proposal.teamId, playerId, actionKey: proposal.id })
+  const activeNegotiation = Object.values(world.negotiationsById).find((item) => isActiveNegotiation(item)
     && item.playerId === playerId
-    && (item.status === 'OPEN' || item.status === 'COUNTERED'))
-  const idCollision = activeNegotiation === undefined ? world.negotiationsById[negotiationId] : undefined
+    && (item.teamId === proposal.teamId || (item.teamId === undefined && item.organizationId === organizationId)))
+  const sameAttempt = world.negotiationsById[openingId]
+  const existing = activeNegotiation ?? sameAttempt
   const existingNegotiation = activeNegotiation === undefined
-    ? idCollision === undefined ? 'NONE' as const : 'ID_COLLISION' as const
+    ? sameAttempt === undefined ? 'NONE' as const : 'SAME_ATTEMPT' as const
     : 'ACTIVE' as const
   const currentlyFreeAgent = isPlayerFreeAgent(world, playerId)
+  const sourcePlan = proposal.planId === undefined ? undefined : world.gmPlanStatesById[proposal.planId]
+  const currentPlan = proposal.planId === undefined
+    || (sourcePlan !== undefined
+      && sourcePlan.teamId === proposal.teamId
+      && sourcePlan.needId === proposal.needId
+      && sourcePlan.selectedOptionKind === 'EXTERNAL_ACQUISITION')
+  const contactReadiness: ContactReadiness = !currentPlan
+    ? 'STALE_PLAN_OR_PROPOSAL'
+    : !currentlyFreeAgent
+      ? 'CANDIDATE_NOT_FREE_AGENT'
+      : activeNegotiation !== undefined
+        ? 'ACTIVE_NEGOTIATION_EXISTS'
+        : sameAttempt !== undefined
+          ? 'SAME_ATTEMPT_ALREADY_RECORDED'
+        : 'READY_TO_CONTACT'
   const transactionResponsibility = resolveTransactionResponsibility(world, proposal.teamId)
   const readinessAssessment = assessNegotiationOpeningReadiness({
     isCurrentFreeAgent: currentlyFreeAgent,
@@ -158,12 +179,14 @@ export function assessFreeAgentOfferIntelligence(world: GameWorld, proposal: Acq
     governanceAuthority: 'UNKNOWN',
     responsibilityOpeningAuthority: transactionResponsibility.openingAuthority,
   })
+  const offerReadiness = currentPlan ? readinessAssessment.readiness : 'STALE_PLAN_OR_PROPOSAL'
   const missingInformation = [
     ...readinessAssessment.missingInformation,
     ...(expectedTermYears === undefined ? ['EXPECTED_TERM_KNOWLEDGE_UNKNOWN'] : []),
   ]
   const blockers = [
     ...(currentlyFreeAgent ? [] : ['CANDIDATE_NO_LONGER_FREE_AGENT']),
+    ...(currentPlan ? [] : ['STALE_GM_PLAN_OR_PROPOSAL']),
     ...(payrollAffordability === 'OVER_BUDGET' ? ['CURRENT_PLAYER_PAYROLL_EXCEEDS_KNOWN_SALARY_BUDGET'] : []),
     ...(transactionResponsibility.status === 'UNKNOWN' ? ['TRANSACTION_RESPONSIBILITY_UNKNOWN'] : []),
     'TRANSACTION_GOVERNANCE_AUTHORITY_UNKNOWN',
@@ -172,7 +195,9 @@ export function assessFreeAgentOfferIntelligence(world: GameWorld, proposal: Acq
   return Object.freeze({
     id: `free-agent-offer:${proposal.id}`,
     outcome: 'FREE_AGENT_OFFER',
-    readiness: readinessAssessment.readiness,
+    readiness: offerReadiness,
+    contactReadiness,
+    contactAuthority: 'UNKNOWN',
     teamId: proposal.teamId,
     ...(proposal.needId === undefined ? {} : { needId: proposal.needId }),
     sourceProposalId: proposal.id,
@@ -189,10 +214,10 @@ export function assessFreeAgentOfferIntelligence(world: GameWorld, proposal: Acq
     ...(proposal.knownPlayerInterest === undefined ? {} : { playerInterest: proposal.knownPlayerInterest }),
     transactionResponsibility,
     governanceAuthority: 'UNKNOWN',
-    ...(activeNegotiation === undefined && idCollision === undefined ? {} : { existingNegotiation: {
-      id: (activeNegotiation ?? idCollision)!.id,
-      status: (activeNegotiation ?? idCollision)!.status,
-      kind: activeNegotiation === undefined ? 'ID_COLLISION' as const : 'ACTIVE' as const,
+    ...(existing === undefined ? {} : { existingNegotiation: {
+      id: existing.id,
+      status: existing.status,
+      kind: activeNegotiation === undefined ? 'SAME_ATTEMPT' as const : 'ACTIVE' as const,
     } }),
     missingInformation: Object.freeze(missingInformation),
     blockers: Object.freeze(blockers),
@@ -224,6 +249,8 @@ function nonFreeAgentOutcome(
     payrollAffordability: 'UNKNOWN',
     transactionResponsibility: { kind: 'recommendSignings' as const, status: 'UNKNOWN' as const, openingAuthority: 'UNKNOWN' as const },
     governanceAuthority: 'UNKNOWN',
+    contactReadiness: 'STALE_PLAN_OR_PROPOSAL',
+    contactAuthority: 'UNKNOWN',
     missingInformation: Object.freeze([]),
     blockers: Object.freeze([reason]),
     reasons: Object.freeze(['BS10D_A_DOES_NOT_PROGRESS_TRADE_OR_NO_ACTION_PROPOSALS']),

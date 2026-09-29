@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { addDays } from '@/domain/date'
 import { updateGameWorld } from '@/domain/world'
+import { createNegotiationContact } from '@/domain/market'
 import { releasePlayer } from '@/app/market'
 import { createGovernanceDecision, createGovernanceDecisionEvent, createGovernanceRequest, createGovernanceRequestEvent } from '@/domain/governance'
 import { applyUserCoachForJob, declineCoachJobOffer } from '@/app/coachCareer/CoachCareerService'
@@ -142,6 +143,10 @@ describe('simulation breakpoints', () => {
   it('keeps a user-owned market counteroffer visible without hard-locking when no resolver exists', () => {
     const base = createAcbTestGame()
     const userTeam = Object.values(base.teams).find((team) => team.coachId === base.userCoachId)!
+    const contactedPlayer = Object.values(base.players)[0]!
+    const contact = createNegotiationContact({ organizationId: userTeam.organizationId, teamId: userTeam.id, playerId: contactedPlayer.id, startedOn: base.currentDate, actionKey: 'contact-breakpoint', responsibleActor: { kind: 'USER' } })
+    const contactedWorld = updateGameWorld(base, { negotiations: [contact] })
+    expect(evaluateSimulationBreakpoints(contactedWorld)).toMatchObject({ mayAdvance: true, breakpoint: { level: 'INFO', reason: 'marketNegotiationAwaitingExternalResponse', diagnostic: expect.stringContaining('before any formal offer exists') } })
     const negotiation = { id: 'negotiation:user-test', organizationId: userTeam.organizationId, playerId: Object.values(base.players)[0]!.id, salary: 100_000, years: 1, role: 'ROTATION' as const, agentFee: 0, status: 'OPEN' as const, round: 0 }
     const openWorld = updateGameWorld(base, { negotiations: [negotiation] })
     expect(evaluateSimulationBreakpoints(openWorld)).toMatchObject({ mayAdvance: true, breakpoint: { level: 'INFO', reason: 'marketNegotiationAwaitingExternalResponse' } })

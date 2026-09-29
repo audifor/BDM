@@ -1,7 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
-import { releasePlayer } from '@/app/market'
+import { releasePlayer, signFreeAgent } from '@/app/market'
 import { staffPersonIdFromString, teamStaffAssignmentIdFromString } from '@/domain/ids'
+import { createNegotiationContact } from '@/domain/market'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import type { GameWorld } from '@/domain/world'
 import { canTeamAffordAdditionalSalary, getEcosystemForTeam, getTeamFinancialSnapshot, updateGameWorld } from '@/domain/world'
@@ -55,6 +56,8 @@ describe('FreeAgentOfferIntelligence', () => {
     expect(result.outcome).toBe('FREE_AGENT_OFFER')
     expect(result.sourceProposalId).toBe(proposal.id)
     expect(result.playerId).toBe(proposal.preferredCandidate?.playerId)
+    expect(result.contactReadiness).toBe('READY_TO_CONTACT')
+    expect(result.contactAuthority).toBe('UNKNOWN')
     expect(result.preparedSalary).toMatchObject({ value: 650_000, source: 'AGENT', confidence: 75, assessedAt: base.currentDate })
     expect(result.playerInterest?.value).toBe(61)
     expect(result.readiness).toBe('MORE_INFORMATION_REQUIRED')
@@ -147,13 +150,33 @@ describe('FreeAgentOfferIntelligence', () => {
     expect(result.existingNegotiation).toMatchObject({ id, status: 'OPEN', kind: 'ACTIVE' })
   })
 
-  it('detects same-day negotiation ID collision even when the earlier negotiation closed', () => {
+  it('does not let a closed historical legacy ID block a later idempotent attempt', () => {
     const organizationId = base.teams[teamId]!.organizationId
     const id = `negotiation:${organizationId}:${playerId}:${base.currentDate}`
     const world = updateGameWorld(base, { negotiations: [{ id, organizationId, playerId, salary: 650_000, years: 2, role: 'ROTATION', agentFee: 1, status: 'REJECTED', round: 1 }] })
     const result = assessFreeAgentOfferIntelligence(world, proposal)
-    expect(result.readiness).toBe('NEGOTIATION_ID_COLLISION')
-    expect(result.existingNegotiation?.kind).toBe('ID_COLLISION')
+    expect(result.readiness).toBe('MORE_INFORMATION_REQUIRED')
+    expect(result.existingNegotiation).toBeUndefined()
+  })
+
+  it('treats an existing contact as the one active team/player negotiation', () => {
+    const organizationId = base.teams[teamId]!.organizationId
+    const contact = createNegotiationContact({ organizationId, teamId, playerId, startedOn: base.currentDate, actionKey: proposal.id, ...(proposal.planId === undefined ? {} : { sourcePlanId: proposal.planId }), sourceProposalId: proposal.id, responsibleActor: { kind: 'USER' } })
+    const world = updateGameWorld(base, { negotiations: [contact] })
+    const result = assessFreeAgentOfferIntelligence(world, proposal)
+    expect(result.contactReadiness).toBe('ACTIVE_NEGOTIATION_EXISTS')
+    expect(result.readiness).toBe('NEGOTIATION_ALREADY_EXISTS')
+    expect(result.existingNegotiation).toMatchObject({ status: 'CONTACTED', kind: 'ACTIVE' })
+  })
+
+  it('blocks contact readiness when the source plan no longer exists or selects external acquisition', () => {
+    const stale = { ...proposal, planId: 'missing-plan' }
+    expect(assessFreeAgentOfferIntelligence(base, stale)).toMatchObject({ contactReadiness: 'STALE_PLAN_OR_PROPOSAL', readiness: 'STALE_PLAN_OR_PROPOSAL', blockers: expect.arrayContaining(['STALE_GM_PLAN_OR_PROPOSAL']) })
+  })
+
+  it('revalidates free-agent status against current world state instead of the BS10C snapshot', () => {
+    const newlySigned = signFreeAgent(base, teamId, playerId)
+    expect(assessFreeAgentOfferIntelligence(newlySigned, proposal)).toMatchObject({ contactReadiness: 'CANDIDATE_NOT_FREE_AGENT', readiness: 'UNSUPPORTED', blockers: expect.arrayContaining(['CANDIDATE_NO_LONGER_FREE_AGENT']) })
   })
 
   it('keeps player-budget governance separate from transaction authority', () => {
