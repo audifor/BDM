@@ -2,7 +2,8 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { releasePlayer, signFreeAgent } from '@/app/market'
 import { staffPersonIdFromString, teamStaffAssignmentIdFromString } from '@/domain/ids'
-import { createNegotiationContact } from '@/domain/market'
+import { createNegotiationContact, type ContractNegotiation } from '@/domain/market'
+import { createGMPlanState } from '@/domain/gmPlanning'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import type { GameWorld } from '@/domain/world'
 import { canTeamAffordAdditionalSalary, getEcosystemForTeam, getTeamFinancialSnapshot, updateGameWorld } from '@/domain/world'
@@ -12,6 +13,7 @@ import { assessMarketCandidatesForNeed } from './MarketCandidateIntelligence'
 import { assessMarketCandidateFeasibility } from './MarketCandidateFeasibility'
 import { selectAcquisitionProposal } from './AcquisitionProposalIntelligence'
 import { assessFreeAgentOfferIntelligence, assessNegotiationOpeningReadiness } from './FreeAgentOfferIntelligence'
+import { deriveNegotiationAttemptKey, resolveNegotiationContactAuthority } from './NegotiationContactAuthority'
 
 let base: GameWorld
 let teamId: TeamId
@@ -48,6 +50,18 @@ beforeAll(() => {
     throw new Error('Expected BS10C to produce a free-agent approach fixture')
   }
   playerId = proposal.preferredCandidate.playerId
+  const planId = `${teamId}:${makeNeed().id}`
+  proposal = { ...proposal, planId, needId: makeNeed().id }
+  const eligibleAssignment = Object.values(base.teamStaffAssignmentsById).find((item) => item.teamId === teamId && ['generalManager', 'assistantGeneralManager', 'directorOfBasketballOperations', 'sportingDirector'].includes(item.role))
+  const staffId = eligibleAssignment?.staffPersonId ?? staffPersonIdFromString('offer-test:contact-operator')
+  base = updateGameWorld(base, {
+    gmPlanStates: [createGMPlanState({ id: planId, teamId, needId: makeNeed().id, selectedOptionKind: 'EXTERNAL_ACQUISITION', selectedOn: base.currentDate, lastReviewedOn: base.currentDate, selectionReason: 'INITIAL_SELECTION', executionReadinessAtSelection: 'UNKNOWN_AUTHORITY', strategyAtSelection: 'CONTEND', originalOptionPriority: 1 })],
+    ...(eligibleAssignment === undefined ? {
+      staffPeople: [...Object.values(base.staffPeopleById), { id: staffId, identity: { firstName: 'Offer', lastName: 'Operator' }, professional: { attributes: Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 70])) as Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number> } }],
+      teamStaffAssignments: [...Object.values(base.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('offer-test:operator-assignment'), staffPersonId: staffId, teamId, role: 'generalManager', assignedOn: base.currentDate }],
+    } : {}),
+    responsibilities: [...Object.values(base.responsibilitiesById).filter((item) => !(item.teamId === teamId && item.kind === 'initiateNegotiationContact')), { id: `responsibility:${teamId}:initiateNegotiationContact` as never, teamId, kind: 'initiateNegotiationContact', mode: 'delegated', holderStaffId: staffId }],
+  })
 })
 
 describe('FreeAgentOfferIntelligence', () => {
@@ -57,7 +71,9 @@ describe('FreeAgentOfferIntelligence', () => {
     expect(result.sourceProposalId).toBe(proposal.id)
     expect(result.playerId).toBe(proposal.preferredCandidate?.playerId)
     expect(result.contactReadiness).toBe('READY_TO_CONTACT')
-    expect(result.contactAuthority).toBe('UNKNOWN')
+    expect(result.contactAuthority.authorityStatus).toBe('AUTHORIZED')
+    expect(result.contactAuthority.governanceRequirement).toBe('NOT_REQUIRED')
+    expect(result.actionKey).toBeTruthy()
     expect(result.preparedSalary).toMatchObject({ value: 650_000, source: 'AGENT', confidence: 75, assessedAt: base.currentDate })
     expect(result.playerInterest?.value).toBe(61)
     expect(result.readiness).toBe('MORE_INFORMATION_REQUIRED')
@@ -114,10 +130,76 @@ describe('FreeAgentOfferIntelligence', () => {
     expect(result.governanceAuthority).toBe('UNKNOWN')
   })
 
-  it('preserves user-controlled responsibility without inventing a staff holder', () => {
+  it('does not treat an AI team userControlled responsibility as autonomous execution', () => {
     const result = assessFreeAgentOfferIntelligence(base, proposal)
-    expect(result.transactionResponsibility).toMatchObject({ kind: 'recommendSignings', status: 'USER_CONTROLLED', openingAuthority: 'UNKNOWN' })
-    expect(result.transactionResponsibility.holder).toBeUndefined()
+    expect(result.contactAuthority.authorityStatus).toBe('AUTHORIZED')
+    const responsibilityId = `responsibility:${teamId}:initiateNegotiationContact`
+    const withoutContactDelegation = updateGameWorld(base, { responsibilities: [...Object.values(base.responsibilitiesById).filter((item) => item.id !== responsibilityId), { id: responsibilityId as never, teamId, kind: 'initiateNegotiationContact', mode: 'userControlled' }] })
+    expect(resolveNegotiationContactAuthority(withoutContactDelegation, teamId)).toMatchObject({ authorityStatus: 'NO_EXECUTION_OWNER', reasons: ['USER_CONTROLLED_MODE_DOES_NOT_DELEGATE_TO_AI'] })
+    const organizational = updateGameWorld(base, { responsibilities: [...Object.values(base.responsibilitiesById).filter((item) => item.id !== responsibilityId), { id: responsibilityId as never, teamId, kind: 'initiateNegotiationContact', mode: 'organizational' }] })
+    expect(resolveNegotiationContactAuthority(organizational, teamId)).toMatchObject({ authorityStatus: 'NO_EXECUTION_OWNER', reasons: ['ORGANIZATIONAL_MODE_HAS_NO_CONTACT_EXECUTOR'] })
+  })
+
+  it('keeps direct user authority at the application boundary without requiring AI staff authority', () => {
+    const contactResponsibilityId = `responsibility:${teamId}:initiateNegotiationContact`
+    const userWorld = updateGameWorld(base, { userCoachId: base.teams[teamId]!.coachId!, gmPlanStates: [], responsibilities: Object.values(base.responsibilitiesById).filter((item) => item.id !== contactResponsibilityId) })
+    expect(resolveNegotiationContactAuthority(userWorld, teamId)).toMatchObject({ authorityStatus: 'USER_CONTROLLED', governanceRequirement: 'NOT_REQUIRED' })
+  })
+
+  it('resolves AI contact only from a valid delegated execution responsibility, never a title', () => {
+    const aiWorld = base
+    const staffId = Object.values(base.teamStaffAssignmentsById).find((item) => item.teamId === teamId && ['generalManager', 'assistantGeneralManager', 'directorOfBasketballOperations', 'sportingDirector'].includes(item.role))!.staffPersonId
+    const responsibilityId = `responsibility:${teamId}:initiateNegotiationContact`
+    const world = updateGameWorld(aiWorld, {
+      responsibilities: [...Object.values(aiWorld.responsibilitiesById).filter((item) => item.id !== responsibilityId), { id: responsibilityId as never, teamId, kind: 'initiateNegotiationContact', mode: 'delegated', holderStaffId: staffId }],
+    })
+    expect(resolveNegotiationContactAuthority(world, teamId)).toMatchObject({ authorityStatus: 'AUTHORIZED', executionMode: 'delegated', responsibleStaffId: staffId, responsibleRole: 'generalManager', governanceRequirement: 'NOT_REQUIRED' })
+    expect(assessFreeAgentOfferIntelligence(world, proposal).contactReadiness).toBe('READY_TO_CONTACT')
+  })
+
+  it('keeps advisory recommendation and organizational contact ownership from authorizing AI contact', () => {
+    const aiWorld = base
+    const withoutExecution = updateGameWorld(aiWorld, { responsibilities: Object.values(aiWorld.responsibilitiesById).filter((item) => !(item.teamId === teamId && item.kind === 'initiateNegotiationContact')) })
+    const staffId = Object.values(base.teamStaffAssignmentsById).find((item) => item.teamId === teamId && ['generalManager', 'assistantGeneralManager', 'directorOfBasketballOperations', 'sportingDirector'].includes(item.role))!.staffPersonId
+    const recommendationId = `responsibility:${teamId}:recommendSignings`
+    const advisory = updateGameWorld(withoutExecution, { responsibilities: [...Object.values(withoutExecution.responsibilitiesById).filter((item) => item.id !== recommendationId), { id: recommendationId as never, teamId, kind: 'recommendSignings', mode: 'advisory', holderStaffId: staffId }] })
+    const result = assessFreeAgentOfferIntelligence(advisory, proposal)
+    expect(result.transactionResponsibility.kind).toBe('recommendSignings')
+    expect(result.contactAuthority.authorityStatus).toBe('NO_EXECUTION_OWNER')
+    expect(result.contactReadiness).toBe('CONTACT_AUTHORITY_UNAVAILABLE')
+    expect(result.contactAuthority.responsibleStaffId).toBeUndefined()
+  })
+
+  it('blocks an invalid delegated assignment instead of trusting the staff title', () => {
+    const aiWorld = base
+    const staffId = staffPersonIdFromString('offer-test:invalid-contact-operator')
+    const responsibilityId = `responsibility:${teamId}:initiateNegotiationContact`
+    const withStaff = updateGameWorld(aiWorld, {
+      staffPeople: [...Object.values(aiWorld.staffPeopleById), { id: staffId, identity: { firstName: 'Taylor', lastName: 'Invalid' }, professional: { attributes: Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 70])) as Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number> } }],
+      teamStaffAssignments: [...Object.values(aiWorld.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('offer-test:invalid-contact-assignment'), staffPersonId: staffId, teamId, role: 'generalManager', assignedOn: base.currentDate }],
+      responsibilities: [...Object.values(aiWorld.responsibilitiesById).filter((item) => item.id !== responsibilityId), { id: responsibilityId as never, teamId, kind: 'initiateNegotiationContact', mode: 'delegated', holderStaffId: staffId }],
+    })
+    const assignmentId = teamStaffAssignmentIdFromString('offer-test:invalid-contact-assignment')
+    const corrupted = { ...withStaff, teamStaffAssignmentsById: { ...withStaff.teamStaffAssignmentsById, [assignmentId]: { ...withStaff.teamStaffAssignmentsById[assignmentId]!, role: 'analyticsStaff' } } } as GameWorld
+    expect(resolveNegotiationContactAuthority(corrupted, teamId)).toMatchObject({ authorityStatus: 'BLOCKED', blockers: [expect.stringContaining('INVALID_CONTACT_EXECUTION_ASSIGNMENT')] })
+  })
+
+  it('does not require salary, terms, role, or fee for contact readiness', () => {
+    const result = assessFreeAgentOfferIntelligence(base, { ...proposal, knownExpectedSalary: undefined, expectedTermYears: undefined })
+    expect(result.contactReadiness).toBe('READY_TO_CONTACT')
+    expect(result.readiness).toBe('MORE_INFORMATION_REQUIRED')
+    expect(result.missingInformation).toEqual(expect.arrayContaining(['EXPECTED_SALARY_UNKNOWN', 'SELECTED_NEGOTIATION_TERM_AUTHORITY_UNKNOWN', 'INCOMING_CONTRACT_ROLE_AUTHORITY_UNKNOWN', 'OPENING_AGENT_FEE_AUTHORITY_UNKNOWN']))
+  })
+
+  it('derives repeatable action keys and advances the key only after the same attempt closes', () => {
+    const identity = { teamId, playerId, planId: proposal.planId, proposalId: proposal.id }
+    const first = deriveNegotiationAttemptKey(base, identity)
+    expect(deriveNegotiationAttemptKey(base, identity)).toBe(first)
+    const contact = createNegotiationContact({ organizationId: base.teams[teamId]!.organizationId, teamId, playerId, startedOn: base.currentDate, actionKey: first, sourcePlanId: proposal.planId, sourceProposalId: proposal.id, responsibleActor: { kind: 'USER' } })
+    const closedRecord: ContractNegotiation = { id: `${contact.id}:closed-offer`, organizationId: base.teams[teamId]!.organizationId, teamId, playerId, startedOn: base.currentDate, openingKey: contact.openingKey, sourcePlanId: proposal.planId, sourceProposalId: proposal.id, status: 'REJECTED', salary: 650_000, years: 1, role: 'ROTATION', agentFee: 0, round: 1 }
+    const closed = updateGameWorld(base, { negotiations: [closedRecord] })
+    expect(deriveNegotiationAttemptKey(closed, identity)).not.toBe(first)
+    expect(deriveNegotiationAttemptKey(closed, identity)).toBe(deriveNegotiationAttemptKey(closed, identity))
   })
 
   it('leaves responsibility unknown when no current recommendation row exists', () => {
@@ -161,7 +243,8 @@ describe('FreeAgentOfferIntelligence', () => {
 
   it('treats an existing contact as the one active team/player negotiation', () => {
     const organizationId = base.teams[teamId]!.organizationId
-    const contact = createNegotiationContact({ organizationId, teamId, playerId, startedOn: base.currentDate, actionKey: proposal.id, ...(proposal.planId === undefined ? {} : { sourcePlanId: proposal.planId }), sourceProposalId: proposal.id, responsibleActor: { kind: 'USER' } })
+    const actionKey = assessFreeAgentOfferIntelligence(base, proposal).actionKey!
+    const contact = createNegotiationContact({ organizationId, teamId, playerId, startedOn: base.currentDate, actionKey, ...(proposal.planId === undefined ? {} : { sourcePlanId: proposal.planId }), sourceProposalId: proposal.id, responsibleActor: { kind: 'USER' } })
     const world = updateGameWorld(base, { negotiations: [contact] })
     const result = assessFreeAgentOfferIntelligence(world, proposal)
     expect(result.contactReadiness).toBe('ACTIVE_NEGOTIATION_EXISTS')
@@ -175,7 +258,7 @@ describe('FreeAgentOfferIntelligence', () => {
   })
 
   it('revalidates free-agent status against current world state instead of the BS10C snapshot', () => {
-    const newlySigned = signFreeAgent(base, teamId, playerId)
+    const newlySigned = updateGameWorld(signFreeAgent(base, teamId, playerId), { gmPlanStates: [base.gmPlanStatesById[proposal.planId!]!] })
     expect(assessFreeAgentOfferIntelligence(newlySigned, proposal)).toMatchObject({ contactReadiness: 'CANDIDATE_NOT_FREE_AGENT', readiness: 'UNSUPPORTED', blockers: expect.arrayContaining(['CANDIDATE_NO_LONGER_FREE_AGENT']) })
   })
 

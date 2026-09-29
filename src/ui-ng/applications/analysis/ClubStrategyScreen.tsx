@@ -209,7 +209,8 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
             {freeAgentOffers.map((offer) => <article key={offer.id} aria-label={`${offer.outcome.replaceAll('_', ' ').toLowerCase()} ${offer.playerName ?? 'no preferred player'}`}>
               {offer.outcome === 'FREE_AGENT_OFFER' && <>
                 <strong>Preferred player: {offer.playerName}</strong>
-                <div>Contact readiness: {offer.contactReadiness.replaceAll('_', ' ').toLowerCase()} · contact authority: {offer.contactAuthority.toLowerCase()}</div>
+                <div>Contact readiness: {offer.contactReadiness.replaceAll('_', ' ').toLowerCase()} · contact authority: {offer.contactAuthority.authorityStatus.replaceAll('_', ' ').toLowerCase()}</div>
+                <div>Contact owner: {offer.contactAuthority.authorityStatus === 'USER_CONTROLLED' ? 'you' : offer.contactAuthority.responsibleStaffId === undefined ? 'none resolved' : `${offer.contactAuthority.responsibleRole ?? 'staff'} (${offer.contactAuthority.responsibleStaffId})`} · Governance for contact: not required</div>
                 <div>Prepared salary: {offer.preparedSalary === undefined ? 'unknown' : `${offer.preparedSalary.value.toLocaleString()} · expected market signal · ${offer.preparedSalary.source.toLowerCase()} · confidence ${offer.preparedSalary.confidence}%`}</div>
                 <div>Term: {offer.expectedTermYears === undefined ? 'unknown' : `expected ${offer.expectedTermYears.value} years`} · selected offer term: unknown</div>
                 <div>Role: unknown · Agent fee: unknown</div>

@@ -31,7 +31,7 @@ export const RESPONSIBILITY_KINDS = [
   // scouting
   'assignScouts', 'prioritizeRegions', 'oppositionReport', 'prospectReport',
   // roster / personnel
-  'recommendSignings', 'shortlistPlayers', 'contractRecommendation', 'tradeRecommendation',
+  'recommendSignings', 'initiateNegotiationContact', 'shortlistPlayers', 'contractRecommendation', 'tradeRecommendation',
   // recruiting
   'prospectIdentification', 'recruitEvaluation', 'recruitingPriorities',
   // medical
@@ -95,6 +95,7 @@ export const RESPONSIBILITY_REGISTRY: Readonly<Record<ResponsibilityKind, Respon
   prospectReport: def('prospectReport', 'scouting', ['regionalScout', 'collegeScout', 'internationalScout', 'proScout'], 2, ['userControlled', 'advisory', 'organizational']),
 
   recommendSignings: def('recommendSignings', 'roster', ['generalManager', 'assistantGeneralManager', 'directorOfBasketballOperations', 'sportingDirector'], 2, ['userControlled', 'advisory', 'organizational']),
+  initiateNegotiationContact: def('initiateNegotiationContact', 'roster', ['generalManager', 'assistantGeneralManager', 'directorOfBasketballOperations', 'sportingDirector'], 2),
   shortlistPlayers: def('shortlistPlayers', 'roster', ['generalManager', 'assistantGeneralManager', 'analyticsStaff'], 1, ['userControlled', 'advisory', 'organizational']),
   contractRecommendation: def('contractRecommendation', 'roster', ['capContractsSpecialist', 'generalManager', 'assistantGeneralManager'], 2, ['userControlled', 'advisory', 'organizational']),
   tradeRecommendation: def('tradeRecommendation', 'roster', ['generalManager', 'assistantGeneralManager', 'sportingDirector'], 2, ['userControlled', 'advisory', 'organizational']),

@@ -6,6 +6,7 @@ import type { GameWorld } from '@/domain/world'
 import { canTeamAffordAdditionalSalary, getResponsibility, getStaffAssignment, getStaffPerson, isPlayerFreeAgent } from '@/domain/world'
 import type { AcquisitionProposalIntelligence } from './AcquisitionProposalIntelligence'
 import type { Affordability, MarketSignalEvidence } from './MarketCandidateFeasibility'
+import { deriveNegotiationAttemptKey, resolveNegotiationContactAuthority, type NegotiationContactAuthority } from './NegotiationContactAuthority'
 
 export type NegotiationOpeningReadiness =
   | 'READY_TO_OPEN_NEGOTIATION'
@@ -19,7 +20,7 @@ export type NegotiationOpeningReadiness =
 export type OfferIntelligenceOutcome = 'FREE_AGENT_OFFER' | 'TRADE_ENQUIRY_ONLY' | 'NO_ACTIONABLE_PROPOSAL'
 export type PayrollAffordability = 'AFFORDABLE' | 'OVER_BUDGET' | 'UNKNOWN'
 export type OpeningAuthority = 'AUTHORIZED' | 'REQUIRES_APPROVAL' | 'BLOCKED' | 'UNKNOWN'
-export type ContactReadiness = 'READY_TO_CONTACT' | 'CANDIDATE_NOT_FREE_AGENT' | 'STALE_PLAN_OR_PROPOSAL' | 'ACTIVE_NEGOTIATION_EXISTS' | 'SAME_ATTEMPT_ALREADY_RECORDED'
+export type ContactReadiness = 'READY_TO_CONTACT' | 'CANDIDATE_NOT_FREE_AGENT' | 'STALE_PLAN_OR_PROPOSAL' | 'ACTIVE_NEGOTIATION_EXISTS' | 'SAME_ATTEMPT_ALREADY_RECORDED' | 'CONTACT_AUTHORITY_UNAVAILABLE' | 'CONTACT_AUTHORITY_BLOCKED'
 export interface NegotiationOpeningReadinessAssessment {
   readonly readiness: NegotiationOpeningReadiness
   readonly missingInformation: readonly string[]
@@ -45,7 +46,9 @@ export interface FreeAgentOfferIntelligence {
   readonly readiness: NegotiationOpeningReadiness
   /** Factual contact-stage readiness; this does not grant the authority to contact. */
   readonly contactReadiness: ContactReadiness
-  readonly contactAuthority: OpeningAuthority
+  readonly contactAuthority: NegotiationContactAuthority
+  /** Stable future contact identity, derived from the current acquisition attempt and closed history. */
+  readonly actionKey?: string
   readonly teamId: TeamId
   readonly needId?: string
   readonly sourceProposalId: string
@@ -140,22 +143,24 @@ export function assessFreeAgentOfferIntelligence(world: GameWorld, proposal: Acq
   const payrollAffordability: PayrollAffordability = preparedSalary === undefined
     ? 'UNKNOWN'
     : canTeamAffordAdditionalSalary(world, proposal.teamId, preparedSalary.value) ? 'AFFORDABLE' : 'OVER_BUDGET'
-  const openingId = negotiationIdForOpening({ organizationId, teamId: proposal.teamId, playerId, actionKey: proposal.id })
   const activeNegotiation = Object.values(world.negotiationsById).find((item) => isActiveNegotiation(item)
     && item.playerId === playerId
     && (item.teamId === proposal.teamId || (item.teamId === undefined && item.organizationId === organizationId)))
-  const sameAttempt = world.negotiationsById[openingId]
+  const currentlyFreeAgent = isPlayerFreeAgent(world, playerId)
+  const sourcePlan = proposal.planId === undefined ? undefined : world.gmPlanStatesById[proposal.planId]
+  const currentPlan = proposal.planId !== undefined
+    && sourcePlan !== undefined
+      && sourcePlan.teamId === proposal.teamId
+      && sourcePlan.needId === proposal.needId
+      && sourcePlan.selectedOptionKind === 'EXTERNAL_ACQUISITION'
+  const actionKey = currentPlan ? deriveNegotiationAttemptKey(world, { teamId: proposal.teamId, playerId, planId: proposal.planId!, proposalId: proposal.id }) : undefined
+  const openingId = actionKey === undefined ? undefined : negotiationIdForOpening({ organizationId, teamId: proposal.teamId, playerId, actionKey })
+  const sameAttempt = openingId === undefined ? undefined : world.negotiationsById[openingId]
   const existing = activeNegotiation ?? sameAttempt
   const existingNegotiation = activeNegotiation === undefined
     ? sameAttempt === undefined ? 'NONE' as const : 'SAME_ATTEMPT' as const
     : 'ACTIVE' as const
-  const currentlyFreeAgent = isPlayerFreeAgent(world, playerId)
-  const sourcePlan = proposal.planId === undefined ? undefined : world.gmPlanStatesById[proposal.planId]
-  const currentPlan = proposal.planId === undefined
-    || (sourcePlan !== undefined
-      && sourcePlan.teamId === proposal.teamId
-      && sourcePlan.needId === proposal.needId
-      && sourcePlan.selectedOptionKind === 'EXTERNAL_ACQUISITION')
+  const contactAuthority = resolveNegotiationContactAuthority(world, proposal.teamId)
   const contactReadiness: ContactReadiness = !currentPlan
     ? 'STALE_PLAN_OR_PROPOSAL'
     : !currentlyFreeAgent
@@ -164,7 +169,11 @@ export function assessFreeAgentOfferIntelligence(world: GameWorld, proposal: Acq
         ? 'ACTIVE_NEGOTIATION_EXISTS'
         : sameAttempt !== undefined
           ? 'SAME_ATTEMPT_ALREADY_RECORDED'
-        : 'READY_TO_CONTACT'
+          : contactAuthority.authorityStatus === 'AUTHORIZED' || contactAuthority.authorityStatus === 'USER_CONTROLLED'
+            ? 'READY_TO_CONTACT'
+            : contactAuthority.authorityStatus === 'BLOCKED'
+              ? 'CONTACT_AUTHORITY_BLOCKED'
+              : 'CONTACT_AUTHORITY_UNAVAILABLE'
   const transactionResponsibility = resolveTransactionResponsibility(world, proposal.teamId)
   const readinessAssessment = assessNegotiationOpeningReadiness({
     isCurrentFreeAgent: currentlyFreeAgent,
@@ -189,6 +198,7 @@ export function assessFreeAgentOfferIntelligence(world: GameWorld, proposal: Acq
     ...(currentPlan ? [] : ['STALE_GM_PLAN_OR_PROPOSAL']),
     ...(payrollAffordability === 'OVER_BUDGET' ? ['CURRENT_PLAYER_PAYROLL_EXCEEDS_KNOWN_SALARY_BUDGET'] : []),
     ...(transactionResponsibility.status === 'UNKNOWN' ? ['TRANSACTION_RESPONSIBILITY_UNKNOWN'] : []),
+    ...contactAuthority.blockers,
     'TRANSACTION_GOVERNANCE_AUTHORITY_UNKNOWN',
     'NEGOTIATION_OPENING_NOT_REQUESTED_OR_CREATED',
   ]
@@ -197,7 +207,8 @@ export function assessFreeAgentOfferIntelligence(world: GameWorld, proposal: Acq
     outcome: 'FREE_AGENT_OFFER',
     readiness: offerReadiness,
     contactReadiness,
-    contactAuthority: 'UNKNOWN',
+    contactAuthority,
+    ...(actionKey === undefined ? {} : { actionKey }),
     teamId: proposal.teamId,
     ...(proposal.needId === undefined ? {} : { needId: proposal.needId }),
     sourceProposalId: proposal.id,
@@ -250,7 +261,7 @@ function nonFreeAgentOutcome(
     transactionResponsibility: { kind: 'recommendSignings' as const, status: 'UNKNOWN' as const, openingAuthority: 'UNKNOWN' as const },
     governanceAuthority: 'UNKNOWN',
     contactReadiness: 'STALE_PLAN_OR_PROPOSAL',
-    contactAuthority: 'UNKNOWN',
+    contactAuthority: { teamId: proposal.teamId, authorityStatus: 'UNKNOWN' as const, responsibilityKind: 'initiateNegotiationContact' as const, governanceRequirement: 'NOT_REQUIRED' as const, governanceStatus: 'NOT_REQUIRED' as const, reasons: Object.freeze([]), blockers: Object.freeze([reason]) },
     missingInformation: Object.freeze([]),
     blockers: Object.freeze([reason]),
     reasons: Object.freeze(['BS10D_A_DOES_NOT_PROGRESS_TRADE_OR_NO_ACTION_PROPOSALS']),
