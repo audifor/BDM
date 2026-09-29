@@ -1,9 +1,10 @@
-import { consolidateMarketSignal, createNegotiationContact as createNegotiationContactRecord, isActiveNegotiation, negotiationIdForOpening, negotiationOpeningKeyString, type ContractNegotiation, type MarketSignal, type NegotiationContactResponse, type NegotiationOpeningKey, type NegotiationResponsibleActor, type NegotiationRole } from '@/domain/market'
+import { consolidateMarketSignal, createNegotiationContact as createNegotiationContactRecord, isActiveNegotiation, negotiationContactActor, negotiationIdForOpening, negotiationOfferActor, negotiationOpeningKeyString, type ContractNegotiation, type MarketSignal, type NegotiationContactResponse, type NegotiationOpeningKey, type NegotiationResponsibleActor, type NegotiationRole } from '@/domain/market'
 import { agencyIdFromString, agentIdFromString, type OrganizationId, type PlayerId } from '@/domain/ids'
 import { canTeamAffordAdditionalSalary, isPlayerFreeAgent, updateGameWorld, type GameWorld } from '@/domain/world'
 import type { GameDate } from '@/domain/date'
 import type { TeamId } from '@/domain/ids'
 import { resolveNegotiationContactAuthority } from '@/engine/marketIntelligence/NegotiationContactAuthority'
+import { isAuthorizedOfferActor } from './NegotiationOfferAuthority'
 
 export interface CreateNegotiationContactInput {
   readonly organizationId: OrganizationId
@@ -51,6 +52,7 @@ export function createNegotiationContact(world: GameWorld, input: CreateNegotiat
       && existing.organizationId === input.organizationId
       && existing.teamId === input.teamId
       && existing.playerId === input.playerId
+      && sameActor(negotiationContactActor(existing), input.responsibleActor)
       && existing.sourcePlanId === input.sourcePlanId
       && existing.sourceProposalId === input.sourceProposalId) {
       return { status: 'ALREADY_EXISTS', world, contact: existing }
@@ -79,6 +81,11 @@ export function createNegotiationContact(world: GameWorld, input: CreateNegotiat
   })
   const next = updateGameWorld(world, { negotiations: [...Object.values(world.negotiationsById), contact] })
   return { status: 'CREATED', world: next, contact }
+}
+
+function sameActor(existing: NegotiationResponsibleActor | undefined, requested: NegotiationResponsibleActor): boolean {
+  return existing?.kind === requested.kind
+    && (requested.kind !== 'STAFF' || (existing?.kind === 'STAFF' && existing.staffPersonId === requested.staffPersonId))
 }
 
 function validContactActor(world: GameWorld, teamId: TeamId, actor: NegotiationResponsibleActor): boolean {
@@ -146,88 +153,75 @@ export interface OpenNegotiationInput {
   readonly agentId?: import('@/domain/ids').AgentId
   readonly salary: number
   readonly years: number
-  readonly role: NegotiationRole
-  readonly agentFee: number
+  readonly role?: NegotiationRole
+  readonly agentFee?: number
   readonly actionKey: string
-  readonly sourcePlanId?: string
-  readonly sourceProposalId?: string
-  readonly responsibleActor: NegotiationResponsibleActor
+  readonly sourcePlanId: string
+  readonly sourceProposalId: string
+  readonly offerResponsibleActor: NegotiationResponsibleActor
 }
 
-/** Creates only a formal first offer. Contact is an earlier term-free state. */
+/** Advances the exact positive CONTACTED record to a nonbinding formal offer. */
 export function openNegotiation(world: GameWorld, input: OpenNegotiationInput): GameWorld {
   const team = world.teams[input.teamId]
   if (team === undefined || team.organizationId !== input.organizationId) throw new RangeError('Negotiation team does not belong to the organization')
+  if (!isAuthorizedOfferActor(world, input.teamId, input.offerResponsibleActor)) throw new RangeError('Formal offer actor is not authorized for this team')
+  if (!Number.isSafeInteger(input.salary) || input.salary < 1 || input.salary > 100_000_000) throw new RangeError('Formal offer salary is invalid')
+  if (!Number.isSafeInteger(input.years) || input.years < 1) throw new RangeError('Formal offer years are invalid')
+  if (input.agentFee !== undefined && (!Number.isSafeInteger(input.agentFee) || input.agentFee < 0)) throw new RangeError('Formal offer agent fee is invalid')
+  if (input.sourcePlanId.trim() === '' || input.sourceProposalId.trim() === '' || input.actionKey.trim() === '') throw new RangeError('Formal offer source and action identity are required')
 
   const openingKey: NegotiationOpeningKey = { organizationId: input.organizationId, teamId: input.teamId, playerId: input.playerId, actionKey: input.actionKey }
   const persistedOpeningKey = negotiationOpeningKeyString(openingKey)
   const id = negotiationIdForOpening(openingKey)
   const existingForKey = world.negotiationsById[id]
   if (existingForKey !== undefined) {
-    const actorMatches = existingForKey.responsibleActor?.kind === input.responsibleActor.kind
-      && (input.responsibleActor.kind !== 'STAFF' || (existingForKey.responsibleActor?.kind === 'STAFF' && existingForKey.responsibleActor.staffPersonId === input.responsibleActor.staffPersonId))
+    const contactActor = negotiationContactActor(existingForKey)
+    const contactActorMatches = existingForKey.status !== 'CONTACTED' || contactActor !== undefined
+    const offerActor = negotiationOfferActor(existingForKey)
+    const offerActorMatches = offerActor?.kind === input.offerResponsibleActor.kind
+      && (input.offerResponsibleActor.kind !== 'STAFF' || (offerActor?.kind === 'STAFF' && offerActor.staffPersonId === input.offerResponsibleActor.staffPersonId))
     const sourceMatches = existingForKey.sourcePlanId === input.sourcePlanId && existingForKey.sourceProposalId === input.sourceProposalId
     if (existingForKey.status === 'CONTACTED') {
-      if (existingForKey.openingKey !== persistedOpeningKey || (existingForKey.actionKey !== undefined && existingForKey.actionKey !== input.actionKey) || existingForKey.teamId !== input.teamId || !actorMatches || !sourceMatches) {
+      if (existingForKey.id !== id || existingForKey.openingKey !== persistedOpeningKey || existingForKey.actionKey !== input.actionKey || existingForKey.teamId !== input.teamId || existingForKey.organizationId !== input.organizationId || existingForKey.playerId !== input.playerId || !contactActorMatches || !sourceMatches) {
         throw new RangeError(`Negotiation contact ${id} does not match this formal offer attempt`)
       }
+      if (existingForKey.contactResponse?.outcome !== 'OPEN_TO_TALKS') throw new RangeError('Formal offer requires a positive current contact response')
       if (!isPlayerFreeAgent(world, input.playerId)) throw new RangeError('Player is no longer a free agent')
+      const conflictingActive = Object.values(world.negotiationsById).some((item) => item.id !== id && isActiveNegotiation(item)
+        && item.playerId === input.playerId
+        && (item.teamId === input.teamId || (item.teamId === undefined && item.organizationId === input.organizationId)))
+      if (conflictingActive) throw new RangeError('Another active negotiation already exists for this team and player')
+      if (!canTeamAffordAdditionalSalary(world, input.teamId, input.salary)) throw new RangeError('Team cannot afford the formal offer salary')
       const offer: ContractNegotiation = {
         ...existingForKey,
         ...(input.agentId === undefined ? {} : { agentId: input.agentId }),
         salary: input.salary,
         years: input.years,
-        role: input.role,
-        agentFee: input.agentFee,
+        ...(input.role === undefined ? {} : { role: input.role }),
+        ...(input.agentFee === undefined ? {} : { agentFee: input.agentFee }),
         actionKey: input.actionKey,
+        offerResponsibleActor: input.offerResponsibleActor,
         status: 'OPEN',
         round: 0,
       }
       return updateGameWorld(world, { negotiations: [...Object.values(world.negotiationsById).filter((item) => item.id !== id), offer] })
     }
     const sameOffer = existingForKey.openingKey === persistedOpeningKey
-      && (existingForKey.actionKey === undefined || existingForKey.actionKey === input.actionKey)
+      && existingForKey.actionKey === input.actionKey
       && existingForKey.teamId === input.teamId
-      && existingForKey.status !== 'CLOSED'
+      && (existingForKey.status === 'OPEN' || existingForKey.status === 'COUNTERED')
       && existingForKey.salary === input.salary
       && existingForKey.years === input.years
       && existingForKey.role === input.role
       && existingForKey.agentFee === input.agentFee
       && existingForKey.agentId === input.agentId
       && sourceMatches
-      && actorMatches
+      && offerActorMatches
     if (sameOffer) return world
     throw new RangeError(`Negotiation opening key ${persistedOpeningKey} is already in use`)
   }
-
-  if (!isPlayerFreeAgent(world, input.playerId)) throw new RangeError('Player is no longer a free agent')
-  if (!canTeamAffordAdditionalSalary(world, input.teamId, input.salary)) throw new RangeError('Team cannot afford the formal offer salary')
-
-  const active = Object.values(world.negotiationsById).find((item) => isActiveNegotiation(item)
-    && item.playerId === input.playerId
-    && (item.teamId === input.teamId || (item.teamId === undefined && item.organizationId === input.organizationId)))
-  if (active !== undefined) throw new RangeError(`An active negotiation already exists for ${input.teamId} and ${input.playerId}`)
-
-  const negotiation: ContractNegotiation = {
-    id,
-    organizationId: input.organizationId,
-    teamId: input.teamId,
-    playerId: input.playerId,
-    ...(input.agentId === undefined ? {} : { agentId: input.agentId }),
-    salary: input.salary,
-    years: input.years,
-    role: input.role,
-    agentFee: input.agentFee,
-    status: 'OPEN',
-    round: 0,
-    startedOn: world.currentDate,
-    openingKey: persistedOpeningKey,
-    actionKey: input.actionKey,
-    ...(input.sourcePlanId === undefined ? {} : { sourcePlanId: input.sourcePlanId }),
-    ...(input.sourceProposalId === undefined ? {} : { sourceProposalId: input.sourceProposalId }),
-    responsibleActor: input.responsibleActor,
-  }
-  return updateGameWorld(world, { negotiations: [...Object.values(world.negotiationsById), negotiation] })
+  throw new RangeError('Formal offer requires an exact existing CONTACTED negotiation')
 }
 export function agentForPlayer(world:GameWorld,playerId:PlayerId){const representation=world.playerRepresentations.find(item=>item.playerId===playerId);return representation===undefined?undefined:world.agentsById[representation.agentId]}
 export function organizationMarketContact(world:GameWorld,teamId:import('@/domain/ids').TeamId,playerId:PlayerId):OrganizationId{return world.teams[teamId]!.organizationId}

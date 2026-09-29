@@ -1,5 +1,5 @@
 import type { AgentId, PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
-import { isActiveNegotiation, negotiationIdForOpening } from '@/domain/market'
+import { isActiveNegotiation, negotiationContactActor, negotiationIdForOpening, negotiationOfferActor } from '@/domain/market'
 import type { ResponsibilityMode } from '@/domain/responsibility'
 import { validateResponsibilityAssignment } from '@/domain/responsibility'
 import type { GameWorld } from '@/domain/world'
@@ -78,6 +78,9 @@ export interface FreeAgentOfferIntelligence {
     readonly status: 'CONTACTED' | 'OPEN' | 'COUNTERED' | 'ACCEPTED' | 'REJECTED' | 'CLOSED'
     readonly kind: 'ACTIVE' | 'SAME_ATTEMPT'
     readonly startedOn?: import('@/domain/date').GameDate
+    readonly contactResponsibleActor?: import('@/domain/market').NegotiationResponsibleActor
+    readonly offerResponsibleActor?: import('@/domain/market').NegotiationResponsibleActor
+    /** @deprecated Compatibility alias for older Analysis consumers. */
     readonly responsibleActor?: import('@/domain/market').NegotiationResponsibleActor
     readonly sourcePlanId?: string
     readonly sourceProposalId?: string
@@ -246,7 +249,8 @@ export function assessFreeAgentOfferIntelligence(world: GameWorld, proposal: Acq
       status: existing.status,
       kind: activeNegotiation !== undefined ? 'ACTIVE' as const : 'SAME_ATTEMPT' as const,
       ...(existing.startedOn === undefined ? {} : { startedOn: existing.startedOn }),
-      ...(existing.responsibleActor === undefined ? {} : { responsibleActor: existing.responsibleActor }),
+      ...(negotiationContactActor(existing) === undefined ? {} : { contactResponsibleActor: negotiationContactActor(existing), responsibleActor: negotiationContactActor(existing) }),
+      ...(negotiationOfferActor(existing) === undefined ? {} : { offerResponsibleActor: negotiationOfferActor(existing) }),
       ...(existing.sourcePlanId === undefined ? {} : { sourcePlanId: existing.sourcePlanId }),
       ...(existing.sourceProposalId === undefined ? {} : { sourceProposalId: existing.sourceProposalId }),
       ...(existing.openingKey === undefined ? {} : { openingKey: existing.openingKey }),

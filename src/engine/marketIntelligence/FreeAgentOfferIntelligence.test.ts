@@ -237,20 +237,41 @@ describe('FreeAgentOfferIntelligence', () => {
       expectedTermYears: { value: 2, source: 'AGENT' },
       termProposalYears: 2,
       termAuthority: 'MATCH_KNOWN_EXPECTED_YEARS',
-      roleAuthority: 'UNKNOWN',
-      agentFeeAuthority: 'UNKNOWN',
+      roleStatus: 'NOT_YET_PROPOSED',
+      roleAuthority: 'NOT_REQUIRED_AT_OPEN',
+      agentFeeStatus: 'NOT_YET_PROPOSED',
+      agentFeeAuthority: 'NOT_REQUIRED_AT_OPEN',
       payrollAffordability: 'AFFORDABLE',
       readiness: 'NO_EXECUTION_OWNER',
-      governanceAuthority: 'UNKNOWN',
+      governanceAuthority: 'NOT_REQUIRED',
+      signingGovernanceDecisionType: 'PLAYER_CONTRACT_SIGNING',
     })
-    expect(result).not.toHaveProperty('promisedRole')
+    expect(result).not.toHaveProperty('roleProposal')
     expect(result).not.toHaveProperty('agentFeeProposal')
-    expect(result.missingInformation).toEqual(expect.arrayContaining(['INCOMING_PLAYER_ROLE_AUTHORITY_UNKNOWN', 'OPENING_AGENT_FEE_AUTHORITY_UNKNOWN']))
-    expect(result.blockers).toContain('PLAYER_CONTRACT_GOVERNANCE_AUTHORITY_UNKNOWN')
+    expect(result.missingInformation).not.toContain('INCOMING_PLAYER_ROLE_AUTHORITY_UNKNOWN')
+    expect(result.missingInformation).not.toContain('OPENING_AGENT_FEE_AUTHORITY_UNKNOWN')
+    expect(result.deferredInformation).toEqual(expect.arrayContaining(['ROLE_PROPOSAL_DEFERRED_UNTIL_SUPPORTED_OR_AGREED', 'AGENT_FEE_DEFERRED_UNTIL_EXPLICITLY_REVEALED']))
     expect(setup.world.negotiationsById[setup.contact.id]).toEqual(setup.contact)
     expect(setup.world.contractsById).toBe(base.contractsById)
     expect(setup.world.playerTransactionsById).toBe(base.playerTransactionsById)
     expect(setup.world.teams[teamId]!.rosterPlayerIds).toEqual(base.teams[teamId]!.rosterPlayerIds)
+  })
+
+  it('keeps explicit role and fee proposals visible without making them OPEN requirements', () => {
+    const setup = withPositiveContact()
+    const explicitProposal = { ...setup.offer, proposedRole: 'ROTATION' as const, agentFee: 75_000 }
+    const result = assessFormalOfferPreparation(setup.world, explicitProposal)
+    expect(result).toMatchObject({
+      roleProposal: 'ROTATION',
+      roleStatus: 'PROPOSED',
+      roleAuthority: 'UNKNOWN',
+      agentFeeProposal: 75_000,
+      agentFeeStatus: 'PROPOSED',
+      agentFeeAuthority: 'UNKNOWN',
+      readiness: 'NO_EXECUTION_OWNER',
+    })
+    expect(result.missingInformation).not.toContain('INCOMING_PLAYER_ROLE_AUTHORITY_UNKNOWN')
+    expect(result.missingInformation).not.toContain('OPENING_AGENT_FEE_AUTHORITY_UNKNOWN')
   })
 
   it('rebuilds current GM and BS10C state instead of trusting a historical offer snapshot', () => {
@@ -278,12 +299,13 @@ describe('FreeAgentOfferIntelligence', () => {
   it('leaves salary and term unresolved when current club-known evidence is absent', () => {
     const setup = withPositiveContact()
     const unknownExpectations = { ...setup.offer, preparedSalary: undefined, expectedTermYears: undefined }
-    const result = assessFormalOfferPreparation(setup.world, unknownExpectations)
+    const userWorld = updateGameWorld(setup.world, { userCoachId: setup.world.teams[teamId]!.coachId!, gmPlanStates: [] })
+    const result = assessFormalOfferPreparation(userWorld, unknownExpectations)
     expect(result.salaryProposal).toBeUndefined()
     expect(result.termProposalYears).toBeUndefined()
     expect(result.payrollAffordability).toBe('UNKNOWN')
     expect(result.missingInformation).toEqual(expect.arrayContaining(['CLUB_KNOWN_EXPECTED_SALARY_UNKNOWN', 'CLUB_KNOWN_EXPECTED_TERM_UNKNOWN']))
-    expect(result.readiness).toBe('NO_EXECUTION_OWNER')
+    expect(result.readiness).toBe('MORE_INFORMATION_REQUIRED')
   })
 
   it('requires an offer-specific delegated owner for AI and keeps user authority separate', () => {
@@ -299,7 +321,7 @@ describe('FreeAgentOfferIntelligence', () => {
     const delegated = updateGameWorld(setup.world, { responsibilities: [...Object.values(setup.world.responsibilitiesById).filter((item) => item.id !== responsibilityId), { id: responsibilityId, teamId, kind: 'submitPlayerContractOffer', mode: 'delegated', holderStaffId: staffId }] })
     const delegatedPreparation = assessFormalOfferPreparation(delegated, setup.offer)
     expect(delegatedPreparation.executionResponsibility).toMatchObject({ status: 'RESOLVED_HOLDER', owner: { kind: 'STAFF', staffPersonId: staffId } })
-    expect(delegatedPreparation.readiness).toBe('MORE_INFORMATION_REQUIRED')
+    expect(delegatedPreparation.readiness).toBe('READY_TO_SUBMIT_OFFER')
 
     const userWorld = updateGameWorld(setup.world, { userCoachId: setup.world.teams[teamId]!.coachId!, gmPlanStates: [] })
     expect(assessFormalOfferPreparation(userWorld, setup.offer).executionResponsibility).toMatchObject({ status: 'USER_AUTHORITY', owner: { kind: 'USER' } })

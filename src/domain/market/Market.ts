@@ -29,6 +29,11 @@ interface NegotiationIdentity {
   readonly actionKey?: string
   readonly sourcePlanId?: string
   readonly sourceProposalId?: string
+  /** Actor who initiated CONTACTED; preserved when formal terms are submitted. */
+  readonly contactResponsibleActor?: NegotiationResponsibleActor
+  /** Actor who submitted the first formal offer or a later counter. */
+  readonly offerResponsibleActor?: NegotiationResponsibleActor
+  /** @deprecated Legacy single-actor attribution; its contact/offer role is ambiguous on historical OPEN records. */
   readonly responsibleActor?: NegotiationResponsibleActor
   readonly agentId?: AgentId
   /** Observable result of a term-free contact; formal offer outcomes remain separate. */
@@ -55,8 +60,10 @@ interface FormalOfferNegotiation extends NegotiationIdentity {
   readonly status: 'OPEN' | 'COUNTERED' | 'ACCEPTED' | 'REJECTED'
   readonly salary: number
   readonly years: number
-  readonly role: NegotiationRole
-  readonly agentFee: number
+  /** Optional club role proposal; it is not an accepted RolePromise until later agreement. */
+  readonly role?: NegotiationRole
+  /** Optional explicit fee proposal; absence means no fee has been proposed. */
+  readonly agentFee?: number
   readonly round: number
 }
 
@@ -84,14 +91,24 @@ export function isActiveNegotiation(negotiation: ContractNegotiation): boolean {
   return negotiation.status === 'CONTACTED' || negotiation.status === 'OPEN' || negotiation.status === 'COUNTERED'
 }
 
-export function createNegotiationContact(input: Omit<ContactOnlyNegotiation, 'status' | 'id' | 'openingKey'> & { readonly actionKey: string }): ContractNegotiation {
+export function createNegotiationContact(input: Omit<ContactOnlyNegotiation, 'status' | 'id' | 'openingKey' | 'contactResponsibleActor' | 'offerResponsibleActor' | 'responsibleActor'> & { readonly actionKey: string; readonly responsibleActor: NegotiationResponsibleActor }): ContractNegotiation {
   if (input.actionKey.trim() === '' || input.startedOn === undefined || input.teamId === undefined || input.responsibleActor === undefined) {
     throw new TypeError('A negotiation contact requires identity, team, date, opening key, and responsible actor')
   }
-  const { actionKey, ...identity } = input
+  const { actionKey, responsibleActor, ...identity } = input
   const key: NegotiationOpeningKey = { organizationId: input.organizationId, teamId: input.teamId, playerId: input.playerId, actionKey }
   const openingKey = negotiationOpeningKeyString(key)
-  return Object.freeze({ ...identity, actionKey, id: negotiationIdForOpening(key), openingKey, status: 'CONTACTED' })
+  return Object.freeze({ ...identity, contactResponsibleActor: responsibleActor, actionKey, id: negotiationIdForOpening(key), openingKey, status: 'CONTACTED' })
+}
+
+/** New records are explicit; legacy single-actor records are interpreted by their persisted stage. */
+export function negotiationContactActor(negotiation: ContractNegotiation): NegotiationResponsibleActor | undefined {
+  return negotiation.contactResponsibleActor ?? (negotiation.status === 'CONTACTED' || negotiation.status === 'CLOSED' ? negotiation.responsibleActor : undefined)
+}
+
+/** Legacy OPEN records do not prove whether their single actor contacted or offered. */
+export function negotiationOfferActor(negotiation: ContractNegotiation): NegotiationResponsibleActor | undefined {
+  return negotiation.offerResponsibleActor
 }
 export interface RolePromise { readonly id:string; readonly playerId:PlayerId; readonly teamOrganizationId:OrganizationId; readonly role:NegotiationRole; readonly acceptedOn:GameDate; readonly status:'ACTIVE'|'FULFILLED'|'BROKEN' }
 
@@ -100,4 +117,4 @@ export function getMarketKnowledge(knowledge:readonly MarketKnowledge[],organiza
 /** Market queries are pure; absent knowledge remains absent rather than reading MarketReality. */
 export function marketAvailability(knowledge:readonly MarketKnowledge[],organizationId:OrganizationId,playerId:PlayerId):MarketKnowledge['availability']|undefined{return getMarketKnowledge(knowledge,organizationId,playerId)?.availability}
 export function consolidateMarketSignal(current:readonly MarketKnowledge[],signal:MarketSignal):readonly MarketKnowledge[]{const prior=getMarketKnowledge(current,signal.organizationId,signal.playerId);const next:MarketKnowledge={organizationId:signal.organizationId,playerId:signal.playerId,availability:signal.availability??prior?.availability,expectedSalary:signal.expectedSalary??prior?.expectedSalary,expectedYears:signal.expectedYears??prior?.expectedYears,playerInterest:signal.playerInterest??prior?.playerInterest,sellerWillingness:signal.sellerWillingness??prior?.sellerWillingness,competition:signal.competition??prior?.competition,confidence:Math.max(prior?.confidence??0,Math.round(signal.reliability*100)),assessedAt:signal.occurredOn,source:signal.source};return[...current.filter(item=>item!==prior),next]}
-export function agentCounter(negotiation:ContractNegotiation,agent:Agent|undefined):ContractNegotiation{if(!agent||negotiation.status!=='OPEN')return negotiation;const pressure=Math.round((agent.abilities.negotiation+agent.personality.aggressiveness+agent.personality.opportunism)/30);return{...negotiation,salary:negotiation.salary+pressure*10_000,agentFee:negotiation.agentFee+Math.round(negotiation.salary*agent.abilities.negotiation/10_000),status:'COUNTERED',round:negotiation.round+1}}
+export function agentCounter(negotiation:ContractNegotiation,agent:Agent|undefined):ContractNegotiation{if(!agent||negotiation.status!=='OPEN')return negotiation;const pressure=Math.round((agent.abilities.negotiation+agent.personality.aggressiveness+agent.personality.opportunism)/30);return{...negotiation,salary:negotiation.salary+pressure*10_000,...(negotiation.agentFee===undefined?{}:{agentFee:negotiation.agentFee+Math.round(negotiation.salary*agent.abilities.negotiation/10_000)}),status:'COUNTERED',round:negotiation.round+1}}

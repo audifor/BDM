@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { releasePlayer, signFreeAgent } from '@/app/market'
 import { addDays } from '@/domain/date'
-import { organizationIdForTeam, staffPersonIdFromString } from '@/domain/ids'
-import { createNegotiationContact, getMarketKnowledge, negotiationIdForOpening, negotiationOpeningKeyString, type ContractNegotiation } from '@/domain/market'
+import { agentIdFromString, organizationIdForTeam, staffPersonIdFromString, teamStaffAssignmentIdFromString } from '@/domain/ids'
+import { agentCounter, createNegotiationContact, getMarketKnowledge, negotiationContactActor, negotiationOfferActor, negotiationOpeningKeyString, type Agent, type ContractNegotiation } from '@/domain/market'
+import { responsibilityIdForTeam } from '@/domain/responsibility'
+import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { updateGameWorld } from '@/domain/world'
 import { initializeMarketAgents, openNegotiation, progressNegotiationContactResponses, receiveMarketSignal, createNegotiationContact as createContactInEngine } from './MarketEngine'
 
@@ -77,40 +79,55 @@ describe('Wave 4 market core',()=>{
     expect(updateGameWorld(world,{negotiations:[contact]}).negotiationsById[contact.id]).toEqual(contact)
     expect(()=>updateGameWorld(world,{negotiations:[contact,{id:'legacy-parallel',organizationId:team.organizationId,playerId:player.id,salary:500_000,years:1,role:'DEPTH',agentFee:0,status:'OPEN',round:0}]})).toThrow(/Multiple active negotiations/)
   })
-  it('advances the same contact record into a formal first offer only when exact terms are supplied',()=>{
-    const initial=createNewGame(),team=Object.values(initial.teams)[1]!,source=Object.values(initial.teams).find(item=>item.id!==team.id)!,playerId=source.rosterPlayerIds[0]!,world=releasePlayer(initial,source.id,playerId)
-    const actionKey='plan-contact:proposal-contact'
-    const contact=createNegotiationContact({organizationId:team.organizationId,teamId:team.id,playerId,startedOn:world.currentDate,actionKey,sourcePlanId:'plan-contact',sourceProposalId:'proposal-contact',responsibleActor:{kind:'ORGANIZATION'}})
-    const contacted=updateGameWorld(world,{negotiations:[contact]})
-    const offered=openNegotiation(contacted,{organizationId:team.organizationId,teamId:team.id,playerId,salary:650_000,years:2,role:'ROTATION',agentFee:1,actionKey,sourcePlanId:'plan-contact',sourceProposalId:'proposal-contact',responsibleActor:{kind:'ORGANIZATION'}})
-    expect(Object.keys(offered.negotiationsById)).toEqual([contact.id])
-    expect(offered.negotiationsById[contact.id]).toMatchObject({status:'OPEN',startedOn:contact.startedOn,salary:650_000,years:2,role:'ROTATION',agentFee:1})
-    expect(contacted.negotiationsById[contact.id]).not.toHaveProperty('salary')
+  it('advances the exact positive contact with a separate authorized offer actor and optional role and fee',()=>{
+    const setup=userContactFixture()
+    const otherTeam=Object.values(setup.world.teams).find(item=>item.id!==setup.team.id&&item.coachId!==undefined)!
+    const staffPersonId=staffPersonIdFromString('staff:offer-execution-test')
+    const assignmentId=teamStaffAssignmentIdFromString('assignment:offer-execution-test')
+    const responsibilityId=responsibilityIdForTeam(setup.team.id,'submitPlayerContractOffer')
+    const world=updateGameWorld(setup.world,{userCoachId:otherTeam.coachId!,staffPeople:[...Object.values(setup.world.staffPeopleById),{id:staffPersonId,identity:{firstName:'Offer',lastName:'Operator'},professional:{attributes:Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map(key=>[key,70])) as Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number],number>}}],teamStaffAssignments:[...Object.values(setup.world.teamStaffAssignmentsById),{id:assignmentId,staffPersonId,teamId:setup.team.id,role:'generalManager',assignedOn:setup.world.currentDate}],responsibilities:[...Object.values(setup.world.responsibilitiesById).filter(item=>item.id!==responsibilityId),{id:responsibilityId,teamId:setup.team.id,kind:'submitPlayerContractOffer',mode:'delegated',holderStaffId:staffPersonId}]})
+    const input={...openInput(setup),offerResponsibleActor:{kind:'STAFF' as const,staffPersonId}}
+    const offered=openNegotiation(world,input)
+    expect(Object.keys(offered.negotiationsById)).toEqual([setup.contact.id])
+    expect(offered.negotiationsById[setup.contact.id]).toMatchObject({status:'OPEN',startedOn:setup.contact.startedOn,salary:650_000,years:2,offerResponsibleActor:input.offerResponsibleActor})
+    expect(offered.negotiationsById[setup.contact.id]).not.toHaveProperty('role')
+    expect(offered.negotiationsById[setup.contact.id]).not.toHaveProperty('agentFee')
+    expect(negotiationContactActor(offered.negotiationsById[setup.contact.id]!)).toEqual({kind:'USER'})
+    expect(negotiationOfferActor(offered.negotiationsById[setup.contact.id]!)).toEqual(input.offerResponsibleActor)
+    expect(offered.contractsById).toBe(world.contractsById)
+    expect(offered.playerTransactionsById).toBe(world.playerTransactionsById)
   })
-  it('uses a stable action identity, blocks a second active team/player attempt, and allows a later attempt after closure',()=>{
-    const initial=createNewGame(),team=Object.values(initial.teams)[1]!,source=Object.values(initial.teams).find(item=>item.id!==team.id)!,playerId=source.rosterPlayerIds[0]!
-    const world=releasePlayer(initial,source.id,playerId)
-    const input={organizationId:team.organizationId,teamId:team.id,playerId,salary:650_000,years:2,role:'ROTATION' as const,agentFee:1,actionKey:'plan-a:proposal-a',sourcePlanId:'plan-a',sourceProposalId:'proposal-a',responsibleActor:{kind:'ORGANIZATION' as const}}
-    const opened=openNegotiation(world,input)
-    expect(opened.negotiationsById[Object.keys(opened.negotiationsById)[0]!]).toMatchObject({status:'OPEN',teamId:team.id,startedOn:world.currentDate,openingKey:negotiationOpeningKeyString({organizationId:team.organizationId,teamId:team.id,playerId,actionKey:'plan-a:proposal-a'})})
+  it('preserves canonical action identity and makes the same offer idempotent',()=>{
+    const setup=userContactFixture(),input=openInput(setup)
+    const opened=openNegotiation(setup.world,input)
+    expect(opened.negotiationsById[setup.contact.id]).toMatchObject({status:'OPEN',teamId:setup.team.id,actionKey:setup.actionKey,openingKey:negotiationOpeningKeyString({organizationId:setup.team.organizationId,teamId:setup.team.id,playerId:setup.playerId,actionKey:setup.actionKey})})
     expect(openNegotiation(opened,input)).toBe(opened)
-    expect(()=>openNegotiation(opened,{...input,actionKey:'plan-a:proposal-b'})).toThrow(/active negotiation already exists/)
-    const closedNegotiations: ContractNegotiation[] = Object.values(opened.negotiationsById).map(item=>item.status==='OPEN'||item.status==='COUNTERED'||item.status==='ACCEPTED'||item.status==='REJECTED'?{...item,status:'REJECTED' as const,round:1}:item)
-    const closed=updateGameWorld(opened,{negotiations:closedNegotiations})
-    const later=openNegotiation(closed,{...input,actionKey:'plan-b:proposal-a',sourcePlanId:'plan-b'})
-    expect(Object.keys(later.negotiationsById)).toHaveLength(2)
-    expect(Object.values(later.negotiationsById).map(item=>item.id)).toEqual(expect.arrayContaining([negotiationIdForOpening({organizationId:team.organizationId,teamId:team.id,playerId,actionKey:'plan-a:proposal-a'}),negotiationIdForOpening({organizationId:team.organizationId,teamId:team.id,playerId,actionKey:'plan-b:proposal-a'})]))
-    expect(openNegotiation(closed,input)).toBe(closed)
+    expect(()=>openNegotiation(opened,{...input,salary:700_000})).toThrow(/already in use/)
+    expect(()=>openNegotiation(setup.world,{...input,actionKey:'second-attempt'})).toThrow(/exact existing CONTACTED/)
   })
-  it('rechecks free-agent status at the formal offer boundary',()=>{
-    const world=createNewGame(),team=Object.values(world.teams)[0]!,playerId=team.rosterPlayerIds[0]!
-    expect(()=>openNegotiation(world,{organizationId:team.organizationId,teamId:team.id,playerId,salary:650_000,years:2,role:'ROTATION',agentFee:1,actionKey:'proposal-a',responsibleActor:{kind:'USER'}})).toThrow(/no longer a free agent/)
+  it('counters salary without manufacturing a missing agent fee',()=>{
+    const setup=userContactFixture()
+    const opened=openNegotiation(setup.world,openInput(setup)).negotiationsById[setup.contact.id]!
+    const agent:Agent={id:agentIdFromString('agent:counter-test'),name:'Counter Agent',reputation:70,abilities:{negotiation:80,marketKnowledge:70,network:60,clientManagement:70,mediaInfluence:50},personality:{aggressiveness:60,loyalty:50,opportunism:55,patience:50,discretion:50}}
+    const counter=agentCounter(opened,agent)
+    expect(counter).toMatchObject({status:'COUNTERED',salary:expect.any(Number),years:2})
+    expect(counter.salary!).toBeGreaterThan(opened.salary!)
+    expect(counter).not.toHaveProperty('agentFee')
   })
-  it('rechecks current payroll affordability at the formal offer boundary',()=>{
-    const initial=createNewGame(),team=Object.values(initial.teams)[1]!,source=Object.values(initial.teams).find(item=>item.id!==team.id)!,playerId=source.rosterPlayerIds[0]!,world=releasePlayer(initial,source.id,playerId)
-    expect(()=>openNegotiation(world,{organizationId:team.organizationId,teamId:team.id,playerId,salary:10_000_000_000,years:2,role:'ROTATION',agentFee:1,actionKey:'unaffordable-offer',responsibleActor:{kind:'USER'}})).toThrow(/cannot afford/)
+  it('requires a positive exact contact, a current free agent, an authorized owner, and affordable salary',()=>{
+    const setup=userContactFixture()
+    const noContact=updateGameWorld(setup.world,{negotiations:[]})
+    expect(()=>openNegotiation(noContact,openInput(setup))).toThrow(/exact existing CONTACTED/)
+    const pending=updateGameWorld(setup.world,{negotiations:[{...setup.contact,contactResponse:undefined}]})
+    expect(()=>openNegotiation(pending,openInput(setup))).toThrow(/positive current contact/)
+    const refused=updateGameWorld(setup.world,{negotiations:[{...setup.contact,status:'CLOSED',contactResponse:{...setup.contact.contactResponse!,outcome:'NOT_INTERESTED'}} as ContractNegotiation]})
+    expect(()=>openNegotiation(refused,openInput(setup))).toThrow(/opening key.*already in use/)
+    const funded=updateGameWorld(setup.world,{teamFinances:Object.values(setup.world.teamFinancesByTeamId).map(item=>item.teamId===setup.team.id?{...item,playerSalaryBudget:100_000_000}:item)})
+    const signed=signFreeAgent(funded,setup.team.id,setup.playerId)
+    expect(()=>openNegotiation(signed,openInput(setup))).toThrow(/no longer a free agent/)
+    expect(()=>openNegotiation(setup.world,{...openInput(setup),offerResponsibleActor:{kind:'ORGANIZATION'}})).toThrow(/not authorized/)
+    expect(()=>openNegotiation(funded,{...openInput(setup),salary:100_000_000})).toThrow(/cannot afford/)
   })
-
   it('creates one authorized term-free contact and persists the delegated actor and current source',()=>{
     const initial=createNewGame(),team=Object.values(initial.teams).find(item=>item.coachId!==undefined&&item.coachId!==initial.userCoachId)!,source=Object.values(initial.teams).find(item=>item.id!==team.id)!,playerId=source.rosterPlayerIds[0]!
     const released=releasePlayer(initial,source.id,playerId)
@@ -119,7 +136,7 @@ describe('Wave 4 market core',()=>{
     const result=createContactInEngine(world,input)
     expect(result.status).toBe('CREATED')
     if(result.status!=='CREATED') throw new Error('expected contact creation')
-    expect(result.contact).toMatchObject({status:'CONTACTED',startedOn:world.currentDate,actionKey:input.actionKey,sourcePlanId:input.sourcePlanId,sourceProposalId:input.sourceProposalId,responsibleActor:input.responsibleActor})
+    expect(result.contact).toMatchObject({status:'CONTACTED',startedOn:world.currentDate,actionKey:input.actionKey,sourcePlanId:input.sourcePlanId,sourceProposalId:input.sourceProposalId,contactResponsibleActor:input.responsibleActor})
     expect(result.contact.openingKey).toBe(negotiationOpeningKeyString({organizationId:team.organizationId,teamId:team.id,playerId,actionKey:input.actionKey}))
     for(const term of ['salary','years','role','agentFee']) expect(result.contact).not.toHaveProperty(term)
     expect(result.world.contractsById).toBe(world.contractsById)
@@ -162,3 +179,20 @@ describe('Wave 4 market core',()=>{
     expect(Object.values(later.world.negotiationsById).map(item=>item.status)).toEqual(['CLOSED','CONTACTED'])
   })
 })
+
+function userContactFixture() {
+  const initial=createNewGame()
+  const team=Object.values(initial.teams).find(item=>item.coachId===initial.userCoachId)!
+  const source=Object.values(initial.teams).find(item=>item.id!==team.id&&item.rosterPlayerIds.length>0)!
+  const playerId=source.rosterPlayerIds[0]!
+  const released=releasePlayer(initial,source.id,playerId)
+  const actionKey='plan-contact:proposal-contact'
+  const sourcePlanId='plan-contact'
+  const sourceProposalId='proposal-contact'
+  const contact={...createNegotiationContact({organizationId:team.organizationId,teamId:team.id,playerId,startedOn:released.currentDate,actionKey,sourcePlanId,sourceProposalId,responsibleActor:{kind:'USER'}}),contactResponse:{outcome:'OPEN_TO_TALKS' as const,respondedOn:released.currentDate,marketSignalId:'signal:positive-contact'}} as ContractNegotiation
+  return {world:updateGameWorld(released,{negotiations:[contact]}),team,playerId,contact,actionKey,sourcePlanId,sourceProposalId}
+}
+
+function openInput(setup: ReturnType<typeof userContactFixture>) {
+  return {organizationId:setup.team.organizationId,teamId:setup.team.id,playerId:setup.playerId,salary:650_000,years:2,actionKey:setup.actionKey,sourcePlanId:setup.sourcePlanId,sourceProposalId:setup.sourceProposalId,offerResponsibleActor:{kind:'USER' as const}}
+}
