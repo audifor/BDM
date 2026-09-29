@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { releasePlayer, signFreeAgent } from '@/app/market'
 import { addDays } from '@/domain/date'
-import { agentIdFromString, organizationIdForTeam, staffPersonIdFromString, teamStaffAssignmentIdFromString } from '@/domain/ids'
+import { agentIdFromString, organizationIdForTeam, playerIdFromString, staffPersonIdFromString, teamStaffAssignmentIdFromString } from '@/domain/ids'
 import { agentCounter, createNegotiationContact, getMarketKnowledge, negotiationContactActor, negotiationOfferActor, negotiationOpeningKeyString, type Agent, type ContractNegotiation } from '@/domain/market'
 import { responsibilityIdForTeam } from '@/domain/responsibility'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
@@ -89,7 +89,8 @@ describe('Wave 4 market core',()=>{
     const input={...openInput(setup),offerResponsibleActor:{kind:'STAFF' as const,staffPersonId}}
     const offered=openNegotiation(world,input)
     expect(Object.keys(offered.negotiationsById)).toEqual([setup.contact.id])
-    expect(offered.negotiationsById[setup.contact.id]).toMatchObject({status:'OPEN',startedOn:setup.contact.startedOn,salary:650_000,years:2,offerResponsibleActor:input.offerResponsibleActor})
+    expect(offered.negotiationsById[setup.contact.id]).toMatchObject({status:'OPEN',startedOn:setup.contact.startedOn,offerSubmittedOn:setup.world.currentDate,contactResponse:setup.contact.contactResponse,salary:650_000,years:2,offerResponsibleActor:input.offerResponsibleActor,sourcePlanId:setup.sourcePlanId,sourceProposalId:setup.sourceProposalId})
+    expect(offered.negotiationsById[setup.contact.id]!.offerSubmittedOn).not.toBe(setup.contact.startedOn)
     expect(offered.negotiationsById[setup.contact.id]).not.toHaveProperty('role')
     expect(offered.negotiationsById[setup.contact.id]).not.toHaveProperty('agentFee')
     expect(negotiationContactActor(offered.negotiationsById[setup.contact.id]!)).toEqual({kind:'USER'})
@@ -103,6 +104,10 @@ describe('Wave 4 market core',()=>{
     expect(opened.negotiationsById[setup.contact.id]).toMatchObject({status:'OPEN',teamId:setup.team.id,actionKey:setup.actionKey,openingKey:negotiationOpeningKeyString({organizationId:setup.team.organizationId,teamId:setup.team.id,playerId:setup.playerId,actionKey:setup.actionKey})})
     expect(openNegotiation(opened,input)).toBe(opened)
     expect(()=>openNegotiation(opened,{...input,salary:700_000})).toThrow(/already in use/)
+    const firstOffer=opened.negotiationsById[setup.contact.id]!
+    if(firstOffer.status!=='OPEN') throw new Error('expected OPEN offer')
+    const countered=updateGameWorld(opened,{negotiations:[{...firstOffer,status:'COUNTERED',round:1}]})
+    expect(()=>openNegotiation(countered,input)).toThrow(/already in use/)
     expect(()=>openNegotiation(setup.world,{...input,actionKey:'second-attempt'})).toThrow(/exact existing CONTACTED/)
   })
   it('counters salary without manufacturing a missing agent fee',()=>{
@@ -112,12 +117,14 @@ describe('Wave 4 market core',()=>{
     const counter=agentCounter(opened,agent)
     expect(counter).toMatchObject({status:'COUNTERED',salary:expect.any(Number),years:2})
     expect(counter.salary!).toBeGreaterThan(opened.salary!)
+    expect(counter.offerSubmittedOn).toBe(opened.offerSubmittedOn)
     expect(counter).not.toHaveProperty('agentFee')
   })
   it('requires a positive exact contact, a current free agent, an authorized owner, and affordable salary',()=>{
     const setup=userContactFixture()
     const noContact=updateGameWorld(setup.world,{negotiations:[]})
     expect(()=>openNegotiation(noContact,openInput(setup))).toThrow(/exact existing CONTACTED/)
+    expect(()=>openNegotiation(setup.world,{...openInput(setup),playerId:playerIdFromString('player:missing')})).toThrow(/player does not exist/)
     const pending=updateGameWorld(setup.world,{negotiations:[{...setup.contact,contactResponse:undefined}]})
     expect(()=>openNegotiation(pending,openInput(setup))).toThrow(/positive current contact/)
     const refused=updateGameWorld(setup.world,{negotiations:[{...setup.contact,status:'CLOSED',contactResponse:{...setup.contact.contactResponse!,outcome:'NOT_INTERESTED'}} as ContractNegotiation]})
@@ -189,8 +196,9 @@ function userContactFixture() {
   const actionKey='plan-contact:proposal-contact'
   const sourcePlanId='plan-contact'
   const sourceProposalId='proposal-contact'
-  const contact={...createNegotiationContact({organizationId:team.organizationId,teamId:team.id,playerId,startedOn:released.currentDate,actionKey,sourcePlanId,sourceProposalId,responsibleActor:{kind:'USER'}}),contactResponse:{outcome:'OPEN_TO_TALKS' as const,respondedOn:released.currentDate,marketSignalId:'signal:positive-contact'}} as ContractNegotiation
-  return {world:updateGameWorld(released,{negotiations:[contact]}),team,playerId,contact,actionKey,sourcePlanId,sourceProposalId}
+  const responseDate=addDays(released.currentDate,1)
+  const contact={...createNegotiationContact({organizationId:team.organizationId,teamId:team.id,playerId,startedOn:released.currentDate,actionKey,sourcePlanId,sourceProposalId,responsibleActor:{kind:'USER'}}),contactResponse:{outcome:'OPEN_TO_TALKS' as const,respondedOn:responseDate,marketSignalId:'signal:positive-contact'}} as ContractNegotiation
+  return {world:updateGameWorld(released,{currentDate:responseDate,negotiations:[contact]}),team,playerId,contact,actionKey,sourcePlanId,sourceProposalId}
 }
 
 function openInput(setup: ReturnType<typeof userContactFixture>) {

@@ -1,11 +1,11 @@
 import type { NegotiationResponsibleActor } from '@/domain/market'
-import type { TeamId } from '@/domain/ids'
+import type { StaffPersonId, TeamId } from '@/domain/ids'
 import { validateResponsibilityAssignment } from '@/domain/responsibility'
 import { getResponsibility, getStaffAssignment, getStaffPerson, type GameWorld } from '@/domain/world'
 
 export type OfferExecutionOwner =
   | { readonly kind: 'USER' }
-  | { readonly kind: 'STAFF'; readonly staffPersonId: string; readonly name: string; readonly role: string }
+  | { readonly kind: 'STAFF'; readonly staffPersonId: StaffPersonId; readonly name: string; readonly role: string }
 
 export interface OfferExecutionResponsibility {
   readonly status: 'USER_AUTHORITY' | 'RESOLVED_HOLDER' | 'NO_EXECUTION_OWNER' | 'BLOCKED'

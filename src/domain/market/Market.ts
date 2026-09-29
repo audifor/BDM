@@ -22,6 +22,8 @@ interface NegotiationIdentity {
   readonly playerId: PlayerId
   /** Added for new records; absent on historical records. */
   readonly teamId?: TeamId
+  /** Date the first formal offer was submitted; absent from legacy offers. */
+  readonly offerSubmittedOn?: GameDate
   readonly startedOn?: GameDate
   /** Stable action identity. A distinct key represents a legitimate later attempt. */
   readonly openingKey?: string
@@ -31,7 +33,7 @@ interface NegotiationIdentity {
   readonly sourceProposalId?: string
   /** Actor who initiated CONTACTED; preserved when formal terms are submitted. */
   readonly contactResponsibleActor?: NegotiationResponsibleActor
-  /** Actor who submitted the first formal offer or a later counter. */
+  /** Actor authorized for the first formal offer; later counter attribution is not yet recorded here. */
   readonly offerResponsibleActor?: NegotiationResponsibleActor
   /** @deprecated Legacy single-actor attribution; its contact/offer role is ambiguous on historical OPEN records. */
   readonly responsibleActor?: NegotiationResponsibleActor

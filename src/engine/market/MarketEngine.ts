@@ -165,6 +165,7 @@ export interface OpenNegotiationInput {
 export function openNegotiation(world: GameWorld, input: OpenNegotiationInput): GameWorld {
   const team = world.teams[input.teamId]
   if (team === undefined || team.organizationId !== input.organizationId) throw new RangeError('Negotiation team does not belong to the organization')
+  if (world.players[input.playerId] === undefined) throw new RangeError('Negotiation player does not exist')
   if (!isAuthorizedOfferActor(world, input.teamId, input.offerResponsibleActor)) throw new RangeError('Formal offer actor is not authorized for this team')
   if (!Number.isSafeInteger(input.salary) || input.salary < 1 || input.salary > 100_000_000) throw new RangeError('Formal offer salary is invalid')
   if (!Number.isSafeInteger(input.years) || input.years < 1) throw new RangeError('Formal offer years are invalid')
@@ -186,7 +187,7 @@ export function openNegotiation(world: GameWorld, input: OpenNegotiationInput): 
       if (existingForKey.id !== id || existingForKey.openingKey !== persistedOpeningKey || existingForKey.actionKey !== input.actionKey || existingForKey.teamId !== input.teamId || existingForKey.organizationId !== input.organizationId || existingForKey.playerId !== input.playerId || !contactActorMatches || !sourceMatches) {
         throw new RangeError(`Negotiation contact ${id} does not match this formal offer attempt`)
       }
-      if (existingForKey.contactResponse?.outcome !== 'OPEN_TO_TALKS') throw new RangeError('Formal offer requires a positive current contact response')
+      if (existingForKey.contactResponse?.outcome !== 'OPEN_TO_TALKS' || existingForKey.contactResponse.respondedOn > world.currentDate) throw new RangeError('Formal offer requires a positive current contact response')
       if (!isPlayerFreeAgent(world, input.playerId)) throw new RangeError('Player is no longer a free agent')
       const conflictingActive = Object.values(world.negotiationsById).some((item) => item.id !== id && isActiveNegotiation(item)
         && item.playerId === input.playerId
@@ -200,6 +201,7 @@ export function openNegotiation(world: GameWorld, input: OpenNegotiationInput): 
         years: input.years,
         ...(input.role === undefined ? {} : { role: input.role }),
         ...(input.agentFee === undefined ? {} : { agentFee: input.agentFee }),
+        offerSubmittedOn: world.currentDate,
         actionKey: input.actionKey,
         offerResponsibleActor: input.offerResponsibleActor,
         status: 'OPEN',
@@ -208,9 +210,12 @@ export function openNegotiation(world: GameWorld, input: OpenNegotiationInput): 
       return updateGameWorld(world, { negotiations: [...Object.values(world.negotiationsById).filter((item) => item.id !== id), offer] })
     }
     const sameOffer = existingForKey.openingKey === persistedOpeningKey
+      && existingForKey.id === id
       && existingForKey.actionKey === input.actionKey
+      && existingForKey.organizationId === input.organizationId
       && existingForKey.teamId === input.teamId
-      && (existingForKey.status === 'OPEN' || existingForKey.status === 'COUNTERED')
+      && existingForKey.playerId === input.playerId
+      && existingForKey.status === 'OPEN'
       && existingForKey.salary === input.salary
       && existingForKey.years === input.years
       && existingForKey.role === input.role

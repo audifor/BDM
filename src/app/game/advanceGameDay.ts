@@ -9,6 +9,7 @@ import { evaluateSimulationBreakpoints, type SimulationBreakpointResult } from '
 import { repairWorldAtLifecycleBoundary } from '@/app/repair'
 import type { WorldRepairReport } from '@/domain/repair'
 import { reviewMajorInjuryChanges, reviewMaterialRosterChanges } from '@/app/gmPlanning'
+import { submitAiOffersAfterPositiveContactResponses } from '@/app/marketIntelligence'
 
 export class SimulationAdvanceBlockedError extends Error {
   constructor(readonly decision: SimulationBreakpointResult) {
@@ -124,6 +125,22 @@ export function advanceGameDayWithResult(world: GameWorld, createSeed: MatchSeed
     }
     current = calendar.world
     phases.push(...calendar.phases.map((phase, index) => ({ ...phase, order: phases.length + index + 1 })))
+
+    activePhaseId = 'AI_FORMAL_FREE_AGENT_OFFERS'
+    const offerCheckpoint = submitAiOffersAfterPositiveContactResponses(current)
+    current = offerCheckpoint.world
+    const submittedOffers = offerCheckpoint.results.filter((result) => result.status === 'SUBMITTED')
+    phases.push({
+      phaseId: activePhaseId,
+      order: phases.length + 1,
+      date: current.currentDate,
+      ran: offerCheckpoint.results.length > 0,
+      worldChanged: current !== calendar.world,
+      diagnostics: submittedOffers.map((result) => ({ code: 'AI_FREE_AGENT_OFFER_SUBMITTED', message: 'AI submitted one nonbinding formal free-agent offer.', sourceId: result.negotiation?.id })),
+      summary: offerCheckpoint.results.length === 0
+        ? 'No AI positive contact response was recorded today.'
+        : `Checked ${offerCheckpoint.results.length} newly positive AI contact(s); submitted ${submittedOffers.length} offer(s).`,
+    })
 
     activePhaseId = 'POST_TRANSITION_SELF_HEALING'
     const changedTeamIds = Object.values(beforeCalendar.teams).filter((team) => team.rosterPlayerIds.join('|') !== current.teams[team.id]?.rosterPlayerIds.join('|')).map((team) => team.id).sort((a, b) => a.localeCompare(b))
