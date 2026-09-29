@@ -1,0 +1,219 @@
+[
+ {
+  "wallMs": 79,
+  "tick": 56,
+  "sequence": 41,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 79,
+  "tick": 56,
+  "sequence": 42,
+  "type": "shotReleased",
+  "detail": "A. Dain +3"
+ },
+ {
+  "wallMs": 79,
+  "tick": 56,
+  "sequence": 43,
+  "type": "actionResolved",
+  "detail": "H. Grove CLOSEOUT"
+ },
+ {
+  "wallMs": 79,
+  "tick": 56,
+  "sequence": 44,
+  "type": "reboundResponsibilitiesAssigned",
+  "detail": "-"
+ },
+ {
+  "wallMs": 575,
+  "tick": 62,
+  "sequence": 45,
+  "type": "possessionPhaseChanged",
+  "detail": "- LIVE_REBOUND"
+ },
+ {
+  "wallMs": 575,
+  "tick": 62,
+  "sequence": 46,
+  "type": "shotMissed",
+  "detail": "A. Dain"
+ },
+ {
+  "wallMs": 575,
+  "tick": 62,
+  "sequence": 47,
+  "type": "actionResolved",
+  "detail": "A. Dain CATCH_AND_SHOOT"
+ },
+ {
+  "wallMs": 1134,
+  "tick": 74,
+  "sequence": 48,
+  "type": "reboundBecameAvailable",
+  "detail": "A. Dain"
+ },
+ {
+  "wallMs": 1134,
+  "tick": 74,
+  "sequence": 49,
+  "type": "reboundSecured",
+  "detail": "D. Corven defensive"
+ },
+ {
+  "wallMs": 1134,
+  "tick": 74,
+  "sequence": 50,
+  "type": "possessionEnd",
+  "detail": "-"
+ },
+ {
+  "wallMs": 1134,
+  "tick": 74,
+  "sequence": 51,
+  "type": "possessionStart",
+  "detail": "- ADVANCE"
+ },
+ {
+  "wallMs": 1134,
+  "tick": 74,
+  "sequence": 52,
+  "type": "defensiveAssignmentsEstablished",
+  "detail": "-"
+ },
+ {
+  "wallMs": 1134,
+  "tick": 74,
+  "sequence": 58,
+  "type": "transitionStarted",
+  "detail": "- defensiveRebound"
+ },
+ {
+  "wallMs": 1135,
+  "tick": 78,
+  "sequence": 59,
+  "type": "decisionSelected",
+  "detail": "D. Corven"
+ },
+ {
+  "wallMs": 1135,
+  "tick": 78,
+  "sequence": 60,
+  "type": "actionStarted",
+  "detail": "D. Corven PASS"
+ },
+ {
+  "wallMs": 1135,
+  "tick": 78,
+  "sequence": 61,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 1135,
+  "tick": 78,
+  "sequence": 62,
+  "type": "passReleased",
+  "detail": "D. Corven > G. Elian"
+ },
+ {
+  "wallMs": 1135,
+  "tick": 78,
+  "sequence": 63,
+  "type": "transitionAdvantageChanged",
+  "detail": "- defensiveRebound"
+ },
+ {
+  "wallMs": 1320,
+  "tick": 84,
+  "sequence": 64,
+  "type": "passReceived",
+  "detail": "G. Elian > G. Elian"
+ },
+ {
+  "wallMs": 1320,
+  "tick": 84,
+  "sequence": 65,
+  "type": "actionResolved",
+  "detail": "D. Corven PASS"
+ },
+ {
+  "wallMs": 1320,
+  "tick": 84,
+  "sequence": 66,
+  "type": "actionStarted",
+  "detail": "H. Corven CLOSEOUT"
+ },
+ {
+  "wallMs": 1320,
+  "tick": 84,
+  "sequence": 67,
+  "type": "decisionSelected",
+  "detail": "G. Elian"
+ },
+ {
+  "wallMs": 1320,
+  "tick": 84,
+  "sequence": 68,
+  "type": "actionStarted",
+  "detail": "G. Elian CATCH_AND_SHOOT"
+ },
+ {
+  "wallMs": 1506,
+  "tick": 88,
+  "sequence": 69,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 1506,
+  "tick": 88,
+  "sequence": 70,
+  "type": "shotReleased",
+  "detail": "G. Elian +3"
+ },
+ {
+  "wallMs": 1506,
+  "tick": 88,
+  "sequence": 71,
+  "type": "actionResolved",
+  "detail": "H. Corven CLOSEOUT"
+ },
+ {
+  "wallMs": 1506,
+  "tick": 88,
+  "sequence": 72,
+  "type": "transitionResolved",
+  "detail": "- defensiveRebound"
+ },
+ {
+  "wallMs": 1695,
+  "tick": 94,
+  "sequence": 73,
+  "type": "shotMade",
+  "detail": "G. Elian +3"
+ },
+ {
+  "wallMs": 1695,
+  "tick": 94,
+  "sequence": 74,
+  "type": "possessionEnd",
+  "detail": "-"
+ },
+ {
+  "wallMs": 1695,
+  "tick": 94,
+  "sequence": 75,
+  "type": "ballDead",
+  "detail": "- madeBasket"
+ },
+ {
+  "wallMs": 1695,
+  "tick": 94,
+  "sequence": 76,
+  "type": "actionResolved",
+  "detail": "G. Elian CATCH_AND_SHOOT"
+ }
+]

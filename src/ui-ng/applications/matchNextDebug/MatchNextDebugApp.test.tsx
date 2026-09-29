@@ -31,7 +31,7 @@ describe('Match Next debug surface', () => {
     for (let index = 0; index < 7; index += 1) fireEvent.click(screen.getByRole('button', { name: 'Step 0.1s' }))
     expect(screen.getByLabelText('Rebound target')).toBeTruthy()
     expect(screen.getByLabelText('Action inspector').textContent).toContain('BOX_OUT')
-    expect(screen.getByText(/Attacker crash:/).textContent).toContain('Attacker crash: 2 | Defender pursuit: 0 | Box-out: 5 | Transition safety: 3')
+    expect(screen.getByText(/Attacker crash:/).textContent).toContain('Attacker crash: 2 | Defender pursuit: 2 | Box-out: 3 | Transition safety: 3')
     fireEvent.click(screen.getByRole('button', { name: 'Check JSON resume' }))
     expect(screen.getByText('Serialization: PASS')).toBeTruthy()
 

@@ -139,6 +139,14 @@ function finishPeriod(state: MatchState): MatchState {
     ball: { kind: 'DEAD', reason: 'periodEnd', position: ballPosition, heightMeters: 0.08 },
   }
   next = endPossession(next, 'periodEnd')
+  // The horn ends whatever action was still running (e.g. a shot in flight). Left ACTIVE it survives into the next
+  // period and blocks every new decision until the shot clock expires, forever (BT1-Next: seed 424242, shot released
+  // at t6160, horn at t6164, then 24 s of nothing and shot-clock violations for the rest of the game).
+  next = {
+    ...next,
+    actions: next.actions.map((action) => action.status === 'ACTIVE' ? { ...action, status: 'CANCELLED' as const, outcome: 'CANCELLED' as const, resolvedT: next.t } : action),
+    currentDecision: null,
+  }
   next = reconcileStructures(next)
   next = emitEvent(next, 'ballDead', { ballReason: 'periodEnd' })
   next = emitEvent(next, 'periodEnd')

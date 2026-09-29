@@ -104,12 +104,13 @@ function reconcileRebound(input: MatchState): MatchState {
     .sort((left, right) => left.score - right.score || comparePlayerId(left.player, right.player))
     .slice(0, REBOUND_PURSUERS_PER_TEAM)
   const crasherIds = new Set(crashers.map(({ player }) => player.playerId))
-  const pursuingDefenderIds = input.ball.kind === 'REBOUNDABLE' && input.t >= rebound.availableAtT
-    ? new Set(defendingPlayers.map((player) => player.playerId)
-      .map((playerId) => ({ playerId, distance: distanceBetween(findPlayer(input, playerId)!.position, rebound.position) }))
-      .sort((left, right) => left.distance - right.distance || String(left.playerId).localeCompare(String(right.playerId)))
-      .slice(0, REBOUND_PURSUERS_PER_TEAM).map((item) => item.playerId))
-    : new Set<PlayerId>()
+  // The nearest defenders go for the landing point from the moment the shot is released, exactly like the offensive
+  // crashers. Waiting until the ball became collectible gave the shooting team the whole flight time as a head start
+  // (BT1-Next audit: 121 of 123 rebounds, 98%, were offensive; seed 424242 t74).
+  const pursuingDefenderIds = new Set(defendingPlayers.map((player) => player.playerId)
+    .map((playerId) => ({ playerId, distance: distanceBetween(findPlayer(input, playerId)!.position, rebound.position) }))
+    .sort((left, right) => left.distance - right.distance || String(left.playerId).localeCompare(String(right.playerId)))
+    .slice(0, REBOUND_PURSUERS_PER_TEAM).map((item) => item.playerId))
 
   let nextResponsibilitySequence = input.nextResponsibilitySequence
   let nextDecisionSequence = input.nextDecisionSequence

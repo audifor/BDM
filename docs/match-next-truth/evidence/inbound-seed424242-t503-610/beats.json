@@ -1,0 +1,233 @@
+[
+ {
+  "wallMs": 1042,
+  "tick": 523,
+  "sequence": 372,
+  "type": "possessionStart",
+  "detail": "- INBOUND"
+ },
+ {
+  "wallMs": 1042,
+  "tick": 523,
+  "sequence": 373,
+  "type": "inboundStarted",
+  "detail": "A. Bexley INBOUND"
+ },
+ {
+  "wallMs": 1042,
+  "tick": 523,
+  "sequence": 374,
+  "type": "defensiveAssignmentsEstablished",
+  "detail": "-"
+ },
+ {
+  "wallMs": 1042,
+  "tick": 523,
+  "sequence": 375,
+  "type": "inboundReleased",
+  "detail": "A. Bexley > H. Grove"
+ },
+ {
+  "wallMs": 1042,
+  "tick": 523,
+  "sequence": 376,
+  "type": "passReleased",
+  "detail": "A. Bexley > H. Grove"
+ },
+ {
+  "wallMs": 1044,
+  "tick": 526,
+  "sequence": 377,
+  "type": "passReceived",
+  "detail": "H. Grove > H. Grove"
+ },
+ {
+  "wallMs": 1044,
+  "tick": 526,
+  "sequence": 378,
+  "type": "possessionPhaseChanged",
+  "detail": "- ADVANCE"
+ },
+ {
+  "wallMs": 1044,
+  "tick": 526,
+  "sequence": 384,
+  "type": "transitionStarted",
+  "detail": "- madeBasketInbound"
+ },
+ {
+  "wallMs": 1414,
+  "tick": 540,
+  "sequence": 385,
+  "type": "transitionAdvantageChanged",
+  "detail": "- madeBasketInbound"
+ },
+ {
+  "wallMs": 1600,
+  "tick": 549,
+  "sequence": 386,
+  "type": "transitionAdvantageChanged",
+  "detail": "- madeBasketInbound"
+ },
+ {
+  "wallMs": 1600,
+  "tick": 551,
+  "sequence": 387,
+  "type": "transitionAdvantageChanged",
+  "detail": "- madeBasketInbound"
+ },
+ {
+  "wallMs": 1602,
+  "tick": 556,
+  "sequence": 388,
+  "type": "decisionSelected",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 1602,
+  "tick": 556,
+  "sequence": 389,
+  "type": "actionStarted",
+  "detail": "H. Grove DRIVE"
+ },
+ {
+  "wallMs": 1602,
+  "tick": 556,
+  "sequence": 390,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 1602,
+  "tick": 556,
+  "sequence": 391,
+  "type": "transitionResolved",
+  "detail": "- madeBasketInbound"
+ },
+ {
+  "wallMs": 1790,
+  "tick": 565,
+  "sequence": 400,
+  "type": "actionResolved",
+  "detail": "H. Grove DRIVE"
+ },
+ {
+  "wallMs": 1790,
+  "tick": 565,
+  "sequence": 401,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 1790,
+  "tick": 565,
+  "sequence": 402,
+  "type": "decisionSelected",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 1790,
+  "tick": 565,
+  "sequence": 403,
+  "type": "actionStarted",
+  "detail": "H. Grove KICK_OUT"
+ },
+ {
+  "wallMs": 1790,
+  "tick": 565,
+  "sequence": 404,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 1790,
+  "tick": 565,
+  "sequence": 405,
+  "type": "passReleased",
+  "detail": "H. Grove > C. Dain"
+ },
+ {
+  "wallMs": 1976,
+  "tick": 570,
+  "sequence": 409,
+  "type": "passReceived",
+  "detail": "C. Dain > C. Dain"
+ },
+ {
+  "wallMs": 1976,
+  "tick": 570,
+  "sequence": 412,
+  "type": "actionResolved",
+  "detail": "H. Grove KICK_OUT"
+ },
+ {
+  "wallMs": 1976,
+  "tick": 570,
+  "sequence": 413,
+  "type": "actionStarted",
+  "detail": "B. Farrow CLOSEOUT"
+ },
+ {
+  "wallMs": 1976,
+  "tick": 570,
+  "sequence": 414,
+  "type": "decisionSelected",
+  "detail": "C. Dain"
+ },
+ {
+  "wallMs": 1976,
+  "tick": 570,
+  "sequence": 415,
+  "type": "actionStarted",
+  "detail": "C. Dain CATCH_AND_SHOOT"
+ },
+ {
+  "wallMs": 1977,
+  "tick": 574,
+  "sequence": 416,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 1977,
+  "tick": 574,
+  "sequence": 417,
+  "type": "shotReleased",
+  "detail": "C. Dain +3"
+ },
+ {
+  "wallMs": 1977,
+  "tick": 574,
+  "sequence": 418,
+  "type": "actionResolved",
+  "detail": "B. Farrow CLOSEOUT"
+ },
+ {
+  "wallMs": 2163,
+  "tick": 580,
+  "sequence": 419,
+  "type": "shotMade",
+  "detail": "C. Dain +3"
+ },
+ {
+  "wallMs": 2163,
+  "tick": 580,
+  "sequence": 420,
+  "type": "possessionEnd",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2163,
+  "tick": 580,
+  "sequence": 421,
+  "type": "ballDead",
+  "detail": "- madeBasket"
+ },
+ {
+  "wallMs": 2163,
+  "tick": 580,
+  "sequence": 422,
+  "type": "actionResolved",
+  "detail": "C. Dain CATCH_AND_SHOOT"
+ }
+]

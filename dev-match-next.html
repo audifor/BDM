@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Basketball Truth · MatchEngine Next</title>
+    <style>
+      html,
+      body,
+      #root {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #0b0f14;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      const params = new URLSearchParams(location.search)
+      const num = (key) => (params.get(key) !== null && Number.isFinite(Number(params.get(key))) ? Number(params.get(key)) : undefined)
+      const { mountNextDemo } = await import('/src/presentation/match-next/dev/mountNextDemo.ts')
+      const handle = mountNextDemo(document.getElementById('root'), {
+        ...(num('seed') !== undefined ? { seed: num('seed') } : {}),
+        ...(num('speed') !== undefined ? { speed: num('speed') } : {}),
+        ...(num('period') !== undefined ? { periodSeconds: num('period') } : {}),
+        ...(params.get('camera') ? { camera: params.get('camera') } : {}),
+        ...(params.get('truth') === '1' ? { truth: true } : {}),
+      })
+      window.__bdmNextDemo = handle
+    </script>
+  </body>
+</html>

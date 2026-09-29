@@ -73,7 +73,13 @@ export class MatchNextLiveController {
     const movementIntents = this.state.movementIntents.filter((item) => !ids.has(item.provenance.responsibilityId))
     this.state = { ...this.state, responsibilities, decisions, movementIntents }
     this.state = applyCommand(this.state, { type: 'startInbound', teamId: pending.teamId, inbounderPlayerId: pending.inbounderPlayerId, reason: pending.reason })
-    this.state = applyCommand(this.state, { type: 'releaseInbound', receiverPlayerId: pending.receiverPlayerId, passKind: 'chest', travelTicks: 1 })
+    // Same pass-speed rule as ActionCore passes (about 10 m/s, 2-8 ticks). A fixed 1 tick moved the ball 3 m in 0.1 s
+    // (30 m/s) on every inbound (BT1-Next: ~160 inbounds per game).
+    const inbounder = this.state.players.find((player) => player.playerId === pending.inbounderPlayerId)
+    const receiver = this.state.players.find((player) => player.playerId === pending.receiverPlayerId)
+    const passDistance = inbounder === undefined || receiver === undefined ? 0 : distanceBetween(inbounder.position, receiver.position)
+    const travelTicks = Math.max(2, Math.min(8, Math.ceil(passDistance)))
+    this.state = applyCommand(this.state, { type: 'releaseInbound', receiverPlayerId: pending.receiverPlayerId, passKind: 'chest', travelTicks })
     this.pendingInbound = null
   }
 

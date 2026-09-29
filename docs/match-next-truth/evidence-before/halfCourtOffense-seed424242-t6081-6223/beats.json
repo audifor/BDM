@@ -1,0 +1,457 @@
+[
+ {
+  "wallMs": 5797,
+  "tick": 6101,
+  "sequence": 4171,
+  "type": "possessionStart",
+  "detail": "- INBOUND"
+ },
+ {
+  "wallMs": 5797,
+  "tick": 6101,
+  "sequence": 4172,
+  "type": "inboundStarted",
+  "detail": "A. Bexley INBOUND"
+ },
+ {
+  "wallMs": 5797,
+  "tick": 6101,
+  "sequence": 4173,
+  "type": "defensiveAssignmentsEstablished",
+  "detail": "-"
+ },
+ {
+  "wallMs": 5797,
+  "tick": 6101,
+  "sequence": 4174,
+  "type": "inboundReleased",
+  "detail": "A. Bexley > H. Grove"
+ },
+ {
+  "wallMs": 5797,
+  "tick": 6101,
+  "sequence": 4175,
+  "type": "passReleased",
+  "detail": "A. Bexley > H. Grove"
+ },
+ {
+  "wallMs": 5799,
+  "tick": 6102,
+  "sequence": 4176,
+  "type": "passReceived",
+  "detail": "H. Grove > H. Grove"
+ },
+ {
+  "wallMs": 5799,
+  "tick": 6102,
+  "sequence": 4177,
+  "type": "possessionPhaseChanged",
+  "detail": "- ADVANCE"
+ },
+ {
+  "wallMs": 5800,
+  "tick": 6102,
+  "sequence": 4183,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 5800,
+  "tick": 6102,
+  "sequence": 4184,
+  "type": "decisionSelected",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 5800,
+  "tick": 6102,
+  "sequence": 4185,
+  "type": "actionStarted",
+  "detail": "H. Grove DRIVE"
+ },
+ {
+  "wallMs": 5800,
+  "tick": 6102,
+  "sequence": 4186,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 6016,
+  "tick": 6118,
+  "sequence": 4190,
+  "type": "actionResolved",
+  "detail": "H. Grove DRIVE"
+ },
+ {
+  "wallMs": 6016,
+  "tick": 6118,
+  "sequence": 4191,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 6016,
+  "tick": 6118,
+  "sequence": 4192,
+  "type": "decisionSelected",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 6016,
+  "tick": 6118,
+  "sequence": 4193,
+  "type": "actionStarted",
+  "detail": "H. Grove KICK_OUT"
+ },
+ {
+  "wallMs": 6016,
+  "tick": 6118,
+  "sequence": 4194,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 6016,
+  "tick": 6118,
+  "sequence": 4195,
+  "type": "passReleased",
+  "detail": "H. Grove > G. Elian"
+ },
+ {
+  "wallMs": 6024,
+  "tick": 6123,
+  "sequence": 4199,
+  "type": "passReceived",
+  "detail": "G. Elian > G. Elian"
+ },
+ {
+  "wallMs": 6024,
+  "tick": 6123,
+  "sequence": 4202,
+  "type": "actionResolved",
+  "detail": "H. Grove KICK_OUT"
+ },
+ {
+  "wallMs": 6024,
+  "tick": 6123,
+  "sequence": 4203,
+  "type": "actionStarted",
+  "detail": "B. Istra CLOSEOUT"
+ },
+ {
+  "wallMs": 6024,
+  "tick": 6123,
+  "sequence": 4204,
+  "type": "decisionSelected",
+  "detail": "G. Elian"
+ },
+ {
+  "wallMs": 6024,
+  "tick": 6123,
+  "sequence": 4205,
+  "type": "actionStarted",
+  "detail": "G. Elian CATCH_AND_SHOOT"
+ },
+ {
+  "wallMs": 6032,
+  "tick": 6127,
+  "sequence": 4206,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 6032,
+  "tick": 6127,
+  "sequence": 4207,
+  "type": "shotReleased",
+  "detail": "G. Elian +3"
+ },
+ {
+  "wallMs": 6032,
+  "tick": 6127,
+  "sequence": 4208,
+  "type": "actionResolved",
+  "detail": "B. Istra CLOSEOUT"
+ },
+ {
+  "wallMs": 6032,
+  "tick": 6127,
+  "sequence": 4209,
+  "type": "reboundResponsibilitiesAssigned",
+  "detail": "-"
+ },
+ {
+  "wallMs": 6233,
+  "tick": 6133,
+  "sequence": 4210,
+  "type": "possessionPhaseChanged",
+  "detail": "- LIVE_REBOUND"
+ },
+ {
+  "wallMs": 6233,
+  "tick": 6133,
+  "sequence": 4211,
+  "type": "shotMissed",
+  "detail": "G. Elian"
+ },
+ {
+  "wallMs": 6233,
+  "tick": 6133,
+  "sequence": 4212,
+  "type": "actionResolved",
+  "detail": "G. Elian CATCH_AND_SHOOT"
+ },
+ {
+  "wallMs": 6450,
+  "tick": 6145,
+  "sequence": 4213,
+  "type": "reboundBecameAvailable",
+  "detail": "G. Elian"
+ },
+ {
+  "wallMs": 6450,
+  "tick": 6145,
+  "sequence": 4214,
+  "type": "reboundSecured",
+  "detail": "H. Grove offensive"
+ },
+ {
+  "wallMs": 6450,
+  "tick": 6145,
+  "sequence": 4215,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 6450,
+  "tick": 6145,
+  "sequence": 4221,
+  "type": "decisionSelected",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 6450,
+  "tick": 6145,
+  "sequence": 4222,
+  "type": "actionStarted",
+  "detail": "H. Grove SHOOT"
+ },
+ {
+  "wallMs": 6450,
+  "tick": 6145,
+  "sequence": 4223,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 6453,
+  "tick": 6147,
+  "sequence": 4224,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 6453,
+  "tick": 6147,
+  "sequence": 4225,
+  "type": "shotReleased",
+  "detail": "H. Grove +2"
+ },
+ {
+  "wallMs": 6453,
+  "tick": 6147,
+  "sequence": 4226,
+  "type": "reboundResponsibilitiesAssigned",
+  "detail": "-"
+ },
+ {
+  "wallMs": 6463,
+  "tick": 6153,
+  "sequence": 4227,
+  "type": "possessionPhaseChanged",
+  "detail": "- LIVE_REBOUND"
+ },
+ {
+  "wallMs": 6463,
+  "tick": 6153,
+  "sequence": 4228,
+  "type": "shotMissed",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 6463,
+  "tick": 6153,
+  "sequence": 4229,
+  "type": "actionResolved",
+  "detail": "H. Grove SHOOT"
+ },
+ {
+  "wallMs": 6666,
+  "tick": 6165,
+  "sequence": 4230,
+  "type": "reboundBecameAvailable",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 6666,
+  "tick": 6165,
+  "sequence": 4231,
+  "type": "reboundSecured",
+  "detail": "G. Elian offensive"
+ },
+ {
+  "wallMs": 6666,
+  "tick": 6165,
+  "sequence": 4232,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 6666,
+  "tick": 6165,
+  "sequence": 4238,
+  "type": "decisionSelected",
+  "detail": "G. Elian"
+ },
+ {
+  "wallMs": 6666,
+  "tick": 6165,
+  "sequence": 4239,
+  "type": "actionStarted",
+  "detail": "G. Elian SHOOT"
+ },
+ {
+  "wallMs": 6666,
+  "tick": 6165,
+  "sequence": 4240,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 6669,
+  "tick": 6167,
+  "sequence": 4241,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 6669,
+  "tick": 6167,
+  "sequence": 4242,
+  "type": "shotReleased",
+  "detail": "G. Elian +2"
+ },
+ {
+  "wallMs": 6669,
+  "tick": 6167,
+  "sequence": 4243,
+  "type": "reboundResponsibilitiesAssigned",
+  "detail": "-"
+ },
+ {
+  "wallMs": 6679,
+  "tick": 6173,
+  "sequence": 4244,
+  "type": "possessionPhaseChanged",
+  "detail": "- LIVE_REBOUND"
+ },
+ {
+  "wallMs": 6679,
+  "tick": 6173,
+  "sequence": 4245,
+  "type": "shotMissed",
+  "detail": "G. Elian"
+ },
+ {
+  "wallMs": 6679,
+  "tick": 6173,
+  "sequence": 4246,
+  "type": "actionResolved",
+  "detail": "G. Elian SHOOT"
+ },
+ {
+  "wallMs": 6886,
+  "tick": 6185,
+  "sequence": 4247,
+  "type": "reboundBecameAvailable",
+  "detail": "G. Elian"
+ },
+ {
+  "wallMs": 6887,
+  "tick": 6185,
+  "sequence": 4248,
+  "type": "reboundSecured",
+  "detail": "H. Grove offensive"
+ },
+ {
+  "wallMs": 6887,
+  "tick": 6185,
+  "sequence": 4249,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 6887,
+  "tick": 6185,
+  "sequence": 4255,
+  "type": "decisionSelected",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 6887,
+  "tick": 6185,
+  "sequence": 4256,
+  "type": "actionStarted",
+  "detail": "H. Grove SHOOT"
+ },
+ {
+  "wallMs": 6887,
+  "tick": 6185,
+  "sequence": 4257,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 6890,
+  "tick": 6187,
+  "sequence": 4258,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 6890,
+  "tick": 6187,
+  "sequence": 4259,
+  "type": "shotReleased",
+  "detail": "H. Grove +2"
+ },
+ {
+  "wallMs": 7081,
+  "tick": 6193,
+  "sequence": 4260,
+  "type": "shotMade",
+  "detail": "H. Grove +2"
+ },
+ {
+  "wallMs": 7081,
+  "tick": 6193,
+  "sequence": 4261,
+  "type": "possessionEnd",
+  "detail": "-"
+ },
+ {
+  "wallMs": 7081,
+  "tick": 6193,
+  "sequence": 4262,
+  "type": "ballDead",
+  "detail": "- madeBasket"
+ },
+ {
+  "wallMs": 7081,
+  "tick": 6193,
+  "sequence": 4263,
+  "type": "actionResolved",
+  "detail": "H. Grove SHOOT"
+ }
+]

@@ -1,0 +1,765 @@
+[
+ {
+  "wallMs": 801,
+  "tick": 323,
+  "sequence": 210,
+  "type": "possessionStart",
+  "detail": "- INBOUND"
+ },
+ {
+  "wallMs": 801,
+  "tick": 323,
+  "sequence": 211,
+  "type": "inboundStarted",
+  "detail": "A. Bexley INBOUND"
+ },
+ {
+  "wallMs": 801,
+  "tick": 323,
+  "sequence": 212,
+  "type": "defensiveAssignmentsEstablished",
+  "detail": "-"
+ },
+ {
+  "wallMs": 801,
+  "tick": 323,
+  "sequence": 213,
+  "type": "inboundReleased",
+  "detail": "A. Bexley > A. Dain"
+ },
+ {
+  "wallMs": 801,
+  "tick": 323,
+  "sequence": 214,
+  "type": "passReleased",
+  "detail": "A. Bexley > A. Dain"
+ },
+ {
+  "wallMs": 802,
+  "tick": 327,
+  "sequence": 215,
+  "type": "passReceived",
+  "detail": "A. Dain > A. Dain"
+ },
+ {
+  "wallMs": 802,
+  "tick": 327,
+  "sequence": 216,
+  "type": "possessionPhaseChanged",
+  "detail": "- ADVANCE"
+ },
+ {
+  "wallMs": 802,
+  "tick": 327,
+  "sequence": 222,
+  "type": "transitionStarted",
+  "detail": "- madeBasketInbound"
+ },
+ {
+  "wallMs": 1002,
+  "tick": 340,
+  "sequence": 223,
+  "type": "transitionAdvantageChanged",
+  "detail": "- madeBasketInbound"
+ },
+ {
+  "wallMs": 1204,
+  "tick": 350,
+  "sequence": 224,
+  "type": "transitionAdvantageChanged",
+  "detail": "- madeBasketInbound"
+ },
+ {
+  "wallMs": 1205,
+  "tick": 354,
+  "sequence": 225,
+  "type": "transitionAdvantageChanged",
+  "detail": "- madeBasketInbound"
+ },
+ {
+  "wallMs": 1206,
+  "tick": 356,
+  "sequence": 226,
+  "type": "decisionSelected",
+  "detail": "A. Dain"
+ },
+ {
+  "wallMs": 1206,
+  "tick": 356,
+  "sequence": 227,
+  "type": "actionStarted",
+  "detail": "A. Dain DRIVE"
+ },
+ {
+  "wallMs": 1206,
+  "tick": 356,
+  "sequence": 228,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 1206,
+  "tick": 356,
+  "sequence": 229,
+  "type": "transitionResolved",
+  "detail": "- madeBasketInbound"
+ },
+ {
+  "wallMs": 1401,
+  "tick": 365,
+  "sequence": 238,
+  "type": "actionResolved",
+  "detail": "A. Dain DRIVE"
+ },
+ {
+  "wallMs": 1401,
+  "tick": 365,
+  "sequence": 239,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 1401,
+  "tick": 365,
+  "sequence": 240,
+  "type": "decisionSelected",
+  "detail": "A. Dain"
+ },
+ {
+  "wallMs": 1401,
+  "tick": 365,
+  "sequence": 241,
+  "type": "actionStarted",
+  "detail": "A. Dain KICK_OUT"
+ },
+ {
+  "wallMs": 1401,
+  "tick": 365,
+  "sequence": 242,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 1401,
+  "tick": 365,
+  "sequence": 243,
+  "type": "passReleased",
+  "detail": "A. Dain > B. Farrow"
+ },
+ {
+  "wallMs": 1401,
+  "tick": 370,
+  "sequence": 247,
+  "type": "passReceived",
+  "detail": "B. Farrow > B. Farrow"
+ },
+ {
+  "wallMs": 1401,
+  "tick": 370,
+  "sequence": 250,
+  "type": "actionResolved",
+  "detail": "A. Dain KICK_OUT"
+ },
+ {
+  "wallMs": 1401,
+  "tick": 370,
+  "sequence": 251,
+  "type": "actionStarted",
+  "detail": "C. Dain CLOSEOUT"
+ },
+ {
+  "wallMs": 1401,
+  "tick": 370,
+  "sequence": 252,
+  "type": "decisionSelected",
+  "detail": "B. Farrow"
+ },
+ {
+  "wallMs": 1401,
+  "tick": 370,
+  "sequence": 253,
+  "type": "actionStarted",
+  "detail": "B. Farrow CATCH_AND_SHOOT"
+ },
+ {
+  "wallMs": 1402,
+  "tick": 374,
+  "sequence": 254,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 1402,
+  "tick": 374,
+  "sequence": 255,
+  "type": "shotReleased",
+  "detail": "B. Farrow +3"
+ },
+ {
+  "wallMs": 1402,
+  "tick": 374,
+  "sequence": 256,
+  "type": "actionResolved",
+  "detail": "C. Dain CLOSEOUT"
+ },
+ {
+  "wallMs": 1402,
+  "tick": 374,
+  "sequence": 257,
+  "type": "reboundResponsibilitiesAssigned",
+  "detail": "-"
+ },
+ {
+  "wallMs": 1404,
+  "tick": 380,
+  "sequence": 258,
+  "type": "possessionPhaseChanged",
+  "detail": "- LIVE_REBOUND"
+ },
+ {
+  "wallMs": 1404,
+  "tick": 380,
+  "sequence": 259,
+  "type": "shotMissed",
+  "detail": "B. Farrow"
+ },
+ {
+  "wallMs": 1404,
+  "tick": 380,
+  "sequence": 260,
+  "type": "actionResolved",
+  "detail": "B. Farrow CATCH_AND_SHOOT"
+ },
+ {
+  "wallMs": 1592,
+  "tick": 392,
+  "sequence": 261,
+  "type": "reboundBecameAvailable",
+  "detail": "B. Farrow"
+ },
+ {
+  "wallMs": 1592,
+  "tick": 393,
+  "sequence": 262,
+  "type": "reboundSecured",
+  "detail": "B. Farrow offensive"
+ },
+ {
+  "wallMs": 1592,
+  "tick": 393,
+  "sequence": 263,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 1592,
+  "tick": 393,
+  "sequence": 269,
+  "type": "decisionSelected",
+  "detail": "B. Farrow"
+ },
+ {
+  "wallMs": 1592,
+  "tick": 393,
+  "sequence": 270,
+  "type": "actionStarted",
+  "detail": "B. Farrow PASS"
+ },
+ {
+  "wallMs": 1592,
+  "tick": 393,
+  "sequence": 271,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 1592,
+  "tick": 393,
+  "sequence": 272,
+  "type": "passReleased",
+  "detail": "B. Farrow > B. Istra"
+ },
+ {
+  "wallMs": 1776,
+  "tick": 398,
+  "sequence": 273,
+  "type": "passReceived",
+  "detail": "B. Istra > B. Istra"
+ },
+ {
+  "wallMs": 1776,
+  "tick": 398,
+  "sequence": 276,
+  "type": "actionResolved",
+  "detail": "B. Farrow PASS"
+ },
+ {
+  "wallMs": 1776,
+  "tick": 398,
+  "sequence": 277,
+  "type": "actionStarted",
+  "detail": "G. Elian CLOSEOUT"
+ },
+ {
+  "wallMs": 1776,
+  "tick": 398,
+  "sequence": 278,
+  "type": "decisionSelected",
+  "detail": "B. Istra"
+ },
+ {
+  "wallMs": 1776,
+  "tick": 398,
+  "sequence": 279,
+  "type": "actionStarted",
+  "detail": "B. Istra CATCH_AND_SHOOT"
+ },
+ {
+  "wallMs": 1778,
+  "tick": 402,
+  "sequence": 280,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 1778,
+  "tick": 402,
+  "sequence": 281,
+  "type": "shotReleased",
+  "detail": "B. Istra +3"
+ },
+ {
+  "wallMs": 1778,
+  "tick": 402,
+  "sequence": 282,
+  "type": "actionResolved",
+  "detail": "G. Elian CLOSEOUT"
+ },
+ {
+  "wallMs": 1778,
+  "tick": 402,
+  "sequence": 283,
+  "type": "reboundResponsibilitiesAssigned",
+  "detail": "-"
+ },
+ {
+  "wallMs": 1779,
+  "tick": 408,
+  "sequence": 284,
+  "type": "possessionPhaseChanged",
+  "detail": "- LIVE_REBOUND"
+ },
+ {
+  "wallMs": 1779,
+  "tick": 408,
+  "sequence": 285,
+  "type": "shotMissed",
+  "detail": "B. Istra"
+ },
+ {
+  "wallMs": 1779,
+  "tick": 408,
+  "sequence": 286,
+  "type": "actionResolved",
+  "detail": "B. Istra CATCH_AND_SHOOT"
+ },
+ {
+  "wallMs": 1966,
+  "tick": 420,
+  "sequence": 287,
+  "type": "reboundBecameAvailable",
+  "detail": "B. Istra"
+ },
+ {
+  "wallMs": 1966,
+  "tick": 420,
+  "sequence": 288,
+  "type": "reboundSecured",
+  "detail": "A. Dain offensive"
+ },
+ {
+  "wallMs": 1966,
+  "tick": 420,
+  "sequence": 289,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 1966,
+  "tick": 420,
+  "sequence": 295,
+  "type": "decisionSelected",
+  "detail": "A. Dain"
+ },
+ {
+  "wallMs": 1966,
+  "tick": 420,
+  "sequence": 296,
+  "type": "actionStarted",
+  "detail": "A. Dain PASS"
+ },
+ {
+  "wallMs": 1966,
+  "tick": 420,
+  "sequence": 297,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 1966,
+  "tick": 420,
+  "sequence": 298,
+  "type": "passReleased",
+  "detail": "A. Dain > B. Istra"
+ },
+ {
+  "wallMs": 1967,
+  "tick": 424,
+  "sequence": 299,
+  "type": "passReceived",
+  "detail": "B. Istra > B. Istra"
+ },
+ {
+  "wallMs": 1967,
+  "tick": 424,
+  "sequence": 302,
+  "type": "actionResolved",
+  "detail": "A. Dain PASS"
+ },
+ {
+  "wallMs": 1967,
+  "tick": 424,
+  "sequence": 303,
+  "type": "actionStarted",
+  "detail": "G. Elian CLOSEOUT"
+ },
+ {
+  "wallMs": 1967,
+  "tick": 424,
+  "sequence": 304,
+  "type": "actionResolved",
+  "detail": "G. Elian CLOSEOUT"
+ },
+ {
+  "wallMs": 1967,
+  "tick": 424,
+  "sequence": 305,
+  "type": "decisionSelected",
+  "detail": "B. Istra"
+ },
+ {
+  "wallMs": 1967,
+  "tick": 424,
+  "sequence": 306,
+  "type": "actionStarted",
+  "detail": "B. Istra DRIVE"
+ },
+ {
+  "wallMs": 2151,
+  "tick": 435,
+  "sequence": 310,
+  "type": "actionResolved",
+  "detail": "B. Istra DRIVE"
+ },
+ {
+  "wallMs": 2151,
+  "tick": 435,
+  "sequence": 311,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 2151,
+  "tick": 435,
+  "sequence": 312,
+  "type": "decisionSelected",
+  "detail": "B. Istra"
+ },
+ {
+  "wallMs": 2151,
+  "tick": 435,
+  "sequence": 313,
+  "type": "actionStarted",
+  "detail": "B. Istra SHOOT"
+ },
+ {
+  "wallMs": 2151,
+  "tick": 435,
+  "sequence": 314,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 2152,
+  "tick": 437,
+  "sequence": 318,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 2152,
+  "tick": 437,
+  "sequence": 319,
+  "type": "shotReleased",
+  "detail": "B. Istra +2"
+ },
+ {
+  "wallMs": 2152,
+  "tick": 437,
+  "sequence": 320,
+  "type": "reboundResponsibilitiesAssigned",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2335,
+  "tick": 443,
+  "sequence": 321,
+  "type": "possessionPhaseChanged",
+  "detail": "- LIVE_REBOUND"
+ },
+ {
+  "wallMs": 2335,
+  "tick": 443,
+  "sequence": 322,
+  "type": "shotMissed",
+  "detail": "B. Istra"
+ },
+ {
+  "wallMs": 2335,
+  "tick": 443,
+  "sequence": 323,
+  "type": "actionResolved",
+  "detail": "B. Istra SHOOT"
+ },
+ {
+  "wallMs": 2338,
+  "tick": 455,
+  "sequence": 324,
+  "type": "reboundBecameAvailable",
+  "detail": "B. Istra"
+ },
+ {
+  "wallMs": 2338,
+  "tick": 455,
+  "sequence": 325,
+  "type": "reboundSecured",
+  "detail": "H. Grove defensive"
+ },
+ {
+  "wallMs": 2338,
+  "tick": 455,
+  "sequence": 326,
+  "type": "possessionEnd",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2338,
+  "tick": 455,
+  "sequence": 327,
+  "type": "possessionStart",
+  "detail": "- ADVANCE"
+ },
+ {
+  "wallMs": 2338,
+  "tick": 455,
+  "sequence": 328,
+  "type": "defensiveAssignmentsEstablished",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2338,
+  "tick": 455,
+  "sequence": 334,
+  "type": "transitionStarted",
+  "detail": "- defensiveRebound"
+ },
+ {
+  "wallMs": 2523,
+  "tick": 459,
+  "sequence": 335,
+  "type": "decisionSelected",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 2523,
+  "tick": 459,
+  "sequence": 336,
+  "type": "actionStarted",
+  "detail": "H. Grove PASS"
+ },
+ {
+  "wallMs": 2523,
+  "tick": 459,
+  "sequence": 337,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 2523,
+  "tick": 459,
+  "sequence": 338,
+  "type": "passReleased",
+  "detail": "H. Grove > A. Bexley"
+ },
+ {
+  "wallMs": 2523,
+  "tick": 459,
+  "sequence": 339,
+  "type": "transitionAdvantageChanged",
+  "detail": "- defensiveRebound"
+ },
+ {
+  "wallMs": 2526,
+  "tick": 466,
+  "sequence": 340,
+  "type": "passIntercepted",
+  "detail": "A. Bexley > A. Bexley"
+ },
+ {
+  "wallMs": 2526,
+  "tick": 466,
+  "sequence": 341,
+  "type": "possessionEnd",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2526,
+  "tick": 466,
+  "sequence": 342,
+  "type": "possessionStart",
+  "detail": "- ADVANCE"
+ },
+ {
+  "wallMs": 2526,
+  "tick": 466,
+  "sequence": 343,
+  "type": "transitionResolved",
+  "detail": "- defensiveRebound"
+ },
+ {
+  "wallMs": 2526,
+  "tick": 466,
+  "sequence": 344,
+  "type": "defensiveAssignmentsEstablished",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2526,
+  "tick": 466,
+  "sequence": 350,
+  "type": "transitionStarted",
+  "detail": "- turnover"
+ },
+ {
+  "wallMs": 2526,
+  "tick": 466,
+  "sequence": 351,
+  "type": "actionResolved",
+  "detail": "H. Grove PASS"
+ },
+ {
+  "wallMs": 2526,
+  "tick": 466,
+  "sequence": 352,
+  "type": "decisionSelected",
+  "detail": "A. Bexley"
+ },
+ {
+  "wallMs": 2526,
+  "tick": 466,
+  "sequence": 353,
+  "type": "actionStarted",
+  "detail": "A. Bexley DRIVE"
+ },
+ {
+  "wallMs": 2526,
+  "tick": 466,
+  "sequence": 354,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 2526,
+  "tick": 466,
+  "sequence": 355,
+  "type": "transitionResolved",
+  "detail": "- turnover"
+ },
+ {
+  "wallMs": 2712,
+  "tick": 476,
+  "sequence": 361,
+  "type": "actionResolved",
+  "detail": "A. Bexley DRIVE"
+ },
+ {
+  "wallMs": 2712,
+  "tick": 476,
+  "sequence": 362,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 2712,
+  "tick": 476,
+  "sequence": 363,
+  "type": "decisionSelected",
+  "detail": "A. Bexley"
+ },
+ {
+  "wallMs": 2712,
+  "tick": 476,
+  "sequence": 364,
+  "type": "actionStarted",
+  "detail": "A. Bexley SHOOT"
+ },
+ {
+  "wallMs": 2712,
+  "tick": 476,
+  "sequence": 365,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 2713,
+  "tick": 478,
+  "sequence": 366,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 2713,
+  "tick": 478,
+  "sequence": 367,
+  "type": "shotReleased",
+  "detail": "A. Bexley +2"
+ },
+ {
+  "wallMs": 2714,
+  "tick": 484,
+  "sequence": 368,
+  "type": "shotMade",
+  "detail": "A. Bexley +2"
+ },
+ {
+  "wallMs": 2714,
+  "tick": 484,
+  "sequence": 369,
+  "type": "possessionEnd",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2714,
+  "tick": 484,
+  "sequence": 370,
+  "type": "ballDead",
+  "detail": "- madeBasket"
+ },
+ {
+  "wallMs": 2714,
+  "tick": 484,
+  "sequence": 371,
+  "type": "actionResolved",
+  "detail": "A. Bexley SHOOT"
+ }
+]

@@ -1,0 +1,183 @@
+{
+ "scenario": {
+  "seed": 424242,
+  "possessionId": "possession-9",
+  "startT": 622,
+  "endT": 692,
+  "teamId": "generated-team-0001",
+  "startReason": "madeBasketInbound",
+  "setupSeconds": 2.9,
+  "passes": 2,
+  "shots": 1,
+  "made": false,
+  "missedThenRebound": true,
+  "reboundType": "defensive",
+  "drive": true,
+  "help": true,
+  "transition": "madeBasketInbound",
+  "transitionStopped": true,
+  "inbound": true,
+  "endReason": "defensiveRebound",
+  "kind": "missedShot",
+  "description": "Missed shot followed by a rebound",
+  "fromTick": 602,
+  "toTick": 722
+ },
+ "everyMs": 1000,
+ "views": {
+  "plain": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 605,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.35246882490422593
+    },
+    {
+     "frame": 1,
+     "tick": 615,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.4261861010960235
+    },
+    {
+     "frame": 2,
+     "tick": 625,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.2183163661702258
+    },
+    {
+     "frame": 3,
+     "tick": 635,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.36755948812114414
+    },
+    {
+     "frame": 4,
+     "tick": 645,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.4405754185503372
+    },
+    {
+     "frame": 5,
+     "tick": 655,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.408366844702783
+    },
+    {
+     "frame": 6,
+     "tick": 665,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0.3560382057592175
+    },
+    {
+     "frame": 7,
+     "tick": 675,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0.32763103340791844
+    },
+    {
+     "frame": 8,
+     "tick": 685,
+     "ball": "REBOUNDABLE",
+     "maxPlayerDiffM": 0.3429281193534174
+    },
+    {
+     "frame": 9,
+     "tick": 695,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.25628595915736074
+    },
+    {
+     "frame": 10,
+     "tick": 705,
+     "ball": "LOOSE",
+     "maxPlayerDiffM": 0.3135029295606305
+    },
+    {
+     "frame": 11,
+     "tick": 715,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.44213165228380946
+    }
+   ]
+  },
+  "truth": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 605,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.35246882490422593
+    },
+    {
+     "frame": 1,
+     "tick": 615,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.4261861010960235
+    },
+    {
+     "frame": 2,
+     "tick": 625,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.2183163661702258
+    },
+    {
+     "frame": 3,
+     "tick": 635,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.36755948812114414
+    },
+    {
+     "frame": 4,
+     "tick": 645,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.4405754185503372
+    },
+    {
+     "frame": 5,
+     "tick": 655,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.408366844702783
+    },
+    {
+     "frame": 6,
+     "tick": 665,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0.3560382057592175
+    },
+    {
+     "frame": 7,
+     "tick": 675,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0.32763103340791844
+    },
+    {
+     "frame": 8,
+     "tick": 685,
+     "ball": "REBOUNDABLE",
+     "maxPlayerDiffM": 0.3429281193534174
+    },
+    {
+     "frame": 9,
+     "tick": 695,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.25628595915736074
+    },
+    {
+     "frame": 10,
+     "tick": 705,
+     "ball": "LOOSE",
+     "maxPlayerDiffM": 0.3135029295606305
+    },
+    {
+     "frame": 11,
+     "tick": 715,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.44213165228380946
+    }
+   ]
+  }
+ }
+}

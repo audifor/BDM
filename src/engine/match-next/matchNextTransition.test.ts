@@ -62,7 +62,9 @@ describe('Match Next rebound and transition integration', () => {
     const assignedDefender = state.players.find((player) => player.playerId === assignedDefenderId)!
     state = launchMiss(state, { ...assignedDefender.position }, 6, 1)
     expect(state.reboundState?.phase).toBe('SHOT_FLIGHT')
-    expect(state.reboundState?.responsibilities.filter((item) => item.teamId !== state.homeTeamId && item.kind === 'BOX_OUT')).toHaveLength(5)
+    // The two defenders nearest the landing point pursue it from the release (symmetric with the two offensive crashers); the rest box out.
+    expect(state.reboundState?.responsibilities.filter((item) => item.teamId !== state.homeTeamId && item.kind === 'BOX_OUT')).toHaveLength(3)
+    expect(state.reboundState?.responsibilities.filter((item) => item.teamId !== state.homeTeamId && item.kind === 'PURSUE_REBOUND')).toHaveLength(2)
     const positionsAtRelease = new Map(state.players.map((player) => [player.playerId, player.position]))
     state = tick(state)
     expect(state.players.some((player) => distanceBetween(player.position, positionsAtRelease.get(player.playerId)!) > 0)).toBe(true)
