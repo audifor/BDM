@@ -17,6 +17,8 @@ export type ClubNeedConfidence = 'HIGH' | 'MODERATE' | 'LOW'
 export type ClubNeedStrategicFit = 'HIGH' | 'MODERATE' | 'LOW'
 export type ClubNeedTemporalScope = 'STRUCTURAL' | 'TEMPORARY' | 'OPPORTUNITY'
 export type ClubNeedRole = 'PRIMARY_HANDLING' | 'SPACING' | 'RIM_PROTECTION'
+export type ClubNeedsKnowledgePerspective = 'USER_ANALYTICS' | 'ORGANIZATION_KNOWLEDGE'
+export type ClubNeedsComparisonStatus = 'AVAILABLE' | 'UNKNOWN'
 
 export interface ClubNeedEvidence {
   readonly code: string
@@ -46,6 +48,8 @@ export interface ClubNeedsAssessment {
   readonly asOfDate: GameDate
   readonly strategy: ClubStrategicMode
   readonly financialContext: ClubFinancialPosture
+  readonly knowledgePerspective: ClubNeedsKnowledgePerspective
+  readonly externalComparisonStatus: ClubNeedsComparisonStatus
   readonly needs: readonly ClubNeed[]
 }
 
@@ -60,9 +64,10 @@ const FIT_ORDER: Readonly<Record<ClubNeedStrategicFit, number>> = { HIGH: 0, MOD
 const CONFIDENCE_ORDER: Readonly<Record<ClubNeedConfidence, number>> = { HIGH: 0, MODERATE: 1, LOW: 2 }
 
 /** A deterministic, non-persisted account of what one club's current roster needs and why. */
-export function assessClubNeeds(world: GameWorld, teamId: TeamId, onDate: GameDate = world.currentDate): ClubNeedsAssessment {
+export function assessClubNeeds(world: GameWorld, teamId: TeamId, onDate: GameDate = world.currentDate, knowledgePerspective?: ClubNeedsKnowledgePerspective): ClubNeedsAssessment {
   const team = world.teams[teamId]
   if (!team) throw new RangeError(`Unknown Team ${teamId}`)
+  const perspective = knowledgePerspective ?? (team.coachId === world.userCoachId ? 'USER_ANALYTICS' : 'ORGANIZATION_KNOWLEDGE')
   const datedWorld = onDate === world.currentDate ? world : { ...world, currentDate: onDate }
   const strategicAssessment = assessClubStrategy(datedWorld, teamId)
   const strategy = world.clubStrategicStatesByTeamId[teamId]?.mode ?? strategicAssessment.candidateMode
@@ -87,7 +92,7 @@ export function assessClubNeeds(world: GameWorld, teamId: TeamId, onDate: GameDa
 
   if (strategicAssessment.financialPressure === 'HIGH' || strategicAssessment.financialPressure === 'MODERATE') push({ kind: 'FINANCIAL_PRESSURE', severity: strategicAssessment.financialPressure === 'HIGH' ? 'HIGH' : 'MEDIUM', urgency: strategicAssessment.financialPressure === 'HIGH' ? 'SOON' : 'PLANNED', confidence: 'HIGH', strategicFit: strategy === 'SURVIVE' ? 'HIGH' : 'MODERATE', affectedArea: 'FINANCE', relatedPlayerIds: Object.freeze([]), evidence: [{ code: 'FINANCE_V2_DISTRESS_CONTEXT', values: { financialPressure: strategicAssessment.financialPressure, posture: financialContext } }], temporalScope: 'STRUCTURAL' })
 
-  const positionPool = activeCompetitionPlayers(world, teamId, onDate)
+  const positionPool = perspective === 'USER_ANALYTICS' ? activeCompetitionPlayers(world, teamId, onDate) : undefined
   const keyPlayers = new Set<PlayerId>()
   for (const position of BASKETBALL_POSITIONS) {
     const rosterAtPosition = rosterIds.filter((id) => canPlay(world, id, position))
@@ -108,7 +113,7 @@ export function assessClubNeeds(world: GameWorld, teamId: TeamId, onDate: GameDa
       if (latestReturn && addDays(onDate, 14) < latestReturn) push({ kind: 'TEMPORARY_COVER', severity: 'HIGH', urgency: latestReturn > addDays(onDate, 30) ? 'IMMEDIATE' : 'SOON', confidence: 'HIGH', strategicFit: strategy === 'SURVIVE' ? 'MODERATE' : 'HIGH', affectedArea: 'AVAILABILITY', targetPosition: position, relatedPlayerIds: Object.freeze(rosterAtPosition), evidence: [{ code: 'POSITION_UNAVAILABLE_UNTIL_RETURN', values: { position, rostered: rosterAtPosition.length, available: availableAtPosition.length, expectedReturnDates: returnDates } }], deadline: latestReturn, temporalScope: 'TEMPORARY' })
     }
 
-    const peerValues = positionPool[position].map((id) => impact(world, id))
+    const peerValues = positionPool?.[position].map((id) => impact(world, id)) ?? []
     if (starter && peerValues.length >= 6 && percentile(impact(world, starter), peerValues) < 0.25) push({ kind: 'STARTER_QUALITY_GAP', severity: 'MEDIUM', urgency: 'PLANNED', confidence: 'MODERATE', strategicFit: strategy === 'DEVELOP' && ageOf(world, starter, onDate) !== undefined && ageOf(world, starter, onDate)! <= 23 ? 'LOW' : strategicFit(strategy, 'STARTER_QUALITY_GAP'), affectedArea: 'POSITION', targetPosition: position, relatedPlayerIds: Object.freeze([starter]), evidence: [{ code: 'STARTER_LOW_POSITIONAL_PERCENTILE', values: { position, playerId: starter, percentile: percentile(impact(world, starter), peerValues), comparisonPlayers: peerValues.length, signal: 'calculatePlayerImpact' } }], temporalScope: 'STRUCTURAL' })
     const backup = ranked.find((id) => id !== starter)
     if (backup && peerValues.length >= 6 && percentile(impact(world, backup), peerValues) < 0.25) push({ kind: 'BENCH_QUALITY_GAP', severity: 'MEDIUM', urgency: 'PLANNED', confidence: 'MODERATE', strategicFit: strategicFit(strategy, 'BENCH_QUALITY_GAP'), affectedArea: 'POSITION', targetPosition: position, relatedPlayerIds: Object.freeze([backup]), evidence: [{ code: 'BACKUP_LOW_POSITIONAL_PERCENTILE', values: { position, playerId: backup, percentile: percentile(impact(world, backup), peerValues), comparisonPlayers: peerValues.length, signal: 'calculatePlayerImpact' } }], temporalScope: 'STRUCTURAL' })
@@ -142,7 +147,7 @@ export function assessClubNeeds(world: GameWorld, teamId: TeamId, onDate: GameDa
   }
 
   const ordered = needs.sort((a, b) => URGENCY_ORDER[a.urgency] - URGENCY_ORDER[b.urgency] || SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] || FIT_ORDER[a.strategicFit] - FIT_ORDER[b.strategicFit] || CONFIDENCE_ORDER[a.confidence] - CONFIDENCE_ORDER[b.confidence] || a.kind.localeCompare(b.kind) || (a.targetPosition ?? '').localeCompare(b.targetPosition ?? '') || (a.targetRole ?? '').localeCompare(b.targetRole ?? '') || a.id.localeCompare(b.id)).map((need, index) => Object.freeze({ ...need, priorityRank: index + 1 }))
-  return Object.freeze({ teamId, asOfDate: onDate, strategy, financialContext, needs: Object.freeze(ordered) })
+  return Object.freeze({ teamId, asOfDate: onDate, strategy, financialContext, knowledgePerspective: perspective, externalComparisonStatus: perspective === 'USER_ANALYTICS' ? 'AVAILABLE' : 'UNKNOWN', needs: Object.freeze(ordered) })
 }
 
 function activeSeasons(world: GameWorld, teamId: TeamId, date: GameDate) {

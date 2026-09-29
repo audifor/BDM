@@ -3,10 +3,11 @@ import { organizationIdForTeam, type StaffPersonId, type TeamId } from '@/domain
 import type { ClubStrategicMode } from '@/domain/clubStrategy'
 import type { ResponsibilityKind } from '@/domain/responsibility'
 import { responsibilityDefinition } from '@/domain/responsibility'
-import { deriveGovernanceRequestStatus } from '@/domain/governance/GovernanceRequest'
 import { getPersonality, getResponsibility, getStaffAssignment, getStaffPerson, type GameWorld } from '@/domain/world'
-import { assessClubNeeds, type ClubNeed, type ClubNeedsAssessment } from '@/engine/clubNeeds'
+import { assessClubNeeds, type ClubNeed, type ClubNeedsAssessment, type ClubNeedsKnowledgePerspective } from '@/engine/clubNeeds'
 import { assessClubStrategy } from '@/engine/clubStrategy/ClubStrategyEngine'
+import { assessOptionSelectionSafety, resolveGovernanceOptionPolicy, type GovernanceOptionPolicy, type OptionSelectionSafety } from './GovernanceOptionPolicy'
+export * from './GovernanceOptionPolicy'
 
 export type GMResponseOptionKind = 'INTERNAL_ROLE_REALLOCATION' | 'INTERNAL_DEVELOPMENT' | 'EXTERNAL_ACQUISITION' | 'SHORT_TERM_COVER' | 'CONTRACT_RETENTION_REVIEW' | 'SUCCESSION_PLANNING' | 'OUTGOING_MARKET_REVIEW' | 'FINANCIAL_CONTAINMENT' | 'SCOUTING_EXPANSION' | 'WAIT_AND_MONITOR'
 export type GMOptionRating = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN'
@@ -33,6 +34,8 @@ export interface GMResponseOption {
   readonly feasibility: GMOptionRating
   readonly confidence: GMOptionRating
   readonly knowledgeReadiness: GMKnowledgeReadiness
+  readonly governancePolicy: GovernanceOptionPolicy
+  readonly selectionSafety: OptionSelectionSafety
   readonly financialContext: ClubNeedsAssessment['financialContext']
   readonly reasons: readonly GMDecisionReason[]
   readonly blockers: readonly string[]
@@ -61,7 +64,8 @@ const SORTED_OPTION_KINDS: readonly GMResponseOptionKind[] = ['INTERNAL_ROLE_REA
 export function assessGMDecisionContext(world: GameWorld, teamId: TeamId, onDate: GameDate = world.currentDate): GMDecisionContext {
   const team = world.teams[teamId]
   if (team === undefined) throw new RangeError(`Unknown Team ${teamId}`)
-  const needsAssessment = assessClubNeeds(world, teamId, onDate)
+  const knowledgePerspective: ClubNeedsKnowledgePerspective = team.coachId === world.userCoachId ? 'USER_ANALYTICS' : 'ORGANIZATION_KNOWLEDGE'
+  const needsAssessment = assessClubNeeds(world, teamId, onDate, knowledgePerspective)
   const strategyAssessment = assessClubStrategy(onDate === world.currentDate ? world : { ...world, currentDate: onDate }, teamId)
   const strategy = needsAssessment.strategy
   const decisionParticipants = resolveParticipants(world, teamId)
@@ -111,7 +115,6 @@ function isImportantNeed(need: ClubNeed, strategy: ClubStrategicMode): boolean {
 
 function buildOptions(world: GameWorld, teamId: TeamId, need: ClubNeed, strategy: ClubStrategicMode, participants: readonly GMDecisionParticipant[], knowledge: GMKnowledgeReadiness, financialContext: ClubNeedsAssessment['financialContext'], strategyAssessment: ReturnType<typeof assessClubStrategy>, onDate: GameDate): GMResponseOption[] {
   const kinds = responseKinds(need)
-  const governanceBlockers = governanceBlockersForNeed(world, teamId, need, onDate)
   const internalAvailable = need.relatedPlayerIds.length >= 2 || world.teams[teamId]!.rosterPlayerIds.length > 7
   const urgencyReasons: GMDecisionReason[] = []
   if (need.priorityRank <= 2 || need.severity === 'CRITICAL') urgencyReasons.push('HIGH_PRIORITY_NEED')
@@ -130,7 +133,10 @@ function buildOptions(world: GameWorld, teamId: TeamId, need: ClubNeed, strategy
     const style = styleAlignment(kind, participants)
     if (style !== 'UNKNOWN' && style !== 'MEDIUM') reasons.push('STAFF_STYLE_SIGNAL')
     if (participants.length === 0) reasons.push('NO_ASSIGNED_DECISION_MAKER')
-    if (governanceBlockers.length > 0) reasons.push('GOVERNANCE_REQUEST_OPEN')
+    const governancePolicy = resolveGovernanceOptionPolicy(world, teamId, kind, onDate)
+    const selectionSafety = assessOptionSelectionSafety(governancePolicy)
+    const governanceBlockers = governancePolicy.pendingRequestIds.map((id) => world.governanceRequestsById[id]).filter((request) => request !== undefined).map((request) => `GOVERNANCE_REQUEST_OPEN:${request.category}`)
+    if (governancePolicy.pendingRequestIds.length > 0) reasons.push('GOVERNANCE_REQUEST_OPEN')
     return Object.freeze({
       id: `${need.id}:${kind}`,
       needId: need.id,
@@ -140,6 +146,8 @@ function buildOptions(world: GameWorld, teamId: TeamId, need: ClubNeed, strategy
       feasibility: feasibility(kind, need, financialContext, internalAvailable),
       confidence: need.confidence === 'HIGH' ? 'HIGH' : need.confidence === 'MODERATE' ? 'MEDIUM' : 'LOW',
       knowledgeReadiness: kind === 'EXTERNAL_ACQUISITION' || kind === 'SCOUTING_EXPANSION' ? knowledge : 'UNKNOWN',
+      governancePolicy,
+      selectionSafety,
       financialContext,
       reasons: Object.freeze([...new Set(reasons)]),
       blockers: Object.freeze(governanceBlockers),
@@ -190,21 +198,4 @@ function feasibility(kind: GMResponseOptionKind, need: ClubNeed, finance: ClubNe
   if (kind === 'SCOUTING_EXPANSION' || kind === 'WAIT_AND_MONITOR') return 'HIGH'
   if (kind === 'FINANCIAL_CONTAINMENT') return finance === 'STRESSED' ? 'MEDIUM' : 'HIGH'
   return 'MEDIUM'
-}
-
-function governanceBlockersForNeed(world: GameWorld, teamId: TeamId, need: ClubNeed, onDate: GameDate): string[] {
-  const team = world.teams[teamId]!
-  const institutions = Object.values(world.governanceInstitutionsById).filter((institution) => institution.teamIds.includes(teamId))
-  const categories = new Set(need.kind === 'FINANCIAL_PRESSURE' ? ['BUDGET'] : ['ROSTER', 'STRATEGY', 'BUDGET'])
-  return Object.values(world.governanceRequestsById)
-    .filter((request) => institutions.some((institution) => institution.id === request.institutionId) && categories.has(request.category))
-    .filter((request) => {
-      const events = Object.values(world.governanceRequestEventsById).filter((event) => event.requestId === request.id && event.effectiveOn <= onDate)
-      const status = deriveGovernanceRequestStatus(events)
-      const issued = events.some((event) => event.kind === 'ISSUED')
-      const addressed = events.some((event) => ['ACCEPTED', 'DECLINED', 'WITHDRAWN', 'FULFILLED'].includes(event.kind))
-      return issued && !addressed && status !== 'FULFILLED'
-    })
-    .sort((a, b) => a.id.localeCompare(b.id))
-    .map((request) => `GOVERNANCE_REQUEST_OPEN:${request.category}`)
 }

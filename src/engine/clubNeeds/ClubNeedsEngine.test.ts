@@ -26,6 +26,8 @@ describe('Club needs assessment', () => {
     const beforeTransactions = base.playerTransactionsById
     expect(assessClubNeeds(base, ai.id)).toEqual(assessClubNeeds(base, ai.id))
     expect(assessClubNeeds(base, user.id).teamId).toBe(user.id)
+    expect(assessClubNeeds(base, ai.id).knowledgePerspective).toBe('ORGANIZATION_KNOWLEDGE')
+    expect(assessClubNeeds(base, user.id).knowledgePerspective).toBe('USER_ANALYTICS')
     expect(base.teams).toBe(beforeTeams)
     expect(base.playerTransactionsById).toBe(beforeTransactions)
     expect(Object.values(assessClubNeeds(base, ai.id).needs).every((need) => !('playerOverall' in need) && !('teamOverall' in need))).toBe(true)
@@ -43,16 +45,30 @@ describe('Club needs assessment', () => {
 
   it('distinguishes a weak named starter from a weak backup and lets strategy change fit', () => {
     const weakStarter = qualityScenario(base, 'CONTEND', 'PG', 5, 95)
-    const starterNeed = findNeed(assessClubNeeds(weakStarter.world, weakStarter.teamId).needs, 'STARTER_QUALITY_GAP', 'PG')
+    const starterNeed = findNeed(assessClubNeeds(weakStarter.world, weakStarter.teamId, base.currentDate, 'USER_ANALYTICS').needs, 'STARTER_QUALITY_GAP', 'PG')
     expect(starterNeed?.relatedPlayerIds).toContain(weakStarter.starterId)
     expect(starterNeed?.strategicFit).toBe('HIGH')
 
     const development = withMode(weakStarter.world, weakStarter.teamId, 'DEVELOP')
-    expect(findNeed(assessClubNeeds(development, weakStarter.teamId).needs, 'STARTER_QUALITY_GAP', 'PG')?.strategicFit).toBe('LOW')
+    expect(findNeed(assessClubNeeds(development, weakStarter.teamId, base.currentDate, 'USER_ANALYTICS').needs, 'STARTER_QUALITY_GAP', 'PG')?.strategicFit).toBe('LOW')
 
     const weakBench = qualityScenario(base, 'CONTEND', 'PG', 95, 5)
-    expect(findNeed(assessClubNeeds(weakBench.world, weakBench.teamId).needs, 'BENCH_QUALITY_GAP', 'PG')?.relatedPlayerIds).toContain(weakBench.backupId)
-    expect(findNeed(assessClubNeeds(weakBench.world, weakBench.teamId).needs, 'STARTER_QUALITY_GAP', 'PG')).toBeUndefined()
+    expect(findNeed(assessClubNeeds(weakBench.world, weakBench.teamId, base.currentDate, 'USER_ANALYTICS').needs, 'BENCH_QUALITY_GAP', 'PG')?.relatedPlayerIds).toContain(weakBench.backupId)
+    expect(findNeed(assessClubNeeds(weakBench.world, weakBench.teamId, base.currentDate, 'USER_ANALYTICS').needs, 'STARTER_QUALITY_GAP', 'PG')).toBeUndefined()
+  })
+
+  it('keeps autonomous external comparison unknown while retaining own-roster role evidence', () => {
+    const weakStarter = qualityScenario(base, 'CONTEND', 'PG', 5, 95)
+    const changedExternal = updateGameWorld(weakStarter.world, { players: Object.values(weakStarter.world.players).map((player) => weakStarter.world.teams[weakStarter.teamId]!.rosterPlayerIds.includes(player.id) ? player : createPlayer({ ...player, basketball: { ...player.basketball, ratings: Object.fromEntries(PLAYER_TRUTH_RATING_KEYS.map((key) => [key, 100])) as PlayerTruthRatings } })) })
+    const before = assessClubNeeds(weakStarter.world, weakStarter.teamId, base.currentDate, 'ORGANIZATION_KNOWLEDGE')
+    const after = assessClubNeeds(changedExternal, weakStarter.teamId, base.currentDate, 'ORGANIZATION_KNOWLEDGE')
+    expect(before.externalComparisonStatus).toBe('UNKNOWN')
+    expect(before.needs).toEqual(after.needs)
+    expect(findNeed(before.needs, 'STARTER_QUALITY_GAP', 'PG')).toBeUndefined()
+
+    const ownRoster = new Set(weakStarter.world.teams[weakStarter.teamId]!.rosterPlayerIds)
+    const ownWeak = updateGameWorld(weakStarter.world, { players: Object.values(weakStarter.world.players).map((player) => ownRoster.has(player.id) ? createPlayer({ ...player, basketball: { ...player.basketball, ratings: { ...player.basketball.ratings, BALL_CONTROL: 10, PASSING_VISION: 10, PRESSURE_HANDLING: 10 } } }) : player) })
+    expect(findNeed(assessClubNeeds(ownWeak, weakStarter.teamId, base.currentDate, 'ORGANIZATION_KNOWLEDGE').needs, 'ROLE_GAP')?.targetRole).toBe('PRIMARY_HANDLING')
   })
 
   it('surfaces a real handling function gap from canonical ratings', () => {

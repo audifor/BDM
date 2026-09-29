@@ -8,10 +8,11 @@ import { createPlayer } from '@/domain/player'
 import { organizationIdForTeam, type TeamId } from '@/domain/ids'
 import { createPersonality } from '@/domain/personality'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
-import { createGovernanceInstitution } from '@/domain/governance/Governance'
+import { createGovernanceAuthorityGrant, createGovernanceBody, createGovernanceInstitution } from '@/domain/governance/Governance'
+import { createGovernanceDecisionParticipationGrant } from '@/domain/governance/GovernanceDecision'
 import { createGovernanceRequest, createGovernanceRequestEvent } from '@/domain/governance/GovernanceRequest'
 import { assessClubNeeds } from '@/engine/clubNeeds'
-import { assessGMDecisionContext } from './GMDecisionContextEngine'
+import { assessGMDecisionContext, assessOptionSelectionSafety, resolveGovernanceOptionPolicy } from './GMDecisionContextEngine'
 
 describe('GM decision context', () => {
   let base: GameWorld
@@ -37,6 +38,9 @@ describe('GM decision context', () => {
     const before = base.playerTransactionsById
     expect(assessGMDecisionContext(base, ai.id).teamId).toBe(ai.id)
     expect(assessGMDecisionContext(base, user.id).teamId).toBe(user.id)
+    expect(assessGMDecisionContext(base, ai.id).needsAssessment.knowledgePerspective).toBe('ORGANIZATION_KNOWLEDGE')
+    expect(assessGMDecisionContext(base, user.id).needsAssessment.knowledgePerspective).toBe('USER_ANALYTICS')
+    expect(assessGMDecisionContext(base, ai.id).options.map((option) => [option.kind, option.governancePolicy, option.selectionSafety])).toEqual(assessGMDecisionContext(base, ai.id).options.map((option) => [option.kind, option.governancePolicy, option.selectionSafety]))
     expect(JSON.stringify(assessGMDecisionContext(base, ai.id))).not.toContain('Overall')
     expect(base.playerTransactionsById).toBe(before)
     expect(base.delegationOutcomesById).toEqual({})
@@ -120,7 +124,7 @@ describe('GM decision context', () => {
     expect(lowOptions.findIndex((option) => option.kind === 'SCOUTING_EXPANSION')).toBeLessThan(lowOptions.findIndex((option) => option.kind === 'EXTERNAL_ACQUISITION'))
   })
 
-  it('does not read external player ratings to form context', () => {
+  it('keeps autonomous needs and response ordering unchanged when unknown external truth changes', () => {
     const club = team(false)
     const external = Object.values(base.players).find((player) => !base.teams[club.id]!.rosterPlayerIds.includes(player.id))!
     const before = assessGMDecisionContext(base, club.id)
@@ -128,6 +132,8 @@ describe('GM decision context', () => {
     const after = assessGMDecisionContext(altered, club.id)
     expect(after.externalKnowledgeReadiness).toBe(before.externalKnowledgeReadiness)
     expect(after.options.filter((item) => item.kind === 'EXTERNAL_ACQUISITION').every((item) => item.knowledgeReadiness === before.externalKnowledgeReadiness)).toBe(true)
+    expect(after.needsAssessment.needs).toEqual(before.needsAssessment.needs)
+    expect(after.options).toEqual(before.options)
   })
 
   it('preserves basketball needs under Finance V2 stress and reduces external feasibility', () => {
@@ -151,9 +157,44 @@ describe('GM decision context', () => {
     const staff = Object.values(base.staffPeopleById)[0]!
     const request = createGovernanceRequest({ id: 'bs9c-request', institutionId: institution.id, issuer: { kind: 'ACTOR', actor: { kind: 'COACH', id: club.coachId! } }, recipient: { kind: 'ACTOR', actor: { kind: 'STAFF', id: staff.id } }, category: 'ROSTER', summary: 'Pending roster review', origin: { kind: 'STANDALONE' } })
     const event = createGovernanceRequestEvent({ id: 'bs9c-request-issued', requestId: request.id, kind: 'ISSUED', effectiveOn: base.currentDate, actor: request.issuer })
+    const accepted = createGovernanceRequestEvent({ id: 'bs9c-request-zaccepted', requestId: request.id, kind: 'ACCEPTED', effectiveOn: base.currentDate, actor: request.recipient })
     const short = shortRoster(base, club.id)
-    const world = updateGameWorld(short, { governanceInstitutions: [institution], governanceRequests: [request], governanceRequestEvents: [event] })
-    expect(assessGMDecisionContext(world, club.id).options.some((option) => option.blockers.includes('GOVERNANCE_REQUEST_OPEN:ROSTER'))).toBe(true)
+    const world = updateGameWorld(short, { governanceInstitutions: [institution], governanceRequests: [request], governanceRequestEvents: [event, accepted] })
+    const pendingContext = assessGMDecisionContext(world, club.id)
+    const pendingRosterOption = pendingContext.options.find((option) => option.blockers.includes('GOVERNANCE_REQUEST_OPEN:ROSTER'))
+    expect(pendingRosterOption?.governancePolicy.status).toBe('UNKNOWN')
+    expect(pendingRosterOption?.governancePolicy.pendingRequestIds).toContain(request.id)
+    expect(pendingRosterOption?.selectionSafety.status).toBe('REQUIRES_APPROVAL_PATH')
+    expect(pendingRosterOption?.blockers).toContain('GOVERNANCE_REQUEST_OPEN:ROSTER')
+  })
+
+  it('resolves explicit mapped budget authority while leaving unmapped families unknown', () => {
+    const club = team(false)
+    const userClub = team(true)
+    const institution = createGovernanceInstitution({ id: 'bs9d-institution', universe: 'PROFESSIONAL_CLUB', name: 'BS9D Club', teamIds: [club.id, userClub.id] })
+    const executive = createGovernanceBody({ id: 'bs9d-executive', institutionId: institution.id, kind: 'EXECUTIVE', name: 'Executive' })
+    const board = createGovernanceBody({ id: 'bs9d-board', institutionId: institution.id, kind: 'BOARD', name: 'Board' })
+    const authority = createGovernanceAuthorityGrant({ id: 'bs9d-budget-authority', fromBodyId: board.id, toBodyId: executive.id, decision: 'BUDGET', grantedOn: base.currentDate })
+    const participation = createGovernanceDecisionParticipationGrant({ id: 'bs9d-execute-budget', authorityGrantId: authority.id, bodyId: executive.id, edgeParticipant: 'DELEGATE', right: 'EXECUTE' })
+    const world = updateGameWorld(base, { governanceInstitutions: [institution], governanceBodies: [executive, board], governanceAuthorityGrants: [authority], governanceDecisionParticipationGrants: [participation] })
+    const before = world.governanceDecisionEventsById
+    const budgetPolicy = resolveGovernanceOptionPolicy(world, club.id, 'FINANCIAL_CONTAINMENT', base.currentDate)
+    expect(budgetPolicy).toMatchObject({ decisionType: 'BUDGET', status: 'AUTHORIZED', executorBodyIds: [executive.id], authorityGrantIds: [authority.id] })
+    expect(assessOptionSelectionSafety(budgetPolicy).status).toBe('SELECTABLE')
+    expect(resolveGovernanceOptionPolicy(world, userClub.id, 'FINANCIAL_CONTAINMENT', base.currentDate)).toEqual(budgetPolicy)
+    expect(world.governanceDecisionEventsById).toBe(before)
+
+    const approvalAuthority = createGovernanceAuthorityGrant({ id: 'bs9d-budget-approval', fromBodyId: board.id, toBodyId: executive.id, decision: 'BUDGET', grantedOn: base.currentDate })
+    const approver = createGovernanceDecisionParticipationGrant({ id: 'bs9d-approve-budget', authorityGrantId: approvalAuthority.id, bodyId: board.id, edgeParticipant: 'DELEGATOR', right: 'APPROVE' })
+    const approvalWorld = updateGameWorld(world, { governanceAuthorityGrants: [authority, approvalAuthority], governanceDecisionParticipationGrants: [participation, approver] })
+    const approvalPolicy = resolveGovernanceOptionPolicy(approvalWorld, club.id, 'FINANCIAL_CONTAINMENT', base.currentDate)
+    expect(approvalPolicy.status).toBe('REQUIRES_APPROVAL')
+    expect(assessOptionSelectionSafety(approvalPolicy).status).toBe('REQUIRES_APPROVAL_PATH')
+
+    const missing = resolveGovernanceOptionPolicy(world, club.id, 'EXTERNAL_ACQUISITION', base.currentDate)
+    expect(missing.status).toBe('UNKNOWN')
+    expect(missing.decisionType).toBeUndefined()
+    expect(assessOptionSelectionSafety(missing)).toMatchObject({ status: 'UNKNOWN_POLICY', reason: 'POLICY_UNRESOLVED' })
   })
 
   it('produces a stable option ordering for the same canonical world', () => {
