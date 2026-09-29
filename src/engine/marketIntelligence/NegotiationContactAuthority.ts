@@ -50,7 +50,7 @@ export function deriveNegotiationAttemptKey(world: GameWorld, input: {
   readonly proposalId: string
 }): string {
   const generation = Object.values(world.negotiationsById).filter((item) =>
-    (item.status === 'CLOSED' || item.status === 'REJECTED')
+    (item.status === 'CLOSED' || item.status === 'REJECTED' || item.status === 'WITHDRAWN')
     && item.teamId === input.teamId
     && item.playerId === input.playerId
     && item.sourcePlanId === input.planId

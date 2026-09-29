@@ -9,7 +9,7 @@ import { evaluateSimulationBreakpoints, type SimulationBreakpointResult } from '
 import { repairWorldAtLifecycleBoundary } from '@/app/repair'
 import type { WorldRepairReport } from '@/domain/repair'
 import { reviewMajorInjuryChanges, reviewMaterialRosterChanges } from '@/app/gmPlanning'
-import { submitAiOffersAfterPositiveContactResponses } from '@/app/marketIntelligence'
+import { progressAiNegotiationCounterResponses, submitAiOffersAfterPositiveContactResponses } from '@/app/marketIntelligence'
 
 export class SimulationAdvanceBlockedError extends Error {
   constructor(readonly decision: SimulationBreakpointResult) {
@@ -140,6 +140,28 @@ export function advanceGameDayWithResult(world: GameWorld, createSeed: MatchSeed
       summary: offerCheckpoint.results.length === 0
         ? 'No AI positive contact response was recorded today.'
         : `Checked ${offerCheckpoint.results.length} newly positive AI contact(s); submitted ${submittedOffers.length} offer(s).`,
+    })
+
+    activePhaseId = 'AI_FORMAL_NEGOTIATION_RESPONSES'
+    const counterCheckpoint = progressAiNegotiationCounterResponses(current)
+    current = counterCheckpoint.world
+    const appliedCounterActions = counterCheckpoint.results.filter((result) => result.status === 'APPLIED')
+    phases.push({
+      phaseId: activePhaseId,
+      order: phases.length + 1,
+      date: current.currentDate,
+      ran: counterCheckpoint.results.length > 0,
+      worldChanged: current !== offerCheckpoint.world,
+      diagnostics: appliedCounterActions.map((result) => ({
+        code: result.negotiation?.status === 'ACCEPTED' ? 'AI_ACCEPTED_NEGOTIATION_COUNTER' : 'AI_DECLINED_NEGOTIATION_COUNTER',
+        message: result.negotiation?.status === 'ACCEPTED'
+          ? 'AI accepted the observed counter terms for a current affordable target.'
+          : 'AI declined counter terms that no longer fit the current target or payroll.',
+        sourceId: result.negotiation?.id,
+      })),
+      summary: counterCheckpoint.results.length === 0
+        ? 'No AI counter required a current club response.'
+        : `Resolved ${appliedCounterActions.length} AI counter decision(s).`,
     })
 
     activePhaseId = 'POST_TRANSITION_SELF_HEALING'

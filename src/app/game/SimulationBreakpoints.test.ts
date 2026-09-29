@@ -162,7 +162,8 @@ describe('simulation breakpoints', () => {
     expect(advanceGameDay(counteredWorld).currentDate).toBe(addDays(counteredWorld.currentDate, 1))
 
     const acceptedWorld = updateGameWorld(openWorld, { negotiations: [{ ...negotiation, status: 'ACCEPTED' }] })
-    expect(evaluateSimulationBreakpoints(acceptedWorld).candidates.some((item) => item.sourceId === negotiation.id)).toBe(false)
+    expect(evaluateSimulationBreakpoints(acceptedWorld)).toMatchObject({ mayAdvance: true })
+    expect(evaluateSimulationBreakpoints(acceptedWorld).candidates).toContainEqual(expect.objectContaining({ level: 'IMPORTANT', reason: 'marketNegotiation', sourceId: negotiation.id, diagnostic: expect.stringContaining('not yet signed') }))
   })
 
   it('blocks an unsafe past-schedule day transition before mutation', () => {

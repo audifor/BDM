@@ -50,7 +50,10 @@ describe('GameWorldSaveV2', () => {
       responsibleActor: { kind: 'USER' }, sourcePlanId: 'plan-save-test', sourceProposalId: 'proposal-save-test',
     })
     const formalOffer = { id: 'negotiation:legacy-offer', organizationId: team.organizationId, playerId: oldPlayer.id, salary: 650_000, years: 2, role: 'ROTATION' as const, agentFee: 1, status: 'OPEN' as const, round: 0 }
-    const newOffer = { ...contact, salary: 700_000, years: 3, offerSubmittedOn: base.currentDate, status: 'OPEN' as const, round: 0, offerResponsibleActor: { kind: 'STAFF' as const, staffPersonId: staffPersonIdFromString('staff:offer-owner') } }
+    const offerActor = { kind: 'STAFF' as const, staffPersonId: staffPersonIdFromString('staff:offer-owner') }
+    const revisedAction = { outcome: 'REVISED_OFFER' as const, respondedOn: base.currentDate, round: 1, actor: offerActor, revisedTerms: { salary: 700_000, years: 3 } }
+    const priorRound = { round: 0, offer: { salary: 600_000, years: 2 }, submittedOn: base.currentDate, submittedBy: { kind: 'USER' as const }, playerResponse: { outcome: 'COUNTERED' as const, respondedOn: base.currentDate, origin: 'AGENT' as const, counterTerms: { salary: 650_000, years: 2 } }, clubAction: revisedAction }
+    const newOffer = { ...contact, salary: 700_000, years: 3, offerSubmittedOn: base.currentDate, status: 'OPEN' as const, round: 1, offerResponsibleActor: offerActor, clubAction: revisedAction, roundHistory: [priorRound] }
     const loadedContact = deserializeGameWorldV2(serializeGameWorldV2(updateGameWorld(base, { negotiations: [contact, formalOffer] }), savedAt))
     const loadedNewOffer = deserializeGameWorldV2(serializeGameWorldV2(updateGameWorld(base, { negotiations: [newOffer, formalOffer] }), savedAt))
     expect(loadedContact.negotiationsById[contact.id]).toEqual(contact)

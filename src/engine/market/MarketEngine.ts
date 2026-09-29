@@ -1,4 +1,4 @@
-import { consolidateMarketSignal, createNegotiationContact as createNegotiationContactRecord, isActiveNegotiation, negotiationContactActor, negotiationIdForOpening, negotiationOfferActor, negotiationOpeningKeyString, type ContractNegotiation, type MarketSignal, type NegotiationContactResponse, type NegotiationOpeningKey, type NegotiationResponsibleActor, type NegotiationRole } from '@/domain/market'
+import { agentCounter, consolidateMarketSignal, createNegotiationContact as createNegotiationContactRecord, isActiveNegotiation, negotiationContactActor, negotiationIdForOpening, negotiationOfferActor, negotiationOpeningKeyString, type ContractNegotiation, type FormalOfferPlayerResponse, type MarketSignal, type NegotiationContactResponse, type NegotiationOpeningKey, type NegotiationResponsibleActor, type NegotiationRole, type NegotiationRoundHistory, type NegotiationTermSet } from '@/domain/market'
 import { agencyIdFromString, agentIdFromString, type OrganizationId, type PlayerId } from '@/domain/ids'
 import { canTeamAffordAdditionalSalary, isPlayerFreeAgent, updateGameWorld, type GameWorld } from '@/domain/world'
 import type { GameDate } from '@/domain/date'
@@ -146,6 +146,138 @@ export function progressNegotiationContactResponses(world: GameWorld): GameWorld
   return current
 }
 
+export interface DerivedFormalOfferResponse {
+  readonly outcome: FormalOfferPlayerResponse['outcome']
+  readonly respondedOn: GameDate
+  readonly origin: FormalOfferPlayerResponse['origin']
+  readonly counterTerms?: NegotiationTermSet
+}
+
+/** Derives a due player-side response from hidden world truth; club intelligence never calls this. */
+export function deriveFormalOfferResponse(world: GameWorld, negotiationId: string, date: GameDate): DerivedFormalOfferResponse | undefined {
+  const negotiation = world.negotiationsById[negotiationId]
+  if (negotiation?.status !== 'OPEN' || (negotiation.offerSubmittedOn !== undefined && negotiation.offerSubmittedOn >= date)) return undefined
+  if (!isPlayerFreeAgent(world, negotiation.playerId)) return undefined
+  const reality = world.marketRealityByPlayerId[negotiation.playerId]
+  if (reality === undefined || !Number.isSafeInteger(reality.expectedSalary) || reality.expectedSalary < 1) return undefined
+  if (negotiation.salary >= reality.expectedSalary) return { outcome: 'ACCEPTED', respondedOn: date, origin: 'PLAYER' }
+
+  const agent = negotiation.agentId === undefined
+    ? agentForPlayer(world, negotiation.playerId)
+    : world.agentsById[negotiation.agentId]
+  if (agent === undefined) return { outcome: 'REJECTED', respondedOn: date, origin: 'PLAYER' }
+  const counter = agentCounter(negotiation, agent)
+  if (counter.status !== 'COUNTERED' || !Number.isSafeInteger(counter.salary) || counter.salary < 1 || counter.salary > 100_000_000
+    || (counter.agentFee !== undefined && (!Number.isSafeInteger(counter.agentFee) || counter.agentFee < 0))) {
+    return { outcome: 'REJECTED', respondedOn: date, origin: 'PLAYER' }
+  }
+  return { outcome: 'COUNTERED', respondedOn: date, origin: 'AGENT', counterTerms: termSet(counter) }
+}
+
+/** Processes due OPEN offers once, after contact responses and contract reconciliation. */
+export function progressFormalOfferResponses(world: GameWorld): GameWorld {
+  let current = world
+  const dueOffers = Object.values(world.negotiationsById)
+    .filter((item) => item.status === 'COUNTERED' || (item.status === 'OPEN' && (item.offerSubmittedOn === undefined || item.offerSubmittedOn < world.currentDate)))
+    .sort((a, b) => a.id.localeCompare(b.id))
+
+  for (const offer of dueOffers) {
+    const latest = current.negotiationsById[offer.id]
+    if (latest?.status !== 'OPEN' && latest?.status !== 'COUNTERED') continue
+    if (!isPlayerFreeAgent(current, latest.playerId)) {
+      const historyEntry: NegotiationRoundHistory = {
+        round: latest.round,
+        offer: termSet(latest),
+        ...(latest.offerSubmittedOn === undefined ? {} : { submittedOn: latest.offerSubmittedOn }),
+        ...(offerActorForRound(latest) === undefined ? {} : { submittedBy: offerActorForRound(latest) }),
+        closedOn: current.currentDate,
+        closeReason: 'PLAYER_NO_LONGER_FREE_AGENT',
+      }
+      const history = [...(latest.roundHistory ?? [])]
+      const lastIndex = history.length - 1
+      if (latest.status === 'COUNTERED') {
+        if (lastIndex >= 0 && history[lastIndex]!.playerResponse?.outcome === 'COUNTERED') {
+          history[lastIndex] = { ...history[lastIndex]!, closedOn: current.currentDate, closeReason: 'PLAYER_NO_LONGER_FREE_AGENT' }
+        }
+      } else {
+        history.push(historyEntry)
+      }
+      const closed: ContractNegotiation = {
+        ...latest,
+        status: 'CLOSED',
+        closedOn: current.currentDate,
+        closeReason: 'PLAYER_NO_LONGER_FREE_AGENT',
+        roundHistory: Object.freeze(history),
+      }
+      current = updateGameWorld(current, { negotiations: [...Object.values(current.negotiationsById).filter((item) => item.id !== latest.id), closed] })
+      continue
+    }
+
+    if (latest.status !== 'OPEN' || (latest.offerSubmittedOn !== undefined && latest.offerSubmittedOn >= current.currentDate)) continue
+    const response = deriveFormalOfferResponse(current, latest.id, current.currentDate)
+    if (response === undefined) continue
+    const historyEntry: NegotiationRoundHistory = {
+      round: latest.round,
+      offer: termSet(latest),
+      ...(latest.offerSubmittedOn === undefined ? {} : { submittedOn: latest.offerSubmittedOn }),
+      ...(offerActorForRound(latest) === undefined ? {} : { submittedBy: offerActorForRound(latest) }),
+      playerResponse: response,
+    }
+    let updated: ContractNegotiation = {
+      ...latest,
+      status: response.outcome,
+      playerResponse: response,
+      roundHistory: Object.freeze([...(latest.roundHistory ?? []), historyEntry]),
+    }
+    if (response.outcome === 'COUNTERED') {
+      if (response.counterTerms === undefined) continue
+      updated = {
+        ...latest,
+        ...response.counterTerms,
+        status: 'COUNTERED',
+        round: latest.round + 1,
+        playerResponse: response,
+        clubAction: undefined,
+        roundHistory: Object.freeze([...(latest.roundHistory ?? []), historyEntry]),
+      }
+      const signal: MarketSignal = {
+        id: formalOfferCounterSignalId(latest.id, latest.round),
+        organizationId: latest.organizationId,
+        playerId: latest.playerId,
+        source: 'AGENT',
+        occurredOn: current.currentDate,
+        reliability: 0.95,
+        expectedSalary: response.counterTerms.salary,
+      }
+      current = updateGameWorld(current, { negotiations: [...Object.values(current.negotiationsById).filter((item) => item.id !== latest.id), updated] })
+      current = receiveMarketSignal(current, signal)
+      continue
+    }
+    updated = { ...updated, clubAction: undefined }
+    current = updateGameWorld(current, { negotiations: [...Object.values(current.negotiationsById).filter((item) => item.id !== latest.id), updated] })
+  }
+  return current
+}
+
+export function formalOfferCounterSignalId(negotiationId: string, round: number): string {
+  return `market-signal:formal-counter:${negotiationId}:${round}`
+}
+
+function termSet(negotiation: Extract<ContractNegotiation, { readonly salary: number }>): NegotiationTermSet {
+  return {
+    salary: negotiation.salary,
+    years: negotiation.years,
+    ...(negotiation.role === undefined ? {} : { role: negotiation.role }),
+    ...(negotiation.agentFee === undefined ? {} : { agentFee: negotiation.agentFee }),
+  }
+}
+
+function offerActorForRound(negotiation: Extract<ContractNegotiation, { readonly salary: number }>): NegotiationResponsibleActor | undefined {
+  return negotiation.status === 'OPEN' && negotiation.clubAction?.outcome === 'REVISED_OFFER'
+    ? negotiation.clubAction.actor
+    : negotiationOfferActor(negotiation)
+}
+
 export interface OpenNegotiationInput {
   readonly organizationId: OrganizationId
   readonly teamId: import('@/domain/ids').TeamId
@@ -228,5 +360,94 @@ export function openNegotiation(world: GameWorld, input: OpenNegotiationInput): 
   }
   throw new RangeError('Formal offer requires an exact existing CONTACTED negotiation')
 }
+
+export type NegotiationCounterAction =
+  | { readonly kind: 'ACCEPT_COUNTER' }
+  | { readonly kind: 'DECLINE_COUNTER' }
+  | { readonly kind: 'REVISE_OFFER'; readonly terms: NegotiationTermSet }
+
+export interface RespondToNegotiationCounterInput {
+  readonly negotiationId: string
+  readonly teamId: TeamId
+  readonly expectedRound: number
+  readonly action: NegotiationCounterAction
+  readonly actor: NegotiationResponsibleActor
+}
+
+/** The canonical Engine boundary for a club's explicit response to a COUNTERED negotiation. */
+export function respondToNegotiationCounter(world: GameWorld, input: RespondToNegotiationCounterInput): GameWorld {
+  const negotiation = world.negotiationsById[input.negotiationId]
+  const team = world.teams[input.teamId]
+  if (team === undefined || negotiation?.teamId !== input.teamId || negotiation.organizationId !== team.organizationId) {
+    throw new RangeError('Counter response does not match the canonical team negotiation')
+  }
+  if (negotiation.status !== 'COUNTERED' || negotiation.round !== input.expectedRound) throw new RangeError('Counter response lifecycle or round is stale')
+  if (world.players[negotiation.playerId] === undefined) throw new RangeError('Counter response player does not exist')
+  if (!isPlayerFreeAgent(world, negotiation.playerId)) {
+    const history = [...(negotiation.roundHistory ?? [])]
+    const lastIndex = history.length - 1
+    if (lastIndex >= 0 && history[lastIndex]!.playerResponse?.outcome === 'COUNTERED') {
+      history[lastIndex] = { ...history[lastIndex]!, closedOn: world.currentDate, closeReason: 'PLAYER_NO_LONGER_FREE_AGENT' }
+    }
+    const closed: ContractNegotiation = {
+      ...negotiation,
+      status: 'CLOSED',
+      closedOn: world.currentDate,
+      closeReason: 'PLAYER_NO_LONGER_FREE_AGENT',
+      roundHistory: Object.freeze(history),
+    }
+    return updateGameWorld(world, { negotiations: [...Object.values(world.negotiationsById).filter((item) => item.id !== negotiation.id), closed] })
+  }
+  if (!isAuthorizedOfferActor(world, input.teamId, input.actor)) throw new RangeError('Counter response actor is not authorized for this team')
+
+  const responseDate = world.currentDate
+  const action: NonNullable<ContractNegotiation['clubAction']> = {
+    outcome: input.action.kind === 'ACCEPT_COUNTER' ? 'ACCEPTED_COUNTER'
+      : input.action.kind === 'DECLINE_COUNTER' ? 'DECLINED_COUNTER' : 'REVISED_OFFER',
+    respondedOn: responseDate,
+    round: input.expectedRound,
+    actor: input.actor,
+    ...(input.action.kind === 'REVISE_OFFER' ? { revisedTerms: input.action.terms } : {}),
+  }
+
+  if (input.action.kind === 'ACCEPT_COUNTER' && !canTeamAffordAdditionalSalary(world, input.teamId, negotiation.salary)) {
+    throw new RangeError('Team cannot afford the counter salary')
+  }
+  if (input.action.kind === 'ACCEPT_COUNTER') validateFormalTerms(termSet(negotiation))
+  if (input.action.kind === 'REVISE_OFFER') {
+    validateFormalTerms(input.action.terms)
+    if (!canTeamAffordAdditionalSalary(world, input.teamId, input.action.terms.salary)) throw new RangeError('Team cannot afford the revised offer salary')
+  }
+
+  const history = [...(negotiation.roundHistory ?? [])]
+  const lastIndex = history.length - 1
+  if (lastIndex >= 0 && history[lastIndex]!.playerResponse?.outcome === 'COUNTERED' && history[lastIndex]!.clubAction === undefined) {
+    history[lastIndex] = { ...history[lastIndex]!, clubAction: action }
+  }
+
+  const nextNegotiation: ContractNegotiation = input.action.kind === 'ACCEPT_COUNTER'
+    ? { ...negotiation, status: 'ACCEPTED', clubAction: action, roundHistory: Object.freeze(history) }
+    : input.action.kind === 'DECLINE_COUNTER'
+      ? { ...negotiation, status: 'WITHDRAWN', clubAction: action, roundHistory: Object.freeze(history) }
+      : {
+        ...negotiation,
+        ...input.action.terms,
+        role: input.action.terms.role,
+        agentFee: input.action.terms.agentFee,
+        status: 'OPEN',
+        offerSubmittedOn: responseDate,
+        playerResponse: undefined,
+        clubAction: action,
+        roundHistory: Object.freeze(history),
+      }
+  return updateGameWorld(world, { negotiations: [...Object.values(world.negotiationsById).filter((item) => item.id !== negotiation.id), nextNegotiation] })
+}
+
+function validateFormalTerms(terms: NegotiationTermSet): void {
+  if (!Number.isSafeInteger(terms.salary) || terms.salary < 1 || terms.salary > 100_000_000) throw new RangeError('Formal offer salary is invalid')
+  if (!Number.isSafeInteger(terms.years) || terms.years < 1) throw new RangeError('Formal offer years are invalid')
+  if (terms.agentFee !== undefined && (!Number.isSafeInteger(terms.agentFee) || terms.agentFee < 0)) throw new RangeError('Formal offer agent fee is invalid')
+}
+
 export function agentForPlayer(world:GameWorld,playerId:PlayerId){const representation=world.playerRepresentations.find(item=>item.playerId===playerId);return representation===undefined?undefined:world.agentsById[representation.agentId]}
 export function organizationMarketContact(world:GameWorld,teamId:import('@/domain/ids').TeamId,playerId:PlayerId):OrganizationId{return world.teams[teamId]!.organizationId}

@@ -100,16 +100,17 @@ export function evaluateSimulationBreakpoints(world: GameWorld, context: Simulat
   }))
 
   if (userTeam !== undefined) {
-    for (const negotiation of Object.values(world.negotiationsById).filter((item) => item.organizationId === userTeam.organizationId && (item.status === 'CONTACTED' || item.status === 'OPEN' || item.status === 'COUNTERED'))) candidates.push(candidate({
-      // No current Market response command/detail surface exists for COUNTERED.
-      // Keep it observable without making time advancement depend on a future resolver.
-      level: negotiation.status === 'COUNTERED' ? 'IMPORTANT' : 'INFO',
-      reason: negotiation.status === 'COUNTERED' ? 'marketNegotiation' : negotiation.contactResponse === undefined ? 'marketNegotiationAwaitingExternalResponse' : 'marketContactResponse',
+    for (const negotiation of Object.values(world.negotiationsById).filter((item) => item.organizationId === userTeam.organizationId && (item.status === 'CONTACTED' || item.status === 'OPEN' || item.status === 'COUNTERED' || item.status === 'ACCEPTED'))) candidates.push(candidate({
+      // Formal counters and agreements are observable, but remain nonblocking until a signing UI exists.
+      level: negotiation.status === 'COUNTERED' || negotiation.status === 'ACCEPTED' ? 'IMPORTANT' : 'INFO',
+      reason: negotiation.status === 'COUNTERED' || negotiation.status === 'ACCEPTED' ? 'marketNegotiation' : negotiation.contactResponse === undefined ? 'marketNegotiationAwaitingExternalResponse' : 'marketContactResponse',
       sourceKind: 'MARKET_NEGOTIATION', sourceId: negotiation.id,
       ownership: { kind: 'USER_TEAM', coachId: world.userCoachId, teamId: userTeam.id },
       route: 'market', actionTarget: { negotiationId: negotiation.id },
       diagnostic: negotiation.status === 'COUNTERED'
-        ? `Market negotiation ${negotiation.id} has countered terms awaiting the user's decision.`
+        ? `Market negotiation ${negotiation.id} has countered at ${negotiation.salary} per year for ${negotiation.years} years (round ${negotiation.round}); the user's decision is available.`
+        : negotiation.status === 'ACCEPTED'
+          ? `Market negotiation ${negotiation.id} has agreed terms of ${negotiation.salary} per year for ${negotiation.years} years; the player is not yet signed.`
         : negotiation.status === 'CONTACTED'
           ? negotiation.contactResponse === undefined
             ? `Market contact ${negotiation.id} is waiting for a response before any formal offer exists.`

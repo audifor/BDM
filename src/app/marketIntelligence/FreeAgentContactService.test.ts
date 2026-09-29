@@ -7,13 +7,13 @@ import { negotiationIdForOpening, type ContractNegotiation } from '@/domain/mark
 import { createGMPlanState } from '@/domain/gmPlanning'
 import { addDays } from '@/domain/date'
 import { responsibilityIdForTeam } from '@/domain/responsibility'
-import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { getTeamFinancialSnapshot, updateGameWorld, type GameWorld } from '@/domain/world'
 import { assessGMDecisionContext } from '@/engine/gmDecisionContext'
 import { reviewClubManagementPlanning } from '@/app/gmPlanning/GMPlanningLifecycleService'
 import { assessRoutedFreeAgentOfferIntelligence } from './FreeAgentOfferIntelligenceService'
 import { initiatePreferredFreeAgentContact } from './FreeAgentContactService'
-import { assessRoutedFormalOfferPreparations, submitAiOffersAfterPositiveContactResponses, submitPreparedFreeAgentOffer } from './index'
-import { progressNegotiationContactResponses } from '@/engine/market'
+import { assessRoutedFormalOfferPreparations, progressAiNegotiationCounterResponses, respondToNegotiationCounter, submitAiOffersAfterPositiveContactResponses, submitPreparedFreeAgentOffer } from './index'
+import { progressFormalOfferResponses, progressNegotiationContactResponses } from '@/engine/market'
 import { initializeMarketAgents } from '@/engine/market'
 
 let plannedWorld: GameWorld
@@ -204,6 +204,103 @@ describe('initiatePreferredFreeAgentContact', () => {
     expect(result.world.playerTransactionsById).toBe(setup.world.playerTransactionsById)
     expect(submitAiOffersAfterPositiveContactResponses(result.world).results).toEqual([])
   })
+
+  it('lets a user explicitly revise a counter and makes the exact retry idempotent', () => {
+    const setup = withAiCounteredOffer()
+    const userWorld = updateGameWorld(setup.world, {
+      userCoachId: setup.world.teams[teamId]!.coachId!,
+      gmPlanStates: Object.values(setup.world.gmPlanStatesById).filter((plan) => plan.teamId !== teamId),
+    })
+    const decision = {
+      teamId,
+      negotiationId: setup.counter.id,
+      expectedRound: setup.counter.round,
+      decision: { kind: 'REVISE_OFFER' as const, terms: { salary: setup.counter.salary + 50_000, years: setup.counter.years, ...(setup.counter.role === undefined ? {} : { role: setup.counter.role }) } },
+    }
+    const revised = respondToNegotiationCounter(userWorld, decision)
+    expect(revised.status).toBe('APPLIED')
+    expect(revised.negotiation).toMatchObject({ id: setup.counter.id, status: 'OPEN', salary: setup.counter.salary! + 50_000, years: setup.counter.years, round: setup.counter.round, offerSubmittedOn: userWorld.currentDate, actionKey: setup.counter.actionKey, openingKey: setup.counter.openingKey })
+    expect(revised.negotiation?.roundHistory?.[0]?.clubAction).toMatchObject({ outcome: 'REVISED_OFFER', round: setup.counter.round, actor: { kind: 'USER' } })
+    const retry = respondToNegotiationCounter(revised.world, decision)
+    expect(retry.status).toBe('ALREADY_APPLIED')
+    expect(retry.world).toBe(revised.world)
+    const conflictingRetry = respondToNegotiationCounter(revised.world, { ...decision, decision: { kind: 'REVISE_OFFER', terms: { salary: setup.counter.salary! + 100_000, years: setup.counter.years } } })
+    expect(conflictingRetry.status).toBe('LIFECYCLE_CONFLICT')
+    if (revised.negotiation?.status !== 'OPEN') throw new Error('Expected revised offer to reopen the same negotiation')
+    const counterReality = userWorld.marketRealityByPlayerId[setup.counter.playerId]!
+    const nextOfferDue = updateGameWorld(revised.world, {
+      currentDate: addDays(revised.world.currentDate, 1),
+      marketReality: [...Object.values(revised.world.marketRealityByPlayerId).filter((item) => item.playerId !== setup.counter.playerId), { ...counterReality, expectedSalary: revised.negotiation.salary + 300_000 }],
+    })
+    const nextDueWorld = progressFormalOfferResponses(nextOfferDue)
+    const nextCounter = nextDueWorld.negotiationsById[setup.counter.id]!
+    expect(nextCounter).toMatchObject({ status: 'COUNTERED', round: setup.counter.round + 1, actionKey: setup.counter.actionKey, openingKey: setup.counter.openingKey })
+    expect(nextCounter.roundHistory).toHaveLength(2)
+    expect(nextCounter.roundHistory?.[1]).toMatchObject({ round: setup.counter.round, offer: { salary: revised.negotiation.salary, years: revised.negotiation.years }, submittedOn: revised.negotiation.offerSubmittedOn, submittedBy: { kind: 'USER' } })
+    expect(respondToNegotiationCounter(nextDueWorld, decision).status).toBe('ALREADY_APPLIED')
+    expect(revised.world.contractsById).toBe(userWorld.contractsById)
+    expect(revised.world.playerTransactionsById).toBe(userWorld.playerTransactionsById)
+    expect(revised.world.teams[teamId]!.rosterPlayerIds).toEqual(userWorld.teams[teamId]!.rosterPlayerIds)
+  })
+
+  it('supports explicit user acceptance and decline as negotiation outcomes only', () => {
+    const setup = withAiCounteredOffer()
+    const userWorld = updateGameWorld(setup.world, {
+      userCoachId: setup.world.teams[teamId]!.coachId!,
+      gmPlanStates: Object.values(setup.world.gmPlanStatesById).filter((plan) => plan.teamId !== teamId),
+    })
+    const request = { teamId, negotiationId: setup.counter.id, expectedRound: setup.counter.round }
+    const accepted = respondToNegotiationCounter(userWorld, { ...request, decision: { kind: 'ACCEPT_COUNTER' } })
+    expect(accepted.status).toBe('APPLIED')
+    expect(accepted.negotiation).toMatchObject({ status: 'ACCEPTED', salary: setup.counter.salary, years: setup.counter.years, clubAction: { outcome: 'ACCEPTED_COUNTER', actor: { kind: 'USER' } } })
+    expect(respondToNegotiationCounter(accepted.world, { ...request, decision: { kind: 'ACCEPT_COUNTER' } })).toMatchObject({ status: 'ALREADY_APPLIED', world: accepted.world })
+    const declined = respondToNegotiationCounter(userWorld, { ...request, decision: { kind: 'DECLINE_COUNTER' } })
+    expect(declined.status).toBe('APPLIED')
+    expect(declined.negotiation).toMatchObject({ status: 'WITHDRAWN', clubAction: { outcome: 'DECLINED_COUNTER', actor: { kind: 'USER' } } })
+    for (const result of [accepted, declined]) {
+      expect(result.world.contractsById).toBe(userWorld.contractsById)
+      expect(result.world.playerTransactionsById).toBe(userWorld.playerTransactionsById)
+      expect(result.world.teams[teamId]!.rosterPlayerIds).toEqual(userWorld.teams[teamId]!.rosterPlayerIds)
+      expect(result.world.governanceRequestsById).toBe(userWorld.governanceRequestsById)
+    }
+  })
+
+  it('keeps user counters user-controlled and lets AI accept only a current affordable observed counter', () => {
+    const setup = withAiCounteredOffer()
+    const userCounterWorld = updateGameWorld(setup.world, {
+      userCoachId: setup.world.teams[teamId]!.coachId!,
+      gmPlanStates: Object.values(setup.world.gmPlanStatesById).filter((plan) => plan.teamId !== teamId),
+    })
+    expect(progressAiNegotiationCounterResponses(userCounterWorld)).toMatchObject({ world: userCounterWorld, results: [] })
+    const noOwner = updateGameWorld(setup.world, { responsibilities: Object.values(setup.world.responsibilitiesById).filter((item) => !(item.teamId === teamId && item.kind === 'submitPlayerContractOffer')) })
+    expect(progressAiNegotiationCounterResponses(noOwner)).toMatchObject({ world: noOwner, results: [] })
+
+    const hiddenChanged = updateGameWorld(setup.world, {
+      marketReality: Object.values(setup.world.marketRealityByPlayerId).map((item) => item.playerId === setup.counter.playerId ? { ...item, expectedSalary: 99_000_000, expectedYears: 1, playerWillingness: 0 } : item),
+    })
+    const ai = progressAiNegotiationCounterResponses(setup.world)
+    const changedHiddenAi = progressAiNegotiationCounterResponses(hiddenChanged)
+    expect(ai.results.map((result) => result.status)).toEqual(['APPLIED'])
+    expect(ai.world.negotiationsById[setup.counter.id]).toMatchObject({ status: 'ACCEPTED', salary: setup.counter.salary, years: setup.counter.years, clubAction: { outcome: 'ACCEPTED_COUNTER', actor: { kind: 'STAFF', staffPersonId: setup.setup.offerOwnerId } } })
+    expect(changedHiddenAi.world.negotiationsById[setup.counter.id]).toEqual(ai.world.negotiationsById[setup.counter.id])
+    expect(ai.world.contractsById).toBe(setup.world.contractsById)
+    expect(ai.world.playerTransactionsById).toBe(setup.world.playerTransactionsById)
+    expect(ai.world.teams[teamId]!.rosterPlayerIds).toEqual(setup.world.teams[teamId]!.rosterPlayerIds)
+    expect(ai.world.governanceRequestsById).toBe(setup.world.governanceRequestsById)
+  })
+
+  it('declines an otherwise current AI counter when the exact counter salary is unaffordable', () => {
+    const setup = withAiCounteredOffer()
+    const payroll = getTeamFinancialSnapshot(setup.world, teamId).currentPlayerPayroll
+    const constrained = updateGameWorld(setup.world, {
+      teamFinances: Object.values(setup.world.teamFinancesByTeamId).map((item) => item.teamId === teamId ? { ...item, playerSalaryBudget: payroll + 1 } : item),
+    })
+    const result = progressAiNegotiationCounterResponses(constrained)
+    expect(result.results.map((item) => item.status)).toEqual(['APPLIED'])
+    expect(result.world.negotiationsById[setup.counter.id]).toMatchObject({ status: 'WITHDRAWN', clubAction: { outcome: 'DECLINED_COUNTER', actor: { kind: 'STAFF', staffPersonId: setup.setup.offerOwnerId } } })
+    expect(result.world.contractsById).toBe(constrained.contractsById)
+    expect(result.world.playerTransactionsById).toBe(constrained.playerTransactionsById)
+  })
 })
 
 function withPositiveDelegatedContact() {
@@ -232,6 +329,23 @@ function withDelegatedAiContact() {
     negotiations: [{ ...setup.contact, contactResponse: undefined }],
   })
   return { ...setup, world }
+}
+
+function withAiCounteredOffer() {
+  const setup = withDelegatedAiContact()
+  const contact = { ...setup.contact, contactResponse: { outcome: 'OPEN_TO_TALKS' as const, respondedOn: setup.world.currentDate, marketSignalId: `market-signal:test:${setup.contact.id}` } }
+  const positiveWorld = updateGameWorld(setup.world, { negotiations: [contact] })
+  const submitted = submitPreparedFreeAgentOffer(positiveWorld, { teamId, negotiationId: contact.id, expectedProposalId: proposalId })
+  if (submitted.status !== 'SUBMITTED' || submitted.negotiation?.status !== 'OPEN') throw new Error('Expected a prepared AI OPEN offer')
+  const reality = submitted.world.marketRealityByPlayerId[contact.playerId]!
+  const due = updateGameWorld(submitted.world, {
+    currentDate: addDays(submitted.world.currentDate, 1),
+    marketReality: [...Object.values(submitted.world.marketRealityByPlayerId).filter((item) => item.playerId !== contact.playerId), { ...reality, expectedSalary: submitted.negotiation.salary + 300_000 }],
+  })
+  const counterWorld = progressFormalOfferResponses(due)
+  const counter = counterWorld.negotiationsById[contact.id]
+  if (counter?.status !== 'COUNTERED') throw new Error(`Expected a canonical agent counter, received ${counter?.status ?? 'missing'}`)
+  return { setup, world: counterWorld, contact, counter }
 }
 
 function withPositiveUserContact(world: GameWorld, contact: ContractNegotiation) {
