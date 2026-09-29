@@ -6,6 +6,7 @@ import { createNewGame } from '@/app/game'
 import { reviewClubManagementPlanning } from '@/app/gmPlanning'
 import { createGMPlanState } from '@/domain/gmPlanning'
 import { assessGMDecisionContext } from '@/engine/gmDecisionContext'
+import { assessRoutedAcquisitionProposalIntelligence, assessRoutedMarketCandidateFeasibility } from '@/app/marketIntelligence'
 import { updateGameWorld } from '@/domain/world'
 import { ClubStrategyScreen } from './ClubStrategyScreen'
 
@@ -64,12 +65,20 @@ describe('ClubStrategyScreen', () => {
     const externalPlayer = Object.values(initial.teams).find((candidate) => candidate.id !== team.id)!.rosterPlayerIds[0]!
     const organizationKnowledge = { organizationId: team.organizationId, subjectPlayerId: externalPlayer, dimensions: Object.fromEntries(['creation', 'shooting', 'interiorDefense'].map((dimension) => [dimension, { coverage: 1, confidence: 0.9, assessedAt: initial.currentDate, provenance: 'scoutReport' as const, estimate: 75, uncertainty: 3 }])) }
     const world = updateGameWorld(shortRoster, { gmPlanStates: [...Object.values(shortRoster.gmPlanStatesById).filter((candidate) => candidate.teamId !== team.id), plan], organizationKnowledge: [...shortRoster.organizationKnowledge, organizationKnowledge] })
+    const proposals = assessRoutedAcquisitionProposalIntelligence(world, team.id)
+    const feasibility = assessRoutedMarketCandidateFeasibility(world, team.id)
+    expect(proposals).toHaveLength(1)
+    expect(proposals[0]!.planId).toBe(plan.id)
+    if (proposals[0]!.preferredCandidate !== undefined) {
+      expect(feasibility[0]!.candidates.map((candidate) => candidate.playerId)).toContain(proposals[0]!.preferredCandidate.playerId)
+    }
     render(<ClubStrategyScreen world={world} />)
     const card = screen.getByRole('article', { name: `${team.name} ${team.gender} strategy` })
     expect(within(card).getByRole('heading', { name: 'Known market candidates' })).toBeInTheDocument()
     expect(within(card).getByText(`${initial.players[externalPlayer]!.firstName} ${initial.players[externalPlayer]!.lastName}`)).toBeInTheDocument()
     expect(within(card).getByText(/Position fit: UNKNOWN/)).toBeInTheDocument()
     expect(within(card).getByText(/Known evidence:/)).toBeInTheDocument()
+    expect(within(card).getByRole('heading', { name: 'Preferred acquisition proposal' })).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 })

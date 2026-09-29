@@ -3,7 +3,7 @@ import { assessClubStrategy } from '@/engine/clubStrategy/ClubStrategyEngine'
 import type { ClubNeedKind } from '@/engine/clubNeeds'
 import { assessGMDecisionContext, type GMResponseOptionKind } from '@/engine/gmDecisionContext'
 import { inspectGMPlanWorkflows } from '@/app/gmPlanning'
-import { assessRoutedMarketCandidateFeasibility } from '@/app/marketIntelligence'
+import { assessRoutedAcquisitionProposalIntelligence, assessRoutedMarketCandidateFeasibility } from '@/app/marketIntelligence'
 
 const REASON_LABELS: Readonly<Record<string, string>> = {
   FINANCIAL_STRESS: 'Financial pressure',
@@ -111,6 +111,7 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
         const decisionContext = assessGMDecisionContext(world, team.id)
         const workflowReview = inspectGMPlanWorkflows(world, team.id)
         const marketCandidateReviews = assessRoutedMarketCandidateFeasibility(world, team.id)
+        const acquisitionProposals = assessRoutedAcquisitionProposalIntelligence(world, team.id)
         const needsAssessment = decisionContext.needsAssessment
         const state = world.clubStrategicStatesByTeamId[team.id]
         const isUserTeam = team.coachId === world.userCoachId
@@ -183,6 +184,25 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
               {review.candidates.length > 5 && <p>{review.candidates.length - 5} more known candidates.</p>}
             </section>
           })}
+          <section aria-label={`${team.name} ${team.gender} acquisition proposal intelligence`}>
+            <h3>{isUserTeam ? 'Recommended approach (advisory)' : 'Preferred acquisition proposal'}</h3>
+            {acquisitionProposals.map((proposal) => <article key={proposal.id} aria-label={`${proposal.proposalType.replaceAll('_', ' ').toLowerCase()} ${proposal.needId ?? 'no active plan'}`}>
+              {proposal.preferredCandidate === undefined
+                ? <strong>No actionable proposal: {proposal.noProposalReason?.replaceAll('_', ' ').toLowerCase() ?? 'unknown reason'}</strong>
+                : <><strong>{proposal.proposalType === 'NO_ACTIONABLE_PROPOSAL' ? 'Candidate needs route information' : proposal.proposalType.replaceAll('_', ' ')}: {proposal.preferredCandidate.name}</strong>
+                  <div>Need fit: {proposal.preferredCandidate.needFit} · Approachability: {proposal.preferredCandidate.feasibility.approachability} · Route: {proposal.route?.replaceAll('_', ' ').toLowerCase() ?? 'unknown'}</div>
+                  <div>Readiness: {proposal.proposalReadiness.replaceAll('_', ' ').toLowerCase()} · Transaction authority: {proposal.governanceReadiness.replaceAll('_', ' ').toLowerCase()}</div>
+                  {proposal.knownExpectedSalary !== undefined && <div>Known expected salary: {proposal.knownExpectedSalary.value.toLocaleString()} · {proposal.knownExpectedSalary.source.toLowerCase()} · confidence {proposal.knownExpectedSalary.confidence}% · {proposal.knownExpectedSalary.assessedAt}</div>}
+                  {proposal.proposalType === 'FREE_AGENT_APPROACH' && <div>Affordability: {proposal.affordability.replaceAll('_', ' ').toLowerCase()} · Expected term: {proposal.expectedTermYears === undefined ? 'unknown' : `${proposal.expectedTermYears.value} years · ${proposal.expectedTermYears.source.toLowerCase()} · confidence ${proposal.expectedTermYears.confidence}%`} · Proposed contract term: not selected</div>}
+                  {proposal.proposalType === 'TRADE_ENQUIRY' && <div>Seller willingness: {proposal.preferredCandidate.feasibility.sellerWillingness === undefined ? 'unknown' : `${proposal.preferredCandidate.feasibility.sellerWillingness.value} · confidence ${proposal.preferredCandidate.feasibility.sellerWillingness.confidence}%`} · Package: not constructed · Perceived value: unknown</div>}
+                </>}
+              {proposal.proposalType === 'FREE_AGENT_APPROACH' && <div>Player interest: {proposal.knownPlayerInterest?.value ?? 'unknown'}</div>}
+              <div>Responsible system: {proposal.responsibleSystem.replaceAll('_', ' ').toLowerCase()} · Responsible role: unknown</div>
+              {proposal.alternatives.length > 0 && <div>Alternatives: {proposal.alternatives.map((alternative) => alternative.name).join(', ')}</div>}
+              {proposal.missingInformation.length > 0 && <div>Missing: {proposal.missingInformation.map((item) => item.replaceAll('_', ' ').toLowerCase()).join(', ')}</div>}
+              {proposal.blockers.length > 0 && <div>Blockers: {proposal.blockers.map((item) => item.replaceAll('_', ' ').toLowerCase()).join(', ')}</div>}
+            </article>)}
+          </section>
           <section aria-label={`${team.name} ${team.gender} response options`}>
             <h3>Management response options</h3>
             <p>{decisionContext.decisionMakerStatus === 'ASSIGNED'
