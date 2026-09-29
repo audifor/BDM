@@ -147,6 +147,8 @@ describe('simulation breakpoints', () => {
     const contact = createNegotiationContact({ organizationId: userTeam.organizationId, teamId: userTeam.id, playerId: contactedPlayer.id, startedOn: base.currentDate, actionKey: 'contact-breakpoint', responsibleActor: { kind: 'USER' } })
     const contactedWorld = updateGameWorld(base, { negotiations: [contact] })
     expect(evaluateSimulationBreakpoints(contactedWorld)).toMatchObject({ mayAdvance: true, breakpoint: { level: 'INFO', reason: 'marketNegotiationAwaitingExternalResponse', diagnostic: expect.stringContaining('before any formal offer exists') } })
+    const respondedWorld = updateGameWorld(contactedWorld, { negotiations: [{ ...contact, contactResponse: { outcome: 'OPEN_TO_TALKS' as const, respondedOn: addDays(contact.startedOn!, 1), marketSignalId: 'signal:contact-response' } }] })
+    expect(evaluateSimulationBreakpoints(respondedWorld)).toMatchObject({ mayAdvance: true, breakpoint: { level: 'INFO', reason: 'marketContactResponse', diagnostic: expect.stringContaining('positive response') } })
     const negotiation = { id: 'negotiation:user-test', organizationId: userTeam.organizationId, playerId: Object.values(base.players)[0]!.id, salary: 100_000, years: 1, role: 'ROTATION' as const, agentFee: 0, status: 'OPEN' as const, round: 0 }
     const openWorld = updateGameWorld(base, { negotiations: [negotiation] })
     expect(evaluateSimulationBreakpoints(openWorld)).toMatchObject({ mayAdvance: true, breakpoint: { level: 'INFO', reason: 'marketNegotiationAwaitingExternalResponse' } })

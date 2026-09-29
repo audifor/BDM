@@ -31,6 +31,14 @@ interface NegotiationIdentity {
   readonly sourceProposalId?: string
   readonly responsibleActor?: NegotiationResponsibleActor
   readonly agentId?: AgentId
+  /** Observable result of a term-free contact; formal offer outcomes remain separate. */
+  readonly contactResponse?: NegotiationContactResponse
+}
+
+export interface NegotiationContactResponse {
+  readonly outcome: 'OPEN_TO_TALKS' | 'NOT_INTERESTED'
+  readonly respondedOn: GameDate
+  readonly marketSignalId: string
 }
 
 interface ContactOnlyNegotiation extends NegotiationIdentity {

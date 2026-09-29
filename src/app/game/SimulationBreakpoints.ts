@@ -104,14 +104,16 @@ export function evaluateSimulationBreakpoints(world: GameWorld, context: Simulat
       // No current Market response command/detail surface exists for COUNTERED.
       // Keep it observable without making time advancement depend on a future resolver.
       level: negotiation.status === 'COUNTERED' ? 'IMPORTANT' : 'INFO',
-      reason: negotiation.status === 'COUNTERED' ? 'marketNegotiation' : 'marketNegotiationAwaitingExternalResponse',
+      reason: negotiation.status === 'COUNTERED' ? 'marketNegotiation' : negotiation.contactResponse === undefined ? 'marketNegotiationAwaitingExternalResponse' : 'marketContactResponse',
       sourceKind: 'MARKET_NEGOTIATION', sourceId: negotiation.id,
       ownership: { kind: 'USER_TEAM', coachId: world.userCoachId, teamId: userTeam.id },
       route: 'market', actionTarget: { negotiationId: negotiation.id },
       diagnostic: negotiation.status === 'COUNTERED'
         ? `Market negotiation ${negotiation.id} has countered terms awaiting the user's decision.`
         : negotiation.status === 'CONTACTED'
-          ? `Market contact ${negotiation.id} is waiting for a response before any formal offer exists.`
+          ? negotiation.contactResponse === undefined
+            ? `Market contact ${negotiation.id} is waiting for a response before any formal offer exists.`
+            : `Market contact ${negotiation.id} received ${negotiation.contactResponse.outcome === 'OPEN_TO_TALKS' ? 'a positive response' : 'a refusal'} on ${negotiation.contactResponse.respondedOn}; no formal offer exists.`
           : `Market negotiation ${negotiation.id} has a formal offer open and is waiting on an external player response.`,
     }))
   }

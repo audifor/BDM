@@ -61,7 +61,7 @@ describe('CalendarEngine', () => {
     const trainingIndex = order.indexOf('TRAINING')
 
     expect(order.slice(fatigueIndex, trainingIndex + 1)).toEqual([
-      'CAREER_FATIGUE_RECOVERY', 'EXPIRED_CONTRACT_RECONCILIATION', 'TRAINING',
+      'CAREER_FATIGUE_RECOVERY', 'EXPIRED_CONTRACT_RECONCILIATION', 'MARKET_CONTACT_RESPONSES', 'TRAINING',
     ])
   })
 

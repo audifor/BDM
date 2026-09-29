@@ -2,7 +2,7 @@ import { addDays, compareGameDates } from '@/domain/date'
 import { annualDevelopmentCycleId, hasAppliedAnnualDevelopmentCycle, markAnnualDevelopmentCycleApplied, updateGameWorld, type GameWorld } from '@/domain/world'
 import { applyOffseasonDevelopment } from '@/engine/development'
 import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
-import { reconcileExpiredPlayerContracts } from '@/engine/market'
+import { progressNegotiationContactResponses, reconcileExpiredPlayerContracts } from '@/engine/market'
 import { recoverCareerFatigueForDay } from '@/engine/training/TrainingEngine'
 import { executeScheduledTrainingSessions } from '@/engine/training/ScheduledTrainingEngine'
 import { openDraft, progressDraftAi, progressDraftProspectAdvisories } from '@/engine/draft'
@@ -25,7 +25,7 @@ import { progressStaffAutonomousOfferDecisions, progressStaffAutonomousResignati
 import { advanceFacilitiesConditionFromHistory } from '@/engine/facilities'
 
 export const DAILY_LIFECYCLE_PHASE_IDS = [
-  'DATE_ADVANCE', 'ANNUAL_PLAYER_DEVELOPMENT', 'CAREER_FATIGUE_RECOVERY', 'EXPIRED_CONTRACT_RECONCILIATION', 'TRAINING', 'RECRUITING', 'ACADEMICS',
+  'DATE_ADVANCE', 'ANNUAL_PLAYER_DEVELOPMENT', 'CAREER_FATIGUE_RECOVERY', 'EXPIRED_CONTRACT_RECONCILIATION', 'MARKET_CONTACT_RESPONSES', 'TRAINING', 'RECRUITING', 'ACADEMICS',
   'NIL_LIFECYCLE', 'MONTHLY_NIL_AUTONOMY', 'MONTHLY_BOOSTER_AUTONOMY', 'COACH_FINANCE', 'MEMORY_DECAY',
   'ENFORCEMENT', 'SCOUTING_INTAKE', 'MEDICAL_AND_ROSTER_ADVISORIES', 'SCOUTING_ASSIGNMENTS', 'DRAFT',
   'STAFF_HUMAN_STATE', 'STAFF_CONFLICTS', 'STAFF_CULTURE_COHESION', 'STAFF_POLITICAL_CASES', 'STAFF_APPRAISAL',
@@ -106,6 +106,7 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
     run('ANNUAL_PLAYER_DEVELOPMENT', current.currentDate, current.currentDate.slice(5) === '07-01' && !hasAppliedAnnualDevelopmentCycle(current, annualDevelopmentCycleId(current.currentDate)), progressAnnualPlayerDevelopment, 'Runs once on the annual 1 July checkpoint.')
     run('CAREER_FATIGUE_RECOVERY', current.currentDate, true, recoverCareerFatigueForDay, 'Career fatigue recovery runs every simulation day.')
     run('EXPIRED_CONTRACT_RECONCILIATION', current.currentDate, true, (input) => reconcileExpiredPlayerContracts(input, input.currentDate), 'Expired player contracts are reconciled every simulation day.')
+    run('MARKET_CONTACT_RESPONSES', current.currentDate, true, progressNegotiationContactResponses, 'Due term-free contact responses are processed after contract reconciliation.')
     run('TRAINING', current.currentDate, true, executeScheduledTrainingSessions, 'Scheduled training is checked every simulation day.')
     run('RECRUITING', current.currentDate, true, progressRecruiting, 'Recruiting cycle status and due lifecycle are checked every simulation day.')
     run('ACADEMICS', current.currentDate, current.currentDate.slice(5) === '01-01' || current.currentDate.slice(5) === '07-01', progressAcademicTerms, 'Academic terms resolve on 1 January and 1 July.')

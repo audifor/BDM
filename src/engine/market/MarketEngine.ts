@@ -1,4 +1,4 @@
-import { consolidateMarketSignal, createNegotiationContact as createNegotiationContactRecord, isActiveNegotiation, negotiationIdForOpening, negotiationOpeningKeyString, type ContractNegotiation, type MarketSignal, type NegotiationOpeningKey, type NegotiationResponsibleActor, type NegotiationRole } from '@/domain/market'
+import { consolidateMarketSignal, createNegotiationContact as createNegotiationContactRecord, isActiveNegotiation, negotiationIdForOpening, negotiationOpeningKeyString, type ContractNegotiation, type MarketSignal, type NegotiationContactResponse, type NegotiationOpeningKey, type NegotiationResponsibleActor, type NegotiationRole } from '@/domain/market'
 import { agencyIdFromString, agentIdFromString, type OrganizationId, type PlayerId } from '@/domain/ids'
 import { canTeamAffordAdditionalSalary, isPlayerFreeAgent, updateGameWorld, type GameWorld } from '@/domain/world'
 import type { GameDate } from '@/domain/date'
@@ -96,6 +96,49 @@ export function initializeMarketAgents(world:GameWorld):GameWorld{if(Object.keys
 
 /** Signals are the only route through which an organization gains market perception. */
 export function receiveMarketSignal(world:GameWorld,signal:MarketSignal):GameWorld{return updateGameWorld(world,{marketSignals:[...Object.values(world.marketSignalsById),signal],marketKnowledge:consolidateMarketSignal(world.marketKnowledge,signal)})}
+
+/** Processes delayed contact replies and reveals only direct-contact observations to the contacted organization. */
+export function progressNegotiationContactResponses(world: GameWorld): GameWorld {
+  let current = world
+  const dueContacts = Object.values(world.negotiationsById)
+    .filter((item) => item.status === 'CONTACTED' && item.contactResponse === undefined
+      && (item.startedOn === undefined || item.startedOn < world.currentDate))
+    .sort((a, b) => a.id.localeCompare(b.id))
+
+  for (const contact of dueContacts) {
+    const latest = current.negotiationsById[contact.id]
+    if (latest?.status !== 'CONTACTED' || latest.contactResponse !== undefined) continue
+    if (!isPlayerFreeAgent(current, latest.playerId)) {
+      const closed: ContractNegotiation = { ...latest, status: 'CLOSED' }
+      current = updateGameWorld(current, { negotiations: [...Object.values(current.negotiationsById).filter((item) => item.id !== latest.id), closed] })
+      continue
+    }
+    const reality = current.marketRealityByPlayerId[latest.playerId]
+    if (reality === undefined) continue
+
+    const signalId = `market-signal:contact-response:${latest.id}`
+    const outcome: NegotiationContactResponse['outcome'] = reality.playerWillingness >= 50 ? 'OPEN_TO_TALKS' : 'NOT_INTERESTED'
+    const response: NegotiationContactResponse = { outcome, respondedOn: current.currentDate, marketSignalId: signalId }
+    const updatedNegotiation: ContractNegotiation = {
+      ...latest,
+      ...(outcome === 'NOT_INTERESTED' ? { status: 'CLOSED' as const } : {}),
+      contactResponse: response,
+    }
+    current = updateGameWorld(current, { negotiations: [...Object.values(current.negotiationsById).filter((item) => item.id !== latest.id), updatedNegotiation] })
+    current = receiveMarketSignal(current, {
+      id: signalId,
+      organizationId: latest.organizationId,
+      playerId: latest.playerId,
+      source: 'CLUB_CONTACT',
+      occurredOn: current.currentDate,
+      reliability: 0.9,
+      playerInterest: reality.playerWillingness,
+      ...(outcome === 'OPEN_TO_TALKS' ? { expectedSalary: reality.expectedSalary } : {}),
+    })
+  }
+  return current
+}
+
 export interface OpenNegotiationInput {
   readonly organizationId: OrganizationId
   readonly teamId: import('@/domain/ids').TeamId

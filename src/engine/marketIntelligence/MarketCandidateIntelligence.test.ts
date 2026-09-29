@@ -1,6 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { releasePlayer } from '@/app/market'
+import { addDays } from '@/domain/date'
+import { createNegotiationContact } from '@/domain/market'
 import { createGMPlanState } from '@/domain/gmPlanning'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { OrganizationKnowledge, OrganizationKnowledgeDimension } from '@/domain/knowledge'
@@ -12,6 +14,7 @@ import { assessGMDecisionContext } from '@/engine/gmDecisionContext'
 import { assessMarketCandidatesForNeed } from './MarketCandidateIntelligence'
 import { assessMarketCandidateFeasibility } from './MarketCandidateFeasibility'
 import { assessRoutedMarketCandidates, assessRoutedMarketCandidateFeasibility } from '@/app/marketIntelligence'
+import { initializeMarketAgents, progressNegotiationContactResponses } from '@/engine/market'
 
 let base: GameWorld
 let club: Team
@@ -126,6 +129,23 @@ describe('MarketCandidateIntelligence', () => {
     expect(candidate.feasibility.affordability).not.toBe(unknown.feasibility.affordability)
     expect(unknown.feasibility.approachability).toBe('UNKNOWN')
     expect(candidate.feasibility.approachability).toBe(canTeamAffordAdditionalSalary(marketWorld, club.id, 1_000_000) ? 'MEDIUM' : 'BLOCKED')
+  })
+
+  it('feeds contact-revealed information into later BS10B feasibility without exposing MarketReality', () => {
+    const sourceTeam = Object.values(base.teams).find((team) => team.rosterPlayerIds.includes(externalPlayerId))!
+    const freeAgentWorld = initializeMarketAgents(releasePlayer(base, sourceTeam.id, externalPlayerId))
+    const responseDate = addDays(freeAgentWorld.currentDate, 1)
+    const reality = { ...freeAgentWorld.marketRealityByPlayerId[externalPlayerId]!, playerWillingness: 72, expectedSalary: 1_000_000 }
+    const dueWorld = updateGameWorld(freeAgentWorld, { currentDate: responseDate, marketReality: [...Object.values(freeAgentWorld.marketRealityByPlayerId).filter((item) => item.playerId !== externalPlayerId), reality] })
+    const contact = createNegotiationContact({ organizationId: club.organizationId, teamId: club.id, playerId: externalPlayerId, startedOn: freeAgentWorld.currentDate, actionKey: 'contact-to-feasibility', responsibleActor: { kind: 'ORGANIZATION' } })
+    const before = assessMarketCandidateFeasibility(dueWorld, assessMarketCandidatesForNeed(dueWorld, club.id, makeNeed(), 'CONTEND')).candidates.find((item) => item.playerId === externalPlayerId)!
+    const responded = progressNegotiationContactResponses(updateGameWorld(dueWorld, { negotiations: [contact] }))
+    const after = assessMarketCandidateFeasibility(responded, assessMarketCandidatesForNeed(responded, club.id, makeNeed(), 'CONTEND')).candidates.find((item) => item.playerId === externalPlayerId)!
+
+    expect(before.feasibility.expectedSalary).toBeUndefined()
+    expect(after.feasibility.expectedSalary).toMatchObject({ value: 1_000_000, source: 'CLUB_CONTACT', confidence: 90, assessedAt: responseDate })
+    expect(after.feasibility.playerInterest).toMatchObject({ value: 72, source: 'CLUB_CONTACT', confidence: 90, assessedAt: responseDate })
+    expect(responded.marketRealityByPlayerId[externalPlayerId]).toEqual(dueWorld.marketRealityByPlayerId[externalPlayerId])
   })
 
   it('never turns unknown valuation, salary, interest or seller willingness into neutral values', () => {

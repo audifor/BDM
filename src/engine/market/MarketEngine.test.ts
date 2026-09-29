@@ -1,14 +1,74 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
-import { releasePlayer } from '@/app/market'
+import { releasePlayer, signFreeAgent } from '@/app/market'
+import { addDays } from '@/domain/date'
 import { organizationIdForTeam, staffPersonIdFromString } from '@/domain/ids'
 import { createNegotiationContact, getMarketKnowledge, negotiationIdForOpening, negotiationOpeningKeyString, type ContractNegotiation } from '@/domain/market'
 import { updateGameWorld } from '@/domain/world'
-import { initializeMarketAgents, openNegotiation, receiveMarketSignal, createNegotiationContact as createContactInEngine } from './MarketEngine'
+import { initializeMarketAgents, openNegotiation, progressNegotiationContactResponses, receiveMarketSignal, createNegotiationContact as createContactInEngine } from './MarketEngine'
 
 describe('Wave 4 market core',()=>{
   it('creates deterministic agencies, shared agent portfolios, and sparse market knowledge',()=>{const first=initializeMarketAgents(createNewGame()),second=initializeMarketAgents(createNewGame());expect(first.agenciesById).toEqual(second.agenciesById);expect(first.agentsById).toEqual(second.agentsById);expect(first.playerRepresentations).toEqual(second.playerRepresentations);expect(Object.keys(first.agentsById).length).toBeLessThan(Object.keys(first.players).length);expect(first.marketKnowledge).toEqual([])})
   it('updates only the contacted organization market knowledge without reading market reality',()=>{const world=initializeMarketAgents(createNewGame()),team=Object.values(world.teams)[0]!,player=Object.values(world.players)[0]!,organizationId=organizationIdForTeam(team.id),before=world.marketKnowledge.length;const next=receiveMarketSignal(world,{id:'signal:1',organizationId,playerId:player.id,source:'AGENT',occurredOn:world.currentDate,reliability:.8,availability:'OPEN',expectedSalary:900_000});expect(next.marketKnowledge).toHaveLength(before+1);expect(getMarketKnowledge(next.marketKnowledge,organizationId,player.id)).toMatchObject({availability:'OPEN',expectedSalary:900_000});expect(next.marketRealityByPlayerId[player.id]).toEqual(world.marketRealityByPlayerId[player.id])})
+  it('processes a due positive contact once and reveals only scoped contact observations',()=>{
+    const initial=initializeMarketAgents(createNewGame()),team=Object.values(initial.teams)[0]!,source=Object.values(initial.teams)[1]!,playerId=source.rosterPlayerIds[0]!,released=releasePlayer(initial,source.id,playerId)
+    const reality={...released.marketRealityByPlayerId[playerId]!,playerWillingness:72,expectedSalary:1_250_000,expectedYears:3}
+    const responseDate=addDays(released.currentDate,1)
+    const world=updateGameWorld(released,{currentDate:responseDate,marketReality:[...Object.values(released.marketRealityByPlayerId).filter(item=>item.playerId!==playerId),reality]})
+    const contact=createNegotiationContact({organizationId:team.organizationId,teamId:team.id,playerId,startedOn:released.currentDate,actionKey:'positive-response',responsibleActor:{kind:'USER'}})
+    const contacted=updateGameWorld(world,{negotiations:[contact]})
+    const answered=progressNegotiationContactResponses(contacted)
+    expect(answered.negotiationsById[contact.id]).toMatchObject({status:'CONTACTED',contactResponse:{outcome:'OPEN_TO_TALKS',respondedOn:world.currentDate,marketSignalId:`market-signal:contact-response:${contact.id}`}})
+    expect(answered.marketSignalsById[`market-signal:contact-response:${contact.id}`]).toMatchObject({organizationId:team.organizationId,playerInterest:72,expectedSalary:1_250_000,source:'CLUB_CONTACT',reliability:.9})
+    expect(answered.marketSignalsById[`market-signal:contact-response:${contact.id}`]).not.toHaveProperty('expectedYears')
+    expect(getMarketKnowledge(answered.marketKnowledge,team.organizationId,playerId)).toMatchObject({playerInterest:72,expectedSalary:1_250_000,source:'CLUB_CONTACT',confidence:90,assessedAt:world.currentDate})
+    expect(getMarketKnowledge(answered.marketKnowledge,source.organizationId,playerId)).toBeUndefined()
+    expect(progressNegotiationContactResponses(contacted)).toEqual(answered)
+    expect(progressNegotiationContactResponses(answered)).toBe(answered)
+    expect(Object.keys(answered.marketSignalsById)).toHaveLength(Object.keys(contacted.marketSignalsById).length+1)
+    expect(answered.negotiationsById[contact.id]).not.toHaveProperty('salary')
+    expect(answered.contractsById).toBe(contacted.contractsById)
+    expect(answered.playerTransactionsById).toBe(contacted.playerTransactionsById)
+    expect(answered.teams[team.id]!.rosterPlayerIds).toEqual(contacted.teams[team.id]!.rosterPlayerIds)
+  })
+  it('closes a refusal without inventing salary or years and leaves missing reality pending',()=>{
+    const initial=initializeMarketAgents(createNewGame()),team=Object.values(initial.teams)[0]!,source=Object.values(initial.teams)[1]!,playerId=source.rosterPlayerIds[0]!,released=releasePlayer(initial,source.id,playerId)
+    const reality={...released.marketRealityByPlayerId[playerId]!,playerWillingness:20}
+    const ready=updateGameWorld(released,{currentDate:addDays(released.currentDate,1),marketReality:[...Object.values(released.marketRealityByPlayerId).filter(item=>item.playerId!==playerId),reality]})
+    const contact=createNegotiationContact({organizationId:team.organizationId,teamId:team.id,playerId,startedOn:released.currentDate,actionKey:'negative-response',responsibleActor:{kind:'USER'}})
+    const refused=progressNegotiationContactResponses(updateGameWorld(ready,{negotiations:[contact]}))
+    expect(refused.negotiationsById[contact.id]).toMatchObject({status:'CLOSED',contactResponse:{outcome:'NOT_INTERESTED'}})
+    expect(refused.marketSignalsById[`market-signal:contact-response:${contact.id}`]).toMatchObject({playerInterest:20,source:'CLUB_CONTACT'})
+    expect(refused.marketSignalsById[`market-signal:contact-response:${contact.id}`]).not.toHaveProperty('expectedSalary')
+    expect(refused.marketSignalsById[`market-signal:contact-response:${contact.id}`]).not.toHaveProperty('expectedYears')
+    const noRealityContact={...contact,id:`${contact.id}:unknown`}
+    const noReality=updateGameWorld(ready,{marketReality:Object.values(ready.marketRealityByPlayerId).filter(item=>item.playerId!==playerId),negotiations:[noRealityContact]})
+    expect(progressNegotiationContactResponses(noReality)).toBe(noReality)
+  })
+  it('waits until the day after contact and closes stale contacts without claiming a response',()=>{
+    const initial=createNewGame(),team=Object.values(initial.teams)[0]!,source=Object.values(initial.teams)[1]!,playerId=source.rosterPlayerIds[0]!,released=releasePlayer(initial,source.id,playerId)
+    const contact=createNegotiationContact({organizationId:team.organizationId,teamId:team.id,playerId,startedOn:released.currentDate,actionKey:'delayed-response',responsibleActor:{kind:'USER'}})
+    const sameDay=updateGameWorld(released,{negotiations:[contact]})
+    expect(progressNegotiationContactResponses(sameDay)).toBe(sameDay)
+    const signed=signFreeAgent(sameDay,source.id,playerId)
+    const later=updateGameWorld(signed,{currentDate:addDays(signed.currentDate,1)})
+    const stale=progressNegotiationContactResponses(later)
+    expect(stale.negotiationsById[contact.id]).toMatchObject({status:'CLOSED'})
+    expect(stale.negotiationsById[contact.id]).not.toHaveProperty('contactResponse')
+    expect(stale.marketSignalsById).toEqual(later.marketSignalsById)
+  })
+  it('uses the same response model for user and AI contacts and ignores non-contact states',()=>{
+    const initial=initializeMarketAgents(createNewGame()),team=Object.values(initial.teams)[0]!,source=Object.values(initial.teams)[1]!,playerId=source.rosterPlayerIds[0]!,released=releasePlayer(initial,source.id,playerId)
+    const due=updateGameWorld(released,{currentDate:addDays(released.currentDate,1)})
+    const userContact=createNegotiationContact({organizationId:team.organizationId,teamId:team.id,playerId,startedOn:released.currentDate,actionKey:'same-response',responsibleActor:{kind:'USER'}})
+    const aiContact={...userContact,responsibleActor:{kind:'ORGANIZATION' as const}}
+    const respond=(contact:ContractNegotiation)=>progressNegotiationContactResponses(updateGameWorld(due,{negotiations:[contact]})).negotiationsById[contact.id]!.contactResponse
+    expect(respond(userContact)).toEqual(respond(aiContact))
+    const open:ContractNegotiation={...userContact,status:'OPEN',salary:500_000,years:1,role:'DEPTH',agentFee:0,round:0}
+    const closed:ContractNegotiation={id:`${userContact.id}:closed`,organizationId:userContact.organizationId,teamId:userContact.teamId,playerId:userContact.playerId,startedOn:userContact.startedOn,actionKey:userContact.actionKey,openingKey:userContact.openingKey,responsibleActor:userContact.responsibleActor,status:'CLOSED'}
+    const untouched=updateGameWorld(due,{negotiations:[open,closed]})
+    expect(progressNegotiationContactResponses(untouched)).toBe(untouched)
+  })
   it('represents pre-offer contact without creating offer terms',()=>{
     const world=createNewGame(),team=Object.values(world.teams)[0]!,player=Object.values(world.players)[0]!
     const contact=createNegotiationContact({organizationId:team.organizationId,teamId:team.id,playerId:player.id,startedOn:world.currentDate,actionKey:'plan-a:proposal-a',sourcePlanId:'plan-a',sourceProposalId:'proposal-a',responsibleActor:{kind:'USER'}})
