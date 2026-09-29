@@ -2,6 +2,7 @@ import type { GameWorld } from '@/domain/world'
 import { assessClubStrategy } from '@/engine/clubStrategy/ClubStrategyEngine'
 import type { ClubNeedKind } from '@/engine/clubNeeds'
 import { assessGMDecisionContext, type GMResponseOptionKind } from '@/engine/gmDecisionContext'
+import { inspectGMPlanWorkflows } from '@/app/gmPlanning'
 
 const REASON_LABELS: Readonly<Record<string, string>> = {
   FINANCIAL_STRESS: 'Financial pressure',
@@ -47,8 +48,53 @@ const OPTION_LABELS: Readonly<Record<GMResponseOptionKind, string>> = {
   WAIT_AND_MONITOR: 'Wait and monitor',
 }
 
+const WORKFLOW_LABELS: Readonly<Record<string, string>> = {
+  NONE: 'Needs review',
+  NO_ACTION: 'No action; monitor',
+  MARKET_INTELLIGENCE_REQUIRED: 'Market intelligence required',
+  ROUTE_TO_SCOUTING: 'Scouting review',
+  ROUTE_TO_CONTRACT_REVIEW: 'Contract review',
+  ROUTE_TO_FINANCE: 'Finance review',
+  APPROVAL_PATH_UNRESOLVED: 'Approval path unresolved',
+  NO_SUPPORTED_WORKFLOW: 'Not yet supported',
+}
+
+const WORKFLOW_STATUS_LABELS: Readonly<Record<string, string>> = {
+  READY_TO_ROUTE: 'Ready for subsystem review',
+  WAITING_APPROVAL: 'Waiting for approval context',
+  WAITING_INFORMATION: 'Waiting for information',
+  BLOCKED: 'Blocked',
+  UNSUPPORTED: 'Not yet supported',
+  NO_ACTION: 'No action required',
+  REVIEW_REQUIRED: 'Review required',
+}
+
+const SYSTEM_LABELS: Readonly<Record<string, string>> = {
+  GM_PLANNING: 'Club planning',
+  BS10_MARKET_INTELLIGENCE: 'Market intelligence',
+  SCOUTING: 'Scouting',
+  BASKETBALL_OPERATIONS_ADVISORY: 'Basketball Operations advisory',
+  FINANCE_AI: 'FinanceAI',
+  UNRESOLVED: 'Unresolved',
+}
+
+const SELECTION_REASON_LABELS: Readonly<Record<string, string>> = {
+  INITIAL_SELECTION: 'Initially selected',
+  PLAN_STILL_VALID: 'Kept after review',
+  SOURCE_NEED_RESOLVED: 'Source need resolved',
+  OPTION_NO_LONGER_AVAILABLE: 'Option no longer available',
+  OPTION_BECAME_BLOCKED: 'Option became blocked',
+  STRATEGY_CHANGED: 'Strategy changed',
+  CONTEXT_MATERIALLY_CHANGED: 'Context materially changed',
+  NO_SELECTABLE_OPTION: 'No selectable option',
+}
+
 function formatEvidenceValue(value: string | number | boolean | readonly (string | number | boolean)[] | readonly Readonly<Record<string, string | number | boolean>>[]): string {
-  return Array.isArray(value) ? value.map((item) => typeof item === 'object' ? JSON.stringify(item) : String(item)).join(', ') : String(value)
+  return Array.isArray(value) ? value.map((item) => typeof item === 'object' ? Object.entries(item).filter(([key]) => !/ids?$/i.test(key)).map(([key, entry]) => `${key}: ${entry}`).join(', ') : String(item)).join(', ') : String(value)
+}
+
+function formatEvidenceEntries(values: Readonly<Record<string, unknown>>): string {
+  return Object.entries(values).filter(([key]) => !/ids?$/i.test(key)).map(([key, value]) => `${key}=${formatEvidenceValue(value as Parameters<typeof formatEvidenceValue>[0])}`).join(' · ')
 }
 
 export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
@@ -62,6 +108,7 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
       {clubs.map((team) => {
         const assessment = assessClubStrategy(world, team.id)
         const decisionContext = assessGMDecisionContext(world, team.id)
+        const workflowReview = inspectGMPlanWorkflows(world, team.id)
         const needsAssessment = decisionContext.needsAssessment
         const state = world.clubStrategicStatesByTeamId[team.id]
         const isUserTeam = team.coachId === world.userCoachId
@@ -88,9 +135,23 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
               <strong>{NEED_LABELS[need.kind]}{need.targetPosition ? ` · ${need.targetPosition}` : ''}{need.targetRole ? ` · ${need.targetRole.replaceAll('_', ' ').toLowerCase()}` : ''}</strong>
               <div>Severity: {need.severity} · Urgency: {need.urgency} · Strategic fit: {need.strategicFit} · Confidence: {need.confidence}</div>
               <div>Scope: {need.temporalScope} · Finance context: {need.financialContext}{need.deadline ? ` · Deadline: ${need.deadline}` : ''}</div>
-              {need.relatedPlayerIds.length > 0 && <div>Related roster players: {need.relatedPlayerIds.map((id) => `${world.players[id]?.firstName ?? 'Unknown'} ${world.players[id]?.lastName ?? ''} (${id})`).join(', ')}</div>}
-              {need.evidence.map((evidence) => <div key={evidence.code}><small>{evidence.code}: {Object.entries(evidence.values).map(([key, value]) => `${key}=${formatEvidenceValue(value)}`).join(' · ')}</small></div>)}
+              {need.relatedPlayerIds.length > 0 && <div>Related roster players: {need.relatedPlayerIds.map((id) => `${world.players[id]?.firstName ?? 'Unknown'} ${world.players[id]?.lastName ?? ''}`).join(', ')}</div>}
+              {need.evidence.map((evidence) => <div key={evidence.code}><small>{evidence.code}: {formatEvidenceEntries(evidence.values)}</small></div>)}
             </li>)}</ol>}
+          </section>
+          <section aria-label={`${team.name} ${team.gender} GM plan and current workflow`}>
+            <h3>{isUserTeam ? 'Recommended plan' : 'Selected plan'}</h3>
+            <p>{isUserTeam ? 'Advisory only; no plan is saved for your club.' : 'Current AI club planning intent.'}</p>
+            {workflowReview.decisions.length === 0 ? <p>No selected response plans for current needs.</p> : <ol>{workflowReview.decisions.map((decision) => {
+              const need = needsAssessment.needs.find((item) => item.id === decision.needId)
+              return <li key={`${decision.planId}:${decision.currentValidity}`}>
+                <strong>{need ? NEED_LABELS[need.kind] : 'Previous club need'}: {OPTION_LABELS[decision.responseFamily]}</strong>
+                <div>Selected: {decision.selectedOn} · {SELECTION_REASON_LABELS[decision.selectionReason] ?? decision.selectionReason.replaceAll('_', ' ').toLowerCase()}</div>
+                <div><strong>{isUserTeam ? 'Recommended next workflow' : 'Planned next workflow'}:</strong> {WORKFLOW_LABELS[decision.route] ?? decision.route}</div>
+                <div>Status: {WORKFLOW_STATUS_LABELS[decision.status] ?? decision.status} · Current authority: {decision.currentExecutionReadiness?.replaceAll('_', ' ').toLowerCase() ?? 'Unknown'}</div>
+                <div>Responsible system: {SYSTEM_LABELS[decision.responsibleSystem] ?? decision.responsibleSystem}</div>
+              </li>
+            })}</ol>}
           </section>
           <section aria-label={`${team.name} ${team.gender} response options`}>
             <h3>Management response options</h3>

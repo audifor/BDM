@@ -27,7 +27,7 @@ export interface ClubStrategicAssessment {
   readonly reviewEligible: boolean
 }
 
-export type ClubStrategyReviewTrigger = 'SCHEDULED' | 'PRESEASON' | 'MAJOR_FINANCIAL_SHOCK' | 'GOVERNANCE_CHANGE' | 'MAJOR_ROSTER_CHANGE' | 'COMPETITION_CHECKPOINT'
+export type ClubStrategyReviewTrigger = 'SCHEDULED' | 'PRESEASON' | 'MAJOR_FINANCIAL_SHOCK' | 'GOVERNANCE_CHANGE' | 'MAJOR_ROSTER_CHANGE' | 'CONTRACT_CHANGE' | 'COMPETITION_CHECKPOINT'
 
 export interface ReviewClubStrategyOptions {
   readonly trigger?: ClubStrategyReviewTrigger

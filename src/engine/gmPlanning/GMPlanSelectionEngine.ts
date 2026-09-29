@@ -21,7 +21,7 @@ export interface GMPlanSelectionResult {
   readonly recommendations: readonly GMPlanRecommendation[]
 }
 
-const MATERIAL_TRIGGERS: readonly GMPlanReviewTrigger[] = ['STRATEGY_TRANSITION', 'MATERIAL_ROSTER_CHANGE', 'MAJOR_INJURY', 'CONTRACT_DEADLINE_ESCALATION', 'MATERIAL_FINANCIAL_CHANGE', 'GOVERNANCE_CHANGE', 'EXPLICIT_REEVALUATION']
+const MATERIAL_TRIGGERS: readonly GMPlanReviewTrigger[] = ['STRATEGY_TRANSITION', 'MATERIAL_ROSTER_CHANGE', 'CONTRACT_CHANGE', 'MAJOR_INJURY', 'CONTRACT_DEADLINE_ESCALATION', 'MATERIAL_FINANCIAL_CHANGE', 'GOVERNANCE_CHANGE', 'EXPLICIT_REEVALUATION']
 
 /** Selects from BS9C's already ordered option list; it never derives needs or ratings. */
 export function selectGMPlans(context: GMDecisionContext, existingPlans: readonly GMPlanState[] = [], trigger: GMPlanReviewTrigger = 'ROUTINE_REVIEW'): GMPlanSelectionResult {

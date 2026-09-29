@@ -1,6 +1,6 @@
 import { createNewGame } from '@/app/game'
 import { addDays, createGameDate } from '@/domain/date'
-import { applyRelationshipEventToWorld } from '@/domain/world'
+import { applyRelationshipEventToWorld, updateGameWorld } from '@/domain/world'
 import { getGamesToday } from '@/engine/calendar'
 import { getTeamFinancialSnapshot } from '@/domain/world/finances'
 import { applyCoachReputationEvent } from '@/domain/coachReputation'
@@ -176,6 +176,39 @@ describe('gameStore', () => {
     expect(result.finalDate).toBe(target)
     expect(useGameStore.getState().world).toBe(result.world)
     expect(useGameStore.getState().world?.currentDate).toBe(target)
+  })
+
+  it('rechecks only participating clubs after a completed player trade', () => {
+    useGameStore.getState().newGame()
+    const initial = useGameStore.getState().world!
+    const season = Object.values(initial.seasons).find((candidate) => initial.tradeRulesBySeasonId[candidate.id] !== undefined)!
+    const teams = Object.values(initial.teams).filter((team) => team.coachId !== undefined && team.coachId !== initial.userCoachId && (season.participantTeamIds ?? initial.competitions[season.competitionId]!.participantTeamIds).includes(team.id)).slice(0, 2)
+    const playerA = teams[0]!.rosterPlayerIds[0]!
+    const playerB = teams[1]!.rosterPlayerIds[0]!
+    const world = updateGameWorld(initial, {
+      currentSeasonId: season.id,
+      currentDate: season.startDate,
+      contracts: Object.values(initial.contractsById).map((contract) => [playerA, playerB].includes(contract.playerId)
+        ? { ...contract, compensation: { annualSalary: 1_000_000, years: [{ cashSalary: 1_000_000, capHit: 1_000_000, guaranteedAmount: 1_000_000 }] } }
+        : contract),
+    })
+    const proposal = {
+      id: 'store-gm-planning-trade', ecosystemId: world.competitions[season.competitionId]!.ecosystemId, seasonId: season.id,
+      participantTeamIds: teams.map((team) => team.id),
+      movements: [
+        { asset: { kind: 'player' as const, playerId: playerA }, fromTeamId: teams[0]!.id, toTeamId: teams[1]!.id },
+        { asset: { kind: 'player' as const, playerId: playerB }, fromTeamId: teams[1]!.id, toTeamId: teams[0]!.id },
+      ],
+    }
+    useGameStore.setState({ world })
+
+    useGameStore.getState().executeTrade(proposal)
+
+    const result = useGameStore.getState().world!
+    expect(result.teams[teams[0]!.id]!.rosterPlayerIds).toContain(playerB)
+    expect(result.teams[teams[1]!.id]!.rosterPlayerIds).toContain(playerA)
+    expect(result.clubStrategicStatesByTeamId[teams[0]!.id]!.lastReviewedOn).toBe(world.currentDate)
+    expect(result.clubStrategicStatesByTeamId[teams[1]!.id]!.lastReviewedOn).toBe(world.currentDate)
   })
 
   it('opens the canonical live session for the pending game without changing GameWorld', () => {

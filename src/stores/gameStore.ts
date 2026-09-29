@@ -35,6 +35,7 @@ import { executeEntityActionResult, type EntityActionExecution } from '@/app/ent
 import type { CommandResult } from '@/app/entityActions/EntityCommand'
 import { selectDraftProspect } from '@/app/draft'
 import { executeTrade } from '@/engine/trade'
+import { reviewMaterialRosterChanges } from '@/app/gmPlanning'
 import type { TradeProposal } from '@/domain/trade'
 import type { ContinueResult, SimulateUntilResult, WorldDayAdvanceResult } from '@/app/game'
 import { addRecruitingBoardEntry, makeRecruitingOffer, performRecruitingAction, removeRecruitingBoardEntry } from '@/engine/recruiting'
@@ -266,7 +267,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   saveDesignerPlaybook: (playbook) => set({ world: saveDesignerPlaybook(requireWorld(get().world), playbook) }),
   deleteDesignerPlaybook: (playbookId) => set({ world: deleteDesignerPlaybook(requireWorld(get().world), playbookId) }),
   selectDraftProspect: (draftId, playerId) => set({ world: selectDraftProspect(requireWorld(get().world), draftId, playerId) }),
-  executeTrade: (proposal) => set({ world: executeTrade(requireWorld(get().world), proposal).world }),
+  executeTrade: (proposal) => { const world = requireWorld(get().world); const result = executeTrade(world, proposal); set({ world: reviewMaterialRosterChanges(world, result.world) }) },
   addRecruitingTarget: (cycleId, recruitId, priority) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined && world.recruitingCyclesById[cycleId] !== undefined) set({ world: addRecruitingBoardEntry(world, { programTeamId: team.id, recruitId, priority }) }) },
   removeRecruitingTarget: (recruitId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: removeRecruitingBoardEntry(world, team.id, recruitId) }) },
   performRecruitingAction: (cycleId, recruitId, kind) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = performRecruitingAction(world, cycleId, recruitId, team.id, kind); if (result.ok) { set({ world: result.value }); return null } return result.reason },

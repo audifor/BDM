@@ -18,7 +18,7 @@ import type { CoachRpgPreset } from '@/domain/coachRpg'
 import { createCoachJobOpeningForTeam } from '@/app/coachCareer'
 import { initializeBoardState } from '@/engine/board'
 import { initializeRecruitingCycle } from '@/engine/season'
-import { reviewAiClubStrategies } from '@/engine/clubStrategy/ClubStrategyEngine'
+import { initializeAiClubManagementPlanning } from '@/app/gmPlanning'
 
 export const PROTOTYPE_GAME_CONFIGURATION = {
   seed: 12_345,
@@ -35,7 +35,7 @@ export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPrese
   const userTeam = Object.values(world.teams).find((team) => team.coachId === world.userCoachId)
   if (userTeam !== undefined) world = initializeBoardState(world, userTeam.id)
   for (const season of Object.values(world.seasons)) world = initializeRecruitingCycle(world, season.id)
-  return reviewAiClubStrategies(world, 'PRESEASON')
+  return initializeAiClubManagementPlanning(world)
 }
 
 function createSingleNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset }, gender: 'male' | 'female'): GameWorld {

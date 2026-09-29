@@ -8,6 +8,7 @@ import { createMatchSeed, simulateAndApplyGame, type MatchSeedFactory } from './
 import { evaluateSimulationBreakpoints, type SimulationBreakpointResult } from './SimulationBreakpoints'
 import { repairWorldAtLifecycleBoundary } from '@/app/repair'
 import type { WorldRepairReport } from '@/domain/repair'
+import { reviewMajorInjuryChanges, reviewMaterialRosterChanges } from '@/app/gmPlanning'
 
 export class SimulationAdvanceBlockedError extends Error {
   constructor(readonly decision: SimulationBreakpointResult) {
@@ -105,6 +106,7 @@ export function advanceGameDayWithResult(world: GameWorld, createSeed: MatchSeed
     const matchStart = performance.now()
     const lineupReports: WorldRepairReport[] = []
     current = simulateRemainingGamesToday(current, createSeed, allowedRequiredReasons, lineupReports)
+    current = reviewMajorInjuryChanges(world, current)
     repairReports.push(...lineupReports)
     phases.push({ phaseId: 'MATCH_RESOLUTION', order: phases.length + 1, date: world.currentDate, ran: matches.length > 0, worldChanged: current !== world, diagnostics: [], summary: matches.length === 0 ? 'No scheduled games required resolution.' : `Resolved ${matches.length} scheduled game(s) through the existing match application boundary.`, elapsedMs: Math.round((performance.now() - matchStart) * 100) / 100 })
     if (lineupReports.length > 0) phases.push({ phaseId: 'MATCH_LINEUP_REPAIR', order: phases.length + 1, date: world.currentDate, ran: true, worldChanged: false, diagnostics: repairDiagnostics(lineupReports), summary: `Resolved ${lineupReports.length} transient match lineup report(s).` })
@@ -133,6 +135,9 @@ export function advanceGameDayWithResult(world: GameWorld, createSeed: MatchSeed
       phases.push({ phaseId: activePhaseId, order: phases.length + 1, date: current.currentDate, ran: true, worldChanged: postTransitionRepair.world !== beforeCalendar, diagnostics: repairDiagnostics(postTransitionRepair.reports), summary: postTransitionRepair.reports.length === 0 ? 'Roster transitions left no minimum-roster or contract-integrity repair pending.' : `Evaluated ${postTransitionRepair.reports.length} repair report(s) after roster transitions.`, elapsedMs: Math.round((performance.now() - repairStart) * 100) / 100 })
       const unresolvedIntegrity = postTransitionRepair.reports.find((report) => report.classification === 'UNRECOVERABLE' && report.sourceDomain === 'MARKET_ROSTER_CONTRACT')
       if (unresolvedIntegrity !== undefined) throw Object.assign(new Error(unresolvedIntegrity.diagnostics[0]?.message ?? 'Roster/contract integrity could not be reconciled.'), { phaseId: activePhaseId, kind: 'INVARIANT_VIOLATION' as const })
+      const beforePlanning = current
+      current = reviewMaterialRosterChanges(beforeCalendar, current)
+      phases.push({ phaseId: 'GM_PLANNING_CHECKPOINT', order: phases.length + 1, date: current.currentDate, ran: true, worldChanged: current !== beforePlanning, diagnostics: [], summary: `Rechecked club planning after completed roster changes for ${changedTeamIds.length} affected club(s).` })
     }
 
     activePhaseId = 'SCHEDULE_INTEGRITY'

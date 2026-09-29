@@ -4,6 +4,7 @@ import { acceptMedicalRecommendation } from '@/engine/injury/MedicalAdvisory'
 import { acceptRecruitingRecommendation } from '@/engine/recruiting/RecruitingAdvisory'
 import { acceptTradeRecommendation } from '@/engine/roster/BasketballOperationsAdvisory'
 import { emitAdvisoryAcceptedEvent, emitAdvisoryRejectedEvent } from '@/app/staffHumanState/StaffHumanAdvisoryEvents'
+import { reviewMaterialRosterChanges } from '@/app/gmPlanning'
 
 /**
  * `ResponsibilityKind`s that have a canonical, existing acceptance seam an advisory
@@ -36,7 +37,7 @@ export function acceptStaffRecommendation(world: GameWorld, outcomeId: Delegatio
   if (MEDICAL_ACCEPTANCE_KINDS.includes(outcome.kind as typeof MEDICAL_ACCEPTANCE_KINDS[number])) {
     const result = acceptMedicalRecommendation(world, outcomeId)
     if (!result.ok) return { ok: false, reason: 'underlyingRejected' }
-    return { ok: true, world: emitAccepted(markAccepted(result.world, outcomeId), outcome) }
+    return { ok: true, world: reviewMaterialRosterChanges(world, emitAccepted(markAccepted(result.world, outcomeId), outcome)) }
   }
   if (RECRUITING_ACCEPTANCE_KINDS.includes(outcome.kind as typeof RECRUITING_ACCEPTANCE_KINDS[number])) {
     const result = acceptRecruitingRecommendation(world, outcomeId)

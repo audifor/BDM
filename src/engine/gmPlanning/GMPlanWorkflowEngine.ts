@@ -13,6 +13,8 @@ export interface GMWorkflowDecision {
   readonly needId: string
   readonly planId: string
   readonly responseFamily: GMResponseOptionKind
+  readonly selectedOn: GMPlanState['selectedOn']
+  readonly selectionReason: GMPlanState['selectionReason']
   readonly currentValidity: 'CURRENT' | 'STALE'
   readonly currentPlanningEligibility: 'SELECTABLE' | 'NOT_SELECTABLE' | 'NOT_AVAILABLE'
   readonly route: GMWorkflowRoute
@@ -59,6 +61,7 @@ export function assessGMPlanWorkflow(context: GMDecisionContext, plan: GMPlanSta
     const blocked = currentOption?.planningEligibility === 'NOT_SELECTABLE' || validity?.selectionReason === 'OPTION_BECAME_BLOCKED'
     return Object.freeze({
       teamId: context.teamId, needId: plan.needId, planId: plan.id, responseFamily: plan.selectedOptionKind,
+      selectedOn: plan.selectedOn, selectionReason: plan.selectionReason,
       currentValidity: 'STALE', currentPlanningEligibility: currentOption?.planningEligibility ?? 'NOT_AVAILABLE', route: 'NONE', status: blocked ? 'BLOCKED' : 'REVIEW_REQUIRED',
       ...(currentOption === undefined ? {} : { currentExecutionReadiness: currentOption.executionReadiness, authorityStatus: currentOption.governancePolicy.status, optionPriority: currentOption.priority }),
       responsibleSystem: 'GM_PLANNING', reviewedOn: context.asOfDate, ...(need === undefined ? {} : { needSeverity: need.severity, needUrgency: need.urgency }),
@@ -69,6 +72,7 @@ export function assessGMPlanWorkflow(context: GMDecisionContext, plan: GMPlanSta
 
   if (plan.selectedOptionKind === 'WAIT_AND_MONITOR') return Object.freeze({
     teamId: context.teamId, needId: plan.needId, planId: plan.id, responseFamily: plan.selectedOptionKind, currentValidity: 'CURRENT', currentPlanningEligibility: 'SELECTABLE',
+    selectedOn: plan.selectedOn, selectionReason: plan.selectionReason,
     route: 'NO_ACTION', status: 'NO_ACTION', currentExecutionReadiness: currentOption.executionReadiness, authorityStatus: currentOption.governancePolicy.status,
     responsibleSystem: 'GM_PLANNING', reviewedOn: context.asOfDate, optionPriority: currentOption.priority,
     ...(need === undefined ? {} : { needSeverity: need.severity, needUrgency: need.urgency }), coordinationFlags: Object.freeze(coordinationFlags), reasons: Object.freeze(['CURRENT_PLAN_VALID', 'WAIT_IS_A_DELIBERATE_PLAN']), blockers: Object.freeze([]),
@@ -76,6 +80,7 @@ export function assessGMPlanWorkflow(context: GMDecisionContext, plan: GMPlanSta
 
   if (currentOption.executionReadiness === 'BLOCKED') return Object.freeze({
     teamId: context.teamId, needId: plan.needId, planId: plan.id, responseFamily: plan.selectedOptionKind, currentValidity: 'STALE', currentPlanningEligibility: currentOption.planningEligibility, route: 'NONE', status: 'BLOCKED',
+    selectedOn: plan.selectedOn, selectionReason: plan.selectionReason,
     currentExecutionReadiness: currentOption.executionReadiness, authorityStatus: currentOption.governancePolicy.status, responsibleSystem: 'GM_PLANNING', reviewedOn: context.asOfDate,
     optionPriority: currentOption.priority, ...(need === undefined ? {} : { needSeverity: need.severity, needUrgency: need.urgency }), coordinationFlags: Object.freeze(coordinationFlags),
     reasons: Object.freeze(['CURRENT_AUTHORITY_BLOCKS_OPTION']), blockers: Object.freeze(['PLANNING_EXECUTION_BOUNDARY_BLOCKED']),
@@ -83,6 +88,7 @@ export function assessGMPlanWorkflow(context: GMDecisionContext, plan: GMPlanSta
 
   if (currentOption.executionReadiness === 'REQUIRES_APPROVAL') return Object.freeze({
     teamId: context.teamId, needId: plan.needId, planId: plan.id, responseFamily: plan.selectedOptionKind, currentValidity: 'CURRENT', currentPlanningEligibility: 'SELECTABLE', route: 'APPROVAL_PATH_UNRESOLVED', status: 'WAITING_APPROVAL',
+    selectedOn: plan.selectedOn, selectionReason: plan.selectionReason,
     currentExecutionReadiness: currentOption.executionReadiness, authorityStatus: currentOption.governancePolicy.status, responsibleSystem: 'UNRESOLVED', reviewedOn: context.asOfDate,
     optionPriority: currentOption.priority, ...(need === undefined ? {} : { needSeverity: need.severity, needUrgency: need.urgency }), coordinationFlags: Object.freeze(coordinationFlags),
     reasons: Object.freeze(['CURRENT_AUTHORITY_REQUIRES_APPROVAL']), blockers: Object.freeze(['NO_CONCRETE_PROPOSAL_OR_APPROVAL_ACTORS']),
@@ -91,6 +97,7 @@ export function assessGMPlanWorkflow(context: GMDecisionContext, plan: GMPlanSta
   const route = ANALYTIC_ROUTES[plan.selectedOptionKind]
   if (route === undefined) return Object.freeze({
     teamId: context.teamId, needId: plan.needId, planId: plan.id, responseFamily: plan.selectedOptionKind, currentValidity: 'CURRENT', currentPlanningEligibility: 'SELECTABLE', route: 'NO_SUPPORTED_WORKFLOW', status: 'UNSUPPORTED',
+    selectedOn: plan.selectedOn, selectionReason: plan.selectionReason,
     currentExecutionReadiness: currentOption.executionReadiness, authorityStatus: currentOption.governancePolicy.status, responsibleSystem: 'GM_PLANNING', reviewedOn: context.asOfDate,
     optionPriority: currentOption.priority, ...(need === undefined ? {} : { needSeverity: need.severity, needUrgency: need.urgency }), coordinationFlags: Object.freeze(coordinationFlags),
     reasons: Object.freeze(['NO_SAFE_BROAD_PLAN_WORKFLOW_EXISTS']), blockers: Object.freeze([]),
@@ -101,6 +108,7 @@ export function assessGMPlanWorkflow(context: GMDecisionContext, plan: GMPlanSta
   const reasons = ['CURRENT_PLAN_VALID', route.reason, ...(financeConstraint ? ['BS9C_FINANCIAL_CONTEXT_CONSTRAINED'] : [])]
   return Object.freeze({
     teamId: context.teamId, needId: plan.needId, planId: plan.id, responseFamily: plan.selectedOptionKind, currentValidity: 'CURRENT', currentPlanningEligibility: 'SELECTABLE', route: route.route,
+    selectedOn: plan.selectedOn, selectionReason: plan.selectionReason,
     status: plan.selectedOptionKind === 'FINANCIAL_CONTAINMENT' && currentOption.executionReadiness === 'AUTHORIZED' ? 'READY_TO_ROUTE' : route.status,
     currentExecutionReadiness: currentOption.executionReadiness, authorityStatus: currentOption.governancePolicy.status, responsibleSystem: route.responsibleSystem,
     reviewedOn: context.asOfDate, optionPriority: currentOption.priority, ...(need === undefined ? {} : { needSeverity: need.severity, needUrgency: need.urgency }),

@@ -19,7 +19,7 @@ import { ensureNcaaNil } from '@/engine/nil'
 import { ensureNcaaBoosters } from '@/engine/boosters'
 import { ensureNcaaEnforcement } from '@/engine/enforcement'
 import { rolloverBoardState } from '@/engine/board'
-import { reviewAiClubStrategies } from '@/engine/clubStrategy/ClubStrategyEngine'
+import { reviewClubManagementPlanning } from '@/app/gmPlanning'
 import { bindRecruitingCycleTargetToSeason, initializeRecruitingCycle } from '@/engine/season'
 import type { CompetitionId, SeasonId } from '@/domain/ids'
 
@@ -165,8 +165,13 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
   const beforeBoards = next
   next = Object.keys(next.boardStatesByTeamId).reduce((current, teamId) => rolloverBoardState(current, teamId as import('@/domain/ids').TeamId, nextPrimary.id), next)
   if (next !== beforeBoards) annualHooksExecuted.push('boardStateRollover')
-  next = reviewAiClubStrategies(next, 'PRESEASON')
-  annualHooksExecuted.push('clubStrategicReview')
+  const preseasonTeamIds = [...new Set([...(nextPrimary.participantTeamIds ?? next.competitions[nextPrimary.competitionId]!.participantTeamIds), ...nextLinkedSeasons.flatMap((season) => season.participantTeamIds ?? [])])].sort((left, right) => left.localeCompare(right))
+  for (const teamId of preseasonTeamIds) {
+    const team = next.teams[teamId]
+    if (team?.coachId === undefined || team.coachId === next.userCoachId) continue
+    next = reviewClubManagementPlanning(next, teamId, 'PRESEASON').world
+  }
+  annualHooksExecuted.push('clubStrategicReview', 'gmPlanWorkflowReview')
   const hasTierResolution = Object.values(world.promotionRelegationResolutionsById).some((resolution) => resolution.upperSeasonId === primary.id || resolution.lowerSeasonId === primary.id)
   const result: CompetitionSeasonTransitionResult = {
     sourceSeasonId: primary.id,
