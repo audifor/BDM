@@ -31,8 +31,9 @@ describe('MG6B player-specific kinematics', () => {
     const faster = profileFor('kinematics-faster', { SPEED: 100 })
     const initial = spatialFor([slower, faster])
     const target = { x: 24, y: 7 }
-    const slowNext = advancePlayerTowardTarget(initial, slower.playerId, target, 4, slower.kinematics)
-    const fastNext = advancePlayerTowardTarget(initial, faster.playerId, target, 4, faster.kinematics)
+    // 2.5 s: long enough for the top speeds to matter, short enough that neither player has reached the 14 m target.
+    const slowNext = advancePlayerTowardTarget(initial, slower.playerId, target, 2.5, slower.kinematics)
+    const fastNext = advancePlayerTowardTarget(initial, faster.playerId, target, 2.5, faster.kinematics)
     const slowPosition = slowNext.players.find((player) => player.playerId === slower.playerId)!.position
     const fastPosition = fastNext.players.find((player) => player.playerId === faster.playerId)!.position
 

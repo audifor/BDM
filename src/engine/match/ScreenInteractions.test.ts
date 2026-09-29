@@ -127,12 +127,20 @@ describe('on-ball screen spatial foundation', () => {
     const { session, state } = createFixture()
     const { handlerId, screenerId, defenderId, basket, offenseKey } = participants(state)
     const heldSpatial = controlBallByPlayer(state.spatial, handlerId)
-    const defenderTarget = assignBaseSpatialTargets(spacingInput({ ...state, spatial: heldSpatial }, handlerId)).defensive.find((target) => target.playerId === defenderId)!.position
-    const defenderPosition = heldSpatial.players.find((player) => player.playerId === defenderId)!.position
+    // The default coverage is a switch: the engine routes the SCREENER's defender (he takes the handler) toward the
+    // coverage target, so that is the route the screen has to cross. Base targets are per assigned man.
+    const defenseKey = offenseKey === 'home' ? 'away' : 'home'
+    const assignments = calculateDefensiveAssignments(state.activeLineups[offenseKey], state.activeLineups[defenseKey], [...state.playerProfiles.home, ...state.playerProfiles.away])
+    const routeDefenderId = assignments.find((matchup) => matchup.offensivePlayerId === screenerId)!.defensivePlayerId
+    const preScreen = { ...createScreenIntent({ screenerId, ballHandlerId: handlerId, defenderId, spatial: heldSpatial, attackingBasket: basket }), phase: 'set' as const, stepsRemaining: 1 }
+    const coverage = coverageForCurrentScreen({ plan: state.coachingState[defenseKey].currentTacticalPlan, screen: preScreen, offensiveLineup: state.activeLineups[offenseKey], defensiveLineup: state.activeLineups[defenseKey], assignments, spatial: heldSpatial, attackingBasket: basket })
+    const defenderTarget = coverage?.targetOverrides.find((target) => target.playerId === routeDefenderId)?.position
+      ?? assignBaseSpatialTargets(spacingInput({ ...state, spatial: heldSpatial }, handlerId)).defensive.find((target) => target.playerId === routeDefenderId)!.position
+    const defenderPosition = heldSpatial.players.find((player) => player.playerId === routeDefenderId)!.position
     const routeMidpoint = { x: (defenderPosition.x + defenderTarget.x) / 2, y: (defenderPosition.y + defenderTarget.y) / 2 }
     const routeSpatial = placePlayer(heldSpatial, screenerId, routeMidpoint)
     const screen = { ...createScreenIntent({ screenerId, ballHandlerId: handlerId, defenderId, spatial: routeSpatial, attackingBasket: basket }), phase: 'set' as const, stepsRemaining: 1, target: routeMidpoint }
-    expect(screenIntersectsDefenderRoute({ screen, spatial: routeSpatial, defenderTarget })).toBe(true)
+    expect(screenIntersectsDefenderRoute({ screen: { ...screen, defenderId: routeDefenderId }, spatial: routeSpatial, defenderTarget })).toBe(true)
     const playerProfiles = {
       ...state.playerProfiles,
       [offenseKey]: state.playerProfiles[offenseKey].map((profile) => profile.playerId === screenerId

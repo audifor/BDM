@@ -27,6 +27,7 @@ import type {
   MatchPresentationEvent,
   MatchPresentationEventKind,
   MatchPresentationState,
+  PresentationSegment,
   PresentationActionIntent,
   PresentationBall,
   PresentationBallState,
@@ -155,6 +156,8 @@ export function toMatchPresentationState(
   const presentationCourt: PresentationCourt = {
     lengthMeters: court.lengthMeters,
     widthMeters: court.widthMeters,
+    threePointArcRadiusMeters: court.threePointLine.arcRadiusMeters,
+    threePointCornerOffsetMeters: court.threePointLine.cornerOffsetMeters,
     baskets: {
       left: toPercent(court.baskets.left, court.lengthMeters, court.widthMeters),
       right: toPercent(court.baskets.right, court.lengthMeters, court.widthMeters),
@@ -284,6 +287,7 @@ export function toMatchPresentationState(
       offensiveTeamId: possessionView.offensiveTeamId,
       defensiveTeamId: possessionView.defensiveTeamId,
       ballHandlerId: possessionView.ballHandlerId,
+      attackingBasket: toPercent(possessionView.attackingBasket, court.lengthMeters, court.widthMeters),
     },
     isComplete: state.isComplete,
     currentActionKind: describeOffensiveAction(state.offensiveAction),
@@ -340,11 +344,18 @@ export function toMatchPresentationEvent(event: MatchEvent): MatchPresentationEv
 
   switch (event.type) {
     case 'shotMade':
-      return { ...base, teamId: event.teamId, playerId: event.playerId, secondaryPlayerId: event.assistPlayerId, points: event.points }
+      return { ...base, teamId: event.teamId, playerId: event.playerId, secondaryPlayerId: event.assistPlayerId, points: event.points, shotZone: event.shotZone }
     case 'shotMissed':
-      return { ...base, teamId: event.teamId, playerId: event.playerId, secondaryPlayerId: event.blockedByPlayerId, points: undefined }
+      return { ...base, teamId: event.teamId, playerId: event.playerId, secondaryPlayerId: event.blockedByPlayerId, points: undefined, shotZone: event.shotZone, blocked: event.blockedByPlayerId !== undefined }
     case 'turnover':
-      return { ...base, teamId: event.teamId, playerId: event.playerId, secondaryPlayerId: event.stealPlayerId, points: undefined }
+      return {
+        ...base,
+        teamId: event.teamId,
+        playerId: event.playerId,
+        secondaryPlayerId: event.stealPlayerId,
+        points: undefined,
+        ...(event.passTargetPlayerId === undefined ? {} : { passTargetPlayerId: event.passTargetPlayerId }),
+      }
     case 'passCompleted':
       return { ...base, teamId: event.teamId, playerId: event.passerPlayerId, secondaryPlayerId: event.receiverPlayerId, points: undefined }
     case 'foul':
@@ -353,7 +364,7 @@ export function toMatchPresentationEvent(event: MatchEvent): MatchPresentationEv
     case 'freeThrowMissed':
       return { ...base, teamId: event.teamId, playerId: event.playerId, secondaryPlayerId: undefined, points: undefined }
     case 'rebound':
-      return { ...base, teamId: event.teamId, playerId: event.playerId, secondaryPlayerId: undefined, points: undefined }
+      return { ...base, teamId: event.teamId, playerId: event.playerId, secondaryPlayerId: undefined, points: undefined, reboundType: event.reboundType }
     case 'substitution':
       return { ...base, teamId: event.teamId, playerId: event.playerInId, secondaryPlayerId: event.playerOutId, points: undefined }
     case 'periodStart':
@@ -365,7 +376,94 @@ export function toMatchPresentationEvent(event: MatchEvent): MatchPresentationEv
   }
 }
 
-/** Converts every new engine event from one step into presentation events, preserving order. */
+/**
+ * Converts every new engine event from one step into presentation events, preserving order.
+ * Event types with no visual meaning (e.g. tacticalChange) are skipped, never guessed.
+ */
 export function toMatchPresentationEvents(events: readonly MatchEvent[]): readonly MatchPresentationEvent[] {
-  return events.map(toMatchPresentationEvent)
+  return events.filter((event) => EVENT_KIND_MAP[event.type] !== undefined).map(toMatchPresentationEvent)
+}
+
+/**
+ * BT1 — one engine step as a presentation SEGMENT.
+ *
+ * MatchEngine advances in coarse action steps: every step moves all ten players for `simSeconds`
+ * of game clock and THEN resolves the outcome (pass / shot / rebound / turnover) at the resulting
+ * positions. A segment keeps exactly that shape (from-state, to-state, the ordered events that
+ * happened at the end of the movement, the game seconds the movement took) so the renderer can
+ * play "move, then resolve" in the same order the engine decided it, instead of blending two
+ * snapshots over an arbitrary wall-clock window.
+ */
+export function toMatchPresentationSegment(input: {
+  readonly index: number
+  readonly before: MatchSessionState
+  readonly after: MatchSessionState
+  readonly labels: PresentationPlayerLabels
+  /** Optional debug-only payload (Basketball Truth frame) carried alongside, never interpreted here. */
+  readonly truth?: PresentationSegment['truth']
+}): PresentationSegment {
+  const { before, after, labels } = input
+  const newEvents = after.events.slice(before.events.length)
+  const events = toMatchPresentationEvents(newEvents)
+  const from = toMatchPresentationState(before, labels)
+  const to = toMatchPresentationState(after, labels)
+  const beforeView = getSpatialPossessionView({
+    homeTeamId: before.homeTeamId,
+    awayTeamId: before.awayTeamId,
+    attackingTeamId: before.attackingTeamId,
+    period: before.period,
+    spatial: before.spatial,
+  })
+  const court = before.spatial.court
+  const attackedBasket = toPercent(beforeView.attackingBasket, court.lengthMeters, court.widthMeters)
+  const lastBefore = before.events.length > 0 ? before.events[before.events.length - 1] : undefined
+  const substitutions = events
+    .filter((event) => event.kind === 'substitution' && event.playerId !== undefined && event.secondaryPlayerId !== undefined)
+    .map((event) => ({ playerInId: event.playerId!, playerOutId: event.secondaryPlayerId! }))
+  const samePeriod = before.period === after.period
+  const simSeconds = samePeriod ? Math.max(0, before.clockSecondsRemaining - after.clockSecondsRemaining) : 0
+  return {
+    index: input.index,
+    from,
+    to,
+    simSeconds,
+    events,
+    actorPlayerId: actorFromEvents(events),
+    attackedBasket,
+    previousEnding: previousEndingFor(lastBefore),
+    substitutions,
+    ...(input.truth === undefined ? {} : { truth: input.truth }),
+  }
+}
+
+function actorFromEvents(events: readonly MatchPresentationEvent[]): PlayerId | undefined {
+  for (const event of events) {
+    switch (event.kind) {
+      case 'passCompleted':
+      case 'shotMade':
+      case 'shotMissed':
+      case 'turnover':
+      case 'freeThrowMade':
+      case 'freeThrowMissed':
+        return event.playerId
+      default:
+    }
+  }
+  return undefined
+}
+
+function previousEndingFor(event: MatchEvent | undefined): PresentationSegment['previousEnding'] {
+  switch (event?.type) {
+    case 'shotMade':
+      return 'madeShot'
+    case 'freeThrowMade':
+    case 'freeThrowMissed':
+      return 'freeThrow'
+    case 'turnover':
+      return 'turnover'
+    case 'periodStart':
+      return 'periodStart'
+    default:
+      return 'none'
+  }
 }

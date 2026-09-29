@@ -1,0 +1,47 @@
+[
+ {
+  "wallMs": 1497,
+  "segment": 7,
+  "tick": 8,
+  "kind": "passRelease",
+  "label": "PASS RELEASE",
+  "eventSequence": 7
+ },
+ {
+  "wallMs": 1704,
+  "segment": 7,
+  "tick": 8,
+  "kind": "catch",
+  "label": "CATCH"
+ },
+ {
+  "wallMs": 2587,
+  "segment": 8,
+  "tick": 10,
+  "kind": "shotRelease",
+  "label": "SHOT RELEASE"
+ },
+ {
+  "wallMs": 2801,
+  "segment": 8,
+  "tick": 10,
+  "kind": "rim",
+  "label": "AT THE RIM"
+ },
+ {
+  "wallMs": 2801,
+  "segment": 8,
+  "tick": 10,
+  "kind": "shotMissed",
+  "label": "SHOT MISSED",
+  "eventSequence": 8
+ },
+ {
+  "wallMs": 3018,
+  "segment": 8,
+  "tick": 10,
+  "kind": "rebound",
+  "label": "DEFENSIVE REBOUND",
+  "eventSequence": 9
+ }
+]

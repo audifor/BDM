@@ -8,7 +8,6 @@ import { generateWorld } from '@/engine/world'
 import { createMatchPlayerProfile, createMatchSession, stepMatchSession, type MatchLineups } from '@/engine/match'
 
 import { toMatchPresentationEvent, toMatchPresentationState, type PresentationPlayerLabels } from './MatchPresentationBridge'
-import { interpolatePresentationState } from './interpolation'
 
 describe('MatchPresentationBridge', () => {
   it('derives a presentation state with exactly the 10 active players and their real MatchEngine positions', () => {
@@ -49,24 +48,6 @@ describe('MatchPresentationBridge', () => {
       }
     }
     expect(collected.size).toBeGreaterThan(0)
-  })
-
-  it('interpolation never changes authoritative facts (score, clock, possession, completion)', () => {
-    const { world, game } = createScheduledGameWorld()
-    const options = createOptions(world, game.id, 55)
-    const labels = buildLabels([...options.lineups.home, ...options.lineups.away])
-    let session = createMatchSession(options)
-    const from = toMatchPresentationState(session.state, labels)
-    session = stepMatchSession(session).session
-    const to = toMatchPresentationState(session.state, labels)
-
-    for (const t of [0.25, 0.5, 0.75]) {
-      const blended = interpolatePresentationState(from, to, t)
-      expect(blended.score).toEqual(to.score)
-      expect(blended.clock).toEqual(to.clock)
-      expect(blended.possession).toEqual(to.possession)
-      expect(blended.isComplete).toBe(to.isComplete)
-    }
   })
 
   it('assigns exactly one defender per offensive player using the engine own calculateDefensiveAssignments (read-only, no new state)', () => {
@@ -111,19 +92,6 @@ describe('MatchPresentationBridge', () => {
         }
       }
     }
-  })
-
-  it('interpolation returns the exact endpoint snapshots at t=0 and t=1', () => {
-    const { world, game } = createScheduledGameWorld()
-    const options = createOptions(world, game.id, 999)
-    const labels = buildLabels([...options.lineups.home, ...options.lineups.away])
-    let session = createMatchSession(options)
-    const from = toMatchPresentationState(session.state, labels)
-    session = stepMatchSession(session).session
-    const to = toMatchPresentationState(session.state, labels)
-
-    expect(interpolatePresentationState(from, to, 0)).toEqual(from)
-    expect(interpolatePresentationState(from, to, 1)).toEqual(to)
   })
 })
 

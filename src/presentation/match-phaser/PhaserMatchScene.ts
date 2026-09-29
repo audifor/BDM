@@ -1,68 +1,53 @@
 /**
- * PhaserMatchScene — pure presentation. Renders whatever MatchPresentationState it is given.
+ * PhaserMatchScene — pure presentation (BT1). Draws whatever PresentationFrame it is handed.
  *
- * This scene never imports from `@/engine/match`. It has no knowledge of possessions, shot
- * probabilities, pass completion, rebounds, or rules — it only draws circles, lines, and text
- * from the contract types in visualTypes.ts. All gameplay facts (score, clock, who has the ball,
- * whether a shot went in) arrive already decided from MatchPresentationState /
- * MatchPresentationEvent; the scene cannot compute or override any of them.
+ * It never imports `@/engine/match` and has no knowledge of possessions, shot probabilities or
+ * rules: circles, lines and text over a METRIC court (uniform scale, real FIBA/NBA markings).
+ * Placeholders only — no sprites, art, crowd or sound.
  *
- * Placeholders only: primitive shapes (circles for players/ball, lines for court markings),
- * player-number labels, simple color coding for team/ball-handler/event flashes. No sprites, no
- * art, no lighting, no crowd, no sound — explicitly out of scope for this milestone.
- *
- * V1 additions over the POC: natural locomotion via LocomotionSystem (MP1B), a richer ball
- * presentation with visual height/state (MP1C), off-ball/on-ball/defense intent-driven visuals
- * (MP1D/E/F), action sequencing beats (MP1G), visual-only spacing separation (MP1H), a
- * follow/broadcast/full-court camera (MP1I), player ID + debug overlays (MP1J/K), and a basic HUD
- * (MP1N). None of these additions read MatchEngine directly or alter any authoritative fact.
+ * Two ways of looking at the same frame:
+ *  - normal: team-coloured bodies, the ball, the ball-handler ring.
+ *  - "Basketball Truth" (debug.basketballTruth): overlays CANONICAL truth (the engine position the
+ *    current segment is heading to) as a hollow square, joins it to the RENDERED body with a line,
+ *    and draws each player's movement target, facing vector and defensive assignment, plus the
+ *    canonical vs rendered ball. If Phaser deformed a correct simulation you can SEE it here; if the
+ *    engine itself put someone in a silly place the square is already there.
  */
 
 import Phaser from 'phaser'
-import type { MatchPresentationEvent, MatchPresentationState, PresentationPlayer } from './visualTypes'
-import { LocomotionSystem, type LocomotionSample, type MovementProfile } from './locomotion'
+import type { PlayerId } from '@/domain/ids'
+import type { TruthPlayerRow } from './audit/basketballTruth'
+import type { PresentationFrame } from './PresentationDirector'
 import { MatchCamera, type CameraMode } from './camera'
-import { ActionSequencer } from './sequencing'
-import { DEFAULT_PRESENTATION_CONFIG, type PresentationConfig } from './presentationConfig'
+import { toMeters } from './segmentPlan'
+import type { MatchPresentationState, PresentationCourt, PresentationPlayer } from './visualTypes'
+
+export const PIXELS_PER_METER = 40
 
 const HOME_COLOR = 0x3b82f6
 const AWAY_COLOR = 0xef4444
 const BALL_COLOR = 0xf97316
-const COURT_LINE_COLOR = 0xe2e8f0
-const COURT_FILL_COLOR = 0x1f2937
-const MADE_FLASH_COLOR = 0x22c55e
-const MISSED_FLASH_COLOR = 0x94a3b8
-const TURNOVER_FLASH_COLOR = 0xf59e0b
-const DEFENDER_RING_COLOR = 0x94a3b8
-const HELP_RING_COLOR = 0xfacc15
-const SCREEN_LINK_COLOR = 0xa78bfa
-const DEBUG_TEXT_COLOR = '#7dd3fc'
-const SELECTED_RING_COLOR = 0x38bdf8
+const FLOOR_COLOR = 0x1e2a38
+const PAINT_COLOR = 0x26374a
+const LINE_COLOR = 0xcbd5e1
+const RIM_COLOR = 0xfbbf24
+const HANDLER_RING = 0xfacc15
+const TRUTH_LINK = 0xfde047
+const TARGET_COLOR = 0xa78bfa
+const FACING_COLOR = 0x22d3ee
+const ASSIGN_COLOR = 0x94a3b8
 
-const PLAYER_RADIUS = 14
-const BALL_RADIUS = 6
-
-export interface PhaserMatchSceneConfig {
-  readonly marginPx: number
-  readonly presentation?: PresentationConfig
-}
-
-/**
- * Everything the scene needs to draw one frame. Supplied by MatchPresentationBridge output plus
- * a queue of presentation events (already fully resolved outcomes) to animate transiently.
- */
-export interface PhaserMatchFrame {
-  readonly state: MatchPresentationState
-  readonly recentEvents: readonly MatchPresentationEvent[]
-}
+const PLAYER_RADIUS_METERS = 0.45
+const BALL_RADIUS_PX = 6.5
+const LIFT_PX_PER_METER = 12
 
 export interface SceneDebugOptions {
-  enabled: boolean
-  showCanonicalPosition: boolean
-  showVelocityVectors: boolean
+  /** Master switch: canonical vs rendered markers, links, targets, facing, ball truth. */
+  basketballTruth: boolean
   showAssignments: boolean
   showTargets: boolean
-  showPassLines: boolean
+  showFacing: boolean
+  showPath: boolean
 }
 
 export interface SceneIdentificationOptions {
@@ -71,46 +56,45 @@ export interface SceneIdentificationOptions {
   showAction: boolean
 }
 
+export interface RenderedTruth {
+  readonly players: ReadonlyMap<PlayerId, { readonly x: number; readonly y: number }>
+  readonly ball: { readonly x: number; readonly y: number }
+  readonly ballHeightMeters: number
+}
+
 interface PlayerVisual {
-  readonly circle: Phaser.GameObjects.Arc
-  readonly jerseyLabel: Phaser.GameObjects.Text
-  readonly nameLabel: Phaser.GameObjects.Text
-  readonly actionLabel: Phaser.GameObjects.Text
-  readonly facingLine: Phaser.GameObjects.Line
-  readonly canonicalGhost: Phaser.GameObjects.Arc
+  readonly body: Phaser.GameObjects.Arc
+  readonly jersey: Phaser.GameObjects.Text
+  readonly name: Phaser.GameObjects.Text
+  readonly action: Phaser.GameObjects.Text
+  readonly nose: Phaser.GameObjects.Line
+}
+
+export type FrameProvider = (deltaMs: number) => PresentationFrame | undefined
+
+export interface PhaserMatchSceneConfig {
+  readonly marginPx?: number
 }
 
 export class PhaserMatchScene extends Phaser.Scene {
   private courtGraphics: Phaser.GameObjects.Graphics | undefined
-  private debugGraphics: Phaser.GameObjects.Graphics | undefined
-  private ballSprite: Phaser.GameObjects.Arc | undefined
+  private courtKey: string | undefined
+  private truthGraphics: Phaser.GameObjects.Graphics | undefined
+  private ball: Phaser.GameObjects.Arc | undefined
   private ballShadow: Phaser.GameObjects.Ellipse | undefined
-  private playerSprites = new Map<string, PlayerVisual>()
-  private clockText: Phaser.GameObjects.Text | undefined
-  private scoreText: Phaser.GameObjects.Text | undefined
-  private possessionText: Phaser.GameObjects.Text | undefined
-  private actionText: Phaser.GameObjects.Text | undefined
-  private ballStateText: Phaser.GameObjects.Text | undefined
-  private eventFlashText: Phaser.GameObjects.Text | undefined
-  private flashTimer: Phaser.Time.TimerEvent | undefined
-  private latestFrame: PhaserMatchFrame | undefined
-  private lastRenderedEventSequence = 0
-  private readonly config: PhaserMatchSceneConfig
-  private readonly presentationConfig: PresentationConfig
-
-  private readonly locomotion: LocomotionSystem
-  private readonly camera2: MatchCamera
-  private readonly sequencer = new ActionSequencer()
-  private lastTickTimeMs: number | undefined
-  private dribblePhaseByPlayerId = new Map<string, number>()
+  private readonly playerVisuals = new Map<string, PlayerVisual>()
+  private readonly cameraModel = new MatchCamera()
+  private frameProvider: FrameProvider | undefined
+  private lastFrame: PresentationFrame | undefined
+  private rendered: RenderedTruth | undefined
+  private frameListener: ((frame: PresentationFrame, rendered: RenderedTruth) => void) | undefined
 
   public readonly debug: SceneDebugOptions = {
-    enabled: false,
-    showCanonicalPosition: false,
-    showVelocityVectors: false,
+    basketballTruth: false,
     showAssignments: false,
     showTargets: false,
-    showPassLines: false,
+    showFacing: false,
+    showPath: false,
   }
 
   public readonly identification: SceneIdentificationOptions = {
@@ -119,359 +103,329 @@ export class PhaserMatchScene extends Phaser.Scene {
     showAction: false,
   }
 
-  public constructor(config: PhaserMatchSceneConfig = { marginPx: 48 }) {
+  public constructor(_config: PhaserMatchSceneConfig = {}) {
     super('PhaserMatchScene')
-    this.config = config
-    this.presentationConfig = config.presentation ?? DEFAULT_PRESENTATION_CONFIG
-    this.locomotion = new LocomotionSystem(this.presentationConfig)
-    this.camera2 = new MatchCamera(this.presentationConfig)
+  }
+
+  public setFrameProvider(provider: FrameProvider): void {
+    this.frameProvider = provider
+  }
+
+  public onFrame(listener: (frame: PresentationFrame, rendered: RenderedTruth) => void): void {
+    this.frameListener = listener
   }
 
   public setCameraMode(mode: CameraMode): void {
-    this.camera2.setMode(mode)
+    this.cameraModel.setMode(mode)
+    this.cameraModel.snap()
   }
 
   public getCameraMode(): CameraMode {
-    return this.camera2.getMode()
+    return this.cameraModel.getMode()
+  }
+
+  public getRenderedTruth(): RenderedTruth | undefined {
+    return this.rendered
+  }
+
+  public getLastFrame(): PresentationFrame | undefined {
+    return this.lastFrame
+  }
+
+  public snapCamera(): void {
+    this.cameraModel.snap()
   }
 
   public create(): void {
     this.cameras.main.setBackgroundColor('#0b0f14')
-    this.courtGraphics = this.add.graphics()
-    this.debugGraphics = this.add.graphics().setDepth(15)
-    this.ballShadow = this.add.ellipse(0, 0, BALL_RADIUS * 1.6, BALL_RADIUS * 0.7, 0x000000, 0.35).setDepth(9)
-    this.ballSprite = this.add.circle(0, 0, BALL_RADIUS, BALL_COLOR).setDepth(20)
-
-    this.clockText = this.add.text(12, 8, '', { fontFamily: 'monospace', fontSize: '18px', color: '#e2e8f0' }).setDepth(30)
-    this.scoreText = this.add.text(12, 30, '', { fontFamily: 'monospace', fontSize: '18px', color: '#e2e8f0' }).setDepth(30)
-    this.possessionText = this.add.text(12, 52, '', { fontFamily: 'monospace', fontSize: '13px', color: '#94a3b8' }).setDepth(30)
-    this.actionText = this.add.text(12, 70, '', { fontFamily: 'monospace', fontSize: '13px', color: '#94a3b8' }).setDepth(30)
-    this.ballStateText = this.add.text(12, 88, '', { fontFamily: 'monospace', fontSize: '12px', color: '#f97316' }).setDepth(30)
-    this.eventFlashText = this.add
-      .text(this.scale.width / 2, 24, '', { fontFamily: 'monospace', fontSize: '16px', color: '#22c55e', fontStyle: 'bold' })
-      .setOrigin(0.5, 0)
-      .setDepth(40)
+    this.courtGraphics = this.add.graphics().setDepth(0)
+    this.truthGraphics = this.add.graphics().setDepth(30)
+    this.ballShadow = this.add.ellipse(0, 0, BALL_RADIUS_PX * 2, BALL_RADIUS_PX * 0.9, 0x000000, 0.4).setDepth(19)
+    this.ball = this.add.circle(0, 0, BALL_RADIUS_PX, BALL_COLOR).setStrokeStyle(1.5, 0x431407, 1).setDepth(25)
   }
 
-  /** The ONLY input this scene accepts. Called once per animation frame by PhaserMatchRenderer. */
-  public renderFrame(frame: PhaserMatchFrame): void {
-    this.latestFrame = frame
-    if (!this.scene.isActive()) return
-    this.paint(frame)
-  }
-
+  /** Phaser calls this once per frame: the single place where a frame is pulled and painted. */
   public override update(_time: number, deltaMs: number): void {
-    if (this.latestFrame !== undefined) this.paint(this.latestFrame, deltaMs)
+    const frame = this.frameProvider?.(deltaMs)
+    if (frame === undefined) return
+    this.lastFrame = frame
+    this.paint(frame, deltaMs)
   }
 
-  private paint(frame: PhaserMatchFrame, deltaMs = 16.6): void {
-    const now = performance.now()
-    this.sequencer.ingest(frame.recentEvents, now)
-    const locomotionSamples = this.locomotion.step(frame.state, deltaMs / 1000)
-    const cameraState = this.camera2.step(frame.state, deltaMs / 1000)
-
-    this.applyCamera(cameraState)
-    this.paintCourtGeometry(frame.state)
-    this.paintPlayers(frame.state, locomotionSamples, deltaMs)
-    this.paintBall(frame.state)
-    this.paintHud(frame.state)
-    this.paintEvents(frame.recentEvents)
-    this.paintDebug(frame.state, locomotionSamples)
+  private paint(frame: PresentationFrame, deltaMs: number): void {
+    const state = frame.state
+    this.ensureCourt(state.court)
+    this.applyCamera(state, deltaMs / 1000)
+    const rendered = this.paintPlayers(state, frame)
+    const ballRendered = this.paintBall(state, frame)
+    this.rendered = { players: rendered, ball: ballRendered.position, ballHeightMeters: frame.ballHeightMeters }
+    this.paintTruth(frame, this.rendered)
+    this.frameListener?.(frame, this.rendered)
   }
 
-  private applyCamera(cameraState: { readonly centerXPercent: number; readonly centerYPercent: number; readonly zoom: number }): void {
-    const center = this.courtToScreen(cameraState.centerXPercent, cameraState.centerYPercent)
-    this.cameras.main.setZoom(cameraState.zoom)
-    this.cameras.main.centerOn(center.x, center.y)
+  private applyCamera(state: MatchPresentationState, deltaSeconds: number): void {
+    const court = state.court
+    const ball = toMeters(state.ball.position, court.lengthMeters, court.widthMeters)
+    const attackingRight = state.possession.attackingBasket.xPercent > 50
+    const target = this.cameraModel.step(
+      {
+        ballXMeters: ball.x,
+        ballYMeters: ball.y,
+        attackedBasketXMeters: attackingRight ? court.lengthMeters : 0,
+        courtLengthMeters: court.lengthMeters,
+        courtWidthMeters: court.widthMeters,
+        viewportWidthPx: this.scale.width,
+        viewportHeightPx: this.scale.height,
+        pixelsPerMeter: PIXELS_PER_METER,
+      },
+      deltaSeconds,
+    )
+    this.cameras.main.setZoom(target.zoom)
+    this.cameras.main.centerOn(target.centerXMeters * PIXELS_PER_METER, target.centerYMeters * PIXELS_PER_METER)
   }
 
-  private courtToScreen(xPercent: number, yPercent: number): { x: number; y: number } {
-    const margin = this.config.marginPx
-    const width = this.scale.width - margin * 2
-    const height = this.scale.height - margin * 2 - 90
-    return {
-      x: margin + (xPercent / 100) * width,
-      y: margin + 90 + (yPercent / 100) * height,
+  private ensureCourt(court: PresentationCourt): void {
+    const key = `${court.lengthMeters}x${court.widthMeters}:${court.threePointArcRadiusMeters}:${court.threePointCornerOffsetMeters}`
+    if (this.courtKey === key || this.courtGraphics === undefined) return
+    this.courtKey = key
+    this.drawCourt(this.courtGraphics, court)
+  }
+
+  private drawCourt(g: Phaser.GameObjects.Graphics, court: PresentationCourt): void {
+    const ppm = PIXELS_PER_METER
+    const L = court.lengthMeters
+    const W = court.widthMeters
+    g.clear()
+    // Apron + floor.
+    g.fillStyle(0x0f1722, 1)
+    g.fillRect(-3 * ppm, -3 * ppm, (L + 6) * ppm, (W + 6) * ppm)
+    g.fillStyle(FLOOR_COLOR, 1)
+    g.fillRect(0, 0, L * ppm, W * ppm)
+    g.lineStyle(2, LINE_COLOR, 1)
+    g.strokeRect(0, 0, L * ppm, W * ppm)
+    // Half-court line and centre circle.
+    g.lineBetween((L / 2) * ppm, 0, (L / 2) * ppm, W * ppm)
+    g.strokeCircle((L / 2) * ppm, (W / 2) * ppm, 1.8 * ppm)
+
+    const baskets = [court.baskets.left, court.baskets.right].map((b) => toMeters(b, L, W))
+    for (const basket of baskets) {
+      const attacksRight = basket.x > L / 2
+      const dir = attacksRight ? -1 : 1 // direction from the basket toward the court centre
+      const baselineX = attacksRight ? L : 0
+      // Lane (paint): 5.8 m long, 4.9 m wide.
+      const laneLen = 5.8
+      const laneHalf = 2.45
+      const laneX0 = Math.min(baselineX, baselineX + dir * laneLen)
+      g.fillStyle(PAINT_COLOR, 1)
+      g.fillRect(laneX0 * ppm, (W / 2 - laneHalf) * ppm, laneLen * ppm, laneHalf * 2 * ppm)
+      g.lineStyle(2, LINE_COLOR, 1)
+      g.strokeRect(laneX0 * ppm, (W / 2 - laneHalf) * ppm, laneLen * ppm, laneHalf * 2 * ppm)
+      // Free-throw circle (top half solid, bottom dashed approximated by a thin arc).
+      const ftX = baselineX + dir * laneLen
+      g.strokeCircle(ftX * ppm, (W / 2) * ppm, 1.8 * ppm)
+      // Three-point line: straight corner sections + arc centred on the basket.
+      const R = court.threePointArcRadiusMeters
+      const corner = court.threePointCornerOffsetMeters
+      const dy = W / 2 - corner
+      if (dy < R) {
+        const phi0 = Math.asin(dy / R)
+        const dx = Math.sqrt(R * R - dy * dy)
+        const arcEndX = basket.x + dir * dx
+        g.lineBetween(baselineX * ppm, corner * ppm, arcEndX * ppm, corner * ppm)
+        g.lineBetween(baselineX * ppm, (W - corner) * ppm, arcEndX * ppm, (W - corner) * ppm)
+        g.beginPath()
+        const centreAngle = dir < 0 ? Math.PI : 0
+        g.arc(basket.x * ppm, basket.y * ppm, R * ppm, centreAngle - phi0, centreAngle + phi0, false)
+        g.strokePath()
+      }
+      // Restricted area arc, backboard and rim.
+      g.beginPath()
+      const centreAngle = dir < 0 ? Math.PI : 0
+      g.arc(basket.x * ppm, basket.y * ppm, 1.25 * ppm, centreAngle - Math.PI / 2, centreAngle + Math.PI / 2, false)
+      g.strokePath()
+      const boardX = basket.x - dir * 0.375
+      g.lineStyle(3, LINE_COLOR, 1)
+      g.lineBetween(boardX * ppm, (basket.y - 0.9) * ppm, boardX * ppm, (basket.y + 0.9) * ppm)
+      g.lineStyle(2.5, RIM_COLOR, 1)
+      g.strokeCircle(basket.x * ppm, basket.y * ppm, 0.23 * ppm)
     }
   }
 
-  private paintCourtGeometry(state: MatchPresentationState): void {
-    const g = this.courtGraphics
-    if (g === undefined) return
-    g.clear()
-
-    const topLeft = this.courtToScreen(0, 0)
-    const bottomRight = this.courtToScreen(100, 100)
-    const width = bottomRight.x - topLeft.x
-    const height = bottomRight.y - topLeft.y
-
-    g.fillStyle(COURT_FILL_COLOR, 1)
-    g.fillRect(topLeft.x, topLeft.y, width, height)
-    g.lineStyle(2, COURT_LINE_COLOR, 1)
-    g.strokeRect(topLeft.x, topLeft.y, width, height)
-
-    const midTop = this.courtToScreen(50, 0)
-    const midBottom = this.courtToScreen(50, 100)
-    g.lineBetween(midTop.x, midTop.y, midBottom.x, midBottom.y)
-
-    const center = this.courtToScreen(50, 50)
-    g.strokeCircle(center.x, center.y, Math.min(width, height) * 0.08)
-
-    const leftBasket = this.courtToScreen(state.court.baskets.left.xPercent, state.court.baskets.left.yPercent)
-    const rightBasket = this.courtToScreen(state.court.baskets.right.xPercent, state.court.baskets.right.yPercent)
-    g.fillStyle(0xfbbf24, 1)
-    g.fillCircle(leftBasket.x, leftBasket.y, 8)
-    g.fillCircle(rightBasket.x, rightBasket.y, 8)
-    g.lineStyle(2, 0xfbbf24, 1)
-    g.strokeRect(topLeft.x, leftBasket.y - height * 0.19, width * 0.19, height * 0.38)
-    g.strokeRect(bottomRight.x - width * 0.19, rightBasket.y - height * 0.19, width * 0.19, height * 0.38)
-  }
-
-  private paintPlayers(state: MatchPresentationState, samples: readonly LocomotionSample[], deltaMs: number): void {
+  private paintPlayers(state: MatchPresentationState, frame: PresentationFrame): Map<PlayerId, { x: number; y: number }> {
+    const court = state.court
     const seen = new Set<string>()
-    const sampleByPlayerId = new Map(samples.map((s) => [s.playerId, s]))
-
+    const rendered = new Map<PlayerId, { x: number; y: number }>()
+    const truthRows = new Map<PlayerId, TruthPlayerRow>((frame.truth?.players ?? []).map((row) => [row.playerId, row]))
     for (const player of state.players) {
       const key = String(player.playerId)
       seen.add(key)
-      const sample = sampleByPlayerId.get(key)
-      const renderedXPercent = sample?.renderedXPercent ?? player.position.xPercent
-      const renderedYPercent = sample?.renderedYPercent ?? player.position.yPercent
-      const { x, y } = this.courtToScreen(renderedXPercent, renderedYPercent)
-
-      let visual = this.playerSprites.get(key)
+      const meters = toMeters(player.position, court.lengthMeters, court.widthMeters)
+      rendered.set(player.playerId, meters)
+      const px = meters.x * PIXELS_PER_METER
+      const py = meters.y * PIXELS_PER_METER
+      let visual = this.playerVisuals.get(key)
       if (visual === undefined) {
-        visual = this.createPlayerVisual(player, x, y)
-        this.playerSprites.set(key, visual)
+        visual = this.createPlayerVisual(player, px, py)
+        this.playerVisuals.set(key, visual)
       }
-
-      visual.circle.setPosition(x, y)
-      const dribbleBob = this.dribbleBobOffset(key, player, deltaMs)
-      visual.circle.y = y - dribbleBob
-      visual.jerseyLabel.setPosition(x, visual.circle.y)
-      visual.nameLabel.setPosition(x, y + PLAYER_RADIUS + 10).setVisible(this.identification.showLabel)
-      visual.actionLabel
-        .setPosition(x, y - PLAYER_RADIUS - 12)
-        .setText(this.identification.showAction || this.debug.enabled ? describeIntent(player) : '')
-        .setVisible(this.identification.showAction || this.debug.enabled)
-      visual.jerseyLabel.setVisible(this.identification.showJersey)
-
-      visual.circle.setStrokeStyle(
-        player.hasBall ? 3 : player === selectedPlaceholder() ? 2 : 0,
-        player.hasBall ? 0xfacc15 : SELECTED_RING_COLOR,
-        1,
-      )
-
-      const orientation = sample?.renderedOrientationRadians ?? player.orientationRadians
-      if (orientation !== undefined) {
-        const lineLength = PLAYER_RADIUS + 6
-        visual.facingLine.setTo(0, 0, Math.cos(orientation) * lineLength, Math.sin(orientation) * lineLength)
-        visual.facingLine.setPosition(x, visual.circle.y)
-        visual.facingLine.setVisible(true)
+      visual.body.setPosition(px, py)
+      visual.body.setAlpha(this.debug.basketballTruth ? 0.85 : 1)
+      visual.body.setStrokeStyle(player.hasBall ? 3 : 1.5, player.hasBall ? HANDLER_RING : 0x0b0f14, 1)
+      visual.jersey.setPosition(px, py).setVisible(this.identification.showJersey)
+      visual.name.setPosition(px, py + PLAYER_RADIUS_METERS * PIXELS_PER_METER + 9).setVisible(this.identification.showLabel)
+      const row = truthRows.get(player.playerId)
+      visual.action
+        .setPosition(px, py - PLAYER_RADIUS_METERS * PIXELS_PER_METER - 9)
+        .setText(row === undefined ? describeIntent(player) : row.currentAction)
+        .setVisible(this.identification.showAction)
+      const angle = player.orientationRadians
+      if (angle === undefined) {
+        visual.nose.setVisible(false)
       } else {
-        visual.facingLine.setVisible(false)
-      }
-
-      if (this.debug.showCanonicalPosition) {
-        const canonical = this.courtToScreen(player.position.xPercent, player.position.yPercent)
-        visual.canonicalGhost.setPosition(canonical.x, canonical.y).setVisible(true)
-      } else {
-        visual.canonicalGhost.setVisible(false)
+        const r = PLAYER_RADIUS_METERS * PIXELS_PER_METER
+        visual.nose.setTo(0, 0, Math.cos(angle) * (r + 6), Math.sin(angle) * (r + 6)).setPosition(px, py).setVisible(true)
       }
     }
-
-    for (const [key, visual] of this.playerSprites) {
-      if (!seen.has(key)) {
-        visual.circle.destroy()
-        visual.jerseyLabel.destroy()
-        visual.nameLabel.destroy()
-        visual.actionLabel.destroy()
-        visual.facingLine.destroy()
-        visual.canonicalGhost.destroy()
-        this.playerSprites.delete(key)
-      }
+    for (const [key, visual] of this.playerVisuals) {
+      if (seen.has(key)) continue
+      visual.body.destroy()
+      visual.jersey.destroy()
+      visual.name.destroy()
+      visual.action.destroy()
+      visual.nose.destroy()
+      this.playerVisuals.delete(key)
     }
+    return rendered
   }
 
   private createPlayerVisual(player: PresentationPlayer, x: number, y: number): PlayerVisual {
     const color = player.side === 'home' ? HOME_COLOR : AWAY_COLOR
-    const circle = this.add.circle(x, y, PLAYER_RADIUS, color).setDepth(10)
-    const jerseyLabel = this.add
-      .text(x, y, String(player.jersey), { fontFamily: 'monospace', fontSize: '11px', color: '#0b0f14', fontStyle: 'bold' })
+    const body = this.add.circle(x, y, PLAYER_RADIUS_METERS * PIXELS_PER_METER, color).setDepth(10)
+    const jersey = this.add
+      .text(x, y, String(player.jersey), { fontFamily: 'monospace', fontSize: '13px', color: '#0b0f14', fontStyle: 'bold' })
       .setOrigin(0.5)
       .setDepth(11)
-    const nameLabel = this.add
-      .text(x, y + PLAYER_RADIUS + 10, player.label, { fontFamily: 'monospace', fontSize: '9px', color: '#cbd5e1' })
-      .setOrigin(0.5)
-      .setDepth(11)
-      .setVisible(false)
-    const actionLabel = this.add
-      .text(x, y - PLAYER_RADIUS - 12, '', { fontFamily: 'monospace', fontSize: '9px', color: '#7dd3fc' })
+      .setResolution(2)
+    const name = this.add
+      .text(x, y, player.label, { fontFamily: 'monospace', fontSize: '10px', color: '#e2e8f0' })
       .setOrigin(0.5)
       .setDepth(12)
       .setVisible(false)
-    const facingLine = this.add.line(x, y, 0, 0, 0, 0, 0xffffff, 0.85).setLineWidth(2).setDepth(12).setVisible(false)
-    const canonicalGhost = this.add.circle(x, y, PLAYER_RADIUS * 0.4, color, 0.35).setDepth(9).setVisible(false)
-    return { circle, jerseyLabel, nameLabel, actionLabel, facingLine, canonicalGhost }
+      .setResolution(2)
+    const action = this.add
+      .text(x, y, '', { fontFamily: 'monospace', fontSize: '10px', color: '#7dd3fc' })
+      .setOrigin(0.5)
+      .setDepth(12)
+      .setVisible(false)
+      .setResolution(2)
+    const nose = this.add.line(x, y, 0, 0, 0, 0, 0xffffff, 0.95).setLineWidth(3).setDepth(12).setVisible(false)
+    return { body, jersey, name, action, nose }
   }
 
-  /** Purely cosmetic hand/ground dribble alternation while a player holds and is moving with the ball. */
-  private dribbleBobOffset(key: string, player: PresentationPlayer, deltaMs: number): number {
-    if (!player.hasBall || player.speedMetersPerSecond < 0.1) {
-      this.dribblePhaseByPlayerId.set(key, 0)
-      return 0
+  private paintBall(state: MatchPresentationState, frame: PresentationFrame): { position: { x: number; y: number } } {
+    const court = state.court
+    const meters = toMeters(state.ball.position, court.lengthMeters, court.widthMeters)
+    const px = meters.x * PIXELS_PER_METER
+    const py = meters.y * PIXELS_PER_METER
+    const lift = frame.ballHeightMeters * LIFT_PX_PER_METER
+    if (this.ball !== undefined) {
+      this.ball.setPosition(px, py - lift)
+      this.ball.setScale(1 + Math.min(1, frame.ballHeightMeters / 3) * 0.6)
     }
-    const phase = (this.dribblePhaseByPlayerId.get(key) ?? 0) + deltaMs * 0.012
-    this.dribblePhaseByPlayerId.set(key, phase)
-    return Math.abs(Math.sin(phase)) * 1.5
+    if (this.ballShadow !== undefined) {
+      this.ballShadow.setPosition(px, py + 1)
+      this.ballShadow.setScale(Math.max(0.5, 1 - frame.ballHeightMeters * 0.12))
+      this.ballShadow.setVisible(frame.ballHeightMeters > 0.05)
+    }
+    return { position: meters }
   }
 
-  private paintBall(state: MatchPresentationState): void {
-    if (this.ballSprite === undefined || this.ballShadow === undefined) return
-    const { x, y } = this.courtToScreen(state.ball.position.xPercent, state.ball.position.yPercent)
-    // Purely visual lift while in flight; never influences the underlying x/y truth.
-    const lift = state.ball.visualHeight * (state.ball.isShotFlight ? 26 : 14)
-    this.ballSprite.setPosition(x, y - lift)
-    this.ballSprite.setScale(1 + state.ball.visualHeight * 0.4)
-    this.ballShadow.setPosition(x, y)
-    this.ballShadow.setScale(Math.max(0.4, 1 - state.ball.visualHeight * 0.5))
-    this.ballShadow.setVisible(state.ball.visualHeight > 0.02)
-  }
-
-  private paintHud(state: MatchPresentationState): void {
-    this.clockText?.setText(`P${state.clock.period}  ${formatClock(state.clock.clockSecondsRemaining)}`)
-    this.scoreText?.setText(`HOME ${state.score.home} — ${state.score.away} AWAY`)
-    this.possessionText?.setText(`possession: ${shortId(state.possession.offensiveTeamId)}  ball: ${state.ball.state}`)
-    this.actionText?.setText(state.currentActionKind !== undefined ? `action: ${state.currentActionKind}` : '')
-    this.ballStateText?.setText(`camera: ${this.camera2.getMode()}`)
-  }
-
-  private paintEvents(events: readonly MatchPresentationEvent[]): void {
-    const newest = [...events].reverse().find((event) => event.sequence > this.lastRenderedEventSequence)
-    if (newest === undefined) return
-    this.lastRenderedEventSequence = newest.sequence
-    const { text, color } = describeEventFlash(newest)
-    if (text === undefined) return
-    this.eventFlashText?.setText(text).setColor(color)
-    this.flashTimer?.remove()
-    this.flashTimer = this.time.delayedCall(1400, () => this.eventFlashText?.setText(''))
-  }
-
-  private paintDebug(state: MatchPresentationState, samples: readonly LocomotionSample[]): void {
-    const g = this.debugGraphics
+  private paintTruth(frame: PresentationFrame, rendered: RenderedTruth): void {
+    const g = this.truthGraphics
     if (g === undefined) return
     g.clear()
-    if (!this.debug.enabled) return
-
-    const sampleByPlayerId = new Map(samples.map((s) => [s.playerId, s]))
-
-    if (this.debug.showVelocityVectors) {
-      g.lineStyle(2, 0x38bdf8, 0.8)
-      for (const player of state.players) {
-        const from = this.courtToScreen(player.position.xPercent, player.position.yPercent)
-        const speedScale = 6
-        const angle = player.orientationRadians ?? 0
-        const to = { x: from.x + Math.cos(angle) * player.speedMetersPerSecond * speedScale, y: from.y + Math.sin(angle) * player.speedMetersPerSecond * speedScale }
-        g.lineBetween(from.x, from.y, to.x, to.y)
-      }
+    if (!this.debug.basketballTruth) return
+    const state = frame.state
+    const court = state.court
+    const ppm = PIXELS_PER_METER
+    const px = (p: { x: number; y: number }): { x: number; y: number } => ({ x: p.x * ppm, y: p.y * ppm })
+    const canonicalOf = (id: PlayerId): { x: number; y: number } | undefined => {
+      const c = frame.canonical.players.get(id)
+      return c === undefined ? undefined : toMeters(c, court.lengthMeters, court.widthMeters)
     }
+    const originOf = (id: PlayerId): { x: number; y: number } | undefined => {
+      const c = frame.origin.get(id)
+      return c === undefined ? undefined : toMeters(c, court.lengthMeters, court.widthMeters)
+    }
+    const truthRows = new Map<PlayerId, TruthPlayerRow>((frame.truth?.players ?? []).map((row) => [row.playerId, row]))
+    const half = 0.4 * ppm
 
-    if (this.debug.showAssignments) {
-      g.lineStyle(1, DEFENDER_RING_COLOR, 0.5)
-      for (const player of state.players) {
-        if (player.defendingPlayerId === undefined) continue
-        const offensivePlayer = state.players.find((p) => p.playerId === player.defendingPlayerId)
-        if (offensivePlayer === undefined) continue
-        const from = this.courtToScreen(player.position.xPercent, player.position.yPercent)
-        const to = this.courtToScreen(offensivePlayer.position.xPercent, offensivePlayer.position.yPercent)
-        g.lineBetween(from.x, from.y, to.x, to.y)
+    for (const player of state.players) {
+      const color = player.side === 'home' ? HOME_COLOR : AWAY_COLOR
+      const renderedPos = rendered.players.get(player.playerId)
+      const canonical = canonicalOf(player.playerId)
+      if (renderedPos === undefined || canonical === undefined) continue
+      const r = px(renderedPos)
+      const c = px(canonical)
+      // CANONICAL: hollow square in the team colour.
+      g.lineStyle(2.5, color, 1)
+      g.lineBetween(c.x - half, c.y - half, c.x + half, c.y - half)
+      g.lineBetween(c.x + half, c.y - half, c.x + half, c.y + half)
+      g.lineBetween(c.x + half, c.y + half, c.x - half, c.y + half)
+      g.lineBetween(c.x - half, c.y + half, c.x - half, c.y - half)
+      // RENDERED -> CANONICAL link.
+      const gap = Math.hypot(renderedPos.x - canonical.x, renderedPos.y - canonical.y)
+      if (gap > 0.15) {
+        g.lineStyle(1.5, TRUTH_LINK, 0.9)
+        g.lineBetween(r.x, r.y, c.x, c.y)
       }
-      g.lineStyle(2, HELP_RING_COLOR, 0.8)
-      for (const player of state.players) {
-        if (player.defensiveIntent === 'help' || player.defensiveIntent === 'recover') {
-          const pos = this.courtToScreen(player.position.xPercent, player.position.yPercent)
-          g.strokeCircle(pos.x, pos.y, PLAYER_RADIUS + 6)
+      if (this.debug.showPath) {
+        const origin = originOf(player.playerId)
+        if (origin !== undefined) {
+          const o = px(origin)
+          g.lineStyle(1, 0x64748b, 0.6)
+          g.lineBetween(o.x, o.y, c.x, c.y)
+          g.fillStyle(0x64748b, 0.8)
+          g.fillCircle(o.x, o.y, 3)
+        }
+      }
+      const row = truthRows.get(player.playerId)
+      if (this.debug.showTargets && row?.movementTarget !== undefined) {
+        const t = px(row.movementTarget)
+        g.lineStyle(1.5, TARGET_COLOR, 0.55)
+        g.lineBetween(c.x, c.y, t.x, t.y)
+        g.lineStyle(2, TARGET_COLOR, 1)
+        g.lineBetween(t.x - 5, t.y - 5, t.x + 5, t.y + 5)
+        g.lineBetween(t.x - 5, t.y + 5, t.x + 5, t.y - 5)
+      }
+      if (this.debug.showFacing && player.orientationRadians !== undefined) {
+        const len = 1.8 * ppm
+        g.lineStyle(2, FACING_COLOR, 0.95)
+        g.lineBetween(r.x, r.y, r.x + Math.cos(player.orientationRadians) * len, r.y + Math.sin(player.orientationRadians) * len)
+      }
+      if (this.debug.showAssignments && player.defendingPlayerId !== undefined) {
+        const man = rendered.players.get(player.defendingPlayerId)
+        if (man !== undefined) {
+          const m = px(man)
+          g.lineStyle(1.5, ASSIGN_COLOR, 0.65)
+          g.lineBetween(r.x, r.y, m.x, m.y)
         }
       }
     }
-
-    if (this.debug.showTargets) {
-      g.lineStyle(2, SCREEN_LINK_COLOR, 0.9)
-      if (state.debugTargets.screenTarget !== undefined) {
-        const target = this.courtToScreen(state.debugTargets.screenTarget.xPercent, state.debugTargets.screenTarget.yPercent)
-        g.strokeCircle(target.x, target.y, 8)
-      }
-      if (state.debugTargets.driveTarget !== undefined) {
-        const target = this.courtToScreen(state.debugTargets.driveTarget.xPercent, state.debugTargets.driveTarget.yPercent)
-        g.lineStyle(2, 0xfb7185, 0.9)
-        g.strokeCircle(target.x, target.y, 8)
-      }
-      for (const player of state.players) {
-        if (player.screenPartnerId === undefined) continue
-        const partner = state.players.find((p) => p.playerId === player.screenPartnerId)
-        if (partner === undefined) continue
-        const from = this.courtToScreen(player.position.xPercent, player.position.yPercent)
-        const to = this.courtToScreen(partner.position.xPercent, partner.position.yPercent)
-        g.lineStyle(2, SCREEN_LINK_COLOR, 0.6)
-        g.lineBetween(from.x, from.y, to.x, to.y)
-      }
+    // Ball: canonical ring vs rendered ball.
+    const ballCanonical = toMeters(frame.canonical.ball, court.lengthMeters, court.widthMeters)
+    const bc = px(ballCanonical)
+    g.lineStyle(2.5, BALL_COLOR, 1)
+    g.strokeCircle(bc.x, bc.y, BALL_RADIUS_PX + 5)
+    const br = px(rendered.ball)
+    const ballGap = Math.hypot(rendered.ball.x - ballCanonical.x, rendered.ball.y - ballCanonical.y)
+    if (ballGap > 0.15) {
+      g.lineStyle(1.5, BALL_COLOR, 0.6)
+      g.lineBetween(br.x, br.y, bc.x, bc.y)
     }
-
-    if (this.debug.showPassLines && state.possession.ballHandlerId !== undefined) {
-      const handler = state.players.find((p) => p.playerId === state.possession.ballHandlerId)
-      if (handler !== undefined) {
-        g.lineStyle(1, 0x64748b, 0.35)
-        const from = this.courtToScreen(handler.position.xPercent, handler.position.yPercent)
-        for (const teammate of state.players.filter((p) => p.isOffense && p.playerId !== handler.playerId)) {
-          const to = this.courtToScreen(teammate.position.xPercent, teammate.position.yPercent)
-          g.lineBetween(from.x, from.y, to.x, to.y)
-        }
-      }
-    }
-
-    void sampleByPlayerId
   }
-}
-
-function selectedPlaceholder(): undefined {
-  // No player-selection UI yet in v1 (React owns selection state); reserved for a future toggle.
-  return undefined
 }
 
 function describeIntent(player: PresentationPlayer): string {
   return player.isOffense ? player.actionIntent : (player.defensiveIntent ?? 'idle')
 }
-
-function formatClock(secondsRemaining: number): string {
-  const clamped = Math.max(0, Math.round(secondsRemaining))
-  const minutes = Math.floor(clamped / 60)
-  const seconds = clamped % 60
-  return `${minutes}:${String(seconds).padStart(2, '0')}`
-}
-
-function shortId(id: unknown): string {
-  return String(id).slice(0, 8)
-}
-
-function describeEventFlash(event: MatchPresentationEvent): { text: string | undefined; color: string } {
-  switch (event.kind) {
-    case 'shotMade':
-      return { text: `SHOT MADE +${event.points ?? 2}`, color: colorHex(MADE_FLASH_COLOR) }
-    case 'shotMissed':
-      return { text: 'SHOT MISSED', color: colorHex(MISSED_FLASH_COLOR) }
-    case 'turnover':
-      return { text: 'TURNOVER', color: colorHex(TURNOVER_FLASH_COLOR) }
-    case 'rebound':
-      return { text: 'REBOUND', color: colorHex(MISSED_FLASH_COLOR) }
-    case 'passCompleted':
-      return { text: 'PASS', color: colorHex(COURT_LINE_COLOR) }
-    default:
-      return { text: undefined, color: colorHex(COURT_LINE_COLOR) }
-  }
-}
-
-function colorHex(value: number): string {
-  return `#${value.toString(16).padStart(6, '0')}`
-}
-
-export type { MovementProfile }

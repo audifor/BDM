@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { playerIdFromString, teamIdFromString } from '@/domain/ids'
 import { LocomotionSystem } from './locomotion'
-import type { MatchPresentationState, PresentationPlayer } from './visualTypes'
+import type { MatchPresentationState, PresentationPlayer } from '../visualTypes'
 
 function makePlayer(overrides: Partial<PresentationPlayer> = {}): PresentationPlayer {
   return {
@@ -28,12 +28,12 @@ function makePlayer(overrides: Partial<PresentationPlayer> = {}): PresentationPl
 function makeState(players: readonly PresentationPlayer[], ballPosition = { xPercent: 50, yPercent: 50 }): MatchPresentationState {
   return {
     simulationTick: 1,
-    court: { lengthMeters: 28, widthMeters: 15, baskets: { left: { xPercent: 5, yPercent: 50 }, right: { xPercent: 95, yPercent: 50 } } },
+    court: { lengthMeters: 28, widthMeters: 15, threePointArcRadiusMeters: 6.75, threePointCornerOffsetMeters: 0.9, baskets: { left: { xPercent: 5, yPercent: 50 }, right: { xPercent: 95, yPercent: 50 } } },
     players,
     ball: { position: ballPosition, state: 'unassigned', ownerPlayerId: undefined, ownerTeamId: undefined, visualHeight: 0, isPassFlight: false, isShotFlight: false },
     clock: { period: 1, periodCount: 4, clockSecondsRemaining: 600, periodSeconds: 600 },
     score: { home: 0, away: 0 },
-    possession: { offensiveTeamId: teamIdFromString('team-1'), defensiveTeamId: teamIdFromString('team-2'), ballHandlerId: undefined },
+    possession: { offensiveTeamId: teamIdFromString('team-1'), defensiveTeamId: teamIdFromString('team-2'), ballHandlerId: undefined, attackingBasket: { xPercent: 95, yPercent: 50 } },
     isComplete: false,
     currentActionKind: undefined,
     debugTargets: { screenTarget: undefined, driveTarget: undefined, passTargetPlayerId: undefined, shotTargetBasket: undefined },

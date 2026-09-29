@@ -1,0 +1,12 @@
+{
+  "seeds": "1000..1059",
+  "games": 60,
+  "meanTotalPoints": 89.17,
+  "meanFieldGoalAttempts": 74.52,
+  "fieldGoalPct": 0.36,
+  "threePointAttemptShare": 0.58,
+  "meanTurnovers": 24.72,
+  "meanReboundsPerMiss": 1,
+  "meanEngineSteps": 260.58,
+  "meanFouls": 13.82
+}

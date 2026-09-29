@@ -135,6 +135,9 @@ export interface PresentationScore {
 export interface PresentationCourt {
   readonly lengthMeters: number
   readonly widthMeters: number
+  /** Regulatory markings needed only to DRAW the court (read verbatim from the engine's CourtGeometry). */
+  readonly threePointArcRadiusMeters: number
+  readonly threePointCornerOffsetMeters: number
   readonly baskets: {
     readonly left: PresentationPoint
     readonly right: PresentationPoint
@@ -145,6 +148,8 @@ export interface PresentationPossession {
   readonly offensiveTeamId: TeamId
   readonly defensiveTeamId: TeamId
   readonly ballHandlerId: PlayerId | undefined
+  /** The basket the offense attacks in this state (read verbatim from the engine possession view). */
+  readonly attackingBasket: PresentationPoint
 }
 
 /** Debug-only spatial targets, read verbatim from engine intent state. Never used for gameplay. */
@@ -204,4 +209,33 @@ export interface MatchPresentationEvent {
   readonly points: 2 | 3 | undefined
   readonly homeScore: number
   readonly awayScore: number
+  /** Extra read-only facts copied verbatim from the source MatchEvent (BT1: needed to choreograph the ball). */
+  readonly shotZone?: string
+  readonly reboundType?: 'offensive' | 'defensive'
+  /** Turnover: the intended receiver of a failed pass. */
+  readonly passTargetPlayerId?: PlayerId
+  readonly blocked?: boolean
+}
+
+/**
+ * BT1 — one MatchEngine step expressed as "movement for `simSeconds`, then the ordered `events`
+ * resolve at the end positions". Produced by MatchPresentationBridge.toMatchPresentationSegment,
+ * consumed by segmentPlan.ts / PresentationDirector.ts. Read-only; never mutated by the renderer.
+ */
+export interface PresentationSegment {
+  readonly index: number
+  readonly from: MatchPresentationState
+  readonly to: MatchPresentationState
+  /** Game-clock seconds the engine spent moving the players before resolving the events. */
+  readonly simSeconds: number
+  readonly events: readonly MatchPresentationEvent[]
+  /** The player who held the ball while the movement happened (first passer/shooter/turnover/FT taker), if any event names one. */
+  readonly actorPlayerId: PlayerId | undefined
+  /** The basket the OFFENSE of the `from` state was attacking (shots and free throws go here). */
+  readonly attackedBasket: PresentationPoint
+  /** How the previous step ended; tells the choreographer whether a loose ball at the start is an inbound. */
+  readonly previousEnding: 'madeShot' | 'freeThrow' | 'turnover' | 'periodStart' | 'none'
+  readonly substitutions: readonly { readonly playerInId: PlayerId; readonly playerOutId: PlayerId }[]
+  /** Debug-only Basketball Truth payload for the end-of-segment canonical state. */
+  readonly truth?: import('./audit/basketballTruth').TruthFrame
 }

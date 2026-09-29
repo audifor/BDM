@@ -1,0 +1,69 @@
+[
+ {
+  "wallMs": 91,
+  "segment": 24,
+  "tick": 19,
+  "kind": "inbound",
+  "label": "INBOUND"
+ },
+ {
+  "wallMs": 2295,
+  "segment": 26,
+  "tick": 21,
+  "kind": "shotRelease",
+  "label": "SHOT RELEASE"
+ },
+ {
+  "wallMs": 2527,
+  "segment": 26,
+  "tick": 21,
+  "kind": "rim",
+  "label": "AT THE RIM"
+ },
+ {
+  "wallMs": 2527,
+  "segment": 26,
+  "tick": 21,
+  "kind": "shotMissed",
+  "label": "SHOT MISSED",
+  "eventSequence": 19
+ },
+ {
+  "wallMs": 2527,
+  "segment": 26,
+  "tick": 21,
+  "kind": "rebound",
+  "label": "OFFENSIVE REBOUND",
+  "eventSequence": 20
+ },
+ {
+  "wallMs": 2966,
+  "segment": 27,
+  "tick": 23,
+  "kind": "shotRelease",
+  "label": "SHOT RELEASE"
+ },
+ {
+  "wallMs": 3191,
+  "segment": 27,
+  "tick": 23,
+  "kind": "rim",
+  "label": "AT THE RIM"
+ },
+ {
+  "wallMs": 3191,
+  "segment": 27,
+  "tick": 23,
+  "kind": "shotMissed",
+  "label": "SHOT MISSED",
+  "eventSequence": 21
+ },
+ {
+  "wallMs": 3191,
+  "segment": 27,
+  "tick": 23,
+  "kind": "rebound",
+  "label": "DEFENSIVE REBOUND",
+  "eventSequence": 22
+ }
+]

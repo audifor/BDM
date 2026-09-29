@@ -20,6 +20,9 @@ export const REBOUND_RESOLUTION_V1 = {
   spatialContextDistanceMeters: 8,
   rebounderSpatialWeightMinimum: 0.75,
   rebounderSpatialWeightMaximum: 1.25,
+  /** Beyond this distance from the rim a player is essentially out of the rebound (BT1: rebounds were credited 12-23 m from the rim). */
+  outOfReachDistanceMeters: 8,
+  outOfReachWeightFactor: 0.03,
   minimumProbability: 0.12,
   maximumProbability: 0.40,
 } as const
@@ -36,7 +39,8 @@ export function calculateOffensiveReboundProbability(context: ReboundContext): n
 export function selectRebounder(candidates: readonly MatchPlayerProfile[], random: RandomSource, spatialContext?: ReboundSpatialContext): MatchPlayerProfile {
   return chooseWeighted(candidates.map((profile) => {
     const distance = spatialContext?.distanceToBasketMetersByPlayerId?.[profile.playerId]
-    const spatialWeight = distance === undefined ? 1 : rebounderSpatialWeight(distance)
+    const outOfReach = distance !== undefined && distance > REBOUND_RESOLUTION_V1.outOfReachDistanceMeters
+    const spatialWeight = distance === undefined ? 1 : rebounderSpatialWeight(distance) * (outOfReach ? REBOUND_RESOLUTION_V1.outOfReachWeightFactor : 1)
     const skillWeight = distance === undefined ? profile.rebounding.impact : profile.rebounding.impact + 1
     return { item: profile, weight: skillWeight * spatialWeight }
   }), random)

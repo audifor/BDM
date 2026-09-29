@@ -1,0 +1,249 @@
+{
+ "scenario": {
+  "seed": 1,
+  "firstStep": 9,
+  "lastStep": 12,
+  "steps": 4,
+  "passes": 2,
+  "hasScreen": false,
+  "hasDrive": true,
+  "hasHelp": false,
+  "transitionSteps": 0,
+  "halfCourtSteps": 3,
+  "ends": "made",
+  "hasMissRebound": false,
+  "clockSeconds": 27,
+  "kind": "halfCourt",
+  "description": "Half-court possession: at least 2 half-court steps, 2 passes, no transition, ends in a shot"
+ },
+ "wallMsAt1x": 17250,
+ "everyMs": 1437,
+ "views": {
+  "plain": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "segment": 9,
+     "phase": "move",
+     "ballLeg": "INBOUND",
+     "maxPlayerDiffM": 17.361815445468256,
+     "meanPlayerDiffM": 7.7148991721674705,
+     "ballDiffM": 13.241945587209782
+    },
+    {
+     "frame": 1,
+     "segment": 9,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 13.314148652277748,
+     "meanPlayerDiffM": 3.6276704225385323,
+     "ballDiffM": 0.11946510036488256
+    },
+    {
+     "frame": 2,
+     "segment": 9,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 8.683060849180695,
+     "meanPlayerDiffM": 2.2055028343501015,
+     "ballDiffM": 1.7763568394002505e-15
+    },
+    {
+     "frame": 3,
+     "segment": 9,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 4.051973046083635,
+     "meanPlayerDiffM": 0.8068788423412248,
+     "ballDiffM": 1.7763568394002505e-15
+    },
+    {
+     "frame": 4,
+     "segment": 9,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 0.007349487128056576,
+     "meanPlayerDiffM": 0.0007349487128070318,
+     "ballDiffM": 1.7763568394002505e-15
+    },
+    {
+     "frame": 5,
+     "segment": 10,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 14.003447070792692,
+     "meanPlayerDiffM": 5.38907186279929,
+     "ballDiffM": 4.554474236763483
+    },
+    {
+     "frame": 6,
+     "segment": 10,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 6.6029734791160655,
+     "meanPlayerDiffM": 1.6745531515516643,
+     "ballDiffM": 4.0034278683768445
+    },
+    {
+     "frame": 7,
+     "segment": 10,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 0.028154085186724773,
+     "meanPlayerDiffM": 0.002815408518672966,
+     "ballDiffM": 3.961278171585576
+    },
+    {
+     "frame": 8,
+     "segment": 11,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 2.7639194988278253,
+     "meanPlayerDiffM": 0.8232948778757082,
+     "ballDiffM": 6.333859430744309
+    },
+    {
+     "frame": 9,
+     "segment": 11,
+     "phase": "event",
+     "ballLeg": "SETTLE",
+     "maxPlayerDiffM": 1.7763568394002505e-15,
+     "meanPlayerDiffM": 7.105427357601002e-16,
+     "ballDiffM": 8.881784197001252e-16
+    },
+    {
+     "frame": 10,
+     "segment": 12,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 0.9199860583469991,
+     "meanPlayerDiffM": 0.21421331804159438,
+     "ballDiffM": 0.36998605834699866
+    },
+    {
+     "frame": 11,
+     "segment": 12,
+     "phase": "event",
+     "ballLeg": "THROUGH THE NET",
+     "maxPlayerDiffM": 1.7763568394002505e-15,
+     "meanPlayerDiffM": 6.766173389349723e-16,
+     "ballDiffM": 7.989569352725198
+    }
+   ]
+  },
+  "truth": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "segment": 9,
+     "phase": "move",
+     "ballLeg": "INBOUND",
+     "maxPlayerDiffM": 17.361815445468256,
+     "meanPlayerDiffM": 7.7148991721674705,
+     "ballDiffM": 13.241945587209782
+    },
+    {
+     "frame": 1,
+     "segment": 9,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 13.314148652277748,
+     "meanPlayerDiffM": 3.6276704225385323,
+     "ballDiffM": 0.11946510036488256
+    },
+    {
+     "frame": 2,
+     "segment": 9,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 8.683060849180695,
+     "meanPlayerDiffM": 2.2055028343501015,
+     "ballDiffM": 1.7763568394002505e-15
+    },
+    {
+     "frame": 3,
+     "segment": 9,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 4.051973046083635,
+     "meanPlayerDiffM": 0.8068788423412248,
+     "ballDiffM": 1.7763568394002505e-15
+    },
+    {
+     "frame": 4,
+     "segment": 9,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 0.007349487128056576,
+     "meanPlayerDiffM": 0.0007349487128070318,
+     "ballDiffM": 1.7763568394002505e-15
+    },
+    {
+     "frame": 5,
+     "segment": 10,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 14.003447070792692,
+     "meanPlayerDiffM": 5.38907186279929,
+     "ballDiffM": 4.554474236763483
+    },
+    {
+     "frame": 6,
+     "segment": 10,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 6.6029734791160655,
+     "meanPlayerDiffM": 1.6745531515516643,
+     "ballDiffM": 4.0034278683768445
+    },
+    {
+     "frame": 7,
+     "segment": 10,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 0.028154085186724773,
+     "meanPlayerDiffM": 0.002815408518672966,
+     "ballDiffM": 3.961278171585576
+    },
+    {
+     "frame": 8,
+     "segment": 11,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 2.7639194988278253,
+     "meanPlayerDiffM": 0.8232948778757082,
+     "ballDiffM": 6.333859430744309
+    },
+    {
+     "frame": 9,
+     "segment": 11,
+     "phase": "event",
+     "ballLeg": "SETTLE",
+     "maxPlayerDiffM": 1.7763568394002505e-15,
+     "meanPlayerDiffM": 7.105427357601002e-16,
+     "ballDiffM": 8.881784197001252e-16
+    },
+    {
+     "frame": 10,
+     "segment": 12,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 0.9199860583469991,
+     "meanPlayerDiffM": 0.21421331804159438,
+     "ballDiffM": 0.36998605834699866
+    },
+    {
+     "frame": 11,
+     "segment": 12,
+     "phase": "event",
+     "ballLeg": "THROUGH THE NET",
+     "maxPlayerDiffM": 1.7763568394002505e-15,
+     "meanPlayerDiffM": 6.766173389349723e-16,
+     "ballDiffM": 7.989569352725198
+    }
+   ]
+  }
+ }
+}

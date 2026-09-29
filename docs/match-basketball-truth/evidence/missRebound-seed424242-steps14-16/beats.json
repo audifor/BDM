@@ -1,0 +1,47 @@
+[
+ {
+  "wallMs": 2408,
+  "segment": 15,
+  "tick": 12,
+  "kind": "passRelease",
+  "label": "PASS RELEASE",
+  "eventSequence": 11
+ },
+ {
+  "wallMs": 2408,
+  "segment": 15,
+  "tick": 12,
+  "kind": "catch",
+  "label": "CATCH"
+ },
+ {
+  "wallMs": 2847,
+  "segment": 16,
+  "tick": 14,
+  "kind": "shotRelease",
+  "label": "SHOT RELEASE"
+ },
+ {
+  "wallMs": 2847,
+  "segment": 16,
+  "tick": 14,
+  "kind": "rim",
+  "label": "BLOCKED"
+ },
+ {
+  "wallMs": 2847,
+  "segment": 16,
+  "tick": 14,
+  "kind": "shotMissed",
+  "label": "SHOT BLOCKED",
+  "eventSequence": 12
+ },
+ {
+  "wallMs": 3078,
+  "segment": 16,
+  "tick": 14,
+  "kind": "rebound",
+  "label": "DEFENSIVE REBOUND",
+  "eventSequence": 13
+ }
+]

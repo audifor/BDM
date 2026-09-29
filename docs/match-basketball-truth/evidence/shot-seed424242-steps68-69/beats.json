@@ -1,0 +1,46 @@
+[
+ {
+  "wallMs": 1731,
+  "segment": 68,
+  "tick": 62,
+  "kind": "passRelease",
+  "label": "PASS RELEASE",
+  "eventSequence": 61
+ },
+ {
+  "wallMs": 1731,
+  "segment": 68,
+  "tick": 62,
+  "kind": "catch",
+  "label": "CATCH"
+ },
+ {
+  "wallMs": 2394,
+  "segment": 69,
+  "tick": 63,
+  "kind": "shotRelease",
+  "label": "SHOT RELEASE"
+ },
+ {
+  "wallMs": 2611,
+  "segment": 69,
+  "tick": 63,
+  "kind": "rim",
+  "label": "AT THE RIM"
+ },
+ {
+  "wallMs": 2611,
+  "segment": 69,
+  "tick": 63,
+  "kind": "shotMade",
+  "label": "SHOT MADE +3",
+  "eventSequence": 62
+ },
+ {
+  "wallMs": 2836,
+  "segment": 70,
+  "tick": 63,
+  "kind": "inbound",
+  "label": "INBOUND"
+ }
+]

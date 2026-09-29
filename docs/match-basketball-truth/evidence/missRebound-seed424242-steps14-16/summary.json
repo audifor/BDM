@@ -1,0 +1,249 @@
+{
+ "scenario": {
+  "seed": 424242,
+  "firstStep": 14,
+  "lastStep": 16,
+  "steps": 3,
+  "passes": 1,
+  "hasScreen": false,
+  "hasDrive": true,
+  "hasHelp": false,
+  "transitionSteps": 0,
+  "halfCourtSteps": 1,
+  "ends": "missed",
+  "hasMissRebound": true,
+  "clockSeconds": 21,
+  "kind": "missRebound",
+  "description": "Miss + rebound: a missed shot followed by a rebound in the same step"
+ },
+ "wallMsAt1x": 15000,
+ "everyMs": 1250,
+ "views": {
+  "plain": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "segment": 14,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 19.525974509931633,
+     "meanPlayerDiffM": 7.829565318815118,
+     "ballDiffM": 5
+    },
+    {
+     "frame": 1,
+     "segment": 14,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 16.679918994641305,
+     "meanPlayerDiffM": 4.559379807819077,
+     "ballDiffM": 0.4982807623054004
+    },
+    {
+     "frame": 2,
+     "segment": 14,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 12.68436588653449,
+     "meanPlayerDiffM": 3.0433196266299167,
+     "ballDiffM": 0
+    },
+    {
+     "frame": 3,
+     "segment": 14,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 8.688812778427673,
+     "meanPlayerDiffM": 1.8321777940897075,
+     "ballDiffM": 0
+    },
+    {
+     "frame": 4,
+     "segment": 14,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 4.693259670320853,
+     "meanPlayerDiffM": 0.626879631105081,
+     "ballDiffM": 0
+    },
+    {
+     "frame": 5,
+     "segment": 14,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 0.6978671396659099,
+     "meanPlayerDiffM": 0.06978671396659152,
+     "ballDiffM": 0
+    },
+    {
+     "frame": 6,
+     "segment": 15,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 11.354935265068294,
+     "meanPlayerDiffM": 6.964546660804544,
+     "ballDiffM": 4.797621417666238
+    },
+    {
+     "frame": 7,
+     "segment": 15,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 5.429935265068298,
+     "meanPlayerDiffM": 3.08950058356758,
+     "ballDiffM": 2.070955210194604
+    },
+    {
+     "frame": 8,
+     "segment": 15,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 0.07654436525168265,
+     "meanPlayerDiffM": 0.007948914614304612,
+     "ballDiffM": 5.092275040182844
+    },
+    {
+     "frame": 9,
+     "segment": 16,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 6.646207625495083,
+     "meanPlayerDiffM": 3.0847874545787635,
+     "ballDiffM": 2.906254384632829
+    },
+    {
+     "frame": 10,
+     "segment": 16,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 0.7844043634663429,
+     "meanPlayerDiffM": 0.12073941479400004,
+     "ballDiffM": 1.0898139917265626
+    },
+    {
+     "frame": 11,
+     "segment": 16,
+     "phase": "event",
+     "ballLeg": "DEFENSIVE REBOUND",
+     "maxPlayerDiffM": 1.7763568394002505e-15,
+     "meanPlayerDiffM": 3.9968028886505636e-16,
+     "ballDiffM": 0.27779294109218505
+    }
+   ]
+  },
+  "truth": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "segment": 14,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 19.525974509931633,
+     "meanPlayerDiffM": 7.829565318815118,
+     "ballDiffM": 5
+    },
+    {
+     "frame": 1,
+     "segment": 14,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 16.679918994641305,
+     "meanPlayerDiffM": 4.559379807819077,
+     "ballDiffM": 0.4982807623054004
+    },
+    {
+     "frame": 2,
+     "segment": 14,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 12.68436588653449,
+     "meanPlayerDiffM": 3.0433196266299167,
+     "ballDiffM": 0
+    },
+    {
+     "frame": 3,
+     "segment": 14,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 8.688812778427673,
+     "meanPlayerDiffM": 1.8321777940897075,
+     "ballDiffM": 0
+    },
+    {
+     "frame": 4,
+     "segment": 14,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 4.693259670320853,
+     "meanPlayerDiffM": 0.626879631105081,
+     "ballDiffM": 0
+    },
+    {
+     "frame": 5,
+     "segment": 14,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 0.6978671396659099,
+     "meanPlayerDiffM": 0.06978671396659152,
+     "ballDiffM": 0
+    },
+    {
+     "frame": 6,
+     "segment": 15,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 11.354935265068294,
+     "meanPlayerDiffM": 6.964546660804544,
+     "ballDiffM": 4.797621417666238
+    },
+    {
+     "frame": 7,
+     "segment": 15,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 5.429935265068298,
+     "meanPlayerDiffM": 3.08950058356758,
+     "ballDiffM": 2.070955210194604
+    },
+    {
+     "frame": 8,
+     "segment": 15,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 0.07654436525168265,
+     "meanPlayerDiffM": 0.007948914614304612,
+     "ballDiffM": 5.092275040182844
+    },
+    {
+     "frame": 9,
+     "segment": 16,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 6.646207625495083,
+     "meanPlayerDiffM": 3.0847874545787635,
+     "ballDiffM": 2.906254384632829
+    },
+    {
+     "frame": 10,
+     "segment": 16,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 0.7844043634663429,
+     "meanPlayerDiffM": 0.12073941479400004,
+     "ballDiffM": 1.0898139917265626
+    },
+    {
+     "frame": 11,
+     "segment": 16,
+     "phase": "event",
+     "ballLeg": "DEFENSIVE REBOUND",
+     "maxPlayerDiffM": 1.7763568394002505e-15,
+     "meanPlayerDiffM": 3.9968028886505636e-16,
+     "ballDiffM": 0.27779294109218505
+    }
+   ]
+  }
+ }
+}

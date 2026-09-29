@@ -444,7 +444,9 @@ describe('MatchSession', () => {
     const whole = simulateMatchDetailed(createOptions(world, game.id, 12345, 67890))
     const stepped = toMatchSimulation(runToComplete(createMatchSession(createOptions(world, game.id, 12345, 67890))))
     expect(stepped).toEqual(whole)
-    expect(regressionSummary(whole)).toEqual({ finalScore: { home: 42, away: 54 }, eventCount: 223, homeTurnovers: 10, awayTurnovers: 8, homeRebounds: 24, awayRebounds: 26, homeAssists: 7, awayAssists: 9 })
+    // Golden master re-recorded for BT1 (sub-stepped movement integration, transition retreat toward the defended basket,
+    // assignment-based defensive spacing, rebound reach, half-court spots just beyond the arc). Previous: 42-54, 223 events.
+    expect(regressionSummary(whole)).toEqual({ finalScore: { home: 36, away: 58 }, eventCount: 200, homeTurnovers: 15, awayTurnovers: 8, homeRebounds: 22, awayRebounds: 21, homeAssists: 5, awayAssists: 13 })
   })
 
   it('advances one logical unit without mutating the previous sporting state', () => {
@@ -612,7 +614,9 @@ describe('MatchSession', () => {
       const before = input.spatial.players.find((player) => player.playerId === target.playerId)!
       const after = moved.players.find((player) => player.playerId === target.playerId)!
       const movedDistance = Math.hypot(after.position.x - before.position.x, after.position.y - before.position.y)
-      if (target.role !== 'stopBall' && target.role !== 'protectRim') expect(Math.sign(target.position.x - before.position.x)).toBe(target.teamId === input.attackingTeamId ? offenseDirection : -offenseDirection)
+      // Attackers run toward the attacked basket. Retreating defenders run to their half-court slot around the basket
+      // they defend (the old fixed 2.5 m "retreat" backpedalled AWAY from it), so no direction is asserted for them.
+      if (target.teamId === input.attackingTeamId) expect(Math.sign(target.position.x - before.position.x)).toBe(offenseDirection)
       expect(movedDistance).toBeLessThanOrEqual(PLAYER_MAX_SPEED_METERS_PER_SECOND * 0.25 + 1e-9)
       expect(Math.hypot(after.position.x - target.position.x, after.position.y - target.position.y)).toBeLessThanOrEqual(Math.hypot(before.position.x - target.position.x, before.position.y - target.position.y))
     }
@@ -820,7 +824,7 @@ describe('MatchSession', () => {
     const handlerId = getSpatialPossessionView(state).ballHandlerId!
     const first = stepMatchSession(prepared).session
     const transitionElapsed = state.clockSecondsRemaining - first.state.clockSecondsRemaining
-    const transitionInput = { ...baseSpacingInput(state, handlerId), spatial: state.spatial }
+    const transitionInput = { ...baseSpacingInput(state, handlerId), spatial: controlBallByPlayer(state.spatial, handlerId) }
     const expectedTransitionStep = stepPlayersTowardTransitionTargets(transitionInput, transitionElapsed)
     const beforeDrive = first.state.spatial.players.find((player) => player.playerId === handlerId)!.position
     const second = stepMatchSession(first).session.state
@@ -1219,7 +1223,9 @@ function withPassProfiles(options: SimulateMatchOptions): SimulateMatchOptions {
 }
 
 function baseSpacingInput(state: ReturnType<typeof createMatchSession>['state'], ballHandlerId: ReturnType<typeof createMatchSession>['state']['activeLineups']['home'][number]) {
-  return { homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, attackingTeamId: state.attackingTeamId, period: state.period, activeLineups: state.activeLineups, playerProfiles: state.playerProfiles, spatial: state.spatial, ballHandlerId }
+  // The defending team's manual matchups are part of the spacing input, exactly as MatchEngine passes them.
+  const defensiveMatchupOverrides = state.defensiveMatchups?.[state.attackingTeamId === state.homeTeamId ? 'away' : 'home'] ?? []
+  return { homeTeamId: state.homeTeamId, awayTeamId: state.awayTeamId, attackingTeamId: state.attackingTeamId, period: state.period, activeLineups: state.activeLineups, playerProfiles: state.playerProfiles, spatial: state.spatial, ballHandlerId, defensiveMatchupOverrides }
 }
 
 function openingHandlerId(state: ReturnType<typeof createMatchSession>['state']) {

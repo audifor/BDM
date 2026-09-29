@@ -1,0 +1,47 @@
+[
+ {
+  "wallMs": 726,
+  "segment": 3,
+  "tick": 3,
+  "kind": "inbound",
+  "label": "INBOUND"
+ },
+ {
+  "wallMs": 1604,
+  "segment": 3,
+  "tick": 3,
+  "kind": "passRelease",
+  "label": "PASS RELEASE",
+  "eventSequence": 2
+ },
+ {
+  "wallMs": 1823,
+  "segment": 3,
+  "tick": 3,
+  "kind": "catch",
+  "label": "CATCH"
+ },
+ {
+  "wallMs": 2257,
+  "segment": 4,
+  "tick": 4,
+  "kind": "passRelease",
+  "label": "PASS RELEASE",
+  "eventSequence": 3
+ },
+ {
+  "wallMs": 2257,
+  "segment": 4,
+  "tick": 4,
+  "kind": "catch",
+  "label": "CATCH"
+ },
+ {
+  "wallMs": 2927,
+  "segment": 5,
+  "tick": 5,
+  "kind": "turnover",
+  "label": "INTERCEPTION",
+  "eventSequence": 4
+ }
+]

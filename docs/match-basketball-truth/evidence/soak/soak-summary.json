@@ -1,0 +1,39 @@
+{
+ "seed": 424242,
+ "minutes": 5,
+ "speed": 2,
+ "console_errors": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "failed_requests": [],
+ "beats": 219,
+ "beatKinds": {
+  "inbound": 26,
+  "passRelease": 10,
+  "catch": 10,
+  "turnover": 15,
+  "foul": 8,
+  "freeThrow": 16,
+  "shotRelease": 30,
+  "rim": 30,
+  "shotMade": 11,
+  "shotMissed": 19,
+  "rebound": 19,
+  "substitution": 20,
+  "handoff": 3,
+  "periodEnd": 1,
+  "periodStart": 1
+ },
+ "engineEventBeats": 120,
+ "eventsOutOfOrder": 0,
+ "lastSegment": 147,
+ "lastScore": {
+  "home": 20,
+  "away": 20
+ },
+ "maxQueued": 2,
+ "canonicalRenderedGap": {
+  "maxOfMax": 19.85340192668501,
+  "meanOfMean": 2.3125614397994116
+ }
+}

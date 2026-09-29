@@ -146,8 +146,42 @@ export function releaseSpatialBall(spatial: SpatialState): SpatialState {
   return { ...spatial, ball: { kind: 'unassigned', position: spatial.ball.position } }
 }
 
+/**
+ * Largest integration sub-step, in seconds. The per-step kinematics below is a single explicit
+ * (trapezoidal) Euler step, which is only valid while the velocity is well approximated as linear
+ * over the step. Match steps span up to 24 s, so integrating them in one go let a player's
+ * leftover velocity from the previous step be applied for half the step: players ran the wrong way
+ * (away from their assigned target) and were clamped against the court boundary (BT1, seed 424242
+ * step 9: PF target (10.6, 5.6) from (8.1, 5.6) ended at (0.0, 7.9)). Sub-stepping keeps the same
+ * accel/brake/max-speed rules and is identical for steps <= this length.
+ */
+export const MOVEMENT_INTEGRATION_STEP_SECONDS = 0.25
+
 /** Advances one active player toward a legal court target using the elapsed match-clock seconds. */
 export function advancePlayerTowardTarget(
+  spatial: SpatialState,
+  playerId: PlayerId,
+  target: CourtPosition,
+  deltaTimeSeconds: number,
+  kinematics: PlayerKinematicProfile,
+): SpatialState {
+  if (!Number.isFinite(deltaTimeSeconds) || deltaTimeSeconds <= MOVEMENT_INTEGRATION_STEP_SECONDS) {
+    return advancePlayerTowardTargetOnce(spatial, playerId, target, deltaTimeSeconds, kinematics)
+  }
+  let current = spatial
+  let remaining = deltaTimeSeconds
+  while (remaining > 0) {
+    const step = Math.min(MOVEMENT_INTEGRATION_STEP_SECONDS, remaining)
+    const next = advancePlayerTowardTargetOnce(current, playerId, target, step, kinematics)
+    // Same object back means the player is at rest on the target: nothing left to integrate.
+    if (next === current) break
+    current = next
+    remaining -= step
+  }
+  return current
+}
+
+function advancePlayerTowardTargetOnce(
   spatial: SpatialState,
   playerId: PlayerId,
   target: CourtPosition,

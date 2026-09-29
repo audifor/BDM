@@ -1,0 +1,249 @@
+{
+ "scenario": {
+  "seed": 12,
+  "firstStep": 7,
+  "lastStep": 8,
+  "steps": 2,
+  "passes": 1,
+  "hasScreen": false,
+  "hasDrive": false,
+  "hasHelp": false,
+  "transitionSteps": 1,
+  "halfCourtSteps": 0,
+  "ends": "missed",
+  "hasMissRebound": true,
+  "clockSeconds": 28,
+  "kind": "transition",
+  "description": "Transition: possession that starts in transition and ends in a shot"
+ },
+ "wallMsAt1x": 12250,
+ "everyMs": 1020,
+ "views": {
+  "plain": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "segment": 7,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 14.228627375434277,
+     "meanPlayerDiffM": 5.155961018614652,
+     "ballDiffM": 6.872907435679754
+    },
+    {
+     "frame": 1,
+     "segment": 7,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 12.290288566139614,
+     "meanPlayerDiffM": 2.397444605892335,
+     "ballDiffM": 6.399835364001774
+    },
+    {
+     "frame": 2,
+     "segment": 7,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 8.948447671148356,
+     "meanPlayerDiffM": 0.9380119267878932,
+     "ballDiffM": 6.382507673540194
+    },
+    {
+     "frame": 3,
+     "segment": 7,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 5.6066067761571,
+     "meanPlayerDiffM": 0.560660677615711,
+     "ballDiffM": 6.382507673540194
+    },
+    {
+     "frame": 4,
+     "segment": 7,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 2.2647658811658418,
+     "meanPlayerDiffM": 0.22647658811658528,
+     "ballDiffM": 6.382507673540194
+    },
+    {
+     "frame": 5,
+     "segment": 7,
+     "phase": "event",
+     "ballLeg": "PASS",
+     "maxPlayerDiffM": 3.972054645195637e-15,
+     "meanPlayerDiffM": 1.1521571212646701e-15,
+     "ballDiffM": 4.8263190773901234
+    },
+    {
+     "frame": 6,
+     "segment": 8,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 18.49434717949458,
+     "meanPlayerDiffM": 8.000098462678084,
+     "ballDiffM": 5.2482038908602995
+    },
+    {
+     "frame": 7,
+     "segment": 8,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 13.159871207123818,
+     "meanPlayerDiffM": 4.620475296296273,
+     "ballDiffM": 4.506494751323772
+    },
+    {
+     "frame": 8,
+     "segment": 8,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 7.770194469850681,
+     "meanPlayerDiffM": 2.2258517614635376,
+     "ballDiffM": 5.558179799479508
+    },
+    {
+     "frame": 9,
+     "segment": 8,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 2.3805177325775433,
+     "meanPlayerDiffM": 0.47364012970242186,
+     "ballDiffM": 5.521548293957048
+    },
+    {
+     "frame": 10,
+     "segment": 8,
+     "phase": "event",
+     "ballLeg": "SHOT (threePoint) — will miss",
+     "maxPlayerDiffM": 3.972054645195637e-15,
+     "meanPlayerDiffM": 4.860233064895762e-16,
+     "ballDiffM": 2.7251691192815866
+    },
+    {
+     "frame": 11,
+     "segment": 8,
+     "phase": "event",
+     "ballLeg": "DEFENSIVE REBOUND",
+     "maxPlayerDiffM": 3.972054645195637e-15,
+     "meanPlayerDiffM": 4.860233064895762e-16,
+     "ballDiffM": 0.11500738762663494
+    }
+   ]
+  },
+  "truth": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "segment": 7,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 14.228627375434277,
+     "meanPlayerDiffM": 5.155961018614652,
+     "ballDiffM": 6.872907435679754
+    },
+    {
+     "frame": 1,
+     "segment": 7,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 12.290288566139614,
+     "meanPlayerDiffM": 2.397444605892335,
+     "ballDiffM": 6.399835364001774
+    },
+    {
+     "frame": 2,
+     "segment": 7,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 8.948447671148356,
+     "meanPlayerDiffM": 0.9380119267878932,
+     "ballDiffM": 6.382507673540194
+    },
+    {
+     "frame": 3,
+     "segment": 7,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 5.6066067761571,
+     "meanPlayerDiffM": 0.560660677615711,
+     "ballDiffM": 6.382507673540194
+    },
+    {
+     "frame": 4,
+     "segment": 7,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 2.2647658811658418,
+     "meanPlayerDiffM": 0.22647658811658528,
+     "ballDiffM": 6.382507673540194
+    },
+    {
+     "frame": 5,
+     "segment": 7,
+     "phase": "event",
+     "ballLeg": "PASS",
+     "maxPlayerDiffM": 3.972054645195637e-15,
+     "meanPlayerDiffM": 1.1521571212646701e-15,
+     "ballDiffM": 4.8263190773901234
+    },
+    {
+     "frame": 6,
+     "segment": 8,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 18.49434717949458,
+     "meanPlayerDiffM": 8.000098462678084,
+     "ballDiffM": 5.2482038908602995
+    },
+    {
+     "frame": 7,
+     "segment": 8,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 13.159871207123818,
+     "meanPlayerDiffM": 4.620475296296273,
+     "ballDiffM": 4.506494751323772
+    },
+    {
+     "frame": 8,
+     "segment": 8,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 7.770194469850681,
+     "meanPlayerDiffM": 2.2258517614635376,
+     "ballDiffM": 5.558179799479508
+    },
+    {
+     "frame": 9,
+     "segment": 8,
+     "phase": "move",
+     "ballLeg": "CARRY",
+     "maxPlayerDiffM": 2.3805177325775433,
+     "meanPlayerDiffM": 0.47364012970242186,
+     "ballDiffM": 5.521548293957048
+    },
+    {
+     "frame": 10,
+     "segment": 8,
+     "phase": "event",
+     "ballLeg": "SHOT (threePoint) — will miss",
+     "maxPlayerDiffM": 3.972054645195637e-15,
+     "meanPlayerDiffM": 4.860233064895762e-16,
+     "ballDiffM": 2.7251691192815866
+    },
+    {
+     "frame": 11,
+     "segment": 8,
+     "phase": "event",
+     "ballLeg": "DEFENSIVE REBOUND",
+     "maxPlayerDiffM": 3.972054645195637e-15,
+     "meanPlayerDiffM": 4.860233064895762e-16,
+     "ballDiffM": 0.11500738762663494
+    }
+   ]
+  }
+ }
+}

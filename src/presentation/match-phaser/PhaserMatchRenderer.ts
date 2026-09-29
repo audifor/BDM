@@ -1,49 +1,51 @@
 /**
- * PhaserMatchRenderer — owns the Phaser.Game instance and feeds it interpolated presentation
- * frames. This is the only file that constructs `new Phaser.Game(...)`.
+ * PhaserMatchRenderer — owns the Phaser.Game instance and the PresentationDirector (BT1).
  *
- * The renderer receives MatchPresentationState snapshots (already fully resolved by
- * MatchPresentationBridge from real MatchEngine state) and MatchPresentationEvents, and does
- * nothing but interpolate + draw them via PresentationPlayback and PhaserMatchScene. It never
- * imports `@/engine/match` and never calls back into the engine.
+ * Pull model: Phaser asks for a frame once per animation frame; the renderer advances the
+ * director by the real elapsed time (scaled by the playback-speed control) and tops the segment
+ * queue up from `segmentSource` only when it is running low. Engine stepping is therefore paced BY
+ * playback, never by a timer running ahead of it, so nothing is skipped, overwritten or shown out
+ * of order. The renderer never imports `@/engine/match`.
  */
 
 import Phaser from 'phaser'
-import { PresentationPlayback } from './interpolation'
-import { PhaserMatchScene, type SceneDebugOptions, type SceneIdentificationOptions } from './PhaserMatchScene'
+import { PresentationDirector, type FiredBeat, type PresentationFrame } from './PresentationDirector'
+import { PhaserMatchScene, type RenderedTruth, type SceneDebugOptions, type SceneIdentificationOptions } from './PhaserMatchScene'
 import type { CameraMode } from './camera'
-import type { MatchPresentationEvent, MatchPresentationState } from './visualTypes'
-import { DEFAULT_PRESENTATION_CONFIG, type PresentationConfig } from './presentationConfig'
+import type { MatchPresentationState, PresentationSegment } from './visualTypes'
 
 export interface PhaserMatchRendererOptions {
   readonly parent: HTMLElement
   readonly width: number
   readonly height: number
-  /** Wall-clock duration (ms) over which one engine step is visually interpolated. */
-  readonly stepDurationMs?: number
-  readonly presentationConfig?: PresentationConfig
+  readonly initialState: MatchPresentationState
+  /** Returns the next engine step as a segment, or undefined when the match is over. */
+  readonly segmentSource: () => PresentationSegment | undefined
+  /** Keep at least this many segments queued ahead of the one playing. */
+  readonly lookahead?: number
 }
 
-/**
- * MP1M Game Speed Controls. This ONLY scales how fast the wall-clock interpolation buffer is
- * consumed by the renderer (`playbackSpeed` multiplies deltaMs before it reaches
- * PresentationPlayback.advance). It never changes how often or how the demo driver calls
- * `stepMatchSession` — simulation speed and presentation playback speed stay fully independent, so
- * there is no risk of the renderer "catching up" by skipping or re-deriving engine snapshots.
- */
+export type RendererFrameListener = (frame: PresentationFrame, rendered: RenderedTruth) => void
+export type RendererBeatListener = (beats: readonly FiredBeat[]) => void
+
 export class PhaserMatchRenderer {
   private readonly game: Phaser.Game
   private readonly scene: PhaserMatchScene
-  private readonly stepDurationMs: number
-  private playback: PresentationPlayback | undefined
-  private pendingEvents: MatchPresentationEvent[] = []
-  private lastFrameTimeMs: number | undefined
-  private playbackSpeed = 1
+  private readonly director: PresentationDirector
+  private readonly segmentSource: () => PresentationSegment | undefined
+  private readonly lookahead: number
   private paused = false
+  private sourceExhausted = false
+  private beatListener: RendererBeatListener | undefined
+  private listener: RendererFrameListener | undefined
 
   public constructor(options: PhaserMatchRendererOptions) {
-    this.stepDurationMs = options.stepDurationMs ?? 650
-    this.scene = new PhaserMatchScene({ marginPx: 48, presentation: options.presentationConfig ?? DEFAULT_PRESENTATION_CONFIG })
+    this.director = new PresentationDirector(options.initialState)
+    this.segmentSource = options.segmentSource
+    this.lookahead = options.lookahead ?? 2
+    this.scene = new PhaserMatchScene()
+    this.scene.setFrameProvider((deltaMs) => this.nextFrame(deltaMs))
+    this.scene.onFrame((frame, rendered) => this.listener?.(frame, rendered))
     this.game = new Phaser.Game({
       type: Phaser.AUTO,
       parent: options.parent,
@@ -52,40 +54,34 @@ export class PhaserMatchRenderer {
       backgroundColor: '#0b0f14',
       scene: this.scene,
       banner: false,
+      fps: { target: 60 },
     })
-    this.game.events.on(Phaser.Core.Events.STEP, () => this.tick())
   }
 
-  /** Seeds the renderer's very first frame; call once before any pushSnapshot. */
-  public initialize(state: MatchPresentationState): void {
-    this.playback = new PresentationPlayback(state, this.stepDurationMs)
+  public onFrame(listener: RendererFrameListener): void {
+    this.listener = listener
   }
 
-  /** Called by the demo driver each time MatchEngine produces a new step. Never called by Phaser itself. */
-  public pushSnapshot(state: MatchPresentationState, events: readonly MatchPresentationEvent[]): void {
-    if (this.playback === undefined) {
-      this.initialize(state)
-    } else {
-      this.playback.pushSnapshot(state)
-    }
-    this.pendingEvents = [...this.pendingEvents, ...events].slice(-20)
+  public onBeats(listener: RendererBeatListener): void {
+    this.beatListener = listener
   }
 
   public resize(width: number, height: number): void {
     this.game.scale.resize(width, height)
+    this.scene.snapCamera()
   }
 
   public destroy(): void {
     this.game.destroy(true)
   }
 
-  /** MP1M: presentation-only playback speed. Does not affect how often the engine itself steps. */
+  /** Playback speed multiplier for the timeline only; the engine is never stepped faster than playback consumes it. */
   public setPlaybackSpeed(speed: number): void {
-    this.playbackSpeed = Math.max(0, speed)
+    this.director.setSpeed(speed)
   }
 
   public getPlaybackSpeed(): number {
-    return this.playbackSpeed
+    return this.director.getSpeed()
   }
 
   public setPaused(paused: boolean): void {
@@ -112,14 +108,44 @@ export class PhaserMatchRenderer {
     return this.scene.identification
   }
 
-  private tick(): void {
-    if (this.playback === undefined) return
-    const now = performance.now()
-    const rawDeltaMs = this.lastFrameTimeMs === undefined ? 0 : now - this.lastFrameTimeMs
-    this.lastFrameTimeMs = now
-    if (this.paused) return
-    const scaledDeltaMs = rawDeltaMs * this.playbackSpeed
-    this.playback.advance(scaledDeltaMs)
-    this.scene.renderFrame({ state: this.playback.currentFrame(), recentEvents: this.pendingEvents })
+  public getRenderedTruth(): RenderedTruth | undefined {
+    return this.scene.getRenderedTruth()
+  }
+
+  public getLastFrame(): PresentationFrame | undefined {
+    return this.scene.getLastFrame()
+  }
+
+  public get queued(): number {
+    return this.director.pending
+  }
+
+  /** Test/dev hook: advance playback by an exact wall-clock amount without waiting for Phaser (used by headless capture). */
+  public advanceForTest(deltaMs: number): PresentationFrame {
+    this.fillQueue()
+    const frame = this.director.advance(deltaMs)
+    if (frame.firedBeats.length > 0) this.beatListener?.(frame.firedBeats)
+    return frame
+  }
+
+  private nextFrame(deltaMs: number): PresentationFrame {
+    this.fillQueue()
+    if (this.paused) return this.director.currentFrame()
+    const frame = this.director.advance(Math.min(deltaMs, 100))
+    if (frame.firedBeats.length > 0) this.beatListener?.(frame.firedBeats)
+    return frame
+  }
+
+  private fillQueue(): void {
+    let guard = 0
+    while (!this.sourceExhausted && this.director.pending < this.lookahead + 1 && guard < 8) {
+      guard += 1
+      const segment = this.segmentSource()
+      if (segment === undefined) {
+        this.sourceExhausted = true
+        break
+      }
+      this.director.enqueue(segment)
+    }
   }
 }

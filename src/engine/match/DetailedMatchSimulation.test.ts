@@ -117,7 +117,7 @@ describe('possession-based MatchEngine v2', () => {
     // Equal external strengths still retain the generated teams' canonical player-profile differences.
     expect(homeWins).toBeGreaterThanOrEqual(10)
     expect(homeWins).toBeLessThanOrEqual(35)
-  })
+  }, 30000) // 200 full games; movement is now integrated in sub-steps, so this can exceed the default 5 s under parallel load
 
   it('uses defensive and offensive rebounds to determine the next attacking team', () => {
     const { world, game } = createScheduledGameWorld()
@@ -367,7 +367,9 @@ class OvertimeRandom implements RandomSource {
   next(): number { return 0.99 }
   nextInt(): number { this.steps += 1; return 24 }
   nextFloat(minInclusive: number): number { return minInclusive }
-  chance(_probability: number): boolean { return this.steps > 150 }
+  // Regulation must stay scoreless (every attempt fails) and overtime must eventually be decided; the step budget
+  // covers the whole regulation, which needs more engine steps now that transitions are not stalled.
+  chance(_probability: number): boolean { return this.steps > 600 }
   pick<Item>(items: readonly Item[]): Item { return items[0]! }
 }
 

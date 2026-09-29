@@ -15,7 +15,7 @@
  * that are already fully determined by the two snapshots it is given.
  */
 
-import type { MatchPresentationState, PresentationPlayer, PresentationPoint } from './visualTypes'
+import type { MatchPresentationState, PresentationPlayer, PresentationPoint } from '../visualTypes'
 
 function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value))

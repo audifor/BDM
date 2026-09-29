@@ -12,8 +12,8 @@
  * overlapping. This is a rendering nicety, not a second physics/AI system.
  */
 
-import type { MatchPresentationState, PresentationPlayer } from './visualTypes'
-import { DEFAULT_PRESENTATION_CONFIG, type PresentationConfig } from './presentationConfig'
+import type { MatchPresentationState, PresentationPlayer } from '../visualTypes'
+import { DEFAULT_PRESENTATION_CONFIG, type PresentationConfig } from '../presentationConfig'
 
 export type MovementProfile = 'stop' | 'walk' | 'jog' | 'run' | 'sprint' | 'shuffle' | 'pivot' | 'turn' | 'backpedal'
 

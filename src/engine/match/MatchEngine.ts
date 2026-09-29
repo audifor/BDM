@@ -499,6 +499,7 @@ export function stepMatchSession(session: MatchSession): MatchSessionStepResult 
     playerProfiles: state.playerProfiles,
     spatial: controlBallByPlayer(state.spatial, playerId),
     ballHandlerId: playerId,
+    defensiveMatchupOverrides: matchupOverrides,
   }
   let transitionContinuation: TransitionContinuation | undefined
   let transitionPassTargetId: PlayerId | undefined
