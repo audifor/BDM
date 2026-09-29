@@ -6,7 +6,7 @@ import { responsibilityDefinition } from '@/domain/responsibility'
 import { getPersonality, getResponsibility, getStaffAssignment, getStaffPerson, type GameWorld } from '@/domain/world'
 import { assessClubNeeds, type ClubNeed, type ClubNeedsAssessment, type ClubNeedsKnowledgePerspective } from '@/engine/clubNeeds'
 import { assessClubStrategy } from '@/engine/clubStrategy/ClubStrategyEngine'
-import { assessOptionSelectionSafety, resolveGovernanceOptionPolicy, type GovernanceOptionPolicy, type OptionSelectionSafety } from './GovernanceOptionPolicy'
+import { assessGMOptionAuthority, resolveGovernanceOptionPolicy, type ExecutionReadiness, type GovernanceOptionPolicy, type PlanningEligibility } from './GovernanceOptionPolicy'
 export * from './GovernanceOptionPolicy'
 
 export type GMResponseOptionKind = 'INTERNAL_ROLE_REALLOCATION' | 'INTERNAL_DEVELOPMENT' | 'EXTERNAL_ACQUISITION' | 'SHORT_TERM_COVER' | 'CONTRACT_RETENTION_REVIEW' | 'SUCCESSION_PLANNING' | 'OUTGOING_MARKET_REVIEW' | 'FINANCIAL_CONTAINMENT' | 'SCOUTING_EXPANSION' | 'WAIT_AND_MONITOR'
@@ -35,7 +35,8 @@ export interface GMResponseOption {
   readonly confidence: GMOptionRating
   readonly knowledgeReadiness: GMKnowledgeReadiness
   readonly governancePolicy: GovernanceOptionPolicy
-  readonly selectionSafety: OptionSelectionSafety
+  readonly planningEligibility: PlanningEligibility
+  readonly executionReadiness: ExecutionReadiness
   readonly financialContext: ClubNeedsAssessment['financialContext']
   readonly reasons: readonly GMDecisionReason[]
   readonly blockers: readonly string[]
@@ -134,7 +135,7 @@ function buildOptions(world: GameWorld, teamId: TeamId, need: ClubNeed, strategy
     if (style !== 'UNKNOWN' && style !== 'MEDIUM') reasons.push('STAFF_STYLE_SIGNAL')
     if (participants.length === 0) reasons.push('NO_ASSIGNED_DECISION_MAKER')
     const governancePolicy = resolveGovernanceOptionPolicy(world, teamId, kind, onDate)
-    const selectionSafety = assessOptionSelectionSafety(governancePolicy)
+    const authorityAssessment = assessGMOptionAuthority(governancePolicy)
     const governanceBlockers = governancePolicy.pendingRequestIds.map((id) => world.governanceRequestsById[id]).filter((request) => request !== undefined).map((request) => `GOVERNANCE_REQUEST_OPEN:${request.category}`)
     if (governancePolicy.pendingRequestIds.length > 0) reasons.push('GOVERNANCE_REQUEST_OPEN')
     return Object.freeze({
@@ -147,7 +148,7 @@ function buildOptions(world: GameWorld, teamId: TeamId, need: ClubNeed, strategy
       confidence: need.confidence === 'HIGH' ? 'HIGH' : need.confidence === 'MODERATE' ? 'MEDIUM' : 'LOW',
       knowledgeReadiness: kind === 'EXTERNAL_ACQUISITION' || kind === 'SCOUTING_EXPANSION' ? knowledge : 'UNKNOWN',
       governancePolicy,
-      selectionSafety,
+      ...authorityAssessment,
       financialContext,
       reasons: Object.freeze([...new Set(reasons)]),
       blockers: Object.freeze(governanceBlockers),

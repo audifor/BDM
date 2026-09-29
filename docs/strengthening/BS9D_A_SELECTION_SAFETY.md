@@ -95,8 +95,9 @@ transaction.
 
 ### Policy, request, and selection gate
 
-Every BS9C option has `governancePolicy` and `selectionSafety`. Formal policy
-statuses are:
+Every BS9C option has `governancePolicy`. BS9D-A initially attached a single
+`selectionSafety` gate; the A2 closure below replaces that field with distinct
+planning and execution projections. Formal policy statuses remain:
 
 - `AUTHORIZED`: an explicit active mapped-domain EXECUTE participation grant
   exists and no mapped APPROVE right is present. This permits consideration at
@@ -110,18 +111,54 @@ statuses are:
 
 An unresolved active Governance request is returned separately as
 `pendingRequestIds` (including an accepted request until it is fulfilled,
-declined, or withdrawn). It does not alter the formal status. For selection safety,
-an unresolved request yields `REQUIRES_APPROVAL_PATH`; otherwise a known
-approval requirement yields the same result. Explicit mapped executor authority
-yields `SELECTABLE`; an explicit future block would yield `NOT_SELECTABLE`;
-unknown policy yields `UNKNOWN_POLICY`. The future AI contract must treat
-`UNKNOWN_POLICY` as ineligible for selection, never as authorization. The
-Analysis surface may continue displaying the option and its unresolved status.
+declined, or withdrawn). It does not alter the formal policy status. BS9D-A's
+single-gate interpretation was superseded by A2: an open request affects
+execution readiness but does not by itself prevent planning.
 
 This is one pure derived resolver used for user and AI context. It does not
 write Governance decisions/events, create requests, or execute a transaction.
 Existing request blocker codes remain visible for inspection. Governance policy
 does not absorb board pressure or strategic urgency.
+
+## BS9D-A2 closure · Planning is not execution
+
+**Planning != execution.**
+
+The original gate conflated authority to select a broad planning option with
+authority to carry out a concrete action. A2 splits those decisions. Every
+option now carries `planningEligibility` (`SELECTABLE` or `NOT_SELECTABLE`)
+and `executionReadiness` (`AUTHORIZED`, `REQUIRES_APPROVAL`,
+`UNKNOWN_AUTHORITY`, or `BLOCKED`), alongside the unchanged `governancePolicy`.
+
+Planning eligibility is `SELECTABLE` for an option BS9C has produced as
+compatible with the need, except when formal Governance policy is explicitly
+`BLOCKED`. `UNKNOWN` and `REQUIRES_APPROVAL` do not bar the club from preferring
+that broad plan. No missing grant is interpreted as a prohibition.
+
+Execution readiness is derived separately. `UNKNOWN` maps to
+`UNKNOWN_AUTHORITY`; `REQUIRES_APPROVAL` remains `REQUIRES_APPROVAL`; an
+explicit `BLOCKED` policy remains `BLOCKED`; and `AUTHORIZED` requires the
+existing mapped-domain executor grant. Any unresolved `pendingRequestIds`
+sets readiness to `REQUIRES_APPROVAL` while remaining distinct metadata.
+Neither `UNKNOWN_AUTHORITY` nor `REQUIRES_APPROVAL` permits execution.
+
+For example, `EXTERNAL_ACQUISITION` can be `SELECTABLE` for planning while its
+execution readiness is `UNKNOWN_AUTHORITY`. Selecting it means only that the
+club prefers to explore an external solution; it does not name a player, submit
+an offer, spend funds, sign, transfer, or trade.
+
+BS9D-B may choose among options whose `planningEligibility` is `SELECTABLE`,
+including those with `UNKNOWN_AUTHORITY` or `REQUIRES_APPROVAL`. Its selected
+decision must carry `executionReadiness` forward, and BS9D must not execute it.
+BS9E must resolve the concrete action and re-check its actual Governance
+decision domain, responsibility/delegation, budget authority, and
+market/contract/trade rules. This patch changes no concrete action service; the
+existing action boundaries continue to validate authority and approval.
+
+Focused tests cover unknown, approval-required, explicit-block, missing-grant,
+pending-request, non-mutation, stable ordering, and hidden-truth behavior.
+Governance family mappings remain unchanged and no new action or request is
+created.
 
 ## Determinism and integration
 
@@ -133,14 +170,13 @@ changed in this milestone, and no action controls were added.
 
 ## Deferred work and findings
 
-BS9D-B may begin implementing option selection only with the gate contract in
-place: `UNKNOWN_POLICY` is not selectable, pending requests require an approval
-path, and broad-family authorization never executes a concrete action. It should
-resolve approvals again at the later concrete transaction boundary.
+BS9D-B may begin implementing option selection under the planning/execution
+contract above. Any selected broad option must retain its execution readiness,
+and only BS9E may resolve and authorize a later concrete action.
 
 No new P0 findings were identified. The original P1-A hidden external-rating
 leak is corrected for autonomous assessments. Governance broad families without
-a truthful mapped decision domain intentionally remain `UNKNOWN`; they cannot
-be freely selected through the new gate. This unresolved policy data is the
-remaining P1 limitation for any family a future milestone wants to select
-autonomously.
+a truthful mapped decision domain intentionally remain `UNKNOWN_AUTHORITY` for
+execution; they may still be considered as plans. This remains a P1 boundary
+for execution of concrete actions until their actual authority domains are
+resolved.

@@ -12,7 +12,7 @@ import { createGovernanceAuthorityGrant, createGovernanceBody, createGovernanceI
 import { createGovernanceDecisionParticipationGrant } from '@/domain/governance/GovernanceDecision'
 import { createGovernanceRequest, createGovernanceRequestEvent } from '@/domain/governance/GovernanceRequest'
 import { assessClubNeeds } from '@/engine/clubNeeds'
-import { assessGMDecisionContext, assessOptionSelectionSafety, resolveGovernanceOptionPolicy } from './GMDecisionContextEngine'
+import { assessGMDecisionContext, assessGMOptionAuthority, resolveGovernanceOptionPolicy } from './GMDecisionContextEngine'
 
 describe('GM decision context', () => {
   let base: GameWorld
@@ -36,13 +36,24 @@ describe('GM decision context', () => {
     const ai = team(false)
     const user = team(true)
     const before = base.playerTransactionsById
+    const beforeGovernanceEvents = base.governanceDecisionEventsById
+    const beforeRequests = base.governanceRequestsById
+    const beforeContracts = base.contractsById
     expect(assessGMDecisionContext(base, ai.id).teamId).toBe(ai.id)
     expect(assessGMDecisionContext(base, user.id).teamId).toBe(user.id)
     expect(assessGMDecisionContext(base, ai.id).needsAssessment.knowledgePerspective).toBe('ORGANIZATION_KNOWLEDGE')
     expect(assessGMDecisionContext(base, user.id).needsAssessment.knowledgePerspective).toBe('USER_ANALYTICS')
-    expect(assessGMDecisionContext(base, ai.id).options.map((option) => [option.kind, option.governancePolicy, option.selectionSafety])).toEqual(assessGMDecisionContext(base, ai.id).options.map((option) => [option.kind, option.governancePolicy, option.selectionSafety]))
+    const planningWorld = shortRoster(base, ai.id)
+    const aiContext = assessGMDecisionContext(planningWorld, ai.id)
+    expect(aiContext.options.map((option) => [option.kind, option.priority, option.planningEligibility, option.executionReadiness])).toEqual(assessGMDecisionContext(planningWorld, ai.id).options.map((option) => [option.kind, option.priority, option.planningEligibility, option.executionReadiness]))
+    const acquisitionOptions = aiContext.options.filter((option) => option.kind === 'EXTERNAL_ACQUISITION')
+    expect(acquisitionOptions.length).toBeGreaterThan(0)
+    expect(acquisitionOptions.every((option) => option.planningEligibility === 'SELECTABLE' && option.executionReadiness === 'UNKNOWN_AUTHORITY')).toBe(true)
     expect(JSON.stringify(assessGMDecisionContext(base, ai.id))).not.toContain('Overall')
     expect(base.playerTransactionsById).toBe(before)
+    expect(base.governanceDecisionEventsById).toBe(beforeGovernanceEvents)
+    expect(base.governanceRequestsById).toBe(beforeRequests)
+    expect(base.contractsById).toBe(beforeContracts)
     expect(base.delegationOutcomesById).toEqual({})
   })
 
@@ -164,7 +175,8 @@ describe('GM decision context', () => {
     const pendingRosterOption = pendingContext.options.find((option) => option.blockers.includes('GOVERNANCE_REQUEST_OPEN:ROSTER'))
     expect(pendingRosterOption?.governancePolicy.status).toBe('UNKNOWN')
     expect(pendingRosterOption?.governancePolicy.pendingRequestIds).toContain(request.id)
-    expect(pendingRosterOption?.selectionSafety.status).toBe('REQUIRES_APPROVAL_PATH')
+    expect(pendingRosterOption?.planningEligibility).toBe('SELECTABLE')
+    expect(pendingRosterOption?.executionReadiness).toBe('REQUIRES_APPROVAL')
     expect(pendingRosterOption?.blockers).toContain('GOVERNANCE_REQUEST_OPEN:ROSTER')
   })
 
@@ -180,7 +192,7 @@ describe('GM decision context', () => {
     const before = world.governanceDecisionEventsById
     const budgetPolicy = resolveGovernanceOptionPolicy(world, club.id, 'FINANCIAL_CONTAINMENT', base.currentDate)
     expect(budgetPolicy).toMatchObject({ decisionType: 'BUDGET', status: 'AUTHORIZED', executorBodyIds: [executive.id], authorityGrantIds: [authority.id] })
-    expect(assessOptionSelectionSafety(budgetPolicy).status).toBe('SELECTABLE')
+    expect(assessGMOptionAuthority(budgetPolicy)).toEqual({ planningEligibility: 'SELECTABLE', executionReadiness: 'AUTHORIZED' })
     expect(resolveGovernanceOptionPolicy(world, userClub.id, 'FINANCIAL_CONTAINMENT', base.currentDate)).toEqual(budgetPolicy)
     expect(world.governanceDecisionEventsById).toBe(before)
 
@@ -189,12 +201,15 @@ describe('GM decision context', () => {
     const approvalWorld = updateGameWorld(world, { governanceAuthorityGrants: [authority, approvalAuthority], governanceDecisionParticipationGrants: [participation, approver] })
     const approvalPolicy = resolveGovernanceOptionPolicy(approvalWorld, club.id, 'FINANCIAL_CONTAINMENT', base.currentDate)
     expect(approvalPolicy.status).toBe('REQUIRES_APPROVAL')
-    expect(assessOptionSelectionSafety(approvalPolicy).status).toBe('REQUIRES_APPROVAL_PATH')
+    expect(assessGMOptionAuthority(approvalPolicy)).toEqual({ planningEligibility: 'SELECTABLE', executionReadiness: 'REQUIRES_APPROVAL' })
 
     const missing = resolveGovernanceOptionPolicy(world, club.id, 'EXTERNAL_ACQUISITION', base.currentDate)
     expect(missing.status).toBe('UNKNOWN')
     expect(missing.decisionType).toBeUndefined()
-    expect(assessOptionSelectionSafety(missing)).toMatchObject({ status: 'UNKNOWN_POLICY', reason: 'POLICY_UNRESOLVED' })
+    expect(assessGMOptionAuthority(missing)).toEqual({ planningEligibility: 'SELECTABLE', executionReadiness: 'UNKNOWN_AUTHORITY' })
+
+    const explicitBlock = { ...missing, status: 'BLOCKED' as const }
+    expect(assessGMOptionAuthority(explicitBlock)).toEqual({ planningEligibility: 'NOT_SELECTABLE', executionReadiness: 'BLOCKED' })
   })
 
   it('produces a stable option ordering for the same canonical world', () => {

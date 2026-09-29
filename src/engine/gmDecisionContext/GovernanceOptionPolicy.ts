@@ -7,7 +7,8 @@ import type { GameWorld } from '@/domain/world'
 import type { GMResponseOptionKind } from './GMDecisionContextEngine'
 
 export type GovernanceOptionPolicyStatus = 'AUTHORIZED' | 'REQUIRES_APPROVAL' | 'BLOCKED' | 'UNKNOWN'
-export type OptionSelectionSafetyStatus = 'SELECTABLE' | 'REQUIRES_APPROVAL_PATH' | 'NOT_SELECTABLE' | 'UNKNOWN_POLICY'
+export type PlanningEligibility = 'SELECTABLE' | 'NOT_SELECTABLE'
+export type ExecutionReadiness = 'AUTHORIZED' | 'REQUIRES_APPROVAL' | 'UNKNOWN_AUTHORITY' | 'BLOCKED'
 
 export interface GovernanceOptionPolicy {
   /** This is the highest mapped Governance domain, not approval for a concrete later transaction. */
@@ -21,9 +22,9 @@ export interface GovernanceOptionPolicy {
   readonly pendingRequestIds: readonly string[]
 }
 
-export interface OptionSelectionSafety {
-  readonly status: OptionSelectionSafetyStatus
-  readonly reason: 'FORMAL_AUTHORITY_PRESENT' | 'APPROVAL_REQUIRED' | 'POLICY_BLOCKS_SELECTION' | 'GOVERNANCE_REQUEST_PENDING' | 'POLICY_UNRESOLVED'
+export interface GMOptionAuthorityAssessment {
+  readonly planningEligibility: PlanningEligibility
+  readonly executionReadiness: ExecutionReadiness
 }
 
 /** Only family/domain relations already represented in Governance V2 are mapped. */
@@ -64,10 +65,15 @@ export function resolveGovernanceOptionPolicy(world: GameWorld, teamId: TeamId, 
   return Object.freeze({ decisionType, status, authorityGrantIds: Object.freeze(rights.authorityGrantIds), proposerBodyIds: Object.freeze(rights.proposerBodyIds), approverBodyIds: Object.freeze(rights.approverBodyIds), executorBodyIds: Object.freeze(rights.executorBodyIds), pendingRequestIds: Object.freeze(pendingRequestIds) })
 }
 
-export function assessOptionSelectionSafety(policy: GovernanceOptionPolicy): OptionSelectionSafety {
-  if (policy.pendingRequestIds.length > 0) return Object.freeze({ status: 'REQUIRES_APPROVAL_PATH', reason: 'GOVERNANCE_REQUEST_PENDING' })
-  if (policy.status === 'REQUIRES_APPROVAL') return Object.freeze({ status: 'REQUIRES_APPROVAL_PATH', reason: 'APPROVAL_REQUIRED' })
-  if (policy.status === 'BLOCKED') return Object.freeze({ status: 'NOT_SELECTABLE', reason: 'POLICY_BLOCKS_SELECTION' })
-  if (policy.status === 'AUTHORIZED') return Object.freeze({ status: 'SELECTABLE', reason: 'FORMAL_AUTHORITY_PRESENT' })
-  return Object.freeze({ status: 'UNKNOWN_POLICY', reason: 'POLICY_UNRESOLVED' })
+/** Broad planning may proceed without execution authority; only an explicit canonical block excludes it. */
+export function assessGMOptionAuthority(policy: GovernanceOptionPolicy): GMOptionAuthorityAssessment {
+  const planningEligibility: PlanningEligibility = policy.status === 'BLOCKED' ? 'NOT_SELECTABLE' : 'SELECTABLE'
+  const executionReadiness: ExecutionReadiness = policy.status === 'BLOCKED'
+    ? 'BLOCKED'
+    : policy.status === 'REQUIRES_APPROVAL' || policy.pendingRequestIds.length > 0
+      ? 'REQUIRES_APPROVAL'
+      : policy.status === 'AUTHORIZED'
+        ? 'AUTHORIZED'
+        : 'UNKNOWN_AUTHORITY'
+  return Object.freeze({ planningEligibility, executionReadiness })
 }
