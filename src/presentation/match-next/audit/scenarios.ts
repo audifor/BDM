@@ -8,7 +8,7 @@ import { runNextAudit, type NextAuditRun } from './nextAudit'
 
 export type NextScenarioKind =
   | 'halfCourtOffense' | 'transitionOffense' | 'transitionDefense' | 'screen' | 'pickAndRoll' | 'drive'
-  | 'helpDefense' | 'passSequence' | 'madeShot' | 'missedShot' | 'rebound' | 'inbound'
+  | 'helpDefense' | 'passSequence' | 'madeShot' | 'missedShot' | 'rebound' | 'inbound' | 'cut' | 'offensiveRebound' | 'kickOut'
 
 export interface PossessionWindow {
   readonly seed: number
@@ -24,6 +24,12 @@ export interface PossessionWindow {
   readonly missedThenRebound: boolean
   readonly reboundType: string | undefined
   readonly drive: boolean
+  readonly screenSet: boolean
+  readonly screenUsed: boolean
+  readonly screenThenDrive: boolean
+  readonly cut: boolean
+  readonly kickOut: boolean
+  readonly offensiveRebound: boolean
   readonly help: boolean
   readonly transition: string | undefined
   readonly transitionStopped: boolean
@@ -70,6 +76,12 @@ export function possessionWindows(seed: number, events: readonly MatchNextEvent[
       missedThenRebound: window.some((e) => e.type === 'shotMissed') && reboundEv !== undefined,
       reboundType: reboundEv?.reboundType,
       drive: window.some((e) => e.type === 'actionStarted' && e.actionKind === 'DRIVE'),
+      screenSet: window.some((e) => e.type === 'screenSet'),
+      screenUsed: window.some((e) => e.type === 'screenUsed'),
+      screenThenDrive: window.some((e) => e.type === 'screenUsed' && window.some((d) => d.type === 'actionStarted' && d.actionKind === 'DRIVE' && d.t >= e.t && d.t <= e.t + 2)),
+      cut: window.some((e) => e.type === 'offBallMove' && (e.ballReason === 'BASKET_CUT' || e.ballReason === 'BACKDOOR_CUT')),
+      kickOut: window.some((e) => e.type === 'actionStarted' && e.actionKind === 'KICK_OUT'),
+      offensiveRebound: window.some((e) => e.type === 'reboundSecured' && e.reboundType === 'offensive'),
       help: window.some((e) => e.type === 'defensiveResponsibilityChanged' && (e.responsibilityKind === 'HELP' || e.responsibilityKind === 'ROTATE' || e.responsibilityKind === 'X_OUT')),
       transition: trans?.transitionTrigger,
       transitionStopped: window.some((e) => e.type === 'transitionAdvantageChanged' && e.transitionAdvantage === 'STOPPED'),
@@ -84,6 +96,11 @@ const CRITERIA: readonly { readonly kind: NextScenarioKind; readonly description
   { kind: 'halfCourtOffense', description: 'Half-court offense: >= 8 s of SETUP/ACTION, >= 2 completed passes, no transition, ends in a shot', test: (w) => w.setupSeconds >= 8 && w.passes >= 2 && w.transition === undefined && w.shots >= 1 },
   { kind: 'transitionOffense', description: 'Transition offense after a defensive rebound/turnover/steal, ending in a shot', test: (w) => w.transition !== undefined && w.transition !== 'madeBasketInbound' && w.transition !== 'openingJumpBall' && w.shots >= 1 },
   { kind: 'transitionDefense', description: 'Transition defense: the transition ends STOPPED (defense recovers) before the shot', test: (w) => w.transition !== undefined && w.transitionStopped && w.shots >= 1 },
+  { kind: 'screen', description: 'Ball screen: a screener sets a real screen (approach, set) for the ball handler', test: (w) => w.screenSet && w.shots >= 1 },
+  { kind: 'pickAndRoll', description: 'Pick and roll: the handler uses the screen (drive off it) and the possession ends in a shot', test: (w) => w.screenThenDrive && w.shots >= 1 },
+  { kind: 'cut', description: 'Off-ball cut: a basket or backdoor cut with a reason (denial / sag) during the possession', test: (w) => w.cut && w.shots >= 1 },
+  { kind: 'kickOut', description: 'Drive and kick-out: the drive collapses the defense and the ball is kicked out', test: (w) => w.kickOut && w.shots >= 1 },
+  { kind: 'offensiveRebound', description: 'Offensive rebound and reset: the rebounder secures, gathers and the possession continues', test: (w) => w.offensiveRebound && w.shots >= 2 },
   { kind: 'drive', description: 'Drive: a DRIVE action starts during the possession', test: (w) => w.drive },
   { kind: 'helpDefense', description: 'Help defense: HELP / ROTATE / X_OUT responsibility triggered', test: (w) => w.help },
   { kind: 'passSequence', description: 'Pass sequence: >= 4 completed passes in one possession', test: (w) => w.passes >= 4 },
@@ -93,8 +110,8 @@ const CRITERIA: readonly { readonly kind: NextScenarioKind; readonly description
   { kind: 'inbound', description: 'Made-basket inbound possession', test: (w) => w.startReason === 'madeBasketInbound' && w.shots >= 1 },
 ]
 
-/** Kinds the engine cannot produce today (no screen/P&R action system in Match Next). */
-export const UNAVAILABLE_SCENARIOS: readonly NextScenarioKind[] = ['screen', 'pickAndRoll']
+/** Kinds the engine cannot produce today. Screens / P&R exist since BT2, so nothing is unavailable any more. */
+export const UNAVAILABLE_SCENARIOS: readonly NextScenarioKind[] = []
 
 export function findNextScenarios(seeds: readonly number[], run: (seed: number) => NextAuditRun = (seed) => runNextAudit(seed, { maxTicks: 9000 })): readonly NextScenario[] {
   const chosen = new Map<NextScenarioKind, NextScenario>()

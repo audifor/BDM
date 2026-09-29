@@ -3,7 +3,7 @@ import type { PlayerId, TeamId } from '@/domain/ids'
 import { emitEvent } from '../events'
 import { activePossession, type DefensiveAssignment, type DefensiveHelpDecision, type DefensiveStructureState, type MatchPlayerState, type MatchState } from '../state'
 import type { DefensiveDecisionKind, DefensiveResponsibilityKind, PlayerResponsibility, StructuralDecision } from '../responsibility/Responsibility'
-import type { MovementFacing, MovementIntent, MovementUrgency } from '../movement/MovementIntent'
+import { MOVEMENT_URGENCY_FACTORS, type MovementFacing, type MovementIntent, type MovementUrgency } from '../movement/MovementIntent'
 import { attackingBasketForTeam } from '../structure/FiveOutStructure'
 
 const ON_BALL_CUSHION_METERS = 1.05
@@ -14,6 +14,9 @@ const HELP_SHADE_METERS = 2.2
 const RECOVER_START_METERS = 1.0
 const RECOVER_END_METERS = 0.6
 const DRIVE_PAINT_THREAT_METERS = 4.8
+const CLOSEOUT_SPRINT_DISTANCE_METERS = 2.2
+/** Staying with a man who is moving takes more than a jog. */
+const TRACKING_RUN_DISTANCE_METERS = 0.7
 
 /** Reconciles one possession's assignments and defensive structure without changing player positions. */
 export function reconcileManDefense(input: MatchState): MatchState {
@@ -53,6 +56,7 @@ export function reconcileManDefense(input: MatchState): MatchState {
   const activeDrive = state.actions.find((action) => action.kind === 'DRIVE' && action.status === 'ACTIVE')
   const helpDecision = resolveDriveHelpDecision(state, assignments, playerById, ballHandlerId, activeDrive, prior?.helpDecision, defendedBasket)
   const driveHelperDefenderId = helpDecision.helperPlayerId
+  const rimProtectorPlayerId = resolveRimProtector(state, assignments, playerById, ballHandlerId, prior?.rimProtectorPlayerId ?? null, helpDecision, defendedBasket)
   const rotationByDefender = new Map(helpDecision.rotations.map((rotation) => [rotation.playerId, rotation]))
   const previousResponsibilities = new Map(state.responsibilities.filter((item) => item.owner === 'defensiveStructure').map((item) => [item.playerId, item]))
   const previousDecisions = new Map(state.decisions.filter((item) => item.owner === 'defensiveStructure').map((item) => [item.playerId, item]))
@@ -144,7 +148,9 @@ export function reconcileManDefense(input: MatchState): MatchState {
 
       const target = kind === 'HELP' || kind === 'LOW_MAN'
         ? guardPosition(handlerPosition(state, ballHandlerId, attacker.position), state.ball.position, defendedBasket, 'HELP', state.court, defensiveTactics)
-        : rotationTarget ?? guardPosition(attacker.position, state.ball.position, defendedBasket, responsibilityTargetKind, state.court, defensiveTactics)
+        : kind === 'GAP' && defender.playerId === rimProtectorPlayerId && rotationTarget === undefined
+          ? rimProtectorPosition(state.ball.position, defendedBasket, state.court)
+          : rotationTarget ?? guardPosition(attacker.position, state.ball.position, defendedBasket, responsibilityTargetKind, state.court, defensiveTactics)
       const distanceToTarget = distanceBetween(defender.position, target)
       const handler = ballHandlerId === null ? undefined : playerById.get(ballHandlerId)
       const isContainingDrive = kind === 'ON_BALL' && activeDrive?.playerId === ballHandlerId
@@ -154,12 +160,15 @@ export function reconcileManDefense(input: MatchState): MatchState {
         && distanceToTarget > 2
       const urgency: MovementUrgency = isContainingDrive
         ? containmentMatchup >= 0 ? 'sprint' : 'run'
-        : (possession.phase === 'ADVANCE' && distanceToTarget > 2) || urgentRotation ? 'run' : 'jog'
+        : (possession.phase === 'ADVANCE' && distanceToTarget > 2) || urgentRotation ? 'run'
+          // A defender who is far from where he must be (a closeout after a catch, a swing to the far side) hustles;
+          // a jog is only for small adjustments around his man.
+          : distanceToTarget > CLOSEOUT_SPRINT_DISTANCE_METERS ? 'sprint' : distanceToTarget > TRACKING_RUN_DISTANCE_METERS ? 'run' : 'jog'
       const facing: MovementFacing = { kind: 'BALL' }
       intents.push({
         playerId: defender.playerId,
         target,
-        urgency,
+        urgency: keepUrgencyAboveCurrentSpeed(urgency, defender),
         facing,
         provenance: { responsibilityId: responsibility.id, decisionId: decision.id, owner: 'defensiveStructure' },
       })
@@ -177,8 +186,9 @@ export function reconcileManDefense(input: MatchState): MatchState {
     && prior.onBallDefenderPlayerId === onBallDefenderPlayerId
     && helpDefenderPlayerIds === prior.helpDefenderPlayerIds
     && JSON.stringify(prior.helpDecision) === JSON.stringify(helpDecision)
+    && (prior.rimProtectorPlayerId ?? null) === rimProtectorPlayerId
     ? prior
-    : { teamId: defendingTeamId, scheme: 'MAN', defendedBasket, assignments, onBallDefenderPlayerId, helpDefenderPlayerIds, helpDecision }
+    : { teamId: defendingTeamId, scheme: 'MAN', defendedBasket, assignments, onBallDefenderPlayerId, helpDefenderPlayerIds, helpDecision, rimProtectorPlayerId }
   return {
     ...state,
     defensiveStructure: structure,
@@ -188,6 +198,40 @@ export function reconcileManDefense(input: MatchState): MatchState {
     nextResponsibilitySequence,
     nextDecisionSequence,
   }
+}
+
+/** Keep a foot in the paint: the man-to-man defender whose attacker is farthest from the ball sags to the rim. */
+const RIM_PROTECTOR_DISTANCE_METERS = 2.4
+/** The protector stays until his man is this close to the ball (then he has to be his man's defender again). */
+const RIM_PROTECTOR_KEEP_BALL_DISTANCE_METERS = 4.5
+const RIM_PROTECTOR_MIN_BALL_DISTANCE_METERS = 6
+
+function resolveRimProtector(
+  state: MatchState,
+  assignments: readonly DefensiveAssignment[],
+  playerById: ReadonlyMap<PlayerId, MatchPlayerState>,
+  ballHandlerId: PlayerId | null,
+  prior: PlayerId | null,
+  helpDecision: DefensiveHelpDecision,
+  basket: CourtPosition,
+): PlayerId | null {
+  if (helpDecision.status === 'TRIGGERED' || ballHandlerId === null) return null
+  const candidates = assignments
+    .filter((item) => item.attackerPlayerId !== ballHandlerId)
+    .map((item) => ({ item, attacker: playerById.get(item.attackerPlayerId), defender: playerById.get(item.defenderPlayerId) }))
+    .filter((entry): entry is { item: DefensiveAssignment; attacker: MatchPlayerState; defender: MatchPlayerState } => entry.attacker !== undefined && entry.defender !== undefined)
+    .map((entry) => ({ ...entry, ballDistance: distanceBetween(entry.attacker.position, state.ball.position) }))
+  const kept = prior === null ? undefined : candidates.find((entry) => entry.item.defenderPlayerId === prior)
+  if (kept !== undefined && kept.ballDistance >= RIM_PROTECTOR_KEEP_BALL_DISTANCE_METERS) return prior
+  const chosen = candidates
+    .filter((entry) => entry.ballDistance >= RIM_PROTECTOR_MIN_BALL_DISTANCE_METERS && distanceBetween(entry.attacker.position, basket) >= 4)
+    .sort((left, right) => right.ballDistance - left.ballDistance || left.attacker.offense.shooting - right.attacker.offense.shooting || comparePlayerId(left.defender, right.defender))[0]
+  return chosen?.item.defenderPlayerId ?? null
+}
+
+function rimProtectorPosition(ball: CourtPosition, basket: CourtPosition, court: MatchState['court']): CourtPosition {
+  const towardBall = unitVector({ x: ball.x - basket.x, y: ball.y - basket.y }, { x: basket.x >= court.lengthMeters / 2 ? -1 : 1, y: 0 })
+  return { x: clamp(basket.x + towardBall.x * RIM_PROTECTOR_DISTANCE_METERS, 0.15, court.lengthMeters - 0.15), y: clamp(basket.y + towardBall.y * RIM_PROTECTOR_DISTANCE_METERS * 0.6, 0.15, court.widthMeters - 0.15) }
 }
 
 function resolveDriveHelpDecision(
@@ -284,6 +328,17 @@ function rotationTargetPosition(
 
 function handlerPosition(state: MatchState, handlerId: PlayerId | null, fallback: CourtPosition): CourtPosition {
   return state.players.find((player) => player.playerId === handlerId)?.position ?? fallback
+}
+
+/** A defender who is already running fast does not get a slower urgency than his current speed: he brakes, he does not snap. */
+function keepUrgencyAboveCurrentSpeed(urgency: MovementUrgency, defender: MatchPlayerState): MovementUrgency {
+  const speed = Math.hypot(defender.velocity.x, defender.velocity.y)
+  const order: readonly MovementUrgency[] = ['walk', 'jog', 'run', 'sprint']
+  for (let index = order.indexOf(urgency); index < order.length; index += 1) {
+    const candidate = order[index]!
+    if (speed <= defender.kinematics.maxSpeedMps * MOVEMENT_URGENCY_FACTORS[candidate] + 0.05) return candidate
+  }
+  return 'sprint'
 }
 
 /** Positions a defender from live man/ball/basket geometry, never an offensive slot target. */

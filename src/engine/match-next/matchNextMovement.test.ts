@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { createCourtGeometry, distanceBetween, isInsideCourt, type CourtPosition } from '@/domain/court'
+import { createCourtGeometry, distanceBetween, isBeyondThreePointLine, isInsideCourt, type CourtPosition } from '@/domain/court'
 import { gameIdFromString, playerIdFromString, teamIdFromString } from '@/domain/ids'
 import { createMatchState, applyCommand, tick, toFrame, observeFrames, activePossession, stepPlayerKinematics, integrateMatchPlayers, resolveFiveOutTargets, resolveBallSide, slotTargetsAreValid, assignFiveOutSlots, attackingBasketForTeam, advanceTarget, MOVEMENT_DT_SECONDS, TARGET_ARRIVAL_TOLERANCE_METERS, TARGET_ARRIVAL_SPEED_MPS, type MatchPlayerState, type MatchSetup, type MatchState } from './index'
 
@@ -184,7 +184,14 @@ describe('Match Next movement and 5OUT authority', () => {
     for (const slot of right) expect(left.find((item) => item.slot === slot.slot)!.position.x + slot.position.x).toBeCloseTo(court.lengthMeters, 8)
     expect(oppositeSide.find((item) => item.slot === 'STRONG_CORNER')!.position.y).toBeGreaterThan(right.find((item) => item.slot === 'STRONG_CORNER')!.position.y)
     const deeperBall = resolveFiveOutTargets(court, { x: 18, y: 3 }, court.baskets.right, 'TOP')
-    expect(deeperBall.find((item) => item.slot === 'STRONG_SLOT')!.position.x).not.toBe(right.find((item) => item.slot === 'STRONG_SLOT')!.position.x)
+    // BT2C: zones belong to the court, not to the ball: a deeper ball does not drag the wings, and the corners are real
+    // corners (on the corner-three strip), not deep wings.
+    expect(deeperBall.find((item) => item.slot === 'STRONG_SLOT')!.position).toEqual(right.find((item) => item.slot === 'STRONG_SLOT')!.position)
+    for (const slot of right) expect(isBeyondThreePointLine(slot.position, court.baskets.right, court)).toBe(true)
+    for (const corner of right.filter((item) => item.slot.endsWith('CORNER'))) {
+      expect(Math.min(corner.position.y, court.widthMeters - corner.position.y)).toBeLessThanOrEqual(court.threePointLine.cornerOffsetMeters)
+      expect(court.lengthMeters - corner.position.x).toBeLessThan(3)
+    }
     expect(resolveBallSide({ x: 22, y: 7.8 }, court, 'TOP')).toBe('TOP')
     expect(resolveBallSide({ x: 22, y: 8.4 }, court, 'TOP')).toBe('BOTTOM')
     expect(resolveBallSide({ x: 7, y: 6.6 }, court, 'BOTTOM')).toBe('TOP')

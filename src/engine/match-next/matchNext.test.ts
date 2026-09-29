@@ -217,6 +217,10 @@ describe('Match Next ball and possession authority', () => {
     state = applyCommand(state, { type: 'putBallDead', reason: 'other', restartTeamId: setup.awayTeamId })
     expect(state.ball).toMatchObject({ kind: 'DEAD', reason: 'other', restartTeamId: setup.awayTeamId })
     expect(state.possessions[0]).toMatchObject({ endReason: 'turnover' })
+    // BT2K: play restarts at the sideline point nearest to where the ball went dead, not at a centre-court jump.
+    const spot = state.ball.kind === 'DEAD' ? state.ball.restartSpot! : center
+    expect(Math.min(spot.y, setup.court.widthMeters - spot.y)).toBeLessThanOrEqual(0.5)
+    state = { ...state, players: state.players.map((player) => player.playerId === awayInbounder ? { ...player, position: { ...spot } } : player) }
     state = applyCommand(state, { type: 'startInbound', teamId: setup.awayTeamId, inbounderPlayerId: awayInbounder, reason: 'turnoverInbound' })
     expect(activePossession(state)).toMatchObject({ teamId: setup.awayTeamId, startReason: 'turnoverInbound', phase: 'INBOUND' })
   })

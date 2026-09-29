@@ -251,7 +251,7 @@ export function putBallDead(state: MatchState, reason: 'outOfBounds' | 'other', 
         restartTeamId: restartTeam,
         restartSpot: reason === 'outOfBounds'
           ? { ...state.ball.position }
-          : { x: state.court.lengthMeters / 2, y: state.court.widthMeters / 2 },
+          : nearestSidelineSpot(state.ball.position, state.court),
       }),
     },
     clock: { gameRunning: !shouldStopGameClock(reason, state.period, state.gameClockTenths, state.clockRules), shotRunning: false },
@@ -268,7 +268,7 @@ export function violateShotClock(state: MatchState): MatchState {
   const position = state.ball.position
   let next: MatchState = {
     ...state,
-    ball: { kind: 'DEAD', reason: 'shotClockViolation', position, heightMeters: 0.08, restartTeamId, restartSpot: { x: state.court.lengthMeters / 2, y: state.court.widthMeters / 2 } },
+    ball: { kind: 'DEAD', reason: 'shotClockViolation', position, heightMeters: 0.08, restartTeamId, restartSpot: nearestSidelineSpot(position, state.court) },
     clock: { gameRunning: !shouldStopGameClock('shotClockViolation', state.period, state.gameClockTenths, state.clockRules), shotRunning: false },
     shotClockTenths: 0,
   }
@@ -278,8 +278,31 @@ export function violateShotClock(state: MatchState): MatchState {
   return emitEvent(next, 'ballDead', { teamId: restartTeamId, ballReason: 'shotClockViolation' })
 }
 
+/** Where a dead ball is put back in play when no rule names a spot: the sideline point closest to where the ball was. */
+function nearestSidelineSpot(position: CourtPosition, court: MatchState['court']): CourtPosition {
+  return { x: Math.max(0.5, Math.min(court.lengthMeters - 0.5, position.x)), y: position.y < court.widthMeters / 2 ? 0.5 : court.widthMeters - 0.5 }
+}
+
+/** A made basket: the ball leaves the net at rim height, falls to the floor and is carried to the inbound spot (also used for the ball dead at the horn). */
+const MADE_BASKET_BALL_HEIGHT_METERS = 3.05
+const MADE_BASKET_FALL_METERS_PER_TICK = 0.42
+const MADE_BASKET_FLOOR_HEIGHT_METERS = 0.12
+const MADE_BASKET_RETRIEVAL_METERS_PER_TICK = 0.4
+
 export function advanceBallAtTick(state: MatchState): MatchState {
   const ball = state.ball
+  if (ball.kind === 'DEAD' && (ball.reason === 'madeBasket' || ball.reason === 'periodEnd')) {
+    const height = Math.max(MADE_BASKET_FLOOR_HEIGHT_METERS, ball.heightMeters - MADE_BASKET_FALL_METERS_PER_TICK)
+    // After the horn the ball is carried to where the next period restarts (the centre spot) instead of jumping there.
+    const target = ball.restartSpot ?? (ball.reason === 'periodEnd' ? { x: state.court.lengthMeters / 2, y: state.court.widthMeters / 2 } : ball.position)
+    const dx = target.x - ball.position.x
+    const dy = target.y - ball.position.y
+    const distance = Math.hypot(dx, dy)
+    const position = height > MADE_BASKET_FLOOR_HEIGHT_METERS || distance <= 1e-9 ? ball.position
+      : distance <= MADE_BASKET_RETRIEVAL_METERS_PER_TICK ? { ...target }
+        : { x: ball.position.x + dx / distance * MADE_BASKET_RETRIEVAL_METERS_PER_TICK, y: ball.position.y + dy / distance * MADE_BASKET_RETRIEVAL_METERS_PER_TICK }
+    return height === ball.heightMeters && position === ball.position ? state : { ...state, ball: { ...ball, heightMeters: height, position } }
+  }
   if (ball.kind === 'JUMP_BALL') {
     const progress = Math.max(0, Math.min(1, (state.t - ball.startedT) / (ball.resolvesAtT - ball.startedT)))
     const receiver = findActivePlayer(state, ball.receiverPlayerId)
@@ -388,7 +411,7 @@ function resolveMadeShot(state: MatchState, points: 2 | 3): MatchState {
   let next: MatchState = {
     ...state,
     score: isHome ? { ...state.score, home: state.score.home + points } : { ...state.score, away: state.score.away + points },
-    ball: { kind: 'DEAD', reason: 'madeBasket', position: ball.targetBasket, heightMeters: 0.08, restartTeamId: opponent, restartSpot },
+    ball: { kind: 'DEAD', reason: 'madeBasket', position: ball.targetBasket, heightMeters: MADE_BASKET_BALL_HEIGHT_METERS, restartTeamId: opponent, restartSpot },
     clock: { gameRunning: !shouldStopGameClock('madeBasket', state.period, state.gameClockTenths, state.clockRules), shotRunning: false },
     shotClockTenths: null,
   }

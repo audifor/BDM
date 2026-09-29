@@ -85,6 +85,14 @@ export function toNextTickFrame(frame: MatchFrame, labels: NextPlayerLabels, pre
     players,
     ball,
     offenseSlots: (frame.offensiveStructure?.slots ?? []).map((s) => ({ slot: s.slot, position: pt(s.position) })),
+    flow: frame.offenseFlow === null ? undefined : {
+      stage: frame.offenseFlow.stage, settled: frame.offenseFlow.settledAtT !== null,
+      moves: frame.offenseFlow.moves.map((move) => ({ playerId: move.playerId, kind: move.kind, target: pt(move.target) })),
+    },
+    screen: frame.screen === null ? undefined : {
+      phase: frame.screen.phase, coverage: frame.screen.coverage, exit: frame.screen.exit, handlerId: frame.screen.handlerId, screenerId: frame.screen.screenerId,
+      location: pt(frame.screen.location), waypoint: pt(frame.screen.waypoint),
+    },
     transition: frame.transition === null ? undefined : { trigger: frame.transition.trigger, advantage: frame.transition.advantage, teamId: frame.transition.teamId },
     currentAction: activeAction === undefined ? undefined : `${activeAction.kind}${activeAction.phase === undefined ? '' : `:${activeAction.phase}`}`,
     isComplete,

@@ -3,10 +3,14 @@ import { draw } from '../rng'
 import { emitEvent } from '../events'
 import { releasePass, releaseShot, type ReleasePassCommand } from '../ball/BallTransitions'
 import { changePossessionPhase } from '../possession'
-import { activePossession, type MatchState } from '../state'
+import { activePossession, type MatchPlayerState, type MatchState } from '../state'
 import type { MovementIntent } from '../movement/MovementIntent'
 import { attackingBasketForTeam } from '../structure/FiveOutStructure'
-import { bestReceiver, driveTarget, estimateShotContest, passQuality, selectDecision, shotMakeProbability, shotValueAt } from './DecisionCore'
+import { guardPosition } from '../defense/ManDefense'
+import { bestReceiver, driveTarget, estimateShotContest, passQuality, readDecision, shotMakeProbability, shotValueAt } from './DecisionCore'
+import { reconcileOffenseFlow } from './OffenseFlow'
+import { createScreenState, planScreen, reconcileScreen, useScreen } from './ScreenCore'
+import { reconcileOffBallMovement } from './OffBallMovement'
 import type { MatchActionKind, MatchActionOutcome, MatchActionState, MatchDecision } from './ActionState'
 
 const DRIVE_MIN_TICKS = 8
@@ -14,6 +18,12 @@ const DRIVE_MIN_PROGRESS_METERS = 2.4
 const DRIVE_TARGET_RADIUS_METERS = 1.05
 const DRIVE_TIMEOUT_TICKS = 36
 const CLOSEOUT_ARRIVAL_METERS = 1.2
+/** A defender this close to the passing line can deflect / intercept the pass. */
+const LANE_STEAL_REACH_METERS = 1.3
+const LANE_STEAL_MAX_CHANCE = 0.24
+/** The driver has beaten his man when he has this much separation AND the defender is no longer ahead of him. */
+const DRIVE_BEATEN_GAP_METERS = 1.2
+const DRIVE_BEATEN_AHEAD_METERS = 0.2
 
 /** Advances action lifecycles and autonomous decisions from MatchState only. */
 export function reconcileActions(input: MatchState): MatchState {
@@ -23,11 +33,17 @@ export function reconcileActions(input: MatchState): MatchState {
   state = updateCloseouts(state)
   state = updateDrives(state)
   state = releaseReadyShots(state)
+  state = reconcileOffenseFlow(state)
+  state = reconcileScreen(state)
+  // The screen may just have resolved its action: the flow must see it now so the handler gets his read time.
+  state = reconcileOffenseFlow(state)
+  state = reconcileOffBallMovement(state)
   if (!hasActiveOffensiveAction(state)) {
-    const decision = selectDecision(state)
-    if (decision) state = executeDecision(recordDecision(state, decision), decision)
+    const read = readDecision(state)
+    if (read.decision) state = executeDecision(recordDecision(state, read.decision), read.decision)
+    else if (read.holdUntilT !== undefined && state.offenseFlow !== null) state = { ...state, offenseFlow: { ...state.offenseFlow, readyAtT: read.holdUntilT } }
   }
-  return applyDriveIntents(state)
+  return applyPassReceiveIntents(applyDriveIntents(state))
 }
 
 function resolveBallActions(state: MatchState): MatchState {
@@ -120,7 +136,11 @@ function updateDrives(state: MatchState): MatchState {
     const helpDecision = next.defensiveStructure?.helpDecision
     const helperId = helpDecision?.status === 'TRIGGERED' && helpDecision.sourceActionId === action.id
       ? helpDecision.helperPlayerId : undefined
-    if (elapsed >= DRIVE_MIN_TICKS && progress >= DRIVE_MIN_PROGRESS_METERS && helperId) {
+    // The drive only becomes an ADVANTAGE when the handler has really beaten his man: help has to come because the
+    // on-ball defender is no longer in front of him, not merely because the ball is near the paint.
+    const guardId = next.defensiveStructure?.assignments.find((item) => item.attackerPlayerId === driver.playerId)?.defenderPlayerId
+    const onBallDefender = next.players.find((player) => player.playerId === guardId)
+    if (elapsed >= DRIVE_MIN_TICKS && progress >= DRIVE_MIN_PROGRESS_METERS && helperId && driverBeatDefender(driver, onBallDefender, action.target)) {
       next = updateAction(next, action.id, { helpDefenderPlayerId: helperId })
       next = resolveAction(next, action.id, 'ADVANTAGE')
       next = setPossessionPhase(next, 'SETUP')
@@ -141,6 +161,18 @@ function updateDrives(state: MatchState): MatchState {
   return next
 }
 
+/** True when the on-ball defender no longer cuts off the line from the driver to the rim. */
+function driverBeatDefender(driver: MatchPlayerState, defender: MatchPlayerState | undefined, rim: CourtPosition): boolean {
+  if (defender === undefined) return true
+  const gap = distanceBetween(defender.position, driver.position)
+  const toRimX = rim.x - driver.position.x
+  const toRimY = rim.y - driver.position.y
+  const toRim = Math.hypot(toRimX, toRimY)
+  if (toRim < 1e-6) return true
+  const ahead = ((defender.position.x - driver.position.x) * toRimX + (defender.position.y - driver.position.y) * toRimY) / toRim
+  return gap >= DRIVE_BEATEN_GAP_METERS && ahead < DRIVE_BEATEN_AHEAD_METERS
+}
+
 function releaseReadyShots(state: MatchState): MatchState {
   let next = state
   for (const action of state.actions) {
@@ -156,11 +188,13 @@ function releaseReadyShots(state: MatchState): MatchState {
     const contest = estimateShotContest(next, shooter.playerId)
     const probability = shotMakeProbability(shooter.offense.shooting, distance, points, contest.score, shooter.fatigue)
     const drawResult = draw(next.rng, 'outcome')
-    next = { ...next, rng: drawResult.state }
+    const bounceDistance = draw(drawResult.state, 'outcome')
+    const bounceAngle = draw(bounceDistance.state, 'outcome')
+    next = { ...next, rng: bounceAngle.state }
     const arrivalT = next.t + 6
     const plannedOutcome = drawResult.value < probability
       ? { kind: 'MAKE' as const, points }
-      : { kind: 'MISS' as const, reboundTarget: reboundLandingTarget(shooter.position, basket), reboundAvailableT: arrivalT + 12 }
+      : { kind: 'MISS' as const, reboundTarget: reboundLandingTarget(shooter.position, basket, bounceDistance.value, bounceAngle.value, next.court), reboundAvailableT: arrivalT + 12 }
     next = releaseShot(next, {
       targetBasket: basket,
       travelTicks: 6,
@@ -184,15 +218,21 @@ function releaseReadyShots(state: MatchState): MatchState {
   return next
 }
 
-function reboundLandingTarget(shooter: CourtPosition, basket: CourtPosition): CourtPosition {
+/**
+ * Where a missed shot comes down. Short misses drop near the rim; the longer the shot, the harder it comes off the rim
+ * and the farther it bounces (long rebounds), always on the shooter side of the basket, with lateral scatter.
+ */
+function reboundLandingTarget(shooter: CourtPosition, basket: CourtPosition, distanceDraw: number, angleDraw: number, court: MatchState['court']): CourtPosition {
   const dx = shooter.x - basket.x
   const dy = shooter.y - basket.y
   const shotDistance = Math.hypot(dx, dy)
   if (shotDistance <= 1e-9) return { ...basket }
-  const reboundDistance = Math.min(3, shotDistance * 0.45)
+  const meanBounce = clamp(0.9 + shotDistance * 0.3, 1.2, 4.6)
+  const reboundDistance = clamp(meanBounce * (0.65 + distanceDraw * 0.7), 0.8, 5.5)
+  const angle = Math.atan2(dy, dx) + (angleDraw - 0.5) * 1.6
   return {
-    x: basket.x + dx / shotDistance * reboundDistance,
-    y: basket.y + dy / shotDistance * reboundDistance,
+    x: clamp(basket.x + Math.cos(angle) * reboundDistance, 0.3, court.lengthMeters - 0.3),
+    y: clamp(basket.y + Math.sin(angle) * reboundDistance, 0.3, court.widthMeters - 0.3),
   }
 }
 
@@ -211,18 +251,29 @@ function executeDecision(state: MatchState, decision: MatchDecision): MatchState
   const possession = activePossession(state)
   if (!actor || !possession || state.ball.kind !== 'HELD' || state.ball.ownerPlayerId !== actor.playerId) return state
   const basket = attackingBasketForTeam(possession.teamId, state.homeTeamId, state.period, state.court)
+  if (decision.kind === 'SCREEN') {
+    const plan = planScreen(state, actor, basket)
+    if (plan === null) return state
+    const action = createAction(state, decision, 'SCREEN', { phase: 'SCREEN_APPROACH', targetPlayerId: plan.screenerId, target: { ...plan.location }, startPosition: { ...actor.position } })
+    let next = setPossessionPhase(startAction(state, action), 'ACTION')
+    next = { ...next, screen: createScreenState(next, plan, actor.playerId, action.id) }
+    return next
+  }
+  const screenSet = state.screen?.phase === 'SET' && state.screen.handlerId === actor.playerId ? state.screen : null
   if (decision.kind === 'DRIVE') {
     const target = driveTarget(state, actor)
     const action = createAction(state, decision, 'DRIVE', {
       phase: 'DRIVING', startPosition: { ...actor.position }, target, targetBasket: { ...basket },
+      ...(screenSet === null ? {} : { waypoint: { ...screenSet.waypoint }, screenId: screenSet.id }),
     })
-    return setPossessionPhase(startAction(state, action), 'ACTION')
+    return useScreen(setPossessionPhase(startAction(state, action), 'ACTION'), actor.playerId)
   }
   if (decision.kind === 'SHOOT' || decision.kind === 'CATCH_AND_SHOOT') {
     const action = createAction(state, decision, decision.kind, {
       phase: 'GATHER', releaseAtT: state.t + (decision.kind === 'CATCH_AND_SHOOT' ? 4 : 2), targetBasket: { ...basket },
+      ...(screenSet === null ? {} : { screenId: screenSet.id }),
     })
-    return setPossessionPhase(startAction(state, action), 'ACTION')
+    return useScreen(setPossessionPhase(startAction(state, action), 'ACTION'), actor.playerId)
   }
   const receiver = decision.targetPlayerId
     ? state.players.find((player) => player.playerId === decision.targetPlayerId)
@@ -232,12 +283,25 @@ function executeDecision(state: MatchState, decision: MatchDecision): MatchState
   const distance = distanceBetween(actor.position, receiver.position)
   const travelTicks = Math.max(2, Math.min(8, Math.ceil(distance / 10 * 10)))
   const predictionSeconds = travelTicks * 0.1
-  const target: CourtPosition = {
-    x: clamp(receiver.position.x + receiver.velocity.x * predictionSeconds, 0.25, state.court.lengthMeters - 0.25),
-    y: clamp(receiver.position.y + receiver.velocity.y * predictionSeconds, 0.25, state.court.widthMeters - 0.25),
+  const led: CourtPosition = {
+    x: receiver.position.x + receiver.velocity.x * predictionSeconds,
+    y: receiver.position.y + receiver.velocity.y * predictionSeconds,
+  }
+  // A pass can be thrown badly: worse passers and tighter lanes miss the receiver by more than he can reach.
+  const errorDraw = draw(state.rng, 'outcome')
+  const directionDraw = draw(errorDraw.state, 'outcome')
+  state = { ...state, rng: directionDraw.state }
+  const badPass = errorDraw.value < clamp(0.015 + (0.94 - quality) * 0.16, 0.01, 0.2)
+  const angle = directionDraw.value * Math.PI * 2
+  const miss = badPass ? 1.9 : 0
+  // A defender in the passing lane may get a hand on it: the ball ends up where he is instead of where the receiver is.
+  const stolen = passLaneSteal(state, actor, led, errorDraw.value, directionDraw.value)
+  const target: CourtPosition = stolen ?? {
+    x: clamp(led.x + Math.cos(angle) * miss, 0.25, state.court.lengthMeters - 0.25),
+    y: clamp(led.y + Math.sin(angle) * miss, 0.25, state.court.widthMeters - 0.25),
   }
   const action = createAction(state, decision, decision.kind, {
-    phase: 'PASS_IN_FLIGHT', targetPlayerId: receiver.playerId, target, passQuality: quality,
+    phase: 'PASS_IN_FLIGHT', targetPlayerId: receiver.playerId, target: { x: clamp(led.x, 0.25, state.court.lengthMeters - 0.25), y: clamp(led.y, 0.25, state.court.widthMeters - 0.25) }, passQuality: quality,
   })
   let next = setPossessionPhase(startAction(state, action), 'ACTION')
   const command: ReleasePassCommand = {
@@ -250,12 +314,13 @@ function executeDecision(state: MatchState, decision: MatchDecision): MatchState
     passQuality: quality,
   }
   next = releasePass(next, command)
-  return next
+  return useScreen(next, actor.playerId)
 }
 
 function recordDecision(state: MatchState, decision: MatchDecision): MatchState {
-  let next = { ...state, currentDecision: decision, nextMatchDecisionSequence: state.nextMatchDecisionSequence + 1 }
-  return emitEvent(next, 'decisionSelected', { teamId: decision.teamId, playerId: decision.playerId, decisionId: decision.id, decisionKind: decision.kind })
+  const offenseFlow = state.offenseFlow === null ? null : { ...state.offenseFlow, reads: state.offenseFlow.reads + 1, resetPending: false }
+  let next = { ...state, offenseFlow, currentDecision: decision, nextMatchDecisionSequence: state.nextMatchDecisionSequence + 1 }
+  return emitEvent(next, 'decisionSelected', { teamId: decision.teamId, playerId: decision.playerId, decisionId: decision.id, decisionKind: decision.kind, ...(decision.utility === undefined ? {} : { utility: decision.utility }) })
 }
 
 function createAction(
@@ -316,14 +381,69 @@ function applyDriveIntents(state: MatchState): MatchState {
   if (!activeDrive || !activeDrive.target || !activeDrive.decisionId) return state
   const responsibility = state.responsibilities.find((item) => item.playerId === activeDrive.playerId && item.owner !== 'defensiveStructure')
   if (!responsibility) return state
+  // A drive off a screen first brushes past the screener's shoulder, then attacks the basket.
+  const driver = state.players.find((player) => player.playerId === activeDrive.playerId)
+  const viaWaypoint = activeDrive.waypoint !== undefined && driver !== undefined && distanceBetween(driver.position, activeDrive.waypoint) > 0.7
+    && distanceBetween(driver.position, activeDrive.target) > distanceBetween(activeDrive.waypoint, activeDrive.target) + 0.3
   const intent: MovementIntent = {
     playerId: activeDrive.playerId,
-    target: { ...activeDrive.target },
+    target: viaWaypoint ? { ...activeDrive.waypoint! } : { ...activeDrive.target },
     urgency: 'sprint',
     facing: { kind: 'BASKET' },
     provenance: { responsibilityId: responsibility.id, decisionId: activeDrive.decisionId, owner: 'action' },
   }
   return { ...state, movementIntents: [...state.movementIntents.filter((item) => item.playerId !== activeDrive.playerId), intent] }
+}
+
+/** Steal chance from a defender who stands in the lane: closer to the line and better hands make it likelier. */
+function passLaneSteal(state: MatchState, passer: MatchPlayerState, receiverTarget: CourtPosition, draw1: number, draw2: number): CourtPosition | undefined {
+  let best: { defender: MatchPlayerState; distance: number; point: CourtPosition } | undefined
+  const dx = receiverTarget.x - passer.position.x
+  const dy = receiverTarget.y - passer.position.y
+  const lengthSquared = dx * dx + dy * dy
+  if (lengthSquared < 1) return undefined
+  for (const defender of state.players) {
+    if (!defender.active || defender.teamId === passer.teamId) continue
+    const t = clamp(((defender.position.x - passer.position.x) * dx + (defender.position.y - passer.position.y) * dy) / lengthSquared, 0, 1)
+    if (t < 0.15 || t > 0.9) continue
+    const point = { x: passer.position.x + t * dx, y: passer.position.y + t * dy }
+    const distance = distanceBetween(defender.position, point)
+    if (distance <= LANE_STEAL_REACH_METERS && (best === undefined || distance < best.distance)) best = { defender, distance, point }
+  }
+  if (best === undefined) return undefined
+  const chance = (1 - best.distance / LANE_STEAL_REACH_METERS) * LANE_STEAL_MAX_CHANCE * (0.6 + (best.defender.defense.steal ?? 50) / 125)
+  void draw2
+  return draw1 * 4 < chance ? { ...best.defender.position } : undefined
+}
+
+/** The intended receiver of a pass in flight goes to meet it instead of drifting to a slot while the ball is on its way. */
+function applyPassReceiveIntents(state: MatchState): MatchState {
+  if (state.ball.kind !== 'PASS_IN_FLIGHT' || state.ball.isInbound) return state
+  const ball = state.ball
+  const receiverId = ball.intendedReceiverPlayerId
+  const responsibility = state.responsibilities.find((item) => item.playerId === receiverId && item.owner !== 'defensiveStructure')
+  const action = state.actions.find((item) => item.status === 'ACTIVE' && (item.kind === 'PASS' || item.kind === 'KICK_OUT') && item.targetPlayerId === receiverId)
+  if (!responsibility || !action?.decisionId || !action.target) return state
+  const intent: MovementIntent = {
+    playerId: receiverId,
+    target: { ...action.target },
+    urgency: 'run',
+    facing: { kind: 'BALL' },
+    provenance: { responsibilityId: responsibility.id, decisionId: action.decisionId, owner: 'action' },
+  }
+  let next: MatchState = { ...state, movementIntents: [...state.movementIntents.filter((item) => item.playerId !== receiverId), intent] }
+  // The receiver's defender closes out while the ball is still in the air (his responsibility does not change until the
+  // catch; only his movement does). Waiting for the catch gave every kick-out a free look.
+  const defenderId = next.defensiveStructure?.assignments.find((item) => item.attackerPlayerId === receiverId)?.defenderPlayerId
+  const defender = next.players.find((player) => player.playerId === defenderId)
+  const defenderIntent = next.movementIntents.find((item) => item.playerId === defenderId)
+  const basket = next.defensiveStructure?.defendedBasket
+  if (defender !== undefined && defenderIntent !== undefined && basket !== undefined && defender.teamId !== ball.passerTeamId) {
+    const tactics = defender.teamId === next.homeTeamId ? next.tacticalPlans.home.defense : next.tacticalPlans.away.defense
+    const target = guardPosition(action.target, action.target, basket, 'ON_BALL', next.court, tactics)
+    next = { ...next, movementIntents: [...next.movementIntents.filter((item) => item.playerId !== defender.playerId), { ...defenderIntent, target, urgency: 'sprint' as const }] }
+  }
+  return next
 }
 
 function contestAtDistance(distanceMeters: number, pointOfAttack: number): number {

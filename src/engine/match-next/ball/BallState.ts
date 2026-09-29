@@ -123,5 +123,6 @@ export type BallState =
   | JumpBallState
 
 export const BALL_ACQUISITION_RADIUS_METERS = 1
-export const REBOUND_ACQUISITION_RADIUS_METERS = 0.12
+/** Upper bound of a rebounder reach at the ball; each player own reach is smaller (see ReboundTransition). */
+export const REBOUND_ACQUISITION_RADIUS_METERS = 1.2
 export const HELD_BALL_HEIGHT_METERS = 0.6

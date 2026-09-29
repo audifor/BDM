@@ -44,7 +44,7 @@ for (const sc of scenarios) {
   const summary = { scenario: sc, everyMs: every, views: {} }
   for (const view of ['plain', 'truth']) {
     const page = await open(sc.seed)
-    await page.evaluate(({ view }) => { const a = window.__bdmNext; a.setTruthMode(view === 'truth'); if (view === 'truth') for (const o of ['targets', 'facing', 'assignments', 'slots']) a.setOverlay(o, true) }, { view })
+    await page.evaluate(({ view }) => { const a = window.__bdmNext; a.setTruthMode(view === 'truth'); if (view === 'truth') for (const o of ['targets', 'facing', 'assignments', 'slots', 'screens', 'moves']) a.setOverlay(o, true) }, { view })
     await page.evaluate((t) => window.__bdmNext.seekToTick(t), sc.fromTick)
     await page.waitForTimeout(300)
     const clip = await page.evaluate(() => { const r = document.querySelector('canvas').getBoundingClientRect(); return { x: Math.round(r.x), y: Math.round(r.y), width: Math.round(r.width), height: Math.round(r.height) } })

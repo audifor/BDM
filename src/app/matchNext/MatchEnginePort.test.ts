@@ -209,7 +209,9 @@ describe('MatchEnginePort integration', () => {
     const port = createMatchEnginePort('match-next')
     const setup = port.prepare(world, game, 3498342002)
     const live = port.createLiveSession(setup)
+    // Play until the first made-basket inbound transition is live with the ball advancing (the moment used to be tick 130).
     live.advanceTicks(130)
+    for (let step = 0; step < 6000 && !(live.matchState.transition?.trigger === 'madeBasketInbound' && live.matchState.ball.kind === 'HELD'); step += 1) live.advanceOneStep()
     const state = live.matchState
     expect(state.transition?.trigger).toBe('madeBasketInbound')
     expect(state.ball.kind).toBe('HELD')

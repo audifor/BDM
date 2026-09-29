@@ -1,7 +1,7 @@
 import type { CourtPosition } from '@/domain/court'
 import type { PlayerId, TeamId } from '@/domain/ids'
 
-export type MatchDecisionKind = 'PASS' | 'SHOOT' | 'DRIVE' | 'KICK_OUT' | 'CATCH_AND_SHOOT'
+export type MatchDecisionKind = 'PASS' | 'SHOOT' | 'DRIVE' | 'KICK_OUT' | 'CATCH_AND_SHOOT' | 'SCREEN'
 export type MatchActionKind = MatchDecisionKind | 'CLOSEOUT'
 export type MatchActionStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
 export type MatchActionOutcome = 'CAUGHT' | 'BAD_PASS' | 'MAKE' | 'MISS' | 'ADVANTAGE' | 'CONTAINED' | 'FINISH' | 'ARRIVED' | 'CONTESTED' | 'CANCELLED'
@@ -14,6 +14,8 @@ export interface MatchDecision {
   readonly decidedT: number
   readonly reason: string
   readonly targetPlayerId?: PlayerId
+  /** Expected points of each option at the moment of the read (BT2G): shot opportunity vs the alternatives. */
+  readonly utility?: { readonly shoot: number; readonly drive: number; readonly pass: number; readonly hold: number; readonly screen?: number }
 }
 
 export interface MatchActionState {
@@ -23,13 +25,16 @@ export interface MatchActionState {
   readonly teamId: TeamId
   readonly startedT: number
   readonly status: MatchActionStatus
-  readonly phase?: 'DRIVING' | 'PASS_IN_FLIGHT' | 'GATHER' | 'SHOT_IN_FLIGHT' | 'CLOSING_OUT'
+  readonly phase?: 'DRIVING' | 'PASS_IN_FLIGHT' | 'GATHER' | 'SHOT_IN_FLIGHT' | 'CLOSING_OUT' | 'SCREEN_APPROACH'
   readonly decisionId?: string
   readonly sourceActionId?: string
   readonly targetPlayerId?: PlayerId
   readonly target?: CourtPosition
   readonly targetBasket?: CourtPosition
   readonly startPosition?: CourtPosition
+  /** A drive first goes around this point (the screener's far shoulder) before attacking the basket. */
+  readonly waypoint?: CourtPosition
+  readonly screenId?: string
   readonly releaseAtT?: number
   readonly resolvedT?: number
   readonly outcome?: MatchActionOutcome

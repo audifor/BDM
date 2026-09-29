@@ -11,7 +11,7 @@ import type { MatchActionState, MatchDecision } from './actions/ActionState'
 import { careerFatigueToMatchSession } from './playerDynamicState'
 import type { CoachRotationPlan } from '@/engine/tactics/CoachRotationEngine'
 
-export type DefensiveAssignmentSource = 'INITIAL' | 'OVERRIDE' | 'STRUCTURAL_REASSIGNMENT'
+export type DefensiveAssignmentSource = 'INITIAL' | 'OVERRIDE' | 'STRUCTURAL_REASSIGNMENT' | 'SWITCH'
 
 export interface DefensiveAssignment {
   readonly defenderPlayerId: PlayerId
@@ -29,6 +29,8 @@ export interface DefensiveStructureState {
   readonly onBallDefenderPlayerId: PlayerId | null
   readonly helpDefenderPlayerIds: readonly PlayerId[]
   readonly helpDecision: DefensiveHelpDecision
+  /** BT2M: the weak-side defender who keeps a foot in the paint while his man is far from the ball. */
+  readonly rimProtectorPlayerId?: PlayerId | null
 }
 
 export interface DefensiveHelpDecision {
@@ -115,6 +117,7 @@ export type MatchNextEventType =
   | 'looseBallCreated' | 'looseBallRecovered'
   | 'defensiveAssignmentsEstablished' | 'defensiveResponsibilityChanged'
   | 'decisionSelected' | 'actionStarted' | 'actionResolved'
+  | 'screenSet' | 'screenUsed' | 'screenEnded' | 'offBallMove'
   | 'reboundResponsibilitiesAssigned' | 'transitionStarted' | 'transitionAdvantageChanged' | 'transitionResolved'
   | 'shotClockViolation' | 'ballDead'
   | 'substitution'
@@ -143,6 +146,8 @@ export interface MatchNextEvent {
   readonly responsibilityKind?: 'ON_BALL' | 'GAP' | 'HELP' | 'LOW_MAN' | 'ROTATE' | 'X_OUT' | 'RECOVER'
   readonly decisionId?: string
   readonly decisionKind?: string
+  /** Expected points of each option when a decision was selected (BT2G/H: shot opportunity vs attempt). */
+  readonly utility?: { readonly shoot: number; readonly drive: number; readonly pass: number; readonly hold: number; readonly screen?: number }
   readonly actionId?: string
   readonly actionKind?: string
   readonly actionOutcome?: string
@@ -156,6 +161,71 @@ export interface MatchNextEvent {
   readonly outgoingPlayerId?: PlayerId
   readonly substitutionReason?: string
   readonly expectedMinutes?: number
+}
+
+export type ScreenPhase = 'APPROACH' | 'SET' | 'USED'
+export type ScreenCoverage = 'switch' | 'drop' | 'hedge' | 'blitz'
+
+/** BT2E/F: a ball screen with real geometry: who sets it, where, for whom, against which defenders, and how it is covered. */
+export interface ScreenState {
+  readonly id: string
+  readonly possessionId: string
+  readonly teamId: TeamId
+  readonly handlerId: PlayerId
+  readonly screenerId: PlayerId
+  readonly handlerDefenderId: PlayerId
+  readonly screenerDefenderId: PlayerId
+  readonly phase: ScreenPhase
+  readonly startedT: number
+  readonly setAtT: number | null
+  readonly usedAtT: number | null
+  /** Where the screener plants himself: beside the handler's defender, on the side the handler attacks. */
+  readonly location: CourtPosition
+  /** The far shoulder of the screener: the handler brushes past it on the way to the basket. */
+  readonly waypoint: CourtPosition
+  readonly side: 1 | -1
+  readonly coverage: ScreenCoverage
+  /** What the screener does after the handler uses the screen. */
+  readonly exit: 'ROLL' | 'POP'
+  readonly actionId: string
+  readonly switched: boolean
+}
+
+export type OffBallMoveKind = 'BASKET_CUT' | 'BACKDOOR_CUT' | 'DRIFT'
+
+/** BT2D: a purposeful off-ball movement with a reason and an end, layered over the 5-out zones. */
+export interface OffBallMove {
+  readonly playerId: PlayerId
+  readonly teamId: TeamId
+  readonly kind: OffBallMoveKind
+  readonly target: CourtPosition
+  readonly startedT: number
+  readonly endsT: number
+  readonly reason: string
+}
+
+/** BT2B: the offense's possession phase authority. Each stage limits which decisions are legitimate. */
+export type OffenseStage = 'EARLY' | 'HALF_COURT' | 'ACTION' | 'ADVANTAGE' | 'RESET'
+
+export interface OffenseFlowState {
+  readonly possessionId: string
+  readonly teamId: TeamId
+  readonly stage: OffenseStage
+  readonly stageStartedT: number
+  readonly holderPlayerId: PlayerId | null
+  readonly holderSinceT: number
+  readonly caughtFromPass: boolean
+  /** No decision by the ball handler before this tick: he is still gathering / reading the floor. */
+  readonly readyAtT: number
+  readonly halfCourtSinceT: number | null
+  /** Tick at which enough off-ball players occupied their zones for the half court to count as set. */
+  readonly settledAtT: number | null
+  readonly offensiveRebounds: number
+  readonly lastResolvedT: number
+  /** True from an offensive rebound until the first decision after it. */
+  readonly resetPending: boolean
+  readonly reads: number
+  readonly moves: readonly OffBallMove[]
 }
 
 export interface MatchPlayerState {
@@ -212,6 +282,8 @@ export interface MatchState {
   readonly reboundState: MatchReboundState | null
   readonly transition: MatchTransitionState | null
   readonly currentDecision: MatchDecision | null
+  readonly offenseFlow: OffenseFlowState | null
+  readonly screen: ScreenState | null
   readonly actions: readonly MatchActionState[]
   readonly nextMatchDecisionSequence: number
   readonly nextActionSequence: number
@@ -277,6 +349,8 @@ export function createInitialMatchState(setup: MatchSetup): MatchState {
     reboundState: null,
     transition: null,
     currentDecision: null,
+    offenseFlow: null,
+    screen: null,
     actions: [],
     nextMatchDecisionSequence: 1,
     nextActionSequence: 1,

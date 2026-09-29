@@ -4,7 +4,7 @@ import { activePossession, type MatchNextEvent, type MatchState, type Possession
 import type { MovementIntent } from './movement/MovementIntent'
 import type { PlayerResponsibility, StructuralDecision } from './responsibility/Responsibility'
 import type { OffensiveStructureState } from './structure/FiveOutStructure'
-import type { DefensiveAssignment, DefensiveStructureState, MatchReboundState, MatchTransitionState, ReboundResponsibility, TransitionRole } from './state'
+import type { DefensiveAssignment, DefensiveStructureState, MatchReboundState, MatchTransitionState, OffenseFlowState, ReboundResponsibility, ScreenState, TransitionRole } from './state'
 import type { MatchActionState } from './actions/ActionState'
 
 export interface MatchFramePlayer {
@@ -95,6 +95,9 @@ export interface MatchFrame {
   readonly currentDecision: MatchState['currentDecision']
   readonly actions: readonly MatchActionState[]
   readonly offensiveStructure: OffensiveStructureState | null
+  /** BT2: possession phase authority, ball screen and off-ball moves (diagnostic projection of MatchState). */
+  readonly offenseFlow: OffenseFlowState | null
+  readonly screen: ScreenState | null
   readonly defensiveStructure: DefensiveStructureState | null
   readonly reboundState: MatchReboundState | null
   readonly transition: MatchTransitionState | null
@@ -187,6 +190,8 @@ export function toFrame(state: MatchState): MatchFrame {
       ...(action.targetBasket === undefined ? {} : { targetBasket: { ...action.targetBasket } }),
       ...(action.startPosition === undefined ? {} : { startPosition: { ...action.startPosition } }),
     })),
+    offenseFlow: state.offenseFlow === null ? null : { ...state.offenseFlow, moves: state.offenseFlow.moves.map((move) => ({ ...move, target: { ...move.target } })) },
+    screen: state.screen === null ? null : { ...state.screen, location: { ...state.screen.location }, waypoint: { ...state.screen.waypoint } },
     offensiveStructure: state.offensiveStructure === null ? null : {
       ...state.offensiveStructure,
       attackingBasket: { ...state.offensiveStructure.attackingBasket },

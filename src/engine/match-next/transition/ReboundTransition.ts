@@ -13,6 +13,10 @@ import { attackingBasketForTeam } from '../structure/FiveOutStructure'
 import { guardPosition } from '../defense/ManDefense'
 
 const REBOUND_PURSUERS_PER_TEAM = 2
+/** Beyond this distance from the landing point an offensive player cannot win the ball: he retreats instead. */
+const CRASH_MAX_DISTANCE_METERS = 5.5
+/** An offensive player who is this much farther than the nearest defender has no realistic chance either. */
+const CRASH_MAX_DISADVANTAGE_METERS = 2.0
 const FRONTCOURT_ADVANTAGE_DISTANCE_METERS = 0.5
 
 /** Clears temporary roles before their normal structural authorities run again. */
@@ -42,18 +46,27 @@ export function reconcileReboundTransition(input: MatchState): MatchState {
   return reconcileTransition(input)
 }
 
-/** Selects only players already inside the physical acquisition radius. */
+/** How far a player can reach to control a falling ball: taller players cover more air around them. */
+export function reboundReachMeters(player: MatchPlayerState): number {
+  return clamp(0.85 + (player.standingReachCm - 190) * 0.008, 0.7, REBOUND_ACQUISITION_RADIUS_METERS)
+}
+
+/**
+ * BT2I: a rebound is contested by everyone who can reach the ball when it comes down. Who controls it is decided by
+ * ability and physical size, by how close each contender is to the ball, and by position: a player who has an opponent
+ * sealed behind him (the opponent is on the far side of him from the ball) is boxing that opponent out.
+ */
 export function securePhysicalRebound(state: MatchState): MatchState {
   if (state.ball.kind !== 'REBOUNDABLE' || state.t < state.ball.availableAtT) return state
   const rebound = state.ball
   const eligible = state.players.filter((player) => player.active
-    && distanceBetween(player.position, rebound.position) <= REBOUND_ACQUISITION_RADIUS_METERS)
+    && distanceBetween(player.position, rebound.position) <= reboundReachMeters(player))
   if (eligible.length === 0) return state
   const drawResult = draw(state.rng, 'outcome')
   let next = { ...state, rng: drawResult.state }
   const weighted = eligible.map((player) => ({
     player,
-    weight: reboundWeight(player, rebound.position, attackingBasketForTeam(rebound.shootingTeamId, state.homeTeamId, state.period, state.court), state),
+    weight: reboundWeight(player, rebound.position, state),
   }))
   const total = weighted.reduce((sum, item) => sum + item.weight, 0)
   let roll = drawResult.value * total
@@ -99,8 +112,12 @@ function reconcileRebound(input: MatchState): MatchState {
   const defendingTeamId = rebound.shootingTeamId === input.homeTeamId ? input.awayTeamId : input.homeTeamId
   const defendingPlayers = input.players.filter((player) => player.active && player.teamId === defendingTeamId)
   const reboundTarget = rebound.target
+  // An offensive player crashes only when he can contest: he is close enough to the landing point and not
+  // outnumbered by defenders already inside. Everyone else gets back (transition safety) instead of arriving late.
+  const nearestDefenderDistance = Math.min(...defendingPlayers.map((player) => distanceBetween(player.position, rebound.position)), Number.POSITIVE_INFINITY)
   const crashers = shootingPlayers
-    .map((player) => ({ player, score: distanceBetween(player.position, rebound.position) - effectiveReboundingImpact(player) * 0.008 - player.standingReachCm * 0.001 }))
+    .map((player) => ({ player, distance: distanceBetween(player.position, rebound.position), score: distanceBetween(player.position, rebound.position) - effectiveReboundingImpact(player) * 0.008 - player.standingReachCm * 0.001 }))
+    .filter((item) => item.distance <= CRASH_MAX_DISTANCE_METERS && item.distance <= nearestDefenderDistance + CRASH_MAX_DISADVANTAGE_METERS)
     .sort((left, right) => left.score - right.score || comparePlayerId(left.player, right.player))
     .slice(0, REBOUND_PURSUERS_PER_TEAM)
   const crasherIds = new Set(crashers.map(({ player }) => player.playerId))
@@ -434,10 +451,10 @@ function transitionOwner(role: TransitionRole): ResponsibilityOwner {
     : role.kind === 'BALL_ADVANCE' ? 'possession' : 'offensiveStructure'
 }
 
+/** Boxing out means standing between the attacker and the falling ball, in contact range. */
 function boxOutPosition(attacker: CourtPosition, rebound: CourtPosition, basket: CourtPosition, state: MatchState): CourtPosition {
-  const towardBasket = unitVector({ x: basket.x - attacker.x, y: basket.y - attacker.y }, { x: basket.x >= state.court.lengthMeters / 2 ? -1 : 1, y: 0 })
-  const towardRebound = unitVector({ x: rebound.x - attacker.x, y: rebound.y - attacker.y }, { x: 0, y: 0 })
-  return clampPosition({ x: attacker.x + towardBasket.x * 0.6 + towardRebound.x * 0.28, y: attacker.y + towardBasket.y * 0.6 + towardRebound.y * 0.28 }, state.court)
+  const towardRebound = unitVector({ x: rebound.x - attacker.x, y: rebound.y - attacker.y }, { x: basket.x >= state.court.lengthMeters / 2 ? -1 : 1, y: 0 })
+  return clampPosition({ x: attacker.x + towardRebound.x * 0.95, y: attacker.y + towardRebound.y * 0.95 }, state.court)
 }
 
 function reboundSafetyTarget(player: MatchPlayerState, rebound: CourtPosition, attackedBasket: CourtPosition, state: MatchState): CourtPosition {
@@ -446,14 +463,24 @@ function reboundSafetyTarget(player: MatchPlayerState, rebound: CourtPosition, a
   return clampPosition({ x: rebound.x - direction * 3.5, y: state.court.widthMeters / 2 + offset }, state.court)
 }
 
-function reboundWeight(player: MatchPlayerState, rebound: CourtPosition, basket: CourtPosition, state: MatchState): number {
+/** True when `blocker` stands on the line between `player` and the ball, closer to the ball than `player` is. */
+function isBoxedOutBy(player: MatchPlayerState, blocker: MatchPlayerState, rebound: CourtPosition): boolean {
+  const toBall = distanceBetween(player.position, rebound)
+  if (toBall < 1e-6 || distanceBetween(blocker.position, rebound) >= toBall - 0.1) return false
+  const dx = rebound.x - player.position.x
+  const dy = rebound.y - player.position.y
+  const along = ((blocker.position.x - player.position.x) * dx + (blocker.position.y - player.position.y) * dy) / (toBall * toBall)
+  if (along <= 0 || along >= 1) return false
+  const lateral = Math.abs((blocker.position.x - player.position.x) * dy - (blocker.position.y - player.position.y) * dx) / toBall
+  return lateral <= 0.85 && distanceBetween(blocker.position, player.position) <= 1.9
+}
+
+function reboundWeight(player: MatchPlayerState, rebound: CourtPosition, state: MatchState): number {
   const distance = distanceBetween(player.position, rebound)
   const heightAdvantage = (player.standingReachCm - 250) * 0.006
   const ability = (effectiveReboundingImpact(player) - 50) * 0.012
-  const otherEligible = state.players.filter((candidate) => candidate.teamId !== player.teamId && candidate.active
-    && distanceBetween(candidate.position, rebound) <= 1)
-  const position = otherEligible.length > 0 && distanceBetween(player.position, basket) < Math.min(...otherEligible.map((candidate) => distanceBetween(candidate.position, basket))) ? 0.16 : 0
-  return Math.exp(ability + heightAdvantage + position - distance * 1.6)
+  const sealed = state.players.some((candidate) => candidate.active && candidate.teamId !== player.teamId && isBoxedOutBy(player, candidate, rebound))
+  return Math.exp(ability + heightAdvantage - (sealed ? 0.9 : 0) - distance * 1.3)
 }
 
 

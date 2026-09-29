@@ -14,7 +14,7 @@ const samples = []; const start = Date.now(); let truthOn = false, shot = 0
 while ((Date.now() - start) / 1000 < minutes * 60) {
   await page.waitForTimeout(2000)
   const el = (Date.now() - start) / 1000
-  if (!truthOn && el > truthAfter) { truthOn = true; await page.evaluate(() => { const a = window.__bdmNext; a.setCamera('halfCourt'); a.setTruthMode(true); for (const o of ['targets', 'facing', 'assignments', 'slots']) a.setOverlay(o, true) }) }
+  if (!truthOn && el > truthAfter) { truthOn = true; await page.evaluate(() => { const a = window.__bdmNext; a.setCamera('halfCourt'); a.setTruthMode(true); for (const o of ['targets', 'facing', 'assignments', 'slots', 'screens', 'moves']) a.setOverlay(o, true) }) }
   const info = await page.evaluate(() => ({ f: window.__bdmNext.getFrameInfo(), t: window.__bdmNext.getTruthFrame() }))
   if (info.t) { const d = info.t.players.map((p) => p.diffMeters ?? 0); samples.push({ t: Math.round(el), tick: info.f.tick, period: info.f.period, score: info.f.score, maxDiff: Math.max(...d), meanDiff: d.reduce((a, b) => a + b, 0) / d.length }) }
   if (Math.round(el) % 20 < 2 && shot < 30) { await page.screenshot({ path: `${out}/t${String(Math.round(el)).padStart(4, '0')}.png` }); shot += 1 }

@@ -87,6 +87,10 @@ export interface NextTickFrame {
   readonly ball: NextBall
   /** Offensive structure slots (canonical 5-out targets) when active. */
   readonly offenseSlots: readonly { readonly slot: string; readonly position: Pt }[]
+  /** BT2 possession phase (EARLY / HALF_COURT / ACTION / ADVANTAGE / RESET) and whether the half court is set. */
+  readonly flow: { readonly stage: string; readonly settled: boolean; readonly moves: readonly { readonly playerId: PlayerId; readonly kind: string; readonly target: Pt }[] } | undefined
+  /** BT2 ball screen in progress (diagnostic). */
+  readonly screen: { readonly phase: string; readonly coverage: string; readonly exit: string; readonly handlerId: PlayerId; readonly screenerId: PlayerId; readonly location: Pt; readonly waypoint: Pt } | undefined
   readonly transition: { readonly trigger: string; readonly advantage: string; readonly teamId: TeamId } | undefined
   readonly currentAction: string | undefined
   readonly isComplete: boolean

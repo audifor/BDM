@@ -30,6 +30,9 @@ const TARGET_COLOR = 0xa78bfa
 const FACING_COLOR = 0x22d3ee
 const ASSIGN_COLOR = 0x94a3b8
 const SLOT_COLOR = 0x34d399
+const SCREEN_COLOR = 0xfacc15
+const MOVE_CUT_COLOR = 0xf97316
+const MOVE_DRIFT_COLOR = 0x22d3ee
 
 const PLAYER_RADIUS_METERS = 0.45
 const BALL_RADIUS_PX = 6.5
@@ -41,6 +44,9 @@ export interface NextSceneDebug {
   showTargets: boolean
   showFacing: boolean
   showSlots: boolean
+  /** BT2 diagnostics: ball screen geometry and off-ball moves. */
+  showScreens: boolean
+  showMoves: boolean
 }
 
 export interface NextSceneIdentification {
@@ -78,7 +84,7 @@ export class PhaserNextScene extends Phaser.Scene {
   private rendered: NextRenderedTruth | undefined
   private listener: ((frame: NextRenderFrame, rendered: NextRenderedTruth) => void) | undefined
 
-  public readonly debug: NextSceneDebug = { basketballTruth: false, showAssignments: false, showTargets: false, showFacing: false, showSlots: false }
+  public readonly debug: NextSceneDebug = { basketballTruth: false, showAssignments: false, showTargets: false, showFacing: false, showSlots: false, showScreens: false, showMoves: false }
   public readonly identification: NextSceneIdentification = { showJersey: true, showLabel: false, showAction: false }
 
   public constructor() {
@@ -325,6 +331,35 @@ export class PhaserNextScene extends Phaser.Scene {
         g.lineBetween(s.x + 8, s.y, s.x, s.y + 8)
         g.lineBetween(s.x, s.y + 8, s.x - 8, s.y)
         g.lineBetween(s.x - 8, s.y, s.x, s.y - 8)
+      }
+    }
+    if (this.debug.showScreens && frame.canonical.screen !== undefined) {
+      const sc = frame.canonical.screen
+      const at = P(sc.location)
+      const way = P(sc.waypoint)
+      const handler = rendered.players.get(sc.handlerId)
+      const screener = rendered.players.get(sc.screenerId)
+      g.lineStyle(3, SCREEN_COLOR, 1)
+      g.strokeRect(at.x - 9, at.y - 9, 18, 18)
+      g.lineStyle(2, SCREEN_COLOR, 0.8)
+      g.lineBetween(at.x, at.y, way.x, way.y)
+      g.strokeCircle(way.x, way.y, 4)
+      if (handler !== undefined && screener !== undefined) {
+        const h = P(handler)
+        const s = P(screener)
+        g.lineStyle(1.5, SCREEN_COLOR, 0.6)
+        g.lineBetween(h.x, h.y, s.x, s.y)
+      }
+    }
+    if (this.debug.showMoves && frame.canonical.flow !== undefined) {
+      for (const move of frame.canonical.flow.moves) {
+        const from = rendered.players.get(move.playerId)
+        if (from === undefined) continue
+        const a = P(from)
+        const b = P(move.target)
+        g.lineStyle(3, move.kind === 'DRIFT' ? MOVE_DRIFT_COLOR : MOVE_CUT_COLOR, 0.95)
+        g.lineBetween(a.x, a.y, b.x, b.y)
+        g.strokeCircle(b.x, b.y, 6)
       }
     }
     const cb = P(frame.canonical.ball.position)

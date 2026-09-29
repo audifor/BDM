@@ -1,4 +1,4 @@
-import type { CourtPosition } from '@/domain/court'
+import { distanceBetween, type CourtPosition } from '@/domain/court'
 import { activePossession, type MatchPlayerState, type MatchState } from '../state'
 import type { PlayerResponsibility, StructuralDecision, StructuralDecisionKind } from '../responsibility/Responsibility'
 import type { MovementFacing, MovementIntent } from '../movement/MovementIntent'
@@ -207,10 +207,31 @@ function findBallPlayer(state: MatchState, teamId: MatchState['homeTeamId'], pri
   return state.players.find((player) => player.active && player.teamId === teamId)?.playerId
 }
 
+/**
+ * BT2C: a slot is a ZONE, not a rail. A player who is already inside it stays where he is (no micro-corrections on
+ * every tick); one who is outside heads for the nearest edge of the zone rather than its exact centre.
+ */
+export const ZONE_TOLERANCE_METERS = 1.5
+/** A zone never reaches in front of its slot (that would put a shooter inside the arc). */
+const ZONE_DEPTH_TOLERANCE_METERS = 0.35
+
+export function isInsideZone(position: CourtPosition, slot: CourtPosition, basket: CourtPosition): boolean {
+  if (distanceBetween(position, slot) > ZONE_TOLERANCE_METERS) return false
+  return distanceBetween(position, basket) >= distanceBetween(slot, basket) - ZONE_DEPTH_TOLERANCE_METERS
+}
+
+function zoneTarget(position: CourtPosition, slot: CourtPosition, basket: CourtPosition): CourtPosition {
+  if (isInsideZone(position, slot, basket)) return { ...position }
+  const distance = distanceBetween(position, slot)
+  if (distance <= ZONE_TOLERANCE_METERS * 0.6) return { ...slot }
+  const edge = ZONE_TOLERANCE_METERS * 0.6
+  return { x: slot.x + (position.x - slot.x) / distance * edge, y: slot.y + (position.y - slot.y) / distance * edge }
+}
+
 function targetForResponsibility(state: MatchState, player: MatchPlayerState, responsibility: PlayerResponsibility, structure: OffensiveStructureState): CourtPosition {
   if (responsibility.kind === 'ADVANCE') return advanceTarget(state, structure.attackingBasket)
   if (responsibility.kind === 'BALL') return { ...player.position }
   const assignment = structure.assignments.find((item) => item.playerId === player.playerId)
   const slot = structure.slots.find((item) => item.slot === assignment?.slot)
-  return slot?.position ?? player.position
+  return slot === undefined ? player.position : zoneTarget(player.position, slot.position, structure.attackingBasket)
 }
