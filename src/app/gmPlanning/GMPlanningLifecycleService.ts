@@ -1,6 +1,9 @@
 import type { TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { reviewAiClubStrategies, reviewClubStrategy } from '@/engine/clubStrategy/ClubStrategyEngine'
+import { resolveNegotiationContactAuthority } from '@/engine/marketIntelligence/NegotiationContactAuthority'
+import { assessRoutedFreeAgentOfferIntelligence } from '@/app/marketIntelligence/FreeAgentOfferIntelligenceService'
+import { initiatePreferredFreeAgentContact } from '@/app/marketIntelligence/FreeAgentContactService'
 import { reviewGMPlanWorkflows, type ReviewGMPlanWorkflowsResult } from './GMPlanWorkflowService'
 
 export type GMPlanningCheckpointTrigger = 'INITIAL_SETUP' | 'PRESEASON' | 'MATERIAL_ROSTER_CHANGE' | 'MAJOR_INJURY' | 'CONTRACT_CHANGE' | 'EXPLICIT_REVIEW'
@@ -31,7 +34,8 @@ export function reviewClubManagementPlanning(world: GameWorld, teamId: TeamId, t
         : trigger === 'CONTRACT_CHANGE' ? 'CONTRACT_CHANGE'
           : 'EXPLICIT_REEVALUATION'
   const result = reviewGMPlanWorkflows(strategyReviewed, teamId, planTrigger)
-  return { ...result, teamId, trigger }
+  const nextWorld = initiateReadyAiFreeAgentContacts(result.world, teamId)
+  return { ...result, world: nextWorld, teamId, trigger }
 }
 
 /** Final career-construction checkpoint. AI clubs are initialized in stable TeamId order. */
@@ -40,7 +44,20 @@ export function initializeAiClubManagementPlanning(world: GameWorld): GameWorld 
   return Object.values(strategyReviewed.teams)
     .filter((team) => team.coachId !== undefined && team.coachId !== strategyReviewed.userCoachId)
     .sort((left, right) => left.id.localeCompare(right.id))
-    .reduce((current, team) => reviewGMPlanWorkflows(current, team.id, 'ROUTINE_REVIEW').world, strategyReviewed)
+    .reduce((current, team) => initiateReadyAiFreeAgentContacts(reviewGMPlanWorkflows(current, team.id, 'ROUTINE_REVIEW').world, team.id), strategyReviewed)
+}
+
+/** Runs only after explicit AI planning checkpoints; it never polls during ordinary calendar days. */
+function initiateReadyAiFreeAgentContacts(world: GameWorld, teamId: TeamId): GameWorld {
+  const team = world.teams[teamId]
+  if (team?.coachId === undefined || team.coachId === world.userCoachId
+    || resolveNegotiationContactAuthority(world, teamId).authorityStatus !== 'AUTHORIZED') return world
+  const proposals = assessRoutedFreeAgentOfferIntelligence(world, teamId)
+    .filter((offer) => offer.outcome === 'FREE_AGENT_OFFER'
+      && offer.contactReadiness === 'READY_TO_CONTACT'
+      && offer.contactAuthority.authorityStatus === 'AUTHORIZED')
+    .sort((left, right) => left.sourceProposalId.localeCompare(right.sourceProposalId))
+  return proposals.reduce((current, offer) => initiatePreferredFreeAgentContact(current, teamId, offer.sourceProposalId).world, world)
 }
 
 /** Rechecks only clubs whose canonical roster actually changed between two application states. */

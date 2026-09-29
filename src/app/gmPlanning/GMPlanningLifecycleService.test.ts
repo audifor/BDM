@@ -84,6 +84,7 @@ describe('GM planning lifecycle coordinator', () => {
 
     expect(result.status).not.toBe('FAILED')
     expect(result.world.gmPlanStatesById).toEqual(world.gmPlanStatesById)
+    expect(result.world.negotiationsById).toBe(world.negotiationsById)
     expect(result.phases.some((phase) => phase.phaseId === 'GM_PLANNING_CHECKPOINT')).toBe(false)
   })
 })

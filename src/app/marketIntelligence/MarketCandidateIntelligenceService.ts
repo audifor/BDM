@@ -2,7 +2,7 @@ import type { TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { assessGMDecisionContext } from '@/engine/gmDecisionContext'
 import { assessMarketCandidateFeasibility, assessMarketCandidatesForNeed, type MarketCandidateAssessment, type MarketCandidateFeasibilityAssessment } from '@/engine/marketIntelligence'
-import { inspectGMPlanWorkflows } from '@/app/gmPlanning'
+import { inspectGMPlanWorkflows } from '../gmPlanning/GMPlanWorkflowService'
 
 export interface RoutedMarketCandidateAssessment extends MarketCandidateAssessment {
   readonly planId: string

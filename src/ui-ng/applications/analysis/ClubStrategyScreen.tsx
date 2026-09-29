@@ -1,4 +1,5 @@
 import type { GameWorld } from '@/domain/world'
+import type { NegotiationResponsibleActor } from '@/domain/market'
 import { assessClubStrategy } from '@/engine/clubStrategy/ClubStrategyEngine'
 import type { ClubNeedKind } from '@/engine/clubNeeds'
 import { assessGMDecisionContext, type GMResponseOptionKind } from '@/engine/gmDecisionContext'
@@ -220,7 +221,8 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
                 <div>Signing Governance: {offer.governanceAuthority.toLowerCase()} · Formal offer readiness: {offer.readiness.replaceAll('_', ' ').toLowerCase()}</div>
               </>}
               {offer.outcome !== 'FREE_AGENT_OFFER' && <strong>{offer.outcome === 'TRADE_ENQUIRY_ONLY' ? 'Trade enquiry remains read-only' : 'No free-agent offer preparation'}: {offer.blockers.join(', ').replaceAll('_', ' ').toLowerCase()}</strong>}
-              {offer.existingNegotiation !== undefined && <div>Existing lifecycle record: {offer.existingNegotiation.status.toLowerCase()} · {offer.existingNegotiation.kind === 'ACTIVE' ? 'active team/player attempt blocks another' : 'same attempt is idempotently recognized'}</div>}
+              {offer.existingNegotiation?.status === 'CONTACTED' && <div>Contacted: {offer.existingNegotiation.startedOn ?? 'date unavailable'} · Actor: {contactActorLabel(world, offer.existingNegotiation.responsibleActor)} · Attempt: {offer.existingNegotiation.sourcePlanId === offer.sourcePlanId && offer.existingNegotiation.sourceProposalId === offer.sourceProposalId ? 'current' : 'active'} · Formal offer: not submitted</div>}
+              {offer.existingNegotiation !== undefined && offer.existingNegotiation.status !== 'CONTACTED' && <div>Existing lifecycle record: {offer.existingNegotiation.status.toLowerCase()} · {offer.existingNegotiation.kind === 'ACTIVE' ? 'active team/player attempt blocks another' : 'same attempt is idempotently recognized'} · Formal offer submitted</div>}
               {offer.missingInformation.length > 0 && <div>Missing: {offer.missingInformation.map((item) => item.replaceAll('_', ' ').toLowerCase()).join(', ')}</div>}
               {offer.blockers.length > 0 && offer.outcome === 'FREE_AGENT_OFFER' && <div>Blockers: {offer.blockers.map((item) => item.replaceAll('_', ' ').toLowerCase()).join(', ')}</div>}
             </article>)}
@@ -245,4 +247,12 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
       {clubs.length === 0 && <p>No coached clubs are currently available for inspection.</p>}
     </div>
   </section>
+}
+
+function contactActorLabel(world: GameWorld, actor: NegotiationResponsibleActor | undefined): string {
+  if (actor === undefined) return 'unknown'
+  if (actor.kind === 'USER') return 'User'
+  if (actor.kind === 'ORGANIZATION') return 'Organization'
+  const person = world.staffPeopleById[actor.staffPersonId]
+  return person === undefined ? `Staff ${actor.staffPersonId}` : `${person.identity.firstName} ${person.identity.lastName}`
 }

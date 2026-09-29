@@ -1,6 +1,6 @@
 import type { TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
-import { inspectGMPlanWorkflows } from '@/app/gmPlanning'
+import { inspectGMPlanWorkflows } from '../gmPlanning/GMPlanWorkflowService'
 import { assessRoutedMarketCandidateFeasibility } from '@/app/marketIntelligence/MarketCandidateIntelligenceService'
 import { createNoActionableProposal, selectAcquisitionProposal, type AcquisitionProposalIntelligence } from '@/engine/marketIntelligence'
 

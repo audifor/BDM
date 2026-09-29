@@ -6,6 +6,7 @@ import type { GameWorld } from '@/domain/world'
 import { canTeamAffordAdditionalSalary, getResponsibility, getStaffAssignment, getStaffPerson, isPlayerFreeAgent } from '@/domain/world'
 import type { AcquisitionProposalIntelligence } from './AcquisitionProposalIntelligence'
 import type { Affordability, MarketSignalEvidence } from './MarketCandidateFeasibility'
+import type { GMWorkflowDecision } from '@/engine/gmPlanning'
 import { deriveNegotiationAttemptKey, resolveNegotiationContactAuthority, type NegotiationContactAuthority } from './NegotiationContactAuthority'
 
 export type NegotiationOpeningReadiness =
@@ -52,6 +53,7 @@ export interface FreeAgentOfferIntelligence {
   readonly teamId: TeamId
   readonly needId?: string
   readonly sourceProposalId: string
+  readonly sourcePlanId?: string
   readonly playerId?: PlayerId
   readonly playerName?: string
   /** Exact BS10C club-known salary signal; no salary is generated here. */
@@ -75,6 +77,11 @@ export interface FreeAgentOfferIntelligence {
     readonly id: string
     readonly status: 'CONTACTED' | 'OPEN' | 'COUNTERED' | 'ACCEPTED' | 'REJECTED' | 'CLOSED'
     readonly kind: 'ACTIVE' | 'SAME_ATTEMPT'
+    readonly startedOn?: import('@/domain/date').GameDate
+    readonly responsibleActor?: import('@/domain/market').NegotiationResponsibleActor
+    readonly sourcePlanId?: string
+    readonly sourceProposalId?: string
+    readonly openingKey?: string
   }
   readonly missingInformation: readonly string[]
   readonly blockers: readonly string[]
@@ -123,7 +130,7 @@ export function assessNegotiationOpeningReadiness(input: {
 }
 
 /** Consumes exactly one current BS10C result. It never opens a negotiation or mutates GameWorld. */
-export function assessFreeAgentOfferIntelligence(world: GameWorld, proposal: AcquisitionProposalIntelligence): FreeAgentOfferIntelligence {
+export function assessFreeAgentOfferIntelligence(world: GameWorld, proposal: AcquisitionProposalIntelligence, currentWorkflow?: GMWorkflowDecision): FreeAgentOfferIntelligence {
   const team = world.teams[proposal.teamId]
   if (team === undefined) throw new RangeError(`Unknown Team ${proposal.teamId}`)
 
@@ -148,11 +155,19 @@ export function assessFreeAgentOfferIntelligence(world: GameWorld, proposal: Acq
     && (item.teamId === proposal.teamId || (item.teamId === undefined && item.organizationId === organizationId)))
   const currentlyFreeAgent = isPlayerFreeAgent(world, playerId)
   const sourcePlan = proposal.planId === undefined ? undefined : world.gmPlanStatesById[proposal.planId]
-  const currentPlan = proposal.planId !== undefined
+  const persistedCurrentPlan = proposal.planId !== undefined
     && sourcePlan !== undefined
       && sourcePlan.teamId === proposal.teamId
       && sourcePlan.needId === proposal.needId
       && sourcePlan.selectedOptionKind === 'EXTERNAL_ACQUISITION'
+  const currentWorkflowPlan = currentWorkflow !== undefined
+    && currentWorkflow.teamId === proposal.teamId
+    && currentWorkflow.planId === proposal.planId
+    && currentWorkflow.needId === proposal.needId
+    && currentWorkflow.responseFamily === 'EXTERNAL_ACQUISITION'
+    && currentWorkflow.currentValidity === 'CURRENT'
+    && currentWorkflow.route === 'MARKET_INTELLIGENCE_REQUIRED'
+  const currentPlan = persistedCurrentPlan || currentWorkflowPlan
   const actionKey = currentPlan ? deriveNegotiationAttemptKey(world, { teamId: proposal.teamId, playerId, planId: proposal.planId!, proposalId: proposal.id }) : undefined
   const openingId = actionKey === undefined ? undefined : negotiationIdForOpening({ organizationId, teamId: proposal.teamId, playerId, actionKey })
   const sameAttempt = openingId === undefined ? undefined : world.negotiationsById[openingId]
@@ -212,6 +227,7 @@ export function assessFreeAgentOfferIntelligence(world: GameWorld, proposal: Acq
     teamId: proposal.teamId,
     ...(proposal.needId === undefined ? {} : { needId: proposal.needId }),
     sourceProposalId: proposal.id,
+    ...(proposal.planId === undefined ? {} : { sourcePlanId: proposal.planId }),
     playerId,
     playerName: candidate.name,
     ...(preparedSalary === undefined ? {} : { preparedSalary }),
@@ -228,7 +244,12 @@ export function assessFreeAgentOfferIntelligence(world: GameWorld, proposal: Acq
     ...(existing === undefined ? {} : { existingNegotiation: {
       id: existing.id,
       status: existing.status,
-      kind: activeNegotiation === undefined ? 'SAME_ATTEMPT' as const : 'ACTIVE' as const,
+      kind: activeNegotiation !== undefined ? 'ACTIVE' as const : 'SAME_ATTEMPT' as const,
+      ...(existing.startedOn === undefined ? {} : { startedOn: existing.startedOn }),
+      ...(existing.responsibleActor === undefined ? {} : { responsibleActor: existing.responsibleActor }),
+      ...(existing.sourcePlanId === undefined ? {} : { sourcePlanId: existing.sourcePlanId }),
+      ...(existing.sourceProposalId === undefined ? {} : { sourceProposalId: existing.sourceProposalId }),
+      ...(existing.openingKey === undefined ? {} : { openingKey: existing.openingKey }),
     } }),
     missingInformation: Object.freeze(missingInformation),
     blockers: Object.freeze(blockers),

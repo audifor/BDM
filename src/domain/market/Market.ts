@@ -25,6 +25,8 @@ interface NegotiationIdentity {
   readonly startedOn?: GameDate
   /** Stable action identity. A distinct key represents a legitimate later attempt. */
   readonly openingKey?: string
+  /** Original A3 attempt identity; retained verbatim alongside its composite opening key. */
+  readonly actionKey?: string
   readonly sourcePlanId?: string
   readonly sourceProposalId?: string
   readonly responsibleActor?: NegotiationResponsibleActor
@@ -81,7 +83,7 @@ export function createNegotiationContact(input: Omit<ContactOnlyNegotiation, 'st
   const { actionKey, ...identity } = input
   const key: NegotiationOpeningKey = { organizationId: input.organizationId, teamId: input.teamId, playerId: input.playerId, actionKey }
   const openingKey = negotiationOpeningKeyString(key)
-  return Object.freeze({ ...identity, id: negotiationIdForOpening(key), openingKey, status: 'CONTACTED' })
+  return Object.freeze({ ...identity, actionKey, id: negotiationIdForOpening(key), openingKey, status: 'CONTACTED' })
 }
 export interface RolePromise { readonly id:string; readonly playerId:PlayerId; readonly teamOrganizationId:OrganizationId; readonly role:NegotiationRole; readonly acceptedOn:GameDate; readonly status:'ACTIVE'|'FULFILLED'|'BROKEN' }
 

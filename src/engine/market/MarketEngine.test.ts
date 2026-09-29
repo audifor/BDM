@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { releasePlayer } from '@/app/market'
-import { organizationIdForTeam } from '@/domain/ids'
+import { organizationIdForTeam, staffPersonIdFromString } from '@/domain/ids'
 import { createNegotiationContact, getMarketKnowledge, negotiationIdForOpening, negotiationOpeningKeyString, type ContractNegotiation } from '@/domain/market'
 import { updateGameWorld } from '@/domain/world'
-import { initializeMarketAgents, openNegotiation, receiveMarketSignal } from './MarketEngine'
+import { initializeMarketAgents, openNegotiation, receiveMarketSignal, createNegotiationContact as createContactInEngine } from './MarketEngine'
 
 describe('Wave 4 market core',()=>{
   it('creates deterministic agencies, shared agent portfolios, and sparse market knowledge',()=>{const first=initializeMarketAgents(createNewGame()),second=initializeMarketAgents(createNewGame());expect(first.agenciesById).toEqual(second.agenciesById);expect(first.agentsById).toEqual(second.agentsById);expect(first.playerRepresentations).toEqual(second.playerRepresentations);expect(Object.keys(first.agentsById).length).toBeLessThan(Object.keys(first.players).length);expect(first.marketKnowledge).toEqual([])})
@@ -49,5 +49,56 @@ describe('Wave 4 market core',()=>{
   it('rechecks current payroll affordability at the formal offer boundary',()=>{
     const initial=createNewGame(),team=Object.values(initial.teams)[1]!,source=Object.values(initial.teams).find(item=>item.id!==team.id)!,playerId=source.rosterPlayerIds[0]!,world=releasePlayer(initial,source.id,playerId)
     expect(()=>openNegotiation(world,{organizationId:team.organizationId,teamId:team.id,playerId,salary:10_000_000_000,years:2,role:'ROTATION',agentFee:1,actionKey:'unaffordable-offer',responsibleActor:{kind:'USER'}})).toThrow(/cannot afford/)
+  })
+
+  it('creates one authorized term-free contact and persists the delegated actor and current source',()=>{
+    const initial=createNewGame(),team=Object.values(initial.teams).find(item=>item.coachId!==undefined&&item.coachId!==initial.userCoachId)!,source=Object.values(initial.teams).find(item=>item.id!==team.id)!,playerId=source.rosterPlayerIds[0]!
+    const released=releasePlayer(initial,source.id,playerId)
+    const world=updateGameWorld(released,{userCoachId:team.coachId!})
+    const input={organizationId:team.organizationId,teamId:team.id,playerId,startedOn:world.currentDate,actionKey:'current-plan:current-proposal',responsibleActor:{kind:'USER' as const},sourcePlanId:'current-plan',sourceProposalId:'current-proposal'}
+    const result=createContactInEngine(world,input)
+    expect(result.status).toBe('CREATED')
+    if(result.status!=='CREATED') throw new Error('expected contact creation')
+    expect(result.contact).toMatchObject({status:'CONTACTED',startedOn:world.currentDate,actionKey:input.actionKey,sourcePlanId:input.sourcePlanId,sourceProposalId:input.sourceProposalId,responsibleActor:input.responsibleActor})
+    expect(result.contact.openingKey).toBe(negotiationOpeningKeyString({organizationId:team.organizationId,teamId:team.id,playerId,actionKey:input.actionKey}))
+    for(const term of ['salary','years','role','agentFee']) expect(result.contact).not.toHaveProperty(term)
+    expect(result.world.contractsById).toBe(world.contractsById)
+    expect(result.world.playerTransactionsById).toBe(world.playerTransactionsById)
+    expect(result.world.governanceRequestsById).toBe(world.governanceRequestsById)
+    expect(result.world.governanceDecisionsById).toBe(world.governanceDecisionsById)
+    expect(result.world.treasuryApplicationsById).toBe(world.treasuryApplicationsById)
+    expect(result.world.marketKnowledge).toBe(world.marketKnowledge)
+    expect(result.world.teams[team.id]!.rosterPlayerIds).toEqual(world.teams[team.id]!.rosterPlayerIds)
+    const repeated=createContactInEngine(result.world,input)
+    expect(repeated.status).toBe('ALREADY_EXISTS')
+    expect(repeated.world).toBe(result.world)
+    expect(Object.keys(repeated.world.negotiationsById)).toHaveLength(Object.keys(result.world.negotiationsById).length)
+  })
+
+  it('blocks unauthorized, malformed, non-free-agent, and conflicting active contacts without mutation',()=>{
+    const initial=createNewGame(),team=Object.values(initial.teams).find(item=>item.coachId!==undefined&&item.coachId!==initial.userCoachId)!,source=Object.values(initial.teams).find(item=>item.id!==team.id)!,playerId=source.rosterPlayerIds[0]!,world=releasePlayer(initial,source.id,playerId)
+    const input={organizationId:team.organizationId,teamId:team.id,playerId,startedOn:world.currentDate,actionKey:'plan:proposal',responsibleActor:{kind:'USER' as const},sourcePlanId:'plan',sourceProposalId:'proposal'}
+    expect(createContactInEngine(world,input)).toMatchObject({status:'BLOCKED',reason:'CONTACT_ACTOR_NOT_AUTHORIZED',world})
+    expect(createContactInEngine(world,{...input,organizationId:organizationIdForTeam(source.id)})).toMatchObject({status:'BLOCKED',reason:'TEAM_OR_ORGANIZATION_MISMATCH',world})
+    expect(createContactInEngine(world,{...input,actionKey:'  '})).toMatchObject({status:'BLOCKED',reason:'CONTACT_SOURCE_OR_ACTION_KEY_REQUIRED',world})
+    expect(createContactInEngine(world,{...input,startedOn:'1900-01-01' as never})).toMatchObject({status:'BLOCKED',reason:'CONTACT_DATE_IS_NOT_CURRENT',world})
+    expect(createContactInEngine(world,{...input,playerId:team.rosterPlayerIds[0]!})).toMatchObject({status:'PLAYER_NOT_FREE_AGENT',world})
+    const userWorld=updateGameWorld(world,{userCoachId:team.coachId!})
+    const authorized={...input,responsibleActor:{kind:'USER' as const}}
+    const created=createContactInEngine(userWorld,authorized)
+    expect(created.status).toBe('CREATED')
+    expect(createContactInEngine(created.status==='CREATED'?created.world:userWorld,{...authorized,actionKey:'another:proposal'})).toMatchObject({status:'ACTIVE_NEGOTIATION_EXISTS'})
+    expect(Object.keys(userWorld.negotiationsById)).toHaveLength(0)
+  })
+
+  it('allows a new canonical contact after an earlier attempt is closed',()=>{
+    const initial=createNewGame(),team=Object.values(initial.teams).find(item=>item.coachId!==undefined&&item.coachId!==initial.userCoachId)!,source=Object.values(initial.teams).find(item=>item.id!==team.id)!,playerId=source.rosterPlayerIds[0]!,world=releasePlayer(initial,source.id,playerId),userWorld=updateGameWorld(world,{userCoachId:team.coachId!})
+    const first=createContactInEngine(userWorld,{organizationId:team.organizationId,teamId:team.id,playerId,startedOn:userWorld.currentDate,actionKey:'plan-a:proposal-a',responsibleActor:{kind:'USER'},sourcePlanId:'plan-a',sourceProposalId:'proposal-a'})
+    if(first.status!=='CREATED') throw new Error('expected first contact')
+    const closedContact=first.contact.status==='CONTACTED'?{...first.contact,status:'CLOSED' as const}:first.contact
+    const closed=updateGameWorld(first.world,{negotiations:Object.values(first.world.negotiationsById).map(item=>item.id===first.contact.id?closedContact:item)})
+    const later=createContactInEngine(closed,{organizationId:team.organizationId,teamId:team.id,playerId,startedOn:closed.currentDate,actionKey:'plan-b:proposal-b',responsibleActor:{kind:'USER'},sourcePlanId:'plan-b',sourceProposalId:'proposal-b'})
+    expect(later.status).toBe('CREATED')
+    expect(Object.values(later.world.negotiationsById).map(item=>item.status)).toEqual(['CLOSED','CONTACTED'])
   })
 })
