@@ -6,11 +6,12 @@ import type { PlayerId, TeamId } from '@/domain/ids'
 import type { OrganizationKnowledge, OrganizationKnowledgeDimension } from '@/domain/knowledge'
 import type { ClubStrategicMode } from '@/domain/clubStrategy'
 import type { Team } from '@/domain/team'
-import { getActivePlayerContract, updateGameWorld, type GameWorld } from '@/domain/world'
+import { canTeamAffordAdditionalSalary, getActivePlayerContract, updateGameWorld, type GameWorld } from '@/domain/world'
 import type { ClubNeed } from '@/engine/clubNeeds'
 import { assessGMDecisionContext } from '@/engine/gmDecisionContext'
 import { assessMarketCandidatesForNeed } from './MarketCandidateIntelligence'
-import { assessRoutedMarketCandidates } from '@/app/marketIntelligence'
+import { assessMarketCandidateFeasibility } from './MarketCandidateFeasibility'
+import { assessRoutedMarketCandidates, assessRoutedMarketCandidateFeasibility } from '@/app/marketIntelligence'
 
 let base: GameWorld
 let club: Team
@@ -83,6 +84,137 @@ describe('MarketCandidateIntelligence', () => {
     const positionCandidate = assessMarketCandidatesForNeed(positionWorld, club.id, need, 'CONTEND').candidates.find((item) => item.playerId === externalPlayerId)!
     expect(positionCandidate.positionFit).toBe('HIGH')
     expect(positionCandidate.reasons).toContain('POSITION_MATCH')
+  })
+
+  it('keeps free-agent salary and feasibility unchanged when hidden ratings and MarketReality change', () => {
+    const sourceTeam = Object.values(base.teams).find((team) => team.rosterPlayerIds.includes(externalPlayerId))!
+    const freeAgentWorld = releasePlayer(base, sourceTeam.id, externalPlayerId)
+    const signalWorld = withMarketSignal(freeAgentWorld, externalPlayerId)
+    const need = makeNeed()
+    const assessment = assessMarketCandidatesForNeed(signalWorld, club.id, need, 'CONTEND')
+    const before = assessMarketCandidateFeasibility(signalWorld, assessment)
+    const changed = updateGameWorld(signalWorld, {
+      players: Object.values(signalWorld.players).map((player) => player.id === externalPlayerId
+        ? { ...player, basketball: { ...player.basketball, ratings: Object.fromEntries(Object.keys(player.basketball.ratings).map((key) => [key, 100])) as typeof player.basketball.ratings } }
+        : player),
+      marketReality: Object.values(signalWorld.marketRealityByPlayerId).map((reality) => reality.playerId === externalPlayerId
+        ? { ...reality, expectedSalary: reality.expectedSalary + 500_000, playerWillingness: 0, sellerWillingness: 0 }
+        : reality),
+    })
+    const after = assessMarketCandidateFeasibility(changed, assessMarketCandidatesForNeed(changed, club.id, need, 'CONTEND'))
+    expect(after.candidates.find((item) => item.playerId === externalPlayerId)?.feasibility).toEqual(before.candidates.find((item) => item.playerId === externalPlayerId)?.feasibility)
+    expect(before.candidates.find((item) => item.playerId === externalPlayerId)?.feasibility.expectedSalary).toBeUndefined()
+    expect(before.candidates.find((item) => item.playerId === externalPlayerId)?.feasibility.affordability).toBe('UNKNOWN')
+  })
+
+  it('uses only club MarketKnowledge salary, willingness, interest and availability with provenance', () => {
+    const sourceTeam = Object.values(base.teams).find((team) => team.rosterPlayerIds.includes(externalPlayerId))!
+    const freeAgentWorld = releasePlayer(base, sourceTeam.id, externalPlayerId)
+    const marketWorld = updateGameWorld(freeAgentWorld, { marketKnowledge: [{ organizationId: club.organizationId, playerId: externalPlayerId, availability: 'OPEN', expectedSalary: 1_000_000, playerInterest: 72, sellerWillingness: 44, confidence: 65, assessedAt: base.currentDate, source: 'AGENT' }] })
+    const unknown = assessMarketCandidateFeasibility(freeAgentWorld, assessMarketCandidatesForNeed(freeAgentWorld, club.id, makeNeed(), 'CONTEND')).candidates.find((item) => item.playerId === externalPlayerId)!
+    const assessment = assessMarketCandidatesForNeed(marketWorld, club.id, makeNeed(), 'CONTEND')
+    const candidate = assessMarketCandidateFeasibility(marketWorld, assessment).candidates.find((item) => item.playerId === externalPlayerId)!
+    expect(candidate.feasibility.route).toBe('FREE_AGENT_SIGNING')
+    expect(candidate.feasibility.routeSupport).toBe('SUPPORTED')
+    expect(candidate.feasibility.expectedSalary).toMatchObject({ value: 1_000_000, source: 'AGENT', confidence: 65, assessedAt: base.currentDate })
+    expect(candidate.feasibility.affordability).toBe(canTeamAffordAdditionalSalary(marketWorld, club.id, 1_000_000) ? 'AFFORDABLE' : 'OVER_BUDGET')
+    expect(candidate.feasibility.playerInterest).toMatchObject({ value: 72, source: 'AGENT', confidence: 65 })
+    expect(candidate.feasibility.sellerWillingness).toMatchObject({ value: 44, source: 'AGENT', confidence: 65 })
+    expect(candidate.feasibility.availability).toBe('FREE_AGENT')
+    expect(candidate.feasibility.marketAvailability).toBe('OPEN')
+    expect(unknown.feasibility.affordability).toBe('UNKNOWN')
+    expect(candidate.feasibility.affordability).not.toBe(unknown.feasibility.affordability)
+    expect(unknown.feasibility.approachability).toBe('UNKNOWN')
+    expect(candidate.feasibility.approachability).toBe(canTeamAffordAdditionalSalary(marketWorld, club.id, 1_000_000) ? 'MEDIUM' : 'BLOCKED')
+  })
+
+  it('never turns unknown valuation, salary, interest or seller willingness into neutral values', () => {
+    const sourceTeam = Object.values(base.teams).find((team) => team.rosterPlayerIds.includes(externalPlayerId))!
+    const freeAgentWorld = releasePlayer(base, sourceTeam.id, externalPlayerId)
+    const assessment = assessMarketCandidatesForNeed(withMarketSignal(freeAgentWorld, externalPlayerId), club.id, makeNeed(), 'CONTEND')
+    const candidate = assessMarketCandidateFeasibility(freeAgentWorld, assessment).candidates.find((item) => item.playerId === externalPlayerId)!
+    expect(candidate.feasibility.expectedSalary).toBeUndefined()
+    expect(candidate.feasibility.affordability).toBe('UNKNOWN')
+    expect(candidate.feasibility.playerInterest).toBeUndefined()
+    expect(candidate.feasibility.sellerWillingness).toBeUndefined()
+    expect(candidate.feasibility.perceivedEconomicValue).toBe('UNKNOWN')
+    expect(candidate.feasibility.approachability).toBe('UNKNOWN')
+  })
+
+  it('does not infer trade availability or payroll affordability from a contracted player', () => {
+    const world = withKnowledge(base, externalPlayerId, { creation: finding(75) })
+    const candidate = assessMarketCandidatesForNeed(world, club.id, makeNeed(), 'CONTEND').candidates.find((item) => item.playerId === externalPlayerId)!
+    const result = assessMarketCandidateFeasibility(world, { ...assessMarketCandidatesForNeed(world, club.id, makeNeed(), 'CONTEND'), candidates: [{ ...candidate, acquisitionContext: 'CONTRACTED' }] }).candidates.find((item) => item.playerId === externalPlayerId)!
+    expect(result.contractStatus).toBe('UNDER_CONTRACT')
+    expect(result.feasibility.availability).toBe('UNKNOWN')
+    expect(result.feasibility.route).toBe('UNKNOWN')
+    expect(result.feasibility.routeSupport).toBe('UNKNOWN')
+    expect(result.feasibility.affordability).toBe('NOT_APPLICABLE')
+    expect(result.feasibility.currentContractAnnualSalary).toBe(getActivePlayerContract(world, externalPlayerId)?.compensation.annualSalary)
+    expect(result.feasibility.expectedSalary).toBeUndefined()
+    expect(result.feasibility.sellerWillingness).toBeUndefined()
+    expect(result.feasibility.tradePackageLegality).toBe('NOT_ASSESSED')
+  })
+
+  it('reports trade-rule route support without constructing or validating a trade package', () => {
+    const season = Object.values(base.seasons).find((item) => {
+      const competition = base.competitions[item.competitionId]!
+      const participants = item.participantTeamIds ?? competition.participantTeamIds
+      return base.currentDate >= item.startDate && base.currentDate <= item.endDate && participants.includes(club.id)
+    })!
+    const competition = base.competitions[season.competitionId]!
+    const sourceTeam = Object.values(base.teams).find((team) => team.id !== club.id && (season.participantTeamIds ?? competition.participantTeamIds).includes(team.id) && team.rosterPlayerIds.length > 0)!
+    const playerId = sourceTeam.rosterPlayerIds[0]!
+    const rules = { seasonId: season.id, ecosystemId: competition.ecosystemId, maxTeamsPerTrade: 2, allowedAssetKinds: ['player'] as const, maxFutureDraftCyclesTradable: 0, retainedSalary: { allowed: false, maximumPercentage: 0, maximumContractsPerTeam: 0 }, cashConsideration: { allowed: false, maximumAmount: 0 }, createTradeException: { enabled: false, expiresAfterSeasons: 1 } }
+    const world = updateGameWorld(base, { tradeRulesBySeasonId: { ...base.tradeRulesBySeasonId, [season.id]: rules }, organizationKnowledge: [...base.organizationKnowledge, knowledge(club.organizationId, playerId, { creation: finding(70) })] })
+    const candidate = assessMarketCandidatesForNeed(world, club.id, makeNeed(), 'CONTEND').candidates.find((item) => item.playerId === playerId)!
+    const assessment = assessMarketCandidatesForNeed(world, club.id, makeNeed(), 'CONTEND')
+    const tradeAssessment = { ...assessment, candidates: [{ ...candidate, acquisitionContext: 'TRADE_CONTEXT' as const, currentTeam: { teamId: sourceTeam.id, name: sourceTeam.name } }] }
+    const result = assessMarketCandidateFeasibility(world, tradeAssessment).candidates[0]!
+    expect(result.feasibility.route).toBe('TRADE')
+    expect(result.feasibility.routeSupport).toBe('SUPPORTED')
+    expect(result.feasibility.tradePackageLegality).toBe('NOT_ASSESSED')
+    expect(result.feasibility.affordability).toBe('NOT_APPLICABLE')
+    expect(result.feasibility.sellerWillingness).toBeUndefined()
+    const noRulesWorld = updateGameWorld(world, { tradeRulesBySeasonId: {} })
+    const unsupported = assessMarketCandidateFeasibility(noRulesWorld, tradeAssessment).candidates[0]!
+    expect(unsupported.feasibility.route).toBe('TRADE')
+    expect(unsupported.feasibility.routeSupport).toBe('UNSUPPORTED')
+    expect(unsupported.feasibility.blockers).toContain('NO_ACTIVE_CANONICAL_TRADE_RULES')
+  })
+
+  it('labels cross-ecosystem transfer context unsupported when no transfer economics exist', () => {
+    const candidate = assessMarketCandidatesForNeed(withKnowledge(base, externalPlayerId, { creation: finding(70) }), club.id, makeNeed(), 'CONTEND').candidates.find((item) => item.playerId === externalPlayerId)!
+    const assessment = assessMarketCandidatesForNeed(withKnowledge(base, externalPlayerId, { creation: finding(70) }), club.id, makeNeed(), 'CONTEND')
+    const transferAssessment = { ...assessment, candidates: [{ ...candidate, acquisitionContext: 'TRANSFER_CONTEXT' as const }] }
+    const result = assessMarketCandidateFeasibility(base, transferAssessment).candidates[0]!
+    expect(result.feasibility.route).toBe('TRANSFER')
+    expect(result.feasibility.routeSupport).toBe('UNSUPPORTED')
+    expect(result.feasibility.routeReason).toBe('NO_CANONICAL_PLAYER_TRANSFER_OR_FEE_MODEL')
+    expect(result.feasibility.approachability).toBe('BLOCKED')
+    expect(result.feasibility.expectedSalary).toBeUndefined()
+    expect(result.feasibility.perceivedEconomicValue).toBe('UNKNOWN')
+  })
+
+  it('keeps Finance V2 context separate and does not add transaction or Governance state', () => {
+    const sourceTeam = Object.values(base.teams).find((team) => team.rosterPlayerIds.includes(externalPlayerId))!
+    const world = releasePlayer(base, sourceTeam.id, externalPlayerId)
+    const market = withMarketSignal(world, externalPlayerId)
+    const assessment = assessMarketCandidatesForNeed(market, club.id, makeNeed({ financialContext: 'STRESSED' }), 'SURVIVE')
+    const before = { negotiations: market.negotiationsById, transactions: market.playerTransactionsById, contracts: market.contractsById, trades: market.tradeHistoryById, governance: market.governanceRequestsById, finance: market.treasuryApplicationsById }
+    const result = assessMarketCandidateFeasibility(market, assessment)
+    const candidate = result.candidates.find((item) => item.playerId === externalPlayerId)!
+    expect(candidate.feasibility.financeV2Context).toBe('STRESSED')
+    expect(candidate.feasibility.approachability).toBe('UNKNOWN')
+    expect(new Set(result.candidates.map((item) => item.playerId))).toEqual(new Set(assessment.candidates.map((item) => item.playerId)))
+    expect(assessMarketCandidateFeasibility(market, assessment)).toEqual(result)
+    expect(market.negotiationsById).toBe(before.negotiations)
+    expect(market.playerTransactionsById).toBe(before.transactions)
+    expect(market.governanceRequestsById).toBe(before.governance)
+    expect(market.contractsById).toBe(before.contracts)
+    expect(market.tradeHistoryById).toBe(before.trades)
+    expect(market.treasuryApplicationsById).toBe(before.finance)
+    expect(result).not.toHaveProperty('world')
   })
 
   it('uses only a listed secondary position and does not infer role fit from hidden ratings', () => {
@@ -193,6 +325,10 @@ describe('MarketCandidateIntelligence', () => {
     expect(routed[0]!.route).toBe('MARKET_INTELLIGENCE_REQUIRED')
     expect(routed[0]!.perspective).toBe('ORGANIZATION_KNOWLEDGE')
     expect(routed[0]!.need.id).toBe(externalNeed.id)
+    const feasibilityRoute = assessRoutedMarketCandidateFeasibility(planned, club.id)
+    expect(feasibilityRoute[0]!.candidates.map((item) => item.playerId).sort()).toEqual(routed[0]!.candidates.map((item) => item.playerId).sort())
+    expect(feasibilityRoute[0]!.candidates.every((item) => item.feasibility.perceivedEconomicValue === 'UNKNOWN')).toBe(true)
+    expect(feasibilityRoute[0]!.candidates.every((item) => item.needFit !== undefined)).toBe(true)
     expect(assessRoutedMarketCandidates(base, club.id)).toEqual([])
     expect(assessRoutedMarketCandidates(planned, club.id).length).toBe(1)
     expect(planned.gmPlanStatesById[seededPlan.id]).toEqual(seededPlan)

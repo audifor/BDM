@@ -1,10 +1,15 @@
 import type { TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { assessGMDecisionContext } from '@/engine/gmDecisionContext'
-import { assessMarketCandidatesForNeed, type MarketCandidateAssessment } from '@/engine/marketIntelligence'
+import { assessMarketCandidateFeasibility, assessMarketCandidatesForNeed, type MarketCandidateAssessment, type MarketCandidateFeasibilityAssessment } from '@/engine/marketIntelligence'
 import { inspectGMPlanWorkflows } from '@/app/gmPlanning'
 
 export interface RoutedMarketCandidateAssessment extends MarketCandidateAssessment {
+  readonly planId: string
+  readonly route: 'MARKET_INTELLIGENCE_REQUIRED'
+}
+
+export interface RoutedMarketCandidateFeasibilityAssessment extends MarketCandidateFeasibilityAssessment {
   readonly planId: string
   readonly route: 'MARKET_INTELLIGENCE_REQUIRED'
 }
@@ -24,4 +29,13 @@ export function assessRoutedMarketCandidates(world: GameWorld, teamId: TeamId): 
       if (need === undefined) return []
       return [{ ...assessMarketCandidatesForNeed(world, teamId, need, context.strategy), planId: decision.planId, route: 'MARKET_INTELLIGENCE_REQUIRED' as const }]
     }))
+}
+
+/** Read-only feasibility over the exact BS10A candidates for each current BS9E market route. */
+export function assessRoutedMarketCandidateFeasibility(world: GameWorld, teamId: TeamId): readonly RoutedMarketCandidateFeasibilityAssessment[] {
+  return Object.freeze(assessRoutedMarketCandidates(world, teamId).map((assessment) => ({
+    ...assessMarketCandidateFeasibility(world, assessment),
+    planId: assessment.planId,
+    route: assessment.route,
+  })))
 }

@@ -3,7 +3,7 @@ import { assessClubStrategy } from '@/engine/clubStrategy/ClubStrategyEngine'
 import type { ClubNeedKind } from '@/engine/clubNeeds'
 import { assessGMDecisionContext, type GMResponseOptionKind } from '@/engine/gmDecisionContext'
 import { inspectGMPlanWorkflows } from '@/app/gmPlanning'
-import { assessRoutedMarketCandidates } from '@/app/marketIntelligence'
+import { assessRoutedMarketCandidateFeasibility } from '@/app/marketIntelligence'
 
 const REASON_LABELS: Readonly<Record<string, string>> = {
   FINANCIAL_STRESS: 'Financial pressure',
@@ -110,7 +110,7 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
         const assessment = assessClubStrategy(world, team.id)
         const decisionContext = assessGMDecisionContext(world, team.id)
         const workflowReview = inspectGMPlanWorkflows(world, team.id)
-        const marketCandidateReviews = assessRoutedMarketCandidates(world, team.id)
+        const marketCandidateReviews = assessRoutedMarketCandidateFeasibility(world, team.id)
         const needsAssessment = decisionContext.needsAssessment
         const state = world.clubStrategicStatesByTeamId[team.id]
         const isUserTeam = team.coachId === world.userCoachId
@@ -165,6 +165,14 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
                 <strong>{candidate.name}</strong>
                 <div>Position fit: {candidate.positionFit} · Role fit: {candidate.roleFit} · Knowledge: {candidate.knowledgeConfidence}</div>
                 <div>Strategy fit: {candidate.strategyFit} · Timeline fit: {candidate.timelineFit} · Availability: {candidate.availabilityStatus.replaceAll('_', ' ').toLowerCase()}</div>
+                <div>Approachability: {candidate.feasibility.approachability} · Route: {candidate.feasibility.route.replaceAll('_', ' ').toLowerCase()} ({candidate.feasibility.routeSupport.toLowerCase()}) · Affordability: {candidate.feasibility.affordability.replaceAll('_', ' ').toLowerCase()}</div>
+                <div>Market availability signal: {candidate.feasibility.marketAvailability?.replaceAll('_', ' ').toLowerCase() ?? 'unknown'} · Expected salary: {candidate.feasibility.expectedSalary === undefined ? 'unknown' : `${candidate.feasibility.expectedSalary.value.toLocaleString()} · ${candidate.feasibility.expectedSalary.source.toLowerCase()} · confidence ${candidate.feasibility.expectedSalary.confidence}% · ${candidate.feasibility.expectedSalary.assessedAt}`} · Perceived economic value: unknown</div>
+                {candidate.feasibility.currentContractAnnualSalary !== undefined && <div>Current contract annual salary: {candidate.feasibility.currentContractAnnualSalary.toLocaleString()} · trade package legality not assessed</div>}
+                <div>Player interest: {candidate.feasibility.playerInterest === undefined ? 'unknown' : `${candidate.feasibility.playerInterest.value} · ${candidate.feasibility.playerInterest.source.toLowerCase()} · confidence ${candidate.feasibility.playerInterest.confidence}% · ${candidate.feasibility.playerInterest.assessedAt}`}</div>
+                <div>Seller willingness: {candidate.feasibility.sellerWillingness === undefined ? 'unknown' : `${candidate.feasibility.sellerWillingness.value} · ${candidate.feasibility.sellerWillingness.source.toLowerCase()} · confidence ${candidate.feasibility.sellerWillingness.confidence}% · ${candidate.feasibility.sellerWillingness.assessedAt}`}</div>
+                <div>Finance V2 context: {candidate.feasibility.financeV2Context.replaceAll('_', ' ').toLowerCase()} · assessed separately from payroll affordability</div>
+                {candidate.feasibility.routeReason !== undefined && <div>Route note: {candidate.feasibility.routeReason.replaceAll('_', ' ').toLowerCase()}</div>}
+                {candidate.feasibility.blockers.length > 0 && <div>Feasibility blockers: {candidate.feasibility.blockers.map((item) => item.replaceAll('_', ' ').toLowerCase()).join(', ')}</div>}
                 {candidate.currentTeam !== undefined && <div>Current team: {candidate.currentTeam.name} · Acquisition context: {candidate.acquisitionContext.replaceAll('_', ' ').toLowerCase()}</div>}
                 {candidate.availabilitySignal !== undefined && <div>Market signal: {candidate.availabilitySignal.source.replaceAll('_', ' ').toLowerCase()} · confidence {candidate.availabilitySignal.confidence}% · {candidate.availabilitySignal.assessedAt}</div>}
                 {Object.keys(candidate.knownDimensions).length > 0 && <div>Known evidence: {Object.keys(candidate.knownDimensions).join(', ')}</div>}
