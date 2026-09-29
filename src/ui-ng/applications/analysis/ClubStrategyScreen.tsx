@@ -3,7 +3,7 @@ import { assessClubStrategy } from '@/engine/clubStrategy/ClubStrategyEngine'
 import type { ClubNeedKind } from '@/engine/clubNeeds'
 import { assessGMDecisionContext, type GMResponseOptionKind } from '@/engine/gmDecisionContext'
 import { inspectGMPlanWorkflows } from '@/app/gmPlanning'
-import { assessRoutedAcquisitionProposalIntelligence, assessRoutedMarketCandidateFeasibility } from '@/app/marketIntelligence'
+import { assessRoutedAcquisitionProposalIntelligence, assessRoutedFreeAgentOfferIntelligence, assessRoutedMarketCandidateFeasibility } from '@/app/marketIntelligence'
 
 const REASON_LABELS: Readonly<Record<string, string>> = {
   FINANCIAL_STRESS: 'Financial pressure',
@@ -112,6 +112,7 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
         const workflowReview = inspectGMPlanWorkflows(world, team.id)
         const marketCandidateReviews = assessRoutedMarketCandidateFeasibility(world, team.id)
         const acquisitionProposals = assessRoutedAcquisitionProposalIntelligence(world, team.id)
+        const freeAgentOffers = assessRoutedFreeAgentOfferIntelligence(world, team.id)
         const needsAssessment = decisionContext.needsAssessment
         const state = world.clubStrategicStatesByTeamId[team.id]
         const isUserTeam = team.coachId === world.userCoachId
@@ -201,6 +202,25 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
               {proposal.alternatives.length > 0 && <div>Alternatives: {proposal.alternatives.map((alternative) => alternative.name).join(', ')}</div>}
               {proposal.missingInformation.length > 0 && <div>Missing: {proposal.missingInformation.map((item) => item.replaceAll('_', ' ').toLowerCase()).join(', ')}</div>}
               {proposal.blockers.length > 0 && <div>Blockers: {proposal.blockers.map((item) => item.replaceAll('_', ' ').toLowerCase()).join(', ')}</div>}
+            </article>)}
+          </section>
+          <section aria-label={`${team.name} ${team.gender} free-agent offer preparation`}>
+            <h3>{isUserTeam ? 'Recommended offer preparation (advisory)' : 'Free-agent offer readiness'}</h3>
+            {freeAgentOffers.map((offer) => <article key={offer.id} aria-label={`${offer.outcome.replaceAll('_', ' ').toLowerCase()} ${offer.playerName ?? 'no preferred player'}`}>
+              {offer.outcome === 'FREE_AGENT_OFFER' && <>
+                <strong>Preferred player: {offer.playerName}</strong>
+                <div>Prepared salary: {offer.preparedSalary === undefined ? 'unknown' : `${offer.preparedSalary.value.toLocaleString()} · expected market signal · ${offer.preparedSalary.source.toLowerCase()} · confidence ${offer.preparedSalary.confidence}%`}</div>
+                <div>Term: {offer.expectedTermYears === undefined ? 'unknown' : `expected ${offer.expectedTermYears.value} years`} · selected offer term: unknown</div>
+                <div>Role: unknown · Agent fee: unknown</div>
+                <div>Player interest: {offer.playerInterest === undefined ? 'unknown' : `${offer.playerInterest.value} · ${offer.playerInterest.source.toLowerCase()} · confidence ${offer.playerInterest.confidence}%`}</div>
+                <div>Current payroll affordability: {offer.payrollAffordability.toLowerCase()} · BS10B affordability: {offer.bs10bAffordability?.replaceAll('_', ' ').toLowerCase() ?? 'unknown'} · Finance V2: {offer.financeV2Context?.replaceAll('_', ' ').toLowerCase() ?? 'unknown'}</div>
+                <div>Transaction responsibility: {offer.transactionResponsibility.status.replaceAll('_', ' ').toLowerCase()}{offer.transactionResponsibility.mode === undefined ? '' : ` · ${offer.transactionResponsibility.mode}`}{offer.transactionResponsibility.holder === undefined ? '' : ` · ${offer.transactionResponsibility.holder.name} (${offer.transactionResponsibility.holder.role})`}</div>
+                <div>Governance authority: {offer.governanceAuthority.toLowerCase()} · Readiness: {offer.readiness.replaceAll('_', ' ').toLowerCase()}</div>
+              </>}
+              {offer.outcome !== 'FREE_AGENT_OFFER' && <strong>{offer.outcome === 'TRADE_ENQUIRY_ONLY' ? 'Trade enquiry remains read-only' : 'No free-agent offer preparation'}: {offer.blockers.join(', ').replaceAll('_', ' ').toLowerCase()}</strong>}
+              {offer.existingNegotiation !== undefined && <div>Existing negotiation: {offer.existingNegotiation.status.toLowerCase()} · duplicate opening blocked</div>}
+              {offer.missingInformation.length > 0 && <div>Missing: {offer.missingInformation.map((item) => item.replaceAll('_', ' ').toLowerCase()).join(', ')}</div>}
+              {offer.blockers.length > 0 && offer.outcome === 'FREE_AGENT_OFFER' && <div>Blockers: {offer.blockers.map((item) => item.replaceAll('_', ' ').toLowerCase()).join(', ')}</div>}
             </article>)}
           </section>
           <section aria-label={`${team.name} ${team.gender} response options`}>

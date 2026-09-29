@@ -6,7 +6,7 @@ import { createNewGame } from '@/app/game'
 import { reviewClubManagementPlanning } from '@/app/gmPlanning'
 import { createGMPlanState } from '@/domain/gmPlanning'
 import { assessGMDecisionContext } from '@/engine/gmDecisionContext'
-import { assessRoutedAcquisitionProposalIntelligence, assessRoutedMarketCandidateFeasibility } from '@/app/marketIntelligence'
+import { assessRoutedAcquisitionProposalIntelligence, assessRoutedFreeAgentOfferIntelligence, assessRoutedMarketCandidateFeasibility } from '@/app/marketIntelligence'
 import { updateGameWorld } from '@/domain/world'
 import { ClubStrategyScreen } from './ClubStrategyScreen'
 
@@ -39,6 +39,7 @@ describe('ClubStrategyScreen', () => {
     expect(screen.getByRole('heading', { name: 'Club strategy and needs' })).toBeInTheDocument()
     const userArticle = screen.getByRole('article', { name: `${userTeam.name} ${userTeam.gender} strategy` })
     expect(within(userArticle).getByRole('region', { name: `${userTeam.name} ${userTeam.gender} top needs` })).toBeInTheDocument()
+    expect(within(userArticle).getByRole('heading', { name: 'Recommended offer preparation (advisory)' })).toBeInTheDocument()
     expect(within(userArticle).getByRole('heading', { name: 'Recommended plan' })).toBeInTheDocument()
     expect(within(userArticle).getAllByText(/Recommended next workflow/).length).toBeGreaterThan(0)
     expect(screen.getByText(/Your club, advisory/)).toBeInTheDocument()
@@ -66,9 +67,12 @@ describe('ClubStrategyScreen', () => {
     const organizationKnowledge = { organizationId: team.organizationId, subjectPlayerId: externalPlayer, dimensions: Object.fromEntries(['creation', 'shooting', 'interiorDefense'].map((dimension) => [dimension, { coverage: 1, confidence: 0.9, assessedAt: initial.currentDate, provenance: 'scoutReport' as const, estimate: 75, uncertainty: 3 }])) }
     const world = updateGameWorld(shortRoster, { gmPlanStates: [...Object.values(shortRoster.gmPlanStatesById).filter((candidate) => candidate.teamId !== team.id), plan], organizationKnowledge: [...shortRoster.organizationKnowledge, organizationKnowledge] })
     const proposals = assessRoutedAcquisitionProposalIntelligence(world, team.id)
+    const offers = assessRoutedFreeAgentOfferIntelligence(world, team.id)
     const feasibility = assessRoutedMarketCandidateFeasibility(world, team.id)
     expect(proposals).toHaveLength(1)
+    expect(offers).toHaveLength(1)
     expect(proposals[0]!.planId).toBe(plan.id)
+    expect(offers[0]!.sourceProposalId).toBe(proposals[0]!.id)
     if (proposals[0]!.preferredCandidate !== undefined) {
       expect(feasibility[0]!.candidates.map((candidate) => candidate.playerId)).toContain(proposals[0]!.preferredCandidate.playerId)
     }
@@ -79,6 +83,7 @@ describe('ClubStrategyScreen', () => {
     expect(within(card).getByText(/Position fit: UNKNOWN/)).toBeInTheDocument()
     expect(within(card).getByText(/Known evidence:/)).toBeInTheDocument()
     expect(within(card).getByRole('heading', { name: 'Preferred acquisition proposal' })).toBeInTheDocument()
+    expect(within(card).getByRole('heading', { name: 'Free-agent offer readiness' })).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 })
