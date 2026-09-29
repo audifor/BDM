@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { advanceDay } from '@/engine/calendar'
 import { parseGameDate } from '@/domain/date'
+import { createGMPlanState } from '@/domain/gmPlanning'
 import { createGovernanceInstitution } from '@/domain/governance'
 import { createOrganization } from '@/domain/organization'
 import { organizationIdFromString, personIdFromString } from '@/domain/ids'
@@ -233,7 +234,7 @@ describe('GameWorldSaveV4 competition runtime', () => {
   it('migrates canonical V3 by preserving V3 fields and adding empty runtime state', () => {
     const v3 = serializeGameWorldV3(createNewGame(), savedAt)
     const v4 = migrateGameWorldSaveV3ToV4(v3)
-    const { worldDbCompetitionRuntime, worldAnnualDevelopmentCycle, organizations, organizationSections, organizationOwnership, organizationControl, organizationOwnershipTransactions, organizationOwnershipTransactionEvents, organizationInvestorInterests, organizationCapitalRaises, organizationCapitalRaiseEvents, organizationInvestmentProposals, organizationInvestmentProposalEvents, multiClubOwnershipPolicies, organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses, places, facilities, facilityComponents, facilityNameRecords, facilityOwnershipInterests, facilityControlRights, facilityOperatorAssignments, facilityOrganizationRelationships, facilityTeamRelationships, facilityUsageRights, facilityCompetitionApprovals, facilityStatusRecords, facilityComponentConditionRecords, facilityConditionRecords, facilityMaintenanceNeeds, facilityMaintenanceActions, facilityInspections, facilityOperationalIncidents, facilityDevelopmentProjects, facilityDevelopmentProjectPhases, facilityFinancialBindings, ...v4CompatibilityPayload } = v4.payload
+    const { worldDbCompetitionRuntime, worldAnnualDevelopmentCycle, clubStrategicStates, gmPlanStates, organizations, organizationSections, organizationOwnership, organizationControl, organizationOwnershipTransactions, organizationOwnershipTransactionEvents, organizationInvestorInterests, organizationCapitalRaises, organizationCapitalRaiseEvents, organizationInvestmentProposals, organizationInvestmentProposalEvents, multiClubOwnershipPolicies, organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses, places, facilities, facilityComponents, facilityNameRecords, facilityOwnershipInterests, facilityControlRights, facilityOperatorAssignments, facilityOrganizationRelationships, facilityTeamRelationships, facilityUsageRights, facilityCompetitionApprovals, facilityStatusRecords, facilityComponentConditionRecords, facilityConditionRecords, facilityMaintenanceNeeds, facilityMaintenanceActions, facilityInspections, facilityOperationalIncidents, facilityDevelopmentProjects, facilityDevelopmentProjectPhases, facilityFinancialBindings, ...v4CompatibilityPayload } = v4.payload
 
     expect(v4.schemaVersion).toBe(4)
     expect(v4CompatibilityPayload).toEqual(v3.payload)
@@ -243,6 +244,8 @@ describe('GameWorldSaveV4 competition runtime', () => {
       competitionSeasonIds: [],
     })
     expect(worldAnnualDevelopmentCycle).toEqual({ lastAppliedCycleId: null })
+    expect(clubStrategicStates).toEqual([])
+    expect(gmPlanStates).toBeUndefined()
     expect(organizationOwnership).toEqual([])
     expect(organizationControl).toEqual([])
     expect(organizationOwnershipTransactions).toEqual([])
@@ -294,10 +297,7 @@ describe('GameWorldSaveV4 competition runtime', () => {
       competitionSeasonIds: [],
     })
     expect(restored.worldAnnualDevelopmentCycle).toEqual({ lastAppliedCycleId: null })
-    // A fresh V3 load must never carry over another world's annual development cycle: both
-    // transitional V4-owned fields are stripped before comparing against a bare pre-V4 world.
-    const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, ...legacyCompatibleWorld } = restored
-    expect(legacyCompatibleWorld).toEqual(world)
+    expect(restored.gmPlanStatesById).toEqual({})
   })
 
   it('rejects malformed canonical V4 runtime payloads', () => {
@@ -351,5 +351,23 @@ describe('GameWorldSaveV4 competition runtime', () => {
     expect(() => deserializeGameWorldV4({ ...valid, extra: true })).toThrow(/unexpected fields/)
     expect(() => deserializeGameWorldV4({ ...valid, savedAt: 'not-a-date' })).toThrow(/ISO-8601/)
     expect(() => deserializeGameWorldV4({ ...valid, schemaVersion: 5 })).toThrow(/Unsupported save version/)
+  })
+})
+
+describe('GameWorldSaveV4 GM plan memory', () => {
+  it('round-trips minimal per-need GM plan memory', () => {
+    const world = createNewGame()
+    const teamId = Object.values(world.teams).find((team) => team.coachId !== undefined && team.coachId !== world.userCoachId)!.id
+    const state = createGMPlanState({ id: `${teamId}:need:depth`, teamId, needId: 'need:depth', selectedOptionKind: 'EXTERNAL_ACQUISITION', selectedOn: world.currentDate, lastReviewedOn: world.currentDate, selectionReason: 'INITIAL_SELECTION', executionReadinessAtSelection: 'UNKNOWN_AUTHORITY', strategyAtSelection: 'CONTEND', originalOptionPriority: 1 })
+    const savedWorld = updateGameWorld(world, { gmPlanStates: [state] })
+    const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(savedWorld, savedAt))))
+    expect(Object.values(restored.gmPlanStatesById)).toEqual([state])
+  })
+
+  it('defaults a pre-plan V4 save to an empty plan collection', () => {
+    const saved = serializeGameWorldV4(createNewGame(), savedAt)
+    const { gmPlanStates: _oldField, ...oldPayload } = saved.payload
+    const restored = deserializeGameWorldV4({ ...saved, payload: oldPayload })
+    expect(restored.gmPlanStatesById).toEqual({})
   })
 })

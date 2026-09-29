@@ -77,6 +77,7 @@ import { createFinanceDecisionProposal, type FinanceDecisionProposal } from '@/d
 import { createIndexationPolicy, type IndexationPolicy } from '@/domain/finance'
 import { parseGameDate } from '@/domain/date'
 import { createClubStrategicState, type ClubStrategicState } from '@/domain/clubStrategy'
+import { createGMPlanState, type GMPlanState } from '@/domain/gmPlanning'
 import { competitionIdFromString, ecosystemIdFromString, expenseRecognitionIdFromString, facilityCompetitionApprovalIdFromString, facilityComponentConditionRecordIdFromString, facilityComponentIdFromString, facilityConditionRecordIdFromString, facilityControlRightIdFromString, facilityDevelopmentProjectIdFromString, facilityDevelopmentProjectPhaseIdFromString, facilityIdFromString, facilityInspectionIdFromString, facilityMaintenanceActionIdFromString, facilityMaintenanceNeedIdFromString, facilityNameRecordIdFromString, facilityOperationalIncidentIdFromString, facilityOperatorAssignmentIdFromString, facilityOrganizationRelationshipIdFromString, facilityOwnershipInterestIdFromString, facilityStatusRecordIdFromString, facilityTeamRelationshipIdFromString, facilityUsageRightIdFromString, financialAccountIdFromString, financialCommitmentIdFromString, financialEntitlementIdFromString, financialTransactionIdFromString, fiscalPeriodIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, placeIdFromString, receivableIdFromString, payableIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, revenueRecognitionIdFromString, seasonIdFromString, treasurySettlementIdFromString, contractIdFromString, teamIdFromString, organizationSectionIdFromString } from '@/domain/ids'
 import {
   deserializeGameWorldSave as deserializeLegacyGameWorldSave,
@@ -106,6 +107,8 @@ export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly worldAnnualDevelopmentCycle: WorldAnnualDevelopmentCycleSaveV4
   /** Minimal accepted club intent and review memory; assessment projections remain derived. */
   readonly clubStrategicStates: readonly ClubStrategicState[]
+  /** Minimal per-need AI planning memory; absent in earlier V4 saves. */
+  readonly gmPlanStates?: readonly GMPlanState[]
   readonly organizations: readonly Organization[]
   readonly organizationSections: readonly OrganizationSection[]
   readonly organizationOwnership: readonly OrganizationOwnership[]
@@ -232,6 +235,7 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
         world.worldAnnualDevelopmentCycle ?? EMPTY_WORLD_ANNUAL_DEVELOPMENT_CYCLE,
       ),
       clubStrategicStates: Object.values(world.clubStrategicStatesByTeamId),
+      gmPlanStates: Object.values(world.gmPlanStatesById),
       organizations: Object.values(world.organizationsById),
       organizationSections: Object.values(world.organizationSectionsById),
       organizationOwnership: Object.values(world.organizationOwnershipById),
@@ -271,6 +275,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const runtime = parseWorldDbCompetitionRuntimeV4(payload.worldDbCompetitionRuntime)
   const developmentCycle = parseWorldAnnualDevelopmentCycleV4(payload.worldAnnualDevelopmentCycle)
   const clubStrategicStates = Object.prototype.hasOwnProperty.call(payload, 'clubStrategicStates') ? parseClubStrategicStates(payload.clubStrategicStates) : []
+  const gmPlanStates = Object.prototype.hasOwnProperty.call(payload, 'gmPlanStates') ? parseGMPlanStates(payload.gmPlanStates) : []
   const hasOrganizations = Object.prototype.hasOwnProperty.call(payload, 'organizations')
   const hasOrganizationSections = Object.prototype.hasOwnProperty.call(payload, 'organizationSections')
   const ownership = Object.prototype.hasOwnProperty.call(payload, 'organizationOwnership')
@@ -358,7 +363,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
-  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, clubStrategicStates: _clubStrategicStates, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalsEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _structuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, revenueSources: _revenueSources, operatingCostSources: _operatingCostSources, operatingCostFacts: _operatingCostFacts, debtInstruments: _debtInstruments, competitionDistributionFacts: _competitionDistributionFacts, financialBudgets: _financialBudgets, budgetLines: _budgetLines, budgetRevisions: _budgetRevisions, budgetAllocations: _budgetAllocations, forecastAssumptions: _forecastAssumptions, facilityFinancialBindings: _facilityFinancialBindings, financialRegulationAssessments: _assessments, financeDecisionProposals: _financeProposals, economicObservations: _observations, exchangeRates: _rates, ...compatibilityPayload } = payload
+  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, clubStrategicStates: _clubStrategicStates, gmPlanStates: _gmPlanStates, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalsEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _structuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, revenueSources: _revenueSources, operatingCostSources: _operatingCostSources, operatingCostFacts: _operatingCostFacts, debtInstruments: _debtInstruments, competitionDistributionFacts: _competitionDistributionFacts, financialBudgets: _financialBudgets, budgetLines: _budgetLines, budgetRevisions: _budgetRevisions, budgetAllocations: _budgetAllocations, forecastAssumptions: _forecastAssumptions, facilityFinancialBindings: _facilityFinancialBindings, financialRegulationAssessments: _assessments, financeDecisionProposals: _financeProposals, economicObservations: _observations, exchangeRates: _rates, ...compatibilityPayload } = payload
   const world = deserializeGameWorldV3({
     schemaVersion: 3,
     savedAt,
@@ -377,7 +382,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const withFacilityDevelopment = updateGameWorld(withFacilityOperations, { facilityDevelopmentProjects, facilityDevelopmentProjectPhases })
   const withFinance = updateGameWorld(withFacilityDevelopment, { financialAccounts, financialTransactions, fiscalPeriods, organizationFinancialProfiles, receivables, payables, treasuryApplications, revenueRecognitions, expenseRecognitions, financialCommitments, financialEntitlements, revenueSources, operatingCostSources, operatingCostFacts, debtInstruments, competitionDistributionFacts, financialBudgets, budgetLines, budgetRevisions, budgetAllocations, forecastAssumptions, financialRegulationAssessments, financeDecisionProposals, economicObservations, exchangeRates })
   const withFacilityFinanceIntegration = updateGameWorld(withFinance, { facilityFinancialBindings })
-  const withClubStrategy = updateGameWorld(withFacilityFinanceIntegration, { clubStrategicStatesByTeamId: Object.fromEntries(clubStrategicStates.map((state) => [state.teamId, state])) })
+  const withClubStrategy = updateGameWorld(withFacilityFinanceIntegration, { clubStrategicStatesByTeamId: Object.fromEntries(clubStrategicStates.map((state) => [state.teamId, state])), gmPlanStates })
   return Object.freeze({ ...attachWorldDbCompetitionRuntime(withClubStrategy, runtime), worldAnnualDevelopmentCycle: developmentCycle })
 }
 
@@ -403,6 +408,28 @@ function parseClubStrategicStates(value: unknown): readonly ClubStrategicState[]
   })
   if (new Set(states.map((state) => state.teamId)).size !== states.length) throw new TypeError('Save V4 clubStrategicStates contains duplicate Teams')
   return Object.freeze(states)
+}
+
+function parseGMPlanStates(value: unknown): readonly GMPlanState[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 gmPlanStates must be an array')
+  const plans = value.map((entry) => {
+    const plan = record(entry, 'Save V4 GM plan state')
+    exactKeys(plan, ['id', 'teamId', 'needId', 'selectedOptionKind', 'selectedOn', 'lastReviewedOn', 'selectionReason', 'executionReadinessAtSelection', 'strategyAtSelection', 'originalOptionPriority'], 'Save V4 GM plan state')
+    return createGMPlanState({
+      id: nonEmptyText(plan.id, 'GM plan id'),
+      teamId: teamIdFromString(nonEmptyText(plan.teamId, 'GM plan teamId')),
+      needId: nonEmptyText(plan.needId, 'GM plan needId'),
+      selectedOptionKind: nonEmptyText(plan.selectedOptionKind, 'GM plan selectedOptionKind') as GMPlanState['selectedOptionKind'],
+      selectedOn: parseGameDate(nonEmptyText(plan.selectedOn, 'GM plan selectedOn')),
+      lastReviewedOn: parseGameDate(nonEmptyText(plan.lastReviewedOn, 'GM plan lastReviewedOn')),
+      selectionReason: nonEmptyText(plan.selectionReason, 'GM plan selectionReason') as GMPlanState['selectionReason'],
+      executionReadinessAtSelection: nonEmptyText(plan.executionReadinessAtSelection, 'GM plan executionReadinessAtSelection') as GMPlanState['executionReadinessAtSelection'],
+      strategyAtSelection: nonEmptyText(plan.strategyAtSelection, 'GM plan strategyAtSelection') as GMPlanState['strategyAtSelection'],
+      originalOptionPriority: integer(plan.originalOptionPriority, 'GM plan originalOptionPriority'),
+    })
+  })
+  if (new Set(plans.map((plan) => `${plan.teamId}:${plan.needId}`)).size !== plans.length) throw new TypeError('Save V4 gmPlanStates contains duplicate Team and need pairs')
+  return Object.freeze(plans)
 }
 
 /** Reads V1-V4. Legacy saves normalize the V4-owned runtime projection to empty state. */
