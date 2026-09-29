@@ -3,7 +3,9 @@ import { createNewGame } from '@/app/game'
 import { releasePlayer, signFreeAgent } from '@/app/market'
 import { staffPersonIdFromString, teamStaffAssignmentIdFromString } from '@/domain/ids'
 import { createNegotiationContact, type ContractNegotiation } from '@/domain/market'
+import { responsibilityIdForTeam } from '@/domain/responsibility'
 import { createGMPlanState } from '@/domain/gmPlanning'
+import { assessRoutedFormalOfferPreparations } from '@/app/marketIntelligence/FormalOfferPreparationService'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import type { GameWorld } from '@/domain/world'
 import { canTeamAffordAdditionalSalary, getEcosystemForTeam, getTeamFinancialSnapshot, updateGameWorld } from '@/domain/world'
@@ -12,7 +14,7 @@ import type { ClubNeed } from '@/engine/clubNeeds'
 import { assessMarketCandidatesForNeed } from './MarketCandidateIntelligence'
 import { assessMarketCandidateFeasibility } from './MarketCandidateFeasibility'
 import { selectAcquisitionProposal } from './AcquisitionProposalIntelligence'
-import { assessFreeAgentOfferIntelligence, assessNegotiationOpeningReadiness } from './FreeAgentOfferIntelligence'
+import { assessFormalOfferPreparation, assessFreeAgentOfferIntelligence, assessNegotiationOpeningReadiness } from './index'
 import { deriveNegotiationAttemptKey, resolveNegotiationContactAuthority } from './NegotiationContactAuthority'
 
 let base: GameWorld
@@ -223,6 +225,99 @@ describe('FreeAgentOfferIntelligence', () => {
     expect(canTeamAffordAdditionalSalary(base, teamId, 650_000)).toBe(true)
   })
 
+  it('requires the exact current positive contact and prepares only club-known salary and term values', () => {
+    const setup = withPositiveContact()
+    const result = assessFormalOfferPreparation(setup.world, setup.offer)
+    expect(result).toMatchObject({
+      negotiationId: setup.contact.id,
+      currentContactResponse: 'OPEN_TO_TALKS',
+      salaryExpectation: { value: 650_000, source: 'AGENT', confidence: 75 },
+      salaryProposal: { amount: 650_000, policy: 'MATCH_KNOWN_EXPECTATION' },
+      salaryAuthority: 'MATCH_KNOWN_EXPECTATION',
+      expectedTermYears: { value: 2, source: 'AGENT' },
+      termProposalYears: 2,
+      termAuthority: 'MATCH_KNOWN_EXPECTED_YEARS',
+      roleAuthority: 'UNKNOWN',
+      agentFeeAuthority: 'UNKNOWN',
+      payrollAffordability: 'AFFORDABLE',
+      readiness: 'NO_EXECUTION_OWNER',
+      governanceAuthority: 'UNKNOWN',
+    })
+    expect(result).not.toHaveProperty('promisedRole')
+    expect(result).not.toHaveProperty('agentFeeProposal')
+    expect(result.missingInformation).toEqual(expect.arrayContaining(['INCOMING_PLAYER_ROLE_AUTHORITY_UNKNOWN', 'OPENING_AGENT_FEE_AUTHORITY_UNKNOWN']))
+    expect(result.blockers).toContain('PLAYER_CONTRACT_GOVERNANCE_AUTHORITY_UNKNOWN')
+    expect(setup.world.negotiationsById[setup.contact.id]).toEqual(setup.contact)
+    expect(setup.world.contractsById).toBe(base.contractsById)
+    expect(setup.world.playerTransactionsById).toBe(base.playerTransactionsById)
+    expect(setup.world.teams[teamId]!.rosterPlayerIds).toEqual(base.teams[teamId]!.rosterPlayerIds)
+  })
+
+  it('rebuilds current GM and BS10C state instead of trusting a historical offer snapshot', () => {
+    const setup = withPositiveContact()
+    const preparations = assessRoutedFormalOfferPreparations(setup.world, teamId)
+    expect(preparations).toHaveLength(1)
+    expect(preparations[0]).toMatchObject({ readiness: 'STALE', blockers: expect.arrayContaining(['CURRENT_GM_PLAN_OR_BS10C_PROPOSAL_UNAVAILABLE']) })
+    expect(preparations[0]?.negotiationId).toBeUndefined()
+    expect(setup.world.negotiationsById[setup.contact.id]).toEqual(setup.contact)
+    expect(setup.world.contractsById).toBe(base.contractsById)
+    expect(setup.world.playerTransactionsById).toBe(base.playerTransactionsById)
+  })
+
+  it('does not proceed from pending/refused contacts or after the player is no longer a free agent', () => {
+    const setup = withPositiveContact()
+    const pending = updateGameWorld(setup.world, { negotiations: [{ ...setup.contact, contactResponse: undefined }] })
+    expect(assessFormalOfferPreparation(pending, setup.offer).readiness).toBe('CONTACT_NOT_POSITIVE')
+    const refusedContact = { ...setup.contact, status: 'CLOSED', contactResponse: { ...setup.contact.contactResponse!, outcome: 'NOT_INTERESTED' } } as ContractNegotiation
+    const refused = updateGameWorld(setup.world, { negotiations: [refusedContact] })
+    expect(assessFormalOfferPreparation(refused, setup.offer).readiness).toBe('CONTACT_NOT_POSITIVE')
+    const signed = signFreeAgent(setup.world, teamId, playerId)
+    expect(assessFormalOfferPreparation(signed, setup.offer).readiness).toBe('STALE')
+  })
+
+  it('leaves salary and term unresolved when current club-known evidence is absent', () => {
+    const setup = withPositiveContact()
+    const unknownExpectations = { ...setup.offer, preparedSalary: undefined, expectedTermYears: undefined }
+    const result = assessFormalOfferPreparation(setup.world, unknownExpectations)
+    expect(result.salaryProposal).toBeUndefined()
+    expect(result.termProposalYears).toBeUndefined()
+    expect(result.payrollAffordability).toBe('UNKNOWN')
+    expect(result.missingInformation).toEqual(expect.arrayContaining(['CLUB_KNOWN_EXPECTED_SALARY_UNKNOWN', 'CLUB_KNOWN_EXPECTED_TERM_UNKNOWN']))
+    expect(result.readiness).toBe('NO_EXECUTION_OWNER')
+  })
+
+  it('requires an offer-specific delegated owner for AI and keeps user authority separate', () => {
+    const setup = withPositiveContact()
+    const unresolved = assessFormalOfferPreparation(setup.world, setup.offer)
+    expect(setup.offer.contactAuthority.authorityStatus).toBe('AUTHORIZED')
+    expect(unresolved.executionResponsibility.kind).toBe('submitPlayerContractOffer')
+    expect(unresolved.executionResponsibility.status).toBe('NO_EXECUTION_OWNER')
+    expect(unresolved.readiness).toBe('NO_EXECUTION_OWNER')
+
+    const staffId = setup.offer.contactAuthority.responsibleStaffId!
+    const responsibilityId = responsibilityIdForTeam(teamId, 'submitPlayerContractOffer')
+    const delegated = updateGameWorld(setup.world, { responsibilities: [...Object.values(setup.world.responsibilitiesById).filter((item) => item.id !== responsibilityId), { id: responsibilityId, teamId, kind: 'submitPlayerContractOffer', mode: 'delegated', holderStaffId: staffId }] })
+    const delegatedPreparation = assessFormalOfferPreparation(delegated, setup.offer)
+    expect(delegatedPreparation.executionResponsibility).toMatchObject({ status: 'RESOLVED_HOLDER', owner: { kind: 'STAFF', staffPersonId: staffId } })
+    expect(delegatedPreparation.readiness).toBe('MORE_INFORMATION_REQUIRED')
+
+    const userWorld = updateGameWorld(setup.world, { userCoachId: setup.world.teams[teamId]!.coachId!, gmPlanStates: [] })
+    expect(assessFormalOfferPreparation(userWorld, setup.offer).executionResponsibility).toMatchObject({ status: 'USER_AUTHORITY', owner: { kind: 'USER' } })
+  })
+
+  it('rechecks salary affordability and ignores hidden external ratings and MarketReality', () => {
+    const setup = withPositiveContact()
+    const payroll = getTeamFinancialSnapshot(setup.world, teamId).currentPlayerPayroll
+    const tightened = updateGameWorld(setup.world, { teamFinances: Object.values(setup.world.teamFinancesByTeamId).map((item) => item.teamId === teamId ? { ...item, playerSalaryBudget: payroll + 100_000 } : item) })
+    expect(assessFormalOfferPreparation(tightened, setup.offer).payrollAffordability).toBe('OVER_BUDGET')
+    expect(assessFormalOfferPreparation(tightened, setup.offer).readiness).toBe('FINANCIAL_BLOCK')
+    const changedTruth = updateGameWorld(setup.world, {
+      players: Object.values(setup.world.players).map((player) => player.id === playerId ? { ...player, basketball: { ...player.basketball, ratings: Object.fromEntries(Object.keys(player.basketball.ratings).map((key) => [key, 100])) as typeof player.basketball.ratings } } : player),
+      marketReality: Object.values(setup.world.marketRealityByPlayerId).map((item) => item.playerId === playerId ? { ...item, expectedSalary: 90_000_000, expectedYears: 10, playerWillingness: 0 } : item),
+    })
+    expect(assessFormalOfferPreparation(changedTruth, setup.offer)).toEqual(assessFormalOfferPreparation(setup.world, setup.offer))
+  })
+
   it('detects an active canonical negotiation before indicating readiness', () => {
     const organizationId = base.teams[teamId]!.organizationId
     const id = `negotiation:${organizationId}:${playerId}:${base.currentDate}`
@@ -337,4 +432,29 @@ function makeNeed(): ClubNeed {
     id: 'test-need', priorityRank: 1, kind: 'POSITIONAL_DEPTH', severity: 'HIGH', urgency: 'SOON', confidence: 'HIGH', strategicFit: 'HIGH',
     affectedArea: 'POSITION', targetPosition: 'PG', relatedPlayerIds: [], evidence: [], temporalScope: 'STRUCTURAL', financialContext: 'HEALTHY',
   }
+}
+
+function withPositiveContact(): { world: GameWorld; offer: ReturnType<typeof assessFreeAgentOfferIntelligence>; contact: ContractNegotiation } {
+  const offer = assessFreeAgentOfferIntelligence(base, proposal)
+  if (offer.actionKey === undefined || offer.sourcePlanId === undefined || offer.contactAuthority.authorityStatus !== 'AUTHORIZED') {
+    throw new Error('Expected a current free-agent offer with contact authority')
+  }
+  const responsibleActor = offer.contactAuthority.responsibleStaffId === undefined
+    ? { kind: 'USER' as const }
+    : { kind: 'STAFF' as const, staffPersonId: offer.contactAuthority.responsibleStaffId }
+  const contact = createNegotiationContact({
+    organizationId: base.teams[teamId]!.organizationId,
+    teamId,
+    playerId,
+    startedOn: base.currentDate,
+    actionKey: offer.actionKey,
+    sourcePlanId: offer.sourcePlanId,
+    sourceProposalId: offer.sourceProposalId,
+    responsibleActor,
+  })
+  const positiveContact: ContractNegotiation = {
+    ...contact,
+    contactResponse: { outcome: 'OPEN_TO_TALKS', respondedOn: base.currentDate, marketSignalId: 'signal:offer-preparation-test' },
+  }
+  return { world: updateGameWorld(base, { negotiations: [positiveContact] }), offer, contact: positiveContact }
 }
