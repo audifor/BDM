@@ -3,6 +3,7 @@ import { assessClubStrategy } from '@/engine/clubStrategy/ClubStrategyEngine'
 import type { ClubNeedKind } from '@/engine/clubNeeds'
 import { assessGMDecisionContext, type GMResponseOptionKind } from '@/engine/gmDecisionContext'
 import { inspectGMPlanWorkflows } from '@/app/gmPlanning'
+import { assessRoutedMarketCandidates } from '@/app/marketIntelligence'
 
 const REASON_LABELS: Readonly<Record<string, string>> = {
   FINANCIAL_STRESS: 'Financial pressure',
@@ -109,6 +110,7 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
         const assessment = assessClubStrategy(world, team.id)
         const decisionContext = assessGMDecisionContext(world, team.id)
         const workflowReview = inspectGMPlanWorkflows(world, team.id)
+        const marketCandidateReviews = assessRoutedMarketCandidates(world, team.id)
         const needsAssessment = decisionContext.needsAssessment
         const state = world.clubStrategicStatesByTeamId[team.id]
         const isUserTeam = team.coachId === world.userCoachId
@@ -153,6 +155,26 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
               </li>
             })}</ol>}
           </section>
+          {marketCandidateReviews.map((review) => {
+            const need = needsAssessment.needs.find((item) => item.id === review.need.id)
+            return <section key={review.planId} aria-label={`${team.name} ${team.gender} known market candidates for ${review.need.id}`}>
+              <h3>{isUserTeam ? 'Recommended market candidates' : 'Known market candidates'}</h3>
+              <p>{need ? NEED_LABELS[need.kind] : 'External acquisition'} · {review.perspective === 'USER_ANALYTICS' ? 'User analytics perspective; player knowledge remains club-scoped.' : 'AI perspective uses organization knowledge and public market facts.'}</p>
+              {review.knowledgeStatus === 'MARKET_KNOWLEDGE_INSUFFICIENT' && <p>Market knowledge insufficient to distinguish candidates confidently.</p>}
+              {review.candidates.length === 0 ? <p>No discoverable candidates for this need.</p> : <ol>{review.candidates.slice(0, 5).map((candidate) => <li key={candidate.playerId}>
+                <strong>{candidate.name}</strong>
+                <div>Position fit: {candidate.positionFit} · Role fit: {candidate.roleFit} · Knowledge: {candidate.knowledgeConfidence}</div>
+                <div>Strategy fit: {candidate.strategyFit} · Timeline fit: {candidate.timelineFit} · Availability: {candidate.availabilityStatus.replaceAll('_', ' ').toLowerCase()}</div>
+                {candidate.currentTeam !== undefined && <div>Current team: {candidate.currentTeam.name} · Acquisition context: {candidate.acquisitionContext.replaceAll('_', ' ').toLowerCase()}</div>}
+                {candidate.availabilitySignal !== undefined && <div>Market signal: {candidate.availabilitySignal.source.replaceAll('_', ' ').toLowerCase()} · confidence {candidate.availabilitySignal.confidence}% · {candidate.availabilitySignal.assessedAt}</div>}
+                {Object.keys(candidate.knownDimensions).length > 0 && <div>Known evidence: {Object.keys(candidate.knownDimensions).join(', ')}</div>}
+                {candidate.missingKnowledge.length > 0 && <div>Missing: {candidate.missingKnowledge.join(', ')}</div>}
+                {candidate.reasons.length > 0 && <div>Why listed: {candidate.reasons.map((reason) => reason.replaceAll('_', ' ').toLowerCase()).join(', ')}</div>}
+                {candidate.contractStatus === 'UNDER_CONTRACT' && candidate.availabilityStatus === 'UNKNOWN' && <div>Contracted; no availability signal is known.</div>}
+              </li>)}</ol>}
+              {review.candidates.length > 5 && <p>{review.candidates.length - 5} more known candidates.</p>}
+            </section>
+          })}
           <section aria-label={`${team.name} ${team.gender} response options`}>
             <h3>Management response options</h3>
             <p>{decisionContext.decisionMakerStatus === 'ASSIGNED'
