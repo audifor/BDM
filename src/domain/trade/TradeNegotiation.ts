@@ -4,7 +4,7 @@ import { createPlayerContract, getPlayerContractStatus } from '@/domain/contract
 import type { EcosystemId, SeasonId, StaffPersonId, TeamId } from '@/domain/ids'
 import type { TradeExceptionUse, TradeAssetMovement, RetainedSalaryTerm } from './TradeModels'
 
-export type TradeNegotiationStatus = 'PROPOSED' | 'COUNTERED' | 'AGREED' | 'REJECTED' | 'WITHDRAWN'
+export type TradeNegotiationStatus = 'PROPOSED' | 'COUNTERED' | 'AGREED' | 'EXECUTED' | 'REJECTED' | 'WITHDRAWN'
 export type TradeNegotiationActionKind = 'PROPOSE' | 'COUNTER' | 'ACCEPT' | 'REJECT' | 'WITHDRAW'
 export type TradeNegotiationActor = { readonly kind: 'USER' } | { readonly kind: 'STAFF'; readonly staffPersonId: StaffPersonId }
 
@@ -46,6 +46,9 @@ export interface TradeNegotiation {
   readonly revisions: readonly TradeNegotiationRevision[]
   readonly actions: readonly TradeNegotiationAction[]
   readonly startedOn: GameDate
+  readonly completedOn?: GameDate
+  readonly tradeRecordId?: string
+  readonly governanceDecisionIdsByTeamId?: Readonly<Record<string, string>>
 }
 
 export function createTradeNegotiation(input: TradeNegotiation): TradeNegotiation {
@@ -120,7 +123,11 @@ export function createTradeNegotiation(input: TradeNegotiation): TradeNegotiatio
   const currentRejections = currentActions.filter((action) => action.kind === 'REJECT')
   const currentWithdrawals = currentActions.filter((action) => action.kind === 'WITHDRAW')
   if (input.status === 'AGREED' && !everyParticipantAccepted) throw new RangeError('An agreed trade negotiation requires every participant to accept the current revision')
-  if (everyParticipantAccepted && input.status !== 'AGREED') throw new RangeError('A fully accepted current revision must be agreed')
+  if (input.status === 'EXECUTED' && (!everyParticipantAccepted || input.completedOn === undefined || input.tradeRecordId === undefined
+    || input.governanceDecisionIdsByTeamId === undefined || participants.size !== Object.keys(input.governanceDecisionIdsByTeamId).length
+    || [...participants].some((teamId) => !input.governanceDecisionIdsByTeamId![teamId]))) throw new RangeError('An executed trade negotiation requires complete execution provenance')
+  if (input.status !== 'EXECUTED' && (input.completedOn !== undefined || input.tradeRecordId !== undefined || input.governanceDecisionIdsByTeamId !== undefined)) throw new RangeError('Only an executed negotiation may contain completion provenance')
+  if (everyParticipantAccepted && input.status !== 'AGREED' && input.status !== 'EXECUTED') throw new RangeError('A fully accepted current revision must be agreed')
   if (input.status === 'REJECTED' && (currentRejections.length !== 1 || currentRejections[0]!.teamId === revisions[revisions.length - 1]!.proposedByTeamId)) throw new RangeError('A rejected trade negotiation requires a current counterparty rejection action')
   if (input.status !== 'REJECTED' && currentRejections.length > 0) throw new RangeError('A current rejection must end the negotiation')
   if (input.status === 'WITHDRAWN' && (currentWithdrawals.length !== 1 || currentWithdrawals[0]!.teamId !== revisions[revisions.length - 1]!.proposedByTeamId)) throw new RangeError('A withdrawn trade negotiation requires a current proposer withdrawal action')
@@ -129,7 +136,7 @@ export function createTradeNegotiation(input: TradeNegotiation): TradeNegotiatio
     || input.status === 'COUNTERED' && (revisions.length < 2 || actions.some((action) => action.revisionId === input.currentRevisionId && (action.kind === 'REJECT' || action.kind === 'WITHDRAW')))) {
     throw new RangeError('Trade negotiation status does not match its current revision history')
   }
-  return Object.freeze({ ...input, startedOn: parseGameDate(input.startedOn), participantTeamIds: Object.freeze([...input.participantTeamIds]), revisions: Object.freeze(revisions), actions: Object.freeze(actions) })
+  return Object.freeze({ ...input, startedOn: parseGameDate(input.startedOn), ...(input.completedOn === undefined ? {} : { completedOn: parseGameDate(input.completedOn) }), ...(input.governanceDecisionIdsByTeamId === undefined ? {} : { governanceDecisionIdsByTeamId: Object.freeze({ ...input.governanceDecisionIdsByTeamId }) }), participantTeamIds: Object.freeze([...input.participantTeamIds]), revisions: Object.freeze(revisions), actions: Object.freeze(actions) })
 }
 
 function freezeActor(actor: TradeNegotiationActor): TradeNegotiationActor {

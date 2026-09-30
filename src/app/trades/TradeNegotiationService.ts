@@ -8,7 +8,7 @@ import { getStaffAssignment, getStaffPerson, getResponsibility, updateGameWorld,
 import { getUserTeam } from '@/engine/calendar'
 import { getTradeWindowStatus, validateTrade } from '@/engine/trade'
 
-export type TradeNegotiationCommandStatus = 'PROPOSED' | 'ALREADY_PROPOSED' | 'COUNTERED' | 'ACCEPTED' | 'ALREADY_APPLIED' | 'AGREED' | 'REJECTED' | 'WITHDRAWN' | 'BLOCKED' | 'NOT_AUTHORIZED' | 'STALE' | 'CONFLICT'
+export type TradeNegotiationCommandStatus = 'PROPOSED' | 'ALREADY_PROPOSED' | 'COUNTERED' | 'ACCEPTED' | 'ALREADY_APPLIED' | 'AGREED' | 'EXECUTED' | 'REJECTED' | 'WITHDRAWN' | 'BLOCKED' | 'NOT_AUTHORIZED' | 'STALE' | 'CONFLICT'
 export type TradeNegotiationResponseKind = 'ACCEPT' | 'REJECT' | 'COUNTER' | 'WITHDRAW'
 
 export interface TradeNegotiationCommandResult {
@@ -71,7 +71,7 @@ export function respondToTradeNegotiation(world: GameWorld, request: TradeNegoti
     return sameActor && sameCounter ? { status: 'ALREADY_APPLIED', world, negotiation } : { status: 'CONFLICT', world, negotiation, reasons: ['RETRY_CONTENT_DIFFERS_FROM_RECORDED_ACTION'] }
   }
   if (negotiation.currentRevisionId !== request.expectedRevisionId) return { status: 'STALE', world, negotiation, reasons: ['EXPECTED_REVISION_IS_NOT_CURRENT'] }
-  if (['AGREED', 'REJECTED', 'WITHDRAWN'].includes(negotiation.status)) return { status: 'CONFLICT', world, negotiation, reasons: ['NEGOTIATION_IS_TERMINAL'] }
+  if (['AGREED', 'EXECUTED', 'REJECTED', 'WITHDRAWN'].includes(negotiation.status)) return { status: 'CONFLICT', world, negotiation, reasons: ['NEGOTIATION_IS_TERMINAL'] }
   const revision = negotiation.revisions[negotiation.revisions.length - 1]!
   if (request.action === 'WITHDRAW') {
     if (revision.proposedByTeamId !== request.teamId) return { status: 'NOT_AUTHORIZED', world, negotiation, reasons: ['ONLY_THE_CURRENT_PROPOSER_MAY_WITHDRAW'] }

@@ -56,6 +56,7 @@ import { acceptStaffRecommendation as acceptStaffRecommendationCommand, dismissS
 import type { DelegationOutcomeId } from '@/domain/responsibility'
 import { declineStaffCareerRequest, grantStaffCareerRequest } from '@/app/staffCareerAutonomy'
 import { proposeTradeNegotiation, respondToTradeNegotiation, type TradeNegotiationActionRequest, type TradeNegotiationCommandResult } from '@/app/trades'
+import { startUserTradeCommitment, recordTradeCommitmentEvent, type TradeCommitmentResult } from '@/app/trades'
 import type { TradeProposal } from '@/domain/trade'
 
 interface GameStore {
@@ -85,6 +86,8 @@ interface GameStore {
   completeFreeAgentSigning(teamId: TeamId, negotiationId: string, expectedProposalId: string): void
   proposeUserTradeNegotiation(proposal: TradeProposal, pursuitId?: string): TradeNegotiationCommandResult
   respondUserToTradeNegotiation(request: Omit<TradeNegotiationActionRequest, 'teamId' | 'actor'>): TradeNegotiationCommandResult
+  startUserTradeCommitment(negotiationId: string, expectedRevisionId: string): TradeCommitmentResult
+  recordUserTradeCommitmentEvent(decisionId: string, kind: 'APPROVED' | 'REJECTED' | 'VETOED', bodyId: string): TradeCommitmentResult
   releasePlayer(teamId: TeamId, playerId: PlayerId): void
   startStaffCandidacy(teamId: TeamId, roleId: StaffRoleId, staffId: StaffPersonId): void
   startStaffInterview(candidacyId: string): void
@@ -207,6 +210,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const team = getUserTeam(world)
     if (team === undefined) return { status: 'NOT_AUTHORIZED', world, reasons: ['USER_TEAM_NOT_FOUND'] }
     const result = respondToTradeNegotiation(world, { ...request, teamId: team.id, actor: { kind: 'USER' } })
+    if (result.world !== world) set({ world: result.world })
+    return result
+  },
+  startUserTradeCommitment: (negotiationId, expectedRevisionId) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    if (team === undefined) return { status: 'NO_AUTHORITY', world, reasons: ['USER_TEAM_NOT_FOUND'] }
+    const result = startUserTradeCommitment(world, { negotiationId, expectedRevisionId, teamId: team.id })
+    if (result.world !== world) set({ world: result.world })
+    return result
+  },
+  recordUserTradeCommitmentEvent: (decisionId, kind, bodyId) => {
+    const world = requireWorld(get().world)
+    const result = recordTradeCommitmentEvent(world, { decisionId, kind, bodyId, actor: { kind: 'COACH', id: world.userCoachId } })
     if (result.world !== world) set({ world: result.world })
     return result
   },

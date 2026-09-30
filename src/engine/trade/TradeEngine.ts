@@ -80,7 +80,7 @@ export function executeTrade(world: GameWorld, proposal: TradeProposal): TradeEx
     if (movement.asset.kind !== 'player') return []
     const playerId = movement.asset.playerId
     const contract = Object.values(world.contractsById).find((item) => item.playerId === playerId && item.teamId === movement.fromTeamId && getPlayerContractStatus(item, world.currentDate) === 'active')!
-    return [{ id: playerTransactionIdFromString(`transaction:trade:${proposal.id}:${playerId}`), playerId, kind: 'traded' as const, occurredOn: world.currentDate, fromTeamId: movement.fromTeamId, toTeamId: movement.toTeamId, contractId: contract.id }]
+    return [{ id: playerTransactionIdFromString(`transaction:trade:${proposal.id}:${playerId}`), playerId, kind: 'traded' as const, occurredOn: world.currentDate, fromTeamId: movement.fromTeamId, toTeamId: movement.toTeamId, contractId: contract.id, sourceTradeId: tradeRecordId }]
   })
   const lineupsByTeamId = Object.fromEntries(Object.entries(world.lineupsByTeamId).map(([teamId, lineup]) => [teamId, movedPlayerIds.reduce((current, playerId) => clearPlayerFromLineup(current, playerId), lineup)]))
   return { validation, world: updateGameWorld(world, { teams, contracts, playerTransactions: [...Object.values(world.playerTransactionsById), ...playerTransactions], lineupsByTeamId, draftPicks: picks, playerRights: rights, futureDraftPickRights: future, draftPickSwapRights: swaps, salaryExceptions: Object.values(exceptions), retainedSalaryObligations: [...Object.values(world.retainedSalaryObligationsById), ...retained], tradeHistory: [...Object.values(world.tradeHistoryById), record] }) }
