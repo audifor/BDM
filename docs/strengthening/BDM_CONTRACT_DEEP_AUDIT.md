@@ -1,0 +1,48 @@
+# BDM Contract Deep Audit
+
+Snapshot: audit HEAD `32493210db55a30a94a4cefb65bf2aadf5f4dd41`. This contract capability audit uses the request's status taxonomy. Later BS11B code at `34dc2ab` is explicitly separated from the base.
+
+| Contract capability | Primary status | Authority / persistence | Lifecycle, AI and manifestation | Exact finding / owner |
+|---|---|---|---|---|
+| Contract identity | CANONICAL_ACTIVE_VISIBLE | `PlayerContract.id`, player/team IDs; GameWorld, Save V4 | Player profile and contract history; market owns creation | one canonical player contract entity |
+| Contract kind | CANONICAL_ACTIVE_VISIBLE | `PlayerContract.kind: 'standard'` | static | one kind only; no type taxonomy for two-way, rookie, exhibit or short-term deals |
+| Start/expiry dates | CANONICAL_ACTIVE_VISIBLE | `term.startsOn`, exclusive `term.expiresOn` | status helper, daily reconciliation; UI timeline/status | scheduled → active → expired; expiry day itself is not active |
+| Termination | CANONICAL_ACTIVE_VISIBLE | optional termination date + reason `'released'` | `releasePlayer` action and lifecycle status | release path exists; no generic termination reason or buyout lifecycle |
+| Base annual salary | CANONICAL_ACTIVE_VISIBLE | `compensation.annualSalary` | market negotiation and schedule fallback | annual fixed base for contracts without yearly terms |
+| Year-by-year cash salary | CANONICAL_ACTIVE_VISIBLE | `compensation.years[].cashSalary` | Finance schedule/market consumers | per-year cash is supported |
+| Cap hit | CANONICAL_ACTIVE_VISIBLE | `compensation.years[].capHit`; Salary Engine | cap/payroll/trade legality | separate from cash salary; league rules configure use |
+| Guaranteed amount | CANONICAL_ACTIVE_VISIBLE | `compensation.years[].guaranteedAmount` | Finance contract schedule | amount exists per year; no separately dated guarantee schedule found |
+| Conditional salary | SPECIFIED_NOT_IMPLEMENTED | no conditional-pay trigger/term in PlayerContract | no lifecycle/action | salary schedules distinguish guaranteed/conditional totals only where source schedule supports them; contract bonus/condition terms are not represented |
+| Options (team/player/mutual) | SPECIFIED_NOT_IMPLEMENTED | no option fields, decision windows, or option decision records found in PlayerContract | no calendar/AI/user decision path | BS11C only after product terms are approved |
+| Guarantees/guarantee dates | CANONICAL_PARTIALLY_CONNECTED | guaranteed amount exists; no per-date protection schedule | Finance reports amount | amount is modeled; trigger and guarantee timing are not |
+| Bonuses/incentives | SPECIFIED_NOT_IMPLEMENTED | no player contract bonus/incentive entities in contract term | no trigger, earned/unearned lifecycle | do not treat negotiation agent fee or yearly amount as a bonus |
+| Clauses (no-trade, consent, release, trade-related) | SPECIFIED_NOT_IMPLEMENTED | no clause model in PlayerContract | no validation or user surface | trade consent/no-trade clauses absent; player movement has general authority checks only |
+| Buyout/release clause | SPECIFIED_NOT_IMPLEMENTED | no buyout amount, trigger or negotiation | explicit release is the only general player contract early-exit action | release is not a buyout or release-clause execution |
+| Agent identity / representation | CANONICAL_ACTIVE_VISIBLE | Person/Agent/Agency + PlayerRepresentation in Market/World | negotiation contact may reference agent; portfolio derived | agent identity and representation exist; no full agent career/autonomous loop |
+| Agent abilities/personality/market knowledge | CANONICAL_PARTIALLY_CONNECTED | `AgentAbilities`, personality, MarketReality/MarketKnowledge | selected negotiation/contact response inputs and market intelligence | modeled agent/market concepts are not a universal actor loop or contract term authority |
+| Agent fee | CANONICAL_PARTIALLY_CONNECTED | optional `agentFee` on negotiation term set and formal offer rounds | proposal/negotiation lifecycle | a fee can be proposed; it is not a canonical PlayerContract compensation year and broad Finance recognition/settlement was not found |
+| RolePromise / negotiation role | CANONICAL_PARTIALLY_CONNECTED | optional role in negotiation terms; separate role-promise lifecycle | negotiations and selected roster planning context | role proposition is distinct from accepted promise/satisfaction; no broad usage fulfillment/retention consequence loop |
+| No-trade / consent | SPECIFIED_NOT_IMPLEMENTED | no player clause/consent field found | no trade validator consumer | BS11C/Trade future only after approved product rule |
+| Trade movement and contract affiliation | CANONICAL_ACTIVE_VISIBLE | TradeEngine moves roster membership while retaining Player/Contract IDs | validated execution and immutable TradeRecord | contract is not recreated by a trade; active contract team/roster consistency invariant still merits explicit recovery policy |
+| Retained salary | CANONICAL_ACTIVE_VISIBLE | Trade obligation, persisted by GameWorld | Trade validation/execution and salary matching | explicit obligation distinct from dead money |
+| Dead money | CANONICAL_ACTIVE_VISIBLE | salary obligation collections | payroll projection and trade/legal checks | persisted obligation; do not duplicate in cash or contract record |
+| Salary exceptions | CANONICAL_ACTIVE_VISIBLE | normalized Salary Engine obligations, remaining amount and history | partial consumption/expiry | active NBA-like salary authority; separate from contract exceptions or cash |
+| Scheduled future contract | CANONICAL_ACTIVE_VISIBLE | dated PlayerContract persisted in world | scheduled before start, active at start; roster projection detects arrival | future contract supported, not a renewal workflow |
+| Extension / renewal creation | ACTUALLY_MISSING | no PlayerContract renewal/extension service at audit HEAD | no offer/decision/execution lifecycle | BS11B review intent is on later branch; it does not create an extension. BS11C should define terms, response, Governance and activation. |
+| Non-renewal decision | CANONICAL_PARTIALLY_CONNECTED | no explicit decision record at audit HEAD; natural expiration works | expiry reconciliation removes expired affiliation by lifecycle rule | BS11B branch adds nonbinding `ALLOW_EXPIRY` user intent, not contract termination |
+| Transaction history | CANONICAL_ACTIVE_VISIBLE | PlayerTransaction plus market/Trade records and negotiation round history | append-only action/lifecycle evidence | records cover supported events; not every contractual obligation is fully eventized |
+| Governance | CANONICAL_ACTIVE_VISIBLE | `PLAYER_CONTRACT_SIGNING` Governance decision and exact signing/execution path | offer agreement is not signed until authorized execution | pending decision appears in shared SimulationBreakpoints as IMPORTANT; source/action resolver remains specific |
+| Finance effects | CANONICAL_PARTIALLY_CONNECTED | ContractFinancialSchedule, cash salary, capHit/guarantees, Finance/Salary authorities | affordability/reporting/market use is split | recurring Club Finance V2 global processing absent; distinguish cap hit, cash, guaranteed amount, agent fee and legacy budget |
+| Roster effects | CANONICAL_ACTIVE_VISIBLE | Team roster membership remains roster authority; roster integrity engine uses transaction evidence | signing/release/trade and expiry paths | active contract vs roster invariant is not universally enforced/recovered at creation boundary |
+| User visibility | CANONICAL_ACTIVE_VISIBLE | Player contract tabs, Analysis projection, Market, Trade workspace | status, term/schedule and selected proposal fields visible | no canonical option/bonus/clause detail because model absent; BS11A shows horizons read-only |
+| User actions | CANONICAL_ACTIVE_VISIBLE | Market/Trade/Analysis application boundaries | contact, offer, negotiation response, signing, trade, release; later BS11B records review intent | no contract renewal/extension action at audit HEAD; later branch has user intent choices and nonblocking timing notice |
+
+## Later branch BS11B evidence
+
+Commit `34dc2ab` (`bdm-stage2-bs11b-contract-review-decisions`) adds a user-only, persisted decision intent for eligible BS9 `CONTRACT_CONTINUITY` evidence: `PURSUE_EXTENSION`, `ALLOW_EXPIRY`, `REVIEW_RELEASE`, and `DEFER`. Candidate state stays derived; decisions do not create terms, negotiate, release, sign, or resolve the need. It reuses BS9's 365-day need horizon and adds an `IMPORTANT` breakpoint at crossing. AI contract-intent ownership remains unavailable because recommendation responsibilities are advisory. Treat this branch as completed prior work to inspect, not as proof that extension execution exists or is merged into this audit base.
+
+## BS11B/BS11C roadmap recommendation
+
+- Rewrite the next BS11B prompt so it explicitly scopes the existing branch work, compares its diff/tests/certification with current base, and identifies only unresolved hardening/merge decisions. Do not implement contract review intent or its breakpoint again.
+- Keep BS11C limited to a product-approved extension/re-sign negotiation and contract activation. Define participant/agent information, salary/term authority, player counters, guarantees/options/clauses only if approved, Finance schedule effects, Governance signing, roster/transaction atomicity, and cleanup on withdrawal/expiry/successor.
+- Preserve BS9 needs, BS10 acquisition/trade workflow, Finance/Salary authorities, RolePromise, Governance approval, and Team roster source. Do not infer nonrenewal, buyout or an option rule from the existence of a field or a design proposal.
