@@ -11,7 +11,10 @@ import {
   simulateRemainingGamesToday,
   advanceGameDayWithResult,
 } from '@/app/game'
-import { releasePlayer, signFreeAgent } from '@/app/market'
+import { releasePlayer } from '@/app/market'
+import { completeAcceptedFreeAgentSigning, initiatePreferredFreeAgentContact, submitPreparedFreeAgentOffer, respondToNegotiationCounter } from '@/app/marketIntelligence'
+import { startUserPlayerContractSigning, recordPlayerContractSigningDecisionEvent } from '@/app/governance'
+import type { ClubCounterDecision } from '@/app/marketIntelligence'
 import { type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
 import type { CoachPerkId, CoachSkillId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
@@ -74,7 +77,12 @@ interface GameStore {
   continueGame(): ContinueResult
   simulateUntilDate(date: GameWorld['currentDate']): SimulateUntilResult
   startNextSeason(): void
-  signFreeAgent(teamId: TeamId, playerId: PlayerId): void
+  contactFreeAgent(teamId: TeamId, playerId: PlayerId, expectedProposalId: string): void
+  submitFreeAgentOffer(teamId: TeamId, negotiationId: string, expectedProposalId: string): void
+  decideFreeAgentCounter(teamId: TeamId, negotiationId: string, expectedRound: number, decision: ClubCounterDecision): void
+  startFreeAgentSigningGovernance(teamId: TeamId, negotiationId: string, expectedProposalId: string, proposerBodyId?: string): void
+  recordFreeAgentSigningDecision(decisionId: string, kind: 'APPROVED' | 'REJECTED' | 'VETOED' | 'WITHDRAWN', bodyId: string): void
+  completeFreeAgentSigning(teamId: TeamId, negotiationId: string, expectedProposalId: string): void
   releasePlayer(teamId: TeamId, playerId: PlayerId): void
   startStaffCandidacy(teamId: TeamId, roleId: StaffRoleId, staffId: StaffPersonId): void
   startStaffInterview(candidacyId: string): void
@@ -179,7 +187,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const world = requireWorld(get().world)
     set({ world: startNextSeason(world) })
   },
-  signFreeAgent: (teamId, playerId) => set({ world: signFreeAgent(requireWorld(get().world), teamId, playerId) }),
+  contactFreeAgent: (teamId, playerId, expectedProposalId) => { const result = initiatePreferredFreeAgentContact(requireWorld(get().world), teamId, expectedProposalId, playerId); if (result.status === 'CREATED') set({ world: result.world }) },
+  submitFreeAgentOffer: (teamId, negotiationId, expectedProposalId) => { const result = submitPreparedFreeAgentOffer(requireWorld(get().world), { teamId, negotiationId, expectedProposalId }); if (result.status === 'SUBMITTED') set({ world: result.world }) },
+  decideFreeAgentCounter: (teamId, negotiationId, expectedRound, decision) => { const result = respondToNegotiationCounter(requireWorld(get().world), { teamId, negotiationId, expectedRound, decision }); if (result.status === 'APPLIED' || result.status === 'PLAYER_NOT_FREE_AGENT') set({ world: result.world }) },
+  startFreeAgentSigningGovernance: (teamId, negotiationId, expectedProposalId, proposerBodyId) => { const result = startUserPlayerContractSigning(requireWorld(get().world), { teamId, negotiationId, expectedProposalId, ...(proposerBodyId === undefined ? {} : { proposerBodyId }) }); if (result.status === 'PROPOSED') set({ world: result.world }) },
+  recordFreeAgentSigningDecision: (decisionId, kind, bodyId) => { const world = requireWorld(get().world); const result = recordPlayerContractSigningDecisionEvent(world, { decisionId, kind, bodyId, actor: { kind: 'COACH', id: world.userCoachId } }); if (result.world !== world) set({ world: result.world }) },
+  completeFreeAgentSigning: (teamId, negotiationId, expectedProposalId) => { const result = completeAcceptedFreeAgentSigning(requireWorld(get().world), { teamId, negotiationId, expectedProposalId }); if (result.status === 'SIGNED') set({ world: result.world }) },
   releasePlayer: (teamId, playerId) => set({ world: releasePlayer(requireWorld(get().world), teamId, playerId) }),
   startStaffCandidacy: (teamId, roleId, staffId) => {
     const opening = createStaffJobOpeningForTeam(requireWorld(get().world), { teamId, roleId })

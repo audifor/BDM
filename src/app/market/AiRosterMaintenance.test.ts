@@ -16,14 +16,15 @@ describe('AI roster maintenance', () => {
       teamFinances: Object.values(released.teamFinancesByTeamId).map((finance) => finance.teamId === ai.id ? { ...finance, playerSalaryBudget: 100_000_000 } : finance),
     })
 
-    const result = maintainAiTeamMinimumRosters(short)
+    const result = maintainAiTeamMinimumRosters(short, { source: 'WORLD_REPAIR' })
     expect(result.world.teams[ai.id]!.rosterPlayerIds).toHaveLength(5)
     expect(result.world.teams[ai.id]!.rosterPlayerIds).toContain(released.players[donor.rosterPlayerIds[0]!]!.id)
     expect(result.world.teams[user.id]!.rosterPlayerIds).toEqual(short.teams[user.id]!.rosterPlayerIds)
     expect(result.unresolvedTeamIds).toEqual([])
-    expect(result.reports.find((report) => report.targetEntity === ai.id)).toMatchObject({ classification: 'RECOVERABLE', worldChanged: true, userActionRequired: false })
+    expect(result.reports.find((report) => report.targetEntity === ai.id)).toMatchObject({ classification: 'RECOVERABLE', sourceDomain: 'WORLD_REPAIR', worldChanged: true, userActionRequired: false })
+    expect(Object.values(result.world.playerTransactionsById).filter((transaction) => transaction.toTeamId === ai.id && transaction.kind === 'signedFreeAgent')).toEqual([expect.objectContaining({ provenance: 'WORLD_REPAIR' })])
 
-    const repeated = maintainAiTeamMinimumRosters(result.world)
+    const repeated = maintainAiTeamMinimumRosters(result.world, { source: 'WORLD_REPAIR' })
     expect(repeated.world).toEqual(result.world)
     expect(repeated.world.teams[ai.id]!.rosterPlayerIds).toHaveLength(5)
   })
@@ -32,7 +33,7 @@ describe('AI roster maintenance', () => {
     const world = createNewGame()
     const user = Object.values(world.teams).find((team) => team.coachId === world.userCoachId)!
     const short = updateGameWorld(world, { teams: Object.values(world.teams).map((team) => team.id === user.id ? { ...team, rosterPlayerIds: team.rosterPlayerIds.slice(0, 4) } : team) })
-    const result = maintainAiTeamMinimumRosters(short)
+    const result = maintainAiTeamMinimumRosters(short, { source: 'WORLD_REPAIR' })
 
     expect(result.world.teams[user.id]!.rosterPlayerIds).toEqual(short.teams[user.id]!.rosterPlayerIds)
     expect(result.unresolvedTeamIds).toContain(user.id)
@@ -44,7 +45,7 @@ describe('AI roster maintenance', () => {
     const ai = Object.values(world.teams)[1]!
     const short = updateGameWorld(world, { teams: Object.values(world.teams).map((team) => team.id === ai.id ? { ...team, rosterPlayerIds: team.rosterPlayerIds.slice(0, 3) } : team) })
     const playerIds = Object.keys(short.players)
-    const result = maintainAiTeamMinimumRosters(short)
+    const result = maintainAiTeamMinimumRosters(short, { source: 'WORLD_REPAIR' })
 
     expect(result.unresolvedTeamIds).toContain(ai.id)
     expect(result.world.teams[ai.id]!.rosterPlayerIds).toHaveLength(3)

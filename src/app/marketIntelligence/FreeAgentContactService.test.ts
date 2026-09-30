@@ -11,6 +11,7 @@ import { getTeamFinancialSnapshot, updateGameWorld, type GameWorld } from '@/dom
 import { assessGMDecisionContext } from '@/engine/gmDecisionContext'
 import { reviewClubManagementPlanning } from '@/app/gmPlanning/GMPlanningLifecycleService'
 import { assessRoutedFreeAgentOfferIntelligence } from './FreeAgentOfferIntelligenceService'
+import { assessRoutedMarketCandidateFeasibility } from './MarketCandidateIntelligenceService'
 import { initiatePreferredFreeAgentContact } from './FreeAgentContactService'
 import { assessRoutedFormalOfferPreparations, progressAiNegotiationCounterResponses, respondToNegotiationCounter, submitAiOffersAfterPositiveContactResponses, submitPreparedFreeAgentOffer } from './index'
 import { progressFormalOfferResponses, progressNegotiationContactResponses } from '@/engine/market'
@@ -55,6 +56,21 @@ beforeAll(() => {
 }, 120_000)
 
 describe('initiatePreferredFreeAgentContact', () => {
+  it('opens canonical user contact from a normal initialized world after the user releases a roster player', () => {
+    const initial = createNewGame()
+    const userTeam = Object.values(initial.teams).find((item) => item.coachId === initial.userCoachId)!
+    const playerId = userTeam.rosterPlayerIds[0]!
+    const released = releasePlayer(initial, userTeam.id, playerId)
+    const offer = assessRoutedFreeAgentOfferIntelligence(released, userTeam.id, playerId)[0]
+    expect(offer).toMatchObject({ playerId, outcome: 'FREE_AGENT_OFFER', contactReadiness: 'READY_TO_CONTACT', contactAuthority: { authorityStatus: 'USER_CONTROLLED' } })
+    const result = initiatePreferredFreeAgentContact(released, userTeam.id, offer!.sourceProposalId, playerId)
+    expect(result.status).toBe('CREATED')
+    expect(result.contact).toMatchObject({ playerId, sourcePlanId: offer!.sourcePlanId, sourceProposalId: offer!.sourceProposalId, contactResponsibleActor: { kind: 'USER' } })
+    expect(result.contact).not.toHaveProperty('salary')
+    expect(result.world.contractsById).toBe(released.contractsById)
+    expect(result.world.playerTransactionsById).toBe(released.playerTransactionsById)
+  })
+
   it('recomputes the live routed proposal and creates exactly one canonical term-free AI contact', () => {
     const before = plannedWorld
     const expected = assessRoutedFreeAgentOfferIntelligence(before, teamId).find((offer) => offer.sourceProposalId === proposalId)!
@@ -115,6 +131,24 @@ describe('initiatePreferredFreeAgentContact', () => {
     const result = initiatePreferredFreeAgentContact(userWorld, teamId, ready.sourceProposalId)
     expect(result.status).toBe('CREATED')
     expect(result.contact?.contactResponsibleActor).toEqual({ kind: 'USER' })
+  })
+
+  it('creates a stable BS9/BS10 plan bridge for a manually selected feasible user target', () => {
+    const userWorld = updateGameWorld(plannedWorld, { userCoachId: plannedWorld.teams[teamId]!.coachId!, gmPlanStates: Object.values(plannedWorld.gmPlanStatesById).filter((plan) => plan.teamId !== teamId) })
+    const target = assessRoutedMarketCandidateFeasibility(userWorld, teamId).flatMap((assessment) => assessment.candidates)
+      .find((candidate) => candidate.feasibility.route === 'FREE_AGENT_SIGNING' && candidate.feasibility.routeSupport === 'SUPPORTED' && candidate.feasibility.blockers.length === 0)
+    if (target === undefined) {
+      const candidates = assessRoutedMarketCandidateFeasibility(userWorld, teamId).flatMap((assessment) => assessment.candidates.map((candidate) => ({ playerId: candidate.playerId, route: candidate.feasibility.route, supported: candidate.feasibility.routeSupport, blockers: candidate.feasibility.blockers })))
+      throw new Error(`Expected an eligible alternative user-selected candidate in the initialized-world market fixture: ${JSON.stringify(candidates)}`)
+    }
+    const offer = assessRoutedFreeAgentOfferIntelligence(userWorld, teamId, target.playerId).find((item) => item.playerId === target.playerId)
+    expect(offer).toMatchObject({ outcome: 'FREE_AGENT_OFFER', contactReadiness: 'READY_TO_CONTACT', contactAuthority: { authorityStatus: 'USER_CONTROLLED' } })
+    expect(offer?.sourcePlanId).toMatch(new RegExp(`^user-market-intent:${teamId}:`))
+    const result = initiatePreferredFreeAgentContact(userWorld, teamId, offer!.sourceProposalId, target.playerId)
+    expect(result.status).toBe('CREATED')
+    expect(result.contact).toMatchObject({ playerId: target.playerId, sourcePlanId: offer!.sourcePlanId, sourceProposalId: offer!.sourceProposalId, contactResponsibleActor: { kind: 'USER' } })
+    expect(result.world.contractsById).toBe(userWorld.contractsById)
+    expect(result.world.playerTransactionsById).toBe(userWorld.playerTransactionsById)
   })
 
   it('submits a READY AI offer from recomputed current preparation and preserves the canonical attempt', () => {

@@ -10,7 +10,7 @@ import type { DesktopAppActions } from './DesktopAppHost'
 import { DesktopAppHost } from './DesktopAppHost'
 import { DESKTOP_APPS } from './DesktopAppRegistry'
 
-const actions: DesktopAppActions = { tacticalPlan: createDefaultTacticalPlan(), openApp: () => undefined, playGame: () => undefined, instantResult: () => undefined, simulateRemainingGamesToday: () => undefined, advanceDay: () => undefined, startNextSeason: () => undefined, releasePlayer: () => undefined, signFreeAgent: () => undefined, startStaffCandidacy: () => undefined, startStaffInterview: () => undefined, completeStaffInterview: () => undefined, createStaffOffer: () => undefined, acceptStaffOffer: () => undefined, declineStaffOffer: () => undefined, fireStaff: () => undefined, selectDraftProspect: () => undefined, purchaseSkill: () => undefined, purchasePerk: () => undefined, acceptOffer: () => undefined, declineOffer: () => undefined, applyForJob: () => undefined, setTacticalPlan: () => undefined, resetTacticalPlan: () => undefined, setTrainingIntensity: () => undefined, setTrainingFocus: () => undefined, scheduleTrainingSession: () => undefined, scheduleTeamModuleSession: () => undefined, cancelTrainingSession: () => undefined, saveUserTrainingModule: () => undefined, deleteUserTrainingModule: () => undefined, assignTrainingModuleToPlayer: () => undefined, setLineupSlot: () => undefined, clearLineupSlot: () => undefined, updateRotationMinutes: () => undefined, updateGamePlanMatchups: () => undefined, updateGamePlanTacticalOverride: () => undefined, saveDesignerPlay: () => undefined, deleteDesignerPlay: () => undefined, saveDesignerPlaybook: () => undefined, deleteDesignerPlaybook: () => undefined }
+const actions: DesktopAppActions = { tacticalPlan: createDefaultTacticalPlan(), openApp: () => undefined, playGame: () => undefined, instantResult: () => undefined, simulateRemainingGamesToday: () => undefined, advanceDay: () => undefined, startNextSeason: () => undefined, releasePlayer: () => undefined, startStaffCandidacy: () => undefined, startStaffInterview: () => undefined, completeStaffInterview: () => undefined, createStaffOffer: () => undefined, acceptStaffOffer: () => undefined, declineStaffOffer: () => undefined, fireStaff: () => undefined, selectDraftProspect: () => undefined, purchaseSkill: () => undefined, purchasePerk: () => undefined, acceptOffer: () => undefined, declineOffer: () => undefined, applyForJob: () => undefined, setTacticalPlan: () => undefined, resetTacticalPlan: () => undefined, setTrainingIntensity: () => undefined, setTrainingFocus: () => undefined, scheduleTrainingSession: () => undefined, scheduleTeamModuleSession: () => undefined, cancelTrainingSession: () => undefined, saveUserTrainingModule: () => undefined, deleteUserTrainingModule: () => undefined, assignTrainingModuleToPlayer: () => undefined, setLineupSlot: () => undefined, clearLineupSlot: () => undefined, updateRotationMinutes: () => undefined, updateGamePlanMatchups: () => undefined, updateGamePlanTacticalOverride: () => undefined, saveDesignerPlay: () => undefined, deleteDesignerPlay: () => undefined, saveDesignerPlaybook: () => undefined, deleteDesignerPlaybook: () => undefined }
 
 describe('DesktopAppHost', () => {
   it('migrates every functional legacy app to a window-capable registry entry', () => {
@@ -33,7 +33,12 @@ describe('DesktopAppHost', () => {
     const world = createNewGame()
     const labels = { training: 'Team Training', coach: 'REPUTATION', tactics: 'Pizarra', market: 'Free agents', draft: 'No draft available' }
     for (const [appId, label] of Object.entries(labels)) {
-      expect(renderToStaticMarkup(createElement(DesktopAppHost, { appId, world, actions }))).toContain(label)
+      const markup = renderToStaticMarkup(createElement(DesktopAppHost, { appId, world, actions }))
+      expect(markup).toContain(label)
+      if (appId === 'market') {
+        expect(markup).not.toContain('Sign player')
+        expect(markup).not.toContain('Asking')
+      }
     }
   })
 

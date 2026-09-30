@@ -1,4 +1,4 @@
-import type { TeamId } from '@/domain/ids'
+import type { PlayerId, TeamId } from '@/domain/ids'
 import { negotiationIdForOpening, type ContractNegotiation } from '@/domain/market'
 import type { GameWorld } from '@/domain/world'
 import { createNegotiationContact as createContactInEngine, type CreateNegotiationContactResult } from '@/engine/market'
@@ -22,9 +22,9 @@ export interface PreferredFreeAgentContactResult {
 }
 
 /** Recomputes the full live routed proposal chain; the supplied proposal ID only identifies the user's intended row. */
-export function initiatePreferredFreeAgentContact(world: GameWorld, teamId: TeamId, expectedProposalId: string): PreferredFreeAgentContactResult {
+export function initiatePreferredFreeAgentContact(world: GameWorld, teamId: TeamId, expectedProposalId: string, selectedPlayerId?: PlayerId): PreferredFreeAgentContactResult {
   if (world.teams[teamId] === undefined) return { status: 'BLOCKED', world, reason: 'TEAM_NOT_FOUND' }
-  const offers = assessRoutedFreeAgentOfferIntelligence(world, teamId)
+  const offers = assessRoutedFreeAgentOfferIntelligence(world, teamId, selectedPlayerId)
   const offer = offers.find((item) => item.sourceProposalId === expectedProposalId)
   if (offer === undefined) return { status: 'STALE_PLAN_OR_PROPOSAL', world, reason: 'EXPECTED_PROPOSAL_IS_NOT_CURRENT' }
   if (offer.outcome !== 'FREE_AGENT_OFFER' || offer.playerId === undefined || offer.actionKey === undefined || offer.sourcePlanId === undefined) {

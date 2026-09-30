@@ -13,7 +13,7 @@ export interface WorldRepairCoordinatorResult {
 /** Dispatches bounded domain repairs for the teams at the current safe lifecycle boundary. */
 export function repairWorldAtLifecycleBoundary(world: GameWorld, teamIds?: readonly TeamId[]): WorldRepairCoordinatorResult {
   const integrity = repairRosterContractIntegrity(world, teamIds)
-  const roster = maintainAiTeamMinimumRosters(integrity.world, teamIds)
+  const roster = maintainAiTeamMinimumRosters(integrity.world, { source: 'WORLD_REPAIR', teamIds })
   const reports = [...integrity.reports, ...roster.reports].filter((item) => item.classification !== 'ALREADY_VALID')
   return { world: roster.world, reports: Object.freeze(reports), unresolvedTeamIds: roster.unresolvedTeamIds }
 }

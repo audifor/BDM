@@ -14,7 +14,7 @@ export interface AiFreeAgentCandidate { readonly playerId: import('@/domain/ids'
 
 export function freeAgentDesirability(priorityScore: number, annualSalary: number): number { return priorityScore - annualSalary / 100_000 }
 
-/** Bounded market ranking: talent is knowledge-derived while asking price stays objective. */
+/** Deterministic candidate ranking used only to restore the minimum playable AI roster. */
 export function rankAiFreeAgentCandidates(world: GameWorld, teamId: TeamId): readonly AiFreeAgentCandidate[] {
   const team = world.teams[teamId]!
   const policy = world.organizationEvaluationPoliciesById[team.organizationId]
@@ -25,10 +25,11 @@ export function rankAiFreeAgentCandidates(world: GameWorld, teamId: TeamId): rea
   }).sort((a, b) => b.desirability - a.desirability || a.annualSalary - b.annualSalary || a.playerId.localeCompare(b.playerId))
 }
 
-/** Deterministically signs affordable, same-gender free agents for AI teams up to five rostered players. */
-export function maintainAiTeamMinimumRosters(world: GameWorld, teamIds?: readonly TeamId[]): AiRosterMaintenanceResult {
+/** WORLD_REPAIR-only signing for deficient AI teams, bounded by the five-player playable minimum. */
+export function maintainAiTeamMinimumRosters(world: GameWorld, context: { readonly source: 'WORLD_REPAIR'; readonly teamIds?: readonly TeamId[] }): AiRosterMaintenanceResult {
+  if (context.source !== 'WORLD_REPAIR') throw new Error('Minimum roster signing is restricted to WORLD_REPAIR')
   const userId = getUserTeam(world)?.id
-  const targets = teamIds === undefined ? undefined : new Set(teamIds)
+  const targets = context.teamIds === undefined ? undefined : new Set(context.teamIds)
   let current = world
   const unresolvedTeamIds: TeamId[] = []
   const reports: WorldRepairReport[] = []
@@ -50,7 +51,7 @@ export function maintainAiTeamMinimumRosters(world: GameWorld, teamIds?: readonl
     while (current.teams[initialTeam.id]!.rosterPlayerIds.length < 5) {
       const candidate = rankAiFreeAgentCandidates(current, initialTeam.id).find((item) => canTeamAffordAdditionalSalary(current, initialTeam.id, item.annualSalary))
       if (candidate === undefined) break
-      current = signFreeAgent(current, initialTeam.id, candidate.playerId)
+      current = signFreeAgent(current, initialTeam.id, candidate.playerId, 'WORLD_REPAIR')
     }
     const afterCount = current.teams[initialTeam.id]!.rosterPlayerIds.length
     const restored = afterCount >= 5
@@ -61,5 +62,5 @@ export function maintainAiTeamMinimumRosters(world: GameWorld, teamIds?: readonl
 }
 
 function rosterReport(teamId: TeamId, classification: WorldRepairReport['classification'], before: number, after: number, action: string, changed: boolean, userActionRequired: boolean, diagnostic?: WorldRepairReport['diagnostics'][number]): WorldRepairReport {
-  return { repairKind: 'MINIMUM_PLAYABLE_ROSTER', sourceDomain: 'MARKET', targetEntity: String(teamId), classification, previousStateSummary: `rostered=${before}; required=5`, actionApplied: action, resultingStateSummary: `rostered=${after}; required=5`, diagnostics: diagnostic === undefined ? [] : [diagnostic], worldChanged: changed, userActionRequired }
+  return { repairKind: 'MINIMUM_PLAYABLE_ROSTER', sourceDomain: 'WORLD_REPAIR', targetEntity: String(teamId), classification, previousStateSummary: `rostered=${before}; required=5`, actionApplied: action, resultingStateSummary: `rostered=${after}; required=5`, diagnostics: diagnostic === undefined ? [] : [diagnostic], worldChanged: changed, userActionRequired }
 }

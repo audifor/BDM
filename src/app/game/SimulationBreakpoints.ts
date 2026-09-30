@@ -1,12 +1,12 @@
 import type { GameDate } from '@/domain/date'
 import { deriveGovernanceDecisionStatus, deriveGovernanceRequestStatus, resolveGovernanceDecisionRights } from '@/domain/governance'
 import type { GameWorld } from '@/domain/world'
-import { canTeamAffordAdditionalSalary, getFreeAgents, getPendingMediaOpportunities } from '@/domain/world'
+import { getPendingMediaOpportunities } from '@/domain/world'
 import { getCurrentDraftPick } from '@/engine/draft'
 import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
 import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
 import { classifyCompetitionLifecycles } from './CompetitionLifecycleCoordinator'
-import { getFreeAgentMarketTerms } from '@/app/market'
+import { assessRoutedFreeAgentOfferIntelligence } from '@/app/marketIntelligence'
 import { getEcosystemForTeam } from '@/domain/world'
 import type { TeamId } from '@/domain/ids'
 import type { ContractNegotiation } from '@/domain/market'
@@ -69,7 +69,7 @@ export function evaluateSimulationBreakpoints(world: GameWorld, context: Simulat
     if (userTeam.rosterPlayerIds.length < 5) {
       const ecosystem = getEcosystemForTeam(world, userTeam.id)
       const marketSupported = ecosystem !== undefined && ecosystem.kind !== 'ncaaLike'
-        && getFreeAgents(world).some((player) => player.gender === userTeam.gender && canTeamAffordAdditionalSalary(world, userTeam.id, getFreeAgentMarketTerms(world, player.id).annualSalary))
+        && assessRoutedFreeAgentOfferIntelligence(world, userTeam.id).some((offer) => offer.outcome === 'FREE_AGENT_OFFER' && offer.contactReadiness === 'READY_TO_CONTACT')
       candidates.push(candidate({
         level: marketSupported ? 'ACTION_REQUIRED' : 'BLOCKING', reason: 'minimumRoster', sourceKind: 'TEAM_ROSTER_MINIMUM', sourceId: userTeam.id,
         effectiveDate: world.currentDate, ownership: { kind: 'USER_TEAM', coachId: world.userCoachId, teamId: userTeam.id },

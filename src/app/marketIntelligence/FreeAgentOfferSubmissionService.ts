@@ -42,7 +42,10 @@ export function submitPreparedFreeAgentOffer(world: GameWorld, input: SubmitPrep
     return { status: 'PLAYER_NOT_FREE_AGENT', world, negotiation: intended, reason: 'PLAYER_NO_LONGER_FREE_AGENT' }
   }
 
-  const offer = assessRoutedFreeAgentOfferIntelligence(world, input.teamId)
+  const isUserDirectedIntent = intended?.sourcePlanId?.startsWith(`user-market-intent:${input.teamId}:`) === true
+  const offer = assessRoutedFreeAgentOfferIntelligence(world, input.teamId,
+    isUserDirectedIntent ? intended?.playerId : undefined,
+    isUserDirectedIntent ? intended?.sourcePlanId : undefined)
     .find((candidate) => candidate.sourceProposalId === input.expectedProposalId)
   if (offer === undefined || offer.outcome !== 'FREE_AGENT_OFFER' || offer.playerId === undefined
     || offer.actionKey === undefined || offer.sourcePlanId === undefined) {
