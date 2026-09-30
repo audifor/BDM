@@ -27,6 +27,8 @@ describe('ClubStrategyScreen', () => {
     expect(within(card).getAllByText(world.clubStrategicStatesByTeamId[team.id]!.mode).length).toBeGreaterThan(0)
     expect(within(card).getByText(world.clubStrategicStatesByTeamId[team.id]!.lastReviewedOn)).toBeInTheDocument()
     expect(within(card).getByRole('heading', { name: 'Selected plan' })).toBeInTheDocument()
+    expect(within(card).getByRole('heading', { name: 'Contract outlook' })).toBeInTheDocument()
+    expect(within(card).getByText(/roster maximum: not configured/)).toBeInTheDocument()
     expect(within(card).getAllByText(/Planned next workflow/).length).toBeGreaterThan(0)
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })

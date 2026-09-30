@@ -9,6 +9,7 @@ import { assessClubStrategy } from '@/engine/clubStrategy/ClubStrategyEngine'
 import type { ClubStrategicMode, ClubFinancialPosture } from '@/domain/clubStrategy'
 import type { GameWorld } from '@/domain/world'
 import type { Player } from '@/domain/player'
+import { assessContractRosterPlanning, hasContinuousContractSuccessor, type ContractRosterPlanning } from './ContractRosterPlanning'
 
 export type ClubNeedKind = 'ROSTER_SIZE' | 'POSITIONAL_DEPTH' | 'STARTER_QUALITY_GAP' | 'BENCH_QUALITY_GAP' | 'ROLE_GAP' | 'CONTRACT_CONTINUITY' | 'CONTRACT_CLUSTER' | 'AGING_CORE' | 'DEVELOPMENT_OPPORTUNITY' | 'POSITION_SURPLUS' | 'TEMPORARY_COVER' | 'ELIGIBILITY_GAP' | 'FINANCIAL_PRESSURE'
 export type ClubNeedSeverity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
@@ -50,6 +51,7 @@ export interface ClubNeedsAssessment {
   readonly financialContext: ClubFinancialPosture
   readonly knowledgePerspective: ClubNeedsKnowledgePerspective
   readonly externalComparisonStatus: ClubNeedsComparisonStatus
+  readonly contractRosterPlanning: ContractRosterPlanning
   readonly needs: readonly ClubNeed[]
 }
 
@@ -72,6 +74,7 @@ export function assessClubNeeds(world: GameWorld, teamId: TeamId, onDate: GameDa
   const strategicAssessment = assessClubStrategy(datedWorld, teamId)
   const strategy = world.clubStrategicStatesByTeamId[teamId]?.mode ?? strategicAssessment.candidateMode
   const financialContext: ClubFinancialPosture = strategicAssessment.financialPressure === 'HIGH' ? 'STRESSED' : strategicAssessment.financialPressure === 'MODERATE' ? 'CONSTRAINED' : strategicAssessment.financialPressure === 'LOW' ? 'HEALTHY' : 'UNKNOWN'
+  const contractRosterPlanning = assessContractRosterPlanning(world, teamId, onDate)
   const rosterIds = [...team.rosterPlayerIds].sort((a, b) => a.localeCompare(b))
   const availableIds = rosterIds.filter((id) => isPlayerAvailable(world, id, onDate))
   const rosterSet = new Set(rosterIds)
@@ -128,7 +131,7 @@ export function assessClubNeeds(world: GameWorld, teamId: TeamId, onDate: GameDa
     if (ranked.length > 0 && ranked[0]!.rating < 50) push({ kind: 'ROLE_GAP', severity: 'MEDIUM', urgency: 'PLANNED', confidence: 'MODERATE', strategicFit: strategicFit(strategy, 'ROLE_GAP'), affectedArea: 'ROLE', targetRole: role, relatedPlayerIds: Object.freeze(ranked.slice(0, 3).map((item) => item.id)), evidence: [{ code: 'NO_AVAILABLE_PLAYER_AT_MIDPOINT', values: { role, bestRatingMean: Math.round(ranked[0]!.rating * 10) / 10, midpoint: 50, ratingKeys: POSITION_RATINGS[role] as readonly string[] } }], temporalScope: 'STRUCTURAL' })
   }
 
-  const contracts = Object.values(world.contractsById).filter((contract) => contract.teamId === teamId && getPlayerContractStatus(contract, onDate) === 'active' && contract.term.expiresOn <= addDays(onDate, 365)).sort((a, b) => a.term.expiresOn.localeCompare(b.term.expiresOn) || a.playerId.localeCompare(b.playerId) || a.id.localeCompare(b.id))
+  const contracts = Object.values(world.contractsById).filter((contract) => contract.teamId === teamId && getPlayerContractStatus(contract, onDate) === 'active' && contract.term.expiresOn <= addDays(onDate, 365) && !hasContinuousContractSuccessor(world, contract.id)).sort((a, b) => a.term.expiresOn.localeCompare(b.term.expiresOn) || a.playerId.localeCompare(b.playerId) || a.id.localeCompare(b.id))
   const keyExpiring = contracts.filter((contract) => keyPlayers.has(contract.playerId))
   for (const contract of keyExpiring) push({ id: `CONTRACT_CONTINUITY:${contract.id}`, kind: 'CONTRACT_CONTINUITY', severity: 'HIGH', urgency: contract.term.expiresOn <= addDays(onDate, 30) ? 'IMMEDIATE' : contract.term.expiresOn <= addDays(onDate, 90) ? 'SOON' : 'PLANNED', confidence: 'HIGH', strategicFit: strategicFit(strategy, 'CONTRACT_CONTINUITY'), affectedArea: 'CONTRACT', relatedPlayerIds: Object.freeze([contract.playerId]), evidence: [{ code: 'KEY_PLAYER_CONTRACT_EXPIRY', values: { playerId: contract.playerId, contractId: contract.id, expiresOn: contract.term.expiresOn, keyPlayer: true } }], deadline: contract.term.expiresOn, temporalScope: 'STRUCTURAL' })
   if (keyExpiring.length >= 3) push({ kind: 'CONTRACT_CLUSTER', severity: 'HIGH', urgency: keyExpiring.some((contract) => contract.term.expiresOn <= addDays(onDate, 30)) ? 'IMMEDIATE' : keyExpiring.some((contract) => contract.term.expiresOn <= addDays(onDate, 90)) ? 'SOON' : 'PLANNED', confidence: 'HIGH', strategicFit: strategicFit(strategy, 'CONTRACT_CLUSTER'), affectedArea: 'CONTRACT', relatedPlayerIds: Object.freeze(keyExpiring.map((contract) => contract.playerId).sort()), evidence: [{ code: 'MULTIPLE_KEY_EXPIRIES', values: { count: keyExpiring.length, contractIds: keyExpiring.map((contract) => contract.id), expiresOn: keyExpiring.map((contract) => contract.term.expiresOn) } }], deadline: keyExpiring[0]!.term.expiresOn, temporalScope: 'STRUCTURAL' })
@@ -147,7 +150,7 @@ export function assessClubNeeds(world: GameWorld, teamId: TeamId, onDate: GameDa
   }
 
   const ordered = needs.sort((a, b) => URGENCY_ORDER[a.urgency] - URGENCY_ORDER[b.urgency] || SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] || FIT_ORDER[a.strategicFit] - FIT_ORDER[b.strategicFit] || CONFIDENCE_ORDER[a.confidence] - CONFIDENCE_ORDER[b.confidence] || a.kind.localeCompare(b.kind) || (a.targetPosition ?? '').localeCompare(b.targetPosition ?? '') || (a.targetRole ?? '').localeCompare(b.targetRole ?? '') || a.id.localeCompare(b.id)).map((need, index) => Object.freeze({ ...need, priorityRank: index + 1 }))
-  return Object.freeze({ teamId, asOfDate: onDate, strategy, financialContext, knowledgePerspective: perspective, externalComparisonStatus: perspective === 'USER_ANALYTICS' ? 'AVAILABLE' : 'UNKNOWN', needs: Object.freeze(ordered) })
+  return Object.freeze({ teamId, asOfDate: onDate, strategy, financialContext, knowledgePerspective: perspective, externalComparisonStatus: perspective === 'USER_ANALYTICS' ? 'AVAILABLE' : 'UNKNOWN', contractRosterPlanning, needs: Object.freeze(ordered) })
 }
 
 function activeSeasons(world: GameWorld, teamId: TeamId, date: GameDate) {

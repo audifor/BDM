@@ -144,6 +144,19 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
               {need.evidence.map((evidence) => <div key={evidence.code}><small>{evidence.code}: {formatEvidenceEntries(evidence.values)}</small></div>)}
             </li>)}</ol>}
           </section>
+          <section aria-label={`${team.name} ${team.gender} contract outlook`}>
+            <h3>Contract outlook</h3>
+            <p>Current roster: {needsAssessment.contractRosterPlanning.currentRosterCount} · roster maximum: not configured. This is a read-only view of existing contracts.</p>
+            {needsAssessment.contractRosterPlanning.horizons.map((horizon) => <div key={horizon.id}>
+              <strong>{horizon.kind.replaceAll('_', ' ')} · {horizon.date}</strong>
+              <div>Contractually retained: {horizon.contractuallyRetainedPlayerIds.length} · scheduled arrivals: {horizon.scheduledArrivalPlayerIds.length} · unresolved expiries: {horizon.unresolvedExpiries.length}</div>
+              {horizon.unresolvedExpiries.length > 0 && <ul>{horizon.unresolvedExpiries.map((expiry) => <li key={expiry.contractId}>
+                {world.players[expiry.playerId]?.firstName} {world.players[expiry.playerId]?.lastName} · {expiry.currentRole.toLowerCase()} {expiry.position} · expires {expiry.expiresOn}
+              </li>)}</ul>}
+              {horizon.positionalContinuityRisks.length > 0 && <div>Continuity risks: {horizon.positionalContinuityRisks.map((risk) => risk.position).join(', ')}</div>}
+              {horizon.seasonId && horizon.guaranteedPlayerPayroll === null && <div>Player payroll context: unavailable</div>}
+            </div>)}
+          </section>
           <section aria-label={`${team.name} ${team.gender} GM plan and current workflow`}>
             <h3>{isUserTeam ? 'Recommended plan' : 'Selected plan'}</h3>
             <p>{isUserTeam ? 'Advisory only; no plan is saved for your club.' : 'Current AI club planning intent.'}</p>
