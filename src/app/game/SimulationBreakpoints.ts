@@ -8,6 +8,8 @@ import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
 import { classifyCompetitionLifecycles } from './CompetitionLifecycleCoordinator'
 import { getFreeAgentMarketTerms } from '@/app/market'
 import { getEcosystemForTeam } from '@/domain/world'
+import type { TeamId } from '@/domain/ids'
+import type { ContractNegotiation } from '@/domain/market'
 
 export const SIMULATION_BREAKPOINT_LEVELS = ['BACKGROUND', 'INFO', 'IMPORTANT', 'ACTION_REQUIRED', 'BLOCKING'] as const
 export type SimulationBreakpointLevel = typeof SIMULATION_BREAKPOINT_LEVELS[number]
@@ -110,7 +112,7 @@ export function evaluateSimulationBreakpoints(world: GameWorld, context: Simulat
       diagnostic: negotiation.status === 'COUNTERED'
         ? `Market negotiation ${negotiation.id} has countered at ${negotiation.salary} per year for ${negotiation.years} years (round ${negotiation.round}); the user's decision is available.`
         : negotiation.status === 'ACCEPTED'
-          ? `Market negotiation ${negotiation.id} has agreed terms of ${negotiation.salary} per year for ${negotiation.years} years; the player is not yet signed.`
+          ? acceptedSigningDiagnostic(world, negotiation, userTeam.id)
         : negotiation.status === 'CONTACTED'
           ? negotiation.contactResponse === undefined
             ? `Market contact ${negotiation.id} is waiting for a response before any formal offer exists.`
@@ -153,6 +155,25 @@ export function evaluateSimulationBreakpoints(world: GameWorld, context: Simulat
   const breakpoint = candidates[0]
   const mayAdvance = breakpoint === undefined || (breakpoint.level !== 'ACTION_REQUIRED' && breakpoint.level !== 'BLOCKING')
   return { mayAdvance, level: breakpoint?.level ?? 'BACKGROUND', ...(breakpoint === undefined ? {} : { breakpoint }), candidates }
+}
+
+function acceptedSigningDiagnostic(world: GameWorld, negotiation: Extract<ContractNegotiation, { readonly salary: number }>, teamId: TeamId): string {
+  const institutions = Object.values(world.governanceInstitutionsById).filter((item) => item.teamIds.includes(teamId))
+  const institution = institutions.length === 1 ? institutions[0] : undefined
+  if (institution === undefined) return `Market negotiation ${negotiation.id} agreed ${negotiation.salary} per year for ${negotiation.years} years, but its signing Governance institution is ${institutions.length === 0 ? 'unavailable' : 'ambiguous'}; the player is not yet signed.`
+  const decision = institution === undefined ? undefined : Object.values(world.governanceDecisionsById).find((item) => item.institutionId === institution.id
+    && item.decisionType === 'PLAYER_CONTRACT_SIGNING' && item.subject.kind === 'GENERIC' && item.subject.referenceId === negotiation.id)
+  if (decision === undefined) return `Market negotiation ${negotiation.id} agreed ${negotiation.salary} per year for ${negotiation.years} years; no exact PLAYER_CONTRACT_SIGNING decision has been proposed, and the player is not yet signed.`
+  const events = Object.values(world.governanceDecisionEventsById).filter((event) => event.decisionId === decision.id && event.effectiveOn <= world.currentDate)
+  const status = deriveGovernanceDecisionStatus(events)
+  if (status === 'REJECTED' || status === 'VETOED' || status === 'WITHDRAWN') return `Market negotiation ${negotiation.id} remains ACCEPTED but signing decision ${decision.id} is ${status}; the player is not signed.`
+  const rights = resolveGovernanceDecisionRights({ decisionType: decision.decisionType, institutionId: decision.institutionId, asOfDate: decision.proposedOn, bodies: Object.values(world.governanceBodiesById), authorityGrants: Object.values(world.governanceAuthorityGrantsById), participationGrants: Object.values(world.governanceDecisionParticipationGrantsById) })
+  if (rights.approverBodyIds.length === 0) return `Market negotiation ${negotiation.id} is not signed because decision ${decision.id} has no mapped PLAYER_CONTRACT_SIGNING approver authority.`
+  const approved = new Set(events.filter((event) => event.kind === 'APPROVED').map((event) => event.bodyId))
+  const missing = rights.approverBodyIds.filter((bodyId) => !approved.has(bodyId))
+  if (missing.length === 0) return `Market negotiation ${negotiation.id} is approved by signing decision ${decision.id}; the user must still explicitly confirm signing and the player is not yet signed.`
+  const requiredBodies = missing.length === 1 ? `body ${missing[0]}` : `bodies ${missing.join(', ')}`
+  return `Market negotiation ${negotiation.id} is awaiting PLAYER_CONTRACT_SIGNING approval in decision ${decision.id} from required ${requiredBodies}; the player is not yet signed.`
 }
 
 function governanceCandidates(world: GameWorld): SimulationBreakpoint[] {
