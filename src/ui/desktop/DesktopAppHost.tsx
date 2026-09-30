@@ -4,6 +4,7 @@ import type { StaffRoleId } from '@/domain/staff'
 import type { SetTeamResponsibilityInput } from '@/app/staffResponsibilities'
 import type { StaffRecommendationCommandResult } from '@/app/staffRecommendations'
 import type { DelegationOutcomeId } from '@/domain/responsibility'
+import type { ContractReviewIntent } from '@/domain/contract/ContractReviewDecision'
 import type { MatchTacticalPlan } from '@/engine/match'
 import type { ScheduledTrainingSession, TrainingFocus, TrainingIntensity, UserTrainingModule } from '@/domain/training'
 import type { Priority } from '@/domain/recruiting'
@@ -27,13 +28,14 @@ import { ClubStrategyScreen } from '@/ui-ng/applications/analysis/ClubStrategySc
 import { MarketWorkspace } from '@/ui-ng/applications/market/MarketWorkspace'
 
 export interface DesktopAppActions {
+  readonly decideContractReview?: (teamId: TeamId, contractId: import('@/domain/ids').ContractId, intent: ContractReviewIntent) => void
   readonly grantStaffCareerRequest?: (requestId: string) => void
   readonly declineStaffCareerRequest?: (requestId: string) => void
 }
 
 export function DesktopAppHost({ appId, entityDestination, world, actions }: { readonly appId: string; readonly entityDestination?: EntityDestination; readonly world: GameWorld; readonly actions: DesktopAppActions }) {
   const key = getDesktopApp(appId)?.renderKey
-  if (appId === 'analysis') return <ClubStrategyScreen world={world} />
+  if (appId === 'analysis') return <ClubStrategyScreen onDecideContractReview={actions.decideContractReview} world={world} />
   if (appId === 'locker-room') return <TeamWorkspacePage appName="Vestuario" sections={['Overview', 'Estructura del equipo', 'Grupos', 'Felicidad', 'Código de conducta', 'Reunión con el equipo', 'Reacción']} />
   if (appId === 'mentoring') return <MentoringPcbPage world={world} />
   if (appId === 'squad') return <PlantillaPcbPage onLineupSlotChange={actions.setLineupSlot} onLineupSlotClear={actions.clearLineupSlot} onOpenEntity={actions.openEntity} world={world} />

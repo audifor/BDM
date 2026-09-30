@@ -1,8 +1,11 @@
 import type { GameWorld } from '@/domain/world'
+import type { ContractId, TeamId } from '@/domain/ids'
+import type { ContractReviewIntent } from '@/domain/contract/ContractReviewDecision'
 import type { NegotiationResponsibleActor } from '@/domain/market'
 import { assessClubStrategy } from '@/engine/clubStrategy/ClubStrategyEngine'
 import type { ClubNeedKind } from '@/engine/clubNeeds'
 import { assessGMDecisionContext, type GMResponseOptionKind } from '@/engine/gmDecisionContext'
+import { assessContractReviewOutlook } from '@/engine/clubNeeds'
 import { inspectGMPlanWorkflows } from '@/app/gmPlanning'
 import { assessRoutedAcquisitionProposalIntelligence, assessRoutedFreeAgentOfferIntelligence, assessRoutedMarketCandidateFeasibility } from '@/app/marketIntelligence'
 
@@ -99,7 +102,14 @@ function formatEvidenceEntries(values: Readonly<Record<string, unknown>>): strin
   return Object.entries(values).filter(([key]) => !/ids?$/i.test(key)).map(([key, value]) => `${key}=${formatEvidenceValue(value as Parameters<typeof formatEvidenceValue>[0])}`).join(' · ')
 }
 
-export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
+const CONTRACT_INTENTS: readonly { readonly value: ContractReviewIntent; readonly label: string }[] = [
+  { value: 'PURSUE_EXTENSION', label: 'Pursue extension' },
+  { value: 'ALLOW_EXPIRY', label: 'Allow expiry' },
+  { value: 'REVIEW_RELEASE', label: 'Review release' },
+  { value: 'DEFER', label: 'Defer to next season checkpoint' },
+]
+
+export function ClubStrategyScreen({ world, onDecideContractReview }: { readonly world: GameWorld; readonly onDecideContractReview?: (teamId: TeamId, contractId: ContractId, intent: ContractReviewIntent) => void }) {
   const clubs = Object.values(world.teams)
     .filter((team) => team.coachId !== undefined)
     .sort((a, b) => a.name.localeCompare(b.name))
@@ -115,6 +125,7 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
         const acquisitionProposals = assessRoutedAcquisitionProposalIntelligence(world, team.id)
         const freeAgentOffers = assessRoutedFreeAgentOfferIntelligence(world, team.id)
         const needsAssessment = decisionContext.needsAssessment
+        const contractReviews = assessContractReviewOutlook(world, team.id).reviews
         const state = world.clubStrategicStatesByTeamId[team.id]
         const isUserTeam = team.coachId === world.userCoachId
         return <article key={team.id} aria-label={`${team.name} ${team.gender} strategy`} style={{ borderBottom: '1px solid rgba(255,255,255,.12)', paddingBottom: 16 }}>
@@ -156,6 +167,28 @@ export function ClubStrategyScreen({ world }: { readonly world: GameWorld }) {
               {horizon.positionalContinuityRisks.length > 0 && <div>Continuity risks: {horizon.positionalContinuityRisks.map((risk) => risk.position).join(', ')}</div>}
               {horizon.seasonId && horizon.guaranteedPlayerPayroll === null && <div>Player payroll context: unavailable</div>}
             </div>)}
+          </section>
+          <section aria-label={`${team.name} ${team.gender} contract review`}>
+            <h3>Contract review</h3>
+            <p>Intent is planning only. It creates no salary terms, negotiation, successor contract, release, or Governance decision.</p>
+            {contractReviews.length === 0 ? <p>No current or recorded contract reviews.</p> : <ul>{contractReviews.map((review) => {
+              const player = world.players[review.playerId]
+              const live = !review.status.startsWith('RESOLVED') && review.status !== 'STALE'
+              const statusLabel = review.status === 'REVIEW_REQUIRED' && review.decision === 'DEFER' ? 'Review due again'
+                : review.status === 'REVIEW_REQUIRED' ? 'Review required'
+                  : review.status === 'DEFERRED' ? `Deferred until ${review.reviewAgainOn}`
+                    : review.status.startsWith('RESOLVED') ? review.status.replace('RESOLVED_', 'Resolved: ').replaceAll('_', ' ').toLowerCase()
+                      : review.status === 'STALE' ? 'Stale review' : `Intent: ${review.status.replaceAll('_', ' ').toLowerCase()}`
+              return <li key={review.id}>
+                <strong>{player?.firstName ?? 'Unknown'} {player?.lastName ?? ''}</strong>
+                <div>Expires: {review.expiresOn}{review.expiryContext ? ` · ${review.expiryContext.currentRole.toLowerCase()} ${review.expiryContext.position}` : ''} · {statusLabel}</div>
+                {review.decision === 'DEFER' && review.status === 'REVIEW_REQUIRED' && <div>Previously deferred on {review.decidedOn}; the season checkpoint reopened this review.</div>}
+                {live && !isUserTeam && <div>AI intent unavailable: no contract-retention decision owner is configured. This is derived review evidence only.</div>}
+                {live && isUserTeam && onDecideContractReview && <div aria-label={`Contract review choices for ${player?.firstName ?? 'player'} ${player?.lastName ?? ''}`}>
+                  {CONTRACT_INTENTS.map((intent) => <button key={intent.value} type="button" onClick={() => onDecideContractReview(team.id, review.contractId, intent.value)}>{intent.label}</button>)}
+                </div>}
+              </li>
+            })}</ul>}
           </section>
           <section aria-label={`${team.name} ${team.gender} GM plan and current workflow`}>
             <h3>{isUserTeam ? 'Recommended plan' : 'Selected plan'}</h3>

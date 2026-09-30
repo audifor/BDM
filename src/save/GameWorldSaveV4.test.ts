@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { advanceDay } from '@/engine/calendar'
 import { parseGameDate } from '@/domain/date'
+import { addDays } from '@/domain/date'
+import { createContractReviewDecision, contractReviewDecisionIdFor } from '@/domain/contract'
 import { createGMPlanState } from '@/domain/gmPlanning'
 import { createGovernanceInstitution } from '@/domain/governance'
 import { createOrganization } from '@/domain/organization'
@@ -22,6 +24,27 @@ import { deserializeGameWorldSaveV4, deserializeGameWorldV4, migrateGameWorldSav
 const savedAt = '2032-10-01T00:00:00.000Z'
 
 describe('GameWorldSaveV4 competition runtime', () => {
+  it('round-trips explicit contract review intent and defaults old V4 saves to none', () => {
+    const base = createNewGame()
+    const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
+    const playerId = team.rosterPlayerIds[0]!
+    const contract = Object.values(base.contractsById).find((item) => item.teamId === team.id && item.playerId === playerId)!
+    const decision = createContractReviewDecision({
+      id: contractReviewDecisionIdFor(team.id, playerId, contract.id), teamId: team.id, playerId, contractId: contract.id,
+      intent: 'DEFER', decidedOn: base.currentDate, decidedByCoachId: base.userCoachId,
+      reviewAgainOn: addDays(base.currentDate, 30),
+    })
+    const world = updateGameWorld(base, { contractReviewDecisions: [decision] })
+    const saved = serializeGameWorldV4(world, savedAt)
+    expect(saved.payload.contractReviewDecisions).toEqual([decision])
+    const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(saved)))
+    expect(restored.contractReviewDecisionsById).toEqual({ [decision.id]: decision })
+
+    const { contractReviewDecisions: _decisions, ...legacyPayload } = saved.payload
+    const legacy = deserializeGameWorldV4({ ...saved, payload: legacyPayload })
+    expect(legacy.contractReviewDecisionsById).toEqual({})
+  })
+
   it('writes the required empty runtime for a world created before V4 runtime exists', () => {
     const world = createNewGame()
     const v4 = serializeGameWorldV4(world, savedAt)

@@ -53,6 +53,7 @@ import { createInjury, isInjuryActive, type InjuryRecord } from '@/domain/injury
 import type { InjuryId } from '@/domain/ids'
 import type { ContractId } from '@/domain/ids'
 import { createPlayerContract, getPlayerContractStatus, type PlayerContract } from '@/domain/contract'
+import { createContractReviewDecision, type ContractReviewDecision, type ContractReviewDecisionId } from '@/domain/contract/ContractReviewDecision'
 import { createExpenseRecognition, createFinancialAccount, createFinancialBudget, createFinancialCommitment, createFinancialEntitlement, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile, createPayable, createReceivable, createRevenueRecognition, createTeamFinances, createTreasurySettlement, createBudgetAllocation, createBudgetLine, createBudgetRevision, createForecastAssumption, validateFinancialPlanningCollections, isCashAccount, createRevenueSource, validateRevenueSources, createOperatingCostSource, createAuthorizedOperatingCostFact, validateOperatingCostCollections, createDebtInstrument, validateDebtInstrumentCollections, createCompetitionDistributionFact, validateCompetitionDistributionFacts, type DebtInstrument, type CompetitionDistributionFact, type AuthorizedOperatingCostFact, type OperatingCostSource, type BudgetAllocation, type BudgetLine, type BudgetRevision, type ExpenseRecognition, type FinancialAccount, type FinancialBudget, type FinancialCommitment, type FinancialEntitlement, type FinancialTransaction, type FiscalPeriod, type ForecastAssumption, type OrganizationFinancialProfile, type Payable, type Receivable, type RevenueRecognition, type RevenueSource, type TeamFinances, type TreasurySettlement } from '@/domain/finance'
 import { createEconomicObservation, createExchangeRate, createFinancialRegulationAssessment, validateEconomicCollections, type EconomicObservation, type ExchangeRate, type FinancialRegulationAssessment } from '@/domain/finance'
 import { createFinanceDecisionProposal, type FinanceDecisionProposal } from '@/domain/finance/FinanceAI'
@@ -365,6 +366,7 @@ export interface GameWorld {
   readonly boardStatesByTeamId: Readonly<Record<string, BoardState>>
   readonly clubStrategicStatesByTeamId: Readonly<Record<string, ClubStrategicState>>
   readonly gmPlanStatesById: Readonly<Record<string, GMPlanState>>
+  readonly contractReviewDecisionsById: Readonly<Record<ContractReviewDecisionId, ContractReviewDecision>>
   readonly governanceInstitutionsById: Readonly<Record<string, GovernanceInstitution>>
   readonly governanceUniverseProfilesById: Readonly<Record<string, GovernanceUniverseProfile>>
   readonly governanceBodiesById: Readonly<Record<string, GovernanceBody>>
@@ -623,6 +625,7 @@ export interface CreateGameWorldInput {
   boardStatesByTeamId?: Readonly<Record<string, BoardState>>
   clubStrategicStatesByTeamId?: Readonly<Record<string, ClubStrategicState>>
   gmPlanStates?: readonly GMPlanState[]
+  contractReviewDecisions?: readonly ContractReviewDecision[]
   governanceInstitutions?: readonly GovernanceInstitution[]
   governanceUniverseProfiles?: readonly GovernanceUniverseProfile[]
   governanceBodies?: readonly GovernanceBody[]
@@ -894,6 +897,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
       return [teamId, strategicState]
     }))),
     gmPlanStatesById: indexById((input.gmPlanStates ?? []).map(createGMPlanState), 'GM plan state'),
+    contractReviewDecisionsById: indexById((input.contractReviewDecisions ?? []).map(createContractReviewDecision), 'Contract review decision'),
     governanceInstitutionsById: indexById((input.governanceInstitutions ?? []).map(createGovernanceInstitution), 'Governance institution'),
     governanceUniverseProfilesById: indexById((input.governanceUniverseProfiles ?? []).map(createGovernanceUniverseProfile), 'Governance universe profile'),
     governanceBodiesById: indexById((input.governanceBodies ?? []).map(createGovernanceBody), 'Governance body'),
@@ -989,6 +993,7 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
 }
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
+  contractReviewDecisions: 'contractReviewDecisionsById',
   financialBudgets: 'financialBudgetsById', budgetLines: 'budgetLinesById', budgetRevisions: 'budgetRevisionsById', budgetAllocations: 'budgetAllocationsById', forecastAssumptions: 'forecastAssumptionsById', financialRegulationAssessments: 'financialRegulationAssessmentsById', financeDecisionProposals: 'financeDecisionProposalsById', economicObservations: 'economicObservationsById', exchangeRates: 'exchangeRatesById', revenueSources: 'revenueSourcesById', operatingCostSources: 'operatingCostSourcesById', operatingCostFacts: 'operatingCostFactsById', debtInstruments: 'debtInstrumentsById', competitionDistributionFacts: 'competitionDistributionFactsById',
   multiClubOwnershipPolicies: 'multiClubOwnershipPoliciesById',
   organizationStructuralChanges: 'organizationStructuralChangesById', organizationLifecycleStates: 'organizationLifecycleStatesById', organizationSuccessions: 'organizationSuccessionsById', regulatoryOrders: 'regulatoryOrdersById', regulatoryRemediationPlans: 'regulatoryRemediationPlansById', organizationLicenses: 'organizationLicensesById',
@@ -1003,6 +1008,7 @@ const collectionPatchTargets: Readonly<Record<string, string>> = {
 
 const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unknown>> = {
   ...Object.fromEntries(Object.keys(collectionPatchTargets).map((key) => [key, (value: unknown) => indexById(value as readonly { readonly id: string }[], key)])),
+  contractReviewDecisions: (value) => indexById((value as readonly ContractReviewDecision[]).map(createContractReviewDecision), 'Contract review decision'),
   financialBudgets: (value) => indexById((value as readonly FinancialBudget[]).map(createFinancialBudget), 'Financial budget'),
   budgetLines: (value) => indexById((value as readonly BudgetLine[]).map(createBudgetLine), 'Budget line'),
   budgetRevisions: (value) => indexById((value as readonly BudgetRevision[]).map(createBudgetRevision), 'Budget revision'),

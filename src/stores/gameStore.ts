@@ -12,6 +12,8 @@ import {
   advanceGameDayWithResult,
 } from '@/app/game'
 import { releasePlayer } from '@/app/market'
+import { recordContractReviewDecision } from '@/app/contractReview'
+import type { ContractReviewIntent } from '@/domain/contract/ContractReviewDecision'
 import { completeAcceptedFreeAgentSigning, initiatePreferredFreeAgentContact, submitPreparedFreeAgentOffer, respondToNegotiationCounter } from '@/app/marketIntelligence'
 import { startUserPlayerContractSigning, recordPlayerContractSigningDecisionEvent } from '@/app/governance'
 import type { ClubCounterDecision } from '@/app/marketIntelligence'
@@ -89,6 +91,7 @@ interface GameStore {
   startUserTradeCommitment(negotiationId: string, expectedRevisionId: string): TradeCommitmentResult
   recordUserTradeCommitmentEvent(decisionId: string, kind: 'APPROVED' | 'REJECTED' | 'VETOED', bodyId: string): TradeCommitmentResult
   releasePlayer(teamId: TeamId, playerId: PlayerId): void
+  decideContractReview(teamId: TeamId, contractId: import('@/domain/ids').ContractId, intent: ContractReviewIntent): void
   startStaffCandidacy(teamId: TeamId, roleId: StaffRoleId, staffId: StaffPersonId): void
   startStaffInterview(candidacyId: string): void
   completeStaffInterview(candidacyId: string): void
@@ -228,6 +231,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return result
   },
   releasePlayer: (teamId, playerId) => set({ world: releasePlayer(requireWorld(get().world), teamId, playerId) }),
+  decideContractReview: (teamId, contractId, intent) => {
+    const result = recordContractReviewDecision(requireWorld(get().world), { teamId, contractId, intent })
+    if (result.ok) set({ world: result.world })
+  },
   startStaffCandidacy: (teamId, roleId, staffId) => {
     const opening = createStaffJobOpeningForTeam(requireWorld(get().world), { teamId, roleId })
     const candidacy = identifyStaffCandidate(opening.world, { openingId: opening.opening.id, staffId })

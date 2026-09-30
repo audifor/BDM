@@ -1,8 +1,11 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createNewGame } from '@/app/game'
+import { addDays } from '@/domain/date'
+import { createPlayerContract } from '@/domain/contract'
+import { contractIdFromString } from '@/domain/ids'
 import { reviewClubManagementPlanning } from '@/app/gmPlanning'
 import { createGMPlanState } from '@/domain/gmPlanning'
 import { assessGMDecisionContext } from '@/engine/gmDecisionContext'
@@ -20,6 +23,27 @@ function preparedAiWorld() {
 }
 
 describe('ClubStrategyScreen', () => {
+  it('exposes review intent only for the user club when an explicit command is supplied', () => {
+    const initial = createNewGame()
+    const team = Object.values(initial.teams).find((candidate) => candidate.coachId === initial.userCoachId)!
+    const playerId = team.rosterPlayerIds[0]!
+    const position = initial.players[playerId]!.basketball.primaryPosition
+    const contract = createPlayerContract({ id: contractIdFromString(`screen-review:${team.id}`), teamId: team.id, playerId, kind: 'standard', term: { startsOn: addDays(initial.currentDate, -30), expiresOn: addDays(initial.currentDate, 120) }, compensation: { annualSalary: 1_000_000 } })
+    const lineup = initial.lineupsByTeamId[team.id]!
+    const world = updateGameWorld(initial, {
+      contracts: [...Object.values(initial.contractsById).filter((item) => item.playerId !== playerId), contract],
+      lineupsByTeamId: { ...initial.lineupsByTeamId, [team.id]: { ...lineup, starters: { ...lineup.starters, [position]: playerId } } },
+    })
+    const onDecideContractReview = vi.fn()
+    render(<ClubStrategyScreen world={world} onDecideContractReview={onDecideContractReview} />)
+    const article = screen.getByRole('article', { name: `${team.name} ${team.gender} strategy` })
+    const choices = within(article).getByLabelText(`Contract review choices for ${initial.players[playerId]!.firstName} ${initial.players[playerId]!.lastName}`)
+    const button = within(choices).getByRole('button', { name: 'Pursue extension' })
+    button.click()
+    expect(onDecideContractReview).toHaveBeenCalledWith(team.id, contract.id, 'PURSUE_EXTENSION')
+    expect(within(article).getByText(/Intent is planning only\. It creates no salary terms/)).toBeInTheDocument()
+  })
+
   it('shows AI club direction, evidence and review timing without adding action controls', () => {
     const { world, team } = preparedAiWorld()
     render(<ClubStrategyScreen world={world} />)

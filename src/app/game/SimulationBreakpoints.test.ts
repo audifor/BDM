@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import { addDays } from '@/domain/date'
+import { createPlayerContract } from '@/domain/contract'
+import { contractIdFromString } from '@/domain/ids'
 import { updateGameWorld } from '@/domain/world'
 import { createNegotiationContact } from '@/domain/market'
 import { releasePlayer } from '@/app/market'
@@ -19,6 +21,30 @@ import { evaluateSimulationBreakpoints } from './SimulationBreakpoints'
 import { simulateUntilDate } from './simulateUntilDate'
 
 describe('simulation breakpoints', () => {
+  it('surfaces one nonblocking contract review notice when an unresolved expiry enters the BS9 horizon', () => {
+    const base = createNewGame()
+    const userTeam = Object.values(base.teams).find((team) => team.coachId === base.userCoachId)!
+    const playerId = userTeam.rosterPlayerIds[0]!
+    const position = base.players[playerId]!.basketball.primaryPosition
+    const expiry = addDays(base.currentDate, 365)
+    const replacement = createPlayerContract({ id: contractIdFromString(`breakpoint-review:${userTeam.id}`), teamId: userTeam.id, playerId, kind: 'standard', term: { startsOn: addDays(base.currentDate, -30), expiresOn: expiry }, compensation: { annualSalary: 1_000_000 } })
+    const lineup = base.lineupsByTeamId[userTeam.id]!
+    const world = updateGameWorld(base, {
+      contracts: [...Object.values(base.contractsById).filter((contract) => contract.playerId !== playerId), replacement],
+      lineupsByTeamId: { ...base.lineupsByTeamId, [userTeam.id]: { ...lineup, starters: { ...lineup.starters, [position]: playerId } } },
+      games: [],
+    })
+
+    const crossing = evaluateSimulationBreakpoints(world)
+    expect(crossing.candidates).toContainEqual(expect.objectContaining({
+      level: 'IMPORTANT', reason: 'contractReviewHorizon', sourceKind: 'USER_CONTRACT_REVIEW',
+      ownership: { kind: 'USER_TEAM', coachId: base.userCoachId, teamId: userTeam.id },
+    }))
+    expect(crossing.mayAdvance).toBe(true)
+    const nextDay = updateGameWorld(world, { currentDate: addDays(world.currentDate, 1) })
+    expect(evaluateSimulationBreakpoints(nextDay).candidates.some((item) => item.reason === 'contractReviewHorizon')).toBe(false)
+  })
+
   it('allows advancement when there is no pending decision', () => {
     const result = evaluateSimulationBreakpoints(createAcbTestGame())
     expect(result).toMatchObject({ mayAdvance: true, level: 'BACKGROUND' })

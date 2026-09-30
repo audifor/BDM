@@ -1,4 +1,4 @@
-import type { GameDate } from '@/domain/date'
+import { addDays, type GameDate } from '@/domain/date'
 import { deriveGovernanceDecisionStatus, deriveGovernanceRequestStatus, resolveGovernanceDecisionRights } from '@/domain/governance'
 import type { GameWorld } from '@/domain/world'
 import { getPendingMediaOpportunities } from '@/domain/world'
@@ -11,6 +11,7 @@ import { getEcosystemForTeam } from '@/domain/world'
 import type { TeamId } from '@/domain/ids'
 import type { ContractNegotiation } from '@/domain/market'
 import { tradeNegotiationResponseReadiness } from '@/app/trades'
+import { assessContractReviewOutlook, CONTRACT_REVIEW_HORIZON_DAYS } from '@/engine/clubNeeds'
 
 export const SIMULATION_BREAKPOINT_LEVELS = ['BACKGROUND', 'INFO', 'IMPORTANT', 'ACTION_REQUIRED', 'BLOCKING'] as const
 export type SimulationBreakpointLevel = typeof SIMULATION_BREAKPOINT_LEVELS[number]
@@ -80,6 +81,16 @@ export function evaluateSimulationBreakpoints(world: GameWorld, context: Simulat
           : `User team ${userTeam.id} has ${userTeam.rosterPlayerIds.length} rostered players; at least five are required and no supported affordable signing is available.`,
       }))
     }
+    const contractReviewsDue = assessContractReviewOutlook(world, userTeam.id).reviews.filter((review) => review.status === 'REVIEW_REQUIRED'
+      && (review.decision === undefined && review.expiresOn === addDays(world.currentDate, CONTRACT_REVIEW_HORIZON_DAYS)
+        || review.decision === 'DEFER' && review.reviewAgainOn === world.currentDate))
+    if (contractReviewsDue.length > 0) candidates.push(candidate({
+      level: 'IMPORTANT', reason: 'contractReviewHorizon', sourceKind: 'USER_CONTRACT_REVIEW',
+      sourceId: `${userTeam.id}:${world.currentDate}`, effectiveDate: world.currentDate,
+      deadline: contractReviewsDue.map((review) => review.expiresOn).sort()[0],
+      ownership: { kind: 'USER_TEAM', coachId: world.userCoachId, teamId: userTeam.id }, route: 'analysis', actionTarget: { teamId: userTeam.id },
+      diagnostic: `${contractReviewsDue.length} unresolved contract review${contractReviewsDue.length === 1 ? '' : 's'} entered the existing BS9 review horizon.`,
+    }))
     for (const draft of Object.values(world.draftsById).filter((item) => item.status === 'inProgress')) {
       const pick = getCurrentDraftPick(world, draft.id)
       if (pick?.ownerTeamId === userTeam.id) candidates.push(candidate({
