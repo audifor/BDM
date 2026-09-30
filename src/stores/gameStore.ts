@@ -55,6 +55,8 @@ import { setTeamResponsibility, type SetTeamResponsibilityInput } from '@/app/st
 import { acceptStaffRecommendation as acceptStaffRecommendationCommand, dismissStaffRecommendation as dismissStaffRecommendationCommand, type StaffRecommendationCommandResult } from '@/app/staffRecommendations'
 import type { DelegationOutcomeId } from '@/domain/responsibility'
 import { declineStaffCareerRequest, grantStaffCareerRequest } from '@/app/staffCareerAutonomy'
+import { proposeTradeNegotiation, respondToTradeNegotiation, type TradeNegotiationActionRequest, type TradeNegotiationCommandResult } from '@/app/trades'
+import type { TradeProposal } from '@/domain/trade'
 
 interface GameStore {
   readonly world: GameWorld | null
@@ -81,6 +83,8 @@ interface GameStore {
   startFreeAgentSigningGovernance(teamId: TeamId, negotiationId: string, expectedProposalId: string, proposerBodyId?: string): void
   recordFreeAgentSigningDecision(decisionId: string, kind: 'APPROVED' | 'REJECTED' | 'VETOED' | 'WITHDRAWN', bodyId: string): void
   completeFreeAgentSigning(teamId: TeamId, negotiationId: string, expectedProposalId: string): void
+  proposeUserTradeNegotiation(proposal: TradeProposal, pursuitId?: string): TradeNegotiationCommandResult
+  respondUserToTradeNegotiation(request: Omit<TradeNegotiationActionRequest, 'teamId' | 'actor'>): TradeNegotiationCommandResult
   releasePlayer(teamId: TeamId, playerId: PlayerId): void
   startStaffCandidacy(teamId: TeamId, roleId: StaffRoleId, staffId: StaffPersonId): void
   startStaffInterview(candidacyId: string): void
@@ -190,6 +194,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
   startFreeAgentSigningGovernance: (teamId, negotiationId, expectedProposalId, proposerBodyId) => { const result = startUserPlayerContractSigning(requireWorld(get().world), { teamId, negotiationId, expectedProposalId, ...(proposerBodyId === undefined ? {} : { proposerBodyId }) }); if (result.status === 'PROPOSED') set({ world: result.world }) },
   recordFreeAgentSigningDecision: (decisionId, kind, bodyId) => { const world = requireWorld(get().world); const result = recordPlayerContractSigningDecisionEvent(world, { decisionId, kind, bodyId, actor: { kind: 'COACH', id: world.userCoachId } }); if (result.world !== world) set({ world: result.world }) },
   completeFreeAgentSigning: (teamId, negotiationId, expectedProposalId) => { const result = completeAcceptedFreeAgentSigning(requireWorld(get().world), { teamId, negotiationId, expectedProposalId }); if (result.status === 'SIGNED') set({ world: result.world }) },
+  proposeUserTradeNegotiation: (proposal, pursuitId) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    if (team === undefined) return { status: 'NOT_AUTHORIZED', world, reasons: ['USER_TEAM_NOT_FOUND'] }
+    const result = proposeTradeNegotiation(world, proposal, team.id, { kind: 'USER' }, pursuitId)
+    if (result.world !== world) set({ world: result.world })
+    return result
+  },
+  respondUserToTradeNegotiation: (request) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    if (team === undefined) return { status: 'NOT_AUTHORIZED', world, reasons: ['USER_TEAM_NOT_FOUND'] }
+    const result = respondToTradeNegotiation(world, { ...request, teamId: team.id, actor: { kind: 'USER' } })
+    if (result.world !== world) set({ world: result.world })
+    return result
+  },
   releasePlayer: (teamId, playerId) => set({ world: releasePlayer(requireWorld(get().world), teamId, playerId) }),
   startStaffCandidacy: (teamId, roleId, staffId) => {
     const opening = createStaffJobOpeningForTeam(requireWorld(get().world), { teamId, roleId })

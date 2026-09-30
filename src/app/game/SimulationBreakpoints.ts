@@ -10,6 +10,7 @@ import { assessRoutedFreeAgentOfferIntelligence } from '@/app/marketIntelligence
 import { getEcosystemForTeam } from '@/domain/world'
 import type { TeamId } from '@/domain/ids'
 import type { ContractNegotiation } from '@/domain/market'
+import { tradeNegotiationResponseReadiness } from '@/app/trades'
 
 export const SIMULATION_BREAKPOINT_LEVELS = ['BACKGROUND', 'INFO', 'IMPORTANT', 'ACTION_REQUIRED', 'BLOCKING'] as const
 export type SimulationBreakpointLevel = typeof SIMULATION_BREAKPOINT_LEVELS[number]
@@ -119,6 +120,17 @@ export function evaluateSimulationBreakpoints(world: GameWorld, context: Simulat
             : `Market contact ${negotiation.id} received ${negotiation.contactResponse.outcome === 'OPEN_TO_TALKS' ? 'a positive response' : 'a refusal'} on ${negotiation.contactResponse.respondedOn}; no formal offer exists.`
           : `Market negotiation ${negotiation.id} has a formal offer open and is waiting on an external player response.`,
     }))
+    for (const negotiation of Object.values(world.tradeNegotiationsById).filter((item) => item.participantTeamIds.includes(userTeam.id) && (item.status === 'PROPOSED' || item.status === 'COUNTERED'))) {
+      const revision = negotiation.revisions[negotiation.revisions.length - 1]!
+      const alreadyDecided = negotiation.actions.some((action) => action.revisionId === revision.id && action.teamId === userTeam.id && (action.kind === 'ACCEPT' || action.kind === 'REJECT'))
+      if (revision.proposedByTeamId === userTeam.id || alreadyDecided || tradeNegotiationResponseReadiness(world, negotiation, userTeam.id).status !== 'READY') continue
+      candidates.push(candidate({
+        level: 'ACTION_REQUIRED', reason: 'tradeNegotiationResponse', sourceKind: 'TRADE_NEGOTIATION', sourceId: negotiation.id,
+        effectiveDate: world.currentDate, ownership: { kind: 'USER_TEAM', coachId: world.userCoachId, teamId: userTeam.id },
+        route: 'trades', actionTarget: { negotiationId: negotiation.id, revisionId: revision.id },
+        diagnostic: `Trade negotiation ${negotiation.id} has a current package revision awaiting the user team's accept, reject, or counter decision.`,
+      }))
+    }
   }
 
   candidates.push(...governanceCandidates(world))

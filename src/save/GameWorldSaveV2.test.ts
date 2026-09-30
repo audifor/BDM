@@ -16,6 +16,14 @@ import { createNegotiationContact } from '@/domain/market'
 
 const savedAt = '2032-10-01T00:00:00.000Z'
 describe('GameWorldSaveV2', () => {
+  it('defaults a legacy market runtime without trade negotiations to an empty collection', () => {
+    const saved = serializeGameWorldV2(createNewGame(), savedAt)
+    const marketRuntime = { ...saved.payload.marketRuntime! }
+    delete marketRuntime.tradeNegotiations
+    const restored = deserializeGameWorldV2({ ...saved, payload: { ...saved.payload, marketRuntime } })
+    expect(restored.tradeNegotiationsById).toEqual({})
+  })
+
   it('serializes canonical player truth only and round-trips V2', () => {
     const world = createNewGame(); const saved = serializeGameWorldV2(world, savedAt)
     expect(saved.schemaVersion).toBe(2)
