@@ -126,7 +126,7 @@ describe('Match Next ball and possession authority', () => {
     state = tick(state)
     expect(state.ball).toMatchObject({ kind: 'HELD', ownerPlayerId: defenderId, ownerTeamId: setup.awayTeamId })
     expect(state.events.some((event) => event.type === 'passIntercepted' && event.playerId === defenderId)).toBe(true)
-    expect(projectMatchNextPlayByPlay(state.events)).toContainEqual(expect.objectContaining({ type: 'turnover', playerId: defenderId, text: 'pass intercepted' }))
+    expect(projectMatchNextPlayByPlay(state.events)).toContainEqual(expect.objectContaining({ type: 'steal', playerId: defenderId }))
     expect(state.possessions[0]).toMatchObject({ endReason: 'turnover' })
     expect(activePossession(state)).toMatchObject({ teamId: setup.awayTeamId, startReason: 'steal' })
     const possessionEnd = state.events.find((event) => event.type === 'possessionEnd' && event.endReason === 'turnover')!

@@ -1,0 +1,166 @@
+{
+ "scenario": {
+  "kind": "chargeOrBlocking",
+  "description": "Charge (offense) or blocking (defense) call on a drive",
+  "seed": 424242,
+  "fromTick": 1552,
+  "toTick": 1642
+ },
+ "everyMs": 750,
+ "views": {
+  "plain": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 1553,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.44002348487905296
+    },
+    {
+     "frame": 1,
+     "tick": 1560,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0.1257143552574249
+    },
+    {
+     "frame": 2,
+     "tick": 1568,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.38408082177475095
+    },
+    {
+     "frame": 3,
+     "tick": 1575,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.1049285245691755
+    },
+    {
+     "frame": 4,
+     "tick": 1583,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.40950827235860476
+    },
+    {
+     "frame": 5,
+     "tick": 1590,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.12338701247999806
+    },
+    {
+     "frame": 6,
+     "tick": 1598,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.4318545436799973
+    },
+    {
+     "frame": 7,
+     "tick": 1605,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.1219136200165803
+    },
+    {
+     "frame": 8,
+     "tick": 1613,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.34237789474559793
+    },
+    {
+     "frame": 9,
+     "tick": 1620,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.06871926113113164
+    },
+    {
+     "frame": 10,
+     "tick": 1628,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0
+    },
+    {
+     "frame": 11,
+     "tick": 1635,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.04345134756812987
+    }
+   ]
+  },
+  "truth": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 1553,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.44002348487905296
+    },
+    {
+     "frame": 1,
+     "tick": 1560,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0.1257143552574249
+    },
+    {
+     "frame": 2,
+     "tick": 1568,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.38408082177475095
+    },
+    {
+     "frame": 3,
+     "tick": 1575,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.1049285245691755
+    },
+    {
+     "frame": 4,
+     "tick": 1583,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.40950827235860476
+    },
+    {
+     "frame": 5,
+     "tick": 1590,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.12338701247999806
+    },
+    {
+     "frame": 6,
+     "tick": 1598,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.4318545436799973
+    },
+    {
+     "frame": 7,
+     "tick": 1605,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.1219136200165803
+    },
+    {
+     "frame": 8,
+     "tick": 1613,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.34237789474559793
+    },
+    {
+     "frame": 9,
+     "tick": 1620,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.06871926113113164
+    },
+    {
+     "frame": 10,
+     "tick": 1628,
+     "ball": "PASS_IN_FLIGHT",
+     "maxPlayerDiffM": 0
+    },
+    {
+     "frame": 11,
+     "tick": 1635,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.04345134756812987
+    }
+   ]
+  }
+ }
+}

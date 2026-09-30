@@ -14,6 +14,10 @@ import { reconcileActions } from './actions/ActionCore'
 import { clearExpiredReboundTransition, finishStoppedTransition, reconcileReboundTransition, securePhysicalRebound } from './transition/ReboundTransition'
 import { advanceMatchSessionFatigue } from './playerDynamicState'
 import { applyCoachSubstitutions, type CoachSubstitutionProposal } from './coaching/RotationDecision'
+import { reconcileFreeThrows } from './rules/FreeThrows'
+import { advancePlayState } from './rules/PlayState'
+import { reconcileOnBallPressure, reconcileSteppedOut } from './defense/StealModel'
+import { resetTeamFoulsForPeriod } from './rules/Fouls'
 
 export type MatchNextCommand =
   | { readonly type: 'startOpeningJumpBall'; readonly homeLineup: readonly PlayerId[]; readonly awayLineup: readonly PlayerId[] }
@@ -46,10 +50,15 @@ export function applyCommand(state: MatchState, command: MatchNextCommand): Matc
     case 'putBallDead': next = putBallDead(state, command.reason, command.restartTeamId); break
     case 'coachSubstitutions': next = applyCoachSubstitutions(state, command.proposals); break
   }
-  return reconcileStructures(next)
+  return advancePlayState(state, reconcileStructures(next))
 }
 
 export function tick(state: MatchState): MatchState {
+  const next = tickCore(state)
+  return next === state ? next : advancePlayState(state, next)
+}
+
+function tickCore(state: MatchState): MatchState {
   if (state.isComplete) return state
   const t = state.t + 1
   const gameClockTenths = state.clock.gameRunning ? Math.max(0, state.gameClockTenths - 1) : state.gameClockTenths
@@ -64,6 +73,9 @@ export function tick(state: MatchState): MatchState {
   next = securePhysicalRebound(next)
   next = securePhysicalLooseBall(next)
   next = reconcileStructures(next)
+  next = reconcileFreeThrows(next)
+  next = reconcileOnBallPressure(next)
+  next = reconcileSteppedOut(next)
 
   const shotClockExpired = state.clock.shotRunning && state.shotClockTenths !== null && state.shotClockTenths > 0 && shotClockTenths === 0
   const expiredAtPriorTick = state.clock.shotRunning && state.shotClockTenths === 0
@@ -156,6 +168,7 @@ function finishPeriod(state: MatchState): MatchState {
   }
   const period = state.period + 1
   const periodSeconds = period > state.clockRules.periodCount ? state.clockRules.overtimeSeconds : state.clockRules.periodSeconds
+  next = resetTeamFoulsForPeriod({ ...next, period }, period)
   next = { ...next, period, gameClockTenths: periodSeconds * 10, periodCourtTimeTenthsByPlayerId: Object.fromEntries(state.players.map((player) => [player.playerId, 0])), ball: { kind: 'DEAD', reason: 'periodEnd', position: ballPosition, heightMeters: 0.08 } }
   return emitEvent(next, 'periodStart')
 }

@@ -6,6 +6,8 @@ export type MatchBallDeadReason = BallDeadReason
 
 /** Reads the actual competition-resolved clock rule carried by MatchSetup. */
 export function shouldStopGameClock(reason: MatchBallDeadReason, period: number, gameClockTenths: number, rules: MatchNextClockRules): boolean {
+  // A whistle or a free throw always stops the clock, whatever the competition says about other dead balls.
+  if (reason === 'foul' || reason === 'freeThrow') return true
   if (reason === 'madeBasket') {
     const threshold = period > rules.periodCount
       ? rules.madeBasketClockStopUnderSecondsInFinalPeriod ?? null
@@ -28,6 +30,9 @@ export function isSubstitutionOpportunity(reason: MatchBallDeadReason, period: n
     return threshold !== null && gameClockTenths <= threshold * 10
       && (rules.madeBasketSubstitutionEligibleTeam !== 'nonScoring' || actingTeamId !== undefined && actingTeamId === restartTeamId)
   }
+  // Fouls always open a substitution window; the free throws in between do not.
+  if (reason === 'foul') return true
+  if (reason === 'freeThrow') return false
   return (rules.substitutionOpportunityReasons ?? ['outOfBounds', 'other', 'shotClockViolation']).includes(reason as 'outOfBounds' | 'other' | 'shotClockViolation')
 }
 

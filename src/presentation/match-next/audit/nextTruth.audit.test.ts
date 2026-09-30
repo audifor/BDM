@@ -41,8 +41,9 @@ describe('canonical truth quality (MatchEngine Next, first 13 min of play, two s
   })
 
   it('keeps a structured half-court defense (documented strengths, so they are not regressed)', () => {
+    // Judged once the possession is 6 s old: the first seconds are both teams running to their spots (see summarizeNextRun).
     for (const seed of SEEDS) {
-      const s = summary(seed)
+      const s = summarizeNextRun(seed, { maxTicks: TICKS, minSecondsIntoPossession: 6 })
       expect(s.defense.meanOnBallDefenderDistance).toBeLessThan(4)
       expect(s.defense.paintUnprotectedShare).toBeLessThan(0.4)
       expect(s.defense.meanGoalSideDefenders).toBeGreaterThan(3)

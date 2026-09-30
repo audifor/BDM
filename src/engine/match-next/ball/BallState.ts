@@ -2,11 +2,11 @@ import type { CourtPosition } from '@/domain/court'
 import type { PlayerId, TeamId } from '@/domain/ids'
 
 export type BallPassKind = 'chest' | 'bounce' | 'lob'
-export type BallDeadReason = 'madeBasket' | 'outOfBounds' | 'shotClockViolation' | 'periodEnd' | 'foundation' | 'other'
-export type LooseBallCause = 'badPass' | 'deflection' | 'lostDribble' | 'rebound' | 'other'
+export type BallDeadReason = 'madeBasket' | 'outOfBounds' | 'shotClockViolation' | 'periodEnd' | 'foundation' | 'other' | 'foul' | 'freeThrow'
+export type LooseBallCause = 'badPass' | 'deflection' | 'lostDribble' | 'rebound' | 'block' | 'pokeLoose' | 'other'
 
 export type PlannedShotOutcome =
-  | { readonly kind: 'MAKE'; readonly points: 2 | 3 }
+  | { readonly kind: 'MAKE'; readonly points: 1 | 2 | 3 }
   | { readonly kind: 'MISS'; readonly reboundTarget: CourtPosition; readonly reboundAvailableT: number }
 
 export interface HeldBallState {
@@ -35,6 +35,8 @@ export interface PassInFlightBallState {
   readonly catchRadiusMeters?: number
   readonly actionId?: string
   readonly passQuality?: number
+  /** BT3I: a defender in the lane got a hand on the pass; how it ends is decided when the ball reaches him. */
+  readonly contest?: { readonly defenderId: PlayerId; readonly kind: 'INTERCEPTION' | 'DEFLECTION' }
 }
 
 export interface ShotInFlightBallState {
@@ -54,6 +56,10 @@ export interface ShotInFlightBallState {
   readonly shotProbability?: number
   readonly contestScore?: number
   readonly contestDefenderPlayerId?: PlayerId
+  /** BT3E: this flight is a free throw of a canonical sequence. */
+  readonly freeThrow?: { readonly sequenceId: string; readonly index: number; readonly last: boolean }
+  /** BT3D: the shooter was fouled in the act; the foul is resolved when the shot arrives (AND-ONE if it goes in). */
+  readonly foul?: { readonly foulId: string; readonly freeThrows: number; readonly points: 2 | 3 }
 }
 
 export interface ReboundableBallState {
@@ -75,6 +81,9 @@ export interface LooseBallState {
   readonly heightMeters: number
   readonly velocity: CourtPosition
   readonly cause: LooseBallCause
+  /** Who touched it last decides who gets it when it leaves the court (BT3K). */
+  readonly lastTouchTeamId?: TeamId
+  readonly lastTouchPlayerId?: PlayerId
   readonly previousPosition: CourtPosition
 }
 
@@ -85,6 +94,7 @@ export interface DeadBallState {
   readonly heightMeters: number
   readonly restartTeamId?: TeamId
   readonly restartSpot?: CourtPosition
+  readonly foulId?: string
 }
 
 export interface InboundBallState {

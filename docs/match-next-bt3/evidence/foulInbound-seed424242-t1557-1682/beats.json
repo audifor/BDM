@@ -1,0 +1,317 @@
+[
+ {
+  "wallMs": 1041,
+  "tick": 1557,
+  "sequence": 855,
+  "type": "decisionSelected",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 1041,
+  "tick": 1557,
+  "sequence": 856,
+  "type": "actionStarted",
+  "detail": "H. Grove PASS"
+ },
+ {
+  "wallMs": 1041,
+  "tick": 1557,
+  "sequence": 857,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 1041,
+  "tick": 1557,
+  "sequence": 858,
+  "type": "passReleased",
+  "detail": "H. Grove > C. Dain"
+ },
+ {
+  "wallMs": 1044,
+  "tick": 1565,
+  "sequence": 859,
+  "type": "passReceived",
+  "detail": "C. Dain > C. Dain"
+ },
+ {
+  "wallMs": 1044,
+  "tick": 1565,
+  "sequence": 862,
+  "type": "actionResolved",
+  "detail": "H. Grove PASS"
+ },
+ {
+  "wallMs": 1044,
+  "tick": 1565,
+  "sequence": 863,
+  "type": "actionStarted",
+  "detail": "B. Farrow CLOSEOUT"
+ },
+ {
+  "wallMs": 1223,
+  "tick": 1568,
+  "sequence": 864,
+  "type": "offBallMove",
+  "detail": "G. Elian BASKET_CUT"
+ },
+ {
+  "wallMs": 1224,
+  "tick": 1570,
+  "sequence": 865,
+  "type": "decisionSelected",
+  "detail": "C. Dain"
+ },
+ {
+  "wallMs": 1224,
+  "tick": 1570,
+  "sequence": 866,
+  "type": "actionStarted",
+  "detail": "C. Dain DRIVE"
+ },
+ {
+  "wallMs": 1225,
+  "tick": 1572,
+  "sequence": 867,
+  "type": "offBallMove",
+  "detail": "A. Bexley DRIFT"
+ },
+ {
+  "wallMs": 1410,
+  "tick": 1579,
+  "sequence": 868,
+  "type": "actionResolved",
+  "detail": "B. Farrow CLOSEOUT"
+ },
+ {
+  "wallMs": 1413,
+  "tick": 1582,
+  "sequence": 869,
+  "type": "contact",
+  "detail": "C. Dain"
+ },
+ {
+  "wallMs": 1413,
+  "tick": 1582,
+  "sequence": 870,
+  "type": "foul",
+  "detail": "B. Farrow"
+ },
+ {
+  "wallMs": 1413,
+  "tick": 1582,
+  "sequence": 871,
+  "type": "ballDead",
+  "detail": "- foul"
+ },
+ {
+  "wallMs": 1413,
+  "tick": 1582,
+  "sequence": 872,
+  "type": "actionResolved",
+  "detail": "C. Dain DRIVE"
+ },
+ {
+  "wallMs": 1413,
+  "tick": 1582,
+  "sequence": 873,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 1413,
+  "tick": 1583,
+  "sequence": 874,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 1414,
+  "tick": 1584,
+  "sequence": 875,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2202,
+  "tick": 1621,
+  "sequence": 876,
+  "type": "possessionPhaseChanged",
+  "detail": "- INBOUND"
+ },
+ {
+  "wallMs": 2202,
+  "tick": 1621,
+  "sequence": 877,
+  "type": "inboundStarted",
+  "detail": "C. Dain INBOUND"
+ },
+ {
+  "wallMs": 2202,
+  "tick": 1621,
+  "sequence": 878,
+  "type": "defensiveAssignmentsEstablished",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2202,
+  "tick": 1621,
+  "sequence": 879,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2203,
+  "tick": 1625,
+  "sequence": 880,
+  "type": "inboundReleased",
+  "detail": "C. Dain > A. Bexley"
+ },
+ {
+  "wallMs": 2203,
+  "tick": 1625,
+  "sequence": 881,
+  "type": "passReleased",
+  "detail": "C. Dain > A. Bexley"
+ },
+ {
+  "wallMs": 2203,
+  "tick": 1625,
+  "sequence": 882,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2402,
+  "tick": 1633,
+  "sequence": 883,
+  "type": "passReceived",
+  "detail": "A. Bexley > A. Bexley"
+ },
+ {
+  "wallMs": 2402,
+  "tick": 1633,
+  "sequence": 884,
+  "type": "possessionPhaseChanged",
+  "detail": "- ADVANCE"
+ },
+ {
+  "wallMs": 2402,
+  "tick": 1633,
+  "sequence": 890,
+  "type": "transitionStarted",
+  "detail": "- defensiveRebound"
+ },
+ {
+  "wallMs": 2402,
+  "tick": 1633,
+  "sequence": 891,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 2402,
+  "tick": 1633,
+  "sequence": 892,
+  "type": "transitionResolved",
+  "detail": "- defensiveRebound"
+ },
+ {
+  "wallMs": 2402,
+  "tick": 1633,
+  "sequence": 898,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2405,
+  "tick": 1638,
+  "sequence": 899,
+  "type": "decisionSelected",
+  "detail": "A. Bexley"
+ },
+ {
+  "wallMs": 2405,
+  "tick": 1638,
+  "sequence": 900,
+  "type": "actionStarted",
+  "detail": "A. Bexley SHOOT"
+ },
+ {
+  "wallMs": 2405,
+  "tick": 1638,
+  "sequence": 901,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 2587,
+  "tick": 1640,
+  "sequence": 902,
+  "type": "contact",
+  "detail": "B. Istra"
+ },
+ {
+  "wallMs": 2587,
+  "tick": 1640,
+  "sequence": 903,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 2587,
+  "tick": 1640,
+  "sequence": 904,
+  "type": "shotReleased",
+  "detail": "A. Bexley +2"
+ },
+ {
+  "wallMs": 2590,
+  "tick": 1646,
+  "sequence": 905,
+  "type": "shotMade",
+  "detail": "A. Bexley +2"
+ },
+ {
+  "wallMs": 2590,
+  "tick": 1646,
+  "sequence": 906,
+  "type": "possessionEnd",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2590,
+  "tick": 1646,
+  "sequence": 907,
+  "type": "ballDead",
+  "detail": "- madeBasket"
+ },
+ {
+  "wallMs": 2590,
+  "tick": 1646,
+  "sequence": 908,
+  "type": "actionResolved",
+  "detail": "A. Bexley SHOOT"
+ },
+ {
+  "wallMs": 2590,
+  "tick": 1646,
+  "sequence": 909,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2590,
+  "tick": 1647,
+  "sequence": 910,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 2590,
+  "tick": 1648,
+  "sequence": 911,
+  "type": "playStateChanged",
+  "detail": "-"
+ }
+]

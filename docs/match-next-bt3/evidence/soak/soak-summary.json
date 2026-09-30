@@ -1,0 +1,52 @@
+{
+ "seed": 424242,
+ "minutes": 4,
+ "speed": 4,
+ "console_errors": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "engineEventsPlayed": 600,
+ "eventsOutOfOrderOrDuplicated": 0,
+ "eventKinds": {
+  "transitionStarted": 10,
+  "possessionPhaseChanged": 53,
+  "transitionResolved": 9,
+  "defensiveResponsibilityChanged": 181,
+  "decisionSelected": 39,
+  "actionStarted": 59,
+  "passReleased": 25,
+  "passReceived": 25,
+  "actionResolved": 58,
+  "contact": 4,
+  "foul": 2,
+  "ballDead": 6,
+  "playStateChanged": 34,
+  "inboundStarted": 5,
+  "defensiveAssignmentsEstablished": 9,
+  "inboundReleased": 5,
+  "offBallMove": 14,
+  "shotReleased": 8,
+  "reboundResponsibilitiesAssigned": 4,
+  "shotMissed": 5,
+  "reboundBecameAvailable": 4,
+  "reboundSecured": 4,
+  "possessionEnd": 8,
+  "possessionStart": 8,
+  "transitionAdvantageChanged": 12,
+  "stealAttempt": 1,
+  "shotMade": 3,
+  "assist": 2,
+  "freeThrowSequenceStarted": 1,
+  "freeThrowMade": 2
+ },
+ "lastTick": 9679,
+ "lastScore": {
+  "home": 51,
+  "away": 35
+ },
+ "period": 2,
+ "canonicalRenderedGap": {
+  "maxOfMax": 0.6223990121710062,
+  "meanOfMean": 0.12602503437929463
+ }
+}

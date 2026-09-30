@@ -9,6 +9,16 @@ export type StandingsTiebreaker = 'wins' | 'pointDifference' | 'pointsFor' | 'te
  * enough to determine period structure. Two competitions inside the same broader ecosystem may
  * therefore declare entirely different GameFormatRules.
  */
+/** Personal and team foul rules, owned by the competition (BT3F/G). Resolved per competition, never from a brand label. */
+export interface FoulRules {
+  /** A player who commits this many personal fouls is out of the game. */
+  readonly personalFoulLimit: number
+  /** From this many team fouls in a period every further non-shooting defensive foul sends the opponent to the line (2 shots). */
+  readonly teamFoulPenaltyFrom: number
+  /** Optional one-and-one stage (NCAA men): from this many team fouls, before the penalty, non-shooting fouls give a one-and-one. */
+  readonly teamFoulOneAndOneFrom?: number | null
+}
+
 export interface GameFormatRules {
   /** Number of regulation periods (e.g. 2 for halves, 4 for quarters). */
   readonly periodCount: number
@@ -30,6 +40,7 @@ export interface GameFormatRules {
   readonly substitutionOpportunityReasons?: readonly ('outOfBounds' | 'other' | 'shotClockViolation')[]
   /** When a stopped clock resumes after an inbound. */
   readonly clockRestartOnInbound?: 'release' | 'receive'
+  readonly foulRules?: FoulRules
 }
 
 export interface CompetitionRules {
@@ -57,11 +68,16 @@ export interface CompetitionRules {
  */
 const COMMON_SUBSTITUTION_OPPORTUNITIES = Object.freeze(['outOfBounds', 'other', 'shotClockViolation'] as const)
 const COMMON_CLOCK_STOP_REASONS = Object.freeze(['outOfBounds', 'other', 'shotClockViolation'] as const)
-export const NCAA_MEN_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 2, periodMinutes: 20, overtimeMinutes: 5, shotClockSeconds: 30, offensiveReboundShotClockSeconds: 20, madeBasketClockStopUnderSecondsInFinalPeriod: 60, madeBasketSubstitutionUnderSecondsInFinalPeriod: 60, clockStopReasons: COMMON_CLOCK_STOP_REASONS, substitutionOpportunityReasons: COMMON_SUBSTITUTION_OPPORTUNITIES, clockRestartOnInbound: 'receive' })
-export const NCAA_WOMEN_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 4, periodMinutes: 10, overtimeMinutes: 5, shotClockSeconds: 30, offensiveReboundShotClockSeconds: 20, madeBasketClockStopUnderSecondsInFinalPeriod: 60, madeBasketSubstitutionUnderSecondsInFinalPeriod: 60, clockStopReasons: COMMON_CLOCK_STOP_REASONS, substitutionOpportunityReasons: COMMON_SUBSTITUTION_OPPORTUNITIES, clockRestartOnInbound: 'receive' })
-export const NBA_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 4, periodMinutes: 12, overtimeMinutes: 5, shotClockSeconds: 24, offensiveReboundShotClockSeconds: 14, madeBasketClockStopUnderSecondsInFinalPeriod: 120, madeBasketClockStopUnderSecondsInOtherPeriods: 60, madeBasketSubstitutionUnderSecondsInFinalPeriod: 120, madeBasketSubstitutionUnderSecondsInOtherPeriods: 60, clockStopReasons: COMMON_CLOCK_STOP_REASONS, substitutionOpportunityReasons: COMMON_SUBSTITUTION_OPPORTUNITIES, clockRestartOnInbound: 'receive' })
-export const WNBA_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 4, periodMinutes: 10, overtimeMinutes: 5, shotClockSeconds: 24, offensiveReboundShotClockSeconds: 14, madeBasketClockStopUnderSecondsInFinalPeriod: 60, madeBasketSubstitutionUnderSecondsInFinalPeriod: 60, clockStopReasons: COMMON_CLOCK_STOP_REASONS, substitutionOpportunityReasons: COMMON_SUBSTITUTION_OPPORTUNITIES, clockRestartOnInbound: 'receive' })
-export const FIBA_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 4, periodMinutes: 10, overtimeMinutes: 5, shotClockSeconds: 24, offensiveReboundShotClockSeconds: 14, madeBasketClockStopUnderSecondsInFinalPeriod: 120, madeBasketSubstitutionUnderSecondsInFinalPeriod: 120, madeBasketSubstitutionEligibleTeam: 'nonScoring', clockStopReasons: COMMON_CLOCK_STOP_REASONS, substitutionOpportunityReasons: COMMON_SUBSTITUTION_OPPORTUNITIES, clockRestartOnInbound: 'receive' })
+export const FIBA_FOUL_RULES: FoulRules = Object.freeze({ personalFoulLimit: 5, teamFoulPenaltyFrom: 5, teamFoulOneAndOneFrom: null })
+export const NBA_FOUL_RULES: FoulRules = Object.freeze({ personalFoulLimit: 6, teamFoulPenaltyFrom: 5, teamFoulOneAndOneFrom: null })
+export const WNBA_FOUL_RULES: FoulRules = Object.freeze({ personalFoulLimit: 6, teamFoulPenaltyFrom: 4, teamFoulOneAndOneFrom: null })
+export const NCAA_MEN_FOUL_RULES: FoulRules = Object.freeze({ personalFoulLimit: 5, teamFoulPenaltyFrom: 10, teamFoulOneAndOneFrom: 7 })
+export const NCAA_WOMEN_FOUL_RULES: FoulRules = Object.freeze({ personalFoulLimit: 5, teamFoulPenaltyFrom: 5, teamFoulOneAndOneFrom: null })
+export const NCAA_MEN_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 2, periodMinutes: 20, overtimeMinutes: 5, shotClockSeconds: 30, offensiveReboundShotClockSeconds: 20, madeBasketClockStopUnderSecondsInFinalPeriod: 60, madeBasketSubstitutionUnderSecondsInFinalPeriod: 60, clockStopReasons: COMMON_CLOCK_STOP_REASONS, substitutionOpportunityReasons: COMMON_SUBSTITUTION_OPPORTUNITIES, clockRestartOnInbound: 'receive', foulRules: NCAA_MEN_FOUL_RULES })
+export const NCAA_WOMEN_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 4, periodMinutes: 10, overtimeMinutes: 5, shotClockSeconds: 30, offensiveReboundShotClockSeconds: 20, madeBasketClockStopUnderSecondsInFinalPeriod: 60, madeBasketSubstitutionUnderSecondsInFinalPeriod: 60, clockStopReasons: COMMON_CLOCK_STOP_REASONS, substitutionOpportunityReasons: COMMON_SUBSTITUTION_OPPORTUNITIES, clockRestartOnInbound: 'receive', foulRules: NCAA_WOMEN_FOUL_RULES })
+export const NBA_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 4, periodMinutes: 12, overtimeMinutes: 5, shotClockSeconds: 24, offensiveReboundShotClockSeconds: 14, madeBasketClockStopUnderSecondsInFinalPeriod: 120, madeBasketClockStopUnderSecondsInOtherPeriods: 60, madeBasketSubstitutionUnderSecondsInFinalPeriod: 120, madeBasketSubstitutionUnderSecondsInOtherPeriods: 60, clockStopReasons: COMMON_CLOCK_STOP_REASONS, substitutionOpportunityReasons: COMMON_SUBSTITUTION_OPPORTUNITIES, clockRestartOnInbound: 'receive', foulRules: NBA_FOUL_RULES })
+export const WNBA_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 4, periodMinutes: 10, overtimeMinutes: 5, shotClockSeconds: 24, offensiveReboundShotClockSeconds: 14, madeBasketClockStopUnderSecondsInFinalPeriod: 60, madeBasketSubstitutionUnderSecondsInFinalPeriod: 60, clockStopReasons: COMMON_CLOCK_STOP_REASONS, substitutionOpportunityReasons: COMMON_SUBSTITUTION_OPPORTUNITIES, clockRestartOnInbound: 'receive', foulRules: WNBA_FOUL_RULES })
+export const FIBA_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 4, periodMinutes: 10, overtimeMinutes: 5, shotClockSeconds: 24, offensiveReboundShotClockSeconds: 14, madeBasketClockStopUnderSecondsInFinalPeriod: 120, madeBasketSubstitutionUnderSecondsInFinalPeriod: 120, madeBasketSubstitutionEligibleTeam: 'nonScoring', clockStopReasons: COMMON_CLOCK_STOP_REASONS, substitutionOpportunityReasons: COMMON_SUBSTITUTION_OPPORTUNITIES, clockRestartOnInbound: 'receive', foulRules: FIBA_FOUL_RULES })
 
 export const defaultLeagueCompetitionRules: CompetitionRules = Object.freeze({
   format: 'leagueRoundRobin',
@@ -102,9 +118,14 @@ export function createCompetitionRules(input: CompetitionRules): CompetitionRule
   if (new Set(clockStopReasons).size !== clockStopReasons.length || clockStopReasons.some((reason) => !['outOfBounds', 'other', 'shotClockViolation'].includes(reason))) throw new RangeError('Competition clock stop reasons are invalid')
   const clockRestartOnInbound = gameFormat.clockRestartOnInbound ?? 'receive'
   if (clockRestartOnInbound !== 'release' && clockRestartOnInbound !== 'receive') throw new RangeError('Competition inbound clock restart rule is invalid')
+  const foulRules = gameFormat.foulRules ?? FIBA_FOUL_RULES
+  if (!Number.isSafeInteger(foulRules.personalFoulLimit) || foulRules.personalFoulLimit <= 0) throw new RangeError('Competition personal foul limit must be a positive integer')
+  if (!Number.isSafeInteger(foulRules.teamFoulPenaltyFrom) || foulRules.teamFoulPenaltyFrom <= 0) throw new RangeError('Competition team foul penalty threshold must be a positive integer')
+  const oneAndOneFrom = foulRules.teamFoulOneAndOneFrom ?? null
+  if (oneAndOneFrom !== null && (!Number.isSafeInteger(oneAndOneFrom) || oneAndOneFrom <= 0 || oneAndOneFrom >= foulRules.teamFoulPenaltyFrom)) throw new RangeError('Competition one-and-one threshold must be null or below the penalty threshold')
   const shotClockSeconds = gameFormat.shotClockSeconds ?? 24
   if (!Number.isSafeInteger(shotClockSeconds) || shotClockSeconds <= 0) throw new RangeError('Competition shot clock must be a positive integer')
   const offensiveReboundShotClockSeconds = gameFormat.offensiveReboundShotClockSeconds ?? null
   if (offensiveReboundShotClockSeconds !== null && (!Number.isSafeInteger(offensiveReboundShotClockSeconds) || offensiveReboundShotClockSeconds <= 0)) throw new RangeError('Competition offensive-rebound shot-clock reset must be null or a positive integer')
-  return Object.freeze({ format: input.format, schedule: Object.freeze({ meetingsPerPair: input.schedule.meetingsPerPair, homeAwayBalance: input.schedule.homeAwayBalance }), standings: Object.freeze({ tiebreakers: Object.freeze(tiebreakers) }), completion: input.completion, champion: input.champion, gameFormat: Object.freeze({ periodCount: gameFormat.periodCount, periodMinutes: gameFormat.periodMinutes, overtimeMinutes: gameFormat.overtimeMinutes, shotClockSeconds, offensiveReboundShotClockSeconds, madeBasketClockStopUnderSecondsInFinalPeriod: madeBasketClockStop, madeBasketClockStopUnderSecondsInOtherPeriods: madeBasketClockStopOtherPeriods, madeBasketSubstitutionUnderSecondsInFinalPeriod: madeBasketSubstitution, madeBasketSubstitutionUnderSecondsInOtherPeriods: madeBasketSubstitutionOtherPeriods, madeBasketSubstitutionEligibleTeam, clockStopReasons: Object.freeze(clockStopReasons), substitutionOpportunityReasons: Object.freeze(substitutionOpportunityReasons), clockRestartOnInbound }) })
+  return Object.freeze({ format: input.format, schedule: Object.freeze({ meetingsPerPair: input.schedule.meetingsPerPair, homeAwayBalance: input.schedule.homeAwayBalance }), standings: Object.freeze({ tiebreakers: Object.freeze(tiebreakers) }), completion: input.completion, champion: input.champion, gameFormat: Object.freeze({ periodCount: gameFormat.periodCount, periodMinutes: gameFormat.periodMinutes, overtimeMinutes: gameFormat.overtimeMinutes, shotClockSeconds, offensiveReboundShotClockSeconds, madeBasketClockStopUnderSecondsInFinalPeriod: madeBasketClockStop, madeBasketClockStopUnderSecondsInOtherPeriods: madeBasketClockStopOtherPeriods, madeBasketSubstitutionUnderSecondsInFinalPeriod: madeBasketSubstitution, madeBasketSubstitutionUnderSecondsInOtherPeriods: madeBasketSubstitutionOtherPeriods, madeBasketSubstitutionEligibleTeam, clockStopReasons: Object.freeze(clockStopReasons), substitutionOpportunityReasons: Object.freeze(substitutionOpportunityReasons), clockRestartOnInbound, foulRules: Object.freeze({ personalFoulLimit: foulRules.personalFoulLimit, teamFoulPenaltyFrom: foulRules.teamFoulPenaltyFrom, teamFoulOneAndOneFrom: oneAndOneFrom }) }) })
 }

@@ -1,0 +1,58 @@
+{
+  "param": "continuationValuePoints",
+  "seeds": [
+    424242,
+    7,
+    1
+  ],
+  "rows": [
+    {
+      "value": 0.88,
+      "points": 231.333,
+      "shots": 223.667,
+      "possessions": 230,
+      "threeShare": 0.413,
+      "rimShare": 0.151,
+      "paintShare": 0.376,
+      "midShare": 0.086,
+      "screens": 15,
+      "drives": 216.333,
+      "passes": 443.333,
+      "orebShare": 0.197,
+      "turnovers": 28.333,
+      "fg": 0.41
+    },
+    {
+      "value": 0.98,
+      "points": 236,
+      "shots": 225.333,
+      "possessions": 230.333,
+      "threeShare": 0.422,
+      "rimShare": 0.15,
+      "paintShare": 0.374,
+      "midShare": 0.085,
+      "screens": 21,
+      "drives": 212,
+      "passes": 443.667,
+      "orebShare": 0.194,
+      "turnovers": 26.667,
+      "fg": 0.394
+    },
+    {
+      "value": 1.08,
+      "points": 228.333,
+      "shots": 222.333,
+      "possessions": 223.333,
+      "threeShare": 0.454,
+      "rimShare": 0.16,
+      "paintShare": 0.352,
+      "midShare": 0.062,
+      "screens": 20,
+      "drives": 207,
+      "passes": 442.667,
+      "orebShare": 0.215,
+      "turnovers": 25,
+      "fg": 0.392
+    }
+  ]
+}

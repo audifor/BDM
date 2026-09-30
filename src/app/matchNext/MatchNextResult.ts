@@ -14,7 +14,7 @@ export interface MatchNextPbpLine {
   readonly playerId?: PlayerId
   readonly targetPlayerId?: PlayerId
   readonly substitutionReason?: string
-  readonly type: 'score' | 'miss' | 'rebound' | 'pass' | 'turnover' | 'drive' | 'period' | 'substitution'
+  readonly type: 'score' | 'miss' | 'rebound' | 'pass' | 'turnover' | 'drive' | 'period' | 'substitution' | 'foul' | 'freeThrow' | 'steal' | 'block'
   readonly text: string
 }
 
@@ -69,26 +69,21 @@ export function createMatchNextResult(setup: MatchSetup, finalState: MatchState)
 }
 
 export function projectMatchNextPlayByPlay(events: readonly MatchNextEvent[]): readonly MatchNextPbpLine[] {
-  const passerByPossession = new Map<string, PlayerId>()
-  const interceptedPossessions = new Set<string>()
   const lines: MatchNextPbpLine[] = []
   const add = (event: MatchNextEvent, type: MatchNextPbpLine['type'], text: string, playerId?: PlayerId, targetPlayerId?: PlayerId, substitutionReason?: string) => {
     lines.push({ sequence: event.sequence, t: event.t, period: event.period, gameClockTenths: event.gameClockTenths, ...(event.teamId ? { teamId: event.teamId } : {}), ...(playerId ? { playerId } : {}), ...(targetPlayerId ? { targetPlayerId } : {}), ...(substitutionReason === undefined ? {} : { substitutionReason }), type, text })
   }
   for (const event of events) {
-    if (event.type === 'passReleased' && event.possessionId && event.passerPlayerId) passerByPossession.set(event.possessionId, event.passerPlayerId)
     if (event.type === 'passReceived' && event.passerPlayerId && event.receiverPlayerId) add(event, 'pass', 'passed to', event.passerPlayerId, event.receiverPlayerId)
-    if (event.type === 'passIntercepted') {
-      if (event.possessionId) interceptedPossessions.add(event.possessionId)
-      add(event, 'turnover', 'pass intercepted', event.playerId)
-    }
+    if (event.type === 'steal' && event.playerId) add(event, 'steal', `stole the ball (${(event.stealKind ?? 'steal').toLocaleLowerCase().replace('_', ' ')})`, event.playerId, event.victimPlayerId)
+    if (event.type === 'turnover' && event.playerId) add(event, 'turnover', `turnover (${(event.turnoverType ?? 'turnover').toLocaleLowerCase().replace('_', ' ')})`, event.playerId)
+    if (event.type === 'foul' && event.playerId) add(event, 'foul', `${(event.foulType ?? 'personal').toLocaleLowerCase().replace('_', ' ')} foul`, event.playerId, event.victimPlayerId)
+    if (event.type === 'freeThrowMade' && event.playerId) add(event, 'score', `made free throw ${event.freeThrowIndex ?? 1} of ${event.freeThrowTotal ?? 1}`, event.playerId)
+    if (event.type === 'freeThrowMissed' && event.playerId) add(event, 'freeThrow', `missed free throw ${event.freeThrowIndex ?? 1} of ${event.freeThrowTotal ?? 1}`, event.playerId)
+    if (event.type === 'shotBlocked' && event.playerId) add(event, 'block', 'blocked the shot of', event.playerId, event.shooterPlayerId)
     if (event.type === 'shotMade' && event.shooterPlayerId && event.points) add(event, 'score', `made ${event.points}-point shot`, event.shooterPlayerId)
     if (event.type === 'shotMissed' && event.shooterPlayerId) add(event, 'miss', 'missed shot', event.shooterPlayerId)
     if (event.type === 'reboundSecured' && event.playerId && event.reboundType) add(event, 'rebound', `${event.reboundType} rebound`, event.playerId)
-    if (event.type === 'possessionEnd' && event.endReason === 'turnover' && event.possessionId && !interceptedPossessions.has(event.possessionId)) {
-      const passer = passerByPossession.get(event.possessionId)
-      add(event, 'turnover', 'turnover', passer)
-    }
     if (event.type === 'looseBallRecovered' && event.playerId) add(event, 'rebound', 'recovered loose ball', event.playerId)
     if (event.type === 'actionResolved' && event.actionKind === 'DRIVE' && event.actionOutcome) add(event, 'drive', `drive ${event.actionOutcome.toLocaleLowerCase()}`, event.playerId)
     if (event.type === 'periodStart') add(event, 'period', 'period started')
@@ -141,9 +136,7 @@ function derivePlayerStats(setup: MatchSetup, state: MatchState): PlayerGameStat
   let awayLineup = new Set(setup.initialLineups.away)
   let homeScore = 0
   let awayScore = 0
-  const passerByPossession = new Map<string, PlayerId>()
   for (const event of state.events) {
-    if (event.type === 'passReleased' && event.possessionId && event.passerPlayerId) passerByPossession.set(event.possessionId, event.passerPlayerId)
     if (event.type === 'shotReleased' && event.shooterPlayerId) update(totals, event.shooterPlayerId, {
       fieldGoalsAttempted: 1,
       ...(event.points === 3 ? { threePointAttempted: 1 } : { twoPointAttempted: 1 }),
@@ -157,13 +150,16 @@ function derivePlayerStats(setup: MatchSetup, state: MatchState): PlayerGameStat
       rebounds: 1,
       ...(event.reboundType === 'offensive' ? { offensiveRebounds: 1 } : { defensiveRebounds: 1 }),
     })
-    if (event.type === 'passIntercepted' && event.playerId) update(totals, event.playerId, { steals: 1 })
-    if (event.type === 'possessionEnd' && event.endReason === 'turnover' && event.possessionId) {
-      const passer = passerByPossession.get(event.possessionId)
-      if (passer) update(totals, passer, { turnovers: 1 })
-    }
-    const scoreDeltaHome = event.type === 'shotMade' && event.teamId === setup.homeTeamId ? event.points ?? 0 : 0
-    const scoreDeltaAway = event.type === 'shotMade' && event.teamId === setup.awayTeamId ? event.points ?? 0 : 0
+    if (event.type === 'freeThrowMade' && event.shooterPlayerId) update(totals, event.shooterPlayerId, { points: 1, freeThrowsMade: 1, freeThrowsAttempted: 1 })
+    if (event.type === 'freeThrowMissed' && event.shooterPlayerId) update(totals, event.shooterPlayerId, { freeThrowsAttempted: 1 })
+    if (event.type === 'steal' && event.playerId) update(totals, event.playerId, { steals: 1 })
+    if (event.type === 'shotBlocked' && event.playerId) update(totals, event.playerId, { blocks: 1 })
+    if (event.type === 'turnover' && event.playerId) update(totals, event.playerId, { turnovers: 1 })
+    if (event.type === 'foul' && event.playerId) update(totals, event.playerId, { foulsCommitted: 1 })
+    if (event.type === 'assist' && event.playerId) update(totals, event.playerId, { assists: 1 })
+    const scored = event.type === 'shotMade' || event.type === 'freeThrowMade' ? event.points ?? 0 : 0
+    const scoreDeltaHome = event.teamId === setup.homeTeamId ? scored : 0
+    const scoreDeltaAway = event.teamId === setup.awayTeamId ? scored : 0
     if (scoreDeltaHome !== 0 || scoreDeltaAway !== 0) {
       const margin = scoreDeltaHome - scoreDeltaAway
       for (const playerId of homeLineup) update(totals, playerId, { plusMinus: margin })

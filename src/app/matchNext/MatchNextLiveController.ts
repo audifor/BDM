@@ -19,10 +19,15 @@ interface PendingInbound {
   readonly spot: { readonly x: number; readonly y: number }
 }
 
+/** Ticks the inbounder holds the ball before passing it in (0.4 s). */
+const INBOUND_HOLD_TICKS = 4
+
 /** Application owner for a Match Next session; consumers receive immutable frames. */
 export class MatchNextLiveController {
   private state: MatchState
   private pendingInbound: PendingInbound | null = null
+  /** A throw-in already started: the inbounder holds the ball a moment (looks for a target) before releasing it. */
+  private inboundHold: { readonly receiverPlayerId: PendingInbound['receiverPlayerId']; readonly releaseAtT: number } | null = null
 
   public constructor(private readonly setup: MatchSetup) {
     this.state = applyCommand(createMatchState({ ...setup, autonomousActions: true }), {
@@ -58,6 +63,9 @@ export class MatchNextLiveController {
   private teamsReadyForInbound(): boolean {
     const pending = this.pendingInbound
     if (!pending) return false
+    // The dead ball is carried to the restart spot first: the throw-in never starts with the ball somewhere else.
+    const ball = this.state.ball
+    if (ball.kind === 'DEAD' && ball.restartSpot !== undefined && distanceBetween(ball.position, ball.restartSpot) > 0.6) return false
     return this.state.players.filter((player) => player.active).every((player) => {
       const intent = this.state.movementIntents.find((item) => item.playerId === player.playerId)
       return intent !== undefined && distanceBetween(player.position, intent.target) <= 0.75
@@ -73,14 +81,26 @@ export class MatchNextLiveController {
     const movementIntents = this.state.movementIntents.filter((item) => !ids.has(item.provenance.responsibilityId))
     this.state = { ...this.state, responsibilities, decisions, movementIntents }
     this.state = applyCommand(this.state, { type: 'startInbound', teamId: pending.teamId, inbounderPlayerId: pending.inbounderPlayerId, reason: pending.reason })
+    this.inboundHold = { receiverPlayerId: pending.receiverPlayerId, releaseAtT: this.state.t + INBOUND_HOLD_TICKS }
+    this.pendingInbound = null
+  }
+
+  /** The throw-in is in the inbounder's hands (INBOUND phase); after a short look he passes it in. */
+  private releaseHeldInbound(): void {
+    const hold = this.inboundHold
+    if (!hold) return
+    // The hold dies with the throw-in: a whistle or the horn during the hold must not block whatever restarts play next.
+    if (this.state.ball.kind !== 'INBOUND') { this.inboundHold = null; return }
+    if (this.state.t < hold.releaseAtT) return
     // Same pass-speed rule as ActionCore passes (about 10 m/s, 2-8 ticks). A fixed 1 tick moved the ball 3 m in 0.1 s
     // (30 m/s) on every inbound (BT1-Next: ~160 inbounds per game).
-    const inbounder = this.state.players.find((player) => player.playerId === pending.inbounderPlayerId)
-    const receiver = this.state.players.find((player) => player.playerId === pending.receiverPlayerId)
+    const inbounderId = this.state.ball.inbounderPlayerId
+    const inbounder = this.state.players.find((player) => player.playerId === inbounderId)
+    const receiver = this.state.players.find((player) => player.playerId === hold.receiverPlayerId)
     const passDistance = inbounder === undefined || receiver === undefined ? 0 : distanceBetween(inbounder.position, receiver.position)
     const travelTicks = Math.max(2, Math.min(8, Math.ceil(passDistance)))
-    this.state = applyCommand(this.state, { type: 'releaseInbound', receiverPlayerId: pending.receiverPlayerId, passKind: 'chest', travelTicks })
-    this.pendingInbound = null
+    this.state = applyCommand(this.state, { type: 'releaseInbound', receiverPlayerId: hold.receiverPlayerId, passKind: 'chest', travelTicks })
+    this.inboundHold = null
   }
 
   private stepState(): void {
@@ -91,9 +111,11 @@ export class MatchNextLiveController {
     if (substitutions.length > 0) this.state = applyCommand(this.state, { type: 'coachSubstitutions', proposals: substitutions })
     if (!this.state.isComplete && this.state.period !== previousPeriod) {
       this.state = preparePeriodInbound(this.state, this.setup, (pending) => { this.pendingInbound = pending })
+    } else if (!this.state.isComplete && this.inboundHold !== null) {
+      this.releaseHeldInbound()
     } else if (!this.state.isComplete && this.pendingInbound && this.teamsReadyForInbound()) {
       this.releasePeriodInbound()
-    } else if (!this.state.isComplete && !this.pendingInbound && this.state.ball.kind === 'DEAD' && this.state.ball.reason !== 'periodEnd') {
+    } else if (!this.state.isComplete && !this.pendingInbound && this.state.freeThrows === null && this.state.ball.kind === 'DEAD' && this.state.ball.reason !== 'periodEnd' && this.state.ball.reason !== 'freeThrow') {
       const restart = this.state.ball
       const teamId = restart.restartTeamId
       const reason = inboundReasonForDeadBall(restart.reason)
@@ -118,9 +140,11 @@ function prepareRestartInbound(
   requestedSpot?: { readonly x: number; readonly y: number },
 ): MatchState {
   const lineup = state.players.filter((player) => player.active && player.teamId === teamId).map((player) => player.playerId)
-  const inbounderPlayerId = lineup[0]!
-  const receiverPlayerId = lineup[1]!
   const target = requestedSpot ?? inboundSpot(state)
+  // The player closest to the spot takes the ball out (he does not walk the length of the court); a teammate nearest to him receives.
+  const inbounderPlayerId = [...lineup].sort((left, right) => spotDistance(state, left, target) - spotDistance(state, right, target) || String(left).localeCompare(String(right)))[0]!
+  // The receiver is whoever the restart formation puts nearest to the thrower (the first of the others in lineup order).
+  const receiverPlayerId = lineup.filter((playerId) => playerId !== inbounderPlayerId)[0]!
   const targets = restartTargets(state, setup, teamId, inbounderPlayerId, target, reason)
   let nextResponsibilitySequence = state.nextResponsibilitySequence
   let nextDecisionSequence = state.nextDecisionSequence
@@ -169,6 +193,8 @@ function restartTargets(state: MatchState, setup: MatchSetup, inboundTeamId: Mat
   const inboundTargets = reason === 'madeBasketInbound'
     ? [{ depth: 3, lateral: 0 }, { depth: 7.5, lateral: -5 }, { depth: 12, lateral: 5 }, { depth: 16, lateral: 1.8 }]
     : [{ depth: 3, lateral: 0 }, { depth: 6, lateral: -3.8 }, { depth: 6, lateral: 3.8 }, { depth: 9, lateral: 1.8 }]
+  // The rest keep the lineup order (guards up the floor, bigs nearer the ball), the natural mapping onto the offense's slots, so
+  // the team is already close to its half-court spots when play starts.
   inboundLineup.filter((playerId) => playerId !== inbounderPlayerId).forEach((playerId, index) => {
     const slot = inboundTargets[index]!
     targets.set(playerId, {
@@ -189,6 +215,11 @@ function restartTargets(state: MatchState, setup: MatchSetup, inboundTeamId: Mat
   return targets
 }
 
+function spotDistance(state: MatchState, playerId: MatchSetup['initialLineups']['home'][number], spot: { readonly x: number; readonly y: number }): number {
+  const player = state.players.find((item) => item.playerId === playerId)
+  return player === undefined ? Number.POSITIVE_INFINITY : distanceBetween(player.position, spot)
+}
+
 function clampCourtX(x: number, length: number): number { return Math.max(0.5, Math.min(length - 0.5, x)) }
 function clampCourtY(y: number, width: number): number { return Math.max(0.5, Math.min(width - 0.5, y)) }
 
@@ -200,6 +231,6 @@ function inboundSpot(state: MatchState): { readonly x: number; readonly y: numbe
 function inboundReasonForDeadBall(reason: string): InboundStartReason | null {
   if (reason === 'madeBasket') return 'madeBasketInbound'
   if (reason === 'shotClockViolation') return 'shotClockViolation'
-  if (reason === 'outOfBounds' || reason === 'other') return 'turnoverInbound'
+  if (reason === 'outOfBounds' || reason === 'other' || reason === 'foul') return 'turnoverInbound'
   return null
 }

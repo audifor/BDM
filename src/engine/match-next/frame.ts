@@ -98,6 +98,10 @@ export interface MatchFrame {
   /** BT2: possession phase authority, ball screen and off-ball moves (diagnostic projection of MatchState). */
   readonly offenseFlow: OffenseFlowState | null
   readonly screen: ScreenState | null
+  /** BT3: dead-ball lifecycle phase, free-throw sequence and foul counters (read-only projection of MatchState). */
+  readonly playState: MatchState['playState']
+  readonly freeThrows: MatchState['freeThrows']
+  readonly fouls: MatchState['fouls']
   readonly defensiveStructure: DefensiveStructureState | null
   readonly reboundState: MatchReboundState | null
   readonly transition: MatchTransitionState | null
@@ -191,6 +195,9 @@ export function toFrame(state: MatchState): MatchFrame {
       ...(action.startPosition === undefined ? {} : { startPosition: { ...action.startPosition } }),
     })),
     offenseFlow: state.offenseFlow === null ? null : { ...state.offenseFlow, moves: state.offenseFlow.moves.map((move) => ({ ...move, target: { ...move.target } })) },
+    playState: { ...state.playState },
+    freeThrows: state.freeThrows === null ? null : { ...state.freeThrows },
+    fouls: { ...state.fouls, personal: { ...state.fouls.personal }, teamPeriod: { ...state.fouls.teamPeriod }, fouledOut: [...state.fouls.fouledOut] },
     screen: state.screen === null ? null : { ...state.screen, location: { ...state.screen.location }, waypoint: { ...state.screen.waypoint } },
     offensiveStructure: state.offensiveStructure === null ? null : {
       ...state.offensiveStructure,

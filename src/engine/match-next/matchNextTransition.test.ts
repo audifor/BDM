@@ -61,7 +61,11 @@ describe('Match Next rebound and transition integration', () => {
     const shooterId = state.ball.kind === 'HELD' ? state.ball.ownerPlayerId : state.homeTeamId
     const assignedDefenderId = state.defensiveStructure?.assignments.find((item) => item.attackerPlayerId === shooterId)?.defenderPlayerId
     const assignedDefender = state.players.find((player) => player.playerId === assignedDefenderId)!
-    state = launchMiss(state, { ...assignedDefender.position }, 6, 1)
+    // The ball drops just beyond the defender (he is between the shooter and the ball): the outcome is a contest he should win, not a coin toss on the shared RNG stream.
+    const shooterPosition = state.players.find((player) => player.playerId === shooterId)!.position
+    const outward = { x: assignedDefender.position.x - shooterPosition.x, y: assignedDefender.position.y - shooterPosition.y }
+    const outwardLength = Math.hypot(outward.x, outward.y) || 1
+    state = launchMiss(state, { x: assignedDefender.position.x + outward.x / outwardLength * 0.5, y: assignedDefender.position.y + outward.y / outwardLength * 0.5 }, 6, 1)
     expect(state.reboundState?.phase).toBe('SHOT_FLIGHT')
     // The two defenders nearest the landing point pursue it from the release (symmetric with the two offensive crashers); the rest box out.
     expect(state.reboundState?.responsibilities.filter((item) => item.teamId !== state.homeTeamId && item.kind === 'BOX_OUT')).toHaveLength(3)

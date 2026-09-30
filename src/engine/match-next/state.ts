@@ -118,6 +118,8 @@ export type MatchNextEventType =
   | 'defensiveAssignmentsEstablished' | 'defensiveResponsibilityChanged'
   | 'decisionSelected' | 'actionStarted' | 'actionResolved'
   | 'screenSet' | 'screenUsed' | 'screenEnded' | 'offBallMove'
+  | 'contact' | 'foul' | 'freeThrowSequenceStarted' | 'freeThrowMade' | 'freeThrowMissed' | 'shotBlocked' | 'steal' | 'deflection' | 'stealAttempt'
+  | 'turnover' | 'outOfBounds' | 'assist' | 'playStateChanged' | 'foulOut'
   | 'reboundResponsibilitiesAssigned' | 'transitionStarted' | 'transitionAdvantageChanged' | 'transitionResolved'
   | 'shotClockViolation' | 'ballDead'
   | 'substitution'
@@ -137,7 +139,7 @@ export interface MatchNextEvent {
   readonly shooterPlayerId?: PlayerId
   readonly shootingTeamId?: TeamId
   readonly reboundType?: 'offensive' | 'defensive'
-  readonly points?: 2 | 3
+  readonly points?: 1 | 2 | 3
   readonly startReason?: PossessionStartReason
   readonly endReason?: PossessionEndReason
   readonly phase?: PossessionPhase
@@ -148,6 +150,25 @@ export interface MatchNextEvent {
   readonly decisionKind?: string
   /** Expected points of each option when a decision was selected (BT2G/H: shot opportunity vs attempt). */
   readonly utility?: { readonly shoot: number; readonly drive: number; readonly pass: number; readonly hold: number; readonly screen?: number }
+  /** BT3 contact / rules payload (all optional, only set by the event kinds that need them). */
+  readonly contactKind?: ContactKind
+  readonly severity?: number
+  /** Distance from the shooter to the basket when a shot is released (audit / presentation). */
+  readonly shotDistanceMeters?: number
+  readonly victimPlayerId?: PlayerId
+  readonly foulType?: FoulType
+  readonly foulResolution?: FoulResolution
+  readonly freeThrowsAwarded?: number
+  readonly freeThrowIndex?: number
+  readonly freeThrowTotal?: number
+  readonly turnoverType?: TurnoverType
+  readonly stealKind?: StealKind
+  readonly blockOutcome?: BlockOutcome
+  readonly assistPlayerId?: PlayerId
+  readonly playPhase?: PlayPhase
+  readonly previousPlayPhase?: PlayPhase
+  readonly personalFouls?: number
+  readonly teamFouls?: number
   readonly actionId?: string
   readonly actionKind?: string
   readonly actionOutcome?: string
@@ -189,6 +210,70 @@ export interface ScreenState {
   readonly exit: 'ROLL' | 'POP'
   readonly actionId: string
   readonly switched: boolean
+  /** BT3B/C: closest approach of the handler's defender to the screener, judged once for a moving (illegal) screen. */
+  readonly contact?: { readonly minGap: number; readonly defenderClosing: number; readonly screenerSpeed: number; readonly atT: number }
+  readonly contactAssessed?: boolean
+}
+
+/** BT3B: what kind of physical interaction two players had. Not every contact is a foul. */
+export type ContactKind = 'INCIDENTAL' | 'LEGAL_DEFENSIVE' | 'SCREEN' | 'DRIVE' | 'SHOOTING' | 'REBOUNDING' | 'ILLEGAL_DISPLACEMENT'
+export type FoulType = 'SHOOTING' | 'REACH' | 'BLOCKING' | 'CHARGING' | 'ILLEGAL_SCREEN' | 'LOOSE_BALL' | 'REBOUNDING'
+export type FoulResolution = 'INBOUND' | 'FREE_THROWS' | 'BONUS_FREE_THROWS' | 'AND_ONE' | 'OFFENSIVE_TURNOVER'
+export type TurnoverType = 'BAD_PASS' | 'INTERCEPTION' | 'LOST_DRIBBLE' | 'OFFENSIVE_FOUL' | 'STEPPED_OUT' | 'SHOT_CLOCK' | 'OUT_OF_BOUNDS'
+export type StealKind = 'CLEAN_STEAL' | 'PASS_INTERCEPTION' | 'DEFLECTION' | 'POKE_LOOSE' | 'FAILED_ATTEMPT' | 'REACH_FOUL'
+export type BlockOutcome = 'BLOCKED_LOOSE' | 'BLOCKED_OUT_OF_BOUNDS' | 'BLOCKED_RECOVERED_OFFENSE' | 'BLOCKED_RECOVERED_DEFENSE'
+export type PlayPhase = 'LIVE' | 'WHISTLE' | 'DEAD' | 'RESOLUTION' | 'INBOUND' | 'FREE_THROW' | 'READY'
+
+/** BT3L: where the game is in the regulatory lifecycle LIVE -> WHISTLE -> DEAD -> RESOLUTION -> INBOUND / FREE_THROW -> READY -> LIVE. */
+export interface PlayState {
+  readonly phase: PlayPhase
+  readonly sinceT: number
+  readonly cause: 'NONE' | 'FOUL' | 'FREE_THROWS' | 'MADE_BASKET' | 'OUT_OF_BOUNDS' | 'VIOLATION' | 'PERIOD_END' | 'OPENING'
+}
+
+/** One personal foul, with everything needed to audit it: who, on whom, what kind, from what contact, and what followed. */
+export interface FoulRecord {
+  readonly id: string
+  readonly t: number
+  readonly period: number
+  readonly possessionId?: string
+  readonly offenderId: PlayerId
+  readonly victimId: PlayerId
+  readonly offenderTeamId: TeamId
+  readonly type: FoulType
+  readonly contact: ContactKind
+  readonly severity: number
+  readonly offensive: boolean
+  readonly resolution: FoulResolution
+  readonly freeThrows: number
+  readonly bonus: 'NONE' | 'ONE_AND_ONE' | 'PENALTY'
+  readonly teamFoulsAfter: number
+  readonly personalFoulsAfter: number
+}
+
+export interface FoulState {
+  readonly personal: Readonly<Record<string, number>>
+  /** Team fouls in the current period, reset when a regulation period starts. */
+  readonly teamPeriod: Readonly<Record<string, number>>
+  readonly fouledOut: readonly PlayerId[]
+  readonly nextSequence: number
+}
+
+/** A canonical free-throw sequence: it is part of the game lifecycle, never an instant sum on the scoreboard. */
+export interface FreeThrowSequence {
+  readonly id: string
+  readonly foulId: string
+  readonly shooterId: PlayerId
+  readonly shooterTeamId: TeamId
+  readonly total: number
+  readonly taken: number
+  readonly made: number
+  readonly phase: 'FORMATION' | 'READY' | 'IN_FLIGHT'
+  readonly reason: 'SHOOTING' | 'PENALTY' | 'ONE_AND_ONE' | 'AND_ONE'
+  readonly oneAndOne: boolean
+  readonly startedT: number
+  readonly readyAtT: number | null
+  readonly possessionId?: string
 }
 
 export type OffBallMoveKind = 'BASKET_CUT' | 'BACKDOOR_CUT' | 'DRIFT'
@@ -243,6 +328,8 @@ export interface MatchPlayerState {
   readonly primaryPosition: MatchSetup['players'][number]['primaryPosition']
   readonly secondaryPositions?: MatchSetup['players'][number]['secondaryPositions']
   readonly heightCm: number
+  readonly weightKg: number
+  readonly wingspanCm: number
   readonly standingReachCm: number
   readonly reboundingImpact: number
   readonly defensiveMobility: number
@@ -284,6 +371,9 @@ export interface MatchState {
   readonly currentDecision: MatchDecision | null
   readonly offenseFlow: OffenseFlowState | null
   readonly screen: ScreenState | null
+  readonly fouls: FoulState
+  readonly freeThrows: FreeThrowSequence | null
+  readonly playState: PlayState
   readonly actions: readonly MatchActionState[]
   readonly nextMatchDecisionSequence: number
   readonly nextActionSequence: number
@@ -351,6 +441,9 @@ export function createInitialMatchState(setup: MatchSetup): MatchState {
     currentDecision: null,
     offenseFlow: null,
     screen: null,
+    fouls: { personal: {}, teamPeriod: {}, fouledOut: [], nextSequence: 1 },
+    freeThrows: null,
+    playState: { phase: 'DEAD', sinceT: 0, cause: 'OPENING' },
     actions: [],
     nextMatchDecisionSequence: 1,
     nextActionSequence: 1,
@@ -378,7 +471,7 @@ function createMatchPlayer(setup: MatchSetup, playerId: PlayerId, teamId: TeamId
     position, velocity: { x: 0, y: 0 }, facing: unitVector({ x: basket.x - position.x, y: basket.y - position.y }),
     primaryPosition: profile.primaryPosition,
     ...(profile.secondaryPositions === undefined ? {} : { secondaryPositions: [...profile.secondaryPositions] }),
-    heightCm: profile.physical.heightCm, standingReachCm: profile.physical.standingReachCm,
+    heightCm: profile.physical.heightCm, weightKg: profile.physical.weightKg, wingspanCm: profile.physical.wingspanCm, standingReachCm: profile.physical.standingReachCm,
     reboundingImpact: profile.rebounding.impact, defensiveMobility: profile.defense.mobility,
     offense: { ...profile.offense }, passing: { accuracy: profile.passing?.accuracy ?? 50, vision: profile.passing?.vision ?? 50, timing: profile.passing?.timing ?? 50 },
     defense: { ...profile.defense }, kinematics: { ...profile.kinematics },

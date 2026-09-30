@@ -16,6 +16,8 @@ export interface MatchNextClockRules {
   readonly clockStopReasons?: readonly ('outOfBounds' | 'other' | 'shotClockViolation')[]
   readonly substitutionOpportunityReasons?: readonly ('outOfBounds' | 'other' | 'shotClockViolation')[]
   readonly clockRestartOnInbound?: 'release' | 'receive'
+  /** Competition-owned personal/team foul rules. Omitted: the engine falls back to the FIBA defaults. */
+  readonly foulRules?: { readonly personalFoulLimit: number; readonly teamFoulPenaltyFrom: number; readonly teamFoulOneAndOneFrom?: number | null }
   /** Competition-owned rule input. Null/omitted means unresolved; never infer a reset. */
   readonly offensiveReboundShotClockSeconds?: number | null
 }

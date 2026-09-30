@@ -92,6 +92,10 @@ export interface NextTickFrame {
   /** BT2 ball screen in progress (diagnostic). */
   readonly screen: { readonly phase: string; readonly coverage: string; readonly exit: string; readonly handlerId: PlayerId; readonly screenerId: PlayerId; readonly location: Pt; readonly waypoint: Pt } | undefined
   readonly transition: { readonly trigger: string; readonly advantage: string; readonly teamId: TeamId } | undefined
+  /** BT3: LIVE / WHISTLE / DEAD / RESOLUTION / INBOUND / FREE_THROW / READY, why, the free-throw sequence and team fouls in the period. */
+  readonly playState: { readonly phase: string; readonly cause: string }
+  readonly freeThrow: { readonly shooterId: PlayerId; readonly index: number; readonly total: number; readonly phase: string } | undefined
+  readonly teamFouls: { readonly home: number; readonly away: number }
   readonly currentAction: string | undefined
   readonly isComplete: boolean
   /** Engine events emitted after the previous frame, in engine order. */

@@ -1,6 +1,7 @@
 import { distanceBetween, type CourtPosition } from '@/domain/court'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import { draw } from '../rng'
+import { judgeBallContestContact } from '../contact/BallContestFouls'
 import { emitEvent } from '../events'
 import { secureRebound } from '../ball/BallTransitions'
 import { REBOUND_ACQUISITION_RADIUS_METERS } from '../ball/BallState'
@@ -22,7 +23,7 @@ const FRONTCOURT_ADVANTAGE_DISTANCE_METERS = 0.5
 /** Clears temporary roles before their normal structural authorities run again. */
 export function clearExpiredReboundTransition(state: MatchState): MatchState {
   let next = state
-  const missedShotInFlight = next.ball.kind === 'SHOT_IN_FLIGHT' && next.ball.plannedOutcome.kind === 'MISS'
+  const missedShotInFlight = next.ball.kind === 'SHOT_IN_FLIGHT' && next.ball.plannedOutcome.kind === 'MISS' && next.ball.freeThrow === undefined && next.ball.foul === undefined
   if (next.reboundState && next.ball.kind !== 'REBOUNDABLE' && !missedShotInFlight) {
     next = removeTemporaryRoles(next, next.reboundState.responsibilities.map((item) => item.responsibilityId))
     next = { ...next, reboundState: null }
@@ -42,7 +43,8 @@ export function clearExpiredReboundTransition(state: MatchState): MatchState {
 
 /** Adds real kinematic intents for a live rebound or a possession-changing transition. */
 export function reconcileReboundTransition(input: MatchState): MatchState {
-  if (input.ball.kind === 'REBOUNDABLE' || input.ball.kind === 'SHOT_IN_FLIGHT' && input.ball.plannedOutcome.kind === 'MISS') return reconcileRebound(input)
+  // A free throw or a fouled shot never opens a rebound in flight: the lane is held until the ball hits the rim (BT3E).
+  if (input.ball.kind === 'REBOUNDABLE' || input.ball.kind === 'SHOT_IN_FLIGHT' && input.ball.plannedOutcome.kind === 'MISS' && input.ball.freeThrow === undefined && input.ball.foul === undefined) return reconcileRebound(input)
   return reconcileTransition(input)
 }
 
@@ -75,7 +77,9 @@ export function securePhysicalRebound(state: MatchState): MatchState {
     roll -= item.weight
     if (roll <= 0) { winner = item.player; break }
   }
-  next = secureRebound(next, winner.playerId)
+  const judged = judgeBallContestContact(next, winner, 'REBOUNDING')
+  if (judged.fouled) return judged.state
+  next = secureRebound(judged.state, winner.playerId)
   return next
 }
 
@@ -92,7 +96,7 @@ export function finishStoppedTransition(state: MatchState): MatchState {
 }
 
 function reconcileRebound(input: MatchState): MatchState {
-  if (input.ball.kind !== 'REBOUNDABLE' && !(input.ball.kind === 'SHOT_IN_FLIGHT' && input.ball.plannedOutcome.kind === 'MISS')) return input
+  if (input.ball.kind !== 'REBOUNDABLE' && !(input.ball.kind === 'SHOT_IN_FLIGHT' && input.ball.plannedOutcome.kind === 'MISS' && input.ball.freeThrow === undefined && input.ball.foul === undefined)) return input
   const rebound = input.ball.kind === 'REBOUNDABLE' ? {
     phase: 'LIVE' as const,
     shootingTeamId: input.ball.shootingTeamId,
@@ -152,12 +156,12 @@ function reconcileRebound(input: MatchState): MatchState {
       if (input.ball.kind === 'REBOUNDABLE' && input.t >= rebound.availableAtT && crasherIds.has(player.playerId)) kind = 'PURSUE_REBOUND'
       else if (crasherIds.has(player.playerId)) kind = 'CRASH_REBOUND'
       else kind = 'RETREAT'
-      target = kind === 'RETREAT' ? reboundSafetyTarget(player, reboundTarget, basket, input) : reboundTarget
+      target = kind === 'RETREAT' ? reboundSafetyTarget(player, reboundTarget, basket, input) : contestSlot(reboundTarget, basket, [...crashers.map((item) => item.player.playerId)].indexOf(player.playerId), true, input)
     } else {
       owner = 'defensiveStructure'
       kind = pursuingDefenderIds.has(player.playerId) ? 'PURSUE_REBOUND' : 'BOX_OUT'
       boxOutTarget = assignedAttacker ? boxOutPosition(assignedAttacker.position, reboundTarget, basket, input) : reboundTarget
-      target = kind === 'PURSUE_REBOUND' ? reboundTarget : boxOutTarget
+      target = kind === 'PURSUE_REBOUND' ? contestSlot(reboundTarget, basket, [...pursuingDefenderIds].indexOf(player.playerId), false, input) : boxOutTarget
     }
     const previous = prior?.responsibilities.find((item) => item.playerId === player.playerId)
     const responsibilityId = previous?.kind === kind ? previous.responsibilityId : `responsibility-${nextResponsibilitySequence++}`
@@ -452,6 +456,25 @@ function transitionOwner(role: TransitionRole): ResponsibilityOwner {
 }
 
 /** Boxing out means standing between the attacker and the falling ball, in contact range. */
+/**
+ * BT3M: contenders do not all run to the same point. The ball comes down on a spot, but each contender takes his own
+ * side of it: defenders inside (rim side, sealing the attackers out), attackers on the flanks and behind. Two per team
+ * means four distinct positions around the landing zone, all within arm's reach of it.
+ */
+/** The first defender of a team seals the spot itself (he is nearest and inside); everyone else takes a wider seat. */
+const CONTEST_RING_METERS = { defenseFirst: 0.3, defenseSecond: 0.8, offenseFirst: 0.7, offenseSecond: 1.0 } as const
+function contestSlot(landing: CourtPosition, basket: CourtPosition, rank: number, offense: boolean, state: MatchState): CourtPosition {
+  const away = unitVector({ x: landing.x - basket.x, y: landing.y - basket.y }, { x: 1, y: 0 })
+  const side = rank % 2 === 0 ? 1 : -1
+  const radius = offense ? (rank <= 0 ? CONTEST_RING_METERS.offenseFirst : CONTEST_RING_METERS.offenseSecond) : (rank <= 0 ? CONTEST_RING_METERS.defenseFirst : CONTEST_RING_METERS.defenseSecond)
+  // Angle from the rim-to-ball axis: defenders sit on the rim side (about 145 degrees), attackers on the flanks (about 80).
+  const angle = (offense ? 80 : 145) * Math.PI / 180 * side
+  const cos = Math.cos(angle)
+  const sin = Math.sin(angle)
+  const direction = { x: away.x * cos - away.y * sin, y: away.x * sin + away.y * cos }
+  return clampPosition({ x: landing.x + direction.x * radius, y: landing.y + direction.y * radius }, state.court)
+}
+
 function boxOutPosition(attacker: CourtPosition, rebound: CourtPosition, basket: CourtPosition, state: MatchState): CourtPosition {
   const towardRebound = unitVector({ x: rebound.x - attacker.x, y: rebound.y - attacker.y }, { x: basket.x >= state.court.lengthMeters / 2 ? -1 : 1, y: 0 })
   return clampPosition({ x: attacker.x + towardRebound.x * 0.95, y: attacker.y + towardRebound.y * 0.95 }, state.court)

@@ -284,17 +284,24 @@ export interface NextAuditSummary {
   readonly defense: { readonly meanOnBallDefenderDistance: number; readonly noBallPressureShare: number; readonly defenderFarFromManShare: number; readonly meanGoalSideDefenders: number; readonly paintUnprotectedShare: number; readonly noWeakSideHelpShare: number }
 }
 
-export function summarizeNextRun(seed: number, opts: { maxTicks?: number } = {}): NextAuditSummary {
+/**
+ * `minSecondsIntoPossession`: only judge frames at least this old in their possession. The plain average weights the early seconds
+ * of every possession (the two teams are still running to their spots) by how many possessions there are, so a game with more
+ * turnovers, fouls and quick transition shots (BT3) reads worse without its half-court defense being any worse.
+ */
+export function summarizeNextRun(seed: number, opts: { maxTicks?: number; minSecondsIntoPossession?: number } = {}): NextAuditSummary {
   let maxSpeed = 0
   let maxBall = 0
   let ballJumps = 0
   let half = 0
   let setupRun = 0
+  let possessionStartT = 0
   const stableOff: { readonly o: OffenseFrameMetrics; readonly f: NextTickFrame }[] = []
   const stableDef: DefenseFrameMetrics[] = []
   const run = runNextAudit(seed, {
     ...(opts.maxTicks === undefined ? {} : { maxTicks: opts.maxTicks }),
     onFrame: (f, p) => {
+      for (const e of f.events) if (e.type === 'possessionStart') possessionStartT = f.t
       for (const q of f.players) {
         const r = p.players.find((x) => x.playerId === q.playerId)
         if (r !== undefined) maxSpeed = Math.max(maxSpeed, dist(q.position, r.position) * 10)
@@ -304,7 +311,7 @@ export function summarizeNextRun(seed: number, opts: { maxTicks?: number } = {})
       if (j > 1.5) ballJumps += 1
       if (isHalfCourtSet(f)) half += 1
       setupRun = isHalfCourtSet(f) ? setupRun + 1 : 0
-      if (setupRun > 8) {
+      if (setupRun > 8 && (f.t - possessionStartT) / 10 >= (opts.minSecondsIntoPossession ?? 0)) {
         const o = offenseMetrics(f)
         const d = defenseMetrics(f)
         if (o !== undefined) stableOff.push({ o, f })

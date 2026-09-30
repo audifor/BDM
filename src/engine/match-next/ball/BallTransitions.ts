@@ -8,6 +8,9 @@ import { activePossession, type MatchState, type PossessionStartReason } from '.
 import { advanceLooseBall, flightProgress, interpolatePosition, looseBallVelocity, passHeight, shotHeight } from './BallFlight'
 import { BALL_ACQUISITION_RADIUS_METERS, HELD_BALL_HEIGHT_METERS, REBOUND_ACQUISITION_RADIUS_METERS, type BallPassKind, type BallState, type PlannedShotOutcome } from './BallState'
 import { shouldStopGameClock, whenDoesClockRestart } from '../clockRules'
+import { nearestSidelineSpot } from './BallGeometry'
+import { emitAssistIfEarned } from '../stats/Assists'
+import { resolveFouledShotArrival, resolveFreeThrowArrival } from '../rules/FreeThrows'
 
 export type InboundStartReason = 'periodStart' | 'madeBasketInbound' | 'turnoverInbound' | 'shotClockViolation'
 
@@ -19,6 +22,7 @@ export interface ReleasePassCommand {
   readonly catchRadiusMeters?: number
   readonly actionId?: string
   readonly passQuality?: number
+  readonly contest?: { readonly defenderId: PlayerId; readonly kind: 'INTERCEPTION' | 'DEFLECTION' }
 }
 
 export interface ReleaseShotCommand {
@@ -41,7 +45,7 @@ export function startInbound(state: MatchState, teamId: TeamId, inbounderPlayerI
       ? state.ball.reason === 'madeBasket'
       : reason === 'shotClockViolation'
         ? state.ball.reason === 'shotClockViolation'
-        : state.ball.reason === 'outOfBounds' || state.ball.reason === 'other'
+        : state.ball.reason === 'outOfBounds' || state.ball.reason === 'other' || state.ball.reason === 'foul'
   if (!reasonMatchesDeadBall) throw new Error(`Inbound reason ${reason} does not match DEAD(${state.ball.reason})`)
   const spot = state.ball.restartSpot ?? restartSpot(state, reason)
   if (state.ball.restartTeamId !== undefined && state.ball.restartTeamId !== teamId) throw new Error('Inbound team does not match the dead-ball restart team')
@@ -149,9 +153,27 @@ export function interceptPass(state: MatchState, defenderPlayerId: PlayerId): Ma
   let next: MatchState = { ...state, ball: heldBall(defender.playerId, defender.teamId, defender.position) }
   const previousPossession = activePossession(next)
   next = emitEvent(next, 'passIntercepted', { possessionId: previousPossession?.id, teamId: defender.teamId, passerPlayerId: state.ball.passerPlayerId, receiverPlayerId: defender.playerId, playerId: defender.playerId, acquisitionDistanceMeters })
+  next = emitEvent(next, 'steal', { possessionId: previousPossession?.id, teamId: defender.teamId, playerId: defender.playerId, victimPlayerId: state.ball.passerPlayerId, stealKind: 'PASS_INTERCEPTION' })
+  next = emitEvent(next, 'turnover', { possessionId: previousPossession?.id, teamId: state.ball.passerTeamId, playerId: state.ball.passerPlayerId, turnoverType: 'INTERCEPTION' })
   next = endPossession(next, 'turnover')
   next = startPossession(next, defender.teamId, 'steal', 'ADVANCE', true)
   return next
+}
+
+/** A defender tips the pass: it drops loose beside him, last touched by his team (so it is the offense's ball if it goes out). */
+function deflectPass(state: MatchState, ball: Extract<BallState, { kind: 'PASS_IN_FLIGHT' }>, defenderPlayerId: PlayerId, position: CourtPosition): MatchState {
+  const defender = activePlayer(state, defenderPlayerId)
+  const along = { x: ball.target.x - ball.from.x, y: ball.target.y - ball.from.y }
+  const length = Math.hypot(along.x, along.y) || 1
+  const side = ((defender.position.x - position.x) * -along.y + (defender.position.y - position.y) * along.x) >= 0 ? 1 : -1
+  const velocity = { x: (along.x / length) * 1.8 + (-along.y / length) * 3.4 * side, y: (along.y / length) * 1.8 + (along.x / length) * 3.4 * side }
+  const possession = activePossession(state)
+  let next: MatchState = {
+    ...state,
+    ball: { kind: 'LOOSE', position: { ...position }, heightMeters: 1.6, velocity, cause: 'deflection', previousPosition: { ...position }, lastTouchTeamId: defender.teamId, lastTouchPlayerId: ball.passerPlayerId },
+  }
+  next = emitEvent(next, 'deflection', { possessionId: possession?.id, teamId: defender.teamId, playerId: defender.playerId, victimPlayerId: ball.passerPlayerId, stealKind: 'DEFLECTION' })
+  return emitEvent(next, 'looseBallCreated', { possessionId: possession?.id, teamId: defender.teamId, playerId: defender.playerId, ballReason: 'deflection' })
 }
 
 export function releaseShot(state: MatchState, command: ReleaseShotCommand): MatchState {
@@ -180,7 +202,7 @@ export function releaseShot(state: MatchState, command: ReleaseShotCommand): Mat
   let next: MatchState = { ...state, ball }
   next = changePossessionPhase(next, 'SHOT')
   return emitEvent(next, 'shotReleased', {
-    possessionId: possession.id, teamId: owner.teamId, shooterPlayerId: owner.playerId,
+    possessionId: possession.id, teamId: owner.teamId, shooterPlayerId: owner.playerId, shotDistanceMeters: Number(distanceBetween(state.ball.position, command.targetBasket).toFixed(2)),
     ...(command.actionId === undefined ? {} : { actionId: command.actionId }),
     ...(command.shotValue === undefined ? {} : { points: command.shotValue }),
     ...(command.shotProbability === undefined ? {} : { shotProbability: command.shotProbability }),
@@ -216,16 +238,33 @@ export function secureRebound(state: MatchState, playerId: PlayerId): MatchState
 export function recoverLooseBall(state: MatchState, playerId: PlayerId): MatchState {
   if (state.ball.kind !== 'LOOSE') throw new Error('Loose-ball recovery requires a LOOSE ball')
   const player = activePlayer(state, playerId)
+  const loose = state.ball
   const acquisitionDistanceMeters = distanceBetween(player.position, state.ball.position)
   if (acquisitionDistanceMeters > BALL_ACQUISITION_RADIUS_METERS) throw new Error(`Recoverer is ${acquisitionDistanceMeters.toFixed(2)}m from the ball`)
   const oldPossession = activePossession(state)
   let next: MatchState = { ...state, ball: heldBall(player.playerId, player.teamId, player.position) }
   next = emitEvent(next, 'looseBallRecovered', { possessionId: oldPossession?.id, teamId: player.teamId, playerId, acquisitionDistanceMeters })
   if (oldPossession && oldPossession.teamId !== player.teamId) {
+    if (loose.cause === 'block') {
+      // A blocked shot that the defense gathers is a defensive rebound: the shot was a miss, not a turnover.
+      next = emitEvent(next, 'reboundSecured', { possessionId: oldPossession.id, teamId: player.teamId, playerId, shootingTeamId: oldPossession.teamId, reboundType: 'defensive', acquisitionDistanceMeters })
+      next = endPossession(next, 'defensiveRebound')
+      return startPossession(next, player.teamId, 'defensiveRebound', 'ADVANCE', true)
+    }
+    const stolen = loose.cause === 'deflection' || loose.cause === 'pokeLoose'
+    if (stolen) next = emitEvent(next, 'steal', { possessionId: oldPossession.id, teamId: player.teamId, playerId, ...(loose.lastTouchPlayerId === undefined ? {} : { victimPlayerId: loose.lastTouchPlayerId }), stealKind: loose.cause === 'deflection' ? 'DEFLECTION' : 'POKE_LOOSE' })
+    if (loose.lastTouchPlayerId !== undefined) {
+      next = emitEvent(next, 'turnover', { possessionId: oldPossession.id, teamId: oldPossession.teamId, playerId: loose.lastTouchPlayerId, turnoverType: loose.cause === 'lostDribble' || loose.cause === 'pokeLoose' ? 'LOST_DRIBBLE' : 'BAD_PASS' })
+    }
     next = endPossession(next, 'turnover')
-    return startPossession(next, player.teamId, 'other', 'ADVANCE', true)
+    return startPossession(next, player.teamId, stolen ? 'steal' : 'other', 'ADVANCE', true)
   }
   if (!oldPossession) return startPossession(next, player.teamId, 'other', 'ADVANCE', true)
+  if (loose.cause === 'block') {
+    // The offense gathers its own blocked shot: an offensive rebound (no shot-clock reset: the ball never touched the rim).
+    next = emitEvent(next, 'reboundSecured', { possessionId: oldPossession.id, teamId: player.teamId, playerId, shootingTeamId: oldPossession.teamId, reboundType: 'offensive', acquisitionDistanceMeters })
+    next = { ...next, possessions: next.possessions.map((item) => item.id === oldPossession.id ? { ...item, offensiveRebounds: item.offensiveRebounds + 1 } : item), clock: { ...next.clock, gameRunning: true, shotRunning: true } }
+  }
   if (oldPossession.phase === 'INBOUND') {
     next = { ...next, shotClockTenths: next.clockRules.shotClockSeconds * 10, clock: { gameRunning: true, shotRunning: true } }
     next = markShotClockStarted(next)
@@ -273,14 +312,10 @@ export function violateShotClock(state: MatchState): MatchState {
     shotClockTenths: 0,
   }
   next = emitEvent(next, 'shotClockViolation', { possessionId: possession.id, teamId: possession.teamId })
+  next = emitEvent(next, 'turnover', { possessionId: possession.id, teamId: possession.teamId, turnoverType: 'SHOT_CLOCK' })
   next = endPossession(next, 'shotClock')
   next = { ...next, shotClockTenths: 0 }
   return emitEvent(next, 'ballDead', { teamId: restartTeamId, ballReason: 'shotClockViolation' })
-}
-
-/** Where a dead ball is put back in play when no rule names a spot: the sideline point closest to where the ball was. */
-function nearestSidelineSpot(position: CourtPosition, court: MatchState['court']): CourtPosition {
-  return { x: Math.max(0.5, Math.min(court.lengthMeters - 0.5, position.x)), y: position.y < court.widthMeters / 2 ? 0.5 : court.widthMeters - 0.5 }
 }
 
 /** A made basket: the ball leaves the net at rim height, falls to the floor and is carried to the inbound spot (also used for the ball dead at the horn). */
@@ -291,14 +326,15 @@ const MADE_BASKET_RETRIEVAL_METERS_PER_TICK = 0.4
 
 export function advanceBallAtTick(state: MatchState): MatchState {
   const ball = state.ball
-  if (ball.kind === 'DEAD' && (ball.reason === 'madeBasket' || ball.reason === 'periodEnd')) {
-    const height = Math.max(MADE_BASKET_FLOOR_HEIGHT_METERS, ball.heightMeters - MADE_BASKET_FALL_METERS_PER_TICK)
+  if (ball.kind === 'DEAD' && (ball.reason === 'madeBasket' || ball.reason === 'periodEnd' || ball.restartSpot !== undefined)) {
+    // Only a ball that came through the net falls; after a whistle or the horn an official carries it, at hand height.
+    const height = ball.reason === 'madeBasket' ? Math.max(MADE_BASKET_FLOOR_HEIGHT_METERS, ball.heightMeters - MADE_BASKET_FALL_METERS_PER_TICK) : Math.max(MADE_BASKET_FLOOR_HEIGHT_METERS, ball.heightMeters)
     // After the horn the ball is carried to where the next period restarts (the centre spot) instead of jumping there.
     const target = ball.restartSpot ?? (ball.reason === 'periodEnd' ? { x: state.court.lengthMeters / 2, y: state.court.widthMeters / 2 } : ball.position)
     const dx = target.x - ball.position.x
     const dy = target.y - ball.position.y
     const distance = Math.hypot(dx, dy)
-    const position = height > MADE_BASKET_FLOOR_HEIGHT_METERS || distance <= 1e-9 ? ball.position
+    const position = (ball.reason === 'madeBasket' && height > MADE_BASKET_FLOOR_HEIGHT_METERS) || distance <= 1e-9 ? ball.position
       : distance <= MADE_BASKET_RETRIEVAL_METERS_PER_TICK ? { ...target }
         : { x: ball.position.x + dx / distance * MADE_BASKET_RETRIEVAL_METERS_PER_TICK, y: ball.position.y + dy / distance * MADE_BASKET_RETRIEVAL_METERS_PER_TICK }
     return height === ball.heightMeters && position === ball.position ? state : { ...state, ball: { ...ball, heightMeters: height, position } }
@@ -327,13 +363,17 @@ export function advanceBallAtTick(state: MatchState): MatchState {
       ? distanceBetween(receiver.position, position) : Number.POSITIVE_INFINITY
     const receiverCanCatch = receiverDistance <= (ball.catchRadiusMeters ?? BALL_ACQUISITION_RADIUS_METERS)
     if (state.t < ball.arrivalT) return moved
+    if (ball.contest?.kind === 'DEFLECTION' && !ball.isInbound) {
+      const deflector = findActivePlayer(moved, ball.contest.defenderId)
+      if (deflector && deflector.active && distanceBetween(deflector.position, position) <= 1.3) return deflectPass(moved, ball, deflector.playerId, position)
+    }
     const defender = ball.isInbound ? undefined : moved.players.filter((player) => player.active && player.teamId !== ball.passerTeamId)
       .map((player) => ({ player, distance: distanceBetween(player.position, position) }))
       .sort((left, right) => left.distance - right.distance || String(left.player.playerId).localeCompare(String(right.player.playerId)))
       .find((item) => item.distance <= BALL_ACQUISITION_RADIUS_METERS)
     if (defender && (!receiverCanCatch || defender.distance < receiverDistance)) return interceptPass(moved, defender.player.playerId)
     if (receiverCanCatch) return receivePass(moved, receiver!.playerId, receiver!.teamId, receiverDistance, ball.isInbound)
-    const loose: BallState = { kind: 'LOOSE', position, heightMeters: Math.max(0.08, moved.ball.heightMeters), velocity: looseBallVelocity(ball.from, ball.target), cause: 'badPass', previousPosition: position }
+    const loose: BallState = { kind: 'LOOSE', position, heightMeters: Math.max(0.08, moved.ball.heightMeters), velocity: looseBallVelocity(ball.from, ball.target), cause: 'badPass', previousPosition: position, lastTouchTeamId: ball.passerTeamId, lastTouchPlayerId: ball.passerPlayerId }
     let next: MatchState = { ...moved, ball: loose }
     const possession = activePossession(next)
     next = emitEvent(next, 'passBecameLoose', { possessionId: possession?.id, teamId: ball.passerTeamId, passerPlayerId: ball.passerPlayerId, receiverPlayerId: ball.intendedReceiverPlayerId })
@@ -344,7 +384,9 @@ export function advanceBallAtTick(state: MatchState): MatchState {
     const position = interpolatePosition(ball.from, ball.targetBasket, progress)
     const moved: MatchState = { ...state, ball: { ...ball, previousPosition: ball.position, position, heightMeters: shotHeight(progress) } }
     if (state.t < ball.arrivalT) return moved
-    if (ball.plannedOutcome.kind === 'MAKE') return resolveMadeShot(moved, ball.plannedOutcome.points)
+    if (ball.freeThrow !== undefined) return resolveFreeThrowArrival(moved)
+    if (ball.foul !== undefined) return resolveFouledShotArrival(moved)
+    if (ball.plannedOutcome.kind === 'MAKE') return resolveMadeShot(moved, ball.plannedOutcome.points === 1 ? 2 : ball.plannedOutcome.points)
     const rebound: BallState = {
       kind: 'REBOUNDABLE', shotByPlayerId: ball.shooterPlayerId, shootingTeamId: ball.shooterTeamId,
       position, heightMeters: 3.05, landingFrom: position, landingStartedT: state.t,
@@ -369,10 +411,16 @@ export function advanceBallAtTick(state: MatchState): MatchState {
     const moved = advanceLooseBall(ball, state.court)
     if (nextX < 0 || nextX > state.court.lengthMeters || nextY < 0 || nextY > state.court.widthMeters) {
       const possession = activePossession(state)
-      const restartTeamId = possession === undefined
-        ? undefined
-        : possession.teamId === state.homeTeamId ? state.awayTeamId : state.homeTeamId
-      return putBallDead({ ...state, ball: moved }, 'outOfBounds', restartTeamId)
+      const opponentOf = (teamId: TeamId): TeamId => teamId === state.homeTeamId ? state.awayTeamId : state.homeTeamId
+      // The team that touched it last loses it: a blocked or deflected ball keeps the offense's possession.
+      const restartTeamId = ball.lastTouchTeamId !== undefined ? opponentOf(ball.lastTouchTeamId)
+        : possession === undefined ? undefined : opponentOf(possession.teamId)
+      let next: MatchState = { ...state, ball: moved }
+      if (possession !== undefined && restartTeamId !== undefined && restartTeamId !== possession.teamId && ball.lastTouchPlayerId !== undefined) {
+        next = emitEvent(next, 'turnover', { possessionId: possession.id, teamId: possession.teamId, playerId: ball.lastTouchPlayerId, turnoverType: ball.cause === 'lostDribble' ? 'LOST_DRIBBLE' : 'OUT_OF_BOUNDS' })
+      }
+      next = emitEvent(next, 'outOfBounds', { possessionId: possession?.id, ...(restartTeamId === undefined ? {} : { teamId: restartTeamId }), ...(ball.lastTouchPlayerId === undefined ? {} : { playerId: ball.lastTouchPlayerId }), ballReason: ball.cause })
+      return putBallDead(next, 'outOfBounds', restartTeamId)
     }
     return { ...state, ball: moved }
   }
@@ -416,6 +464,7 @@ function resolveMadeShot(state: MatchState, points: 2 | 3): MatchState {
     shotClockTenths: null,
   }
   next = emitEvent(next, 'shotMade', { possessionId: activePossession(next)?.id, teamId: ball.shooterTeamId, shooterPlayerId: ball.shooterPlayerId, points })
+  next = emitAssistIfEarned(next, ball.shooterPlayerId)
   next = endPossession(next, 'made')
   return emitEvent(next, 'ballDead', { teamId: opponent, ballReason: 'madeBasket' })
 }
@@ -441,6 +490,7 @@ function createPass(state: MatchState, passerPlayerId: PlayerId, receiverPlayerI
     ...(command?.catchRadiusMeters === undefined ? {} : { catchRadiusMeters: command.catchRadiusMeters }),
     ...(command?.actionId === undefined ? {} : { actionId: command.actionId }),
     ...(command?.passQuality === undefined ? {} : { passQuality: command.passQuality }),
+    ...(command?.contest === undefined ? {} : { contest: command.contest }),
   }
 }
 

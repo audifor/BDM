@@ -1,0 +1,58 @@
+{
+  "param": "screenBaseValuePoints",
+  "seeds": [
+    424242,
+    7,
+    1
+  ],
+  "rows": [
+    {
+      "value": 1.1,
+      "points": 244.333,
+      "shots": 232.667,
+      "possessions": 227.667,
+      "threeShare": 0.411,
+      "rimShare": 0.144,
+      "paintShare": 0.406,
+      "midShare": 0.065,
+      "screens": 15,
+      "drives": 212,
+      "passes": 441.333,
+      "orebShare": 0.234,
+      "turnovers": 22,
+      "fg": 0.403
+    },
+    {
+      "value": 1.25,
+      "points": 236,
+      "shots": 225.333,
+      "possessions": 230.333,
+      "threeShare": 0.422,
+      "rimShare": 0.15,
+      "paintShare": 0.374,
+      "midShare": 0.085,
+      "screens": 21,
+      "drives": 212,
+      "passes": 443.667,
+      "orebShare": 0.194,
+      "turnovers": 26.667,
+      "fg": 0.394
+    },
+    {
+      "value": 1.4,
+      "points": 234.667,
+      "shots": 221.667,
+      "possessions": 223.333,
+      "threeShare": 0.413,
+      "rimShare": 0.157,
+      "paintShare": 0.39,
+      "midShare": 0.068,
+      "screens": 29,
+      "drives": 213,
+      "passes": 434.333,
+      "orebShare": 0.215,
+      "turnovers": 25,
+      "fg": 0.416
+    }
+  ]
+}

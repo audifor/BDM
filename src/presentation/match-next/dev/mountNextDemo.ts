@@ -37,7 +37,7 @@ export interface NextTruthApi {
   setPaused(paused: boolean): void
   setCamera(mode: CameraMode): void
   setTruthMode(enabled: boolean): void
-  setOverlay(name: 'assignments' | 'targets' | 'facing' | 'slots' | 'screens' | 'moves' | 'names' | 'action', enabled: boolean): void
+  setOverlay(name: 'assignments' | 'targets' | 'facing' | 'slots' | 'screens' | 'moves' | 'incidents' | 'names' | 'action', enabled: boolean): void
   advance(ms: number): void
   /** Fast-forwards playback until canonical tick >= t has been played. */
   seekToTick(t: number): void
@@ -165,6 +165,7 @@ export function mountNextDemo(root: HTMLElement, options: MountNextOptions = {})
       else if (name === 'slots') renderer.debugOptions.showSlots = enabled
       else if (name === 'screens') renderer.debugOptions.showScreens = enabled
       else if (name === 'moves') renderer.debugOptions.showMoves = enabled
+      else if (name === 'incidents') renderer.debugOptions.showIncidents = enabled
       else if (name === 'names') renderer.identificationOptions.showLabel = enabled
       else renderer.identificationOptions.showAction = enabled
     },
@@ -252,6 +253,7 @@ function buildControls(container: HTMLElement, side: HTMLElement, renderer: Phas
   overlays.appendChild(toggle('slots', false, (v) => (renderer.debugOptions.showSlots = v)))
   overlays.appendChild(toggle('screens', false, (v) => (renderer.debugOptions.showScreens = v)))
   overlays.appendChild(toggle('moves', false, (v) => (renderer.debugOptions.showMoves = v)))
+  overlays.appendChild(toggle('incidents', true, (v) => (renderer.debugOptions.showIncidents = v)))
   const ids = group('ids:')
   ids.appendChild(toggle('jersey', true, (v) => (renderer.identificationOptions.showJersey = v)))
   ids.appendChild(toggle('names', false, (v) => (renderer.identificationOptions.showLabel = v)))

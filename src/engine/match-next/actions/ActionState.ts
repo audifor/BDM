@@ -1,10 +1,11 @@
 import type { CourtPosition } from '@/domain/court'
 import type { PlayerId, TeamId } from '@/domain/ids'
+import type { DriveContactTrack } from '../contact/ContactModel'
 
 export type MatchDecisionKind = 'PASS' | 'SHOOT' | 'DRIVE' | 'KICK_OUT' | 'CATCH_AND_SHOOT' | 'SCREEN'
 export type MatchActionKind = MatchDecisionKind | 'CLOSEOUT'
 export type MatchActionStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
-export type MatchActionOutcome = 'CAUGHT' | 'BAD_PASS' | 'MAKE' | 'MISS' | 'ADVANTAGE' | 'CONTAINED' | 'FINISH' | 'ARRIVED' | 'CONTESTED' | 'CANCELLED'
+export type MatchActionOutcome = 'CAUGHT' | 'BAD_PASS' | 'MAKE' | 'MISS' | 'ADVANTAGE' | 'CONTAINED' | 'FINISH' | 'ARRIVED' | 'CONTESTED' | 'CANCELLED' | 'FOULED' | 'BLOCKED'
 
 export interface MatchDecision {
   readonly id: string
@@ -34,6 +35,9 @@ export interface MatchActionState {
   readonly startPosition?: CourtPosition
   /** A drive first goes around this point (the screener's far shoulder) before attacking the basket. */
   readonly waypoint?: CourtPosition
+  /** BT3B: closest approach between the driver and his on-ball defender, and whether it has been judged already. */
+  readonly contact?: DriveContactTrack
+  readonly contactAssessed?: boolean
   readonly screenId?: string
   readonly releaseAtT?: number
   readonly resolvedT?: number

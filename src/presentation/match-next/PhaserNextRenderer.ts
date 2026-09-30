@@ -89,14 +89,14 @@ export class PhaserNextRenderer {
   /** Dev/capture hook: advance playback by exact wall-clock ms regardless of pause. */
   public advanceForTest(deltaMs: number): NextRenderFrame {
     const frame = this.director.advance(deltaMs)
-    if (frame.firedEvents.length > 0) this.eventListener?.(frame.firedEvents, frame)
+    if (frame.firedEvents.length > 0) { this.scene.queueEvents(frame.firedEvents, frame.rendered); this.eventListener?.(frame.firedEvents, frame) }
     return frame
   }
 
   private nextFrame(deltaMs: number): NextRenderFrame {
     if (this.paused) return this.director.currentFrame()
     const frame = this.director.advance(Math.min(deltaMs, 100))
-    if (frame.firedEvents.length > 0) this.eventListener?.(frame.firedEvents, frame)
+    if (frame.firedEvents.length > 0) { this.scene.queueEvents(frame.firedEvents, frame.rendered); this.eventListener?.(frame.firedEvents, frame) }
     return frame
   }
 }

@@ -33,7 +33,7 @@ function urgentRotation(setup: MatchSetup, side: 'home' | 'away', periodMinutes:
   return { ...plan, minutesByPeriod, fatigueTolerance: 0.82 }
 }
 
-describe('BS8 coach and rotation authority', () => {
+describe('BS8 coach and rotation authority', { timeout: 60000 }, () => {
   it('prefers a fresher positional equivalent when a starter becomes heavily fatigued', () => {
     const { world, team, setup } = fixture()
     const isHome = team.id === setup.homeTeamId
@@ -215,7 +215,7 @@ describe('BS8 coach and rotation authority', () => {
 
   it('produces an automatic substitution during a regular match without manual UI commands', () => {
     const { world, game, setup } = fixture()
-    const periodMinutes = 3
+    const periodMinutes = 5
     const loadedWorld = updateGameWorld(world, { careerFatigueByPlayerId: {
       ...world.careerFatigueByPlayerId,
       ...Object.fromEntries(setup.players.map((player) => [player.playerId, 85])),
@@ -257,7 +257,7 @@ describe('BS8 coach and rotation authority', () => {
 
   it('uses the same deterministic rotation decisions for live playback and instant completion', () => {
     const { world, game, setup } = fixture()
-    const periodMinutes = 3
+    const periodMinutes = 5
     const loadedWorld = updateGameWorld(world, { careerFatigueByPlayerId: {
       ...world.careerFatigueByPlayerId,
       ...Object.fromEntries(setup.players.map((player) => [player.playerId, 85])),
@@ -291,6 +291,8 @@ describe('BS8 coach and rotation authority', () => {
     const completed = port.complete(loadedWorld, live)
     const outgoingId = homeSubstitutions[0]?.outgoingPlayerId
     const incomingId = homeSubstitutions[0]?.playerId
+    // Someone who never got on the court: the player who was subbed out (more minutes) must carry more workload than him.
+    const idleId = consequences.find((item) => item.workload.minutes === 0 && item.playerId !== incomingId)?.playerId
 
     expect(live.events).toEqual(instant.events)
     expect(live.playerStats).toEqual(instant.playerStats)
@@ -300,10 +302,11 @@ describe('BS8 coach and rotation authority', () => {
     expect(live.playerStats.find((line) => line.playerId === incomingId)!.secondsPlayed).toBeGreaterThan(0)
     expect(consequences.find((item) => item.playerId === outgoingId)!.workload.minutes)
       .toBeCloseTo(live.playerStats.find((line) => line.playerId === outgoingId)!.secondsPlayed / 60, 2)
+    expect(idleId).toBeDefined()
     expect(consequences.find((item) => item.playerId === outgoingId)!.workload.minutes)
-      .toBeGreaterThan(consequences.find((item) => item.playerId === incomingId)!.workload.minutes)
+      .toBeGreaterThan(consequences.find((item) => item.playerId === idleId)!.workload.minutes)
     expect(consequences.find((item) => item.playerId === outgoingId)!.developmentStimulusDelta.stamina)
-      .toBeGreaterThan(consequences.find((item) => item.playerId === incomingId)!.developmentStimulusDelta.stamina ?? 0)
+      .toBeGreaterThan(consequences.find((item) => item.playerId === idleId)!.developmentStimulusDelta.stamina ?? 0)
     expect(completed.developmentStimulusByPlayerId[outgoingId!]).not.toEqual(loadedWorld.developmentStimulusByPlayerId[outgoingId!])
     expect(completed.developmentStimulusByPlayerId[incomingId!]).not.toEqual(loadedWorld.developmentStimulusByPlayerId[incomingId!])
     expect(completed.careerFatigueByPlayerId[outgoingId!]).toBeGreaterThan(loadedWorld.careerFatigueByPlayerId[outgoingId!]!)

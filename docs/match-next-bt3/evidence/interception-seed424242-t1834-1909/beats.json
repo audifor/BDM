@@ -1,0 +1,184 @@
+[
+ {
+  "wallMs": 729,
+  "tick": 1836,
+  "sequence": 982,
+  "type": "offBallMove",
+  "detail": "H. Grove DRIFT"
+ },
+ {
+  "wallMs": 1222,
+  "tick": 1840,
+  "sequence": 983,
+  "type": "transitionAdvantageChanged",
+  "detail": "- madeBasketInbound"
+ },
+ {
+  "wallMs": 1222,
+  "tick": 1840,
+  "sequence": 984,
+  "type": "transitionResolved",
+  "detail": "- madeBasketInbound"
+ },
+ {
+  "wallMs": 1222,
+  "tick": 1840,
+  "sequence": 990,
+  "type": "actionResolved",
+  "detail": "A. Bexley DRIVE"
+ },
+ {
+  "wallMs": 1222,
+  "tick": 1840,
+  "sequence": 991,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 1407,
+  "tick": 1843,
+  "sequence": 995,
+  "type": "decisionSelected",
+  "detail": "A. Bexley"
+ },
+ {
+  "wallMs": 1407,
+  "tick": 1843,
+  "sequence": 996,
+  "type": "actionStarted",
+  "detail": "A. Bexley KICK_OUT"
+ },
+ {
+  "wallMs": 1407,
+  "tick": 1843,
+  "sequence": 997,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 1407,
+  "tick": 1843,
+  "sequence": 998,
+  "type": "passReleased",
+  "detail": "A. Bexley > D. Corven"
+ },
+ {
+  "wallMs": 1600,
+  "tick": 1850,
+  "sequence": 1000,
+  "type": "passReceived",
+  "detail": "D. Corven > D. Corven"
+ },
+ {
+  "wallMs": 1600,
+  "tick": 1850,
+  "sequence": 1003,
+  "type": "actionResolved",
+  "detail": "A. Bexley KICK_OUT"
+ },
+ {
+  "wallMs": 1600,
+  "tick": 1850,
+  "sequence": 1004,
+  "type": "actionStarted",
+  "detail": "H. Corven CLOSEOUT"
+ },
+ {
+  "wallMs": 1602,
+  "tick": 1854,
+  "sequence": 1005,
+  "type": "decisionSelected",
+  "detail": "D. Corven"
+ },
+ {
+  "wallMs": 1602,
+  "tick": 1854,
+  "sequence": 1006,
+  "type": "actionStarted",
+  "detail": "D. Corven PASS"
+ },
+ {
+  "wallMs": 1602,
+  "tick": 1854,
+  "sequence": 1007,
+  "type": "passReleased",
+  "detail": "D. Corven > A. Bexley"
+ },
+ {
+  "wallMs": 1800,
+  "tick": 1859,
+  "sequence": 1008,
+  "type": "passIntercepted",
+  "detail": "A. Bexley > A. Bexley"
+ },
+ {
+  "wallMs": 1800,
+  "tick": 1859,
+  "sequence": 1009,
+  "type": "steal",
+  "detail": "A. Bexley"
+ },
+ {
+  "wallMs": 1800,
+  "tick": 1859,
+  "sequence": 1010,
+  "type": "turnover",
+  "detail": "D. Corven"
+ },
+ {
+  "wallMs": 1800,
+  "tick": 1859,
+  "sequence": 1011,
+  "type": "possessionEnd",
+  "detail": "-"
+ },
+ {
+  "wallMs": 1800,
+  "tick": 1859,
+  "sequence": 1012,
+  "type": "possessionStart",
+  "detail": "- ADVANCE"
+ },
+ {
+  "wallMs": 1800,
+  "tick": 1859,
+  "sequence": 1013,
+  "type": "defensiveAssignmentsEstablished",
+  "detail": "-"
+ },
+ {
+  "wallMs": 1800,
+  "tick": 1859,
+  "sequence": 1019,
+  "type": "transitionStarted",
+  "detail": "- turnover"
+ },
+ {
+  "wallMs": 1800,
+  "tick": 1859,
+  "sequence": 1020,
+  "type": "actionResolved",
+  "detail": "D. Corven PASS"
+ },
+ {
+  "wallMs": 1800,
+  "tick": 1859,
+  "sequence": 1021,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 1800,
+  "tick": 1859,
+  "sequence": 1022,
+  "type": "transitionResolved",
+  "detail": "- turnover"
+ },
+ {
+  "wallMs": 1801,
+  "tick": 1861,
+  "sequence": 1028,
+  "type": "actionResolved",
+  "detail": "H. Corven CLOSEOUT"
+ }
+]

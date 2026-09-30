@@ -1,0 +1,166 @@
+{
+ "scenario": {
+  "kind": "screenContact",
+  "description": "A defender meets a ball screener (measured screen contact)",
+  "seed": 7,
+  "fromTick": 16159,
+  "toTick": 16229
+ },
+ "everyMs": 583,
+ "views": {
+  "plain": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 16161,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.42924319568144914
+    },
+    {
+     "frame": 1,
+     "tick": 16167,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.533485760880343
+    },
+    {
+     "frame": 2,
+     "tick": 16172,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.02452792420940445
+    },
+    {
+     "frame": 3,
+     "tick": 16178,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.08848842603344259
+    },
+    {
+     "frame": 4,
+     "tick": 16184,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.11728335844631908
+    },
+    {
+     "frame": 5,
+     "tick": 16190,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.15545932202020285
+    },
+    {
+     "frame": 6,
+     "tick": 16196,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0.3024919560108383
+    },
+    {
+     "frame": 7,
+     "tick": 16202,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.25488320996758396
+    },
+    {
+     "frame": 8,
+     "tick": 16207,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.025299219754785905
+    },
+    {
+     "frame": 9,
+     "tick": 16213,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.09137643050902072
+    },
+    {
+     "frame": 10,
+     "tick": 16219,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.22739709468872818
+    },
+    {
+     "frame": 11,
+     "tick": 16225,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.29097265648658927
+    }
+   ]
+  },
+  "truth": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 16161,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.42924319568144914
+    },
+    {
+     "frame": 1,
+     "tick": 16167,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.533485760880343
+    },
+    {
+     "frame": 2,
+     "tick": 16172,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.02452792420940445
+    },
+    {
+     "frame": 3,
+     "tick": 16178,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.08848842603344259
+    },
+    {
+     "frame": 4,
+     "tick": 16184,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.11728335844631908
+    },
+    {
+     "frame": 5,
+     "tick": 16190,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.15545932202020285
+    },
+    {
+     "frame": 6,
+     "tick": 16196,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0.3024919560108383
+    },
+    {
+     "frame": 7,
+     "tick": 16202,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.25488320996758396
+    },
+    {
+     "frame": 8,
+     "tick": 16207,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.025299219754785905
+    },
+    {
+     "frame": 9,
+     "tick": 16213,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.09137643050902072
+    },
+    {
+     "frame": 10,
+     "tick": 16219,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.22739709468872818
+    },
+    {
+     "frame": 11,
+     "tick": 16225,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.29097265648658927
+    }
+   ]
+  }
+ }
+}

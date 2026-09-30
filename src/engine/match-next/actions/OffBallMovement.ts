@@ -56,7 +56,12 @@ function cutTarget(state: MatchState, cutter: MatchPlayerState, basket: CourtPos
 export function reconcileOffBallMovement(input: MatchState): MatchState {
   const possession = activePossession(input)
   const flow = input.offenseFlow
-  if (!possession || flow === null || flow.possessionId !== possession.id || input.ball.kind === 'DEAD' || input.ball.kind === 'REBOUNDABLE') return input
+  if (!possession || flow === null || flow.possessionId !== possession.id) return input
+  if (input.ball.kind === 'DEAD' || input.ball.kind === 'REBOUNDABLE') {
+    // No new moves while the ball is dead or loose, but the ones that ended (a drive stopped by a whistle, a block) retire now.
+    const stale = flow.moves.filter((move) => input.t >= move.endsT || !stillValid(input, move))
+    return stale.length === 0 ? input : { ...input, offenseFlow: { ...flow, moves: flow.moves.filter((move) => !stale.includes(move)) } }
+  }
   let state = input
   const basket = attackingBasketForTeam(possession.teamId, state.homeTeamId, state.period, state.court)
   // Retire finished moves.

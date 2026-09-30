@@ -1,0 +1,166 @@
+{
+ "scenario": {
+  "kind": "freeThrows",
+  "description": "Free-throw sequence: formation, ready, each attempt, then live rebound or throw-in",
+  "seed": 424242,
+  "fromTick": 4384,
+  "toTick": 4493
+ },
+ "everyMs": 908,
+ "views": {
+  "plain": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 4385,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.2579721518573972
+    },
+    {
+     "frame": 1,
+     "tick": 4394,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.20475502095800205
+    },
+    {
+     "frame": 2,
+     "tick": 4403,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.21180084281189798
+    },
+    {
+     "frame": 3,
+     "tick": 4412,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.21510616461060938
+    },
+    {
+     "frame": 4,
+     "tick": 4421,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.15758772210511704
+    },
+    {
+     "frame": 5,
+     "tick": 4430,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.02185787131436908
+    },
+    {
+     "frame": 6,
+     "tick": 4439,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0
+    },
+    {
+     "frame": 7,
+     "tick": 4448,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0
+    },
+    {
+     "frame": 8,
+     "tick": 4457,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.006944247112318966
+    },
+    {
+     "frame": 9,
+     "tick": 4467,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.43700470588655854
+    },
+    {
+     "frame": 10,
+     "tick": 4476,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.4469530890239959
+    },
+    {
+     "frame": 11,
+     "tick": 4485,
+     "ball": "INBOUND",
+     "maxPlayerDiffM": 0.2421337169794044
+    }
+   ]
+  },
+  "truth": {
+   "frames": 12,
+   "diffs": [
+    {
+     "frame": 0,
+     "tick": 4385,
+     "ball": "HELD",
+     "maxPlayerDiffM": 0.2579721518573972
+    },
+    {
+     "frame": 1,
+     "tick": 4394,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.20475502095800205
+    },
+    {
+     "frame": 2,
+     "tick": 4403,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.21180084281189798
+    },
+    {
+     "frame": 3,
+     "tick": 4412,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.21510616461060938
+    },
+    {
+     "frame": 4,
+     "tick": 4421,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.15758772210511704
+    },
+    {
+     "frame": 5,
+     "tick": 4430,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.02185787131436908
+    },
+    {
+     "frame": 6,
+     "tick": 4439,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0
+    },
+    {
+     "frame": 7,
+     "tick": 4448,
+     "ball": "SHOT_IN_FLIGHT",
+     "maxPlayerDiffM": 0
+    },
+    {
+     "frame": 8,
+     "tick": 4457,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.006944247112318966
+    },
+    {
+     "frame": 9,
+     "tick": 4467,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.43700470588655854
+    },
+    {
+     "frame": 10,
+     "tick": 4476,
+     "ball": "DEAD",
+     "maxPlayerDiffM": 0.4469530890239959
+    },
+    {
+     "frame": 11,
+     "tick": 4485,
+     "ball": "INBOUND",
+     "maxPlayerDiffM": 0.2421337169794044
+    }
+   ]
+  }
+ }
+}

@@ -5,6 +5,10 @@ import type { MovementIntent } from '../movement/MovementIntent'
 import { activePossession, type MatchPlayerState, type MatchState, type ScreenCoverage, type ScreenState } from '../state'
 import { attackingBasketForTeam } from '../structure/FiveOutStructure'
 import { guardPosition } from '../defense/ManDefense'
+import { tuning } from '../tuning'
+import { assessScreenContact, updateScreenContactTrack } from '../contact/ContactModel'
+import { commitFoul } from '../rules/Fouls'
+import { draw } from '../rng'
 
 /** Ticks a screener may take to arrive before the ball screen is abandoned. */
 const SCREEN_APPROACH_TIMEOUT_TICKS = 40
@@ -16,6 +20,8 @@ const SCREEN_CONTACT_WINDOW_TICKS = 14
 /** The screener holds his position until the handler has moved this far past him toward the basket. */
 const SCREEN_CLEAR_PROGRESS_METERS = 0.6
 const SCREEN_MAX_HOLD_TICKS = 10
+/** The referee judges the screen this long after the handler used it (the defender has met, or missed, the screener). */
+const SCREEN_JUDGE_AFTER_TICKS = 9
 /** Ball screens are set where the handler can attack from: not in the paint and not too far from the basket. */
 const SCREEN_MIN_HANDLER_DISTANCE_METERS = 6
 const SCREEN_MAX_HANDLER_DISTANCE_METERS = 13
@@ -26,7 +32,6 @@ const SCREENER_MAX_DISTANCE_METERS = 10
 export const SCREEN_MIN_SECONDS_LEFT = 8
 const MAX_SCREENS_PER_POSSESSION = 2
 /** Value of a ball screen before player quality: the advantage a well-set screen is expected to create, plus the option value of keeping every read (drive, pull-up, roll pass) open after it. */
-const SCREEN_BASE_VALUE_POINTS = 1.25
 
 export interface ScreenPlan {
   readonly screenerId: PlayerId
@@ -106,7 +111,7 @@ export function planScreen(state: MatchState, handler: MatchPlayerState, basket:
     const threat = rollThreat(screener)
     const popThreat = screener.offense.shooting
     const coveragePenalty = coverage === 'switch' ? 0.14 : coverage === 'blitz' ? 0.04 : 0
-    const value = SCREEN_BASE_VALUE_POINTS + 0.3 * (handler.offense.creation - 50) / 50 + 0.2 * (Math.max(threat, popThreat) - 50) / 50
+    const value = tuning().screenBaseValuePoints + 0.3 * (handler.offense.creation - 50) / 50 + 0.2 * (Math.max(threat, popThreat) - 50) / 50
       - coveragePenalty - distance * 0.008
     if (best === null || value > best.value) {
       best = {
@@ -202,6 +207,25 @@ export function reconcileScreen(input: MatchState): MatchState {
     state = drive(state, current.screenerId, current.location, 'walk', 'action')
   }
   state = applyCoverage(state, current, handler, screener, handlerDefender, screenerDefender, basket)
+  // A moving screen is illegal: track the closest approach of the defender and judge it once, after the contact.
+  if (sinceUse <= SCREEN_CONTACT_WINDOW_TICKS) {
+    const track = updateScreenContactTrack(current.contact, screener, handlerDefender, state.t)
+    state = { ...state, screen: { ...state.screen!, contact: track } }
+    if (current.contactAssessed !== true && sinceUse >= SCREEN_JUDGE_AFTER_TICKS) {
+      const assessment = assessScreenContact(screener, handlerDefender, track)
+      state = { ...state, screen: { ...state.screen!, contactAssessed: true } }
+      if (assessment.severity >= 0.12) state = emitEvent(state, 'contact', { playerId: screener.playerId, victimPlayerId: handlerDefender.playerId, contactKind: assessment.kind, severity: Number(assessment.severity.toFixed(3)), ...(assessment.foulType === null ? {} : { foulType: assessment.foulType }) })
+      if (assessment.foulType !== null && assessment.offenderId !== null && assessment.victimId !== null) {
+        const roll = draw(state.rng, 'outcome')
+        state = { ...state, rng: roll.state }
+        if (roll.value < assessment.callProbability) {
+          if (assessment.severity < 0.12) state = emitEvent(state, 'contact', { playerId: screener.playerId, victimPlayerId: handlerDefender.playerId, contactKind: assessment.kind, severity: Number(assessment.severity.toFixed(3)), foulType: assessment.foulType })
+          const outcome = commitFoul(state, { offenderId: assessment.offenderId, victimId: assessment.victimId, type: 'ILLEGAL_SCREEN', contact: assessment.kind, severity: assessment.severity, offensive: true })
+          if (outcome.record !== null) return outcome.state
+        }
+      }
+    }
+  }
   // The screener is a body: the handler's defender cannot walk through him. He has to go around, which costs him
   // ground on the handler. Under a drop he goes under (toward the basket); otherwise over the top (behind the screener).
   if (sinceUse <= SCREEN_CONTACT_WINDOW_TICKS && !current.switched && current.coverage !== 'blitz') {

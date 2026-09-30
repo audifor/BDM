@@ -1,0 +1,180 @@
+{
+  "seeds": [
+    424242,
+    7,
+    1,
+    99,
+    2024,
+    31337
+  ],
+  "result": {
+    "ballSecurity": {
+      "30": {
+        "homeTurnovers": 14,
+        "homeBadPassShare": 0.064,
+        "homeSteals": 9.5,
+        "homeBlocks": 3.833,
+        "homeFtPct": 0.802,
+        "homeFta": 11.667,
+        "homeFgPct": 0.388,
+        "homeOreb": 12.333,
+        "homeDreb": 46.833,
+        "homePoints": 111.5,
+        "awayTurnovers": 15.833
+      },
+      "80": {
+        "homeTurnovers": 11.667,
+        "homeBadPassShare": 0.056,
+        "homeSteals": 7.5,
+        "homeBlocks": 4,
+        "homeFtPct": 0.846,
+        "homeFta": 15.833,
+        "homeFgPct": 0.374,
+        "homeOreb": 14.167,
+        "homeDreb": 48.667,
+        "homePoints": 115.833,
+        "awayTurnovers": 13.833
+      }
+    },
+    "interiorDefense": {
+      "30": {
+        "homeTurnovers": 16,
+        "homeBadPassShare": 0.063,
+        "homeSteals": 6.833,
+        "homeBlocks": 4.333,
+        "homeFtPct": 0.846,
+        "homeFta": 8,
+        "homeFgPct": 0.385,
+        "homeOreb": 12.167,
+        "homeDreb": 41.5,
+        "homePoints": 108.5,
+        "awayTurnovers": 13.5
+      },
+      "80": {
+        "homeTurnovers": 17,
+        "homeBadPassShare": 0.071,
+        "homeSteals": 6.333,
+        "homeBlocks": 3.333,
+        "homeFtPct": 0.812,
+        "homeFta": 14.167,
+        "homeFgPct": 0.392,
+        "homeOreb": 12.833,
+        "homeDreb": 48.167,
+        "homePoints": 114,
+        "awayTurnovers": 12.833
+      }
+    },
+    "passing": {
+      "30": {
+        "homeTurnovers": 15,
+        "homeBadPassShare": 0.09,
+        "homeSteals": 7,
+        "homeBlocks": 3,
+        "homeFtPct": 0.788,
+        "homeFta": 10.5,
+        "homeFgPct": 0.407,
+        "homeOreb": 12,
+        "homeDreb": 47.333,
+        "homePoints": 112.5,
+        "awayTurnovers": 12.167
+      },
+      "80": {
+        "homeTurnovers": 16.667,
+        "homeBadPassShare": 0.06,
+        "homeSteals": 9.333,
+        "homeBlocks": 4.167,
+        "homeFtPct": 0.788,
+        "homeFta": 11,
+        "homeFgPct": 0.417,
+        "homeOreb": 11.667,
+        "homeDreb": 50,
+        "homePoints": 117,
+        "awayTurnovers": 14.833
+      }
+    },
+    "rebounding": {
+      "30": {
+        "homeTurnovers": 14.167,
+        "homeBadPassShare": 0.07,
+        "homeSteals": 7,
+        "homeBlocks": 4,
+        "homeFtPct": 0.843,
+        "homeFta": 13.167,
+        "homeFgPct": 0.398,
+        "homeOreb": 11.333,
+        "homeDreb": 46.667,
+        "homePoints": 112.667,
+        "awayTurnovers": 14.333
+      },
+      "80": {
+        "homeTurnovers": 17.333,
+        "homeBadPassShare": 0.072,
+        "homeSteals": 9.667,
+        "homeBlocks": 4.833,
+        "homeFtPct": 0.863,
+        "homeFta": 12.167,
+        "homeFgPct": 0.42,
+        "homeOreb": 9.167,
+        "homeDreb": 46.5,
+        "homePoints": 115.833,
+        "awayTurnovers": 17.833
+      }
+    },
+    "shooting": {
+      "30": {
+        "homeTurnovers": 16.667,
+        "homeBadPassShare": 0.058,
+        "homeSteals": 5.667,
+        "homeBlocks": 3.5,
+        "homeFtPct": 0.652,
+        "homeFta": 19.167,
+        "homeFgPct": 0.279,
+        "homeOreb": 16.167,
+        "homeDreb": 47.167,
+        "homePoints": 71.5,
+        "awayTurnovers": 10.333
+      },
+      "80": {
+        "homeTurnovers": 14.667,
+        "homeBadPassShare": 0.07,
+        "homeSteals": 8.833,
+        "homeBlocks": 4.167,
+        "homeFtPct": 0.921,
+        "homeFta": 9.667,
+        "homeFgPct": 0.417,
+        "homeOreb": 10.167,
+        "homeDreb": 49.833,
+        "homePoints": 124.667,
+        "awayTurnovers": 13.833
+      }
+    },
+    "stealRating": {
+      "30": {
+        "homeTurnovers": 14,
+        "homeBadPassShare": 0.057,
+        "homeSteals": 6.5,
+        "homeBlocks": 3.667,
+        "homeFtPct": 0.8,
+        "homeFta": 10.667,
+        "homeFgPct": 0.376,
+        "homeOreb": 12,
+        "homeDreb": 46.667,
+        "homePoints": 109.5,
+        "awayTurnovers": 12.667
+      },
+      "80": {
+        "homeTurnovers": 17.167,
+        "homeBadPassShare": 0.065,
+        "homeSteals": 11,
+        "homeBlocks": 4,
+        "homeFtPct": 0.781,
+        "homeFta": 14.833,
+        "homeFgPct": 0.389,
+        "homeOreb": 12.333,
+        "homeDreb": 52.5,
+        "homePoints": 113,
+        "awayTurnovers": 17.5
+      }
+    }
+  }
+}

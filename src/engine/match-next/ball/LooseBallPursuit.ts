@@ -1,6 +1,7 @@
 import { distanceBetween } from '@/domain/court'
 import { BALL_ACQUISITION_RADIUS_METERS } from './BallState'
 import { recoverLooseBall } from './BallTransitions'
+import { judgeBallContestContact } from '../contact/BallContestFouls'
 import { activePossession, type MatchState } from '../state'
 import type { PlayerResponsibility, StructuralDecision } from '../responsibility/Responsibility'
 import type { MovementIntent } from '../movement/MovementIntent'
@@ -54,7 +55,10 @@ export function securePhysicalLooseBall(state: MatchState): MatchState {
     && distanceBetween(player.position, state.ball.position) <= BALL_ACQUISITION_RADIUS_METERS)
     .sort((a, b) => distanceBetween(a.position, state.ball.position) - distanceBetween(b.position, state.ball.position)
       || String(a.playerId).localeCompare(String(b.playerId)))
-  return eligible[0] ? recoverLooseBall(state, eligible[0].playerId) : state
+  if (!eligible[0]) return state
+  const judged = judgeBallContestContact(state, eligible[0], 'LOOSE_BALL')
+  if (judged.fouled) return judged.state
+  return recoverLooseBall(judged.state, eligible[0].playerId)
 }
 
 function clearPursuit(state: MatchState): MatchState {

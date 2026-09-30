@@ -112,11 +112,15 @@ describe('MatchEnginePort integration', () => {
     expect(live.matchState.ball).toMatchObject({ kind: 'DEAD', reason: 'madeBasket' })
     expect(live.matchState.clock).toEqual({ gameRunning: true, shotRunning: false })
     expect(decideRotationSubstitutions(live.matchState)).toEqual([])
-    for (let tick = 0; tick < 500 && !live.matchState.events.some((event) => event.type === 'inboundReleased'); tick += 1) live.advanceOneStep()
+    // The throw-in that follows THIS basket (an earlier foul or turnover may already have produced one).
+    const madeAt = live.matchState.events.find((event) => event.type === 'ballDead' && event.ballReason === 'madeBasket')!.t
+    const afterBasket = (event: { readonly type: string; readonly t: number }): boolean => event.type === 'inboundReleased' && event.t >= madeAt
+    for (let tick = 0; tick < 500 && !live.matchState.events.some(afterBasket); tick += 1) live.advanceOneStep()
     expect(live.matchState.clock.gameRunning).toBe(true)
-    const inboundRelease = live.matchState.events.find((event) => event.type === 'inboundReleased')!
-    for (let tick = 0; tick < 30 && !live.matchState.events.some((event) => event.type === 'passReceived' && event.receiverPlayerId === inboundRelease.receiverPlayerId); tick += 1) live.advanceOneStep()
-    expect(live.matchState.events.some((event) => event.type === 'passReceived' && event.receiverPlayerId === inboundRelease.receiverPlayerId)).toBe(true)
+    const inboundRelease = live.matchState.events.find(afterBasket)!
+    const received = (event: { readonly type: string; readonly t: number; readonly receiverPlayerId?: unknown }): boolean => event.type === 'passReceived' && event.t >= inboundRelease.t && event.receiverPlayerId === inboundRelease.receiverPlayerId
+    for (let tick = 0; tick < 30 && !live.matchState.events.some(received); tick += 1) live.advanceOneStep()
+    expect(live.matchState.events.some(received)).toBe(true)
     expect(live.matchState.clock).toEqual({ gameRunning: true, shotRunning: true })
   })
 
@@ -130,11 +134,15 @@ describe('MatchEnginePort integration', () => {
 
     expect(live.matchState.ball).toMatchObject({ kind: 'DEAD', reason: 'madeBasket' })
     expect(live.matchState.clock).toEqual({ gameRunning: false, shotRunning: false })
-    for (let tick = 0; tick < 500 && !live.matchState.events.some((event) => event.type === 'inboundReleased'); tick += 1) live.advanceOneStep()
+    // The throw-in that follows THIS basket (an earlier foul or turnover may already have produced one).
+    const madeAt = live.matchState.events.find((event) => event.type === 'ballDead' && event.ballReason === 'madeBasket')!.t
+    const afterBasket = (event: { readonly type: string; readonly t: number }): boolean => event.type === 'inboundReleased' && event.t >= madeAt
+    for (let tick = 0; tick < 500 && !live.matchState.events.some(afterBasket); tick += 1) live.advanceOneStep()
     expect(live.matchState.clock.gameRunning).toBe(false)
-    const inboundRelease = live.matchState.events.find((event) => event.type === 'inboundReleased')!
-    for (let tick = 0; tick < 30 && !live.matchState.events.some((event) => event.type === 'passReceived' && event.receiverPlayerId === inboundRelease.receiverPlayerId); tick += 1) live.advanceOneStep()
-    expect(live.matchState.events.some((event) => event.type === 'passReceived' && event.receiverPlayerId === inboundRelease.receiverPlayerId)).toBe(true)
+    const inboundRelease = live.matchState.events.find(afterBasket)!
+    const received = (event: { readonly type: string; readonly t: number; readonly receiverPlayerId?: unknown }): boolean => event.type === 'passReceived' && event.t >= inboundRelease.t && event.receiverPlayerId === inboundRelease.receiverPlayerId
+    for (let tick = 0; tick < 30 && !live.matchState.events.some(received); tick += 1) live.advanceOneStep()
+    expect(live.matchState.events.some(received)).toBe(true)
     expect(live.matchState.clock).toEqual({ gameRunning: true, shotRunning: true })
   })
 

@@ -11,6 +11,7 @@
 
 import Phaser from 'phaser'
 import type { PlayerId } from '@/domain/ids'
+import type { MatchNextEvent } from '@/engine/match-next'
 import { MatchCamera, type CameraMode } from './camera'
 import type { NextRenderFrame } from './NextPresentationDirector'
 import type { NextCourt, NextPlayer, Pt } from './types'
@@ -34,6 +35,30 @@ const SCREEN_COLOR = 0xfacc15
 const MOVE_CUT_COLOR = 0xf97316
 const MOVE_DRIFT_COLOR = 0x22d3ee
 
+/** BT3 incident markers (contact, fouls, free throws, blocks, steals, out of bounds). They only repeat what an engine event says. */
+const INCIDENT_LIFETIME_MS = 1800
+const INCIDENT_STYLE: Readonly<Partial<Record<MatchNextEvent['type'], { readonly label: (event: MatchNextEvent) => string; readonly color: number }>>> = {
+  foul: { label: (e) => `FOUL ${(e.foulType ?? '').toLowerCase().replace('_', ' ')}`, color: 0xef4444 },
+  shotBlocked: { label: () => 'BLOCK', color: 0x22d3ee },
+  steal: { label: (e) => `STEAL ${(e.stealKind ?? '').toLowerCase().replace('_', ' ')}`, color: 0x4ade80 },
+  deflection: { label: () => 'DEFLECTION', color: 0x2dd4bf },
+  stealAttempt: { label: () => 'reach', color: 0x94a3b8 },
+  outOfBounds: { label: () => 'OUT OF BOUNDS', color: 0xfb923c },
+  turnover: { label: (e) => `TO ${(e.turnoverType ?? '').toLowerCase().replace('_', ' ')}`, color: 0xf472b6 },
+  freeThrowMade: { label: (e) => `FT ${e.freeThrowIndex ?? 1}/${e.freeThrowTotal ?? 1} good`, color: 0xfacc15 },
+  freeThrowMissed: { label: (e) => `FT ${e.freeThrowIndex ?? 1}/${e.freeThrowTotal ?? 1} miss`, color: 0xa3a3a3 },
+  freeThrowSequenceStarted: { label: (e) => `${e.freeThrowsAwarded ?? ''} FREE THROWS`, color: 0xfacc15 },
+  assist: { label: () => 'AST', color: 0x60a5fa },
+  contact: { label: (e) => (e.contactKind ?? 'contact').toLowerCase().replace('_', ' '), color: 0xe2e8f0 },
+}
+
+interface IncidentVisual {
+  readonly text: Phaser.GameObjects.Text
+  readonly ring: Phaser.GameObjects.Arc
+  readonly link: Phaser.GameObjects.Line | undefined
+  ageMs: number
+}
+
 const PLAYER_RADIUS_METERS = 0.45
 const BALL_RADIUS_PX = 6.5
 const LIFT_PX_PER_METER = 12
@@ -47,6 +72,8 @@ export interface NextSceneDebug {
   /** BT2 diagnostics: ball screen geometry and off-ball moves. */
   showScreens: boolean
   showMoves: boolean
+  /** BT3: labelled markers for contact, fouls, free throws, blocks, steals and out of bounds, and the dead-ball status line. */
+  showIncidents: boolean
 }
 
 export interface NextSceneIdentification {
@@ -78,13 +105,16 @@ export class PhaserNextScene extends Phaser.Scene {
   private ball: Phaser.GameObjects.Arc | undefined
   private ballShadow: Phaser.GameObjects.Ellipse | undefined
   private readonly visuals = new Map<string, PlayerVisual>()
+  private readonly incidents: IncidentVisual[] = []
+  private queuedEvents: { readonly event: MatchNextEvent; readonly at: ReadonlyMap<PlayerId, Pt>; readonly ball: Pt }[] = []
+  private statusText: Phaser.GameObjects.Text | undefined
   private readonly cameraModel = new MatchCamera()
   private provider: NextFrameProvider | undefined
   private lastFrame: NextRenderFrame | undefined
   private rendered: NextRenderedTruth | undefined
   private listener: ((frame: NextRenderFrame, rendered: NextRenderedTruth) => void) | undefined
 
-  public readonly debug: NextSceneDebug = { basketballTruth: false, showAssignments: false, showTargets: false, showFacing: false, showSlots: false, showScreens: false, showMoves: false }
+  public readonly debug: NextSceneDebug = { basketballTruth: false, showAssignments: false, showTargets: false, showFacing: false, showSlots: false, showScreens: false, showMoves: false, showIncidents: true }
   public readonly identification: NextSceneIdentification = { showJersey: true, showLabel: false, showAction: false }
 
   public constructor() {
@@ -93,6 +123,16 @@ export class PhaserNextScene extends Phaser.Scene {
 
   public setFrameProvider(provider: NextFrameProvider): void {
     this.provider = provider
+  }
+
+  /** Engine events that just reached the screen (the renderer hands them over exactly once, also when playback is stepped by hand). */
+  public queueEvents(events: readonly MatchNextEvent[], rendered: NextRenderFrame['rendered']): void {
+    // Positions are frozen when the event reaches the screen, so a marker sits where the action happened even if it is drawn later.
+    const at = new Map(rendered.players.map((player) => [player.playerId, { x: player.position.x, y: player.position.y }] as const))
+    const ball = { x: rendered.ball.position.x, y: rendered.ball.position.y }
+    // A seek replays the whole past into one frame: only what happened in the last 1.5 s is worth a marker.
+    for (const event of events) if (INCIDENT_STYLE[event.type] !== undefined && rendered.t - event.t <= 15) this.queuedEvents.push({ event, at, ball })
+    if (this.queuedEvents.length > 120) this.queuedEvents = this.queuedEvents.slice(-120)
   }
 
   public onFrame(listener: (frame: NextRenderFrame, rendered: NextRenderedTruth) => void): void {
@@ -126,6 +166,7 @@ export class PhaserNextScene extends Phaser.Scene {
     this.truthGraphics = this.add.graphics().setDepth(30)
     this.ballShadow = this.add.ellipse(0, 0, BALL_RADIUS_PX * 2, BALL_RADIUS_PX * 0.9, 0x000000, 0.4).setDepth(19)
     this.ball = this.add.circle(0, 0, BALL_RADIUS_PX, BALL_COLOR).setStrokeStyle(1.5, 0x431407, 1).setDepth(25)
+    this.statusText = this.add.text(12, 10, '', { fontFamily: 'monospace', fontSize: '13px', color: '#e2e8f0', backgroundColor: '#0b0f14cc', padding: { x: 6, y: 3 } }).setScrollFactor(0).setDepth(60).setResolution(2)
   }
 
   /** Phaser calls this once per frame: the single place where a frame is pulled and painted. */
@@ -161,7 +202,53 @@ export class PhaserNextScene extends Phaser.Scene {
     this.paintBall(frame)
     this.rendered = { players, ball: { x: r.ball.position.x, y: r.ball.position.y }, ballHeightMeters: r.ball.heightMeters }
     this.paintTruth(frame, this.rendered)
+    this.paintIncidents(frame, players, deltaMs)
     this.listener?.(frame, this.rendered)
+  }
+
+  /** BT3U: what the engine just decided (contact, whistle, free throw, block, steal, out of bounds) shown where it happened. */
+  private paintIncidents(frame: NextRenderFrame, players: ReadonlyMap<PlayerId, Pt>, deltaMs: number): void {
+    const ppm = PIXELS_PER_METER
+    const c = frame.canonical
+    const status = this.statusText
+    if (status !== undefined) {
+      const ft = c.freeThrow === undefined ? '' : ` | FT ${c.freeThrow.index}/${c.freeThrow.total} ${c.freeThrow.phase.toLowerCase()}`
+      // Screen-space HUD: undo the camera zoom so the line always sits in the top-left corner.
+      const camera = this.cameras.main
+      const zoom = camera.zoom || 1
+      status.setScale(1 / zoom).setPosition(camera.width / 2 - (camera.width / 2 - 12) / zoom, camera.height / 2 - (camera.height / 2 - 10) / zoom)
+      status.setVisible(this.debug.showIncidents).setText(`${c.playState.phase}${c.playState.cause === 'NONE' ? '' : ` (${c.playState.cause.toLowerCase()})`}${ft} | team fouls H ${c.teamFouls.home} A ${c.teamFouls.away}`)
+    }
+    for (let index = this.incidents.length - 1; index >= 0; index -= 1) {
+      const incident = this.incidents[index]!
+      incident.ageMs += deltaMs
+      const life = 1 - incident.ageMs / INCIDENT_LIFETIME_MS
+      if (life <= 0) {
+        incident.text.destroy(); incident.ring.destroy(); incident.link?.destroy()
+        this.incidents.splice(index, 1)
+        continue
+      }
+      incident.text.setAlpha(Math.min(1, life * 1.6)).y -= deltaMs * 0.012
+      incident.ring.setAlpha(life).setScale(1 + (1 - life) * 0.8)
+    }
+    const pending = this.queuedEvents
+    this.queuedEvents = []
+    if (!this.debug.showIncidents) return
+    for (const { event, at: frozen, ball: frozenBall } of pending) {
+      // Queued during a fast replay (a seek): by the time it is painted the moment has passed, so it is not shown.
+      if (frame.rendered.t - event.t > 15) continue
+      const style = INCIDENT_STYLE[event.type]
+      if (style === undefined) continue
+      const subject = event.playerId ?? event.shooterPlayerId
+      const at = (subject === undefined ? undefined : frozen.get(subject) ?? players.get(subject)) ?? frozenBall
+      const victim = event.victimPlayerId === undefined ? undefined : frozen.get(event.victimPlayerId) ?? players.get(event.victimPlayerId)
+      const x = at.x * ppm
+      const y = at.y * ppm
+      const ring = this.add.circle(x, y, PLAYER_RADIUS_METERS * ppm + 6).setStrokeStyle(event.type === 'contact' ? 1.5 : 3, style.color, 1).setFillStyle(style.color, 0).setDepth(40)
+      const text = this.add.text(x, y - PLAYER_RADIUS_METERS * ppm - 16, style.label(event), { fontFamily: 'monospace', fontSize: event.type === 'contact' ? '10px' : '12px', color: '#0b0f14', backgroundColor: `#${style.color.toString(16).padStart(6, '0')}`, padding: { x: 4, y: 1 } }).setOrigin(0.5).setDepth(41).setResolution(2)
+      const link = victim === undefined ? undefined : this.add.line(0, 0, x, y, victim.x * ppm, victim.y * ppm, style.color, 0.9).setOrigin(0, 0).setLineWidth(event.type === 'contact' ? 1.5 : 3).setDepth(39)
+      this.incidents.push({ text, ring, link, ageMs: 0 })
+    }
   }
 
   private ensureCourt(court: NextCourt): void {

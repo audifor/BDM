@@ -1,0 +1,359 @@
+[
+ {
+  "wallMs": 3368,
+  "tick": 4358,
+  "sequence": 2289,
+  "type": "actionResolved",
+  "detail": "G. Elian CLOSEOUT"
+ },
+ {
+  "wallMs": 3370,
+  "tick": 4359,
+  "sequence": 2290,
+  "type": "screenSet",
+  "detail": "A. Dain > B. Istra"
+ },
+ {
+  "wallMs": 3370,
+  "tick": 4359,
+  "sequence": 2291,
+  "type": "actionResolved",
+  "detail": "B. Istra SCREEN"
+ },
+ {
+  "wallMs": 3375,
+  "tick": 4361,
+  "sequence": 2294,
+  "type": "decisionSelected",
+  "detail": "B. Istra"
+ },
+ {
+  "wallMs": 3375,
+  "tick": 4361,
+  "sequence": 2295,
+  "type": "actionStarted",
+  "detail": "B. Istra DRIVE"
+ },
+ {
+  "wallMs": 3375,
+  "tick": 4361,
+  "sequence": 2296,
+  "type": "screenUsed",
+  "detail": "B. Istra > A. Dain"
+ },
+ {
+  "wallMs": 3380,
+  "tick": 4364,
+  "sequence": 2297,
+  "type": "offBallMove",
+  "detail": "A. Bexley DRIFT"
+ },
+ {
+  "wallMs": 3380,
+  "tick": 4364,
+  "sequence": 2298,
+  "type": "offBallMove",
+  "detail": "H. Corven DRIFT"
+ },
+ {
+  "wallMs": 3598,
+  "tick": 4375,
+  "sequence": 2302,
+  "type": "actionResolved",
+  "detail": "B. Istra DRIVE"
+ },
+ {
+  "wallMs": 3598,
+  "tick": 4375,
+  "sequence": 2303,
+  "type": "possessionPhaseChanged",
+  "detail": "- SETUP"
+ },
+ {
+  "wallMs": 3827,
+  "tick": 4378,
+  "sequence": 2307,
+  "type": "decisionSelected",
+  "detail": "B. Istra"
+ },
+ {
+  "wallMs": 3827,
+  "tick": 4378,
+  "sequence": 2308,
+  "type": "actionStarted",
+  "detail": "B. Istra KICK_OUT"
+ },
+ {
+  "wallMs": 3827,
+  "tick": 4378,
+  "sequence": 2309,
+  "type": "possessionPhaseChanged",
+  "detail": "- ACTION"
+ },
+ {
+  "wallMs": 3827,
+  "tick": 4378,
+  "sequence": 2310,
+  "type": "passReleased",
+  "detail": "B. Istra > A. Dain"
+ },
+ {
+  "wallMs": 3831,
+  "tick": 4380,
+  "sequence": 2311,
+  "type": "passReceived",
+  "detail": "A. Dain > A. Dain"
+ },
+ {
+  "wallMs": 3831,
+  "tick": 4380,
+  "sequence": 2314,
+  "type": "actionResolved",
+  "detail": "B. Istra KICK_OUT"
+ },
+ {
+  "wallMs": 3831,
+  "tick": 4380,
+  "sequence": 2315,
+  "type": "actionStarted",
+  "detail": "G. Elian CLOSEOUT"
+ },
+ {
+  "wallMs": 3831,
+  "tick": 4380,
+  "sequence": 2316,
+  "type": "actionResolved",
+  "detail": "G. Elian CLOSEOUT"
+ },
+ {
+  "wallMs": 3839,
+  "tick": 4384,
+  "sequence": 2317,
+  "type": "decisionSelected",
+  "detail": "A. Dain"
+ },
+ {
+  "wallMs": 3839,
+  "tick": 4384,
+  "sequence": 2318,
+  "type": "actionStarted",
+  "detail": "A. Dain CATCH_AND_SHOOT"
+ },
+ {
+  "wallMs": 3847,
+  "tick": 4388,
+  "sequence": 2319,
+  "type": "contact",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 3847,
+  "tick": 4388,
+  "sequence": 2320,
+  "type": "possessionPhaseChanged",
+  "detail": "- SHOT"
+ },
+ {
+  "wallMs": 3847,
+  "tick": 4388,
+  "sequence": 2321,
+  "type": "shotReleased",
+  "detail": "A. Dain +2"
+ },
+ {
+  "wallMs": 3847,
+  "tick": 4388,
+  "sequence": 2322,
+  "type": "foul",
+  "detail": "H. Grove"
+ },
+ {
+  "wallMs": 3847,
+  "tick": 4388,
+  "sequence": 2323,
+  "type": "screenEnded",
+  "detail": "A. Dain > B. Istra exit"
+ },
+ {
+  "wallMs": 4098,
+  "tick": 4394,
+  "sequence": 2324,
+  "type": "shotMissed",
+  "detail": "A. Dain"
+ },
+ {
+  "wallMs": 4098,
+  "tick": 4394,
+  "sequence": 2325,
+  "type": "ballDead",
+  "detail": "- foul"
+ },
+ {
+  "wallMs": 4098,
+  "tick": 4394,
+  "sequence": 2326,
+  "type": "freeThrowSequenceStarted",
+  "detail": "A. Dain"
+ },
+ {
+  "wallMs": 4098,
+  "tick": 4394,
+  "sequence": 2327,
+  "type": "actionResolved",
+  "detail": "A. Dain CATCH_AND_SHOOT"
+ },
+ {
+  "wallMs": 4098,
+  "tick": 4394,
+  "sequence": 2328,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 4100,
+  "tick": 4395,
+  "sequence": 2329,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 4102,
+  "tick": 4396,
+  "sequence": 2330,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 4590,
+  "tick": 4423,
+  "sequence": 2331,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 5026,
+  "tick": 4438,
+  "sequence": 2332,
+  "type": "freeThrowMade",
+  "detail": "A. Dain +1"
+ },
+ {
+  "wallMs": 5251,
+  "tick": 4453,
+  "sequence": 2333,
+  "type": "freeThrowMade",
+  "detail": "A. Dain +1"
+ },
+ {
+  "wallMs": 5251,
+  "tick": 4453,
+  "sequence": 2334,
+  "type": "possessionEnd",
+  "detail": "-"
+ },
+ {
+  "wallMs": 5251,
+  "tick": 4453,
+  "sequence": 2335,
+  "type": "ballDead",
+  "detail": "- madeBasket"
+ },
+ {
+  "wallMs": 5251,
+  "tick": 4453,
+  "sequence": 2336,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 5253,
+  "tick": 4454,
+  "sequence": 2337,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 5255,
+  "tick": 4455,
+  "sequence": 2338,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 5696,
+  "tick": 4485,
+  "sequence": 2339,
+  "type": "possessionStart",
+  "detail": "- INBOUND"
+ },
+ {
+  "wallMs": 5696,
+  "tick": 4485,
+  "sequence": 2340,
+  "type": "inboundStarted",
+  "detail": "A. Bexley INBOUND"
+ },
+ {
+  "wallMs": 5696,
+  "tick": 4485,
+  "sequence": 2341,
+  "type": "defensiveAssignmentsEstablished",
+  "detail": "-"
+ },
+ {
+  "wallMs": 5696,
+  "tick": 4485,
+  "sequence": 2342,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 5925,
+  "tick": 4489,
+  "sequence": 2343,
+  "type": "inboundReleased",
+  "detail": "A. Bexley > H. Grove"
+ },
+ {
+  "wallMs": 5925,
+  "tick": 4489,
+  "sequence": 2344,
+  "type": "passReleased",
+  "detail": "A. Bexley > H. Grove"
+ },
+ {
+  "wallMs": 5925,
+  "tick": 4489,
+  "sequence": 2345,
+  "type": "playStateChanged",
+  "detail": "-"
+ },
+ {
+  "wallMs": 5932,
+  "tick": 4492,
+  "sequence": 2346,
+  "type": "passReceived",
+  "detail": "H. Grove > H. Grove"
+ },
+ {
+  "wallMs": 5932,
+  "tick": 4492,
+  "sequence": 2347,
+  "type": "possessionPhaseChanged",
+  "detail": "- ADVANCE"
+ },
+ {
+  "wallMs": 5932,
+  "tick": 4492,
+  "sequence": 2353,
+  "type": "transitionStarted",
+  "detail": "- madeBasketInbound"
+ },
+ {
+  "wallMs": 5932,
+  "tick": 4492,
+  "sequence": 2354,
+  "type": "playStateChanged",
+  "detail": "-"
+ }
+]
