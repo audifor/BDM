@@ -10,6 +10,7 @@ import { clearPlayerFromLineup } from '@/domain/tactics'
 import { responsibilityIdForTeam } from '@/domain/responsibility'
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { deserializeGameWorldV3, serializeGameWorldV3 } from '@/save/GameWorldSaveV3'
+import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { completeAcceptedFreeAgentSigning, completeAiAcceptedFreeAgentSignings } from './FreeAgentSigningService'
 
 function fixture(input: { readonly status?: 'OPEN' | 'ACCEPTED'; readonly role?: NegotiationRole; readonly agentFee?: number; readonly teamId?: string } = {}) {
@@ -180,6 +181,10 @@ describe('completeAcceptedFreeAgentSigning', () => {
     const loaded = deserializeGameWorldV3(serializeGameWorldV3(signed.world, '2032-10-01T00:00:00.000Z'))
     expect(loaded.negotiationsById[setup.negotiation.id]).toEqual(signed.negotiation)
     expect(loaded.contractsById[signed.contractId as never]).toEqual(signed.world.contractsById[signed.contractId as never])
+    const currentSave = deserializeGameWorldV4(serializeGameWorldV4(signed.world, '2032-10-01T00:00:00.000Z'))
+    expect(currentSave.negotiationsById[setup.negotiation.id]).toEqual(signed.negotiation)
+    expect(currentSave.contractsById[signed.contractId as never]).toEqual(signed.world.contractsById[signed.contractId as never])
+    expect(Object.values(currentSave.playerTransactionsById).filter((entry) => entry.kind === 'signedFreeAgent' && entry.contractId === signed.contractId)).toHaveLength(1)
   })
 
   it('keeps user agreements out of the AI signing checkpoint', () => {

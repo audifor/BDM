@@ -7,6 +7,7 @@ import { staffPersonIdFromString, teamStaffAssignmentIdFromString } from '@/doma
 import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { addDays } from '@/domain/date'
 import { serializeGameWorldV3, deserializeGameWorldV3 } from '@/save/GameWorldSaveV3'
+import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { serializeGameWorldV2 } from '@/save/GameWorldSaveV2'
 import { getUserTeam } from '@/engine/calendar'
 import { proposeTradeNegotiation, respondToTradeNegotiation } from './TradeNegotiationService'
@@ -100,6 +101,11 @@ describe('trade Governance and atomic execution', () => {
     expect(Object.values(done.world.governanceDecisionEventsById).filter((event) => event.kind === 'EXECUTED')).toHaveLength(2)
     expect(Object.values(done.world.playerTransactionsById).filter((transaction) => transaction.kind === 'traded')).toEqual(expect.arrayContaining([expect.objectContaining({ sourceTradeId: done.world.tradeNegotiationsById[f.negotiation.id]!.tradeRecordId })]))
     expect(deserializeGameWorldV3(serializeGameWorldV3(done.world, '2032-10-01T00:00:00.000Z')).tradeNegotiationsById[f.negotiation.id]).toMatchObject({ status: 'EXECUTED', tradeRecordId: done.world.tradeNegotiationsById[f.negotiation.id]!.tradeRecordId })
+    const currentSave = deserializeGameWorldV4(serializeGameWorldV4(done.world, '2032-10-01T00:00:00.000Z'))
+    expect(currentSave.tradeNegotiationsById[f.negotiation.id]).toEqual(done.world.tradeNegotiationsById[f.negotiation.id])
+    expect(currentSave.governanceDecisionsById[started.userDecisionId]).toEqual(done.world.governanceDecisionsById[started.userDecisionId])
+    expect(Object.values(currentSave.governanceDecisionEventsById).filter((event) => event.kind === 'EXECUTED')).toHaveLength(2)
+    expect(Object.values(currentSave.tradeHistoryById)).toHaveLength(Object.keys(f.world.tradeHistoryById).length + 1)
     expect(() => serializeGameWorldV2(done.world, '2032-10-01T00:00:00.000Z')).toThrow('Executed trade negotiations require Save V3 Governance state')
     expect(completeAgreedTrade(done.world, { negotiationId: f.negotiation.id, expectedRevisionId: f.negotiation.currentRevisionId })).toMatchObject({ status: 'ALREADY_EXECUTED', world: done.world })
     expect(respondToTradeNegotiation(done.world, { negotiationId: f.negotiation.id, expectedRevisionId: f.negotiation.currentRevisionId, teamId: f.userTeam.id, actor: { kind: 'USER' }, action: 'WITHDRAW' }).status).toBe('CONFLICT')
