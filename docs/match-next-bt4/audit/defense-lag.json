@@ -1,0 +1,89 @@
+{
+  "frames": 23875,
+  "meanDistanceToMan": 3.33,
+  "meanDistanceToOwnTarget": 3.13,
+  "meanTargetToMan": 3.29,
+  "meanSpeed": 2.68,
+  "shareWithin1_5mOfMan": 0.303,
+  "shareBeyond3mOfMan": 0.456,
+  "byUrgency": {
+    "run": {
+      "share": 0.229,
+      "toMan": 3.13
+    },
+    "sprint": {
+      "share": 0.467,
+      "toMan": 3.92
+    },
+    "jog": {
+      "share": 0.304,
+      "toMan": 2.57
+    }
+  },
+  "byRelation": {
+    "ON_BALL": {
+      "share": 0.2,
+      "toMan": 1.62,
+      "targetToMan": 1.05
+    },
+    "ONE_PASS_AWAY": {
+      "share": 0.758,
+      "toMan": 3.67,
+      "targetToMan": 3.78
+    },
+    "ASSIGNED": {
+      "share": 0.042,
+      "toMan": 5.22,
+      "targetToMan": 5.22
+    },
+    "TWO_PLUS_PASSES_AWAY": {
+      "share": 0,
+      "toMan": 8.7,
+      "targetToMan": 8.27
+    }
+  },
+  "byKind": {
+    "ON_BALL": {
+      "share": 0.2,
+      "toMan": 1.62,
+      "targetToMan": 1.05,
+      "speed": 1.21
+    },
+    "GAP": {
+      "share": 0.758,
+      "toMan": 3.67,
+      "targetToMan": 3.78,
+      "speed": 3.07
+    },
+    "RECOVER": {
+      "share": 0.017,
+      "toMan": 5.91,
+      "targetToMan": 2.95,
+      "speed": 3.07
+    },
+    "ROTATE": {
+      "share": 0.009,
+      "toMan": 5.88,
+      "targetToMan": 7.42,
+      "speed": 1.95
+    },
+    "X_OUT": {
+      "share": 0.009,
+      "toMan": 3.83,
+      "targetToMan": 5.85,
+      "speed": 2.58
+    },
+    "LOW_MAN": {
+      "share": 0.009,
+      "toMan": 4.59,
+      "targetToMan": 6.87,
+      "speed": 2.39
+    },
+    "HELP": {
+      "share": 0,
+      "toMan": 8.7,
+      "targetToMan": 8.27,
+      "speed": 3.64
+    }
+  }
+}

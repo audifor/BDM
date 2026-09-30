@@ -9,7 +9,7 @@ import { activePossession, type MatchPlayerState, type MatchState } from '../sta
 import { nearestSidelineSpot } from '../ball/BallGeometry'
 
 /** Per-tick chance that an on-ball defender within reach of the dribble goes for the ball, before exposure and skill. */
-const STEAL_ATTEMPT_RATE_PER_TICK = 0.0075
+const STEAL_ATTEMPT_RATE_PER_TICK = 0.009
 /** The defender's hands reach the ball only inside this distance. */
 const STEAL_REACH_METERS = 1.15
 /** Per-tick chance a handler under contact pressure loses the handle on his own, before ball security. */

@@ -118,11 +118,13 @@ describe('Match Next rebound and transition integration', () => {
     let outletPass: MatchState['actions'][number] | undefined
     for (let index = 0; index < 150 && !outletPass; index += 1) {
       state = tick(state)
+      // The outlet is thrown, and passes can be thrown badly (BT2): it is the throw that must happen, not its success.
       outletPass = state.actions.find((action) => action.startedT >= transitionStartedT
-        && action.kind === 'PASS' && action.status === 'COMPLETED' && action.outcome === 'CAUGHT')
+        && action.kind === 'PASS' && action.status === 'COMPLETED')
     }
     expect(outletPass).toBeDefined()
-    expect(state.events.some((event) => event.type === 'passReceived' && event.receiverPlayerId === outletPass?.targetPlayerId)).toBe(true)
+    if (outletPass?.outcome === 'CAUGHT') expect(state.events.some((event) => event.type === 'passReceived' && event.receiverPlayerId === outletPass?.targetPlayerId)).toBe(true)
+    else expect(outletPass?.outcome).toBe('BAD_PASS')
   })
 
   it('lets an eligible offensive crash continue the same possession through the existing reset authority', () => {
@@ -166,8 +168,10 @@ describe('Match Next rebound and transition integration', () => {
     const ballAdvance = state.transition!.roles.find((role) => role.kind === 'BALL_ADVANCE')!
     const stopBall = state.transition!.roles.find((role) => role.kind === 'STOP_BALL')!
     expect(stopBall.playerId).toBe(state.defensiveStructure?.onBallDefenderPlayerId)
-    expect(state.movementIntents.find((intent) => intent.playerId === ballAdvance.playerId)?.urgency).toBe('run')
-    expect(state.movementIntents.find((intent) => intent.playerId === state.transition!.roles.find((role) => role.kind === 'LANE_LEFT')!.playerId)?.urgency).toBe('sprint')
+    // BT4A: a numbers advantage pushes (handler runs, lanes sprint); without one the team brings the ball up in control.
+    const pushing = state.transition!.advantage === 'ADVANTAGE'
+    expect(state.movementIntents.find((intent) => intent.playerId === ballAdvance.playerId)?.urgency).toBe(pushing ? 'run' : 'jog')
+    expect(state.movementIntents.find((intent) => intent.playerId === state.transition!.roles.find((role) => role.kind === 'LANE_LEFT')!.playerId)?.urgency).toBe(pushing ? 'sprint' : 'run')
     expect(ballAdvance.target.x).toBeLessThan(state.players.find((player) => player.playerId === ballAdvance.playerId)!.position.x)
     expect(state.players.map(({ playerId, position }) => ({ playerId, position }))).toEqual(originalPositions)
 

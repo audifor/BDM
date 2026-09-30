@@ -49,6 +49,8 @@ const INCIDENT_STYLE: Readonly<Partial<Record<MatchNextEvent['type'], { readonly
   freeThrowMissed: { label: (e) => `FT ${e.freeThrowIndex ?? 1}/${e.freeThrowTotal ?? 1} miss`, color: 0xa3a3a3 },
   freeThrowSequenceStarted: { label: (e) => `${e.freeThrowsAwarded ?? ''} FREE THROWS`, color: 0xfacc15 },
   assist: { label: () => 'AST', color: 0x60a5fa },
+  // BT4Z: what created the shot and where it came from (labels the engine derived, not chosen by the presentation).
+  shotReleased: { label: (e) => `${(e.shotCreation ?? 'shot').toLowerCase().replace(/_/g, ' ')} | ${(e.shotZone ?? '').toLowerCase().replace(/_/g, ' ')}`, color: 0xc4b5fd },
   contact: { label: (e) => (e.contactKind ?? 'contact').toLowerCase().replace('_', ' '), color: 0xe2e8f0 },
 }
 

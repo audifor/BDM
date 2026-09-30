@@ -17,6 +17,7 @@ import { applyCoachSubstitutions, type CoachSubstitutionProposal } from './coach
 import { reconcileFreeThrows } from './rules/FreeThrows'
 import { advancePlayState } from './rules/PlayState'
 import { reconcileOnBallPressure, reconcileSteppedOut } from './defense/StealModel'
+import { reconcileEpisodeContacts } from './contact/EpisodeContact'
 import { resetTeamFoulsForPeriod } from './rules/Fouls'
 
 export type MatchNextCommand =
@@ -76,6 +77,7 @@ function tickCore(state: MatchState): MatchState {
   next = reconcileFreeThrows(next)
   next = reconcileOnBallPressure(next)
   next = reconcileSteppedOut(next)
+  next = reconcileEpisodeContacts(next)
 
   const shotClockExpired = state.clock.shotRunning && state.shotClockTenths !== null && state.shotClockTenths > 0 && shotClockTenths === 0
   const expiredAtPriorTick = state.clock.shotRunning && state.shotClockTenths === 0

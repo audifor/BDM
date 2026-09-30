@@ -7,7 +7,7 @@ import type { MatchPlayerState } from '../state'
 export const BLOCK_MAX_HORIZONTAL_METERS = 1.4
 
 /** Per-attempt base rate of a perfectly placed, perfectly timed block by zone. Rim attempts are the only ones really blockable. */
-const BLOCK_BASE_RATE = Object.freeze({ rim: 0.32, paint: 0.16, mid: 0.05, three: 0.012 })
+const BLOCK_BASE_RATE = Object.freeze({ rim: 0.55, paint: 0.25, mid: 0.06, three: 0.012 })
 
 export interface BlockAssessment {
   readonly blockerId: PlayerId

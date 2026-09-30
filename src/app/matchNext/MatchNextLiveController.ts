@@ -66,8 +66,12 @@ export class MatchNextLiveController {
     // The dead ball is carried to the restart spot first: the throw-in never starts with the ball somewhere else.
     const ball = this.state.ball
     if (ball.kind === 'DEAD' && ball.restartSpot !== undefined && distanceBetween(ball.position, ball.restartSpot) > 0.6) return false
+    // Only the restart formation counts: an unrelated intent that happens to sit under the player must not release the throw-in.
+    const ids = new Set(pending.responsibilityIds)
+    const inbounder = this.state.players.find((player) => player.playerId === pending.inbounderPlayerId)
+    if (inbounder === undefined || !inbounder.active || distanceBetween(inbounder.position, pending.spot) > 0.75) return false
     return this.state.players.filter((player) => player.active).every((player) => {
-      const intent = this.state.movementIntents.find((item) => item.playerId === player.playerId)
+      const intent = this.state.movementIntents.find((item) => item.playerId === player.playerId && ids.has(item.provenance.responsibilityId))
       return intent !== undefined && distanceBetween(player.position, intent.target) <= 0.75
     })
   }

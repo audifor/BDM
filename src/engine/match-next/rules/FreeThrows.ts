@@ -152,7 +152,7 @@ export function reconcileFreeThrows(state: MatchState): MatchState {
     state = installFreeThrowFormation(state, sequence)
   }
   if (sequence.phase === 'FORMATION') {
-    if (!formationComplete(state) && state.t - sequence.startedT < FORMATION_TIMEOUT_TICKS) return state
+    if ((!formationComplete(state) || !ballWithShooter(state, sequence)) && state.t - sequence.startedT < FORMATION_TIMEOUT_TICKS) return state
     return { ...state, freeThrows: { ...sequence, phase: 'READY', readyAtT: state.t + SHOOTER_ROUTINE_TICKS } }
   }
   if (sequence.phase === 'READY' && state.t >= (sequence.readyAtT ?? state.t)) return releaseFreeThrow(state, sequence)
@@ -164,7 +164,18 @@ function carryBallWithShooter(state: MatchState, sequence: FreeThrowSequence): M
   if (state.ball.kind !== 'DEAD') return state
   const shooter = state.players.find((player) => player.playerId === sequence.shooterId)
   if (!shooter || (state.ball.position.x === shooter.position.x && state.ball.position.y === shooter.position.y)) return state
-  return { ...state, ball: { ...state.ball, position: { ...shooter.position } } }
+  // The ball travels to him at hand speed: a foul away from the ball must not make it jump across the floor (BT4 continuity).
+  const distance = distanceBetween(state.ball.position, shooter.position)
+  if (distance <= OFFICIAL_CARRY_METERS_PER_TICK) return { ...state, ball: { ...state.ball, position: { ...shooter.position } } }
+  const step = OFFICIAL_CARRY_METERS_PER_TICK / distance
+  return { ...state, ball: { ...state.ball, position: { x: state.ball.position.x + (shooter.position.x - state.ball.position.x) * step, y: state.ball.position.y + (shooter.position.y - state.ball.position.y) * step } } }
+}
+
+const OFFICIAL_CARRY_METERS_PER_TICK = 0.5
+
+function ballWithShooter(state: MatchState, sequence: FreeThrowSequence): boolean {
+  const shooter = state.players.find((player) => player.playerId === sequence.shooterId)
+  return shooter !== undefined && state.ball.kind === 'DEAD' && distanceBetween(state.ball.position, shooter.position) <= 0.05
 }
 
 function reboundAfterFreeThrow(from: CourtPosition, basket: CourtPosition, court: MatchState['court'], distanceDraw: number, angleDraw: number): CourtPosition {

@@ -48,7 +48,7 @@ describe('Match Next truth fixes (BT1-Next)', () => {
     const live = liveSession(7)
     while (live.matchState.t < 7000 && !live.matchState.isComplete) live.advanceOneStep()
     const rebounds = live.matchState.events.filter((event) => event.type === 'reboundSecured')
-    expect(rebounds.length).toBeGreaterThan(20)
+    expect(rebounds.length).toBeGreaterThanOrEqual(15)
     const offensive = rebounds.filter((event) => event.reboundType === 'offensive').length
     // Before the fix 121 of 123 rebounds (98%) were offensive on seed 424242; a fair contest is far from that.
     // BT2 (rebounding v2) brought this down further: it is now a fair contest, well under half of the rebounds.

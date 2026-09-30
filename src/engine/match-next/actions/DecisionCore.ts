@@ -10,7 +10,7 @@ import { FOULED_SHOT_MAKE_FACTOR } from '../contact/ContactModel'
 import { guardPosition } from '../defense/ManDefense'
 import { closeoutReactionTicks } from '../defense/Closeout'
 import { stepPlayerKinematics } from '../movement/PlayerKinematics'
-import { activePossession, type MatchPlayerState, type MatchState, type ScreenState } from '../state'
+import { activePossession, INITIAL_SHOT_VALUE_MEMORY, type MatchPlayerState, type MatchState, type ScreenState } from '../state'
 import { planScreen, SCREEN_MIN_SECONDS_LEFT } from './ScreenCore'
 import { attackingBasketForTeam } from '../structure/FiveOutStructure'
 import { isInOffensiveFrontcourt } from '../structure/OffensiveStructure'
@@ -31,11 +31,9 @@ const CLOCK_PRESSURE_SPAN_SECONDS = 12.5
 export const OPEN_LOOK_VALUE_POINTS = 1.2
 /** Value of a shot per level of the plan's shot profile (-2..2) and per usage point over/under 50. */
 const SHOT_PROFILE_VALUE_PER_LEVEL = 0.05
-const USAGE_VALUE_PER_POINT = 0.004
 /** Each pace level shortens the wait for a better look and lowers the bar for an 'open enough' one. */
 const PACE_OPEN_LOOK_PER_LEVEL = 0.04
 const PACE_READ_TICKS_PER_LEVEL = 0.6
-const HOLD_DISCOUNT = 0.95
 /** Below this many seconds an unsettled offense may no longer wait to be organised. */
 const UNSETTLED_HOLD_MIN_SECONDS = 9
 
@@ -51,6 +49,9 @@ export function estimateShotContest(state: MatchState, shooterPlayerId: PlayerId
 
 /** Contest a shooter of `teamId` would face standing at `position` given where the defenders are right now. */
 export function estimateContestAt(state: MatchState, teamId: MatchPlayerState['teamId'], position: CourtPosition): ShotContest {
+  // Near the rim a contest is a big man's job (interior defense, size); away from it, a perimeter defender's (point of attack).
+  const basket = attackingBasketForTeam(teamId, state.homeTeamId, state.period, state.court)
+  const nearRim = distanceBetween(position, basket) <= NEAR_RIM_CONTEST_METERS
   const closest = state.players
     .filter((player) => player.active && player.teamId !== teamId)
     .map((defender) => {
@@ -61,7 +62,7 @@ export function estimateContestAt(state: MatchState, teamId: MatchPlayerState['t
         defender,
         distance: distanceBetween(defender.position, position),
         score: clamp((3.4 - effective) / 2.8, 0, 1)
-          * (0.6 + clamp(defender.defense.pointOfAttack - defender.fatigue * 0.08, 0, 100) / 250),
+          * (0.6 + clamp((nearRim ? 0.75 * defender.defense.interior + 0.25 * defender.defense.pointOfAttack : defender.defense.pointOfAttack) - defender.fatigue * 0.08, 0, 100) / 250),
       }
     })
     .sort((left, right) => right.score - left.score || String(left.defender.playerId).localeCompare(String(right.defender.playerId)))[0]
@@ -70,24 +71,29 @@ export function estimateContestAt(state: MatchState, teamId: MatchPlayerState['t
     : { score: 0, defenderPlayerId: null, distanceMeters: null }
 }
 
+const NEAR_RIM_CONTEST_METERS = 4.6
+const DEFENSIVE_REBOUND_GATHER_TICKS = 9
+
 /** How far ahead (seconds) a closing defender's contest is projected: the shot takes time to leave the shooter's hands. */
 const CONTEST_LOOKAHEAD_SECONDS = 0.3
 
 /** Beyond this distance from the basket a three-pointer gets harder with every metre (arc is 6.75 m, corner 6.6 m). */
 const THREE_POINT_COMFORT_DISTANCE_METERS = 7.4
 
-const RIM_BASE_MAKE_PROBABILITY = 0.72
-const RIM_CONTEST_PENALTY = 0.23
-
-export function shotMakeProbability(shooting: number, distanceMeters: number, points: 2 | 3, contestScore: number, fatigue = 0): number {
+/**
+ * `finishing` is the shooter's ability to score at the rim (rimAttack): the closer to the basket, the more the shot is a finish and the
+ * less it is a jump shot, so the rating that matters moves from `shooting` to `finishing`.
+ */
+export function shotMakeProbability(shooting: number, distanceMeters: number, points: 2 | 3, contestScore: number, fatigue = 0, finishing = shooting): number {
+  const skill = points === 3 ? shooting : distanceMeters <= 2.2 ? 0.7 * finishing + 0.3 * shooting : distanceMeters <= 4.6 ? 0.35 * finishing + 0.65 * shooting : shooting
   // BT3: blocks and shooting fouls are now separate mechanisms, so the make probability of a finish at the rim no longer has to
   // carry them (an at-the-rim FG% that counts blocks as misses is ~0.60 in real basketball; BT2's 0.66 already absorbed them as
   // "contest"). The contest penalty is also smaller there: the hand in the face at the rim is what the block model judges.
-  const base = points === 3 ? 0.35 : distanceMeters <= 2.2 ? RIM_BASE_MAKE_PROBABILITY : distanceMeters <= 5 ? 0.53 : 0.44
-  const ratingEffect = (clamp(shooting - clamp(fatigue, 0, 100) * 0.08, 0, 100) - 50) * 0.004
+  const base = points === 3 ? tuning().threeBaseMakeProbability : distanceMeters <= 2.2 ? tuning().rimBaseMakeProbability : distanceMeters <= 5 ? 0.57 : 0.44
+  const ratingEffect = (clamp(skill - clamp(fatigue, 0, 100) * 0.08, 0, 100) - 50) * 0.004
   const longTwoPenalty = points === 2 ? Math.max(0, distanceMeters - 5) * 0.012 : 0
   const deepThreePenalty = points === 3 ? Math.max(0, distanceMeters - THREE_POINT_COMFORT_DISTANCE_METERS) * 0.035 : 0
-  return clamp(base + ratingEffect - longTwoPenalty - deepThreePenalty - clamp(contestScore, 0, 1) * (points === 2 && distanceMeters <= 2.2 ? RIM_CONTEST_PENALTY : 0.28), 0.04, 0.82)
+  return clamp(base + ratingEffect - longTwoPenalty - deepThreePenalty - clamp(contestScore, 0, 1) * (points === 2 && distanceMeters <= 2.2 ? tuning().rimContestPenalty : 0.28), 0.04, 0.82)
 }
 
 export function passQuality(state: MatchState, passer: MatchPlayerState, receiver: MatchPlayerState): number {
@@ -115,8 +121,24 @@ export function selectDecision(state: MatchState): MatchDecision | null {
 export function continuationValue(state: MatchState): number {
   const shotClock = state.shotClockTenths === null ? state.clockRules.shotClockSeconds : state.shotClockTenths / 10
   const seconds = Math.min(shotClock, state.gameClockTenths / 10)
-  return tuning().continuationValuePoints * clamp((seconds - CLOCK_EXHAUSTED_SECONDS) / CLOCK_PRESSURE_SPAN_SECONDS, 0, 1)
+  const teamId = activePossession(state)?.teamId
+  const remembered = teamId === undefined ? INITIAL_SHOT_VALUE_MEMORY : teamId === state.homeTeamId ? state.shotValueMemory.home : state.shotValueMemory.away
+  // Holding the ball is worth what this team's shots have been worth (times a factor: a possession that goes on can beat its average shot).
+  return (tuning().continuationValuePoints / DEFAULT_CONTINUATION) * remembered * clamp((seconds - CLOCK_EXHAUSTED_SECONDS) / CLOCK_PRESSURE_SPAN_SECONDS, 0, 1)
 }
+
+/**
+ * BT4.1: what the possession is worth when the ball keeps MOVING (a pass that starts another read, a screen, a drive), as against a
+ * handler who just holds it. While the shot clock still allows several looks, the best of them is worth more than the average one.
+ */
+export function workingValue(state: MatchState): number {
+  const shotClock = state.shotClockTenths === null ? state.clockRules.shotClockSeconds : state.shotClockTenths / 10
+  const seconds = Math.min(shotClock, state.gameClockTenths / 10)
+  return continuationValue(state) * (1 + tuning().waitPremium * clamp((seconds - 6) / 14, 0, 1))
+}
+
+/** The default of `continuationValuePoints` is the factor over the remembered shot value that reproduces the calibrated behaviour. */
+const DEFAULT_CONTINUATION = 1.05
 
 export interface ShotOpportunity {
   readonly points: 2 | 3
@@ -128,10 +150,18 @@ export interface ShotOpportunity {
 }
 
 /** A shot OPPORTUNITY: what taking a shot from `position` would be worth. Whether to take it is decided elsewhere. */
-export function evaluateShotOpportunity(state: MatchState, shooter: MatchPlayerState, position: CourtPosition, basket: CourtPosition, contestScore: number): ShotOpportunity {
+export interface ShotModifiers {
+  /** Scale of the make probability (a pull-up or a floater is not a catch-and-shoot). */
+  readonly makeScale?: number
+  /** Scale of the block risk and of the foul-draw chance (a floater is released higher and earlier than a layup). */
+  readonly blockScale?: number
+  readonly foulScale?: number
+}
+
+export function evaluateShotOpportunity(state: MatchState, shooter: MatchPlayerState, position: CourtPosition, basket: CourtPosition, contestScore: number, mods: ShotModifiers = {}): ShotOpportunity {
   const points = shotValueAt(position, basket, state)
   const distanceMeters = distanceBetween(position, basket)
-  const probability = shotMakeProbability(shooter.offense.shooting, distanceMeters, points, contestScore, shooter.fatigue) * putbackQuality(state, shooter, position, basket)
+  const probability = Math.min(0.9, shotMakeProbability(shooter.offense.shooting, distanceMeters, points, contestScore, shooter.fatigue, shooter.offense.rimAttack) * putbackQuality(state, shooter, position, basket) * (mods.makeScale ?? 1))
   const plan = shooter.teamId === state.homeTeamId ? state.tacticalPlans.home : state.tacticalPlans.away
   const preference = points === 3 ? plan.shotProfile.threePoint : distanceMeters <= 2.2 ? plan.shotProfile.rim : plan.shotProfile.midRange
   // BT3D/H: the attempt is worth what it earns on the scoreboard AND at the line, and it can be rejected. A shot from a spot
@@ -140,15 +170,15 @@ export function evaluateShotOpportunity(state: MatchState, shooter: MatchPlayerS
   const at = { ...shooter, position }
   const block = assessBlock(at, defenders, basket, distanceMeters)
   const contact = assessShootingContact(at, defenders, basket, false)
-  const blockRisk = block?.probability ?? 0
-  const foulChance = contact.foulType === null ? 0 : contact.callProbability
+  const blockRisk = Math.min(0.9, (block?.probability ?? 0) * tuning().blockRiskWeight * (mods.blockScale ?? 1))
+  const foulChance = contact.foulType === null ? 0 : Math.min(0.95, contact.callProbability * tuning().foulDrawWeight * (mods.foulScale ?? 1))
   const freeThrow = freeThrowProbability(shooter)
   const madeWhenFouled = probability * FOULED_SHOT_MAKE_FACTOR
   const whenFouled = madeWhenFouled * (points + freeThrow) + (1 - madeWhenFouled) * points * freeThrow
   const expected = (1 - blockRisk) * ((1 - foulChance) * probability * points + foulChance * whenFouled)
   // BT3Q: the plan's shot profile (-2..2 per zone) and the shooter's own usage decide how much this look is WANTED, on top of
   // what it is worth. A star with high usage takes more of the team's shots; a role player defers; a three-heavy plan wants threes.
-  const usageWant = 1 + (shooter.offense.usage - 50) * USAGE_VALUE_PER_POINT
+  const usageWant = 1 + (shooter.offense.usage - 50) * tuning().usageValuePerPoint
   return { points, probability, value: expected * (1 + preference * SHOT_PROFILE_VALUE_PER_LEVEL) * usageWant, distanceMeters, contestScore }
 }
 
@@ -179,7 +209,7 @@ export function putbackQuality(state: MatchState, shooter: MatchPlayerState, pos
   const angle = forward < 0.2 ? 0.8 : 1 - Math.min(0.2, (lateral / Math.max(forward, 0.4)) * 0.07)
   const crowd = state.players.filter((player) => player.active && player.teamId !== shooter.teamId && distanceBetween(player.position, position) <= 1.6).length
   const balance = 1 - Math.min(0.3, crowd * 0.09 + speedOfPlayer(shooter) * 0.03)
-  return Math.max(0.5, Math.min(1, control * angle * balance))
+  return 1 - (1 - Math.max(0.5, Math.min(1, control * angle * balance))) * tuning().putbackQualityWeight
 }
 
 function speedOfPlayer(player: MatchPlayerState): number {
@@ -231,7 +261,8 @@ function predictContestAfterPass(state: MatchState, passer: MatchPlayerState, re
     if (!defender.active || defender.teamId === receiver.teamId) continue
     const at = defender.playerId === guardId ? forecastCloseout(state, defender, receiver, seconds)
       : { x: defender.position.x + defender.velocity.x * CONTEST_LOOKAHEAD_SECONDS, y: defender.position.y + defender.velocity.y * CONTEST_LOOKAHEAD_SECONDS }
-    const distance = distanceBetween(at, receiver.position)
+    const helpReach = defender.playerId === guardId ? 0 : defender.kinematics.maxSpeedMps * (1 - defender.fatigue * 0.0012) * tuning().helpCloseoutBelief * Math.max(0, seconds - closeoutReactionTicks() / 10)
+    const distance = Math.max(0, distanceBetween(at, receiver.position) - helpReach)
     const score = clamp((3.4 - distance) / 2.8, 0, 1) * (0.6 + clamp(defender.defense.pointOfAttack - defender.fatigue * 0.08, 0, 100) / 250)
     worst = Math.max(worst, score)
   }
@@ -245,7 +276,9 @@ function readReceivers(state: MatchState, passer: MatchPlayerState, basket: Cour
       const contest = predictContestAfterPass(state, passer, player)
       const opportunity = evaluateShotOpportunity(state, player, player.position, basket, contest)
       const completion = 0.72 + 0.28 * passQuality(state, passer, player)
-      return { player, opportunity, completion, value: completion * opportunity.value }
+      // A passer who sees the floor values his teammates' looks at what they are worth; one who does not, misses some of them.
+      const sight = 0.88 + 0.24 * (passer.passing.vision / 100)
+      return { player, opportunity, completion, value: completion * opportunity.value * sight }
     })
     .sort((left, right) => right.value - left.value || String(left.player.playerId).localeCompare(String(right.player.playerId)))
 }
@@ -256,18 +289,105 @@ function guardOf(state: MatchState, attacker: MatchPlayerState): MatchPlayerStat
 }
 
 /** Expected points of attacking the on-ball defender off the dribble (finish, or collapse the defense and pass). */
-function driveValue(state: MatchState, actor: MatchPlayerState, basket: CourtPosition): number {
+interface DriveEdge {
+  readonly edge: number
+  readonly defender: MatchPlayerState | undefined
+}
+
+/** How much better the driver is than the man in front of him, from real ratings, the gap and the lane to the rim. */
+function driveEdge(state: MatchState, actor: MatchPlayerState, basket: CourtPosition): DriveEdge {
   const defender = guardOf(state, actor)
   const gap = defender ? distanceBetween(defender.position, actor.position) : 4
   // A defender standing on the line to the rim obstructs the drive; one who is out of position (closing out) does not.
   const lane = defender ? distanceToSegment(defender.position, actor.position, basket) : 3
   const attack = (actor.offense.rimAttack + actor.offense.creation) / 2 - actor.fatigue * 0.06
   const defend = defender ? (defender.defense.pointOfAttack + defender.defensiveMobility) / 2 : 50
-  const edge = clamp((attack - defend) / 60 + (gap - 1.1) / 5 + Math.min(0.3, (lane - 0.9) * 0.15), -0.4, 0.6)
+  return { edge: clamp((attack - defend) / 60 + (gap - 1.1) / 5 + Math.min(0.3, (lane - 0.9) * 0.15), -0.4, 0.6), defender }
+}
+
+/** A spot at the rim on the driver's side, where a drive that gets through ends. */
+function rimSpotFor(from: CourtPosition, basket: CourtPosition): CourtPosition {
+  const dx = from.x - basket.x
+  const dy = from.y - basket.y
+  const length = Math.hypot(dx, dy) || 1
+  return { x: basket.x + (dx / length) * 1.1, y: basket.y + (dy / length) * 1.1 }
+}
+
+/**
+ * BT4K: the value of attacking the on-ball defender, from the same shot model everything else uses. A drive either gets past
+ * him (probability from the ratings edge: then the finish at the rim, with its blocks and its free throws) or it is contained
+ * (then the handler is back to a read with a rim protector stepping up). No constant "a drive is worth 0.9 + ..." any more:
+ * a better handler against a worse defender drives more, and a finisher who draws fouls is worth more driving.
+ */
+function driveValue(state: MatchState, actor: MatchPlayerState, basket: CourtPosition): number {
+  const { edge } = driveEdge(state, actor, basket)
   const plan = actor.teamId === state.homeTeamId ? state.tacticalPlans.home : state.tacticalPlans.away
   // Each drive already taken this possession has the help defense more set: the next one is worth less.
   const drivesSoFar = state.actions.filter((action) => action.kind === 'DRIVE' && action.teamId === actor.teamId && action.startedT >= (activePossession(state)?.startedT ?? 0)).length
-  return (0.9 + 0.9 * edge) * (1 + plan.shotProfile.rim * SHOT_PROFILE_VALUE_PER_LEVEL) * Math.pow(0.8, drivesSoFar)
+  const spot = rimSpotFor(actor.position, basket)
+  // The help is already at the rim (a big in the paint, a weak-side man tagging): it lowers the chance to get through and contests the finish.
+  const guardId = guardOf(state, actor)?.playerId
+  const atRim = state.players.filter((player) => player.active && player.teamId !== actor.teamId && player.playerId !== guardId && distanceBetween(player.position, spot) <= 2.8).length
+  const pBeat = clamp(tuning().driveBeatBase + 0.9 * edge - 0.09 * atRim, 0.06, 0.85)
+  const rimContest = estimateContestAt(state, actor.teamId, spot).score
+  const beaten = evaluateShotOpportunity(state, actor, spot, basket, Math.max(0.3, rimContest * 0.7)).value
+  const contested = evaluateShotOpportunity(state, actor, spot, basket, Math.max(0.8, rimContest)).value
+  const contained = workingValue(state) * 0.9
+  const value = pBeat * beaten + (1 - pBeat) * (0.35 * contested + 0.65 * contained)
+  return value * (1 + plan.shotProfile.rim * SHOT_PROFILE_VALUE_PER_LEVEL) * Math.pow(0.8, drivesSoFar)
+}
+
+/** Pull-up and floater: how well this shooter makes a shot he takes on the move, from his own ratings. */
+export function pullUpFactor(player: MatchPlayerState): number {
+  return clamp(tuning().pullUpBaseFactor + (player.offense.shooting - 50) * 0.0015 + (player.offense.creation - 50) * 0.001 - player.fatigue * 0.0005, 0.75, 1)
+}
+
+export function floaterFactor(player: MatchPlayerState): number {
+  return clamp(tuning().floaterBaseFactor + (player.offense.rimAttack - 50) * 0.0012 + (player.offense.shooting - 50) * 0.0008 - player.fatigue * 0.0005, 0.75, 1)
+}
+
+export interface DriveStopRead {
+  readonly kind: 'CONTINUE' | 'PULL_UP' | 'FLOATER'
+  readonly values: { readonly continue: number; readonly pullUp: number; readonly floater: number; readonly pass: number; readonly pFinish: number }
+}
+
+/**
+ * BT4G/H: a driver whose lane closes decides whether to keep going, stop and shoot, or (near the rim) float it over the help. All
+ * three are valued with the shot model: continuing is the chance to still reach the rim (defenders between him and it lower
+ * it) times the finish, or being contained; the pull-up is the shot from where he is, with his balance (speed), his ratings and
+ * the defender's contest; the floater trades make probability for a much smaller block risk. A pass to an open teammate is the
+ * alternative that keeps him from stopping at all. Where the shot ends up is wherever the drive was when the lane closed.
+ */
+export function readDriveStop(state: MatchState, driver: MatchPlayerState, basket: CourtPosition): DriveStopRead {
+  const distance = distanceBetween(driver.position, basket)
+  const opponents = state.players.filter((player) => player.active && player.teamId !== driver.teamId)
+  const ahead = opponents.filter((defender) => distanceBetween(defender.position, basket) < distance - 0.2 && distanceToSegment(defender.position, driver.position, basket) < 1.3)
+  const { edge } = driveEdge(state, driver, basket)
+  const pFinish = ahead.length === 0 ? 0.9 : clamp(0.28 + 0.9 * edge - 0.12 * (ahead.length - 1), 0.08, 0.8)
+  const spot = rimSpotFor(driver.position, basket)
+  const rimFinish = evaluateShotOpportunity(state, driver, spot, basket, estimateContestAt(state, driver.teamId, spot).score).value
+  const contained = workingValue(state) * 0.9
+  const cont = pFinish * rimFinish + (1 - pFinish) * contained
+  const contestNow = estimateContestAt(state, driver.teamId, driver.position).score
+  const speed = Math.hypot(driver.velocity.x, driver.velocity.y)
+  const balance = 1 - Math.max(0, speed - 2) * 0.025
+  const pullUp = distance >= 3.4 ? evaluateShotOpportunity(state, driver, driver.position, basket, contestNow, { makeScale: pullUpFactor(driver) * balance }).value : Number.NEGATIVE_INFINITY
+  const floater = distance >= 2.0 && distance <= 4.8
+    ? evaluateShotOpportunity(state, driver, driver.position, basket, contestNow * 0.85, { makeScale: floaterFactor(driver) * balance, blockScale: 0.35, foulScale: 0.6 }).value : Number.NEGATIVE_INFINITY
+  const best = bestReceiverValue(state, driver, basket)
+  const pass = best === undefined ? Number.NEGATIVE_INFINITY : best
+  const temperature = tuning().decisionTemperaturePoints
+  const gumbel = (salt: string): number => temperature <= 0 ? 0 : -temperature * Math.log(-Math.log(Math.min(0.999, Math.max(0.001, decisionNoise(state, driver.playerId, `stop-${salt}`)))))
+  const scored = (
+    [['CONTINUE', cont], ['PULL_UP', pullUp], ['FLOATER', floater], ['CONTINUE', pass]] as const
+  ).map(([kind, value]) => ({ kind, value: Number.isFinite(value) ? value + gumbel(`${kind}${value.toFixed(2)}`) : value }))
+  const top = scored.sort((left, right) => right.value - left.value)[0]!
+  return { kind: top.kind, values: { continue: cont, pullUp, floater, pass, pFinish } }
+}
+
+function bestReceiverValue(state: MatchState, passer: MatchPlayerState, basket: CourtPosition): number | undefined {
+  const reads = readReceivers(state, passer, basket)
+  return reads.length === 0 ? undefined : Math.max(...reads.map((read) => read.value))
 }
 
 export function readDecision(state: MatchState): DecisionRead {
@@ -284,7 +404,8 @@ export function readDecision(state: MatchState): DecisionRead {
   const basket = attackingBasketForTeam(possession.teamId, state.homeTeamId, state.period, state.court)
   if (liveTransition && state.transition?.trigger === 'madeBasketInbound'
     && !isInOffensiveFrontcourt(actor.position, basket, state.court.lengthMeters)) return { decision: null }
-  if (liveTransition && state.transition?.trigger === 'defensiveRebound' && state.t - state.transition.startedT < 4) return { decision: null }
+  // A defensive rebounder lands, secures and turns before he can look up the floor (BT4D: 0.4 s was less than any real rebound).
+  if (liveTransition && state.transition?.trigger === 'defensiveRebound' && state.t - state.transition.startedT < DEFENSIVE_REBOUND_GATHER_TICKS) return { decision: null }
   const lastOffensive = [...state.actions].reverse().find((action) => action.teamId === possession.teamId && action.kind !== 'CLOSEOUT')
   const containedThisPossession = state.actions.some((action) => action.kind === 'DRIVE'
     && action.playerId === actor.playerId && action.teamId === possession.teamId
@@ -387,13 +508,13 @@ function readTheFloor(state: MatchState, actor: MatchPlayerState, basket: CourtP
   const drive = !contained && distanceToBasket > 3.2 && distanceToBasket < 14 && secondsLeft > 5 ? driveValue(state, actor, basket) + screenSeparation.driveGain : Number.NEGATIVE_INFINITY
   const screenPlan = screen === null && !contained && !mustAct && flow !== null && flow.stage === 'HALF_COURT' && flow.settledAtT !== null && secondsLeft > SCREEN_MIN_SECONDS_LEFT
     ? planScreen(state, actor, basket) : null
-  const hold = continuationValue(state) * HOLD_DISCOUNT
+  const hold = workingValue(state) * tuning().holdDiscount
   const noise = (salt: string): number => 1 + (decisionNoise(state, actor.playerId, salt) - 0.5) * 0.12
   const options = {
-    shoot: shot.value * noise('shoot'),
-    drive: drive * noise('drive'),
+    shoot: shot.value * tuning().shootValueScale * noise('shoot'),
+    drive: drive * tuning().driveValueScale * (1 + (actor.offense.usage - 50) * tuning().usageDrivePerPoint) * noise('drive'),
     // Off a set screen the handler first USES it (attack, pull up); the ball only moves early if he is being trapped.
-    pass: (secondsLeft > 3.5 && (screen === null || screen.coverage === 'blitz') ? bestReceiver?.value ?? Number.NEGATIVE_INFINITY : Number.NEGATIVE_INFINITY) * noise('pass'),
+    pass: (secondsLeft > 3.5 && (screen === null || screen.coverage === 'blitz') ? (bestReceiver?.value ?? Number.NEGATIVE_INFINITY) * tuning().passValueScale * (1 - (actor.offense.usage - 50) * tuning().usagePassPerPoint) : Number.NEGATIVE_INFINITY) * noise('pass'),
     screen: (screenPlan?.value ?? Number.NEGATIVE_INFINITY) * noise('screen'),
     hold,
   }

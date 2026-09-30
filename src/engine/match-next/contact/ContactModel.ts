@@ -92,7 +92,7 @@ const NO_CONTACT: ContactAssessment = Object.freeze({ kind: 'INCIDENTAL', severi
 
 /** A referee tolerates less contact on a man who has left his feet. Called probability of a maximum-severity contact. */
 export const REFEREE_TOLERANCE = Object.freeze({
-  shotAtRim: 1.0, shotInPaint: 0.6, shotMidRange: 0.25, shotThree: 0.1,
+  shotAtRim: 0.65, shotInPaint: 0.45, shotMidRange: 0.4, shotThree: 0.18,
   charge: 0.18, blocking: 0.65, reach: 0.55, illegalScreen: 0.6, looseBall: 0.22, rebounding: 0.1,
 })
 

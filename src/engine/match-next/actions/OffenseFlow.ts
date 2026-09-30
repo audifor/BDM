@@ -1,6 +1,8 @@
 import { hashStringToSeed } from '@/engine/random'
 import type { PlayerId } from '@/domain/ids'
 import { activePossession, type MatchPlayerState, type MatchState, type OffenseFlowState, type OffenseStage } from '../state'
+import { distanceBetween } from '@/domain/court'
+import { tuning } from '../tuning'
 import { isInsideZone } from '../structure/OffensiveStructure'
 
 /** Share of the four off-ball players that must be in their zones for the half-court offense to count as set. */
@@ -17,10 +19,14 @@ export function decisionNoise(state: Pick<MatchState, 'rng' | 't'>, playerId: st
 }
 
 /** How long a player needs to read the floor after gaining control. Better passers/readers see it sooner. */
-export function readTicksFor(state: Pick<MatchState, 'rng' | 't'>, player: MatchPlayerState): number {
+export function readTicksFor(state: MatchState, player: MatchPlayerState): number {
   const reading = (player.passing.vision + player.passing.timing) / 2
   const base = 3 + Math.round((100 - Math.max(0, Math.min(100, reading))) / 30)
-  return base + (decisionNoise(state, player.playerId, 'read') < 0.5 ? 0 : 1)
+  // BT4.1: a catch on the run needs a gather before the next move, and a defender on top of him slows the read.
+  const speed = Math.hypot(player.velocity.x, player.velocity.y)
+  const nearest = Math.min(...state.players.filter((other) => other.active && other.teamId !== player.teamId).map((other) => distanceBetween(other.position, player.position)), Number.POSITIVE_INFINITY)
+  const gather = Math.round(speed * tuning().catchGatherTicksPerMps) + (nearest < 2 ? Math.round((2 - nearest) * tuning().catchPressureTicksPerMeter) : 0)
+  return base + gather + (decisionNoise(state, player.playerId, 'read') < 0.5 ? 0 : 1)
 }
 
 export function offenseSettlement(state: MatchState): { readonly inZone: number; readonly total: number; readonly share: number } {

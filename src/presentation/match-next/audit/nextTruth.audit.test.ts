@@ -65,11 +65,19 @@ describe('event truth', { timeout: 120000 }, () => {
       expect(e.sequence).toBeGreaterThan(last)
       last = e.sequence
     }
-    for (const w of possessionWindows(7, run.events)) expect(w.made && w.missedThenRebound && w.shots === 1).toBe(false)
+    // A missed free throw (the AND-ONE after a made basket, BT3) has a rebound of its own: it is the FT's rebound, not the shot's.
+    const afterFreeThrowMiss = (rebound: (typeof run.events)[number], made: (typeof run.events)[number]): boolean =>
+      run.events.some((e) => e.type === 'freeThrowMissed' && e.sequence > made.sequence && e.sequence < rebound.sequence)
+    for (const w of possessionWindows(7, run.events)) {
+      const rebound = run.events.find((e) => e.type === 'reboundSecured' && e.possessionId === w.possessionId)
+      const made = run.events.find((e) => e.type === 'shotMade' && e.possessionId === w.possessionId)
+      const ftRebound = rebound !== undefined && made !== undefined && afterFreeThrowMiss(rebound, made)
+      expect(w.made && w.missedThenRebound && w.shots === 1 && !ftRebound).toBe(false)
+    }
     const made = run.events.filter((e) => e.type === 'shotMade')
     for (const m of made) {
       const rebound = run.events.find((e) => e.type === 'reboundSecured' && e.possessionId === m.possessionId && e.sequence > m.sequence)
-      expect(rebound).toBeUndefined()
+      if (rebound !== undefined) expect(afterFreeThrowMiss(rebound, m)).toBe(true)
     }
   })
 })

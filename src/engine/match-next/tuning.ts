@@ -12,13 +12,74 @@ export interface MatchNextTuning {
   readonly screenBaseValuePoints: number
   /** Softness of the choice between options: 0 = always the best, larger = closer options are chosen more often. */
   readonly decisionTemperaturePoints: number
+  /** Value of a shot per usage point over/under 50 (who is the team's shooter). */
+  readonly usageValuePerPoint: number
+  /** Make probability of a finish at the rim before contest, and how much the nearest defender's contest takes away. */
+  readonly rimBaseMakeProbability: number
+  readonly rimContestPenalty: number
+  /** Weights (1 = the model as is) of the block risk and of the free-throw value inside a shot's expected points. */
+  readonly blockRiskWeight: number
+  readonly foulDrawWeight: number
+  /** Fraction of the value of continuing the possession that a handler credits to holding the ball. */
+  readonly holdDiscount: number
+  /** Multipliers of the value of each family of options (audits only). */
+  readonly shootValueScale: number
+  readonly driveValueScale: number
+  readonly passValueScale: number
+  /** Weight of the putback quality penalty (0 = no penalty, 1 = as is). */
+  readonly putbackQualityWeight: number
+  /** Fraction of his top speed at which a NON-assigned defender is believed to help close out a pass (BT2 believed 0.4 for everyone). */
+  readonly helpCloseoutBelief: number
+  /** BT4G/H: chance scale of getting past the on-ball defender (base) and the make-probability scale of a pull-up / floater. */
+  readonly driveBeatBase: number
+  readonly pullUpBaseFactor: number
+  readonly floaterBaseFactor: number
+  /** 1 = a driver may stop and shoot when the lane closes (pull-up / floater); 0 = drives always go to the rim. */
+  readonly driveStopEnabled: number
+  /** 1 = without a numbers advantage the team brings the ball up in control (handler jogs, the rest run); 0 = always at the BT2 speeds. */
+  readonly controlledAdvance: number
+  /** Make probability of a three before rating, contest and distance. */
+  readonly threeBaseMakeProbability: number
+  /** BT4S tendency: how each point of usage over 50 tilts the handler toward attacking (drive) and away from passing. */
+  readonly usageDrivePerPoint: number
+  readonly usagePassPerPoint: number
+  /** Scale of the whistle probability of contact judged between guarding bodies away from shots and drives (BT4J). */
+  readonly episodeFoulScale: number
+  /** BT4.1 experiment: extra worth of waiting for a better look while the shot clock still allows several. */
+  readonly waitPremium: number
+  /** BT4.1: ticks a receiver needs to gather per m/s of his speed at the catch, and per metre of defender pressure under 2 m. */
+  readonly catchGatherTicksPerMps: number
+  readonly catchPressureTicksPerMeter: number
 }
 
 export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
   closeoutReactionTicks: 2,
-  continuationValuePoints: 0.98,
+  continuationValuePoints: 1.10,
   screenBaseValuePoints: 1.25,
   decisionTemperaturePoints: 0.15,
+  usageValuePerPoint: 0.004,
+  rimBaseMakeProbability: 0.64,
+  rimContestPenalty: 0.26,
+  blockRiskWeight: 1,
+  foulDrawWeight: 1,
+  holdDiscount: 0.95,
+  shootValueScale: 1,
+  driveValueScale: 1,
+  passValueScale: 1.12,
+  putbackQualityWeight: 0.5,
+  helpCloseoutBelief: 0,
+  driveBeatBase: 0.05,
+  pullUpBaseFactor: 0.95,
+  floaterBaseFactor: 1.0,
+  driveStopEnabled: 1,
+  controlledAdvance: 1,
+  threeBaseMakeProbability: 0.36,
+  usageDrivePerPoint: 0.003,
+  usagePassPerPoint: 0.003,
+  episodeFoulScale: 1.7,
+  waitPremium: 0,
+  catchGatherTicksPerMps: 0,
+  catchPressureTicksPerMeter: 0,
 })
 
 let active: MatchNextTuning = DEFAULT_MATCH_NEXT_TUNING

@@ -2,6 +2,7 @@ import type { BasketballPosition } from '@/domain/primitives'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import type { MatchState, MatchNextEvent } from '../state'
 import { isSubstitutionOpportunity } from '../clockRules'
+import { resolveFoulRules } from '../rules/FoulRules'
 
 export interface CoachSubstitutionProposal {
   readonly teamId: TeamId
@@ -88,8 +89,11 @@ function decideForTeam(state: MatchState, teamId: TeamId): CoachSubstitutionProp
     const overTarget = Math.max(0, playedMinutes - playerTargetMinutes - 0.35)
     const fatiguePressure = Math.max(0, outgoing.fatigue - 35) * 0.105 / plan.fatigueTolerance
     const minutePressure = overTarget * 2.15
+    // Foul trouble (BT4): a player one foul from disqualification is taken out before he is lost for the rest of the game.
+    const foulLimit = resolveFoulRules(state.clockRules).personalFoulLimit
+    const foulTrouble = Math.max(0, (state.fouls.personal[outgoing.playerId] ?? 0) - (foulLimit - 2)) * 3.6
     const contextAdjustment = (closeLateGame ? 1.8 : 0) + (lateBlowout ? -1.35 : 0)
-    const pressure = fatiguePressure + minutePressure
+    const pressure = fatiguePressure + minutePressure + foulTrouble
     const role = plan.roleByPlayerId[outgoing.playerId]
     const replacement = bench
       .map((player) => ({

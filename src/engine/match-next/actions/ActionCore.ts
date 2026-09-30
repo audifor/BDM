@@ -11,7 +11,9 @@ import { closeoutReactionTicks } from '../defense/Closeout'
 import { assessBlock, blockedBallVelocity } from '../defense/BlockModel'
 import { assessDriveContact, assessShootingContact, CONTACT_DISTANCE_METERS, FOULED_SHOT_MAKE_FACTOR, updateDriveContactTrack, type ContactAssessment } from '../contact/ContactModel'
 import { commitFoul } from '../rules/Fouls'
-import { bestReceiver, driveTarget, estimateShotContest, passQuality, putbackQuality, readDecision, shotMakeProbability, shotValueAt } from './DecisionCore'
+import { tuning } from '../tuning'
+import { classifyShotCreation, shotZone } from '../stats/ShotEcology'
+import { bestReceiver, driveTarget, estimateShotContest, evaluateShotOpportunity, floaterFactor, passQuality, pullUpFactor, putbackQuality, readDecision, readDriveStop, shotMakeProbability, shotValueAt } from './DecisionCore'
 import { reconcileOffenseFlow } from './OffenseFlow'
 import { createScreenState, planScreen, reconcileScreen, useScreen } from './ScreenCore'
 import { reconcileOffBallMovement } from './OffBallMovement'
@@ -24,7 +26,7 @@ const DRIVE_TIMEOUT_TICKS = 36
 const CLOSEOUT_ARRIVAL_METERS = 1.2
 /** A defender this close to the passing line can deflect / intercept the pass. */
 const LANE_STEAL_REACH_METERS = 1.3
-const LANE_STEAL_MAX_CHANCE = 0.24
+const LANE_STEAL_MAX_CHANCE = 0.34
 /** The driver has beaten his man when he has this much separation AND the defender is no longer ahead of him. */
 const DRIVE_BEATEN_GAP_METERS = 1.2
 const DRIVE_BEATEN_AHEAD_METERS = 0.2
@@ -47,7 +49,7 @@ export function reconcileActions(input: MatchState): MatchState {
     if (read.decision) state = executeDecision(recordDecision(state, read.decision), read.decision)
     else if (read.holdUntilT !== undefined && state.offenseFlow !== null) state = { ...state, offenseFlow: { ...state.offenseFlow, readyAtT: read.holdUntilT } }
   }
-  return applyPassReceiveIntents(applyDriveIntents(state))
+  return applyPassReceiveIntents(applyStopIntents(applyDriveIntents(state)))
 }
 
 function resolveBallActions(state: MatchState): MatchState {
@@ -150,6 +152,32 @@ function updateDrives(state: MatchState): MatchState {
         if (judged.fouled) continue
       }
     }
+    // BT4G/H: when the lane closes the driver may stop and shoot (pull-up) or float it; evaluated once per window, from the shot model.
+    if (tuning().driveStopEnabled > 0 && elapsed >= DRIVE_STOP_MIN_TICKS && progress >= DRIVE_STOP_MIN_PROGRESS_METERS) {
+      const basketNow = action.targetBasket ?? next.court.baskets.left
+      const distanceToRim = distanceBetween(driver.position, basketNow)
+      const window = distanceToRim <= DRIVE_STOP_NEAR_METERS ? 'NEAR' as const : distanceToRim <= DRIVE_STOP_FAR_METERS ? 'FAR' as const : undefined
+      const checked = next.actions.find((item) => item.id === action.id)?.stopWindows ?? []
+      if (window !== undefined && !checked.includes(window)) {
+        next = updateAction(next, action.id, { stopWindows: [...checked, window] })
+        const read = readDriveStop(next, driver, basketNow)
+        if (read.kind !== 'CONTINUE') {
+          next = beginStopShot(next, action, driver, read.kind, basketNow)
+          continue
+        }
+        // He keeps going: whether he gets through is what the model just believed (his edge over the men in the lane), and the
+        // game draws it. A driver who loses that draw is contained: he is stopped where he is and has to read again.
+        if (window === 'NEAR' && read.values.pFinish < 0.9 && read.values.continue >= read.values.pass) {
+          const containDraw = draw(next.rng, 'outcome')
+          next = { ...next, rng: containDraw.state }
+          if (containDraw.value >= read.values.pFinish) {
+            next = resolveAction(next, action.id, 'CONTAINED')
+            next = setPossessionPhase(next, 'SETUP')
+            continue
+          }
+        }
+      }
+    }
     const helpDecision = next.defensiveStructure?.helpDecision
     const helperId = helpDecision?.status === 'TRIGGERED' && helpDecision.sourceActionId === action.id
       ? helpDecision.helperPlayerId : undefined
@@ -157,7 +185,15 @@ function updateDrives(state: MatchState): MatchState {
     // on-ball defender is no longer in front of him, not merely because the ball is near the paint.
     const guardId = next.defensiveStructure?.assignments.find((item) => item.attackerPlayerId === driver.playerId)?.defenderPlayerId
     const onBallDefender = next.players.find((player) => player.playerId === guardId)
-    if (elapsed >= DRIVE_MIN_TICKS && progress >= DRIVE_MIN_PROGRESS_METERS && helperId && driverBeatDefender(driver, onBallDefender, action.target)) {
+    const beatAndHelped = elapsed >= DRIVE_MIN_TICKS && progress >= DRIVE_MIN_PROGRESS_METERS && helperId && driverBeatDefender(driver, onBallDefender, action.target)
+    let choice = next.actions.find((item) => item.id === action.id)?.advantageChoice
+    if (beatAndHelped && choice === undefined && action.targetBasket !== undefined) {
+      // Help has come: keep going to the rim, or kick it to the man the help left? The shot model decides (once).
+      const read = readDriveStop(next, driver, action.targetBasket)
+      choice = read.values.continue >= read.values.pass ? 'FINISH' : 'KICK'
+      next = updateAction(next, action.id, { advantageChoice: choice })
+    }
+    if (beatAndHelped && choice !== 'FINISH') {
       next = updateAction(next, action.id, { helpDefenderPlayerId: helperId })
       next = resolveAction(next, action.id, 'ADVANTAGE')
       next = setPossessionPhase(next, 'SETUP')
@@ -176,6 +212,31 @@ function updateDrives(state: MatchState): MatchState {
     }
   }
   return next
+}
+
+const DRIVE_STOP_MIN_TICKS = 3
+/** How fast the remembered value of a team's shots follows the shots it takes (about the last 16). */
+const SHOT_VALUE_MEMORY_RATE = 0.06
+const DRIVE_STOP_MIN_PROGRESS_METERS = 1.2
+/** Decision windows of a drive: when the driver is inside these distances of the rim (first time only). */
+const DRIVE_STOP_FAR_METERS = 7.4
+const DRIVE_STOP_NEAR_METERS = 3.9
+const STOP_GATHER_TICKS = { PULL_UP: 3, FLOATER: 2 } as const
+
+/**
+ * The driver stops where he is: the drive ends (STOPPED) and the shot starts right there. He brakes for the gather (his intent is
+ * to stand where he stands), so the shot is taken from the place the lane closed, not from a slot he would otherwise run back to.
+ */
+function beginStopShot(state: MatchState, drive: MatchActionState, driver: MatchPlayerState, kind: 'PULL_UP' | 'FLOATER', basket: CourtPosition): MatchState {
+  let next = resolveAction(state, drive.id, 'STOPPED')
+  next = setPossessionPhase(next, 'SETUP')
+  const action: MatchActionState = {
+    id: `match-action-${next.nextActionSequence}`, kind: 'SHOOT', playerId: driver.playerId, teamId: driver.teamId, startedT: next.t, status: 'ACTIVE',
+    ...(drive.decisionId === undefined ? {} : { decisionId: drive.decisionId }), phase: 'GATHER', releaseAtT: next.t + STOP_GATHER_TICKS[kind], targetBasket: { ...basket }, shotStop: kind,
+    target: { ...driver.position },
+  }
+  next = startAction(next, action)
+  return setPossessionPhase(next, 'ACTION')
 }
 
 /** True when the on-ball defender no longer cuts off the line from the driver to the rim. */
@@ -230,11 +291,13 @@ function releaseReadyShots(state: MatchState): MatchState {
     const points = shotValueAt(shooter.position, basket, next)
     const distance = distanceBetween(shooter.position, basket)
     const contest = estimateShotContest(next, shooter.playerId)
-    const probability = shotMakeProbability(shooter.offense.shooting, distance, points, contest.score, shooter.fatigue) * putbackQuality(next, shooter, shooter.position, basket)
+    const probability = shotMakeProbability(shooter.offense.shooting, distance, points, contest.score, shooter.fatigue, shooter.offense.rimAttack) * putbackQuality(next, shooter, shooter.position, basket) * stopFactor(action, shooter)
     // Everything that can happen to the shot in the act, from the geometry of the defenders around the shooter (BT3D/BT3H).
     const defenders = next.players.filter((player) => player.active && player.teamId !== shooter.teamId)
     const block = assessBlock(shooter, defenders, basket, distance)
     const shootingContact = assessShootingContact(shooter, defenders, basket, isDriveFinish(next, shooter.playerId))
+    const zone = shotZone(shooter.position, basket, points, next.court)
+    const creation = classifyShotCreation(next, shooter.playerId, shooter.position, basket, action.shotStop === undefined ? {} : { stopKind: action.shotStop })
     const blockRoll = draw(next.rng, 'outcome')
     const foulRoll = draw(blockRoll.state, 'outcome')
     const drawResult = draw(foulRoll.state, 'outcome')
@@ -244,7 +307,7 @@ function releaseReadyShots(state: MatchState): MatchState {
     const swatSpeed = draw(swatAngle.state, 'outcome')
     next = { ...next, rng: swatSpeed.state }
     if (block !== null && blockRoll.value < block.probability) {
-      next = blockShot(next, action, shooter, block.blockerId, block.reachAdvantageCm, basket, points, probability, contest.score, swatAngle.value, swatSpeed.value)
+      next = blockShot(next, action, shooter, block.blockerId, block.reachAdvantageCm, basket, points, probability, contest.score, swatAngle.value, swatSpeed.value, zone, creation)
       next = finishCloseoutsForShooter(next, shooter.playerId, contest.score)
       continue
     }
@@ -253,11 +316,14 @@ function releaseReadyShots(state: MatchState): MatchState {
     // A shot with a hand in the face or a body into the shooter goes in less often.
     const goesIn = drawResult.value < (fouled ? probability * FOULED_SHOT_MAKE_FACTOR : probability)
     const arrivalT = next.t + 6
+    const missTarget = reboundLandingTarget(shooter.position, basket, bounceDistance.value, bounceAngle.value, next.court)
     const plannedOutcome = goesIn
       ? { kind: 'MAKE' as const, points }
-      : { kind: 'MISS' as const, reboundTarget: reboundLandingTarget(shooter.position, basket, bounceDistance.value, bounceAngle.value, next.court), reboundAvailableT: arrivalT + 12 }
+      : { kind: 'MISS' as const, reboundTarget: missTarget, reboundAvailableT: arrivalT + reboundHangTicks(distanceBetween(missTarget, basket)) }
     next = releaseShot(next, {
       targetBasket: basket,
+      shotZone: zone,
+      shotCreation: creation,
       travelTicks: 6,
       plannedOutcome,
       actionId: action.id,
@@ -266,6 +332,9 @@ function releaseReadyShots(state: MatchState): MatchState {
       contestScore: contest.score,
       contestDefenderPlayerId: contest.defenderPlayerId ?? undefined,
     })
+    // What the team's shots are worth: the running mean that sets what holding the ball is worth (BT4).
+    const worth = evaluateShotOpportunity(next, shooter, shooter.position, basket, contest.score, action.shotStop === undefined ? {} : { makeScale: action.shotStop === 'PULL_UP' ? pullUpFactor(shooter) : floaterFactor(shooter) }).value
+    next = { ...next, shotValueMemory: shooter.teamId === next.homeTeamId ? { ...next.shotValueMemory, home: next.shotValueMemory.home * (1 - SHOT_VALUE_MEMORY_RATE) + worth * SHOT_VALUE_MEMORY_RATE } : { ...next.shotValueMemory, away: next.shotValueMemory.away * (1 - SHOT_VALUE_MEMORY_RATE) + worth * SHOT_VALUE_MEMORY_RATE } }
     next = updateAction(next, action.id, {
       phase: 'SHOT_IN_FLIGHT',
       targetBasket: { ...basket },
@@ -285,11 +354,11 @@ function releaseReadyShots(state: MatchState): MatchState {
 }
 
 /** A shot rejected at the release point: the ball is swatted loose, the attempt counts, the offense may recover it. */
-function blockShot(state: MatchState, action: MatchActionState, shooter: MatchPlayerState, blockerId: MatchPlayerState['playerId'], reachAdvantageCm: number, basket: CourtPosition, points: 2 | 3, probability: number, contestScore: number, angleDraw: number, speedDraw: number): MatchState {
+function blockShot(state: MatchState, action: MatchActionState, shooter: MatchPlayerState, blockerId: MatchPlayerState['playerId'], reachAdvantageCm: number, basket: CourtPosition, points: 2 | 3, probability: number, contestScore: number, angleDraw: number, speedDraw: number, zone: string, creation: string): MatchState {
   const blocker = state.players.find((player) => player.playerId === blockerId)
   const possession = activePossession(state)
   if (!blocker || !possession) return state
-  let next = emitEvent(state, 'shotReleased', { possessionId: possession.id, teamId: shooter.teamId, shooterPlayerId: shooter.playerId, actionId: action.id, points, shotProbability: probability, contestScore, shotDistanceMeters: Number(distanceBetween(shooter.position, basket).toFixed(2)) })
+  let next = emitEvent(state, 'shotReleased', { possessionId: possession.id, teamId: shooter.teamId, shooterPlayerId: shooter.playerId, actionId: action.id, points, shotProbability: probability, contestScore, shotZone: zone, shotCreation: creation, shotDistanceMeters: Number(distanceBetween(shooter.position, basket).toFixed(2)) })
   const velocity = blockedBallVelocity(shooter, blocker, basket, reachAdvantageCm, angleDraw, speedDraw)
   next = {
     ...next,
@@ -305,6 +374,14 @@ function blockShot(state: MatchState, action: MatchActionState, shooter: MatchPl
  * Where a missed shot comes down. Short misses drop near the rim; the longer the shot, the harder it comes off the rim
  * and the farther it bounces (long rebounds), always on the shooter side of the basket, with lateral scatter.
  */
+/**
+ * How long the ball hangs before anyone can take it: it comes off the rim and falls to where it lands. A short rebound drops almost
+ * at once; a long one (off a three, off the far side of the rim) takes noticeably longer. BT3 gave every miss the same 1.2 s.
+ */
+function reboundHangTicks(landingDistanceFromRim: number): number {
+  return Math.round(clamp(8 + landingDistanceFromRim * 2.6, 9, 20))
+}
+
 function reboundLandingTarget(shooter: CourtPosition, basket: CourtPosition, distanceDraw: number, angleDraw: number, court: MatchState['court']): CourtPosition {
   const dx = shooter.x - basket.x
   const dy = shooter.y - basket.y
@@ -353,7 +430,7 @@ function executeDecision(state: MatchState, decision: MatchDecision): MatchState
   }
   if (decision.kind === 'SHOOT' || decision.kind === 'CATCH_AND_SHOOT') {
     const action = createAction(state, decision, decision.kind, {
-      phase: 'GATHER', releaseAtT: state.t + (decision.kind === 'CATCH_AND_SHOOT' ? 4 : 2), targetBasket: { ...basket },
+      phase: 'GATHER', releaseAtT: state.t + (decision.kind === 'CATCH_AND_SHOOT' ? 4 : 3), targetBasket: { ...basket },
       ...(screenSet === null ? {} : { screenId: screenSet.id }),
     })
     return useScreen(setPossessionPhase(startAction(state, action), 'ACTION'), actor.playerId)
@@ -458,6 +535,31 @@ function setPossessionPhase(state: MatchState, phase: 'SETUP' | 'ACTION'): Match
 function hasActiveOffensiveAction(state: MatchState): boolean {
   const teamId = activePossession(state)?.teamId
   return teamId !== undefined && state.actions.some((action) => action.status === 'ACTIVE' && action.teamId === teamId && action.kind !== 'CLOSEOUT')
+}
+
+/** A shot taken on the move is harder than a catch-and-shoot: his own ratings and his speed at the stop decide how much. */
+function stopFactor(action: MatchActionState, shooter: MatchPlayerState): number {
+  if (action.shotStop === undefined) return 1
+  const speed = Math.hypot(shooter.velocity.x, shooter.velocity.y)
+  const balance = 1 - Math.max(0, speed - 2) * 0.025
+  return (action.shotStop === 'PULL_UP' ? pullUpFactor(shooter) : floaterFactor(shooter)) * balance
+}
+
+/** A shooter who stopped a drive stands where he stopped while he gathers. */
+function applyStopIntents(state: MatchState): MatchState {
+  let next = state
+  for (const action of state.actions) {
+    if (action.kind !== 'SHOOT' || action.status !== 'ACTIVE' || action.shotStop === undefined || action.decisionId === undefined) continue
+    const player = next.players.find((candidate) => candidate.playerId === action.playerId)
+    const responsibility = next.responsibilities.find((item) => item.playerId === action.playerId && item.owner !== 'defensiveStructure')
+    if (!player || !responsibility) continue
+    const intent: MovementIntent = {
+      playerId: action.playerId, target: { ...player.position }, urgency: 'walk', facing: { kind: 'BASKET' },
+      provenance: { responsibilityId: responsibility.id, decisionId: action.decisionId, owner: 'action' },
+    }
+    next = { ...next, movementIntents: [...next.movementIntents.filter((item) => item.playerId !== action.playerId), intent] }
+  }
+  return next
 }
 
 function applyDriveIntents(state: MatchState): MatchState {

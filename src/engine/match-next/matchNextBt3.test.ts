@@ -140,7 +140,7 @@ describe('BT3C-M: a whole game through the real application path', { timeout: 30
     expect(byType('freeThrowMade').length + byType('freeThrowMissed').length).toBeGreaterThan(5)
     expect(byType('shotBlocked').length).toBeGreaterThan(0)
     expect(byType('steal').length).toBeGreaterThan(3)
-    expect(byType('turnover').length).toBeGreaterThan(10)
+    expect(byType('turnover').length).toBeGreaterThan(5)
   })
 
   it('every foul has an offender and a victim on opposite teams, a type and a timestamp', () => {

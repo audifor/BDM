@@ -12,6 +12,7 @@ import type { MovementIntent } from '../movement/MovementIntent'
 import { advanceTarget } from '../structure/OffensiveStructure'
 import { attackingBasketForTeam } from '../structure/FiveOutStructure'
 import { guardPosition } from '../defense/ManDefense'
+import { tuning } from '../tuning'
 
 const REBOUND_PURSUERS_PER_TEAM = 2
 /** Beyond this distance from the landing point an offensive player cannot win the ball: he retreats instead. */
@@ -120,7 +121,7 @@ function reconcileRebound(input: MatchState): MatchState {
   // outnumbered by defenders already inside. Everyone else gets back (transition safety) instead of arriving late.
   const nearestDefenderDistance = Math.min(...defendingPlayers.map((player) => distanceBetween(player.position, rebound.position)), Number.POSITIVE_INFINITY)
   const crashers = shootingPlayers
-    .map((player) => ({ player, distance: distanceBetween(player.position, rebound.position), score: distanceBetween(player.position, rebound.position) - effectiveReboundingImpact(player) * 0.008 - player.standingReachCm * 0.001 }))
+    .map((player) => ({ player, distance: distanceBetween(player.position, rebound.position), score: distanceBetween(player.position, rebound.position) - effectiveReboundingImpact(player) * 0.02 - player.standingReachCm * 0.001 }))
     .filter((item) => item.distance <= CRASH_MAX_DISTANCE_METERS && item.distance <= nearestDefenderDistance + CRASH_MAX_DISADVANTAGE_METERS)
     .sort((left, right) => left.score - right.score || comparePlayerId(left.player, right.player))
     .slice(0, REBOUND_PURSUERS_PER_TEAM)
@@ -129,7 +130,7 @@ function reconcileRebound(input: MatchState): MatchState {
   // crashers. Waiting until the ball became collectible gave the shooting team the whole flight time as a head start
   // (BT1-Next audit: 121 of 123 rebounds, 98%, were offensive; seed 424242 t74).
   const pursuingDefenderIds = new Set(defendingPlayers.map((player) => player.playerId)
-    .map((playerId) => ({ playerId, distance: distanceBetween(findPlayer(input, playerId)!.position, rebound.position) }))
+    .map((playerId) => ({ playerId, distance: distanceBetween(findPlayer(input, playerId)!.position, rebound.position) - effectiveReboundingImpact(findPlayer(input, playerId)!) * 0.02 }))
     .sort((left, right) => left.distance - right.distance || String(left.playerId).localeCompare(String(right.playerId)))
     .slice(0, REBOUND_PURSUERS_PER_TEAM).map((item) => item.playerId))
 
@@ -327,7 +328,7 @@ function installTransitionRoles(input: MatchState, transition: MatchTransitionSt
   }))
   const intents: MovementIntent[] = roles.map((role) => ({
     playerId: role.playerId, target: { ...role.target },
-    urgency: role.teamId !== transition.teamId ? 'sprint' : role.kind === 'BALL_ADVANCE' ? 'run' : 'sprint',
+    urgency: role.teamId !== transition.teamId ? 'sprint' : offenseUrgency(role.kind, transition.advantage),
     facing: { kind: role.kind === 'BALL_ADVANCE' || role.kind === 'RIM_RUN' ? 'BASKET' : 'BALL' },
     provenance: { responsibilityId: role.responsibilityId, decisionId: role.decisionId, owner: transitionOwner(role) },
   }))
@@ -349,6 +350,16 @@ function updateRoleTargets(state: MatchState, roles: readonly TransitionRole[]):
     const action = state.actions.find((item) => item.playerId === role.playerId && item.kind === 'DRIVE' && item.status === 'ACTIVE')
     return { ...role, target: role.kind === 'BALL_ADVANCE' && action?.target ? { ...action.target } : roleTarget(state, role) }
   })
+}
+
+/**
+ * A team with a numbers advantage pushes (fast break: the handler runs, everyone else sprints). Without one it brings the ball up in
+ * control: the handler at a jog, against a defense that is getting set, and the others run to their spots (BT4A: time is spent by
+ * moving, not waiting).
+ */
+function offenseUrgency(kind: TransitionRoleKind, advantage: TransitionAdvantage): 'jog' | 'run' | 'sprint' {
+  if (advantage === 'ADVANTAGE' || tuning().controlledAdvance <= 0) return kind === 'BALL_ADVANCE' ? 'run' : 'sprint'
+  return kind === 'BALL_ADVANCE' ? 'jog' : 'run'
 }
 
 function roleTarget(state: MatchState, role: TransitionRole): CourtPosition {
@@ -498,12 +509,17 @@ function isBoxedOutBy(player: MatchPlayerState, blocker: MatchPlayerState, rebou
   return lateral <= 0.85 && distanceBetween(blocker.position, player.position) <= 1.9
 }
 
-function reboundWeight(player: MatchPlayerState, rebound: CourtPosition, state: MatchState): number {
+/** How much each point of rebounding impact (over 50) is worth in the contest for the ball (BT4Q: BT3 let position eclipse it). */
+const REBOUND_ABILITY_PER_POINT = 0.028
+
+export function reboundWeight(player: MatchPlayerState, rebound: CourtPosition, state: MatchState): number {
   const distance = distanceBetween(player.position, rebound)
   const heightAdvantage = (player.standingReachCm - 250) * 0.006
-  const ability = (effectiveReboundingImpact(player) - 50) * 0.012
-  const sealed = state.players.some((candidate) => candidate.active && candidate.teamId !== player.teamId && isBoxedOutBy(player, candidate, rebound))
-  return Math.exp(ability + heightAdvantage - (sealed ? 0.9 : 0) - distance * 1.3)
+  const ability = (effectiveReboundingImpact(player) - 50) * REBOUND_ABILITY_PER_POINT
+  // Being sealed costs what the sealer's strength and rebounding make of it: a big body that boxes out well takes his man out of the play.
+  const sealer = state.players.find((candidate) => candidate.active && candidate.teamId !== player.teamId && isBoxedOutBy(player, candidate, rebound))
+  const sealPenalty = sealer === undefined ? 0 : 0.5 + 0.7 * clamp(effectiveReboundingImpact(sealer) / 100, 0, 1) + (sealer.weightKg - 90) * 0.006
+  return Math.exp(ability + heightAdvantage - sealPenalty - distance * 1.3)
 }
 
 

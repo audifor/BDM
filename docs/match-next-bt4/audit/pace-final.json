@@ -1,0 +1,624 @@
+{
+  "tag": "final",
+  "seeds": [
+    424242,
+    7,
+    1,
+    99,
+    2024,
+    31337
+  ],
+  "summary": {
+    "games": 6,
+    "complete": 6,
+    "perGame": {
+      "possessions": 215.5,
+      "ticks": 27162.17,
+      "clockRunningSeconds": 2400,
+      "clockStoppedSeconds": 316.22,
+      "possessionSecondsTotal": 2300.88,
+      "betweenPossessionsSeconds": 415.33
+    },
+    "counts": {
+      "drives": 147.17,
+      "screens": 19.17,
+      "passes": 400,
+      "shots": 209.5,
+      "threes": 97.33,
+      "made": 81.67,
+      "fta": 34,
+      "turnovers": 20.5,
+      "points": 225
+    },
+    "possessionSeconds": {
+      "n": 1293,
+      "mean": 10.68,
+      "median": 9.8,
+      "p10": 6.3,
+      "p90": 16.3,
+      "min": 0,
+      "max": 48.5
+    },
+    "phases": [
+      {
+        "phase": "inbound",
+        "share": 0.039,
+        "frequency": 0.493,
+        "secondsWhenPresent": {
+          "n": 638,
+          "mean": 0.83,
+          "median": 0.7,
+          "p10": 0.7,
+          "p90": 1.2,
+          "min": 0.7,
+          "max": 3.6
+        },
+        "secondsPerPossession": {
+          "n": 1293,
+          "mean": 0.41,
+          "median": 0,
+          "p10": 0,
+          "p90": 0.8,
+          "min": 0,
+          "max": 3.6
+        }
+      },
+      {
+        "phase": "transition",
+        "share": 0.184,
+        "frequency": 0.968,
+        "secondsWhenPresent": {
+          "n": 1252,
+          "mean": 2.03,
+          "median": 1.2,
+          "p10": 0.4,
+          "p90": 3.9,
+          "min": 0.1,
+          "max": 6
+        },
+        "secondsPerPossession": {
+          "n": 1293,
+          "mean": 1.96,
+          "median": 1.1,
+          "p10": 0.4,
+          "p90": 3.9,
+          "min": 0,
+          "max": 6
+        }
+      },
+      {
+        "phase": "early",
+        "share": 0,
+        "frequency": 0,
+        "secondsWhenPresent": {
+          "n": 0,
+          "mean": 0,
+          "median": 0,
+          "p10": 0,
+          "p90": 0,
+          "min": 0,
+          "max": 0
+        },
+        "secondsPerPossession": {
+          "n": 1293,
+          "mean": 0,
+          "median": 0,
+          "p10": 0,
+          "p90": 0,
+          "min": 0,
+          "max": 0
+        }
+      },
+      {
+        "phase": "settlement",
+        "share": 0.245,
+        "frequency": 0.781,
+        "secondsWhenPresent": {
+          "n": 1010,
+          "mean": 3.35,
+          "median": 3.9,
+          "p10": 0.5,
+          "p90": 5.3,
+          "min": 0.1,
+          "max": 8.3
+        },
+        "secondsPerPossession": {
+          "n": 1293,
+          "mean": 2.62,
+          "median": 2.8,
+          "p10": 0,
+          "p90": 5.2,
+          "min": 0,
+          "max": 8.3
+        }
+      },
+      {
+        "phase": "reading",
+        "share": 0.062,
+        "frequency": 0.514,
+        "secondsWhenPresent": {
+          "n": 664,
+          "mean": 1.3,
+          "median": 1,
+          "p10": 0.4,
+          "p90": 2.6,
+          "min": 0.1,
+          "max": 10.3
+        },
+        "secondsPerPossession": {
+          "n": 1293,
+          "mean": 0.67,
+          "median": 0.2,
+          "p10": 0,
+          "p90": 1.9,
+          "min": 0,
+          "max": 10.3
+        }
+      },
+      {
+        "phase": "actionSetup",
+        "share": 0.038,
+        "frequency": 0.092,
+        "secondsWhenPresent": {
+          "n": 119,
+          "mean": 4.44,
+          "median": 4.4,
+          "p10": 2.4,
+          "p90": 5.9,
+          "min": 0.9,
+          "max": 10.7
+        },
+        "secondsPerPossession": {
+          "n": 1293,
+          "mean": 0.41,
+          "median": 0,
+          "p10": 0,
+          "p90": 0,
+          "min": 0,
+          "max": 10.7
+        }
+      },
+      {
+        "phase": "actionExecution",
+        "share": 0.204,
+        "frequency": 0.927,
+        "secondsWhenPresent": {
+          "n": 1198,
+          "mean": 2.35,
+          "median": 2.2,
+          "p10": 1.1,
+          "p90": 3.7,
+          "min": 0.1,
+          "max": 32.3
+        },
+        "secondsPerPossession": {
+          "n": 1293,
+          "mean": 2.18,
+          "median": 2,
+          "p10": 0.7,
+          "p90": 3.7,
+          "min": 0,
+          "max": 32.3
+        }
+      },
+      {
+        "phase": "advantage",
+        "share": 0.019,
+        "frequency": 0.4,
+        "secondsWhenPresent": {
+          "n": 517,
+          "mean": 0.52,
+          "median": 0.3,
+          "p10": 0.3,
+          "p90": 0.8,
+          "min": 0.3,
+          "max": 2.3
+        },
+        "secondsPerPossession": {
+          "n": 1293,
+          "mean": 0.21,
+          "median": 0,
+          "p10": 0,
+          "p90": 0.7,
+          "min": 0,
+          "max": 2.3
+        }
+      },
+      {
+        "phase": "reset",
+        "share": 0.007,
+        "frequency": 0.085,
+        "secondsWhenPresent": {
+          "n": 110,
+          "mean": 0.94,
+          "median": 0.7,
+          "p10": 0.6,
+          "p90": 1.4,
+          "min": 0.5,
+          "max": 2.6
+        },
+        "secondsPerPossession": {
+          "n": 1293,
+          "mean": 0.08,
+          "median": 0,
+          "p10": 0,
+          "p90": 0,
+          "min": 0,
+          "max": 2.6
+        }
+      },
+      {
+        "phase": "shot",
+        "share": 0.062,
+        "frequency": 0.896,
+        "secondsWhenPresent": {
+          "n": 1158,
+          "mean": 0.74,
+          "median": 0.6,
+          "p10": 0.6,
+          "p90": 1.2,
+          "min": 0.2,
+          "max": 4.2
+        },
+        "secondsPerPossession": {
+          "n": 1293,
+          "mean": 0.66,
+          "median": 0.6,
+          "p10": 0,
+          "p90": 1.2,
+          "min": 0,
+          "max": 4.2
+        }
+      },
+      {
+        "phase": "rebound",
+        "share": 0.079,
+        "frequency": 0.561,
+        "secondsWhenPresent": {
+          "n": 726,
+          "mean": 1.5,
+          "median": 1.5,
+          "p10": 0.8,
+          "p90": 2.2,
+          "min": 0.1,
+          "max": 4.6
+        },
+        "secondsPerPossession": {
+          "n": 1293,
+          "mean": 0.85,
+          "median": 0.9,
+          "p10": 0,
+          "p90": 1.8,
+          "min": 0,
+          "max": 4.6
+        }
+      },
+      {
+        "phase": "deadBall",
+        "share": 0.06,
+        "frequency": 0.142,
+        "secondsWhenPresent": {
+          "n": 184,
+          "mean": 4.49,
+          "median": 4.4,
+          "p10": 3.1,
+          "p90": 6.2,
+          "min": 2.4,
+          "max": 9.1
+        },
+        "secondsPerPossession": {
+          "n": 1293,
+          "mean": 0.64,
+          "median": 0,
+          "p10": 0,
+          "p90": 3.7,
+          "min": 0,
+          "max": 9.1
+        }
+      }
+    ],
+    "durationBins": {
+      "<4 s": 0.048,
+      "4-8 s": 0.213,
+      "8-12 s": 0.414,
+      "12-16 s": 0.218,
+      "16-20 s": 0.07,
+      ">20 s": 0.037
+    },
+    "byCategory": {
+      "afterDefensiveRebound": {
+        "perGame": 92,
+        "seconds": {
+          "n": 552,
+          "mean": 10.35,
+          "median": 9.9,
+          "p10": 6.2,
+          "p90": 15.8,
+          "min": 0,
+          "max": 48.5
+        },
+        "bins": {
+          "<4 s": 0.058,
+          "4-8 s": 0.192,
+          "8-12 s": 0.464,
+          "12-16 s": 0.192,
+          "16-20 s": 0.069,
+          ">20 s": 0.025
+        },
+        "shotsPerPossession": 0.85
+      },
+      "afterFreeThrows": {
+        "perGame": 13,
+        "seconds": {
+          "n": 78,
+          "mean": 11.24,
+          "median": 11.5,
+          "p10": 7.3,
+          "p90": 16.2,
+          "min": 1.8,
+          "max": 19.2
+        },
+        "bins": {
+          "<4 s": 0.013,
+          "4-8 s": 0.231,
+          "8-12 s": 0.333,
+          "12-16 s": 0.321,
+          "16-20 s": 0.103,
+          ">20 s": 0
+        },
+        "shotsPerPossession": 0.9
+      },
+      "afterMadeBasket": {
+        "perGame": 69,
+        "seconds": {
+          "n": 414,
+          "mean": 10.06,
+          "median": 8.9,
+          "p10": 6.9,
+          "p90": 14.5,
+          "min": 0.8,
+          "max": 37.6
+        },
+        "bins": {
+          "<4 s": 0.046,
+          "4-8 s": 0.229,
+          "8-12 s": 0.449,
+          "12-16 s": 0.215,
+          "16-20 s": 0.039,
+          ">20 s": 0.022
+        },
+        "shotsPerPossession": 0.88
+      },
+      "afterTurnover": {
+        "perGame": 19.3,
+        "seconds": {
+          "n": 116,
+          "mean": 9.41,
+          "median": 8.8,
+          "p10": 4.4,
+          "p90": 14.4,
+          "min": 1.2,
+          "max": 43.1
+        },
+        "bins": {
+          "<4 s": 0.069,
+          "4-8 s": 0.379,
+          "8-12 s": 0.345,
+          "12-16 s": 0.129,
+          "16-20 s": 0.052,
+          ">20 s": 0.026
+        },
+        "shotsPerPossession": 0.89
+      },
+      "openingJumpBall": {
+        "perGame": 0.8,
+        "seconds": {
+          "n": 5,
+          "mean": 8.42,
+          "median": 8.3,
+          "p10": 3.1,
+          "p90": 13.4,
+          "min": 3.1,
+          "max": 13.4
+        },
+        "bins": {
+          "<4 s": 0.2,
+          "4-8 s": 0,
+          "8-12 s": 0.6,
+          "12-16 s": 0.2,
+          "16-20 s": 0,
+          ">20 s": 0
+        },
+        "shotsPerPossession": 1
+      },
+      "periodStart": {
+        "perGame": 2.8,
+        "seconds": {
+          "n": 17,
+          "mean": 8.17,
+          "median": 5.7,
+          "p10": 4.5,
+          "p90": 10,
+          "min": 3.9,
+          "max": 34.1
+        },
+        "bins": {
+          "<4 s": 0.059,
+          "4-8 s": 0.588,
+          "8-12 s": 0.294,
+          "12-16 s": 0,
+          "16-20 s": 0,
+          ">20 s": 0.059
+        },
+        "shotsPerPossession": 0.94
+      },
+      "secondChance": {
+        "perGame": 18.5,
+        "seconds": {
+          "n": 111,
+          "mean": 16.02,
+          "median": 14.8,
+          "p10": 10.8,
+          "p90": 23.5,
+          "min": 5.4,
+          "max": 40.9
+        },
+        "bins": {
+          "<4 s": 0,
+          "4-8 s": 0.027,
+          "8-12 s": 0.171,
+          "12-16 s": 0.414,
+          "16-20 s": 0.198,
+          ">20 s": 0.189
+        },
+        "shotsPerPossession": 2.06
+      }
+    },
+    "byEnd": {
+      "made": {
+        "perGame": 92,
+        "seconds": {
+          "n": 552,
+          "mean": 10.58,
+          "median": 9.4,
+          "p10": 6.7,
+          "p90": 15.8,
+          "min": 0.6,
+          "max": 40.9
+        }
+      },
+      "defensiveRebound": {
+        "perGame": 99.2,
+        "seconds": {
+          "n": 595,
+          "mean": 11.58,
+          "median": 10.5,
+          "p10": 8,
+          "p90": 16.8,
+          "min": 2.8,
+          "max": 25.9
+        }
+      },
+      "turnover": {
+        "perGame": 19.7,
+        "seconds": {
+          "n": 118,
+          "mean": 6.97,
+          "median": 6.7,
+          "p10": 1.4,
+          "p90": 14.4,
+          "min": 0,
+          "max": 20.3
+        }
+      },
+      "periodEnd": {
+        "perGame": 3.8,
+        "seconds": {
+          "n": 23,
+          "mean": 2.82,
+          "median": 2.4,
+          "p10": 0.6,
+          "p90": 5.6,
+          "min": 0.2,
+          "max": 7
+        }
+      },
+      "shotClock": {
+        "perGame": 0.8,
+        "seconds": {
+          "n": 5,
+          "mean": 37.6,
+          "median": 37.6,
+          "p10": 24.7,
+          "p90": 48.5,
+          "min": 24.7,
+          "max": 48.5
+        }
+      }
+    },
+    "firstShot": {
+      "actionExecution": {
+        "share": 0.821,
+        "atSeconds": {
+          "n": 1061,
+          "mean": 8.37,
+          "median": 7.5,
+          "p10": 5.7,
+          "p90": 12.1,
+          "min": 0.7,
+          "max": 27.1
+        }
+      },
+      "actionSetup": {
+        "share": 0.058,
+        "atSeconds": {
+          "n": 75,
+          "mean": 13.87,
+          "median": 13.5,
+          "p10": 10.9,
+          "p90": 17.9,
+          "min": 8.2,
+          "max": 22
+        }
+      },
+      "noShot": {
+        "share": 0.12,
+        "atSeconds": {
+          "n": 0,
+          "mean": 0,
+          "median": 0,
+          "p10": 0,
+          "p90": 0,
+          "min": 0,
+          "max": 0
+        }
+      },
+      "rebound": {
+        "share": 0.001,
+        "atSeconds": {
+          "n": 1,
+          "mean": 0,
+          "median": 0,
+          "p10": 0,
+          "p90": 0,
+          "min": 0,
+          "max": 0
+        }
+      },
+      "transition": {
+        "share": 0.001,
+        "atSeconds": {
+          "n": 1,
+          "mean": 4.7,
+          "median": 4.7,
+          "p10": 4.7,
+          "p90": 4.7,
+          "min": 4.7,
+          "max": 4.7
+        }
+      }
+    },
+    "betweenPossessionsSecondsPerGame": {
+      "JUMP_BALL": 1.9,
+      "dead:madeBasket": 380.2,
+      "dead:outOfBounds": 10.8,
+      "dead:periodEnd": 13,
+      "dead:shotClockViolation": 3,
+      "dead:foul": 6.3
+    },
+    "clockSecondsByPhasePerGame": {
+      "inbound": 50.65,
+      "transition": 423.25,
+      "early": 0,
+      "settlement": 563.72,
+      "reading": 143.35,
+      "actionSetup": 88.03,
+      "actionExecution": 469.7,
+      "advantage": 44.63,
+      "reset": 17.15,
+      "shot": 113.4,
+      "rebound": 178.45,
+      "deadBall": 307.67
+    }
+  }
+}

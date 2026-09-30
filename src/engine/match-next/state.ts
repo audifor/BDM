@@ -173,6 +173,9 @@ export interface MatchNextEvent {
   readonly actionKind?: string
   readonly actionOutcome?: string
   readonly shotProbability?: number
+  /** BT4E/F: derived labels of a released shot (see stats/ShotEcology). */
+  readonly shotZone?: string
+  readonly shotCreation?: string
   readonly contestScore?: number
   readonly passQuality?: number
   readonly reboundRole?: ReboundResponsibilityKind
@@ -217,6 +220,22 @@ export interface ScreenState {
 
 /** BT3B: what kind of physical interaction two players had. Not every contact is a foul. */
 export type ContactKind = 'INCIDENTAL' | 'LEGAL_DEFENSIVE' | 'SCREEN' | 'DRIVE' | 'SHOOTING' | 'REBOUNDING' | 'ILLEGAL_DISPLACEMENT'
+/** Expected points per shot a team starts a game believing (about a league-average shot). */
+export const INITIAL_SHOT_VALUE_MEMORY = 1.05
+
+export interface ContactEpisode {
+  readonly attackerId: PlayerId
+  readonly defenderId: PlayerId
+  readonly minGap: number
+  /** Closing speeds at the closest approach (m/s): who was moving into whom. */
+  readonly attackerClosing: number
+  readonly defenderClosing: number
+  readonly established: boolean
+  readonly inPath: boolean
+  readonly startedT: number
+  readonly lastT: number
+}
+
 export type FoulType = 'SHOOTING' | 'REACH' | 'BLOCKING' | 'CHARGING' | 'ILLEGAL_SCREEN' | 'LOOSE_BALL' | 'REBOUNDING'
 export type FoulResolution = 'INBOUND' | 'FREE_THROWS' | 'BONUS_FREE_THROWS' | 'AND_ONE' | 'OFFENSIVE_TURNOVER'
 export type TurnoverType = 'BAD_PASS' | 'INTERCEPTION' | 'LOST_DRIBBLE' | 'OFFENSIVE_FOUL' | 'STEPPED_OUT' | 'SHOT_CLOCK' | 'OUT_OF_BOUNDS'
@@ -372,6 +391,13 @@ export interface MatchState {
   readonly offenseFlow: OffenseFlowState | null
   readonly screen: ScreenState | null
   readonly fouls: FoulState
+  /** BT4J: guarding bodies currently within reach of each other, judged once when they part. */
+  readonly contactEpisodes: readonly ContactEpisode[]
+  /**
+   * BT4: what a team's shots have been worth lately (running mean of the expected points of the shots it took). It is what the team
+   * expects a possession to yield if it keeps working: the value of holding the ball is measured against it instead of a constant.
+   */
+  readonly shotValueMemory: { readonly home: number; readonly away: number }
   readonly freeThrows: FreeThrowSequence | null
   readonly playState: PlayState
   readonly actions: readonly MatchActionState[]
@@ -442,6 +468,8 @@ export function createInitialMatchState(setup: MatchSetup): MatchState {
     offenseFlow: null,
     screen: null,
     fouls: { personal: {}, teamPeriod: {}, fouledOut: [], nextSequence: 1 },
+    contactEpisodes: [],
+    shotValueMemory: { home: INITIAL_SHOT_VALUE_MEMORY, away: INITIAL_SHOT_VALUE_MEMORY },
     freeThrows: null,
     playState: { phase: 'DEAD', sinceT: 0, cause: 'OPENING' },
     actions: [],

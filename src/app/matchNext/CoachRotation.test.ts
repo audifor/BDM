@@ -300,8 +300,9 @@ describe('BS8 coach and rotation authority', { timeout: 60000 }, () => {
     expect(awaySubstitutions.length).toBeGreaterThan(0)
     expect(live.playerStats.find((line) => line.playerId === outgoingId)!.secondsPlayed).toBeLessThan(periodMinutes * 60)
     expect(live.playerStats.find((line) => line.playerId === incomingId)!.secondsPlayed).toBeGreaterThan(0)
-    expect(consequences.find((item) => item.playerId === outgoingId)!.workload.minutes)
-      .toBeCloseTo(live.playerStats.find((line) => line.playerId === outgoingId)!.secondsPlayed / 60, 2)
+    // Minutes are rounded to two decimals: the rounding error may be exactly half a hundredth.
+    expect(Math.abs(consequences.find((item) => item.playerId === outgoingId)!.workload.minutes - live.playerStats.find((line) => line.playerId === outgoingId)!.secondsPlayed / 60))
+      .toBeLessThanOrEqual(0.005 + 1e-9)
     expect(idleId).toBeDefined()
     expect(consequences.find((item) => item.playerId === outgoingId)!.workload.minutes)
       .toBeGreaterThan(consequences.find((item) => item.playerId === idleId)!.workload.minutes)

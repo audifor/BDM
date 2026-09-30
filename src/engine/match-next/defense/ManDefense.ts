@@ -150,7 +150,7 @@ export function reconcileManDefense(input: MatchState): MatchState {
         ? guardPosition(handlerPosition(state, ballHandlerId, attacker.position), state.ball.position, defendedBasket, 'HELP', state.court, defensiveTactics)
         : kind === 'GAP' && defender.playerId === rimProtectorPlayerId && rotationTarget === undefined
           ? rimProtectorPosition(state.ball.position, defendedBasket, state.court)
-          : rotationTarget ?? guardPosition(attacker.position, state.ball.position, defendedBasket, responsibilityTargetKind, state.court, defensiveTactics)
+          : rotationTarget ?? guardPosition(attacker.position, state.ball.position, defendedBasket, responsibilityTargetKind, state.court, defensiveTactics, attacker.offense.shooting)
       const distanceToTarget = distanceBetween(defender.position, target)
       const handler = ballHandlerId === null ? undefined : playerById.get(ballHandlerId)
       const isContainingDrive = kind === 'ON_BALL' && activeDrive?.playerId === ballHandlerId
@@ -206,6 +206,11 @@ const RIM_PROTECTOR_DISTANCE_METERS = 2.4
 const RIM_PROTECTOR_KEEP_BALL_DISTANCE_METERS = 4.5
 const RIM_PROTECTOR_MIN_BALL_DISTANCE_METERS = 6
 
+/** How much sense it makes to leave this attacker alone: far from the ball and unable to punish the space. */
+function sagScore(attacker: MatchPlayerState, ballDistance: number): number {
+  return ballDistance * 0.6 + (100 - attacker.offense.shooting) * 0.12
+}
+
 function resolveRimProtector(
   state: MatchState,
   assignments: readonly DefensiveAssignment[],
@@ -225,7 +230,9 @@ function resolveRimProtector(
   if (kept !== undefined && kept.ballDistance >= RIM_PROTECTOR_KEEP_BALL_DISTANCE_METERS) return prior
   const chosen = candidates
     .filter((entry) => entry.ballDistance >= RIM_PROTECTOR_MIN_BALL_DISTANCE_METERS && distanceBetween(entry.attacker.position, basket) >= 4)
-    .sort((left, right) => right.ballDistance - left.ballDistance || left.attacker.offense.shooting - right.attacker.offense.shooting || comparePlayerId(left.defender, right.defender))[0]
+    // BT4L: the man who sags into the paint is the one who can least punish it: far from the ball AND the worst shooter. An elite
+    // spot-up shooter is never the one left alone.
+    .sort((left, right) => sagScore(right.attacker, right.ballDistance) - sagScore(left.attacker, left.ballDistance) || comparePlayerId(left.defender, right.defender))[0]
   return chosen?.item.defenderPlayerId ?? null
 }
 
@@ -349,15 +356,18 @@ export function guardPosition(
   responsibility: 'ON_BALL' | 'GAP' | 'HELP',
   court: MatchState['court'],
   tactics?: MatchState['tacticalPlans']['home']['defense'],
+  /** Shooting rating of the man being guarded: a defender crowds a shooter who can punish space and sags off one who cannot. */
+  attackerShooting = 55,
 ): CourtPosition {
+  const threatScale = clamp(1.5 - attackerShooting * 0.009, 0.65, 1.4)
   const basketSideFallback = { x: defendedBasket.x >= court.lengthMeters / 2 ? -1 : 1, y: 0 }
   const towardBasket = unitVector({ x: defendedBasket.x - attackerPosition.x, y: defendedBasket.y - attackerPosition.y }, basketSideFallback)
   const towardBall = unitVector({ x: ballPosition.x - attackerPosition.x, y: ballPosition.y - attackerPosition.y }, { x: 0, y: 0 })
   const basketDistance = distanceBetween(attackerPosition, defendedBasket)
   const onBallCushion = clamp(ON_BALL_CUSHION_METERS - (tactics?.perimeter ?? 0) * 0.12, 0.6, 1.5)
-  const gapDepth = clamp(GAP_DEPTH_METERS + (tactics?.interior ?? 0) * 0.1, 0.5, 1.3)
+  const gapDepth = clamp((GAP_DEPTH_METERS + (tactics?.interior ?? 0) * 0.1) * threatScale, 0.4, 1.6)
   const helpDepth = clamp(HELP_DEPTH_METERS + (tactics?.interior ?? 0) * 0.2, 0.7, 2.3)
-  const gapShade = clamp(GAP_SHADE_METERS + (tactics?.perimeter ?? 0) * 0.1, 0.35, 0.95)
+  const gapShade = clamp((GAP_SHADE_METERS + (tactics?.perimeter ?? 0) * 0.1) * threatScale, 0.25, 1.2)
   const depth = responsibility === 'ON_BALL' ? Math.min(onBallCushion, Math.max(0, basketDistance - 0.45))
     : responsibility === 'GAP' ? Math.min(gapDepth, Math.max(0, basketDistance - 0.6))
       : Math.min(helpDepth, Math.max(0, basketDistance - 0.6))

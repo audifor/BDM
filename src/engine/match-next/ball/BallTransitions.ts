@@ -34,6 +34,8 @@ export interface ReleaseShotCommand {
   readonly shotProbability?: number
   readonly contestScore?: number
   readonly contestDefenderPlayerId?: PlayerId
+  readonly shotZone?: string
+  readonly shotCreation?: string
 }
 
 export function startInbound(state: MatchState, teamId: TeamId, inbounderPlayerId: PlayerId, reason: InboundStartReason): MatchState {
@@ -207,6 +209,8 @@ export function releaseShot(state: MatchState, command: ReleaseShotCommand): Mat
     ...(command.shotValue === undefined ? {} : { points: command.shotValue }),
     ...(command.shotProbability === undefined ? {} : { shotProbability: command.shotProbability }),
     ...(command.contestScore === undefined ? {} : { contestScore: command.contestScore }),
+    ...(command.shotZone === undefined ? {} : { shotZone: command.shotZone }),
+    ...(command.shotCreation === undefined ? {} : { shotCreation: command.shotCreation }),
   })
 }
 
