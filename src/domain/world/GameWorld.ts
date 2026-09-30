@@ -7,7 +7,7 @@ import { createConference, createConferenceMembership, type Conference, type Con
 import type { Draft, DraftPick } from '@/domain/draft'
 import { createSportsEcosystem, DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, DEFAULT_NBA_LIKE_ECOSYSTEM_ID, DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, type SportsEcosystem } from '@/domain/ecosystem'
 import type { Country } from '@/domain/country'
-import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
+import { addYears, compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import type { Game } from '@/domain/game'
 import type {
   CoachId,
@@ -58,6 +58,7 @@ import { createEconomicObservation, createExchangeRate, createFinancialRegulatio
 import { createFinanceDecisionProposal, type FinanceDecisionProposal } from '@/domain/finance/FinanceAI'
 import type { PlayerTransaction } from '@/domain/transaction'
 import type { PlayerTransactionId } from '@/domain/ids'
+import { contractIdFromString, financialCommitmentIdFromString, playerTransactionIdFromString } from '@/domain/ids'
 import { createOrganizationKnowledge, createPlayerKnowledge, type OrganizationKnowledge, type PlayerKnowledgeRecord } from '@/domain/knowledge'
 import { createEvaluatorProfile, type Evidence, type EvaluatorProfile, type EvaluatorReport, type ScoutingAssignment } from '@/domain/scouting'
 import { deriveOrganizationEvaluationPolicy, type OrganizationEvaluationPolicy } from '@/domain/intelligence'
@@ -1869,17 +1870,91 @@ function validateGovernance(world: GameWorld): void {
     if (events.filter((event) => event.kind === 'EXECUTED').length > 1) throw new GameWorldValidationError(`Governance decision ${decision.id} executed more than once`)
     const execution = events.find((event) => event.kind === 'EXECUTED')
     if (execution !== undefined && governanceDecisionExecutionPolicy(decision.decisionType) === 'EFFECT_REQUIRED') {
-      if (decision.decisionType !== 'COACH_FIRING') throw new GameWorldValidationError(`Governance decision ${decision.id} requires an unimplemented execution effect`)
-      const coachId = decision.subject.kind === 'COACH' ? decision.subject.coachId as CoachId : undefined
-      const fired = coachId === undefined ? false : (world.coachCareerHistoryByCoachId[coachId] ?? []).some((entry) => entry.kind === 'departure' && entry.reason === 'fired' && entry.teamId !== undefined && institution.teamIds.includes(entry.teamId) && entry.date === execution.effectiveOn)
-      if (!fired) throw new GameWorldValidationError(`Governance decision ${decision.id} lacks its canonical coach firing effect`)
+      if (decision.decisionType === 'COACH_FIRING') {
+        const coachId = decision.subject.kind === 'COACH' ? decision.subject.coachId as CoachId : undefined
+        const fired = coachId === undefined ? false : (world.coachCareerHistoryByCoachId[coachId] ?? []).some((entry) => entry.kind === 'departure' && entry.reason === 'fired' && entry.teamId !== undefined && institution.teamIds.includes(entry.teamId) && entry.date === execution.effectiveOn)
+        if (!fired) throw new GameWorldValidationError(`Governance decision ${decision.id} lacks its canonical coach firing effect`)
+      } else if (decision.decisionType === 'PLAYER_CONTRACT_SIGNING') {
+        assertPlayerContractSigningEffect(world, decision, execution.effectiveOn)
+      } else {
+        throw new GameWorldValidationError(`Governance decision ${decision.id} requires an unimplemented execution effect`)
+      }
     }
+  }
+  for (const negotiation of Object.values(world.negotiationsById)) {
+    if (negotiation.status !== 'SIGNED') {
+      if (negotiation.signedOn !== undefined || negotiation.signedContractId !== undefined || negotiation.signedTransactionId !== undefined
+        || negotiation.signedGovernanceDecisionId !== undefined || negotiation.signedBy !== undefined) {
+        throw new GameWorldValidationError(`Unsigned negotiation ${negotiation.id} contains signing provenance`)
+      }
+      continue
+    }
+    if (negotiation.signedGovernanceDecisionId === undefined || negotiation.signedOn === undefined) throw new GameWorldValidationError(`Signed negotiation ${negotiation.id} lacks signing provenance`)
+    const decision = requireEntity(world.governanceDecisionsById, negotiation.signedGovernanceDecisionId, `Signed negotiation ${negotiation.id} Governance decision`)
+    const execution = Object.values(world.governanceDecisionEventsById).find((event) => event.decisionId === decision.id && event.kind === 'EXECUTED')
+    if (execution === undefined) throw new GameWorldValidationError(`Signed negotiation ${negotiation.id} has no Governance execution event`)
+    assertPlayerContractSigningEffect(world, decision, execution.effectiveOn)
   }
   for (const event of Object.values(world.governanceDecisionEventsById)) requireEntity(world.governanceDecisionsById, event.decisionId, `Governance decision event ${event.id} decision`)
   for (const decision of new Set(grants.map((grant) => grant.decision))) {
     const edges = grants.filter((grant) => grant.decision === decision && isGovernanceAuthorityActive(grant, world.currentDate))
     const visit = (bodyId: string, path: Set<string>): void => { if (path.has(bodyId)) throw new GameWorldValidationError(`Governance authority cycle for ${decision}`); const next = new Set(path); next.add(bodyId); for (const edge of edges.filter((item) => item.fromBodyId === bodyId)) visit(edge.toBodyId, next) }
     for (const body of Object.values(world.governanceBodiesById)) visit(body.id, new Set())
+  }
+}
+
+function assertPlayerContractSigningEffect(world: GameWorld, decision: GovernanceDecision, effectiveOn: GameDate): void {
+  if (decision.decisionType !== 'PLAYER_CONTRACT_SIGNING' || decision.subject.kind !== 'GENERIC') {
+    throw new GameWorldValidationError(`Governance decision ${decision.id} has an invalid player signing subject`)
+  }
+  const negotiation = world.negotiationsById[decision.subject.referenceId]
+  if (negotiation === undefined || negotiation.status !== 'SIGNED' || !('salary' in negotiation)
+    || negotiation.signedGovernanceDecisionId !== decision.id || negotiation.signedOn !== effectiveOn
+    || negotiation.signedContractId === undefined || negotiation.signedTransactionId === undefined || negotiation.signedBy === undefined) {
+    throw new GameWorldValidationError(`Governance decision ${decision.id} lacks its canonical player signing effect`)
+  }
+  const contract = requireEntity(world.contractsById, negotiation.signedContractId, `Signed negotiation ${negotiation.id} contract`)
+  const transaction = requireEntity(world.playerTransactionsById, negotiation.signedTransactionId, `Signed negotiation ${negotiation.id} transaction`)
+  if (negotiation.signedBy?.kind === 'STAFF') requireEntity(world.staffPeopleById, negotiation.signedBy.staffPersonId, `Signed negotiation ${negotiation.id} signing Staff`)
+  const institution = requireEntity(world.governanceInstitutionsById, decision.institutionId, `Governance decision ${decision.id} institution`)
+  if (negotiation.teamId === undefined) throw new GameWorldValidationError(`Signed negotiation ${negotiation.id} lacks a Team ID`)
+  const team = requireEntity(world.teams, negotiation.teamId, `Signed negotiation ${negotiation.id} team`)
+  if (!institution.teamIds.includes(team.id) || team.organizationId !== negotiation.organizationId
+    || contract.id !== contractIdFromString(`contract:signed-free-agent:${negotiation.id}`)
+    || transaction.id !== playerTransactionIdFromString(`transaction:signed-free-agent:${negotiation.id}`)
+    || contract.playerId !== negotiation.playerId || contract.teamId !== team.id || contract.term.startsOn !== negotiation.signedOn
+    || contract.term.expiresOn !== addYears(negotiation.signedOn, negotiation.years)
+    || contract.compensation.annualSalary !== negotiation.salary
+    || transaction.playerId !== negotiation.playerId || transaction.kind !== 'signedFreeAgent'
+    || transaction.occurredOn !== negotiation.signedOn || transaction.toTeamId !== team.id || transaction.contractId !== contract.id
+    || !team.rosterPlayerIds.includes(negotiation.playerId)
+    || Object.values(world.teams).some((item) => item.id !== team.id && item.rosterPlayerIds.includes(negotiation.playerId))) {
+    throw new GameWorldValidationError(`Governance decision ${decision.id} player signing effects do not match the accepted agreement`)
+  }
+
+  const rolePromiseId = `role-promise:signed-free-agent:${negotiation.id}`
+  const rolePromise = world.rolePromisesById[rolePromiseId]
+  if ((negotiation.role === undefined && rolePromise !== undefined)
+    || (negotiation.role !== undefined && (rolePromise === undefined || rolePromise.playerId !== negotiation.playerId
+      || rolePromise.teamOrganizationId !== negotiation.organizationId || rolePromise.role !== negotiation.role
+      || rolePromise.acceptedOn !== negotiation.signedOn || rolePromise.status !== 'ACTIVE'))) {
+    throw new GameWorldValidationError(`Signed negotiation ${negotiation.id} has an invalid RolePromise effect`)
+  }
+
+  const feeCommitments = Object.values(world.financialCommitmentsById).filter((item) => item.provenance.kind === 'PLAYER_AGENT_FEE' && item.provenance.id === negotiation.id)
+  if (negotiation.agentFee !== undefined && negotiation.agentFee > 0) {
+    const fee = feeCommitments[0]
+    const profile = world.organizationFinancialProfilesById[team.organizationId]
+    if (feeCommitments.length !== 1 || fee === undefined || profile === undefined
+      || fee.id !== financialCommitmentIdFromString(`financial-commitment:player-agent-fee:${negotiation.id}`)
+      || fee.organizationId !== team.organizationId || fee.amount.minorUnits !== negotiation.agentFee
+      || fee.amount.currencyCode !== profile.baseCurrencyCode || fee.startsOn !== negotiation.signedOn || fee.dueOn !== negotiation.signedOn
+      || fee.dimensions?.teamId !== team.id || fee.dimensions.reference?.kind !== 'CONTRACT_NEGOTIATION'
+      || fee.dimensions.reference.id !== negotiation.id) {
+      throw new GameWorldValidationError(`Signed negotiation ${negotiation.id} lacks its canonical agent-fee commitment`)
+    }
+  } else if (feeCommitments.length > 0) {
+    throw new GameWorldValidationError(`Signed negotiation ${negotiation.id} has an unagreed agent-fee commitment`)
   }
 }
 

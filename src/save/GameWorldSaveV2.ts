@@ -19,7 +19,10 @@ export function migrateGameWorldSaveV1ToV2(value: SaveGameEnvelopeV1): SaveGameE
   return { schemaVersion: 2, savedAt: legacyShape.savedAt, payload: v2Payload(legacyShape.payload, Object.values(world.playerKnowledgeById).map((record) => migrateLegacyPlayerKnowledge(record))) }
 }
 
-export function serializeGameWorldV2(world: GameWorld, savedAt: string): SaveGameEnvelopeV2 {
+export function serializeGameWorldV2(world: GameWorld, savedAt: string, options: { readonly v3SigningCompatibility?: boolean } = {}): SaveGameEnvelopeV2 {
+  if (options.v3SigningCompatibility !== true && Object.values(world.negotiationsById).some((negotiation) => negotiation.status === 'SIGNED')) {
+    throw new RangeError('Signed negotiations require Save V3 Governance state')
+  }
   const compatibilityPayload = serializeGameWorldV1(world, savedAt)
   return { schemaVersion: 2, savedAt: compatibilityPayload.savedAt, payload: v2Payload(compatibilityPayload.payload, world.organizationKnowledge, world) }
 }

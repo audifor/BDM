@@ -9,7 +9,7 @@ import { evaluateSimulationBreakpoints, type SimulationBreakpointResult } from '
 import { repairWorldAtLifecycleBoundary } from '@/app/repair'
 import type { WorldRepairReport } from '@/domain/repair'
 import { reviewMajorInjuryChanges, reviewMaterialRosterChanges } from '@/app/gmPlanning'
-import { progressAiNegotiationCounterResponses, submitAiOffersAfterPositiveContactResponses } from '@/app/marketIntelligence'
+import { completeAiAcceptedFreeAgentSignings, progressAiNegotiationCounterResponses, submitAiOffersAfterPositiveContactResponses } from '@/app/marketIntelligence'
 
 export class SimulationAdvanceBlockedError extends Error {
   constructor(readonly decision: SimulationBreakpointResult) {
@@ -126,6 +126,11 @@ export function advanceGameDayWithResult(world: GameWorld, createSeed: MatchSeed
     current = calendar.world
     phases.push(...calendar.phases.map((phase, index) => ({ ...phase, order: phases.length + index + 1 })))
 
+    const calendarAcceptedIds = newlyAcceptedNegotiationIds(beforeCalendar, current)
+    const calendarSigning = completeAiAcceptedFreeAgentSignings(current, calendarAcceptedIds)
+    current = calendarSigning.world
+    phases.push(signingCheckpointPhase('AI_ACCEPTED_FREE_AGENT_SIGNINGS', phases.length + 1, current, calendarAcceptedIds.length, calendarSigning.results))
+
     activePhaseId = 'AI_FORMAL_FREE_AGENT_OFFERS'
     const offerCheckpoint = submitAiOffersAfterPositiveContactResponses(current)
     current = offerCheckpoint.world
@@ -163,6 +168,11 @@ export function advanceGameDayWithResult(world: GameWorld, createSeed: MatchSeed
         ? 'No AI counter required a current club response.'
         : `Resolved ${appliedCounterActions.length} AI counter decision(s).`,
     })
+
+    const counterAcceptedIds = counterCheckpoint.results.filter((result) => result.status === 'APPLIED' && result.negotiation?.status === 'ACCEPTED').map((result) => result.negotiation!.id)
+    const counterSigning = completeAiAcceptedFreeAgentSignings(current, counterAcceptedIds)
+    current = counterSigning.world
+    phases.push(signingCheckpointPhase('AI_ACCEPTED_COUNTER_SIGNINGS', phases.length + 1, current, counterAcceptedIds.length, counterSigning.results))
 
     activePhaseId = 'POST_TRANSITION_SELF_HEALING'
     const changedTeamIds = Object.values(beforeCalendar.teams).filter((team) => team.rosterPlayerIds.join('|') !== current.teams[team.id]?.rosterPlayerIds.join('|')).map((team) => team.id).sort((a, b) => a.localeCompare(b))
@@ -212,6 +222,38 @@ export function advanceGameDayWithResult(world: GameWorld, createSeed: MatchSeed
     const diagnostic = { code: String(kind), message }
     phases.push({ phaseId, order: phases.length + 1, date: world.currentDate, ran: true, worldChanged: false, diagnostics: [diagnostic], summary: message })
     return { status: 'FAILED', world, phases: Object.freeze(phases), diagnostics: Object.freeze(phases.flatMap((phase) => phase.diagnostics)), breakpointBefore, repairReports: Object.freeze(repairReports), seasonPointerChanged: false, failure: { kind: kind === 'INVARIANT_VIOLATION' ? kind : 'TECHNICAL_FAILURE', phaseId, message } }
+  }
+}
+
+function newlyAcceptedNegotiationIds(previous: GameWorld, next: GameWorld): readonly string[] {
+  return Object.values(next.negotiationsById)
+    .filter((negotiation) => negotiation.status === 'ACCEPTED'
+      && previous.negotiationsById[negotiation.id]?.status !== 'ACCEPTED'
+      && negotiation.teamId !== undefined
+      && next.teams[negotiation.teamId]?.coachId !== undefined
+      && next.teams[negotiation.teamId]?.coachId !== next.userCoachId)
+    .map((negotiation) => negotiation.id)
+    .sort((left, right) => left.localeCompare(right))
+}
+
+function signingCheckpointPhase(
+  phaseId: string,
+  order: number,
+  world: GameWorld,
+  acceptedCount: number,
+  results: readonly import('@/app/marketIntelligence').FreeAgentSigningResult[],
+): WorldDayAdvancePhase {
+  const signed = results.filter((result) => result.status === 'SIGNED')
+  return {
+    phaseId,
+    order,
+    date: world.currentDate,
+    ran: acceptedCount > 0,
+    worldChanged: signed.length > 0,
+    diagnostics: signed.map((result) => ({ code: 'AI_FREE_AGENT_SIGNED', message: 'AI completed an accepted free-agent signing under current execution and Governance authority.', sourceId: result.negotiation?.id })),
+    summary: acceptedCount === 0
+      ? 'No newly accepted AI negotiation required a signing check.'
+      : `Checked ${acceptedCount} newly accepted AI negotiation(s); signed ${signed.length}.`,
   }
 }
 

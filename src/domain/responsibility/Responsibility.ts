@@ -31,7 +31,7 @@ export const RESPONSIBILITY_KINDS = [
   // scouting
   'assignScouts', 'prioritizeRegions', 'oppositionReport', 'prospectReport',
   // roster / personnel
-  'recommendSignings', 'initiateNegotiationContact', 'submitPlayerContractOffer', 'shortlistPlayers', 'contractRecommendation', 'tradeRecommendation',
+  'recommendSignings', 'initiateNegotiationContact', 'submitPlayerContractOffer', 'executePlayerContractSigning', 'shortlistPlayers', 'contractRecommendation', 'tradeRecommendation',
   // recruiting
   'prospectIdentification', 'recruitEvaluation', 'recruitingPriorities',
   // medical
@@ -97,6 +97,7 @@ export const RESPONSIBILITY_REGISTRY: Readonly<Record<ResponsibilityKind, Respon
   recommendSignings: def('recommendSignings', 'roster', ['generalManager', 'assistantGeneralManager', 'directorOfBasketballOperations', 'sportingDirector'], 2, ['userControlled', 'advisory', 'organizational']),
   initiateNegotiationContact: def('initiateNegotiationContact', 'roster', ['generalManager', 'assistantGeneralManager', 'directorOfBasketballOperations', 'sportingDirector'], 2),
   submitPlayerContractOffer: def('submitPlayerContractOffer', 'roster', ['generalManager', 'assistantGeneralManager', 'directorOfBasketballOperations', 'sportingDirector', 'capContractsSpecialist'], 2, ['userControlled', 'delegated']),
+  executePlayerContractSigning: def('executePlayerContractSigning', 'roster', ['generalManager', 'assistantGeneralManager', 'directorOfBasketballOperations', 'sportingDirector', 'capContractsSpecialist'], 2, ['userControlled', 'delegated']),
   shortlistPlayers: def('shortlistPlayers', 'roster', ['generalManager', 'assistantGeneralManager', 'analyticsStaff'], 1, ['userControlled', 'advisory', 'organizational']),
   contractRecommendation: def('contractRecommendation', 'roster', ['capContractsSpecialist', 'generalManager', 'assistantGeneralManager'], 2, ['userControlled', 'advisory', 'organizational']),
   tradeRecommendation: def('tradeRecommendation', 'roster', ['generalManager', 'assistantGeneralManager', 'sportingDirector'], 2, ['userControlled', 'advisory', 'organizational']),

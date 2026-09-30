@@ -75,7 +75,7 @@ export interface FreeAgentOfferIntelligence {
   readonly governanceAuthority: OpeningAuthority
   readonly existingNegotiation?: {
     readonly id: string
-    readonly status: 'CONTACTED' | 'OPEN' | 'COUNTERED' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN' | 'CLOSED'
+    readonly status: 'CONTACTED' | 'OPEN' | 'COUNTERED' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN' | 'CLOSED' | 'SIGNED'
     readonly kind: 'ACTIVE' | 'SAME_ATTEMPT'
     readonly startedOn?: import('@/domain/date').GameDate
     readonly contactResponsibleActor?: import('@/domain/market').NegotiationResponsibleActor

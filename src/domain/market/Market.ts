@@ -1,5 +1,5 @@
 import type { GameDate } from '@/domain/date'
-import type { AgencyId, AgentId, OrganizationId, PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
+import type { AgencyId, AgentId, ContractId, OrganizationId, PlayerId, PlayerTransactionId, StaffPersonId, TeamId } from '@/domain/ids'
 
 export interface AgentAbilities { readonly negotiation:number; readonly marketKnowledge:number; readonly network:number; readonly clientManagement:number; readonly mediaInfluence:number }
 export interface AgentProfessionalPersonality { readonly aggressiveness:number; readonly loyalty:number; readonly opportunism:number; readonly patience:number; readonly discretion:number }
@@ -83,6 +83,12 @@ interface NegotiationIdentity {
   /** Present on a formal negotiation closed because its player became unavailable. */
   readonly closedOn?: GameDate
   readonly closeReason?: 'PLAYER_NO_LONGER_FREE_AGENT'
+  /** Result links are present together only after the accepted agreement is signed. */
+  readonly signedOn?: GameDate
+  readonly signedContractId?: ContractId
+  readonly signedTransactionId?: PlayerTransactionId
+  readonly signedGovernanceDecisionId?: string
+  readonly signedBy?: NegotiationResponsibleActor
 }
 
 export interface NegotiationContactResponse {
@@ -102,7 +108,7 @@ interface ContactOnlyNegotiation extends NegotiationIdentity {
 }
 
 interface FormalOfferNegotiation extends NegotiationIdentity {
-  readonly status: 'OPEN' | 'COUNTERED' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN' | 'CLOSED'
+  readonly status: 'OPEN' | 'COUNTERED' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN' | 'CLOSED' | 'SIGNED'
   readonly salary: number
   readonly years: number
   /** Optional club role proposal; it is not an accepted RolePromise until later agreement. */
