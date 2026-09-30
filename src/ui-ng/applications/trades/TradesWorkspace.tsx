@@ -63,7 +63,6 @@ function TradesBoard({
   readonly teamId: TeamId
   readonly rules: TradeRules
 }) {
-  const executeTrade = useGameStore((state) => state.executeTrade)
   const [draft, setDraft] = useState(() => createTradeDraft(world))
   const [partnerId, setPartnerId] = useState<TeamId | ''>('')
   const [feedback, setFeedback] = useState<string | null>(null)
@@ -114,19 +113,15 @@ function TradesBoard({
         </button>
         <button
           className="ng-canon__action"
-          disabled={!presentation.allowed}
+          disabled={draft.movements.length === 0}
           onClick={() => {
-            try {
-              executeTrade(presentation.proposal)
-              setDraft(createTradeDraft(world))
-              setFeedback('Trade completed.')
-            } catch (error) {
-              setFeedback(error instanceof Error ? error.message : 'The trade could not be completed.')
-            }
+            setFeedback(presentation.allowed
+              ? 'Configured trade checks pass. This is a read-only assessment; negotiation and execution are not available.'
+              : 'This package does not pass the current trade checks. No trade was proposed or executed.')
           }}
           type="button"
         >
-          Propose trade
+          Assess package
         </button>
       </div>
       {feedback !== null ? <p className="ng-canon__note">{feedback}</p> : null}

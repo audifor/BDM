@@ -1287,7 +1287,16 @@ function validateWorld(world: GameWorld): void {
   validateFinancialState(world)
   validateTreasuryState(world)
   validateRecognitionState(world)
-  for (const transaction of Object.values(world.playerTransactionsById)) { requireEntity(world.players,transaction.playerId,`Transaction ${transaction.id} Player`); if(transaction.fromTeamId)requireEntity(world.teams,transaction.fromTeamId,`Transaction ${transaction.id} from Team`); if(transaction.toTeamId)requireEntity(world.teams,transaction.toTeamId,`Transaction ${transaction.id} to Team`); if(transaction.contractId)requireEntity(world.contractsById,transaction.contractId,`Transaction ${transaction.id} Contract`) }
+  for (const transaction of Object.values(world.playerTransactionsById)) {
+    requireEntity(world.players, transaction.playerId, `Transaction ${transaction.id} Player`)
+    if (transaction.fromTeamId) requireEntity(world.teams, transaction.fromTeamId, `Transaction ${transaction.id} from Team`)
+    if (transaction.toTeamId) requireEntity(world.teams, transaction.toTeamId, `Transaction ${transaction.id} to Team`)
+    if (transaction.contractId) requireEntity(world.contractsById, transaction.contractId, `Transaction ${transaction.id} Contract`)
+    if (transaction.kind === 'traded') {
+      if (transaction.fromTeamId === undefined || transaction.toTeamId === undefined || transaction.contractId === undefined) throw new GameWorldValidationError(`Trade transaction ${transaction.id} requires both teams and the transferred contract`)
+      if (world.contractsById[transaction.contractId]?.playerId !== transaction.playerId) throw new GameWorldValidationError(`Trade transaction ${transaction.id} contract belongs to another player`)
+    }
+  }
   const pairs = new Set<string>(); for (const knowledge of Object.values(world.playerKnowledgeById)) { createPlayerKnowledge(knowledge); requireEntity(world.teams, knowledge.observerTeamId, 'Knowledge observer Team'); requireEntity(world.players, knowledge.subjectPlayerId, 'Knowledge subject Player'); const pair=`${knowledge.observerTeamId}:${knowledge.subjectPlayerId}`; if(pairs.has(pair)) throw new GameWorldValidationError('Duplicate Player knowledge observer and subject'); pairs.add(pair) }
   for (const knowledge of world.organizationKnowledge) { createOrganizationKnowledge(knowledge); requireEntity(world.players, knowledge.subjectPlayerId, 'Organization knowledge subject Player') }
   for (const evidence of Object.values(world.evidenceById)) { requireEntity(world.players, evidence.subjectPlayerId, 'Evidence subject Player') }
@@ -1508,7 +1517,14 @@ function validateWorld(world: GameWorld): void {
   for (const [seasonId, rules] of Object.entries(world.salaryRulesBySeasonId) as [SeasonId, SalaryRules][]) { requireEntity(world.seasons, seasonId, 'Salary rules season'); createSalaryRules(rules); if (rules.seasonId !== seasonId) throw new GameWorldValidationError('Salary rules season does not match key') }
   for (const exception of Object.values(world.salaryExceptionsById)) { createTeamSalaryException(exception); requireEntity(world.teams, exception.teamId, 'Salary exception Team'); requireEntity(world.seasons, exception.seasonId, 'Salary exception season') }
   for (const charge of Object.values(world.deadMoneyChargesById)) { createDeadMoneyCharge(charge); requireEntity(world.teams, charge.teamId, 'Dead money Team'); requireEntity(world.seasons, charge.seasonId, 'Dead money season') }
-  for (const [seasonId, rules] of Object.entries(world.tradeRulesBySeasonId) as [SeasonId, TradeRules][]) { requireEntity(world.seasons, seasonId, 'Trade rules season'); createTradeRules(rules); if (rules.seasonId !== seasonId) throw new GameWorldValidationError('Trade rules season does not match key'); requireEntity(world.ecosystems, rules.ecosystemId, 'Trade rules ecosystem') }
+  for (const [seasonId, rules] of Object.entries(world.tradeRulesBySeasonId) as [SeasonId, TradeRules][]) {
+    const season = requireEntity(world.seasons, seasonId, 'Trade rules season')
+    createTradeRules(rules)
+    if (rules.seasonId !== seasonId) throw new GameWorldValidationError('Trade rules season does not match key')
+    requireEntity(world.ecosystems, rules.ecosystemId, 'Trade rules ecosystem')
+    if ((rules.tradeWindow?.opensOn !== undefined && (compareGameDates(rules.tradeWindow.opensOn, season.startDate) < 0 || compareGameDates(rules.tradeWindow.opensOn, season.endDate) > 0))
+      || (rules.tradeWindow?.closesOn !== undefined && (compareGameDates(rules.tradeWindow.closesOn, season.startDate) < 0 || compareGameDates(rules.tradeWindow.closesOn, season.endDate) > 0))) throw new GameWorldValidationError('Trade window must stay within its season')
+  }
   for (const rights of Object.values(world.playerRightsById)) { createPlayerRights(rights); requireEntity(world.players, rights.playerId, 'Player rights Player'); requireEntity(world.teams, rights.ownerTeamId, 'Player rights Team'); requireEntity(world.ecosystems, rights.ecosystemId, 'Player rights ecosystem') }
   for (const right of Object.values(world.futureDraftPickRightsById)) { createFutureDraftPickRight(right); requireEntity(world.teams, right.originalTeamId, 'Future pick original Team'); requireEntity(world.teams, right.ownerTeamId, 'Future pick owner Team'); requireEntity(world.ecosystems, right.ecosystemId, 'Future pick ecosystem'); if (right.conditionalRecipientTeamId !== undefined) requireEntity(world.teams, right.conditionalRecipientTeamId, 'Future pick conditional Team') }
   for (const right of Object.values(world.draftPickSwapRightsById)) { createDraftPickSwapRight(right); requireEntity(world.teams, right.holderTeamId, 'Swap right holder Team'); requireEntity(world.teams, right.counterpartTeamId, 'Swap right counterpart Team'); requireEntity(world.ecosystems, right.ecosystemId, 'Swap right ecosystem') }

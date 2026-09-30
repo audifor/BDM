@@ -1,17 +1,23 @@
 import { describe, expect, it } from 'vitest'
 
 import { createNewGame } from '@/app/game'
-import { createFutureDraftPickRight, createPlayerRights } from '@/domain/trade'
+import { createFutureDraftPickRight, createPlayerRights, createTradeRules } from '@/domain/trade'
+import { calculateTeamPayroll, getTeamRetainedSalary } from '@/engine/salary'
 import { updateGameWorld } from '@/domain/world'
 
-import { executeTrade, validateTrade } from './TradeEngine'
+import { executeTrade, getTradeWindowStatus, validateTrade } from './TradeEngine'
 import { materializeFutureDraftPickOwnership, resolveDraftPickSwapRight } from './DraftPickRightsResolution'
 
 function tradeWorld() {
   const base = createNewGame()
   const season = Object.values(base.seasons).find((item) => base.tradeRulesBySeasonId[item.id] !== undefined)!
   const teams = Object.values(base.teams).filter((team) => base.competitions[season.competitionId]!.participantTeamIds.includes(team.id))
-  return { world: updateGameWorld(base, { currentSeasonId: season.id, currentDate: season.startDate }), season, teams }
+  const world = updateGameWorld(base, {
+    currentSeasonId: season.id,
+    currentDate: season.startDate,
+    tradeRulesBySeasonId: { ...base.tradeRulesBySeasonId, [season.id]: createTradeRules({ ...base.tradeRulesBySeasonId[season.id]!, tradeWindow: {} }) },
+  })
+  return { world, season, teams }
 }
 
 describe('TradeEngine', () => {
@@ -21,13 +27,55 @@ describe('TradeEngine', () => {
     const equalWorld = updateGameWorld(world, { contracts: Object.values(world.contractsById).map((contract) => [playerA, playerB, playerC].includes(contract.playerId) ? { ...contract, compensation: { annualSalary: 1_000_000, years: [{ cashSalary: 1_000_000, capHit: 1_000_000, guaranteedAmount: 1_000_000 }] } } : contract) })
     const proposal = { id: 'three-team', ecosystemId: equalWorld.competitions[season.competitionId]!.ecosystemId, seasonId: season.id, participantTeamIds: [a!.id, b!.id, c!.id], movements: [{ asset: { kind: 'player' as const, playerId: playerA }, fromTeamId: a!.id, toTeamId: b!.id }, { asset: { kind: 'player' as const, playerId: playerB }, fromTeamId: b!.id, toTeamId: c!.id }, { asset: { kind: 'player' as const, playerId: playerC }, fromTeamId: c!.id, toTeamId: a!.id }] }
     const result = executeTrade(equalWorld, proposal)
-    expect(result.validation.allowed).toBe(true); expect(result.world.teams[b!.id]!.rosterPlayerIds).toContain(playerA); expect(result.world.teams[a!.id]!.rosterPlayerIds).toContain(playerC); expect(Object.values(result.world.contractsById).find((contract) => contract.playerId === playerA)).toEqual(Object.values(equalWorld.contractsById).find((contract) => contract.playerId === playerA)); expect(Object.keys(result.world.tradeHistoryById)).toHaveLength(1)
+    expect(result.validation.allowed).toBe(true); expect(result.world.teams[b!.id]!.rosterPlayerIds).toContain(playerA); expect(result.world.teams[a!.id]!.rosterPlayerIds).toContain(playerC)
+    const sourceContract = Object.values(equalWorld.contractsById).find((contract) => contract.playerId === playerA)!
+    const movedContract = result.world.contractsById[sourceContract.id]!
+    expect(movedContract).toMatchObject({ ...sourceContract, teamId: b!.id })
+    expect(movedContract.id).toBe(sourceContract.id)
+    expect(Object.values(result.world.playerTransactionsById).filter((transaction) => transaction.kind === 'traded')).toContainEqual(expect.objectContaining({ playerId: playerA, fromTeamId: a!.id, toTeamId: b!.id, contractId: sourceContract.id }))
+    expect(Object.keys(result.world.tradeHistoryById)).toHaveLength(1)
+  })
+
+  it('keeps retained salary with the old team while the same contract moves to the new team', () => {
+    const { world, season, teams } = tradeWorld(); const [a, b] = teams; const playerA = a!.rosterPlayerIds[0]!; const playerB = b!.rosterPlayerIds[0]!
+    const equalWorld = updateGameWorld(world, { contracts: Object.values(world.contractsById).map((contract) => [playerA, playerB].includes(contract.playerId) ? { ...contract, compensation: { annualSalary: 1_000_000, years: [{ cashSalary: 1_000_000, capHit: 1_000_000, guaranteedAmount: 1_000_000 }] } } : contract) })
+    const proposal = { id: 'retained-salary', ecosystemId: equalWorld.competitions[season.competitionId]!.ecosystemId, seasonId: season.id, participantTeamIds: [a!.id, b!.id], movements: [{ asset: { kind: 'player' as const, playerId: playerA }, fromTeamId: a!.id, toTeamId: b!.id }, { asset: { kind: 'player' as const, playerId: playerB }, fromTeamId: b!.id, toTeamId: a!.id }], retainedSalary: [{ playerId: playerA, retainingTeamId: a!.id, receivingTeamId: b!.id, amount: 500_000 }] }
+    const result = executeTrade(equalWorld, proposal)
+    expect(result.validation.allowed).toBe(true)
+    expect(result.world.tradeHistoryById[`trade:${season.id}:${proposal.id}`]!.retainedSalaryObligationIds).toHaveLength(1)
+    const obligation = result.world.retainedSalaryObligationsById[result.world.tradeHistoryById[`trade:${season.id}:${proposal.id}`]!.retainedSalaryObligationIds[0]!]!
+    expect(obligation).toMatchObject({ sourceTradeId: `trade:${season.id}:${proposal.id}`, retainingTeamId: a!.id, receivingTeamId: b!.id, seasonId: season.id, amount: 500_000 })
+    expect(getTeamRetainedSalary(result.world, a!.id, season.id)).toBe(500_000)
+    expect(result.world.contractsById[Object.values(equalWorld.contractsById).find((contract) => contract.playerId === playerA)!.id]!.teamId).toBe(b!.id)
+    const retainedCap = calculateTeamPayroll([], equalWorld.currentDate, 0, getTeamRetainedSalary(result.world, a!.id, season.id))
+    expect(retainedCap.totalCapHit).toBe(500_000)
+  })
+
+  it('fails closed when no trade window is configured and reports configured windows open or closed', () => {
+    const { world, season, teams } = tradeWorld(); const [a, b] = teams; const playerA = a!.rosterPlayerIds[0]!; const playerB = b!.rosterPlayerIds[0]!
+    const proposal = { id: 'window-state', ecosystemId: world.competitions[season.competitionId]!.ecosystemId, seasonId: season.id, participantTeamIds: [a!.id, b!.id], movements: [{ asset: { kind: 'player' as const, playerId: playerA }, fromTeamId: a!.id, toTeamId: b!.id }, { asset: { kind: 'player' as const, playerId: playerB }, fromTeamId: b!.id, toTeamId: a!.id }] }
+    const noWindow = updateGameWorld(world, { tradeRulesBySeasonId: { ...world.tradeRulesBySeasonId, [season.id]: createTradeRules({ ...world.tradeRulesBySeasonId[season.id]!, tradeWindow: undefined }) } })
+    expect(getTradeWindowStatus(noWindow, proposal)).toBe('NOT_CONFIGURED')
+    expect(validateTrade(noWindow, proposal).globalReasons).toContain('TRADE_WINDOW_NOT_CONFIGURED')
+    expect(executeTrade(noWindow, proposal).world).toBe(noWindow)
+    const closed = updateGameWorld(world, { currentDate: season.endDate, tradeRulesBySeasonId: { ...world.tradeRulesBySeasonId, [season.id]: createTradeRules({ ...world.tradeRulesBySeasonId[season.id]!, tradeWindow: { closesOn: season.startDate } }) } })
+    expect(getTradeWindowStatus(closed, proposal)).toBe('CLOSED')
+    expect(validateTrade(closed, proposal).globalReasons).toContain('TRADE_WINDOW_CLOSED')
   })
 
   it('rejects duplicate assets without any mutation', () => {
     const { world, season, teams } = tradeWorld(); const [a, b] = teams; const player = a!.rosterPlayerIds[0]!
     const proposal = { id: 'duplicate', ecosystemId: world.competitions[season.competitionId]!.ecosystemId, seasonId: season.id, participantTeamIds: [a!.id, b!.id], movements: [{ asset: { kind: 'player' as const, playerId: player }, fromTeamId: a!.id, toTeamId: b!.id }, { asset: { kind: 'player' as const, playerId: player }, fromTeamId: a!.id, toTeamId: b!.id }] }
     expect(validateTrade(world, proposal).allowed).toBe(false); expect(executeTrade(world, proposal).world).toBe(world)
+  })
+
+  it('rejects cash consideration until it can settle atomically through finance ledgers', () => {
+    const { world, season, teams } = tradeWorld(); const [a, b] = teams
+    const cashWorld = updateGameWorld(world, { tradeRulesBySeasonId: { ...world.tradeRulesBySeasonId, [season.id]: createTradeRules({ ...world.tradeRulesBySeasonId[season.id]!, cashConsideration: { allowed: true, maximumAmount: 100_000 } }) } })
+    const proposal = { id: 'cash-unsettled', ecosystemId: cashWorld.competitions[season.competitionId]!.ecosystemId, seasonId: season.id, participantTeamIds: [a!.id, b!.id], movements: [{ asset: { kind: 'cash' as const, amount: 50_000 }, fromTeamId: a!.id, toTeamId: b!.id }] }
+    const result = executeTrade(cashWorld, proposal)
+    expect(result.validation.teamResults.flatMap((item) => item.reasons)).toContain('CASH_SETTLEMENT_UNAVAILABLE')
+    expect(result.world).toBe(cashWorld)
   })
 
   it('transfers cross-ecosystem rights without moving the player roster', () => {

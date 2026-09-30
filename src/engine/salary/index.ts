@@ -1,4 +1,4 @@
-export { calculateLuxuryTax, calculateTeamPayroll, calculateTeamSalaryStatus, getIncomingSalaryLimit, validateContractOffer } from './SalaryEngine'
+export { calculateLuxuryTax, calculateTeamPayroll, calculateTeamSalaryStatus, getIncomingSalaryLimit, getTeamRetainedSalary, validateContractOffer } from './SalaryEngine'
 export { useSalaryException } from './SalaryExceptions'
 export type { ProposedSalaryContract, SalaryValidationReason, SalaryValidationResult, TeamPayroll, TeamSalaryStatus } from './SalaryEngine'
 export { createNbaLikeSalaryRules } from './NbaLikeSalaryRules'

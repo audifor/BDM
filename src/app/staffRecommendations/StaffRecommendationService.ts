@@ -18,7 +18,7 @@ const TRADE_ACCEPTANCE_KINDS = ['tradeRecommendation'] as const
 
 export { hasCanonicalAcceptanceSeam }
 
-export type StaffRecommendationCommandFailureReason = 'notFound' | 'alreadyResolved' | 'notAcceptable' | 'underlyingRejected'
+export type StaffRecommendationCommandFailureReason = 'notFound' | 'alreadyResolved' | 'notAcceptable' | 'underlyingRejected' | 'negotiationRequired'
 export type StaffRecommendationCommandResult = { readonly ok: true; readonly world: GameWorld } | { readonly ok: false; readonly reason: StaffRecommendationCommandFailureReason }
 
 /**
@@ -46,7 +46,7 @@ export function acceptStaffRecommendation(world: GameWorld, outcomeId: Delegatio
   }
   if (TRADE_ACCEPTANCE_KINDS.includes(outcome.kind as typeof TRADE_ACCEPTANCE_KINDS[number])) {
     const result = acceptTradeRecommendation(world, outcomeId)
-    if (!result.ok) return { ok: false, reason: 'underlyingRejected' }
+    if (!result.ok) return { ok: false, reason: result.reason === 'negotiationRequired' ? 'negotiationRequired' : 'underlyingRejected' }
     return { ok: true, world: emitAccepted(markAccepted(result.world, outcomeId), outcome) }
   }
   return { ok: false, reason: 'notAcceptable' }

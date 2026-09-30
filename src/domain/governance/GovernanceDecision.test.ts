@@ -30,7 +30,7 @@ describe("Governance decisions", () => {
   });
   it('defines one exhaustive execution policy and rejects unknown decision types', () => {
     expect(GOVERNANCE_DECISION_TYPES.map(governanceDecisionExecutionPolicy)).toEqual([
-      'FORMAL_ONLY', 'FORMAL_ONLY', 'EFFECT_REQUIRED', 'EFFECT_REQUIRED', 'FORMAL_ONLY', 'EFFECT_REQUIRED', 'EFFECT_REQUIRED', 'FORMAL_ONLY', 'EFFECT_REQUIRED', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY',
+      'FORMAL_ONLY', 'FORMAL_ONLY', 'EFFECT_REQUIRED', 'EFFECT_REQUIRED', 'FORMAL_ONLY', 'EFFECT_REQUIRED', 'EFFECT_REQUIRED', 'FORMAL_ONLY', 'EFFECT_REQUIRED', 'EFFECT_REQUIRED', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY',
     ])
     expect(() => governanceDecisionExecutionPolicy('UNKNOWN')).toThrow('Unknown governance decision type')
   })

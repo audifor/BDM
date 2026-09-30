@@ -22,6 +22,8 @@ import { rolloverBoardState } from '@/engine/board'
 import { reviewClubManagementPlanning } from '@/app/gmPlanning'
 import { bindRecruitingCycleTargetToSeason, initializeRecruitingCycle } from '@/engine/season'
 import type { CompetitionId, SeasonId } from '@/domain/ids'
+import { createTradeRules } from '@/domain/trade'
+import type { TradeRules } from '@/domain/trade'
 
 export interface CompetitionSeasonTransitionResult {
   readonly sourceSeasonId: SeasonId
@@ -86,9 +88,10 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
   })
   if (existingSuccessors.every((season) => season !== undefined)) {
     const target = existingSuccessors[0]!
+    const rolledWorld = rollForwardTradeRules(world, [[primary, target], ...linkedEditions.map((source, index) => [source, existingSuccessors[index + 1]!] as const)])
     const hasTierResolution = Object.values(world.promotionRelegationResolutionsById).some((resolution) => resolution.upperSeasonId === primary.id || resolution.lowerSeasonId === primary.id)
     return {
-      world,
+      world: rolledWorld,
       result: {
         sourceSeasonId: primary.id,
         targetSeasonId: target.id,
@@ -145,7 +148,8 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
     const competition = rolledCompetitions.get(nextSeason.competitionId)!
     rolledCompetitions.set(competition.id, createCompetition({ ...competition, participantTeamIds: [] }))
   }
-  const staged = updateGameWorld(world, { seasons: [...Object.values(world.seasons), nextPrimary, ...nextLinkedSeasons], competitions: [...rolledCompetitions.values()] })
+  const stagedWorld = updateGameWorld(world, { seasons: [...Object.values(world.seasons), nextPrimary, ...nextLinkedSeasons], competitions: [...rolledCompetitions.values()] })
+  const staged = rollForwardTradeRules(stagedWorld, [[primary, nextPrimary], ...linkedEditions.map((source, index) => [source, nextLinkedSeasons[index]!] as const)])
   const regularSeasonNodeKey = nextPrimary.worldCompetitionFormat?.variants.find((variant) => variant.isRealVariant)?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key
     ?? nextPrimary.worldCompetitionFormat?.variants[0]?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key
   const schedule = staged.ecosystems[staged.competitions[nextPrimary.competitionId]!.ecosystemId]!.kind === 'ncaaLike'
@@ -185,6 +189,32 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
     repairReports: repair.reports,
   }
   return { world: next, result }
+}
+
+export function rollForwardTradeRules(world: GameWorld, successors: readonly (readonly [Season, Season])[]): GameWorld {
+  let current = world
+  for (const [source, target] of successors) {
+    const sourceRules = current.tradeRulesBySeasonId[source.id]
+    const sourceCompetition = current.competitions[source.competitionId]
+    const targetCompetition = current.competitions[target.competitionId]
+    if (sourceRules === undefined || current.tradeRulesBySeasonId[target.id] !== undefined
+      || source.competitionId !== target.competitionId || sourceCompetition === undefined || targetCompetition === undefined
+      || sourceCompetition.ecosystemId !== targetCompetition.ecosystemId || sourceRules.ecosystemId !== targetCompetition.ecosystemId) continue
+    const { tradeWindow: sourceWindow, ...baseRules } = sourceRules
+    let tradeWindow = sourceWindow
+    if (sourceWindow !== undefined && (sourceWindow.opensOn !== undefined || sourceWindow.closesOn !== undefined)) {
+      const yearShift = Number(target.startDate.slice(0, 4)) - Number(source.startDate.slice(0, 4))
+      const shifted = {
+        ...(sourceWindow.opensOn === undefined ? {} : { opensOn: addYears(sourceWindow.opensOn, yearShift) }),
+        ...(sourceWindow.closesOn === undefined ? {} : { closesOn: addYears(sourceWindow.closesOn, yearShift) }),
+      }
+      tradeWindow = (shifted.opensOn === undefined || shifted.opensOn >= target.startDate)
+        && (shifted.closesOn === undefined || shifted.closesOn <= target.endDate) ? shifted : undefined
+    }
+    const successorRules: TradeRules = createTradeRules({ ...baseRules, seasonId: target.id, ...(tradeWindow === undefined ? {} : { tradeWindow }) })
+    current = updateGameWorld(current, { tradeRulesBySeasonId: { ...current.tradeRulesBySeasonId, [target.id]: successorRules } })
+  }
+  return current
 }
 
 function linkedCompetitionEditions(world: GameWorld, primary: Season): Season[] {

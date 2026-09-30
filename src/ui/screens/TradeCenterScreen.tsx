@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react'
 
 import type { TeamId } from '@/domain/ids'
-import type { TradeAsset, TradeAssetKind, TradeAssetMovement, TradeProposal } from '@/domain/trade'
+import type { TradeAsset, TradeAssetKind, TradeAssetMovement } from '@/domain/trade'
 import type { GameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { BdmButton, Dialog, Divider, EmptyState, Feedback, IconAction, Input, Select, Surface } from '@/ui/components/designSystem'
 import { formatMoney } from '@/ui/formatters'
 import { addTradeMovement, addTradeParticipant, buildTradePresentation, changeTradeCounterparty, createTradeDraft, humanizeTradeReason, removeTradeMovement, tradeAssetKey, tradeAssetLabel, type TradeDraft } from '@/ui/trades/TradePresentation'
 
-export function TradeCenterScreen({ world, onExecute }: { readonly world: GameWorld; readonly onExecute: (proposal: TradeProposal) => void }) {
+export function TradeCenterScreen({ world }: { readonly world: GameWorld }) {
   const rules = world.tradeRulesBySeasonId[world.currentSeasonId]
   const userTeam = getUserTeam(world)
   const teams = useMemo(() => rules === undefined ? [] : Object.values(world.teams).filter((team) => Object.values(world.competitions).some((competition) => competition.ecosystemId === rules.ecosystemId && competition.participantTeamIds.includes(team.id))), [rules, world.competitions, world.teams])
@@ -27,16 +27,18 @@ export function TradeCenterScreen({ world, onExecute }: { readonly world: GameWo
   const availablePartners = teams.filter((team) => team.id !== userTeam.id && !draft.participantTeamIds.includes(team.id) && team.name.toLocaleLowerCase().includes(teamQuery.toLocaleLowerCase()))
   const openAssets = (target: TeamId) => { setAssetTarget(target); setAssetSource(draft.participantTeamIds.find((teamId) => teamId !== target)); setAssetKind(rules.allowedAssetKinds[0] ?? 'player'); setCashAmount('') }
   const addAsset = (asset: TradeAsset) => { if (assetTarget === null || assetSource === undefined) return; setDraft((current) => addTradeMovement(current, { asset, fromTeamId: assetSource, toTeamId: assetTarget })); setAssetTarget(null) }
-  const execute = () => { try { onExecute(presentation.proposal); setDraft(createTradeDraft(world)); setFeedback('Trade completed.') } catch (error) { setFeedback(error instanceof Error ? error.message : 'The trade could not be completed.') } }
+  const assessPackage = () => setFeedback(presentation.allowed
+    ? 'Configured trade checks pass. This is a read-only assessment; negotiation and execution are not available.'
+    : 'This package does not pass the current trade checks. No trade was proposed or executed.')
   const currentSource = assetSource === undefined ? undefined : world.teams[assetSource]
 
   return <section className="screen trade-center">
     <header className="trade-center__heading"><div><p className="eyebrow">TRADES</p><h1>Trade Center</h1><p>Build the exchange around what each team receives.</p></div><div className="trade-center__heading-actions">{draft.participantTeamIds.length > 1 && <BdmButton onClick={() => setTeamPickerMode('partner')} size="compact" variant="ghost">Change partner</BdmButton>}{draft.participantTeamIds.length > 1 && <BdmButton disabled={draft.participantTeamIds.length >= rules.maxTeamsPerTrade || availablePartners.length === 0} onClick={() => setTeamPickerMode('add')} size="compact" variant="ghost">+ Add team</BdmButton>}</div></header>
-    {feedback !== null && <Feedback tone="success">{feedback}</Feedback>}
-    {draft.participantTeamIds.length < 2 ? <EmptyState action={<BdmButton onClick={() => setTeamPickerMode('partner')} size="large">Select a team</BdmButton>} description="Choose another team to start a negotiation." icon="↔" title="Build a trade" /> : <>
+    {feedback !== null && <Feedback>{feedback}</Feedback>}
+    {draft.participantTeamIds.length < 2 ? <EmptyState action={<BdmButton onClick={() => setTeamPickerMode('partner')} size="large">Select a team</BdmButton>} description="Choose another team to assess an exchange." icon="↔" title="Build a trade package" /> : <>
       <div className={`trade-board trade-board--${draft.participantTeamIds.length}`}>{presentation.teams.map((team) => <TradeTeamColumn hasSalaryMatching={presentation.hasSalaryMatching} key={team.teamId} onAddAsset={() => openAssets(team.teamId)} onRemove={(movement) => setDraft((current) => removeTradeMovement(current, movement))} team={team} />)}</div>
       <section className="trade-center__validation"><div><strong>{presentation.allowed ? 'Trade valid' : 'Trade needs changes'}</strong><p>{presentation.allowed ? 'Every team currently satisfies the configured trade rules.' : 'Review the team notes before proposing this trade.'}</p></div><div className="trade-center__reasons">{presentation.globalReasons.map((reason) => <Feedback key={reason} tone="danger">{humanizeTradeReason(reason)}</Feedback>)}{presentation.teams.flatMap((team) => team.validation?.reasons.map((reason, index) => <Feedback key={`${team.teamId}:${reason}:${index}`} tone="danger">{humanizeTradeReason(reason, team.teamName, team.validation)} <small>{reason}</small></Feedback>) ?? [])}</div></section>
-      <footer className="trade-center__footer"><BdmButton disabled={draft.movements.length === 0} onClick={() => { setDraft(createTradeDraft(world)); setFeedback(null) }} variant="ghost">Clear proposal</BdmButton><BdmButton disabled={!presentation.allowed} onClick={execute} size="large">Propose trade</BdmButton></footer>
+      <footer className="trade-center__footer"><BdmButton disabled={draft.movements.length === 0} onClick={() => { setDraft(createTradeDraft(world)); setFeedback(null) }} variant="ghost">Clear package</BdmButton><BdmButton disabled={draft.movements.length === 0} onClick={assessPackage} size="large">Assess package</BdmButton></footer>
     </>}
 
     <Dialog onClose={() => { setTeamPickerMode(null); setTeamQuery('') }} open={teamPickerMode !== null} title={teamPickerMode === 'add' ? 'Add team to trade' : 'Select trade partner'}><div className="trade-picker"><Input aria-label="Search teams" label="Search teams" onChange={(event) => setTeamQuery(event.target.value)} placeholder="Search by team name" value={teamQuery} />{availablePartners.map((team) => <BdmButton key={team.id} onClick={() => { setDraft((current) => teamPickerMode === 'partner' ? changeTradeCounterparty(current, userTeam.id, team.id) : addTradeParticipant(current, team.id, rules.maxTeamsPerTrade)); setTeamPickerMode(null); setTeamQuery('') }} variant="ghost">{team.name}</BdmButton>)}{availablePartners.length === 0 && <p>No teams match this search.</p>}</div></Dialog>

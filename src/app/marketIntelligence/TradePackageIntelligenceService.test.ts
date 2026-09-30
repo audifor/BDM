@@ -4,6 +4,7 @@ import { createNewGame } from '@/app/game'
 import { createOrganizationKnowledge } from '@/domain/knowledge'
 import { createGMPlanState } from '@/domain/gmPlanning'
 import { createClubStrategicState } from '@/domain/clubStrategy'
+import { createTradeRules } from '@/domain/trade'
 import type { MarketKnowledge } from '@/domain/market'
 import type { OrganizationKnowledge } from '@/domain/knowledge'
 import type { PlayerId, TeamId } from '@/domain/ids'
@@ -30,6 +31,7 @@ function configuredTradeWorld(): { readonly world: GameWorld; readonly teamId: T
     currentSeasonId: season.id,
     players,
     clubStrategicStatesByTeamId: { ...base.clubStrategicStatesByTeamId, [team.id]: strategy },
+    tradeRulesBySeasonId: { ...base.tradeRulesBySeasonId, [season.id]: createTradeRules({ ...base.tradeRulesBySeasonId[season.id]!, tradeWindow: {} }) },
   })
   const context = assessGMDecisionContext(world, team.id)
   const outgoingNeed = context.needsAssessment.needs.find((need) => need.kind === 'POSITION_SURPLUS' && context.options.some((option) => option.needId === need.id && option.kind === 'OUTGOING_MARKET_REVIEW'))!
@@ -74,13 +76,16 @@ describe('TradePackageIntelligenceService', () => {
     expect(first.packages[0]!.outgoingAssets[0]).toMatchObject({ kind: 'player' })
     expect((first.packages[0]!.outgoingAssets[0] as { playerId: PlayerId }).playerId).not.toBe(targetPlayerId)
     expect(first.packages[0]!.outgoingNeedKind).toBe('POSITION_SURPLUS')
-    expect(first.packages[0]!.legality).toMatchObject({ ecosystemSupport: 'PASS', roster: 'PASS', contract: 'PASS', tradeWindow: 'NOT_ASSESSED' })
+    expect(first.packages[0]!.legality).toMatchObject({ ecosystemSupport: 'PASS', roster: 'PASS', contract: 'PASS', tradeWindow: 'OPEN' })
     expect(first.packages[0]!.economicStatus).toBe('UNKNOWN')
+    expect(first.packages[0]!.contractTransferSemantics).toBe('SAME_CONTRACT_ID_MOVES_TO_NEW_TEAM')
     expect(first.packages[0]!.clubKnowledge[0]!.incomingPlayer.knownDimensions).toContain('shooting')
     expect(first.packages[0]!.clubKnowledge[0]!.incomingPlayer.knownDimensions).not.toContain('finishing')
     expect(first.packages[0]!.clubKnowledge[1]!.outgoingPlayer.knownDimensions).toContain('finishing')
     expect(first.packages[0]!.clubKnowledge[1]!.outgoingPlayer.knownDimensions).not.toContain('shooting')
     expect(first.packages[0]!.blockers).toContain('TRADE_GOVERNANCE_AUTHORITY_UNKNOWN')
+    expect(first.packages[0]!.blockers).toContain('TRADE_NEGOTIATION_REQUIRED')
+    expect(first.packages[0]!.authorityByTeam).toHaveLength(2)
     expect(JSON.stringify(world)).toBe(before)
   })
 
@@ -104,6 +109,17 @@ describe('TradePackageIntelligenceService', () => {
     const result = assessTradePackageIntelligence(withoutRules, teamId)
     expect(result.packages).toEqual([])
     expect(result.blockers).toContain('NO_CURRENT_SUPPORTED_TRADE_ENQUIRY')
+  })
+
+  it('keeps a missing trade window NOT_CONFIGURED and blocks package readiness', () => {
+    const { world, teamId } = configuredTradeWorld()
+    const { tradeWindow: _tradeWindow, ...rulesWithoutWindow } = world.tradeRulesBySeasonId[world.currentSeasonId]!
+    const unconfigured = updateGameWorld(world, { tradeRulesBySeasonId: { ...world.tradeRulesBySeasonId, [world.currentSeasonId]: createTradeRules(rulesWithoutWindow) } })
+    const result = assessTradePackageIntelligence(unconfigured, teamId)
+    expect(result.packages.length).toBeGreaterThan(0)
+    expect(result.packages[0]!.legality.tradeWindow).toBe('NOT_CONFIGURED')
+    expect(result.packages[0]!.readiness).toBe('BLOCKED')
+    expect(result.packages[0]!.blockers).toContain('TRADE_WINDOW_NOT_CONFIGURED')
   })
 
   it('keeps unknown seller availability and economic value explicit', () => {

@@ -3,7 +3,7 @@ import { getPlayerContractStatus, getContractYearCompensation } from '@/domain/c
 import { createFinancialSource, type ValuationAssumptions } from '@/domain/finance'
 import type { GameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
-import { calculateTeamPayroll, calculateTeamSalaryStatus } from '@/engine/salary'
+import { calculateTeamPayroll, calculateTeamSalaryStatus, getTeamRetainedSalary } from '@/engine/salary'
 import { useGameStore } from '@/stores/gameStore'
 import { formatMoney } from '@/ui/formatters'
 import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
@@ -80,7 +80,8 @@ function SalaryCapSection({ world, teamId }: { readonly world: GameWorld; readon
   if (!rules) return <div className="finance-workspace__section"><h2>Salary cap</h2><p className="finance-workspace__note">Competition roster charge. This is separate from Organization cash and financial payroll.</p><p className="finance-workspace__empty">No salary-cap rules for the active cycle.</p></div>
   const contracts = Object.values(world.contractsById).filter((contract) => contract.teamId === teamId && getPlayerContractStatus(contract, world.currentDate) === 'active')
   const deadMoney = Object.values(world.deadMoneyChargesById).filter((charge) => charge.teamId === teamId && charge.seasonId === rules.seasonId).reduce((sum, charge) => sum + charge.amount, 0)
-  const status = calculateTeamSalaryStatus(rules, calculateTeamPayroll(contracts, world.currentDate, deadMoney))
+  const retainedSalary = getTeamRetainedSalary(world, teamId as never, rules.seasonId)
+  const status = calculateTeamSalaryStatus(rules, calculateTeamPayroll(contracts, world.currentDate, deadMoney, retainedSalary))
   const exceptions = Object.values(world.salaryExceptionsById).filter((item) => item.teamId === teamId)
   return <div className="finance-workspace__section"><h2>Salary cap</h2><p className="finance-workspace__note">Competition roster charge. This is separate from Organization cash and financial payroll.</p>
     <dl className="finance-workspace__metrics">{[['Cap hit', status.payroll.totalCapHit], ['Cap', status.capAmount], ['Cap space', status.capSpace], ['Tax overage', status.taxOverage]].map(([label, value]) => <div className="finance-workspace__metric" key={label}><dt>{label}</dt><dd>{formatMoney(Number(value))}</dd></div>)}</dl>

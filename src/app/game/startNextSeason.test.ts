@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import { createGameWorld, updateGameWorld } from '@/domain/world'
+import { addYears } from '@/domain/date'
+import { seasonIdFromString } from '@/domain/ids'
+import { createSeason } from '@/domain/season'
+import { createTradeRules } from '@/domain/trade'
 import { calculateStaffRoleProficiencyByRoleId } from '@/domain/staff'
 import { calculateStandings } from '@/engine/competition/standings'
 import { getPlayerCareerStats, getPlayerSeasonStats } from '@/engine/stats/PlayerHistory'
@@ -10,7 +14,7 @@ import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSa
 import { createNewGame } from './createNewGame'
 import { simulateAndApplyGame } from './playUserGame'
 import { getCurrentSeason } from './selectors'
-import { startNextSeason, startNextSeasonFor, startNextSeasonTransitionFor } from './startNextSeason'
+import { rollForwardTradeRules, startNextSeason, startNextSeasonFor, startNextSeasonTransitionFor } from './startNextSeason'
 import { advanceGameDay } from './advanceGameDay'
 
 /**
@@ -26,6 +30,23 @@ function latestSeasonFor(world: ReturnType<typeof createNewGame>, competitionId:
 }
 
 describe('startNextSeason', () => {
+  it('materializes equivalent trade rules for a successor in the same competition and ecosystem', () => {
+    const base = createNewGame()
+    const source = Object.values(base.seasons).find((season) => base.tradeRulesBySeasonId[season.id] !== undefined)!
+    const sourceRules = createTradeRules({ ...base.tradeRulesBySeasonId[source.id]!, tradeWindow: {} })
+    const successor = createSeason({
+      id: seasonIdFromString('test-trade-rules-successor'),
+      competitionId: source.competitionId,
+      label: 'Next edition',
+      startDate: addYears(source.startDate, 1),
+      endDate: addYears(source.endDate, 1),
+      participantTeamIds: source.participantTeamIds ?? base.competitions[source.competitionId]!.participantTeamIds,
+    })
+    const withSuccessor = updateGameWorld(base, { seasons: [...Object.values(base.seasons), successor], tradeRulesBySeasonId: { ...base.tradeRulesBySeasonId, [source.id]: sourceRules } })
+    const rolled = rollForwardTradeRules(withSuccessor, [[source, successor]])
+    expect(rolled.tradeRulesBySeasonId[successor.id]).toEqual({ ...sourceRules, seasonId: successor.id })
+  })
+
   it('requires a finalized current season', () => {
     expect(() => startNextSeason(createNewGame())).toThrow('not complete')
   })

@@ -3,11 +3,12 @@ import type { MarketKnowledge } from '@/domain/market'
 import type { OrganizationKnowledge, OrganizationKnowledgeDimension } from '@/domain/knowledge'
 import type { EcosystemId, PlayerId, SeasonId, TeamId } from '@/domain/ids'
 import type { TradeAsset } from '@/domain/trade'
+import { responsibilityIdForTeam } from '@/domain/responsibility'
 import type { GameWorld } from '@/domain/world'
 import { assessRoutedAcquisitionProposalIntelligence } from './AcquisitionProposalIntelligenceService'
 import { inspectGMPlanWorkflows } from '@/app/gmPlanning/GMPlanWorkflowService'
 import { assessGMDecisionContext } from '@/engine/gmDecisionContext'
-import { validateTrade, type TradeValidationReason } from '@/engine/trade'
+import { getTradeWindowStatus, validateTrade, type TradeValidationReason, type TradeWindowStatus } from '@/engine/trade'
 import type { AcquisitionProposalIntelligence } from '@/engine/marketIntelligence'
 import type { ClubNeed } from '@/engine/clubNeeds'
 
@@ -39,6 +40,13 @@ export interface TradeClubPackageKnowledge {
   readonly incomingMarketObservation?: TradeMarketObservation
 }
 
+export interface TradeClubAuthorityStatus {
+  readonly teamId: TeamId
+  readonly negotiation: 'USER_CONTROLLED' | 'DELEGATED' | 'UNKNOWN'
+  readonly execution: 'USER_CONTROLLED' | 'DELEGATED' | 'UNKNOWN'
+  readonly governance: 'UNKNOWN'
+}
+
 /** A derived, non-persistent package view. It deliberately is not a TradeProposal command. */
 export interface TradePackageIntelligence {
   readonly packageId: string
@@ -61,16 +69,18 @@ export interface TradePackageIntelligence {
     readonly ecosystemSupport: TradePackageCheck
     readonly roster: TradePackageCheck
     readonly contract: TradePackageCheck
+    readonly contractReasons: readonly TradeValidationReason[]
     readonly salaryCap: TradePackageCheck
-    readonly tradeWindow: 'NOT_ASSESSED'
+    readonly tradeWindow: TradeWindowStatus
     readonly assetEligibility: TradePackageCheck
     readonly assetReasons: readonly TradeValidationReason[]
     readonly salaryReasons: readonly TradeValidationReason[]
   }
   readonly economicStatus: 'UNKNOWN'
   readonly executionAuthority: 'UNKNOWN'
-  readonly contractTransferSemantics: 'CURRENT_ENGINE_PRESERVES_CONTRACT_UNCHANGED'
+  readonly contractTransferSemantics: 'SAME_CONTRACT_ID_MOVES_TO_NEW_TEAM'
   readonly clubKnowledge: readonly TradeClubPackageKnowledge[]
+  readonly authorityByTeam: readonly TradeClubAuthorityStatus[]
   readonly readiness: TradePackageReadiness
   readonly blockers: readonly string[]
 }
@@ -137,26 +147,28 @@ export function assessTradePackageIntelligence(world: GameWorld, teamId: TeamId)
           const incomingContract = activeContractFor(world, target.playerId, counterpartyTeamId)
           const rosterCheck: TradePackageCheck = team.rosterPlayerIds.includes(outgoingPlayerId)
             && world.teams[counterpartyTeamId]?.rosterPlayerIds.includes(target.playerId) === true ? 'PASS' : 'FAIL'
-          const contractCheck: TradePackageCheck = incomingContract !== undefined && outgoingContract !== undefined ? 'PASS' : 'NOT_ASSESSED'
+          const contractReasons = validation.teamResults.flatMap((result) => result.reasons.filter((reason) => reason === 'PLAYER_CONTRACT_NOT_ACTIVE'))
+          const contractCheck: TradePackageCheck = incomingContract !== undefined && outgoingContract !== undefined && contractReasons.length === 0 ? 'PASS' : 'FAIL'
           const salaryRulesAvailable = world.salaryRulesBySeasonId[seasonId] !== undefined
+          const tradeWindow = getTradeWindowStatus(world, { seasonId, ecosystemId })
           const salaryReasons = validation.teamResults.flatMap((result) => result.reasons.filter((reason) => reason === 'SALARY_MATCHING_FAILED' || reason === 'EXCEPTION_UNAVAILABLE'))
-          const assetReasons = [...validation.globalReasons, ...validation.teamResults.flatMap((result) => result.reasons.filter((reason) => reason !== 'SALARY_MATCHING_FAILED' && reason !== 'EXCEPTION_UNAVAILABLE'))]
+          const assetReasons = [...validation.globalReasons.filter((reason) => reason !== 'TRADE_WINDOW_CLOSED' && reason !== 'TRADE_WINDOW_NOT_CONFIGURED'), ...validation.teamResults.flatMap((result) => result.reasons.filter((reason) => reason !== 'SALARY_MATCHING_FAILED' && reason !== 'EXCEPTION_UNAVAILABLE' && reason !== 'PLAYER_CONTRACT_NOT_ACTIVE'))]
           const assetCheck: TradePackageCheck = assetReasons.length > 0 ? 'FAIL' : 'PASS'
           const salaryCheck: TradePackageCheck = !salaryRulesAvailable ? 'NOT_ASSESSED' : salaryReasons.length > 0 ? 'FAIL' : 'PASS'
           const market = marketObservation(world.marketKnowledge, team.organizationId, target.playerId)
-          const hardFailures = [rosterCheck, contractCheck, assetCheck, salaryCheck].includes('FAIL') || market?.availability === 'NOT_FOR_SALE'
+          const hardFailures = [rosterCheck, contractCheck, assetCheck, salaryCheck].includes('FAIL') || tradeWindow !== 'OPEN' || market?.availability === 'NOT_FOR_SALE'
           const blockers = [
             ...(rosterCheck === 'FAIL' ? ['PLAYER_ROSTER_OWNERSHIP_FAILED'] : []),
-            ...(contractCheck === 'NOT_ASSESSED' ? ['ACTIVE_PLAYER_CONTRACT_NOT_VERIFIED'] : []),
+            ...(contractCheck === 'FAIL' ? ['PLAYER_CONTRACT_NOT_ACTIVE'] : []),
             ...(assetCheck === 'FAIL' ? assetReasons : []),
             ...(salaryCheck === 'FAIL' ? salaryReasons : []),
             ...(!salaryRulesAvailable ? ['SALARY_CAP_RULES_NOT_ASSESSED'] : []),
+            ...(tradeWindow === 'NOT_CONFIGURED' ? ['TRADE_WINDOW_NOT_CONFIGURED'] : []),
+            ...(tradeWindow === 'CLOSED' ? ['TRADE_WINDOW_CLOSED'] : []),
             ...(market?.availability === undefined ? ['SELLER_AVAILABILITY_UNKNOWN'] : []),
             ...(market?.availability === 'NOT_FOR_SALE' ? ['SELLER_KNOWN_NOT_FOR_SALE'] : []),
             ...(market?.sellerWillingness === undefined ? ['SELLER_WILLINGNESS_UNKNOWN'] : []),
-            'TRADE_WINDOW_NOT_ASSESSED',
-            'CONTRACT_AFFILIATION_AFTER_TRADE_UNRESOLVED',
-            'TRADE_NEGOTIATION_AUTHORITY_UNKNOWN',
+            'TRADE_NEGOTIATION_REQUIRED',
             'TRADE_GOVERNANCE_AUTHORITY_UNKNOWN',
           ]
           packages.push(Object.freeze({
@@ -179,18 +191,23 @@ export function assessTradePackageIntelligence(world: GameWorld, teamId: TeamId)
               ecosystemSupport: 'PASS',
               roster: rosterCheck,
               contract: contractCheck,
+              contractReasons: Object.freeze(contractReasons),
               salaryCap: salaryCheck,
-              tradeWindow: 'NOT_ASSESSED',
+              tradeWindow,
               assetEligibility: assetCheck,
               assetReasons: Object.freeze(assetReasons),
               salaryReasons: Object.freeze(salaryReasons),
             }),
             economicStatus: 'UNKNOWN',
             executionAuthority: 'UNKNOWN',
-            contractTransferSemantics: 'CURRENT_ENGINE_PRESERVES_CONTRACT_UNCHANGED',
+            contractTransferSemantics: 'SAME_CONTRACT_ID_MOVES_TO_NEW_TEAM',
             clubKnowledge: Object.freeze([
               clubKnowledge(world, team, target.playerId, outgoingPlayerId, market),
               clubKnowledge(world, world.teams[counterpartyTeamId]!, outgoingPlayerId, target.playerId, marketObservation(world.marketKnowledge, world.teams[counterpartyTeamId]!.organizationId, outgoingPlayerId)),
+            ]),
+            authorityByTeam: Object.freeze([
+              clubAuthority(world, teamId),
+              clubAuthority(world, counterpartyTeamId),
             ]),
             readiness: hardFailures ? 'BLOCKED' : 'MORE_INFORMATION_REQUIRED',
             blockers: Object.freeze([...new Set(blockers)]),
@@ -239,6 +256,16 @@ function marketObservation(records: readonly MarketKnowledge[], organizationId: 
     ...(knowledge.availability === undefined ? {} : { availability: knowledge.availability }),
     ...(knowledge.sellerWillingness === undefined ? {} : { sellerWillingness: Object.freeze({ value: knowledge.sellerWillingness, source: knowledge.source, confidence: knowledge.confidence, assessedAt: knowledge.assessedAt }) }),
   })
+}
+
+function clubAuthority(world: GameWorld, teamId: TeamId): TradeClubAuthorityStatus {
+  const getStatus = (kind: 'negotiatePlayerTrade' | 'executePlayerTrade'): TradeClubAuthorityStatus['negotiation'] => {
+    const responsibility = world.responsibilitiesById[responsibilityIdForTeam(teamId, kind)]
+    if (responsibility?.mode === 'userControlled' && world.teams[teamId]?.coachId === world.userCoachId) return 'USER_CONTROLLED'
+    if (responsibility?.mode === 'delegated' && responsibility.holderStaffId !== undefined) return 'DELEGATED'
+    return 'UNKNOWN'
+  }
+  return Object.freeze({ teamId, negotiation: getStatus('negotiatePlayerTrade'), execution: getStatus('executePlayerTrade'), governance: 'UNKNOWN' })
 }
 
 function clubKnowledge(world: GameWorld, team: GameWorld['teams'][TeamId], incomingPlayerId: PlayerId, outgoingPlayerId: PlayerId, incomingMarketObservation?: TradeMarketObservation): TradeClubPackageKnowledge {

@@ -156,20 +156,13 @@ describe('acceptStaffRecommendation', () => {
     expect(updated.userDisposition).toBe('accepted')
   })
 
-  it('ACCEPT TRADE: dispatches to acceptTradeRecommendation and executes the canonical trade', () => {
+  it('ACCEPT TRADE: reports that negotiation is required and leaves the world unchanged', () => {
     const { world, outcome } = tradeFixture()
-    const outgoingPlayerId = outcome.payload.outgoingPlayerId as string
-    const incomingPlayerId = outcome.payload.incomingPlayerId as string
-    const teamId = outcome.payload.teamId as string
-
+    const before = JSON.stringify(world)
     const result = acceptStaffRecommendation(world, outcome.id)
-    expect(result.ok).toBe(true)
-    if (!result.ok) return
-    expect(result.world.teams[teamId as never]!.rosterPlayerIds).toContain(incomingPlayerId)
-    expect(result.world.teams[teamId as never]!.rosterPlayerIds).not.toContain(outgoingPlayerId)
-    const updated = result.world.delegationOutcomesById[outcome.id]!
-    expect(updated.applied).toBe(true)
-    expect(updated.userDisposition).toBe('accepted')
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.reason).toBe('negotiationRequired')
+    expect(JSON.stringify(world)).toBe(before)
   })
 
   it('STALE: a recommendation invalidated in the underlying engine fails atomically, world unchanged, no disposition', () => {
