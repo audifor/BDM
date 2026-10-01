@@ -14,13 +14,13 @@ type CoachTab = 'overview' | 'opportunities' | 'career' | 'reputation' | 'relati
 type Employment = GameWorld['coachEmploymentByCoachId'][keyof GameWorld['coachEmploymentByCoachId']]
 type Opening = GameWorld['coachJobOpeningsById'][keyof GameWorld['coachJobOpeningsById']]
 type Offer = GameWorld['coachJobOffersById'][keyof GameWorld['coachJobOffersById']]
-type Professional = GameWorld['coachProfessionalProfilesByCoachId'][keyof GameWorld['coachProfessionalProfilesByCoachId']]
+type Professional = GameWorld['staffPeopleById'][keyof GameWorld['staffPeopleById']]['professional']
 type Reputation = GameWorld['coachReputationProfilesByCoachId'][keyof GameWorld['coachReputationProfilesByCoachId']]
 type Rpg = GameWorld['coachRpgProfilesByCoachId'][keyof GameWorld['coachRpgProfilesByCoachId']]
 const label = { competitive: 'Competitive', development: 'Development', professional: 'Professional', publicStanding: 'Public Standing' } as const
 
 export function CoachScreen({ world, onSkill, onPerk, onApply = () => undefined, onAcceptOffer = () => undefined, onDeclineOffer = () => undefined }: { readonly world: GameWorld; readonly onSkill: (id: CoachSkillId) => void; readonly onPerk: (id: CoachPerkId) => void; readonly onApply?: (id: string) => void; readonly onAcceptOffer?: (id: string) => void; readonly onDeclineOffer?: (id: string) => void }) {
-  const [tab, setTab] = useState<CoachTab>('overview'); const coach = world.coaches[world.userCoachId]; const reputation = world.coachReputationProfilesByCoachId[world.userCoachId]; const rpg = world.coachRpgProfilesByCoachId[world.userCoachId]; const professional = world.coachProfessionalProfilesByCoachId[world.userCoachId]
+  const [tab, setTab] = useState<CoachTab>('overview'); const coach = world.coaches[world.userCoachId]; const reputation = world.coachReputationProfilesByCoachId[world.userCoachId]; const rpg = world.coachRpgProfilesByCoachId[world.userCoachId]; const professional = coach === undefined ? undefined : world.staffPeopleById[coach.staffProfileId]?.professional
   if (!coach || !reputation || !rpg || !professional) return <section className="screen"><p className="content-panel">Coach profile unavailable.</p></section>
   const employment = world.coachEmploymentByCoachId[world.userCoachId]; const history = world.coachCareerHistoryByCoachId[world.userCoachId] ?? []; const offers = Object.values(world.coachJobOffersById).filter((offer) => offer.coachId === coach.id); const openings = Object.values(world.coachJobOpeningsById).filter((opening) => opening.status === 'open'); const relationships = getRelationshipsForPerson(world, coach.id)
   const title = employment?.status === 'employed' && employment.teamId ? world.teams[employment.teamId]?.name ?? 'Employed' : 'Unemployed'

@@ -30,7 +30,7 @@ describe('Coach RPG persistence acceptance',()=>{
     expect(first.coachRpgProfilesByCoachId[id]!.skills).toEqual({});expect(first.coachRpgProfilesByCoachId[id]!.perks).toEqual({});expect(second.coachRpgProfilesByCoachId).toEqual(first.coachRpgProfilesByCoachId)
   })
   it('retains an acquired perk and rejects duplicate purchase after load',()=>{
-    const base=createNewGame();const id=base.userCoachId;const rpgWorld=withRpg(base,{development:{globalProgress:0,developmentPoints:9},skills:{opponentStudy:{skillId:'opponentStudy',rank:2}}});const world={...rpgWorld,coachProfessionalProfilesByCoachId:{...rpgWorld.coachProfessionalProfilesByCoachId,[id]:{attributes:{...rpgWorld.coachProfessionalProfilesByCoachId[id]!.attributes,analysis:60}}}} as ReturnType<typeof createNewGame>;const perk=purchaseCoachPerk(world,id,'filmRoomSpecialist' as never);expect(perk.ok).toBe(true);if(!perk.ok)return
+    const base=createNewGame();const id=base.userCoachId;const rpgWorld=withRpg(base,{development:{globalProgress:0,developmentPoints:9},skills:{opponentStudy:{skillId:'opponentStudy',rank:2}}});const coach=rpgWorld.coaches[id]!;const staff=rpgWorld.staffPeopleById[coach.staffProfileId]!;const world={...rpgWorld,staffPeopleById:{...rpgWorld.staffPeopleById,[staff.id]:{...staff,professional:{...staff.professional,attributes:{...staff.professional.attributes,analysis:60}}}}} as ReturnType<typeof createNewGame>;const perk=purchaseCoachPerk(world,id,'filmRoomSpecialist' as never);expect(perk.ok).toBe(true);if(!perk.ok)return
     const duplicate=purchaseCoachPerk(loaded(perk.world as ReturnType<typeof createNewGame>),id,'filmRoomSpecialist' as never);expect(duplicate).toMatchObject({ok:false,reason:'alreadyOwned'})
   })
 })

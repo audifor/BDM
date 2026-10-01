@@ -1,5 +1,5 @@
 import type { SportsEcosystemKind } from '@/domain/ecosystem'
-import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS, type StaffPerson, type StaffProfessionalAttributeKey } from './StaffPerson'
+import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS, type StaffPerson, type StaffProfessionalAttributeKey, type StaffProfessionalProfile } from './StaffPerson'
 import { STAFF_ROLE_IDS, type StaffRoleId } from './StaffRoleId'
 
 export { STAFF_ROLE_IDS, ASSIGNABLE_STAFF_ROLE_IDS, type StaffRoleId } from './StaffRoleId'
@@ -89,9 +89,14 @@ export function isStaffRoleApplicableToEcosystem(roleId: StaffRoleId, ecosystemK
 
 /** Generalized proficiency: reads weights from `STAFF_ROLE_REGISTRY` instead of a closed switch. */
 export function calculateStaffRoleProficiencyByRoleId(person: StaffPerson, roleId: StaffRoleId): number {
+  return calculateStaffRoleProficiencyFromProfile(person.professional, roleId)
+}
+
+/** Shared profile-based calculation for role proficiency when a consumer has canonical professional truth only. */
+export function calculateStaffRoleProficiencyFromProfile(professional: StaffProfessionalProfile, roleId: StaffRoleId): number {
   const weights = staffRoleDefinition(roleId).attributeWeights
   return Math.round(
-    Object.entries(weights).reduce((sum, [key, weight]) => sum + person.professional.attributes[key as StaffProfessionalAttributeKey] * weight!, 0),
+    Object.entries(weights).reduce((sum, [key, weight]) => sum + professional.attributes[key as StaffProfessionalAttributeKey] * weight!, 0),
   )
 }
 

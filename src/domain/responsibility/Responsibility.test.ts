@@ -10,6 +10,7 @@ import {
   RESPONSIBILITY_KINDS,
   RESPONSIBILITY_MODES,
   RESPONSIBILITY_REGISTRY,
+  isResponsibilityConnected,
   responsibilityDefinition,
   responsibilityIdForTeam,
   responsibilityIdFromString,
@@ -46,13 +47,15 @@ describe('RESPONSIBILITY_REGISTRY', () => {
     expect(RESPONSIBILITY_REGISTRY.rotationPlanning.eligibleRoleIds).toHaveLength(0)
   })
 
-  it('records an explicit inactive disposition and owner for every formerly disconnected kind', () => {
+  it('records the final disposition for every formerly disconnected kind', () => {
     expect(RESPONSIBILITY_REGISTRY.manageRecovery.disposition).toBe('RETIRED')
     expect(RESPONSIBILITY_REGISTRY.recommendWorkloadChange.disposition).toBe('RETIRED')
     expect(RESPONSIBILITY_REGISTRY.rotationPlanning.disposition).toBe('RETIRED')
-    for (const kind of ['defensiveGamePlan', 'offensivePreparation', 'matchupRecommendation'] as const) {
-      expect(RESPONSIBILITY_REGISTRY[kind].disposition).toBe('DEFERRED_WITH_OWNER')
-      expect(RESPONSIBILITY_REGISTRY[kind].dispositionOwner).toContain('BS13C')
+    expect(RESPONSIBILITY_REGISTRY.defensiveGamePlan.disposition).toBe('RETIRED')
+    expect(isResponsibilityConnected('defensiveGamePlan')).toBe(false)
+    for (const kind of ['offensivePreparation', 'matchupRecommendation'] as const) {
+      expect(RESPONSIBILITY_REGISTRY[kind].disposition).toBe('DEFERRED_TO_NON_BS13_OWNER')
+      expect(RESPONSIBILITY_REGISTRY[kind].dispositionOwner).toContain('future non-BS13')
     }
   })
 })

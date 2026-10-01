@@ -58,7 +58,7 @@ export const RESPONSIBILITY_MODES = ['userControlled', 'delegated', 'advisory', 
 export type ResponsibilityMode = typeof RESPONSIBILITY_MODES[number]
 
 export type ResponsibilityParticipant = 'staff' | 'coach'
-export type ResponsibilityDisposition = 'CONNECTED' | 'RETIRED' | 'DEFERRED_WITH_OWNER'
+export type ResponsibilityDisposition = 'CONNECTED' | 'RETIRED' | 'DEFERRED_WITH_OWNER' | 'DEFERRED_TO_NON_BS13_OWNER'
 
 export interface ResponsibilityDefinition {
   readonly kind: ResponsibilityKind
@@ -89,10 +89,10 @@ export const RESPONSIBILITY_REGISTRY: Readonly<Record<ResponsibilityKind, Respon
   recommendWorkloadChange: def('recommendWorkloadChange', 'training', ['strengthConditioningCoach', 'performanceCoach', 'loadManagementSpecialist', 'sportsScientist'], 1, ['userControlled', 'advisory', 'organizational'], 'RETIRED'),
 
   oppositionScouting: def('oppositionScouting', 'tactics', ['advanceScout', 'headScout', 'assistantCoach', 'offensiveSpecialist', 'defensiveSpecialist'], 2, ['userControlled', 'advisory', 'organizational']),
-  defensiveGamePlan: def('defensiveGamePlan', 'tactics', ['defensiveSpecialist', 'associateCoach', 'assistantCoach'], 2, undefined, 'DEFERRED_WITH_OWNER', 'BS13C · Staff Decision Intelligence'),
-  offensivePreparation: def('offensivePreparation', 'tactics', ['offensiveSpecialist', 'associateCoach', 'assistantCoach'], 2, undefined, 'DEFERRED_WITH_OWNER', 'BS13C · Staff Decision Intelligence'),
+  defensiveGamePlan: def('defensiveGamePlan', 'tactics', ['defensiveSpecialist', 'associateCoach', 'assistantCoach'], 2, undefined, 'RETIRED'),
+  offensivePreparation: def('offensivePreparation', 'tactics', ['offensiveSpecialist', 'associateCoach', 'assistantCoach'], 2, undefined, 'DEFERRED_TO_NON_BS13_OWNER', 'Tactics planning owner · future non-BS13 tactical-planning milestone'),
   rotationPlanning: { ...def('rotationPlanning', 'tactics', [], 1, ['userControlled'], 'RETIRED'), eligibleParticipant: 'coach' },
-  matchupRecommendation: def('matchupRecommendation', 'tactics', ['advanceScout', 'assistantCoach'], 1, ['userControlled', 'advisory', 'organizational'], 'DEFERRED_WITH_OWNER', 'BS13C · Staff Decision Intelligence'),
+  matchupRecommendation: def('matchupRecommendation', 'tactics', ['advanceScout', 'assistantCoach'], 1, ['userControlled', 'advisory', 'organizational'], 'DEFERRED_TO_NON_BS13_OWNER', 'Tactics/Rotation planning owner · future non-BS13 tactical-planning milestone'),
 
   assignScouts: def('assignScouts', 'scouting', ['headScout', 'regionalScout'], 2),
   prioritizeRegions: def('prioritizeRegions', 'scouting', ['headScout', 'regionalScout'], 1),

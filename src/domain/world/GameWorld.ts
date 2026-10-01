@@ -84,7 +84,6 @@ import { createCoachRpgProfile, type CoachRpgProfile } from '@/domain/coachRpg'
 import { createCoachFinanceProfile, type CoachFinanceProfile } from '@/domain/coachFinances'
 import { createCoachReputationProfile, createDefaultCoachReputationProfile, type CoachReputationProfile } from '@/domain/coachReputation'
 import { createCoachEmployment, createCoachJobOpening, type CoachCareerHistoryEntry, type CoachEmployment, type CoachInterview, type CoachJobCandidacy, type CoachJobCandidacyId, type CoachJobOffer, type CoachJobOfferId, type CoachJobOpening, type CoachJobOpeningId } from '@/domain/coachCareer'
-import { createStaffProfessionalProfile, type StaffProfessionalProfile } from '@/domain/staff'
 import { relationshipKey, validateRelationshipProfile, type RelationshipProfile } from '@/domain/relationships'
 import { generatePersonality, type Personality } from '@/domain/personality'
 import { createMoraleProfile, type MoraleProfile } from '@/domain/morale'
@@ -236,7 +235,6 @@ export interface GameWorld {
   readonly responsibilitiesById: Readonly<Record<ResponsibilityId, Responsibility>>
   readonly delegationOutcomesById: Readonly<Record<DelegationOutcomeId, DelegationOutcome>>
   readonly oppositionScoutingReportsById: Readonly<Record<string, OppositionScoutingReport>>
-  readonly coachProfessionalProfilesByCoachId: Readonly<Record<CoachId, StaffProfessionalProfile>>
   readonly coachRpgProfilesByCoachId: Readonly<Record<CoachId, CoachRpgProfile>>
   readonly coachFinancesByCoachId: Readonly<Record<CoachId, CoachFinanceProfile>>
   readonly coachReputationProfilesByCoachId: Readonly<Record<CoachId, CoachReputationProfile>>
@@ -525,7 +523,6 @@ export interface CreateGameWorldInput {
   staffPoliticalAlliances?: readonly StaffPoliticalAlliance[]
   staffPoliticalFactions?: readonly StaffPoliticalFaction[]
   oppositionScoutingReports?: readonly OppositionScoutingReport[]
-  coachProfessionalProfilesByCoachId?: Readonly<Record<CoachId, StaffProfessionalProfile>>
   coachRpgProfilesByCoachId?: Readonly<Record<CoachId, CoachRpgProfile>>
   coachFinancesByCoachId?: Readonly<Record<CoachId, CoachFinanceProfile>>
   coachReputationProfilesByCoachId?: Readonly<Record<CoachId, CoachReputationProfile>>
@@ -828,7 +825,6 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     responsibilitiesById: indexById(input.responsibilities ?? [], 'Responsibility'),
     delegationOutcomesById: indexById(input.delegationOutcomes ?? [], 'Delegation outcome'),
     oppositionScoutingReportsById: indexById(input.oppositionScoutingReports ?? [], 'Opposition scouting report'),
-    coachProfessionalProfilesByCoachId: input.coachProfessionalProfilesByCoachId ?? {},
     coachRpgProfilesByCoachId: input.coachRpgProfilesByCoachId ?? {},
     coachFinancesByCoachId: coachFinancesForCoaches(input.coaches, input.coachFinancesByCoachId),
     coachReputationProfilesByCoachId: coachReputationProfilesForCoaches(input.coaches, input.coachReputationProfilesByCoachId),
@@ -1500,7 +1496,6 @@ function validateWorld(world: GameWorld): void {
     const opponentRoster = new Set(world.teams[report.opponentTeamId]!.rosterPlayerIds)
     for (const playerId of report.flaggedPlayerIds) if (!opponentRoster.has(playerId)) throw new GameWorldValidationError(`Opposition scouting report ${report.id} flagged Player ${playerId} is not on opponent Team ${report.opponentTeamId}'s roster`)
   }
-  for (const [coachId, profile] of Object.entries(world.coachProfessionalProfilesByCoachId) as [CoachId, StaffProfessionalProfile][]) { requireEntity(world.coaches, coachId, 'Coach professional profile'); createStaffProfessionalProfile(profile) }
   for (const [coachId, profile] of Object.entries(world.coachRpgProfilesByCoachId) as [CoachId, CoachRpgProfile][]) { requireEntity(world.coaches, coachId, 'Coach RPG profile'); createCoachRpgProfile(profile) }
   for (const [coachId, profile] of Object.entries(world.coachFinancesByCoachId) as [CoachId, CoachFinanceProfile][]) { requireEntity(world.coaches, coachId, 'Coach finance profile'); createCoachFinanceProfile(profile) }
   for (const [coachId, profile] of Object.entries(world.coachReputationProfilesByCoachId) as [CoachId, CoachReputationProfile][]) { requireEntity(world.coaches, coachId, 'Coach reputation profile'); createCoachReputationProfile(profile) }

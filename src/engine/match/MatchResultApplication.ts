@@ -2,7 +2,7 @@ import { createGame } from '@/domain/game'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { applyMoraleEvent } from '@/domain/morale'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
-import { applyCoachExperienceGain, applyMatchCoachReputationConsequences, deriveCoachMatchExperienceGain } from '@/engine/coach'
+import { applyCoachExperienceToWorld, applyMatchCoachReputationConsequences, deriveCoachMatchExperienceGain } from '@/engine/coach'
 import { calculateTeamStrength } from '@/engine/team'
 
 import { calculateMatchPlayerStats } from './PlayerMatchStats'
@@ -123,10 +123,10 @@ function applyMatchCoachExperience(worldBefore: GameWorld, resultWorld: GameWorl
   const homeStrength = calculateTeamStrength(worldBefore, completedGame.homeTeamId, completedGame.date).value
   const awayStrength = calculateTeamStrength(worldBefore, completedGame.awayTeamId, completedGame.date).value
   const margin = Math.abs(completedGame.result!.homeScore - completedGame.result!.awayScore)
-  const professional = { ...resultWorld.coachProfessionalProfilesByCoachId }; const rpg = { ...resultWorld.coachRpgProfilesByCoachId }
+  let updated = resultWorld
   for (const [coachId, gain] of [[homeCoachId, deriveCoachMatchExperienceGain({ ownStrength: homeStrength, opponentStrength: awayStrength, won: completedGame.result!.homeScore > completedGame.result!.awayScore, scoreMargin: margin })], [awayCoachId, deriveCoachMatchExperienceGain({ ownStrength: awayStrength, opponentStrength: homeStrength, won: completedGame.result!.awayScore > completedGame.result!.homeScore, scoreMargin: margin })]] as const) {
-    if (coachId === undefined || professional[coachId] === undefined || rpg[coachId] === undefined) continue
-    const applied = applyCoachExperienceGain(professional[coachId], rpg[coachId], gain); professional[coachId] = applied.professionalProfile; rpg[coachId] = applied.rpgProfile
+    if (coachId === undefined) continue
+    updated = applyCoachExperienceToWorld(updated, coachId, gain)
   }
-  return updateGameWorld(resultWorld, { coachProfessionalProfilesByCoachId: professional, coachRpgProfilesByCoachId: rpg })
+  return updated
 }

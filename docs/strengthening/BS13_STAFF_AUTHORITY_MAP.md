@@ -1,6 +1,6 @@
 # BS13 Staff Authority Map
 
-Each row names the current authority, not an aspirational design. Compatibility copies are called out explicitly. Where runtime consumers expose competing professional values, the report marks the source-of-truth question unresolved rather than choosing silently.
+Each row names the current authority, not an aspirational design. Compatibility copies are called out explicitly.
 
 | Concern | Canonical authority | Compatibility / derivation / boundary |
 |---|---|---|
@@ -8,7 +8,7 @@ Each row names the current authority, not an aspirational design. Compatibility 
 | Staff professional identity | `StaffPerson` / `StaffProfile` | Coach is a facade that references the profile; no second Staff entity. |
 | Role vocabulary | `StaffRoleId` and `STAFF_ROLE_REGISTRY` | Deprecated closed `StaffRole` union is a three-role compatibility helper; legacy values map at load. |
 | Team assignment | `TeamStaffAssignment` | One active assignment per Staff person is enforced by `GameWorld`; this is the role/team relation used for responsibility eligibility. |
-| Professional attributes | `StaffPerson.professional.attributes` | 13 persisted values; see **unresolved Coach profile seam** below for parallel Coach-keyed use. |
+| Professional attributes | `StaffPerson.professional.attributes` | The single persisted professional truth for all 13 canonical attributes. Legacy Coach-keyed values are read only during Save V1 migration. |
 | Role proficiency | `calculateStaffRoleProficiencyByRoleId` + registry weights | Derived, role-context-specific, not stored and not an overall. Deprecated three-role proficiency function is compatibility-only. |
 | Employment status | `staffEmploymentByStaffId` / `StaffEmployment` | Lifecycle state machine owns employed/unemployed and hire/departure transitions. Team/role repeat assignment data and are checked against it. |
 | Staff contracts | `staffContractsById` / `StaffContract`; `isStaffContractActiveOn` | One canonical active-date predicate. Contract term/salary/termination are separate from current assignment. |
@@ -44,7 +44,7 @@ Each row names the current authority, not an aspirational design. Compatibility 
 ## Compatibility seams
 
 - **Coach facade:** `Coach` points to a canonical Person + StaffProfile and has the `headCoach` role assignment. It is not a second Staff entity.
-- **Coach-keyed professional projection (unresolved):** `GameWorld.coachProfessionalProfilesByCoachId` is a second persisted map with the same attribute shape. `CoachExperience` and Coach UI read/update it, while Staff-based responsibility quality reads `StaffPerson.professional`. World validation does not enforce equality between these maps. The architecture states StaffProfile carries the professional role, but runtime consumers maintain both. **Canonical authority for a coach's shared Staff skill values is unclear in current runtime behavior.** Keep StaffProfile as the identity/assignment authority; do not silently decide how/when the Coach-keyed projection should synchronize. This is a P1 convergence gap, not a new profile proposal.
+- **Legacy Coach-keyed professional map:** Save V1 accepts `coachProfessionalProfilesByCoachId` on read to migrate older saves. It is omitted from runtime GameWorld and newly written saves. If the matching Staff professional profile exists, it wins; for a missing legacy Coach Staff profile, the old Coach value seeds it. No conflict averaging or invented recency is used.
 - **Three-role helper:** deprecated `STAFF_ROLES`, `StaffRole`, and `calculateStaffRoleProficiency` remain compatibility surfaces. Current assignment/role weighting uses the 31-role registry.
 - **Legacy training responsibility map:** `trainingResponsibilitiesByTeamId` is save-only input/output compatibility. Load migration validates/moves it into `responsibilitiesById` and clears it; no second live authority.
 - **Legacy save materialization:** Save V1 may deterministically materialize compatibility Staff roots/assignments for legacy Coach data. Canonical GameWorld construction requires the profile and matching head-coach assignment.
@@ -56,4 +56,4 @@ Each row names the current authority, not an aspirational design. Compatibility 
 2. Add team responsibilities only to the generic Responsibility authority; do not revive the training compatibility map.
 3. Let the target domain own final mutations (Training, Medical, Recruiting, Market, Trade, Draft, Match, Governance).
 4. Keep advice (`applied: false`) distinct from delegated execution and from the accepted target-domain action.
-5. Record unresolved Coach professional-profile synchronization as a product/architecture choice before any migration or runtime merge.
+5. Keep legacy Coach professional-profile handling as read-only Save V1 migration; do not restore a second runtime authority.

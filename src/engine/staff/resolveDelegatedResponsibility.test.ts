@@ -34,6 +34,7 @@ describe('resolveAdvisoryResponsibility', () => {
     const base = createNewGame()
     const teamId = Object.values(base.teams)[0]!.id
     expect(resolveDelegatedResponsibility(base, teamId, 'manageRecovery')).toBeUndefined()
+    expect(resolveDelegatedResponsibility(base, teamId, 'defensiveGamePlan')).toBeUndefined()
     expect(resolveAdvisoryResponsibility(base, teamId, 'matchupRecommendation')).toBeUndefined()
   })
 

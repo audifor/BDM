@@ -142,28 +142,21 @@ export function deriveCoachMatchExperienceGain(context: CoachMatchExperienceCont
   })
 }
 
-/** Returns the original world unchanged for legacy saves whose 040.5 profiles are absent. */
+/** Applies Coach professional experience to the linked canonical StaffProfile. */
 export function applyCoachExperienceToWorld(world: GameWorld, coachId: CoachId, gain: CoachExperienceGain): GameWorld {
-  const professional = world.coachProfessionalProfilesByCoachId[coachId]
+  const coach = world.coaches[coachId]
+  const staff = coach === undefined ? undefined : world.staffPeopleById[coach.staffProfileId]
   const rpg = world.coachRpgProfilesByCoachId[coachId]
-  if (professional === undefined || rpg === undefined) return world
+  if (staff === undefined || rpg === undefined) return world
 
-  const applied = applyCoachExperienceGain(professional, rpg, gain)
-  return rebuildWorld(world, {
-    ...world.coachProfessionalProfilesByCoachId,
-    [coachId]: applied.professionalProfile,
-  }, {
-    ...world.coachRpgProfilesByCoachId,
-    [coachId]: applied.rpgProfile,
+  const applied = applyCoachExperienceGain(staff.professional, rpg, gain)
+  const staffPeople = Object.values(world.staffPeopleById).map((person) => person.id === staff.id
+    ? { ...person, professional: applied.professionalProfile }
+    : person)
+  return updateGameWorld(world, {
+    staffPeople,
+    coachRpgProfilesByCoachId: { ...world.coachRpgProfilesByCoachId, [coachId]: applied.rpgProfile },
   })
-}
-
-function rebuildWorld(
-  world: GameWorld,
-  professionalProfiles: GameWorld['coachProfessionalProfilesByCoachId'],
-  rpgProfiles: GameWorld['coachRpgProfilesByCoachId'],
-): GameWorld {
-  return updateGameWorld(world, { coachProfessionalProfilesByCoachId: professionalProfiles, coachRpgProfilesByCoachId: rpgProfiles })
 }
 
 function getMatchClosenessFactor(margin: number): number { if (margin <= 5) return 1.15; if (margin <= 10) return 1.08; if (margin <= 20) return 1; return 0.92 }

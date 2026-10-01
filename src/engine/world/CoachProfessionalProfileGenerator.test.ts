@@ -19,11 +19,11 @@ describe('Coach RPG world setup', () => {
 
   it('initializes a deterministic professional and RPG profile for every Coach', () => {
     const world = createNewGame()
-    expect(Object.keys(world.coachProfessionalProfilesByCoachId)).toHaveLength(Object.keys(world.coaches).length)
     expect(Object.keys(world.coachRpgProfilesByCoachId)).toHaveLength(Object.keys(world.coaches).length)
     for (const coach of Object.values(world.coaches)) {
       const professional = getCoachProfessionalProfile(world, coach.id)!
       const rpg = getCoachRpgProfile(world, coach.id)!
+      expect(professional).toEqual(world.staffPeopleById[coach.staffProfileId]!.professional)
       expect(Object.keys(professional.attributes)).toEqual(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS)
       expect(Object.values(professional.attributes).every((value) => Number.isInteger(value) && value >= 0 && value <= 100)).toBe(true)
       expect(rpg.development).toEqual({ globalProgress: 0, developmentPoints: 0 })
@@ -36,12 +36,12 @@ describe('Coach RPG world setup', () => {
   it('applies presets only to the user Coach and preserves profiles through ordinary transforms', () => {
     const blank = createNewGame()
     const tactician = createNewGame({ coachRpgPreset: 'tactician' })
-    expect(tactician.coachProfessionalProfilesByCoachId[blank.userCoachId]).not.toEqual(blank.coachProfessionalProfilesByCoachId[blank.userCoachId])
-    for (const coach of Object.values(blank.coaches).filter((coach) => coach.id !== blank.userCoachId)) expect(tactician.coachProfessionalProfilesByCoachId[coach.id]).toEqual(blank.coachProfessionalProfilesByCoachId[coach.id])
+    expect(getCoachProfessionalProfile(tactician, blank.userCoachId)).not.toEqual(getCoachProfessionalProfile(blank, blank.userCoachId))
+    for (const coach of Object.values(blank.coaches).filter((coach) => coach.id !== blank.userCoachId)) expect(getCoachProfessionalProfile(tactician, coach.id)).toEqual(getCoachProfessionalProfile(blank, coach.id))
     expect(tactician.coachRpgProfilesByCoachId).toEqual(blank.coachRpgProfilesByCoachId)
     expect(tactician.players).toEqual(blank.players); expect(tactician.games).toEqual(blank.games)
-    expect(tactician.staffPeopleById[tactician.coaches[tactician.userCoachId]!.staffProfileId]!.professional).toEqual(tactician.coachProfessionalProfilesByCoachId[tactician.userCoachId])
-    expect(advanceDay(blank).coachProfessionalProfilesByCoachId).toEqual(blank.coachProfessionalProfilesByCoachId)
+    expect(tactician.staffPeopleById[tactician.coaches[tactician.userCoachId]!.staffProfileId]!.professional).toEqual(getCoachProfessionalProfile(tactician, tactician.userCoachId))
+    expect(getCoachProfessionalProfile(advanceDay(blank), blank.userCoachId)).toEqual(getCoachProfessionalProfile(blank, blank.userCoachId))
     const game = Object.values(blank.games)[0]!
     const result = applyMatchResult(blank, { gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, homeScore: 80, awayScore: 70 })
     const homeCoachId = blank.teams[game.homeTeamId]!.coachId!

@@ -179,7 +179,6 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
       staffCareerHistoryByStaffId: { ...staffCareerHistoryByStaffId, ...coachStaffCareerHistoryByStaffId },
       staffReputationProfilesByStaffId,
       staffContracts: [...staffContracts, ...coachStaffContracts],
-      coachProfessionalProfilesByCoachId: coachProfiles.professionalProfiles,
       coachRpgProfilesByCoachId: coachProfiles.rpgProfiles,
     })
 

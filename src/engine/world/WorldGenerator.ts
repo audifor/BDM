@@ -222,7 +222,6 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     ...(nbaSeason === undefined ? {} : { salaryRulesBySeasonId: { [nbaSeason.id]: createNbaLikeSalaryRules(nbaSeason.id, gender, DEFAULT_NBA_LIKE_ECOSYSTEM_ID) } }),
     ...(nbaSeason === undefined ? {} : { tradeRulesBySeasonId: { [nbaSeason.id]: createNbaLikeTradeRules(nbaSeason.id, DEFAULT_NBA_LIKE_ECOSYSTEM_ID) } }),
     staffPeople: [...staff.map((item) => item.person), ...coachStaffProfiles], teamStaffAssignments: [...staff.map((item) => item.assignment), ...coachAssignments], staffEmploymentByStaffId: coachStaffEmployment,
-    coachProfessionalProfilesByCoachId: coachProfiles.professionalProfiles,
     coachRpgProfilesByCoachId: coachProfiles.rpgProfiles,
   })
 }
