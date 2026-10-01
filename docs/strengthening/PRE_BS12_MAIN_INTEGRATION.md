@@ -1,4 +1,4 @@
-# PRE-BS12 Main Integration
+﻿# PRE-BS12 Main Integration
 
 ## Baseline and strategy
 
@@ -32,6 +32,6 @@
 
 ## Merge and push record
 
-- Integration branch final HEAD: recorded by `git log -1` for this report's containing integration commit.
+- Integration branch final HEAD: 2a3ab1c074c0473a641d1bc8fb7d1f70dacfbab6.
 - Normal main integration merge SHA: 4352e6287f41b284175e94c4f1e46e84d0d5b2b3.
-- Push status: pending final validation and normal push to `origin`.
+- Push status: pending final verification and normal push to `origin`.
