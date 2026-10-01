@@ -46,6 +46,7 @@ export function stepPlayerKinematics(
   const speed = Math.hypot(player.velocity.x, player.velocity.y)
   const fatigueFactor = 1 - Math.max(0, Math.min(100, player.fatigue)) * 0.0012
   const braking = Math.max(0.01, profile.brakingMps2)
+  const acceleration = Math.max(0.01, profile.accelerationMps2)
   const maxSpeed = Math.max(0, profile.maxSpeedMps) * fatigueFactor * MOVEMENT_URGENCY_FACTORS[intent.urgency]
   const remaining = Math.max(0, distance - TARGET_ARRIVAL_TOLERANCE_METERS)
   const brakingSpeed = distance <= TARGET_ARRIVAL_TOLERANCE_METERS
@@ -70,9 +71,27 @@ export function stepPlayerKinematics(
 
   const deltaVelocity = { x: desiredVelocity.x - player.velocity.x, y: desiredVelocity.y - player.velocity.y }
   const deltaMagnitude = Math.hypot(deltaVelocity.x, deltaVelocity.y)
-  const maxDelta = (desiredSpeed < speed ? braking : Math.max(0.01, profile.accelerationMps2) * fatigueFactor) * MOVEMENT_DT_SECONDS
-  const scale = deltaMagnitude > maxDelta && deltaMagnitude > 0 ? maxDelta / deltaMagnitude : 1
-  let velocity = { x: player.velocity.x + deltaVelocity.x * scale, y: player.velocity.y + deltaVelocity.y * scale }
+  const maxDelta = (desiredSpeed < speed ? braking : acceleration * fatigueFactor) * MOVEMENT_DT_SECONDS
+  let velocity: CourtPosition
+  const lateralGrip = profile.lateralGripMps2
+  if (lateralGrip !== undefined && lateralGrip > 0 && speed > 0.3) {
+    // A runner can speed up, slow down and turn with different limits: his feet plant and push sideways (grip) much harder than he
+    // accelerates, so a change of direction is a plant and a cut, not a wide skating arc.
+    const ux = player.velocity.x / speed
+    const uy = player.velocity.y / speed
+    const along = deltaVelocity.x * ux + deltaVelocity.y * uy
+    const sideX = deltaVelocity.x - along * ux
+    const sideY = deltaVelocity.y - along * uy
+    const side = Math.hypot(sideX, sideY)
+    const alongLimit = (along >= 0 ? acceleration * fatigueFactor : braking) * MOVEMENT_DT_SECONDS
+    const sideLimit = lateralGrip * MOVEMENT_DT_SECONDS
+    const alongApplied = Math.max(-alongLimit, Math.min(alongLimit, along))
+    const sideScale = side > sideLimit && side > 0 ? sideLimit / side : 1
+    velocity = { x: player.velocity.x + alongApplied * ux + sideX * sideScale, y: player.velocity.y + alongApplied * uy + sideY * sideScale }
+  } else {
+    const scale = deltaMagnitude > maxDelta && deltaMagnitude > 0 ? maxDelta / deltaMagnitude : 1
+    velocity = { x: player.velocity.x + deltaVelocity.x * scale, y: player.velocity.y + deltaVelocity.y * scale }
+  }
   let nextPosition = {
     x: player.position.x + (player.velocity.x + velocity.x) * 0.5 * MOVEMENT_DT_SECONDS,
     y: player.position.y + (player.velocity.y + velocity.y) * 0.5 * MOVEMENT_DT_SECONDS,

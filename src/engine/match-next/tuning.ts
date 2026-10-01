@@ -50,12 +50,26 @@ export interface MatchNextTuning {
   /** BT4.1: ticks a receiver needs to gather per m/s of his speed at the catch, and per metre of defender pressure under 2 m. */
   readonly catchGatherTicksPerMps: number
   readonly catchPressureTicksPerMeter: number
+  /** BT4.1: how far from his own man the weak-side help defender may sag toward the rim, before the man's shooting threat shortens it. */
+  readonly helpSagMaxMeters: number
+  readonly helpSagBaseMeters: number
+  /** BT4.1 movement: scale of the legacy acceleration/braking limits (1 = as the profile says), and the turning grip as a share of braking (0 = legacy single vector limit). */
+  readonly movementAgility: number
+  readonly lateralGripFactor: number
+  /** BT4.1 switches (1 = on): probing dribble while reading, a teammate offering himself to a stuck handler, carrying the ball up from the backcourt whatever the phase. */
+  readonly probeEnabled: number
+  readonly offerEnabled: number
+  readonly backcourtCarryEnabled: number
+  /** Where waiting pays: 0 = anywhere, 1 = whenever there is no live transition, 2 = only once the offense is settled. */
+  readonly waitGateMode: number
+  /** Referee strictness: scales every whistle probability of the contact model (1 = the calibrated tolerances). */
+  readonly refereeScale: number
 }
 
 export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
   closeoutReactionTicks: 2,
   continuationValuePoints: 1.10,
-  screenBaseValuePoints: 1.25,
+  screenBaseValuePoints: 1.6,
   decisionTemperaturePoints: 0.15,
   usageValuePerPoint: 0.004,
   rimBaseMakeProbability: 0.64,
@@ -77,9 +91,18 @@ export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
   usageDrivePerPoint: 0.003,
   usagePassPerPoint: 0.003,
   episodeFoulScale: 1.7,
-  waitPremium: 0,
-  catchGatherTicksPerMps: 0,
-  catchPressureTicksPerMeter: 0,
+  waitPremium: 1.4,
+  catchGatherTicksPerMps: 0.8,
+  catchPressureTicksPerMeter: 2,
+  helpSagMaxMeters: 99,
+  helpSagBaseMeters: 5.4,
+  movementAgility: 1,
+  lateralGripFactor: 1.2,
+  probeEnabled: 1,
+  offerEnabled: 1,
+  backcourtCarryEnabled: 1,
+  waitGateMode: 1,
+  refereeScale: 0.7,
 })
 
 let active: MatchNextTuning = DEFAULT_MATCH_NEXT_TUNING

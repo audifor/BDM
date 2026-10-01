@@ -1,0 +1,84 @@
+{
+  "games": 6,
+  "possessionsPerGame": 164.8,
+  "violationsPerGame": 0.33,
+  "violationShareOfPossessions": 0.002,
+  "violationsByStartReason": {
+    "steal": 1,
+    "defensiveRebound": 1
+  },
+  "controlSecondsUntilFrontcourt": {
+    "n": 927,
+    "mean": 3.57,
+    "median": 3.8,
+    "p10": 2.8,
+    "p90": 4.2,
+    "min": 0,
+    "max": 7.6
+  },
+  "byStartReason": {
+    "openingJumpBall": {
+      "n": 6,
+      "mean": 0.5,
+      "median": 0,
+      "p10": 0,
+      "p90": 1.5,
+      "min": 0,
+      "max": 1.5
+    },
+    "madeBasketInbound": {
+      "n": 434,
+      "mean": 3.74,
+      "median": 3.8,
+      "p10": 3.6,
+      "p90": 3.9,
+      "min": 1.5,
+      "max": 4
+    },
+    "defensiveRebound": {
+      "n": 359,
+      "mean": 3.94,
+      "median": 3.9,
+      "p10": 3.4,
+      "p90": 4.6,
+      "min": 2.4,
+      "max": 5.9
+    },
+    "steal": {
+      "n": 74,
+      "mean": 2.26,
+      "median": 2.3,
+      "p10": 0,
+      "p90": 4.3,
+      "min": 0,
+      "max": 7.6
+    },
+    "periodStart": {
+      "n": 18,
+      "mean": 0,
+      "median": 0,
+      "p10": 0,
+      "p90": 0,
+      "min": 0,
+      "max": 0
+    },
+    "other": {
+      "n": 17,
+      "mean": 3.16,
+      "median": 3.3,
+      "p10": 0,
+      "p90": 5,
+      "min": 0,
+      "max": 5.4
+    },
+    "turnoverInbound": {
+      "n": 19,
+      "mean": 2.27,
+      "median": 2.3,
+      "p10": 0,
+      "p90": 4,
+      "min": 0,
+      "max": 4.3
+    }
+  }
+}

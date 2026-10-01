@@ -2,6 +2,7 @@ import { distanceBetween, type CourtPosition } from '@/domain/court'
 import { activePossession, type MatchPlayerState, type MatchState } from '../state'
 import type { PlayerResponsibility, StructuralDecision, StructuralDecisionKind } from '../responsibility/Responsibility'
 import type { MovementFacing, MovementIntent } from '../movement/MovementIntent'
+import { tuning } from '../tuning'
 import { attackingBasketForTeam, resolveBallSide, resolveFiveOutTargets, slotTargetsAreValid, type OffensiveSlotName, type OffensiveStructureState } from './FiveOutStructure'
 import { assignFiveOutSlots } from './SlotAssignment'
 
@@ -107,7 +108,11 @@ export function reconcileOffensiveStructure(state: MatchState): MatchState {
   for (const player of offense) {
     const slot = assignments.find((item) => item.playerId === player.playerId)?.slot
     if (!slot) continue
-    const kind = slot === 'BALL' ? possession.phase === 'ADVANCE' ? 'ADVANCE' : 'BALL' : 'SPACE'
+    // The carrier brings the ball up whenever it is still in the backcourt, whatever phase the possession was marked as: a stopped
+    // transition must not leave him standing in his own half (FIBA gives the team eight seconds to cross).
+    const ballStillInBackcourt = tuning().backcourtCarryEnabled !== 0 && slot === 'BALL' && state.ball.kind === 'HELD' && state.ball.ownerPlayerId === player.playerId
+      && !isInOffensiveFrontcourt(state.ball.position, structure.attackingBasket, state.court.lengthMeters)
+    const kind = slot === 'BALL' ? possession.phase === 'ADVANCE' || ballStillInBackcourt ? 'ADVANCE' : 'BALL' : 'SPACE'
     const owner = kind === 'BALL' || kind === 'ADVANCE' ? 'possession' : 'offensiveStructure'
     const oldResponsibility = previousResponsibilities.get(player.playerId)
     const sameResponsibility = oldResponsibility?.kind === kind && oldResponsibility.slot === (slot === 'BALL' ? undefined : slot) && oldResponsibility.owner === owner
@@ -188,6 +193,39 @@ function projectToThreePointArc(position: CourtPosition, basket: CourtPosition, 
   }
 }
 
+/**
+ * A carrier does not run straight into the man who is stopping him: when a defender stands ahead on his line he goes around him, on
+ * the side with more room, and takes the line again once he is past (the target is re-read every tick).
+ */
+const AVOID_LOOKAHEAD_METERS = 4.5
+const AVOID_HALF_WIDTH_METERS = 1.6
+const AVOID_SIDE_STEP_METERS = 2.3
+function steerAroundDefender(state: MatchState, player: MatchPlayerState, target: CourtPosition): CourtPosition {
+  const dx = target.x - player.position.x
+  const dy = target.y - player.position.y
+  const length = Math.hypot(dx, dy)
+  if (length < 1e-6) return target
+  const h = { x: dx / length, y: dy / length }
+  const n = { x: -h.y, y: h.x }
+  let blocker: { along: number; cross: number } | undefined
+  for (const other of state.players) {
+    if (!other.active || other.teamId === player.teamId) continue
+    const rx = other.position.x - player.position.x
+    const ry = other.position.y - player.position.y
+    const along = rx * h.x + ry * h.y
+    const cross = rx * n.x + ry * n.y
+    if (along <= 0 || along > AVOID_LOOKAHEAD_METERS || Math.abs(cross) > AVOID_HALF_WIDTH_METERS) continue
+    if (blocker === undefined || along < blocker.along) blocker = { along, cross }
+  }
+  if (blocker === undefined) return target
+  const side = Math.abs(blocker.cross) > 0.25 ? (blocker.cross > 0 ? -1 : 1) : (player.position.y > state.court.widthMeters / 2 ? -1 : 1) * (n.y >= 0 ? 1 : -1)
+  const ahead = Math.max(blocker.along, 1.5)
+  return {
+    x: Math.max(0.5, Math.min(state.court.lengthMeters - 0.5, player.position.x + h.x * ahead + n.x * side * AVOID_SIDE_STEP_METERS)),
+    y: Math.max(0.5, Math.min(state.court.widthMeters - 0.5, player.position.y + h.y * ahead + n.y * side * AVOID_SIDE_STEP_METERS)),
+  }
+}
+
 export function advanceTarget(state: MatchState, basket: CourtPosition): CourtPosition {
   const direction = basket.x >= state.court.lengthMeters / 2 ? 1 : -1
   const center = state.court.lengthMeters / 2 + direction * 2
@@ -229,7 +267,7 @@ function zoneTarget(position: CourtPosition, slot: CourtPosition, basket: CourtP
 }
 
 function targetForResponsibility(state: MatchState, player: MatchPlayerState, responsibility: PlayerResponsibility, structure: OffensiveStructureState): CourtPosition {
-  if (responsibility.kind === 'ADVANCE') return advanceTarget(state, structure.attackingBasket)
+  if (responsibility.kind === 'ADVANCE') return steerAroundDefender(state, player, advanceTarget(state, structure.attackingBasket))
   if (responsibility.kind === 'BALL') return { ...player.position }
   const assignment = structure.assignments.find((item) => item.playerId === player.playerId)
   const slot = structure.slots.find((item) => item.slot === assignment?.slot)

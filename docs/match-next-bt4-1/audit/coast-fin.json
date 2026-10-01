@@ -1,0 +1,10 @@
+{
+  "games": 3,
+  "carries": 1027,
+  "longCarriesPerGame": 127.3,
+  "longCarryMeanPath": 23.68,
+  "longCarryEndedInShot": 0.58,
+  "nearestDefenderSecondHalfMean": 1,
+  "shareOfLongCarryFramesDefenderBeyond2_5m": 0,
+  "longCarriesBeyond25m": 46.3
+}

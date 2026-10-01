@@ -1,3 +1,4 @@
+import { tuning } from '@/engine/match-next/tuning'
 import type { Game } from '@/domain/game'
 import type { GameWorld } from '@/domain/world'
 import { courtRulesetForEcosystem, createCourtGeometry } from '@/domain/court'
@@ -20,7 +21,7 @@ export function prepareMatchSetup(
     ...options.playerProfiles.home.map((profile) => ({
       playerId: profile.playerId, teamId: homeTeamId, primaryPosition: profile.primaryPosition,
       secondaryPositions: world.players[profile.playerId]!.basketball.secondaryPositions,
-      physical: { ...profile.physical }, kinematics: { ...profile.kinematics }, offense: { ...profile.offense },
+      physical: { ...profile.physical }, kinematics: gameSpeedKinematics(profile.kinematics), offense: { ...profile.offense },
       passing: profile.passing === undefined ? undefined : { ...profile.passing },
       defense: { ...profile.defense }, rebounding: { ...profile.rebounding },
       dynamicState: { careerFatigue: world.careerFatigueByPlayerId[profile.playerId] ?? 0 },
@@ -28,7 +29,7 @@ export function prepareMatchSetup(
     ...options.playerProfiles.away.map((profile) => ({
       playerId: profile.playerId, teamId: awayTeamId, primaryPosition: profile.primaryPosition,
       secondaryPositions: world.players[profile.playerId]!.basketball.secondaryPositions,
-      physical: { ...profile.physical }, kinematics: { ...profile.kinematics }, offense: { ...profile.offense },
+      physical: { ...profile.physical }, kinematics: gameSpeedKinematics(profile.kinematics), offense: { ...profile.offense },
       passing: profile.passing === undefined ? undefined : { ...profile.passing },
       defense: { ...profile.defense }, rebounding: { ...profile.rebounding },
       dynamicState: { careerFatigue: world.careerFatigueByPlayerId[profile.playerId] ?? 0 },
@@ -61,5 +62,19 @@ export function prepareMatchSetup(
     },
     matchSeed: options.matchSeed,
     autonomousActions: true,
+  }
+}
+
+/**
+ * The shared player profile gives limits for a generic athlete (acceleration 2.4-3.6, braking 3.2-4.8 m/s2): at those values a runner
+ * needs about three seconds to reverse, which is skating. On court a player plants and cuts: he accelerates and brakes harder and turns
+ * on a grip of his own (BT4.1). The scale is a tuning parameter so audits can sweep it.
+ */
+function gameSpeedKinematics(kinematics: { readonly maxSpeedMps: number; readonly accelerationMps2: number; readonly brakingMps2: number }): MatchNextPlayerProfile['kinematics'] {
+  const { movementAgility, lateralGripFactor } = tuning()
+  const braking = kinematics.brakingMps2 * movementAgility
+  return {
+    maxSpeedMps: kinematics.maxSpeedMps, accelerationMps2: kinematics.accelerationMps2 * movementAgility, brakingMps2: braking,
+    ...(lateralGripFactor > 0 ? { lateralGripMps2: braking * lateralGripFactor } : {}),
   }
 }

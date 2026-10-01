@@ -1,0 +1,99 @@
+{
+  "seeds": [
+    424242,
+    7,
+    1,
+    99,
+    2024,
+    31337
+  ],
+  "result": {
+    "sag99": {
+      "overrides": {
+        "helpSagMaxMeters": 99
+      },
+      "points": 185,
+      "possessions": 165.333,
+      "possessionSeconds": 14.418,
+      "fga": 170.333,
+      "fgPct": 0.408,
+      "threeShare": 0.259,
+      "rimShare": 0.484,
+      "paintShare": 0.166,
+      "midShare": 0.067,
+      "fta": 36.833,
+      "ftaPerFga": 0.217,
+      "fouls": 35.5,
+      "bonusFouls": 2.333,
+      "turnovers": 15,
+      "steals": 11.333,
+      "blocks": 7.167,
+      "orebShare": 0.261,
+      "assists": 15.5,
+      "drives": 131.333,
+      "screens": 48.167,
+      "passes": 252.333,
+      "ppp": 1.118,
+      "pointsPerFga": 1.087,
+      "completed": 1
+    },
+    "sag32": {
+      "overrides": {
+        "helpSagMaxMeters": 3.2
+      },
+      "points": 181.333,
+      "possessions": 163.333,
+      "possessionSeconds": 14.49,
+      "fga": 164.333,
+      "fgPct": 0.424,
+      "threeShare": 0.235,
+      "rimShare": 0.487,
+      "paintShare": 0.173,
+      "midShare": 0.081,
+      "fta": 37.333,
+      "ftaPerFga": 0.228,
+      "fouls": 33.5,
+      "bonusFouls": 3.833,
+      "turnovers": 17.833,
+      "steals": 10.667,
+      "blocks": 7,
+      "orebShare": 0.282,
+      "assists": 13.5,
+      "drives": 134.333,
+      "screens": 47.667,
+      "passes": 262.167,
+      "ppp": 1.11,
+      "pointsPerFga": 1.103,
+      "completed": 1
+    },
+    "sag26": {
+      "overrides": {
+        "helpSagMaxMeters": 2.6
+      },
+      "points": 178.333,
+      "possessions": 168.833,
+      "possessionSeconds": 14.612,
+      "fga": 170.667,
+      "fgPct": 0.391,
+      "threeShare": 0.25,
+      "rimShare": 0.487,
+      "paintShare": 0.175,
+      "midShare": 0.07,
+      "fta": 44.167,
+      "ftaPerFga": 0.26,
+      "fouls": 37.167,
+      "bonusFouls": 4.333,
+      "turnovers": 18.667,
+      "steals": 11,
+      "blocks": 7.5,
+      "orebShare": 0.283,
+      "assists": 12.5,
+      "drives": 134,
+      "screens": 51.333,
+      "passes": 260.833,
+      "ppp": 1.054,
+      "pointsPerFga": 1.045,
+      "completed": 1
+    }
+  }
+}

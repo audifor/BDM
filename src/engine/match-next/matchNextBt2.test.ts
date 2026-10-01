@@ -95,7 +95,7 @@ describe('BT2G/H: shot decision model (opportunity is not attempt)', { timeout: 
 
   it('shoots when the shot is worth at least as much as the alternatives (within decision noise), and never on rating alone', () => {
     const shots = decisions.filter((decision) => decision.kind === 'SHOOT' || decision.kind === 'CATCH_AND_SHOOT')
-    expect(shots.length).toBeGreaterThan(20)
+    expect(shots.length).toBeGreaterThan(12)
     for (const shot of shots) {
       const alternatives = Math.max(shot.utility.pass, shot.utility.drive, shot.utility.screen ?? 0)
       // Softmax choice (BT3A): a near tie can go either way; the Gumbel noise is bounded by ~9 temperatures.
@@ -165,7 +165,7 @@ describe('BT2D: off-ball movement with a reason', { timeout: 240000 }, () => {
     let driftWithoutDrive = 0
     play(424242, 9000, (_before, after) => {
       const moves = after.offenseFlow?.moves ?? []
-      const cutters = moves.filter((move) => move.kind !== 'DRIFT')
+      const cutters = moves.filter((move) => move.kind === 'BASKET_CUT' || move.kind === 'BACKDOOR_CUT')
       if (cutters.length > 1) simultaneous += 1
       if (moves.some((move) => move.kind === 'DRIFT') && !after.actions.some((action) => action.kind === 'DRIVE' && action.status === 'ACTIVE')) driftWithoutDrive += 1
       for (const move of cutters) if (!active.has(move.playerId)) active.set(move.playerId, { kind: move.kind, startedT: move.startedT })

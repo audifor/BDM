@@ -234,7 +234,10 @@ describe('Match Next movement and 5OUT authority', () => {
       expect(movement.provenance.owner).toBe(responsibility?.owner)
     }
     const ballHandler = state.ball.kind === 'HELD' ? state.ball.ownerPlayerId : null
-    expect(state.movementIntents.find((movement) => movement.playerId === ballHandler)?.target).toEqual(advanceTarget(state, state.offensiveStructure!.attackingBasket))
+    // The carrier heads for the advance target, going around a defender who stands on his line (BT4.1).
+    const carrierTarget = state.movementIntents.find((movement) => movement.playerId === ballHandler)!.target
+    const advance = advanceTarget(state, state.offensiveStructure!.attackingBasket)
+    expect(Math.hypot(carrierTarget.x - advance.x, carrierTarget.y - advance.y)).toBeLessThanOrEqual(3.5)
     expect(state.movementIntents.filter((movement) => movement.provenance.owner === 'offensiveStructure' && movement.facing.kind === 'BALL')).toHaveLength(4)
     expect(state.movementIntents.filter((movement) => movement.facing.kind === 'BASKET')).toHaveLength(1)
   })

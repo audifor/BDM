@@ -20,6 +20,8 @@ export interface MatchNextClockRules {
   readonly foulRules?: { readonly personalFoulLimit: number; readonly teamFoulPenaltyFrom: number; readonly teamFoulOneAndOneFrom?: number | null }
   /** Competition-owned rule input. Null/omitted means unresolved; never infer a reset. */
   readonly offensiveReboundShotClockSeconds?: number | null
+  /** Seconds a team has to take the ball into its frontcourt (FIBA/NBA 8). Omitted: 8. Null: no backcourt clock. */
+  readonly backcourtSeconds?: number | null
 }
 
 export interface MatchNextPlayerProfile {
@@ -28,7 +30,7 @@ export interface MatchNextPlayerProfile {
   readonly primaryPosition: BasketballPosition
   readonly secondaryPositions?: readonly BasketballPosition[]
   readonly physical: { readonly heightCm: number; readonly weightKg: number; readonly wingspanCm: number; readonly standingReachCm: number }
-  readonly kinematics: { readonly maxSpeedMps: number; readonly accelerationMps2: number; readonly brakingMps2: number }
+  readonly kinematics: { readonly maxSpeedMps: number; readonly accelerationMps2: number; readonly brakingMps2: number; /** Sideways push of the feet when he changes direction; omitted: one limit for every change of velocity. */ readonly lateralGripMps2?: number }
   readonly offense: { readonly usage: number; readonly rimAttack: number; readonly shooting: number; readonly creation: number; readonly ballSecurity: number }
   readonly passing?: { readonly accuracy: number; readonly vision: number; readonly timing: number }
   readonly defense: { readonly pointOfAttack: number; readonly interior: number; readonly mobility: number; readonly steal?: number }

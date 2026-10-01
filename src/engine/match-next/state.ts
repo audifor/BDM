@@ -238,7 +238,7 @@ export interface ContactEpisode {
 
 export type FoulType = 'SHOOTING' | 'REACH' | 'BLOCKING' | 'CHARGING' | 'ILLEGAL_SCREEN' | 'LOOSE_BALL' | 'REBOUNDING'
 export type FoulResolution = 'INBOUND' | 'FREE_THROWS' | 'BONUS_FREE_THROWS' | 'AND_ONE' | 'OFFENSIVE_TURNOVER'
-export type TurnoverType = 'BAD_PASS' | 'INTERCEPTION' | 'LOST_DRIBBLE' | 'OFFENSIVE_FOUL' | 'STEPPED_OUT' | 'SHOT_CLOCK' | 'OUT_OF_BOUNDS'
+export type TurnoverType = 'BAD_PASS' | 'INTERCEPTION' | 'LOST_DRIBBLE' | 'OFFENSIVE_FOUL' | 'STEPPED_OUT' | 'SHOT_CLOCK' | 'EIGHT_SECOND' | 'OUT_OF_BOUNDS'
 export type StealKind = 'CLEAN_STEAL' | 'PASS_INTERCEPTION' | 'DEFLECTION' | 'POKE_LOOSE' | 'FAILED_ATTEMPT' | 'REACH_FOUL'
 export type BlockOutcome = 'BLOCKED_LOOSE' | 'BLOCKED_OUT_OF_BOUNDS' | 'BLOCKED_RECOVERED_OFFENSE' | 'BLOCKED_RECOVERED_DEFENSE'
 export type PlayPhase = 'LIVE' | 'WHISTLE' | 'DEAD' | 'RESOLUTION' | 'INBOUND' | 'FREE_THROW' | 'READY'
@@ -295,7 +295,7 @@ export interface FreeThrowSequence {
   readonly possessionId?: string
 }
 
-export type OffBallMoveKind = 'BASKET_CUT' | 'BACKDOOR_CUT' | 'DRIFT'
+export type OffBallMoveKind = 'BASKET_CUT' | 'BACKDOOR_CUT' | 'DRIFT' | 'OFFER'
 
 /** BT2D: a purposeful off-ball movement with a reason and an end, layered over the 5-out zones. */
 export interface OffBallMove {
@@ -330,6 +330,8 @@ export interface OffenseFlowState {
   readonly resetPending: boolean
   readonly reads: number
   readonly moves: readonly OffBallMove[]
+  /** BT4.1: while the handler keeps reading he works the ball (a probing dribble) instead of standing still. */
+  readonly probe?: { readonly playerId: PlayerId; readonly target: CourtPosition; readonly endsT: number } | null
 }
 
 export interface MatchPlayerState {
@@ -355,7 +357,7 @@ export interface MatchPlayerState {
   readonly offense: MatchSetup['players'][number]['offense']
   readonly passing: Required<NonNullable<MatchSetup['players'][number]['passing']>>
   readonly defense: MatchSetup['players'][number]['defense']
-  readonly kinematics: { readonly maxSpeedMps: number; readonly accelerationMps2: number; readonly brakingMps2: number }
+  readonly kinematics: { readonly maxSpeedMps: number; readonly accelerationMps2: number; readonly brakingMps2: number; readonly lateralGripMps2?: number }
 }
 
 export interface MatchState {
@@ -398,6 +400,8 @@ export interface MatchState {
    * expects a possession to yield if it keeps working: the value of holding the ball is measured against it instead of a constant.
    */
   readonly shotValueMemory: { readonly home: number; readonly away: number }
+  /** Backcourt clock of the open possession (FIBA 28): control time in the backcourt, and whether the ball has already reached the frontcourt. */
+  readonly backcourtControl?: { readonly possessionId: string; readonly ticks: number; readonly done: boolean } | null
   readonly freeThrows: FreeThrowSequence | null
   readonly playState: PlayState
   readonly actions: readonly MatchActionState[]

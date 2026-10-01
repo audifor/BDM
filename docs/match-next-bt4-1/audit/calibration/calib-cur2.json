@@ -1,0 +1,37 @@
+{
+  "seeds": [
+    424242,
+    7,
+    1,
+    99
+  ],
+  "result": {
+    "current": {
+      "overrides": {},
+      "points": 278,
+      "possessions": 240.75,
+      "possessionSeconds": 11.198,
+      "fga": 225.75,
+      "fgPct": 0.402,
+      "threeShare": 0.089,
+      "rimShare": 0.709,
+      "paintShare": 0.165,
+      "midShare": 0.036,
+      "fta": 126.25,
+      "ftaPerFga": 0.559,
+      "fouls": 92,
+      "bonusFouls": 22.75,
+      "turnovers": 28,
+      "steals": 18.5,
+      "blocks": 15.25,
+      "orebShare": 0.295,
+      "assists": 8,
+      "drives": 218.25,
+      "screens": 67.75,
+      "passes": 242.75,
+      "ppp": 1.157,
+      "pointsPerFga": 1.237,
+      "completed": 1
+    }
+  }
+}

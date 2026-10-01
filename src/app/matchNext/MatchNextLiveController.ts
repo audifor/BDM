@@ -65,7 +65,8 @@ export class MatchNextLiveController {
     if (!pending) return false
     // The dead ball is carried to the restart spot first: the throw-in never starts with the ball somewhere else.
     const ball = this.state.ball
-    if (ball.kind === 'DEAD' && ball.restartSpot !== undefined && distanceBetween(ball.position, ball.restartSpot) > 0.6) return false
+    // A period restart has no restart spot on the ball: the throw-in spot is the pending one (the ball is carried there from where the horn caught it).
+    if (ball.kind === 'DEAD' && distanceBetween(ball.position, ball.restartSpot ?? pending.spot) > 0.6) return false
     // Only the restart formation counts: an unrelated intent that happens to sit under the player must not release the throw-in.
     const ids = new Set(pending.responsibilityIds)
     const inbounder = this.state.players.find((player) => player.playerId === pending.inbounderPlayerId)

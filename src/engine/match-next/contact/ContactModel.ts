@@ -1,3 +1,4 @@
+import { tuning } from '../tuning'
 import { distanceBetween, type CourtPosition } from '@/domain/court'
 import type { PlayerId } from '@/domain/ids'
 import type { ContactKind, FoulType, MatchPlayerState } from '../state'
@@ -91,6 +92,9 @@ export interface ContactAssessment {
 const NO_CONTACT: ContactAssessment = Object.freeze({ kind: 'INCIDENTAL', severity: 0, offenderId: null, victimId: null, foulType: null, callProbability: 0 })
 
 /** A referee tolerates less contact on a man who has left his feet. Called probability of a maximum-severity contact. */
+/** The whistle tolerance of one kind of contact, scaled by the referee's strictness (an audit/competition parameter). */
+function whistleTolerance(kind: keyof typeof REFEREE_TOLERANCE): number { return REFEREE_TOLERANCE[kind] * tuning().refereeScale }
+
 export const REFEREE_TOLERANCE = Object.freeze({
   shotAtRim: 0.65, shotInPaint: 0.45, shotMidRange: 0.4, shotThree: 0.18,
   charge: 0.18, blocking: 0.65, reach: 0.55, illegalScreen: 0.6, looseBall: 0.22, rebounding: 0.1,
@@ -111,12 +115,12 @@ export function assessDriveContact(track: DriveContactTrack | undefined, driver:
   const driverSkill = (driver.offense.rimAttack + driver.offense.creation) / 200
   const defenderSkill = (defender.defense.pointOfAttack + defender.defense.mobility) / 200
   if (track.established && track.closingSpeed >= 1.5) {
-    return { kind: 'DRIVE', severity, offenderId: driver.playerId, victimId: defender.playerId, foulType: 'CHARGING', callProbability: Math.min(0.9, REFEREE_TOLERANCE.charge * severity * (1.2 - 0.45 * driverSkill)) }
+    return { kind: 'DRIVE', severity, offenderId: driver.playerId, victimId: defender.playerId, foulType: 'CHARGING', callProbability: Math.min(0.9, whistleTolerance('charge') * severity * (1.2 - 0.45 * driverSkill)) }
   }
   if (track.inPath) {
-    return { kind: 'DRIVE', severity, offenderId: defender.playerId, victimId: driver.playerId, foulType: 'BLOCKING', callProbability: Math.min(0.9, REFEREE_TOLERANCE.blocking * severity * (1.3 - defenderSkill)) }
+    return { kind: 'DRIVE', severity, offenderId: defender.playerId, victimId: driver.playerId, foulType: 'BLOCKING', callProbability: Math.min(0.9, whistleTolerance('blocking') * severity * (1.3 - defenderSkill)) }
   }
-  return { kind: 'DRIVE', severity, offenderId: defender.playerId, victimId: driver.playerId, foulType: 'REACH', callProbability: Math.min(0.9, REFEREE_TOLERANCE.reach * severity * (1.3 - defenderSkill)) }
+  return { kind: 'DRIVE', severity, offenderId: defender.playerId, victimId: driver.playerId, foulType: 'REACH', callProbability: Math.min(0.9, whistleTolerance('reach') * severity * (1.3 - defenderSkill)) }
 }
 
 /**
@@ -130,9 +134,9 @@ export function assessShootingContact(
   driveFinish: boolean,
 ): ContactAssessment {
   const distanceToBasket = distanceBetween(shooter.position, basket)
-  const tolerance = distanceToBasket <= 2.6 ? REFEREE_TOLERANCE.shotAtRim
-    : distanceToBasket <= 4.6 ? REFEREE_TOLERANCE.shotInPaint
-      : distanceToBasket <= 6.6 ? REFEREE_TOLERANCE.shotMidRange : REFEREE_TOLERANCE.shotThree
+  const tolerance = distanceToBasket <= 2.6 ? whistleTolerance('shotAtRim')
+    : distanceToBasket <= 4.6 ? whistleTolerance('shotInPaint')
+      : distanceToBasket <= 6.6 ? whistleTolerance('shotMidRange') : whistleTolerance('shotThree')
   let best: ContactAssessment = NO_CONTACT
   for (const defender of defenders) {
     const gap = distanceBetween(defender.position, shooter.position)
@@ -178,7 +182,7 @@ export function assessScreenContact(screener: MatchPlayerState, defender: MatchP
   if (screenerSpeedAtContact < 1.0) return { kind: 'SCREEN', severity, offenderId: null, victimId: null, foulType: null, callProbability: 0 }
   return {
     kind: 'ILLEGAL_DISPLACEMENT', severity, offenderId: screener.playerId, victimId: defender.playerId, foulType: 'ILLEGAL_SCREEN',
-    callProbability: Math.min(0.9, REFEREE_TOLERANCE.illegalScreen * severity * Math.min(1, screenerSpeedAtContact / 2.2)),
+    callProbability: Math.min(0.9, whistleTolerance('illegalScreen') * severity * Math.min(1, screenerSpeedAtContact / 2.2)),
   }
 }
 
@@ -197,7 +201,7 @@ export function assessBallContestContact(winner: MatchPlayerState, opponent: Mat
   const closing = Math.max(winnerClosing, opponentClosing)
   const severity = contactSeverity(Math.max(0, closing), mover.weightKg) * Math.max(0, Math.min(1, (CONTACT_DISTANCE_METERS + 0.15 - gap) / 0.6 + 0.25))
   if (severity < 0.08) return { ...NO_CONTACT, kind: 'REBOUNDING', severity }
-  const tolerance = kind === 'LOOSE_BALL' ? REFEREE_TOLERANCE.looseBall : REFEREE_TOLERANCE.rebounding
+  const tolerance = kind === 'LOOSE_BALL' ? whistleTolerance('looseBall') : whistleTolerance('rebounding')
   const skill = (mover.defense.interior + mover.reboundingImpact) / 200
   return {
     kind: 'REBOUNDING', severity, offenderId: mover.playerId, victimId: other.playerId,

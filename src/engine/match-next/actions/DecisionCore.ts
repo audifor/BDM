@@ -134,7 +134,12 @@ export function continuationValue(state: MatchState): number {
 export function workingValue(state: MatchState): number {
   const shotClock = state.shotClockTenths === null ? state.clockRules.shotClockSeconds : state.shotClockTenths / 10
   const seconds = Math.min(shotClock, state.gameClockTenths / 10)
-  return continuationValue(state) * (1 + tuning().waitPremium * clamp((seconds - 6) / 14, 0, 1))
+  // Waiting only pays once the floor is organised: while the offense is still getting set or the defense is still recovering
+  // (transition / early offense), every second lets the defense settle, so the first good look is the look.
+  const flow = state.offenseFlow
+  const mode = tuning().waitGateMode
+  const organised = mode === 0 || (mode === 1 ? state.transition === null : flow !== null && flow.settledAtT !== null && state.transition === null)
+  return continuationValue(state) * (1 + (organised ? tuning().waitPremium * clamp((seconds - 6) / 14, 0, 1) : 0))
 }
 
 /** The default of `continuationValuePoints` is the factor over the remembered shot value that reproduces the calibrated behaviour. */

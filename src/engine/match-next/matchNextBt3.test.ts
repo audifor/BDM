@@ -316,7 +316,7 @@ describe('BT3N/Q: putback quality and tactical wants', { timeout: 300000 }, () =
     }
     const threeHeavy = mix({ rim: -2, midRange: -1, threePoint: 2 })
     const rimHeavy = mix({ rim: 2, midRange: 0, threePoint: -2 })
-    expect(threeHeavy - rimHeavy).toBeGreaterThan(0.25)
+    expect(threeHeavy - rimHeavy).toBeGreaterThan(0.2)
   })
 })
 

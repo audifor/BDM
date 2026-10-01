@@ -14,7 +14,7 @@ import { commitFoul } from '../rules/Fouls'
 import { tuning } from '../tuning'
 import { classifyShotCreation, shotZone } from '../stats/ShotEcology'
 import { bestReceiver, driveTarget, estimateShotContest, evaluateShotOpportunity, floaterFactor, passQuality, pullUpFactor, putbackQuality, readDecision, readDriveStop, shotMakeProbability, shotValueAt } from './DecisionCore'
-import { reconcileOffenseFlow } from './OffenseFlow'
+import { decisionNoise, reconcileOffenseFlow } from './OffenseFlow'
 import { createScreenState, planScreen, reconcileScreen, useScreen } from './ScreenCore'
 import { reconcileOffBallMovement } from './OffBallMovement'
 import type { MatchActionKind, MatchActionOutcome, MatchActionState, MatchDecision } from './ActionState'
@@ -47,9 +47,9 @@ export function reconcileActions(input: MatchState): MatchState {
   if (!hasActiveOffensiveAction(state)) {
     const read = readDecision(state)
     if (read.decision) state = executeDecision(recordDecision(state, read.decision), read.decision)
-    else if (read.holdUntilT !== undefined && state.offenseFlow !== null) state = { ...state, offenseFlow: { ...state.offenseFlow, readyAtT: read.holdUntilT } }
+    else if (read.holdUntilT !== undefined && state.offenseFlow !== null) state = startProbe({ ...state, offenseFlow: { ...state.offenseFlow, readyAtT: read.holdUntilT } })
   }
-  return applyPassReceiveIntents(applyStopIntents(applyDriveIntents(state)))
+  return applyPassReceiveIntents(applyProbeIntents(applyStopIntents(applyDriveIntents(state))))
 }
 
 function resolveBallActions(state: MatchState): MatchState {
@@ -546,6 +546,57 @@ function stopFactor(action: MatchActionState, shooter: MatchPlayerState): number
 }
 
 /** A shooter who stopped a drive stands where he stopped while he gathers. */
+/** Probe: a handler who keeps reading does not stand still; he dribbles into the space the defenders leave, a step or two at a time. */
+const PROBE_STEP_METERS = 1.6
+const PROBE_MIN_TICKS = 10
+const PROBE_MIN_DISTANCE_TO_BASKET_METERS = 6.6
+
+function startProbe(state: MatchState): MatchState {
+  const flow = state.offenseFlow
+  if (flow === null || state.ball.kind !== 'HELD' || tuning().probeEnabled === 0) return state
+  if (flow.probe != null && flow.probe.endsT > state.t) return state
+  // Only a half court that is already set: a team bringing the ball up (transition, advance, early offense) keeps moving forward.
+  const phase = activePossession(state)?.phase
+  if (state.transition !== null || phase === 'ADVANCE' || phase === 'INBOUND' || flow.stage === 'EARLY' || flow.settledAtT === null) return state
+  const holder = state.players.find((player) => state.ball.kind === 'HELD' && player.playerId === state.ball.ownerPlayerId)
+  const possession = activePossession(state)
+  if (holder === undefined || possession === undefined || holder.teamId !== possession.teamId) return state
+  const basket = attackingBasketForTeam(possession.teamId, state.homeTeamId, state.period, state.court)
+  const toBasket = { x: basket.x - holder.position.x, y: basket.y - holder.position.y }
+  const length = Math.hypot(toBasket.x, toBasket.y) || 1
+  const u = { x: toBasket.x / length, y: toBasket.y / length }
+  const n = { x: -u.y, y: u.x }
+  const defenders = state.players.filter((player) => player.active && player.teamId !== holder.teamId)
+  const centerY = state.court.widthMeters / 2
+  const candidates = ([1, -1] as const).map((side) => {
+    const target = { x: holder.position.x + n.x * side * PROBE_STEP_METERS + u.x * 0.3, y: holder.position.y + n.y * side * PROBE_STEP_METERS + u.y * 0.3 }
+    const inside = target.y > 1 && target.y < state.court.widthMeters - 1 && target.x > 1 && target.x < state.court.lengthMeters - 1
+    const room = Math.min(...defenders.map((defender) => distanceBetween(defender.position, target)), 99)
+    const score = room - 0.25 * Math.abs(target.y - centerY) + (inside ? 0 : -50) + (distanceBetween(target, basket) < PROBE_MIN_DISTANCE_TO_BASKET_METERS ? -50 : 0) + (decisionNoise(state, holder.playerId, `probe-${side}`) - 0.5) * 0.4
+    return { target, score }
+  }).sort((left, right) => right.score - left.score)
+  const best = candidates[0]!
+  if (best.score < -20) return state
+  const endsT = state.t + PROBE_MIN_TICKS + Math.floor(decisionNoise(state, holder.playerId, 'probe-len') * 8)
+  return { ...state, offenseFlow: { ...flow, probe: { playerId: holder.playerId, target: best.target, endsT } } }
+}
+
+function applyProbeIntents(state: MatchState): MatchState {
+  const flow = state.offenseFlow
+  const probe = flow?.probe
+  if (flow === null || probe == null) return state
+  const holding = state.ball.kind === 'HELD' && state.ball.ownerPlayerId === probe.playerId
+  const busy = state.actions.some((action) => action.playerId === probe.playerId && action.status === 'ACTIVE') || state.screen !== null
+  if (!holding || busy || state.t >= probe.endsT) return { ...state, offenseFlow: { ...flow, probe: null } }
+  const responsibility = state.responsibilities.find((item) => item.playerId === probe.playerId && item.owner !== 'defensiveStructure')
+  if (!responsibility) return state
+  const intent: MovementIntent = {
+    playerId: probe.playerId, target: { ...probe.target }, urgency: 'jog', facing: { kind: 'BASKET' },
+    provenance: { responsibilityId: responsibility.id, decisionId: state.decisions.find((item) => item.playerId === probe.playerId && item.responsibilityId === responsibility.id)?.id ?? `probe-${probe.playerId}`, owner: 'action' },
+  }
+  return { ...state, movementIntents: [...state.movementIntents.filter((item) => item.playerId !== probe.playerId), intent] }
+}
+
 function applyStopIntents(state: MatchState): MatchState {
   let next = state
   for (const action of state.actions) {

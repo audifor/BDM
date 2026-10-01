@@ -67,9 +67,11 @@ function laneSpots(basket: CourtPosition, court: MatchState['court']): { readonl
   const at = (offset: number, lateral: number): CourtPosition => ({ x: basket.x + toward * offset, y: centerY + lateral })
   return {
     shooter: at(FREE_THROW_LINE_DISTANCE_METERS, 0),
-    // Lane spots, low block to high: defenders take the two blocks and the two high spots, attackers the middle ones.
-    defenders: [at(1.5, -LANE_SPOT_LATERAL_METERS), at(1.5, LANE_SPOT_LATERAL_METERS), at(3.7, -LANE_SPOT_LATERAL_METERS), at(3.7, LANE_SPOT_LATERAL_METERS), at(6.2, 3.4)],
-    attackers: [at(2.6, -LANE_SPOT_LATERAL_METERS), at(2.6, LANE_SPOT_LATERAL_METERS), at(6.2, -3.4), at(7.6, 0)],
+    // FIBA 43: at most five players line the lane (three defenders and two attackers): the defenders take the two places nearest to
+    // the basket and one more, the attackers the middle places. Everybody else waits behind the free-throw line extended and the
+    // three-point line, and does not enter the lane until the ball touches the ring.
+    defenders: [at(1.5, -LANE_SPOT_LATERAL_METERS), at(1.5, LANE_SPOT_LATERAL_METERS), at(3.7, -LANE_SPOT_LATERAL_METERS), at(6.9, -2.6), at(6.9, 2.6)],
+    attackers: [at(2.6, -LANE_SPOT_LATERAL_METERS), at(2.6, LANE_SPOT_LATERAL_METERS), at(7.6, 1.3), at(7.6, -1.3)],
   }
 }
 
@@ -85,7 +87,7 @@ function assign(players: readonly MatchPlayerState[], spots: readonly CourtPosit
   return result
 }
 
-/** Everybody walks to his spot: shooter at the line, four attackers and five defenders around the lane. */
+/** Everybody walks to his spot: shooter at the line, five players on the lane places (three defenders, two attackers) and the rest behind the three-point line. */
 function installFreeThrowFormation(state: MatchState, sequence: FreeThrowSequence): MatchState {
   const basket = attackingBasketForTeam(sequence.shooterTeamId, state.homeTeamId, state.period, state.court)
   const spots = laneSpots(basket, state.court)

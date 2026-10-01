@@ -83,10 +83,9 @@ export function startOpeningJumpBall(state: MatchState, homeLineup: readonly Pla
   const winningLineup = winner.teamId === state.homeTeamId ? homeLineup : awayLineup
   const receiverPlayerId = winningLineup.find((playerId) => playerId !== winner.playerId)!
   const center = { x: state.court.lengthMeters / 2, y: state.court.widthMeters / 2 }
-  const homeJumpPositions = jumpBallFormation(homeLineup, homeJumper.playerId, -1, center, state.court.widthMeters)
-  const awayJumpPositions = jumpBallFormation(awayLineup, awayJumper.playerId, 1, center, state.court.widthMeters)
+  const jumpPositions = jumpBallFormation(homeLineup, awayLineup, homeJumper.playerId, awayJumper.playerId, center)
   const players = state.players.map((player) => {
-    const position = homeJumpPositions.get(player.playerId) ?? awayJumpPositions.get(player.playerId)
+    const position = jumpPositions.get(player.playerId)
     return position ? { ...player, position, velocity: { x: 0, y: 0 } } : player
   })
   const jumpBall: BallState = {
@@ -98,17 +97,26 @@ export function startOpeningJumpBall(state: MatchState, homeLineup: readonly Pla
   return emitEvent(next, 'jumpBallStarted', { playerId: homeJumper.playerId })
 }
 
-function jumpBallFormation(lineup: readonly PlayerId[], jumperId: PlayerId, side: -1 | 1, center: CourtPosition, courtWidth: number): ReadonlyMap<PlayerId, CourtPosition> {
-  const depth = [2.8, 3.9, 5.6, 6.8]
-  const lateral = [-2.4, 2.4, -4.4, 4.4]
-  const teammates = lineup.filter((playerId) => playerId !== jumperId)
-  const positions = new Map<PlayerId, CourtPosition>([[jumperId, { x: center.x + side * 0.65, y: center.y }]])
-  teammates.forEach((playerId, index) => {
-    positions.set(playerId, {
-      x: center.x + side * depth[index]!,
-      y: Math.max(0.75, Math.min(courtWidth - 0.75, center.y + lateral[index]!)),
-    })
-  })
+/**
+ * The standard opening tip (FIBA 12.2): each jumper stands in the half of the centre circle nearer to his own basket, with one foot
+ * near the centre line; the other eight players stand around the circle, outside it, and the two teams alternate around it (a team
+ * cannot take two adjacent places if an opponent wants one of them).
+ */
+const JUMP_CIRCLE_PLACE_RADIUS_METERS = 2.45
+function jumpBallFormation(homeLineup: readonly PlayerId[], awayLineup: readonly PlayerId[], homeJumperId: PlayerId, awayJumperId: PlayerId, center: CourtPosition): ReadonlyMap<PlayerId, CourtPosition> {
+  const positions = new Map<PlayerId, CourtPosition>([
+    [homeJumperId, { x: center.x - 0.65, y: center.y }],
+    [awayJumperId, { x: center.x + 0.65, y: center.y }],
+  ])
+  const home = homeLineup.filter((playerId) => playerId !== homeJumperId)
+  const away = awayLineup.filter((playerId) => playerId !== awayJumperId)
+  const places = 8
+  for (let index = 0; index < places; index += 1) {
+    const angle = (Math.PI * 2 * (index + 0.5)) / places
+    const position = { x: center.x + Math.cos(angle) * JUMP_CIRCLE_PLACE_RADIUS_METERS, y: center.y + Math.sin(angle) * JUMP_CIRCLE_PLACE_RADIUS_METERS }
+    const playerId = index % 2 === 0 ? home[Math.floor(index / 2)] : away[Math.floor(index / 2)]
+    if (playerId !== undefined) positions.set(playerId, position)
+  }
   return positions
 }
 
@@ -302,6 +310,16 @@ export function putBallDead(state: MatchState, reason: 'outOfBounds' | 'other', 
   }
   if (active && restartTeam !== undefined && active.teamId !== restartTeam) next = endPossession(next, 'turnover')
   return emitEvent(next, 'ballDead', { teamId: restartTeam, ballReason: reason })
+}
+
+/** FIBA 28: the team did not take the ball into its frontcourt in time. Turnover; the opponents throw in from the nearest sideline. */
+export function violateBackcourt(state: MatchState): MatchState {
+  const possession = activePossession(state)
+  if (!possession || state.ball.kind === 'DEAD' || state.ball.kind === 'INBOUND' || state.ball.kind === 'SHOT_IN_FLIGHT') return state
+  const restartTeamId = possession.teamId === state.homeTeamId ? state.awayTeamId : state.homeTeamId
+  let next = emitEvent(state, 'turnover', { possessionId: possession.id, teamId: possession.teamId, turnoverType: 'EIGHT_SECOND' })
+  next = putBallDead(next, 'other', restartTeamId)
+  return { ...next, backcourtControl: null }
 }
 
 export function violateShotClock(state: MatchState): MatchState {

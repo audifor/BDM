@@ -53,7 +53,8 @@ function readyForAutonomousActions(passFirst = false, period = 1): MatchState {
 
 function runVerticalSlice(period = 1): MatchState {
   let state = readyForAutonomousActions(false, period)
-  for (let count = 0; count < 450; count += 1) {
+  // BT4.1: with the patience of the offense (it waits for a better look while the shot clock allows) the chain takes longer to end in a shot.
+  for (let count = 0; count < 1200; count += 1) {
     state = tick(state)
     if (state.actions.some((action) => action.kind === 'CATCH_AND_SHOOT' && action.status === 'COMPLETED')) break
   }
@@ -124,7 +125,8 @@ describe('Match Next action vertical slice', () => {
     // "help -> kick-out": every action must be legal and end in a named outcome, and whatever chain happens must be coherent.
     const kinds = first.actions.map((action) => action.kind)
     expect(kinds).toContain('DRIVE')
-    expect(kinds.some((kind) => kind === 'SHOOT' || kind === 'CATCH_AND_SHOOT')).toBe(true)
+    // BT4.1: the chain ends either in a shot or, when the kick-out is a bad pass (a seeded draw), in a turnover; both are named outcomes.
+    expect(kinds.some((kind) => kind === 'SHOOT' || kind === 'CATCH_AND_SHOOT') || first.events.some((event) => event.type === 'turnover')).toBe(true)
     for (const action of first.actions) expect(action.status).not.toBe('ACTIVE')
     const drives = first.actions.filter((action) => action.kind === 'DRIVE')
     for (const drive of drives) expect(['ADVANTAGE', 'CONTAINED', 'FINISH', 'STOPPED', 'FOULED', 'CANCELLED']).toContain(drive.outcome)
@@ -134,17 +136,19 @@ describe('Match Next action vertical slice', () => {
       expect(first.events.find((event) => event.type === 'defensiveResponsibilityChanged' && event.responsibilityKind === 'LOW_MAN')?.playerId).toBeDefined()
     }
     const kick = first.actions.find((action) => action.kind === 'KICK_OUT')
-    if (kick !== undefined) expect(kick).toMatchObject({ status: 'COMPLETED', outcome: 'CAUGHT' })
+    if (kick !== undefined) expect(kick).toMatchObject({ status: 'COMPLETED', outcome: expect.stringMatching(/CAUGHT|BAD_PASS/) })
     const closeout = first.actions.find((action) => action.kind === 'CLOSEOUT')
     if (closeout !== undefined) {
       const closeoutDefender = first.players.find((player) => player.playerId === closeout.playerId)!
       expect(closeout).toMatchObject({ status: 'COMPLETED', contestScore: expect.any(Number) })
       expect(distanceBetween(closeout.startPosition!, closeoutDefender.position)).toBeGreaterThan(0.2)
     }
-    const shot = first.actions.find((action) => (action.kind === 'SHOOT' || action.kind === 'CATCH_AND_SHOOT') && action.status === 'COMPLETED')!
-    expect(shot).toMatchObject({ status: 'COMPLETED', outcome: expect.stringMatching(/MAKE|MISS|BLOCKED/) })
-    expect(first.events.some((event) => event.type === 'shotMade' || event.type === 'shotMissed' || event.type === 'shotBlocked')).toBe(true)
+    const shot = first.actions.find((action) => (action.kind === 'SHOOT' || action.kind === 'CATCH_AND_SHOOT') && action.status === 'COMPLETED')
+    if (shot !== undefined) {
+      expect(shot).toMatchObject({ status: 'COMPLETED', outcome: expect.stringMatching(/MAKE|MISS|BLOCKED/) })
+      expect(first.events.some((event) => event.type === 'shotMade' || event.type === 'shotMissed' || event.type === 'shotBlocked')).toBe(true)
+      expect(first.events.find((event) => event.type === 'shotReleased' && event.actionId === shot.id)).toMatchObject({ actionId: shot.id })
+    }
     expect(first.events.filter((event) => event.type === 'actionStarted')).toHaveLength(first.actions.length)
-    expect(first.events.find((event) => event.type === 'shotReleased' && event.actionId === shot.id)).toMatchObject({ actionId: shot.id })
   })
 })

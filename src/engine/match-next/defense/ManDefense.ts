@@ -5,6 +5,7 @@ import { activePossession, type DefensiveAssignment, type DefensiveHelpDecision,
 import type { DefensiveDecisionKind, DefensiveResponsibilityKind, PlayerResponsibility, StructuralDecision } from '../responsibility/Responsibility'
 import { MOVEMENT_URGENCY_FACTORS, type MovementFacing, type MovementIntent, type MovementUrgency } from '../movement/MovementIntent'
 import { attackingBasketForTeam } from '../structure/FiveOutStructure'
+import { tuning } from '../tuning'
 
 const ON_BALL_CUSHION_METERS = 1.05
 const GAP_DEPTH_METERS = 0.9
@@ -149,7 +150,7 @@ export function reconcileManDefense(input: MatchState): MatchState {
       const target = kind === 'HELP' || kind === 'LOW_MAN'
         ? guardPosition(handlerPosition(state, ballHandlerId, attacker.position), state.ball.position, defendedBasket, 'HELP', state.court, defensiveTactics)
         : kind === 'GAP' && defender.playerId === rimProtectorPlayerId && rotationTarget === undefined
-          ? rimProtectorPosition(state.ball.position, defendedBasket, state.court)
+          ? sagTowardRim(attacker, rimProtectorPosition(state.ball.position, defendedBasket, state.court))
           : rotationTarget ?? guardPosition(attacker.position, state.ball.position, defendedBasket, responsibilityTargetKind, state.court, defensiveTactics, attacker.offense.shooting)
       const distanceToTarget = distanceBetween(defender.position, target)
       const handler = ballHandlerId === null ? undefined : playerById.get(ballHandlerId)
@@ -234,6 +235,18 @@ function resolveRimProtector(
     // spot-up shooter is never the one left alone.
     .sort((left, right) => sagScore(right.attacker, right.ballDistance) - sagScore(left.attacker, left.ballDistance) || comparePlayerId(left.defender, right.defender))[0]
   return chosen?.item.defenderPlayerId ?? null
+}
+
+/**
+ * BT4.1: the weak-side helper keeps a foot in the paint but does not abandon his man: he sags along the line from his man to the
+ * help spot, no farther than he can recover from, and less against a man who can punish the space.
+ */
+function sagTowardRim(attacker: MatchPlayerState, helpSpot: CourtPosition): CourtPosition {
+  const reach = Math.min(tuning().helpSagMaxMeters, tuning().helpSagBaseMeters + (100 - attacker.offense.shooting) * 0.025)
+  const gap = distanceBetween(attacker.position, helpSpot)
+  if (gap <= reach) return helpSpot
+  const k = reach / gap
+  return { x: attacker.position.x + (helpSpot.x - attacker.position.x) * k, y: attacker.position.y + (helpSpot.y - attacker.position.y) * k }
 }
 
 function rimProtectorPosition(ball: CourtPosition, basket: CourtPosition, court: MatchState['court']): CourtPosition {

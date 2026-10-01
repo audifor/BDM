@@ -4,6 +4,7 @@ import { emitEvent } from '../events'
 import type { MovementIntent } from '../movement/MovementIntent'
 import { activePossession, type MatchPlayerState, type MatchState, type OffBallMove } from '../state'
 import { attackingBasketForTeam } from '../structure/FiveOutStructure'
+import { tuning } from '../tuning'
 import { decisionNoise } from './OffenseFlow'
 
 /** Off-ball moves are re-evaluated on this cadence (ticks); nobody reads the floor every tick. */
@@ -19,6 +20,12 @@ const SAG_DISTANCE_METERS = 2.1
 /** A defender this close on the ball side of his man is denying the pass: the man goes backdoor. */
 const DENIAL_DISTANCE_METERS = 1.7
 const MAX_CUTS_PER_POSSESSION = 3
+/** A handler who has kept the ball this long, pressured or with nobody close, gets a teammate who comes to offer himself. */
+const OFFER_AFTER_TICKS = 12
+const OFFER_MAX_TICKS = 26
+const OFFER_DISTANCE_METERS = 5
+const OFFER_PRESSURE_METERS = 2.3
+const OFFER_COOLDOWN_TICKS = 14
 const DRIFT_SHIFT_METERS = 1.6
 const DRIFT_MIN_IMPROVEMENT_METERS = 0.5
 
@@ -75,6 +82,27 @@ export function reconcileOffBallMovement(input: MatchState): MatchState {
   const driveActive = state.actions.find((action) => action.kind === 'DRIVE' && action.status === 'ACTIVE' && action.teamId === possession.teamId)
   const halfCourt = flow.stage === 'HALF_COURT' || flow.stage === 'ADVANTAGE' || flow.stage === 'ACTION'
 
+  if (holder !== undefined && tuning().offerEnabled !== 0 && driveActive === undefined && state.t % EVALUATION_PERIOD_TICKS === 0 && state.screen === null
+    && state.t - flow.holderSinceT >= OFFER_AFTER_TICKS && !moves.some((move) => move.kind === 'OFFER') && state.ball.kind === 'HELD') {
+    const recentOffer = state.events.some((event) => event.type === 'offBallMove' && event.ballReason === 'OFFER' && event.t >= state.t - OFFER_COOLDOWN_TICKS)
+    const pressure = nearestDefenderDistance(state, holder.teamId, holder.position)
+    const nearestTeammate = Math.min(...state.players.filter((p) => p.active && p.teamId === holder.teamId && p.playerId !== holder.playerId).map((p) => distanceBetween(p.position, holder.position)), Number.POSITIVE_INFINITY)
+    // Only a handler who is really stuck gets one: nobody he could pass to along a clear line. A handler with an outlet already has
+    // his teammates where they should be (their spots), and pulling them to the ball would bunch the floor.
+    const defendersNow = state.players.filter((p) => p.active && p.teamId !== holder.teamId)
+    const hasOutlet = state.players.some((p) => p.active && p.teamId === holder.teamId && p.playerId !== holder.playerId
+      && distanceBetween(p.position, holder.position) >= 2.5 && distanceBetween(p.position, holder.position) <= 14
+      && Math.min(...defendersNow.map((d) => distanceToSegment(d.position, holder.position, p.position)), 99) >= 1.3)
+    if (!recentOffer && !hasOutlet && (pressure <= OFFER_PRESSURE_METERS || nearestTeammate > 8)) {
+      const offer = pickOffer(state, holder, basket, busy)
+      if (offer !== undefined) {
+        moves = [...moves, offer]
+        state = emitEvent({ ...state, offenseFlow: { ...state.offenseFlow!, moves } }, 'offBallMove', { teamId: offer.teamId, playerId: offer.playerId, ballReason: offer.kind })
+        busy.add(offer.playerId)
+      }
+    }
+  }
+
   if (holder !== undefined && halfCourt && state.t % EVALUATION_PERIOD_TICKS === 0 && state.t >= flow.readyAtT - 2) {
     if (driveActive === undefined && flow.stage === 'HALF_COURT' && flow.settledAtT !== null) {
       const cutsSoFar = state.events.filter((event) => event.type === 'offBallMove' && event.t >= possession.startedT && (event.ballReason === 'BASKET_CUT' || event.ballReason === 'BACKDOOR_CUT')).length
@@ -102,7 +130,7 @@ export function reconcileOffBallMovement(input: MatchState): MatchState {
     const responsibility = state.responsibilities.find((item) => item.playerId === move.playerId && item.owner !== 'defensiveStructure')
     if (!responsibility) continue
     const intent: MovementIntent = {
-      playerId: move.playerId, target: { ...move.target }, urgency: move.kind === 'BASKET_CUT' || move.kind === 'BACKDOOR_CUT' ? 'sprint' : 'run',
+      playerId: move.playerId, target: { ...move.target }, urgency: move.kind === 'BASKET_CUT' || move.kind === 'BACKDOOR_CUT' || move.kind === 'OFFER' ? 'sprint' : 'run',
       facing: move.kind === 'BASKET_CUT' || move.kind === 'BACKDOOR_CUT' ? { kind: 'BASKET' } : { kind: 'BALL' },
       provenance: { responsibilityId: responsibility.id, decisionId: state.decisions.find((item) => item.playerId === move.playerId && item.responsibilityId === responsibility.id)?.id ?? `move-${move.playerId}`, owner: 'action' },
     }
@@ -116,7 +144,37 @@ function stillValid(state: MatchState, move: OffBallMove): boolean {
   if (!player || !player.active) return false
   // A cut ends when the cutter has arrived; a drift ends with the drive that caused it.
   if (move.kind === 'BASKET_CUT' || move.kind === 'BACKDOOR_CUT') return distanceBetween(player.position, move.target) > 0.8 && state.ball.kind !== 'SHOT_IN_FLIGHT'
+  if (move.kind === 'OFFER') return distanceBetween(player.position, move.target) > 0.7 && state.ball.kind === 'HELD' && state.ball.ownerTeamId === player.teamId
   return state.actions.some((action) => action.kind === 'DRIVE' && action.status === 'ACTIVE' && action.teamId === player.teamId)
+}
+
+/**
+ * A teammate comes to the ball: a spot about five metres from the handler, to one side, where no defender stands on the passing
+ * line, away from the defenders, inside the court. The nearest teammate who can get there takes it.
+ */
+function pickOffer(state: MatchState, holder: MatchPlayerState, basket: CourtPosition, busy: ReadonlySet<PlayerId>): OffBallMove | undefined {
+  const toBasket = { x: basket.x - holder.position.x, y: basket.y - holder.position.y }
+  const length = Math.hypot(toBasket.x, toBasket.y) || 1
+  const u = { x: toBasket.x / length, y: toBasket.y / length }
+  const defenders = state.players.filter((player) => player.active && player.teamId !== holder.teamId)
+  let best: { move: OffBallMove; score: number } | undefined
+  for (const angle of [Math.PI / 2, -Math.PI / 2, (3 * Math.PI) / 4, (-3 * Math.PI) / 4, Math.PI / 4, -Math.PI / 4]) {
+    const c = Math.cos(angle)
+    const si = Math.sin(angle)
+    const target = { x: holder.position.x + (u.x * c - u.y * si) * OFFER_DISTANCE_METERS, y: holder.position.y + (u.x * si + u.y * c) * OFFER_DISTANCE_METERS }
+    if (target.x < 1 || target.x > state.court.lengthMeters - 1 || target.y < 1 || target.y > state.court.widthMeters - 1) continue
+    const laneClearance = Math.min(...defenders.map((d) => distanceToSegment(d.position, holder.position, target)), 99)
+    const room = Math.min(...defenders.map((d) => distanceBetween(d.position, target)), 99)
+    if (laneClearance < 1.1) continue
+    for (const mate of state.players) {
+      if (!mate.active || mate.teamId !== holder.teamId || mate.playerId === holder.playerId || busy.has(mate.playerId)) continue
+      const travel = distanceBetween(mate.position, target)
+      if (travel > 13) continue
+      const score = Math.min(room, 3) * 1.2 + Math.min(laneClearance, 3) - travel * 0.35
+      if (best === undefined || score > best.score) best = { score, move: { playerId: mate.playerId, teamId: mate.teamId, kind: 'OFFER', target, startedT: state.t, endsT: state.t + OFFER_MAX_TICKS, reason: 'Come to the ball: the handler has no outlet' } }
+    }
+  }
+  return best?.move
 }
 
 function pickCut(state: MatchState, holder: MatchPlayerState, basket: CourtPosition, busy: ReadonlySet<PlayerId>): OffBallMove | undefined {

@@ -1,0 +1,67 @@
+{
+  "seeds": [
+    424242,
+    7,
+    1,
+    99
+  ],
+  "result": {
+    "current": {
+      "overrides": {},
+      "points": 295.75,
+      "possessions": 237.5,
+      "possessionSeconds": 11.4,
+      "fga": 222.25,
+      "fgPct": 0.41,
+      "threeShare": 0.108,
+      "rimShare": 0.699,
+      "paintShare": 0.154,
+      "midShare": 0.038,
+      "fta": 135.75,
+      "ftaPerFga": 0.611,
+      "fouls": 93.75,
+      "bonusFouls": 24.75,
+      "turnovers": 24.5,
+      "steals": 17.25,
+      "blocks": 16.75,
+      "orebShare": 0.304,
+      "assists": 12.25,
+      "drives": 214.5,
+      "screens": 76,
+      "passes": 259,
+      "ppp": 1.245,
+      "pointsPerFga": 1.332,
+      "completed": 1
+    },
+    "noAgility": {
+      "overrides": {
+        "movementAgility": 1,
+        "lateralGripFactor": 0
+      },
+      "points": 263,
+      "possessions": 219,
+      "possessionSeconds": 10.835,
+      "fga": 225,
+      "fgPct": 0.455,
+      "threeShare": 0.11,
+      "rimShare": 0.65,
+      "paintShare": 0.163,
+      "midShare": 0.075,
+      "fta": 67.25,
+      "ftaPerFga": 0.299,
+      "fouls": 54.25,
+      "bonusFouls": 8.75,
+      "turnovers": 16.25,
+      "steals": 12.5,
+      "blocks": 4,
+      "orebShare": 0.287,
+      "assists": 10.75,
+      "drives": 204,
+      "screens": 40,
+      "passes": 242.25,
+      "ppp": 1.202,
+      "pointsPerFga": 1.169,
+      "completed": 1
+    }
+  }
+}
