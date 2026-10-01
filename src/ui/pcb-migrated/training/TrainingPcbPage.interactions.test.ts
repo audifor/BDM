@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import '@testing-library/jest-dom/vitest'
 import { createNewGame } from '@/app/game'
 import { getUserTeam } from '@/engine/calendar'
-import { nextEligibleTrainingDate } from '@/engine/training'
+import { nextEligibleTrainingDate, scheduleTeamModuleSession } from '@/engine/training'
 import { selectUserTrainingPlan } from '@/stores/gameStore'
 import { addDays, parseGameDate } from '@/domain/date'
 import { getGamesForTeam } from '@/domain/world'
@@ -43,6 +43,21 @@ describe('TrainingPcbPage / interactions', () => {
     expect(screen.getByText(team.name)).toBeInTheDocument()
     expect((screen.getByLabelText('Intensidad') as HTMLSelectElement).value).toBe(plan.intensity)
     expect((screen.getByLabelText('Foco') as HTMLSelectElement).value).toBe(plan.focus)
+  })
+
+  it('exposes per-player participation override on a scheduled team session', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const playerId = team.rosterPlayerIds[0]!
+    const date = nextEligibleTrainingDate(base.currentDate)
+    const world = scheduleTeamModuleSession(base, { teamId: team.id, moduleId: 'threePoint', date, startTime: '09:00', durationMinutes: 60, sessionId: 'participation-ui-session' })
+    const onSetTrainingParticipation = vi.fn()
+    render(createElement(TrainingPcbPage, { world, onSetTrainingParticipation }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Load' }))
+    const player = world.players[playerId]!
+    fireEvent.change(screen.getByLabelText(`Participación ${player.firstName} ${player.lastName}`), { target: { value: 'REST' } })
+    expect(onSetTrainingParticipation).toHaveBeenCalledWith('participation-ui-session', playerId, 'REST')
   })
 
   it('derives the week label from world.currentDate instead of a hardcoded value', () => {

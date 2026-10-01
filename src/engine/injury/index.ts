@@ -1,3 +1,6 @@
 export * from './PostMatchInjuries'
+export * from './InjuryCreation'
+export * from './InjuryRisk'
+export { trainingInjuryProbability } from './TrainingInjuries'
 export * from './MedicalRiskAssessment'
 export * from './MedicalAdvisory'

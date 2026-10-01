@@ -470,6 +470,7 @@ function injuryStatus(injury: InjuryRecord, onDate: GameDate): 'RECOVERING' | 'R
 }
 
 function buildSourceContext(world: GameWorld, injury: InjuryRecord): string | null {
+  if (injury.source === 'TRAINING') return 'Training'
   if (injury.sourceGameId === undefined) return null
   const game = world.games[injury.sourceGameId]
   if (game === undefined) return null

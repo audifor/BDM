@@ -36,9 +36,10 @@ function playerPosition(world: GameWorld, playerId: string): string {
   return world.players[playerId as never]?.basketball.primaryPosition ?? '—'
 }
 
-function injurySourceLabel(world: GameWorld, sourceGameId: string | undefined): string {
-  if (sourceGameId === undefined) return '—'
-  const game = world.games[sourceGameId as never]
+function injurySourceLabel(world: GameWorld, injury: import('@/domain/injury').InjuryRecord): string {
+  if (injury.source === 'TRAINING') return 'Training'
+  if (injury.sourceGameId === undefined) return '—'
+  const game = world.games[injury.sourceGameId]
   return game === undefined ? 'Match' : `Match · ${formatGameDateLabel(game.date)}`
 }
 
@@ -73,7 +74,7 @@ export function buildMedicalWorkspaceModel(world: GameWorld): MedicalWorkspaceMo
       injuryLabel: formatInjuryKind(injury.kind),
       severity: injury.severity,
       severityLabel: INJURY_SEVERITY_LABELS[injury.severity],
-      sourceLabel: injurySourceLabel(world, injury.sourceGameId),
+      sourceLabel: injurySourceLabel(world, injury),
       injuredOnLabel: formatGameDateLabel(injury.injuredOn),
       expectedReturnLabel: formatGameDateLabel(injury.expectedReturnDate),
       clearedOnLabel: injury.returnToPlay?.clearedOn === undefined ? null : formatGameDateLabel(injury.returnToPlay.clearedOn),
@@ -131,7 +132,7 @@ export function buildMedicalWorkspaceModel(world: GameWorld): MedicalWorkspaceMo
       playerName: playerName(world, injury.playerId),
       injuryLabel: formatInjuryKind(injury.kind),
       severityLabel: INJURY_SEVERITY_LABELS[injury.severity],
-      sourceLabel: injurySourceLabel(world, injury.sourceGameId),
+      sourceLabel: injurySourceLabel(world, injury),
       injuredOnLabel: formatGameDateLabel(injury.injuredOn),
       expectedReturnLabel: formatGameDateLabel(injury.expectedReturnDate),
       clearedOnLabel: injury.returnToPlay?.clearedOn === undefined ? null : formatGameDateLabel(injury.returnToPlay.clearedOn),

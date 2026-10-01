@@ -48,6 +48,7 @@ export function TrainingWorkspace() {
   const scheduleTeamModuleSession = useGameStore((state) => state.scheduleTeamModuleSession)
   const scheduleAutomaticTeamTrainingWeek = useGameStore((state) => state.scheduleAutomaticTeamTrainingWeek)
   const cancelTrainingSession = useGameStore((state) => state.cancelTrainingSession)
+  const setTrainingParticipation = useGameStore((state) => state.setTrainingParticipation)
   const saveUserTrainingModule = useGameStore((state) => state.saveUserTrainingModule)
   const deleteUserTrainingModule = useGameStore((state) => state.deleteUserTrainingModule)
   const assignTrainingModuleToPlayer = useGameStore((state) => state.assignTrainingModuleToPlayer)
@@ -114,6 +115,7 @@ export function TrainingWorkspace() {
             onIntensity={setTrainingIntensity}
             onSaveModule={saveUserTrainingModule}
             onScheduleSession={scheduleTrainingSession}
+            onSetTrainingParticipation={(sessionId, playerId, participation) => setTrainingParticipation({ sessionId, playerId, participation })}
             onScheduleAutomaticWeek={scheduleAutomaticTeamTrainingWeek}
             onScheduleTeamModule={scheduleTeamModuleSession}
             onOpenPlayer={(playerId) => openEntity({ type: 'player', playerId, section: 'overview' })}

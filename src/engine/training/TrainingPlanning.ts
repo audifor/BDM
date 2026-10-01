@@ -5,7 +5,9 @@ import { getTeamRoster } from '@/domain/world'
 import { isStaffWeeklyCheckpoint, resolveDelegatedResponsibility } from '@/engine/staff'
 import { automaticTeamTrainingDefinitionId } from './AutomaticTeamTraining'
 import { dailyScheduledLoad } from './ScheduledTrainingEngine'
-import { scheduleTeamModuleSession } from './TrainingModuleEngine'
+import { assignTrainingModuleToPlayer, scheduleTeamModuleSession } from './TrainingModuleEngine'
+import { recommendTrainingParticipation } from './TrainingParticipation'
+import { hashStringToSeed } from '@/engine/random'
 import { trainingDefinitionById, type TrainingIntensity } from '@/domain/training'
 
 const PLANNING_HORIZON_DAYS = 7
@@ -208,7 +210,7 @@ export function progressAiTrainingPlanning(world: GameWorld): AiTrainingPlanning
       const recovery = severeFatigue || context.fixtureDensity.isDense || context.fatigue.highCount > 0 || (dayAfterGame && context.fatigue.average >= MODERATE_FATIGUE)
       const moduleId = recovery
         ? severeFatigue ? 'lowLoadRecovery' : 'activeRecovery'
-        : automaticTeamTrainingDefinitionId(plan.focus)
+        : aiTrainingModuleId(team.id, plan.focus)
       const definition = trainingDefinitionById(moduleId)
       const reducedIntensity = severeFatigue || context.fatigue.average >= MODERATE_FATIGUE || context.fatigue.highCount > 0
       const intensity: TrainingIntensity = recovery || reducedIntensity ? 'light' : plan.intensity
@@ -221,9 +223,24 @@ export function progressAiTrainingPlanning(world: GameWorld): AiTrainingPlanning
         durationMinutes: definition.durationMinutes,
         sessionId,
         intensity,
+        participationByPlayerId: Object.fromEntries(getTeamRoster(next, team.id).map((player) => [player.id, recommendTrainingParticipation(next, team.id, player.id, date)])),
         ...(staff === undefined ? {} : { assignedStaffPersonIds: [staff.staffId] }),
       })
       sessionIds.push(sessionId)
+    }
+    if (sessionIds.length > 0 && !context.fixtureDensity.isDense && context.fatigue.band === 'LOW' && context.fatigue.unavailableCount === 0) {
+      const individualDate = candidates.find((date) => !selected.includes(date) && selected.every((teamDate) => Math.abs(daysBetween(teamDate, date)) >= 2))
+      const moduleId = individualDevelopmentModuleId(team.id, plan.focus)
+      const definition = trainingDefinitionById(moduleId)
+      const targetRatings = definition.effects.targetRatings
+      const player = getTeamRoster(next, team.id)
+        .filter((candidate) => definition.eligiblePositions === undefined || definition.eligiblePositions.includes(candidate.basketball.primaryPosition))
+        .sort((left, right) => developmentNeed(left, targetRatings) - developmentNeed(right, targetRatings) || left.id.localeCompare(right.id))[0]
+      if (individualDate !== undefined && player !== undefined) {
+        const sessionId = `ai-training-individual:${team.id}:${individualDate}:${player.id}`
+        next = assignTrainingModuleToPlayer(next, { teamId: team.id, playerId: player.id, moduleId, date: individualDate, startTime: '11:00', sessionId })
+        sessionIds.push(sessionId)
+      }
     }
     decisions.push({
       teamId: team.id,
@@ -234,6 +251,23 @@ export function progressAiTrainingPlanning(world: GameWorld): AiTrainingPlanning
     })
   }
   return { world: next, decisions }
+}
+
+/** Balanced plans vary by stable team identity while explicit team focus remains authoritative. */
+function aiTrainingModuleId(teamId: TeamId, focus: import('@/domain/training').TrainingFocus): string {
+  if (focus !== 'balanced') return automaticTeamTrainingDefinitionId(focus)
+  const options = ['teamCohesion', 'threePoint', 'conditioning', 'defensiveSystem', 'passing'] as const
+  return options[hashStringToSeed(`ai-training-focus-v1:${teamId}`) % options.length]!
+}
+
+function individualDevelopmentModuleId(teamId: TeamId, focus: import('@/domain/training').TrainingFocus): string {
+  if (focus !== 'balanced') return automaticTeamTrainingDefinitionId(focus)
+  const options = ['threePoint', 'rimFinishing', 'defensiveAwareness', 'passing', 'conditioning'] as const
+  return options[hashStringToSeed(`ai-training-development-v1:${teamId}`) % options.length]!
+}
+
+function developmentNeed(player: import('@/domain/player').Player, targetRatings: readonly import('@/domain/player').CanonicalRatingKey[]): number {
+  return targetRatings.length === 0 ? Number.POSITIVE_INFINITY : targetRatings.reduce((total, key) => total + player.basketball.ratings[key], 0) / targetRatings.length
 }
 
 function eligibleTrainingDates(world: GameWorld, teamId: TeamId): readonly GameDate[] {

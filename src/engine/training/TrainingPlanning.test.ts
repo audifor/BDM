@@ -71,11 +71,25 @@ describe('BS12B Training planning', () => {
     const first = progressAiTrainingPlanning(focused)
     const sessions = sessionsFor(first.world, team.id)
 
-    expect(sessions).toHaveLength(3)
-    expect(sessions.every((session) => session.definitionId === 'threePoint' && session.intensity === 'normal')).toBe(true)
+    const teamSessions = sessions.filter((session) => session.scope === 'team')
+    const individualSessions = sessions.filter((session) => session.scope === 'individual')
+    expect(teamSessions).toHaveLength(3)
+    expect(individualSessions).toHaveLength(1)
+    expect(teamSessions.every((session) => session.definitionId === 'threePoint' && session.intensity === 'normal')).toBe(true)
+    expect(individualSessions[0]).toMatchObject({ definitionId: 'threePoint', playerId: expect.any(String) })
     expect(sessions.every((session) => session.date > MONDAY)).toBe(true)
+    expect(teamSessions.every((session) => Object.keys(session.participationByPlayerId ?? {}).length === team.rosterPlayerIds.length)).toBe(true)
     expect(progressAiTrainingPlanning(first.world).world).toEqual(first.world)
     expect(first.decisions.find((decision) => decision.teamId === team.id)?.action).toBe('SCHEDULED')
+  })
+
+  it('uses stable club identity to vary balanced AI team modules across an open week', () => {
+    const base = createNewGame()
+    const world = updateGameWorld(base, { currentDate: MONDAY, games: [] })
+    const result = progressAiTrainingPlanning(world)
+    const aiSessions = Object.values(result.world.scheduledTrainingSessionsById).filter((session) => session.scope === 'team' && session.id.startsWith('ai-training:'))
+    expect(new Set(aiSessions.map((session) => session.definitionId)).size).toBeGreaterThan(1)
+    expect(progressAiTrainingPlanning(world).world.scheduledTrainingSessionsById).toEqual(result.world.scheduledTrainingSessionsById)
   })
 
   it('reduces dense-week training and selects recovery away from match dates and their eves', () => {
@@ -102,6 +116,7 @@ describe('BS12B Training planning', () => {
 
     expect(sessions).toHaveLength(2)
     expect(sessions.every((session) => session.moduleId === 'lowLoadRecovery' && session.intensity === 'light')).toBe(true)
+    expect(sessions.every((session) => team.rosterPlayerIds.every((playerId) => session.participationByPlayerId?.[playerId] === 'REST'))).toBe(true)
     expect(result.world.careerFatigueByPlayerId).toEqual(loaded.careerFatigueByPlayerId)
     expect(result.world.injuriesById).toEqual(loaded.injuriesById)
     expect(result.world).not.toHaveProperty('trainingFatigue')

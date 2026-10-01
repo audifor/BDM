@@ -80,6 +80,13 @@
 .pcb-training__time-select select { padding: 8px 6px; }
 .pcb-training__time-select span { color: #94a3b8; }
 
+/* Per-player load choices remain inside the existing scheduled team-session card. */
+.pcb-training__session { flex-wrap: wrap; }
+.pcb-training__session > button:not(:first-child):not(.pcb-training__delete) { align-self: center; border: 1px solid rgba(255,255,255,.12); border-radius: 7px; background: rgba(15,23,42,.65); color: #cbd5e1; padding: 5px 8px; }
+.pcb-training__participation { display: grid; flex: 1 0 100%; gap: 6px; border-top: 1px solid rgba(255,255,255,.08); padding: 8px 10px; }
+.pcb-training__participation label { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #94a3b8; }
+.pcb-training__participation select { min-width: 150px; border: 1px solid rgba(255,255,255,.12); border-radius: 7px; background: rgba(9,12,18,.8); color: #e2e8f0; padding: 5px 7px; }
+
 /* Explicit, unmistakable row selection for Load Management player selection (issue #8). */
 .pcb-training__load > div[role="radio"] { cursor: pointer; }
 .pcb-training__load > div.is-selected { outline: 2px solid #38bdf8; outline-offset: -2px; }

@@ -4,6 +4,7 @@ import { trainingDefinitionById } from './TrainingCatalog'
 import type { TrainingIntensity } from './Training'
 
 export type ScheduledTrainingSessionStatus = 'scheduled' | 'completed'
+export type TrainingParticipation = 'FULL' | 'REDUCED' | 'REST'
 
 export interface ScheduledTrainingSession {
   readonly id: string
@@ -28,6 +29,8 @@ export interface ScheduledTrainingSession {
    * it is not an employment-history record.
    */
   readonly assignedStaffPersonIds?: readonly StaffPersonId[]
+  /** Explicit per-player exceptions to the derived team-session recommendation. */
+  readonly participationByPlayerId?: Readonly<Record<string, TrainingParticipation>>
 }
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/
@@ -52,7 +55,11 @@ export function createScheduledTrainingSession(input: Omit<ScheduledTrainingSess
   if (!['light', 'normal', 'high'].includes(input.intensity)) throw new RangeError('Invalid session intensity')
   const assigned = input.assignedStaffPersonIds
   if (assigned !== undefined && new Set(assigned).size !== assigned.length) throw new RangeError('Scheduled session staff assignments must not contain duplicates')
-  return { ...input, ...(assigned === undefined ? {} : { assignedStaffPersonIds: Object.freeze([...assigned]) }), status: input.status ?? 'scheduled' }
+  if (input.participationByPlayerId !== undefined) {
+    if (input.scope !== 'team') throw new RangeError('Player participation only applies to team sessions')
+    for (const value of Object.values(input.participationByPlayerId)) if (!['FULL', 'REDUCED', 'REST'].includes(value)) throw new RangeError('Invalid team-session participation')
+  }
+  return { ...input, ...(assigned === undefined ? {} : { assignedStaffPersonIds: Object.freeze([...assigned]) }), ...(input.participationByPlayerId === undefined ? {} : { participationByPlayerId: Object.freeze({ ...input.participationByPlayerId }) }), status: input.status ?? 'scheduled' }
 }
 
 /** True if two sessions occupy overlapping time ranges on the same date. */

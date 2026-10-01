@@ -2264,6 +2264,7 @@ function validateInjury(world: GameWorld, injury: InjuryRecord): void {
   createInjury(injury)
   requireEntity(world.players, injury.playerId, `Injury ${injury.id} Player`)
   if (injury.sourceGameId !== undefined) { const game = requireEntity(world.games, injury.sourceGameId, `Injury ${injury.id} Game`); if (game.date !== injury.injuredOn) throw new GameWorldValidationError(`Injury ${injury.id} date does not match source Game`) }
+  if (injury.sourceTrainingSessionId !== undefined) { const session = requireEntity(world.scheduledTrainingSessionsById, injury.sourceTrainingSessionId, `Injury ${injury.id} Training session`); if (session.date !== injury.injuredOn || session.status !== 'completed') throw new GameWorldValidationError(`Injury ${injury.id} date does not match completed Training session`) }
   for (const other of Object.values(world.injuriesById)) if (other.id !== injury.id && other.playerId === injury.playerId && isInjuryActive(other, injury.injuredOn)) throw new GameWorldValidationError(`Injury ${injury.playerId} overlaps another injury`)
 }
 

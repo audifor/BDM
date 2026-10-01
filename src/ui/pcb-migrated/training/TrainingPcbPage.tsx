@@ -2,7 +2,7 @@ import { Fragment, useMemo, useState, type ReactNode } from "react";
 import type { GameWorld } from "@/domain/world";
 import { getCareerFatigueForPlayer, getDevelopmentStimulusForPlayer, getGamesForTeam, getTeamRoster } from "@/domain/world";
 import { getUserTeam } from "@/engine/calendar";
-import { buildTrainingPlanningContext, canTeamTrainOnDate, dailyLoadStatusForTeam, dailyScheduledLoad, nextEligibleTrainingDate, type TrainingPlanningWarningCode } from "@/engine/training";
+import { buildTrainingPlanningContext, canTeamTrainOnDate, dailyLoadStatusForTeam, dailyScheduledLoad, nextEligibleTrainingDate, recommendTrainingParticipation, type TrainingPlanningWarningCode } from "@/engine/training";
 import { addDays, formatGameDate, isoWeekNumber, parseGameDate, type GameDate } from "@/domain/date";
 import { BASKETBALL_RATING_KEYS, type BasketballRatingKey, type Player } from "@/domain/player";
 import type { Team } from "@/domain/team";
@@ -12,7 +12,7 @@ import { STAFF_ROLE_REGISTRY, type StaffRoleId } from "@/domain/staff";
 import { STAFF_ROLE_LABELS } from "@/ui/staffPresentation";
 import { useEntityContextMenu } from "@/ui/entityContextMenu/EntityContextMenuProvider";
 import { PlayerNameLink } from "@/ui/navigation/PlayerNameLink";
-import { TRAINING_CATALOG, trainingDefinitionById, trainingLoad, type DailyLoadStatus, type ScheduledTrainingSession, type TrainingCategory, type TrainingFocus, type TrainingIntensity as DomainTrainingIntensity, type TrainingDefinition, type TrainingScope, type UserTrainingModule } from "@/domain/training";
+import { TRAINING_CATALOG, trainingDefinitionById, trainingLoad, type DailyLoadStatus, type ScheduledTrainingSession, type TrainingCategory, type TrainingFocus, type TrainingIntensity as DomainTrainingIntensity, type TrainingDefinition, type TrainingParticipation, type TrainingScope, type UserTrainingModule } from "@/domain/training";
 import { ATTRIBUTE_LABELS } from "@/ui/attributeLabels";
 import { selectLatestUserTrainingSession, selectUserTeamScheduledSessions, selectUserTrainingModules, selectUserTrainingPlan } from "@/stores/gameStore";
 import { PrecisionDivHead } from "@/ui-ng/components/PrecisionDivHead";
@@ -199,6 +199,7 @@ export function TrainingPcbPage({
   onScheduleTeamModule,
   onScheduleAutomaticWeek,
   onCancelSession,
+  onSetTrainingParticipation,
   onSaveModule,
   onDeleteModule,
   onAssignModule,
@@ -215,6 +216,7 @@ export function TrainingPcbPage({
   readonly onScheduleTeamModule?: (input: { readonly moduleId: string; readonly date: GameDate; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: DomainTrainingIntensity; readonly assignedStaffPersonIds?: readonly StaffPersonId[] }) => void;
   readonly onScheduleAutomaticWeek?: (weekStart: GameDate) => void;
   readonly onCancelSession?: (sessionId: string) => void;
+  readonly onSetTrainingParticipation?: (sessionId: string, playerId: PlayerId, participation?: TrainingParticipation) => void;
   readonly onSaveModule?: (module: UserTrainingModule) => void;
   readonly onDeleteModule?: (moduleId: string) => void;
   readonly onAssignModule?: (input: TrainingModuleAssignmentInput) => void;
@@ -252,6 +254,7 @@ export function TrainingPcbPage({
       {tab === "team" ? (
         <TeamTraining
           onCancelSession={onCancelSession}
+          onSetTrainingParticipation={onSetTrainingParticipation}
           onFocus={onFocus}
           onIntensity={onIntensity}
           onScheduleAutomaticWeek={onScheduleAutomaticWeek}
@@ -316,6 +319,7 @@ function TeamTraining({
   onScheduleTeamModule,
   onScheduleAutomaticWeek,
   onCancelSession,
+  onSetTrainingParticipation,
   eligibleStaff,
 }: {
   readonly world?: GameWorld;
@@ -327,6 +331,7 @@ function TeamTraining({
   readonly onScheduleTeamModule?: (input: { readonly moduleId: string; readonly date: GameDate; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: DomainTrainingIntensity; readonly assignedStaffPersonIds?: readonly StaffPersonId[] }) => void;
   readonly onScheduleAutomaticWeek?: (weekStart: GameDate) => void;
   readonly onCancelSession?: (sessionId: string) => void;
+  readonly onSetTrainingParticipation?: (sessionId: string, playerId: PlayerId, participation?: TrainingParticipation) => void;
   readonly eligibleStaff: readonly { readonly id: StaffPersonId; readonly role: string; readonly name: string }[];
 }) {
   const [week, setWeek] = useState(0);
@@ -335,6 +340,7 @@ function TeamTraining({
     readonly session?: ScheduledTrainingSession;
   }>();
   const [editorError, setEditorError] = useState<string>();
+  const [participationSessionId, setParticipationSessionId] = useState<string>();
   const trainingPlan = world === undefined ? undefined : selectUserTrainingPlan(world);
   const latestSession = world === undefined ? undefined : selectLatestUserTrainingSession(world);
   const impact = world !== undefined && team !== undefined ? getTrainingImpact(world, team.id) : undefined;
@@ -499,6 +505,13 @@ function TeamTraining({
                               <i className={`is-${intensityEs.toLocaleLowerCase()}`}>{intensityEs}</i>
                             </button>
                             <button
+                              aria-expanded={participationSessionId === session.id}
+                              onClick={() => setParticipationSessionId((current) => current === session.id ? undefined : session.id)}
+                              type="button"
+                            >
+                              Load
+                            </button>
+                            <button
                               className="pcb-training__delete"
                               onClick={() => onCancelSession?.(session.id)}
                               title="Eliminar sesión"
@@ -506,6 +519,23 @@ function TeamTraining({
                             >
                               ×
                             </button>
+                            {participationSessionId === session.id && world !== undefined && team !== undefined && (
+                              <div className="pcb-training__participation">
+                                {getTeamRoster(world, team.id).map((player) => {
+                                  const suggestion = recommendTrainingParticipation(world, team.id, player.id, session.date);
+                                  const explicit = session.participationByPlayerId?.[player.id];
+                                  return <label key={player.id}>
+                                    <span>{playerName(player)} · Fatiga {getCareerFatigueForPlayer(world, player.id)} · Sugerido {suggestion}</span>
+                                    <select aria-label={`Participación ${playerName(player)}`} disabled={session.date <= world.currentDate} onChange={(event) => onSetTrainingParticipation?.(session.id, player.id, event.target.value === 'AUTO' ? undefined : event.target.value as TrainingParticipation)} value={explicit ?? 'AUTO'}>
+                                      <option value="AUTO">Automático ({suggestion})</option>
+                                      <option value="FULL">Completa</option>
+                                      <option value="REDUCED">Reducida</option>
+                                      <option value="REST">Descanso</option>
+                                    </select>
+                                  </label>
+                                })}
+                              </div>
+                            )}
                           </article>
                         );
                       })

@@ -4,6 +4,7 @@ import type { DelegationOutcomeId } from '@/domain/responsibility'
 
 export type InjuryKind = 'ankleSprain' | 'hamstringStrain' | 'kneeSprain' | 'backStrain' | 'handInjury' | 'shoulderStrain'
 export type InjurySeverity = 'minor' | 'moderate' | 'serious'
+export type InjurySource = 'MATCH' | 'TRAINING'
 export type ReturnToPlayDecision = 'CLEAR_FOR_PLAY' | 'CONTINUE_RECOVERY'
 export type ReturnToPlayReviewActor =
   | { readonly kind: 'USER'; readonly coachId: CoachId }
@@ -34,6 +35,8 @@ export interface InjuryRecord {
   /** Projected recovery date and first RTP review date, not automatic clearance for new injuries. */
   readonly expectedReturnDate: GameDate
   readonly sourceGameId?: GameId
+  readonly source?: InjurySource
+  readonly sourceTrainingSessionId?: string
   /** Optional only for legacy serialized records; canonical injuries have this state. */
   readonly returnToPlay?: ReturnToPlayState
 }
@@ -41,6 +44,9 @@ export interface InjuryRecord {
 export function createInjury(input: InjuryRecord): InjuryRecord {
   if (!['ankleSprain', 'hamstringStrain', 'kneeSprain', 'backStrain', 'handInjury', 'shoulderStrain'].includes(input.kind)) throw new TypeError('Injury kind is invalid')
   if (!['minor', 'moderate', 'serious'].includes(input.severity)) throw new TypeError('Injury severity is invalid')
+  if (input.source !== undefined && !['MATCH', 'TRAINING'].includes(input.source)) throw new TypeError('Injury source is invalid')
+  if (input.source === 'TRAINING' && (input.sourceTrainingSessionId === undefined || input.sourceGameId !== undefined)) throw new TypeError('Training injury source evidence is invalid')
+  if (input.source === 'MATCH' && (input.sourceGameId === undefined || input.sourceTrainingSessionId !== undefined)) throw new TypeError('Match injury source evidence is invalid')
   if (compareGameDates(input.expectedReturnDate, input.injuredOn) <= 0) throw new RangeError('Injury expected return date must be after injuredOn')
   const returnToPlay = input.returnToPlay ?? { reviewDueOn: input.expectedReturnDate, reviews: [] }
   if (compareGameDates(returnToPlay.reviewDueOn, input.injuredOn) <= 0) throw new RangeError('Injury review date must be after injuredOn')

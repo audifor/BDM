@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { createAcbTestGame, createNewGame } from '@/app/game'
 import { advanceDay } from '@/engine/calendar'
-import { cancelScheduledTrainingSession, dailyLoadStatusForTeam, dailyScheduledLoad, executeScheduledTrainingSessions, nextEligibleTrainingDate, scheduleTrainingSession, trainingStaffExecutionMultiplier } from '@/engine/training'
+import { cancelScheduledTrainingSession, dailyLoadStatusForTeam, dailyScheduledLoad, executeScheduledTrainingSessions, nextEligibleTrainingDate, scheduleTrainingSession, setTrainingParticipation, trainingStaffExecutionMultiplier } from '@/engine/training'
 import { updateGameWorld } from '@/domain/world'
 import { createScheduledTrainingSession } from '@/domain/training'
+import { createInjury } from '@/domain/injury'
+import { injuryIdFromString } from '@/domain/ids'
+import { addDays } from '@/domain/date'
 
 describe('ScheduledTrainingEngine', () => {
   it('persists eligible executing staff, rejects invalid/overlapping use, and applies bounded deterministic quality', () => {
@@ -96,6 +99,53 @@ describe('ScheduledTrainingEngine', () => {
 
     const executedTwice = executeScheduledTrainingSessions(executedOnce)
     expect(executedTwice).toEqual(executedOnce)
+  })
+
+  it('respects a user FULL override over a REST recommendation and scales REDUCED effects', () => {
+    const base = createNewGame()
+    const teamId = Object.values(base.teams)[0]!.id
+    const playerId = base.teams[teamId]!.rosterPlayerIds[0]!
+    const date = nextEligibleTrainingDate(base.currentDate)
+    const loaded = updateGameWorld(base, { careerFatigueByPlayerId: { ...base.careerFatigueByPlayerId, [playerId]: 92 } })
+    const makeDue = (participation: 'FULL' | 'REDUCED' | 'REST') => {
+      const scheduled = scheduleTrainingSession(loaded, createScheduledTrainingSession({ id: 'participation', teamId, date, startTime: '09:00', durationMinutes: 60, scope: 'team', definitionId: 'threePoint', intensity: 'normal' }))
+      const chosen = setTrainingParticipation(scheduled, { sessionId: 'participation', playerId, participation })
+      return executeScheduledTrainingSessions(updateGameWorld(chosen, { currentDate: date }))
+    }
+    const full = makeDue('FULL')
+    const reduced = makeDue('REDUCED')
+    const rest = makeDue('REST')
+    const fatigueBefore = loaded.careerFatigueByPlayerId[playerId]!
+    const stimulusBefore = loaded.developmentStimulusByPlayerId[playerId]!.byRating.threePointShooting!
+    expect(full.careerFatigueByPlayerId[playerId]! - fatigueBefore).toBe(5)
+    expect(reduced.careerFatigueByPlayerId[playerId]! - fatigueBefore).toBe(2.5)
+    expect(rest.careerFatigueByPlayerId[playerId]).toBe(fatigueBefore)
+    expect(full.developmentStimulusByPlayerId[playerId]!.byRating.threePointShooting).toBeGreaterThan(stimulusBefore)
+    expect(reduced.developmentStimulusByPlayerId[playerId]!.byRating.threePointShooting).toBeGreaterThan(stimulusBefore)
+    expect(rest.developmentStimulusByPlayerId[playerId]!.byRating.threePointShooting).toBe(stimulusBefore)
+  })
+
+  it('skips load and injury exposure for an unavailable player and for a cancelled session', () => {
+    const base = createNewGame()
+    const teamId = Object.values(base.teams)[0]!.id
+    const playerId = base.teams[teamId]!.rosterPlayerIds[0]!
+    const date = nextEligibleTrainingDate(base.currentDate)
+    const injuryDate = addDays(date, -1)
+    const injury = createInjury({ id: injuryIdFromString('training-unavailable'), playerId, kind: 'kneeSprain', severity: 'minor', injuredOn: injuryDate, expectedReturnDate: addDays(date, 5) })
+    const injured = updateGameWorld(base, { injuries: [injury] })
+    const session = createScheduledTrainingSession({ id: 'unavailable-player-session', teamId, date, startTime: '09:00', durationMinutes: 120, scope: 'team', definitionId: 'strength', intensity: 'high' })
+    const scheduled = scheduleTrainingSession(injured, session)
+    const due = updateGameWorld(scheduled, { currentDate: date })
+    const fatigueBefore = due.careerFatigueByPlayerId[playerId]
+    const stimulusBefore = due.developmentStimulusByPlayerId[playerId]
+    const executed = executeScheduledTrainingSessions(due)
+    expect(executed.careerFatigueByPlayerId[playerId]).toBe(fatigueBefore)
+    expect(executed.developmentStimulusByPlayerId[playerId]).toEqual(stimulusBefore)
+    expect(Object.values(executed.injuriesById).filter((item) => item.sourceTrainingSessionId === session.id)).toHaveLength(0)
+
+    const cancellable = scheduleTrainingSession(base, createScheduledTrainingSession({ id: 'cancelled-no-injury', teamId, date, startTime: '09:00', durationMinutes: 120, scope: 'team', definitionId: 'strength', intensity: 'high' }))
+    const cancelledWorld = cancelScheduledTrainingSession(cancellable, 'cancelled-no-injury')
+    expect(executeScheduledTrainingSessions(updateGameWorld(cancelledWorld, { currentDate: date })).injuriesById).toEqual(base.injuriesById)
   })
 
   it('executes deterministically: advancing the same seeded world identically produces the same training result', () => {
