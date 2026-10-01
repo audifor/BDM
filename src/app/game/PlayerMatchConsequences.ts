@@ -1,4 +1,5 @@
 import { addDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
+import { createDevelopmentStimulusEvent } from '@/domain/development/DevelopmentStimulusEvent'
 import { clampCareerFatigue } from '@/domain/careerFatigue/CareerFatigue'
 import type { CanonicalRatingKey } from '@/domain/player'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
@@ -9,6 +10,7 @@ export function applyPlayerMatchConsequences(completedWorld: GameWorld, simulati
   const finalFatigue = calculateFatigueAtEvents(simulation.lineups, simulation.squads, simulation.homeTeamId, simulation.awayTeamId, simulation.events)
   const fatigue = { ...completedWorld.careerFatigueByPlayerId }
   const stimulus = { ...completedWorld.developmentStimulusByPlayerId }
+  const stimulusEvents = [] as ReturnType<typeof createDevelopmentStimulusEvent>[]
   let changed = false
 
   for (const stats of calculateMatchPlayerStats(simulation)) {
@@ -20,11 +22,13 @@ export function applyPlayerMatchConsequences(completedWorld: GameWorld, simulati
     }
     const currentStimulus = stimulus[stats.playerId]
     if (currentStimulus !== undefined && stats.secondsPlayed > 0) {
-      stimulus[stats.playerId] = addDevelopmentStimulus(currentStimulus, deriveStimulus(stats.secondsPlayed / 60, stats.threePointAttempted, stats.twoPointAttempted, stats.offensiveRebounds, stats.defensiveRebounds, stats.assists, stats.steals, stats.blocks))
+      const byRating = deriveStimulus(stats.secondsPlayed / 60, stats.threePointAttempted, stats.twoPointAttempted, stats.offensiveRebounds, stats.defensiveRebounds, stats.assists, stats.steals, stats.blocks)
+      stimulus[stats.playerId] = addDevelopmentStimulus(currentStimulus, byRating)
+      if (Object.values(byRating).some((amount) => amount !== undefined && amount > 0)) stimulusEvents.push(createDevelopmentStimulusEvent({ id: `match:${simulation.gameId}:${stats.playerId}`, playerId: stats.playerId, sourceType: 'match', sourceId: simulation.gameId, date: completedWorld.games[simulation.gameId]!.date, byRating }))
       changed = true
     }
   }
-  return changed ? updateGameWorld(completedWorld, { careerFatigueByPlayerId: fatigue, developmentStimulusByPlayerId: stimulus }) : completedWorld
+  return changed ? updateGameWorld(completedWorld, { careerFatigueByPlayerId: fatigue, developmentStimulusByPlayerId: stimulus, developmentStimulusEvents: [...Object.values(completedWorld.developmentStimulusEventsById), ...stimulusEvents] }) : completedWorld
 }
 
 function deriveStimulus(minutes: number, threes: number, twos: number, offensiveRebounds: number, defensiveRebounds: number, assists: number, steals: number, blocks: number): Partial<Record<CanonicalRatingKey, number>> {

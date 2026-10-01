@@ -91,6 +91,7 @@ import { createMoraleProfile, type MoraleProfile } from '@/domain/morale'
 import type { InboxItem, NewsItem } from '@/domain/inbox'
 import { EMPTY_DEVELOPMENT_STIMULUS, type PlayerDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
 import { createPlayerSeasonRatingChange, type PlayerRatingHistory } from '@/domain/development/PlayerRatingHistory'
+import { createDevelopmentStimulusEvent, type DevelopmentStimulusEvent } from '@/domain/development/DevelopmentStimulusEvent'
 import { clampCareerFatigue } from '@/domain/careerFatigue/CareerFatigue'
 import { clampTeamCohesion, createDefaultTrainingPlan, createIndividualTrainingPlan, createScheduledTrainingSession, createUserTrainingModule, findCollidingSession, type IndividualTrainingPlan, type ScheduledTrainingSession, type TeamTrainingPlan, type TrainingResponsibility, type TrainingSession, type UserTrainingModule } from '@/domain/training'
 import { createDefaultTeamLineup, createDefaultTeamTacticalPlan, createOppositionScoutingReport, createPlaybook, createSavedPlay, oppositionScoutingReportId, validateTeamLineup, type OppositionScoutingReport, type Playbook, type SavedPlay, type TeamGamePlan, type TeamLineup, type TeamTacticalPlan } from '@/domain/tactics'
@@ -290,6 +291,7 @@ export interface GameWorld {
   /** User-created training modules, composing the built-in catalog. */
   readonly userTrainingModulesById: Readonly<Record<string, UserTrainingModule>>
   readonly developmentStimulusByPlayerId: Readonly<Record<string, PlayerDevelopmentStimulus>>
+  readonly developmentStimulusEventsById: Readonly<Record<string, DevelopmentStimulusEvent>>
   /**
    * Canonical rating movement recorded per offseason transition, oldest first.
    *
@@ -559,6 +561,7 @@ export interface CreateGameWorldInput {
   scheduledTrainingSessionsById?: Readonly<Record<string, ScheduledTrainingSession>>
   userTrainingModulesById?: Readonly<Record<string, UserTrainingModule>>
   developmentStimulusByPlayerId?: Readonly<Record<string, PlayerDevelopmentStimulus>>
+  developmentStimulusEvents?: readonly DevelopmentStimulusEvent[]
   playerRatingHistoryByPlayerId?: Readonly<Record<string, PlayerRatingHistory>>
   careerFatigueByPlayerId?: Readonly<Record<string, number>>
   teamCohesionByTeamId?: Readonly<Record<string, number>>
@@ -864,6 +867,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     scheduledTrainingSessionsById: Object.freeze(Object.fromEntries(Object.entries(input.scheduledTrainingSessionsById ?? {}).map(([id, session]) => [id, createScheduledTrainingSession(session)]))),
     userTrainingModulesById: Object.freeze(Object.fromEntries(Object.entries(input.userTrainingModulesById ?? {}).map(([id, module]) => [id, createUserTrainingModule(module)]))),
     developmentStimulusByPlayerId:Object.freeze(Object.fromEntries(input.players.map((player)=>[player.id,input.developmentStimulusByPlayerId?.[player.id]??{playerId:player.id,byRating:{...EMPTY_DEVELOPMENT_STIMULUS}}]))), careerFatigueByPlayerId:Object.freeze(Object.fromEntries(input.players.map((player)=>[player.id,clampCareerFatigue(input.careerFatigueByPlayerId?.[player.id]??0)]))),
+    developmentStimulusEventsById: indexById((input.developmentStimulusEvents ?? []).map(createDevelopmentStimulusEvent), 'Development stimulus event'),
     playerRatingHistoryByPlayerId: Object.freeze(Object.fromEntries(input.players.flatMap((player) => {
       const history = input.playerRatingHistoryByPlayerId?.[player.id]
       return history === undefined || history.length === 0 ? [] : [[player.id, Object.freeze(history.map(createPlayerSeasonRatingChange))]]
@@ -953,11 +957,15 @@ export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorld
   const remainingPatch = { ...patch } as Record<string, unknown>
   const worldPatch: Record<string, unknown> = {}
 
+  if (remainingPatch.scheduledTrainingSessionsById !== undefined) assertTrainingSessionsAppendOnly(world.scheduledTrainingSessionsById, remainingPatch.scheduledTrainingSessionsById as Readonly<Record<string, ScheduledTrainingSession>>)
+  if (remainingPatch.playerRatingHistoryByPlayerId !== undefined) assertRatingHistoryAppendOnly(world.playerRatingHistoryByPlayerId, remainingPatch.playerRatingHistoryByPlayerId as Readonly<Record<string, PlayerRatingHistory>>)
+
   for (const [inputKey, worldKey] of Object.entries(collectionPatchTargets)) {
     const value = remainingPatch[inputKey]
     if (value === undefined) continue
     delete remainingPatch[inputKey]
     if (inputKey === 'financialTransactions') assertFinancialTransactionsAppendOnly(world, value as readonly FinancialTransaction[])
+    if (inputKey === 'developmentStimulusEvents') assertImmutableCollection(world.developmentStimulusEventsById, (value as readonly DevelopmentStimulusEvent[]).map(createDevelopmentStimulusEvent), 'Development stimulus event')
   if (inputKey === 'treasuryApplications') assertTreasurySettlementsAppendOnly(world, value as readonly TreasurySettlement[])
     if (inputKey === 'revenueRecognitions') assertRevenueRecognitionsAppendOnly(world, value as readonly RevenueRecognition[])
     if (inputKey === 'expenseRecognitions') assertExpenseRecognitionsAppendOnly(world, value as readonly ExpenseRecognition[])
@@ -1024,7 +1032,7 @@ const collectionPatchTargets: Readonly<Record<string, string>> = {
   supporterRelationships: 'supporterRelationshipsById', collectiveInstitutionAffiliations: 'collectiveInstitutionAffiliationsById', collectiveParticipantAffiliations: 'collectiveParticipantAffiliationsById', collectiveInstitutionalStatusEvents: 'collectiveInstitutionalStatusEventsById', collectiveInstitutionalLiaisons: 'collectiveInstitutionalLiaisonsById', supporterExpectations: 'supporterExpectationsById', supporterExpectationEvents: 'supporterExpectationEventsById', supporterPressureEvents: 'supporterPressureEventsById', supporterReactions: 'supporterReactionsById', supportFundingPledges: 'supportFundingPledgesById', supportFundingPledgeEvents: 'supportFundingPledgeEventsById', supportContributions: 'supportContributionsById',
   supportComplianceCases: 'supportComplianceCasesById', supportComplianceCaseEvents: 'supportComplianceCaseEventsById', supportComplianceFindings: 'supportComplianceFindingsById', supportConflictDisclosures: 'supportConflictDisclosuresById', supportConsequences: 'supportConsequencesById', supportRemediations: 'supportRemediationsById',
   governanceManagerEvaluationPeriods: 'governanceManagerEvaluationPeriodsById', governanceManagerEvaluations: 'governanceManagerEvaluationsById', governanceJobSecurityTransitions: 'governanceJobSecurityTransitionsById', governanceDecisions: 'governanceDecisionsById', governanceDecisionParticipationGrants: 'governanceDecisionParticipationGrantsById', governanceDecisionEvents: 'governanceDecisionEventsById', governanceMeetings:'governanceMeetingsById', governanceMeetingParticipants:'governanceMeetingParticipantsById', governanceMeetingAgendaItems:'governanceMeetingAgendaItemsById', governanceMeetingEvents:'governanceMeetingEventsById', governanceRequests:'governanceRequestsById', governanceRequestEvents:'governanceRequestEventsById', governanceCommitments:'governanceCommitmentsById', governanceCommitmentEvents:'governanceCommitmentEventsById',
-  persons: 'personsById', countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', organizations: 'organizationsById', organizationSections: 'organizationSectionsById', organizationOwnership: 'organizationOwnershipById', organizationControl: 'organizationControlById', organizationOwnershipTransactions: 'organizationOwnershipTransactionsById', organizationOwnershipTransactionEvents: 'organizationOwnershipTransactionEventsById', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', contractServiceTimeBaselines: 'contractServiceTimeBaselinesById', contractServiceTimeCredits: 'contractServiceTimeCreditsById', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', financialAccounts: 'financialAccountsById', financialTransactions: 'financialTransactionsById', fiscalPeriods: 'fiscalPeriodsById', organizationFinancialProfiles: 'organizationFinancialProfilesById', receivables: 'receivablesById', payables: 'payablesById', treasuryApplications: 'treasuryApplicationsById', revenueRecognitions: 'revenueRecognitionsById', expenseRecognitions: 'expenseRecognitionsById', financialCommitments: 'financialCommitmentsById', financialEntitlements: 'financialEntitlementsById', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', tradeNegotiations: 'tradeNegotiationsById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', gmPlanStates: 'gmPlanStatesById', narratives:'narrativesById',
+  developmentStimulusEvents: 'developmentStimulusEventsById', persons: 'personsById', countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', organizations: 'organizationsById', organizationSections: 'organizationSectionsById', organizationOwnership: 'organizationOwnershipById', organizationControl: 'organizationControlById', organizationOwnershipTransactions: 'organizationOwnershipTransactionsById', organizationOwnershipTransactionEvents: 'organizationOwnershipTransactionEventsById', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', contractServiceTimeBaselines: 'contractServiceTimeBaselinesById', contractServiceTimeCredits: 'contractServiceTimeCreditsById', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', financialAccounts: 'financialAccountsById', financialTransactions: 'financialTransactionsById', fiscalPeriods: 'fiscalPeriodsById', organizationFinancialProfiles: 'organizationFinancialProfilesById', receivables: 'receivablesById', payables: 'payablesById', treasuryApplications: 'treasuryApplicationsById', revenueRecognitions: 'revenueRecognitionsById', expenseRecognitions: 'expenseRecognitionsById', financialCommitments: 'financialCommitmentsById', financialEntitlements: 'financialEntitlementsById', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', tradeNegotiations: 'tradeNegotiationsById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', gmPlanStates: 'gmPlanStatesById', narratives:'narrativesById',
 }
 
 const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unknown>> = {
@@ -1225,6 +1233,22 @@ function validateWorld(world: GameWorld): void {
   for (const session of scheduledSessions) {
     requireEntity(world.teams, session.teamId, `Scheduled training session ${session.id} team`)
     if (session.playerId !== undefined) requireEntity(world.players, session.playerId, `Scheduled training session ${session.id} player`)
+    if (session.execution !== undefined) {
+      if (session.status !== 'completed' || session.execution.completedOn !== session.date) throw new GameWorldValidationError(`Scheduled training session ${session.id} execution evidence is inconsistent`)
+      for (const staffId of session.execution.executingStaffPersonIds) requireEntity(world.staffPeopleById, staffId, `Scheduled training session ${session.id} executor`)
+      for (const participant of session.execution.participants) {
+        requireEntity(world.players, participant.playerId, `Scheduled training session ${session.id} participant`)
+        for (const injuryId of participant.injuryIds) {
+          const injury = requireEntity(world.injuriesById, injuryId, `Scheduled training session ${session.id} injury`)
+          if (injury.source !== 'TRAINING' || injury.sourceTrainingSessionId !== session.id || injury.playerId !== participant.playerId) throw new GameWorldValidationError(`Scheduled training session ${session.id} injury link is invalid`)
+        }
+        const eventId = participant.developmentStimulusEventId
+        if (eventId !== undefined) {
+          const event = requireEntity(world.developmentStimulusEventsById, eventId, `Scheduled training session ${session.id} stimulus event`)
+          if (event.sourceType !== 'training' || event.sourceId !== session.id || event.playerId !== participant.playerId) throw new GameWorldValidationError(`Scheduled training session ${session.id} stimulus link is invalid`)
+        }
+      }
+    }
     const collision = findCollidingSession(session, scheduledSessions)
     if (collision !== undefined) throw new GameWorldValidationError(`Scheduled training session ${session.id} collides with session ${collision.id}`)
     const assigned = session.assignedStaffPersonIds
@@ -1324,6 +1348,17 @@ function validateWorld(world: GameWorld): void {
     teamDates.add(key)
   }
   for (const log of Object.values(world.matchStatLogsByGameId)) validateMatchStatLog(world, log)
+  for (const event of Object.values(world.developmentStimulusEventsById)) {
+    requireEntity(world.players, event.playerId, `Development stimulus event ${event.id} player`)
+    if (event.sourceType === 'training') {
+      const session = requireEntity(world.scheduledTrainingSessionsById, event.sourceId, `Development stimulus event ${event.id} Training session`)
+      if (session.status !== 'completed' || session.execution === undefined || session.date !== event.date) throw new GameWorldValidationError(`Development stimulus event ${event.id} does not match completed Training evidence`)
+      if (!session.execution.participants.some((participant) => participant.playerId === event.playerId && participant.developmentStimulusEventId === event.id)) throw new GameWorldValidationError(`Development stimulus event ${event.id} is not linked from its Training participant`)
+    } else {
+      const game = requireEntity(world.games, event.sourceId as GameId, `Development stimulus event ${event.id} Game`)
+      if (game.status !== 'completed' || game.date !== event.date) throw new GameWorldValidationError(`Development stimulus event ${event.id} does not match completed Match`)
+    }
+  }
   for (const injury of Object.values(world.injuriesById)) validateInjury(world, injury)
   for (const contract of Object.values(world.contractsById)) { createPlayerContract(contract); requireEntity(world.players,contract.playerId,`Contract ${contract.id} Player`); requireEntity(world.teams,contract.teamId,`Contract ${contract.id} Team`) }
   const successorByPredecessor = new Map<string, string>()
@@ -2840,6 +2875,30 @@ function assertImmutableCollection<T extends { readonly id: string }>(existingBy
     const next = nextById.get(String(existing.id))
     if (next === undefined) throw new GameWorldValidationError(`${label} ${existing.id} cannot be removed`)
     if (JSON.stringify(next) !== JSON.stringify(existing)) throw new GameWorldValidationError(`${label} ${existing.id} is immutable`)
+  }
+}
+
+function assertTrainingSessionsAppendOnly(existing: Readonly<Record<string, ScheduledTrainingSession>>, proposed: Readonly<Record<string, ScheduledTrainingSession>>): void {
+  for (const [id, session] of Object.entries(existing)) {
+    const next = proposed[id]
+    if (session.status === 'completed' && (next === undefined || JSON.stringify(next) !== JSON.stringify(session))) throw new GameWorldValidationError(`Completed Training session ${id} is immutable`)
+    if (session.execution !== undefined && next?.execution !== undefined && JSON.stringify(next.execution) !== JSON.stringify(session.execution)) throw new GameWorldValidationError(`Training execution evidence ${id} is immutable`)
+    if (session.status === 'scheduled' && next?.status === 'completed') {
+      const { status: _oldStatus, assignedStaffPersonIds: _oldStaff, execution: _oldExecution, ...oldSchedule } = session
+      const { status: _newStatus, assignedStaffPersonIds: _newStaff, execution: _newExecution, ...newSchedule } = next
+      if (JSON.stringify(oldSchedule) !== JSON.stringify(newSchedule) || next.execution === undefined || JSON.stringify(next.execution.executingStaffPersonIds) !== JSON.stringify(session.assignedStaffPersonIds ?? [])) throw new GameWorldValidationError(`Completed Training session ${id} does not preserve its scheduled identity and executor`)
+    }
+  }
+}
+
+function assertRatingHistoryAppendOnly(existing: Readonly<Record<string, PlayerRatingHistory>>, proposed: Readonly<Record<string, PlayerRatingHistory>>): void {
+  for (const [playerId, history] of Object.entries(existing)) {
+    const next = proposed[playerId] ?? []
+    for (const entry of history) {
+      const nextEntry = next.find((candidate) => candidate.seasonId === entry.seasonId)
+      if (nextEntry !== undefined && JSON.stringify(nextEntry) !== JSON.stringify(entry)) throw new GameWorldValidationError(`Player rating history for ${playerId}/${entry.seasonId} is immutable`)
+      if (nextEntry === undefined) throw new GameWorldValidationError(`Player rating history for ${playerId}/${entry.seasonId} cannot be removed`)
+    }
   }
 }
 

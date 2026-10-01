@@ -1,10 +1,30 @@
 import type { GameDate } from '@/domain/date'
-import type { PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
+import type { InjuryId, PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
 import { trainingDefinitionById } from './TrainingCatalog'
 import type { TrainingIntensity } from './Training'
 
 export type ScheduledTrainingSessionStatus = 'scheduled' | 'completed'
 export type TrainingParticipation = 'FULL' | 'REDUCED' | 'REST'
+
+export interface TrainingParticipantExecutionEvidence {
+  readonly playerId: PlayerId
+  readonly participation: TrainingParticipation
+  readonly careerFatigueDelta: number
+  readonly moraleDelta?: number
+  readonly developmentStimulusEventId?: string
+  readonly injuryIds: readonly InjuryId[]
+}
+
+export interface TrainingExecutionEvidence {
+  readonly completedOn: GameDate
+  readonly moduleName: string
+  readonly category: import('./TrainingCatalog').TrainingCategory
+  readonly effectiveIntensity: TrainingIntensity
+  readonly executingStaffPersonIds: readonly StaffPersonId[]
+  readonly executionQualityMultiplier: number
+  readonly participants: readonly TrainingParticipantExecutionEvidence[]
+  readonly cohesionDelta: number
+}
 
 export interface ScheduledTrainingSession {
   readonly id: string
@@ -31,6 +51,8 @@ export interface ScheduledTrainingSession {
   readonly assignedStaffPersonIds?: readonly StaffPersonId[]
   /** Explicit per-player exceptions to the derived team-session recommendation. */
   readonly participationByPlayerId?: Readonly<Record<string, TrainingParticipation>>
+  /** Immutable factual evidence attached when this scheduled session completes. */
+  readonly execution?: TrainingExecutionEvidence
 }
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/
@@ -59,7 +81,23 @@ export function createScheduledTrainingSession(input: Omit<ScheduledTrainingSess
     if (input.scope !== 'team') throw new RangeError('Player participation only applies to team sessions')
     for (const value of Object.values(input.participationByPlayerId)) if (!['FULL', 'REDUCED', 'REST'].includes(value)) throw new RangeError('Invalid team-session participation')
   }
-  return { ...input, ...(assigned === undefined ? {} : { assignedStaffPersonIds: Object.freeze([...assigned]) }), ...(input.participationByPlayerId === undefined ? {} : { participationByPlayerId: Object.freeze({ ...input.participationByPlayerId }) }), status: input.status ?? 'scheduled' }
+  if (input.execution !== undefined && input.status !== 'completed') throw new RangeError('Only a completed Training session can have execution evidence')
+  if (input.execution !== undefined) {
+    const evidence = input.execution
+    if (evidence.completedOn !== input.date || !evidence.moduleName.trim() || !['shooting', 'finishing', 'ballHandling', 'playmaking', 'defense', 'rebounding', 'physical', 'recovery', 'tactical'].includes(evidence.category)) throw new RangeError('Training execution evidence identity is invalid')
+    if (!['light', 'normal', 'high'].includes(evidence.effectiveIntensity) || !Number.isFinite(evidence.executionQualityMultiplier) || evidence.executionQualityMultiplier < 0.9 || evidence.executionQualityMultiplier > 1.18 || !Number.isFinite(evidence.cohesionDelta)) throw new RangeError('Training execution evidence effects are invalid')
+    if (new Set(evidence.executingStaffPersonIds).size !== evidence.executingStaffPersonIds.length || new Set(evidence.participants.map((participant) => participant.playerId)).size !== evidence.participants.length) throw new RangeError('Training execution evidence must not contain duplicate participants or Staff')
+    for (const participant of evidence.participants) {
+      if (!['FULL', 'REDUCED', 'REST'].includes(participant.participation) || !Number.isFinite(participant.careerFatigueDelta) || (participant.moraleDelta !== undefined && !Number.isFinite(participant.moraleDelta)) || new Set(participant.injuryIds).size !== participant.injuryIds.length) throw new RangeError('Training participant execution evidence is invalid')
+      if (participant.participation === 'REST' && (participant.careerFatigueDelta !== 0 || participant.developmentStimulusEventId !== undefined || participant.injuryIds.length > 0 || (participant.moraleDelta ?? 0) !== 0)) throw new RangeError('REST participation cannot have Training effects')
+    }
+  }
+  const execution = input.execution === undefined ? undefined : Object.freeze({
+    ...input.execution,
+    executingStaffPersonIds: Object.freeze([...input.execution.executingStaffPersonIds]),
+    participants: Object.freeze(input.execution.participants.map((participant) => Object.freeze({ ...participant, injuryIds: Object.freeze([...participant.injuryIds]) }))),
+  })
+  return { ...input, ...(assigned === undefined ? {} : { assignedStaffPersonIds: Object.freeze([...assigned]) }), ...(input.participationByPlayerId === undefined ? {} : { participationByPlayerId: Object.freeze({ ...input.participationByPlayerId }) }), ...(execution === undefined ? {} : { execution }), status: input.status ?? 'scheduled' }
 }
 
 /** True if two sessions occupy overlapping time ranges on the same date. */

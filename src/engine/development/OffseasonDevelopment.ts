@@ -6,9 +6,9 @@ import {
   EMPTY_PLAYER_RATING_HISTORY,
   type PlayerRatingDeltas,
 } from '@/domain/development/PlayerRatingHistory'
-import { CANONICAL_RATING_KEYS, legacyCanonicalRatingSignals, type CanonicalRatingKey, type Player } from '@/domain/player'
+import { CANONICAL_RATING_KEYS, legacyCanonicalRatingSignals, PLAYER_TRUTH_RATING_KEYS, type CanonicalRatingKey, type PlayerTruthRatingKey, type Player } from '@/domain/player'
 import type { PlayerDevelopmentContext, PlayerDevelopmentResult } from './PlayerDevelopment'
-import { developPlayerForSeason } from './PlayerDevelopment'
+import { calculatePotentialGrowthFactor, developPlayerForSeason, getBaseDevelopmentTrend } from './PlayerDevelopment'
 
 /**
  * Canonical rating movement of one transition.
@@ -36,10 +36,26 @@ export function applyOffseasonDevelopment(world: GameWorld, context: PlayerDevel
     const previous = world.players[item.player.id]
     if (previous === undefined) continue
     const deltas = canonicalDeltas(previous, item.player)
-    if (Object.keys(deltas).length === 0) continue
+    const truthDeltas: Partial<Record<PlayerTruthRatingKey, { before: number; after: number; delta: number }>> = {}
+    for (const key of PLAYER_TRUTH_RATING_KEYS) {
+      const before = previous.basketball.ratings[key]
+      const after = item.player.basketball.ratings[key]
+      if (before !== after) truthDeltas[key] = { before, after, delta: after - before }
+    }
+    const stimulusByRating = world.developmentStimulusByPlayerId[item.player.id]?.byRating ?? EMPTY_DEVELOPMENT_STIMULUS
     playerRatingHistoryByPlayerId[item.player.id] = appendRatingHistory(
       playerRatingHistoryByPlayerId[item.player.id] ?? EMPTY_PLAYER_RATING_HISTORY,
-      { seasonId: context.fromSeasonId, deltas },
+      {
+        seasonId: context.fromSeasonId,
+        deltas,
+        truthDeltas,
+        stimulusByRating,
+        checkpointDate: context.targetDate,
+        ...(context.cycleId === undefined ? {} : { cycleId: context.cycleId }),
+        age: item.result.age,
+        baseTrend: getBaseDevelopmentTrend(item.result.age),
+        potentialGrowthFactor: calculatePotentialGrowthFactor(previous),
+      },
     )
   }
   return {

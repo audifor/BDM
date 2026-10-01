@@ -4,7 +4,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import '@testing-library/jest-dom/vitest'
 
 import { createNewGame } from '@/app/game'
+import { updateGameWorld } from '@/domain/world'
+import { createScheduledTrainingSession } from '@/domain/training'
 import { getUserTeam } from '@/engine/calendar'
+import { executeScheduledTrainingSessions, nextEligibleTrainingDate, scheduleTrainingSession } from '@/engine/training'
 import { selectUserTrainingPlan, useGameStore } from '@/stores/gameStore'
 import { TrainingWorkspace } from '@/ui-ng/applications/training/TrainingWorkspace'
 import { NgWorkspaceNavigationProvider } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
@@ -98,5 +101,20 @@ describe('TrainingWorkspace', () => {
     expect(screen.queryAllByRole('listbox')).toHaveLength(0)
     fireEvent.click(screen.getByRole('button', { name: `${player.firstName} ${player.lastName}` }))
     expect(new URL(window.location.href).searchParams.get('playerId')).toBe(player.id)
+  })
+
+  it('shows completed Training history with the executed module and participation', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const playerId = team.rosterPlayerIds[0]!
+    const date = nextEligibleTrainingDate(base.currentDate)
+    const scheduled = scheduleTrainingSession(base, createScheduledTrainingSession({ id: 'history-ui', teamId: team.id, playerId, date, startTime: '09:00', durationMinutes: 60, scope: 'individual', definitionId: 'threePoint', intensity: 'normal' }))
+    const completed = executeScheduledTrainingSessions(updateGameWorld(scheduled, { currentDate: date }))
+    mountTrainingWorkspace(completed)
+
+    const history = document.querySelector('[data-ng-region="training-history"]')!
+    expect(history).toHaveTextContent('Completed sessions')
+    expect(history).toHaveTextContent('Three-Point Shooting')
+    expect(history).toHaveTextContent('FULL 1')
   })
 })

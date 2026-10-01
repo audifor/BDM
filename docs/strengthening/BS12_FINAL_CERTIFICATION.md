@@ -1,53 +1,65 @@
 # BS12 Final Certification — Training + Medical
 
-**Scope:** BS12A canonical audit, BS12B Training ownership/load convergence, BS12C Medical recovery and Return-to-Play.
-**BS12B baseline:** `b32c2a73c163e76808a2baee8fe0eece8fd4d33`.
+**Scope:** final certification of BS12A–BS12F at the BS12F implementation baseline.
+
+## Milestone completion
+
+| Milestone | Completed scope |
+|---|---|
+| BS12A | Canonical Training/Medical authority audit and reuse map |
+| BS12B | Training planning, AI ownership, Staff execution, and Career Fatigue convergence |
+| BS12C | Shared Medical recovery, availability, and Return-to-Play lifecycle |
+| BS12D | FULL / REDUCED / REST participation, Training injury risk, and recurrence interaction |
+| BS12E | Rehabilitation, fitness testing, and deeper Medical lifecycle integration |
+| BS12F | Immutable Training execution evidence, stimulus provenance, annual 80-rating history, NG manifestation, and final authority audit |
+
+## Certified gameplay loops
+
+**Training and development:**
+
+`TRAINING PLAN → PARTICIPATION → EXECUTION → LOAD / STIMULUS → ANNUAL DEVELOPMENT → 80-RATING HISTORY`
+
+Training stimulus is one input to the existing annual development algorithm. Individual sessions do not directly change ratings. Match participation also contributes through the existing `PlayerMatchConsequences` path; BS12F records that actual contribution without changing Match behavior.
+
+**Medical:**
+
+`TRAINING / MATCH EXPOSURE → INJURY RISK → INJURY → REHAB → FITNESS TEST → RTP → AVAILABILITY`
+
+InjuryRecord remains the injury authority. Medical history and lifecycle remain on the existing BS12C-E services.
 
 ## Authority audit
 
 | Area | Canonical authority | Result |
 |---|---|---|
-| Training execution | Scheduled Training executor | PASS; sole automatic executor |
-| Training planning | BS12B AI Training planner | PASS; separate from execution |
-| User Training | Existing user planning/actions | PASS; no BS12C ownership change |
-| Physical load | Career Fatigue | PASS; Medical displays context only |
-| Development | OffseasonDevelopment and canonical ratings | PASS; no competing development authority |
-| Injury creation/truth | `InjuryRecord` / `PostMatchInjuries` | PASS; unchanged creator, one canonical injury record |
-| Medical advisory | StaffRecommendationService / DelegationOutcome | PASS; reused acceptance seam |
-| Medical availability | Injury RTP lifecycle + shared availability query | PASS; derived, not separately persisted |
-| RTP decision | BS12C shared `reviewReturnToPlay` service | PASS; user and AI share transition |
-| Staff | Existing responsibility assignments and holders | PASS; no new hierarchy |
-| Facilities | Existing CFI facts | PASS; no invented Training/recovery effects |
-| MatchEngine | Existing match authority | PASS; untouched |
+| Training planning | Existing Training planner and user plan | PASS |
+| Training execution / participation | Scheduled Training executor and BS12D resolution | PASS |
+| Physical load | Career Fatigue | PASS |
+| Development stimulus | `developmentStimulusByPlayerId` aggregate | PASS; source events are explanatory only |
+| Annual development | `OffseasonDevelopment` and calendar cycle idempotency | PASS |
+| Player truth / development history | 80 canonical Player Truth ratings; one history row with 35-key compatibility projection | PASS |
+| Injury creation / truth | InjuryRecord | PASS |
+| Medical availability, RTP, rehab, and fitness testing | Existing BS12C-E lifecycle | PASS |
+| Staff recommendation | Existing Staff recommendation authority | PASS |
+| MatchEngine | Existing MatchEngine | PASS; unchanged |
 
-## Coverage and boundaries
+## Corrected Match-development finding
 
-BS12A established the canonical Training/Medical ownership map and identified advisory and lifecycle gaps. BS12B closed Training planning/execution and physical-load convergence at the validated baseline above. BS12C completes recovery, review, clearance, AI decision, save migration, and user Medical actions.
-
-Training sessions remain fatigue-only. AI planning and user Training retain their existing surfaces. Development remains on the canonical offseason/rating path. Injuries remain canonical records, with new records entering recovery and remaining unavailable until review clearance. Staff Medical advice uses existing recommendation outcomes. RTP review and clearance use one service. Competition eligibility and other availability restrictions remain independent. Medical and Player surfaces expose recovery/review/clearance. Save migration avoids resurrecting old past-date injuries. Facilities consequences, detailed rehabilitation, and MatchEngine behavior were not expanded.
+The first BS12F blocker text claimed that no Match stimulus writer existed. The implementation audit found the existing `PlayerMatchConsequences.applyPlayerMatchConsequences` writer, called by the completed user-match flow after `applyCompletedMatch`. The BS12A audit, capability map, integration matrix, and current game-loop reference now describe the actual connection. **Match → development stimulus is connected.** BS12F adds provenance only and introduces no Match mechanic or MatchEngine change.
 
 ## Remaining P1 inventory
 
-All listed items are **SAFE DEFERRED** for BS12 closure; no item is required to deliver the approved Training + Medical lifecycle. Owners below are subsystem follow-ups, not new BS12 scope.
+All remaining items are safe deferred work and do not block this closure:
 
-| P1 opportunity | Classification | Follow-up owner |
-|---|---|---|
-| Player-specific Training rest | SAFE DEFERRED | Training product/engine |
-| More sophisticated AI Training focus | SAFE DEFERRED | Training AI |
-| Training/injury-risk interaction | SAFE DEFERRED; needs an explicit product rule before effects | Training + Medical product |
-| Facilities effects on Training/recovery | SAFE DEFERRED; requires approved consequence rules | Facilities / CFI |
-| Detailed rehabilitation | SAFE DEFERRED; explicitly outside BS12 | Medical product |
-| Injury recurrence | SAFE DEFERRED; no recurrence authority exists | Medical product |
-| Body-area history depth | SAFE DEFERRED | Player Medical projection |
-| Advanced fitness tests | SAFE DEFERRED | Medical product |
-| Legacy Training/Medical surfaces | SAFE DEFERRED | UI migration |
-| Completed-session executor history | SAFE DEFERRED | Training persistence/history |
-| 80-key causal development history | SAFE DEFERRED | Development history |
+| P1 | Owner |
+|---|---|
+| Sophisticated Training periodization | Future Training product work |
+| Deeper anatomical Medical simulation / role-specific rehab | Future Medical product work |
+| Staff prevention and intelligence | BS13 |
+| Facilities effects | BS17 |
+| Legacy Training/Medical UI | BS21 |
 
-## P0 findings
-
-None identified in the BS12 Training + Medical scope. No duplicate injury, training, fatigue, or RTP authority was added. The explicitly excluded treatment engine, facility bonuses, recurrence system, and MatchEngine changes remain absent.
+No P0 remains in the BS12 Training + Medical scope. See [BS12F implementation audit](BS12F_TRAINING_DEVELOPMENT_HISTORY.md) for Save, history, causality, scenario, and focused validation details.
 
 ## Certification
 
-**BS12 · TRAINING + MEDICAL — PASS.** BS12A audit, BS12B Training ownership/load convergence, and BS12C Medical recovery/RTP form a coherent authority chain. BS12C validation passed: 77 focused tests across 9 files, 1 additional focused Calendar/Save test, typecheck, production build, and diff check.
+**BS12 · TRAINING + MEDICAL — FULLY CLOSED / PASS.** BS12A–F form a coherent, inspectable gameplay loop while preserving one authority per system.
