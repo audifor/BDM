@@ -1,5 +1,5 @@
 import type { InjuryId, PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
-import type { InjurySeverity } from '@/domain/injury'
+import type { FitnessTestResult, InjurySeverity, RehabilitationMode } from '@/domain/injury'
 import type { MedicalRiskBand } from '@/engine/injury/MedicalRiskAssessment'
 import type { StaffPresentationItem } from '@/ui/staffPresentation'
 
@@ -37,8 +37,38 @@ export interface MedicalInjuredRow {
   readonly sourceLabel: string
   readonly injuredOnLabel: string
   readonly expectedReturnLabel: string
+  readonly reviewDueLabel: string
+  readonly fitnessTestLabel: string
+  readonly clearedOnLabel: string | null
   readonly daysRemaining: number
   readonly durationLabel: string
+  readonly lifecycleStatus: 'RECOVERING' | 'RETURN-TO-PLAY REVIEW' | 'CLEARED'
+  readonly fatigue: number
+  readonly rehabilitationMode: RehabilitationMode
+  readonly suggestedRehabilitationMode: RehabilitationMode
+  readonly rehabilitationConsequence: string
+  readonly canChangeRehabilitation: boolean
+  readonly rehabilitationHistory: readonly string[]
+  readonly reviewHistory: readonly { readonly dateLabel: string; readonly decision: string; readonly actorLabel: string }[]
+}
+
+export interface MedicalReturnToPlayRow {
+  readonly injuryId: InjuryId
+  readonly playerId: PlayerId
+  readonly playerName: string
+  readonly injuryLabel: string
+  readonly injuredOnLabel: string
+  readonly expectedReturnLabel: string
+  readonly reviewDueLabel: string
+  readonly fatigue: number
+  readonly recommendationOutcomeId?: import('@/domain/responsibility').DelegationOutcomeId
+  readonly reviewHistory: readonly { readonly dateLabel: string; readonly decision: string; readonly actorLabel: string }[]
+  readonly staffName?: string
+  readonly staffQuality?: number
+  readonly recommendationSummary?: string
+  readonly fitnessTestRequired: boolean
+  readonly fitnessTestResult: FitnessTestResult | null
+  readonly canClear: boolean
 }
 
 export interface MedicalHistoryRow {
@@ -50,8 +80,15 @@ export interface MedicalHistoryRow {
   readonly sourceLabel: string
   readonly injuredOnLabel: string
   readonly expectedReturnLabel: string
-  readonly statusLabel: 'Active' | 'Recovered'
+  readonly clearedOnLabel: string | null
+  readonly statusLabel: 'RECOVERING' | 'RETURN-TO-PLAY REVIEW' | 'CLEARED'
   readonly durationLabel: string
+  readonly familyLabel: string
+  readonly recurrenceLabel: string
+  readonly rehabSummary: string
+  readonly setbackSummary: string
+  readonly fitnessTestSummary: string
+  readonly clearanceLabel: string
 }
 
 export interface MedicalRiskRow {
@@ -92,6 +129,7 @@ export interface MedicalWorkspaceModel {
   readonly medicalStaffCount: number
   readonly openAdvisoryCount: number
   readonly injured: readonly MedicalInjuredRow[]
+  readonly returnToPlayReviews: readonly MedicalReturnToPlayRow[]
   readonly history: readonly MedicalHistoryRow[]
   readonly risk: readonly MedicalRiskRow[]
   readonly staff: readonly MedicalStaffRow[]

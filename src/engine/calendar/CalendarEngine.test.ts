@@ -86,7 +86,7 @@ describe('CalendarEngine', () => {
     expect(next.world.negotiationsById[contact.id]).toMatchObject({ status: 'ACCEPTED', offerSubmittedOn: opened.currentDate, playerResponse: { outcome: 'ACCEPTED', respondedOn: addDays(opened.currentDate, 1) } })
   })
 
-  it('preserves the pre-BS1 fatigue, contract reconciliation, then scheduled training order', () => {
+  it('plans AI Training after fatigue recovery and before the scheduled executor', () => {
     const { world } = createScheduledGameWorld()
     const result = advanceDayWithTrace(world)
     const order = result.phases.map((phase) => phase.phaseId)
@@ -94,7 +94,7 @@ describe('CalendarEngine', () => {
     const trainingIndex = order.indexOf('TRAINING')
 
     expect(order.slice(fatigueIndex, trainingIndex + 1)).toEqual([
-      'CAREER_FATIGUE_RECOVERY', 'EXPIRED_CONTRACT_RECONCILIATION', 'RETENTION_NEGOTIATION_INVALIDATION', 'AI_RETENTION_NEGOTIATIONS', 'MARKET_CONTACT_RESPONSES', 'MARKET_FORMAL_OFFER_RESPONSES', 'TRAINING',
+      'CAREER_FATIGUE_RECOVERY', 'EXPIRED_CONTRACT_RECONCILIATION', 'RETENTION_NEGOTIATION_INVALIDATION', 'AI_RETENTION_NEGOTIATIONS', 'MARKET_CONTACT_RESPONSES', 'MARKET_FORMAL_OFFER_RESPONSES', 'AI_TRAINING_PLANNING', 'TRAINING',
     ])
   })
 

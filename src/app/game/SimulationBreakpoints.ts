@@ -13,6 +13,7 @@ import type { ContractNegotiation } from '@/domain/market'
 import { tradeNegotiationResponseReadiness } from '@/app/trades'
 import { assessContractReviewOutlook, CONTRACT_REVIEW_HORIZON_DAYS } from '@/engine/clubNeeds'
 import { derivedRetentionStatus } from '@/engine/contractRetention/ContractRetentionEngine'
+import { injuryLifecycleStatus } from '@/domain/injury'
 
 export const SIMULATION_BREAKPOINT_LEVELS = ['BACKGROUND', 'INFO', 'IMPORTANT', 'ACTION_REQUIRED', 'BLOCKING'] as const
 export type SimulationBreakpointLevel = typeof SIMULATION_BREAKPOINT_LEVELS[number]
@@ -69,6 +70,12 @@ export function evaluateSimulationBreakpoints(world: GameWorld, context: Simulat
   }
 
   if (userTeam !== undefined) {
+    for (const injury of Object.values(world.injuriesById).filter((item) => userTeam.rosterPlayerIds.includes(item.playerId) && injuryLifecycleStatus(item, world.currentDate) === 'RTP_REVIEW_DUE')) candidates.push(candidate({
+      level: 'ACTION_REQUIRED', reason: 'returnToPlayReview', sourceKind: 'USER_RTP_REVIEW', sourceId: injury.id,
+      effectiveDate: world.currentDate, ownership: { kind: 'USER_TEAM', coachId: world.userCoachId, teamId: userTeam.id },
+      route: 'medical', actionTarget: { injuryId: injury.id, playerId: injury.playerId },
+      diagnostic: `Return-to-Play review for injury ${injury.id} is due; clear the player or continue recovery before advancing.`,
+    }))
     if (userTeam.rosterPlayerIds.length < 5) {
       const ecosystem = getEcosystemForTeam(world, userTeam.id)
       const marketSupported = ecosystem !== undefined && ecosystem.kind !== 'ncaaLike'

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { createNewGame } from '@/app/game'
 import { createGameDate } from '@/domain/date'
-import { CANONICAL_RATING_KEYS, legacyCanonicalRatingSignals } from '@/domain/player'
+import { CANONICAL_RATING_KEYS, PLAYER_TRUTH_RATING_KEYS, legacyCanonicalRatingSignals } from '@/domain/player'
 import { playerIdFromString, seasonIdFromString, type PlayerId } from '@/domain/ids'
 import { ratingHistorySeries } from '@/domain/development/PlayerRatingHistory'
 
@@ -33,6 +33,14 @@ describe('applyOffseasonDevelopment rating history', () => {
         const delta = history[0]!.deltas[key] ?? 0
         expect(after[key] - before[key]).toBe(delta)
       }
+      const truth = history[0]!.truthDeltas ?? {}
+      for (const key of PLAYER_TRUTH_RATING_KEYS) {
+        const truthBefore = world.players[playerId]!.basketball.ratings[key]
+        const truthAfter = result.world.players[playerId]!.basketball.ratings[key]
+        if (truthBefore === truthAfter) expect(truth[key]).toBeUndefined()
+        else expect(truth[key]).toEqual({ before: truthBefore, after: truthAfter, delta: truthAfter - truthBefore })
+      }
+      expect(PLAYER_TRUTH_RATING_KEYS).toHaveLength(80)
     }
   })
 
@@ -75,17 +83,19 @@ describe('applyOffseasonDevelopment rating history', () => {
     expect(history.map((entry) => entry.seasonId)).toEqual(['season-1', 'season-2'])
   })
 
-  it('keeps a player without canonical movement out of the history', () => {
+  it('records each annual checkpoint, including sparse truth changes and the stimulus snapshot', () => {
     const world = createNewGame()
     const result = applyOffseasonDevelopment(world, context)
 
     for (const [rawPlayerId, history] of Object.entries(result.world.playerRatingHistoryByPlayerId)) {
       const playerId = playerIdFromString(rawPlayerId)
       expect(history.length).toBeGreaterThan(0)
-      expect(Object.keys(history[0]!.deltas).length).toBeGreaterThan(0)
+      expect(history[0]!.checkpointDate).toBe(context.targetDate)
+      expect(history[0]!.truthDeltas).toBeDefined()
+      expect(history[0]!.stimulusByRating).toBeDefined()
       const before = legacyCanonicalRatingSignals(world.players[playerId]!.basketball.ratings)
       const after = legacyCanonicalRatingSignals(result.world.players[playerId]!.basketball.ratings)
-      expect(CANONICAL_RATING_KEYS.some((key) => before[key] !== after[key])).toBe(true)
+      expect(Object.keys(history[0]!.deltas).some((key) => before[key as keyof typeof before] !== after[key as keyof typeof after]) || Object.keys(history[0]!.truthDeltas!).length === 0).toBe(true)
     }
   })
 })

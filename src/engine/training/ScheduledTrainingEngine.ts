@@ -1,15 +1,23 @@
 import { addDevelopmentStimulus } from '@/domain/development/DevelopmentStimulus'
+import { createDevelopmentStimulusEvent } from '@/domain/development/DevelopmentStimulusEvent'
 import { clampCareerFatigue } from '@/domain/careerFatigue/CareerFatigue'
 import { clampTeamCohesion, dailyWorkloadScore, findCollidingSession, isPositionEligible, timeToMinutes, trainingDefinitionById, trainingLoad, type ScheduledTrainingSession, type TrainingDefinition, type TrainingIntensity } from '@/domain/training'
 import { calculateStaffRoleProficiencyByRoleId, type StaffRoleId } from '@/domain/staff'
 import { applyMoraleEvent, type MoraleEvent } from '@/domain/morale'
 import { createDelegationOutcome, delegationOutcomeIdFromString, type DelegationOutcome } from '@/domain/responsibility'
 import { addDays, type GameDate } from '@/domain/date'
-import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { isPlayerAvailable, updateGameWorld, type GameWorld } from '@/domain/world'
 import type { CanonicalRatingKey } from '@/domain/player'
 import type { PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
 import { resolveDelegatedResponsibility, trainingQuality } from '@/engine/staff'
 import { delegatedStimulusMultiplier, effectiveIndividualDefinition, effectiveIntensity, effectiveTeamDefinition } from './DelegatedTraining'
+import { canTeamTrainOnDate } from './TrainingEngine'
+import { trainingParticipationForPlayer } from './TrainingParticipation'
+import { trainingInjuryProbability } from '@/engine/injury/TrainingInjuries'
+import { createDeterministicInjury, deterministicInjuryKind } from '@/engine/injury/InjuryCreation'
+import { boundedInjuryProbability, recurrenceRiskMultiplier } from '@/engine/injury/InjuryRisk'
+import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
+import type { InjuryRecord } from '@/domain/injury'
 
 /**
  * The earliest date a newly-scheduled session is guaranteed to actually execute.
@@ -36,6 +44,7 @@ export function scheduleTrainingSession(world: GameWorld, session: ScheduledTrai
   if (session.date <= world.currentDate) {
     throw new RangeError(`Scheduled session date ${session.date} must be after the current date ${world.currentDate}; it would never execute`)
   }
+  if (!canTeamTrainOnDate(world, session.teamId, session.date)) throw new RangeError(`Training cannot be scheduled on fixture date ${session.date}`)
   const existing = Object.values(world.scheduledTrainingSessionsById)
   const collision = findCollidingSession(session, existing)
   if (collision !== undefined) throw new RangeError(`Session collides with existing session ${collision.id}`)
@@ -68,10 +77,31 @@ export function cancelScheduledTrainingSession(world: GameWorld, sessionId: stri
   return updateGameWorld(world, { scheduledTrainingSessionsById: sessions })
 }
 
+/** Records a user's explicit player-level participation choice on one existing team session. */
+export function setTrainingParticipation(world: GameWorld, input: { readonly sessionId: string; readonly playerId: PlayerId; readonly participation?: import('@/domain/training').TrainingParticipation }): GameWorld {
+  const session = world.scheduledTrainingSessionsById[input.sessionId]
+  if (session === undefined || session.scope !== 'team' || session.status !== 'scheduled') throw new RangeError('Participation requires a pending team session')
+  if (!world.teams[session.teamId]!.rosterPlayerIds.includes(input.playerId)) throw new RangeError('Player is not on the session team roster')
+  const participationByPlayerId = { ...(session.participationByPlayerId ?? {}) }
+  if (input.participation === undefined) delete participationByPlayerId[input.playerId]
+  else participationByPlayerId[input.playerId] = input.participation
+  return updateGameWorld(world, { scheduledTrainingSessionsById: { ...world.scheduledTrainingSessionsById, [session.id]: { ...session, participationByPlayerId } } })
+}
+
 /** Executes every scheduled session whose date is world.currentDate and that has not already been completed. Idempotent: completed sessions are skipped. */
 export function executeScheduledTrainingSessions(world: GameWorld): GameWorld {
+  return executeScheduledTrainingSessionsWithEvidence(world).world
+}
+
+/** Due sessions that conflict with a fixture are preserved for inspection and never executed. */
+export function executeScheduledTrainingSessionsWithEvidence(world: GameWorld): { readonly world: GameWorld; readonly matchConflictSessionIds: readonly string[] } {
   const due = Object.values(world.scheduledTrainingSessionsById).filter((session) => session.date === world.currentDate && session.status === 'scheduled')
-  return due.reduce((next, session) => executeScheduledSession(next, session), world)
+  const blocked = due.filter((session) => !canTeamTrainOnDate(world, session.teamId, session.date))
+  const executable = due.filter((session) => canTeamTrainOnDate(world, session.teamId, session.date))
+  return {
+    world: executable.reduce((next, session) => executeScheduledSession(next, session), world),
+    matchConflictSessionIds: blocked.map((session) => session.id).sort(),
+  }
 }
 
 /**
@@ -111,23 +141,66 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
   let stimulus = { ...world.developmentStimulusByPlayerId }
   let fatigue = { ...world.careerFatigueByPlayerId }
   let moraleByPersonId = world.moraleByPersonId
+  const trainingInjuries: InjuryRecord[] = []
+  const stimulusEvents = [] as ReturnType<typeof createDevelopmentStimulusEvent>[]
+  const participantEvidence: import('@/domain/training').TrainingParticipantExecutionEvidence[] = []
+  let participatingLoad = 0
 
   for (const playerId of playerIds) {
+    const available = isPlayerAvailable(world, playerId, world.currentDate)
+    const participation = !available ? 'REST' : session.scope === 'team'
+      ? trainingParticipationForPlayer(world, session.teamId, playerId, session.date, session.participationByPlayerId?.[playerId])
+      : 'FULL'
+    const participationMultiplier = participation === 'FULL' ? 1 : participation === 'REDUCED' ? .5 : 0
+    if (participationMultiplier === 0) {
+      participantEvidence.push({ playerId, participation, careerFatigueDelta: 0, injuryIds: [] })
+      continue
+    }
+    participatingLoad += participationMultiplier
     const rosterPlayer = world.players[playerId]
     const eligible = rosterPlayer === undefined || isPositionEligible(definition, rosterPlayer.basketball.primaryPosition)
+    const fatigueBefore = fatigue[playerId] ?? 0
+    const moraleBefore = moraleByPersonId[playerId]?.value
+    let developmentStimulusEventId: string | undefined
     if (eligible) {
       const efficiency = Math.max(0.4, 1 - (fatigue[playerId] ?? 0) / 150)
       const stimulusMultiplier = planDelegation === undefined ? 1 : delegatedStimulusMultiplier(planDelegation.qualityScore, stimulusVarianceSeed(planDelegation.responsibilityId, session.id, playerId, world.currentDate))
-      const developmentDelta = distributeStimulus(definition, load.stimulus * efficiency * stimulusMultiplier * executionMultiplier)
-      if (Object.keys(developmentDelta).length > 0) stimulus[playerId] = addDevelopmentStimulus(stimulus[playerId]!, developmentDelta)
+      const developmentDelta = distributeStimulus(definition, load.stimulus * efficiency * stimulusMultiplier * executionMultiplier * participationMultiplier)
+      if (Object.keys(developmentDelta).length > 0) {
+        stimulus[playerId] = addDevelopmentStimulus(stimulus[playerId]!, developmentDelta)
+        const event = createDevelopmentStimulusEvent({ id: `training:${session.id}:${playerId}`, playerId, sourceType: 'training', sourceId: session.id, date: world.currentDate, byRating: developmentDelta })
+        stimulusEvents.push(event)
+        developmentStimulusEventId = event.id
+      }
     }
     const fatigueExecutionMultiplier = definition.category === 'recovery' ? executionMultiplier : 1
-    const fatigueDelta = load.fatigue * definition.effects.fatigueMultiplier * fatigueExecutionMultiplier
+    const fatigueDelta = load.fatigue * definition.effects.fatigueMultiplier * fatigueExecutionMultiplier * participationMultiplier
     fatigue[playerId] = clampCareerFatigue((fatigue[playerId] ?? 0) + fatigueDelta)
-    if (eligible && definition.effects.moraleDelta !== 0) moraleByPersonId = applyMoraleForPlayer(moraleByPersonId, world, playerId, definition, session)
+    if (eligible && definition.effects.moraleDelta !== 0) moraleByPersonId = applyMoraleForPlayer(moraleByPersonId, world, playerId, definition, session, participationMultiplier)
+
+    const kind = deterministicInjuryKind('TRAINING', session.id, playerId)
+    const probability = trainingInjuryProbability({
+      riskWeight: definition.effects.injuryRiskWeight,
+      intensity,
+      durationMinutes: session.durationMinutes,
+      fatigue: world.careerFatigueByPlayerId[playerId] ?? 0,
+      recurrence: recurrenceRiskMultiplier(world, playerId, kind, world.currentDate),
+      participationMultiplier,
+    })
+    if (new SeededRandomSource(hashStringToSeed(`training-injury-occurrence-v1:${session.id}:${playerId}`)).nextFloat(0, 1) < probability) {
+      trainingInjuries.push(createDeterministicInjury({ playerId, injuredOn: world.currentDate, source: 'TRAINING', sourceId: session.id }))
+    }
+    participantEvidence.push({
+      playerId,
+      participation,
+      careerFatigueDelta: fatigue[playerId]! - fatigueBefore,
+      ...(developmentStimulusEventId === undefined ? {} : { developmentStimulusEventId }),
+      injuryIds: trainingInjuries.filter((injury) => injury.playerId === playerId).map((injury) => injury.id),
+      ...(moraleBefore === undefined || moraleByPersonId[playerId] === undefined || moraleByPersonId[playerId]!.value === moraleBefore ? {} : { moraleDelta: moraleByPersonId[playerId]!.value - moraleBefore }),
+    })
   }
 
-  const cohesionExecutionMultiplier = definition.category === 'tactical' ? executionMultiplier : 1
+  const cohesionExecutionMultiplier = definition.category === 'tactical' ? executionMultiplier * (playerIds.length === 0 ? 0 : participatingLoad / playerIds.length) : 1
   const teamCohesionByTeamId = definition.effects.cohesionDelta === 0
     ? world.teamCohesionByTeamId
     : { ...world.teamCohesionByTeamId, [session.teamId]: clampTeamCohesion((world.teamCohesionByTeamId[session.teamId] ?? 50) + definition.effects.cohesionDelta * cohesionExecutionMultiplier) }
@@ -137,16 +210,31 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
     ...(intensityDelegation === undefined ? [] : [intensityDelegation.outcome]),
   ]
 
-  const completedSession: ScheduledTrainingSession = session.assignedStaffPersonIds === undefined
-    ? { ...session, status: 'completed' }
-    : { ...session, assignedStaffPersonIds: undefined, status: 'completed' }
+  const moduleName = (session.moduleId === undefined ? undefined : world.userTrainingModulesById[session.moduleId]?.name) ?? definition.name
+  const completedSession: ScheduledTrainingSession = {
+    ...session,
+    assignedStaffPersonIds: undefined,
+    status: 'completed',
+    execution: {
+      completedOn: world.currentDate,
+      moduleName,
+      category: definition.category,
+      effectiveIntensity: intensity,
+      executingStaffPersonIds: session.assignedStaffPersonIds ?? [],
+      executionQualityMultiplier: executionMultiplier,
+      participants: participantEvidence,
+      cohesionDelta: (teamCohesionByTeamId[session.teamId] ?? 50) - (world.teamCohesionByTeamId[session.teamId] ?? 50),
+    },
+  }
 
   return updateGameWorld(world, {
     developmentStimulusByPlayerId: stimulus,
     careerFatigueByPlayerId: fatigue,
     moraleByPersonId,
     teamCohesionByTeamId,
+    ...(trainingInjuries.length === 0 ? {} : { injuries: [...Object.values(world.injuriesById), ...trainingInjuries] }),
     scheduledTrainingSessionsById: { ...world.scheduledTrainingSessionsById, [session.id]: completedSession },
+    developmentStimulusEvents: [...Object.values(world.developmentStimulusEventsById), ...stimulusEvents],
     ...(delegationOutcomes.length === 0 ? {} : { delegationOutcomes: [...Object.values(world.delegationOutcomesById), ...delegationOutcomes] }),
   })
 }
@@ -284,7 +372,7 @@ function resolveIntensityDelegation(world: GameWorld, session: ScheduledTraining
   return { intensity, outcome }
 }
 
-function applyMoraleForPlayer(moraleByPersonId: GameWorld['moraleByPersonId'], world: GameWorld, playerId: PlayerId, definition: TrainingDefinition, session: ScheduledTrainingSession): GameWorld['moraleByPersonId'] {
+function applyMoraleForPlayer(moraleByPersonId: GameWorld['moraleByPersonId'], world: GameWorld, playerId: PlayerId, definition: TrainingDefinition, session: ScheduledTrainingSession, participationMultiplier: number): GameWorld['moraleByPersonId'] {
   const profile = moraleByPersonId[playerId]
   const personality = world.personalitiesByPersonId[playerId]
   if (profile === undefined || personality === undefined) return moraleByPersonId
@@ -293,7 +381,7 @@ function applyMoraleForPlayer(moraleByPersonId: GameWorld['moraleByPersonId'], w
     personId: playerId,
     gameDate: world.currentDate,
     source: 'developmentEvent',
-    delta: Math.round(definition.effects.moraleDelta),
+    delta: Math.round(definition.effects.moraleDelta * participationMultiplier),
     context: { sessionId: session.id, definitionId: definition.id },
   }
   if (event.delta === 0) return moraleByPersonId

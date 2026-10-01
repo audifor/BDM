@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 
 import {
   CareerCurvePanel,
@@ -20,9 +20,12 @@ import {
   type PlayerDevelopmentModel,
 } from '@/ui-ng/applications/player/data/buildPlayerDevelopmentModel'
 import type { RatingCategory } from '@/ui-ng/applications/player/data/ratingCatalog'
+import { ratingCategory, ratingLabel } from '@/ui-ng/applications/player/data/ratingCatalog'
+import { useGameStore } from '@/stores/gameStore'
 
 export function PlayerDevelopmentView() {
   const { model, session } = usePlayerWorkspace()
+  const world = useGameStore((state) => state.world)
   const { selectedItemId, setSelectedItemId } = session.development
 
   if (model === null) return null
@@ -69,6 +72,51 @@ export function PlayerDevelopmentView() {
         <DevelopmentEventsPanel events={development.longitudinal.events} />
         <ScoutingProjectionPanel projection={development.projection} />
       </div>
+      {world !== null && <PlayerHistoryPanels world={world} playerId={model.player.id} />}
+    </div>
+  )
+}
+
+function PlayerHistoryPanels({ world, playerId }: { readonly world: NonNullable<ReturnType<typeof useGameStore.getState>['world']>; readonly playerId: import('@/domain/ids').PlayerId }) {
+  const [stimulusVisibleCount, setStimulusVisibleCount] = useState(40)
+  const training = Object.values(world.scheduledTrainingSessionsById)
+    .flatMap((session) => {
+      const result = session.execution?.participants.find((participant) => participant.playerId === playerId)
+      return result === undefined ? [] : [{ session, result }]
+    })
+    .sort((a, b) => b.session.date.localeCompare(a.session.date))
+  const ratingHistory = world.playerRatingHistoryByPlayerId[playerId] ?? []
+  const stimulusEvents = Object.values(world.developmentStimulusEventsById).filter((event) => event.playerId === playerId).sort((a, b) => b.date.localeCompare(a.date))
+  return (
+    <div className="po-dev-band po-dev-band--last">
+      <section className="po-dev-panel" data-ng-region="player-training-history">
+        <header className="po-dev-panel__head"><span className="po-dev-panel__title">Training history</span><span className="po-dev-panel__meta">{training.length}</span></header>
+        {training.length === 0 ? <p className="po-dev-stat__note">No completed Training history is recorded.</p> : (
+          <ul className="po-dev-gaps">{training.slice(0, 12).map(({ session, result }) => {
+            const execution = session.execution!
+            const staff = execution.executingStaffPersonIds.map((id) => {
+              const person = world.staffPeopleById[id]
+              return person === undefined ? String(id) : `${person.identity.firstName} ${person.identity.lastName}`
+            }).join(', ') || 'No assigned executor'
+            const event = result.developmentStimulusEventId === undefined ? undefined : world.developmentStimulusEventsById[result.developmentStimulusEventId]
+            const stimulus = event === undefined ? '0.00' : Object.values(event.byRating).reduce<number>((sum, amount) => sum + (amount ?? 0), 0).toFixed(2)
+            const injuryLabels = result.injuryIds.map((id) => `${world.injuriesById[id]?.kind ?? 'Injury'} (${id})`)
+            return <li key={session.id}><span>{session.date} · {execution.moduleName} · {result.participation}</span><span className="po-dev-stat__note">Staff: {staff} · fatigue {result.careerFatigueDelta >= 0 ? '+' : ''}{result.careerFatigueDelta.toFixed(1)} · stimulus {stimulus} · injuries {injuryLabels.join(', ') || 'none'}</span></li>
+          })}</ul>
+        )}
+        <p className="po-dev-stat__note">Training supplied stimulus to the development cycle; individual sessions do not directly change ratings.</p>
+      </section>
+      <section className="po-dev-panel" data-ng-region="player-rating-truth-history">
+        <header className="po-dev-panel__head"><span className="po-dev-panel__title">80-rating annual history</span><span className="po-dev-panel__meta">Changed ratings</span></header>
+        {ratingHistory.length === 0 ? <p className="po-dev-stat__note">Canonical annual history will be recorded at the next development checkpoint.</p> : ratingHistory.slice().reverse().map((season) => {
+          const changes = Object.entries(season.truthDeltas ?? {}) as [import('@/domain/player').PlayerTruthRatingKey, { before: number; after: number; delta: number }][]
+          return <details key={season.cycleId ?? String(season.seasonId)}><summary>{season.checkpointDate ?? String(season.seasonId)} · {changes.length} rating changes</summary>
+            <p className="po-dev-stat__note">Age {season.age ?? '—'} · age trend {season.baseTrend ?? '—'} · potential factor {season.potentialGrowthFactor?.toFixed(2) ?? '—'}. Training stimulus was one input; changes are not attributed to individual sessions.</p>
+            <ul className="po-dev-gaps">{changes.sort(([a], [b]) => ratingCategory(a).localeCompare(ratingCategory(b)) || a.localeCompare(b)).map(([key, change]) => <li key={key}><span>{ratingCategory(key)} · {ratingLabel(key)}</span><span>{change.before} → {change.after} ({change.delta > 0 ? '+' : ''}{change.delta})</span></li>)}</ul>
+          </details>
+        })}
+        {stimulusEvents.length > 0 && <details><summary>Stimulus source history · {stimulusEvents.length} records</summary><ul className="po-dev-gaps">{stimulusEvents.slice(0, stimulusVisibleCount).map((event) => <li key={event.id}><span>{event.date} · {event.sourceType === 'match' ? 'Match' : 'Training'} · {event.sourceId}</span><span>{Object.entries(event.byRating).map(([key, amount]) => `${key.replace(/([A-Z])/g, ' $1')} +${amount!.toFixed(2)}`).join(', ')}</span></li>)}</ul>{stimulusEvents.length > stimulusVisibleCount && <button type="button" onClick={() => setStimulusVisibleCount((count) => count + 40)}>Show older stimulus sources</button>}</details>}
+      </section>
     </div>
   )
 }

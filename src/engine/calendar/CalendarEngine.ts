@@ -4,7 +4,9 @@ import { applyOffseasonDevelopment } from '@/engine/development'
 import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
 import { progressFormalOfferResponses, progressNegotiationContactResponses, reconcileExpiredPlayerContracts } from '@/engine/market'
 import { recoverCareerFatigueForDay } from '@/engine/training/TrainingEngine'
-import { executeScheduledTrainingSessions } from '@/engine/training/ScheduledTrainingEngine'
+import { executeScheduledTrainingSessionsWithEvidence } from '@/engine/training/ScheduledTrainingEngine'
+import { progressAiTrainingPlanning } from '@/engine/training/TrainingPlanning'
+import { isStaffWeeklyCheckpoint } from '@/engine/staff'
 import { openDraft, progressDraftAi, progressDraftProspectAdvisories } from '@/engine/draft'
 import { arriveSignedRecruits, generateRecruitingPool, progressAiRecruiting, progressRecruitingAdvisories, resolveRecruitingCommitments } from '@/engine/recruiting'
 import { progressAiAcademicSupport, resolveAcademicTerm } from '@/engine/academic'
@@ -16,6 +18,8 @@ import { decayMemoriesForMonth } from '@/engine/memory'
 import { progressAdvisoryScoutingReports, progressDelegatedScouting, progressScoutingAssignments } from '@/engine/scouting'
 import { progressOppositionScoutingReports } from '@/engine/tactics/OppositionScoutingReportEngine'
 import { progressMedicalAdvisories } from '@/engine/injury'
+import { progressAiMedicalLifecycle } from '@/engine/injury/AiMedicalLifecycle'
+import { progressRehabilitationSetbacks } from '@/engine/injury/Rehabilitation'
 import { progressBasketballOperationsAdvisories } from '@/engine/roster'
 import { progressStaffCareerAutonomyAppraisal, progressStaffHumanState } from '@/engine/staff/StaffHumanStatePipeline'
 import { progressStaffCultureAndCohesion } from '@/engine/staff/StaffCultureCohesionPipeline'
@@ -27,9 +31,9 @@ import { expireStaleRetentionNegotiations } from '@/engine/contractRetention/Con
 import { progressAiRetentionNegotiationsWithEvidence, type AiRetentionDecisionEvidence } from '@/engine/contractRetention/AiRetentionEngine'
 
 export const DAILY_LIFECYCLE_PHASE_IDS = [
-  'DATE_ADVANCE', 'ANNUAL_PLAYER_DEVELOPMENT', 'CAREER_FATIGUE_RECOVERY', 'EXPIRED_CONTRACT_RECONCILIATION', 'RETENTION_NEGOTIATION_INVALIDATION', 'AI_RETENTION_NEGOTIATIONS', 'MARKET_CONTACT_RESPONSES', 'MARKET_FORMAL_OFFER_RESPONSES', 'TRAINING', 'RECRUITING', 'ACADEMICS',
+  'DATE_ADVANCE', 'ANNUAL_PLAYER_DEVELOPMENT', 'CAREER_FATIGUE_RECOVERY', 'EXPIRED_CONTRACT_RECONCILIATION', 'RETENTION_NEGOTIATION_INVALIDATION', 'AI_RETENTION_NEGOTIATIONS', 'MARKET_CONTACT_RESPONSES', 'MARKET_FORMAL_OFFER_RESPONSES', 'AI_TRAINING_PLANNING', 'TRAINING', 'RECRUITING', 'ACADEMICS',
   'NIL_LIFECYCLE', 'MONTHLY_NIL_AUTONOMY', 'MONTHLY_BOOSTER_AUTONOMY', 'COACH_FINANCE', 'MEMORY_DECAY',
-  'ENFORCEMENT', 'SCOUTING_INTAKE', 'MEDICAL_AND_ROSTER_ADVISORIES', 'SCOUTING_ASSIGNMENTS', 'DRAFT',
+  'ENFORCEMENT', 'SCOUTING_INTAKE', 'MEDICAL_AND_ROSTER_ADVISORIES', 'AI_MEDICAL_DECISIONS', 'SCOUTING_ASSIGNMENTS', 'DRAFT',
   'STAFF_HUMAN_STATE', 'STAFF_CONFLICTS', 'STAFF_CULTURE_COHESION', 'STAFF_POLITICAL_CASES', 'STAFF_APPRAISAL',
   'STAFF_CAREER_AUTONOMY', 'FACILITY_CONDITION', 'CLUB_FINANCE_V2', 'GOVERNANCE', 'EVENT_COLLECTION',
 ] as const
@@ -121,7 +125,26 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
     })))
     run('MARKET_CONTACT_RESPONSES', current.currentDate, true, progressNegotiationContactResponses, 'Due term-free contact responses are processed after contract reconciliation.')
     run('MARKET_FORMAL_OFFER_RESPONSES', current.currentDate, true, progressFormalOfferResponses, 'Due formal free-agent offer responses are processed after contact responses.')
-    run('TRAINING', current.currentDate, true, executeScheduledTrainingSessions, 'Scheduled training is checked every simulation day.')
+    let aiTrainingDecisions: ReturnType<typeof progressAiTrainingPlanning>['decisions'] = []
+    run('AI_TRAINING_PLANNING', current.currentDate, isStaffWeeklyCheckpoint(current.currentDate), (input) => {
+      const result = progressAiTrainingPlanning(input)
+      aiTrainingDecisions = result.decisions
+      return result.world
+    }, 'AI Training plans are reviewed on the ISO Monday checkpoint.', () => aiTrainingDecisions.map((decision) => ({
+      code: `AI_TRAINING_${decision.action}`,
+      message: `${decision.reason} ${decision.sessionIds.length} session(s) scheduled.`,
+      sourceId: decision.sessionIds[0] ?? decision.teamId,
+    })))
+    let trainingConflicts: readonly string[] = []
+    run('TRAINING', current.currentDate, true, (input) => {
+      const result = executeScheduledTrainingSessionsWithEvidence(input)
+      trainingConflicts = result.matchConflictSessionIds
+      return result.world
+    }, 'Scheduled Training is checked every simulation day; fixture-date conflicts are skipped.', () => trainingConflicts.map((sessionId) => ({
+      code: 'TRAINING_MATCH_CONFLICT',
+      message: `Scheduled session ${sessionId} was not executed because a fixture is on that date.`,
+      sourceId: sessionId,
+    })))
     run('RECRUITING', current.currentDate, true, progressRecruiting, 'Recruiting cycle status and due lifecycle are checked every simulation day.')
     run('ACADEMICS', current.currentDate, current.currentDate.slice(5) === '01-01' || current.currentDate.slice(5) === '07-01', progressAcademicTerms, 'Academic terms resolve on 1 January and 1 July.')
     run('NIL_LIFECYCLE', current.currentDate, true, progressNilLifecycle, 'NIL expiry and lifecycle are checked every simulation day.')
@@ -131,7 +154,17 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
     run('MEMORY_DECAY', current.currentDate, current.currentDate.slice(-2) === '01', decayMemoriesForMonth, 'Memory decay runs on the first day of each month.')
     run('ENFORCEMENT', current.currentDate, true, progressEnforcement, 'Enforcement lifecycle is checked every simulation day.')
     run('SCOUTING_INTAKE', current.currentDate, true, (input) => progressOppositionScoutingReports(progressAdvisoryScoutingReports(progressDelegatedScouting(input))), 'Scouting intake is checked every simulation day.')
-    run('MEDICAL_AND_ROSTER_ADVISORIES', current.currentDate, true, (input) => progressBasketballOperationsAdvisories(progressMedicalAdvisories(input)), 'Medical and basketball-operations advisories are checked every simulation day.')
+    run('MEDICAL_AND_ROSTER_ADVISORIES', current.currentDate, true, (input) => progressBasketballOperationsAdvisories(progressMedicalAdvisories(progressRehabilitationSetbacks(input))), 'Rehabilitation setbacks and Medical/basketball-operations advisories are checked every simulation day.')
+    let aiMedicalDecisions: ReturnType<typeof progressAiMedicalLifecycle>['decisions'] = []
+    run('AI_MEDICAL_DECISIONS', current.currentDate, true, (input) => {
+      const result = progressAiMedicalLifecycle(input)
+      aiMedicalDecisions = result.decisions
+      return result.world
+    }, 'AI clubs resolve canonical medical advice and due Return-to-Play reviews after advisory processing.', () => aiMedicalDecisions.map((decision) => ({
+      code: `AI_MEDICAL_${decision.action}`,
+      message: `${decision.action.replaceAll('_', ' ')} for injury ${decision.injuryId}.`,
+      sourceId: decision.sourceId,
+    })))
     run('SCOUTING_ASSIGNMENTS', current.currentDate, true, progressScoutingAssignments, 'Scouting assignments are progressed every simulation day.')
     run('DRAFT', current.currentDate, true, (input) => Object.values(input.draftsById).sort((a, b) => a.id.localeCompare(b.id)).reduce((updated, draft) => {
       const opened = openDraft(updated, draft.id)

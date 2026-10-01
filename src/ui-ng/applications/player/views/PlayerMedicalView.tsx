@@ -66,7 +66,7 @@ export function PlayerMedicalView() {
             >
               {medical.bodyRegions.some((region) => region.status === 'attention')
                 ? '● Issues recorded'
-                : '● All systems healthy'}
+                : '● No injury recorded'}
             </span>
           </header>
           <MedicalBodyMap

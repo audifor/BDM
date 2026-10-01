@@ -1,9 +1,13 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 
 import type { InjuryId, PlayerId, StaffPersonId } from '@/domain/ids'
+import type { RehabilitationMode, ReturnToPlayDecision } from '@/domain/injury'
+import type { DelegationOutcomeId } from '@/domain/responsibility'
 
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
+import { getStaffRecommendationsForTeam } from '@/ui/staffRecommendationPresentation'
+import type { StaffRecommendationPresentationItem } from '@/ui/staffRecommendationPresentation'
 import { buildMedicalWorkspaceModel } from '@/ui-ng/applications/medical/buildMedicalWorkspaceModel'
 import {
   MEDICAL_WORKSPACE_TABS,
@@ -11,6 +15,7 @@ import {
   type MedicalHistoryRow,
   type MedicalInjuredRow,
   type MedicalRiskRow,
+  type MedicalReturnToPlayRow,
   type MedicalStaffRow,
   type MedicalWorkspaceModel,
   type MedicalWorkspaceTabId,
@@ -52,6 +57,74 @@ function MetricRow({ label, value }: { readonly label: string; readonly value: R
       <dt>{label}</dt>
       <dd>{value}</dd>
     </div>
+  )
+}
+
+function ReturnToPlayBoard({
+  rows,
+  onDecision,
+  onFitnessTest,
+  onOpenPlayer,
+}: {
+  readonly rows: readonly MedicalReturnToPlayRow[]
+  readonly onDecision: (injuryId: InjuryId, decision: ReturnToPlayDecision, recommendationOutcomeId?: DelegationOutcomeId) => void
+  readonly onFitnessTest: (injuryId: InjuryId) => void
+  readonly onOpenPlayer: (playerId: PlayerId) => void
+}) {
+  if (rows.length === 0) return null
+  return (
+    <section className="medical-workspace__panel ng-holo-panel medical-workspace__rtp" aria-label="Return-to-Play review">
+      <p className="medical-workspace__eyebrow">RETURN-TO-PLAY REVIEW</p>
+      {rows.map((row) => (
+        <article className="medical-workspace__rtp-row" key={row.injuryId}>
+          <div>
+            <button className="medical-workspace__link" onClick={() => onOpenPlayer(row.playerId)} type="button">{row.playerName}</button>
+            <p>{row.injuryLabel} · injured {row.injuredOnLabel} · projected return {row.expectedReturnLabel} · review due {row.reviewDueLabel} · Career Fatigue {row.fatigue}</p>
+            {row.recommendationSummary === undefined ? <p>No current Staff recommendation.</p> : (
+              <p>Advice from {row.staffName} ({row.staffQuality}/100): {row.recommendationSummary}</p>
+            )}
+            {row.reviewHistory.map((review, index) => <p key={`${review.dateLabel}-${index}`}>Prior review {review.dateLabel}: {review.decision} · {review.actorLabel}</p>)}
+            {row.fitnessTestRequired ? <p>Fitness test required · latest result: {row.fitnessTestResult ?? 'not tested'}</p> : <p>Fitness test not required for this injury.</p>}
+          </div>
+          <div className="medical-workspace__rtp-actions">
+            {row.fitnessTestRequired && !row.canClear ? <button onClick={() => onFitnessTest(row.injuryId)} type="button">RUN FITNESS TEST</button> : null}
+            <button disabled={!row.canClear} onClick={() => onDecision(row.injuryId, 'CLEAR_FOR_PLAY', row.recommendationOutcomeId)} type="button">CLEAR FOR PLAY</button>
+            <button onClick={() => onDecision(row.injuryId, 'CONTINUE_RECOVERY', row.recommendationOutcomeId)} type="button">CONTINUE RECOVERY</button>
+          </div>
+        </article>
+      ))}
+    </section>
+  )
+}
+
+function MedicalRecommendationsBoard({
+  recommendations,
+  onAccept,
+  onDismiss,
+}: {
+  readonly recommendations: readonly StaffRecommendationPresentationItem[]
+  readonly onAccept: (outcomeId: DelegationOutcomeId) => void
+  readonly onDismiss: (outcomeId: DelegationOutcomeId) => void
+}) {
+  if (recommendations.length === 0) return null
+  return (
+    <section className="medical-workspace__panel ng-holo-panel" aria-label="Staff recommendations">
+      <p className="medical-workspace__eyebrow">STAFF RECOMMENDATIONS</p>
+      {recommendations.map((recommendation) => (
+        <article className="medical-workspace__rtp-row" key={recommendation.outcomeId}>
+          <div>
+            <strong>{recommendation.title}</strong>
+            <p>{recommendation.summary} · {recommendation.staffName} · quality {recommendation.qualityScore}/100</p>
+          </div>
+          {recommendation.actionability === 'ACCEPTABLE' ? (
+            <div className="medical-workspace__rtp-actions">
+              <button onClick={() => onAccept(recommendation.outcomeId)} type="button">ACCEPT</button>
+              <button onClick={() => onDismiss(recommendation.outcomeId)} type="button">DISMISS</button>
+            </div>
+          ) : <span>{recommendation.status}</span>}
+        </article>
+      ))}
+    </section>
   )
 }
 
@@ -112,6 +185,7 @@ function OverviewBoard({
                 </button>
               ), { value: (row) => row.playerName }),
               ngCol('injury', 'Injury', (row) => row.injuryLabel, { value: (row) => row.injuryLabel }),
+              ngCol('status', 'Status', (row) => row.lifecycleStatus, { value: (row) => row.lifecycleStatus }),
               ngCol('severity', 'Severity', (row) => (
                 <span className={`medical-workspace__badge medical-workspace__badge--${row.severity}`}>
                   {row.severityLabel}
@@ -133,11 +207,13 @@ function InjuredBoard({
   selectedInjuryId,
   onSelectInjury,
   onOpenPlayer,
+  onSetRehabilitationPlan,
 }: {
   readonly rows: readonly MedicalInjuredRow[]
   readonly selectedInjuryId: InjuryId | undefined
   readonly onSelectInjury: (injuryId: InjuryId) => void
   readonly onOpenPlayer: (playerId: PlayerId) => void
+  readonly onSetRehabilitationPlan: (injuryId: InjuryId, mode: RehabilitationMode) => void
 }) {
   if (rows.length === 0) {
     return <p className="medical-workspace__empty">No active injuries.</p>
@@ -194,9 +270,25 @@ function InjuredBoard({
             <MetricRow label="Source" value={selected.sourceLabel} />
             <MetricRow label="Injured on" value={selected.injuredOnLabel} />
             <MetricRow label="Expected return" value={selected.expectedReturnLabel} />
+            <MetricRow label="Projected review" value={selected.reviewDueLabel} />
+            <MetricRow label="Medical status" value={selected.lifecycleStatus} />
+            <MetricRow label="Fitness test" value={selected.fitnessTestLabel} />
+            <MetricRow label="Career Fatigue" value={selected.fatigue} />
             <MetricRow label="Days remaining" value={selected.daysRemaining} />
             <MetricRow label="Duration" value={selected.durationLabel} />
+            <MetricRow label="Rehabilitation" value={selected.rehabilitationMode.replaceAll('_', ' ')} />
+            <MetricRow label="Suggested plan" value={selected.suggestedRehabilitationMode.replaceAll('_', ' ')} />
           </dl>
+          <p>{selected.rehabilitationConsequence}</p>
+          <label className="medical-workspace__rehab-control">
+            Rehab plan
+            <select disabled={!selected.canChangeRehabilitation} onChange={(event) => onSetRehabilitationPlan(selected.injuryId, event.target.value as RehabilitationMode)} value={selected.rehabilitationMode}>
+              <option value="REST">REST</option>
+              <option value="STANDARD_REHAB">STANDARD REHAB</option>
+              <option value="ACCELERATED_REHAB">ACCELERATED REHAB</option>
+            </select>
+          </label>
+          {selected.rehabilitationHistory.map((entry) => <p key={entry}>{entry}</p>)}
         </aside>
       )}
     </div>
@@ -231,10 +323,13 @@ function HistoryBoard({
               {row.statusLabel}
             </span>
           ), { value: (row) => row.statusLabel }),
+          ngCol('cleared', 'Cleared on', (row) => row.clearedOnLabel ?? '—', { value: (row) => row.clearedOnLabel ?? '—' }),
           ngCol('injured', 'Injured', (row) => row.injuredOnLabel, { value: (row) => row.injuredOnLabel }),
           ngCol('return', 'Return', (row) => row.expectedReturnLabel, { value: (row) => row.expectedReturnLabel }),
           ngCol('duration', 'Duration', (row) => row.durationLabel, { value: (row) => row.durationLabel }),
           ngCol('source', 'Source', (row) => row.sourceLabel, { value: (row) => row.sourceLabel }),
+          ngCol('related', 'Body family / recurrence', (row) => `${row.familyLabel} · ${row.recurrenceLabel}`, { value: (row) => `${row.familyLabel}; ${row.recurrenceLabel}` }),
+          ngCol('medical', 'Rehab / setback / tests / clearance', (row) => <span>{row.rehabSummary} · setback: {row.setbackSummary} · tests: {row.fitnessTestSummary} · cleared: {row.clearanceLabel}</span>, { value: (row) => `${row.rehabSummary}; ${row.setbackSummary}; ${row.fitnessTestSummary}; ${row.clearanceLabel}` }),
         ])}
         gridId="ng-medical-history"
         rows={rows.map((row) => ({ ...row, id: row.injuryId }))}
@@ -362,6 +457,11 @@ function StaffBoard({
 
 export function MedicalWorkspace() {
   const world = useGameStore((state) => state.world)
+  const acceptStaffRecommendation = useGameStore((state) => state.acceptStaffRecommendation)
+  const dismissStaffRecommendation = useGameStore((state) => state.dismissStaffRecommendation)
+  const reviewReturnToPlay = useGameStore((state) => state.reviewReturnToPlay)
+  const setRehabilitationPlan = useGameStore((state) => state.setRehabilitationPlan)
+  const conductFitnessTest = useGameStore((state) => state.conductFitnessTest)
   const [activeTab, setActiveTab] = useState<MedicalWorkspaceTabId>('overview')
   const [selectedInjuryId, setSelectedInjuryId] = useState<InjuryId | undefined>(undefined)
   const [selectedRiskPlayerId, setSelectedRiskPlayerId] = useState<PlayerId | undefined>(undefined)
@@ -389,6 +489,10 @@ export function MedicalWorkspace() {
           })),
     [activeTab, model],
   )
+  const medicalRecommendations = useMemo(
+    () => world === null || model === null ? [] : getStaffRecommendationsForTeam(world, model.teamId).filter((item) => item.domain === 'medical' && (item.status === 'PENDING' || item.status === 'INFORMATIONAL')),
+    [model, world],
+  )
 
   if (world === null || model === null) {
     return (
@@ -414,11 +518,27 @@ export function MedicalWorkspace() {
         }
       >
         <ScrollRegion className="medical-workspace__scroll">
-          {activeTab === 'overview' ? <OverviewBoard model={model} onOpenPlayer={navigateToPlayerMedical} /> : null}
+          {activeTab === 'overview' ? (
+            <>
+              <ReturnToPlayBoard
+                rows={model.returnToPlayReviews}
+                onDecision={(injuryId, decision, outcomeId) => reviewReturnToPlay(injuryId, decision, outcomeId)}
+                onFitnessTest={(injuryId) => conductFitnessTest(injuryId)}
+                onOpenPlayer={navigateToPlayerMedical}
+              />
+              <MedicalRecommendationsBoard
+                recommendations={medicalRecommendations}
+                onAccept={(outcomeId) => acceptStaffRecommendation(outcomeId)}
+                onDismiss={(outcomeId) => dismissStaffRecommendation(outcomeId)}
+              />
+              <OverviewBoard model={model} onOpenPlayer={navigateToPlayerMedical} />
+            </>
+          ) : null}
           {activeTab === 'injured' ? (
             <InjuredBoard
               onOpenPlayer={navigateToPlayerMedical}
               onSelectInjury={setSelectedInjuryId}
+              onSetRehabilitationPlan={(injuryId, mode) => setRehabilitationPlan(injuryId, mode)}
               rows={model.injured}
               selectedInjuryId={selectedInjuryId}
             />

@@ -50,4 +50,15 @@ describe('TrainingPcbPage', () => {
     expect(markup).not.toContain('ALERTA LESIÓN')
     expect(markup).toContain('ALERTA DE FATIGA')
   })
+
+  it('shows derived fixture and load guidance in the NG Team and Load views only', () => {
+    const world = createNewGame()
+    const teamMarkup = renderToStaticMarkup(createElement(TrainingPcbPage, { world, initialTab: 'team', variant: 'ng' }))
+    const loadMarkup = renderToStaticMarkup(createElement(TrainingPcbPage, { world, initialTab: 'load', variant: 'ng' }))
+    const legacyMarkup = renderToStaticMarkup(createElement(TrainingPcbPage, { world, initialTab: 'team', variant: 'legacy' }))
+
+    expect(teamMarkup).toContain('Contexto de planificacion de entrenamiento')
+    expect(loadMarkup).toContain('Planificacion semanal')
+    expect(legacyMarkup).not.toContain('Planificacion semanal')
+  })
 })

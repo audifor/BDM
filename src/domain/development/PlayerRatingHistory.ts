@@ -3,7 +3,10 @@ import {
   CANONICAL_RATING_KEYS,
   type CanonicalRatingKey,
   type LegacyCanonicalPlayerRatings,
+  PLAYER_TRUTH_RATING_KEYS,
+  type PlayerTruthRatingKey,
 } from '@/domain/player'
+import type { GameDate } from '@/domain/date'
 
 /**
  * Canonical rating movement applied by one offseason development transition.
@@ -18,6 +21,15 @@ export interface PlayerSeasonRatingChange {
   /** Season the change closed: the transition ran from this season into the following one. */
   readonly seasonId: SeasonId
   readonly deltas: PlayerRatingDeltas
+  /** Sparse exact changes to the 80 persisted Player Truth ratings. Absent on legacy saves. */
+  readonly truthDeltas?: Readonly<Partial<Record<PlayerTruthRatingKey, { readonly before: number; readonly after: number; readonly delta: number }>>>
+  /** Stimulus present at this checkpoint, retained after the live aggregate resets. */
+  readonly stimulusByRating?: Readonly<Partial<Record<CanonicalRatingKey, number>>>
+  readonly checkpointDate?: GameDate
+  readonly cycleId?: string
+  readonly age?: number
+  readonly baseTrend?: number
+  readonly potentialGrowthFactor?: number
 }
 
 /** Chronological (oldest first) rating movement history for one player. Never contains the current value. */
@@ -33,7 +45,31 @@ export function createPlayerSeasonRatingChange(input: PlayerSeasonRatingChange):
     if (!Number.isInteger(value)) throw new RangeError(`Rating history delta must be an integer: ${key}`)
     if (value !== 0) deltas[key] = value
   }
-  return { seasonId: input.seasonId, deltas: Object.freeze(deltas) }
+  const truthDeltas: Partial<Record<PlayerTruthRatingKey, { before: number; after: number; delta: number }>> = {}
+  for (const key of PLAYER_TRUTH_RATING_KEYS) {
+    const change = input.truthDeltas?.[key]
+    if (change === undefined) continue
+    if (![change.before, change.after, change.delta].every(Number.isInteger) || change.after - change.before !== change.delta) throw new RangeError(`Truth rating history change is invalid: ${key}`)
+    if (change.delta !== 0) truthDeltas[key] = Object.freeze({ ...change })
+  }
+  const stimulusByRating: Partial<Record<CanonicalRatingKey, number>> = {}
+  for (const key of CANONICAL_RATING_KEYS) {
+    const amount = input.stimulusByRating?.[key]
+    if (amount === undefined || amount === 0) continue
+    if (!Number.isFinite(amount) || amount < 0) throw new RangeError(`Rating history stimulus is invalid: ${key}`)
+    stimulusByRating[key] = amount
+  }
+  return {
+    seasonId: input.seasonId,
+    deltas: Object.freeze(deltas),
+    ...(input.truthDeltas === undefined ? {} : { truthDeltas: Object.freeze(truthDeltas) }),
+    ...(input.stimulusByRating === undefined ? {} : { stimulusByRating: Object.freeze(stimulusByRating) }),
+    ...(input.checkpointDate === undefined ? {} : { checkpointDate: input.checkpointDate }),
+    ...(input.cycleId === undefined ? {} : { cycleId: input.cycleId }),
+    ...(input.age === undefined ? {} : { age: input.age }),
+    ...(input.baseTrend === undefined ? {} : { baseTrend: input.baseTrend }),
+    ...(input.potentialGrowthFactor === undefined ? {} : { potentialGrowthFactor: input.potentialGrowthFactor }),
+  }
 }
 
 /** Appends one transition, replacing any previously recorded entry for the same season. */

@@ -21,7 +21,7 @@ import { startUserPlayerContractSigning, recordPlayerContractSigningDecisionEven
 import { executeAcceptedRetentionAgreement } from '@/app/contractRetention/RetentionSigningService'
 import { ensureRetentionPlayerContractSigningDecision } from '@/app/governance/PlayerContractSigningGovernanceService'
 import type { ClubCounterDecision } from '@/app/marketIntelligence'
-import { type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
+import { type InjuryId, type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
 import type { CoachPerkId, CoachSkillId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { getInboxItemsForCoach, getNewsFeed, getRelationshipsForPerson, getUnreadInboxCount, getUserCoachReputationProfile } from '@/domain/world'
@@ -32,8 +32,8 @@ import type { LiveMatchController, LiveMatchStep } from '@/app/game'
 import { create } from 'zustand'
 import { acceptCoachJobOffer, applyUserCoachForJob, declineCoachJobOffer } from '@/app/coachCareer'
 import { getCareerFatigueForPlayer, getLatestTrainingSession, getTrainingPlanForTeam } from '@/domain/world'
-import type { ScheduledTrainingSession, TrainingFocus, TrainingIntensity, UserTrainingModule } from '@/domain/training'
-import { assignTrainingModuleToPlayer, cancelScheduledTrainingSession, createOrUpdateUserTrainingModule, deleteUserTrainingModule, scheduleAutomaticTeamTrainingWeek, scheduleTeamModuleSession, scheduleTrainingSession, setTeamTrainingPlan } from '@/engine/training'
+import type { ScheduledTrainingSession, TrainingFocus, TrainingIntensity, TrainingParticipation, UserTrainingModule } from '@/domain/training'
+import { assignTrainingModuleToPlayer, cancelScheduledTrainingSession, createOrUpdateUserTrainingModule, deleteUserTrainingModule, scheduleAutomaticTeamTrainingWeek, scheduleTeamModuleSession, scheduleTrainingSession, setTeamTrainingPlan, setTrainingParticipation } from '@/engine/training'
 import { clearLineupSlot, setLineupSlot } from '@/engine/tactics/LineupEngine'
 import { getTeamLineup } from '@/domain/world'
 import type { LineupSlot, DefensiveMatchupAssignment, Playbook, SavedPlay } from '@/domain/tactics'
@@ -64,6 +64,11 @@ import { declineStaffCareerRequest, grantStaffCareerRequest } from '@/app/staffC
 import { proposeTradeNegotiation, respondToTradeNegotiation, type TradeNegotiationActionRequest, type TradeNegotiationCommandResult } from '@/app/trades'
 import { startUserTradeCommitment, recordTradeCommitmentEvent, type TradeCommitmentResult } from '@/app/trades'
 import type { TradeProposal } from '@/domain/trade'
+import { reviewReturnToPlay as reviewReturnToPlayCommand, type ReturnToPlayReviewResult } from '@/engine/injury/ReturnToPlayEngine'
+import type { ReturnToPlayDecision } from '@/domain/injury'
+import type { RehabilitationMode } from '@/domain/injury'
+import { conductFitnessTest as conductFitnessTestCommand, type ConductFitnessTestResult } from '@/engine/injury/FitnessTest'
+import { setRehabilitationPlan as setRehabilitationPlanCommand, type SetRehabilitationPlanResult } from '@/engine/injury/Rehabilitation'
 
 interface GameStore {
   readonly world: GameWorld | null
@@ -111,6 +116,9 @@ interface GameStore {
   setStaffResponsibility(input: SetTeamResponsibilityInput): void
   acceptStaffRecommendation(outcomeId: DelegationOutcomeId): StaffRecommendationCommandResult
   dismissStaffRecommendation(outcomeId: DelegationOutcomeId): StaffRecommendationCommandResult
+  reviewReturnToPlay(injuryId: import('@/domain/ids').InjuryId, decision: ReturnToPlayDecision, recommendationOutcomeId?: DelegationOutcomeId): ReturnToPlayReviewResult
+  setRehabilitationPlan(injuryId: InjuryId, mode: RehabilitationMode): SetRehabilitationPlanResult
+  conductFitnessTest(injuryId: InjuryId): ConductFitnessTestResult
   grantStaffCareerRequest(requestId: string): void
   declineStaffCareerRequest(requestId: string): void
   purchaseUserCoachSkill(skillId: CoachSkillId): CoachRpgOperationResult
@@ -121,9 +129,10 @@ interface GameStore {
   setTrainingIntensity(intensity: TrainingIntensity): void
   setTrainingFocus(focus: TrainingFocus): void
   scheduleTrainingSession(session: ScheduledTrainingSession): void
-  scheduleTeamModuleSession(input: { readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: TrainingIntensity; readonly assignedStaffPersonIds?: readonly StaffPersonId[] }): void
+  scheduleTeamModuleSession(input: { readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: TrainingIntensity; readonly assignedStaffPersonIds?: readonly StaffPersonId[]; readonly participationByPlayerId?: Readonly<Record<string, TrainingParticipation>> }): void
   scheduleAutomaticTeamTrainingWeek(weekStart: GameWorld['currentDate']): void
   cancelTrainingSession(sessionId: string): void
+  setTrainingParticipation(input: { readonly sessionId: string; readonly playerId: PlayerId; readonly participation?: TrainingParticipation }): void
   saveUserTrainingModule(module: UserTrainingModule): void
   deleteUserTrainingModule(moduleId: string): void
   assignTrainingModuleToPlayer(input: { readonly playerId: PlayerId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly sessionId: string; readonly assignedStaffPersonIds?: readonly StaffPersonId[] }): void
@@ -292,6 +301,29 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (result.ok) set({ world: result.world })
     return result
   },
+  reviewReturnToPlay: (injuryId, decision, recommendationOutcomeId) => {
+    const world = requireWorld(get().world)
+    const result = reviewReturnToPlayCommand(world, {
+      injuryId,
+      decision,
+      actor: { kind: 'USER', coachId: world.userCoachId },
+      ...(recommendationOutcomeId === undefined ? {} : { recommendationOutcomeId }),
+    })
+    if (result.ok) set({ world: result.world })
+    return result
+  },
+  setRehabilitationPlan: (injuryId, mode) => {
+    const world = requireWorld(get().world)
+    const result = setRehabilitationPlanCommand(world, { injuryId, mode, actor: { kind: 'USER', coachId: world.userCoachId } })
+    if (result.ok) set({ world: result.world })
+    return result
+  },
+  conductFitnessTest: (injuryId) => {
+    const world = requireWorld(get().world)
+    const result = conductFitnessTestCommand(world, { injuryId, actor: { kind: 'USER', coachId: world.userCoachId } })
+    if (result.ok) set({ world: result.world })
+    return result
+  },
   grantStaffCareerRequest: (requestId) => set({ world: grantStaffCareerRequest(requireWorld(get().world), requestId) }),
   declineStaffCareerRequest: (requestId) => set({ world: declineStaffCareerRequest(requireWorld(get().world), requestId) }),
   purchaseUserCoachSkill: (skillId) => { const result = purchaseCoachSkillRank(requireWorld(get().world), requireWorld(get().world).userCoachId, skillId); if (result.ok) set({ world: result.world }); return result },
@@ -305,6 +337,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   scheduleTeamModuleSession: (input) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: scheduleTeamModuleSession(world, { teamId: team.id, ...input }) }) },
   scheduleAutomaticTeamTrainingWeek: (weekStart) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: scheduleAutomaticTeamTrainingWeek(world, { teamId: team.id, weekStart }) }) },
   cancelTrainingSession: (sessionId) => set({ world: cancelScheduledTrainingSession(requireWorld(get().world), sessionId) }),
+  setTrainingParticipation: (input) => set({ world: setTrainingParticipation(requireWorld(get().world), input) }),
   saveUserTrainingModule: (module) => set({ world: createOrUpdateUserTrainingModule(requireWorld(get().world), module) }),
   deleteUserTrainingModule: (moduleId) => set({ world: deleteUserTrainingModule(requireWorld(get().world), moduleId) }),
   assignTrainingModuleToPlayer: (input) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: assignTrainingModuleToPlayer(world, { teamId: team.id, ...input }) }) },

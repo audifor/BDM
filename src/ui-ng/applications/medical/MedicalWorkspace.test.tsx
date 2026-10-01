@@ -5,10 +5,13 @@ import '@testing-library/jest-dom/vitest'
 
 import { createNewGame } from '@/app/game'
 import { addDays } from '@/domain/date'
-import { injuryIdFromString } from '@/domain/ids'
+import { injuryIdFromString, staffPersonIdFromString, teamStaffAssignmentIdFromString } from '@/domain/ids'
 import { createInjury } from '@/domain/injury'
+import { createResponsibility, responsibilityIdForTeam } from '@/domain/responsibility'
 import { updateGameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
+import { progressMedicalAdvisories } from '@/engine/injury/MedicalAdvisory'
+import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { useGameStore } from '@/stores/gameStore'
 import { MedicalWorkspace } from '@/ui-ng/applications/medical/MedicalWorkspace'
 import { STAFF_ROLE_LABELS } from '@/ui/staffPresentation'
@@ -91,5 +94,88 @@ describe('MedicalWorkspace', () => {
     const url = new URL(window.location.href)
     expect(url.searchParams.get('playerId')).toBe(playerId)
     expect(url.searchParams.get('playerView')).toBe('medical')
+  })
+
+  it('lets the user change rehab mode from the InjuryRecord dossier', () => {
+    const base = createNewGame()
+    const { world } = withInjury(base)
+    mountMedicalWorkspace(world)
+    fireEvent.click(screen.getByRole('button', { name: /^Injured/ }))
+    fireEvent.change(screen.getByLabelText('Rehab plan'), { target: { value: 'ACCELERATED_REHAB' } })
+    const updated = useGameStore.getState().world!
+    const injury = Object.values(updated.injuriesById).find((item) => item.kind === 'hamstringStrain')!
+    expect(injury.rehabilitation?.mode).toBe('ACCELERATED_REHAB')
+    expect(injury.rehabilitation?.history.at(-1)).toMatchObject({ mode: 'ACCELERATED_REHAB', actor: { kind: 'USER', coachId: updated.userCoachId } })
+  })
+
+  it('requires and records a fitness test before a serious injury can be cleared', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const playerId = team.rosterPlayerIds[0]!
+    const injury = createInjury({
+      id: injuryIdFromString('injury-medical-test-required'), playerId, kind: 'kneeSprain', severity: 'serious',
+      injuredOn: addDays(base.currentDate, -30), expectedReturnDate: base.currentDate,
+    })
+    mountMedicalWorkspace(updateGameWorld(base, { injuries: [injury] }))
+    expect(screen.getByRole('button', { name: 'RUN FITNESS TEST' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'CLEAR FOR PLAY' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'RUN FITNESS TEST' }))
+    const tested = useGameStore.getState().world!.injuriesById[injury.id]!
+    expect(tested.fitnessTests).toHaveLength(1)
+    expect(tested.returnToPlay?.clearedOn).toBeUndefined()
+  })
+
+  it('lets the user clear or defer a due RTP review from Medical', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const playerId = team.rosterPlayerIds[0]!
+    const injury = createInjury({
+      id: injuryIdFromString('injury-medical-review-action'), playerId, kind: 'kneeSprain', severity: 'moderate',
+      injuredOn: addDays(base.currentDate, -10), expectedReturnDate: base.currentDate,
+    })
+    const view = mountMedicalWorkspace(updateGameWorld(base, { injuries: [injury] }))
+
+    expect(screen.getAllByText('RETURN-TO-PLAY REVIEW').length).toBeGreaterThan(0)
+    fireEvent.click(screen.getByRole('button', { name: 'CONTINUE RECOVERY' }))
+    let updated = useGameStore.getState().world!
+    expect(updated.injuriesById[injury.id]?.expectedReturnDate).toBe(injury.expectedReturnDate)
+    expect(updated.injuriesById[injury.id]?.returnToPlay?.reviewDueOn).toBe(addDays(base.currentDate, 1))
+
+    const dueAgain = updateGameWorld(updated, { currentDate: addDays(base.currentDate, 1) })
+    view.unmount()
+    mountMedicalWorkspace(dueAgain)
+    fireEvent.click(screen.getByRole('button', { name: 'CLEAR FOR PLAY' }))
+    updated = useGameStore.getState().world!
+    expect(updated.injuriesById[injury.id]?.returnToPlay?.clearedOn).toBe(dueAgain.currentDate)
+    expect(updated.injuriesById[injury.id]?.returnToPlay?.reviews).toHaveLength(2)
+  })
+
+  it('uses the existing Staff recommendation accept action without clearing the injury', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const playerId = team.rosterPlayerIds[0]!
+    const staffId = staffPersonIdFromString(`medical-ui-staff:${team.id}`)
+    const staff = { id: staffId, identity: { firstName: 'Medical', lastName: 'Advisor' }, professional: { attributes: Object.fromEntries(STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.map((key) => [key, 60])) as Record<typeof STAFF_PROFESSIONAL_ATTRIBUTE_KEYS[number], number> } }
+    const injury = createInjury({
+      id: injuryIdFromString('injury-medical-recommendation'), playerId, kind: 'hamstringStrain', severity: 'moderate',
+      injuredOn: base.currentDate, expectedReturnDate: addDays(base.currentDate, 15),
+    })
+    const withStaff = updateGameWorld(base, {
+      staffPeople: [...Object.values(base.staffPeopleById), staff],
+      teamStaffAssignments: [...Object.values(base.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString(`medical-ui-assignment:${team.id}`), staffPersonId: staffId, teamId: team.id, role: 'teamDoctor', assignedOn: base.currentDate }],
+    })
+    const responsibility = createResponsibility({
+      id: responsibilityIdForTeam(team.id, 'returnToPlayRecommendation'), teamId: team.id,
+      kind: 'returnToPlayRecommendation', mode: 'advisory', holderStaffId: staffId, assignedOn: base.currentDate,
+    })
+    const advised = progressMedicalAdvisories(updateGameWorld(withStaff, { injuries: [injury], responsibilities: [responsibility] }))
+    const outcome = Object.values(advised.delegationOutcomesById).find((item) => item.kind === 'returnToPlayRecommendation' && item.payload.injuryId === injury.id)!
+    mountMedicalWorkspace(advised)
+
+    fireEvent.click(screen.getByRole('button', { name: 'ACCEPT' }))
+    const updated = useGameStore.getState().world!
+    expect(updated.delegationOutcomesById[outcome.id]?.userDisposition).toBe('accepted')
+    expect(updated.injuriesById[injury.id]?.returnToPlay?.clearedOn).toBeUndefined()
+    expect(updated.delegationOutcomesById[outcome.id]?.applied).toBe(true)
   })
 })

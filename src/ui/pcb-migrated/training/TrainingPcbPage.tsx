@@ -2,7 +2,7 @@ import { Fragment, useMemo, useState, type ReactNode } from "react";
 import type { GameWorld } from "@/domain/world";
 import { getCareerFatigueForPlayer, getDevelopmentStimulusForPlayer, getGamesForTeam, getTeamRoster } from "@/domain/world";
 import { getUserTeam } from "@/engine/calendar";
-import { canTeamTrainOnDate, dailyLoadStatusForTeam, dailyScheduledLoad, nextEligibleTrainingDate } from "@/engine/training";
+import { buildTrainingPlanningContext, canTeamTrainOnDate, dailyLoadStatusForTeam, dailyScheduledLoad, nextEligibleTrainingDate, recommendTrainingParticipation, type TrainingPlanningWarningCode } from "@/engine/training";
 import { addDays, formatGameDate, isoWeekNumber, parseGameDate, type GameDate } from "@/domain/date";
 import { BASKETBALL_RATING_KEYS, type BasketballRatingKey, type Player } from "@/domain/player";
 import type { Team } from "@/domain/team";
@@ -12,7 +12,7 @@ import { STAFF_ROLE_REGISTRY, type StaffRoleId } from "@/domain/staff";
 import { STAFF_ROLE_LABELS } from "@/ui/staffPresentation";
 import { useEntityContextMenu } from "@/ui/entityContextMenu/EntityContextMenuProvider";
 import { PlayerNameLink } from "@/ui/navigation/PlayerNameLink";
-import { TRAINING_CATALOG, trainingLoad, type DailyLoadStatus, type ScheduledTrainingSession, type TrainingCategory, type TrainingFocus, type TrainingIntensity as DomainTrainingIntensity, type TrainingDefinition, type TrainingScope, type UserTrainingModule } from "@/domain/training";
+import { TRAINING_CATALOG, trainingDefinitionById, trainingLoad, type DailyLoadStatus, type ScheduledTrainingSession, type TrainingCategory, type TrainingFocus, type TrainingIntensity as DomainTrainingIntensity, type TrainingDefinition, type TrainingParticipation, type TrainingScope, type UserTrainingModule } from "@/domain/training";
 import { ATTRIBUTE_LABELS } from "@/ui/attributeLabels";
 import { selectLatestUserTrainingSession, selectUserTeamScheduledSessions, selectUserTrainingModules, selectUserTrainingPlan } from "@/stores/gameStore";
 import { PrecisionDivHead } from "@/ui-ng/components/PrecisionDivHead";
@@ -49,6 +49,14 @@ const INTENSITY_ES: Record<DomainTrainingIntensity, "Baja" | "Media" | "Alta"> =
 const INTENSITY_FROM_ES: Record<"Baja" | "Media" | "Alta", DomainTrainingIntensity> = { Baja: "light", Media: "normal", Alta: "high" };
 const LOAD_STATUS_LABELS: Record<DailyLoadStatus, string> = { OK: "OK", HIGH: "Alta", VERY_HIGH: "Muy alta" };
 const LOAD_STATUS_TONE: Record<DailyLoadStatus, "good" | "warn" | "danger"> = { OK: "good", HIGH: "warn", VERY_HIGH: "danger" };
+const PLANNING_WARNING_LABELS: Readonly<Record<TrainingPlanningWarningCode, string>> = {
+  MATCH_TODAY: "Hay un partido hoy; no se recomienda programar entrenamiento.",
+  MATCH_TOMORROW: "Hay un partido manana; evita la carga fisica alta.",
+  DENSE_FIXTURE_WINDOW: "Calendario denso: baja la carga y prioriza recuperacion.",
+  HIGH_PLAYER_FATIGUE: "Hay jugadores con fatiga alta; se recomienda carga ligera.",
+  HIGH_SCHEDULED_LOAD: "La carga ya programada es alta en los proximos siete dias.",
+  MATCH_TRAINING_CONFLICT: "Hay sesiones programadas que coinciden con un partido; no se ejecutaran.",
+};
 const DAY_NAMES = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
 function playerName(player: Player): string {
@@ -191,6 +199,7 @@ export function TrainingPcbPage({
   onScheduleTeamModule,
   onScheduleAutomaticWeek,
   onCancelSession,
+  onSetTrainingParticipation,
   onSaveModule,
   onDeleteModule,
   onAssignModule,
@@ -207,6 +216,7 @@ export function TrainingPcbPage({
   readonly onScheduleTeamModule?: (input: { readonly moduleId: string; readonly date: GameDate; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: DomainTrainingIntensity; readonly assignedStaffPersonIds?: readonly StaffPersonId[] }) => void;
   readonly onScheduleAutomaticWeek?: (weekStart: GameDate) => void;
   readonly onCancelSession?: (sessionId: string) => void;
+  readonly onSetTrainingParticipation?: (sessionId: string, playerId: PlayerId, participation?: TrainingParticipation) => void;
   readonly onSaveModule?: (module: UserTrainingModule) => void;
   readonly onDeleteModule?: (moduleId: string) => void;
   readonly onAssignModule?: (input: TrainingModuleAssignmentInput) => void;
@@ -238,9 +248,13 @@ export function TrainingPcbPage({
         storageKey="pcbasket.subnav.training"
       />
       ) : null}
+      {variant === "ng" && world !== undefined && team !== undefined && (tab === "team" || tab === "load") && (
+        <TrainingPlanningSummary world={world} team={team} />
+      )}
       {tab === "team" ? (
         <TeamTraining
           onCancelSession={onCancelSession}
+          onSetTrainingParticipation={onSetTrainingParticipation}
           onFocus={onFocus}
           onIntensity={onIntensity}
           onScheduleAutomaticWeek={onScheduleAutomaticWeek}
@@ -264,6 +278,37 @@ export function TrainingPcbPage({
   );
 }
 
+function TrainingPlanningSummary({ world, team }: { readonly world: GameWorld; readonly team: Team }) {
+  const context = buildTrainingPlanningContext(world, team.id);
+  const recommendation = context.recommendation === "REST"
+    ? "Descanso en dia de partido"
+    : context.recommendation === "RECOVERY"
+      ? `Recuperacion (${trainingDefinitionById(context.recommendedModuleId!).name})`
+      : context.recommendation === "LIGHT"
+        ? `Carga ligera (${trainingDefinitionById(context.recommendedModuleId!).name})`
+        : `Plan actual (${trainingDefinitionById(context.recommendedModuleId!).name}, ${INTENSITY_LABELS[context.recommendedIntensity!]})`;
+  const warnings = context.warnings.map((warning) => {
+    if (warning === "DENSE_FIXTURE_WINDOW") return `${PLANNING_WARNING_LABELS[warning]} ${context.fixtureDensity.gamesNext7Days} partidos proximos.`;
+    if (warning === "HIGH_PLAYER_FATIGUE") return `${context.fatigue.highCount} jugadores con fatiga alta.`;
+    return PLANNING_WARNING_LABELS[warning];
+  });
+
+  return (
+    <section aria-label="Contexto de planificacion de entrenamiento" className="pcb-training__planning-summary">
+      <div>
+        <h2>Planificacion semanal</h2>
+        <p>{context.fixtureDensity.gamesNext7Days} partidos en los proximos siete dias · {context.fixtureDensity.gamesRecent7Days} recientes · fatiga media {context.fatigue.average.toFixed(0)}% · {context.scheduledSessionsNext7Days} sesiones programadas</p>
+      </div>
+      <p><strong>Recomendacion:</strong> {recommendation}</p>
+      {warnings.length > 0 ? (
+        <ul>{warnings.map((warning, index) => <li key={`${index}-${warning}`}>{warning}</li>)}</ul>
+      ) : (
+        <p>Sin alertas de calendario o carga. El plan actual esta disponible para revision.</p>
+      )}
+    </section>
+  );
+}
+
 function TeamTraining({
   world,
   team,
@@ -274,6 +319,7 @@ function TeamTraining({
   onScheduleTeamModule,
   onScheduleAutomaticWeek,
   onCancelSession,
+  onSetTrainingParticipation,
   eligibleStaff,
 }: {
   readonly world?: GameWorld;
@@ -285,6 +331,7 @@ function TeamTraining({
   readonly onScheduleTeamModule?: (input: { readonly moduleId: string; readonly date: GameDate; readonly startTime: string; readonly durationMinutes: number; readonly sessionId: string; readonly intensity?: DomainTrainingIntensity; readonly assignedStaffPersonIds?: readonly StaffPersonId[] }) => void;
   readonly onScheduleAutomaticWeek?: (weekStart: GameDate) => void;
   readonly onCancelSession?: (sessionId: string) => void;
+  readonly onSetTrainingParticipation?: (sessionId: string, playerId: PlayerId, participation?: TrainingParticipation) => void;
   readonly eligibleStaff: readonly { readonly id: StaffPersonId; readonly role: string; readonly name: string }[];
 }) {
   const [week, setWeek] = useState(0);
@@ -293,6 +340,7 @@ function TeamTraining({
     readonly session?: ScheduledTrainingSession;
   }>();
   const [editorError, setEditorError] = useState<string>();
+  const [participationSessionId, setParticipationSessionId] = useState<string>();
   const trainingPlan = world === undefined ? undefined : selectUserTrainingPlan(world);
   const latestSession = world === undefined ? undefined : selectLatestUserTrainingSession(world);
   const impact = world !== undefined && team !== undefined ? getTrainingImpact(world, team.id) : undefined;
@@ -457,6 +505,13 @@ function TeamTraining({
                               <i className={`is-${intensityEs.toLocaleLowerCase()}`}>{intensityEs}</i>
                             </button>
                             <button
+                              aria-expanded={participationSessionId === session.id}
+                              onClick={() => setParticipationSessionId((current) => current === session.id ? undefined : session.id)}
+                              type="button"
+                            >
+                              Load
+                            </button>
+                            <button
                               className="pcb-training__delete"
                               onClick={() => onCancelSession?.(session.id)}
                               title="Eliminar sesión"
@@ -464,6 +519,23 @@ function TeamTraining({
                             >
                               ×
                             </button>
+                            {participationSessionId === session.id && world !== undefined && team !== undefined && (
+                              <div className="pcb-training__participation">
+                                {getTeamRoster(world, team.id).map((player) => {
+                                  const suggestion = recommendTrainingParticipation(world, team.id, player.id, session.date);
+                                  const explicit = session.participationByPlayerId?.[player.id];
+                                  return <label key={player.id}>
+                                    <span>{playerName(player)} · Fatiga {getCareerFatigueForPlayer(world, player.id)} · Sugerido {suggestion}</span>
+                                    <select aria-label={`Participación ${playerName(player)}`} disabled={session.date <= world.currentDate} onChange={(event) => onSetTrainingParticipation?.(session.id, player.id, event.target.value === 'AUTO' ? undefined : event.target.value as TrainingParticipation)} value={explicit ?? 'AUTO'}>
+                                      <option value="AUTO">Automático ({suggestion})</option>
+                                      <option value="FULL">Completa</option>
+                                      <option value="REDUCED">Reducida</option>
+                                      <option value="REST">Descanso</option>
+                                    </select>
+                                  </label>
+                                })}
+                              </div>
+                            )}
                           </article>
                         );
                       })
