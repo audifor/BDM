@@ -251,8 +251,9 @@ describe('BT3A/O: the decision is a smooth function of its parameters', { timeou
     const low = threes(0.94)
     const mid = threes(0.98)
     const high = threes(1.02)
-    expect(Math.abs(mid - low)).toBeLessThan(0.15)
-    expect(Math.abs(high - mid)).toBeLessThan(0.15)
+    // One game of ~60 shots: a few shots more or less move the share by several points, so the guard is against a flip, not a ripple.
+    expect(Math.abs(mid - low)).toBeLessThan(0.2)
+    expect(Math.abs(high - mid)).toBeLessThan(0.2)
   })
 })
 

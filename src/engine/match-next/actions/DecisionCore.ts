@@ -138,8 +138,21 @@ export function workingValue(state: MatchState): number {
   // (transition / early offense), every second lets the defense settle, so the first good look is the look.
   const flow = state.offenseFlow
   const mode = tuning().waitGateMode
-  const organised = mode === 0 || (mode === 1 ? state.transition === null : flow !== null && flow.settledAtT !== null && state.transition === null)
-  return continuationValue(state) * (1 + (organised ? tuning().waitPremium * clamp((seconds - 6) / 14, 0, 1) : 0))
+  const organised = mode === 0 || (mode === 1 ? state.transition === null
+    : mode === 3 ? state.transition === null && flow !== null && !flow.resetPending && defenseIsSet(state)
+      : flow !== null && flow.settledAtT !== null && state.transition === null)
+  return continuationValue(state) * (1 + (organised ? tuning().waitPremium * clamp((seconds - tuning().waitPremiumEndSeconds) / 14, 0, 1) : 0))
+}
+
+/** The defense is set when most defenders are on the spot their responsibility gives them: waiting for a look only pays against a set defense. */
+function defenseIsSet(state: MatchState): boolean {
+  const defenders = state.players.filter((player) => player.active && player.teamId === state.defensiveStructure?.teamId)
+  if (defenders.length === 0) return true
+  const set = defenders.filter((defender) => {
+    const intent = state.movementIntents.find((item) => item.playerId === defender.playerId && item.provenance.owner === 'defensiveStructure')
+    return intent !== undefined && distanceBetween(defender.position, intent.target) <= tuning().defenseSetRadiusMeters
+  }).length
+  return set >= 3
 }
 
 /** The default of `continuationValuePoints` is the factor over the remembered shot value that reproduces the calibrated behaviour. */
@@ -282,7 +295,7 @@ function readReceivers(state: MatchState, passer: MatchPlayerState, basket: Cour
       const opportunity = evaluateShotOpportunity(state, player, player.position, basket, contest)
       const completion = 0.72 + 0.28 * passQuality(state, passer, player)
       // A passer who sees the floor values his teammates' looks at what they are worth; one who does not, misses some of them.
-      const sight = 0.88 + 0.24 * (passer.passing.vision / 100)
+      const sight = 1 - tuning().passSightSpread / 2 + tuning().passSightSpread * (passer.passing.vision / 100)
       return { player, opportunity, completion, value: completion * opportunity.value * sight }
     })
     .sort((left, right) => right.value - left.value || String(left.player.playerId).localeCompare(String(right.player.playerId)))
@@ -337,7 +350,7 @@ function driveValue(state: MatchState, actor: MatchPlayerState, basket: CourtPos
   const rimContest = estimateContestAt(state, actor.teamId, spot).score
   const beaten = evaluateShotOpportunity(state, actor, spot, basket, Math.max(0.3, rimContest * 0.7)).value
   const contested = evaluateShotOpportunity(state, actor, spot, basket, Math.max(0.8, rimContest)).value
-  const contained = workingValue(state) * 0.9
+  const contained = (tuning().driveContainedPremium !== 0 ? workingValue(state) : continuationValue(state)) * 0.9
   const value = pBeat * beaten + (1 - pBeat) * (0.35 * contested + 0.65 * contained)
   return value * (1 + plan.shotProfile.rim * SHOT_PROFILE_VALUE_PER_LEVEL) * Math.pow(0.8, drivesSoFar)
 }
@@ -371,7 +384,7 @@ export function readDriveStop(state: MatchState, driver: MatchPlayerState, baske
   const pFinish = ahead.length === 0 ? 0.9 : clamp(0.28 + 0.9 * edge - 0.12 * (ahead.length - 1), 0.08, 0.8)
   const spot = rimSpotFor(driver.position, basket)
   const rimFinish = evaluateShotOpportunity(state, driver, spot, basket, estimateContestAt(state, driver.teamId, spot).score).value
-  const contained = workingValue(state) * 0.9
+  const contained = (tuning().driveContainedPremium !== 0 ? workingValue(state) : continuationValue(state)) * 0.9
   const cont = pFinish * rimFinish + (1 - pFinish) * contained
   const contestNow = estimateContestAt(state, driver.teamId, driver.position).score
   const speed = Math.hypot(driver.velocity.x, driver.velocity.y)
@@ -519,7 +532,7 @@ function readTheFloor(state: MatchState, actor: MatchPlayerState, basket: CourtP
     shoot: shot.value * tuning().shootValueScale * noise('shoot'),
     drive: drive * tuning().driveValueScale * (1 + (actor.offense.usage - 50) * tuning().usageDrivePerPoint) * noise('drive'),
     // Off a set screen the handler first USES it (attack, pull up); the ball only moves early if he is being trapped.
-    pass: (secondsLeft > 3.5 && (screen === null || screen.coverage === 'blitz') ? (bestReceiver?.value ?? Number.NEGATIVE_INFINITY) * tuning().passValueScale * (1 - (actor.offense.usage - 50) * tuning().usagePassPerPoint) : Number.NEGATIVE_INFINITY) * noise('pass'),
+    pass: (secondsLeft > 3.5 && (screen === null || screen.coverage === 'blitz' || tuning().passOffScreen !== 0) ? (bestReceiver?.value ?? Number.NEGATIVE_INFINITY) * tuning().passValueScale * (1 - (actor.offense.usage - 50) * tuning().usagePassPerPoint) : Number.NEGATIVE_INFINITY) * noise('pass'),
     screen: (screenPlan?.value ?? Number.NEGATIVE_INFINITY) * noise('screen'),
     hold,
   }

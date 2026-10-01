@@ -53,7 +53,7 @@ describe('MatchEnginePort integration', () => {
     const setup = { ...prepared, clockRules: { ...prepared.clockRules, periodCount: 2, periodSeconds: 300, overtimeSeconds: 20 } }
     const live = createMatchEnginePort('match-next').createLiveSession(setup)
 
-    for (let tick = 0; tick < 1200 && !live.matchState.events.some((event) => event.type === 'ballDead' && event.ballReason === 'madeBasket'); tick += 1) {
+    for (let tick = 0; tick < 3000 && fieldGoalBasketDeadBall(live.matchState.events) === undefined; tick += 1) {
       live.advanceOneStep()
     }
 
@@ -290,4 +290,21 @@ describe('MatchEnginePort integration', () => {
     expect(overtimeEnd.isComplete).toBe(true)
     expect(overtimeEnd.events.at(-1)?.type).toBe('gameEnd')
   })
+  it('lines nobody up on a baseline for a throw-in: a restart near the attacked basket opens into the court (BT4.2)', () => {
+    const world = createNewGame()
+    const game = Object.values(world.games).find((candidate) => candidate.status === 'scheduled')!
+    const prepared = createMatchEnginePort('match-next').prepare(world, game, 424242)
+    const live = createMatchEnginePort('match-next').createLiveSession(prepared)
+    const length = live.matchState.court.lengthMeters
+    let throwIns = 0
+    while (!live.matchState.isComplete && live.matchState.t < 14000) {
+      live.advanceOneStep()
+      const state = live.matchState
+      if (state.ball.kind !== 'INBOUND' || !state.events.some((event) => event.t === state.t && event.type === 'inboundStarted')) continue
+      throwIns += 1
+      const onBaseline = state.players.filter((player) => player.active && Math.min(player.position.x, length - player.position.x) < 1.2).length
+      expect(onBaseline).toBeLessThan(6)
+    }
+    expect(throwIns).toBeGreaterThan(20)
+  }, 120_000)
 })

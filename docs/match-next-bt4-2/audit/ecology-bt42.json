@@ -1,0 +1,375 @@
+{
+  "seeds": [
+    424242,
+    7,
+    1,
+    99,
+    2024,
+    31337,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "shotsPerGame": 145.91666666666666,
+  "overall": {
+    "n": 1751,
+    "share": 1,
+    "fgPct": 0.371,
+    "blockedPct": 0.023,
+    "fouledPct": 0.112,
+    "ftPerShot": 0.112,
+    "pointsPerShot": 1.044,
+    "meanProbability": 0.396,
+    "meanContest": 0.596
+  },
+  "byZone": {
+    "RESTRICTED": {
+      "n": 492,
+      "share": 0.281,
+      "fgPct": 0.437,
+      "blockedPct": 0.008,
+      "fouledPct": 0.317,
+      "ftPerShot": 0.317,
+      "pointsPerShot": 1.274,
+      "meanProbability": 0.499,
+      "meanContest": 0.85
+    },
+    "RIM": {
+      "n": 104,
+      "share": 0.059,
+      "fgPct": 0.413,
+      "blockedPct": 0.125,
+      "fouledPct": 0.135,
+      "ftPerShot": 0.135,
+      "pointsPerShot": 1,
+      "meanProbability": 0.52,
+      "meanContest": 0.799
+    },
+    "SHORT_PAINT": {
+      "n": 167,
+      "share": 0.095,
+      "fgPct": 0.413,
+      "blockedPct": 0.132,
+      "fouledPct": 0.09,
+      "ftPerShot": 0.09,
+      "pointsPerShot": 0.946,
+      "meanProbability": 0.418,
+      "meanContest": 0.795
+    },
+    "FLOATER_RANGE": {
+      "n": 53,
+      "share": 0.03,
+      "fgPct": 0.321,
+      "blockedPct": 0.038,
+      "fouledPct": 0.094,
+      "ftPerShot": 0.094,
+      "pointsPerShot": 0.736,
+      "meanProbability": 0.426,
+      "meanContest": 0.793
+    },
+    "MIDRANGE": {
+      "n": 51,
+      "share": 0.029,
+      "fgPct": 0.353,
+      "blockedPct": 0,
+      "fouledPct": 0.039,
+      "ftPerShot": 0.039,
+      "pointsPerShot": 0.745,
+      "meanProbability": 0.318,
+      "meanContest": 0.722
+    },
+    "LONG_MIDRANGE": {
+      "n": 34,
+      "share": 0.019,
+      "fgPct": 0.176,
+      "blockedPct": 0,
+      "fouledPct": 0.029,
+      "ftPerShot": 0.029,
+      "pointsPerShot": 0.412,
+      "meanProbability": 0.296,
+      "meanContest": 0.734
+    },
+    "CORNER_THREE": {
+      "n": 381,
+      "share": 0.218,
+      "fgPct": 0.307,
+      "blockedPct": 0,
+      "fouledPct": 0,
+      "ftPerShot": 0,
+      "pointsPerShot": 0.921,
+      "meanProbability": 0.312,
+      "meanContest": 0.425
+    },
+    "ABOVE_BREAK_THREE": {
+      "n": 414,
+      "share": 0.236,
+      "fgPct": 0.377,
+      "blockedPct": 0,
+      "fouledPct": 0,
+      "ftPerShot": 0,
+      "pointsPerShot": 1.13,
+      "meanProbability": 0.355,
+      "meanContest": 0.277
+    },
+    "DEEP": {
+      "n": 55,
+      "share": 0.031,
+      "fgPct": 0.145,
+      "blockedPct": 0,
+      "fouledPct": 0.055,
+      "ftPerShot": 0.055,
+      "pointsPerShot": 0.527,
+      "meanProbability": 0.172,
+      "meanContest": 0.539
+    }
+  },
+  "byCreation": {
+    "PUTBACK": {
+      "n": 26,
+      "share": 0.015,
+      "fgPct": 0.385,
+      "blockedPct": 0.115,
+      "fouledPct": 0.192,
+      "ftPerShot": 0.192,
+      "pointsPerShot": 1,
+      "meanProbability": 0.435,
+      "meanContest": 0.849
+    },
+    "TRANSITION": {
+      "n": 298,
+      "share": 0.17,
+      "fgPct": 0.366,
+      "blockedPct": 0.047,
+      "fouledPct": 0.174,
+      "ftPerShot": 0.174,
+      "pointsPerShot": 0.94,
+      "meanProbability": 0.413,
+      "meanContest": 0.816
+    },
+    "CUT_FINISH": {
+      "n": 0,
+      "share": 0,
+      "fgPct": 0,
+      "blockedPct": 0,
+      "fouledPct": 0,
+      "ftPerShot": 0,
+      "pointsPerShot": 0,
+      "meanProbability": 0,
+      "meanContest": 0
+    },
+    "KICK_OUT": {
+      "n": 60,
+      "share": 0.034,
+      "fgPct": 0.367,
+      "blockedPct": 0.05,
+      "fouledPct": 0.017,
+      "ftPerShot": 0.017,
+      "pointsPerShot": 1.083,
+      "meanProbability": 0.378,
+      "meanContest": 0.341
+    },
+    "PR_ROLLER": {
+      "n": 27,
+      "share": 0.015,
+      "fgPct": 0.556,
+      "blockedPct": 0,
+      "fouledPct": 0.037,
+      "ftPerShot": 0.037,
+      "pointsPerShot": 1.481,
+      "meanProbability": 0.453,
+      "meanContest": 0.499
+    },
+    "PR_HANDLER": {
+      "n": 113,
+      "share": 0.065,
+      "fgPct": 0.354,
+      "blockedPct": 0.053,
+      "fouledPct": 0.115,
+      "ftPerShot": 0.115,
+      "pointsPerShot": 1.027,
+      "meanProbability": 0.372,
+      "meanContest": 0.58
+    },
+    "DRIVE_FINISH": {
+      "n": 387,
+      "share": 0.221,
+      "fgPct": 0.444,
+      "blockedPct": 0.018,
+      "fouledPct": 0.289,
+      "ftPerShot": 0.289,
+      "pointsPerShot": 1.271,
+      "meanProbability": 0.496,
+      "meanContest": 0.835
+    },
+    "FLOATER": {
+      "n": 35,
+      "share": 0.02,
+      "fgPct": 0.314,
+      "blockedPct": 0,
+      "fouledPct": 0.086,
+      "ftPerShot": 0.086,
+      "pointsPerShot": 0.714,
+      "meanProbability": 0.405,
+      "meanContest": 0.794
+    },
+    "PULL_UP": {
+      "n": 79,
+      "share": 0.045,
+      "fgPct": 0.38,
+      "blockedPct": 0.089,
+      "fouledPct": 0.038,
+      "ftPerShot": 0.038,
+      "pointsPerShot": 0.873,
+      "meanProbability": 0.402,
+      "meanContest": 0.72
+    },
+    "CATCH_AND_SHOOT": {
+      "n": 719,
+      "share": 0.411,
+      "fgPct": 0.331,
+      "blockedPct": 0.001,
+      "fouledPct": 0.007,
+      "ftPerShot": 0.007,
+      "pointsPerShot": 0.983,
+      "meanProbability": 0.338,
+      "meanContest": 0.37
+    },
+    "LATE_CLOCK": {
+      "n": 7,
+      "share": 0.004,
+      "fgPct": 0.286,
+      "blockedPct": 0,
+      "fouledPct": 0.143,
+      "ftPerShot": 0.143,
+      "pointsPerShot": 1.143,
+      "meanProbability": 0.169,
+      "meanContest": 0.852
+    }
+  },
+  "zoneByCreation": {
+    "PUTBACK": {
+      "RESTRICTED": 6,
+      "RIM": 13,
+      "SHORT_PAINT": 7,
+      "FLOATER_RANGE": 0,
+      "MIDRANGE": 0,
+      "LONG_MIDRANGE": 0,
+      "CORNER_THREE": 0,
+      "ABOVE_BREAK_THREE": 0,
+      "DEEP": 0
+    },
+    "TRANSITION": {
+      "RESTRICTED": 131,
+      "RIM": 23,
+      "SHORT_PAINT": 65,
+      "FLOATER_RANGE": 8,
+      "MIDRANGE": 28,
+      "LONG_MIDRANGE": 11,
+      "CORNER_THREE": 0,
+      "ABOVE_BREAK_THREE": 4,
+      "DEEP": 28
+    },
+    "CUT_FINISH": {
+      "RESTRICTED": 0,
+      "RIM": 0,
+      "SHORT_PAINT": 0,
+      "FLOATER_RANGE": 0,
+      "MIDRANGE": 0,
+      "LONG_MIDRANGE": 0,
+      "CORNER_THREE": 0,
+      "ABOVE_BREAK_THREE": 0,
+      "DEEP": 0
+    },
+    "KICK_OUT": {
+      "RESTRICTED": 0,
+      "RIM": 6,
+      "SHORT_PAINT": 1,
+      "FLOATER_RANGE": 0,
+      "MIDRANGE": 0,
+      "LONG_MIDRANGE": 1,
+      "CORNER_THREE": 10,
+      "ABOVE_BREAK_THREE": 34,
+      "DEEP": 8
+    },
+    "PR_ROLLER": {
+      "RESTRICTED": 0,
+      "RIM": 8,
+      "SHORT_PAINT": 2,
+      "FLOATER_RANGE": 2,
+      "MIDRANGE": 0,
+      "LONG_MIDRANGE": 2,
+      "CORNER_THREE": 1,
+      "ABOVE_BREAK_THREE": 12,
+      "DEEP": 0
+    },
+    "PR_HANDLER": {
+      "RESTRICTED": 12,
+      "RIM": 8,
+      "SHORT_PAINT": 14,
+      "FLOATER_RANGE": 10,
+      "MIDRANGE": 4,
+      "LONG_MIDRANGE": 8,
+      "CORNER_THREE": 0,
+      "ABOVE_BREAK_THREE": 52,
+      "DEEP": 5
+    },
+    "DRIVE_FINISH": {
+      "RESTRICTED": 343,
+      "RIM": 28,
+      "SHORT_PAINT": 15,
+      "FLOATER_RANGE": 1,
+      "MIDRANGE": 0,
+      "LONG_MIDRANGE": 0,
+      "CORNER_THREE": 0,
+      "ABOVE_BREAK_THREE": 0,
+      "DEEP": 0
+    },
+    "FLOATER": {
+      "RESTRICTED": 0,
+      "RIM": 0,
+      "SHORT_PAINT": 22,
+      "FLOATER_RANGE": 13,
+      "MIDRANGE": 0,
+      "LONG_MIDRANGE": 0,
+      "CORNER_THREE": 0,
+      "ABOVE_BREAK_THREE": 0,
+      "DEEP": 0
+    },
+    "PULL_UP": {
+      "RESTRICTED": 0,
+      "RIM": 2,
+      "SHORT_PAINT": 36,
+      "FLOATER_RANGE": 15,
+      "MIDRANGE": 11,
+      "LONG_MIDRANGE": 4,
+      "CORNER_THREE": 6,
+      "ABOVE_BREAK_THREE": 3,
+      "DEEP": 2
+    },
+    "CATCH_AND_SHOOT": {
+      "RESTRICTED": 0,
+      "RIM": 16,
+      "SHORT_PAINT": 5,
+      "FLOATER_RANGE": 4,
+      "MIDRANGE": 8,
+      "LONG_MIDRANGE": 6,
+      "CORNER_THREE": 363,
+      "ABOVE_BREAK_THREE": 309,
+      "DEEP": 8
+    },
+    "LATE_CLOCK": {
+      "RESTRICTED": 0,
+      "RIM": 0,
+      "SHORT_PAINT": 0,
+      "FLOATER_RANGE": 0,
+      "MIDRANGE": 0,
+      "LONG_MIDRANGE": 2,
+      "CORNER_THREE": 1,
+      "ABOVE_BREAK_THREE": 0,
+      "DEEP": 4
+    }
+  }
+}

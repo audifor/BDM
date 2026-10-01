@@ -64,12 +64,24 @@ export interface MatchNextTuning {
   readonly waitGateMode: number
   /** Referee strictness: scales every whistle probability of the contact model (1 = the calibrated tolerances). */
   readonly refereeScale: number
+  /** BT4.2: 1 = a stopped transition stays a transition until the carrier is in the frontcourt (whatever started it); 0 = only after a made basket. */
+  readonly transitionHoldsUntilFrontcourt: number
+  /** BT4.2: 1 = the handler may pass off a set screen to a teammate who is better placed (PnR reads); 0 = only when he is trapped. */
+  readonly passOffScreen: number
+  /** BT4.2: 1 = a contained drive is valued with the patience premium (the handler can keep working), 0 = at the plain continuation value. */
+  readonly driveContainedPremium: number
+  /** BT4.2: the patience premium is full above (end + 14) seconds on the shot clock and gone at `end` seconds. */
+  readonly waitPremiumEndSeconds: number
+  /** BT4.2: a defender counts as being on his spot when he is within this distance of the position his responsibility gives him. */
+  readonly defenseSetRadiusMeters: number
+  /** BT4.2: how much the passer's vision changes the worth he sees in his teammates' looks (spread between vision 0 and 100, centred on vision 50). */
+  readonly passSightSpread: number
 }
 
 export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
   closeoutReactionTicks: 2,
   continuationValuePoints: 1.10,
-  screenBaseValuePoints: 1.6,
+  screenBaseValuePoints: 1.4,
   decisionTemperaturePoints: 0.15,
   usageValuePerPoint: 0.004,
   rimBaseMakeProbability: 0.64,
@@ -91,7 +103,7 @@ export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
   usageDrivePerPoint: 0.003,
   usagePassPerPoint: 0.003,
   episodeFoulScale: 1.7,
-  waitPremium: 1.4,
+  waitPremium: 2.0,
   catchGatherTicksPerMps: 0.8,
   catchPressureTicksPerMeter: 2,
   helpSagMaxMeters: 99,
@@ -101,8 +113,14 @@ export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
   probeEnabled: 1,
   offerEnabled: 1,
   backcourtCarryEnabled: 1,
-  waitGateMode: 1,
-  refereeScale: 0.7,
+  waitGateMode: 3,
+  refereeScale: 1,
+  transitionHoldsUntilFrontcourt: 1,
+  passOffScreen: 1,
+  driveContainedPremium: 0,
+  waitPremiumEndSeconds: 6,
+  defenseSetRadiusMeters: 4.5,
+  passSightSpread: 0.8,
 })
 
 let active: MatchNextTuning = DEFAULT_MATCH_NEXT_TUNING

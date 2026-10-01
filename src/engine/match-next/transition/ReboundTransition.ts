@@ -89,8 +89,11 @@ export function finishStoppedTransition(state: MatchState): MatchState {
   const possession = activePossession(state)
   if (!state.transition || !possession || possession.phase !== 'ADVANCE' || state.transition.advantage !== 'STOPPED') return state
   if (state.transition.trigger === 'defensiveRebound' && state.t - state.transition.startedT < 4) return state
-  if (state.transition.trigger === 'madeBasketInbound') {
+  // A transition the defense has stopped is still a possession that has not crossed midcourt: the carrier brings it up (or the ball is
+  // passed up) before the half-court offense begins. A rebounder with a man on him at the rim is not a half court (BT4.2).
+  if (state.transition.trigger === 'madeBasketInbound' || tuning().transitionHoldsUntilFrontcourt !== 0) {
     const handler = state.ball.kind === 'HELD' ? findPlayer(state, state.ball.ownerPlayerId) : undefined
+    if (state.transition.trigger !== 'madeBasketInbound' && handler === undefined) return state
     if (handler && !isInFrontcourt(handler.position, possession.teamId, state)) return state
   }
   return changePossessionPhase(state, 'SETUP')
@@ -237,7 +240,9 @@ function reconcileTransition(input: MatchState): MatchState {
   const ballHandler = next.ball.kind === 'HELD' && next.ball.ownerTeamId === existing.teamId
     ? findPlayer(next, next.ball.ownerPlayerId) : undefined
   const actionActive = next.actions.some((action) => action.teamId === existing.teamId && action.status === 'ACTIVE' && action.kind !== 'CLOSEOUT')
-  if (possession.phase === 'ACTION' && !actionActive && (advantage === 'STOPPED' || ballHandler && isInFrontcourt(ballHandler.position, existing.teamId, next))) {
+  // The half-court phase begins when the ball is in the frontcourt; a defender on the new carrier does not make a half court out of the backcourt (BT4.2).
+  const crossed = ballHandler !== undefined && isInFrontcourt(ballHandler.position, existing.teamId, next)
+  if (possession.phase === 'ACTION' && !actionActive && (crossed || (tuning().transitionHoldsUntilFrontcourt === 0 && advantage === 'STOPPED'))) {
     return changePossessionPhase(next, 'SETUP')
   }
   return next

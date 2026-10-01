@@ -20,6 +20,10 @@ interface PendingInbound {
 }
 
 /** Ticks the inbounder holds the ball before passing it in (0.4 s). */
+/** A restart closer than this to the attacked baseline is a frontcourt throw-in. */
+const FRONTCOURT_RESTART_ROOM_METERS = 12
+const FRONTCOURT_DEFENSE_RING = [{ depth: 2.2, lateral: 0 }, { depth: 3.4, lateral: -3.2 }, { depth: 3.4, lateral: 3.2 }, { depth: 5.2, lateral: -1.8 }, { depth: 5.2, lateral: 1.8 }] as const
+
 const INBOUND_HOLD_TICKS = 4
 
 /** Application owner for a Match Next session; consumers receive immutable frames. */
@@ -192,10 +196,17 @@ function restartTargets(state: MatchState, setup: MatchSetup, inboundTeamId: Mat
   const defenseTeamId = inboundIsHome ? setup.awayTeamId : setup.homeTeamId
   const defenseLineup = state.players.filter((player) => player.active && player.teamId === defenseTeamId).map((player) => player.playerId)
   const basket = attackingBasketForTeam(inboundTeamId, setup.homeTeamId, state.period, state.court)
-  const direction = basket.x >= state.court.lengthMeters / 2 ? 1 : -1
+  const attackDirection = basket.x >= state.court.lengthMeters / 2 ? 1 : -1
   const centerY = state.court.widthMeters / 2
+  // A restart close to the basket the team attacks has no room to open "toward" it (every slot is cut at the baseline and the ten
+  // players end up in a line on it): the offense opens into the court and the defense sets up around the basket instead.
+  const roomToAttackedBaseline = attackDirection > 0 ? state.court.lengthMeters - spot.x : spot.x
+  const frontcourtRestart = roomToAttackedBaseline < FRONTCOURT_RESTART_ROOM_METERS
+  const direction = frontcourtRestart ? -attackDirection : attackDirection
   const targets = new Map<MatchSetup['initialLineups']['home'][number], { readonly x: number; readonly y: number }>([[inbounderPlayerId, spot]])
-  const inboundTargets = reason === 'madeBasketInbound'
+  const inboundTargets = frontcourtRestart
+    ? [{ depth: 2.5, lateral: -4.5 }, { depth: 4.5, lateral: 1.5 }, { depth: 6.5, lateral: -2.5 }, { depth: 8, lateral: 4.5 }]
+    : reason === 'madeBasketInbound'
     ? [{ depth: 3, lateral: 0 }, { depth: 7.5, lateral: -5 }, { depth: 12, lateral: 5 }, { depth: 16, lateral: 1.8 }]
     : [{ depth: 3, lateral: 0 }, { depth: 6, lateral: -3.8 }, { depth: 6, lateral: 3.8 }, { depth: 9, lateral: 1.8 }]
   // The rest keep the lineup order (guards up the floor, bigs nearer the ball), the natural mapping onto the offense's slots, so
@@ -212,6 +223,15 @@ function restartTargets(state: MatchState, setup: MatchSetup, inboundTeamId: Mat
     : [{ depth: 5.5, lateral: 0 }, { depth: 7.5, lateral: -4.2 }, { depth: 7.5, lateral: 4.2 }, { depth: 9.5, lateral: -1.8 }, { depth: 9.5, lateral: 1.8 }]
   defenseLineup.forEach((playerId, index) => {
     const slot = defenseTargets[index]!
+    if (frontcourtRestart) {
+      // Around the basket, between it and the ball: tight on the throw-in, spread across the lane and the arc.
+      const ring = FRONTCOURT_DEFENSE_RING[index]!
+      targets.set(playerId, {
+        x: clampCourtX(basket.x - attackDirection * ring.depth, state.court.lengthMeters),
+        y: clampCourtY(basket.y + ring.lateral, state.court.widthMeters),
+      })
+      return
+    }
     targets.set(playerId, {
       x: clampCourtX(spot.x + direction * slot.depth, state.court.lengthMeters),
       y: clampCourtY(centerY + slot.lateral, state.court.widthMeters),

@@ -5,6 +5,7 @@ import type { MatchNextEvent } from '@/engine/match-next'
 import { preparedSetup } from '../bt2/economy'
 import { quantiles } from './pace'
 import { shotRows } from './ecology'
+import { withTuning, type MatchNextTuning } from '@/engine/match-next/tuning'
 
 /**
  * BT4W player stat distributions and BT4Y extreme games, from the same set of games.
@@ -30,7 +31,8 @@ it.skipIf(process.env.BT2_AUDIT === undefined)('BT4W/Y distributions and extreme
   const lines = new Map<string, Line>()
   const ratings = new Map<string, Record<string, number>>()
   const games: { seed: number; complete: boolean; components: Record<string, number> }[] = []
-  for (const seed of seeds) {
+  const overrides = JSON.parse(process.env.BT4_TUNING ?? '{}') as Partial<MatchNextTuning>
+  withTuning(overrides, () => { for (const seed of seeds) {
     const setup = preparedSetup(seed)
     for (const p of setup.players) ratings.set(String(p.playerId), { usage: p.offense.usage, shooting: p.offense.shooting, rimAttack: p.offense.rimAttack, creation: p.offense.creation, ballSecurity: p.offense.ballSecurity, vision: p.passing?.vision ?? 50, accuracy: p.passing?.accuracy ?? 50, interior: p.defense.interior, steal: p.defense.steal ?? 50, rebounding: p.rebounding.impact, height: p.physical.heightCm ?? 190 })
     const live = createMatchEnginePort('match-next').createLiveSession(setup)
@@ -67,7 +69,7 @@ it.skipIf(process.env.BT2_AUDIT === undefined)('BT4W/Y distributions and extreme
       turnovers: events.filter((e) => e.type === 'turnover').length, oreb: events.filter((e) => e.type === 'reboundSecured' && e.reboundType === 'offensive').length, fouls: events.filter((e) => e.type === 'foul').length,
       fgMade: rows.filter((r) => r.made).length, expectedFieldPoints: Number(expectedField.toFixed(1)), actualFieldPoints: actualField, steals: events.filter((e) => e.type === 'steal').length, blocks: events.filter((e) => e.type === 'shotBlocked').length,
     } })
-  }
+  } })
   // Players: minutes-weighted per-36 lines for regulars.
   const regulars = [...lines.entries()].filter(([, l]) => l.minutes >= seeds.length * 12)
   const per36 = (l: Line, key: keyof Line): number => (l.minutes === 0 ? 0 : (l[key] * 36) / l.minutes)
