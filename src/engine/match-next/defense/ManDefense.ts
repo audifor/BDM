@@ -147,11 +147,12 @@ export function reconcileManDefense(input: MatchState): MatchState {
           }
       decisions.push(decision)
 
-      const target = kind === 'HELP' || kind === 'LOW_MAN'
+      const rawTarget = kind === 'HELP' || kind === 'LOW_MAN'
         ? guardPosition(handlerPosition(state, ballHandlerId, attacker.position), state.ball.position, defendedBasket, 'HELP', state.court, defensiveTactics)
         : kind === 'GAP' && defender.playerId === rimProtectorPlayerId && rotationTarget === undefined
           ? sagTowardRim(attacker, rimProtectorPosition(state.ball.position, defendedBasket, state.court))
           : rotationTarget ?? guardPosition(attacker.position, state.ball.position, defendedBasket, responsibilityTargetKind, state.court, defensiveTactics, attacker.offense.shooting)
+      const target = kind === 'ON_BALL' ? rawTarget : keepGoalSide(rawTarget, state.ball.position, defendedBasket)
       const distanceToTarget = distanceBetween(defender.position, target)
       const handler = ballHandlerId === null ? undefined : playerById.get(ballHandlerId)
       const isContainingDrive = kind === 'ON_BALL' && activeDrive?.playerId === ballHandlerId
@@ -165,7 +166,8 @@ export function reconcileManDefense(input: MatchState): MatchState {
           // A defender who is far from where he must be (a closeout after a catch, a swing to the far side) hustles;
           // a jog is only for small adjustments around his man.
           : distanceToTarget > CLOSEOUT_SPRINT_DISTANCE_METERS ? 'sprint' : distanceToTarget > TRACKING_RUN_DISTANCE_METERS ? 'run' : 'jog'
-      const facing: MovementFacing = { kind: 'BALL' }
+      // With far to go he turns and runs; close to his spot he faces the ball (stance). BT4.2.
+      const facing: MovementFacing = tuning().defenderTravelFacing !== 0 && distanceToTarget > 3 ? { kind: 'TRAVEL' } : { kind: 'BALL' }
       intents.push({
         playerId: defender.playerId,
         target,
@@ -241,6 +243,17 @@ function resolveRimProtector(
  * BT4.1: the weak-side helper keeps a foot in the paint but does not abandon his man: he sags along the line from his man to the
  * help spot, no farther than he can recover from, and less against a man who can punish the space.
  */
+/** A defender never takes a spot farther from his basket than the ball: he stays goal-side, level with the ball at most, and does not follow a trailer into the other half. */
+function keepGoalSide(target: CourtPosition, ball: CourtPosition, basket: CourtPosition): CourtPosition {
+  const margin = tuning().goalSideMarginMeters
+  if (margin <= 0) return target
+  const limit = distanceBetween(ball, basket) + margin
+  const current = distanceBetween(target, basket)
+  if (current <= limit || current < 1e-6) return target
+  const k = limit / current
+  return { x: basket.x + (target.x - basket.x) * k, y: basket.y + (target.y - basket.y) * k }
+}
+
 function sagTowardRim(attacker: MatchPlayerState, helpSpot: CourtPosition): CourtPosition {
   const reach = Math.min(tuning().helpSagMaxMeters, tuning().helpSagBaseMeters + (100 - attacker.offense.shooting) * 0.025)
   const gap = distanceBetween(attacker.position, helpSpot)

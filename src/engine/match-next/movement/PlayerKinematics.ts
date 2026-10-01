@@ -47,7 +47,17 @@ export function stepPlayerKinematics(
   const fatigueFactor = 1 - Math.max(0, Math.min(100, player.fatigue)) * 0.0012
   const braking = Math.max(0.01, profile.brakingMps2)
   const acceleration = Math.max(0.01, profile.accelerationMps2)
-  const maxSpeed = Math.max(0, profile.maxSpeedMps) * fatigueFactor * MOVEMENT_URGENCY_FACTORS[intent.urgency]
+  // A runner is quickest running where he faces; backpedalling or sliding sideways costs top speed (BT4.2).
+  let directionFactor = 1
+  if (profile.backpedalFactor !== undefined && distance > 1e-6) {
+    const facingLength = Math.hypot(player.facing.x, player.facing.y)
+    if (facingLength > 1e-6) {
+      const cosine = (player.facing.x * dx + player.facing.y * dy) / (facingLength * distance)
+      const loss = 1 - profile.backpedalFactor
+      directionFactor = 1 - loss * clamp((0.7 - cosine) / 1.7, 0, 1)
+    }
+  }
+  const maxSpeed = Math.max(0, profile.maxSpeedMps) * fatigueFactor * MOVEMENT_URGENCY_FACTORS[intent.urgency] * directionFactor
   const remaining = Math.max(0, distance - TARGET_ARRIVAL_TOLERANCE_METERS)
   const brakingSpeed = distance <= TARGET_ARRIVAL_TOLERANCE_METERS
     ? 0

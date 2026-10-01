@@ -71,10 +71,11 @@ export function prepareMatchSetup(
  * on a grip of his own (BT4.1). The scale is a tuning parameter so audits can sweep it.
  */
 function gameSpeedKinematics(kinematics: { readonly maxSpeedMps: number; readonly accelerationMps2: number; readonly brakingMps2: number }): MatchNextPlayerProfile['kinematics'] {
-  const { movementAgility, lateralGripFactor } = tuning()
+  const { movementAgility, lateralGripFactor, backpedalSpeedFactor } = tuning()
   const braking = kinematics.brakingMps2 * movementAgility
   return {
     maxSpeedMps: kinematics.maxSpeedMps, accelerationMps2: kinematics.accelerationMps2 * movementAgility, brakingMps2: braking,
     ...(lateralGripFactor > 0 ? { lateralGripMps2: braking * lateralGripFactor } : {}),
+    ...(backpedalSpeedFactor < 1 ? { backpedalFactor: backpedalSpeedFactor } : {}),
   }
 }

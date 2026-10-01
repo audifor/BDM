@@ -11,7 +11,7 @@ import { isHalfCourtSet, runNextAudit } from '../nextAudit'
  */
 it.skipIf(process.env.BT2_AUDIT === undefined)('BT4.1 defense watch', () => {
   const seeds = [424242, 7, 1].slice(0, Number(process.env.BT41_SEEDS ?? 2))
-  interface Row { awayFromTarget: boolean; turning: number; toMan: number; speed: number; kind: string; relation: string; reversal: boolean; targetJump: boolean; ballToMan: number; manToBasket: number }
+  interface Row { backpedal: boolean; sideways: boolean; awayFromTarget: boolean; turning: number; toMan: number; speed: number; kind: string; relation: string; reversal: boolean; targetJump: boolean; ballToMan: number; manToBasket: number }
   const rows: Row[] = []
   const overrides = JSON.parse(process.env.BT41_TUNING ?? '{}') as Partial<MatchNextTuning>
   withTuning(overrides, () => { for (const seed of seeds) {
@@ -39,6 +39,11 @@ it.skipIf(process.env.BT2_AUDIT === undefined)('BT4.1 defense watch', () => {
         const target = defender.intentTarget
         const previousTarget = lastTarget.get(id)
         const targetJump = target !== undefined && previousTarget !== undefined && distanceBetween(target, previousTarget) > 1.2
+        const faceLen = Math.hypot(defender.facing.x, defender.facing.y)
+        const velLen = Math.hypot(defender.velocity.x, defender.velocity.y)
+        const cosFace = faceLen > 1e-6 && velLen > 1e-6 ? (defender.facing.x * defender.velocity.x + defender.facing.y * defender.velocity.y) / (faceLen * velLen) : 1
+        const backpedal = velLen > 3 && cosFace < -0.5
+        const sideways = velLen > 3 && cosFace >= -0.5 && cosFace < 0.4
         let turning = 0
         const speedNow = Math.hypot(defender.velocity?.x ?? 0, defender.velocity?.y ?? 0)
         if (speedNow > 1) {
@@ -55,7 +60,7 @@ it.skipIf(process.env.BT2_AUDIT === undefined)('BT4.1 defense watch', () => {
         if (run <= 8) continue
         const man = offense.find((o) => o.playerId === defender.guarding)
         if (man === undefined) continue
-        rows.push({ awayFromTarget, turning, toMan: distanceBetween(defender.position, man.position), speed: defender.speedMps, kind: defender.responsibility ?? '?', relation: defender.ballRelation ?? '?', reversal, targetJump, ballToMan: distanceBetween(ball, man.position), manToBasket: 0 })
+        rows.push({ backpedal, sideways, awayFromTarget, turning, toMan: distanceBetween(defender.position, man.position), speed: defender.speedMps, kind: defender.responsibility ?? '?', relation: defender.ballRelation ?? '?', reversal, targetJump, ballToMan: distanceBetween(ball, man.position), manToBasket: 0 })
       }
     } })
   } })
@@ -67,7 +72,7 @@ it.skipIf(process.env.BT2_AUDIT === undefined)('BT4.1 defense watch', () => {
   }))
   const summary = {
     frames: rows.length, meanToMan: mean(rows.map((r) => r.toMan)), within1_5m: share((r) => r.toMan <= 1.5), within2_5m: share((r) => r.toMan <= 2.5), beyond3m: share((r) => r.toMan > 3), beyond4m: share((r) => r.toMan > 4),
-    chasing: share((r) => r.speed > 4.5 && r.toMan > 3), orbiting: share((r) => r.turning > 4.2), awayFromTarget: share((r) => r.awayFromTarget), reversalsPerSecond: Number((share((r) => r.reversal) * 10).toFixed(2)), targetJumpsPerSecond: Number((share((r) => r.targetJump) * 10).toFixed(2)),
+    chasing: share((r) => r.speed > 4.5 && r.toMan > 3), backpedalFast: share((r) => r.backpedal), slidingFast: share((r) => r.sideways), fastFrames: share((r) => r.speed > 3), orbiting: share((r) => r.turning > 4.2), awayFromTarget: share((r) => r.awayFromTarget), reversalsPerSecond: Number((share((r) => r.reversal) * 10).toFixed(2)), targetJumpsPerSecond: Number((share((r) => r.targetJump) * 10).toFixed(2)),
     meanSpeed: mean(rows.map((r) => r.speed)), byKind: split((r) => r.kind), byRelation: split((r) => r.relation),
   }
   mkdirSync('docs/match-next-bt4-1/audit', { recursive: true })

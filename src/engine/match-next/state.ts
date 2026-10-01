@@ -357,7 +357,7 @@ export interface MatchPlayerState {
   readonly offense: MatchSetup['players'][number]['offense']
   readonly passing: Required<NonNullable<MatchSetup['players'][number]['passing']>>
   readonly defense: MatchSetup['players'][number]['defense']
-  readonly kinematics: { readonly maxSpeedMps: number; readonly accelerationMps2: number; readonly brakingMps2: number; readonly lateralGripMps2?: number }
+  readonly kinematics: { readonly maxSpeedMps: number; readonly accelerationMps2: number; readonly brakingMps2: number; readonly lateralGripMps2?: number; readonly backpedalFactor?: number }
 }
 
 export interface MatchState {

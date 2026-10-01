@@ -7,7 +7,8 @@ import { createMatchEnginePort } from './MatchEnginePortFactory'
 /** The dead ball of a basket from the field: a free-throw make also ends in a made-basket dead ball, but its clock rules are the free throw's. */
 const fieldGoalBasketDeadBall = (events: readonly MatchNextEvent[]): MatchNextEvent | undefined =>
   events.find((event, index) => event.type === 'ballDead' && event.ballReason === 'madeBasket'
-    && events.slice(Math.max(0, index - 14), index).some((other) => other.type === 'shotMade' && other.t === event.t))
+    && events.slice(Math.max(0, index - 14), index).some((other) => other.type === 'shotMade' && other.t === event.t)
+    && !events.some((other) => other.type === 'foul' && other.t >= event.t - 60 && other.t <= event.t))
 
 describe('MatchEnginePort integration', () => {
   it('opens a live Match Next session with a deterministic center jump ball before possession', () => {
@@ -76,10 +77,12 @@ describe('MatchEnginePort integration', () => {
       .map((target) => Math.hypot(target.x - restartBall.restartSpot!.x, target.y - restartBall.restartSpot!.y))
     expect(Math.max(...teammateDistances)).toBeGreaterThan(2)
 
-    for (let tick = 0; tick < 300 && !live.matchState.events.some((event) => event.type === 'inboundStarted' && event.startReason === 'madeBasketInbound'); tick += 1) {
+    const basketAt = fieldGoalBasketDeadBall(live.matchState.events)!.t
+    const inboundAfterBasket = (event: { readonly type: string; readonly t: number; readonly startReason?: string }): boolean => event.type === 'inboundStarted' && event.startReason === 'madeBasketInbound' && event.t >= basketAt
+    for (let tick = 0; tick < 300 && !live.matchState.events.some(inboundAfterBasket); tick += 1) {
       live.advanceOneStep()
     }
-    expect(live.matchState.events.some((event) => event.type === 'inboundStarted' && event.startReason === 'madeBasketInbound')).toBe(true)
+    expect(live.matchState.events.some(inboundAfterBasket)).toBe(true)
     for (const player of live.matchState.players.filter((item) => item.active)) {
       const target = restartTargets.get(player.playerId)!
       expect(Math.hypot(player.position.x - target.x, player.position.y - target.y)).toBeLessThanOrEqual(0.75)
@@ -94,7 +97,7 @@ describe('MatchEnginePort integration', () => {
     const live = createMatchEnginePort('match-next').createLiveSession(setup)
 
     let snapshot = live.snapshot()
-    for (let tick = 0; tick < 3000 && !(snapshot.frame.events.some((event) => event.type === 'shotMade') && snapshot.frame.events.some((event) => event.type === 'ballDead' && event.ballReason === 'madeBasket')); tick += 1) {
+    for (let tick = 0; tick < 3000 && fieldGoalBasketDeadBall(live.matchState.events) === undefined; tick += 1) {
       snapshot = live.advanceOneStep()
     }
     for (let tick = 0; tick < 500 && !snapshot.frame.events.some((event) => event.type === 'possessionStart' && event.startReason === 'madeBasketInbound'); tick += 1) snapshot = live.advanceOneStep()

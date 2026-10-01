@@ -30,7 +30,7 @@ export interface MatchNextPlayerProfile {
   readonly primaryPosition: BasketballPosition
   readonly secondaryPositions?: readonly BasketballPosition[]
   readonly physical: { readonly heightCm: number; readonly weightKg: number; readonly wingspanCm: number; readonly standingReachCm: number }
-  readonly kinematics: { readonly maxSpeedMps: number; readonly accelerationMps2: number; readonly brakingMps2: number; /** Sideways push of the feet when he changes direction; omitted: one limit for every change of velocity. */ readonly lateralGripMps2?: number }
+  readonly kinematics: { readonly maxSpeedMps: number; readonly accelerationMps2: number; readonly brakingMps2: number; /** Share of the top speed he keeps moving directly away from where he faces; omitted: no penalty. */ readonly backpedalFactor?: number; /** Sideways push of the feet when he changes direction; omitted: one limit for every change of velocity. */ readonly lateralGripMps2?: number }
   readonly offense: { readonly usage: number; readonly rimAttack: number; readonly shooting: number; readonly creation: number; readonly ballSecurity: number }
   readonly passing?: { readonly accuracy: number; readonly vision: number; readonly timing: number }
   readonly defense: { readonly pointOfAttack: number; readonly interior: number; readonly mobility: number; readonly steal?: number }

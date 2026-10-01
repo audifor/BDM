@@ -76,6 +76,12 @@ export interface MatchNextTuning {
   readonly defenseSetRadiusMeters: number
   /** BT4.2: how much the passer's vision changes the worth he sees in his teammates' looks (spread between vision 0 and 100, centred on vision 50). */
   readonly passSightSpread: number
+  /** BT4.2 marking: a defender (not on the ball) never takes a spot farther from his basket than the ball plus this margin; 0 = off. */
+  readonly goalSideMarginMeters: number
+  /** BT4.2: 1 = a defender with far to go runs facing where he runs (turned, not backpedalling at full speed); 0 = always facing the ball. */
+  readonly defenderTravelFacing: number
+  /** BT4.2: top speed a player keeps when he moves directly away from where he faces (backpedal); 1 = no penalty. Sideways costs half of the loss. */
+  readonly backpedalSpeedFactor: number
 }
 
 export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
@@ -121,6 +127,9 @@ export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
   waitPremiumEndSeconds: 6,
   defenseSetRadiusMeters: 4.5,
   passSightSpread: 0.8,
+  goalSideMarginMeters: 1.5,
+  defenderTravelFacing: 1,
+  backpedalSpeedFactor: 0.6,
 })
 
 let active: MatchNextTuning = DEFAULT_MATCH_NEXT_TUNING

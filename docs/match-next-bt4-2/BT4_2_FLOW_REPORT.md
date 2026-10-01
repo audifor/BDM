@@ -113,6 +113,15 @@ Puntos: media 157 (p10 141, p90 177; mín 130, máx 196); posesiones 168 (162–
 - Adaptados por diseño (cada uno por una causa propia): reloj tras canasta de campo y organización del saque (el primer "balón muerto por canasta" puede ser un tiro libre), cadena de acciones y pases tras bloqueo, y el umbral de robustez del reparto de tiro (una partida de ~60 tiros mueve la cuota varios puntos).
 - Nuevo: saque de banda sin apilados en la línea de fondo.
 
+## Adenda: marcaje y patinaje (revisión visual de la persona usuaria, semilla 31337)
+
+Dos fallos vistos en el partido:
+- **"Un jugador se va hasta el otro campo".** El defensor 08 recorría 10 m del aro (x=4) al centro (x=14) y volvía, porque su par asignado era un atacante rezagado en su propio campo. Los objetivos de marcaje no tenían límite respecto al balón. Ahora un defensor que no está sobre el balón no toma un puesto más lejos de su aro que el balón más 1,5 m (`goalSideMarginMeters`), así que no sigue a un rezagado al otro campo. En el mismo tramo los cinco defensores se repliegan de forma monótona (el 08 baja de x=18,5 a 2,7 y se queda).
+- **"El defensor azul patina".** Todos los defensores corrían mirando al balón (orden de orientación fija) y sin penalización por ir de espaldas o de lado. Ahora, con más de 3 m por recorrer, corren mirando hacia donde van (`defenderTravelFacing`), y el motor penaliza la velocidad máxima al ir de espaldas (60%) y algo menos de lado (~85%) (`backpedalSpeedFactor`, en el perfil de cada jugador). Fotogramas de defensores a >3 m/s de espaldas: 4,5% → 3,1%; deslizándose de lado: 3,7% → 2,4%.
+
+Economía con todo encendido (4 semillas): 168,5 posesiones, 174 puntos, FG .40, PPP 1,16, 25 pérdidas (27,5), 23 asistencias, triples 46%, aro 41%, 38 tiros libres. Los tests del puerto del motor que dependían de qué primer tiro entra se adaptaron (un tiro con falta ya no cuenta como "tiro de campo" en el helper).
+Limitación: las cifras de esta adenda son de 3–4 semillas; no he repetido la cadena completa de auditorías con estos dos cambios.
+
 ## Limitaciones restantes
 
 1. **Ritmo a 168,5** (2% sobre el rango) y con un reloj de tiro **bimodal**: el 36% de los primeros tiros sale con 19–15 s, solo el 10% con 14–10 s y el 37% con 9–5 s. La paciencia acaba de golpe cuando el valor de seguir cae por debajo de lo que ofrece el tiro; un partido real tiene una masa central.
