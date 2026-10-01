@@ -30,6 +30,18 @@ describe('EntityActionComposer', () => {
     useEntityActionComposerStore.getState().close()
   })
 
+  it('shows the canonical contract release preview before confirmation', () => {
+    const world = createNewGame(); const team = Object.values(world.teams)[0]!; const playerId = team.rosterPlayerIds[0]!
+    const store = useEntityActionComposerStore.getState()
+    store.open(createEntityRef('player', playerId), { world, controlledTeamId: team.id }, { x: 10, y: 10 })
+    store.chooseAction('player.release')
+    const markup = renderComposer()
+    expect(markup).toContain('Release preview')
+    expect(markup).toContain('Contracts to terminate:')
+    expect(markup).toContain('Future guaranteed obligations:')
+    useEntityActionComposerStore.getState().close()
+  })
+
   it('adapts the same board and Quick grid to Staff and Team catalogs', () => {
     const world = createNewGame(); const team = Object.values(world.teams)[0]!; const staffId = Object.values(world.staffPeopleById)[0]!.id
     useEntityActionComposerStore.getState().open(createEntityRef('staff', staffId), { world, controlledTeamId: team.id }, { x: 10, y: 10 })

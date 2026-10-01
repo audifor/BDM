@@ -62,6 +62,7 @@ function daysBetween(fromDate: GameDate, toDate: GameDate): number {
 export interface ComponentDeteriorationResult {
   readonly componentId: FacilityComponentId
   readonly facilityId: FacilityId
+  readonly fromDate: GameDate
   readonly previousCondition: number | null
   readonly nextCondition: number | null
   readonly previousServiceability: ReturnType<typeof worstServiceabilityImpliedByCondition> | null
@@ -86,38 +87,22 @@ export type FacilityDeteriorationOutcome = (typeof FACILITY_DETERIORATION_OUTCOM
  */
 export function calculateComponentDeterioration(world: GameWorld, facilityId: FacilityId, fromDate: GameDate, toDate: GameDate, usageLoads: readonly FacilityUsageLoad[] = [], thresholds: FacilityDeteriorationThresholds = DEFAULT_FACILITY_DETERIORATION_THRESHOLDS): readonly ComponentDeteriorationResult[] {
   const components = activeFacilityComponentsAt(Object.values(world.facilityComponentsById), facilityId, toDate)
-  const conditionRecords = Object.values(world.facilityComponentConditionRecordsById)
-  const usageByComponent = new Map(usageLoads.map((load) => [load.componentId, load.utilizationRatio]))
-  return components.map((component) => {
-    const previousRecord = componentConditionAt(conditionRecords, component.id, fromDate)
-    const previousCondition = previousRecord?.physicalCondition ?? null
-    const previousServiceability = previousRecord?.serviceability ?? null
-    const utilizationRatio = usageByComponent.get(component.id) ?? 1
-    const nextCondition = conditionAfterElapsedPeriod(previousCondition, component, fromDate, toDate, utilizationRatio, thresholds)
-    const impliedServiceability = nextCondition === null ? null : worstServiceabilityImpliedByCondition(nextCondition, thresholds)
-    const nextServiceability = resolveWorsenedServiceability(previousServiceability, impliedServiceability)
-    const outcomes: FacilityDeteriorationOutcome[] = []
-    if (nextCondition !== null && nextCondition <= thresholds.maintenanceNeedCondition && (previousCondition === null || previousCondition > thresholds.maintenanceNeedCondition)) {
-      outcomes.push('MAINTENANCE_NEED_OPENED')
-    }
-    if (nextServiceability === 'LIMITED' && previousServiceability !== 'LIMITED' && previousServiceability !== 'SEVERELY_LIMITED' && previousServiceability !== 'OUT_OF_SERVICE') {
-      outcomes.push('COMPONENT_LIMITED')
-    }
-    if (nextServiceability === 'OUT_OF_SERVICE' && previousServiceability !== 'OUT_OF_SERVICE') {
-      outcomes.push('COMPONENT_OUT_OF_SERVICE')
-    }
-    const changed = nextCondition !== previousCondition || nextServiceability !== previousServiceability
-    return Object.freeze({
-      componentId: component.id,
-      facilityId,
-      previousCondition,
-      nextCondition,
-      previousServiceability,
-      nextServiceability,
-      changed,
-      outcomes: Object.freeze(outcomes),
-    })
-  })
+  return components.map((component) => calculateOneComponentDeterioration(world, component, fromDate, toDate, usageLoads, thresholds))
+}
+
+function calculateOneComponentDeterioration(world: GameWorld, component: FacilityComponent, fromDate: GameDate, toDate: GameDate, usageLoads: readonly FacilityUsageLoad[], thresholds: FacilityDeteriorationThresholds): ComponentDeteriorationResult {
+  const previousRecord = componentConditionAt(Object.values(world.facilityComponentConditionRecordsById), component.id, fromDate)
+  const previousCondition = previousRecord?.physicalCondition ?? null
+  const previousServiceability = previousRecord?.serviceability ?? null
+  const utilizationRatio = usageLoads.find((load) => load.componentId === component.id)?.utilizationRatio ?? 1
+  const nextCondition = conditionAfterElapsedPeriod(previousCondition, component, fromDate, toDate, utilizationRatio, thresholds)
+  const impliedServiceability = nextCondition === null ? null : worstServiceabilityImpliedByCondition(nextCondition, thresholds)
+  const nextServiceability = resolveWorsenedServiceability(previousServiceability, impliedServiceability)
+  const outcomes: FacilityDeteriorationOutcome[] = []
+  if (nextCondition !== null && nextCondition <= thresholds.maintenanceNeedCondition && (previousCondition === null || previousCondition > thresholds.maintenanceNeedCondition)) outcomes.push('MAINTENANCE_NEED_OPENED')
+  if (nextServiceability === 'LIMITED' && previousServiceability !== 'LIMITED' && previousServiceability !== 'SEVERELY_LIMITED' && previousServiceability !== 'OUT_OF_SERVICE') outcomes.push('COMPONENT_LIMITED')
+  if (nextServiceability === 'OUT_OF_SERVICE' && previousServiceability !== 'OUT_OF_SERVICE') outcomes.push('COMPONENT_OUT_OF_SERVICE')
+  return Object.freeze({ componentId: component.id, facilityId: component.facilityId, fromDate, previousCondition, nextCondition, previousServiceability, nextServiceability, changed: nextCondition !== previousCondition || nextServiceability !== previousServiceability, outcomes: Object.freeze(outcomes) })
 }
 
 function resolveWorsenedServiceability(previous: ReturnType<typeof worstServiceabilityImpliedByCondition> | null, implied: ReturnType<typeof worstServiceabilityImpliedByCondition> | null): ReturnType<typeof worstServiceabilityImpliedByCondition> | null {
@@ -144,6 +129,23 @@ export interface FacilityDeteriorationApplication {
  */
 export function advanceFacilityCondition(world: GameWorld, facilityId: FacilityId, fromDate: GameDate, toDate: GameDate, usageLoads: readonly FacilityUsageLoad[] = [], thresholds: FacilityDeteriorationThresholds = DEFAULT_FACILITY_DETERIORATION_THRESHOLDS): FacilityDeteriorationApplication {
   const results = calculateComponentDeterioration(world, facilityId, fromDate, toDate, usageLoads, thresholds)
+  return applyDeteriorationResults(world, results, toDate)
+}
+
+/** Progresses each component from its own latest canonical condition record to `toDate`. */
+export function advanceFacilitiesConditionFromHistory(world: GameWorld, toDate: GameDate, usageLoads: readonly FacilityUsageLoad[] = [], thresholds: FacilityDeteriorationThresholds = DEFAULT_FACILITY_DETERIORATION_THRESHOLDS): FacilityDeteriorationApplication {
+  const facilityIds = [...new Set(Object.values(world.facilityComponentsById).map((component) => component.facilityId))].sort((a, b) => a.localeCompare(b))
+  const records = Object.values(world.facilityComponentConditionRecordsById)
+  const results = facilityIds.flatMap((facilityId) => [...activeFacilityComponentsAt(Object.values(world.facilityComponentsById), facilityId, toDate)]
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map((component) => {
+      const latestRecord = componentConditionAt(records, component.id, toDate)
+      return calculateOneComponentDeterioration(world, component, latestRecord?.effectiveFrom ?? toDate, toDate, usageLoads, thresholds)
+    }))
+  return applyDeteriorationResults(world, results, toDate)
+}
+
+function applyDeteriorationResults(world: GameWorld, results: readonly ComponentDeteriorationResult[], toDate: GameDate): FacilityDeteriorationApplication {
   const changed = results.filter((result) => result.changed)
   if (changed.length === 0) return { world, results, openedNeeds: [] }
 
@@ -152,7 +154,7 @@ export function advanceFacilityCondition(world: GameWorld, facilityId: FacilityI
   const closedRecordIds = new Set<string>()
 
   for (const result of changed) {
-    const activeRecord = componentConditionAt(existingConditionRecords, result.componentId, fromDate)
+    const activeRecord = componentConditionAt(existingConditionRecords, result.componentId, result.fromDate)
     if (activeRecord !== undefined && activeRecord.effectiveTo === null) closedRecordIds.add(activeRecord.id)
     newConditionRecords.push(createFacilityComponentConditionRecord({
       id: facilityComponentConditionRecordIdFromString(`facility-component-condition:${result.componentId}:${toDate}`),
@@ -174,7 +176,7 @@ export function advanceFacilityCondition(world: GameWorld, facilityId: FacilityI
     if (alreadyOpen) continue
     openedNeeds.push(createFacilityMaintenanceNeed({
       id: facilityMaintenanceNeedIdFromString(`facility-maintenance-need:${result.componentId}:${toDate}`),
-      facilityId,
+      facilityId: result.facilityId,
       componentId: result.componentId,
       detectedAt: toDate,
       type: 'CORRECTIVE',

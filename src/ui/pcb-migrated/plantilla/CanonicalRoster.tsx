@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import type { CanonicalRatingKey, LegacyPlayerRatings, Player } from "@/domain/player";
 import { getPlayerAge, legacyRatingSignals } from "@/domain/player";
+import { getPlayerContractStatus } from "@/domain/contract";
 import { formatInjuryKind } from "@/domain/injury";
 import {
   getCareerFatigueForPlayer,
@@ -429,6 +430,30 @@ export function CanonicalRoster({
         render: (player) =>
           getCurrentPlayerContract(world, player.id)?.term.expiresOn ?? "—",
       },
+      {
+        id: "contract-plan",
+        label: "PLAN",
+        defaultWidth: 150,
+        minWidth: 110,
+        sortable: true,
+        value: (player) => {
+          const contract = getCurrentPlayerContract(world, player.id);
+          if (contract === undefined) return "No active contract";
+          const intent = Object.values(world.contractReviewDecisionsById).find((item) => item.contractId === contract.id)?.intent;
+          const hasSuccessor = Object.values(world.contractsById).some((item) => item.predecessorContractId === contract.id && getPlayerContractStatus(item, world.currentDate) === "scheduled");
+          const hasNegotiation = Object.values(world.retentionNegotiationsById).some((item) => item.predecessorContractId === contract.id && !["REJECTED", "WITHDRAWN", "EXPIRED"].includes(item.status));
+          return [contract.term.expiresOn <= world.currentDate ? "Expired" : "Contracted", hasSuccessor ? "Successor signed" : "", hasNegotiation ? "Negotiation" : "", intent?.replaceAll("_", " ") ?? ""].filter(Boolean).join(" · ");
+        },
+        render: (player) => {
+          const contract = getCurrentPlayerContract(world, player.id);
+          if (contract === undefined) return <span>No active contract</span>;
+          const intent = Object.values(world.contractReviewDecisionsById).find((item) => item.contractId === contract.id)?.intent;
+          const successor = Object.values(world.contractsById).some((item) => item.predecessorContractId === contract.id && getPlayerContractStatus(item, world.currentDate) === "scheduled");
+          const negotiation = Object.values(world.retentionNegotiationsById).some((item) => item.predecessorContractId === contract.id && !["REJECTED", "WITHDRAWN", "EXPIRED"].includes(item.status));
+          const expiring = world.seasons[world.currentSeasonId] !== undefined && contract.term.expiresOn <= world.seasons[world.currentSeasonId]!.endDate;
+          return <span title={[expiring ? "Expiring this season" : undefined, successor ? "Successor signed" : undefined, negotiation ? "Negotiation active" : undefined, intent?.replaceAll("_", " ")].filter(Boolean).join(" · ")}>{[expiring ? "Expiring" : undefined, successor ? "Successor" : undefined, negotiation ? "Negotiating" : undefined, intent?.replaceAll("_", " ")].filter(Boolean).join(" · ") || "—"}</span>;
+        },
+      },
       ...summaryColumns,
       ...ratingColumns(OFFENSE_RATING_KEYS),
       ...ratingColumns(BRAIN_RATING_KEYS),
@@ -474,7 +499,7 @@ export function CanonicalRoster({
       // Compact FM-like overview: core roster fields plus the established
       // FIN/SHO/PMK/PDE/IDE/REB/ATH basketball summary signals (deterministic
       // projections of the 35 canonical ratings) - not every rating/personality column.
-      columnIds: [...baseColumnIds, ...summaryColumnIds, "fatigue", "salary", "expiry"],
+      columnIds: [...baseColumnIds, ...summaryColumnIds, "fatigue", "salary", "expiry", "contract-plan"],
     },
     {
       id: "offense",

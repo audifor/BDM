@@ -10,6 +10,8 @@ import { generateRoundRobinSchedule } from './schedule'
 import { applyMatchResult } from '@/engine/match'
 import { finalizeSeason } from '@/engine/season'
 import { buildNextCompetitionParticipants, getCompetitionTier, resolvePromotionRelegation } from './PromotionRelegation'
+import { advanceCompetitionLifecycles } from '@/app/game/CompetitionLifecycleCoordinator'
+import { startNextSeasonFor } from '@/app/game/startNextSeason'
 
 describe('promotion and relegation', () => {
   it('waits for both independent editions, resolves deterministically, and only changes future participants', () => {
@@ -26,6 +28,8 @@ describe('promotion and relegation', () => {
     const complete = (input: typeof world, seasonId: string) => Object.values(input.games).filter((game) => game.seasonId === seasonId).reduce((current, game) => applyMatchResult(current, { gameId: game.id, homeTeamId: game.homeTeamId, awayTeamId: game.awayTeamId, homeScore: 90, awayScore: 80 }), input)
     world = finalizeSeason(complete(world, lowerSeason.id), lowerSeason.id)
     expect(Object.keys(world.promotionRelegationResolutionsById)).toHaveLength(0)
+    expect(advanceCompetitionLifecycles(world).transitions).toEqual([])
+    expect(() => startNextSeasonFor(world, lowerSeason.id)).toThrow('linked promotion/relegation editions')
     expect(world.ecosystems).toEqual(preserved.ecosystems); expect(world.competitions).toEqual(preserved.competitions); expect(world.trainingPlansByTeamId).toEqual(preserved.training); expect(world.careerFatigueByPlayerId).toEqual(preserved.fatigue); expect(world.inboxItemsById).toEqual(preserved.inbox); expect(world.seasons[lowerSeason.id]!.participantTeamIds).toEqual(preserved.seasons[lowerSeason.id]!.participantTeamIds)
     world = finalizeSeason(complete(world, upperSeason.id), upperSeason.id)
     const resolved = resolvePromotionRelegation(world, upperSeason.id, lowerSeason.id)
@@ -34,6 +38,12 @@ describe('promotion and relegation', () => {
     expect(resolved).toEqual(world)
     expect(buildNextCompetitionParticipants(world, upperSeason.id)).toEqual([...upper.participantTeamIds.slice(0, 3), resolution.promotedTeamIds[0]!])
     expect(buildNextCompetitionParticipants(world, lowerSeason.id)).toEqual([...lower.participantTeamIds.slice(1), resolution.relegatedTeamIds[0]!])
+    const continued = advanceCompetitionLifecycles(world)
+    expect(continued.transitions).toHaveLength(2)
+    const nextUpper = Object.values(continued.world.seasons).find((season) => season.competitionId === upperId && season.id !== upperSeason.id)!
+    const nextLower = Object.values(continued.world.seasons).find((season) => season.competitionId === lowerId && season.id !== lowerSeason.id)!
+    expect(nextUpper.participantTeamIds).toEqual(buildNextCompetitionParticipants(world, upperSeason.id))
+    expect(nextLower.participantTeamIds).toEqual(buildNextCompetitionParticipants(world, lowerSeason.id))
     expect(world.seasons[upperSeason.id]!.participantTeamIds).toEqual(upper.participantTeamIds)
     expect(getCompetitionTier(world, lowerId)?.level).toBe(2)
     expect(Object.values(world.memoriesById)).toEqual(expect.arrayContaining([expect.objectContaining({ tags: expect.arrayContaining(['promotion']), permanent: true }), expect.objectContaining({ tags: expect.arrayContaining(['relegation']), permanent: true })]))

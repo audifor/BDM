@@ -25,10 +25,12 @@ describe("Governance decisions", () => {
     expect(() => createGovernanceDecision({ ...base, decisionType: "FACILITIES", subject: { kind: "COACH", coachId: "coach" } })).toThrow();
     expect(() => createGovernanceDecision({ ...base, decisionType: "EXECUTIVE_FIRING", subject: { kind: "BUDGET", scope: "TEAM", referenceId: "team" } })).toThrow();
     expect(() => createGovernanceDecision({ ...base, decisionType: "BUDGET", subject: { kind: "BUDGET", scope: "TEAM", referenceId: "team" }, source: { kind: "MANAGER_EVALUATION", evaluationId: "evaluation" } })).toThrow();
+    expect(createGovernanceDecision({ ...base, decisionType: 'PLAYER_CONTRACT_SIGNING', subject: { kind: 'GENERIC', referenceId: 'negotiation:offer' } }).decisionType).toBe('PLAYER_CONTRACT_SIGNING')
+    expect(() => createGovernanceDecision({ ...base, decisionType: 'PLAYER_CONTRACT_SIGNING', subject: { kind: 'BUDGET', scope: 'TEAM', referenceId: 'team' } })).toThrow()
   });
   it('defines one exhaustive execution policy and rejects unknown decision types', () => {
     expect(GOVERNANCE_DECISION_TYPES.map(governanceDecisionExecutionPolicy)).toEqual([
-      'FORMAL_ONLY', 'FORMAL_ONLY', 'EFFECT_REQUIRED', 'EFFECT_REQUIRED', 'FORMAL_ONLY', 'EFFECT_REQUIRED', 'EFFECT_REQUIRED', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY',
+      'FORMAL_ONLY', 'FORMAL_ONLY', 'EFFECT_REQUIRED', 'EFFECT_REQUIRED', 'FORMAL_ONLY', 'EFFECT_REQUIRED', 'EFFECT_REQUIRED', 'FORMAL_ONLY', 'EFFECT_REQUIRED', 'EFFECT_REQUIRED', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY', 'FORMAL_ONLY',
     ])
     expect(() => governanceDecisionExecutionPolicy('UNKNOWN')).toThrow('Unknown governance decision type')
   })
@@ -36,6 +38,7 @@ describe("Governance decisions", () => {
     const rights = resolveGovernanceDecisionRights({ decisionType: "COACH_FIRING", institutionId: "club", asOfDate: date, bodies: clubBodies, authorityGrants: [...authorities].reverse(), participationGrants: [...participation].reverse() });
     expect(rights.proposerBodyIds).toEqual(["executive"]); expect(rights.approverBodyIds).toEqual(["board"]); expect(rights.executorBodyIds).toEqual(["executive"]); expect(rights.vetoBodyIds).toEqual(["owner"]);
     expect(resolveGovernanceDecisionRights({ decisionType: "BUDGET", institutionId: "club", asOfDate: date, bodies: clubBodies, authorityGrants: authorities, participationGrants: participation }).authorityGrantIds).toEqual([]);
+    expect(resolveGovernanceDecisionRights({ decisionType: 'PLAYER_CONTRACT_SIGNING', institutionId: 'club', asOfDate: date, bodies: clubBodies, authorityGrants: authorities, participationGrants: participation }).authorityGrantIds).toEqual([])
     expect(resolveGovernanceDecisionRights({ decisionType: "COACH_FIRING", institutionId: "club", asOfDate: "2031-12-31" as never, bodies: clubBodies, authorityGrants: authorities, participationGrants: participation }).proposerBodyIds).toEqual([]);
     expect(resolveGovernanceDecisionRights({ decisionType: "COACH_FIRING", institutionId: "club", asOfDate: "2032-02-01" as never, bodies: clubBodies, authorityGrants: [{ ...authorities[0]!, revokedOn: "2032-01-31" as never }, authorities[1]!], participationGrants: participation }).proposerBodyIds).toEqual([]);
   });

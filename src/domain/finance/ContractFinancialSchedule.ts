@@ -51,6 +51,9 @@ export interface ContractFinancialScheduleEntry {
   readonly dimensions: FinancialDimensions
 }
 
+/** Currency-neutral projection of contract cash terms for previews without a selected Finance currency policy. */
+export type ContractFinancialScheduleAmountEntry = Omit<ContractFinancialScheduleEntry, 'amount'> & { readonly amountMinorUnits: number }
+
 export interface ContractFinancialScheduleQuery {
   readonly organizationId?: OrganizationId | string
   readonly teamId?: TeamId | string
@@ -89,6 +92,12 @@ const PAYROLL_EVENT_CATEGORIES = new Set<string>([PLAYER_EVENT_TYPE, STAFF_EVENT
 export function getContractFinancialSchedule(world: GameWorld, query: ContractFinancialScheduleQuery): readonly ContractFinancialScheduleEntry[] {
   const contracts = selectContracts(world, query)
   const entries = contracts.flatMap((source) => buildEntries(world, source, query)).filter((entry) => query.includeConditional !== false || entry.compensationStatus === 'GUARANTEED')
+  return Object.freeze(entries.sort((left, right) => compareGameDates(left.effectiveOn, right.effectiveOn) || left.id.localeCompare(right.id)))
+}
+
+export function getContractFinancialScheduleAmounts(world: GameWorld, query: ContractFinancialScheduleQuery): readonly ContractFinancialScheduleAmountEntry[] {
+  const contracts = selectContracts(world, query)
+  const entries = contracts.flatMap((source) => buildAmountEntries(world, source, query)).filter((entry) => query.includeConditional !== false || entry.compensationStatus === 'GUARANTEED')
   return Object.freeze(entries.sort((left, right) => compareGameDates(left.effectiveOn, right.effectiveOn) || left.id.localeCompare(right.id)))
 }
 
@@ -223,18 +232,31 @@ type SourceContract =
   | { readonly sourceContractType: 'STAFF'; readonly contract: StaffContract; readonly contractId: string; readonly beneficiaryId: string; readonly teamId: TeamId; readonly category: 'STAFF_SALARY' }
 
 function buildEntries(world: GameWorld, source: SourceContract, query: ContractFinancialScheduleQuery): readonly ContractFinancialScheduleEntry[] {
+  const amounts = buildAmountEntries(world, source, query)
+  if (amounts.length === 0) return Object.freeze([])
   const organizationId = world.teams[source.teamId]?.organizationId
   if (organizationId === undefined) throw new Error(`Contract financial schedule Team ${source.teamId} is missing`)
   const currencyCode = resolveCurrencyCode(world, organizationId, query.currencyCode)
+  return Object.freeze(amounts.map((entry) => {
+    const { amountMinorUnits, ...rest } = entry
+    return Object.freeze({ ...rest, amount: createMoney({ currencyCode, minorUnits: amountMinorUnits }) })
+  }))
+}
+
+function buildAmountEntries(world: GameWorld, source: SourceContract, query: ContractFinancialScheduleQuery): readonly ContractFinancialScheduleAmountEntry[] {
+  const organizationId = world.teams[source.teamId]?.organizationId
+  if (organizationId === undefined) throw new Error(`Contract financial schedule Team ${source.teamId} is missing`)
   const contractEnd = source.sourceContractType === 'PLAYER'
-    ? earliest(source.contract.term.expiresOn, source.contract.termination?.terminatedOn)
+    ? source.contract.term.expiresOn
     : earliest(source.contract.term.expiresOn, source.contract.termination?.effectiveOn)
   const team = world.teams[source.teamId]!
   const periods = annualPeriods(source.contract.term.startsOn, contractEnd)
   return Object.freeze(periods.flatMap((period, yearIndex) => {
     const compensation = source.sourceContractType === 'PLAYER' ? getContractYearCompensation(source.contract, period.startsOn) : { cashSalary: source.contract.compensation.annualSalary, guaranteedAmount: source.contract.compensation.annualSalary }
     const guaranteed = compensation.guaranteedAmount
-    const conditional = compensation.cashSalary - compensation.guaranteedAmount
+    const conditionalSurvives = source.sourceContractType !== 'PLAYER' || source.contract.termination === undefined
+      || compareGameDates(period.endsOn, source.contract.termination.terminatedOn) <= 0
+    const conditional = conditionalSurvives ? compensation.cashSalary - compensation.guaranteedAmount : 0
     const values: { amount: number; status: ContractFinancialCompensationStatus; sourceTerm: string }[] = []
     if (guaranteed > 0) values.push({ amount: guaranteed, status: 'GUARANTEED', sourceTerm: source.sourceContractType === 'PLAYER' && source.contract.compensation.years !== undefined ? `compensation.years[${yearIndex}].guaranteedAmount` : 'compensation.annualSalary' })
     if (conditional > 0) values.push({ amount: conditional, status: 'CONDITIONAL', sourceTerm: `compensation.years[${yearIndex}].cashSalary-guaranteedAmount` })
@@ -244,7 +266,7 @@ function buildEntries(world: GameWorld, source: SourceContract, query: ContractF
       const dimensions = source.sourceContractType === 'PLAYER'
         ? { teamId: source.teamId, organizationSectionId: team.organizationSectionId, contractId: contractIdFromString(source.contractId) }
         : { teamId: source.teamId, organizationSectionId: team.organizationSectionId, reference: { kind: 'STAFF_CONTRACT', id: source.contractId } }
-      return Object.freeze({ id, contractId: source.contractId, sourceContractType: source.sourceContractType, organizationId, beneficiaryId: source.beneficiaryId, teamId: source.teamId, organizationSectionId: team.organizationSectionId, category: source.category, amount: createMoney({ currencyCode, minorUnits: value.amount }), compensationStatus: value.status, sourceTerm: value.sourceTerm, seasonId, period, effectiveOn: period.startsOn, dueOn: null, provenance: Object.freeze({ kind: 'CONTRACT_FINANCIAL_SCHEDULE', id, description: `Derived from ${source.sourceContractType.toLowerCase()} Contract terms` }), dimensions: Object.freeze(dimensions) })
+      return Object.freeze({ id, contractId: source.contractId, sourceContractType: source.sourceContractType, organizationId, beneficiaryId: source.beneficiaryId, teamId: source.teamId, organizationSectionId: team.organizationSectionId, category: source.category, amountMinorUnits: value.amount, compensationStatus: value.status, sourceTerm: value.sourceTerm, seasonId, period, effectiveOn: period.startsOn, dueOn: null, provenance: Object.freeze({ kind: 'CONTRACT_FINANCIAL_SCHEDULE', id, description: `Derived from ${source.sourceContractType.toLowerCase()} Contract terms` }), dimensions: Object.freeze(dimensions) })
     })
   }))
 }

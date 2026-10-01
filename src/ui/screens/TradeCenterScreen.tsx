@@ -1,14 +1,17 @@
 import { useMemo, useState } from 'react'
 
 import type { TeamId } from '@/domain/ids'
-import type { TradeAsset, TradeAssetKind, TradeAssetMovement, TradeProposal } from '@/domain/trade'
+import type { TradeAsset, TradeAssetKind, TradeAssetMovement } from '@/domain/trade'
 import type { GameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { BdmButton, Dialog, Divider, EmptyState, Feedback, IconAction, Input, Select, Surface } from '@/ui/components/designSystem'
 import { formatMoney } from '@/ui/formatters'
+import { useGameStore } from '@/stores/gameStore'
+import { assessTradeCommitmentReadiness } from '@/app/trades'
+import { resolveGovernanceDecisionRights } from '@/domain/governance'
 import { addTradeMovement, addTradeParticipant, buildTradePresentation, changeTradeCounterparty, createTradeDraft, humanizeTradeReason, removeTradeMovement, tradeAssetKey, tradeAssetLabel, type TradeDraft } from '@/ui/trades/TradePresentation'
 
-export function TradeCenterScreen({ world, onExecute }: { readonly world: GameWorld; readonly onExecute: (proposal: TradeProposal) => void }) {
+export function TradeCenterScreen({ world }: { readonly world: GameWorld }) {
   const rules = world.tradeRulesBySeasonId[world.currentSeasonId]
   const userTeam = getUserTeam(world)
   const teams = useMemo(() => rules === undefined ? [] : Object.values(world.teams).filter((team) => Object.values(world.competitions).some((competition) => competition.ecosystemId === rules.ecosystemId && competition.participantTeamIds.includes(team.id))), [rules, world.competitions, world.teams])
@@ -20,6 +23,10 @@ export function TradeCenterScreen({ world, onExecute }: { readonly world: GameWo
   const [teamQuery, setTeamQuery] = useState('')
   const [cashAmount, setCashAmount] = useState('')
   const [feedback, setFeedback] = useState<string | null>(null)
+  const proposeNegotiation = useGameStore((state) => state.proposeUserTradeNegotiation)
+  const respondNegotiation = useGameStore((state) => state.respondUserToTradeNegotiation)
+  const startCommitment = useGameStore((state) => state.startUserTradeCommitment)
+  const recordCommitmentEvent = useGameStore((state) => state.recordUserTradeCommitmentEvent)
 
   if (rules === undefined || userTeam === undefined || teams.length < 2) return <section className="screen trade-center"><div className="trade-center__heading"><div><p className="eyebrow">TRADES</p><h1>Trade Center</h1></div></div><EmptyState description="No active NBA-like trade rules are available for this career." title="Trades unavailable" /></section>
 
@@ -27,22 +34,51 @@ export function TradeCenterScreen({ world, onExecute }: { readonly world: GameWo
   const availablePartners = teams.filter((team) => team.id !== userTeam.id && !draft.participantTeamIds.includes(team.id) && team.name.toLocaleLowerCase().includes(teamQuery.toLocaleLowerCase()))
   const openAssets = (target: TeamId) => { setAssetTarget(target); setAssetSource(draft.participantTeamIds.find((teamId) => teamId !== target)); setAssetKind(rules.allowedAssetKinds[0] ?? 'player'); setCashAmount('') }
   const addAsset = (asset: TradeAsset) => { if (assetTarget === null || assetSource === undefined) return; setDraft((current) => addTradeMovement(current, { asset, fromTeamId: assetSource, toTeamId: assetTarget })); setAssetTarget(null) }
-  const execute = () => { try { onExecute(presentation.proposal); setDraft(createTradeDraft(world)); setFeedback('Trade completed.') } catch (error) { setFeedback(error instanceof Error ? error.message : 'The trade could not be completed.') } }
+  const assessPackage = () => setFeedback(presentation.allowed
+    ? 'Configured trade checks pass. This is a read-only assessment; negotiation and execution are not available.'
+    : 'This package does not pass the current trade checks. No trade was proposed or executed.')
+  const packageProposal = () => ({ id: `trade-center:${userTeam.id}:${world.currentDate}`, ecosystemId: rules.ecosystemId, seasonId: world.currentSeasonId, participantTeamIds: [...draft.participantTeamIds], movements: [...draft.movements] })
+  const sendProposal = () => {
+    const result = proposeNegotiation(packageProposal())
+    setFeedback(result.status === 'PROPOSED' || result.status === 'ALREADY_PROPOSED' ? 'The package is now recorded as a nonbinding proposal.' : `${result.status}: ${(result.reasons ?? []).join(', ')}`)
+  }
+  const respond = (negotiationId: string, expectedRevisionId: string, action: 'ACCEPT' | 'REJECT' | 'WITHDRAW' | 'COUNTER') => {
+    const result = respondNegotiation({ negotiationId, expectedRevisionId, action, ...(action === 'COUNTER' ? { counterPackage: packageProposal() } : {}) })
+    setFeedback(`${result.status}${result.reasons === undefined ? '' : `: ${result.reasons.join(', ')}`}`)
+  }
   const currentSource = assetSource === undefined ? undefined : world.teams[assetSource]
+  const userNegotiations = Object.values(world.tradeNegotiationsById).filter((item) => item.participantTeamIds.includes(userTeam.id)).sort((a, b) => b.startedOn.localeCompare(a.startedOn))
 
   return <section className="screen trade-center">
     <header className="trade-center__heading"><div><p className="eyebrow">TRADES</p><h1>Trade Center</h1><p>Build the exchange around what each team receives.</p></div><div className="trade-center__heading-actions">{draft.participantTeamIds.length > 1 && <BdmButton onClick={() => setTeamPickerMode('partner')} size="compact" variant="ghost">Change partner</BdmButton>}{draft.participantTeamIds.length > 1 && <BdmButton disabled={draft.participantTeamIds.length >= rules.maxTeamsPerTrade || availablePartners.length === 0} onClick={() => setTeamPickerMode('add')} size="compact" variant="ghost">+ Add team</BdmButton>}</div></header>
-    {feedback !== null && <Feedback tone="success">{feedback}</Feedback>}
-    {draft.participantTeamIds.length < 2 ? <EmptyState action={<BdmButton onClick={() => setTeamPickerMode('partner')} size="large">Select a team</BdmButton>} description="Choose another team to start a negotiation." icon="↔" title="Build a trade" /> : <>
+    {feedback !== null && <Feedback>{feedback}</Feedback>}
+    {draft.participantTeamIds.length < 2 ? <EmptyState action={<BdmButton onClick={() => setTeamPickerMode('partner')} size="large">Select a team</BdmButton>} description="Choose another team to assess an exchange." icon="↔" title="Build a trade package" /> : <>
       <div className={`trade-board trade-board--${draft.participantTeamIds.length}`}>{presentation.teams.map((team) => <TradeTeamColumn hasSalaryMatching={presentation.hasSalaryMatching} key={team.teamId} onAddAsset={() => openAssets(team.teamId)} onRemove={(movement) => setDraft((current) => removeTradeMovement(current, movement))} team={team} />)}</div>
       <section className="trade-center__validation"><div><strong>{presentation.allowed ? 'Trade valid' : 'Trade needs changes'}</strong><p>{presentation.allowed ? 'Every team currently satisfies the configured trade rules.' : 'Review the team notes before proposing this trade.'}</p></div><div className="trade-center__reasons">{presentation.globalReasons.map((reason) => <Feedback key={reason} tone="danger">{humanizeTradeReason(reason)}</Feedback>)}{presentation.teams.flatMap((team) => team.validation?.reasons.map((reason, index) => <Feedback key={`${team.teamId}:${reason}:${index}`} tone="danger">{humanizeTradeReason(reason, team.teamName, team.validation)} <small>{reason}</small></Feedback>) ?? [])}</div></section>
-      <footer className="trade-center__footer"><BdmButton disabled={draft.movements.length === 0} onClick={() => { setDraft(createTradeDraft(world)); setFeedback(null) }} variant="ghost">Clear proposal</BdmButton><BdmButton disabled={!presentation.allowed} onClick={execute} size="large">Propose trade</BdmButton></footer>
+      <footer className="trade-center__footer"><BdmButton disabled={draft.movements.length === 0} onClick={() => { setDraft(createTradeDraft(world)); setFeedback(null) }} variant="ghost">Clear package</BdmButton><BdmButton disabled={draft.movements.length === 0} onClick={assessPackage} variant="ghost">Assess package</BdmButton><BdmButton disabled={!presentation.allowed || draft.movements.length === 0} onClick={sendProposal} size="large">Propose trade</BdmButton></footer>
     </>}
+
+    <section className="trade-center__negotiations"><h2>Trade negotiations</h2>{userNegotiations.length === 0 ? <p>No trade proposals yet.</p> : userNegotiations.map((negotiation) => {
+      const revision = negotiation.revisions[negotiation.revisions.length - 1]!
+      const isCurrentUserProposer = revision.proposedByTeamId === userTeam.id
+      const hasUserAccepted = negotiation.actions.some((action) => action.revisionId === revision.id && action.teamId === userTeam.id && action.kind === 'ACCEPT')
+      const canCounter = !isCurrentUserProposer && sameIds(draft.participantTeamIds, negotiation.participantTeamIds) && presentation.allowed && draft.movements.length > 0
+      const commitment = negotiation.status === 'AGREED' ? assessTradeCommitmentReadiness(world, negotiation.id, revision.id) : undefined
+      const userParticipant = commitment?.participants.find((participant) => participant.teamId === userTeam.id)
+      const decision = userParticipant?.governanceDecisionId === undefined ? undefined : world.governanceDecisionsById[userParticipant.governanceDecisionId]
+      const currentRights = decision === undefined ? undefined : resolveGovernanceDecisionRights({ bodies: Object.values(world.governanceBodiesById), authorityGrants: Object.values(world.governanceAuthorityGrantsById), participationGrants: Object.values(world.governanceDecisionParticipationGrantsById), decisionType: decision.decisionType, institutionId: decision.institutionId, asOfDate: world.currentDate })
+      const userApprovalBodies = currentRights?.approverBodyIds.filter((bodyId) => Object.values(world.governanceAppointmentsById).some((appointment) => appointment.actor.kind === 'COACH' && appointment.actor.id === world.userCoachId && appointment.bodyId === bodyId && appointment.startedOn <= world.currentDate && (appointment.endedOn === undefined || appointment.endedOn >= world.currentDate))) ?? []
+      const userInstitutions = Object.values(world.governanceInstitutionsById).filter((institution) => institution.teamIds.includes(userTeam.id))
+      const userProposerBodies = userInstitutions.length !== 1 ? [] : resolveGovernanceDecisionRights({ bodies: Object.values(world.governanceBodiesById), authorityGrants: Object.values(world.governanceAuthorityGrantsById), participationGrants: Object.values(world.governanceDecisionParticipationGrantsById), decisionType: 'PLAYER_TRADE_COMMITMENT', institutionId: userInstitutions[0]!.id, asOfDate: world.currentDate }).proposerBodyIds.filter((bodyId) => Object.values(world.governanceAppointmentsById).some((appointment) => appointment.actor.kind === 'COACH' && appointment.actor.id === world.userCoachId && appointment.bodyId === bodyId && appointment.startedOn <= world.currentDate && (appointment.endedOn === undefined || appointment.endedOn >= world.currentDate)))
+      return <Surface className="trade-negotiation-card" key={negotiation.id}><strong>{negotiation.status} · Revision {revision.revisionNumber + 1}</strong><p>{world.teams[revision.proposedByTeamId]?.name ?? revision.proposedByTeamId} proposed this package on {revision.proposedOn}.{negotiation.status === 'EXECUTED' ? ' The agreed exchange is complete.' : ' It is nonbinding; agreement does not move players or other assets.'}</p><div className="trade-negotiation-card__history"><h3>Package history</h3>{negotiation.revisions.map((item) => <p key={item.id}><strong>Revision {item.revisionNumber + 1}</strong> · {item.movements.map((movement) => `${tradeAssetLabel(world, movement.asset)}: ${world.teams[movement.fromTeamId]?.name ?? movement.fromTeamId} → ${world.teams[movement.toTeamId]?.name ?? movement.toTeamId}`).join('; ')}</p>)}{negotiation.actions.map((action) => <small key={action.id}>{action.kind} · {world.teams[action.teamId]?.name ?? action.teamId} · {action.actor.kind === 'USER' ? 'User' : action.actor.staffPersonId} · {action.actedOn}</small>)}</div>{negotiation.status === 'AGREED' && <><p>Commitment status: {userParticipant?.status ?? commitment?.status ?? 'BLOCKED'}. {userParticipant?.blockers.join(', ')}</p>{decision === undefined ? userProposerBodies.length > 0 && <BdmButton onClick={() => setFeedback(`${startCommitment(negotiation.id, revision.id).status}`)} size="compact">Start this team’s commitment review</BdmButton> : userApprovalBodies.map((bodyId) => <BdmButton key={bodyId} onClick={() => setFeedback(`${recordCommitmentEvent(decision.id, 'APPROVED', bodyId).status}`)} size="compact">Approve for {world.governanceBodiesById[bodyId]?.name ?? bodyId}</BdmButton>)}</>}{!['AGREED', 'EXECUTED', 'REJECTED', 'WITHDRAWN'].includes(negotiation.status) && <div className="trade-center__heading-actions">{isCurrentUserProposer ? <BdmButton onClick={() => respond(negotiation.id, revision.id, 'WITHDRAW')} size="compact" variant="ghost">Withdraw</BdmButton> : !hasUserAccepted && <><BdmButton onClick={() => respond(negotiation.id, revision.id, 'ACCEPT')} size="compact">Accept</BdmButton><BdmButton onClick={() => respond(negotiation.id, revision.id, 'REJECT')} size="compact" variant="ghost">Reject</BdmButton><BdmButton disabled={!canCounter} onClick={() => respond(negotiation.id, revision.id, 'COUNTER')} size="compact" variant="ghost">Counter with current package</BdmButton></>}</div>}</Surface>
+    })}</section>
 
     <Dialog onClose={() => { setTeamPickerMode(null); setTeamQuery('') }} open={teamPickerMode !== null} title={teamPickerMode === 'add' ? 'Add team to trade' : 'Select trade partner'}><div className="trade-picker"><Input aria-label="Search teams" label="Search teams" onChange={(event) => setTeamQuery(event.target.value)} placeholder="Search by team name" value={teamQuery} />{availablePartners.map((team) => <BdmButton key={team.id} onClick={() => { setDraft((current) => teamPickerMode === 'partner' ? changeTradeCounterparty(current, userTeam.id, team.id) : addTradeParticipant(current, team.id, rules.maxTeamsPerTrade)); setTeamPickerMode(null); setTeamQuery('') }} variant="ghost">{team.name}</BdmButton>)}{availablePartners.length === 0 && <p>No teams match this search.</p>}</div></Dialog>
     <Dialog onClose={() => setAssetTarget(null)} open={assetTarget !== null} title="Add asset"><div className="trade-picker"><Select ariaLabel="Source team" label="Sending team" onChange={(value) => setAssetSource(value as TeamId)} options={draft.participantTeamIds.filter((teamId) => teamId !== assetTarget).map((teamId) => ({ value: teamId, label: world.teams[teamId]!.name }))} value={assetSource} /><Select ariaLabel="Asset type" label="Asset type" onChange={(value) => setAssetKind(value as TradeAssetKind)} options={rules.allowedAssetKinds.map((kind) => ({ value: kind, label: assetKindLabel(kind) }))} value={assetKind} />{assetKind === 'cash' ? <div className="trade-picker__cash"><Input inputMode="numeric" label="Cash amount" onChange={(event) => setCashAmount(event.target.value)} placeholder="500000" value={cashAmount} /><BdmButton disabled={!validCash(cashAmount)} onClick={() => addAsset({ kind: 'cash', amount: Number(cashAmount) })}>Add cash</BdmButton></div> : currentSource === undefined ? null : <AssetChoices assets={assetsFor(world, currentSource.id, assetKind)} disabledKeys={new Set(draft.movements.map((movement) => tradeAssetKey(movement.asset)))} onChoose={addAsset} world={world} />}</div></Dialog>
   </section>
 }
+
+function sameIds(a: readonly string[], b: readonly string[]): boolean { const left = [...a].sort(); const right = [...b].sort(); return left.length === right.length && left.every((value, index) => value === right[index]) }
 
 function TradeTeamColumn({ hasSalaryMatching, onAddAsset, onRemove, team }: { readonly hasSalaryMatching: boolean; readonly onAddAsset: () => void; readonly onRemove: (movement: TradeAssetMovement) => void; readonly team: ReturnType<typeof buildTradePresentation>['teams'][number] }) {
   const validation = team.validation

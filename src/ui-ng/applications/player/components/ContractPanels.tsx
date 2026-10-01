@@ -147,7 +147,7 @@ export function ContractIntelligencePanel({
 }
 
 /**
- * The five reference panels the save has no data for. Rendering them as declared gaps keeps the
+ * The remaining reference panels the save has no data for. Rendering them as declared gaps keeps the
  * mockup's shape without inventing clauses, market values or negotiation state.
  */
 export function ContractClosingPanels({

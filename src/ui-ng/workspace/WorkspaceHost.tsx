@@ -4,6 +4,7 @@ import { ClubWorkspace } from '@/ui-ng/applications/club/ClubWorkspace'
 import { CoachWorkspace } from '@/ui-ng/applications/coach/CoachWorkspace'
 import { CoachFinancesWorkspace } from '@/ui-ng/applications/coachFinances/CoachFinancesWorkspace'
 import { CompetitionWorkspace } from '@/ui-ng/applications/competition/CompetitionWorkspace'
+import { ContractsWorkspace } from '@/ui-ng/applications/contracts/ContractsWorkspace'
 import { DraftWorkspace } from '@/ui-ng/applications/draft/DraftWorkspace'
 import { EnforcementWorkspace } from '@/ui-ng/applications/enforcement/EnforcementWorkspace'
 import { FinancesWorkspace } from '@/ui-ng/applications/finances/FinancesWorkspace'
@@ -50,6 +51,7 @@ const WORKSPACES = {
   draft: DraftWorkspace,
   trades: TradesWorkspace,
   club: ClubWorkspace,
+  contracts: ContractsWorkspace,
   board: BoardWorkspace,
   finances: FinancesWorkspace,
   enforcement: EnforcementWorkspace,

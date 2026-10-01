@@ -22,9 +22,15 @@ describe('Competition', () => {
   })
 
   it('validates only deterministic, balanced round-robin rules', () => {
-    expect(createCompetitionRules(defaultLeagueCompetitionRules)).toEqual(defaultLeagueCompetitionRules)
+    expect(createCompetitionRules(defaultLeagueCompetitionRules)).toMatchObject(defaultLeagueCompetitionRules)
     expect(() => createCompetitionRules({ ...defaultLeagueCompetitionRules, schedule: { ...defaultLeagueCompetitionRules.schedule, meetingsPerPair: 3 } })).toThrow('even')
     expect(() => createCompetitionRules({ ...defaultLeagueCompetitionRules, standings: { tiebreakers: ['wins'] } })).toThrow('teamId')
+  })
+
+  it('keeps the independent retention eligibility window configurable and positive', () => {
+    expect(defaultLeagueCompetitionRules.retentionWindowDaysBeforeExpiry).toBe(365)
+    expect(createCompetitionRules({ ...defaultLeagueCompetitionRules, retentionWindowDaysBeforeExpiry: 180 }).retentionWindowDaysBeforeExpiry).toBe(180)
+    expect(() => createCompetitionRules({ ...defaultLeagueCompetitionRules, retentionWindowDaysBeforeExpiry: 0 })).toThrow(RangeError)
   })
 
   it('rejects duplicate participants and empty names', () => {

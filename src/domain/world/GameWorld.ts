@@ -7,7 +7,7 @@ import { createConference, createConferenceMembership, type Conference, type Con
 import type { Draft, DraftPick } from '@/domain/draft'
 import { createSportsEcosystem, DEFAULT_FIBA_LIKE_ECOSYSTEM_ID, DEFAULT_NBA_LIKE_ECOSYSTEM_ID, DEFAULT_NCAA_LIKE_ECOSYSTEM_ID, type SportsEcosystem } from '@/domain/ecosystem'
 import type { Country } from '@/domain/country'
-import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
+import { addYears, compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import type { Game } from '@/domain/game'
 import type {
   CoachId,
@@ -52,16 +52,20 @@ import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
 import { createInjury, isInjuryActive, type InjuryRecord } from '@/domain/injury'
 import type { InjuryId } from '@/domain/ids'
 import type { ContractId } from '@/domain/ids'
-import { createPlayerContract, type PlayerContract } from '@/domain/contract'
+import { createPlayerContract, getPlayerContractStatus, type PlayerContract } from '@/domain/contract'
+import { createContractServiceTimeBaseline, createContractServiceTimeCredit, type ContractServiceTimeBaseline, type ContractServiceTimeCredit } from '@/domain/contract/ContractServiceTime'
+import { createContractReviewDecision, type ContractReviewDecision, type ContractReviewDecisionId } from '@/domain/contract/ContractReviewDecision'
+import { createRetentionNegotiation, type ContractRetentionNegotiation } from '@/domain/contract/ContractRetentionNegotiation'
 import { createExpenseRecognition, createFinancialAccount, createFinancialBudget, createFinancialCommitment, createFinancialEntitlement, createFinancialTransaction, createFiscalPeriod, createOrganizationFinancialProfile, createPayable, createReceivable, createRevenueRecognition, createTeamFinances, createTreasurySettlement, createBudgetAllocation, createBudgetLine, createBudgetRevision, createForecastAssumption, validateFinancialPlanningCollections, isCashAccount, createRevenueSource, validateRevenueSources, createOperatingCostSource, createAuthorizedOperatingCostFact, validateOperatingCostCollections, createDebtInstrument, validateDebtInstrumentCollections, createCompetitionDistributionFact, validateCompetitionDistributionFacts, type DebtInstrument, type CompetitionDistributionFact, type AuthorizedOperatingCostFact, type OperatingCostSource, type BudgetAllocation, type BudgetLine, type BudgetRevision, type ExpenseRecognition, type FinancialAccount, type FinancialBudget, type FinancialCommitment, type FinancialEntitlement, type FinancialTransaction, type FiscalPeriod, type ForecastAssumption, type OrganizationFinancialProfile, type Payable, type Receivable, type RevenueRecognition, type RevenueSource, type TeamFinances, type TreasurySettlement } from '@/domain/finance'
 import { createEconomicObservation, createExchangeRate, createFinancialRegulationAssessment, validateEconomicCollections, type EconomicObservation, type ExchangeRate, type FinancialRegulationAssessment } from '@/domain/finance'
 import { createFinanceDecisionProposal, type FinanceDecisionProposal } from '@/domain/finance/FinanceAI'
 import type { PlayerTransaction } from '@/domain/transaction'
 import type { PlayerTransactionId } from '@/domain/ids'
+import { contractIdFromString, financialCommitmentIdFromString, playerTransactionIdFromString } from '@/domain/ids'
 import { createOrganizationKnowledge, createPlayerKnowledge, type OrganizationKnowledge, type PlayerKnowledgeRecord } from '@/domain/knowledge'
 import { createEvaluatorProfile, type Evidence, type EvaluatorProfile, type EvaluatorReport, type ScoutingAssignment } from '@/domain/scouting'
 import { deriveOrganizationEvaluationPolicy, type OrganizationEvaluationPolicy } from '@/domain/intelligence'
-import type { Agency, Agent, ContractNegotiation, MarketKnowledge, MarketReality, MarketSignal, PlayerRepresentation, RolePromise } from '@/domain/market'
+import { isActiveNegotiation, type Agency, type Agent, type ContractNegotiation, type MarketKnowledge, type MarketReality, type MarketSignal, type PlayerRepresentation, type RolePromise } from '@/domain/market'
 import type { OrganizationId } from '@/domain/ids'
 import type { PlayerKnowledgeId } from '@/domain/ids'
 import { createStaffPerson, createTeamStaffAssignment, staffRoleDefinition, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS, type StaffPerson, type TeamStaffAssignment } from '@/domain/staff'
@@ -92,7 +96,7 @@ import { clampTeamCohesion, createDefaultTrainingPlan, createIndividualTrainingP
 import { createDefaultTeamLineup, createDefaultTeamTacticalPlan, createOppositionScoutingReport, createPlaybook, createSavedPlay, oppositionScoutingReportId, validateTeamLineup, type OppositionScoutingReport, type Playbook, type SavedPlay, type TeamGamePlan, type TeamLineup, type TeamTacticalPlan } from '@/domain/tactics'
 import { createSalaryRules, type SalaryRules } from '@/domain/salary'
 import { createDeadMoneyCharge, createTeamSalaryException, type DeadMoneyCharge, type TeamSalaryException } from '@/domain/salary'
-import { createDraftPickSwapRight, createFutureDraftPickRight, createPlayerRights, createRetainedSalaryObligation, createTradeRecord, createTradeRules, type DraftPickSwapRight, type FutureDraftPickRight, type PlayerRights, type RetainedSalaryObligation, type TradeRecord, type TradeRules } from '@/domain/trade'
+import { createDraftPickSwapRight, createFutureDraftPickRight, createPlayerRights, createRetainedSalaryObligation, createTradeNegotiation, createTradeRecord, createTradeRules, type DraftPickSwapRight, type FutureDraftPickRight, type PlayerRights, type RetainedSalaryObligation, type TradeNegotiation, type TradeRecord, type TradeRules } from '@/domain/trade'
 import type { RecruitingActionRecord, RecruitingBoardEntry, RecruitingCommitment, RecruitingCycle, RecruitingInterest, RecruitingOffer, RecruitingVisit, RecruitProfile, RecruitSigning } from '@/domain/recruiting'
 import type { EligibilityProfile, EligibilityRestriction, EligibilityRules } from '@/domain/eligibility'
 import type { AcademicProfile, AcademicRules, AcademicSupportPlan, AcademicTermRecord } from '@/domain/academic'
@@ -115,6 +119,8 @@ import { createGovernanceUniverseProfile, governanceUniverseForProfile, type Gov
 import type { CoachAchievement, CoachLegacyState, CoachTeamLegacy, CoachTenure } from '@/domain/legacy'
 import { createFacility, createFacilityComponent, createFacilityComponentConditionRecord, createFacilityCompetitionApproval, createFacilityConditionRecord, createFacilityControlRight, createFacilityDevelopmentProject, createFacilityDevelopmentProjectPhase, createFacilityInspection, createFacilityMaintenanceAction, createFacilityMaintenanceNeed, createFacilityNameRecord, createFacilityOperationalIncident, createFacilityOperatorAssignment, createFacilityOrganizationRelationship, createFacilityOwnershipInterest, createFacilityStatusRecord, createFacilityTeamRelationship, createFacilityUsageRight, createPlace, validateFacilitiesDomain, type Facility, type FacilityComponent, type FacilityComponentConditionRecord, type FacilityCompetitionApproval, type FacilityConditionRecord, type FacilityControlRight, type FacilityDevelopmentProject, type FacilityDevelopmentProjectPhase, type FacilityInspection, type FacilityMaintenanceAction, type FacilityMaintenanceNeed, type FacilityNameRecord, type FacilityOperationalIncident, type FacilityOperatorAssignment, type FacilityOrganizationRelationship, type FacilityOwnershipInterest, type FacilityTeamRelationship, type FacilityUsageRight, type FacilityStatusRecord, type Place } from '@/domain/facilities'
 import type { FacilityComponentConditionRecordId, FacilityComponentId, FacilityCompetitionApprovalId, FacilityConditionRecordId, FacilityControlRightId, FacilityDevelopmentProjectId, FacilityDevelopmentProjectPhaseId, FacilityId, FacilityInspectionId, FacilityMaintenanceActionId, FacilityMaintenanceNeedId, FacilityNameRecordId, FacilityOperationalIncidentId, FacilityOperatorAssignmentId, FacilityOrganizationRelationshipId, FacilityOwnershipInterestId, FacilityStatusRecordId, FacilityTeamRelationshipId, FacilityUsageRightId, PlaceId } from '@/domain/ids'
+import { createClubStrategicState, type ClubStrategicState } from '@/domain/clubStrategy'
+import { createGMPlanState, type GMPlanState } from '@/domain/gmPlanning'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -176,6 +182,8 @@ export interface GameWorld {
   readonly seasons: Readonly<Record<SeasonId, Season>>
   readonly games: Readonly<Record<GameId, Game>>
   readonly matchStatLogsByGameId: Readonly<Record<GameId, MatchStatLog>>
+  readonly contractServiceTimeBaselinesById: Readonly<Record<string, ContractServiceTimeBaseline>>
+  readonly contractServiceTimeCreditsById: Readonly<Record<string, ContractServiceTimeCredit>>
   readonly seasonHistoryBySeasonId: Readonly<Record<SeasonId, SeasonHistoryRecord>>
   readonly injuriesById: Readonly<Record<InjuryId, InjuryRecord>>
   readonly contractsById: Readonly<Record<ContractId, PlayerContract>>
@@ -220,6 +228,7 @@ export interface GameWorld {
   readonly marketKnowledge: readonly MarketKnowledge[]
   readonly marketSignalsById: Readonly<Record<string, MarketSignal>>
   readonly negotiationsById: Readonly<Record<string, ContractNegotiation>>
+  readonly retentionNegotiationsById: Readonly<Record<string, ContractRetentionNegotiation>>
   readonly rolePromisesById: Readonly<Record<string, RolePromise>>
   readonly staffPeopleById: Readonly<Record<StaffPersonId, StaffPerson>>
   readonly teamStaffAssignmentsById: Readonly<Record<TeamStaffAssignmentId, TeamStaffAssignment>>
@@ -303,6 +312,7 @@ export interface GameWorld {
   readonly draftPickSwapRightsById: Readonly<Record<string, DraftPickSwapRight>>
   readonly retainedSalaryObligationsById: Readonly<Record<string, RetainedSalaryObligation>>
   readonly tradeHistoryById: Readonly<Record<string, TradeRecord>>
+  readonly tradeNegotiationsById: Readonly<Record<string, TradeNegotiation>>
   readonly recruitingCyclesById: Readonly<Record<string, RecruitingCycle>>
   readonly recruitProfilesById: Readonly<Record<string, RecruitProfile>>
   readonly recruitingInterests: readonly RecruitingInterest[]
@@ -359,6 +369,9 @@ export interface GameWorld {
   readonly mediaInteractionsById: Readonly<Record<string, MediaInteraction>>
   readonly mediaProfilesByCoachId: Readonly<Record<string, MediaProfile>>
   readonly boardStatesByTeamId: Readonly<Record<string, BoardState>>
+  readonly clubStrategicStatesByTeamId: Readonly<Record<string, ClubStrategicState>>
+  readonly gmPlanStatesById: Readonly<Record<string, GMPlanState>>
+  readonly contractReviewDecisionsById: Readonly<Record<ContractReviewDecisionId, ContractReviewDecision>>
   readonly governanceInstitutionsById: Readonly<Record<string, GovernanceInstitution>>
   readonly governanceUniverseProfilesById: Readonly<Record<string, GovernanceUniverseProfile>>
   readonly governanceBodiesById: Readonly<Record<string, GovernanceBody>>
@@ -444,6 +457,8 @@ export interface CreateGameWorldInput {
   seasons: readonly Season[]
   games: readonly Game[]
   matchStatLogs?: readonly MatchStatLog[]
+  contractServiceTimeBaselines?: readonly ContractServiceTimeBaseline[]
+  contractServiceTimeCredits?: readonly ContractServiceTimeCredit[]
   seasonHistory?: readonly SeasonHistoryRecord[]
   injuries?: readonly InjuryRecord[]
   contracts?: readonly PlayerContract[]
@@ -488,6 +503,7 @@ export interface CreateGameWorldInput {
   marketKnowledge?: readonly MarketKnowledge[]
   marketSignals?: readonly MarketSignal[]
   negotiations?: readonly ContractNegotiation[]
+  retentionNegotiations?: readonly ContractRetentionNegotiation[]
   rolePromises?: readonly RolePromise[]
   staffPeople?: readonly StaffPerson[]
   teamStaffAssignments?: readonly TeamStaffAssignment[]
@@ -558,6 +574,7 @@ export interface CreateGameWorldInput {
   draftPickSwapRights?: readonly DraftPickSwapRight[]
   retainedSalaryObligations?: readonly RetainedSalaryObligation[]
   tradeHistory?: readonly TradeRecord[]
+  tradeNegotiations?: readonly TradeNegotiation[]
   recruitingCycles?: readonly RecruitingCycle[]
   recruitProfiles?: readonly RecruitProfile[]
   recruitingInterests?: readonly RecruitingInterest[]
@@ -614,6 +631,9 @@ export interface CreateGameWorldInput {
   mediaInteractionsById?: Readonly<Record<string, MediaInteraction>>
   mediaProfilesByCoachId?: Readonly<Record<string, MediaProfile>>
   boardStatesByTeamId?: Readonly<Record<string, BoardState>>
+  clubStrategicStatesByTeamId?: Readonly<Record<string, ClubStrategicState>>
+  gmPlanStates?: readonly GMPlanState[]
+  contractReviewDecisions?: readonly ContractReviewDecision[]
   governanceInstitutions?: readonly GovernanceInstitution[]
   governanceUniverseProfiles?: readonly GovernanceUniverseProfile[]
   governanceBodies?: readonly GovernanceBody[]
@@ -646,6 +666,28 @@ export class GameWorldValidationError extends Error {
   public constructor(message: string) {
     super(message)
     this.name = 'GameWorldValidationError'
+  }
+}
+
+function assertActiveNegotiationUniqueness(negotiations: readonly ContractNegotiation[]): void {
+  const active = negotiations.filter(isActiveNegotiation)
+  for (let index = 0; index < active.length; index += 1) {
+    const current = active[index]!
+    const duplicate = active.slice(0, index).find((prior) => prior.playerId === current.playerId
+      && (prior.teamId !== undefined && current.teamId !== undefined
+        ? prior.teamId === current.teamId
+        : prior.organizationId === current.organizationId))
+    if (duplicate !== undefined) throw new GameWorldValidationError(`Multiple active negotiations exist for ${current.teamId ?? current.organizationId} and ${current.playerId}`)
+  }
+}
+
+function assertActiveRetentionUniqueness(negotiations: readonly ContractRetentionNegotiation[]): void {
+  const active = negotiations.filter((item) => ['OPEN', 'CLUB_OFFERED', 'PLAYER_COUNTERED'].includes(item.status))
+  for (let index = 0; index < active.length; index += 1) {
+    const current = active[index]!
+    if (active.slice(0, index).some((prior) => prior.teamId === current.teamId && prior.playerId === current.playerId && prior.predecessorContractId === current.predecessorContractId)) {
+      throw new GameWorldValidationError(`Multiple active retention negotiations exist for ${current.teamId}, ${current.playerId}, and ${current.predecessorContractId}`)
+    }
   }
 }
 
@@ -738,6 +780,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     seasons,
     games: indexById(input.games, 'Game'),
     matchStatLogsByGameId: indexLogsByGameId(input.matchStatLogs ?? []),
+    contractServiceTimeBaselinesById: indexById((input.contractServiceTimeBaselines ?? []).map(createContractServiceTimeBaseline), 'Contract service-time baseline'),
+    contractServiceTimeCreditsById: indexById((input.contractServiceTimeCredits ?? []).map(createContractServiceTimeCredit), 'Contract service-time credit'),
     seasonHistoryBySeasonId: indexHistoryBySeasonId(input.seasonHistory ?? []),
     injuriesById: indexById(input.injuries ?? [], 'Injury'),
     contractsById: indexById(input.contracts ?? [], 'Contract'),
@@ -775,7 +819,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     scoutingAssignmentsById: indexById(input.scoutingAssignments ?? [], 'Scouting assignment'),
     evaluatorReportsById: indexById(input.evaluatorReports ?? [], 'Evaluator report'),
     organizationEvaluationPoliciesById: organizationPolicies(teams, input.organizationEvaluationPoliciesById),
-    agentsById: indexById(input.agents ?? [], 'Agent'), agenciesById: indexById(input.agencies ?? [], 'Agency'), playerRepresentations: Object.freeze([...(input.playerRepresentations ?? [])]), marketRealityByPlayerId: Object.freeze(Object.fromEntries((input.marketReality ?? []).map(item => [item.playerId, item]))), marketKnowledge: Object.freeze([...(input.marketKnowledge ?? [])]), marketSignalsById: indexById(input.marketSignals ?? [], 'Market signal'), negotiationsById: indexById(input.negotiations ?? [], 'Negotiation'), rolePromisesById: indexById(input.rolePromises ?? [], 'Role promise'),
+    agentsById: indexById(input.agents ?? [], 'Agent'), agenciesById: indexById(input.agencies ?? [], 'Agency'), playerRepresentations: Object.freeze([...(input.playerRepresentations ?? [])]), marketRealityByPlayerId: Object.freeze(Object.fromEntries((input.marketReality ?? []).map(item => [item.playerId, item]))), marketKnowledge: Object.freeze([...(input.marketKnowledge ?? [])]), marketSignalsById: indexById(input.marketSignals ?? [], 'Market signal'), negotiationsById: indexById(input.negotiations ?? [], 'Negotiation'), retentionNegotiationsById: indexById((input.retentionNegotiations ?? []).map(createRetentionNegotiation), 'Retention negotiation'), rolePromisesById: indexById(input.rolePromises ?? [], 'Role promise'),
     staffPeopleById: indexById(staffPeople, 'Staff person'),
     teamStaffAssignmentsById: indexById(input.teamStaffAssignments ?? [], 'Staff assignment'),
     responsibilitiesById: indexById(input.responsibilities ?? [], 'Responsibility'),
@@ -837,6 +881,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     draftPickSwapRightsById: indexById(input.draftPickSwapRights ?? [], 'Draft pick swap right'),
     retainedSalaryObligationsById: indexById(input.retainedSalaryObligations ?? [], 'Retained salary obligation'),
     tradeHistoryById: indexById(input.tradeHistory ?? [], 'Trade record'),
+    tradeNegotiationsById: indexById((input.tradeNegotiations ?? []).map(createTradeNegotiation), 'Trade negotiation'),
     recruitingCyclesById: indexById(input.recruitingCycles ?? [], 'Recruiting cycle'),
     recruitProfilesById: indexById(input.recruitProfiles ?? [], 'Recruit profile'),
     recruitingInterests: Object.freeze([...(input.recruitingInterests ?? [])]),
@@ -866,6 +911,13 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     mediaInteractionsById: Object.freeze({ ...(input.mediaInteractionsById ?? {}) }),
     mediaProfilesByCoachId: Object.freeze({ ...(input.mediaProfilesByCoachId ?? {}) }),
     boardStatesByTeamId: Object.freeze(Object.fromEntries(Object.entries(input.boardStatesByTeamId ?? {}).map(([teamId, state]) => [teamId, createBoardState(state)]))),
+    clubStrategicStatesByTeamId: Object.freeze(Object.fromEntries(Object.entries(input.clubStrategicStatesByTeamId ?? {}).map(([teamId, state]) => {
+      const strategicState = createClubStrategicState(state)
+      if (teamId !== strategicState.teamId || !input.teams.some((team) => team.id === strategicState.teamId)) throw new GameWorldValidationError(`Club strategic state references unknown Team ${teamId}`)
+      return [teamId, strategicState]
+    }))),
+    gmPlanStatesById: indexById((input.gmPlanStates ?? []).map(createGMPlanState), 'GM plan state'),
+    contractReviewDecisionsById: indexById((input.contractReviewDecisions ?? []).map(createContractReviewDecision), 'Contract review decision'),
     governanceInstitutionsById: indexById((input.governanceInstitutions ?? []).map(createGovernanceInstitution), 'Governance institution'),
     governanceUniverseProfilesById: indexById((input.governanceUniverseProfiles ?? []).map(createGovernanceUniverseProfile), 'Governance universe profile'),
     governanceBodiesById: indexById((input.governanceBodies ?? []).map(createGovernanceBody), 'Governance body'),
@@ -961,6 +1013,8 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
 }
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
+  contractReviewDecisions: 'contractReviewDecisionsById',
+  retentionNegotiations: 'retentionNegotiationsById',
   financialBudgets: 'financialBudgetsById', budgetLines: 'budgetLinesById', budgetRevisions: 'budgetRevisionsById', budgetAllocations: 'budgetAllocationsById', forecastAssumptions: 'forecastAssumptionsById', financialRegulationAssessments: 'financialRegulationAssessmentsById', financeDecisionProposals: 'financeDecisionProposalsById', economicObservations: 'economicObservationsById', exchangeRates: 'exchangeRatesById', revenueSources: 'revenueSourcesById', operatingCostSources: 'operatingCostSourcesById', operatingCostFacts: 'operatingCostFactsById', debtInstruments: 'debtInstrumentsById', competitionDistributionFacts: 'competitionDistributionFactsById',
   multiClubOwnershipPolicies: 'multiClubOwnershipPoliciesById',
   organizationStructuralChanges: 'organizationStructuralChangesById', organizationLifecycleStates: 'organizationLifecycleStatesById', organizationSuccessions: 'organizationSuccessionsById', regulatoryOrders: 'regulatoryOrdersById', regulatoryRemediationPlans: 'regulatoryRemediationPlansById', organizationLicenses: 'organizationLicensesById',
@@ -970,11 +1024,15 @@ const collectionPatchTargets: Readonly<Record<string, string>> = {
   supporterRelationships: 'supporterRelationshipsById', collectiveInstitutionAffiliations: 'collectiveInstitutionAffiliationsById', collectiveParticipantAffiliations: 'collectiveParticipantAffiliationsById', collectiveInstitutionalStatusEvents: 'collectiveInstitutionalStatusEventsById', collectiveInstitutionalLiaisons: 'collectiveInstitutionalLiaisonsById', supporterExpectations: 'supporterExpectationsById', supporterExpectationEvents: 'supporterExpectationEventsById', supporterPressureEvents: 'supporterPressureEventsById', supporterReactions: 'supporterReactionsById', supportFundingPledges: 'supportFundingPledgesById', supportFundingPledgeEvents: 'supportFundingPledgeEventsById', supportContributions: 'supportContributionsById',
   supportComplianceCases: 'supportComplianceCasesById', supportComplianceCaseEvents: 'supportComplianceCaseEventsById', supportComplianceFindings: 'supportComplianceFindingsById', supportConflictDisclosures: 'supportConflictDisclosuresById', supportConsequences: 'supportConsequencesById', supportRemediations: 'supportRemediationsById',
   governanceManagerEvaluationPeriods: 'governanceManagerEvaluationPeriodsById', governanceManagerEvaluations: 'governanceManagerEvaluationsById', governanceJobSecurityTransitions: 'governanceJobSecurityTransitionsById', governanceDecisions: 'governanceDecisionsById', governanceDecisionParticipationGrants: 'governanceDecisionParticipationGrantsById', governanceDecisionEvents: 'governanceDecisionEventsById', governanceMeetings:'governanceMeetingsById', governanceMeetingParticipants:'governanceMeetingParticipantsById', governanceMeetingAgendaItems:'governanceMeetingAgendaItemsById', governanceMeetingEvents:'governanceMeetingEventsById', governanceRequests:'governanceRequestsById', governanceRequestEvents:'governanceRequestEventsById', governanceCommitments:'governanceCommitmentsById', governanceCommitmentEvents:'governanceCommitmentEventsById',
-  persons: 'personsById', countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', organizations: 'organizationsById', organizationSections: 'organizationSectionsById', organizationOwnership: 'organizationOwnershipById', organizationControl: 'organizationControlById', organizationOwnershipTransactions: 'organizationOwnershipTransactionsById', organizationOwnershipTransactionEvents: 'organizationOwnershipTransactionEventsById', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', financialAccounts: 'financialAccountsById', financialTransactions: 'financialTransactionsById', fiscalPeriods: 'fiscalPeriodsById', organizationFinancialProfiles: 'organizationFinancialProfilesById', receivables: 'receivablesById', payables: 'payablesById', treasuryApplications: 'treasuryApplicationsById', revenueRecognitions: 'revenueRecognitionsById', expenseRecognitions: 'expenseRecognitionsById', financialCommitments: 'financialCommitmentsById', financialEntitlements: 'financialEntitlementsById', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', narratives:'narrativesById',
+  persons: 'personsById', countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', organizations: 'organizationsById', organizationSections: 'organizationSectionsById', organizationOwnership: 'organizationOwnershipById', organizationControl: 'organizationControlById', organizationOwnershipTransactions: 'organizationOwnershipTransactionsById', organizationOwnershipTransactionEvents: 'organizationOwnershipTransactionEventsById', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', contractServiceTimeBaselines: 'contractServiceTimeBaselinesById', contractServiceTimeCredits: 'contractServiceTimeCreditsById', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', financialAccounts: 'financialAccountsById', financialTransactions: 'financialTransactionsById', fiscalPeriods: 'fiscalPeriodsById', organizationFinancialProfiles: 'organizationFinancialProfilesById', receivables: 'receivablesById', payables: 'payablesById', treasuryApplications: 'treasuryApplicationsById', revenueRecognitions: 'revenueRecognitionsById', expenseRecognitions: 'expenseRecognitionsById', financialCommitments: 'financialCommitmentsById', financialEntitlements: 'financialEntitlementsById', playerTransactions: 'playerTransactionsById', playerKnowledge: 'playerKnowledgeById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', tradeNegotiations: 'tradeNegotiationsById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', gmPlanStates: 'gmPlanStatesById', narratives:'narrativesById',
 }
 
 const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unknown>> = {
   ...Object.fromEntries(Object.keys(collectionPatchTargets).map((key) => [key, (value: unknown) => indexById(value as readonly { readonly id: string }[], key)])),
+  contractServiceTimeBaselines: (value) => indexById((value as readonly ContractServiceTimeBaseline[]).map(createContractServiceTimeBaseline), 'Contract service-time baseline'),
+  contractServiceTimeCredits: (value) => indexById((value as readonly ContractServiceTimeCredit[]).map(createContractServiceTimeCredit), 'Contract service-time credit'),
+  contractReviewDecisions: (value) => indexById((value as readonly ContractReviewDecision[]).map(createContractReviewDecision), 'Contract review decision'),
+  retentionNegotiations: (value) => indexById((value as readonly ContractRetentionNegotiation[]).map(createRetentionNegotiation), 'Retention negotiation'),
   financialBudgets: (value) => indexById((value as readonly FinancialBudget[]).map(createFinancialBudget), 'Financial budget'),
   budgetLines: (value) => indexById((value as readonly BudgetLine[]).map(createBudgetLine), 'Budget line'),
   budgetRevisions: (value) => indexById((value as readonly BudgetRevision[]).map(createBudgetRevision), 'Budget revision'),
@@ -1061,6 +1119,7 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   financialCommitments: (value) => indexById((value as readonly FinancialCommitment[]).map(createFinancialCommitment), 'Financial commitment'),
   financialEntitlements: (value) => indexById((value as readonly FinancialEntitlement[]).map(createFinancialEntitlement), 'Financial entitlement'),
   marketReality: (value) => Object.freeze(Object.fromEntries((value as readonly MarketReality[]).map((item) => [item.playerId, item]))),
+  tradeNegotiations: (value) => indexById((value as readonly TradeNegotiation[]).map(createTradeNegotiation), 'Trade negotiation'),
   staffHumanStates: (value) => indexHumanStatesByContextId(value as readonly StaffHumanState[]),
   staffExpectationProfiles: (value) => indexExpectationProfilesByContextId(value as readonly StaffExpectationProfile[]),
   staffCultureStates: (value) => indexCultureStatesByScopeKey(value as readonly StaffCultureState[]),
@@ -1070,6 +1129,8 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
 }
 
 function validateWorld(world: GameWorld): void {
+  assertActiveNegotiationUniqueness(Object.values(world.negotiationsById))
+  assertActiveRetentionUniqueness(Object.values(world.retentionNegotiationsById))
   requireEntity(world.seasons, world.currentSeasonId, 'Current season')
   requireEntity(world.coaches, world.userCoachId, 'User coach')
   validatePersons(world)
@@ -1083,6 +1144,19 @@ function validateWorld(world: GameWorld): void {
     requireEntity(world.organizationsById, team.organizationId, `Team ${team.id} organization`)
     const section = requireEntity(world.organizationSectionsById, team.organizationSectionId, `Team ${team.id} organization section`)
     if (section.organizationId !== team.organizationId) throw new GameWorldValidationError(`Team ${team.id} organization section belongs to a different organization`)
+  }
+  for (const [teamId, state] of Object.entries(world.clubStrategicStatesByTeamId)) {
+    if (teamId !== state.teamId || !world.teams[teamId as TeamId]) throw new GameWorldValidationError(`Club strategic state references unknown Team ${teamId}`)
+    createClubStrategicState(state)
+  }
+  const gmPlanKeys = new Set<string>()
+  for (const plan of Object.values(world.gmPlanStatesById)) {
+    createGMPlanState(plan)
+    const planTeam = requireEntity(world.teams, plan.teamId, `GM plan ${plan.id} team`)
+    if (planTeam.coachId === world.userCoachId) throw new GameWorldValidationError(`GM plan ${plan.id} cannot be persisted for the user team`)
+    const key = `${plan.teamId}:${plan.needId}`
+    if (gmPlanKeys.has(key) || plan.id !== key) throw new GameWorldValidationError(`Duplicate or invalid GM plan for ${key}`)
+    gmPlanKeys.add(key)
   }
   validateOrganizationOwnershipAndControl(world)
   validateOrganizationOwnershipTransactions(world)
@@ -1100,6 +1174,14 @@ function validateWorld(world: GameWorld): void {
   for (const player of Object.values(world.players)) {
     requireEntity(world.countries, player.nationalityId, `Player ${player.id} nationality`)
     if (compareGameDates(player.bio.dateOfBirth, world.currentDate) >= 0) throw new GameWorldValidationError(`Player ${player.id} date of birth must be before current date`)
+  }
+
+  for (const negotiation of Object.values(world.retentionNegotiationsById)) {
+    requireEntity(world.teams, negotiation.teamId, `Retention negotiation ${negotiation.id} Team`)
+    requireEntity(world.organizationsById, negotiation.organizationId, `Retention negotiation ${negotiation.id} Organization`)
+    requireEntity(world.players, negotiation.playerId, `Retention negotiation ${negotiation.id} Player`)
+    const predecessor = requireEntity(world.contractsById, negotiation.predecessorContractId, `Retention negotiation ${negotiation.id} predecessor contract`)
+    if (predecessor.playerId !== negotiation.playerId) throw new GameWorldValidationError(`Retention negotiation ${negotiation.id} references a different contract player`)
   }
 
   const rosteredPlayerIds = new Set<PlayerId>()
@@ -1244,11 +1326,28 @@ function validateWorld(world: GameWorld): void {
   for (const log of Object.values(world.matchStatLogsByGameId)) validateMatchStatLog(world, log)
   for (const injury of Object.values(world.injuriesById)) validateInjury(world, injury)
   for (const contract of Object.values(world.contractsById)) { createPlayerContract(contract); requireEntity(world.players,contract.playerId,`Contract ${contract.id} Player`); requireEntity(world.teams,contract.teamId,`Contract ${contract.id} Team`) }
+  const successorByPredecessor = new Map<string, string>()
+  for (const contract of Object.values(world.contractsById)) if (contract.predecessorContractId !== undefined) {
+    const predecessor = requireEntity(world.contractsById, contract.predecessorContractId, `Contract ${contract.id} predecessor`)
+    if (predecessor.playerId !== contract.playerId || predecessor.teamId !== contract.teamId || predecessor.term.expiresOn !== contract.term.startsOn) throw new GameWorldValidationError(`Contract ${contract.id} does not continue its predecessor`)
+    if (predecessor.termination?.reason === 'released' && (contract.termination?.reason !== 'released' || contract.termination.terminatedOn !== predecessor.termination.terminatedOn)) throw new GameWorldValidationError(`Contract ${contract.id} was not terminated with its released predecessor`)
+    if (successorByPredecessor.has(predecessor.id)) throw new GameWorldValidationError(`Contract ${predecessor.id} has multiple explicit successors`)
+    successorByPredecessor.set(predecessor.id, contract.id)
+  }
   for (const finances of Object.values(world.teamFinancesByTeamId)) { createTeamFinances(finances); requireEntity(world.teams,finances.teamId,`Team finances ${finances.teamId} Team`) }
   validateFinancialState(world)
   validateTreasuryState(world)
   validateRecognitionState(world)
-  for (const transaction of Object.values(world.playerTransactionsById)) { requireEntity(world.players,transaction.playerId,`Transaction ${transaction.id} Player`); if(transaction.fromTeamId)requireEntity(world.teams,transaction.fromTeamId,`Transaction ${transaction.id} from Team`); if(transaction.toTeamId)requireEntity(world.teams,transaction.toTeamId,`Transaction ${transaction.id} to Team`); if(transaction.contractId)requireEntity(world.contractsById,transaction.contractId,`Transaction ${transaction.id} Contract`) }
+  for (const transaction of Object.values(world.playerTransactionsById)) {
+    requireEntity(world.players, transaction.playerId, `Transaction ${transaction.id} Player`)
+    if (transaction.fromTeamId) requireEntity(world.teams, transaction.fromTeamId, `Transaction ${transaction.id} from Team`)
+    if (transaction.toTeamId) requireEntity(world.teams, transaction.toTeamId, `Transaction ${transaction.id} to Team`)
+    if (transaction.contractId) requireEntity(world.contractsById, transaction.contractId, `Transaction ${transaction.id} Contract`)
+    if (transaction.kind === 'traded') {
+      if (transaction.fromTeamId === undefined || transaction.toTeamId === undefined || transaction.contractId === undefined) throw new GameWorldValidationError(`Trade transaction ${transaction.id} requires both teams and the transferred contract`)
+      if (world.contractsById[transaction.contractId]?.playerId !== transaction.playerId) throw new GameWorldValidationError(`Trade transaction ${transaction.id} contract belongs to another player`)
+    }
+  }
   const pairs = new Set<string>(); for (const knowledge of Object.values(world.playerKnowledgeById)) { createPlayerKnowledge(knowledge); requireEntity(world.teams, knowledge.observerTeamId, 'Knowledge observer Team'); requireEntity(world.players, knowledge.subjectPlayerId, 'Knowledge subject Player'); const pair=`${knowledge.observerTeamId}:${knowledge.subjectPlayerId}`; if(pairs.has(pair)) throw new GameWorldValidationError('Duplicate Player knowledge observer and subject'); pairs.add(pair) }
   for (const knowledge of world.organizationKnowledge) { createOrganizationKnowledge(knowledge); requireEntity(world.players, knowledge.subjectPlayerId, 'Organization knowledge subject Player') }
   for (const evidence of Object.values(world.evidenceById)) { requireEntity(world.players, evidence.subjectPlayerId, 'Evidence subject Player') }
@@ -1466,15 +1565,51 @@ function validateWorld(world: GameWorld): void {
   for (const resolution of Object.values(world.promotionRelegationResolutionsById)) validatePromotionRelegationResolution(world, resolution)
   for (const draft of Object.values(world.draftsById)) validateDraft(world, draft)
   for (const pick of Object.values(world.draftPicksById)) validateDraftPick(world, pick)
-  for (const [seasonId, rules] of Object.entries(world.salaryRulesBySeasonId) as [SeasonId, SalaryRules][]) { requireEntity(world.seasons, seasonId, 'Salary rules season'); createSalaryRules(rules); if (rules.seasonId !== seasonId) throw new GameWorldValidationError('Salary rules season does not match key') }
+  const baselineKeys = new Set<string>()
+  for (const baseline of Object.values(world.contractServiceTimeBaselinesById)) { createContractServiceTimeBaseline(baseline); requireEntity(world.players, baseline.playerId, 'Service-time baseline Player'); requireEntity(world.ecosystems, baseline.jurisdictionId, 'Service-time baseline jurisdiction'); const key = `${baseline.playerId}:${baseline.jurisdictionId}`; if (baselineKeys.has(key)) throw new GameWorldValidationError('Player has duplicate service-time baselines for a jurisdiction'); baselineKeys.add(key) }
+  const creditKeys = new Set<string>()
+  for (const credit of Object.values(world.contractServiceTimeCreditsById)) { createContractServiceTimeCredit(credit); requireEntity(world.players, credit.playerId, 'Service-time credit Player'); requireEntity(world.ecosystems, credit.jurisdictionId, 'Service-time credit jurisdiction'); const season = requireEntity(world.seasons, credit.seasonId, 'Service-time credit season'); const competition = requireEntity(world.competitions, season.competitionId, 'Service-time credit competition'); if (competition.id !== credit.competitionId || competition.ecosystemId !== credit.jurisdictionId) throw new GameWorldValidationError('Service-time credit jurisdiction does not match competition'); const key = `${credit.playerId}:${credit.jurisdictionId}:${credit.serviceYear}`; if (creditKeys.has(key)) throw new GameWorldValidationError('Player has duplicate service-time credits for a jurisdiction/year'); creditKeys.add(key); if (new Set(credit.qualifyingGameIds).size !== credit.qualifyingGameIds.length || credit.qualifyingGameIds.some((id) => world.games[id as GameId]?.seasonId !== credit.seasonId)) throw new GameWorldValidationError('Service-time credit evidence is invalid') }
+  for (const [seasonId, rules] of Object.entries(world.salaryRulesBySeasonId) as [SeasonId, SalaryRules][]) { requireEntity(world.seasons, seasonId, 'Salary rules season'); createSalaryRules(rules); if (rules.seasonId !== seasonId) throw new GameWorldValidationError('Salary rules season does not match key'); if (rules.serviceTimePolicy !== undefined) requireEntity(world.ecosystems, rules.serviceTimePolicy.jurisdictionId, 'Salary service-time jurisdiction') }
   for (const exception of Object.values(world.salaryExceptionsById)) { createTeamSalaryException(exception); requireEntity(world.teams, exception.teamId, 'Salary exception Team'); requireEntity(world.seasons, exception.seasonId, 'Salary exception season') }
   for (const charge of Object.values(world.deadMoneyChargesById)) { createDeadMoneyCharge(charge); requireEntity(world.teams, charge.teamId, 'Dead money Team'); requireEntity(world.seasons, charge.seasonId, 'Dead money season') }
-  for (const [seasonId, rules] of Object.entries(world.tradeRulesBySeasonId) as [SeasonId, TradeRules][]) { requireEntity(world.seasons, seasonId, 'Trade rules season'); createTradeRules(rules); if (rules.seasonId !== seasonId) throw new GameWorldValidationError('Trade rules season does not match key'); requireEntity(world.ecosystems, rules.ecosystemId, 'Trade rules ecosystem') }
+  for (const [seasonId, rules] of Object.entries(world.tradeRulesBySeasonId) as [SeasonId, TradeRules][]) {
+    const season = requireEntity(world.seasons, seasonId, 'Trade rules season')
+    createTradeRules(rules)
+    if (rules.seasonId !== seasonId) throw new GameWorldValidationError('Trade rules season does not match key')
+    requireEntity(world.ecosystems, rules.ecosystemId, 'Trade rules ecosystem')
+    if ((rules.tradeWindow?.opensOn !== undefined && (compareGameDates(rules.tradeWindow.opensOn, season.startDate) < 0 || compareGameDates(rules.tradeWindow.opensOn, season.endDate) > 0))
+      || (rules.tradeWindow?.closesOn !== undefined && (compareGameDates(rules.tradeWindow.closesOn, season.startDate) < 0 || compareGameDates(rules.tradeWindow.closesOn, season.endDate) > 0))) throw new GameWorldValidationError('Trade window must stay within its season')
+  }
   for (const rights of Object.values(world.playerRightsById)) { createPlayerRights(rights); requireEntity(world.players, rights.playerId, 'Player rights Player'); requireEntity(world.teams, rights.ownerTeamId, 'Player rights Team'); requireEntity(world.ecosystems, rights.ecosystemId, 'Player rights ecosystem') }
   for (const right of Object.values(world.futureDraftPickRightsById)) { createFutureDraftPickRight(right); requireEntity(world.teams, right.originalTeamId, 'Future pick original Team'); requireEntity(world.teams, right.ownerTeamId, 'Future pick owner Team'); requireEntity(world.ecosystems, right.ecosystemId, 'Future pick ecosystem'); if (right.conditionalRecipientTeamId !== undefined) requireEntity(world.teams, right.conditionalRecipientTeamId, 'Future pick conditional Team') }
   for (const right of Object.values(world.draftPickSwapRightsById)) { createDraftPickSwapRight(right); requireEntity(world.teams, right.holderTeamId, 'Swap right holder Team'); requireEntity(world.teams, right.counterpartTeamId, 'Swap right counterpart Team'); requireEntity(world.ecosystems, right.ecosystemId, 'Swap right ecosystem') }
   for (const obligation of Object.values(world.retainedSalaryObligationsById)) { createRetainedSalaryObligation(obligation); requireEntity(world.players, obligation.playerId, 'Retained salary Player'); requireEntity(world.teams, obligation.retainingTeamId, 'Retained salary retaining Team'); requireEntity(world.teams, obligation.receivingTeamId, 'Retained salary receiving Team'); requireEntity(world.seasons, obligation.seasonId, 'Retained salary season') }
   for (const trade of Object.values(world.tradeHistoryById)) { createTradeRecord(trade); requireEntity(world.ecosystems, trade.ecosystemId, 'Trade ecosystem'); requireEntity(world.seasons, trade.seasonId, 'Trade season'); for (const teamId of trade.participantTeamIds) requireEntity(world.teams, teamId, 'Trade participant Team') }
+  for (const negotiation of Object.values(world.tradeNegotiationsById)) {
+    createTradeNegotiation(negotiation)
+    requireEntity(world.ecosystems, negotiation.ecosystemId, `Trade negotiation ${negotiation.id} ecosystem`)
+    requireEntity(world.seasons, negotiation.seasonId, `Trade negotiation ${negotiation.id} season`)
+    for (const teamId of negotiation.participantTeamIds) requireEntity(world.teams, teamId, `Trade negotiation ${negotiation.id} participant`)
+    for (const revision of negotiation.revisions) {
+      for (const movement of revision.movements) {
+        if (movement.asset.kind === 'player') requireEntity(world.players, movement.asset.playerId, `Trade negotiation ${negotiation.id} Player`)
+        if (movement.asset.kind === 'draftPick') requireEntity(world.draftPicksById, movement.asset.draftPickId, `Trade negotiation ${negotiation.id} Draft pick`)
+        if (movement.asset.kind === 'futureDraftPick') requireEntity(world.futureDraftPickRightsById, movement.asset.futureDraftPickRightId, `Trade negotiation ${negotiation.id} Future pick`)
+        if (movement.asset.kind === 'playerRights') requireEntity(world.playerRightsById, movement.asset.playerRightsId, `Trade negotiation ${negotiation.id} Player rights`)
+        if (movement.asset.kind === 'draftPickSwapRight') requireEntity(world.draftPickSwapRightsById, movement.asset.draftPickSwapRightId, `Trade negotiation ${negotiation.id} Swap right`)
+      }
+      for (const snapshot of revision.contractSnapshots) requireEntity(world.players, snapshot.playerId, `Trade negotiation ${negotiation.id} contract snapshot Player`)
+      if (revision.proposedByActor.kind === 'STAFF') requireEntity(world.staffPeopleById, revision.proposedByActor.staffPersonId, `Trade negotiation ${negotiation.id} proposer Staff`)
+    }
+    for (const action of negotiation.actions) if (action.actor.kind === 'STAFF') requireEntity(world.staffPeopleById, action.actor.staffPersonId, `Trade negotiation ${negotiation.id} action Staff`)
+    if (negotiation.status === 'EXECUTED') {
+      const decisionIds = negotiation.governanceDecisionIdsByTeamId!
+      for (const teamId of negotiation.participantTeamIds) {
+        const decision = requireEntity(world.governanceDecisionsById, decisionIds[teamId]!, `Executed trade negotiation ${negotiation.id} Governance decision`)
+        assertPlayerTradeCommitmentEffect(world, decision, negotiation.completedOn!)
+      }
+    }
+  }
 }
 
 function validateOrganizationOwnershipAndControl(world: GameWorld): void {
@@ -1831,11 +1966,32 @@ function validateGovernance(world: GameWorld): void {
     if (events.filter((event) => event.kind === 'EXECUTED').length > 1) throw new GameWorldValidationError(`Governance decision ${decision.id} executed more than once`)
     const execution = events.find((event) => event.kind === 'EXECUTED')
     if (execution !== undefined && governanceDecisionExecutionPolicy(decision.decisionType) === 'EFFECT_REQUIRED') {
-      if (decision.decisionType !== 'COACH_FIRING') throw new GameWorldValidationError(`Governance decision ${decision.id} requires an unimplemented execution effect`)
-      const coachId = decision.subject.kind === 'COACH' ? decision.subject.coachId as CoachId : undefined
-      const fired = coachId === undefined ? false : (world.coachCareerHistoryByCoachId[coachId] ?? []).some((entry) => entry.kind === 'departure' && entry.reason === 'fired' && entry.teamId !== undefined && institution.teamIds.includes(entry.teamId) && entry.date === execution.effectiveOn)
-      if (!fired) throw new GameWorldValidationError(`Governance decision ${decision.id} lacks its canonical coach firing effect`)
+      if (decision.decisionType === 'COACH_FIRING') {
+        const coachId = decision.subject.kind === 'COACH' ? decision.subject.coachId as CoachId : undefined
+        const fired = coachId === undefined ? false : (world.coachCareerHistoryByCoachId[coachId] ?? []).some((entry) => entry.kind === 'departure' && entry.reason === 'fired' && entry.teamId !== undefined && institution.teamIds.includes(entry.teamId) && entry.date === execution.effectiveOn)
+        if (!fired) throw new GameWorldValidationError(`Governance decision ${decision.id} lacks its canonical coach firing effect`)
+      } else if (decision.decisionType === 'PLAYER_CONTRACT_SIGNING') {
+        assertPlayerContractSigningEffect(world, decision, execution.effectiveOn)
+      } else if (decision.decisionType === 'PLAYER_TRADE_COMMITMENT') {
+        assertPlayerTradeCommitmentEffect(world, decision, execution.effectiveOn)
+      } else {
+        throw new GameWorldValidationError(`Governance decision ${decision.id} requires an unimplemented execution effect`)
+      }
     }
+  }
+  for (const negotiation of Object.values(world.negotiationsById)) {
+    if (negotiation.status !== 'SIGNED') {
+      if (negotiation.signedOn !== undefined || negotiation.signedContractId !== undefined || negotiation.signedTransactionId !== undefined
+        || negotiation.signedGovernanceDecisionId !== undefined || negotiation.signedBy !== undefined) {
+        throw new GameWorldValidationError(`Unsigned negotiation ${negotiation.id} contains signing provenance`)
+      }
+      continue
+    }
+    if (negotiation.signedGovernanceDecisionId === undefined || negotiation.signedOn === undefined) throw new GameWorldValidationError(`Signed negotiation ${negotiation.id} lacks signing provenance`)
+    const decision = requireEntity(world.governanceDecisionsById, negotiation.signedGovernanceDecisionId, `Signed negotiation ${negotiation.id} Governance decision`)
+    const execution = Object.values(world.governanceDecisionEventsById).find((event) => event.decisionId === decision.id && event.kind === 'EXECUTED')
+    if (execution === undefined) throw new GameWorldValidationError(`Signed negotiation ${negotiation.id} has no Governance execution event`)
+    assertPlayerContractSigningEffect(world, decision, execution.effectiveOn)
   }
   for (const event of Object.values(world.governanceDecisionEventsById)) requireEntity(world.governanceDecisionsById, event.decisionId, `Governance decision event ${event.id} decision`)
   for (const decision of new Set(grants.map((grant) => grant.decision))) {
@@ -1844,6 +2000,186 @@ function validateGovernance(world: GameWorld): void {
     for (const body of Object.values(world.governanceBodiesById)) visit(body.id, new Set())
   }
 }
+
+function assertPlayerContractSigningEffect(world: GameWorld, decision: GovernanceDecision, effectiveOn: GameDate): void {
+  if (decision.decisionType !== 'PLAYER_CONTRACT_SIGNING' || decision.subject.kind !== 'GENERIC') {
+    throw new GameWorldValidationError(`Governance decision ${decision.id} has an invalid player signing subject`)
+  }
+  if (decision.subject.referenceId.startsWith('retention:')) {
+    assertRetentionContractSigningEffect(world, decision, effectiveOn, decision.subject.referenceId.slice('retention:'.length))
+    return
+  }
+  const negotiation = world.negotiationsById[decision.subject.referenceId]
+  if (negotiation === undefined || negotiation.status !== 'SIGNED' || !('salary' in negotiation)
+    || negotiation.signedGovernanceDecisionId !== decision.id || negotiation.signedOn !== effectiveOn
+    || negotiation.signedContractId === undefined || negotiation.signedTransactionId === undefined || negotiation.signedBy === undefined) {
+    throw new GameWorldValidationError(`Governance decision ${decision.id} lacks its canonical player signing effect`)
+  }
+  const contract = requireEntity(world.contractsById, negotiation.signedContractId, `Signed negotiation ${negotiation.id} contract`)
+  const transaction = requireEntity(world.playerTransactionsById, negotiation.signedTransactionId, `Signed negotiation ${negotiation.id} transaction`)
+  if (negotiation.signedBy?.kind === 'STAFF') requireEntity(world.staffPeopleById, negotiation.signedBy.staffPersonId, `Signed negotiation ${negotiation.id} signing Staff`)
+  const institution = requireEntity(world.governanceInstitutionsById, decision.institutionId, `Governance decision ${decision.id} institution`)
+  if (negotiation.teamId === undefined) throw new GameWorldValidationError(`Signed negotiation ${negotiation.id} lacks a Team ID`)
+  const team = requireEntity(world.teams, negotiation.teamId, `Signed negotiation ${negotiation.id} team`)
+  if (!institution.teamIds.includes(team.id) || team.organizationId !== negotiation.organizationId
+    || contract.id !== contractIdFromString(`contract:signed-free-agent:${negotiation.id}`)
+    || transaction.id !== playerTransactionIdFromString(`transaction:signed-free-agent:${negotiation.id}`)
+    || contract.playerId !== negotiation.playerId || contract.teamId !== team.id || contract.term.startsOn !== negotiation.signedOn
+    || contract.term.expiresOn !== addYears(negotiation.signedOn, negotiation.years)
+    || contract.compensation.annualSalary !== negotiation.salary
+    || transaction.playerId !== negotiation.playerId || transaction.kind !== 'signedFreeAgent'
+    || transaction.occurredOn !== negotiation.signedOn || transaction.toTeamId !== team.id || transaction.contractId !== contract.id
+    || !validCurrentContractRosterEffect(world, contract, team.id)) {
+    throw new GameWorldValidationError(`Governance decision ${decision.id} player signing effects do not match the accepted agreement`)
+  }
+
+  const rolePromiseId = `role-promise:signed-free-agent:${negotiation.id}`
+  const rolePromise = world.rolePromisesById[rolePromiseId]
+  if ((negotiation.role === undefined && rolePromise !== undefined)
+    || (negotiation.role !== undefined && (rolePromise === undefined || rolePromise.playerId !== negotiation.playerId
+      || rolePromise.teamOrganizationId !== negotiation.organizationId || rolePromise.role !== negotiation.role
+      || rolePromise.acceptedOn !== negotiation.signedOn || !rolePromiseStatusMatchesContract(world, rolePromise, contract)))) {
+    throw new GameWorldValidationError(`Signed negotiation ${negotiation.id} has an invalid RolePromise effect`)
+  }
+
+  const feeCommitments = Object.values(world.financialCommitmentsById).filter((item) => item.provenance.kind === 'PLAYER_AGENT_FEE' && item.provenance.id === negotiation.id)
+  if (negotiation.agentFee !== undefined && negotiation.agentFee > 0) {
+    const fee = feeCommitments[0]
+    const profile = world.organizationFinancialProfilesById[team.organizationId]
+    if (feeCommitments.length !== 1 || fee === undefined || profile === undefined
+      || fee.id !== financialCommitmentIdFromString(`financial-commitment:player-agent-fee:${negotiation.id}`)
+      || fee.organizationId !== team.organizationId || fee.amount.minorUnits !== negotiation.agentFee
+      || fee.amount.currencyCode !== profile.baseCurrencyCode || fee.startsOn !== negotiation.signedOn || fee.dueOn !== negotiation.signedOn
+      || fee.dimensions?.teamId !== team.id || fee.dimensions.reference?.kind !== 'CONTRACT_NEGOTIATION'
+      || fee.dimensions.reference.id !== negotiation.id) {
+      throw new GameWorldValidationError(`Signed negotiation ${negotiation.id} lacks its canonical agent-fee commitment`)
+    }
+  } else if (feeCommitments.length > 0) {
+    throw new GameWorldValidationError(`Signed negotiation ${negotiation.id} has an unagreed agent-fee commitment`)
+  }
+}
+
+function assertRetentionContractSigningEffect(world: GameWorld, decision: GovernanceDecision, effectiveOn: GameDate, negotiationId: string): void {
+  const negotiation = world.retentionNegotiationsById[negotiationId]
+  const execution = negotiation?.execution
+  if (negotiation === undefined || negotiation.status !== 'ACCEPTED' || negotiation.acceptedTerms === undefined || execution?.status !== 'SIGNED'
+    || execution.governanceDecisionId !== decision.id || execution.signedOn !== effectiveOn) throw new GameWorldValidationError(`Governance decision ${decision.id} lacks its exact signed retention agreement`)
+  const predecessor = requireEntity(world.contractsById, negotiation.predecessorContractId, `Retention signing ${negotiation.id} predecessor`)
+  const contract = requireEntity(world.contractsById, execution.contractId, `Retention signing ${negotiation.id} successor`)
+  const institution = requireEntity(world.governanceInstitutionsById, decision.institutionId, `Retention signing ${decision.id} institution`)
+  const terms = negotiation.acceptedTerms
+  const expectedYears = terms.years
+  if (!institution.teamIds.includes(negotiation.teamId) || predecessor.playerId !== negotiation.playerId || predecessor.teamId !== negotiation.teamId
+    || contract.id !== contractIdFromString(`contract:retention-successor:${negotiation.id}`) || contract.predecessorContractId !== predecessor.id
+    || contract.playerId !== negotiation.playerId || contract.teamId !== negotiation.teamId || contract.term.startsOn !== predecessor.term.expiresOn
+    || contract.term.expiresOn !== addYears(predecessor.term.expiresOn, expectedYears) || contract.compensation.annualSalary !== terms.salary
+    || contract.compensation.years?.length !== expectedYears || !validCurrentContractRosterEffect(world, contract, negotiation.teamId)) {
+    throw new GameWorldValidationError(`Governance decision ${decision.id} retention contract does not match its accepted terms`)
+  }
+  for (let index = 0; index < expectedYears; index++) {
+    const year = contract.compensation.years![index]!
+    if (year.cashSalary !== terms.salary || year.guaranteedAmount !== (terms.guarantees?.find((item) => item.year === index + 1)?.guaranteedAmount ?? 0)) throw new GameWorldValidationError(`Retention successor ${contract.id} compensation differs from accepted terms`)
+  }
+  const rolePromise = world.rolePromisesById[`role-promise:signed-retention:${negotiation.id}`]
+  if ((terms.role === undefined && rolePromise !== undefined) || (terms.role !== undefined && (rolePromise?.playerId !== negotiation.playerId
+    || rolePromise.teamOrganizationId !== negotiation.organizationId || rolePromise.role !== terms.role || rolePromise.acceptedOn !== effectiveOn || !rolePromiseStatusMatchesContract(world, rolePromise, contract)))) throw new GameWorldValidationError(`Retention successor ${contract.id} has an invalid RolePromise`)
+  const feeCommitments = Object.values(world.financialCommitmentsById).filter((item) => item.provenance.kind === 'PLAYER_AGENT_FEE' && item.provenance.id === `retention:${negotiation.id}`)
+  if (terms.agentFeePayer === 'CLUB' && (terms.agentFee ?? 0) > 0) {
+    const fee = feeCommitments[0]
+    const profile = world.organizationFinancialProfilesById[negotiation.organizationId]
+    if (feeCommitments.length !== 1 || fee === undefined || profile === undefined || fee.id !== financialCommitmentIdFromString(`financial-commitment:player-agent-fee:retention:${negotiation.id}`)
+      || fee.organizationId !== negotiation.organizationId || fee.category !== 'PLAYER_AGENT_FEE' || fee.amount.minorUnits !== terms.agentFee
+      || fee.amount.currencyCode !== profile.baseCurrencyCode || fee.startsOn !== effectiveOn || fee.dueOn !== effectiveOn
+      || fee.dimensions?.teamId !== negotiation.teamId || fee.dimensions.reference?.id !== `retention:${negotiation.id}`) throw new GameWorldValidationError(`Retention signing ${negotiation.id} lacks its agent-fee commitment`)
+  } else if (feeCommitments.length > 0) throw new GameWorldValidationError(`Retention signing ${negotiation.id} has an unagreed agent-fee commitment`)
+}
+
+function rolePromiseStatusMatchesContract(world: GameWorld, promise: RolePromise, contract: PlayerContract): boolean {
+  if (promise.status === 'FULFILLED') return true
+  const wasReleased = Object.values(world.playerTransactionsById).some((transaction) => transaction.kind === 'released'
+    && transaction.playerId === contract.playerId && transaction.fromTeamId !== undefined
+    && world.teams[transaction.fromTeamId]?.organizationId === promise.teamOrganizationId
+    && transaction.occurredOn >= promise.acceptedOn)
+  return promise.status === 'BROKEN' ? wasReleased : !wasReleased
+}
+
+function validCurrentContractRosterEffect(world: GameWorld, contract: PlayerContract, teamId: TeamId): boolean {
+  if (contract.termination?.reason === 'released') {
+    return Object.values(world.playerTransactionsById).some((transaction) => transaction.kind === 'released'
+      && transaction.playerId === contract.playerId && transaction.fromTeamId === teamId
+      && transaction.occurredOn === contract.termination!.terminatedOn && transaction.contractId !== undefined
+      && releaseTransactionCoversContract(world, transaction.contractId, contract.id, transaction.occurredOn))
+  }
+  const rosterTeamIds = Object.values(world.teams).filter((team) => team.rosterPlayerIds.includes(contract.playerId)).map((team) => team.id)
+  if (rosterTeamIds.length === 1 && rosterTeamIds[0] === teamId) return true
+  return Object.values(world.playerTransactionsById).some((transaction) => transaction.kind === 'released'
+    && transaction.playerId === contract.playerId && transaction.fromTeamId === teamId
+    && transaction.occurredOn >= contract.term.startsOn && transaction.contractId !== undefined
+    && world.contractsById[transaction.contractId]?.playerId === contract.playerId)
+}
+
+function releaseTransactionCoversContract(world: GameWorld, rootContractId: ContractId, targetContractId: ContractId, releasedOn: GameDate): boolean {
+  let contract: PlayerContract | undefined = world.contractsById[rootContractId]
+  const seen = new Set<string>()
+  while (contract !== undefined && !seen.has(String(contract.id))) {
+    seen.add(String(contract.id))
+    if (contract.termination?.reason !== 'released' || contract.termination.terminatedOn !== releasedOn) return false
+    if (contract.id === targetContractId) return true
+    contract = Object.values(world.contractsById).find((item) => item.predecessorContractId === contract!.id)
+  }
+  return false
+}
+
+function assertPlayerTradeCommitmentEffect(world: GameWorld, decision: GovernanceDecision, effectiveOn: GameDate): void {
+  if (decision.decisionType !== 'PLAYER_TRADE_COMMITMENT' || decision.subject.kind !== 'GENERIC' || !decision.subject.referenceId.startsWith('trade-commitment:')) throw new GameWorldValidationError(`Governance decision ${decision.id} has an invalid trade commitment subject`)
+  const subjectReferenceId = decision.subject.referenceId
+  const negotiation = Object.values(world.tradeNegotiationsById).find((item) => item.status === 'EXECUTED' && item.participantTeamIds.some((teamId) => `trade-commitment:${encodeURIComponent(item.id)}:${encodeURIComponent(item.currentRevisionId)}:${encodeURIComponent(teamId)}` === subjectReferenceId))
+  if (negotiation === undefined || negotiation.completedOn !== effectiveOn) throw new GameWorldValidationError(`Governance decision ${decision.id} lacks its completed trade negotiation`)
+  const revision = negotiation.revisions.find((item) => item.id === negotiation.currentRevisionId)
+  const institution = requireEntity(world.governanceInstitutionsById, decision.institutionId, `Trade commitment ${decision.id} institution`)
+  const teamIds = institution.teamIds.filter((id) => negotiation.participantTeamIds.includes(id) && subjectReferenceId.endsWith(`:${encodeURIComponent(id)}`))
+  const teamId = teamIds.length === 1 ? teamIds[0] : undefined
+  const record = negotiation.tradeRecordId === undefined ? undefined : world.tradeHistoryById[negotiation.tradeRecordId]
+  const execution = Object.values(world.governanceDecisionEventsById).find((event) => event.decisionId === decision.id && event.kind === 'EXECUTED')
+  const problems = [
+    ...(revision === undefined ? ['REVISION_MISSING'] : []), ...(teamId === undefined ? ['PARTICIPANT_INSTITUTION_MISMATCH'] : []),
+    ...(record === undefined ? ['TRADE_RECORD_MISSING'] : []), ...(execution === undefined ? ['EXECUTION_EVENT_MISSING'] : []),
+    ...(record === undefined || record.negotiationId !== negotiation.id ? ['TRADE_NEGOTIATION_LINK_MISMATCH'] : []),
+    ...(record === undefined || revision === undefined || record.revisionId !== revision.id ? ['TRADE_REVISION_LINK_MISMATCH'] : []),
+    ...(record === undefined || teamId === undefined || record.governanceDecisionIdsByTeamId?.[teamId] !== decision.id ? ['TRADE_DECISION_LINK_MISMATCH'] : []),
+    ...(teamId === undefined || negotiation.governanceDecisionIdsByTeamId?.[teamId] !== decision.id ? ['NEGOTIATION_DECISION_LINK_MISMATCH'] : []),
+    ...(record === undefined || !sameStringSet(record.participantTeamIds, negotiation.participantTeamIds) ? ['PARTICIPANTS_MISMATCH'] : []),
+    ...(!sameStringSet(Object.keys(negotiation.governanceDecisionIdsByTeamId ?? {}), negotiation.participantTeamIds) ? ['DECISION_MAP_MISMATCH'] : []),
+    ...(Object.values(negotiation.governanceDecisionIdsByTeamId ?? {}).some((id) => !Object.values(world.governanceDecisionEventsById).some((event) => event.decisionId === id && event.kind === 'EXECUTED')) ? ['PARTICIPANT_EXECUTION_EVENT_MISSING'] : []),
+    ...(record === undefined || record.executedAt !== effectiveOn ? ['TRADE_DATE_MISMATCH'] : []),
+    ...(record === undefined || revision === undefined || !sameTradeMovements(record.movements, revision.movements) ? ['MOVEMENTS_MISMATCH'] : []),
+  ]
+  if (problems.length > 0) throw new GameWorldValidationError(`Governance decision ${decision.id} does not match a completed bilateral trade effect: ${problems.join(', ')}`)
+  if (revision === undefined || teamId === undefined || record === undefined || execution === undefined) throw new GameWorldValidationError(`Governance decision ${decision.id} has incomplete trade effect references`)
+  if (record.retainedSalaryObligationIds.length !== (revision.retainedSalary ?? []).length
+    || record.retainedSalaryObligationIds.some((id) => {
+      const obligation = world.retainedSalaryObligationsById[id]
+      return obligation === undefined || obligation.sourceTradeId !== record.id || !(revision.retainedSalary ?? []).some((term) => term.playerId === obligation.playerId && term.retainingTeamId === obligation.retainingTeamId && term.receivingTeamId === obligation.receivingTeamId && term.amount === obligation.amount && obligation.seasonId === negotiation.seasonId)
+    })
+    || record.createdExceptionIds.some((id) => world.salaryExceptionsById[id] === undefined)) {
+    throw new GameWorldValidationError(`Trade ${record.id} retention or salary exception effects do not match its agreement`)
+  }
+  for (const movement of revision.movements) {
+    if (movement.asset.kind === 'cash') throw new GameWorldValidationError(`Governance decision ${decision.id} executes unavailable cash consideration`)
+    if (movement.asset.kind === 'player') {
+      const player = requireEntity(world.players, movement.asset.playerId, `Trade ${record.id} player`)
+      const contract = Object.values(world.contractsById).find((item) => item.playerId === player.id && item.teamId === movement.toTeamId && getPlayerContractStatus(item, effectiveOn) === 'active')
+      const transaction = Object.values(world.playerTransactionsById).filter((item) => item.kind === 'traded' && item.playerId === player.id && item.fromTeamId === movement.fromTeamId && item.toTeamId === movement.toTeamId && item.occurredOn === effectiveOn && item.contractId === revision.contractSnapshots.find((snapshot) => snapshot.playerId === player.id)?.id && item.sourceTradeId === record.id)
+      if (!world.teams[movement.toTeamId]?.rosterPlayerIds.includes(player.id) || world.teams[movement.fromTeamId]?.rosterPlayerIds.includes(player.id) || contract === undefined || transaction.length !== 1) throw new GameWorldValidationError(`Trade ${record.id} player effect is incomplete`)
+    } else if (movement.asset.kind === 'draftPick' && world.draftPicksById[movement.asset.draftPickId]?.ownerTeamId !== movement.toTeamId) throw new GameWorldValidationError(`Trade ${record.id} draft pick effect is incomplete`)
+    else if (movement.asset.kind === 'playerRights' && world.playerRightsById[movement.asset.playerRightsId]?.ownerTeamId !== movement.toTeamId) throw new GameWorldValidationError(`Trade ${record.id} player rights effect is incomplete`)
+    else if (movement.asset.kind === 'futureDraftPick' && world.futureDraftPickRightsById[movement.asset.futureDraftPickRightId]?.ownerTeamId !== movement.toTeamId) throw new GameWorldValidationError(`Trade ${record.id} future pick effect is incomplete`)
+    else if (movement.asset.kind === 'draftPickSwapRight' && world.draftPickSwapRightsById[movement.asset.draftPickSwapRightId]?.holderTeamId !== movement.toTeamId) throw new GameWorldValidationError(`Trade ${record.id} swap effect is incomplete`)
+  }
+}
+
+function sameStringSet(left: readonly string[], right: readonly string[]): boolean { return left.length === right.length && [...left].sort().every((value, index) => value === [...right].sort()[index]) }
+function sameTradeMovements(left: readonly { readonly asset: { readonly kind: string; readonly [key: string]: unknown }; readonly fromTeamId: string; readonly toTeamId: string }[], right: readonly { readonly asset: { readonly kind: string; readonly [key: string]: unknown }; readonly fromTeamId: string; readonly toTeamId: string }[]): boolean { const key = (movement: (typeof left)[number]) => JSON.stringify({ fromTeamId: movement.fromTeamId, toTeamId: movement.toTeamId, asset: Object.fromEntries(Object.entries(movement.asset).sort(([a], [b]) => a.localeCompare(b))) }); return left.length === right.length && left.every((movement, index) => key(movement) === key(right[index]!)) }
 
 /** BG7A records structural supporter facts only; authority and Staff Politics remain untouched. */
 function validateInstitutionalSupport(world: GameWorld): void {

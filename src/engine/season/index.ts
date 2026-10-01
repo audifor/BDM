@@ -1,2 +1,2 @@
 export { finalizeCompletedSeason, finalizeSeason, getCompetitionChampion, getSeasonHistory, getSeasonHistoryRecord, isCompetitionComplete, isSeasonComplete } from './SeasonProgression'
-export { initializeRecruitingCycle, processSeasonContentLifecycle } from './SeasonContentLifecycle'
+export { bindRecruitingCycleTargetToSeason, initializeRecruitingCycle, processSeasonContentLifecycle } from './SeasonContentLifecycle'

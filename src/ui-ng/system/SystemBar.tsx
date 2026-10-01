@@ -1,15 +1,18 @@
 import './SystemBar.css'
 
-import { getContinueStopReason, type ContinueStopReason } from '@/app/game'
+import { evaluateSimulationBreakpoints, getContinueStopReason, type ContinueStopReason } from '@/app/game'
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
 import { formatGameDateLabel } from '@/ui-ng/applications/player/data/presentationHelpers'
 import { SimulateUntilControl } from '@/ui-ng/system/SimulateUntilControl'
 import { syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
 
-function continueButtonLabel(stopType: ContinueStopReason['type'] | undefined): string {
-  if (stopType === 'userGame') return 'Match'
-  if (stopType === 'mediaOpportunity') return 'Press'
+function continueButtonLabel(stop: ContinueStopReason | undefined): string {
+  if (stop?.type === 'userGame') return 'Match'
+  if (stop?.type === 'mediaOpportunity') return 'Press'
+  if (stop?.type === 'breakpoint' && stop.breakpoint.route === 'draft') return 'Draft'
+  if (stop?.type === 'breakpoint' && stop.breakpoint.route === 'coach') return 'Coach'
+  if (stop?.type === 'breakpoint' && stop.breakpoint.route === 'contracts') return 'Contracts'
   return 'Continue'
 }
 
@@ -20,6 +23,7 @@ export function SystemBar() {
   const season = world === null ? undefined : world.seasons[world.currentSeasonId]
   const competition = season === undefined || world === null ? undefined : world.competitions[season.competitionId]
   const stop = world === null ? undefined : getContinueStopReason(world)
+  const contractAttention = world !== null && evaluateSimulationBreakpoints(world).candidates.some((item) => item.route === 'contracts')
   const blocked = world === null
 
   return (
@@ -42,8 +46,9 @@ export function SystemBar() {
         <button className="ng-btn ng-btn--ghost" type="button">
           Inbox
         </button>
+        {contractAttention && <button aria-label="Open contracts requiring attention" className="ng-btn ng-btn--ghost" onClick={() => syncWorkspaceAppQuery('contracts')} type="button">Contracts</button>}
         <button
-          aria-label={continueButtonLabel(stop?.type)}
+          aria-label={continueButtonLabel(stop)}
           className="ng-btn ng-btn--primary"
           disabled={blocked}
           onClick={() => {
@@ -57,11 +62,23 @@ export function SystemBar() {
               return
             }
             if (stop?.type === 'seasonComplete') return
+            if (stop?.type === 'breakpoint' && stop.breakpoint.route === 'draft') {
+              syncWorkspaceAppQuery('draft')
+              return
+            }
+            if (stop?.type === 'breakpoint' && stop.breakpoint.route === 'coach') {
+              syncWorkspaceAppQuery('coach')
+              return
+            }
+            if (stop?.type === 'breakpoint' && stop.breakpoint.route === 'contracts') {
+              syncWorkspaceAppQuery('contracts')
+              return
+            }
             continueGame()
           }}
           type="button"
         >
-          {continueButtonLabel(stop?.type)}
+          {continueButtonLabel(stop)}
         </button>
         {world !== null ? <SimulateUntilControl blocked={blocked} world={world} /> : null}
         <svg aria-hidden className="ng-system-bar__orbit" viewBox="0 0 28 28">

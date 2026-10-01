@@ -1,13 +1,12 @@
 import { compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import type { GameId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
-import { getUserTeam } from '@/engine/calendar'
-import { skipMediaOpportunity } from '@/engine/media'
 
 import { advanceGameDay } from './advanceGameDay'
 import { getContinueStopReason, type ContinueStopReason } from './ContinueFlow'
-import { createMatchSeed, instantResult, type MatchSeedFactory } from './playUserGame'
+import { createMatchSeed, type MatchSeedFactory } from './playUserGame'
 import { advanceCompetitionLifecycles, type UnsupportedLifecycleDiagnostic } from './CompetitionLifecycleCoordinator'
+import type { CompetitionSeasonTransitionResult } from './startNextSeason'
 
 export type SimulateUntilStopReason = ContinueStopReason | { readonly type: 'arrived' } | { readonly type: 'unsupportedLifecycle'; readonly diagnostic: UnsupportedLifecycleDiagnostic }
 
@@ -16,6 +15,7 @@ export interface SimulateUntilResult {
   readonly daysAdvanced: number
   readonly finalDate: GameWorld['currentDate']
   readonly stopReason: SimulateUntilStopReason
+  readonly seasonTransitions: readonly CompetitionSeasonTransitionResult[]
 }
 
 export interface UserMatchSummary {
@@ -33,8 +33,8 @@ export type SimulateUntilEvent =
   | { readonly type: 'mediaSkipped' }
   | { readonly type: 'userMatch'; readonly match: UserMatchSummary }
   | { readonly type: 'dayAdvanced' }
-  | { readonly type: 'seasonRolledOver'; readonly previousSeasonId: GameWorld['currentSeasonId']; readonly nextSeasonId: GameWorld['currentSeasonId'] }
-  | { readonly type: 'finished'; readonly stopReason: SimulateUntilStopReason }
+  | { readonly type: 'seasonRolledOver'; readonly previousSeasonId: GameWorld['currentSeasonId']; readonly nextSeasonId: GameWorld['currentSeasonId']; readonly transitions: readonly CompetitionSeasonTransitionResult[] }
+  | { readonly type: 'finished'; readonly stopReason: SimulateUntilStopReason; readonly transitions?: readonly CompetitionSeasonTransitionResult[] }
 
 export interface SimulateUntilTick {
   readonly world: GameWorld
@@ -60,6 +60,11 @@ export function tickSimulateUntilDate(world: GameWorld, targetDate: GameDate, cr
     return { world, event: { type: 'finished', stopReason: getContinueStopReason(world) ?? { type: 'arrived' } } }
   }
 
+  const interruption = getContinueStopReason(world)
+  if (interruption !== undefined && interruption.type !== 'seasonComplete') {
+    return { world, event: { type: 'finished', stopReason: interruption } }
+  }
+
   // Checked every tick, not only when the primary (user-facing) competition happens to be
   // complete: a background competition (e.g. an NCAA-like season with no future-season
   // support) can complete independently while the primary is still mid-season, and its
@@ -69,29 +74,19 @@ export function tickSimulateUntilDate(world: GameWorld, targetDate: GameDate, cr
   // can never overshoot `target` the way an eager clock jump could.
   const advanced = advanceCompetitionLifecycles(world)
   if (advanced.blockedOn !== undefined) {
-    return { world: advanced.world, event: { type: 'finished', stopReason: { type: 'unsupportedLifecycle', diagnostic: advanced.blockedOn } } }
+    return { world: advanced.world, event: { type: 'finished', stopReason: getContinueStopReason(advanced.world) ?? { type: 'unsupportedLifecycle', diagnostic: advanced.blockedOn }, transitions: advanced.transitions } }
   }
   if (advanced.world !== world) {
-    return { world: advanced.world, event: { type: 'seasonRolledOver', previousSeasonId: world.currentSeasonId, nextSeasonId: advanced.world.currentSeasonId } }
+    return { world: advanced.world, event: { type: 'seasonRolledOver', previousSeasonId: world.currentSeasonId, nextSeasonId: advanced.world.currentSeasonId, transitions: advanced.transitions } }
   }
 
-  const interruption = getContinueStopReason(world)
   if (interruption?.type === 'seasonComplete') {
     // The primary's next edition already exists (rolled above, if it was FULLY_SUPPORTED) with a
     // future `startDate`; keep advancing one day at a time until the world clock reaches it and
     // `currentSeasonId` migrates naturally (see CalendarEngine.migrateCurrentSeasonIfElapsed).
-    return { world: advanceGameDay(world, createSeed), event: { type: 'dayAdvanced' } }
+    return { world: advanceGameDay(world, createSeed, ['seasonComplete']), event: { type: 'dayAdvanced' } }
   }
-  if (interruption?.type === 'mediaOpportunity') {
-    return { world: skipMediaOpportunity(world, interruption.opportunityId), event: { type: 'mediaSkipped' } }
-  }
-  if (interruption?.type === 'userGame') {
-    const next = instantResult(world, undefined, createSeed())
-    const match = summarizeResolvedUserMatch(world, next)
-    return match === undefined
-      ? { world: next, event: { type: 'mediaSkipped' } }
-      : { world: next, event: { type: 'userMatch', match } }
-  }
+  if (interruption !== undefined) return { world, event: { type: 'finished', stopReason: interruption } }
 
   return { world: advanceGameDay(world, createSeed), event: { type: 'dayAdvanced' } }
 }
@@ -105,6 +100,7 @@ export function simulateUntilDate(world: GameWorld, targetDate: GameDate, create
 
   let current = world
   let daysAdvanced = 0
+  const seasonTransitions: CompetitionSeasonTransitionResult[] = []
   const maxDays = Math.max(1, calendarDaysBetween(world.currentDate, target))
   let iterations = 0
   const maxIterations = maxDays * 8 + 16
@@ -112,12 +108,14 @@ export function simulateUntilDate(world: GameWorld, targetDate: GameDate, create
   while (compareGameDates(current.currentDate, target) < 0) {
     iterations += 1
     if (iterations > maxIterations || daysAdvanced >= maxDays) {
-      return result(current, daysAdvanced, { type: 'safetyLimit' })
+      return result(current, daysAdvanced, { type: 'safetyLimit' }, seasonTransitions)
     }
 
     const tick = tickSimulateUntilDate(current, target, createSeed)
+    if (tick.event.type === 'seasonRolledOver') seasonTransitions.push(...tick.event.transitions)
+    if (tick.event.type === 'finished' && tick.event.transitions !== undefined) seasonTransitions.push(...tick.event.transitions)
     if (tick.event.type === 'finished') {
-      return result(tick.world, daysAdvanced, tick.event.stopReason)
+      return result(tick.world, daysAdvanced, tick.event.stopReason, seasonTransitions)
     }
 
     current = tick.world
@@ -126,41 +124,11 @@ export function simulateUntilDate(world: GameWorld, targetDate: GameDate, create
     }
   }
 
-  return result(current, daysAdvanced, getContinueStopReason(current) ?? { type: 'arrived' })
+  return result(current, daysAdvanced, getContinueStopReason(current) ?? { type: 'arrived' }, seasonTransitions)
 }
 
-function summarizeResolvedUserMatch(before: GameWorld, after: GameWorld): UserMatchSummary | undefined {
-  const team = getUserTeam(after)
-  if (team === undefined) return undefined
-
-  const resolved = Object.values(after.games).find((game) => {
-    const previous = before.games[game.id]
-    return (
-      game.status === 'completed' &&
-      previous?.status === 'scheduled' &&
-      (game.homeTeamId === team.id || game.awayTeamId === team.id)
-    )
-  })
-  if (resolved === undefined || resolved.status !== 'completed') return undefined
-
-  const userIsHome = resolved.homeTeamId === team.id
-  const userScore = userIsHome ? resolved.result.homeScore : resolved.result.awayScore
-  const oppScore = userIsHome ? resolved.result.awayScore : resolved.result.homeScore
-
-  return {
-    gameId: resolved.id,
-    date: resolved.date,
-    homeName: after.teams[resolved.homeTeamId]?.name ?? resolved.homeTeamId,
-    awayName: after.teams[resolved.awayTeamId]?.name ?? resolved.awayTeamId,
-    homeScore: resolved.result.homeScore,
-    awayScore: resolved.result.awayScore,
-    userSide: userIsHome ? 'home' : 'away',
-    outcome: userScore === oppScore ? 'draw' : userScore > oppScore ? 'win' : 'loss',
-  }
-}
-
-function result(world: GameWorld, daysAdvanced: number, stopReason: SimulateUntilStopReason): SimulateUntilResult {
-  return { world, daysAdvanced, finalDate: world.currentDate, stopReason }
+function result(world: GameWorld, daysAdvanced: number, stopReason: SimulateUntilStopReason, seasonTransitions: readonly CompetitionSeasonTransitionResult[] = []): SimulateUntilResult {
+  return { world, daysAdvanced, finalDate: world.currentDate, stopReason, seasonTransitions: Object.freeze([...seasonTransitions]) }
 }
 
 function calendarDaysBetween(from: GameDate, to: GameDate): number {

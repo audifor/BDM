@@ -23,6 +23,7 @@ export const WORKSPACE_APP_IDS = [
   'draft',
   'trades',
   'club',
+  'contracts',
   'board',
   'finances',
   'enforcement',
@@ -60,6 +61,7 @@ export const WORKSPACE_TASKBAR_APPS: readonly WorkspaceTaskbarApp[] = [
   { id: 'draft', label: 'Draft' },
   { id: 'trades', label: 'Trades' },
   { id: 'club', label: 'Club' },
+  { id: 'contracts', label: 'Contracts' },
   { id: 'board', label: 'Board' },
   { id: 'finances', label: 'Finances' },
   { id: 'enforcement', label: 'Compliance' },
@@ -185,6 +187,16 @@ export function navigateToPlayerMedical(playerId: PlayerId) {
   url.searchParams.set('app', 'player')
   url.searchParams.set('playerId', playerId)
   url.searchParams.set('playerView', 'medical')
+  applyHistory(url, 'push')
+  notifyNgNavigation()
+}
+
+export function navigateToContracts(teamId?: TeamId, playerId?: PlayerId) {
+  const url = new URL(window.location.href)
+  clearEntityQuery(url)
+  url.searchParams.set('app', 'contracts')
+  if (teamId !== undefined) url.searchParams.set('teamId', teamId)
+  if (playerId !== undefined) url.searchParams.set('playerId', playerId)
   applyHistory(url, 'push')
   notifyNgNavigation()
 }

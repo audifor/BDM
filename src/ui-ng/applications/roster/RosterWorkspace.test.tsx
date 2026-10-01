@@ -96,6 +96,7 @@ describe('CanonicalRoster NG variant', () => {
     expect(screen.queryByLabelText('Vista')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Buscar jugador')).not.toBeInTheDocument()
     expect(screen.getByPlaceholderText('Buscar jugador...')).toBeInTheDocument()
+    expect(screen.getByText('PLAN')).toBeInTheDocument()
   })
 
   it('shows real injury status instead of hardcoded OK when injured', () => {

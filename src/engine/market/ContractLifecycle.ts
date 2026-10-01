@@ -1,9 +1,10 @@
 import type { GameDate } from '@/domain/date'
 import { getPlayerContractStatus } from '@/domain/contract'
-import { playerTransactionIdFromString } from '@/domain/ids'
+import { playerTransactionIdFromString, type PlayerId } from '@/domain/ids'
+import { clearPlayerFromLineup } from '@/domain/tactics'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 export function reconcileExpiredPlayerContracts(world: GameWorld, onDate: GameDate): GameWorld {
-  const removals = new Map<string, string>()
+  const removals = new Map<PlayerId, string>()
   const transactions = []
   for (const team of Object.values(world.teams)) for (const playerId of team.rosterPlayerIds) {
     const contracts = Object.values(world.contractsById).filter((contract) => contract.playerId === playerId && contract.teamId === team.id)
@@ -17,6 +18,7 @@ export function reconcileExpiredPlayerContracts(world: GameWorld, onDate: GameDa
   if (!removals.size && !transactions.length) return world
   return updateGameWorld(world, {
     teams: Object.values(world.teams).map((team) => ({ ...team, rosterPlayerIds: team.rosterPlayerIds.filter((playerId) => !removals.has(playerId)) })),
+    lineupsByTeamId: Object.fromEntries(Object.entries(world.lineupsByTeamId).map(([teamId, lineup]) => [teamId, [...removals.keys()].reduce((current, playerId) => clearPlayerFromLineup(current, playerId), lineup)])),
     playerTransactions: [...Object.values(world.playerTransactionsById), ...transactions],
   })
 }

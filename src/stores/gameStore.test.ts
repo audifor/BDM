@@ -1,6 +1,6 @@
 import { createNewGame } from '@/app/game'
 import { addDays, createGameDate } from '@/domain/date'
-import { applyRelationshipEventToWorld } from '@/domain/world'
+import { applyRelationshipEventToWorld, updateGameWorld } from '@/domain/world'
 import { getGamesToday } from '@/engine/calendar'
 import { getTeamFinancialSnapshot } from '@/domain/world/finances'
 import { applyCoachReputationEvent } from '@/domain/coachReputation'
@@ -176,6 +176,11 @@ describe('gameStore', () => {
     expect(result.finalDate).toBe(target)
     expect(useGameStore.getState().world).toBe(result.world)
     expect(useGameStore.getState().world?.currentDate).toBe(target)
+  })
+
+  it('does not expose direct trade execution from the game store', () => {
+    useGameStore.getState().newGame()
+    expect(Object.hasOwn(useGameStore.getState(), 'executeTrade')).toBe(false)
   })
 
   it('opens the canonical live session for the pending game without changing GameWorld', () => {

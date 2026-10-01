@@ -58,6 +58,16 @@ export interface ResolvedGameClockRules {
   readonly periodCount: number
   readonly periodSeconds: number
   readonly overtimeSeconds: number
+  readonly shotClockSeconds?: number
+  readonly offensiveReboundShotClockSeconds?: number | null
+  readonly madeBasketClockStopUnderSecondsInFinalPeriod?: number | null
+  readonly madeBasketClockStopUnderSecondsInOtherPeriods?: number | null
+  readonly madeBasketSubstitutionUnderSecondsInFinalPeriod?: number | null
+  readonly madeBasketSubstitutionUnderSecondsInOtherPeriods?: number | null
+  readonly madeBasketSubstitutionEligibleTeam?: 'both' | 'nonScoring'
+  readonly clockStopReasons?: readonly ('outOfBounds' | 'other' | 'shotClockViolation')[]
+  readonly substitutionOpportunityReasons?: readonly ('outOfBounds' | 'other' | 'shotClockViolation')[]
+  readonly clockRestartOnInbound?: 'release' | 'receive'
 }
 
 /**
@@ -72,6 +82,20 @@ export function resolveGameClockRules(world: GameWorld, competitionId: Competiti
     periodCount: gameFormat.periodCount,
     periodSeconds: Math.round(gameFormat.periodMinutes * 60),
     overtimeSeconds: Math.round(gameFormat.overtimeMinutes * 60),
+    shotClockSeconds: gameFormat.shotClockSeconds ?? 24,
+    offensiveReboundShotClockSeconds: gameFormat.offensiveReboundShotClockSeconds ?? null,
+    madeBasketClockStopUnderSecondsInFinalPeriod: gameFormat.madeBasketClockStopUnderSecondsInFinalPeriod ?? null,
+    madeBasketClockStopUnderSecondsInOtherPeriods: gameFormat.madeBasketClockStopUnderSecondsInOtherPeriods ?? null,
+    madeBasketSubstitutionUnderSecondsInFinalPeriod: gameFormat.madeBasketSubstitutionUnderSecondsInFinalPeriod === undefined
+      ? gameFormat.madeBasketClockStopUnderSecondsInFinalPeriod ?? null
+      : gameFormat.madeBasketSubstitutionUnderSecondsInFinalPeriod,
+    madeBasketSubstitutionUnderSecondsInOtherPeriods: gameFormat.madeBasketSubstitutionUnderSecondsInOtherPeriods === undefined
+      ? gameFormat.madeBasketClockStopUnderSecondsInOtherPeriods ?? null
+      : gameFormat.madeBasketSubstitutionUnderSecondsInOtherPeriods,
+    madeBasketSubstitutionEligibleTeam: gameFormat.madeBasketSubstitutionEligibleTeam ?? 'both',
+    clockStopReasons: gameFormat.clockStopReasons ?? ['outOfBounds', 'other', 'shotClockViolation'],
+    substitutionOpportunityReasons: gameFormat.substitutionOpportunityReasons ?? ['outOfBounds', 'other', 'shotClockViolation'],
+    clockRestartOnInbound: gameFormat.clockRestartOnInbound ?? 'receive',
   }
 }
 

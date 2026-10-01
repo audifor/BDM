@@ -148,16 +148,28 @@ describe('CF5 contract financial scheduling', () => {
     expect(Object.keys(result.world.expenseRecognitionsById)).toHaveLength(0)
   })
 
-  it('removes only future schedule entries after a valid termination and preserves history', () => {
+  it('preserves guaranteed future obligations after termination and removes conditional future exposure', () => {
     const world = scheduleWorld()
     const team = Object.values(world.teams)[0]!
     const contract = Object.values(world.contractsById)[0]!
     const materialized = materializeContractFinanceForDate(world, '2032-10-01', { contractId: contract.id, currencyCode: 'EUR', dueDatePolicy: 'ON_RECOGNITION', ledger: { offsetAccountId: 'payable:cf5', resultAccountId: 'expense:cf5' } })
     const terminated = createPlayerContract({ ...contract, termination: { terminatedOn: '2033-10-01' as never, reason: 'released' } })
     const changed = updateGameWorld(materialized.world, { contracts: [terminated] })
-    const future = getFutureContractCommitmentsByContract(changed, team.organizationId, '2033-10-01', contract.id, { currencyCode: 'EUR' })
-    expect(future).toHaveLength(0)
+    const future = getContractFinancialSchedule(changed, { contractId: contract.id, currencyCode: 'EUR' }).filter((entry) => entry.effectiveOn >= '2033-10-01')
+    expect(future.map((entry) => [entry.effectiveOn, entry.amount.minorUnits, entry.compensationStatus])).toEqual([
+      ['2033-10-01', 1_200_000, 'GUARANTEED'],
+      ['2034-10-01', 1_500_000, 'GUARANTEED'],
+    ])
     expect(getRecognizedExpense(changed, team.organizationId)).toEqual([{ currencyCode: 'EUR', minorUnits: 1_000_000 }])
+  })
+
+  it('does not retain conditional salary after a scheduled contract is terminated before activation', () => {
+    const world = scheduleWorld()
+    const team = Object.values(world.teams)[0]!
+    const contract = createPlayerContract({ ...Object.values(world.contractsById)[0]!, id: contractIdFromString('contract:cf5:scheduled-release'), term: { startsOn: '2035-10-01' as never, expiresOn: '2036-10-01' as never }, compensation: { annualSalary: 1_000_000, years: [{ cashSalary: 1_000_000, capHit: 1_000_000, guaranteedAmount: 0 }] }, termination: { terminatedOn: '2033-10-01' as never, reason: 'released' } })
+    const changed = updateGameWorld(world, { contracts: [...Object.values(world.contractsById), contract] })
+    expect(getContractFinancialSchedule(changed, { contractId: contract.id, currencyCode: 'EUR', includeConditional: true })).toEqual([])
+    expect(getFutureContractCommitmentsByContract(changed, team.organizationId, '2033-10-01', contract.id, { currencyCode: 'EUR' })).toEqual([])
   })
 
   it('keeps financial payroll separate from Salary Cap calculations', () => {

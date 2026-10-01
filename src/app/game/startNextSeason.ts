@@ -1,6 +1,7 @@
 import { addYears, formatGameDate } from '@/domain/date'
 import { seasonIdFromString } from '@/domain/ids'
 import { createSeason } from '@/domain/season'
+import { createSalaryRules } from '@/domain/salary'
 import type { CompetitionCalendarPolicy, Season } from '@/domain/season'
 import { createCompetition } from '@/domain/competition'
 import type { WorldCompetitionFormatDocument } from '@/domain/competition'
@@ -8,13 +9,39 @@ import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { generateNcaaLikeSchedule, generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
 import { reconcileExpiredPlayerContracts } from '@/engine/market'
-import { maintainAiTeamMinimumRosters } from '@/app/market'
+import { repairWorldAtLifecycleBoundary } from '@/app/repair'
+import type { WorldRepairReport } from '@/domain/repair'
 import { getCurrentSeason } from './selectors'
-import { buildNextCompetitionParticipants } from '@/engine/competition'
+import { areTierMovementDependenciesResolved, buildNextCompetitionParticipants } from '@/engine/competition'
 import { deriveNextEditionCalendarPolicy } from '@/engine/competition/WorldCompetitionCalendar'
 import { ensureNcaaEligibility } from '@/engine/eligibility'
 import { ensureNcaaAcademics } from '@/engine/academic'
+import { ensureNcaaNil } from '@/engine/nil'
+import { ensureNcaaBoosters } from '@/engine/boosters'
+import { ensureNcaaEnforcement } from '@/engine/enforcement'
 import { rolloverBoardState } from '@/engine/board'
+import { reviewClubManagementPlanning } from '@/app/gmPlanning'
+import { bindRecruitingCycleTargetToSeason, initializeRecruitingCycle } from '@/engine/season'
+import type { CompetitionId, SeasonId } from '@/domain/ids'
+import { createTradeRules } from '@/domain/trade'
+import type { TradeRules } from '@/domain/trade'
+
+export interface CompetitionSeasonTransitionResult {
+  readonly sourceSeasonId: SeasonId
+  readonly targetSeasonId: SeasonId
+  readonly competitionId: CompetitionId
+  readonly participantDerivation: 'seasonSnapshot' | 'competitionConfiguration' | 'promotionRelegationResolution'
+  readonly schedule: { readonly kind: 'generated'; readonly fixtureCount: number }
+  readonly linkedCompetitionSeasonIds: readonly string[]
+  readonly annualHooksExecuted: readonly string[]
+  readonly diagnostics: readonly []
+  readonly repairReports: readonly WorldRepairReport[]
+}
+
+export interface CompetitionSeasonTransition {
+  readonly world: GameWorld
+  readonly result: CompetitionSeasonTransitionResult
+}
 
 /** Starts the next edition of the world's current (user-facing) competition. */
 export function startNextSeason(world: GameWorld): GameWorld {
@@ -39,17 +66,48 @@ export function startNextSeason(world: GameWorld): GameWorld {
  * `currentDate` is still anywhere in between (including still inside the old season's window).
  */
 export function startNextSeasonFor(world: GameWorld, seasonId: Season['id']): GameWorld {
+  return startNextSeasonTransitionFor(world, seasonId).world
+}
+
+/** Resolves one primary edition rollover and returns transient transition diagnostics. */
+export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season['id']): CompetitionSeasonTransition {
   const primary = world.seasons[seasonId]
   if (primary === undefined) throw new Error(`GameWorld has no Season: ${seasonId}`)
   if (!isSeasonComplete(world, primary.id)) throw new Error('Current season is not complete')
   if (getSeasonHistoryRecord(world, primary.id) === undefined) throw new Error('Current season requires a history record')
+  if (!areTierMovementDependenciesResolved(world, primary.id)) throw new Error(`Season ${primary.id} cannot roll forward before its linked promotion/relegation editions are finalized`)
   const linkedEditions = linkedCompetitionEditions(world, primary)
-  const nextIds = nextSeasonIds(world, linkedEditions.length + 1)
   const editionIds = new Map<string, string>([[primary.worldCompetitionFormat?.competitionSeasonId ?? String(primary.id), nextCompetitionSeasonId(primary.worldCompetitionFormat?.competitionSeasonId ?? String(primary.id), addYears(primary.startDate, 1))]])
   for (const linked of linkedEditions) {
     const previousId = linked.worldCompetitionFormat!.competitionSeasonId
     editionIds.set(previousId, nextCompetitionSeasonId(previousId, addYears(linked.startDate, 1)))
   }
+  const expectedEditionIds = [editionIds.get(primary.worldCompetitionFormat?.competitionSeasonId ?? String(primary.id)), ...linkedEditions.map((linked) => editionIds.get(linked.worldCompetitionFormat!.competitionSeasonId))]
+  const existingSuccessors = expectedEditionIds.map((editionId, index) => {
+    const competitionId = index === 0 ? primary.competitionId : linkedEditions[index - 1]!.competitionId
+    return Object.values(world.seasons).find((candidate) => candidate.competitionId === competitionId && (candidate.worldCompetitionFormat?.competitionSeasonId === editionId || (index === 0 && primary.worldCompetitionFormat === undefined && candidate.startDate === addYears(primary.startDate, 1))))
+  })
+  if (existingSuccessors.every((season) => season !== undefined)) {
+    const target = existingSuccessors[0]!
+    const rolledWorld = rollForwardTradeRules(rollForwardSalaryRules(world, [[primary, target], ...linkedEditions.map((source, index) => [source, existingSuccessors[index + 1]!] as const)]), [[primary, target], ...linkedEditions.map((source, index) => [source, existingSuccessors[index + 1]!] as const)])
+    const hasTierResolution = Object.values(world.promotionRelegationResolutionsById).some((resolution) => resolution.upperSeasonId === primary.id || resolution.lowerSeasonId === primary.id)
+    return {
+      world: rolledWorld,
+      result: {
+        sourceSeasonId: primary.id,
+        targetSeasonId: target.id,
+        competitionId: primary.competitionId,
+        participantDerivation: hasTierResolution ? 'promotionRelegationResolution' : primary.participantTeamIds === undefined ? 'competitionConfiguration' : 'seasonSnapshot',
+        schedule: { kind: 'generated', fixtureCount: Object.values(world.games).filter((game) => game.seasonId === target.id).length },
+        linkedCompetitionSeasonIds: Object.freeze(existingSuccessors.slice(1).map((season) => String(season!.id))),
+        annualHooksExecuted: Object.freeze([]),
+        diagnostics: Object.freeze([]),
+        repairReports: Object.freeze([]),
+      },
+    }
+  }
+  if (existingSuccessors.some((season) => season !== undefined)) throw new Error(`Season ${primary.id} has a partial existing successor set`)
+  const nextIds = nextSeasonIds(world, linkedEditions.length + 1)
   const nextParticipants = buildNextCompetitionParticipants(world, primary.id)
   const primaryRoundCount = regularSeasonRoundCount(world, primary, nextParticipants.length)
   const nextPrimaryCalendar = primary.calendarPolicy === undefined ? undefined : rollForwardCalendar(primary.calendarPolicy, editionIds, primaryRoundCount)
@@ -60,6 +118,10 @@ export function startNextSeasonFor(world: GameWorld, seasonId: Season['id']): Ga
     startDate: nextPrimaryCalendar?.seasonWindow.startDate ?? addYears(primary.startDate, 1),
     endDate: nextPrimaryCalendar?.seasonWindow.endDate ?? addYears(primary.endDate, 1),
     participantTeamIds: nextParticipants,
+    ...(world.ecosystems[world.competitions[primary.competitionId]!.ecosystemId]!.kind !== 'ncaaLike' ? {} : {
+      conferenceMembershipSnapshot: (primary.conferenceMembershipSnapshot ?? world.conferenceMemberships.filter((membership) => membership.seasonId === primary.id))
+        .map((membership) => ({ ...membership, seasonId: nextIds[0]! })),
+    }),
     ...(primary.worldCompetitionFormat === undefined ? {} : { worldCompetitionFormat: rollForwardFormat(primary.worldCompetitionFormat, editionIds, nextSeasonLabel(primary)) }),
     ...(nextPrimaryCalendar === undefined ? {} : { calendarPolicy: nextPrimaryCalendar }),
   })
@@ -87,14 +149,89 @@ export function startNextSeasonFor(world: GameWorld, seasonId: Season['id']): Ga
     const competition = rolledCompetitions.get(nextSeason.competitionId)!
     rolledCompetitions.set(competition.id, createCompetition({ ...competition, participantTeamIds: [] }))
   }
-  const staged = updateGameWorld(world, { seasons: [...Object.values(world.seasons), nextPrimary, ...nextLinkedSeasons], competitions: [...rolledCompetitions.values()] })
+  const stagedWorld = updateGameWorld(world, { seasons: [...Object.values(world.seasons), nextPrimary, ...nextLinkedSeasons], competitions: [...rolledCompetitions.values()] })
+  const stagedSuccessors = [[primary, nextPrimary], ...linkedEditions.map((source, index) => [source, nextLinkedSeasons[index]!] as const)] as const
+  const staged = rollForwardTradeRules(rollForwardSalaryRules(stagedWorld, stagedSuccessors), stagedSuccessors)
   const regularSeasonNodeKey = nextPrimary.worldCompetitionFormat?.variants.find((variant) => variant.isRealVariant)?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key
     ?? nextPrimary.worldCompetitionFormat?.variants[0]?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key
   const schedule = staged.ecosystems[staged.competitions[nextPrimary.competitionId]!.ecosystemId]!.kind === 'ncaaLike'
     ? generateNcaaLikeSchedule(staged, nextPrimary.id)
     : generateRoundRobinSchedule({ world: staged, seasonId: nextPrimary.id, ...(regularSeasonNodeKey === undefined ? {} : { competitionStageKey: regularSeasonNodeKey }) })
-  const next = ensureNcaaAcademics(ensureNcaaEligibility(maintainAiTeamMinimumRosters(reconcileExpiredPlayerContracts(updateGameWorld(staged, { games: [...Object.values(staged.games), ...schedule] }), nextPrimary.startDate)).world))
-  return Object.keys(next.boardStatesByTeamId).reduce((current, teamId) => rolloverBoardState(current, teamId as import('@/domain/ids').TeamId, nextPrimary.id), next)
+  const reconciled = reconcileExpiredPlayerContracts(updateGameWorld(staged, { games: [...Object.values(staged.games), ...schedule] }), nextPrimary.startDate)
+  const repair = repairWorldAtLifecycleBoundary(reconciled)
+  let next = repair.world
+  const ecosystem = next.ecosystems[next.competitions[nextPrimary.competitionId]!.ecosystemId]!
+  const annualHooksExecuted = ['contractReconciliation', 'aiRosterMaintenance']
+  if (ecosystem.kind === 'ncaaLike') {
+    next = bindRecruitingCycleTargetToSeason(next, primary.id, nextPrimary.id)
+    next = initializeRecruitingCycle(next, nextPrimary.id)
+    next = ensureNcaaEnforcement(ensureNcaaBoosters(ensureNcaaNil(ensureNcaaAcademics(ensureNcaaEligibility(next)))))
+    annualHooksExecuted.push('recruitingCycle', 'eligibilityInitialization', 'academicInitialization', 'nilInitialization', 'boosterInitialization', 'enforcementInitialization')
+  }
+  const beforeBoards = next
+  next = Object.keys(next.boardStatesByTeamId).reduce((current, teamId) => rolloverBoardState(current, teamId as import('@/domain/ids').TeamId, nextPrimary.id), next)
+  if (next !== beforeBoards) annualHooksExecuted.push('boardStateRollover')
+  const preseasonTeamIds = [...new Set([...(nextPrimary.participantTeamIds ?? next.competitions[nextPrimary.competitionId]!.participantTeamIds), ...nextLinkedSeasons.flatMap((season) => season.participantTeamIds ?? [])])].sort((left, right) => left.localeCompare(right))
+  for (const teamId of preseasonTeamIds) {
+    const team = next.teams[teamId]
+    if (team?.coachId === undefined || team.coachId === next.userCoachId) continue
+    next = reviewClubManagementPlanning(next, teamId, 'PRESEASON').world
+  }
+  annualHooksExecuted.push('clubStrategicReview', 'gmPlanWorkflowReview')
+  const hasTierResolution = Object.values(world.promotionRelegationResolutionsById).some((resolution) => resolution.upperSeasonId === primary.id || resolution.lowerSeasonId === primary.id)
+  const result: CompetitionSeasonTransitionResult = {
+    sourceSeasonId: primary.id,
+    targetSeasonId: nextPrimary.id,
+    competitionId: primary.competitionId,
+    participantDerivation: hasTierResolution ? 'promotionRelegationResolution' : primary.participantTeamIds === undefined ? 'competitionConfiguration' : 'seasonSnapshot',
+    schedule: { kind: 'generated', fixtureCount: schedule.length },
+    linkedCompetitionSeasonIds: nextLinkedSeasons.map((season) => String(season.id)),
+    annualHooksExecuted: Object.freeze(annualHooksExecuted),
+    diagnostics: Object.freeze([]),
+    repairReports: repair.reports,
+  }
+  return { world: next, result }
+}
+
+export function rollForwardTradeRules(world: GameWorld, successors: readonly (readonly [Season, Season])[]): GameWorld {
+  let current = world
+  for (const [source, target] of successors) {
+    const sourceRules = current.tradeRulesBySeasonId[source.id]
+    const sourceCompetition = current.competitions[source.competitionId]
+    const targetCompetition = current.competitions[target.competitionId]
+    if (sourceRules === undefined || current.tradeRulesBySeasonId[target.id] !== undefined
+      || source.competitionId !== target.competitionId || sourceCompetition === undefined || targetCompetition === undefined
+      || sourceCompetition.ecosystemId !== targetCompetition.ecosystemId || sourceRules.ecosystemId !== targetCompetition.ecosystemId) continue
+    const { tradeWindow: sourceWindow, ...baseRules } = sourceRules
+    let tradeWindow = sourceWindow
+    if (sourceWindow !== undefined && (sourceWindow.opensOn !== undefined || sourceWindow.closesOn !== undefined)) {
+      const yearShift = Number(target.startDate.slice(0, 4)) - Number(source.startDate.slice(0, 4))
+      const shifted = {
+        ...(sourceWindow.opensOn === undefined ? {} : { opensOn: addYears(sourceWindow.opensOn, yearShift) }),
+        ...(sourceWindow.closesOn === undefined ? {} : { closesOn: addYears(sourceWindow.closesOn, yearShift) }),
+      }
+      tradeWindow = (shifted.opensOn === undefined || shifted.opensOn >= target.startDate)
+        && (shifted.closesOn === undefined || shifted.closesOn <= target.endDate) ? shifted : undefined
+    }
+    const successorRules: TradeRules = createTradeRules({ ...baseRules, seasonId: target.id, ...(tradeWindow === undefined ? {} : { tradeWindow }) })
+    current = updateGameWorld(current, { tradeRulesBySeasonId: { ...current.tradeRulesBySeasonId, [target.id]: successorRules } })
+  }
+  return current
+}
+
+export function rollForwardSalaryRules(world: GameWorld, successors: readonly (readonly [Season, Season])[]): GameWorld {
+  let current = world
+  for (const [source, target] of successors) {
+    const sourceRules = current.salaryRulesBySeasonId[source.id]
+    const sourceCompetition = current.competitions[source.competitionId]
+    const targetCompetition = current.competitions[target.competitionId]
+    if (sourceRules === undefined || current.salaryRulesBySeasonId[target.id] !== undefined
+      || source.competitionId !== target.competitionId || sourceCompetition === undefined || targetCompetition === undefined
+      || sourceCompetition.ecosystemId !== targetCompetition.ecosystemId) continue
+    const successorRules = createSalaryRules({ ...sourceRules, seasonId: target.id })
+    current = updateGameWorld(current, { salaryRulesBySeasonId: { ...current.salaryRulesBySeasonId, [target.id]: successorRules } })
+  }
+  return current
 }
 
 function linkedCompetitionEditions(world: GameWorld, primary: Season): Season[] {

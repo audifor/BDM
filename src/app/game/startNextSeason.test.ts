@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import { createGameWorld, updateGameWorld } from '@/domain/world'
+import { addYears } from '@/domain/date'
+import { seasonIdFromString } from '@/domain/ids'
+import { createSeason } from '@/domain/season'
+import { createTradeRules } from '@/domain/trade'
 import { calculateStaffRoleProficiencyByRoleId } from '@/domain/staff'
 import { calculateStandings } from '@/engine/competition/standings'
 import { getPlayerCareerStats, getPlayerSeasonStats } from '@/engine/stats/PlayerHistory'
@@ -10,7 +14,7 @@ import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSa
 import { createNewGame } from './createNewGame'
 import { simulateAndApplyGame } from './playUserGame'
 import { getCurrentSeason } from './selectors'
-import { startNextSeason, startNextSeasonFor } from './startNextSeason'
+import { rollForwardTradeRules, startNextSeason, startNextSeasonFor, startNextSeasonTransitionFor } from './startNextSeason'
 import { advanceGameDay } from './advanceGameDay'
 
 /**
@@ -26,6 +30,23 @@ function latestSeasonFor(world: ReturnType<typeof createNewGame>, competitionId:
 }
 
 describe('startNextSeason', () => {
+  it('materializes equivalent trade rules for a successor in the same competition and ecosystem', () => {
+    const base = createNewGame()
+    const source = Object.values(base.seasons).find((season) => base.tradeRulesBySeasonId[season.id] !== undefined)!
+    const sourceRules = createTradeRules({ ...base.tradeRulesBySeasonId[source.id]!, tradeWindow: {} })
+    const successor = createSeason({
+      id: seasonIdFromString('test-trade-rules-successor'),
+      competitionId: source.competitionId,
+      label: 'Next edition',
+      startDate: addYears(source.startDate, 1),
+      endDate: addYears(source.endDate, 1),
+      participantTeamIds: source.participantTeamIds ?? base.competitions[source.competitionId]!.participantTeamIds,
+    })
+    const withSuccessor = updateGameWorld(base, { seasons: [...Object.values(base.seasons), successor], tradeRulesBySeasonId: { ...base.tradeRulesBySeasonId, [source.id]: sourceRules } })
+    const rolled = rollForwardTradeRules(withSuccessor, [[source, successor]])
+    expect(rolled.tradeRulesBySeasonId[successor.id]).toEqual({ ...sourceRules, seasonId: successor.id })
+  })
+
   it('requires a finalized current season', () => {
     expect(() => startNextSeason(createNewGame())).toThrow('not complete')
   })
@@ -146,6 +167,25 @@ describe('startNextSeason', () => {
     }
   }, 10_000)
 })
+
+  it('preserves NBA season finalization and creates a scheduled next closed-league edition', () => {
+    let world = createNewGame()
+    const season = Object.values(world.seasons).find((item) => world.ecosystems[world.competitions[item.competitionId]!.ecosystemId]!.kind === 'nbaLike')!
+    const competition = world.competitions[season.competitionId]!
+    const ecosystem = world.ecosystems[competition.ecosystemId]!
+    for (const game of Object.values(world.games).filter((item) => item.seasonId === season.id)) world = simulateAndApplyGame(world, game)
+    expect(getSeasonHistoryRecord(world, season.id)).toBeDefined()
+    expect(world.draftsById[`draft:${ecosystem.id}:${season.id}`]).toBeDefined()
+
+    const transition = startNextSeasonTransitionFor(world, season.id)
+    const nextSeason = transition.world.seasons[transition.result.targetSeasonId]!
+    expect(transition.result.competitionId).toBe(competition.id)
+    expect(transition.result.schedule.fixtureCount).toBeGreaterThan(0)
+    expect(Object.values(transition.world.games).filter((item) => item.seasonId === nextSeason.id).every((item) => item.status === 'scheduled')).toBe(true)
+    expect(nextSeason.participantTeamIds).toEqual(season.participantTeamIds ?? competition.participantTeamIds)
+    expect(transition.world.seasonHistoryBySeasonId[season.id]).toEqual(world.seasonHistoryBySeasonId[season.id])
+    expect(transition.world.draftsById[`draft:${ecosystem.id}:${season.id}`]).toEqual(world.draftsById[`draft:${ecosystem.id}:${season.id}`])
+  }, 30_000)
 
 function completeCurrentSeason(world: ReturnType<typeof createNewGame>) {
   return Object.values(world.games).filter((game) => game.status === 'scheduled').reduce((current, game) => simulateAndApplyGame(current, game), world)

@@ -27,3 +27,15 @@ export function initializeRecruitingCycle(world: GameWorld, seasonId: keyof Game
   const closesOn = addDays(season.endDate, 30) < addDays(nextStart, -1) ? addDays(season.endDate, 30) : addDays(nextStart, -1)
   return updateGameWorld(world, { recruitingCycles: [...Object.values(world.recruitingCyclesById), { id, ecosystemId: ecosystem.id, sourceSeasonId: season.id, targetSeasonId: `${season.id}:next` as never, opensOn: season.startDate, signingOn: addDays(season.endDate, 1), closesOn, status: 'scheduled', rules: ecosystem.recruitingRules }] })
 }
+
+/** Binds a source season's already-signed recruiting class to its materialized successor. */
+export function bindRecruitingCycleTargetToSeason(world: GameWorld, sourceSeasonId: keyof GameWorld['seasons'], targetSeasonId: keyof GameWorld['seasons']): GameWorld {
+  const placeholder = `${sourceSeasonId}:next`
+  const cycles = Object.values(world.recruitingCyclesById).filter((cycle) => cycle.sourceSeasonId === sourceSeasonId && cycle.targetSeasonId === placeholder)
+  if (cycles.length === 0) return world
+  const cycleIds = new Set(cycles.map((cycle) => cycle.id))
+  return updateGameWorld(world, {
+    recruitingCycles: Object.values(world.recruitingCyclesById).map((cycle) => cycleIds.has(cycle.id) ? { ...cycle, targetSeasonId: targetSeasonId as never } : cycle),
+    recruitSignings: Object.values(world.recruitSigningsById).map((signing) => cycleIds.has(signing.cycleId) && signing.targetSeasonId === placeholder ? { ...signing, targetSeasonId: targetSeasonId as never } : signing),
+  })
+}

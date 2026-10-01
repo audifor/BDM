@@ -16,6 +16,18 @@ describe('RecruitingEngine canonical operations', () => {
     expect(Object.values(first.recruitProfilesById)).toHaveLength(5)
     expect(first.teams[teamIdFromString('team-home')]!.rosterPlayerIds).toHaveLength(1)
   })
+  it('keeps deterministic player IDs globally unique across recruiting cycles', () => {
+    const firstCycleWorld = generateRecruitingPool(world(), 'cycle-1')
+    const cycleTwo = { ...firstCycleWorld.recruitingCyclesById['cycle-1']!, id: 'cycle-2', sourceSeasonId: 'season-b' as never, targetSeasonId: 'season-b' as never }
+    const withSecondCycle = updateGameWorld(firstCycleWorld, { recruitingCycles: [...Object.values(firstCycleWorld.recruitingCyclesById), cycleTwo] })
+    const generated = generateRecruitingPool(withSecondCycle, 'cycle-2')
+    const firstCyclePlayerIds = Object.values(firstCycleWorld.recruitProfilesById).map((profile) => profile.playerId)
+    const playerIds = Object.values(generated.recruitProfilesById).map((profile) => profile.playerId)
+    expect(new Set(playerIds).size).toBe(playerIds.length)
+    expect(firstCyclePlayerIds).toHaveLength(5)
+    expect(playerIds.filter((id) => !firstCyclePlayerIds.includes(id))).toHaveLength(5)
+    expect(new Set(Object.keys(generated.players)).size).toBe(Object.keys(generated.players).length)
+  })
   it('consumes capacity, records actions and commits only after competition', () => {
     const generated = generateRecruitingPool(world(), 'cycle-1'); const recruit = Object.values(generated.recruitProfilesById)[0]!; const program = 'team-home' as never
     const contacted = performRecruitingAction(generated, 'cycle-1', recruit.id, program, 'contact'); expect(contacted.ok).toBe(true)

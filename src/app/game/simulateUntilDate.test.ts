@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { addDays, compareGameDates, parseGameDate } from '@/domain/date'
-import { getUserTeam } from '@/engine/calendar'
+import { addDays, parseGameDate } from '@/domain/date'
 import { isSeasonComplete } from '@/engine/season'
 import { simulateAndApplyGame } from './playUserGame'
 
@@ -36,37 +35,18 @@ describe('simulate until date', () => {
     expect(result.world).toEqual(manual)
   }, 15_000)
 
-  it('simulates the user match and every other pending game before arriving on the target morning', () => {
+  it('stops before advancing through an unresolved user game', () => {
     const world = createNewGame()
-    const team = getUserTeam(world)!
     const target = addDays(world.currentDate, 7)
     const before = JSON.stringify(world)
 
     const result = simulateUntilDate(world, target)
 
     expect(JSON.stringify(world)).toBe(before)
-    expect(result.world.currentDate).toBe(target)
-    expect(result.daysAdvanced).toBe(7)
-
-    for (const game of Object.values(world.games)) {
-      const resolved = result.world.games[game.id]!
-      if (compareGameDates(game.date, target) < 0) {
-        expect(resolved.status).toBe('completed')
-      }
-      if (compareGameDates(game.date, target) >= 0) {
-        expect(resolved.status).toBe(game.status)
-      }
-    }
-
-    const userGameOnTarget = Object.values(result.world.games).find(
-      (game) =>
-        game.status === 'scheduled' &&
-        game.date === target &&
-        (game.homeTeamId === team.id || game.awayTeamId === team.id),
-    )
-    if (userGameOnTarget !== undefined) {
-      expect(result.stopReason.type === 'userGame' || result.stopReason.type === 'mediaOpportunity').toBe(true)
-    }
+    expect(result.world).toBe(world)
+    expect(result.world.currentDate).toBe(world.currentDate)
+    expect(result.daysAdvanced).toBe(0)
+    expect(result.stopReason).toMatchObject({ type: 'userGame', breakpoint: { level: 'ACTION_REQUIRED', reason: 'userGame' } })
   })
 
   it('continues the world clock beyond a completed competition season', () => {
@@ -85,27 +65,22 @@ describe('simulate until date', () => {
 
   describe('RWS-BUG-002 SIMULAR HASTA FECHA', () => {
     it('simulates until tomorrow', () => {
-      const world = createNewGame()
+      const world = withNoScheduledGames(createNewGame())
       const target = addDays(world.currentDate, 1)
       const result = simulateUntilDate(world, target)
       expect(result.finalDate).toBe(target)
     })
 
     it('simulates +30 days exactly', () => {
-      const world = createNewGame()
+      const world = withNoScheduledGames(createNewGame())
       const target = addDays(world.currentDate, 30)
       const result = simulateUntilDate(world, target)
       expect(result.finalDate).toBe(target)
     }, 15_000)
 
-    // createNewGame()'s demo world includes an NCAA-like competition with no future-season
-    // support (UNSUPPORTED_FUTURE_LIFECYCLE, see CompetitionLifecycleCoordinator.ts) and an
-    // unrelated, pre-existing recruiting-pool generation bug that can throw a duplicate-ID error
-    // if its recruiting cycles are advanced across certain date ranges. These tests clear
-    // recruitingCyclesById to isolate SIMULAR HASTA FECHA's own behavior from that separate,
-    // out-of-scope bug; long calendar-year spans and the unsupportedLifecycle diagnostic itself
-    // are certified against RealWorldSpain (ACB + Copa) in WorldDbGameBootstrap.test.ts and
-    // CompetitionLifecycleCoordinator.test.ts (ncaaLike diagnostic) instead.
+    // These date-boundary tests remove unrelated scheduled games and recruiting cycles so their
+    // assertions stay focused on calendar arithmetic. NCAA future-season support and recruiting
+    // cycle IDs are covered by the focused lifecycle tests.
     it('crosses 31 December to 1 January', () => {
       const world = withNoScheduledGames(createNewGame())
       const start = parseGameDate('2032-12-31')
@@ -141,18 +116,13 @@ describe('simulate until date', () => {
       }
       expect(isSeasonComplete(complete, primarySeasonId)).toBe(true)
 
-      // startNextSeason's fallback (no calendarPolicy) jumps the next edition's start a full
-      // calendar year ahead (addYears), so the target must clear that full year for the
-      // rollover to actually happen on the way there. `simulateUntilDate` auto-resolves every
-      // user game strictly before targetDate (see `tickSimulateUntilDate`'s `instantResult`
-      // branch); it only stops early on one scheduled exactly on targetDate itself, exactly like
-      // the "simulates the user match..." test above -- createAcbTestGame designates a user team,
-      // so that is an equally valid arrival here.
+      // startNextSeason's fallback (no calendarPolicy) moves the next edition about a year
+      // ahead. Simulate Until now stops at the next unresolved user game on the way there.
       const target = addDays(complete.currentDate, 400)
       const result = simulateUntilDate(complete, target)
 
-      expect(result.finalDate).toBe(target)
-      expect(result.stopReason.type === 'arrived' || result.stopReason.type === 'userGame' || result.stopReason.type === 'mediaOpportunity').toBe(true)
+      expect(result.finalDate < target).toBe(true)
+      expect(result.stopReason).toMatchObject({ type: 'userGame', breakpoint: { level: 'ACTION_REQUIRED' } })
       // Rollover never moves currentSeasonId directly (see startNextSeason.ts): it only migrates
       // once the world clock naturally reaches the new edition's startDate, which 400 days does.
       expect(result.world.currentSeasonId).not.toBe(primarySeasonId)
@@ -176,6 +146,7 @@ describe('simulate until date', () => {
 
       expect(result.finalDate).toBe(target)
       expect(result.world.currentSeasonId).toBe(primarySeasonId)
+      expect(result.seasonTransitions).toEqual(expect.arrayContaining([expect.objectContaining({ sourceSeasonId: primarySeasonId, schedule: expect.objectContaining({ kind: 'generated' }) })]))
     })
 
     it('empty days with no games or events still advance correctly', () => {
@@ -203,30 +174,15 @@ describe('simulate until date', () => {
     }, 15_000)
   })
 
-  it('exposes one holiday tick so the UI can show the passing date and a resolved user match', () => {
+  it('exposes a finished tick with the canonical user-game breakpoint', () => {
     const world = createNewGame()
     const target = addDays(world.currentDate, 1)
     const arrived = tickSimulateUntilDate(world, world.currentDate)
     expect(arrived.event.type).toBe('finished')
 
-    let current = world
-    let match
-    for (let step = 0; step < 24; step += 1) {
-      const tick = tickSimulateUntilDate(current, target)
-      current = tick.world
-      if (tick.event.type === 'userMatch') {
-        match = tick.event.match
-        break
-      }
-      if (tick.event.type === 'finished') break
-    }
-
-    expect(match).toBeDefined()
-    expect(match!.homeName.length).toBeGreaterThan(0)
-    expect(match!.awayName.length).toBeGreaterThan(0)
-    expect(match!.homeScore).toBeGreaterThanOrEqual(0)
-    expect(match!.awayScore).toBeGreaterThanOrEqual(0)
-    expect(['win', 'loss', 'draw']).toContain(match!.outcome)
+    const tick = tickSimulateUntilDate(world, target)
+    expect(tick.world).toBe(world)
+    expect(tick.event).toMatchObject({ type: 'finished', stopReason: { type: 'userGame', breakpoint: { level: 'ACTION_REQUIRED', reason: 'userGame' } } })
   })
 })
 
@@ -235,10 +191,8 @@ function withNoScheduledGames<T extends { readonly games: Record<string, { statu
 }
 
 /**
- * Clears recruiting cycles: they carry date-window state (opensOn/signingOn/closesOn) that a
- * raw currentDate jump, or a long calendar-year span, can leave inconsistent, triggering an
- * unrelated, pre-existing recruiting-pool generation bug (duplicate deterministic player IDs).
- * Out of scope for RWS-BUG-002; this isolates SIMULAR HASTA FECHA's own behavior from it.
+ * Keeps recruiting lifecycle work out of calendar-boundary fixtures; recruiting ID uniqueness is
+ * covered by RecruitingEngine tests.
  */
 function withNoRecruiting<T extends { readonly recruitingCyclesById: Record<string, unknown> }>(world: T): T {
   return { ...world, recruitingCyclesById: {} }

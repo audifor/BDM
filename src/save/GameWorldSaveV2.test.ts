@@ -12,9 +12,18 @@ import { serializeGameWorldV1 } from './GameWorldSaveV1'
 import { deserializeGameWorldSave, deserializeGameWorldV2, migrateGameWorldSaveV1ToV2, parseCanonicalRatingsV2, parsePlayerTendenciesV2, serializeGameWorldV2 } from './GameWorldSaveV2'
 import { ensurePlayerKnowledge } from '@/engine/world'
 import { setLineupSlot } from '@/engine/tactics/LineupEngine'
+import { createNegotiationContact } from '@/domain/market'
 
 const savedAt = '2032-10-01T00:00:00.000Z'
 describe('GameWorldSaveV2', () => {
+  it('defaults a legacy market runtime without trade negotiations to an empty collection', () => {
+    const saved = serializeGameWorldV2(createNewGame(), savedAt)
+    const marketRuntime = { ...saved.payload.marketRuntime! }
+    delete marketRuntime.tradeNegotiations
+    const restored = deserializeGameWorldV2({ ...saved, payload: { ...saved.payload, marketRuntime } })
+    expect(restored.tradeNegotiationsById).toEqual({})
+  })
+
   it('serializes canonical player truth only and round-trips V2', () => {
     const world = createNewGame(); const saved = serializeGameWorldV2(world, savedAt)
     expect(saved.schemaVersion).toBe(2)
@@ -39,6 +48,27 @@ describe('GameWorldSaveV2', () => {
     expect(loaded.lineupsByTeamId[team.id]).toEqual(world.lineupsByTeamId[team.id])
     expect(loaded.lineupsByTeamId[team.id]!.starters.PG).toBe(first)
     expect(loaded.lineupsByTeamId[team.id]!.bench.B1).toBe(second)
+  })
+  it('round-trips term-free contacts, actor-separated offers, and legacy formal-offer records', () => {
+    const base = createNewGame(); const team = Object.values(base.teams)[0]!; const [player, legacyPlayer] = Object.values(base.players)
+    const oldPlayer = legacyPlayer!
+    const contact = createNegotiationContact({
+      organizationId: team.organizationId, teamId: team.id, playerId: player.id,
+      startedOn: base.currentDate, actionKey: 'contact-save-test',
+      responsibleActor: { kind: 'USER' }, sourcePlanId: 'plan-save-test', sourceProposalId: 'proposal-save-test',
+    })
+    const formalOffer = { id: 'negotiation:legacy-offer', organizationId: team.organizationId, playerId: oldPlayer.id, salary: 650_000, years: 2, role: 'ROTATION' as const, agentFee: 1, status: 'OPEN' as const, round: 0 }
+    const offerActor = { kind: 'STAFF' as const, staffPersonId: staffPersonIdFromString('staff:offer-owner') }
+    const revisedAction = { outcome: 'REVISED_OFFER' as const, respondedOn: base.currentDate, round: 1, actor: offerActor, revisedTerms: { salary: 700_000, years: 3 } }
+    const priorRound = { round: 0, offer: { salary: 600_000, years: 2 }, submittedOn: base.currentDate, submittedBy: { kind: 'USER' as const }, playerResponse: { outcome: 'COUNTERED' as const, respondedOn: base.currentDate, origin: 'AGENT' as const, counterTerms: { salary: 650_000, years: 2 } }, clubAction: revisedAction }
+    const newOffer = { ...contact, salary: 700_000, years: 3, offerSubmittedOn: base.currentDate, status: 'OPEN' as const, round: 1, offerResponsibleActor: offerActor, clubAction: revisedAction, roundHistory: [priorRound] }
+    const loadedContact = deserializeGameWorldV2(serializeGameWorldV2(updateGameWorld(base, { negotiations: [contact, formalOffer] }), savedAt))
+    const loadedNewOffer = deserializeGameWorldV2(serializeGameWorldV2(updateGameWorld(base, { negotiations: [newOffer, formalOffer] }), savedAt))
+    expect(loadedContact.negotiationsById[contact.id]).toEqual(contact)
+    expect(loadedContact.negotiationsById[contact.id]).not.toHaveProperty('salary')
+    expect(loadedContact.negotiationsById[contact.id]).not.toHaveProperty('offerResponsibleActor')
+    expect(loadedNewOffer.negotiationsById[newOffer.id]).toEqual(newOffer)
+    expect(loadedNewOffer.negotiationsById[formalOffer.id]).toEqual(formalOffer)
   })
   it('migrates a V1 envelope deterministically without mutating it', () => {
     const v1 = serializeGameWorldV1(ensurePlayerKnowledge(createNewGame()), savedAt); const snapshot = JSON.stringify(v1)

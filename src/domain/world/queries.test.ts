@@ -40,7 +40,7 @@ describe('GameWorld queries', () => {
 
   it('resolves seconds-based game clock rules from the competition\'s own gameFormat, defaulting to FIBA-style 4x10', () => {
     const rules = resolveGameClockRules(world, competitionIdFromString('competition-a'))
-    expect(rules).toEqual({ periodCount: 4, periodSeconds: 600, overtimeSeconds: 300 })
+    expect(rules).toMatchObject({ periodCount: 4, periodSeconds: 600, overtimeSeconds: 300, shotClockSeconds: 24, offensiveReboundShotClockSeconds: 14, madeBasketClockStopUnderSecondsInFinalPeriod: 120, madeBasketSubstitutionUnderSecondsInFinalPeriod: 120, madeBasketSubstitutionEligibleTeam: 'nonScoring', clockRestartOnInbound: 'receive' })
 
     const game = getGame(world, gameIdFromString('game-a'))
     expect(resolveGameClockRulesForGame(world, game)).toEqual(rules)
@@ -51,6 +51,15 @@ describe('GameWorld queries', () => {
       ...createValidGameWorldInput(),
       competitions: [{ ...world.competitions[competitionIdFromString('competition-a')]!, rules: { ...world.competitions[competitionIdFromString('competition-a')]!.rules, gameFormat: NCAA_MEN_GAME_FORMAT } }],
     })
-    expect(resolveGameClockRules(worldWithNcaaMen, competitionIdFromString('competition-a'))).toEqual({ periodCount: 2, periodSeconds: 1200, overtimeSeconds: 300 })
+    expect(resolveGameClockRules(worldWithNcaaMen, competitionIdFromString('competition-a'))).toMatchObject({ periodCount: 2, periodSeconds: 1200, overtimeSeconds: 300, shotClockSeconds: 30, offensiveReboundShotClockSeconds: 20, madeBasketClockStopUnderSecondsInFinalPeriod: 60, madeBasketSubstitutionUnderSecondsInFinalPeriod: 60, clockRestartOnInbound: 'receive' })
+  })
+
+  it('resolves independent made-basket windows and competition-configured shot-clock values', () => {
+    const base = world.competitions[competitionIdFromString('competition-a')]!
+    const customized = createGameWorld({
+      ...createValidGameWorldInput(),
+      competitions: [{ ...base, rules: { ...base.rules, gameFormat: { ...base.rules.gameFormat, shotClockSeconds: 30, offensiveReboundShotClockSeconds: 14, madeBasketClockStopUnderSecondsInFinalPeriod: null, madeBasketSubstitutionUnderSecondsInFinalPeriod: 30 } } }],
+    })
+    expect(resolveGameClockRules(customized, competitionIdFromString('competition-a'))).toMatchObject({ shotClockSeconds: 30, offensiveReboundShotClockSeconds: 14, madeBasketClockStopUnderSecondsInFinalPeriod: null, madeBasketSubstitutionUnderSecondsInFinalPeriod: 30 })
   })
 })
