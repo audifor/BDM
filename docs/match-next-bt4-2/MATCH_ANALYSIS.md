@@ -34,3 +34,21 @@ Instrumento: `src/presentation/match-next/audit/bt42/fluidity.ts` (`BT2_AUDIT=1`
 3. Ampliar el vocabulario sin balón con lo mínimo que dé fluidez: corte de retorno, bloqueo sin balón, mano a mano.
 4. Reducir el trabajo inútil de la defensa: no perseguir ofertas ni ir a hombres que no pueden recibir.
 5. Revisar la suavidad del movimiento (velocidad media baja, 28–42% de tiempo parado) con un clip a 1x.
+
+## Segunda pasada: de qué está hecha una posesión de media cancha (`structure-base.json`)
+
+269 posesiones de media cancha de más de 6 s en tres partidos (90 por partido).
+
+- **Duración:** 19,5 s de media (mediana 18,7; p10 14,2; p90 24,6). Las posesiones de media cancha son largas; el ritmo global de 168 posesiones se consigue con muchas posesiones de contra cortas y estas largas.
+- **Circulación:** 3,2 pases por posesión (mediana 3), longitud media 7,1 m (29% de menos de 4 m; 26% de más de 10 m), cambios de lado 1,1 por posesión (el 66% tiene al menos uno). **El balón se mueve en el perímetro sin avanzar:** avance neto hacia el aro por pase 0,0 m de mediana, desplazamiento lateral medio de 4,7 m.
+- **Intervención:** 3,7 jugadores intervienen por posesión (pasan 2,7, reciben 2,5). Solo el 3,7% de las posesiones tiene a un jugador sin balón que corra menos de 3 m: **nadie está "dormido" del todo**.
+- **Movimiento sin balón:** 19,8 m por jugador y posesión (99,5 m por minuto, 1,7 m/s); **el 45% del tiempo sin balón lo pasan quietos sobre su puesto** (mediana 49%, p90 76%).
+- **Manejador:** acarrea el balón 11,9 m por posesión y solo se mueve el 29% del tiempo que lo tiene.
+- **Bloqueos:** 0,59 por posesión, todos usados.
+- **Defensa:** 2,5 cierres de pase por posesión, 1,3 rotaciones de ayuda y **19,8 cambios de responsabilidad por posesión** (casi uno por segundo, entre ON_BALL, GAP, HELP, ROTATE, RECOVER y X_OUT).
+
+### Lo que esto cambia en el diagnóstico
+
+1. **No es que falte circulación; falta intención.** La posesión de media cancha es una circulación lateral larga (19 s, pases sin avance neto) hasta que la espera decae y llega una penetración o un bloqueo. Un ataque real alterna acciones rápidas (algo ocurre en 4–6 s y crea una ventaja) con circulación que *castiga* esa ventaja (la defensa rota, el balón llega al hombre libre). Aquí la circulación no nace de una ventaja: nace de la espera.
+2. **La defensa trabaja mucho para nada:** ~20 cambios de rol por posesión contra un ataque que no genera ventajas, de ahí la impresión de pollos sin cabeza. Cada pase lateral dispara un cierre y una reasignación, sin consecuencia.
+3. **Quietud repartida, no ausencia:** los jugadores corren 20 m por posesión, pero la mitad del tiempo están clavados en su puesto: se mueven en ráfagas (oferta, deriva) y se paran.
