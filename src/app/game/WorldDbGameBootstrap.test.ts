@@ -278,6 +278,9 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     expect(Object.values(world.games).filter((game) => game.seasonId === cupSeasonId)).toHaveLength(7)
     world = finalizeCompletedSeason(world, cupSeasonId)
     expect(world.seasonHistoryBySeasonId[cupSeasonId]?.championTeamId).toBe(cupChampion)
+    const priorCupSeason = structuredClone(world.seasons[cupSeasonId])
+    const priorCupGames = structuredClone(Object.values(world.games).filter((game) => game.seasonId === cupSeasonId))
+    const priorCupHistory = structuredClone(world.seasonHistoryBySeasonId[cupSeasonId])
 
     const after33 = completeGames(world, regularGames.filter((game) => game.date <= rounds[32]!))
     expect(Object.values(after33.games).filter((game) => game.seasonId === leagueSeasonId && game.competitionStageKey === 'REGULAR' && game.status === 'completed')).toHaveLength(297)
@@ -321,7 +324,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     expect(world.seasonHistoryBySeasonId[leagueSeasonId]?.championTeamId).toBe(leagueChampion)
 
     const atFinalWindow = updateGameWorld(world, { currentDate: parseGameDate('2026-06-28') })
-    const atJuly1 = advanceGameDay(advanceGameDay(advanceGameDay(atFinalWindow)))
+    const atJuly1 = updateGameWorld(atFinalWindow, { currentDate: parseGameDate('2026-07-01') })
     expect(atJuly1.currentDate).toBe('2026-07-01')
 
     // Rollover never moves the world clock or currentSeasonId (see startNextSeason.ts): the new
@@ -339,6 +342,48 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     expect(nextCup).toBeDefined()
     expect(nextCup?.calendarPolicy?.seasonWindow.startDate).toBe('2027-02-19')
     expect(nextLeague.calendarPolicy?.seasonWindow.startDate).toBe('2026-10-01')
+    expect(nextCup?.participantTeamIds).toEqual([])
+    expect(Object.values(nextSeasonWorld.games).filter((game) => game.seasonId === nextCup?.id)).toHaveLength(0)
+    expect(getCompetitionPostseasonState(nextSeasonWorld, nextCup!.id)?.lifecycleDiagnostic?.code).toBe('QUALIFICATION_PENDING')
+
+    const seasonCountAfterFirstRollover = Object.keys(nextSeasonWorld.seasons).length
+    const repeatedRollover = startNextSeasonFor(nextSeasonWorld, leagueSeasonId)
+    expect(repeatedRollover).toBe(nextSeasonWorld)
+    expect(Object.keys(repeatedRollover.seasons)).toHaveLength(seasonCountAfterFirstRollover)
+    expect(Object.values(repeatedRollover.seasons).filter((season) => season.worldCompetitionFormat?.competitionSeasonId === spainCopaCompetitionSeasonId(2026))).toHaveLength(1)
+
+    const nextLeagueRounds = [...new Set(nextLeagueGames.map((game) => game.date))].sort()
+    const nextLeagueFirst17 = nextLeagueGames.filter((game) => game.date <= nextLeagueRounds[16]!)
+    let afterNextCupQualification = completeGames(repeatedRollover, nextLeagueFirst17.slice(0, -1))
+    const finalNextLeagueJ17Game = nextLeagueFirst17.at(-1)!
+    afterNextCupQualification = applyMatchResult(afterNextCupQualification, { gameId: finalNextLeagueJ17Game.id, homeTeamId: finalNextLeagueJ17Game.homeTeamId, awayTeamId: finalNextLeagueJ17Game.awayTeamId, homeScore: 100, awayScore: 80 })
+    const playableNextCup = afterNextCupQualification.seasons[nextCup!.id]!
+    const nextCupState = getCompetitionPostseasonState(afterNextCupQualification, nextCup!.id)!
+    const expectedNextCupParticipants = calculateStandings(afterNextCupQualification, nextLeague.id, nextLeagueRounds[16]).slice(0, 8).map((line) => line.teamId)
+    const nextCupGames = Object.values(afterNextCupQualification.games).filter((game) => game.seasonId === nextCup!.id)
+    expect(playableNextCup.participantTeamIds).toEqual(expectedNextCupParticipants)
+    expect(nextCupState.seeds.map((entry) => entry.competitionSeasonEntryId)).toEqual(expectedNextCupParticipants)
+    expect(nextCupState.bracketPlan?.fixtures).toHaveLength(7)
+    expect(nextCupGames).toHaveLength(4)
+    expect(nextCupGames.every((game) => game.seasonId === nextCup!.id && game.date === '2027-02-19' && game.neutralSite === true)).toBe(true)
+    expect(nextCupGames.every((game) => !priorCupGames.some((prior) => prior.id === game.id))).toBe(true)
+    expect(afterNextCupQualification.seasons[cupSeasonId]).toEqual(priorCupSeason)
+    expect(Object.values(afterNextCupQualification.games).filter((game) => game.seasonId === cupSeasonId)).toEqual(priorCupGames)
+    expect(afterNextCupQualification.seasonHistoryBySeasonId[cupSeasonId]).toEqual(priorCupHistory)
+
+    const cupSeason = afterNextCupQualification.seasons[nextCup!.id]!
+    const invalidFormat = {
+      ...cupSeason.worldCompetitionFormat!,
+      variants: cupSeason.worldCompetitionFormat!.variants.map((variant) => variant.key === 'MAIN' ? {
+        ...variant,
+        entrySelection: { ...variant.entrySelection!, payload: { ...variant.entrySelection!.payload, source_competition_season_id: 'missing:league:edition' } },
+      } : variant),
+    }
+    const invalidWorld = updateGameWorld(afterNextCupQualification, { seasons: [...Object.values(afterNextCupQualification.seasons).map((season) => season.id === cupSeason.id ? { ...season, worldCompetitionFormat: invalidFormat } : season)] })
+    const invalidCupState = getCompetitionPostseasonState(invalidWorld, cupSeason.id)!
+    expect(invalidCupState.regularSeasonComplete).toBe(false)
+    expect(invalidCupState.bracketPlan).toBeNull()
+    expect(invalidCupState.lifecycleDiagnostic).toEqual({ code: 'INVALID_QUALIFICATION', message: 'Configured qualification source season is missing: missing:league:edition', sourceCompetitionSeasonId: 'missing:league:edition' })
   })
 
   // RWS-BUG-002A: the calendar's regular-season window is now derived from the actual round

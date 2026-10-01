@@ -1,4 +1,5 @@
-export { advanceGameDay, simulateRemainingGamesToday } from './advanceGameDay'
+export { advanceGameDay, advanceGameDayWithResult, assertSimulationMayAdvance, simulateRemainingGamesToday, SimulationAdvanceBlockedError, type WorldDayAdvancePhase, type WorldDayAdvanceResult, type WorldDayAdvanceStatus } from './advanceGameDay'
+export { evaluateSimulationBreakpoints, SIMULATION_BREAKPOINT_LEVELS, type SimulationBreakpoint, type SimulationBreakpointContext, type SimulationBreakpointInput, type SimulationBreakpointLevel, type SimulationBreakpointResult } from './SimulationBreakpoints'
 export { continueGame, getContinueStopReason, getNextKnownEvent, DEFAULT_CONTINUE_DAY_LIMIT, type ContinueResult, type ContinueStopReason, type NextKnownEvent } from './ContinueFlow'
 export {
   simulateUntilDate,
@@ -63,4 +64,4 @@ export {
 } from './playUserGame'
 export { LiveMatchController, type LiveMatchStep } from './LiveMatchController'
 export { getCurrentSeason } from './selectors'
-export { startNextSeason } from './startNextSeason'
+export { startNextSeason, startNextSeasonTransitionFor, type CompetitionSeasonTransition, type CompetitionSeasonTransitionResult } from './startNextSeason'

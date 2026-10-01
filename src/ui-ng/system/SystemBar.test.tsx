@@ -4,6 +4,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import '@testing-library/jest-dom/vitest'
 
 import { addDays } from '@/domain/date'
+import { updateGameWorld } from '@/domain/world'
+import { getUserTeam } from '@/engine/calendar'
+import { createRetentionNegotiation, retentionNegotiationIdFor } from '@/domain/contract/ContractRetentionNegotiation'
 import { continueGame, createAcbTestGame, createNewGame, simulateUntilDate } from '@/app/game'
 import { useGameStore } from '@/stores/gameStore'
 import { SystemBar } from '@/ui-ng/system/SystemBar'
@@ -31,6 +34,20 @@ describe('SystemBar continue', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Match' }))
     expect(new URL(window.location.href).searchParams.get('app')).toBe('match')
+  })
+
+  it('surfaces contract breakpoint attention and routes it to the Contracts Hub', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const playerId = team.rosterPlayerIds[0]!
+    const contract = Object.values(base.contractsById).find((item) => item.teamId === team.id && item.playerId === playerId)!
+    const negotiationId = retentionNegotiationIdFor(team.id, playerId, contract.id, 'system-bar-contract-attention')
+    const negotiation = createRetentionNegotiation({ id: negotiationId, openingActionId: 'system-bar-contract-attention', teamId: team.id, organizationId: team.organizationId, playerId, predecessorContractId: contract.id, openedOn: base.currentDate, openedByCoachId: team.coachId!, status: 'ACCEPTED', acceptedTerms: { salary: contract.compensation.annualSalary, years: 1 }, rounds: [] })
+    useGameStore.getState().replaceWorld(updateGameWorld(base, { retentionNegotiations: [negotiation] }))
+    mountBar()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open contracts requiring attention' }))
+    expect(new URL(window.location.href).searchParams.get('app')).toBe('contracts')
   })
 
   it('advances the canonical calendar until the next interruption', { timeout: 15_000 }, () => {

@@ -16,28 +16,28 @@ describe('CompetitionRules.gameFormat', () => {
 
   it('an NCAA men\'s-style competition resolves 2x20-minute halves', () => {
     const competition = createCompetition({ id: competitionIdFromString('ncaa-men'), name: 'NCAA Men', gender: 'male', participantTeamIds: [teamA, teamB], rules: { ...defaultLeagueCompetitionRules, gameFormat: NCAA_MEN_GAME_FORMAT } })
-    expect(competition.rules.gameFormat).toEqual({ periodCount: 2, periodMinutes: 20, overtimeMinutes: 5 })
+    expect(competition.rules.gameFormat).toMatchObject(NCAA_MEN_GAME_FORMAT)
   })
 
   it('an NCAA women\'s-style competition resolves 4x10-minute quarters', () => {
     const competition = createCompetition({ id: competitionIdFromString('ncaa-women'), name: 'NCAA Women', gender: 'female', participantTeamIds: [teamA, teamB], rules: { ...defaultLeagueCompetitionRules, gameFormat: NCAA_WOMEN_GAME_FORMAT } })
-    expect(competition.rules.gameFormat).toEqual({ periodCount: 4, periodMinutes: 10, overtimeMinutes: 5 })
+    expect(competition.rules.gameFormat).toMatchObject(NCAA_WOMEN_GAME_FORMAT)
   })
 
   it('an NBA-style competition resolves 4x12-minute quarters', () => {
     const competition = createCompetition({ id: competitionIdFromString('nba'), name: 'NBA', gender: 'male', participantTeamIds: [teamA, teamB], rules: { ...defaultLeagueCompetitionRules, gameFormat: NBA_GAME_FORMAT } })
-    expect(competition.rules.gameFormat).toEqual({ periodCount: 4, periodMinutes: 12, overtimeMinutes: 5 })
+    expect(competition.rules.gameFormat).toMatchObject(NBA_GAME_FORMAT)
   })
 
   it('a WNBA-style competition resolves 4x10-minute quarters', () => {
     const competition = createCompetition({ id: competitionIdFromString('wnba'), name: 'WNBA', gender: 'female', participantTeamIds: [teamA, teamB], rules: { ...defaultLeagueCompetitionRules, gameFormat: WNBA_GAME_FORMAT } })
-    expect(competition.rules.gameFormat).toEqual({ periodCount: 4, periodMinutes: 10, overtimeMinutes: 5 })
+    expect(competition.rules.gameFormat).toMatchObject(WNBA_GAME_FORMAT)
   })
 
   it('a FIBA-style competition resolves 4x10-minute quarters and is the schema default', () => {
     expect(defaultLeagueCompetitionRules.gameFormat).toEqual(FIBA_GAME_FORMAT)
     const competition = createCompetition({ id: competitionIdFromString('fiba'), name: 'FIBA League', gender: 'male', participantTeamIds: [teamA, teamB] })
-    expect(competition.rules.gameFormat).toEqual({ periodCount: 4, periodMinutes: 10, overtimeMinutes: 5 })
+    expect(competition.rules.gameFormat).toMatchObject(FIBA_GAME_FORMAT)
   })
 
   it('the same broader NCAA-like ecosystem may contain competitions with different timing rules, with no UI/engine branching required', () => {
@@ -47,8 +47,17 @@ describe('CompetitionRules.gameFormat', () => {
 
     expect(men.ecosystemId).toBe(women.ecosystemId)
     expect(men.rules.gameFormat).not.toEqual(women.rules.gameFormat)
-    expect(men.rules.gameFormat).toEqual({ periodCount: 2, periodMinutes: 20, overtimeMinutes: 5 })
-    expect(women.rules.gameFormat).toEqual({ periodCount: 4, periodMinutes: 10, overtimeMinutes: 5 })
+    expect(men.rules.gameFormat).toMatchObject(NCAA_MEN_GAME_FORMAT)
+    expect(women.rules.gameFormat).toMatchObject(NCAA_WOMEN_GAME_FORMAT)
+  })
+
+  it('keeps made-basket clock stops and substitution windows independently configurable', () => {
+    const competition = createCompetition({
+      id: competitionIdFromString('independent-clock-rules'), name: 'Independent Clock Rules', gender: 'male', participantTeamIds: [teamA, teamB],
+      rules: { ...defaultLeagueCompetitionRules, gameFormat: { ...FIBA_GAME_FORMAT, madeBasketClockStopUnderSecondsInFinalPeriod: null, madeBasketSubstitutionUnderSecondsInFinalPeriod: 30 } },
+    })
+    expect(competition.rules.gameFormat.madeBasketClockStopUnderSecondsInFinalPeriod).toBeNull()
+    expect(competition.rules.gameFormat.madeBasketSubstitutionUnderSecondsInFinalPeriod).toBe(30)
   })
 
   it('rejects a non-positive period count, period length, or overtime length', () => {

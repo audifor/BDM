@@ -302,6 +302,7 @@ const TRANSACTION_LABELS: Record<PlayerTransactionKind, string> = {
   signedFreeAgent: 'Signed',
   released: 'Released',
   contractExpired: 'Contract expired',
+  traded: 'Traded',
 }
 
 const ECOSYSTEM_LABELS: Record<EcosystemTransitionType, string> = {

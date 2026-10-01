@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import { createNewGame } from '@/app/game'
 import { addDays } from '@/domain/date'
+import { createPlayerContract } from '@/domain/contract'
+import { contractIdFromString } from '@/domain/ids'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { advanceDay } from '@/engine/calendar'
 import { calculateStandings } from '@/engine/competition/standings'
@@ -46,6 +48,18 @@ describe('DraftEngine', () => {
     expect(world.draftsById[initial.draftId]!.status).toBe('completed')
     expect(getCurrentDraftPick(world, initial.draftId)).toBeUndefined()
     expect(() => makeDraftSelection(world, initial.draftId, userTeamId, getAvailableDraftProspects(world, initial.draftId)[0]!)).toThrow('Draft is not in progress')
+  })
+
+  it('refuses to add a player with an existing active contract through draft arrival', () => {
+    const initial = createOpenDraftWorld(1)
+    const scheduledOn = initial.world.draftsById[initial.draftId]!.scheduledOn
+    const world = openDraft(updateGameWorld(initial.world, { currentDate: scheduledOn }), initial.draftId)
+    const pick = getCurrentDraftPick(world, initial.draftId)!
+    const prospect = getAvailableDraftProspects(world, initial.draftId)[0]!
+    const template = Object.values(world.contractsById)[0]!
+    const contract = createPlayerContract({ ...template, id: contractIdFromString(`draft-active:${prospect}`), playerId: prospect, teamId: pick.ownerTeamId })
+    const inconsistent = updateGameWorld(world, { contracts: [...Object.values(world.contractsById), contract] })
+    expect(() => makeDraftSelection(inconsistent, initial.draftId, pick.ownerTeamId, prospect)).toThrow(/active player contract/)
   })
 
   it('opens and progresses through advanceDay while the FIBA-like competition remains active', () => {

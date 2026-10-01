@@ -1,4 +1,5 @@
 import type { PlayerId, TeamId } from '@/domain/ids'
+import { getPlayerContractStatus } from '@/domain/contract'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import type { DraftPick } from '@/domain/draft'
 import type { Draft, DraftRules } from '@/domain/draft'
@@ -44,6 +45,7 @@ export function getAvailableDraftProspects(world: GameWorld, draftId: string): r
 export function makeDraftSelection(world: GameWorld, draftId: string, selectingTeamId: TeamId, playerId: PlayerId): GameWorld {
   const draft = world.draftsById[draftId]; if (!draft || draft.status !== 'inProgress') throw new Error('Draft is not in progress')
   const pick = getCurrentDraftPick(world, draftId); if (!pick || pick.ownerTeamId !== selectingTeamId || !getAvailableDraftProspects(world, draftId).includes(playerId)) throw new Error('Draft selection is invalid')
+  if (Object.values(world.contractsById).some((contract) => contract.playerId === playerId && getPlayerContractStatus(contract, world.currentDate) === 'active')) throw new Error('Draft prospect already has an active player contract')
   const team = world.teams[selectingTeamId]!; if (team.rosterPlayerIds.includes(playerId) || team.gender !== world.players[playerId]?.gender) throw new Error('Draft prospect is already rostered')
   const picks = Object.values(world.draftPicksById).map((item) => item.id === pick.id ? { ...item, selection: { playerId, teamId: selectingTeamId } } : item)
   const complete = picks.filter((item) => item.draftId === draftId).every((item) => item.selection !== undefined)

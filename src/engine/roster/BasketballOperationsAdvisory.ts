@@ -7,7 +7,7 @@ import { getActivePlayerContract, getEcosystemForTeam, getTeamFinancialSnapshot,
 import { basketballOperationsQuality, resolveAdvisoryResponsibility } from '@/engine/staff'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import type { TradeProposal } from '@/domain/trade'
-import { executeTrade, validateTrade } from '@/engine/trade'
+import { validateTrade } from '@/engine/trade'
 
 const KINDS = ['recommendSignings', 'shortlistPlayers', 'contractRecommendation', 'tradeRecommendation'] as const
 const MAX_SHORTLIST = 8
@@ -174,7 +174,11 @@ function tradeRecommendation(world: GameWorld, teamId: TeamId, organizationId: O
           { asset: { kind: 'player' as const, playerId: incoming }, fromTeamId: counterpart.id, toTeamId: teamId },
         ],
       }
-      if (validateTrade(world, proposal).allowed) {
+      const validation = validateTrade(world, proposal)
+      const onlyWindowUnconfigured = validation.globalReasons.length === 1
+        && validation.globalReasons[0] === 'TRADE_WINDOW_NOT_CONFIGURED'
+        && validation.teamResults.every((result) => result.reasons.length === 0)
+      if (validation.allowed || onlyWindowUnconfigured) {
         viablePairs.push({ incoming, outgoing, counterpartTeamId: counterpart.id, proposal })
         break // stop at the FIRST (most expendable) legal outgoing for this incoming candidate
       }
@@ -228,48 +232,14 @@ function seasonForTeam(world: GameWorld, teamId: TeamId): SeasonId | undefined {
     .sort((a, b) => a.id.localeCompare(b.id))[0]?.id
 }
 
-export type AcceptTradeRecommendationFailureReason = 'notFound' | 'invalidKind' | 'alreadyApplied' | 'malformedPayload' | 'staleRecommendation' | 'tradeEngineRejected'
+export type AcceptTradeRecommendationFailureReason = 'notFound' | 'invalidKind' | 'alreadyApplied' | 'negotiationRequired'
 export type AcceptTradeRecommendationResult = { readonly ok: true; readonly world: GameWorld } | { readonly ok: false; readonly reason: AcceptTradeRecommendationFailureReason }
 
-/**
- * Sole canonical application seam for a `tradeRecommendation` advisory outcome (docs
- * §"tradeRecommendation" business rules, mirroring `acceptRecruitingRecommendation` /
- * `acceptMedicalRecommendation`). Rebuilds the exact two-team player-for-player proposal from the
- * frozen payload and revalidates it through the canonical `validateTrade`/`executeTrade` boundary
- * before applying — if ownership, contracts, roster membership, cap, finances or trade rules
- * changed materially since the recommendation was created, `executeTrade`'s own validation rejects
- * it atomically (no partial mutation) and this returns `tradeEngineRejected`. No roster/contract/
- * cap/finance mutation happens anywhere else in this module; this is the only mutating function.
- */
+/** Staff advice cannot commit a trade or start negotiation until a negotiation lifecycle exists. */
 export function acceptTradeRecommendation(world: GameWorld, outcomeId: DelegationOutcomeId): AcceptTradeRecommendationResult {
   const outcome = world.delegationOutcomesById[outcomeId]
   if (outcome === undefined) return { ok: false, reason: 'notFound' }
   if (outcome.kind !== 'tradeRecommendation') return { ok: false, reason: 'invalidKind' }
   if (outcome.applied) return { ok: false, reason: 'alreadyApplied' }
-
-  const { teamId, incomingPlayerId, outgoingPlayerId, counterpartTeamId, proposalId, ecosystemId, seasonId } = outcome.payload
-  if (typeof teamId !== 'string' || typeof incomingPlayerId !== 'string' || typeof outgoingPlayerId !== 'string' || typeof counterpartTeamId !== 'string' || typeof proposalId !== 'string' || typeof ecosystemId !== 'string' || typeof seasonId !== 'string') return { ok: false, reason: 'malformedPayload' }
-
-  // Reconstruct the exact proposal frozen at recommendation time — never reinterpret it against
-  // `world.currentSeasonId`, which may have advanced (or never applied to this team/ecosystem) since
-  // creation. If the frozen season/ecosystem no longer exist or no longer relate to each other, the
-  // recommendation is stale and must fail safely with no mutation.
-  const season = world.seasons[seasonId as SeasonId]
-  if (season === undefined) return { ok: false, reason: 'staleRecommendation' }
-  const competition = world.competitions[season.competitionId]
-  if (competition === undefined || competition.ecosystemId !== ecosystemId) return { ok: false, reason: 'staleRecommendation' }
-  const proposal = {
-    id: proposalId,
-    ecosystemId: ecosystemId as EcosystemId,
-    seasonId: seasonId as SeasonId,
-    participantTeamIds: [teamId as TeamId, counterpartTeamId as TeamId],
-    movements: [
-      { asset: { kind: 'player' as const, playerId: outgoingPlayerId as PlayerId }, fromTeamId: teamId as TeamId, toTeamId: counterpartTeamId as TeamId },
-      { asset: { kind: 'player' as const, playerId: incomingPlayerId as PlayerId }, fromTeamId: counterpartTeamId as TeamId, toTeamId: teamId as TeamId },
-    ],
-  }
-  const result = executeTrade(world, proposal)
-  if (!result.validation.allowed) return { ok: false, reason: 'tradeEngineRejected' }
-  const updatedOutcome: DelegationOutcome = { ...outcome, applied: true }
-  return { ok: true, world: { ...result.world, delegationOutcomesById: { ...result.world.delegationOutcomesById, [outcomeId]: updatedOutcome } } }
+  return { ok: false, reason: 'negotiationRequired' }
 }

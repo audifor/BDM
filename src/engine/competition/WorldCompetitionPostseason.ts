@@ -16,6 +16,12 @@ export interface CompetitionPostseasonSeriesStateV1 {
   readonly state: WorldCompetitionSeriesStateV1
 }
 
+export interface CompetitionLifecycleDiagnosticV1 {
+  readonly code: 'QUALIFICATION_PENDING' | 'INVALID_QUALIFICATION'
+  readonly message: string
+  readonly sourceCompetitionSeasonId?: string
+}
+
 export interface CompetitionPostseasonStateV1 {
   readonly regularSeasonComplete: boolean
   readonly seeds: readonly WorldCompetitionSeededEntryV1[]
@@ -25,6 +31,7 @@ export interface CompetitionPostseasonStateV1 {
   readonly outcomes: readonly WorldCompetitionVirtualFixtureOutcomeV1[]
   readonly seriesByFixtureId: Readonly<Record<string, CompetitionPostseasonSeriesStateV1>>
   readonly championTeamId: TeamId | null
+  readonly lifecycleDiagnostic: CompetitionLifecycleDiagnosticV1 | null
 }
 
 /** Derives bracket and series state from canonical format rules and persisted Game results. */
@@ -68,6 +75,7 @@ export function getCompetitionPostseasonState(world: GameWorld, seasonId: keyof 
         outcomes: Object.freeze(outcomes),
         seriesByFixtureId: Object.freeze(seriesByFixtureId),
         championTeamId: terminalChampion(variant.nodes, variant.edges, outcomes),
+        lifecycleDiagnostic: null,
       })
     }
   }
@@ -192,7 +200,7 @@ function terminalChampion(nodes: readonly WorldCompetitionFormatNode[], edges: r
 }
 
 function emptyPostseasonState(): CompetitionPostseasonStateV1 {
-  return Object.freeze({ regularSeasonComplete: false, seeds: Object.freeze([]), bracketPlan: null, resolvedFixtures: Object.freeze([]), readyFixtures: Object.freeze([]), outcomes: Object.freeze([]), seriesByFixtureId: Object.freeze({}), championTeamId: null })
+  return Object.freeze({ regularSeasonComplete: false, seeds: Object.freeze([]), bracketPlan: null, resolvedFixtures: Object.freeze([]), readyFixtures: Object.freeze([]), outcomes: Object.freeze([]), seriesByFixtureId: Object.freeze({}), championTeamId: null, lifecycleDiagnostic: null })
 }
 
 function requireNode(format: WorldCompetitionFormatDocument, key: string): WorldCompetitionFormatNode {

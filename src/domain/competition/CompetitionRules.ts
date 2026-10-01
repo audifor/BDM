@@ -1,4 +1,5 @@
 export type StandingsTiebreaker = 'wins' | 'pointDifference' | 'pointsFor' | 'teamId'
+export const DEFAULT_RETENTION_WINDOW_DAYS_BEFORE_EXPIRY = 365
 
 /**
  * Generic basketball game-clock/format rules, owned by the competition itself.
@@ -16,6 +17,20 @@ export interface GameFormatRules {
   readonly periodMinutes: number
   /** Length of one overtime period, in minutes. */
   readonly overtimeMinutes: number
+  readonly shotClockSeconds?: number
+  readonly offensiveReboundShotClockSeconds?: number | null
+  /** Stop the game clock after a made basket in the final period at or below this time. Null keeps it running. */
+  readonly madeBasketClockStopUnderSecondsInFinalPeriod?: number | null
+  readonly madeBasketClockStopUnderSecondsInOtherPeriods?: number | null
+  /** Open a substitution window after a made basket in the final period at or below this time. Independent of clock stop. */
+  readonly madeBasketSubstitutionUnderSecondsInFinalPeriod?: number | null
+  readonly madeBasketSubstitutionUnderSecondsInOtherPeriods?: number | null
+  readonly madeBasketSubstitutionEligibleTeam?: 'both' | 'nonScoring'
+  readonly clockStopReasons?: readonly ('outOfBounds' | 'other' | 'shotClockViolation')[]
+  /** Dead-ball causes that open a legal substitution window. Made-basket windows have their own threshold above. */
+  readonly substitutionOpportunityReasons?: readonly ('outOfBounds' | 'other' | 'shotClockViolation')[]
+  /** When a stopped clock resumes after an inbound. */
+  readonly clockRestartOnInbound?: 'release' | 'receive'
 }
 
 export interface CompetitionRules {
@@ -30,6 +45,8 @@ export interface CompetitionRules {
   readonly completion: 'allScheduledGamesCompleted'
   readonly champion: 'standingsLeader'
   readonly gameFormat: GameFormatRules
+  /** Professional-contract retention eligibility; independent of planning horizons. */
+  readonly retentionWindowDaysBeforeExpiry?: number
 }
 
 /**
@@ -41,11 +58,13 @@ export interface CompetitionRules {
  * They exist only so callers constructing a CompetitionRules do not have to restate the same
  * well-known figures inline.
  */
-export const NCAA_MEN_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 2, periodMinutes: 20, overtimeMinutes: 5 })
-export const NCAA_WOMEN_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 4, periodMinutes: 10, overtimeMinutes: 5 })
-export const NBA_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 4, periodMinutes: 12, overtimeMinutes: 5 })
-export const WNBA_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 4, periodMinutes: 10, overtimeMinutes: 5 })
-export const FIBA_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 4, periodMinutes: 10, overtimeMinutes: 5 })
+const COMMON_SUBSTITUTION_OPPORTUNITIES = Object.freeze(['outOfBounds', 'other', 'shotClockViolation'] as const)
+const COMMON_CLOCK_STOP_REASONS = Object.freeze(['outOfBounds', 'other', 'shotClockViolation'] as const)
+export const NCAA_MEN_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 2, periodMinutes: 20, overtimeMinutes: 5, shotClockSeconds: 30, offensiveReboundShotClockSeconds: 20, madeBasketClockStopUnderSecondsInFinalPeriod: 60, madeBasketSubstitutionUnderSecondsInFinalPeriod: 60, clockStopReasons: COMMON_CLOCK_STOP_REASONS, substitutionOpportunityReasons: COMMON_SUBSTITUTION_OPPORTUNITIES, clockRestartOnInbound: 'receive' })
+export const NCAA_WOMEN_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 4, periodMinutes: 10, overtimeMinutes: 5, shotClockSeconds: 30, offensiveReboundShotClockSeconds: 20, madeBasketClockStopUnderSecondsInFinalPeriod: 60, madeBasketSubstitutionUnderSecondsInFinalPeriod: 60, clockStopReasons: COMMON_CLOCK_STOP_REASONS, substitutionOpportunityReasons: COMMON_SUBSTITUTION_OPPORTUNITIES, clockRestartOnInbound: 'receive' })
+export const NBA_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 4, periodMinutes: 12, overtimeMinutes: 5, shotClockSeconds: 24, offensiveReboundShotClockSeconds: 14, madeBasketClockStopUnderSecondsInFinalPeriod: 120, madeBasketClockStopUnderSecondsInOtherPeriods: 60, madeBasketSubstitutionUnderSecondsInFinalPeriod: 120, madeBasketSubstitutionUnderSecondsInOtherPeriods: 60, clockStopReasons: COMMON_CLOCK_STOP_REASONS, substitutionOpportunityReasons: COMMON_SUBSTITUTION_OPPORTUNITIES, clockRestartOnInbound: 'receive' })
+export const WNBA_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 4, periodMinutes: 10, overtimeMinutes: 5, shotClockSeconds: 24, offensiveReboundShotClockSeconds: 14, madeBasketClockStopUnderSecondsInFinalPeriod: 60, madeBasketSubstitutionUnderSecondsInFinalPeriod: 60, clockStopReasons: COMMON_CLOCK_STOP_REASONS, substitutionOpportunityReasons: COMMON_SUBSTITUTION_OPPORTUNITIES, clockRestartOnInbound: 'receive' })
+export const FIBA_GAME_FORMAT: GameFormatRules = Object.freeze({ periodCount: 4, periodMinutes: 10, overtimeMinutes: 5, shotClockSeconds: 24, offensiveReboundShotClockSeconds: 14, madeBasketClockStopUnderSecondsInFinalPeriod: 120, madeBasketSubstitutionUnderSecondsInFinalPeriod: 120, madeBasketSubstitutionEligibleTeam: 'nonScoring', clockStopReasons: COMMON_CLOCK_STOP_REASONS, substitutionOpportunityReasons: COMMON_SUBSTITUTION_OPPORTUNITIES, clockRestartOnInbound: 'receive' })
 
 export const defaultLeagueCompetitionRules: CompetitionRules = Object.freeze({
   format: 'leagueRoundRobin',
@@ -54,6 +73,7 @@ export const defaultLeagueCompetitionRules: CompetitionRules = Object.freeze({
   completion: 'allScheduledGamesCompleted',
   champion: 'standingsLeader',
   gameFormat: FIBA_GAME_FORMAT,
+  retentionWindowDaysBeforeExpiry: DEFAULT_RETENTION_WINDOW_DAYS_BEFORE_EXPIRY,
 })
 
 export function createCompetitionRules(input: CompetitionRules): CompetitionRules {
@@ -63,6 +83,8 @@ export function createCompetitionRules(input: CompetitionRules): CompetitionRule
   if (input.schedule.meetingsPerPair % 2 !== 0) throw new RangeError('Equal home/away balance requires an even number of meetings per pair')
   if (input.completion !== 'allScheduledGamesCompleted') throw new RangeError('Competition completion rule is unsupported')
   if (input.champion !== 'standingsLeader') throw new RangeError('Competition champion rule is unsupported')
+  const retentionWindowDaysBeforeExpiry = input.retentionWindowDaysBeforeExpiry ?? DEFAULT_RETENTION_WINDOW_DAYS_BEFORE_EXPIRY
+  if (!Number.isSafeInteger(retentionWindowDaysBeforeExpiry) || retentionWindowDaysBeforeExpiry < 1) throw new RangeError('Competition retention window must be a positive whole number of days')
   const tiebreakers = [...input.standings.tiebreakers]
   if (tiebreakers.length === 0 || new Set(tiebreakers).size !== tiebreakers.length || tiebreakers.some((value) => !['wins', 'pointDifference', 'pointsFor', 'teamId'].includes(value))) throw new RangeError('Competition standings tiebreakers are invalid')
   if (tiebreakers[tiebreakers.length - 1] !== 'teamId') throw new RangeError('Competition standings must end with deterministic teamId tiebreaker')
@@ -70,5 +92,25 @@ export function createCompetitionRules(input: CompetitionRules): CompetitionRule
   if (!Number.isInteger(gameFormat.periodCount) || gameFormat.periodCount <= 0) throw new RangeError('Competition game format period count must be a positive integer')
   if (!Number.isFinite(gameFormat.periodMinutes) || gameFormat.periodMinutes <= 0) throw new RangeError('Competition game format period minutes must be positive')
   if (!Number.isFinite(gameFormat.overtimeMinutes) || gameFormat.overtimeMinutes <= 0) throw new RangeError('Competition game format overtime minutes must be positive')
-  return Object.freeze({ format: input.format, schedule: Object.freeze({ meetingsPerPair: input.schedule.meetingsPerPair, homeAwayBalance: input.schedule.homeAwayBalance }), standings: Object.freeze({ tiebreakers: Object.freeze(tiebreakers) }), completion: input.completion, champion: input.champion, gameFormat: Object.freeze({ periodCount: gameFormat.periodCount, periodMinutes: gameFormat.periodMinutes, overtimeMinutes: gameFormat.overtimeMinutes }) })
+  const madeBasketClockStop = gameFormat.madeBasketClockStopUnderSecondsInFinalPeriod ?? null
+  if (madeBasketClockStop !== null && (!Number.isSafeInteger(madeBasketClockStop) || madeBasketClockStop < 0)) throw new RangeError('Competition made-basket clock-stop threshold must be null or a non-negative integer')
+  const madeBasketSubstitution = gameFormat.madeBasketSubstitutionUnderSecondsInFinalPeriod === undefined ? madeBasketClockStop : gameFormat.madeBasketSubstitutionUnderSecondsInFinalPeriod
+  if (madeBasketSubstitution !== null && (!Number.isSafeInteger(madeBasketSubstitution) || madeBasketSubstitution < 0)) throw new RangeError('Competition made-basket substitution threshold must be null or a non-negative integer')
+  const madeBasketClockStopOtherPeriods = gameFormat.madeBasketClockStopUnderSecondsInOtherPeriods ?? null
+  if (madeBasketClockStopOtherPeriods !== null && (!Number.isSafeInteger(madeBasketClockStopOtherPeriods) || madeBasketClockStopOtherPeriods < 0)) throw new RangeError('Competition other-period made-basket clock-stop threshold must be null or a non-negative integer')
+  const madeBasketSubstitutionOtherPeriods = gameFormat.madeBasketSubstitutionUnderSecondsInOtherPeriods === undefined ? madeBasketClockStopOtherPeriods : gameFormat.madeBasketSubstitutionUnderSecondsInOtherPeriods
+  if (madeBasketSubstitutionOtherPeriods !== null && (!Number.isSafeInteger(madeBasketSubstitutionOtherPeriods) || madeBasketSubstitutionOtherPeriods < 0)) throw new RangeError('Competition other-period made-basket substitution threshold must be null or a non-negative integer')
+  const madeBasketSubstitutionEligibleTeam = gameFormat.madeBasketSubstitutionEligibleTeam ?? 'both'
+  if (madeBasketSubstitutionEligibleTeam !== 'both' && madeBasketSubstitutionEligibleTeam !== 'nonScoring') throw new RangeError('Competition made-basket substitution team rule is invalid')
+  const substitutionOpportunityReasons = [...(gameFormat.substitutionOpportunityReasons ?? COMMON_SUBSTITUTION_OPPORTUNITIES)]
+  if (new Set(substitutionOpportunityReasons).size !== substitutionOpportunityReasons.length || substitutionOpportunityReasons.some((reason) => !['outOfBounds', 'other', 'shotClockViolation'].includes(reason))) throw new RangeError('Competition substitution opportunity reasons are invalid')
+  const clockStopReasons = [...(gameFormat.clockStopReasons ?? COMMON_CLOCK_STOP_REASONS)]
+  if (new Set(clockStopReasons).size !== clockStopReasons.length || clockStopReasons.some((reason) => !['outOfBounds', 'other', 'shotClockViolation'].includes(reason))) throw new RangeError('Competition clock stop reasons are invalid')
+  const clockRestartOnInbound = gameFormat.clockRestartOnInbound ?? 'receive'
+  if (clockRestartOnInbound !== 'release' && clockRestartOnInbound !== 'receive') throw new RangeError('Competition inbound clock restart rule is invalid')
+  const shotClockSeconds = gameFormat.shotClockSeconds ?? 24
+  if (!Number.isSafeInteger(shotClockSeconds) || shotClockSeconds <= 0) throw new RangeError('Competition shot clock must be a positive integer')
+  const offensiveReboundShotClockSeconds = gameFormat.offensiveReboundShotClockSeconds ?? null
+  if (offensiveReboundShotClockSeconds !== null && (!Number.isSafeInteger(offensiveReboundShotClockSeconds) || offensiveReboundShotClockSeconds <= 0)) throw new RangeError('Competition offensive-rebound shot-clock reset must be null or a positive integer')
+  return Object.freeze({ format: input.format, schedule: Object.freeze({ meetingsPerPair: input.schedule.meetingsPerPair, homeAwayBalance: input.schedule.homeAwayBalance }), standings: Object.freeze({ tiebreakers: Object.freeze(tiebreakers) }), completion: input.completion, champion: input.champion, retentionWindowDaysBeforeExpiry, gameFormat: Object.freeze({ periodCount: gameFormat.periodCount, periodMinutes: gameFormat.periodMinutes, overtimeMinutes: gameFormat.overtimeMinutes, shotClockSeconds, offensiveReboundShotClockSeconds, madeBasketClockStopUnderSecondsInFinalPeriod: madeBasketClockStop, madeBasketClockStopUnderSecondsInOtherPeriods: madeBasketClockStopOtherPeriods, madeBasketSubstitutionUnderSecondsInFinalPeriod: madeBasketSubstitution, madeBasketSubstitutionUnderSecondsInOtherPeriods: madeBasketSubstitutionOtherPeriods, madeBasketSubstitutionEligibleTeam, clockStopReasons: Object.freeze(clockStopReasons), substitutionOpportunityReasons: Object.freeze(substitutionOpportunityReasons), clockRestartOnInbound }) })
 }

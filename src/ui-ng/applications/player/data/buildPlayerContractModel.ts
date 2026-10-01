@@ -529,19 +529,9 @@ function buildContractGaps(): readonly OverviewGapModel[] {
       reason: 'Only draft and international rights are recorded; domestic and FIBA registration are not.',
     },
     {
-      id: 'negotiation',
-      label: 'Negotiation intelligence',
-      reason: 'No negotiation state is persisted, so no demand, stance or outcome can be reported.',
-    },
-    {
       id: 'market',
       label: 'Market context',
       reason: 'The world carries no market valuation model for players.',
-    },
-    {
-      id: 'decision-center',
-      label: 'Decision center actions',
-      reason: 'Player contract negotiation does not exist yet: no action can be offered here.',
     },
     {
       id: 'bonuses',

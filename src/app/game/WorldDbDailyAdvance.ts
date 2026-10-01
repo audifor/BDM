@@ -1,7 +1,8 @@
 import type { GameWorld } from '@/domain/world'
 import type { WorldDbCompetitionPlanningContextV1 } from '@/engine/competition/WorldDbPhysicalGamePlanner'
+import { evaluateSimulationBreakpoints } from './SimulationBreakpoints'
 
-import { advanceGameDay } from './advanceGameDay'
+import { advanceGameDayWithResult, type WorldDayAdvanceResult } from './advanceGameDay'
 import {
   materializeWorldDbPhysicalGamesV1,
   type WorldDbGameMaterializationResultV1,
@@ -16,6 +17,7 @@ export interface AdvanceWorldDbGameDayResultV1 {
   readonly world: GameWorld
   readonly before: WorldDbGameMaterializationResultV1
   readonly after: WorldDbGameMaterializationResultV1
+  readonly lifecycle: WorldDayAdvanceResult
 }
 
 /**
@@ -35,13 +37,45 @@ export function advanceWorldDbGameDayV1(
   requireAsOf(input.afterAsOf, 'afterAsOf')
 
   const before = materializeWorldDbPhysicalGamesV1(world, contexts, input.beforeAsOf)
-  const advancedWorld = advanceGameDay(before.world)
-  const after = materializeWorldDbPhysicalGamesV1(advancedWorld, contexts, input.afterAsOf)
+  const lifecycle = advanceGameDayWithResult(before.world)
+  if (lifecycle.status === 'BREAKPOINT_PREVENTED' || lifecycle.status === 'FAILED') {
+    return Object.freeze({ world: before.world, before, after: before, lifecycle })
+  }
+  const after = materializeWorldDbPhysicalGamesV1(lifecycle.world, contexts, input.afterAsOf)
+  const rematerializationPhase = {
+    phaseId: 'WORLD_DB_REMATERIALIZATION',
+    order: lifecycle.phases.length + 1,
+    date: after.world.currentDate,
+    ran: true,
+    worldChanged: after.world !== lifecycle.world,
+    diagnostics: [],
+    summary: 'World DB fixtures were reconciled after the canonical day lifecycle.',
+  } as const
+  const breakpointAfter = evaluateSimulationBreakpoints(after.world)
+  const attention = breakpointAfter.candidates.filter((candidate) => candidate.level === 'ACTION_REQUIRED' || candidate.level === 'BLOCKING')
+  const reconciliationPhase = {
+    phaseId: 'WORLD_DB_BREAKPOINT_RECONCILIATION',
+    order: lifecycle.phases.length + 2,
+    date: after.world.currentDate,
+    ran: true,
+    worldChanged: false,
+    diagnostics: attention.map((candidate) => ({ code: 'BREAKPOINT_AFTER_PROCESSING', message: candidate.diagnostic, sourceId: candidate.sourceId })),
+    summary: attention.length === 0 ? 'No stopping breakpoint exists after World DB rematerialization.' : `${attention.length} action-required or blocking breakpoint(s) remain after World DB rematerialization.`,
+  } as const
+  const completedLifecycle: WorldDayAdvanceResult = {
+    ...lifecycle,
+    status: attention.length === 0 ? lifecycle.status : 'BREAKPOINT_AFTER_PROCESSING',
+    world: after.world,
+    phases: Object.freeze([...lifecycle.phases, rematerializationPhase, reconciliationPhase]),
+    diagnostics: Object.freeze([...lifecycle.diagnostics, ...reconciliationPhase.diagnostics]),
+    breakpointAfter,
+  }
 
   return Object.freeze({
     world: after.world,
     before,
     after,
+    lifecycle: completedLifecycle,
   })
 }
 

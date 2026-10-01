@@ -993,6 +993,7 @@ const RECOMMENDATION_FAILURE_MESSAGES: Readonly<Record<string, string>> = {
   alreadyResolved: "Recommendation already resolved.",
   notAcceptable: "This recommendation is informational only.",
   underlyingRejected: "Recommendation is no longer valid.",
+  negotiationRequired: "Trade negotiation is not available yet. This recommendation did not execute a trade.",
 };
 
 function AdvisoryTab({

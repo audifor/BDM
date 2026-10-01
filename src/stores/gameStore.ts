@@ -1,5 +1,4 @@
 import {
-  advanceGameDay,
   continueGame as runContinueGame,
   simulateUntilDate as runSimulateUntilDate,
   startNextSeason,
@@ -10,8 +9,18 @@ import {
   createLiveUserMatch,
   playUserGame,
   simulateRemainingGamesToday,
+  advanceGameDayWithResult,
 } from '@/app/game'
-import { releasePlayer, signFreeAgent } from '@/app/market'
+import { releasePlayer } from '@/app/market'
+import { recordContractReviewDecision } from '@/app/contractReview'
+import { openUserContractRetention, respondUserToContractRetentionCounter, submitUserContractRetentionOffer, withdrawUserContractRetention } from '@/app/contractRetention/ContractRetentionService'
+import type { RetentionTermSet } from '@/domain/contract/ContractRetentionNegotiation'
+import type { ContractReviewIntent } from '@/domain/contract/ContractReviewDecision'
+import { completeAcceptedFreeAgentSigning, initiatePreferredFreeAgentContact, submitPreparedFreeAgentOffer, respondToNegotiationCounter } from '@/app/marketIntelligence'
+import { startUserPlayerContractSigning, recordPlayerContractSigningDecisionEvent } from '@/app/governance'
+import { executeAcceptedRetentionAgreement } from '@/app/contractRetention/RetentionSigningService'
+import { ensureRetentionPlayerContractSigningDecision } from '@/app/governance/PlayerContractSigningGovernanceService'
+import type { ClubCounterDecision } from '@/app/marketIntelligence'
 import { type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
 import type { CoachPerkId, CoachSkillId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
@@ -34,9 +43,8 @@ import { updateRotationMinutesForTeam } from '@/engine/tactics/RotationEngine'
 import { executeEntityActionResult, type EntityActionExecution } from '@/app/entityActions/EntityActionExecutor'
 import type { CommandResult } from '@/app/entityActions/EntityCommand'
 import { selectDraftProspect } from '@/app/draft'
-import { executeTrade } from '@/engine/trade'
-import type { TradeProposal } from '@/domain/trade'
-import type { ContinueResult, SimulateUntilResult } from '@/app/game'
+import { reviewMaterialRosterChanges } from '@/app/gmPlanning'
+import type { ContinueResult, SimulateUntilResult, WorldDayAdvanceResult } from '@/app/game'
 import { addRecruitingBoardEntry, makeRecruitingOffer, performRecruitingAction, removeRecruitingBoardEntry } from '@/engine/recruiting'
 import type { Priority } from '@/domain/recruiting'
 import { acceptNilOpportunity } from '@/engine/nil'
@@ -53,9 +61,13 @@ import { setTeamResponsibility, type SetTeamResponsibilityInput } from '@/app/st
 import { acceptStaffRecommendation as acceptStaffRecommendationCommand, dismissStaffRecommendation as dismissStaffRecommendationCommand, type StaffRecommendationCommandResult } from '@/app/staffRecommendations'
 import type { DelegationOutcomeId } from '@/domain/responsibility'
 import { declineStaffCareerRequest, grantStaffCareerRequest } from '@/app/staffCareerAutonomy'
+import { proposeTradeNegotiation, respondToTradeNegotiation, type TradeNegotiationActionRequest, type TradeNegotiationCommandResult } from '@/app/trades'
+import { startUserTradeCommitment, recordTradeCommitmentEvent, type TradeCommitmentResult } from '@/app/trades'
+import type { TradeProposal } from '@/domain/trade'
 
 interface GameStore {
   readonly world: GameWorld | null
+  readonly lastDayAdvanceResult: WorldDayAdvanceResult | null
   newGame(): void
   prepareUserMatch(tacticalPlan?: MatchTacticalPlan): MatchSimulation
   startLiveMatch(tacticalPlan?: MatchTacticalPlan): MatchSimulation
@@ -68,12 +80,27 @@ interface GameStore {
   instantResult(tacticalPlan?: MatchTacticalPlan): void
   playUserGame(): void
   simulateRemainingGamesToday(): void
-  advanceDay(): void
+  advanceDay(): WorldDayAdvanceResult
   continueGame(): ContinueResult
   simulateUntilDate(date: GameWorld['currentDate']): SimulateUntilResult
   startNextSeason(): void
-  signFreeAgent(teamId: TeamId, playerId: PlayerId): void
+  contactFreeAgent(teamId: TeamId, playerId: PlayerId, expectedProposalId: string): void
+  submitFreeAgentOffer(teamId: TeamId, negotiationId: string, expectedProposalId: string): void
+  decideFreeAgentCounter(teamId: TeamId, negotiationId: string, expectedRound: number, decision: ClubCounterDecision): void
+  startFreeAgentSigningGovernance(teamId: TeamId, negotiationId: string, expectedProposalId: string, proposerBodyId?: string): void
+  recordFreeAgentSigningDecision(decisionId: string, kind: 'APPROVED' | 'REJECTED' | 'VETOED' | 'WITHDRAWN', bodyId: string): void
+  completeFreeAgentSigning(teamId: TeamId, negotiationId: string, expectedProposalId: string): void
+  proposeUserTradeNegotiation(proposal: TradeProposal, pursuitId?: string): TradeNegotiationCommandResult
+  respondUserToTradeNegotiation(request: Omit<TradeNegotiationActionRequest, 'teamId' | 'actor'>): TradeNegotiationCommandResult
+  startUserTradeCommitment(negotiationId: string, expectedRevisionId: string): TradeCommitmentResult
+  recordUserTradeCommitmentEvent(decisionId: string, kind: 'APPROVED' | 'REJECTED' | 'VETOED', bodyId: string): TradeCommitmentResult
   releasePlayer(teamId: TeamId, playerId: PlayerId): void
+  decideContractReview(teamId: TeamId, contractId: import('@/domain/ids').ContractId, intent: ContractReviewIntent): void
+  openContractRetention(teamId: TeamId, contractId: import('@/domain/ids').ContractId, actionId: string): void
+  submitContractRetentionOffer(teamId: TeamId, negotiationId: string, expectedRound: number, actionId: string, terms: RetentionTermSet): void
+  acceptContractRetentionCounter(teamId: TeamId, negotiationId: string, expectedRound: number, actionId: string): void
+  withdrawContractRetention(teamId: TeamId, negotiationId: string, actionId: string): void
+  requestRetentionSigning(teamId: TeamId, negotiationId: string, proposerBodyId?: string): void
   startStaffCandidacy(teamId: TeamId, roleId: StaffRoleId, staffId: StaffPersonId): void
   startStaffInterview(candidacyId: string): void
   completeStaffInterview(candidacyId: string): void
@@ -111,7 +138,6 @@ interface GameStore {
   saveDesignerPlaybook(playbook: Playbook): void
   deleteDesignerPlaybook(playbookId: string): void
   selectDraftProspect(draftId: string, playerId: PlayerId): void
-  executeTrade(proposal: TradeProposal): void
   addRecruitingTarget(cycleId: string, recruitId: string, priority: Priority): void
   removeRecruitingTarget(recruitId: string): void
   performRecruitingAction(cycleId: string, recruitId: string, kind: 'contact'|'pitch'|'visit'): string | null
@@ -131,7 +157,8 @@ interface GameStore {
 let liveController: LiveMatchController | null = null
 export const useGameStore = create<GameStore>((set, get) => ({
   world: null,
-  newGame: () => set({ world: createNewGame() }),
+  lastDayAdvanceResult: null,
+  newGame: () => set({ world: createNewGame(), lastDayAdvanceResult: null }),
   prepareUserMatch: (tacticalPlan) => prepareUserMatch(requireWorld(get().world), tacticalPlan),
   startLiveMatch: (tacticalPlan) => { const world = addPreMatchMedia(requireWorld(get().world)); set({ world }); liveController = createLiveUserMatch(world, tacticalPlan); return liveController.snapshot() },
   advanceLiveMatch: () => requireLiveController().advanceOneStep(),
@@ -158,7 +185,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   advanceDay: () => {
     const world = requireWorld(get().world)
-    set({ world: advanceGameDay(world) })
+    const result = advanceGameDayWithResult(world)
+    set({ world: result.status === 'COMPLETED' || result.status === 'BREAKPOINT_AFTER_PROCESSING' ? result.world : world, lastDayAdvanceResult: result })
+    return result
   },
   continueGame: () => {
     const result = runContinueGame(requireWorld(get().world))
@@ -174,8 +203,73 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const world = requireWorld(get().world)
     set({ world: startNextSeason(world) })
   },
-  signFreeAgent: (teamId, playerId) => set({ world: signFreeAgent(requireWorld(get().world), teamId, playerId) }),
+  contactFreeAgent: (teamId, playerId, expectedProposalId) => { const result = initiatePreferredFreeAgentContact(requireWorld(get().world), teamId, expectedProposalId, playerId); if (result.status === 'CREATED') set({ world: result.world }) },
+  submitFreeAgentOffer: (teamId, negotiationId, expectedProposalId) => { const result = submitPreparedFreeAgentOffer(requireWorld(get().world), { teamId, negotiationId, expectedProposalId }); if (result.status === 'SUBMITTED') set({ world: result.world }) },
+  decideFreeAgentCounter: (teamId, negotiationId, expectedRound, decision) => { const result = respondToNegotiationCounter(requireWorld(get().world), { teamId, negotiationId, expectedRound, decision }); if (result.status === 'APPLIED' || result.status === 'PLAYER_NOT_FREE_AGENT') set({ world: result.world }) },
+  startFreeAgentSigningGovernance: (teamId, negotiationId, expectedProposalId, proposerBodyId) => { const result = startUserPlayerContractSigning(requireWorld(get().world), { teamId, negotiationId, expectedProposalId, ...(proposerBodyId === undefined ? {} : { proposerBodyId }) }); if (result.status === 'PROPOSED') set({ world: result.world }) },
+  recordFreeAgentSigningDecision: (decisionId, kind, bodyId) => { const world = requireWorld(get().world); const result = recordPlayerContractSigningDecisionEvent(world, { decisionId, kind, bodyId, actor: { kind: 'COACH', id: world.userCoachId } }); let next = result.world; const decision = next.governanceDecisionsById[decisionId]; if (result.status === 'APPROVED' && decision?.subject.kind === 'GENERIC' && decision.subject.referenceId.startsWith('retention:')) next = executeAcceptedRetentionAgreement(next, decision.subject.referenceId.slice('retention:'.length)).world; if (next !== world) set({ world: next }) },
+  completeFreeAgentSigning: (teamId, negotiationId, expectedProposalId) => { const result = completeAcceptedFreeAgentSigning(requireWorld(get().world), { teamId, negotiationId, expectedProposalId }); if (result.status === 'SIGNED') set({ world: result.world }) },
+  proposeUserTradeNegotiation: (proposal, pursuitId) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    if (team === undefined) return { status: 'NOT_AUTHORIZED', world, reasons: ['USER_TEAM_NOT_FOUND'] }
+    const result = proposeTradeNegotiation(world, proposal, team.id, { kind: 'USER' }, pursuitId)
+    if (result.world !== world) set({ world: result.world })
+    return result
+  },
+  respondUserToTradeNegotiation: (request) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    if (team === undefined) return { status: 'NOT_AUTHORIZED', world, reasons: ['USER_TEAM_NOT_FOUND'] }
+    const result = respondToTradeNegotiation(world, { ...request, teamId: team.id, actor: { kind: 'USER' } })
+    if (result.world !== world) set({ world: result.world })
+    return result
+  },
+  startUserTradeCommitment: (negotiationId, expectedRevisionId) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    if (team === undefined) return { status: 'NO_AUTHORITY', world, reasons: ['USER_TEAM_NOT_FOUND'] }
+    const result = startUserTradeCommitment(world, { negotiationId, expectedRevisionId, teamId: team.id })
+    if (result.world !== world) set({ world: result.world })
+    return result
+  },
+  recordUserTradeCommitmentEvent: (decisionId, kind, bodyId) => {
+    const world = requireWorld(get().world)
+    const result = recordTradeCommitmentEvent(world, { decisionId, kind, bodyId, actor: { kind: 'COACH', id: world.userCoachId } })
+    if (result.world !== world) set({ world: result.world })
+    return result
+  },
   releasePlayer: (teamId, playerId) => set({ world: releasePlayer(requireWorld(get().world), teamId, playerId) }),
+  decideContractReview: (teamId, contractId, intent) => {
+    const result = recordContractReviewDecision(requireWorld(get().world), { teamId, contractId, intent })
+    if (result.ok) set({ world: result.world })
+  },
+  openContractRetention: (teamId, contractId, actionId) => {
+    const result = openUserContractRetention(requireWorld(get().world), { teamId, contractId, actionId })
+    if (result.world !== get().world) set({ world: result.world })
+  },
+  submitContractRetentionOffer: (teamId, negotiationId, expectedRound, actionId, terms) => {
+    const result = submitUserContractRetentionOffer(requireWorld(get().world), { teamId, negotiationId, expectedRound, actionId, terms })
+    if (result.world !== get().world) set({ world: result.world })
+  },
+  acceptContractRetentionCounter: (teamId, negotiationId, expectedRound, actionId) => {
+    const result = respondUserToContractRetentionCounter(requireWorld(get().world), { teamId, negotiationId, expectedRound, actionId, action: 'ACCEPT_COUNTER' })
+    if (result.world !== get().world) set({ world: result.world })
+  },
+  withdrawContractRetention: (teamId, negotiationId, actionId) => {
+    const result = withdrawUserContractRetention(requireWorld(get().world), { teamId, negotiationId, actionId })
+    if (result.world !== get().world) set({ world: result.world })
+  },
+  requestRetentionSigning: (teamId, negotiationId, proposerBodyId) => {
+    const world = requireWorld(get().world)
+    const result = ensureRetentionPlayerContractSigningDecision(world, {
+      teamId,
+      retentionNegotiationId: negotiationId,
+      initiator: { kind: 'COACH', id: world.userCoachId },
+      ...(proposerBodyId === undefined ? {} : { proposerBodyId }),
+    })
+    if (result.world !== world) set({ world: result.world })
+  },
   startStaffCandidacy: (teamId, roleId, staffId) => {
     const opening = createStaffJobOpeningForTeam(requireWorld(get().world), { teamId, roleId })
     const candidacy = identifyStaffCandidate(opening.world, { openingId: opening.opening.id, staffId })
@@ -262,7 +356,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
   saveDesignerPlaybook: (playbook) => set({ world: saveDesignerPlaybook(requireWorld(get().world), playbook) }),
   deleteDesignerPlaybook: (playbookId) => set({ world: deleteDesignerPlaybook(requireWorld(get().world), playbookId) }),
   selectDraftProspect: (draftId, playerId) => set({ world: selectDraftProspect(requireWorld(get().world), draftId, playerId) }),
-  executeTrade: (proposal) => set({ world: executeTrade(requireWorld(get().world), proposal).world }),
   addRecruitingTarget: (cycleId, recruitId, priority) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined && world.recruitingCyclesById[cycleId] !== undefined) set({ world: addRecruitingBoardEntry(world, { programTeamId: team.id, recruitId, priority }) }) },
   removeRecruitingTarget: (recruitId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: removeRecruitingBoardEntry(world, team.id, recruitId) }) },
   performRecruitingAction: (cycleId, recruitId, kind) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = performRecruitingAction(world, cycleId, recruitId, team.id, kind); if (result.ok) { set({ world: result.value }); return null } return result.reason },
@@ -278,8 +371,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return outcome
   },
   getActiveMatchSession: () => liveController,
-  replaceWorld: (world) => { liveController = null; set({ world }) },
-  resetGame: () => { liveController = null; set({ world: null }) },
+  replaceWorld: (world) => { liveController = null; set({ world, lastDayAdvanceResult: null }) },
+  resetGame: () => { liveController = null; set({ world: null, lastDayAdvanceResult: null }) },
 }))
 
 function requireWorld(world: GameWorld | null): GameWorld {

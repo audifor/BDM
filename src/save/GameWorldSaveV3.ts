@@ -15,6 +15,8 @@ import { createGovernanceUniverseProfile, type GovernanceUniverseProfile } from 
 import { createCollectiveInstitutionAffiliation, createCollectiveInstitutionalLiaison, createCollectiveInstitutionalStatusEvent, createCollectiveParticipantAffiliation, createSupportComplianceCase, createSupportComplianceCaseEvent, createSupportComplianceFinding, createSupportConflictDisclosure, createSupportConsequence, createSupportRemediation, createSupportContribution, createSupporterExpectation, createSupporterExpectationEvent, createSupporterPressureEvent, createSupporterReaction, createSupporterRelationship, createSupportFundingPledge, createSupportFundingPledgeEvent, COLLECTIVE_AFFILIATION_KINDS, COLLECTIVE_INSTITUTIONAL_STATUSES, COLLECTIVE_LIAISON_KINDS, COLLECTIVE_PARTICIPANT_KINDS, DONOR_PATTERNS, INSTITUTIONAL_SUPPORT_SCOPES, SUPPORT_COMPLIANCE_CASE_EVENT_KINDS, SUPPORT_COMPLIANCE_FINDING_KINDS, SUPPORT_COMPLIANCE_SEVERITIES, SUPPORT_CONSEQUENCE_KINDS, SUPPORT_DISCLOSURE_STATUSES, SUPPORT_REMEDIATION_KINDS, SUPPORTER_EXPECTATION_CATEGORIES, SUPPORTER_EXPECTATION_EVENT_KINDS, SUPPORTER_EXPECTATION_INTENSITIES, SUPPORTER_PRESSURE_EVENT_KINDS, SUPPORTER_PRESSURE_VISIBILITIES, SUPPORTER_REACTION_KINDS, SUPPORTER_RELATIONSHIP_KINDS, SUPPORT_CONTRIBUTION_MEDIA, SUPPORT_FUNDING_PLEDGE_EVENT_KINDS, SUPPORT_FUNDING_PLEDGE_SCHEDULES, SUPPORT_FUNDING_RESTRICTIONS, SUPPORT_FUNDING_SCOPES, type CollectiveInstitutionAffiliation, type CollectiveInstitutionalLiaison, type CollectiveInstitutionalStatusEvent, type CollectiveParticipantAffiliation, type SupportComplianceCase, type SupportComplianceCaseEvent, type SupportComplianceFinding, type SupportConflictDisclosure, type SupportConsequence, type SupportRemediation, type SupportContribution, type SupporterExpectation, type SupporterExpectationEvent, type SupporterPressureEvent, type SupporterReaction, type SupportFundingPledge, type SupportFundingPledgeEvent, type SupporterRelationship } from '@/domain/supporters'
 import { deserializeGameWorldV2, migrateGameWorldSaveV1ToV2, serializeGameWorldV2, assertExactKeys, type GameWorldSaveV2, type SaveGameEnvelopeV2 } from './GameWorldSaveV2'
 import type { SaveGameEnvelopeV1 } from './GameWorldSaveV1'
+import type { ContractNegotiation } from '@/domain/market'
+import { createTradeNegotiation, type TradeNegotiation } from '@/domain/trade'
 
 /**
  * Wave 4A save layer (Issue #19 §10). V1/V2 remain legacy-readable and unweakened. Runtime
@@ -51,7 +53,7 @@ export function migrateGameWorldSaveV2ToV3(value: SaveGameEnvelopeV2): SaveGameE
 }
 
 export function serializeGameWorldV3(world: GameWorld, savedAt: string): SaveGameEnvelopeV3 {
-  const compatibilityPayload = serializeGameWorldV2(world, savedAt)
+  const compatibilityPayload = serializeGameWorldV2(world, savedAt, { v3SigningCompatibility: true, v3TradeCompatibility: true })
   return { schemaVersion: 3, savedAt: compatibilityPayload.savedAt, payload: v3Payload(compatibilityPayload.payload, world) }
 }
 
@@ -63,12 +65,18 @@ export function deserializeGameWorldV3(value: unknown): GameWorld {
   const payload = record(envelope.payload, 'Save V3 payload')
   const teamFinances = array(payload.teamFinances, 'Save V3 teamFinances').map(parseTeamFinancesV3)
   const runtime = parseStaffCareerRuntimeV3(payload.staffCareerRuntime)
+  const signedNegotiations = parseSignedNegotiationsV3(payload)
+  const signedDecisionIds = new Set(signedNegotiations.map((item) => item.signedGovernanceDecisionId).filter((id): id is string => id !== undefined))
+  const deferredSigningExecutions = runtime.governanceDecisionEvents.filter((event) => event.kind === 'EXECUTED' && signedDecisionIds.has(event.decisionId))
   const trainingStaffAssignments = parseScheduledTrainingStaffAssignments(payload.scheduledTrainingSessions)
   // V2/V1 are legacy layers and do not own Staff Career. A current V3 session may carry concrete
   // execution-staff IDs, but validating those IDs requires V3 employment to exist. Strip only that
   // new field while constructing the compatibility world, restore V3 Staff Career, then restore the
   // assignments through updateGameWorld so the full canonical validator runs with employment live.
-  const compatibilityPayload = stripScheduledTrainingStaffAssignments(payload)
+  const trades = stripExecutedTradeNegotiationsForCompatibility(stripSignedNegotiationsForCompatibility(payload))
+  const tradeDecisionIds = new Set(trades.executed.flatMap((negotiation) => Object.values(negotiation.governanceDecisionIdsByTeamId ?? {})))
+  const deferredTradeExecutions = runtime.governanceDecisionEvents.filter((event) => event.kind === 'EXECUTED' && tradeDecisionIds.has(event.decisionId))
+  const compatibilityPayload = stripScheduledTrainingStaffAssignments(trades.payload)
   const world = deserializeGameWorldV2({ ...envelope, schemaVersion: 2, payload: compatibilityPayload })
   const withStaffCareer = updateGameWorld(world, {
     teamFinances,
@@ -97,7 +105,7 @@ export function deserializeGameWorldV3(value: unknown): GameWorld {
     governanceJobSecurityTransitions: runtime.governanceJobSecurityTransitions,
     governanceDecisionParticipationGrants: runtime.governanceDecisionParticipationGrants,
     governanceDecisions: runtime.governanceDecisions,
-    governanceDecisionEvents: runtime.governanceDecisionEvents,
+    governanceDecisionEvents: runtime.governanceDecisionEvents.filter((event) => !deferredSigningExecutions.some((deferred) => deferred.id === event.id) && !deferredTradeExecutions.some((deferred) => deferred.id === event.id)),
     governanceMeetings: runtime.governanceMeetings, governanceMeetingParticipants: runtime.governanceMeetingParticipants, governanceMeetingAgendaItems: runtime.governanceMeetingAgendaItems, governanceMeetingEvents: runtime.governanceMeetingEvents, governanceRequests: runtime.governanceRequests, governanceRequestEvents: runtime.governanceRequestEvents, governanceCommitments: runtime.governanceCommitments, governanceCommitmentEvents: runtime.governanceCommitmentEvents,
     supporterRelationships: runtime.supporterRelationships, collectiveInstitutionAffiliations: runtime.collectiveInstitutionAffiliations, collectiveParticipantAffiliations: runtime.collectiveParticipantAffiliations,
     collectiveInstitutionalStatusEvents: runtime.collectiveInstitutionalStatusEvents, collectiveInstitutionalLiaisons: runtime.collectiveInstitutionalLiaisons,
@@ -105,7 +113,12 @@ export function deserializeGameWorldV3(value: unknown): GameWorld {
     supportFundingPledges: runtime.supportFundingPledges, supportFundingPledgeEvents: runtime.supportFundingPledgeEvents, supportContributions: runtime.supportContributions,
     supportComplianceCases: runtime.supportComplianceCases, supportComplianceCaseEvents: runtime.supportComplianceCaseEvents, supportComplianceFindings: runtime.supportComplianceFindings, supportConflictDisclosures: runtime.supportConflictDisclosures, supportConsequences: runtime.supportConsequences, supportRemediations: runtime.supportRemediations,
   })
-  return restoreScheduledTrainingStaffAssignments(withStaffCareer, trainingStaffAssignments)
+  const withTrainingStaff = restoreScheduledTrainingStaffAssignments(withStaffCareer, trainingStaffAssignments)
+  return signedNegotiations.length === 0 && trades.executed.length === 0 ? withTrainingStaff : updateGameWorld(withTrainingStaff, {
+    negotiations: [...Object.values(withTrainingStaff.negotiationsById).filter((item) => !signedNegotiations.some((signed) => signed.id === item.id)), ...signedNegotiations],
+    tradeNegotiations: [...Object.values(withTrainingStaff.tradeNegotiationsById).filter((item) => !trades.executed.some((executed) => executed.id === item.id)), ...trades.executed],
+    governanceDecisionEvents: [...Object.values(withTrainingStaff.governanceDecisionEventsById), ...deferredSigningExecutions, ...deferredTradeExecutions],
+  })
 }
 
 function v3Payload(payload: GameWorldSaveV2, world: GameWorld): GameWorldSaveV3 {
@@ -490,6 +503,45 @@ function stripScheduledTrainingStaffAssignments(payload: Record<string, unknown>
     return session
   })
   return { ...payload, scheduledTrainingSessions }
+}
+
+function parseSignedNegotiationsV3(payload: Record<string, unknown>): readonly ContractNegotiation[] {
+  if (payload.marketRuntime === undefined) return []
+  const marketRuntime = record(payload.marketRuntime, 'Save V3 market runtime')
+  if (marketRuntime.negotiations === undefined) return []
+  return array(marketRuntime.negotiations, 'Save V3 negotiations').flatMap((value) => {
+    const negotiation = record(value, 'Save V3 negotiation')
+    return negotiation.status === 'SIGNED' ? [negotiation as unknown as ContractNegotiation] : []
+  })
+}
+
+/** V2 constructs the compatibility world before V3 restores Governance, so defer SIGNED validation. */
+function stripSignedNegotiationsForCompatibility(payload: Record<string, unknown>): Record<string, unknown> {
+  if (payload.marketRuntime === undefined) return payload
+  const marketRuntime = { ...record(payload.marketRuntime, 'Save V3 market runtime') }
+  if (marketRuntime.negotiations === undefined) return payload
+  marketRuntime.negotiations = array(marketRuntime.negotiations, 'Save V3 negotiations').map((value) => {
+    const negotiation = { ...record(value, 'Save V3 negotiation') }
+    if (negotiation.status !== 'SIGNED') return negotiation
+    delete negotiation.signedOn
+    delete negotiation.signedContractId
+    delete negotiation.signedTransactionId
+    delete negotiation.signedGovernanceDecisionId
+    delete negotiation.signedBy
+    return { ...negotiation, status: 'ACCEPTED' }
+  })
+  return { ...payload, marketRuntime }
+}
+
+/** V2 has no Governance runtime, so defer completed trade validation until V3 restores it. */
+function stripExecutedTradeNegotiationsForCompatibility(payload: Record<string, unknown>): { readonly payload: Record<string, unknown>; readonly executed: readonly TradeNegotiation[] } {
+  if (payload.marketRuntime === undefined) return { payload, executed: [] }
+  const marketRuntime = { ...record(payload.marketRuntime, 'Save V3 market runtime') }
+  if (marketRuntime.tradeNegotiations === undefined) return { payload, executed: [] }
+  const negotiations = array(marketRuntime.tradeNegotiations, 'Save V3 trade negotiations').map((value) => createTradeNegotiation(record(value, 'Save V3 trade negotiation') as unknown as TradeNegotiation))
+  const executed = negotiations.filter((negotiation) => negotiation.status === 'EXECUTED')
+  marketRuntime.tradeNegotiations = negotiations.filter((negotiation) => negotiation.status !== 'EXECUTED')
+  return { payload: { ...payload, marketRuntime }, executed }
 }
 
 function restoreScheduledTrainingStaffAssignments(world: GameWorld, assignments: Readonly<Record<string, readonly StaffPersonId[]>>): GameWorld {

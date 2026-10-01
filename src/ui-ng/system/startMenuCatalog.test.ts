@@ -28,7 +28,7 @@ describe('startMenuCatalog', () => {
   })
 
   it('exposes college and club apps in the searchable catalog', () => {
-    expect(allStartMenuApps()).toEqual(expect.arrayContaining(['schedule', 'club', 'recruiting', 'nil', 'boosters']))
+    expect(allStartMenuApps()).toEqual(expect.arrayContaining(['schedule', 'club', 'contracts', 'recruiting', 'nil', 'boosters']))
     expect(filterStartMenuApps('rec', NCAA)).toEqual(['recruiting'])
     expect(filterStartMenuApps('sta', FIBA)).toEqual(['staff'])
   })

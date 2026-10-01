@@ -9,9 +9,16 @@ import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { applyMatchResult, createMatchPlayerProfile, simulateMatch, type MatchLineups } from '@/engine/match'
 import { SeededRandomSource } from '@/engine/random'
 import { generateWorld } from '@/engine/world'
+import { createNewGame } from '@/app/game'
+import { releasePlayer } from '@/app/market'
+import { addDays } from '@/domain/date'
+import { initializeMarketAgents, openNegotiation } from '@/engine/market'
+import { createNegotiationContact } from '@/domain/market'
+import { updateGameWorld } from '@/domain/world'
 
 import {
   advanceDay,
+  advanceDayWithTrace,
   getGamesToday,
   getNextUserGame,
   getScheduledGamesToday,
@@ -36,6 +43,59 @@ describe('CalendarEngine', () => {
     expect(Object.keys(nextWorld.games)).toHaveLength(Object.keys(world.games).length)
     expect(nextWorld.staffPeopleById).toEqual(world.staffPeopleById)
     expect(nextWorld.teamStaffAssignmentsById).toEqual(world.teamStaffAssignmentsById)
+  })
+
+  it('returns a deterministic ordered phase trace and keeps unsupported systems explicit', () => {
+    const { world } = createScheduledGameWorld()
+    const first = advanceDayWithTrace(world)
+    const second = advanceDayWithTrace(world)
+
+    expect(first.status).toBe('COMPLETED')
+    expect(first.phases.map(({ phaseId, order, ran, worldChanged }) => ({ phaseId, order, ran, worldChanged })))
+      .toEqual(second.phases.map(({ phaseId, order, ran, worldChanged }) => ({ phaseId, order, ran, worldChanged })))
+    expect(first.phases.map((phase) => phase.order)).toEqual(first.phases.map((_, index) => index + 1))
+    expect(first.phases.find((phase) => phase.phaseId === 'CLUB_FINANCE_V2')).toMatchObject({ ran: false, diagnostics: [{ code: 'PHASE_SKIPPED' }] })
+    expect(first.phases.find((phase) => phase.phaseId === 'GOVERNANCE')).toMatchObject({ ran: false, diagnostics: [{ code: 'PHASE_SKIPPED' }] })
+    expect(first.phases.at(-1)?.phaseId).toBe('EVENT_COLLECTION')
+  })
+
+  it('processes a due formal offer after date advance, contract reconciliation, and contact responses', () => {
+    const initial = createNewGame()
+    const team = Object.values(initial.teams).find((item) => item.coachId === initial.userCoachId)!
+    const source = Object.values(initial.teams).find((item) => item.id !== team.id && item.rosterPlayerIds.length > 0)!
+    const playerId = source.rosterPlayerIds[0]!
+    const realityWorld = initializeMarketAgents(releasePlayer(initial, source.id, playerId))
+    const reality = { ...realityWorld.marketRealityByPlayerId[playerId]!, expectedSalary: 650_000 }
+    const world = updateGameWorld(realityWorld, { marketReality: [...Object.values(realityWorld.marketRealityByPlayerId).filter((item) => item.playerId !== playerId), reality] })
+    const contact = createNegotiationContact({
+      organizationId: team.organizationId, teamId: team.id, playerId, startedOn: world.currentDate,
+      actionKey: 'calendar-offer-response', sourcePlanId: 'plan-calendar', sourceProposalId: 'proposal-calendar',
+      responsibleActor: { kind: 'USER' },
+    })
+    const contacted = updateGameWorld(world, { negotiations: [{ ...contact, contactResponse: { outcome: 'OPEN_TO_TALKS', respondedOn: world.currentDate, marketSignalId: 'signal:calendar-contact' } }] })
+    const opened = openNegotiation(contacted, {
+      organizationId: team.organizationId, teamId: team.id, playerId, salary: 650_000, years: 2,
+      actionKey: contact.actionKey!, sourcePlanId: contact.sourcePlanId!, sourceProposalId: contact.sourceProposalId!, offerResponsibleActor: { kind: 'USER' },
+    })
+
+    const next = advanceDayWithTrace(opened)
+    const phaseIds = next.phases.map((phase) => phase.phaseId)
+    expect(phaseIds.indexOf('DATE_ADVANCE')).toBeLessThan(phaseIds.indexOf('MARKET_FORMAL_OFFER_RESPONSES'))
+    expect(phaseIds.indexOf('EXPIRED_CONTRACT_RECONCILIATION')).toBeLessThan(phaseIds.indexOf('MARKET_FORMAL_OFFER_RESPONSES'))
+    expect(phaseIds.indexOf('MARKET_CONTACT_RESPONSES')).toBeLessThan(phaseIds.indexOf('MARKET_FORMAL_OFFER_RESPONSES'))
+    expect(next.world.negotiationsById[contact.id]).toMatchObject({ status: 'ACCEPTED', offerSubmittedOn: opened.currentDate, playerResponse: { outcome: 'ACCEPTED', respondedOn: addDays(opened.currentDate, 1) } })
+  })
+
+  it('preserves the pre-BS1 fatigue, contract reconciliation, then scheduled training order', () => {
+    const { world } = createScheduledGameWorld()
+    const result = advanceDayWithTrace(world)
+    const order = result.phases.map((phase) => phase.phaseId)
+    const fatigueIndex = order.indexOf('CAREER_FATIGUE_RECOVERY')
+    const trainingIndex = order.indexOf('TRAINING')
+
+    expect(order.slice(fatigueIndex, trainingIndex + 1)).toEqual([
+      'CAREER_FATIGUE_RECOVERY', 'EXPIRED_CONTRACT_RECONCILIATION', 'RETENTION_NEGOTIATION_INVALIDATION', 'AI_RETENTION_NEGOTIATIONS', 'MARKET_CONTACT_RESPONSES', 'MARKET_FORMAL_OFFER_RESPONSES', 'TRAINING',
+    ])
   })
 
   it.each([

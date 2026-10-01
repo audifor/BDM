@@ -3,6 +3,7 @@ import { createPlayerContract, getPlayerContractStatus } from '@/domain/contract
 import type { EcosystemTransition, EcosystemTransitionType } from '@/domain/career'
 import { contractIdFromString, type EcosystemId, type PlayerId, type TeamId } from '@/domain/ids'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { clearPlayerFromLineup } from '@/domain/tactics'
 import { makeDraftSelection } from '@/engine/draft'
 
 export interface ProfessionalTransitionInput { readonly id: string; readonly playerId: PlayerId; readonly toTeamId: TeamId; readonly annualSalary: number; readonly contractYears: number }
@@ -27,10 +28,11 @@ export function movePlayerAcrossEcosystems(world: GameWorld, input: { readonly i
   try {
     const source = findRosterTeam(world, input.playerId), target = world.teams[input.toTeamId]
     if (source === undefined) return { ok: false, reason: 'PLAYER_NOT_ROSTERED' }
+    if (Object.values(world.contractsById).some((contract) => contract.playerId === input.playerId && getPlayerContractStatus(contract, world.currentDate) === 'active')) return { ok: false, reason: 'ACTIVE_CONTRACT_REQUIRES_CANONICAL_TRANSITION' }
     if (target === undefined || target.rosterPlayerIds.includes(input.playerId)) return { ok: false, reason: 'INVALID_DESTINATION' }
     const route = routeForTeams(world, source.id, target.id)
     if (route.fromEcosystemId === route.toEcosystemId) return { ok: false, reason: 'INVALID_ECOSYSTEM_ROUTE' }
-    const moved = updateGameWorld(world, { teams: Object.values(world.teams).map((team) => team.id === source.id ? { ...team, rosterPlayerIds: team.rosterPlayerIds.filter((id) => id !== input.playerId) } : team.id === target.id ? { ...team, rosterPlayerIds: [...team.rosterPlayerIds, input.playerId] } : team) })
+    const moved = updateGameWorld(world, { teams: Object.values(world.teams).map((team) => team.id === source.id ? { ...team, rosterPlayerIds: team.rosterPlayerIds.filter((id) => id !== input.playerId) } : team.id === target.id ? { ...team, rosterPlayerIds: [...team.rosterPlayerIds, input.playerId] } : team), lineupsByTeamId: lineupsAfterMove(world, input.playerId) })
     return { ok: true, value: recordTransition(moved, input.id, input.playerId, { ...route, sourceTeamId: source.id }, input.transitionType, target.id, input.sourceSystem) }
   } catch { return { ok: false, reason: 'INVALID_ECOSYSTEM_ROUTE' } }
 }
@@ -39,15 +41,18 @@ function transitionProfessionalPlayer(world: GameWorld, input: ProfessionalTrans
   if (world.ecosystemTransitionsById[input.id] !== undefined) return world
   if (!Number.isInteger(input.annualSalary) || input.annualSalary < 1 || !Number.isInteger(input.contractYears) || input.contractYears < 1) throw new Error('Professional transition terms are invalid')
   const route = requireRoute(world, input.playerId, input.toTeamId, originKind, destinationKind)
+  const activeContracts = Object.values(world.contractsById).filter((contract) => contract.playerId === input.playerId && getPlayerContractStatus(contract, world.currentDate) === 'active')
+  if (originKind === 'ncaaLike' && activeContracts.length > 0 || originKind !== 'ncaaLike' && (activeContracts.length !== 1 || activeContracts[0]!.teamId !== route.sourceTeamId)) throw new Error('Player roster and active Contract state is not uniquely consistent for this transition')
   const sourceContract = Object.values(world.contractsById).find((contract) => contract.playerId === input.playerId && contract.teamId === route.sourceTeamId && getPlayerContractStatus(contract, world.currentDate) === 'active')
   if (originKind !== 'ncaaLike' && sourceContract === undefined) throw new Error('Professional player cannot leave without an active contract')
   const destinationContract = createPlayerContract({ id: contractIdFromString(`contract:ecosystem-transition:${input.id}`), playerId: input.playerId, teamId: input.toTeamId, kind: 'standard', term: { startsOn: world.currentDate, expiresOn: addYears(world.currentDate, input.contractYears) }, compensation: { annualSalary: input.annualSalary } })
   const contracts = [...Object.values(world.contractsById).map((contract) => contract.id === sourceContract?.id ? { ...contract, termination: { terminatedOn: world.currentDate, reason: 'released' as const } } : contract), destinationContract]
-  const moved = updateGameWorld(world, { teams: Object.values(world.teams).map((team) => team.id === route.sourceTeamId ? { ...team, rosterPlayerIds: team.rosterPlayerIds.filter((id) => id !== input.playerId) } : team.id === input.toTeamId ? { ...team, rosterPlayerIds: [...team.rosterPlayerIds, input.playerId] } : team), contracts })
+  const moved = updateGameWorld(world, { teams: Object.values(world.teams).map((team) => team.id === route.sourceTeamId ? { ...team, rosterPlayerIds: team.rosterPlayerIds.filter((id) => id !== input.playerId) } : team.id === input.toTeamId ? { ...team, rosterPlayerIds: [...team.rosterPlayerIds, input.playerId] } : team), contracts, lineupsByTeamId: lineupsAfterMove(world, input.playerId) })
   return recordTransition(moved, input.id, input.playerId, route, transitionType, input.toTeamId, 'professionalSigning')
 }
 
-function detachSource(world: GameWorld, sourceTeamId: TeamId, playerId: PlayerId): GameWorld { return updateGameWorld(world, { teams: Object.values(world.teams).map((team) => team.id === sourceTeamId ? { ...team, rosterPlayerIds: team.rosterPlayerIds.filter((id) => id !== playerId) } : team) }) }
+function detachSource(world: GameWorld, sourceTeamId: TeamId, playerId: PlayerId): GameWorld { return updateGameWorld(world, { teams: Object.values(world.teams).map((team) => team.id === sourceTeamId ? { ...team, rosterPlayerIds: team.rosterPlayerIds.filter((id) => id !== playerId) } : team), lineupsByTeamId: lineupsAfterMove(world, playerId) }) }
+function lineupsAfterMove(world: GameWorld, playerId: PlayerId): GameWorld['lineupsByTeamId'] { return Object.fromEntries(Object.entries(world.lineupsByTeamId).map(([teamId, lineup]) => [teamId, clearPlayerFromLineup(lineup, playerId)])) }
 function requireRoute(world: GameWorld, playerId: PlayerId, destinationTeamId: TeamId, originKind: 'ncaaLike' | 'fibaLike' | 'nbaLike', destinationKind: 'fibaLike' | 'nbaLike') { const source = findRosterTeam(world, playerId); if (source === undefined) throw new Error('Player is not on an active roster'); const route = routeForTeams(world, source.id, destinationTeamId); const origin = world.ecosystems[route.fromEcosystemId], destination = world.ecosystems[route.toEcosystemId]; if (origin?.kind !== originKind || destination?.kind !== destinationKind || origin.category !== destination.category) throw new Error('Invalid ecosystem transition route'); return { ...route, sourceTeamId: source.id } }
 function findRosterTeam(world: GameWorld, playerId: PlayerId) { return Object.values(world.teams).find((team) => team.rosterPlayerIds.includes(playerId)) }
 function routeForTeams(world: GameWorld, fromTeamId: TeamId, toTeamId: TeamId) { const fromEcosystemId = Object.values(world.competitions).find((competition) => competition.participantTeamIds.includes(fromTeamId))?.ecosystemId, toEcosystemId = Object.values(world.competitions).find((competition) => competition.participantTeamIds.includes(toTeamId))?.ecosystemId; if (fromEcosystemId === undefined || toEcosystemId === undefined) throw new Error('Teams must belong to ecosystems'); return { fromEcosystemId, toEcosystemId } }

@@ -9,7 +9,7 @@ import { calculateStandings } from './standings'
 import { deriveCompetitionSeasonWindows, requireCompetitionFormatVariant } from './WorldCompetitionCalendar'
 import { instantiateWorldCompetitionFixedBracketV1, type WorldCompetitionFixedBracketPlanV1, type WorldCompetitionSeededEntryV1 } from './WorldCompetitionFixedBracket'
 import { resolveWorldCompetitionVirtualFixturesV1, type WorldCompetitionVirtualFixtureOutcomeV1 } from './WorldCompetitionVirtualFixtureResolver'
-import type { CompetitionPostseasonStateV1 } from './WorldCompetitionPostseason'
+import type { CompetitionLifecycleDiagnosticV1, CompetitionPostseasonStateV1 } from './WorldCompetitionPostseason'
 
 /** Builds progression for a single-elimination edition qualified from another competition season. */
 export function getWorldCompetitionSingleEliminationState(world: GameWorld, seasonId: keyof GameWorld['seasons']): CompetitionPostseasonStateV1 | null {
@@ -18,9 +18,10 @@ export function getWorldCompetitionSingleEliminationState(world: GameWorld, seas
   if (season === undefined || format === undefined) return null
   const variant = requireCompetitionFormatVariant(format)
   const selection = variant.entrySelection
-  if (selection === undefined || selection.method !== 'RANK_BASED') return null
-  const qualifiers = qualifiedEntries(world, selection.payload)
-  if (qualifiers === null) return emptyState()
+  if (selection === undefined || selection.method !== 'RANK_BASED') return emptyState({ code: 'INVALID_QUALIFICATION', message: `Single-elimination qualification method is unsupported: ${selection?.method ?? 'missing'}` })
+  const qualification = qualifiedEntries(world, selection.payload)
+  if (qualification.entries === null) return emptyState(qualification.diagnostic)
+  const qualifiers = qualification.entries
   const effectiveFormat = withDeterministicSeededDraw(format, variant, qualifiers)
   const bracketPlan = instantiateWorldCompetitionFixedBracketV1(effectiveFormat, variant.key, qualifiers)
   const outcomes = readOutcomes(world, season.id, bracketPlan)
@@ -35,6 +36,7 @@ export function getWorldCompetitionSingleEliminationState(world: GameWorld, seas
     outcomes: Object.freeze(outcomes),
     seriesByFixtureId: Object.freeze({}),
     championTeamId,
+    lifecycleDiagnostic: null,
   })
 }
 
@@ -89,31 +91,38 @@ function materializeAnySingleElimination(world: GameWorld, seasonId: keyof GameW
     : materializeWorldCompetitionSingleElimination(world, seasonId, state)
 }
 
-function qualifiedEntries(world: GameWorld, payload: Readonly<Record<string, unknown>>): WorldCompetitionSeededEntryV1[] | null {
+function qualifiedEntries(world: GameWorld, payload: Readonly<Record<string, unknown>>): { entries: WorldCompetitionSeededEntryV1[] | null; diagnostic: CompetitionLifecycleDiagnosticV1 | null } {
   const sourceCompetitionSeasonId = text(payload.source_competition_season_id)
   const reference = text(payload.reference_point)
   const matchday = reference === undefined ? undefined : Number(/^AFTER_MATCHDAY_(\d+)$/i.exec(reference)?.[1])
   const rankFrom = integer(payload.rank_from)
   const rankTo = integer(payload.rank_to)
-  if (sourceCompetitionSeasonId === undefined || matchday === undefined || !Number.isInteger(matchday) || rankFrom === undefined || rankTo === undefined || rankFrom < 1 || rankTo < rankFrom) return null
+  if (sourceCompetitionSeasonId === undefined || matchday === undefined || !Number.isInteger(matchday) || matchday < 1 || rankFrom === undefined || rankTo === undefined || rankFrom < 1 || rankTo < rankFrom) {
+    return { entries: null, diagnostic: { code: 'INVALID_QUALIFICATION', message: 'Rank-based cup qualification requires a source season, a positive matchday reference, and valid rank bounds.', ...(sourceCompetitionSeasonId === undefined ? {} : { sourceCompetitionSeasonId }) } }
+  }
   const sourceSeason = Object.values(world.seasons).find((candidate) => candidate.worldCompetitionFormat?.competitionSeasonId === sourceCompetitionSeasonId)
-  if (sourceSeason === undefined) return null
+  if (sourceSeason === undefined) return { entries: null, diagnostic: { code: 'INVALID_QUALIFICATION', message: `Configured qualification source season is missing: ${sourceCompetitionSeasonId}`, sourceCompetitionSeasonId } }
   const sourceVariant = requireCompetitionFormatVariant(sourceSeason.worldCompetitionFormat!)
   const regularNode = sourceVariant.nodes.find((node) => node.role === 'REGULAR_SEASON')
-  if (regularNode === undefined) return null
+  if (regularNode === undefined) return { entries: null, diagnostic: { code: 'INVALID_QUALIFICATION', message: `Qualification source has no regular-season stage: ${sourceCompetitionSeasonId}`, sourceCompetitionSeasonId } }
   const expectedTeamCount = regularNode.teamCount ?? (sourceSeason.participantTeamIds ?? world.competitions[sourceSeason.competitionId]!.participantTeamIds).length
+  if (!Number.isInteger(expectedTeamCount) || expectedTeamCount < 2 || expectedTeamCount % 2 !== 0 || rankTo > expectedTeamCount) {
+    return { entries: null, diagnostic: { code: 'INVALID_QUALIFICATION', message: `Qualification ranks or source team count are invalid for ${sourceCompetitionSeasonId}`, sourceCompetitionSeasonId } }
+  }
   const gamesPerRound = expectedTeamCount / 2
   const regularGames = Object.values(world.games).filter((game) => game.seasonId === sourceSeason.id && (game.competitionStageKey === undefined || game.competitionStageKey === regularNode.key))
   const dates = [...new Set(regularGames.map((game) => game.date))].sort()
-  if (dates.length < matchday) return null
+  if (dates.length < matchday) return { entries: null, diagnostic: { code: 'QUALIFICATION_PENDING', message: `Waiting for matchday ${matchday} in qualification source ${sourceCompetitionSeasonId}.`, sourceCompetitionSeasonId } }
   const firstLeg = dates.slice(0, matchday)
   const completedGames = firstLeg.flatMap((date) => regularGames.filter((game) => game.date === date))
-  if (completedGames.length !== gamesPerRound * matchday || completedGames.some((game) => game.status !== 'completed')) return null
-  if (firstLeg.some((date) => regularGames.filter((game) => game.date === date).length !== gamesPerRound)) return null
+  if (completedGames.length !== gamesPerRound * matchday || completedGames.some((game) => game.status !== 'completed')) return { entries: null, diagnostic: { code: 'QUALIFICATION_PENDING', message: `Qualification source ${sourceCompetitionSeasonId} has not completed matchday ${matchday}.`, sourceCompetitionSeasonId } }
+  if (firstLeg.some((date) => regularGames.filter((game) => game.date === date).length !== gamesPerRound)) {
+    return { entries: null, diagnostic: { code: 'INVALID_QUALIFICATION', message: `Qualification source ${sourceCompetitionSeasonId} has an incomplete scheduled matchday.`, sourceCompetitionSeasonId } }
+  }
   const standings = calculateStandings(world, sourceSeason.id, firstLeg.at(-1))
   const qualified = standings.filter((entry) => entry.position >= rankFrom && entry.position <= rankTo)
-  if (qualified.length !== rankTo - rankFrom + 1) return null
-  return qualified.map((entry) => Object.freeze({ competitionSeasonEntryId: entry.teamId, seed: entry.position }))
+  if (qualified.length !== rankTo - rankFrom + 1) return { entries: null, diagnostic: { code: 'INVALID_QUALIFICATION', message: `Qualification source ${sourceCompetitionSeasonId} cannot satisfy configured ranks ${rankFrom}-${rankTo}.`, sourceCompetitionSeasonId } }
+  return { entries: qualified.map((entry) => Object.freeze({ competitionSeasonEntryId: entry.teamId, seed: entry.position })), diagnostic: null }
 }
 
 function setSeasonParticipants(world: GameWorld, seasonId: keyof GameWorld['seasons'], teamIds: readonly ReturnType<typeof teamIdFromString>[]): GameWorld {
@@ -170,8 +179,8 @@ function requireNode(nodes: readonly WorldCompetitionFormatNode[], key: string):
   return node
 }
 
-function emptyState(): CompetitionPostseasonStateV1 {
-  return Object.freeze({ regularSeasonComplete: false, seeds: Object.freeze([]), bracketPlan: null, resolvedFixtures: Object.freeze([]), readyFixtures: Object.freeze([]), outcomes: Object.freeze([]), seriesByFixtureId: Object.freeze({}), championTeamId: null })
+function emptyState(diagnostic: CompetitionLifecycleDiagnosticV1 | null): CompetitionPostseasonStateV1 {
+  return Object.freeze({ regularSeasonComplete: false, seeds: Object.freeze([]), bracketPlan: null, resolvedFixtures: Object.freeze([]), readyFixtures: Object.freeze([]), outcomes: Object.freeze([]), seriesByFixtureId: Object.freeze({}), championTeamId: null, lifecycleDiagnostic: diagnostic })
 }
 
 function text(value: unknown): string | undefined { return typeof value === 'string' ? value : undefined }

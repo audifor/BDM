@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { advanceDay } from '@/engine/calendar'
 import { parseGameDate } from '@/domain/date'
+import { addDays } from '@/domain/date'
+import { createContractReviewDecision, contractReviewDecisionIdFor, createRetentionNegotiation, retentionNegotiationIdFor } from '@/domain/contract'
+import { createGMPlanState } from '@/domain/gmPlanning'
 import { createGovernanceInstitution } from '@/domain/governance'
 import { createOrganization } from '@/domain/organization'
 import { organizationIdFromString, personIdFromString } from '@/domain/ids'
@@ -21,6 +24,49 @@ import { deserializeGameWorldSaveV4, deserializeGameWorldV4, migrateGameWorldSav
 const savedAt = '2032-10-01T00:00:00.000Z'
 
 describe('GameWorldSaveV4 competition runtime', () => {
+  it('round-trips nonbinding retention incentive proposal terms', () => {
+    const base = createNewGame()
+    const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
+    const contract = Object.values(base.contractsById).find((item) => item.teamId === team.id && team.rosterPlayerIds.includes(item.playerId))!
+    const competition = Object.values(base.competitions).find((item) => item.participantTeamIds.includes(team.id))!
+    const openingActionId = 'save-c4-open'
+    const id = retentionNegotiationIdFor(team.id, contract.playerId, contract.id, openingActionId)
+    const terms = { salary: contract.compensation.annualSalary, years: 1, incentives: [{ type: 'GAMES_PLAYED' as const, competitionId: competition.id, contractYear: 1, minimumGamesPlayed: 50, amount: 75_000 }], clauses: [{ type: 'TRADE_CONSENT_REQUIRED' as const, decisionAuthority: 'PLAYER' as const }] }
+    const negotiation = createRetentionNegotiation({
+      id, openingActionId, teamId: team.id, organizationId: team.organizationId, playerId: contract.playerId, predecessorContractId: contract.id,
+      openedOn: base.currentDate, openedByCoachId: base.userCoachId!, status: 'ACCEPTED', acceptedTerms: terms,
+      rounds: [{ round: 1, actionId: 'save-c4-offer', offer: terms, submittedOn: base.currentDate, playerResponse: { outcome: 'ACCEPTED', respondedOn: base.currentDate, origin: 'PLAYER', reasonCodes: ['SALARY_ACCEPTABLE'] } }],
+    })
+    const world = updateGameWorld(base, { retentionNegotiations: [negotiation] })
+    const saved = serializeGameWorldV4(world, savedAt)
+    const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(saved)))
+    expect(restored.retentionNegotiationsById[id]!.acceptedTerms?.incentives).toEqual(terms.incentives)
+    expect(restored.retentionNegotiationsById[id]!.rounds[0]!.offer.incentives).toEqual(terms.incentives)
+    expect(restored.retentionNegotiationsById[id]!.acceptedTerms?.clauses).toEqual(terms.clauses)
+    expect(restored.retentionNegotiationsById[id]!.rounds[0]!.offer.clauses).toEqual(terms.clauses)
+  })
+
+  it('round-trips explicit contract review intent and defaults old V4 saves to none', () => {
+    const base = createNewGame()
+    const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
+    const playerId = team.rosterPlayerIds[0]!
+    const contract = Object.values(base.contractsById).find((item) => item.teamId === team.id && item.playerId === playerId)!
+    const decision = createContractReviewDecision({
+      id: contractReviewDecisionIdFor(team.id, playerId, contract.id), teamId: team.id, playerId, contractId: contract.id,
+      intent: 'DEFER', decidedOn: base.currentDate, decidedByCoachId: base.userCoachId,
+      reviewAgainOn: addDays(base.currentDate, 30),
+    })
+    const world = updateGameWorld(base, { contractReviewDecisions: [decision] })
+    const saved = serializeGameWorldV4(world, savedAt)
+    expect(saved.payload.contractReviewDecisions).toEqual([decision])
+    const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(saved)))
+    expect(restored.contractReviewDecisionsById).toEqual({ [decision.id]: decision })
+
+    const { contractReviewDecisions: _decisions, ...legacyPayload } = saved.payload
+    const legacy = deserializeGameWorldV4({ ...saved, payload: legacyPayload })
+    expect(legacy.contractReviewDecisionsById).toEqual({})
+  })
+
   it('writes the required empty runtime for a world created before V4 runtime exists', () => {
     const world = createNewGame()
     const v4 = serializeGameWorldV4(world, savedAt)
@@ -233,7 +279,7 @@ describe('GameWorldSaveV4 competition runtime', () => {
   it('migrates canonical V3 by preserving V3 fields and adding empty runtime state', () => {
     const v3 = serializeGameWorldV3(createNewGame(), savedAt)
     const v4 = migrateGameWorldSaveV3ToV4(v3)
-    const { worldDbCompetitionRuntime, worldAnnualDevelopmentCycle, organizations, organizationSections, organizationOwnership, organizationControl, organizationOwnershipTransactions, organizationOwnershipTransactionEvents, organizationInvestorInterests, organizationCapitalRaises, organizationCapitalRaiseEvents, organizationInvestmentProposals, organizationInvestmentProposalEvents, multiClubOwnershipPolicies, organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses, places, facilities, facilityComponents, facilityNameRecords, facilityOwnershipInterests, facilityControlRights, facilityOperatorAssignments, facilityOrganizationRelationships, facilityTeamRelationships, facilityUsageRights, facilityCompetitionApprovals, facilityStatusRecords, facilityComponentConditionRecords, facilityConditionRecords, facilityMaintenanceNeeds, facilityMaintenanceActions, facilityInspections, facilityOperationalIncidents, facilityDevelopmentProjects, facilityDevelopmentProjectPhases, facilityFinancialBindings, ...v4CompatibilityPayload } = v4.payload
+    const { worldDbCompetitionRuntime, worldAnnualDevelopmentCycle, clubStrategicStates, gmPlanStates, organizations, organizationSections, organizationOwnership, organizationControl, organizationOwnershipTransactions, organizationOwnershipTransactionEvents, organizationInvestorInterests, organizationCapitalRaises, organizationCapitalRaiseEvents, organizationInvestmentProposals, organizationInvestmentProposalEvents, multiClubOwnershipPolicies, organizationStructuralChanges, organizationLifecycleStates, organizationSuccessions, regulatoryOrders, regulatoryRemediationPlans, organizationLicenses, places, facilities, facilityComponents, facilityNameRecords, facilityOwnershipInterests, facilityControlRights, facilityOperatorAssignments, facilityOrganizationRelationships, facilityTeamRelationships, facilityUsageRights, facilityCompetitionApprovals, facilityStatusRecords, facilityComponentConditionRecords, facilityConditionRecords, facilityMaintenanceNeeds, facilityMaintenanceActions, facilityInspections, facilityOperationalIncidents, facilityDevelopmentProjects, facilityDevelopmentProjectPhases, facilityFinancialBindings, ...v4CompatibilityPayload } = v4.payload
 
     expect(v4.schemaVersion).toBe(4)
     expect(v4CompatibilityPayload).toEqual(v3.payload)
@@ -243,6 +289,8 @@ describe('GameWorldSaveV4 competition runtime', () => {
       competitionSeasonIds: [],
     })
     expect(worldAnnualDevelopmentCycle).toEqual({ lastAppliedCycleId: null })
+    expect(clubStrategicStates).toEqual([])
+    expect(gmPlanStates).toBeUndefined()
     expect(organizationOwnership).toEqual([])
     expect(organizationControl).toEqual([])
     expect(organizationOwnershipTransactions).toEqual([])
@@ -294,10 +342,7 @@ describe('GameWorldSaveV4 competition runtime', () => {
       competitionSeasonIds: [],
     })
     expect(restored.worldAnnualDevelopmentCycle).toEqual({ lastAppliedCycleId: null })
-    // A fresh V3 load must never carry over another world's annual development cycle: both
-    // transitional V4-owned fields are stripped before comparing against a bare pre-V4 world.
-    const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, ...legacyCompatibleWorld } = restored
-    expect(legacyCompatibleWorld).toEqual(world)
+    expect(restored.gmPlanStatesById).toEqual({})
   })
 
   it('rejects malformed canonical V4 runtime payloads', () => {
@@ -351,5 +396,23 @@ describe('GameWorldSaveV4 competition runtime', () => {
     expect(() => deserializeGameWorldV4({ ...valid, extra: true })).toThrow(/unexpected fields/)
     expect(() => deserializeGameWorldV4({ ...valid, savedAt: 'not-a-date' })).toThrow(/ISO-8601/)
     expect(() => deserializeGameWorldV4({ ...valid, schemaVersion: 5 })).toThrow(/Unsupported save version/)
+  })
+})
+
+describe('GameWorldSaveV4 GM plan memory', () => {
+  it('round-trips minimal per-need GM plan memory', () => {
+    const world = createNewGame()
+    const teamId = Object.values(world.teams).find((team) => team.coachId !== undefined && team.coachId !== world.userCoachId)!.id
+    const state = createGMPlanState({ id: `${teamId}:need:depth`, teamId, needId: 'need:depth', selectedOptionKind: 'EXTERNAL_ACQUISITION', selectedOn: world.currentDate, lastReviewedOn: world.currentDate, selectionReason: 'INITIAL_SELECTION', executionReadinessAtSelection: 'UNKNOWN_AUTHORITY', strategyAtSelection: 'CONTEND', originalOptionPriority: 1 })
+    const savedWorld = updateGameWorld(world, { gmPlanStates: [state] })
+    const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(savedWorld, savedAt))))
+    expect(Object.values(restored.gmPlanStatesById)).toEqual([state])
+  })
+
+  it('defaults a pre-plan V4 save to an empty plan collection', () => {
+    const saved = serializeGameWorldV4(createNewGame(), savedAt)
+    const { gmPlanStates: _oldField, ...oldPayload } = saved.payload
+    const restored = deserializeGameWorldV4({ ...saved, payload: oldPayload })
+    expect(restored.gmPlanStatesById).toEqual({})
   })
 })

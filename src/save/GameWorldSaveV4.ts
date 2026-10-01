@@ -76,7 +76,12 @@ import { createEconomicObservation, createExchangeRate, createFinancialRegulatio
 import { createFinanceDecisionProposal, type FinanceDecisionProposal } from '@/domain/finance/FinanceAI'
 import { createIndexationPolicy, type IndexationPolicy } from '@/domain/finance'
 import { parseGameDate } from '@/domain/date'
-import { competitionIdFromString, ecosystemIdFromString, expenseRecognitionIdFromString, facilityCompetitionApprovalIdFromString, facilityComponentConditionRecordIdFromString, facilityComponentIdFromString, facilityConditionRecordIdFromString, facilityControlRightIdFromString, facilityDevelopmentProjectIdFromString, facilityDevelopmentProjectPhaseIdFromString, facilityIdFromString, facilityInspectionIdFromString, facilityMaintenanceActionIdFromString, facilityMaintenanceNeedIdFromString, facilityNameRecordIdFromString, facilityOperationalIncidentIdFromString, facilityOperatorAssignmentIdFromString, facilityOrganizationRelationshipIdFromString, facilityOwnershipInterestIdFromString, facilityStatusRecordIdFromString, facilityTeamRelationshipIdFromString, facilityUsageRightIdFromString, financialAccountIdFromString, financialCommitmentIdFromString, financialEntitlementIdFromString, financialTransactionIdFromString, fiscalPeriodIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, placeIdFromString, receivableIdFromString, payableIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, revenueRecognitionIdFromString, seasonIdFromString, treasurySettlementIdFromString, contractIdFromString, teamIdFromString, organizationSectionIdFromString } from '@/domain/ids'
+import { createGovernanceDecisionEvent } from '@/domain/governance'
+import { createClubStrategicState, type ClubStrategicState } from '@/domain/clubStrategy'
+import { createGMPlanState, type GMPlanState } from '@/domain/gmPlanning'
+import { contractReviewDecisionIdFor, createContractReviewDecision, type ContractReviewDecision } from '@/domain/contract/ContractReviewDecision'
+import { createRetentionNegotiation, freezeRetentionTerms, type ContractRetentionNegotiation, type RetentionNegotiationRound, type RetentionTermSet } from '@/domain/contract/ContractRetentionNegotiation'
+import { competitionIdFromString, ecosystemIdFromString, expenseRecognitionIdFromString, facilityCompetitionApprovalIdFromString, facilityComponentConditionRecordIdFromString, facilityComponentIdFromString, facilityConditionRecordIdFromString, facilityControlRightIdFromString, facilityDevelopmentProjectIdFromString, facilityDevelopmentProjectPhaseIdFromString, facilityIdFromString, facilityInspectionIdFromString, facilityMaintenanceActionIdFromString, facilityMaintenanceNeedIdFromString, facilityNameRecordIdFromString, facilityOperationalIncidentIdFromString, facilityOperatorAssignmentIdFromString, facilityOrganizationRelationshipIdFromString, facilityOwnershipInterestIdFromString, facilityStatusRecordIdFromString, facilityTeamRelationshipIdFromString, facilityUsageRightIdFromString, financialAccountIdFromString, financialCommitmentIdFromString, financialEntitlementIdFromString, financialTransactionIdFromString, fiscalPeriodIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, placeIdFromString, receivableIdFromString, payableIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, revenueRecognitionIdFromString, seasonIdFromString, treasurySettlementIdFromString, contractIdFromString, teamIdFromString, organizationSectionIdFromString, playerIdFromString, coachIdFromString } from '@/domain/ids'
 import {
   deserializeGameWorldSave as deserializeLegacyGameWorldSave,
   deserializeGameWorldV3,
@@ -103,6 +108,13 @@ export interface WorldAnnualDevelopmentCycleSaveV4 {
 export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly worldDbCompetitionRuntime: WorldDbCompetitionRuntimeSaveV4
   readonly worldAnnualDevelopmentCycle: WorldAnnualDevelopmentCycleSaveV4
+  /** Minimal accepted club intent and review memory; assessment projections remain derived. */
+  readonly clubStrategicStates: readonly ClubStrategicState[]
+  /** Minimal per-need AI planning memory; absent in earlier V4 saves. */
+  readonly gmPlanStates?: readonly GMPlanState[]
+  readonly contractReviewDecisions?: readonly ContractReviewDecision[]
+  /** Absent from older Save V4 payloads, which reconstruct an empty collection. */
+  readonly retentionNegotiations?: readonly ContractRetentionNegotiation[]
   readonly organizations: readonly Organization[]
   readonly organizationSections: readonly OrganizationSection[]
   readonly organizationOwnership: readonly OrganizationOwnership[]
@@ -193,6 +205,7 @@ export function migrateGameWorldSaveV3ToV4(value: SaveGameEnvelopeV3): SaveGameE
       ...value.payload,
       worldDbCompetitionRuntime: serializeWorldDbCompetitionRuntimeV4(EMPTY_WORLD_DB_COMPETITION_RUNTIME),
       worldAnnualDevelopmentCycle: serializeWorldAnnualDevelopmentCycleV4(EMPTY_WORLD_ANNUAL_DEVELOPMENT_CYCLE),
+      clubStrategicStates: [],
       organizations: Object.values(world.organizationsById),
       organizationSections: Object.values(world.organizationSectionsById),
       organizationOwnership: [],
@@ -227,6 +240,10 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       worldAnnualDevelopmentCycle: serializeWorldAnnualDevelopmentCycleV4(
         world.worldAnnualDevelopmentCycle ?? EMPTY_WORLD_ANNUAL_DEVELOPMENT_CYCLE,
       ),
+      clubStrategicStates: Object.values(world.clubStrategicStatesByTeamId),
+      gmPlanStates: Object.values(world.gmPlanStatesById),
+      contractReviewDecisions: Object.values(world.contractReviewDecisionsById),
+      retentionNegotiations: Object.values(world.retentionNegotiationsById),
       organizations: Object.values(world.organizationsById),
       organizationSections: Object.values(world.organizationSectionsById),
       organizationOwnership: Object.values(world.organizationOwnershipById),
@@ -265,6 +282,10 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const payload = record(envelope.payload, 'Save V4 payload')
   const runtime = parseWorldDbCompetitionRuntimeV4(payload.worldDbCompetitionRuntime)
   const developmentCycle = parseWorldAnnualDevelopmentCycleV4(payload.worldAnnualDevelopmentCycle)
+  const clubStrategicStates = Object.prototype.hasOwnProperty.call(payload, 'clubStrategicStates') ? parseClubStrategicStates(payload.clubStrategicStates) : []
+  const gmPlanStates = Object.prototype.hasOwnProperty.call(payload, 'gmPlanStates') ? parseGMPlanStates(payload.gmPlanStates) : []
+  const contractReviewDecisions = Object.prototype.hasOwnProperty.call(payload, 'contractReviewDecisions') ? parseContractReviewDecisions(payload.contractReviewDecisions) : []
+  const retentionNegotiations = Object.prototype.hasOwnProperty.call(payload, 'retentionNegotiations') ? parseRetentionNegotiations(payload.retentionNegotiations) : []
   const hasOrganizations = Object.prototype.hasOwnProperty.call(payload, 'organizations')
   const hasOrganizationSections = Object.prototype.hasOwnProperty.call(payload, 'organizationSections')
   const ownership = Object.prototype.hasOwnProperty.call(payload, 'organizationOwnership')
@@ -352,11 +373,21 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
-  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalsEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _structuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, revenueSources: _revenueSources, operatingCostSources: _operatingCostSources, operatingCostFacts: _operatingCostFacts, debtInstruments: _debtInstruments, competitionDistributionFacts: _competitionDistributionFacts, financialBudgets: _financialBudgets, budgetLines: _budgetLines, budgetRevisions: _budgetRevisions, budgetAllocations: _budgetAllocations, forecastAssumptions: _forecastAssumptions, facilityFinancialBindings: _facilityFinancialBindings, financialRegulationAssessments: _assessments, financeDecisionProposals: _financeProposals, economicObservations: _observations, exchangeRates: _rates, ...compatibilityPayload } = payload
+  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, clubStrategicStates: _clubStrategicStates, gmPlanStates: _gmPlanStates, contractReviewDecisions: _contractReviewDecisions, retentionNegotiations: _retentionNegotiations, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalsEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _organizationStructuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, revenueSources: _revenueSources, operatingCostSources: _operatingCostSources, operatingCostFacts: _operatingCostFacts, debtInstruments: _debtInstruments, competitionDistributionFacts: _competitionDistributionFacts, financialBudgets: _financialBudgets, budgetLines: _budgetLines, budgetRevisions: _budgetRevisions, budgetAllocations: _budgetAllocations, forecastAssumptions: _forecastAssumptions, facilityFinancialBindings: _facilityFinancialBindings, financialRegulationAssessments: _assessments, financeDecisionProposals: _financeProposals, economicObservations: _observations, exchangeRates: _rates, ...compatibilityPayload } = payload
+  const staffCareerRuntimePayload = record(payload.staffCareerRuntime, 'Save V4 staff career runtime')
+  const rawDecisions = staffCareerRuntimePayload.governanceDecisions === undefined ? [] : rawArray(staffCareerRuntimePayload.governanceDecisions, 'Save V4 governance decisions')
+  const retentionDecisionIds = new Set(rawDecisions.flatMap((value) => {
+    const decision = record(value, 'Save V4 governance decision')
+    const subject = record(decision.subject, 'Save V4 governance subject')
+    return subject.kind === 'GENERIC' && typeof subject.referenceId === 'string' && subject.referenceId.startsWith('retention:') ? [nonEmptyText(decision.id, 'Governance decision id')] : []
+  }))
+  const governanceEvents = staffCareerRuntimePayload.governanceDecisionEvents === undefined ? [] : rawArray(staffCareerRuntimePayload.governanceDecisionEvents, 'Save V4 governance decision events')
+  const retentionExecutionEvents = governanceEvents.filter((value) => { const event = record(value, 'Save V4 governance decision event'); return event.kind === 'EXECUTED' && retentionDecisionIds.has(nonEmptyText(event.decisionId, 'Governance event decision id')) }).map(parseRetentionSigningEvent)
+  const compatibilityGovernanceEvents = governanceEvents.filter((value) => { const event = record(value, 'Save V4 governance decision event'); return !(event.kind === 'EXECUTED' && retentionDecisionIds.has(nonEmptyText(event.decisionId, 'Governance event decision id'))) })
   const world = deserializeGameWorldV3({
     schemaVersion: 3,
     savedAt,
-    payload: compatibilityPayload as unknown as GameWorldSaveV3,
+    payload: { ...compatibilityPayload, staffCareerRuntime: { ...staffCareerRuntimePayload, governanceDecisionEvents: compatibilityGovernanceEvents } } as unknown as GameWorldSaveV3,
   })
   const withOrganizations = organizations === undefined || organizationSections === undefined
     ? world
@@ -371,7 +402,198 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const withFacilityDevelopment = updateGameWorld(withFacilityOperations, { facilityDevelopmentProjects, facilityDevelopmentProjectPhases })
   const withFinance = updateGameWorld(withFacilityDevelopment, { financialAccounts, financialTransactions, fiscalPeriods, organizationFinancialProfiles, receivables, payables, treasuryApplications, revenueRecognitions, expenseRecognitions, financialCommitments, financialEntitlements, revenueSources, operatingCostSources, operatingCostFacts, debtInstruments, competitionDistributionFacts, financialBudgets, budgetLines, budgetRevisions, budgetAllocations, forecastAssumptions, financialRegulationAssessments, financeDecisionProposals, economicObservations, exchangeRates })
   const withFacilityFinanceIntegration = updateGameWorld(withFinance, { facilityFinancialBindings })
-  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withFacilityFinanceIntegration, runtime), worldAnnualDevelopmentCycle: developmentCycle })
+  const withClubStrategy = updateGameWorld(withFacilityFinanceIntegration, { clubStrategicStatesByTeamId: Object.fromEntries(clubStrategicStates.map((state) => [state.teamId, state])), gmPlanStates })
+  const withContractReviewDecisions = updateGameWorld(withClubStrategy, { contractReviewDecisions })
+  const withRetentionNegotiations = updateGameWorld(withContractReviewDecisions, { retentionNegotiations })
+  const withRetentionExecutions = retentionExecutionEvents.length === 0 ? withRetentionNegotiations : updateGameWorld(withRetentionNegotiations, { governanceDecisionEvents: [...Object.values(withRetentionNegotiations.governanceDecisionEventsById), ...retentionExecutionEvents] })
+  return Object.freeze({ ...attachWorldDbCompetitionRuntime(withRetentionExecutions, runtime), worldAnnualDevelopmentCycle: developmentCycle })
+}
+
+function parseRetentionSigningEvent(value: unknown) {
+  const event = record(value, 'Save V4 retention signing event')
+  exactKeys(event, ['id', 'decisionId', 'kind', 'bodyId', 'effectiveOn', 'authorityGrantIds'], 'Save V4 retention signing event')
+  if (event.kind !== 'EXECUTED' || !Array.isArray(event.authorityGrantIds)) throw new TypeError('Save V4 retention signing event is invalid')
+  return createGovernanceDecisionEvent({ id: nonEmptyText(event.id, 'Governance event id'), decisionId: nonEmptyText(event.decisionId, 'Governance event decision id'), kind: 'EXECUTED', bodyId: nonEmptyText(event.bodyId, 'Governance event body id'), effectiveOn: parseGameDate(nonEmptyText(event.effectiveOn, 'Governance event date')), authorityGrantIds: event.authorityGrantIds.map((id) => nonEmptyText(id, 'Governance authority grant id')) })
+}
+
+function rawArray(value: unknown, label: string): unknown[] {
+  if (!Array.isArray(value)) throw new TypeError(`${label} must be an array`)
+  return value
+}
+
+function parseClubStrategicStates(value: unknown): readonly ClubStrategicState[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 clubStrategicStates must be an array')
+  const states = value.map((entry) => {
+    const state = record(entry, 'Save V4 club strategic state')
+    exactKeys(state, ['teamId', 'mode', 'horizon', 'financialPosture', 'riskTolerance', 'developmentEmphasis', 'retentionPosture', 'acquisitionAggression', 'sellingWillingness', 'establishedOn', 'lastReviewedOn', 'transitionReason'], 'Save V4 club strategic state')
+    return createClubStrategicState({
+      teamId: teamIdFromString(nonEmptyText(state.teamId, 'Club strategic teamId')),
+      mode: nonEmptyText(state.mode, 'Club strategic mode') as ClubStrategicState['mode'],
+      horizon: nonEmptyText(state.horizon, 'Club strategic horizon') as ClubStrategicState['horizon'],
+      financialPosture: nonEmptyText(state.financialPosture, 'Club strategic financialPosture') as ClubStrategicState['financialPosture'],
+      riskTolerance: nonEmptyText(state.riskTolerance, 'Club strategic riskTolerance') as ClubStrategicState['riskTolerance'],
+      developmentEmphasis: integer(state.developmentEmphasis, 'Club strategic developmentEmphasis'),
+      retentionPosture: nonEmptyText(state.retentionPosture, 'Club strategic retentionPosture') as ClubStrategicState['retentionPosture'],
+      acquisitionAggression: nonEmptyText(state.acquisitionAggression, 'Club strategic acquisitionAggression') as ClubStrategicState['acquisitionAggression'],
+      sellingWillingness: nonEmptyText(state.sellingWillingness, 'Club strategic sellingWillingness') as ClubStrategicState['sellingWillingness'],
+      establishedOn: parseGameDate(nonEmptyText(state.establishedOn, 'Club strategic establishedOn')),
+      lastReviewedOn: parseGameDate(nonEmptyText(state.lastReviewedOn, 'Club strategic lastReviewedOn')),
+      transitionReason: nonEmptyText(state.transitionReason, 'Club strategic transitionReason') as ClubStrategicState['transitionReason'],
+    })
+  })
+  if (new Set(states.map((state) => state.teamId)).size !== states.length) throw new TypeError('Save V4 clubStrategicStates contains duplicate Teams')
+  return Object.freeze(states)
+}
+
+function parseGMPlanStates(value: unknown): readonly GMPlanState[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 gmPlanStates must be an array')
+  const plans = value.map((entry) => {
+    const plan = record(entry, 'Save V4 GM plan state')
+    exactKeys(plan, ['id', 'teamId', 'needId', 'selectedOptionKind', 'selectedOn', 'lastReviewedOn', 'selectionReason', 'executionReadinessAtSelection', 'strategyAtSelection', 'originalOptionPriority'], 'Save V4 GM plan state')
+    return createGMPlanState({
+      id: nonEmptyText(plan.id, 'GM plan id'),
+      teamId: teamIdFromString(nonEmptyText(plan.teamId, 'GM plan teamId')),
+      needId: nonEmptyText(plan.needId, 'GM plan needId'),
+      selectedOptionKind: nonEmptyText(plan.selectedOptionKind, 'GM plan selectedOptionKind') as GMPlanState['selectedOptionKind'],
+      selectedOn: parseGameDate(nonEmptyText(plan.selectedOn, 'GM plan selectedOn')),
+      lastReviewedOn: parseGameDate(nonEmptyText(plan.lastReviewedOn, 'GM plan lastReviewedOn')),
+      selectionReason: nonEmptyText(plan.selectionReason, 'GM plan selectionReason') as GMPlanState['selectionReason'],
+      executionReadinessAtSelection: nonEmptyText(plan.executionReadinessAtSelection, 'GM plan executionReadinessAtSelection') as GMPlanState['executionReadinessAtSelection'],
+      strategyAtSelection: nonEmptyText(plan.strategyAtSelection, 'GM plan strategyAtSelection') as GMPlanState['strategyAtSelection'],
+      originalOptionPriority: integer(plan.originalOptionPriority, 'GM plan originalOptionPriority'),
+    })
+  })
+  if (new Set(plans.map((plan) => `${plan.teamId}:${plan.needId}`)).size !== plans.length) throw new TypeError('Save V4 gmPlanStates contains duplicate Team and need pairs')
+  return Object.freeze(plans)
+}
+
+function parseContractReviewDecisions(value: unknown): readonly ContractReviewDecision[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 contractReviewDecisions must be an array')
+  const decisions = value.map((entry) => {
+    const decision = record(entry, 'Save V4 contract review decision')
+    const hasReviewAgainOn = Object.prototype.hasOwnProperty.call(decision, 'reviewAgainOn')
+    exactKeys(decision, ['id', 'teamId', 'playerId', 'contractId', 'intent', 'decidedOn', 'decidedByCoachId', ...(hasReviewAgainOn ? ['reviewAgainOn'] : [])], 'Save V4 contract review decision')
+    const created = createContractReviewDecision({
+      id: nonEmptyText(decision.id, 'Contract review decision id') as ContractReviewDecision['id'],
+      teamId: teamIdFromString(nonEmptyText(decision.teamId, 'Contract review teamId')),
+      playerId: playerIdFromString(nonEmptyText(decision.playerId, 'Contract review playerId')),
+      contractId: contractIdFromString(nonEmptyText(decision.contractId, 'Contract review contractId')),
+      intent: nonEmptyText(decision.intent, 'Contract review intent') as ContractReviewDecision['intent'],
+      decidedOn: parseGameDate(nonEmptyText(decision.decidedOn, 'Contract review decidedOn')),
+      decidedByCoachId: coachIdFromString(nonEmptyText(decision.decidedByCoachId, 'Contract review decidedByCoachId')),
+      ...(hasReviewAgainOn ? { reviewAgainOn: parseGameDate(nonEmptyText(decision.reviewAgainOn, 'Contract review reviewAgainOn')) } : {}),
+    })
+    if (created.id !== decision.id || decision.id !== contractReviewDecisionIdFor(created.teamId, created.playerId, created.contractId)) throw new TypeError('Save V4 contract review decision has a non-canonical id')
+    return created
+  })
+  if (new Set(decisions.map((decision) => decision.id)).size !== decisions.length) throw new TypeError('Save V4 contract review decisions contain duplicate identities')
+  return Object.freeze(decisions)
+}
+
+function parseRetentionNegotiations(value: unknown): readonly ContractRetentionNegotiation[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 retentionNegotiations must be an array')
+  const negotiations = value.map((entry) => {
+    const item = record(entry, 'Save V4 retention negotiation')
+    const optional = ['currentTerms', 'acceptedTerms', 'execution', 'closedOn', 'closingActionId', 'reopenOn', 'terminalReason']
+    exactKeys(item, ['id', 'openingActionId', 'teamId', 'organizationId', 'playerId', 'predecessorContractId', 'openedOn', 'openedByCoachId', 'status', 'rounds', ...optional.filter((key) => Object.prototype.hasOwnProperty.call(item, key))], 'Save V4 retention negotiation')
+    if (!Array.isArray(item.rounds)) throw new TypeError('Save V4 retention negotiation rounds must be an array')
+    const rounds: RetentionNegotiationRound[] = item.rounds.map((rawRound) => {
+      const round = record(rawRound, 'Save V4 retention round')
+      const hasClubAction = Object.prototype.hasOwnProperty.call(round, 'clubAction')
+      exactKeys(round, ['round', 'actionId', 'offer', 'submittedOn', 'playerResponse', ...(hasClubAction ? ['clubAction'] : [])], 'Save V4 retention round')
+      const response = record(round.playerResponse, 'Save V4 retention player response')
+      exactKeys(response, ['outcome', 'respondedOn', 'origin', 'reasonCodes', ...(Object.prototype.hasOwnProperty.call(response, 'counterTerms') ? ['counterTerms'] : [])], 'Save V4 retention player response')
+      if (!Array.isArray(response.reasonCodes)) throw new TypeError('Save V4 retention response reason codes must be an array')
+      const clubAction = hasClubAction ? record(round.clubAction, 'Save V4 retention club action') : undefined
+      if (clubAction !== undefined) exactKeys(clubAction, ['actionId', 'kind', 'respondedOn', ...(Object.prototype.hasOwnProperty.call(clubAction, 'revisedTerms') ? ['revisedTerms'] : [])], 'Save V4 retention club action')
+      return {
+        round: integer(round.round, 'Retention round number'),
+        actionId: nonEmptyText(round.actionId, 'Retention round action id'),
+        offer: parseRetentionTerms(round.offer),
+        submittedOn: parseGameDate(nonEmptyText(round.submittedOn, 'Retention round submittedOn')),
+        playerResponse: {
+          outcome: nonEmptyText(response.outcome, 'Retention response outcome') as RetentionNegotiationRound['playerResponse']['outcome'],
+          respondedOn: parseGameDate(nonEmptyText(response.respondedOn, 'Retention response date')),
+          origin: nonEmptyText(response.origin, 'Retention response origin') as RetentionNegotiationRound['playerResponse']['origin'],
+          ...(Object.prototype.hasOwnProperty.call(response, 'counterTerms') ? { counterTerms: parseRetentionTerms(response.counterTerms) } : {}),
+          reasonCodes: response.reasonCodes.map((code) => nonEmptyText(code, 'Retention response reason code') as RetentionNegotiationRound['playerResponse']['reasonCodes'][number]),
+        },
+        ...(clubAction === undefined ? {} : { clubAction: {
+          actionId: nonEmptyText(clubAction.actionId, 'Retention club action id'),
+          kind: nonEmptyText(clubAction.kind, 'Retention club action kind') as NonNullable<RetentionNegotiationRound['clubAction']>['kind'],
+          respondedOn: parseGameDate(nonEmptyText(clubAction.respondedOn, 'Retention club action date')),
+          ...(Object.prototype.hasOwnProperty.call(clubAction, 'revisedTerms') ? { revisedTerms: parseRetentionTerms(clubAction.revisedTerms) } : {}),
+        } }),
+      }
+    })
+    return createRetentionNegotiation({
+      id: nonEmptyText(item.id, 'Retention negotiation id'),
+      openingActionId: nonEmptyText(item.openingActionId, 'Retention opening action id'),
+      teamId: nonEmptyText(item.teamId, 'Retention team id') as ContractRetentionNegotiation['teamId'],
+      organizationId: nonEmptyText(item.organizationId, 'Retention organization id') as ContractRetentionNegotiation['organizationId'],
+      playerId: nonEmptyText(item.playerId, 'Retention player id') as ContractRetentionNegotiation['playerId'],
+      predecessorContractId: nonEmptyText(item.predecessorContractId, 'Retention predecessor contract id') as ContractRetentionNegotiation['predecessorContractId'],
+      openedOn: parseGameDate(nonEmptyText(item.openedOn, 'Retention opening date')),
+      openedByCoachId: nonEmptyText(item.openedByCoachId, 'Retention opening coach id') as ContractRetentionNegotiation['openedByCoachId'],
+      status: nonEmptyText(item.status, 'Retention status') as ContractRetentionNegotiation['status'],
+      rounds,
+      ...(Object.prototype.hasOwnProperty.call(item, 'currentTerms') ? { currentTerms: parseRetentionTerms(item.currentTerms) } : {}),
+      ...(Object.prototype.hasOwnProperty.call(item, 'acceptedTerms') ? { acceptedTerms: parseRetentionTerms(item.acceptedTerms) } : {}),
+      ...(Object.prototype.hasOwnProperty.call(item, 'execution') ? { execution: parseRetentionExecution(item.execution) } : {}),
+      ...(Object.prototype.hasOwnProperty.call(item, 'closedOn') ? { closedOn: parseGameDate(nonEmptyText(item.closedOn, 'Retention close date')) } : {}),
+      ...(Object.prototype.hasOwnProperty.call(item, 'closingActionId') ? { closingActionId: nonEmptyText(item.closingActionId, 'Retention closing action id') } : {}),
+      ...(Object.prototype.hasOwnProperty.call(item, 'reopenOn') ? { reopenOn: parseGameDate(nonEmptyText(item.reopenOn, 'Retention reopen date')) } : {}),
+      ...(Object.prototype.hasOwnProperty.call(item, 'terminalReason') ? { terminalReason: nonEmptyText(item.terminalReason, 'Retention terminal reason') as NonNullable<ContractRetentionNegotiation['terminalReason']> } : {}),
+    })
+  })
+  if (new Set(negotiations.map((item) => item.id)).size !== negotiations.length) throw new TypeError('Save V4 retention negotiations contain duplicate identities')
+  return Object.freeze(negotiations)
+}
+
+function parseRetentionExecution(value: unknown): NonNullable<ContractRetentionNegotiation['execution']> {
+  const execution = record(value, 'Save V4 retention execution')
+  exactKeys(execution, ['status', 'contractId', 'signedOn', 'governanceDecisionId'], 'Save V4 retention execution')
+  if (execution.status !== 'SIGNED') throw new TypeError('Save V4 retention execution status is invalid')
+  return { status: 'SIGNED', contractId: contractIdFromString(nonEmptyText(execution.contractId, 'Retention signed contract id')), signedOn: parseGameDate(nonEmptyText(execution.signedOn, 'Retention signed date')), governanceDecisionId: nonEmptyText(execution.governanceDecisionId, 'Retention Governance decision id') }
+}
+
+function parseRetentionTerms(value: unknown): RetentionTermSet {
+  const terms = record(value, 'Save V4 retention terms')
+  const hasOptions = Object.prototype.hasOwnProperty.call(terms, 'options')
+  const hasGuarantees = Object.prototype.hasOwnProperty.call(terms, 'guarantees')
+  const hasIncentives = Object.prototype.hasOwnProperty.call(terms, 'incentives')
+  const hasClauses = Object.prototype.hasOwnProperty.call(terms, 'clauses')
+  exactKeys(terms, ['salary', 'years', ...(Object.prototype.hasOwnProperty.call(terms, 'role') ? ['role'] : []), ...(Object.prototype.hasOwnProperty.call(terms, 'agentFee') ? ['agentFee', 'agentFeePayer'] : []), ...(hasOptions ? ['options'] : []), ...(hasGuarantees ? ['guarantees'] : []), ...(hasIncentives ? ['incentives'] : []), ...(hasClauses ? ['clauses'] : [])], 'Save V4 retention terms')
+  if (hasOptions && !Array.isArray(terms.options)) throw new TypeError('Save V4 retention options must be an array')
+  if (hasGuarantees && !Array.isArray(terms.guarantees)) throw new TypeError('Save V4 retention guarantees must be an array')
+  if (hasIncentives && !Array.isArray(terms.incentives)) throw new TypeError('Save V4 retention incentives must be an array')
+  if (hasClauses && !Array.isArray(terms.clauses)) throw new TypeError('Save V4 retention clauses must be an array')
+  return freezeRetentionTerms({
+    salary: integer(terms.salary, 'Retention salary'),
+    years: integer(terms.years, 'Retention years'),
+    ...(Object.prototype.hasOwnProperty.call(terms, 'role') ? { role: nonEmptyText(terms.role, 'Retention role') as RetentionTermSet['role'] } : {}),
+    ...(Object.prototype.hasOwnProperty.call(terms, 'agentFee') ? { agentFee: integer(terms.agentFee, 'Retention agent fee'), agentFeePayer: nonEmptyText(terms.agentFeePayer, 'Retention agent fee payer') as 'CLUB' } : {}),
+    ...(hasOptions ? { options: (terms.options as unknown[]).map((rawOption) => {
+      const option = record(rawOption, 'Save V4 retention option')
+      exactKeys(option, ['year', 'type', 'decisionAuthority'], 'Save V4 retention option')
+      return { year: integer(option.year, 'Retention option year'), type: nonEmptyText(option.type, 'Retention option type') as NonNullable<RetentionTermSet['options']>[number]['type'], decisionAuthority: nonEmptyText(option.decisionAuthority, 'Retention option decision authority') as NonNullable<RetentionTermSet['options']>[number]['decisionAuthority'] }
+    }) } : {}),
+    ...(hasGuarantees ? { guarantees: (terms.guarantees as unknown[]).map((rawGuarantee) => {
+      const guarantee = record(rawGuarantee, 'Save V4 retention guarantee')
+      exactKeys(guarantee, ['year', 'guaranteedAmount'], 'Save V4 retention guarantee')
+      return { year: integer(guarantee.year, 'Retention guarantee year'), guaranteedAmount: integer(guarantee.guaranteedAmount, 'Retention guaranteed amount') }
+    }) } : {}),
+    ...(hasIncentives ? { incentives: (terms.incentives as unknown[]).map((rawIncentive) => {
+      const incentive = record(rawIncentive, 'Save V4 retention incentive')
+      exactKeys(incentive, ['type', 'competitionId', 'contractYear', 'minimumGamesPlayed', 'amount'], 'Save V4 retention incentive')
+      return { type: nonEmptyText(incentive.type, 'Retention incentive type') as NonNullable<RetentionTermSet['incentives']>[number]['type'], competitionId: nonEmptyText(incentive.competitionId, 'Retention incentive competition id') as NonNullable<RetentionTermSet['incentives']>[number]['competitionId'], contractYear: integer(incentive.contractYear, 'Retention incentive contract year'), minimumGamesPlayed: integer(incentive.minimumGamesPlayed, 'Retention incentive games threshold'), amount: integer(incentive.amount, 'Retention incentive amount') }
+    }) } : {}),
+    ...(hasClauses ? { clauses: (terms.clauses as unknown[]).map((rawClause) => {
+      const clause = record(rawClause, 'Save V4 retention clause')
+      exactKeys(clause, ['type', 'decisionAuthority'], 'Save V4 retention clause')
+      return { type: nonEmptyText(clause.type, 'Retention clause type') as NonNullable<RetentionTermSet['clauses']>[number]['type'], decisionAuthority: nonEmptyText(clause.decisionAuthority, 'Retention clause decision authority') as NonNullable<RetentionTermSet['clauses']>[number]['decisionAuthority'] }
+    }) } : {}),
+  })
 }
 
 /** Reads V1-V4. Legacy saves normalize the V4-owned runtime projection to empty state. */

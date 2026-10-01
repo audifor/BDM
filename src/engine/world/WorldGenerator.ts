@@ -23,6 +23,7 @@ import { hashStringToSeed, SeededRandomSource, type RandomSource } from '@/engin
 import { generatePlayerBio } from './PlayerBioGenerator'
 import { generateCanonicalDevelopmentProfile, generateCanonicalRatings } from './CanonicalPlayerTruthGenerator'
 import { generateInitialPlayerContract } from './PlayerContractGenerator'
+import { createContractServiceTimeBaseline } from '@/domain/contract/ContractServiceTime'
 import { generateInitialTeamFinances } from './TeamFinancesGenerator'
 import { generateInitialStaffStructure } from './StaffGenerator'
 import { generateCoachRpgProfiles } from './CoachProfessionalProfileGenerator'
@@ -125,6 +126,7 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
   const ncaaTeamNames = includeNcaaLike ? shuffle([...TEAM_NAMES.slice(12)], new SeededRandomSource(hashStringToSeed(`ncaa-team-names-v1:${options.seed}`))) : []
   const teamNames = [...baseTeamNames, ...ncaaTeamNames].slice(0, teamCount)
   const players: ReturnType<typeof createPlayer>[] = []
+  const serviceTimeBaselines: ReturnType<typeof createContractServiceTimeBaseline>[] = []
   const teams = []
 
   for (let teamIndex = 0; teamIndex < teamCount; teamIndex += 1) {
@@ -149,6 +151,11 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
         development: generateCanonicalDevelopmentProfile(options.seed, playerId, ratings, calculateAge(bio.dateOfBirth, startDate)),
       })
       players.push(player)
+      if (options.includeNbaLike && teamIndex >= FIBA_TEAM_COUNT && teamIndex < FIBA_TEAM_COUNT + 4) {
+        const maximumPlausibleSeasons = Math.min(12, Math.max(0, calculateAge(bio.dateOfBirth, startDate) - 18))
+        const baselineRandom = new SeededRandomSource(hashStringToSeed(`contract-service-time-baseline-v1:${options.seed}:${playerId}`))
+        serviceTimeBaselines.push(createContractServiceTimeBaseline({ id: `service-time:${DEFAULT_NBA_LIKE_ECOSYSTEM_ID}:${playerId}`, playerId, jurisdictionId: DEFAULT_NBA_LIKE_ECOSYSTEM_ID, seasons: baselineRandom.nextInt(0, maximumPlausibleSeasons), effectiveOn: startDate, source: 'WORLD_GENERATION' }))
+      }
       rosterPlayerIds.push(player.id)
     }
 
@@ -209,9 +216,10 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
     conferences, conferenceMemberships: ncaaMemberships,
     seasons: [season, ...(nbaSeason === undefined ? [] : [nbaSeason]), ...(ncaaSeason === undefined ? [] : [ncaaSeason])],
     games: [],
+    contractServiceTimeBaselines: serviceTimeBaselines,
     contracts,
     teamFinances: teams.map((team) => generateInitialTeamFinances(team.id, contracts.filter((contract) => contract.teamId === team.id).reduce((sum, contract) => sum + contract.compensation.annualSalary, 0))),
-    ...(nbaSeason === undefined ? {} : { salaryRulesBySeasonId: { [nbaSeason.id]: createNbaLikeSalaryRules(nbaSeason.id, gender) } }),
+    ...(nbaSeason === undefined ? {} : { salaryRulesBySeasonId: { [nbaSeason.id]: createNbaLikeSalaryRules(nbaSeason.id, gender, DEFAULT_NBA_LIKE_ECOSYSTEM_ID) } }),
     ...(nbaSeason === undefined ? {} : { tradeRulesBySeasonId: { [nbaSeason.id]: createNbaLikeTradeRules(nbaSeason.id, DEFAULT_NBA_LIKE_ECOSYSTEM_ID) } }),
     staffPeople: [...staff.map((item) => item.person), ...coachStaffProfiles], teamStaffAssignments: [...staff.map((item) => item.assignment), ...coachAssignments], staffEmploymentByStaffId: coachStaffEmployment,
     coachProfessionalProfilesByCoachId: coachProfiles.professionalProfiles,

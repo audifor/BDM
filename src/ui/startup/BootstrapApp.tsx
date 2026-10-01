@@ -29,7 +29,9 @@ export function BootstrapApp({ uiMode = 'ng' }: { readonly uiMode?: 'legacy' | '
     return () => { active = false }
   }, [])
 
-  if (world !== null) return uiMode === 'ng' ? <BdmOsNg /> : <App />
+  if (world !== null) {
+    return uiMode === 'ng' ? <BdmOsNg /> : <App />
+  }
 
   const startGame = async (configuration: NewGameConfiguration) => {
     setMessage(null)

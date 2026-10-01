@@ -1,15 +1,14 @@
 import type { GameId, TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
-import { getGamesToday, getNextUserGame, getUserTeam } from '@/engine/calendar'
-import { getPendingMediaOpportunities } from '@/domain/world'
-import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
+import { getNextUserGame, getUserTeam } from '@/engine/calendar'
 import { advanceGameDay } from './advanceGameDay'
-import { getCurrentSeason } from './selectors'
+import { evaluateSimulationBreakpoints, type SimulationBreakpoint } from './SimulationBreakpoints'
 
 export type ContinueStopReason =
-  | { readonly type: 'userGame'; readonly gameId: GameId }
-  | { readonly type: 'mediaOpportunity'; readonly opportunityId: string }
-  | { readonly type: 'seasonComplete' }
+  | { readonly type: 'userGame'; readonly gameId: GameId; readonly breakpoint: SimulationBreakpoint }
+  | { readonly type: 'mediaOpportunity'; readonly opportunityId: string; readonly breakpoint: SimulationBreakpoint }
+  | { readonly type: 'seasonComplete'; readonly breakpoint: SimulationBreakpoint }
+  | { readonly type: 'breakpoint'; readonly breakpoint: SimulationBreakpoint }
   | { readonly type: 'safetyLimit' }
 
 export interface ContinueResult { readonly world: GameWorld; readonly daysAdvanced: number; readonly finalDate: GameWorld['currentDate']; readonly stopReason: ContinueStopReason }
@@ -17,16 +16,12 @@ export interface NextKnownEvent { readonly type: 'userGame'; readonly gameId: Ga
 export const DEFAULT_CONTINUE_DAY_LIMIT = 366
 
 export function getContinueStopReason(world: GameWorld): ContinueStopReason | undefined {
-  const media = getPendingMediaOpportunities(world, world.userCoachId)[0]
-  if (media !== undefined) return { type: 'mediaOpportunity', opportunityId: media.id }
-  const team = getUserTeam(world)
-  const userGame = team === undefined ? undefined : getGamesToday(world).find((game) => game.status === 'scheduled' && (game.homeTeamId === team.id || game.awayTeamId === team.id))
-  if (userGame !== undefined) return { type: 'userGame', gameId: userGame.id }
-  if (getNextUserGame(world) === undefined) {
-    const primary = getCurrentSeason(world)
-    if (isSeasonComplete(world, primary.id) && getSeasonHistoryRecord(world, primary.id) !== undefined) return { type: 'seasonComplete' }
-  }
-  return undefined
+  const breakpoint = evaluateSimulationBreakpoints(world).breakpoint
+  if (breakpoint === undefined || (breakpoint.level !== 'ACTION_REQUIRED' && breakpoint.level !== 'BLOCKING')) return undefined
+  if (breakpoint.reason === 'userGame') return { type: 'userGame', gameId: breakpoint.sourceId as GameId, breakpoint }
+  if (breakpoint.reason === 'mediaOpportunity') return { type: 'mediaOpportunity', opportunityId: breakpoint.sourceId, breakpoint }
+  if (breakpoint.reason === 'seasonComplete') return { type: 'seasonComplete', breakpoint }
+  return { type: 'breakpoint', breakpoint }
 }
 
 /** Repeats the canonical daily application flow until a supported interruption. */

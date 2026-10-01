@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 import { getComposerOptions } from "@/app/entityActions/ComposerEngine";
+import { assessContractRelease } from "@/app/market/ContractReleaseService";
 import { createActionSignature, resolveQuickActions } from "@/app/entityActions/QuickActions";
 import { productionEntityActionRegistry } from "@/app/entityActions/productionRegistry";
 import type { CommandResult } from "@/app/entityActions/EntityCommand";
@@ -77,6 +78,12 @@ export function EntityActionComposer({
   );
   const quickActions = resolveQuickActions(state.entity, state.environment, productionEntityActionRegistry, preferences);
   const composition = state.composition;
+  const releaseAssessment = composition?.status === "readyToConfirm"
+    && composition.action.id === "player.release"
+    && player !== undefined
+    && state.environment.controlledTeamId !== undefined
+    ? assessContractRelease(state.environment.world, state.environment.controlledTeamId, player.id)
+    : undefined;
   const options =
     composition?.status === "selecting" ? getComposerOptions(composition) : [];
   const crumb =
@@ -178,13 +185,30 @@ export function EntityActionComposer({
           <div className="entity-action-composer__composition">
             <p className="entity-action-composer__breadcrumb">{crumb}</p>
             {composition?.status === "readyToConfirm" ? (
-              <button
-                className="primary-button"
-                onClick={confirm}
-                type="button"
-              >
-                CONFIRM
-              </button>
+              <>
+                {releaseAssessment !== undefined && (
+                  <section aria-label="Release preview" role="status">
+                    <p>Contracts to terminate: {releaseAssessment.contractIds.length > 0 ? releaseAssessment.contractIds.join(", ") : "none"}</p>
+                    {releaseAssessment.status === "READY" || releaseAssessment.status === "ALREADY_TERMINATED" ? (
+                      <>
+                        <p>{releaseAssessment.status === "ALREADY_TERMINATED" ? "This release is already recorded." : "The player will leave the roster after the linked contracts terminate."}</p>
+                        <p>Future guaranteed obligations:</p>
+                        {releaseAssessment.financeStatus === "CURRENCY_POLICY_REQUIRED" && <p>Currency policy is not set; amounts are shown in original contract units.</p>}
+                        {releaseAssessment.financeConsequences.length === 0 ? <p>None scheduled.</p> : <ul>{releaseAssessment.financeConsequences.map((item) => <li key={`${item.contractId}:${item.effectiveOn}`}>{item.effectiveOn}: {item.amount} {item.currencyCode ?? "contract units"} ({item.contractId})</li>)}</ul>}
+                        <p>Cap consequence: none under NOT_APPLICABLE treatment.</p>
+                      </>
+                    ) : <p>{releaseAssessment.reason}</p>}
+                  </section>
+                )}
+                <button
+                  className="primary-button"
+                  disabled={releaseAssessment !== undefined && releaseAssessment.status !== "READY" && releaseAssessment.status !== "ALREADY_TERMINATED"}
+                  onClick={confirm}
+                  type="button"
+                >
+                  CONFIRM
+                </button>
+              </>
             ) : (
               options.map((option) => (
                 <button

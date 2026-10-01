@@ -1,10 +1,14 @@
 import { useMemo, useState } from 'react'
 
-import { getFreeAgentMarketTerms } from '@/app/market'
+import { assessPlayerContractSigningReadiness } from '@/app/governance'
+import { assessRoutedFreeAgentOfferIntelligence } from '@/app/marketIntelligence'
+import { assessFormalOfferPreparation } from '@/engine/marketIntelligence'
+import { resolveGovernanceDecisionRights } from '@/domain/governance'
 import { type PlayerId } from '@/domain/ids'
+import type { GameWorld } from '@/domain/world'
 import { formatRatingEvaluation, getOrganizationRatingEvaluation } from '@/domain/intelligence'
 import { getPlayerAge, type Player } from '@/domain/player'
-import { canTeamAffordAdditionalSalary, getFreeAgents, getPlayerKnowledge, getTeamFinancialSnapshot } from '@/domain/world'
+import { canTeamAffordAdditionalSalary, getFreeAgents, getPlayerKnowledge, getTeamFinancialSnapshot, isPlayerFreeAgent } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
 import { formatMoney } from '@/ui/formatters'
@@ -15,12 +19,18 @@ import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 
 type PositionFilter = 'ALL' | Player['basketball']['primaryPosition']
 
-export function MarketWorkspace() {
-  const world = useGameStore((state) => state.world)
-  const signFreeAgent = useGameStore((state) => state.signFreeAgent)
+export function MarketWorkspace({ initialWorld }: { readonly initialWorld?: GameWorld } = {}) {
+  const world = useGameStore((state) => state.world) ?? initialWorld ?? null
+  const contactFreeAgent = useGameStore((state) => state.contactFreeAgent)
+  const submitFreeAgentOffer = useGameStore((state) => state.submitFreeAgentOffer)
+  const decideFreeAgentCounter = useGameStore((state) => state.decideFreeAgentCounter)
+  const startFreeAgentSigningGovernance = useGameStore((state) => state.startFreeAgentSigningGovernance)
+  const recordFreeAgentSigningDecision = useGameStore((state) => state.recordFreeAgentSigningDecision)
+  const completeFreeAgentSigning = useGameStore((state) => state.completeFreeAgentSigning)
   const [query, setQuery] = useState('')
   const [position, setPosition] = useState<PositionFilter>('ALL')
   const [selectedId, setSelectedId] = useState<PlayerId | undefined>()
+  const [revisions, setRevisions] = useState<Record<string, { salary: string; years: string }>>({})
   const team = world === null ? undefined : getUserTeam(world)
 
   const agents = useMemo(() => {
@@ -37,6 +47,8 @@ export function MarketWorkspace() {
   }
 
   const finances = getTeamFinancialSnapshot(world, team.id)
+  const selectedIntentPlanId = selectedId === undefined ? undefined : Object.values(world.negotiationsById).find((item) => item.teamId === team.id && item.playerId === selectedId)?.sourcePlanId
+  const offers = assessRoutedFreeAgentOfferIntelligence(world, team.id, selectedId, selectedIntentPlanId)
   const selected = agents.find((player) => player.id === selectedId)
   const evaluate = (player: Player, dimension: string) =>
     formatRatingEvaluation(
@@ -95,10 +107,6 @@ export function MarketWorkspace() {
                   numeric: true,
                   value: (player) => getPlayerAge(world, player.id) ?? 0,
                 }),
-                ngCol('asking', 'Asking', (player) => formatMoney(getFreeAgentMarketTerms(world, player.id).annualSalary), {
-                  numeric: true,
-                  value: (player) => getFreeAgentMarketTerms(world, player.id).annualSalary,
-                }),
               ])}
               gridId="ng-market-free-agents"
               onSelectionChange={(ids) => setSelectedId(ids[0] as PlayerId | undefined)}
@@ -109,7 +117,7 @@ export function MarketWorkspace() {
         </div>
         <aside className="ng-canon__inspector ng-holo-panel">
           {selected === undefined ? (
-            <p className="ng-canon__empty">Select a free agent to inspect known information and the real contract ask.</p>
+            <p className="ng-canon__empty">Select a free agent to inspect known information and current acquisition readiness.</p>
           ) : (
             <>
               <p className="ng-canon__eyebrow">Player inspector</p>
@@ -119,27 +127,104 @@ export function MarketWorkspace() {
               <dl className="ng-canon__metrics">
                 <NgMetric label="Position" value={<PlayPositionMark position={selected.basketball.primaryPosition} />} />
                 <NgMetric label="Age" value={getPlayerAge(world, selected.id)} />
-                <NgMetric label="Asking" value={formatMoney(getFreeAgentMarketTerms(world, selected.id).annualSalary)} />
-                <NgMetric label="Term" value={`${getFreeAgentMarketTerms(world, selected.id).contractYears} years`} />
                 <NgMetric label="Knowledge" value={getPlayerKnowledge(world, team.id, selected.id) === undefined ? 'Unknown' : 'Scouted'} />
                 <NgMetric label="Finishing" value={evaluate(selected, 'finishing')} />
                 <NgMetric label="Shooting" value={evaluate(selected, 'shooting')} />
                 <NgMetric label="Creation" value={evaluate(selected, 'creation')} />
               </dl>
-              <button
-                className="ng-canon__action"
-                disabled={!canTeamAffordAdditionalSalary(world, team.id, getFreeAgentMarketTerms(world, selected.id).annualSalary)}
-                onClick={() => signFreeAgent(team.id, selected.id)}
-                type="button"
-              >
-                {canTeamAffordAdditionalSalary(world, team.id, getFreeAgentMarketTerms(world, selected.id).annualSalary)
-                  ? 'Sign player'
-                  : 'Insufficient salary budget'}
-              </button>
+              <FreeAgentOfferActions
+                offer={offers.find((item) => item.playerId === selected.id)}
+                onContact={() => {
+                  const offer = offers.find((item) => item.playerId === selected.id)
+                  if (offer !== undefined) contactFreeAgent(team.id, selected.id, offer.sourceProposalId)
+                }}
+              />
             </>
           )}
         </aside>
       </div>
+      <section aria-label="Free-agent negotiations" className="ng-canon__panel ng-holo-panel">
+        <h3>Acquisition activity</h3>
+        {Object.values(world.negotiationsById).filter((item) => item.teamId === team.id).sort((a, b) => a.id.localeCompare(b.id)).length === 0 ? (
+          <p className="ng-canon__empty">No player contacts or negotiations yet.</p>
+        ) : Object.values(world.negotiationsById).filter((item) => item.teamId === team.id).sort((a, b) => a.id.localeCompare(b.id)).map((negotiation) => {
+          const player = world.players[negotiation.playerId]
+          const offer = assessRoutedFreeAgentOfferIntelligence(world, team.id, negotiation.playerId, negotiation.sourcePlanId)
+            .find((item) => item.sourceProposalId === negotiation.sourceProposalId)
+          const preparation = offer === undefined ? undefined : assessFormalOfferPreparation(world, offer)
+          const signing = assessPlayerContractSigningReadiness(world, team.id, negotiation.id)
+          const decision = signing.governanceDecisionId === undefined ? undefined : world.governanceDecisionsById[signing.governanceDecisionId]
+          const signingAppointments = Object.values(world.governanceAppointmentsById).filter((appointment) => appointment.actor.kind === 'COACH'
+            && appointment.actor.id === world.userCoachId && appointment.startedOn <= world.currentDate
+            && (appointment.endedOn === undefined || appointment.endedOn >= world.currentDate))
+          const institution = Object.values(world.governanceInstitutionsById).find((item) => item.teamIds.includes(team.id))
+          const rights = institution === undefined ? undefined : resolveGovernanceDecisionRights({
+            decisionType: 'PLAYER_CONTRACT_SIGNING', institutionId: institution.id, asOfDate: world.currentDate,
+            bodies: Object.values(world.governanceBodiesById), authorityGrants: Object.values(world.governanceAuthorityGrantsById),
+            participationGrants: Object.values(world.governanceDecisionParticipationGrantsById),
+          })
+          const proposerBodyIds = rights?.proposerBodyIds.filter((bodyId) => signingAppointments.some((appointment) => appointment.bodyId === bodyId)) ?? []
+          const approverBodyIds = decision === undefined ? [] : signing.requiredApproverBodyIds.filter((bodyId) => signingAppointments.some((appointment) => appointment.bodyId === bodyId))
+          const approved = new Set(signing.approvedBodyIds)
+          return (
+            <article key={negotiation.id} className="ng-canon__panel" data-negotiation-id={negotiation.id}>
+              <h4>{player === undefined ? negotiation.playerId : `${player.firstName} ${player.lastName}`}</h4>
+              <p>Contact: {negotiation.status === 'CONTACTED' ? 'Awaiting player response' : 'CONTACTED'} · Response: {negotiation.contactResponse?.outcome ?? 'Pending'}</p>
+              <p>Negotiation: {negotiation.status}{'salary' in negotiation && negotiation.salary !== undefined ? ` · ${formatMoney(negotiation.salary)} / ${negotiation.years} years` : ''}</p>
+              {negotiation.status === 'CONTACTED' && negotiation.contactResponse?.outcome === 'OPEN_TO_TALKS' && preparation !== undefined && (
+                <>
+                  <p>Offer preparation: {preparation.readiness}{preparation.blockers.length > 0 ? ` · ${preparation.blockers.join(', ')}` : ''}</p>
+                  {preparation.readiness === 'READY_TO_SUBMIT_OFFER' && <button onClick={() => submitFreeAgentOffer(team.id, negotiation.id, negotiation.sourceProposalId!)} type="button">Submit prepared offer</button>}
+                </>
+              )}
+              {negotiation.status === 'COUNTERED' && negotiation.salary !== undefined && (
+                <>
+                  <p>Counter: {formatMoney(negotiation.salary)} / {negotiation.years} years</p>
+                  <button onClick={() => decideFreeAgentCounter(team.id, negotiation.id, negotiation.round, { kind: 'ACCEPT_COUNTER' })} type="button">Accept counter</button>
+                  <label>Revise salary<input aria-label={`Revised salary ${negotiation.id}`} min="1" onChange={(event) => setRevisions((state) => ({ ...state, [negotiation.id]: { salary: event.target.value, years: state[negotiation.id]?.years ?? '' } }))} type="number" value={revisions[negotiation.id]?.salary ?? ''} /></label>
+                  <label>Revise years<input aria-label={`Revised years ${negotiation.id}`} min="1" onChange={(event) => setRevisions((state) => ({ ...state, [negotiation.id]: { salary: state[negotiation.id]?.salary ?? '', years: event.target.value } }))} type="number" value={revisions[negotiation.id]?.years ?? ''} /></label>
+                  <button disabled={!Number.isSafeInteger(Number(revisions[negotiation.id]?.salary)) || Number(revisions[negotiation.id]?.salary) < 1 || !Number.isSafeInteger(Number(revisions[negotiation.id]?.years)) || Number(revisions[negotiation.id]?.years) < 1}
+                    onClick={() => decideFreeAgentCounter(team.id, negotiation.id, negotiation.round, { kind: 'REVISE_OFFER', terms: { salary: Number(revisions[negotiation.id]?.salary), years: Number(revisions[negotiation.id]?.years) } })} type="button">Submit revised offer</button>
+                  <button onClick={() => decideFreeAgentCounter(team.id, negotiation.id, negotiation.round, { kind: 'DECLINE_COUNTER' })} type="button">Decline counter</button>
+                </>
+              )}
+              {negotiation.status === 'ACCEPTED' && <p>Agreed terms: {formatMoney(negotiation.salary)} / {negotiation.years} years</p>}
+              {negotiation.status === 'ACCEPTED' && signing.status !== 'SIGNED' && signing.status !== 'ALREADY_SIGNED' && (
+                <>
+                  <p>Signing Governance: {signing.status} · {signing.blocker ?? 'Awaiting current authority'}</p>
+                  {decision !== undefined && <p>Approvals: {approved.size} of {signing.requiredApproverBodyIds.length}; pending: {signing.requiredApproverBodyIds.filter((bodyId) => !approved.has(bodyId)).map((bodyId) => world.governanceBodiesById[bodyId]?.name ?? bodyId).join(', ') || 'none'}</p>}
+                </>
+              )}
+              {negotiation.status === 'ACCEPTED' && decision === undefined && proposerBodyIds.map((bodyId) => (
+                <button key={bodyId} onClick={() => startFreeAgentSigningGovernance(team.id, negotiation.id, negotiation.sourceProposalId!, bodyId)} type="button">Start signing approval ({world.governanceBodiesById[bodyId]?.name ?? bodyId})</button>
+              ))}
+              {decision !== undefined && approverBodyIds.filter((bodyId) => !approved.has(bodyId)).map((bodyId) => (
+                <button key={bodyId} onClick={() => recordFreeAgentSigningDecision(decision.id, 'APPROVED', bodyId)} type="button">Approve signing ({world.governanceBodiesById[bodyId]?.name ?? bodyId})</button>
+              ))}
+              {decision !== undefined && signing.status === 'APPROVED' && team.coachId === world.userCoachId && (
+                <button onClick={() => completeFreeAgentSigning(team.id, negotiation.id, negotiation.sourceProposalId!)} type="button">Complete signing</button>
+              )}
+              {negotiation.status === 'SIGNED' && <p>Signed · Contract {negotiation.signedContractId}</p>}
+              {!isPlayerFreeAgent(world, negotiation.playerId) && negotiation.status !== 'SIGNED' && <p>Signing blocker: Player is no longer a free agent.</p>}
+            </article>
+          )
+        })}
+      </section>
     </NgHoloShell>
   )
+}
+
+function FreeAgentOfferActions({ offer, onContact }: {
+  readonly offer: ReturnType<typeof assessRoutedFreeAgentOfferIntelligence>[number] | undefined
+  readonly onContact: () => void
+}) {
+  const activeContact = offer?.existingNegotiation
+  if (activeContact !== undefined) return <p>Contact status: {activeContact.status}</p>
+  if (offer === undefined) return <p>Contact unavailable: this player is not in the current feasible BS10 acquisition recommendations.</p>
+  return <div>
+    <p>Contact readiness: {offer.contactReadiness}</p>
+    {offer.contactReadiness === 'READY_TO_CONTACT'
+      ? <button onClick={onContact} type="button">Contact player</button>
+      : <p>Contact blocker: {offer.blockers.join(', ') || offer.contactAuthority.blockers.join(', ') || 'Current proposal is unavailable.'}</p>}
+  </div>
 }

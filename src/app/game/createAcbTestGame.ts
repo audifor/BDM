@@ -29,6 +29,7 @@ import { createTeam } from '@/domain/team'
 import { createGameWorld, type GameWorld } from '@/domain/world'
 import type { CoachRpgPreset } from '@/domain/coachRpg'
 import { ACB_2026_27_TEAMS, ACB_QUICK_START_TEAM_KEY } from '@/data/acb2026'
+import { initializeAiClubManagementPlanning } from '@/app/gmPlanning'
 
 const ACB_SEED = 20_260_827
 const SPAIN_ID = countryIdFromString('acb-country-spain')
@@ -185,7 +186,7 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
   let world = buildWorld([])
   world = buildWorld(generateRoundRobinSchedule({ world, seasonId: season.id, daysBetweenRounds: 7 }))
   world = ensurePlayerKnowledge(world)
-  return initializeBoardState(world, userTeam.id)
+  return initializeAiClubManagementPlanning(initializeBoardState(world, userTeam.id))
 }
 
 function createCanonicalCoach(input: Omit<Parameters<typeof createCoach>[0], 'personId' | 'staffProfileId'>) {
