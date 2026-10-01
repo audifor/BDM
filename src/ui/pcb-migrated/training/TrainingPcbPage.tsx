@@ -2,7 +2,7 @@ import { Fragment, useMemo, useState, type ReactNode } from "react";
 import type { GameWorld } from "@/domain/world";
 import { getCareerFatigueForPlayer, getDevelopmentStimulusForPlayer, getGamesForTeam, getTeamRoster } from "@/domain/world";
 import { getUserTeam } from "@/engine/calendar";
-import { canTeamTrainOnDate, dailyLoadStatusForTeam, dailyScheduledLoad, nextEligibleTrainingDate } from "@/engine/training";
+import { buildTrainingPlanningContext, canTeamTrainOnDate, dailyLoadStatusForTeam, dailyScheduledLoad, nextEligibleTrainingDate, type TrainingPlanningWarningCode } from "@/engine/training";
 import { addDays, formatGameDate, isoWeekNumber, parseGameDate, type GameDate } from "@/domain/date";
 import { BASKETBALL_RATING_KEYS, type BasketballRatingKey, type Player } from "@/domain/player";
 import type { Team } from "@/domain/team";
@@ -12,7 +12,7 @@ import { STAFF_ROLE_REGISTRY, type StaffRoleId } from "@/domain/staff";
 import { STAFF_ROLE_LABELS } from "@/ui/staffPresentation";
 import { useEntityContextMenu } from "@/ui/entityContextMenu/EntityContextMenuProvider";
 import { PlayerNameLink } from "@/ui/navigation/PlayerNameLink";
-import { TRAINING_CATALOG, trainingLoad, type DailyLoadStatus, type ScheduledTrainingSession, type TrainingCategory, type TrainingFocus, type TrainingIntensity as DomainTrainingIntensity, type TrainingDefinition, type TrainingScope, type UserTrainingModule } from "@/domain/training";
+import { TRAINING_CATALOG, trainingDefinitionById, trainingLoad, type DailyLoadStatus, type ScheduledTrainingSession, type TrainingCategory, type TrainingFocus, type TrainingIntensity as DomainTrainingIntensity, type TrainingDefinition, type TrainingScope, type UserTrainingModule } from "@/domain/training";
 import { ATTRIBUTE_LABELS } from "@/ui/attributeLabels";
 import { selectLatestUserTrainingSession, selectUserTeamScheduledSessions, selectUserTrainingModules, selectUserTrainingPlan } from "@/stores/gameStore";
 import { PrecisionDivHead } from "@/ui-ng/components/PrecisionDivHead";
@@ -49,6 +49,14 @@ const INTENSITY_ES: Record<DomainTrainingIntensity, "Baja" | "Media" | "Alta"> =
 const INTENSITY_FROM_ES: Record<"Baja" | "Media" | "Alta", DomainTrainingIntensity> = { Baja: "light", Media: "normal", Alta: "high" };
 const LOAD_STATUS_LABELS: Record<DailyLoadStatus, string> = { OK: "OK", HIGH: "Alta", VERY_HIGH: "Muy alta" };
 const LOAD_STATUS_TONE: Record<DailyLoadStatus, "good" | "warn" | "danger"> = { OK: "good", HIGH: "warn", VERY_HIGH: "danger" };
+const PLANNING_WARNING_LABELS: Readonly<Record<TrainingPlanningWarningCode, string>> = {
+  MATCH_TODAY: "Hay un partido hoy; no se recomienda programar entrenamiento.",
+  MATCH_TOMORROW: "Hay un partido manana; evita la carga fisica alta.",
+  DENSE_FIXTURE_WINDOW: "Calendario denso: baja la carga y prioriza recuperacion.",
+  HIGH_PLAYER_FATIGUE: "Hay jugadores con fatiga alta; se recomienda carga ligera.",
+  HIGH_SCHEDULED_LOAD: "La carga ya programada es alta en los proximos siete dias.",
+  MATCH_TRAINING_CONFLICT: "Hay sesiones programadas que coinciden con un partido; no se ejecutaran.",
+};
 const DAY_NAMES = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
 function playerName(player: Player): string {
@@ -238,6 +246,9 @@ export function TrainingPcbPage({
         storageKey="pcbasket.subnav.training"
       />
       ) : null}
+      {variant === "ng" && world !== undefined && team !== undefined && (tab === "team" || tab === "load") && (
+        <TrainingPlanningSummary world={world} team={team} />
+      )}
       {tab === "team" ? (
         <TeamTraining
           onCancelSession={onCancelSession}
@@ -259,6 +270,37 @@ export function TrainingPcbPage({
         <StaffAssignments world={world} />
       ) : (
         <TrainingModules onDeleteModule={onDeleteModule} onSaveModule={onSaveModule} userModules={userModules} />
+      )}
+    </section>
+  );
+}
+
+function TrainingPlanningSummary({ world, team }: { readonly world: GameWorld; readonly team: Team }) {
+  const context = buildTrainingPlanningContext(world, team.id);
+  const recommendation = context.recommendation === "REST"
+    ? "Descanso en dia de partido"
+    : context.recommendation === "RECOVERY"
+      ? `Recuperacion (${trainingDefinitionById(context.recommendedModuleId!).name})`
+      : context.recommendation === "LIGHT"
+        ? `Carga ligera (${trainingDefinitionById(context.recommendedModuleId!).name})`
+        : `Plan actual (${trainingDefinitionById(context.recommendedModuleId!).name}, ${INTENSITY_LABELS[context.recommendedIntensity!]})`;
+  const warnings = context.warnings.map((warning) => {
+    if (warning === "DENSE_FIXTURE_WINDOW") return `${PLANNING_WARNING_LABELS[warning]} ${context.fixtureDensity.gamesNext7Days} partidos proximos.`;
+    if (warning === "HIGH_PLAYER_FATIGUE") return `${context.fatigue.highCount} jugadores con fatiga alta.`;
+    return PLANNING_WARNING_LABELS[warning];
+  });
+
+  return (
+    <section aria-label="Contexto de planificacion de entrenamiento" className="pcb-training__planning-summary">
+      <div>
+        <h2>Planificacion semanal</h2>
+        <p>{context.fixtureDensity.gamesNext7Days} partidos en los proximos siete dias · {context.fixtureDensity.gamesRecent7Days} recientes · fatiga media {context.fatigue.average.toFixed(0)}% · {context.scheduledSessionsNext7Days} sesiones programadas</p>
+      </div>
+      <p><strong>Recomendacion:</strong> {recommendation}</p>
+      {warnings.length > 0 ? (
+        <ul>{warnings.map((warning, index) => <li key={`${index}-${warning}`}>{warning}</li>)}</ul>
+      ) : (
+        <p>Sin alertas de calendario o carga. El plan actual esta disponible para revision.</p>
       )}
     </section>
   );

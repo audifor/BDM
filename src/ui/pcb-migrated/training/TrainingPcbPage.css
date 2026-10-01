@@ -1,4 +1,5 @@
 /* Canonical Plantilla cell format for Individual, Carga and Staff. */
+.pcb-training__planning-summary{display:grid;gap:6px;margin:0 0 12px;padding:12px 14px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:linear-gradient(145deg,rgba(255,255,255,.08),rgba(255,255,255,.025));color:#e2e8f0}.pcb-training__planning-summary h2{font-size:14px}.pcb-training__planning-summary p{margin:0;color:#94a3b8}.pcb-training__planning-summary ul{display:grid;gap:4px;margin:0;padding-left:18px;color:#facc15}
 .pcb-training .pcb-training__table { border-color:#293a4a; border-radius:7px; background:rgba(15,23,42,.7); }
 .pcb-training .pcb-training__table > div { height:43px; min-height:0; align-items:stretch; border-color:#293a4a; background:transparent; color:#eef5fb; font-size:11px; font-weight:600; }
 .pcb-training .pcb-training__table > div > * { display:flex; height:100%; min-width:0; align-items:center; justify-content:center; padding:0 10px; border-right:1px solid #293a4a; }

@@ -10,6 +10,7 @@ import type { CanonicalRatingKey } from '@/domain/player'
 import type { PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
 import { resolveDelegatedResponsibility, trainingQuality } from '@/engine/staff'
 import { delegatedStimulusMultiplier, effectiveIndividualDefinition, effectiveIntensity, effectiveTeamDefinition } from './DelegatedTraining'
+import { canTeamTrainOnDate } from './TrainingEngine'
 
 /**
  * The earliest date a newly-scheduled session is guaranteed to actually execute.
@@ -36,6 +37,7 @@ export function scheduleTrainingSession(world: GameWorld, session: ScheduledTrai
   if (session.date <= world.currentDate) {
     throw new RangeError(`Scheduled session date ${session.date} must be after the current date ${world.currentDate}; it would never execute`)
   }
+  if (!canTeamTrainOnDate(world, session.teamId, session.date)) throw new RangeError(`Training cannot be scheduled on fixture date ${session.date}`)
   const existing = Object.values(world.scheduledTrainingSessionsById)
   const collision = findCollidingSession(session, existing)
   if (collision !== undefined) throw new RangeError(`Session collides with existing session ${collision.id}`)
@@ -70,8 +72,18 @@ export function cancelScheduledTrainingSession(world: GameWorld, sessionId: stri
 
 /** Executes every scheduled session whose date is world.currentDate and that has not already been completed. Idempotent: completed sessions are skipped. */
 export function executeScheduledTrainingSessions(world: GameWorld): GameWorld {
+  return executeScheduledTrainingSessionsWithEvidence(world).world
+}
+
+/** Due sessions that conflict with a fixture are preserved for inspection and never executed. */
+export function executeScheduledTrainingSessionsWithEvidence(world: GameWorld): { readonly world: GameWorld; readonly matchConflictSessionIds: readonly string[] } {
   const due = Object.values(world.scheduledTrainingSessionsById).filter((session) => session.date === world.currentDate && session.status === 'scheduled')
-  return due.reduce((next, session) => executeScheduledSession(next, session), world)
+  const blocked = due.filter((session) => !canTeamTrainOnDate(world, session.teamId, session.date))
+  const executable = due.filter((session) => canTeamTrainOnDate(world, session.teamId, session.date))
+  return {
+    world: executable.reduce((next, session) => executeScheduledSession(next, session), world),
+    matchConflictSessionIds: blocked.map((session) => session.id).sort(),
+  }
 }
 
 /**
