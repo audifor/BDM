@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game/createNewGame'
 import { getUserTeam } from '@/engine/calendar'
 import { getTeamStaffAssignments, type GameWorld } from '@/domain/world'
-import { RESPONSIBILITY_DOMAINS, RESPONSIBILITY_KINDS } from '@/domain/responsibility'
+import { isResponsibilityConnected, RESPONSIBILITY_DOMAINS, RESPONSIBILITY_KINDS } from '@/domain/responsibility'
 import type { StaffRoleId } from '@/domain/staff'
 import { setTeamResponsibility } from '@/app/staffResponsibilities'
 import type { StaffPersonId, TeamId } from '@/domain/ids'
@@ -35,8 +35,9 @@ describe('getTeamResponsibilityPresentation', () => {
     const w = world()
     const teamId = userTeamId(w)
     const rows = getTeamResponsibilityPresentation(w, teamId)
-    expect(rows).toHaveLength(RESPONSIBILITY_KINDS.length)
-    expect(new Set(rows.map((row) => row.kind))).toEqual(new Set(RESPONSIBILITY_KINDS))
+    const activeKinds = RESPONSIBILITY_KINDS.filter(isResponsibilityConnected)
+    expect(rows).toHaveLength(activeKinds.length)
+    expect(new Set(rows.map((row) => row.kind))).toEqual(new Set(activeKinds))
   })
 
   it('is ordered deterministically by canonical domain then kind order', () => {
@@ -62,12 +63,10 @@ describe('getTeamResponsibilityPresentation', () => {
     expect(delegatedRow.holderLabel).toContain(' ') // "First Last"
     expect(delegatedRow.holderStaffId).toBe(assistantId)
 
-    const userControlledRow = rows.find((row) => row.kind === 'defensiveGamePlan')!
+    const userControlledRow = rows.find((row) => row.kind === 'oppositionScouting')!
     expect(userControlledRow.holderLabel).toBe('YOU')
 
-    const coachOnlyRow = rows.find((row) => row.kind === 'rotationPlanning')!
-    expect(coachOnlyRow.holderLabel).toBe('HEAD COACH')
-    expect(coachOnlyRow.holderStaffId).toBeUndefined()
+    expect(rows.some((row) => row.kind === 'rotationPlanning')).toBe(false)
   })
 
   it('labels the domain in uppercase display form', () => {
@@ -106,6 +105,12 @@ describe('getEligibleResponsibilityCandidates', () => {
     const w = world()
     const teamId = userTeamId(w)
     expect(getEligibleResponsibilityCandidates(w, teamId, 'rotationPlanning', 'advisory')).toEqual([])
+  })
+
+  it('returns no candidates for deferred responsibilities', () => {
+    const w = world()
+    const teamId = userTeamId(w)
+    expect(getEligibleResponsibilityCandidates(w, teamId, 'defensiveGamePlan', 'delegated')).toEqual([])
   })
 
   it('projected workload uses the canonical calculateStaffWorkload result and reflects capacity added', () => {

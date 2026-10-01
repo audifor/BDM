@@ -149,6 +149,19 @@ describe('calculateStaffWorkload', () => {
     expect(afterOne.totalCapacityUsed).toBeGreaterThan(baseline.totalCapacityUsed)
   })
 
+  it('does not charge inert legacy responsibility rows to workload', () => {
+    const input = createValidGameWorldInput()
+    const world = createGameWorld(input)
+    const teamId = teamIdFromString('team-home')
+    const staffId = staffPersonIdFromString('resp-world-doctor')
+    const withDoctor = updateGameWorld(world, {
+      staffPeople: [...Object.values(world.staffPeopleById), { id: staffId, identity: { firstName: 'Elin', lastName: 'Voss' }, professional: { attributes } }],
+      teamStaffAssignments: [...Object.values(world.teamStaffAssignmentsById), { id: teamStaffAssignmentIdFromString('resp-world-doctor-assignment'), staffPersonId: staffId, teamId, role: 'teamDoctor', assignedOn: createGameDate(2032, 10, 1) }],
+      responsibilities: [{ id: responsibilityIdForTeam(teamId, 'manageRecovery'), teamId, kind: 'manageRecovery', mode: 'delegated', holderStaffId: staffId }],
+    })
+    expect(calculateStaffWorkload(withDoctor, staffId).totalCapacityUsed).toBe(STAFF_ROLE_REGISTRY.teamDoctor.capacityCost)
+  })
+
   it('detects overload once capacity used exceeds the seniority-derived limit', () => {
     const world = worldWithScout()
     const teamId = teamIdFromString('team-home')

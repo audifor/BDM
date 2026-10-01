@@ -1,6 +1,7 @@
 import type { StaffPersonId, TeamId } from '@/domain/ids'
 import {
   createResponsibility,
+  isResponsibilityConnected,
   responsibilityDefinition,
   responsibilityIdForTeam,
   validateResponsibilityAssignment,
@@ -43,6 +44,9 @@ export function setTeamResponsibility(world: GameWorld, input: SetTeamResponsibi
   const before: Responsibility | undefined = world.responsibilitiesById[responsibilityIdForTeam(input.teamId, input.kind)]
 
   const definition = responsibilityDefinition(input.kind)
+  if (!isResponsibilityConnected(input.kind)) {
+    throw new RangeError(`Responsibility ${input.kind} is ${definition.disposition.toLowerCase().replaceAll('_', ' ')} and cannot be assigned`)
+  }
   if (!definition.supportedModes.includes(input.mode)) {
     throw new RangeError(`Responsibility ${input.kind} does not support mode ${input.mode}`)
   }

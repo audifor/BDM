@@ -24,7 +24,7 @@ Each row names the current authority, not an aspirational design. Compatibility 
 | Conflicts | StaffConflict domain/engine | Conflict lifecycle and triggers. |
 | Politics | StaffPolitics domain/engines | Cases, positions, actions, alliances and factions; not governance's final authority. |
 | Workload/capacity | Role registry capacity cost + Responsibility registry cost + `calculateStaffWorkload` | Utilization is derived; Staff human workload tracking records sustained consequences. No separate persisted universal workload total. |
-| Responsibilities | `responsibilitiesById` + `RESPONSIBILITY_REGISTRY` | Exactly one row per team/kind; validates holder against live assignment and role. |
+| Responsibilities | `responsibilitiesById` + `RESPONSIBILITY_REGISTRY` | Canonical generic authority; registry disposition gates new assignment, default enrichment, resolution, workload, and active UI visibility. Retired/deferred kinds remain parseable for old saves; target domains retain all final mutations. |
 | Delegation resolution | `resolveDelegatedResponsibility` | Sole shared gate for delegated Staff holder/context; caller owns the target action. |
 | Advisory outcomes | `DelegationOutcome` + StaffRecommendation application service | Advisory quality/payload and accepted/dismissed state; consumer owns accepted mutation. |
 | Training Staff resolution | Training consumer + generic Responsibility resolver | Scheduled execution chooses team vs individual kind and resolves `determineIntensity`; PlayerDevelopment owns later rating transition. |

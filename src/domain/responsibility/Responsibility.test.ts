@@ -45,6 +45,16 @@ describe('RESPONSIBILITY_REGISTRY', () => {
     expect(RESPONSIBILITY_REGISTRY.rotationPlanning.eligibleParticipant).toBe('coach')
     expect(RESPONSIBILITY_REGISTRY.rotationPlanning.eligibleRoleIds).toHaveLength(0)
   })
+
+  it('records an explicit inactive disposition and owner for every formerly disconnected kind', () => {
+    expect(RESPONSIBILITY_REGISTRY.manageRecovery.disposition).toBe('RETIRED')
+    expect(RESPONSIBILITY_REGISTRY.recommendWorkloadChange.disposition).toBe('RETIRED')
+    expect(RESPONSIBILITY_REGISTRY.rotationPlanning.disposition).toBe('RETIRED')
+    for (const kind of ['defensiveGamePlan', 'offensivePreparation', 'matchupRecommendation'] as const) {
+      expect(RESPONSIBILITY_REGISTRY[kind].disposition).toBe('DEFERRED_WITH_OWNER')
+      expect(RESPONSIBILITY_REGISTRY[kind].dispositionOwner).toContain('BS13C')
+    }
+  })
 })
 
 describe('createResponsibility', () => {

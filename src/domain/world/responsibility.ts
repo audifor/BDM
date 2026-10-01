@@ -1,5 +1,5 @@
 import type { StaffPersonId, TeamId } from '@/domain/ids'
-import { responsibilityDefinition, type Responsibility, type ResponsibilityKind, type StaffWorkloadSnapshot } from '@/domain/responsibility'
+import { isResponsibilityConnected, responsibilityDefinition, type Responsibility, type ResponsibilityKind, type StaffWorkloadSnapshot } from '@/domain/responsibility'
 import { staffRoleDefinition, type StaffRoleSeniority } from '@/domain/staff'
 import type { GameWorld } from './GameWorld'
 import { getStaffAssignment } from './staff'
@@ -34,7 +34,7 @@ export function getResponsibility(world: GameWorld, teamId: TeamId, kind: Respon
  */
 export function calculateStaffWorkload(world: GameWorld, staffId: StaffPersonId): StaffWorkloadSnapshot {
   const assignment = getStaffAssignment(world, staffId)
-  const heldResponsibilityCost = getResponsibilitiesHeldByStaff(world, staffId).reduce((sum, responsibility) => sum + responsibilityDefinition(responsibility.kind).capacityCost, 0)
+  const heldResponsibilityCost = getResponsibilitiesHeldByStaff(world, staffId).filter((responsibility) => isResponsibilityConnected(responsibility.kind)).reduce((sum, responsibility) => sum + responsibilityDefinition(responsibility.kind).capacityCost, 0)
   if (assignment === undefined) return { staffId, totalCapacityUsed: heldResponsibilityCost, capacityLimit: 0, utilization: heldResponsibilityCost > 0 ? Infinity : 0, overloaded: heldResponsibilityCost > 0 }
   const roleDefinition = staffRoleDefinition(assignment.role)
   const totalCapacityUsed = roleDefinition.capacityCost + heldResponsibilityCost

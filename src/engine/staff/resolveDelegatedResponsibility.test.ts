@@ -30,6 +30,13 @@ function setResponsibility(world: GameWorld, teamId: TeamId, kind: 'assignScouts
 }
 
 describe('resolveAdvisoryResponsibility', () => {
+  it('does not resolve retired or deferred kinds', () => {
+    const base = createNewGame()
+    const teamId = Object.values(base.teams)[0]!.id
+    expect(resolveDelegatedResponsibility(base, teamId, 'manageRecovery')).toBeUndefined()
+    expect(resolveAdvisoryResponsibility(base, teamId, 'matchupRecommendation')).toBeUndefined()
+  })
+
   it('resolves when the responsibility is genuinely advisory with a valid holder', () => {
     const base = createNewGame()
     const teamId = Object.values(base.teams)[0]!.id

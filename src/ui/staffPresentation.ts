@@ -17,6 +17,7 @@ import type { StaffAppointmentReason, StaffCareerHistoryEntry, StaffDepartureRea
 import { staffReputationScore, type StaffReputationProfile } from '@/domain/staffReputation'
 import { calculateStaffWorkload, getStaffAssignment, getStaffPerson, getTeamStaffAssignments, getTeamResponsibilities, getResponsibilitiesHeldByStaff, type GameWorld } from '@/domain/world'
 import {
+  isResponsibilityConnected,
   RESPONSIBILITY_DOMAINS,
   RESPONSIBILITY_KINDS,
   responsibilityDefinition,
@@ -451,7 +452,7 @@ export interface StaffResponsibilityPresentationItem {
 export function getTeamResponsibilityPresentation(world: GameWorld, teamId: TeamId): readonly StaffResponsibilityPresentationItem[] {
   const existingByKind = new Map<ResponsibilityKind, Responsibility>(getTeamResponsibilities(world, teamId).map((item) => [item.kind, item]))
 
-  return [...RESPONSIBILITY_KINDS]
+  return RESPONSIBILITY_KINDS.filter(isResponsibilityConnected)
     .sort((left, right) => {
       const definitionLeft = responsibilityDefinition(left)
       const definitionRight = responsibilityDefinition(right)
@@ -513,6 +514,7 @@ export interface StaffResponsibilityCandidate {
  */
 export function getEligibleResponsibilityCandidates(world: GameWorld, teamId: TeamId, kind: ResponsibilityKind, mode: 'delegated' | 'advisory'): readonly StaffResponsibilityCandidate[] {
   const definition = responsibilityDefinition(kind)
+  if (!isResponsibilityConnected(kind)) return []
   if (definition.eligibleParticipant !== 'staff') return []
 
   return getTeamStaffAssignments(world, teamId)
