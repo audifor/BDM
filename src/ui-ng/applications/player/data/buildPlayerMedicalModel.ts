@@ -2,6 +2,7 @@ import { compareGameDates, type GameDate } from '@/domain/date'
 import { CAREER_FATIGUE_DAILY_RECOVERY } from '@/domain/careerFatigue/CareerFatigue'
 import {
   formatInjuryKind,
+  injuryLifecycleStatus,
   isInjuryActive,
   type InjuryKind,
   type InjuryRecord,
@@ -67,6 +68,9 @@ export interface MedicalActiveInjuryModel {
   readonly severityLabel: string
   readonly injuredOnLabel: string
   readonly expectedReturnLabel: string
+  readonly reviewDueLabel: string
+  readonly statusLabel: 'RECOVERING' | 'RETURN-TO-PLAY REVIEW'
+  readonly clearedOnLabel: string | null
   readonly daysRemaining: number
   readonly expectedDurationDays: number
   readonly sourceContext: string | null
@@ -86,8 +90,9 @@ export interface MedicalHistoryRowModel {
   readonly id: InjuryId
   readonly injuredOnLabel: string
   readonly expectedReturnLabel: string
+  readonly clearedOnLabel: string | null
   readonly injuryLabel: string
-  readonly statusLabel: 'Active' | 'Recovered'
+  readonly statusLabel: 'RECOVERING' | 'RETURN-TO-PLAY REVIEW' | 'CLEARED'
   readonly statusTone: 'active' | 'recovered'
   readonly durationLabel: string
   readonly severityLabel: string
@@ -97,7 +102,7 @@ export interface MedicalInspectorInjuryDetail {
   readonly kind: 'injury'
   readonly injuryLabel: string
   readonly severityLabel: string
-  readonly statusLabel: 'Active' | 'Recovered'
+  readonly statusLabel: 'RECOVERING' | 'RETURN-TO-PLAY REVIEW' | 'CLEARED'
   readonly injuredOnLabel: string
   readonly expectedReturnLabel: string
   readonly durationLabel: string
@@ -459,8 +464,9 @@ function playerInjuries(world: GameWorld, playerId: PlayerId): InjuryRecord[] {
     )
 }
 
-function injuryStatus(injury: InjuryRecord, onDate: GameDate): 'Active' | 'Recovered' {
-  return isInjuryActive(injury, onDate) ? 'Active' : 'Recovered'
+function injuryStatus(injury: InjuryRecord, onDate: GameDate): 'RECOVERING' | 'RETURN-TO-PLAY REVIEW' | 'CLEARED' {
+  const status = injuryLifecycleStatus(injury, onDate)
+  return status === 'RTP_REVIEW_DUE' ? 'RETURN-TO-PLAY REVIEW' : status
 }
 
 function buildSourceContext(world: GameWorld, injury: InjuryRecord): string | null {
@@ -475,12 +481,16 @@ function buildActiveInjuryModel(
   injury: InjuryRecord,
   onDate: GameDate,
 ): MedicalActiveInjuryModel {
+  const lifecycleStatus = injuryStatus(injury, onDate)
   return {
     id: injury.id,
     kindLabel: formatInjuryKind(injury.kind),
     severityLabel: SEVERITY_LABELS[injury.severity],
     injuredOnLabel: formatGameDateLabel(injury.injuredOn),
     expectedReturnLabel: formatGameDateLabel(injury.expectedReturnDate),
+    reviewDueLabel: formatGameDateLabel(injury.returnToPlay?.reviewDueOn ?? injury.expectedReturnDate),
+    statusLabel: lifecycleStatus === 'CLEARED' ? 'RECOVERING' : lifecycleStatus,
+    clearedOnLabel: injury.returnToPlay?.clearedOn === undefined ? null : formatGameDateLabel(injury.returnToPlay.clearedOn),
     daysRemaining: calendarDaysBetween(onDate, injury.expectedReturnDate),
     expectedDurationDays: calendarDaysBetween(injury.injuredOn, injury.expectedReturnDate),
     sourceContext: buildSourceContext(world, injury),
@@ -522,9 +532,10 @@ function buildHistoryRow(injury: InjuryRecord, onDate: GameDate): MedicalHistory
     id: injury.id,
     injuredOnLabel: formatGameDateLabel(injury.injuredOn),
     expectedReturnLabel: formatGameDateLabel(injury.expectedReturnDate),
+    clearedOnLabel: injury.returnToPlay?.clearedOn === undefined ? null : formatGameDateLabel(injury.returnToPlay.clearedOn),
     injuryLabel: formatInjuryKind(injury.kind),
     statusLabel: status,
-    statusTone: status === 'Active' ? 'active' : 'recovered',
+    statusTone: status === 'CLEARED' ? 'recovered' : 'active',
     durationLabel: formatDurationLabel(calendarDaysBetween(injury.injuredOn, injury.expectedReturnDate)),
     severityLabel: SEVERITY_LABELS[injury.severity],
   }
@@ -549,7 +560,9 @@ export function buildPlayerMedicalModel(world: GameWorld, playerId: PlayerId): P
       ? null
       : activeInjury === undefined
         ? null
-        : `Expected return · ${formatGameDateLabel(activeInjury.expectedReturnDate)}`,
+        : injuryLifecycleStatus(activeInjury, onDate) === 'RTP_REVIEW_DUE'
+          ? `RETURN-TO-PLAY REVIEW · due ${formatGameDateLabel(activeInjury.returnToPlay?.reviewDueOn ?? activeInjury.expectedReturnDate)}`
+          : `RECOVERING · review due ${formatGameDateLabel(activeInjury.returnToPlay?.reviewDueOn ?? activeInjury.expectedReturnDate)}`,
     currentDateLabel: formatGameDateLabel(onDate),
     limitationLabel:
       activeInjury === undefined
@@ -700,7 +713,7 @@ const BODY_REGIONS: readonly {
 
 /**
  * The body map, derived from the recorded injuries by kind. A region with no matching active
- * injury is healthy; a matching one carries the injury and its return date.
+ * no injury is mapped; a matching one carries the injury and its review date.
  */
 function buildBodyRegions(
   injuries: readonly InjuryRecord[],
@@ -716,7 +729,7 @@ function buildBodyRegions(
         label: region.label,
         column: region.column,
         status: 'healthy',
-        statusLabel: 'Healthy',
+        statusLabel: 'No injury recorded',
         detail: 'No active issue recorded for this region.',
       }
     }
@@ -752,10 +765,10 @@ function buildMedicalDetail(
     risk.status === 'available' ? (risk.displayLabel ?? '—') : (risk.unavailableLabel ?? '—')
 
   return {
-    statusLabel: available ? 'Fully healthy' : 'Unavailable',
+    statusLabel: available ? 'Medically available' : 'Unavailable',
     statusTone: available ? 'positive' : 'caution',
     statusDetail: available
-      ? 'No current issues. Player is fit and available for all team activities.'
+      ? 'No active medical injury. Fatigue or competition eligibility may still limit availability.'
       : active === undefined
         ? 'The player is not selectable, but no injury record explains why.'
         : `${formatInjuryKind(active.kind)} until ${formatGameDateLabel(active.expectedReturnDate)}.`,
@@ -884,7 +897,7 @@ export function findMedicalInspectorDetail(
     durationLabel: injuryRow.durationLabel,
     daysRemainingLabel: daysRemaining,
     availabilityImpact:
-      injuryRow.statusLabel === 'Active'
+      injuryRow.statusLabel !== 'CLEARED'
         ? 'Unavailable for match selection'
         : 'No current availability restriction',
   }

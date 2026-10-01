@@ -92,7 +92,7 @@ export function CurrentInjuryPanel({
           </span>
           <span className="po-med-injury__detail">
             {clear
-              ? 'Player is fully fit and available for selection.'
+              ? 'No active medical injury. Fatigue or competition eligibility may still limit availability.'
               : `${band.summary ?? 'Return date not recorded.'} The player is not available for selection.`}
           </span>
         </span>
@@ -303,6 +303,7 @@ export function MedicalHistoryPanel({
     readonly severityLabel: string
     readonly durationLabel: string
     readonly statusLabel: string
+    readonly clearedOnLabel?: string | null
   }[]
   readonly selectedEventId: string | null
 }) {
@@ -345,7 +346,7 @@ export function MedicalHistoryPanel({
               <span>{row.injuryLabel}</span>
               <span>{row.severityLabel}</span>
               <span className="ng-type-numeric">{row.durationLabel}</span>
-              <span className={`is-${row.statusLabel.toLowerCase()}`}>{row.statusLabel}</span>
+              <span className={`is-${row.statusLabel.toLowerCase()}`}>{row.statusLabel}{row.clearedOnLabel === null || row.clearedOnLabel === undefined ? '' : ` · ${row.clearedOnLabel}`}</span>
             </button>
           ))
         )}

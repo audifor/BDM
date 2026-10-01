@@ -5,6 +5,7 @@ import { createSportsEcosystem } from '@/domain/ecosystem'
 import { createConference, createConferenceMembership } from '@/domain/conference'
 import { createCountry } from '@/domain/country'
 import { parseGameDate } from '@/domain/date'
+import { createInjury, migrateLegacyInjury, type InjuryRecord, type ReturnToPlayReview, type ReturnToPlayState } from '@/domain/injury'
 import { createGame } from '@/domain/game'
 import {
   coachIdFromString,
@@ -340,7 +341,7 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
     draftPickSwapRights: payload.draftPickSwapRights === undefined ? [] : array(payload.draftPickSwapRights, 'Save draft pick swap rights').map(readDraftPickSwapRight),
     retainedSalaryObligations: payload.retainedSalaryObligations === undefined ? [] : array(payload.retainedSalaryObligations, 'Save retained salary obligations').map(readRetainedSalaryObligation).filter((item) => seasonIds.has(item.seasonId)),
     tradeHistory: payload.tradeHistory === undefined ? [] : array(payload.tradeHistory, 'Save trade history').map(readTradeRecord).filter((item) => seasonIds.has(item.seasonId)),
-    injuries: payload.injuries === undefined ? [] : array(payload.injuries, 'Save injuries').map(readInjury),
+    injuries: payload.injuries === undefined ? [] : array(payload.injuries, 'Save injuries').map((injury) => readInjury(injury, parseGameDate(string(payload.currentDate, 'Save currentDate')))),
     contracts,
     playerTransactions: payload.playerTransactions === undefined ? [] : array(payload.playerTransactions, 'Save playerTransactions').map(readTransaction),
     teamFinances,
@@ -481,7 +482,42 @@ function readMatchStatLog(value: unknown): MatchStatLog {
   return { gameId: gameIdFromString(string(v.gameId, 'MatchStatLog gameId')), competitionId: competitionIdFromString(string(v.competitionId, 'MatchStatLog competitionId')), seasonId: seasonIdFromString(string(v.seasonId, 'MatchStatLog seasonId')), gameDate: parseGameDate(string(v.gameDate, 'MatchStatLog gameDate')), homeTeamId: teamIdFromString(string(v.homeTeamId, 'MatchStatLog homeTeamId')), awayTeamId: teamIdFromString(string(v.awayTeamId, 'MatchStatLog awayTeamId')), finalScore: { home: integer(score.home, 'MatchStatLog score home'), away: integer(score.away, 'MatchStatLog score away') }, playerLines: array(v.playerLines, 'MatchStatLog playerLines').map(readPlayerLine) }
 }
 function readSeasonHistory(value: unknown): SeasonHistoryRecord { const v = record(value, 'Season history'); const championSource = v.championSource === undefined ? undefined : string(v.championSource, 'Season history champion source'); return { seasonId: seasonIdFromString(string(v.seasonId, 'Season history seasonId')), competitionId: competitionIdFromString(string(v.competitionId, 'Season history competitionId')), completedOn: parseGameDate(string(v.completedOn, 'Season history completedOn')), championTeamId: teamIdFromString(string(v.championTeamId, 'Season history championTeamId')), ...(championSource === undefined ? {} : { championSource: championSource === 'postseason' || championSource === 'regularSeason' ? championSource : fail('Season history champion source is invalid') }), finalStandings: array(v.finalStandings, 'Season history finalStandings').map(readFinalStanding) } }
-function readInjury(value: unknown) { const v=record(value,'Injury'); const kind=string(v.kind,'Injury kind'); const severity=string(v.severity,'Injury severity'); return { id: injuryIdFromString(string(v.id,'Injury id')),playerId:playerIdFromString(string(v.playerId,'Injury playerId')),kind:kind as import('@/domain/injury').InjuryKind,severity:severity as import('@/domain/injury').InjurySeverity,injuredOn:parseGameDate(string(v.injuredOn,'Injury injuredOn')),expectedReturnDate:parseGameDate(string(v.expectedReturnDate,'Injury expectedReturnDate')),...(v.sourceGameId===undefined?{}:{sourceGameId:gameIdFromString(string(v.sourceGameId,'Injury sourceGameId'))})} }
+function readInjury(value: unknown, currentDate: import('@/domain/date').GameDate): InjuryRecord {
+  const v = record(value, 'Injury')
+  const base = {
+    id: injuryIdFromString(string(v.id, 'Injury id')),
+    playerId: playerIdFromString(string(v.playerId, 'Injury playerId')),
+    kind: string(v.kind, 'Injury kind') as import('@/domain/injury').InjuryKind,
+    severity: string(v.severity, 'Injury severity') as import('@/domain/injury').InjurySeverity,
+    injuredOn: parseGameDate(string(v.injuredOn, 'Injury injuredOn')),
+    expectedReturnDate: parseGameDate(string(v.expectedReturnDate, 'Injury expectedReturnDate')),
+    ...(v.sourceGameId === undefined ? {} : { sourceGameId: gameIdFromString(string(v.sourceGameId, 'Injury sourceGameId')) }),
+  }
+  if (v.returnToPlay === undefined) return migrateLegacyInjury(base as InjuryRecord, currentDate)
+  const state = record(v.returnToPlay, 'Injury Return-to-Play state')
+  const reviews: ReturnToPlayReview[] = array(state.reviews, 'Injury Return-to-Play reviews').map((item) => {
+    const review = record(item, 'Injury Return-to-Play review')
+    const actor = record(review.actor, 'Injury Return-to-Play actor')
+    const kind = string(actor.kind, 'Injury Return-to-Play actor kind')
+    return {
+      reviewedOn: parseGameDate(string(review.reviewedOn, 'Injury Return-to-Play review date')),
+      decision: string(review.decision, 'Injury Return-to-Play decision') as ReturnToPlayReview['decision'],
+      actor: kind === 'USER'
+        ? { kind, coachId: string(actor.coachId, 'Injury Return-to-Play coach') as import('@/domain/ids').CoachId }
+        : kind === 'AI'
+          ? { kind, teamId: string(actor.teamId, 'Injury Return-to-Play team') as import('@/domain/ids').TeamId }
+          : fail('Injury Return-to-Play actor kind is invalid'),
+      ...(review.staffId === undefined ? {} : { staffId: string(review.staffId, 'Injury Return-to-Play Staff') as import('@/domain/ids').StaffPersonId }),
+      ...(review.recommendationOutcomeId === undefined ? {} : { recommendationOutcomeId: string(review.recommendationOutcomeId, 'Injury Return-to-Play recommendation') as import('@/domain/responsibility').DelegationOutcomeId }),
+    }
+  })
+  const returnToPlay: ReturnToPlayState = {
+    reviewDueOn: parseGameDate(string(state.reviewDueOn, 'Injury review due date')),
+    ...(state.clearedOn === undefined ? {} : { clearedOn: parseGameDate(string(state.clearedOn, 'Injury cleared date')) }),
+    reviews,
+  }
+  return createInjury({ ...base, returnToPlay })
+}
 function readContract(value: unknown) { const v=record(value,'Contract'); const term=record(v.term,'Contract term'); const compensation=record(v.compensation,'Contract compensation'); const annualSalary=integer(compensation.annualSalary,'Contract annualSalary'); const years=compensation.years===undefined?undefined:array(compensation.years,'Contract compensation years').map((year)=>{const item=record(year,'Contract compensation year');const capTreatment=item.capTreatment===undefined?undefined:(()=>{const treatment=record(item.capTreatment,'Contract cap treatment');return treatment.policy==='NOT_APPLICABLE'?{policy:'NOT_APPLICABLE' as const}:{policy:string(treatment.policy,'Contract cap policy') as 'BASE_SALARY'|'EXPLICIT_SCHEDULE',capHit:integer(treatment.capHit,'Contract cap hit')}})();return{cashSalary:integer(item.cashSalary,'Contract cash salary'),...(item.capHit===undefined?{}:{capHit:integer(item.capHit,'Contract cap hit')}),guaranteedAmount:integer(item.guaranteedAmount,'Contract guaranteed amount'),...(capTreatment===undefined?{}:{capTreatment})}}); return {id:contractIdFromString(string(v.id,'Contract id')),playerId:playerIdFromString(string(v.playerId,'Contract playerId')),teamId:teamIdFromString(string(v.teamId,'Contract teamId')),kind:string(v.kind,'Contract kind') as 'standard',term:{startsOn:parseGameDate(string(term.startsOn,'Contract startsOn')),expiresOn:parseGameDate(string(term.expiresOn,'Contract expiresOn'))},compensation:{annualSalary,...(years===undefined?{}:{years})},...(v.predecessorContractId===undefined?{}:{predecessorContractId:contractIdFromString(string(v.predecessorContractId,'Contract predecessorContractId'))}),...(v.termination===undefined?{}:{termination:readTermination(v.termination)})} }
 function readContractServiceTimeBaseline(value: unknown) { const v=record(value,'Service-time baseline'); return createContractServiceTimeBaseline({id:string(v.id,'Service-time baseline id'),playerId:playerIdFromString(string(v.playerId,'Service-time player')),jurisdictionId:ecosystemIdFromString(string(v.jurisdictionId,'Service-time jurisdiction')),seasons:integer(v.seasons,'Service-time seasons'),effectiveOn:parseGameDate(string(v.effectiveOn,'Service-time effective date')),source:string(v.source,'Service-time source') as 'WORLD_GENERATION'|'IMPORTED'}) }
 function readContractServiceTimeCredit(value: unknown) { const v=record(value,'Service-time credit'); return createContractServiceTimeCredit({id:string(v.id,'Service-time credit id'),playerId:playerIdFromString(string(v.playerId,'Service-time player')),jurisdictionId:ecosystemIdFromString(string(v.jurisdictionId,'Service-time jurisdiction')),serviceYear:integer(v.serviceYear,'Service year'),seasonId:seasonIdFromString(string(v.seasonId,'Service season')),competitionId:string(v.competitionId,'Service competition'),creditedOn:parseGameDate(string(v.creditedOn,'Service credited date')),qualifyingGameIds:array(v.qualifyingGameIds,'Service games').map((id)=>string(id,'Service game id'))}) }

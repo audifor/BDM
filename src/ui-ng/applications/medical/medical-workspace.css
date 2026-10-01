@@ -277,3 +277,4 @@
     grid-template-columns: 1fr;
   }
 }
+.medical-workspace__rtp{display:grid;gap:12px;padding:14px}.medical-workspace__rtp-row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px;border:1px solid rgba(148,163,184,.2);border-radius:8px}.medical-workspace__rtp-row p{margin:5px 0;color:#94a3b8}.medical-workspace__rtp-actions{display:flex;flex-wrap:wrap;gap:8px}.medical-workspace__rtp-actions button{padding:7px 10px;border:1px solid rgba(148,163,184,.35);border-radius:6px;background:#172234;color:#e2e8f0;cursor:pointer}

@@ -29,9 +29,12 @@ function withInjury(
     injuredOn: (input.injuredOn ?? world.currentDate) as never,
     expectedReturnDate: (input.expectedReturnDate ?? addDays(world.currentDate, 14)) as never,
   })
+  const migrated = injury.expectedReturnDate < world.currentDate
+    ? { ...injury, returnToPlay: { reviewDueOn: injury.expectedReturnDate, clearedOn: injury.expectedReturnDate, reviews: [] } }
+    : injury
 
   return updateGameWorld(world, {
-    injuries: [...Object.values(world.injuriesById), injury],
+    injuries: [...Object.values(world.injuriesById), migrated],
   })
 }
 
@@ -72,7 +75,7 @@ describe('buildMedicalWorkspaceModel', () => {
     expect(model.injured[0]?.severityLabel).toBe('Moderate')
     expect(model.injured[0]?.sourceLabel).toBe('—')
     expect(model.history).toHaveLength(1)
-    expect(model.history[0]?.statusLabel).toBe('Active')
+    expect(model.history[0]?.statusLabel).toBe('RECOVERING')
     expect(model.risk.find((row) => row.playerId === playerId)?.available).toBe(false)
     expect(model.risk.find((row) => row.playerId === playerId)?.riskScore).toBeGreaterThan(0)
   })
@@ -90,7 +93,7 @@ describe('buildMedicalWorkspaceModel', () => {
     expect(model.injured).toEqual([])
     expect(model.injuredCount).toBe(0)
     expect(model.history).toHaveLength(1)
-    expect(model.history[0]?.statusLabel).toBe('Recovered')
+    expect(model.history[0]?.statusLabel).toBe('CLEARED')
     expect(isPlayerAvailable(recoveredWorld, playerId)).toBe(true)
   })
 })

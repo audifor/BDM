@@ -1,5 +1,5 @@
 import { compareGameDates } from '@/domain/date'
-import { formatInjuryKind, isInjuryActive } from '@/domain/injury'
+import { formatInjuryKind, injuryLifecycleStatus, isInjuryActive } from '@/domain/injury'
 import { getCareerFatigueForPlayer, isPlayerAvailable, type GameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { getMedicalRiskAssessments } from '@/engine/injury/MedicalRiskAssessment'
@@ -10,6 +10,7 @@ import {
   type MedicalInjuredRow,
   type MedicalRiskRow,
   type MedicalStaffRow,
+  type MedicalReturnToPlayRow,
   type MedicalWorkspaceModel,
 } from '@/ui-ng/applications/medical/medicalWorkspaceModel'
 import {
@@ -53,6 +54,9 @@ export function buildMedicalWorkspaceModel(world: GameWorld): MedicalWorkspaceMo
   const openAdvisoryCount = getStaffRecommendationsForTeam(world, team.id).filter(
     (item) => item.domain === 'medical' && (item.status === 'PENDING' || item.status === 'INFORMATIONAL'),
   ).length
+  const medicalRecommendations = getStaffRecommendationsForTeam(world, team.id).filter(
+    (item) => item.domain === 'medical' && (item.status === 'PENDING' || item.status === 'INFORMATIONAL'),
+  )
 
   const injured: readonly MedicalInjuredRow[] = [...activeInjuries]
     .sort(
@@ -72,9 +76,47 @@ export function buildMedicalWorkspaceModel(world: GameWorld): MedicalWorkspaceMo
       sourceLabel: injurySourceLabel(world, injury.sourceGameId),
       injuredOnLabel: formatGameDateLabel(injury.injuredOn),
       expectedReturnLabel: formatGameDateLabel(injury.expectedReturnDate),
+      clearedOnLabel: injury.returnToPlay?.clearedOn === undefined ? null : formatGameDateLabel(injury.returnToPlay.clearedOn),
       daysRemaining: calendarDaysBetween(world.currentDate, injury.expectedReturnDate),
       durationLabel: formatDurationLabel(calendarDaysBetween(injury.injuredOn, injury.expectedReturnDate)),
+      lifecycleStatus: injuryLifecycleStatus(injury, world.currentDate) === 'RTP_REVIEW_DUE' ? 'RETURN-TO-PLAY REVIEW' : 'RECOVERING',
+      fatigue: getCareerFatigueForPlayer(world, injury.playerId),
+      reviewHistory: (injury.returnToPlay?.reviews ?? []).map((review) => ({
+        dateLabel: formatGameDateLabel(review.reviewedOn),
+        decision: review.decision === 'CLEAR_FOR_PLAY' ? 'CLEAR FOR PLAY' : 'CONTINUE RECOVERY',
+        actorLabel: review.actor.kind === 'USER' ? 'User' : 'AI',
+      })),
     }))
+
+  const returnToPlayReviews: readonly MedicalReturnToPlayRow[] = [...activeInjuries]
+    .filter((injury) => injuryLifecycleStatus(injury, world.currentDate) === 'RTP_REVIEW_DUE')
+    .map((injury) => {
+      const recommendation = medicalRecommendations.find((item) => {
+        const outcome = world.delegationOutcomesById[item.outcomeId]
+        return outcome?.payload.injuryId === injury.id
+      })
+      return {
+        injuryId: injury.id,
+        playerId: injury.playerId,
+        playerName: playerName(world, injury.playerId),
+        injuryLabel: formatInjuryKind(injury.kind),
+        injuredOnLabel: formatGameDateLabel(injury.injuredOn),
+        expectedReturnLabel: formatGameDateLabel(injury.expectedReturnDate),
+        reviewDueLabel: formatGameDateLabel(injury.returnToPlay?.reviewDueOn ?? injury.expectedReturnDate),
+        fatigue: getCareerFatigueForPlayer(world, injury.playerId),
+        reviewHistory: (injury.returnToPlay?.reviews ?? []).map((review) => ({
+          dateLabel: formatGameDateLabel(review.reviewedOn),
+          decision: review.decision === 'CLEAR_FOR_PLAY' ? 'CLEAR FOR PLAY' : 'CONTINUE RECOVERY',
+          actorLabel: review.actor.kind === 'USER' ? 'User' : 'AI',
+        })),
+        ...(recommendation === undefined ? {} : {
+          recommendationOutcomeId: recommendation.outcomeId,
+          staffName: recommendation.staffName,
+          staffQuality: recommendation.qualityScore,
+          recommendationSummary: recommendation.summary,
+        }),
+      }
+    })
 
   const history: readonly MedicalHistoryRow[] = [...injuries]
     .sort(
@@ -92,7 +134,8 @@ export function buildMedicalWorkspaceModel(world: GameWorld): MedicalWorkspaceMo
       sourceLabel: injurySourceLabel(world, injury.sourceGameId),
       injuredOnLabel: formatGameDateLabel(injury.injuredOn),
       expectedReturnLabel: formatGameDateLabel(injury.expectedReturnDate),
-      statusLabel: isInjuryActive(injury, world.currentDate) ? 'Active' : 'Recovered',
+      clearedOnLabel: injury.returnToPlay?.clearedOn === undefined ? null : formatGameDateLabel(injury.returnToPlay.clearedOn),
+      statusLabel: injuryLifecycleStatus(injury, world.currentDate) === 'RECOVERING' ? 'RECOVERING' : injuryLifecycleStatus(injury, world.currentDate) === 'RTP_REVIEW_DUE' ? 'RETURN-TO-PLAY REVIEW' : 'CLEARED',
       durationLabel: formatDurationLabel(calendarDaysBetween(injury.injuredOn, injury.expectedReturnDate)),
     }))
 
@@ -139,6 +182,7 @@ export function buildMedicalWorkspaceModel(world: GameWorld): MedicalWorkspaceMo
     medicalStaffCount: staff.length,
     openAdvisoryCount,
     injured,
+    returnToPlayReviews,
     history,
     risk,
     staff,

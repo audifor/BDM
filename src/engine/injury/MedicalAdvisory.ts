@@ -165,7 +165,16 @@ export function acceptMedicalRecommendation(world: GameWorld, outcomeId: Delegat
   const newReturnDate = addDays(baseDate, recommendedExtraDays)
   if (compareGameDates(newReturnDate, injury.injuredOn) <= 0) return { ok: false, reason: 'outOfBounds' }
 
-  const updatedInjury = { ...injury, expectedReturnDate: newReturnDate }
+  const updatedInjury = {
+    ...injury,
+    expectedReturnDate: newReturnDate,
+    ...(injury.returnToPlay === undefined ? {} : {
+      returnToPlay: {
+        ...injury.returnToPlay,
+        ...(injury.returnToPlay.reviews.length === 0 && injury.returnToPlay.clearedOn === undefined ? { reviewDueOn: newReturnDate } : {}),
+      },
+    }),
+  }
   const updatedOutcome: DelegationOutcome = { ...outcome, applied: true }
   return {
     ok: true,

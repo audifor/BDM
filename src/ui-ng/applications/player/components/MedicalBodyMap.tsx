@@ -165,7 +165,7 @@ export function MedicalBodyMap({
 
       <p className="po-med-bodymap__legend">
         {attention === 0
-          ? 'All systems healthy: no recorded injury maps to any region.'
+          ? 'No injury recorded: no recorded injury maps to any region.'
           : `${attention} ${attention === 1 ? 'region' : 'regions'} marked from the recorded injuries.`}
       </p>
     </div>

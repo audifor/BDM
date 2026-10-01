@@ -158,7 +158,7 @@ describe('buildPlayerMedicalModel', () => {
     expect(model.availabilityBand.statusLabel).toBe('Injured')
     expect(model.activeInjury?.kindLabel).toBe('Ankle sprain')
     expect(model.recoveryTimeline).toHaveLength(3)
-    expect(model.history[0]?.statusLabel).toBe('Active')
+    expect(model.history[0]?.statusLabel).toBe('RECOVERING')
     expect(model.defaultSelectedEventId).toBe(model.activeInjury?.id ?? null)
     expect(model.risk?.riskScore).toBeGreaterThan(0)
     expect(model.risk?.riskBand).not.toBe('low')
@@ -220,6 +220,7 @@ describe('buildPlayerMedicalModel', () => {
       severity: 'minor',
       injuredOn: addDays(world.currentDate, -40),
       expectedReturnDate: addDays(world.currentDate, -30),
+      returnToPlay: { reviewDueOn: addDays(world.currentDate, -30), clearedOn: addDays(world.currentDate, -30), reviews: [] },
     })
     const newer = createInjury({
       id: injuryIdFromString('injury-new'),
@@ -235,8 +236,8 @@ describe('buildPlayerMedicalModel', () => {
     const model = buildPlayerMedicalModel(withHistory, playerId)
 
     expect(model.history.map((entry) => entry.injuryLabel)).toEqual(['Knee sprain', 'Back strain'])
-    expect(model.history[0]?.statusLabel).toBe('Active')
-    expect(model.history[1]?.statusLabel).toBe('Recovered')
+    expect(model.history[0]?.statusLabel).toBe('RECOVERING')
+    expect(model.history[1]?.statusLabel).toBe('CLEARED')
   })
 
   it('derives duration labels from real injury dates', () => {
@@ -277,6 +278,7 @@ describe('buildPlayerMedicalModel', () => {
       severity: 'minor',
       injuredOn: addDays(world.currentDate, -20),
       expectedReturnDate: addDays(world.currentDate, -5),
+      returnToPlay: { reviewDueOn: addDays(world.currentDate, -5), clearedOn: addDays(world.currentDate, -5), reviews: [] },
     })
     const withHistory = updateGameWorld(world, {
       injuries: [...Object.values(world.injuriesById), recovered],
@@ -285,7 +287,7 @@ describe('buildPlayerMedicalModel', () => {
     const detail = findMedicalInspectorDetail(model, recovered.id)
 
     expect(model.activeInjury).toBeNull()
-    expect(detail?.statusLabel).toBe('Recovered')
+    expect(detail?.statusLabel).toBe('CLEARED')
     expect(detail?.availabilityImpact).toBe('No current availability restriction')
   })
 })

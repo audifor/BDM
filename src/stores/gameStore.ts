@@ -64,6 +64,8 @@ import { declineStaffCareerRequest, grantStaffCareerRequest } from '@/app/staffC
 import { proposeTradeNegotiation, respondToTradeNegotiation, type TradeNegotiationActionRequest, type TradeNegotiationCommandResult } from '@/app/trades'
 import { startUserTradeCommitment, recordTradeCommitmentEvent, type TradeCommitmentResult } from '@/app/trades'
 import type { TradeProposal } from '@/domain/trade'
+import { reviewReturnToPlay as reviewReturnToPlayCommand, type ReturnToPlayReviewResult } from '@/engine/injury/ReturnToPlayEngine'
+import type { ReturnToPlayDecision } from '@/domain/injury'
 
 interface GameStore {
   readonly world: GameWorld | null
@@ -111,6 +113,7 @@ interface GameStore {
   setStaffResponsibility(input: SetTeamResponsibilityInput): void
   acceptStaffRecommendation(outcomeId: DelegationOutcomeId): StaffRecommendationCommandResult
   dismissStaffRecommendation(outcomeId: DelegationOutcomeId): StaffRecommendationCommandResult
+  reviewReturnToPlay(injuryId: import('@/domain/ids').InjuryId, decision: ReturnToPlayDecision, recommendationOutcomeId?: DelegationOutcomeId): ReturnToPlayReviewResult
   grantStaffCareerRequest(requestId: string): void
   declineStaffCareerRequest(requestId: string): void
   purchaseUserCoachSkill(skillId: CoachSkillId): CoachRpgOperationResult
@@ -289,6 +292,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   dismissStaffRecommendation: (outcomeId) => {
     const result = dismissStaffRecommendationCommand(requireWorld(get().world), outcomeId)
+    if (result.ok) set({ world: result.world })
+    return result
+  },
+  reviewReturnToPlay: (injuryId, decision, recommendationOutcomeId) => {
+    const world = requireWorld(get().world)
+    const result = reviewReturnToPlayCommand(world, {
+      injuryId,
+      decision,
+      actor: { kind: 'USER', coachId: world.userCoachId },
+      ...(recommendationOutcomeId === undefined ? {} : { recommendationOutcomeId }),
+    })
     if (result.ok) set({ world: result.world })
     return result
   },
