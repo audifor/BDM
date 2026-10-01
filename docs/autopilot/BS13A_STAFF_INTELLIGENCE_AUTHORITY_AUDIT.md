@@ -6,8 +6,6 @@ Branch: `bdm-stage2-bs13a-staff-intelligence-audit`
 
 Scope: read-only code, persistence, lifecycle and UI audit. No production behavior changed.
 
-> The supplied brief ends mid-sentence in §10 after “historical”. This report covers all 20 primary questions and the detailed scope visible in the supplied text; no missing instructions after that cutoff are inferred.
-
 ## Executive summary
 
 BDM already has one broad Staff domain, not a small placeholder subsystem: canonical Staff profiles and assignments, a 31-role registry, 13 professional attributes, persisted job and contract lifecycle, generic responsibilities, delegated/advisory outcomes, workload and quality scoring, and substantial Staff human-state, culture, cohesion, conflict and politics systems. These are integrated into training, medical, scouting, recruiting, roster/market operations and trades. Staff is not yet a match-control system: match tactics, lineup/rotation selection and on-court decisions do not generally resolve through Staff responsibilities.
@@ -98,7 +96,7 @@ The current model supports vacancy and explicit mode choices. It does not guaran
 | **Advisor** | Yes. Advisory outputs are recorded separately and are not automatically applied. | Medical recommendations, scouting/tactical reports, recruiting assessments and basketball-operations recommendations. `DelegationOutcome.applied` plus the accept/dismiss seam distinguishes advice from applied decisions. |
 | **Modifier** | Yes. | Role proficiency, personality, relationships and derived workload feed bounded training/medical/scouting/tactics/recruiting/basketball-operations quality functions. The result quality changes; these values do not replace the target system’s decision or mutation boundary. |
 | **Display only** | Some data is display-only where there is no consumer. | A role label, specialism, date of birth or attribute is not automatically a gameplay modifier merely because the Staff UI displays it. The 13 attributes are selectively consumed via role/quality logic. |
-| **Unused / registered only** | Several responsibilities have no evidence of a connected end-to-end caller, despite being valid in the registry. | `recommendWorkloadChange`, `defensiveGamePlan`, `offensivePreparation`, `matchupRecommendation`, `shortlistPlayers`, and some medical/recruiting kinds should be treated as partial/registered until a caller is traced. Do not infer active behavior from the registry alone. |
+| **Unused / registered only** | Several responsibilities have no evidence of a connected end-to-end caller, despite being valid in the registry. | The currently unconsumed kinds are `manageRecovery`, `recommendWorkloadChange`, `defensiveGamePlan`, `offensivePreparation`, `rotationPlanning`, and `matchupRecommendation`. `shortlistPlayers`, medical recommendation kinds, and recruiting advice have concrete callers and are not in this list. |
 
 Staff does not directly select player actions in `MatchEngine`, set match lineups from staff quality, or run a general-purpose GM who autonomously decides all roster actions.
 
@@ -111,13 +109,13 @@ Status reflects Staff-specific connection, not whether the named domain exists.
 | Training | **CONNECTED** | Planner responsibility, delegated plan execution/quality, delegated intensity and AI weekly planning are integrated. Staff execution applies to scheduled sessions; daily Training V1 progression remains its own shared team pipeline. |
 | Medical | **CONNECTED** | Treatment, return-to-play and risk assessment can resolve Staff expertise/advice. Injury/availability transitions remain in injury/medical engines. |
 | Match / coaching | **PARTIAL** | Coach remains a canonical Staff-backed head-coach facade; opposition reports and coach contexts exist. Staff skills are not a general MatchEngine input or live action selector. |
-| Rotation | **PARTIAL** | `rotationPlanning` exists but is Head-Coach-only; no delegated assistant-staff rotation authority was found. Lineup/rotation state is not generally derived from staff proficiency. |
-| Tactics | **PARTIAL** | Staff quality affects opposition reports and advisory preparation seams; it does not generally control live tactics or MatchEngine behavior. |
+| Rotation | **DISCONNECTED** | `rotationPlanning` is Head-Coach-only in the registry and has no live Responsibility caller; lineup/rotation state is not driven by Staff proficiency. The Coach facade remains a separate pathway. |
+| Tactics | **PARTIAL** | Staff quality affects opposition scouting/report advice; `defensiveGamePlan`, `offensivePreparation` and `matchupRecommendation` have no traced callers and Staff does not control live tactics or MatchEngine behavior. |
 | Scouting | **CONNECTED** | Staff-attributed evaluators, delegated scout assignment/regions, reports and quality uncertainty paths. |
 | Contracts | **CONNECTED** | Staff can hold submit-offer/signing responsibilities; Staff employment contracts and salary are independently canonical. |
 | Free agency | **CONNECTED** | Signing/contact authority and recommendations consult Staff responsibilities. Market and contract engines retain validation and execution authority. |
 | Trades | **CONNECTED** | Trade recommendation, negotiation response and operational execution can be Staff-backed/delegated; governance/TradeEngine remain authoritative. |
-| Draft | **PARTIAL** | Draft prospect scouting/advisory can use Staff evaluation; AI pick choice and selection authority remain Draft Engine decisions. |
+| Draft | **PARTIAL** | `prospectReport` has live advisory callers for prospect/scouting contexts; AI pick choice and selection authority remain Draft Engine decisions. |
 | Recruiting | **CONNECTED** | Staff quality/advisory for identification, evaluation and priorities; Recruiting Engine is the only action/commit/signing authority. |
 | NCAA | **PARTIAL** | Recruiting Staff roles are NCAA-gated and used in recruiting. Staff does not own academic eligibility, NIL, booster, enforcement or competition availability. |
 | Youth / newgens | **ABSENT** | No youth Staff domain/role path was identified; development roles do not establish an academy/youth authority by themselves. |
@@ -163,7 +161,97 @@ The current Staff UI (`src/ui-ng/applications/staff`) is data-backed: department
 3. **Coach / Staff profile:** Coach has its own gameplay facade, but Staff identity/professional profile is canonical for person/assignment/rating data. Do not add a second coach-skills model.
 4. **Registered does not mean connected:** the Responsibility registry is broader than concrete callers. Verify each responsibility end-to-end before exposing it as consequential.
 5. **Staff system breadth:** lifecycle, human RPG, politics, culture, cohesion and conflict are separate existing systems. Future “Staff intelligence” must specify which authority owns each new choice and how it affects these systems rather than add another generic Staff state blob.
-6. **Not implemented as Staff systems:** Staff skill growth/decline, Staff potential/experience ratings, multi-role/temporary employment, youth Staff, media authority, universal live-match coaching, and universal workload-change recommendation behavior.
+6. **Coach professional-profile projection:** `CoachExperience` and Coach UI read/update `coachProfessionalProfilesByCoachId`; Staff-backed quality resolution reads `StaffPerson.professional`. Both maps persist the same attribute shape, and `GameWorld` does not enforce equality. Architecture text calls StaffProfile the shared professional authority, but runtime consumers maintain both. Treat synchronization/authority as unresolved; do not choose a merge behavior in this audit.
+7. **Not implemented as Staff systems:** Staff skill growth/decline, Staff potential/experience ratings, multi-role/temporary employment, youth Staff, media authority, universal live-match coaching, and universal workload-change recommendation behavior.
+
+## Final registers
+
+### P0
+
+**None found.** The audit found no Staff defect that currently blocks or corrupts gameplay. The employment/assignment and Staff contract invariants reject inconsistent states; delegated resolution falls back when a holder cannot be resolved.
+
+### P1
+
+1. **Six registered responsibilities are disconnected:** `manageRecovery`, `recommendWorkloadChange`, `defensiveGamePlan`, `offensivePreparation`, `rotationPlanning`, and `matchupRecommendation`. Registry presence does not cause automation. Decide which are useful, then connect or retire only through an explicit milestone.
+2. **Coach professional values have two runtime maps:** StaffProfile is the architecture-level shared profile, but CoachExperience/Coach UI use `coachProfessionalProfilesByCoachId`, while Staff quality uses StaffPerson values. No equality invariant synchronizes them. This is a source-of-truth convergence issue; the audit makes no behavioral choice.
+3. **Staff professional skills do not progress or decline.** Existing Staff employment, autonomy, reputation and career history are real; they do not provide professional attribute evolution. Whether age/performance-based evolution or Staff potential/experience ratings are needed remains a product decision, not a defect.
+4. **Match/tactics/rotation are only partially Staff-manifested.** Some preparation/advisory/report paths consume Staff, but no universal live-match coaching exists; the `rotationPlanning` row itself is disconnected. MatchEngine takeover is out of scope.
+5. **Vacancy fallback is safe but not self-healing.** Invalid/missing delegated holders resolve to no Staff context and use the consumer fallback; there is no global policy that creates an opening or reassigns a holder automatically.
+6. **Workload and explanations are uneven.** Responsibility/role capacity affects quality and Staff human-state tracking, but not every Staff task contributes to workload. Delegation outcomes persist quality/payload, while rationale and user-facing causal history vary by caller.
+
+Existing career lifecycle, Staff contracts, Staff career history, Staff reputation, Staff human state, and user controls are not listed as missing systems.
+
+## Completed BS13 deliverables
+
+- [Staff capability map](../strengthening/BS13_STAFF_CAPABILITY_MAP.md)
+- [Staff integration matrix](../strengthening/BS13_STAFF_INTEGRATION_MATRIX.md)
+- [Staff authority map](../strengthening/BS13_STAFF_AUTHORITY_MAP.md)
+
+## Proposed smallest useful BS13 roadmap
+
+These are proposals based on the audit, not product decisions or authorization to implement them.
+
+### BS13B — Responsibility & Delegation Convergence
+
+- **Objective / gap:** Resolve the six disconnected registered kinds; for each, make an explicit product choice to wire a real caller or retire the unused declaration. Review safe vacancy fallback and whether any self-healing is actually required.
+- **Authorities reused:** `Responsibility`, role registry, `resolveDelegatedResponsibility`, and target-domain engines. The target domain keeps all final mutations.
+- **Non-goals:** No new Staff model, no automatic assignment policy without approval, no broad AI, no behavior inferred from labels, no MatchEngine changes.
+- **User manifestation:** Only newly approved, truly connected controls/results appear in their existing domain workspaces.
+- **Focused tests:** Responsibility assignment/role eligibility, delegated/advisory resolution, each selected caller, vacancy/fallback and persistence.
+- **Dependencies:** BS13A audit; any product choice for which registered kinds are meaningful.
+- **Later boundaries:** Scouting-specific work stays in BS14; governance in BS18; no MatchEngine action selection.
+
+### BS13C — Staff Decision Intelligence
+
+- **Objective / gap:** Improve deterministic use of role specialization and quality in already connected delegated/advisory workflows, and close the Coach/Staff professional-profile projection seam after its canonical authority is decided.
+- **Authorities reused:** StaffProfile attributes/role weights, shared Personality/Relationships/Workload, existing quality functions, consumer domains and `DelegationOutcome`.
+- **Non-goals:** No persisted overall, no generic omniscient Staff AI, no direct signing/trade/recruiting/medical mutation outside each target authority, no possession/action selection.
+- **User manifestation:** Better bounded outcomes with existing Staff responsibility and recommendation surfaces; explainable cause fields only where callers can support them.
+- **Focused tests:** Quality determinism/role-fit tests, source-profile parity after the approved resolution, relevant delegated/advisory consumers.
+- **Dependencies:** BS13B responsibility choices; explicit decision on Coach profile synchronization.
+- **Later boundaries:** Does not absorb deeper Scouting (BS14), Governance (BS18), Human RPG (BS19), UX redesign (BS21), or MatchEngine.
+
+### BS13D — Staff Development & Career Consequence (conditional)
+
+- **Objective / gap:** Add Staff professional skill evolution only if the product approves whether Staff improve/decline, how age/performance/education matter, and whether any potential/experience concept is needed. Reuse existing career/reputation/history rather than duplicate them.
+- **Authorities reused:** StaffProfessionalProfile, StaffCareer history/employment, StaffReputation, Personality and existing human-state events.
+- **Non-goals:** No replacement hiring market/contracts, no second history/reputation store, no unapproved potential or universal age curve.
+- **User manifestation:** Only approved changes surfaced in Staff profile and history.
+- **Focused tests:** Deterministic bounded evolution, persistence, history/reputation event linkage, no duplicate application.
+- **Dependencies:** Product decision; BS13C professional-profile authority resolution.
+- **Later boundaries:** Broader Human RPG remains BS19; youth-specific development belongs to BS15.
+
+### BS13E — Staff Decision Manifestation & Certification
+
+- **Objective / gap:** Make the reasons and consequences of connected Staff decisions traceable in existing Staff/domain surfaces; certify that training, medical, scouting, recruiting, market and trade outcomes remain attributable and persisted.
+- **Authorities reused:** Existing `DelegationOutcome`, each target domain's history, Staff career/dynamics queries and current UI projections.
+- **Non-goals:** No broad cross-product UX overhaul, no duplicate event/history authority, no new recommendation engine.
+- **User manifestation:** Consistent caller-supported explanation and consequence history in Staff and target-domain workspaces.
+- **Focused tests:** Outcome round-trip, caller payload/reason expectations, Staff UI model tests and authority-boundary tests.
+- **Dependencies:** BS13B/C (and BS13D only if that milestone is approved).
+- **Later boundaries:** Broad UX/information design remains BS21; Human RPG depth remains BS19.
+
+## Cross-milestone ownership boundaries
+
+- **BS14 Scouting:** Owns deeper scouting gameplay/intelligence. BS13 may improve Staff execution quality but must not absorb Scouting.
+- **BS15 Youth + Newgens:** Owns the youth ecosystem. BS13 creates no youth Staff architecture.
+- **BS17 Facilities:** Owns infrastructure gameplay. No Staff facility effects are invented here.
+- **BS18 Governance:** Owns governance decisions. Staff politics/advice do not become final governance authority.
+- **BS19 Human RPG:** Owns broader human/RPG depth. BS13 consumes current Staff human systems without rebuilding them.
+- **BS21 UX / Information:** Owns broad UX redesign. Any BS13 screen work stays Staff-specific and tied to connected capability.
+- **MatchEngine:** May consume coaching/tactical context in a later approved boundary; BS13 does not change MatchEngine or add live possession/action selection.
+
+## Focused validation and certification
+
+Focused existing tests were run with Vitest; no tests were added and no full suite/build was run. The selected set covered StaffPerson/role registry, Responsibility/domain resolution, Staff lifecycle/contracts, training, medical, scouting, recruiting, roster recommendations, trades, Save V3/Responsibility round-trip and a Staff UI model.
+
+- Initial selected run: **19 test files; 328 passed, 3 timed out at the default 5-second per-test limit** (331 total). All three timeouts were in expensive game-creation/integration cases; no assertion failure was reported.
+- Isolated reruns with a 20-second timeout: **3/3 passed** (`AdvisoryScoutingReports` opposition-report flow, `TrainingStaffExecution` firing cleanup, `DelegatedScouting` order independence).
+- `git diff --check`: PASS after documentation edits.
+- Full suite: NOT RUN, as required.
+- Production behavior changed: NO.
+
+**BS13A certification: CANONICAL / CLOSED / PASS.** The established audit is preserved; all three requested maps exist; the Coach projection and employment/assignment seams are explicitly recorded; no P0 remains; focused tests pass when the three contention-sensitive cases are rerun in isolation; and this milestone adds documentation only.
 
 ## Primary code evidence
 
