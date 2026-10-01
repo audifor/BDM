@@ -19,6 +19,7 @@ import { progressAdvisoryScoutingReports, progressDelegatedScouting, progressSco
 import { progressOppositionScoutingReports } from '@/engine/tactics/OppositionScoutingReportEngine'
 import { progressMedicalAdvisories } from '@/engine/injury'
 import { progressAiMedicalLifecycle } from '@/engine/injury/AiMedicalLifecycle'
+import { progressRehabilitationSetbacks } from '@/engine/injury/Rehabilitation'
 import { progressBasketballOperationsAdvisories } from '@/engine/roster'
 import { progressStaffCareerAutonomyAppraisal, progressStaffHumanState } from '@/engine/staff/StaffHumanStatePipeline'
 import { progressStaffCultureAndCohesion } from '@/engine/staff/StaffCultureCohesionPipeline'
@@ -153,7 +154,7 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
     run('MEMORY_DECAY', current.currentDate, current.currentDate.slice(-2) === '01', decayMemoriesForMonth, 'Memory decay runs on the first day of each month.')
     run('ENFORCEMENT', current.currentDate, true, progressEnforcement, 'Enforcement lifecycle is checked every simulation day.')
     run('SCOUTING_INTAKE', current.currentDate, true, (input) => progressOppositionScoutingReports(progressAdvisoryScoutingReports(progressDelegatedScouting(input))), 'Scouting intake is checked every simulation day.')
-    run('MEDICAL_AND_ROSTER_ADVISORIES', current.currentDate, true, (input) => progressBasketballOperationsAdvisories(progressMedicalAdvisories(input)), 'Medical and basketball-operations advisories are checked every simulation day.')
+    run('MEDICAL_AND_ROSTER_ADVISORIES', current.currentDate, true, (input) => progressBasketballOperationsAdvisories(progressMedicalAdvisories(progressRehabilitationSetbacks(input))), 'Rehabilitation setbacks and Medical/basketball-operations advisories are checked every simulation day.')
     let aiMedicalDecisions: ReturnType<typeof progressAiMedicalLifecycle>['decisions'] = []
     run('AI_MEDICAL_DECISIONS', current.currentDate, true, (input) => {
       const result = progressAiMedicalLifecycle(input)

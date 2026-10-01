@@ -3,8 +3,9 @@ import type { InjuryId, StaffPersonId } from '@/domain/ids'
 import type { DelegationOutcomeId } from '@/domain/responsibility'
 import { injuryLifecycleStatus, type ReturnToPlayDecision, type ReturnToPlayReviewActor } from '@/domain/injury'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { hasPassedRequiredFitnessTest } from './FitnessTest'
 
-export type ReturnToPlayReviewFailure = 'INJURY_NOT_FOUND' | 'REVIEW_NOT_DUE' | 'ALREADY_CLEARED' | 'TEAM_NOT_FOUND' | 'NOT_AUTHORIZED'
+export type ReturnToPlayReviewFailure = 'INJURY_NOT_FOUND' | 'REVIEW_NOT_DUE' | 'ALREADY_CLEARED' | 'TEAM_NOT_FOUND' | 'NOT_AUTHORIZED' | 'FITNESS_TEST_REQUIRED'
 export type ReturnToPlayReviewResult =
   | { readonly ok: true; readonly world: GameWorld }
   | { readonly ok: false; readonly reason: ReturnToPlayReviewFailure }
@@ -24,6 +25,7 @@ export function reviewReturnToPlay(
   if (injury === undefined) return { ok: false, reason: 'INJURY_NOT_FOUND' }
   if (injuryLifecycleStatus(injury, world.currentDate) === 'CLEARED') return { ok: false, reason: 'ALREADY_CLEARED' }
   if (injuryLifecycleStatus(injury, world.currentDate) !== 'RTP_REVIEW_DUE') return { ok: false, reason: 'REVIEW_NOT_DUE' }
+  if (request.decision === 'CLEAR_FOR_PLAY' && !hasPassedRequiredFitnessTest(world, injury)) return { ok: false, reason: 'FITNESS_TEST_REQUIRED' }
 
   const team = Object.values(world.teams).find((candidate) => candidate.rosterPlayerIds.includes(injury.playerId))
   if (team === undefined) return { ok: false, reason: 'TEAM_NOT_FOUND' }

@@ -1,12 +1,10 @@
 import { addDays, compareGameDates, type GameDate } from '@/domain/date'
-import type { InjuryKind } from '@/domain/injury'
+import { injuryFamilyForKind, type InjuryFamily, type InjuryKind } from '@/domain/injury'
 import type { PlayerId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 
-export type InjuryFamily = 'LOWER_LEG' | 'HAMSTRING' | 'KNEE' | 'BACK' | 'HAND' | 'SHOULDER'
-
 export function injuryFamily(kind: InjuryKind): InjuryFamily {
-  return ({ ankleSprain: 'LOWER_LEG', hamstringStrain: 'HAMSTRING', kneeSprain: 'KNEE', backStrain: 'BACK', handInjury: 'HAND', shoulderStrain: 'SHOULDER' } as const)[kind]
+  return injuryFamilyForKind(kind)
 }
 
 /** Related history adds 10% each, or 16% within the last year, capped at 40%. */

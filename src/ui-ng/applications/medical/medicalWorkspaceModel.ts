@@ -1,5 +1,5 @@
 import type { InjuryId, PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
-import type { InjurySeverity } from '@/domain/injury'
+import type { FitnessTestResult, InjurySeverity, RehabilitationMode } from '@/domain/injury'
 import type { MedicalRiskBand } from '@/engine/injury/MedicalRiskAssessment'
 import type { StaffPresentationItem } from '@/ui/staffPresentation'
 
@@ -37,11 +37,18 @@ export interface MedicalInjuredRow {
   readonly sourceLabel: string
   readonly injuredOnLabel: string
   readonly expectedReturnLabel: string
+  readonly reviewDueLabel: string
+  readonly fitnessTestLabel: string
   readonly clearedOnLabel: string | null
   readonly daysRemaining: number
   readonly durationLabel: string
   readonly lifecycleStatus: 'RECOVERING' | 'RETURN-TO-PLAY REVIEW' | 'CLEARED'
   readonly fatigue: number
+  readonly rehabilitationMode: RehabilitationMode
+  readonly suggestedRehabilitationMode: RehabilitationMode
+  readonly rehabilitationConsequence: string
+  readonly canChangeRehabilitation: boolean
+  readonly rehabilitationHistory: readonly string[]
   readonly reviewHistory: readonly { readonly dateLabel: string; readonly decision: string; readonly actorLabel: string }[]
 }
 
@@ -59,6 +66,9 @@ export interface MedicalReturnToPlayRow {
   readonly staffName?: string
   readonly staffQuality?: number
   readonly recommendationSummary?: string
+  readonly fitnessTestRequired: boolean
+  readonly fitnessTestResult: FitnessTestResult | null
+  readonly canClear: boolean
 }
 
 export interface MedicalHistoryRow {
@@ -73,6 +83,12 @@ export interface MedicalHistoryRow {
   readonly clearedOnLabel: string | null
   readonly statusLabel: 'RECOVERING' | 'RETURN-TO-PLAY REVIEW' | 'CLEARED'
   readonly durationLabel: string
+  readonly familyLabel: string
+  readonly recurrenceLabel: string
+  readonly rehabSummary: string
+  readonly setbackSummary: string
+  readonly fitnessTestSummary: string
+  readonly clearanceLabel: string
 }
 
 export interface MedicalRiskRow {

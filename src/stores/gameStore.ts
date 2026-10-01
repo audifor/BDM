@@ -21,7 +21,7 @@ import { startUserPlayerContractSigning, recordPlayerContractSigningDecisionEven
 import { executeAcceptedRetentionAgreement } from '@/app/contractRetention/RetentionSigningService'
 import { ensureRetentionPlayerContractSigningDecision } from '@/app/governance/PlayerContractSigningGovernanceService'
 import type { ClubCounterDecision } from '@/app/marketIntelligence'
-import { type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
+import { type InjuryId, type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
 import type { CoachPerkId, CoachSkillId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { getInboxItemsForCoach, getNewsFeed, getRelationshipsForPerson, getUnreadInboxCount, getUserCoachReputationProfile } from '@/domain/world'
@@ -66,6 +66,9 @@ import { startUserTradeCommitment, recordTradeCommitmentEvent, type TradeCommitm
 import type { TradeProposal } from '@/domain/trade'
 import { reviewReturnToPlay as reviewReturnToPlayCommand, type ReturnToPlayReviewResult } from '@/engine/injury/ReturnToPlayEngine'
 import type { ReturnToPlayDecision } from '@/domain/injury'
+import type { RehabilitationMode } from '@/domain/injury'
+import { conductFitnessTest as conductFitnessTestCommand, type ConductFitnessTestResult } from '@/engine/injury/FitnessTest'
+import { setRehabilitationPlan as setRehabilitationPlanCommand, type SetRehabilitationPlanResult } from '@/engine/injury/Rehabilitation'
 
 interface GameStore {
   readonly world: GameWorld | null
@@ -114,6 +117,8 @@ interface GameStore {
   acceptStaffRecommendation(outcomeId: DelegationOutcomeId): StaffRecommendationCommandResult
   dismissStaffRecommendation(outcomeId: DelegationOutcomeId): StaffRecommendationCommandResult
   reviewReturnToPlay(injuryId: import('@/domain/ids').InjuryId, decision: ReturnToPlayDecision, recommendationOutcomeId?: DelegationOutcomeId): ReturnToPlayReviewResult
+  setRehabilitationPlan(injuryId: InjuryId, mode: RehabilitationMode): SetRehabilitationPlanResult
+  conductFitnessTest(injuryId: InjuryId): ConductFitnessTestResult
   grantStaffCareerRequest(requestId: string): void
   declineStaffCareerRequest(requestId: string): void
   purchaseUserCoachSkill(skillId: CoachSkillId): CoachRpgOperationResult
@@ -304,6 +309,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
       actor: { kind: 'USER', coachId: world.userCoachId },
       ...(recommendationOutcomeId === undefined ? {} : { recommendationOutcomeId }),
     })
+    if (result.ok) set({ world: result.world })
+    return result
+  },
+  setRehabilitationPlan: (injuryId, mode) => {
+    const world = requireWorld(get().world)
+    const result = setRehabilitationPlanCommand(world, { injuryId, mode, actor: { kind: 'USER', coachId: world.userCoachId } })
+    if (result.ok) set({ world: result.world })
+    return result
+  },
+  conductFitnessTest: (injuryId) => {
+    const world = requireWorld(get().world)
+    const result = conductFitnessTestCommand(world, { injuryId, actor: { kind: 'USER', coachId: world.userCoachId } })
     if (result.ok) set({ world: result.world })
     return result
   },

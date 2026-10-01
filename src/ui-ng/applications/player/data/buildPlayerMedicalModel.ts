@@ -3,7 +3,9 @@ import { CAREER_FATIGUE_DAILY_RECOVERY } from '@/domain/careerFatigue/CareerFati
 import {
   formatInjuryKind,
   injuryLifecycleStatus,
+  hasPriorRelatedInjury,
   isInjuryActive,
+  projectedInjuryReviewDate,
   type InjuryKind,
   type InjuryRecord,
   type InjurySeverity,
@@ -21,6 +23,7 @@ import {
   getMedicalRiskAssessments,
   type MedicalRiskBand,
 } from '@/engine/injury/MedicalRiskAssessment'
+import { injuryRequiresFitnessTest } from '@/engine/injury/FitnessTest'
 import { getPlayerGameLogs } from '@/engine/stats/PlayerHistory'
 
 import { findTeamForPlayer, formatGameDateLabel } from './presentationHelpers'
@@ -489,10 +492,10 @@ function buildActiveInjuryModel(
     severityLabel: SEVERITY_LABELS[injury.severity],
     injuredOnLabel: formatGameDateLabel(injury.injuredOn),
     expectedReturnLabel: formatGameDateLabel(injury.expectedReturnDate),
-    reviewDueLabel: formatGameDateLabel(injury.returnToPlay?.reviewDueOn ?? injury.expectedReturnDate),
+    reviewDueLabel: formatGameDateLabel(projectedInjuryReviewDate(injury, onDate)),
     statusLabel: lifecycleStatus === 'CLEARED' ? 'RECOVERING' : lifecycleStatus,
     clearedOnLabel: injury.returnToPlay?.clearedOn === undefined ? null : formatGameDateLabel(injury.returnToPlay.clearedOn),
-    daysRemaining: calendarDaysBetween(onDate, injury.expectedReturnDate),
+    daysRemaining: calendarDaysBetween(onDate, projectedInjuryReviewDate(injury, onDate)),
     expectedDurationDays: calendarDaysBetween(injury.injuredOn, injury.expectedReturnDate),
     sourceContext: buildSourceContext(world, injury),
   }
@@ -561,9 +564,7 @@ export function buildPlayerMedicalModel(world: GameWorld, playerId: PlayerId): P
       ? null
       : activeInjury === undefined
         ? null
-        : injuryLifecycleStatus(activeInjury, onDate) === 'RTP_REVIEW_DUE'
-          ? `RETURN-TO-PLAY REVIEW · due ${formatGameDateLabel(activeInjury.returnToPlay?.reviewDueOn ?? activeInjury.expectedReturnDate)}`
-          : `RECOVERING · review due ${formatGameDateLabel(activeInjury.returnToPlay?.reviewDueOn ?? activeInjury.expectedReturnDate)}`,
+        : `${injuryLifecycleStatus(activeInjury, onDate) === 'RTP_REVIEW_DUE' ? 'RETURN-TO-PLAY REVIEW' : 'RECOVERING'} · ${activeInjury.rehabilitation?.mode.replaceAll('_', ' ') ?? 'STANDARD REHAB'} · review ${formatGameDateLabel(projectedInjuryReviewDate(activeInjury, onDate))} · ${injuryRequiresFitnessTest(world, activeInjury) ? `fitness test ${activeInjury.fitnessTests?.at(-1)?.result ?? 'required'}` : 'no fitness test required'}${hasPriorRelatedInjury(activeInjury, Object.values(world.injuriesById)) ? ' · RELATED INJURY HISTORY' : ''}`,
     currentDateLabel: formatGameDateLabel(onDate),
     limitationLabel:
       activeInjury === undefined

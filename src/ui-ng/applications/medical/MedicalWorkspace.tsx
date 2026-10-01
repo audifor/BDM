@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 
 import type { InjuryId, PlayerId, StaffPersonId } from '@/domain/ids'
-import type { ReturnToPlayDecision } from '@/domain/injury'
+import type { RehabilitationMode, ReturnToPlayDecision } from '@/domain/injury'
 import type { DelegationOutcomeId } from '@/domain/responsibility'
 
 import { getUserTeam } from '@/engine/calendar'
@@ -63,10 +63,12 @@ function MetricRow({ label, value }: { readonly label: string; readonly value: R
 function ReturnToPlayBoard({
   rows,
   onDecision,
+  onFitnessTest,
   onOpenPlayer,
 }: {
   readonly rows: readonly MedicalReturnToPlayRow[]
   readonly onDecision: (injuryId: InjuryId, decision: ReturnToPlayDecision, recommendationOutcomeId?: DelegationOutcomeId) => void
+  readonly onFitnessTest: (injuryId: InjuryId) => void
   readonly onOpenPlayer: (playerId: PlayerId) => void
 }) {
   if (rows.length === 0) return null
@@ -82,9 +84,11 @@ function ReturnToPlayBoard({
               <p>Advice from {row.staffName} ({row.staffQuality}/100): {row.recommendationSummary}</p>
             )}
             {row.reviewHistory.map((review, index) => <p key={`${review.dateLabel}-${index}`}>Prior review {review.dateLabel}: {review.decision} · {review.actorLabel}</p>)}
+            {row.fitnessTestRequired ? <p>Fitness test required · latest result: {row.fitnessTestResult ?? 'not tested'}</p> : <p>Fitness test not required for this injury.</p>}
           </div>
           <div className="medical-workspace__rtp-actions">
-            <button onClick={() => onDecision(row.injuryId, 'CLEAR_FOR_PLAY', row.recommendationOutcomeId)} type="button">CLEAR FOR PLAY</button>
+            {row.fitnessTestRequired && !row.canClear ? <button onClick={() => onFitnessTest(row.injuryId)} type="button">RUN FITNESS TEST</button> : null}
+            <button disabled={!row.canClear} onClick={() => onDecision(row.injuryId, 'CLEAR_FOR_PLAY', row.recommendationOutcomeId)} type="button">CLEAR FOR PLAY</button>
             <button onClick={() => onDecision(row.injuryId, 'CONTINUE_RECOVERY', row.recommendationOutcomeId)} type="button">CONTINUE RECOVERY</button>
           </div>
         </article>
@@ -203,11 +207,13 @@ function InjuredBoard({
   selectedInjuryId,
   onSelectInjury,
   onOpenPlayer,
+  onSetRehabilitationPlan,
 }: {
   readonly rows: readonly MedicalInjuredRow[]
   readonly selectedInjuryId: InjuryId | undefined
   readonly onSelectInjury: (injuryId: InjuryId) => void
   readonly onOpenPlayer: (playerId: PlayerId) => void
+  readonly onSetRehabilitationPlan: (injuryId: InjuryId, mode: RehabilitationMode) => void
 }) {
   if (rows.length === 0) {
     return <p className="medical-workspace__empty">No active injuries.</p>
@@ -264,11 +270,25 @@ function InjuredBoard({
             <MetricRow label="Source" value={selected.sourceLabel} />
             <MetricRow label="Injured on" value={selected.injuredOnLabel} />
             <MetricRow label="Expected return" value={selected.expectedReturnLabel} />
+            <MetricRow label="Projected review" value={selected.reviewDueLabel} />
             <MetricRow label="Medical status" value={selected.lifecycleStatus} />
+            <MetricRow label="Fitness test" value={selected.fitnessTestLabel} />
             <MetricRow label="Career Fatigue" value={selected.fatigue} />
             <MetricRow label="Days remaining" value={selected.daysRemaining} />
             <MetricRow label="Duration" value={selected.durationLabel} />
+            <MetricRow label="Rehabilitation" value={selected.rehabilitationMode.replaceAll('_', ' ')} />
+            <MetricRow label="Suggested plan" value={selected.suggestedRehabilitationMode.replaceAll('_', ' ')} />
           </dl>
+          <p>{selected.rehabilitationConsequence}</p>
+          <label className="medical-workspace__rehab-control">
+            Rehab plan
+            <select disabled={!selected.canChangeRehabilitation} onChange={(event) => onSetRehabilitationPlan(selected.injuryId, event.target.value as RehabilitationMode)} value={selected.rehabilitationMode}>
+              <option value="REST">REST</option>
+              <option value="STANDARD_REHAB">STANDARD REHAB</option>
+              <option value="ACCELERATED_REHAB">ACCELERATED REHAB</option>
+            </select>
+          </label>
+          {selected.rehabilitationHistory.map((entry) => <p key={entry}>{entry}</p>)}
         </aside>
       )}
     </div>
@@ -308,6 +328,8 @@ function HistoryBoard({
           ngCol('return', 'Return', (row) => row.expectedReturnLabel, { value: (row) => row.expectedReturnLabel }),
           ngCol('duration', 'Duration', (row) => row.durationLabel, { value: (row) => row.durationLabel }),
           ngCol('source', 'Source', (row) => row.sourceLabel, { value: (row) => row.sourceLabel }),
+          ngCol('related', 'Body family / recurrence', (row) => `${row.familyLabel} · ${row.recurrenceLabel}`, { value: (row) => `${row.familyLabel}; ${row.recurrenceLabel}` }),
+          ngCol('medical', 'Rehab / setback / tests / clearance', (row) => <span>{row.rehabSummary} · setback: {row.setbackSummary} · tests: {row.fitnessTestSummary} · cleared: {row.clearanceLabel}</span>, { value: (row) => `${row.rehabSummary}; ${row.setbackSummary}; ${row.fitnessTestSummary}; ${row.clearanceLabel}` }),
         ])}
         gridId="ng-medical-history"
         rows={rows.map((row) => ({ ...row, id: row.injuryId }))}
@@ -438,6 +460,8 @@ export function MedicalWorkspace() {
   const acceptStaffRecommendation = useGameStore((state) => state.acceptStaffRecommendation)
   const dismissStaffRecommendation = useGameStore((state) => state.dismissStaffRecommendation)
   const reviewReturnToPlay = useGameStore((state) => state.reviewReturnToPlay)
+  const setRehabilitationPlan = useGameStore((state) => state.setRehabilitationPlan)
+  const conductFitnessTest = useGameStore((state) => state.conductFitnessTest)
   const [activeTab, setActiveTab] = useState<MedicalWorkspaceTabId>('overview')
   const [selectedInjuryId, setSelectedInjuryId] = useState<InjuryId | undefined>(undefined)
   const [selectedRiskPlayerId, setSelectedRiskPlayerId] = useState<PlayerId | undefined>(undefined)
@@ -499,6 +523,7 @@ export function MedicalWorkspace() {
               <ReturnToPlayBoard
                 rows={model.returnToPlayReviews}
                 onDecision={(injuryId, decision, outcomeId) => reviewReturnToPlay(injuryId, decision, outcomeId)}
+                onFitnessTest={(injuryId) => conductFitnessTest(injuryId)}
                 onOpenPlayer={navigateToPlayerMedical}
               />
               <MedicalRecommendationsBoard
@@ -513,6 +538,7 @@ export function MedicalWorkspace() {
             <InjuredBoard
               onOpenPlayer={navigateToPlayerMedical}
               onSelectInjury={setSelectedInjuryId}
+              onSetRehabilitationPlan={(injuryId, mode) => setRehabilitationPlan(injuryId, mode)}
               rows={model.injured}
               selectedInjuryId={selectedInjuryId}
             />

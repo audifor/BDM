@@ -5,7 +5,7 @@ import { createSportsEcosystem } from '@/domain/ecosystem'
 import { createConference, createConferenceMembership } from '@/domain/conference'
 import { createCountry } from '@/domain/country'
 import { parseGameDate } from '@/domain/date'
-import { createInjury, migrateLegacyInjury, type InjuryRecord, type ReturnToPlayReview, type ReturnToPlayState } from '@/domain/injury'
+import { createInjury, migrateLegacyInjury, type FitnessTestRecord, type InjuryRecord, type MedicalActionActor, type RehabilitationMode, type RehabilitationPlanChange, type RehabilitationSetback, type RehabilitationState, type ReturnToPlayReview, type ReturnToPlayState } from '@/domain/injury'
 import { createGame } from '@/domain/game'
 import {
   coachIdFromString,
@@ -518,7 +518,32 @@ function readInjury(value: unknown, currentDate: import('@/domain/date').GameDat
     ...(state.clearedOn === undefined ? {} : { clearedOn: parseGameDate(string(state.clearedOn, 'Injury cleared date')) }),
     reviews,
   }
-  return createInjury({ ...base, returnToPlay })
+  const readActor = (value: unknown): MedicalActionActor => {
+    const actor = record(value, 'Medical action actor')
+    const kind = string(actor.kind, 'Medical action actor kind')
+    return kind === 'USER'
+      ? { kind, coachId: string(actor.coachId, 'Medical actor coach') as import('@/domain/ids').CoachId }
+      : kind === 'AI'
+        ? { kind, teamId: string(actor.teamId, 'Medical actor team') as import('@/domain/ids').TeamId }
+        : fail('Medical action actor kind is invalid')
+  }
+  const rehabilitation: RehabilitationState | undefined = v.rehabilitation === undefined ? undefined : (() => {
+    const state = record(v.rehabilitation, 'Injury rehabilitation')
+    const history: RehabilitationPlanChange[] = array(state.history, 'Rehabilitation history').map((item) => {
+      const change = record(item, 'Rehabilitation plan change')
+      return { changedOn: parseGameDate(string(change.changedOn, 'Rehabilitation changedOn')), mode: string(change.mode, 'Rehabilitation mode') as RehabilitationMode, actor: readActor(change.actor) }
+    })
+    return { mode: string(state.mode, 'Rehabilitation mode') as RehabilitationMode, startedOn: parseGameDate(string(state.startedOn, 'Rehabilitation startedOn')), changedOn: parseGameDate(string(state.changedOn, 'Rehabilitation changedOn')), history }
+  })()
+  const rehabilitationSetbacks: readonly RehabilitationSetback[] | undefined = v.rehabilitationSetbacks === undefined ? undefined : array(v.rehabilitationSetbacks, 'Rehabilitation setbacks').map((item) => {
+    const setback = record(item, 'Rehabilitation setback')
+    return { id: string(setback.id, 'Rehabilitation setback id'), occurredOn: parseGameDate(string(setback.occurredOn, 'Rehabilitation setback date')), mode: string(setback.mode, 'Rehabilitation setback mode') as RehabilitationMode, reason: string(setback.reason, 'Rehabilitation setback reason') as 'REHAB_SETBACK', daysAdded: integer(setback.daysAdded, 'Rehabilitation setback days') }
+  })
+  const fitnessTests: readonly FitnessTestRecord[] | undefined = v.fitnessTests === undefined ? undefined : array(v.fitnessTests, 'Fitness tests').map((item) => {
+    const test = record(item, 'Fitness test')
+    return { id: string(test.id, 'Fitness test id'), testedOn: parseGameDate(string(test.testedOn, 'Fitness test date')), result: string(test.result, 'Fitness test result') as FitnessTestRecord['result'], actor: readActor(test.actor), ...(test.staffId === undefined ? {} : { staffId: string(test.staffId, 'Fitness test Staff') as import('@/domain/ids').StaffPersonId }), ...(test.qualityScore === undefined ? {} : { qualityScore: integer(test.qualityScore, 'Fitness test quality') }) }
+  })
+  return createInjury({ ...base, returnToPlay, ...(rehabilitation === undefined ? {} : { rehabilitation }), ...(rehabilitationSetbacks === undefined ? {} : { rehabilitationSetbacks }), ...(fitnessTests === undefined ? {} : { fitnessTests }) })
 }
 function readContract(value: unknown) { const v=record(value,'Contract'); const term=record(v.term,'Contract term'); const compensation=record(v.compensation,'Contract compensation'); const annualSalary=integer(compensation.annualSalary,'Contract annualSalary'); const years=compensation.years===undefined?undefined:array(compensation.years,'Contract compensation years').map((year)=>{const item=record(year,'Contract compensation year');const capTreatment=item.capTreatment===undefined?undefined:(()=>{const treatment=record(item.capTreatment,'Contract cap treatment');return treatment.policy==='NOT_APPLICABLE'?{policy:'NOT_APPLICABLE' as const}:{policy:string(treatment.policy,'Contract cap policy') as 'BASE_SALARY'|'EXPLICIT_SCHEDULE',capHit:integer(treatment.capHit,'Contract cap hit')}})();return{cashSalary:integer(item.cashSalary,'Contract cash salary'),...(item.capHit===undefined?{}:{capHit:integer(item.capHit,'Contract cap hit')}),guaranteedAmount:integer(item.guaranteedAmount,'Contract guaranteed amount'),...(capTreatment===undefined?{}:{capTreatment})}}); return {id:contractIdFromString(string(v.id,'Contract id')),playerId:playerIdFromString(string(v.playerId,'Contract playerId')),teamId:teamIdFromString(string(v.teamId,'Contract teamId')),kind:string(v.kind,'Contract kind') as 'standard',term:{startsOn:parseGameDate(string(term.startsOn,'Contract startsOn')),expiresOn:parseGameDate(string(term.expiresOn,'Contract expiresOn'))},compensation:{annualSalary,...(years===undefined?{}:{years})},...(v.predecessorContractId===undefined?{}:{predecessorContractId:contractIdFromString(string(v.predecessorContractId,'Contract predecessorContractId'))}),...(v.termination===undefined?{}:{termination:readTermination(v.termination)})} }
 function readContractServiceTimeBaseline(value: unknown) { const v=record(value,'Service-time baseline'); return createContractServiceTimeBaseline({id:string(v.id,'Service-time baseline id'),playerId:playerIdFromString(string(v.playerId,'Service-time player')),jurisdictionId:ecosystemIdFromString(string(v.jurisdictionId,'Service-time jurisdiction')),seasons:integer(v.seasons,'Service-time seasons'),effectiveOn:parseGameDate(string(v.effectiveOn,'Service-time effective date')),source:string(v.source,'Service-time source') as 'WORLD_GENERATION'|'IMPORTED'}) }

@@ -96,6 +96,35 @@ describe('MedicalWorkspace', () => {
     expect(url.searchParams.get('playerView')).toBe('medical')
   })
 
+  it('lets the user change rehab mode from the InjuryRecord dossier', () => {
+    const base = createNewGame()
+    const { world } = withInjury(base)
+    mountMedicalWorkspace(world)
+    fireEvent.click(screen.getByRole('button', { name: /^Injured/ }))
+    fireEvent.change(screen.getByLabelText('Rehab plan'), { target: { value: 'ACCELERATED_REHAB' } })
+    const updated = useGameStore.getState().world!
+    const injury = Object.values(updated.injuriesById).find((item) => item.kind === 'hamstringStrain')!
+    expect(injury.rehabilitation?.mode).toBe('ACCELERATED_REHAB')
+    expect(injury.rehabilitation?.history.at(-1)).toMatchObject({ mode: 'ACCELERATED_REHAB', actor: { kind: 'USER', coachId: updated.userCoachId } })
+  })
+
+  it('requires and records a fitness test before a serious injury can be cleared', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const playerId = team.rosterPlayerIds[0]!
+    const injury = createInjury({
+      id: injuryIdFromString('injury-medical-test-required'), playerId, kind: 'kneeSprain', severity: 'serious',
+      injuredOn: addDays(base.currentDate, -30), expectedReturnDate: base.currentDate,
+    })
+    mountMedicalWorkspace(updateGameWorld(base, { injuries: [injury] }))
+    expect(screen.getByRole('button', { name: 'RUN FITNESS TEST' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'CLEAR FOR PLAY' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'RUN FITNESS TEST' }))
+    const tested = useGameStore.getState().world!.injuriesById[injury.id]!
+    expect(tested.fitnessTests).toHaveLength(1)
+    expect(tested.returnToPlay?.clearedOn).toBeUndefined()
+  })
+
   it('lets the user clear or defer a due RTP review from Medical', () => {
     const base = createNewGame()
     const team = getUserTeam(base)!
