@@ -98,8 +98,6 @@ export interface MatchNextTuning {
   readonly playPassBoost: number
   /** Passes after its action that a set needs before it counts as run (the second read: the ball goes to the weak side). */
   readonly playExtraPasses: number
-  /** BT4.3: an offense that is not set may still attack a defense that is not set either (early offense); this is how close three defenders must be to their spots for the defense to count as set. 0 = never attack before the set. */
-  readonly earlyOffenseRadiusMeters: number
 }
 
 export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
@@ -158,7 +156,6 @@ export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
   playDriveBoost: 1.3,
   playPassBoost: 1.25,
   playExtraPasses: 1,
-  earlyOffenseRadiusMeters: 3,
 })
 
 let active: MatchNextTuning = DEFAULT_MATCH_NEXT_TUNING

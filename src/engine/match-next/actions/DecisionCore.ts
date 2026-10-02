@@ -146,7 +146,7 @@ export function workingValue(state: MatchState): number {
 }
 
 /** The defense is set when most defenders are on the spot their responsibility gives them: waiting for a look only pays against a set defense. */
-function defenseIsSet(state: MatchState, radius: number = tuning().defenseSetRadiusMeters): boolean {
+export function defenseIsSet(state: MatchState, radius: number = tuning().defenseSetRadiusMeters): boolean {
   const defenders = state.players.filter((player) => player.active && player.teamId === state.defensiveStructure?.teamId)
   if (defenders.length === 0) return true
   const set = defenders.filter((defender) => {
@@ -551,6 +551,19 @@ function playRead(state: MatchState, flow: MatchState['offenseFlow'], teamId: Ma
   return { kind, committed: !executed && elapsed < tuning().playCommitSeconds, screensDone, drivesDone, passesDone }
 }
 
+/** A fast break in basketball terms: between the ball and the basket there are at least as many attackers as defenders. */
+function hasNumericAdvantage(state: MatchState, actor: MatchPlayerState, basket: CourtPosition): boolean {
+  const reach = distanceBetween(actor.position, basket)
+  let attackers = 0
+  let defenders = 0
+  for (const player of state.players) {
+    if (!player.active || player.playerId === actor.playerId || distanceBetween(player.position, basket) >= reach) continue
+    if (player.teamId === actor.teamId) attackers += 1
+    else defenders += 1
+  }
+  return defenders <= attackers
+}
+
 function readTheFloor(state: MatchState, actor: MatchPlayerState, basket: CourtPosition, flow: MatchState['offenseFlow'], contained: boolean, passKind: 'PASS' | 'KICK_OUT', mustAct = false, screen: ScreenState | null = null): FloorRead {
   const contest = estimateContestAt(state, actor.teamId, actor.position)
   // Off a set screen the handler's defender is about to be delayed: the pull-up is less contested than it looks now.
@@ -589,18 +602,25 @@ function readTheFloor(state: MatchState, actor: MatchPlayerState, basket: CourtP
   const gumbel = (salt: string): number => temperature <= 0 ? 0 : -temperature * Math.log(-Math.log(Math.min(0.999, Math.max(0.001, decisionNoise(state, actor.playerId, `gumbel-${salt}`)))))
   // BT4.3: with the floor set the handler does not wait: waiting is not a basketball action, the possession is made of actions.
   const noHold = mustAct || (tuning().settledHandlerActs !== 0 && flow !== null && flow.settledAtT !== null && state.transition === null && secondsLeft > 1)
-  const candidates = (Object.entries(options) as [keyof typeof options, number][])
-    .filter(([name]) => !noHold || name !== 'hold')
-    .map(([name, value]): [keyof typeof options, number] => [name, Number.isFinite(value) ? value + gumbel(name) : value])
-  const best = candidates.sort((left, right) => right[1] - left[1])[0]![0]
   const settled = flow === null || flow.settledAtT !== null
   // After an offensive rebound the floor is a scramble, not a set: the rebounder reads it as it is (putback, kick-out or reset).
   // With the clock nearly gone there is nothing left to organise: the possession must produce a look now.
   const halfCourtUnsettled = flow !== null && !settled && flow.stage === 'HALF_COURT' && secondsLeft > UNSETTLED_HOLD_MIN_SECONDS
+  // BT4.4: an offense that is not set may act on a look that is already there (a shot, a pass), but a drive is a play: it is only a legitimate early attack
+  // with a real transition advantage or while the defense is not set either. A transition the defense has already stopped (STOPPED/NEUTRAL) grants nothing:
+  // the handler is bringing the ball up. Before, any open look (or a stopped transition in the EARLY stage) let the handler act and the best option could be a drive.
+  const transitionAdvantage = state.transition !== null && state.transition.teamId === actor.teamId && state.transition.advantage === 'ADVANTAGE'
+  const notSetYet = flow !== null && !settled && (flow.stage === 'HALF_COURT' || flow.stage === 'EARLY') && secondsLeft > UNSETTLED_HOLD_MIN_SECONDS
+  const earlyDriveAllowed = transitionAdvantage || hasNumericAdvantage(state, actor, basket)
+  const driveIsAPlay = tuning().playsEnabled !== 0 && notSetYet && !mustAct && !earlyDriveAllowed
+  const candidates = (Object.entries(options) as [keyof typeof options, number][])
+    .filter(([name]) => (!noHold || name !== 'hold') && !(driveIsAPlay && name === 'drive'))
+    .map(([name, value]): [keyof typeof options, number] => [name, Number.isFinite(value) ? value + gumbel(name) : value])
+  const best = candidates.sort((left, right) => right[1] - left[1])[0]![0]
   // Until the floor is organised only a genuinely open look justifies acting: otherwise keep reading.
   const pace = actor.teamId === state.homeTeamId ? state.tacticalPlans.home.pace : state.tacticalPlans.away.pace
   // BT4.3: an offense that is not set does not attack on its own: only a shot or a pass that is already there justifies acting; a drive is a play, not a look.
-  const openLook = Math.max(options.shoot, options.pass, tuning().playsEnabled !== 0 && !(tuning().earlyOffenseRadiusMeters > 0 && !defenseIsSet(state, tuning().earlyOffenseRadiusMeters)) ? Number.NEGATIVE_INFINITY : options.drive) >= OPEN_LOOK_VALUE_POINTS * (1 - pace * PACE_OPEN_LOOK_PER_LEVEL)
+  const openLook = Math.max(options.shoot, options.pass, tuning().playsEnabled !== 0 && !earlyDriveAllowed ? Number.NEGATIVE_INFINITY : options.drive) >= OPEN_LOOK_VALUE_POINTS * (1 - pace * PACE_OPEN_LOOK_PER_LEVEL)
   const readAgain = state.t + Math.max(1, Math.round(3 - pace * PACE_READ_TICKS_PER_LEVEL)) + Math.floor(decisionNoise(state, actor.playerId, 'hold') * 4)
   if (!noHold && (best === 'hold' || (halfCourtUnsettled && !openLook))) return { kind: 'HOLD', holdUntilT: readAgain }
   const recentCatch = flow !== null && flow.caughtFromPass && state.t - flow.holderSinceT <= 14

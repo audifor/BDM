@@ -13,6 +13,7 @@ import { closeoutReactionTicks } from './defense/Closeout'
 import { tuning } from './tuning'
 import { OPEN_LOOK_VALUE_POINTS, shotMakeProbability } from './actions/DecisionCore'
 import { isInsideZone, ZONE_TOLERANCE_METERS } from './structure/OffensiveStructure'
+import { attackingBasketForTeam } from './structure/FiveOutStructure'
 import type { MatchNextEvent, MatchState } from './index'
 
 type Coverage = 'switch' | 'drop' | 'hedge' | 'blitz'
@@ -47,12 +48,18 @@ function play(seed: number, ticks: number, observe: (before: MatchState, after: 
 const at = (state: MatchState, t: number): readonly MatchNextEvent[] => state.events.filter((event) => event.t === t)
 
 describe('BT2B/L: possession phases and decision cadence', { timeout: 240000 }, () => {
-  const stageAtDecision: { secondsLeft: number; transition: boolean; stage: string | undefined; settled: boolean; best: number; hold: number; sinceResolved: number; kind: string | undefined; sinceCatch: number | undefined; caught: boolean }[] = []
+  const stageAtDecision: { secondsLeft: number; transition: boolean; advantage: boolean; stage: string | undefined; settled: boolean; best: number; hold: number; sinceResolved: number; kind: string | undefined; sinceCatch: number | undefined; caught: boolean }[] = []
   const final = play(424242, 7000, (before, after) => {
     for (const event of at(after, after.t)) {
       if (event.type !== 'decisionSelected' || event.utility === undefined) continue
       const flow = before.offenseFlow
+      // A reaction to an advantage (BT4.4): at least as many attackers as defenders between the ball and the basket, as the engine's own fast-break rule reads it.
+      const actor = before.players.find((player) => player.playerId === event.playerId)
+      const basket = actor === undefined ? undefined : attackingBasketForTeam(actor.teamId, before.homeTeamId, before.period, before.court)
+      const ahead = actor === undefined || basket === undefined ? [] : before.players.filter((player) => player.active && player.playerId !== actor.playerId && distanceBetween(player.position, basket) < distanceBetween(actor.position, basket))
+      const advantage = actor !== undefined && ahead.filter((player) => player.teamId !== actor.teamId).length <= ahead.filter((player) => player.teamId === actor.teamId).length
       stageAtDecision.push({
+        advantage,
         // Stage as the handler saw it, settlement as of this very tick (the offense may settle on the tick he decides).
         secondsLeft: Math.min(before.shotClockTenths ?? 240, before.gameClockTenths) / 10, transition: before.transition !== null, stage: flow?.stage, settled: after.offenseFlow?.settledAtT != null, kind: event.decisionKind, hold: event.utility.hold, sinceResolved: flow === null ? 99 : after.t - flow.lastResolvedT,
         best: Math.max(event.utility.shoot, event.utility.drive, event.utility.pass, event.utility.screen ?? 0),
@@ -69,10 +76,11 @@ describe('BT2B/L: possession phases and decision cadence', { timeout: 240000 }, 
   it('does not act before the half court is set unless the look is genuinely open (or the decision is a reaction to an advantage)', () => {
     // With the clock nearly gone an unsettled offense may no longer wait (BT4.1: the hold value also carries the patience premium,
     // so the time left on the shot clock or the game clock, not the hold value, tells whether there is still time to wait): that is not "acting early".
-    const early = stageAtDecision.filter((decision) => !decision.transition && decision.stage === 'HALF_COURT' && !decision.settled && decision.secondsLeft > 9.5 && decision.sinceResolved > 6)
+    const early = stageAtDecision.filter((decision) => !decision.transition && !decision.advantage && decision.stage === 'HALF_COURT' && !decision.settled && decision.secondsLeft > 9.5 && decision.sinceResolved > 6)
     // The recorded utilities are expected points; the willingness to act also carries the handler's tendencies (usage) and the softmax (BT3/BT4),
     // which move it by up to about 15% either way.
-    for (const decision of early) expect(decision.best).toBeGreaterThanOrEqual(OPEN_LOOK_VALUE_POINTS * 0.85)
+    // BT4.4: the gate sees a pass with the play's boost (a committed set calls for ball movement) and the recorded utilities do not carry it.
+    for (const decision of early) expect(decision.best).toBeGreaterThanOrEqual(OPEN_LOOK_VALUE_POINTS * 0.85 / tuning().playPassBoost)
   })
 
   it('decides on a human cadence: the median gap between decisions is over a second, not every tick', () => {
@@ -150,8 +158,7 @@ describe('BT2C: half-court settlement (zones, not rails)', { timeout: 240000 }, 
       if (occupied === 0) cornersMissing += 1
     })
     expect(samples).toBeGreaterThan(100)
-    // BT4.3: the handler starts the play (ball screen, drive-and-kick) right after the set, so the 3 s window has more movement than before.
-    expect(inZone / players).toBeGreaterThan(0.65)
+    expect(inZone / players).toBeGreaterThan(0.7)
     // Per tick, not per sample: BT3 games spend less time in a settled half court (more fouls, turnovers and transition shots), so the
     // same handful of frames (BT2: about 1 in 500 ticks) is a bigger share of a smaller sample.
     expect(cornersMissing / 7000).toBeLessThan(0.005)

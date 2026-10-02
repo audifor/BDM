@@ -61,8 +61,8 @@ function runVerticalSlice(period = 1): MatchState {
   return state
 }
 
-function runOpeningPass(): MatchState {
-  let state = readyForAutonomousActions(true)
+function runOpeningPass(period = 1): MatchState {
+  let state = readyForAutonomousActions(true, period)
   // The handler now reads the floor (gather, settle) before he decides: give the opening pass more time to happen.
   for (let count = 0; count < 900; count += 1) {
     state = tick(state)
@@ -102,14 +102,19 @@ describe('Match Next action vertical slice', () => {
   })
 
   it('executes an ordinary PASS as a live decision with a physical catch', () => {
-    const state = runOpeningPass()
-    // A weak handler may first run a ball screen and drive off it; the ball then moves by a PASS or a KICK_OUT.
-    const pass = state.actions.find((action) => action.kind === 'PASS' || action.kind === 'KICK_OUT')
-
-    // BT4.3: the first pass is a seeded draw: it is physically caught or it is a bad pass (the turnover itself is booked when the loose ball is resolved); both are resolved outcomes.
-    expect(pass).toMatchObject({ status: 'COMPLETED' })
-    expect(['CAUGHT', 'BAD_PASS']).toContain(pass?.outcome)
-    if (pass?.outcome === 'CAUGHT') expect(state.events.some((event) => event.type === 'passReceived' && event.receiverPlayerId === pass?.targetPlayerId)).toBe(true)
+    // The first pass of one fixed state is a seeded draw (a long cross-court read through a contested lane), so it is checked over four starting states:
+    // every pass is resolved physically, the caught ones are real catches by the intended receiver, and at least half are caught.
+    // The pass risk of whole games is audited in audit/bt44 (6.9% BT4.2, 7.4% BT4.3 of the passes are not caught).
+    const outcomes = [1, 2, 3, 4].map((period) => {
+      const state = runOpeningPass(period)
+      // A weak handler may first run a ball screen and drive off it; the ball then moves by a PASS or a KICK_OUT.
+      const pass = state.actions.find((action) => action.kind === 'PASS' || action.kind === 'KICK_OUT')
+      expect(pass).toMatchObject({ status: 'COMPLETED' })
+      expect(['CAUGHT', 'BAD_PASS']).toContain(pass?.outcome)
+      if (pass?.outcome === 'CAUGHT') expect(state.events.some((event) => event.type === 'passReceived' && event.receiverPlayerId === pass.targetPlayerId)).toBe(true)
+      return pass?.outcome
+    })
+    expect(outcomes.filter((outcome) => outcome === 'CAUGHT').length).toBeGreaterThanOrEqual(2)
   })
 
   it('runs drive help -> kick-out catch -> physical closeout -> catch-and-shoot resolution deterministically', () => {
