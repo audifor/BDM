@@ -9,6 +9,8 @@ import { nextEligibleTrainingDate, scheduleTeamModuleSession } from '@/engine/tr
 import { selectUserTrainingPlan } from '@/stores/gameStore'
 import { addDays, parseGameDate } from '@/domain/date'
 import { getGamesForTeam } from '@/domain/world'
+import { updateGameWorld } from '@/domain/world'
+import { executeScheduledTrainingSessions } from '@/engine/training'
 import { TrainingPcbPage } from './TrainingPcbPage'
 
 afterEach(cleanup)
@@ -88,6 +90,26 @@ describe('TrainingPcbPage / interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Anterior' }))
     fireEvent.click(screen.getByRole('button', { name: 'Anterior' }))
     expect(screen.getByText('2026-08-10 - 2026-08-16')).toBeInTheDocument()
+  })
+
+  it('shows a completed session in its original weekly slot after time advances and the user goes back', () => {
+    const base = { ...createNewGame(), currentDate: parseGameDate('2026-10-05') }
+    const team = getUserTeam(base)!
+    const date = nextEligibleTrainingDate(base.currentDate)
+    const scheduled = scheduleTeamModuleSession(base, { teamId: team.id, moduleId: 'threePoint', date, startTime: '09:00', durationMinutes: 60, sessionId: 'history-calendar-session' })
+    const completed = executeScheduledTrainingSessions(updateGameWorld(scheduled, { currentDate: date }))
+    const later = { ...completed, currentDate: addDays(date, 8) }
+    const { container } = render(createElement(TrainingPcbPage, { world: later }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Anterior' }))
+
+    expect(container.querySelectorAll('.pcb-training__session')).toHaveLength(1)
+    expect(screen.getByText(/COMPLETED/)).toBeInTheDocument()
+    expect(screen.getByText('Three-Point Shooting')).toBeInTheDocument()
+    const historicalCard = container.querySelector('.pcb-training__session--completed')!
+    expect(within(historicalCard as HTMLElement).queryByRole('button')).not.toBeInTheDocument()
+    expect(within(historicalCard as HTMLElement).getByText(/Planned/)).toBeInTheDocument()
+    expect(within(historicalCard as HTMLElement).getByText(/Effective/)).toBeInTheDocument()
   })
 
   it('opening the new-session modal for a real team shows a real catalog definition and calls onScheduleTeamModule with real domain data', () => {

@@ -9,6 +9,8 @@ import { injuryIdFromString } from '@/domain/ids'
 import { addDays } from '@/domain/date'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import { trainingInjuryProbability } from '@/engine/injury/TrainingInjuries'
+import { deserializeGameWorldV3, serializeGameWorldV3 } from '@/save/GameWorldSaveV3'
+import { sessionsForTrainingWeek } from '@/domain/training'
 
 describe('ScheduledTrainingEngine', () => {
   it('persists eligible executing staff, rejects invalid/overlapping use, and applies bounded deterministic quality', () => {
@@ -266,6 +268,45 @@ describe('ScheduledTrainingEngine', () => {
     const scheduled = scheduleTrainingSession(world, createScheduledTrainingSession({ id: 's1', teamId, date: tomorrow, startTime: '09:00', durationMinutes: 60, scope: 'individual', playerId, definitionId: 'threePoint', intensity: 'normal' }))
     const advanced = advanceDay(scheduled)
     expect(advanced.scheduledTrainingSessionsById['s1']!.status).toBe('completed')
+  })
+
+  it('keeps one completed session in its original week through +1, +7, +30 days and Save V3 round trips', () => {
+    const world = createNewGame()
+    const teamId = Object.values(world.teams)[0]!.id
+    const playerId = world.teams[teamId]!.rosterPlayerIds[0]!
+    const date = nextEligibleTrainingDate(world.currentDate)
+    const weekDay = new Date(`${date}T00:00:00.000Z`).getUTCDay()
+    const weekStart = addDays(date, -(weekDay === 0 ? 6 : weekDay - 1))
+    const scheduled = scheduleTrainingSession(world, createScheduledTrainingSession({ id: 'retained-history', teamId, date, startTime: '09:00', durationMinutes: 60, scope: 'individual', playerId, definitionId: 'threePoint', intensity: 'high' }))
+    let current = advanceDay(scheduled)
+    expect(current.scheduledTrainingSessionsById['retained-history']).toMatchObject({ status: 'completed', date })
+    const originalExecution = current.scheduledTrainingSessionsById['retained-history']!.execution!
+    expect(originalExecution).toMatchObject({ plannedModuleName: 'Three-Point Shooting', moduleName: 'Three-Point Shooting', effectiveIntensity: 'high' })
+
+    const reload = (value: typeof current) => deserializeGameWorldV3(serializeGameWorldV3(value, '2026-10-02T00:00:00.000Z'))
+    current = reload(current)
+    for (let day = 1; day <= 30; day += 1) {
+      current = advanceDay(current)
+      if (![1, 7, 30].includes(day)) continue
+      current = reload(current)
+      const retained = current.scheduledTrainingSessionsById['retained-history']!
+      expect(retained).toMatchObject({ status: 'completed', date })
+      expect(retained.execution).toEqual(originalExecution)
+      expect(sessionsForTrainingWeek(Object.values(current.scheduledTrainingSessionsById), teamId, weekStart).filter((session) => session.id === 'retained-history')).toHaveLength(1)
+    }
+    expect(current.currentDate).toBe(addDays(date, 30))
+  }, 90000)
+
+  it('does not allow completed history to be cancelled or rescheduled through the application engine', () => {
+    const world = createNewGame()
+    const teamId = Object.values(world.teams)[0]!.id
+    const playerId = world.teams[teamId]!.rosterPlayerIds[0]!
+    const date = nextEligibleTrainingDate(world.currentDate)
+    const session = createScheduledTrainingSession({ id: 'read-only-history', teamId, date, startTime: '09:00', durationMinutes: 60, scope: 'individual', playerId, definitionId: 'threePoint', intensity: 'normal' })
+    const completed = advanceDay(scheduleTrainingSession(world, session))
+
+    expect(() => cancelScheduledTrainingSession(completed, session.id)).toThrow(/immutable/)
+    expect(() => scheduleTrainingSession(completed, createScheduledTrainingSession({ ...session, date: addDays(completed.currentDate, 1) }))).toThrow(/immutable/)
   })
 
   it('team position-restricted training applies fatigue to every participating player but development stimulus only to eligible players', () => {

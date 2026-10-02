@@ -9,10 +9,10 @@ import type { Team } from "@/domain/team";
 import type { TeamId, PlayerId, StaffPersonId } from "@/domain/ids";
 import { createEntityId } from "@/domain/ids";
 import { isTrainingStaffRoleEligible, type StaffRoleId } from "@/domain/staff";
-import { STAFF_ROLE_LABELS } from "@/ui/staffPresentation";
+import { STAFF_ROLE_LABELS, staffQualityBand, trainingContributionBand } from "@/ui/staffPresentation";
 import { useEntityContextMenu } from "@/ui/entityContextMenu/EntityContextMenuProvider";
 import { PlayerNameLink } from "@/ui/navigation/PlayerNameLink";
-import { TRAINING_CATALOG, trainingDefinitionById, trainingLoad, type DailyLoadStatus, type ScheduledTrainingSession, type TrainingCategory, type TrainingFocus, type TrainingIntensity as DomainTrainingIntensity, type TrainingDefinition, type TrainingParticipation, type TrainingScope, type UserTrainingModule } from "@/domain/training";
+import { TRAINING_CATALOG, sessionsForTrainingWeek, trainingDefinitionById, trainingLoad, type DailyLoadStatus, type ScheduledTrainingSession, type TrainingCategory, type TrainingFocus, type TrainingIntensity as DomainTrainingIntensity, type TrainingDefinition, type TrainingParticipation, type TrainingScope, type UserTrainingModule } from "@/domain/training";
 import { ATTRIBUTE_LABELS } from "@/ui/attributeLabels";
 import { selectLatestUserTrainingSession, selectUserTeamScheduledSessions, selectUserTrainingModules, selectUserTrainingPlan } from "@/stores/gameStore";
 import { PrecisionDivHead } from "@/ui-ng/components/PrecisionDivHead";
@@ -355,7 +355,8 @@ function TeamTraining({
   const impact = world !== undefined && team !== undefined ? getTrainingImpact(world, team.id) : undefined;
   const anchor = weekAnchor(world, week);
   const days = anchor === undefined ? [] : DAY_NAMES.map((name, index) => ({ name, date: addDays(anchor, index) }));
-  const sessionsForDate = (date: GameDate) => scheduledSessions.filter((session) => session.date === date && session.status === "scheduled").sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const weekSessions = anchor === undefined || team === undefined ? [] : sessionsForTrainingWeek(scheduledSessions, team.id, anchor);
+  const sessionsForDate = (date: GameDate) => weekSessions.filter((session) => session.date === date);
   const hasAutomaticDays = days.some(({ date }) => {
     if (world === undefined || team === undefined || date <= world.currentDate) return false;
     if (isMatchDay(world, team, date)) return false;
@@ -501,6 +502,40 @@ function TeamTraining({
                       sessions.map((session) => {
                         const definition = TRAINING_CATALOG.find((entry) => entry.id === session.definitionId);
                         const intensityEs = INTENSITY_ES[session.intensity];
+                        if (session.status === "completed") {
+                          const execution = session.execution;
+                          const executorNames = execution?.executingStaffPersonIds.map((id) => {
+                            const person = world?.staffPeopleById[id];
+                            const role = execution.executingStaffRoles.find((entry) => entry.staffId === id)?.roleId;
+                            return `${person === undefined ? "Staff" : `${person.identity.firstName} ${person.identity.lastName}`}${role === undefined ? "" : ` · ${STAFF_ROLE_LABELS[role]}`}`;
+                          }) ?? [];
+                          const planOutcome = Object.values(world?.delegationOutcomesById ?? {}).find((outcome) => outcome.payload.sessionId === session.id && outcome.kind === (session.scope === "team" ? "createTeamTrainingPlan" : "assignIndividualDevelopment"));
+                          const intensityOutcome = Object.values(world?.delegationOutcomesById ?? {}).find((outcome) => outcome.payload.sessionId === session.id && outcome.kind === "determineIntensity");
+                          const stimulusPlayers = execution?.participants.filter((entry) => entry.developmentStimulusEventId !== undefined).length ?? 0;
+                          const injuries = execution?.participants.reduce((total, entry) => total + entry.injuryIds.length, 0) ?? 0;
+                          return (
+                            <details className="pcb-training__session pcb-training__session--completed" key={session.id}>
+                              <summary>
+                                <b>{execution?.moduleName ?? execution?.plannedModuleName ?? definition?.name ?? session.definitionId}</b>
+                                <small>{session.startTime} · COMPLETED · {intensityEs}</small>
+                              </summary>
+                              <div className="pcb-training__completed-detail">
+                                {execution === undefined ? <p>Historical Training session; detailed execution evidence is unavailable in this save.</p> : <>
+                                  <p><strong>Planned</strong> {execution.plannedModuleName} · {intensityEs}</p>
+                                  <p><strong>Effective</strong> {execution.moduleName} · {INTENSITY_LABELS[execution.effectiveIntensity]}{execution.moduleName !== execution.plannedModuleName || execution.effectiveIntensity !== session.intensity ? " · changed from plan" : " · as planned"}</p>
+                                  {planOutcome !== undefined && <p><strong>Plan Staff</strong> {world?.staffPeopleById[planOutcome.staffId] ? `${world.staffPeopleById[planOutcome.staffId]!.identity.firstName} ${world.staffPeopleById[planOutcome.staffId]!.identity.lastName}` : "Staff"} · {planOutcome.staffRoleIdAtDecision ? STAFF_ROLE_LABELS[planOutcome.staffRoleIdAtDecision] : "role not recorded"} · {staffQualityBand(planOutcome.qualityScore)}{planOutcome.staffWasOverloadedAtDecision ? " · high workload" : ""}</p>}
+                                  {intensityOutcome !== undefined && <p><strong>Intensity advice</strong> {intensityOutcome.staffRoleIdAtDecision ? STAFF_ROLE_LABELS[intensityOutcome.staffRoleIdAtDecision] : "Staff"} · {intensityOutcome.staffWasOverloadedAtDecision ? "high workload" : "workload within capacity"}</p>}
+                                  <p><strong>Executor</strong> {executorNames.join(", ") || "No assigned executor"} · {trainingContributionBand(execution.executionQualityMultiplier)} quality</p>
+                                  <p><strong>Result</strong> {execution.participants.length} players · {stimulusPlayers} development stimuli · {injuries} injuries</p>
+                                  <ul>{execution.participants.map((participant) => {
+                                    const player = world?.players[participant.playerId];
+                                    return <li key={participant.playerId}>{player === undefined ? "Unknown player" : `${player.firstName} ${player.lastName}`} · {participant.participation} · fatigue {participant.careerFatigueDelta > 0 ? "+" : ""}{participant.careerFatigueDelta} · {participant.developmentStimulusEventId === undefined ? "no development stimulus" : "development stimulus recorded"} · {participant.injuryIds.length} injuries</li>;
+                                  })}</ul>
+                                </>}
+                              </div>
+                            </details>
+                          );
+                        }
                         return (
                           <article className="pcb-training__session" key={session.id}>
                             <button onClick={() => setEditor({ date, session })} type="button">
