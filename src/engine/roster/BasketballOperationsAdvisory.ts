@@ -33,7 +33,7 @@ function record(world: GameWorld, teamId: TeamId, kind: typeof KINDS[number]): G
   else if (kind === 'tradeRecommendation') payload = tradeRecommendation(world, teamId, organizationId, qualityScore, rngSeed)
 
   if (payload === undefined) return world
-  const outcome = createDelegationOutcome({ id, responsibilityId: resolution.responsibilityId, staffId: resolution.staffId, decidedOn: world.currentDate, kind: kind as ResponsibilityKind, applied: false, qualityScore, payload })
+  const outcome = createDelegationOutcome({ id, responsibilityId: resolution.responsibilityId, staffId: resolution.staffId, decidedOn: world.currentDate, kind: kind as ResponsibilityKind, applied: false, qualityScore, staffRoleIdAtDecision: resolution.context.roleId, staffWasOverloadedAtDecision: resolution.context.workload.overloaded, payload })
   return { ...world, delegationOutcomesById: { ...world.delegationOutcomesById, [id]: outcome } }
 }
 

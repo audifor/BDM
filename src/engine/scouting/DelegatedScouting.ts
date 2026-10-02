@@ -79,6 +79,8 @@ function progressTeamDelegatedScouting(world: GameWorld, teamId: TeamId): GameWo
     kind: 'assignScouts',
     applied: true,
     qualityScore,
+    staffRoleIdAtDecision: resolution.context.roleId,
+    staffWasOverloadedAtDecision: resolution.context.workload.overloaded,
     payload: { targetPlayerId: target, evaluatorStaffId, missionType: 'QUICK_LOOK' },
   })
   return { ...withRequest, delegationOutcomesById: { ...withRequest.delegationOutcomesById, [outcomeId]: outcome } }
@@ -218,6 +220,8 @@ function applyPrioritizeRegions(world: GameWorld, teamId: TeamId): { readonly wo
     kind: 'prioritizeRegions',
     applied: true,
     qualityScore: prioritizeQuality,
+    staffRoleIdAtDecision: resolution.context.roleId,
+    staffWasOverloadedAtDecision: resolution.context.workload.overloaded,
     payload: { opponentTeamId, selectedNationalityId, candidateBandSize: bandSize, unknownPlayerCount: selectedUnknownPlayerCount },
   })
   return { world: { ...world, delegationOutcomesById: { ...world.delegationOutcomesById, [outcomeId]: outcome } }, nationalityOrder }

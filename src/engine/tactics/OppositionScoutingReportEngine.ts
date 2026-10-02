@@ -56,6 +56,8 @@ function progressTeamOppositionReport(world: GameWorld, teamId: TeamId): GameWor
     kind: 'oppositionScouting',
     applied: false,
     qualityScore,
+    staffRoleIdAtDecision: resolution.context.roleId,
+    staffWasOverloadedAtDecision: resolution.context.workload.overloaded,
     payload: {
       reportId,
       gameId: nextGame.id,

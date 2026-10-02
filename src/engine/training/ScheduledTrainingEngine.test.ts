@@ -96,6 +96,7 @@ describe('ScheduledTrainingEngine', () => {
     const executedOnce = executeScheduledTrainingSessions(scheduled)
     expect(executedOnce.scheduledTrainingSessionsById['s1']!.status).toBe('completed')
     const execution = executedOnce.scheduledTrainingSessionsById['s1']!.execution!
+    expect(execution).toMatchObject({ plannedModuleName: 'Three-Point Shooting', moduleName: 'Three-Point Shooting', effectiveIntensity: 'high', executingStaffRoles: [] })
     expect(execution.participants.find((entry) => entry.playerId === playerId)).toMatchObject({ participation: 'FULL', careerFatigueDelta: expect.any(Number) })
     expect(execution.participants.find((entry) => entry.playerId === playerId)!.developmentStimulusEventId).toBe(`training:s1:${playerId}`)
     expect(executedOnce.developmentStimulusEventsById[`training:s1:${playerId}`]!.sourceType).toBe('training')

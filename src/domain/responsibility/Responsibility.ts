@@ -196,6 +196,10 @@ export interface DelegationOutcome {
   readonly applied: boolean
   /** 0-100, deterministic function of staff attributes/personality/context — never the "correct" answer. */
   readonly qualityScore: number
+  /** Historical assignment context; optional for saves written before this evidence was captured. */
+  readonly staffRoleIdAtDecision?: StaffRoleId
+  /** Whether the holder was overloaded when this decision was made. */
+  readonly staffWasOverloadedAtDecision?: boolean
   readonly payload: Readonly<Record<string, string | number | boolean>>
   readonly rationale?: string
   /**
@@ -223,6 +227,8 @@ export function createDelegationOutcome(input: DelegationOutcome): DelegationOut
     kind: input.kind,
     applied: input.applied,
     qualityScore: input.qualityScore,
+    ...(input.staffRoleIdAtDecision === undefined ? {} : { staffRoleIdAtDecision: input.staffRoleIdAtDecision }),
+    ...(input.staffWasOverloadedAtDecision === undefined ? {} : { staffWasOverloadedAtDecision: input.staffWasOverloadedAtDecision }),
     payload: { ...input.payload },
     ...(input.rationale === undefined ? {} : { rationale: input.rationale }),
     ...(input.userDisposition === undefined ? {} : { userDisposition: input.userDisposition }),

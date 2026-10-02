@@ -4,7 +4,7 @@ import type { StaffRecommendationCommandResult } from '@/app/staffRecommendation
 import type { DelegationOutcomeId } from '@/domain/responsibility'
 import type { TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
-import { RESPONSIBILITY_DOMAIN_LABELS, STAFF_ROLE_LABELS } from '@/ui/staffPresentation'
+import { RESPONSIBILITY_DOMAIN_LABELS, STAFF_ROLE_LABELS, staffQualityBand } from '@/ui/staffPresentation'
 import {
   getStaffRecommendationsForTeam,
   type StaffRecommendationPresentationItem,
@@ -79,9 +79,8 @@ export function StaffAdvisoryBoard({
                 }),
                 ngCol('recommendation', 'Recommendation', (row) => row.summary, { value: (row) => row.summary }),
                 ngCol('from', 'From', (row) => row.staffName, { value: (row) => row.staffName }),
-                ngCol('quality', 'Quality', (row) => row.qualityScore, {
-                  numeric: true,
-                  value: (row) => row.qualityScore,
+                ngCol('quality', 'Quality', (row) => staffQualityBand(row.qualityScore), {
+                  value: (row) => staffQualityBand(row.qualityScore),
                 }),
                 ngCol('status', 'Status', (row) => row.status, { value: (row) => row.status }),
               ])}
@@ -149,7 +148,7 @@ function AdvisoryInspector({
         <MetricRow label="Date" value={item.decidedOn} />
         <MetricRow label="From" value={item.staffName} />
         {item.staffRole !== undefined ? <MetricRow label="Role" value={STAFF_ROLE_LABELS[item.staffRole]} /> : null}
-        <MetricRow label="Quality" value={item.qualityScore} />
+        <MetricRow label="Quality" value={staffQualityBand(item.qualityScore)} />
       </dl>
 
       <InspectorSection title="Details">

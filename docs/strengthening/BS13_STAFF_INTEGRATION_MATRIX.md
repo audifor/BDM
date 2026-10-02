@@ -49,3 +49,11 @@ Match/coaching, Rotation, Tactics, Draft, NCAA, Governance/Board, Morale/Relatio
 ## Absent systems
 
 Facilities staffing/effects, Youth/Newgen Staff authority and Media Staff authority are absent. Their named milestone ownership remains outside BS13.
+
+## BS13E manifestation update
+
+- Training execution and delegated decision snapshots feed the existing Training history and Staff Recent Impact projection; no parallel event store was introduced.
+- Medical/recruiting/operations/scouting advisories retain their existing target-domain decision seams and expose Staff decision-time role and qualitative quality where their outcome record is present.
+- Opposition report acceptance remains connected to existing TeamGamePlan state; no MatchEngine behavior changed.
+- Staff career history supplies dated evaluator roles for scouting reports. The report artifact itself still does not snapshot evaluator role, so unresolvable legacy history is presented as unknown.
+- Market contact/offer and Trade action histories show persisted Staff actors with dated career roles where the history can resolve them.

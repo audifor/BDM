@@ -185,7 +185,7 @@ function ReportBoard({
               {row.playerName}
             </button>
             <span>{row.missionLabel}</span>
-            <span>{row.evaluatorName}</span>
+            <span>{row.evaluatorName} · {row.evaluatorRoleLabel}</span>
             <span>{row.createdLabel}</span>
             {row.tacticalFitLabel !== null ? <span>Fit {row.tacticalFitLabel}</span> : null}
           </header>
@@ -221,10 +221,10 @@ function OppositionBoard({
           <header className="scouting-workspace__card-head">
             <strong>{row.opponentName}</strong>
             <span>{row.gameDateLabel}</span>
-            <span>Quality {row.qualityScore}</span>
+            <span>{row.qualityLabel} report</span>
             <span>{row.emphasisLabel ?? 'No emphasis'}</span>
             <span>{row.paceLabel === null ? 'Pace —' : `Pace ${row.paceLabel}`}</span>
-            <span>{row.authoredBy}</span>
+            <span>{row.authoredBy} · {row.authorRoleLabel}</span>
           </header>
           {row.flaggedPlayers.length > 0 ? (
             <ul className="scouting-workspace__findings">

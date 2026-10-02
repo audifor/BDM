@@ -89,6 +89,8 @@ function recordMedicalRecommendation(world: GameWorld, teamId: TeamId, injuryId:
     kind,
     applied: false,
     qualityScore,
+    staffRoleIdAtDecision: resolution.context.roleId,
+    staffWasOverloadedAtDecision: resolution.context.workload.overloaded,
     payload: {
       injuryId,
       playerId,

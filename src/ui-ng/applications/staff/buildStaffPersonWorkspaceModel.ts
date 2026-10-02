@@ -1,4 +1,5 @@
 import { staffRoleDefinition, type StaffProfessionalAttributeKey } from '@/domain/staff'
+import { addDays } from '@/domain/date'
 import { STAFF_REPUTATION_DIMENSIONS, staffReputationScore } from '@/domain/staffReputation'
 import type { StaffPersonId } from '@/domain/ids'
 import { calculateStaffWorkload, getStaffAssignment, getStaffPerson, type GameWorld } from '@/domain/world'
@@ -26,6 +27,8 @@ import {
   RESPONSIBILITY_DOMAIN_LABELS,
   RESPONSIBILITY_KIND_LABELS,
   RESPONSIBILITY_MODE_LABELS,
+  staffQualityBand,
+  trainingContributionBand,
 } from '@/ui/staffPresentation'
 import { deriveTeamColors, teamShortCode } from '@/ui-ng/applications/player/data/presentationHelpers'
 import {
@@ -102,6 +105,13 @@ export function buildStaffPersonWorkspaceModel(
   const culture = explainStaffCultureFit(world, staffPersonId)
   const attributes = buildAttributeRows(person.professional.attributes)
   const teamColors = deriveTeamColors(team?.id ?? staffPersonId)
+  const windowStart = addDays(world.currentDate, -29)
+  const recentSessions = Object.values(world.scheduledTrainingSessionsById).filter((session) => session.status === 'completed' && session.execution !== undefined && session.execution.completedOn >= windowStart && session.execution.completedOn <= world.currentDate && session.execution.executingStaffPersonIds.includes(staffPersonId))
+  const recentOutcomes = Object.values(world.delegationOutcomesById).filter((outcome) => outcome.staffId === staffPersonId && outcome.decidedOn >= windowStart && outcome.decidedOn <= world.currentDate)
+  const impactEntries = [
+    ...recentSessions.map((session) => ({ id: `training:${session.id}`, date: session.execution!.completedOn, activity: `Training session · ${session.execution!.moduleName}`, result: `${trainingContributionBand(session.execution!.executionQualityMultiplier)} contribution`, roleLabel: session.execution!.executingStaffRoles.find((staff) => staff.staffId === staffPersonId)?.roleId ? STAFF_ROLE_LABELS[session.execution!.executingStaffRoles.find((staff) => staff.staffId === staffPersonId)!.roleId] : 'Role not recorded' })),
+    ...recentOutcomes.map((outcome) => ({ id: outcome.id, date: outcome.decidedOn, activity: RESPONSIBILITY_KIND_LABELS[outcome.kind], result: outcome.userDisposition === 'accepted' ? 'Accepted' : outcome.userDisposition === 'dismissed' ? 'Dismissed' : outcome.applied ? 'Applied' : 'Recommended', roleLabel: outcome.staffRoleIdAtDecision === undefined ? 'Role not recorded' : STAFF_ROLE_LABELS[outcome.staffRoleIdAtDecision] })),
+  ].sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id))
 
   return {
     identity: {
@@ -165,6 +175,12 @@ export function buildStaffPersonWorkspaceModel(
       id: `${entry.date}-${entry.kind}-${index}`,
       label: formatStaffCareerEntry(entry),
     })),
+    recentImpact: {
+      trainingSessions: recentSessions.length,
+      recommendations: recentOutcomes.filter((outcome) => !outcome.applied || outcome.userDisposition !== undefined).length,
+      acceptedRecommendations: recentOutcomes.filter((outcome) => outcome.userDisposition === 'accepted').length,
+      entries: impactEntries.slice(0, 6),
+    },
     dynamics: {
       stateLabel: explanation === undefined ? null : DYNAMICS_STATE_LABELS[explanation.currentState],
       stateTone: explanation === undefined ? null : toneForInterpretedState(explanation.currentState),

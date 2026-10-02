@@ -87,6 +87,8 @@ function recordAdvisoryScoutingRequest(
     kind,
     applied: false,
     qualityScore,
+    staffRoleIdAtDecision: resolution.context.roleId,
+    staffWasOverloadedAtDecision: resolution.context.workload.overloaded,
     payload: { targetPlayerId: target, missionType, ...(requestedAssignmentId === undefined ? {} : { assignmentId: requestedAssignmentId }) },
   })
   return { ...withRequest, delegationOutcomesById: { ...withRequest.delegationOutcomesById, [outcomeId]: outcome } }

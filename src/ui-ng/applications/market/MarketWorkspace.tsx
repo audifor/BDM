@@ -10,6 +10,8 @@ import { formatRatingEvaluation, getOrganizationRatingEvaluation } from '@/domai
 import { getPlayerAge, type Player } from '@/domain/player'
 import { canTeamAffordAdditionalSalary, getFreeAgents, getPlayerKnowledge, getTeamFinancialSnapshot, isPlayerFreeAgent } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
+import { STAFF_ROLE_LABELS } from '@/ui/staffPresentation'
+import type { NegotiationResponsibleActor } from '@/domain/market'
 import { useGameStore } from '@/stores/gameStore'
 import { formatMoney } from '@/ui/formatters'
 import { navigateToPlayer } from '@/ui-ng/workspace/workspaceApps'
@@ -18,6 +20,16 @@ import { ngCol, ngTableColumns, NgPrecisionTable } from '@/ui-ng/components/NgPr
 import { NgHoloShell, NgMetric } from '@/ui-ng/workspace/NgHoloShell'
 
 type PositionFilter = 'ALL' | Player['basketball']['primaryPosition']
+
+function marketActorLabel(world: GameWorld, actor: NegotiationResponsibleActor | undefined, date: string | undefined): string | undefined {
+  if (actor === undefined) return undefined
+  if (actor.kind === 'USER') return 'User'
+  if (actor.kind === 'ORGANIZATION') return 'Organization'
+  const person = world.staffPeopleById[actor.staffPersonId]
+  const history = (world.staffCareerHistoryByStaffId[actor.staffPersonId] ?? []).filter((entry) => date !== undefined && entry.date <= date).sort((a, b) => b.date.localeCompare(a.date))[0]
+  const name = person === undefined ? 'Staff member' : `${person.identity.firstName} ${person.identity.lastName}`
+  return history?.kind === 'appointment' ? `${name} · ${STAFF_ROLE_LABELS[history.roleId]}` : name
+}
 
 export function MarketWorkspace({ initialWorld }: { readonly initialWorld?: GameWorld } = {}) {
   const world = useGameStore((state) => state.world) ?? initialWorld ?? null
@@ -170,6 +182,8 @@ export function MarketWorkspace({ initialWorld }: { readonly initialWorld?: Game
             <article key={negotiation.id} className="ng-canon__panel" data-negotiation-id={negotiation.id}>
               <h4>{player === undefined ? negotiation.playerId : `${player.firstName} ${player.lastName}`}</h4>
               <p>Contact: {negotiation.status === 'CONTACTED' ? 'Awaiting player response' : 'CONTACTED'} · Response: {negotiation.contactResponse?.outcome ?? 'Pending'}</p>
+              {marketActorLabel(world, negotiation.contactResponsibleActor ?? negotiation.responsibleActor, negotiation.startedOn) !== undefined && <p>Contact handled by: {marketActorLabel(world, negotiation.contactResponsibleActor ?? negotiation.responsibleActor, negotiation.startedOn)}</p>}
+              {marketActorLabel(world, negotiation.offerResponsibleActor, negotiation.offerSubmittedOn) !== undefined && <p>Offer submitted by: {marketActorLabel(world, negotiation.offerResponsibleActor, negotiation.offerSubmittedOn)}</p>}
               <p>Negotiation: {negotiation.status}{'salary' in negotiation && negotiation.salary !== undefined ? ` · ${formatMoney(negotiation.salary)} / ${negotiation.years} years` : ''}</p>
               {negotiation.status === 'CONTACTED' && negotiation.contactResponse?.outcome === 'OPEN_TO_TALKS' && preparation !== undefined && (
                 <>

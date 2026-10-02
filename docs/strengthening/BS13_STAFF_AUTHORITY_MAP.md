@@ -57,3 +57,10 @@ Each row names the current authority, not an aspirational design. Compatibility 
 3. Let the target domain own final mutations (Training, Medical, Recruiting, Market, Trade, Draft, Match, Governance).
 4. Keep advice (`applied: false`) distinct from delegated execution and from the accepted target-domain action.
 5. Keep legacy Coach professional-profile handling as read-only Save V1 migration; do not restore a second runtime authority.
+
+## BS13E evidence authority clarification
+
+- `TrainingExecutionEvidence` remains attached to the canonical completed scheduled session and captures execution-time Staff roles and planned module name. `DelegationOutcome` remains authority for decision-time Staff role, quality, overload fact, payload, and user disposition.
+- Staff Recent Impact is a read-only projection over those records and is never authority for hiring, reputation, player development, Medical state, Recruiting, Market, Trade, or tactics.
+- Save V1 parsing carries optional snapshots for backward compatibility; no UI-derived narrative or global Staff score is persisted.
+- Market and Trade keep their own operation actors/validation as authoritative. Showing advisory source does not make Staff quality a legality or execution rule.

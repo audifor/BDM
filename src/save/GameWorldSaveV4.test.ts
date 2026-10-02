@@ -10,6 +10,7 @@ import { createOrganization } from '@/domain/organization'
 import { organizationIdFromString, personIdFromString } from '@/domain/ids'
 import { createPerson } from '@/domain/person'
 import { createOrganizationControl, createOrganizationOwnership } from '@/domain/ownership/OrganizationOwnership'
+import { createScheduledTrainingSession } from '@/domain/training'
 import { createOrganizationOwnershipTransaction, createOrganizationOwnershipTransactionEvent } from '@/domain/ownership/OrganizationOwnershipTransaction'
 import { executeOrganizationOwnershipTransaction } from '@/domain/ownership/OrganizationOwnershipTransactionExecution'
 import { createOrganizationInvestorInterest } from '@/domain/investment/OrganizationInvestorInterest'
@@ -24,6 +25,29 @@ import { deserializeGameWorldSaveV4, deserializeGameWorldV4, migrateGameWorldSav
 const savedAt = '2032-10-01T00:00:00.000Z'
 
 describe('GameWorldSaveV4 competition runtime', () => {
+  it('round-trips immutable Training Staff role and planned module evidence', () => {
+    const base = createNewGame()
+    const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
+    const assignment = Object.values(base.teamStaffAssignmentsById).find((item) => item.teamId === team.id)!
+    const session = createScheduledTrainingSession({
+      id: 'save-training-evidence', teamId: team.id, date: base.currentDate, startTime: '09:00', durationMinutes: 60,
+      scope: 'team', definitionId: 'threePoint', intensity: 'normal', status: 'completed',
+      execution: {
+        completedOn: base.currentDate, moduleName: 'Three-Point Shooting', plannedModuleName: 'Custom shooting plan',
+        category: 'shooting', effectiveIntensity: 'high', executingStaffPersonIds: [assignment.staffPersonId],
+        executingStaffRoles: [{ staffId: assignment.staffPersonId, roleId: assignment.role }], executionQualityMultiplier: 1.04,
+        participants: [], cohesionDelta: 0,
+      },
+    })
+    const world = updateGameWorld(base, { scheduledTrainingSessionsById: { ...base.scheduledTrainingSessionsById, [session.id]: session } })
+    const restored = deserializeGameWorldV4(JSON.parse(JSON.stringify(serializeGameWorldV4(world, savedAt))))
+    expect(restored.scheduledTrainingSessionsById[session.id]!.execution).toMatchObject({
+      plannedModuleName: 'Custom shooting plan',
+      executingStaffRoles: [{ staffId: assignment.staffPersonId, roleId: assignment.role }],
+      effectiveIntensity: 'high',
+    })
+  })
+
   it('round-trips nonbinding retention incentive proposal terms', () => {
     const base = createNewGame()
     const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!

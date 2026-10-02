@@ -43,6 +43,13 @@ Status is about an end-to-end Staff-backed flow. A role or responsibility declar
 | Media | No Staff media authority | No media Staff assignment/responsibility | None | None | None | None | None | None | ABSENT | No Staff media/news role | Future only if approved |
 | Player development | PlayerDevelopment Engine; Training Staff execution is upstream | Player development stimulus/history; Staff profile/responsibility | Staff quality shapes session output; player rating changes are downstream | Training stimulus accumulates then canonical development transition consumes it | Player development | AI and user use shared Training/Development pipeline | Training plan/session actions | Training and player development history | PARTIAL | Staff does not grow/decline and does not directly set Player ratings | BS13D for Staff; Player Development remains separate |
 
+## BS13E evidence projection update
+
+- Completed Training history presents planned/effective module and intensity, executor name/decision-time role, a qualitative execution band, linked plan/intensity Staff role and overload context, and recorded stimulus/participation/injury consequences.
+- Staff person Overview derives a rolling 30-day Recent Impact count/list from completed Training and existing `DelegationOutcome` records. It is evidence only, not a global Staff score.
+- Advisory and opposition-report views use qualitative quality bands; new outcomes retain decision-time Staff role and overload snapshots. Old records without snapshots remain role-unknown where no canonical historical source exists.
+- Market contact/offer history and Trade action history now resolve persisted actor identities to readable Staff names and dated roles where career history supports it.
+
 ## Audit evidence notes
 
 - Core authority: `src/domain/staff/StaffPerson.ts`, `StaffRoleId.ts`, `StaffRoleRegistry.ts`, `src/domain/responsibility/Responsibility.ts`.

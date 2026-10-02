@@ -210,7 +210,9 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
     ...(intensityDelegation === undefined ? [] : [intensityDelegation.outcome]),
   ]
 
-  const moduleName = (session.moduleId === undefined ? undefined : world.userTrainingModulesById[session.moduleId]?.name) ?? definition.name
+  const plannedDefinition = trainingDefinitionById(session.definitionId)
+  const plannedModuleName = (session.moduleId === undefined ? undefined : world.userTrainingModulesById[session.moduleId]?.name) ?? plannedDefinition.name
+  const moduleName = planDelegation === undefined ? plannedModuleName : definition.name
   const completedSession: ScheduledTrainingSession = {
     ...session,
     assignedStaffPersonIds: undefined,
@@ -221,6 +223,11 @@ function executeScheduledSession(world: GameWorld, session: ScheduledTrainingSes
       category: definition.category,
       effectiveIntensity: intensity,
       executingStaffPersonIds: session.assignedStaffPersonIds ?? [],
+      executingStaffRoles: (session.assignedStaffPersonIds ?? []).flatMap((staffId) => {
+        const roleId = world.staffEmploymentByStaffId[staffId]?.roleId
+        return roleId === undefined ? [] : [{ staffId, roleId }]
+      }),
+      plannedModuleName,
       executionQualityMultiplier: executionMultiplier,
       participants: participantEvidence,
       cohesionDelta: (teamCohesionByTeamId[session.teamId] ?? 50) - (world.teamCohesionByTeamId[session.teamId] ?? 50),
@@ -348,6 +355,8 @@ function resolvePlanDelegation(world: GameWorld, session: ScheduledTrainingSessi
     kind,
     applied: true,
     qualityScore,
+    staffRoleIdAtDecision: resolution.context.roleId,
+    staffWasOverloadedAtDecision: resolution.context.workload.overloaded,
     payload: { sessionId: session.id, definitionId: definition.id, category: definition.category, scope: session.scope },
   })
   return { definition, responsibilityId: resolution.responsibilityId, qualityScore, outcome }
@@ -367,6 +376,8 @@ function resolveIntensityDelegation(world: GameWorld, session: ScheduledTraining
     kind: 'determineIntensity',
     applied: true,
     qualityScore,
+    staffRoleIdAtDecision: resolution.context.roleId,
+    staffWasOverloadedAtDecision: resolution.context.workload.overloaded,
     payload: { sessionId: session.id, intensity, scope: session.scope },
   })
   return { intensity, outcome }

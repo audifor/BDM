@@ -1,6 +1,7 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 
 import { getUserTeam } from '@/engine/calendar'
+import { STAFF_ROLE_LABELS, staffQualityBand, trainingContributionBand } from '@/ui/staffPresentation'
 import { useGameStore } from '@/stores/gameStore'
 import { TRAINING_PCB_TABS, TrainingPcbPage, type TrainingPcbTab } from '@/ui/pcb-migrated/training/TrainingPcbPage'
 import { deriveTeamColors } from '@/ui-ng/applications/player/data/presentationHelpers'
@@ -147,22 +148,36 @@ function TeamTrainingHistory({ world, teamId }: { readonly world: GameWorld; rea
             for (const participant of execution.participants) counts[participant.participation] += 1
             const staff = execution.executingStaffPersonIds.map((id) => {
               const person = world.staffPeopleById[id]
-              return person === undefined ? String(id) : `${person.identity.firstName} ${person.identity.lastName}`
+              const role = execution.executingStaffRoles.find((item) => item.staffId === id)?.roleId
+              return person === undefined ? 'Staff member' : `${person.identity.firstName} ${person.identity.lastName}${role === undefined ? '' : ` · ${STAFF_ROLE_LABELS[role]}`}`
             })
+            const planOutcome = Object.values(world.delegationOutcomesById).find((outcome) => outcome.payload.sessionId === session.id && outcome.kind === (session.scope === 'team' ? 'createTeamTrainingPlan' : 'assignIndividualDevelopment'))
+            const intensityOutcome = Object.values(world.delegationOutcomesById).find((outcome) => outcome.payload.sessionId === session.id && outcome.kind === 'determineIntensity')
+            const stimulusPlayers = execution.participants.filter((participant) => participant.developmentStimulusEventId !== undefined).length
+            const plannedIntensity = session.intensity
+            const intensityChanged = plannedIntensity !== execution.effectiveIntensity
+            const moduleChanged = execution.plannedModuleName !== execution.moduleName
+            const qualityBand = trainingContributionBand(execution.executionQualityMultiplier)
             return (
               <details className="training-history-session" key={session.id}>
                 <summary>
-                  <span><strong>{execution.moduleName}</strong><small>{session.date} · {execution.effectiveIntensity} · {execution.category}</small></span>
+                  <span><strong>{execution.moduleName}</strong><small>{session.date} · {execution.category}</small></span>
                   <span><small>{staff.join(', ') || 'No assigned executor'}</small><small>FULL {counts.FULL} · REDUCED {counts.REDUCED} · REST {counts.REST}</small></span>
-                  <span><small>Quality {execution.executionQualityMultiplier.toFixed(2)}×</small><small>{execution.participants.reduce((total, participant) => total + participant.injuryIds.length, 0)} injuries</small></span>
+                  <span><small>{qualityBand} execution</small><small>{execution.participants.reduce((total, participant) => total + participant.injuryIds.length, 0)} injuries</small></span>
                 </summary>
+                <div className="training-history-impact">
+                  <p><strong>Planned</strong> {execution.plannedModuleName} · {plannedIntensity} intensity</p>
+                  <p><strong>Effective</strong> {execution.moduleName} · {execution.effectiveIntensity} intensity{moduleChanged || intensityChanged ? ' · changed from plan' : ' · as planned'}</p>
+                  {planOutcome ? <p><strong>Plan Staff</strong> {world.staffPeopleById[planOutcome.staffId] ? `${world.staffPeopleById[planOutcome.staffId]!.identity.firstName} ${world.staffPeopleById[planOutcome.staffId]!.identity.lastName}` : 'Staff member'} · {planOutcome.staffRoleIdAtDecision ? STAFF_ROLE_LABELS[planOutcome.staffRoleIdAtDecision] : 'role not recorded'} · {staffQualityBand(planOutcome.qualityScore)}{planOutcome.staffWasOverloadedAtDecision ? ' · high workload' : ''}</p> : null}
+                  {intensityOutcome ? <p><strong>Intensity advice</strong> {intensityOutcome.staffRoleIdAtDecision ? STAFF_ROLE_LABELS[intensityOutcome.staffRoleIdAtDecision] : 'Staff'} · {intensityOutcome.staffWasOverloadedAtDecision ? 'high workload' : 'workload within capacity'}</p> : null}
+                  <p><strong>Consequence</strong> {stimulusPlayers} player{stimulusPlayers === 1 ? '' : 's'} received a development stimulus; {execution.participants.filter((participant) => participant.participation !== 'REST').length} took part.</p>
+                </div>
                 <ul>{execution.participants.map((participant) => {
                   const player = world.players[participant.playerId]
-                  const name = player === undefined ? String(participant.playerId) : `${player.firstName} ${player.lastName}`
+                  const name = player === undefined ? 'Unknown player' : `${player.firstName} ${player.lastName}`
                   const stimulus = participant.developmentStimulusEventId === undefined ? undefined : world.developmentStimulusEventsById[participant.developmentStimulusEventId]
-                  const stimulusTotal = stimulus === undefined ? 0 : Object.values(stimulus.byRating).reduce<number>((sum, amount) => sum + (amount ?? 0), 0)
                   const injuries = participant.injuryIds.map((id) => world.injuriesById[id]?.kind ?? String(id)).join(', ') || 'none'
-                  return <li key={participant.playerId}><span>{name} · {participant.participation}</span><span>Fatigue {participant.careerFatigueDelta >= 0 ? '+' : ''}{participant.careerFatigueDelta.toFixed(1)} · stimulus {stimulusTotal.toFixed(2)} · injuries {injuries}</span></li>
+                  return <li key={participant.playerId}><span>{name} · {participant.participation}</span><span>{stimulus === undefined ? 'No development stimulus' : 'Development stimulus recorded'} · {injuries === 'none' ? 'no injury' : `injury: ${injuries}`}</span></li>
                 })}</ul>
               </details>
             )

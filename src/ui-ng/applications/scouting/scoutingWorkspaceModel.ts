@@ -75,6 +75,7 @@ export interface ScoutingReportRow {
   readonly playerName: string
   readonly missionLabel: string
   readonly evaluatorName: string
+  readonly evaluatorRoleLabel: string
   readonly createdLabel: string
   readonly tacticalFitLabel: string | null
   readonly findings: readonly ScoutingReportFinding[]
@@ -88,6 +89,8 @@ export interface ScoutingOppositionRow {
   readonly emphasisLabel: string | null
   readonly paceLabel: string | null
   readonly authoredBy: string
+  readonly authorRoleLabel: string
+  readonly qualityLabel: string
   readonly flaggedPlayers: readonly { readonly playerId: PlayerId; readonly name: string }[]
 }
 

@@ -2,6 +2,7 @@ import type { GameDate } from '@/domain/date'
 import type { InjuryId, PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
 import { trainingDefinitionById } from './TrainingCatalog'
 import type { TrainingIntensity } from './Training'
+import type { StaffRoleId } from '@/domain/staff'
 
 export type ScheduledTrainingSessionStatus = 'scheduled' | 'completed'
 export type TrainingParticipation = 'FULL' | 'REDUCED' | 'REST'
@@ -21,6 +22,8 @@ export interface TrainingExecutionEvidence {
   readonly category: import('./TrainingCatalog').TrainingCategory
   readonly effectiveIntensity: TrainingIntensity
   readonly executingStaffPersonIds: readonly StaffPersonId[]
+  readonly executingStaffRoles: readonly { readonly staffId: StaffPersonId; readonly roleId: StaffRoleId }[]
+  readonly plannedModuleName: string
   readonly executionQualityMultiplier: number
   readonly participants: readonly TrainingParticipantExecutionEvidence[]
   readonly cohesionDelta: number
@@ -84,9 +87,9 @@ export function createScheduledTrainingSession(input: Omit<ScheduledTrainingSess
   if (input.execution !== undefined && input.status !== 'completed') throw new RangeError('Only a completed Training session can have execution evidence')
   if (input.execution !== undefined) {
     const evidence = input.execution
-    if (evidence.completedOn !== input.date || !evidence.moduleName.trim() || !['shooting', 'finishing', 'ballHandling', 'playmaking', 'defense', 'rebounding', 'physical', 'recovery', 'tactical'].includes(evidence.category)) throw new RangeError('Training execution evidence identity is invalid')
+    if (evidence.completedOn !== input.date || !evidence.moduleName.trim() || !evidence.plannedModuleName.trim() || !['shooting', 'finishing', 'ballHandling', 'playmaking', 'defense', 'rebounding', 'physical', 'recovery', 'tactical'].includes(evidence.category)) throw new RangeError('Training execution evidence identity is invalid')
     if (!['light', 'normal', 'high'].includes(evidence.effectiveIntensity) || !Number.isFinite(evidence.executionQualityMultiplier) || evidence.executionQualityMultiplier < 0.9 || evidence.executionQualityMultiplier > 1.18 || !Number.isFinite(evidence.cohesionDelta)) throw new RangeError('Training execution evidence effects are invalid')
-    if (new Set(evidence.executingStaffPersonIds).size !== evidence.executingStaffPersonIds.length || new Set(evidence.participants.map((participant) => participant.playerId)).size !== evidence.participants.length) throw new RangeError('Training execution evidence must not contain duplicate participants or Staff')
+    if (new Set(evidence.executingStaffPersonIds).size !== evidence.executingStaffPersonIds.length || new Set(evidence.executingStaffRoles.map((staff) => staff.staffId)).size !== evidence.executingStaffRoles.length || new Set(evidence.participants.map((participant) => participant.playerId)).size !== evidence.participants.length) throw new RangeError('Training execution evidence must not contain duplicate participants or Staff')
     for (const participant of evidence.participants) {
       if (!['FULL', 'REDUCED', 'REST'].includes(participant.participation) || !Number.isFinite(participant.careerFatigueDelta) || (participant.moraleDelta !== undefined && !Number.isFinite(participant.moraleDelta)) || new Set(participant.injuryIds).size !== participant.injuryIds.length) throw new RangeError('Training participant execution evidence is invalid')
       if (participant.participation === 'REST' && (participant.careerFatigueDelta !== 0 || participant.developmentStimulusEventId !== undefined || participant.injuryIds.length > 0 || (participant.moraleDelta ?? 0) !== 0)) throw new RangeError('REST participation cannot have Training effects')
@@ -95,6 +98,7 @@ export function createScheduledTrainingSession(input: Omit<ScheduledTrainingSess
   const execution = input.execution === undefined ? undefined : Object.freeze({
     ...input.execution,
     executingStaffPersonIds: Object.freeze([...input.execution.executingStaffPersonIds]),
+    executingStaffRoles: Object.freeze(input.execution.executingStaffRoles.map((staff) => Object.freeze({ ...staff }))),
     participants: Object.freeze(input.execution.participants.map((participant) => Object.freeze({ ...participant, injuryIds: Object.freeze([...participant.injuryIds]) }))),
   })
   return { ...input, ...(assigned === undefined ? {} : { assignedStaffPersonIds: Object.freeze([...assigned]) }), ...(input.participationByPlayerId === undefined ? {} : { participationByPlayerId: Object.freeze({ ...input.participationByPlayerId }) }), ...(execution === undefined ? {} : { execution }), status: input.status ?? 'scheduled' }

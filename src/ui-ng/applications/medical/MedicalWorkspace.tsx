@@ -7,6 +7,7 @@ import type { DelegationOutcomeId } from '@/domain/responsibility'
 import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
 import { getStaffRecommendationsForTeam } from '@/ui/staffRecommendationPresentation'
+import { STAFF_ROLE_LABELS, staffQualityBand } from '@/ui/staffPresentation'
 import type { StaffRecommendationPresentationItem } from '@/ui/staffRecommendationPresentation'
 import { buildMedicalWorkspaceModel } from '@/ui-ng/applications/medical/buildMedicalWorkspaceModel'
 import {
@@ -114,7 +115,7 @@ function MedicalRecommendationsBoard({
         <article className="medical-workspace__rtp-row" key={recommendation.outcomeId}>
           <div>
             <strong>{recommendation.title}</strong>
-            <p>{recommendation.summary} · {recommendation.staffName} · quality {recommendation.qualityScore}/100</p>
+            <p>{recommendation.summary} · {recommendation.staffName} · {recommendation.staffRole === undefined ? 'Role not recorded' : STAFF_ROLE_LABELS[recommendation.staffRole]} · {staffQualityBand(recommendation.qualityScore)}</p>
           </div>
           {recommendation.actionability === 'ACCEPTABLE' ? (
             <div className="medical-workspace__rtp-actions">

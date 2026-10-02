@@ -113,7 +113,7 @@ function toPresentationItem(world: GameWorld, outcome: DelegationOutcome): Staff
     decidedOn: outcome.decidedOn,
     staffId: outcome.staffId,
     staffName,
-    staffRole: staffAssignment?.role,
+    staffRole: outcome.staffRoleIdAtDecision ?? staffAssignment?.role,
     qualityScore: outcome.qualityScore,
     status,
     actionability: resolveActionability(status, outcome.kind),

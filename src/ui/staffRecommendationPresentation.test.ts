@@ -68,6 +68,15 @@ describe('getStaffRecommendationsForTeam', () => {
     const item = items.find((entry) => entry.outcomeId === outcome.id)!
     expect(item.status).toBe('PENDING')
     expect(item.actionability).toBe('ACCEPTABLE')
+    expect(item.staffRole).toBe('teamDoctor')
+  })
+
+  it('uses the recorded decision-time role after the live Staff assignment changes', () => {
+    const { world, teamId, outcome } = medicalPendingFixture()
+    const historical = { ...outcome, staffRoleIdAtDecision: 'physiotherapist' as const, staffWasOverloadedAtDecision: true }
+    const withSnapshot = updateGameWorld(world, { delegationOutcomes: [...Object.values(world.delegationOutcomesById).filter((item) => item.id !== outcome.id), historical] })
+    const item = getStaffRecommendationsForTeam(withSnapshot, teamId).find((entry) => entry.outcomeId === outcome.id)!
+    expect(item.staffRole).toBe('physiotherapist')
   })
 
   it('an informational outcome (no acceptance seam, not applied) appears as INFORMATIONAL/VIEW_ONLY', () => {

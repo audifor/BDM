@@ -6,6 +6,7 @@ import {
 } from '@/domain/intelligence'
 import type { GameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
+import { STAFF_ROLE_LABELS, staffQualityBand } from '@/ui/staffPresentation'
 import { getPlayerKnowledgeSummary } from '@/engine/scouting'
 import { findTeamForPlayer, formatGameDateLabel } from '@/ui-ng/applications/player/data/presentationHelpers'
 import {
@@ -32,6 +33,12 @@ function playerName(world: GameWorld, playerId: PlayerId): string {
 function staffName(world: GameWorld, staffId: string): string {
   const staff = world.staffPeopleById[staffId as StaffPersonId]
   return staff === undefined ? 'Unknown evaluator' : `${staff.identity.firstName} ${staff.identity.lastName}`
+}
+
+function staffRoleAtDate(world: GameWorld, staffId: StaffPersonId, date: string): string {
+  const history = (world.staffCareerHistoryByStaffId[staffId] ?? []).filter((entry) => entry.date <= date).sort((left, right) => right.date.localeCompare(left.date))
+  const latest = history[0]
+  return latest?.kind === 'appointment' ? STAFF_ROLE_LABELS[latest.roleId] : 'Role not recorded'
 }
 
 function compareText(left: string, right: string): number {
@@ -166,6 +173,7 @@ export function buildScoutingWorkspaceModel(world: GameWorld): ScoutingWorkspace
         playerName: playerName(world, report.subjectPlayerId),
         missionLabel: scoutingMissionLabel(report.missionType),
         evaluatorName: staffName(world, report.evaluatorStaffId),
+        evaluatorRoleLabel: staffRoleAtDate(world, report.evaluatorStaffId, report.createdAt),
         createdLabel: formatGameDateLabel(report.createdAt),
         tacticalFitLabel: report.tacticalFit === undefined ? null : String(report.tacticalFit),
         findings,
@@ -178,6 +186,8 @@ export function buildScoutingWorkspaceModel(world: GameWorld): ScoutingWorkspace
     .map((report) => {
       const opponent = world.teams[report.opponentTeamId]
       const game = world.games[report.gameId]
+      const authorOutcome = Object.values(world.delegationOutcomesById).find((outcome) => outcome.payload.reportId === report.id)
+      const authorRole = authorOutcome?.staffRoleIdAtDecision ?? world.staffEmploymentByStaffId[report.authoredByStaffId]?.roleId
       return {
         id: report.id,
         opponentName: opponent?.name ?? 'Unknown opponent',
@@ -196,6 +206,8 @@ export function buildScoutingWorkspaceModel(world: GameWorld): ScoutingWorkspace
               ? `+${report.recommendedPaceAdjustment}`
               : String(report.recommendedPaceAdjustment),
         authoredBy: staffName(world, report.authoredByStaffId),
+        authorRoleLabel: authorRole === undefined ? 'Role not recorded' : STAFF_ROLE_LABELS[authorRole],
+        qualityLabel: staffQualityBand(report.qualityScore),
         flaggedPlayers: report.flaggedPlayerIds.map((playerId) => ({
           playerId,
           name: playerName(world, playerId),
