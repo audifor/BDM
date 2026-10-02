@@ -60,7 +60,7 @@ export function tickSimulateUntilDate(world: GameWorld, targetDate: GameDate, cr
     return { world, event: { type: 'finished', stopReason: getContinueStopReason(world) ?? { type: 'arrived' } } }
   }
 
-  const interruption = getContinueStopReason(world)
+  const interruption = getContinueStopReason(world, ['userGame'])
   if (interruption !== undefined && interruption.type !== 'seasonComplete') {
     return { world, event: { type: 'finished', stopReason: interruption } }
   }

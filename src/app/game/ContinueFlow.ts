@@ -15,9 +15,16 @@ export interface ContinueResult { readonly world: GameWorld; readonly daysAdvanc
 export interface NextKnownEvent { readonly type: 'userGame'; readonly gameId: GameId; readonly date: GameWorld['currentDate']; readonly opponentTeamId: TeamId }
 export const DEFAULT_CONTINUE_DAY_LIMIT = 366
 
-export function getContinueStopReason(world: GameWorld): ContinueStopReason | undefined {
-  const breakpoint = evaluateSimulationBreakpoints(world).breakpoint
-  if (breakpoint === undefined || (breakpoint.level !== 'ACTION_REQUIRED' && breakpoint.level !== 'BLOCKING')) return undefined
+export function getContinueStopReason(world: GameWorld, autoSimulatedRequiredReasons: readonly string[] = []): ContinueStopReason | undefined {
+  const decision = evaluateSimulationBreakpoints(world)
+  const primary = decision.breakpoint
+  if (primary === undefined || (primary.level !== 'ACTION_REQUIRED' && primary.level !== 'BLOCKING')) return undefined
+  const breakpoint = autoSimulatedRequiredReasons.includes(primary.reason)
+    ? decision.candidates.find((candidate) => candidate !== primary
+      && (candidate.level === 'ACTION_REQUIRED' || candidate.level === 'BLOCKING')
+      && !autoSimulatedRequiredReasons.includes(candidate.reason))
+    : primary
+  if (breakpoint === undefined) return undefined
   if (breakpoint.reason === 'userGame') return { type: 'userGame', gameId: breakpoint.sourceId as GameId, breakpoint }
   if (breakpoint.reason === 'mediaOpportunity') return { type: 'mediaOpportunity', opportunityId: breakpoint.sourceId, breakpoint }
   if (breakpoint.reason === 'seasonComplete') return { type: 'seasonComplete', breakpoint }
@@ -29,7 +36,7 @@ export function continueGame(world: GameWorld, dayLimit = DEFAULT_CONTINUE_DAY_L
   if (!Number.isInteger(dayLimit) || dayLimit < 1) throw new RangeError('Continue day limit must be a positive integer')
   let current = world; let daysAdvanced = 0
   while (daysAdvanced < dayLimit) {
-    const interruption = getContinueStopReason(current)
+    const interruption = getContinueStopReason(current, ['userGame'])
     if (interruption !== undefined) return result(current, daysAdvanced, interruption)
     current = advanceGameDay(current)
     daysAdvanced += 1

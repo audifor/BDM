@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { addDays, parseGameDate } from '@/domain/date'
+import { updateGameWorld } from '@/domain/world'
 import { isSeasonComplete } from '@/engine/season'
 import { simulateAndApplyGame } from './playUserGame'
 
@@ -35,18 +36,35 @@ describe('simulate until date', () => {
     expect(result.world).toEqual(manual)
   }, 15_000)
 
-  it('stops before advancing through an unresolved user game', () => {
+  it('simulates a user game reached by an explicit date advance and then arrives at the target', () => {
     const world = createNewGame()
-    const target = addDays(world.currentDate, 7)
-    const before = JSON.stringify(world)
+    const userTeam = Object.values(world.teams).find((team) => team.coachId === world.userCoachId)!
+    const userGame = Object.values(world.games).find((game) => game.status === 'scheduled' && game.date === world.currentDate && (game.homeTeamId === userTeam.id || game.awayTeamId === userTeam.id))!
+    const target = addDays(world.currentDate, 1)
 
     const result = simulateUntilDate(world, target)
 
-    expect(JSON.stringify(world)).toBe(before)
-    expect(result.world).toBe(world)
-    expect(result.world.currentDate).toBe(world.currentDate)
-    expect(result.daysAdvanced).toBe(0)
-    expect(result.stopReason).toMatchObject({ type: 'userGame', breakpoint: { level: 'ACTION_REQUIRED', reason: 'userGame' } })
+    expect(world.games[userGame.id]?.status).toBe('scheduled')
+    expect(result.daysAdvanced).toBe(1)
+    expect(result.world.currentDate).toBe(target)
+    expect(result.world.games[userGame.id]?.status).toBe('completed')
+    expect(result.world.matchStatLogsByGameId[userGame.id]).toBeDefined()
+    expect(Object.values(result.world.matchStatLogsByGameId).filter((log) => log.gameId === userGame.id)).toHaveLength(1)
+  })
+
+  it('preserves a later media ACTION_REQUIRED breakpoint after advancing earlier days', () => {
+    const base = createNewGame()
+    const userTeam = Object.values(base.teams).find((team) => team.coachId === base.userCoachId)!
+    const userGame = Object.values(base.games).find((game) => game.status === 'scheduled' && (game.homeTeamId === userTeam.id || game.awayTeamId === userTeam.id))!
+    const fixtureDate = addDays(base.currentDate, 1)
+    const world = updateGameWorld(base, { games: Object.values(base.games).map((game) => game.id === userGame.id ? { ...game, date: fixtureDate, stakes: 'final' } : game) })
+
+    const result = simulateUntilDate(world, addDays(fixtureDate, 2))
+
+    expect(result.daysAdvanced).toBe(1)
+    expect(result.world.currentDate).toBe(fixtureDate)
+    expect(result.world.games[userGame.id]?.status).toBe('scheduled')
+    expect(result.stopReason).toMatchObject({ type: 'mediaOpportunity', breakpoint: { level: 'ACTION_REQUIRED', reason: 'mediaOpportunity' } })
   })
 
   it('continues the world clock beyond a completed competition season', () => {
@@ -117,12 +135,12 @@ describe('simulate until date', () => {
       expect(isSeasonComplete(complete, primarySeasonId)).toBe(true)
 
       // startNextSeason's fallback (no calendarPolicy) moves the next edition about a year
-      // ahead. Simulate Until now stops at the next unresolved user game on the way there.
+      // ahead. Explicit progression resolves any user fixtures crossed before the target.
       const target = addDays(complete.currentDate, 400)
       const result = simulateUntilDate(complete, target)
 
-      expect(result.finalDate < target).toBe(true)
-      expect(result.stopReason).toMatchObject({ type: 'userGame', breakpoint: { level: 'ACTION_REQUIRED' } })
+      expect(result.finalDate <= target).toBe(true)
+      if (result.finalDate < target) expect(result.stopReason.type).not.toBe('userGame')
       // Rollover never moves currentSeasonId directly (see startNextSeason.ts): it only migrates
       // once the world clock naturally reaches the new edition's startDate, which 400 days does.
       expect(result.world.currentSeasonId).not.toBe(primarySeasonId)
@@ -174,15 +192,19 @@ describe('simulate until date', () => {
     }, 15_000)
   })
 
-  it('exposes a finished tick with the canonical user-game breakpoint', () => {
+  it('resolves a user fixture during one explicit date tick while preserving already-arrived behavior', () => {
     const world = createNewGame()
     const target = addDays(world.currentDate, 1)
     const arrived = tickSimulateUntilDate(world, world.currentDate)
-    expect(arrived.event.type).toBe('finished')
+    expect(arrived.event).toMatchObject({ type: 'finished', stopReason: { type: 'userGame', breakpoint: { level: 'ACTION_REQUIRED', reason: 'userGame' } } })
 
     const tick = tickSimulateUntilDate(world, target)
-    expect(tick.world).toBe(world)
-    expect(tick.event).toMatchObject({ type: 'finished', stopReason: { type: 'userGame', breakpoint: { level: 'ACTION_REQUIRED', reason: 'userGame' } } })
+    const userTeam = Object.values(world.teams).find((team) => team.coachId === world.userCoachId)!
+    const userGame = Object.values(world.games).find((game) => game.status === 'scheduled' && game.date === world.currentDate && (game.homeTeamId === userTeam.id || game.awayTeamId === userTeam.id))!
+    expect(tick.world.currentDate).toBe(target)
+    expect(tick.world.games[userGame.id]?.status).toBe('completed')
+    expect(tick.world.matchStatLogsByGameId[userGame.id]).toBeDefined()
+    expect(tick.event).toEqual({ type: 'dayAdvanced' })
   })
 })
 

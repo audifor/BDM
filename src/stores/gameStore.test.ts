@@ -156,13 +156,17 @@ describe('gameStore', () => {
     expect(recoveredWorld.careerFatigueByPlayerId[playerId]!).toBeLessThan(fatigueAfterLoad)
   })
 
-  it('delegates continuing time to the application flow and stores its resulting world', () => {
+  it('stores canonical user-game results from an explicit day advance', () => {
     useGameStore.getState().newGame()
+    const before = useGameStore.getState().world!
+    const userTeam = Object.values(before.teams).find((team) => team.coachId === before.userCoachId)!
+    const userGame = Object.values(before.games).find((game) => game.status === 'scheduled' && game.date === before.currentDate && (game.homeTeamId === userTeam.id || game.awayTeamId === userTeam.id))!
 
-    const result = useGameStore.getState().continueGame()
+    const result = useGameStore.getState().advanceDay()
 
-    expect(result.daysAdvanced).toBe(0)
-    expect(result.stopReason.type).toBe('userGame')
+    expect(result.world.currentDate).toBe(addDays(before.currentDate, 1))
+    expect(result.world.games[userGame.id]?.status).toBe('completed')
+    expect(result.world.matchStatLogsByGameId[userGame.id]).toBeDefined()
     expect(useGameStore.getState().world).toBe(result.world)
   })
 
