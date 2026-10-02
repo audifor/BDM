@@ -20,6 +20,7 @@ import { createGame, type Game } from '@/domain/game'
 import type { WorldCompetitionFormatDocument } from '@/domain/competition'
 import { attachWorldDbCompetitionRuntime, createGameWorld, type GameWorld, type WorldDbCompetitionRuntimeBundlePin } from '@/domain/world'
 import { distributeRoundsAcrossSeason, generateRoundRobinSchedule } from '@/engine/competition/schedule'
+import { ensureStaffContractStructure, ensureStaffEmploymentStructure, ensureStaffReputationStructure } from '@/engine/world/StaffCareerEnrichment'
 import { assertWorldDbGameBootstrapSliceV1, type WorldDbGameBootstrapSelectionV1, type WorldDbGameBootstrapSliceV1 } from '@/domain/worldDb/GameBootstrap'
 
 const ROLE_FAMILIES: Readonly<Record<string, StaffRoleFamily>> = {
@@ -114,7 +115,8 @@ export function bootstrapGameWorldFromWorldDb(slice: WorldDbGameBootstrapSliceV1
     ? assertCompleteRoundRobin(importedGames, teams.length, competition.rules.schedule.meetingsPerPair)
     : generatedGames
   const world = createGameWorld({ currentDate: season.startDate, currentSeasonId: season.id, userCoachId: coach.id, persons, countries, coaches: [coach], players, teams, organizations, organizationSections, organizationOwnership, organizationInvestorInterests, competitions: [competition], ecosystems: [ecosystem], seasons: [season], games, staffPeople: staff, teamStaffAssignments: staffAssignments })
-  return attachWorldDbCompetitionRuntime(world, { competitionRuntimeBundle: runtimeBundlePin, competitionPlanIds: [], competitionSeasonIds: [slice.season.competitionSeasonId] })
+  const withStaffCareer = ensureStaffReputationStructure(ensureStaffContractStructure(ensureStaffEmploymentStructure(world)))
+  return attachWorldDbCompetitionRuntime(withStaffCareer, { competitionRuntimeBundle: runtimeBundlePin, competitionPlanIds: [], competitionSeasonIds: [slice.season.competitionSeasonId] })
 }
 
 function requireProfilePerson(person: WorldDbGameBootstrapSliceV1['persons'][number], personId: string): {

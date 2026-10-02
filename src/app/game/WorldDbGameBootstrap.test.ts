@@ -14,6 +14,9 @@ import { bootstrapGameWorldFromWorldDb } from './WorldDbGameBootstrap'
 import { WorldDbSessionV1 } from './WorldDbSession'
 import { advanceGameDay } from './advanceGameDay'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
+import { getEligibleResponsibilityCandidates } from '@/ui/staffPresentation'
+import { setTeamResponsibility } from '@/app/staffResponsibilities'
+import { resolveDelegatedResponsibility } from '@/engine/staff/resolveDelegatedResponsibility'
 import { applyMatchResult } from '@/engine/match'
 import { getCompetitionPostseasonState, materializeCompetitionPostseason } from '@/engine/competition'
 import { calculateStandings } from '@/engine/competition/standings'
@@ -39,11 +42,87 @@ function slice(): WorldDbGameBootstrapSliceV1 {
   const persons = [...players.map((player) => ({ personId: player.personId, firstName: player.personId.split(':').at(-2)!, lastName: 'Player', gender: 'male' as const, dateOfBirth: '1998-01-01', nationalityIds: ['place:country:ESP'], physical: { heightCm: 190, weightKg: 90, wingspanCm: 195, standingReachCm: 245 } })), ...staffProfiles.map((staff) => ({ personId: staff.personId, firstName: 'Head', lastName: staff.personId.split(':').at(-2)!, gender: 'male' as const, dateOfBirth: '1980-01-01', nationalityIds: ['place:country:ESP'], physical: { heightCm: 180, weightKg: 80, wingspanCm: 180, standingReachCm: 230 } })), { personId: 'person:owner-only', firstName: 'Owner', lastName: 'Only', nationalityIds: [] }]
   return { schemaVersion: 1, source, ecosystem: { ecosystemId: selection.ecosystemId, name: 'Spain ACB Ecosystem', kind: 'fibaLike', category: 'men' }, competition: { competitionId: selection.competitionId, name: 'Liga Endesa', gender: 'male', ecosystemId: selection.ecosystemId }, season: { competitionSeasonId: selection.competitionSeasonId, seasonId: 'season:2025_26', label: '2025-26', startDate: '2025-10-01', endDate: '2026-06-30', provenance: 'DERIVED_SIMULATION_FROM_B04' }, countries: [{ countryId: 'place:country:ESP', name: 'ESP', code: 'ESP' }], organizations, organizationSections, organizationOwnership: [{ ownershipId: 'ownership:worlddb', organizationId: teams[0]!.organizationId, ownerKind: 'PERSON', ownerId: 'person:owner-only', ownershipPercentage: 25, validFrom: '2025-10-01', validTo: null }], teams, persons, players, staffProfiles, staffAssignments: teams.map((team) => ({ assignmentId: `${team.teamId}:head-assignment`, staffId: `staff:${team.teamId}:head`, teamId: team.teamId, roleCode: 'headCoach', assignedOn: '2025-10-01' })), rosterAssignments: players.map((player) => ({ rosterId: `roster:${player.playerId.split(':').slice(0, 4).join(':')}`, teamId: player.playerId.split(':').slice(0, 4).join(':'), playerId: player.playerId, status: 'ACTIVE' })), matches: [] }
 }
+function sliceWithAssistantCoach(): WorldDbGameBootstrapSliceV1 {
+  const base = slice()
+  const team = base.teams.find((item) => item.teamId === selection.teamId)!
+  const staffId = `staff:${team.teamId}:assistant`
+  const personId = `${team.teamId}:assistant-coach`
+  return {
+    ...base,
+    staffProfiles: [...base.staffProfiles, {
+      staffId,
+      personId,
+      attributes: Object.fromEntries(Array.from({ length: 80 }, (_, index) => [`STAFF_ATTRIBUTE_${String(index + 1).padStart(2, '0')}`, 60])),
+      specialismIds: ['TRAINING'],
+    }],
+    persons: [...base.persons, { personId, firstName: 'Assistant', lastName: 'Coach', gender: 'male', dateOfBirth: '1982-01-01', nationalityIds: ['place:country:ESP'], physical: { heightCm: 180, weightKg: 80, wingspanCm: 180, standingReachCm: 230 } }],
+    staffAssignments: [...base.staffAssignments, { assignmentId: `${team.teamId}:assistant-assignment`, staffId, teamId: team.teamId, roleCode: 'assistantCoach', assignedOn: '2025-10-01' }],
+  }
+}
+function worldWithAssistantCoach() {
+  return bootstrapGameWorldFromWorldDb(sliceWithAssistantCoach(), selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema })
+}
 function catalog(): WorldDbSelectionCatalogV1 { const teams = slice().teams; return { schemaVersion: 1, source, ecosystems: [{ ecosystemId: selection.ecosystemId, code: 'SPAIN_ACB', name: 'Spain ACB Ecosystem', gender: 'M' }], levels: [], units: [], competitionAssignments: [{ assignmentId: 'assignment:liga-endesa', ecosystemId: selection.ecosystemId, competitionId: selection.competitionId, competitionName: 'Liga Endesa', levelId: null, unitId: null, roleType: 'PRIMARY_LEAGUE' }], competitionSeasons: [{ competitionSeasonId: selection.competitionSeasonId, competitionId: selection.competitionId, competitionName: 'Liga Endesa', seasonId: 'season:2025_26', editionNumber: 1 }, { competitionSeasonId: spainCopaCompetitionSeasonId(2025), competitionId: 'competition:ESP:copa-del-rey', competitionName: 'Copa del Rey', seasonId: 'season:2025_26', editionNumber: 1 }], teamMemberships: teams.map((team) => ({ membershipId: `membership:${team.teamId}`, ecosystemId: selection.ecosystemId, teamId: team.teamId, teamName: team.name, levelId: null, unitId: null, membershipStatus: 'ACTIVE', validFrom: null, validTo: null })), teamUnitMemberships: [] } }
 function repository(bootstrapSlice = slice()): WorldDatabaseRepository { const info: WorldDbDatabaseInfoV1 = { schemaVersion: 1, source, competitionSeasonIds: [selection.competitionSeasonId, spainCopaCompetitionSeasonId(2025)] }; return { inspectDatabase: vi.fn(async () => info), loadSelectionCatalog: vi.fn(async () => catalog()), loadCompetitionSeason: vi.fn(), loadMatchRealizations: vi.fn(), loadGameBootstrapSlice: vi.fn(async () => bootstrapSlice), loadCompetitionRuntimeBundle: vi.fn(async () => runtimeBundle) } }
 function openSession(repo = repository()): WorldDbSessionV1 { return new WorldDbSessionV1({ repository: repo, databasePath: source.databaseId, runtimeBundlePath: 'runtime-bundle.json' }) }
 
 describe('World DB Spain ACB playable GameWorld bootstrap', () => {
+  it('materializes imported Staff career state and supports delegated team Training planning', () => {
+    const world = worldWithAssistantCoach()
+    for (const item of Object.values(world.teamStaffAssignmentsById)) {
+      expect(world.staffEmploymentByStaffId[item.staffPersonId]).toEqual({ status: 'employed', teamId: item.teamId, roleId: item.role, startedOn: item.assignedOn })
+      expect(Object.values(world.staffContractsById).filter((contract) => contract.staffId === item.staffPersonId && contract.termination === undefined)).toHaveLength(1)
+    }
+    const assignment = Object.values(world.teamStaffAssignmentsById).find((item) => item.teamId === selection.teamId && item.role === 'assistantCoach')!
+    expect(world.staffCareerHistoryByStaffId[assignment.staffPersonId]).toContainEqual({ kind: 'appointment', staffId: assignment.staffPersonId, teamId: assignment.teamId, roleId: assignment.role, date: assignment.assignedOn, reason: 'initialAppointment' })
+
+    const candidates = getEligibleResponsibilityCandidates(world, assignment.teamId, 'createTeamTrainingPlan', 'delegated')
+    expect(candidates.map((candidate) => candidate.staffPersonId)).toContain(assignment.staffPersonId)
+    const delegated = setTeamResponsibility(world, { teamId: assignment.teamId, kind: 'createTeamTrainingPlan', mode: 'delegated', holderStaffId: assignment.staffPersonId })
+    expect(delegated.responsibilitiesById[`responsibility:${assignment.teamId}:createTeamTrainingPlan` as never]).toMatchObject({ mode: 'delegated', holderStaffId: assignment.staffPersonId })
+    expect(resolveDelegatedResponsibility(delegated, assignment.teamId, 'createTeamTrainingPlan')?.staffId).toBe(assignment.staffPersonId)
+
+    const restored = deserializeGameWorldV4(serializeGameWorldV4(delegated, '2026-09-01T00:00:00.000Z'))
+    expect(restored.staffEmploymentByStaffId[assignment.staffPersonId]).toEqual(delegated.staffEmploymentByStaffId[assignment.staffPersonId])
+    expect(restored.staffContractsById).toEqual(delegated.staffContractsById)
+    expect(getEligibleResponsibilityCandidates(restored, assignment.teamId, 'createTeamTrainingPlan', 'delegated').map((candidate) => candidate.staffPersonId)).toContain(assignment.staffPersonId)
+    expect(restored.responsibilitiesById[`responsibility:${assignment.teamId}:createTeamTrainingPlan` as never]).toMatchObject({ mode: 'delegated', holderStaffId: assignment.staffPersonId })
+  })
+
+  it('repairs pre-fix V4 saves with assigned Staff but empty career runtime deterministically', () => {
+    const world = worldWithAssistantCoach()
+    const assignment = Object.values(world.teamStaffAssignmentsById).find((item) => item.teamId === selection.teamId && item.role === 'assistantCoach')!
+    const saved = structuredClone(serializeGameWorldV4(world, '2026-09-01T00:00:00.000Z'))
+    const runtime = (saved.payload as unknown as Record<string, unknown>).staffCareerRuntime as Record<string, unknown>
+    runtime.staffEmployment = []
+    runtime.staffCareerHistory = []
+    runtime.staffContracts = []
+    runtime.staffReputationProfiles = []
+
+    const repaired = deserializeGameWorldV4(saved)
+    const repeated = deserializeGameWorldV4(saved)
+    expect(repaired.staffEmploymentByStaffId[assignment.staffPersonId]).toEqual({ status: 'employed', teamId: assignment.teamId, roleId: assignment.role, startedOn: assignment.assignedOn })
+    expect(repaired.staffCareerHistoryByStaffId[assignment.staffPersonId]).toContainEqual({ kind: 'appointment', staffId: assignment.staffPersonId, teamId: assignment.teamId, roleId: assignment.role, date: assignment.assignedOn, reason: 'initialAppointment' })
+    expect(Object.values(repaired.staffContractsById).filter((contract) => contract.staffId === assignment.staffPersonId && contract.termination === undefined)).toHaveLength(1)
+    expect(repeated.staffEmploymentByStaffId).toEqual(repaired.staffEmploymentByStaffId)
+    expect(repeated.staffCareerHistoryByStaffId).toEqual(repaired.staffCareerHistoryByStaffId)
+    expect(repeated.staffContractsById).toEqual(repaired.staffContractsById)
+    expect(getEligibleResponsibilityCandidates(repaired, assignment.teamId, 'createTeamTrainingPlan', 'delegated').map((candidate) => candidate.staffPersonId)).toContain(assignment.staffPersonId)
+  })
+
+  it('rejects a conflicting active Staff employment record instead of replacing it during load repair', () => {
+    const world = worldWithAssistantCoach()
+    const assignment = Object.values(world.teamStaffAssignmentsById).find((item) => item.teamId === selection.teamId && item.role === 'assistantCoach')!
+    const saved = structuredClone(serializeGameWorldV4(world, '2026-09-01T00:00:00.000Z'))
+    const runtime = (saved.payload as unknown as Record<string, unknown>).staffCareerRuntime as Record<string, unknown>
+    runtime.staffEmployment = [{ staffId: assignment.staffPersonId, employment: { status: 'employed', teamId: 'team:ESP:male:001', roleId: assignment.role, startedOn: assignment.assignedOn } }]
+    runtime.staffCareerHistory = []
+    runtime.staffContracts = []
+    runtime.staffReputationProfiles = []
+
+    expect(() => deserializeGameWorldV4(saved)).toThrow(`Staff ${assignment.staffPersonId} employment does not match Team assignment`)
+  })
+
   it('derives the complete 18-team home-and-away schedule when persisted fixtures are absent', async () => { const session = openSession(); await session.open(); const world = await session.bootstrapGameWorld(selection); expect(Object.keys(world.teams)).toHaveLength(18); expect(Object.keys(world.players)).toHaveLength(90); expect(Object.keys(world.staffPeopleById)).toHaveLength(18); expect(Object.keys(world.teamStaffAssignmentsById)).toHaveLength(18); expect(Object.keys(world.games)).toHaveLength(306); expect(Object.values(world.teams).find((team) => team.id === selection.teamId)?.coachId).toBe('worlddb:coach:team:ESP:male:000'); expect(Object.values(world.coaches).find((coach) => coach.id === 'worlddb:coach:team:ESP:male:000')?.firstName).toBe('Head'); expect(Object.values(world.personsById).find((person) => person.id === `${selection.teamId}:head-coach`)?.profileRefs).toEqual([{ kind: 'staff', profileId: 'staff:team:ESP:male:000:head' }]) })
   it('preserves shared organization identity, section records and their IDs through save/load', () => {
     const sourceSlice = slice()
