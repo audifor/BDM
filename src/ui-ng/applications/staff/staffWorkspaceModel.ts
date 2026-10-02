@@ -9,12 +9,12 @@ export function parseStaffDepartment(value: string | null): StaffDepartment | nu
   return null
 }
 
-export const STAFF_WORKSPACE_TABS = ['staff', 'responsibilities', 'advisory', 'dynamics'] as const
+export const STAFF_WORKSPACE_TABS = ['staff', 'assignments', 'advisory', 'dynamics'] as const
 export type StaffWorkspaceTabId = (typeof STAFF_WORKSPACE_TABS)[number]
 
 export const STAFF_TAB_LABELS: Readonly<Record<StaffWorkspaceTabId, string>> = {
   staff: 'Staff',
-  responsibilities: 'Responsibilities',
+  assignments: 'Assignments',
   advisory: 'Advisory',
   dynamics: 'Dynamics',
 }

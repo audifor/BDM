@@ -58,6 +58,7 @@ import { requestScouting } from '@/engine/scouting'
 import type { StaffRoleId } from '@/domain/staff'
 import { acceptStaffJobOffer, completeStaffInterview, createStaffJobOffer, createStaffJobOpeningForTeam, declineStaffJobOffer, fireStaffFromTeam, identifyStaffCandidate, startStaffInterview } from '@/app/staffCareer'
 import { setTeamResponsibility, type SetTeamResponsibilityInput } from '@/app/staffResponsibilities'
+import { runStaffAssignmentStrategy, runStaffOptimization, type StaffAssignmentScope, type StaffAssignmentStrategy } from '@/app/staffAssignments'
 import { acceptStaffRecommendation as acceptStaffRecommendationCommand, dismissStaffRecommendation as dismissStaffRecommendationCommand, type StaffRecommendationCommandResult } from '@/app/staffRecommendations'
 import type { DelegationOutcomeId } from '@/domain/responsibility'
 import { declineStaffCareerRequest, grantStaffCareerRequest } from '@/app/staffCareerAutonomy'
@@ -114,6 +115,8 @@ interface GameStore {
   declineStaffOffer(offerId: string): void
   fireStaff(staffId: StaffPersonId): void
   setStaffResponsibility(input: SetTeamResponsibilityInput): void
+  applyStaffAssignmentStrategy(teamId: TeamId, strategy: StaffAssignmentStrategy, scope?: StaffAssignmentScope): number
+  applyStaffOptimization(teamId: TeamId, scope?: StaffAssignmentScope): number
   acceptStaffRecommendation(outcomeId: DelegationOutcomeId): StaffRecommendationCommandResult
   dismissStaffRecommendation(outcomeId: DelegationOutcomeId): StaffRecommendationCommandResult
   reviewReturnToPlay(injuryId: import('@/domain/ids').InjuryId, decision: ReturnToPlayDecision, recommendationOutcomeId?: DelegationOutcomeId): ReturnToPlayReviewResult
@@ -291,6 +294,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
   declineStaffOffer: (offerId) => set({ world: declineStaffJobOffer(requireWorld(get().world), offerId) }),
   fireStaff: (staffId) => set({ world: fireStaffFromTeam(requireWorld(get().world), staffId) }),
   setStaffResponsibility: (input) => set({ world: setTeamResponsibility(requireWorld(get().world), input) }),
+  applyStaffAssignmentStrategy: (teamId, strategy, scope) => {
+    const result = runStaffAssignmentStrategy(requireWorld(get().world), teamId, strategy, scope)
+    if (result.changes.length > 0) set({ world: result.world })
+    return result.changes.length
+  },
+  applyStaffOptimization: (teamId, scope) => {
+    const result = runStaffOptimization(requireWorld(get().world), teamId, scope)
+    if (result.changes.length > 0) set({ world: result.world })
+    return result.changes.length
+  },
   acceptStaffRecommendation: (outcomeId) => {
     const result = acceptStaffRecommendationCommand(requireWorld(get().world), outcomeId)
     if (result.ok) set({ world: result.world })

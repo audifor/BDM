@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 
 import type { StaffPersonId } from '@/domain/ids'
 import type { StaffDepartment } from '@/domain/staff'
@@ -7,15 +7,16 @@ import { getUserTeam } from '@/engine/calendar'
 import { useGameStore } from '@/stores/gameStore'
 import { deriveTeamColors } from '@/ui-ng/applications/player/data/presentationHelpers'
 import { StaffAdvisoryBoard } from '@/ui-ng/applications/staff/StaffAdvisoryBoard'
+import { StaffAssignmentsScreen, type StaffAssignmentPanelRequest } from '@/ui-ng/applications/staff/assignments/StaffAssignmentsScreen'
 import { useStaffDepartmentTabHover } from '@/ui-ng/applications/staff/StaffChrome'
 import { StaffDepartmentWorkspace } from '@/ui-ng/applications/staff/StaffDepartmentWorkspace'
 import { StaffDynamicsBoard } from '@/ui-ng/applications/staff/StaffDynamicsBoard'
 import { StaffPeopleBoard } from '@/ui-ng/applications/staff/StaffPeopleBoard'
 import { StaffPersonWorkspace } from '@/ui-ng/applications/staff/StaffPersonWorkspace'
-import { StaffResponsibilitiesBoard } from '@/ui-ng/applications/staff/StaffResponsibilitiesBoard'
 import { buildStaffWorkspaceModel } from '@/ui-ng/applications/staff/buildStaffWorkspaceModel'
 import {
   parseStaffDepartment,
+  STAFF_TAB_LABELS,
   STAFF_WORKSPACE_TABS,
   staffTabLabel,
   type StaffWorkspaceModel,
@@ -28,11 +29,19 @@ import { navigateToStaff, parseWorkspaceStaffId } from '@/ui-ng/workspace/worksp
 
 import './staff-workspace.css'
 
-function StaffWorkspaceHeader({ model }: { readonly model: StaffWorkspaceModel }) {
+function StaffWorkspaceHeader({
+  model,
+  label,
+  actions,
+}: {
+  readonly model: StaffWorkspaceModel
+  readonly label: string
+  readonly actions?: ReactNode
+}) {
   return (
     <header className="staff-workspace-header" data-ng-region="staff-workspace-header">
       <div className="staff-workspace-header__main">
-        <span className="staff-workspace-header__app">Staff</span>
+        <span className="staff-workspace-header__app">{label}</span>
         <span className="staff-workspace-header__sep" aria-hidden />
         <span className="staff-workspace-header__team">{model.teamName}</span>
         <span className="staff-workspace-header__meta">
@@ -43,6 +52,7 @@ function StaffWorkspaceHeader({ model }: { readonly model: StaffWorkspaceModel }
           <span className="ng-type-numeric">{model.needsAttentionCount}</span> attention
         </span>
       </div>
+      {actions === undefined ? null : <div className="staff-workspace-header__actions">{actions}</div>}
     </header>
   )
 }
@@ -94,12 +104,12 @@ export function StaffWorkspace() {
 
 function StaffBoardWorkspace() {
   const world = useGameStore((state) => state.world)
-  const setStaffResponsibility = useGameStore((state) => state.setStaffResponsibility)
   const acceptStaffRecommendation = useGameStore((state) => state.acceptStaffRecommendation)
   const dismissStaffRecommendation = useGameStore((state) => state.dismissStaffRecommendation)
   const grantStaffCareerRequest = useGameStore((state) => state.grantStaffCareerRequest)
   const declineStaffCareerRequest = useGameStore((state) => state.declineStaffCareerRequest)
   const [activeTab, setActiveTab] = useState<StaffWorkspaceTabId>('staff')
+  const [assignmentPanel, setAssignmentPanel] = useState<StaffAssignmentPanelRequest | null>(null)
   const departmentHover = useStaffDepartmentTabHover(null)
 
   const model = useMemo(() => (world === null ? null : buildStaffWorkspaceModel(world)), [world])
@@ -126,6 +136,25 @@ function StaffBoardWorkspace() {
     [activeTab, model],
   )
 
+  const tabsNode: ReactNode = (
+    <>
+      <WorkspaceTabs
+        activeTabId={activeTab}
+        onTabMouseEnter={(tabId) => {
+          if (tabId === 'staff') departmentHover.onTabMouseEnter()
+        }}
+        onTabMouseLeave={(tabId) => {
+          if (tabId === 'staff') departmentHover.onTabMouseLeave()
+        }}
+        onTabSelect={(tabId) => setActiveTab(tabId as StaffWorkspaceTabId)}
+        tabRef={departmentHover.tabButtonRef}
+        tabRefId="staff"
+        tabs={tabs}
+      />
+      {departmentHover.menu}
+    </>
+  )
+
   if (world === null || model === null) {
     return (
       <div className="staff-workspace staff-workspace--empty" data-ng-region="staff-workspace">
@@ -140,55 +169,64 @@ function StaffBoardWorkspace() {
   return (
     <div className="staff-workspace" data-ng-region="staff-workspace" style={teamStyle}>
       <ApplicationWorkspace
-        header={<StaffWorkspaceHeader model={model} />}
-        tabs={
-          <>
-            <WorkspaceTabs
-              activeTabId={activeTab}
-              onTabMouseEnter={(tabId) => {
-                if (tabId === 'staff') departmentHover.onTabMouseEnter()
-              }}
-              onTabMouseLeave={(tabId) => {
-                if (tabId === 'staff') departmentHover.onTabMouseLeave()
-              }}
-              onTabSelect={(tabId) => setActiveTab(tabId as StaffWorkspaceTabId)}
-              tabRef={departmentHover.tabButtonRef}
-              tabRefId="staff"
-              tabs={tabs}
-            />
-            {departmentHover.menu}
-          </>
+        tabs={tabsNode}
+        tabsHeader={
+          <StaffWorkspaceHeader
+            actions={
+              activeTab === 'assignments' ? (
+                <>
+                  <button className="sa-action" onClick={() => setAssignmentPanel({ kind: 'autoAssign' })} type="button">
+                    AUTO-ASSIGN
+                  </button>
+                  <button className="sa-action" onClick={() => setAssignmentPanel({ kind: 'optimize' })} type="button">
+                    OPTIMIZE
+                  </button>
+                  <button className="sa-action sa-action--primary" onClick={() => setAssignmentPanel({ kind: 'newAssignment' })} type="button">
+                    + NEW ASSIGNMENT
+                  </button>
+                </>
+              ) : undefined
+            }
+            label={STAFF_TAB_LABELS[activeTab]}
+            model={model}
+          />
         }
       >
-        <ScrollRegion className="staff-workspace__scroll">
-          {activeTab === 'staff' ? (
-            <StaffPeopleBoard
-              staff={model.staff}
-              teamId={model.teamId}
-              world={world}
-            />
-          ) : null}
-          {activeTab === 'responsibilities' ? (
-            <StaffResponsibilitiesBoard onSetResponsibility={setStaffResponsibility} teamId={model.teamId} world={world} />
-          ) : null}
-          {activeTab === 'advisory' ? (
-            <StaffAdvisoryBoard
-              onAcceptRecommendation={acceptStaffRecommendation}
-              onDismissRecommendation={dismissStaffRecommendation}
-              teamId={model.teamId}
-              world={world}
-            />
-          ) : null}
-          {activeTab === 'dynamics' ? (
-            <StaffDynamicsBoard
-              onDeclineCareerRequest={declineStaffCareerRequest}
-              onGrantCareerRequest={grantStaffCareerRequest}
-              onOpenStaff={navigateToStaff}
-              teamId={model.teamId}
-              world={world}
-            />
-          ) : null}
-        </ScrollRegion>
+        {activeTab === 'assignments' ? (
+          <StaffAssignmentsScreen
+            onPanelRequestHandled={() => setAssignmentPanel(null)}
+            panelRequest={assignmentPanel}
+            teamId={model.teamId}
+            world={world}
+          />
+        ) : (
+          <ScrollRegion className="staff-workspace__scroll">
+            {activeTab === 'staff' ? (
+              <StaffPeopleBoard
+                staff={model.staff}
+                teamId={model.teamId}
+                world={world}
+              />
+            ) : null}
+            {activeTab === 'advisory' ? (
+              <StaffAdvisoryBoard
+                onAcceptRecommendation={acceptStaffRecommendation}
+                onDismissRecommendation={dismissStaffRecommendation}
+                teamId={model.teamId}
+                world={world}
+              />
+            ) : null}
+            {activeTab === 'dynamics' ? (
+              <StaffDynamicsBoard
+                onDeclineCareerRequest={declineStaffCareerRequest}
+                onGrantCareerRequest={grantStaffCareerRequest}
+                onOpenStaff={navigateToStaff}
+                teamId={model.teamId}
+                world={world}
+              />
+            ) : null}
+          </ScrollRegion>
+        )}
       </ApplicationWorkspace>
     </div>
   )

@@ -130,6 +130,25 @@
   text-overflow: ellipsis;
 }
 
+.staff-workspace {
+  /* Shared by the Staff Assignments screen and the workspace header actions it owns. */
+  --sa-border: var(--bdm-border-subtle);
+  --sa-border-strong: var(--bdm-border-default);
+  --sa-row-line: var(--bdm-border-subtle);
+  --sa-hover: rgba(22, 217, 243, 0.05);
+  --sa-selected: rgba(22, 217, 243, 0.06);
+  --sa-action: #0e6ea6;
+  --sa-action-hover: #1284c4;
+  --sa-ease: cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+.staff-workspace-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
 .staff-workspace__stack {
   display: grid;
   gap: var(--ng-spacing-12);

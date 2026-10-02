@@ -48,6 +48,7 @@
 .ng-application-workspace__header-slot,
 .ng-application-workspace__identity-slot,
 .ng-application-workspace__tabs-slot,
+.ng-application-workspace__tabs-header-slot,
 .ng-application-workspace__toolbar-slot,
 .ng-application-workspace__body-slot {
   min-width: 0;
