@@ -24,17 +24,28 @@ export function getContinueStopReason(world: GameWorld): ContinueStopReason | un
   return { type: 'breakpoint', breakpoint }
 }
 
+/** Explicit date advancement auto-resolves user games, but keeps every other required decision blocking. */
+export function getExplicitAdvanceStopReason(world: GameWorld): ContinueStopReason | undefined {
+  const decision = evaluateSimulationBreakpoints(world)
+  const required = decision.candidates.filter((candidate) => candidate.level === 'ACTION_REQUIRED' || candidate.level === 'BLOCKING')
+  const nonGame = required.find((candidate) => candidate.reason !== 'userGame')
+  if (nonGame === undefined) return undefined
+  if (nonGame.reason === 'mediaOpportunity') return { type: 'mediaOpportunity', opportunityId: nonGame.sourceId, breakpoint: nonGame }
+  if (nonGame.reason === 'seasonComplete') return { type: 'seasonComplete', breakpoint: nonGame }
+  return { type: 'breakpoint', breakpoint: nonGame }
+}
+
 /** Repeats the canonical daily application flow until a supported interruption. */
 export function continueGame(world: GameWorld, dayLimit = DEFAULT_CONTINUE_DAY_LIMIT): ContinueResult {
   if (!Number.isInteger(dayLimit) || dayLimit < 1) throw new RangeError('Continue day limit must be a positive integer')
   let current = world; let daysAdvanced = 0
   while (daysAdvanced < dayLimit) {
-    const interruption = getContinueStopReason(current)
+    const interruption = getExplicitAdvanceStopReason(current)
     if (interruption !== undefined) return result(current, daysAdvanced, interruption)
     current = advanceGameDay(current)
     daysAdvanced += 1
   }
-  return result(current, daysAdvanced, getContinueStopReason(current) ?? { type: 'safetyLimit' })
+  return result(current, daysAdvanced, getExplicitAdvanceStopReason(current) ?? { type: 'safetyLimit' })
 }
 
 export function getNextKnownEvent(world: GameWorld): NextKnownEvent | undefined {

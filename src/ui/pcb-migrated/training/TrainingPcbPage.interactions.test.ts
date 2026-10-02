@@ -104,12 +104,41 @@ describe('TrainingPcbPage / interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Anterior' }))
 
     expect(container.querySelectorAll('.pcb-training__session')).toHaveLength(1)
-    expect(screen.getByText(/COMPLETED/)).toBeInTheDocument()
-    expect(screen.getByText('Three-Point Shooting')).toBeInTheDocument()
-    const historicalCard = container.querySelector('.pcb-training__session--completed')!
-    expect(within(historicalCard as HTMLElement).queryByRole('button')).not.toBeInTheDocument()
-    expect(within(historicalCard as HTMLElement).getByText(/Planned/)).toBeInTheDocument()
-    expect(within(historicalCard as HTMLElement).getByText(/Effective/)).toBeInTheDocument()
+    const historicalCard = screen.getByRole('button', { name: /Three-Point Shooting.*COMPLETED/ })
+    expect(within(historicalCard).queryByRole('button')).not.toBeInTheDocument()
+    fireEvent.click(historicalCard)
+
+    const modal = screen.getByRole('dialog', { name: 'Three-Point Shooting' })
+    expect(within(modal).getByText(/COMPLETED/)).toBeInTheDocument()
+    expect(within(modal).getByText(/Planned/)).toBeInTheDocument()
+    expect(within(modal).getByText(/Effective/)).toBeInTheDocument()
+    expect(within(modal).getByText(/Executor/)).toBeInTheDocument()
+
+    fireEvent.mouseDown(modal)
+    expect(screen.getByRole('dialog', { name: 'Three-Point Shooting' })).toBeInTheDocument()
+    fireEvent.click(within(modal).getByRole('button', { name: 'Close dialog' }))
+    expect(screen.queryByRole('dialog', { name: 'Three-Point Shooting' })).not.toBeInTheDocument()
+
+    fireEvent.click(historicalCard)
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('dialog', { name: 'Three-Point Shooting' })).not.toBeInTheDocument()
+
+    fireEvent.click(historicalCard)
+    fireEvent.mouseDown(document.querySelector('.bdm-dialog-backdrop')!)
+    expect(screen.queryByRole('dialog', { name: 'Three-Point Shooting' })).not.toBeInTheDocument()
+  })
+
+  it('keeps future scheduled sessions on their existing edit flow', () => {
+    const base = { ...createNewGame(), currentDate: parseGameDate('2026-10-05') }
+    const team = getUserTeam(base)!
+    const date = nextEligibleTrainingDate(base.currentDate)
+    const scheduled = scheduleTeamModuleSession(base, { teamId: team.id, moduleId: 'threePoint', date, startTime: '09:00', durationMinutes: 60, sessionId: 'future-calendar-session' })
+    const world = { ...scheduled, currentDate: addDays(date, -1) }
+    const { container } = render(createElement(TrainingPcbPage, { world }))
+
+    fireEvent.click(screen.getByRole('button', { name: /Three-Point Shooting/ }))
+    expect(screen.getByRole('heading', { name: 'Editar sesión' })).toBeInTheDocument()
+    expect(container.querySelector('.pcb-training__session--completed')).toBeNull()
   })
 
   it('opening the new-session modal for a real team shows a real catalog definition and calls onScheduleTeamModule with real domain data', () => {
