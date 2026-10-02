@@ -4,7 +4,7 @@ import { createNewGame } from '@/app/game'
 import { addDays, parseGameDate } from '@/domain/date'
 import { getGamesForTeam, updateGameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
-import { nextEligibleTrainingDate, scheduleTeamModuleSession } from '@/engine/training'
+import { nextEligibleTrainingDate, scheduleTeamModuleSession, setTrainingParticipation } from '@/engine/training'
 import {
   automaticTeamTrainingDefinitionId,
   scheduleAutomaticTeamTrainingWeek,
@@ -46,6 +46,42 @@ describe('scheduleAutomaticTeamTrainingWeek', () => {
     expect(autoSessions.every((session) => session.intensity === 'high')).toBe(true)
     expect(autoSessions.some((session) => session.date === match!.date)).toBe(false)
     expect(scheduleAutomaticTeamTrainingWeek(scheduled, { teamId: team.id, weekStart })).toEqual(scheduled)
+  })
+
+  it('refreshes its pending sessions when the team focus or intensity changes', () => {
+    const base = createNewGame()
+    const team = getUserTeam(base)!
+    const weekStart = mondayOf(addDays(base.currentDate, 7))
+    const beforeWeek = updateGameWorld(base, { currentDate: addDays(weekStart, -1) })
+    const balancedPlan = setTeamTrainingPlan(beforeWeek, team.id, { focus: 'balanced', intensity: 'normal' })
+    const balancedSchedule = scheduleAutomaticTeamTrainingWeek(balancedPlan, { teamId: team.id, weekStart })
+    const originalAutoSessions = Object.values(balancedSchedule.scheduledTrainingSessionsById).filter(
+      (session) => session.teamId === team.id && session.id.startsWith(`auto:${team.id}:`),
+    )
+    expect(originalAutoSessions.length).toBeGreaterThan(0)
+    expect(originalAutoSessions.every((session) => session.definitionId === 'teamCohesion')).toBe(true)
+
+    const customizedSession = originalAutoSessions[0]!
+    const playerId = team.rosterPlayerIds[0]!
+    const withParticipationOverride = setTrainingParticipation(balancedSchedule, {
+      sessionId: customizedSession.id,
+      playerId,
+      participation: 'REST',
+    })
+
+    const shootingPlan = setTeamTrainingPlan(withParticipationOverride, team.id, { focus: 'shooting', intensity: 'high' })
+    const refreshed = scheduleAutomaticTeamTrainingWeek(shootingPlan, { teamId: team.id, weekStart })
+    const refreshedAutoSessions = Object.values(refreshed.scheduledTrainingSessionsById).filter(
+      (session) => session.teamId === team.id && session.id.startsWith(`auto:${team.id}:`),
+    )
+    const preservedCustomizedSession = refreshed.scheduledTrainingSessionsById[customizedSession.id]!
+    const replannedSessions = refreshedAutoSessions.filter((session) => session.id !== customizedSession.id)
+
+    expect(refreshedAutoSessions).toHaveLength(originalAutoSessions.length)
+    expect(preservedCustomizedSession).toMatchObject({ definitionId: 'teamCohesion', participationByPlayerId: { [playerId]: 'REST' } })
+    expect(replannedSessions.length).toBeGreaterThan(0)
+    expect(replannedSessions.every((session) => session.definitionId === 'threePoint' && session.intensity === 'high')).toBe(true)
+    expect(refreshedAutoSessions.map((session) => session.date).sort()).toEqual(originalAutoSessions.map((session) => session.date).sort())
   })
 
   it('does not replace a team session already scheduled that week', () => {
