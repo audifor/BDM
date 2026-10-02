@@ -1,0 +1,133 @@
+{
+  "seeds": [
+    31337,
+    424242,
+    7
+  ],
+  "summary": {
+    "halfCourtPossessions": 336,
+    "perGame": 112,
+    "passes": {
+      "perPossession": {
+        "n": 336,
+        "mean": 3.93,
+        "median": 4,
+        "p10": 1,
+        "p90": 7,
+        "min": 0,
+        "max": 15
+      },
+      "lengthMeters": {
+        "n": 1321,
+        "mean": 6.56,
+        "median": 6.26,
+        "p10": 3,
+        "p90": 11.08,
+        "min": 0.13,
+        "max": 15.54
+      },
+      "shareShorterThan4m": 0.273,
+      "shareLongerThan10m": 0.16,
+      "towardBasketMeters": {
+        "n": 1321,
+        "mean": -0.55,
+        "median": 0,
+        "p10": -4.43,
+        "p90": 1.75,
+        "min": -7.69,
+        "max": 8.29
+      },
+      "lateralMeters": {
+        "n": 1321,
+        "mean": 4.58,
+        "median": 4.17,
+        "p10": 0.12,
+        "p90": 10.06,
+        "min": 0,
+        "max": 14.15
+      },
+      "sideSwitchesPerPossession": 1.6,
+      "possessionsWithASideSwitch": 0.753,
+      "possessionsWithNoPass": 0.027
+    },
+    "handler": {
+      "metersCarriedPerPossession": {
+        "n": 336,
+        "mean": 14.77,
+        "median": 14.89,
+        "p10": 6.77,
+        "p90": 22.48,
+        "min": 2.39,
+        "max": 36.35
+      },
+      "shareOfBallTimeMoving": 0.444
+    },
+    "involvement": {
+      "playersInvolvedPerPossession": {
+        "n": 336,
+        "mean": 3.81,
+        "median": 4,
+        "p10": 2,
+        "p90": 5,
+        "min": 0,
+        "max": 6
+      },
+      "playersWhoPassedPerPossession": {
+        "n": 336,
+        "mean": 2.96,
+        "median": 3,
+        "p10": 1,
+        "p90": 5,
+        "min": 0,
+        "max": 5
+      },
+      "playersWhoCaughtPerPossession": {
+        "n": 336,
+        "mean": 2.84,
+        "median": 3,
+        "p10": 1,
+        "p90": 5,
+        "min": 0,
+        "max": 5
+      },
+      "offBallRunMetersPerPlayerPossession": {
+        "n": 1671,
+        "mean": 19.94,
+        "median": 19.6,
+        "p10": 9.02,
+        "p90": 30.25,
+        "min": 1.13,
+        "max": 54.53
+      },
+      "offBallRunMetersPerMinute": 130.8,
+      "offBallShareOfTimeStandingOnTheSlot": {
+        "n": 1671,
+        "mean": 0.39,
+        "median": 0.4,
+        "p10": 0,
+        "p90": 0.68,
+        "min": 0,
+        "max": 0.97
+      },
+      "possessionsWhereAnOffBallPlayerRanUnder3m": 0.027
+    },
+    "screens": {
+      "perPossession": 0.65,
+      "usedShare": 1
+    },
+    "defense": {
+      "closeoutsPerPossession": 3.22,
+      "rotationsPerPossession": 2.4,
+      "responsibilityChangesPerPossession": 23.93
+    },
+    "possessionSeconds": {
+      "n": 336,
+      "mean": 15.99,
+      "median": 15,
+      "p10": 9.9,
+      "p90": 23,
+      "min": 7,
+      "max": 46.9
+    }
+  }
+}

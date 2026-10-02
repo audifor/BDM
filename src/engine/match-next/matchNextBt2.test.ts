@@ -150,7 +150,8 @@ describe('BT2C: half-court settlement (zones, not rails)', { timeout: 240000 }, 
       if (occupied === 0) cornersMissing += 1
     })
     expect(samples).toBeGreaterThan(100)
-    expect(inZone / players).toBeGreaterThan(0.7)
+    // BT4.3: the handler starts the play (ball screen, drive-and-kick) right after the set, so the 3 s window has more movement than before.
+    expect(inZone / players).toBeGreaterThan(0.65)
     // Per tick, not per sample: BT3 games spend less time in a settled half court (more fouls, turnovers and transition shots), so the
     // same handful of frames (BT2: about 1 in 500 ticks) is a bigger share of a smaller sample.
     expect(cornersMissing / 7000).toBeLessThan(0.005)

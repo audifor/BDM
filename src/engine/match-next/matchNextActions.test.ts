@@ -106,8 +106,10 @@ describe('Match Next action vertical slice', () => {
     // A weak handler may first run a ball screen and drive off it; the ball then moves by a PASS or a KICK_OUT.
     const pass = state.actions.find((action) => action.kind === 'PASS' || action.kind === 'KICK_OUT')
 
-    expect(pass).toMatchObject({ status: 'COMPLETED', outcome: 'CAUGHT' })
-    expect(state.events.some((event) => event.type === 'passReceived' && event.receiverPlayerId === pass?.targetPlayerId)).toBe(true)
+    // BT4.3: the first pass is a seeded draw: it is physically caught or it is a bad pass (the turnover itself is booked when the loose ball is resolved); both are resolved outcomes.
+    expect(pass).toMatchObject({ status: 'COMPLETED' })
+    expect(['CAUGHT', 'BAD_PASS']).toContain(pass?.outcome)
+    if (pass?.outcome === 'CAUGHT') expect(state.events.some((event) => event.type === 'passReceived' && event.receiverPlayerId === pass?.targetPlayerId)).toBe(true)
   })
 
   it('runs drive help -> kick-out catch -> physical closeout -> catch-and-shoot resolution deterministically', () => {

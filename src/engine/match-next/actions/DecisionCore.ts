@@ -11,6 +11,7 @@ import { guardPosition } from '../defense/ManDefense'
 import { closeoutReactionTicks } from '../defense/Closeout'
 import { stepPlayerKinematics } from '../movement/PlayerKinematics'
 import { activePossession, INITIAL_SHOT_VALUE_MEMORY, type MatchPlayerState, type MatchState, type ScreenState } from '../state'
+import { hashStringToSeed } from '@/engine/random'
 import { planScreen, SCREEN_MIN_SECONDS_LEFT } from './ScreenCore'
 import { attackingBasketForTeam } from '../structure/FiveOutStructure'
 import { isInOffensiveFrontcourt } from '../structure/OffensiveStructure'
@@ -145,12 +146,12 @@ export function workingValue(state: MatchState): number {
 }
 
 /** The defense is set when most defenders are on the spot their responsibility gives them: waiting for a look only pays against a set defense. */
-function defenseIsSet(state: MatchState): boolean {
+function defenseIsSet(state: MatchState, radius: number = tuning().defenseSetRadiusMeters): boolean {
   const defenders = state.players.filter((player) => player.active && player.teamId === state.defensiveStructure?.teamId)
   if (defenders.length === 0) return true
   const set = defenders.filter((defender) => {
     const intent = state.movementIntents.find((item) => item.playerId === defender.playerId && item.provenance.owner === 'defensiveStructure')
-    return intent !== undefined && distanceBetween(defender.position, intent.target) <= tuning().defenseSetRadiusMeters
+    return intent !== undefined && distanceBetween(defender.position, intent.target) <= radius
   }).length
   return set >= 3
 }
@@ -513,6 +514,43 @@ function screenSeparationFor(state: MatchState, screen: ScreenState, handler: Ma
   }
 }
 
+export type PlayKind = 'BALL_SCREEN' | 'DRIVE_KICK' | 'SWING'
+
+/** What the offense is running in this half court, chosen once per possession from who is on the floor (stable: static ratings and the possession id). */
+export function playFor(state: MatchState, teamId: MatchPlayerState['teamId']): PlayKind {
+  const possession = activePossession(state)
+  const players = state.players.filter((player) => player.active && player.teamId === teamId)
+  const top = (score: (player: MatchPlayerState) => number, count: number): number => {
+    const values = players.map(score).sort((a, b) => b - a).slice(0, count)
+    return values.reduce((a, b) => a + b, 0) / Math.max(1, values.length)
+  }
+  const plan = teamId === state.homeTeamId ? state.tacticalPlans.home : state.tacticalPlans.away
+  const screenWeight = 1 + 0.012 * (top((p) => p.offense.creation, 2) - 50) + 0.012 * (top((p) => (p.offense.rimAttack + p.reboundingImpact + (p.heightCm - 170) * 0.6) / 3, 1) - 50)
+  const driveWeight = 0.9 + 0.012 * (top((p) => p.offense.rimAttack, 3) - 50) + plan.shotProfile.rim * 0.15
+  const swingWeight = 0.9 + 0.012 * (top((p) => p.offense.shooting, 3) - 50) + plan.shotProfile.threePoint * 0.15
+  const total = Math.max(0.3, screenWeight) + Math.max(0.3, driveWeight) + Math.max(0.3, swingWeight)
+  const u = hashStringToSeed(`bt43-play:${possession?.id ?? 'none'}:${possession?.offensiveRebounds ?? 0}`) / 0x1_0000_0000 * total
+  if (u < Math.max(0.3, screenWeight)) return 'BALL_SCREEN'
+  return u < Math.max(0.3, screenWeight) + Math.max(0.3, driveWeight) ? 'DRIVE_KICK' : 'SWING'
+}
+
+interface PlayRead { readonly kind: PlayKind; readonly committed: boolean; readonly screensDone: number; readonly drivesDone: number; readonly passesDone: number }
+
+/** The set the team is running and whether it is still committed to it (it ends when it has been run, or after the commitment window). */
+function playRead(state: MatchState, flow: MatchState['offenseFlow'], teamId: MatchPlayerState['teamId']): PlayRead | null {
+  if (tuning().playsEnabled === 0 || flow === null || flow.halfCourtSinceT === null || state.transition !== null) return null
+  const since = flow.halfCourtSinceT
+  const mine = state.actions.filter((action) => action.teamId === teamId && action.startedT >= since && action.status === 'COMPLETED')
+  const screensDone = mine.filter((action) => action.kind === 'SCREEN').length
+  const drivesDone = mine.filter((action) => action.kind === 'DRIVE').length
+  const passesDone = mine.filter((action) => action.kind === 'PASS' || action.kind === 'KICK_OUT').length
+  const kind = playFor(state, teamId)
+  const elapsed = (state.t - since) / 10
+  const extra = tuning().playExtraPasses
+  const executed = kind === 'BALL_SCREEN' ? screensDone >= 1 && passesDone + drivesDone >= 1 + extra : kind === 'DRIVE_KICK' ? drivesDone >= 1 && passesDone >= 1 + extra : passesDone >= 3 + extra
+  return { kind, committed: !executed && elapsed < tuning().playCommitSeconds, screensDone, drivesDone, passesDone }
+}
+
 function readTheFloor(state: MatchState, actor: MatchPlayerState, basket: CourtPosition, flow: MatchState['offenseFlow'], contained: boolean, passKind: 'PASS' | 'KICK_OUT', mustAct = false, screen: ScreenState | null = null): FloorRead {
   const contest = estimateContestAt(state, actor.teamId, actor.position)
   // Off a set screen the handler's defender is about to be delayed: the pull-up is less contested than it looks now.
@@ -528,12 +566,18 @@ function readTheFloor(state: MatchState, actor: MatchPlayerState, basket: CourtP
     ? planScreen(state, actor, basket) : null
   const hold = workingValue(state) * tuning().holdDiscount
   const noise = (salt: string): number => 1 + (decisionNoise(state, actor.playerId, salt) - 0.5) * 0.12
+  const play = playRead(state, flow, actor.teamId)
+  const committed = play !== null && play.committed
+  const gift = shot.value >= tuning().playGiftValue && contest.score <= tuning().playGiftContest
+  const shootPlayFactor = committed && !gift ? tuning().playShotFactor : 1
+  const drivePlayFactor = committed && play!.kind === 'DRIVE_KICK' && play!.drivesDone === 0 ? tuning().playDriveBoost : 1
+  const passPlayFactor = committed && (play!.kind === 'SWING' || (play!.kind === 'DRIVE_KICK' && play!.drivesDone >= 1)) ? tuning().playPassBoost : 1
   const options = {
-    shoot: shot.value * tuning().shootValueScale * noise('shoot'),
-    drive: drive * tuning().driveValueScale * (1 + (actor.offense.usage - 50) * tuning().usageDrivePerPoint) * noise('drive'),
+    shoot: shot.value * tuning().shootValueScale * shootPlayFactor * noise('shoot'),
+    drive: drive * drivePlayFactor * tuning().driveValueScale * (1 + (actor.offense.usage - 50) * tuning().usageDrivePerPoint) * noise('drive'),
     // Off a set screen the handler first USES it (attack, pull up); the ball only moves early if he is being trapped.
-    pass: (secondsLeft > 3.5 && (screen === null || screen.coverage === 'blitz' || tuning().passOffScreen !== 0) ? (bestReceiver?.value ?? Number.NEGATIVE_INFINITY) * tuning().passValueScale * (1 - (actor.offense.usage - 50) * tuning().usagePassPerPoint) : Number.NEGATIVE_INFINITY) * noise('pass'),
-    screen: (screenPlan?.value ?? Number.NEGATIVE_INFINITY) * noise('screen'),
+    pass: (secondsLeft > 3.5 && (screen === null || screen.coverage === 'blitz' || tuning().passOffScreen !== 0) ? (bestReceiver?.value ?? Number.NEGATIVE_INFINITY) * tuning().passValueScale * passPlayFactor * (1 - (actor.offense.usage - 50) * tuning().usagePassPerPoint) : Number.NEGATIVE_INFINITY) * noise('pass'),
+    screen: ((screenPlan?.value ?? Number.NEGATIVE_INFINITY) + (committed && play!.kind === 'BALL_SCREEN' && play!.screensDone === 0 ? tuning().playScreenBonus : 0)) * noise('screen'),
     hold,
   }
   const utility = { shoot: round(shot.value), drive: round(Number.isFinite(drive) ? drive : 0), pass: round(bestReceiver?.value ?? 0), hold: round(hold), ...(screenPlan === null ? {} : { screen: round(screenPlan.value) }) }
@@ -543,8 +587,10 @@ function readTheFloor(state: MatchState, actor: MatchPlayerState, basket: CourtP
   // a near tie is split between options and the mix responds progressively to the parameters.
   const temperature = tuning().decisionTemperaturePoints
   const gumbel = (salt: string): number => temperature <= 0 ? 0 : -temperature * Math.log(-Math.log(Math.min(0.999, Math.max(0.001, decisionNoise(state, actor.playerId, `gumbel-${salt}`)))))
+  // BT4.3: with the floor set the handler does not wait: waiting is not a basketball action, the possession is made of actions.
+  const noHold = mustAct || (tuning().settledHandlerActs !== 0 && flow !== null && flow.settledAtT !== null && state.transition === null && secondsLeft > 1)
   const candidates = (Object.entries(options) as [keyof typeof options, number][])
-    .filter(([name]) => !mustAct || name !== 'hold')
+    .filter(([name]) => !noHold || name !== 'hold')
     .map(([name, value]): [keyof typeof options, number] => [name, Number.isFinite(value) ? value + gumbel(name) : value])
   const best = candidates.sort((left, right) => right[1] - left[1])[0]![0]
   const settled = flow === null || flow.settledAtT !== null
@@ -553,9 +599,10 @@ function readTheFloor(state: MatchState, actor: MatchPlayerState, basket: CourtP
   const halfCourtUnsettled = flow !== null && !settled && flow.stage === 'HALF_COURT' && secondsLeft > UNSETTLED_HOLD_MIN_SECONDS
   // Until the floor is organised only a genuinely open look justifies acting: otherwise keep reading.
   const pace = actor.teamId === state.homeTeamId ? state.tacticalPlans.home.pace : state.tacticalPlans.away.pace
-  const openLook = Math.max(options.shoot, options.pass, options.drive) >= OPEN_LOOK_VALUE_POINTS * (1 - pace * PACE_OPEN_LOOK_PER_LEVEL)
+  // BT4.3: an offense that is not set does not attack on its own: only a shot or a pass that is already there justifies acting; a drive is a play, not a look.
+  const openLook = Math.max(options.shoot, options.pass, tuning().playsEnabled !== 0 && !(tuning().earlyOffenseRadiusMeters > 0 && !defenseIsSet(state, tuning().earlyOffenseRadiusMeters)) ? Number.NEGATIVE_INFINITY : options.drive) >= OPEN_LOOK_VALUE_POINTS * (1 - pace * PACE_OPEN_LOOK_PER_LEVEL)
   const readAgain = state.t + Math.max(1, Math.round(3 - pace * PACE_READ_TICKS_PER_LEVEL)) + Math.floor(decisionNoise(state, actor.playerId, 'hold') * 4)
-  if (!mustAct && (best === 'hold' || (halfCourtUnsettled && !openLook))) return { kind: 'HOLD', holdUntilT: readAgain }
+  if (!noHold && (best === 'hold' || (halfCourtUnsettled && !openLook))) return { kind: 'HOLD', holdUntilT: readAgain }
   const recentCatch = flow !== null && flow.caughtFromPass && state.t - flow.holderSinceT <= 14
   if (best === 'shoot') {
     return {

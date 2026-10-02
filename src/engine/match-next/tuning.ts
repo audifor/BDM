@@ -82,6 +82,24 @@ export interface MatchNextTuning {
   readonly defenderTravelFacing: number
   /** BT4.2: top speed a player keeps when he moves directly away from where he faces (backpedal); 1 = no penalty. Sideways costs half of the loss. */
   readonly backpedalSpeedFactor: number
+  /** BT4.3: 1 = once the half court is set the handler must act (no waiting with the ball): every possession is made of actions. */
+  readonly settledHandlerActs: number
+  /** BT4.3 plays: 1 = every half-court possession runs a set (ball screen, drive and kick, swing) and the team commits to it. */
+  readonly playsEnabled: number
+  /** Seconds after the half court is set during which the team is committed to its set. */
+  readonly playCommitSeconds: number
+  /** While committed a cold shot is worth this share; a gift (contest below playGiftContest and value above playGiftValue) is taken anyway. */
+  readonly playShotFactor: number
+  readonly playGiftContest: number
+  readonly playGiftValue: number
+  /** What the set favors: the ball screen is called (extra points on its value), the driver goes, the ball moves (multipliers). */
+  readonly playScreenBonus: number
+  readonly playDriveBoost: number
+  readonly playPassBoost: number
+  /** Passes after its action that a set needs before it counts as run (the second read: the ball goes to the weak side). */
+  readonly playExtraPasses: number
+  /** BT4.3: an offense that is not set may still attack a defense that is not set either (early offense); this is how close three defenders must be to their spots for the defense to count as set. 0 = never attack before the set. */
+  readonly earlyOffenseRadiusMeters: number
 }
 
 export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
@@ -109,15 +127,15 @@ export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
   usageDrivePerPoint: 0.003,
   usagePassPerPoint: 0.003,
   episodeFoulScale: 1.7,
-  waitPremium: 2.0,
+  waitPremium: 0,
   catchGatherTicksPerMps: 0.8,
   catchPressureTicksPerMeter: 2,
   helpSagMaxMeters: 99,
   helpSagBaseMeters: 5.4,
   movementAgility: 1,
   lateralGripFactor: 1.2,
-  probeEnabled: 1,
-  offerEnabled: 1,
+  probeEnabled: 0,
+  offerEnabled: 0,
   backcourtCarryEnabled: 1,
   waitGateMode: 3,
   refereeScale: 1,
@@ -130,6 +148,17 @@ export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
   goalSideMarginMeters: 1.5,
   defenderTravelFacing: 1,
   backpedalSpeedFactor: 0.6,
+  settledHandlerActs: 1,
+  playsEnabled: 1,
+  playCommitSeconds: 12,
+  playShotFactor: 0.65,
+  playGiftContest: 0.12,
+  playGiftValue: 1.25,
+  playScreenBonus: 0.45,
+  playDriveBoost: 1.3,
+  playPassBoost: 1.25,
+  playExtraPasses: 1,
+  earlyOffenseRadiusMeters: 3,
 })
 
 let active: MatchNextTuning = DEFAULT_MATCH_NEXT_TUNING

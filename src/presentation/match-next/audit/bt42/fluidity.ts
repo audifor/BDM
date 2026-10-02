@@ -106,7 +106,7 @@ export function runFluidityGame(seed: number, maxTicks = 60000): FluidityGame {
         touches.push(p.touchers.size)
         if ((e.t - p.start) / 10 >= 6) { firstAction.push(p.firstAction ?? (e.t - p.start) / 10); offersPer.push(p.offers) }
         patterns.push(p.seq.filter((x) => !x.includes('offBall')).map((x) => x.split(' ').slice(1).join(' ')).filter((x) => x !== '').slice(0, 7).join(' > '))
-        if (timelines.length < 14 && p.seq.length >= 4 && (e.t - p.start) / 10 >= 8) timelines.push(`#${id} ${p.reason} ${((e.t - p.start) / 10).toFixed(1)}s: ${p.seq.join(' | ')}`)
+        if (timelines.length < 24 && p.seq.length >= 3 && (e.t - p.start) / 10 >= 5) timelines.push(`#${id} ${p.reason} ${((e.t - p.start) / 10).toFixed(1)}s: ${p.seq.join(' | ')}`)
         open.delete(id!)
       }
     }

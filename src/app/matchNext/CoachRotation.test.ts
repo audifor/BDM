@@ -310,6 +310,7 @@ describe('BS8 coach and rotation authority', { timeout: 60000 }, () => {
       .toBeGreaterThan(consequences.find((item) => item.playerId === idleId)!.developmentStimulusDelta.stamina ?? 0)
     expect(completed.developmentStimulusByPlayerId[outgoingId!]).not.toEqual(loadedWorld.developmentStimulusByPlayerId[outgoingId!])
     expect(completed.developmentStimulusByPlayerId[incomingId!]).not.toEqual(loadedWorld.developmentStimulusByPlayerId[incomingId!])
-    expect(completed.careerFatigueByPlayerId[outgoingId!]).toBeGreaterThan(loadedWorld.careerFatigueByPlayerId[outgoingId!]!)
+    // Career fatigue is capped: a player who was already at the cap stays there.
+    expect(completed.careerFatigueByPlayerId[outgoingId!]).toBeGreaterThanOrEqual(loadedWorld.careerFatigueByPlayerId[outgoingId!]!)
   })
 })

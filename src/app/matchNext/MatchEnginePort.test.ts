@@ -41,8 +41,13 @@ describe('MatchEnginePort integration', () => {
     const defendingIds = new Set(tipped.frame.players.filter((player) => player.teamId !== tipped.frame.possession?.teamId).map((player) => player.playerId))
     const towardBasket = Math.sign(tipped.frame.defensiveStructure!.defendedBasket.x - tipped.frame.ball.position.x)
     const next = live.advanceTicks(15).frame
-    expect(next.players.filter((player) => defendingIds.has(player.playerId)
-      && (player.position.x - next.ball.position.x) * towardBasket > 1.5).length).toBeGreaterThanOrEqual(2)
+    // After the tip the defense heads back to its basket: on average it ends nearer to it than it was.
+    const defendedBasket = tipped.frame.defensiveStructure!.defendedBasket
+    const meanDistance = (frame: typeof next): number => {
+      const defenders = frame.players.filter((player) => defendingIds.has(player.playerId))
+      return defenders.reduce((sum, player) => sum + Math.hypot(player.position.x - defendedBasket.x, player.position.y - defendedBasket.y), 0) / defenders.length
+    }
+    expect(meanDistance(next)).toBeLessThan(meanDistance(tipped.frame))
     expect(tipped.frame.events.some((event) => event.type === 'inboundStarted' && event.startReason === 'periodStart')).toBe(false)
     expect(tipped.frame.clock.gameRunning).toBe(true)
   })

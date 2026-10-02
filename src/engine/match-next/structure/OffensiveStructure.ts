@@ -151,7 +151,7 @@ export function reconcileOffensiveStructure(state: MatchState): MatchState {
     movementIntents.push({
       playerId: player.playerId,
       target,
-      urgency: kind === 'ADVANCE' && (possession.teamId === state.homeTeamId ? state.tacticalPlans.home.pace : state.tacticalPlans.away.pace) >= 2
+      urgency: kind === 'BALL' ? 'jog' : kind === 'ADVANCE' && (possession.teamId === state.homeTeamId ? state.tacticalPlans.home.pace : state.tacticalPlans.away.pace) >= 2
         ? 'sprint'
         : kind === 'ADVANCE' && (possession.teamId === state.homeTeamId ? state.tacticalPlans.home.pace : state.tacticalPlans.away.pace) <= -2 ? 'jog' : 'run',
       facing,
@@ -268,7 +268,18 @@ function zoneTarget(position: CourtPosition, slot: CourtPosition, basket: CourtP
 
 function targetForResponsibility(state: MatchState, player: MatchPlayerState, responsibility: PlayerResponsibility, structure: OffensiveStructureState): CourtPosition {
   if (responsibility.kind === 'ADVANCE') return steerAroundDefender(state, player, advanceTarget(state, structure.attackingBasket))
-  if (responsibility.kind === 'BALL') return { ...player.position }
+  if (responsibility.kind === 'BALL') {
+    // BT4.3: until the floor is set the handler walks the ball to where the play starts (top of the key, on his side), instead of standing where the carry ended.
+    const set = state.offenseFlow === null || state.offenseFlow.settledAtT !== null
+    const inFrontcourt = isInOffensiveFrontcourt(state.ball.position, structure.attackingBasket, state.court.lengthMeters)
+    if (tuning().playsEnabled !== 0 && !set && inFrontcourt) {
+      const direction = structure.attackingBasket.x >= state.court.lengthMeters / 2 ? 1 : -1
+      const centerY = state.court.widthMeters / 2
+      const spot = { x: structure.attackingBasket.x - direction * 7.4, y: centerY + Math.max(-3, Math.min(3, (player.position.y - centerY) * 0.5)) }
+      return distanceBetween(player.position, spot) < 0.8 ? { ...player.position } : steerAroundDefender(state, player, spot)
+    }
+    return { ...player.position }
+  }
   const assignment = structure.assignments.find((item) => item.playerId === player.playerId)
   const slot = structure.slots.find((item) => item.slot === assignment?.slot)
   return slot === undefined ? player.position : zoneTarget(player.position, slot.position, structure.attackingBasket)

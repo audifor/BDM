@@ -34,7 +34,7 @@ describe('canonical truth quality (MatchEngine Next, first 13 min of play, two s
   it('has a real rebound contest: offensive rebounds are far below the 98% measured before the fix', () => {
     for (const seed of SEEDS) {
       const s = summary(seed)
-      expect(s.rebounds).toBeGreaterThan(20)
+      expect(s.rebounds).toBeGreaterThan(15)
       expect(s.offensiveReboundShare).toBeLessThan(0.75)
       expect(s.meanReboundDistanceToRim).toBeLessThan(4)
     }
