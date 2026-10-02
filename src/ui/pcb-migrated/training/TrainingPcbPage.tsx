@@ -8,7 +8,7 @@ import { BASKETBALL_RATING_KEYS, type BasketballRatingKey, type Player } from "@
 import type { Team } from "@/domain/team";
 import type { TeamId, PlayerId, StaffPersonId } from "@/domain/ids";
 import { createEntityId } from "@/domain/ids";
-import { STAFF_ROLE_REGISTRY, type StaffRoleId } from "@/domain/staff";
+import { isTrainingStaffRoleEligible, type StaffRoleId } from "@/domain/staff";
 import { STAFF_ROLE_LABELS } from "@/ui/staffPresentation";
 import { useEntityContextMenu } from "@/ui/entityContextMenu/EntityContextMenuProvider";
 import { PlayerNameLink } from "@/ui/navigation/PlayerNameLink";
@@ -188,6 +188,15 @@ function eligibleTrainingStaff(world: GameWorld | undefined, team: Team | undefi
   return Object.values(world.teamStaffAssignmentsById)
     .filter((assignment) => assignment.teamId === team.id && world.staffEmploymentByStaffId[assignment.staffPersonId]?.status === "employed")
     .map((assignment) => ({ id: assignment.staffPersonId, role: assignment.role, name: `${world.staffPeopleById[assignment.staffPersonId]!.identity.firstName} ${world.staffPeopleById[assignment.staffPersonId]!.identity.lastName}` }));
+}
+
+function trainingStaffForDefinition<T extends { readonly role: string }>(staff: readonly T[], definition: TrainingDefinition): readonly T[] {
+  return staff.filter((candidate) => isTrainingStaffRoleEligible(candidate.role as StaffRoleId, definition.category, definition.id));
+}
+
+function trainingDefinitionForModule(world: GameWorld | undefined, moduleId: string): TrainingDefinition | undefined {
+  const definitionId = world?.userTrainingModulesById[moduleId]?.baseDefinitionId ?? moduleId;
+  return TRAINING_CATALOG.find((definition) => definition.id === definitionId);
 }
 
 export function TrainingPcbPage({
@@ -633,6 +642,8 @@ function SessionModal({
   const [staffIds, setStaffIds] = useState<readonly StaffPersonId[]>(initial?.assignedStaffPersonIds ?? []);
   const selectedUserModule = userModules.find((module) => module.id === moduleId);
   const definition = TRAINING_CATALOG.find((entry) => entry.id === (selectedUserModule?.baseDefinitionId ?? moduleId)) ?? builtinOptions[0]!;
+  const eligibleStaffForDefinition = trainingStaffForDefinition(eligibleStaff, definition);
+  const selectedStaffIds = staffIds.filter((staffId) => eligibleStaffForDefinition.some((staff) => staff.id === staffId));
   const effectiveIntensity: DomainTrainingIntensity = selectedUserModule?.intensity ?? INTENSITY_FROM_ES[intensity];
   const durationMinutes = definition.durationMinutes;
   const load = trainingLoad(effectiveIntensity).fatigue * definition.effects.fatigueMultiplier;
@@ -648,7 +659,10 @@ function SessionModal({
         <label>
           Tipo
           <select
-            onChange={(event) => setModuleId(event.target.value)}
+            onChange={(event) => {
+              setModuleId(event.target.value);
+              setStaffIds([]);
+            }}
             value={moduleId}
           >
             <optgroup label="Catálogo">
@@ -701,8 +715,8 @@ function SessionModal({
         </div>
         <label>
           Staff ejecutor
-          <select aria-label="Staff ejecutor" multiple onChange={(event) => setStaffIds(Array.from(event.currentTarget.selectedOptions, (option) => option.value as StaffPersonId))} value={staffIds}>
-            {eligibleStaff.map((staff) => <option key={staff.id} value={staff.id}>{staff.name} · {staff.role}</option>)}
+          <select aria-label="Staff ejecutor" multiple onChange={(event) => setStaffIds(Array.from(event.currentTarget.selectedOptions, (option) => option.value as StaffPersonId))} value={selectedStaffIds}>
+            {eligibleStaffForDefinition.map((staff) => <option key={staff.id} value={staff.id}>{staff.name} · {staff.role}</option>)}
           </select>
         </label>
         {error !== undefined && (
@@ -716,7 +730,7 @@ function SessionModal({
           </button>
           <button
             className="is-primary"
-            onClick={() => onSave({ startTime, durationMinutes, moduleId, intensity: effectiveIntensity, assignedStaffPersonIds: staffIds })}
+            onClick={() => onSave({ startTime, durationMinutes, moduleId, intensity: effectiveIntensity, assignedStaffPersonIds: selectedStaffIds })}
             type="button"
           >
             Guardar sesión
@@ -753,10 +767,7 @@ function PersonalTraining({
     ...individualDefinitions.map((entry) => ({ id: entry.id, name: entry.name })),
     ...userModules.filter((module) => module.scope !== "team").map((module) => ({ id: module.id, name: module.name })),
   ];
-  const assignStaff = eligibleStaff.filter((staff) => {
-    const department = STAFF_ROLE_REGISTRY[staff.role as StaffRoleId]?.department;
-    return department === "coaching" || department === "performance";
-  });
+  const assignStaff = eligibleStaff;
   const [selection, setSelection] = useState<Record<string, string>>({});
   const [staffSelection, setStaffSelection] = useState<Record<string, StaffPersonId | "">>({});
   const [assignError, setAssignError] = useState<{ readonly playerId: string; readonly message: string }>();
@@ -796,6 +807,7 @@ function PersonalTraining({
               .sort((a, b) => (a.date === b.date ? a.startTime.localeCompare(b.startTime) : a.date.localeCompare(b.date)))[0];
             const assignedDefinition = assignedSession === undefined ? undefined : TRAINING_CATALOG.find((entry) => entry.id === assignedSession.definitionId);
             const selectedModuleId = selection[player.id] ?? assignableModules[0]?.id ?? "";
+            const eligibleAssignStaff = trainingStaffForDefinition(assignStaff, trainingDefinitionForModule(world, selectedModuleId) ?? individualDefinitions[0]!);
             const cells: Record<string, ReactNode> = {
               player: (
                 <b>
@@ -828,10 +840,10 @@ function PersonalTraining({
                   <select
                     aria-label={`Staff ejecutor para ${playerName(player)}`}
                     onChange={(event) => setStaffSelection((current) => ({ ...current, [player.id]: event.target.value as StaffPersonId | "" }))}
-                    value={staffSelection[player.id] ?? ""}
+                    value={eligibleAssignStaff.some((staff) => staff.id === staffSelection[player.id]) ? staffSelection[player.id] ?? "" : ""}
                   >
                     <option value="">Sin staff</option>
-                    {assignStaff.map((staff) => (
+                    {eligibleAssignStaff.map((staff) => (
                       <option key={staff.id} value={staff.id}>
                         {staff.name} · {STAFF_ROLE_LABELS[staff.role as StaffRoleId] ?? staff.role}
                       </option>

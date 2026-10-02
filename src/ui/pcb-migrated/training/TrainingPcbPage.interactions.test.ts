@@ -3,7 +3,7 @@ import { createElement } from 'react'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import '@testing-library/jest-dom/vitest'
-import { createNewGame } from '@/app/game'
+import { createAcbTestGame, createNewGame } from '@/app/game'
 import { getUserTeam } from '@/engine/calendar'
 import { nextEligibleTrainingDate, scheduleTeamModuleSession } from '@/engine/training'
 import { selectUserTrainingPlan } from '@/stores/gameStore'
@@ -124,6 +124,30 @@ describe('TrainingPcbPage / interactions', () => {
 
     expect(onScheduleTeamModule).toHaveBeenCalledTimes(1)
     expect(onScheduleTeamModule.mock.calls[0]![0]).toMatchObject({ intensity: 'high' })
+  })
+
+  it('filters team-session executors by the selected module capability', () => {
+    const world = createAcbTestGame()
+    render(createElement(TrainingPcbPage, { world }))
+    const enabled = screen.getAllByRole('button', { name: '+ Sesión' }).find((button) => !(button as HTMLButtonElement).disabled)!
+    fireEvent.click(enabled)
+
+    const modal = screen.getByRole('heading', { name: 'Nueva sesión' }).closest('section') as HTMLElement
+    fireEvent.change(within(modal).getByLabelText('Tipo'), { target: { value: 'catchAndShoot' } })
+    const options = Array.from((within(modal).getByLabelText('Staff ejecutor') as HTMLSelectElement).options).map((option) => option.textContent ?? '')
+
+    expect(options.some((option) => option.includes('assistantCoach') || option.includes('shootingCoach'))).toBe(true)
+    expect(options.some((option) => option.includes('headCoach') || option.includes('physiotherapist') || option.includes('regionalScout') || option.includes('strengthConditioningCoach'))).toBe(false)
+
+    fireEvent.change(within(modal).getByLabelText('Tipo'), { target: { value: 'strength' } })
+    const physicalOptions = Array.from((within(modal).getByLabelText('Staff ejecutor') as HTMLSelectElement).options).map((option) => option.textContent ?? '')
+    expect(physicalOptions.some((option) => option.includes('strengthConditioningCoach'))).toBe(true)
+    expect(physicalOptions.some((option) => option.includes('physiotherapist') || option.includes('regionalScout'))).toBe(false)
+
+    fireEvent.change(within(modal).getByLabelText('Tipo'), { target: { value: 'rest' } })
+    const recoveryOptions = Array.from((within(modal).getByLabelText('Staff ejecutor') as HTMLSelectElement).options).map((option) => option.textContent ?? '')
+    expect(recoveryOptions.some((option) => option.includes('physiotherapist'))).toBe(true)
+    expect(recoveryOptions.some((option) => option.includes('regionalScout'))).toBe(false)
   })
 
   it('the session modal composes hour + minute selectors into a canonical HH:MM start time', () => {

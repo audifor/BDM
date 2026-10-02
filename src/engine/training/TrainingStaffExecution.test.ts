@@ -96,6 +96,31 @@ describe('Training Staff V2 execution assignments', () => {
     }))).toThrow(/Unknown scheduled session staff/)
   })
 
+  it('uses canonical role capabilities for technical, physical, and recovery execution', () => {
+    const world = createAcbTestGame()
+    const team = firstTeam(world)
+    const date = nextEligibleTrainingDate(world.currentDate)
+    const shooter = staffForRole(world, team.id, 'shootingCoach')
+    const assistant = staffForRole(world, team.id, 'assistantCoach')
+    const strengthCoach = staffForRole(world, team.id, 'strengthConditioningCoach')
+    const physio = staffForRole(world, team.id, 'physiotherapist')
+    const scout = staffForRole(world, team.id, 'regionalScout')
+    const session = (id: string, definitionId: string, staffId: StaffPersonId, startTime: string) => createScheduledTrainingSession({
+      id, teamId: team.id, date, startTime, durationMinutes: 60, scope: 'team', definitionId, intensity: 'normal', assignedStaffPersonIds: [staffId],
+    })
+
+    expect(scheduleTrainingSession(world, session('technical-shooter', 'catchAndShoot', shooter, '09:00'))).toBeDefined()
+    expect(scheduleTrainingSession(world, session('technical-assistant', 'catchAndShoot', assistant, '10:00'))).toBeDefined()
+    expect(() => scheduleTrainingSession(world, session('technical-physio', 'catchAndShoot', physio, '11:00'))).toThrow(/not eligible to execute/)
+    expect(() => scheduleTrainingSession(world, session('technical-scout', 'catchAndShoot', scout, '12:00'))).toThrow(/not eligible to execute/)
+
+    expect(scheduleTrainingSession(world, session('physical-strength', 'strength', strengthCoach, '13:00'))).toBeDefined()
+    expect(() => scheduleTrainingSession(world, session('physical-physio', 'strength', physio, '14:00'))).toThrow(/not eligible to execute/)
+
+    expect(scheduleTrainingSession(world, session('recovery-physio', 'rest', physio, '15:00'))).toBeDefined()
+    expect(() => scheduleTrainingSession(world, session('recovery-scout', 'rest', scout, '16:00'))).toThrow(/not eligible to execute/)
+  })
+
   it('uses role speciality and bounded diminishing returns instead of raw headcount stacking', () => {
     const world = createAcbTestGame()
     const team = firstTeam(world)
@@ -129,12 +154,12 @@ describe('Training Staff V2 execution assignments', () => {
     const team = firstTeam(world)
     const playerId = team.rosterPlayerIds[0]!
     const shooter = staffForRole(world, team.id, 'shootingCoach')
-    const scout = staffForRole(world, team.id, 'regionalScout')
+    const assistant = staffForRole(world, team.id, 'assistantCoach')
 
     const withShooter = executeIndividual(world, { teamId: team.id, playerId, staffId: shooter, definitionId: 'threePoint', sessionId: 'exec-shooter' })
-    const withScout = executeIndividual(world, { teamId: team.id, playerId, staffId: scout, definitionId: 'threePoint', sessionId: 'exec-scout' })
-    expect(withShooter.developmentStimulusByPlayerId[playerId]!.byRating.threePointShooting!).toBeGreaterThan(withScout.developmentStimulusByPlayerId[playerId]!.byRating.threePointShooting!)
-    expect(withShooter.careerFatigueByPlayerId[playerId]).toBe(withScout.careerFatigueByPlayerId[playerId])
+    const withAssistant = executeIndividual(world, { teamId: team.id, playerId, staffId: assistant, definitionId: 'threePoint', sessionId: 'exec-assistant' })
+    expect(withShooter.developmentStimulusByPlayerId[playerId]!.byRating.threePointShooting!).toBeGreaterThan(withAssistant.developmentStimulusByPlayerId[playerId]!.byRating.threePointShooting!)
+    expect(withShooter.careerFatigueByPlayerId[playerId]).toBe(withAssistant.careerFatigueByPlayerId[playerId])
     expect(withShooter.scheduledTrainingSessionsById['exec-shooter']!.status).toBe('completed')
     expect(withShooter.scheduledTrainingSessionsById['exec-shooter']!.assignedStaffPersonIds).toBeUndefined()
   })
@@ -144,12 +169,11 @@ describe('Training Staff V2 execution assignments', () => {
     const team = firstTeam(initial)
     const playerId = team.rosterPlayerIds[0]!
     const physio = staffForRole(initial, team.id, 'physiotherapist')
-    const scout = staffForRole(initial, team.id, 'regionalScout')
     const world = updateGameWorld(initial, { careerFatigueByPlayerId: { ...initial.careerFatigueByPlayerId, [playerId]: 50 } })
 
     const withPhysio = executeIndividual(world, { teamId: team.id, playerId, staffId: physio, definitionId: 'rest', sessionId: 'recovery-physio' })
-    const withScout = executeIndividual(world, { teamId: team.id, playerId, staffId: scout, definitionId: 'rest', sessionId: 'recovery-scout' })
-    expect(withPhysio.careerFatigueByPlayerId[playerId]!).toBeLessThan(withScout.careerFatigueByPlayerId[playerId]!)
+    const withoutStaff = executeScheduledTrainingSessions(updateGameWorld(scheduleTrainingSession(world, createScheduledTrainingSession({ id: 'recovery-without-staff', teamId: team.id, date: nextEligibleTrainingDate(world.currentDate), startTime: '09:00', durationMinutes: 60, scope: 'individual', playerId, definitionId: 'rest', intensity: 'light' })), { currentDate: nextEligibleTrainingDate(world.currentDate) }))
+    expect(withPhysio.careerFatigueByPlayerId[playerId]!).toBeLessThan(withoutStaff.careerFatigueByPlayerId[playerId]!)
     expect(withPhysio.careerFatigueByPlayerId[playerId]!).toBeLessThan(50)
   })
 
@@ -157,10 +181,10 @@ describe('Training Staff V2 execution assignments', () => {
     const world = createAcbTestGame()
     const team = firstTeam(world)
     const offensive = staffForRole(world, team.id, 'offensiveSpecialist')
-    const scout = staffForRole(world, team.id, 'regionalScout')
+    const assistant = staffForRole(world, team.id, 'assistantCoach')
     const withSpecialist = executeTeam(world, { teamId: team.id, staffId: offensive, definitionId: 'offensiveSystem', sessionId: 'tactical-specialist' })
-    const withScout = executeTeam(world, { teamId: team.id, staffId: scout, definitionId: 'offensiveSystem', sessionId: 'tactical-scout' })
-    expect(withSpecialist.teamCohesionByTeamId[team.id]!).toBeGreaterThan(withScout.teamCohesionByTeamId[team.id]!)
+    const withAssistant = executeTeam(world, { teamId: team.id, staffId: assistant, definitionId: 'offensiveSystem', sessionId: 'tactical-assistant' })
+    expect(withSpecialist.teamCohesionByTeamId[team.id]!).toBeGreaterThan(withAssistant.teamCohesionByTeamId[team.id]!)
   })
 
   it('detaches pending work on firing and keeps firing safe after completed execution', () => {
