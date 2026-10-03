@@ -24,6 +24,8 @@
 
 **Exit gate:** deterministic same-seed outcomes; bounded cohort supply; no duplicate materialization for the same candidate; realistic rarity checks across cohort percentiles; identity, origin and save/load provenance survive a round trip; recruiting/scouting cannot read hidden Player Truth. Record counts and time for a long-run simulation harness without claiming 30-year balance yet.
 
+**BS15B delivery:** implemented in the successor branch with `TalentCohort`, candidate-key materialization records, single/batch canonical Player creation, the provisional rare-tail Player Truth policy, a no-Player long-run diagnostic, and optional Save V4 persistence. See `BS15B_GLOBAL_TALENT_SUPPLY.md` for current measured results and limitations. Academy and recruiting consumers remain for BS15C/BS15E.
+
 ### BS15C · Club Youth, Academies and Registration
 
 **Vertical slice:** one club operates a youth age-group team, registers a Player, plays a competition season, and promotes or releases that same Player into a senior/reserve destination with dated history.

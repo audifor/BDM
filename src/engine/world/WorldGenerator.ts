@@ -32,6 +32,7 @@ import type { CoachRpgPreset } from '@/domain/coachRpg'
 import { createNbaLikeSalaryRules } from '@/engine/salary'
 import { createNbaLikeTradeRules } from '@/engine/trade'
 import { defaultRecruitingRules } from '@/domain/recruiting'
+import { generatePersonName } from './GeneratedPersonName'
 
 const FIBA_TEAM_COUNT = 8
 const PLAYERS_PER_TEAM = 12
@@ -45,32 +46,6 @@ const GENERATED_NBA_SEASON_ID = seasonIdFromString('generated-season-0003')
 const GENERATED_NCAA_SEASON_ID = seasonIdFromString('generated-season-0005')
 const DEFAULT_START_DATE = createGameDate(2032, 10, 1)
 const SEASON_LENGTH_DAYS = 272
-
-const FIRST_NAMES = [
-  'Arel',
-  'Bren',
-  'Cira',
-  'Daro',
-  'Eris',
-  'Falen',
-  'Galen',
-  'Hira',
-  'Iven',
-  'Jora',
-] as const
-
-const LAST_NAMES = [
-  'Arden',
-  'Bexley',
-  'Corven',
-  'Dain',
-  'Elian',
-  'Farrow',
-  'Grove',
-  'Hale',
-  'Istra',
-  'Joren',
-] as const
 
 const TEAM_NAMES = [
   'Ashvale Kites',
@@ -228,13 +203,6 @@ function generateWorldFromRandom(options: GenerateWorldOptions, random: RandomSo
 
 const ROSTER_POSITIONS: readonly BasketballPosition[] = ['PG','PG','SG','SG','SG','SF','SF','PF','PF','PF','C','C']
 const NCAA_ROSTER_POSITIONS: readonly BasketballPosition[] = ['PG','PG','SG','SF','PF','C','C']
-
-function generatePersonName(random: RandomSource): { firstName: string; lastName: string } {
-  return {
-    firstName: random.pick(FIRST_NAMES),
-    lastName: random.pick(LAST_NAMES),
-  }
-}
 
 function shuffle<Item>(items: Item[], random: RandomSource): Item[] {
   for (let index = items.length - 1; index > 0; index -= 1) {

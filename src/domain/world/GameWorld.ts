@@ -120,6 +120,7 @@ import { createFacility, createFacilityComponent, createFacilityComponentConditi
 import type { FacilityComponentConditionRecordId, FacilityComponentId, FacilityCompetitionApprovalId, FacilityConditionRecordId, FacilityControlRightId, FacilityDevelopmentProjectId, FacilityDevelopmentProjectPhaseId, FacilityId, FacilityInspectionId, FacilityMaintenanceActionId, FacilityMaintenanceNeedId, FacilityNameRecordId, FacilityOperationalIncidentId, FacilityOperatorAssignmentId, FacilityOrganizationRelationshipId, FacilityOwnershipInterestId, FacilityStatusRecordId, FacilityTeamRelationshipId, FacilityUsageRightId, PlaceId } from '@/domain/ids'
 import { createClubStrategicState, type ClubStrategicState } from '@/domain/clubStrategy'
 import { createGMPlanState, type GMPlanState } from '@/domain/gmPlanning'
+import { createTalentCohort, createTalentMaterialization, type TalentCohort, type TalentMaterialization } from '@/domain/talent'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -152,6 +153,8 @@ export interface GameWorld {
   readonly regulatoryRemediationPlansById: Readonly<Record<import('@/domain/ids').RegulatoryRemediationPlanId, RegulatoryRemediationPlan>>
   readonly organizationLicensesById: Readonly<Record<import('@/domain/ids').OrganizationLicenseId, OrganizationLicense>>
   readonly placesById: Readonly<Record<PlaceId, Place>>
+  readonly talentCohortsById: Readonly<Record<string, TalentCohort>>
+  readonly talentMaterializationsByCandidateKey: Readonly<Record<string, TalentMaterialization>>
   readonly facilitiesById: Readonly<Record<FacilityId, Facility>>
   readonly facilityComponentsById: Readonly<Record<FacilityComponentId, FacilityComponent>>
   readonly facilityNameRecordsById: Readonly<Record<FacilityNameRecordId, FacilityNameRecord>>
@@ -431,6 +434,8 @@ export interface CreateGameWorldInput {
   regulatoryRemediationPlans?: readonly RegulatoryRemediationPlan[]
   organizationLicenses?: readonly OrganizationLicense[]
   places?: readonly Place[]
+  talentCohorts?: readonly TalentCohort[]
+  talentMaterializations?: readonly TalentMaterialization[]
   facilities?: readonly Facility[]
   facilityComponents?: readonly FacilityComponent[]
   facilityNameRecords?: readonly FacilityNameRecord[]
@@ -756,6 +761,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     regulatoryRemediationPlansById: indexById((input.regulatoryRemediationPlans ?? []).map(createRegulatoryRemediationPlan), 'Regulatory remediation plan'),
     organizationLicensesById: indexById((input.organizationLicenses ?? []).map(createOrganizationLicense), 'Organization license'),
     placesById: indexById((input.places ?? []).map(createPlace), 'Place'),
+    talentCohortsById: indexById((input.talentCohorts ?? []).map(createTalentCohort), 'Talent cohort'),
+    talentMaterializationsByCandidateKey: indexTalentMaterializations((input.talentMaterializations ?? []).map(createTalentMaterialization)),
     facilitiesById: indexById((input.facilities ?? []).map(createFacility), 'Facility'),
     facilityComponentsById: indexById((input.facilityComponents ?? []).map(createFacilityComponent), 'Facility component'),
     facilityNameRecordsById: indexById((input.facilityNameRecords ?? []).map(createFacilityNameRecord), 'Facility name record'),
@@ -1028,7 +1035,7 @@ const collectionPatchTargets: Readonly<Record<string, string>> = {
   multiClubOwnershipPolicies: 'multiClubOwnershipPoliciesById',
   organizationStructuralChanges: 'organizationStructuralChangesById', organizationLifecycleStates: 'organizationLifecycleStatesById', organizationSuccessions: 'organizationSuccessionsById', regulatoryOrders: 'regulatoryOrdersById', regulatoryRemediationPlans: 'regulatoryRemediationPlansById', organizationLicenses: 'organizationLicensesById',
   organizationInvestorInterests: 'organizationInvestorInterestsById', organizationCapitalRaises: 'organizationCapitalRaisesById', organizationCapitalRaiseEvents: 'organizationCapitalRaiseEventsById', organizationInvestmentProposals: 'organizationInvestmentProposalsById', organizationInvestmentProposalEvents: 'organizationInvestmentProposalEventsById',
-  places: 'placesById', facilities: 'facilitiesById', facilityComponents: 'facilityComponentsById', facilityNameRecords: 'facilityNameRecordsById', facilityOwnershipInterests: 'facilityOwnershipInterestsById', facilityControlRights: 'facilityControlRightsById', facilityOperatorAssignments: 'facilityOperatorAssignmentsById', facilityOrganizationRelationships: 'facilityOrganizationRelationshipsById', facilityTeamRelationships: 'facilityTeamRelationshipsById', facilityUsageRights: 'facilityUsageRightsById', facilityCompetitionApprovals: 'facilityCompetitionApprovalsById', facilityStatusRecords: 'facilityStatusRecordsById', facilityComponentConditionRecords: 'facilityComponentConditionRecordsById', facilityConditionRecords: 'facilityConditionRecordsById', facilityMaintenanceNeeds: 'facilityMaintenanceNeedsById', facilityMaintenanceActions: 'facilityMaintenanceActionsById', facilityInspections: 'facilityInspectionsById', facilityOperationalIncidents: 'facilityOperationalIncidentsById', facilityDevelopmentProjects: 'facilityDevelopmentProjectsById', facilityDevelopmentProjectPhases: 'facilityDevelopmentProjectPhasesById', facilityFinancialBindings: 'facilityFinancialBindingsById',
+  places: 'placesById', talentCohorts: 'talentCohortsById', talentMaterializations: 'talentMaterializationsByCandidateKey', facilities: 'facilitiesById', facilityComponents: 'facilityComponentsById', facilityNameRecords: 'facilityNameRecordsById', facilityOwnershipInterests: 'facilityOwnershipInterestsById', facilityControlRights: 'facilityControlRightsById', facilityOperatorAssignments: 'facilityOperatorAssignmentsById', facilityOrganizationRelationships: 'facilityOrganizationRelationshipsById', facilityTeamRelationships: 'facilityTeamRelationshipsById', facilityUsageRights: 'facilityUsageRightsById', facilityCompetitionApprovals: 'facilityCompetitionApprovalsById', facilityStatusRecords: 'facilityStatusRecordsById', facilityComponentConditionRecords: 'facilityComponentConditionRecordsById', facilityConditionRecords: 'facilityConditionRecordsById', facilityMaintenanceNeeds: 'facilityMaintenanceNeedsById', facilityMaintenanceActions: 'facilityMaintenanceActionsById', facilityInspections: 'facilityInspectionsById', facilityOperationalIncidents: 'facilityOperationalIncidentsById', facilityDevelopmentProjects: 'facilityDevelopmentProjectsById', facilityDevelopmentProjectPhases: 'facilityDevelopmentProjectPhasesById', facilityFinancialBindings: 'facilityFinancialBindingsById',
   governanceInstitutions: 'governanceInstitutionsById', governanceUniverseProfiles: 'governanceUniverseProfilesById', governanceBodies: 'governanceBodiesById', governanceAppointments: 'governanceAppointmentsById', governanceAuthorityGrants: 'governanceAuthorityGrantsById', governanceExternalRelationships: 'governanceExternalRelationshipsById', governanceExpectationPeriods: 'governanceExpectationPeriodsById', governanceObjectives: 'governanceObjectivesById',
   supporterRelationships: 'supporterRelationshipsById', collectiveInstitutionAffiliations: 'collectiveInstitutionAffiliationsById', collectiveParticipantAffiliations: 'collectiveParticipantAffiliationsById', collectiveInstitutionalStatusEvents: 'collectiveInstitutionalStatusEventsById', collectiveInstitutionalLiaisons: 'collectiveInstitutionalLiaisonsById', supporterExpectations: 'supporterExpectationsById', supporterExpectationEvents: 'supporterExpectationEventsById', supporterPressureEvents: 'supporterPressureEventsById', supporterReactions: 'supporterReactionsById', supportFundingPledges: 'supportFundingPledgesById', supportFundingPledgeEvents: 'supportFundingPledgeEventsById', supportContributions: 'supportContributionsById',
   supportComplianceCases: 'supportComplianceCasesById', supportComplianceCaseEvents: 'supportComplianceCaseEventsById', supportComplianceFindings: 'supportComplianceFindingsById', supportConflictDisclosures: 'supportConflictDisclosuresById', supportConsequences: 'supportConsequencesById', supportRemediations: 'supportRemediationsById',
@@ -1038,6 +1045,8 @@ const collectionPatchTargets: Readonly<Record<string, string>> = {
 
 const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unknown>> = {
   ...Object.fromEntries(Object.keys(collectionPatchTargets).map((key) => [key, (value: unknown) => indexById(value as readonly { readonly id: string }[], key)])),
+  talentCohorts: (value) => indexById((value as readonly TalentCohort[]).map(createTalentCohort), 'Talent cohort'),
+  talentMaterializations: (value) => indexTalentMaterializations((value as readonly TalentMaterialization[]).map(createTalentMaterialization)),
   contractServiceTimeBaselines: (value) => indexById((value as readonly ContractServiceTimeBaseline[]).map(createContractServiceTimeBaseline), 'Contract service-time baseline'),
   contractServiceTimeCredits: (value) => indexById((value as readonly ContractServiceTimeCredit[]).map(createContractServiceTimeCredit), 'Contract service-time credit'),
   contractReviewDecisions: (value) => indexById((value as readonly ContractReviewDecision[]).map(createContractReviewDecision), 'Contract review decision'),
@@ -1171,6 +1180,7 @@ function validateWorld(world: GameWorld): void {
   validateOrganizationOwnershipTransactions(world)
   validateOrganizationInvestments(world)
   validateFacilities(world)
+  validateTalentSupply(world)
   validateMultiClubOwnershipPolicies(world)
   validateStructuralRegulation(world)
   validateGovernance(world)
@@ -2423,6 +2433,49 @@ function indexById<Id extends string, Entity extends { readonly id: Id }>(
   }
 
   return Object.freeze(indexed)
+}
+
+function indexTalentMaterializations(records: readonly TalentMaterialization[]): Readonly<Record<string, TalentMaterialization>> {
+  const indexed: Record<string, TalentMaterialization> = Object.create(null) as Record<string, TalentMaterialization>
+  for (const record of records) {
+    if (Object.hasOwn(indexed, record.candidateKey)) throw new GameWorldValidationError(`Duplicate Talent materialization candidate key: ${record.candidateKey}`)
+    indexed[record.candidateKey] = record
+  }
+  return Object.freeze(indexed)
+}
+
+function validateTalentSupply(world: GameWorld): void {
+  const materializedPlayerIds = new Set<PlayerId>()
+  for (const cohort of Object.values(world.talentCohortsById)) {
+    if (createTalentCohort(cohort).candidateCapacity !== cohort.candidateCapacity) throw new GameWorldValidationError(`Talent cohort ${cohort.id} capacity does not match its supply inputs`)
+    const place = requireEntity(world.placesById, cohort.placeId, `Talent cohort ${cohort.id} Place`)
+    requireTalentPlaceCountry(world, place)
+  }
+  for (const [candidateKey, record] of Object.entries(world.talentMaterializationsByCandidateKey)) {
+    createTalentMaterialization(record)
+    if (candidateKey !== record.candidateKey) throw new GameWorldValidationError(`Talent materialization index does not match ${candidateKey}`)
+    const cohort = requireEntity(world.talentCohortsById, record.cohortId, `Talent materialization ${candidateKey} cohort`)
+    if (record.placeId !== cohort.placeId || record.generationYear !== cohort.generationYear || record.candidateIndex > cohort.candidateCapacity) throw new GameWorldValidationError(`Talent materialization ${candidateKey} does not match its cohort`)
+    if (compareGameDates(record.materializedOn, world.currentDate) > 0) throw new GameWorldValidationError(`Talent materialization ${candidateKey} is dated after the current game date`)
+    const player = requireEntity(world.players, record.playerId, `Talent materialization ${candidateKey} Player`)
+    if (materializedPlayerIds.has(player.id)) throw new GameWorldValidationError(`Player ${player.id} is materialized from more than one talent candidate`)
+    materializedPlayerIds.add(player.id)
+    const person = requireEntity(world.personsById, player.personId!, `Talent materialization ${candidateKey} Person`)
+    if (player.nationalityId !== requireTalentPlaceCountry(world, world.placesById[record.placeId]!)) throw new GameWorldValidationError(`Talent materialization ${candidateKey} nationality does not match its origin Place`)
+    if (player.gender !== cohort.gender || Number(player.bio.dateOfBirth.slice(0, 4)) !== cohort.birthYear) throw new GameWorldValidationError(`Talent materialization ${candidateKey} Player identity does not match its cohort`)
+    if (person.firstName !== player.firstName || person.lastName !== player.lastName || person.gender !== player.gender || person.dateOfBirth !== player.bio.dateOfBirth || !person.nationalityIds.includes(player.nationalityId)) throw new GameWorldValidationError(`Talent materialization ${candidateKey} Person and Player identity facts disagree`)
+  }
+}
+
+function requireTalentPlaceCountry(world: GameWorld, startingPlace: Place): CountryId {
+  let current: Place | undefined = startingPlace
+  const visited = new Set<string>()
+  while (current !== undefined && !visited.has(current.id)) {
+    visited.add(current.id)
+    if (current.countryId !== null) return requireEntity(world.countries, current.countryId, `Talent Place ${current.id} Country`).id
+    current = current.parentPlaceId === null ? undefined : world.placesById[current.parentPlaceId]
+  }
+  throw new GameWorldValidationError(`Talent Place ${startingPlace.id} has no Country in its Place hierarchy`)
 }
 
 function indexFinancialProfiles(profiles: readonly OrganizationFinancialProfile[]): Readonly<Record<OrganizationId, OrganizationFinancialProfile>> {

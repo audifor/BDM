@@ -79,6 +79,7 @@ import { parseGameDate } from '@/domain/date'
 import { createGovernanceDecisionEvent } from '@/domain/governance'
 import { createClubStrategicState, type ClubStrategicState } from '@/domain/clubStrategy'
 import { createGMPlanState, type GMPlanState } from '@/domain/gmPlanning'
+import { createTalentCohort, createTalentMaterialization, type TalentCohort, type TalentMaterialization } from '@/domain/talent'
 import { contractReviewDecisionIdFor, createContractReviewDecision, type ContractReviewDecision } from '@/domain/contract/ContractReviewDecision'
 import { createRetentionNegotiation, freezeRetentionTerms, type ContractRetentionNegotiation, type RetentionNegotiationRound, type RetentionTermSet } from '@/domain/contract/ContractRetentionNegotiation'
 import { competitionIdFromString, ecosystemIdFromString, expenseRecognitionIdFromString, facilityCompetitionApprovalIdFromString, facilityComponentConditionRecordIdFromString, facilityComponentIdFromString, facilityConditionRecordIdFromString, facilityControlRightIdFromString, facilityDevelopmentProjectIdFromString, facilityDevelopmentProjectPhaseIdFromString, facilityIdFromString, facilityInspectionIdFromString, facilityMaintenanceActionIdFromString, facilityMaintenanceNeedIdFromString, facilityNameRecordIdFromString, facilityOperationalIncidentIdFromString, facilityOperatorAssignmentIdFromString, facilityOrganizationRelationshipIdFromString, facilityOwnershipInterestIdFromString, facilityStatusRecordIdFromString, facilityTeamRelationshipIdFromString, facilityUsageRightIdFromString, financialAccountIdFromString, financialCommitmentIdFromString, financialEntitlementIdFromString, financialTransactionIdFromString, fiscalPeriodIdFromString, investorInterestIdFromString, multiClubOwnershipPolicyIdFromString, organizationCapitalRaiseIdFromString, organizationIdFromString, organizationInvestmentProposalIdFromString, organizationOwnershipTransactionIdFromString, personIdFromString, organizationStructuralChangeIdFromString, organizationLifecycleStateIdFromString, organizationSuccessionIdFromString, placeIdFromString, receivableIdFromString, payableIdFromString, regulatoryOrderIdFromString, regulatoryRemediationPlanIdFromString, organizationLicenseIdFromString, revenueRecognitionIdFromString, seasonIdFromString, treasurySettlementIdFromString, contractIdFromString, teamIdFromString, organizationSectionIdFromString, playerIdFromString, coachIdFromString } from '@/domain/ids'
@@ -184,6 +185,9 @@ export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly financeDecisionProposals?: readonly FinanceDecisionProposal[]
   readonly economicObservations?: readonly EconomicObservation[]
   readonly exchangeRates?: readonly ExchangeRate[]
+  /** Optional additive BS15B records; absent in earlier V4 payloads. */
+  readonly talentCohorts?: readonly TalentCohort[]
+  readonly talentMaterializations?: readonly TalentMaterialization[]
 }
 
 export interface SaveGameEnvelopeV4 {
@@ -223,6 +227,7 @@ export function migrateGameWorldSaveV3ToV4(value: SaveGameEnvelopeV3): SaveGameE
       facilityMaintenanceNeeds: [], facilityMaintenanceActions: [], facilityInspections: [], facilityOperationalIncidents: [],
       facilityDevelopmentProjects: [], facilityDevelopmentProjectPhases: [],
       facilityFinancialBindings: [],
+      talentCohorts: [], talentMaterializations: [],
     }),
   })
 }
@@ -270,6 +275,8 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       operatingCostSources: Object.values(world.operatingCostSourcesById), operatingCostFacts: Object.values(world.operatingCostFactsById),
       debtInstruments: Object.values(world.debtInstrumentsById), competitionDistributionFacts: Object.values(world.competitionDistributionFactsById),
       facilityFinancialBindings: Object.values(world.facilityFinancialBindingsById),
+      talentCohorts: Object.values(world.talentCohortsById),
+      talentMaterializations: Object.values(world.talentMaterializationsByCandidateKey),
     }),
   })
 }
@@ -325,6 +332,8 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const regulatoryRemediationPlans = Object.prototype.hasOwnProperty.call(payload, 'regulatoryRemediationPlans') ? parseRegulatoryRemediationPlans(payload.regulatoryRemediationPlans) : []
   const organizationLicenses = Object.prototype.hasOwnProperty.call(payload, 'organizationLicenses') ? parseOrganizationLicenses(payload.organizationLicenses) : []
   const places = Object.prototype.hasOwnProperty.call(payload, 'places') ? parsePlaces(payload.places) : []
+  const talentCohorts = Object.prototype.hasOwnProperty.call(payload, 'talentCohorts') ? parseTalentCohorts(payload.talentCohorts) : []
+  const talentMaterializations = Object.prototype.hasOwnProperty.call(payload, 'talentMaterializations') ? parseTalentMaterializations(payload.talentMaterializations) : []
   const facilities = Object.prototype.hasOwnProperty.call(payload, 'facilities') ? parseFacilities(payload.facilities) : []
   const facilityComponents = Object.prototype.hasOwnProperty.call(payload, 'facilityComponents') ? parseFacilityComponents(payload.facilityComponents) : []
   const facilityNameRecords = Object.prototype.hasOwnProperty.call(payload, 'facilityNameRecords') ? parseFacilityNameRecords(payload.facilityNameRecords) : []
@@ -373,7 +382,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
-  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, clubStrategicStates: _clubStrategicStates, gmPlanStates: _gmPlanStates, contractReviewDecisions: _contractReviewDecisions, retentionNegotiations: _retentionNegotiations, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalsEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _organizationStructuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, revenueSources: _revenueSources, operatingCostSources: _operatingCostSources, operatingCostFacts: _operatingCostFacts, debtInstruments: _debtInstruments, competitionDistributionFacts: _competitionDistributionFacts, financialBudgets: _financialBudgets, budgetLines: _budgetLines, budgetRevisions: _budgetRevisions, budgetAllocations: _budgetAllocations, forecastAssumptions: _forecastAssumptions, facilityFinancialBindings: _facilityFinancialBindings, financialRegulationAssessments: _assessments, financeDecisionProposals: _financeProposals, economicObservations: _observations, exchangeRates: _rates, ...compatibilityPayload } = payload
+  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, clubStrategicStates: _clubStrategicStates, gmPlanStates: _gmPlanStates, contractReviewDecisions: _contractReviewDecisions, retentionNegotiations: _retentionNegotiations, talentCohorts: _talentCohorts, talentMaterializations: _talentMaterializations, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalsEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _organizationStructuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, revenueSources: _revenueSources, operatingCostSources: _operatingCostSources, operatingCostFacts: _operatingCostFacts, debtInstruments: _debtInstruments, competitionDistributionFacts: _competitionDistributionFacts, financialBudgets: _financialBudgets, budgetLines: _budgetLines, budgetRevisions: _budgetRevisions, budgetAllocations: _budgetAllocations, forecastAssumptions: _forecastAssumptions, facilityFinancialBindings: _facilityFinancialBindings, financialRegulationAssessments: _assessments, financeDecisionProposals: _financeProposals, economicObservations: _observations, exchangeRates: _rates, ...compatibilityPayload } = payload
   const staffCareerRuntimePayload = record(payload.staffCareerRuntime, 'Save V4 staff career runtime')
   const rawDecisions = staffCareerRuntimePayload.governanceDecisions === undefined ? [] : rawArray(staffCareerRuntimePayload.governanceDecisions, 'Save V4 governance decisions')
   const retentionDecisionIds = new Set(rawDecisions.flatMap((value) => {
@@ -405,7 +414,8 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const withClubStrategy = updateGameWorld(withFacilityFinanceIntegration, { clubStrategicStatesByTeamId: Object.fromEntries(clubStrategicStates.map((state) => [state.teamId, state])), gmPlanStates })
   const withContractReviewDecisions = updateGameWorld(withClubStrategy, { contractReviewDecisions })
   const withRetentionNegotiations = updateGameWorld(withContractReviewDecisions, { retentionNegotiations })
-  const withRetentionExecutions = retentionExecutionEvents.length === 0 ? withRetentionNegotiations : updateGameWorld(withRetentionNegotiations, { governanceDecisionEvents: [...Object.values(withRetentionNegotiations.governanceDecisionEventsById), ...retentionExecutionEvents] })
+  const withTalentSupply = updateGameWorld(withRetentionNegotiations, { talentCohorts, talentMaterializations })
+  const withRetentionExecutions = retentionExecutionEvents.length === 0 ? withTalentSupply : updateGameWorld(withTalentSupply, { governanceDecisionEvents: [...Object.values(withTalentSupply.governanceDecisionEventsById), ...retentionExecutionEvents] })
   return Object.freeze({ ...attachWorldDbCompetitionRuntime(withRetentionExecutions, runtime), worldAnnualDevelopmentCycle: developmentCycle })
 }
 
@@ -870,6 +880,51 @@ function parsePlaces(value: unknown): readonly Place[] {
       parentPlaceId: nullableText(place.parentPlaceId, 'Save V4 Place parentPlaceId'),
       latitude: nullableNumber(place.latitude, 'Save V4 Place latitude'),
       longitude: nullableNumber(place.longitude, 'Save V4 Place longitude'),
+    })
+  }))
+}
+
+function parseTalentCohorts(value: unknown): readonly TalentCohort[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 talentCohorts must be an array')
+  return Object.freeze(value.map((entry) => {
+    const cohort = record(entry, 'Save V4 talent cohort')
+    exactKeys(cohort, ['id', 'placeId', 'birthYear', 'generationYear', 'gender', 'seed', 'candidateCapacity', 'inputs', 'inputVersion'], 'Save V4 talent cohort')
+    const inputs = record(cohort.inputs, 'Save V4 talent supply inputs')
+    exactKeys(inputs, ['ageCohortPopulation', 'basketballParticipationPerThousand', 'accessOpportunityBasisPoints'], 'Save V4 talent supply inputs')
+    const created = createTalentCohort({
+      id: nonEmptyText(cohort.id, 'Talent cohort id'),
+      placeId: placeIdFromString(nonEmptyText(cohort.placeId, 'Talent cohort placeId')),
+      birthYear: integer(cohort.birthYear, 'Talent cohort birthYear'),
+      generationYear: integer(cohort.generationYear, 'Talent cohort generationYear'),
+      gender: nonEmptyText(cohort.gender, 'Talent cohort gender') as TalentCohort['gender'],
+      seed: integer(cohort.seed, 'Talent cohort seed'),
+      inputs: {
+        ageCohortPopulation: integer(inputs.ageCohortPopulation, 'Talent age cohort population'),
+        basketballParticipationPerThousand: integer(inputs.basketballParticipationPerThousand, 'Talent basketball participation'),
+        accessOpportunityBasisPoints: integer(inputs.accessOpportunityBasisPoints, 'Talent access opportunity'),
+      },
+      inputVersion: nonEmptyText(cohort.inputVersion, 'Talent input version'),
+    })
+    if (created.candidateCapacity !== integer(cohort.candidateCapacity, 'Talent candidate capacity')) throw new TypeError('Save V4 talent cohort candidate capacity does not match its inputs')
+    return created
+  }))
+}
+
+function parseTalentMaterializations(value: unknown): readonly TalentMaterialization[] {
+  if (!Array.isArray(value)) throw new TypeError('Save V4 talentMaterializations must be an array')
+  return Object.freeze(value.map((entry) => {
+    const item = record(entry, 'Save V4 talent materialization')
+    exactKeys(item, ['candidateKey', 'cohortId', 'candidateIndex', 'playerId', 'placeId', 'generationYear', 'generatorVersion', 'materializationCause', 'materializedOn'], 'Save V4 talent materialization')
+    return createTalentMaterialization({
+      candidateKey: nonEmptyText(item.candidateKey, 'Talent candidateKey'),
+      cohortId: nonEmptyText(item.cohortId, 'Talent cohortId') as TalentMaterialization['cohortId'],
+      candidateIndex: integer(item.candidateIndex, 'Talent candidateIndex'),
+      playerId: playerIdFromString(nonEmptyText(item.playerId, 'Talent playerId')),
+      placeId: placeIdFromString(nonEmptyText(item.placeId, 'Talent placeId')),
+      generationYear: integer(item.generationYear, 'Talent generationYear'),
+      generatorVersion: nonEmptyText(item.generatorVersion, 'Talent generatorVersion'),
+      materializationCause: nonEmptyText(item.materializationCause, 'Talent materializationCause') as TalentMaterialization['materializationCause'],
+      materializedOn: parseGameDate(nonEmptyText(item.materializedOn, 'Talent materializedOn')),
     })
   }))
 }
