@@ -16,7 +16,7 @@ export interface SaveGameEnvelopeV2 { readonly schemaVersion: 2; readonly savedA
 export function migrateGameWorldSaveV1ToV2(value: SaveGameEnvelopeV1): SaveGameEnvelopeV2 {
   const world = deserializeGameWorldV1(value, { enrichLegacy: false })
   const legacyShape = serializeGameWorldV1(world, value.savedAt)
-  return { schemaVersion: 2, savedAt: legacyShape.savedAt, payload: v2Payload(legacyShape.payload, Object.values(world.playerKnowledgeById).map((record) => migrateLegacyPlayerKnowledge(record))) }
+  return { schemaVersion: 2, savedAt: legacyShape.savedAt, payload: v2Payload(legacyShape.payload, world.organizationKnowledge) }
 }
 
 export function serializeGameWorldV2(world: GameWorld, savedAt: string, options: { readonly v3SigningCompatibility?: boolean; readonly v3TradeCompatibility?: boolean } = {}): SaveGameEnvelopeV2 {

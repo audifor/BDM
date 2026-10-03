@@ -33,7 +33,7 @@ export { getActivePlayerContract, getCurrentPlayerContract, getPlayerContracts }
 export { calculateTeamPlayerPayroll, canTeamAffordAdditionalSalary, getTeamFinancialSnapshot, calculateTeamStaffPayroll, canTeamAffordAdditionalStaffSalary, getTeamStaffPayroll } from './finances'
 export type { TeamFinancialSnapshot, TeamFinancialStatus, TeamStaffPayroll } from './finances'
 export type { ResolvedGameClockRules } from './queries'
-export { getKnownBasketballRating, getPlayerBasketballKnowledgeView, getPlayerKnowledge } from './knowledge'
+export { getOrganizationKnowledge } from './knowledge'
 export { getStaffAssignment, getStaffPerson, getStaffRoleProficiency, getTeamStaffAssignments, getTeamStaffByRole, getTeamStaffPeople } from './staff'
 export { calculateStaffWorkload, getResponsibilitiesHeldByStaff, getResponsibility, getTeamResponsibilities } from './responsibility'
 export { migrateTrainingResponsibilities } from './migrateTrainingResponsibilities'

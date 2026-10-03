@@ -8,7 +8,7 @@ import { type PlayerId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { formatRatingEvaluation, getOrganizationRatingEvaluation } from '@/domain/intelligence'
 import { getPlayerAge, type Player } from '@/domain/player'
-import { canTeamAffordAdditionalSalary, getFreeAgents, getPlayerKnowledge, getTeamFinancialSnapshot, isPlayerFreeAgent } from '@/domain/world'
+import { canTeamAffordAdditionalSalary, getFreeAgents, getOrganizationKnowledge, getTeamFinancialSnapshot, isPlayerFreeAgent } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { STAFF_ROLE_LABELS } from '@/ui/staffPresentation'
 import type { NegotiationResponsibleActor } from '@/domain/market'
@@ -139,7 +139,7 @@ export function MarketWorkspace({ initialWorld }: { readonly initialWorld?: Game
               <dl className="ng-canon__metrics">
                 <NgMetric label="Position" value={<PlayPositionMark position={selected.basketball.primaryPosition} />} />
                 <NgMetric label="Age" value={getPlayerAge(world, selected.id)} />
-                <NgMetric label="Knowledge" value={getPlayerKnowledge(world, team.id, selected.id) === undefined ? 'Unknown' : 'Scouted'} />
+                <NgMetric label="Knowledge" value={getOrganizationKnowledge(world, team.organizationId, selected.id) === undefined ? 'Unknown' : 'Scouted'} />
                 <NgMetric label="Finishing" value={evaluate(selected, 'finishing')} />
                 <NgMetric label="Shooting" value={evaluate(selected, 'shooting')} />
                 <NgMetric label="Creation" value={evaluate(selected, 'creation')} />

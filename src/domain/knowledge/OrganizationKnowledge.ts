@@ -1,5 +1,5 @@
 import type { GameDate } from '@/domain/date'
-import { organizationIdForTeam, type OrganizationId, type PlayerId } from '@/domain/ids'
+import type { OrganizationId, PlayerId, TeamId } from '@/domain/ids'
 import type { PlayerKnowledgeRecord } from './PlayerKnowledge'
 export type { OrganizationId } from '@/domain/ids'
 export type KnowledgeProvenance = 'legacyBaseline' | 'public' | 'ownObservation' | 'scoutReport' | 'inferred' | 'staffFamiliarity'
@@ -9,14 +9,53 @@ export interface OrganizationKnowledge { readonly organizationId:OrganizationId;
 
 const legacyDimensions: Readonly<Record<string, string>> = { finishing: 'finishing', shooting: 'shooting', playmaking: 'creation', perimeterDefense: 'perimeterDefense', interiorDefense: 'interiorDefense', rebounding: 'rebounding', athleticism: 'physical' }
 
-/** Pure V1 boundary migration: one record becomes one deliberately sparse finding. */
-export function migrateLegacyPlayerKnowledge(record: PlayerKnowledgeRecord, ownPlayerIds: ReadonlySet<PlayerId> = new Set()): OrganizationKnowledge {
+/** Pure V1 boundary migration. The caller resolves the observer Team's canonical Organization. */
+export function migrateLegacyPlayerKnowledge(record: PlayerKnowledgeRecord, organizationId: OrganizationId, ownPlayerIds: ReadonlySet<PlayerId> = new Set()): OrganizationKnowledge {
   const coverageBase = ownPlayerIds.has(record.subjectPlayerId) ? 0.65 : 0.35
   const dimensions = Object.fromEntries(Object.entries(record.basketball.ratings).map(([legacyKey, finding]) => {
     const confidence = Math.max(0.1, Math.min(0.9, 1 - finding.uncertainty / 25))
     return [legacyDimensions[legacyKey]!, { coverage: coverageBase, confidence, assessedAt: record.assessedOn, provenance: 'legacyBaseline' as const, estimate: finding.estimatedValue, uncertainty: finding.uncertainty }]
   }))
-  return { organizationId: organizationIdForTeam(record.observerTeamId), subjectPlayerId: record.subjectPlayerId, dimensions }
+  return { organizationId, subjectPlayerId: record.subjectPlayerId, dimensions }
+}
+
+/** Converts V1 Team-scoped records into one organization/player record without dropping conflicts. */
+export function migrateLegacyPlayerKnowledgeRecords(
+  records: readonly PlayerKnowledgeRecord[],
+  organizationIdForObserverTeam: (teamId: TeamId) => OrganizationId,
+  ownPlayerIdsByOrganization: ReadonlyMap<OrganizationId, ReadonlySet<PlayerId>> = new Map(),
+): readonly OrganizationKnowledge[] {
+  const grouped = new Map<string, OrganizationKnowledge[]>()
+  for (const record of records) {
+    const organizationId = organizationIdForObserverTeam(record.observerTeamId)
+    const migrated = migrateLegacyPlayerKnowledge(record, organizationId, ownPlayerIdsByOrganization.get(organizationId))
+    const key = `${organizationId}:${record.subjectPlayerId}`
+    grouped.set(key, [...(grouped.get(key) ?? []), migrated])
+  }
+
+  return [...grouped.values()].map((entries) => {
+    const first = entries[0]!
+    const dimensions: Record<string, OrganizationKnowledgeDimension> = {}
+    for (const dimension of Object.keys(first.dimensions).sort()) {
+      const findings = entries.map((entry) => entry.dimensions[dimension]!).sort((a, b) => a.assessedAt.localeCompare(b.assessedAt) || (a.estimate ?? 0) - (b.estimate ?? 0))
+      if (findings.length === 1) {
+        dimensions[dimension] = findings[0]!
+        continue
+      }
+      const estimates = findings.map((finding) => finding.estimate ?? 50)
+      const estimate = estimates.reduce((sum, value) => sum + value, 0) / estimates.length
+      const uncertainty = Math.min(20, Math.max(...findings.map((finding, index) => (finding.uncertainty ?? 20) + Math.abs(estimates[index]! - estimate))))
+      dimensions[dimension] = {
+        coverage: Math.max(...findings.map((finding) => finding.coverage)),
+        confidence: Math.min(...findings.map((finding) => finding.confidence)),
+        assessedAt: findings[0]!.assessedAt,
+        provenance: 'legacyBaseline',
+        estimate: Math.round(estimate),
+        uncertainty: Math.ceil(uncertainty),
+      }
+    }
+    return { organizationId: first.organizationId, subjectPlayerId: first.subjectPlayerId, dimensions }
+  }).sort((a, b) => a.organizationId.localeCompare(b.organizationId) || a.subjectPlayerId.localeCompare(b.subjectPlayerId))
 }
 
 export function createOrganizationKnowledge(value: OrganizationKnowledge): OrganizationKnowledge {

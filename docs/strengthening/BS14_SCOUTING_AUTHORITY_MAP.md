@@ -30,8 +30,8 @@ Player profile overview / development detail
   └─ currently reads Player truth directly (mask bypass)
 
 Legacy PlayerKnowledgeRecord
-  └─ GameWorld.playerKnowledgeById (team scoped, 7 old dimensions)
-       └─ Save V1 compatibility; V1→V2 migration to sparse OrganizationKnowledge
+  └─ Save V1 input payload only (team scoped, 7 old dimensions)
+       └─ V1→V2 migration to sparse OrganizationKnowledge
 
 Tactical opposition report
   └─ GameWorld.oppositionScoutingReportsById (team/game; tacticsQuality; separate artifact)
@@ -48,7 +48,7 @@ Tactical opposition report
 | Player assignment | `scoutingAssignmentsById` | `requestScouting`; daily `progressScoutingAssignments` | Domain shape is player-specific; no region assignment. |
 | Evidence and Player report | `evidenceById`, `evaluatorReportsById` | Created at assignment completion; immutable IDs | Evidence omits observed values; report omits PlayerTruth. |
 | Consolidated current knowledge | `organizationKnowledge` | `consolidateOrganizationKnowledge` | This is the current consumer-facing player evaluation input. |
-| Old knowledge | `playerKnowledgeById` | `ensurePlayerKnowledge` compatibility helper and Save V1 | Not updated by current report completion; no current market/player evaluation reads it. |
+| Old knowledge | V1 `playerKnowledge` payload / `PlayerKnowledgeRecord` type | Save V1 parser and deterministic V1→V2 migration only | No runtime index, modern consumer, or current writer. |
 | Displayed evaluation | derived by `getOrganizationRatingEvaluation` | roster, Scouting, Player scouting/potential, market/draft/recruiting | Mode/uncertainty/freshness are projections, not separately persisted. |
 | Organization decision preference | `organizationEvaluationPoliciesById` | deterministic ID-based policy factory | A decision preference vector, not actual player knowledge. |
 | Tactical opposition report | `oppositionScoutingReportsById` | `progressOppositionScoutingReports` | Uses tactics quality and OrganizationKnowledge; separate from evaluator reports. |
@@ -62,6 +62,8 @@ Tactical opposition report
 - Role proficiency is computed from `STAFF_ROLE_REGISTRY`; scouting quality also includes bounded professionalism/resilience personality effects, seeded jitter, and the shared overload penalty.
 - Evaluator `experience`, role proficiency, decision `qualityScore`, report `confidence`, and organization finding `confidence` remain different values. There is no universal Staff overall.
 
-## Legacy overlap
+## BS14B convergence
 
-The compatibility seam is not yet a single authority: `PlayerKnowledgeRecord` is keyed by observing Team and has seven `BasketballRatingKey` summaries; current `OrganizationKnowledge` is keyed by `OrganizationId` and arbitrary dimension strings. V1→V2 migration transforms old estimates into organization findings with `legacyBaseline` provenance, while current reports only consolidate the latter. This is a P1 convergence issue.
+Current mutable scouting knowledge is only `GameWorld.organizationKnowledge`, keyed by the owning `Team.organizationId` and subject Player. Report completion consolidates findings there. Old `PlayerKnowledgeRecord` remains a V1 disk-input type; the V1 deserializer resolves each observer team through its required `organizationId`, merges records for teams sharing an organization, retains estimates, widens uncertainty to cover conflicts, and labels findings `legacyBaseline`. Repeated migration is deterministic and does not create duplicate organization/player entries.
+
+Normal generated and WorldDB worlds start with empty `organizationKnowledge` and have no legacy runtime field. The ACB test-game path seeds its compatibility baseline directly into OrganizationKnowledge. `getOrganizationKnowledge` and current market presentation read the same canonical collection. The Player profile's direct truth exposure remains for BS14C; the seven dimensions and remaining assignment/model gaps remain for later milestones.

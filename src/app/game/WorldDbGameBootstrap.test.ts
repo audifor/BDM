@@ -123,7 +123,7 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     expect(() => deserializeGameWorldV4(saved)).toThrow(`Staff ${assignment.staffPersonId} employment does not match Team assignment`)
   })
 
-  it('derives the complete 18-team home-and-away schedule when persisted fixtures are absent', async () => { const session = openSession(); await session.open(); const world = await session.bootstrapGameWorld(selection); expect(Object.keys(world.teams)).toHaveLength(18); expect(Object.keys(world.players)).toHaveLength(90); expect(Object.keys(world.staffPeopleById)).toHaveLength(18); expect(Object.keys(world.teamStaffAssignmentsById)).toHaveLength(18); expect(Object.keys(world.games)).toHaveLength(306); expect(Object.values(world.teams).find((team) => team.id === selection.teamId)?.coachId).toBe('worlddb:coach:team:ESP:male:000'); expect(Object.values(world.coaches).find((coach) => coach.id === 'worlddb:coach:team:ESP:male:000')?.firstName).toBe('Head'); expect(Object.values(world.personsById).find((person) => person.id === `${selection.teamId}:head-coach`)?.profileRefs).toEqual([{ kind: 'staff', profileId: 'staff:team:ESP:male:000:head' }]) })
+  it('derives the complete 18-team home-and-away schedule when persisted fixtures are absent', async () => { const session = openSession(); await session.open(); const world = await session.bootstrapGameWorld(selection); expect(Object.keys(world.teams)).toHaveLength(18); expect(Object.keys(world.players)).toHaveLength(90); expect(Object.keys(world.staffPeopleById)).toHaveLength(18); expect(Object.keys(world.teamStaffAssignmentsById)).toHaveLength(18); expect(Object.keys(world.games)).toHaveLength(306); expect(world.organizationKnowledge).toEqual([]); expect(world).not.toHaveProperty('playerKnowledgeById'); expect(Object.values(world.teams).find((team) => team.id === selection.teamId)?.coachId).toBe('worlddb:coach:team:ESP:male:000'); expect(Object.values(world.coaches).find((coach) => coach.id === 'worlddb:coach:team:ESP:male:000')?.firstName).toBe('Head'); expect(Object.values(world.personsById).find((person) => person.id === `${selection.teamId}:head-coach`)?.profileRefs).toEqual([{ kind: 'staff', profileId: 'staff:team:ESP:male:000:head' }]) })
   it('preserves shared organization identity, section records and their IDs through save/load', () => {
     const sourceSlice = slice()
     const world = bootstrapGameWorldFromWorldDb(sourceSlice, selection, { contentId: runtimeBundle.contentId, contentHash: runtimeBundle.contentHash, worldDbSchema: runtimeBundle.worldDbSchema })
@@ -131,6 +131,8 @@ describe('World DB Spain ACB playable GameWorld bootstrap', () => {
     const second = Object.values(world.teams)[1]!
     expect(first.organizationId).toBe(second.organizationId)
     expect(first.organizationId).toBe('organization:0')
+    expect(world.organizationKnowledge).toEqual([])
+    expect(world).not.toHaveProperty('playerKnowledgeById')
     expect(world.organizationsById[first.organizationId]?.legalName).toBe('Legal organization:0')
     expect(world.organizationSectionsById[second.organizationSectionId]?.canonicalName).toBe('Team 1')
     expect(world.organizationOwnershipById['ownership:worlddb' as never]?.owner).toEqual({ kind: 'PERSON', personId: 'person:owner-only' })

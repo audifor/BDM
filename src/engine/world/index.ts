@@ -1,6 +1,6 @@
 export { generateWorld } from './WorldGenerator'
 export type { GenerateWorldOptions } from './WorldGenerator'
-export { ensurePlayerKnowledge } from './PlayerKnowledgeEnrichment'
+export { ensureTestGameOrganizationKnowledge } from './TestGameOrganizationKnowledge'
 export { generateInitialStaffStructure } from './StaffGenerator'
 export { ensureStaffStructure } from './StaffStructureEnrichment'
 export { applicableSupportingRoles, generateStaffSandbox } from './StaffSandboxGenerator'

@@ -11,7 +11,7 @@ Snapshot: source `c52a21717a5973ee33d99a0df3000d405bcb9847`.
 | Report evidence | REAL | `evidenceById` | Inputs report provenance/quality | Partial | Yes | Automatic producer creates one synthetic evidence stub; many sources unused. |
 | Evaluator report | REAL | `evaluatorReportsById` | Changes organization knowledge | Yes | Yes | Seven aggregate rating dimensions, not 80 findings. |
 | Organization knowledge | REAL | `organizationKnowledge` | Affects projections and AI rankings | Yes, derived ranges/labels | Yes | Organization scoped; knowledge starts empty. |
-| Legacy team knowledge | LEGACY | `playerKnowledgeById` | No current scouting consumer found | Some older projections may exist | V1 compatibility / runtime | Duplicate shape (team scoped, seven dimensions). |
+| Legacy team knowledge | LEGACY / MIGRATION INPUT | V1 `playerKnowledge` payload and `PlayerKnowledgeRecord` type | V1→V2 conversion only | None at runtime | V1 input only | Converts by `Team.organizationId` into organization-scoped `legacyBaseline` findings. |
 | Repeated observation | PARTIAL | consolidation formula | Changes estimate/coverage; may alter uncertainty | Report history | Yes | No staged discovery progression; disagreement may widen uncertainty. |
 | Knowledge decay | PARTIAL | lazy freshness in evaluation helpers | Range/confidence display worsens after 365 days | Yes | Date remains; no rewrite | No expiry, refresh, or event. |
 | Player profile fog | DISCONNECTED | profile builders read Player directly | None; scouting mask bypassed | Exact ratings visible | N/A | P0 external player truth leak. |
@@ -31,3 +31,7 @@ Snapshot: source `c52a21717a5973ee33d99a0df3000d405bcb9847`.
 | Financial scouting budget/cost | MISSING | None | None | None | No | No per-assignment cost. |
 | WorldDB initial knowledge | MISSING | Bootstrap creates no knowledge | Starts with empty org knowledge | Truth still profile-visible | None initially | Same empty knowledge as generated world. |
 | Generated world initial knowledge | MISSING | createNewGame has empty knowledge | No baseline reports | Profile exactness unaffected | Empty collections save | Legacy helper not called on normal generation. |
+
+## BS14B authority status
+
+`GameWorld.organizationKnowledge` is the only current mutable Player scouting knowledge authority. V1 legacy records are parsed only at the compatibility boundary and immediately converted. Generated and WorldDB creation do not initialize legacy knowledge; ACB test-game baseline data is authored into OrganizationKnowledge. BS14B does not change profile visibility, report dimensions, geographic scope, or valuation formulas.

@@ -1,6 +1,6 @@
 import { initializeBoardState } from '@/engine/board'
 import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
-import { ensurePlayerKnowledge, generateCoachRpgProfiles, generateStaffSandbox } from '@/engine/world'
+import { ensureTestGameOrganizationKnowledge, generateCoachRpgProfiles, generateStaffSandbox } from '@/engine/world'
 import { generateCanonicalDevelopmentProfile, generateCanonicalRatings } from '@/engine/world/CanonicalPlayerTruthGenerator'
 import { generatePlayerBio } from '@/engine/world/PlayerBioGenerator'
 import { generateInitialPlayerContract } from '@/engine/world/PlayerContractGenerator'
@@ -184,7 +184,7 @@ export function createAcbTestGame(options: CreateAcbTestGameOptions = {}): GameW
 
   let world = buildWorld([])
   world = buildWorld(generateRoundRobinSchedule({ world, seasonId: season.id, daysBetweenRounds: 7 }))
-  world = ensurePlayerKnowledge(world)
+  world = ensureTestGameOrganizationKnowledge(world)
   return initializeAiClubManagementPlanning(initializeBoardState(world, userTeam.id))
 }
 

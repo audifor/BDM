@@ -24,6 +24,16 @@ import { deserializeGameWorldSaveV4, deserializeGameWorldV4, migrateGameWorldSav
 
 const savedAt = '2032-10-01T00:00:00.000Z'
 
+describe('BS14B OrganizationKnowledge persistence', () => {
+  it('retains current scouting knowledge through Save V4', () => {
+    const base = createNewGame()
+    const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
+    const player = Object.values(base.players)[0]!
+    const world = updateGameWorld(base, { organizationKnowledge: [{ organizationId: team.organizationId, subjectPlayerId: player.id, dimensions: { shooting: { coverage: 0.7, confidence: 0.6, assessedAt: base.currentDate, provenance: 'scoutReport', estimate: 72, uncertainty: 7 } } }] })
+    expect(deserializeGameWorldV4(serializeGameWorldV4(world, savedAt)).organizationKnowledge).toEqual(world.organizationKnowledge)
+  })
+})
+
 describe('GameWorldSaveV4 competition runtime', () => {
   it('round-trips immutable Training Staff role and planned module evidence', () => {
     const base = createNewGame()

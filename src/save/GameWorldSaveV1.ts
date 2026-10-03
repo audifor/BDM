@@ -35,7 +35,7 @@ import { createGameWorld, type GameWorld } from '@/domain/world'
 import { generatePlayerBio } from '@/engine/world/PlayerBioGenerator'
 import { generatePlayerPotential } from '@/engine/world/PlayerPotentialGenerator'
 import { ensureTeamFinances } from '@/engine/world/TeamFinancesEnrichment'
-import { ensurePlayerKnowledge } from '@/engine/world/PlayerKnowledgeEnrichment'
+import { migrateLegacyPlayerKnowledgeRecords } from '@/domain/knowledge'
 import { ensureStaffStructure } from '@/engine/world/StaffStructureEnrichment'
 import { ensureStaffContractStructure, ensureStaffEmploymentStructure, ensureStaffReputationStructure } from '@/engine/world/StaffCareerEnrichment'
 import { ensureResponsibilityStructure } from '@/engine/world/ResponsibilityEnrichment'
@@ -225,7 +225,8 @@ export function serializeGameWorldV1(world: GameWorld, savedAt: string): SaveGam
       // `TeamFinances` object, which now carries `staffSalaryBudget` too. V3 is the sole canonical
       // writer/validator of that field (see `GameWorldSaveV3.ts`'s `parseTeamFinancesV3`).
       teamFinances: Object.values(world.teamFinancesByTeamId).map((finances) => ({ teamId: finances.teamId, playerSalaryBudget: finances.playerSalaryBudget })),
-      playerKnowledge: copyRecords(Object.values(world.playerKnowledgeById)),
+      // V1 retains the legacy shape for reads only; modern runtime knowledge is serialized by V2+.
+      playerKnowledge: [],
       organizationEvaluationPolicies: Object.entries(world.organizationEvaluationPoliciesById).map(([organizationId, policy]) => ({ organizationId, ...policy })),
       staffPeople: copyRecords(Object.values(world.staffPeopleById)), teamStaffAssignments: copyRecords(Object.values(world.teamStaffAssignmentsById)),
       responsibilities: copyRecords(Object.values(world.responsibilitiesById)), delegationOutcomes: copyRecords(Object.values(world.delegationOutcomesById)), oppositionScoutingReports: copyRecords(Object.values(world.oppositionScoutingReportsById)),
@@ -290,6 +291,17 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
   const currentDate = parseGameDate(string(payload.currentDate, 'Save currentDate'))
   const teams = array(payload.teams, 'Save teams').map(readTeam)
   const players = array(payload.players, 'Save players').map((player) => (options.readPlayer ?? readPlayer)(player, referenceDate, currentDate))
+  const legacyPlayerKnowledge = payload.playerKnowledge === undefined ? [] : array(payload.playerKnowledge, 'Save playerKnowledge').map(readPlayerKnowledge)
+  const ownPlayerIdsByOrganization = new Map(teams.map((team) => [team.organizationId, new Set(teams.filter((candidate) => candidate.organizationId === team.organizationId).flatMap((candidate) => candidate.rosterPlayerIds))]))
+  const organizationKnowledge = migrateLegacyPlayerKnowledgeRecords(
+    legacyPlayerKnowledge,
+    (observerTeamId) => {
+      const observer = teams.find((team) => team.id === observerTeamId)
+      if (observer === undefined) throw new TypeError(`Legacy Player knowledge references unknown observer Team ${observerTeamId}`)
+      return observer.organizationId
+    },
+    ownPlayerIdsByOrganization,
+  )
   const contracts = payload.contracts === undefined ? [] : array(payload.contracts, 'Save contracts').map(readContract)
   const teamFinances = ensureTeamFinances({
     currentDate,
@@ -345,7 +357,7 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
     contracts,
     playerTransactions: payload.playerTransactions === undefined ? [] : array(payload.playerTransactions, 'Save playerTransactions').map(readTransaction),
     teamFinances,
-    playerKnowledge: payload.playerKnowledge === undefined ? [] : array(payload.playerKnowledge, 'Save playerKnowledge').map(readPlayerKnowledge),
+    organizationKnowledge,
     ...(payload.organizationEvaluationPolicies === undefined ? {} : { organizationEvaluationPoliciesById: readOrganizationEvaluationPolicies(payload.organizationEvaluationPolicies) }),
     staffPeople, teamStaffAssignments: legacyCoachStructure.assignments,
     ...(payload.responsibilities === undefined ? {} : { responsibilities: array(payload.responsibilities, 'Save responsibilities').map(readResponsibility) }),
@@ -395,8 +407,7 @@ export function deserializeGameWorldV1(value: unknown, options: { readonly enric
   if (Object.values(world.seasons).some((season) => Object.values(world.games).filter((game) => game.seasonId === season.id).every((game) => game.status === 'completed') && world.seasonHistoryBySeasonId[season.id] === undefined)) {
     throw new Error('Completed season is missing season history')
   }
-  const withLegacyKnowledge = options.enrichLegacy === false || payload.playerKnowledge !== undefined ? world : ensurePlayerKnowledge(world)
-  const withResponsibilities = options.enrichLegacy === false ? withLegacyKnowledge : migrateTrainingResponsibilities(ensureResponsibilityStructure(ensureStaffStructure(withLegacyKnowledge)))
+  const withResponsibilities = options.enrichLegacy === false ? world : migrateTrainingResponsibilities(ensureResponsibilityStructure(ensureStaffStructure(world)))
   const withStaffCareer = options.enrichLegacy === false ? withResponsibilities : ensureStaffReputationStructure(ensureStaffContractStructure(ensureStaffEmploymentStructure(withResponsibilities)))
   const enriched = ensureNcaaAcademics(ensureNcaaEligibility(withStaffCareer))
   return payload.nilProfiles === undefined ? ensureNcaaNil(enriched) : enriched

@@ -64,7 +64,7 @@ Unknown scouting dimensions use deterministic ID-based prior estimates with UNKN
 
 - Player profile overview and development detail bypass the organization evaluation projector and read Player truth.
 - Scouting assignment findings cover seven groups/eight potential dimensions; the 80-value rating catalogue is not the report schema.
-- Legacy `PlayerKnowledgeRecord` is not updated when reports complete and is not a current acquisition input.
+- Legacy `PlayerKnowledgeRecord` exists only as a V1 payload parser/migration type; runtime readers/writers and acquisition inputs have been removed.
 - Normal generated and WorldDB bootstrap paths do not seed current organization knowledge, evidence, assignments, or reports.
 - `prioritizeRegions` connects a Region-named responsibility to nationality grouping, with no geographic entity, assignment, or coverage effect.
 - AI responsibilities default to userControlled. AI acquisition paths use current organization knowledge or UNKNOWN priors, but no default AI scouting cadence populates that knowledge.
@@ -73,4 +73,8 @@ Unknown scouting dimensions use deterministic ID-based prior estimates with UNKN
 
 ## Save integration
 
-`GameWorld` holds Player knowledge, OrganizationKnowledge, evidence, evaluator profiles, assignments, reports, responsibility/outcome state, and tactical opposition reports. Save V1 is the legacy team knowledge shape; Save V2 migrates it to OrganizationKnowledge and stores `scoutingRuntime`; V3/V4 preserve that payload and the tactical opposition-report store. No persistent geography/coverage/discovery object currently exists.
+`GameWorld` holds OrganizationKnowledge, evidence, evaluator profiles, assignments, reports, responsibility/outcome state, and tactical opposition reports. Save V1 accepts legacy team knowledge in its input payload and the V1 reader converts it to OrganizationKnowledge using `Team.organizationId`; the V1 serializer emits an empty legacy field. Save V2 persists current OrganizationKnowledge and `scoutingRuntime`; V3/V4 preserve that payload and the tactical opposition-report store. No persistent geography/coverage/discovery object currently exists.
+
+## BS14B consumer certification
+
+Scouting report completion, organization/player evaluation, market, draft, recruiting, AI free-agent/draft/recruiting ranking, and tactical opposition preparation use OrganizationKnowledge. Market workspace's knowledge badge was the remaining active legacy read and now queries the organization's knowledge. Tactical opposition reports remain a distinct team/game artifact and may use OrganizationKnowledge as an input; they are not evaluator reports and do not own player findings.
