@@ -3,7 +3,7 @@ import { playerIdFromString, placeIdFromString, type PlayerId, type PlaceId } fr
 import { requireNonEmptyString } from '@/domain/validation'
 import { talentCohortIdFromString, type TalentCohortId } from './TalentCohort'
 
-export const TALENT_MATERIALIZATION_CAUSES = ['SCOUTING_DISCOVERY', 'RECRUITING_POOL'] as const
+export const TALENT_MATERIALIZATION_CAUSES = ['SCOUTING_DISCOVERY', 'RECRUITING_POOL', 'ACADEMY_INTAKE'] as const
 export type TalentMaterializationCause = (typeof TALENT_MATERIALIZATION_CAUSES)[number]
 
 /** Durable origin and idempotency record; it is not current roster/pathway membership. */

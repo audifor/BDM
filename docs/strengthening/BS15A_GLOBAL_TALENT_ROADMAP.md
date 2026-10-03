@@ -36,6 +36,8 @@
 
 **Exit gate:** registration, eligibility at competition entry, season participation, development attribution and promotion/release are explainable from events; one Player ID survives every transition; current rosters and historical registrations cannot contradict; a non-academy senior-only save still loads.
 
+**BS15C delivery:** `TeamPathwayRelation` configures Organization-scoped senior/reserve/youth Teams; optional Competition age bands validate registration; `PlayerRegistration` history and one atomic pathway gateway support bounded BS15B intake, upward promotion and release. Save V4 defaults older payloads to no pathway relations/history. Same-identity male/female tests and over-age rollback coverage are in `BS15C_CLUB_YOUTH_ACADEMY_REGISTRATION.md`. Youth competition continues through the existing generic Competition/Match/Training/Development systems. Age-out is surfaced for an explicit decision; loans, dual registration, youth-only staff/facility privileges and separate opportunity-based growth remain deferred.
+
 ### BS15D · NCAA Ruleset, Enrollment and Eligibility Core
 
 **Vertical slice:** a college Team enrolls a Player under a dated ruleset; competition participation, academic term progress, eligibility assessment and availability use the same enrollment history and produce a reasoned decision.

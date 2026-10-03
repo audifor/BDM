@@ -90,3 +90,17 @@ Place / cohort supply (latent)
 4. **College continuation:** eligibility/academic term → retention/Portal transfer decision → NCAA destination Recruitment/enrollment → preserved remaining eligibility and identity.
 5. **Professional entry and career end:** NCAA/international entrants → Draft/pro signing → contracts/rosters/transitions → retirement/career end and cohort replacement.
 6. **Shared AI:** human and AI clubs/programs use the same knowledge boundary, decisions, rules validation, movement events, and roster authority.
+
+## BS15C authority update
+
+| Fact / decision | Canonical owner | BS15C status |
+|---|---|---|
+| Current youth/reserve/senior membership | `Team.rosterPlayerIds` | Remains the sole current roster; dual Team registration is rejected by the pathway gateway. |
+| Club pathway affiliation and upward destinations | `TeamPathwayRelation` in `GameWorld` | Explicit per-Team Organization, senior destination, role, category and allowed targets; never inferred from names. |
+| Dated youth/progression registration history | `PlayerRegistration` in `GameWorld` | BS15C causes cover intake, age-group/reserve/senior promotion and release. One action ID makes movement replay safe. |
+| Competition player age band | `Competition.rules.playerAgeEligibility` | Optional min/max age validated against canonical DOB and game date at registration; no team-name age rule. |
+| Age-out action required | Derived youth pathway read model | Reports `AGE_OUT_REQUIRES_DECISION`; no automatic movement. |
+| BS15B candidate-to-academy acquisition | `TalentCohort` + materialization + youth registration gateway | Intake uses one bounded candidate index from the Organization primary Place and keeps the BS15B PlayerId; declined proposals do not materialize. |
+| Academy/youth capability | Existing Team, Competition, Staff, Training, Facilities and PlayerDevelopment | Reused without a second Team/Player, academy quality score or parallel development engine. Youth-only staff/facility privileges and minutes attribution remain gaps. |
+
+See `BS15C_CLUB_YOUTH_ACADEMY_REGISTRATION.md` for operation and Save V4 contracts.

@@ -121,6 +121,7 @@ import type { FacilityComponentConditionRecordId, FacilityComponentId, FacilityC
 import { createClubStrategicState, type ClubStrategicState } from '@/domain/clubStrategy'
 import { createGMPlanState, type GMPlanState } from '@/domain/gmPlanning'
 import { createTalentCohort, createTalentMaterialization, type TalentCohort, type TalentMaterialization } from '@/domain/talent'
+import { createPlayerRegistration, createTeamPathwayRelation, type PlayerRegistration, type TeamPathwayRelation } from '@/domain/youth/ClubPathway'
 
 export const GAME_WORLD_SCHEMA_VERSION = 1 as const
 
@@ -155,6 +156,8 @@ export interface GameWorld {
   readonly placesById: Readonly<Record<PlaceId, Place>>
   readonly talentCohortsById: Readonly<Record<string, TalentCohort>>
   readonly talentMaterializationsByCandidateKey: Readonly<Record<string, TalentMaterialization>>
+  readonly teamPathwayRelationsById: Readonly<Record<string, TeamPathwayRelation>>
+  readonly playerRegistrationsById: Readonly<Record<string, PlayerRegistration>>
   readonly facilitiesById: Readonly<Record<FacilityId, Facility>>
   readonly facilityComponentsById: Readonly<Record<FacilityComponentId, FacilityComponent>>
   readonly facilityNameRecordsById: Readonly<Record<FacilityNameRecordId, FacilityNameRecord>>
@@ -436,6 +439,8 @@ export interface CreateGameWorldInput {
   places?: readonly Place[]
   talentCohorts?: readonly TalentCohort[]
   talentMaterializations?: readonly TalentMaterialization[]
+  teamPathwayRelations?: readonly TeamPathwayRelation[]
+  playerRegistrations?: readonly PlayerRegistration[]
   facilities?: readonly Facility[]
   facilityComponents?: readonly FacilityComponent[]
   facilityNameRecords?: readonly FacilityNameRecord[]
@@ -763,6 +768,8 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     placesById: indexById((input.places ?? []).map(createPlace), 'Place'),
     talentCohortsById: indexById((input.talentCohorts ?? []).map(createTalentCohort), 'Talent cohort'),
     talentMaterializationsByCandidateKey: indexTalentMaterializations((input.talentMaterializations ?? []).map(createTalentMaterialization)),
+    teamPathwayRelationsById: indexById((input.teamPathwayRelations ?? []).map(createTeamPathwayRelation), 'Team pathway relation'),
+    playerRegistrationsById: indexById((input.playerRegistrations ?? []).map(createPlayerRegistration), 'Player registration'),
     facilitiesById: indexById((input.facilities ?? []).map(createFacility), 'Facility'),
     facilityComponentsById: indexById((input.facilityComponents ?? []).map(createFacilityComponent), 'Facility component'),
     facilityNameRecordsById: indexById((input.facilityNameRecords ?? []).map(createFacilityNameRecord), 'Facility name record'),
@@ -993,8 +1000,13 @@ export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorld
   }
 
   const patched = { ...world, ...remainingPatch, ...worldPatch } as GameWorld
+  const playersWithDevelopmentState = worldPatch.players === undefined ? patched : {
+    ...patched,
+    developmentStimulusByPlayerId: Object.freeze(Object.fromEntries(Object.values(patched.players).map((player) => [player.id, patched.developmentStimulusByPlayerId[player.id] ?? { playerId: player.id, byRating: { ...EMPTY_DEVELOPMENT_STIMULUS } }]))),
+    careerFatigueByPlayerId: Object.freeze(Object.fromEntries(Object.values(patched.players).map((player) => [player.id, clampCareerFatigue(patched.careerFatigueByPlayerId[player.id] ?? 0)]))),
+  } as GameWorld
   const profilesChanged = worldPatch.coaches !== undefined || worldPatch.players !== undefined || worldPatch.staffPeopleById !== undefined
-  const withPersonRoots = profilesChanged && worldPatch.persons === undefined ? { ...patched, personsById: synchronizePersonRoots(patched) } : patched
+  const withPersonRoots = profilesChanged && worldPatch.persons === undefined ? { ...playersWithDevelopmentState, personsById: synchronizePersonRoots(playersWithDevelopmentState) } : playersWithDevelopmentState
   const updated = profilesChanged
     ? {
         ...withPersonRoots,
@@ -1029,6 +1041,8 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
 }
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
+  teamPathwayRelations: 'teamPathwayRelationsById',
+  playerRegistrations: 'playerRegistrationsById',
   contractReviewDecisions: 'contractReviewDecisionsById',
   retentionNegotiations: 'retentionNegotiationsById',
   financialBudgets: 'financialBudgetsById', budgetLines: 'budgetLinesById', budgetRevisions: 'budgetRevisionsById', budgetAllocations: 'budgetAllocationsById', forecastAssumptions: 'forecastAssumptionsById', financialRegulationAssessments: 'financialRegulationAssessmentsById', financeDecisionProposals: 'financeDecisionProposalsById', economicObservations: 'economicObservationsById', exchangeRates: 'exchangeRatesById', revenueSources: 'revenueSourcesById', operatingCostSources: 'operatingCostSourcesById', operatingCostFacts: 'operatingCostFactsById', debtInstruments: 'debtInstrumentsById', competitionDistributionFacts: 'competitionDistributionFactsById',
@@ -1047,6 +1061,8 @@ const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unkno
   ...Object.fromEntries(Object.keys(collectionPatchTargets).map((key) => [key, (value: unknown) => indexById(value as readonly { readonly id: string }[], key)])),
   talentCohorts: (value) => indexById((value as readonly TalentCohort[]).map(createTalentCohort), 'Talent cohort'),
   talentMaterializations: (value) => indexTalentMaterializations((value as readonly TalentMaterialization[]).map(createTalentMaterialization)),
+  teamPathwayRelations: (value) => indexById((value as readonly TeamPathwayRelation[]).map(createTeamPathwayRelation), 'Team pathway relation'),
+  playerRegistrations: (value) => indexById((value as readonly PlayerRegistration[]).map(createPlayerRegistration), 'Player registration'),
   contractServiceTimeBaselines: (value) => indexById((value as readonly ContractServiceTimeBaseline[]).map(createContractServiceTimeBaseline), 'Contract service-time baseline'),
   contractServiceTimeCredits: (value) => indexById((value as readonly ContractServiceTimeCredit[]).map(createContractServiceTimeCredit), 'Contract service-time credit'),
   contractReviewDecisions: (value) => indexById((value as readonly ContractReviewDecision[]).map(createContractReviewDecision), 'Contract review decision'),
@@ -1181,6 +1197,7 @@ function validateWorld(world: GameWorld): void {
   validateOrganizationInvestments(world)
   validateFacilities(world)
   validateTalentSupply(world)
+  validateYouthPathway(world)
   validateMultiClubOwnershipPolicies(world)
   validateStructuralRegulation(world)
   validateGovernance(world)
@@ -2464,6 +2481,37 @@ function validateTalentSupply(world: GameWorld): void {
     if (player.nationalityId !== requireTalentPlaceCountry(world, world.placesById[record.placeId]!)) throw new GameWorldValidationError(`Talent materialization ${candidateKey} nationality does not match its origin Place`)
     if (player.gender !== cohort.gender || Number(player.bio.dateOfBirth.slice(0, 4)) !== cohort.birthYear) throw new GameWorldValidationError(`Talent materialization ${candidateKey} Player identity does not match its cohort`)
     if (person.firstName !== player.firstName || person.lastName !== player.lastName || person.gender !== player.gender || person.dateOfBirth !== player.bio.dateOfBirth || !person.nationalityIds.includes(player.nationalityId)) throw new GameWorldValidationError(`Talent materialization ${candidateKey} Person and Player identity facts disagree`)
+  }
+}
+
+function validateYouthPathway(world: GameWorld): void {
+  const activePlayers = new Set<PlayerId>()
+  const teamsWithPathways = new Set<TeamId>()
+  for (const relation of Object.values(world.teamPathwayRelationsById)) {
+    createTeamPathwayRelation(relation)
+    if (teamsWithPathways.has(relation.teamId)) throw new GameWorldValidationError(`Team ${relation.teamId} has multiple pathway relations`)
+    teamsWithPathways.add(relation.teamId)
+    const team = requireEntity(world.teams, relation.teamId, `Pathway ${relation.id} Team`)
+    const senior = requireEntity(world.teams, relation.seniorTeamId, `Pathway ${relation.id} senior Team`)
+    if (team.organizationId !== relation.organizationId || senior.organizationId !== relation.organizationId || team.gender !== senior.gender) throw new GameWorldValidationError(`Pathway ${relation.id} crosses organization or gender`)
+    for (const targetId of relation.movementTargetTeamIds) {
+      const target = requireEntity(world.teams, targetId, `Pathway ${relation.id} movement target`)
+      if (target.organizationId !== relation.organizationId || target.gender !== team.gender) throw new GameWorldValidationError(`Pathway ${relation.id} has an incompatible target`)
+    }
+  }
+  for (const registration of Object.values(world.playerRegistrationsById)) {
+    createPlayerRegistration(registration)
+    const player = requireEntity(world.players, registration.playerId, `Registration ${registration.id} Player`)
+    const team = requireEntity(world.teams, registration.teamId, `Registration ${registration.id} Team`)
+    if (team.organizationId !== registration.organizationId || player.gender !== team.gender) throw new GameWorldValidationError(`Registration ${registration.id} does not match its Team`)
+    if (registration.competitionId !== undefined) {
+      const competition = requireEntity(world.competitions, registration.competitionId, `Registration ${registration.id} Competition`)
+      if (!competition.participantTeamIds.includes(team.id) || competition.gender !== player.gender) throw new GameWorldValidationError(`Registration ${registration.id} competition scope is invalid`)
+    }
+    if (registration.endsOn === undefined) {
+      if (activePlayers.has(player.id) || !team.rosterPlayerIds.includes(player.id)) throw new GameWorldValidationError(`Player ${player.id} has contradictory active pathway registration`)
+      activePlayers.add(player.id)
+    }
   }
 }
 
