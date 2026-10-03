@@ -34,6 +34,7 @@ export { calculateTeamPlayerPayroll, canTeamAffordAdditionalSalary, getTeamFinan
 export type { TeamFinancialSnapshot, TeamFinancialStatus, TeamStaffPayroll } from './finances'
 export type { ResolvedGameClockRules } from './queries'
 export { getOrganizationKnowledge } from './knowledge'
+export { getPlayersInScoutingTerritory, getTeamsInScoutingTerritory, isPlayerCurrentlyInTerritory, isStaffRoleSuitableForScoutingTerritory, resolveTerritoryCountry, scoutingTerritoryForCompetition } from './scoutingTerritories'
 export { getStaffAssignment, getStaffPerson, getStaffRoleProficiency, getTeamStaffAssignments, getTeamStaffByRole, getTeamStaffPeople } from './staff'
 export { calculateStaffWorkload, getResponsibilitiesHeldByStaff, getResponsibility, getTeamResponsibilities } from './responsibility'
 export { migrateTrainingResponsibilities } from './migrateTrainingResponsibilities'

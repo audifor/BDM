@@ -14,7 +14,7 @@ import {
 } from '@/domain/player/PlayerTruthCatalog'
 import type { OrganizationKnowledge, OrganizationKnowledgeDimension } from '@/domain/knowledge'
 import { getOrganizationRatingEvaluation } from '@/domain/intelligence'
-import { createEvaluatorProfile, type EvaluatorFinding, type EvaluatorProfile, type EvaluatorReport, type Evidence, type ScoutingAssignment, type ScoutingMission, type ScoutingPriority } from '@/domain/scouting'
+import { createEvaluatorProfile, SCOUTING_TERRITORY_WORKLOAD_COST, type EvaluatorFinding, type EvaluatorProfile, type EvaluatorReport, type Evidence, type ScoutingAssignment, type ScoutingMission, type ScoutingPriority } from '@/domain/scouting'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 
 const missionUnits: Readonly<Record<ScoutingMission, number>> = { QUICK_LOOK: 1, FULL_REPORT: 4, SKILL_EVALUATION: 2, POTENTIAL_EVALUATION: 2, TACTICAL_FIT: 2, LIVE_GAME: 2 }
@@ -57,7 +57,11 @@ export function progressScoutingAssignments(world: GameWorld): GameWorld {
   const priority = { URGENT: 0, HIGH: 1, NORMAL: 2, LOW: 3 } as const
   for (const assignment of Object.values(world.scoutingAssignmentsById).filter((item) => item.status !== 'COMPLETED' && item.status !== 'CANCELLED').sort((a, b) => priority[a.priority] - priority[b.priority] || a.id.localeCompare(b.id))) {
     if (assignment.status === 'QUEUED') {
-      const capacity = assignment.missionType === 'QUICK_LOOK' ? 6 : 4
+      const territoryAllowance = Math.min(
+        SCOUTING_TERRITORY_WORKLOAD_COST,
+        Object.values(next.scoutingTerritoryAssignmentsById).filter((item) => item.scoutStaffId === assignment.evaluatorStaffId && item.status === 'ACTIVE').length * SCOUTING_TERRITORY_WORKLOAD_COST,
+      )
+      const capacity = (assignment.missionType === 'QUICK_LOOK' ? 6 : 4) + territoryAllowance
       if (activeWorkload(next, assignment.evaluatorStaffId) + missionUnits[assignment.missionType] > capacity) continue
       if (assignment.missionType === 'LIVE_GAME' && (assignment.gameId === undefined || world.games[assignment.gameId as keyof typeof world.games]?.date !== world.currentDate)) continue
       const expectedCompletionAt = addDays(world.currentDate, durationDays(next, assignment))
@@ -78,7 +82,7 @@ export function durationDays(world: GameWorld, assignment: ScoutingAssignment): 
   const workload = activeWorkload(world, assignment.evaluatorStaffId)
   return Math.max(1, missionDays[assignment.missionType] + (relevant < 50 ? 1 : 0) + (profile.experience < 30 ? 1 : 0) + (workload >= 4 ? 1 : 0))
 }
-export function activeWorkload(world: GameWorld, staffId: StaffPersonId): number { return Object.values(world.scoutingAssignmentsById).filter((item) => item.evaluatorStaffId === staffId && item.status === 'ACTIVE').reduce((sum, item) => sum + missionUnits[item.missionType], 0) }
+export function activeWorkload(world: GameWorld, staffId: StaffPersonId): number { return Object.values(world.scoutingAssignmentsById).filter((item) => item.evaluatorStaffId === staffId && item.status === 'ACTIVE').reduce((sum, item) => sum + missionUnits[item.missionType], 0) + Object.values(world.scoutingTerritoryAssignmentsById).filter((item) => item.scoutStaffId === staffId && item.status === 'ACTIVE').length * SCOUTING_TERRITORY_WORKLOAD_COST }
 
 function completeAssignment(world: GameWorld, assignmentId: string): GameWorld {
   const assignment = world.scoutingAssignmentsById[assignmentId]!; const evidence = createEvidence(world, assignment); const report = generateEvaluatorReport(world, assignment, evidence)

@@ -1,6 +1,8 @@
 import type { GameDate } from '@/domain/date'
 import type { OrganizationId, PlayerId, StaffPersonId, TeamId } from '@/domain/ids'
 
+export * from './ScoutingTerritory'
+
 export const EVIDENCE_SOURCES = ['PUBLIC_DATA', 'STATISTICS', 'LIVE_SCOUTING', 'VIDEO_SCOUTING', 'OPPONENT_GAME', 'OWN_TEAM_OBSERVATION', 'STAFF_PRIOR_KNOWLEDGE', 'COMBINE', 'WORKOUT'] as const
 export type EvidenceSource = typeof EVIDENCE_SOURCES[number]
 export const SCOUTING_MISSIONS = ['QUICK_LOOK', 'FULL_REPORT', 'SKILL_EVALUATION', 'POTENTIAL_EVALUATION', 'TACTICAL_FIT', 'LIVE_GAME'] as const

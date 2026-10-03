@@ -15,7 +15,7 @@ import { progressAiBoosters } from '@/engine/boosters'
 import { progressEnforcement } from '@/engine/enforcement'
 import { processCoachFinancesForMonth } from '@/engine/coachFinances'
 import { decayMemoriesForMonth } from '@/engine/memory'
-import { progressAdvisoryScoutingReports, progressDelegatedScouting, progressScoutingAssignments } from '@/engine/scouting'
+import { progressAdvisoryScoutingReports, progressDelegatedScouting, progressScoutingAssignments, progressScoutingTerritoryAssignments } from '@/engine/scouting'
 import { progressOppositionScoutingReports } from '@/engine/tactics/OppositionScoutingReportEngine'
 import { progressMedicalAdvisories } from '@/engine/injury'
 import { progressAiMedicalLifecycle } from '@/engine/injury/AiMedicalLifecycle'
@@ -153,7 +153,7 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
     run('COACH_FINANCE', current.currentDate, current.currentDate.slice(-2) === '01', processCoachFinancesForMonth, 'Coach Finance runs once on the first day of each month.')
     run('MEMORY_DECAY', current.currentDate, current.currentDate.slice(-2) === '01', decayMemoriesForMonth, 'Memory decay runs on the first day of each month.')
     run('ENFORCEMENT', current.currentDate, true, progressEnforcement, 'Enforcement lifecycle is checked every simulation day.')
-    run('SCOUTING_INTAKE', current.currentDate, true, (input) => progressOppositionScoutingReports(progressAdvisoryScoutingReports(progressDelegatedScouting(input))), 'Scouting intake is checked every simulation day.')
+    run('SCOUTING_INTAKE', current.currentDate, true, (input) => progressScoutingTerritoryAssignments(progressOppositionScoutingReports(progressAdvisoryScoutingReports(progressDelegatedScouting(input)))), 'Scouting intake and active territorial discovery are checked every simulation day.')
     run('MEDICAL_AND_ROSTER_ADVISORIES', current.currentDate, true, (input) => progressBasketballOperationsAdvisories(progressMedicalAdvisories(progressRehabilitationSetbacks(input))), 'Rehabilitation setbacks and Medical/basketball-operations advisories are checked every simulation day.')
     let aiMedicalDecisions: ReturnType<typeof progressAiMedicalLifecycle>['decisions'] = []
     run('AI_MEDICAL_DECISIONS', current.currentDate, true, (input) => {

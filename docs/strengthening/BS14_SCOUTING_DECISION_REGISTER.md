@@ -53,3 +53,14 @@ The information boundary is the user's controlled roster, not mere organization 
 - External profile rows use only exact `rating:<KEY>` organization findings; own-roster exact ratings and external development masking continue under BS14C.
 
 See [BS14D Rating-Level Scouting](BS14D_RATING_LEVEL_SCOUTING.md). Status: **TECH READY / AWAITING VALIDATION**; this does not certify all Scouting complete.
+
+## BS14E decisions
+
+- Territory is `COUNTRY` or `COMPETITION`, based on current Team/Competition membership. Nationality remains biography.
+- Identity awareness is organization-scoped and distinct from OrganizationKnowledge. Territory discovery does not create rating or potential knowledge.
+- Each active territory assignment costs two existing Scouting workload units. Daily discovery is deterministic, quality-sensitive, workload-limited, and capped at three Players.
+- Publicly addressable roster, opponent, active draft, recruiting, market-knowledge, and free-agent Players remain candidates without gaining evaluation knowledge.
+- The `prioritizeRegions` ID is preserved; its current delegated decision records the scheduled game's Competition territory. Broad AI operation cadence is deferred to BS14F.
+- Territory and awareness fields are optional additive V2 scouting-runtime values, defaulting empty for older saves and preserved by V2/V3/V4.
+
+See [BS14E Scouting Operations and Coverage](BS14E_SCOUTING_OPERATIONS_AND_COVERAGE.md).

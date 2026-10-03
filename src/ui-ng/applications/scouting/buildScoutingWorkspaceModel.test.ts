@@ -4,7 +4,7 @@ import { createNewGame } from '@/app/game/createNewGame'
 import { addDays } from '@/domain/date'
 import { organizationIdForTeam } from '@/domain/ids'
 import { updateGameWorld } from '@/domain/world'
-import { getUserTeam } from '@/engine/calendar'
+import { getNextScheduledGameForTeam, getUserTeam } from '@/engine/calendar'
 import { progressScoutingAssignments, requestScouting } from '@/engine/scouting'
 import { buildScoutingWorkspaceModel } from '@/ui-ng/applications/scouting/buildScoutingWorkspaceModel'
 
@@ -36,6 +36,19 @@ describe('buildScoutingWorkspaceModel', () => {
     expect(subject.valuationCurrent).toBeNull()
     expect(JSON.stringify(subject)).not.toContain(JSON.stringify(player.basketball.ratings))
     expect(JSON.stringify(model)).not.toMatch(/actualRating|truthValue|canonicalPlayer/)
+  })
+
+  it('keeps public opponent players addressable without granting scouting knowledge', () => {
+    const world = createNewGame()
+    const team = getUserTeam(world)!
+    const game = getNextScheduledGameForTeam(world, team.id)!
+    const opponentTeamId = game.homeTeamId === team.id ? game.awayTeamId : game.homeTeamId
+    const publicPlayerId = world.teams[opponentTeamId]!.rosterPlayerIds[0]!
+    const model = buildScoutingWorkspaceModel(world)!
+    const row = model.knowledge.find((candidate) => candidate.playerId === publicPlayerId)!
+    expect(row).toBeDefined()
+    expect(row.knownDomains).toEqual([])
+    expect(row.evaluations.every((evaluation) => evaluation.evaluationLabel === '?')).toBe(true)
   })
 
   it('surfaces completed assignments and reports through organization knowledge, not player truth', () => {

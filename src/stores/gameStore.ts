@@ -12,6 +12,7 @@ import {
   advanceGameDayWithResult,
 } from '@/app/game'
 import { releasePlayer } from '@/app/market'
+import { createScoutingTerritoryAssignment as createTerritoryOperation, endScoutingTerritoryAssignment as endTerritoryOperation } from '@/app/scouting'
 import { recordContractReviewDecision } from '@/app/contractReview'
 import { openUserContractRetention, respondUserToContractRetentionCounter, submitUserContractRetentionOffer, withdrawUserContractRetention } from '@/app/contractRetention/ContractRetentionService'
 import type { RetentionTermSet } from '@/domain/contract/ContractRetentionNegotiation'
@@ -24,6 +25,7 @@ import type { ClubCounterDecision } from '@/app/marketIntelligence'
 import { type InjuryId, type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
 import type { CoachPerkId, CoachSkillId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
+import type { ScoutingTerritory } from '@/domain/scouting'
 import { getInboxItemsForCoach, getNewsFeed, getRelationshipsForPerson, getUnreadInboxCount, getUserCoachReputationProfile } from '@/domain/world'
 import { getRecentCoachReputationEvents, type CoachReputationProfile } from '@/domain/coachReputation'
 import { purchaseCoachPerk, purchaseCoachSkillRank, type CoachRpgOperationResult } from '@/engine/coach'
@@ -138,6 +140,8 @@ interface GameStore {
   assignTrainingModuleToPlayer(input: { readonly playerId: PlayerId; readonly moduleId: string; readonly date: GameWorld['currentDate']; readonly startTime: string; readonly sessionId: string; readonly assignedStaffPersonIds?: readonly StaffPersonId[] }): void
   setLineupSlot(slot: LineupSlot, playerId: PlayerId): void
   requestScoutingAssignment(playerId: PlayerId): void
+  createScoutingTerritoryAssignment(input: { readonly scoutStaffId: StaffPersonId; readonly territory: ScoutingTerritory }): void
+  endScoutingTerritoryAssignment(assignmentId: string): void
   clearLineupSlot(slot: LineupSlot): void
   updateRotationMinutes(minutesByPeriod: Readonly<Record<PlayerId, readonly number[]>>): void
   updateGamePlanMatchups(matchups: readonly DefensiveMatchupAssignment[]): void
@@ -360,6 +364,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }),
     })
   },
+  createScoutingTerritoryAssignment: (input) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    if (team !== undefined) set({ world: createTerritoryOperation(world, { requestingTeamId: team.id, ...input }) })
+  },
+  endScoutingTerritoryAssignment: (assignmentId) => set({ world: endTerritoryOperation(requireWorld(get().world), assignmentId) }),
   clearLineupSlot: (slot) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: clearLineupSlot(world, team.id, slot) }) },
   updateRotationMinutes: (minutesByPeriod) => {
     const world = requireWorld(get().world)

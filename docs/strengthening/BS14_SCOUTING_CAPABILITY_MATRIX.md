@@ -51,3 +51,13 @@ The Player profile fog is now permission-aware through `derivePlayerKnowledgeAcc
 | External rating detail | REAL / PERMISSIONED | `derivePlayerKnowledgeAccess` | No simulation side effect | Known rating evaluation only; own roster stays exact | N/A | Exact mode still requires exact OrganizationKnowledge evaluation. |
 
 See [BS14D Rating-Level Scouting](BS14D_RATING_LEVEL_SCOUTING.md) for the error, consolidation, freshness, save, and manual validation contract.
+
+## BS14E delta
+
+| Capability | Status | Authority | Gameplay effect | UI visible | Save persistent | Problem / note |
+|---|---|---|---|---|---|---|
+| COUNTRY / COMPETITION territory membership | REAL | Team country, Competition participants, current rosters | Current basketball location governs eligibility | No territory management UI yet | Derived from world | Nationality is not used. |
+| Persistent Scout operations | REAL | `scoutingTerritoryAssignmentsById` | Staff quality/workload drives bounded daily discovery | Store/application commands only | V2/V3/V4 | Two shared Scouting workload units per active operation. |
+| Organization player awareness | REAL | `organizationPlayerAwarenessById` | Discovered identity becomes a Quick Look candidate | Scouting workspace candidate source | V2/V3/V4 | No rating or potential findings are created. |
+| Public player addressability | REAL | Roster, opponent, draft, recruiting, market knowledge, free-agent sources | Publicly exposed players remain selectable | Scouting workspace | Source systems | Identity access does not grant knowledge. |
+| `prioritizeRegions` | CONVERGED | Existing responsibility ID; current scheduled Competition focus | Stops grouping by nationality | No new UI | Existing outcomes | Wider AI territory operations are BS14F. |

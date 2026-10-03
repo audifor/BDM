@@ -76,3 +76,7 @@ Normal generated and WorldDB worlds start with empty `organizationKnowledge` and
 ## BS14D rating-level authority
 
 Current ability findings now use `rating:<CANONICAL_KEY>` for the 80 keys in `PLAYER_TRUTH_RATING_KEYS`. The Domain `PLAYER_RATING_FAMILY_KEYS` map is the single family authority shared by Scouting and Player UI. EvaluatorReport is historical; `GameWorld.organizationKnowledge` remains the only current knowledge authority. Full details and the aggregate/mission rules are in [BS14D Rating-Level Scouting](BS14D_RATING_LEVEL_SCOUTING.md).
+
+## BS14E discovery authority
+
+`ScoutingTerritory` and the world helpers resolve current membership through Team country and Competition participants/current rosters. `OrganizationPlayerAwareness` is a separate identity-only authority; it does not grant rating or potential knowledge. Persistent territory operations and daily discovery are documented in [BS14E Scouting Operations and Coverage](BS14E_SCOUTING_OPERATIONS_AND_COVERAGE.md).

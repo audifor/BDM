@@ -5,7 +5,8 @@ import {
   getOrganizationRatingEvaluation,
 } from '@/domain/intelligence'
 import type { GameWorld } from '@/domain/world'
-import { getUserTeam } from '@/engine/calendar'
+import { getFreeAgents } from '@/domain/world'
+import { getNextScheduledGameForTeam, getUserTeam } from '@/engine/calendar'
 import { STAFF_ROLE_LABELS, staffQualityBand } from '@/ui/staffPresentation'
 import { getPlayerKnowledgeSummary } from '@/engine/scouting'
 import { findTeamForPlayer, formatGameDateLabel } from '@/ui-ng/applications/player/data/presentationHelpers'
@@ -51,11 +52,37 @@ export function buildScoutingWorkspaceModel(world: GameWorld): ScoutingWorkspace
 
   const organizationId = team.organizationId
   const ownRoster = new Set(team.rosterPlayerIds)
+  const publicPlayerIds = new Set<PlayerId>(team.rosterPlayerIds)
+  const nextGame = getNextScheduledGameForTeam(world, team.id)
+  if (nextGame !== undefined) {
+    const opponentTeamId = nextGame.homeTeamId === team.id ? nextGame.awayTeamId : nextGame.homeTeamId
+    for (const playerId of world.teams[opponentTeamId]?.rosterPlayerIds ?? []) publicPlayerIds.add(playerId)
+  }
+  const ecosystemId = nextGame === undefined ? undefined : world.competitions[nextGame.competitionId]?.ecosystemId
+  if (ecosystemId !== undefined) {
+    for (const draft of Object.values(world.draftsById)) {
+      if (draft.ecosystemId === ecosystemId && (draft.status === 'scheduled' || draft.status === 'inProgress')) {
+        for (const playerId of draft.prospectPlayerIds) publicPlayerIds.add(playerId)
+      }
+    }
+  }
+  for (const boardEntry of world.recruitingBoards) {
+    if (boardEntry.programTeamId !== team.id) continue
+    const playerId = world.recruitProfilesById[boardEntry.recruitId]?.playerId
+    if (playerId !== undefined) publicPlayerIds.add(playerId)
+  }
+  for (const playerId of getFreeAgents(world).map((player) => player.id)) publicPlayerIds.add(playerId)
+  for (const entry of world.marketKnowledge) {
+    if (entry.organizationId === organizationId) publicPlayerIds.add(entry.playerId)
+  }
   const subjectIds = new Set<PlayerId>([
     ...world.organizationKnowledge
       .filter((entry) => entry.organizationId === organizationId)
       .map((entry) => entry.subjectPlayerId),
-    ...team.rosterPlayerIds,
+    ...Object.values(world.organizationPlayerAwarenessById)
+      .filter((entry) => entry.organizationId === organizationId)
+      .map((entry) => entry.playerId),
+    ...publicPlayerIds,
   ])
 
   const canRequestScouting = Object.values(world.teamStaffAssignmentsById).some(
