@@ -1,8 +1,9 @@
 import { getPlayerContractStatus, type PlayerContract } from '@/domain/contract'
 import type { MarketKnowledge } from '@/domain/market'
-import type { OrganizationKnowledge, OrganizationKnowledgeDimension } from '@/domain/knowledge'
 import type { EcosystemId, PlayerId, SeasonId, TeamId } from '@/domain/ids'
 import type { TradeAsset } from '@/domain/trade'
+import { getOrganizationRatingEvaluation } from '@/domain/intelligence/OrganizationPlayerEvaluation'
+import type { PlayerAggregateScoutingDimension } from '@/domain/player/PlayerTruthCatalog'
 import { responsibilityIdForTeam } from '@/domain/responsibility'
 import type { GameWorld } from '@/domain/world'
 import { assessRoutedAcquisitionProposalIntelligence } from './AcquisitionProposalIntelligenceService'
@@ -91,7 +92,7 @@ export interface TradePackageIntelligenceResult {
   readonly blockers: readonly string[]
 }
 
-const RATING_DIMENSIONS = Object.freeze(['finishing', 'shooting', 'creation', 'perimeterDefense', 'interiorDefense', 'rebounding', 'physical', 'potential:physical'])
+const RATING_DIMENSIONS: readonly (PlayerAggregateScoutingDimension | 'potential:physical')[] = Object.freeze(['finishing', 'shooting', 'creation', 'perimeterDefense', 'interiorDefense', 'rebounding', 'physical', 'potential:physical'])
 
 /**
  * Joins current need-selected BS10 trade enquiries to current BS9 outgoing-review plans.
@@ -269,42 +270,26 @@ function clubAuthority(world: GameWorld, teamId: TeamId): TradeClubAuthorityStat
 }
 
 function clubKnowledge(world: GameWorld, team: GameWorld['teams'][TeamId], incomingPlayerId: PlayerId, outgoingPlayerId: PlayerId, incomingMarketObservation?: TradeMarketObservation): TradeClubPackageKnowledge {
-  const records = consolidateOrganizationKnowledge(world.organizationKnowledge, team.organizationId)
   return Object.freeze({
     teamId: team.id,
     organizationId: team.organizationId,
     incomingPlayerId,
     outgoingPlayerId,
-    incomingPlayer: summarizeKnowledge(records.get(incomingPlayerId)),
-    outgoingPlayer: summarizeKnowledge(records.get(outgoingPlayerId)),
+    incomingPlayer: summarizeKnowledge(world, team.organizationId, incomingPlayerId),
+    outgoingPlayer: summarizeKnowledge(world, team.organizationId, outgoingPlayerId),
     ...(incomingMarketObservation === undefined ? {} : { incomingMarketObservation }),
   })
 }
 
-function consolidateOrganizationKnowledge(records: readonly OrganizationKnowledge[], organizationId: string): ReadonlyMap<PlayerId, Readonly<Record<string, OrganizationKnowledgeDimension>>> {
-  const relevant = records.filter((record) => record.organizationId === organizationId)
-  const byPlayer = new Map<PlayerId, Map<string, OrganizationKnowledgeDimension[]>>()
-  for (const record of relevant) {
-    const byDimension = byPlayer.get(record.subjectPlayerId) ?? new Map<string, OrganizationKnowledgeDimension[]>()
-    for (const [dimension, finding] of Object.entries(record.dimensions)) {
-      if (!RATING_DIMENSIONS.includes(dimension)) continue
-      const entries = byDimension.get(dimension) ?? []
-      entries.push(finding)
-      byDimension.set(dimension, entries)
-    }
-    byPlayer.set(record.subjectPlayerId, byDimension)
-  }
-  return new Map([...byPlayer].map(([playerId, byDimension]) => [playerId, Object.fromEntries([...byDimension].map(([dimension, findings]) => {
-    findings.sort((a, b) => b.assessedAt.localeCompare(a.assessedAt)
-      || (b.coverage * b.confidence) - (a.coverage * a.confidence)
-      || (a.uncertainty ?? Number.POSITIVE_INFINITY) - (b.uncertainty ?? Number.POSITIVE_INFINITY)
-      || a.provenance.localeCompare(b.provenance))
-    return [dimension, findings[0]!]
-  }))]))
-}
-
-function summarizeKnowledge(knowledge: Readonly<Record<string, OrganizationKnowledgeDimension>> | undefined): TradePlayerKnowledgeCoverage {
-  const knownDimensions = Object.keys(knowledge ?? {}).filter((dimension) => knowledge?.[dimension]?.estimate !== undefined).sort()
+function summarizeKnowledge(world: GameWorld, organizationId: string, playerId: PlayerId): TradePlayerKnowledgeCoverage {
+  const knownDimensions = RATING_DIMENSIONS.filter((dimension) => getOrganizationRatingEvaluation({
+    organizationId: organizationId as never,
+    playerId,
+    dimension,
+    knowledge: world.organizationKnowledge,
+    currentDate: world.currentDate,
+    publicPosition: world.players[playerId]?.basketball.primaryPosition,
+  }).mode !== 'UNKNOWN').sort()
   return Object.freeze({ knownDimensions: Object.freeze(knownDimensions), missingDimensions: Object.freeze(RATING_DIMENSIONS.filter((dimension) => !knownDimensions.includes(dimension))) })
 }
 

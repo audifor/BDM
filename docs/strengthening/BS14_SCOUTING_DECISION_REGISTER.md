@@ -42,3 +42,14 @@ The selected BS13E lineage adds Staff responsibilities, workload, evaluator-qual
 ## BS14C decision: Player-profile visibility
 
 The information boundary is the user's controlled roster, not mere organization membership. `Team.organizationId` owns shared knowledge; controlled-roster membership alone authorizes exact current PlayerTruth ratings. External current ability and potential are projected from current OrganizationKnowledge at the world date. Unknown stays unknown, and seven aggregate dimensions are never expanded into individual ratings. Public identity/context and separately owned contract/medical information retain their existing rules. True external development history is withheld pending BS14D rating-level intelligence. Navigation into a profile reuses this policy.
+
+## BS14D decisions
+
+- Current basketball rating findings use `rating:<CANONICAL_KEY>`; `PlayerTruthCatalog.ts` owns the single 80-key skill-family map. Tendencies remain deferred.
+- Quick Look stays aggregate; Full Report covers all 80 current ratings; Skill Evaluation covers the selected family (and supports legacy aggregate target IDs); potential stays separate; Tactical Fit stays contextual; Live Game retains broad observations pending a defensible per-rating observation map.
+- Rating-derived aggregate projections take precedence when canonical-member coverage is at least 0.60. The estimate is an equal-weight known-member mean; uncertainty includes a missing-coverage penalty. Below threshold, the stored aggregate finding remains the compatibility fallback.
+- Rating findings consolidate in OrganizationKnowledge under the same per-dimension rules, age through lazy freshness, and do not synchronize with later PlayerTruth development.
+- V2/V3/V4 already preserve generic dimensions; no save schema migration is required. Aggregate-only legacy findings remain intact and do not create fake individual ratings.
+- External profile rows use only exact `rating:<KEY>` organization findings; own-roster exact ratings and external development masking continue under BS14C.
+
+See [BS14D Rating-Level Scouting](BS14D_RATING_LEVEL_SCOUTING.md). Status: **TECH READY / AWAITING VALIDATION**; this does not certify all Scouting complete.

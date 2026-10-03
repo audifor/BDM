@@ -72,3 +72,7 @@ Normal generated and WorldDB worlds start with empty `organizationKnowledge` and
 ## BS14C visibility boundary
 
 `derivePlayerKnowledgeAccess` is the Player UI permission projection: exact current ratings only for the user's controlled roster; external evaluation only from the viewer's `Team.organizationId` in `GameWorld.organizationKnowledge`; unknown information stays unknown. Same-organization sharing grants knowledge, not exact PlayerTruth. Public identity/context, contract and injury remain in their owning domains. Potential remains knowledge-aware, true 80-rating history is masked externally, and rating-level scouting is deferred to BS14D. See [BS14C Player Knowledge Visibility](BS14C_PLAYER_KNOWLEDGE_VISIBILITY.md).
+
+## BS14D rating-level authority
+
+Current ability findings now use `rating:<CANONICAL_KEY>` for the 80 keys in `PLAYER_TRUTH_RATING_KEYS`. The Domain `PLAYER_RATING_FAMILY_KEYS` map is the single family authority shared by Scouting and Player UI. EvaluatorReport is historical; `GameWorld.organizationKnowledge` remains the only current knowledge authority. Full details and the aggregate/mission rules are in [BS14D Rating-Level Scouting](BS14D_RATING_LEVEL_SCOUTING.md).

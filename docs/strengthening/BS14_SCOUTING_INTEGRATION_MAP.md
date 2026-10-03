@@ -82,3 +82,9 @@ Scouting report completion, organization/player evaluation, market, draft, recru
 ## BS14C profile integration
 
 `derivePlayerKnowledgeAccess` now projects exact-own-roster, scouted-external and unknown-external access for Player workspace, overview, attributes, development, scouting, comparison and compact profile surfaces. Shared Market, Draft, Recruiting and external roster links therefore preserve the same mask at the workspace builder. External view models do not carry individual truth ratings or their history; aggregate and potential displays use the viewer organization's freshness-adjusted OrganizationKnowledge. ACB baseline knowledge follows the same route. See [BS14C Player Knowledge Visibility](BS14C_PLAYER_KNOWLEDGE_VISIBILITY.md).
+
+## BS14D rating-level integration
+
+Full Report writes up to 80 `rating:<CANONICAL_KEY>` findings through the existing EvaluatorReport → OrganizationKnowledge completion path. Quick Look remains two broad current-ability findings; Skill Evaluation uses the selected canonical family. The Player access projection now exposes known per-rating evaluations to external Attributes while preserving unknown rows and controlled-roster exact ratings. Development history remains masked.
+
+The Domain catalogue owns eight scouting families and seven aggregate member sets. Shared evaluation derives an aggregate from known member ratings once coverage reaches 0.60, widening uncertainty for missing evidence; below that threshold, stored aggregate findings remain readable. Market/draft/recruiting continue through shared valuation helpers, and Trade Package knowledge now uses the same OrganizationKnowledge evaluation helper. V2/V3/V4 preserve rating dimensions as generic OrganizationKnowledge; old aggregate-only knowledge does not fabricate individual findings. Potential stays separate and tendencies are deferred. See [BS14D Rating-Level Scouting](BS14D_RATING_LEVEL_SCOUTING.md).

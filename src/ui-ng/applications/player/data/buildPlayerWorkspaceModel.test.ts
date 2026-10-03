@@ -66,6 +66,7 @@ describe('buildPlayerWorkspaceModel', () => {
         subjectPlayerId: player.id,
         dimensions: {
           shooting: { coverage: 1, confidence: 0.9, assessedAt: world.currentDate, provenance: 'scoutReport', estimate: 78, uncertainty: 0 },
+          'rating:THREE_POINT_STATIC': { coverage: 0.75, confidence: 0.8, assessedAt: world.currentDate, provenance: 'scoutReport', estimate: 61, uncertainty: 5 },
         },
       }],
     })
@@ -85,6 +86,9 @@ describe('buildPlayerWorkspaceModel', () => {
     expect(known.knowledgeAccess.knownDimensions.map((dimension) => dimension.id)).toContain('shooting')
     expect(known.knowledgeAccess.knownDimensions.find((dimension) => dimension.id === 'shooting')!.evaluation.mode).toBe('EXACT')
     expect(known.knowledgeAccess.knownDimensions.find((dimension) => dimension.id === 'shooting')!.displayLabel).toBe('78')
+    expect(known.knowledgeAccess.ratingEvaluations.find((rating) => rating.key === 'THREE_POINT_STATIC')).toMatchObject({ evaluation: { mode: 'RANGE', estimate: 61, uncertainty: 5 }, displayLabel: '56-66' })
+    expect(known.knowledgeAccess.ratingEvaluations.find((rating) => rating.key === 'FREE_THROW')!.evaluation).toBeNull()
+    expect(known.knowledgeAccess.ratingEvaluations).toHaveLength(80)
     expect(known.ratings).toEqual([])
     expect(known.attributes.allRatings).toEqual([])
     expect(known.attributes.evolutionByRating).toEqual({})

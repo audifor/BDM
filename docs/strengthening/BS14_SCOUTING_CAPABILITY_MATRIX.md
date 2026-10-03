@@ -39,3 +39,15 @@ Snapshot: source `c52a21717a5973ee33d99a0df3000d405bcb9847`.
 ## BS14C delta
 
 The Player profile fog is now permission-aware through `derivePlayerKnowledgeAccess`. Own controlled-roster current ratings remain exact; external profiles receive only current organization knowledge plus public context. External 80-rating attributes and development history are unavailable until BS14D adds rating-level scouting. Potential remains based on OrganizationKnowledge. No global knowledge was seeded, and the ACB baseline uses the shared projection. See [BS14C Player Knowledge Visibility](BS14C_PLAYER_KNOWLEDGE_VISIBILITY.md).
+
+## BS14D delta
+
+| Capability | Status | Authority | Gameplay effect | UI visible | Save persistent | Problem / note |
+|---|---|---|---|---|---|---|
+| 80-rating scouting | REAL | `rating:<CANONICAL_KEY>` in `organizationKnowledge` | Full Report and focused Skill Evaluation store uncertain per-rating findings | External Attributes shows known rows/ranges; unknown stays Not scouted | V2/V3/V4 generic knowledge payload | All 80 keys are covered; tendencies remain deferred. |
+| Scouting family catalogue | REAL | Domain `PLAYER_RATING_FAMILY_KEYS` | Defines focused evaluation and attribute grouping | Same mapping in profile catalogue | Static code | Eight families; one canonical key per family. |
+| Aggregate from rating findings | REAL | `deriveAggregateEvaluationFromRatingKnowledge` | Acquisition valuation reads derived aggregate above 0.60 coverage; otherwise stored aggregate fallback | Summary dimensions | Derived on read | Uncertainty widens for missing coverage. |
+| Mission distinction | REAL / PARTIAL UI | `ScoutingEngine` mission mapping | Quick Look = two broad findings; Full Report = 80; Skill Evaluation = selected family | Human UI still Quick Look only | Reports and current findings persist | Existing advisory/domain route supports Full Report; no new selector. |
+| External rating detail | REAL / PERMISSIONED | `derivePlayerKnowledgeAccess` | No simulation side effect | Known rating evaluation only; own roster stays exact | N/A | Exact mode still requires exact OrganizationKnowledge evaluation. |
+
+See [BS14D Rating-Level Scouting](BS14D_RATING_LEVEL_SCOUTING.md) for the error, consolidation, freshness, save, and manual validation contract.

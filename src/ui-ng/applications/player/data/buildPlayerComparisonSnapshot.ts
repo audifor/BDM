@@ -24,6 +24,7 @@ export interface PlayerComparisonSnapshot {
   readonly ratings: Partial<PlayerTruthRatings>
   readonly accessKind: 'own-roster' | 'scouted' | 'unknown'
   readonly knownDimensions: PlayerKnowledgeAccess['knownDimensions']
+  readonly ratingEvaluations: PlayerKnowledgeAccess['ratingEvaluations']
 }
 
 function displayName(player: Player): string {
@@ -76,5 +77,6 @@ export function buildPlayerComparisonSnapshot(
       : {},
     accessKind: access.kind,
     knownDimensions: access.knownDimensions,
+    ratingEvaluations: access.ratingEvaluations,
   }
 }

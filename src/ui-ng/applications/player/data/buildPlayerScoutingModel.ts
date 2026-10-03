@@ -1,5 +1,6 @@
 import { type PlayerId, type StaffPersonId } from '@/domain/ids'
 import {
+  deriveAggregateEvaluationFromRatingKnowledge,
   formatRatingEvaluation,
   getOrganizationRatingEvaluation,
   type RatingEvaluation,
@@ -294,14 +295,14 @@ export function buildPlayerScoutingModel(
   const statusPanel: ScoutingStatusModel = {
     // A coverage share with no evaluated dimension would read as knowledge the club does not have.
     knowledgeLabel:
-      summary.knownDomains.length === 0
+      access.knownDimensions.length + access.knownPotential.length === 0
         ? 'Not scouted'
         : `${Math.round(summary.overallCoverage * 100)}%`,
-    knowledgeCoverage: summary.knownDomains.length === 0 ? 0 : summary.overallCoverage,
-    knownDimensionCount: summary.knownDomains.length,
+    knowledgeCoverage: access.knownDimensions.length + access.knownPotential.length === 0 ? 0 : summary.overallCoverage,
+    knownDimensionCount: access.knownDimensions.length + access.knownPotential.length,
     confidenceLabel:
       summary.overallConfidence >= 0.75 ? 'High' : summary.overallConfidence >= 0.45 ? 'Medium' : 'Low',
-    confidenceNote: `Combined coverage across ${summary.knownDomains.length} scouted ${summary.knownDomains.length === 1 ? 'dimension' : 'dimensions'}.`,
+    confidenceNote: `Combined coverage across ${access.knownDimensions.length + access.knownPotential.length} scouted dimensions.`,
     lastScoutedLabel: summary.lastAssessedAt === undefined ? null : formatGameDateLabel(summary.lastAssessedAt),
     observerLabel,
     disagreementLabel: summary.disagreement,
@@ -331,9 +332,18 @@ export function buildPlayerScoutingModel(
         note: `${area.dimensions.map(knowledgeDimensionLabel).join(', ')} have not been evaluated yet.`,
       }
     }
-    const coverage =
-      known.reduce((sum, dimension) => sum + (knowledge?.dimensions[dimension]?.coverage ?? 0), 0) /
-      known.length
+    const coverage = known.reduce((sum, dimension) => {
+      const storedCoverage = knowledge?.dimensions[dimension]?.coverage
+      if (storedCoverage !== undefined) return sum + storedCoverage
+      const derived = deriveAggregateEvaluationFromRatingKnowledge({
+        organizationId,
+        playerId,
+        knowledge: world.organizationKnowledge,
+        currentDate: world.currentDate,
+        publicPosition: player.basketball.primaryPosition,
+      }, dimension as 'finishing' | 'shooting' | 'creation' | 'perimeterDefense' | 'interiorDefense' | 'rebounding' | 'physical')
+      return sum + (derived?.coverage ?? 0)
+    }, 0) / known.length
     return {
       id: area.id,
       label: area.label,

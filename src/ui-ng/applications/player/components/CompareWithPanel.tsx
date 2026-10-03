@@ -162,14 +162,20 @@ export function CompareBody({
     return (
       <div className="po-compare__attributes">
         <p className="po-compare__note">
-          {snapshot.knownDimensions.length === 0
+          {snapshot.knownDimensions.length === 0 && !snapshot.ratingEvaluations.some((entry) => entry.evaluation !== null)
             ? 'No scouting dimensions are available for this player.'
-            : 'Comparison is limited to the scouting dimensions your organization knows.'}
+            : 'Comparison is limited to the scouting information your organization knows.'}
         </p>
         {snapshot.knownDimensions.map((dimension) => (
           <div className="po-compare__row" key={dimension.id}>
             <span className="po-compare__row-label">{dimension.label}</span>
             <span className="po-compare__row-value">{dimension.displayLabel}</span>
+          </div>
+        ))}
+        {snapshot.ratingEvaluations.filter((entry) => entry.evaluation !== null).map((rating) => (
+          <div className="po-compare__row" key={rating.id}>
+            <span className="po-compare__row-label">{rating.label}</span>
+            <span className="po-compare__row-value">{rating.displayLabel}</span>
           </div>
         ))}
       </div>

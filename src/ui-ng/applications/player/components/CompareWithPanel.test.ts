@@ -16,6 +16,7 @@ function snapshot(overrides: Partial<PlayerComparisonSnapshot> = {}): PlayerComp
     ratings: { threePointShooting: 84, midRangeShooting: 80 } as never,
     accessKind: 'own-roster',
     knownDimensions: [],
+    ratingEvaluations: [],
     ...overrides,
   }
 }

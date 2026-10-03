@@ -5,6 +5,7 @@ import { parseGameDate } from '@/domain/date'
 import { CANONICAL_RATING_KEYS, PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS, TENDENCY_KEYS, createPlayer, type Player, type PlayerRatings, type PlayerTendencies } from '@/domain/player'
 import { DEVELOPMENT_DOMAINS, createDevelopmentProfile, type PlayerDevelopmentProfile } from '@/domain/player/PlayerDevelopmentProfile'
 import { PERSONALITY_DIMENSIONS } from '@/domain/personality'
+import { ratingKeyFromKnowledgeDimension } from '@/domain/player/PlayerTruthCatalog'
 import { createEvaluatorProfile, EVIDENCE_SOURCES, SCOUTING_MISSIONS, type Evidence, type EvaluatorProfile, type EvaluatorReport, type ScoutingAssignment } from '@/domain/scouting'
 import type { OrganizationEvaluationPolicy } from '@/domain/intelligence'
 import { deserializeGameWorldV1, serializeGameWorldV1, type GameWorldSaveV1, type SaveGameEnvelopeV1 } from './GameWorldSaveV1'
@@ -114,7 +115,8 @@ export function parseOrganizationKnowledgeV2(value: unknown): readonly Organizat
     const source = record(entry, 'Organization knowledge V2'); assertExactKeys(source, ['organizationId', 'subjectPlayerId', 'dimensions'], 'Organization knowledge V2')
     const sourceDimensions = record(source.dimensions, 'Organization knowledge V2 dimensions')
     const dimensions = Object.fromEntries(Object.entries(sourceDimensions).map(([key, raw]) => {
-      if (!/^(finishing|shooting|creation|perimeterDefense|interiorDefense|rebounding|physical|potential:[a-zA-Z]+|tacticalFit)$/.test(key)) throw new TypeError(`Unknown organization knowledge dimension ${key}`)
+      const aggregateDimension = /^(finishing|shooting|creation|perimeterDefense|interiorDefense|rebounding|physical|potential:[a-zA-Z]+|tacticalFit)$/.test(key)
+      if (!aggregateDimension && ratingKeyFromKnowledgeDimension(key) === undefined) throw new TypeError(`Unknown organization knowledge dimension ${key}`)
       const finding = record(raw, 'Organization knowledge V2 finding'); const keys = ['coverage', 'confidence', 'assessedAt', 'provenance', ...(finding.estimate === undefined ? [] : ['estimate']), ...(finding.uncertainty === undefined ? [] : ['uncertainty']), ...(finding.evidenceIds === undefined ? [] : ['evidenceIds']), ...(finding.reportIds === undefined ? [] : ['reportIds'])]; assertExactKeys(finding, keys, 'Organization knowledge V2 finding')
       return [key, { coverage: bounded(finding.coverage, 'Organization knowledge coverage', 0, 1), confidence: bounded(finding.confidence, 'Organization knowledge confidence', 0, 1), assessedAt: parseGameDate(text(finding.assessedAt, 'Organization knowledge assessedAt')), provenance: enumValue(finding.provenance, ['legacyBaseline', 'public', 'ownObservation', 'scoutReport', 'inferred', 'staffFamiliarity'], 'Organization knowledge provenance') as OrganizationKnowledge['dimensions'][string]['provenance'], ...(finding.estimate === undefined ? {} : { estimate: bounded(finding.estimate, 'Organization knowledge estimate', 0, 100) }), ...(finding.uncertainty === undefined ? {} : { uncertainty: bounded(finding.uncertainty, 'Organization knowledge uncertainty', 0, 20) }), ...(finding.evidenceIds === undefined ? {} : { evidenceIds: array(finding.evidenceIds, 'Organization knowledge evidence IDs').map((id) => text(id, 'Organization knowledge evidence ID')) }), ...(finding.reportIds === undefined ? {} : { reportIds: array(finding.reportIds, 'Organization knowledge report IDs').map((id) => text(id, 'Organization knowledge report ID')) }) }]
     }))

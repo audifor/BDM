@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
+import { createOrganizationKnowledge } from '@/domain/knowledge'
 import { getNextScheduledGame, updateGameWorld, type GameWorld } from '@/domain/world'
 import { CANONICAL_RATING_KEYS, PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS, TENDENCY_KEYS, canonicalizeLegacyRatings } from '@/domain/player'
 import { playerIdFromString } from '@/domain/ids'
@@ -13,6 +14,8 @@ import { deserializeGameWorldSave, deserializeGameWorldV2, migrateGameWorldSaveV
 import { setLineupSlot } from '@/engine/tactics/LineupEngine'
 import { createNegotiationContact } from '@/domain/market'
 import { BASKETBALL_RATING_KEYS, legacyRatingSignals } from '@/domain/player'
+import { serializeGameWorldV3, deserializeGameWorldV3 } from './GameWorldSaveV3'
+import { serializeGameWorldV4, deserializeGameWorldV4 } from './GameWorldSaveV4'
 
 const savedAt = '2032-10-01T00:00:00.000Z'
 function v1WithLegacyKnowledge(world: GameWorld, count = Object.keys(world.players).length) {
@@ -43,6 +46,32 @@ describe('GameWorldSaveV2', () => {
     expect(Object.keys(player.basketball.ratings)).toEqual(PLAYER_TRUTH_RATING_KEYS)
     expect(Object.keys(player.basketball.tendencies)).toEqual(PLAYER_TRUTH_TENDENCY_KEYS)
     expect(deserializeGameWorldV2(saved).players).toEqual(world.players)
+  })
+  it('round-trips sparse rating-level knowledge through V2, V3 and V4 without manufacturing legacy ratings', () => {
+    const base = createNewGame()
+    const organization = Object.values(base.teams)[0]!.organizationId
+    const playerId = Object.keys(base.players)[0]!
+    const world = updateGameWorld(base, { organizationKnowledge: [createOrganizationKnowledge({
+      organizationId: organization,
+      subjectPlayerId: playerId as never,
+      dimensions: { 'rating:THREE_POINT_STATIC': { coverage: 0.72, confidence: 0.81, assessedAt: base.currentDate, provenance: 'scoutReport', estimate: 67, uncertainty: 6 } },
+    })] })
+    for (const restored of [
+      deserializeGameWorldV2(serializeGameWorldV2(world, savedAt)),
+      deserializeGameWorldV3(serializeGameWorldV3(world, savedAt)),
+      deserializeGameWorldV4(serializeGameWorldV4(world, savedAt)),
+    ]) {
+      expect(restored.organizationKnowledge[0]!.dimensions['rating:THREE_POINT_STATIC']).toMatchObject({ estimate: 67, uncertainty: 6, coverage: 0.72 })
+      expect(Object.keys(restored.organizationKnowledge[0]!.dimensions).filter((dimension) => dimension.startsWith('rating:'))).toEqual(['rating:THREE_POINT_STATIC'])
+    }
+    const legacy = updateGameWorld(base, { organizationKnowledge: [createOrganizationKnowledge({
+      organizationId: organization,
+      subjectPlayerId: playerId as never,
+      dimensions: { shooting: { coverage: 0.8, confidence: 0.75, assessedAt: base.currentDate, provenance: 'scoutReport', estimate: 64, uncertainty: 8 } },
+    })] })
+    const legacyLoaded = deserializeGameWorldV2(serializeGameWorldV2(legacy, savedAt))
+    expect(legacyLoaded.organizationKnowledge[0]!.dimensions.shooting?.estimate).toBe(64)
+    expect(Object.keys(legacyLoaded.organizationKnowledge[0]!.dimensions).some((dimension) => dimension.startsWith('rating:'))).toBe(false)
   })
   it('round-trips sparse tactical and game-plan state with neutral legacy defaults', () => {
     const base=createNewGame();const team=Object.values(base.teams)[0]!,game=Object.values(base.games)[0]!
