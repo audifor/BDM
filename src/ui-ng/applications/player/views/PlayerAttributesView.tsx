@@ -53,6 +53,19 @@ export function PlayerAttributesView() {
 
   if (model === null) return null
 
+  if (model.knowledgeAccess.kind !== 'own-roster') {
+    return (
+      <section className="po-attributes po-at-board po-attributes--empty" data-ng-region="player-attributes">
+        <h2>Individual ratings</h2>
+        <p className="po-lane-empty">
+          {model.knowledgeAccess.knownDimensions.length === 0
+            ? 'Not scouted. Individual ratings are unavailable for external players.'
+            : `Scouting covers ${model.knowledgeAccess.knownDimensions.map((entry) => `${entry.label} ${entry.displayLabel}`).join(' · ')}. Individual rating scouting is not available yet.`}
+        </p>
+      </section>
+    )
+  }
+
   if (categoryModel === undefined || activeRatingId === null) {
     return (
       <div className="po-attributes po-at-board po-attributes--empty">

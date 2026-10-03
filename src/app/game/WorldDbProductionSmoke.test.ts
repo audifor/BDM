@@ -61,7 +61,7 @@ describe.runIf(runProductionSmoke)('World DB production Spain ACB smoke', () => 
     }
     const realRosterPlayer = world.players[team.rosterPlayerIds[0]!]!
     const workspaceModel = buildPlayerWorkspaceModel(world, realRosterPlayer.id)!
-    expect(workspaceModel.player).toBe(realRosterPlayer)
+    expect(workspaceModel.knowledgeAccess.kind).toBe('own-roster')
     expect(workspaceModel.person).toBe(world.personsById[realRosterPlayer.personId!]!)
     expect(workspaceModel.attributes.allRatings).toHaveLength(80)
     expect(workspaceModel.attributes.allRatings.map((rating) => rating.value)).toEqual(

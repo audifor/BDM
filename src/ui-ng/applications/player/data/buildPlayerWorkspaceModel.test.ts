@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 
 import { PLAYER_TRUTH_RATING_KEYS } from '@/domain/player'
 import { completeMatch, createConfiguredGame, createNewGame, prepareUserMatch } from '@/app/game'
+import { createAcbTestGame } from '@/app/game/createAcbTestGame'
+import { derivePlayerKnowledgeAccess } from '@/app/player/PlayerKnowledgeAccess'
+import { updateGameWorld } from '@/domain/world'
+import { getUserTeam } from '@/engine/calendar'
 import { boxScoreValuation } from '@/engine/stats/boxScoreValuation'
 import { getPlayerSeasonStats } from '@/engine/stats/PlayerHistory'
 import { ACB_QUICK_START_TEAM_KEY, ACB_TEST_UNIVERSE_ID } from '@/data/acb2026'
@@ -31,6 +35,7 @@ describe('buildPlayerWorkspaceModel', () => {
       PLAYER_TRUTH_RATING_KEYS.map((key) => world.players[playerId!]!.basketball.ratings[key]),
     )
     expect(model!.ratings.every((rating) => rating.value >= 1 && rating.value <= 100)).toBe(true)
+    expect(model!.overview.developmentPulse.potentialStatus).toBe('unavailable')
     expect(model!.strengths).toHaveLength(3)
     expect(model!.limitations).toHaveLength(3)
     expect(model!.shotProfile.status).toBe('unavailable')
@@ -40,7 +45,8 @@ describe('buildPlayerWorkspaceModel', () => {
     expect(model!.identity.dateOfBirth.status).toBe('available')
     expect(model!.identity.wingspan.status).toBe('available')
     expect(model!.attributes.allRatings.map((rating) => rating.id)).toEqual(PLAYER_TRUTH_RATING_KEYS)
-    expect(model!.player).toBe(world.players[playerId!])
+    expect(model!.knowledgeAccess.kind).toBe('own-roster')
+    expect('player' in model!).toBe(false)
     expect(model!.person).toBe(world.personsById[world.players[playerId!]!.personId!])
     expect(model!.attributes.categories.length).toBe(8)
     expect(model!.attributes.categories.reduce((count, category) => count + category.all.length, 0)).toBe(80)
@@ -48,6 +54,80 @@ describe('buildPlayerWorkspaceModel', () => {
     expect(model!.attributes.categories[0]!.note).not.toContain('mean')
     expect(model!.development.longitudinal.status).toBe('unavailable')
     expect(model!.history.scope.scopeNote).toContain('persisted in this save')
+  })
+
+  it('projects external profiles from viewer knowledge and removes exact rating data', () => {
+    const world = createNewGame()
+    const viewer = getUserTeam(world)!
+    const player = Object.values(world.players).find((candidate) => !viewer.rosterPlayerIds.includes(candidate.id))!
+    const knownWorld = updateGameWorld(world, {
+      organizationKnowledge: [{
+        organizationId: viewer.organizationId,
+        subjectPlayerId: player.id,
+        dimensions: {
+          shooting: { coverage: 1, confidence: 0.9, assessedAt: world.currentDate, provenance: 'scoutReport', estimate: 78, uncertainty: 0 },
+        },
+      }],
+    })
+    const known = buildPlayerWorkspaceModel(knownWorld, player.id)!
+    const unknown = buildPlayerWorkspaceModel(world, player.id)!
+    const playerTeam = Object.values(world.teams).find((team) => team.rosterPlayerIds.includes(player.id))!
+    const sameOrganization = {
+      ...world,
+      teams: {
+        ...world.teams,
+        [playerTeam.id]: { ...playerTeam, organizationId: viewer.organizationId },
+      },
+    } as typeof world
+    const sharedOrg = buildPlayerWorkspaceModel(sameOrganization, player.id)!
+
+    expect(known.knowledgeAccess.kind).toBe('scouted')
+    expect(known.knowledgeAccess.knownDimensions.map((dimension) => dimension.id)).toContain('shooting')
+    expect(known.knowledgeAccess.knownDimensions.find((dimension) => dimension.id === 'shooting')!.evaluation.mode).toBe('EXACT')
+    expect(known.knowledgeAccess.knownDimensions.find((dimension) => dimension.id === 'shooting')!.displayLabel).toBe('78')
+    expect(known.ratings).toEqual([])
+    expect(known.attributes.allRatings).toEqual([])
+    expect(known.attributes.evolutionByRating).toEqual({})
+    expect(known.strengths).toEqual([])
+    expect(known.limitations).toEqual([])
+    expect(known.development.seasonStimulus.topRatings).toEqual([])
+    expect(known.development.longitudinal.series).toEqual([])
+    expect(known.development.longitudinal.events).toEqual([])
+    expect(known.development.categoryCurve).toEqual([])
+    expect(known.knowledgeAccess.currentRatings).toBeUndefined()
+    expect(unknown.knowledgeAccess.kind).toBe('unknown')
+    expect(unknown.knowledgeAccess.knownDimensions).toEqual([])
+    expect(unknown.ratings).toEqual([])
+    expect(sharedOrg.knowledgeAccess.kind).toBe('unknown')
+    expect(sharedOrg.ratings).toEqual([])
+  })
+
+  it('uses freshness-adjusted knowledge and the same access projection for ACB baseline data', () => {
+    const base = createNewGame()
+    const viewer = getUserTeam(base)!
+    const player = Object.values(base.players).find((candidate) => !viewer.rosterPlayerIds.includes(candidate.id))!
+    const fresh = updateGameWorld(base, {
+      organizationKnowledge: [{
+        organizationId: viewer.organizationId,
+        subjectPlayerId: player.id,
+        dimensions: {
+          shooting: { coverage: 1, confidence: 0.9, assessedAt: base.currentDate, provenance: 'scoutReport', estimate: 78, uncertainty: 0 },
+        },
+      }],
+    })
+    const nextDate = new Date(`${base.currentDate}T00:00:00.000Z`)
+    nextDate.setUTCDate(nextDate.getUTCDate() + 365)
+    const stale = updateGameWorld(fresh, { currentDate: nextDate.toISOString().slice(0, 10) as never })
+    const staleModel = buildPlayerWorkspaceModel(stale, player.id)!
+    const acb = createAcbTestGame({ userTeamKey: 'caz' })
+    const acbViewer = getUserTeam(acb)!
+    const acbPlayer = Object.values(acb.players).find((candidate) => !acbViewer.rosterPlayerIds.includes(candidate.id))!
+    const acbAccess = derivePlayerKnowledgeAccess(acb, acbPlayer.id)
+
+    expect(staleModel.knowledgeAccess.knownDimensions.find((dimension) => dimension.id === 'shooting')!.evaluation.mode).not.toBe('EXACT')
+    expect(staleModel.ratings).toEqual([])
+    expect(acbAccess.kind).toBe('scouted')
+    expect(acbAccess.knownDimensions.length).toBeGreaterThan(0)
   })
 
   it('aggregates radar categories as the mean of canonical ratings in each family', () => {

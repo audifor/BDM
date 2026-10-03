@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { createNewGame } from '@/app/game'
 import { PLAYER_TRUTH_RATING_KEYS, getPlayerAge } from '@/domain/player'
 import { updateGameWorld } from '@/domain/world'
+import { getUserTeam } from '@/engine/calendar'
 
 import {
   buildPlayerComparisonSnapshot,
@@ -16,7 +17,7 @@ function playerIdOf(world: ReturnType<typeof createNewGame>, index: number) {
 describe('buildPlayerComparisonSnapshot', () => {
   it('exposes every canonical rating of the rival plus their identity', () => {
     const world = createNewGame()
-    const playerId = playerIdOf(world, 3)
+    const playerId = getUserTeam(world)!.rosterPlayerIds[0]!
     const snapshot = buildPlayerComparisonSnapshot(world, playerId)!
 
     expect(snapshot.playerId).toBe(playerId)
@@ -27,6 +28,26 @@ describe('buildPlayerComparisonSnapshot', () => {
     expect(snapshot.ratings.THREE_POINT_STATIC).toBe(
       world.players[playerId]!.basketball.ratings.THREE_POINT_STATIC,
     )
+  })
+
+  it('keeps external truth ratings out while retaining authorized scouting dimensions', () => {
+    const world = createNewGame()
+    const userTeam = getUserTeam(world)!
+    const playerId = Object.values(world.players).find((player) => !userTeam.rosterPlayerIds.includes(player.id))!.id
+    const scouted = updateGameWorld(world, {
+      organizationKnowledge: [{
+        organizationId: userTeam.organizationId,
+        subjectPlayerId: playerId,
+        dimensions: {
+          shooting: { coverage: 1, confidence: 0.9, assessedAt: world.currentDate, provenance: 'scoutReport', estimate: 78, uncertainty: 1 },
+        },
+      }],
+    })
+    const snapshot = buildPlayerComparisonSnapshot(scouted, playerId)!
+
+    expect(snapshot.accessKind).toBe('scouted')
+    expect(snapshot.ratings).toEqual({})
+    expect(snapshot.knownDimensions.map((dimension) => dimension.id)).toContain('shooting')
   })
 
   it('returns nothing for a player the world no longer has', () => {

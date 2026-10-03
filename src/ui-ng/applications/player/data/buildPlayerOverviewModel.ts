@@ -18,7 +18,6 @@ import { DEVELOPMENT_DOMAINS } from '@/domain/player/PlayerDevelopmentProfile'
 import type { PlayerId } from '@/domain/ids'
 import {
   formatRatingEvaluation,
-  getOrganizationRatingEvaluation,
   intelligenceSortValue,
 } from '@/domain/intelligence/OrganizationPlayerEvaluation'
 import type { PlayerRatingHistory } from '@/domain/development/PlayerRatingHistory'
@@ -47,6 +46,7 @@ import {
   unavailableField,
 } from './presentationHelpers'
 import { effectiveFieldGoalPercentage, trueShootingPercentage } from './statFormulas'
+import { derivePlayerKnowledgeAccess, type PlayerKnowledgeAccess } from '@/app/player/PlayerKnowledgeAccess'
 import type {
   OverviewAlertModel,
   OverviewChipModel,
@@ -145,14 +145,15 @@ function weakCategory(player: Player): (typeof RADAR_CATEGORY_ORDER)[number] {
 function buildIdentityModule(
   world: GameWorld,
   player: Player,
+  access: PlayerKnowledgeAccess,
 ): PlayerOverviewModel['identityModule'] {
   const position = player.basketball.primaryPosition
-  const strongest = strongCategory(player)
-  const weakest = weakCategory(player)
-  const topRatings: OverviewChipModel[] = canonicalRatings(player.basketball.ratings)
+  const strongest = access.kind === 'own-roster' ? strongCategory(player) : undefined
+  const weakest = access.kind === 'own-roster' ? weakCategory(player) : undefined
+  const topRatings: OverviewChipModel[] = access.kind === 'own-roster' ? canonicalRatings(player.basketball.ratings)
     .map(([key, value]) => ({ id: key, label: ratingLabel(key), value }))
     .sort((left, right) => right.value - left.value || left.label.localeCompare(right.label))
-    .slice(0, 4)
+    .slice(0, 4) : []
 
   const teamId = getPlayerRosterTeamId(world, player.id)
   const lineup = teamId === undefined ? undefined : world.lineupsByTeamId[teamId]
@@ -169,25 +170,41 @@ function buildIdentityModule(
           : availableField('Unassigned')
 
   const rosterIds = teamId === undefined ? [] : world.teams[teamId]!.rosterPlayerIds
-  const ranked = rosterIds
+  const ranked = access.kind === 'own-roster' ? rosterIds
     .map((id) => world.players[id])
     .filter((candidate): candidate is Player => candidate !== undefined)
     .sort(
       (left, right) =>
         canonicalMean(right.basketball.ratings) - canonicalMean(left.basketball.ratings) ||
         left.id.localeCompare(right.id),
-    )
+    ) : []
   const rank = ranked.findIndex((candidate) => candidate.id === player.id) + 1
   const rosterRank: PresentationField<number> =
-    rosterIds.length === 0 || rank === 0
-      ? unavailableField('No roster')
+    access.kind !== 'own-roster'
+      ? unavailableField('Not available')
+      : rosterIds.length === 0 || rank === 0
+        ? unavailableField('No roster')
       : availableField(rank)
 
+  const scoutedDimensions = access.knownDimensions.map((entry) => ({
+    id: entry.id,
+    label: entry.label,
+    displayLabel: entry.displayLabel,
+    confidence: entry.evaluation.confidence,
+    coveragePercent: entry.coveragePercent,
+  }))
+  const description = access.kind === 'own-roster'
+    ? `Strongest family is ${CATEGORY_LABELS[strongest!]} (${aggregateCategoryValue(strongest!, access.currentRatings)}); thinnest is ${CATEGORY_LABELS[weakest!]} (${aggregateCategoryValue(weakest!, access.currentRatings)}), with ${topRatings[0]?.label ?? 'no headline rating'} leading the profile.`
+    : scoutedDimensions.length === 0
+      ? 'Basketball ability is not scouted by your organization.'
+      : `Organization scouting covers ${scoutedDimensions.map((entry) => `${entry.label} ${entry.displayLabel}`).join(' · ')}. Individual rating scouting is not available.`
+
   return {
-    archetypeTitle: `${CATEGORY_ADJECTIVES[strongest]} ${POSITION_WORDS[position] ?? position}`,
+    archetypeTitle: access.kind === 'own-roster' ? `${CATEGORY_ADJECTIVES[strongest!]} ${POSITION_WORDS[position] ?? position}` : scoutedDimensions.length > 0 ? 'SCOUTING PROFILE' : 'NOT SCOUTED',
     roleTitle: POSITION_ROLE_TITLES[position] ?? position,
     chips: topRatings,
-    description: `Strongest family is ${CATEGORY_LABELS[strongest]} (${aggregateCategoryValue(strongest, player.basketball.ratings)}); thinnest is ${CATEGORY_LABELS[weakest]} (${aggregateCategoryValue(weakest, player.basketball.ratings)}), with ${topRatings[0]?.label ?? 'no headline rating'} leading the profile.`,
+    scoutedDimensions,
+    description,
     teamName:
       teamId === undefined
         ? unavailableField('Free agent')
@@ -521,6 +538,7 @@ function recentSplit(world: GameWorld, playerId: Player['id']): {
 function buildObservations(
   world: GameWorld,
   playerId: Player['id'],
+  access: PlayerKnowledgeAccess,
 ): { readonly observations: readonly OverviewObservationModel[]; readonly note: string } {
   const split = recentSplit(world, playerId)
   const observations: OverviewObservationModel[] = []
@@ -567,29 +585,31 @@ function buildObservations(
     }
   }
 
-  const player = world.players[playerId]!
-  const best = strongCategory(player)
-  const weakest = weakCategory(player)
-  const league = leagueBaselineFor(world, player, best)
-  if (league !== null) {
-    const delta = aggregateCategoryValue(best, player.basketball.ratings) - league
-    observations.push({
-      id: 'league-strength',
-      tone: delta >= 0 ? 'positive' : 'warning',
-      label: `${CATEGORY_LABELS[best]} against the league`,
-      detail: `${signed(delta)} versus the competition mean of ${league.toFixed(1)} for the same family.`,
-    })
-  }
-  const weakLeague = leagueBaselineFor(world, player, weakest)
-  if (weakLeague !== null && observations.length < MAX_OBSERVATIONS) {
-    const delta = aggregateCategoryValue(weakest, player.basketball.ratings) - weakLeague
-    if (delta < 0) {
+  if (access.kind === 'own-roster') {
+    const player = world.players[playerId]!
+    const best = strongCategory(player)
+    const weakest = weakCategory(player)
+    const league = leagueBaselineFor(world, player, best)
+    if (league !== null) {
+      const delta = aggregateCategoryValue(best, player.basketball.ratings) - league
       observations.push({
-        id: 'league-weakness',
-        tone: 'warning',
-        label: `${CATEGORY_LABELS[weakest]} below the league mean`,
-        detail: `${signed(delta)} versus the competition mean of ${weakLeague.toFixed(1)} for the same family.`,
+        id: 'league-strength',
+        tone: delta >= 0 ? 'positive' : 'warning',
+        label: `${CATEGORY_LABELS[best]} against the league`,
+        detail: `${signed(delta)} versus the competition mean of ${league.toFixed(1)} for the same family.`,
       })
+    }
+    const weakLeague = leagueBaselineFor(world, player, weakest)
+    if (weakLeague !== null && observations.length < MAX_OBSERVATIONS) {
+      const delta = aggregateCategoryValue(weakest, player.basketball.ratings) - weakLeague
+      if (delta < 0) {
+        observations.push({
+          id: 'league-weakness',
+          tone: 'warning',
+          label: `${CATEGORY_LABELS[weakest]} below the league mean`,
+          detail: `${signed(delta)} versus the competition mean of ${weakLeague.toFixed(1)} for the same family.`,
+        })
+      }
     }
   }
 
@@ -697,8 +717,24 @@ function buildRatingSeries(
 function buildDevelopmentPulse(
   world: GameWorld,
   player: Player,
+  access: PlayerKnowledgeAccess,
 ): PlayerOverviewModel['developmentPulse'] {
   const age = getPlayerAge(world, player.id)
+  if (access.kind !== 'own-roster') {
+    return {
+      trendLabel: 'Unavailable',
+      ageLabel: String(age),
+      stageLabel: 'Unavailable',
+      stageNote: 'Individual development readings require rating-level scouting, which is not available yet.',
+      ...buildPotential(player, access),
+      trainingLabel: unavailableField('Not available'),
+      series: [],
+      seasonLabels: [],
+      seriesNote: 'No individual rating history is available for this scouting view.',
+      movers: [],
+      moversNote: 'No individual rating movements are available for this scouting view.',
+    }
+  }
   const stimulus = world.developmentStimulusByPlayerId[player.id]?.byRating
   const concentrated = stimulus === undefined
     ? undefined
@@ -743,7 +779,7 @@ function buildDevelopmentPulse(
     ageLabel: String(age),
     stageLabel: DEVELOPMENT_STAGE_LABELS[player.development.developmentStage],
     stageNote: 'Informational stage label; the offseason transition applies the base age trend.',
-    ...buildPotential(world, player),
+    ...buildPotential(player, access),
     trainingLabel,
     series,
     seasonLabels: [...history.map((entry) => entry.seasonId), world.currentSeasonId].map(
@@ -766,14 +802,13 @@ function buildDevelopmentPulse(
  * has actually reported for one of the eight development domains. No evaluation means no claim.
  */
 function buildPotential(
-  world: GameWorld,
   player: Player,
+  access: PlayerKnowledgeAccess,
 ): Pick<
   PlayerOverviewModel['developmentPulse'],
   'potentialStatus' | 'potentialLabel' | 'potentialNote'
 > {
-  const teamId = getPlayerRosterTeamId(world, player.id)
-  if (teamId === undefined) {
+  if (access.organizationId === null) {
     return {
       potentialStatus: 'unavailable',
       potentialLabel: 'Not scouted',
@@ -781,18 +816,10 @@ function buildPotential(
     }
   }
 
-  const organizationId = world.teams[teamId]!.organizationId
-  const scouted = DEVELOPMENT_DOMAINS.map((domain) => ({
-    domain,
-    evaluation: getOrganizationRatingEvaluation({
-      organizationId,
-      playerId: player.id,
-      dimension: `potential:${domain}`,
-      knowledge: world.organizationKnowledge,
-      currentDate: world.currentDate,
-      publicPosition: player.basketball.primaryPosition,
-    }),
-  })).filter((entry) => entry.evaluation.mode !== 'UNKNOWN')
+  const scouted = access.knownPotential.map((entry) => ({
+    domain: DEVELOPMENT_DOMAINS.find((domain) => `potential:${domain}` === entry.id)!,
+    evaluation: entry.evaluation,
+  }))
 
   if (scouted.length === 0) {
     return {
@@ -1066,19 +1093,20 @@ function buildTimeline(world: GameWorld, playerId: Player['id']): readonly Overv
 export function buildPlayerOverviewModel(
   world: GameWorld,
   playerId: Player['id'],
+  access: PlayerKnowledgeAccess = derivePlayerKnowledgeAccess(world, playerId),
 ): PlayerOverviewModel | undefined {
   const player = world.players[playerId]
   if (player === undefined) return undefined
 
-  const { observations, note } = buildObservations(world, playerId)
+  const { observations, note } = buildObservations(world, playerId, access)
 
   return {
-    identityModule: buildIdentityModule(world, player),
+    identityModule: buildIdentityModule(world, player, access),
     season: buildSeasonSnapshot(world, playerId),
     recentForm: buildRecentForm(world, playerId),
     observations,
     observationsNote: note,
-    developmentPulse: buildDevelopmentPulse(world, player),
+    developmentPulse: buildDevelopmentPulse(world, player, access),
     contractPulse: buildContractPulse(world, playerId),
     medicalPulse: buildMedicalPulse(world, playerId),
     alerts: buildAlerts(world, playerId),

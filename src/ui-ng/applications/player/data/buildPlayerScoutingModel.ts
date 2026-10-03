@@ -8,10 +8,11 @@ import { getPlayerGameLogs } from '@/engine/stats/PlayerHistory'
 import { getPlayerKnowledgeSummary } from '@/engine/scouting'
 import { getPlayerRosterTeamId, type GameWorld } from '@/domain/world'
 
-import { formatGameDateLabel, findTeamForPlayer, opponentShortCode } from './presentationHelpers'
+import { formatGameDateLabel, opponentShortCode } from './presentationHelpers'
 import { ratingLabel } from './ratingCatalog'
 import { knowledgeDimensionLabel } from '@/ui-ng/applications/scouting/scoutingWorkspaceModel'
 import type { AttributeHighlightModel, OverviewGapModel, PresentationAvailability } from './playerWorkspaceModel'
+import { derivePlayerKnowledgeAccess, type PlayerKnowledgeAccess } from '@/app/player/PlayerKnowledgeAccess'
 
 /**
  * The six knowledge areas the reference shows. `dimensions` lists the real knowledge dimensions that
@@ -236,15 +237,15 @@ function estimateBounds(evaluation: RatingEvaluation): {
 export function buildPlayerScoutingModel(
   world: GameWorld,
   playerId: PlayerId,
+  access: PlayerKnowledgeAccess = derivePlayerKnowledgeAccess(world, playerId),
 ): PlayerScoutingModel {
   const player = world.players[playerId]
-  const team = findTeamForPlayer(world, playerId)
   const gaps = buildScoutingGaps()
 
-  if (player === undefined || team === undefined) {
+  if (player === undefined || access.organizationId === null) {
     return {
       status: 'unavailable',
-      unavailableLabel: team === undefined ? 'Requires a club context to read scouting knowledge.' : 'Player not found.',
+      unavailableLabel: player === undefined ? 'Player not found.' : 'Requires a club context to read scouting knowledge.',
       statusPanel: null,
       knowledgeAreas: [],
       attributes: [],
@@ -272,7 +273,7 @@ export function buildPlayerScoutingModel(
     }
   }
 
-  const organizationId = team.organizationId
+  const organizationId = access.organizationId
   const summary = getPlayerKnowledgeSummary(world, organizationId, playerId)
   const knowledge = world.organizationKnowledge.find(
     (entry) => entry.organizationId === organizationId && entry.subjectPlayerId === playerId,

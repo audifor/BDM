@@ -26,8 +26,9 @@ StaffPerson.professional.attributes + TeamStaffAssignment.role
   ├─ mission duration, evaluator rank and report error/uncertainty
   └─ registry role proficiency → scoutingQuality → delegated selection/uncertainty
 
-Player profile overview / development detail
-  └─ currently reads Player truth directly (mask bypass)
+Player profile UI
+  └─ derivePlayerKnowledgeAccess → own-roster truth OR current OrganizationKnowledge projection
+       └─ external unknown remains unknown; no 80-rating expansion
 
 Legacy PlayerKnowledgeRecord
   └─ Save V1 input payload only (team scoped, 7 old dimensions)
@@ -66,4 +67,8 @@ Tactical opposition report
 
 Current mutable scouting knowledge is only `GameWorld.organizationKnowledge`, keyed by the owning `Team.organizationId` and subject Player. Report completion consolidates findings there. Old `PlayerKnowledgeRecord` remains a V1 disk-input type; the V1 deserializer resolves each observer team through its required `organizationId`, merges records for teams sharing an organization, retains estimates, widens uncertainty to cover conflicts, and labels findings `legacyBaseline`. Repeated migration is deterministic and does not create duplicate organization/player entries.
 
-Normal generated and WorldDB worlds start with empty `organizationKnowledge` and have no legacy runtime field. The ACB test-game path seeds its compatibility baseline directly into OrganizationKnowledge. `getOrganizationKnowledge` and current market presentation read the same canonical collection. The Player profile's direct truth exposure remains for BS14C; the seven dimensions and remaining assignment/model gaps remain for later milestones.
+Normal generated and WorldDB worlds start with empty `organizationKnowledge` and have no legacy runtime field. The ACB test-game path seeds its compatibility baseline directly into OrganizationKnowledge. `getOrganizationKnowledge` and current market presentation read the same canonical collection.
+
+## BS14C visibility boundary
+
+`derivePlayerKnowledgeAccess` is the Player UI permission projection: exact current ratings only for the user's controlled roster; external evaluation only from the viewer's `Team.organizationId` in `GameWorld.organizationKnowledge`; unknown information stays unknown. Same-organization sharing grants knowledge, not exact PlayerTruth. Public identity/context, contract and injury remain in their owning domains. Potential remains knowledge-aware, true 80-rating history is masked externally, and rating-level scouting is deferred to BS14D. See [BS14C Player Knowledge Visibility](BS14C_PLAYER_KNOWLEDGE_VISIBILITY.md).

@@ -38,3 +38,7 @@ BS14B authority/legacy migration → BS14C knowledge permissions and profile mas
 ## BS14B delta disposition
 
 The selected BS13E lineage adds Staff responsibilities, workload, evaluator-quality inputs, and related save/runtime integration relative to BS14A's BS12C audit source. It does not change OrganizationKnowledge shape or authority, PlayerKnowledge compatibility shape, V1 migration, report completion authority, or acquisition valuation inputs. BS14A's authority findings remain valid; BS14B closes D-02 and updates the ACB exception under D-04.
+
+## BS14C decision: Player-profile visibility
+
+The information boundary is the user's controlled roster, not mere organization membership. `Team.organizationId` owns shared knowledge; controlled-roster membership alone authorizes exact current PlayerTruth ratings. External current ability and potential are projected from current OrganizationKnowledge at the world date. Unknown stays unknown, and seven aggregate dimensions are never expanded into individual ratings. Public identity/context and separately owned contract/medical information retain their existing rules. True external development history is withheld pending BS14D rating-level intelligence. Navigation into a profile reuses this policy.

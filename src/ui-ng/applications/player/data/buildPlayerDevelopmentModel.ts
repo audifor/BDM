@@ -4,10 +4,6 @@ import type { PlayerId, SeasonId } from '@/domain/ids'
 import { formatInjuryKind } from '@/domain/injury'
 import type { PlayerRatingHistory } from '@/domain/development/PlayerRatingHistory'
 import {
-  formatRatingEvaluation,
-  getOrganizationRatingEvaluation,
-} from '@/domain/intelligence/OrganizationPlayerEvaluation'
-import {
   getCareerFatigueForPlayer,
   getDevelopmentStimulusForPlayer,
   getTrainingPlanForTeam,
@@ -18,6 +14,7 @@ import { calculatePlayerStatAverages, getPlayerSeasonStats } from '@/engine/stat
 
 import { formatSeasonSpanLabel } from './buildPlayerContractModel'
 import { calendarDaysBetween } from './buildPlayerMedicalModel'
+import { derivePlayerKnowledgeAccess, type PlayerKnowledgeAccess } from '@/app/player/PlayerKnowledgeAccess'
 
 import {
   aggregateCategoryValue,
@@ -414,41 +411,70 @@ function buildSeasonStimulus(world: GameWorld, playerId: PlayerId): DevelopmentS
   }
 }
 
-function buildScoutPotential(world: GameWorld, playerId: PlayerId): DevelopmentScoutPotentialModel {
-  const player = world.players[playerId]
-  const team = findTeamForPlayer(world, playerId)
-  if (player === undefined || team === undefined) {
-    return {
-      status: 'unavailable',
-      rows: [],
-      unavailableLabel: 'Requires roster team scouting context',
-      contextNote: POTENTIAL_NOTE,
-    }
-  }
-
-  const organizationId = team.organizationId
-  const rows = DEVELOPMENT_DOMAINS.map((domain) => {
-    const evaluation = getOrganizationRatingEvaluation({
-      organizationId,
-      playerId,
-      dimension: `potential:${domain}`,
-      knowledge: world.organizationKnowledge,
-      currentDate: world.currentDate,
-      publicPosition: player.basketball.primaryPosition,
-    })
-    return {
-      id: `potential:${domain}`,
-      domainLabel: DEVELOPMENT_DOMAIN_LABELS[domain],
-      evaluationLabel: formatRatingEvaluation(evaluation),
-    }
-  })
-
+function buildScoutPotential(access: PlayerKnowledgeAccess): DevelopmentScoutPotentialModel {
+  const knownById = new Map(access.knownPotential.map((entry) => [entry.id, entry.displayLabel]))
+  const rows = DEVELOPMENT_DOMAINS.map((domain) => ({
+    id: `potential:${domain}`,
+    domainLabel: DEVELOPMENT_DOMAIN_LABELS[domain],
+    evaluationLabel: knownById.get(`potential:${domain}`) ?? '?',
+  }))
   const hasSignal = rows.some((row) => row.evaluationLabel !== '?')
   return {
     status: hasSignal ? 'available' : 'unavailable',
     rows,
     unavailableLabel: hasSignal ? null : 'No scouting potential evaluations available',
     contextNote: POTENTIAL_NOTE,
+  }
+}
+
+function buildScoutingOnlyDevelopmentModel(
+  world: GameWorld,
+  playerId: PlayerId,
+  scoutPotential: DevelopmentScoutPotentialModel,
+): PlayerDevelopmentModel {
+  const age = getPlayerAge(world, playerId)
+  const projection = buildProjection(world, playerId, scoutPotential)
+  const unavailable = 'Individual rating development is unavailable until rating-level scouting exists.'
+  return {
+    contextBand: {
+      age,
+      seasonLabel: world.seasons[world.currentSeasonId]?.label ?? null,
+      developmentStageLabel: 'Unavailable',
+      developmentStageNote: unavailable,
+      ageTrendLabel: 'Unavailable',
+      ageTrendNote: unavailable,
+    },
+    overview: {
+      ageLabel: String(age),
+      careerStageLabel: 'Unavailable',
+      trendLabel: 'Unavailable',
+      trendTone: 'neutral',
+      trendNote: unavailable,
+      nextEvaluationLabel: 'Unavailable',
+      nextEvaluationNote: unavailable,
+    },
+    insight: unavailable,
+    seasonStimulus: { totalStimulus: 0, categories: [], topRatings: [], contextNote: unavailable },
+    scoutPotential,
+    projection,
+    trainingContext: { teamIntensity: null, teamFocus: null, individualPlanActive: false, individualFocus: null, individualIntensity: null, contextNote: unavailable },
+    trainingPlan: { focusLabel: 'Unavailable', focusDetail: unavailable, secondaryLabel: 'Unavailable', secondaryDetail: unavailable, loadFill: null, loadLabel: 'Unavailable', loadTone: 'neutral' },
+    trainingEffect: { rows: [], confidenceLabel: 'Unavailable', confidenceFill: null, note: unavailable },
+    longitudinal: { headline: 'Individual development', status: 'unavailable', message: unavailable, series: [], movers: [], events: [], note: unavailable },
+    categoryCurve: [],
+    markers: [],
+    detailByCategory: {} as Readonly<Record<RatingCategory, DevelopmentDetailModel>>,
+    lifecycle: {
+      stages: LIFECYCLE_ORDER.map((stage) => ({ id: stage, label: DEVELOPMENT_STAGE_LABELS[stage], isCurrent: false })),
+      currentLabel: 'Unavailable',
+      focusLabel: 'Unavailable',
+      potentialLabel: scoutPotential.rows.find((row) => row.evaluationLabel !== '?')?.evaluationLabel ?? 'Not scouted',
+      potentialStatus: scoutPotential.status,
+    },
+    categoryDevelopment: [],
+    drivers: [],
+    gaps: [{ id: 'individual-ratings', label: 'Individual rating development', reason: unavailable }],
+    defaultSelectedItemId: null,
   }
 }
 
@@ -1093,14 +1119,18 @@ function buildDevelopmentGaps(): readonly OverviewGapModel[] {
 export function buildPlayerDevelopmentModel(
   world: GameWorld,
   playerId: PlayerId,
+  access: PlayerKnowledgeAccess = derivePlayerKnowledgeAccess(world, playerId),
 ): PlayerDevelopmentModel | undefined {
   const player = world.players[playerId]
   if (player === undefined) return undefined
 
   const age = getPlayerAge(world, playerId)
   const season = world.seasons[world.currentSeasonId]
+  const scoutPotential = buildScoutPotential(access)
+  if (access.kind !== 'own-roster') {
+    return buildScoutingOnlyDevelopmentModel(world, playerId, scoutPotential)
+  }
   const seasonStimulus = buildSeasonStimulus(world, playerId)
-  const scoutPotential = buildScoutPotential(world, playerId)
   const trainingContext = buildTrainingContext(world, playerId)
   const defaultCategory =
     seasonStimulus.categories.find((row) => row.stimulusTotal > 0)?.id ??

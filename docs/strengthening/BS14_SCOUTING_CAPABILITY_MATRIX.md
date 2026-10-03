@@ -4,7 +4,7 @@ Snapshot: source `c52a21717a5973ee33d99a0df3000d405bcb9847`.
 
 | Capability | Status | Authority | Gameplay effect | UI visible | Save persistent | Problem / note |
 |---|---|---|---|---|---|---|
-| Player true ratings (80) | REAL | `Player.basketball.ratings` | Drives simulation | Yes, exact on profile paths | Yes | Profile bypasses scouting mask. |
+| Player true ratings (80) | REAL | `Player.basketball.ratings` | Drives simulation | Exact only for controlled roster; external profile rows omitted | Yes | External individual scouting is deferred to BS14D. |
 | Staff evaluator attributes | REAL | `StaffPerson.professional.attributes` | Error, uncertainty, time, selection | Staff UI | Yes | No overall; distinct quality numbers coexist. |
 | Staff Scout roles | REAL | Role registry + TeamStaffAssignment | Eligibility/proficiency/ranking | Staff UI | Yes | Default human request only uses regionalScout. |
 | Player assignment | REAL | `scoutingAssignmentsById` | Queued/active/completed daily work | Scouting workspace | Yes | Human UI only QUICK_LOOK, normal, fixed evaluator. |
@@ -14,7 +14,7 @@ Snapshot: source `c52a21717a5973ee33d99a0df3000d405bcb9847`.
 | Legacy team knowledge | LEGACY / MIGRATION INPUT | V1 `playerKnowledge` payload and `PlayerKnowledgeRecord` type | V1→V2 conversion only | None at runtime | V1 input only | Converts by `Team.organizationId` into organization-scoped `legacyBaseline` findings. |
 | Repeated observation | PARTIAL | consolidation formula | Changes estimate/coverage; may alter uncertainty | Report history | Yes | No staged discovery progression; disagreement may widen uncertainty. |
 | Knowledge decay | PARTIAL | lazy freshness in evaluation helpers | Range/confidence display worsens after 365 days | Yes | Date remains; no rewrite | No expiry, refresh, or event. |
-| Player profile fog | DISCONNECTED | profile builders read Player directly | None; scouting mask bypassed | Exact ratings visible | N/A | P0 external player truth leak. |
+| Player profile fog | REAL / PERMISSIONED | `derivePlayerKnowledgeAccess` + `organizationKnowledge` | No simulation effect | Own exact; external aggregates/unknown | N/A | External development history is masked pending BS14D. |
 | Potential evaluation | PARTIAL | report findings + OrganizationKnowledge | Potential valuation and display estimates | Scouting/development panel | Yes | Eight domains, never rendered exact by evaluation helper. |
 | 80-rating scouting | MISSING | No finding/report mapping for each canonical key | No attribute-level report effect | 7 summary dimensions only | N/A | Stale 7-dimension assumption. |
 | Player discovery/search | MISSING | No discovery authority | Assignments need known Player ID; AI bounded targets | Knowledge board is own roster/known subjects | N/A | No discoverability state. |
@@ -29,9 +29,13 @@ Snapshot: source `c52a21717a5973ee33d99a0df3000d405bcb9847`.
 | Report narrative/strengths/weaknesses | UI_ONLY/PARTIAL | Findings only | No narrative effect | Some derived labels | No narrative | No persisted observation text or general recommendation. |
 | Scout workload | REAL | mission-unit activeWorkload + generic workload | Queueing/duration/selection | Assignment status | Assignments persist | No travel or cash cost. |
 | Financial scouting budget/cost | MISSING | None | None | None | No | No per-assignment cost. |
-| WorldDB initial knowledge | MISSING | Bootstrap creates no knowledge | Starts with empty org knowledge | Truth still profile-visible | None initially | Same empty knowledge as generated world. |
-| Generated world initial knowledge | MISSING | createNewGame has empty knowledge | No baseline reports | Profile exactness unaffected | Empty collections save | Legacy helper not called on normal generation. |
+| WorldDB initial knowledge | MISSING | Bootstrap creates no knowledge | Starts with empty org knowledge | External players are Not scouted | None initially | Same empty knowledge as generated world. |
+| Generated world initial knowledge | MISSING | createNewGame has empty knowledge | No baseline reports | External players are Not scouted | Empty collections save | Legacy helper not called on normal generation. |
 
 ## BS14B authority status
 
-`GameWorld.organizationKnowledge` is the only current mutable Player scouting knowledge authority. V1 legacy records are parsed only at the compatibility boundary and immediately converted. Generated and WorldDB creation do not initialize legacy knowledge; ACB test-game baseline data is authored into OrganizationKnowledge. BS14B does not change profile visibility, report dimensions, geographic scope, or valuation formulas.
+`GameWorld.organizationKnowledge` is the only current mutable Player scouting knowledge authority. V1 legacy records are parsed only at the compatibility boundary and immediately converted. Generated and WorldDB creation do not initialize legacy knowledge; ACB test-game baseline data is authored into OrganizationKnowledge.
+
+## BS14C delta
+
+The Player profile fog is now permission-aware through `derivePlayerKnowledgeAccess`. Own controlled-roster current ratings remain exact; external profiles receive only current organization knowledge plus public context. External 80-rating attributes and development history are unavailable until BS14D adds rating-level scouting. Potential remains based on OrganizationKnowledge. No global knowledge was seeded, and the ACB baseline uses the shared projection. See [BS14C Player Knowledge Visibility](BS14C_PLAYER_KNOWLEDGE_VISIBILITY.md).

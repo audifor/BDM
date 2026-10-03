@@ -62,7 +62,7 @@ Unknown scouting dimensions use deterministic ID-based prior estimates with UNKN
 
 ## Integration gaps
 
-- Player profile overview and development detail bypass the organization evaluation projector and read Player truth.
+- Player profile overview, attributes, development, scouting and comparison consume the canonical permission projection; external exact 80-rating scouting remains a BS14D gap.
 - Scouting assignment findings cover seven groups/eight potential dimensions; the 80-value rating catalogue is not the report schema.
 - Legacy `PlayerKnowledgeRecord` exists only as a V1 payload parser/migration type; runtime readers/writers and acquisition inputs have been removed.
 - Normal generated and WorldDB bootstrap paths do not seed current organization knowledge, evidence, assignments, or reports.
@@ -78,3 +78,7 @@ Unknown scouting dimensions use deterministic ID-based prior estimates with UNKN
 ## BS14B consumer certification
 
 Scouting report completion, organization/player evaluation, market, draft, recruiting, AI free-agent/draft/recruiting ranking, and tactical opposition preparation use OrganizationKnowledge. Market workspace's knowledge badge was the remaining active legacy read and now queries the organization's knowledge. Tactical opposition reports remain a distinct team/game artifact and may use OrganizationKnowledge as an input; they are not evaluator reports and do not own player findings.
+
+## BS14C profile integration
+
+`derivePlayerKnowledgeAccess` now projects exact-own-roster, scouted-external and unknown-external access for Player workspace, overview, attributes, development, scouting, comparison and compact profile surfaces. Shared Market, Draft, Recruiting and external roster links therefore preserve the same mask at the workspace builder. External view models do not carry individual truth ratings or their history; aggregate and potential displays use the viewer organization's freshness-adjusted OrganizationKnowledge. ACB baseline knowledge follows the same route. See [BS14C Player Knowledge Visibility](BS14C_PLAYER_KNOWLEDGE_VISIBILITY.md).
