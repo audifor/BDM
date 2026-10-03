@@ -57,12 +57,7 @@ export function progressScoutingAssignments(world: GameWorld): GameWorld {
   const priority = { URGENT: 0, HIGH: 1, NORMAL: 2, LOW: 3 } as const
   for (const assignment of Object.values(world.scoutingAssignmentsById).filter((item) => item.status !== 'COMPLETED' && item.status !== 'CANCELLED').sort((a, b) => priority[a.priority] - priority[b.priority] || a.id.localeCompare(b.id))) {
     if (assignment.status === 'QUEUED') {
-      const territoryAllowance = Math.min(
-        SCOUTING_TERRITORY_WORKLOAD_COST,
-        Object.values(next.scoutingTerritoryAssignmentsById).filter((item) => item.scoutStaffId === assignment.evaluatorStaffId && item.status === 'ACTIVE').length * SCOUTING_TERRITORY_WORKLOAD_COST,
-      )
-      const capacity = (assignment.missionType === 'QUICK_LOOK' ? 6 : 4) + territoryAllowance
-      if (activeWorkload(next, assignment.evaluatorStaffId) + missionUnits[assignment.missionType] > capacity) continue
+      if (!hasScoutingCapacityForMission(next, assignment.evaluatorStaffId, assignment.missionType)) continue
       if (assignment.missionType === 'LIVE_GAME' && (assignment.gameId === undefined || world.games[assignment.gameId as keyof typeof world.games]?.date !== world.currentDate)) continue
       const expectedCompletionAt = addDays(world.currentDate, durationDays(next, assignment))
       next = updateAssignment(next, { ...assignment, status: 'ACTIVE', startedAt: world.currentDate, expectedCompletionAt })
@@ -73,6 +68,15 @@ export function progressScoutingAssignments(world: GameWorld): GameWorld {
     next = completeAssignment(next, assignment.id)
   }
   return next
+}
+
+export function hasScoutingCapacityForMission(world: GameWorld, staffId: StaffPersonId, missionType: ScoutingMission): boolean {
+  const territoryAllowance = Math.min(
+    SCOUTING_TERRITORY_WORKLOAD_COST,
+    Object.values(world.scoutingTerritoryAssignmentsById).filter((item) => item.scoutStaffId === staffId && item.status === 'ACTIVE').length * SCOUTING_TERRITORY_WORKLOAD_COST,
+  )
+  const capacity = (missionType === 'QUICK_LOOK' ? 6 : 4) + territoryAllowance
+  return activeWorkload(world, staffId) + missionUnits[missionType] <= capacity
 }
 
 export function durationDays(world: GameWorld, assignment: ScoutingAssignment): number {

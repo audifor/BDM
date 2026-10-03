@@ -64,3 +64,15 @@ See [BS14D Rating-Level Scouting](BS14D_RATING_LEVEL_SCOUTING.md). Status: **TEC
 - Territory and awareness fields are optional additive V2 scouting-runtime values, defaulting empty for older saves and preserved by V2/V3/V4.
 
 See [BS14E Scouting Operations and Coverage](BS14E_SCOUTING_OPERATIONS_AND_COVERAGE.md).
+
+## BS14F decisions
+
+- AI means a coached team whose coach differs from `world.userCoachId`; no responsibility values are altered. Human delegation stays on the existing delegated path.
+- Strategic AI Scouting planning runs on days 1, 8, 15, 22, and 29. Daily assignment execution and territory discovery continue in their established calendar phases; no new cooldown save field is required.
+- Territory count is capped at three per organization and by employed eligible Scouting Staff. Own Competition leads, with relevant role-suitable domestic/foreign/acquisition ecosystems next; canonical BS14E coverage penalizes saturated areas. Valid operations persist to prevent churn.
+- AI targets at most 120 bounded public/contextual candidates and requests at most two reports per organization per cycle. Unknown starts at Quick Look; broad-only or sufficiently stale high-priority knowledge may escalate to Full Report. Skill and potential missions are not selected automatically.
+- Active/equivalent assignments, same-day reports, shared workload, and deterministic evaluator ranking guard duplicate and overload work. No hidden ratings influence target selection.
+- Existing acquisition valuation remains the authority for free agency, market/trades, draft, and recruiting. Urgent decisions proceed with available knowledge or UNKNOWN priors rather than waiting for a report.
+- OrganizationKnowledge remains the only current evaluation authority for both human and AI consumers; awareness confers identity only. Existing saves carry awareness, reports, and knowledge across reload and season transition.
+
+See [BS14F AI Scouting and Acquisition](BS14F_AI_SCOUTING_AND_ACQUISITION.md). Status: **TECH READY after focused validation**; final human Scouting UX remains BS14G.

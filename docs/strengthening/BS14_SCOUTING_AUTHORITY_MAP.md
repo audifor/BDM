@@ -80,3 +80,7 @@ Current ability findings now use `rating:<CANONICAL_KEY>` for the 80 keys in `PL
 ## BS14E discovery authority
 
 `ScoutingTerritory` and the world helpers resolve current membership through Team country and Competition participants/current rosters. `OrganizationPlayerAwareness` is a separate identity-only authority; it does not grant rating or potential knowledge. Persistent territory operations and daily discovery are documented in [BS14E Scouting Operations and Coverage](BS14E_SCOUTING_OPERATIONS_AND_COVERAGE.md).
+
+## BS14F autonomous authority
+
+`progressAiScoutingOperations` is the sole AI strategic Scouting planner. It calls canonical territory operations and `requestScouting`, while daily discovery/report completion remains in their existing engines. AI eligibility follows the coached-team convention (`coachId` is defined and differs from `userCoachId`); human teams stay under existing delegation. Targets and valuation use public context and OrganizationKnowledge, never hidden PlayerTruth. Details: [BS14F AI Scouting and Acquisition](BS14F_AI_SCOUTING_AND_ACQUISITION.md).

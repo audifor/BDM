@@ -61,3 +61,14 @@ See [BS14D Rating-Level Scouting](BS14D_RATING_LEVEL_SCOUTING.md) for the error,
 | Organization player awareness | REAL | `organizationPlayerAwarenessById` | Discovered identity becomes a Quick Look candidate | Scouting workspace candidate source | V2/V3/V4 | No rating or potential findings are created. |
 | Public player addressability | REAL | Roster, opponent, draft, recruiting, market knowledge, free-agent sources | Publicly exposed players remain selectable | Scouting workspace | Source systems | Identity access does not grant knowledge. |
 | `prioritizeRegions` | CONVERGED | Existing responsibility ID; current scheduled Competition focus | Stops grouping by nationality | No new UI | Existing outcomes | Wider AI territory operations are BS14F. |
+
+## BS14F delta
+
+| Capability | Status | Authority | Gameplay effect | UI visible | Save persistent | Problem / note |
+|---|---|---|---|---|---|---|
+| Autonomous AI territory planning | REAL | `progressAiScoutingOperations` + BS14E territory service | Periodic bounded coverage by eligible AI Staff | No new UI | Assignments use existing V2/V3/V4 runtime | Maximum three per organization, capped by eligible Scout slots. |
+| AI awareness and report funnel | REAL | Territory discovery + `requestScouting` | Public/contextual target selection, Quick Look then selective Full Report | Existing Scouting views | Awareness, assignments, reports and knowledge already persist | Two report requests per organization per planning cycle. |
+| Human control boundary | REAL | `coachId === userCoachId` | Prevents autonomous work on user-controlled teams | Existing delegation UI | No new responsibility state | Existing delegation remains authoritative. |
+| Acquisition knowledge feedback | REAL | Existing OrganizationKnowledge valuation consumers | Completed report findings can change real valuation inputs | Existing consumer views | OrganizationKnowledge already persists | No new market, trade, draft, or recruiting algorithm. |
+
+See [BS14F AI Scouting and Acquisition](BS14F_AI_SCOUTING_AND_ACQUISITION.md) for bounds, fairness, and validation.
