@@ -2,10 +2,13 @@ import type { GameDate } from '@/domain/date'
 import type { PlayerId } from '@/domain/ids'
 import type { Evidence, ScoutingMission, ScoutingPriority, ScoutingStatus, ScoutingTerritory, ScoutingTerritoryAssignment } from '@/domain/scouting'
 
-export const SCOUTING_WORKSPACE_TABS = ['knowledge', 'assignments', 'reports', 'coverage', 'opposition'] as const
+export const SCOUTING_WORKSPACE_TABS = ['centre', 'search', 'focuses', 'knowledge', 'assignments', 'reports', 'coverage', 'opposition'] as const
 export type ScoutingWorkspaceTabId = (typeof SCOUTING_WORKSPACE_TABS)[number]
 
 export const SCOUTING_TAB_LABELS: Readonly<Record<ScoutingWorkspaceTabId, string>> = {
+  centre: 'Centre',
+  search: 'Player Search',
+  focuses: 'Recruitment Focuses',
   knowledge: 'Knowledge',
   assignments: 'Assignments',
   reports: 'Reports',

@@ -11,11 +11,11 @@ import { BdmButton, Dialog, IconAction } from '@/ui/components/designSystem'
 import { DESKTOP_WIDGETS, DESKTOP_WIDGET_SNAP, DESKTOP_TOP_BAR_HEIGHT, DESKTOP_BOTTOM_BAR_HEIGHT, getDesktopWidget, rectsIntersect, snapToGrid, type DesktopWidgetBounds, type DesktopWidgetId, type DesktopWidgetLayout } from './DesktopWidgetRegistry'
 import { DesktopClubIdentity } from './DesktopClubIdentity'
 import { ContinueControl } from './ContinueControl'
-import type { ContinueResult, SimulateUntilResult } from '@/app/game'
+import type { ContinueResult, SimulateUntilResult, WorldDayAdvanceResult } from '@/app/game'
 import type { GameDate } from '@/domain/date'
 import type { GameId } from '@/domain/ids'
 
-interface DesktopWidgetLayerProps { readonly world: Parameters<typeof getUserTeam>[0]; readonly onOpenApp: (id: string) => void; readonly onPlayGame: () => void; readonly onInstantResult: () => void; readonly onContinue: () => ContinueResult; readonly onAdvanceDay: () => void; readonly onOpenPendingGame: (gameId: GameId) => void; readonly onStartNextSeason: () => void; readonly onSimulateUntilDate: (date: GameDate) => SimulateUntilResult }
+interface DesktopWidgetLayerProps { readonly world: Parameters<typeof getUserTeam>[0]; readonly onOpenApp: (id: string) => void; readonly onPlayGame: () => void; readonly onInstantResult: () => void; readonly onContinue: () => ContinueResult; readonly onAdvanceDay: () => WorldDayAdvanceResult | void; readonly onOpenPendingGame: (gameId: GameId) => void; readonly onStartNextSeason: () => void; readonly onSimulateUntilDate: (date: GameDate) => SimulateUntilResult }
 
 export function DesktopWidgetLayer({ world, onOpenApp, onPlayGame, onInstantResult, onContinue, onAdvanceDay, onOpenPendingGame, onStartNextSeason, onSimulateUntilDate }: DesktopWidgetLayerProps) {
   const layerRef = useRef<HTMLDivElement>(null); const [bounds, setBounds] = useState<DesktopWidgetBounds>({ width: 1920, height: 1080 }); const [pickerOpen, setPickerOpen] = useState(false)

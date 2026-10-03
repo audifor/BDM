@@ -1,85 +1,37 @@
 # BS14 Scouting Decision Register
 
-Snapshot: audit facts at `c52a21717a5973ee33d99a0df3000d405bcb9847`. “Decision” means a confirmed repository fact or a deferred product/architecture decision; no gameplay rule is approved here.
+Current closure dispositions through BS14H. This register replaces the historical audit snapshot.
 
-## Confirmed findings
-
-| ID | Finding | Severity | Evidence / disposition |
+| ID | Decision or gap | Disposition | Evidence / limit |
 |---|---|---|---|
-| D-01 | Player profile has an exact PlayerTruth bypass for ratings | P0 | `buildPlayerOverviewModel` enumerates `PLAYER_TRUTH_RATING_KEYS`; development detail reads truth. Preserve as audit finding; BS14C must decide access policy before changing it. |
-| D-02 | OrganizationKnowledge is the sole current mutable Player scouting knowledge authority | CLOSED for BS14B | Runtime `playerKnowledgeById` and its writers/readers were removed; V1 records remain migration input and map through `Team.organizationId`. |
-| D-03 | Current scouting dimensions do not represent 80 individual ratings | P1 | `ScoutingEngine.domains` maps seven aggregates; PlayerTruth catalog has 80 rating keys. BS14D must select the report dimension contract. |
-| D-04 | Generated and WorldDB starts have empty current knowledge; ACB test-game seeds a special baseline | CONFIRMED | Normal creation has no legacy authority. ACB baseline is now seeded directly as `legacyBaseline` OrganizationKnowledge. Initial knowledge policy remains future work. |
-| D-05 | Player assignment addressing is not discovery | P1 | Assignment requires PlayerId; current human board has own roster and already-known subjects; automation uses bounded known domain sources. |
-| D-06 | Staff causal signals are multiple and intentionally distinct | P2 | Professional attrs, evaluator experience, role proficiency, quality score, confidence, and coverage each have separate formulas. No universal overall. |
-| D-07 | Region prioritization has no geographic authority | P2 | It ranks nationality clusters in next opponent pool. Decide whether to rename/narrow or add actual geography model in BS14E. |
-| D-08 | AI does not default to delegated scouting | P2 | Responsibility enrichment sets default mode userControlled; AI valuation consumers use knowledge/UNKNOWN priors. Decide AI assignment cadence in BS14F. |
-| D-09 | Knowledge decays only when projected | P2 | Lazy freshness increases uncertainty; no expiry/rewrite/refresh lifecycle. Decide whether persisted history should be immutable evidence with derived current certainty. |
-| D-10 | Player scouting and tactical opposition scouting are separate report systems | P2 | EvaluatorReport vs OppositionScoutingReport, distinct producer/quality/output/save; only shared generic responsibility/OrganizationKnowledge surfaces. |
-| D-11 | Human Scouting UI exposes one request variant | P2 | QUICK_LOOK only; fixed regional scout/normal priority; no cancellation or other mission controls. |
-| D-12 | Real geographic scope and travel/budget are absent | P2 | No coverage or Region state, cost producer, or travel calculation. |
-| D-13 | Some evidence-source enum options lack producer integrations | P3 | Automatic completion produces source from mission type; source list includes many external inputs without ingestion in this path. |
+| D-01 | Sole mutable current evaluation authority | CLOSED | `GameWorld.organizationKnowledge`. |
+| D-02 | Identity/discovery must not grant ability | CLOSED | `organizationPlayerAwarenessById` stores awareness separately; tests cover discovery without ratings. |
+| D-03 | External PlayerTruth profile leak | CLOSED | `derivePlayerKnowledgeAccess` is the profile boundary; own roster alone receives exact ratings. |
+| D-04 | Full Report rating coverage | CLOSED | Canonical 80 rating findings enter the standard evidence/report/consolidation pipeline. |
+| D-05 | Skill Evaluation scope | CLOSED | Only the requested canonical family is emitted. |
+| D-06 | Potential truth masking | CLOSED | Potential Evaluation emits estimates and never true development ceilings. |
+| D-07 | Live Game provenance | CLOSED | Eligibility requires a scheduled player game; report evidence references that game. |
+| D-08 | Staff role and employment suitability | CLOSED | Eligibility requires a live team assignment and employment; role proficiency, quality and workload stay separate signals. Advance Scouts may do broad opposition Full Reports and contextual Fit/Live Game missions. |
+| D-09 | Human, delegated and advisory convergence | CLOSED | Requests use the canonical assignment pipeline; advisory recommendations remain `applied: false`. |
+| D-10 | AI scouting and fairness | CLOSED | Bounded planner excludes user-controlled teams and uses public/contextual candidates plus shared operations; acquisition uses OrganizationKnowledge. |
+| D-11 | Territory lifecycle | CLOSED | COUNTRY/COMPETITION operations resolve current membership, discover awareness only, stop when ended and preserve awareness. |
+| D-12 | Save/load of runtime Scouting state | CLOSED | Targeted V2/V3/V4 and territory persistence regressions pass; legacy omission defaults are covered. |
+| D-13 | Exactly-once completion and replay | CLOSED | Terminal-state filtering, stable IDs and same-date replay regression prevent duplicate report/evidence/knowledge. |
+| D-14 | Season rollover | CLOSED | Added targeted test preserves knowledge, reports, evidence, assignments, awareness and territory operation. |
+| D-15 | Adjacent season/calendar medical invariant | OUTSIDE | `startNextSeason.test.ts` has a pre-existing `advanceGameDay` failure: rehabilitation date precedes injury. Reproduced unchanged at the BS14G base SHA; no Scouting code is in that path. |
+| D-16 | Tendency, personality and medical scouting | DEFERRED | Outside current mission and knowledge dimensions. |
+| D-17 | Travel simulation and financial scouting cost | DEFERRED | Staff workload is the current operational capacity model. |
+| D-18 | Richer evidence ingestion and authored report narratives | DEFERRED | Current synthetic evidence/report contract remains unchanged. |
+| D-19 | Generated world seeded scouting knowledge | OUTSIDE | Fresh worlds start without invented observations; explicit ACB fixture baseline remains supported. |
+| D-20 | Final visual smoke after BS14H | DEFERRED to BS14I | The new Recruitment Focus product flow replaces final certification as this milestone. BS14G full visual validation remains user-confirmed; BS14I owns end-to-end Scouting certification. |
 
-## Product/architecture questions intentionally left open
+The prior technical audit found no unresolved Scouting P0/P1 authority gap; the known red adjacent test D-15 is reproduced at the BS14G base and is outside Scouting. The previous BS14H certification effort is stopped. Recruitment Focuses, fog-safe Player Search and the end-to-end brief-to-candidate workflow are now open implementation scope; BS14I owns final certification.
 
-1. What should cross-team knowledge access be when multiple teams share one organization? BS14B uses the existing `Team.organizationId` ownership rule for current evaluation.
-2. Which of the 80 rating keys and 40 tendency keys are scouted, reported, or made public through independent facts?
-3. Which fields are inherently public (identity, age, position, injury, contract, value) and which require evidence/permission?
-4. Should own-roster ability be exact, estimated, or mixed with staff observation? Current UI/legacy ownership differs by route.
-5. What does “region” mean in the basketball universe: country, league, competition, geography, or a configured scout territory?
-6. How should AI acquire initial player knowledge and how much operational work should AI clubs perform?
-7. Should stale evidence remain in an immutable archive while current estimates recalculate, or should findings expire/refresh?
-8. Is tactical Opposition Scouting a separate domain permanently, with only shared source knowledge, or should specific common report/evidence contracts be reused?
-
-## Proposed follow-on sequence
-
-BS14B authority/legacy migration → BS14C knowledge permissions and profile masking → BS14D 80-rating report/quality model → BS14E assignment operations and real geography → BS14F market/recruiting/draft and AI integration → BS14G user-facing actions/report content → BS14H save, daily lifecycle, and integration certification. This order avoids designing UI around unresolved truth/knowledge ownership. The sequence remains a recommendation only.
-
-## BS14B delta disposition
-
-The selected BS13E lineage adds Staff responsibilities, workload, evaluator-quality inputs, and related save/runtime integration relative to BS14A's BS12C audit source. It does not change OrganizationKnowledge shape or authority, PlayerKnowledge compatibility shape, V1 migration, report completion authority, or acquisition valuation inputs. BS14A's authority findings remain valid; BS14B closes D-02 and updates the ACB exception under D-04.
-
-## BS14C decision: Player-profile visibility
-
-The information boundary is the user's controlled roster, not mere organization membership. `Team.organizationId` owns shared knowledge; controlled-roster membership alone authorizes exact current PlayerTruth ratings. External current ability and potential are projected from current OrganizationKnowledge at the world date. Unknown stays unknown, and seven aggregate dimensions are never expanded into individual ratings. Public identity/context and separately owned contract/medical information retain their existing rules. True external development history is withheld pending BS14D rating-level intelligence. Navigation into a profile reuses this policy.
-
-## BS14D decisions
-
-- Current basketball rating findings use `rating:<CANONICAL_KEY>`; `PlayerTruthCatalog.ts` owns the single 80-key skill-family map. Tendencies remain deferred.
-- Quick Look stays aggregate; Full Report covers all 80 current ratings; Skill Evaluation covers the selected family (and supports legacy aggregate target IDs); potential stays separate; Tactical Fit stays contextual; Live Game retains broad observations pending a defensible per-rating observation map.
-- Rating-derived aggregate projections take precedence when canonical-member coverage is at least 0.60. The estimate is an equal-weight known-member mean; uncertainty includes a missing-coverage penalty. Below threshold, the stored aggregate finding remains the compatibility fallback.
-- Rating findings consolidate in OrganizationKnowledge under the same per-dimension rules, age through lazy freshness, and do not synchronize with later PlayerTruth development.
-- V2/V3/V4 already preserve generic dimensions; no save schema migration is required. Aggregate-only legacy findings remain intact and do not create fake individual ratings.
-- External profile rows use only exact `rating:<KEY>` organization findings; own-roster exact ratings and external development masking continue under BS14C.
-
-See [BS14D Rating-Level Scouting](BS14D_RATING_LEVEL_SCOUTING.md). Status: **TECH READY / AWAITING VALIDATION**; this does not certify all Scouting complete.
-
-## BS14E decisions
-
-- Territory is `COUNTRY` or `COMPETITION`, based on current Team/Competition membership. Nationality remains biography.
-- Identity awareness is organization-scoped and distinct from OrganizationKnowledge. Territory discovery does not create rating or potential knowledge.
-- Each active territory assignment costs two existing Scouting workload units. Daily discovery is deterministic, quality-sensitive, workload-limited, and capped at three Players.
-- Publicly addressable roster, opponent, active draft, recruiting, market-knowledge, and free-agent Players remain candidates without gaining evaluation knowledge.
-- The `prioritizeRegions` ID is preserved; its current delegated decision records the scheduled game's Competition territory. Broad AI operation cadence is deferred to BS14F.
-- Territory and awareness fields are optional additive V2 scouting-runtime values, defaulting empty for older saves and preserved by V2/V3/V4.
-
-See [BS14E Scouting Operations and Coverage](BS14E_SCOUTING_OPERATIONS_AND_COVERAGE.md).
-
-## BS14F decisions
-
-- AI means a coached team whose coach differs from `world.userCoachId`; no responsibility values are altered. Human delegation stays on the existing delegated path.
-- Strategic AI Scouting planning runs on days 1, 8, 15, 22, and 29. Daily assignment execution and territory discovery continue in their established calendar phases; no new cooldown save field is required.
-- Territory count is capped at three per organization and by employed eligible Scouting Staff. Own Competition leads, with relevant role-suitable domestic/foreign/acquisition ecosystems next; canonical BS14E coverage penalizes saturated areas. Valid operations persist to prevent churn.
-- AI targets at most 120 bounded public/contextual candidates and requests at most two reports per organization per cycle. Unknown starts at Quick Look; broad-only or sufficiently stale high-priority knowledge may escalate to Full Report. Skill and potential missions are not selected automatically.
-- Active/equivalent assignments, same-day reports, shared workload, and deterministic evaluator ranking guard duplicate and overload work. No hidden ratings influence target selection.
-- Existing acquisition valuation remains the authority for free agency, market/trades, draft, and recruiting. Urgent decisions proceed with available knowledge or UNKNOWN priors rather than waiting for a report.
-- OrganizationKnowledge remains the only current evaluation authority for both human and AI consumers; awareness confers identity only. Existing saves carry awareness, reports, and knowledge across reload and season transition.
-
-See [BS14F AI Scouting and Acquisition](BS14F_AI_SCOUTING_AND_ACQUISITION.md). Status: **TECH READY after focused validation**; final human Scouting UX remains BS14G.
-# BS14G product decisions
-
-- Strengths require a known estimate >=65 and confidence >=0.55; weaknesses require <=40 and the same confidence. No forced fill.
-- Archetype requires >=4 reliable broad dimensions and mean confidence >=0.60; otherwise show “Insufficient scouting information.”
-- One evaluator is a Scout assessment; multi-evaluator consensus is labeled only with multiple evaluators.
-- Assignment and territory cancellation/end preserve historical records, reports, awareness and existing knowledge.
-- Full Report details group rating findings by the canonical eight rating families. See [BS14G gameplay UX](BS14G_SCOUTING_GAMEPLAY_UX.md).
+| ID | Decision or gap | Disposition | Evidence / limit |
+|---|---|---|---|
+| D-21 | Canonical Recruitment Focus authority | IMPLEMENTED | `scoutingRecruitmentFocusesById` stores intent/lifecycle; candidates derive from existing territory, awareness and OrganizationKnowledge state. |
+| D-22 | Focus discovery, workload and priority | IMPLEMENTED | Focus links to territory operations; those operations retain staff quality, capacity and awareness authority. Priority orders daily operation allocation. |
+| D-23 | Focus current/potential thresholds | IMPLEMENTED | Candidate fit uses non-UNKNOWN `getOrganizationRatingEvaluation`; unknown evidence stays UNKNOWN and lowers confidence. |
+| D-24 | Player Search and Search-to-Focus | IMPLEMENTED | Search only traverses `getAddressableScoutingPlayerIds`; addressable identity filters and known-evaluation thresholds are supported. |
+| D-25 | Manual A-E gameplay validation | OPEN | Desktop UI is unavailable to the current computer-use surface; required manual visual acceptance has not passed. |
+| D-26 | Full Centre, editable/resumable Focuses, automatic Quick Look and AI Focus convergence | DEFERRED | This tranche supplies create/priority/cancel/history, explicit deeper reports and the existing AI territory planner. |

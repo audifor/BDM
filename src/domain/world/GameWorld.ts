@@ -63,7 +63,7 @@ import type { PlayerTransaction } from '@/domain/transaction'
 import type { PlayerTransactionId } from '@/domain/ids'
 import { contractIdFromString, financialCommitmentIdFromString, playerTransactionIdFromString } from '@/domain/ids'
 import { createOrganizationKnowledge, type OrganizationKnowledge } from '@/domain/knowledge'
-import { createEvaluatorProfile, createOrganizationPlayerAwareness, createScoutingTerritoryAssignment, type Evidence, type EvaluatorProfile, type EvaluatorReport, type OrganizationPlayerAwareness, type ScoutingAssignment, type ScoutingTerritoryAssignment } from '@/domain/scouting'
+import { createEvaluatorProfile, createOrganizationPlayerAwareness, createScoutingRecruitmentFocus, createScoutingTerritoryAssignment, type Evidence, type EvaluatorProfile, type EvaluatorReport, type OrganizationPlayerAwareness, type ScoutingAssignment, type ScoutingRecruitmentFocus, type ScoutingTerritoryAssignment } from '@/domain/scouting'
 import { deriveOrganizationEvaluationPolicy, type OrganizationEvaluationPolicy } from '@/domain/intelligence'
 import { isActiveNegotiation, type Agency, type Agent, type ContractNegotiation, type MarketKnowledge, type MarketReality, type MarketSignal, type PlayerRepresentation, type RolePromise } from '@/domain/market'
 import type { OrganizationId } from '@/domain/ids'
@@ -166,7 +166,7 @@ export interface GameWorld {
   readonly facilityOperationalIncidentsById: Readonly<Record<FacilityOperationalIncidentId, FacilityOperationalIncident>>
   readonly facilityDevelopmentProjectsById: Readonly<Record<FacilityDevelopmentProjectId, FacilityDevelopmentProject>>
   readonly facilityDevelopmentProjectPhasesById: Readonly<Record<FacilityDevelopmentProjectPhaseId, FacilityDevelopmentProjectPhase>>
-  /** CFI7 — non-monetary cross-references from a Facilities fact (maintenance action / development project) to a Finance fact. No amount lives here; see src/integration/facilitiesFinance. */
+  /** CFI7 â€” non-monetary cross-references from a Facilities fact (maintenance action / development project) to a Finance fact. No amount lives here; see src/integration/facilitiesFinance. */
   readonly facilityFinancialBindingsById: Readonly<Record<string, FacilityFinancialBinding>>
   readonly facilityOrganizationRelationshipsById: Readonly<Record<FacilityOrganizationRelationshipId, FacilityOrganizationRelationship>>
   readonly facilityTeamRelationshipsById: Readonly<Record<FacilityTeamRelationshipId, FacilityTeamRelationship>>
@@ -219,6 +219,7 @@ export interface GameWorld {
   readonly scoutingAssignmentsById: Readonly<Record<string, ScoutingAssignment>>
   readonly evaluatorReportsById: Readonly<Record<string, EvaluatorReport>>
   readonly scoutingTerritoryAssignmentsById: Readonly<Record<string, ScoutingTerritoryAssignment>>
+  readonly scoutingRecruitmentFocusesById: Readonly<Record<string, ScoutingRecruitmentFocus>>
   readonly organizationPlayerAwarenessById: Readonly<Record<string, OrganizationPlayerAwareness>>
   readonly organizationEvaluationPoliciesById: Readonly<Record<OrganizationId, OrganizationEvaluationPolicy>>
   readonly agentsById: Readonly<Record<import('@/domain/ids').AgentId, Agent>>
@@ -256,9 +257,9 @@ export interface GameWorld {
   readonly staffHumanStatesByContextId: Readonly<Record<StaffHumanContextId, StaffHumanState>>
   readonly staffExpectationProfilesByContextId: Readonly<Record<StaffHumanContextId, StaffExpectationProfile>>
   readonly staffReactionRecordsById: Readonly<Record<StaffReactionRecordId, StaffReactionRecord>>
-  /** Wave 5C — Organizational Culture, keyed by opaque `scopeKey` (= `TeamId` for this wave). Distinct from `teamCohesionByTeamId`. */
+  /** Wave 5C â€” Organizational Culture, keyed by opaque `scopeKey` (= `TeamId` for this wave). Distinct from `teamCohesionByTeamId`. */
   readonly staffCultureStatesByScopeKey: Readonly<Record<string, StaffCultureState>>
-  /** Wave 5C — Staff Unit Cohesion, keyed by `${teamId}:${department}`. Never the tactical/training `teamCohesionByTeamId`. */
+  /** Wave 5C â€” Staff Unit Cohesion, keyed by `${teamId}:${department}`. Never the tactical/training `teamCohesionByTeamId`. */
   readonly staffUnitCohesionStatesByUnitKey: Readonly<Record<string, StaffUnitCohesionState>>
   readonly staffConflictsById: Readonly<Record<string, StaffConflict>>
   readonly staffCareerAutonomyByContextId: Readonly<Record<StaffHumanContextId, StaffCareerAutonomyState>>
@@ -495,6 +496,7 @@ export interface CreateGameWorldInput {
   scoutingAssignments?: readonly ScoutingAssignment[]
   evaluatorReports?: readonly EvaluatorReport[]
   scoutingTerritoryAssignments?: readonly ScoutingTerritoryAssignment[]
+  scoutingRecruitmentFocuses?: readonly ScoutingRecruitmentFocus[]
   organizationPlayerAwareness?: readonly OrganizationPlayerAwareness[]
   organizationEvaluationPoliciesById?: Readonly<Record<OrganizationId, OrganizationEvaluationPolicy>>
   agents?: readonly Agent[]
@@ -819,6 +821,7 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     scoutingAssignmentsById: indexById(input.scoutingAssignments ?? [], 'Scouting assignment'),
     evaluatorReportsById: indexById(input.evaluatorReports ?? [], 'Evaluator report'),
     scoutingTerritoryAssignmentsById: indexById((input.scoutingTerritoryAssignments ?? []).map(createScoutingTerritoryAssignment), 'Scouting territory assignment'),
+    scoutingRecruitmentFocusesById: indexById((input.scoutingRecruitmentFocuses ?? []).map(createScoutingRecruitmentFocus), 'Scouting recruitment focus'),
     organizationPlayerAwarenessById: indexById((input.organizationPlayerAwareness ?? []).map(createOrganizationPlayerAwareness), 'Organization player awareness'),
     organizationEvaluationPoliciesById: organizationPolicies(teams, input.organizationEvaluationPoliciesById),
     agentsById: indexById(input.agents ?? [], 'Agent'), agenciesById: indexById(input.agencies ?? [], 'Agency'), playerRepresentations: Object.freeze([...(input.playerRepresentations ?? [])]), marketRealityByPlayerId: Object.freeze(Object.fromEntries((input.marketReality ?? []).map(item => [item.playerId, item]))), marketKnowledge: Object.freeze([...(input.marketKnowledge ?? [])]), marketSignalsById: indexById(input.marketSignals ?? [], 'Market signal'), negotiationsById: indexById(input.negotiations ?? [], 'Negotiation'), retentionNegotiationsById: indexById((input.retentionNegotiations ?? []).map(createRetentionNegotiation), 'Retention negotiation'), rolePromisesById: indexById(input.rolePromises ?? [], 'Role promise'),
@@ -1030,7 +1033,7 @@ const collectionPatchTargets: Readonly<Record<string, string>> = {
   supporterRelationships: 'supporterRelationshipsById', collectiveInstitutionAffiliations: 'collectiveInstitutionAffiliationsById', collectiveParticipantAffiliations: 'collectiveParticipantAffiliationsById', collectiveInstitutionalStatusEvents: 'collectiveInstitutionalStatusEventsById', collectiveInstitutionalLiaisons: 'collectiveInstitutionalLiaisonsById', supporterExpectations: 'supporterExpectationsById', supporterExpectationEvents: 'supporterExpectationEventsById', supporterPressureEvents: 'supporterPressureEventsById', supporterReactions: 'supporterReactionsById', supportFundingPledges: 'supportFundingPledgesById', supportFundingPledgeEvents: 'supportFundingPledgeEventsById', supportContributions: 'supportContributionsById',
   supportComplianceCases: 'supportComplianceCasesById', supportComplianceCaseEvents: 'supportComplianceCaseEventsById', supportComplianceFindings: 'supportComplianceFindingsById', supportConflictDisclosures: 'supportConflictDisclosuresById', supportConsequences: 'supportConsequencesById', supportRemediations: 'supportRemediationsById',
   governanceManagerEvaluationPeriods: 'governanceManagerEvaluationPeriodsById', governanceManagerEvaluations: 'governanceManagerEvaluationsById', governanceJobSecurityTransitions: 'governanceJobSecurityTransitionsById', governanceDecisions: 'governanceDecisionsById', governanceDecisionParticipationGrants: 'governanceDecisionParticipationGrantsById', governanceDecisionEvents: 'governanceDecisionEventsById', governanceMeetings:'governanceMeetingsById', governanceMeetingParticipants:'governanceMeetingParticipantsById', governanceMeetingAgendaItems:'governanceMeetingAgendaItemsById', governanceMeetingEvents:'governanceMeetingEventsById', governanceRequests:'governanceRequestsById', governanceRequestEvents:'governanceRequestEventsById', governanceCommitments:'governanceCommitmentsById', governanceCommitmentEvents:'governanceCommitmentEventsById',
-  developmentStimulusEvents: 'developmentStimulusEventsById', persons: 'personsById', countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', organizations: 'organizationsById', organizationSections: 'organizationSectionsById', organizationOwnership: 'organizationOwnershipById', organizationControl: 'organizationControlById', organizationOwnershipTransactions: 'organizationOwnershipTransactionsById', organizationOwnershipTransactionEvents: 'organizationOwnershipTransactionEventsById', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', contractServiceTimeBaselines: 'contractServiceTimeBaselinesById', contractServiceTimeCredits: 'contractServiceTimeCreditsById', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', financialAccounts: 'financialAccountsById', financialTransactions: 'financialTransactionsById', fiscalPeriods: 'fiscalPeriodsById', organizationFinancialProfiles: 'organizationFinancialProfilesById', receivables: 'receivablesById', payables: 'payablesById', treasuryApplications: 'treasuryApplicationsById', revenueRecognitions: 'revenueRecognitionsById', expenseRecognitions: 'expenseRecognitionsById', financialCommitments: 'financialCommitmentsById', financialEntitlements: 'financialEntitlementsById', playerTransactions: 'playerTransactionsById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', scoutingTerritoryAssignments: 'scoutingTerritoryAssignmentsById', organizationPlayerAwareness: 'organizationPlayerAwarenessById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', tradeNegotiations: 'tradeNegotiationsById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', gmPlanStates: 'gmPlanStatesById', narratives:'narrativesById',
+  developmentStimulusEvents: 'developmentStimulusEventsById', persons: 'personsById', countries: 'countries', coaches: 'coaches', players: 'players', teams: 'teams', organizations: 'organizationsById', organizationSections: 'organizationSectionsById', organizationOwnership: 'organizationOwnershipById', organizationControl: 'organizationControlById', organizationOwnershipTransactions: 'organizationOwnershipTransactionsById', organizationOwnershipTransactionEvents: 'organizationOwnershipTransactionEventsById', competitions: 'competitions', ecosystems: 'ecosystems', conferences: 'conferencesById', seasons: 'seasons', games: 'games', matchStatLogs: 'matchStatLogsByGameId', contractServiceTimeBaselines: 'contractServiceTimeBaselinesById', contractServiceTimeCredits: 'contractServiceTimeCreditsById', seasonHistory: 'seasonHistoryBySeasonId', injuries: 'injuriesById', contracts: 'contractsById', teamFinances: 'teamFinancesByTeamId', financialAccounts: 'financialAccountsById', financialTransactions: 'financialTransactionsById', fiscalPeriods: 'fiscalPeriodsById', organizationFinancialProfiles: 'organizationFinancialProfilesById', receivables: 'receivablesById', payables: 'payablesById', treasuryApplications: 'treasuryApplicationsById', revenueRecognitions: 'revenueRecognitionsById', expenseRecognitions: 'expenseRecognitionsById', financialCommitments: 'financialCommitmentsById', financialEntitlements: 'financialEntitlementsById', playerTransactions: 'playerTransactionsById', evidence: 'evidenceById', scoutingAssignments: 'scoutingAssignmentsById', evaluatorReports: 'evaluatorReportsById', scoutingTerritoryAssignments: 'scoutingTerritoryAssignmentsById', scoutingRecruitmentFocuses: 'scoutingRecruitmentFocusesById', organizationPlayerAwareness: 'organizationPlayerAwarenessById', agents:'agentsById',agencies:'agenciesById',marketReality:'marketRealityByPlayerId',marketSignals:'marketSignalsById',negotiations:'negotiationsById',rolePromises:'rolePromisesById', staffPeople: 'staffPeopleById', teamStaffAssignments: 'teamStaffAssignmentsById', responsibilities: 'responsibilitiesById', delegationOutcomes: 'delegationOutcomesById', oppositionScoutingReports: 'oppositionScoutingReportsById', staffJobOpenings: 'staffJobOpeningsById', staffJobCandidacies: 'staffJobCandidaciesById', staffJobOffers: 'staffJobOffersById', staffContracts: 'staffContractsById', staffHumanContexts: 'staffHumanContextsById', staffHumanStates: 'staffHumanStatesByContextId', staffExpectationProfiles: 'staffExpectationProfilesByContextId', staffReactionRecords: 'staffReactionRecordsById', staffCultureStates: 'staffCultureStatesByScopeKey', staffUnitCohesionStates: 'staffUnitCohesionStatesByUnitKey', staffConflicts: 'staffConflictsById', staffCareerAutonomyStates: 'staffCareerAutonomyByContextId', staffCareerRequests: 'staffCareerRequestsById', staffPoliticalCases: 'staffPoliticalCasesById', staffPoliticalActions: 'staffPoliticalActionsById', staffPoliticalAlliances: 'staffPoliticalAlliancesById', staffPoliticalFactions: 'staffPoliticalFactionsById', promotionRelegationResolutions: 'promotionRelegationResolutionsById', drafts: 'draftsById', draftPicks: 'draftPicksById', salaryExceptions: 'salaryExceptionsById', deadMoneyCharges: 'deadMoneyChargesById', playerRights: 'playerRightsById', futureDraftPickRights: 'futureDraftPickRightsById', draftPickSwapRights: 'draftPickSwapRightsById', retainedSalaryObligations: 'retainedSalaryObligationsById', tradeHistory: 'tradeHistoryById', tradeNegotiations: 'tradeNegotiationsById', recruitingCycles: 'recruitingCyclesById', recruitProfiles: 'recruitProfilesById', recruitingActionHistory: 'recruitingActionHistoryById', recruitingOffers: 'recruitingOffersById', recruitingVisits: 'recruitingVisitsById', recruitingCommitments: 'recruitingCommitmentsById', recruitSignings: 'recruitSigningsById', eligibilityProfiles: 'eligibilityProfilesById', eligibilityRestrictions: 'eligibilityRestrictionsById', academicProfiles: 'academicProfilesById', academicTermRecords: 'academicTermRecordsById', academicSupportPlans: 'academicSupportPlansById', nilProfiles: 'nilProfilesById', nilOpportunities: 'nilOpportunitiesById', nilDeals: 'nilDealsById', collectives: 'collectivesById', boosters: 'boostersById', boosterContributions: 'boosterContributionsById', boosterRequests: 'boosterRequestsById', violations: 'violationsById', investigations: 'investigationsById', findings: 'findingsById', sanctions: 'sanctionsById', ecosystemTransitions:'ecosystemTransitionsById', memories:'memoriesById', gmPlanStates: 'gmPlanStatesById', narratives:'narrativesById',
 }
 
 const collectionPatchIndexers: Readonly<Record<string, (value: unknown) => unknown>> = {
@@ -1393,6 +1396,19 @@ function validateWorld(world: GameWorld): void {
     if (assignment.territory.kind === 'COUNTRY') requireEntity(world.countries, assignment.territory.countryId, 'Scouting territory Country')
     else requireEntity(world.competitions, assignment.territory.competitionId, 'Scouting territory Competition')
   }
+  for (const focus of Object.values(world.scoutingRecruitmentFocusesById)) {
+    createScoutingRecruitmentFocus(focus)
+    const team = world.teams[focus.requestingTeamId]
+    if (team === undefined || team.organizationId !== focus.organizationId) throw new GameWorldValidationError(`Scouting Recruitment Focus ${focus.id} has an invalid requesting Team`)
+    for (const staffId of focus.scoutStaffIds) requireEntity(world.staffPeopleById, staffId, 'Recruitment Focus Scout')
+    for (const territory of focus.territories) {
+      if (territory.kind === 'COUNTRY') requireEntity(world.countries, territory.countryId, 'Recruitment Focus Country')
+      else requireEntity(world.competitions, territory.competitionId, 'Recruitment Focus Competition')
+    }
+    for (const playerId of focus.dismissedPlayerIds ?? []) requireEntity(world.players, playerId, 'Recruitment Focus dismissed Player')
+    if (focus.completedAt !== undefined) parseGameDate(focus.completedAt)
+    if (focus.cancelledAt !== undefined) parseGameDate(focus.cancelledAt)
+  }
   for (const awareness of Object.values(world.organizationPlayerAwarenessById)) {
     requireEntity(world.players, awareness.playerId, 'Organization player awareness Player')
     if (!Object.values(world.teams).some((team) => team.organizationId === awareness.organizationId)) throw new GameWorldValidationError(`Organization player awareness ${awareness.id} has an unknown Organization`)
@@ -1487,8 +1503,8 @@ function validateWorld(world: GameWorld): void {
     requireEntity(world.staffHumanContextsById, reaction.contextId, `Staff reaction record ${reaction.id} context`)
     requireEntity(world.staffPeopleById, reaction.staffId, `Staff reaction record ${reaction.id} Staff`)
   }
-  // Wave 5C — shape validation only. Culture/Cohesion scope keys are opaque adapter strings
-  // (Team-as-Organization / Team×Department proxies), so no cross-referential Team lookup is asserted:
+  // Wave 5C â€” shape validation only. Culture/Cohesion scope keys are opaque adapter strings
+  // (Team-as-Organization / TeamÃ—Department proxies), so no cross-referential Team lookup is asserted:
   // a Team removal must never invalidate an otherwise well-formed save.
   for (const state of Object.values(world.staffCultureStatesByScopeKey)) createStaffCultureState(state)
   for (const state of Object.values(world.staffUnitCohesionStatesByUnitKey)) createStaffUnitCohesionState(state)
@@ -1574,12 +1590,12 @@ function validateWorld(world: GameWorld): void {
     const opening = requireEntity(world.staffJobOpeningsById, offer.jobOpeningId, `Staff offer ${offer.id} opening`)
     // Full semantic consistency (Issue #19 review Blocker 6): an offer must genuinely belong to the
     // opening it references (same Team) and to a real candidacy for the same (opening, Staff) pair
-    // — never a combination the state machine could not have legitimately produced.
+    // â€” never a combination the state machine could not have legitimately produced.
     if (opening.teamId !== offer.teamId) throw new GameWorldValidationError(`Staff offer ${offer.id} Team does not match its opening's Team`)
     const candidacy = Object.values(world.staffJobCandidaciesById).find((item) => item.jobOpeningId === offer.jobOpeningId && item.staffId === offer.staffId)
     if (candidacy === undefined) throw new GameWorldValidationError(`Staff offer ${offer.id} has no matching Staff candidacy for the same opening and Staff`)
     // Issue #19 review Blocker 2: the offer's status must be one the state machine could actually
-    // have produced together with its candidacy's current status — see the centralized
+    // have produced together with its candidacy's current status â€” see the centralized
     // `isStaffOfferCandidacyStateConsistent` matrix.
     if (!isStaffOfferCandidacyStateConsistent(offer.status, candidacy.status)) throw new GameWorldValidationError(`Staff offer ${offer.id} status ${offer.status} is inconsistent with its Staff candidacy ${candidacy.id} status ${candidacy.status}`)
   }
@@ -1594,7 +1610,7 @@ function validateWorld(world: GameWorld): void {
     createStaffContract(contract)
     requireEntity(world.staffPeopleById, contract.staffId, `Staff contract ${contract.id} Staff`)
     requireEntity(world.teams, contract.teamId, `Staff contract ${contract.id} Team`)
-    // Active-on-the-CURRENT-date, via the single canonical `isStaffContractActiveOn` semantics —
+    // Active-on-the-CURRENT-date, via the single canonical `isStaffContractActiveOn` semantics â€”
     // never `termination === undefined` alone, which would wrongly treat a lapsed (past-expiresOn)
     // contract as active and a scheduled-but-not-yet-effective termination as inactive.
     if (isStaffContractActiveOn(contract, world.currentDate)) {

@@ -15,7 +15,7 @@ export interface ScoutingTerritoryCoverage {
   readonly coverage: number
 }
 
-export function createScoutingTerritoryAssignment(world: GameWorld, input: { readonly requestingTeamId: import('@/domain/ids').TeamId; readonly scoutStaffId: StaffPersonId; readonly territory: ScoutingTerritory }): GameWorld {
+export function createScoutingTerritoryAssignment(world: GameWorld, input: { readonly requestingTeamId: import('@/domain/ids').TeamId; readonly scoutStaffId: StaffPersonId; readonly territory: ScoutingTerritory; readonly recruitmentFocusId?: string; readonly priority?: import('@/domain/scouting').ScoutingPriority }): GameWorld {
   const team = world.teams[input.requestingTeamId]
   if (team === undefined) throw new RangeError(`Unknown requesting Team ${input.requestingTeamId}`)
   const staff = world.staffPeopleById[input.scoutStaffId]
@@ -25,13 +25,13 @@ export function createScoutingTerritoryAssignment(world: GameWorld, input: { rea
   if (employment?.status !== 'employed' || employment.teamId !== team.id || assignment === undefined) throw new RangeError('Scout must be employed and assigned to the requesting Team')
   if (!isStaffRoleSuitableForScoutingTerritory(world, team.id, assignment.role, input.territory)) throw new RangeError(`Staff role ${assignment.role} is not suitable for ${input.territory.kind} scouting`)
   if (getTeamsInScoutingTerritory(world, input.territory).length === 0) throw new RangeError('Scouting territory has no current basketball context')
-  if (Object.values(world.scoutingTerritoryAssignmentsById).some((item) => item.organizationId === team.organizationId && item.requestingTeamId === team.id && item.scoutStaffId === input.scoutStaffId && item.status === 'ACTIVE' && scoutingTerritoryKey(item.territory) === scoutingTerritoryKey(input.territory))) return world
+  if (Object.values(world.scoutingTerritoryAssignmentsById).some((item) => item.organizationId === team.organizationId && item.requestingTeamId === team.id && item.scoutStaffId === input.scoutStaffId && item.status === 'ACTIVE' && item.recruitmentFocusId === input.recruitmentFocusId && scoutingTerritoryKey(item.territory) === scoutingTerritoryKey(input.territory))) return world
   const workload = calculateStaffWorkload(world, input.scoutStaffId)
   if (workload.overloaded || workload.totalCapacityUsed + SCOUTING_TERRITORY_WORKLOAD_COST > workload.capacityLimit) throw new RangeError('Scout does not have enough workload capacity for territory coverage')
   const prefix = `scouting-territory:${team.id}:${input.scoutStaffId}:${scoutingTerritoryKey(input.territory)}:${world.currentDate}`
   let sequence = 1
   while (world.scoutingTerritoryAssignmentsById[`${prefix}:${sequence}`] !== undefined) sequence += 1
-  const record: ScoutingTerritoryAssignment = makeScoutingTerritoryAssignment({ id: `${prefix}:${sequence}`, organizationId: team.organizationId, requestingTeamId: team.id, scoutStaffId: input.scoutStaffId, territory: input.territory, startedAt: world.currentDate, status: 'ACTIVE' })
+  const record: ScoutingTerritoryAssignment = makeScoutingTerritoryAssignment({ id: `${prefix}:${sequence}`, organizationId: team.organizationId, requestingTeamId: team.id, scoutStaffId: input.scoutStaffId, territory: input.territory, ...(input.recruitmentFocusId === undefined ? {} : { recruitmentFocusId: input.recruitmentFocusId }), ...(input.priority === undefined ? {} : { priority: input.priority }), startedAt: world.currentDate, status: 'ACTIVE' })
   return updateGameWorld(world, { scoutingTerritoryAssignments: [...Object.values(world.scoutingTerritoryAssignmentsById), record] })
 }
 
@@ -54,7 +54,8 @@ export function getScoutingTerritoryCoverage(world: GameWorld, organizationId: i
 /** Progresses only persisted active operations. No rating or potential knowledge is produced. */
 export function progressScoutingTerritoryAssignments(world: GameWorld): GameWorld {
   let next = world
-  const assignments = Object.values(world.scoutingTerritoryAssignmentsById).filter((item) => item.status === 'ACTIVE').sort((a, b) => a.id.localeCompare(b.id))
+  const priorityRank = { URGENT: 0, HIGH: 1, NORMAL: 2, LOW: 3 } as const
+  const assignments = Object.values(world.scoutingTerritoryAssignmentsById).filter((item) => item.status === 'ACTIVE').sort((a, b) => priorityRank[a.priority ?? 'NORMAL'] - priorityRank[b.priority ?? 'NORMAL'] || a.id.localeCompare(b.id))
   for (const original of assignments) {
     const assignment = next.scoutingTerritoryAssignmentsById[original.id]
     if (assignment === undefined || assignment.status !== 'ACTIVE' || assignment.lastProcessedAt === next.currentDate) continue
@@ -69,7 +70,16 @@ export function progressScoutingTerritoryAssignments(world: GameWorld): GameWorl
     const awareness = new Set(Object.values(next.organizationPlayerAwarenessById).filter((item) => item.organizationId === assignment.organizationId).map((item) => item.playerId))
     const evaluated = new Set(next.organizationKnowledge.filter((item) => item.organizationId === assignment.organizationId).map((item) => item.subjectPlayerId))
     const ownRoster = new Set(Object.values(next.teams).filter((item) => item.organizationId === assignment.organizationId).flatMap((item) => item.rosterPlayerIds))
-    const eligible = getPlayersInScoutingTerritory(next, assignment.territory).filter((id) => !awareness.has(id) && !evaluated.has(id) && !ownRoster.has(id))
+    const focus = assignment.recruitmentFocusId === undefined ? undefined : next.scoutingRecruitmentFocusesById[assignment.recruitmentFocusId]
+    if (assignment.recruitmentFocusId !== undefined && (focus === undefined || focus.status !== 'ACTIVE')) continue
+    const eligible = getPlayersInScoutingTerritory(next, assignment.territory).filter((id) => {
+      if (awareness.has(id) || evaluated.has(id) || ownRoster.has(id)) return false
+      if (focus === undefined) return true
+      const player = next.players[id]!
+      const age = player.bio.dateOfBirth
+      const currentAge = Number(next.currentDate.slice(0, 4)) - Number(age.slice(0, 4)) - (next.currentDate.slice(5) < age.slice(5) ? 1 : 0)
+      return focus.positions.includes(player.basketball.primaryPosition) && (focus.minimumAge === undefined || currentAge >= focus.minimumAge) && (focus.maximumAge === undefined || currentAge <= focus.maximumAge)
+    })
     const quality = operationalQuality(next, assignment.scoutStaffId, staffAssignment.role)
     const loadPenalty = workloadPenalty(next, assignment.scoutStaffId)
     const throughput = Math.max(0, Math.min(MAX_DAILY_DISCOVERIES, 1 + Math.floor(quality / 40) - loadPenalty))

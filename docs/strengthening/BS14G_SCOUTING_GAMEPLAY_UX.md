@@ -34,4 +34,4 @@ Coverage lists active and ended territory operations. Add Coverage uses valid co
 
 ## Certification boundary
 
-BS14G is technically ready after focused checks and build. A person must complete the checklist in the running BDM UI before visual certification; BS14H owns final certification. No merge or push is part of this milestone.
+BS14G passed focused technical checks, build and manual visual validation, user-confirmed before BS14H. BS14H performs only a compact regression smoke after its integration changes. No merge or push is part of this milestone.

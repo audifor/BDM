@@ -12,7 +12,7 @@ import {
   advanceGameDayWithResult,
 } from '@/app/game'
 import { releasePlayer } from '@/app/market'
-import { cancelScoutingAssignment as cancelScoutingAssignmentCommand, createScoutingTerritoryAssignment as createTerritoryOperation, endScoutingTerritoryAssignment as endTerritoryOperation, requestPlayerScouting, updateScoutingAssignmentPriority as updateScoutingPriority, type RequestScoutingInput } from '@/app/scouting'
+import { cancelRecruitmentFocus, dismissRecruitmentFocusCandidate, editRecruitmentFocusCriteria, cancelScoutingAssignment as cancelScoutingAssignmentCommand, createRecruitmentFocus, createScoutingTerritoryAssignment as createTerritoryOperation, endScoutingTerritoryAssignment as endTerritoryOperation, requestPlayerScouting, updateRecruitmentFocusPriority, updateScoutingAssignmentPriority as updateScoutingPriority, type CreateRecruitmentFocusInput, type RequestScoutingInput } from '@/app/scouting'
 import { recordContractReviewDecision } from '@/app/contractReview'
 import { openUserContractRetention, respondUserToContractRetentionCounter, submitUserContractRetentionOffer, withdrawUserContractRetention } from '@/app/contractRetention/ContractRetentionService'
 import type { RetentionTermSet } from '@/domain/contract/ContractRetentionNegotiation'
@@ -144,6 +144,11 @@ interface GameStore {
   cancelScoutingAssignment(assignmentId: string): string | null
   createScoutingTerritoryAssignment(input: { readonly scoutStaffId: StaffPersonId; readonly territory: ScoutingTerritory }): string | null
   endScoutingTerritoryAssignment(assignmentId: string): void
+  createRecruitmentFocus(input: CreateRecruitmentFocusInput): string | null
+  updateRecruitmentFocusPriority(focusId: string, priority: ScoutingPriority): string | null
+  cancelRecruitmentFocus(focusId: string): string | null
+  dismissRecruitmentFocusCandidate(focusId: string, playerId: PlayerId): string | null
+  editRecruitmentFocusCriteria(focusId: string, criteria: Pick<CreateRecruitmentFocusInput, 'name' | 'positions' | 'minimumAge' | 'maximumAge' | 'knowledgeState' | 'evaluationDimension' | 'minimumCurrentLevel' | 'minimumPotentialLevel'>): string | null
   clearLineupSlot(slot: LineupSlot): void
   updateRotationMinutes(minutesByPeriod: Readonly<Record<PlayerId, readonly number[]>>): void
   updateGamePlanMatchups(matchups: readonly DefensiveMatchupAssignment[]): void
@@ -375,6 +380,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } catch (error) { return error instanceof Error ? error.message : 'Territory coverage could not be started.' }
   },
   endScoutingTerritoryAssignment: (assignmentId) => set({ world: endTerritoryOperation(requireWorld(get().world), assignmentId) }),
+  createRecruitmentFocus: (input) => {
+    try { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'No user-controlled team is available.'; set({ world: createRecruitmentFocus(world, team.id, input) }); return null }
+    catch (error) { return error instanceof Error ? error.message : 'Recruitment Focus could not be created.' }
+  },
+  updateRecruitmentFocusPriority: (focusId, priority) => { try { set({ world: updateRecruitmentFocusPriority(requireWorld(get().world), focusId, priority) }); return null } catch (error) { return error instanceof Error ? error.message : 'Priority could not be changed.' } },
+  cancelRecruitmentFocus: (focusId) => { try { set({ world: cancelRecruitmentFocus(requireWorld(get().world), focusId) }); return null } catch (error) { return error instanceof Error ? error.message : 'Recruitment Focus could not be cancelled.' } },
+  dismissRecruitmentFocusCandidate: (focusId, playerId) => { try { set({ world: dismissRecruitmentFocusCandidate(requireWorld(get().world), focusId, playerId) }); return null } catch (error) { return error instanceof Error ? error.message : 'Candidate could not be removed.' } },
+  editRecruitmentFocusCriteria: (focusId, criteria) => { try { set({ world: editRecruitmentFocusCriteria(requireWorld(get().world), focusId, criteria) }); return null } catch (error) { return error instanceof Error ? error.message : 'Recruitment Focus criteria could not be updated.' } },
   clearLineupSlot: (slot) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: clearLineupSlot(world, team.id, slot) }) },
   updateRotationMinutes: (minutesByPeriod) => {
     const world = requireWorld(get().world)

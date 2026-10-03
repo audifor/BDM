@@ -63,5 +63,6 @@ describe('ScoutingWorkspace', () => {
     expect(assignments[0]?.status).toBe('QUEUED')
     expect(assignments[0]?.requestedBy).toBe('HEAD_COACH')
     expect(screen.getByRole('button', { name: /Quick look.*Queued/i })).toBeInTheDocument()
+    expect(screen.getByText(/Scouting report requested/i)).toBeInTheDocument()
   })
 })

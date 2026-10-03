@@ -13,6 +13,8 @@ export interface ScoutingTerritoryAssignment {
   readonly organizationId: OrganizationId
   readonly requestingTeamId: TeamId
   readonly scoutStaffId: StaffPersonId
+  readonly recruitmentFocusId?: string
+  readonly priority?: import('./Scouting').ScoutingPriority
   readonly territory: ScoutingTerritory
   readonly startedAt: GameDate
   readonly status: ScoutingTerritoryAssignmentStatus
@@ -44,6 +46,8 @@ export const SCOUTING_TERRITORY_WORKLOAD_COST = 2
 
 export function createScoutingTerritoryAssignment(value: ScoutingTerritoryAssignment): ScoutingTerritoryAssignment {
   validateTerritory(value.territory)
+  if (value.recruitmentFocusId !== undefined && value.recruitmentFocusId.trim() === '') throw new TypeError('Recruitment Focus attribution must not be empty')
+  if (value.priority !== undefined && !['LOW', 'NORMAL', 'HIGH', 'URGENT'].includes(value.priority)) throw new TypeError('Scouting territory priority is invalid')
   if (value.status !== 'ACTIVE' && value.status !== 'ENDED') throw new TypeError('Scouting territory assignment status is invalid')
   if (value.status === 'ENDED' && value.endedAt === undefined) throw new TypeError('Ended scouting territory assignment requires endedAt')
   if (value.status === 'ACTIVE' && value.endedAt !== undefined) throw new TypeError('Active scouting territory assignment cannot have endedAt')

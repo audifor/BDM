@@ -1,101 +1,60 @@
 # BS14 Scouting Integration Map
 
-Snapshot: source `c52a21717a5973ee33d99a0df3000d405bcb9847`.
+Current integration through BS14H; earlier BS14A-D prose is superseded by this map.
 
-## Executable flows
-
-### Human Player scouting
-
-```text
-ScoutingWorkspace Knowledge tab
-  → gameStore.requestScoutingAssignment(playerId)
-  → regionalScout lookup on user's team
-  → requestScouting(QUICK_LOOK, HEAD_COACH)
-  → CalendarEngine daily SCOUTING_ASSIGNMENTS
-  → evidence + EvaluatorReport + OrganizationKnowledge
-  → assignments/reports/knowledge UI projections
-```
-
-The board target set is the user's own roster plus subjects already present in organization knowledge. The button requests one QUICK_LOOK, normal priority, fixed regional scout. There is no unscouted-player discovery route in this board.
-
-### Delegated/advisory Player scouting
+## Daily loop
 
 ```text
 SCOUTING_INTAKE
-  ├─ progressDelegatedScouting: assignScouts (+ optional prioritizeRegions)
-  │    → next scheduled opponent's unknown roster
-  │    → selects evaluator and creates QUICK_LOOK
-  └─ progressAdvisoryScoutingReports
-       ├─ oppositionReport → next opponent's first unknown player, FULL_REPORT
-       └─ prospectReport → recruiting board's first unknown player, FULL_REPORT
-  → SCOUTING_ASSIGNMENTS progresses those requests the same date if capacity permits
+  ├─ human/manual and delegated/advisory request intake
+  ├─ bounded AI plan for AI-controlled organizations
+  └─ active territory discovery → OrganizationPlayerAwareness
+
+SCOUTING_ASSIGNMENTS
+  └─ queued/active assignment progression
+       └─ evidence → EvaluatorReport → OrganizationKnowledge consolidation
+            └─ workspace, Player profile and acquisition projections
 ```
 
-Assignments use shared `ScoutingEngine` execution. Delegated assignment outcomes are marked applied. Advisory requests are recorded as `applied: false` recommendations; they are not a second report producer.
+The intake phase precedes assignment progression. Assignment completion creates one historical report/evidence set and updates the canonical current knowledge. Completed/cancelled work is terminal; stable IDs and replay tests cover idempotence. Advisory scouting requests create canonical assignments and `applied: false` outcomes, not a second report type. Advance Scouts can cover broad opposition Full Reports and contextual missions, while focused player evaluation follows player-scout roles.
 
-### Tactical opposition preparation
+## Territory and AI
+
+Human territory commands and AI territory planning call the same territory service. COUNTRY and COMPETITION membership comes from current world teams, rosters and competition participants. A discovery adds organization/player awareness only; the Player remains unknown for ability until a report adds OrganizationKnowledge. Ending an operation stops new discovery and retains already-discovered identity. AI planning is cadence-gated, bounded to a small number of operations/requests, and excludes user-controlled teams.
+
+## Knowledge consumers and fog boundary
 
 ```text
-SCOUTING_INTAKE
-  → progressOppositionScoutingReports
-  → advisory `oppositionScouting` holder and next scheduled opponent
-  → report from OrganizationKnowledge and existing report familiarity
-  → Scouting workspace Opposition tab
-  → explicit acceptOppositionScoutingReport
-  → existing TeamGamePlan tactical override
+derivePlayerKnowledgeAccess
+  ├─ controlled roster → exact current ratings
+  └─ external player → only viewer OrganizationKnowledge estimates
+
+OrganizationKnowledge → getOrganizationRatingEvaluation → profile/market/trade/draft/recruiting
+                      └→ deriveOrganizationPlayerValuation → AI acquisition ranking
 ```
 
-This report has its own `OppositionScoutingReport` store, uses `tacticsQuality`, and is keyed once per team/game. It does not create a Player report or share Player evidence/report lifecycle.
+Overview, Attributes, Development, Scouting, comparison and report detail use canonical or stored derived projections. Market/free-agent, trade, draft and recruiting valuation paths use the organization evaluator; missing knowledge yields a deterministic unknown prior, not hidden truth. AI target selection uses public/contextual candidate sources and the same knowledge authority. Tactical `OppositionScoutingReport` remains a distinct team/game artifact that can consume current knowledge and requires explicit acceptance.
 
-### Acquisition
+## Recruitment Focus and Search
 
-```text
-OrganizationKnowledge ─→ getOrganizationRatingEvaluation ─→ roster/market/draft/recruiting display
-                     └→ deriveOrganizationPlayerValuation
-                           ├─ AI draft choice/advisory
-                           ├─ AI recruiting target ranking
-                           ├─ AI minimum-roster free-agent ranking
-                           └─ market candidate/trade intelligence
-```
+Human Recruitment Focuses create existing territory operations with a Focus reference and priority. The territory engine still resolves membership, Staff quality, workload, daily discovery cap and awareness writes. Focus status/duration advances in daily intake and ends linked operations on completion or cancellation. AI continues to plan territory operations directly; convergence on Focus entities is deferred.
 
-Unknown scouting dimensions use deterministic ID-based prior estimates with UNKNOWN mode and zero confidence. The investigated acquisition rankings do not fall back to true Player ratings. Other inputs (public position, roster need, salary/market facts) are separate from Player rating knowledge.
+`ScoutingRecruitmentFocus` stores intent, territory, Staff assignments, priority and lifecycle. Candidate lists are derived from matching territory membership, addressable identities, awareness and OrganizationKnowledge. Player Search stays within the organization's currently addressable identity set; current/potential thresholds require a non-UNKNOWN `getOrganizationRatingEvaluation` result. Search criteria can create a Focus without selecting a Player.
 
-## Integration gaps
+## Staff and historical attribution
 
-- Player profile overview, attributes, development, scouting and comparison consume the canonical permission projection; external exact 80-rating scouting remains a BS14D gap.
-- Scouting assignment findings cover seven groups/eight potential dimensions; the 80-value rating catalogue is not the report schema.
-- Legacy `PlayerKnowledgeRecord` exists only as a V1 payload parser/migration type; runtime readers/writers and acquisition inputs have been removed.
-- Normal generated and WorldDB bootstrap paths do not seed current organization knowledge, evidence, assignments, or reports.
-- `prioritizeRegions` connects a Region-named responsibility to nationality grouping, with no geographic entity, assignment, or coverage effect.
-- AI responsibilities default to userControlled. AI acquisition paths use current organization knowledge or UNKNOWN priors, but no default AI scouting cadence populates that knowledge.
-- Listed evidence sources such as public statistics/combine/workout/prior knowledge have no broad ingestion workflow in the automatic assignment completion path.
-- Player profile personality, roles, fit, comparison, contract/injury intelligence and market value are not generally produced by Player Scouting. Some are independently exposed by their owning domains.
+Employed Staff with a live team role must be eligible for the mission and have capacity. Professional attributes and role proficiency influence evaluator quality, selection and duration; active assignment and territory workloads share the workload calculation. Assignment and report records retain evaluator identity and role attribution from the observation. Later Staff changes do not edit existing evidence or report findings.
 
-## Save integration
+## Save, reload and season
 
-`GameWorld` holds OrganizationKnowledge, evidence, evaluator profiles, assignments, reports, responsibility/outcome state, and tactical opposition reports. Save V1 accepts legacy team knowledge in its input payload and the V1 reader converts it to OrganizationKnowledge using `Team.organizationId`; the V1 serializer emits an empty legacy field. Save V2 persists current OrganizationKnowledge and `scoutingRuntime`; V3/V4 preserve that payload and the tactical opposition-report store. No persistent geography/coverage/discovery object currently exists.
+| Boundary | Scouting state behavior |
+|---|---|
+| V1 | Legacy team knowledge is deterministically converted to organization knowledge; current V1 writer does not re-emit runtime legacy authority. |
+| V2 | Persists current knowledge and runtime; missing old territory/awareness fields default to empty. |
+| V3 | Preserves Scouting runtime collections through the extended envelope. |
+| V4 | Preserves knowledge and runtime state, including in-flight work. |
+| Mid-assignment reload | Active work resumes and completes through the ordinary progression; same-date replay does not duplicate output. |
+| Mid-territory reload | Active operation resumes discovery using its canonical state; ended operation remains stopped and awareness persists. |
+| Season rollover | Knowledge, reports, evidence, assignments, awareness and territory operations are retained. Competition membership remains derived from current participants. |
 
-## BS14B consumer certification
-
-Scouting report completion, organization/player evaluation, market, draft, recruiting, AI free-agent/draft/recruiting ranking, and tactical opposition preparation use OrganizationKnowledge. Market workspace's knowledge badge was the remaining active legacy read and now queries the organization's knowledge. Tactical opposition reports remain a distinct team/game artifact and may use OrganizationKnowledge as an input; they are not evaluator reports and do not own player findings.
-
-## BS14C profile integration
-
-`derivePlayerKnowledgeAccess` now projects exact-own-roster, scouted-external and unknown-external access for Player workspace, overview, attributes, development, scouting, comparison and compact profile surfaces. Shared Market, Draft, Recruiting and external roster links therefore preserve the same mask at the workspace builder. External view models do not carry individual truth ratings or their history; aggregate and potential displays use the viewer organization's freshness-adjusted OrganizationKnowledge. ACB baseline knowledge follows the same route. See [BS14C Player Knowledge Visibility](BS14C_PLAYER_KNOWLEDGE_VISIBILITY.md).
-
-## BS14D rating-level integration
-
-Full Report writes up to 80 `rating:<CANONICAL_KEY>` findings through the existing EvaluatorReport → OrganizationKnowledge completion path. Quick Look remains two broad current-ability findings; Skill Evaluation uses the selected canonical family. The Player access projection now exposes known per-rating evaluations to external Attributes while preserving unknown rows and controlled-roster exact ratings. Development history remains masked.
-
-The Domain catalogue owns eight scouting families and seven aggregate member sets. Shared evaluation derives an aggregate from known member ratings once coverage reaches 0.60, widening uncertainty for missing evidence; below that threshold, stored aggregate findings remain readable. Market/draft/recruiting continue through shared valuation helpers, and Trade Package knowledge now uses the same OrganizationKnowledge evaluation helper. V2/V3/V4 preserve rating dimensions as generic OrganizationKnowledge; old aggregate-only knowledge does not fabricate individual findings. Potential stays separate and tendencies are deferred. See [BS14D Rating-Level Scouting](BS14D_RATING_LEVEL_SCOUTING.md).
-
-## BS14E discovery integration
-
-Calendar daily Scouting intake progresses active territory operations alongside existing scouting cadence. Operations read current territory membership and write only organization awareness. The existing workspace candidate projection combines awareness with bounded public addressability sources, while rating rows remain sourced from OrganizationKnowledge and continue through existing Quick Look/Full Report flows. Store commands route creation and ending through the Scouting application service. V2/V3/V4 preserve new state with empty defaults for legacy saves. Details: [BS14E Scouting Operations and Coverage](BS14E_SCOUTING_OPERATIONS_AND_COVERAGE.md).
-
-## BS14F autonomous AI integration
-
-The calendar invokes one AI strategic planner during daily Scouting intake; its cadence gate runs five planning dates per month. The planner derives coached AI teams, roster needs, territory coverage, and public acquisition candidates from canonical world state; it creates operations through the territory service and report work through `requestScouting`. Existing daily discovery and report progression then build awareness and OrganizationKnowledge. Acquisition systems remain unchanged and consume that knowledge through their existing valuation paths. Human teams are excluded from autonomous planning, and reports never select targets from hidden PlayerTruth. No additional save fields were introduced. See [BS14F AI Scouting and Acquisition](BS14F_AI_SCOUTING_AND_ACQUISITION.md).
-# BS14G integration update
-
-Scouting workspace and Player profile share the Request Scouting modal and store actions. Workspace routes operations through the application service; profile actions derive availability from canonical assignments and report history. Coverage creation/end use the territory service. Report detail is built from stored EvaluatorReport/Evidence data. Full visual validation checklist: [BS14G gameplay UX](BS14G_SCOUTING_GAMEPLAY_UX.md).
+Targeted persistence and rollover outcomes are in [BS14H final certification](BS14H_SCOUTING_FINAL_CERTIFICATION.md). Tendency, personality/medical scouting, travel, per-assignment financial cost, broad evidence ingestion and narrative authoring remain intentionally deferred.

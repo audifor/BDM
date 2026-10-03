@@ -92,7 +92,9 @@ export function isScoutingEvaluatorEligible(world: GameWorld, teamId: TeamId, st
   const assignment = Object.values(world.teamStaffAssignmentsById).find((item) => item.teamId === teamId && item.staffPersonId === staffId)
   const employment = world.staffEmploymentByStaffId[staffId]
   if (assignment === undefined || !SCOUTING_ROLE_IDS.has(assignment.role) || employment?.status !== 'employed' || employment.teamId !== teamId) return false
-  if (assignment.role === 'advanceScout' && missionType !== 'TACTICAL_FIT' && missionType !== 'LIVE_GAME') return false
+  // Advance scouts can deliver broad opponent evaluation as well as contextual fit/game reports;
+  // focused player-rating and potential missions remain with the player-scouting roles.
+  if (assignment.role === 'advanceScout' && missionType !== 'FULL_REPORT' && missionType !== 'TACTICAL_FIT' && missionType !== 'LIVE_GAME') return false
   return hasScoutingCapacityForMission(world, staffId, missionType)
 }
 

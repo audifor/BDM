@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createNewGame } from '@/app/game/createNewGame'
-import { createScoutingTerritoryAssignment, endScoutingTerritoryAssignment } from '@/app/scouting'
+import { createRecruitmentFocus, endScoutingTerritoryAssignment } from '@/app/scouting'
 import { getUserTeam } from '@/engine/calendar'
 import { progressScoutingTerritoryAssignments } from '@/engine/scouting'
 import { serializeGameWorldV2, deserializeGameWorldV2 } from './GameWorldSaveV2'
@@ -20,12 +20,15 @@ describe('scouting territory persistence', () => {
     const team = getUserTeam(base)!
     const game = Object.values(base.games).find((candidate) => candidate.homeTeamId === team.id || candidate.awayTeamId === team.id)!
     const scout = Object.values(base.teamStaffAssignmentsById).find((item) => item.teamId === team.id && item.role === 'regionalScout')!
-    const active = createScoutingTerritoryAssignment(base, { requestingTeamId: team.id, scoutStaffId: scout.staffPersonId, territory: { kind: 'COMPETITION', competitionId: game.competitionId } })
+    const territory = { kind: 'COMPETITION' as const, competitionId: game.competitionId }
+    const focused = createRecruitmentFocus(base, team.id, { name: 'Young guards', positions: ['PG', 'SG'], minimumAge: 18, maximumAge: 24, territories: [territory], scoutStaffIds: [scout.staffPersonId], priority: 'HIGH', duration: 'MEDIUM' })
+    const active = focused
     const discovered = progressScoutingTerritoryAssignments(active)
     const ended = endScoutingTerritoryAssignment(discovered, Object.keys(discovered.scoutingTerritoryAssignmentsById)[0]!)
     const restored = deserialize(serialize(ended, savedAt))
     expect(restored.scoutingTerritoryAssignmentsById).toEqual(ended.scoutingTerritoryAssignmentsById)
     expect(restored.organizationPlayerAwarenessById).toEqual(ended.organizationPlayerAwarenessById)
+    expect(restored.scoutingRecruitmentFocusesById).toEqual(ended.scoutingRecruitmentFocusesById)
   })
 
   it('defaults old V2 scouting runtimes without territory state to empty collections', () => {
