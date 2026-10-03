@@ -48,6 +48,8 @@
 
 **Exit gate:** two effective-date rulesets can explain different decisions for the same facts; transfers/previous experience are not silently reset; academic or eligibility restrictions reach the existing match availability seam; next-season NCAA lifecycle and old saves remain valid.
 
+**BS15D delivery:** `CollegeRuleset` resolves fixture-only academic thresholds by ecosystem and game date; `PlayerEnrollment` records college affiliation separately from Team roster and BS15C `PlayerRegistration`; explainable eligibility assessment consumes existing academic, participation, pathway and restriction evidence and filters the common pregame competition pool. Optional Save V4 fields preserve rules, enrollment and historical assessment provenance while older V4 payloads default safely. No official real-world numeric NCAA rules are asserted. See `BS15D_NCAA_RULESET_ENROLLMENT_ELIGIBILITY.md`. BS15E remains recruiting/international acquisition; BS15F remains college continuation, compensation and transfer portal.
+
 ### BS15E · Recruiting and International Acquisition
 
 **Vertical slice:** a real materialized academy/international/eligible high-school or junior-college Player becomes visible through permitted public and organization knowledge, is evaluated on a recruiting board, receives an offer, commits, enrolls and arrives on a college roster.

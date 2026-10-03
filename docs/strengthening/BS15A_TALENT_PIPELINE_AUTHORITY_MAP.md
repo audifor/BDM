@@ -104,3 +104,17 @@ Place / cohort supply (latent)
 | Academy/youth capability | Existing Team, Competition, Staff, Training, Facilities and PlayerDevelopment | Reused without a second Team/Player, academy quality score or parallel development engine. Youth-only staff/facility privileges and minutes attribution remain gaps. |
 
 See `BS15C_CLUB_YOUTH_ACADEMY_REGISTRATION.md` for operation and Save V4 contracts.
+
+## BS15D authority update
+
+| Fact / decision | Canonical owner | BS15D status |
+|---|---|---|
+| NCAA-like governing rules | `CollegeRuleset` in `GameWorld` | Versioned by ecosystem and effective date. Current V1/V2 values are explicitly `TEST / PRODUCT FIXTURE`, not official NCAA rules. |
+| College enrollment affiliation/history | `PlayerEnrollment` in `GameWorld` | Dated player-to-institution/team affiliation with close history; enrollment does not alter the roster. One active enrollment per Player and ecosystem. |
+| Current sporting membership | `Team.rosterPlayerIds` | Remains the only current team membership authority; BS15D enrollment commands require a rostered Player when opening enrollment. |
+| Club/youth/pro pathway history | `PlayerRegistration` in `GameWorld` | Remains BS15C's sporting pathway history. Eligibility assessments read its IDs as evidence but never rewrite it. |
+| Academic performance/progress | Existing `AcademicProfile` and `AcademicTermRecord` | Term progression updates the existing profile and recorded history; no college-specific duplicate academic profile. |
+| Current legal participation decision | `assessCollegeEligibility` derived from enrollment, ruleset, academic state, existing participation profile, pathway history and restrictions | Stable reason codes and ruleset ID/version. Persisted assessments are historical explanations; availability re-evaluates current facts. |
+| Shared pregame participation availability | Eligibility engine's `getAvailablePlayersForCompetition` / existing match preparation | The same competition filter excludes currently ineligible Players before match simulation; no MatchEngine NCAA rule or Player boolean. |
+
+The distinction is explicit: `PlayerRegistration` = sporting/pathway history; `PlayerEnrollment` = college affiliation; `Team.rosterPlayerIds` = current roster; eligibility assessment = derived legal participation state; `CollegeRuleset` = governing authority. See `BS15D_NCAA_RULESET_ENROLLMENT_ELIGIBILITY.md` for the Save V4 and lifecycle contract.

@@ -21,6 +21,7 @@ import { createOrganizationSuccession, type OrganizationSuccession } from '@/dom
 import { createRegulatoryOrder, type RegulatoryOrder } from '@/domain/structuralRegulation/RegulatoryOrder'
 import { createRegulatoryRemediationPlan, type RegulatoryRemediationPlan } from '@/domain/structuralRegulation/RegulatoryRemediationPlan'
 import { createOrganizationLicense, type OrganizationLicense } from '@/domain/structuralRegulation/OrganizationLicense'
+import { createCollegeEligibilityAssessment, createCollegeRuleset, createPlayerEnrollment, type CollegeEligibilityAssessment, type CollegeRuleset, type PlayerEnrollment } from '@/domain/eligibility'
 import {
   createCapacitySpecification,
   createCourtSpecification,
@@ -117,6 +118,10 @@ export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly contractReviewDecisions?: readonly ContractReviewDecision[]
   /** Absent from older Save V4 payloads, which reconstruct an empty collection. */
   readonly retentionNegotiations?: readonly ContractRetentionNegotiation[]
+  /** Optional BS15D college authority; absent in prior V4 saves. */
+  readonly collegeRulesets?: readonly CollegeRuleset[]
+  readonly playerEnrollments?: readonly PlayerEnrollment[]
+  readonly collegeEligibilityAssessments?: readonly CollegeEligibilityAssessment[]
   readonly organizations: readonly Organization[]
   readonly organizationSections: readonly OrganizationSection[]
   readonly organizationOwnership: readonly OrganizationOwnership[]
@@ -252,6 +257,9 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       gmPlanStates: Object.values(world.gmPlanStatesById),
       contractReviewDecisions: Object.values(world.contractReviewDecisionsById),
       retentionNegotiations: Object.values(world.retentionNegotiationsById),
+      collegeRulesets: Object.values(world.collegeRulesetsById),
+      playerEnrollments: Object.values(world.playerEnrollmentsById),
+      collegeEligibilityAssessments: Object.values(world.collegeEligibilityAssessmentsById),
       organizations: Object.values(world.organizationsById),
       organizationSections: Object.values(world.organizationSectionsById),
       organizationOwnership: Object.values(world.organizationOwnershipById),
@@ -341,6 +349,9 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const talentMaterializations = Object.prototype.hasOwnProperty.call(payload, 'talentMaterializations') ? parseTalentMaterializations(payload.talentMaterializations) : []
   const teamPathwayRelations = Object.prototype.hasOwnProperty.call(payload, 'teamPathwayRelations') ? rawArray(payload.teamPathwayRelations, 'Save V4 team pathways').map((item) => createTeamPathwayRelation(record(item, 'Save V4 team pathway') as unknown as TeamPathwayRelation)) : []
   const playerRegistrations = Object.prototype.hasOwnProperty.call(payload, 'playerRegistrations') ? rawArray(payload.playerRegistrations, 'Save V4 player registrations').map((item) => createPlayerRegistration(record(item, 'Save V4 player registration') as unknown as PlayerRegistration)) : []
+  const collegeRulesets = Object.prototype.hasOwnProperty.call(payload, 'collegeRulesets') ? rawArray(payload.collegeRulesets, 'Save V4 college rulesets').map((item) => createCollegeRuleset(record(item, 'Save V4 college ruleset') as unknown as CollegeRuleset)) : []
+  const playerEnrollments = Object.prototype.hasOwnProperty.call(payload, 'playerEnrollments') ? rawArray(payload.playerEnrollments, 'Save V4 player enrollments').map((item) => createPlayerEnrollment(record(item, 'Save V4 player enrollment') as unknown as PlayerEnrollment)) : []
+  const collegeEligibilityAssessments = Object.prototype.hasOwnProperty.call(payload, 'collegeEligibilityAssessments') ? rawArray(payload.collegeEligibilityAssessments, 'Save V4 college eligibility assessments').map((item) => createCollegeEligibilityAssessment(record(item, 'Save V4 college eligibility assessment') as unknown as CollegeEligibilityAssessment)) : []
   const facilities = Object.prototype.hasOwnProperty.call(payload, 'facilities') ? parseFacilities(payload.facilities) : []
   const facilityComponents = Object.prototype.hasOwnProperty.call(payload, 'facilityComponents') ? parseFacilityComponents(payload.facilityComponents) : []
   const facilityNameRecords = Object.prototype.hasOwnProperty.call(payload, 'facilityNameRecords') ? parseFacilityNameRecords(payload.facilityNameRecords) : []
@@ -389,7 +400,7 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   if (hasOrganizations !== hasOrganizationSections) throw new TypeError('Save V4 Organization and OrganizationSection records must be stored together')
   const organizations = hasOrganizations ? parseOrganizations(payload.organizations) : undefined
   const organizationSections = hasOrganizationSections ? parseOrganizationSections(payload.organizationSections) : undefined
-  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, clubStrategicStates: _clubStrategicStates, gmPlanStates: _gmPlanStates, contractReviewDecisions: _contractReviewDecisions, retentionNegotiations: _retentionNegotiations, talentCohorts: _talentCohorts, talentMaterializations: _talentMaterializations, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalsEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _organizationStructuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, revenueSources: _revenueSources, operatingCostSources: _operatingCostSources, operatingCostFacts: _operatingCostFacts, debtInstruments: _debtInstruments, competitionDistributionFacts: _competitionDistributionFacts, financialBudgets: _financialBudgets, budgetLines: _budgetLines, budgetRevisions: _budgetRevisions, budgetAllocations: _budgetAllocations, forecastAssumptions: _forecastAssumptions, facilityFinancialBindings: _facilityFinancialBindings, financialRegulationAssessments: _assessments, financeDecisionProposals: _financeProposals, economicObservations: _observations, exchangeRates: _rates, ...compatibilityPayload } = payload
+  const { worldDbCompetitionRuntime: _runtime, worldAnnualDevelopmentCycle: _cycle, collegeRulesets: _collegeRulesets, playerEnrollments: _playerEnrollments, collegeEligibilityAssessments: _collegeEligibilityAssessments, clubStrategicStates: _clubStrategicStates, gmPlanStates: _gmPlanStates, contractReviewDecisions: _contractReviewDecisions, retentionNegotiations: _retentionNegotiations, talentCohorts: _talentCohorts, talentMaterializations: _talentMaterializations, organizations: _organizations, organizationSections: _sections, organizationOwnership: _ownership, organizationControl: _control, organizationOwnershipTransactions: _transactions, organizationOwnershipTransactionEvents: _transactionEvents, organizationInvestorInterests: _investorInterests, organizationCapitalRaises: _capitalRaises, organizationCapitalRaiseEvents: _capitalRaiseEvents, organizationInvestmentProposals: _investmentProposals, organizationInvestmentProposalEvents: _investmentProposalsEvents, multiClubOwnershipPolicies: _multiClubOwnershipPolicies, organizationStructuralChanges: _organizationStructuralChanges, organizationLifecycleStates: _lifecycleStates, organizationSuccessions: _successions, regulatoryOrders: _orders, regulatoryRemediationPlans: _remediationPlans, organizationLicenses: _licenses, financialAccounts: _financialAccounts, financialTransactions: _financialTransactions, fiscalPeriods: _fiscalPeriods, organizationFinancialProfiles: _organizationFinancialProfiles, receivables: _receivables, payables: _payables, treasuryApplications: _treasuryApplications, revenueRecognitions: _revenueRecognitions, expenseRecognitions: _expenseRecognitions, financialCommitments: _financialCommitments, financialEntitlements: _financialEntitlements, revenueSources: _revenueSources, operatingCostSources: _operatingCostSources, operatingCostFacts: _operatingCostFacts, debtInstruments: _debtInstruments, competitionDistributionFacts: _competitionDistributionFacts, financialBudgets: _financialBudgets, budgetLines: _budgetLines, budgetRevisions: _budgetRevisions, budgetAllocations: _budgetAllocations, forecastAssumptions: _forecastAssumptions, facilityFinancialBindings: _facilityFinancialBindings, financialRegulationAssessments: _assessments, financeDecisionProposals: _financeProposals, economicObservations: _observations, exchangeRates: _rates, ...compatibilityPayload } = payload
   const { teamPathwayRelations: _pathwayPayload, playerRegistrations: _registrationPayload, ...v3CompatibilityPayload } = compatibilityPayload
   const staffCareerRuntimePayload = record(payload.staffCareerRuntime, 'Save V4 staff career runtime')
   const rawDecisions = staffCareerRuntimePayload.governanceDecisions === undefined ? [] : rawArray(staffCareerRuntimePayload.governanceDecisions, 'Save V4 governance decisions')
@@ -423,7 +434,12 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const withContractReviewDecisions = updateGameWorld(withClubStrategy, { contractReviewDecisions })
   const withRetentionNegotiations = updateGameWorld(withContractReviewDecisions, { retentionNegotiations })
   const withTalentSupply = updateGameWorld(withRetentionNegotiations, { talentCohorts, talentMaterializations, teamPathwayRelations, playerRegistrations })
-  const withRetentionExecutions = retentionExecutionEvents.length === 0 ? withTalentSupply : updateGameWorld(withTalentSupply, { governanceDecisionEvents: [...Object.values(withTalentSupply.governanceDecisionEventsById), ...retentionExecutionEvents] })
+  const withCollegeEligibility = updateGameWorld(withTalentSupply, {
+    ...(Object.prototype.hasOwnProperty.call(payload, 'collegeRulesets') ? { collegeRulesets } : {}),
+    ...(Object.prototype.hasOwnProperty.call(payload, 'playerEnrollments') ? { playerEnrollments } : {}),
+    ...(Object.prototype.hasOwnProperty.call(payload, 'collegeEligibilityAssessments') ? { collegeEligibilityAssessments } : {}),
+  })
+  const withRetentionExecutions = retentionExecutionEvents.length === 0 ? withCollegeEligibility : updateGameWorld(withCollegeEligibility, { governanceDecisionEvents: [...Object.values(withCollegeEligibility.governanceDecisionEventsById), ...retentionExecutionEvents] })
   return Object.freeze({ ...attachWorldDbCompetitionRuntime(withRetentionExecutions, runtime), worldAnnualDevelopmentCycle: developmentCycle })
 }
 

@@ -97,7 +97,7 @@ import { createSalaryRules, type SalaryRules } from '@/domain/salary'
 import { createDeadMoneyCharge, createTeamSalaryException, type DeadMoneyCharge, type TeamSalaryException } from '@/domain/salary'
 import { createDraftPickSwapRight, createFutureDraftPickRight, createPlayerRights, createRetainedSalaryObligation, createTradeNegotiation, createTradeRecord, createTradeRules, type DraftPickSwapRight, type FutureDraftPickRight, type PlayerRights, type RetainedSalaryObligation, type TradeNegotiation, type TradeRecord, type TradeRules } from '@/domain/trade'
 import type { RecruitingActionRecord, RecruitingBoardEntry, RecruitingCommitment, RecruitingCycle, RecruitingInterest, RecruitingOffer, RecruitingVisit, RecruitProfile, RecruitSigning } from '@/domain/recruiting'
-import type { EligibilityProfile, EligibilityRestriction, EligibilityRules } from '@/domain/eligibility'
+import { createCollegeEligibilityAssessment, createCollegeRuleset, createPlayerEnrollment, type CollegeEligibilityAssessment, type CollegeRuleset, type EligibilityProfile, type EligibilityRestriction, type EligibilityRules, type PlayerEnrollment } from '@/domain/eligibility'
 import type { AcademicProfile, AcademicRules, AcademicSupportPlan, AcademicTermRecord } from '@/domain/academic'
 import type { Collective, NilDeal, NilOpportunity, NilProfile, NilRules } from '@/domain/nil'
 import type { Booster, BoosterContribution, BoosterRequest } from '@/domain/boosters'
@@ -331,6 +331,9 @@ export interface GameWorld {
   readonly recruitingCommitmentsById: Readonly<Record<string, RecruitingCommitment>>
   readonly recruitSigningsById: Readonly<Record<string, RecruitSigning>>
   readonly eligibilityRulesByEcosystemId: Readonly<Record<EcosystemId, EligibilityRules>>
+  readonly collegeRulesetsById: Readonly<Record<string, CollegeRuleset>>
+  readonly playerEnrollmentsById: Readonly<Record<string, PlayerEnrollment>>
+  readonly collegeEligibilityAssessmentsById: Readonly<Record<string, CollegeEligibilityAssessment>>
   readonly eligibilityProfilesById: Readonly<Record<string, EligibilityProfile>>
   readonly eligibilityRestrictionsById: Readonly<Record<string, EligibilityRestriction>>
   readonly academicRulesByEcosystemId: Readonly<Record<EcosystemId, AcademicRules>>
@@ -599,6 +602,9 @@ export interface CreateGameWorldInput {
   recruitingCommitments?: readonly RecruitingCommitment[]
   recruitSignings?: readonly RecruitSigning[]
   eligibilityRulesByEcosystemId?: Readonly<Record<EcosystemId, EligibilityRules>>
+  collegeRulesets?: readonly CollegeRuleset[]
+  playerEnrollments?: readonly PlayerEnrollment[]
+  collegeEligibilityAssessments?: readonly CollegeEligibilityAssessment[]
   eligibilityProfiles?: readonly EligibilityProfile[]
   eligibilityRestrictions?: readonly EligibilityRestriction[]
   academicRulesByEcosystemId?: Readonly<Record<EcosystemId, AcademicRules>>
@@ -912,6 +918,9 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     recruitingCommitmentsById: indexById(input.recruitingCommitments ?? [], 'Recruiting commitment'),
     recruitSigningsById: indexById(input.recruitSignings ?? [], 'Recruit signing'),
     eligibilityRulesByEcosystemId: Object.freeze({ ...(input.eligibilityRulesByEcosystemId ?? {}) }),
+    collegeRulesetsById: indexById((input.collegeRulesets ?? []).map(createCollegeRuleset), 'College ruleset'),
+    playerEnrollmentsById: indexById((input.playerEnrollments ?? []).map(createPlayerEnrollment), 'Player enrollment'),
+    collegeEligibilityAssessmentsById: indexById((input.collegeEligibilityAssessments ?? []).map(createCollegeEligibilityAssessment), 'College eligibility assessment'),
     eligibilityProfilesById: indexById(input.eligibilityProfiles ?? [], 'Eligibility profile'),
     eligibilityRestrictionsById: indexById(input.eligibilityRestrictions ?? [], 'Eligibility restriction'),
     academicRulesByEcosystemId: Object.freeze({ ...(input.academicRulesByEcosystemId ?? {}) }), academicProfilesById: indexById(input.academicProfiles ?? [], 'Academic profile'), academicTermRecordsById: indexById(input.academicTermRecords ?? [], 'Academic term record'), academicSupportPlansById: indexById(input.academicSupportPlans ?? [], 'Academic support plan'),
@@ -1042,7 +1051,7 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
   teamPathwayRelations: 'teamPathwayRelationsById',
-  playerRegistrations: 'playerRegistrationsById',
+  playerRegistrations: 'playerRegistrationsById', collegeRulesets: 'collegeRulesetsById', playerEnrollments: 'playerEnrollmentsById', collegeEligibilityAssessments: 'collegeEligibilityAssessmentsById',
   contractReviewDecisions: 'contractReviewDecisionsById',
   retentionNegotiations: 'retentionNegotiationsById',
   financialBudgets: 'financialBudgetsById', budgetLines: 'budgetLinesById', budgetRevisions: 'budgetRevisionsById', budgetAllocations: 'budgetAllocationsById', forecastAssumptions: 'forecastAssumptionsById', financialRegulationAssessments: 'financialRegulationAssessmentsById', financeDecisionProposals: 'financeDecisionProposalsById', economicObservations: 'economicObservationsById', exchangeRates: 'exchangeRatesById', revenueSources: 'revenueSourcesById', operatingCostSources: 'operatingCostSourcesById', operatingCostFacts: 'operatingCostFactsById', debtInstruments: 'debtInstrumentsById', competitionDistributionFacts: 'competitionDistributionFactsById',
@@ -1198,6 +1207,7 @@ function validateWorld(world: GameWorld): void {
   validateFacilities(world)
   validateTalentSupply(world)
   validateYouthPathway(world)
+  validateCollegeEligibility(world)
   validateMultiClubOwnershipPolicies(world)
   validateStructuralRegulation(world)
   validateGovernance(world)
@@ -2512,6 +2522,43 @@ function validateYouthPathway(world: GameWorld): void {
       if (activePlayers.has(player.id) || !team.rosterPlayerIds.includes(player.id)) throw new GameWorldValidationError(`Player ${player.id} has contradictory active pathway registration`)
       activePlayers.add(player.id)
     }
+  }
+}
+
+function validateCollegeEligibility(world: GameWorld): void {
+  const versions = new Set<string>()
+  const rulesets = Object.values(world.collegeRulesetsById)
+  for (const ruleset of rulesets) {
+    createCollegeRuleset(ruleset)
+    if (world.ecosystems[ruleset.ecosystemId]?.kind !== 'ncaaLike') throw new GameWorldValidationError(`College ruleset ${ruleset.id} must belong to an NCAA-like ecosystem`)
+    const versionKey = `${ruleset.ecosystemId}:${ruleset.version}`
+    if (versions.has(versionKey)) throw new GameWorldValidationError(`Duplicate college ruleset version ${versionKey}`)
+    versions.add(versionKey)
+  }
+  for (let i = 0; i < rulesets.length; i++) for (let j = i + 1; j < rulesets.length; j++) {
+    const a = rulesets[i]!, b = rulesets[j]!
+    if (a.ecosystemId !== b.ecosystemId) continue
+    const aEnds = a.effectiveTo ?? '9999-12-31', bEnds = b.effectiveTo ?? '9999-12-31'
+    if (a.effectiveFrom <= bEnds && b.effectiveFrom <= aEnds) throw new GameWorldValidationError(`College rulesets ${a.id} and ${b.id} have overlapping effective dates`)
+  }
+  const active = new Set<string>()
+  for (const enrollment of Object.values(world.playerEnrollmentsById)) {
+    createPlayerEnrollment(enrollment)
+    requireEntity(world.players, enrollment.playerId, `Enrollment ${enrollment.id} Player`)
+    const team = requireEntity(world.teams, enrollment.teamId, `Enrollment ${enrollment.id} Team`)
+    if (team.organizationId !== enrollment.organizationId || world.ecosystems[enrollment.ecosystemId]?.kind !== 'ncaaLike') throw new GameWorldValidationError(`Enrollment ${enrollment.id} has an invalid institution or ecosystem`)
+    if (!Object.values(world.competitions).some((competition) => competition.ecosystemId === enrollment.ecosystemId && competition.participantTeamIds.includes(team.id))) throw new GameWorldValidationError(`Enrollment ${enrollment.id} Team is outside its college ecosystem`)
+    if (enrollment.sourceRegistrationId !== undefined && !world.playerRegistrationsById[enrollment.sourceRegistrationId]) throw new GameWorldValidationError(`Enrollment ${enrollment.id} references missing pathway registration`)
+    if (enrollment.status === 'active') {
+      const key = `${enrollment.ecosystemId}:${enrollment.playerId}`
+      if (active.has(key)) throw new GameWorldValidationError(`Player ${enrollment.playerId} has duplicate active enrollment in ${enrollment.ecosystemId}`)
+      active.add(key)
+    }
+  }
+  for (const assessment of Object.values(world.collegeEligibilityAssessmentsById)) {
+    requireEntity(world.players, assessment.playerId, `Eligibility assessment ${assessment.id} Player`)
+    requireEntity(world.teams, assessment.teamId, `Eligibility assessment ${assessment.id} Team`)
+    if (!rulesets.some((item) => item.id === assessment.rulesetId && item.version === assessment.rulesetVersion && item.ecosystemId === assessment.ecosystemId)) throw new GameWorldValidationError(`Eligibility assessment ${assessment.id} has no matching ruleset provenance`)
   }
 }
 
