@@ -26,6 +26,8 @@ export function createScoutingTerritoryAssignment(world: GameWorld, input: { rea
   if (!isStaffRoleSuitableForScoutingTerritory(world, team.id, assignment.role, input.territory)) throw new RangeError(`Staff role ${assignment.role} is not suitable for ${input.territory.kind} scouting`)
   if (getTeamsInScoutingTerritory(world, input.territory).length === 0) throw new RangeError('Scouting territory has no current basketball context')
   if (Object.values(world.scoutingTerritoryAssignmentsById).some((item) => item.organizationId === team.organizationId && item.requestingTeamId === team.id && item.scoutStaffId === input.scoutStaffId && item.status === 'ACTIVE' && scoutingTerritoryKey(item.territory) === scoutingTerritoryKey(input.territory))) return world
+  const workload = calculateStaffWorkload(world, input.scoutStaffId)
+  if (workload.overloaded || workload.totalCapacityUsed + SCOUTING_TERRITORY_WORKLOAD_COST > workload.capacityLimit) throw new RangeError('Scout does not have enough workload capacity for territory coverage')
   const prefix = `scouting-territory:${team.id}:${input.scoutStaffId}:${scoutingTerritoryKey(input.territory)}:${world.currentDate}`
   let sequence = 1
   while (world.scoutingTerritoryAssignmentsById[`${prefix}:${sequence}`] !== undefined) sequence += 1

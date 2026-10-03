@@ -32,7 +32,7 @@ describe('buildScoutingWorkspaceModel', () => {
 
     const subject = model!.knowledge.find((row) => row.isOwnRoster)!
     const player = world.players[subject.playerId]!
-    expect(subject.evaluations.every((evaluation) => evaluation.evaluationLabel === '?')).toBe(true)
+    expect(subject.knowledgeState).toBe('UNKNOWN')
     expect(subject.valuationCurrent).toBeNull()
     expect(JSON.stringify(subject)).not.toContain(JSON.stringify(player.basketball.ratings))
     expect(JSON.stringify(model)).not.toMatch(/actualRating|truthValue|canonicalPlayer/)
@@ -48,7 +48,7 @@ describe('buildScoutingWorkspaceModel', () => {
     const row = model.knowledge.find((candidate) => candidate.playerId === publicPlayerId)!
     expect(row).toBeDefined()
     expect(row.knownDomains).toEqual([])
-    expect(row.evaluations.every((evaluation) => evaluation.evaluationLabel === '?')).toBe(true)
+    expect(row.knowledgeState).toBe('UNKNOWN')
   })
 
   it('surfaces completed assignments and reports through organization knowledge, not player truth', () => {
@@ -103,7 +103,8 @@ describe('buildScoutingWorkspaceModel', () => {
     })
     const after = buildScoutingWorkspaceModel(altered)!
     const afterRow = after.knowledge.find((row) => row.playerId === player.id)!
-    expect(afterRow.evaluations).toEqual(beforeRow.evaluations)
+    expect(afterRow.knowledgeState).toBe(beforeRow.knowledgeState)
+    expect(afterRow.knownRatingCount).toBe(beforeRow.knownRatingCount)
     expect(afterRow.valuationCurrent).toBe(beforeRow.valuationCurrent)
     expect(afterRow.valuationCurrent).toBeNull()
   })

@@ -1,14 +1,15 @@
 import type { GameDate } from '@/domain/date'
 import type { PlayerId } from '@/domain/ids'
-import type { ScoutingMission, ScoutingPriority, ScoutingStatus } from '@/domain/scouting'
+import type { Evidence, ScoutingMission, ScoutingPriority, ScoutingStatus, ScoutingTerritory, ScoutingTerritoryAssignment } from '@/domain/scouting'
 
-export const SCOUTING_WORKSPACE_TABS = ['knowledge', 'assignments', 'reports', 'opposition'] as const
+export const SCOUTING_WORKSPACE_TABS = ['knowledge', 'assignments', 'reports', 'coverage', 'opposition'] as const
 export type ScoutingWorkspaceTabId = (typeof SCOUTING_WORKSPACE_TABS)[number]
 
 export const SCOUTING_TAB_LABELS: Readonly<Record<ScoutingWorkspaceTabId, string>> = {
   knowledge: 'Knowledge',
   assignments: 'Assignments',
   reports: 'Reports',
+  coverage: 'Coverage',
   opposition: 'Opposition',
 }
 
@@ -35,6 +36,11 @@ export interface ScoutingKnowledgeRow {
   readonly name: string
   readonly position: string
   readonly clubName: string
+  readonly countryName: string
+  readonly competitionName: string
+  readonly age: number
+  readonly knowledgeState: ScoutingKnowledgeState
+  readonly discovered: boolean
   readonly isOwnRoster: boolean
   readonly coverageLabel: string
   readonly confidenceLabel: string
@@ -42,12 +48,14 @@ export interface ScoutingKnowledgeRow {
   readonly disagreement: 'LOW' | 'MODERATE' | 'HIGH'
   readonly knownDomains: readonly string[]
   readonly lastAssessedLabel: string | null
-  readonly evaluations: readonly ScoutingKnowledgeEvaluation[]
+  readonly knownRatingCount: number
   readonly valuationCurrent: number | null
   readonly valuationCertainty: number | null
   readonly valuationRisk: number | null
-  readonly hasOpenQuickLook: boolean
+  readonly activeAssignment: ScoutingAssignmentRow | null
 }
+
+export type ScoutingKnowledgeState = 'UNKNOWN' | 'DISCOVERED' | 'QUICK_LOOK' | 'PARTIAL' | 'DETAILED'
 
 export interface ScoutingAssignmentRow {
   readonly id: string
@@ -59,6 +67,9 @@ export interface ScoutingAssignmentRow {
   readonly priority: ScoutingPriority
   readonly priorityLabel: string
   readonly evaluatorName: string
+  readonly evaluatorRoleLabel: string
+  readonly sourceLabel: string
+  readonly workloadLabel: string
   readonly createdLabel: string
   readonly expectedLabel: string | null
 }
@@ -77,8 +88,32 @@ export interface ScoutingReportRow {
   readonly evaluatorName: string
   readonly evaluatorRoleLabel: string
   readonly createdLabel: string
+  readonly confidenceLabel: string
+  readonly uncertaintyLabel: string
+  readonly coverageLabel: string
+  readonly evidenceSourceLabel: string
+  readonly findingCount: number
   readonly tacticalFitLabel: string | null
   readonly findings: readonly ScoutingReportFinding[]
+}
+
+export interface ScoutingReportDetail extends ScoutingReportRow {
+  readonly evidence: readonly Evidence[]
+  readonly families: readonly { readonly id: string; readonly label: string; readonly findings: readonly { readonly key: string; readonly label: string; readonly estimate: number; readonly uncertainty: number; readonly confidence: number }[] }[]
+  readonly broadFindings: readonly { readonly label: string; readonly estimate: number; readonly uncertainty: number; readonly confidence: number }[]
+  readonly potentialFindings: readonly { readonly label: string; readonly estimate: number; readonly uncertainty: number; readonly confidence: number }[]
+}
+
+export interface ScoutingCoverageRow {
+  readonly id: string
+  readonly assignment: ScoutingTerritoryAssignment
+  readonly territoryLabel: string
+  readonly territoryTypeLabel: string
+  readonly scoutName: string
+  readonly scoutRoleLabel: string
+  readonly coverageLabel: string
+  readonly knownEligibleLabel: string
+  readonly workloadLabel: string
 }
 
 export interface ScoutingOppositionRow {
@@ -101,11 +136,15 @@ export interface ScoutingWorkspaceModel {
   readonly openAssignmentCount: number
   readonly reportCount: number
   readonly oppositionCount: number
+  readonly territoryCount: number
+  readonly candidateCount: number
   readonly canRequestScouting: boolean
   readonly requestUnavailableLabel: string | null
   readonly knowledge: readonly ScoutingKnowledgeRow[]
   readonly assignments: readonly ScoutingAssignmentRow[]
   readonly reports: readonly ScoutingReportRow[]
+  readonly coverage: readonly ScoutingCoverageRow[]
+  readonly validTerritories: readonly ScoutingTerritory[]
   readonly opposition: readonly ScoutingOppositionRow[]
 }
 

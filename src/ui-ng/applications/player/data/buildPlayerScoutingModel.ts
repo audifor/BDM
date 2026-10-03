@@ -454,7 +454,7 @@ export function buildPlayerScoutingModel(
       }
     })
 
-  const ranked = [...attributes].sort(
+  const ranked = [...attributes].filter((row) => row.estimate !== null && row.confidence !== null && row.confidence >= 0.55 && row.knowledgeState !== 'unknown').sort(
     (left, right) => (right.estimate ?? 0) - (left.estimate ?? 0) || left.label.localeCompare(right.label),
   )
   const toHighlight = (row: ScoutingAttributeRowModel): ScoutingHighlightModel => ({
@@ -463,17 +463,15 @@ export function buildPlayerScoutingModel(
     rangeLabel: row.rangeLabel,
     knowledgeState: row.knowledgeState,
   })
-  const strengths = ranked.slice(0, 5).map(toHighlight)
-  const weaknesses = [...ranked]
-    .reverse()
-    .slice(0, 5)
-    .map(toHighlight)
+  const strengths = ranked.filter((row) => (row.estimate ?? 0) >= 65).slice(0, 5).map(toHighlight)
+  const weaknesses = ranked.filter((row) => (row.estimate ?? 101) <= 40).slice(-5).map(toHighlight)
 
-  // Archetype from the scouts' own reading: the strongest scouted dimensions, never the true profile.
-  const archetypeDescriptors = ranked.slice(0, 3).map((row) => row.label)
+  // Archetype is a projection of broad OrganizationKnowledge only, and needs four reliable dimensions.
+  const archetypeSupported = ranked.length >= 4 && ranked.reduce((sum, row) => sum + (row.confidence ?? 0), 0) / ranked.length >= 0.6
+  const archetypeDescriptors = archetypeSupported ? ranked.slice(0, 3).map((row) => row.label) : []
   const archetypeTitle =
     archetypeDescriptors.length === 0
-      ? 'Not scouted'
+      ? 'Insufficient scouting information'
       : `${archetypeDescriptors[0]}-first ${player.basketball.primaryPosition === 'PG' ? 'lead guard' : 'player'}`
   const archetypeRoleTitle =
     archetypeDescriptors.length <= 1 ? 'Insufficient reports' : `${archetypeDescriptors[1]} · ${archetypeDescriptors[2]}`
@@ -612,8 +610,7 @@ export function buildPlayerScoutingModel(
     overallFitLabel: 'Unknown',
     teamFitNote: 'No tactical or locker-room fit model exists for a player.',
     noteTimeline,
-    actionsNote:
-      'Assigning a scout, changing priority or requesting a report are not actions this workspace can perform.',
+    actionsNote: 'Actions and availability reflect the current assignment and report history.',
     gaps,
   }
 }

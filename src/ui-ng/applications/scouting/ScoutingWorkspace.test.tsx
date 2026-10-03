@@ -43,19 +43,25 @@ describe('ScoutingWorkspace', () => {
     const player = world.players[team.rosterPlayerIds[0]!]!
 
     expect(screen.getByText((_, element) => element?.classList.contains('scouting-workspace-header__team') === true && element.textContent === team.name)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: `${player.firstName} ${player.lastName}` })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: `${player.firstName} ${player.lastName}` }).length).toBeGreaterThan(0)
     expect(document.body.textContent).not.toContain(JSON.stringify(player.basketball.ratings))
   })
 
   it('queues a quick-look assignment from the knowledge board', () => {
     mountScoutingWorkspace()
-    fireEvent.click(screen.getAllByRole('button', { name: 'Quick look' })[0]!)
+    fireEvent.click(screen.getAllByRole('button', { name: 'Request scouting' })[0]!)
+    expect(screen.getByRole('option', { name: 'Full report' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Skill evaluation' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Potential evaluation' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Tactical fit' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Live game' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm assignment' }))
 
     const assignments = Object.values(useGameStore.getState().world!.scoutingAssignmentsById)
     expect(assignments).toHaveLength(1)
     expect(assignments[0]?.missionType).toBe('QUICK_LOOK')
     expect(assignments[0]?.status).toBe('QUEUED')
     expect(assignments[0]?.requestedBy).toBe('HEAD_COACH')
-    expect(screen.getByRole('button', { name: 'Queued' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /Quick look.*Queued/i })).toBeInTheDocument()
   })
 })

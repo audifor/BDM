@@ -96,3 +96,6 @@ Calendar daily Scouting intake progresses active territory operations alongside 
 ## BS14F autonomous AI integration
 
 The calendar invokes one AI strategic planner during daily Scouting intake; its cadence gate runs five planning dates per month. The planner derives coached AI teams, roster needs, territory coverage, and public acquisition candidates from canonical world state; it creates operations through the territory service and report work through `requestScouting`. Existing daily discovery and report progression then build awareness and OrganizationKnowledge. Acquisition systems remain unchanged and consume that knowledge through their existing valuation paths. Human teams are excluded from autonomous planning, and reports never select targets from hidden PlayerTruth. No additional save fields were introduced. See [BS14F AI Scouting and Acquisition](BS14F_AI_SCOUTING_AND_ACQUISITION.md).
+# BS14G integration update
+
+Scouting workspace and Player profile share the Request Scouting modal and store actions. Workspace routes operations through the application service; profile actions derive availability from canonical assignments and report history. Coverage creation/end use the territory service. Report detail is built from stored EvaluatorReport/Evidence data. Full visual validation checklist: [BS14G gameplay UX](BS14G_SCOUTING_GAMEPLAY_UX.md).

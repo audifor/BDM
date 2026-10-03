@@ -1,5 +1,5 @@
 import { addDays, compareGameDates, type GameDate } from '@/domain/date'
-import { type OrganizationId, type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
+import { type GameId, type OrganizationId, type PlayerId, type StaffPersonId, type TeamId } from '@/domain/ids'
 import { PLAYER_TRUTH_RATING_KEYS } from '@/domain/player'
 import {
   PLAYER_AGGREGATE_SCOUTING_KEYS,
@@ -14,6 +14,7 @@ import {
 } from '@/domain/player/PlayerTruthCatalog'
 import type { OrganizationKnowledge, OrganizationKnowledgeDimension } from '@/domain/knowledge'
 import { getOrganizationRatingEvaluation } from '@/domain/intelligence'
+import { calculateStaffRoleProficiencyByRoleId, staffRoleIdsInDepartment, type StaffRoleId } from '@/domain/staff'
 import { createEvaluatorProfile, SCOUTING_TERRITORY_WORKLOAD_COST, type EvaluatorFinding, type EvaluatorProfile, type EvaluatorReport, type Evidence, type ScoutingAssignment, type ScoutingMission, type ScoutingPriority } from '@/domain/scouting'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 
@@ -31,9 +32,15 @@ export function evaluatorProfile(world: GameWorld, staffId: StaffPersonId): Eval
 }
 
 export function requestScouting(world: GameWorld, input: { organizationId: OrganizationId; playerId: PlayerId; missionType: ScoutingMission; priority?: ScoutingPriority; evaluatorStaffId?: StaffPersonId; targetDimension?: string; teamContextId?: TeamId; gameId?: string; requestedBy?: 'HEAD_COACH' | 'SCOUTING_DEPARTMENT'; staffQualityScore?: number }): GameWorld {
-  const evaluatorStaffId = input.evaluatorStaffId ?? chooseEvaluator(world, input.organizationId, input.missionType)
+  const evaluatorStaffId = input.evaluatorStaffId ?? chooseEvaluator(world, input.organizationId, input.missionType, input.teamContextId)
   if (!world.players[input.playerId] || !world.staffPeopleById[evaluatorStaffId]) throw new Error('Scouting request references missing entity')
   if (input.missionType === 'SKILL_EVALUATION' && input.targetDimension !== undefined && !isSkillTarget(input.targetDimension)) throw new Error(`Unknown scouting skill family ${input.targetDimension}`)
+  if (input.missionType === 'LIVE_GAME' && !isValidLiveGameTarget(world, input.playerId, input.gameId)) throw new Error('Live Game requires a scheduled game involving the Player and their current team')
+  if (input.teamContextId !== undefined) {
+    const team = world.teams[input.teamContextId]
+    if (team === undefined || team.organizationId !== input.organizationId) throw new Error('Scouting team context does not belong to this organization')
+    if (!isScoutingEvaluatorEligible(world, team.id, evaluatorStaffId, input.missionType)) throw new Error('Selected Staff is not eligible for this Scouting mission')
+  }
   if (Object.values(world.scoutingAssignmentsById).some((item) => item.organizationId === input.organizationId && item.subjectPlayerId === input.playerId && item.evaluatorStaffId === evaluatorStaffId && item.missionType === input.missionType && item.status !== 'COMPLETED' && item.status !== 'CANCELLED')) return world
   const id = `scouting:${input.organizationId}:${input.playerId}:${evaluatorStaffId}:${input.missionType}:${world.currentDate}`
   const assignment: ScoutingAssignment = { id, organizationId: input.organizationId, subjectPlayerId: input.playerId, evaluatorStaffId, missionType: input.missionType, requestedBy: input.requestedBy ?? 'HEAD_COACH', priority: input.priority ?? 'NORMAL', createdAt: world.currentDate, status: 'QUEUED', ...(input.targetDimension === undefined ? {} : { targetDimension: input.targetDimension }), ...(input.teamContextId === undefined ? {} : { teamContextId: input.teamContextId }), ...(input.gameId === undefined ? {} : { gameId: input.gameId }), ...(input.staffQualityScore === undefined ? {} : { staffQualityScore: input.staffQualityScore }) }
@@ -77,6 +84,38 @@ export function hasScoutingCapacityForMission(world: GameWorld, staffId: StaffPe
   )
   const capacity = (missionType === 'QUICK_LOOK' ? 6 : 4) + territoryAllowance
   return activeWorkload(world, staffId) + missionUnits[missionType] <= capacity
+}
+
+const SCOUTING_ROLE_IDS = new Set<StaffRoleId>(staffRoleIdsInDepartment('scouting'))
+
+export function isScoutingEvaluatorEligible(world: GameWorld, teamId: TeamId, staffId: StaffPersonId, missionType: ScoutingMission): boolean {
+  const assignment = Object.values(world.teamStaffAssignmentsById).find((item) => item.teamId === teamId && item.staffPersonId === staffId)
+  const employment = world.staffEmploymentByStaffId[staffId]
+  if (assignment === undefined || !SCOUTING_ROLE_IDS.has(assignment.role) || employment?.status !== 'employed' || employment.teamId !== teamId) return false
+  if (assignment.role === 'advanceScout' && missionType !== 'TACTICAL_FIT' && missionType !== 'LIVE_GAME') return false
+  return hasScoutingCapacityForMission(world, staffId, missionType)
+}
+
+export function getEligibleScoutingEvaluators(world: GameWorld, teamId: TeamId, missionType: ScoutingMission): readonly StaffPersonId[] {
+  return Object.values(world.teamStaffAssignmentsById)
+    .filter((item) => item.teamId === teamId && isScoutingEvaluatorEligible(world, teamId, item.staffPersonId, missionType))
+    .map((item) => ({ staffId: item.staffPersonId, roleId: item.role }))
+    .sort((left, right) => scoutingEvaluatorScore(world, right.staffId, right.roleId, missionType) - scoutingEvaluatorScore(world, left.staffId, left.roleId, missionType) || left.staffId.localeCompare(right.staffId))
+    .map((item) => item.staffId)
+}
+
+export function updateScoutingAssignmentPriority(world: GameWorld, assignmentId: string, priority: ScoutingPriority): GameWorld {
+  const assignment = world.scoutingAssignmentsById[assignmentId]
+  if (assignment === undefined || assignment.status === 'COMPLETED' || assignment.status === 'CANCELLED') throw new Error('Only queued or active Scouting assignments can change priority')
+  if (!['LOW', 'NORMAL', 'HIGH', 'URGENT'].includes(priority)) throw new Error('Invalid Scouting priority')
+  if (assignment.priority === priority) return world
+  return updateGameWorld(world, { scoutingAssignments: Object.values(world.scoutingAssignmentsById).map((item) => item.id === assignmentId ? { ...item, priority } : item) })
+}
+
+export function cancelScoutingAssignment(world: GameWorld, assignmentId: string): GameWorld {
+  const assignment = world.scoutingAssignmentsById[assignmentId]
+  if (assignment === undefined || assignment.status === 'COMPLETED' || assignment.status === 'CANCELLED') throw new Error('Only queued or active Scouting assignments can be cancelled')
+  return updateGameWorld(world, { scoutingAssignments: Object.values(world.scoutingAssignmentsById).map((item) => item.id === assignmentId ? { ...item, status: 'CANCELLED' } : item) })
 }
 
 export function durationDays(world: GameWorld, assignment: ScoutingAssignment): number {
@@ -160,8 +199,27 @@ export function getPlayerKnowledgeSummary(world: GameWorld, organizationId: Orga
     ...(findings.length === 0 ? {} : { lastAssessedAt: findings.map((item) => item.assessedAt).sort().at(-1)! }),
   }
 }
-function chooseEvaluator(world:GameWorld, organizationId:OrganizationId, mission:ScoutingMission):StaffPersonId { const teamId = organizationId as unknown as TeamId; const candidates = Object.values(world.teamStaffAssignmentsById).filter((item) => item.teamId === teamId && item.role === 'regionalScout').map((item) => item.staffPersonId); const selected = candidates.sort((a,b) => score(world,b,mission)-score(world,a,mission) || a.localeCompare(b))[0]; if (!selected) throw new Error('Organization has no scout'); return selected }
-function score(world:GameWorld,id:StaffPersonId,mission:ScoutingMission):number { const a=world.staffPeopleById[id]!.professional.attributes; return (mission==='POTENTIAL_EVALUATION'?a.potentialEvaluation:mission==='TACTICAL_FIT'?a.tacticalKnowledge+a.analysis:a.talentEvaluation)+evaluatorProfile(world,id).experience*.15-activeWorkload(world,id)*10 }
+function chooseEvaluator(world: GameWorld, organizationId: OrganizationId, mission: ScoutingMission, teamContextId?: TeamId): StaffPersonId {
+  const teamIds = teamContextId === undefined ? Object.values(world.teams).filter((team) => team.organizationId === organizationId).map((team) => team.id) : [teamContextId]
+  const selected = teamIds.flatMap((teamId) => getEligibleScoutingEvaluators(world, teamId, mission)).sort((a, b) => {
+    const roleA = Object.values(world.teamStaffAssignmentsById).find((item) => item.staffPersonId === a)?.role
+    const roleB = Object.values(world.teamStaffAssignmentsById).find((item) => item.staffPersonId === b)?.role
+    return scoutingEvaluatorScore(world, b, roleB!, mission) - scoutingEvaluatorScore(world, a, roleA!, mission) || a.localeCompare(b)
+  })[0]
+  if (selected === undefined) throw new Error('Organization has no eligible Scout with available capacity')
+  return selected
+}
+function scoutingEvaluatorScore(world: GameWorld, id: StaffPersonId, role: StaffRoleId, mission: ScoutingMission): number {
+  const a = world.staffPeopleById[id]!.professional.attributes
+  const ability = mission === 'POTENTIAL_EVALUATION' ? a.potentialEvaluation : mission === 'TACTICAL_FIT' ? a.tacticalKnowledge : a.talentEvaluation
+  return calculateStaffRoleProficiencyByRoleId(world.staffPeopleById[id]!, role) * .55 + ability * .3 + a.analysis * .15 - activeWorkload(world, id) * 8
+}
+function isValidLiveGameTarget(world: GameWorld, playerId: PlayerId, gameId: string | undefined): boolean {
+  if (gameId === undefined) return false
+  const playerTeam = Object.values(world.teams).find((team) => team.rosterPlayerIds.includes(playerId))
+  const game = world.games[gameId as GameId]
+  return playerTeam !== undefined && game?.status === 'scheduled' && compareGameDates(game.date, world.currentDate) >= 0 && (game.homeTeamId === playerTeam.id || game.awayTeamId === playerTeam.id)
+}
 function isSkillTarget(value: string): boolean {
   return SCOUTING_FAMILY_SET.has(value) || Object.hasOwn(PLAYER_AGGREGATE_SCOUTING_KEYS, value)
 }

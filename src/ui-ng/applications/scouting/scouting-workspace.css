@@ -201,3 +201,41 @@
   border-radius: var(--ng-radius-sm);
   color: var(--ng-text-secondary);
 }
+
+.scouting-filter-bar { display:flex; align-items:end; flex-wrap:wrap; gap:8px 12px; padding:10px 12px; border-bottom:1px solid var(--ng-border-subtle); }
+.scouting-filter-bar label,.scouting-request-form label { display:grid; gap:4px; color:var(--ng-text-muted); font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
+.scouting-filter-bar input,.scouting-filter-bar select,.scouting-workspace__table select,.scouting-request-form input,.scouting-request-form select { min-width:100px; min-height:30px; padding:4px 8px; border:1px solid var(--ng-border-subtle); border-radius:var(--ng-radius-sm); background:var(--ng-surface-raised); color:var(--ng-text-primary); }
+.scouting-filter-bar__age { display:flex!important; align-items:center; gap:5px!important; }
+.scouting-filter-bar__age input { width:58px; min-width:0; }
+.scouting-filter-bar__check { display:flex!important; align-items:center; gap:6px!important; }
+.scouting-filter-bar__check input { min-width:0; }
+.scouting-filter-bar__count { margin-left:auto; padding:6px; color:var(--ng-text-muted); font-size:12px; }
+.scouting-workspace__table-wrap { min-width:0; overflow:auto; }
+.scouting-workspace__table th,.scouting-workspace__table td { padding:7px 9px; border-bottom:1px solid var(--ng-border-subtle); text-align:left; white-space:nowrap; font-size:12px; }
+.scouting-workspace__table th { position:sticky; top:0; z-index:1; background:var(--ng-surface-raised); color:var(--ng-text-muted); font-size:10px; letter-spacing:.06em; text-transform:uppercase; }
+.scouting-state { display:inline-block; padding:3px 6px; border:1px solid var(--ng-border-subtle); border-radius:var(--ng-radius-sm); font-size:10px; text-transform:uppercase; }
+.scouting-state.is-discovered { color:var(--ng-amber); }
+.scouting-state.is-detailed { color:var(--ng-cyan); }
+.scouting-workspace__empty,.scouting-workspace__note,.scouting-workspace__feedback { padding:12px; color:var(--ng-text-muted); }
+.scouting-section-head { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 12px; }
+.scouting-report-row { display:flex; align-items:center; flex-wrap:wrap; gap:8px 16px; padding:10px 12px; }
+.scouting-report-row>div { display:flex; align-items:center; gap:8px; }
+.scouting-modal-backdrop { position:fixed; inset:0; z-index:1000; display:grid; place-items:center; padding:24px; background:rgba(3,8,17,.78); }
+.scouting-modal { width:min(640px,100%); max-height:min(88vh,900px); overflow:auto; border:1px solid var(--ng-border-subtle); border-radius:var(--ng-radius-md); background:var(--ng-surface-raised); box-shadow:0 22px 80px rgba(0,0,0,.6); }
+.scouting-modal__header,.scouting-modal__footer { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 16px; border-bottom:1px solid var(--ng-border-subtle); }
+.scouting-modal__header h2 { margin:0; font-size:16px; text-transform:uppercase; }
+.scouting-modal__body { padding:16px; }
+.scouting-modal__footer { justify-content:flex-end; border-top:1px solid var(--ng-border-subtle); border-bottom:0; }
+.scouting-modal__error { margin-right:auto; color:var(--ng-danger); font-size:12px; }
+.scouting-request-form { display:grid; gap:12px; }
+.scouting-request-form input[readonly] { opacity:.75; }
+.scouting-request-form small { color:var(--ng-text-muted); font-size:11px; text-transform:none; letter-spacing:0; }
+.scouting-modal__warning { color:var(--ng-amber); }
+.scouting-modal button:disabled { opacity:.45; cursor:not-allowed; }
+.scouting-coverage-preview { display:flex; flex-wrap:wrap; gap:8px 14px; padding:10px; border:1px solid var(--ng-border-subtle); color:var(--ng-text-secondary); font-size:12px; }
+.scouting-report-detail header,.scouting-report-detail section { display:grid; gap:5px; margin-bottom:14px; color:var(--ng-text-secondary); font-size:12px; }
+.scouting-report-detail h3 { margin:6px 0 0; color:var(--ng-text-primary); font-size:12px; text-transform:uppercase; }
+.scouting-report-detail details { margin:8px 0; padding:8px; border:1px solid var(--ng-border-subtle); }
+.scouting-report-detail__ratings { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px 12px; }
+.scouting-report-detail__ratings p { display:flex; justify-content:space-between; gap:8px; margin:0; padding:5px; border-bottom:1px solid var(--ng-border-subtle); font-size:11px; }
+.scouting-report-detail__ratings small { color:var(--ng-text-muted); }

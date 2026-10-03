@@ -84,3 +84,6 @@ Current ability findings now use `rating:<CANONICAL_KEY>` for the 80 keys in `PL
 ## BS14F autonomous authority
 
 `progressAiScoutingOperations` is the sole AI strategic Scouting planner. It calls canonical territory operations and `requestScouting`, while daily discovery/report completion remains in their existing engines. AI eligibility follows the coached-team convention (`coachId` is defined and differs from `userCoachId`); human teams stay under existing delegation. Targets and valuation use public context and OrganizationKnowledge, never hidden PlayerTruth. Details: [BS14F AI Scouting and Acquisition](BS14F_AI_SCOUTING_AND_ACQUISITION.md).
+# BS14G user-facing authority update
+
+Human scouting requests, evaluator eligibility, Auto selection, priority and cancellation route through `ScoutingOperationsService` and the canonical Scouting engine. Current Player ability remains authorized by OrganizationKnowledge and `derivePlayerKnowledgeAccess`; awareness exposes identity only. See [BS14G gameplay UX](BS14G_SCOUTING_GAMEPLAY_UX.md).

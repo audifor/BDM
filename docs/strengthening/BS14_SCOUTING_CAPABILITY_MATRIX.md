@@ -72,3 +72,6 @@ See [BS14D Rating-Level Scouting](BS14D_RATING_LEVEL_SCOUTING.md) for the error,
 | Acquisition knowledge feedback | REAL | Existing OrganizationKnowledge valuation consumers | Completed report findings can change real valuation inputs | Existing consumer views | OrganizationKnowledge already persists | No new market, trade, draft, or recruiting algorithm. |
 
 See [BS14F AI Scouting and Acquisition](BS14F_AI_SCOUTING_AND_ACQUISITION.md) for bounds, fairness, and validation.
+# BS14G manifestation update
+
+The human Scouting workspace now projects addressable Players, active assignments, canonical reports and territory coverage. The shared Request Scouting modal supports all canonical missions. Player actions and report detail are wired to the same operations. Visual behavior remains awaiting manual validation; see [BS14G gameplay UX](BS14G_SCOUTING_GAMEPLAY_UX.md).

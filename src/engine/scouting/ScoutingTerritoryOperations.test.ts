@@ -27,7 +27,7 @@ describe('scouting territory operations', () => {
     const row = model.knowledge.find((entry) => entry.playerId === awareness!.playerId)
     expect(row).toBeDefined()
     expect(row!.knownDomains).toEqual([])
-    expect(row!.evaluations.every((entry) => entry.evaluationLabel === '?')).toBe(true)
+    expect(row!.knowledgeState).toBe('DISCOVERED')
     const otherOrganization = Object.values(discoveredWorld.teams).find((candidate) => candidate.id !== team.id)!.organizationId
     expect(Object.values(discoveredWorld.organizationPlayerAwarenessById).some((entry) => entry.organizationId === otherOrganization && entry.playerId === awareness!.playerId)).toBe(false)
 

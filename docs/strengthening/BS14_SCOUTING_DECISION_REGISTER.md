@@ -76,3 +76,10 @@ See [BS14E Scouting Operations and Coverage](BS14E_SCOUTING_OPERATIONS_AND_COVER
 - OrganizationKnowledge remains the only current evaluation authority for both human and AI consumers; awareness confers identity only. Existing saves carry awareness, reports, and knowledge across reload and season transition.
 
 See [BS14F AI Scouting and Acquisition](BS14F_AI_SCOUTING_AND_ACQUISITION.md). Status: **TECH READY after focused validation**; final human Scouting UX remains BS14G.
+# BS14G product decisions
+
+- Strengths require a known estimate >=65 and confidence >=0.55; weaknesses require <=40 and the same confidence. No forced fill.
+- Archetype requires >=4 reliable broad dimensions and mean confidence >=0.60; otherwise show “Insufficient scouting information.”
+- One evaluator is a Scout assessment; multi-evaluator consensus is labeled only with multiple evaluators.
+- Assignment and territory cancellation/end preserve historical records, reports, awareness and existing knowledge.
+- Full Report details group rating findings by the canonical eight rating families. See [BS14G gameplay UX](BS14G_SCOUTING_GAMEPLAY_UX.md).
