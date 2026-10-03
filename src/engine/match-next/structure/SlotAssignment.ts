@@ -2,13 +2,14 @@ import { distanceBetween, type CourtPosition } from '@/domain/court'
 import type { PlayerId } from '@/domain/ids'
 import type { OffensiveSlotName, OffensiveSlotTarget } from './FiveOutStructure'
 
-const SPACE_SLOTS: readonly Exclude<OffensiveSlotName, 'BALL'>[] = ['STRONG_CORNER', 'STRONG_SLOT', 'WEAK_SLOT', 'WEAK_CORNER']
+const SPACE_SLOTS: readonly Exclude<OffensiveSlotName, 'BALL'>[] = ['STRONG_CORNER', 'STRONG_SLOT', 'WEAK_SLOT', 'WEAK_CORNER', 'POST']
 type SpaceAssignment = { readonly playerId: PlayerId; readonly slot: Exclude<OffensiveSlotName, 'BALL'> }
 
 export function assignFiveOutSlots(
   playerPositions: readonly { readonly playerId: PlayerId; readonly position: CourtPosition }[],
   targets: readonly OffensiveSlotTarget[],
   previous: readonly { readonly playerId: PlayerId; readonly slot: OffensiveSlotName }[] = [],
+  fixed?: SpaceAssignment,
 ): readonly SpaceAssignment[] {
   const players = [...playerPositions].sort((left, right) => String(left.playerId).localeCompare(String(right.playerId)))
   if (players.length !== 4 || targets.length !== 4) throw new Error('5OUT assignment requires four SPACE players and four targets')
@@ -26,8 +27,16 @@ export function assignFiveOutSlots(
     usedSlots.add(prior)
   }
 
+  // BT5.8: a fixed occupant (the post player of a 4-out-1-in) takes his slot whatever the distances.
+  if (fixed !== undefined && targetsBySlot.has(fixed.slot) && players.some((player) => player.playerId === fixed.playerId)) {
+    const holder = retained.findIndex((item) => item.slot === fixed.slot || item.playerId === fixed.playerId)
+    if (holder >= 0 && !(retained[holder]!.slot === fixed.slot && retained[holder]!.playerId === fixed.playerId)) {
+      for (let index = retained.length - 1; index >= 0; index -= 1) if (retained[index]!.slot === fixed.slot || retained[index]!.playerId === fixed.playerId) { usedSlots.delete(retained[index]!.slot); retained.splice(index, 1) }
+    }
+    if (!retained.some((item) => item.playerId === fixed.playerId)) { retained.push({ playerId: fixed.playerId, slot: fixed.slot }); usedSlots.add(fixed.slot) }
+  }
   const unassigned = players.filter((player) => !retained.some((item) => item.playerId === player.playerId))
-  const openSlots = SPACE_SLOTS.filter((slot) => !usedSlots.has(slot))
+  const openSlots = targets.map((item) => item.slot).filter((slot) => !usedSlots.has(slot))
   let bestCost = Number.POSITIVE_INFINITY
   let best: SpaceAssignment[] = []
   const visit = (playerIndex: number, used: Set<Exclude<OffensiveSlotName, 'BALL'>>, current: SpaceAssignment[], cost: number) => {

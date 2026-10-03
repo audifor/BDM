@@ -95,8 +95,10 @@ describe('Match Next action vertical slice', () => {
     expect(selectDecision(afterReturnPass)?.kind).not.toBe('DRIVE')
 
     let live: MatchState = afterContainment
-    for (let step = 0; step < 150 && !live.events.some((event) => event.type === 'shotReleased' || event.type === 'possessionEnd'); step += 1) live = tick(live)
-    expect(live.events.some((event) => event.type === 'shotReleased' || event.type === 'possessionEnd')).toBe(true)
+    // BT5: a whistle (a foul on the drive) is also a named end of the sequence; a kernel-only test has nobody to run the throw-in.
+    const ended = (state: MatchState): boolean => state.events.some((event) => event.type === 'shotReleased' || event.type === 'possessionEnd' || event.type === 'foul')
+    for (let step = 0; step < 150 && !ended(live); step += 1) live = tick(live)
+    expect(ended(live)).toBe(true)
     expect(live.actions.filter((action) => action.kind === 'DRIVE' && action.playerId === handlerId
       && action.startedT > contained.startedT)).toHaveLength(0)
   })
@@ -134,7 +136,7 @@ describe('Match Next action vertical slice', () => {
     // BT4.2: off a set screen the handler may also pass; the chain only has to be made of named actions.
     expect(kinds.length).toBeGreaterThan(0)
     // BT4.1: the chain ends either in a shot or, when the kick-out is a bad pass (a seeded draw), in a turnover; both are named outcomes.
-    expect(kinds.some((kind) => kind === 'SHOOT' || kind === 'CATCH_AND_SHOOT') || first.events.some((event) => event.type === 'turnover')).toBe(true)
+    expect(kinds.some((kind) => kind === 'SHOOT' || kind === 'CATCH_AND_SHOOT') || first.events.some((event) => event.type === 'turnover' || event.type === 'foul')).toBe(true)
     for (const action of first.actions) expect(action.status).not.toBe('ACTIVE')
     const drives = first.actions.filter((action) => action.kind === 'DRIVE')
     for (const drive of drives) expect(['ADVANTAGE', 'CONTAINED', 'FINISH', 'STOPPED', 'FOULED', 'CANCELLED']).toContain(drive.outcome)

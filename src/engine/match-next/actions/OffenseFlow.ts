@@ -4,6 +4,8 @@ import { activePossession, type MatchPlayerState, type MatchState, type OffenseF
 import { distanceBetween } from '@/domain/court'
 import { tuning } from '../tuning'
 import { isInsideZone } from '../structure/OffensiveStructure'
+import { emitEvent } from '../events'
+import { callPlay, spacingFor, type PlayCall } from '../tactics/PlayCalling'
 
 /** Share of the four off-ball players that must be in their zones for the half-court offense to count as set. */
 export const SETTLE_READY_SHARE = 0.75
@@ -103,8 +105,29 @@ export function reconcileOffenseFlow(state: MatchState): MatchState {
     const settlement = offenseSettlement(state)
     const settledAtT = flow.settledAtT ?? (settlement.total > 0 && settlement.share >= SETTLE_READY_SHARE ? state.t : null)
     if (halfCourtSinceT !== flow.halfCourtSinceT || settledAtT !== flow.settledAtT) flow = { ...flow, halfCourtSinceT, settledAtT }
+    // BT5.6: the half court starts (or restarts after an offensive rebound): the bench calls the play.
+    if (tuning().playsEnabled !== 0 && (flow.call == null || flow.call.possessionId !== possession.id || flow.call.calledT < halfCourtSinceT || flow.call.family === 'EARLY_OFFENSE')) {
+      const call = callPlay(state, possession)
+      flow = { ...flow, call }
+      return announceCall({ ...state, offenseFlow: flow }, call)
+    }
   }
   return flow === state.offenseFlow ? state : { ...state, offenseFlow: flow }
+}
+
+export function announceCall(state: MatchState, call: PlayCall): MatchState {
+  return emitEvent(state, 'playCalled', {
+    possessionId: call.possessionId, teamId: state.offenseFlow?.teamId, ...(call.initiatorId === null ? {} : { playerId: call.initiatorId }),
+    ...(call.screenerId ?? call.targetId) === undefined ? {} : { receiverPlayerId: (call.screenerId ?? call.targetId)! },
+    playFamily: call.family, playLocation: call.location, spacing: call.spacing, tacticalReason: call.reason,
+  })
+}
+
+/** BT5.6: a possession attacked before any half court (a push, an early drive or shot) is the EARLY_OFFENSE family. */
+export function earlyOffenseCall(state: MatchState, initiatorId: PlayerId): PlayCall | null {
+  const possession = activePossession(state)
+  if (!possession) return null
+  return { possessionId: possession.id, family: 'EARLY_OFFENSE', location: 'TRANSITION', spacing: spacingFor(state, possession.teamId).spacing, initiatorId, calledT: state.t, weights: {}, reason: 'Attack before the defense is set' }
 }
 
 export function isSettled(flow: OffenseFlowState | null): boolean {

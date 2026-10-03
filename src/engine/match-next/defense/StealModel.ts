@@ -7,6 +7,7 @@ import { endPossession, startPossession } from '../possession'
 import { draw } from '../rng'
 import { activePossession, type MatchPlayerState, type MatchState } from '../state'
 import { nearestSidelineSpot } from '../ball/BallGeometry'
+import { tacticalIntent } from '../tactics/TacticalIdentity'
 
 /** Per-tick chance that an on-ball defender within reach of the dribble goes for the ball, before exposure and skill. */
 const STEAL_ATTEMPT_RATE_PER_TICK = 0.009
@@ -56,7 +57,9 @@ export function reconcileOnBallPressure(state: MatchState): MatchState {
   const advantage = Math.max(-0.5, Math.min(0.5, (stealRating - handler.offense.ballSecurity) / 100))
   const roll = draw(state.rng, 'outcome')
   let next: MatchState = { ...state, rng: roll.state }
-  const attemptRate = STEAL_ATTEMPT_RATE_PER_TICK * (stealRating / 50) * exposure * Math.max(0.4, Math.min(1.3, (1.25 - gap / 3)))
+  // BT5.19: a pressure defense goes for the ball more often (more steals, more reach fouls, more blow-bys); a conservative one sits.
+  const pressureIntent = tacticalIntent(state, defender.teamId).defense.pressure
+  const attemptRate = STEAL_ATTEMPT_RATE_PER_TICK * (stealRating / 50) * exposure * Math.max(0.4, Math.min(1.3, (1.25 - gap / 3))) * (0.6 + 0.8 * pressureIntent)
   const pressure = Math.max(0, Math.min(1, (STEAL_REACH_METERS - gap) / 0.6))
   const lostRate = LOST_DRIBBLE_RATE_PER_TICK * Math.pow(1 - handler.offense.ballSecurity / 100, 1) * 2 * pressure * exposure
   if (roll.value >= attemptRate && roll.value < 1 - lostRate) return next

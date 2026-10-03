@@ -9,6 +9,8 @@ import { tuning } from '../tuning'
 import { assessScreenContact, updateScreenContactTrack } from '../contact/ContactModel'
 import { commitFoul } from '../rules/Fouls'
 import { draw } from '../rng'
+import { chooseCoverage, dropDistanceFromBasket } from '../tactics/Coverage'
+import { tacticalIntent } from '../tactics/TacticalIdentity'
 
 /** Ticks a screener may take to arrive before the ball screen is abandoned. */
 const SCREEN_APPROACH_TIMEOUT_TICKS = 40
@@ -26,7 +28,8 @@ const SCREEN_JUDGE_AFTER_TICKS = 9
 const SCREEN_MIN_HANDLER_DISTANCE_METERS = 6
 const SCREEN_MAX_HANDLER_DISTANCE_METERS = 13
 const SCREEN_MIN_DEPTH_METERS = 4
-const SCREEN_MAX_LATERAL_METERS = 5.2
+/** BT5.7: wide enough for a side (wing) ball screen; a corner or baseline screen is still out. */
+const SCREEN_MAX_LATERAL_METERS = 6.2
 const SCREENER_MIN_DISTANCE_METERS = 2.5
 const SCREENER_MAX_DISTANCE_METERS = 10
 export const SCREEN_MIN_SECONDS_LEFT = 8
@@ -44,12 +47,15 @@ export interface ScreenPlan {
   readonly exit: 'ROLL' | 'POP'
   /** Expected points of running this ball screen: player quality and the defense's coverage. */
   readonly value: number
+  readonly coverageReason?: string
+  readonly dropDepth?: number
+  readonly communicationTicks?: number
+  readonly locationKind?: string
 }
 
+/** The defense's base ball-screen coverage (coach, match plan or in-game adjustment): BT5.13 adapts it per screen in chooseCoverage. */
 export function screenCoverageFor(state: MatchState, defendingTeamId: MatchPlayerState['teamId']): ScreenCoverage {
-  const plan = defendingTeamId === state.homeTeamId ? state.tacticalPlans.home : state.tacticalPlans.away
-  const value = plan.defense.pickAndRollCoverage
-  return value === 'switch' || value === 'hedge' || value === 'blitz' ? value : 'drop'
+  return tacticalIntent(state, defendingTeamId).defense.coverage
 }
 
 function unit(dx: number, dy: number, fallback: CourtPosition): CourtPosition {
@@ -79,7 +85,7 @@ export function planScreen(state: MatchState, handler: MatchPlayerState, basket:
   const handlerDefenderId = assignments.find((item) => item.attackerPlayerId === handler.playerId)?.defenderPlayerId
   const handlerDefender = state.players.find((player) => player.playerId === handlerDefenderId)
   if (!handlerDefender) return null
-  const coverage = screenCoverageFor(state, handlerDefender.teamId)
+  const call = state.offenseFlow?.possessionId === possession.id ? state.offenseFlow.call : null
   const toBasket = unit(basket.x - handler.position.x, basket.y - handler.position.y, { x: -1, y: 0 })
   // The handler attacks toward the middle of the floor, off the shoulder of the screener.
   const centerY = state.court.widthMeters / 2
@@ -110,13 +116,22 @@ export function planScreen(state: MatchState, handler: MatchPlayerState, basket:
     }
     const threat = rollThreat(screener)
     const popThreat = screener.offense.shooting
+    const screenerDefender = state.players.find((player) => player.playerId === screenerDefenderId)
+    // BT5.13: the defense covers each screen for the two men in it (and its own two defenders).
+    const covered = screenerDefender === undefined ? { coverage: screenCoverageFor(state, handlerDefender.teamId), dropDepth: 0.5, communicationTicks: 0, reason: 'base' } : chooseCoverage(state, handlerDefender.teamId, handler, screener, handlerDefender, screenerDefender)
+    const coverage = covered.coverage
     const coveragePenalty = coverage === 'switch' ? 0.14 : coverage === 'blitz' ? 0.04 : 0
+    // BT5.9: the set names its screener; the handler still checks that the screen makes sense.
+    const designated = call?.family === 'BALL_SCREEN' && call.screenerId === screener.playerId ? 0.25 : 0
     const value = tuning().screenBaseValuePoints + 0.3 * (handler.offense.creation - 50) / 50 + 0.2 * (Math.max(threat, popThreat) - 50) / 50
-      - coveragePenalty - distance * 0.008
+      - coveragePenalty - distance * 0.008 + designated
     if (best === null || value > best.value) {
       best = {
         screenerId: screener.playerId, handlerDefenderId: handlerDefender.playerId, screenerDefenderId: screenerDefenderId!, location, waypoint, side,
-        coverage, exit: popThreat >= 62 && popThreat >= screener.offense.rimAttack + 6 ? 'POP' : 'ROLL', value,
+        // A screener who shoots it pops to the arc; one who finishes rolls to the rim (BT5.9: a stretch big pops, a roller rolls).
+        coverage, exit: popThreat >= 60 && popThreat >= screener.offense.rimAttack + 2 ? 'POP' : 'ROLL', value,
+        coverageReason: covered.reason, dropDepth: covered.dropDepth, communicationTicks: covered.communicationTicks,
+        ...(call?.family === 'BALL_SCREEN' ? { locationKind: call.location } : {}),
       }
     }
   }
@@ -129,6 +144,8 @@ export function createScreenState(state: MatchState, plan: ScreenPlan, handlerId
     id: `screen-${actionId}`, possessionId: possession.id, teamId: possession.teamId, handlerId, screenerId: plan.screenerId,
     handlerDefenderId: plan.handlerDefenderId, screenerDefenderId: plan.screenerDefenderId, phase: 'APPROACH', startedT: state.t,
     setAtT: null, usedAtT: null, location: plan.location, waypoint: plan.waypoint, side: plan.side, coverage: plan.coverage, exit: plan.exit, actionId, switched: false,
+    ...(plan.coverageReason === undefined ? {} : { coverageReason: plan.coverageReason }), ...(plan.dropDepth === undefined ? {} : { dropDepth: plan.dropDepth }),
+    ...(plan.communicationTicks === undefined ? {} : { communicationTicks: plan.communicationTicks }), ...(plan.locationKind === undefined ? {} : { locationKind: plan.locationKind }),
   }
 }
 
@@ -145,11 +162,12 @@ function drive(state: MatchState, playerId: PlayerId, target: CourtPosition, urg
 }
 
 function dropTarget(state: MatchState, screen: ScreenState, handler: MatchPlayerState, screener: MatchPlayerState, basket: CourtPosition): CourtPosition {
-  // Screener's defender protects the rim below the screen, on the line between the handler and the basket.
+  // Screener's defender protects the rim below the screen, on the line between the handler and the basket. BT5.14: how far below
+  // depends on the plan and the matchup (shallow against a shooter, deep against a roller), not on a constant.
   const toBasket = unit(basket.x - handler.position.x, basket.y - handler.position.y, { x: -1, y: 0 })
-  const depth = Math.max(2.6, Math.min(4.2, distanceBetween(handler.position, basket) - 2.4))
-  void screen
+  const depth = screen.dropDepth === undefined ? Math.max(2.6, Math.min(4.2, distanceBetween(handler.position, basket) - 2.4)) : dropDistanceFromBasket(distanceBetween(handler.position, basket), screen.dropDepth)
   void screener
+  void state
   return { x: basket.x - toBasket.x * depth, y: basket.y - toBasket.y * depth }
 }
 
@@ -176,7 +194,7 @@ export function reconcileScreen(input: MatchState): MatchState {
     const distance = distanceBetween(screener.position, screen.location)
     if (distance <= SCREEN_SET_RADIUS_METERS) {
       state = { ...state, screen: { ...screen, phase: 'SET', setAtT: state.t } }
-      state = emitEvent(state, 'screenSet', { teamId: screen.teamId, playerId: screen.screenerId, receiverPlayerId: screen.handlerId })
+      state = emitEvent(state, 'screenSet', { possessionId: screen.possessionId, teamId: screen.teamId, playerId: screen.screenerId, receiverPlayerId: screen.handlerId, screenCoverage: screen.coverage, ...(screen.coverageReason === undefined ? {} : { tacticalReason: screen.coverageReason }), ...(screen.locationKind === undefined ? {} : { playLocation: screen.locationKind }) })
       state = closeScreenAction(state, screen, 'ARRIVED')
     } else if (state.t - screen.startedT > SCREEN_APPROACH_TIMEOUT_TICKS) {
       return endScreen(state, screen, 'abandoned')
@@ -257,7 +275,8 @@ function applyCoverage(state: MatchState, screen: ScreenState, handler: MatchPla
   const sinceUse = screen.usedAtT === null ? -1 : state.t - screen.usedAtT
   const structure = next.defensiveStructure
   if (screen.coverage === 'switch') {
-    if (!screen.switched && structure !== null) {
+    // BT5.15: the two defenders exchange men when the handler comes off the screen (not before), after the call between them.
+    if (!screen.switched && structure !== null && sinceUse >= (screen.communicationTicks ?? 0)) {
       const assignments = structure.assignments.map((item) => item.defenderPlayerId === screen.handlerDefenderId
         ? { ...item, attackerPlayerId: screen.screenerId, source: 'SWITCH' as const, startedT: state.t }
         : item.defenderPlayerId === screen.screenerDefenderId
@@ -281,7 +300,8 @@ function applyCoverage(state: MatchState, screen: ScreenState, handler: MatchPla
     }
     return next
   }
-  // blitz: both defenders trap the handler; the screener is left alone.
+  // blitz: both defenders trap the handler; the screener is left alone (the low man has to pick him up: ManDefense TAG).
+  if (screen.setAtT !== null && state.t - screen.setAtT < (screen.communicationTicks ?? 0)) return next
   const trapA: CourtPosition = { x: handler.position.x + (screen.waypoint.x - handler.position.x) * 0.35, y: handler.position.y + (screen.waypoint.y - handler.position.y) * 0.35 }
   next = drive(next, screen.screenerDefenderId, trapA, 'sprint', 'defensiveStructure')
   void handlerDefender

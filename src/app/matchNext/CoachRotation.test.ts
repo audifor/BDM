@@ -289,15 +289,16 @@ describe('BS8 coach and rotation authority', { timeout: 60000 }, () => {
     const port = createMatchEnginePort('match-next')
     const consequences = deriveMatchNextDynamicConsequences(loadedWorld, live)
     const completed = port.complete(loadedWorld, live)
-    const outgoingId = homeSubstitutions[0]?.outgoingPlayerId
-    const incomingId = homeSubstitutions[0]?.playerId
+    // BT5: in a five-minute period a team may get no legal window (a substitution needs a stoppage for it); the checks follow whichever team subbed.
+    const substitutions = homeSubstitutions.length > 0 ? homeSubstitutions : awaySubstitutions
+    const outgoingId = substitutions[0]?.outgoingPlayerId
+    const incomingId = substitutions[0]?.playerId
     // Someone who never got on the court: the player who was subbed out (more minutes) must carry more workload than him.
     const idleId = consequences.find((item) => item.workload.minutes === 0 && item.playerId !== incomingId)?.playerId
 
     expect(live.events).toEqual(instant.events)
     expect(live.playerStats).toEqual(instant.playerStats)
-    expect(homeSubstitutions.length).toBeGreaterThan(0)
-    expect(awaySubstitutions.length).toBeGreaterThan(0)
+    expect(homeSubstitutions.length + awaySubstitutions.length).toBeGreaterThan(0)
     expect(live.playerStats.find((line) => line.playerId === outgoingId)!.secondsPlayed).toBeLessThan(periodMinutes * 60)
     expect(live.playerStats.find((line) => line.playerId === incomingId)!.secondsPlayed).toBeGreaterThan(0)
     // Minutes are rounded to two decimals: the rounding error may be exactly half a hundredth.

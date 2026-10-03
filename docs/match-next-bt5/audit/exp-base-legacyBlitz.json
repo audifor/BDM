@@ -1,0 +1,123 @@
+{
+  "seeds": [
+    31337,
+    424242,
+    7,
+    1,
+    99,
+    2024
+  ],
+  "overrides": {},
+  "out": {
+    "legacyBlitz": {
+      "description": "Home defense blitzes every ball screen",
+      "msPerGame": 90868,
+      "complete": 6,
+      "home": {
+        "games": 6,
+        "possessions": 90,
+        "ppp": 0.9,
+        "secondsPerPossession": 12.349,
+        "transitionShare": 0.061,
+        "passesPerPossession": 2.737,
+        "assistsPerFgm": 0.56,
+        "drivesPerPossession": 0.715,
+        "screensPerPossession": 0.474,
+        "cutsPerPossession": 0.2,
+        "rimShare": 0.216,
+        "paintShare": 0.107,
+        "midShare": 0.066,
+        "threeShare": 0.611,
+        "catchShootShare": 0.579,
+        "pullUpShare": 0.066,
+        "prShare": 0.127,
+        "cutShare": 0,
+        "orebRate": 0.165,
+        "tovPerPossession": 0.193,
+        "stealsPerOppPossession": 0.113,
+        "blocksPerOppFga": 0.023,
+        "ftaPerFga": 0.168,
+        "coverageUsed": {
+          "blitz": 1
+        },
+        "switchesPerScreenFaced": 0,
+        "helpsPerDriveFaced": 0.936,
+        "topInitiatorShare": 0.303,
+        "topShooterShare": 0.328,
+        "rollShare": 1,
+        "playFamilies": {},
+        "playLocations": {},
+        "spacing": {},
+        "adaptations": 0,
+        "firstShotSecondsP50": 12.6,
+        "passesPerPossessionP90": 6
+      },
+      "away": {
+        "games": 6,
+        "possessions": 89.833,
+        "ppp": 1.007,
+        "secondsPerPossession": 11.641,
+        "transitionShare": 0.119,
+        "passesPerPossession": 3.004,
+        "assistsPerFgm": 0.52,
+        "drivesPerPossession": 0.72,
+        "screensPerPossession": 0.377,
+        "cutsPerPossession": 0.184,
+        "rimShare": 0.33,
+        "paintShare": 0.06,
+        "midShare": 0.035,
+        "threeShare": 0.575,
+        "catchShootShare": 0.563,
+        "pullUpShare": 0.035,
+        "prShare": 0.074,
+        "cutShare": 0,
+        "orebRate": 0.187,
+        "tovPerPossession": 0.154,
+        "stealsPerOppPossession": 0.154,
+        "blocksPerOppFga": 0.035,
+        "ftaPerFga": 0.227,
+        "coverageUsed": {
+          "switch": 1
+        },
+        "switchesPerScreenFaced": 1,
+        "helpsPerDriveFaced": 0.891,
+        "topInitiatorShare": 0.321,
+        "topShooterShare": 0.317,
+        "rollShare": 0.539,
+        "playFamilies": {},
+        "playLocations": {},
+        "spacing": {},
+        "adaptations": 0,
+        "firstShotSecondsP50": 10.5,
+        "passesPerPossessionP90": 7
+      },
+      "score": [
+        {
+          "home": 78,
+          "away": 70
+        },
+        {
+          "home": 82,
+          "away": 77
+        },
+        {
+          "home": 100,
+          "away": 92
+        },
+        {
+          "home": 65,
+          "away": 103
+        },
+        {
+          "home": 98,
+          "away": 99
+        },
+        {
+          "home": 63,
+          "away": 102
+        }
+      ]
+    }
+  },
+  "distances": {}
+}

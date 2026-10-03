@@ -300,7 +300,9 @@ describe('BT3N/Q: putback quality and tactical wants', { timeout: 300000 }, () =
     expect(neutral.value).toBeGreaterThan(role.value)
     expect(star.probability).toBe(neutral.probability)
     const threeHeavy = { ...base, tacticalPlans: { ...base.tacticalPlans, home: { ...base.tacticalPlans.home, shotProfile: { rim: -1, midRange: -1, threePoint: 2 } } } }
-    expect(evaluateShotOpportunity(threeHeavy, shooter, { x: basket.x - 7.5, y: basket.y }, basket, contest).value).toBeGreaterThan(neutral.value)
+    // BT5.11: the plan's shot profile no longer multiplies what a zone is worth; it is read as an interior/perimeter identity that acts
+    // through spacing, play families and post touches (see the next test). The value of the same look is the same under any plan.
+    expect(evaluateShotOpportunity(threeHeavy, shooter, { x: basket.x - 7.5, y: basket.y }, basket, contest).value).toBe(neutral.value)
   })
 
   it('the same roster shoots a very different mix under opposite plans (no universal percentage)', () => {
@@ -317,7 +319,9 @@ describe('BT3N/Q: putback quality and tactical wants', { timeout: 300000 }, () =
     }
     const threeHeavy = mix({ rim: -2, midRange: -1, threePoint: 2 })
     const rimHeavy = mix({ rim: 2, midRange: 0, threePoint: -2 })
-    expect(threeHeavy - rimHeavy).toBeGreaterThan(0.2)
+    // BT5.11: the mix now emerges from the interior/perimeter identity the profile is read as (spacing, families, read priorities),
+    // not from a multiplier on the value of each zone. It still has to differ clearly.
+    expect(threeHeavy - rimHeavy).toBeGreaterThan(0.08)
   })
 })
 

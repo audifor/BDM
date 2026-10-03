@@ -10,7 +10,7 @@ import { createMatchEnginePort } from '@/app/matchNext/MatchEnginePortFactory'
 import { createCourtGeometry, distanceBetween, isBeyondThreePointLine } from '@/domain/court'
 import { REBOUND_ACQUISITION_RADIUS_METERS } from './ball/BallState'
 import { closeoutReactionTicks } from './defense/Closeout'
-import { tuning } from './tuning'
+import { tuning, withTuning } from './tuning'
 import { OPEN_LOOK_VALUE_POINTS, shotMakeProbability } from './actions/DecisionCore'
 import { isInsideZone, ZONE_TOLERANCE_METERS } from './structure/OffensiveStructure'
 import { attackingBasketForTeam } from './structure/FiveOutStructure'
@@ -134,7 +134,8 @@ describe('BT2C: half-court settlement (zones, not rails)', { timeout: 240000 }, 
     let inZone = 0
     let players = 0
     let cornersMissing = 0
-    play(424242, 7000, (_before, after) => {
+    // BT5.8: this is the 5-out structure; a lineup with a non-shooting big plays 4-out-1-in (tested in matchNextTactics), so it is forced off here.
+    withTuning({ postSpacing: 0 }, () => play(424242, 7000, (_before, after) => {
       const flow = after.offenseFlow
       const structure = after.offensiveStructure
       if (flow === null || structure === null || flow.settledAtT === null || after.ball.kind !== 'HELD' || flow.stage !== 'HALF_COURT') return
@@ -156,7 +157,7 @@ describe('BT2C: half-court settlement (zones, not rails)', { timeout: 240000 }, 
         return distanceBetween(player.position, slot.position) <= ZONE_TOLERANCE_METERS + 0.5
       }).length
       if (occupied === 0) cornersMissing += 1
-    })
+    }))
     expect(samples).toBeGreaterThan(100)
     expect(inZone / players).toBeGreaterThan(0.7)
     // Per tick, not per sample: BT3 games spend less time in a settled half court (more fouls, turnovers and transition shots), so the

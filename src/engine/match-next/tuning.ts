@@ -112,6 +112,22 @@ export interface MatchNextTuning {
   readonly passLossPoints: number
   /** How much a denied receiver (a defender on him or between him and the ball) lowers the completion the passer expects. */
   readonly passDenialWeight: number
+  /** BT5 audit switches (1 = on): the throw-in goes to the primary creator; the set's man gets pass priority; 4-out-1-in spacing; TAG/DIG help; a fast team's leak-out. */
+  readonly inboundToCreator: number
+  readonly setPassPriority: number
+  readonly postSpacing: number
+  readonly screenPostHelp: number
+  readonly leakOut: number
+  /** BT5 audit switches: drives that read the defender's shade and go baseline; the families MOVEMENT, POST and ISOLATION. */
+  readonly baselineDrives: number
+  readonly newFamilies: number
+  /** BT5: exponent of the family weights (1 = plain shares, larger = a coach's preferred family dominates more). */
+  readonly familySharpness: number
+  /** BT5.12: completion a tempo-only push needs, and that any transition pass over 12 m of progress needs. */
+  readonly tempoPushCompletion: number
+  readonly longOutletCompletion: number
+  /** BT5.11: weight of the identity's read priorities (interior looks inside and attacks the rim, perimeter looks for the open shooter). */
+  readonly identityReadWeight: number
 }
 
 export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
@@ -177,6 +193,17 @@ export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
   passErrorBase: 0.012,
   passLossPoints: 0.9,
   passDenialWeight: 0.25,
+  inboundToCreator: 0,
+  setPassPriority: 1,
+  postSpacing: 1,
+  screenPostHelp: 1,
+  leakOut: 0,
+  baselineDrives: 1,
+  newFamilies: 1,
+  familySharpness: 1.5,
+  tempoPushCompletion: 0.88,
+  longOutletCompletion: 0.82,
+  identityReadWeight: 1,
 })
 
 let active: MatchNextTuning = DEFAULT_MATCH_NEXT_TUNING

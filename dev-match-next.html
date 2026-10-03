@@ -28,6 +28,8 @@
         ...(num('period') !== undefined ? { periodSeconds: num('period') } : {}),
         ...(params.get('camera') ? { camera: params.get('camera') } : {}),
         ...(params.get('truth') === '1' ? { truth: true } : {}),
+        ...(params.get('homeStyle') ? { homeStyle: params.get('homeStyle') } : {}),
+        ...(params.get('awayStyle') ? { awayStyle: params.get('awayStyle') } : {}),
       })
       window.__bdmNextDemo = handle
     </script>

@@ -5,7 +5,9 @@ import { courtRulesetForEcosystem, createCourtGeometry } from '@/domain/court'
 import { getEcosystemForCompetition, resolveGameClockRulesForGame } from '@/domain/world'
 import type { MatchTacticalPlan } from '@/engine/match'
 import { prepareMatchOptions, type MatchSeedFactory } from '@/app/game/playUserGame'
-import type { MatchSetup, MatchNextPlayerProfile } from '@/engine/match-next'
+import type { MatchSetup, MatchNextPlayerProfile, MatchNextTacticalPlan } from '@/engine/match-next'
+import { getCoachProfessionalProfile, getTeamCoach } from '@/domain/world'
+import type { TeamId } from '@/domain/ids'
 
 /** Resolves canonical game inputs at the app boundary, then returns data-only kernel input. */
 export function prepareMatchSetup(
@@ -53,8 +55,8 @@ export function prepareMatchSetup(
     players: profiles,
     coachingPlans: options.coachingPlans,
     tacticalPlans: {
-      home: { ...resolvedTacticalPlans.home, shotProfile: { ...resolvedTacticalPlans.home.shotProfile }, defense: { ...resolvedTacticalPlans.home.defense } },
-      away: { ...resolvedTacticalPlans.away, shotProfile: { ...resolvedTacticalPlans.away.shotProfile }, defense: { ...resolvedTacticalPlans.away.defense } },
+      home: withBench(world, homeTeamId, { ...resolvedTacticalPlans.home, shotProfile: { ...resolvedTacticalPlans.home.shotProfile }, defense: { ...resolvedTacticalPlans.home.defense } }),
+      away: withBench(world, awayTeamId, { ...resolvedTacticalPlans.away, shotProfile: { ...resolvedTacticalPlans.away.shotProfile }, defense: { ...resolvedTacticalPlans.away.defense } }),
     },
     defensiveMatchupOverrides: {
       home: (options.defensiveMatchups?.home ?? []).map(({ ourPlayerId, opponentPlayerId }) => ({ playerId: ourPlayerId, opponentPlayerId })),
@@ -62,6 +64,21 @@ export function prepareMatchSetup(
     },
     matchSeed: options.matchSeed,
     autonomousActions: true,
+  }
+}
+
+/**
+ * BT5.2/5.24: the bench as a tactical authority. The head coach's adaptability and tactical knowledge (staff attributes) and the team's
+ * tactical familiarity (team cohesion) travel with the plan; the plan's own identity, when it has one, is kept.
+ */
+function withBench(world: GameWorld, teamId: TeamId, plan: MatchNextTacticalPlan): MatchNextTacticalPlan {
+  const coach = getTeamCoach(world, teamId)
+  const attributes = coach === undefined ? undefined : getCoachProfessionalProfile(world, coach.id)?.attributes
+  const familiarity = world.teamCohesionByTeamId[teamId]
+  return {
+    ...plan,
+    ...(attributes === undefined ? {} : { coach: { ...plan.coach, adaptability: plan.coach?.adaptability ?? attributes.adaptability, tacticalKnowledge: plan.coach?.tacticalKnowledge ?? attributes.tacticalKnowledge } }),
+    ...(familiarity === undefined || plan.familiarity !== undefined ? {} : { familiarity }),
   }
 }
 

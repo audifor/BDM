@@ -13,6 +13,7 @@ import { advanceTarget } from '../structure/OffensiveStructure'
 import { attackingBasketForTeam } from '../structure/FiveOutStructure'
 import { guardPosition } from '../defense/ManDefense'
 import { tuning } from '../tuning'
+import { defensiveShape, tacticalIntent } from '../tactics/TacticalIdentity'
 
 const REBOUND_PURSUERS_PER_TEAM = 2
 /** Beyond this distance from the landing point an offensive player cannot win the ball: he retreats instead. */
@@ -123,11 +124,13 @@ function reconcileRebound(input: MatchState): MatchState {
   // An offensive player crashes only when he can contest: he is close enough to the landing point and not
   // outnumbered by defenders already inside. Everyone else gets back (transition safety) instead of arriving late.
   const nearestDefenderDistance = Math.min(...defendingPlayers.map((player) => distanceBetween(player.position, rebound.position)), Number.POSITIVE_INFINITY)
+  // BT5.12/5.19: how many go to the offensive glass is the shooting team's crash commitment (1 to 3); the rest get back.
+  const crashCount = Math.max(1, Math.min(3, Math.round(1 + 2 * tacticalIntent(input, rebound.shootingTeamId).offense.crash)))
   const crashers = shootingPlayers
     .map((player) => ({ player, distance: distanceBetween(player.position, rebound.position), score: distanceBetween(player.position, rebound.position) - effectiveReboundingImpact(player) * 0.02 - player.standingReachCm * 0.001 }))
     .filter((item) => item.distance <= CRASH_MAX_DISTANCE_METERS && item.distance <= nearestDefenderDistance + CRASH_MAX_DISADVANTAGE_METERS)
     .sort((left, right) => left.score - right.score || comparePlayerId(left.player, right.player))
-    .slice(0, REBOUND_PURSUERS_PER_TEAM)
+    .slice(0, crashCount)
   const crasherIds = new Set(crashers.map(({ player }) => player.playerId))
   // The nearest defenders go for the landing point from the moment the shot is released, exactly like the offensive
   // crashers. Waiting until the ball became collectible gave the shooting team the whole flight time as a head start
@@ -137,6 +140,10 @@ function reconcileRebound(input: MatchState): MatchState {
     .sort((left, right) => left.distance - right.distance || String(left.playerId).localeCompare(String(right.playerId)))
     .slice(0, REBOUND_PURSUERS_PER_TEAM).map((item) => item.playerId))
 
+  // A fast team leaks its best runner out as the shot goes up (it gives up a body on the glass for the break).
+  const defendingTempo = tacticalIntent(input, defendingTeamId).offense.tempo
+  const leakerId = defendingTempo > 0.35 && tuning().leakOut !== 0 ? defendingPlayers.filter((player) => !pursuingDefenderIds.has(player.playerId))
+    .sort((left, right) => distanceBetween(right.position, rebound.position) - distanceBetween(left.position, rebound.position) || comparePlayerId(left, right))[0]?.playerId : undefined
   let nextResponsibilitySequence = input.nextResponsibilitySequence
   let nextDecisionSequence = input.nextDecisionSequence
   const responsibilities: ReboundResponsibility[] = []
@@ -163,9 +170,10 @@ function reconcileRebound(input: MatchState): MatchState {
       target = kind === 'RETREAT' ? reboundSafetyTarget(player, reboundTarget, basket, input) : contestSlot(reboundTarget, basket, [...crashers.map((item) => item.player.playerId)].indexOf(player.playerId), true, input)
     } else {
       owner = 'defensiveStructure'
-      kind = pursuingDefenderIds.has(player.playerId) ? 'PURSUE_REBOUND' : 'BOX_OUT'
-      boxOutTarget = assignedAttacker ? boxOutPosition(assignedAttacker.position, reboundTarget, basket, input) : reboundTarget
-      target = kind === 'PURSUE_REBOUND' ? contestSlot(reboundTarget, basket, [...pursuingDefenderIds].indexOf(player.playerId), false, input) : boxOutTarget
+      kind = pursuingDefenderIds.has(player.playerId) ? 'PURSUE_REBOUND' : player.playerId === leakerId ? 'RETREAT' : 'BOX_OUT'
+      boxOutTarget = kind === 'RETREAT' ? undefined : assignedAttacker ? boxOutPosition(assignedAttacker.position, reboundTarget, basket, input) : reboundTarget
+      target = kind === 'PURSUE_REBOUND' ? contestSlot(reboundTarget, basket, [...pursuingDefenderIds].indexOf(player.playerId), false, input)
+        : kind === 'RETREAT' ? leakTarget(player, basket, input) : boxOutTarget!
     }
     const previous = prior?.responsibilities.find((item) => item.playerId === player.playerId)
     const responsibilityId = previous?.kind === kind ? previous.responsibilityId : `responsibility-${nextResponsibilitySequence++}`
@@ -321,6 +329,7 @@ function installTransitionRoles(input: MatchState, transition: MatchTransitionSt
     }
   })
   const installedTransition = { ...transition, roles }
+  const tempo = tacticalIntent(input, transition.teamId).offense.tempo
   const responsibilities = roles.map((role) => ({
     id: role.responsibilityId, playerId: role.playerId, teamId: role.teamId, kind: role.kind,
     owner: transitionOwner(role), startedT: input.responsibilities.find((item) => item.id === role.responsibilityId)?.startedT ?? input.t,
@@ -333,7 +342,7 @@ function installTransitionRoles(input: MatchState, transition: MatchTransitionSt
   }))
   const intents: MovementIntent[] = roles.map((role) => ({
     playerId: role.playerId, target: { ...role.target },
-    urgency: role.teamId !== transition.teamId ? 'sprint' : offenseUrgency(role.kind, transition.advantage),
+    urgency: role.teamId !== transition.teamId ? 'sprint' : offenseUrgency(role.kind, transition.advantage, tempo),
     facing: { kind: role.kind === 'BALL_ADVANCE' || role.kind === 'RIM_RUN' ? 'BASKET' : 'BALL' },
     provenance: { responsibilityId: role.responsibilityId, decisionId: role.decisionId, owner: transitionOwner(role) },
   }))
@@ -362,9 +371,11 @@ function updateRoleTargets(state: MatchState, roles: readonly TransitionRole[]):
  * control: the handler at a jog, against a defense that is getting set, and the others run to their spots (BT4A: time is spent by
  * moving, not waiting).
  */
-function offenseUrgency(kind: TransitionRoleKind, advantage: TransitionAdvantage): 'jog' | 'run' | 'sprint' {
-  if (advantage === 'ADVANTAGE' || tuning().controlledAdvance <= 0) return kind === 'BALL_ADVANCE' ? 'run' : 'sprint'
-  return kind === 'BALL_ADVANCE' ? 'jog' : 'run'
+function offenseUrgency(kind: TransitionRoleKind, advantage: TransitionAdvantage, tempo = 0): 'jog' | 'run' | 'sprint' {
+  // BT5.12: a fast team pushes every transition that is not stopped; a controlled one brings even a numbers advantage up under control.
+  if (advantage === 'ADVANTAGE' && tempo < -0.55) return kind === 'BALL_ADVANCE' ? 'jog' : 'run'
+  if (advantage === 'ADVANTAGE' || tuning().controlledAdvance <= 0 || (tempo > 0.35 && advantage === 'NEUTRAL')) return kind === 'BALL_ADVANCE' ? 'run' : 'sprint'
+  return kind === 'BALL_ADVANCE' ? 'jog' : tempo < -0.55 ? 'jog' : 'run'
 }
 
 function roleTarget(state: MatchState, role: TransitionRole): CourtPosition {
@@ -374,7 +385,7 @@ function roleTarget(state: MatchState, role: TransitionRole): CourtPosition {
     ? findPlayer(state, state.ball.ownerPlayerId) : undefined
   const centerY = state.court.widthMeters / 2
   const direction = basket.x >= state.court.lengthMeters / 2 ? 1 : -1
-  const defensiveTactics = role.teamId === state.homeTeamId ? state.tacticalPlans.home.defense : state.tacticalPlans.away.defense
+  const defensiveTactics = defensiveShape(state, role.teamId)
   if (role.kind === 'BALL_ADVANCE') {
     const handler = ballHandler ?? findPlayer(state, role.playerId)
     if (!handler) return role.target
@@ -494,6 +505,12 @@ function contestSlot(landing: CourtPosition, basket: CourtPosition, rank: number
 function boxOutPosition(attacker: CourtPosition, rebound: CourtPosition, basket: CourtPosition, state: MatchState): CourtPosition {
   const towardRebound = unitVector({ x: rebound.x - attacker.x, y: rebound.y - attacker.y }, { x: basket.x >= state.court.lengthMeters / 2 ? -1 : 1, y: 0 })
   return clampPosition({ x: attacker.x + towardRebound.x * 0.95, y: attacker.y + towardRebound.y * 0.95 }, state.court)
+}
+
+/** Where a leaking defender runs: past half court on his side, toward the basket his team will attack. */
+function leakTarget(player: MatchPlayerState, defendedBasket: CourtPosition, state: MatchState): CourtPosition {
+  const away = defendedBasket.x >= state.court.lengthMeters / 2 ? -1 : 1
+  return clampPosition({ x: state.court.lengthMeters / 2 + away * 3, y: player.position.y < state.court.widthMeters / 2 ? state.court.widthMeters * 0.3 : state.court.widthMeters * 0.7 }, state.court)
 }
 
 function reboundSafetyTarget(player: MatchPlayerState, rebound: CourtPosition, attackedBasket: CourtPosition, state: MatchState): CourtPosition {

@@ -1,6 +1,6 @@
 import { distanceBetween } from '@/domain/court'
 import { attackingBasketForTeam } from '@/engine/match-next/structure/FiveOutStructure'
-import { applyCommand, createMatchState, decideRotationSubstitutions, tick, toFrame, type MatchFrame, type MatchSetup, type MatchState } from '@/engine/match-next'
+import { applyCommand, createMatchState, decideRotationSubstitutions, inboundReceiverOrder, inboundTempo, tick, toFrame, type MatchFrame, type MatchSetup, type MatchState } from '@/engine/match-next'
 import type { MovementIntent } from '@/engine/match-next/movement/MovementIntent'
 import type { InboundStartReason } from '@/engine/match-next/ball/BallTransitions'
 import { createMatchNextResult, type MatchNextResult } from './MatchNextResult'
@@ -75,6 +75,12 @@ export class MatchNextLiveController {
     const ids = new Set(pending.responsibilityIds)
     const inbounder = this.state.players.find((player) => player.playerId === pending.inbounderPlayerId)
     if (inbounder === undefined || !inbounder.active || distanceBetween(inbounder.position, pending.spot) > 0.75) return false
+    // BT5.12: after a basket a fast team does not wait for the formation: thrower and receiver in place, and the ball goes in.
+    if (pending.reason === 'madeBasketInbound' && inboundTempo(this.state, pending.teamId).skipFormation) {
+      const receiver = this.state.players.find((player) => player.playerId === pending.receiverPlayerId)
+      const intent = receiver === undefined ? undefined : this.state.movementIntents.find((item) => item.playerId === receiver.playerId && ids.has(item.provenance.responsibilityId))
+      return receiver !== undefined && intent !== undefined && distanceBetween(receiver.position, intent.target) <= 1.5
+    }
     return this.state.players.filter((player) => player.active).every((player) => {
       const intent = this.state.movementIntents.find((item) => item.playerId === player.playerId && ids.has(item.provenance.responsibilityId))
       return intent !== undefined && distanceBetween(player.position, intent.target) <= 0.75
@@ -90,7 +96,8 @@ export class MatchNextLiveController {
     const movementIntents = this.state.movementIntents.filter((item) => !ids.has(item.provenance.responsibilityId))
     this.state = { ...this.state, responsibilities, decisions, movementIntents }
     this.state = applyCommand(this.state, { type: 'startInbound', teamId: pending.teamId, inbounderPlayerId: pending.inbounderPlayerId, reason: pending.reason })
-    this.inboundHold = { receiverPlayerId: pending.receiverPlayerId, releaseAtT: this.state.t + INBOUND_HOLD_TICKS }
+    const hold = pending.reason === 'madeBasketInbound' ? inboundTempo(this.state, pending.teamId).holdTicks : INBOUND_HOLD_TICKS
+    this.inboundHold = { receiverPlayerId: pending.receiverPlayerId, releaseAtT: this.state.t + hold }
     this.pendingInbound = null
   }
 
@@ -152,9 +159,11 @@ function prepareRestartInbound(
   const target = requestedSpot ?? inboundSpot(state)
   // The player closest to the spot takes the ball out (he does not walk the length of the court); a teammate nearest to him receives.
   const inbounderPlayerId = [...lineup].sort((left, right) => spotDistance(state, left, target) - spotDistance(state, right, target) || String(left).localeCompare(String(right)))[0]!
-  // The receiver is whoever the restart formation puts nearest to the thrower (the first of the others in lineup order).
-  const receiverPlayerId = lineup.filter((playerId) => playerId !== inbounderPlayerId)[0]!
-  const targets = restartTargets(state, setup, teamId, inbounderPlayerId, target, reason)
+  // The receiver is whoever the restart formation puts nearest to the thrower. BT5.5: that is the man who initiates (the primary creator),
+  // then the rest of the lineup in order.
+  const receivers = inboundReceiverOrder(state, teamId, inbounderPlayerId)
+  const receiverPlayerId = receivers[0]!
+  const targets = restartTargets(state, setup, teamId, inbounderPlayerId, target, reason, receivers)
   let nextResponsibilitySequence = state.nextResponsibilitySequence
   let nextDecisionSequence = state.nextDecisionSequence
   const responsibilities: MatchState['responsibilities'][number][] = []
@@ -190,7 +199,7 @@ function prepareRestartInbound(
   }
 }
 
-function restartTargets(state: MatchState, setup: MatchSetup, inboundTeamId: MatchSetup['homeTeamId'], inbounderPlayerId: MatchSetup['initialLineups']['home'][number], spot: { readonly x: number; readonly y: number }, reason: InboundStartReason): Map<MatchSetup['initialLineups']['home'][number], { readonly x: number; readonly y: number }> {
+function restartTargets(state: MatchState, setup: MatchSetup, inboundTeamId: MatchSetup['homeTeamId'], inbounderPlayerId: MatchSetup['initialLineups']['home'][number], spot: { readonly x: number; readonly y: number }, reason: InboundStartReason, receivers?: readonly MatchSetup['initialLineups']['home'][number][]): Map<MatchSetup['initialLineups']['home'][number], { readonly x: number; readonly y: number }> {
   const inboundIsHome = inboundTeamId === setup.homeTeamId
   const inboundLineup = state.players.filter((player) => player.active && player.teamId === inboundTeamId).map((player) => player.playerId)
   const defenseTeamId = inboundIsHome ? setup.awayTeamId : setup.homeTeamId
@@ -211,7 +220,7 @@ function restartTargets(state: MatchState, setup: MatchSetup, inboundTeamId: Mat
     : [{ depth: 3, lateral: 0 }, { depth: 6, lateral: -3.8 }, { depth: 6, lateral: 3.8 }, { depth: 9, lateral: 1.8 }]
   // The rest keep the lineup order (guards up the floor, bigs nearer the ball), the natural mapping onto the offense's slots, so
   // the team is already close to its half-court spots when play starts.
-  inboundLineup.filter((playerId) => playerId !== inbounderPlayerId).forEach((playerId, index) => {
+  ;(receivers ?? inboundLineup.filter((playerId) => playerId !== inbounderPlayerId)).forEach((playerId, index) => {
     const slot = inboundTargets[index]!
     targets.set(playerId, {
       x: clampCourtX(spot.x + direction * slot.depth, state.court.lengthMeters),

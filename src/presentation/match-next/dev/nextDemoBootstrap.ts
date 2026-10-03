@@ -11,6 +11,7 @@ import type { MatchSetup } from '@/engine/match-next'
 import type { PlayerId } from '@/domain/ids'
 import { toNextTickFrame } from '../MatchNextPresentationBridge'
 import type { NextPlayerLabels, NextTickFrame } from '../types'
+import { withStyle } from './tacticalStyles'
 
 export interface NextDemoSession {
   readonly seed: number
@@ -26,6 +27,9 @@ export interface NextDemoSession {
 export interface NextDemoOptions {
   readonly periodSeconds?: number
   readonly periodCount?: number
+  /** BT5 visual validation: a named coach identity for each team (see tacticalStyles). */
+  readonly homeStyle?: string
+  readonly awayStyle?: string
 }
 
 export function createNextDemoSession(seed = 424242, options: NextDemoOptions = {}): NextDemoSession {
@@ -40,6 +44,7 @@ export function createNextDemoSession(seed = 424242, options: NextDemoOptions = 
       ...(options.periodSeconds === undefined ? {} : { periodSeconds: options.periodSeconds }),
       ...(options.periodCount === undefined ? {} : { periodCount: options.periodCount }),
     },
+    tacticalPlans: { home: withStyle(prepared.tacticalPlans.home, options.homeStyle), away: withStyle(prepared.tacticalPlans.away, options.awayStyle) },
   }
   const controller = port.createLiveSession(setup)
   const labels = new Map<PlayerId, { label: string; jersey: number }>()

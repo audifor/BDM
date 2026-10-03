@@ -16,6 +16,9 @@ import { planScreen, SCREEN_MIN_SECONDS_LEFT } from './ScreenCore'
 import { attackingBasketForTeam } from '../structure/FiveOutStructure'
 import { ballFlightSeconds, executionQuality, interceptAttemptChance, passExecutionError, perceivedLaneRead, receiverDenial } from './PassRisk'
 import { isInOffensiveFrontcourt } from '../structure/OffensiveStructure'
+import { callPlay, type PlayCall, type PlayFamily } from '../tactics/PlayCalling'
+import { defensiveShape, tacticalIntent, type TacticalIntent } from '../tactics/TacticalIdentity'
+import { lineupRoles } from '../tactics/OffensiveRoles'
 
 export interface ShotContest {
   readonly score: number
@@ -31,9 +34,7 @@ const CLOCK_EXHAUSTED_SECONDS = 2.2
 const CLOCK_PRESSURE_SPAN_SECONDS = 12.5
 /** A look at least this valuable is taken even before the offense is set (a genuinely open look). */
 export const OPEN_LOOK_VALUE_POINTS = 1.2
-/** Value of a shot per level of the plan's shot profile (-2..2) and per usage point over/under 50. */
-const SHOT_PROFILE_VALUE_PER_LEVEL = 0.05
-/** Each pace level shortens the wait for a better look and lowers the bar for an 'open enough' one. */
+/** Each tempo level (intent tempo x 2, the old pace scale) shortens the wait for a better look and lowers the bar for an 'open enough' one. */
 const PACE_OPEN_LOOK_PER_LEVEL = 0.04
 const PACE_READ_TICKS_PER_LEVEL = 0.6
 /** Below this many seconds an unsettled offense may no longer wait to be organised. */
@@ -177,8 +178,6 @@ export function evaluateShotOpportunity(state: MatchState, shooter: MatchPlayerS
   const points = shotValueAt(position, basket, state)
   const distanceMeters = distanceBetween(position, basket)
   const probability = Math.min(0.9, shotMakeProbability(shooter.offense.shooting, distanceMeters, points, contestScore, shooter.fatigue, shooter.offense.rimAttack) * putbackQuality(state, shooter, position, basket) * (mods.makeScale ?? 1))
-  const plan = shooter.teamId === state.homeTeamId ? state.tacticalPlans.home : state.tacticalPlans.away
-  const preference = points === 3 ? plan.shotProfile.threePoint : distanceMeters <= 2.2 ? plan.shotProfile.rim : plan.shotProfile.midRange
   // BT3D/H: the attempt is worth what it earns on the scoreboard AND at the line, and it can be rejected. A shot from a spot
   // where defenders are within reach risks a block and draws fouls in proportion to the same geometry the game will judge.
   const defenders = state.players.filter((player) => player.active && player.teamId !== shooter.teamId)
@@ -191,10 +190,11 @@ export function evaluateShotOpportunity(state: MatchState, shooter: MatchPlayerS
   const madeWhenFouled = probability * FOULED_SHOT_MAKE_FACTOR
   const whenFouled = madeWhenFouled * (points + freeThrow) + (1 - madeWhenFouled) * points * freeThrow
   const expected = (1 - blockRisk) * ((1 - foulChance) * probability * points + foulChance * whenFouled)
-  // BT3Q: the plan's shot profile (-2..2 per zone) and the shooter's own usage decide how much this look is WANTED, on top of
-  // what it is worth. A star with high usage takes more of the team's shots; a role player defers; a three-heavy plan wants threes.
+  // BT3Q: the shooter's own usage decides how much this look is WANTED, on top of what it is worth (a star takes more of the team's
+  // shots, a role player defers). BT5.11: the plan's shot profile no longer multiplies the value of a zone; where the shots come from is
+  // the output of the plays, the spacing and the post touches the identity asks for.
   const usageWant = 1 + (shooter.offense.usage - 50) * tuning().usageValuePerPoint
-  return { points, probability, value: expected * (1 + preference * SHOT_PROFILE_VALUE_PER_LEVEL) * usageWant, distanceMeters, contestScore }
+  return { points, probability, value: expected * usageWant, distanceMeters, contestScore }
 }
 
 /** Ticks after grabbing an offensive rebound during which the first attempt is a putback. */
@@ -250,7 +250,7 @@ function forecastCloseout(state: MatchState, defender: MatchPlayerState, receive
   const totalTicks = Math.round(seconds * 10)
   const runTicks = Math.max(0, totalTicks - closeoutReactionTicks())
   const basket = attackingBasketForTeam(receiver.teamId, state.homeTeamId, state.period, state.court)
-  const tactics = defender.teamId === state.homeTeamId ? state.tacticalPlans.home.defense : state.tacticalPlans.away.defense
+  const tactics = defensiveShape(state, defender.teamId)
   const target = guardPosition(receiver.position, receiver.position, basket, 'ON_BALL', state.court, tactics)
   const intent = { playerId: defender.playerId, target, urgency: 'sprint' as const, facing: { kind: 'BALL' as const }, provenance: { responsibilityId: 'forecast', decisionId: 'forecast', owner: 'defensiveStructure' as const } }
   let position = { ...defender.position }
@@ -350,7 +350,6 @@ function rimSpotFor(from: CourtPosition, basket: CourtPosition): CourtPosition {
  */
 function driveValue(state: MatchState, actor: MatchPlayerState, basket: CourtPosition): number {
   const { edge } = driveEdge(state, actor, basket)
-  const plan = actor.teamId === state.homeTeamId ? state.tacticalPlans.home : state.tacticalPlans.away
   // Each drive already taken this possession has the help defense more set: the next one is worth less.
   const drivesSoFar = state.actions.filter((action) => action.kind === 'DRIVE' && action.teamId === actor.teamId && action.startedT >= (activePossession(state)?.startedT ?? 0)).length
   const spot = rimSpotFor(actor.position, basket)
@@ -363,7 +362,7 @@ function driveValue(state: MatchState, actor: MatchPlayerState, basket: CourtPos
   const contested = evaluateShotOpportunity(state, actor, spot, basket, Math.max(0.8, rimContest)).value
   const contained = (tuning().driveContainedPremium !== 0 ? workingValue(state) : continuationValue(state)) * 0.9
   const value = pBeat * beaten + (1 - pBeat) * (0.35 * contested + 0.65 * contained)
-  return value * (1 + plan.shotProfile.rim * SHOT_PROFILE_VALUE_PER_LEVEL) * Math.pow(0.8, drivesSoFar)
+  return value * Math.pow(0.8, drivesSoFar)
 }
 
 /** Pull-up and floater: how well this shooter makes a shot he takes on the move, from his own ratings. */
@@ -447,9 +446,10 @@ export function readDecision(state: MatchState): DecisionRead {
   const outletAlreadyCaught = state.actions.some((action) => action.teamId === possession.teamId
     && action.startedT >= (state.transition?.startedT ?? Number.POSITIVE_INFINITY)
     && (action.kind === 'PASS' || action.kind === 'KICK_OUT') && action.status === 'COMPLETED' && action.outcome === 'CAUGHT')
+  const tempo = tacticalIntent(state, possession.teamId).offense.tempo
   const outlet = liveTransition && state.transition && !outletAlreadyCaught
-    && (state.transition.trigger === 'defensiveRebound' || state.transition.advantage === 'ADVANTAGE')
-    ? bestTransitionReceiver(state, actor, basket) ?? (state.transition.trigger === 'defensiveRebound' ? bestReceiver(state, actor, false) : undefined)
+    && (state.transition.trigger === 'defensiveRebound' || state.transition.advantage === 'ADVANTAGE' || (tempo > 0.35 && state.transition.advantage === 'NEUTRAL'))
+    ? bestTransitionReceiver(state, actor, basket, state.transition.advantage === 'ADVANTAGE' || state.transition.trigger === 'defensiveRebound' ? 0.6 : tuning().tempoPushCompletion) ?? (state.transition.trigger === 'defensiveRebound' ? bestReceiver(state, actor, false) : undefined)
     : undefined
 
   if (outlet) {
@@ -524,41 +524,55 @@ function screenSeparationFor(state: MatchState, screen: ScreenState, handler: Ma
   }
 }
 
-export type PlayKind = 'BALL_SCREEN' | 'DRIVE_KICK' | 'SWING'
+export type PlayKind = PlayFamily
 
-/** What the offense is running in this half court, chosen once per possession from who is on the floor (stable: static ratings and the possession id). */
+/** What the offense is running in this half court: the call of the flow (BT5), or the call the team would make now. */
 export function playFor(state: MatchState, teamId: MatchPlayerState['teamId']): PlayKind {
+  const flow = state.offenseFlow
+  if (flow !== null && flow.teamId === teamId && flow.call !== undefined && flow.call !== null) return flow.call.family
   const possession = activePossession(state)
-  const players = state.players.filter((player) => player.active && player.teamId === teamId)
-  const top = (score: (player: MatchPlayerState) => number, count: number): number => {
-    const values = players.map(score).sort((a, b) => b - a).slice(0, count)
-    return values.reduce((a, b) => a + b, 0) / Math.max(1, values.length)
-  }
-  const plan = teamId === state.homeTeamId ? state.tacticalPlans.home : state.tacticalPlans.away
-  const screenWeight = 1 + 0.012 * (top((p) => p.offense.creation, 2) - 50) + 0.012 * (top((p) => (p.offense.rimAttack + p.reboundingImpact + (p.heightCm - 170) * 0.6) / 3, 1) - 50)
-  const driveWeight = 0.9 + 0.012 * (top((p) => p.offense.rimAttack, 3) - 50) + plan.shotProfile.rim * 0.15
-  const swingWeight = 0.9 + 0.012 * (top((p) => p.offense.shooting, 3) - 50) + plan.shotProfile.threePoint * 0.15
-  const total = Math.max(0.3, screenWeight) + Math.max(0.3, driveWeight) + Math.max(0.3, swingWeight)
-  const u = hashStringToSeed(`bt43-play:${possession?.id ?? 'none'}:${possession?.offensiveRebounds ?? 0}`) / 0x1_0000_0000 * total
-  if (u < Math.max(0.3, screenWeight)) return 'BALL_SCREEN'
-  return u < Math.max(0.3, screenWeight) + Math.max(0.3, driveWeight) ? 'DRIVE_KICK' : 'SWING'
+  return possession !== undefined && possession.teamId === teamId ? callPlay(state, possession).family : 'CIRCULATION'
 }
 
-interface PlayRead { readonly kind: PlayKind; readonly committed: boolean; readonly screensDone: number; readonly drivesDone: number; readonly passesDone: number }
+interface PlayRead {
+  readonly kind: PlayKind; readonly call: PlayCall; readonly committed: boolean; readonly screensDone: number; readonly drivesDone: number; readonly passesDone: number
+  /** Post touches of the call's target and off-ball screens used since the half court started. */
+  readonly postTouches: number; readonly offBallScreens: number
+}
+
+const POST_TOUCH_METERS = 5.2
 
 /** The set the team is running and whether it is still committed to it (it ends when it has been run, or after the commitment window). */
-function playRead(state: MatchState, flow: MatchState['offenseFlow'], teamId: MatchPlayerState['teamId']): PlayRead | null {
+function playRead(state: MatchState, flow: MatchState['offenseFlow'], teamId: MatchPlayerState['teamId'], intent: TacticalIntent): PlayRead | null {
   if (tuning().playsEnabled === 0 || flow === null || flow.halfCourtSinceT === null || state.transition !== null) return null
+  const call = flow.call
+  if (call === undefined || call === null || call.family === 'EARLY_OFFENSE') return null
   const since = flow.halfCourtSinceT
   const mine = state.actions.filter((action) => action.teamId === teamId && action.startedT >= since && action.status === 'COMPLETED')
   const screensDone = mine.filter((action) => action.kind === 'SCREEN').length
   const drivesDone = mine.filter((action) => action.kind === 'DRIVE').length
   const passesDone = mine.filter((action) => action.kind === 'PASS' || action.kind === 'KICK_OUT').length
-  const kind = playFor(state, teamId)
+  const basket = attackingBasketForTeam(teamId, state.homeTeamId, state.period, state.court)
+  const postTouches = call.targetId === undefined ? 0 : mine.filter((action) => (action.kind === 'PASS' || action.kind === 'KICK_OUT') && action.outcome === 'CAUGHT'
+    && action.targetPlayerId === call.targetId && action.target !== undefined && distanceBetween(action.target, basket) <= POST_TOUCH_METERS).length
+  let offBallScreens = 0
+  for (let index = state.events.length - 1; index >= 0; index -= 1) {
+    const event = state.events[index]!
+    if (event.t < since) break
+    if (event.type === 'offBallMove' && event.ballReason === 'COME_OFF' && event.teamId === teamId) offBallScreens += 1
+  }
   const elapsed = (state.t - since) / 10
-  const extra = tuning().playExtraPasses
-  const executed = kind === 'BALL_SCREEN' ? screensDone >= 1 && passesDone + drivesDone >= 1 + extra : kind === 'DRIVE_KICK' ? drivesDone >= 1 && passesDone >= 1 + extra : passesDone >= 3 + extra
-  return { kind, committed: !executed && elapsed < tuning().playCommitSeconds, screensDone, drivesDone, passesDone }
+  // A patient team (ball movement) needs one more pass before a set counts as run, and stays with it longer; an attacking one less.
+  const extra = Math.max(0, tuning().playExtraPasses + Math.round(intent.offense.ballMovement * 1.2))
+  const kind = call.family
+  const executed = kind === 'BALL_SCREEN' ? screensDone >= 1 && passesDone + drivesDone >= 1 + extra
+    : kind === 'DRIVE_KICK' ? drivesDone >= 1 && passesDone >= 1 + extra
+      : kind === 'MOVEMENT' ? (offBallScreens >= 1 || passesDone >= 3 + extra) && passesDone >= 1 + extra
+        : kind === 'POST' ? postTouches >= 1 && (passesDone >= 1 + extra || drivesDone >= 1)
+          : kind === 'ISOLATION' ? drivesDone >= 1
+            : passesDone >= 3 + extra
+  const commitSeconds = tuning().playCommitSeconds * (1 + 0.3 * intent.offense.ballMovement)
+  return { kind, call, committed: !executed && elapsed < commitSeconds, screensDone, drivesDone, passesDone, postTouches, offBallScreens }
 }
 
 /** A fast break in basketball terms: between the ball and the basket there are at least as many attackers as defenders. */
@@ -575,32 +589,46 @@ function hasNumericAdvantage(state: MatchState, actor: MatchPlayerState, basket:
 }
 
 function readTheFloor(state: MatchState, actor: MatchPlayerState, basket: CourtPosition, flow: MatchState['offenseFlow'], contained: boolean, passKind: 'PASS' | 'KICK_OUT', mustAct = false, screen: ScreenState | null = null): FloorRead {
+  const intent = tacticalIntent(state, actor.teamId)
   const contest = estimateContestAt(state, actor.teamId, actor.position)
   // Off a set screen the handler's defender is about to be delayed: the pull-up is less contested than it looks now.
   const screenSeparation = screen === null ? { driveGain: 0, contestRelief: 0 } : screenSeparationFor(state, screen, actor)
   const shot = evaluateShotOpportunity(state, actor, actor.position, basket, Math.max(0, contest.score - screenSeparation.contestRelief))
-  const receivers = readReceivers(state, actor, basket)
+  const play = playRead(state, flow, actor.teamId, intent)
+  const committed = play !== null && play.committed
+  const call = play?.call ?? null
+  const initiatorOnFloor = call?.initiatorId != null && state.players.some((player) => player.active && player.playerId === call.initiatorId)
+  const isInitiator = call === null || !initiatorOnFloor || call.initiatorId === actor.playerId
+  // BT5.5/5.6: the set says who must get the ball: the handler of the screen or the isolation, the post target, the shooter coming off a pin-down.
+  const priority = committed && tuning().setPassPriority !== 0 ? passPriority(state, play!, actor) : null
+  const receivers = rankWithPriority(rankWithPriority(readReceivers(state, actor, basket), priority), identityReadPriority(state, actor, basket, intent))
   const bestReceiver = receivers[0]
   const distanceToBasket = distanceBetween(actor.position, basket)
   const secondsLeft = Math.min(state.shotClockTenths === null ? state.clockRules.shotClockSeconds : state.shotClockTenths / 10, state.gameClockTenths / 10)
+  // A post player with the ball works from the block: his drive is a post move (a shorter path to the rim than a drive from the arc).
+  const postMove = call?.family === 'POST' && call.targetId === actor.playerId && distanceToBasket <= POST_TOUCH_METERS
   // Actions take time: a drive needs ~3 s to develop and a pass ~1.5 s before the receiver can shoot.
-  const drive = !contained && distanceToBasket > 3.2 && distanceToBasket < 14 && secondsLeft > 5 ? driveValue(state, actor, basket) + screenSeparation.driveGain : Number.NEGATIVE_INFINITY
-  const screenPlan = screen === null && !contained && !mustAct && flow !== null && flow.stage === 'HALF_COURT' && flow.settledAtT !== null && secondsLeft > SCREEN_MIN_SECONDS_LEFT
+  const drive = !contained && distanceToBasket > (postMove ? 2.3 : 3.2) && distanceToBasket < 14 && secondsLeft > 5 ? driveValue(state, actor, basket) + screenSeparation.driveGain : Number.NEGATIVE_INFINITY
+  const isolating = committed && play!.kind === 'ISOLATION' && isInitiator && play!.drivesDone === 0
+  const screenPlan = screen === null && !contained && !mustAct && !isolating && flow !== null && flow.stage === 'HALF_COURT' && flow.settledAtT !== null && secondsLeft > SCREEN_MIN_SECONDS_LEFT
     ? planScreen(state, actor, basket) : null
   const hold = workingValue(state) * tuning().holdDiscount
   const noise = (salt: string): number => 1 + (decisionNoise(state, actor.playerId, salt) - 0.5) * 0.12
-  const play = playRead(state, flow, actor.teamId)
-  const committed = play !== null && play.committed
   const gift = shot.value >= tuning().playGiftValue && contest.score <= tuning().playGiftContest
-  const shootPlayFactor = committed && !gift ? tuning().playShotFactor : 1
-  const drivePlayFactor = committed && play!.kind === 'DRIVE_KICK' && play!.drivesDone === 0 ? tuning().playDriveBoost : 1
-  const passPlayFactor = committed && (play!.kind === 'SWING' || (play!.kind === 'DRIVE_KICK' && play!.drivesDone >= 1)) ? tuning().playPassBoost : 1
+  // A patient team passes up more cold looks while its set runs; an attacking one takes them.
+  const shootPlayFactor = committed && !gift ? tuning().playShotFactor - 0.12 * intent.offense.ballMovement : 1
+  const drivePlayFactor = isolating ? tuning().playDriveBoost * 1.15
+    : committed && play!.kind === 'DRIVE_KICK' && play!.drivesDone === 0 ? tuning().playDriveBoost : 1
+  const passPlayFactor = isolating ? 0.8
+    : committed && (play!.kind === 'CIRCULATION' || play!.kind === 'MOVEMENT' || (play!.kind === 'DRIVE_KICK' && play!.drivesDone >= 1) || (play!.kind === 'POST' && play!.postTouches === 0)) ? tuning().playPassBoost : 1
+  const screenBonus = committed && play!.kind === 'BALL_SCREEN' && play!.screensDone === 0 && isInitiator ? tuning().playScreenBonus : 0
   const options = {
     shoot: shot.value * tuning().shootValueScale * shootPlayFactor * noise('shoot'),
-    drive: drive * drivePlayFactor * tuning().driveValueScale * (1 + (actor.offense.usage - 50) * tuning().usageDrivePerPoint) * noise('drive'),
+    // BT5.11: an interior identity attacks the rim first (a read priority, not a shot value).
+    drive: drive * drivePlayFactor * tuning().driveValueScale * (1 + (actor.offense.usage - 50) * tuning().usageDrivePerPoint) * (1 + tuning().identityReadWeight * 0.25 * intent.offense.interior) * noise('drive'),
     // Off a set screen the handler first USES it (attack, pull up); the ball only moves early if he is being trapped.
     pass: (secondsLeft > 3.5 && (screen === null || screen.coverage === 'blitz' || tuning().passOffScreen !== 0) ? (bestReceiver?.value ?? Number.NEGATIVE_INFINITY) * tuning().passValueScale * passPlayFactor * (1 - (actor.offense.usage - 50) * tuning().usagePassPerPoint) : Number.NEGATIVE_INFINITY) * noise('pass'),
-    screen: ((screenPlan?.value ?? Number.NEGATIVE_INFINITY) + (committed && play!.kind === 'BALL_SCREEN' && play!.screensDone === 0 ? tuning().playScreenBonus : 0)) * noise('screen'),
+    screen: ((screenPlan?.value ?? Number.NEGATIVE_INFINITY) + screenBonus) * noise('screen'),
     hold,
   }
   const utility = { shoot: round(shot.value), drive: round(Number.isFinite(drive) ? drive : 0), pass: round(bestReceiver?.value ?? 0), hold: round(hold), ...(screenPlan === null ? {} : { screen: round(screenPlan.value) }) }
@@ -621,14 +649,16 @@ function readTheFloor(state: MatchState, actor: MatchPlayerState, basket: CourtP
   // the handler is bringing the ball up. Before, any open look (or a stopped transition in the EARLY stage) let the handler act and the best option could be a drive.
   const transitionAdvantage = state.transition !== null && state.transition.teamId === actor.teamId && state.transition.advantage === 'ADVANTAGE'
   const notSetYet = flow !== null && !settled && (flow.stage === 'HALF_COURT' || flow.stage === 'EARLY') && secondsLeft > UNSETTLED_HOLD_MIN_SECONDS
+  // BT5.12: a fast team also attacks a defense that is still getting back (no numbers, but not set); a controlled one waits for the set.
   const earlyDriveAllowed = transitionAdvantage || hasNumericAdvantage(state, actor, basket)
+    || (intent.offense.tempo > 0.25 && !defenseIsSet(state) && decisionNoise(state, actor.playerId, 'tempo-early') < intent.offense.tempo)
   const driveIsAPlay = tuning().playsEnabled !== 0 && notSetYet && !mustAct && !earlyDriveAllowed
   const candidates = (Object.entries(options) as [keyof typeof options, number][])
     .filter(([name]) => (!noHold || name !== 'hold') && !(driveIsAPlay && name === 'drive'))
     .map(([name, value]): [keyof typeof options, number] => [name, Number.isFinite(value) ? value + gumbel(name) : value])
   const best = candidates.sort((left, right) => right[1] - left[1])[0]![0]
   // Until the floor is organised only a genuinely open look justifies acting: otherwise keep reading.
-  const pace = actor.teamId === state.homeTeamId ? state.tacticalPlans.home.pace : state.tacticalPlans.away.pace
+  const pace = intent.offense.tempo * 2
   // BT4.3: an offense that is not set does not attack on its own: only a shot or a pass that is already there justifies acting; a drive is a play, not a look.
   const openLook = Math.max(options.shoot, options.pass, tuning().playsEnabled !== 0 && !earlyDriveAllowed ? Number.NEGATIVE_INFINITY : options.drive) >= OPEN_LOOK_VALUE_POINTS * (1 - pace * PACE_OPEN_LOOK_PER_LEVEL)
   const readAgain = state.t + Math.max(1, Math.round(3 - pace * PACE_READ_TICKS_PER_LEVEL)) + Math.floor(decisionNoise(state, actor.playerId, 'hold') * 4)
@@ -644,7 +674,55 @@ function readTheFloor(state: MatchState, actor: MatchPlayerState, basket: CourtP
     return { kind: 'SCREEN', targetPlayerId: screenPlan.screenerId, utility, reason: 'No look is good enough yet: run a ball screen to create one' }
   }
   if (best === 'drive') return { kind: 'DRIVE', utility, reason: 'Attack the on-ball defender: the drive is worth more than the shot or the pass' }
-  return { kind: passKind, targetPlayerId: bestReceiver!.player.playerId, utility, reason: 'A teammate has a better look than mine' }
+  const prioritized = priority !== null && bestReceiver!.player.playerId === priority.playerId
+  return { kind: passKind, targetPlayerId: bestReceiver!.player.playerId, utility, reason: prioritized ? `Get it to the man the set is for (${priority!.why})` : 'A teammate has a better look than mine' }
+}
+
+interface PassPriority { readonly playerId: PlayerId; readonly points: number; readonly why: string }
+
+/**
+ * Who the set needs the ball in the hands of, and how much the passer favors him over a look of the same worth. It is a preference
+ * between options (the pass still has to be completable and worth something), never a forced pass.
+ */
+function passPriority(state: MatchState, play: PlayRead, actor: MatchPlayerState): PassPriority | null {
+  const call = play.call
+  const onFloor = (id: PlayerId | null | undefined): id is PlayerId => id !== null && id !== undefined && id !== actor.playerId && state.players.some((player) => player.active && player.playerId === id)
+  if ((call.family === 'BALL_SCREEN' && play.screensDone === 0) || (call.family === 'ISOLATION' && play.drivesDone === 0)) {
+    return onFloor(call.initiatorId) ? { playerId: call.initiatorId, points: 0.16, why: call.family === 'BALL_SCREEN' ? 'the handler of the ball screen' : 'the isolation' } : null
+  }
+  if (call.family === 'POST' && play.postTouches === 0) return onFloor(call.targetId) ? { playerId: call.targetId, points: 0.3, why: 'the post entry' } : null
+  if (call.family === 'MOVEMENT' && onFloor(call.targetId)) {
+    const comingOff = state.offenseFlow?.moves.some((move) => move.kind === 'COME_OFF' && move.playerId === call.targetId) ?? false
+    return comingOff ? { playerId: call.targetId, points: 0.18, why: 'the shooter coming off the screen' } : null
+  }
+  return null
+}
+
+/**
+ * BT5.11: where the offense LOOKS first, from its interior/perimeter identity. An interior team looks for its post player when he has
+ * position near the rim; a perimeter team looks for the open spot-up shooter on the arc. The look still has to be completable and worth
+ * something: this is the order of the reads, never the value of the shot.
+ */
+function identityReadPriority(state: MatchState, actor: MatchPlayerState, basket: CourtPosition, intent: TacticalIntent): PassPriority | null {
+  const weight = tuning().identityReadWeight
+  const interior = intent.offense.interior
+  if (weight === 0 || Math.abs(interior) < 0.15) return null
+  const mates = state.players.filter((player) => player.active && player.teamId === actor.teamId && player.playerId !== actor.playerId)
+  if (interior > 0) {
+    const post = mates.filter((player) => distanceBetween(player.position, basket) <= 4.5 && player.heightCm >= 198)
+      .sort((left, right) => distanceBetween(left.position, basket) - distanceBetween(right.position, basket) || String(left.playerId).localeCompare(String(right.playerId)))[0]
+    return post === undefined ? null : { playerId: post.playerId, points: weight * 0.22 * interior, why: 'the post has position' }
+  }
+  const open = mates.filter((player) => isBeyondThreePointLine(player.position, basket, state.court) && estimateContestAt(state, player.teamId, player.position).score < 0.25)
+    .sort((left, right) => right.offense.shooting - left.offense.shooting || String(left.playerId).localeCompare(String(right.playerId)))[0]
+  return open === undefined ? null : { playerId: open.playerId, points: weight * 0.05 * -interior, why: 'the open shooter on the arc' }
+}
+
+function rankWithPriority(reads: ReceiverRead[], priority: PassPriority | null): ReceiverRead[] {
+  if (priority === null) return reads
+  return reads
+    .map((read) => read.player.playerId === priority.playerId && read.completion > 0.8 ? { ...read, value: read.value + priority.points } : read)
+    .sort((left, right) => right.value - left.value || String(left.player.playerId).localeCompare(String(right.player.playerId)))
 }
 
 export function bestReceiver(state: MatchState, passer: MatchPlayerState, preferOpenShooter: boolean): MatchPlayerState | undefined {
@@ -656,8 +734,15 @@ export function bestReceiver(state: MatchState, passer: MatchPlayerState, prefer
     .sort((left, right) => right.score - left.score || String(left.read.player.playerId).localeCompare(String(right.read.player.playerId)))[0]?.read.player
 }
 
-function bestTransitionReceiver(state: MatchState, passer: MatchPlayerState, basket: CourtPosition): MatchPlayerState | undefined {
+/**
+ * BT5.12: `minCompletion` is the confidence the push needs. A numbers advantage or a rebound outlet accepts the BT4.5 risk; a push that
+ * only the team's tempo asks for (no advantage) needs a pass the passer is nearly sure of; and a long throw ahead (over 12 m of
+ * progress) always needs more confidence than a short outlet: running teams push the ball by dribble, not by heaving it.
+ */
+function bestTransitionReceiver(state: MatchState, passer: MatchPlayerState, basket: CourtPosition, minCompletion = 0.6): MatchPlayerState | undefined {
   const direction = basket.x >= state.court.lengthMeters / 2 ? 1 : -1
+  // BT5.5: the outlet looks for the man who brings it up (the primary creator), unless someone is already ahead of the play.
+  const roles = lineupRoles(state, passer.teamId, tacticalIntent(state, passer.teamId))
   return state.players.filter((player) => player.active && player.teamId === passer.teamId && player.playerId !== passer.playerId)
     .map((player) => {
       const progress = (player.position.x - passer.position.x) * direction
@@ -665,21 +750,32 @@ function bestTransitionReceiver(state: MatchState, passer: MatchPlayerState, bas
         .map((defender) => distanceBetween(defender.position, player.position)), Number.POSITIVE_INFINITY)
       // BT4.5: the same risk the half court uses (execution, lane in real time, receiver availability): a pass ahead into a lane that is closed is not an outlet.
       const completion = perceivedCompletion(state, passer, player)
-      const score = progress + Math.min(nearestDefender, 8) * 0.28 + player.offense.creation * 0.008 - (1 - completion) * 14
+      const score = progress + Math.min(nearestDefender, 8) * 0.28 + player.offense.creation * 0.008 - (1 - completion) * 14 + (player.playerId === roles.primaryCreatorId && progress < 4 ? 1 : 0)
       return { player, score, progress, completion }
     })
-    .filter((candidate) => candidate.progress > 0.75 && candidate.completion > 0.6)
+    .filter((candidate) => candidate.progress > 0.75 && candidate.completion > (candidate.progress > 12 ? Math.max(minCompletion, tuning().longOutletCompletion) : minCompletion))
     .sort((left, right) => right.score - left.score || String(left.player.playerId).localeCompare(String(right.player.playerId)))[0]?.player
 }
 
-/** A drive attacks the rim: it ends in the restricted area, on the side the driver started from. */
-export function driveTarget(state: MatchState, player: MatchPlayerState): CourtPosition {
+/**
+ * A drive attacks the rim: it ends in the restricted area. BT5.7: where it goes depends on the defender. One who shades the middle
+ * gives up the baseline (the drive runs along it and finishes on the block side); otherwise the drive goes to the middle of the lane.
+ * `lateral` forces the side (a handler rejecting a screen).
+ */
+export function driveTarget(state: MatchState, player: MatchPlayerState, lateral?: number): CourtPosition {
   const possession = activePossession(state)
   const basket = attackingBasketForTeam(possession?.teamId ?? player.teamId, state.homeTeamId, state.period, state.court)
   const direction = basket.x >= state.court.lengthMeters / 2 ? -1 : 1
+  if (lateral !== undefined) return { x: clamp(basket.x + direction * 1.0, 0.8, state.court.lengthMeters - 0.8), y: clamp(basket.y + lateral, 2.5, state.court.widthMeters - 2.5) }
+  const guard = guardOf(state, player)
+  const offset = player.position.y - basket.y
+  const towardMiddle = guard === undefined || Math.abs(offset) < 1.5 ? 0 : (player.position.y - guard.position.y) * Math.sign(offset)
+  if (tuning().baselineDrives !== 0 && towardMiddle > 0.35 && Math.abs(offset) > 3) {
+    return { x: clamp(basket.x + direction * 0.6, 0.8, state.court.lengthMeters - 0.8), y: clamp(basket.y + Math.sign(offset) * 1.9, 2.5, state.court.widthMeters - 2.5) }
+  }
   return {
     x: clamp(basket.x + direction * 1.0, 0.8, state.court.lengthMeters - 0.8),
-    y: clamp(basket.y + clamp((player.position.y - basket.y) * 0.4, -1.6, 1.6), 2.5, state.court.widthMeters - 2.5),
+    y: clamp(basket.y + clamp(offset * 0.4, -1.6, 1.6), 2.5, state.court.widthMeters - 2.5),
   }
 }
 

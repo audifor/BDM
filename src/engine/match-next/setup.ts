@@ -2,6 +2,7 @@ import type { GameId, PlayerId, TeamId } from '@/domain/ids'
 import type { CourtGeometry, CourtPosition } from '@/domain/court'
 import type { BasketballPosition } from '@/domain/primitives'
 import type { CoachRotationPlan } from '@/engine/tactics/CoachRotationEngine'
+import type { DefensiveIdentity, OffensiveIdentity } from './tactics/TacticalIdentity'
 
 export interface MatchNextClockRules {
   readonly periodCount: number
@@ -44,6 +45,12 @@ export interface MatchNextTacticalPlan {
   readonly shotProfile: { readonly rim: number; readonly midRange: number; readonly threePoint: number }
   readonly defense: { readonly interior: number; readonly perimeter: number; readonly pickAndRollCoverage?: string }
   readonly featuredPlayerId?: PlayerId
+  /** BT5.2 coach preference: his identity (omitted dimensions are read from the legacy levels above), adaptability and tactical knowledge (0-100). */
+  readonly coach?: { readonly offense?: Partial<OffensiveIdentity>; readonly defense?: Partial<DefensiveIdentity>; readonly adaptability?: number; readonly tacticalKnowledge?: number }
+  /** BT5.2 match plan: what the staff adds for this game on top of the coach's identity (offsets for the numeric dimensions, a coverage). */
+  readonly matchPlan?: { readonly offense?: Partial<OffensiveIdentity>; readonly defense?: Partial<DefensiveIdentity> }
+  /** BT5.24 tactical familiarity with the system (0-100, team cohesion). Omitted: 75. */
+  readonly familiarity?: number
 }
 
 export interface DefensiveMatchupOverride { readonly playerId: PlayerId; readonly opponentPlayerId: PlayerId }

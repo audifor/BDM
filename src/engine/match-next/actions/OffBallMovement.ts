@@ -6,6 +6,7 @@ import { activePossession, type MatchPlayerState, type MatchState, type OffBallM
 import { attackingBasketForTeam } from '../structure/FiveOutStructure'
 import { tuning } from '../tuning'
 import { decisionNoise } from './OffenseFlow'
+import { tacticalIntent } from '../tactics/TacticalIdentity'
 
 /** Off-ball moves are re-evaluated on this cadence (ticks); nobody reads the floor every tick. */
 const EVALUATION_PERIOD_TICKS = 4
@@ -19,7 +20,13 @@ const CUT_LANE_CLEARANCE_METERS = 1.3
 const SAG_DISTANCE_METERS = 2.1
 /** A defender this close on the ball side of his man is denying the pass: the man goes backdoor. */
 const DENIAL_DISTANCE_METERS = 1.7
-const MAX_CUTS_PER_POSSESSION = 3
+/** BT5.10: how many cuts a possession has room for, and how far a defender must sag before a cut is worth it, follow the off-ball identity. */
+function maxCutsPerPossession(offBall: number): number { return Math.round(1.5 + 4 * offBall) }
+function sagDistanceFor(offBall: number): number { return SAG_DISTANCE_METERS - (offBall - 0.35) * 1.2 }
+const PIN_DOWN_MAX_TICKS = 34
+const COME_OFF_MAX_TICKS = 26
+const PIN_DOWN_SET_METERS = 1.1
+const MAX_PIN_DOWNS_PER_POSSESSION = 2
 /** A handler who has kept the ball this long, pressured or with nobody close, gets a teammate who comes to offer himself. */
 const OFFER_AFTER_TICKS = 12
 const OFFER_MAX_TICKS = 26
@@ -103,11 +110,24 @@ export function reconcileOffBallMovement(input: MatchState): MatchState {
     }
   }
 
+  const offBall = tacticalIntent(state, possession.teamId).offense.offBall
   if (holder !== undefined && halfCourt && state.t % EVALUATION_PERIOD_TICKS === 0 && state.t >= flow.readyAtT - 2) {
+    // BT5.10: a movement set frees its shooter with an off-ball screen (pin-down) before anything else.
+    const call = flow.call
+    if (driveActive === undefined && flow.stage === 'HALF_COURT' && flow.settledAtT !== null && call?.family === 'MOVEMENT' && state.screen === null
+      && !moves.some((move) => move.kind === 'PIN_DOWN' || move.kind === 'COME_OFF')) {
+      const pinDownsSoFar = state.events.filter((event) => event.type === 'offBallMove' && event.t >= possession.startedT && event.ballReason === 'PIN_DOWN').length
+      const pair = pinDownsSoFar < MAX_PIN_DOWNS_PER_POSSESSION ? pickPinDown(state, holder, basket, busy, call.targetId, call.screenerId) : undefined
+      if (pair !== undefined) {
+        moves = [...moves, ...pair]
+        state = { ...state, offenseFlow: { ...state.offenseFlow!, moves } }
+        for (const move of pair) { state = emitEvent(state, 'offBallMove', { teamId: move.teamId, playerId: move.playerId, ballReason: move.kind }); busy.add(move.playerId) }
+      }
+    }
     if (driveActive === undefined && flow.stage === 'HALF_COURT' && flow.settledAtT !== null) {
       const cutsSoFar = state.events.filter((event) => event.type === 'offBallMove' && event.t >= possession.startedT && (event.ballReason === 'BASKET_CUT' || event.ballReason === 'BACKDOOR_CUT')).length
-      if (cutsSoFar < MAX_CUTS_PER_POSSESSION && !moves.some((move) => move.kind === 'BASKET_CUT' || move.kind === 'BACKDOOR_CUT')) {
-        const cut = pickCut(state, holder, basket, busy)
+      if (cutsSoFar < maxCutsPerPossession(offBall) && !moves.some((move) => move.kind === 'BASKET_CUT' || move.kind === 'BACKDOOR_CUT')) {
+        const cut = pickCut(state, holder, basket, busy, sagDistanceFor(offBall))
         if (cut !== undefined) {
           moves = [...moves, cut]
           state = emitEvent({ ...state, offenseFlow: { ...state.offenseFlow!, moves } }, 'offBallMove', { teamId: cut.teamId, playerId: cut.playerId, ballReason: cut.kind })
@@ -129,14 +149,71 @@ export function reconcileOffBallMovement(input: MatchState): MatchState {
   for (const move of state.offenseFlow!.moves) {
     const responsibility = state.responsibilities.find((item) => item.playerId === move.playerId && item.owner !== 'defensiveStructure')
     if (!responsibility) continue
+    const player = state.players.find((candidate) => candidate.playerId === move.playerId)
+    // The shooter of a pin-down waits (setting up his man) until the screener is there, then comes off it.
+    const released = move.kind !== 'COME_OFF' || pinDownSet(state, move)
+    const target = released ? move.target : player?.position ?? move.target
     const intent: MovementIntent = {
-      playerId: move.playerId, target: { ...move.target }, urgency: move.kind === 'BASKET_CUT' || move.kind === 'BACKDOOR_CUT' || move.kind === 'OFFER' ? 'sprint' : 'run',
+      playerId: move.playerId, target: { ...target }, urgency: move.kind === 'BASKET_CUT' || move.kind === 'BACKDOOR_CUT' || move.kind === 'OFFER' || move.kind === 'COME_OFF' || move.kind === 'PIN_DOWN' ? 'sprint' : 'run',
       facing: move.kind === 'BASKET_CUT' || move.kind === 'BACKDOOR_CUT' ? { kind: 'BASKET' } : { kind: 'BALL' },
       provenance: { responsibilityId: responsibility.id, decisionId: state.decisions.find((item) => item.playerId === move.playerId && item.responsibilityId === responsibility.id)?.id ?? `move-${move.playerId}`, owner: 'action' },
     }
     state = { ...state, movementIntents: [...state.movementIntents.filter((item) => item.playerId !== move.playerId), intent] }
+    if (move.kind === 'COME_OFF' && released) state = trailAroundScreen(state, move)
   }
   return state
+}
+
+function pinDownSet(state: MatchState, move: OffBallMove): boolean {
+  const screener = state.players.find((candidate) => candidate.playerId === move.partnerId)
+  return move.screenPoint === undefined || screener === undefined || distanceBetween(screener.position, move.screenPoint) <= PIN_DOWN_SET_METERS || state.t - move.startedT >= 16
+}
+
+/**
+ * The shooter's defender is behind the screener's body: he has to go around it (trail), which costs him the step the shooter needs.
+ * Once he is past the screener, or the shooter is gone, his own structure takes him back.
+ */
+function trailAroundScreen(state: MatchState, move: OffBallMove): MatchState {
+  const shooter = state.players.find((candidate) => candidate.playerId === move.playerId)
+  const screener = state.players.find((candidate) => candidate.playerId === move.partnerId)
+  const defender = shooter === undefined ? undefined : guardOf(state, shooter)
+  if (shooter === undefined || screener === undefined || defender === undefined) return state
+  const toDestination = { x: move.target.x - screener.position.x, y: move.target.y - screener.position.y }
+  const length = Math.hypot(toDestination.x, toDestination.y) || 1
+  const along = ((defender.position.x - screener.position.x) * toDestination.x + (defender.position.y - screener.position.y) * toDestination.y) / length
+  if (along > 0.4 || distanceBetween(defender.position, screener.position) > 2.4) return state
+  const away = { x: -toDestination.x / length, y: -toDestination.y / length }
+  const side = { x: -away.y, y: away.x }
+  const sign = (defender.position.x - screener.position.x) * side.x + (defender.position.y - screener.position.y) * side.y >= 0 ? 1 : -1
+  const detour = { x: screener.position.x + side.x * sign * 1.1 + away.x * 0.3, y: screener.position.y + side.y * sign * 1.1 + away.y * 0.3 }
+  const base = state.movementIntents.find((item) => item.playerId === defender.playerId)
+  if (base === undefined) return state
+  return { ...state, movementIntents: [...state.movementIntents.filter((item) => item.playerId !== defender.playerId), { ...base, target: detour, urgency: 'run' }] }
+}
+
+/**
+ * A pin-down: the screener walks into the path of the shooter's defender and the shooter comes off him toward the ball, onto the arc.
+ * Only for the set's shooter and screener, when neither has the ball, both are free and the shooter's man is close enough to be screened.
+ */
+function pickPinDown(state: MatchState, holder: MatchPlayerState, basket: CourtPosition, busy: ReadonlySet<PlayerId>, shooterId: PlayerId | undefined, screenerId: PlayerId | undefined): OffBallMove[] | undefined {
+  const shooter = state.players.find((player) => player.active && player.playerId === shooterId && player.teamId === holder.teamId)
+  const screener = state.players.find((player) => player.active && player.playerId === screenerId && player.teamId === holder.teamId)
+  if (shooter === undefined || screener === undefined || shooter.playerId === holder.playerId || screener.playerId === holder.playerId || busy.has(shooter.playerId) || busy.has(screener.playerId)) return undefined
+  const defender = guardOf(state, shooter)
+  if (defender === undefined || distanceBetween(defender.position, shooter.position) > 2.6) return undefined
+  const arc = state.court.threePointLine.arcRadiusMeters + 0.7
+  const angle = Math.atan2(shooter.position.y - basket.y, shooter.position.x - basket.x)
+  const holderAngle = Math.atan2(holder.position.y - basket.y, holder.position.x - basket.x)
+  // Come off toward the ball (a catch facing the basket), about 0.6 rad along the arc.
+  const delta = Math.sign(Math.atan2(Math.sin(holderAngle - angle), Math.cos(holderAngle - angle))) || 1
+  const destination = { x: Math.max(0.8, Math.min(state.court.lengthMeters - 0.8, basket.x + Math.cos(angle + delta * 0.6) * arc)), y: Math.max(0.8, Math.min(state.court.widthMeters - 0.8, basket.y + Math.sin(angle + delta * 0.6) * arc)) }
+  if (distanceBetween(destination, holder.position) < 3.5 || distanceBetween(screener.position, shooter.position) > 11) return undefined
+  // The screen goes on the defender's side of the shooter, a step toward where the shooter is going.
+  const screenPoint = { x: (shooter.position.x + defender.position.x) / 2 + (destination.x - shooter.position.x) * 0.2, y: (shooter.position.y + defender.position.y) / 2 + (destination.y - shooter.position.y) * 0.2 }
+  return [
+    { playerId: screener.playerId, teamId: screener.teamId, kind: 'PIN_DOWN', target: screenPoint, startedT: state.t, endsT: state.t + PIN_DOWN_MAX_TICKS, reason: 'Screen the shooter\'s man so he comes off free', partnerId: shooter.playerId, screenPoint },
+    { playerId: shooter.playerId, teamId: shooter.teamId, kind: 'COME_OFF', target: destination, startedT: state.t, endsT: state.t + PIN_DOWN_MAX_TICKS + COME_OFF_MAX_TICKS, reason: 'Come off the pin-down toward the ball for the catch', partnerId: screener.playerId, screenPoint },
+  ]
 }
 
 function stillValid(state: MatchState, move: OffBallMove): boolean {
@@ -145,6 +222,13 @@ function stillValid(state: MatchState, move: OffBallMove): boolean {
   // A cut ends when the cutter has arrived; a drift ends with the drive that caused it.
   if (move.kind === 'BASKET_CUT' || move.kind === 'BACKDOOR_CUT') return distanceBetween(player.position, move.target) > 0.8 && state.ball.kind !== 'SHOT_IN_FLIGHT'
   if (move.kind === 'OFFER') return distanceBetween(player.position, move.target) > 0.7 && state.ball.kind === 'HELD' && state.ball.ownerTeamId === player.teamId
+  // The pin-down holds until the shooter has come off it; the shooter's move ends at his spot or when the ball leaves the team.
+  if (move.kind === 'PIN_DOWN') return state.ball.kind === 'HELD' && state.ball.ownerTeamId === player.teamId && (state.offenseFlow?.moves.some((other) => other.kind === 'COME_OFF' && other.playerId === move.partnerId) ?? false)
+  if (move.kind === 'COME_OFF') {
+    const ballWithTeam = (state.ball.kind === 'HELD' && state.ball.ownerTeamId === player.teamId) || (state.ball.kind === 'PASS_IN_FLIGHT' && state.ball.passerTeamId === player.teamId)
+    const hasBall = state.ball.kind === 'HELD' && state.ball.ownerPlayerId === player.playerId
+    return distanceBetween(player.position, move.target) > 0.8 && ballWithTeam && !hasBall
+  }
   return state.actions.some((action) => action.kind === 'DRIVE' && action.status === 'ACTIVE' && action.teamId === player.teamId)
 }
 
@@ -177,7 +261,7 @@ function pickOffer(state: MatchState, holder: MatchPlayerState, basket: CourtPos
   return best?.move
 }
 
-function pickCut(state: MatchState, holder: MatchPlayerState, basket: CourtPosition, busy: ReadonlySet<PlayerId>): OffBallMove | undefined {
+function pickCut(state: MatchState, holder: MatchPlayerState, basket: CourtPosition, busy: ReadonlySet<PlayerId>, sagDistance: number = SAG_DISTANCE_METERS): OffBallMove | undefined {
   let best: { move: OffBallMove; score: number } | undefined
   for (const cutter of state.players) {
     if (!cutter.active || cutter.teamId !== holder.teamId || cutter.playerId === holder.playerId || busy.has(cutter.playerId)) continue
@@ -191,7 +275,7 @@ function pickCut(state: MatchState, holder: MatchPlayerState, basket: CourtPosit
     if (ballDistance < 1e-6 || ballDistance > 14) continue
     const denialAlignment = ((defender.position.x - cutter.position.x) * towardBall.x + (defender.position.y - cutter.position.y) * towardBall.y) / (ballDistance * Math.max(gap, 1e-6))
     const denying = gap <= DENIAL_DISTANCE_METERS && denialAlignment > 0.55
-    const sagging = gap >= SAG_DISTANCE_METERS
+    const sagging = gap >= sagDistance
     if (!denying && !sagging) continue
     const target = cutTarget(state, cutter, basket)
     // The lane to the rim must be open (the man who is being cut past does not count against a backdoor cut).

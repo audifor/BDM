@@ -2,7 +2,8 @@ import type { PlayerId, TeamId } from '@/domain/ids'
 import type { OffensiveSlotName } from '../structure/FiveOutStructure'
 
 export type OffensiveResponsibilityKind = 'BALL' | 'SPACE' | 'ADVANCE'
-export type DefensiveResponsibilityKind = 'ON_BALL' | 'GAP' | 'HELP' | 'LOW_MAN' | 'ROTATE' | 'X_OUT' | 'RECOVER'
+/** BT5.18: TAG = the low man steps into the roller's path; DIG = a help defender digs at a post touch. */
+export type DefensiveResponsibilityKind = 'ON_BALL' | 'GAP' | 'HELP' | 'LOW_MAN' | 'ROTATE' | 'X_OUT' | 'RECOVER' | 'TAG' | 'DIG'
 export type TemporaryResponsibilityKind =
   | 'BOX_OUT' | 'CRASH_REBOUND' | 'PURSUE_REBOUND' | 'SECURE_REBOUND' | 'RETREAT'
   | 'BALL_ADVANCE' | 'LANE_LEFT' | 'LANE_RIGHT' | 'RIM_RUN' | 'TRAIL'

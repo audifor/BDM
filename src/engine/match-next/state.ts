@@ -10,6 +10,8 @@ import type { DefensiveMatchupOverride } from './setup'
 import type { MatchActionState, MatchDecision } from './actions/ActionState'
 import { careerFatigueToMatchSession } from './playerDynamicState'
 import type { CoachRotationPlan } from '@/engine/tactics/CoachRotationEngine'
+import type { PlayCall } from './tactics/PlayCalling'
+import type { TacticsState } from './tactics/MatchMemory'
 
 export type DefensiveAssignmentSource = 'INITIAL' | 'OVERRIDE' | 'STRUCTURAL_REASSIGNMENT' | 'SWITCH'
 
@@ -123,6 +125,7 @@ export type MatchNextEventType =
   | 'reboundResponsibilitiesAssigned' | 'transitionStarted' | 'transitionAdvantageChanged' | 'transitionResolved'
   | 'shotClockViolation' | 'ballDead'
   | 'substitution'
+  | 'playCalled' | 'tacticalAdjustment'
 
 export interface MatchNextEvent {
   readonly sequence: number
@@ -145,7 +148,7 @@ export interface MatchNextEvent {
   readonly phase?: PossessionPhase
   readonly ballReason?: string
   readonly acquisitionDistanceMeters?: number
-  readonly responsibilityKind?: 'ON_BALL' | 'GAP' | 'HELP' | 'LOW_MAN' | 'ROTATE' | 'X_OUT' | 'RECOVER'
+  readonly responsibilityKind?: 'ON_BALL' | 'GAP' | 'HELP' | 'LOW_MAN' | 'ROTATE' | 'X_OUT' | 'RECOVER' | 'TAG' | 'DIG'
   readonly decisionId?: string
   readonly decisionKind?: string
   /** Expected points of each option when a decision was selected (BT2G/H: shot opportunity vs attempt). */
@@ -185,6 +188,12 @@ export interface MatchNextEvent {
   readonly outgoingPlayerId?: PlayerId
   readonly substitutionReason?: string
   readonly expectedMinutes?: number
+  /** BT5 tactical payload: the play called (family, location, spacing), the ball-screen coverage, and why. */
+  readonly playFamily?: string
+  readonly playLocation?: string
+  readonly spacing?: string
+  readonly screenCoverage?: string
+  readonly tacticalReason?: string
 }
 
 export type ScreenPhase = 'APPROACH' | 'SET' | 'USED'
@@ -216,6 +225,12 @@ export interface ScreenState {
   /** BT3B/C: closest approach of the handler's defender to the screener, judged once for a moving (illegal) screen. */
   readonly contact?: { readonly minGap: number; readonly defenderClosing: number; readonly screenerSpeed: number; readonly atT: number }
   readonly contactAssessed?: boolean
+  /** BT5.13: why this coverage was chosen for this screen, how deep a drop sits (0..1), and the ticks the defenders need to agree on it. */
+  readonly coverageReason?: string
+  readonly dropDepth?: number
+  readonly communicationTicks?: number
+  /** BT5.7: where on the floor the screen is set (from the play call). */
+  readonly locationKind?: string
 }
 
 /** BT3B: what kind of physical interaction two players had. Not every contact is a foul. */
@@ -295,7 +310,7 @@ export interface FreeThrowSequence {
   readonly possessionId?: string
 }
 
-export type OffBallMoveKind = 'BASKET_CUT' | 'BACKDOOR_CUT' | 'DRIFT' | 'OFFER'
+export type OffBallMoveKind = 'BASKET_CUT' | 'BACKDOOR_CUT' | 'DRIFT' | 'OFFER' | 'PIN_DOWN' | 'COME_OFF'
 
 /** BT2D: a purposeful off-ball movement with a reason and an end, layered over the 5-out zones. */
 export interface OffBallMove {
@@ -306,6 +321,9 @@ export interface OffBallMove {
   readonly startedT: number
   readonly endsT: number
   readonly reason: string
+  /** BT5.10: an off-ball screen pairs two moves, the screener (PIN_DOWN) and the shooter he frees (COME_OFF). */
+  readonly partnerId?: PlayerId
+  readonly screenPoint?: CourtPosition
 }
 
 /** BT2B: the offense's possession phase authority. Each stage limits which decisions are legitimate. */
@@ -332,6 +350,8 @@ export interface OffenseFlowState {
   readonly moves: readonly OffBallMove[]
   /** BT4.1: while the handler keeps reading he works the ball (a probing dribble) instead of standing still. */
   readonly probe?: { readonly playerId: PlayerId; readonly target: CourtPosition; readonly endsT: number } | null
+  /** BT5: the play this half court runs (called once when the half court starts, again after an offensive rebound). */
+  readonly call?: PlayCall | null
 }
 
 export interface MatchPlayerState {
@@ -417,6 +437,8 @@ export interface MatchState {
   readonly nextEventSequence: number
   readonly events: readonly MatchNextEvent[]
   readonly isComplete: boolean
+  /** BT5.27: the benches' memory of this game (outcomes per family and coverage, recent initiators, in-game adjustment). */
+  readonly tactics?: TacticsState
 }
 
 export function activePossession(state: MatchState): PossessionState | undefined {

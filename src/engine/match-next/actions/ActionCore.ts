@@ -15,10 +15,11 @@ import { tuning } from '../tuning'
 import { classifyShotCreation, shotZone } from '../stats/ShotEcology'
 import { executionQuality, interceptAttemptChance, laneRead, passExecutionError } from './PassRisk'
 import { bestReceiver, driveTarget, estimateShotContest, evaluateShotOpportunity, floaterFactor, passQuality, pullUpFactor, putbackQuality, readDecision, readDriveStop, shotMakeProbability, shotValueAt } from './DecisionCore'
-import { decisionNoise, reconcileOffenseFlow } from './OffenseFlow'
+import { announceCall, decisionNoise, earlyOffenseCall, reconcileOffenseFlow } from './OffenseFlow'
 import { createScreenState, planScreen, reconcileScreen, useScreen } from './ScreenCore'
 import { reconcileOffBallMovement } from './OffBallMovement'
 import type { MatchActionKind, MatchActionOutcome, MatchActionState, MatchDecision } from './ActionState'
+import { defensiveShape } from '../tactics/TacticalIdentity'
 
 const DRIVE_MIN_TICKS = 8
 const DRIVE_MIN_PROGRESS_METERS = 2.4
@@ -60,6 +61,11 @@ function resolveBallActions(state: MatchState): MatchState {
       } else if (next.ball.kind === 'LOOSE' || (next.ball.kind === 'HELD' && next.ball.ownerTeamId !== action.teamId)) {
         next = resolveAction(next, action.id, 'BAD_PASS')
       }
+    } else if ((action.kind === 'SHOOT' || action.kind === 'CATCH_AND_SHOOT') && action.phase === 'GATHER'
+      && !(next.ball.kind === 'HELD' && next.ball.ownerPlayerId === action.playerId)) {
+      // BT5: a shot still being gathered when the shooter loses the ball (a whistle, a strip) never goes up. Left ACTIVE, its
+      // "stand where you stopped" intent pinned the shooter, and a shooter who had to take the throw-in froze the restart.
+      next = resolveAction(next, action.id, 'CANCELLED')
     } else if (action.kind === 'SHOOT' || action.kind === 'CATCH_AND_SHOOT') {
       const resolvedShot = next.events.some((event) => event.t >= action.startedT
         && (event.type === 'shotMade' || event.type === 'shotMissed')
@@ -419,10 +425,12 @@ function executeDecision(state: MatchState, decision: MatchDecision): MatchState
   }
   const screenSet = state.screen?.phase === 'SET' && state.screen.handlerId === actor.playerId ? state.screen : null
   if (decision.kind === 'DRIVE') {
-    const target = driveTarget(state, actor)
+    // BT5.9 reject: if his defender has already jumped to the screen side (to go over it, or to show), the handler goes the other way.
+    const rejected = screenSet !== null && screenRejected(state, screenSet, actor)
+    const target = driveTarget(state, actor, rejected ? (Math.sign(actor.position.y - screenSet!.location.y) || 1) * 1.4 : undefined)
     const action = createAction(state, decision, 'DRIVE', {
       phase: 'DRIVING', startPosition: { ...actor.position }, target, targetBasket: { ...basket },
-      ...(screenSet === null ? {} : { waypoint: { ...screenSet.waypoint }, screenId: screenSet.id }),
+      ...(screenSet === null || rejected ? {} : { waypoint: { ...screenSet.waypoint }, screenId: screenSet.id }),
     })
     return useScreen(setPossessionPhase(startAction(state, action), 'ACTION'), actor.playerId)
   }
@@ -484,9 +492,24 @@ function executeDecision(state: MatchState, decision: MatchDecision): MatchState
   return useScreen(next, actor.playerId)
 }
 
+/** The handler's defender stands on the screen side of him (beyond the line to the basket): the screen is already beaten, attack away from it. */
+function screenRejected(state: MatchState, screen: NonNullable<MatchState['screen']>, handler: MatchPlayerState): boolean {
+  const defender = state.players.find((player) => player.playerId === screen.handlerDefenderId)
+  if (defender === undefined || screen.coverage === 'blitz') return false
+  const toScreen = { x: screen.location.x - handler.position.x, y: screen.location.y - handler.position.y }
+  const length = Math.hypot(toScreen.x, toScreen.y) || 1
+  const along = ((defender.position.x - handler.position.x) * toScreen.x + (defender.position.y - handler.position.y) * toScreen.y) / length
+  return along > 0.55 && distanceBetween(defender.position, screen.location) < 1.3
+}
+
 function recordDecision(state: MatchState, decision: MatchDecision): MatchState {
-  const offenseFlow = state.offenseFlow === null ? null : { ...state.offenseFlow, reads: state.offenseFlow.reads + 1, resetPending: false }
-  let next = { ...state, offenseFlow, currentDecision: decision, nextMatchDecisionSequence: state.nextMatchDecisionSequence + 1 }
+  let offenseFlow = state.offenseFlow === null ? null : { ...state.offenseFlow, reads: state.offenseFlow.reads + 1, resetPending: false }
+  // The first attack of a possession that never reached a half court is its early offense.
+  const early = offenseFlow !== null && offenseFlow.call == null && offenseFlow.halfCourtSinceT === null && state.transition?.teamId === decision.teamId
+    && (decision.kind === 'SHOOT' || decision.kind === 'DRIVE' || decision.kind === 'CATCH_AND_SHOOT') ? earlyOffenseCall(state, decision.playerId) : null
+  if (early !== null && offenseFlow !== null) offenseFlow = { ...offenseFlow, call: early }
+  let next: MatchState = { ...state, offenseFlow, currentDecision: decision, nextMatchDecisionSequence: state.nextMatchDecisionSequence + 1 }
+  if (early !== null) next = announceCall(next, early)
   return emitEvent(next, 'decisionSelected', { teamId: decision.teamId, playerId: decision.playerId, decisionId: decision.id, decisionKind: decision.kind, ...(decision.utility === undefined ? {} : { utility: decision.utility }) })
 }
 
@@ -661,7 +684,7 @@ function applyPassReceiveIntents(state: MatchState): MatchState {
   const defenderIntent = next.movementIntents.find((item) => item.playerId === defenderId)
   const basket = next.defensiveStructure?.defendedBasket
   if (defender !== undefined && defenderIntent !== undefined && basket !== undefined && defender.teamId !== ball.passerTeamId && state.t - ball.releaseT >= closeoutReactionTicks()) {
-    const tactics = defender.teamId === next.homeTeamId ? next.tacticalPlans.home.defense : next.tacticalPlans.away.defense
+    const tactics = defensiveShape(next, defender.teamId)
     const target = guardPosition(action.target, action.target, basket, 'ON_BALL', next.court, tactics)
     next = { ...next, movementIntents: [...next.movementIntents.filter((item) => item.playerId !== defender.playerId), { ...defenderIntent, target, urgency: 'sprint' as const }] }
   }

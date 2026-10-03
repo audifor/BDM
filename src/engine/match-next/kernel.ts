@@ -20,6 +20,7 @@ import { advancePlayState } from './rules/PlayState'
 import { reconcileOnBallPressure, reconcileSteppedOut } from './defense/StealModel'
 import { reconcileEpisodeContacts } from './contact/EpisodeContact'
 import { resetTeamFoulsForPeriod } from './rules/Fouls'
+import { reconcileTacticalMemory } from './tactics/MatchMemory'
 
 export type MatchNextCommand =
   | { readonly type: 'startOpeningJumpBall'; readonly homeLineup: readonly PlayerId[]; readonly awayLineup: readonly PlayerId[] }
@@ -52,12 +53,12 @@ export function applyCommand(state: MatchState, command: MatchNextCommand): Matc
     case 'putBallDead': next = putBallDead(state, command.reason, command.restartTeamId); break
     case 'coachSubstitutions': next = applyCoachSubstitutions(state, command.proposals); break
   }
-  return advancePlayState(state, reconcileStructures(next))
+  return reconcileTacticalMemory(advancePlayState(state, reconcileStructures(next)))
 }
 
 export function tick(state: MatchState): MatchState {
   const next = tickCore(state)
-  return next === state ? next : advancePlayState(state, next)
+  return next === state ? next : reconcileTacticalMemory(advancePlayState(state, next))
 }
 
 function tickCore(state: MatchState): MatchState {

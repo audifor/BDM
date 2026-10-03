@@ -1,0 +1,154 @@
+{
+  "seeds": [
+    31337,
+    424242,
+    7
+  ],
+  "overrides": {
+    "baselineDrives": 0,
+    "newFamilies": 0
+  },
+  "out": {
+    "neutral": {
+      "description": "Default plans for both teams",
+      "msPerGame": 86573,
+      "complete": 3,
+      "home": {
+        "games": 3,
+        "possessions": 96.333,
+        "ppp": 1.048,
+        "secondsPerPossession": 12.162,
+        "transitionShare": 0.09,
+        "passesPerPossession": 2.602,
+        "assistsPerFgm": 0.568,
+        "drivesPerPossession": 0.716,
+        "screensPerPossession": 0.522,
+        "cutsPerPossession": 0.173,
+        "rimShare": 0.226,
+        "paintShare": 0.14,
+        "midShare": 0.082,
+        "threeShare": 0.553,
+        "catchShootShare": 0.502,
+        "pullUpShare": 0.101,
+        "prShare": 0.16,
+        "cutShare": 0,
+        "orebRate": 0.241,
+        "tovPerPossession": 0.176,
+        "stealsPerOppPossession": 0.218,
+        "blocksPerOppFga": 0.026,
+        "ftaPerFga": 0.292,
+        "coverageUsed": {
+          "drop": 0.148,
+          "switch": 0.852
+        },
+        "switchesPerScreenFaced": 0.795,
+        "helpsPerDriveFaced": 0.956,
+        "topInitiatorShare": 0.354,
+        "topShooterShare": 0.367,
+        "rollShare": 0.532,
+        "playFamilies": {
+          "BALL_SCREEN": 0.406,
+          "CIRCULATION": 0.241,
+          "DRIVE_KICK": 0.278,
+          "EARLY_OFFENSE": 0.075
+        },
+        "playLocations": {
+          "BALL_SCREEN@EMPTY_CORNER": 0.041,
+          "BALL_SCREEN@HIGH": 0.209,
+          "BALL_SCREEN@SIDE": 0.157,
+          "CIRCULATION@TOP": 0.241,
+          "DRIVE_KICK@TOP": 0.096,
+          "DRIVE_KICK@WING": 0.183,
+          "EARLY_OFFENSE@TRANSITION": 0.075
+        },
+        "spacing": {
+          "4OUT1IN": 0.9,
+          "5OUT": 0.1
+        },
+        "adaptations": 0.333,
+        "offBallScreensPerPossession": 0,
+        "helpKinds": {
+          "help:DIG": 20.333,
+          "help:TAG": 1.333
+        },
+        "firstShotSecondsP50": 11.5,
+        "passesPerPossessionP90": 6
+      },
+      "away": {
+        "games": 3,
+        "possessions": 95,
+        "ppp": 0.975,
+        "secondsPerPossession": 10.061,
+        "transitionShare": 0.109,
+        "passesPerPossession": 2.421,
+        "assistsPerFgm": 0.469,
+        "drivesPerPossession": 0.642,
+        "screensPerPossession": 0.274,
+        "cutsPerPossession": 0.119,
+        "rimShare": 0.392,
+        "paintShare": 0.088,
+        "midShare": 0.022,
+        "threeShare": 0.498,
+        "catchShootShare": 0.454,
+        "pullUpShare": 0.057,
+        "prShare": 0.07,
+        "cutShare": 0,
+        "orebRate": 0.224,
+        "tovPerPossession": 0.256,
+        "stealsPerOppPossession": 0.152,
+        "blocksPerOppFga": 0.039,
+        "ftaPerFga": 0.194,
+        "coverageUsed": {
+          "drop": 0.013,
+          "switch": 0.987
+        },
+        "switchesPerScreenFaced": 0.954,
+        "helpsPerDriveFaced": 0.865,
+        "topInitiatorShare": 0.368,
+        "topShooterShare": 0.381,
+        "rollShare": 0.333,
+        "playFamilies": {
+          "BALL_SCREEN": 0.378,
+          "CIRCULATION": 0.264,
+          "DRIVE_KICK": 0.238,
+          "EARLY_OFFENSE": 0.12
+        },
+        "playLocations": {
+          "BALL_SCREEN@EMPTY_CORNER": 0.034,
+          "BALL_SCREEN@HIGH": 0.14,
+          "BALL_SCREEN@SIDE": 0.203,
+          "CIRCULATION@TOP": 0.264,
+          "DRIVE_KICK@WING": 0.238,
+          "EARLY_OFFENSE@TRANSITION": 0.12
+        },
+        "spacing": {
+          "4OUT1IN": 0.479,
+          "5OUT": 0.521
+        },
+        "adaptations": 1.333,
+        "offBallScreensPerPossession": 0,
+        "helpKinds": {
+          "help:DIG": 26,
+          "help:TAG": 0.333
+        },
+        "firstShotSecondsP50": 8.9,
+        "passesPerPossessionP90": 6
+      },
+      "score": [
+        {
+          "home": 107,
+          "away": 79
+        },
+        {
+          "home": 99,
+          "away": 85
+        },
+        {
+          "home": 97,
+          "away": 114
+        }
+      ]
+    }
+  },
+  "distances": {}
+}

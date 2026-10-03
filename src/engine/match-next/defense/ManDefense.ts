@@ -6,6 +6,7 @@ import type { DefensiveDecisionKind, DefensiveResponsibilityKind, PlayerResponsi
 import { MOVEMENT_URGENCY_FACTORS, type MovementFacing, type MovementIntent, type MovementUrgency } from '../movement/MovementIntent'
 import { attackingBasketForTeam } from '../structure/FiveOutStructure'
 import { tuning } from '../tuning'
+import { defensiveShape, postScore, tacticalIntent } from '../tactics/TacticalIdentity'
 
 const ON_BALL_CUSHION_METERS = 1.05
 const GAP_DEPTH_METERS = 0.9
@@ -35,8 +36,9 @@ export function reconcileManDefense(input: MatchState): MatchState {
 
   const prior = input.defensiveStructure?.teamId === defendingTeamId ? input.defensiveStructure : null
   const assignmentsValid = prior !== null && areAssignmentsValid(prior.assignments, defenders, attackers)
+  const intent = tacticalIntent(input, defendingTeamId)
   const assignments = assignmentsValid
-    ? prior.assignments
+    ? switchBack(input, prior.assignments, intent.coach.tacticalKnowledge)
     : createAssignments(input, defenders, attackers, prior !== null || input.defensiveStructure !== null)
   let state = input
   if (!assignmentsValid) {
@@ -44,7 +46,7 @@ export function reconcileManDefense(input: MatchState): MatchState {
   }
 
   const defendedBasket = attackingBasketForTeam(possession.teamId, state.homeTeamId, state.period, state.court)
-  const defensiveTactics = defendingTeamId === state.homeTeamId ? state.tacticalPlans.home.defense : state.tacticalPlans.away.defense
+  const defensiveTactics = defensiveShape(state, defendingTeamId)
   const nonReactiveBallPhase = state.ball.kind === 'SHOT_IN_FLIGHT' || state.ball.kind === 'REBOUNDABLE' || state.ball.kind === 'LOOSE'
   if (nonReactiveBallPhase && prior !== null) return state
 
@@ -55,7 +57,9 @@ export function reconcileManDefense(input: MatchState): MatchState {
   const onBallAssignment = ballHandlerId === null ? undefined : assignments.find((item) => item.attackerPlayerId === ballHandlerId)
   const playerById = new Map(state.players.map((player) => [player.playerId, player]))
   const activeDrive = state.actions.find((action) => action.kind === 'DRIVE' && action.status === 'ACTIVE')
-  const helpDecision = resolveDriveHelpDecision(state, assignments, playerById, ballHandlerId, activeDrive, prior?.helpDecision, defendedBasket)
+  const helpDecision = resolveDriveHelpDecision(state, assignments, playerById, ballHandlerId, activeDrive, prior?.helpDecision, defendedBasket, intent.defense.help, intent.coach.tacticalKnowledge)
+  // BT5.18: the other help responsibilities (the low man tags a roller, a defender digs at a post touch, the weak side picks up the screener of a trap).
+  const screenHelp = helpDecision.status === 'TRIGGERED' || tuning().screenPostHelp === 0 ? null : resolveScreenAndPostHelp(state, assignments, playerById, ballHandlerId, defendedBasket, intent.defense.help)
   const driveHelperDefenderId = helpDecision.helperPlayerId
   const rimProtectorPlayerId = resolveRimProtector(state, assignments, playerById, ballHandlerId, prior?.rimProtectorPlayerId ?? null, helpDecision, defendedBasket)
   const rotationByDefender = new Map(helpDecision.rotations.map((rotation) => [rotation.playerId, rotation]))
@@ -77,18 +81,19 @@ export function reconcileManDefense(input: MatchState): MatchState {
       if (!assignment || !attacker) continue
       const previous = previousResponsibilities.get(defender.playerId)
       const rotation = rotationByDefender.get(defender.playerId)
+      const extraHelp = screenHelp !== null && screenHelp.defenderId === defender.playerId && assignment.attackerPlayerId !== ballHandlerId ? screenHelp : null
       const baseKind: DefensiveResponsibilityKind = assignment.attackerPlayerId === ballHandlerId
         ? 'ON_BALL'
         : defender.playerId === driveHelperDefenderId
           ? helpDecision.helperKind ?? 'HELP'
-          : rotation?.kind ?? 'GAP'
+          : extraHelp !== null ? extraHelp.kind : rotation?.kind ?? 'GAP'
       const rotationTarget = rotation ? rotationTargetPosition(rotation, playerById, state.ball.position, defendedBasket, state.court, defensiveTactics) : undefined
-      const guardKind: 'ON_BALL' | 'GAP' | 'HELP' = baseKind === 'LOW_MAN' ? 'HELP'
+      const guardKind: 'ON_BALL' | 'GAP' | 'HELP' = baseKind === 'LOW_MAN' || baseKind === 'TAG' || baseKind === 'DIG' ? 'HELP'
         : baseKind === 'ROTATE' || baseKind === 'X_OUT' ? 'GAP' : baseKind
       const baseTarget = rotationTarget ?? guardPosition(attacker.position, state.ball.position, defendedBasket, guardKind, state.court, defensiveTactics)
       let kind: DefensiveResponsibilityKind = baseKind
       let recoveryTarget: 'GAP' | 'HELP' | undefined
-      if (baseKind === 'GAP' && (previous?.kind === 'HELP' || previous?.kind === 'LOW_MAN') && distanceBetween(defender.position, baseTarget) > RECOVER_START_METERS) {
+      if (baseKind === 'GAP' && (previous?.kind === 'HELP' || previous?.kind === 'LOW_MAN' || previous?.kind === 'TAG' || previous?.kind === 'DIG') && distanceBetween(defender.position, baseTarget) > RECOVER_START_METERS) {
         kind = 'RECOVER'
         recoveryTarget = 'GAP'
       } else if (baseKind === 'GAP' && previous?.kind === 'RECOVER' && previous.recoveryTarget === 'GAP' && distanceBetween(defender.position, baseTarget) > RECOVER_END_METERS) {
@@ -99,7 +104,7 @@ export function reconcileManDefense(input: MatchState): MatchState {
         recoveryTarget = 'HELP'
       }
       const responsibilityTargetKind: 'ON_BALL' | 'GAP' | 'HELP' = kind === 'RECOVER' ? recoveryTarget!
-        : kind === 'LOW_MAN' ? 'HELP' : kind === 'ROTATE' || kind === 'X_OUT' ? 'GAP' : kind
+        : kind === 'LOW_MAN' || kind === 'TAG' || kind === 'DIG' ? 'HELP' : kind === 'ROTATE' || kind === 'X_OUT' ? 'GAP' : kind
       const responsibility = previous?.kind === kind && previous.recoveryTarget === recoveryTarget
         ? previous
         : {
@@ -112,6 +117,7 @@ export function reconcileManDefense(input: MatchState): MatchState {
             reason: kind === 'ON_BALL' ? 'Contain the ball handler from the basket side'
               : kind === 'GAP' ? 'Stay connected to the assigned man while shading the ball'
                 : kind === 'HELP' || kind === 'LOW_MAN' ? helpDecision.reason
+                  : kind === 'TAG' || kind === 'DIG' ? extraHelp?.reason ?? 'Help on the screen or the post'
                   : kind === 'ROTATE' ? 'Rotate to cover the low-man helper’s vacated assignment'
                     : kind === 'X_OUT' ? 'Split the next two open assignments after the help rotation'
                       : 'Recover physically to the assigned man’s current guard position',
@@ -124,7 +130,7 @@ export function reconcileManDefense(input: MatchState): MatchState {
         ? 'RETREAT_TO_DEFENSE'
         : kind === 'ON_BALL' ? 'GUARD_BALL'
           : kind === 'GAP' ? 'GUARD_GAP'
-            : kind === 'HELP' || kind === 'LOW_MAN' ? 'HELP_POSITION'
+            : kind === 'HELP' || kind === 'LOW_MAN' || kind === 'TAG' || kind === 'DIG' ? 'HELP_POSITION'
               : kind === 'ROTATE' ? 'ROTATE_TO_HELP_MAN'
                 : kind === 'X_OUT' ? 'X_OUT_TWO_MAN' : 'RECOVER_TO_MAN'
       const oldDecision = previousDecisions.get(defender.playerId)
@@ -140,14 +146,15 @@ export function reconcileManDefense(input: MatchState): MatchState {
             reason: decisionKind === 'RETREAT_TO_DEFENSE' ? 'Set the assigned man-side before half-court structure'
               : decisionKind === 'GUARD_BALL' ? 'Stay between the handler and the defended basket'
                 : decisionKind === 'GUARD_GAP' ? 'Shade toward the ball without losing the assigned man'
-                  : decisionKind === 'HELP_POSITION' ? helpDecision.reason
+                  : decisionKind === 'HELP_POSITION' ? (kind === 'TAG' || kind === 'DIG' ? extraHelp?.reason ?? helpDecision.reason : helpDecision.reason)
                     : decisionKind === 'ROTATE_TO_HELP_MAN' ? 'Cover the helper’s abandoned assignment'
                       : decisionKind === 'X_OUT_TWO_MAN' ? 'Split the open perimeter assignments'
                         : 'Return physically to the normal guard position',
           }
       decisions.push(decision)
 
-      const rawTarget = kind === 'HELP' || kind === 'LOW_MAN'
+      const rawTarget = (kind === 'TAG' || kind === 'DIG') && extraHelp !== null ? extraHelp.target
+        : kind === 'HELP' || kind === 'LOW_MAN'
         ? guardPosition(handlerPosition(state, ballHandlerId, attacker.position), state.ball.position, defendedBasket, 'HELP', state.court, defensiveTactics)
         : kind === 'GAP' && defender.playerId === rimProtectorPlayerId && rotationTarget === undefined
           ? sagTowardRim(attacker, rimProtectorPosition(state.ball.position, defendedBasket, state.court))
@@ -158,7 +165,7 @@ export function reconcileManDefense(input: MatchState): MatchState {
       const isContainingDrive = kind === 'ON_BALL' && activeDrive?.playerId === ballHandlerId
       const containmentMatchup = handler === undefined ? 0
         : defender.defense.pointOfAttack + defender.defense.mobility - handler.offense.rimAttack - handler.offense.creation
-      const urgentRotation = (kind === 'HELP' || kind === 'LOW_MAN' || kind === 'ROTATE' || kind === 'X_OUT' || kind === 'RECOVER')
+      const urgentRotation = (kind === 'HELP' || kind === 'LOW_MAN' || kind === 'ROTATE' || kind === 'X_OUT' || kind === 'RECOVER' || kind === 'TAG' || kind === 'DIG')
         && distanceToTarget > 2
       const urgency: MovementUrgency = isContainingDrive
         ? containmentMatchup >= 0 ? 'sprint' : 'run'
@@ -180,7 +187,7 @@ export function reconcileManDefense(input: MatchState): MatchState {
   }
 
   const onBallDefenderPlayerId = onBallAssignment?.defenderPlayerId ?? null
-  const calculatedHelpDefenders = responsibilities.filter((item) => item.kind === 'HELP' || item.kind === 'LOW_MAN').map((item) => item.playerId)
+  const calculatedHelpDefenders = responsibilities.filter((item) => item.kind === 'HELP' || item.kind === 'LOW_MAN' || item.kind === 'TAG' || item.kind === 'DIG').map((item) => item.playerId)
   const helpDefenderPlayerIds = prior && sameIds(prior.helpDefenderPlayerIds, calculatedHelpDefenders) ? prior.helpDefenderPlayerIds : calculatedHelpDefenders
   const structure: DefensiveStructureState = prior
     && assignments === prior.assignments
@@ -275,6 +282,8 @@ function resolveDriveHelpDecision(
   drive: MatchState['actions'][number] | undefined,
   prior: DefensiveHelpDecision | undefined,
   basket: CourtPosition,
+  helpAggression = 0.5,
+  tacticalKnowledge = 50,
 ): DefensiveHelpDecision {
   const source = drive?.kind === 'DRIVE' && drive.playerId === ballHandlerId
     && (drive.status === 'ACTIVE' || drive.outcome === 'ADVANTAGE') ? drive : undefined
@@ -293,7 +302,8 @@ function resolveDriveHelpDecision(
   const direction = unitVector({ x: basket.x - onBallDefender.position.x, y: basket.y - onBallDefender.position.y }, { x: basket.x >= state.court.lengthMeters / 2 ? -1 : 1, y: 0 })
   const handlerPastDefender = (handler.position.x - onBallDefender.position.x) * direction.x
     + (handler.position.y - onBallDefender.position.y) * direction.y > 0.5
-  const enteredPaintThreat = basketDistance <= DRIVE_PAINT_THREAT_METERS
+  // BT5.18/5.19: an aggressive help defense steps in earlier (protects the rim, leaves the kick-out); a conservative one waits for the paint.
+  const enteredPaintThreat = basketDistance <= DRIVE_PAINT_THREAT_METERS + (helpAggression - 0.5) * 2.4
   const containment = clamp((onBallDefender.defense.pointOfAttack + onBallDefender.defense.mobility
     - handler.offense.rimAttack - handler.offense.creation) / 200, -0.12, 0.12)
   const beaten = handlerPastDefender && basketDistance <= DRIVE_PAINT_THREAT_METERS + 2 + containment
@@ -310,7 +320,9 @@ function resolveDriveHelpDecision(
   const candidates = assignments.filter((item) => item.attackerPlayerId !== ballHandlerId)
     .map((assignment) => ({ assignment, defender: playerById.get(assignment.defenderPlayerId), attacker: playerById.get(assignment.attackerPlayerId) }))
     .filter((item): item is { assignment: DefensiveAssignment; defender: MatchPlayerState; attacker: MatchPlayerState } => item.defender !== undefined && item.attacker !== undefined)
-  const weaksideLowMan = candidates.filter(({ attacker }) => ballSide !== 0 && Math.sign(attacker.position.y - centerY) !== 0 && Math.sign(attacker.position.y - centerY) !== ballSide)
+  // BT5.20: a defense that knows its matchups does not help off an elite shooter when someone else can.
+  const stayHome = (attacker: MatchPlayerState): boolean => tacticalKnowledge >= 45 && attacker.offense.shooting >= 80
+  const weaksideLowMan = candidates.filter(({ attacker }) => ballSide !== 0 && Math.sign(attacker.position.y - centerY) !== 0 && Math.sign(attacker.position.y - centerY) !== ballSide && !stayHome(attacker))
     .sort((left, right) => distanceBetween(left.attacker.position, basket) - distanceBetween(right.attacker.position, basket)
       || distanceBetween(left.defender.position, basket) - distanceBetween(right.defender.position, basket)
       || String(left.assignment.defenderPlayerId).localeCompare(String(right.assignment.defenderPlayerId)))[0]
@@ -339,6 +351,92 @@ function resolveDriveHelpDecision(
     helperKind: weaksideLowMan ? 'LOW_MAN' : 'HELP',
     rotations,
   }
+}
+
+interface ExtraHelp { readonly defenderId: PlayerId; readonly kind: 'TAG' | 'DIG'; readonly target: CourtPosition; readonly reason: string }
+
+/**
+ * BT5.18 help responsibilities beyond the drive:
+ *  - TAG: a roller diving to the rim behind a hedge, a trap, or a drop that has lost him is met by the low man (the weak-side defender
+ *    nearest the rim), who leaves his own man for the kick-out;
+ *  - TAG (pick-up): a screener who pops while his defender traps the handler is picked up by the nearest defender who is not trapping;
+ *  - DIG: a post touch (the ball held within 4.2 m of the rim without a drive) draws the nearest ball-side defender a step toward the ball.
+ * How readily the defense does each follows its help aggression.
+ */
+function resolveScreenAndPostHelp(state: MatchState, assignments: readonly DefensiveAssignment[], playerById: ReadonlyMap<PlayerId, MatchPlayerState>, ballHandlerId: PlayerId | null, basket: CourtPosition, help: number): ExtraHelp | null {
+  if (ballHandlerId === null) return null
+  const handler = playerById.get(ballHandlerId)
+  if (handler === undefined) return null
+  const screen = state.screen
+  const defenderOf = (attackerId: PlayerId): PlayerId | undefined => assignments.find((item) => item.attackerPlayerId === attackerId)?.defenderPlayerId
+  const centerY = state.court.widthMeters / 2
+  if (screen !== null && screen.phase === 'USED' && !screen.switched && help >= 0.25) {
+    const screener = playerById.get(screen.screenerId)
+    const screenerDefender = playerById.get(screen.screenerDefenderId)
+    if (screener !== undefined && screenerDefender !== undefined) {
+      const busy = new Set<PlayerId>([screen.handlerDefenderId, screen.screenerDefenderId])
+      const free = assignments.filter((item) => !busy.has(item.defenderPlayerId) && item.attackerPlayerId !== ballHandlerId)
+        .map((item) => ({ item, defender: playerById.get(item.defenderPlayerId)!, attacker: playerById.get(item.attackerPlayerId)! }))
+        .filter((entry) => entry.defender !== undefined && entry.attacker !== undefined)
+      const rollerFree = distanceBetween(screenerDefender.position, screener.position) > 2.2
+      if (screen.exit === 'ROLL' && distanceBetween(screener.position, basket) <= 5.5 && (screen.coverage === 'hedge' || screen.coverage === 'blitz' || rollerFree)) {
+        const lowSide = Math.sign(handler.position.y - centerY) || 1
+        const tagger = free
+          .sort((left, right) => (Math.sign(left.attacker.position.y - centerY) === lowSide ? 1 : 0) - (Math.sign(right.attacker.position.y - centerY) === lowSide ? 1 : 0)
+            || distanceBetween(left.defender.position, basket) - distanceBetween(right.defender.position, basket) || String(left.defender.playerId).localeCompare(String(right.defender.playerId)))[0]
+        if (tagger !== undefined) {
+          const toRim = unitVector({ x: basket.x - screener.position.x, y: basket.y - screener.position.y }, { x: 1, y: 0 })
+          return { defenderId: tagger.defender.playerId, kind: 'TAG', target: { x: screener.position.x + toRim.x * 1.0, y: screener.position.y + toRim.y * 1.0 }, reason: `Low man tags the roller (${screen.coverage})` }
+        }
+      }
+      if (screen.exit === 'POP' && screen.coverage === 'blitz') {
+        const picker = free.sort((left, right) => distanceBetween(left.defender.position, screener.position) - distanceBetween(right.defender.position, screener.position) || String(left.defender.playerId).localeCompare(String(right.defender.playerId)))[0]
+        if (picker !== undefined) return { defenderId: picker.defender.playerId, kind: 'TAG', target: guardPosition(screener.position, state.ball.position, basket, 'GAP', state.court), reason: 'Rotate to the popping screener the trap left open' }
+      }
+    }
+  }
+  // A post touch is a CATCH near the block (not a driver who stopped there, not a rebounder): the dig comes while he is still deciding.
+  const flow = state.offenseFlow
+  const postTouch = flow !== null && flow.caughtFromPass && flow.holderPlayerId === ballHandlerId && state.t - flow.holderSinceT <= 25 && state.transition === null
+  if (postTouch && state.ball.kind === 'HELD' && distanceBetween(handler.position, basket) <= 4.2 && postScore(handler) >= 62 - (help - 0.5) * 30) {
+    const ballSide = Math.sign(handler.position.y - centerY) || 1
+    const digger = assignments.filter((item) => item.attackerPlayerId !== ballHandlerId)
+      .map((item) => ({ defender: playerById.get(item.defenderPlayerId), attacker: playerById.get(item.attackerPlayerId) }))
+      .filter((entry): entry is { defender: MatchPlayerState; attacker: MatchPlayerState } => entry.defender !== undefined && entry.attacker !== undefined
+        && Math.sign(entry.attacker.position.y - centerY) === ballSide && distanceBetween(entry.attacker.position, handler.position) <= 7.5)
+      .sort((left, right) => distanceBetween(left.defender.position, handler.position) - distanceBetween(right.defender.position, handler.position) || String(left.defender.playerId).localeCompare(String(right.defender.playerId)))[0]
+    if (digger !== undefined) {
+      const toward = unitVector({ x: handler.position.x - digger.attacker.position.x, y: handler.position.y - digger.attacker.position.y }, { x: 1, y: 0 })
+      const distance = distanceBetween(handler.position, digger.attacker.position)
+      const step = Math.max(0, distance - 1.4)
+      return { defenderId: digger.defender.playerId, kind: 'DIG', target: { x: digger.attacker.position.x + toward.x * step, y: digger.attacker.position.y + toward.y * step }, reason: 'Dig at the post touch from the ball side' }
+    }
+  }
+  return null
+}
+
+/**
+ * BT5.15 switch back: after a switch, once the action is over and the two switched attackers are away from the ball, a defense that
+ * knows its matchups trades back the mismatch it cannot live with (a small on a big who is posting near the rim).
+ */
+function switchBack(state: MatchState, assignments: readonly DefensiveAssignment[], tacticalKnowledge: number): readonly DefensiveAssignment[] {
+  if (tacticalKnowledge < 40 || state.screen !== null || state.ball.kind !== 'HELD') return assignments
+  const switched = assignments.filter((item) => item.source === 'SWITCH' && state.t - item.startedT >= 15)
+  if (switched.length !== 2 || switched[0]!.startedT !== switched[1]!.startedT) return assignments
+  const [a, b] = switched as [DefensiveAssignment, DefensiveAssignment]
+  const find = (id: PlayerId): MatchPlayerState | undefined => state.players.find((player) => player.playerId === id)
+  const basket = state.defensiveStructure?.defendedBasket
+  if (basket === undefined) return assignments
+  const holder = state.ball.ownerPlayerId
+  const badMismatch = (assignment: DefensiveAssignment): boolean => {
+    const defender = find(assignment.defenderPlayerId)
+    const attacker = find(assignment.attackerPlayerId)
+    return defender !== undefined && attacker !== undefined && attacker.heightCm - defender.heightCm >= 12 && distanceBetween(attacker.position, basket) <= 5 && attacker.playerId !== holder
+  }
+  if (!badMismatch(a) && !badMismatch(b)) return assignments
+  if (a.attackerPlayerId === holder || b.attackerPlayerId === holder) return assignments
+  return assignments.map((item) => item === a ? { ...a, attackerPlayerId: b.attackerPlayerId, source: 'STRUCTURAL_REASSIGNMENT' as const, startedT: state.t }
+    : item === b ? { ...b, attackerPlayerId: a.attackerPlayerId, source: 'STRUCTURAL_REASSIGNMENT' as const, startedT: state.t } : item)
 }
 
 function rotationTargetPosition(

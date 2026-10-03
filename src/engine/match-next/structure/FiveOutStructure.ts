@@ -1,7 +1,8 @@
 import { distanceBetween, type CourtGeometry, type CourtPosition } from '@/domain/court'
 import type { PlayerId, TeamId } from '@/domain/ids'
 
-export type OffensiveSlotName = 'BALL' | 'STRONG_CORNER' | 'STRONG_SLOT' | 'WEAK_SLOT' | 'WEAK_CORNER'
+/** BT5.8: POST is the ball-side block of a 4-out-1-in (it replaces the strong corner). */
+export type OffensiveSlotName = 'BALL' | 'STRONG_CORNER' | 'STRONG_SLOT' | 'WEAK_SLOT' | 'WEAK_CORNER' | 'POST'
 export type OffensiveBallSide = 'TOP' | 'BOTTOM'
 
 export interface OffensiveSlotTarget {
@@ -11,7 +12,7 @@ export interface OffensiveSlotTarget {
 
 export interface OffensiveStructureState {
   readonly teamId: TeamId
-  readonly formation: '5OUT'
+  readonly formation: '5OUT' | '4OUT1IN'
   readonly attackingBasket: CourtPosition
   readonly ballSide: OffensiveBallSide
   readonly ballPlayerId: PlayerId
@@ -36,7 +37,14 @@ export function resolveBallSide(ball: CourtPosition, court: CourtGeometry, previ
   return previous
 }
 
-export function resolveFiveOutTargets(court: CourtGeometry, ball: CourtPosition, attackingBasket: CourtPosition, ballSide: OffensiveBallSide): readonly OffensiveSlotTarget[] {
+export interface SpacingOptions {
+  /** 4-out-1-in: the strong corner becomes the ball-side block. */
+  readonly post?: boolean
+  /** Empty-corner ball screen: the strong-corner player lifts to the weak side of the top, leaving the corner (and the roll) empty. */
+  readonly emptyCorner?: boolean
+}
+
+export function resolveFiveOutTargets(court: CourtGeometry, ball: CourtPosition, attackingBasket: CourtPosition, ballSide: OffensiveBallSide, options: SpacingOptions = {}): readonly OffensiveSlotTarget[] {
   void ball
   const direction = attackingBasket.x >= court.lengthMeters / 2 ? 1 : -1
   const side = ballSide === 'TOP' ? -1 : 1
@@ -55,8 +63,14 @@ export function resolveFiveOutTargets(court: CourtGeometry, ball: CourtPosition,
     x: clamp(attackingBasket.x - direction * back, 0.5, court.lengthMeters - 0.5),
     y: clamp(y, 0.3, court.widthMeters - 0.3),
   })
+  const strongSign = ballSide === 'TOP' ? -1 : 1
+  const strongCorner: OffensiveSlotTarget = options.post
+    ? { slot: 'POST', position: point(1.0, centerY + strongSign * 2.6) }
+    : options.emptyCorner
+      ? { slot: 'STRONG_CORNER', position: point(wingBack + 2.0, centerY - side * 1.6) }
+      : { slot: 'STRONG_CORNER', position: point(cornerBack, strongCornerY) }
   return [
-    { slot: 'STRONG_CORNER', position: point(cornerBack, strongCornerY) },
+    strongCorner,
     { slot: 'STRONG_SLOT', position: point(wingBack, centerY + side * wingLateral) },
     { slot: 'WEAK_SLOT', position: point(wingBack, centerY - side * wingLateral) },
     { slot: 'WEAK_CORNER', position: point(cornerBack, court.widthMeters - strongCornerY) },

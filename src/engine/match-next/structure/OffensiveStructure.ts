@@ -5,6 +5,8 @@ import type { MovementFacing, MovementIntent } from '../movement/MovementIntent'
 import { tuning } from '../tuning'
 import { attackingBasketForTeam, resolveBallSide, resolveFiveOutTargets, slotTargetsAreValid, type OffensiveSlotName, type OffensiveStructureState } from './FiveOutStructure'
 import { assignFiveOutSlots } from './SlotAssignment'
+import { initiatorSpot, spacingFor } from '../tactics/PlayCalling'
+import { tacticalIntent } from '../tactics/TacticalIdentity'
 
 export function reconcileOffensiveStructure(state: MatchState): MatchState {
   if (state.responsibilities.some((item) => item.kind === 'PERIOD_RESTART')) return state
@@ -35,8 +37,14 @@ export function reconcileOffensiveStructure(state: MatchState): MatchState {
   const basket = attackingBasketForTeam(possession.teamId, state.homeTeamId, state.period, state.court)
   const ballPosition = state.ball.position
   const ballSide = resolveBallSide(ballPosition, state.court, prior?.ballSide)
-  const targets = resolveFiveOutTargets(state.court, ballPosition, basket, ballSide)
   const spacePlayers = offense.filter((player) => player.playerId !== ballPlayerId)
+  // BT5.8: the formation comes from the identity and the lineup; the post player has the block unless he has the ball.
+  const wanted = spacingFor(state, possession.teamId)
+  const postPlayerId = wanted.spacing === '4OUT1IN' && wanted.postPlayerId !== null && spacePlayers.some((player) => player.playerId === wanted.postPlayerId) ? wanted.postPlayerId : null
+  const formation = postPlayerId === null ? '5OUT' as const : '4OUT1IN' as const
+  const call = state.offenseFlow?.possessionId === possession.id ? state.offenseFlow.call : null
+  const emptyCorner = formation === '5OUT' && call?.family === 'BALL_SCREEN' && call.location === 'EMPTY_CORNER'
+  const targets = resolveFiveOutTargets(state.court, ballPosition, basket, ballSide, { post: formation === '4OUT1IN', emptyCorner })
   const ownerChanged = prior !== null && prior.ballPlayerId !== ballPlayerId
   const sideChanged = prior !== null && prior.ballSide !== ballSide
   const priorSpaceAssignments = prior?.assignments.filter((item) => item.slot !== 'BALL') ?? []
@@ -47,9 +55,11 @@ export function reconcileOffensiveStructure(state: MatchState): MatchState {
     && new Set(currentAssignments.map((item) => item.playerId)).size === 4
     && new Set(currentAssignments.map((item) => item.slot)).size === 4
     && spacePlayers.every((player) => currentAssignments.some((item) => item.playerId === player.playerId))
-  const reassign = prior === null || ownerChanged || sideChanged || !assignmentsValid
+  const formationChanged = prior !== null && prior.formation !== formation
+  const postMisplaced = postPlayerId !== null && !currentAssignments.some((item) => item.playerId === postPlayerId && item.slot === 'POST')
+  const reassign = prior === null || ownerChanged || sideChanged || !assignmentsValid || formationChanged || postMisplaced
   const assignedSpaces = reassign
-    ? assignFiveOutSlots(spacePlayers.map(({ playerId, position }) => ({ playerId, position })), targets, currentAssignments)
+    ? assignFiveOutSlots(spacePlayers.map(({ playerId, position }) => ({ playerId, position })), targets, formationChanged ? [] : currentAssignments, postPlayerId === null ? undefined : { playerId: postPlayerId, slot: 'POST' })
     : currentAssignments
   const assignments = [
     { playerId: ballPlayerId, slot: 'BALL' as const },
@@ -57,13 +67,13 @@ export function reconcileOffensiveStructure(state: MatchState): MatchState {
   ]
   const carriedAnchors = (prior?.continuityAnchors ?? []).flatMap((anchor) => {
     const assignment = assignedSpaces.find((item) => item.playerId === anchor.playerId)
-    return assignment && assignment.slot !== 'BALL'
+    return assignment && assignment.slot !== 'BALL' && assignment.slot !== 'POST'
       ? [{ ...anchor, slot: assignment.slot }]
       : []
   })
   const newAnchorPlayer = ownerChanged ? spacePlayers.find((item) => item.playerId === prior?.ballPlayerId) : undefined
   const newAnchorAssignment = assignedSpaces.find((item) => item.playerId === newAnchorPlayer?.playerId)
-  const newAnchor = newAnchorPlayer && newAnchorAssignment && newAnchorAssignment.slot !== 'BALL'
+  const newAnchor = newAnchorPlayer && newAnchorAssignment && newAnchorAssignment.slot !== 'BALL' && newAnchorAssignment.slot !== 'POST'
     ? { playerId: newAnchorPlayer.playerId, slot: newAnchorAssignment.slot, position: projectToThreePointArc(newAnchorPlayer.position, basket, state.court) }
     : undefined
   const anchorCandidates = newAnchor ? [...carriedAnchors, newAnchor] : carriedAnchors
@@ -82,7 +92,7 @@ export function reconcileOffensiveStructure(state: MatchState): MatchState {
   })
   const structure: OffensiveStructureState = {
     teamId: possession.teamId,
-    formation: '5OUT',
+    formation,
     attackingBasket: basket,
     ballSide,
     ballPlayerId,
@@ -105,6 +115,7 @@ export function reconcileOffensiveStructure(state: MatchState): MatchState {
   const decisions: StructuralDecision[] = []
   const movementIntents: MovementIntent[] = []
 
+  const tempo = tacticalIntent(state, possession.teamId).offense.tempo
   for (const player of offense) {
     const slot = assignments.find((item) => item.playerId === player.playerId)?.slot
     if (!slot) continue
@@ -151,9 +162,10 @@ export function reconcileOffensiveStructure(state: MatchState): MatchState {
     movementIntents.push({
       playerId: player.playerId,
       target,
-      urgency: kind === 'BALL' ? 'jog' : kind === 'ADVANCE' && (possession.teamId === state.homeTeamId ? state.tacticalPlans.home.pace : state.tacticalPlans.away.pace) >= 2
+      // BT5.12: how fast the ball comes up is the team's tempo (a fast team sprints it up, a controlled one walks it into the set).
+      urgency: kind === 'BALL' ? 'jog' : kind === 'ADVANCE' && tempo >= 0.6
         ? 'sprint'
-        : kind === 'ADVANCE' && (possession.teamId === state.homeTeamId ? state.tacticalPlans.home.pace : state.tacticalPlans.away.pace) <= -2 ? 'jog' : 'run',
+        : kind === 'ADVANCE' && tempo <= -0.6 ? 'jog' : 'run',
       facing,
       provenance: { responsibilityId: responsibility.id, decisionId: decision.id, owner: responsibility.owner },
     })
@@ -176,6 +188,7 @@ function oppositeStrongWeakSlot(slot: OffensiveSlotName): OffensiveSlotName {
     case 'STRONG_SLOT': return 'WEAK_SLOT'
     case 'WEAK_SLOT': return 'STRONG_SLOT'
     case 'WEAK_CORNER': return 'STRONG_CORNER'
+    case 'POST': return 'POST'
     case 'BALL': return 'BALL'
   }
 }
@@ -273,9 +286,9 @@ function targetForResponsibility(state: MatchState, player: MatchPlayerState, re
     const set = state.offenseFlow === null || state.offenseFlow.settledAtT !== null
     const inFrontcourt = isInOffensiveFrontcourt(state.ball.position, structure.attackingBasket, state.court.lengthMeters)
     if (tuning().playsEnabled !== 0 && !set && inFrontcourt) {
-      const direction = structure.attackingBasket.x >= state.court.lengthMeters / 2 ? 1 : -1
-      const centerY = state.court.widthMeters / 2
-      const spot = { x: structure.attackingBasket.x - direction * 7.4, y: centerY + Math.max(-3, Math.min(3, (player.position.y - centerY) * 0.5)) }
+      // BT5.7: where the play starts depends on the call (top for a high screen, the wing for a side screen, a pin-down or an entry).
+      const call = state.offenseFlow?.teamId === player.teamId ? state.offenseFlow.call : null
+      const spot = initiatorSpot(state, player.teamId, call, player)
       return distanceBetween(player.position, spot) < 0.8 ? { ...player.position } : steerAroundDefender(state, player, spot)
     }
     return { ...player.position }
