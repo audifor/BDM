@@ -1,0 +1,33 @@
+# BS14 Scouting Capability Matrix
+
+Snapshot: source `c52a21717a5973ee33d99a0df3000d405bcb9847`.
+
+| Capability | Status | Authority | Gameplay effect | UI visible | Save persistent | Problem / note |
+|---|---|---|---|---|---|---|
+| Player true ratings (80) | REAL | `Player.basketball.ratings` | Drives simulation | Yes, exact on profile paths | Yes | Profile bypasses scouting mask. |
+| Staff evaluator attributes | REAL | `StaffPerson.professional.attributes` | Error, uncertainty, time, selection | Staff UI | Yes | No overall; distinct quality numbers coexist. |
+| Staff Scout roles | REAL | Role registry + TeamStaffAssignment | Eligibility/proficiency/ranking | Staff UI | Yes | Default human request only uses regionalScout. |
+| Player assignment | REAL | `scoutingAssignmentsById` | Queued/active/completed daily work | Scouting workspace | Yes | Human UI only QUICK_LOOK, normal, fixed evaluator. |
+| Report evidence | REAL | `evidenceById` | Inputs report provenance/quality | Partial | Yes | Automatic producer creates one synthetic evidence stub; many sources unused. |
+| Evaluator report | REAL | `evaluatorReportsById` | Changes organization knowledge | Yes | Yes | Seven aggregate rating dimensions, not 80 findings. |
+| Organization knowledge | REAL | `organizationKnowledge` | Affects projections and AI rankings | Yes, derived ranges/labels | Yes | Organization scoped; knowledge starts empty. |
+| Legacy team knowledge | LEGACY | `playerKnowledgeById` | No current scouting consumer found | Some older projections may exist | V1 compatibility / runtime | Duplicate shape (team scoped, seven dimensions). |
+| Repeated observation | PARTIAL | consolidation formula | Changes estimate/coverage; may alter uncertainty | Report history | Yes | No staged discovery progression; disagreement may widen uncertainty. |
+| Knowledge decay | PARTIAL | lazy freshness in evaluation helpers | Range/confidence display worsens after 365 days | Yes | Date remains; no rewrite | No expiry, refresh, or event. |
+| Player profile fog | DISCONNECTED | profile builders read Player directly | None; scouting mask bypassed | Exact ratings visible | N/A | P0 external player truth leak. |
+| Potential evaluation | PARTIAL | report findings + OrganizationKnowledge | Potential valuation and display estimates | Scouting/development panel | Yes | Eight domains, never rendered exact by evaluation helper. |
+| 80-rating scouting | MISSING | No finding/report mapping for each canonical key | No attribute-level report effect | 7 summary dimensions only | N/A | Stale 7-dimension assumption. |
+| Player discovery/search | MISSING | No discovery authority | Assignments need known Player ID; AI bounded targets | Knowledge board is own roster/known subjects | N/A | No discoverability state. |
+| Region/country/competition coverage | MISSING | No Region/coverage entity | No geographic effect | No true coverage map | No | `prioritizeRegions` groups nationality only. |
+| Delegated assignment | REAL | responsibility + `DelegatedScouting` | Requests one bounded QUICK_LOOK | Assignment/advisory boards | Yes | Only runs for configured delegated holder. |
+| Advisory Player opposition/prospect report | PARTIAL | `AdvisoryScoutingReports` | Requests FULL_REPORT, unapplied advisory | Outcomes and assignment/report board | Yes | Not same as tactical OppositionScoutingReport. |
+| Tactical opposition report | REAL | `oppositionScoutingReportsById` | Recommendations; accepted into game plan | Scouting Opposition tab / tactics | Yes | Separate pre-match domain, exact once per team/game. |
+| Draft knowledge use | REAL | Organization valuation | AI pick ranking/recommendations | Human draft estimates | Yes | Unknown prior when no knowledge. |
+| Recruiting knowledge use | REAL | Organization valuation | AI target ordering | UI projections | Yes | Candidate list includes public/context inputs separately. |
+| Market/free-agent knowledge use | REAL | Organization valuation/market knowledge | Candidate ranking and feasibility | Market views | Yes | Does not read hidden ratings in evaluated consumer paths. |
+| AI scouting operations | PARTIAL | Same responsibility + assignment engine | No default assignments; works if explicitly delegated/advisory | Not directly distinguished by UI | Yes when created | Default responsibilities are userControlled. |
+| Report narrative/strengths/weaknesses | UI_ONLY/PARTIAL | Findings only | No narrative effect | Some derived labels | No narrative | No persisted observation text or general recommendation. |
+| Scout workload | REAL | mission-unit activeWorkload + generic workload | Queueing/duration/selection | Assignment status | Assignments persist | No travel or cash cost. |
+| Financial scouting budget/cost | MISSING | None | None | None | No | No per-assignment cost. |
+| WorldDB initial knowledge | MISSING | Bootstrap creates no knowledge | Starts with empty org knowledge | Truth still profile-visible | None initially | Same empty knowledge as generated world. |
+| Generated world initial knowledge | MISSING | createNewGame has empty knowledge | No baseline reports | Profile exactness unaffected | Empty collections save | Legacy helper not called on normal generation. |
