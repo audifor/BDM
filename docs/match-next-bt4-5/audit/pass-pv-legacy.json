@@ -1,0 +1,1329 @@
+{
+  "seeds": [
+    31337,
+    424242,
+    7,
+    1
+  ],
+  "overrides": {
+    "bisectLegacySelection": 1
+  },
+  "summary": {
+    "games": 4,
+    "complete": 4,
+    "totals": {
+      "possessions": 187.75,
+      "points": 171.75,
+      "assists": 29,
+      "fga": 155,
+      "passesLive": 482.5,
+      "passesAll": 569,
+      "turnoversAll": 41.25,
+      "steals": 37.5,
+      "shotMix": {
+        "CATCH_AND_SHOOT": 70.5,
+        "zone:ABOVE_BREAK_THREE": 53,
+        "zone:FLOATER_RANGE": 7.5,
+        "PR_HANDLER": 20,
+        "zone:CORNER_THREE": 29.25,
+        "zone:RIM": 11.25,
+        "zone:SHORT_PAINT": 13.5,
+        "zone:RESTRICTED": 33,
+        "DRIVE_FINISH": 23.75,
+        "KICK_OUT": 14.75,
+        "TRANSITION": 13.5,
+        "zone:DEEP": 3.75,
+        "FLOATER": 4.75,
+        "PULL_UP": 5,
+        "zone:MIDRANGE": 1.25,
+        "PUTBACK": 0.25,
+        "zone:LONG_MIDRANGE": 2.5,
+        "PR_ROLLER": 2.25,
+        "LATE_CLOCK": 0.25
+      }
+    },
+    "overall": {
+      "n": 1930,
+      "perGame": 482.5,
+      "completedPct": 93.3,
+      "interceptedPct": 2.6,
+      "deflectedPct": 3.2,
+      "inaccuratePct": 0.8,
+      "receiverPct": 0.2,
+      "outPct": 0,
+      "lostPossessionPct": 6.8,
+      "turnoversPerGame": 33
+    },
+    "byType": {
+      "ENTRY": {
+        "n": 144,
+        "perGame": 36,
+        "completedPct": 86.1,
+        "interceptedPct": 5.6,
+        "deflectedPct": 7.6,
+        "inaccuratePct": 0.7,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 13.2,
+        "turnoversPerGame": 4.75
+      },
+      "INBOUND": {
+        "n": 346,
+        "perGame": 86.5,
+        "completedPct": 100,
+        "interceptedPct": 0,
+        "deflectedPct": 0,
+        "inaccuratePct": 0,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 2,
+        "turnoversPerGame": 1.75
+      },
+      "KICK_OUT": {
+        "n": 146,
+        "perGame": 36.5,
+        "completedPct": 98.6,
+        "interceptedPct": 0.7,
+        "deflectedPct": 0,
+        "inaccuratePct": 0.7,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 0.7,
+        "turnoversPerGame": 0.25
+      },
+      "OTHER": {
+        "n": 215,
+        "perGame": 53.75,
+        "completedPct": 94.4,
+        "interceptedPct": 2.3,
+        "deflectedPct": 2.8,
+        "inaccuratePct": 0.5,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 5.6,
+        "turnoversPerGame": 3
+      },
+      "OUTLET": {
+        "n": 303,
+        "perGame": 75.75,
+        "completedPct": 96.4,
+        "interceptedPct": 1.3,
+        "deflectedPct": 1,
+        "inaccuratePct": 1,
+        "receiverPct": 0.3,
+        "outPct": 0,
+        "lostPossessionPct": 4.6,
+        "turnoversPerGame": 3.5
+      },
+      "RESET": {
+        "n": 52,
+        "perGame": 13,
+        "completedPct": 94.2,
+        "interceptedPct": 0,
+        "deflectedPct": 5.8,
+        "inaccuratePct": 0,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 5.8,
+        "turnoversPerGame": 0.75
+      },
+      "REVERSAL": {
+        "n": 512,
+        "perGame": 128,
+        "completedPct": 94.9,
+        "interceptedPct": 1.8,
+        "deflectedPct": 2.1,
+        "inaccuratePct": 1,
+        "receiverPct": 0.2,
+        "outPct": 0,
+        "lostPossessionPct": 5.3,
+        "turnoversPerGame": 6.75
+      },
+      "ROLL": {
+        "n": 61,
+        "perGame": 15.25,
+        "completedPct": 91.8,
+        "interceptedPct": 4.9,
+        "deflectedPct": 1.6,
+        "inaccuratePct": 1.6,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 6.6,
+        "turnoversPerGame": 1
+      },
+      "SKIP": {
+        "n": 153,
+        "perGame": 38.25,
+        "completedPct": 76.5,
+        "interceptedPct": 7.2,
+        "deflectedPct": 16.3,
+        "inaccuratePct": 0,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 24.2,
+        "turnoversPerGame": 9.25
+      },
+      "SWING": {
+        "n": 226,
+        "perGame": 56.5,
+        "completedPct": 97.8,
+        "interceptedPct": 0.9,
+        "deflectedPct": 0.4,
+        "inaccuratePct": 0.9,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 2.2,
+        "turnoversPerGame": 1.25
+      },
+      "TRANSITION_ADVANCE": {
+        "n": 118,
+        "perGame": 29.5,
+        "completedPct": 91.5,
+        "interceptedPct": 5.9,
+        "deflectedPct": 0.8,
+        "inaccuratePct": 0.8,
+        "receiverPct": 0.8,
+        "outPct": 0,
+        "lostPossessionPct": 8.5,
+        "turnoversPerGame": 2.5
+      }
+    },
+    "byPlay": {
+      "BALL_SCREEN": {
+        "n": 356,
+        "perGame": 89,
+        "completedPct": 91,
+        "interceptedPct": 3.1,
+        "deflectedPct": 5.3,
+        "inaccuratePct": 0.6,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 8.7,
+        "turnoversPerGame": 7.75
+      },
+      "DRIVE_KICK": {
+        "n": 208,
+        "perGame": 52,
+        "completedPct": 95.7,
+        "interceptedPct": 1.9,
+        "deflectedPct": 1.9,
+        "inaccuratePct": 0.5,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 3.8,
+        "turnoversPerGame": 2
+      },
+      "SWING": {
+        "n": 446,
+        "perGame": 111.5,
+        "completedPct": 91.9,
+        "interceptedPct": 2.7,
+        "deflectedPct": 4.5,
+        "inaccuratePct": 0.9,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 8.1,
+        "turnoversPerGame": 9
+      },
+      "unsettled:ACTION": {
+        "n": 919,
+        "perGame": 229.75,
+        "completedPct": 94.3,
+        "interceptedPct": 2.5,
+        "deflectedPct": 2.1,
+        "inaccuratePct": 0.8,
+        "receiverPct": 0.3,
+        "outPct": 0,
+        "lostPossessionPct": 6.2,
+        "turnoversPerGame": 14.25
+      },
+      "unsettled:EARLY": {
+        "n": 1,
+        "perGame": 0.25,
+        "completedPct": 0,
+        "interceptedPct": 0,
+        "deflectedPct": 0,
+        "inaccuratePct": 100,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 0,
+        "turnoversPerGame": 0
+      }
+    },
+    "byStart": {
+      "defensiveRebound": {
+        "n": 949,
+        "perGame": 237.25,
+        "completedPct": 94.6,
+        "interceptedPct": 2.1,
+        "deflectedPct": 2.3,
+        "inaccuratePct": 0.8,
+        "receiverPct": 0.1,
+        "outPct": 0,
+        "lostPossessionPct": 5.7,
+        "turnoversPerGame": 13.5
+      },
+      "madeBasketInbound": {
+        "n": 599,
+        "perGame": 149.75,
+        "completedPct": 91.2,
+        "interceptedPct": 2.8,
+        "deflectedPct": 5.2,
+        "inaccuratePct": 0.7,
+        "receiverPct": 0.2,
+        "outPct": 0,
+        "lostPossessionPct": 8.7,
+        "turnoversPerGame": 13
+      },
+      "openingJumpBall": {
+        "n": 7,
+        "perGame": 1.75,
+        "completedPct": 100,
+        "interceptedPct": 0,
+        "deflectedPct": 0,
+        "inaccuratePct": 0,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 0,
+        "turnoversPerGame": 0
+      },
+      "other": {
+        "n": 1,
+        "perGame": 0.25,
+        "completedPct": 0,
+        "interceptedPct": 100,
+        "deflectedPct": 0,
+        "inaccuratePct": 0,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 100,
+        "turnoversPerGame": 0.25
+      },
+      "periodStart": {
+        "n": 20,
+        "perGame": 5,
+        "completedPct": 95,
+        "interceptedPct": 5,
+        "deflectedPct": 0,
+        "inaccuratePct": 0,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 5,
+        "turnoversPerGame": 0.25
+      },
+      "shotClockViolation": {
+        "n": 4,
+        "perGame": 1,
+        "completedPct": 100,
+        "interceptedPct": 0,
+        "deflectedPct": 0,
+        "inaccuratePct": 0,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 0,
+        "turnoversPerGame": 0
+      },
+      "steal": {
+        "n": 337,
+        "perGame": 84.25,
+        "completedPct": 93.2,
+        "interceptedPct": 3.3,
+        "deflectedPct": 2.4,
+        "inaccuratePct": 0.9,
+        "receiverPct": 0.3,
+        "outPct": 0,
+        "lostPossessionPct": 6.5,
+        "turnoversPerGame": 5.5
+      },
+      "turnoverInbound": {
+        "n": 13,
+        "perGame": 3.25,
+        "completedPct": 92.3,
+        "interceptedPct": 0,
+        "deflectedPct": 7.7,
+        "inaccuratePct": 0,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 15.4,
+        "turnoversPerGame": 0.5
+      }
+    },
+    "contestedByPerp": {
+      "0..0.3": {
+        "n": 517,
+        "perGame": 129.25,
+        "completedPct": 86.8,
+        "interceptedPct": 5.6,
+        "deflectedPct": 6.2,
+        "inaccuratePct": 1.4,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 13.2,
+        "turnoversPerGame": 17
+      },
+      "0.3..0.6": {
+        "n": 429,
+        "perGame": 107.25,
+        "completedPct": 93,
+        "interceptedPct": 2.6,
+        "deflectedPct": 3.7,
+        "inaccuratePct": 0.5,
+        "receiverPct": 0.2,
+        "outPct": 0,
+        "lostPossessionPct": 6.8,
+        "turnoversPerGame": 7.25
+      },
+      "0.6..1": {
+        "n": 412,
+        "perGame": 103,
+        "completedPct": 95.1,
+        "interceptedPct": 1.9,
+        "deflectedPct": 2.7,
+        "inaccuratePct": 0.2,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 5.1,
+        "turnoversPerGame": 5.25
+      },
+      "1..1.5": {
+        "n": 219,
+        "perGame": 54.75,
+        "completedPct": 96.3,
+        "interceptedPct": 0.9,
+        "deflectedPct": 1.4,
+        "inaccuratePct": 0.9,
+        "receiverPct": 0.5,
+        "outPct": 0,
+        "lostPossessionPct": 3.7,
+        "turnoversPerGame": 2
+      },
+      "1.5..99": {
+        "n": 353,
+        "perGame": 88.25,
+        "completedPct": 98.9,
+        "interceptedPct": 0,
+        "deflectedPct": 0,
+        "inaccuratePct": 0.8,
+        "receiverPct": 0.3,
+        "outPct": 0,
+        "lostPossessionPct": 1.7,
+        "turnoversPerGame": 1.5
+      }
+    },
+    "contestedByPerpQuality": {
+      "0..0.3": {
+        "passerSkill": 69.964,
+        "defenderSteal": 67.484,
+        "share": 26.8
+      },
+      "0.3..0.6": {
+        "passerSkill": 71.104,
+        "defenderSteal": 67.287,
+        "share": 22.2
+      },
+      "0.6..1": {
+        "passerSkill": 70.237,
+        "defenderSteal": 66.57,
+        "share": 21.3
+      },
+      "1..1.5": {
+        "passerSkill": 71.768,
+        "defenderSteal": 65.416,
+        "share": 11.3
+      },
+      "1.5..99": {
+        "passerSkill": 71.209,
+        "defenderSteal": 66.317,
+        "share": 18.3
+      }
+    },
+    "bySlack": {
+      "-9..-0.6": {
+        "n": 171,
+        "perGame": 42.75,
+        "completedPct": 98.2,
+        "interceptedPct": 0.6,
+        "deflectedPct": 0,
+        "inaccuratePct": 1.2,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 2.3,
+        "turnoversPerGame": 1
+      },
+      "-0.6..-0.3": {
+        "n": 164,
+        "perGame": 41,
+        "completedPct": 98.2,
+        "interceptedPct": 0,
+        "deflectedPct": 0,
+        "inaccuratePct": 1.2,
+        "receiverPct": 0.6,
+        "outPct": 0,
+        "lostPossessionPct": 1.8,
+        "turnoversPerGame": 0.75
+      },
+      "-0.3..0": {
+        "n": 793,
+        "perGame": 198.25,
+        "completedPct": 98.4,
+        "interceptedPct": 0.4,
+        "deflectedPct": 0.4,
+        "inaccuratePct": 0.8,
+        "receiverPct": 0.1,
+        "outPct": 0,
+        "lostPossessionPct": 2.4,
+        "turnoversPerGame": 4.75
+      },
+      "0..0.15": {
+        "n": 408,
+        "perGame": 102,
+        "completedPct": 94.1,
+        "interceptedPct": 2.9,
+        "deflectedPct": 2.5,
+        "inaccuratePct": 0.2,
+        "receiverPct": 0.2,
+        "outPct": 0,
+        "lostPossessionPct": 5.9,
+        "turnoversPerGame": 6
+      },
+      "0.15..0.3": {
+        "n": 212,
+        "perGame": 53,
+        "completedPct": 84.9,
+        "interceptedPct": 4.7,
+        "deflectedPct": 9.4,
+        "inaccuratePct": 0.9,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 13.7,
+        "turnoversPerGame": 7.25
+      },
+      "0.3..0.6": {
+        "n": 182,
+        "perGame": 45.5,
+        "completedPct": 69.8,
+        "interceptedPct": 13.2,
+        "deflectedPct": 15.9,
+        "inaccuratePct": 1.1,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 29.1,
+        "turnoversPerGame": 13.25
+      },
+      "0.6..99": {
+        "n": 0,
+        "perGame": 0,
+        "completedPct": 0,
+        "interceptedPct": 0,
+        "deflectedPct": 0,
+        "inaccuratePct": 0,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 0,
+        "turnoversPerGame": 0
+      }
+    },
+    "perpBySlack": {
+      "0..0.3": {
+        "noTimeThreat": {
+          "n": 193,
+          "perGame": 48.25,
+          "completedPct": 96.4,
+          "interceptedPct": 1,
+          "deflectedPct": 0.5,
+          "inaccuratePct": 2.1,
+          "receiverPct": 0,
+          "outPct": 0,
+          "lostPossessionPct": 4.1,
+          "turnoversPerGame": 2
+        },
+        "timeThreat": {
+          "n": 324,
+          "perGame": 81,
+          "completedPct": 81.2,
+          "interceptedPct": 8.3,
+          "deflectedPct": 9.6,
+          "inaccuratePct": 0.9,
+          "receiverPct": 0,
+          "outPct": 0,
+          "lostPossessionPct": 18.5,
+          "turnoversPerGame": 15
+        }
+      },
+      "0.3..0.6": {
+        "noTimeThreat": {
+          "n": 198,
+          "perGame": 49.5,
+          "completedPct": 99.5,
+          "interceptedPct": 0,
+          "deflectedPct": 0,
+          "inaccuratePct": 0.5,
+          "receiverPct": 0,
+          "outPct": 0,
+          "lostPossessionPct": 1,
+          "turnoversPerGame": 0.5
+        },
+        "timeThreat": {
+          "n": 231,
+          "perGame": 57.75,
+          "completedPct": 87.4,
+          "interceptedPct": 4.8,
+          "deflectedPct": 6.9,
+          "inaccuratePct": 0.4,
+          "receiverPct": 0.4,
+          "outPct": 0,
+          "lostPossessionPct": 11.7,
+          "turnoversPerGame": 6.75
+        }
+      },
+      "0.6..1": {
+        "noTimeThreat": {
+          "n": 279,
+          "perGame": 69.75,
+          "completedPct": 98.9,
+          "interceptedPct": 0.4,
+          "deflectedPct": 0.7,
+          "inaccuratePct": 0,
+          "receiverPct": 0,
+          "outPct": 0,
+          "lostPossessionPct": 2.2,
+          "turnoversPerGame": 1.5
+        },
+        "timeThreat": {
+          "n": 133,
+          "perGame": 33.25,
+          "completedPct": 87.2,
+          "interceptedPct": 5.3,
+          "deflectedPct": 6.8,
+          "inaccuratePct": 0.8,
+          "receiverPct": 0,
+          "outPct": 0,
+          "lostPossessionPct": 11.3,
+          "turnoversPerGame": 3.75
+        }
+      },
+      "1..1.5": {
+        "noTimeThreat": {
+          "n": 162,
+          "perGame": 40.5,
+          "completedPct": 97.5,
+          "interceptedPct": 0.6,
+          "deflectedPct": 0,
+          "inaccuratePct": 1.2,
+          "receiverPct": 0.6,
+          "outPct": 0,
+          "lostPossessionPct": 2.5,
+          "turnoversPerGame": 1
+        },
+        "timeThreat": {
+          "n": 57,
+          "perGame": 14.25,
+          "completedPct": 93,
+          "interceptedPct": 1.8,
+          "deflectedPct": 5.3,
+          "inaccuratePct": 0,
+          "receiverPct": 0,
+          "outPct": 0,
+          "lostPossessionPct": 7,
+          "turnoversPerGame": 1
+        }
+      },
+      "1.5..99": {
+        "noTimeThreat": {
+          "n": 296,
+          "perGame": 74,
+          "completedPct": 98.6,
+          "interceptedPct": 0,
+          "deflectedPct": 0,
+          "inaccuratePct": 1,
+          "receiverPct": 0.3,
+          "outPct": 0,
+          "lostPossessionPct": 2,
+          "turnoversPerGame": 1.5
+        },
+        "timeThreat": {
+          "n": 57,
+          "perGame": 14.25,
+          "completedPct": 100,
+          "interceptedPct": 0,
+          "deflectedPct": 0,
+          "inaccuratePct": 0,
+          "receiverPct": 0,
+          "outPct": 0,
+          "lostPossessionPct": 0,
+          "turnoversPerGame": 0
+        }
+      }
+    },
+    "byDefenderStealWhenThreat": {
+      "LOW": {
+        "n": 10,
+        "perGame": 2.5,
+        "completedPct": 90,
+        "interceptedPct": 10,
+        "deflectedPct": 0,
+        "inaccuratePct": 0,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 10,
+        "turnoversPerGame": 0.25
+      },
+      "MEDIUM": {
+        "n": 171,
+        "perGame": 42.75,
+        "completedPct": 90.6,
+        "interceptedPct": 4.7,
+        "deflectedPct": 4.1,
+        "inaccuratePct": 0.6,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 9.4,
+        "turnoversPerGame": 4
+      },
+      "ELITE": {
+        "n": 621,
+        "perGame": 155.25,
+        "completedPct": 84.9,
+        "interceptedPct": 6,
+        "deflectedPct": 8.4,
+        "inaccuratePct": 0.6,
+        "receiverPct": 0.2,
+        "outPct": 0,
+        "lostPossessionPct": 14.3,
+        "turnoversPerGame": 22.25
+      }
+    },
+    "perceivedByPerp": {
+      "0..0.3": {
+        "perceivedRiskPct": 13.4,
+        "actualLostPct": 13.2,
+        "actualNotCompletedPct": 13.2
+      },
+      "0.3..0.6": {
+        "perceivedRiskPct": 12.3,
+        "actualLostPct": 6.8,
+        "actualNotCompletedPct": 7
+      },
+      "0.6..1": {
+        "perceivedRiskPct": 7.9,
+        "actualLostPct": 5.1,
+        "actualNotCompletedPct": 4.9
+      },
+      "1..1.5": {
+        "perceivedRiskPct": 4.6,
+        "actualLostPct": 3.7,
+        "actualNotCompletedPct": 3.7
+      },
+      "1.5..99": {
+        "perceivedRiskPct": 2.8,
+        "actualLostPct": 1.7,
+        "actualNotCompletedPct": 1.1
+      }
+    },
+    "interceptCalibration": {
+      "perceivedAttemptMean": 0.071,
+      "actualInterceptOrDeflect": 5.8,
+      "byPerceivedBucket": {
+        "0..0.02": {
+          "n": 1287,
+          "perceivedAttempt": 0,
+          "actualInterceptOrDeflectPct": 1.9
+        },
+        "0.02..0.1": {
+          "n": 133,
+          "perceivedAttempt": 0.063,
+          "actualInterceptOrDeflectPct": 6.8
+        },
+        "0.1..0.2": {
+          "n": 165,
+          "perceivedAttempt": 0.153,
+          "actualInterceptOrDeflectPct": 8.5
+        },
+        "0.2..0.35": {
+          "n": 257,
+          "perceivedAttempt": 0.269,
+          "actualInterceptOrDeflectPct": 18.7
+        },
+        "0.35..1.01": {
+          "n": 88,
+          "perceivedAttempt": 0.385,
+          "actualInterceptOrDeflectPct": 19.3
+        }
+      }
+    },
+    "passesToDeniedReceiverShare": 6.2,
+    "byTypeDistance": {
+      "ENTRY": {
+        "distance": 6.643,
+        "laneUnder1m": 80.6,
+        "timeThreat": 63.2
+      },
+      "KICK_OUT": {
+        "distance": 6.753,
+        "laneUnder1m": 67.8,
+        "timeThreat": 15.1
+      },
+      "OTHER": {
+        "distance": 5.442,
+        "laneUnder1m": 67.4,
+        "timeThreat": 28.4
+      },
+      "OUTLET": {
+        "distance": 4.062,
+        "laneUnder1m": 90.8,
+        "timeThreat": 34.7
+      },
+      "RESET": {
+        "distance": 5.611,
+        "laneUnder1m": 40.4,
+        "timeThreat": 11.5
+      },
+      "REVERSAL": {
+        "distance": 8.206,
+        "laneUnder1m": 64.3,
+        "timeThreat": 41
+      },
+      "ROLL": {
+        "distance": 6.905,
+        "laneUnder1m": 77,
+        "timeThreat": 59
+      },
+      "SKIP": {
+        "distance": 13.336,
+        "laneUnder1m": 94.8,
+        "timeThreat": 89.5
+      },
+      "SWING": {
+        "distance": 6.156,
+        "laneUnder1m": 30.1,
+        "timeThreat": 28.3
+      },
+      "TRANSITION_ADVANCE": {
+        "distance": 7.965,
+        "laneUnder1m": 95.8,
+        "timeThreat": 59.3
+      }
+    },
+    "byThreats": {
+      "0": {
+        "n": 1128,
+        "perGame": 282,
+        "completedPct": 98.3,
+        "interceptedPct": 0.4,
+        "deflectedPct": 0.3,
+        "inaccuratePct": 0.9,
+        "receiverPct": 0.2,
+        "outPct": 0,
+        "lostPossessionPct": 2.3,
+        "turnoversPerGame": 6.5
+      },
+      "1": {
+        "n": 530,
+        "perGame": 132.5,
+        "completedPct": 88.9,
+        "interceptedPct": 4.7,
+        "deflectedPct": 5.8,
+        "inaccuratePct": 0.4,
+        "receiverPct": 0.2,
+        "outPct": 0,
+        "lostPossessionPct": 10.9,
+        "turnoversPerGame": 14.5
+      },
+      "2": {
+        "n": 204,
+        "perGame": 51,
+        "completedPct": 82.8,
+        "interceptedPct": 6.9,
+        "deflectedPct": 9.3,
+        "inaccuratePct": 1,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 15.7,
+        "turnoversPerGame": 8
+      },
+      "3+": {
+        "n": 68,
+        "perGame": 17,
+        "completedPct": 75,
+        "interceptedPct": 10.3,
+        "deflectedPct": 13.2,
+        "inaccuratePct": 1.5,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 23.5,
+        "turnoversPerGame": 4
+      }
+    },
+    "shareWithDefenderUnder1mButNoTimeThreat": 49.3,
+    "byReceiverSeparation": {
+      "0..1": {
+        "n": 280,
+        "perGame": 70,
+        "completedPct": 88.9,
+        "interceptedPct": 6.1,
+        "deflectedPct": 5,
+        "inaccuratePct": 0,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 12.1,
+        "turnoversPerGame": 8.5
+      },
+      "1..1.5": {
+        "n": 128,
+        "perGame": 32,
+        "completedPct": 91.4,
+        "interceptedPct": 4.7,
+        "deflectedPct": 3.1,
+        "inaccuratePct": 0.8,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 10.2,
+        "turnoversPerGame": 3.25
+      },
+      "1.5..2.5": {
+        "n": 295,
+        "perGame": 73.75,
+        "completedPct": 94.6,
+        "interceptedPct": 3.1,
+        "deflectedPct": 1.4,
+        "inaccuratePct": 0.3,
+        "receiverPct": 0.7,
+        "outPct": 0,
+        "lostPossessionPct": 5.8,
+        "turnoversPerGame": 4.25
+      },
+      "2.5..4": {
+        "n": 495,
+        "perGame": 123.75,
+        "completedPct": 90.9,
+        "interceptedPct": 3,
+        "deflectedPct": 5.1,
+        "inaccuratePct": 1,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 8.3,
+        "turnoversPerGame": 10.25
+      },
+      "4..99": {
+        "n": 732,
+        "perGame": 183,
+        "completedPct": 96.3,
+        "interceptedPct": 0.4,
+        "deflectedPct": 2,
+        "inaccuratePct": 1.1,
+        "receiverPct": 0.1,
+        "outPct": 0,
+        "lostPossessionPct": 3.7,
+        "turnoversPerGame": 6.75
+      }
+    },
+    "byReceiverDenied": {
+      "denied": {
+        "n": 119,
+        "perGame": 29.75,
+        "completedPct": 91.6,
+        "interceptedPct": 5,
+        "deflectedPct": 3.4,
+        "inaccuratePct": 0,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 9.2,
+        "turnoversPerGame": 2.75
+      },
+      "open": {
+        "n": 1811,
+        "perGame": 452.75,
+        "completedPct": 93.4,
+        "interceptedPct": 2.4,
+        "deflectedPct": 3.2,
+        "inaccuratePct": 0.8,
+        "receiverPct": 0.2,
+        "outPct": 0,
+        "lostPossessionPct": 6.7,
+        "turnoversPerGame": 30.25
+      }
+    },
+    "byDistance": {
+      "0..4": {
+        "n": 314,
+        "perGame": 78.5,
+        "completedPct": 96.2,
+        "interceptedPct": 2.5,
+        "deflectedPct": 0.6,
+        "inaccuratePct": 0.6,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 4.8,
+        "turnoversPerGame": 3.75
+      },
+      "4..7": {
+        "n": 721,
+        "perGame": 180.25,
+        "completedPct": 95.7,
+        "interceptedPct": 1.7,
+        "deflectedPct": 1.7,
+        "inaccuratePct": 1,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 4.4,
+        "turnoversPerGame": 8
+      },
+      "7..10": {
+        "n": 544,
+        "perGame": 136,
+        "completedPct": 93,
+        "interceptedPct": 2.6,
+        "deflectedPct": 3.5,
+        "inaccuratePct": 0.6,
+        "receiverPct": 0.4,
+        "outPct": 0,
+        "lostPossessionPct": 6.8,
+        "turnoversPerGame": 9.25
+      },
+      "10..14": {
+        "n": 333,
+        "perGame": 83.25,
+        "completedPct": 86.2,
+        "interceptedPct": 4.5,
+        "deflectedPct": 8.1,
+        "inaccuratePct": 0.9,
+        "receiverPct": 0.3,
+        "outPct": 0,
+        "lostPossessionPct": 13.5,
+        "turnoversPerGame": 11.25
+      },
+      "14..99": {
+        "n": 18,
+        "perGame": 4.5,
+        "completedPct": 83.3,
+        "interceptedPct": 5.6,
+        "deflectedPct": 11.1,
+        "inaccuratePct": 0,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 16.7,
+        "turnoversPerGame": 0.75
+      }
+    },
+    "ballSpeed": {
+      "byType": {
+        "ENTRY": {
+          "speed": {
+            "n": 144,
+            "mean": 10.26,
+            "median": 10.54,
+            "p10": 7.55,
+            "p90": 12.36,
+            "min": 2.87,
+            "max": 15.58
+          },
+          "flightSeconds": 0.635
+        },
+        "KICK_OUT": {
+          "speed": {
+            "n": 146,
+            "mean": 9.88,
+            "median": 9.82,
+            "p10": 8.66,
+            "p90": 12.06,
+            "min": 2.68,
+            "max": 14.02
+          },
+          "flightSeconds": 0.666
+        },
+        "OTHER": {
+          "speed": {
+            "n": 215,
+            "mean": 9.03,
+            "median": 8.93,
+            "p10": 7.18,
+            "p90": 11.01,
+            "min": 3.9,
+            "max": 14.13
+          },
+          "flightSeconds": 0.592
+        },
+        "OUTLET": {
+          "speed": {
+            "n": 303,
+            "mean": 10.59,
+            "median": 10.73,
+            "p10": 8.49,
+            "p90": 12.54,
+            "min": 4.13,
+            "max": 16.43
+          },
+          "flightSeconds": 0.379
+        },
+        "RESET": {
+          "speed": {
+            "n": 52,
+            "mean": 9.41,
+            "median": 9.09,
+            "p10": 8.03,
+            "p90": 11.75,
+            "min": 7.6,
+            "max": 13
+          },
+          "flightSeconds": 0.59
+        },
+        "REVERSAL": {
+          "speed": {
+            "n": 512,
+            "mean": 11.1,
+            "median": 10.74,
+            "p10": 8.85,
+            "p90": 13.83,
+            "min": 7.47,
+            "max": 16.7
+          },
+          "flightSeconds": 0.731
+        },
+        "ROLL": {
+          "speed": {
+            "n": 61,
+            "mean": 10.22,
+            "median": 9.85,
+            "p10": 8.26,
+            "p90": 13.51,
+            "min": 2.48,
+            "max": 15.6
+          },
+          "flightSeconds": 0.648
+        },
+        "SKIP": {
+          "speed": {
+            "n": 153,
+            "mean": 16.67,
+            "median": 16.69,
+            "p10": 15.95,
+            "p90": 17.52,
+            "min": 13.72,
+            "max": 17.99
+          },
+          "flightSeconds": 0.8
+        },
+        "SWING": {
+          "speed": {
+            "n": 226,
+            "mean": 9.64,
+            "median": 9.39,
+            "p10": 8.02,
+            "p90": 12.26,
+            "min": 2.55,
+            "max": 13.38
+          },
+          "flightSeconds": 0.62
+        },
+        "TRANSITION_ADVANCE": {
+          "speed": {
+            "n": 118,
+            "mean": 10.88,
+            "median": 10.85,
+            "p10": 8.93,
+            "p90": 12.9,
+            "min": 5.08,
+            "max": 18.2
+          },
+          "flightSeconds": 0.722
+        }
+      }
+    },
+    "receiverMovement": {
+      "speedAtRelease": {
+        "n": 1930,
+        "mean": 1.46,
+        "median": 0.66,
+        "p10": 0,
+        "p90": 4.1,
+        "min": 0,
+        "max": 5.31
+      },
+      "driftAtArrival": {
+        "n": 1818,
+        "mean": 0.14,
+        "median": 0.02,
+        "p10": 0,
+        "p90": 0.48,
+        "min": 0,
+        "max": 2.18
+      },
+      "driftOfLoose": {
+        "n": 18,
+        "mean": 1.75,
+        "median": 1.88,
+        "p10": 1.25,
+        "p90": 2.03,
+        "min": 1.22,
+        "max": 2.18
+      },
+      "ledTargetToReceiverAtRelease": {
+        "n": 1930,
+        "mean": 0.61,
+        "median": 0.23,
+        "p10": 0,
+        "p90": 1.86,
+        "min": 0,
+        "max": 3.52
+      }
+    },
+    "selection": {
+      "withUtility": 1610,
+      "lostPass": {
+        "utilityPass": 1.148,
+        "bestAlternative": 1.146,
+        "gap": 0.002,
+        "perceivedRisk": 0.197,
+        "n": 115
+      },
+      "keptPass": {
+        "utilityPass": 1.24,
+        "bestAlternative": 1.154,
+        "gap": 0.086,
+        "perceivedRisk": 0.087,
+        "n": 1495
+      },
+      "lostWherePassWasNotTheBest": 49.6,
+      "lostWithPerceivedRiskUnder5pct": 14.8,
+      "actualVsPerceivedRisk": {
+        "perceived": 0.09,
+        "actualLostPct": 6.8,
+        "actualNotCompletedPct": 6.7
+      }
+    },
+    "passerCohorts": {
+      "LOW": {
+        "n": 209,
+        "perGame": 52.25,
+        "completedPct": 89.5,
+        "interceptedPct": 4.8,
+        "deflectedPct": 3.8,
+        "inaccuratePct": 1.4,
+        "receiverPct": 0.5,
+        "outPct": 0,
+        "lostPossessionPct": 9.1,
+        "turnoversPerGame": 4.75,
+        "vision": 43.266,
+        "meanSlack": -0.179,
+        "shareSlackPositive": 49.3,
+        "shareLaneUnder1m": 75.6,
+        "meanSeparation": 3.521,
+        "utilityGap": -0.013
+      },
+      "MEDIUM": {
+        "n": 260,
+        "perGame": 65,
+        "completedPct": 93.1,
+        "interceptedPct": 3.8,
+        "deflectedPct": 2.7,
+        "inaccuratePct": 0.4,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 7.3,
+        "turnoversPerGame": 4.75,
+        "vision": 63.665,
+        "meanSlack": -0.332,
+        "shareSlackPositive": 46.5,
+        "shareLaneUnder1m": 67.7,
+        "meanSeparation": 3.248,
+        "utilityGap": 0.052
+      },
+      "ELITE": {
+        "n": 1461,
+        "perGame": 365.25,
+        "completedPct": 93.8,
+        "interceptedPct": 2.1,
+        "deflectedPct": 3.2,
+        "inaccuratePct": 0.8,
+        "receiverPct": 0.1,
+        "outPct": 0,
+        "lostPossessionPct": 6.4,
+        "turnoversPerGame": 23.5,
+        "vision": 73.135,
+        "meanSlack": -0.439,
+        "shareSlackPositive": 39.6,
+        "shareLaneUnder1m": 70.1,
+        "meanSeparation": 3.333,
+        "utilityGap": 0.098
+      }
+    },
+    "defenderCohorts": {
+      "LOW": {
+        "n": 28,
+        "perGame": 7,
+        "completedPct": 96.4,
+        "interceptedPct": 3.6,
+        "deflectedPct": 0,
+        "inaccuratePct": 0,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 3.6,
+        "turnoversPerGame": 0.25
+      },
+      "MEDIUM": {
+        "n": 335,
+        "perGame": 83.75,
+        "completedPct": 94.6,
+        "interceptedPct": 2.4,
+        "deflectedPct": 2.4,
+        "inaccuratePct": 0.6,
+        "receiverPct": 0,
+        "outPct": 0,
+        "lostPossessionPct": 6,
+        "turnoversPerGame": 5
+      },
+      "ELITE": {
+        "n": 1232,
+        "perGame": 308,
+        "completedPct": 91.5,
+        "interceptedPct": 3.2,
+        "deflectedPct": 4.4,
+        "inaccuratePct": 0.7,
+        "receiverPct": 0.2,
+        "outPct": 0,
+        "lostPossessionPct": 8.4,
+        "turnoversPerGame": 26
+      }
+    },
+    "turnoverTaxonomy": {
+      "BAD_PASS|pass:DEFLECTED": 15,
+      "BAD_PASS|pass:LOOSE_INACCURATE": 0.5,
+      "INTERCEPTION|pass:INTERCEPTED": 12.5,
+      "LOST_DRIBBLE|noPass": 5.25,
+      "LOST_DRIBBLE|pass:COMPLETED": 4.75,
+      "OFFENSIVE_FOUL|noPass": 0.75,
+      "OFFENSIVE_FOUL|pass:COMPLETED": 1.25,
+      "OUT_OF_BOUNDS|pass:LOOSE_INACCURATE": 0.25,
+      "OUT_OF_BOUNDS|pass:LOOSE_RECEIVER": 0.25,
+      "SHOT_CLOCK|noPass": 0.25,
+      "STEPPED_OUT|noPass": 0.25,
+      "STEPPED_OUT|pass:COMPLETED": 0.25
+    },
+    "stealKinds": {
+      "CLEAN_STEAL": 8.75,
+      "DEFLECTION": 15,
+      "PASS_INTERCEPTION": 12.5,
+      "POKE_LOOSE": 1.25
+    },
+    "stealByResponsibility": {
+      "CLEAN_STEAL|MATCH": 0.75,
+      "CLEAN_STEAL|ON_BALL": 6.25,
+      "CLEAN_STEAL|STOP_BALL": 1.75,
+      "DEFLECTION|GAP": 13.5,
+      "DEFLECTION|MATCH": 0.25,
+      "DEFLECTION|ON_BALL": 0.5,
+      "DEFLECTION|PURSUE_LOOSE_BALL": 0.25,
+      "DEFLECTION|RECOVER": 0.25,
+      "DEFLECTION|STOP_BALL": 0.25,
+      "PASS_INTERCEPTION|GAP": 8.5,
+      "PASS_INTERCEPTION|MATCH": 2,
+      "PASS_INTERCEPTION|ON_BALL": 0.75,
+      "PASS_INTERCEPTION|PROTECT_RIM": 0.75,
+      "PASS_INTERCEPTION|RECOVER": 0.5,
+      "POKE_LOOSE|GAP": 0.25,
+      "POKE_LOOSE|ON_BALL": 0.25,
+      "POKE_LOOSE|STOP_BALL": 0.75
+    },
+    "stealsViaPassShare": 73.3
+  }
+}

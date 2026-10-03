@@ -14,6 +14,7 @@ import { activePossession, INITIAL_SHOT_VALUE_MEMORY, type MatchPlayerState, typ
 import { hashStringToSeed } from '@/engine/random'
 import { planScreen, SCREEN_MIN_SECONDS_LEFT } from './ScreenCore'
 import { attackingBasketForTeam } from '../structure/FiveOutStructure'
+import { ballFlightSeconds, executionQuality, interceptAttemptChance, passExecutionError, perceivedLaneRead, receiverDenial } from './PassRisk'
 import { isInOffensiveFrontcourt } from '../structure/OffensiveStructure'
 
 export interface ShotContest {
@@ -97,14 +98,9 @@ export function shotMakeProbability(shooting: number, distanceMeters: number, po
   return clamp(base + ratingEffect - longTwoPenalty - deepThreePenalty - clamp(contestScore, 0, 1) * (points === 2 && distanceMeters <= 2.2 ? tuning().rimContestPenalty : 0.28), 0.04, 0.82)
 }
 
+/** Execution quality of a throw (BT4.5: the lane is no longer part of it; the interception is its own layer, see PassRisk). */
 export function passQuality(state: MatchState, passer: MatchPlayerState, receiver: MatchPlayerState): number {
-  const average = (passer.passing.accuracy + passer.passing.vision + passer.passing.timing) / 3
-  const laneDistance = Math.min(...state.players
-    .filter((player) => player.active && player.teamId !== passer.teamId)
-    .map((player) => distanceToSegment(player.position, passer.position, receiver.position)), Number.POSITIVE_INFINITY)
-  const pressure = clamp((2.1 - laneDistance) / 2.1, 0, 1)
-  const effectivePassing = average - passer.fatigue * 0.06
-  return clamp(0.55 + (clamp(effectivePassing, 0, 100) - 50) * 0.004 - pressure * 0.22, 0.28, 0.94)
+  return executionQuality(passExecutionError(state, passer, receiver, distanceBetween(passer.position, receiver.position)))
 }
 
 export interface DecisionRead {
@@ -294,12 +290,26 @@ function readReceivers(state: MatchState, passer: MatchPlayerState, basket: Cour
     .map((player) => {
       const contest = predictContestAfterPass(state, passer, player)
       const opportunity = evaluateShotOpportunity(state, player, player.position, basket, contest)
-      const completion = 0.72 + 0.28 * passQuality(state, passer, player)
+      const completion = perceivedCompletion(state, passer, player)
       // A passer who sees the floor values his teammates' looks at what they are worth; one who does not, misses some of them.
       const sight = 1 - tuning().passSightSpread / 2 + tuning().passSightSpread * (passer.passing.vision / 100)
-      return { player, opportunity, completion, value: completion * opportunity.value * sight }
+      // BT4.5: a pass that is lost is not worth zero, it is worth minus the possession (and the break that follows).
+      return { player, opportunity, completion, value: completion * opportunity.value * sight - (1 - completion) * tuning().passLossPoints }
     })
     .sort((left, right) => right.value - left.value || String(left.player.playerId).localeCompare(String(right.player.playerId)))
+}
+
+/**
+ * BT4.5: the completion the passer EXPECTS, in its three layers (execution, lane, receiver availability), with the lane read as he can read it
+ * (a poor reader underestimates how fast a defender gets to the line, an elite one sees him already sliding in).
+ */
+export function perceivedCompletion(state: MatchState, passer: MatchPlayerState, receiver: MatchPlayerState): number {
+  const distance = distanceBetween(passer.position, receiver.position)
+  const lane = perceivedLaneRead(state, passer, passer.position, receiver.position, ballFlightSeconds(distance))
+  const execution = 1 - passExecutionError(state, passer, receiver, distance)
+  const interception = 1 - 0.85 * interceptAttemptChance(lane)
+  const availability = 1 - tuning().passDenialWeight * receiverDenial(state, passer, receiver)
+  return execution * interception * availability
 }
 
 function guardOf(state: MatchState, attacker: MatchPlayerState): MatchPlayerState | undefined {
@@ -653,13 +663,12 @@ function bestTransitionReceiver(state: MatchState, passer: MatchPlayerState, bas
       const progress = (player.position.x - passer.position.x) * direction
       const nearestDefender = Math.min(...state.players.filter((candidate) => candidate.active && candidate.teamId !== passer.teamId)
         .map((defender) => distanceBetween(defender.position, player.position)), Number.POSITIVE_INFINITY)
-      const lane = Math.min(...state.players.filter((candidate) => candidate.active && candidate.teamId !== passer.teamId)
-        .map((defender) => distanceToSegment(defender.position, passer.position, player.position)), Number.POSITIVE_INFINITY)
-      const score = progress + Math.min(nearestDefender, 8) * 0.28 + player.offense.creation * 0.008
-        - Math.max(0, 1.1 - lane) * 3
-      return { player, score, progress, lane }
+      // BT4.5: the same risk the half court uses (execution, lane in real time, receiver availability): a pass ahead into a lane that is closed is not an outlet.
+      const completion = perceivedCompletion(state, passer, player)
+      const score = progress + Math.min(nearestDefender, 8) * 0.28 + player.offense.creation * 0.008 - (1 - completion) * 14
+      return { player, score, progress, completion }
     })
-    .filter((candidate) => candidate.progress > 0.75 && candidate.lane > 0.45)
+    .filter((candidate) => candidate.progress > 0.75 && candidate.completion > 0.6)
     .sort((left, right) => right.score - left.score || String(left.player.playerId).localeCompare(String(right.player.playerId)))[0]?.player
 }
 

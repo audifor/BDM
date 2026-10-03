@@ -13,6 +13,7 @@ import { assessDriveContact, assessShootingContact, CONTACT_DISTANCE_METERS, FOU
 import { commitFoul } from '../rules/Fouls'
 import { tuning } from '../tuning'
 import { classifyShotCreation, shotZone } from '../stats/ShotEcology'
+import { executionQuality, interceptAttemptChance, laneRead, passExecutionError } from './PassRisk'
 import { bestReceiver, driveTarget, estimateShotContest, evaluateShotOpportunity, floaterFactor, passQuality, pullUpFactor, putbackQuality, readDecision, readDriveStop, shotMakeProbability, shotValueAt } from './DecisionCore'
 import { decisionNoise, reconcileOffenseFlow } from './OffenseFlow'
 import { createScreenState, planScreen, reconcileScreen, useScreen } from './ScreenCore'
@@ -24,9 +25,6 @@ const DRIVE_MIN_PROGRESS_METERS = 2.4
 const DRIVE_TARGET_RADIUS_METERS = 1.05
 const DRIVE_TIMEOUT_TICKS = 36
 const CLOSEOUT_ARRIVAL_METERS = 1.2
-/** A defender this close to the passing line can deflect / intercept the pass. */
-const LANE_STEAL_REACH_METERS = 1.3
-const LANE_STEAL_MAX_CHANCE = 0.34
 /** The driver has beaten his man when he has this much separation AND the defender is no longer ahead of him. */
 const DRIVE_BEATEN_GAP_METERS = 1.2
 const DRIVE_BEATEN_AHEAD_METERS = 0.2
@@ -439,7 +437,6 @@ function executeDecision(state: MatchState, decision: MatchDecision): MatchState
     ? state.players.find((player) => player.playerId === decision.targetPlayerId)
     : bestReceiver(state, actor, decision.kind === 'KICK_OUT')
   if (!receiver || receiver.teamId !== actor.teamId) return state
-  const quality = passQuality(state, actor, receiver)
   const distance = distanceBetween(actor.position, receiver.position)
   const travelTicks = Math.max(2, Math.min(8, Math.ceil(distance / 10 * 10)))
   const predictionSeconds = travelTicks * 0.1
@@ -447,19 +444,28 @@ function executeDecision(state: MatchState, decision: MatchDecision): MatchState
     x: receiver.position.x + receiver.velocity.x * predictionSeconds,
     y: receiver.position.y + receiver.velocity.y * predictionSeconds,
   }
-  // A pass can be thrown badly: worse passers and tighter lanes miss the receiver by more than he can reach.
+  // BT4.5, layer 2 (EXECUTION): the throw can go wrong from skill, distance, a defender on the passer and a running receiver; never from the lane.
+  const executionError = passExecutionError(state, actor, receiver, distance)
+  const quality = executionQuality(executionError)
   const errorDraw = draw(state.rng, 'outcome')
   const directionDraw = draw(errorDraw.state, 'outcome')
-  state = { ...state, rng: directionDraw.state }
-  const badPass = errorDraw.value < clamp(0.015 + (0.94 - quality) * 0.16, 0.01, 0.2)
+  const interceptDraw = draw(directionDraw.state, 'outcome')
+  state = { ...state, rng: interceptDraw.state }
+  const badPass = errorDraw.value < executionError
   const angle = directionDraw.value * Math.PI * 2
   const miss = badPass ? 1.9 : 0
-  // A defender in the passing lane may get a hand on it: the ball ends up where he is instead of where the receiver is.
-  const contested = passLaneContest(state, actor, led, errorDraw.value, directionDraw.value)
-  const target: CourtPosition = contested?.position ?? {
+  const target: CourtPosition = {
     x: clamp(led.x + Math.cos(angle) * miss, 0.25, state.court.lengthMeters - 0.25),
     y: clamp(led.y + Math.sin(angle) * miss, 0.25, state.court.widthMeters - 0.25),
   }
+  // BT4.5, layer 3 (INTERCEPTION): a defender who can be on the line before the ball passes may go for it; the ball keeps flying to where it was thrown and
+  // the defender runs to meet it, so a pass is only stolen when he is physically there.
+  const lane = laneRead(state, actor.position, target, actor.teamId, travelTicks / 10, 1)
+  const attempt = lane.defender !== null && interceptDraw.value < interceptAttemptChance(lane)
+  const interceptShare = lane.defender === null ? 0 : clamp(0.4 + ((lane.defender.defense.steal ?? 50) - actor.passing.accuracy) / 200, 0.15, 0.7)
+  const contested = attempt && lane.defender !== null
+    ? { defender: lane.defender, point: lane.point, kind: (interceptDraw.value / Math.max(1e-6, interceptAttemptChance(lane))) < interceptShare ? 'INTERCEPTION' as const : 'DEFLECTION' as const }
+    : undefined
   const action = createAction(state, decision, decision.kind, {
     phase: 'PASS_IN_FLIGHT', targetPlayerId: receiver.playerId, target: { x: clamp(led.x, 0.25, state.court.lengthMeters - 0.25), y: clamp(led.y, 0.25, state.court.widthMeters - 0.25) }, passQuality: quality,
   })
@@ -472,7 +478,7 @@ function executeDecision(state: MatchState, decision: MatchDecision): MatchState
     catchRadiusMeters: 0.55 + quality * 0.45,
     actionId: action.id,
     passQuality: quality,
-    ...(contested === undefined ? {} : { contest: { defenderId: contested.defender.playerId, kind: contested.kind } }),
+    ...(contested === undefined ? {} : { contest: { defenderId: contested.defender.playerId, kind: contested.kind, point: contested.point } }),
   }
   next = releasePass(next, command)
   return useScreen(next, actor.playerId)
@@ -632,31 +638,6 @@ function applyDriveIntents(state: MatchState): MatchState {
   return { ...state, movementIntents: [...state.movementIntents.filter((item) => item.playerId !== activeDrive.playerId), intent] }
 }
 
-/**
- * A defender standing in the passing lane may get a hand on the ball (closer to the line and better hands make it likelier).
- * Whether he takes it clean (interception) or only tips it (deflection) depends on his hands against the passer's accuracy.
- */
-function passLaneContest(state: MatchState, passer: MatchPlayerState, receiverTarget: CourtPosition, draw1: number, draw2: number): { readonly position: CourtPosition; readonly defender: MatchPlayerState; readonly kind: 'INTERCEPTION' | 'DEFLECTION' } | undefined {
-  let best: { defender: MatchPlayerState; distance: number; point: CourtPosition } | undefined
-  const dx = receiverTarget.x - passer.position.x
-  const dy = receiverTarget.y - passer.position.y
-  const lengthSquared = dx * dx + dy * dy
-  if (lengthSquared < 1) return undefined
-  for (const defender of state.players) {
-    if (!defender.active || defender.teamId === passer.teamId) continue
-    const t = clamp(((defender.position.x - passer.position.x) * dx + (defender.position.y - passer.position.y) * dy) / lengthSquared, 0, 1)
-    if (t < 0.15 || t > 0.9) continue
-    const point = { x: passer.position.x + t * dx, y: passer.position.y + t * dy }
-    const distance = distanceBetween(defender.position, point)
-    if (distance <= LANE_STEAL_REACH_METERS && (best === undefined || distance < best.distance)) best = { defender, distance, point }
-  }
-  if (best === undefined) return undefined
-  const chance = (1 - best.distance / LANE_STEAL_REACH_METERS) * LANE_STEAL_MAX_CHANCE * (0.6 + (best.defender.defense.steal ?? 50) / 125)
-  if (draw1 * 4 >= chance) return undefined
-  const interceptShare = clamp(0.4 + ((best.defender.defense.steal ?? 50) - passer.passing.accuracy) / 200, 0.15, 0.7)
-  return { position: { ...best.defender.position }, defender: best.defender, kind: draw2 < interceptShare ? 'INTERCEPTION' : 'DEFLECTION' }
-}
-
 /** The intended receiver of a pass in flight goes to meet it instead of drifting to a slot while the ball is on its way. */
 function applyPassReceiveIntents(state: MatchState): MatchState {
   if (state.ball.kind !== 'PASS_IN_FLIGHT' || state.ball.isInbound) return state
@@ -683,6 +664,14 @@ function applyPassReceiveIntents(state: MatchState): MatchState {
     const tactics = defender.teamId === next.homeTeamId ? next.tacticalPlans.home.defense : next.tacticalPlans.away.defense
     const target = guardPosition(action.target, action.target, basket, 'ON_BALL', next.court, tactics)
     next = { ...next, movementIntents: [...next.movementIntents.filter((item) => item.playerId !== defender.playerId), { ...defenderIntent, target, urgency: 'sprint' as const }] }
+  }
+  // BT4.5: the defender who went for the ball runs to the point of the line where he can meet it.
+  if (ball.contest?.point !== undefined) {
+    const interceptor = next.players.find((player) => player.playerId === ball.contest!.defenderId)
+    const base = next.movementIntents.find((item) => item.playerId === ball.contest!.defenderId)
+    if (interceptor !== undefined && base !== undefined) {
+      next = { ...next, movementIntents: [...next.movementIntents.filter((item) => item.playerId !== interceptor.playerId), { ...base, target: { ...ball.contest.point }, urgency: 'sprint' as const, facing: { kind: 'BALL' as const } }] }
+    }
   }
   return next
 }

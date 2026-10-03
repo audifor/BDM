@@ -98,6 +98,20 @@ export interface MatchNextTuning {
   readonly playPassBoost: number
   /** Passes after its action that a set needs before it counts as run (the second read: the ball goes to the weak side). */
   readonly playExtraPasses: number
+  /** BT4.5 pass ecology. Reaction time of a defender to a ball in the air (scaled by his hands: elite steal reacts ~30% faster than poor). */
+  readonly passReactionSeconds: number
+  /** Chance that a defender who can be on the line first goes for the ball (times his hands); the physics decides whether he gets it. */
+  readonly passInterceptMax: number
+  /** Seconds of slack over which that chance rises from 0 to its maximum. */
+  readonly passInterceptSlackScale: number
+  /** Seconds by which a passer with no vision underestimates how fast a defender reaches the line (0 for vision 100). */
+  readonly passPerceptionBiasSeconds: number
+  /** Base probability that a throw goes wrong, before skill, distance, pressure on the passer and a running receiver. */
+  readonly passErrorBase: number
+  /** What a lost ball costs the offense, in points, when a pass is valued (the continuation of the possession plus the opponent's break). */
+  readonly passLossPoints: number
+  /** How much a denied receiver (a defender on him or between him and the ball) lowers the completion the passer expects. */
+  readonly passDenialWeight: number
 }
 
 export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
@@ -112,8 +126,8 @@ export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
   foulDrawWeight: 1,
   holdDiscount: 0.95,
   shootValueScale: 1,
-  driveValueScale: 1,
-  passValueScale: 1.12,
+  driveValueScale: 1.1,
+  passValueScale: 1.09,
   putbackQualityWeight: 0.5,
   helpCloseoutBelief: 0,
   driveBeatBase: 0.05,
@@ -156,6 +170,13 @@ export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
   playDriveBoost: 1.3,
   playPassBoost: 1.25,
   playExtraPasses: 1,
+  passReactionSeconds: 0.25,
+  passInterceptMax: 0.12,
+  passInterceptSlackScale: 0.35,
+  passPerceptionBiasSeconds: 0.3,
+  passErrorBase: 0.012,
+  passLossPoints: 0.9,
+  passDenialWeight: 0.25,
 })
 
 let active: MatchNextTuning = DEFAULT_MATCH_NEXT_TUNING

@@ -1,0 +1,12 @@
+{
+  "decisions": 1066,
+  "sameReceiver": 0.813,
+  "meanDistanceToBasket": {
+    "legacy": 9.058,
+    "fresh": 9.578
+  },
+  "perimeterShare": {
+    "legacy": 0.799,
+    "fresh": 0.84
+  }
+}

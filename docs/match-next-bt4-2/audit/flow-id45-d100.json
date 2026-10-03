@@ -1,0 +1,745 @@
+{
+  "tag": "id45-d100",
+  "seeds": [
+    424242,
+    7,
+    1,
+    99,
+    2024,
+    31337,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "overrides": {
+    "driveValueScale": 1
+  },
+  "summary": {
+    "games": 12,
+    "possessionsPerGame": 174.6,
+    "passes": {
+      "perGame": 635.4,
+      "perHalfCourtPossession": {
+        "n": 1661,
+        "mean": 3.93,
+        "median": 3,
+        "p10": 1,
+        "p90": 8,
+        "min": 0,
+        "max": 24
+      },
+      "shareOfHalfCourtWithZeroOrOnePass": 0.242,
+      "beforeFirstShot": {
+        "distribution": {
+          "n": 1737,
+          "mean": 3.64,
+          "median": 3,
+          "p10": 1,
+          "p90": 7,
+          "min": 0,
+          "max": 13
+        },
+        "zero": 0.039,
+        "one": 0.2,
+        "twoOrThree": 0.291,
+        "fourPlus": 0.471
+      },
+      "kickOutPassesPerGame": 55.8,
+      "afterDrive": {
+        "?": {
+          "perGame": 2.7,
+          "kickOutWithin4s": 0,
+          "shotWithin4s": 0
+        },
+        "ADVANTAGE": {
+          "perGame": 49.6,
+          "kickOutWithin4s": 0.95,
+          "shotWithin4s": 0.632
+        },
+        "CANCELLED": {
+          "perGame": 3.3,
+          "kickOutWithin4s": 0.538,
+          "shotWithin4s": 0.256
+        },
+        "CONTAINED": {
+          "perGame": 11.8,
+          "kickOutWithin4s": 0.922,
+          "shotWithin4s": 0.44
+        },
+        "FINISH": {
+          "perGame": 32.5,
+          "kickOutWithin4s": 0.105,
+          "shotWithin4s": 0.997
+        },
+        "FOULED": {
+          "perGame": 1.1,
+          "kickOutWithin4s": 0.231,
+          "shotWithin4s": 0
+        },
+        "STOPPED": {
+          "perGame": 11.5,
+          "kickOutWithin4s": 0.072,
+          "shotWithin4s": 1
+        }
+      }
+    },
+    "transition": {
+      "defensiveRebound": {
+        "perGame": 78,
+        "toFirstDecision": {
+          "n": 919,
+          "mean": 0.93,
+          "median": 0.9,
+          "p10": 0.9,
+          "p90": 0.9,
+          "min": 0.9,
+          "max": 10.3
+        },
+        "toFrontcourt": {
+          "n": 853,
+          "mean": 3.49,
+          "median": 3.3,
+          "p10": 2.5,
+          "p90": 4.2,
+          "min": 1.6,
+          "max": 11
+        },
+        "toHalfCourtPhase": {
+          "n": 577,
+          "mean": 8.99,
+          "median": 9.2,
+          "p10": 4.2,
+          "p90": 13.6,
+          "min": 1.7,
+          "max": 24.2
+        },
+        "transitionLife": {
+          "n": 860,
+          "mean": 3.22,
+          "median": 3.2,
+          "p10": 2.4,
+          "p90": 4,
+          "min": 0.1,
+          "max": 6.8
+        },
+        "resolvedDetail": {
+          "STOPPED/defensiveRebound": 831,
+          "NEUTRAL/defensiveRebound": 29
+        },
+        "shotWithin8s": 0.151,
+        "firstShotSeconds": {
+          "n": 760,
+          "mean": 12.35,
+          "median": 12.2,
+          "p10": 6.4,
+          "p90": 18.1,
+          "min": 2.5,
+          "max": 31.5
+        }
+      },
+      "madeBasketInbound": {
+        "perGame": 66.7,
+        "toFirstDecision": {
+          "n": 751,
+          "mean": 6.24,
+          "median": 5.6,
+          "p10": 4.5,
+          "p90": 8.1,
+          "min": 4.4,
+          "max": 18.1
+        },
+        "toFrontcourt": {
+          "n": 763,
+          "mean": 4.67,
+          "median": 4.5,
+          "p10": 4.4,
+          "p90": 4.6,
+          "min": 4.3,
+          "max": 14.8
+        },
+        "toHalfCourtPhase": {
+          "n": 738,
+          "mean": 5.14,
+          "median": 4.5,
+          "p10": 4.4,
+          "p90": 6.5,
+          "min": 4.3,
+          "max": 15.4
+        },
+        "transitionLife": {
+          "n": 761,
+          "mean": 3.79,
+          "median": 3.8,
+          "p10": 3.7,
+          "p90": 4.5,
+          "min": 0.6,
+          "max": 4.7
+        },
+        "resolvedDetail": {
+          "STOPPED/madeBasketInbound": 749,
+          "NEUTRAL/madeBasketInbound": 12
+        },
+        "shotWithin8s": 0.223,
+        "firstShotSeconds": {
+          "n": 676,
+          "mean": 12.26,
+          "median": 12.2,
+          "p10": 7,
+          "p90": 18.2,
+          "min": 4.7,
+          "max": 32.3
+        }
+      },
+      "openingJumpBall": {
+        "perGame": 1,
+        "toFirstDecision": {
+          "n": 12,
+          "mean": 1.09,
+          "median": 1,
+          "p10": 0.4,
+          "p90": 1.8,
+          "min": 0.4,
+          "max": 1.9
+        },
+        "toFrontcourt": {
+          "n": 12,
+          "mean": 0.45,
+          "median": 0.9,
+          "p10": 0,
+          "p90": 0.9,
+          "min": 0,
+          "max": 0.9
+        },
+        "toHalfCourtPhase": {
+          "n": 12,
+          "mean": 1.5,
+          "median": 3,
+          "p10": 0,
+          "p90": 3,
+          "min": 0,
+          "max": 3
+        },
+        "transitionLife": {
+          "n": 12,
+          "mean": 0.6,
+          "median": 1.2,
+          "p10": 0,
+          "p90": 1.2,
+          "min": 0,
+          "max": 1.2
+        },
+        "resolvedDetail": {
+          "NEUTRAL/openingJumpBall": 6,
+          "STOPPED/openingJumpBall": 6
+        },
+        "shotWithin8s": 0.583,
+        "firstShotSeconds": {
+          "n": 12,
+          "mean": 6.33,
+          "median": 3.6,
+          "p10": 3.6,
+          "p90": 11.3,
+          "min": 3,
+          "max": 12.3
+        }
+      },
+      "other": {
+        "perGame": 1.3,
+        "toFirstDecision": {
+          "n": 12,
+          "mean": 4.46,
+          "median": 4.7,
+          "p10": 1,
+          "p90": 7.8,
+          "min": 0.7,
+          "max": 10.4
+        },
+        "toFrontcourt": {
+          "n": 16,
+          "mean": 2.94,
+          "median": 2.6,
+          "p10": 0,
+          "p90": 8,
+          "min": 0,
+          "max": 8.6
+        },
+        "toHalfCourtPhase": {
+          "n": 16,
+          "mean": 3.21,
+          "median": 3.3,
+          "p10": 0.1,
+          "p90": 8.3,
+          "min": 0.1,
+          "max": 8.6
+        },
+        "transitionLife": {
+          "n": 16,
+          "mean": 1.79,
+          "median": 2.1,
+          "p10": 0,
+          "p90": 4.5,
+          "min": 0,
+          "max": 5.9
+        },
+        "resolvedDetail": {
+          "NEUTRAL/defensiveRebound": 5,
+          "STOPPED/looseBallRecovery": 9,
+          "NEUTRAL/madeBasketInbound": 2
+        },
+        "shotWithin8s": 0.313,
+        "firstShotSeconds": {
+          "n": 11,
+          "mean": 8.75,
+          "median": 10.1,
+          "p10": 4.1,
+          "p90": 13.8,
+          "min": 1,
+          "max": 16
+        }
+      },
+      "periodStart": {
+        "perGame": 3,
+        "toFirstDecision": {
+          "n": 36,
+          "mean": 2.49,
+          "median": 2.1,
+          "p10": 1.2,
+          "p90": 3.8,
+          "min": 1.1,
+          "max": 6.8
+        },
+        "toFrontcourt": {
+          "n": 36,
+          "mean": 0.72,
+          "median": 0.7,
+          "p10": 0.7,
+          "p90": 0.8,
+          "min": 0.7,
+          "max": 0.8
+        },
+        "toHalfCourtPhase": {
+          "n": 36,
+          "mean": 0.72,
+          "median": 0.7,
+          "p10": 0.7,
+          "p90": 0.8,
+          "min": 0.7,
+          "max": 0.8
+        },
+        "transitionLife": {
+          "n": 0,
+          "mean": 0,
+          "median": 0,
+          "p10": 0,
+          "p90": 0,
+          "min": 0,
+          "max": 0
+        },
+        "resolvedDetail": {},
+        "shotWithin8s": 0.389,
+        "firstShotSeconds": {
+          "n": 33,
+          "mean": 9.82,
+          "median": 9.4,
+          "p10": 6.3,
+          "p90": 15.4,
+          "min": 3.8,
+          "max": 17.8
+        }
+      },
+      "shotClockViolation": {
+        "perGame": 0.4,
+        "toFirstDecision": {
+          "n": 5,
+          "mean": 4.7,
+          "median": 4.6,
+          "p10": 3,
+          "p90": 6.1,
+          "min": 3,
+          "max": 6.1
+        },
+        "toFrontcourt": {
+          "n": 5,
+          "mean": 2.94,
+          "median": 3,
+          "p10": 1.8,
+          "p90": 4,
+          "min": 1.8,
+          "max": 4
+        },
+        "toHalfCourtPhase": {
+          "n": 5,
+          "mean": 2.94,
+          "median": 3,
+          "p10": 1.8,
+          "p90": 4,
+          "min": 1.8,
+          "max": 4
+        },
+        "transitionLife": {
+          "n": 0,
+          "mean": 0,
+          "median": 0,
+          "p10": 0,
+          "p90": 0,
+          "min": 0,
+          "max": 0
+        },
+        "resolvedDetail": {},
+        "shotWithin8s": 0.6,
+        "firstShotSeconds": {
+          "n": 5,
+          "mean": 8.12,
+          "median": 7.5,
+          "p10": 5.4,
+          "p90": 11.4,
+          "min": 5.4,
+          "max": 11.4
+        }
+      },
+      "steal": {
+        "perGame": 21.9,
+        "toFirstDecision": {
+          "n": 247,
+          "mean": 4.14,
+          "median": 3.6,
+          "p10": 1.1,
+          "p90": 7.6,
+          "min": 0.6,
+          "max": 14
+        },
+        "toFrontcourt": {
+          "n": 255,
+          "mean": 2.47,
+          "median": 2.8,
+          "p10": 0,
+          "p90": 4.4,
+          "min": 0,
+          "max": 8.8
+        },
+        "toHalfCourtPhase": {
+          "n": 251,
+          "mean": 2.79,
+          "median": 3.1,
+          "p10": 0,
+          "p90": 4.9,
+          "min": 0,
+          "max": 12
+        },
+        "transitionLife": {
+          "n": 260,
+          "mean": 2.1,
+          "median": 2.5,
+          "p10": 0,
+          "p90": 4.3,
+          "min": 0,
+          "max": 5.5
+        },
+        "resolvedDetail": {
+          "STOPPED/turnover": 164,
+          "NEUTRAL/defensiveRebound": 40,
+          "STOPPED/madeBasketInbound": 18,
+          "NEUTRAL/madeBasketInbound": 15,
+          "NEUTRAL/turnover": 10,
+          "STOPPED/defensiveRebound": 13
+        },
+        "shotWithin8s": 0.308,
+        "firstShotSeconds": {
+          "n": 216,
+          "mean": 10.18,
+          "median": 9.9,
+          "p10": 4.6,
+          "p90": 16.5,
+          "min": 1.1,
+          "max": 23.5
+        }
+      },
+      "turnoverInbound": {
+        "perGame": 2.3,
+        "toFirstDecision": {
+          "n": 26,
+          "mean": 4.85,
+          "median": 4.8,
+          "p10": 3.1,
+          "p90": 7.3,
+          "min": 1.5,
+          "max": 9.4
+        },
+        "toFrontcourt": {
+          "n": 26,
+          "mean": 4.06,
+          "median": 4.2,
+          "p10": 3,
+          "p90": 5.2,
+          "min": 0.8,
+          "max": 6.2
+        },
+        "toHalfCourtPhase": {
+          "n": 26,
+          "mean": 4.06,
+          "median": 4.2,
+          "p10": 3,
+          "p90": 5.2,
+          "min": 0.8,
+          "max": 6.2
+        },
+        "transitionLife": {
+          "n": 0,
+          "mean": 0,
+          "median": 0,
+          "p10": 0,
+          "p90": 0,
+          "min": 0,
+          "max": 0
+        },
+        "resolvedDetail": {},
+        "shotWithin8s": 0.407,
+        "firstShotSeconds": {
+          "n": 24,
+          "mean": 10.13,
+          "median": 8.2,
+          "p10": 5.6,
+          "p90": 17.3,
+          "min": 4.1,
+          "max": 17.8
+        }
+      }
+    },
+    "utilities": {
+      "decisions": 9344,
+      "decisionsPerPossession": 4.46,
+      "meanUtility": {
+        "shoot": 0.985,
+        "drive": 0.906,
+        "pass": 1.254,
+        "hold": 0.96,
+        "screen": 0.297
+      },
+      "chosenShare": {
+        "CATCH_AND_SHOOT": 0.136,
+        "DRIVE": 0.144,
+        "KICK_OUT": 0.06,
+        "PASS": 0.545,
+        "SCREEN": 0.105,
+        "SHOOT": 0.01
+      },
+      "utilityWhenChosen": {
+        "CATCH_AND_SHOOT": {
+          "n": 1270,
+          "shoot": 1.361,
+          "drive": 0.837,
+          "pass": 1.16,
+          "hold": 0.768
+        },
+        "DRIVE": {
+          "n": 1348,
+          "shoot": 0.837,
+          "drive": 1.152,
+          "pass": 1.046,
+          "hold": 1.054
+        },
+        "KICK_OUT": {
+          "n": 562,
+          "shoot": 0.951,
+          "drive": 0,
+          "pass": 1.455,
+          "hold": 0.933
+        },
+        "PASS": {
+          "n": 5091,
+          "shoot": 0.934,
+          "drive": 0.938,
+          "pass": 1.339,
+          "hold": 0.971
+        },
+        "SCREEN": {
+          "n": 984,
+          "shoot": 0.991,
+          "drive": 1.061,
+          "pass": 1.114,
+          "hold": 1.047
+        },
+        "SHOOT": {
+          "n": 89,
+          "shoot": 0.925,
+          "drive": 0.4,
+          "pass": 1.102,
+          "hold": 0.834
+        }
+      },
+      "passBeatsDriveShare": 0.751,
+      "passWithin0_1OfBestShare": 0.662
+    },
+    "cadence": {
+      "playerGames": 171,
+      "touchSeconds": {
+        "n": 171,
+        "mean": 1.53,
+        "median": 1.42,
+        "p10": 0.88,
+        "p90": 2.27,
+        "min": 0.61,
+        "max": 4.67
+      },
+      "passShare": {
+        "n": 171,
+        "mean": 0.57,
+        "median": 0.57,
+        "p10": 0.44,
+        "p90": 0.71,
+        "min": 0.29,
+        "max": 0.9
+      },
+      "correlations": {
+        "vision vs touchSeconds": -0.23,
+        "creation vs touchSeconds": -0.33,
+        "usage vs touchSeconds": -0.33,
+        "vision vs passShare": -0.1,
+        "creation vs passShare": -0.25,
+        "usage vs passShare": -0.23,
+        "creation vs assists": 0.35,
+        "vision vs assists": 0.28,
+        "passShare vs assists": 0.05
+      }
+    },
+    "secondChance": {
+      "perGame": 12.5,
+      "seconds": {
+        "n": 150,
+        "mean": 22.82,
+        "median": 22.2,
+        "p10": 15,
+        "p90": 31.5,
+        "min": 9,
+        "max": 44.4
+      },
+      "orebsPerPossession": 1.08,
+      "secondsBeforeFirstOreb": {
+        "n": 150,
+        "mean": 14.29,
+        "median": 14.4,
+        "p10": 7.8,
+        "p90": 19.7,
+        "min": 4.1,
+        "max": 32.5
+      },
+      "secondsFromFirstOrebToEnd": {
+        "n": 150,
+        "mean": 8.53,
+        "median": 8.3,
+        "p10": 3.1,
+        "p90": 13.6,
+        "min": 0,
+        "max": 24.9
+      },
+      "toFirstDecisionAfterOreb": {
+        "n": 147,
+        "mean": 0.89,
+        "median": 0.8,
+        "p10": 0.7,
+        "p90": 1.2,
+        "min": 0.7,
+        "max": 5.3
+      },
+      "toNextShotAfterOreb": {
+        "n": 136,
+        "mean": 6.71,
+        "median": 6.9,
+        "p10": 2.3,
+        "p90": 11.2,
+        "min": 1,
+        "max": 18.9
+      },
+      "phaseSecondsWholePossession": {
+        "inbound": 0.48,
+        "backcourtAdvance": 0.07,
+        "transition": 2.91,
+        "settlement": 3.23,
+        "reading": 2.26,
+        "offBallMove": 0.17,
+        "screenSetup": 2.62,
+        "drive": 0.94,
+        "passFlight": 4.24,
+        "shotSetup": 0.5,
+        "shotFlight": 1.14,
+        "rebound": 2,
+        "offensiveReset": 0.89,
+        "advantage": 0.45,
+        "deadBall": 0.93
+      },
+      "phaseSecondsAfterFirstOreb": {
+        "inbound": 0.02,
+        "transition": 0.02,
+        "settlement": 1.06,
+        "reading": 1.12,
+        "offBallMove": 0.09,
+        "screenSetup": 0.97,
+        "drive": 0.18,
+        "passFlight": 2.18,
+        "shotSetup": 0.27,
+        "shotFlight": 0.6,
+        "rebound": 0.83,
+        "offensiveReset": 0.89,
+        "advantage": 0.13,
+        "deadBall": 0.17
+      },
+      "shotsPerPossession": 1.97,
+      "passesAfterOrebBeforeShot": {
+        "n": 150,
+        "mean": 3.23,
+        "median": 3,
+        "p10": 0,
+        "p90": 6,
+        "min": 0,
+        "max": 9
+      }
+    },
+    "sampleEvents": {
+      "transitionStarted": {
+        "sequence": 12,
+        "t": 20,
+        "period": 1,
+        "gameClockTenths": 6000,
+        "type": "transitionStarted",
+        "teamId": "generated-team-0001",
+        "transitionTrigger": "openingJumpBall",
+        "transitionAdvantage": "NEUTRAL"
+      },
+      "possessionPhaseChanged": {
+        "sequence": 13,
+        "t": 20,
+        "period": 1,
+        "gameClockTenths": 6000,
+        "type": "possessionPhaseChanged",
+        "possessionId": "possession-1",
+        "teamId": "generated-team-0001",
+        "phase": "SETUP"
+      },
+      "transitionResolved": {
+        "sequence": 14,
+        "t": 20,
+        "period": 1,
+        "gameClockTenths": 6000,
+        "type": "transitionResolved",
+        "teamId": "generated-team-0001",
+        "transitionTrigger": "openingJumpBall",
+        "transitionAdvantage": "NEUTRAL"
+      },
+      "assist": {
+        "sequence": 525,
+        "t": 1029,
+        "period": 1,
+        "gameClockTenths": 5180,
+        "type": "assist",
+        "possessionId": "possession-7",
+        "teamId": "generated-team-0001",
+        "playerId": "generated-player-0008",
+        "shooterPlayerId": "generated-player-0004",
+        "assistPlayerId": "generated-player-0008"
+      }
+    }
+  }
+}

@@ -35,8 +35,8 @@ export interface PassInFlightBallState {
   readonly catchRadiusMeters?: number
   readonly actionId?: string
   readonly passQuality?: number
-  /** BT3I: a defender in the lane got a hand on the pass; how it ends is decided when the ball reaches him. */
-  readonly contest?: { readonly defenderId: PlayerId; readonly kind: 'INTERCEPTION' | 'DEFLECTION' }
+  /** BT3I/BT4.5: a defender who can be on the line first goes for the ball; whether he gets there is decided by where he is when the ball passes him. */
+  readonly contest?: { readonly defenderId: PlayerId; readonly kind: 'INTERCEPTION' | 'DEFLECTION'; /** BT4.5: the point of the line where the defender goes to meet the ball. */ readonly point?: CourtPosition }
 }
 
 export interface ShotInFlightBallState {

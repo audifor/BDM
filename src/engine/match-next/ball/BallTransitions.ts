@@ -22,7 +22,7 @@ export interface ReleasePassCommand {
   readonly catchRadiusMeters?: number
   readonly actionId?: string
   readonly passQuality?: number
-  readonly contest?: { readonly defenderId: PlayerId; readonly kind: 'INTERCEPTION' | 'DEFLECTION' }
+  readonly contest?: { readonly defenderId: PlayerId; readonly kind: 'INTERCEPTION' | 'DEFLECTION'; readonly point?: CourtPosition }
 }
 
 export interface ReleaseShotCommand {
@@ -384,11 +384,14 @@ export function advanceBallAtTick(state: MatchState): MatchState {
     const receiverDistance = receiver && receiver.teamId === ball.passerTeamId
       ? distanceBetween(receiver.position, position) : Number.POSITIVE_INFINITY
     const receiverCanCatch = receiverDistance <= (ball.catchRadiusMeters ?? BALL_ACQUISITION_RADIUS_METERS)
-    if (state.t < ball.arrivalT) return moved
-    if (ball.contest?.kind === 'DEFLECTION' && !ball.isInbound) {
-      const deflector = findActivePlayer(moved, ball.contest.defenderId)
-      if (deflector && deflector.active && distanceBetween(deflector.position, position) <= 1.3) return deflectPass(moved, ball, deflector.playerId, position)
+    // BT4.5: the defender who went for the ball takes it where he meets it, along the flight, if he is physically there when the ball passes him.
+    if (ball.contest !== undefined && !ball.isInbound && progress > 0.05 && progress < 1) {
+      const interceptor = findActivePlayer(moved, ball.contest.defenderId)
+      if (interceptor && interceptor.active && distanceBetween(interceptor.position, position) <= BALL_ACQUISITION_RADIUS_METERS) {
+        return ball.contest.kind === 'INTERCEPTION' ? interceptPass(moved, interceptor.playerId) : deflectPass(moved, ball, interceptor.playerId, position)
+      }
     }
+    if (state.t < ball.arrivalT) return moved
     const defender = ball.isInbound ? undefined : moved.players.filter((player) => player.active && player.teamId !== ball.passerTeamId)
       .map((player) => ({ player, distance: distanceBetween(player.position, position) }))
       .sort((left, right) => left.distance - right.distance || String(left.player.playerId).localeCompare(String(right.player.playerId)))
