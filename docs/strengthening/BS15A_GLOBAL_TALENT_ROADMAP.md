@@ -58,7 +58,7 @@
 
 **Dependencies:** stable identity/materialization, recruiting permission boundaries, and eligibility checks at commitment/enrollment. Support the first end-to-end source route before expanding all routes.
 
-**Exit gate:** scouting and recruiting use authorized information only; one candidate cannot be signed twice; offer, commitment, enrollment and roster arrival are idempotent and auditable; ineligible prospects receive an actionable explanation; the original NCAA recruiting cycle continues to work.
+**Exit gate:** scouting and recruiting use authorized information only; one candidate cannot be signed twice; offer, commitment, enrollment and roster arrival are idempotent and auditable; ineligible prospects receive an actionable explanation; the original NCAA recruiting cycle continues to work. BS15E adds a relationship-led decision slice over canonical Player identity, distinct preference truth and program-specific imperfect intel, a bounded one-candidate TalentCohort discovery action, and versioned rules calendars. Successor seasons use simulated carry-forward rulesets when no newer verified source is configured. Basketball signing windows now resolve the regular opening from the season championship final and the final signing date from separate program policy; both missing inputs fail closed. Full Scouting/OrganizationKnowledge discovery integration, season-scoped Staff designation/workload, negative/gray recruiting Governance, broader AI fairness and end-to-end international certification remain open; see `BS15E_RECRUITING_RPG_AND_INTERNATIONAL_ACQUISITION.md` and `docs/research/NCAA_BASKETBALL_RECRUITING_RULES_2026_27.md`.
 
 ### BS15F · College Continuation, Compensation and Transfer Portal
 

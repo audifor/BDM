@@ -38,6 +38,20 @@ describe('RecruitingEngine canonical operations', () => {
     expect(Object.values(committed.recruitingCommitmentsById)[0]?.programTeamId).toBe(program)
     expect(Object.values(committed.recruitingActionHistoryById)).toHaveLength(1)
   })
+  it('assigns a new identity when a withdrawn offer is made again', () => {
+    const generated = generateRecruitingPool(world(), 'cycle-1')
+    const recruit = Object.values(generated.recruitProfilesById)[0]!
+    const program = teamIdFromString('team-home')
+    const first = makeRecruitingOffer(generated, 'cycle-1', recruit.id, program)
+    expect(first.ok).toBe(true)
+    if (!first.ok) return
+    const withdrawn = updateGameWorld(first.value, { recruitingOffers: Object.values(first.value.recruitingOffersById).map((item) => ({ ...item, status: 'withdrawn' as const })) })
+    const reopened = makeRecruitingOffer(withdrawn, 'cycle-1', recruit.id, program)
+    expect(reopened.ok).toBe(true)
+    if (!reopened.ok) return
+    expect(Object.keys(reopened.value.recruitingOffersById)).toHaveLength(2)
+    expect(Object.values(reopened.value.recruitingOffersById).map((item) => item.id)).toContain(`${first.value.recruitingOffersById[Object.keys(first.value.recruitingOffersById)[0]!]!.id}:attempt:2`)
+  })
   it('keeps AI target ordering invariant when only hidden prospect truth changes', () => {
     const generated = generateRecruitingPool(world(), 'cycle-1'); const program = teamIdFromString('team-home')
     const before = rankAiRecruitingTargets(generated, 'cycle-1', program).map((profile) => profile.id)

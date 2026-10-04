@@ -8,7 +8,7 @@ import { executeScheduledTrainingSessionsWithEvidence } from '@/engine/training/
 import { progressAiTrainingPlanning } from '@/engine/training/TrainingPlanning'
 import { isStaffWeeklyCheckpoint } from '@/engine/staff'
 import { openDraft, progressDraftAi, progressDraftProspectAdvisories } from '@/engine/draft'
-import { arriveSignedRecruits, generateRecruitingPool, progressAiRecruiting, progressRecruitingAdvisories, resolveRecruitingCommitments } from '@/engine/recruiting'
+import { arriveSignedRecruits, generateRecruitingPool, progressAiRecruiting, progressRecruitingAdvisories, resolveRecruitingCommitments, signCommittedRecruit } from '@/engine/recruiting'
 import { progressAiAcademicSupport, resolveAcademicTerm } from '@/engine/academic'
 import { progressAiNil, progressNilLifecycle } from '@/engine/nil'
 import { progressAiBoosters } from '@/engine/boosters'
@@ -250,7 +250,20 @@ function progressRecruiting(world: GameWorld): GameWorld {
       if (next.currentDate.slice(-2) === '01' || cycle.status !== status) next = progressAiRecruiting(next, cycle.id)
       next = progressRecruitingAdvisories(next, cycle.id)
       next = resolveRecruitingCommitments(next, cycle.id)
+      if (status === 'signing') next = progressAiRecruitingSignings(next, cycle.id)
     }
   }
   return arriveSignedRecruits(next)
+}
+
+function progressAiRecruitingSignings(world: GameWorld, cycleId: string): GameWorld {
+  const cycle = world.recruitingCyclesById[cycleId]
+  if (cycle === undefined || world.ecosystems[cycle.ecosystemId]?.kind !== 'ncaaLike') return world
+  const userProgramTeamId = Object.values(world.teams).find((team) => team.coachId === world.userCoachId)?.id
+  return Object.values(world.recruitingCommitmentsById)
+    .filter((commitment) => commitment.cycleId === cycleId && commitment.programTeamId !== userProgramTeamId)
+    .reduce((current, commitment) => {
+      const result = signCommittedRecruit(current, cycleId, commitment.recruitId)
+      return result.ok ? result.value : current
+    }, world)
 }

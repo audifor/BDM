@@ -13,7 +13,8 @@ export {
 export { createNewGame, PROTOTYPE_GAME_CONFIGURATION } from './createNewGame'
 export { createAcbTestGame, type CreateAcbTestGameOptions } from './createAcbTestGame'
 export { createConfiguredGame, createConfiguredGameAsync } from './createConfiguredGame'
-export { NEW_GAME_UNIVERSES, WORLD_DB_SPAIN_UNIVERSE_ID, type NewGameConfiguration, type NewGameTeamOption, type NewGameUniverseId, type NewGameUniverseOption } from './NewGameUniverseCatalog'
+export { NEW_GAME_UNIVERSES, NCAA_SIMULATED_UNIVERSE_ID, WORLD_DB_SPAIN_UNIVERSE_ID, type NewGameConfiguration, type NewGameTeamOption, type NewGameUniverseId, type NewGameUniverseOption } from './NewGameUniverseCatalog'
+export { createNcaaSimulatedGame } from './createNcaaSimulatedGame'
 export {
   createWorldDbSpainGame,
   discoverWorldDbSpainSelection,

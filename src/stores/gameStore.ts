@@ -47,8 +47,8 @@ import type { CommandResult } from '@/app/entityActions/EntityCommand'
 import { selectDraftProspect } from '@/app/draft'
 import { reviewMaterialRosterChanges } from '@/app/gmPlanning'
 import type { ContinueResult, SimulateUntilResult, WorldDayAdvanceResult } from '@/app/game'
-import { addRecruitingBoardEntry, makeRecruitingOffer, performRecruitingAction, removeRecruitingBoardEntry } from '@/engine/recruiting'
-import type { Priority } from '@/domain/recruiting'
+import { addRecruitingBoardEntry, applyRecruitingPressure, discoverRecruitingTalentCandidate, makeRecruitingOffer, openRecruitingNegotiation, performRecruitingAction, promiseRecruitingRole, removeRecruitingBoardEntry, respondToRecruitingConcern, signCommittedRecruit } from '@/engine/recruiting'
+import type { Priority, RecruitingNegotiationTopic, RecruitingProgramResponseKind } from '@/domain/recruiting'
 import { acceptNilOpportunity } from '@/engine/nil'
 import { requestBoosterSupport } from '@/engine/boosters'
 import { setCoachLifestyle } from '@/engine/coachFinances'
@@ -159,9 +159,15 @@ interface GameStore {
   deleteDesignerPlaybook(playbookId: string): void
   selectDraftProspect(draftId: string, playerId: PlayerId): void
   addRecruitingTarget(cycleId: string, recruitId: string, priority: Priority): void
+  discoverRecruitingTalent(cycleId: string): string | null
   removeRecruitingTarget(recruitId: string): void
   performRecruitingAction(cycleId: string, recruitId: string, kind: 'contact'|'pitch'|'visit'): string | null
   makeRecruitingOffer(cycleId: string, recruitId: string): string | null
+  signRecruit(cycleId: string, recruitId: string): string | null
+  promiseRecruitingRole(cycleId: string, recruitId: string): string | null
+  openRecruitingNegotiation(cycleId: string, recruitId: string): string | null
+  respondToRecruitingConcern(negotiationId: string, topic: RecruitingNegotiationTopic, kind: RecruitingProgramResponseKind): string | null
+  applyRecruitingPressure(negotiationId: string): string | null
   acceptNilOpportunity(opportunityId: string): void
   requestBoosterSupport(boosterId: string): void
   setUserCoachLifestyle(lifestyle: Lifestyle): void
@@ -418,9 +424,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
   deleteDesignerPlaybook: (playbookId) => set({ world: deleteDesignerPlaybook(requireWorld(get().world), playbookId) }),
   selectDraftProspect: (draftId, playerId) => set({ world: selectDraftProspect(requireWorld(get().world), draftId, playerId) }),
   addRecruitingTarget: (cycleId, recruitId, priority) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined && world.recruitingCyclesById[cycleId] !== undefined) set({ world: addRecruitingBoardEntry(world, { programTeamId: team.id, recruitId, priority }) }) },
+  discoverRecruitingTalent: (cycleId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = discoverRecruitingTalentCandidate(world, cycleId, team.id); if (result.ok) { set({ world: result.value }); return null } return result.reason },
   removeRecruitingTarget: (recruitId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team !== undefined) set({ world: removeRecruitingBoardEntry(world, team.id, recruitId) }) },
   performRecruitingAction: (cycleId, recruitId, kind) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = performRecruitingAction(world, cycleId, recruitId, team.id, kind); if (result.ok) { set({ world: result.value }); return null } return result.reason },
   makeRecruitingOffer: (cycleId, recruitId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = makeRecruitingOffer(world, cycleId, recruitId, team.id); if (result.ok) { set({ world: result.value }); return null } return result.reason },
+  signRecruit: (cycleId, recruitId) => { const result = signCommittedRecruit(requireWorld(get().world), cycleId, recruitId); if (result.ok) { set({ world: result.value }); return null } return result.reason },
+  promiseRecruitingRole: (cycleId, recruitId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = promiseRecruitingRole(world, cycleId, recruitId, team.id); if (result.ok) { set({ world: result.value }); return null } return result.reason },
+  openRecruitingNegotiation: (cycleId, recruitId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = openRecruitingNegotiation(world, cycleId, recruitId, team.id); if (result.ok) { set({ world: result.world }); return null } return result.reason },
+  respondToRecruitingConcern: (negotiationId, topic, kind) => { const result = respondToRecruitingConcern(requireWorld(get().world), negotiationId, topic, kind); if (result.ok) { set({ world: result.world }); return null } return result.reason },
+  applyRecruitingPressure: (negotiationId) => { const result = applyRecruitingPressure(requireWorld(get().world), negotiationId); if (result.ok) { set({ world: result.world }); return null } return result.reason },
   acceptNilOpportunity: (opportunityId) => { const result = acceptNilOpportunity(requireWorld(get().world), opportunityId); if (result.ok) set({ world: result.value }) },
   requestBoosterSupport: (boosterId) => { const result=requestBoosterSupport(requireWorld(get().world),boosterId);if(result.ok)set({world:result.value}) },
   setUserCoachLifestyle: (lifestyle) => set({ world: setCoachLifestyle(requireWorld(get().world), requireWorld(get().world).userCoachId, lifestyle) }),

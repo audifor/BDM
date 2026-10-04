@@ -11,20 +11,52 @@ import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
 
 const REASON_TEXT: Readonly<Record<string, string>> = {
   RECRUITING_NOT_OPEN: 'The recruiting window is closed.',
+  NO_UNDISCOVERED_TALENT: 'No eligible undiscovered TalentCohort candidate is available.',
   INVALID_RECRUIT: 'This recruit is not part of the active cycle.',
   INSUFFICIENT_RECRUITING_CAPACITY: 'No recruiting capacity remains.',
   DUPLICATE_OFFER: 'An active offer already exists.',
   OFFER_LIMIT_REACHED: 'The offer or signing limit was reached.',
   RECRUIT_ALREADY_COMMITTED: 'This recruit is no longer available.',
+  SIGNING_RULESET_MISSING: 'No current NCAA signing rules are configured for this cycle.',
+  SIGNING_PROSPECT_CLASS_NOT_ELIGIBLE: 'This prospect class cannot sign in this configured period.',
+  SIGNING_PERIOD_NOT_YET_OPEN: 'The signing period opens at 7:00 a.m.',
+  SIGNING_PERIOD_CLOSED: 'No applicable NCAA signing period is open.',
+  SIGNING_PERIOD_CLOSED_OR_UNCONFIGURED: 'No applicable NCAA signing period is open or configured.',
+  NO_ACTIVE_RECRUITING_PERIOD: 'No configured recruiting period is active on this date.',
+  NCAA_RULESET_MISSING: 'This NCAA cycle has no valid recruiting ruleset.',
+  RECRUITING_SHUTDOWN: 'Recruiting is fully shut down for this period.',
+  DEAD_PERIOD_IN_PERSON_BLOCKED: 'In-person recruiting is prohibited during this dead period.',
+  QUIET_PERIOD_OFF_CAMPUS: 'In-person contact is limited to campus during this quiet period.',
+  EVALUATION_PERIOD_NO_IN_PERSON_CONTACT: 'Off-campus in-person contact is prohibited during this evaluation period.',
+  EVALUATION_CONTEXT_NOT_ALLOWED: 'This event is not authorized for evaluation during this period.',
+  JULY_VISIT_RESTRICTION: 'This visit type is restricted during the July evaluation period.',
+  VISIT_NOT_ALLOWED_IN_PERIOD: 'Visits are not permitted during this recruiting period.',
+  SIGNED_WITH_OTHER_PROGRAM: 'This prospect has formally signed with another program.',
+  PROSPECT_COMPETING_TODAY: 'In-person contact is restricted on a prospect competition day.',
+  NEGOTIATION_TOPIC_NOT_OPEN: 'There is no active concern for that response.',
+  PROMISE_TOPIC_UNSUPPORTED: 'This concern cannot be addressed with a role or support promise.',
+  STAFF_HIGH_TOUCH_ACTIVITY_CONFLICT: 'This Staff member already has an incompatible off-campus Recruiting activity today.',
+  STAFF_WORKLOAD_CAPACITY_EXHAUSTED: 'This Staff member has no remaining Staff V2 workload capacity.',
+  STAFF_RECRUITING_CAPACITY_EXHAUSTED: 'This Staff member has reached today’s Recruiting activity limit.',
+  RECRUITING_STAFF_REQUIRED: 'An assigned Staff member is required for this Recruiting action.',
+  STAFF_NOT_DESIGNATED_OFF_CAMPUS_RECRUITER: 'An off-campus contact requires an active designated recruiter.',
+  OFF_CAMPUS_RECRUITER_DAILY_LIMIT: 'Four designated recruiters have already made off-campus contacts today.',
+  OFF_CAMPUS_RECRUITER_DESIGNATION_LIMIT: 'The cycle’s designated recruiter limit has been reached.',
   NO_CONTROLLED_PROGRAM: 'You do not control an NCAA program.',
 }
 
 export function RecruitingWorkspace() {
   const world = useGameStore((state) => state.world)
   const addRecruitingTarget = useGameStore((state) => state.addRecruitingTarget)
+  const discoverRecruitingTalent = useGameStore((state) => state.discoverRecruitingTalent)
   const removeRecruitingTarget = useGameStore((state) => state.removeRecruitingTarget)
   const performRecruitingAction = useGameStore((state) => state.performRecruitingAction)
   const makeRecruitingOffer = useGameStore((state) => state.makeRecruitingOffer)
+  const signRecruit = useGameStore((state) => state.signRecruit)
+  const promiseRecruitingRole = useGameStore((state) => state.promiseRecruitingRole)
+  const openNegotiation = useGameStore((state) => state.openRecruitingNegotiation)
+  const respondToConcern = useGameStore((state) => state.respondToRecruitingConcern)
+  const applyPressure = useGameStore((state) => state.applyRecruitingPressure)
   const [feedback, setFeedback] = useState<string | null>(null)
 
   if (world === null) {
@@ -70,6 +102,11 @@ export function RecruitingWorkspace() {
       title="Recruiting center"
     >
       {feedback !== null ? <p className="ng-canon__note">{feedback}</p> : null}
+      {controlled && cycle !== undefined ? (
+        <button className="ng-canon__action" onClick={() => run(() => discoverRecruitingTalent(cycle.id))} type="button">
+          Discover prospect
+        </button>
+      ) : null}
       {profiles.length === 0 ? (
         <p className="ng-canon__empty">No recruit profiles in the world.</p>
       ) : (
@@ -78,10 +115,10 @@ export function RecruitingWorkspace() {
             className="ng-canon__table"
             columns={ngTableColumns(profiles.map((profile) => {
               const player = world.players[profile.playerId]
-              const interest =
-                team === undefined
-                  ? undefined
-                  : world.recruitingInterests.find((item) => item.recruitId === profile.id && item.programTeamId === team.id)?.value
+              const profileCycle = world.recruitingCyclesById[profile.cycleId]
+              const rpg = profile.recruitingRpg
+              const relationship = team === undefined ? undefined : rpg?.relationships.filter((item) => item.programTeamId === team.id).reduce((best, item) => Math.max(best, item.rapport), 0)
+              const known = team === undefined ? [] : Object.entries(rpg?.intel.find((item) => item.programTeamId === team.id)?.beliefs ?? {}).filter(([, band]) => band !== undefined).map(([dimension]) => dimension)
               return {
                 id: profile.id,
                 playerId: profile.playerId,
@@ -90,17 +127,12 @@ export function RecruitingWorkspace() {
                 position: profile.position,
                 tier: profile.tier,
                 status: profile.status,
-                interest,
-                interestLabel:
-                  interest === undefined
-                    ? 'Cold'
-                    : interest >= 75
-                      ? 'Leader'
-                      : interest >= 55
-                        ? 'Strong'
-                        : interest >= 30
-                          ? 'Warm'
-                          : 'Interested',
+                cycleStatus: profileCycle?.status,
+                cycleId: profileCycle?.id,
+                relationship,
+                relationshipLabel: relationship === undefined ? 'Not established' : relationship >= 55 ? 'Strong rapport' : relationship >= 25 ? 'Building' : 'New contact',
+                known,
+                committedByProgram: team !== undefined && Object.values(world.recruitingCommitmentsById).some((item) => item.recruitId === profile.id && item.programTeamId === team.id),
                 board:
                   team === undefined
                     ? undefined
@@ -118,13 +150,15 @@ export function RecruitingWorkspace() {
                 ), { value: (row) => row.player === undefined ? row.playerId : `${row.player.firstName} ${row.player.lastName}` }),
               ngCol('pos', 'Pos', (row) => <PlayPositionMark position={row.position} />, { value: (row) => row.position }),
               ngCol('tier', 'Tier', (row) => row.tier, { value: (row) => row.tier }),
-              ngCol('interest', 'Interest', (row) => row.interestLabel, { value: (row) => row.interest ?? -1 }),
+              ngCol('relationship', 'Relationship', (row) => row.relationshipLabel, { value: (row) => row.relationship ?? -1 }),
+              ngCol('knowledge', 'Known priorities', (row) => row.known.length ? row.known.join(', ') : 'Not yet known', { value: (row) => row.known.join(', ') }),
               ngCol('status', 'Status', (row) => row.status, { value: (row) => row.status }),
               ngCol('actions', 'Actions', (row) =>
                 controlled && cycle !== undefined ? (
                   <div className="ng-canon__actions">
+                    {row.cycleStatus === 'open' && row.cycleId !== undefined && !['signed', 'incoming', 'arrived', 'ineligible', 'unsigned'].includes(row.status) ? <>
                     {row.board === undefined ? (
-                      <button className="ng-canon__action" onClick={() => addRecruitingTarget(cycle.id, row.id, 'normal')} type="button">
+                      <button className="ng-canon__action" onClick={() => addRecruitingTarget(row.cycleId!, row.id, 'normal')} type="button">
                         Target
                       </button>
                     ) : (
@@ -132,18 +166,40 @@ export function RecruitingWorkspace() {
                         Remove
                       </button>
                     )}
-                    <button className="ng-canon__action" onClick={() => run(() => performRecruitingAction(cycle.id, row.id, 'contact'))} type="button">
+                    <button className="ng-canon__action" onClick={() => run(() => performRecruitingAction(row.cycleId!, row.id, 'contact'))} type="button">
                       Contact
                     </button>
-                    <button className="ng-canon__action" onClick={() => run(() => performRecruitingAction(cycle.id, row.id, 'pitch'))} type="button">
+                    <button className="ng-canon__action" onClick={() => run(() => performRecruitingAction(row.cycleId!, row.id, 'pitch'))} type="button">
                       Pitch
                     </button>
-                    <button className="ng-canon__action" onClick={() => run(() => performRecruitingAction(cycle.id, row.id, 'visit'))} type="button">
+                    <button className="ng-canon__action" onClick={() => run(() => performRecruitingAction(row.cycleId!, row.id, 'visit'))} type="button">
                       Visit
                     </button>
-                    <button className="ng-canon__action" onClick={() => run(() => makeRecruitingOffer(cycle.id, row.id))} type="button">
+                    <button className="ng-canon__action" onClick={() => run(() => makeRecruitingOffer(row.cycleId!, row.id))} type="button">
                       Offer
                     </button>
+                    <button className="ng-canon__action" onClick={() => run(() => promiseRecruitingRole(row.cycleId!, row.id))} type="button">
+                      Promise role
+                    </button>
+                    <button className="ng-canon__action" onClick={() => run(() => openNegotiation(row.cycleId!, row.id))} type="button">
+                      Discuss concerns
+                    </button>
+                    </> : row.status === 'signed' || row.status === 'incoming' || row.status === 'arrived' || row.status === 'ineligible' || row.status === 'unsigned'
+                      ? <p className="ng-canon__note">Recruiting closed for this prospect.</p>
+                      : row.cycleStatus === 'signing' && row.committedByProgram && row.cycleId !== undefined
+                        ? <button className="ng-canon__action" onClick={() => run(() => signRecruit(row.cycleId!, row.id))} type="button">Sign</button>
+                        : <p className="ng-canon__note">{row.cycleStatus === 'signing' ? 'Recruiting is closed; only a prospect committed to this program can be signed.' : row.cycleStatus === 'open' ? 'Recruiting closed for this prospect.' : 'Recruiting closed for this cycle.'}</p>}
+                    {row.cycleStatus === 'open' && row.cycleId !== undefined && !['signed', 'incoming', 'arrived', 'ineligible', 'unsigned'].includes(row.status) ? (() => {
+                      const negotiation = row.player === undefined ? undefined : world.recruitProfilesById[row.id]?.recruitingRpg?.negotiations?.find((item) => item.cycleId === row.cycleId && item.programTeamId === team?.id && item.terminalState === 'active')
+                      const topic = negotiation?.unresolvedTopics[0]
+                      if (!negotiation || topic === undefined) return null
+                      return <>
+                        {negotiation.currentConcerns.filter((item) => item.status === 'open').map((item) => <p className="ng-canon__note" key={item.id}>Prospect concern: {item.description}</p>)}
+                        <button className="ng-canon__action" onClick={() => run(() => respondToConcern(negotiation.id, topic, 'factualReassurance'))} type="button">Explain concern</button>
+                        <button className="ng-canon__action" onClick={() => run(() => respondToConcern(negotiation.id, topic, 'promise'))} type="button">Make assurance</button>
+                        <button className="ng-canon__action" onClick={() => run(() => applyPressure(negotiation.id))} type="button">Apply pressure</button>
+                      </>
+                    })() : null}
                   </div>
                 ) : null,
               ),
@@ -151,10 +207,14 @@ export function RecruitingWorkspace() {
             gridId="ng-recruiting"
             rows={profiles.map((profile) => {
               const player = world.players[profile.playerId]
-              const interest =
-                team === undefined
-                  ? undefined
-                  : world.recruitingInterests.find((item) => item.recruitId === profile.id && item.programTeamId === team.id)?.value
+              const profileCycle = world.recruitingCyclesById[profile.cycleId]
+              const rpg = profile.recruitingRpg
+              const relationship = team === undefined ? undefined : rpg?.relationships.filter((item) => item.programTeamId === team.id).reduce((best, item) => Math.max(best, item.rapport), 0)
+              const actorRelationshipLabel = (actor: 'recruiter'|'headCoach'|'program') => {
+                const rapport = team === undefined ? undefined : rpg?.relationships.find((item) => item.programTeamId === team.id && item.actor === actor)?.rapport
+                return rapport === undefined ? 'Not established' : rapport >= 55 ? 'Strong rapport' : rapport >= 25 ? 'Building rapport' : 'New relationship'
+              }
+              const known = team === undefined ? [] : Object.entries(rpg?.intel.find((item) => item.programTeamId === team.id)?.beliefs ?? {}).filter(([, band]) => band !== undefined).map(([dimension]) => dimension)
               return {
                 id: profile.id,
                 playerId: profile.playerId,
@@ -163,17 +223,12 @@ export function RecruitingWorkspace() {
                 position: profile.position,
                 tier: profile.tier,
                 status: profile.status,
-                interest,
-                interestLabel:
-                  interest === undefined
-                    ? 'Cold'
-                    : interest >= 75
-                      ? 'Leader'
-                      : interest >= 55
-                        ? 'Strong'
-                        : interest >= 30
-                          ? 'Warm'
-                          : 'Interested',
+                cycleStatus: profileCycle?.status,
+                cycleId: profileCycle?.id,
+                relationship,
+                relationshipLabel: `Recruiter: ${actorRelationshipLabel('recruiter')} · Head Coach: ${actorRelationshipLabel('headCoach')} · Program: ${actorRelationshipLabel('program')}`,
+                known,
+                committedByProgram: team !== undefined && Object.values(world.recruitingCommitmentsById).some((item) => item.recruitId === profile.id && item.programTeamId === team.id),
                 board:
                   team === undefined
                     ? undefined

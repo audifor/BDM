@@ -2,8 +2,9 @@ import type { CoachRpgPreset } from '@/domain/coachRpg'
 import { ACB_2026_27_TEAMS, ACB_QUICK_START_TEAM_KEY, ACB_TEST_UNIVERSE_ID } from '@/data/acb2026'
 
 export const WORLD_DB_SPAIN_UNIVERSE_ID = 'worldDbSpain' as const
+export const NCAA_SIMULATED_UNIVERSE_ID = 'ncaaSimulated' as const
 
-export type NewGameUniverseId = 'prototype' | typeof ACB_TEST_UNIVERSE_ID | typeof WORLD_DB_SPAIN_UNIVERSE_ID
+export type NewGameUniverseId = 'prototype' | typeof ACB_TEST_UNIVERSE_ID | typeof WORLD_DB_SPAIN_UNIVERSE_ID | typeof NCAA_SIMULATED_UNIVERSE_ID
 
 export interface NewGameConfiguration {
   readonly universeId?: NewGameUniverseId
@@ -22,6 +23,13 @@ export interface NewGameUniverseOption {
 }
 
 export const NEW_GAME_UNIVERSES: readonly NewGameUniverseOption[] = [
+  {
+    id: NCAA_SIMULATED_UNIVERSE_ID,
+    label: 'NCAA DEVELOPMENT · SIMULATED',
+    description: 'Simulated NCAA-like development career for Recruiting and college-system validation. Generated program and player data; not official NCAA data.',
+    isTest: true,
+    teams: [],
+  },
   {
     id: WORLD_DB_SPAIN_UNIVERSE_ID,
     label: 'WORLD DB · SPAIN ACB',
