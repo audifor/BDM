@@ -940,7 +940,7 @@ export function updateGameWorld(world: GameWorld, patch: Partial<CreateGameWorld
   validateDebtInstrumentCollections(Object.values(updated.debtInstrumentsById), updated)
   validateCompetitionDistributionFacts(Object.values(updated.competitionDistributionFactsById), updated)
   validateFacilityFinancialBindingCollection(Object.values(updated.facilityFinancialBindingsById), updated)
-  validateWorld(updated)
+  if (singleValidationDepth === 0) validateWorld(updated)
   return updated
 }
 
@@ -956,8 +956,29 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
   }
   if (!changed) return world
   const updated = { ...world, memoriesById: Object.freeze(memoriesById) }
-  validateWorld(updated)
+  if (singleValidationDepth === 0) validateWorld(updated)
   return updated
+}
+
+/*
+ * ME-LOCK1.1: applying one match result is a chain of world updates (result, stat log, Player consequences, eligibility, season,
+ * injuries) and a day applies several matches; each update used to re-validate the whole world (every domain), which made applying a
+ * result cost more than preparing it. Inside `withSingleWorldValidation` the intermediate worlds are not validated, and the returned
+ * world goes through exactly the same whole-world validation once. `validateWorld` only checks (it never changes the world), so the
+ * returned world is identical, and an invalid result still fails closed (the operation throws and nothing is returned).
+ */
+let singleValidationDepth = 0
+
+export function withSingleWorldValidation(world: GameWorld, update: (world: GameWorld) => GameWorld): GameWorld {
+  singleValidationDepth += 1
+  let result: GameWorld
+  try {
+    result = update(world)
+  } finally {
+    singleValidationDepth -= 1
+  }
+  if (singleValidationDepth === 0 && result !== world) validateWorld(result)
+  return result
 }
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {

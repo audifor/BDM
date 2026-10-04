@@ -17,6 +17,49 @@ export function activeActions(state: Pick<MatchState, 'actions'>): readonly Matc
   return active
 }
 
+/*
+ * ME-LOCK1.1: the history arrays are rebuilt every tick (a drive is patched every tick), so recomputing the ACTIVE view from the whole
+ * history on every new array was still proportional to the game played. The builders below create the new history array exactly as
+ * before and derive its ACTIVE view from the previous one (same elements, same order as `filter(status === 'ACTIVE')`).
+ */
+
+/** `[...actions, action]`, carrying the ACTIVE view forward. */
+export function appendAction(actions: readonly MatchActionState[], action: MatchActionState): MatchActionState[] {
+  const next = [...actions, action]
+  const previous = activeByHistory.get(actions)
+  if (previous !== undefined) activeByHistory.set(next, action.status === 'ACTIVE' ? [...previous, action] : previous)
+  return next
+}
+
+/** A copy of `actions` with `actions[index]` replaced by `value`, carrying the ACTIVE view forward. */
+export function replaceActionAt(actions: readonly MatchActionState[], index: number, value: MatchActionState): MatchActionState[] {
+  const next = actions.slice()
+  next[index] = value
+  const previous = activeByHistory.get(actions)
+  if (previous !== undefined) {
+    const old = actions[index]!
+    if (old.status === 'ACTIVE') {
+      const at = previous.indexOf(old)
+      if (at >= 0) {
+        const active = previous.slice()
+        if (value.status === 'ACTIVE') active[at] = value
+        else active.splice(at, 1)
+        activeByHistory.set(next, active)
+      }
+    } else if (value.status !== 'ACTIVE') activeByHistory.set(next, previous)
+    // An inactive action becoming ACTIVE again never happens; were it to, the view is simply recomputed on first use.
+  }
+  return next
+}
+
+/** A fresh copy of `actions` (same elements), sharing its ACTIVE view. */
+export function copyActions(actions: readonly MatchActionState[]): MatchActionState[] {
+  const next = actions.slice()
+  const previous = activeByHistory.get(actions)
+  if (previous !== undefined) activeByHistory.set(next, previous)
+  return next
+}
+
 /** What the offense flow reads about a team's non-closeout actions over the whole game, summarised once per history array. */
 export interface TeamOffensiveActions {
   /** Latest `resolvedT` (-1 when none resolved) and the first action, in history order, resolved at that tick. */

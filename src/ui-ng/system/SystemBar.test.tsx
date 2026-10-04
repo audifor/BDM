@@ -38,7 +38,7 @@ describe('SystemBar continue', () => {
     expect(new URL(window.location.href).searchParams.get('app')).toBe('match')
   })
 
-  it('advances the canonical calendar until the next interruption', { timeout: 15_000 }, () => {
+  it('advances the canonical calendar until the next interruption', { timeout: 15_000 }, async () => {
     const world = createAcbTestGame()
     const preview = continueGame(world)
     expect(preview.daysAdvanced).toBeGreaterThan(0)
@@ -46,7 +46,8 @@ describe('SystemBar continue', () => {
     mountBar()
 
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
-    expect(useGameStore.getState().world?.currentDate).toBe(preview.finalDate)
+    // ME-LOCK1.1: Continue runs the day's matches on the match runner (workers in the app), so the world arrives asynchronously.
+    await waitFor(() => expect(useGameStore.getState().world?.currentDate).toBe(preview.finalDate), { timeout: 14_000 })
     expect(screen.getByRole('button', { name: 'Match' })).toBeInTheDocument()
   })
 

@@ -1,7 +1,8 @@
 import type { GameId, TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { getNextUserGame, getUserTeam } from '@/engine/calendar'
-import { advanceGameDay } from './advanceGameDay'
+import { advanceGameDay, advanceGameDayAsync } from './advanceGameDay'
+import type { MatchSimulationRunner } from '@/app/matchNext/MatchSimulationRunner'
 import { evaluateSimulationBreakpoints, type SimulationBreakpoint } from './SimulationBreakpoints'
 
 export type ContinueStopReason =
@@ -32,6 +33,19 @@ export function continueGame(world: GameWorld, dayLimit = DEFAULT_CONTINUE_DAY_L
     const interruption = getContinueStopReason(current)
     if (interruption !== undefined) return result(current, daysAdvanced, interruption)
     current = advanceGameDay(current)
+    daysAdvanced += 1
+  }
+  return result(current, daysAdvanced, getContinueStopReason(current) ?? { type: 'safetyLimit' })
+}
+
+/** ME-LOCK1.1: `continueGame` with each day's match simulations on `runner` (parallel workers in the app); the same world. */
+export async function continueGameAsync(world: GameWorld, runner: MatchSimulationRunner, dayLimit = DEFAULT_CONTINUE_DAY_LIMIT): Promise<ContinueResult> {
+  if (!Number.isInteger(dayLimit) || dayLimit < 1) throw new RangeError('Continue day limit must be a positive integer')
+  let current = world; let daysAdvanced = 0
+  while (daysAdvanced < dayLimit) {
+    const interruption = getContinueStopReason(current)
+    if (interruption !== undefined) return result(current, daysAdvanced, interruption)
+    current = await advanceGameDayAsync(current, runner)
     daysAdvanced += 1
   }
   return result(current, daysAdvanced, getContinueStopReason(current) ?? { type: 'safetyLimit' })

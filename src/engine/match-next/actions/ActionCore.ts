@@ -19,7 +19,7 @@ import { announceCall, decisionNoise, earlyOffenseCall, reconcileOffenseFlow, re
 import { createScreenState, planScreen, reconcileScreen, useScreen } from './ScreenCore'
 import { reconcileOffBallMovement } from './OffBallMovement'
 import type { MatchActionKind, MatchActionOutcome, MatchActionState, MatchDecision } from './ActionState'
-import { actionById, actionIndexById, activeActions, findLastAction, someActionAfter } from './ActionIndex'
+import { actionById, actionIndexById, activeActions, appendAction, copyActions, findLastAction, replaceActionAt, someActionAfter } from './ActionIndex'
 import { defensiveShape, tacticalIntent } from '../tactics/TacticalIdentity'
 import { onBallCushion } from '../defense/PointOfAttack'
 
@@ -105,7 +105,7 @@ function startCloseoutAfterCatch(state: MatchState): MatchState {
     ...(intent ? { target: { ...intent.target } } : {}),
     closestDefenderDistanceMeters: distanceBetween(defender.position, state.ball.position),
   }
-  let next = { ...state, actions: [...state.actions, action], nextActionSequence: state.nextActionSequence + 1 }
+  let next = { ...state, actions: appendAction(state.actions, action), nextActionSequence: state.nextActionSequence + 1 }
   return emitEvent(next, 'actionStarted', { teamId: action.teamId, playerId: action.playerId, actionId: action.id, actionKind: action.kind })
 }
 
@@ -555,7 +555,7 @@ function createAction(
 }
 
 function startAction(state: MatchState, action: MatchActionState): MatchState {
-  const next = { ...state, actions: [...state.actions, action], nextActionSequence: state.nextActionSequence + 1 }
+  const next = { ...state, actions: appendAction(state.actions, action), nextActionSequence: state.nextActionSequence + 1 }
   return emitEvent(next, 'actionStarted', { teamId: action.teamId, playerId: action.playerId, actionId: action.id, actionKind: action.kind })
 }
 
@@ -563,7 +563,7 @@ function resolveAction(state: MatchState, actionId: string, outcome: MatchAction
   const index = actionIndexById(state, actionId)
   const action = index < 0 ? undefined : state.actions[index]!
   if (!action || action.status !== 'ACTIVE') return state
-  const actions = replaceAt(state.actions, index, { ...action, status: outcome === 'CANCELLED' ? 'CANCELLED' as const : 'COMPLETED' as const, outcome, resolvedT: state.t })
+  const actions = replaceActionAt(state.actions, index, { ...action, status: outcome === 'CANCELLED' ? 'CANCELLED' as const : 'COMPLETED' as const, outcome, resolvedT: state.t })
   const currentDecision = action.kind !== 'CLOSEOUT' && state.currentDecision?.id === action.decisionId ? null : state.currentDecision
   const next = { ...state, actions, currentDecision }
   return emitEvent(next, 'actionResolved', { teamId: action.teamId, playerId: action.playerId, actionId, actionKind: action.kind, actionOutcome: outcome, shotProbability: action.shotProbability, contestScore: action.contestScore })
@@ -572,15 +572,8 @@ function resolveAction(state: MatchState, actionId: string, outcome: MatchAction
 function updateAction(state: MatchState, actionId: string, patch: Partial<MatchActionState>): MatchState {
   const index = actionIndexById(state, actionId)
   // Same array the full map produced: only the ACTIVE action with this id changes (ids are unique); otherwise a fresh copy.
-  if (index < 0 || state.actions[index]!.status !== 'ACTIVE') return { ...state, actions: state.actions.slice() }
-  return { ...state, actions: replaceAt(state.actions, index, { ...state.actions[index]!, ...patch }) }
-}
-
-/** A copy of `items` with `items[index]` replaced (what a `map` over every element produced, without a callback per element). */
-function replaceAt<T>(items: readonly T[], index: number, value: T): T[] {
-  const copy = items.slice()
-  copy[index] = value
-  return copy
+  if (index < 0 || state.actions[index]!.status !== 'ACTIVE') return { ...state, actions: copyActions(state.actions) }
+  return { ...state, actions: replaceActionAt(state.actions, index, { ...state.actions[index]!, ...patch }) }
 }
 
 function setPossessionPhase(state: MatchState, phase: 'SETUP' | 'ACTION'): MatchState {

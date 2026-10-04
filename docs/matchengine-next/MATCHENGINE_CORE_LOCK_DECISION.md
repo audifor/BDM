@@ -1,5 +1,34 @@
 # MatchEngine Next · Decisión de Core Lock
 
+## Actualización ME-LOCK1.1 (2026-10-05)
+
+Rama `match-next-me-lock1-1-production-performance`, desde `8c81154`. Evidencia en:
+
+- `ME_LOCK1_1_PRODUCTION_PERFORMANCE_REPORT.md`;
+- `ME_LOCK1_1_FAST_PROFILE.md`.
+
+### BASKETBALL CORE LOCK: **YES** (sin cambios)
+
+Todas las optimizaciones son exactas:
+
+- resultados golden, *setups* y mundo completo idénticos a `8c81154`;
+- el día en paralelo produce el mismo mundo que el secuencial, en cualquier orden de finalización.
+
+### PRODUCTION MATCHENGINE LOCK: **NO**
+
+| Condición del enunciado | Estado |
+|---|---|
+| 1. Una sola autoridad de simulación | **SÍ** |
+| 2. FAST usa Match Next | **SÍ** |
+| 3. Equivalencia de baloncesto FAST | **SÍ** (exacta) |
+| 4. La simulación del mundo pasa | **SÍ** |
+| 5. Rendimiento operativo aceptable | **SÍ para el mundo actual**: día de 4 partidos 3,8 s y día ACB 6,7 s en Chromium con Web Workers; 100 partidos 66 s |
+| 6. Escala de un mundo mayor creíble | **NO**: ~0,7 s por partido con 12 hilos, así que 50–250 partidos al día costarían de 35 s a 3–4 min por día |
+| 7. Sin vuelta atrás al legado | **SÍ** |
+| 8. Aplicación determinista | **SÍ** |
+
+Bloquea la condición 6. La decisión está en `ME_LOCK1_1_PRODUCTION_PERFORMANCE_REPORT.md` §8. Recomendación: un hito de arquitectura de ejecución exacta (núcleo mutable encapsulado, reconciliación incremental), antes de cualquier política de menor fidelidad.
+
 ## Actualización ME-LOCK1 (2026-10-04)
 
 Rama `match-next-me-lock1-fast-simulation`, desde `3408a4e`. Evidencia en:

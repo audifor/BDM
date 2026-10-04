@@ -5,7 +5,9 @@ import { createPreMatchMediaOpportunity } from '@/engine/media'
 import { getUserTeam } from '@/engine/calendar'
 
 import { createMatchSeed, type MatchSeedFactory } from './playUserGame'
-import { simulateAndApplyGame } from './matchResolution'
+import { applyDayResults, dayGamesAreIndependent, prepareDayGames, resolveDayGames, resolveDayGamesAsync, simulateDayGamesInline, type PreparedDayGame } from './matchResolution'
+import type { MatchNextResult } from '@/app/matchNext/MatchNextResult'
+import type { MatchSimulationRunner } from '@/app/matchNext/MatchSimulationRunner'
 import { evaluateSimulationBreakpoints, type SimulationBreakpointResult } from './SimulationBreakpoints'
 import { repairWorldAtLifecycleBoundary } from '@/app/repair'
 import type { WorldRepairReport } from '@/domain/repair'
@@ -53,10 +55,13 @@ export function assertSimulationMayAdvance(world: GameWorld, allowedRequiredReas
 /** Resolves every remaining game today without changing the calendar date. */
 export function simulateRemainingGamesToday(world: GameWorld, createSeed: MatchSeedFactory = createMatchSeed, allowedRequiredReasons: readonly string[] = ['userGame'], repairReports: WorldRepairReport[] = []): GameWorld {
   assertSimulationMayAdvance(world, allowedRequiredReasons)
-  return getScheduledGamesToday(world).reduce(
-    (updatedWorld, game) => simulateAndApplyGame(updatedWorld, game, createSeed(), repairReports),
-    world,
-  )
+  return resolveDayGames(world, getScheduledGamesToday(world), createSeed, repairReports)
+}
+
+/** The same resolution with the simulation phase on `runner` (parallel workers in the app); identical result for the same seeds. */
+export async function simulateRemainingGamesTodayAsync(world: GameWorld, runner: MatchSimulationRunner, createSeed: MatchSeedFactory = createMatchSeed, allowedRequiredReasons: readonly string[] = ['userGame'], repairReports: WorldRepairReport[] = []): Promise<GameWorld> {
+  assertSimulationMayAdvance(world, allowedRequiredReasons)
+  return resolveDayGamesAsync(world, getScheduledGamesToday(world), createSeed, runner, repairReports)
 }
 
 /** Resolves today's pending games, then advances the game calendar by one day. */
@@ -69,6 +74,56 @@ export function advanceGameDay(world: GameWorld, createSeed: MatchSeedFactory = 
 
 /** Executes one application day boundary and returns transient lifecycle evidence. */
 export function advanceGameDayWithResult(world: GameWorld, createSeed: MatchSeedFactory = createMatchSeed, allowedRequiredReasons: readonly string[] = ['userGame']): WorldDayAdvanceResult {
+  const process = advanceGameDayProcess(world, createSeed, allowedRequiredReasons)
+  let step = process.next()
+  while (!step.done) {
+    let results: MatchNextResult[]
+    try {
+      results = simulateDayGamesInline(step.value)
+    } catch (error) {
+      step = process.throw(error)
+      continue
+    }
+    step = process.next(results)
+  }
+  return step.value
+}
+
+/**
+ * ME-LOCK1.1: the same day boundary with the day's match simulations on `runner` (a pool of workers in the app). Everything else -
+ * breakpoints, repairs, preparation, result application in schedule order, calendar, media - runs exactly as in the synchronous
+ * version (it is the same process); for the same seeds the returned world is identical.
+ */
+export async function advanceGameDayWithResultAsync(world: GameWorld, runner: MatchSimulationRunner, createSeed: MatchSeedFactory = createMatchSeed, allowedRequiredReasons: readonly string[] = ['userGame']): Promise<WorldDayAdvanceResult> {
+  const process = advanceGameDayProcess(world, createSeed, allowedRequiredReasons)
+  let step = process.next()
+  while (!step.done) {
+    let results: MatchNextResult[]
+    try {
+      results = await runner.simulate(step.value.map((item) => item.setup))
+    } catch (error) {
+      step = process.throw(error)
+      continue
+    }
+    step = process.next(results)
+  }
+  return step.value
+}
+
+/** `advanceGameDay` with the simulation phase on `runner`. */
+export async function advanceGameDayAsync(world: GameWorld, runner: MatchSimulationRunner, createSeed: MatchSeedFactory = createMatchSeed, allowedRequiredReasons: readonly string[] = ['userGame']): Promise<GameWorld> {
+  const result = await advanceGameDayWithResultAsync(world, runner, createSeed, allowedRequiredReasons)
+  if (result.status === 'BREAKPOINT_PREVENTED') throw new SimulationAdvanceBlockedError(result.breakpointBefore)
+  if (result.status === 'FAILED') throw new Error(result.failure?.message ?? 'World day lifecycle failed')
+  return result.world
+}
+
+/**
+ * The one day process. It yields once, with the day's prepared Games, and expects their FAST results in the same order: the only step
+ * that may run elsewhere (the synchronous driver simulates inline; the asynchronous one hands the setups to a runner). A failure of
+ * that step is thrown back into the process at the yield, so it ends the day as FAILED with the world untouched, as before.
+ */
+function* advanceGameDayProcess(world: GameWorld, createSeed: MatchSeedFactory, allowedRequiredReasons: readonly string[]): Generator<readonly PreparedDayGame[], WorldDayAdvanceResult, MatchNextResult[]> {
   const phases: WorldDayAdvancePhase[] = []
   const initialBreakpoint = evaluateSimulationBreakpoints(world)
   const validationTime = performance.now()
@@ -105,7 +160,14 @@ export function advanceGameDayWithResult(world: GameWorld, createSeed: MatchSeed
     const matches = getScheduledGamesToday(current)
     const matchStart = performance.now()
     const lineupReports: WorldRepairReport[] = []
-    current = simulateRemainingGamesToday(current, createSeed, allowedRequiredReasons, lineupReports)
+    assertSimulationMayAdvance(current, allowedRequiredReasons)
+    if (dayGamesAreIndependent(matches)) {
+      const prepared = prepareDayGames(current, matches, createSeed, lineupReports)
+      const results: MatchNextResult[] = prepared.length === 0 ? [] : yield prepared
+      current = applyDayResults(current, prepared, results)
+    } else {
+      current = resolveDayGames(current, matches, createSeed, lineupReports)
+    }
     repairReports.push(...lineupReports)
     phases.push({ phaseId: 'MATCH_RESOLUTION', order: phases.length + 1, date: world.currentDate, ran: matches.length > 0, worldChanged: current !== world, diagnostics: [], summary: matches.length === 0 ? 'No scheduled games required resolution.' : `Resolved ${matches.length} scheduled game(s) through the existing match application boundary.`, elapsedMs: Math.round((performance.now() - matchStart) * 100) / 100 })
     if (lineupReports.length > 0) phases.push({ phaseId: 'MATCH_LINEUP_REPAIR', order: phases.length + 1, date: world.currentDate, ran: true, worldChanged: false, diagnostics: repairDiagnostics(lineupReports), summary: `Resolved ${lineupReports.length} transient match lineup report(s).` })

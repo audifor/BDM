@@ -2,6 +2,7 @@ export {
   GAME_WORLD_SCHEMA_VERSION,
   createGameWorld,
   updateGameWorld,
+  withSingleWorldValidation,
   GameWorldValidationError,
 } from './GameWorld'
 export type { CreateGameWorldInput, GameWorld } from './GameWorld'

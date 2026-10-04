@@ -1,4 +1,4 @@
-import { updateGameWorld, type GameWorld } from '@/domain/world'
+import { updateGameWorld, withSingleWorldValidation, type GameWorld } from '@/domain/world'
 import type { MatchStatLog } from '@/domain/stats/MatchStatLog'
 import { applyPostMatchInjuries } from '@/engine/injury'
 import { finalizeCompletedSeason } from '@/engine/season'
@@ -10,6 +10,11 @@ import { applyMatchNextDynamicConsequences } from './MatchNextDynamicConsequence
 /** Applies the Next result through canonical Game/season/stat-log boundaries without changing save shape. */
 export function completeMatchNext(world: GameWorld, result: MatchNextResult): GameWorld {
   if (world.matchStatLogsByGameId[result.gameId] !== undefined) throw new Error(`MatchStatLog already exists for Game ${result.gameId}`)
+  // ME-LOCK1.1: the chain below is one application; the whole world is validated once, on the world it returns.
+  return withSingleWorldValidation(world, (current) => applyMatchNextResultChain(current, result))
+}
+
+function applyMatchNextResultChain(world: GameWorld, result: MatchNextResult): GameWorld {
   const log = createMatchStatLogFromMatchNext(world, result) as MatchStatLog
   const withResult = applyMatchResult(world, {
     gameId: result.gameId,

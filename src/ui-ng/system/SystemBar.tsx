@@ -17,12 +17,14 @@ function continueButtonLabel(stop: ContinueStopReason | undefined): string {
 
 export function SystemBar() {
   const world = useGameStore((state) => state.world)
-  const continueGame = useGameStore((state) => state.continueGame)
+  // ME-LOCK1.1: Continue simulates each day's matches in parallel workers.
+  const continueGame = useGameStore((state) => state.continueGameAsync)
+  const simulationBusy = useGameStore((state) => state.simulationBusy)
   const userTeam = world === null ? undefined : getUserTeam(world)
   const season = world === null ? undefined : world.seasons[world.currentSeasonId]
   const competition = season === undefined || world === null ? undefined : world.competitions[season.competitionId]
   const stop = world === null ? undefined : getContinueStopReason(world)
-  const blocked = world === null
+  const blocked = world === null || simulationBusy
 
   return (
     <header className="ng-system-bar" data-ng-region="system-bar">
@@ -67,7 +69,7 @@ export function SystemBar() {
               syncWorkspaceAppQuery('coach')
               return
             }
-            continueGame()
+            void continueGame()
           }}
           type="button"
         >

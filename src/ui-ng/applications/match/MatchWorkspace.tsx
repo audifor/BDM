@@ -19,8 +19,10 @@ import './match-workspace.css'
 
 export function MatchWorkspace() {
   const world = useGameStore((state) => state.world)
-  const advanceDay = useGameStore((state) => state.advanceDay)
-  const simulateRemainingGamesToday = useGameStore((state) => state.simulateRemainingGamesToday)
+  // ME-LOCK1.1: day advances simulate the day's matches in parallel workers; the buttons wait while a day is being simulated.
+  const advanceDay = useGameStore((state) => state.advanceDayAsync)
+  const simulateRemainingGamesToday = useGameStore((state) => state.simulateRemainingGamesTodayAsync)
+  const simulationBusy = useGameStore((state) => state.simulationBusy)
   const replaceWorld = useGameStore((state) => state.replaceWorld)
   const simulation = useMatchViewerStore((state) => state.simulation)
   const tacticalPlan = useTacticalPlanStore((state) => state.plan)
@@ -82,7 +84,7 @@ export function MatchWorkspace() {
   if (game === undefined) {
     return (
       <NgHoloShell appLabel="Match" empty emptyMessage="No scheduled match." region="match-workspace" teamId={team.id}>
-        <button className="ng-canon__action" onClick={() => advanceDay()} type="button">
+        <button className="ng-canon__action" disabled={simulationBusy} onClick={() => { void advanceDay() }} type="button">
           Advance day
         </button>
       </NgHoloShell>
@@ -166,12 +168,12 @@ export function MatchWorkspace() {
                 <button className="ng-canon__action" disabled={instantProgress !== null} onClick={simulateMatchNext} type="button">
                   Instant result
                 </button>
-                <button className="ng-canon__action" disabled={instantProgress !== null} onClick={() => simulateRemainingGamesToday()} type="button">
+                <button className="ng-canon__action" disabled={instantProgress !== null || simulationBusy} onClick={() => { void simulateRemainingGamesToday() }} type="button">
                   Simulate other games
                 </button>
               </>
             ) : null}
-            <button className="ng-canon__action" onClick={() => advanceDay()} type="button">
+            <button className="ng-canon__action" disabled={simulationBusy} onClick={() => { void advanceDay() }} type="button">
               Advance day
             </button>
             <button className="ng-canon__action" onClick={() => syncWorkspaceAppQuery('roster')} type="button">

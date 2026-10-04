@@ -3,7 +3,7 @@ import './simulate-until.css'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
-import { getNextKnownEvent, tickSimulateUntilDate, type UserMatchSummary } from '@/app/game'
+import { getNextKnownEvent, getWorldMatchRunner, tickSimulateUntilDateAsync, type UserMatchSummary } from '@/app/game'
 import { addDays, compareGameDates, parseGameDate, type GameDate } from '@/domain/date'
 import type { GameWorld } from '@/domain/world'
 import { useGameStore } from '@/stores/gameStore'
@@ -104,24 +104,28 @@ export function SimulateUntilControl({ blocked, world }: { readonly blocked: boo
         return
       }
 
-      const tick = tickSimulateUntilDate(current, target)
-      iterations += 1
-      useGameStore.getState().replaceWorld(tick.world)
-      const live = tick.event.type === 'userMatch' ? tick.event.match.date : tick.world.currentDate
-      if (tick.event.type === 'userMatch') {
-        spotlight = tick.event.match
-      } else if (spotlight !== undefined && !holidayResultStillVisible(spotlight.date, live)) {
-        spotlight = undefined
-      }
-      setLiveDate(live)
-      setMatches(spotlight === undefined ? [] : [spotlight])
-      const arrived = compareGameDates(tick.world.currentDate, target) >= 0
-      if (tick.event.type === 'finished' || arrived || iterations > 4000) {
-        setRunning(false)
-        setMatches([])
-        return
-      }
-      window.setTimeout(step, spotlight === undefined ? 90 : 500)
+      // ME-LOCK1.1: each day's matches are simulated in parallel workers; the next tick starts when this one has been applied.
+      void tickSimulateUntilDateAsync(current, target, getWorldMatchRunner()).then((tick) => {
+        if (cancelRef.current) return
+        if (useGameStore.getState().world !== current) { setRunning(false); setMatches([]); return }
+        iterations += 1
+        useGameStore.getState().replaceWorld(tick.world)
+        const live = tick.event.type === 'userMatch' ? tick.event.match.date : tick.world.currentDate
+        if (tick.event.type === 'userMatch') {
+          spotlight = tick.event.match
+        } else if (spotlight !== undefined && !holidayResultStillVisible(spotlight.date, live)) {
+          spotlight = undefined
+        }
+        setLiveDate(live)
+        setMatches(spotlight === undefined ? [] : [spotlight])
+        const arrived = compareGameDates(tick.world.currentDate, target) >= 0
+        if (tick.event.type === 'finished' || arrived || iterations > 4000) {
+          setRunning(false)
+          setMatches([])
+          return
+        }
+        window.setTimeout(step, spotlight === undefined ? 90 : 500)
+      }, () => { setRunning(false); setMatches([]) })
     }
 
     window.setTimeout(step, 0)

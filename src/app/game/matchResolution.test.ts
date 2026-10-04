@@ -7,7 +7,9 @@ import { calculateStandings } from '@/engine/competition/standings'
 import { getGamesToday, getScheduledGamesToday, getUserTeam } from '@/engine/calendar'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { deserializeGameWorldV4, serializeGameWorldV4 } from '@/save/GameWorldSaveV4'
-import { simulateRemainingGamesToday } from './advanceGameDay'
+import { advanceGameDayWithResult, advanceGameDayWithResultAsync, simulateRemainingGamesToday } from './advanceGameDay'
+import { createInlineMatchRunner, createWorkerPoolRunner, type MatchSimulationJob, type MatchSimulationReply } from '@/app/matchNext/MatchSimulationRunner'
+import { withShortGameFormat } from './testFixtures'
 import { createNewGame } from './createNewGame'
 import { instantResult, simulateAndApplyGame } from './matchResolution'
 
@@ -133,6 +135,49 @@ describe('foul-out with no eligible substitute', () => {
     const announced = state.events.filter((event) => event.type === 'foulOutNoReplacement' && event.teamId === base.homeTeamId).map((event) => event.playerId)
     expect(announced).toEqual(homeFoulOuts.map((event) => event.playerId))
     expect(state.players.filter((player) => player.teamId === base.homeTeamId && player.active)).toHaveLength(5)
+  }, 120_000)
+})
+
+describe('day simulation in parallel workers (ME-LOCK1.1)', () => {
+  /** In-process stand-ins for workers that answer out of order (last job first), to prove the applied world ignores completion order. */
+  function reversedReplyPool() {
+    const port = createMatchEnginePort('match-next')
+    const pending: { readonly job: MatchSimulationJob; readonly reply: (reply: MatchSimulationReply) => void }[] = []
+    let flushScheduled = false
+    const flush = (): void => { flushScheduled = false; for (const item of pending.splice(0).reverse()) item.reply({ jobId: item.job.jobId, result: port.simulate(item.job.setup, 'FAST') }) }
+    return createWorkerPoolRunner(() => {
+      let listener: (reply: MatchSimulationReply) => void = () => {}
+      return {
+        post: (job) => { pending.push({ job, reply: (reply) => listener(reply) }); if (!flushScheduled) { flushScheduled = true; setTimeout(flush, 5) } },
+        onReply: (next) => { listener = next },
+        onFailure: () => {},
+        terminate: () => {},
+      }
+    }, 8)
+  }
+
+  it('applies the identical world whatever runner simulated the day and in whatever order the results arrived', async () => {
+    const world = withShortGameFormat(createNewGame())
+    let a = 100, b = 100, c = 100
+    const sync = advanceGameDayWithResult(world, () => a++)
+    const inline = await advanceGameDayWithResultAsync(world, createInlineMatchRunner(), () => b++)
+    const reversed = await advanceGameDayWithResultAsync(world, reversedReplyPool(), () => c++)
+    expect(sync.status).toBe('COMPLETED')
+    expect(JSON.stringify(inline.world)).toBe(JSON.stringify(sync.world))
+    expect(JSON.stringify(reversed.world)).toBe(JSON.stringify(sync.world))
+    expect(reversed.phases.map((phase) => phase.phaseId)).toEqual(sync.phases.map((phase) => phase.phaseId))
+  }, 600_000)
+
+  it('a failed simulation ends the day as FAILED with the world untouched (nothing applied)', async () => {
+    const world = withShortGameFormat(createNewGame())
+    const failing = createWorkerPoolRunner(() => {
+      let listener: (reply: MatchSimulationReply) => void = () => {}
+      return { post: (job) => setTimeout(() => listener({ jobId: job.jobId, error: 'worker crashed' }), 1), onReply: (next) => { listener = next }, onFailure: () => {}, terminate: () => {} }
+    }, 4)
+    const result = await advanceGameDayWithResultAsync(world, failing, () => 1)
+    expect(result.status).toBe('FAILED')
+    expect(result.world).toBe(world)
+    expect(result.failure?.message).toMatch(/worker crashed/)
   }, 120_000)
 })
 

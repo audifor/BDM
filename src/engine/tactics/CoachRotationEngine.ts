@@ -180,38 +180,63 @@ function selectContextualLineup(
 ): PlayerId[] {
   let best: PlayerId[] | undefined
   let bestScore = Number.NEGATIVE_INFINITY
-  const current: PlayerId[] = []
-  const visit = (slot: number) => {
-    if (slot === COACH_ROTATION_POSITIONS.length) {
-      const score = scoreLineup(current, fits, input.players)
-      const key = current.join('|')
-      const bestKey = best?.join('|') ?? ''
-      if (score > bestScore || (score === bestScore && key < bestKey)) { best = [...current]; bestScore = score }
-      return
-    }
-    const position = COACH_ROTATION_POSITIONS[slot]!
-    const fixed = anchored.get(position)
-    const candidates = fixed === undefined ? available.filter((id) => !current.includes(id)) : [fixed]
-    for (const playerId of candidates) {
-      if (current.includes(playerId)) continue
-      current.push(playerId)
-      visit(slot + 1)
-      current.pop()
+  // ME-LOCK1.1: every ordered five is scored (P(n,5): 524,160 lineups for 16 players). The search below visits them in the same order
+  // and computes the same score with the same arithmetic, without allocating per lineup: the per-player terms are computed once, the
+  // fit total, ball-handler and spacer counts and the interior maximum accumulate slot by slot (the order the score summed them), the
+  // three best perimeter defenders come from an insertion sort of the five values, and the tie-break keys are built only on a tie.
+  const terms = lineupScoreTerms(available, input.players)
+  const count = available.length
+  const fitAt = available.map((playerId) => COACH_ROTATION_POSITIONS.map((position) => fits[playerId]?.[position] ?? 0))
+  const handlerAt = available.map((playerId) => terms.get(playerId)!.handler ? 1 : 0)
+  const spacerAt = available.map((playerId) => terms.get(playerId)!.spacer ? 1 : 0)
+  const interiorAt = available.map((playerId) => terms.get(playerId)!.interior)
+  const perimeterAt = available.map((playerId) => terms.get(playerId)!.perimeterDefense)
+  const anchoredIndex = COACH_ROTATION_POSITIONS.map((position) => { const fixed = anchored.get(position); return fixed === undefined ? -1 : available.indexOf(fixed) })
+  const used = new Array<boolean>(count).fill(false)
+  const chosen = new Array<number>(COACH_ROTATION_POSITIONS.length).fill(0)
+  const perimeter = new Array<number>(COACH_ROTATION_POSITIONS.length).fill(0)
+  const slots = COACH_ROTATION_POSITIONS.length
+  const leaf = (fitTotal: number, handlers: number, spacers: number, interior: number): void => {
+    for (let slot = 0; slot < slots; slot += 1) perimeter[slot] = perimeterAt[chosen[slot]!]!
+    for (let i = 1; i < slots; i += 1) { const value = perimeter[i]!; let j = i - 1; while (j >= 0 && perimeter[j]! < value) { perimeter[j + 1] = perimeter[j]!; j -= 1 } perimeter[j + 1] = value }
+    const perimeterDefense = (0 + perimeter[0]! + perimeter[1]! + perimeter[2]!) / 3
+    const score = fitTotal + Math.min(0, handlers - 2) * 3 + Math.min(0, spacers - 2) * 2 + interior * 0.06 + perimeterDefense * 0.035
+    if (score > bestScore) { best = chosen.map((index) => available[index]!); bestScore = score }
+    else if (score === bestScore) {
+      const candidate = chosen.map((index) => available[index]!)
+      if (candidate.join('|') < (best?.join('|') ?? '')) { best = candidate; bestScore = score }
     }
   }
-  visit(0)
+  const visit = (slot: number, fitTotal: number, handlers: number, spacers: number, interior: number): void => {
+    if (slot === slots) { leaf(fitTotal, handlers, spacers, interior); return }
+    const fixed = anchoredIndex[slot]!
+    const from = fixed >= 0 ? fixed : 0
+    const to = fixed >= 0 ? fixed + 1 : count
+    for (let index = from; index < to; index += 1) {
+      if (used[index]) continue
+      used[index] = true
+      chosen[slot] = index
+      visit(slot + 1, fitTotal + fitAt[index]![slot]!, handlers + handlerAt[index]!, spacers + spacerAt[index]!, Math.max(interior, interiorAt[index]!))
+      used[index] = false
+    }
+  }
+  visit(0, 0, 0, 0, Number.NEGATIVE_INFINITY)
   if (best === undefined) throw new RangeError('Unable to find five distinct players for the coaching plan')
   return best
 }
 
-function scoreLineup(lineup: readonly PlayerId[], fits: Partial<Record<PlayerId, Partial<Record<BasketballPosition, number>>>>, players: Readonly<Record<PlayerId, Player>>): number {
-  const fitTotal = lineup.reduce((sum, playerId, index) => sum + (fits[playerId]?.[COACH_ROTATION_POSITIONS[index]!] ?? 0), 0)
-  const selected = lineup.map((id) => players[id]!)
-  const handlers = selected.filter((player) => avg([player.basketball.ratings.BALL_CONTROL, player.basketball.ratings.PASSING_VISION, player.basketball.ratings.PRESSURE_HANDLING]) >= 63).length
-  const spacers = selected.filter((player) => avg([player.basketball.ratings.THREE_POINT_STATIC, player.basketball.ratings.MOVEMENT_SHOOTING, player.basketball.ratings.SPACING]) >= 62).length
-  const reboundAndInterior = Math.max(...selected.map((player) => avg([player.basketball.ratings.RIM_PROTECTION, player.basketball.ratings.DEFENSIVE_REBOUNDING, player.basketball.ratings.STRENGTH])))
-  const perimeterDefense = selected.map((player) => avg([player.basketball.ratings.POINT_OF_ATTACK_DEFENSE, player.basketball.ratings.LATERAL_DEFENSE])).sort((a, b) => b - a).slice(0, 3).reduce((sum, value) => sum + value, 0) / 3
-  return fitTotal + Math.min(0, handlers - 2) * 3 + Math.min(0, spacers - 2) * 2 + reboundAndInterior * 0.06 + perimeterDefense * 0.035
+interface LineupScoreTerms { readonly handler: boolean; readonly spacer: boolean; readonly interior: number; readonly perimeterDefense: number }
+
+function lineupScoreTerms(available: readonly PlayerId[], players: Readonly<Record<PlayerId, Player>>): ReadonlyMap<PlayerId, LineupScoreTerms> {
+  return new Map(available.map((id) => {
+    const ratings = players[id]!.basketball.ratings
+    return [id, {
+      handler: avg([ratings.BALL_CONTROL, ratings.PASSING_VISION, ratings.PRESSURE_HANDLING]) >= 63,
+      spacer: avg([ratings.THREE_POINT_STATIC, ratings.MOVEMENT_SHOOTING, ratings.SPACING]) >= 62,
+      interior: avg([ratings.RIM_PROTECTION, ratings.DEFENSIVE_REBOUNDING, ratings.STRENGTH]),
+      perimeterDefense: avg([ratings.POINT_OF_ATTACK_DEFENSE, ratings.LATERAL_DEFENSE]),
+    }]
+  }))
 }
 
 function allocateMinuteTargets(
