@@ -128,7 +128,7 @@ export type MatchNextEventType =
   | 'shotClockViolation' | 'ballDead'
   | 'substitution'
   | 'playCalled' | 'tacticalAdjustment'
-  | 'dribblePickedUp'
+  | 'dribblePickedUp' | 'offenseReset'
 
 export interface MatchNextEvent {
   readonly sequence: number
@@ -355,6 +355,8 @@ export interface OffenseFlowState {
   readonly probe?: { readonly playerId: PlayerId; readonly target: CourtPosition; readonly endsT: number } | null
   /** BT5: the play this half court runs (called once when the half court starts, again after an offensive rebound). */
   readonly call?: PlayCall | null
+  /** BT6.1: the handler who reset after a contained drive: the half court is not set again until he is back outside the arc (or passed it). */
+  readonly resetHandlerId?: PlayerId | null
 }
 
 export interface MatchPlayerState {

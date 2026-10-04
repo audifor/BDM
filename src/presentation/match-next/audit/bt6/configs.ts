@@ -12,4 +12,6 @@ export const BT6_CONFIGS: Readonly<Record<string, ExperimentConfig>> = {
   pressureHighVsCreation: { description: 'Home pressure 0.95 vs away creation roster', transform: compose(rigid({ pressure: 0.95 }), ROSTER_CREATION('away')) },
   pressureLowVsCreation: { description: 'Home pressure 0.05 vs away creation roster', transform: compose(rigid({ pressure: 0.05 }), ROSTER_CREATION('away')) },
   helpMid: { description: 'Home defense: help 0.5', transform: rigid({ help: 0.5 }) },
+  // BT6.1.25: player quality on both ends (the home OFFENSE is the creation roster; the away defense is elite or default).
+  creationVsDefense: { description: 'Home creation roster vs away defense roster', transform: compose(ROSTER_CREATION('home'), ROSTER_DEFENSE('away')) },
 }

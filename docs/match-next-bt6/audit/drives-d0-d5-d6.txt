@@ -1,0 +1,110 @@
+coachA            d0   poss 174.0 PPP 0.90 TOV% 17.9 STL 25.8 FTr 0.140 | home rim 0.186 3 0.555 FTr 0.109 AST/FGM 0.53 | drives 56.7 PPPwithDrive 1.13 secondary 3.3 interior 39.8 lost 0.084
+   act  rimAttempt:14.0 shortPaintAttempt:14.3 otherShot:3.7 kickOut:18.3 dumpOff:0.5 interiorEntry:1.7 shortRollPass:0.8 resetPass:0.0 reset:0.0 turnover:1.3 shootingFoul:0.0 foulOnDrive:0.7
+   after extraPass:12.2 catchAndShootOpen:2.8 catchAndShootContested:5.0 closeoutAttack:0.5 secondDrive:0.0 heldOrReset:0.7 turnover:0.7
+   rim  DRIVE_FINISH:7.7 TRANSITION:3.7 PR_HANDLER:2.2 PR_ROLLER:0.2 CUT_FINISH:0.0 PUTBACK:0.3 KICK_OUT:0.2 CATCH_AND_SHOOT:0.7 | FT fouls drive:4.3 putback:0.0 roll:0.0 nearRimOther:0.2 jumpShot:0.0
+   TOV  deflectedPass:8.3 interception:6.2 onBallStrip:7.8 transitionPass:2.7 strippedDrive:1.0 offensiveFoul:1.0 | STL CLEAN_STEAL:9.0 DEFLECTION:8.7 PASS_INTERCEPTION:7.8 POKE_LOOSE:0.3
+coachB            d0   poss 155.8 PPP 0.94 TOV% 15.3 STL 21.7 FTr 0.120 | home rim 0.137 3 0.571 FTr 0.110 AST/FGM 0.60 | drives 52.0 PPPwithDrive 0.96 secondary 4.3 interior 39.0 lost 0.060
+   act  rimAttempt:9.2 shortPaintAttempt:14.2 otherShot:3.0 kickOut:19.7 dumpOff:2.5 interiorEntry:0.5 shortRollPass:1.3 resetPass:0.0 reset:0.0 turnover:1.0 shootingFoul:0.0 foulOnDrive:0.5
+   after extraPass:14.0 catchAndShootOpen:3.0 catchAndShootContested:3.0 closeoutAttack:0.7 secondDrive:0.7 heldOrReset:1.0 turnover:1.3
+   rim  DRIVE_FINISH:6.5 TRANSITION:1.3 PR_HANDLER:1.2 PR_ROLLER:0.2 CUT_FINISH:0.2 PUTBACK:0.2 KICK_OUT:0.0 CATCH_AND_SHOOT:0.7 | FT fouls drive:3.2 putback:0.0 roll:0.0 nearRimOther:0.0 jumpShot:0.3
+   TOV  deflectedPass:8.3 interception:7.0 onBallStrip:4.2 transitionPass:1.2 strippedDrive:1.2 offensiveFoul:0.3 | STL CLEAN_STEAL:5.3 DEFLECTION:8.5 PASS_INTERCEPTION:7.8 POKE_LOOSE:0.0
+creationVsDefense d0   poss 156.3 PPP 0.89 TOV% 16.6 STL 22.8 FTr 0.070 | home rim 0.169 3 0.721 FTr 0.078 AST/FGM 0.59 | drives 33.8 PPPwithDrive 1.11 secondary 2.3 interior 23.7 lost 0.120
+   act  rimAttempt:10.5 shortPaintAttempt:4.8 otherShot:1.8 kickOut:14.2 dumpOff:0.3 interiorEntry:0.7 shortRollPass:0.0 resetPass:0.0 reset:0.0 turnover:0.7 shootingFoul:0.0 foulOnDrive:0.3
+   after extraPass:9.3 catchAndShootOpen:2.2 catchAndShootContested:2.3 closeoutAttack:0.0 secondDrive:0.2 heldOrReset:0.3 turnover:1.0
+   rim  DRIVE_FINISH:4.3 TRANSITION:5.3 PR_HANDLER:1.0 PR_ROLLER:0.0 CUT_FINISH:0.2 PUTBACK:0.0 KICK_OUT:0.0 CATCH_AND_SHOOT:0.0 | FT fouls drive:2.2 putback:0.0 roll:0.0 nearRimOther:0.0 jumpShot:0.2
+   TOV  deflectedPass:7.5 interception:4.7 onBallStrip:6.2 transitionPass:3.5 strippedDrive:1.0 offensiveFoul:0.8 | STL CLEAN_STEAL:7.0 DEFLECTION:7.5 PASS_INTERCEPTION:7.7 POKE_LOOSE:0.7
+helpHigh          d0   poss 163.7 PPP 0.99 TOV% 16.2 STL 22.0 FTr 0.170 | away rim 0.241 3 0.595 FTr 0.214 AST/FGM 0.61 | drives 50.3 PPPwithDrive 1.22 secondary 3.0 interior 40.5 lost 0.086
+   act  rimAttempt:16.5 shortPaintAttempt:7.0 otherShot:2.3 kickOut:17.5 dumpOff:1.5 interiorEntry:1.3 shortRollPass:1.0 resetPass:0.0 reset:0.0 turnover:0.8 shootingFoul:0.0 foulOnDrive:1.0
+   after extraPass:14.2 catchAndShootOpen:2.0 catchAndShootContested:2.5 closeoutAttack:0.8 secondDrive:0.2 heldOrReset:0.8 turnover:1.2
+   rim  DRIVE_FINISH:8.5 TRANSITION:4.0 PR_HANDLER:4.0 PR_ROLLER:0.2 CUT_FINISH:0.2 PUTBACK:0.2 KICK_OUT:0.2 CATCH_AND_SHOOT:0.3 | FT fouls drive:5.3 putback:0.0 roll:0.0 nearRimOther:0.0 jumpShot:0.3
+   TOV  deflectedPass:7.7 interception:5.8 onBallStrip:5.7 transitionPass:1.8 strippedDrive:0.8 offensiveFoul:0.8 | STL CLEAN_STEAL:6.5 DEFLECTION:7.8 PASS_INTERCEPTION:6.8 POKE_LOOSE:0.8
+helpLow           d0   poss 161.3 PPP 0.94 TOV% 15.7 STL 21.8 FTr 0.090 | away rim 0.274 3 0.515 FTr 0.100 AST/FGM 0.49 | drives 56.8 PPPwithDrive 1.21 secondary 2.3 interior 39.0 lost 0.103
+   act  rimAttempt:20.0 shortPaintAttempt:10.8 otherShot:3.5 kickOut:17.2 dumpOff:1.8 interiorEntry:0.8 shortRollPass:0.5 resetPass:0.0 reset:0.0 turnover:0.7 shootingFoul:0.0 foulOnDrive:0.7
+   after extraPass:14.3 catchAndShootOpen:1.7 catchAndShootContested:1.7 closeoutAttack:0.2 secondDrive:0.5 heldOrReset:0.2 turnover:1.3
+   rim  DRIVE_FINISH:10.0 TRANSITION:4.0 PR_HANDLER:5.7 PR_ROLLER:0.2 CUT_FINISH:0.2 PUTBACK:0.8 KICK_OUT:0.2 CATCH_AND_SHOOT:0.5 | FT fouls drive:3.5 putback:0.0 roll:0.0 nearRimOther:0.0 jumpShot:0.2
+   TOV  deflectedPass:8.2 interception:5.7 onBallStrip:4.3 transitionPass:2.3 strippedDrive:0.8 offensiveFoul:0.7 | STL CLEAN_STEAL:5.7 DEFLECTION:8.2 PASS_INTERCEPTION:7.5 POKE_LOOSE:0.5
+neutral           d0   poss 163.2 PPP 1.00 TOV% 15.7 STL 22.5 FTr 0.090 | home rim 0.156 3 0.625 FTr 0.081 AST/FGM 0.57 | drives 48.5 PPPwithDrive 1.11 secondary 3.2 interior 33.3 lost 0.100
+   act  rimAttempt:10.5 shortPaintAttempt:9.7 otherShot:3.5 kickOut:18.5 dumpOff:1.0 interiorEntry:0.8 shortRollPass:1.0 resetPass:0.0 reset:0.0 turnover:1.0 shootingFoul:0.0 foulOnDrive:0.7
+   after extraPass:13.8 catchAndShootOpen:2.2 catchAndShootContested:3.0 closeoutAttack:0.8 secondDrive:0.2 heldOrReset:1.0 turnover:1.2
+   rim  DRIVE_FINISH:6.7 TRANSITION:2.5 PR_HANDLER:1.0 PR_ROLLER:0.5 CUT_FINISH:0.0 PUTBACK:0.5 KICK_OUT:0.3 CATCH_AND_SHOOT:0.3 | FT fouls drive:3.0 putback:0.0 roll:0.0 nearRimOther:0.3 jumpShot:0.0
+   TOV  deflectedPass:8.0 interception:7.3 onBallStrip:5.7 transitionPass:0.7 strippedDrive:0.7 offensiveFoul:0.7 | STL CLEAN_STEAL:6.3 DEFLECTION:8.2 PASS_INTERCEPTION:7.3 POKE_LOOSE:0.7
+oppDefense        d0   poss 159.7 PPP 0.85 TOV% 15.6 STL 22.2 FTr 0.080 | home rim 0.110 3 0.655 FTr 0.078 AST/FGM 0.53 | drives 47.3 PPPwithDrive 1.11 secondary 4.7 interior 28.5 lost 0.117
+   act  rimAttempt:7.7 shortPaintAttempt:11.8 otherShot:2.3 kickOut:21.0 dumpOff:0.8 interiorEntry:0.3 shortRollPass:0.5 resetPass:0.2 reset:0.0 turnover:0.5 shootingFoul:0.0 foulOnDrive:0.8
+   after extraPass:13.3 catchAndShootOpen:3.2 catchAndShootContested:2.8 closeoutAttack:0.7 secondDrive:0.8 heldOrReset:1.3 turnover:1.3
+   rim  DRIVE_FINISH:4.7 TRANSITION:2.0 PR_HANDLER:1.0 PR_ROLLER:0.2 CUT_FINISH:0.2 PUTBACK:0.0 KICK_OUT:0.0 CATCH_AND_SHOOT:0.0 | FT fouls drive:2.3 putback:0.0 roll:0.0 nearRimOther:0.0 jumpShot:0.5
+   TOV  deflectedPass:6.0 interception:6.3 onBallStrip:7.5 transitionPass:1.2 strippedDrive:1.2 offensiveFoul:0.7 | STL CLEAN_STEAL:8.7 DEFLECTION:6.3 PASS_INTERCEPTION:6.7 POKE_LOOSE:0.5
+rosterCreation    d0   poss 168.8 PPP 1.04 TOV% 14.4 STL 21.5 FTr 0.130 | home rim 0.159 3 0.731 FTr 0.089 AST/FGM 0.61 | drives 37.5 PPPwithDrive 1.18 secondary 3.0 interior 33.3 lost 0.145
+   act  rimAttempt:11.5 shortPaintAttempt:6.0 otherShot:1.0 kickOut:16.7 dumpOff:0.3 interiorEntry:1.3 shortRollPass:0.0 resetPass:0.0 reset:0.0 turnover:0.2 shootingFoul:0.0 foulOnDrive:0.3
+   after extraPass:11.3 catchAndShootOpen:2.8 catchAndShootContested:1.7 closeoutAttack:0.0 secondDrive:0.2 heldOrReset:0.7 turnover:0.7
+   rim  DRIVE_FINISH:6.2 TRANSITION:4.0 PR_HANDLER:1.3 PR_ROLLER:0.0 CUT_FINISH:0.0 PUTBACK:0.2 KICK_OUT:0.0 CATCH_AND_SHOOT:0.0 | FT fouls drive:1.7 putback:0.0 roll:0.0 nearRimOther:0.0 jumpShot:0.7
+   TOV  deflectedPass:6.7 interception:6.8 onBallStrip:2.8 transitionPass:4.5 strippedDrive:0.2 offensiveFoul:0.5 | STL CLEAN_STEAL:3.2 DEFLECTION:6.7 PASS_INTERCEPTION:11.0 POKE_LOOSE:0.7
+coachA            d5   poss 184.0 PPP 1.00 TOV% 14.5 STL 22.2 FTr 0.170 | home rim 0.239 3 0.543 FTr 0.156 AST/FGM 0.59 | drives 57.7 PPPwithDrive 1.07 secondary 4.0 interior 55.2 lost 0.066
+   act  rimAttempt:19.8 shortPaintAttempt:12.5 otherShot:2.7 kickOut:17.0 dumpOff:1.3 interiorEntry:0.7 shortRollPass:1.3 resetPass:0.2 reset:0.3 turnover:0.8 shootingFoul:0.0 foulOnDrive:0.7
+   after extraPass:11.0 catchAndShootOpen:2.8 catchAndShootContested:3.0 closeoutAttack:0.7 secondDrive:0.5 heldOrReset:0.7 turnover:1.5
+   rim  DRIVE_FINISH:12.3 TRANSITION:3.7 PR_HANDLER:3.0 PR_ROLLER:0.5 CUT_FINISH:0.0 PUTBACK:0.2 KICK_OUT:0.0 CATCH_AND_SHOOT:0.7 | FT fouls drive:5.2 putback:0.0 roll:0.0 nearRimOther:0.2 jumpShot:0.0
+   TOV  deflectedPass:7.2 interception:5.5 onBallStrip:6.3 transitionPass:2.8 strippedDrive:1.0 offensiveFoul:0.7 | STL CLEAN_STEAL:7.5 DEFLECTION:7.7 PASS_INTERCEPTION:6.5 POKE_LOOSE:0.5
+coachB            d5   poss 158.5 PPP 1.00 TOV% 12.6 STL 15.5 FTr 0.140 | home rim 0.199 3 0.524 FTr 0.122 AST/FGM 0.54 | drives 52.0 PPPwithDrive 1.08 secondary 3.0 interior 47.0 lost 0.060
+   act  rimAttempt:13.8 shortPaintAttempt:12.5 otherShot:3.2 kickOut:16.7 dumpOff:1.3 interiorEntry:0.7 shortRollPass:0.7 resetPass:0.0 reset:0.2 turnover:1.0 shootingFoul:0.0 foulOnDrive:1.0
+   after extraPass:10.2 catchAndShootOpen:2.8 catchAndShootContested:4.2 closeoutAttack:0.2 secondDrive:0.0 heldOrReset:1.5 turnover:0.2
+   rim  DRIVE_FINISH:8.8 TRANSITION:1.0 PR_HANDLER:3.2 PR_ROLLER:1.0 CUT_FINISH:0.0 PUTBACK:0.7 KICK_OUT:0.5 CATCH_AND_SHOOT:0.3 | FT fouls drive:4.0 putback:0.0 roll:0.0 nearRimOther:0.2 jumpShot:0.5
+   TOV  deflectedPass:4.5 interception:3.7 onBallStrip:4.2 transitionPass:1.8 strippedDrive:1.2 offensiveFoul:0.8 | STL CLEAN_STEAL:5.7 DEFLECTION:5.2 PASS_INTERCEPTION:4.2 POKE_LOOSE:0.5
+creationVsDefense d5   poss 154.5 PPP 1.06 TOV% 11.8 STL 12.5 FTr 0.070 | home rim 0.167 3 0.680 FTr 0.056 AST/FGM 0.57 | drives 38.8 PPPwithDrive 1.30 secondary 2.3 interior 33.2 lost 0.030
+   act  rimAttempt:11.7 shortPaintAttempt:6.5 otherShot:2.8 kickOut:15.3 dumpOff:0.3 interiorEntry:1.0 shortRollPass:0.0 resetPass:0.0 reset:0.2 turnover:0.5 shootingFoul:0.0 foulOnDrive:0.3
+   after extraPass:9.5 catchAndShootOpen:2.0 catchAndShootContested:2.7 closeoutAttack:0.2 secondDrive:0.2 heldOrReset:0.7 turnover:0.5
+   rim  DRIVE_FINISH:3.8 TRANSITION:7.3 PR_HANDLER:0.7 PR_ROLLER:0.0 CUT_FINISH:0.0 PUTBACK:0.0 KICK_OUT:0.0 CATCH_AND_SHOOT:0.2 | FT fouls drive:2.3 putback:0.0 roll:0.0 nearRimOther:0.2 jumpShot:0.0
+   TOV  deflectedPass:4.0 interception:3.5 onBallStrip:3.3 transitionPass:2.0 strippedDrive:1.0 offensiveFoul:1.2 | STL CLEAN_STEAL:4.3 DEFLECTION:4.2 PASS_INTERCEPTION:3.7 POKE_LOOSE:0.3
+helpHigh          d5   poss 167.0 PPP 0.95 TOV% 14.3 STL 18.7 FTr 0.100 | away rim 0.184 3 0.641 FTr 0.110 AST/FGM 0.57 | drives 49.5 PPPwithDrive 1.12 secondary 2.7 interior 54.7 lost 0.055
+   act  rimAttempt:13.8 shortPaintAttempt:9.0 otherShot:2.0 kickOut:18.5 dumpOff:1.5 interiorEntry:1.0 shortRollPass:0.7 resetPass:0.0 reset:0.0 turnover:0.8 shootingFoul:0.0 foulOnDrive:1.2
+   after extraPass:13.5 catchAndShootOpen:2.0 catchAndShootContested:4.2 closeoutAttack:0.5 secondDrive:0.2 heldOrReset:0.5 turnover:1.2
+   rim  DRIVE_FINISH:6.5 TRANSITION:3.8 PR_HANDLER:3.2 PR_ROLLER:0.2 CUT_FINISH:0.0 PUTBACK:0.3 KICK_OUT:0.2 CATCH_AND_SHOOT:0.3 | FT fouls drive:3.3 putback:0.0 roll:0.0 nearRimOther:0.0 jumpShot:0.2
+   TOV  deflectedPass:6.2 interception:4.3 onBallStrip:5.7 transitionPass:3.0 strippedDrive:0.8 offensiveFoul:1.3 | STL CLEAN_STEAL:6.2 DEFLECTION:6.8 PASS_INTERCEPTION:5.0 POKE_LOOSE:0.7
+helpLow           d5   poss 170.3 PPP 0.97 TOV% 15.8 STL 22.2 FTr 0.100 | away rim 0.249 3 0.546 FTr 0.101 AST/FGM 0.47 | drives 50.7 PPPwithDrive 1.15 secondary 3.2 interior 49.8 lost 0.064
+   act  rimAttempt:19.2 shortPaintAttempt:10.2 otherShot:2.2 kickOut:13.5 dumpOff:1.2 interiorEntry:1.3 shortRollPass:0.2 resetPass:0.2 reset:0.0 turnover:1.5 shootingFoul:0.0 foulOnDrive:0.3
+   after extraPass:10.7 catchAndShootOpen:1.8 catchAndShootContested:1.2 closeoutAttack:1.2 secondDrive:0.2 heldOrReset:0.0 turnover:1.2
+   rim  DRIVE_FINISH:10.0 TRANSITION:4.5 PR_HANDLER:4.3 PR_ROLLER:0.2 CUT_FINISH:0.0 PUTBACK:0.3 KICK_OUT:0.2 CATCH_AND_SHOOT:1.0 | FT fouls drive:4.0 putback:0.0 roll:0.0 nearRimOther:0.0 jumpShot:0.2
+   TOV  deflectedPass:6.3 interception:6.2 onBallStrip:5.0 transitionPass:3.0 strippedDrive:1.8 offensiveFoul:1.7 | STL CLEAN_STEAL:6.8 DEFLECTION:6.8 PASS_INTERCEPTION:7.7 POKE_LOOSE:0.8
+neutral           d5   poss 163.7 PPP 1.05 TOV% 12.5 STL 16.3 FTr 0.110 | home rim 0.197 3 0.591 FTr 0.120 AST/FGM 0.59 | drives 49.8 PPPwithDrive 1.18 secondary 3.8 interior 47.3 lost 0.053
+   act  rimAttempt:14.0 shortPaintAttempt:10.7 otherShot:2.7 kickOut:17.8 dumpOff:0.5 interiorEntry:0.3 shortRollPass:1.5 resetPass:0.0 reset:0.2 turnover:1.2 shootingFoul:0.0 foulOnDrive:0.5
+   after extraPass:9.5 catchAndShootOpen:3.7 catchAndShootContested:4.8 closeoutAttack:0.2 secondDrive:0.0 heldOrReset:0.2 turnover:1.0
+   rim  DRIVE_FINISH:9.8 TRANSITION:2.0 PR_HANDLER:2.0 PR_ROLLER:0.5 CUT_FINISH:0.2 PUTBACK:0.2 KICK_OUT:0.3 CATCH_AND_SHOOT:0.3 | FT fouls drive:4.7 putback:0.0 roll:0.0 nearRimOther:0.0 jumpShot:0.0
+   TOV  deflectedPass:5.5 interception:3.2 onBallStrip:4.5 transitionPass:2.7 strippedDrive:1.2 offensiveFoul:0.8 | STL CLEAN_STEAL:6.2 DEFLECTION:6.5 PASS_INTERCEPTION:3.3 POKE_LOOSE:0.3
+oppDefense        d5   poss 161.7 PPP 0.88 TOV% 15.3 STL 18.5 FTr 0.090 | home rim 0.152 3 0.600 FTr 0.107 AST/FGM 0.56 | drives 53.2 PPPwithDrive 1.08 secondary 4.8 interior 42.7 lost 0.063
+   act  rimAttempt:10.8 shortPaintAttempt:12.5 otherShot:3.5 kickOut:21.0 dumpOff:0.8 interiorEntry:0.5 shortRollPass:0.5 resetPass:0.2 reset:0.3 turnover:1.8 shootingFoul:0.0 foulOnDrive:0.5
+   after extraPass:12.7 catchAndShootOpen:3.3 catchAndShootContested:3.8 closeoutAttack:0.7 secondDrive:0.8 heldOrReset:0.3 turnover:1.3
+   rim  DRIVE_FINISH:5.7 TRANSITION:2.8 PR_HANDLER:2.3 PR_ROLLER:0.0 CUT_FINISH:0.0 PUTBACK:0.2 KICK_OUT:0.0 CATCH_AND_SHOOT:0.2 | FT fouls drive:3.8 putback:0.0 roll:0.0 nearRimOther:0.0 jumpShot:0.0
+   TOV  deflectedPass:3.8 interception:3.5 onBallStrip:7.3 transitionPass:2.3 strippedDrive:1.8 offensiveFoul:1.0 | STL CLEAN_STEAL:9.8 DEFLECTION:4.3 PASS_INTERCEPTION:3.7 POKE_LOOSE:0.7
+rosterCreation    d5   poss 162.2 PPP 1.01 TOV% 14.0 STL 18.0 FTr 0.110 | home rim 0.198 3 0.679 FTr 0.052 AST/FGM 0.60 | drives 35.5 PPPwithDrive 1.02 secondary 2.3 interior 39.2 lost 0.038
+   act  rimAttempt:14.3 shortPaintAttempt:6.3 otherShot:1.3 kickOut:11.5 dumpOff:0.2 interiorEntry:0.7 shortRollPass:0.0 resetPass:0.0 reset:0.0 turnover:1.0 shootingFoul:0.0 foulOnDrive:0.2
+   after extraPass:7.0 catchAndShootOpen:2.2 catchAndShootContested:2.0 closeoutAttack:0.2 secondDrive:0.0 heldOrReset:0.2 turnover:0.7
+   rim  DRIVE_FINISH:6.2 TRANSITION:7.3 PR_HANDLER:0.8 PR_ROLLER:0.0 CUT_FINISH:0.0 PUTBACK:0.0 KICK_OUT:0.0 CATCH_AND_SHOOT:0.2 | FT fouls drive:2.5 putback:0.0 roll:0.0 nearRimOther:0.0 jumpShot:0.0
+   TOV  deflectedPass:6.2 interception:5.7 onBallStrip:3.8 transitionPass:2.3 strippedDrive:0.8 offensiveFoul:1.8 | STL CLEAN_STEAL:4.5 DEFLECTION:6.8 PASS_INTERCEPTION:6.0 POKE_LOOSE:0.7
+coachA            d6   poss 177.8 PPP 1.00 TOV% 14.3 STL 20.8 FTr 0.180 | home rim 0.235 3 0.466 FTr 0.164 AST/FGM 0.43 | drives 59.2 PPPwithDrive 1.14 secondary 2.7 interior 52.5 lost 0.083
+   act  rimAttempt:16.5 shortPaintAttempt:16.5 otherShot:4.2 kickOut:15.7 dumpOff:0.7 interiorEntry:0.8 shortRollPass:1.0 resetPass:0.0 reset:0.2 turnover:0.7 shootingFoul:0.0 foulOnDrive:1.5
+   after extraPass:11.0 catchAndShootOpen:2.0 catchAndShootContested:3.2 closeoutAttack:0.7 secondDrive:0.0 heldOrReset:1.2 turnover:1.0
+   rim  DRIVE_FINISH:12.3 TRANSITION:2.7 PR_HANDLER:1.7 PR_ROLLER:0.3 CUT_FINISH:0.0 PUTBACK:0.2 KICK_OUT:0.3 CATCH_AND_SHOOT:1.2 | FT fouls drive:4.3 putback:0.0 roll:0.0 nearRimOther:0.3 jumpShot:0.2
+   TOV  deflectedPass:7.0 interception:4.2 onBallStrip:6.5 transitionPass:2.0 strippedDrive:1.2 offensiveFoul:0.8 | STL CLEAN_STEAL:8.0 DEFLECTION:7.3 PASS_INTERCEPTION:4.7 POKE_LOOSE:0.8
+coachB            d6   poss 154.0 PPP 1.02 TOV% 14.7 STL 19.3 FTr 0.100 | home rim 0.192 3 0.515 FTr 0.117 AST/FGM 0.53 | drives 52.0 PPPwithDrive 1.14 secondary 4.0 interior 42.3 lost 0.079
+   act  rimAttempt:12.0 shortPaintAttempt:15.8 otherShot:3.5 kickOut:15.2 dumpOff:0.7 interiorEntry:1.0 shortRollPass:1.0 resetPass:0.0 reset:0.3 turnover:0.7 shootingFoul:0.0 foulOnDrive:0.8
+   after extraPass:10.5 catchAndShootOpen:2.5 catchAndShootContested:1.5 closeoutAttack:1.2 secondDrive:0.3 heldOrReset:0.7 turnover:1.8
+   rim  DRIVE_FINISH:8.0 TRANSITION:1.2 PR_HANDLER:2.5 PR_ROLLER:1.0 CUT_FINISH:0.0 PUTBACK:0.5 KICK_OUT:0.0 CATCH_AND_SHOOT:1.0 | FT fouls drive:4.0 putback:0.0 roll:0.0 nearRimOther:0.2 jumpShot:0.2
+   TOV  deflectedPass:5.7 interception:5.5 onBallStrip:5.3 transitionPass:1.2 strippedDrive:1.0 offensiveFoul:1.0 | STL CLEAN_STEAL:6.5 DEFLECTION:6.2 PASS_INTERCEPTION:6.0 POKE_LOOSE:0.7
+helpLow           d6   poss 163.0 PPP 1.00 TOV% 12.9 STL 18.3 FTr 0.130 | away rim 0.287 3 0.536 FTr 0.159 AST/FGM 0.47 | drives 55.0 PPPwithDrive 1.15 secondary 2.7 interior 52.3 lost 0.048
+   act  rimAttempt:21.5 shortPaintAttempt:10.7 otherShot:1.5 kickOut:15.8 dumpOff:1.0 interiorEntry:0.3 shortRollPass:0.7 resetPass:0.0 reset:0.3 turnover:1.3 shootingFoul:0.0 foulOnDrive:1.0
+   after extraPass:11.8 catchAndShootOpen:2.0 catchAndShootContested:2.3 closeoutAttack:0.2 secondDrive:0.5 heldOrReset:0.5 turnover:0.7
+   rim  DRIVE_FINISH:11.2 TRANSITION:4.7 PR_HANDLER:5.5 PR_ROLLER:0.2 CUT_FINISH:0.0 PUTBACK:0.3 KICK_OUT:0.3 CATCH_AND_SHOOT:0.7 | FT fouls drive:5.7 putback:0.0 roll:0.0 nearRimOther:0.2 jumpShot:0.0
+   TOV  deflectedPass:4.3 interception:5.0 onBallStrip:5.7 transitionPass:1.3 strippedDrive:2.2 offensiveFoul:0.5 | STL CLEAN_STEAL:7.5 DEFLECTION:4.7 PASS_INTERCEPTION:5.2 POKE_LOOSE:1.0
+neutral           d6   poss 165.0 PPP 1.06 TOV% 13.6 STL 17.8 FTr 0.150 | home rim 0.259 3 0.517 FTr 0.139 AST/FGM 0.51 | drives 53.5 PPPwithDrive 1.27 secondary 3.5 interior 50.0 lost 0.053
+   act  rimAttempt:19.2 shortPaintAttempt:12.0 otherShot:2.8 kickOut:15.5 dumpOff:0.3 interiorEntry:0.5 shortRollPass:0.8 resetPass:0.0 reset:0.2 turnover:1.2 shootingFoul:0.0 foulOnDrive:0.5
+   after extraPass:9.8 catchAndShootOpen:2.3 catchAndShootContested:2.7 closeoutAttack:0.8 secondDrive:0.3 heldOrReset:0.5 turnover:0.7
+   rim  DRIVE_FINISH:13.2 TRANSITION:3.3 PR_HANDLER:2.0 PR_ROLLER:0.8 CUT_FINISH:0.0 PUTBACK:0.2 KICK_OUT:0.2 CATCH_AND_SHOOT:0.3 | FT fouls drive:4.5 putback:0.0 roll:0.0 nearRimOther:0.2 jumpShot:0.5
+   TOV  deflectedPass:5.0 interception:4.0 onBallStrip:5.8 transitionPass:2.0 strippedDrive:1.3 offensiveFoul:1.0 | STL CLEAN_STEAL:8.0 DEFLECTION:5.2 PASS_INTERCEPTION:4.2 POKE_LOOSE:0.5
+oppDefense        d6   poss 164.7 PPP 0.82 TOV% 16.7 STL 23.3 FTr 0.080 | home rim 0.203 3 0.585 FTr 0.096 AST/FGM 0.56 | drives 52.5 PPPwithDrive 1.09 secondary 4.2 interior 44.2 lost 0.072
+   act  rimAttempt:14.0 shortPaintAttempt:9.7 otherShot:3.3 kickOut:18.5 dumpOff:1.2 interiorEntry:1.5 shortRollPass:1.3 resetPass:0.0 reset:0.0 turnover:1.2 shootingFoul:0.0 foulOnDrive:0.3
+   after extraPass:12.7 catchAndShootOpen:3.2 catchAndShootContested:3.3 closeoutAttack:0.8 secondDrive:0.2 heldOrReset:0.8 turnover:1.8
+   rim  DRIVE_FINISH:7.0 TRANSITION:4.3 PR_HANDLER:2.5 PR_ROLLER:0.5 CUT_FINISH:0.2 PUTBACK:0.2 KICK_OUT:0.2 CATCH_AND_SHOOT:0.3 | FT fouls drive:3.2 putback:0.0 roll:0.0 nearRimOther:0.3 jumpShot:0.2
+   TOV  deflectedPass:6.0 interception:5.5 onBallStrip:8.2 transitionPass:1.7 strippedDrive:1.2 offensiveFoul:1.2 | STL CLEAN_STEAL:10.2 DEFLECTION:6.5 PASS_INTERCEPTION:6.0 POKE_LOOSE:0.7
+rosterCreation    d6   poss 166.2 PPP 1.03 TOV% 12.3 STL 14.7 FTr 0.120 | home rim 0.211 3 0.670 FTr 0.051 AST/FGM 0.64 | drives 37.3 PPPwithDrive 1.10 secondary 1.2 interior 38.3 lost 0.030
+   act  rimAttempt:16.3 shortPaintAttempt:6.0 otherShot:1.0 kickOut:11.5 dumpOff:0.5 interiorEntry:0.7 shortRollPass:0.0 resetPass:0.0 reset:0.0 turnover:0.5 shootingFoul:0.0 foulOnDrive:0.3
+   after extraPass:9.8 catchAndShootOpen:1.0 catchAndShootContested:0.8 closeoutAttack:0.2 secondDrive:0.0 heldOrReset:0.0 turnover:0.5
+   rim  DRIVE_FINISH:8.2 TRANSITION:6.8 PR_HANDLER:0.8 PR_ROLLER:0.0 CUT_FINISH:0.0 PUTBACK:0.3 KICK_OUT:0.0 CATCH_AND_SHOOT:0.3 | FT fouls drive:2.3 putback:0.0 roll:0.0 nearRimOther:0.0 jumpShot:0.2
+   TOV  deflectedPass:6.0 interception:3.7 onBallStrip:3.2 transitionPass:1.5 strippedDrive:0.8 offensiveFoul:1.7 | STL CLEAN_STEAL:3.8 DEFLECTION:6.2 PASS_INTERCEPTION:4.0 POKE_LOOSE:0.7

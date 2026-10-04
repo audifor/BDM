@@ -29,6 +29,15 @@ it.skipIf(process.env.BT2_AUDIT === undefined)('BT6 scenes', () => {
         if (e.type === 'actionStarted' && e.actionKind === 'KICK_OUT' && defenseIsHome) add('kickOut', e.t)
         if (e.type === 'actionStarted' && e.actionKind === 'DRIVE' && defenseIsHome) add('drive', e.t)
         if (e.type === 'dribblePickedUp' && defenseIsHome) add('pickup', e.t)
+        // BT6.1 drive ecology scenes (the away team attacks the home defense).
+        if (e.type === 'actionResolved' && e.actionKind === 'DRIVE' && defenseIsHome) add(`drive:${e.actionOutcome}`, e.t)
+        if (e.type === 'offenseReset' && defenseIsHome) add('reset', e.t)
+        if (e.type === 'foul' && e.foulType === 'SHOOTING') { const victim = s.players.find((p) => p.playerId === e.victimPlayerId); if (victim !== undefined && victim.teamId !== s.homeTeamId) add('shootingFoul', e.t) }
+        if (e.type === 'passReleased' && defenseIsHome) {
+          const receiver = s.players.find((p) => p.playerId === e.receiverPlayerId)
+          const basket = s.defensiveStructure?.defendedBasket
+          if (receiver !== undefined && basket !== undefined && Math.hypot(receiver.position.x - basket.x, receiver.position.y - basket.y) < 5) add(s.screen !== null && s.screen.screenerId === receiver.playerId ? 'shortRollPass' : 'interiorEntry', e.t)
+        }
         if (e.type === 'stealAttempt' && !defenseIsHome) add('reachAttempt', e.t)
         if (e.type === 'offBallMove' && defenseIsHome && (e.ballReason === 'COME_OFF' || e.ballReason === 'BASKET_CUT' || e.ballReason === 'BACKDOOR_CUT')) add(`offBall:${e.ballReason}`, e.t)
         if (e.type === 'shotReleased' && e.shotCreation === 'TRANSITION') add(`transitionShot:${defenseIsHome ? 'awayAttacks' : 'homeAttacks'}`, e.t)

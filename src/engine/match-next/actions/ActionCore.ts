@@ -13,9 +13,9 @@ import { assessDriveContact, assessShootingContact, CONTACT_DISTANCE_METERS, FOU
 import { commitFoul } from '../rules/Fouls'
 import { tuning } from '../tuning'
 import { classifyShotCreation, shotZone } from '../stats/ShotEcology'
-import { executionQuality, interceptAttemptChance, laneRead, passExecutionError } from './PassRisk'
+import { executionQuality, interceptAttemptChance, laneRead, passExecutionError, passTravelTicks } from './PassRisk'
 import { bestReceiver, driveTarget, estimateShotContest, evaluateShotOpportunity, floaterFactor, passQuality, pullUpFactor, putbackQuality, readDecision, readDriveStop, shotMakeProbability, shotValueAt } from './DecisionCore'
-import { announceCall, decisionNoise, earlyOffenseCall, reconcileOffenseFlow } from './OffenseFlow'
+import { announceCall, decisionNoise, earlyOffenseCall, reconcileOffenseFlow, resetOffense } from './OffenseFlow'
 import { createScreenState, planScreen, reconcileScreen, useScreen } from './ScreenCore'
 import { reconcileOffBallMovement } from './OffBallMovement'
 import type { MatchActionKind, MatchActionOutcome, MatchActionState, MatchDecision } from './ActionState'
@@ -47,6 +47,7 @@ export function reconcileActions(input: MatchState): MatchState {
   if (!hasActiveOffensiveAction(state)) {
     const read = readDecision(state)
     if (read.decision) state = executeDecision(recordDecision(state, read.decision), read.decision)
+    else if (read.reset === true && state.ball.kind === 'HELD') state = resetOffense(state, state.ball.ownerPlayerId)
     else if (read.holdUntilT !== undefined && state.offenseFlow !== null) state = startProbe({ ...state, offenseFlow: { ...state.offenseFlow, readyAtT: read.holdUntilT } })
   }
   return applyPassReceiveIntents(applyProbeIntents(applyStopIntents(applyDriveIntents(state))))
@@ -234,6 +235,8 @@ function pickUpIfSmothered(state: MatchState, driver: MatchPlayerState): MatchSt
   return emitEvent({ ...state, ball: { ...state.ball, dribble: 'picked' } }, 'dribblePickedUp', { possessionId: activePossession(state)?.id, teamId: driver.teamId, playerId: driver.playerId, victimPlayerId: guard.playerId })
 }
 const PICKUP_GAP_METERS = 0.75
+/** BT6.1: within this distance of the rim a shooter goes up with the momentum he gathered with (a cut, a roll, a putback, a drive). */
+const RIM_ATTACK_CONTACT_METERS = 3
 
 const DRIVE_STOP_MIN_TICKS = 3
 /** How fast the remembered value of a team's shots follows the shots it takes (about the last 16). */
@@ -253,7 +256,7 @@ function beginStopShot(state: MatchState, drive: MatchActionState, driver: Match
   next = setPossessionPhase(next, 'SETUP')
   const action: MatchActionState = {
     id: `match-action-${next.nextActionSequence}`, kind: 'SHOOT', playerId: driver.playerId, teamId: driver.teamId, startedT: next.t, status: 'ACTIVE',
-    ...(drive.decisionId === undefined ? {} : { decisionId: drive.decisionId }), phase: 'GATHER', releaseAtT: next.t + STOP_GATHER_TICKS[kind], targetBasket: { ...basket }, shotStop: kind,
+    ...(drive.decisionId === undefined ? {} : { decisionId: drive.decisionId }), phase: 'GATHER', releaseAtT: next.t + STOP_GATHER_TICKS[kind], targetBasket: { ...basket }, shotStop: kind, gatherVelocity: { ...driver.velocity },
     target: { ...driver.position },
   }
   next = startAction(next, action)
@@ -316,7 +319,10 @@ function releaseReadyShots(state: MatchState): MatchState {
     // Everything that can happen to the shot in the act, from the geometry of the defenders around the shooter (BT3D/BT3H).
     const defenders = next.players.filter((player) => player.active && player.teamId !== shooter.teamId)
     const block = assessBlock(shooter, defenders, basket, distance)
-    const shootingContact = assessShootingContact(shooter, defenders, basket, isDriveFinish(next, shooter.playerId))
+    // A floater keeps attacking the rim as it goes up; a pull-up stops and rises (no momentum into anybody).
+    const driveFinish = isDriveFinish(next, shooter.playerId) || action.shotStop === 'FLOATER'
+    const attacking = driveFinish || distance <= RIM_ATTACK_CONTACT_METERS
+    const shootingContact = assessShootingContact(shooter, defenders, basket, driveFinish, attacking ? action.gatherVelocity : undefined)
     const zone = shotZone(shooter.position, basket, points, next.court)
     const creation = classifyShotCreation(next, shooter.playerId, shooter.position, basket, action.shotStop === undefined ? {} : { stopKind: action.shotStop })
     const blockRoll = draw(next.rng, 'outcome')
@@ -453,7 +459,7 @@ function executeDecision(state: MatchState, decision: MatchDecision): MatchState
   }
   if (decision.kind === 'SHOOT' || decision.kind === 'CATCH_AND_SHOOT') {
     const action = createAction(state, decision, decision.kind, {
-      phase: 'GATHER', releaseAtT: state.t + (decision.kind === 'CATCH_AND_SHOOT' ? 4 : 3), targetBasket: { ...basket },
+      phase: 'GATHER', releaseAtT: state.t + (decision.kind === 'CATCH_AND_SHOOT' ? 4 : 3), targetBasket: { ...basket }, gatherVelocity: { ...actor.velocity },
       ...(screenSet === null ? {} : { screenId: screenSet.id }),
     })
     return useScreen(setPossessionPhase(startAction(state, action), 'ACTION'), actor.playerId)
@@ -463,7 +469,7 @@ function executeDecision(state: MatchState, decision: MatchDecision): MatchState
     : bestReceiver(state, actor, decision.kind === 'KICK_OUT')
   if (!receiver || receiver.teamId !== actor.teamId) return state
   const distance = distanceBetween(actor.position, receiver.position)
-  const travelTicks = Math.max(2, Math.min(8, Math.ceil(distance / 10 * 10)))
+  const travelTicks = passTravelTicks(distance)
   const predictionSeconds = travelTicks * 0.1
   const led: CourtPosition = {
     x: receiver.position.x + receiver.velocity.x * predictionSeconds,

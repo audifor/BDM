@@ -14,7 +14,7 @@ import { activePossession, INITIAL_SHOT_VALUE_MEMORY, type MatchPlayerState, typ
 import { hashStringToSeed } from '@/engine/random'
 import { planScreen, SCREEN_MIN_SECONDS_LEFT } from './ScreenCore'
 import { attackingBasketForTeam } from '../structure/FiveOutStructure'
-import { ballFlightSeconds, executionQuality, interceptAttemptChance, passExecutionError, perceivedLaneRead, receiverDenial } from './PassRisk'
+import { ballFlightSeconds, catchPoint, executionQuality, interceptAttemptChance, passExecutionError, perceivedLaneRead, receiverDenial } from './PassRisk'
 import { isInOffensiveFrontcourt } from '../structure/OffensiveStructure'
 import { callPlay, type PlayCall, type PlayFamily } from '../tactics/PlayCalling'
 import { defensiveShape, tacticalIntent, type TacticalIntent } from '../tactics/TacticalIdentity'
@@ -125,6 +125,8 @@ export interface DecisionRead {
   readonly decision: MatchDecision | null
   /** When the handler chose to keep reading instead of acting, the tick of his next read. */
   readonly holdUntilT?: number
+  /** BT6.1: the handler, contained with a live dribble, takes the ball back out and the offense re-organises for another action. */
+  readonly reset?: boolean
 }
 
 /** Selects one possession action from current MatchState and the completed action that led here. */
@@ -133,9 +135,9 @@ export function selectDecision(state: MatchState): MatchDecision | null {
 }
 
 /** Expected points of the possession if the offense keeps working: falls as the clock runs out. */
-export function continuationValue(state: MatchState): number {
+export function continuationValue(state: MatchState, spentSeconds = 0): number {
   const shotClock = state.shotClockTenths === null ? state.clockRules.shotClockSeconds : state.shotClockTenths / 10
-  const seconds = Math.min(shotClock, state.gameClockTenths / 10)
+  const seconds = Math.min(shotClock, state.gameClockTenths / 10) - spentSeconds
   const teamId = activePossession(state)?.teamId
   const remembered = teamId === undefined ? INITIAL_SHOT_VALUE_MEMORY : teamId === state.homeTeamId ? state.shotValueMemory.home : state.shotValueMemory.away
   // Holding the ball is worth what this team's shots have been worth (times a factor: a possession that goes on can beat its average shot).
@@ -172,6 +174,13 @@ export function defenseIsSet(state: MatchState, radius: number = tuning().defens
 
 /** The default of `continuationValuePoints` is the factor over the remembered shot value that reproduces the calibrated behaviour. */
 const DEFAULT_CONTINUATION = 1.05
+/** BT6.1: seconds a reset costs (back out, re-space, call the next action) and the clock below which there is no time for one. */
+const RESET_COST_SECONDS = 5
+const RESET_MIN_SECONDS = 10
+/** BT6.1: a defender this far behind the driver (along the line to the rim) has been beaten. */
+const BEATEN_BEHIND_METERS = 0.3
+/** BT6.1: seconds of their current motion other defenders are believed to keep while a pass is in the air and the receiver gathers. */
+const CONTEST_CARRY_MAX_SECONDS = 1.2
 
 export interface ShotOpportunity {
   readonly points: 2 | 3
@@ -189,6 +198,8 @@ export interface ShotModifiers {
   /** Scale of the block risk and of the foul-draw chance (a floater is released higher and earlier than a layup). */
   readonly blockScale?: number
   readonly foulScale?: number
+  /** BT6.1: the shot is a drive finish: the shooter goes up with the velocity he has now (the contact the referee will judge). */
+  readonly driveFinish?: boolean
 }
 
 export function evaluateShotOpportunity(state: MatchState, shooter: MatchPlayerState, position: CourtPosition, basket: CourtPosition, contestScore: number, mods: ShotModifiers = {}): ShotOpportunity {
@@ -200,7 +211,8 @@ export function evaluateShotOpportunity(state: MatchState, shooter: MatchPlayerS
   const defenders = state.players.filter((player) => player.active && player.teamId !== shooter.teamId)
   const at = { ...shooter, position }
   const block = assessBlock(at, defenders, basket, distanceMeters)
-  const contact = assessShootingContact(at, defenders, basket, false)
+  const attacking = mods.driveFinish === true || distanceMeters <= 3
+  const contact = assessShootingContact(at, defenders, basket, mods.driveFinish === true, attacking ? shooter.velocity : undefined)
   const blockRisk = Math.min(0.9, (block?.probability ?? 0) * tuning().blockRiskWeight * (mods.blockScale ?? 1))
   const foulChance = contact.foulType === null ? 0 : Math.min(0.95, contact.callProbability * tuning().foulDrawWeight * (mods.foulScale ?? 1))
   const freeThrow = freeThrowProbability(shooter)
@@ -291,8 +303,11 @@ function predictContestAfterPass(state: MatchState, passer: MatchPlayerState, re
   let worst = 0
   for (const defender of state.players) {
     if (!defender.active || defender.teamId === receiver.teamId) continue
+    // BT6.1: everybody else keeps running while the ball flies and the receiver gathers (a defender sprinting back in transition arrives
+    // at the catch point with the ball), not only for the 0.3 s of a shot already going up.
+    const carry = Math.min(seconds, CONTEST_CARRY_MAX_SECONDS)
     const at = defender.playerId === guardId ? forecastCloseout(state, defender, receiver, seconds)
-      : { x: defender.position.x + defender.velocity.x * CONTEST_LOOKAHEAD_SECONDS, y: defender.position.y + defender.velocity.y * CONTEST_LOOKAHEAD_SECONDS }
+      : { x: defender.position.x + defender.velocity.x * carry, y: defender.position.y + defender.velocity.y * carry }
     const helpReach = defender.playerId === guardId ? 0 : defender.kinematics.maxSpeedMps * (1 - defender.fatigue * 0.0012) * tuning().helpCloseoutBelief * Math.max(0, seconds - closeoutReactionTicks() / 10)
     const distance = Math.max(0, distanceBetween(at, receiver.position) - helpReach)
     const basketFor = attackingBasketForTeam(receiver.teamId, state.homeTeamId, state.period, state.court)
@@ -310,10 +325,15 @@ function readReceivers(state: MatchState, passer: MatchPlayerState, basket: Cour
   const lossPoints = tuning().passLossPoints + (openFloor ? tuning().openFloorLossPoints : 0)
   return state.players
     .filter((player) => player.active && player.teamId === passer.teamId && player.playerId !== passer.playerId)
-    .map((player) => {
-      const contest = predictContestAfterPass(state, passer, player)
-      const opportunity = evaluateShotOpportunity(state, player, player.position, basket, contest)
-      const completion = perceivedCompletion(state, passer, player)
+    .map((receiver) => {
+      // BT6.1: the look is the one he will have where he catches it (a cutter is worth his finish at the rim, a man drifting away less).
+      // `atCatch` is a hypothetical copy for the valuation only; nothing is written to the state.
+      const catchAt = tuning().catchPointValue !== 0 ? catchPoint(passer, receiver, state.court) : receiver.position
+      const atCatch = { ...receiver, position: catchAt }
+      const contest = predictContestAfterPass(state, passer, atCatch)
+      const opportunity = evaluateShotOpportunity(state, atCatch, catchAt, basket, contest)
+      const completion = perceivedCompletion(state, passer, receiver)
+      const player = receiver
       // A passer who sees the floor values his teammates' looks at what they are worth; one who does not, misses some of them.
       const sight = 1 - tuning().passSightSpread / 2 + tuning().passSightSpread * (passer.passing.vision / 100)
       // BT4.5: a pass that is lost is not worth zero, it is worth minus the possession (and the break that follows).
@@ -327,8 +347,10 @@ function readReceivers(state: MatchState, passer: MatchPlayerState, basket: Cour
  * (a poor reader underestimates how fast a defender gets to the line, an elite one sees him already sliding in).
  */
 export function perceivedCompletion(state: MatchState, passer: MatchPlayerState, receiver: MatchPlayerState): number {
-  const distance = distanceBetween(passer.position, receiver.position)
-  const lane = perceivedLaneRead(state, passer, passer.position, receiver.position, ballFlightSeconds(distance))
+  // BT6.1: the lane he reads is the line the ball will travel: to the catch point, not to where the receiver stands now.
+  const target = tuning().catchPointLane !== 0 ? catchPoint(passer, receiver, state.court) : receiver.position
+  const distance = distanceBetween(passer.position, target)
+  const lane = perceivedLaneRead(state, passer, passer.position, target, ballFlightSeconds(distance), receiver.position)
   const execution = 1 - passExecutionError(state, passer, receiver, distance)
   const interception = 1 - 0.85 * interceptAttemptChance(lane)
   const availability = 1 - tuning().passDenialWeight * receiverDenial(state, passer, receiver)
@@ -359,7 +381,13 @@ function driveEdge(state: MatchState, actor: MatchPlayerState, basket: CourtPosi
   // BT6.7: the edge is the separation his first step creates against this defender's read and slide at the distance he is played (the same
   // quantities the movement uses), plus how far the defender is from the line to the rim (a closeout, a man caught on a screen).
   if (defender === undefined) return { edge: 0.6, defender }
-  const separation = expectedSeparation(state, defender, actor, gap)
+  // BT6.1: a defender who is already behind him on the way to the rim has been beaten: the distance to him is separation the driver has,
+  // not a cushion the defender keeps. (BT6 read every gap as a cushion, so a driver who had won believed he was contained and kicked it out.)
+  const rimX = basket.x - actor.position.x
+  const rimY = basket.y - actor.position.y
+  const rimLength = Math.hypot(rimX, rimY) || 1
+  const ahead = ((defender.position.x - actor.position.x) * rimX + (defender.position.y - actor.position.y) * rimY) / rimLength
+  const separation = ahead < -BEATEN_BEHIND_METERS ? 1 : expectedSeparation(state, defender, actor, gap)
   const ratings = (handlerBurst(actor) - defenderQuickness(defender)) / 75
   return { edge: clamp(ratings + 0.35 * clamp(separation, -0.3, 1) + Math.min(0.3, (lane - 0.9) * 0.15), -0.4, 0.6), defender }
 }
@@ -423,7 +451,7 @@ export function readDriveStop(state: MatchState, driver: MatchPlayerState, baske
   const { edge } = driveEdge(state, driver, basket)
   const pFinish = ahead.length === 0 ? 0.9 : clamp(0.28 + 0.9 * edge - 0.12 * (ahead.length - 1), 0.08, 0.8)
   const spot = rimSpotFor(driver.position, basket)
-  const rimFinish = evaluateShotOpportunity(state, driver, spot, basket, estimateContestAt(state, driver.teamId, spot).score).value
+  const rimFinish = evaluateShotOpportunity(state, driver, spot, basket, estimateContestAt(state, driver.teamId, spot).score, { driveFinish: true }).value
   const contained = (tuning().driveContainedPremium !== 0 ? workingValue(state) : continuationValue(state)) * 0.9
   const cont = pFinish * rimFinish + (1 - pFinish) * contained
   const contestNow = estimateContestAt(state, driver.teamId, driver.position).score
@@ -465,9 +493,11 @@ export function readDecision(state: MatchState): DecisionRead {
   // A defensive rebounder lands, secures and turns before he can look up the floor (BT4D: 0.4 s was less than any real rebound).
   if (liveTransition && state.transition?.trigger === 'defensiveRebound' && state.t - state.transition.startedT < DEFENSIVE_REBOUND_GATHER_TICKS) return { decision: null }
   const lastOffensive = [...state.actions].reverse().find((action) => action.teamId === possession.teamId && action.kind !== 'CLOSEOUT')
+  // BT6.1: a contained handler does not drive the same man again in this action; after a reset (a new half court) he may.
+  const containedSince = Math.max(possession.startedT, flow?.halfCourtSinceT ?? possession.startedT)
   const containedThisPossession = state.actions.some((action) => action.kind === 'DRIVE'
     && action.playerId === actor.playerId && action.teamId === possession.teamId
-    && action.startedT >= possession.startedT && action.status === 'COMPLETED' && action.outcome === 'CONTAINED')
+    && action.startedT >= containedSince && action.status === 'COMPLETED' && action.outcome === 'CONTAINED')
   let kind: MatchDecisionKind
   let targetPlayerId: PlayerId | undefined
   let reason: string
@@ -492,6 +522,7 @@ export function readDecision(state: MatchState): DecisionRead {
     && state.screen?.phase === 'SET' && state.screen.handlerId === actor.playerId) {
     // The screen is set: use it (attack off it, pull up, or move the ball); the handler cannot stand still on it.
     const read = readTheFloor(state, actor, basket, flow, containedThisPossession, 'PASS', true, state.screen)
+    if (read.kind === 'RESET') return { decision: null, reset: true }
     kind = read.kind === 'HOLD' ? 'DRIVE' : read.kind
     targetPlayerId = read.kind === 'HOLD' ? undefined : read.targetPlayerId
     reason = read.kind === 'HOLD' ? 'The screen is set: attack it' : `Off the screen: ${read.reason}`
@@ -502,14 +533,18 @@ export function readDecision(state: MatchState): DecisionRead {
     reason = 'Finish the drive with a shot at the rim'
   } else if (lastOffensive?.kind === 'DRIVE' && lastOffensive.status === 'COMPLETED' && lastOffensive.playerId === actor.playerId
     && (lastOffensive.outcome === 'ADVANTAGE' || lastOffensive.outcome === 'CONTAINED')) {
-    // After a drive the handler is at the rim (or stopped short): finish or move the ball, valued like any other read.
-    const read = readTheFloor(state, actor, basket, flow, true, lastOffensive.outcome === 'ADVANTAGE' ? 'KICK_OUT' : 'PASS', true)
+    // After a drive the handler is at the rim (or stopped short): finish or move the ball, valued like any other read. BT6.1: a contained
+    // handler who still has his dribble may also take it back out and start again (a reset), if the clock allows another action.
+    const canReset = lastOffensive.outcome === 'CONTAINED' && state.ball.kind === 'HELD' && state.ball.dribble === 'live'
+    const read = readTheFloor(state, actor, basket, flow, true, lastOffensive.outcome === 'ADVANTAGE' ? 'KICK_OUT' : 'PASS', true, null, canReset)
+    if (read.kind === 'RESET') return { decision: null, reset: true }
     kind = read.kind === 'HOLD' ? 'SHOOT' : read.kind
     targetPlayerId = read.kind === 'HOLD' ? undefined : read.targetPlayerId
     reason = read.kind === 'HOLD' ? 'The drive ended and there is nothing better than to finish' : `After the drive (${lastOffensive.outcome}): ${read.reason}`
     utility = read.kind === 'HOLD' ? undefined : read.utility
   } else {
     const read = readTheFloor(state, actor, basket, flow, containedThisPossession, 'PASS')
+    if (read.kind === 'RESET') return { decision: null, reset: true }
     if (read.kind === 'HOLD') return { decision: null, holdUntilT: read.holdUntilT }
     kind = read.kind
     targetPlayerId = read.targetPlayerId
@@ -533,6 +568,7 @@ export function readDecision(state: MatchState): DecisionRead {
 
 type FloorRead =
   | { readonly kind: 'HOLD'; readonly holdUntilT: number }
+  | { readonly kind: 'RESET' }
   | { readonly kind: 'SHOOT' | 'CATCH_AND_SHOOT' | 'DRIVE' | 'PASS' | 'KICK_OUT' | 'SCREEN'; readonly targetPlayerId?: PlayerId; readonly reason: string; readonly utility: NonNullable<MatchDecision['utility']> }
 
 /**
@@ -595,12 +631,15 @@ function playRead(state: MatchState, flow: MatchState['offenseFlow'], teamId: Ma
   // A patient team (ball movement) needs one more pass before a set counts as run, and stays with it longer; an attacking one less.
   const extra = Math.max(0, tuning().playExtraPasses + Math.round(intent.offense.ballMovement * 1.2))
   const kind = call.family
-  const executed = kind === 'BALL_SCREEN' ? screensDone >= 1 && passesDone + drivesDone >= 1 + extra
+  // BT6.1: a set has done its job once it has bent the defense: a drive that drew help and was kicked out (the kick-out was caught). From there
+  // the advantage belongs to the man with the ball (shoot it, attack the closeout, or move it on) and not to the set's pass count.
+  const advantageCreated = mine.some((action) => action.kind === 'KICK_OUT' && action.outcome === 'CAUGHT')
+  const executed = advantageCreated || (kind === 'BALL_SCREEN' ? screensDone >= 1 && passesDone + drivesDone >= 1 + extra
     : kind === 'DRIVE_KICK' ? drivesDone >= 1 && passesDone >= 1 + extra
       : kind === 'MOVEMENT' ? (offBallScreens >= 1 || passesDone >= 3 + extra) && passesDone >= 1 + extra
         : kind === 'POST' ? postTouches >= 1 && (passesDone >= 1 + extra || drivesDone >= 1)
           : kind === 'ISOLATION' ? drivesDone >= 1
-            : passesDone >= 3 + extra
+            : passesDone >= 3 + extra)
   const commitSeconds = tuning().playCommitSeconds * (1 + 0.3 * intent.offense.ballMovement)
   return { kind, call, committed: !executed && elapsed < commitSeconds, screensDone, drivesDone, passesDone, postTouches, offBallScreens }
 }
@@ -618,7 +657,7 @@ function hasNumericAdvantage(state: MatchState, actor: MatchPlayerState, basket:
   return defenders <= attackers
 }
 
-function readTheFloor(state: MatchState, actor: MatchPlayerState, basket: CourtPosition, flow: MatchState['offenseFlow'], contained: boolean, passKind: 'PASS' | 'KICK_OUT', mustAct = false, screen: ScreenState | null = null): FloorRead {
+function readTheFloor(state: MatchState, actor: MatchPlayerState, basket: CourtPosition, flow: MatchState['offenseFlow'], contained: boolean, passKind: 'PASS' | 'KICK_OUT', mustAct = false, screen: ScreenState | null = null, canReset = false): FloorRead {
   const intent = tacticalIntent(state, actor.teamId)
   const contest = estimateContestAt(state, actor.teamId, actor.position)
   // Off a set screen the handler's defender is about to be delayed: the pull-up is less contested than it looks now.
@@ -662,6 +701,8 @@ function readTheFloor(state: MatchState, actor: MatchPlayerState, basket: CourtP
     pass: (secondsLeft > 3.5 && (screen === null || screen.coverage === 'blitz' || tuning().passOffScreen !== 0) ? (bestReceiver?.value ?? Number.NEGATIVE_INFINITY) * tuning().passValueScale * passPlayFactor * (1 - (actor.offense.usage - 50) * tuning().usagePassPerPoint) : Number.NEGATIVE_INFINITY) * noise('pass'),
     screen: ((screenPlan?.value ?? Number.NEGATIVE_INFINITY) + screenBonus) * noise('screen'),
     hold,
+    // BT6.1: taking the ball back out costs the seconds a new action needs; it is worth what the possession is worth with that much less clock.
+    reset: canReset && secondsLeft > RESET_MIN_SECONDS ? continuationValue(state, RESET_COST_SECONDS) * tuning().holdDiscount * noise('reset') : Number.NEGATIVE_INFINITY,
   }
   const utility = { shoot: round(shot.value), drive: round(Number.isFinite(drive) ? drive : 0), pass: round(bestReceiver?.value ?? 0), hold: round(hold), ...(screenPlan === null ? {} : { screen: round(screenPlan.value) }) }
   // A handler who has just finished a drive cannot "keep reading": he acts with what he has.
@@ -694,6 +735,7 @@ function readTheFloor(state: MatchState, actor: MatchPlayerState, basket: CourtP
   // BT4.3: an offense that is not set does not attack on its own: only a shot or a pass that is already there justifies acting; a drive is a play, not a look.
   const openLook = Math.max(options.shoot, options.pass, tuning().playsEnabled !== 0 && !earlyDriveAllowed ? Number.NEGATIVE_INFINITY : options.drive) >= OPEN_LOOK_VALUE_POINTS * (1 - pace * PACE_OPEN_LOOK_PER_LEVEL)
   const readAgain = state.t + Math.max(1, Math.round(3 - pace * PACE_READ_TICKS_PER_LEVEL)) + Math.floor(decisionNoise(state, actor.playerId, 'hold') * 4)
+  if (best === 'reset') return { kind: 'RESET' }
   if (!noHold && (best === 'hold' || (halfCourtUnsettled && !openLook))) return { kind: 'HOLD', holdUntilT: readAgain }
   const recentCatch = flow !== null && flow.caughtFromPass && state.t - flow.holderSinceT <= 14
   if (best === 'shoot') {

@@ -1,7 +1,8 @@
 import { hashStringToSeed } from '@/engine/random'
 import type { PlayerId } from '@/domain/ids'
 import { activePossession, type MatchPlayerState, type MatchState, type OffenseFlowState, type OffenseStage } from '../state'
-import { distanceBetween } from '@/domain/court'
+import { distanceBetween, isBeyondThreePointLine } from '@/domain/court'
+import { attackingBasketForTeam } from '../structure/FiveOutStructure'
 import { tuning } from '../tuning'
 import { tacticalIntent } from '../tactics/TacticalIdentity'
 import { isInsideZone } from '../structure/OffensiveStructure'
@@ -109,8 +110,12 @@ export function reconcileOffenseFlow(state: MatchState): MatchState {
   if (inHalfCourt && !early) {
     const halfCourtSinceT = flow.halfCourtSinceT ?? state.t
     const settlement = offenseSettlement(state)
-    const settledAtT = flow.settledAtT ?? (settlement.total > 0 && settlement.share >= SETTLE_READY_SHARE ? state.t : null)
-    if (halfCourtSinceT !== flow.halfCourtSinceT || settledAtT !== flow.settledAtT) flow = { ...flow, halfCourtSinceT, settledAtT }
+    // BT6.1: after a reset the floor is set again only when the man who took it back out is outside the arc (or no longer has the ball).
+    const resetHandler = flow.resetHandlerId == null ? undefined : state.players.find((player) => player.playerId === flow.resetHandlerId)
+    const resetting = resetHandler !== undefined && state.ball.kind === 'HELD' && state.ball.ownerPlayerId === resetHandler.playerId
+      && !isBeyondThreePointLine(resetHandler.position, attackingBasketForTeam(possession.teamId, state.homeTeamId, state.period, state.court), state.court)
+    const settledAtT = flow.settledAtT ?? (!resetting && settlement.total > 0 && settlement.share >= SETTLE_READY_SHARE ? state.t : null)
+    if (halfCourtSinceT !== flow.halfCourtSinceT || settledAtT !== flow.settledAtT) flow = { ...flow, halfCourtSinceT, settledAtT, ...(settledAtT !== null ? { resetHandlerId: null } : {}) }
     // BT5.6: the half court starts (or restarts after an offensive rebound): the bench calls the play.
     if (tuning().playsEnabled !== 0 && (flow.call == null || flow.call.possessionId !== possession.id || flow.call.calledT < halfCourtSinceT || flow.call.family === 'EARLY_OFFENSE')) {
       const call = callPlay(state, possession)
@@ -139,3 +144,18 @@ export function earlyOffenseCall(state: MatchState, initiatorId: PlayerId): Play
 export function isSettled(flow: OffenseFlowState | null): boolean {
   return flow === null || flow.settledAtT !== null
 }
+
+/**
+ * BT6.1 offensive reset: a contained handler takes the ball back out. The half court starts again (a new call), the floor has to set
+ * again with him outside the arc, and only then does the next action come: the possession continues with another action instead of
+ * a forced pass or shot from where the drive died.
+ */
+export function resetOffense(state: MatchState, handlerId: PlayerId): MatchState {
+  const flow = state.offenseFlow
+  if (flow === null) return state
+  const next: MatchState = { ...state, offenseFlow: { ...flow, settledAtT: null, halfCourtSinceT: state.t, resetHandlerId: handlerId, readyAtT: Math.max(flow.readyAtT, state.t + RESET_READ_TICKS) } }
+  return emitEvent(next, 'offenseReset', { possessionId: flow.possessionId, teamId: flow.teamId, playerId: handlerId })
+}
+
+/** Ticks before the reset handler reads again (he is turning and dribbling back out). */
+const RESET_READ_TICKS = 6

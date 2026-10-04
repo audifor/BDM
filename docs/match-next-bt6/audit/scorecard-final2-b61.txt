@@ -1,0 +1,13 @@
+final2: configs 32 poss 165.1 PPP 0.971 TOV 26.4 TOV% 15.98 STL 22.7 STL/poss 0.138 FTA 19.2 FTr 0.124 AST/FGM 0.53 OREB% 21.3 FGA 153.4 s/poss 13.06 <=8 36.7 fouls 27.5 BLK 5.0 drives 101.6
+  shares rim 0.192 paint 0.154 mid 0.063 three 0.591 | FG restricted 0.533 rim 0.455 paint 0.438 above3 0.344 corner3 0.333
+  TOV causes {"deflectedPass":7.92,"interception":6.2,"onBallStrip":5.08,"transitionPass":2.2,"strippedDrive":1.03,"shotClock":0.93,"offensiveFoul":0.84,"passOutOfBounds":0.81,"pokedLoose":0.74,"badPass":0.42,"handleLoss":0.14,"steppedOut":0.06,"eightSecond":0.01}
+  steals {"DEFLECTION":8.14,"PASS_INTERCEPTION":7.7,"CLEAN_STEAL":6.22,"POKE_LOOSE":0.63}
+b61: configs 32 poss 164.2 PPP 1.007 TOV 23.4 TOV% 14.27 STL 18.8 STL/poss 0.115 FTA 20.7 FTr 0.132 AST/FGM 0.51 OREB% 22.2 FGA 156.6 s/poss 13.07 <=8 36.7 fouls 28.3 BLK 6.3 drives 104.4
+  shares rim 0.240 paint 0.155 mid 0.054 three 0.550 | FG restricted 0.541 rim 0.451 paint 0.443 above3 0.350 corner3 0.345
+  TOV causes {"deflectedPass":6.03,"onBallStrip":5.22,"interception":4.69,"transitionPass":2.3,"strippedDrive":1.11,"offensiveFoul":0.93,"shotClock":0.88,"passOutOfBounds":0.84,"pokedLoose":0.66,"badPass":0.47,"handleLoss":0.2,"steppedOut":0.08}
+  steals {"DEFLECTION":6.53,"CLEAN_STEAL":6.44,"PASS_INTERCEPTION":5.31,"POKE_LOOSE":0.56}
+  drives nextAct {"rimAttempt":35.21,"kickOut":32.51,"shortPaintAttempt":21.31,"otherShot":5.03,"dumpOff":1.82,"shortRollPass":1.68,"turnover":1.67,"foulOnDrive":1.54,"interiorEntry":1.53,"passOther":0.96,"noActBeforeEnd":0.71,"reset":0.3,"possessionEndedDuringDrive":0.08,"resetPass":0.04}
+  drives afterFirstPass {"extraPass":23.7,"catchAndShootContested":5.13,"catchAndShootOpen":4.1,"turnover":2.06,"heldOrReset":1.3,"closeoutAttack":1.12,"secondDrive":0.62,"scoredLater":0.52}
+  rim by source {"DRIVE_FINISH":19.44,"TRANSITION":8.71,"PR_HANDLER":6.25,"CATCH_AND_SHOOT":1.23,"PR_ROLLER":0.79,"PUTBACK":0.77,"KICK_OUT":0.32,"FLOATER":0.08,"CUT_FINISH":0.04,"PULL_UP":0.02,"LATE_CLOCK":0.01}
+  shooting fouls by source {"drive":8.51,"jumpShot":0.51,"nearRimOther":0.3,"putback":0.02}
+  interior passes/g 97.5 lost/g 5.94 (6.1%)

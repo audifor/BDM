@@ -46,6 +46,8 @@ export interface MatchActionState {
   readonly advantageChoice?: 'FINISH' | 'KICK'
   readonly screenId?: string
   readonly releaseAtT?: number
+  /** BT6.1: the shooter's velocity when he started the shot: a driver carries it into whoever is in front of him as he goes up. */
+  readonly gatherVelocity?: CourtPosition
   readonly resolvedT?: number
   readonly outcome?: MatchActionOutcome
   readonly progressMeters?: number

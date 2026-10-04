@@ -5,6 +5,7 @@ import { fingerprint, runFingerprintGame, type FingerprintGame, type Side, type 
 import { CONFIGS } from '../bt5/configs'
 import { BT6_CONFIGS } from './configs'
 import { defenseObserver, summarizeDefense, type DefenseCounts } from './defense'
+import { driveObserver, summarizeDrives, type DriveCounts } from '../bt61/drives'
 
 /**
  * BT6 controlled experiments: the BT5 fingerprint plus the BT6 defensive observer, per config and side.
@@ -41,10 +42,13 @@ it.skipIf(process.env.BT2_AUDIT === undefined)('BT6 experiments', () => {
     if (config === undefined) throw new Error(`Unknown config ${name}`)
     const started = Date.now()
     const defense: Record<Side, DefenseCounts>[] = []
+    const driveGames: Record<Side, DriveCounts>[] = []
     const games: FingerprintGame[] = seeds.map((seed) => withTuning(overrides, () => {
       const observer = defenseObserver()
-      const game = runFingerprintGame(seed, config.transform, { observe: observer.observe })
+      const driveAudit = driveObserver()
+      const game = runFingerprintGame(seed, config.transform, { observe: (s, e, setup) => { observer.observe(s, e, setup); driveAudit.observe(s, e, setup) } })
       defense.push(observer.counts)
+      driveGames.push(driveAudit.counts)
       process.stderr.write(`[bt6] ${name} seed ${seed} done (${game.score.home}-${game.score.away})\n`)
       return game
     }))
@@ -52,7 +56,7 @@ it.skipIf(process.env.BT2_AUDIT === undefined)('BT6 experiments', () => {
       const other: Side = side === 'home' ? 'away' : 'home'
       const own = games.reduce((a, g) => a + g.teams[side].possessions, 0)
       const opp = games.reduce((a, g) => a + g.teams[other].possessions, 0)
-      return [side, { fingerprint: fingerprint(games, side), bt6: summarizeDefense(defense, side, { own, opp }) }]
+      return [side, { fingerprint: fingerprint(games, side), bt6: summarizeDefense(defense, side, { own, opp }), drives: summarizeDrives(driveGames, side) }]
     }))
     out[name] = { description: config.description, msPerGame: Math.round((Date.now() - started) / games.length), complete: games.filter((g) => g.complete).length, totals: totals(games, defense), perSeed: games.map((g) => ({ seed: g.seed, score: g.score, possessions: g.teams.home.possessions + g.teams.away.possessions, turnovers: g.teams.home.turnovers + g.teams.away.turnovers, steals: g.teams.home.steals + g.teams.away.steals })), adjustments: games.map((g) => g.adjustments), ...sides }
   }

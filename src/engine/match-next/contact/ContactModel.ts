@@ -132,6 +132,8 @@ export function assessShootingContact(
   defenders: readonly MatchPlayerState[],
   basket: CourtPosition,
   driveFinish: boolean,
+  /** BT6.1: the velocity the shooter went up with (a drive finish carries it into the defender even if he has braked to gather). */
+  approachVelocity?: CourtPosition,
 ): ContactAssessment {
   const distanceToBasket = distanceBetween(shooter.position, basket)
   const tolerance = distanceToBasket <= 2.6 ? whistleTolerance('shotAtRim')
@@ -145,7 +147,9 @@ export function assessShootingContact(
     // Arms reach beyond the body: a defender a metre away is already in the shooter's space.
     const proximity = Math.max(0, Math.min(1, (1.7 - gap) / 1.1))
     // The shooter is going up and cannot absorb contact: he adds his own momentum toward the defender when driving.
-    const momentum = driveFinish ? Math.max(0, closingSpeed(shooter, defender)) * 0.6 : 0
+    const carried = approachVelocity === undefined ? 0 : closingSpeed({ position: shooter.position, velocity: approachVelocity }, defender)
+    // BT6.1: a shooter attacking the rim at speed (a drive, a cut, a roll, a putback) carries his momentum into whoever is in front of him.
+    const momentum = driveFinish || approachVelocity !== undefined ? Math.max(0, closingSpeed(shooter, defender), carried) * 0.6 : 0
     const severity = Math.min(1, contactSeverity(closing + momentum + 1.2, defender.weightKg) * proximity * (driveFinish ? 1.25 : 1))
     if (severity <= best.severity) continue
     const skill = defensiveSkill(defender, distanceToBasket <= 4.6)

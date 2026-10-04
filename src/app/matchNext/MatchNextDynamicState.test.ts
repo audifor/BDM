@@ -65,7 +65,9 @@ describe('Match Next player dynamic state connection', () => {
     expect(liveWorld.careerFatigueByPlayerId).toEqual(instantWorld.careerFatigueByPlayerId)
     expect(liveWorld.developmentStimulusByPlayerId).toEqual(instantWorld.developmentStimulusByPlayerId)
     expect(() => port.complete(liveWorld, liveResult)).toThrow(/MatchStatLog already exists|Cannot apply result to completed Game/)
-  })
+    // BT6.1: two short matches (Live and Instant) take ~4-6 s when the focused suite runs its files in parallel; the default 5 s budget made
+    // this equality check fail by timeout, not by any difference (it passes alone). The assertion is unchanged.
+  }, 20_000)
 
   it('recovers match load through the existing daily career-fatigue recovery authority', () => {
     const { world, game, port } = fixture()

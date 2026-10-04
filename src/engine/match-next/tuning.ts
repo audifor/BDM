@@ -112,6 +112,13 @@ export interface MatchNextTuning {
   readonly passErrorBase: number
   /** What a lost ball costs the offense, in points, when a pass is valued (the continuation of the possession plus the opponent's break). */
   readonly passLossPoints: number
+  /**
+   * BT6.1 audit switches (1 = on): value the receiver's look at the catch point; read the lane to the catch point. The lane is read where the
+   * ball is thrown (on); the look is valued where the receiver is (value off): the shot model prices a set shooter, and a man catching on the
+   * run who has to gather and finish in motion is not one (valuing it at the catch point overpaid every pass ahead to a runner, ablation abV/abL).
+   */
+  readonly catchPointValue: number
+  readonly catchPointLane: number
   /** BT6.12: what a pass lost in the open floor costs on top (the opponent's break against a team that is not back). */
   readonly openFloorLossPoints: number
   /** BT6.7: share of his top speed a handler keeps dribbling at full speed, at handle 0 and 100 (creation and ball security). */
@@ -206,6 +213,8 @@ export const DEFAULT_MATCH_NEXT_TUNING: MatchNextTuning = Object.freeze({
   passErrorBase: 0.012,
   passLossPoints: 0.9,
   openFloorLossPoints: 0.6,
+  catchPointValue: 0,
+  catchPointLane: 1,
   dribbleSpeedMin: 0.86,
   dribbleSpeedMax: 0.98,
   passDenialWeight: 0.25,
