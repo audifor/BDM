@@ -21,6 +21,7 @@ import type { WorldRepairReport } from '@/domain/repair'
 import { applyPostMatchInjuries } from '@/engine/injury'
 import { getAvailablePlayersForCompetition } from '@/engine/eligibility'
 import { MINIMUM_MATCH_SQUAD_SIZE } from '@/engine/match'
+import { isStaffActivityRestricted } from '@/engine/enforcement/EnforcementRemedies'
 import { LiveMatchController } from './LiveMatchController'
 import { getEffectiveTacticalPlan, getGamePlan } from './TacticalPlanning'
 import { applyPlayerMatchConsequences } from './PlayerMatchConsequences'
@@ -181,6 +182,7 @@ function coachInput(world: GameWorld, teamId: TeamId): { readonly id: string; re
   const coachId = world.teams[teamId]?.coachId
   if (coachId === undefined) return undefined
   const coach = world.coaches[coachId]
+  if (coach !== undefined && isStaffActivityRestricted(world, coach.staffProfileId, 'COACHING')) return undefined
   return coach === undefined ? undefined : { id: String(coachId), ...(world.staffPeopleById[coach.staffProfileId] === undefined ? {} : { staff: world.staffPeopleById[coach.staffProfileId] }), ...(world.coachRpgProfilesByCoachId[coachId] === undefined ? {} : { rpg: world.coachRpgProfilesByCoachId[coachId] }) }
 }
 

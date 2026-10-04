@@ -9,6 +9,7 @@ import { parseWorldCompetitionFormatDocument } from '@/domain/competition'
 import { createSeason } from '@/domain/season'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 import { createNewGame } from './createNewGame'
+import { ensureTransferPortalRuleset } from '@/engine/eligibility'
 
 /** Creates a clearly simulated NCAA-like career for validating college-only game systems. */
 export function createNcaaSimulatedGame(): GameWorld {
@@ -20,6 +21,8 @@ export function createNcaaSimulatedGame(): GameWorld {
       && world.ecosystems[competition.ecosystemId]?.category === 'men'
   })
   if (season === undefined) throw new Error('Simulated NCAA career requires a generated men\'s college season.')
+
+  world = ensureTransferPortalRuleset(world, season.id)
 
   const competition = world.competitions[season.competitionId]!
   const program = competition.participantTeamIds

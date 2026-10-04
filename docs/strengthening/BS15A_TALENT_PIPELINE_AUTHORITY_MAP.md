@@ -140,3 +140,17 @@ The distinction is explicit: `PlayerRegistration` = sporting/pathway history; `P
 | Basketball evaluation | `OrganizationKnowledge` + existing permitted valuation | Player Truth is not read directly for Recruiting evaluation/AI target ordering. |
 | College enrollment/eligibility | BS15D `CollegeRuleset`, `PlayerEnrollment`, eligibility assessment | Signed NCAA arrival stages roster membership, invokes `enrollPlayer`, records the dated assessment, and rolls back roster arrival when enrollment/eligibility fails. |
 | Persisted recruiting narrative state | Existing Save V4 `RecruitProfile` payload | RPG nested state round-trips as part of the existing collection; no Save version bump. |
+
+## BS15F authority update · in progress
+
+| Fact / decision | Intended canonical owner | Current implementation status |
+|---|---|---|
+| NCAA transfer rule version/provenance | `TransferPortalRuleset` in `GameWorld` | Implemented as a distinct effective-dated versioned rules authority. 2026-27 cites current NCAA LSDBi; successor seasons are labelled simulated carry-forward and link to their parent ruleset. |
+| Ordinary basketball notification period | Current competition's completed championship final + `TransferPortalRuleset` | Completed-final lookup opens the 15-day period; ordinary notice and AI lifecycle use that authority. |
+| Notice, education module, institutional processing | `TransferPortalEntry` in `GameWorld` | Notice and module dates plus the two-business-day deadline persist; entry does not alter source roster. Institution processing is explicit. |
+| Destination contact permission | BS15E `canPerformRecruitingAction` extended with Portal authorization | Contact, offers, negotiation and signing use Portal permission; unauthorized action is blocked. |
+| Continuation, lived role, trust and promises | Derived `CollegeContinuationAssessment` from season stats, BS15E promises/relationships, Staff history and financial context | Implemented with measured promise persistence and separate stay/leave reasons. No transfer-probability scalar. |
+| Athletics aid, institutional settlement benefits and cap | Separate aid and settlement-related agreements plus Organization cap context, connected to Finance V2 | Implemented with signed Finance event, recognition, payable, ledger, reporting and annual carry. Third-party NIL stays separate. |
+| Ghost-transfer finding/sanction | Existing Enforcement, Staff availability, Governance and Finance | Shared guard applies a canonical case, contest-equivalent Staff restriction and sport-budget Finance fine for deliberate prohibited actions. |
+| Destination eligibility and movement | BS15D `CollegeRuleset`, enrollment/eligibility and one transfer movement gateway | Versioned clock/midyear evidence and one same-Player movement preserve source history. |
+| Save compatibility | Save V4 additive college collections and existing Finance/Enforcement collections | Old V4 defaults, integrated transfer, penalties and 2045–46 round-trip are tested. |

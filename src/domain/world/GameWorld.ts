@@ -98,7 +98,9 @@ import { createDeadMoneyCharge, createTeamSalaryException, type DeadMoneyCharge,
 import { createDraftPickSwapRight, createFutureDraftPickRight, createPlayerRights, createRetainedSalaryObligation, createTradeNegotiation, createTradeRecord, createTradeRules, type DraftPickSwapRight, type FutureDraftPickRight, type PlayerRights, type RetainedSalaryObligation, type TradeNegotiation, type TradeRecord, type TradeRules } from '@/domain/trade'
 import type { RecruitingActionRecord, RecruitingBoardEntry, RecruitingCommitment, RecruitingCycle, RecruitingInterest, RecruitingOffer, RecruitingVisit, RecruitProfile, RecruitSigning } from '@/domain/recruiting'
 import { createCollegeEligibilityAssessment, createCollegeRuleset, createPlayerEnrollment, type CollegeEligibilityAssessment, type CollegeRuleset, type EligibilityProfile, type EligibilityRestriction, type EligibilityRules, type PlayerEnrollment } from '@/domain/eligibility'
+import { createTransferPortalEntry, createTransferPortalRuleset, type TransferPortalEntry, type TransferPortalRuleset } from '@/domain/eligibility'
 import type { AcademicProfile, AcademicRules, AcademicSupportPlan, AcademicTermRecord } from '@/domain/academic'
+import { createAthleticsAidAgreement, createInstitutionBenefitsCap, createSettlementBenefitsAgreement, type AthleticsAidAgreement, type InstitutionBenefitsCap, type SettlementBenefitsAgreement } from '@/domain/collegeCompensation'
 import type { Collective, NilDeal, NilOpportunity, NilProfile, NilRules } from '@/domain/nil'
 import type { Booster, BoosterContribution, BoosterRequest } from '@/domain/boosters'
 import { createCollectiveInstitutionAffiliation, createCollectiveInstitutionalLiaison, createCollectiveInstitutionalStatusEvent, createCollectiveParticipantAffiliation, createSupportComplianceCase, createSupportComplianceCaseEvent, createSupportComplianceFinding, createSupportConflictDisclosure, createSupportConsequence, createSupportRemediation, createSupportContribution, createSupporterExpectation, createSupporterExpectationEvent, createSupporterPressureEvent, createSupporterReaction, createSupporterRelationship, createSupportFundingPledge, createSupportFundingPledgeEvent, selectPledgeContributions, sortSupportFundingPledgeEvents, type CollectiveInstitutionAffiliation, type CollectiveInstitutionalLiaison, type CollectiveInstitutionalStatusEvent, type CollectiveParticipantAffiliation, type SupportComplianceCase, type SupportComplianceCaseEvent, type SupportComplianceFinding, type SupportConflictDisclosure, type SupportConsequence, type SupportRemediation, type SupportContribution, type SupporterExpectation, type SupporterExpectationEvent, type SupporterPressureEvent, type SupporterReaction, type SupportFundingPledge, type SupportFundingPledgeEvent, type SupporterRelationship } from '@/domain/supporters'
@@ -334,6 +336,11 @@ export interface GameWorld {
   readonly collegeRulesetsById: Readonly<Record<string, CollegeRuleset>>
   readonly playerEnrollmentsById: Readonly<Record<string, PlayerEnrollment>>
   readonly collegeEligibilityAssessmentsById: Readonly<Record<string, CollegeEligibilityAssessment>>
+  readonly transferPortalRulesetsById: Readonly<Record<string, TransferPortalRuleset>>
+  readonly transferPortalEntriesById: Readonly<Record<string, TransferPortalEntry>>
+  readonly athleticsAidAgreementsById: Readonly<Record<string, AthleticsAidAgreement>>
+  readonly institutionBenefitsCapsById: Readonly<Record<string, InstitutionBenefitsCap>>
+  readonly settlementBenefitsAgreementsById: Readonly<Record<string, SettlementBenefitsAgreement>>
   readonly eligibilityProfilesById: Readonly<Record<string, EligibilityProfile>>
   readonly eligibilityRestrictionsById: Readonly<Record<string, EligibilityRestriction>>
   readonly academicRulesByEcosystemId: Readonly<Record<EcosystemId, AcademicRules>>
@@ -605,6 +612,11 @@ export interface CreateGameWorldInput {
   collegeRulesets?: readonly CollegeRuleset[]
   playerEnrollments?: readonly PlayerEnrollment[]
   collegeEligibilityAssessments?: readonly CollegeEligibilityAssessment[]
+  transferPortalRulesets?: readonly TransferPortalRuleset[]
+  transferPortalEntries?: readonly TransferPortalEntry[]
+  athleticsAidAgreements?: readonly AthleticsAidAgreement[]
+  institutionBenefitsCaps?: readonly InstitutionBenefitsCap[]
+  settlementBenefitsAgreements?: readonly SettlementBenefitsAgreement[]
   eligibilityProfiles?: readonly EligibilityProfile[]
   eligibilityRestrictions?: readonly EligibilityRestriction[]
   academicRulesByEcosystemId?: Readonly<Record<EcosystemId, AcademicRules>>
@@ -921,6 +933,11 @@ export function createGameWorld(input: CreateGameWorldInput): GameWorld {
     collegeRulesetsById: indexById((input.collegeRulesets ?? []).map(createCollegeRuleset), 'College ruleset'),
     playerEnrollmentsById: indexById((input.playerEnrollments ?? []).map(createPlayerEnrollment), 'Player enrollment'),
     collegeEligibilityAssessmentsById: indexById((input.collegeEligibilityAssessments ?? []).map(createCollegeEligibilityAssessment), 'College eligibility assessment'),
+    transferPortalRulesetsById: indexById((input.transferPortalRulesets ?? []).map(createTransferPortalRuleset), 'Transfer Portal ruleset'),
+    transferPortalEntriesById: indexById((input.transferPortalEntries ?? []).map(createTransferPortalEntry), 'Transfer Portal entry'),
+    athleticsAidAgreementsById: indexById((input.athleticsAidAgreements ?? []).map(createAthleticsAidAgreement), 'Athletics aid agreement'),
+    institutionBenefitsCapsById: indexById((input.institutionBenefitsCaps ?? []).map(createInstitutionBenefitsCap), 'Institution benefits cap'),
+    settlementBenefitsAgreementsById: indexById((input.settlementBenefitsAgreements ?? []).map(createSettlementBenefitsAgreement), 'Settlement benefits agreement'),
     eligibilityProfilesById: indexById(input.eligibilityProfiles ?? [], 'Eligibility profile'),
     eligibilityRestrictionsById: indexById(input.eligibilityRestrictions ?? [], 'Eligibility restriction'),
     academicRulesByEcosystemId: Object.freeze({ ...(input.academicRulesByEcosystemId ?? {}) }), academicProfilesById: indexById(input.academicProfiles ?? [], 'Academic profile'), academicTermRecordsById: indexById(input.academicTermRecords ?? [], 'Academic term record'), academicSupportPlansById: indexById(input.academicSupportPlans ?? [], 'Academic support plan'),
@@ -1051,7 +1068,7 @@ export function addMemoriesToGameWorld(world: GameWorld, additions: readonly Mem
 
 const collectionPatchTargets: Readonly<Record<string, string>> = {
   teamPathwayRelations: 'teamPathwayRelationsById',
-  playerRegistrations: 'playerRegistrationsById', collegeRulesets: 'collegeRulesetsById', playerEnrollments: 'playerEnrollmentsById', collegeEligibilityAssessments: 'collegeEligibilityAssessmentsById',
+  playerRegistrations: 'playerRegistrationsById', collegeRulesets: 'collegeRulesetsById', playerEnrollments: 'playerEnrollmentsById', collegeEligibilityAssessments: 'collegeEligibilityAssessmentsById', transferPortalRulesets: 'transferPortalRulesetsById', transferPortalEntries: 'transferPortalEntriesById', athleticsAidAgreements: 'athleticsAidAgreementsById', institutionBenefitsCaps: 'institutionBenefitsCapsById', settlementBenefitsAgreements: 'settlementBenefitsAgreementsById',
   contractReviewDecisions: 'contractReviewDecisionsById',
   retentionNegotiations: 'retentionNegotiationsById',
   financialBudgets: 'financialBudgetsById', budgetLines: 'budgetLinesById', budgetRevisions: 'budgetRevisionsById', budgetAllocations: 'budgetAllocationsById', forecastAssumptions: 'forecastAssumptionsById', financialRegulationAssessments: 'financialRegulationAssessmentsById', financeDecisionProposals: 'financeDecisionProposalsById', economicObservations: 'economicObservationsById', exchangeRates: 'exchangeRatesById', revenueSources: 'revenueSourcesById', operatingCostSources: 'operatingCostSourcesById', operatingCostFacts: 'operatingCostFactsById', debtInstruments: 'debtInstrumentsById', competitionDistributionFacts: 'competitionDistributionFactsById',
@@ -1208,6 +1225,7 @@ function validateWorld(world: GameWorld): void {
   validateTalentSupply(world)
   validateYouthPathway(world)
   validateCollegeEligibility(world)
+  validateTransferPortal(world)
   validateMultiClubOwnershipPolicies(world)
   validateStructuralRegulation(world)
   validateGovernance(world)
@@ -2549,6 +2567,10 @@ function validateCollegeEligibility(world: GameWorld): void {
     if (team.organizationId !== enrollment.organizationId || world.ecosystems[enrollment.ecosystemId]?.kind !== 'ncaaLike') throw new GameWorldValidationError(`Enrollment ${enrollment.id} has an invalid institution or ecosystem`)
     if (!Object.values(world.competitions).some((competition) => competition.ecosystemId === enrollment.ecosystemId && competition.participantTeamIds.includes(team.id))) throw new GameWorldValidationError(`Enrollment ${enrollment.id} Team is outside its college ecosystem`)
     if (enrollment.sourceRegistrationId !== undefined && !world.playerRegistrationsById[enrollment.sourceRegistrationId]) throw new GameWorldValidationError(`Enrollment ${enrollment.id} references missing pathway registration`)
+    if (enrollment.transferFromEnrollmentId !== undefined) {
+      const source = world.playerEnrollmentsById[enrollment.transferFromEnrollmentId]
+      if (source === undefined || source.playerId !== enrollment.playerId || source.ecosystemId !== enrollment.ecosystemId || source.id === enrollment.id) throw new GameWorldValidationError(`Enrollment ${enrollment.id} has invalid transfer history`)
+    }
     if (enrollment.status === 'active') {
       const key = `${enrollment.ecosystemId}:${enrollment.playerId}`
       if (active.has(key)) throw new GameWorldValidationError(`Player ${enrollment.playerId} has duplicate active enrollment in ${enrollment.ecosystemId}`)
@@ -2559,6 +2581,46 @@ function validateCollegeEligibility(world: GameWorld): void {
     requireEntity(world.players, assessment.playerId, `Eligibility assessment ${assessment.id} Player`)
     requireEntity(world.teams, assessment.teamId, `Eligibility assessment ${assessment.id} Team`)
     if (!rulesets.some((item) => item.id === assessment.rulesetId && item.version === assessment.rulesetVersion && item.ecosystemId === assessment.ecosystemId)) throw new GameWorldValidationError(`Eligibility assessment ${assessment.id} has no matching ruleset provenance`)
+  }
+}
+
+function validateTransferPortal(world: GameWorld): void {
+  for (const ruleset of Object.values(world.transferPortalRulesetsById)) {
+    createTransferPortalRuleset(ruleset)
+    if (world.ecosystems[ruleset.ecosystemId]?.kind !== 'ncaaLike') throw new GameWorldValidationError(`Transfer ruleset ${ruleset.id} must belong to an NCAA-like ecosystem`)
+    if (ruleset.basedOnRulesetId !== undefined) {
+      const source = world.transferPortalRulesetsById[ruleset.basedOnRulesetId]
+      if (ruleset.provenance !== 'SIMULATED_CARRY_FORWARD' || source === undefined || source.ecosystemId !== ruleset.ecosystemId) throw new GameWorldValidationError(`Transfer ruleset ${ruleset.id} has invalid carry-forward authority`)
+    }
+  }
+  const activePlayers = new Set<string>()
+  for (const entry of Object.values(world.transferPortalEntriesById)) {
+    createTransferPortalEntry(entry)
+    requireEntity(world.players, entry.playerId, `Portal entry ${entry.id} Player`)
+    const sourceTeam = requireEntity(world.teams, entry.sourceTeamId, `Portal entry ${entry.id} source Team`)
+    const ruleset = requireEntity(world.transferPortalRulesetsById, entry.rulesetId, `Portal entry ${entry.id} ruleset`)
+    if (ruleset.ecosystemId !== entry.ecosystemId || world.ecosystems[entry.ecosystemId]?.kind !== 'ncaaLike' || !Object.values(world.competitions).some((competition) => competition.ecosystemId === entry.ecosystemId && competition.participantTeamIds.includes(sourceTeam.id))) throw new GameWorldValidationError(`Portal entry ${entry.id} has invalid college authority`)
+    if (entry.destinationTeamId !== undefined) requireEntity(world.teams, entry.destinationTeamId, `Portal entry ${entry.id} destination Team`)
+    if (entry.status === 'noticePending' || entry.status === 'authorized') {
+      const key = `${entry.ecosystemId}:${entry.playerId}`
+      if (activePlayers.has(key)) throw new GameWorldValidationError(`Player ${entry.playerId} has duplicate active Transfer Portal entries`)
+      activePlayers.add(key)
+    }
+  }
+  for (const profile of Object.values(world.recruitProfilesById).filter((item) => item.origin === 'transfer')) {
+    if (!profile.transferPortalEntryId) throw new GameWorldValidationError(`Transfer RecruitProfile ${profile.id} is missing its Portal entry`)
+    // Save V4 constructs its legacy V1-V3 compatibility world before attaching additive Portal tables.
+    // The final V4 update validates the relationship once the Portal entry collection is restored.
+    const entry = world.transferPortalEntriesById[profile.transferPortalEntryId]
+    if (entry === undefined && Object.keys(world.transferPortalEntriesById).length === 0) continue
+    if (entry === undefined) throw new GameWorldValidationError(`Transfer RecruitProfile ${profile.id} Portal entry references missing ID ${profile.transferPortalEntryId}`)
+    const cycle = requireEntity(world.recruitingCyclesById, profile.cycleId, `Transfer RecruitProfile ${profile.id} RecruitingCycle`)
+    const season = requireEntity(world.seasons, cycle.sourceSeasonId, `Transfer RecruitProfile ${profile.id} source Season`)
+    const competition = requireEntity(world.competitions, season.competitionId, `Transfer RecruitProfile ${profile.id} source Competition`)
+    if (entry.playerId !== profile.playerId || entry.ecosystemId !== cycle.ecosystemId || competition.ecosystemId !== entry.ecosystemId) throw new GameWorldValidationError(`Transfer RecruitProfile ${profile.id} has mismatched Player, Portal, or RecruitingCycle authority`)
+    if (profile.status === 'arrived' && (entry.status !== 'completed' || entry.destinationTeamId === undefined || !world.teams[entry.destinationTeamId]?.rosterPlayerIds.includes(profile.playerId))) throw new GameWorldValidationError(`Arrived transfer RecruitProfile ${profile.id} has no completed destination movement`)
+    if (profile.status === 'incoming' && (entry.status !== 'authorized' || !Object.values(world.recruitSigningsById).some((signing) => signing.recruitId === profile.id && signing.playerId === profile.playerId))) throw new GameWorldValidationError(`Incoming transfer RecruitProfile ${profile.id} has no authorized signed destination`)
+    if (['open', 'committed'].includes(profile.status) && entry.status !== 'authorized') throw new GameWorldValidationError(`Active transfer RecruitProfile ${profile.id} has no authorized Portal entry`)
   }
 }
 

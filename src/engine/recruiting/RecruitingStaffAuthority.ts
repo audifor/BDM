@@ -2,6 +2,7 @@ import type { StaffPersonId, TeamId } from '@/domain/ids'
 import type { RecruitingCycle, RecruitingActionRecord } from '@/domain/recruiting'
 import type { GameWorld } from '@/domain/world'
 import { calculateStaffWorkload, updateGameWorld } from '@/domain/world'
+import { isStaffActivityRestricted } from '@/engine/enforcement/EnforcementRemedies'
 
 export interface RecruitingStaffActors {
   readonly headCoachId?: string
@@ -22,6 +23,7 @@ export function recruitingStaffActors(world: GameWorld, teamId: TeamId): Recruit
 /** Shared capacity gate for offer, promise and negotiation actions using the canonical Staff V2 workload and Recruiting action ledger. */
 export function recruitingStaffActionBlock(world: GameWorld, cycle: RecruitingCycle, teamId: TeamId, staffId: StaffPersonId | undefined, cost = 1): string | undefined {
   if (staffId === undefined || world.staffPeopleById[staffId] === undefined || !Object.values(world.teamStaffAssignmentsById).some((assignment) => assignment.teamId === teamId && assignment.staffPersonId === staffId)) return 'RECRUITING_STAFF_REQUIRED'
+  if (isStaffActivityRestricted(world, staffId, 'RECRUITING')) return 'STAFF_ACTIVITY_SUSPENDED'
   if (world.ecosystems[cycle.ecosystemId]?.kind !== 'ncaaLike') return undefined
   const workload = calculateStaffWorkload(world, staffId)
   if (workload.overloaded || workload.totalCapacityUsed + cost > workload.capacityLimit) return 'STAFF_WORKLOAD_CAPACITY_EXHAUSTED'

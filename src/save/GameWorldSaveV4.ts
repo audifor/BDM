@@ -22,6 +22,8 @@ import { createRegulatoryOrder, type RegulatoryOrder } from '@/domain/structural
 import { createRegulatoryRemediationPlan, type RegulatoryRemediationPlan } from '@/domain/structuralRegulation/RegulatoryRemediationPlan'
 import { createOrganizationLicense, type OrganizationLicense } from '@/domain/structuralRegulation/OrganizationLicense'
 import { createCollegeEligibilityAssessment, createCollegeRuleset, createPlayerEnrollment, type CollegeEligibilityAssessment, type CollegeRuleset, type PlayerEnrollment } from '@/domain/eligibility'
+import { createTransferPortalEntry, createTransferPortalRuleset, type TransferPortalEntry, type TransferPortalRuleset } from '@/domain/eligibility'
+import { createAthleticsAidAgreement, createInstitutionBenefitsCap, createSettlementBenefitsAgreement, type AthleticsAidAgreement, type InstitutionBenefitsCap, type SettlementBenefitsAgreement } from '@/domain/collegeCompensation'
 import {
   createCapacitySpecification,
   createCourtSpecification,
@@ -122,6 +124,12 @@ export interface GameWorldSaveV4 extends GameWorldSaveV3 {
   readonly collegeRulesets?: readonly CollegeRuleset[]
   readonly playerEnrollments?: readonly PlayerEnrollment[]
   readonly collegeEligibilityAssessments?: readonly CollegeEligibilityAssessment[]
+  /** Absent from prior Save V4 payloads; absent means no transfer history is inferred. */
+  readonly transferPortalRulesets?: readonly TransferPortalRuleset[]
+  readonly transferPortalEntries?: readonly TransferPortalEntry[]
+  readonly athleticsAidAgreements?: readonly AthleticsAidAgreement[]
+  readonly institutionBenefitsCaps?: readonly InstitutionBenefitsCap[]
+  readonly settlementBenefitsAgreements?: readonly SettlementBenefitsAgreement[]
   readonly organizations: readonly Organization[]
   readonly organizationSections: readonly OrganizationSection[]
   readonly organizationOwnership: readonly OrganizationOwnership[]
@@ -260,6 +268,11 @@ export function serializeGameWorldV4(world: GameWorld, savedAt: string): SaveGam
       collegeRulesets: Object.values(world.collegeRulesetsById),
       playerEnrollments: Object.values(world.playerEnrollmentsById),
       collegeEligibilityAssessments: Object.values(world.collegeEligibilityAssessmentsById),
+      transferPortalRulesets: Object.values(world.transferPortalRulesetsById),
+      transferPortalEntries: Object.values(world.transferPortalEntriesById),
+      athleticsAidAgreements: Object.values(world.athleticsAidAgreementsById),
+      institutionBenefitsCaps: Object.values(world.institutionBenefitsCapsById),
+      settlementBenefitsAgreements: Object.values(world.settlementBenefitsAgreementsById),
       organizations: Object.values(world.organizationsById),
       organizationSections: Object.values(world.organizationSectionsById),
       organizationOwnership: Object.values(world.organizationOwnershipById),
@@ -352,6 +365,11 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
   const collegeRulesets = Object.prototype.hasOwnProperty.call(payload, 'collegeRulesets') ? rawArray(payload.collegeRulesets, 'Save V4 college rulesets').map((item) => createCollegeRuleset(record(item, 'Save V4 college ruleset') as unknown as CollegeRuleset)) : []
   const playerEnrollments = Object.prototype.hasOwnProperty.call(payload, 'playerEnrollments') ? rawArray(payload.playerEnrollments, 'Save V4 player enrollments').map((item) => createPlayerEnrollment(record(item, 'Save V4 player enrollment') as unknown as PlayerEnrollment)) : []
   const collegeEligibilityAssessments = Object.prototype.hasOwnProperty.call(payload, 'collegeEligibilityAssessments') ? rawArray(payload.collegeEligibilityAssessments, 'Save V4 college eligibility assessments').map((item) => createCollegeEligibilityAssessment(record(item, 'Save V4 college eligibility assessment') as unknown as CollegeEligibilityAssessment)) : []
+  const transferPortalRulesets = Object.prototype.hasOwnProperty.call(payload, 'transferPortalRulesets') ? rawArray(payload.transferPortalRulesets, 'Save V4 Transfer Portal rulesets').map((item) => createTransferPortalRuleset(record(item, 'Save V4 Transfer Portal ruleset') as unknown as TransferPortalRuleset)) : []
+  const transferPortalEntries = Object.prototype.hasOwnProperty.call(payload, 'transferPortalEntries') ? rawArray(payload.transferPortalEntries, 'Save V4 Transfer Portal entries').map((item) => createTransferPortalEntry(record(item, 'Save V4 Transfer Portal entry') as unknown as TransferPortalEntry)) : []
+  const athleticsAidAgreements = Object.prototype.hasOwnProperty.call(payload, 'athleticsAidAgreements') ? rawArray(payload.athleticsAidAgreements, 'Save V4 athletics aid agreements').map((item) => createAthleticsAidAgreement(record(item, 'Save V4 athletics aid agreement') as unknown as AthleticsAidAgreement)) : []
+  const institutionBenefitsCaps = Object.prototype.hasOwnProperty.call(payload, 'institutionBenefitsCaps') ? rawArray(payload.institutionBenefitsCaps, 'Save V4 institution benefits caps').map((item) => createInstitutionBenefitsCap(record(item, 'Save V4 institution benefits cap') as unknown as InstitutionBenefitsCap)) : []
+  const settlementBenefitsAgreements = Object.prototype.hasOwnProperty.call(payload, 'settlementBenefitsAgreements') ? rawArray(payload.settlementBenefitsAgreements, 'Save V4 settlement benefits agreements').map((item) => createSettlementBenefitsAgreement(record(item, 'Save V4 settlement benefits agreement') as unknown as SettlementBenefitsAgreement)) : []
   const facilities = Object.prototype.hasOwnProperty.call(payload, 'facilities') ? parseFacilities(payload.facilities) : []
   const facilityComponents = Object.prototype.hasOwnProperty.call(payload, 'facilityComponents') ? parseFacilityComponents(payload.facilityComponents) : []
   const facilityNameRecords = Object.prototype.hasOwnProperty.call(payload, 'facilityNameRecords') ? parseFacilityNameRecords(payload.facilityNameRecords) : []
@@ -438,6 +456,11 @@ export function deserializeGameWorldV4(value: unknown): GameWorld {
     ...(Object.prototype.hasOwnProperty.call(payload, 'collegeRulesets') ? { collegeRulesets } : {}),
     ...(Object.prototype.hasOwnProperty.call(payload, 'playerEnrollments') ? { playerEnrollments } : {}),
     ...(Object.prototype.hasOwnProperty.call(payload, 'collegeEligibilityAssessments') ? { collegeEligibilityAssessments } : {}),
+    ...(Object.prototype.hasOwnProperty.call(payload, 'transferPortalRulesets') ? { transferPortalRulesets } : {}),
+    ...(Object.prototype.hasOwnProperty.call(payload, 'transferPortalEntries') ? { transferPortalEntries } : {}),
+    ...(Object.prototype.hasOwnProperty.call(payload, 'athleticsAidAgreements') ? { athleticsAidAgreements } : {}),
+    ...(Object.prototype.hasOwnProperty.call(payload, 'institutionBenefitsCaps') ? { institutionBenefitsCaps } : {}),
+    ...(Object.prototype.hasOwnProperty.call(payload, 'settlementBenefitsAgreements') ? { settlementBenefitsAgreements } : {}),
   })
   const withRetentionExecutions = retentionExecutionEvents.length === 0 ? withCollegeEligibility : updateGameWorld(withCollegeEligibility, { governanceDecisionEvents: [...Object.values(withCollegeEligibility.governanceDecisionEventsById), ...retentionExecutionEvents] })
   return Object.freeze({ ...attachWorldDbCompetitionRuntime(withRetentionExecutions, runtime), worldAnnualDevelopmentCycle: developmentCycle })

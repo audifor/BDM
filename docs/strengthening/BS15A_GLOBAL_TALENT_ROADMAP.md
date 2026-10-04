@@ -70,6 +70,8 @@
 
 **Exit gate:** entry, visibility, contact, destination, withdrawal and enrollment have explicit legal states; eligibility history survives transfer; NIL restrictions and compensation are explainable; one Player remains; save migration and old non-portal paths pass.
 
+**BS15F implementation status (2026-10-04):** an initial transfer rules lifecycle and Save V4 transfer authority slice is underway in isolated worktree `C:\BDM-BS15F`. It provides versioned 2026-27 official-source baseline rules, explicit simulated carry-forward for later NCAA seasons, championship-final-derived 15-day dates, coach/aids/postgraduate date projections, and notice/module/two-business-day processing records. Continuation assessment, transfer recruiting permission integration, compensation/cap, enforcement, eligibility transfer gateway, AI, and desktop flow remain open; this milestone is not certified PASS. See `BS15F_COLLEGE_CONTINUATION_COMPENSATION_TRANSFER_PORTAL.md` and `docs/research/NCAA_TRANSFER_PORTAL_COLLEGE_COMPENSATION_2026_27.md`.
+
 ### BS15G · Pathway Movement, Draft Integration and Shared AI
 
 **Vertical slice:** AI and user-controlled acquisition move qualified Players through at least academy-to-senior, international-to-NCAA, NCAA-to-NCAA, NCAA-to-Draft/pro, NCAA-to-FIBA and direct international-pro routes, with one shared eligibility/registration/contract gateway and recorded causes.

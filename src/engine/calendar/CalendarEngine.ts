@@ -13,6 +13,9 @@ import { progressAiAcademicSupport, resolveAcademicTerm } from '@/engine/academi
 import { progressAiNil, progressNilLifecycle } from '@/engine/nil'
 import { progressAiBoosters } from '@/engine/boosters'
 import { progressEnforcement } from '@/engine/enforcement'
+import { ensureNcaaSportBudgets, progressStaffActivitySanctions } from '@/engine/enforcement/EnforcementRemedies'
+import { progressInstitutionBenefitsReporting, rolloverInstitutionBenefitsCaps } from '@/engine/eligibility/CollegeCompensationEngine'
+import { runCollegeRosterContinuationAndTransferAI } from '@/engine/eligibility/CollegeTransferAI'
 import { processCoachFinancesForMonth } from '@/engine/coachFinances'
 import { decayMemoriesForMonth } from '@/engine/memory'
 import { progressAdvisoryScoutingReports, progressAiScoutingOperations, progressDelegatedScouting, progressRecruitmentFocuses, progressScoutingAssignments, progressScoutingTerritoryAssignments } from '@/engine/scouting'
@@ -152,7 +155,7 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
     run('MONTHLY_BOOSTER_AUTONOMY', current.currentDate, current.currentDate.slice(-2) === '01', progressAiBoosters, 'Booster progression runs on the first day of each month.')
     run('COACH_FINANCE', current.currentDate, current.currentDate.slice(-2) === '01', processCoachFinancesForMonth, 'Coach Finance runs once on the first day of each month.')
     run('MEMORY_DECAY', current.currentDate, current.currentDate.slice(-2) === '01', decayMemoriesForMonth, 'Memory decay runs on the first day of each month.')
-    run('ENFORCEMENT', current.currentDate, true, progressEnforcement, 'Enforcement lifecycle is checked every simulation day.')
+    run('ENFORCEMENT', current.currentDate, true, (input) => progressStaffActivitySanctions(progressEnforcement(progressInstitutionBenefitsReporting(rolloverInstitutionBenefitsCaps(ensureNcaaSportBudgets(input))))), 'Enforcement, contest suspensions, sport budgets, benefits cap rollover and institutional reporting are checked every simulation day.')
     run('SCOUTING_INTAKE', current.currentDate, true, (input) => progressRecruitmentFocuses(progressScoutingTerritoryAssignments(progressAiScoutingOperations(progressOppositionScoutingReports(progressAdvisoryScoutingReports(progressDelegatedScouting(input)))))), 'AI Scouting departments plan on days 1, 8, 15 and 22/29; delegated reports, Recruitment Focus duration and active territory discovery are checked daily.')
     run('MEDICAL_AND_ROSTER_ADVISORIES', current.currentDate, true, (input) => progressBasketballOperationsAdvisories(progressMedicalAdvisories(progressRehabilitationSetbacks(input))), 'Rehabilitation setbacks and Medical/basketball-operations advisories are checked every simulation day.')
     let aiMedicalDecisions: ReturnType<typeof progressAiMedicalLifecycle>['decisions'] = []
@@ -246,6 +249,7 @@ function progressRecruiting(world: GameWorld): GameWorld {
     const status = next.currentDate < cycle.opensOn ? 'scheduled' : next.currentDate < cycle.signingOn ? 'open' : next.currentDate <= cycle.closesOn ? 'signing' : 'completed'
     if (cycle.status !== status) next = updateGameWorld(next, { recruitingCycles: Object.values(next.recruitingCyclesById).map((item) => item.id === cycle.id ? { ...item, status } : item) })
     if (status === 'open' || status === 'signing') {
+      if (status === 'open') next = runCollegeRosterContinuationAndTransferAI(next, cycle.id)
       next = generateRecruitingPool(next, cycle.id)
       if (next.currentDate.slice(-2) === '01' || cycle.status !== status) next = progressAiRecruiting(next, cycle.id)
       next = progressRecruitingAdvisories(next, cycle.id)

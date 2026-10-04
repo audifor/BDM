@@ -18,6 +18,7 @@ import { createDeterministicInjury, deterministicInjuryKind } from '@/engine/inj
 import { boundedInjuryProbability, recurrenceRiskMultiplier } from '@/engine/injury/InjuryRisk'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import type { InjuryRecord } from '@/domain/injury'
+import { validateTransferAuthorization } from '@/engine/eligibility/TransferPortalLifecycle'
 
 /**
  * The earliest date a newly-scheduled session is guaranteed to actually execute.
@@ -40,7 +41,7 @@ export function nextEligibleTrainingDate(currentDate: GameDate): GameDate {
  * it would sit "scheduled" forever. Reject those at this canonical scheduling boundary rather
  * than relying only on UI validation.
  */
-export function scheduleTrainingSession(world: GameWorld, session: ScheduledTrainingSession): GameWorld {
+export function scheduleTrainingSession(world: GameWorld, session: ScheduledTrainingSession, options: { readonly commitUnauthorizedTransfer?: boolean } = {}): GameWorld {
   if (session.date <= world.currentDate) {
     throw new RangeError(`Scheduled session date ${session.date} must be after the current date ${world.currentDate}; it would never execute`)
   }
@@ -48,6 +49,8 @@ export function scheduleTrainingSession(world: GameWorld, session: ScheduledTrai
   const existing = Object.values(world.scheduledTrainingSessionsById)
   const collision = findCollidingSession(session, existing)
   if (collision !== undefined) throw new RangeError(`Session collides with existing session ${collision.id}`)
+  const participants = session.scope === 'individual' ? [session.playerId!] : world.teams[session.teamId]!.rosterPlayerIds
+  if (!options.commitUnauthorizedTransfer && participants.some((playerId) => !validateTransferAuthorization(world, playerId, session.teamId, 'ATHLETIC_ACTIVITY').ok)) throw new RangeError('TRANSFER_PORTAL_AUTHORIZATION_REQUIRED')
   validateAssignedStaff(world, session, existing)
   return updateGameWorld(world, { scheduledTrainingSessionsById: { ...world.scheduledTrainingSessionsById, [session.id]: session } })
 }
@@ -99,7 +102,16 @@ export function executeScheduledTrainingSessionsWithEvidence(world: GameWorld): 
   const blocked = due.filter((session) => !canTeamTrainOnDate(world, session.teamId, session.date))
   const executable = due.filter((session) => canTeamTrainOnDate(world, session.teamId, session.date))
   return {
-    world: executable.reduce((next, session) => executeScheduledSession(next, session), world),
+    world: executable.reduce((next, session) => {
+      const participants = session.scope === 'individual' ? [session.playerId!] : next.teams[session.teamId]!.rosterPlayerIds
+      let guarded = next
+      for (const playerId of participants) {
+        const permission = validateTransferAuthorization(guarded, playerId, session.teamId, 'ATHLETIC_ACTIVITY', true)
+        if (!permission.ok) throw new RangeError(`Training transfer authorization consequence unavailable: ${permission.reason}`)
+        guarded = permission.world
+      }
+      return executeScheduledSession(guarded, session)
+    }, world),
     matchConflictSessionIds: blocked.map((session) => session.id).sort(),
   }
 }

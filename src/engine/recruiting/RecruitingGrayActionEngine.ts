@@ -4,6 +4,7 @@ import { calculateStaffWorkload, updateGameWorld, type GameWorld } from '@/domai
 import { hashStringToSeed } from '@/engine/random'
 import { ensureNcaaEnforcement, openInvestigation, reportViolation } from '@/engine/enforcement'
 import { canPerformRecruitingAction } from './RecruitingPermission'
+import { canRecruitTransferPlayer } from '@/engine/eligibility'
 import type { RecruitingResult } from './RecruitingEngine'
 
 /** A bounded, categorical negative pitch. It never accepts allegation text or rival private state. */
@@ -17,7 +18,7 @@ export function performRecruitingGrayAction(world: GameWorld, cycleId: string, r
   if (staff === undefined || world.staffPeopleById[staff as keyof typeof world.staffPeopleById] === undefined || isNCAA && !Object.values(world.teamStaffAssignmentsById).some((assignment) => assignment.teamId === programTeamId && assignment.staffPersonId === staff)) return { ok: false, reason: 'RECRUITING_STAFF_REQUIRED' }
   if (isNCAA) { const workload = calculateStaffWorkload(world, staff as never); if (workload.overloaded || workload.totalCapacityUsed + 1 > workload.capacityLimit) return { ok: false, reason: 'STAFF_WORKLOAD_CAPACITY_EXHAUSTED' } }
   const illegal = input.tactic === 'impermissibleContact' || input.tactic === 'impermissibleInducement'
-  const permission = canPerformRecruitingAction({ date: world.currentDate, isNCAA, calendar: cycle.calendar, category: world.ecosystems[cycle.ecosystemId]?.category, prospectGroup: profile.prospectGroup, education: profile.education, action: illegal ? 'inPersonContact' : 'correspondence', location: illegal ? 'offCampus' : undefined, signedWithOtherProgram: Object.values(world.recruitSigningsById).some((signing) => signing.recruitId === recruitId && signing.programTeamId !== programTeamId), releasedFromContactProhibition: profile.contactReleasedFromProgramId !== undefined })
+  const permission = canPerformRecruitingAction({ date: world.currentDate, isNCAA, calendar: cycle.calendar, category: world.ecosystems[cycle.ecosystemId]?.category, prospectGroup: profile.prospectGroup, education: profile.education, ...(profile.origin === 'transfer' ? { recruitingContext: 'TRANSFER' as const, transferAuthorized: canRecruitTransferPlayer(world, profile.playerId, programTeamId) } : { recruitingContext: 'INITIAL' as const }), action: illegal ? 'inPersonContact' : 'correspondence', location: illegal ? 'offCampus' : undefined, signedWithOtherProgram: Object.values(world.recruitSigningsById).some((signing) => signing.recruitId === recruitId && signing.programTeamId !== programTeamId), releasedFromContactProhibition: profile.contactReleasedFromProgramId !== undefined })
   if (!permission.allowed && !illegal) return { ok: false, reason: permission.reasonCode }
   const records = Object.values(world.recruitingActionHistoryById)
   const dailyUsed = records.filter((item) => item.staffPersonId === staff && item.date === world.currentDate).reduce((sum, item) => sum + item.cost, 0)

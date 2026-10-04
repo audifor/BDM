@@ -10,15 +10,45 @@ import { deriveOrganizationPlayerValuation } from '@/domain/intelligence'
 import { addYears, createGameDate } from '@/domain/date'
 import { hashStringToSeed, SeededRandomSource } from '@/engine/random'
 import { generateCanonicalDevelopmentProfile, generateCanonicalRatings } from '@/engine/world/CanonicalPlayerTruthGenerator'
-import { assessCollegeEligibility, endPlayerEnrollment, enrollPlayer, initializeEligibility, recordCollegeEligibilityAssessment } from '@/engine/eligibility'
+import { assessCollegeEligibility, canRecruitTransferPlayer, endPlayerEnrollment, enrollPlayer, initializeEligibility, recordCollegeEligibilityAssessment } from '@/engine/eligibility'
 import { initializeAcademicProfile } from '@/engine/academic'
 import { initializeNilProfile } from '@/engine/nil'
 import { materializeTalentCandidate } from '@/engine/world/TalentSupply'
 import { canPerformRecruitingAction } from './RecruitingPermission'
 import { openAiRecruitingNegotiation, respondToRecruitingConcern } from './RecruitingNegotiationEngine'
 import { recruitingStaffActionBlock, recruitingStaffActors, recordRecruitingStaffAction } from './RecruitingStaffAuthority'
+import { isStaffActivityRestricted } from '@/engine/enforcement/EnforcementRemedies'
+import { availableInstitutionBenefitsRoom } from '@/domain/collegeCompensation'
 export type RecruitingResult<T>={ok:true;value:T}|{ok:false;reason:string}
 export function setBoard(entries:readonly RecruitingBoardEntry[],entry:RecruitingBoardEntry){return[...entries.filter(x=>x.programTeamId!==entry.programTeamId||x.recruitId!==entry.recruitId),entry]}
+
+/** Adds an already rostered, authorized Portal Player to an existing BS15E recruiting cycle. */
+export function addTransferRecruitToCycle(world: GameWorld, cycleId: string, portalEntryId: string): RecruitingResult<GameWorld> {
+  const entry = world.transferPortalEntriesById[portalEntryId]
+  const cycle = world.recruitingCyclesById[cycleId]
+  if (!entry || entry.status !== 'authorized' || !cycle || cycle.status !== 'open' || cycle.ecosystemId !== entry.ecosystemId) return { ok: false, reason: 'TRANSFER_PORTAL_AUTHORIZATION_REQUIRED' }
+  const cycleSeason = world.seasons[cycle.sourceSeasonId]
+  const cycleCompetition = cycleSeason === undefined ? undefined : world.competitions[cycleSeason.competitionId]
+  const programTeamIds = cycleCompetition?.participantTeamIds.filter((teamId) => teamId !== entry.sourceTeamId) ?? []
+  if (!programTeamIds.some((teamId) => canRecruitTransferPlayer(world, entry.playerId, teamId))) return { ok: false, reason: 'TRANSFER_DESTINATION_UNAVAILABLE' }
+  const existing = Object.values(world.recruitProfilesById).find((profile) => profile.transferPortalEntryId === entry.id)
+  if (existing !== undefined) return existing.cycleId === cycleId ? { ok: true, value: world } : { ok: false, reason: 'TRANSFER_ALREADY_IN_RECRUITING' }
+  if (Object.values(world.recruitProfilesById).some((profile) => profile.playerId === entry.playerId && profile.status !== 'arrived' && profile.status !== 'unsigned' && profile.status !== 'ineligible')) return { ok: false, reason: 'PLAYER_ALREADY_IN_RECRUITING' }
+  const player = world.players[entry.playerId]
+  if (!player || !world.teams[entry.sourceTeamId]?.rosterPlayerIds.includes(entry.playerId)) return { ok: false, reason: 'TRANSFER_SOURCE_ROSTER_MISMATCH' }
+  const priorProfile = Object.values(world.recruitProfilesById).filter((profile) => profile.playerId === player.id).sort((a, b) => b.id.localeCompare(a.id))[0]
+  const random = new SeededRandomSource(hashStringToSeed(`transfer-recruiting:${entry.id}`))
+  const recruitingRpg = priorProfile?.recruitingRpg ?? createRecruitingRpg(random, programTeamIds)
+  const cycleProfiles = Object.values(world.recruitProfilesById).filter((profile) => profile.cycleId === cycleId && profile.status === 'open')
+  const positionRank = cycleProfiles.filter((profile) => profile.position === player.basketball.primaryPosition).length + 1
+  const recruit: RecruitProfile = {
+    id: `transfer-recruit:${entry.id}`, playerId: player.id, cycleId, origin: 'transfer', transferPortalEntryId: entry.id,
+    position: player.basketball.primaryPosition, publicRank: cycleProfiles.length + 1, positionRank, tier: 'rotation',
+    preferences: { opportunity: random.nextInt(1, 10), development: random.nextInt(1, 10), competing: random.nextInt(1, 10), coach: random.nextInt(1, 10) },
+    recruitingRpg, status: 'open',
+  }
+  return { ok: true, value: updateGameWorld(world, { recruitProfiles: [...Object.values(world.recruitProfilesById), recruit] }) }
+}
 export function act(cycle:RecruitingCycle,recruit:RecruitProfile|undefined,interests:readonly RecruitingInterest[],program:TeamId,kind:'contact'|'pitch'|'visit',capacity:number):RecruitingResult<{interests:readonly RecruitingInterest[];capacity:number}>{if(cycle.status!=='open')return{ok:false,reason:'RECRUITING_NOT_OPEN'};if(!recruit||recruit.cycleId!==cycle.id)return{ok:false,reason:'INVALID_RECRUIT'};const cost=cycle.rules.costs[kind];if(capacity<cost)return{ok:false,reason:'INSUFFICIENT_RECRUITING_CAPACITY'};const before=interests.find(x=>x.recruitId===recruit.id&&x.programTeamId===program)?.value??0;const gain=kind==='contact'?5:kind==='pitch'?3:0;return{ok:true,value:{capacity:capacity-cost,interests:[...interests.filter(x=>x.recruitId!==recruit.id||x.programTeamId!==program),{recruitId:recruit.id,programTeamId:program,value:Math.max(0,Math.min(100,before+gain))}]}}}
 
 function createRecruitingRpg(random: SeededRandomSource, programTeamIds: readonly TeamId[]): RecruitingRpgState {
@@ -26,12 +56,18 @@ function createRecruitingRpg(random: SeededRandomSource, programTeamIds: readonl
   const top = [...RECRUITING_PREFERENCE_DIMENSIONS].sort((a, b) => importance[b] - importance[a]).slice(0, 4)
   const dealbreakers = random.nextInt(0, 2) === 0 ? [] : [top[0]!]
   const stakeholder = random.nextInt(0, 4) === 0 ? undefined : { id: `stakeholder:${random.nextInt(1, 3)}`, role: random.nextInt(0, 2) === 0 ? 'parent' as const : 'schoolCoach' as const, influence: random.nextInt(45, 85), preference: top[1]!, attitudeByProgram: Object.fromEntries(programTeamIds.map((id) => [id, random.nextInt(-35, 35)])) }
-  return { preferenceProfile: { importance, dealbreakers, decisionStyle: (['early','deliberate','visitDriven','deadlineDriven','volatile','loyal'] as const)[random.nextInt(0, 5)]!, ...(random.nextInt(0, 2) === 0 ? { internationalNeeds: ['language','relocation'] as const } : {}) }, intel: [], relationships: [], stakeholders: stakeholder === undefined ? [] : [stakeholder], promises: [], story: [] }
+  return { preferenceProfile: { importance, compensationSecurityImportance: random.nextInt(1, 10), dealbreakers, decisionStyle: (['early','deliberate','visitDriven','deadlineDriven','volatile','loyal'] as const)[random.nextInt(0, 5)]!, ...(random.nextInt(0, 2) === 0 ? { internationalNeeds: ['language','relocation'] as const } : {}) }, intel: [], relationships: [], stakeholders: stakeholder === undefined ? [] : [stakeholder], promises: [], story: [] }
 }
 
 function staffForRecruiting(world: GameWorld, teamId: TeamId): { headCoachId?: string; recruiterId?: string } {
   const actors = recruitingStaffActors(world, teamId)
   return { headCoachId: actors.headCoachId, recruiterId: actors.recruiterId }
+}
+
+function transferPermissionContext(world: GameWorld, profile: RecruitProfile | undefined, programTeamId: TeamId) {
+  return profile?.origin === 'transfer'
+    ? { recruitingContext: 'TRANSFER' as const, transferAuthorized: canRecruitTransferPlayer(world, profile.playerId, programTeamId) }
+    : { recruitingContext: 'INITIAL' as const }
 }
 
 function rosterOpportunity(world: GameWorld, recruit: RecruitProfile, teamId: TeamId): number {
@@ -69,10 +105,19 @@ export function evaluateRecruitingChoice(world: GameWorld, recruit: RecruitProfi
     { dimension: 'distance' as const, value: 50 }, { dimension: 'academics' as const, value: 50 },
     { dimension: 'professionalPathway' as const, value: 50 }, { dimension: 'internationalSupport' as const, value: 50 },
   ]
-  const value = components.reduce((sum, item) => sum + preference[item.dimension] * item.value, 0) / Math.max(1, RECRUITING_PREFERENCE_DIMENSIONS.reduce((sum, dimension) => sum + preference[dimension], 0))
+  const institutionId = world.teams[teamId]?.organizationId
+  const benefits = Object.values(world.settlementBenefitsAgreementsById).filter((item) => item.playerId === recruit.playerId && item.teamId === teamId && item.institutionId === institutionId && item.status !== 'cancelled').sort((a, b) => b.valueMinorUnits - a.valueMinorUnits)[0]
+  const cap = benefits === undefined ? undefined : world.institutionBenefitsCapsById[`cap:${institutionId}:${benefits.capYear}`] ?? Object.values(world.institutionBenefitsCapsById).find((item) => item.institutionId === institutionId && item.capYear === benefits.capYear)
+  const legalBenefits = benefits !== undefined && cap !== undefined && (benefits.status === 'signed' || benefits.valueMinorUnits <= availableInstitutionBenefitsRoom(cap, Object.values(world.settlementBenefitsAgreementsById))) ? benefits.valueMinorUnits : 0
+  const aid = Object.values(world.athleticsAidAgreementsById).filter((item) => item.playerId === recruit.playerId && item.teamId === teamId && (item.status === 'offered' || item.status === 'signed')).sort((a, b) => b.valueMinorUnits - a.valueMinorUnits)[0]?.valueMinorUnits ?? 0
+  const compensationImportance = legalBenefits + aid > 0 ? rpg.preferenceProfile.compensationSecurityImportance ?? 0 : 0
+  const compensationValue = Math.min(100, Math.round((legalBenefits + aid) / 500_000 * 100))
+  const weight = RECRUITING_PREFERENCE_DIMENSIONS.reduce((sum, dimension) => sum + preference[dimension], 0) + compensationImportance
+  const value = (components.reduce((sum, item) => sum + preference[item.dimension] * item.value, 0) + compensationImportance * compensationValue) / Math.max(1, weight)
   const facts = Object.fromEntries(components.map((item) => [item.dimension, item.value])) as Record<RecruitingPreferenceDimension, number>
   const dealbreakerPenalty = rpg.preferenceProfile.dealbreakers.filter((dimension) => facts[dimension] < 30).length * 40
   const reasons = components.filter((item) => preference[item.dimension] >= 7).sort((a, b) => b.value - a.value).slice(0, 2).map((item) => `${item.dimension}: ${Math.round(item.value)}`)
+  if (compensationImportance >= 7 && (legalBenefits > 0 || aid > 0)) reasons.push(`legal compensation security: ${compensationValue}`)
   return { value: Math.round(value - Math.min(18, conflictingAssurances * 9) - dealbreakerPenalty + negotiationEffect + recentNegativeEffect), reasons }
 }
 export function offer(cycle:RecruitingCycle,recruit:RecruitProfile|undefined,offers:readonly RecruitingOffer[],program:TeamId,date:GameDate):RecruitingResult<RecruitingOffer>{if(cycle.status!=='open')return{ok:false,reason:'RECRUITING_NOT_OPEN'};if(!recruit)return{ok:false,reason:'INVALID_RECRUIT'};if(!['open','committed'].includes(recruit.status))return{ok:false,reason:'RECRUIT_ALREADY_COMMITTED'};if(offers.some(x=>x.recruitId===recruit.id&&x.programTeamId===program&&x.status==='active'))return{ok:false,reason:'DUPLICATE_OFFER'};if(offers.filter(x=>x.programTeamId===program&&x.status==='active').length>=cycle.rules.maxOffers)return{ok:false,reason:'OFFER_LIMIT_REACHED'};const priorAttempts=offers.filter(x=>x.cycleId===cycle.id&&x.recruitId===recruit.id&&x.programTeamId===program).length;const baseId=`offer:${cycle.id}:${recruit.id}:${program}`;return{ok:true,value:{id:priorAttempts===0?baseId:`${baseId}:attempt:${priorAttempts+1}`,cycleId:cycle.id,recruitId:recruit.id,programTeamId:program,status:'active',madeOn:date}}}
@@ -149,6 +194,7 @@ export function performRecruitingAction(world: GameWorld, cycleId: string, recru
   // person-day. Each is checked against Staff V2 capacity and the common permission gateway.
   // AI calls this same operation. Evaluation and gray actions have their own entries below.
   if (isNCAA && (staffId === undefined || involvedStaffIds.some((personId) => !Object.values(world.teamStaffAssignmentsById).some((assignment) => assignment.teamId === programTeamId && assignment.staffPersonId === personId)))) return { ok: false, reason: 'RECRUITING_STAFF_REQUIRED' }
+  if (isNCAA && involvedStaffIds.some((personId) => isStaffActivityRestricted(world, personId as StaffPersonId, 'RECRUITING'))) return { ok: false, reason: 'STAFF_ACTIVITY_SUSPENDED' }
   if (isNCAA && involvedStaffIds.some((personId) => { const workload = calculateStaffWorkload(world, personId as StaffPersonId); return workload.overloaded || workload.totalCapacityUsed + 1 > workload.capacityLimit })) return { ok: false, reason: 'STAFF_WORKLOAD_CAPACITY_EXHAUSTED' }
   const offCampus = kind !== 'visit' && visitDetails?.offCampus === true
   if (isNCAA && offCampus && staffId !== undefined && Object.values(world.recruitingActionHistoryById).some((item) => item.staffPersonId === staffId && item.date === world.currentDate && item.offCampus && item.kind !== kind && item.kind !== 'negativeRecruiting')) return { ok: false, reason: 'STAFF_HIGH_TOUCH_ACTIVITY_CONFLICT' }
@@ -164,7 +210,7 @@ export function performRecruitingAction(world: GameWorld, cycleId: string, recru
   const personDayYear = recruitingPersonDayYear(world.currentDate, category)
   const personDaysUsed = new Set(Object.values(world.recruitingActionHistoryById).filter((item) => item.programTeamId === programTeamId && item.offCampus && item.staffPersonId !== undefined && recruitingPersonDayYear(item.date, category) === personDayYear && isCountableRecruitingPersonDay(cycle, item.date, recruit?.prospectGroup)).map((item) => `${item.staffPersonId}:${item.date}`)).size
   const personDayException = cycle.calendar === undefined ? undefined : getRecruitingPeriod(cycle.calendar, world.currentDate, recruit?.prospectGroup)?.personDayException
-  const permission = canPerformRecruitingAction({ date: world.currentDate, isNCAA, calendar: cycle.calendar, category: world.ecosystems[cycle.ecosystemId]?.category, education: recruit?.education, prospectGroup: recruit?.prospectGroup, action: kind === 'visit' ? visitType === 'official' ? 'officialVisit' : 'unofficialVisit' : kind === 'contact' ? 'inPersonContact' : 'correspondence', location: offCampus ? 'offCampus' : 'onCampus', offCampusSite: visitDetails?.offCampusSite, signedWithOtherProgram, releasedFromContactProhibition, signingDay, countsAsOpportunity, countableOpportunitiesUsed, personDayRequired: offCampus, personDayException, personDaysUsed, designatedOffCampusRecruiter: offCampus ? activeDesignation !== undefined : undefined, designatedOffCampusRecruitersUsed: designations.length, simultaneousOffCampusRecruiters: simultaneousRecruiters, maximumDesignatedOffCampusRecruiters: cycle.calendar?.maximumDesignatedOffCampusRecruiters, maximumSimultaneousOffCampusRecruiters: cycle.calendar?.maximumSimultaneousOffCampusRecruiters, staffDailyCapacity: cycle.rules.staffDailyCapacity ?? 6, staffDailyCapacityUsed, staffActionCost: cycle.rules.costs[kind] })
+  const permission = canPerformRecruitingAction({ date: world.currentDate, isNCAA, calendar: cycle.calendar, category: world.ecosystems[cycle.ecosystemId]?.category, education: recruit?.education, prospectGroup: recruit?.prospectGroup, ...transferPermissionContext(world, recruit, programTeamId), action: kind === 'visit' ? visitType === 'official' ? 'officialVisit' : 'unofficialVisit' : kind === 'contact' ? 'inPersonContact' : 'correspondence', location: offCampus ? 'offCampus' : 'onCampus', offCampusSite: visitDetails?.offCampusSite, signedWithOtherProgram, releasedFromContactProhibition, signingDay, countsAsOpportunity, countableOpportunitiesUsed, personDayRequired: offCampus, personDayException, personDaysUsed, designatedOffCampusRecruiter: offCampus ? activeDesignation !== undefined : undefined, designatedOffCampusRecruitersUsed: designations.length, simultaneousOffCampusRecruiters: simultaneousRecruiters, maximumDesignatedOffCampusRecruiters: cycle.calendar?.maximumDesignatedOffCampusRecruiters, maximumSimultaneousOffCampusRecruiters: cycle.calendar?.maximumSimultaneousOffCampusRecruiters, staffDailyCapacity: cycle.rules.staffDailyCapacity ?? 6, staffDailyCapacityUsed, staffActionCost: cycle.rules.costs[kind] })
   if (!permission.allowed) return { ok: false, reason: permission.reasonCode }
   if (kind === 'visit' && isNCAA && visitDetails?.type === 'official') {
     const maximumNights = cycle.calendar?.maximumOfficialVisitLodgingNights
@@ -240,7 +286,7 @@ export function recordRecruitingEvaluation(world: GameWorld, input: { cycleId: s
   const personDayYear = recruitingPersonDayYear(world.currentDate, category)
   const countedDays = new Set(Object.values(world.recruitingActionHistoryById).filter((item) => item.programTeamId === input.programTeamId && item.offCampus && item.staffPersonId !== undefined && recruitingPersonDayYear(item.date, category) === personDayYear && isCountableRecruitingPersonDay(cycle, item.date, recruit.prospectGroup)).map((item) => `${item.staffPersonId}:${item.date}`)).size
   const staffDailyCapacityUsed = Object.values(world.recruitingActionHistoryById).filter((item) => item.staffPersonId === evaluatorId && item.date === world.currentDate).reduce((sum, item) => sum + item.cost, 0)
-  const permission = canPerformRecruitingAction({ date: world.currentDate, time: input.time, isNCAA, calendar: cycle.calendar, category, prospectGroup: recruit.prospectGroup, education: recruit.education, action: 'evaluation', eventType: input.eventType, eventApproved: input.eventApproved, prospectCompetingToday: input.prospectCompetingToday, signingDay, signingRelatedActivity: input.signingRelatedActivity, countsAsOpportunity: true, countableOpportunitiesUsed: countableOpportunityRecords.length, personDayRequired: offCampus, personDayException: windowsToday?.personDayException, personDaysUsed: countedDays, designatedOffCampusRecruiter: offCampus ? staffAssignment !== undefined : undefined, designatedOffCampusRecruitersUsed: staffAssignments.length, simultaneousOffCampusRecruiters: simultaneousRecruiters, maximumDesignatedOffCampusRecruiters: cycle.calendar?.maximumDesignatedOffCampusRecruiters, maximumSimultaneousOffCampusRecruiters: cycle.calendar?.maximumSimultaneousOffCampusRecruiters, staffDailyCapacity: cycle.rules.staffDailyCapacity ?? 6, staffDailyCapacityUsed, staffActionCost: 1 })
+  const permission = canPerformRecruitingAction({ date: world.currentDate, time: input.time, isNCAA, calendar: cycle.calendar, category, prospectGroup: recruit.prospectGroup, education: recruit.education, ...transferPermissionContext(world, recruit, input.programTeamId), action: 'evaluation', eventType: input.eventType, eventApproved: input.eventApproved, prospectCompetingToday: input.prospectCompetingToday, signingDay, signingRelatedActivity: input.signingRelatedActivity, countsAsOpportunity: true, countableOpportunitiesUsed: countableOpportunityRecords.length, personDayRequired: offCampus, personDayException: windowsToday?.personDayException, personDaysUsed: countedDays, designatedOffCampusRecruiter: offCampus ? staffAssignment !== undefined : undefined, designatedOffCampusRecruitersUsed: staffAssignments.length, simultaneousOffCampusRecruiters: simultaneousRecruiters, maximumDesignatedOffCampusRecruiters: cycle.calendar?.maximumDesignatedOffCampusRecruiters, maximumSimultaneousOffCampusRecruiters: cycle.calendar?.maximumSimultaneousOffCampusRecruiters, staffDailyCapacity: cycle.rules.staffDailyCapacity ?? 6, staffDailyCapacityUsed, staffActionCost: 1 })
   if (!permission.allowed) return { ok: false, reason: permission.reasonCode }
   if (offCampus && !staffAssignment) return { ok: false, reason: 'STAFF_DESIGNATION_REQUIRED' }
   if (offCampus && cycle.calendar?.maximumDesignatedOffCampusRecruiters !== undefined && staffAssignments.length > cycle.calendar.maximumDesignatedOffCampusRecruiters) return { ok: false, reason: 'OFF_CAMPUS_RECRUITER_DESIGNATION_LIMIT' }
@@ -297,7 +343,7 @@ export function makeRecruitingOffer(world: GameWorld, cycleId: string, recruitId
     if (staffBlock !== undefined) return { ok: false, reason: staffBlock }
   }
   const releasedFromContactProhibition = rivalSigning !== undefined && profile?.contactReleasedFromProgramId === rivalSigning.programTeamId
-  const permission = canPerformRecruitingAction({ date: world.currentDate, isNCAA: world.ecosystems[cycle.ecosystemId]?.kind === 'ncaaLike', calendar: cycle.calendar, category: world.ecosystems[cycle.ecosystemId]?.category, education: profile?.education, prospectGroup: profile?.prospectGroup, action: 'offer', signedWithOtherProgram, releasedFromContactProhibition })
+  const permission = canPerformRecruitingAction({ date: world.currentDate, isNCAA: world.ecosystems[cycle.ecosystemId]?.kind === 'ncaaLike', calendar: cycle.calendar, category: world.ecosystems[cycle.ecosystemId]?.category, education: profile?.education, prospectGroup: profile?.prospectGroup, ...transferPermissionContext(world, profile, programTeamId), action: 'offer', signedWithOtherProgram, releasedFromContactProhibition })
   if (!permission.allowed) return { ok: false, reason: permission.reasonCode }
   const result = offer(cycle, world.recruitProfilesById[recruitId], Object.values(world.recruitingOffersById), programTeamId, world.currentDate)
   if (!result.ok) return result
@@ -314,7 +360,7 @@ export function promiseRecruitingRole(world: GameWorld, cycleId: string, recruit
   const signedWithOtherProgram = rivalSigning !== undefined
   const profile = world.recruitProfilesById[recruitId]
   const releasedFromContactProhibition = rivalSigning !== undefined && profile?.contactReleasedFromProgramId === rivalSigning.programTeamId
-  const permission = canPerformRecruitingAction({ date: world.currentDate, isNCAA: world.ecosystems[cycle.ecosystemId]?.kind === 'ncaaLike', calendar: cycle.calendar, category: world.ecosystems[cycle.ecosystemId]?.category, education: profile?.education, prospectGroup: profile?.prospectGroup, action: 'correspondence', signedWithOtherProgram, releasedFromContactProhibition })
+  const permission = canPerformRecruitingAction({ date: world.currentDate, isNCAA: world.ecosystems[cycle.ecosystemId]?.kind === 'ncaaLike', calendar: cycle.calendar, category: world.ecosystems[cycle.ecosystemId]?.category, education: profile?.education, prospectGroup: profile?.prospectGroup, ...transferPermissionContext(world, profile, programTeamId), action: 'correspondence', signedWithOtherProgram, releasedFromContactProhibition })
   if (!permission.allowed) return { ok: false, reason: permission.reasonCode }
   if (cycle?.status !== 'open' || !profile || profile.cycleId !== cycleId || profile.status === 'signed' || profile.status === 'arrived') return { ok: false, reason: 'INVALID_RECRUIT' }
   const capacity = world.recruitingCapacityByProgramId[programTeamId] ?? cycle.rules.periodCapacity
@@ -352,7 +398,7 @@ export function resolveRecruitingCommitments(world: GameWorld, cycleId: string):
       const decisionReadiness = (style === 'early' ? 12 : style === 'deliberate' ? -8 : style === 'visitDriven' ? visits > 0 ? 15 : -35 : style === 'deadlineDriven' ? 0 : style === 'loyal' ? 10 : -4)
       const signal = next.recruitingInterests.find((value) => value.recruitId === profile.id && value.programTeamId === offer.programTeamId)?.value ?? 0
       return { offer, value: Math.round(choice.value + decisionReadiness + Math.min(12, rapport / 10) + Math.min(5, signal / 20)) }
-    }).filter((candidate) => candidate.value >= cycle.rules.commitmentThreshold).sort((a, b) => b.value - a.value || a.offer.programTeamId.localeCompare(b.offer.programTeamId))
+    }).filter((candidate) => profile.origin !== 'transfer' || canRecruitTransferPlayer(next, profile.playerId, candidate.offer.programTeamId)).filter((candidate) => candidate.value >= cycle.rules.commitmentThreshold).sort((a, b) => b.value - a.value || a.offer.programTeamId.localeCompare(b.offer.programTeamId))
     const winner = candidates[0]
     if (!winner) {
       if (current && !Object.values(next.recruitSigningsById).some((item) => item.recruitId === profile.id)) next = updateGameWorld(next, { recruitProfiles: [...Object.values(next.recruitProfilesById).filter((item) => item.id !== profile.id), { ...profile, status: 'open' }], recruitingCommitments: Object.values(next.recruitingCommitmentsById).filter((item) => item.id !== current.id), recruitingOffers: Object.values(next.recruitingOffersById).map((item) => item.recruitId === profile.id ? { ...item, status: 'active' } : item) })
@@ -400,7 +446,7 @@ export function signCommittedRecruit(world: GameWorld, cycleId: string, recruitI
   const isNCAA = world.ecosystems[cycle.ecosystemId]?.kind === 'ncaaLike'
   if (!isNCAA && cycle.status !== 'signing') return { ok: false, reason: 'RECRUITING_NOT_OPEN' }
   const institutionalPolicy = cycle.institutionalSigningPolicies?.find((policy) => policy.programTeamId === commitment.programTeamId && policy.seasonId === cycle.sourceSeasonId)
-  const permission = canPerformRecruitingAction({ date: world.currentDate, isNCAA, calendar: cycle.calendar, category: world.ecosystems[cycle.ecosystemId]?.category, prospectGroup: profile.prospectGroup, basketballChampionshipDate: resolveBasketballChampionshipDate(world, cycle), institutionalRegularSigningEndOn: institutionalPolicy?.finalAidSigningDate, action: 'sign' })
+  const permission = canPerformRecruitingAction({ date: world.currentDate, isNCAA, calendar: cycle.calendar, category: world.ecosystems[cycle.ecosystemId]?.category, prospectGroup: profile.prospectGroup, ...transferPermissionContext(world, profile, commitment.programTeamId), basketballChampionshipDate: resolveBasketballChampionshipDate(world, cycle), institutionalRegularSigningEndOn: institutionalPolicy?.finalAidSigningDate, action: 'sign' })
   if (!permission.allowed) return { ok: false, reason: permission.reasonCode }
   const used = Object.values(world.recruitSigningsById).filter((item) => item.cycleId === cycleId && item.programTeamId === commitment.programTeamId).length
   if (used >= cycle.rules.maxSignings) return { ok: false, reason: 'OFFER_LIMIT_REACHED' }
@@ -410,8 +456,62 @@ export function signCommittedRecruit(world: GameWorld, cycleId: string, recruitI
   return { ok: true, value: updateGameWorld(world, { recruitProfiles: [...Object.values(world.recruitProfilesById).filter((item) => item.id !== recruitId), signedProfile], recruitSignings: [...Object.values(world.recruitSigningsById), signing], recruitingOffers: Object.values(world.recruitingOffersById).map((offer) => offer.id === commitment.offerId ? { ...offer, status: 'signed' } : offer) }) }
 }
 
+/** Completes a signed transfer as one roster move while retaining the canonical Player identity. */
+export function completeCollegeTransfer(world: GameWorld, recruitId: string, academicEvidence?: Pick<import('@/domain/eligibility').PlayerEnrollment, 'fullTimeEnrollmentTermStartedAt' | 'firstClassAttendanceAt' | 'academicLevel' | 'firstAcademicTermEndsOn' | 'nextAcademicYearStartsOn' | 'transitionPolicySelection' | 'transitionPolicySource'>): RecruitingResult<GameWorld> {
+  const profile = world.recruitProfilesById[recruitId]
+  const entry = profile?.transferPortalEntryId === undefined ? undefined : world.transferPortalEntriesById[profile.transferPortalEntryId]
+  const signing = Object.values(world.recruitSigningsById).find((item) => item.recruitId === recruitId)
+  if (profile?.origin === 'transfer' && profile.status === 'arrived' && entry?.status === 'completed' && entry.movement !== undefined) return { ok: true, value: world }
+  if (profile?.origin !== 'transfer' || !entry || entry.status !== 'authorized' || profile.status !== 'incoming' || !signing) return { ok: false, reason: 'SIGNED_TRANSFER_REQUIRED' }
+  if (!canRecruitTransferPlayer(world, profile.playerId, signing.programTeamId)) return { ok: false, reason: 'TRANSFER_PORTAL_AUTHORIZATION_REQUIRED' }
+  const cycle = world.recruitingCyclesById[signing.cycleId]
+  const season = cycle === undefined ? undefined : world.seasons[cycle.sourceSeasonId]
+  const competition = season === undefined ? undefined : world.competitions[season.competitionId]
+  const destination = world.teams[signing.programTeamId]
+  const activeEnrollment = Object.values(world.playerEnrollmentsById).find((item) => item.playerId === profile.playerId && item.ecosystemId === entry.ecosystemId && item.teamId === entry.sourceTeamId && item.status === 'active')
+  if (!cycle || cycle.ecosystemId !== entry.ecosystemId || !competition?.participantTeamIds.includes(signing.programTeamId) || !destination || !activeEnrollment) return { ok: false, reason: 'TRANSFER_DESTINATION_OR_SOURCE_ENROLLMENT_INVALID' }
+  const sourceAcademic = Object.values(world.academicProfilesById).find((item) => item.playerId === profile.playerId && item.ecosystemId === entry.ecosystemId && item.programTeamId === entry.sourceTeamId)
+  const sourceEligibility = Object.values(world.eligibilityProfilesById).find((item) => item.playerId === profile.playerId && item.ecosystemId === entry.ecosystemId && item.programTeamId === entry.sourceTeamId)
+  const sourceNil = Object.values(world.nilProfilesById).find((item) => item.playerId === profile.playerId && item.ecosystemId === entry.ecosystemId && item.programTeamId === entry.sourceTeamId)
+  let staged = updateGameWorld(world, {
+    teams: Object.values(world.teams).map((team) => createTeam({ ...team, rosterPlayerIds: team.id === signing.programTeamId
+      ? [...team.rosterPlayerIds.filter((id) => id !== profile.playerId), profile.playerId]
+      : team.rosterPlayerIds.filter((id) => id !== profile.playerId) })),
+    playerEnrollments: Object.values(world.playerEnrollmentsById).map((item) => item.id === activeEnrollment.id ? { ...item, status: 'ended' as const, endsOn: world.currentDate } : item),
+  })
+  const enrolled = enrollPlayer(staged, { playerId: profile.playerId, teamId: signing.programTeamId, ecosystemId: entry.ecosystemId, actionId: `transfer-signing:${signing.id}`, evidence: { transferFromEnrollmentId: activeEnrollment.id, ...(activeEnrollment.academicLevel === undefined ? {} : { academicLevel: activeEnrollment.academicLevel }), ...academicEvidence } })
+  if (!enrolled.ok) return { ok: false, reason: enrolled.reason }
+  staged = enrolled.world
+  const movedAcademic = sourceAcademic === undefined ? staged.academicProfilesById : { ...staged.academicProfilesById, [`academic:${entry.ecosystemId}:${signing.programTeamId}:${profile.playerId}`]: { ...sourceAcademic, id: `academic:${entry.ecosystemId}:${signing.programTeamId}:${profile.playerId}`, programTeamId: signing.programTeamId } }
+  const movedEligibility = sourceEligibility === undefined ? staged.eligibilityProfilesById : { ...staged.eligibilityProfilesById, [`eligibility:${entry.ecosystemId}:${signing.programTeamId}:${profile.playerId}`]: { ...sourceEligibility, id: `eligibility:${entry.ecosystemId}:${signing.programTeamId}:${profile.playerId}`, programTeamId: signing.programTeamId } }
+  const movedNil = sourceNil === undefined ? staged.nilProfilesById : { ...staged.nilProfilesById, [`nil-profile:${entry.ecosystemId}:${signing.programTeamId}:${profile.playerId}`]: { ...sourceNil, id: `nil-profile:${entry.ecosystemId}:${signing.programTeamId}:${profile.playerId}`, programTeamId: signing.programTeamId } }
+  staged = updateGameWorld(staged, { academicProfiles: Object.values(movedAcademic), eligibilityProfiles: Object.values(movedEligibility), nilProfiles: Object.values(movedNil) })
+  const assessment = assessCollegeEligibility(staged, { playerId: profile.playerId, teamId: signing.programTeamId, ecosystemId: entry.ecosystemId })
+  if (!assessment?.eligible) return { ok: false, reason: `TRANSFER_DESTINATION_INELIGIBLE:${assessment?.reasons.join(',') ?? 'RULESET_UNAVAILABLE'}` }
+  staged = recordCollegeEligibilityAssessment(staged, { playerId: profile.playerId, teamId: signing.programTeamId, ecosystemId: entry.ecosystemId })
+  staged = initializeNilProfile(staged, profile.playerId, signing.programTeamId, entry.ecosystemId)
+  const completedEntry = { ...entry, status: 'completed' as const, destinationTeamId: signing.programTeamId, movement: {
+    playerId: profile.playerId,
+    sourceTeamId: entry.sourceTeamId,
+    destinationTeamId: signing.programTeamId,
+    sourceEnrollmentId: activeEnrollment.id,
+    destinationEnrollmentId: enrolled.enrollment.id,
+    formalSigningId: signing.id,
+    transferredOn: world.currentDate,
+    eligibilityAssessmentId: assessment.id,
+    authority: 'AUTHORIZED_PORTAL_ENTRY' as const,
+    rulesetId: entry.rulesetId,
+    rulesetProvenance: world.transferPortalRulesetsById[entry.rulesetId]!.provenance,
+  } }
+  const arrivedProfile = { ...profile, status: 'arrived' as const }
+  return { ok: true, value: updateGameWorld(staged, {
+    transferPortalEntries: Object.values(staged.transferPortalEntriesById).map((item) => item.id === entry.id ? completedEntry : item),
+    recruitProfiles: Object.values(staged.recruitProfilesById).map((item) => item.id === profile.id ? arrivedProfile : item),
+  }) }
+}
+
 export function arriveSignedRecruits(world: GameWorld): GameWorld {
-  const arrivals = Object.values(world.recruitSigningsById).filter((signing) => signing.targetSeasonId === world.currentSeasonId && !world.teams[signing.programTeamId].rosterPlayerIds.includes(signing.playerId) && world.recruitProfilesById[signing.recruitId]?.status === 'incoming')
+  const arrivals = Object.values(world.recruitSigningsById).filter((signing) => signing.targetSeasonId === world.currentSeasonId && !world.teams[signing.programTeamId].rosterPlayerIds.includes(signing.playerId) && world.recruitProfilesById[signing.recruitId]?.status === 'incoming' && world.recruitProfilesById[signing.recruitId]?.origin !== 'transfer')
   if (arrivals.length === 0) return world
   let current = world
   for (const arrival of arrivals) {
@@ -498,7 +598,7 @@ export function progressAiRecruiting(world: GameWorld, cycleId: string): GameWor
   return resolveRecruitingCommitments(next, cycleId)
 }
 
-function progressAiNegotiation(world: GameWorld, cycleId: string, recruitId: string, programTeamId: TeamId): GameWorld {
+export function progressAiNegotiation(world: GameWorld, cycleId: string, recruitId: string, programTeamId: TeamId): GameWorld {
   const profile = world.recruitProfilesById[recruitId]
   if (profile?.recruitingRpg === undefined || profile.status !== 'open') return world
   let negotiation = profile.recruitingRpg.negotiations?.find((item) => item.cycleId === cycleId && item.programTeamId === programTeamId && item.terminalState === 'active')

@@ -26,6 +26,8 @@ export interface RecruitingPermissionContext {
   readonly prospectGroup?: RecruitingProspectGroup
   readonly education?: RecruitingProspectEducation
   readonly action: RecruitingPermissionAction
+  readonly recruitingContext?: 'INITIAL'|'TRANSFER'
+  readonly transferAuthorized?: boolean
   readonly location?: RecruitingActionLocation
   readonly offCampusSite?: RecruitingOffCampusSite
   readonly communicationTarget?: RecruitingCommunicationTarget
@@ -77,6 +79,10 @@ export function canPerformRecruitingAction(context: RecruitingPermissionContext)
   if (missingCalendar && context.isNCAA) return decision(context, undefined, false, 'NCAA_RULESET_MISSING')
   const active = calendar ? getRecruitingPeriod(calendar, context.date, context.prospectGroup ?? 'all') : undefined
   const base = decision(context, active, false, 'BLOCKED')
+  if (context.recruitingContext === 'TRANSFER') {
+    if (!context.transferAuthorized) return { ...base, reasonCode: 'TRANSFER_PORTAL_AUTHORIZATION_REQUIRED' }
+    return { ...base, allowed: true, reasonCode: 'ALLOWED', matchedException: 'authorized-transfer-recruiting' }
+  }
   let matchedException: string | undefined
   const normalizedAction = context.action === 'phoneCall' ? 'outboundCall' : context.action === 'correspondence' ? 'electronicMessage' : context.action
   const mayOccurOutsideCalendarWindows = ['outboundCall','inboundCall','electronicMessage','offer','promise','sign'].includes(normalizedAction)

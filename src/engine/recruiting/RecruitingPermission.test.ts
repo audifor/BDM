@@ -11,6 +11,13 @@ import { generateRecruitingPool, performRecruitingAction, recordRecruitingEvalua
 import { canPerformRecruitingAction } from './RecruitingPermission'
 
 describe('2026-27 NCAA basketball recruiting rulesets', () => {
+  it('requires Portal authorization at the shared transfer gate and permits transfer recruiting outside initial-player periods when authorized', () => {
+    const calendar = recruitingRulesetForSeason('men', 2026)
+    const transfer = { date: createGameDate(2026, 8, 25), isNCAA: true, calendar, action: 'offer' as const, recruitingContext: 'TRANSFER' as const }
+    expect(canPerformRecruitingAction(transfer)).toMatchObject({ allowed: false, reasonCode: 'TRANSFER_PORTAL_AUTHORIZATION_REQUIRED' })
+    expect(canPerformRecruitingAction({ ...transfer, transferAuthorized: true })).toMatchObject({ allowed: true, matchedException: 'authorized-transfer-recruiting' })
+  })
+
   it('keeps the MBB dead period distinct from legal remote communication', () => {
     const calendar = recruitingRulesetForSeason('men', 2026)
     expect(calendar).toMatchObject({ version: 'NCAA_DI_MBB_2026_27', provenance: 'OFFICIAL_SOURCE', derivedSeason: '2026-27' })

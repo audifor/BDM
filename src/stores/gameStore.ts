@@ -47,7 +47,10 @@ import type { CommandResult } from '@/app/entityActions/EntityCommand'
 import { selectDraftProspect } from '@/app/draft'
 import { reviewMaterialRosterChanges } from '@/app/gmPlanning'
 import type { ContinueResult, SimulateUntilResult, WorldDayAdvanceResult } from '@/app/game'
-import { addRecruitingBoardEntry, applyRecruitingPressure, discoverRecruitingTalentCandidate, makeRecruitingOffer, openRecruitingNegotiation, performRecruitingAction, promiseRecruitingRole, removeRecruitingBoardEntry, respondToRecruitingConcern, signCommittedRecruit } from '@/engine/recruiting'
+import { addRecruitingBoardEntry, addTransferRecruitToCycle, applyRecruitingPressure, completeCollegeTransfer, discoverRecruitingTalentCandidate, makeRecruitingOffer, openRecruitingNegotiation, performRecruitingAction, promiseRecruitingRole, removeRecruitingBoardEntry, resolveBasketballChampionshipDate, respondToRecruitingConcern, signCommittedRecruit } from '@/engine/recruiting'
+import { basketballTransferWindow } from '@/domain/eligibility'
+import { ensureTransferPortalRuleset } from '@/engine/eligibility'
+import { canRecruitTransferPlayer, completeTransferEducationModule as completeTransferModule, processTransferPortalEntry as processPortalEntry, submitTransferNotice, withdrawTransferPortalEntry as withdrawPortalEntry } from '@/engine/eligibility'
 import type { Priority, RecruitingNegotiationTopic, RecruitingProgramResponseKind } from '@/domain/recruiting'
 import { acceptNilOpportunity } from '@/engine/nil'
 import { requestBoosterSupport } from '@/engine/boosters'
@@ -164,6 +167,12 @@ interface GameStore {
   performRecruitingAction(cycleId: string, recruitId: string, kind: 'contact'|'pitch'|'visit'): string | null
   makeRecruitingOffer(cycleId: string, recruitId: string): string | null
   signRecruit(cycleId: string, recruitId: string): string | null
+  submitTransferNotice(playerId: PlayerId): string | null
+  completeTransferEducationModule(entryId: string): string | null
+  processTransferPortalEntry(entryId: string): string | null
+  withdrawTransferPortalEntry(entryId: string): string | null
+  addTransferRecruitToCycle(entryId: string): string | null
+  completeCollegeTransfer(recruitId: string): string | null
   promiseRecruitingRole(cycleId: string, recruitId: string): string | null
   openRecruitingNegotiation(cycleId: string, recruitId: string): string | null
   respondToRecruitingConcern(negotiationId: string, topic: RecruitingNegotiationTopic, kind: RecruitingProgramResponseKind): string | null
@@ -429,6 +438,50 @@ export const useGameStore = create<GameStore>((set, get) => ({
   performRecruitingAction: (cycleId, recruitId, kind) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = performRecruitingAction(world, cycleId, recruitId, team.id, kind); if (result.ok) { set({ world: result.value }); return null } return result.reason },
   makeRecruitingOffer: (cycleId, recruitId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = makeRecruitingOffer(world, cycleId, recruitId, team.id); if (result.ok) { set({ world: result.value }); return null } return result.reason },
   signRecruit: (cycleId, recruitId) => { const result = signCommittedRecruit(requireWorld(get().world), cycleId, recruitId); if (result.ok) { set({ world: result.value }); return null } return result.reason },
+  submitTransferNotice: (playerId) => {
+    let world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    if (!team || !team.rosterPlayerIds.includes(playerId)) return 'PLAYER_NOT_ON_CONTROLLED_ROSTER'
+    const season = world.seasons[world.currentSeasonId]
+    const competition = season && world.competitions[season.competitionId]
+    if (!season || !competition || !competition.participantTeamIds.includes(team.id) || world.ecosystems[competition.ecosystemId]?.kind !== 'ncaaLike') return 'NO_CONTROLLED_PROGRAM'
+    world = ensureTransferPortalRuleset(world, season.id)
+    const cycle = Object.values(world.recruitingCyclesById).find((item) => item.sourceSeasonId === season.id && item.ecosystemId === competition.ecosystemId && item.status === 'open')
+    const finalDate = cycle && resolveBasketballChampionshipDate(world, cycle)
+    const ruleset = Object.values(world.transferPortalRulesetsById).filter((item) => item.ecosystemId === competition.ecosystemId && item.effectiveFrom <= world.currentDate).sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0]
+    if (!cycle || !finalDate || !ruleset) return 'TRANSFER_RULESET_OR_CHAMPIONSHIP_UNAVAILABLE'
+    const entryId = `portal:${playerId}:${world.currentDate}`
+    const result = submitTransferNotice(world, { id: entryId, playerId, sourceTeamId: team.id, ecosystemId: competition.ecosystemId, rulesetId: ruleset.id }, basketballTransferWindow(finalDate, ruleset))
+    if (!result.ok) return result.reason
+    set({ world: result.world })
+    return null
+  },
+  completeTransferEducationModule: (entryId) => { const world = requireWorld(get().world); const entry = world.transferPortalEntriesById[entryId]; const team = getUserTeam(world); if (!team || entry?.sourceTeamId !== team.id) return 'NO_CONTROLLED_PROGRAM'; const result = completeTransferModule(world, entryId); if (result.ok) { set({ world: result.world }); return null } return result.reason },
+  processTransferPortalEntry: (entryId) => { const world = requireWorld(get().world); const entry = world.transferPortalEntriesById[entryId]; const team = getUserTeam(world); if (!team || entry?.sourceTeamId !== team.id) return 'NO_CONTROLLED_PROGRAM'; const result = processPortalEntry(world, entryId); if (result.ok) { set({ world: result.world }); return null } return result.reason },
+  withdrawTransferPortalEntry: (entryId) => { const world = requireWorld(get().world); const entry = world.transferPortalEntriesById[entryId]; const team = getUserTeam(world); if (!team || entry?.sourceTeamId !== team.id) return 'NO_CONTROLLED_PROGRAM'; const result = withdrawPortalEntry(world, entryId); if (result.ok) { set({ world: result.world }); return null } return result.reason },
+  addTransferRecruitToCycle: (entryId) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    const entry = world.transferPortalEntriesById[entryId]
+    if (!team || !entry || !canRecruitTransferPlayer(world, entry.playerId, team.id)) return 'TRANSFER_PORTAL_AUTHORIZATION_REQUIRED'
+    const cycle = Object.values(world.recruitingCyclesById).find((item) => item.sourceSeasonId === world.currentSeasonId && item.ecosystemId === entry.ecosystemId && item.status === 'open')
+    if (!cycle) return 'RECRUITING_NOT_OPEN'
+    const season = world.seasons[cycle.sourceSeasonId]
+    const competition = season === undefined ? undefined : world.competitions[season.competitionId]
+    if (!competition?.participantTeamIds.includes(team.id)) return 'TRANSFER_DESTINATION_UNAVAILABLE'
+    const result = addTransferRecruitToCycle(world, cycle.id, entryId)
+    if (result.ok) { set({ world: result.value }); return null }
+    return result.reason
+  },
+  completeCollegeTransfer: (recruitId) => {
+    const world = requireWorld(get().world)
+    const team = getUserTeam(world)
+    const signing = Object.values(world.recruitSigningsById).find((item) => item.recruitId === recruitId)
+    if (!team || signing?.programTeamId !== team.id) return 'NO_CONTROLLED_PROGRAM'
+    const result = completeCollegeTransfer(world, recruitId)
+    if (result.ok) { set({ world: result.value }); return null }
+    return result.reason
+  },
   promiseRecruitingRole: (cycleId, recruitId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = promiseRecruitingRole(world, cycleId, recruitId, team.id); if (result.ok) { set({ world: result.value }); return null } return result.reason },
   openRecruitingNegotiation: (cycleId, recruitId) => { const world = requireWorld(get().world); const team = getUserTeam(world); if (team === undefined) return 'NO_CONTROLLED_PROGRAM'; const result = openRecruitingNegotiation(world, cycleId, recruitId, team.id); if (result.ok) { set({ world: result.world }); return null } return result.reason },
   respondToRecruitingConcern: (negotiationId, topic, kind) => { const result = respondToRecruitingConcern(requireWorld(get().world), negotiationId, topic, kind); if (result.ok) { set({ world: result.world }); return null } return result.reason },

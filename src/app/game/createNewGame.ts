@@ -7,11 +7,13 @@ import { createGameWorld, migrateTrainingResponsibilities, updateGameWorld, type
 import { createPlayer } from '@/domain/player'
 import { generateNcaaLikeSchedule, generateRoundRobinSchedule } from '@/engine/competition/schedule'
 import { generateWorld } from '@/engine/world'
-import { ensureNcaaEligibility } from '@/engine/eligibility'
+import { ensureNcaaEligibility, ensureTransferPortalRuleset } from '@/engine/eligibility'
+import { ensureInstitutionBenefitsCaps } from '@/engine/eligibility/CollegeCompensationEngine'
 import { ensureNcaaAcademics } from '@/engine/academic'
 import { ensureNcaaNil } from '@/engine/nil'
 import { ensureNcaaBoosters } from '@/engine/boosters'
 import { ensureNcaaEnforcement } from '@/engine/enforcement'
+import { ensureNcaaSportBudgets } from '@/engine/enforcement/EnforcementRemedies'
 import { ensureResponsibilityStructure } from '@/engine/world/ResponsibilityEnrichment'
 import { ensureStaffContractStructure, ensureStaffEmploymentStructure, ensureStaffReputationStructure } from '@/engine/world/StaffCareerEnrichment'
 import type { CoachRpgPreset } from '@/domain/coachRpg'
@@ -34,8 +36,11 @@ export function createNewGame(options: { readonly coachRpgPreset?: CoachRpgPrese
   for (const team of Object.values(world.teams).filter((team) => team.coachId === undefined)) world = createCoachJobOpeningForTeam(world, { teamId: team.id }).world
   const userTeam = Object.values(world.teams).find((team) => team.coachId === world.userCoachId)
   if (userTeam !== undefined) world = initializeBoardState(world, userTeam.id)
-  for (const season of Object.values(world.seasons)) world = initializeRecruitingCycle(world, season.id)
-  return initializeAiClubManagementPlanning(world)
+  for (const season of Object.values(world.seasons)) {
+    world = initializeRecruitingCycle(world, season.id)
+    world = ensureTransferPortalRuleset(world, season.id)
+  }
+  return initializeAiClubManagementPlanning(ensureNcaaSportBudgets(ensureInstitutionBenefitsCaps(world)))
 }
 
 function createSingleNewGame(options: { readonly coachRpgPreset?: CoachRpgPreset }, gender: 'male' | 'female'): GameWorld {

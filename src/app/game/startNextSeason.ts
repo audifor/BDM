@@ -14,7 +14,7 @@ import type { WorldRepairReport } from '@/domain/repair'
 import { getCurrentSeason } from './selectors'
 import { areTierMovementDependenciesResolved, buildNextCompetitionParticipants } from '@/engine/competition'
 import { deriveNextEditionCalendarPolicy } from '@/engine/competition/WorldCompetitionCalendar'
-import { ensureNcaaEligibility } from '@/engine/eligibility'
+import { ensureNcaaEligibility, ensureTransferPortalRuleset } from '@/engine/eligibility'
 import { ensureNcaaAcademics } from '@/engine/academic'
 import { ensureNcaaNil } from '@/engine/nil'
 import { ensureNcaaBoosters } from '@/engine/boosters'
@@ -165,8 +165,9 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
   if (ecosystem.kind === 'ncaaLike') {
     next = bindRecruitingCycleTargetToSeason(next, primary.id, nextPrimary.id)
     next = initializeRecruitingCycle(next, nextPrimary.id)
+    next = ensureTransferPortalRuleset(next, nextPrimary.id)
     next = ensureNcaaEnforcement(ensureNcaaBoosters(ensureNcaaNil(ensureNcaaAcademics(ensureNcaaEligibility(next)))))
-    annualHooksExecuted.push('recruitingCycle', 'eligibilityInitialization', 'academicInitialization', 'nilInitialization', 'boosterInitialization', 'enforcementInitialization')
+    annualHooksExecuted.push('recruitingCycle', 'transferRuleset', 'eligibilityInitialization', 'academicInitialization', 'nilInitialization', 'boosterInitialization', 'enforcementInitialization')
   }
   const beforeBoards = next
   next = Object.keys(next.boardStatesByTeamId).reduce((current, teamId) => rolloverBoardState(current, teamId as import('@/domain/ids').TeamId, nextPrimary.id), next)

@@ -34,6 +34,24 @@ describe('BS14B OrganizationKnowledge persistence', () => {
   })
 })
 
+describe('BS15F transfer rules persistence', () => {
+  it('round-trips NCAA carry-forward rules and defaults pre-BS15F Save V4 payloads to empty', () => {
+    const world = createNewGame()
+    const ncaaEcosystemIds = new Set(Object.values(world.ecosystems).filter((ecosystem) => ecosystem.kind === 'ncaaLike').map((ecosystem) => ecosystem.id))
+    const rulesets = Object.values(world.transferPortalRulesetsById)
+    expect(rulesets.length).toBeGreaterThanOrEqual(ncaaEcosystemIds.size)
+    expect(rulesets.every((ruleset) => ncaaEcosystemIds.has(ruleset.ecosystemId))).toBe(true)
+    expect(rulesets.filter((ruleset) => ruleset.provenance === 'OFFICIAL_SOURCE')).toHaveLength(ncaaEcosystemIds.size)
+    expect(rulesets.filter((ruleset) => ruleset.provenance === 'SIMULATED_CARRY_FORWARD').every((ruleset) => rulesets.some((source) => source.id === ruleset.basedOnRulesetId))).toBe(true)
+    expect(deserializeGameWorldV4(serializeGameWorldV4(world, savedAt)).transferPortalRulesetsById).toEqual(world.transferPortalRulesetsById)
+
+    const { transferPortalRulesets: _rulesets, transferPortalEntries: _entries, ...oldPayload } = serializeGameWorldV4(world, savedAt).payload
+    const legacy = deserializeGameWorldV4({ ...serializeGameWorldV4(world, savedAt), payload: oldPayload })
+    expect(legacy.transferPortalRulesetsById).toEqual({})
+    expect(legacy.transferPortalEntriesById).toEqual({})
+  })
+})
+
 describe('GameWorldSaveV4 competition runtime', () => {
   it('round-trips immutable Training Staff role and planned module evidence', () => {
     const base = createNewGame()

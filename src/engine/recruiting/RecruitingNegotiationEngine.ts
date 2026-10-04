@@ -2,6 +2,7 @@ import { type RecruitingConcern, type RecruitingNegotiation, type RecruitingNego
 import type { TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { updateGameWorld } from '@/domain/world'
+import { canRecruitTransferPlayer } from '@/engine/eligibility'
 import { canPerformRecruitingAction } from './RecruitingPermission'
 import { recruitingStaffActionBlock, recruitingStaffActors, recordRecruitingStaffAction } from './RecruitingStaffAuthority'
 
@@ -35,7 +36,7 @@ function openNegotiationWithTopics(world: GameWorld, cycleId: string, recruitId:
   const cycle = world.recruitingCyclesById[cycleId]
   const profile = world.recruitProfilesById[recruitId]
   if (!cycle || cycle.status !== 'open' || !profile || profile.cycleId !== cycleId || profile.status !== 'open' || !profile.recruitingRpg) return { ok: false, reason: 'INVALID_RECRUIT' }
-  const permission = canPerformRecruitingAction({ date: world.currentDate, isNCAA: world.ecosystems[cycle.ecosystemId]?.kind === 'ncaaLike', calendar: cycle.calendar, category: world.ecosystems[cycle.ecosystemId]?.category, prospectGroup: profile.prospectGroup, education: profile.education, action: 'correspondence' })
+  const permission = canPerformRecruitingAction({ date: world.currentDate, isNCAA: world.ecosystems[cycle.ecosystemId]?.kind === 'ncaaLike', calendar: cycle.calendar, category: world.ecosystems[cycle.ecosystemId]?.category, prospectGroup: profile.prospectGroup, education: profile.education, ...(profile.origin === 'transfer' ? { recruitingContext: 'TRANSFER' as const, transferAuthorized: canRecruitTransferPlayer(world, profile.playerId, programTeamId) } : { recruitingContext: 'INITIAL' as const }), action: 'correspondence' })
   if (!permission.allowed) return { ok: false, reason: permission.reasonCode }
   const state = profile.recruitingRpg
   const priorNegotiations = (state.negotiations ?? []).filter((item) => item.cycleId === cycleId && item.programTeamId === programTeamId)
@@ -69,7 +70,7 @@ export function respondToRecruitingConcern(world: GameWorld, negotiationId: stri
   const { profile, negotiation } = found
   const cycle = world.recruitingCyclesById[negotiation.cycleId]
   if (!cycle || negotiation.terminalState !== 'active' || (kind !== 'pressure' && !negotiation.unresolvedTopics.includes(topic))) return { ok: false, reason: 'NEGOTIATION_TOPIC_NOT_OPEN' }
-  const permission = canPerformRecruitingAction({ date: world.currentDate, isNCAA: world.ecosystems[cycle.ecosystemId]?.kind === 'ncaaLike', calendar: cycle.calendar, category: world.ecosystems[cycle.ecosystemId]?.category, prospectGroup: profile.prospectGroup, education: profile.education, action: 'correspondence' })
+  const permission = canPerformRecruitingAction({ date: world.currentDate, isNCAA: world.ecosystems[cycle.ecosystemId]?.kind === 'ncaaLike', calendar: cycle.calendar, category: world.ecosystems[cycle.ecosystemId]?.category, prospectGroup: profile.prospectGroup, education: profile.education, ...(profile.origin === 'transfer' ? { recruitingContext: 'TRANSFER' as const, transferAuthorized: canRecruitTransferPlayer(world, profile.playerId, negotiation.programTeamId) } : { recruitingContext: 'INITIAL' as const }), action: 'correspondence' })
   if (!permission.allowed) return { ok: false, reason: permission.reasonCode }
   const recruiterId = recruitingStaffActors(world, negotiation.programTeamId).recruiterId
   if (world.ecosystems[cycle.ecosystemId]?.kind === 'ncaaLike') {
