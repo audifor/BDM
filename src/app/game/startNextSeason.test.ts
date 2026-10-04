@@ -7,11 +7,15 @@ import { getPlayerCareerStats, getPlayerSeasonStats } from '@/engine/stats/Playe
 import { getSeasonHistoryRecord } from '@/engine/season'
 import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSaveV1'
 
-import { createNewGame } from './createNewGame'
-import { simulateAndApplyGame } from './playUserGame'
+import { createNewGame as createFullNewGame } from './createNewGame'
+import { simulateAndApplyGame } from './matchResolution'
 import { getCurrentSeason } from './selectors'
 import { startNextSeason, startNextSeasonFor, startNextSeasonTransitionFor } from './startNextSeason'
 import { advanceGameDay } from './advanceGameDay'
+import { withShortGameFormat } from './testFixtures'
+
+// ME-LOCK1: a lifecycle test (calendar/season/staff), not a basketball one: its Games still resolve through Match Next FAST, with a short game format.
+const createNewGame = (...args: Parameters<typeof createFullNewGame>): ReturnType<typeof createFullNewGame> => withShortGameFormat(createFullNewGame(...args))
 
 /**
  * `startNextSeason` no longer moves `world.currentSeasonId` (see startNextSeason.ts): it only

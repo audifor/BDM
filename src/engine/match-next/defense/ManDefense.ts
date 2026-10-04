@@ -1,3 +1,4 @@
+import { activeActions } from '../actions/ActionIndex'
 import { distanceBetween, type CourtPosition } from '@/domain/court'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import { emitEvent } from '../events'
@@ -103,7 +104,7 @@ export function reconcileManDefense(input: MatchState): MatchState {
   const ballHandlerId = currentOrPriorHandler(state, possession.teamId)
   const onBallAssignment = ballHandlerId === null ? undefined : assignments.find((item) => item.attackerPlayerId === ballHandlerId)
   const playerById = new Map(state.players.map((player) => [player.playerId, player]))
-  const activeDrive = state.actions.find((action) => action.kind === 'DRIVE' && action.status === 'ACTIVE')
+  const activeDrive = activeActions(state).find((action) => action.kind === 'DRIVE' && action.status === 'ACTIVE')
   const helpDecision = resolveDriveHelpDecision(state, assignments, playerById, ballHandlerId, activeDrive, prior?.helpDecision, defendedBasket, intent.defense.help, intent.coach.tacticalKnowledge)
   // BT5.18: the other help responsibilities (the low man tags a roller, a defender digs at a post touch, the weak side picks up the screener of a trap).
   const screenHelp = helpDecision.status === 'TRIGGERED' || tuning().screenPostHelp === 0 ? null : resolveScreenAndPostHelp(state, assignments, playerById, ballHandlerId, defendedBasket, intent.defense.help)

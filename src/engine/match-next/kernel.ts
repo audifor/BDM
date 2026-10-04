@@ -1,5 +1,5 @@
 import type { PlayerId, TeamId } from '@/domain/ids'
-import { emitEvent } from './events'
+import { emitEvent, someEventSince } from './events'
 import { reconcileBackcourtClock } from './rules/Backcourt'
 import { advanceBallAtTick, interceptPass, putBallDead, recoverLooseBall, releaseInbound, releasePass, releaseShot, secureRebound, startInbound, startOpeningJumpBall, syncHeldBallToOwner, violateShotClock, type InboundStartReason, type ReleasePassCommand, type ReleaseShotCommand } from './ball/BallTransitions'
 import { reconcileLooseBallPursuit, securePhysicalLooseBall } from './ball/LooseBallPursuit'
@@ -81,12 +81,12 @@ function tickCore(state: MatchState): MatchState {
   next = reconcileSteppedOut(next)
   next = reconcileEpisodeContacts(next)
   next = reconcileBackcourtClock(next)
-  if (next.ball.kind === 'DEAD' && next.events.some((event) => event.t === next.t && event.type === 'turnover' && event.turnoverType === 'EIGHT_SECOND')) return reconcileStructures(next)
+  if (next.ball.kind === 'DEAD' && someEventSince(next, next.t, (event) => event.type === 'turnover' && event.turnoverType === 'EIGHT_SECOND')) return reconcileStructures(next)
 
   const shotClockExpired = state.clock.shotRunning && state.shotClockTenths !== null && state.shotClockTenths > 0 && shotClockTenths === 0
   const expiredAtPriorTick = state.clock.shotRunning && state.shotClockTenths === 0
   const shotWasReleased = state.ball.kind === 'SHOT_IN_FLIGHT'
-  const reboundSecured = next.events.some((event) => event.t === next.t && event.type === 'reboundSecured')
+  const reboundSecured = someEventSince(next, next.t, (event) => event.type === 'reboundSecured')
   const shotIsLiveOrResolved = next.ball.kind === 'SHOT_IN_FLIGHT' || next.ball.kind === 'REBOUNDABLE' || next.ball.kind === 'DEAD' || reboundSecured
   if ((shotClockExpired || expiredAtPriorTick) && !shotWasReleased && !shotIsLiveOrResolved) return reconcileStructures(violateShotClock(next))
   if ((shotClockExpired || expiredAtPriorTick) && (shotWasReleased || next.ball.kind === 'REBOUNDABLE')) {

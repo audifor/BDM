@@ -1,4 +1,48 @@
-# MatchEngine Next · Decisión de Core Lock (BT7)
+# MatchEngine Next · Decisión de Core Lock
+
+## Actualización ME-LOCK1 (2026-10-04)
+
+Rama `match-next-me-lock1-fast-simulation`, desde `3408a4e`. Evidencia en:
+
+- `ME_LOCK1_SIMULATION_UNIFICATION_REPORT.md`;
+- `ME_LOCK1_FASTSIM_CERTIFICATION.md`;
+- `ME_LOCK1_PERFORMANCE_PROFILE.md`;
+- `ME_LOCK1_SIMULATION_ROUTE_AUDIT.md`;
+- `ME_LOCK1_LEGACY_ENGINE_RETIREMENT.md`.
+
+### BASKETBALL CORE LOCK: **YES**
+
+ME-LOCK1 no encontró ningún P0 de baloncesto:
+
+- las optimizaciones conservan cada partido bit a bit;
+- el arnés BT7 sigue verde, con A 46/46 y R:NBA/F 44/44;
+- las limitaciones de clase B (FTr, aro, creación secundaria, presión) siguen siendo P1 documentados, no bloqueos.
+
+Las autoridades de la tabla de abajo quedan bloqueadas.
+
+### PRODUCTION MATCHENGINE LOCK: **NO**
+
+| Condición | Estado |
+|---|---|
+| Toda la simulación normal de producción usa Match Next | **SÍ**: avance de día, Simulate Day, Continue, simulación hasta una fecha, World DB e Instant, por `matchResolution.ts` en FAST; guardián estructural |
+| FAST compatible en estadísticas y tácticas | **SÍ**: idéntico a FULL (10/10 partidos completos) |
+| Mundo mixto FULL/FAST coherente | **SÍ**: mismo contrato y misma clasificación (prueba de día mixto) |
+| Motor legado en cuarentena | **SÍ**: solo en la interfaz legacy, en la rama residual `NgMatchViewer` y en *fixtures* de prueba |
+| Rendimiento de FAST práctico | **NO, todavía.** ~2,8 s por partido frente a ~0,25 s del legado: día ACB ~30 s, temporada ACB ~17 min, y las pruebas de ciclo de vida necesitan formato corto |
+
+Lo único que falta es rendimiento. Siguiente paso recomendado: simular en paralelo, en *workers*, los partidos independientes de cada día, con resultados idénticos y aplicados en orden. Exige un avance de día asíncrono en los stores, `ContinueFlow` y `simulateUntilDate`.
+
+### Cambios desde BT7
+
+| Punto de BT7 | Estado ahora |
+|---|---|
+| P1-2 (formatos del mundo generado) | **resuelto en su dominio**: `WorldGenerator` da NBA/WNBA a las ligas NBA y NCAA masculino/femenino a las NCAA |
+| P1-1 (eliminado sin banquillo) | política explícita: el motor mantiene cinco en pista y emite `foulOutNoReplacement`, nunca en silencio. Jugar con menos de cinco sigue en la lista MP2 |
+| Coste del frame (punto 4 de la lista MP2) | sigue pendiente: Live con frames ~32 s |
+
+---
+
+# Decisión original de BT7
 
 Fecha: 2026-10-04. Rama `match-next-basketball-core-bt7-full-integration`. Evidencia en `docs/matchengine-next/BT7_FULL_BASKETBALL_INTEGRATION_REPORT.md`.
 

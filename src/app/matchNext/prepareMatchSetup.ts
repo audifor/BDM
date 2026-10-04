@@ -4,7 +4,7 @@ import type { GameWorld } from '@/domain/world'
 import { courtRulesetForEcosystem, createCourtGeometry } from '@/domain/court'
 import { getEcosystemForCompetition, resolveGameClockRulesForGame } from '@/domain/world'
 import type { MatchTacticalPlan } from '@/engine/match'
-import { prepareMatchOptions, type MatchSeedFactory } from '@/app/game/playUserGame'
+import { prepareMatchOptions, type MatchSeedFactory, type PreparedMatchOptions } from '@/app/game/playUserGame'
 import type { MatchSetup, MatchNextPlayerProfile, MatchNextTacticalPlan } from '@/engine/match-next'
 import { getCoachProfessionalProfile, getTeamCoach } from '@/domain/world'
 import type { TeamId } from '@/domain/ids'
@@ -16,7 +16,21 @@ export function prepareMatchSetup(
   matchSeed?: number | MatchSeedFactory,
   tacticalPlanOverrides?: Partial<{ home: MatchTacticalPlan; away: MatchTacticalPlan }>,
 ): MatchSetup {
+  return prepareMatchSetupWithReports(world, game, matchSeed, tacticalPlanOverrides).setup
+}
+
+/** The same preparation, also returning the lineup repair reports of the canonical preparation (world simulation records them). */
+export function prepareMatchSetupWithReports(
+  world: GameWorld,
+  game: Game,
+  matchSeed?: number | MatchSeedFactory,
+  tacticalPlanOverrides?: Partial<{ home: MatchTacticalPlan; away: MatchTacticalPlan }>,
+): { readonly setup: MatchSetup; readonly repairReports: PreparedMatchOptions['repairReports'] } {
   const options = prepareMatchOptions(world, game, tacticalPlanOverrides, matchSeed)
+  return { setup: setupFromOptions(world, game, options), repairReports: options.repairReports }
+}
+
+function setupFromOptions(world: GameWorld, game: Game, options: PreparedMatchOptions): MatchSetup {
   const homeTeamId = game.homeTeamId
   const awayTeamId = game.awayTeamId
   const profiles: MatchNextPlayerProfile[] = [

@@ -1,6 +1,7 @@
+import { activeActions } from './ActionIndex'
 import { distanceBetween, type CourtPosition } from '@/domain/court'
 import type { PlayerId } from '@/domain/ids'
-import { emitEvent } from '../events'
+import { countEventsSince, emitEvent, someEventSince } from '../events'
 import type { MovementIntent } from '../movement/MovementIntent'
 import { activePossession, type MatchPlayerState, type MatchState, type OffBallMove } from '../state'
 import { attackingBasketForTeam } from '../structure/FiveOutStructure'
@@ -86,12 +87,12 @@ export function reconcileOffBallMovement(input: MatchState): MatchState {
   const holder = state.ball.kind === 'HELD' && state.ball.ownerTeamId === possession.teamId
     ? state.players.find((player) => state.ball.kind === 'HELD' && player.playerId === state.ball.ownerPlayerId) : undefined
   const busy = new Set<PlayerId>([...moves.map((move) => move.playerId), ...(state.screen === null ? [] : [state.screen.screenerId, state.screen.handlerId])])
-  const driveActive = state.actions.find((action) => action.kind === 'DRIVE' && action.status === 'ACTIVE' && action.teamId === possession.teamId)
+  const driveActive = activeActions(state).find((action) => action.kind === 'DRIVE' && action.status === 'ACTIVE' && action.teamId === possession.teamId)
   const halfCourt = flow.stage === 'HALF_COURT' || flow.stage === 'ADVANTAGE' || flow.stage === 'ACTION'
 
   if (holder !== undefined && tuning().offerEnabled !== 0 && driveActive === undefined && state.t % EVALUATION_PERIOD_TICKS === 0 && state.screen === null
     && state.t - flow.holderSinceT >= OFFER_AFTER_TICKS && !moves.some((move) => move.kind === 'OFFER') && state.ball.kind === 'HELD') {
-    const recentOffer = state.events.some((event) => event.type === 'offBallMove' && event.ballReason === 'OFFER' && event.t >= state.t - OFFER_COOLDOWN_TICKS)
+    const recentOffer = someEventSince(state, state.t - OFFER_COOLDOWN_TICKS, (event) => event.type === 'offBallMove' && event.ballReason === 'OFFER')
     const pressure = nearestDefenderDistance(state, holder.teamId, holder.position)
     const nearestTeammate = Math.min(...state.players.filter((p) => p.active && p.teamId === holder.teamId && p.playerId !== holder.playerId).map((p) => distanceBetween(p.position, holder.position)), Number.POSITIVE_INFINITY)
     // Only a handler who is really stuck gets one: nobody he could pass to along a clear line. A handler with an outlet already has
@@ -116,7 +117,7 @@ export function reconcileOffBallMovement(input: MatchState): MatchState {
     const call = flow.call
     if (driveActive === undefined && flow.stage === 'HALF_COURT' && flow.settledAtT !== null && call?.family === 'MOVEMENT' && state.screen === null
       && !moves.some((move) => move.kind === 'PIN_DOWN' || move.kind === 'COME_OFF')) {
-      const pinDownsSoFar = state.events.filter((event) => event.type === 'offBallMove' && event.t >= possession.startedT && event.ballReason === 'PIN_DOWN').length
+      const pinDownsSoFar = countEventsSince(state, possession.startedT, (event) => event.type === 'offBallMove' && event.ballReason === 'PIN_DOWN')
       const pair = pinDownsSoFar < MAX_PIN_DOWNS_PER_POSSESSION ? pickPinDown(state, holder, basket, busy, call.targetId, call.screenerId) : undefined
       if (pair !== undefined) {
         moves = [...moves, ...pair]
@@ -125,7 +126,7 @@ export function reconcileOffBallMovement(input: MatchState): MatchState {
       }
     }
     if (driveActive === undefined && flow.stage === 'HALF_COURT' && flow.settledAtT !== null) {
-      const cutsSoFar = state.events.filter((event) => event.type === 'offBallMove' && event.t >= possession.startedT && (event.ballReason === 'BASKET_CUT' || event.ballReason === 'BACKDOOR_CUT')).length
+      const cutsSoFar = countEventsSince(state, possession.startedT, (event) => event.type === 'offBallMove' && (event.ballReason === 'BASKET_CUT' || event.ballReason === 'BACKDOOR_CUT'))
       if (cutsSoFar < maxCutsPerPossession(offBall) && !moves.some((move) => move.kind === 'BASKET_CUT' || move.kind === 'BACKDOOR_CUT')) {
         const cut = pickCut(state, holder, basket, busy, sagDistanceFor(offBall))
         if (cut !== undefined) {
@@ -229,7 +230,7 @@ function stillValid(state: MatchState, move: OffBallMove): boolean {
     const hasBall = state.ball.kind === 'HELD' && state.ball.ownerPlayerId === player.playerId
     return distanceBetween(player.position, move.target) > 0.8 && ballWithTeam && !hasBall
   }
-  return state.actions.some((action) => action.kind === 'DRIVE' && action.status === 'ACTIVE' && action.teamId === player.teamId)
+  return activeActions(state).some((action) => action.kind === 'DRIVE' && action.status === 'ACTIVE' && action.teamId === player.teamId)
 }
 
 /**

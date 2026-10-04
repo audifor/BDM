@@ -8,6 +8,8 @@ import { type MatchNextResult } from './MatchNextResult'
 import { completeMatchNext } from './applyMatchNextResult'
 import type { MatchEnginePort } from './MatchEnginePort'
 
+export type MatchExecutionMode = 'FULL' | 'FAST'
+
 export class MatchNextEnginePort implements MatchEnginePort<MatchSetup, MatchNextLiveController, MatchNextResult> {
   public readonly engine = 'match-next' as const
 
@@ -19,8 +21,22 @@ export class MatchNextEnginePort implements MatchEnginePort<MatchSetup, MatchNex
     return new MatchNextLiveController(setup)
   }
 
+  /** Instant resolution is FAST: the same engine with no presentation (Live = Instant is certified on the same controller). */
   public runInstant(setup: MatchSetup): MatchNextResult {
-    return this.createLiveSession(setup).skipToEnd()
+    return this.simulate(setup, 'FAST')
+  }
+
+  /**
+   * ME-LOCK1 execution modes of the one Match Next engine (same setup, same authorities, same result contract):
+   * - FULL: the presentation path; a MatchFrame is built every tick, as the Live viewer consumes them.
+   * - FAST: no presentation work at all (no frames, no snapshots); for AI/world games and Instant results.
+   * The frames are read-only projections, so both modes produce the identical result for the same setup.
+   */
+  public simulate(setup: MatchSetup, mode: MatchExecutionMode): MatchNextResult {
+    const session = this.createLiveSession(setup)
+    if (mode === 'FAST') return session.skipToEnd()
+    while (!session.matchState.isComplete) session.advanceOneStep()
+    return session.result()
   }
 
   public complete(world: GameWorld, result: MatchNextResult): GameWorld {

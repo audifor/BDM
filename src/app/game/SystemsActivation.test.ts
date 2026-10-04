@@ -4,7 +4,7 @@ import { deserializeGameWorldV1, serializeGameWorldV1 } from '@/save/GameWorldSa
 import { respondToMediaOpportunity } from '@/engine/media'
 import { acceptCoachJobOffer, applyUserCoachForJob } from '@/app/coachCareer'
 import { createNewGame } from './createNewGame'
-import { instantResult } from './playUserGame'
+import { instantResult } from './matchResolution'
 
 describe('systems activation gameplay', () => {
   it('activates news, media interaction, progression, career memories and persistence through gameplay boundaries', () => {

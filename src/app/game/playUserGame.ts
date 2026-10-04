@@ -25,7 +25,7 @@ import { LiveMatchController } from './LiveMatchController'
 import { getEffectiveTacticalPlan, getGamePlan } from './TacticalPlanning'
 import { applyPlayerMatchConsequences, initialMatchFatigue } from './PlayerMatchConsequences'
 
-type PreparedMatchOptions = SimulateMatchWithRotationsOptions & {
+export type PreparedMatchOptions = SimulateMatchWithRotationsOptions & {
   readonly matchSeed: number
   readonly repairReports: readonly WorldRepairReport[]
   readonly coachingPlans: { readonly home: CoachRotationPlan; readonly away: CoachRotationPlan }
@@ -56,8 +56,8 @@ export function createMatchRandomSources(matchSeed: number) {
   }
 }
 
-/** Prepares the user's current game for a viewer without changing GameWorld. */
-export function prepareUserMatch(world: GameWorld, userTacticalPlan?: MatchTacticalPlan, matchSeed?: number): MatchSimulation {
+/** The user's scheduled Game today, or a PlayUserGameError naming why there is none. */
+export function requireUserGameToday(world: GameWorld): { readonly game: Game; readonly userTeamId: Game['homeTeamId'] } {
   const userTeam = getUserTeam(world)
   if (userTeam === undefined) {
     throw new PlayUserGameError('The user coach is not assigned to a Team')
@@ -72,8 +72,16 @@ export function prepareUserMatch(world: GameWorld, userTacticalPlan?: MatchTacti
   if (game.status !== 'scheduled') {
     throw new PlayUserGameError(`The user Game ${game.id} is already completed`)
   }
+  return { game, userTeamId: userTeam.id }
+}
 
-  return prepareMatch(world, game, userMatchTacticalPlans(game, userTeam.id, userTacticalPlan), matchSeed)
+/**
+ * LEGACY ENGINE (compatibility): prepares the user's current game for the legacy viewer (`?ui=legacy`) and test fixtures.
+ * Production resolution of games goes through Match Next (`matchResolution.ts`).
+ */
+export function prepareUserMatch(world: GameWorld, userTacticalPlan?: MatchTacticalPlan, matchSeed?: number): MatchSimulation {
+  const { game, userTeamId } = requireUserGameToday(world)
+  return prepareMatch(world, game, userMatchTacticalPlans(game, userTeamId, userTacticalPlan), matchSeed)
 }
 
 export function createLiveUserMatch(world: GameWorld, userTacticalPlan?: MatchTacticalPlan, matchSeed?: number): LiveMatchController {
@@ -160,7 +168,7 @@ function coachingLineupReport(world: GameWorld, teamId: TeamId, gameDate: Game['
   }
 }
 
-function userMatchTacticalPlans(game: Game, userTeamId: Game['homeTeamId'], userTacticalPlan?: MatchTacticalPlan): Partial<{ home: MatchTacticalPlan; away: MatchTacticalPlan }> | undefined {
+export function userMatchTacticalPlans(game: Game, userTeamId: Game['homeTeamId'], userTacticalPlan?: MatchTacticalPlan): Partial<{ home: MatchTacticalPlan; away: MatchTacticalPlan }> | undefined {
   if (userTacticalPlan === undefined) return undefined
   return userTeamId === game.homeTeamId
     ? { home: userTacticalPlan }
@@ -199,18 +207,4 @@ export function completeMatch(world: GameWorld, simulation: MatchSimulation): Ga
   return applyPostMatchInjuries(applyPlayerMatchConsequences(world, completed, simulation), simulation.gameId)
 }
 
-/** Instant Result uses the same detailed simulation as MatchViewer, then applies it immediately. */
-export function instantResult(world: GameWorld, tacticalPlan?: MatchTacticalPlan, matchSeed?: number): GameWorld {
-  return completeMatch(world, prepareUserMatch(world, tacticalPlan, matchSeed))
-}
-
-/** Retained application alias for existing instant-result callers. */
-export function playUserGame(world: GameWorld, matchSeed?: number): GameWorld {
-  return instantResult(world, undefined, matchSeed)
-}
-
-export function simulateAndApplyGame(world: GameWorld, game: Game, matchSeed?: number, repairReports?: WorldRepairReport[]): GameWorld {
-  const options = prepareMatchOptions(world, game, undefined, matchSeed)
-  repairReports?.push(...options.repairReports)
-  return completeMatch(world, simulateMatchWithRotations(options))
-}
+// ME-LOCK1: instantResult, playUserGame and simulateAndApplyGame resolve through Match Next now (`matchResolution.ts`).

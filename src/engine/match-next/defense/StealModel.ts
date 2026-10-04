@@ -1,3 +1,4 @@
+import { activeActions } from '../actions/ActionIndex'
 import { distanceBetween, type CourtPosition } from '@/domain/court'
 import { closingSpeed, contactSeverity, speedOf } from '../contact/ContactModel'
 import { emitEvent } from '../events'
@@ -44,7 +45,7 @@ export function reconcileOnBallPressure(state: MatchState): MatchState {
   const possession = activePossession(state)
   if (!state.autonomousActions || !possession || state.ball.kind !== 'HELD' || state.ball.ownerTeamId !== possession.teamId) return state
   if (possession.phase === 'INBOUND' || possession.phase === 'SHOT') return state
-  if (state.actions.some((action) => action.status === 'ACTIVE' && (action.kind === 'SHOOT' || action.kind === 'CATCH_AND_SHOOT') && action.teamId === possession.teamId)) return state
+  if (activeActions(state).some((action) => action.status === 'ACTIVE' && (action.kind === 'SHOOT' || action.kind === 'CATCH_AND_SHOOT') && action.teamId === possession.teamId)) return state
   const handler = state.players.find((player) => player.playerId === (state.ball.kind === 'HELD' ? state.ball.ownerPlayerId : ''))
   if (!handler) return state
   const defender = guardOf(state, handler.playerId)

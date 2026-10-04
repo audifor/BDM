@@ -124,6 +124,8 @@ export type MatchNextEventType =
   | 'screenSet' | 'screenUsed' | 'screenEnded' | 'offBallMove'
   | 'contact' | 'foul' | 'freeThrowSequenceStarted' | 'freeThrowMade' | 'freeThrowMissed' | 'shotBlocked' | 'steal' | 'deflection' | 'stealAttempt'
   | 'turnover' | 'outOfBounds' | 'assist' | 'playStateChanged' | 'foulOut'
+  /** ME-LOCK1: a player reached the foul limit with no eligible player left on the bench; he stays on the court (explicit fail-safe). */
+  | 'foulOutNoReplacement'
   | 'reboundResponsibilitiesAssigned' | 'transitionStarted' | 'transitionAdvantageChanged' | 'transitionResolved'
   | 'shotClockViolation' | 'ballDead'
   | 'substitution'
@@ -449,7 +451,10 @@ export interface MatchState {
 }
 
 export function activePossession(state: MatchState): PossessionState | undefined {
-  return state.activePossessionId === null ? undefined : state.possessions.find((possession) => possession.id === state.activePossessionId)
+  if (state.activePossessionId === null) return undefined
+  // Possession ids are unique and the active one is the newest: searching from the end finds it at once (ME-LOCK1).
+  for (let index = state.possessions.length - 1; index >= 0; index -= 1) if (state.possessions[index]!.id === state.activePossessionId) return state.possessions[index]
+  return undefined
 }
 
 export function createInitialMatchState(setup: MatchSetup): MatchState {

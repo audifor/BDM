@@ -266,7 +266,27 @@ export function planFor(state: MatchState, teamId: TeamId): MatchNextTacticalPla
  */
 const intentCache = new WeakMap<object, Map<string, TacticalIntent>>()
 
+/**
+ * ME-LOCK1: the memo key itself (filter, fatigue mean, string join) cost more than the intent once it is cached, and the intent is read
+ * ~26 times per tick. Every input of the key is reached through these references, so while they are the same objects the key, and
+ * therefore the intent, is the same: the last answer per team is reused without rebuilding the key.
+ */
+interface LastIntent {
+  readonly players: MatchState['players']; readonly score: MatchState['score']; readonly period: number; readonly gameClockTenths: number
+  readonly tactics: MatchState['tactics']; readonly tacticalPlans: MatchState['tacticalPlans']; readonly homeTeamId: TeamId; readonly clockRules: MatchState['clockRules']; readonly intent: TacticalIntent
+}
+const lastIntentByTeam = new Map<TeamId, LastIntent>()
+
 export function tacticalIntent(state: MatchState, teamId: TeamId): TacticalIntent {
+  const last = lastIntentByTeam.get(teamId)
+  if (last !== undefined && last.players === state.players && last.score === state.score && last.period === state.period && last.gameClockTenths === state.gameClockTenths
+    && last.tactics === state.tactics && last.tacticalPlans === state.tacticalPlans && last.homeTeamId === state.homeTeamId && last.clockRules === state.clockRules) return last.intent
+  const intent = memoizedTacticalIntent(state, teamId)
+  lastIntentByTeam.set(teamId, { players: state.players, score: state.score, period: state.period, gameClockTenths: state.gameClockTenths, tactics: state.tactics, tacticalPlans: state.tacticalPlans, homeTeamId: state.homeTeamId, clockRules: state.clockRules, intent })
+  return intent
+}
+
+function memoizedTacticalIntent(state: MatchState, teamId: TeamId): TacticalIntent {
   const lineup = state.players.filter((player) => player.active && player.teamId === teamId)
   const fatigue = lineup.length === 0 ? 0 : lineup.reduce((sum, player) => sum + player.fatigue, 0) / lineup.length
   const finalPeriod = state.period >= state.clockRules.periodCount

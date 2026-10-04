@@ -1,5 +1,5 @@
 import type { PlayerId } from '@/domain/ids'
-import { emitEvent } from '../events'
+import { emitEvent, findLastEvent } from '../events'
 import { activePossession, type MatchState } from '../state'
 
 /** The catch-to-release time within which a pass is still credited with the shot (2.2 s). */
@@ -27,7 +27,7 @@ export function deriveAssistPasserId(state: MatchState, shooterId: PlayerId): Pl
   const longDribble = state.actions.some((action) => action.kind === 'DRIVE' && action.playerId === shooterId && action.startedT >= pass.resolvedT!
     && (action.resolvedT ?? state.t) - action.startedT > ASSIST_MAX_DRIBBLE_TICKS)
   if (longDribble) return undefined
-  const decision = pass.decisionId === undefined ? undefined : [...state.events].reverse().find((event) => event.type === 'decisionSelected' && event.decisionId === pass.decisionId)
+  const decision = pass.decisionId === undefined ? undefined : findLastEvent(state, (event) => event.type === 'decisionSelected' && event.decisionId === pass.decisionId)
   if (decision?.utility !== undefined && decision.utility.pass < decision.utility.shoot + ASSIST_MIN_GAIN_POINTS) return undefined
   return pass.playerId
 }

@@ -1,6 +1,6 @@
 import { distanceBetween, isBeyondThreePointLine, type CourtPosition } from '@/domain/court'
 import { draw } from '../rng'
-import { emitEvent } from '../events'
+import { emitEvent, someEventSince } from '../events'
 import { releasePass, releaseShot, type ReleasePassCommand } from '../ball/BallTransitions'
 import { changePossessionPhase } from '../possession'
 import { activePossession, type MatchPlayerState, type MatchState } from '../state'
@@ -19,6 +19,7 @@ import { announceCall, decisionNoise, earlyOffenseCall, reconcileOffenseFlow, re
 import { createScreenState, planScreen, reconcileScreen, useScreen } from './ScreenCore'
 import { reconcileOffBallMovement } from './OffBallMovement'
 import type { MatchActionKind, MatchActionOutcome, MatchActionState, MatchDecision } from './ActionState'
+import { actionById, actionIndexById, activeActions, findLastAction, someActionAfter } from './ActionIndex'
 import { defensiveShape, tacticalIntent } from '../tactics/TacticalIdentity'
 import { onBallCushion } from '../defense/PointOfAttack'
 
@@ -55,7 +56,7 @@ export function reconcileActions(input: MatchState): MatchState {
 
 function resolveBallActions(state: MatchState): MatchState {
   let next = state
-  for (const action of state.actions) {
+  for (const action of activeActions(state)) {
     if (action.status !== 'ACTIVE') continue
     if (action.kind === 'PASS' || action.kind === 'KICK_OUT') {
       if (next.ball.kind === 'HELD' && next.ball.ownerPlayerId === action.targetPlayerId) {
@@ -69,11 +70,10 @@ function resolveBallActions(state: MatchState): MatchState {
       // "stand where you stopped" intent pinned the shooter, and a shooter who had to take the throw-in froze the restart.
       next = resolveAction(next, action.id, 'CANCELLED')
     } else if (action.kind === 'SHOOT' || action.kind === 'CATCH_AND_SHOOT') {
-      const resolvedShot = next.events.some((event) => event.t >= action.startedT
-        && (event.type === 'shotMade' || event.type === 'shotMissed')
+      const resolvedShot = someEventSince(next, action.startedT, (event) => (event.type === 'shotMade' || event.type === 'shotMissed')
         && event.shooterPlayerId === action.playerId)
       if (resolvedShot) {
-        const made = next.events.some((event) => event.t >= action.startedT && event.type === 'shotMade' && event.shooterPlayerId === action.playerId)
+        const made = someEventSince(next, action.startedT, (event) => event.type === 'shotMade' && event.shooterPlayerId === action.playerId)
         next = resolveAction(next, action.id, made ? 'MAKE' : 'MISS')
       }
     }
@@ -84,9 +84,9 @@ function resolveBallActions(state: MatchState): MatchState {
 function startCloseoutAfterCatch(state: MatchState): MatchState {
   if (state.ball.kind !== 'HELD') return state
   const ownerPlayerId = state.ball.ownerPlayerId
-  const passAction = [...state.actions].reverse().find((action) => (action.kind === 'PASS' || action.kind === 'KICK_OUT')
+  const passAction = findLastAction(state, (action) => (action.kind === 'PASS' || action.kind === 'KICK_OUT')
     && action.status === 'COMPLETED' && action.outcome === 'CAUGHT' && action.targetPlayerId === ownerPlayerId)
-  if (!passAction || state.actions.some((action) => action.kind === 'CLOSEOUT' && action.sourceActionId === passAction.id)) return state
+  if (!passAction || someActionAfter(state, passAction, (action) => action.kind === 'CLOSEOUT' && action.sourceActionId === passAction.id)) return state
   const defenderId = state.defensiveStructure?.onBallDefenderPlayerId
   const defender = defenderId ? state.players.find((player) => player.playerId === defenderId) : undefined
   if (!defender) return state
@@ -111,7 +111,7 @@ function startCloseoutAfterCatch(state: MatchState): MatchState {
 
 function updateCloseouts(state: MatchState): MatchState {
   let next = state
-  for (const action of state.actions) {
+  for (const action of activeActions(state)) {
     if (action.kind !== 'CLOSEOUT' || action.status !== 'ACTIVE' || !action.targetPlayerId) continue
     const defender = next.players.find((player) => player.playerId === action.playerId)
     const shooter = next.players.find((player) => player.playerId === action.targetPlayerId)
@@ -133,7 +133,7 @@ function updateCloseouts(state: MatchState): MatchState {
 
 function updateDrives(state: MatchState): MatchState {
   let next = state
-  for (const action of state.actions) {
+  for (const action of activeActions(state)) {
     if (action.kind !== 'DRIVE' || action.status !== 'ACTIVE') continue
     if (next.ball.kind !== 'HELD' || next.ball.ownerPlayerId !== action.playerId) {
       next = resolveAction(next, action.id, 'CANCELLED')
@@ -149,9 +149,9 @@ function updateDrives(state: MatchState): MatchState {
     const contactGuardId = next.defensiveStructure?.assignments.find((item) => item.attackerPlayerId === driver.playerId)?.defenderPlayerId
     const contactGuard = next.players.find((player) => player.playerId === contactGuardId && player.active)
     if (contactGuard !== undefined) {
-      const track = updateDriveContactTrack(next.actions.find((item) => item.id === action.id)?.contact, driver, contactGuard, next.t)
+      const track = updateDriveContactTrack(actionById(next, action.id)?.contact, driver, contactGuard, next.t)
       next = updateAction(next, action.id, { contact: track })
-      const current = next.actions.find((item) => item.id === action.id)!
+      const current = actionById(next, action.id)!
       if (current.contactAssessed !== true && track.minGap <= CONTACT_DISTANCE_METERS && next.t - track.atT >= 2) {
         const judged = judgeDriveContact(next, current, driver, contactGuard)
         next = judged.state
@@ -163,7 +163,7 @@ function updateDrives(state: MatchState): MatchState {
       const basketNow = action.targetBasket ?? next.court.baskets.left
       const distanceToRim = distanceBetween(driver.position, basketNow)
       const window = distanceToRim <= DRIVE_STOP_NEAR_METERS ? 'NEAR' as const : distanceToRim <= DRIVE_STOP_FAR_METERS ? 'FAR' as const : undefined
-      const checked = next.actions.find((item) => item.id === action.id)?.stopWindows ?? []
+      const checked = actionById(next, action.id)?.stopWindows ?? []
       if (window !== undefined && !checked.includes(window)) {
         next = updateAction(next, action.id, { stopWindows: [...checked, window] })
         const read = readDriveStop(next, driver, basketNow)
@@ -192,7 +192,7 @@ function updateDrives(state: MatchState): MatchState {
     const guardId = next.defensiveStructure?.assignments.find((item) => item.attackerPlayerId === driver.playerId)?.defenderPlayerId
     const onBallDefender = next.players.find((player) => player.playerId === guardId)
     const beatAndHelped = elapsed >= DRIVE_MIN_TICKS && progress >= DRIVE_MIN_PROGRESS_METERS && helperId && driverBeatDefender(driver, onBallDefender, action.target)
-    let choice = next.actions.find((item) => item.id === action.id)?.advantageChoice
+    let choice = actionById(next, action.id)?.advantageChoice
     if (beatAndHelped && choice === undefined && action.targetBasket !== undefined) {
       // Help has come: keep going to the rim, or kick it to the man the help left? The shot model decides (once).
       const read = readDriveStop(next, driver, action.targetBasket)
@@ -304,7 +304,7 @@ function isDriveFinish(state: MatchState, shooterId: string): boolean {
 
 function releaseReadyShots(state: MatchState): MatchState {
   let next = state
-  for (const action of state.actions) {
+  for (const action of activeActions(state)) {
     if ((action.kind !== 'SHOOT' && action.kind !== 'CATCH_AND_SHOOT') || action.status !== 'ACTIVE' || action.phase !== 'GATHER') continue
     if (!action.releaseAtT || next.t < action.releaseAtT || next.ball.kind !== 'HELD' || next.ball.ownerPlayerId !== action.playerId) continue
     const shooter = next.players.find((player) => player.playerId === action.playerId)
@@ -425,7 +425,7 @@ function reboundLandingTarget(shooter: CourtPosition, basket: CourtPosition, dis
 
 function finishCloseoutsForShooter(state: MatchState, shooterPlayerId: string, contestScore: number): MatchState {
   let next = state
-  for (const action of state.actions) {
+  for (const action of activeActions(state)) {
     if (action.kind === 'CLOSEOUT' && action.status === 'ACTIVE' && action.targetPlayerId === shooterPlayerId) {
       next = resolveAction(next, action.id, contestScore >= 0.35 ? 'CONTESTED' : 'ARRIVED')
     }
@@ -560,21 +560,27 @@ function startAction(state: MatchState, action: MatchActionState): MatchState {
 }
 
 function resolveAction(state: MatchState, actionId: string, outcome: MatchActionOutcome): MatchState {
-  const action = state.actions.find((candidate) => candidate.id === actionId)
+  const index = actionIndexById(state, actionId)
+  const action = index < 0 ? undefined : state.actions[index]!
   if (!action || action.status !== 'ACTIVE') return state
-  const actions = state.actions.map((candidate) => candidate.id === actionId
-    ? { ...candidate, status: outcome === 'CANCELLED' ? 'CANCELLED' as const : 'COMPLETED' as const, outcome, resolvedT: state.t }
-    : candidate)
+  const actions = replaceAt(state.actions, index, { ...action, status: outcome === 'CANCELLED' ? 'CANCELLED' as const : 'COMPLETED' as const, outcome, resolvedT: state.t })
   const currentDecision = action.kind !== 'CLOSEOUT' && state.currentDecision?.id === action.decisionId ? null : state.currentDecision
   const next = { ...state, actions, currentDecision }
   return emitEvent(next, 'actionResolved', { teamId: action.teamId, playerId: action.playerId, actionId, actionKind: action.kind, actionOutcome: outcome, shotProbability: action.shotProbability, contestScore: action.contestScore })
 }
 
 function updateAction(state: MatchState, actionId: string, patch: Partial<MatchActionState>): MatchState {
-  return {
-    ...state,
-    actions: state.actions.map((action) => action.id === actionId && action.status === 'ACTIVE' ? { ...action, ...patch } : action),
-  }
+  const index = actionIndexById(state, actionId)
+  // Same array the full map produced: only the ACTIVE action with this id changes (ids are unique); otherwise a fresh copy.
+  if (index < 0 || state.actions[index]!.status !== 'ACTIVE') return { ...state, actions: state.actions.slice() }
+  return { ...state, actions: replaceAt(state.actions, index, { ...state.actions[index]!, ...patch }) }
+}
+
+/** A copy of `items` with `items[index]` replaced (what a `map` over every element produced, without a callback per element). */
+function replaceAt<T>(items: readonly T[], index: number, value: T): T[] {
+  const copy = items.slice()
+  copy[index] = value
+  return copy
 }
 
 function setPossessionPhase(state: MatchState, phase: 'SETUP' | 'ACTION'): MatchState {
@@ -586,7 +592,7 @@ function setPossessionPhase(state: MatchState, phase: 'SETUP' | 'ACTION'): Match
 
 function hasActiveOffensiveAction(state: MatchState): boolean {
   const teamId = activePossession(state)?.teamId
-  return teamId !== undefined && state.actions.some((action) => action.status === 'ACTIVE' && action.teamId === teamId && action.kind !== 'CLOSEOUT')
+  return teamId !== undefined && activeActions(state).some((action) => action.status === 'ACTIVE' && action.teamId === teamId && action.kind !== 'CLOSEOUT')
 }
 
 /** A shot taken on the move is harder than a catch-and-shoot: his own ratings and his speed at the stop decide how much. */
@@ -638,7 +644,7 @@ function applyProbeIntents(state: MatchState): MatchState {
   const probe = flow?.probe
   if (flow === null || probe == null) return state
   const holding = state.ball.kind === 'HELD' && state.ball.ownerPlayerId === probe.playerId
-  const busy = state.actions.some((action) => action.playerId === probe.playerId && action.status === 'ACTIVE') || state.screen !== null
+  const busy = activeActions(state).some((action) => action.playerId === probe.playerId && action.status === 'ACTIVE') || state.screen !== null
   if (!holding || busy || state.t >= probe.endsT) return { ...state, offenseFlow: { ...flow, probe: null } }
   const responsibility = state.responsibilities.find((item) => item.playerId === probe.playerId && item.owner !== 'defensiveStructure')
   if (!responsibility) return state
@@ -651,7 +657,7 @@ function applyProbeIntents(state: MatchState): MatchState {
 
 function applyStopIntents(state: MatchState): MatchState {
   let next = state
-  for (const action of state.actions) {
+  for (const action of activeActions(state)) {
     if (action.kind !== 'SHOOT' || action.status !== 'ACTIVE' || action.shotStop === undefined || action.decisionId === undefined) continue
     const player = next.players.find((candidate) => candidate.playerId === action.playerId)
     const responsibility = next.responsibilities.find((item) => item.playerId === action.playerId && item.owner !== 'defensiveStructure')
@@ -666,7 +672,7 @@ function applyStopIntents(state: MatchState): MatchState {
 }
 
 function applyDriveIntents(state: MatchState): MatchState {
-  const activeDrive = state.actions.find((action) => action.kind === 'DRIVE' && action.status === 'ACTIVE')
+  const activeDrive = activeActions(state).find((action) => action.kind === 'DRIVE' && action.status === 'ACTIVE')
   if (!activeDrive || !activeDrive.target || !activeDrive.decisionId) return state
   const responsibility = state.responsibilities.find((item) => item.playerId === activeDrive.playerId && item.owner !== 'defensiveStructure')
   if (!responsibility) return state
@@ -690,7 +696,7 @@ function applyPassReceiveIntents(state: MatchState): MatchState {
   const ball = state.ball
   const receiverId = ball.intendedReceiverPlayerId
   const responsibility = state.responsibilities.find((item) => item.playerId === receiverId && item.owner !== 'defensiveStructure')
-  const action = state.actions.find((item) => item.status === 'ACTIVE' && (item.kind === 'PASS' || item.kind === 'KICK_OUT') && item.targetPlayerId === receiverId)
+  const action = activeActions(state).find((item) => item.status === 'ACTIVE' && (item.kind === 'PASS' || item.kind === 'KICK_OUT') && item.targetPlayerId === receiverId)
   if (!responsibility || !action?.decisionId || !action.target) return state
   const intent: MovementIntent = {
     playerId: receiverId,

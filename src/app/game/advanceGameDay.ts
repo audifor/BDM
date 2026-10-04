@@ -4,7 +4,8 @@ import { advanceDayWithTrace, getScheduledGamesToday, type CalendarDayLifecycleR
 import { createPreMatchMediaOpportunity } from '@/engine/media'
 import { getUserTeam } from '@/engine/calendar'
 
-import { createMatchSeed, simulateAndApplyGame, type MatchSeedFactory } from './playUserGame'
+import { createMatchSeed, type MatchSeedFactory } from './playUserGame'
+import { simulateAndApplyGame } from './matchResolution'
 import { evaluateSimulationBreakpoints, type SimulationBreakpointResult } from './SimulationBreakpoints'
 import { repairWorldAtLifecycleBoundary } from '@/app/repair'
 import type { WorldRepairReport } from '@/domain/repair'

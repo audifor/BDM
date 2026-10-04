@@ -72,6 +72,11 @@ export function commitFoul(state: MatchState, input: FoulInput): FoulOutcome {
     personalFouls: personalAfter, teamFouls: teamAfter,
   })
   if (fouledOut) next = emitEvent(next, 'foulOut', { teamId: offender.teamId, playerId: offender.playerId, personalFouls: personalAfter })
+  // ME-LOCK1 fail-safe policy: the engine always keeps five on the court (it does not model playing short-handed). When the foul limit
+  // leaves no eligible substitute, the disqualified player stays on the court; that is announced explicitly, never silent.
+  if (fouledOut && !next.players.some((player) => player.teamId === offender.teamId && !player.active && !next.fouls.fouledOut.includes(player.playerId))) {
+    next = emitEvent(next, 'foulOutNoReplacement', { teamId: offender.teamId, playerId: offender.playerId, personalFouls: personalAfter })
+  }
 
   // A shooter fouled in the act keeps shooting: the foul is settled when the ball arrives (AND-ONE if it goes in).
   if (input.shot?.inFlight === true) return { state: next, record }

@@ -2,10 +2,14 @@ import { describe, expect, it } from 'vitest'
 
 import { addDays } from '@/domain/date'
 import { updateGameWorld } from '@/domain/world'
-import { createNewGame } from './createNewGame'
+import { createNewGame as createFullNewGame } from './createNewGame'
 import { advanceGameDay, simulateRemainingGamesToday } from './advanceGameDay'
 import { continueGame, getContinueStopReason, getNextKnownEvent } from './ContinueFlow'
-import { instantResult, simulateAndApplyGame } from './playUserGame'
+import { instantResult, simulateAndApplyGame } from './matchResolution'
+import { withShortGameFormat } from './testFixtures'
+
+// ME-LOCK1: a lifecycle test (calendar/season/staff), not a basketball one: its Games still resolve through Match Next FAST, with a short game format.
+const createNewGame = (...args: Parameters<typeof createFullNewGame>): ReturnType<typeof createFullNewGame> => withShortGameFormat(createFullNewGame(...args))
 
 describe('continue flow', () => {
   it('stops immediately for a scheduled user game on the current date', () => {

@@ -1,3 +1,4 @@
+import { teamOffensiveActions } from './ActionIndex'
 import { hashStringToSeed } from '@/engine/random'
 import type { PlayerId } from '@/domain/ids'
 import { activePossession, type MatchPlayerState, type MatchState, type OffenseFlowState, type OffenseStage } from '../state'
@@ -79,10 +80,10 @@ export function reconcileOffenseFlow(state: MatchState): MatchState {
   }
 
   // A finished action (drive, pass reception is handled above) leaves the handler a short read before the next one.
-  const offensive = state.actions.filter((action) => action.teamId === possession.teamId && action.kind !== 'CLOSEOUT')
-  const lastResolved = offensive.reduce((latest, action) => Math.max(latest, action.resolvedT ?? -1), -1)
+  const offensive = teamOffensiveActions(state, possession.teamId)
+  const lastResolved = offensive.lastResolvedT
   if (lastResolved > flow.lastResolvedT) {
-    const last = offensive.find((action) => action.resolvedT === lastResolved)
+    const last = offensive.lastResolved
     flow = { ...flow, lastResolvedT: lastResolved, readyAtT: Math.max(flow.readyAtT, lastResolved + (last?.kind === 'DRIVE' ? POST_ACTION_READ_TICKS : last?.kind === 'SCREEN' ? 2 : 0)) }
   }
 
@@ -95,9 +96,8 @@ export function reconcileOffenseFlow(state: MatchState): MatchState {
   }
 
   const early = state.transition?.teamId === possession.teamId && state.transition.advantage === 'ADVANTAGE'
-  const activeAction = offensive.some((action) => action.status === 'ACTIVE')
-  const lastAdvantage = offensive.some((action) => action.kind === 'DRIVE' && action.status === 'COMPLETED'
-    && (action.outcome === 'ADVANTAGE' || action.outcome === 'FINISH') && (action.resolvedT ?? -100) >= state.t - ADVANTAGE_WINDOW_TICKS)
+  const activeAction = offensive.anyActive
+  const lastAdvantage = offensive.lastAdvantageDriveT >= state.t - ADVANTAGE_WINDOW_TICKS
   const inHalfCourt = possession.phase === 'SETUP' || possession.phase === 'ACTION' || (!early && possession.phase !== 'INBOUND' && possession.phase !== 'ADVANCE')
   let stage: OffenseStage
   if (possession.phase === 'INBOUND' || possession.phase === 'ADVANCE' || early) stage = 'EARLY'

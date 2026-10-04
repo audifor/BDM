@@ -4,10 +4,15 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import '@testing-library/jest-dom/vitest'
 
 import { addDays } from '@/domain/date'
-import { continueGame, createAcbTestGame, createNewGame, simulateUntilDate } from '@/app/game'
+import { continueGame, createAcbTestGame as createFullAcbTestGame, createNewGame as createFullNewGame, simulateUntilDate } from '@/app/game'
 import { useGameStore } from '@/stores/gameStore'
 import { SystemBar } from '@/ui-ng/system/SystemBar'
 import { NgWorkspaceNavigationProvider } from '@/ui-ng/workspace/NgWorkspaceNavigationProvider'
+import { withShortGameFormat } from '@/app/game/testFixtures'
+
+// ME-LOCK1: a lifecycle test (calendar/season/staff), not a basketball one: its Games still resolve through Match Next FAST, with a short game format.
+const createNewGame = (...args: Parameters<typeof createFullNewGame>): ReturnType<typeof createFullNewGame> => withShortGameFormat(createFullNewGame(...args))
+const createAcbTestGame = (...args: Parameters<typeof createFullAcbTestGame>): ReturnType<typeof createFullAcbTestGame> => withShortGameFormat(createFullAcbTestGame(...args))
 
 afterEach(cleanup)
 

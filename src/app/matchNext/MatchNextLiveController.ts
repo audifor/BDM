@@ -1,3 +1,4 @@
+import { someEventSince } from '@/engine/match-next/events'
 import { distanceBetween } from '@/domain/court'
 import { attackingBasketForTeam } from '@/engine/match-next/structure/FiveOutStructure'
 import { applyCommand, createMatchState, decideRotationSubstitutions, inboundReceiverOrder, inboundTempo, tick, toFrame, type MatchFrame, type MatchSetup, type MatchState } from '@/engine/match-next'
@@ -122,7 +123,7 @@ export class MatchNextLiveController {
   private stepState(): void {
     const previousPeriod = this.state.period
     this.state = tick(this.state)
-    const reachedStoppage = this.state.events.some((event) => event.t === this.state.t && event.type === 'ballDead')
+    const reachedStoppage = someEventSince(this.state, this.state.t, (event) => event.type === 'ballDead')
     const substitutions = reachedStoppage ? decideRotationSubstitutions(this.state) : []
     if (substitutions.length > 0) this.state = applyCommand(this.state, { type: 'coachSubstitutions', proposals: substitutions })
     if (!this.state.isComplete && this.state.period !== previousPeriod) {

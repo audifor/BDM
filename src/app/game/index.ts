@@ -55,13 +55,11 @@ export {
   type MatchSeedFactory,
   completeMatch,
   createLiveUserMatch,
-  instantResult,
   PlayUserGameError,
-  playUserGame,
   prepareMatch,
   prepareUserMatch,
-  simulateAndApplyGame,
 } from './playUserGame'
+export { instantResult, playUserGame, simulateAndApplyGame } from './matchResolution'
 export { LiveMatchController, type LiveMatchStep } from './LiveMatchController'
 export { getCurrentSeason } from './selectors'
 export { startNextSeason, startNextSeasonTransitionFor, type CompetitionSeasonTransition, type CompetitionSeasonTransitionResult } from './startNextSeason'

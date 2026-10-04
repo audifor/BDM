@@ -1,8 +1,9 @@
+import { activeActions } from '../actions/ActionIndex'
 import { distanceBetween, type CourtPosition } from '@/domain/court'
 import type { PlayerId, TeamId } from '@/domain/ids'
 import { draw } from '../rng'
 import { judgeBallContestContact } from '../contact/BallContestFouls'
-import { emitEvent } from '../events'
+import { emitEvent, findLastEvent } from '../events'
 import { secureRebound } from '../ball/BallTransitions'
 import { REBOUND_ACQUISITION_RADIUS_METERS } from '../ball/BallState'
 import { changePossessionPhase } from '../possession'
@@ -247,7 +248,7 @@ function reconcileTransition(input: MatchState): MatchState {
   next = installTransitionRoles(next, transition)
   const ballHandler = next.ball.kind === 'HELD' && next.ball.ownerTeamId === existing.teamId
     ? findPlayer(next, next.ball.ownerPlayerId) : undefined
-  const actionActive = next.actions.some((action) => action.teamId === existing.teamId && action.status === 'ACTIVE' && action.kind !== 'CLOSEOUT')
+  const actionActive = activeActions(next).some((action) => action.teamId === existing.teamId && action.status === 'ACTIVE' && action.kind !== 'CLOSEOUT')
   // The half-court phase begins when the ball is in the frontcourt; a defender on the new carrier does not make a half court out of the backcourt (BT4.2).
   const crossed = ballHandler !== undefined && isInFrontcourt(ballHandler.position, existing.teamId, next)
   if (possession.phase === 'ACTION' && !actionActive && (crossed || (tuning().transitionHoldsUntilFrontcourt === 0 && advantage === 'STOPPED'))) {
@@ -321,7 +322,7 @@ function installTransitionRoles(input: MatchState, transition: MatchTransitionSt
   const prior = input.transition?.roles ?? []
   const roles = transition.roles.map((role) => {
     const old = prior.find((item) => item.playerId === role.playerId && item.kind === role.kind)
-    const action = input.actions.find((item) => item.playerId === role.playerId && item.kind === 'DRIVE' && item.status === 'ACTIVE')
+    const action = activeActions(input).find((item) => item.playerId === role.playerId && item.kind === 'DRIVE' && item.status === 'ACTIVE')
     return {
       ...role,
       responsibilityId: old?.responsibilityId || `responsibility-${nextResponsibilitySequence++}`,
@@ -337,7 +338,7 @@ function installTransitionRoles(input: MatchState, transition: MatchTransitionSt
   }))
   const decisions = roles.map((role) => ({
     id: role.decisionId, playerId: role.playerId, responsibilityId: role.responsibilityId, kind: role.kind,
-    owner: transitionOwner(role), startedT: input.actions.find((item) => item.playerId === role.playerId && item.kind === 'DRIVE' && item.status === 'ACTIVE')?.startedT ?? input.t,
+    owner: transitionOwner(role), startedT: activeActions(input).find((item) => item.playerId === role.playerId && item.kind === 'DRIVE' && item.status === 'ACTIVE')?.startedT ?? input.t,
     reason: `Transition role: ${role.kind}`,
   }))
   const intents: MovementIntent[] = roles.map((role) => ({
@@ -361,7 +362,7 @@ function installTransitionRoles(input: MatchState, transition: MatchTransitionSt
 
 function updateRoleTargets(state: MatchState, roles: readonly TransitionRole[]): readonly TransitionRole[] {
   return roles.map((role) => {
-    const action = state.actions.find((item) => item.playerId === role.playerId && item.kind === 'DRIVE' && item.status === 'ACTIVE')
+    const action = activeActions(state).find((item) => item.playerId === role.playerId && item.kind === 'DRIVE' && item.status === 'ACTIVE')
     return { ...role, target: role.kind === 'BALL_ADVANCE' && action?.target ? { ...action.target } : roleTarget(state, role) }
   })
 }
@@ -449,7 +450,7 @@ function transitionTrigger(state: MatchState): TransitionTrigger | null {
   if (possession.startReason === 'madeBasketInbound') return 'madeBasketInbound'
   if (possession.startReason === 'defensiveRebound') return 'defensiveRebound'
   if (possession.startReason === 'steal') return 'turnover'
-  const recovery = [...state.events].reverse().find((event) => event.type === 'looseBallRecovered')
+  const recovery = findLastEvent(state, (event) => event.type === 'looseBallRecovered')
   return possession.startReason === 'other' && recovery?.teamId === possession.teamId ? 'looseBallRecovery' : null
 }
 

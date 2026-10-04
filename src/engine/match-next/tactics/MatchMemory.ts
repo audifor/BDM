@@ -1,5 +1,5 @@
 import type { PlayerId, TeamId } from '@/domain/ids'
-import { emitEvent } from '../events'
+import { emitEvent, findLastEvent } from '../events'
 import type { MatchNextEvent, MatchState, ScreenCoverage } from '../state'
 import { clamp, tacticalIntent, type OffensiveIdentity } from './TacticalIdentity'
 
@@ -110,7 +110,7 @@ function follow(state: MatchState, tactics: TacticsState, event: MatchNextEvent,
       const next = replace(item.possessionId, { points: item.points + event.points })
       // How the shot after a screen was created is what a bench sees: who scored on its coverage.
       if (event.type === 'shotMade' && item.coverages.length > 0) {
-        const created = [...state.events].reverse().find((candidate) => candidate.type === 'shotReleased' && candidate.shooterPlayerId === event.shooterPlayerId)?.shotCreation ?? 'OTHER'
+        const created = findLastEvent(state, (candidate) => candidate.type === 'shotReleased' && candidate.shooterPlayerId === event.shooterPlayerId)?.shotCreation ?? 'OTHER'
         const defenseKey = item.offenseTeamId === state.homeTeamId ? 'away' : 'home'
         const coverage = item.coverages[item.coverages.length - 1]!
         const label = `${coverage}:${created}`
