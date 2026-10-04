@@ -1,0 +1,41 @@
+{
+ "scen": "LIST",
+ "wallMs": 1,
+ "notes": {
+  "variants": [
+   {
+    "key": "fibaLike:male",
+    "game": "schedule-generated-season-0001-game-0001",
+    "competition": "generated-competition-0001"
+   },
+   {
+    "key": "nbaLike:male",
+    "game": "schedule-generated-season-0003-game-0001",
+    "competition": "generated-competition-0003"
+   },
+   {
+    "key": "ncaaLike:male",
+    "game": "schedule-generated-season-0005-game-0001",
+    "competition": "generated-competition-0004"
+   },
+   {
+    "key": "fibaLike:female",
+    "game": "schedule-women-season-0001-game-0001",
+    "competition": "women-competition-0001"
+   },
+   {
+    "key": "nbaLike:female",
+    "game": "schedule-women-season-0003-game-0001",
+    "competition": "women-competition-0003"
+   },
+   {
+    "key": "ncaaLike:female",
+    "game": "schedule-women-season-0005-game-0001",
+    "competition": "women-competition-0004"
+   }
+  ],
+  "userGame": "schedule-generated-season-0001-game-0001"
+ },
+ "failed": [],
+ "audits": []
+}

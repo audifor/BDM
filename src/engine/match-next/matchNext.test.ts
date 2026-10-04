@@ -55,7 +55,8 @@ describe('Match Next ball and possession authority', () => {
     expect(JSON.stringify(world)).toBe(worldSnapshot)
     expect(JSON.parse(JSON.stringify(setup))).toEqual(setup)
     expect(setup.clockRules).toHaveProperty('shotClockSeconds', 24)
-    expect(setup.clockRules).toHaveProperty('offensiveReboundShotClockSeconds', null)
+    // BT7: the prepared rules are the Competition's (FIBA-like: offensive-rebound reset to 14 s since 54a9f7a), never a hard-coded null.
+    expect(setup.clockRules).toHaveProperty('offensiveReboundShotClockSeconds', 14)
   })
 
   it('validates setup membership, positions, lineups, and optional shot-clock reset rules', () => {
@@ -201,8 +202,15 @@ describe('Match Next ball and possession authority', () => {
     expect(state.ball).toMatchObject({ kind: 'DEAD', reason: 'madeBasket', restartTeamId: setup.awayTeamId })
     expect(state.score).toEqual({ home: 3, away: 0 })
     expect(state.possessions[0]).toMatchObject({ endReason: 'made' })
-    expect(state.clock).toEqual({ gameRunning: false, shotRunning: false })
+    // BT7: FIBA-like rules stop the game clock after a made basket only in the last 2:00 of the final period/overtime (54a9f7a); at 10:00 of Q1
+    // it keeps running while the shot clock stops. The late-game stop is asserted below with the same planned make.
+    expect(state.clock).toEqual({ gameRunning: true, shotRunning: false })
     expect(state.events.filter((event) => event.type === 'shotMade')).toHaveLength(1)
+    let late = { ...liveHome(source), period: 4, gameClockTenths: 600 }
+    late = applyCommand(late, { type: 'releaseShot', command: { targetBasket: setup.court.baskets.right, travelTicks: 5, plannedOutcome: { kind: 'MAKE', points: 2 } } })
+    late = ticks(late, 5)
+    expect(late.ball).toMatchObject({ kind: 'DEAD', reason: 'madeBasket' })
+    expect(late.clock).toEqual({ gameRunning: false, shotRunning: false })
     state = applyCommand(state, { type: 'startInbound', teamId: setup.awayTeamId, inbounderPlayerId: setup.initialLineups.away[0]!, reason: 'madeBasketInbound' })
     expect(state.ball.kind).toBe('INBOUND')
     expect(activePossession(state)).toMatchObject({ teamId: setup.awayTeamId, startReason: 'madeBasketInbound', phase: 'INBOUND' })
@@ -244,22 +252,29 @@ describe('Match Next ball and possession authority', () => {
     const rebounder = offense.ball.kind === 'HELD' ? offense.ball.ownerPlayerId : resetSetup.initialLineups.home[2]!
     const offensePosition = offense.players.find((player) => player.playerId === rebounder)!.position
     let offensive = applyCommand(offense, { type: 'releaseShot', command: { targetBasket: resetSetup.court.baskets.right, travelTicks: 5, plannedOutcome: { kind: 'MISS', reboundTarget: offensePosition, reboundAvailableT: offense.t + 25 } } })
-    offensive = ticks(offensive, 25)
+    offensive = ticks(offensive, 24)
+    // BT7: rebounds are physical (nearest/boxing player secures it), so the offensive case clears the defenders the same way the defensive case clears the offense.
+    offensive = { ...offensive, players: offensive.players.map((player) => player.playerId === rebounder ? { ...player, position: offensePosition } : player.teamId === resetSetup.awayTeamId ? { ...player, position: { x: 2, y: player.position.y } } : player) }
+    offensive = tick(offensive)
     for (let index = 0; index < 120 && !offensive.events.some((event) => event.type === 'reboundSecured'); index += 1) offensive = tick(offensive)
     const id = activePossession(offensive)?.id
     expect(activePossession(offensive)).toMatchObject({ id, phase: 'SETUP', offensiveRebounds: 1 })
     expect(offensive.shotClockTenths).toBe(140)
 
-    const unresolvedSetup = positionedSetup(source)
+    // BT7: a competition WITHOUT an offensive-rebound reset is now declared explicitly (the generated FIBA-like competition resets to 14 s).
+    const unresolvedSetup = positionedSetup(source, {}, { offensiveReboundShotClockSeconds: null })
     const unresolvedHeld = liveHome(unresolvedSetup)
     const unresolvedRebounder = unresolvedHeld.ball.kind === 'HELD' ? unresolvedHeld.ball.ownerPlayerId : unresolvedSetup.initialLineups.home[2]!
     const unresolvedTarget = unresolvedHeld.players.find((player) => player.playerId === unresolvedRebounder)!.position
     let unresolved = applyCommand(unresolvedHeld, { type: 'releaseShot', command: { targetBasket: unresolvedSetup.court.baskets.right, travelTicks: 5, plannedOutcome: { kind: 'MISS', reboundTarget: unresolvedTarget, reboundAvailableT: unresolvedHeld.t + 25 } } })
-    unresolved = ticks(unresolved, 25)
+    unresolved = ticks(unresolved, 24)
+    unresolved = { ...unresolved, players: unresolved.players.map((player) => player.playerId === unresolvedRebounder ? { ...player, position: unresolvedTarget } : player.teamId === unresolvedSetup.awayTeamId ? { ...player, position: { x: 2, y: player.position.y } } : player) }
+    const shotClockBeforeRebound = unresolved.shotClockTenths ?? 0
+    unresolved = tick(unresolved)
     for (let index = 0; index < 120 && !unresolved.events.some((event) => event.type === 'reboundSecured'); index += 1) unresolved = tick(unresolved)
-    const priorShotClock = unresolved.shotClockTenths
     expect(unresolvedSetup.clockRules.offensiveReboundShotClockSeconds).toBeNull()
-    expect(unresolved.shotClockTenths).toBe(priorShotClock)
+    expect(activePossession(unresolved)?.offensiveRebounds).toBe(1)
+    expect(unresolved.shotClockTenths).toBeLessThan(shotClockBeforeRebound)
     expect(activePossession(unresolved)?.phase).toBe('SETUP')
   })
 

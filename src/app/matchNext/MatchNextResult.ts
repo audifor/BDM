@@ -128,9 +128,8 @@ export function createMatchStatLogFromMatchNext(world: GameWorld, result: MatchN
 
 function derivePlayerStats(setup: MatchSetup, state: MatchState): PlayerGameStatsSnapshot[] {
   const totals = new Map<PlayerId, PlayerGameStatsSnapshot>([...setup.homeSquad, ...setup.awaySquad].map((playerId) => [playerId, emptyStats(playerId)]))
-  for (const playerId of totals.keys()) {
-    const tenths = state.courtTimeTenthsByPlayerId?.[playerId]
-    if (tenths !== undefined) update(totals, playerId, { secondsPlayed: tenths / 10 })
+  for (const squad of [setup.homeSquad, setup.awaySquad]) {
+    for (const [playerId, seconds] of wholeSecondsPlayed(squad, state.courtTimeTenthsByPlayerId ?? {})) update(totals, playerId, { secondsPlayed: seconds })
   }
   let homeLineup = new Set(setup.initialLineups.home)
   let awayLineup = new Set(setup.initialLineups.away)
@@ -180,6 +179,20 @@ function derivePlayerStats(setup: MatchSetup, state: MatchState): PlayerGameStat
 
 function emptyStats(playerId: PlayerId): PlayerGameStatsSnapshot {
   return { playerId, secondsPlayed: 0, points: 0, fieldGoalsMade: 0, fieldGoalsAttempted: 0, twoPointMade: 0, twoPointAttempted: 0, threePointMade: 0, threePointAttempted: 0, freeThrowsMade: 0, freeThrowsAttempted: 0, offensiveRebounds: 0, defensiveRebounds: 0, rebounds: 0, assists: 0, steals: 0, blocks: 0, turnovers: 0, foulsCommitted: 0, plusMinus: 0 }
+}
+
+/**
+ * The persisted stat contract (MatchStatLog, Save V4) counts whole seconds, while court time is measured in 0.1 s ticks.
+ * Largest-remainder rounding per team keeps every line an integer and the team total equal to its rounded court time (5 x game length).
+ */
+function wholeSecondsPlayed(squad: readonly PlayerId[], tenthsByPlayerId: Readonly<Record<PlayerId, number>>): Map<PlayerId, number> {
+  const exact = squad.map((playerId) => ({ playerId, tenths: tenthsByPlayerId[playerId] ?? 0 }))
+  const target = Math.round(exact.reduce((sum, item) => sum + item.tenths, 0) / 10)
+  const seconds = new Map(exact.map((item) => [item.playerId, Math.floor(item.tenths / 10)]))
+  const missing = target - [...seconds.values()].reduce((sum, value) => sum + value, 0)
+  const byRemainder = [...exact].sort((a, b) => (b.tenths % 10) - (a.tenths % 10) || String(a.playerId).localeCompare(String(b.playerId)))
+  for (const item of byRemainder.slice(0, Math.max(0, missing))) seconds.set(item.playerId, seconds.get(item.playerId)! + 1)
+  return seconds
 }
 
 function update(totals: Map<PlayerId, PlayerGameStatsSnapshot>, playerId: PlayerId, delta: Partial<Omit<PlayerGameStatsSnapshot, 'playerId'>>): void {

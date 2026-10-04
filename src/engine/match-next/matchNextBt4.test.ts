@@ -167,7 +167,9 @@ describe('BT4: a whole game', { timeout: 400000 }, () => {
   it('has real variety: pull-ups, mid-range, floater range and threes all appear, from action, not from a chosen zone', () => {
     const all = [...shots(state), ...shots(other)]
     const count = (test: (shot: MatchNextEvent) => boolean): number => all.filter(test).length
-    expect(count((shot) => shot.shotCreation === 'PULL_UP')).toBeGreaterThan(8)
+    // BT7: since the coach's starting five plays its planned minutes (it used to be benched at the first dead ball), these two games
+    // carry better point-of-attack defenders and a more perimeter lineup: 7 pull-ups here, 6.0 per game over 6 seeds (8.2 before).
+    expect(count((shot) => shot.shotCreation === 'PULL_UP')).toBeGreaterThan(5)
     expect(count((shot) => shot.shotZone === 'MIDRANGE' || shot.shotZone === 'LONG_MIDRANGE')).toBeGreaterThan(8)
     expect(count((shot) => shot.shotZone === 'FLOATER_RANGE' || shot.shotZone === 'SHORT_PAINT')).toBeGreaterThan(10)
     expect(count((shot) => shot.points === 3)).toBeGreaterThan(30)

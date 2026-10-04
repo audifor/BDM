@@ -14,6 +14,11 @@ export interface CoachSubstitutionProposal {
   readonly forced?: boolean
 }
 
+const BASE_THRESHOLD = 3.1
+const MINUTE_PRESSURE_PER_MINUTE = 2.15
+/** Minutes past the period target a coach tolerates before the minute plan alone asks for the substitution. */
+const MINUTE_TOLERANCE = 0.35
+
 /** Chooses at most one legal substitution per team at a competition-defined dead-ball opportunity. */
 export function decideRotationSubstitutions(state: MatchState): readonly CoachSubstitutionProposal[] {
   if (state.ball.kind !== 'DEAD' || state.isComplete) return []
@@ -86,9 +91,12 @@ function decideForTeam(state: MatchState, teamId: TeamId): CoachSubstitutionProp
   for (const outgoing of active) {
     const playerTargetMinutes = expectedMinutes(outgoing.playerId)
     const playedMinutes = (state.periodCourtTimeTenthsByPlayerId?.[outgoing.playerId] ?? 0) / 600
-    const overTarget = Math.max(0, playedMinutes - playerTargetMinutes - 0.35)
+    // BT7: minute pressure reaches the substitution threshold when the player is MINUTE_TOLERANCE past his period target. It used to
+    // start ramping only there and needed ~1.4 more minutes, so an 8-of-10 target fired at 9.8 minutes: the plan's ~32-minute starters
+    // played 40 because the trigger came after the quarter was over.
+    const overTarget = Math.max(0, playedMinutes - playerTargetMinutes - MINUTE_TOLERANCE + BASE_THRESHOLD / MINUTE_PRESSURE_PER_MINUTE)
     const fatiguePressure = Math.max(0, outgoing.fatigue - 35) * 0.105 / plan.fatigueTolerance
-    const minutePressure = overTarget * 2.15
+    const minutePressure = overTarget * MINUTE_PRESSURE_PER_MINUTE
     // Foul trouble (BT4): a player one foul from disqualification is taken out before he is lost for the rest of the game.
     const foulLimit = resolveFoulRules(state.clockRules).personalFoulLimit
     const foulTrouble = Math.max(0, (state.fouls.personal[outgoing.playerId] ?? 0) - (foulLimit - 2)) * 3.6
@@ -106,11 +114,14 @@ function decideForTeam(state: MatchState, teamId: TeamId): CoachSubstitutionProp
       .sort((left, right) => right.fit - left.fit || right.target - left.target || String(left.player.playerId).localeCompare(String(right.player.playerId)))[0]
     if (replacement === undefined) continue
     const qualityPenalty = Math.max(-1, (roleFit(plan, outgoing.playerId, role) - replacement.fit) * 0.035)
-    const threshold = 3.1 + qualityPenalty + contextAdjustment
+    const threshold = BASE_THRESHOLD + qualityPenalty + contextAdjustment
     if (pressure < threshold) continue
-    const reason = outgoing.fatigue >= 55
-      ? `fatigue ${Math.round(outgoing.fatigue)} with ${playedMinutes.toFixed(1)}/${playerTargetMinutes} target minutes`
-      : `${playedMinutes.toFixed(1)} minutes exceeds the ${playerTargetMinutes}-minute period target`
+    // The reason names the pressure that actually dominated (the text is part of the presentation contract).
+    const reason = foulTrouble >= Math.max(fatiguePressure, minutePressure)
+      ? `foul trouble: ${state.fouls.personal[outgoing.playerId] ?? 0} of ${foulLimit} personal fouls`
+      : fatiguePressure >= minutePressure
+        ? `fatigue ${Math.round(outgoing.fatigue)} with ${playedMinutes.toFixed(1)}/${playerTargetMinutes} target minutes`
+        : `${playedMinutes.toFixed(1)} minutes reaches the ${playerTargetMinutes}-minute period target`
     const candidate = { proposal: { teamId, playerOutId: outgoing.playerId, playerInId: replacement.player.playerId, reason, expectedMinutes: playerTargetMinutes }, pressure, candidateFit: replacement.fit }
     if (best === undefined || candidate.pressure > best.pressure || (candidate.pressure === best.pressure && candidate.candidateFit > best.candidateFit)
       || (candidate.pressure === best.pressure && candidate.candidateFit === best.candidateFit && String(candidate.proposal.playerOutId).localeCompare(String(best.proposal.playerOutId)) < 0)) best = candidate

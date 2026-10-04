@@ -455,10 +455,10 @@ export function activePossession(state: MatchState): PossessionState | undefined
 export function createInitialMatchState(setup: MatchSetup): MatchState {
   const initialPositions = setup.initialPlayerPositions ?? []
   const initialPosition = (playerId: PlayerId) => initialPositions.find((entry) => entry.playerId === playerId)?.position
-  const startingIds = new Set([...setup.initialLineups.home, ...setup.initialLineups.away])
+  const startingIds = [...setup.initialLineups.home, ...setup.initialLineups.away]
   const players = [
-    ...setup.homeSquad.map((playerId, slot) => createMatchPlayer(setup, playerId, setup.homeTeamId, startingIds.has(playerId), 'home', slot, initialPosition(playerId))),
-    ...setup.awaySquad.map((playerId, slot) => createMatchPlayer(setup, playerId, setup.awayTeamId, startingIds.has(playerId), 'away', slot, initialPosition(playerId))),
+    ...setup.homeSquad.map((playerId, slot) => createMatchPlayer(setup, playerId, setup.homeTeamId, startingIds.includes(playerId), 'home', slot, initialPosition(playerId))),
+    ...setup.awaySquad.map((playerId, slot) => createMatchPlayer(setup, playerId, setup.awayTeamId, startingIds.includes(playerId), 'away', slot, initialPosition(playerId))),
   ]
   const playerIds = [...setup.homeSquad, ...setup.awaySquad]
   const position = { x: setup.court.lengthMeters / 2, y: setup.court.widthMeters / 2 }

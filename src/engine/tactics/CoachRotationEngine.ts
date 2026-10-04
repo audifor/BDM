@@ -220,9 +220,13 @@ function allocateMinuteTargets(
   fits: CoachRotationPlan['roleFitByPlayerId'],
   periodMinutes: readonly number[],
 ): Record<PlayerId, readonly number[]> {
-  const targets = Object.fromEntries(rotation.map((id) => [id, [] as number[]])) as Record<PlayerId, number[]>
+  // BT7: the five starter shares go to the coach's starting five (it may hold a player outside the top five by fit, or outside the
+  // fit-ranked rotation); the bench shares follow fit order. Ranking by fit alone gave a chosen starter bench minutes, so the minute
+  // plan opened with a different five than the starting lineup (an automatic substitution at the opening tip).
+  const ordered = [...starters, ...rotation.filter((playerId) => !starters.includes(playerId))]
+  const targets = Object.fromEntries(ordered.map((id) => [id, [] as number[]])) as Record<PlayerId, number[]>
   for (const periodLength of periodMinutes) {
-    const rawWeights = rotation.map((playerId, index) => {
+    const rawWeights = ordered.map((playerId, index) => {
       const starter = starters.includes(playerId)
       const fit = Math.max(...Object.values(fits[playerId] ?? { PG: 50 }))
       const rankWeight = index < 5 ? 1.22 : [0.55, 0.45, 0.34, 0.23, 0.14][index - 5] ?? 0.08
